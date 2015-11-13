@@ -21,7 +21,7 @@
 #define GPIO_DIR_IN	0
 #define GPIO_DIR_OUT	1
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 #define DEF_SECOND_WANIF	"usb"
 #else
 #define DEF_SECOND_WANIF	"none"
@@ -114,6 +114,16 @@ enum {
 
 #define EXTEND_AIHOME_API_LEVEL		1
 #define EXTEND_HTTPD_AIHOME_VER		0
+
+#define EXTEND_ASSIA_API_LEVEL		1
+
+enum {
+	FROM_BROWSER,
+	FROM_ASUSROUTER,
+	FROM_DUTUtil,
+	FROM_ASSIA,
+	FROM_UNKNOWN
+};
 
 enum {
 	ACT_IDLE,
@@ -244,6 +254,7 @@ enum {
 	MODEL_RTN54U,
 	MODEL_RTAC54U,
 	MODEL_RTN56UB1,
+	MODEL_RTN56UB2,
 	MODEL_RTAC1200HP,
 	MODEL_RTAC55U,
 	MODEL_RTAC55UHP,
@@ -419,11 +430,13 @@ enum led_id {
 #ifdef RTCONFIG_LED_ALL
 	LED_ALL,
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
+	LED_3G,
 	LED_LTE,
 	LED_SIG1,
 	LED_SIG2,
 	LED_SIG3,
+	LED_SIG4,
 #endif
 	LED_SWITCH,
 	LED_5G_FORCED,	/* Will handle ledbh & nvram flag */
@@ -843,6 +856,9 @@ extern int psr_exist();
 extern int psr_exist_except(int unit);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
 extern int check_bwdpi_nvram_setting();
+extern void StampToDate(unsigned long timestamp, char *date);
+extern int check_filesize_over(char *path, long int size);
+extern time_t get_last_month_timestamp();
 extern int get_iface_hwaddr(char *name, unsigned char *hwaddr);
 #define xstart(args...)	_xstart(args, NULL)
 extern int _xstart(const char *cmd, ...);
@@ -989,11 +1005,11 @@ static inline void enable_wifi_bled(char *ifname)
 #if defined(RTCONFIG_QCA)
 		v = LED_OFF;	/* WiFi not ready. Don't turn on WiFi LED here. */		
 #endif
-#if defined(RTAC1200HP) || defined(RTN56UB1)
+#if defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2)
 		if(!get_radio(1, 0) && unit==1) //*5G WiFi not ready. Don't turn on WiFi GPIO LED . */
 		 	v=LED_OFF;
 #endif		
-#if defined(RTN56UB1)
+#if defined(RTN56UB1) || defined(RTN56UB2)
 		if(!get_radio(0, 0) && unit==0) //*2G WiFi not ready. Don't turn on WiFi GPIO LED . */
 		 	v=LED_OFF;
 #endif		

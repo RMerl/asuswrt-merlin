@@ -98,10 +98,6 @@ LDFLAGS += -L$(TOP)/wb -lws
 LDFLAGS += -L$(TOP)/push_log -lpush_log
 endif
 
-ifeq ($(RTCONFIG_ODMPID),y)
-CFLAG += RTCONFIG_ODMPID
-endif
-
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
 
 ifneq ($(findstring NET_CLS_POLICE=, $(shell cat $(LINUXDIR)/.config)),)
@@ -150,6 +146,9 @@ else ifeq ($(RTCONFIG_QCA),y)
 OBJS += init-qca.o wps-qca.o qca.o ate-qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.o,prebuild/ctl.o)
 else
 OBJS += init-broadcom.o wps-broadcom.o broadcom.o ate-broadcom.o
+ifeq ($(BUILD_NAME), RT-AC68U)
+OBJS += cfe.o
+endif
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += init-broadcom-dsl.o
 endif
@@ -192,6 +191,10 @@ endif
 
 ifeq ($(RTCONFIG_SSH),y)
 OBJS += ssh.o
+endif
+
+ifeq ($(RTCONFIG_WTFAST),y)
+OBJS += wtfast.o
 endif
 
 ifeq ($(RTCONFIG_PPTPD),y)
@@ -305,12 +308,8 @@ OBJS += pwdec.o
 endif
 endif
 
-ifeq ($(RT4GAC55U),y)
+ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
 OBJS += lteled.o
-endif
-
-ifeq ($(BUILD_NAME), RT-AC68U)
-OBJS += sysdeps/broadcom/cfe.o
 endif
 
 ifeq ($(RTCONFIG_TR069),y)
@@ -522,6 +521,9 @@ endif
 ifeq ($(RTCONFIG_SSH),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_sshd
 endif
+ifeq ($(RTCONFIG_WTFAST),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc run_wtfast
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_pptpd
 
 ifeq ($(RTCONFIG_PARENTALCTRL),y)
@@ -570,7 +572,7 @@ endif
 ifeq ($(RTCONFIG_IPERF),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc monitor
 endif
-ifeq ($(RT4GAC55U),y)
+ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc lteled
 endif
 ifeq ($(RTCONFIG_TR069),y)
@@ -619,7 +621,7 @@ endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
-ifneq ($(wildcard ./prebuild/ate-broadcom.o),)
+ifneq ($(wildcard ./prebuild/pwdec.o),)
 pwdec.o:
 	@-cp -f ./prebuild/pwdec.o .
 endif
@@ -630,6 +632,12 @@ ifeq ($(CONFIG_BCMWL5),y)
 ifneq ($(wildcard ./prebuild/ate-broadcom.o),)
 ate-broadcom.o:
 	@-cp -f ./prebuild/ate-broadcom.o .
+endif
+ifeq ($(BUILD_NAME), RT-AC68U)
+ifneq ($(wildcard ./prebuild/cfe.o),)
+cfe.o:
+	@-cp -f ./prebuild/cfe.o .
+endif
 endif
 endif
 

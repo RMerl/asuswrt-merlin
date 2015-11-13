@@ -333,7 +333,7 @@ endef
 
 ################################################################
 # CLM function; generates a rule to run ClmCompiler iff the XML exists.
-# USAGE: $(call WLAN_GenClmCompilerRule,target-dir,src-base[,flags[,ext]])
+# USAGE: $(call WLAN_GenClmCompilerRule,target-dir,src-base[,flags[,ext[,purposes_vary[,xml_dir]]]])
 #   This macro uses GNU make's eval function to generate an
 # explicit rule to generate a particular CLM data file each time
 # it's called. Make variables which should be evaluated during eval
@@ -370,9 +370,11 @@ ifneq (,$(wildcard $(addsuffix /wl/clm/private/wlc_clm_data.xml,$2 $2/../../src 
   vpath wlc_clm_data.xml $(wildcard $(addsuffix /wl/clm/private,$5 $2 $2/../../src $2/../../../src))
   vpath %.clm $(addsuffix /wl/clm/types,$2 $2/../../src $2/../../../src)
   $$(sort $1/wlc_clm_data$4.c ./wlc_clm_data$4.c): \
-      wlc_clm_data.xml $2/wl/clm/include/wlc_clm_data.h $$(wildcard $2/wl/clm/bin/ClmCompiler.py) $$(if $$(CLM_TYPE),$$(CLM_TYPE).clm) ; \
-    $$(strip $$(abspath $$(<D)/../../../tools/build/ClmCompiler) \
-      $$(if $$(CLM_TYPE),--config_file $$(lastword $$^) $3,$$(if $3,$3,$$(CLMCOMPDEFFLAGS))) \
+      $6wlc_clm_data.xml $2/wl/clm/include/wlc_clm_data.h $$(wildcard $2/wl/clm/bin/ClmCompiler.py) $$(if $$(CLM_TYPE),$$(CLM_TYPE).clm) ; \
+    $$(strip $$(firstword $$(wildcard $$(addsuffix /tools/build/ClmCompiler, $2 $2/../../src $2/../../../src))) \
+      --clmapi_include_dir $$(firstword $$(wildcard $$(addsuffix src/wl/clm/include, $2/../ $2/../../ $2/../../../ ))) \
+      --print_options --bcmwifi_include_dir $$(firstword $$(wildcard $$(addsuffix src/shared/bcmwifi/include, $2/../ $2/../../ $2/../../../ ))) \
+      $$(if $$(and $$(if $$(filter --config_file,$3),,x), $$(CLM_TYPE)),--config_file $$(lastword $$^) $3,$$(if $3,$3,$$(CLMCOMPDEFFLAGS))) \
       $(CLMCOMPEXTFLAGS) $$< $$@ $$(call wlan_copy_to_gen,$$@,$2))
 else
   vpath %.GEN $(subst $(abspath $2),$(abspath $2/$(WLAN_GEN_BASEDIR)),$1) $(sort $(patsubst %/,%,$(dir $(wildcard $(subst $(abspath $2),$(abspath $2/$(WLAN_GEN_BASEDIR)),$(dir $1))*/*.GEN))))

@@ -24,12 +24,18 @@ PCIEFD_EMBED_HEADER		:= $(SRCBASE_DHD)/shared/rtecdc_router.h
 
 # All firmware targets must be defined here
 #PCIEFD_TARGETS_LIST		:= 43602a1
-PCIEFD_TARGETS_LIST		+= 4365b1
+PCIEFD_TARGETS_LIST		+= 4366b1
 
 obj-pciefd			:= $(patsubst %,%-obj,$(PCIEFD_TARGETS_LIST))
 clean-pciefd			:= $(patsubst %,%-clean,$(PCIEFD_TARGETS_LIST))
 version-pciefd			:= $(patsubst %,%-version,$(PCIEFD_TARGETS_LIST))
 
+WLCX				:= ""
+ifeq ($(CONFIG_GMAC3),y)
+ifeq ($(CONFIG_FLATLAS),y)
+	WLCX			:= "-wlcx"
+endif
+endif
 
 # 43602a1-roml target
 FW_43602a1_SRCBASE		:= $(abspath $(SRCBASE)/../43602/src)
@@ -45,22 +51,23 @@ else
 endif
 
 
-# 4365b1-roml target
-FW_4365b1_SRCBASE		:= $(abspath $(SRCBASE)/../4365/src)
-FW_4365b1_CHIPID		:= 4365b1
-FW_4365b1_BUILD_PREFIX		:= $(FW_4365b1_CHIPID)-roml
-FW_4365b1_MAKE_PATH		:= $(FW_4365b1_SRCBASE)/dongle/make/wl
-FW_4365b1_BUILD_PATH		:= $(FW_4365b1_SRCBASE)/../build/dongle/$(FW_4365b1_BUILD_PREFIX)
-FW_4365b1_OS_PATH		:= $(FW_4365b1_SRCBASE)/../components/threadx
+# 4366b1-roml target
+FW_4366b1_SRCBASE		:= $(abspath $(SRCBASE)/../4365/src)
+FW_4366b1_CHIPID		:= 4366b1
+FW_4366b1_BUILD_PREFIX		:= $(FW_4366b1_CHIPID)-roml
+FW_4366b1_MAKE_PATH		:= $(FW_4366b1_SRCBASE)/dongle/make/wl
+FW_4366b1_BUILD_PATH		:= $(FW_4366b1_SRCBASE)/../build/dongle/$(FW_4366b1_BUILD_PREFIX)
+FW_4366b1_OS_PATH		:= $(FW_4366b1_SRCBASE)/../components/threadx
 ifeq ($(WLTEST),1)
-    FW_4365b1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16
+    FW_4366b1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)
 else
-        FW_4365b1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs-txpwr
+        FW_4366b1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)
 endif
 
 
 # All rules start here
 $(obj-pciefd):
+	@echo "TARGETS : $(PCIEFD_TARGETS_LIST)"
 	$(eval R_CHIP := $(patsubst %-obj,%,$@))
 	@if [ -d $(FW_$(R_CHIP)_SRCBASE)/wl/sys ]; then \
 	if [ -d $(FW_$(R_CHIP)_OS_PATH) ]; then \

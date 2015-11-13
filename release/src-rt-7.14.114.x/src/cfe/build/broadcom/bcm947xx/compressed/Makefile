@@ -98,6 +98,22 @@ else
 COMPRESS	:= cat
 endif
 
+ifeq ($(RTAC68U), 1)
+ifeq ($(BCM470XC0), 1)
+	CFEZ_FILE := cfe_rt-ac68u_5003_c0.bin
+else ifeq ($(BCM470XC0), 2)
+	CFEZ_FILE := cfe_rt-ac68u_v2_5003_c0.bin
+else ifeq ($(PATYPE), 0)
+	CFEZ_FILE := cfe_rt-ac68u.bin
+else ifeq ($(PATYPE), 5023)
+	CFEZ_FILE := cfe_rt-ac68u_v2_5023.bin
+else ifeq ($(PATYPE), 85402)
+	CFEZ_FILE := cfe_rt-ac68u_v2_85402.bin
+else ifeq ($(PATYPE), 5003)
+	CFEZ_FILE := cfe_rt-ac68u_v2_5003.bin
+endif
+endif
+
 all: cfez.bin
 
 # Don't build dependencies, this may die if $(CC) isn't gcc
@@ -139,24 +155,20 @@ else ifeq ($(RTAC87U), 1)
 	fi
 
 else ifeq ($(RTAC68U), 1)
-ifeq ($(PATYPE), 0)
-ifeq ($(TMO), 1)
-	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u.bin -s 00 rt-ac68u_nvram_tmo.txt
-else
-	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u.bin -s 00 rt-ac68u_nvram.txt
-endif
-	cp cfe_rt-ac68u.bin ../../../..
+ifeq ($(BCM470XC0), 1)
+	../../../../../ctools/nvserial -i cfez.bin -o $(CFEZ_FILE) -s 00 rt-ac68u_5003_c0_nvram.txt
+else ifeq ($(BCM470XC0), 2)
+	../../../../../ctools/nvserial -i cfez.bin -o $(CFEZ_FILE) -s 00 rt-ac68u_v2_5003_c0_nvram.txt
+else ifeq ($(PATYPE), 0)
+	../../../../../ctools/nvserial -i cfez.bin -o $(CFEZ_FILE) -s 00 rt-ac68u_nvram.txt
 else ifeq ($(PATYPE), 5023)
-	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u_v2_5023.bin -s 00 rt-ac68u_v2_5023_nvram.txt
-	cp cfe_rt-ac68u_v2_5023.bin ../../../..
+	../../../../../ctools/nvserial -i cfez.bin -o $(CFEZ_FILE) -s 00 rt-ac68u_v2_5023_nvram.txt
 else ifeq ($(PATYPE), 85402)
-	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u_v2_85402.bin -s 00 rt-ac68u_v2_85402_nvram.txt
-	cp cfe_rt-ac68u_v2_85402.bin ../../../..
+	../../../../../ctools/nvserial -i cfez.bin -o $(CFEZ_FILE) -s 00 rt-ac68u_v2_85402_nvram.txt
 else ifeq ($(PATYPE), 5003)
-	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u_v2_5003.bin -s 00 rt-ac68u_v2_5003_nvram.txt
-	cp cfe_rt-ac68u_v2_5003.bin ../../../..
+	../../../../../ctools/nvserial -i cfez.bin -o $(CFEZ_FILE) -s 00 rt-ac68u_v2_5003_nvram.txt
 endif
-
+	cp $(CFEZ_FILE) ../../../..
 else ifeq ($(RTN18U), 1)
 		../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-n18u.bin -s 00 rt-n18u_nvram.txt
 		cp cfe_rt-n18u.bin ../../../..
@@ -189,7 +201,7 @@ else ifeq ($(RTAC3200U), 1)
 
 else ifeq ($(RTAC68U), 1)
 	@if [ "$(CFEZ_MAXSIZE)" != "" ]; then \
-		if [ "`wc -c < cfe_rt-ac68u.bin`" -gt "$(CFEZ_MAXSIZE)" ]; then \
+		if [ "`wc -c < $(CFEZ_FILE)`" -gt "$(CFEZ_MAXSIZE)" ]; then \
 			echo "*** ERROR *** : cfe_rt-ac68u.bin bootrom image size: `wc -c < cfe_rt-ac68u.bin` exceeds limit: $(CFEZ_MAXSIZE)"; \
 			exit 2; \
 		fi ; \

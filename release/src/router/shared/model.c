@@ -29,6 +29,7 @@ static const struct model_s model_list[] = {
 	{ "RT-N54U",	MODEL_RTN54U	},
 	{ "RT-AC54U",	MODEL_RTAC54U	},
 	{ "RT-N56UB1",	MODEL_RTN56UB1	},
+	{ "RT-N56UB2",	MODEL_RTN56UB2	},
 	{ "RT-N36U3",	MODEL_RTN36U3	},
 	{ "RT-N56U",	MODEL_RTN56U	},
 	{ "RT-N65U",	MODEL_RTN65U	},
@@ -135,6 +136,10 @@ int get_blver(char *bls) {
         return blver;
 }
 
+int get_fwver(char *buildno, char *extendno) {
+	
+	return atoi(buildno)*100000 + atoi(extendno);
+}
 
 /* returns MODEL ID
  * result is cached for safe multiple use */

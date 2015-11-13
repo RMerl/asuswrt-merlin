@@ -19,6 +19,7 @@
 }
 </style>
 <script type="text/JavaScript">
+var based_modelid = '<% nvram_get("productid"); %>';
 function QKInternet_load_body(){
 	if(parent.document.QKform.sw_mode.value == 4) {
 		document.getElementById("nextButton").value = "<#CTL_apply#>";
@@ -159,7 +160,12 @@ function submitForm(){
 			if(Rawifi_support || Qcawifi_support) {
 				document.mbform.sw_mode.value = 2;
 			}
-			else {
+			else{
+				if(based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC5300")
+					document.mbform.wlc_psta.value = 3;
+				else
+					document.mbform.wlc_psta.value = 1;
+							
 				document.mbform.sw_mode.value = 3;
 			}
 			document.mbform.submit();

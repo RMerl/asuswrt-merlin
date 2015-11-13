@@ -144,6 +144,7 @@ var originData = {
 	time_scheduling_devicename: decodeURIComponent('<% nvram_char_to_ascii("", "MULTIFILTER_DEVICENAME"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('>'),
 	time_scheduling_daytime: decodeURIComponent('<% nvram_char_to_ascii("", "MULTIFILTER_MACFILTER_DAYTIME"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('>'),
 	current_time: '<% uptime(); %>',
+	wtf_rulelist: decodeURIComponent('<% nvram_char_to_ascii("", "wtf_rulelist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	init: true
 }
 
@@ -190,6 +191,7 @@ var setClientAttr = function(){
 	this.dpiDevice = "";
 	this.internetMode = "allow";
 	this.internetState = 1; // 1:Allow Internet access, 0:Block Internet access
+	this.wtfast = 0;
 }
 
 var ouiClientList = cookie.get("ouiClientList");
@@ -276,7 +278,7 @@ function genClientList(){
 		var thisClient = originData.asusDevice[i].split(">");
 		var thisClientMacAddr = (typeof thisClient[3] == "undefined") ? false : thisClient[3].toUpperCase();
 
-		if(!thisClientMacAddr || thisClient[2] == '<% nvram_get("lan_ipaddr"); %>'){
+		if(!thisClientMacAddr || thisClient.length != 8 || thisClient[2] == '<% nvram_get("lan_ipaddr"); %>'){
 			continue;
 		}
 
@@ -315,7 +317,7 @@ function genClientList(){
 		var thisClient = originData.fromNetworkmapd[i].split(">");
 		var thisClientMacAddr = (typeof thisClient[3] == "undefined") ? false : thisClient[3].toUpperCase();
 
-		if(!thisClientMacAddr){
+		if(!thisClientMacAddr || thisClient.length != 8){
 			continue;
 		}
 
@@ -460,7 +462,7 @@ function genClientList(){
 		var thisClient = originData.customList[i].split(">");
 		var thisClientMacAddr = (typeof thisClient[1] == "undefined") ? false : thisClient[1].toUpperCase();
 
-		if(!thisClientMacAddr){
+		if(!thisClientMacAddr || thisClient.length != 6){
 			continue;
 		}
 
@@ -493,7 +495,7 @@ function genClientList(){
 		thisClient[0].toUpperCase().substring(2, 4) + ":" + thisClient[0].toUpperCase().substring(4, 6) + ":" + thisClient[0].toUpperCase().substring(6, 8) + ":" + 
 		thisClient[0].toUpperCase().substring(8, 10) + ":" + thisClient[0].toUpperCase().substring(10, 12);
 
-		if(!thisClientMacAddr) {
+		if(!thisClientMacAddr || thisClient.length != 8) {
 			continue;
 		}
 
@@ -630,6 +632,19 @@ function genClientList(){
 				if(clientList[thisClientMacAddr].ip == thisClient[1] || clientList[thisClientMacAddr].ip == "offline")
 					clientList[thisClientMacAddr].ipMethod = "Manual";
 			}
+		}
+	}
+
+	for(var i = 0; i < originData.wtf_rulelist.length; i += 1) {
+		var thisClient = originData.wtf_rulelist[i].split(">");
+		var thisClientMacAddr = (typeof thisClient[1] == "undefined") ? false : thisClient[1].toUpperCase();
+
+		if(!thisClientMacAddr || typeof clientList[thisClientMacAddr] == "undefined") {
+			continue;
+		}
+
+		if(typeof clientList[thisClientMacAddr] != "undefined") {
+			clientList[thisClientMacAddr].wtfast = parseInt(thisClient[0]);
 		}
 	}
 

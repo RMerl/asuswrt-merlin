@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: d11.h 573629 2015-07-23 07:54:55Z $
+ * $Id: d11.h 578947 2015-08-13 04:46:06Z $
  */
 
 #ifndef	_D11_H
@@ -2751,6 +2751,7 @@ typedef enum
 {
 	BTC_FW_RX_REAGG_AFTER_SCO = 0,	/* Set to 1 to allow rx-agg to be re-enabled */
 	BTC_FW_RSSI_THRESH_SCO = 1,		/* RSSI at which SCO deny limit changes */
+	BTC_FW_SISO_ACK_TX_PWR = 2,			/* set SISO ACK Tx Pwr */
 	BTC_FW_MAX_INDICES				/* Maximum number of btc_fw sw registers */
 } btcParamsFirmwareDefinitions;
 
@@ -2882,7 +2883,6 @@ typedef enum
 #define	WSEC_MAX_RCMTA_KEYS	(54 - M_ADDR_BMP_BLK_SZ)
 #else
 #define	WSEC_MAX_RCMTA_KEYS	54
-#define ADDR_BMP_BSSID		(1 << 2)	/* BSSID - AMT info */
 #endif
 
 /* PKTENG Rx Stats Block */
@@ -2914,6 +2914,11 @@ typedef enum
 #define SPATIAL_SHIFT		8
 #define MAX_COREMASK_BLK	5
 
+#define TXCORE0_MASK		0x01
+#define TXCORE1_MASK		0x02
+#define TXCORE2_MASK		0x04
+#define TXCORE01_MASK		0x03
+#define TXCORE012_MASK		0x07
 
 
 #define M_WLCX_BLK		(0x38a)				/* dual radio coex */

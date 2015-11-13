@@ -129,10 +129,6 @@ function initial(){
 	if(!timemachine_support)
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("<#TimeMach#>")[0]);
 
-	if(!nodm_support){              
-		addOnlineHelp(document.getElementById("faq2"), ["ASUSWRT", "download","associated"]);
-	}
-
 	trNum = default_apps_array.length;
 	calHeight(0);
 	
@@ -952,7 +948,7 @@ function go_modem_page(usb_unit_flag){
 								<a id="faq" href="http://www.asus.com/support/FAQ/1009773/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master FAQ</a>
 							</li>
 							<li style="margin-top:10px;">
-								<a id="faq2" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master Tool FAQ</a>
+								<a id="faq2" href="http://www.asus.com/support/faq/114002/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master Tool FAQ</a>
 							</li>
 							<li style="margin-top:10px;">
 								<a id="DMUtilityLink" href="http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/DM2_2037.zip" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#DM_Download_Tool#></a>

@@ -1,0 +1,58 @@
+.\" Copyright (c) 2013-2014 Sougata Santra / Tuxera Inc.
+.\" Copyright (c) 2011-2012 Erik Larsson / Tuxera Inc.
+.\"
+.TH FATDEBUG 8 "June 2013" "Tuxera TFATprogs 3014.9.11"
+.SH NAME
+fatdebug \- Create a metadata dump of a FAT volume suitable for bug
+reporting.
+.SH SYNOPSIS
+.B fatdebug
+\fIdevice|image\fR
+.SH DESCRIPTION
+.B fatdebug
+will efficiently extract all metadata relevant for debugging from a FAT
+volume and dump it to standard output.
+It works at disk sector level and copies only the metadata of the FAT volume
+(so the resulting output is relatively small).
+
+.B fatdebug
+is mostly useful when sending bug reports to FAT developers.
+.SH EXIT CODES
+The exit code is 0 on success, non\-zero otherwise.
+.SH EXAMPLES
+Dump FAT file system metadata on /dev/sda1 to a local image file:
+.RS
+.sp
+.B fatdebug /dev/sda1 > sda1.img
+.sp
+.RE
+Dump FAT file system metadata on /dev/sda1 to a bzip2-compressed local image
+file:
+.RS
+.sp
+.B fatdebug /dev/sda1 | bzip2 > sda1.img
+.sp
+.RE
+Dump FAT file system metadata to a remote host, using ssh. Please note that
+ssh may ask for a password!
+.RS
+.sp
+.B fatdebug /dev/sda1 | ssh host 'cat > sda1.img'
+.sp
+.RE
+.SH KNOWN ISSUES
+There are no known problems with
+.BR fatdebug .
+If you think you have found a problem then please send an email describing it to
+fat-support@tuxera.com.
+.hy
+.SH AUTHORS
+.B fatdebug
+was written by Sougata Santra, Tuxera Inc.
+.SH AVAILABILITY
+.B fatdebug
+is part of the
+.B Tuxera TFATprogs
+package.
+.SH SEE ALSO
+.BR fatdump (8)

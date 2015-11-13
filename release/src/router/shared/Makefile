@@ -84,7 +84,7 @@ OBJS += flash_mtd.o api-ralink.o
 ifeq ($(RTCONFIG_RALINK_RT3052),y)
 OBJS += ra3052.o
 endif
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTAC54U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTN56UB2)$(RTAC54U),y)
 CFLAGS += -DRA_ESW
 OBJS += mt7620.o
 else
@@ -145,6 +145,10 @@ ifeq ($(RTCONFIG_TCODE),y)
 OBJS    += tcode.o
 endif
 
+#ifeq ($(RTCONFIG_BCM5301X_TRAFFIC_MONITOR),y)
+#OBJS    += private.o
+#endif
+
 vpath %.c sysdeps $(SRCBASE)/shared/ $(WLAN_ComponentSrcDirs)
 ifeq ($(RTCONFIG_RALINK),y)
 vpath %.c sysdeps/ralink
@@ -191,6 +195,13 @@ ifeq ($(RTCONFIG_TCODE),y)
 ifneq ($(wildcard ./prebuild/tcode.o),)
 tcode.o:
 	@-cp -f ./prebuild/tcode.o .
+endif
+endif
+
+ifeq ($(RTCONFIG_BCM5301X_TRAFFIC_MONITOR),y)
+ifneq ($(wildcard ./prebuild/private.o),)
+private.o:
+	@-cp -f ./prebuild/private.o .
 endif
 endif
 

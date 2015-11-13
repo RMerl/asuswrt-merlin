@@ -92,7 +92,7 @@ int wait_rc_service(int wait)
 	char p1[16];
 
 	psname(nvram_get_int("rc_service_pid"), p1, sizeof(p1));
-	while (!nvram_match("rc_service", "")) {
+	while (*nvram_safe_get("rc_service")) {
 		if(--i < 0)
 			return 0;
 		if(first_try){

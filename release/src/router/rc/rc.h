@@ -51,7 +51,7 @@
 #else
 #endif
 
-#if defined(RTN56UB1) //for MT7621
+#if defined(RTN56UB1) || defined(RTN56UB2) //for MT7621
 #define USB20_MOD	"xhci-hcd"
 #else
 #define USB20_MOD	"ehci-hcd"
@@ -319,6 +319,7 @@ extern unsigned int getPapState(int unit);
 typedef unsigned int	u_int;
 extern u_int ieee80211_mhz2ieee(u_int freq);
 #endif
+extern int country_to_code(char *ctry, int band);
 
 /* sysdeps/dsl-*.c */
 extern int check_tc_firmware_crc(void);
@@ -943,7 +944,7 @@ extern void check_hour_monitor_service();
 extern void hm_traffic_analyzer_save();
 extern void hm_traffic_control_save();
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 extern int lteled_main(int argc, char **argv);
 extern int start_lteled(void);
 extern void stop_lteled(void);
@@ -991,6 +992,8 @@ extern void start_keyguard(void);
 extern int keyguard_main(int argc, char *argv[]);	
 #endif
 
+extern void start_ecoguard(void);
+
 #ifdef BTN_SETUP
 enum BTNSETUP_STATE
 {
@@ -1022,6 +1025,10 @@ extern int run_telnetd(void);
 #ifdef RTCONFIG_SSH
 extern int run_sshd(void);
 #endif
+#ifdef RTCONFIG_WTFAST
+extern void start_wtfast(void);
+extern void stop_wtfast(void);
+#endif
 extern void start_hotplug2(void);
 extern void stop_services(void);
 extern void stop_logger(void);
@@ -1035,6 +1042,10 @@ extern int start_wanduck(void);
 extern void stop_wanduck(void);
 extern void stop_ntpc(void);
 extern int start_ntpc(void);
+#ifdef RTCONFIG_UPNPC
+extern int start_miniupnpc(void);
+extern void stop_miniupnpc(void);
+#endif
 extern void stop_networkmap(void);
 extern int start_networkmap(int bootwait);
 extern int stop_wps(void);
@@ -1111,6 +1122,9 @@ extern char *cfe_nvram_safe_get(const char *name);
 extern char *cfe_nvram_get_raw(const char *name);
 extern char *cfe_nvram_safe_get_raw(const char *name);
 extern int cfe_nvram_set(const char *name);
+#if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
+int cfe_nvram_set_x(const char *name);
+#endif
 extern int factory_debug();
 #if !(defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM))
 extern char *ATE_BRCM_PREFIX(void);

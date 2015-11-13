@@ -1802,7 +1802,7 @@ convert_deprecated(void)
 
 #ifdef __CONFIG_NAT__
 	/* pppoe_ifname used to save the underlying WAN interface name */
-	if (nvram_invmatch("pppoe_ifname", "") && nvram_match("wan_proto", "pppoe"))
+	if (*nvram_safe_get("pppoe_ifname") && nvram_match("wan_proto", "pppoe"))
 		nvram_set("wan_ifname", nvram_get("pppoe_ifname"));
 	nvram_unset("pppoe_ifname");
 

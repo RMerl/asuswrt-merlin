@@ -226,10 +226,16 @@ function loadData()
 			if (h.rx_max > xx_max) xx_max = h.rx_max;
 			if (h.tx_max > xx_max) xx_max = h.tx_max;
 
-			if (i == "WIRELESS1")
-				t = "<#tm_wireless#> (5GHz)";
+			if (i == "WIRELESS1"){
+				if(wl_info.band5g_2_support)
+					t = "<#tm_wireless#> (5GHz-1)";
+				else	
+					t = "<#tm_wireless#> (5GHz)";
+			}
 			else if (i == "WIRELESS0")
 				t = "<#tm_wireless#> (2.4GHz)";
+			else if (i == "WIRELESS2")
+				t = "<#tm_wireless#> (5GHz-2)";
 			else if (i == "WIRED")
 				t = "<#tm_wired#>";
 			else if (i == "BRIDGE")				
@@ -269,6 +275,10 @@ function loadData()
 			}
 			else if (i.search("WIRELESS") > -1 && i.search(".") > -1)
 				t = "NotUsed";
+			else if (i.search("LACP") > -1){
+				var num = i.substr(4);
+				t = "Bonding (LAN"+num+")";
+			}			
 			else
 				t = i;			
  
@@ -293,7 +303,7 @@ function loadData()
 		}
 		
 		//Sort tab by Viz 2014.06
-		var tabsort = ["speed-tab-INTERNET,<#Internet#>", "speed-tab-INTERNET,<#dualwan_primary#>","speed-tab-INTERNET1,<#dualwan_secondary#>","speed-tab-INTERNET,DSL WAN","speed-tab-INTERNET,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET,USB Modem","speed-tab-INTERNET,<#Mobile_title#>","speed-tab-INTERNET1,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET1,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET1,<#Mobile_title#>","speed-tab-INTERNET1,USB Modem","speed-tab-WIRED,<#tm_wired#>","speed-tab-WIRELESS0,<#tm_wireless#> (2.4GHz)","speed-tab-WIRELESS1,<#tm_wireless#> (5GHz)","speed-tab-BRIDGE,LAN"];
+		var tabsort = ["speed-tab-INTERNET,<#Internet#>", "speed-tab-INTERNET,<#dualwan_primary#>","speed-tab-INTERNET1,<#dualwan_secondary#>","speed-tab-INTERNET,DSL WAN","speed-tab-INTERNET,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET,USB Modem","speed-tab-INTERNET,<#Mobile_title#>","speed-tab-INTERNET1,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET1,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET1,<#Mobile_title#>","speed-tab-INTERNET1,USB Modem","speed-tab-WIRED,<#tm_wired#>", "speed-tab-LACP1,Bonding (LAN1)", "speed-tab-LACP2,Bonding (LAN2)", "speed-tab-WIRELESS0,<#tm_wireless#> (2.4GHz)","speed-tab-WIRELESS1,<#tm_wireless#> (5GHz)", "speed-tab-WIRELESS1,<#tm_wireless#> (5GHz-1)", "speed-tab-WIRELESS2,<#tm_wireless#> (5GHz-2)", "speed-tab-BRIDGE,LAN"];
 		var sortabs = [];		
 		for(var i=0;i<tabsort.length;i++){
 			for(var j=0;j<tabs.length;j++){	

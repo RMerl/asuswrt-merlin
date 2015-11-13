@@ -1544,11 +1544,11 @@ fa_napt_add(fa_t *fa, ctf_ipc_t *ipc, bool v6)
 	if (v6)
 		return BCME_ERROR;
 
-#ifdef RGMII_BCM_FA
+//#ifdef RGMII_BCM_FA
         /* currently not supported for PPP */
         if (ipc->ppp_ifp)
                 return BCME_ERROR;
-#endif
+//#endif
 
 	sip = ipc->tuple.sip;
 	dip = ipc->tuple.dip;

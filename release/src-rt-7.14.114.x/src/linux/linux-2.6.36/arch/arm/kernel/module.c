@@ -24,6 +24,18 @@
 #include <asm/sections.h>
 #include <asm/unwind.h>
 
+#ifdef CONFIG_BCM47XX
+#include <bcmutils.h>
+#include <siutils.h>
+#include <bcmdefs.h>
+#include <bcmdevs.h>
+
+/* Global SB handle */
+extern si_t *bcm947xx_sih;
+#define sih bcm947xx_sih
+
+#endif /* CONFIG_BCM47XX */
+
 #ifdef CONFIG_XIP_KERNEL
 /*
  * The XIP kernel text is mapped in the module area for modules and
@@ -41,6 +53,11 @@ void *module_alloc(unsigned long size)
 	struct vm_struct *area;
 
 	size = PAGE_ALIGN(size);
+#ifdef CONFIG_BCM47XX
+	if (BCM53573_CHIP(sih->chip)) {
+		size += PAGE_SIZE;
+	}
+#endif /* CONFIG_BCM47XX */
 	if (!size)
 		return NULL;
 

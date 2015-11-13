@@ -354,13 +354,13 @@ function showclient_list(list){
 			else if(j == 2){
 				if(client_list_col[1] != "")	
 					//code += '<td width="15%" class="ClientName">'+ client_list_col[7] +'</td>';	// Show SSID
-					code += '<td width="27%" class="border2">'+ '<div class="ClientName">' + client_list_col[2] + '</div>' + '<div class="macName">' + client_list_col[8] + '</div>' + '</td>';	// Show SSID
+					code += '<td width="27%" class="border2">'+ '<div class="ClientName">' + client_list_col[2] + '</div>' + '<div class="macName">' + client_list_col[6] + '</div>' + '</td>';	// Show SSID
 			}
 			else if(j == 3){
 					code += '<td width="5%" class="border4" height="30px;"><div class="wifi_logo"></div></td>';	
 			}
 			else if(j == 4){
-					code += '<td width="30%" class="border2"><div class="findname">' + client_list_col[7] +'</div></td>';	
+					code += '<td width="30%" class="border2"><div class="findname">' + client_list_col[5] +'</div></td>';
 			}
 			else if(j == 5){
 					code += '<td width="6%" class="border4"><div border="0px"><a title="<#select_IP#>" target="_blank" href="http://'+ client_list_col[2] +'"><img src="../images/arrow-right.png" width="32px" hight="20px" style="border:0px"></a></div></td>';	

@@ -58,6 +58,9 @@
 #define SIG_VER			"/proc/nk_policy"
 #define DPI_VER			"/proc/ips_info"
 
+// traffic analyzer database
+#define TRAFFIC_DB_PATH         (strcmp(nvram_safe_get("bwdpi_db_path"), "")) ? nvram_safe_get("bwdpi_db_path") : "/jffs/traffic.db"
+
 typedef struct cat_id cid_s;
 struct cat_id{
 	int id;
@@ -189,6 +192,7 @@ extern int data_collect_main(char *cmd, char *path);
 
 //tools.c
 extern int debug; // bwdpi_debug or wrs_debug
+extern int check_filesize_over(char *path, long int size);
 extern void check_filesize(char *path, long int size);
 extern void StampToDate(unsigned long timestamp, char *date);
 extern void rewrite_logfile(char *path1, char *path2, char *path3);

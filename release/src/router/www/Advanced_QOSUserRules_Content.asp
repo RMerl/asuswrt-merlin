@@ -837,7 +837,7 @@ function linkport(obj){
 						<div style="margin-top:5px;">
 							<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 								<!--option><#switchpage#></option-->
-								<option value="1">Configuration</option>
+								<option value="1"><#Adaptive_QoS_Conf#></option>
 								<option value="2" selected><#qos_user_rules#></option>
 								<option value="3"><#qos_user_prio#></option>
 							</select>	    

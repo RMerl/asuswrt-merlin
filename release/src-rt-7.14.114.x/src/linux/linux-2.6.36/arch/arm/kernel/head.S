@@ -191,9 +191,8 @@ check_ace:
 	ldr	r7, =0xc0000000			@ Clear the upper two bits
 	bic	r3, r3, r7
 	ldr	r7, =PADDR_ACE_BCM53573		@ BCM53573 ACE starting address
-	cmp	r4, #0x20000			@ The revision number of BCM53573 A0 = 0, A1 = 1, B0 = 2.
-	bne	2f
-	ldr	r7, =PADDR_ACE1_BCM53573        @ Shadow region to PADDR_ACE_BCM53573
+	cmp	r4, #0x20000			@ BCM53573 revision number: A0=0, A1=1, B0=2, B1=3.
+	ldrge	r7, =PADDR_ACE1_BCM53573        @ Shadow region to PADDR_ACE_BCM53573
 2:
 	orr	r3, r3, r7
 	mov	pc, r3				@ PC=0x80008000 for BCM53573 ACE

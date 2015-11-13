@@ -56,6 +56,11 @@ int generate_afp_config(char *mpname)
 
 #if defined(RTCONFIG_RGMII_BRCM5301X) || defined(RTCONFIG_QCA)
 	strcpy(et0macaddr, nvram_safe_get("lan_hwaddr"));
+#elif defined(RTCONFIG_GMAC3)
+	if (nvram_match("gmac3_enable", "1"))
+		strcpy(et0macaddr, nvram_safe_get("et2macaddr"));
+	else
+		strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
 #else
 	strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
 #endif

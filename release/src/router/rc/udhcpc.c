@@ -288,7 +288,7 @@ bound(void)
 	stop_zcip(ifunit);
 
 	changed += nvram_set_env(strcat_r(prefix, "ipaddr", tmp), "ip");
-#if defined(RTCONFIG_USB_MODEM) && defined(RT4GAC55U)
+#if defined(RTCONFIG_USB_MODEM) && defined(RTCONFIG_INTERNAL_GOBI)
 	if (get_dualwan_by_unit(ifunit) == WANS_DUALWAN_IF_USB &&
 	    nvram_match("usb_modem_act_type", "gobi")) {
 		changed += nvram_set_check(strcat_r(prefix, "netmask", tmp), "255.255.255.255");
@@ -456,7 +456,7 @@ renew(void)
 	if ((value = getenv("ip")) == NULL ||
 	    !nvram_match(strcat_r(prefix, "ipaddr", tmp), trim_r(value)))
 		return bound();
-#if defined(RTCONFIG_USB_MODEM) && defined(RT4GAC55U)
+#if defined(RTCONFIG_USB_MODEM) && defined(RTCONFIG_INTERNAL_GOBI)
 	if (get_dualwan_by_unit(ifunit) == WANS_DUALWAN_IF_USB &&
 	    nvram_match("usb_modem_act_type", "gobi")) {
 		if (!nvram_match(strcat_r(prefix, "netmask", tmp), "255.255.255.255"))

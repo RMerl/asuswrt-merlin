@@ -22,6 +22,9 @@
 #include <rtconfig.h>
 //#include "asusdiscovery.h"
 #ifdef RTCONFIG_BWDPI
+#undef RTCONFIG_BWDPI
+#endif
+#ifdef RTCONFIG_BWDPI
 #include <bwdpi.h>
 #endif
 
@@ -31,7 +34,7 @@ unsigned char my_hwaddr[6];
 unsigned char my_ipaddr[4];
 unsigned char broadcast_hwaddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 unsigned char refresh_ip_list[255][4];
-int networkmap_fullscan, lock, mdns_lock;
+int networkmap_fullscan, lock, mdns_lock, nvram_lock;
 int refresh_exist_table = 0, scan_count=0;
 char *nmp_client_list;
 int show_info;
@@ -261,6 +264,7 @@ static int safe_leave(int signo){
 	fclose(fp_smb);
 	file_unlock(lock);
 	file_unlock(mdns_lock);
+	file_unlock(nvram_lock);
 	free(nmp_client_list);
 	printf("Leave......\n");
 	return 0;
@@ -587,6 +591,7 @@ static void AppleModelCheck(char *model, char *name, int *type, char *shm_model)
 	return;
 }
 
+#ifdef RTCONFIG_UPNPC
 static int QuerymUPnPCInfo(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab, int x)
 {
         unsigned char *a;
@@ -639,7 +644,9 @@ static int QuerymUPnPCInfo(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab, 
 		fclose(fp);
 	}
 }
+#endif
 
+#ifdef RTCONFIG_BONJOUR
 static int QuerymDNSInfo(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab, int x)
 {
 	unsigned char *a;
@@ -677,6 +684,7 @@ p_client_detail_info_tab->ip_addr[x][3]
 
 	return 0;
 }
+#endif
 
 void StringChk(char *chk_string)
 {
@@ -808,6 +816,10 @@ int main(int argc, char *argv[])
 	strcpy(router_mac, nvram_safe_get("et0macaddr"));
 #endif
 #endif	
+#ifdef RTCONFIG_GMAC3
+        if(nvram_match("gmac3_enable", "1"))
+		strcpy(router_mac, nvram_safe_get("et2macaddr"));
+#endif
         inet_aton(router_ipaddr, &router_addr.sin_addr);
         memcpy(my_ipaddr,  &router_addr.sin_addr, 4);
 
@@ -846,7 +858,9 @@ int main(int argc, char *argv[])
 		fullscan:
                 if(networkmap_fullscan == 1) { //Scan all IP address in the subnetwork
 		    if(scan_count == 0) { 
+#ifdef RTCONFIG_BONJOUR
 			eval("mDNSQuery");	//send mDNS service dicsovery
+#endif
 			eval("asusdiscovery");	//find asus device
 			// (re)-start from the begining
 			memset(scan_ipaddr, 0x00, 4);
@@ -1018,8 +1032,12 @@ int main(int argc, char *argv[])
                                 memcpy(p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->ip_mac_num], 
 					arp_ptr->source_hwaddr, 6);
 				p_client_detail_info_tab->exist[p_client_detail_info_tab->ip_mac_num] = 1;
+#ifdef RTCONFIG_BONJOUR
 				query_ret = QuerymDNSInfo(p_client_detail_info_tab, i);
+#endif
+#ifdef RTCONFIG_UPNPC
 				query_ret = QuerymUPnPCInfo(p_client_detail_info_tab, i);
+#endif
 				#ifdef RTCONFIG_BWDPI
 				query_ret = QueryBwdpiInfo(p_client_detail_info_tab, i);
 				#endif
@@ -1085,7 +1103,9 @@ int main(int argc, char *argv[])
 		query_ret = QueryBwdpiInfo(p_client_detail_info_tab, i);
 		#endif
 		#ifdef NMP_DB
+			nvram_lock = file_lock("usenvram");
 			write_to_nvram(p_client_detail_info_tab);
+			file_unlock(nvram_lock);
 		#endif
 		p_client_detail_info_tab->detail_info_num++;
 	    }
@@ -1095,7 +1115,10 @@ int main(int argc, char *argv[])
 		commit_no, p_client_detail_info_tab->detail_info_num, client_updated);
 		if( (commit_no != p_client_detail_info_tab->detail_info_num) || client_updated ) {
 			NMP_DEBUG("Commit nmp client list\n");
+			nvram_lock = file_lock("usenvram");
 			nvram_commit();
+			file_unlock(nvram_lock);
+
 		    	commit_no = p_client_detail_info_tab->detail_info_num;
 			client_updated = 0;
 		}

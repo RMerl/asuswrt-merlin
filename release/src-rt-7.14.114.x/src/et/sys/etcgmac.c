@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etcgmac.c 573045 2015-07-21 20:17:41Z $
+ * $Id: etcgmac.c 578047 2015-08-10 07:47:45Z $
  */
 
 #include <et_cfg.h>
@@ -54,7 +54,6 @@
 #include <etc_fa.h>
 #endif /* ETFA */
 #include <hndfwd.h> /* BCM_GMAC3 */
-
 #ifdef ETAGG
 #include "etc_agg.h"
 #endif /* ETAGG */
@@ -631,20 +630,20 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 #endif /* ETFA */
 
 #ifdef ETAGG
-       /*
-        * Broadcom Port Trunking/Aggregation
-        */
-       if (!BCM4707_CHIP(CHIPID(ch->sih->chip)) || ETHER_ISNULLADDR(&etc->perm_etheraddr))
-               goto no_agg;
+	/*
+	 * Broadcom Port Trunking/Aggregation
+	 */
+	if (!BCM4707_CHIP(CHIPID(ch->sih->chip)) || ETHER_ISNULLADDR(&etc->perm_etheraddr))
+		goto no_agg;
 
 #ifdef ETFA
-       /* FA aux dev would not enable bhdr */
-       if (FA_IS_AUX_DEV((fa_t *)etc->fa))
-               goto no_agg;
+	/* FA aux dev would not enable bhdr */
+	if (FA_IS_AUX_DEV((fa_t *)etc->fa))
+		goto no_agg;
 #endif /* ETFA */
 
-       if (!(etc->agg = agg_attach(osh, ch->et, ch->vars, etc->coreunit, etc->robo)))
-               goto no_agg;
+	if (!(etc->agg = agg_attach(osh, ch->et, ch->vars, etc->coreunit, etc->robo)))
+		goto no_agg;
 
 no_agg:
 #endif /* ETAGG */
@@ -1293,14 +1292,9 @@ chipinreset:
 		}
 	}
 
-#ifdef ETAGG
-        /* 3GMAC: for BCM4707, only do core reset at chipattach */
-        if (CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
-#else
 	/* 3GMAC: for BCM4707 and BCM47094, only do core reset at chipattach */
 	if ((CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) &&
 	    (CHIPID(ch->sih->chip) != BCM47094_CHIP_ID)) {
-#endif
 		/* reset core */
 		si_core_reset(ch->sih, flagbits, 0);
 	}

@@ -33,7 +33,7 @@ body{
 <script type="text/javascript" src="js/jquery.js"></script>
 <script>
 var sw_mode = '<% nvram_get("sw_mode"); %>';
-if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
@@ -208,6 +208,7 @@ $.ajax({
 function QIS_load_body(){
 	if(navigator.appVersion.indexOf("iPhone") != -1 || navigator.appVersion.indexOf("iPad") != -1){		//let iframe works on ios
 		$("#contentM").addClass("ios_iframe");
+		$("#frame_field").css("position", "absolute");
 	}
 	
 	document.getElementById("menu").onclick = function(){
@@ -226,13 +227,13 @@ function QIS_load_body(){
 	}
 	
 	if(sw_mode == "1"){
-		document.getElementById("menu_rt").style.color = "#007AFF";
+		document.getElementById("menu_rt").style.color = "#279FD9";
 	}
 	else if(sw_mode == "3"){
-		document.getElementById("menu_ap").style.color = "#007AFF";
+		document.getElementById("menu_ap").style.color = "#279FD9";
 	}
 	else if(sw_mode == "4"){
-		document.getElementById("menu_mb").style.color = "#007AFF";
+		document.getElementById("menu_mb").style.color = "#279FD9";
 	}
 	
 	var showCase;
@@ -247,7 +248,8 @@ function QIS_load_body(){
 		
 	if(psta_support){
 		document.getElementById("menu_mb").style.display = "";
-		if((document.QKform.sw_mode.value == 2 || document.QKform.sw_mode.value == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+		if(((document.QKform.sw_mode.value == 2 || document.QKform.sw_mode.value == 3) && '<% nvram_get("wlc_psta"); %>' == 1) 
+		  || document.QKform.sw_mode.value == 3 && '<% nvram_get("wlc_psta"); %>' == 3)
 			document.QKform.sw_mode.value = 4;
 	}
 
@@ -479,7 +481,7 @@ function switch_operation_mode(mode){
 		document.getElementById("menu_mb").style.color = "#FFF";
 		
 	if(mode == "1"){		//Router
-		document.getElementById("menu_rt").style.color = "#007AFF";
+		document.getElementById("menu_rt").style.color = "#279FD9";
 		document.QKform.sw_mode.value = 1;
 		document.redirectForm.action = "/qis_m/QIS_internet_type.htm";
 		document.redirectForm.submit();
@@ -492,13 +494,13 @@ function switch_operation_mode(mode){
 		document.redirectForm.submit();
 	}
 	else if(mode == "3"){		//Access Point
-		document.getElementById("menu_ap").style.color = "#007AFF";
+		document.getElementById("menu_ap").style.color = "#279FD9";
 		parent.document.QKform.sw_mode.value = 3;
 		document.redirectForm.action = "/qis_m/QIS_lanip.htm";
 		document.redirectForm.submit();
 	}
 	else if(mode == "4"){		//Media Bridge
-		document.getElementById("menu_mb").style.color = "#007AFF";
+		document.getElementById("menu_mb").style.color = "#279FD9";
 		document.QKform.sw_mode.value = 4;
 		localAP_support = false;
 		isRepeater = false;
@@ -790,7 +792,7 @@ function uploadSetting(){
 		</div>
 	</div>
 	
-	<div style="height:100%;width:100%;position:fixed;">
+	<div id="frame_field" style="height:100%;width:100%;position:fixed;">
 		<iframe id="contentM" name="contentM" class="background_img background_position" style="width:100%;height:100%;border:none;"></iframe>
 	</div>
 </div>

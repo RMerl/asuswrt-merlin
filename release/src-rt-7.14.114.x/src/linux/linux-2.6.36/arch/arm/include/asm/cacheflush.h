@@ -286,6 +286,23 @@ extern void dmac_flush_range(const void *, const void *);
 
 #endif
 
+#ifdef CONFIG_CPU_CACHE_V7
+#define __cpuc_flush_line(_addr)    \
+	__asm__ __volatile__("mcr p15, 0, %0, c7, c14, 1" : : "r" (_addr));
+#define __cpuc_clean_line(_addr)    \
+	__asm__ __volatile__("mcr p15, 0, %0, c7, c10, 1" : : "r" (_addr));
+#define __cpuc_inv_line(_addr)      \
+	__asm__ __volatile__("mcr p15, 0, %0, c7, c6, 1" : : "r" (_addr));
+#endif
+
+#if defined(CONFIG_BCM947XX) && defined(CONFIG_BCM_GMAC3)
+extern void cache_inv_line(void *virt_addr);
+extern void cache_flush_line(void *virt_addr);
+extern void cache_inv_len(void *virt_addr, unsigned int len);
+extern void cache_flush_len(void *virt_addr, unsigned int len);
+#endif /* CONFIG_BCM947XX && CONFIG_BCM_GMAC3 */
+
+
 /*
  * Copy user data from/to a page which is mapped into a different
  * processes address space.  Really, we want to allow our "user

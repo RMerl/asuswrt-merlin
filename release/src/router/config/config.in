@@ -559,12 +559,18 @@ config RTCONFIG_QCA
 	bool "Qualcomm Atheros Chip Support"
 	default n
 
-config RTCONFIG_QCA953X
-	bool "Qualcomm Atheros QCA953X Chip Support"
+config RTCONFIG_SOC_QCA9557
+	bool "Qualcomm Atheros QCA9557 SoC"
+	depends on RTCONFIG_QCA
 	default n
 
-config RTCONFIG_QCA955X
-	bool "Qualcomm Atheros QCA955X Chip Support"
+config RTCONFIG_WIFI_QCA9557_QCA9882
+	bool "Qualcomm Atheros QCA9557 and QCA9882 WiFi chip"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_QCA953X
+	bool "Qualcomm Atheros QCA953X Chip Support"
 	default n
 
 config RTCONFIG_QCA956X
@@ -727,11 +733,6 @@ config RTCONFIG_TURBO
 
 config RTCONFIG_LED_BTN
 	bool "HW LED Button"
-	default n
-
-config RTCONFIG_LED_BTN_MODE
-	bool "HW LED Button Mode"
-	depends on RTCONFIG_LED_BTN
 	default n
 
 config RTCONFIG_USBEJECT
@@ -1010,6 +1011,7 @@ config RTCONFIG_TR181
 config RTCONFIG_STAINFO
 	bool "STA informtion support"
 	default n
+
 config RTCONFIG_CLOUDCHECK
 	bool "Cloudcheck support"
 	default n
@@ -1043,8 +1045,8 @@ config RTCONFIG_RECVFILE
 	default n
 
 config RTCONFIG_WTFAST
-        bool "WTFast support"
-        default n
+	bool "WTFast support"
+	default n
 
 config RTCONFIG_ERP_TEST
 	bool "erp test"
@@ -1052,4 +1054,20 @@ config RTCONFIG_ERP_TEST
 
 config RTCONFIG_REBOOT_SCHEDULE
 	bool "Reboot_schedule"
+	default n
+
+config RTCONFIG_INTERNAL_GOBI
+	bool "built-in Gobi"
+	default n
+
+config RTCONFIG_UPNPC
+	bool "UPNP client support"
+	default y
+
+config RTCONFIG_BONJOUR
+	bool "Apple device query support"
+	default y
+
+config RTCONFIG_FORCE_AUTO_UPGRADE
+	bool "Force auto update"
 	default n

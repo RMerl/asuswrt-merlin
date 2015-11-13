@@ -74,12 +74,33 @@ ieee80211_mhz2ieee(u_int freq)
 }
 /////////////
 
+#if defined(RTCONFIG_WIFI_QCA9557_QCA9882) || defined(RTCONFIG_QCA953X) || defined(RTCONFIG_QCA956X)
 const char WIF_5G[] = "ath1";
 const char WIF_2G[] = "ath0";
 const char STA_5G[] = "sta1";
 const char STA_2G[] = "sta0";
 const char VPHY_5G[] = "wifi1";
 const char VPHY_2G[] = "wifi0";
+#elif defined(RTCONFIG_WIFI_QCA9990_QCA9990) || defined(RTCONFIG_WIFI_QCA9994_QCA9994)
+#if defined(RTAC88N)
+const char WIF_5G[] = "ath0";
+const char WIF_2G[] = "ath1";
+const char STA_5G[] = "sta0";
+const char STA_2G[] = "sta1";
+const char VPHY_5G[] = "wifi0";
+const char VPHY_2G[] = "wifi1";
+#else
+/* RT-AC88Q, RT-AC88S */
+const char WIF_5G[] = "ath1";
+const char WIF_2G[] = "ath0";
+const char STA_5G[] = "sta1";
+const char STA_2G[] = "sta0";
+const char VPHY_5G[] = "wifi1";
+const char VPHY_2G[] = "wifi0";
+#endif
+#else
+#error Define WiFi 2G/5G interface name!
+#endif
 
 #define GPIOLIB_DIR	"/sys/class/gpio"
 
@@ -358,6 +379,7 @@ void set_radio(int on, int unit, int subunit)
 {
 	int led = (!unit)? LED_2G:LED_5G, onoff = (!on)? LED_OFF:LED_ON;
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX", athfix[]="athXXXXXX";
+	char path[sizeof(NAWDS_SH_FMT) + 6];
 
 	if (subunit > 0)
 	{   
@@ -374,7 +396,12 @@ void set_radio(int on, int unit, int subunit)
 	if (*athfix != '\0')
 	{   
 	   	if(!strstr(athfix,"sta")) //all lan-interfaces except sta when running repeater mode
-			doSystem("ifconfig %s %s",athfix, on?"up":"down");
+			eval("ifconfig", athfix, on? "up" : "down");
+
+		/* Reconnect to peer WDS AP */
+		sprintf(path, NAWDS_SH_FMT, unit? WIF_5G : WIF_2G);
+		if (!subunit && !nvram_match(strcat_r(prefix, "mode_x", tmp), "0") && f_exists(path))
+			doSystem(path);
 	}
 
 	led_control(led, onoff);

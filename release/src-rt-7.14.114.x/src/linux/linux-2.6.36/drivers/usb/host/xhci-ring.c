@@ -156,7 +156,7 @@ static void inc_deq(struct xhci_hcd *xhci, struct xhci_ring *ring, bool consumer
 		 */
 		if (last_trb(xhci, ring, ring->deq_seg, ring->dequeue)) {
 			if (consumer && last_trb_on_last_seg(xhci, ring,
-									ring->deq_seg, ring->dequeue)) {
+				ring->deq_seg, ring->dequeue)) {
 				if (!in_interrupt())
 					xhci_dbg(xhci, "Toggle cycle state "
 									"for ring %p = %i\n",
@@ -174,6 +174,7 @@ static void inc_deq(struct xhci_hcd *xhci, struct xhci_ring *ring, bool consumer
 	} while (last_trb(xhci, ring, ring->deq_seg, ring->dequeue));
 
 	addr = (unsigned long long) xhci_trb_virt_to_dma(ring->deq_seg, ring->dequeue);
+
 	if (ring == xhci->event_ring)
 		xhci_dbg(xhci, "Event ring deq = 0x%llx (DMA)\n", addr);
 	else if (ring == xhci->cmd_ring)

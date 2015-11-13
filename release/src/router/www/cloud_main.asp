@@ -62,7 +62,6 @@ for(var x=0; x < apps_array.length; x++){	//check if AiCloud 2.0 has installed
 }
 var ddns_hostname = '<% nvram_get("ddns_hostname_x"); %>';
 var https_port = '<% nvram_get("webdav_https_port"); %>';
-var sw_mode = '<% nvram_get("sw_mode"); %>';
 
 if(tmo_support)
 	var theUrl = "cellspot.router"; 

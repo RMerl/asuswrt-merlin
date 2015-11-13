@@ -299,36 +299,13 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "TargetProduct=0x%04x\n",	0x1464);
 			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011060000000000000000000000000000");
 			break;
-		case SN_ZTE_MF620:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0001);
-			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000600000000000000000000000000000000");
-			break;
-		case SN_ZTE_MF622:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0002);
-			fprintf(fp, "MessageContent=%s\n",	"55534243f8f993882000000080000a85010101180101010101000000000000");
-			break;
-		case SN_ZTE_MF628:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0015);
-			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000030000000000000000000000");
-		/*	fprintf(fp, "NeedResponse=1\n");	// was ResponseNeeded=1 */
-			break;
 		case SN_ZTE_MF626:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0031);
-			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061e000000000000000000000000000000");
-			fprintf(fp, "MessageContent2=%s\n",	"5553424312345679000000000000061b000000020000000000000000000000");
-			fprintf(fp, "NeedResponse=1\n");
+			fprintf(fp, "TargetProductList=%s\n",	"0001,0002,0015,0016,0017,0019,0031,0033,0037,0042,0052,0055,0061,0063,0064,0066,0091,0108,0117,0128,0151,0157,0177,1402,2002,2003");
+			fprintf(fp, "StandardEject=1\n");
+			fprintf(fp, "MessageContent=%s\n",	"55534243123456702000000080000c85010101180101010101000000000000");
 			break;
 		case SN_ZTE_AC8710:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
@@ -344,20 +321,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "TargetProduct=0x%04x\n",	0xffff);
 			fprintf(fp, "MessageContent=%s\n",	"5553424312345678c00000008000069f010000000000000000000000000000");
 			break;
-		case SN_ZTE6535_Z:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0052);
-			fprintf(fp, "MessageContent=%s\n",	"55534243123456782000000080000c85010101180101010101000000000000");
-			break;
-		case SN_ZTE_K3520_Z:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0055);
-			fprintf(fp, "MessageContent=%s\n",	"55534243123456782000000080000c85010101180101010101000000000000");
-			break;
 		case SN_ZTE_MF110:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0053);
@@ -366,27 +329,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
 			fprintf(fp, "MessageContent2=%s\n",	"55534243876543212000000080000c85010101180101010101000000000000");
 			fprintf(fp, "NeedResponse=1\n");
-			break;
-		case SN_ZTE_K3565:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0063);
-			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
-			break;
-		case SN_ONDA_MT503HS:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0002);
-			fprintf(fp, "MessageContent=%s\n",	"55534243b0c8dc812000000080000a85010101180101010101000000000000");
-			break;
-		case SN_ONDA_MT505UP:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0002);
-			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000010080000a28000000001c00002000000000000000");
 			break;
 		case SN_Novatel_Wireless_Ovation_MC950D:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1410);
@@ -1041,15 +983,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x9e00);
 			fprintf(fp, "TargetClass=0x%02x\n",	0xff);
 			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000606f50402527000000000000000000000");
-			break;
-		case SN_ZTE_WCDMA_from_BNSL:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x2000);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0108);
-			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061e000000000000000000000000000000");
-			fprintf(fp, "MessageContent2=%s\n",	"5553424312345679000000000000061b000000020000000000000000000000");
-			fprintf(fp, "NeedResponse=1\n");
 			break;
 		case SN_Huawei_U8110:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
@@ -1925,7 +1858,7 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_Huawei_K4305, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x156a)
 			write_3g_conf(fp, SN_Huawei_E3276s, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x2000)	// also ZTE622, 628, 626, 6535-Z, K3520-Z, K3565, ONDA-MT503HS, ONDA-MT505UP
+		else if(vid == 0x19d2 && pid == 0x2000)	// also ZTE 620, 622, 628, 6535-Z, K3520-Z, K3565, ONDA-MT503HS, ONDA-MT505UP
 			write_3g_conf(fp, SN_ZTE_MF626, 1, vid, pid);
 		else if(vid == 0x19d2 && pid == 0xfff5)
 			write_3g_conf(fp, SN_ZTE_AC2710, 1, vid, pid);	// 2710
@@ -2269,30 +2202,14 @@ usb_dbg("3G: manaul setting.\n");
 			fclose(fp);
 			unlink(conf_file);
 			return 0;
-		} else if (strcmp(dongle_name, "ZTE-MF620") == 0){
-			write_3g_conf(fp, SN_ZTE_MF620, 0, vid, pid);
-		} else if (strcmp(dongle_name, "ZTE-MF622") == 0){
-			write_3g_conf(fp, SN_ZTE_MF622, 0, vid, pid);
-		} else if (strcmp(dongle_name, "ZTE-MF628") == 0){
-			write_3g_conf(fp, SN_ZTE_MF628, 0, vid, pid);
 		} else if (strcmp(dongle_name, "ZTE-MF626") == 0){
 			write_3g_conf(fp, SN_ZTE_MF626, 0, vid, pid);
 		} else if (strcmp(dongle_name, "ZTE-AC8710") == 0){
 			write_3g_conf(fp, SN_ZTE_AC8710, 0, vid, pid);
 		} else if (strcmp(dongle_name, "ZTE-AC2710") == 0){
 			write_3g_conf(fp, SN_ZTE_AC2710, 0, vid, pid);
-		} else if (strcmp(dongle_name, "ZTE-6535-Z") == 0){
-			write_3g_conf(fp, SN_ZTE6535_Z, 0, vid, pid);
-		} else if (strcmp(dongle_name, "ZTE-K3520-Z") == 0){
-			write_3g_conf(fp, SN_ZTE_K3520_Z, 0, vid, pid);
 		} else if (strcmp(dongle_name, "ZTE-MF110") == 0){
 			write_3g_conf(fp, SN_ZTE_MF110, 0, vid, pid);
-		} else if (strcmp(dongle_name, "ZTE-K3565") == 0){
-			write_3g_conf(fp, SN_ZTE_K3565, 0, vid, pid);
-		} else if (strcmp(dongle_name, "ONDA-MT503HS") == 0){
-			write_3g_conf(fp, SN_ONDA_MT503HS, 0, vid, pid);
-		} else if (strcmp(dongle_name, "ONDA-MT505UP") == 0){
-			write_3g_conf(fp, SN_ONDA_MT505UP, 0, vid, pid);
 		} else if (strcmp(dongle_name, "Novatel-Wireless-Ovation-MC950D-HSUPA") == 0){
 			write_3g_conf(fp, SN_Novatel_Wireless_Ovation_MC950D, 0, vid, pid);
 		} else if (strcmp(dongle_name, "Novatel-U727") == 0){
@@ -4351,7 +4268,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 			}
 #endif
 
-#ifndef RT4GAC55U
+#ifndef RTCONFIG_INTERNAL_GOBI
 			// When ACM dongles are removed, there are no removed hotplugs of ttyACM nodes.
 			if(!strncmp(buf, "ttyACM", 6)){
 				// No methods let DUT restore the normal state after removing the ACM dongle.
@@ -4383,11 +4300,11 @@ int asus_usb_interface(const char *device_name, const char *action){
 		turn_on_led = 0;
 
 	snprintf(nvram_usb_path, 32, "usb_led%d", port_num);
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	if(nvram_get_int("usb_buildin") == port_num)
 		; //skip this LED
 	else
-#endif	/* RT4GAC55U */
+#endif	/* RTCONFIG_INTERNAL_GOBI */
 	if (turn_on_led && strcmp(nvram_safe_get(nvram_usb_path), "1"))
 		nvram_set(nvram_usb_path, "1");
 
@@ -4457,7 +4374,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 		file_unlock(isLock);
 		return 0;
 	}
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	else if((nvram_get_int("usb_gobi") == 1 && strcmp(port_path, "2"))
 			|| (nvram_get_int("usb_gobi") != 1 && !strcmp(port_path, "2"))
 			){

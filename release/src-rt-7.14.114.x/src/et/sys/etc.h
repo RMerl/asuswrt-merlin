@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: etc.h 573045 2015-07-21 20:17:41Z $
+ * $Id: etc.h 578047 2015-08-10 07:47:45Z $
  */
 
 #ifndef _etc_h_
@@ -198,10 +198,10 @@ typedef struct etc_info {
 #ifdef ETFA
 	void		*fa;		/* optional fa private data */
 #endif
-#ifdef ETAGG
-        void		*agg;		/* agg private data */
-#endif /* ETAGG */
 	uint32		rxrecord;
+#ifdef ETAGG
+	void		*agg;		/* agg private data */
+#endif /* ETAGG */
 } etc_info_t;
 
 typedef struct et_sw_port_info {

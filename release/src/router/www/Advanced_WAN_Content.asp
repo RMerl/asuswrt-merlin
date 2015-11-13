@@ -108,6 +108,10 @@ function initial(){
 		document.getElementById("wan_inf_th").innerHTML = "<#WAN_Interface_Title#>";
 	}
 
+	if(productid == "DSL-AC68U" || productid == "DSL-AC68R")      //MODELDEP: DSL-AC68U,DSL-AC68R
+		showhide("dot1q_setting",1);
+	else
+		showhide("dot1q_setting",0);
 }
 
 function display_upnp_options(){
@@ -190,6 +194,13 @@ function applyRule(){
 		else{				
 			return false;
 		}
+	}
+	
+	if(productid != "DSL-AC68U" && productid != "DSL-AC68R"){      //MODELDEP: DSL-AC68U,DSL-AC68R
+		document.form.ewan_dot1q[0].disabled = true;
+		document.form.ewan_dot1q[1].disabled = true;
+		document.form.ewan_vid.disabled = true;
+		document.form.ewan_dot1p.disabled = true;
 	}
 
 	if(validForm()){
@@ -387,6 +398,17 @@ function validForm(){
 		|| (document.form.wan_proto.value == "static")){
 			if(!validator.numberRange(document.form.wan_mtu, 576, 9000))
 				return false;
+	}
+
+	if(productid == "DSL-AC68U" || productid == "DSL-AC68R"){      //MODELDEP: DSL-AC68U,DSL-AC68R
+		if((document.form.ewan_vid.value >= 1 && document.form.ewan_vid.value <= 3) ||
+			(document.form.ewan_vid.value == 20) ||
+			(document.form.ewan_vid.value >= 100 && document.form.ewan_vid.value <= 107) ||
+			(document.form.ewan_vid.value >= 4000 && document.form.ewan_vid.value <= 4002)){
+			alert("It is a kept value, please change VLAN ID."); /* untranslated */
+			document.form.ewan_vid.focus();
+			return false;
+		}
 	}
 	
 	if(document.form.wan_hostname.value.length > 0){
@@ -922,6 +944,29 @@ function pass_checked(obj){
 										<input type="text" maxlength="5" name="upnp_max_port_ext" class="input_6_table" value="<% nvram_get("upnp_max_port_ext"); %>" onkeypress="return validator.isNumber(this,event);">
 									</td>
 							</tr>										
+						</table>
+
+						<table id="dot1q_setting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+						<thead><tr><td colspan="2">802.1Q</td></tr></thead>
+						<tr>
+							<th><#WLANConfig11b_WirelessCtrl_button1name#></th>
+							<td>
+								<input type="radio" name="ewan_dot1q" class="input" value="1" onclick="change_dsl_dhcp_enable();" <% nvram_match("ewan_dot1q", "1", "checked"); %>><#checkbox_Yes#>
+								<input type="radio" name="ewan_dot1q" class="input" value="0" onclick="change_dsl_dhcp_enable();" <% nvram_match("ewan_dot1q", "0", "checked"); %>><#checkbox_No#>
+							</td>
+						</tr>
+						<tr>
+							<th>VLAN ID</th>
+							<td>
+								<input type="text" name="ewan_vid" maxlength="4" class="input_6_table" value="<% nvram_get("ewan_vid"); %>" onKeyPress="return validator.isNumber(this,event);"> ( 0 ~ 4095 )
+							</td>
+						</tr>
+						<tr>
+							<th>802.1P</th>
+							<td>
+								<input type="text" name="ewan_dot1p" maxlength="4" class="input_6_table" value="<% nvram_get("ewan_dot1p"); %>" onKeyPress="return validator.isNumber(this,event);"> ( 0 ~ 7 )
+							</td>
+						</tr>
 						</table>
 
 						<table id="IPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">

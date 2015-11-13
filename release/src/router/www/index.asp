@@ -166,7 +166,6 @@ var currentUsbPort = new Number();
 var usbPorts = new Array();
 
 // Wireless
-var wlc_band = '<% nvram_get("wlc_band"); %>';
 window.onresize = function() {
 	if(document.getElementById("edit_client_block").style.display == "block") {
 		cal_panel_block("edit_client_block", 0.23);

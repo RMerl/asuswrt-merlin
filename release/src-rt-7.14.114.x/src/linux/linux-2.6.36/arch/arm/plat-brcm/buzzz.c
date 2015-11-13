@@ -786,13 +786,15 @@ buzzz_log_dump(uint32_t limit, uint32_t count,
 	else
 		total = count;
 
-	BUZZZ_PRINT("limit<%u> bufsz<%u> max<%u> count<%u> wrap<%u> total<%u>"
-		" log<%p> cur<%p> end<%p> log_size<%u>", limit, BUZZZ_AVAIL_BUFSIZE,
+	BUZZZ_PRINT("limit<%u> bufsz<%u> max<%u> count<%u> wrap<%u> total<%u>\n"
+		" log<%p> cur<%p> end<%p> log_size<%u> config_limit<%u>",
+		limit, BUZZZ_AVAIL_BUFSIZE,
 		(BUZZZ_AVAIL_BUFSIZE / log_size),
 		count, buzzz_g.wrap, total,
-		buzzz_g.log, buzzz_g.cur, buzzz_g.end, log_size);
+		buzzz_g.log, buzzz_g.cur, buzzz_g.end, log_size,
+		buzzz_g.config_limit);
 
-	if (limit > buzzz_g.config_limit)
+	if ((buzzz_g.config_limit != 0) && (limit > buzzz_g.config_limit))
 		limit = buzzz_g.config_limit;
 
 	if (total > limit)
@@ -2849,16 +2851,16 @@ __buzzz_kevt_default(void)
 	buzzz_klog_reg(BUZZZ_KEVT_ID_IRQ_CHECK, CLRerr "IRQ_CHECK %u");
 	buzzz_klog_reg(BUZZZ_KEVT_ID_IRQ_ENTRY, CLRr " >> IRQ %03u   ");
 	buzzz_klog_reg(BUZZZ_KEVT_ID_IRQ_EXIT, CLRr " << IRQ %03u   ");
-	buzzz_klog_reg(BUZZZ_KEVT_ID_SIRQ_ENTRY, CLRm ">>> SOFTIRQ ");
-	buzzz_klog_reg(BUZZZ_KEVT_ID_SIRQ_EXIT, CLRm "<<< SOFTIRQ ");
-	buzzz_klog_reg(BUZZZ_KEVT_ID_WORKQ_ENTRY, CLRb ">>>>> WORKQ ");
-	buzzz_klog_reg(BUZZZ_KEVT_ID_WORKQ_EXIT, CLRb "<<<<< WORKQ ");
+	buzzz_klog_reg(BUZZZ_KEVT_ID_SIRQ_ENTRY, CLRm ">>> SOFTIRQ %pS");
+	buzzz_klog_reg(BUZZZ_KEVT_ID_SIRQ_EXIT, CLRm "<<< SOFTIRQ %pS");
+	buzzz_klog_reg(BUZZZ_KEVT_ID_WORKQ_ENTRY, CLRb ">>>>> WORKQ %pS");
+	buzzz_klog_reg(BUZZZ_KEVT_ID_WORKQ_EXIT, CLRb "<<<<< WORKQ %pS");
 	buzzz_klog_reg(BUZZZ_KEVT_ID_SCHEDULE,
 	               "TASK_SWITCH from[%s %u:%u:%u] to[%s %u:%u:%u]");
 	buzzz_klog_reg(BUZZZ_KEVT_ID_SCHED_TICK, CLRb
 	               "\tscheduler tick jiffies<%u> cycles<%u>");
 	buzzz_klog_reg(BUZZZ_KEVT_ID_SCHED_HRTICK, CLRb "sched hrtick");
-	buzzz_klog_reg(BUZZZ_KEVT_ID_GTIMER_EVENT, CLRb "\tgtimer ");
+	buzzz_klog_reg(BUZZZ_KEVT_ID_GTIMER_EVENT, CLRb "\tgtimer %pS");
 	buzzz_klog_reg(BUZZZ_KEVT_ID_GTIMER_NEXT, CLRb "\tgtimer next<%u>");
 	buzzz_klog_reg(BUZZZ_KEVT_ID_BUZZZ_TMR, CLRb "\tbuzzz sys timer");
 	BUZZZ_PRINT("using default configuration for KEVT");

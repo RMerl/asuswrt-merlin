@@ -629,3 +629,24 @@ Printer			18
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#000000', endColorstr='#656C6F',GradientType=0 ); /* IE6-9 */
 	height: 2px;
 }
+
+.boost_tag {
+	text-align: center;
+	width: 60px;
+	height: 30px;
+	line-height: 30px;
+	border-radius: 15%;
+	margin-top: -37px;
+	margin-left: 30px;
+	color: #FFFFFF;
+	font-size: 9px;
+	-webkit-transform: scale(0.75);
+	background: #FF4848; /* Old browsers */
+	background: -moz-linear-gradient(top, #A21717 0%, #B71010 50%, #FF4848 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#A21717), color-stop(50%,#B71010), color-stop(100%,#FF4848)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #A21717 0%,#B71010 50%,#FF4848 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #A21717 0%,#B71010 50%,#FF4848 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #A21717 0%,#B71010 50%,#FF4848 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #A21717 0%,#B71010 70%,#FF4848 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#A21717', endColorstr='#FF4848',GradientType=0 ); /* IE6-9 */
+}

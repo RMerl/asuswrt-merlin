@@ -105,7 +105,7 @@ function initial(){
 	}
 
 	wl_bwch_hint();
-	if(based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "4G-AC55U")
+	if(Qcawifi_support)
 		wl_vht_hint();
 	setTimeout("wds_scan();", 500);
 }

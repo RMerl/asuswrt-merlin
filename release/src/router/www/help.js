@@ -107,7 +107,7 @@ function suspendconn(wan_index, wanenable){
 
 function enableMonomode(){
 	document.titleForm.action = "/apply.cgi";
-	document.titleForm.current_page.value = top.location.pathname;
+	document.titleForm.current_page.value = top.location.pathname.split("/")[1];
 	document.titleForm.action_mode.value = "mfp_monopolize";
 	document.titleForm.action_wait.value = "2";
 	showLoading(2);
@@ -203,15 +203,26 @@ function overHint(itemNum){
 	if(itemNum == 50){
 		statusmenu ="<span>Enable PPTP or L2TP client (optional)</span>";
 	}
-	
-	if(itemNum == 90){
-		statusmenu ="<span>Enable this function allow you to block websites used to display banner or popup advertisement.</span>";		 
+		
+	if(itemNum == 85){
+		statusmenu ="<span>Manually prioritize apps category depending on your preference.</span>";		/* untranslated */
+	}
+	else if(itemNum == 86){
+		statusmenu ="<span>This mode is suitable for playing internet game and boost your gaming bandwidth.<br><#Adaptive_Category1#></span>";		/* untranslated */
+	}
+	else if(itemNum == 87){
+		statusmenu ="<span>This mode is suitable for playing video streaming and make sure your viewing experience.<br><#Adaptive_Category2#></span>";	/* untranslated */
+	}
+	else if(itemNum == 88){
+		statusmenu ="<span>This mode is suitable for general web browsing and avoid to networking latency whileﬁfile transferring.<br><#Adaptive_Category4#></span>";	/* untranslated */
 	}
 	else if(itemNum == 89){
-		statusmenu ="<span>Enable this function allow block advertisement in the streaming video.</span>";		 
+		statusmenu ="<span>Enable this function allow block advertisement in the streaming video.</span>";
 	}
-	
-	if(itemNum == 91){
+	else if(itemNum == 90){
+		statusmenu ="<span>Enable this function allow you to block websites used to display banner or popup advertisement.</span>";
+	}
+	else if(itemNum == 91){
 		statusmenu ="<span><#Adaptive_Category1#></span>";
 	}
 	else if(itemNum == 92){
@@ -226,8 +237,7 @@ function overHint(itemNum){
 	else if(itemNum == 95){
 		statusmenu ="<span><#Adaptive_Category5#></span>";
 	}
-	
-	if(itemNum == 96){
+	else if(itemNum == 96){
 		statusmenu ="<span><#Adaptive_Category6#></span>";
 	}
 	
@@ -275,33 +285,33 @@ function overHint(itemNum){
 	//for AiProtection-Router Security Assessment
 	if(itemNum == 25)
 		statusmenu += "<span>Disable Wi-Fi Protected Setup to avoid attacker to obtain the keys via an intelligent brute force </span>";
-	if(itemNum == 23)		
+	else if(itemNum == 23)		
 		statusmenu += "<span><#AiProtection_scan_note23#></span>";
-	if(itemNum == 22)		
+	else if(itemNum == 22)		
 		statusmenu += "<span><#AiProtection_scan_note22#></span>";
-	if(itemNum == 21)		
+	else if(itemNum == 21)		
 		statusmenu += "<span><#AiProtection_scan_note21#></span>";
-	if(itemNum == 20)		
+	else if(itemNum == 20)		
 		statusmenu += "<span><#AiProtection_scan_note20#></span>";
-	if(itemNum == 19)		
+	else if(itemNum == 19)		
 		statusmenu += "<span><#AiProtection_scan_note19#></span>";
-	if(itemNum == 18)		
+	else if(itemNum == 18)		
 		statusmenu += "<span><#AiProtection_scan_note18#></span>";
-	if(itemNum == 17)		
+	else if(itemNum == 17)		
 		statusmenu += "<span><#AiProtection_scan_note17#></span>";
-	if(itemNum == 16)		
+	else if(itemNum == 16)		
 		statusmenu += "<span><#AiProtection_scan_note16#></span>";
-	if(itemNum == 15)		
+	else if(itemNum == 15)		
 		statusmenu += "<span><#AiProtection_scan_note15#></span>";
-	if(itemNum == 14)		
+	else if(itemNum == 14)		
 		statusmenu += "<span><#AiProtection_scan_note14#></span>";
-	if(itemNum == 13)		
+	else if(itemNum == 13)		
 		statusmenu += "<span><#AiProtection_scan_note13#></span>";
-	if(itemNum == 12)		
+	else if(itemNum == 12)		
 		statusmenu += "<span><#AiProtection_scan_note12#></span>";
-	if(itemNum == 11)		
+	else if(itemNum == 11)		
 		statusmenu += "<span><#AiProtection_scan_note11#></span>";	
-	if(itemNum == 10)		
+	else if(itemNum == 10)		
 		statusmenu += "<span><#AiProtection_scan_note10#></span>";	
 	
 	// Viz add 2015.07 bwdpi : Adpative QoS mode start
@@ -864,7 +874,7 @@ function overHint(itemNum){
 function show_diagTime(){
 				
 	Etime = debug_end_time - boottime;
-	EHours = Math.floor((Etime / 3600) % 24);	
+	EHours = Math.floor(Etime / 3600);	
 	EMinutes = Math.floor(Etime % 3600 / 60);	
 	boottime += 1;
 	//setTimeout("show_diagTime();", 1000);
@@ -1048,10 +1058,10 @@ function openHint(hint_array_id, hint_show_id, flag){
 	for (var i=0;i<tag_name.length;i++)
 		tag_name[i].onmouseout=nd;
 	
-	if(hint_array_id == 0 && hint_show_id > 21) // for status icon
-		return overlib(helpcontent[hint_array_id][hint_show_id], FIXX, 270, FIXY, 30);
-	else if(helpcontent == [] || helpcontent == "" || hint_array_id > helpcontent.length)
+	if(helpcontent == [] || helpcontent == "" || hint_array_id > helpcontent.length)
 		return overlib('<#defaultHint#>', HAUTO, VAUTO);
+	else if(hint_array_id == 0 && hint_show_id > 21 && hint_show_id < 24)
+		return overlib(helpcontent[hint_array_id][hint_show_id], FIXX, 270, FIXY, 30);
 	else{
 		if(hint_show_id > helpcontent[hint_array_id].length)
 			return overlib('<#defaultHint#>', HAUTO, VAUTO);
@@ -2567,8 +2577,8 @@ function check_common_string(pwd, flag){
 	var termKeyboards1 = "qwertyuiop";
 	var termKeyboards2 = "asdfghjkl";
 	var termKeyboards3 = "zxcvbnm";
-	var termCommon5 = ["123123","abc123","ashley","bailey","dragon","letmein","master","michael","monkey","qazwsx","shadow"];
-	var termCommon8 = ["adminpassword","baseball","football","iloveyou","loginpassword","passw0rd","password","sunshine","superman","trustno1","useradmin","userpassword"];
+	var termCommon5 = ["123123","abc123","letmein","master","qazwsx","admin"];
+	var termCommon8 = ["adminpassword","loginpassword","passw0rd","password","useradmin","userpassword"];
 	var nSeqString = 0;
 	if(flag == "httpd_password"){	//at lease length 5		
 		if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }

@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et_linux.c 575708 2015-07-30 20:27:43Z $
+ * $Id: et_linux.c 584164 2015-09-04 07:40:24Z $
  */
 
 #include <et_cfg.h>
@@ -83,6 +83,7 @@
 #endif /* ETFA */
 #ifdef ETAGG
 #include <etc_agg.h>
+#endif /* ETAGG */
 
 #ifdef ETFA
 #define FA_RX_BCM_HDR_ENAB(et)	FA_RX_BCM_HDR((fa_t *)et->etc->fa)
@@ -102,7 +103,6 @@
 
 #define RX_BCM_HDR_ENAB(et)	(FA_RX_BCM_HDR_ENAB(et) | AGG_RX_BCM_HDR_ENAB(et))
 #define TX_BCM_HDR_ENAB(et)	(FA_TX_BCM_HDR_ENAB(et) | AGG_TX_BCM_HDR_ENAB(et))
-#endif /* ETAGG */
 
 #ifdef ETFA
 #define CTF_CAPABLE_DEV(et)	FA_CTF_CAPABLE_DEV((fa_t *)(et)->etc->fa)
@@ -241,6 +241,7 @@ typedef struct et_info {
 #ifdef ETFA
 	spinlock_t	fa_lock;	/* lock for fa cache protection */
 #endif
+	bool            dev_registered; /* netdev registed done */
 #if defined(ETFA) || defined(ETAGG)
 	uint8		bhdr_sz;	/* size of brcm header */
 	int8		bhdr_roff;	/* brcm header's position relative to dest mac */
@@ -473,9 +474,7 @@ is_pkt_chainable(et_info_t *et, void * pkt, void *pkthdr, uint8 prio,
 
 			if (et->brc_hot &&
 			    CTF_HOTBRC_CMP(et->brc_hot, evh->ether_dhost, (void*)et->dev) &&
-			    (evh->vlan_type == HTON16(ETHER_TYPE_8021Q)) &&
-			    ((evh->ether_type == HTON16(ETHER_TYPE_IP)) ||
-			     (evh->ether_type == HTON16(ETHER_TYPE_IPV6)))) {
+				(evh->vlan_type == HTON16(ETHER_TYPE_8021Q))) {
 
 				return TRUE;
 			}
@@ -484,11 +483,7 @@ is_pkt_chainable(et_info_t *et, void * pkt, void *pkthdr, uint8 prio,
 
 			/* Packets are received without VLAN Tag on GMAC forwarders */
 
-			if ((eh->ether_type == HTON16(ETHER_TYPE_IP)) ||
-			    (eh->ether_type == HTON16(ETHER_TYPE_IPV6))) {
-
-				return TRUE;
-			}
+			return !ETHER_ISMULTI(eh);
 		}
 	}
 
@@ -510,8 +505,6 @@ is_pkt_chainable(et_info_t *et, void * pkt, void * pkthdr, uint8 prio,
 	    CTF_HOTBRC_CMP(et->brc_hot, evh, (void *)et->dev) &&
 	    (prio == cd->h_prio) &&
 	    (evh->vlan_type == HTON16(ETHER_TYPE_8021Q)) &&
-	    ((evh->ether_type == HTON16(ETHER_TYPE_IP)) ||
-	     (evh->ether_type == HTON16(ETHER_TYPE_IPV6))) &&
 	    (!RXH_FLAGS(et->etc, PKTDATA(et->osh, pkt)))) {
 
 		return TRUE;
@@ -1078,13 +1071,6 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	et->fa_aux_dev = FA_IS_AUX_DEV((fa_t *)et->etc->fa)
 		           ? TRUE : FALSE;
 
-#ifdef ETAGG
-	if (et->fa_bhdr_sz) {
-		et->bhdr_sz = et->fa_bhdr_sz;
-		/* bhdr would be inserted before dest mac address of packets */
-		et->bhdr_roff = 0 - et->bhdr_sz;
-	}
-#endif	/* ETAGG */
 #endif /* ETFA */
 
 #ifdef ETAGG
@@ -1112,6 +1098,11 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	et->fwdh = (struct fwder *)NULL;
 
 	if (DEV_FWDER(et->etc)) { /* Attach driver to forwarder */
+
+                if (ddr_aliasing_enabled() && !getintvar(NULL, "pacp_tx_off")) {
+                        osl_flag_set(osh, OSL_FWDERBUF);
+                }
+
 		/* Ethernet network interface uses "ethXX". Use "fwdXX" instead */
 		strncpy(dev->name, DEV_FWDER_NAME, 3);
 
@@ -1170,13 +1161,13 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 			poolsz = ((num_physpages >= 32767) ? CTFPOOLSZ * 2 :
 			          ((num_physpages >= 8192) ? CTFPOOLSZ : 0));
 #if defined(BCM_GMAC3)
-                        /* Atlas-II w/ 256M: 4K sized CTFPOOL
-                         * Need minimum of 3K packets:
-                         *   512 rx ring + 2048 flowring backup queue  + 512 flowring
-                         */
-                        if (DEV_FWDER(et->etc) && (num_physpages >= 65535)) {
-                                poolsz = CTFPOOLSZ * 4;
-                        }
+			/* Atlas-II w/ 256M: 4K sized CTFPOOL
+			 * Need minimum of 3K packets:
+			 *   512 rx ring + 2048 flowring backup queue  + 512 flowring
+			 */
+			if (DEV_FWDER(et->etc) && (num_physpages >= 65535)) {
+				poolsz = CTFPOOLSZ * 4;
+			}
 #endif /* BCM_GMAC3 */
 			if ((poolsz > 0) &&
 			    (osl_ctfpool_init(osh, poolsz, RXBUFSZ+BCMEXTRAHDROOM) < 0)) {
@@ -1297,6 +1288,7 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		ET_ERROR(("et%d: register_netdev() failed\n", unit));
 		goto fail;
 	}
+	et->dev_registered = TRUE;
 
 #ifdef __ARM_ARCH_7A__
 	dev->features = (NETIF_F_SG | NETIF_F_FRAGLIST | NETIF_F_ALL_CSUM);
@@ -1484,10 +1476,10 @@ et_module_init(void)
 		et_rxlazy_framecnt = bcm_strtoul(var, NULL, 0);
 	printf("%s: et_rxlazy_framecnt set to 0x%x\n", __FUNCTION__, et_rxlazy_framecnt);
 
-        var = getvar(NULL, "et_rxlazy_dyn_thresh");
-        if (var)
-                et_rxlazy_dyn_thresh = bcm_strtoul(var, NULL, 0);
-        printf("%s: et_rxlazy_dyn_thresh set to %d\n", __FUNCTION__, et_rxlazy_dyn_thresh);
+	var = getvar(NULL, "et_rxlazy_dyn_thresh");
+	if (var)
+		et_rxlazy_dyn_thresh = bcm_strtoul(var, NULL, 0);
+	printf("%s: et_rxlazy_dyn_thresh set to %d\n", __FUNCTION__, et_rxlazy_dyn_thresh);
 
 	return pci_module_init(&et_pci_driver);
 }
@@ -1541,7 +1533,7 @@ et_free(et_info_t *et)
 	}
 #endif /* ETAGG */
 
-	if (et->dev) {
+	if (et->dev_registered) {
 		unregister_netdev(et->dev);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
@@ -1553,6 +1545,7 @@ et_free(et_info_t *et)
 #endif
 		et->dev = NULL;
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) */
+		et->dev_registered = FALSE;
 	}
 
 #ifdef CTFPOOL
@@ -1971,10 +1964,11 @@ et_sendnext(et_info_t *et)
 			PKTCLRCHAINED(et->osh, p);
 			/* replicate vlan header contents from curr frame */
 			if ((n != NULL) && (vlan_type == HTON16(ETHER_TYPE_8021Q))) {
-				uint8 *n_evh;
-				n_evh = PKTPUSH(et->osh, n, VLAN_TAG_LEN);
-				*(struct ethervlan_header *)n_evh =
-				*(struct ethervlan_header *)PKTDATA(et->osh, p);
+                                uint8 *n_evh = PKTPUSH(et->osh, n, VLAN_TAG_LEN);
+ 
+                                /* Retain orig ether_type */
+                                bcopy(PKTDATA(et->osh, p), n_evh,
+                                	OFFSETOF(struct ethervlan_header, ether_type));
 			} else if (n == NULL)
 				PKTCSETFLAG(p, 1);
 
@@ -2220,16 +2214,16 @@ _et_watchdog(struct net_device *dev)
 	etc_watchdog(et->etc);
 
 #if defined(BCM_GMAC3)
-        if (DEV_FWDER(et->etc)) {
-                if (et_rxlazy_dyn_thresh > 0) {
-                        if ((et->etc->rxframe - et->etc->rxrecord) > et_rxlazy_dyn_thresh) {
-                                etc_rxlazy(et->etc, ET_RXLAZY_TIMEOUT, ET_RXLAZY_FRAMECNT);
-                        } else {
-                                etc_rxlazy(et->etc, et_rxlazy_timeout, et_rxlazy_framecnt);
-                        }
-                }
-                et->etc->rxrecord = et->etc->rxframe;
-        }
+	if (DEV_FWDER(et->etc)) {
+		if (et_rxlazy_dyn_thresh > 0) {
+			if ((et->etc->rxframe - et->etc->rxrecord) > et_rxlazy_dyn_thresh) {
+				etc_rxlazy(et->etc, ET_RXLAZY_TIMEOUT, ET_RXLAZY_FRAMECNT);
+			} else {
+				etc_rxlazy(et->etc, et_rxlazy_timeout, et_rxlazy_framecnt);
+			}
+		}
+		et->etc->rxrecord = et->etc->rxframe;
+	}
 #endif
 
 	if (et->set) {
@@ -2767,7 +2761,9 @@ et_sendup_chain_error_handler(et_info_t *et, struct sk_buff *skb, uint sz, int32
 		PKTCSETLEN(skb, PKTLEN(et->etc->osh, skb));
 
 		if (et_ctf_forward(et, skb) == BCME_OK) {
-			ET_ERROR(("et%d: shall not happen\n", et->etc->unit));
+			/* partial packets of this chain can be forwarded by CTF */
+			ET_ERROR(("et%d: unexpected forwarding\n", et->etc->unit));
+			continue;
 		}
 
 		if (et->etc->qos)
@@ -2887,8 +2883,6 @@ et_chain_rx(et_info_t *et, int rxcnt, void **rxpkts, const int dataoff,
 #endif /* USBAP */
 #ifdef ETAGG
 	const int dataoff_ext = (RX_BCM_HDR_ENAB(et) && (et->bhdr_roff > 0)) ? et->bhdr_sz : 0;
-#else /* ! ETAGG */
-	const int dataoff_ext = 0;
 #endif /* ! ETAGG */
 
 	for (nrx = 0; nrx < rxcnt; nrx++) {
@@ -3038,8 +3032,6 @@ et_single_rx(et_info_t *et, int rxcnt, void **rxpkts, int dataoff)
 	struct sk_buff *skb;
 #ifdef ETAGG
 	const int dataoff_ext = (RX_BCM_HDR_ENAB(et) && (et->bhdr_roff > 0)) ? et->bhdr_sz : 0;
-#else /* ! ETAGG */
-	const int dataoff_ext = 0;
 #endif /* ! ETAGG */
 
 	et->etc->unchained += rxcnt;
@@ -3118,9 +3110,7 @@ et_rxevent(void * ch, int quota, struct chops *chops, et_info_t *et)
 		/* Bulk decrement pktalloced count. If fwder fails to transfer the pkts,
 		 * then increment pktalloced count before freeing to ctfpool.
 		 */
-
 		et->etc->rxframe += rxcnt;
-
 		PKTTOFWDER(et->osh, rxpkts, rxcnt);
 
 		if (fwder_transmit(et->fwdh, (void *)rxpkts, rxcnt, et->dev) != FWDER_SUCCESS) {
@@ -3383,13 +3373,19 @@ et_ctf_forward(et_info_t *et, struct sk_buff *skb)
 #endif
 
 #ifdef CONFIG_IP_NF_DNSMQ
-       if(dnsmq_hit_hook&&dnsmq_hit_hook(skb))
-               return (BCME_ERROR);
+	bool dnsmq_hit = FALSE;
+
+	if (dnsmq_hit_hook && dnsmq_hit_hook(skb))
+		dnsmq_hit = TRUE;
 #endif
 
 #ifdef HNDCTF
 	/* try cut thru first */
-	if (CTF_ENAB(et->cih) && (ret = ctf_forward(et->cih, skb, skb->dev)) != BCME_ERROR) {
+	if (CTF_ENAB(et->cih) &&
+#ifdef CONFIG_IP_NF_DNSMQ
+		!dnsmq_hit &&
+#endif
+		(ret = ctf_forward(et->cih, skb, skb->dev)) != BCME_ERROR) {
 		if (ret == BCME_EPERM) {
 			PKTFRMNATIVE(et->osh, skb);
 			PKTFREE(et->osh, skb, FALSE);

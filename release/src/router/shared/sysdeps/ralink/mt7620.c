@@ -100,7 +100,7 @@ enum {
 	CPU_PORT=6,
 	P7_PORT=7,
 };
-#elif defined(RTN56UB1)
+#elif defined(RTN56UB1) || defined(RTN56UB2)
 enum {
 	WAN_PORT=4,
 	LAN1_PORT=3,
@@ -565,7 +565,7 @@ int mt7621_vlan_unset(int vid)
 }
 
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC54U)
 /**
  * Get TX or RX byte count of WAN and WANS_LAN
  * @unit:	WAN unit.
@@ -1037,7 +1037,7 @@ static void set_Vlan_PRIO(int prio)
 	nvram_set("vlan_prio", tmp);
 }
 
-//convert port mapping from  RT-N56U   to   RT-N14U / RT-AC52U / RT-AC51U (MT7620) /RT-N54U /RT-AC54U /RT-AC1200HP /RT-N56UB1
+//convert port mapping from  RT-N56U   to   RT-N14U / RT-AC52U / RT-AC51U (MT7620) /RT-N54U /RT-AC54U /RT-AC1200HP /RT-N56UB1 /RT-N56UB2
 static int convert_port_bitmask(int orig)
 {
 	int i, mask, result;
@@ -1130,7 +1130,7 @@ static void initialize_Vlan(int stb_bitmask)
 	switch_fini();
 }
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC54U)
 static void fix_up_hwnat_for_wifi(void)
 {
 	int i, j, m, r, v, isp_profile_hwnat_not_safe = 0;
@@ -1138,7 +1138,7 @@ static void fix_up_hwnat_for_wifi(void)
 	char bss[] = "wl0.1_bss_enabledXXXXXX";
 	char mode_x[] = "wl0_mode_xXXXXXX";
 	struct wifi_if_vid_s w = {
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC54U)
 		.wl_vid = { 21, 43 },		/* DP_RA0  ~ DP_RA3:  21, 22, 23, 24;	DP_RAI0  ~ DP_RAI3:  43, 44, 45, 46 */
 		.wl_wds_vid = { 37, 59 },	/* DP_WDS0 ~ DP_WDS3: 37, 38, 39, 40;	DP_WDSI0 ~ DP_WDSI3: 59, 60, 61, 62 */
 #elif defined(RTN14U) || defined(RTN11P) || defined(RTN300)

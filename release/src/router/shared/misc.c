@@ -1428,7 +1428,11 @@ int is_psta(int unit)
 {
 	if (unit < 0) return 0;
 	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
-		(nvram_get_int("wlc_psta") == 1) &&
+		((nvram_get_int("wlc_psta") == 1)
+#ifdef RTCONFIG_BCM_7114
+		|| (nvram_get_int("wlc_psta") == 3)
+#endif
+		) &&
 		((nvram_get_int("wlc_band") == unit)
 #ifdef PXYSTA_DUALBAND
 		|| (nvram_match("exband", "1") && nvram_get_int("wlc_band_ex") == unit)
@@ -1802,18 +1806,20 @@ int check_bwdpi_nvram_setting()
 	if(nvram_get_int("wrs_enable") == 0 && nvram_get_int("wrs_app_enable") == 0 && 
 		nvram_get_int("wrs_vp_enable") == 0 && nvram_get_int("wrs_cc_enable") == 0 &&
 		nvram_get_int("wrs_mals_enable") == 0 &&
-		nvram_get_int("wrs_adblock_popup") == 0 && nvram_get_int("wrs_adblock_stream") == 0 &&
 		nvram_get_int("bwdpi_db_enable") == 0 &&
+		nvram_get_int("apps_analysis") == 0 &&
+		nvram_get_int("bwdpi_wh_enable") == 0 &&
 		nvram_get_int("qos_enable") == 0)
 		enabled = 0;
 
-	// check traditional qos service
+	// check qos service (not adaptive qos)
 	if(nvram_get_int("wrs_enable") == 0 && nvram_get_int("wrs_app_enable") == 0 && 
 		nvram_get_int("wrs_vp_enable") == 0 && nvram_get_int("wrs_cc_enable") == 0 &&
 		nvram_get_int("wrs_mals_enable") == 0 &&
-		nvram_get_int("wrs_adblock_popup") == 0 && nvram_get_int("wrs_adblock_stream") == 0 &&
 		nvram_get_int("bwdpi_db_enable") == 0 &&
-		nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
+		nvram_get_int("apps_analysis") == 0 &&
+		nvram_get_int("bwdpi_wh_enable") == 0 &&
+		nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1)
 		enabled = 0;
 
 	if(debug) dbg("[check_bwdpi_nvram_setting] enabled= %d\n", enabled);
@@ -1834,6 +1840,57 @@ void StampToDate(unsigned long timestamp, char *date)
 	now = timestamp;
 	local = localtime(&now);
 	strftime(date, 30, "%Y-%m-%d %H:%M:%S", local);
+}
+
+/*
+	check filesize is over or not
+	if over size, return 1, else return 0
+*/
+int check_filesize_over(char *path, long int size)
+{
+	struct stat st;
+	off_t cursize;
+
+	stat(path, &st);
+	cursize = st.st_size;
+
+	size = size * 1024; // KB
+
+	if(cursize > size)
+		return 1;
+	else
+		return 0;
+}
+
+/*
+	get last month's timestamp
+	ex.
+	now = 1445817600
+	tm  = 2015/10/26 00:00:00
+	t   = 2015/10/01 00:00:00
+	t_t = 1443628800
+*/
+time_t get_last_month_timestamp()
+{
+	struct tm local, t;
+	time_t now, t_t = 0;
+			
+	// get timestamp and tm
+	time(&now);
+	localtime_r(&now, &local);
+
+	// copy t from local
+	t.tm_year = local.tm_year;
+	t.tm_mon = local.tm_mon;
+	t.tm_mday = 1;
+	t.tm_hour = 0;
+	t.tm_min = 0;
+	t.tm_sec = 0;
+
+	// transfer tm to timestamp
+	t_t = mktime(&t);
+
+	return t_t;
 }
 
 int get_iface_hwaddr(char *name, unsigned char *hwaddr)

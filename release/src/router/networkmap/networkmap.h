@@ -101,7 +101,7 @@ typedef struct {
         int             printer[255];
         int             itune[255];
 	int		exist[255];
-#ifdef RTCONFIG_BWDPI
+#if 0//def RTCONFIG_BWDPI
 	char		bwdpi_host[255][32];
 	char		bwdpi_vendor[255][100];
 	char		bwdpi_type[255][100];

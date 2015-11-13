@@ -280,6 +280,7 @@ void PROCESS_UNPACK_GET_INFO(char *pbuf, struct sockaddr_in from_addr)
     memcpy(searchRouterInfo[a_GetRouterCount].routerRealMacAddress, cTemp2, 17);
     
     memcpy(searchRouterInfo[a_GetRouterCount].routerSSID,            get_discovery_info.SSID,              32);
+    searchRouterInfo[a_GetRouterCount].routerSSID[32] = '\0';	/* get_discovery_info.SSID is not ASCIIZ string. */
     memcpy(searchRouterInfo[a_GetRouterCount].routerSubMask,         get_discovery_info.NetMask,           32);
     memcpy(searchRouterInfo[a_GetRouterCount].routerProductID,       get_discovery_info.ProductID,         32);
     memcpy(searchRouterInfo[a_GetRouterCount].routerFirmwareVersion, get_discovery_info.FirmwareVersion,   16);

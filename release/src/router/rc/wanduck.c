@@ -348,27 +348,27 @@ void enable_wan_wled()
         	switch (get_model()) {
                 	case MODEL_RTAC3200:
                 	case MODEL_RTAC87U:
-				eval("et", "robowr", "0", "0x18", "0x01ff");
-				eval("et", "robowr", "0", "0x1a", "0x01fe");
+				eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");
+				eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01fe");
                         return;
 
                 	case MODEL_RTAC5300:
                 	case MODEL_RTAC88U:
                 	case MODEL_RTAC3100:
-				eval("et", "robowr", "0", "0x18", "0x01ff");
-				eval("et", "robowr", "0", "0x1a", "0");
+				eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");
+				eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0");
                         return;
         	}
 	}
 
-	eval("et", "robowr", "0", "0x18", "0x01ff");
-	eval("et", "robowr", "0", "0x1a", "0x01ff");
+	eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");
+	eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01ff");
 }
 
 void disable_wan_wled()
 {
-	eval("et", "robowr", "0", "0x18", "0x01fe");
-	eval("et", "robowr", "0", "0x1a", "0x01fe");
+	eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01fe");
+	eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01fe");
 }
 
 static void wan_led_control(int sig) {
@@ -424,9 +424,12 @@ int do_ping_detect(int wan_unit){
 			return 1;
 		}
 	}
-#elif defined(RTCONFIG_DUALWAN)
+//elif defined(RTCONFIG_DUALWAN)
+#endif
+#if defined(RTCONFIG_DUALWAN)
+#if 0
 	csprintf("wanduck: ping %s to %s...", wandog_target, PING_RESULT_FILE);
-	sprintf(cmd, "ping -c 1 %s >/dev/null && touch %s", wandog_target, PING_RESULT_FILE);
+	sprintf(cmd, "ping -c 1 -w 2 %s >/dev/null && touch %s", wandog_target, PING_RESULT_FILE);
 	system(cmd);
 
 	if(check_if_file_exist(PING_RESULT_FILE)){
@@ -434,6 +437,26 @@ int do_ping_detect(int wan_unit){
 		unlink(PING_RESULT_FILE);
 		return 1;
 	}
+#else
+	FILE *fp;
+
+	csprintf("wanduck: ping %s...", wandog_target);
+	snprintf(cmd, 256, "ping -c 1 -w 2 %s", wandog_target);
+	if((fp = popen(cmd, "r")) != NULL){
+		char *p, var[256];
+
+		var[0] = '\0';
+		while(fgets(var, sizeof(var), fp)){
+			if(!strstr(var, "1 packets received"))
+				continue;
+
+			csprintf("ok.\n");
+			fclose(fp);
+			return 1;
+		}
+		fclose(fp);
+	}
+#endif
 #else
 	return 1;
 #endif
@@ -915,7 +938,7 @@ int if_wan_phyconnected(int wan_unit){
 		int find_modem_node = 0;
 		int wan_state = nvram_get_int(nvram_state[wan_unit]);
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 		if(strlen(usb_if) <= 0 && nvram_get_int("usb_gobi") == 1){
 			snprintf(usb_if, 16, "%s", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 csprintf("wanduck: try to get usb_if=%s.\n", usb_if);
@@ -987,7 +1010,7 @@ csprintf("wanduck: try to get usb_if=%s.\n", usb_if);
 				else if(wan_state != WAN_STATE_CONNECTING)
 					eval("modem_status.sh", "sim");
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 				if(wan_state == WAN_STATE_CONNECTED)
 					eval("modem_status.sh", "operation");
 #endif
@@ -1002,7 +1025,7 @@ csprintf("wanduck: try to get usb_if=%s.\n", usb_if);
 				else if(sim_state != 1)
 					link_wan[wan_unit] = 0;
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 				if(sim_state >= 1 && sim_state <= 5 && !strcmp(nvram_safe_get("usb_modem_act_auth"), ""))
 					eval("modem_status.sh", "simauth");
 #endif
@@ -1667,8 +1690,10 @@ void record_conn_status(int wan_unit){
 #endif
 					)
 				logmessage(log_title, "ISP's DHCP did not function properly.");
+#if 0
 			else
 				logmessage(log_title, "Detected that the WAN Connection Type was PPPoE. But the PPPoE Setting was not complete.");
+#endif
 		}
 		else if(disconn_case[wan_unit] == CASE_MISROUTE){
 			if(disconn_case_old[wan_unit] == CASE_MISROUTE)
@@ -1961,7 +1986,7 @@ int wanduck_main(int argc, char *argv[]){
 
 #ifdef RTCONFIG_USB_MODEM
 	memset(modem_type, 0, 32);
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	memset(usb_if, 0, 32);
 #endif
 #endif
@@ -3075,7 +3100,7 @@ _dprintf("wanduck(%d)(all   end): state %d, state_old %d, changed %d, wan_state 
 					&& (get_disconn_count(current_wan_unit) >= max_disconn_count[current_wan_unit]
 #ifdef RTCONFIG_USB_MODEM
 							|| (!link_wan[current_wan_unit] && dualwan_unit__usbif(current_wan_unit)
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 									&& strcmp(usb_if, "")
 #endif
 									)

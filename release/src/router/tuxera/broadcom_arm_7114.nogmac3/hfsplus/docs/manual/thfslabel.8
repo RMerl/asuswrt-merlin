@@ -1,0 +1,46 @@
+.\" Copyright (c) 2013 Erik Larsson / Tuxera Inc.
+.\"
+.TH THFSLABEL 8 "Dec 2013" "Tuxera HFS+ Utilities 3014.8.10"
+.SH NAME
+thfslabel \- Display/change the label on an HFS+ file system.
+.SH SYNOPSIS
+\fBthfslabel\fR [\fIoptions\fR] \fIdevice \fR[\fInew\-label\fR]
+.SH DESCRIPTION
+\fBthfslabel\fR will display or change the file system label on the HFS+ file
+system located on \fIdevice\fR.
+.PP
+If the optional argument \fInew\-label\fR is not present, \fBthfslabel\fR will
+simply print the current file system label as a UTF-8 string.
+.PP
+If the optional argument \fInew\-label\fR is present, then \fBthfslabel\fR will
+set the file system label to be the string \fInew\-label\fR, given in UTF-8
+format.
+.br
+HFS+ file system labels can be at most 255 UTF-16 code units of decomposed
+Unicode long; if \fInew\-label\fR is longer than 255 UTF-16 code units of
+decomposed Unicode, \fBthfslabel\fR will truncate it and print a warning
+message. Note that the string in \fInew\-label\fR will be decomposed
+automatically by \fBthfslabel\fR.
+.PP
+.SH OPTIONS
+Below is a summary of all the options that \fBthfslabel\fR accepts.
+.TP
+\fB\-\-output-mode\fR=[mode]
+Specify the output mode when printing the volume label. Currently the supported
+output modes are \fBraw\fR and \fBcomposed\fR.
+.br
+Raw mode means that the label is converted from UTF-16 to UTF-8 without any
+further transformation. This implies that the output will be in decomposed
+Unicode since this is how strings are stored in HFS+.
+.br
+Composed mode means that the label is converted from the on-disk decomposed form
+into composed Unicode, which is what most operating systems expect (Mac OS X
+being the exception).
+.br
+The default behaviour (when this option is not given) is the behaviour of the
+\fBcomposed\fR option.
+.SH BUGS
+If you find a bug please send an email describing the problem to
+hfs-support@tuxera.com.
+.SH AVAILABILITY
+\fBthfslabel\fR is part of the \fBTuxera HFS+ Utilities\fR package.

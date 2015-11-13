@@ -12,17 +12,37 @@
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
+<link rel="stylesheet" type="text/css" href="css/element.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
+<style>
+.transition_style{
+	-webkit-transition: all 0.2s ease-in-out;
+	-moz-transition: all 0.2s ease-in-out;
+	-o-transition: all 0.2s ease-in-out;
+	transition: all 0.2s ease-in-out;
+}
+</style>
 <script>
 function initial(){
-	show_menu();	
-	getWebHistory();
-	genClientListOption()
+	show_menu();
+	$("#switch").click(function(){
+		enable_record();
+	});
+	if(document.form.bwdpi_wh_enable.value == 1){
+		document.getElementById("switch").checked = true;
+		document.getElementById("log_field").style.display = "";
+		getWebHistory();
+		genClientListOption();
+	}
+	else{	
+		document.getElementById("switch").checked = false;
+		document.getElementById("log_field").style.display = "none";
+	}	
 }
 var data_array = new Array();
 function parsingAjaxResult(rawData){
@@ -170,6 +190,15 @@ function change_page(flag){
 		getWebHistory("", page);
 	}
 }
+
+function enable_record(){
+	if(document.getElementById("switch").checked)
+		document.form.bwdpi_wh_enable.value = 1;
+	else	
+		document.form.bwdpi_wh_enable.value = 0;
+												
+	document.form.submit();
+}
 </script>
 </head>
 <body onload="initial();" onunload="unload_body();">
@@ -182,9 +211,10 @@ function change_page(flag){
 <input type="hidden" name="current_page" value="/AdaptiveQoS_WebHistory.asp">
 <input type="hidden" name="next_page" value="/AdaptiveQoS_WebHistory.asp">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_qos">
-<input type="hidden" name="action_wait" value="5">
+<input type="hidden" name="action_script" value="restart_qos;restart_firewall">
+<input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="flag" value="">
+<input type="hidden" name="bwdpi_wh_enable" value="<% nvram_get("bwdpi_wh_enable"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
@@ -206,19 +236,39 @@ function change_page(flag){
 									<div class="formfontdesc">
 										<#Adaptive_History_desc#>
 									</div>
-									<div style="margin-bottom:5px">
-										<select id="clientListOption" class="input_option" name="clientList" onchange="getWebHistory(this.value);">
-											<option value="" selected>All client</option>
-										</select>
-										<label style="margin: 0 5px 0 20px;visibility:hidden;cursor:pointer" id="previous_button" onclick="change_page('previous');">Previous</label>
-										<input class="input_3_table" value="1" id="current_page"></input>
-										<label style="margin-left:5px;cursor:pointer" id="next_button" onclick="change_page('next');">Next</label>
+									<div style="margin:5px">
+										<table style="margin-left:0px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+											<th>Enable Web History</th>
+											<td>
+												<div class="switch_field" >
+													<label for="switch">
+														<input id="switch" class="switch" type="checkbox" style="display:none" <% nvram_match("bwdpi_wh_enable", "1", "checked"); %>>
+														<div class="switch_container" >
+															<div class="switch_bar"></div>
+															<div class="switch_circle transition_style">
+																<div></div>
+															</div>
+														</div>
+													</label>
+												</div>
+											</td>
+										</table>
 									</div>
-									<div style="height:600px;border:1px solid #A9A9A9;overflow:auto;">
-										<table style="width:100%" id="log_table"></table>
-									</div>
-									<div class="apply_gen">
-										<input class="button_gen_long" onClick="getWebHistory(document.form.clientList.value)" type="button" value="<#CTL_refresh#>">
+									<div id="log_field">
+										<div style="margin:10px 5px">
+											<select id="clientListOption" class="input_option" name="clientList" onchange="getWebHistory(this.value);">
+												<option value="" selected>All client</option>
+											</select>
+											<label style="margin: 0 5px 0 20px;visibility:hidden;cursor:pointer" id="previous_button" onclick="change_page('previous');">Previous</label>
+											<input class="input_3_table" value="1" id="current_page"></input>
+											<label style="margin-left:5px;cursor:pointer" id="next_button" onclick="change_page('next');">Next</label>
+										</div>
+										<div style="height:600px;border:1px solid #A9A9A9;overflow:auto;margin:5px">
+											<table style="width:100%" id="log_table"></table>
+										</div>
+										<div class="apply_gen">
+											<input class="button_gen_long" onClick="getWebHistory(document.form.clientList.value)" type="button" value="<#CTL_refresh#>">
+										</div>
 									</div>
 								</td>
 							</tr>

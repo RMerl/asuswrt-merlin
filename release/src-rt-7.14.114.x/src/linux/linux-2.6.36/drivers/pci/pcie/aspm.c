@@ -452,6 +452,12 @@ static void pcie_config_aspm_dev(struct pci_dev *pdev, u32 val)
 	u16 reg16;
 	int pos = pci_pcie_cap(pdev);
 
+	/* ASM1061(PCIE-SATA) doesn't support ASPM, we cannot enable ASPM on it */
+	if (pdev->vendor == PCI_VENDOR_ID_ASMEDIA &&
+	    pdev->device == PCI_DEVICE_ID_ASM1061_IDE) {
+		return;
+	}
+
 	pci_read_config_word(pdev, pos + PCI_EXP_LNKCTL, &reg16);
 	reg16 &= ~0x3;
 	reg16 |= val;

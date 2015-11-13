@@ -978,7 +978,7 @@ wlc_olpc_eng_pkt_complete(wlc_info_t *wlc, void *pkt, uint txs)
 	if (olpc_chan->cores_cal_active == 0) {
 		WL_OLPC(wlc->olpc_info, ("%s: no more cores w/ cal active!\n", __FUNCTION__));
 		/* cache calibration results so following ops don't mess it up */
-#if (defined(PHYCAL_CACHING) || defined(WLMCHAN) || defined(WL_MODESW))
+#if (defined(PHYCAL_CACHING) || defined(WLMCHAN))
 #ifndef WLC_HIGH_ONLY
 		if (!wlc_phy_get_chanctx((phy_info_t *)wlc->band->pi, wlc->chanspec))
 		  wlc_phy_create_chanctx(wlc->band->pi, wlc->chanspec);

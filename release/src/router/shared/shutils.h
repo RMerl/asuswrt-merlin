@@ -251,6 +251,13 @@ static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 /* Return NUL instead of NULL if undefined */
 #define safe_getenv(s) (getenv(s) ? : "")
 
+#define ONE_ENTRANT()                               \
+do {                                                            \
+	static int served = 0;  \
+	if(served ++ > 0)       \
+		return;         \
+} while (0)
+
 //#define dbg(fmt, args...) do { FILE *fp = fopen("/dev/console", "w"); if (fp) { fprintf(fp, fmt, ## args); fclose(fp); } else fprintf(stderr, fmt, ## args); } while (0)
 extern void dbg(const char * format, ...);
 #define dbG(fmt, args...) dbg("%s(0x%04x): " fmt , __FUNCTION__ , __LINE__, ## args)
@@ -358,3 +365,5 @@ extern int str_bprintf(struct strbuf *b, const char *fmt, ...);
 
 extern int strArgs(int argc, char **argv, char *fmt, ...);
 extern char *trimNL(char *str);
+extern pid_t get_pid_by_name(char *name);
+extern char *get_process_name_by_pid(const int pid);

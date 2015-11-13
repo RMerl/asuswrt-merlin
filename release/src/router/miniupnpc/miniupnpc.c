@@ -1261,7 +1261,7 @@ UPNP_GetValidIGD(struct UPNPDev * devlist,
 				    }
 				}
 			get_icon:
-                                //syslog(LOG_NOTICE, "Real icon url: %s", realIconUrl);
+//                                syslog(LOG_NOTICE, "Real icon url: %s", realIconUrl);
                                 fprintf(xml_fd, "Real icon url: %s\n", realIconUrl);
                                 sprintf(iconFile, "/tmp/upnpicon/%s.ico", IGDInfo.hostname);
 

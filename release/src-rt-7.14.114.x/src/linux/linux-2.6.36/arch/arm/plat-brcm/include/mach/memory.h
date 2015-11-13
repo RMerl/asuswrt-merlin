@@ -90,4 +90,27 @@ extern void bcm47xx_adjust_zones(unsigned long *size, unsigned long *hole);
 #define __phys_to_virt(x)	((x) - PHYS_OFFSET + PAGE_OFFSET)
 #endif /* CONFIG_SPARSEMEM */
 
+#if defined(CONFIG_BCM947XX) && defined(CONFIG_BCM_GMAC3)
+/*
+ * 4709C0: ACP_WIN_SIZE = 1GB
+ *
+ * DDR Aliasing         :
+ *
+ * 1GB     ACP region   : 0x40000000 to 0x7FFFFFFF
+ * 1GB non ACP region   : 0x80000000 to 0xBFFFFFFF
+ *
+ *      PHYS_OFFSET     : 0x40000000 =  Start of ACP region
+ *      ACP_WIN_SIZE    : 0x40000000 =  1 GBytes
+ *      ACP_WIN_LIMIT   : 0x80000000 =  Start address of non-ACP region
+ */
+
+#define __virt_to_phys_noacp(virt)     (__virt_to_phys(virt) + ACP_WIN_SIZE)
+
+#define __ddr_aliasing_enabled() \
+	((PHYS_OFFSET == 0x40000000) && \
+	 (ACP_WIN_SIZE == 0x40000000) && \
+	 (ACP_WIN_LIMIT == 0x80000000))
+
+#endif /* CONFIG_BCM947XX && CONFIG_BCM_GMAC3 */
+
 #endif

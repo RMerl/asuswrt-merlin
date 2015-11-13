@@ -1,0 +1,82 @@
+FATDUMP(8)                                                          FATDUMP(8)
+
+
+
+NAME
+       fatdump - Efficiently dump the contents of a FAT volume.
+
+SYNOPSIS
+       fatdump [options] device|image
+
+DESCRIPTION
+       fatdump will efficiently extract all relevant metadata and (optionally)
+       data from an FAT volume and dump it to standard output.   It  works  at
+       disk  sector  level  and  copies  only the used data. Unused disk space
+       becomes zero.
+
+       fatdump can be useful to make backups,  an  exact  snapshot  of  a  FAT
+       filesystem   to   restore   later   on,  or  for  developers  to  trou‐
+       bleshoot/investigate users' issues using the clone without the risk  of
+       destroying the original filesystem.
+
+OPTIONS
+       Below is a summary of all the options that fatdump accepts.  Nearly all
+       options have two equivalent names.  The short name is preceded by - and
+       the long name is preceded by -- .
+
+       -m, --metadata
+              Clone  ONLY METADATA (for FAT experts). A metadata dump contains
+              all of the FAT volume structures but none of the user data, i.e.
+              all  file  content  will  be omitted but the directory structure
+              will be preserved. The output from this command  will  be  rela‐
+              tively small if compressed.
+
+       -n, --ntfsclone-image
+              Emit an ntfsclone packed image (special image format) as output.
+              This saves space since all the non-allocated regions (and in the
+              case  of  '-m'  /'--metadata' all the non-metadata regions) will
+              not be written out explicitly, but instead marked as a 'hole' in
+              the image.
+
+       -q, --quiet
+              Suppress non-error output on stderr.
+
+       -f, --force
+              Force a clone, ignoring errors from cluster accounting.
+
+EXIT CODES
+       The exit code is 0 on success, non-zero otherwise.
+
+EXAMPLES
+       Dump FAT file system on /dev/sda1 to a compressed metadata image:
+
+              fatdump /dev/sda1 | bzip2 > sda1.img.bz2
+
+       Dump  FAT  file  system  metadata on /dev/sda1 to a compressed metadata
+       image:
+
+              fatdump -m /dev/sda1 | bzip2 > sda1.img.bz2
+
+       Dump a FAT volume to a remote host, using ssh. Please note that ssh may
+       ask for a password!
+
+              fatdump /dev/sda1 | bzip2 | ssh host 'cat > sda1.img.bzip2'
+
+
+KNOWN ISSUES
+       There  are no known problems with fatdump.  If you think you have found
+       a problem then please send an email describing it  to  fat-support@tux‐
+       era.com.
+
+AUTHORS
+       fatdump was written by Sougata Santra, Tuxera Inc.
+
+AVAILABILITY
+       fatdump is part of the Tuxera FAT package.
+
+SEE ALSO
+       fatdebug(8)
+
+
+
+Tuxera TFATprogs 3014.9.11         June 2013                        FATDUMP(8)

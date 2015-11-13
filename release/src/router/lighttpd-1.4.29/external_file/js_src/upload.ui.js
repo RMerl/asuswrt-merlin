@@ -15,7 +15,12 @@ function openUploadPanel(option){
 			$modalWindow.jqmShow();
 		}
 	}
-	else{		
+	else{
+		if (typeof FileReader == "undefined"){
+			alert("The browser does not support the file upload method, please use other browser ( ex. chrome, firefox ) to upload your files.");
+			return;
+		}
+		
 		g_upload_mode = 1;
 		g_upload_option = option;
 				

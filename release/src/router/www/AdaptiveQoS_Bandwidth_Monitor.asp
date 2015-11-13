@@ -82,8 +82,8 @@
 	margin-left:10px;
 }
 
-.qosLevel{
-	background-color: inherit;
+.qosLevel, .qosLevel3{
+	background-color: #7A797A;	
 }
 .qosLevel0{
 	background-color: #F01F09;
@@ -93,9 +93,6 @@
 }
 .qosLevel2{
 	background-color: #F3DD09;
-}
-.qosLevel3{
-	background-color: #59E920;
 }
 .qosLevel4{
 	background-color: #58CCED;
@@ -134,12 +131,36 @@
 	height: 8px;
 	border-radius:5px;
 }
+.traffic_bar_boost{
+	background-color: #B71010;
+}
 
 .transition_style{
-	-webkit-transition: all 0.5s ease-in-out;
-	-moz-transition: all 0.5s ease-in-out;
-	-o-transition: all 0.5s ease-in-out;
-	transition: all 0.5s ease-in-out;
+	-webkit-transition: all 2s ease-in-out;
+	-moz-transition: all 2s ease-in-out;
+	-o-transition: all 2s ease-in-out;
+	transition: all 2s ease-in-out;
+}
+.boost_tag_BM {
+	font-weight: normal;
+	text-align: center;
+	width: 55px;
+	height: 25px;
+	line-height: 25px;
+	border-radius: 15%;
+	margin-top: -21px;
+	margin-left: 25px;
+	color: #FFFFFF;
+	font-size: 9px;
+	-webkit-transform: scale(0.75);
+	background: #FF4848; /* Old browsers */
+	background: -moz-linear-gradient(top, #A21717 0%, #B71010 50%, #FF4848 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#A21717), color-stop(50%,#B71010), color-stop(100%,#FF4848)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #A21717 0%,#B71010 50%,#FF4848 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #A21717 0%,#B71010 50%,#FF4848 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #A21717 0%,#B71010 50%,#FF4848 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #A21717 0%,#B71010 70%,#FF4848 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#A21717', endColorstr='#FF4848',GradientType=0 ); /* IE6-9 */
 }
 </style>
 <script>
@@ -155,7 +176,7 @@ var qos_rulelist = "<% nvram_get("qos_rulelist"); %>".replace(/&#62/g, ">").repl
 var curState = '<% nvram_get("apps_analysis"); %>';
 
 function register_event(){
-	var color_array = ["#F01F09", "#F08C09", "#F3DD09", "#59E920", "#58CCED", "inherit"];
+	var color_array = ["#F01F09", "#F08C09", "#F3DD09", "#7A797A", "#58CCED", "inherit"];
 	$(function() {
 		$("#sortable").sortable();
 		$("#sortable").disableSelection();
@@ -258,22 +279,19 @@ function calculate_router_traffic(traffic){
 		router_traffic_old = [0, 0];
 	}
 	
-	if(router_traffic_new[0] - router_traffic_old[0] < 0){		// to control overflow issue
-		tx = (parseInt(router_traffic_new[0]) + Math.pow(2,32)) - router_traffic_old[0];	
+	if((router_traffic_new[0] - router_traffic_old[0]) < 0){		// to control overflow issue
+		//tx = (parseInt(router_traffic_new[0]) + Math.pow(2,32)) - router_traffic_old[0];	
 	}
 	else{
 		tx = router_traffic_new[0] - router_traffic_old[0];
 	}
 	
-	if(router_traffic_new[1] - router_traffic_old[1] < 0){
-		rx = (parseInt(router_traffic_new[1]) + Math.pow(2,32)) - router_traffic_old[1];
+	if((router_traffic_new[1] - router_traffic_old[1]) < 0){
+		//rx = (parseInt(router_traffic_new[1]) + Math.pow(2,32)) - router_traffic_old[1];
 	}
 	else{
 		rx = router_traffic_new[1] - router_traffic_old[1];
 	}
-
-	
-	
 	
 	tx = tx*8/detect_interval;		// translate to bits
 	rx = rx*8/detect_interval;
@@ -445,6 +463,11 @@ function show_clients(priority_type){
 			}
 			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed ' + clientListCSS + ' qosLevel' + clientObj.qosLevel + '"></div>';
 		}
+		
+		if(clientObj.wtfast && wtfast_support) {
+			code += '<div class="boost_tag_BM">BOOST</div>';/*untranslated*/
+		}
+		
 		code += '</td>';
 		code += '<td style="width:180px;">';
 
@@ -463,7 +486,10 @@ function show_clients(priority_type){
 		code += '<tr>';
 		code += '<td style="width:385px">';
 		code += '<div style="height:8px;padding:3px;background-color:#000;border-radius:10px;">';	
-		code += '<div id="'+clientObj.mac+'_upload_bar" class="traffic_bar transition_style"></div>';
+		if(clientObj.wtfast && wtfast_support)
+			code += '<div id="'+clientObj.mac+'_upload_bar" class="traffic_bar transition_style traffic_bar_boost"></div>';
+		else
+			code += '<div id="'+clientObj.mac+'_upload_bar" class="traffic_bar transition_style"></div>';
 		code += '</div>';
 		code += '</td>';
 		code += '<td style="text-align:right;">';
@@ -479,7 +505,10 @@ function show_clients(priority_type){
 		code += '<tr>';
 		code += '<td>';
 		code +=	'<div style="height:8px;padding:3px;background-color:#000;border-radius:10px;">';
-		code += '<div id="'+clientObj.mac+'_download_bar" class="traffic_bar transition_style"></div>';
+		if(clientObj.wtfast && wtfast_support)
+			code += '<div id="'+clientObj.mac+'_download_bar" class="traffic_bar transition_style traffic_bar_boost"></div>';
+		else
+			code += '<div id="'+clientObj.mac+'_download_bar" class="traffic_bar transition_style"></div>';
 		code +=	'</div>';
 		code += '</td>';
 		code += '<td style="text-align:right;">';
@@ -716,7 +745,7 @@ function calculate_traffic(array_traffic){
 	var client_traffic_new = new Array();
 
 	for(i=0;i< array_traffic.length;i++){
-		if(typeof(clientList[array_traffic[i][0]]) != "undefined"){	
+		if(typeof(clientList[array_traffic[i][0]]) != "undefined" && clientList[array_traffic[i][0]].isOnline){	
 			client_traffic_new.push(array_traffic[i][0]);	
 			client_traffic_new[array_traffic[i][0]] = {"tx":array_traffic[i][1], "rx":array_traffic[i][2]};								
 		}	
@@ -735,7 +764,7 @@ function calculate_traffic(array_traffic){
 			
 			if(client_traffic_old[client_traffic_new[i]]){
 				if((client_traffic_new[client_traffic_new[i]].tx - client_traffic_old[client_traffic_new[i]].tx) < 0){
-					diff_tx = (parseInt(client_traffic_new[client_traffic_new[i]].tx) + Math.pow(2,32)) - client_traffic_old[client_traffic_new[i]].tx;
+					//diff_tx = (parseInt(client_traffic_new[client_traffic_new[i]].tx) + Math.pow(2,32)) - client_traffic_old[client_traffic_new[i]].tx;
 				}
 				else{
 					diff_tx = client_traffic_new[client_traffic_new[i]].tx - client_traffic_old[client_traffic_new[i]].tx;
@@ -747,7 +776,7 @@ function calculate_traffic(array_traffic){
 			
 			if(client_traffic_old[client_traffic_new[i]]){
 				if((client_traffic_new[client_traffic_new[i]].rx - client_traffic_old[client_traffic_new[i]].rx) < 0){
-					diff_rx = (parseInt(client_traffic_new[client_traffic_new[i]].rx) + Math.pow(2,32)) - client_traffic_old[client_traffic_new[i]].rx;
+					//diff_rx = (parseInt(client_traffic_new[client_traffic_new[i]].rx) + Math.pow(2,32)) - client_traffic_old[client_traffic_new[i]].rx;
 				}
 				else{
 					diff_rx = client_traffic_new[client_traffic_new[i]].rx - client_traffic_old[client_traffic_new[i]].rx;
@@ -1334,7 +1363,7 @@ function cancel(){
 													<table>
 														<tr>
 															<td>															
-																<div id="0" style="cursor:pointer;background-color:#444F53;width:100px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="0" style="cursor:pointer;background-color:#444F53;width:100px;border-radius:10px;text-align:center;box-shadow:0px 2px black;z-index:100;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#F01F09;margin-left:5px;"></div></td>
@@ -1344,7 +1373,7 @@ function cancel(){
 																</div>
 															</td>
 															<td>
-																<div id="1" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="1" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;z-index:100;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#F08C09;margin-left:5px;"></div></td>
@@ -1354,7 +1383,7 @@ function cancel(){
 																</div>	
 															</td>
 															<td>
-																<div id="2" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="2" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;z-index:100;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#F3DD09;margin-left:5px;"></div></td>
@@ -1364,17 +1393,17 @@ function cancel(){
 																</div>
 															</td>
 															<td>													             												
-																<div id="3" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="3" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;z-index:100;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
-																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#59E920;margin-left:5px;"></div></td>
-																			<td><#Low#></td>
+																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#7A797A;margin-left:5px;"></div></td>
+																			<td><#Setting_factorydefault_value#></td>
 																		</tr>
 																	</table>						
 																</div>												
 															</td>
 															<td>												
-																<div id="4" style="cursor:pointer;background-color:#444F53;width:100px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="4" style="cursor:pointer;background-color:#444F53;width:100px;border-radius:10px;text-align:center;box-shadow:0px 2px black;z-index:100;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#58CCED;margin-left:5px;"></div></td>

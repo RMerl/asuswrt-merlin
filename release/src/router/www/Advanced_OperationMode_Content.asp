@@ -91,9 +91,12 @@
 <script>
 var sw_mode_orig = '<% nvram_get("sw_mode"); %>';
 var wlc_express_orig = '<% nvram_get("wlc_express"); %>';
-if((sw_mode_orig == 2 || sw_mode_orig == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+var wlc_psta_orig = '<% nvram_get("wlc_psta"); %>';
+if( ((sw_mode_orig == 2 || sw_mode_orig == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+   || sw_mode_orig == 3 && wlc_psta_orig == 3){	
 	sw_mode_orig = 4;
-
+}
+	
 window.onresize = function() {
 	if(document.getElementById("routerSSID").style.display == "block") {
 		cal_panel_block("routerSSID", 0.25);
@@ -201,7 +204,7 @@ function saveMode(){
 		}
 	}
 
-  if(document.form.sw_mode.value == 2){
+	if(document.form.sw_mode.value == 2){
 		if(document.form.wlc_express.value == 1)
 			parent.location.href = '/QIS_wizard.htm?flag=sitesurvey_exp2';
 		else if(document.form.wlc_express.value == 2)	

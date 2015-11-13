@@ -18,7 +18,9 @@
 # $Id: Makefile 398971 2013-04-26 22:39:49Z $
 #
 
+ifneq ($(wildcard ../../../../.config),)
 include ../../../../.config
+endif
 
 ARCH ?= arm
 CPU ?= bcmcore
@@ -80,10 +82,12 @@ RTAC68U := 0
 RTAC56U := 0
 RTAC3200 := 0
 PATYPE := 0
-MTDSIZE ?= $(LINUX_MTD)
-MTDSIZE ?= 32
+BCM470XC0 := 0
+MTDSIZE ?= 64
+ifneq ($(wildcard ../../../../.config),)
+MTDSIZE := $(LINUX_MTD)
+endif
 DUAL_TRX := 0
-TMO := 0
 
 # HND source base
 SRCBASE := $(shell cd ../../../.. && pwd)
@@ -145,18 +149,15 @@ CFLAGS += -DDUAL_TRX
 endif
 
 ifeq ($(strip $(RTAC68U)),1)
-ifeq ($(strip $(TMO)),1)
-MTDSIZE := 48
-CFLAGS += -DDUAL_TRX
-else
 MTDSIZE := 64
-endif
 CFLAGS += -DRTAC68U
 endif
 
 ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC88U RT-AC5300 RT-AC3100))
+ifneq ($(wildcard ../../../../.config),)
 MODELFLAG = $(shell echo $(BUILD_NAME) | sed -n "s/-//p")
 CFLAGS += -D$(MODELFLAG)
+endif
 ifeq ($(RGMII_BRCM5301X),y) 
 ifeq ($(SWITCH2), RTL8365MB)
 CFLAGS += -DRTL8365MB

@@ -49,7 +49,7 @@ int btn_turbo_gpio = 0xff;
 #ifdef RTCONFIG_LED_BTN
 int btn_led_gpio = 0xff;
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 int btn_lte_gpio = 0xff;
 #endif
 #ifdef RTCONFIG_SWMODE_SWITCH
@@ -89,7 +89,7 @@ int init_gpio(void)
 #ifdef RTCONFIG_LED_BTN
 		, "btn_led_gpio"
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 		, "btn_lte_gpio"
 #endif
 	};
@@ -112,8 +112,8 @@ int init_gpio(void)
 		, "pwr_2g_gpio"
 		, "pwr_5g_gpio"
 #endif
-#ifdef RT4GAC55U
-		, "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio"
+#ifdef RTCONFIG_INTERNAL_GOBI
+		, "led_3g_gpio", "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio", "led_sig4_gpio"
 #endif
 #if (defined(PLN12) || defined(PLAC56))
 		, "plc_wake_gpio"
@@ -135,10 +135,10 @@ int init_gpio(void)
 	int enable, disable;
 	int i;
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	void get_gpio_values_once(void);
 	get_gpio_values_once();		// for filling data to led_gpio_table[]
-#endif	/* RT4GAC55U */
+#endif	/* RTCONFIG_INTERNAL_GOBI */
 
 	/* btn input */
 	for(i = 0; i < ASIZE(btn_list); i++)
@@ -180,9 +180,9 @@ int init_gpio(void)
 			disable = !disable;
 
 		set_gpio(gpio_pin, disable);
-#ifdef RT4GAC55U	// save setting value
+#ifdef RTCONFIG_INTERNAL_GOBI	// save setting value
 		{ int i; char led[16]; for(i=0; i<LED_ID_MAX; i++) if(gpio_pin == (led_gpio_table[i]&0xff)){snprintf(led, sizeof(led), "led%02d", i); nvram_set_int(led, LED_OFF); break;}}
-#endif	/* RT4GAC55U */
+#endif	/* RTCONFIG_INTERNAL_GOBI */
 	}
 
 #if (defined(PLN12) || defined(PLAC56))
@@ -193,9 +193,9 @@ int init_gpio(void)
 	{
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
-#ifdef RT4GAC55U	// save setting value
+#ifdef RTCONFIG_INTERNAL_GOBI	// save setting value
 		{ int i; char led[16]; for(i=0; i<LED_ID_MAX; i++) if(gpio_pin == (led_gpio_table[i]&0xff)){snprintf(led, sizeof(led), "led%02d", i); nvram_set_int(led, LED_ON); break;}}
-#endif	/* RT4GAC55U */
+#endif	/* RTCONFIG_INTERNAL_GOBI */
 	}
 
 	// Power of USB.
@@ -232,9 +232,11 @@ int set_pwr_usb(int boolOn){
 
 	switch(get_model()) {
 		case MODEL_RTAC68U:
-			if((nvram_get_int("HW_ver") != 170) &&
+			if ((nvram_get_int("HW_ver") != 170) &&
 			   (atof(nvram_safe_get("HW_ver")) != 1.10) &&
-			   (atof(nvram_safe_get("HW_ver")) != 2.10))
+			   (atof(nvram_safe_get("HW_ver")) != 1.90) &&
+			   (atof(nvram_safe_get("HW_ver")) != 2.10) &&
+			   (atof(nvram_safe_get("HW_ver")) != 2.20))
 				return 0;
 			break;
 	}
@@ -315,11 +317,13 @@ void get_gpio_values_once(void)
 #ifdef RTCONFIG_QTN
 	led_gpio_table[BTN_QTN_RESET] = __get_gpio("reset_qtn_gpio");
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
+	led_gpio_table[LED_3G] = __get_gpio("led_3g_gpio");
 	led_gpio_table[LED_LTE] = __get_gpio("led_lte_gpio");
 	led_gpio_table[LED_SIG1] = __get_gpio("led_sig1_gpio");
 	led_gpio_table[LED_SIG2] = __get_gpio("led_sig2_gpio");
 	led_gpio_table[LED_SIG3] = __get_gpio("led_sig3_gpio");
+	led_gpio_table[LED_SIG4] = __get_gpio("led_sig4_gpio");
 #endif
 
 #ifdef RTAC5300
@@ -358,7 +362,7 @@ void get_gpio_values_once(void)
 #ifdef RTCONFIG_QTN
 	reset_qtn_gpio = nvram_get_int("reset_qtn_gpio");
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	btn_lte_gpio = __get_gpio("btn_lte_gpio");
 #endif
 }
@@ -413,7 +417,7 @@ int button_pressed(int which)
 			use_gpio = btn_led_gpio;
 			break;
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 		case BTN_LTE:
 			use_gpio = btn_lte_gpio;
 			break;
@@ -439,7 +443,7 @@ int button_pressed(int which)
 
 
 int led_control(int which, int mode)
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 { //save value
 	char name[16];
 
@@ -593,7 +597,7 @@ int led_control_atomic(int which, int mode)
 	return led_control(which, mode);
 }
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 void led_control_lte(int percent)
 {
 	if(percent >= 0)
@@ -628,7 +632,7 @@ void led_control_lte(int percent)
 		}
 	}
 }
-#endif	/* RT4GAC55U */
+#endif	/* RTCONFIG_INTERNAL_GOBI */
 
 
 extern uint32_t get_phy_status(uint32_t portmask);

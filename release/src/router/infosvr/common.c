@@ -159,22 +159,6 @@ char *get_lan_netmask()
 	return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
-#ifdef RTCONFIG_BCMWL6
-#ifdef RTCONFIG_PROXYSTA
-int is_psta(int unit)
-{
-	if (unit < 0) return 0;
-
-	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
-		(nvram_get_int("wlc_psta") == 1) &&
-		(nvram_get_int("wlc_band") == unit))
-		return 1;
-
-	return 0;
-}
-#endif
-#endif
-
 char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 {
     unsigned int realOPCode;
@@ -283,7 +267,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-			if (is_psta(0) || is_psta(1))
+			if (is_psta(nvram_get_int("wlc_band")) || is_psr(nvram_get_int("wlc_band")))
 			{
 				snprintf(prefix, sizeof(prefix), "wl%d_", 1 - nvram_get_int("wlc_band"));
 				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
@@ -352,7 +336,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-			if (is_psta(0) || is_psta(1))
+			if (is_psta(nvram_get_int("wlc_band")) || is_psr(nvram_get_int("wlc_band")))
 			{
 				snprintf(prefix, sizeof(prefix), "wl%d_", 1 - nvram_get_int("wlc_band"));
 				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);

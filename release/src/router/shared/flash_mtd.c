@@ -270,7 +270,7 @@ int MTDPartitionRead(const char *mtd_name, const unsigned char *buf, int offset,
 	return 0;
 }
 
-#if defined(RTCONFIG_QCA)
+#if defined(RTCONFIG_QCA) && ( defined(RTCONFIG_WIFI_QCA9557_QCA9882) || defined(RTCONFIG_QCA953X) || defined(RTCONFIG_QCA956X))
 int VVPartitionRead(const char *mtd_name, const unsigned char *buf, int offset, int count)
 {
 	int cnt, fd, ret;
@@ -320,7 +320,7 @@ int CalRead(const unsigned char *buf, int offset, int count)
 	/// TBD. MTDPartitionRead will fail...
 	return VVPartitionRead(CALDATA_MTD_NAME, buf, offset, count);
 }
-#endif	/* RTCONFIG_QCA */
+#endif	/* RTCONFIG_QCA && RTCONFIG_WIFI_QCA9557_QCA9882 */
 
 /**
  * Read data from Factory partition.
@@ -585,7 +585,7 @@ int MTDPartitionWrite(const char *mtd_name, const unsigned char *buf, int offset
 	off = offset;
 	cnt = count;
 	while (cnt > 0) {
-		o = off & ~(mi->erasesize - 1);	/* aligned to erase boundary */
+		o = ROUNDDOWN(off, mi->erasesize);	/* aligned to erase boundary */
 		len = mi->erasesize - (off - o);
 		if (cnt < len)
 			len = cnt;

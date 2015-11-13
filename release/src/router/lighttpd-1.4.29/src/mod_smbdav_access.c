@@ -171,6 +171,7 @@ URIHANDLER_FUNC(mod_smbdav_access_physical_handler){
 		strcpy(auth_password, smb_info->password->ptr);
 	}
 	
+#if 0
 	if( smbc_aidisk_account_authentication(con, auth_username, auth_password) == -1 ){
 		Cdbg(DBE, "smbc_aidisk_account_authentication fail");
 		free(auth_username);
@@ -178,6 +179,32 @@ URIHANDLER_FUNC(mod_smbdav_access_physical_handler){
 		smbc_wrapper_response_401(srv, con);
 		return HANDLER_FINISHED;
 	}
+#else
+
+	int st_samba_mode = 0;
+	
+#if EMBEDDED_EANBLE
+	st_samba_mode = nvram_get_st_samba_mode();
+#endif
+
+	//- Share All, use guest account, no need account and password.
+	if(st_samba_mode==1){
+		buffer_copy_string(con->aidisk_username, "guest");
+		buffer_copy_string(con->aidisk_passwd, "");
+	}
+	else{
+		if( smbc_acc_account_authentication(con, auth_username, auth_password) != 1 ){
+			Cdbg(DBE, "smbc_acc_account_authentication fail");
+			free(auth_username);
+			free(auth_password);
+			smbc_wrapper_response_401(srv, con);
+			return HANDLER_FINISHED;
+		}
+
+		buffer_copy_string(con->aidisk_username, auth_username);
+		buffer_copy_string(con->aidisk_passwd, auth_password);
+	}
+#endif
 
 	if(smb_info==NULL){
 		smb_info = calloc(1, sizeof(smb_info_t));

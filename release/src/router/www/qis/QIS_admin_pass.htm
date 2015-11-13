@@ -322,6 +322,12 @@ function clean_scorebar(obj){
 	if(obj.value == "")
 		document.getElementById("scorebarBorder").style.display = "none";
 }
+
+function paste_password(){
+	document.form.show_pass_1.checked = true;
+	pass_checked(document.form.http_passwd);
+	pass_checked(document.form.v_password2);
+}
 </script>
 </head>  
 <body onLoad="QKinternettype_load_body();" onunload="">
@@ -368,7 +374,7 @@ function clean_scorebar(obj){
 		<tr>
 			<th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 			<td class="QISformtd">
-				<input type="password" autocomplete="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_18_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;"/ onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off">
+				<input type="password" autocomplete="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_18_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="setTimeout('paste_password();', 10)" onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off">
 			&nbsp;&nbsp;
 				<div id="scorebarBorder" style="margin-left:180px; margin-top:-26px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 				<div id="score" style="margin-top:3px;"></div>
@@ -379,7 +385,7 @@ function clean_scorebar(obj){
 		<tr>
 			<th width="240"><span class="hintstyle"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></span></th>
 			<td class="QISformtd">
-				<input type="password" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_18_table" maxlength="16" onpaste="return false;" autocorrect="off" autocapitalize="off"/>
+				<input type="password" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_18_table" maxlength="16" onpaste="setTimeout('paste_password();', 10)" autocorrect="off" autocapitalize="off"/>
 				<div style="margin:-25px 0px 0px 175px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 			</td>
 		</tr>

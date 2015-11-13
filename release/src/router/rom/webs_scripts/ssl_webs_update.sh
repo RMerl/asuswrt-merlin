@@ -20,8 +20,8 @@ current_extendno=`echo $current_extendno | sed s/-g.*//;`
 forsq=`nvram get apps_sq`
 model=`nvram get productid`
 model="$model#"
-if [ "$model" == "RT-AC68U#" ] || [ "$model" == "RT-AC56U#" ] || [ "$model" == "RT-N18U#" ]; then	#Do upgrade middle firmware
-	model_30="1"
+if [ "$model" == "RT-AC68U#" ] || [ "$model" == "RT-AC56S#" ] || [ "$model" == "RT-AC56U#" ] || [ "$model" == "RT-N18U#" ]; then
+	model_30="1"	#Use another info after middle firmware
 else
 	model_30="0"
 fi

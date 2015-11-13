@@ -3779,6 +3779,8 @@ propmatch_cleanup:
 		char* webdav_http_port = nvram_get_webdav_http_port();
 		char* webdav_https_port = nvram_get_webdav_https_port();
 		char* http_enable = nvram_get_http_enable();
+		char* lan_http_port = "80";
+		char* lan_https_port = nvram_get_lan_https_port();
 		char* misc_http_x = nvram_get_misc_http_x();
 		char* misc_http_port = nvram_get_misc_http_port();
 		char* misc_https_port = nvram_get_misc_https_port();
@@ -3797,8 +3799,8 @@ propmatch_cleanup:
 		char* aicloud_app_type = "embed";
 		char* smartsync_version_file = "/usr/lighttpd/smartsync_control";
 		#endif
-		char aicloud_version[20]="\0";
-		char smartsync_version[20]="\0";
+		char aicloud_version[30]="\0";
+		char smartsync_version[30]="\0";
 		char *swpjverno = nvram_get_swpjverno();
 		char *extendno = nvram_get_extendno();
 
@@ -3818,6 +3820,8 @@ propmatch_cleanup:
 		char* webdav_http_port = "8082";
 		char* webdav_https_port = "443";
 		char* http_enable = "2";
+		char* lan_http_port = "80";
+		char* lan_https_port = "8443";
 		char* misc_http_x = "0";
 		char* misc_http_port = "8080";
 		char* misc_https_port = "8443";
@@ -3829,8 +3833,8 @@ propmatch_cleanup:
 		//- Get aicloud version
 		char* aicloud_version_file = "/usr/css/control";
 		char* smartsync_version_file = "/usr/css/smartsync_control";
-		char aicloud_version[20]="\0";
-		char smartsync_version[20]="\0";
+		char aicloud_version[30]="\0";
+		char smartsync_version[30]="\0";
 		char *swpjverno = "";
 		char *extendno = "";
 		char* aicloud_app_type = "embed";
@@ -3938,6 +3942,12 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("<http_enable>"));
 		buffer_append_string(b,http_enable);
 		buffer_append_string_len(b,CONST_STR_LEN("</http_enable>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<lan_http_port>"));
+		buffer_append_string(b,lan_http_port);
+		buffer_append_string_len(b,CONST_STR_LEN("</lan_http_port>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<lan_https_port>"));
+		buffer_append_string(b,lan_https_port);
+		buffer_append_string_len(b,CONST_STR_LEN("</lan_https_port>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<misc_http_enable>"));
 		buffer_append_string(b,misc_http_x);
 		buffer_append_string_len(b,CONST_STR_LEN("</misc_http_enable>"));

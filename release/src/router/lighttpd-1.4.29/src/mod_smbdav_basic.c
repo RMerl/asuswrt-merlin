@@ -131,9 +131,9 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 #endif
 			goto error_455;
 		}
-		
-		if( strcmp(user->ptr, webav_user)!=0 || 
-		    strcmp(pass->ptr, webav_pass)!=0 ){
+
+		if( smbc_acc_account_authentication(con, user->ptr, pass->ptr) != 1 ){
+		//if( strcmp(user->ptr, webav_user)!=0 || strcmp(pass->ptr, webav_pass)!=0 ){
 			
 			if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && con->smb_info && ds_auth!=NULL ){
 			//if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && con->smb_info ){

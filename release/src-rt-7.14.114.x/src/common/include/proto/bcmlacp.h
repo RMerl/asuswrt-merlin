@@ -26,7 +26,7 @@ typedef BWL_PRE_PACKED_STRUCT struct lacpdu {
 	int8 subtype;			/* LACP(= 0x01) */
 	int8 version_number;
 	int8 tlv_type_actor_info;	/* actor information(type/length/value) */
-	int8 actor_information_length; 	/* 20 */
+	int8 actor_information_length;	/* 20 */
 	int16 actor_system_priority;
 	int8 actor_system[ETH_ALEN];
 	int16 actor_key;

@@ -1915,7 +1915,12 @@ SYSCALL_DEFINE6(splice, int, fd_in, loff_t __user *, off_in,
 					goto done;
 
 				if ((out->f_op && out->f_op->splice_write)) {
-					error = do_splice_from_socket(out, sock, off_out, len);
+					ssize_t (*splice_from_socket)(struct file *, struct socket *, loff_t __user *, size_t);
+
+					splice_from_socket = out->f_op->splice_write_from_socket;
+					if(!splice_from_socket)
+						splice_from_socket = do_splice_from_socket;
+					error = splice_from_socket(out, sock, off_out, len);
 				} else {
 					/* Splice from socket->file not supported */
 					error = -EBADF;

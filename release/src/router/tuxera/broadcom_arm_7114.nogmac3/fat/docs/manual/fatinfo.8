@@ -1,0 +1,47 @@
+.\" Copyright (c) 2013-2014 Sougata Santra / Tuxera Inc.
+.\" Copyright (c) 2011 Erik Larsson / Tuxera Inc.
+.\"
+.TH FATINFO 8 "June 2013" "Tuxera TFATprogs 3014.9.11"
+.SH NAME
+fatinfo \- dump a file's attributes
+.SH SYNOPSIS
+.B fatinfo
+[\fIoptions\fR] \fIdevice\fR
+.SH DESCRIPTION
+.B fatinfo
+will dump the boot-sector and volume information of a FAT volume.
+.SH OPTIONS
+Below is a summary of all the options that
+.B fatinfo
+accepts.  Nearly all options have two equivalent names.  The short name is
+preceded by
+.B \-
+and the long name is preceded by
+.BR \-\- .
+Any single letter options, that don't take an argument, can be combined into a
+single command, e.g.
+.B \-fv
+is equivalent to
+.BR "\-f \-v" .
+Long named options can be abbreviated to any unique prefix of their name.
+.TP
+\fB\-a\fR, \fB\-\-backup\-boot-\-sector\fR
+Dump backup\-boot\-sector (the default is primary boot sector).
+.TP
+\fB\-b\fR, \fB\-\-boot-\sector\fR
+Dump backup\-boot\-sector (the default is primary boot sector).
+.SH BUGS
+There are no known problems with
+.BR fatinfo .
+If you find a bug please send an email describing the problem to
+fat-support@tuxera.com.
+.hy
+.SH AUTHORS
+.B fatinfo
+was written by Sougata Santra, Tuxera Inc.
+.SH AVAILABILITY
+.B fatinfo
+is part of the
+.B Tuxera FAT
+package.
+.hy

@@ -820,7 +820,7 @@ int enable_qos()
 		 nvram_match("qos_pshack_prio", "1") ||
 		 nvram_match("qos_service_enable", "1") ||
 		 nvram_match("qos_shortpkt_prio", "1")	) ||
-		(!nvram_match("qos_manual_ubw","0") && !nvram_match("qos_manual_ubw","")) ||
+		(!nvram_match("qos_manual_ubw","0") && *nvram_safe_get("qos_manual_ubw")) ||
 		(rulenum && qos_userspec_app_en)
 	)
 	{
@@ -942,11 +942,6 @@ void update_wan_state(char *prefix, int state, int reason)
                 run_custom_script("wan-start", tmp);
         }
 
-#ifdef RTCONFIG_DUALWAN
-#if defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
-	refresh_ntpc();
-#endif
-#endif
 #if defined(RTCONFIG_WANRED_LED)
 	if (state == WAN_STATE_INITIALIZING || state == WAN_STATE_STOPPED || state == WAN_STATE_CONNECTING || state == WAN_STATE_STOPPING || state == WAN_STATE_CONNECTED) {
 		int unit = 0;
@@ -1182,6 +1177,84 @@ void check_wan_nvram(void)
 	if(nvram_match("wan1_proto", "")) nvram_set("wan1_proto", "dhcp");
 }
 #endif
+
+#ifdef DSL_AC68U	//Andy Chiu, 2015/09/15
+extern cur_ewan_vid;
+
+int check_wan_if(int unit)
+{
+	//check wan mode.
+	dbG("unit=%d\n", unit);
+	if((get_wans_dualwan()&WANSCAP_LAN) && nvram_match("ewan_dot1q", "1"))
+	{
+		//check vid
+		int new_vid = nvram_get_int("ewan_vid");
+		dbG("cur_vid=%d, new_vid=%d\n", cur_ewan_vid, new_vid);
+		
+		if(new_vid != cur_ewan_vid)
+		{
+			//generate vlan interfaces
+			char cur_vif[16], new_vif[16];
+			sprintf(cur_vif, "vlan%d", cur_ewan_vid);
+			sprintf(new_vif, "vlan%d", new_vid);
+
+			dbG("cur_vif=%s, new_vif=%s\n", cur_vif, new_vif);
+			
+			char word[256], *next, tmp[256];
+			//replace old vlan interface by new vlan interface
+			memset(tmp, 0, 256);
+			foreach(word, nvram_safe_get("wandevs"), next)
+			{
+				sprintf(tmp, "%s %s", tmp, (!strcmp(word, cur_vif))? new_vif: word);
+			}
+			dbG("wandevs=%s\n", tmp);
+			nvram_set("wandevs", tmp);
+
+			//replace wan_phy
+			memset(tmp, 0, 256);
+			foreach(word, nvram_safe_get("wan_ifnames"), next)
+			{
+				sprintf(tmp, "%s %s", tmp, (!strcmp(word, cur_vif))? new_vif: word);
+			}
+			dbG("wan_ifnames=%s\n", tmp);
+			nvram_set("wan_ifnames", tmp);
+
+			//check all wan unit.
+			int unit;
+			char prefix[32];
+			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+			{
+				sprintf(prefix, "wan%d_ifname", unit);
+				if(nvram_match(prefix, cur_vif))
+				{
+					dbG("%s=%s\n", prefix, new_vif);
+					nvram_set(prefix, new_vif);
+				}
+
+				sprintf(prefix, "wan%d_gw_ifname", unit);
+				if(nvram_match(prefix, cur_vif))
+				{
+					dbG("%s=%s\n", prefix, new_vif);
+					nvram_set(prefix, new_vif);
+				}
+			}
+		
+			//remove old vlan		
+			eval("ifconfig", cur_vif, "down");
+			eval("vcondif", "rem", cur_vif);
+
+			//set new vlan
+			eval("vconfig", "set_name_type", "VLAN_PLUS_VID_NO_PAD");
+			eval("vconfig", "add", "eth0", nvram_safe_get("ewan_vid"));
+			eval("ifconfig", new_vif, "up");
+			eval("ifconfig", new_vif, "hw", "ether", nvram_safe_get("et1macaddr"));
+			cur_ewan_vid = new_vid;
+		}
+		dbG("Set switch\n");
+		config_switch_dsl_set_lan();
+	}
+}
+#endif 
 
 void
 start_wan_if(int unit)
@@ -1779,11 +1852,8 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 		else if (strcmp(wan_proto, "dhcp") == 0)
 		{
 			/* Bring up WAN interface */
+			dbG("ifup:%s\n", wan_ifname);
 			ifconfig(wan_ifname, IFUP, NULL, NULL);
-
-#ifdef RTCONFIG_DSL
-			nvram_set(strcat_r(prefix, "clientid", tmp), nvram_safe_get("dslx_dhcp_clientid"));
-#endif
 
 			/* MTU */
 			if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
@@ -1804,9 +1874,15 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 			}
 
 			/* Start pre-authenticator */
+			dbG("start auth:%d\n", unit);
 			start_auth(unit, 0);
 
+#ifdef RTCONFIG_DSL
+			dbG("nvram set %s=%s\n", strcat_r(prefix, "clientid", tmp), nvram_safe_get("dslx_dhcp_clientid"));
+			nvram_set(strcat_r(prefix, "clientid", tmp), nvram_safe_get("dslx_dhcp_clientid"));
+#endif
 			/* Start dhcp daemon */
+			dbG("start udhcpc:%s, %d\n", wan_ifname, unit);
 			start_udhcpc(wan_ifname, unit, &pid);
 		}
 		/* Configure static IP connection. */
@@ -2031,7 +2107,7 @@ stop_wan_if(int unit)
 		}
 #endif	/* RTCONFIG_USB_BECEEM */
 
-#if defined(RT4GAC55U)
+#ifdef RTCONFIG_INTERNAL_GOBI
 		char *const modem_argv[] = {"modem_stop.sh", NULL};
 
 		_eval(modem_argv, ">>/tmp/usb.log", 0, NULL);
@@ -2530,7 +2606,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	add_multi_routes();
 
 #ifdef RTCONFIG_USB_MODEM
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	if(dualwan_unit__usbif(wan_unit)){
 		eval("modem_status.sh", "operation");
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -2679,7 +2755,7 @@ wan_down(char *wan_ifname)
 
 	_dprintf("%s(%s): %s.\n", __FUNCTION__, wan_ifname, nvram_safe_get(strcat_r(prefix, "dns", tmp)));
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	if(dualwan_unit__usbif(wan_unit))
 		nvram_unset("usb_modem_act_startsec");
 #endif
@@ -3020,7 +3096,7 @@ start_wan(void)
 #endif
 
 	/* Report stats */
-	if (!nvram_match("stats_server", "")) {
+	if (*nvram_safe_get("stats_server")) {
 		char *stats_argv[] = { "stats", nvram_safe_get("stats_server"), NULL };
 		_eval(stats_argv, NULL, 5, NULL);
 	}
@@ -3104,7 +3180,11 @@ void convert_wan_nvram(char *prefix, int unit)
 	else{
 		/* QTN */
 		if(strcmp(prefix, "wan1_") == 0){
+#ifdef RTCONFIG_GMAC3
+			strcpy(hwaddr_5g, nvram_get_int("gmac3_enable")? nvram_safe_get("et2macaddr"): nvram_safe_get("et1macaddr"));
+#else
 			strcpy(hwaddr_5g, nvram_safe_get("et1macaddr"));
+#endif
 			inc_mac(hwaddr_5g, 7);
 			nvram_set(strcat_r(prefix, "hwaddr", tmp), hwaddr_5g);
 			logmessage("wan", "[%s] == [%s]\n", tmp, hwaddr_5g);

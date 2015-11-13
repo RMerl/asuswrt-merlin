@@ -81,46 +81,51 @@ global.uploadlib = new function() {
 		var start = opt_startByte;
 		var stop = opt_stopByte;
 		
-		var reader = new FileReader();
-		var bSliceAsBinary = 0;
-		
-		// If we use onloadend, we need to check the readyState.
-		reader.onloadend = function(evt) {			
-			if (evt.target.readyState == FileReader.DONE) { // DONE == 2   
-				//alert(evt.target.result.byteLength);
-				  	
-				var tURL = this_upload_handler.url + encodeURIComponent(path) + encodeURIComponent(pfile.name);
-				
-				this_upload_handler.webdav.PUT(tURL, 
-					evt.target.result, 
-					bSliceAsBinary, 
-					start, 
-					stop, 
-					filesize, 
-					"T",
-					this_upload_handler._complete_callbackfunction,
-					this_upload_handler._progress_callbackfunction);
-			}
-		};
-		
-		if (pfile.webkitSlice) {
-			var blob = pfile.webkitSlice(start, stop + 1);
-			reader.readAsArrayBuffer(blob);
-			bSliceAsBinary = 1;
-		} 
-		else if (pfile.mozSlice) {      
-			var blob = pfile.mozSlice(start, stop + 1);
-			reader.readAsBinaryString(blob);
-			bSliceAsBinary = 0;
+		try{
+			var reader = new FileReader();
+			var bSliceAsBinary = 0;
 			
-			//reader.readAsArrayBuffer(blob);
-			//bSliceAsBinary = 1;			
+			// If we use onloadend, we need to check the readyState.
+			reader.onloadend = function(evt) {			
+				if (evt.target.readyState == FileReader.DONE) { // DONE == 2   
+					//alert(evt.target.result.byteLength);
+					  	
+					var tURL = this_upload_handler.url + encodeURIComponent(path) + encodeURIComponent(pfile.name);
+					
+					this_upload_handler.webdav.PUT(tURL, 
+						evt.target.result, 
+						bSliceAsBinary, 
+						start, 
+						stop, 
+						filesize, 
+						"T",
+						this_upload_handler._complete_callbackfunction,
+						this_upload_handler._progress_callbackfunction);
+				}
+			};
+			
+			if (pfile.webkitSlice) {
+				var blob = pfile.webkitSlice(start, stop + 1);
+				reader.readAsArrayBuffer(blob);
+				bSliceAsBinary = 1;
+			} 
+			else if (pfile.mozSlice) {      
+				var blob = pfile.mozSlice(start, stop + 1);
+				reader.readAsBinaryString(blob);
+				bSliceAsBinary = 0;
+				
+				//reader.readAsArrayBuffer(blob);
+				//bSliceAsBinary = 1;			
+			}
+			else {
+				var blob = pfile.slice(start, stop + 1);			
+				reader.readAsArrayBuffer(blob);
+				bSliceAsBinary = 1;			
+	    	}
 		}
-		else {
-			var blob = pfile.slice(start, stop + 1);			
-			reader.readAsArrayBuffer(blob);
-			bSliceAsBinary = 1;			
-    	}
+		catch(err){
+			alert(err.message);	
+		}
 	};
 	
 	this.WebDAVUploadHandler.prototype._progress_callbackfunction = function(evt){

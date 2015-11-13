@@ -557,6 +557,9 @@ struct xhci_slot_ctx {
 #define SLOT_STATE	(0x1f << 27)
 #define GET_SLOT_STATE(p)	(((p) & (0x1f << 27)) >> 27)
 
+/* deq bitmasks */
+#define EP_CTX_CYCLE_MASK               (1 << 0)
+#define SCTX_DEQ_MASK                   (~0xfL)
 
 /**
  * struct xhci_ep_ctx
@@ -1043,6 +1046,9 @@ union xhci_trb {
 #define	TRB_NEC_CMD_COMP	48
 /* Get NEC firmware revision. */
 #define	TRB_NEC_GET_FW		49
+
+#define TRB_TYPE_LINK_LE32(x)	(((x) & cpu_to_le32(TRB_TYPE_BITMASK)) == \
+	cpu_to_le32(TRB_TYPE(TRB_LINK)))
 
 #define TRB_TYPE_LINK_LE32(x)	(((x) & cpu_to_le32(TRB_TYPE_BITMASK)) == \
 	cpu_to_le32(TRB_TYPE(TRB_LINK)))

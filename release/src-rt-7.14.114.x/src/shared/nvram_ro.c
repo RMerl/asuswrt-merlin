@@ -406,22 +406,8 @@ initvars_file(si_t *sih, osl_t *osh, char **nvramp, int *nvraml)
 	char *nvram_buf = *nvramp;
 	void	*nvram_fp = NULL;
 	int nv_len = 0, ret = 0, i = 0, len = 0;
-#if defined(BCM_REQUEST_FW)
-	char nv_name[64] = "/lib/firmware/brcm/bcm";
-	switch (CHIPID(sih->chip)) {
-	case BCM4360_CHIP_ID:
-		bcmstrncat(nv_name, "4360", 4);
-		break;
-	default:
-		NVR_MSG(("%s: unsupported device %x\n", __FUNCTION__, CHIPID(sih->chip)));
-		ret = -1;
-		goto exit;
-	}
-	bcmstrncat(nv_name, ".nvm", 4);
-	nvram_fp = (void*)osl_os_open_image(nv_name);
-#else
+
 	nvram_fp = (void*)osl_os_open_image("nvram.txt");
-#endif /* BCM_REQUEST_FW */
 	if (nvram_fp != NULL) {
 		while ((nv_len = osl_os_get_image_block(nvram_buf, MAXSZ_NVRAM_VARS, nvram_fp)))
 			len = nv_len;

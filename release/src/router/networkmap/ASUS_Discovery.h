@@ -19,7 +19,7 @@ typedef struct _SearchRouterInfoStruct
     char routerSubMask[32];
     unsigned char routerMacAddress[6];
     unsigned char routerRealMacAddress[18];
-    char routerSSID[32];
+    char routerSSID[33];			/* maximum length of SSID is 32 characters. */
     char routerFirmwareVersion[16];
     char routerOperationMode;
     char routerRegulation;

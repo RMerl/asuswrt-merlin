@@ -46,7 +46,7 @@ body{
 	width: 480px;
 }
 .button{
-	background-color:#007AFF;
+	background-color:#279FD9;
 	/*background:rgba(255,255,255,0.1);
 	border: solid 1px #6e8385;*/
 	border-radius: 4px ;

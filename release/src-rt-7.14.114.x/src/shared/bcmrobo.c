@@ -976,8 +976,10 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 //#ifndef	_CFE_
 	const char *et1port, *et1phyaddr;
 	int mdcport = 0, phyaddr = 0;
+#ifndef RTAC68U
 	uint8 val8;
-	uint16 reg_val; 
+	uint16 reg_val;
+#endif
 //#endif /* _CFE_ */
 	int lan_portenable = 0;
 	int rc;
@@ -1235,6 +1237,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	robo->plc_hw = (getvar(vars, "plc_vifs") != NULL);
 #endif /* PLC */
 
+#ifndef RTAC68U
 	/* reset p5 reg when needs to link up it in ac88u/ac87u */
 	if (ROBO_IS_BCM5301X(robo->devid) && mdcport == 0 && phyaddr == 30) {
 		val8 = 0xfb;
@@ -1259,6 +1262,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	reg_val |= 0x1ff;
 #endif
 	robo->ops->write_reg(robo, PAGE_CTRL, 0x1a, &reg_val, sizeof(reg_val));
+#endif
 
 #ifdef BCMFA
 	robo->aux_pid = -1;
@@ -1825,7 +1829,6 @@ robo_fa_enable(robo_info_t *robo, bool on, bool bhdr)
 {
 	uint16 val16;
 	uint8 val8;
-	int32 err;
 
 	if (!robo)
 		return;
@@ -1837,19 +1840,8 @@ robo_fa_enable(robo_info_t *robo, bool on, bool bhdr)
 	/* BCM_HDR and OOB PAUSE */
 	if (on) {
 		/* Enable BCM_HDR Tag on IMP port if need it. */
-#ifdef ETAGG
-		if (bhdr)
-			err = robo_bhdr_register(robo, BHDR_PORT8, BHDR_FA);
-		else
-			err = robo_bhdr_unregister(robo, BHDR_PORT8, BHDR_FA);
-		if (err) {
-			ET_ERROR(("%s: enabling FA but failed to %s bhdr\n",
-				__FUNCTION__, bhdr ? "register" : "unregister"));
-		}
-#else
 		val8 = (bhdr ? 0x1 : 0x0);
 		robo->ops->write_reg(robo, PAGE_MMR, REG_BRCM_HDR, &val8, sizeof(val8));
-#endif	/* ETAGG */
 
 		/* Use out-of-band signal for Switch and SOC flow control */
 		robo->ops->read_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
@@ -1858,16 +1850,8 @@ robo_fa_enable(robo_info_t *robo, bool on, bool bhdr)
 	}
 	else {
 		/* Disable BRCM HDR */
-#ifdef ETAGG
-		err = robo_bhdr_unregister(robo, BHDR_PORT8, BHDR_FA);
-		if (err) {
-			ET_ERROR(("%s: disabling FA but failed to unregister bhdr\n",
-				__FUNCTION__));
-		}
-#else
 		val8 = 0x0;
 		robo->ops->write_reg(robo, PAGE_MMR, REG_BRCM_HDR, &val8, sizeof(val8));
-#endif	/* ETAGG */
 
 		/* Default value: Use pause frame for Switch and SOC flow control. */
 		robo->ops->read_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
@@ -2377,7 +2361,7 @@ bcm_robo_enable_switch(robo_info_t *robo)
 					&val8, sizeof(val8));
 				mang_mode_en = TRUE;
 
-				/* BCM_GMAC3: Enable ports 5 and 7 for SMP dual core 3 GMAC setup */
+				/* Enable ports 5 and 7 for SMP dual core 3 GMAC setup */
 
 				/* Port 5 GMII Port States Override Register
 				 * (Page 0, Address 0x5d)

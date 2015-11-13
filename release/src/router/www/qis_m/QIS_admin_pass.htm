@@ -231,6 +231,10 @@ function clean_scorebar(obj){
 	if(obj.value == "")
 		document.getElementById("scorebarBorder").style.display = "none";
 }
+function paste_password(){
+	document.form.http_passwd.type = "text";
+	document.form.v_password2.type = "text";
+}
 </script>
 
 <style>
@@ -264,7 +268,7 @@ body{
 	<div id="alert_msg1" style="color:#FC0;margin-left:15px;display:none;"></div>
 	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PASS_new#></div>
 	<div style="margin:10px 27px 10px 15px;">
-		<input type="password" name="http_passwd" tabindex="2" style="width:100%;height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="16" onpaste="return false;"/ onBlur="clean_scorebar(this);" autocomplete="off" autocorrect="off" autocapitalize="off">
+		<input type="password" name="http_passwd" tabindex="2" style="width:100%;height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="16" onpaste="setTimeout('paste_password();', 10)" onBlur="clean_scorebar(this);" autocomplete="off" autocorrect="off" autocapitalize="off">
 	</div>
 	<div id="scorebarBorder" style="display:none;margin-left:15px" title="<#LANHostConfig_x_Password_itemSecur#>">
 		<div id="score"></div>
@@ -272,14 +276,14 @@ body{
 	</div>
 	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PASS_retype#></div>
 	<div style="margin:10px 27px 120px 15px">
-		<input type="password" name="v_password2" tabindex="3" style="width:100%;height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="16" onpaste="return false;" autocomplete="off" autocorrect="off" autocapitalize="off"/ onBlur="clean_scorebar(this);">
+		<input type="password" name="v_password2" tabindex="3" style="width:100%;height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="16" onpaste="setTimeout('paste_password();', 10)" autocomplete="off" autocorrect="off" autocapitalize="off"/ onBlur="clean_scorebar(this);">
 	</div>
 	<div id="bottom_button" style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
 		<div style="width:100%;height:100%;display:table">
 			<div id="prev_btn" style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="gotoPrev();">
 				<div style="font-size:1em;color:#7E8593"><#CTL_prev#></div>
 			</div>
-			<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;background-color:#007AFF" onclick="submitForm();">
+			<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;background-color:#279FD9" onclick="submitForm();">
 				<div style="font-size:1em;color:#FFF;"><#CTL_next#></div>
 			</div>
 		</div>

@@ -1,4 +1,3 @@
-#define TRAFFIC_DB_PATH "/jffs/traffic.db"
 #define MON_SEC 86400 * 31
 #define DAY_SEC 86400
 #define HOURSEC 3600

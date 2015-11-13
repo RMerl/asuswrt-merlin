@@ -91,7 +91,7 @@
 //usage:       "Send ICMP ECHO_REQUEST packets to network hosts\n"
 //usage:     "\n	-4,-6		Force IP or IPv6 name resolution"
 //usage:     "\n	-c CNT		Send only CNT pings"
-//usage:     "\n	-s SIZE		Send SIZE data bytes in packets (default:56)"
+//usage:     "\n	-s SIZE		Send SIZE data bytes in packets (default:32)"
 //usage:     "\n	-t TTL		Set TTL"
 //usage:     "\n	-I IFACE/IP	Use interface or IP address as source"
 //usage:     "\n	-W SEC		Seconds to wait for the first response (default:10)"
@@ -100,13 +100,14 @@
 //usage:     "\n			(can exit earlier with -c CNT)"
 //usage:     "\n	-q		Quiet, only displays output at start"
 //usage:     "\n			and when finished"
+//usage:     "\n	-M		packets can fragment"
 //usage:
 //usage:# define ping6_trivial_usage
 //usage:       "[OPTIONS] HOST"
 //usage:# define ping6_full_usage "\n\n"
 //usage:       "Send ICMP ECHO_REQUEST packets to network hosts\n"
 //usage:     "\n	-c CNT		Send only CNT pings"
-//usage:     "\n	-s SIZE		Send SIZE data bytes in packets (default:56)"
+//usage:     "\n	-s SIZE		Send SIZE data bytes in packets (default:32)"
 //usage:     "\n	-I IFACE/IP	Use interface or IP address as source"
 //usage:     "\n	-q		Quiet, only displays output at start"
 //usage:     "\n			and when finished"
@@ -141,12 +142,13 @@
 #endif
 
 enum {
-	DEFDATALEN = 56,
+	DEFDATALEN = 32,
 	MAXIPLEN = 60,
 	MAXICMPLEN = 76,
 	MAX_DUP_CHK = (8 * 128),
 	MAXWAIT = 10,
 	PINGINTERVAL = 1, /* 1 second */
+	DEFTTL = 128
 };
 
 #if !ENABLE_FEATURE_FANCY_PING
@@ -299,18 +301,19 @@ static int common_ping_main(sa_family_t af, char **argv)
 
 /* Full(er) version */
 
-#define OPT_STRING ("qvc:s:t:w:W:I:4" IF_PING6("6"))
+#define OPT_STRING ("qvMc:s:t:w:W:I:4" IF_PING6("6"))
 enum {
 	OPT_QUIET = 1 << 0,
 	OPT_VERBOSE = 1 << 1,
-	OPT_c = 1 << 2,
-	OPT_s = 1 << 3,
-	OPT_t = 1 << 4,
-	OPT_w = 1 << 5,
-	OPT_W = 1 << 6,
-	OPT_I = 1 << 7,
-	OPT_IPV4 = 1 << 8,
-	OPT_IPV6 = (1 << 9) * ENABLE_PING6,
+	OPT_M = 1 << 2,
+	OPT_c = 1 << 3,
+	OPT_s = 1 << 4,
+	OPT_t = 1 << 5,
+	OPT_w = 1 << 6,
+	OPT_W = 1 << 7,
+	OPT_I = 1 << 8,
+	OPT_IPV4 = 1 << 9,
+	OPT_IPV6 = (1 << 10) * ENABLE_PING6,
 };
 
 
@@ -342,6 +345,7 @@ struct globals {
 #endif
 	} pingaddr;
 	char rcvd_tbl[MAX_DUP_CHK / 8];
+	unsigned pmtudisc;
 } FIX_ALIASING;
 #define G (*(struct globals*)&bb_common_bufsiz1)
 #define pingsock     (G.pingsock    )
@@ -365,6 +369,7 @@ struct globals {
 #define dotted       (G.dotted      )
 #define pingaddr     (G.pingaddr    )
 #define rcvd_tbl     (G.rcvd_tbl    )
+#define pmtudisc     (G.pmtudisc    )
 void BUG_ping_globals_too_big(void);
 #define INIT_G() do { \
 	if (sizeof(G) > COMMON_BUFSIZE) \
@@ -673,6 +678,13 @@ static void ping4(len_and_sockaddr *lsa)
 		setsockopt(pingsock, IPPROTO_IP, IP_MULTICAST_TTL, &opt_ttl, sizeof(opt_ttl));
 	}
 
+	setsockopt(pingsock, SOL_IP, IP_MTU_DISCOVER, &pmtudisc, sizeof(pmtudisc));
+
+	int ttl = DEFTTL;
+	int ittl = ttl;
+	setsockopt(pingsock, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, 1);
+	setsockopt(pingsock, IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl));
+
 	signal(SIGINT, print_stats_and_exit);
 
 	/* start the ping's going ... */
@@ -839,6 +851,11 @@ static int common_ping_main(int opt, char **argv)
 	hostname = argv[optind];
 #if ENABLE_PING6
 	{
+		if (opt & OPT_M)
+			pmtudisc = IP_PMTUDISC_DO;
+		else
+			pmtudisc = IP_PMTUDISC_DONT;
+
 		sa_family_t af = AF_UNSPEC;
 		if (opt & OPT_IPV4)
 			af = AF_INET;

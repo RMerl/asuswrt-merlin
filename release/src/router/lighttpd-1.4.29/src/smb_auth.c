@@ -2302,6 +2302,7 @@ int smbc_parser_basic_authentication(server *srv, connection* con, char** userna
 	return 0;
 }
 
+#if 0
 int smbc_aidisk_account_authentication(connection* con, const char *username, const char *password){
 
 	char *nvram_acc_list;
@@ -2326,7 +2327,7 @@ int smbc_aidisk_account_authentication(connection* con, const char *username, co
 #endif
 
 	int account_right = -1;
-
+	
 	//- Share All, use guest account, no need account and password.
 	if(st_samba_mode==1){
 		buffer_copy_string(con->aidisk_username, "guest");
@@ -2363,13 +2364,85 @@ int smbc_aidisk_account_authentication(connection* con, const char *username, co
 		buffer_copy_string(buffer_acc_pass, pass);
 		buffer_urldecode_path(buffer_acc_pass);
 		free(pass);		
-
+		
 		if( buffer_is_equal_string(buffer_acc_name, username, strlen(username)) &&
 			buffer_is_equal_string(buffer_acc_pass, password, strlen(password)) ){
 			
 			buffer_copy_string(con->aidisk_username, username);
 			buffer_copy_string(con->aidisk_passwd, password);
 				
+			account_right = 1;
+			
+			break;
+		}
+		
+		pch = strtok(NULL,"<>");
+	}
+
+	buffer_free(buffer_acc_name);
+	buffer_free(buffer_acc_pass);
+	free(nvram_acc_list);
+		
+	return account_right;
+}
+#endif
+
+int smbc_acc_account_authentication(connection* con, const char *username, const char *password){
+
+	char *nvram_acc_list;
+	
+	if (con->mode != SMB_BASIC&&con->mode != DIRECT) return -1;
+#if EMBEDDED_EANBLE
+	char *a = nvram_get_acc_list();
+	if(a==NULL) return -1;
+	int l = strlen(a);
+	nvram_acc_list = (char*)malloc(l+1);
+	strncpy(nvram_acc_list, a, l);
+	nvram_acc_list[l] = '\0';
+	#ifdef APP_IPKG
+	free(a);
+	#endif
+#else
+	int i = 100;
+	nvram_acc_list = (char*)malloc(100);
+	strcpy(nvram_acc_list, "admin>admin<jerry>jerry");
+#endif
+
+	int account_right = -1;
+	
+	char * pch;
+	pch = strtok(nvram_acc_list, "<>");	
+
+	buffer* buffer_acc_name = buffer_init();
+	buffer* buffer_acc_pass = buffer_init();
+	
+	while(pch!=NULL){
+		char *name;
+		char *pass;
+		int len;
+		
+		//- User Name
+		len = strlen(pch);
+		name = (char*)malloc(len+1);
+		strncpy(name, pch, len);
+		name[len] = '\0';
+		buffer_copy_string(buffer_acc_name, name);
+		buffer_urldecode_path(buffer_acc_name);
+		free(name);
+		
+		//- User Password
+		pch = strtok(NULL,"<>");
+		len = strlen(pch);
+		pass = (char*)malloc(len+1);
+		strncpy(pass, pch, len);
+		pass[len] = '\0';
+		buffer_copy_string(buffer_acc_pass, pass);
+		buffer_urldecode_path(buffer_acc_pass);
+		free(pass);		
+		
+		if( buffer_is_equal_string(buffer_acc_name, username, strlen(username)) &&
+			buffer_is_equal_string(buffer_acc_pass, password, strlen(password)) ){
+			
 			account_right = 1;
 			
 			break;

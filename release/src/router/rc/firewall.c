@@ -1092,7 +1092,7 @@ void repeater_nat_setting(){
 	fprintf(fp, "-A PREROUTING -d %s -p tcp --dport 80 -j DNAT --to-destination %s:80\n", nvram_default_get("lan_ipaddr"), lan_ip);
 #ifdef RTCONFIG_REDIRECT_DNAME
 	fprintf(fp, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:53\n", lan_ip);
-#endif	
+#endif
 	fprintf(fp, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:18018\n", lan_ip);
 	fprintf(fp, "COMMIT\n");
 
@@ -1198,7 +1198,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 
 		nv = strdup(nvram_safe_get("Tor_redir_list"));
-                if (strlen(nv) == 0) {
+		if (strlen(nv) == 0) {
 		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
 		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
 		}
@@ -1447,23 +1447,23 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
 
 #ifdef RTCONFIG_TOR
-         if(nvram_match("Tor_enable", "1")){
-                ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+	if(nvram_match("Tor_enable", "1")){
+		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 
-                nv = strdup(nvram_safe_get("Tor_redir_list"));
-                if (strlen(nv) == 0) {
-                fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
-                fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
-                }
-                else{
-                        while ((b = strsep(&nv, "<")) != NULL) {
-                                if (strlen(b)==0) continue;
-                                        fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, b, nvram_safe_get("Tor_dnsport"));
-                                        fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, b, nvram_safe_get("Tor_transport"));
-                        }
-                        free(nv);
-                }
-        }
+		nv = strdup(nvram_safe_get("Tor_redir_list"));
+		if (strlen(nv) == 0) {
+		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
+		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
+		}
+		else{
+			while ((b = strsep(&nv, "<")) != NULL) {
+				if (strlen(b)==0) continue;
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, b, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, b, nvram_safe_get("Tor_transport"));
+			}
+			free(nv);
+		}
+	}
 #endif
 	}
 	if (!fp) {
@@ -1709,12 +1709,12 @@ void redirect_setting(void)
 				&& strncmp(tmp_buf, "COMMIT", 6) != 0) {
 #ifdef RTCONFIG_TOR
 			if(nvram_match("Tor_enable", "1")){
-				if(strstr(tmp_buf, "PREROUTING") && strstr(tmp_buf, "--to-ports 9053"))	
+				if(strstr(tmp_buf, "PREROUTING") && strstr(tmp_buf, "--to-ports 9053"))
 					continue;
 				if(strstr(tmp_buf, "PREROUTING") && strstr(tmp_buf, "--to-ports 9040"))
 					continue;
 			}
-#endif			
+#endif
 			fprintf(redirect_fp, "%s", tmp_buf);
 		}
 		fclose(nat_fp);
@@ -2806,6 +2806,8 @@ TRACE_PT("writing Parental Control\n");
 		fprintf(fp, "-I %s -i %s -o %s -p 50 -j %s\n", chain, lan_if, wan_if, "DROP");
 		fprintf(fp, "-I %s -i %s -o %s -p 51 -j %s\n", chain, lan_if, wan_if, "DROP");
 	}
+	if (nvram_match("fw_pt_sip", "0"))
+		fprintf(fp, "-I %s -i %s -o %s -p udp --dport %d -j %s\n", chain, lan_if, wan_if, 5060, "DROP");
 
 	// Filter from WAN to LAN
 	if (nvram_match("fw_wl_enable_x", "1"))
@@ -3567,7 +3569,7 @@ TRACE_PT("writing Parental Control\n");
  			continue;
  		wan_if = get_wan_ifname(unit);
 
-		fprintf(fp, "-A FORWARD -i %s -j %s", wan_if, "SECURITY");
+		fprintf(fp, "-A FORWARD -i %s -j %s\n", wan_if, "SECURITY");
 	}
 
 	// FILTER from LAN to WAN
@@ -3741,6 +3743,8 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-I %s -i %s -o %s -p 50 -j %s\n", chain, lan_if, wan_if, "DROP");
 			fprintf(fp, "-I %s -i %s -o %s -p 51 -j %s\n", chain, lan_if, wan_if, "DROP");
 		}
+		if (nvram_match("fw_pt_sip", "0"))
+			fprintf(fp, "-I %s -i %s -o %s -p udp --dport %d -j %s\n", chain, lan_if, wan_if, 5060, "DROP");
 	}
 
 	// Filter from WAN to LAN
@@ -3971,7 +3975,7 @@ TRACE_PT("write url filter\n");
 #ifdef RTCONFIG_IPV6
 					if (ipv6_enabled())
 					fprintf(fp_ipv6, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j REJECT --reject-with tcp-reset\n",
-                                                timef, filterstr);
+						timef, filterstr);
 #endif
 				}
 			}
@@ -4048,11 +4052,30 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 	char *out_proto, *in_proto, *out_port, *in_port, *desc;
 	char out_protoptr[16], in_protoptr[16];
 	int first = 1;
+#ifdef RTCONFIG_DUALWAN
+	char dualwan_mode[8];
+	char dualwan_wans[16];
+#endif
 
 	if(is_nat) {
 		fprintf(fp, "-A VSERVER -j TRIGGER --trigger-type dnat\n");
 		return;
 	}
+
+#ifdef RTCONFIG_DUALWAN
+	memset(dualwan_mode, 0, 8);
+	strcpy(dualwan_mode, nvram_safe_get("wans_mode"));
+	memset(dualwan_wans, 0, 16);
+	strcpy(dualwan_wans, nvram_safe_get("wans_dualwan"));
+	/* load balance mode, skip port trigger on secondary wan */
+	if(strcmp(dualwan_mode, "lb") == 0 &&
+		strcmp(dualwan_wans, "wan none") != 0){
+		if(nvram_match("wan1_gw_ifname", wan_if)){
+			_dprintf("porttrigger, this is secondary wan[%s], skip port trigger\n", wan_if);
+			return;
+		}
+	}
+#endif
 
 	nvp = nv = strdup(nvram_safe_get("autofw_rulelist"));
 	while (nv && (b = strsep(&nvp, "<")) != NULL) {
@@ -4292,7 +4315,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #ifdef RTCONFIG_IPV6
 	if (nvram_get_int("yadns_enable_x") && ipv6_enabled()) {
 		FILE *fp;
-		
+
 		fp = fopen("/tmp/mangle_rules_ipv6.yadns", "w");
 		if (fp != NULL) {
 			fprintf(fp, "*mangle\n"
@@ -4386,7 +4409,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 			     "-p", "tcp",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
 		}
-#endif
+#endif		
 	}
 #endif
 }
@@ -4486,6 +4509,11 @@ int start_firewall(int wanunit, int lanunit)
 	char wan_if[IFNAMSIZ+1], wan_ip[32], lan_if[IFNAMSIZ+1], lan_ip[32];
 	char wanx_if[IFNAMSIZ+1], wanx_ip[32], wan_proto[16];
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
+
+	if (getpid() != 1) {
+		notify_rc("start_firewall");
+		return 0;
+	}
 
 	if (getpid() != 1) {
 		notify_rc("start_firewall");
@@ -4806,7 +4834,7 @@ int start_firewall(int wanunit, int lanunit)
 #ifdef RTCONFIG_OPENVPN
 	run_vpn_firewall_scripts();
 #endif
-	
+
 	if(nvram_match("ttl_inc_enable", "0"))
 	{
 		modprobe_r("xt_HL");

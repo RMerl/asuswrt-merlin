@@ -1768,6 +1768,8 @@ got_data:
 
 	sdp->use_16_for_rw = (sdkp->capacity > 0xffffffff);
 
+	sdp->use_16_for_rw = (sdkp->capacity > 0xffffffff);
+
 	/* Rescale capacity to 512-byte units */
 	if (sector_size == 4096)
 		sdkp->capacity <<= 3;

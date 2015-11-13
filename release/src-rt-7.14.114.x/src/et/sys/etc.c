@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etc.c 550727 2015-04-21 10:54:31Z $
+ * $Id: etc.c 584164 2015-09-04 07:40:24Z $
  */
 
 #include <et_cfg.h>
@@ -513,8 +513,7 @@ etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg, int len)
 				bcm_bprintf(&b, "fa ");
 #endif
 #ifdef BCM_GMAC3
-				if (!getvar(NULL, "gmac3_off"))
-					bcm_bprintf(&b, "gmac3 ");
+				bcm_bprintf(&b, "gmac3 ");
 #endif
 			}
 			break;

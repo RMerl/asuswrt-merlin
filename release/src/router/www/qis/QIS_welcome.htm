@@ -175,6 +175,8 @@ function QKinternettype_load_body(){
 		document.getElementById("main_manual").style.display = "none";
 		document.getElementById("lte_manual").style.display = "";
 	}
+	else if(based_modelid == "PL-N12")
+		document.getElementById("Productdesc_4").style.display = "none";
 	
 	document.getElementById("btn_next_step").focus();
 }
@@ -185,6 +187,8 @@ function redirect_page(redirect_flag){
 }
 
 function submitForm(mode){
+	parent.flag_manual = 0;
+	
 	if(mode == 0)
 		parent.flag_manual = 1;
 	else if(mode == 3)

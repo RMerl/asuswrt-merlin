@@ -55,7 +55,7 @@
 char *wlc_nvname(char *keyword);
 //#endif
 
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
 #define VHT_SUPPORT /* 11AC */
 #endif
 
@@ -82,7 +82,7 @@ typedef struct {
 int g_wsc_configured = 0;
 int g_isEnrollee[MAX_NR_WL_IF] = { 0, };
 
-int getCountryRegion5G(const char *countryCode, int *warning);
+int getCountryRegion5G(const char *countryCode, int *warning, int IEEE80211H);
 
 static void 
 iwprivSet(const char *ifname, const char *name, const char *value)
@@ -301,8 +301,16 @@ int getChannelNumMax2G(int region)
 	return 14;
 }
 
-int getCountryRegion5G(const char *countryCode, int *warning)
+int getCountryRegion5G(const char *countryCode, int *warning, int IEEE80211H)
 {
+#ifdef RTCONFIG_RALINK_DFS
+	if (IEEE80211H)
+	{
+		if(	(!strcasecmp(countryCode, "GB")) )
+			return 18;
+	}
+#endif	/* RTCONFIG_RALINK_DFS */
+
 	if (		(!strcasecmp(countryCode, "AE")) ||
 			(!strcasecmp(countryCode, "AL")) ||
 #ifdef RTCONFIG_LOCALE2012
@@ -676,6 +684,7 @@ int gen_ralink_config(int band, int is_iNIC)
 #endif
 	int sw_mode  = nvram_get_int("sw_mode");
 	int wlc_band = nvram_get_int("wlc_band");
+	int IEEE80211H = 0;
 
 	if (!is_iNIC)
 	{
@@ -712,12 +721,17 @@ int gen_ralink_config(int band, int is_iNIC)
 		fprintf(fp, "CountryRegion=%d\n", 5);
 	}
 
+#ifdef RTCONFIG_RALINK_DFS
+	if(band && nvram_match(strcat_r(prefix, "IEEE80211H", tmp), "1"))
+		IEEE80211H = 1;
+#endif	/* RTCONFIG_RALINK_DFS */
+
 	//CountryRegion for A band
 	str = nvram_safe_get(strcat_r(prefix, "country_code", tmp));
 	if (str && strlen(str))
 	{
 		int region;
-		region = getCountryRegion5G(str, &warning);
+		region = getCountryRegion5G(str, &warning, IEEE80211H);
 		fprintf(fp, "CountryRegionABand=%d\n", region);
 	}
 	else
@@ -735,12 +749,13 @@ int gen_ralink_config(int band, int is_iNIC)
 #define COUNTRY_IN
 #endif
 #ifdef COUNTRY_IN
-		if((nvram_match("wl0_country_code", "US"))) //IN using 2G ch 1~11
+		if((nvram_match("wl_reg_2g", "2G_CH11"))) //IN using 2G_CH11
 			fprintf(fp, "CountryCode=%s\n", "IN");
 		else
 		{ // regular CE with 2G ch 1~13
 #endif
 		fprintf(fp, "CountryCode=FR\n");
+		fprintf(fp, "ED_MODE=1\n");
 		fprintf(fp, "EDCCA_AP_STA_TH=255\n");
 		fprintf(fp, "EDCCA_AP_AP_TH=255\n");
 		fprintf(fp, "EDCCA_FALSE_CCA_TH=3000\n");
@@ -1232,6 +1247,11 @@ int gen_ralink_config(int band, int is_iNIC)
 		{
 			if (atoi(str) == 0)
 			{
+#ifdef RTCONFIG_RALINK_DFS
+				if(band && IEEE80211H)
+					fprintf(fp, "AutoChannelSelect=%d\n", 1);			//NEED rule 1 for DFS
+				else
+#endif	/* RTCONFIG_RALINK_DFS */
 				fprintf(fp, "AutoChannelSelect=%d\n", 2);
 				memset(tmpstr, 0x0, sizeof(tmpstr));
 				if (band && nvram_get_int(strcat_r(prefix, "bw", tmp)) > 0) {
@@ -1241,6 +1261,11 @@ int gen_ralink_config(int band, int is_iNIC)
 					else
 #endif
 					sprintf(tmpstr,"%d",165);// skip 165 in A band when bw setting to 20/40Mhz or 40Mhz.
+
+#ifdef RTCONFIG_RALINK_DFS
+					if(band && IEEE80211H)
+						sprintf(tmpstr,"%s;%d",tmpstr,116);	//skip 116 when BW > 20MHz
+#endif	/* RTCONFIG_RALINK_DFS */
 				}
 
 #ifdef RTCONFIG_MTK_TW_AUTO_BAND4 //NCC: for 5G BAND24 & BAND14
@@ -1298,12 +1323,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "IEEE8021X=%s\n", tmpstr);
 
 
-#ifdef RTCONFIG_RALINK_DFS
-	if(band)
-		fprintf(fp, "IEEE80211H=1\n");
-	else
-#endif
-		fprintf(fp, "IEEE80211H=0\n");
+	fprintf(fp, "IEEE80211H=%d\n", IEEE80211H);
 
 #ifdef RTCONFIG_AP_CARRIER_DETECTION
 #if defined(RTAC1200HP)
@@ -1372,7 +1392,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		fprintf(fp, "GreenAP=%d\n", 1);
 	}
-#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
 	/// MT7620 GreenAP will impact TSSI, force to disable GreenAP here..
 	//  MT7620 GreenAP cause bad site survey result on RTAC52 2G.
 	{
@@ -2081,7 +2101,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	if (str && strlen(str))
 	{   
 		fprintf(fp, "HT_GI=%d\n", atoi(str));
-#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) ||defined(RTN56UB2)
 #if defined(VHT_SUPPORT)
 		fprintf(fp, "VHT_SGI=%d\n", atoi(str));
 #endif		
@@ -2091,14 +2111,14 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		warning = 39;
 		fprintf(fp, "HT_GI=%d\n", 1);
-#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
 #if defined(VHT_SUPPORT)
 		fprintf(fp, "VHT_SGI=%d\n", 1);
 #endif		
 #endif		
 	}
 
-#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTAC54U) || defined(RTN56UB1)
+#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTAC54U) || defined(RTN56UB1) || defined(RTN56UB2)
 #if defined(VHT_SUPPORT)
 		fprintf(fp, "VHT_LDPC=%d\n",1);
 #endif		

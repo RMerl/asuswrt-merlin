@@ -1626,6 +1626,7 @@ $(document).ready(function(){
 			if(error==200){
 				var data = parseXml(content);
 				var x = $(data);
+				
     			g_storage.set('webdav_mode', x.find("webdav_mode").text());
     			g_storage.set('http_port', x.find("http_port").text());
     			g_storage.set('https_port', x.find("https_port").text());
@@ -1633,6 +1634,7 @@ $(document).ready(function(){
     			g_storage.set('misc_http_enable', x.find("misc_http_enable").text());
     			g_storage.set('misc_http_port', String(x.find("misc_http_port").text()).replace("\n",""));
     			g_storage.set('misc_https_port', String(x.find("misc_https_port").text()).replace("\n",""));
+    			g_storage.set('lan_https_port', String(x.find("lan_https_port").text()).replace("\n",""));
     			g_storage.set('last_login_info', x.find("last_login_info").text());
     			g_storage.set('ddns_host_name', x.find("ddns_host_name").text());
     			g_storage.set('router_version', x.find("version").text());
@@ -2049,10 +2051,11 @@ $(document).ready(function(){
 			addtoFavorite();
 		}
 		else if(func=="config"){
-			var http_enable = g_storage.get('http_enable'); //- 0: http, 1: https, 2: both
-			var misc_http_enable = g_storage.get('misc_http_enable');
+			var http_enable = parseInt(g_storage.get('http_enable')); //- 0: http, 1: https, 2: both
+			var misc_http_enable = parseInt(g_storage.get('misc_http_enable'));
 	    	var misc_http_port = g_storage.get('misc_http_port');
 	    	var misc_https_port = g_storage.get('misc_https_port');
+	    	var lan_https_port = g_storage.get('lan_https_port');
 	    	var location_host = window.location.host;
 	    	var misc_protocol = "http";
 	    	var misc_port = misc_http_port;
@@ -2063,20 +2066,24 @@ $(document).ready(function(){
 	    			return;
 	    		}
 	  		}
-	  	
-	  		if(http_enable=="0"){
-	  			misc_protocol = "http";
-	  			misc_port = misc_http_port;
-	  		}
-	  		else if(http_enable=="1"){
+	  			
+	  		if(http_enable==1){
 	  			misc_protocol = "https";
 	  			misc_port = misc_https_port;
 	  		}
-	  	
+	  		else{
+	  			misc_protocol = "http";
+	  			misc_port = misc_http_port;
+	  		}
+	  		
 	  		var url;
 	  		  			
-	  		if( isPrivateIP() )
+	  		if( isPrivateIP() ){
 	  			url = misc_protocol + "://" + location_host.split(":")[0];
+	  			
+	  			if(http_enable==1)
+	  				url += ":" + lan_https_port; 
+	  		}
 	  		else{
 	  			url = misc_protocol + "://" + location_host.split(":")[0];
 	  		
@@ -2810,7 +2817,22 @@ $(document).ready(function(){
 				}
 			},
 			"sep1": "---------",
-            "download": {name: m.getString("func_download")},
+            "download": {
+            	name: m.getString("func_download"),
+            	disabled: function(){
+					if(g_select_array.length<=0)
+						return true;
+					
+					for(var i=0; i < g_select_array.length; i++){
+						if(g_select_array[i].isdir=="1"){
+							//- Disable download function while selected the folder before we found the solution to download folder.
+							return true;
+						}
+					}
+							
+					return false;
+				}
+			},
 			"sep2": "---------",
 			"submenu_upload": { 
 				name : m.getString("title_upload2"),

@@ -270,22 +270,20 @@ function initial(){
 			var value = ["1", "2"];
 			add_options_x2(document.form.wl_turbo_qam, desc, value, '<% nvram_get("wl_turbo_qam"); %>');
 			$('#turbo_qam_hint').click(function(){openHint(3,33);});
-		}		
+		}
+
+		if((!Qcawifi_support && !Rawifi_support) || based_modelid == "RT-AC87U")		// hide on Broadcom platform
+			document.getElementById("wl_plcphdr_field").style.display = "none";
 	}
 	else{ // 2.4GHz
-		if(	based_modelid == "RT-AC3200" ||
-			based_modelid == "RT-N18U" ||
-			based_modelid == "RT-N65U" ||
-			based_modelid == "RT-AC69U" ||
-			based_modelid == "RT-AC87U" ||
-			based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "4G-AC55U" ||
-			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
-			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
-			based_modelid == "RT-AC5300")
-		{
+		var usb_usb3_support = (function(){
+			var usb3_flag = '<% nvram_default_get("usb_usb3"); %>';
+			return (usb3_flag != '') ? true : false;
+		})();
+
+		if(usb_usb3_support){
 			inputCtrl(document.form.usb_usb3, 1);
-		}	
+		}
 
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-N18U" ||
@@ -352,22 +350,22 @@ function initial(){
 	if(svc_ready == "0")
 		document.getElementById('svc_hint_div').style.display = "";	
 	
-	corrected_timezone();	
-	
-	if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'){	//for RT-AC87U 5G Advanced setting
+	corrected_timezone();		
+	if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'){	//for RT-AC87U 5 GHz Advanced setting
 		document.getElementById("wl_mrate_select").style.display = "none";
-		document.getElementById("wl_plcphdr_field").style.display = "none";
+		//document.getElementById("wl_plcphdr_field").style.display = "none";
 		document.getElementById("ampdu_rts_tr").style.display = "none";
 		document.getElementById("rts_threshold").style.display = "none";
 		document.getElementById("wl_frameburst_field").style.display = "none";
 		document.getElementById("wl_wme_apsd_field").style.display = "none";
 		document.getElementById("wl_ampdu_mpdu_field").style.display = "none";
 		document.getElementById("wl_ack_ratio_field").style.display = "none";
+		document.getElementById("wl_MU_MIMO_field").style.display = "";
+		document.form.wl_mumimo.disabled = false;
 		//document.getElementById('wl_80211h_tr').style.display = "";
-		document.getElementById("wl_regmode_field").style.display = "none";
 	}
 	
-	/*Airtime fairness, only for Broadcom ARM platform, except RT-AC87U 5G*/
+	/*Airtime fairness, only for Broadcom ARM platform, except RT-AC87U 5 GHz*/
 	if(	based_modelid == "RT-N18U" ||
 		based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" ||
 		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
@@ -408,18 +406,22 @@ function generate_region(){
 	var region_name = ["Asia", "China", "Europe", "Korea", "Russia", "Singapore", "United States"];	//Viz mod 2015.06.15
 	var region_value = ["AP", "CN", "EU", "KR", "RU", "SG", "US"]; //Viz mod 2015.06.15
 	var current_region = '<% nvram_get("location_code"); %>';
-	var is_CN_sku = (function(){
+	var isUsing_AU_sku = (function(){
 		if( productid !== "RT-AC87U" && productid !== "RT-AC68U" && productid !== "RT-AC66U" && productid !== "RT-N66U" && productid !== "RT-N18U" && productid != "RT-AC51U" &&
 			productid !== "RT-N12+" && productid !== "RT-N12D1" && productid !== "RT-N12HP_B1" && productid !== "RT-N12HP" && productid !== "RT-AC55U" && productid !== "RT-AC1200" && productid != "RT-AC51U" &&
 			productid !== "RT-AC88U" && productid !== "RT-AC5300" && productid !== "RT-AC55U"
 		  )	return false;
-		return ('<% nvram_get("territory_code"); %>'.search("CN") == -1) ? false : true;
+	
+		if(ttc.search("CN") == 0 ) 
+			return true;
+		
+		return false;	
 	})();
 
 	if(current_region == '')
 		current_region = ttc.split("/")[0];
 
-	if(is_CN_sku){
+	if(isUsing_AU_sku){
 		region_name.push("Australia");
 		region_value.push("XX");
 	} 
@@ -428,6 +430,11 @@ function generate_region(){
 		var idx = region_value.getIndexByValue("US");
 		region_value.splice(idx, 1);
 		region_name.splice(idx, 1);
+	}
+
+	if( region_value.indexOf(ttc.split("/")[0]) < 0 ) {   
+		region_name.splice(0, 0, "Default");
+		region_value.splice(0, 0, ttc.split("/")[0]);
 	}
 
 	add_options_x2(document.form.location_code, region_name, region_value, current_region);
@@ -504,7 +511,14 @@ function applyRule(){
 			}				
 		}
 		
-		document.form.wl_sched.value = wifi_schedule_value;	
+		document.form.wl_sched.value = wifi_schedule_value;
+		if(based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300"){
+			document.form.action_wait.value = "10";
+		}
+		else if(sdk_7){
+			document.form.action_wait.value = "5";
+		}
+		
 		showLoading();
 		document.form.submit();
 	}
@@ -1472,12 +1486,24 @@ function control_TimeField(){
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);"><#WLANConfig11b_x_uniBeam#></a></th>
 						<td>
 							<select name="wl_itxbf" class="input_option" disabled>
-									<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-									<option value="1" <% nvram_match("wl_itxbf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+								<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option value="1" <% nvram_match("wl_itxbf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
 						</td>
+					</tr>
+					<!--MU-MIMO for RT-AC87U 5 GHz only-->
+					<tr id="wl_MU_MIMO_field" style="display:none">
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="">Multi-User MIMO<sup> *BETA</sup</a></th>
+						<td>
+							<div style="display:table-cell;vertical-align:middle">
+								<select name="wl_mumimo" class="input_option" disabled>
+									<option value="0" <% nvram_match("wl_mumimo", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_mumimo", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+								</select>
+							</div>
+							<div style="display:table-cell;padding:0 5px 0 10px;color:#FC0;line-height: 18px">Current MU-MIMO specification is still under Wi-Fi Alliance's testing and might have compatibility issues among different brands. Wi-Fi Alliance is estimated to announce certification program by Jun. 2016.</div>
+						</td>
 					</tr>					
-
 					<tr id="wl_txPower_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 16);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>

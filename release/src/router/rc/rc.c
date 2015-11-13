@@ -143,7 +143,7 @@ static int rctest_main(int argc, char *argv[])
 #endif
 				}
 #endif
-			add_iQosRules(get_wan_ifname(0));
+			add_iQosRules(get_wan_ifname(wan_primary_ifunit()));
 #ifdef RTCONFIG_BWDPI
 				if(nvram_get_int("qos_type") == 1) {
 					start_dpi_engine_service();
@@ -172,7 +172,7 @@ static int rctest_main(int argc, char *argv[])
 					f_write_string("/proc/sys/net/ipv4/conf/all/force_igmp_version", "2", 0, 0);
 #endif
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
 					if (!(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")))
 #endif
 					{
@@ -396,7 +396,7 @@ static const applets_t applets[] = {
 	{ "rsasign_sig_check",		rsasign_sig_check_main		},
 #endif
 	{ "hour_monitor",		hour_monitor_main		},
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	{ "lteled",			lteled_main			},
 #endif
 #ifdef RTCONFIG_TR069
@@ -757,6 +757,12 @@ int main(int argc, char **argv)
 		return 0;
 	}
 #endif
+#ifdef RTCONFIG_WTFAST
+	else if(!strcmp(base, "run_wtfast")) {
+		start_wtfast();
+		return 0;
+	}
+#endif	
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	else if(!strcmp(base, "run_pptpd")) {
 		start_pptpd();

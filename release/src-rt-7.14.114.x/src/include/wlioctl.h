@@ -19,7 +19,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 567606 2015-06-30 02:01:22Z $
+ * $Id: wlioctl.h 586916 2015-09-16 21:09:07Z $
  */
 
 #ifndef _wlioctl_h_
@@ -65,6 +65,13 @@ typedef struct {
 	uint32 num;
 	chanspec_t list[1];
 } chanspec_list_t;
+
+#define DFS_SCAN_S_IDLE				-1
+#define DFS_SCAN_S_RADAR_FREE			0
+#define DFS_SCAN_S_RADAR_FOUND			1
+#define DFS_SCAN_S_INPROGESS			2
+#define DFS_SCAN_S_SCAN_ABORTED			3
+#define DFS_SCAN_S_SCAN_MODESW_INPROGRESS	4
 
 /* DFS Forced param */
 typedef struct wl_dfs_forced_params {
@@ -321,9 +328,9 @@ typedef struct wl_bss_info {
 	uint16		ie_offset;		/* offset at which IEs start, from beginning */
 	uint32		ie_length;		/* byte length of Information Elements */
 	int16		SNR;			/* average SNR of during frame reception */
-	uint16		vht_mcsmap;		/* STA's Associated vhtmcsmap */
-	uint16		vht_mcsmap_prop;	/* STA's Associated prop vhtmcsmap */
-	uint16		vht_txmcsmap_prop;	/* prop VHT tx mcs prop */
+        uint16          vht_mcsmap;             /* STA's Associated vhtmcsmap */
+        uint16          vht_mcsmap_prop;        /* STA's Associated prop vhtmcsmap */
+        uint16          vht_txmcsmap_prop;      /* prop VHT tx mcs prop */
 	/* Add new fields here */
 	/* variable length Information Elements */
 } wl_bss_info_t;
@@ -366,7 +373,9 @@ typedef struct wl_bss_config {
 #define DLOAD_FLAG_VER_MASK		0xf000	/* Downloader version mask */
 #define DLOAD_FLAG_VER_SHIFT	12	/* Downloader version shift */
 
-#define DL_CRC_NOT_INUSE 			0x0001
+#define DL_CRC_NOT_INUSE	0x0001
+#define DL_BEGIN		0x0002
+#define DL_END			0x0004
 
 /* generic download types & flags */
 enum {
@@ -1601,6 +1610,30 @@ typedef struct {
 	uint16 pad;
 } wl_dfs_status_t;
 
+typedef struct {
+	uint state;		/* noted by WL_DFS_CACSTATE_XX */
+	uint duration;		/* time spent in ms in state */
+	chanspec_t chanspec;	/* chanspec of this core */
+	chanspec_t chanspec_last_cleared; /* chanspec last cleared for operation by scanning */
+	uint16 sub_type;	/* currently just the index of the core or the respective PLL */
+	uint16 pad;
+} wl_dfs_sub_status_t;
+
+#define WL_DFS_STATUS_ALL_VERSION	(1)
+typedef struct {
+	uint16 version;		/* version field; current max version 1 */
+	uint16 num_sub_status;
+	wl_dfs_sub_status_t  dfs_sub_status[1]; /* struct array of length num_sub_status */
+} wl_dfs_status_all_t;
+
+#define WL_DFS_AP_MOVE_VERSION	(1)
+typedef struct wl_dfs_ap_move_status {
+	int8 version;            /* version field; current max version 1 */
+	int8 move_status;        /* DFS move status */
+	chanspec_t chanspec;     /* New AP Chanspec */
+	wl_dfs_status_all_t scan_status; /* status; see dfs_status_all for wl_dfs_status_all_t */
+} wl_dfs_ap_move_status_t;
+
 /* data structure used in 'radar_status' wl interface, which is use to query radar det status */
 typedef struct {
 	bool detected;
@@ -2055,8 +2088,8 @@ typedef struct {
 	uint32  rxprobersp;     /**< Number of RX probe response */
 	uint32  txaction;       /**< Number of TX action frame */
 	uint32  rxaction;       /**< Number of RX action frame */
-	uint32  ampdu_wds;      /* Number of AMPDU watchdogs */
-	uint32  txlost;         /* Number of lost packets reported in txs */
+	uint32	ampdu_wds;	/* Number of AMPDU watchdogs */
+	uint32	txlost;		/* Number of lost packets reported in txs */
 } wl_cnt_wlc_t;
 
 /* MACXSTAT counters for ucodex (corerev >= 64) */
@@ -6671,7 +6704,8 @@ typedef enum wl_stamon_cfg_cmd_type {
 	STAMON_CFG_CMD_DEL = 0,
 	STAMON_CFG_CMD_ADD = 1,
 	STAMON_CFG_CMD_ENB = 2,
-	STAMON_CFG_CMD_DSB = 3
+	STAMON_CFG_CMD_DSB = 3,
+	STAMON_CFG_CMD_CNT = 4
 } wl_stamon_cfg_cmd_type_t;
 
 typedef struct wlc_stamon_sta_config {

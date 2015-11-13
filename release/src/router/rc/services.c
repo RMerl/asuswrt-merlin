@@ -746,11 +746,11 @@ void traffic_control_sendSMS(int flag)
 	else if(flag == 1)
 		snprintf(message, PATH_MAX, "%s %s bytes.", nvram_safe_get("modem_sms_message2"), nvram_safe_get("traffic_control_limit_max"));
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	stop_lteled();
 #endif
 	_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	start_lteled();
 #endif
 }
@@ -908,7 +908,7 @@ static void link_up(void)
 int restart_dnsmasq(int need_link_DownUp)
 {
 	if (need_link_DownUp) {
-#if (defined(PLN12) || defined(PLAC56))
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66))
 		nvram_set("plc_ready", "0");
 #endif
 		link_down();
@@ -921,7 +921,7 @@ int restart_dnsmasq(int need_link_DownUp)
 
 	if (need_link_DownUp) {
 		link_up();
-#if (defined(PLN12) || defined(PLAC56))
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66))
 		nvram_set("plc_ready", "1");
 #endif
 	}
@@ -936,8 +936,6 @@ void start_dnsmasq()
 	char *lan_ifname, *lan_ipaddr;
 	char *value;
 	int i, have_dhcp = 0;
-	int unit;
-	char prefix[8];
 
 	TRACE_PT("begin\n");
 
@@ -1404,31 +1402,6 @@ void start_dnsmasq()
 			i = 4;
 		}
 	}
-
-/* TODO: remove it for here !!!*/
-	char nvram_name[16], wan_proto[16];
-
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){ // Multipath
-		if(unit != wan_primary_ifunit()
-#ifdef RTCONFIG_DUALWAN
-				&& !nvram_match("wans_mode", "lb")
-#endif
-				)
-			continue;
-
-		memset(prefix, 0, sizeof(prefix));
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-
-		memset(wan_proto, 0, 16);
-		strcpy(wan_proto, nvram_safe_get(strcat_r(prefix, "proto", nvram_name)));
-
-		if(!strcmp(wan_proto, "static")){
-			/* Sync time */
-			refresh_ntpc();
-		}
-	}
-
-/* TODO: remove it */
 
 	TRACE_PT("end\n");
 }
@@ -2099,6 +2072,9 @@ int start_networkmap(int bootwait)
 	if (bootwait)
 		networkmap_argv[1] = "--bootwait";
 
+#ifdef RTCONFIG_UPNPC
+	start_miniupnpc();
+#endif
 	_eval(networkmap_argv, NULL, 0, &pid);
 
 	return 0;
@@ -2109,11 +2085,14 @@ int start_networkmap(int bootwait)
 void stop_networkmap(void)
 {
 	killall_tk("networkmap");
+#ifdef RTCONFIG_UPNPC
+	stop_miniupnpc();
+#endif
 }
 
+#ifdef RTCONFIG_BONJOUR
 int start_netmonitor(void)
 {
-_dprintf(">>>>>>>>> NetMonitor <<<<<<<<\n");
         char *netmonitor_argv[] = {"mDNSNetMonitor", NULL};
         pid_t pid;
 
@@ -2121,6 +2100,7 @@ _dprintf(">>>>>>>>> NetMonitor <<<<<<<<\n");
 
         return 0;
 }
+#endif
 
 #ifdef RTCONFIG_JFFS2USERICON
 void stop_lltdc(void)
@@ -2143,23 +2123,21 @@ int start_lltdc(void)
 }
 #endif
 
+#ifdef RTCONFIG_UPNPC
 void stop_miniupnpc(void)
 {
-        if (pids("miniupnpc"))
-                killall_tk("miniupnpc");
+	if (pids("miniupnpc"))
+		killall_tk("miniupnpc");
 }
 
 int start_miniupnpc(void)
 {
-        pid_t pid;
-
-        if (pids("miniupnpc"))
+	if (pids("miniupnpc"))
 		return 0;
 
-	xstart("miniupnpc", "-m", "br0", "-t");
-
-        return 0;
+	return xstart("miniupnpc", "-m", "br0", "-t");
 }
+#endif
 
 #ifdef RTCONFIG_LLDP
 int start_lldpd(void)
@@ -2752,7 +2730,7 @@ _dprintf("%s:\n", __FUNCTION__);
 	start_syslogd();
 	start_klogd();
 
-#ifdef DUMP_PREV_OOPS_MSG && defined(RTCONFIG_BCMARM)
+#if defined(DUMP_PREV_OOPS_MSG) && defined(RTCONFIG_BCMARM)
 	eval("et", "dump_oops");
 #endif
 
@@ -2826,7 +2804,7 @@ stop_misc(void)
 		killall_tk("sw_devled");
 #endif
 	if (pids("watchdog")
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
 		&& !nvram_get_int("auto_upgrade")
 #endif
 	)
@@ -3137,6 +3115,11 @@ void start_upnp(void)
 				char *lanmask = nvram_safe_get("lan_netmask");
 #if defined(RTCONFIG_RGMII_BRCM5301X) || defined(RTCONFIG_QCA)
 				strcpy(et0macaddr, nvram_safe_get("lan_hwaddr"));
+#elif defined(RTCONFIG_GMAC3)
+				if (nvram_match("gmac3_enable", "1"))
+					strcpy(et0macaddr, nvram_safe_get("et2macaddr"));
+				else
+					strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
 #else
 				strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
 #endif
@@ -3322,6 +3305,10 @@ int start_lltd(void)
 			else if (!strcmp(odmpid, "RT-AC68RW"))
 				eval("lld2d.rtac68rw", "br0");
 			break;
+		case MODEL_DSLAC68U:
+			if (!strcmp(odmpid, "DSL-AC68R"))
+				eval("lld2d.dslac68r", "br0");
+			break;
 		default:
 			eval("lld2d", "br0");
 			break;
@@ -3391,6 +3378,11 @@ int generate_mdns_config(void)
 
 #if defined(RTCONFIG_RGMII_BRCM5301X) || defined(RTCONFIG_QCA)
 	strcpy(et0macaddr, nvram_safe_get("lan_hwaddr"));
+#elif defined(RTCONFIG_GMAC3)
+	if (nvram_match("gmac3_enable", "1"))
+		strcpy(et0macaddr, nvram_safe_get("et2macaddr"));
+	else
+		strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
 #else
 	strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
 #endif
@@ -3823,7 +3815,7 @@ start_services(void)
 	start_traffic_control_init();
 #endif
 	start_watchdog();
-#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
+#ifdef RTAC87U
 	start_watchdog02();
 #endif
 #ifdef SW_DEVLED
@@ -3850,11 +3842,12 @@ start_services(void)
 #endif
 //	start_upnp();
 
+#ifdef RTCONFIG_BONJOUR
         start_netmonitor();
+#endif
 #ifdef RTCONFIG_JFFS2USERICON
         start_lltdc();
 #endif
-	start_miniupnpc();
 	start_networkmap(1);
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
@@ -3902,7 +3895,7 @@ start_services(void)
 	start_samba();	// We might need it for wins/browsing services
 #endif
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	start_lteled();
 #endif
 
@@ -3929,6 +3922,10 @@ start_services(void)
 	start_keyguard();
 #endif
 
+#if 0//defined(RTCONFIG_WTFAST)
+	start_wtfast();
+#endif
+
 	start_ecoguard();
 
 	run_custom_script("services-start", NULL);
@@ -3948,7 +3945,7 @@ stop_logger(void)
 void
 stop_services(void)
 {
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	stop_lteled();
 #endif
 
@@ -4083,56 +4080,6 @@ stop_services(void)
 	stop_keyguard();
 #endif
 }
-
-#ifdef RTCONFIG_QCA
-int stop_wifi_service(void)
-{
-   	int is_unload;
-	int i, unit = -1, sunit = 0;
-	unsigned int m;	/* bit0~3: 2G, bit4~7: 5G */
-	char wif[256];
-	char pid_path[] = "/var/run/hostapd_athXXX.pidYYYYYY";
-	char path[] = "/sys/class/net/ath001XXXXXX";
-	
-	for (i = 0, unit = 0, sunit = 0, m = 0xFF; m > 0; ++i, ++sunit, m >>= 1) {
-		if (i == 4) {
-			unit = 1;
-			sunit -= 4;
-		}
-		__get_wlifname(unit, sunit, wif);
-		sprintf(path, "/sys/class/net/%s", wif);
-		if (d_exists(path))
-			ifconfig(wif, 0, NULL, NULL);
-		sprintf(pid_path, "/var/run/hostapd_%s.pid", wif);
-		if (!f_exists(pid_path))
-			continue;
-
-		kill_pidfile_tk(pid_path);
-	}
-
-#if defined(QCA_WIFI_INS_RM) 	
-	if(nvram_get_int("sw_mode")==2)
-		is_unload=0;
-	else
-		is_unload=1;
-#else
-	is_unload=1;
-#endif	
-	if(is_unload)
-	{   
-		if (module_loaded("umac")) {
-			modprobe_r("umac");
-			sleep(2);
-		}
-		if (module_loaded("ath_dev"))
-			modprobe_r("ath_dev");
-
-		if (module_loaded("ath_hal"))
-			modprobe_r("ath_hal");
-	}	
-	return 0;
-}   
-#endif
 
 // 2008.10 magic 
 
@@ -4528,7 +4475,7 @@ again:
 			modprobe_r("wl_high");
 		}
 
-#if !defined(RTN56UB1)
+#if !(defined(RTN56UB1) || defined(RTN56UB2))
 		stop_usb();
 		stop_usbled();
 #endif		
@@ -4622,7 +4569,7 @@ again:
 				modprobe_r("wl");
 			}
 
-#if !defined(RTN53) && !defined(RTN56UB1)
+#if !defined(RTN53) && !defined(RTN56UB1) && !defined(RTN56UB2)
 			stop_usb();
 			stop_usbled();
 			remove_storage_main(1);
@@ -4707,9 +4654,6 @@ again:
 				stop_dnsmasq();
 				stop_networkmap();
 				stop_wpsaide();
-#ifdef RTCONFIG_QCA	
-				stop_wifi_service();
-#endif
 #endif
 				if (!(r = build_temp_rootfs(TMP_ROOTFS_MNT_POINT)))
 					sw = 1;
@@ -4938,7 +4882,7 @@ again:
 			start_mdns();
 #endif
 			start_wan();
-#ifndef RT4GAC55U
+#ifndef RTCONFIG_INTERNAL_GOBI
 #ifdef RTCONFIG_USB_MODEM
 			if((unit = get_usbif_dualwan_unit()) >= 0)
 				start_wan_if(unit);
@@ -5334,6 +5278,11 @@ check_ddr_done:
 			}
 			if(action & RC_SERVICE_START)
 			{
+#ifdef DSL_AC68U	//Andy Chiu, 2015/09/15.
+				//Check the vlan config of ethernet wan, reset the config by new vlan id.
+				check_wan_if(atoi(cmd[1]));
+
+#endif
 				start_wan_if(atoi(cmd[1]));
 			}
 		}
@@ -5560,6 +5509,15 @@ check_ddr_done:
 		system("sh /opt/etc/init.d/S50smartsync restart");
 #endif
 	}
+#ifdef RTCONFIG_WTFAST	
+	else if (strcmp(script, "wtfast") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_wtfast();
+		if(action & RC_SERVICE_START) start_wtfast();
+	}
+	else if(strcmp(script, "wtfast_rule") == 0)
+		killall("wtfslhd", SIGHUP);
+#endif
 //#endif
 #ifdef RTCONFIG_USB_PRINTER
 	else if (strcmp(script, "lpd") == 0)
@@ -5758,11 +5716,11 @@ check_ddr_done:
 		else
 			snprintf(message, PATH_MAX, "%s %s bytes.", nvram_safe_get("modem_sms_message2"), nvram_safe_get("modem_bytes_data_limit"));
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 		stop_lteled();
 #endif
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 		start_lteled();
 #endif
 	}
@@ -5797,7 +5755,7 @@ check_ddr_done:
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	else if(!strncmp(script, "simdetect", 9)){
 		// Need to reboot after this.
 		char buf[4];
@@ -5923,12 +5881,11 @@ check_ddr_done:
 	else if (strcmp(script, "qos") == 0)
 	{
 		if(action&RC_SERVICE_STOP) {
+			stop_iQos();
 #ifdef RTCONFIG_BWDPI
 			stop_dpi_engine_service(0);
-#else
-			stop_iQos();
-			del_iQosRules();
 #endif
+			del_iQosRules();
 		}
 		if(action & RC_SERVICE_START) {
 			reinit_hwnat(-1);
@@ -6542,9 +6499,12 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
                 if(action&RC_SERVICE_START) start_lltdc();
         }
 #endif
-        else if (strcmp(script, "miniupnpc") == 0) {
-                if(action&RC_SERVICE_START) start_miniupnpc();
-  	}
+#ifdef RTCONFIG_UPNPC
+	else if (strcmp(script, "miniupnpc") == 0) {
+		if(action&RC_SERVICE_STOP) stop_miniupnpc();
+		if(action&RC_SERVICE_START) start_miniupnpc();
+	}
+#endif
 #ifdef RTCONFIG_TOR
 	else if (strcmp(script, "tor") == 0)
 	{
@@ -6612,9 +6572,6 @@ _dprintf("handle_notifications() end\n");
 void
 start_wlcscan(void)
 {
-	char *wlcscan_argv[] = {"wlcscan", NULL};
-	pid_t pid;
-
 	if(getpid()!=1) {
 		notify_rc("start_wlcscan");
 		return;
@@ -6622,7 +6579,7 @@ start_wlcscan(void)
 
 	killall("wlcscan", SIGTERM);
 
-	_eval(wlcscan_argv, NULL, 0, &pid);
+	system("wlcscan");
 }
 
 void
@@ -7064,6 +7021,7 @@ int start_dhd_monitor(void)
 #endif
 	killall_tk("dhd_monitor");
 
+	nvram_set("fast_restart", "1");
 	ret = eval("/usr/sbin/dhd_monitor");
 
 	return ret;
@@ -7076,7 +7034,7 @@ int stop_dhd_monitor(void)
 }
 #endif /* RTCONFIG_DHDAP */
 
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 int start_lteled(void)
 {
 	char *lteled_argv[] = {"lteled", NULL};
@@ -7094,7 +7052,7 @@ void stop_lteled(void)
 {
 	killall_tk("lteled");
 }
-#endif	/* RT4GAC55U */
+#endif	/* RTCONFIG_INTERNAL_GOBI */
 
 
 int

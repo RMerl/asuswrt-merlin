@@ -168,7 +168,7 @@ int WAN_FB_UNIT;
 #ifdef RTCONFIG_USB_MODEM
 char modem_type[32];
 int sim_lock = 0;
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 char usb_if[16];
 #endif
 #endif

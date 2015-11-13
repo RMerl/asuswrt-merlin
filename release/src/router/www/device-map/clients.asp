@@ -302,6 +302,11 @@ function drawClientList(tab){
 			clientHtmlTd += '</div></div>';
 		}
 
+		// display boost client.
+		if(clientObj.wtfast && wtfast_support) {
+			clientHtmlTd += '<div class="boost_tag">BOOST</div>';/*untranslated*/
+		}
+
 		i++;
 	}
 

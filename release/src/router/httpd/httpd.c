@@ -72,6 +72,7 @@ typedef unsigned int __u32;   // 1225 ham
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <shared.h>
+#include <shutils.h>
 
 #define ETCPHYRD	14
 #define SIOCGETCPHYRD   0x89FE
@@ -204,8 +205,8 @@ struct language_table language_tables[] = {
 
 /* Forwards. */
 static int initialize_listen_socket( usockaddr* usaP );
-static int auth_check( char* dirname, char* authorization, char* url, char* cookies, char* useragent);
-static int referer_check(char* referer, char* useragent);
+static int auth_check( char* dirname, char* authorization, char* url, char* cookies, int fromapp_flag);
+static int referer_check(char* referer, int fromapp_flag);
 char *generate_token(void);
 static void send_error( int status, char* title, char* extra_header, char* text );
 //#ifdef RTCONFIG_CLOUDSYNC
@@ -216,8 +217,8 @@ static void send_token_headers( int status, char* title, char* extra_header, cha
 static int match( const char* pattern, const char* string );
 static int match_one( const char* pattern, int patternlen, const char* string );
 static void handle_request(void);
-void send_login_page(int fromapp_flag, int error_status, char* url);
-void __send_login_page(int fromapp_flag, int error_status);
+void send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
+void __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
 
 /* added by Joey */
 //2008.08 magic{
@@ -239,8 +240,12 @@ unsigned int login_ip_tmp=0; // the ip of the current session.
 unsigned int login_try=0;
 unsigned int last_login_ip = 0;	// the last logined ip 2008.08 magic
 /* limit login IP addr; 2012.03 Yau */
-unsigned int access_ip[4];
+struct {
+	struct in_addr ip;
+	struct in_addr netmask;
+} access_ip[4];
 unsigned int MAX_login;
+int lock_flag = 0;
 
 // 2008.08 magic {
 time_t request_timestamp = 0;
@@ -268,7 +273,7 @@ void sethost(char *host)
 	if(!host) return;
 
 	memset(host_name, 0, sizeof(host_name));
-	strncpy(host_name, host, sizeof(host_name));
+	strncpy(host_name, host, sizeof(host_name)-1);
 
 	cp = host_name;
 	for ( cp = cp + 7; *cp && *cp != '\r' && *cp != '\n'; cp++ );
@@ -331,15 +336,18 @@ initialize_listen_socket( usockaddr* usaP )
     }
 
 void 
-send_login_page(int fromapp_flag, int error_status, char* url)
+send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
 {
 	char inviteCode[256]={0};
+	char url_tmp[64]={0};
+
+	if(url == NULL)
+		strncpy(url_tmp, "index.asp", sizeof(url_tmp));
+	else
+		strncpy(url_tmp, url, sizeof(url_tmp));
+		
 	if(fromapp_flag == 0){
-		if(url == NULL){
-			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d';</script>",error_status);
-		}else{
-			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s';</script>",error_status, url);
-		}
+		snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s&lock_time=%d';</script>",error_status, url_tmp, lock_time);
 	}else{
 		snprintf(inviteCode, sizeof(inviteCode), "\"error_status\":\"%d\"", error_status);
 	}
@@ -347,32 +355,25 @@ send_login_page(int fromapp_flag, int error_status, char* url)
 }
 
 void
-__send_login_page(int fromapp_flag, int error_status)
+__send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
 {
 	login_try++;
 	last_login_timestamp = login_timestamp_tmp;
-
-	send_login_page(fromapp_flag, error_status, NULL);
+	
+	send_login_page(fromapp_flag, error_status, url, lock_time);
 }
 
 static int
-referer_check(char* referer, char *useragent)
+referer_check(char* referer, int fromapp_flag)
 {
 
 	char *auth_referer=NULL;
 	char *cp1=NULL, *cp2=NULL, *location_cp1=NULL;
-	int fromapp_flag = 0;
 
-	if(useragent != NULL){
-		char *cp = strtok(useragent, "-");
-
-		if(strcmp( cp, "asusrouter") == 0)
-			fromapp_flag = 1;
-	}
-	if(fromapp_flag == 1)
+	if(fromapp_flag != 0)
 		return 0;
 	if(!referer){
-		send_login_page(fromapp_flag, NOREFERER, NULL);
+		send_login_page(fromapp_flag, NOREFERER, NULL, 0);
 		return NOREFERER;
 	}else{
 		location_cp1 = strstr(referer,"//");
@@ -388,7 +389,7 @@ referer_check(char* referer, char *useragent)
 
 	}
 	if(referer_host[0] == 0){
-		send_login_page(fromapp_flag, WEB_NOREFERER, NULL);
+		send_login_page(fromapp_flag, WEB_NOREFERER, NULL, 0);
 		return WEB_NOREFERER;
 	}
 	if(strncmp(DUT_DOMAIN_NAME, auth_referer, strlen(DUT_DOMAIN_NAME))==0){
@@ -400,43 +401,37 @@ referer_check(char* referer, char *useragent)
 		return 0;
 	}else{
 		//_dprintf("asus token referer_check: the wrong user and password\n");
-		send_login_page(fromapp_flag, REFERERFAIL, NULL);
+		send_login_page(fromapp_flag, REFERERFAIL, NULL, 0);
 		return REFERERFAIL;
 	}
-	send_login_page(fromapp_flag, REFERERFAIL, NULL);
+	send_login_page(fromapp_flag, REFERERFAIL, NULL, 0);
 	return REFERERFAIL;
 }
 
 #define	HEAD_HTTP_LOGIN	"HTTP login"	// copy from push_log/push_log.h
 
 static int
-auth_check( char* dirname, char* authorization ,char* url, char* cookies, char* useragent)
+auth_check( char* dirname, char* authorization ,char* url, char* cookies, int fromapp_flag)
 {
 	struct in_addr temp_ip_addr;
 	char *temp_ip_str;
 	time_t dt;
 	char asustoken[32];
-	char *cp1=NULL, *cp=NULL, *location_cp;
+	char *cp=NULL, *location_cp;
 
 	memset(asustoken,0,sizeof(asustoken));
-
-	int fromapp_flag = 0;
-	if(useragent != NULL){
-		cp1 = strtok(useragent, "-");
-
-		if(strcmp( cp1, "asusrouter") == 0)
-			fromapp_flag = 1;
-	}
 
 	login_timestamp_tmp = uptime();
 	dt = login_timestamp_tmp - last_login_timestamp;
 	if(last_login_timestamp != 0 && dt > 60){
 		login_try = 0;
 		last_login_timestamp = 0;
+		lock_flag = 0;
 	}
 	if (MAX_login <= DEFAULT_LOGIN_MAX_NUM)
 		MAX_login = DEFAULT_LOGIN_MAX_NUM;
 	if(login_try >= MAX_login){
+		lock_flag = 1;
 		temp_ip_addr.s_addr = login_ip_tmp;
 		temp_ip_str = inet_ntoa(temp_ip_addr);
 
@@ -444,7 +439,7 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, char* 
 			logmessage(HEAD_HTTP_LOGIN, "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
 
 //#ifdef LOGIN_LOCK
-		send_login_page(fromapp_flag, LOGINLOCK, url);
+		send_login_page(fromapp_flag, LOGINLOCK, url, dt);
 		return LOGINLOCK;
 //#endif
 	}
@@ -456,7 +451,7 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, char* 
 	}
 
 	if(!cookies){
-		send_login_page(fromapp_flag, NOTOKEN, url);
+		send_login_page(fromapp_flag, NOTOKEN, url, 0);
 		return NOTOKEN;
 	}else{
 		location_cp = strstr(cookies,"asus_token");
@@ -465,7 +460,7 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, char* 
 			cp += strspn( cp, " \t" );
 			snprintf(asustoken, sizeof(asustoken), "%s", cp);
 		}else{
-			send_login_page(fromapp_flag, NOTOKEN, url);
+			send_login_page(fromapp_flag, NOTOKEN, url, 0);
 			return NOTOKEN;
 		}
 	}
@@ -475,14 +470,15 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, char* 
 		//_dprintf("asus token auth_check: the right user and password\n");
 		login_try = 0;
 		last_login_timestamp = 0;
+		lock_flag = 0;
 		return 0;
 	}else{
 		//_dprintf("asus token auth_check: the wrong user and password\n");
-		send_login_page(fromapp_flag, AUTHFAIL, url);
+		send_login_page(fromapp_flag, AUTHFAIL, url, 0);
 		return AUTHFAIL;
 	}
 
-	send_login_page(fromapp_flag, AUTHFAIL, url);
+	send_login_page(fromapp_flag, AUTHFAIL, url, 0);
 	return AUTHFAIL;
 }
 
@@ -537,11 +533,16 @@ send_headers( int status, char* title, char* extra_header, char* mime_type, int 
     char timebuf[100];
     (void) fprintf( conn_fp, "%s %d %s\r\n", PROTOCOL, status, title );
     (void) fprintf( conn_fp, "Server: %s\r\n", SERVER_NAME );
-    if (fromapp == 1){
+    if (fromapp != 0){
 	(void) fprintf( conn_fp, "Cache-Control: no-store\r\n");	
 	(void) fprintf( conn_fp, "Pragma: no-cache\r\n");
-	(void) fprintf( conn_fp, "AiHOMEAPILevel: %d\r\n", EXTEND_AIHOME_API_LEVEL );
-	(void) fprintf( conn_fp, "Httpd_AiHome_Ver: %d\r\n", EXTEND_HTTPD_AIHOME_VER );
+	if(fromapp == FROM_DUTUtil){
+		(void) fprintf( conn_fp, "AiHOMEAPILevel: %d\r\n", EXTEND_AIHOME_API_LEVEL );
+		(void) fprintf( conn_fp, "Httpd_AiHome_Ver: %d\r\n", EXTEND_HTTPD_AIHOME_VER );
+		(void) fprintf( conn_fp, "Model_Name: %s\r\n", get_productid() );
+	}else if(fromapp == FROM_ASSIA){
+		(void) fprintf( conn_fp, "ASSIA_API_Level: %d\r\n", EXTEND_ASSIA_API_LEVEL );
+	}
     }
     now = time( (time_t*) 0 );
     (void) strftime( timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &now ) );
@@ -549,7 +550,7 @@ send_headers( int status, char* title, char* extra_header, char* mime_type, int 
     if ( extra_header != (char*) 0 )
 	(void) fprintf( conn_fp, "%s\r\n", extra_header );
     if ( mime_type != (char*) 0 ){
-	if(fromapp == 1)
+	if(fromapp != 0)
 		(void) fprintf( conn_fp, "Content-Type: %s\r\n", "application/json;charset=UTF-8" );		
 	else
 		(void) fprintf( conn_fp, "Content-Type: %s\r\n", mime_type );
@@ -576,9 +577,12 @@ send_token_headers( int status, char* title, char* extra_header, char* mime_type
 
     (void) fprintf( conn_fp, "%s %d %s\r\n", PROTOCOL, status, title );
     (void) fprintf( conn_fp, "Server: %s\r\n", SERVER_NAME );
-    if (fromapp == 1){
-    	(void) fprintf( conn_fp, "AiHOMEAPILevel: %d\r\n", EXTEND_AIHOME_API_LEVEL );
-    	(void) fprintf( conn_fp, "Httpd_AiHome_Ver: %d\r\n", EXTEND_HTTPD_AIHOME_VER );
+    if(fromapp == FROM_DUTUtil){
+	(void) fprintf( conn_fp, "AiHOMEAPILevel: %d\r\n", EXTEND_AIHOME_API_LEVEL );
+	(void) fprintf( conn_fp, "Httpd_AiHome_Ver: %d\r\n", EXTEND_HTTPD_AIHOME_VER );
+	(void) fprintf( conn_fp, "Model_Name: %s\r\n", get_productid() );
+    }else if(fromapp == FROM_ASSIA){
+	(void) fprintf( conn_fp, "ASSIA_API_Level: %d\r\n", EXTEND_ASSIA_API_LEVEL );
     }
     now = time( (time_t*) 0 );
     (void) strftime( timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &now ) );
@@ -789,7 +793,7 @@ handle_request(void)
 			char lang_buf[256];
 			memset(lang_buf, 0, sizeof(lang_buf));
 			alang = &cur[16];
-			strncpy(lang_buf, alang, sizeof(lang_buf));
+			strncpy(lang_buf, alang, sizeof(lang_buf)-1);
 			p = lang_buf;
 			while (p != NULL)
 			{
@@ -819,7 +823,9 @@ handle_request(void)
 							continue;
 						}
 						snprintf(Accept_Language,sizeof(Accept_Language),"%s",pLang->Target_Lang);
-						if (is_firsttime()) {
+						if (is_firsttime() && nvram_match("ui_Setting", "0")) {
+							_dprintf("%s", Accept_Language);
+							nvram_set("ui_Setting", "1");
 							nvram_set("preferred_lang", Accept_Language);
 						}
 
@@ -953,7 +959,7 @@ handle_request(void)
 	}
 	else
 	{
-		strncpy(url, file, sizeof(url));
+		strncpy(url, file, sizeof(url)-1);
 	}
 // 2007.11 James. }
 
@@ -968,10 +974,19 @@ handle_request(void)
 		strcpy(url, url+strlen(GETAPPSTR));
 		file += strlen(GETAPPSTR);
 	}
+
 	if(useragent != NULL){
-		char *cp1 = strtok(useragent, "-");
-		if(strcmp( cp1, "asusrouter") == 0){
-			fromapp=1;
+		char *cp1=NULL, *app_router=NULL, *app_platform=NULL, *app_framework=NULL, *app_verison=NULL;
+		cp1 = strdup(useragent);
+
+		vstrsep(cp1, "-", &app_router, &app_platform, &app_framework, &app_verison);
+
+		if(app_router != NULL && app_framework != NULL && strcmp( app_router, "asusrouter") == 0){
+				fromapp=FROM_ASUSROUTER;
+			if(strcmp( app_framework, "DUTUtil") == 0)
+				fromapp=FROM_DUTUtil;
+			else if(strcmp( app_framework, "ASSIA") == 0)
+				fromapp=FROM_ASSIA;
 		}
 	}
 
@@ -981,6 +996,22 @@ handle_request(void)
 	do_referer = 0;
 
 	if(!fromapp) {
+		if(lock_flag == 1){
+			time_t dt_t;
+			login_timestamp_tmp = uptime();
+			dt_t = login_timestamp_tmp - last_login_timestamp;
+			if(last_login_timestamp != 0 && dt_t > 60){
+				login_try = 0;
+				last_login_timestamp = 0;
+				lock_flag = 0;
+			}else{
+				if(strncmp(file, "Main_Login.asp?error_status=7", 29)==0 || strstr(url, ".png")){
+				}else{
+					send_login_page(fromapp, LOGINLOCK, url, dt_t);
+					return;
+				}
+			}
+		}
 		http_login_timeout(login_ip_tmp, cookies, fromapp);	// 2008.07 James.
 		login_state = http_login_check();
 		// for each page, mime_exception is defined to do exception handler
@@ -1024,7 +1055,7 @@ handle_request(void)
 							handler->input(file, conn_fp, cl, boundary);
 						}
 					}
-					send_login_page(fromapp, NOLOGIN, NULL);
+					send_login_page(fromapp, NOLOGIN, NULL, 0);
 					return;
 				}
 			}
@@ -1037,27 +1068,27 @@ handle_request(void)
 				}
 				else {
 					if(do_referer&CHECK_REFERER){
-						referer_result = referer_check(referer, useragent);
+						referer_result = referer_check(referer, fromapp);
 						if(referer_result != 0){
 							if(strcasecmp(method, "post") == 0){
 								if (handler->input) {
 									handler->input(file, conn_fp, cl, boundary);
 								}
-								send_login_page(fromapp, referer_result, NULL);
+								send_login_page(fromapp, referer_result, NULL, 0);
 							}
 							//if(!fromapp) http_logout(login_ip_tmp, cookies);
 							return;
 						}
 					}
 					handler->auth(auth_userid, auth_passwd, auth_realm);
-					auth_result = auth_check(auth_realm, authorization, url, cookies, useragent);
+					auth_result = auth_check(auth_realm, authorization, url, cookies, fromapp);
 					if (auth_result != 0)
 					{
 						if(strcasecmp(method, "post") == 0){
 							if (handler->input) {
 								handler->input(file, conn_fp, cl, boundary);
 							}
-							send_login_page(fromapp, auth_result, NULL);
+							send_login_page(fromapp, auth_result, NULL, 0);
 						}
 						//if(!fromapp) http_logout(login_ip_tmp, cookies);
 						return;
@@ -1078,7 +1109,7 @@ handle_request(void)
 	
 			if(!strcmp(file, "Logout.asp")){
 				http_logout(login_ip_tmp, cookies, fromapp);
-				send_login_page(fromapp, ISLOGOUT, NULL);
+				send_login_page(fromapp, ISLOGOUT, NULL, 0);
 				return;
 			}
 
@@ -1138,7 +1169,7 @@ handle_request(void)
 			if(strncmp(url, "login.cgi", strlen(url))==0){	//set user-agent
 				memset(user_agent, 0, sizeof(user_agent));
 				if(useragent != NULL)
-					strncpy(user_agent, useragent, sizeof(user_agent));
+					strncpy(user_agent, useragent, sizeof(user_agent)-1);
 				else
 					strcpy(user_agent, "");
 			}
@@ -1270,33 +1301,28 @@ void http_login_cache(usockaddr *u) {
 	temp_ip_str = inet_ntoa(temp_ip_addr);
 }
 
-void http_get_access_ip(void) {
-	struct in_addr tmp_access_addr;
-	char tmp_access_ip[32];
-	char *nv, *nvp, *b;
-	int i=0, p=0;
+void http_get_access_ip(void)
+{
+	struct in_addr addr4;
+	char *nv, *nvp, *b, *ip;
+	int i, size;
 
-	for(; i<ARRAY_SIZE(access_ip); i++)
-		access_ip[i]=0;
+	memset(&access_ip, 0, sizeof(access_ip));
 
 	nv = nvp = strdup(nvram_safe_get("http_clientlist"));
-
-	if (nv) {
-		while ((b = strsep(&nvp, "<")) != NULL) {
-			if (strlen(b)==0) continue;
-			sprintf(tmp_access_ip, "%s", b);
-			inet_aton(tmp_access_ip, &tmp_access_addr);
-
-			if (p >= ARRAY_SIZE(access_ip)) {
-				_dprintf("%s: access_ip out of range (p %d addr %x)!\n",
-					__func__, p, (unsigned int)tmp_access_addr.s_addr);
-				break;
-			}
-			access_ip[p] = (unsigned int)tmp_access_addr.s_addr;
-			p++;
+	i = 0;
+	while (nv && (b = strsep(&nvp, "<")) != NULL && i < ARRAY_SIZE(access_ip)) {
+		ip = strsep(&b, "/");
+		size = (b && *b) ? strtoul(b, NULL, 10) : 32;
+		if (inet_pton(AF_INET, ip, &addr4) > 0) {
+			if (size > 32)
+				size = 32;
+			access_ip[i].ip.s_addr = addr4.s_addr;
+			access_ip[i].netmask.s_addr = htonl(0xffffffffUL << (32 - size));
+			i++;
 		}
-		free(nv);
 	}
+	free(nv);
 }
 
 void http_login(unsigned int ip, char *url) {
@@ -1332,16 +1358,17 @@ void http_login(unsigned int ip, char *url) {
 	nvram_set("login_timestamp", login_timestampstr);
 }
 
-int http_client_ip_check(void) {
-
+int http_client_ip_check(void)
+{
 	int i = 0;
-	if(nvram_match("http_client", "1")) {
-		while(i<ARRAY_SIZE(access_ip)) {
-			if(access_ip[i]!=0) {
-				if(login_ip_tmp==access_ip[i])
-					return 1;
-			}
-			i++;
+
+	if (nvram_match("http_client", "1")) {
+		for (i = 0; i < ARRAY_SIZE(access_ip); i++) {
+			if (access_ip[i].ip.s_addr == INADDR_ANY)
+				continue;
+			if ((login_ip_tmp & access_ip[i].netmask.s_addr) ==
+			    (access_ip[i].ip.s_addr & access_ip[i].netmask.s_addr))
+				return 1;
 		}
 		return 0;
 	}
@@ -1403,7 +1430,7 @@ void http_logout(unsigned int ip, char *cookies, int fromapp_flag)
 			reget_passwd = 1;
 		}
 // 2008.03 James. }
-	}else if(fromapp_flag == 1){
+	}else if(fromapp_flag != 0){
 		delete_logout_from_list(cookies);
 }
 }

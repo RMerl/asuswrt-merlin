@@ -836,6 +836,7 @@ CONFIG_MTD_NAND_IDS=y
 #
 # Broadcom Flash Devices Support
 #
+# CONFIG_MTD_BCMCONF_PARTS is not set
 CONFIG_MTD_BCMSFLASH=y
 CONFIG_MTD_BRCMNAND=y
 CONFIG_MTD_NFLASH=y
@@ -957,7 +958,7 @@ CONFIG_SCSI_LOWLEVEL=y
 # CONFIG_SCSI_BFA_FC is not set
 # CONFIG_SCSI_DH is not set
 # CONFIG_SCSI_OSD_INITIATOR is not set
-CONFIG_ATA=y
+# CONFIG_ATA is not set
 # CONFIG_ATA_NONSTANDARD is not set
 # CONFIG_ATA_VERBOSE_ERROR is not set
 # CONFIG_SATA_PMP is not set
@@ -965,7 +966,7 @@ CONFIG_ATA=y
 #
 # Controllers with non-SFF native interface
 #
-CONFIG_SATA_AHCI=y
+# CONFIG_SATA_AHCI is not set
 # CONFIG_SATA_AHCI_PLATFORM is not set
 # CONFIG_SATA_INIC162X is not set
 # CONFIG_SATA_SIL24 is not set

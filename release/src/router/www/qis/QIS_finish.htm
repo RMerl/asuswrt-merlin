@@ -33,7 +33,7 @@ span{
 <% secondary_wanlink(); %>
 
 var sw_mode = '<% nvram_get("sw_mode"); %>';
-if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
@@ -216,13 +216,14 @@ function detect_httpd(){
 		timeout: 2000,
 		error: function(xhr){
 			dead++;
-			if(dead < 50)
+			if(dead < 70)
 				setTimeout("detect_httpd();", 1000);
 			else{
 				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
-				document.getElementById("newFWgradedFail").style.display = "";
+				// document.getElementById("newFWgradedFail").style.display = "";
+				document.getElementById("hidden_frame").contentWindow.showWlHint(1);
 			}
 		},
 		success: function(){
@@ -300,6 +301,11 @@ function checkIsNewFirmware(){
 
 		document.getElementById("QISmain").style.display = "none";
 		document.getElementById("liveUpdate_div").style.display = "";
+
+		//force_upgrade_support : rc_support with "fupgrade"
+		if(!parent.is_CN && parent.force_upgrade_support){
+			doLiveUpdate(true);
+		}
 	}
 	else{
 		goto_index();
@@ -1568,7 +1574,7 @@ function chkMBConState(){
 		<td id="tdWlcItem" align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"></td>	
 	</tr>
 	<tr class="wlcItem">
-	  <th width="180"><span id="wlcssid_item"><#Wireless_name#> (<#remote#>)</span></th>
+	  <th width="180"><span id="wlcssid_item"><#QIS_finish_wireless_item1#> (<#remote#>)</span></th>
 	  <td class="QISformtd">
 			<span id="wlcssid"></span>
 	  </td>
@@ -1708,7 +1714,7 @@ function chkMBConState(){
 		</div>
 		<br>
 		<br>
-		<div style="text-align:left;line-height: 25px;">
+		<div style="text-align:left;line-height: 25px;display:none;">
 			<#FW_n1#>
 			<br>
 		</div>

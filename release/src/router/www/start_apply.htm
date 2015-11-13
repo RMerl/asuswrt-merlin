@@ -148,7 +148,7 @@ function showWlHint(){
 
 		if(sw_mode == '2' && wlc_express == '0') ui_sw_mode = "re"; // Repeater
 		else if(sw_mode == '3' && wlc_psta == '0') ui_sw_mode = "ap"; // AP
-		else if(sw_mode == '3' && wlc_psta == '1') ui_sw_mode = "mb"; // MediaBridge
+		else if((sw_mode == '3' && wlc_psta == '1') || (sw_mode == '3' && wlc_psta == '3')) ui_sw_mode = "mb"; // MediaBridge
 		else if(sw_mode == '2' && wlc_express != '0') ui_sw_mode = "ew"; // Express Way
 		else if(sw_mode == '5') ui_sw_mode = 'hs'; // Hotspot
 		else ui_sw_mode = "rt"; // Router
@@ -321,7 +321,7 @@ function showWlHint(){
 		wlHintCss += "@media screen and (max-width: 1000px){";
 		if(top.location.pathname.search("QIS") != -1){
 			wlHintCss += "#wlHint{background:url('/images/qis/pattern3-3_10_A15.png'),url('/images/qis/pattern3_05_4.png'),url('/images/qis/mainimage_img4.png') #1D1E1F no-repeat;";
-			wlHintCss += "background-size:auto;}b{color:#007AFF;}";
+			wlHintCss += "background-size:auto;}b{color:#279FD9;}";
 		}
 		wlHintCss += ".prod_madelName{";
 		wlHintCss += "font-size: 13pt;";
@@ -362,7 +362,7 @@ function showWlHint(){
 		for(var i=0; i<wlObj.length; i++){
 			wlHintHtml += '<div class="p1 title_gap">'+ wlObj[i].band +'</div>';
 			wlHintHtml += '<div class="nologin">';
-			wlHintHtml += '<#Wireless_name#>: <b>';
+			wlHintHtml += '<#QIS_finish_wireless_item1#>: <b>';
 			wlHintHtml += wlObj[i].ssid + '</b><br>';
 			wlHintHtml += '<#Network_key#>: <b>';
 			wlHintHtml += (wlObj[i].key == "") ? "Open System" : wlObj[i].key;
@@ -423,6 +423,7 @@ function initial(){
 		}, getXMLAndRedirect);
 	};
 
+	console.log(getflag);
 	if(getflag == "vpnClient" || getflag == "background" || action_script == "saveNvram"){
 		return false;
 	}

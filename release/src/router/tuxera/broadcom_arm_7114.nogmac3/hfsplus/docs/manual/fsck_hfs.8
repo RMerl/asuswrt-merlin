@@ -1,0 +1,78 @@
+.\" Copyright (c) 2013 Tuxera Inc.
+.\"
+.TH FSCK_HFS 8 "December 2013" "Tuxera HFS+ 3014.7.28"
+.SH NAME
+fsck_hfs \- check and repair an HFS+ volume
+.SH SYNOPSIS
+.B fsck_hfs
+[\fIoptions\fR] \fIdevice\fR
+.SH DESCRIPTION
+.B fsck_hfs
+will check an HFS+ volume for errors, and optionally correct them.
+Run fsck_hfs without arguments for a full list of options.
+.SH OPTIONS
+Below is a summary of all the options that
+.B fsck_hfs
+accepts.
+.TP
+\fB\-q\fR
+Do only a quick test to check if the file-system will mount properly. This
+is useful when you want to do a fast check to find out if the volume was 
+unmounted cleanly. It returns a non non-zero exit value if the volume was not
+unmounted cleanly, otherwise an exit value of 0 is returned.
+.TP
+\fB\-d\fR
+Verbose output. This is useful for debugging when \fBfsck_hfs\fR cannot repair 
+a corrupted HFS+ volume.
+.TP
+\fB\-f\fR
+Force \fBfsck_hfs\fR to check and repair journaled HFS+ file-system. When used
+with \fB\-p\fR option, forces \fBfsck_hfs\fR to check 'clean' file systems.
+.TP
+\fB\-l\fR
+Lock the file-system and perform a read-only check. This is useful when you want
+to check a mounted volume, without trying to repair it.
+.TP
+\fB\-m\fR  MODE
+Set permissions for the lost+found directory when created. It accepts an octal
+value that will be used to set the permission. \fBfsck_hfs\fR places orphaned
+files and directories in lost+found directory (located in the root directory).
+Default mode is 01777.
+.TP
+\fB\-p\fR
+Preen the specified file-system.
+.TP
+\fB\-c\fR  SIZE
+Specify the internal cache size used by \fBfsck_hfs\fR. Bigger size can ensure
+better performance but can deadlock when used with \fB\-l\fR option. It accepts
+size value as an argument, which can be a decimal, octal, or a hexadecimal
+number. Numbers ending with a 'k', 'm' or 'g' are multiplied by 1024 (1K),
+1048576 (1M) or 1073741824 (1G), respectively.
+.TP
+\fB\-r\fR
+Rebuild the catalog file on the specified file-system.
+.TP
+\fB\-y\fR
+Always try to repair every corruption that is found.
+.TP
+\fB\-n\fR
+Never try to repair any corruption that is found.
+
+.SH EXIT STATUS
+\fB0\fR: Success quick test, file-system was cleanly unmounted.
+.TP
+\fB3\fR: File-system Dirty, no checks.
+.TP
+\fB4\fR: Writeable Root File-system was fixed.
+.TP
+\fB8\fR: Standard error exit.
+.SH BUGS
+If you find a bug please send an email describing the problem to
+hfs-support@tuxera.com.
+.hy
+.SH AVAILABILITY
+.B fsck_hfs
+is part of the
+.B Tuxera HFS+
+package.
+.hy

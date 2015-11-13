@@ -247,6 +247,8 @@ function genBWTable(_unit){
 				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || 
 				based_modelid == "RT-AC66U" || 
 				based_modelid == "RT-AC3200" || 
+				based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC5300" ||
 				based_modelid == "RT-AC53U") && document.form.wl_nmode_x.value == 1){		//N only
 				bws = [0, 1, 2];
 				bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];
@@ -827,7 +829,7 @@ function regen_auto_option(obj){
 		  	</tr-->
 
 				<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#WLANConfig11b_SSID_itemname#></a></th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#QIS_finish_wireless_item1#></a></th>
 					<td>
 						<input type="text" maxlength="32" class="input_32_table" id="wl_ssid" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>" onkeypress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 					</td>

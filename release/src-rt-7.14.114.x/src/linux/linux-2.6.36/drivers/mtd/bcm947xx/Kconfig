@@ -4,7 +4,7 @@ if MTD
 
 config MTD_BCMCONF_PARTS
 	bool "Broadcom confmtd partition"
-	depends on !MTD_BRCMNAND && MTD_BCMSFLASH
+	depends on MTD_BCMSFLASH
 
 source "drivers/mtd/bcm947xx/devices/Kconfig"
 

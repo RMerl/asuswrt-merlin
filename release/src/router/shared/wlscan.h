@@ -129,6 +129,8 @@ struct bss_ie_hdr {
 	unsigned char oui[3];
 } bss_ie;
 
+#define MAX_NUMBER_OF_APINFO	64
+
 struct apinfo
 {
 	char BSSID[18];
@@ -142,7 +144,8 @@ struct apinfo
 	struct wpa_ie_data wid;
 	int status;
 	int NetworkType;
-} apinfos[32];
+} apinfos[MAX_NUMBER_OF_APINFO];
 
 #define WIF "eth1"
+#define WLC_SCAN_RESULT_BUF_LEN	32 * 1024
 char buf[WLC_IOCTL_MAXLEN];

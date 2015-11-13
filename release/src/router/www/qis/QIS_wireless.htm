@@ -730,6 +730,7 @@ function submitForm(){
 		}else{
 			document.form.sw_mode.value = 2;
 		}
+		
 		document.form.flag.value = "wlcconnect";
 		document.form.action_script.value = "reboot";
 		parent.document.getElementById("stassid").innerHTML = document.form.wlc_ssid.value;
@@ -827,9 +828,11 @@ function submitForm(){
 	}
 
 	document.form.submit();
-	setTimeout(function(){
-		location.href = "/qis/QIS_finish.htm";
-	}, 500)
+	if(document.form.sw_mode.value == "1" || document.form.sw_mode.value == "3"){
+		setTimeout(function(){
+			location.href = "/qis/QIS_finish.htm";
+		}, 500)
+	}
 }
 
 function timezone_by_preferred_lang(v){

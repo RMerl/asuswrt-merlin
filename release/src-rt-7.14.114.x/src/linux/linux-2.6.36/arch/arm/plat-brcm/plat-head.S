@@ -91,8 +91,8 @@ ENTRY(__mach_head_fixup)
 	str	r1, [r0]
 	ldr	r0, =0x18010e00		@ Enable all coherence bits for all DMA
 	ldr	r1, =0xffffffff
-	cmp     r4, #0x20000		@ The revision number of BCM53573 A0=0, A1=1, B0=2.
-	bne	4f
+	cmp     r4, #0x20000		@ BCM53573 revision number: A0=0, A1=1, B0=2, B1=3.
+	blt	4f
 	ldr	r7, [r0]
 	ldr     r0, =0x18010c40         @ Enable access write for GCI control register 11
 	ldr     r1, =0xb

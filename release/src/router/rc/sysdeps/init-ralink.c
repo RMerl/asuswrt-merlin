@@ -45,7 +45,7 @@ void init_devs(void)
 {
 #define MKNOD(name,mode,dev)	if(mknod(name,mode,dev)) perror("## mknod " name)
 
-#if defined(LINUX30) && !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U)
+#if defined(LINUX30) && !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTN56UB2) && !defined(RTAC54U)
 	/* Below device node are used by proprietary driver.
 	 * Thus, we cannot use GPL-only symbol to create/remove device node dynamically.
 	 */
@@ -58,12 +58,12 @@ void init_devs(void)
 	MKNOD("/dev/nvram", S_IFCHR | 0666, makedev(228, 0));
 #else
 	MKNOD("/dev/video0", S_IFCHR | 0666, makedev(81, 0));
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTN56UB2) && !defined(RTAC54U)
 	MKNOD("/dev/rtkswitch", S_IFCHR | 0666, makedev(206, 0));
 #endif
 	MKNOD("/dev/spiS0", S_IFCHR | 0666, makedev(217, 0));
 	MKNOD("/dev/i2cM0", S_IFCHR | 0666, makedev(218, 0));
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC54U)
 #else
 	MKNOD("/dev/rdm0", S_IFCHR | 0666, makedev(254, 0));
 #endif
@@ -138,6 +138,7 @@ void generate_switch_para(void)
 		case MODEL_RTN54U:      /* fall through */
 		case MODEL_RTAC54U:      /* fall through */
 		case MODEL_RTN56UB1:      /* fall through */
+		case MODEL_RTN56UB2:      /* fall through */
 		case MODEL_RTAC1200HP:  /* fall through */
 		case MODEL_RTAC51U:	/* fall through */
 		case MODEL_RTAC52U:
@@ -165,7 +166,7 @@ static void init_switch_ralink(void)
 		else
 			eval("ifconfig", nvram_safe_get("wan0_ifname"), "hw", "ether", nvram_safe_get("et0macaddr"));
 	}
-#if defined(RTN56UB1)	//workaround, let network device initialize before config_switch()
+#if defined(RTN56UB1) || defined(RTN56UB2) //workaround, let network device initialize before config_switch()
 	eval("ifconfig", "eth2", "up");
 	sleep(1);
 #endif	
@@ -286,6 +287,7 @@ void config_switch()
 	case MODEL_RTAC51U:	/* fall through */
 	case MODEL_RTAC52U:	/* fall through */
 	case MODEL_RTN56UB1:	/* fall through */
+	case MODEL_RTN56UB2:	/* fall through */
 		merge_wan_port_into_lan_ports = 1;
 		break;
 	default:
@@ -299,7 +301,7 @@ void config_switch()
 		dbG("software reset\n");
 		eval("rtkswitch", "27");	// software reset
 	}
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
 	system("rtkswitch 8 0"); //Barton add
 #endif
 
@@ -741,7 +743,7 @@ void init_syspara(void)
 	char ea[ETHER_ADDR_LEN];
 	const char *reg_spec_def;
 
-#if defined(RTAC1200HP) || defined(RTN56UB1)
+#if defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2)
 	char fixch;
 	char value_str[MAX_REGSPEC_LEN+1];
 	memset(value_str, 0, sizeof(value_str));
@@ -783,7 +785,7 @@ void init_syspara(void)
 	}
 #endif
 
-#if defined(RTAC1200HP) || defined(RTN56UB1)
+#if defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2)
 	fixch='0';
 	FRead(&fixch, OFFSET_FIX_CHANNEL, 1);
 	if(fixch=='1')
@@ -845,6 +847,31 @@ void init_syspara(void)
 			if (ether_atoe(macaddr2, ea))
 				FWrite(ea, OFFSET_MAC_GMAC2, 6);
 		}
+	}
+
+#ifdef RA_SINGLE_SKU
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
+	gen_ra_sku(nvram_safe_get("reg_spec"));
+#endif	/* RTAC52U && RTAC51U && RTN54U && RTAC54U && RTAC1200HP && RTN56UB1 && RTN56UB1 && RTN11P && RTN300 */
+#endif	/* RA_SINGLE_SKU */
+
+	{
+#ifdef RTCONFIG_ODMPID
+		char modelname[16];
+		FRead(modelname, OFFSET_ODMPID, sizeof(modelname));
+		modelname[sizeof(modelname)-1] = '\0';
+		if(modelname[0] != 0 && (unsigned char)(modelname[0]) != 0xff && is_valid_hostname(modelname) && strcmp(modelname, "ASUS"))
+		{
+#if defined(RTN11P)
+			if(strcmp(modelname, "RT-N12E_B")==0)
+				nvram_set("odmpid", "RT-N12E_B1");
+			else
+#endif	/* RTN11P */
+			nvram_set("odmpid", modelname);
+		}
+		else
+#endif
+			nvram_unset("odmpid");
 	}
 
 	/* reserved for Ralink. used as ASUS country code. */
@@ -919,7 +946,6 @@ void init_syspara(void)
 		else
 			nvram_set("wl0_country_code", "DB");
 	}
-
 #ifdef RTCONFIG_HAS_5G
 	if (FRead(dst, REG5G_EEPROM_ADDR, MAX_REGDOMAIN_LEN)<0 || memcmp(dst,"5G_", 3) != 0)
 	{
@@ -936,10 +962,16 @@ void init_syspara(void)
 
 		dst[i] = 0;
 		nvram_set("wl_reg_5g", dst);
+		nvram_set("wl1_IEEE80211H", "0");
 		if      (strcmp(dst, "5G_BAND1") == 0)
 			nvram_set("wl1_country_code", "GB");
 		else if (strcmp(dst, "5G_BAND123") == 0)
+		{
 			nvram_set("wl1_country_code", "GB");
+#ifdef RTCONFIG_RALINK_DFS
+			nvram_set("wl1_IEEE80211H", "1");
+#endif	/* RTCONFIG_RALINK_DFS */
+		}
 		else if (strcmp(dst, "5G_BAND14") == 0)
 			nvram_set("wl1_country_code", "US");
 		else if (strcmp(dst, "5G_BAND24") == 0)
@@ -1016,6 +1048,32 @@ void init_syspara(void)
 			nvram_set("territory_code", buffer);
 		}
 	}
+
+#if defined(RTN56UB1)  
+	if((nvram_match("territory_code","EU/01")|| nvram_match("territory_code","UK/01"))&& !nvram_match("wl1_IEEE80211H","1"))
+	{
+#ifdef RTCONFIG_RALINK_DFS
+			nvram_set("wl1_IEEE80211H", "1");
+#endif	/* RTCONFIG_RALINK_DFS */
+	}
+#endif	
+
+#if defined(RTN11P)
+	if (nvram_match("odmpid", "RT-N12+") && nvram_match("reg_spec", "CN"))
+	{
+		char *str;
+		str = nvram_get("territory_code");
+		if(str == NULL || str[0] == '\0') {
+			nvram_set("territory_code", "CN/01");
+		}
+	}
+
+	if( nvram_match("odmpid", "RT-N12+") && !strncmp(nvram_safe_get("territory_code"), "IN", 2 )) {
+		nvram_set("reg_spec", "NCC");
+		nvram_set("wl0_country_code", "US");
+	}
+#endif	/* RTN11P */
+	
 	/* PSK */
         memset(buffer, 0, sizeof(buffer));
 	if (FRead(buffer, OFFSET_PSK, 14) < 0) {
@@ -1100,41 +1158,6 @@ void init_syspara(void)
 	}
 #endif
 
-#ifdef RA_SINGLE_SKU
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
-	gen_ra_sku(nvram_safe_get("reg_spec"));
-#endif	/* RTAC52U && RTAC51U && RTN54U && RTAC54U && RTAC1200HP && RTN56UB1 */
-#endif	/* RA_SINGLE_SKU */
-
-	{
-#ifdef RTCONFIG_ODMPID
-		char modelname[16];
-		FRead(modelname, OFFSET_ODMPID, sizeof(modelname));
-		modelname[sizeof(modelname)-1] = '\0';
-		if(modelname[0] != 0 && (unsigned char)(modelname[0]) != 0xff && is_valid_hostname(modelname) && strcmp(modelname, "ASUS"))
-		{
-#if defined(RTN11P) || defined(RTN300)
-			if(strcmp(modelname, "RT-N12E_B")==0)
-				nvram_set("odmpid", "RT-N12E_B1");
-			else
-#endif	/* RTN11P */
-			nvram_set("odmpid", modelname);
-		}
-		else
-#endif
-			nvram_unset("odmpid");
-	}
-#if defined(RTCONFIG_TCODE) && defined(RTN11P)
-	if (nvram_match("odmpid", "RT-N12+") && nvram_match("reg_spec", "CN"))
-	{
-		char *str;
-		str = nvram_get("territory_code");
-		if(str == NULL || str[0] == '\0') {
-			nvram_set("territory_code", "CN/01");
-		}
-	}
-#endif	/* RTCONFIG_TCODE && RTN11P */
-
 	nvram_set("firmver", rt_version);
 	nvram_set("productid", rt_buildname);
 
@@ -1147,7 +1170,7 @@ void generate_wl_para(int unit, int subunit)
 {
 }
 
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2)  || defined(RTAC54U)
 #define HW_NAT_WIFI_OFFLOADING		(0xFF00)
 #define HW_NAT_DEVNAME			"hwnat0"
 static void adjust_hwnat_wifi_offloading(void)
@@ -1199,7 +1222,7 @@ void reinit_hwnat(int unit)
 	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1)
 		act = 0;
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
 	if (act > 0 && !nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", ""))
 		act = 0;
 #endif
@@ -1229,7 +1252,7 @@ void reinit_hwnat(int unit)
 #endif
 	}
 
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
 	if (act > 0) {
 #if defined(RTCONFIG_DUALWAN)
 		if (unit < 0 || unit > WAN_UNIT_SECOND || nvram_match("wans_mode", "lb")) {
@@ -1371,6 +1394,7 @@ set_wan_tag(char *interface) {
 	case MODEL_RTN14U:
 	case MODEL_RTN54U:
 	case MODEL_RTN56UB1:
+	case MODEL_RTN56UB2:
 		ifconfig(interface, IFUP, 0, 0);
 		if(wan_vid) { /* config wan port */
 			eval("vconfig", "rem", "vlan2");

@@ -20,6 +20,7 @@
 #include <asm/mach/map.h>
 #include <asm/clkdev.h>
 #include <asm/uaccess.h>
+#include <asm/ptrace.h>
 #include <mach/clkdev.h>
 #include <mach/io_map.h>
 #include <plat/bsp.h>
@@ -203,10 +204,10 @@ static int soc_abort_handler(unsigned long addr, unsigned int fsr,
 	 * These happen for no good reason
 	 * possibly left over from CFE
 	 */
-	printk( KERN_WARNING 
+	printk(KERN_WARNING
 		"External imprecise Data abort at "
-		"addr=%#lx, fsr=%#x ignored.\n", 
-		addr, fsr );
+		"addr=%#lx, fsr=%#x, pc=%#lx lr=%#lx ignored.\n",
+		addr, fsr, regs->ARM_pc, regs->ARM_lr);
 
 	/* Returning non-zero causes fault display and panic */
         return 0;
@@ -624,6 +625,8 @@ void __init soc_add_devices(void)
 		}
 		/* BCM53573 uses different interrupt ID number */
 		uart_ports[0].irq = IRQ_CC_UART;
+		/* Select 16550A to enable UART FIFO mode */
+		uart_ports[0].type = PORT_16550A;
 	}
 
 	/* Fixup UART port structure */
@@ -726,3 +729,45 @@ static int  __init bcm5301_pl310_init(void)
 }
 early_initcall( bcm5301_pl310_init );
 #endif
+
+#ifdef CONFIG_PROC_FS
+#define BCM_CHIPINFO_PROC_NAME	"bcm_chipinfo"
+static int chipinfo_read_proc(char *buf, char **start, off_t off, int count, int *eof, void *data)
+{
+	int len = 0;
+	u32 reg, val;
+	void __iomem *reg_map;
+
+	reg = SOC_CHIPCOMON_A_BASE_PA;
+	reg_map = ioremap_nocache(reg, 4);
+	val = readl(reg_map);
+	iounmap((void *)reg_map);
+
+	len += sprintf(buf + len, "ChipID: 0x%x\n", val & 0xffff);
+	len += sprintf(buf + len, "ChipRevision: 0x%x\n", (val >> 16) & 0xf);
+	len += sprintf(buf + len, "PackageOption: 0x%x\n", (val >> 20) & 0xf);
+
+	*eof = 1;
+	return len;
+}
+
+static void __init chipinfo_proc_init(void)
+{
+	struct proc_dir_entry *chip_info;
+
+	chip_info = create_proc_read_entry(BCM_CHIPINFO_PROC_NAME, 0, NULL,
+		chipinfo_read_proc, NULL);
+	if (!chip_info) {
+		printk(KERN_ERR "%s: Create proc entry failed.\n", __FUNCTION__);
+		return;
+	}
+}
+
+static void __exit chipinfo_proc_exit(void)
+{
+	remove_proc_entry(BCM_CHIPINFO_PROC_NAME, NULL);
+}
+
+module_init(chipinfo_proc_init);
+module_exit(chipinfo_proc_exit);
+#endif /* CONFIG_PROC_FS */

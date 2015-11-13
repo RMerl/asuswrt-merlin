@@ -101,7 +101,7 @@ function valid_form(){
 		  <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 		  	
       	<tr>
-      		<th>NAT Acceleration(IPv4 Only)</th>
+		<th><#NAT_Acceleration#> (IPv4 Only)<!--untranslated--></th>
           <td>
 						<select name="qca_sfe" class="input_option">
 							<option class="content_input_fd" value="0" <% nvram_match("qca_sfe", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>

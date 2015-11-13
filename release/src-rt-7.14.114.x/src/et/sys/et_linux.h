@@ -15,7 +15,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: et_linux.h 575708 2015-07-30 20:27:43Z $
+ * $Id: et_linux.h 581745 2015-08-25 12:15:08Z $
  */
 
 #ifndef _et_linux_h_
@@ -34,9 +34,12 @@
 #endif /* ET_INGRESS_QOS */
 #endif /* CONFIG_RAM_SIZE ... */
 
-#if defined(BCM_GMAC3)
+#if defined(DHDAP)
 #undef NRXBUFPOST
 #define NRXBUFPOST 511
+#endif /* DHDAP */
+
+#if defined(BCM_GMAC3)
 /*
  * To ensure that a 2K slab is used,                                  2048
  * Linux Add-ons: skb_shared_info=264, NET_SKB_PAD=32, align=32        352

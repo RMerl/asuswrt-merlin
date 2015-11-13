@@ -19,6 +19,7 @@ extern int setPLC_para(const char *abuf, int addr);
 extern void ate_ctl_plc_led(void);
 extern int set_plc_all_led_onoff(int on);
 
+#define PLC_LOCK_FILE		"/tmp/plc_lock"
 #define BOOT_NVM_PATH		"/tmp/asus.nvm"
 #define BOOT_PIB_PATH		"/tmp/asus.pib"
 

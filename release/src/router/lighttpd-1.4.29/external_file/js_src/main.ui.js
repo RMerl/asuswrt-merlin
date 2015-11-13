@@ -936,7 +936,12 @@ function showHideEditUIRegion(show){
 		//showHideEditUIRegion(true);
 			
 		if(isAiModeView()<0) $("#btnDeleteSel").removeClass("disable");
-		$("#btnDownload").removeClass("disable");
+		
+		if(g_select_folder_count>0)
+			$("#btnDownload").addClass("disable");
+		else
+			$("#btnDownload").removeClass("disable");
+			
 		$("#btnShareLink").removeClass("disable");
 		$("#btnCopyMove").removeClass("disable");
 	}

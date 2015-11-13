@@ -46,7 +46,7 @@ body{
 	width:480px;
 }
 .button{
-	background-color:#007AFF;
+	background-color:#279FD9;
 	/*background:rgba(255,255,255,0.1);
 	border: solid 1px #6e8385;*/
 	border-radius: 4px ;
@@ -200,7 +200,7 @@ var casenum = '<% get_parameter("flag"); %>';
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 var wlc_psta = '<% nvram_get("wlc_psta"); %>';
 var wlc_express = '<% nvram_get("wlc_express"); %>';
-if((sw_mode == 2 || sw_mode == 3) && wlc_psta == 1)
+if( ((sw_mode == 2 || sw_mode == 3) && wlc_psta == 1) || (sw_mode == 3 && wlc_psta == 3))
 	sw_mode = 4;
 	
 if(sw_mode == 3 && wlc_psta == 2)
@@ -225,6 +225,9 @@ if(wans_dualwan_orig.search(" ") == -1)
 var new_lan_ip = (function(){
 	var current_lanip = '<% nvram_get("lan_ipaddr"); %>';
 	var current_mask = '<% nvram_get("lan_netmask"); %>';
+	var MAX_SUBNET = 3232300800;
+	var MIN_LAN_IP = 3232235521;
+
 	var inet_aton = function(ip_str){
 		if(!ip_str)
 			return -1;
@@ -262,10 +265,15 @@ var new_lan_ip = (function(){
 	if(tmo_support){		
 		return (current_lanip.indexOf("192.168.29") == -1) ? "192.168.29.1" : "192.168.24.1";
 	}
-	else{
+	else{	
 		var reverse_mask_num = ~(inet_aton(current_mask));
-		var current_lanip_num = inet_aton(current_lanip);
-		var new_lanip_num = current_lanip_num+reverse_mask_num+1;	
+		var current_lanip_num = inet_aton(current_lanip);      
+		var lan_subnet = current_lanip_num+reverse_mask_num;
+
+		if(lan_subnet >= MAX_SUBNET)
+			var new_lanip_num = MIN_LAN_IP;
+		else
+			var new_lanip_num = lan_subnet+1;
 
 		return inet_ntoa(new_lanip_num);
 	}	
@@ -285,7 +293,6 @@ function initial(){
 		html_code += "<ul>";
 		html_code += "<li><#web_redirect_suggestion1#></li>";
 		html_code += "</ul>";
-		
 		$("#wanLink").click(function(){
 			detect_general();
 		});
@@ -360,7 +367,7 @@ function initial(){
 	}
 	else if(casenum.search("6") !== -1){
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
-			showtext($("#failReason1")[0], "IP conflict detected. Please check again.");
+			showtext($("#failReason1")[0], "<#web_redirect_reason6#> Please check again.");
 			html_code = html_code_notlogin;
 		}else{		
 			showtext($("#failReason1")[0], "<#web_redirect_reason6#>");
@@ -487,28 +494,26 @@ function detect_router(){
 }
 
 function detect_general(){
-	$("#wanLink").click(function(){
-		if(wans_flag){
-		    if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB")
-				top.location.href = '/Advanced_Modem_Content.asp';
-			else if(dsl_support){
-				if(wans_dualwan_orig.split(" ")[0].toUpperCase == "WAN" || wans_dualwan_orig.split(" ")[0].toUpperCase == "LAN")
-					top.location.href = '/Advanced_WAN_Content.asp';
-				else
-				    top.location.href = '/Advanced_DSL_Content.asp';
-			}
+	if(wans_flag){
+		if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB"){
+			top.location.href = '/Advanced_Modem_Content.asp';
+		}else if(dsl_support){
+			if(wans_dualwan_orig.split(" ")[0].toUpperCase == "WAN" || wans_dualwan_orig.split(" ")[0].toUpperCase == "LAN")
+				top.location.href = '/Advanced_WAN_Content.asp';
 			else
-				top.location.href = '/Advanced_WAN_Content.asp';
+				top.location.href = '/Advanced_DSL_Content.asp';
 		}
-		else{
-			if(dsl_support)                 
-			    top.location.href = '/Advanced_DSL_Content.asp';
-			else if(sw_mode == 3)
-			    top.location.href = '/index.asp';
-		    else
-				top.location.href = '/Advanced_WAN_Content.asp';
-		}
-	});	
+		else
+			top.location.href = '/Advanced_WAN_Content.asp';
+	}
+	else{
+		if(dsl_support)                 
+			top.location.href = '/Advanced_DSL_Content.asp';
+		else if(sw_mode == 3)
+			top.location.href = '/index.asp';
+		else
+			top.location.href = '/Advanced_WAN_Content.asp';
+	}
 }
 </script>
 

@@ -327,7 +327,7 @@ void start_usb(void)
 
 		/* if enabled, force USB2 before USB1.1 */
 		if (nvram_get_int("usb_usb2") == 1) {
-#if defined(RTN56UB1)		
+#if defined(RTN56UB1) || defined(RTN56UB2) 		 
 			modprobe(USB20_MOD);
 #else		   
 			i = nvram_get_int("usb_irq_thresh");
@@ -352,7 +352,7 @@ void start_usb(void)
 #endif
 #ifdef RTCONFIG_USB_MODEM
 		modprobe("usbnet");
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 		if(nvram_get_int("usb_gobi") == 1)
 			modprobe("gobi");
 #else
@@ -375,7 +375,7 @@ void remove_usb_modem_modules(void)
 #ifdef RTCONFIG_USB_BECEEM
 	modprobe_r("drxvi314");
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	killall_tk("gobi");
 	modprobe_r("gobi");
 #else
@@ -579,7 +579,7 @@ void stop_usb(void)
 	if (disabled || nvram_get_int("usb_uhci") != 1) modprobe_r(USBUHCI_MOD);
 	if (disabled || nvram_get_int("usb_usb2") != 1) modprobe_r(USB20_MOD);
 
-#if defined(RTN56UB1)		
+#if defined(RTN56UB1) ||  defined(RTN56UB2)		
 	modprobe_r(USB20_MOD);
 #endif		   
 
@@ -1294,10 +1294,8 @@ done:
 	{
 		chmod(mountpoint, 0777);
 
-#ifdef RTCONFIG_USB_MODEM
 		char usb_node[32], port_path[8];
 		char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
-		unsigned int vid, pid;
 
 		ptr = dev_name+5;
 
@@ -1308,6 +1306,9 @@ done:
 				// for ATE.
 				if(strlen(nvram_safe_get(strcat_r(prefix, "_fs_path0", tmp))) <= 0)
 					nvram_set(tmp, ptr);
+
+#ifdef RTCONFIG_USB_MODEM
+				unsigned int vid, pid;
 
 				vid = strtoul(nvram_safe_get(strcat_r(prefix, "_vid", tmp)), NULL, 16);
 				pid = strtoul(nvram_safe_get(strcat_r(prefix, "_pid", tmp)), NULL, 16);
@@ -1321,9 +1322,9 @@ done:
 
 					return 0; // skip to restart_nasapps.
 				}
+#endif
 			}
 		}
-#endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 		if(!strcmp(nvram_safe_get("apps_mounted_path"), "")){
@@ -1742,7 +1743,6 @@ void hotplug_usb(void)
 		syslog(LOG_DEBUG, "Attached USB device %s [INTERFACE=%s PRODUCT=%s]",
 			device, interface, product);
 
-
 #ifndef LINUX26
 		/* To allow automount to be blocked on startup.
 		 * In kernel 2.6 we still need to serialize mount/umount calls -
@@ -1789,6 +1789,7 @@ void hotplug_usb(void)
 					/* This is a disc, and not a "no-partition" device,
 					 * like APPLE iPOD shuffle. We can't mount it.
 					 */
+					file_unlock(lock);
 					return;
 				}
 				TRACE_PT(" mount to dev: %s\n", devname);

@@ -10,7 +10,6 @@
 
 #define AGG_INVALID_PID		0xFFFF
 
-/* FIXME, should integrate with FA's definition */
 typedef struct {
 	union {
 #ifdef BIG_ENDIAN

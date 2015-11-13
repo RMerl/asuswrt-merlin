@@ -480,8 +480,8 @@ static int plc_read_from_flash(char *nvm_path, char *pib_path)
 		goto open_fail;
 	}
 	rlen = read(rfd, hdr, sizeof(plc_image_header));
-	// check header crc
-	if (hdr_match_crc(hdr) == 0)
+	// check header crc and magic number
+	if (hdr_match_crc(hdr) == 0 || hdr->magic != PLC_MAGIC)
 		goto mismatch;
 
 	memset(buf, 0, sizeof(buf));
@@ -539,7 +539,7 @@ open_fail:
  */
 static int plc_write_to_flash(char *nvm_path, char *pib_path)
 {
-	int fd;
+	int fd, fl;
 	plc_image_header *hdr = &header;
 	char cmd[128];
 
@@ -568,10 +568,21 @@ static int plc_write_to_flash(char *nvm_path, char *pib_path)
 	close(fd);
 
 	// write to plc partition
-	sprintf(cmd, "cat %s %s %s > %s", HDR_PATH, nvm_path, pib_path, IMAGE_PATH);
-	system(cmd);
-	sprintf(cmd, "mtd-write -i %s -d %s", IMAGE_PATH, PLC_MTD_NAME);
-	system(cmd);
+	while (1) {
+		if ((fl = open(PLC_LOCK_FILE, O_WRONLY|O_CREAT|O_EXCL|O_TRUNC, 0600)) >= 0) {
+			sprintf(cmd, "cat %s %s %s > %s", HDR_PATH, nvm_path, pib_path, IMAGE_PATH);
+			system(cmd);
+			sprintf(cmd, "mtd-write -i %s -d %s", IMAGE_PATH, PLC_MTD_NAME);
+			system(cmd);
+			close(PLC_LOCK_FILE);
+			unlink(PLC_LOCK_FILE);
+			break;
+		}
+		else {
+			dbg("%s: PLC file lock! Try again after waiting 1 sec\n", __func__);
+			sleep(1);
+		}
+	}
 
 	unlink(HDR_PATH);
 	unlink(IMAGE_PATH);
@@ -580,52 +591,12 @@ static int plc_write_to_flash(char *nvm_path, char *pib_path)
 }
 
 /*
- * check .nvm and .pib of plc partition
- *
- * return
- * 1: vaild
- * 0: invaild or fail
- */
-int vaild_plc_partition(void)
-{
-	int fd, ret = 0;
-	plc_image_header *hdr = &header;
-	char cmd[32];
-
-	sprintf(cmd, "cat /dev/%s > %s", PLC_MTD_DEV, IMAGE_PATH);
-	system(cmd);
-
-	memset(hdr, 0, sizeof(plc_image_header));
-	// header
-	if ((fd = open(IMAGE_PATH, O_RDONLY)) < 0) {
-		fprintf(stderr, "%s: Can't open %s\n", __func__, IMAGE_PATH);
-		goto open_fail;
-	}
-	read(fd, hdr, sizeof(plc_image_header));
-
-	// check header crc
-	if (hdr_match_crc(hdr) == 0)
-		goto mismatch;
-
-	if (hdr->magic == PLC_MAGIC)
-		ret = 1;
-
-mismatch:
-	close(fd);
-
-open_fail:
-	unlink(IMAGE_PATH);
-
-	return ret;
-}
-
-/*
  * write default .nvm and .pib to flash, if plc partition is empty.
  * reload .nvm and .pib to /tmp from flash for plchost utility
  */
 int load_plc_setting(void)
 {
-	if (vaild_plc_partition() == 0) {
+	if (plc_read_from_flash(BOOT_NVM_PATH, BOOT_PIB_PATH)) {
 		FILE *fp;
 		int len, i;
 		char cmd[64], buf[64];
@@ -679,10 +650,6 @@ int load_plc_setting(void)
 		}
 
 		if (plc_write_to_flash(BOOT_NVM_PATH, BOOT_PIB_PATH))
-			return -1;
-	}
-	else {
-		if (plc_read_from_flash(BOOT_NVM_PATH, BOOT_PIB_PATH))
 			return -1;
 	}
 

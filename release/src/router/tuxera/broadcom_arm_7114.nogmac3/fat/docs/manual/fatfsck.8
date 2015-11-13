@@ -1,0 +1,78 @@
+.\" Copyright (c) 2014 Sougata Santra / Tuxera Inc.
+.\" Copyright (c) 2011-2012 Erik Larsson / Tuxera Inc.
+.\"
+.TH FATFSCK 8 "March 2014" "Tuxera TFATprogs 3014.9.11"
+.SH NAME
+fatfsck \- check and repair a FAT volume
+.SH SYNOPSIS
+.B fatfsck
+[\fIoptions\fR] \fIdevice\fR
+.SH DESCRIPTION
+.B fatfsck
+will check a FAT volume for errors, and optionally correct them.
+Run fatfsck without arguments for a full list of options.
+.SH OPTIONS
+Below is a summary of all the options that
+.B fatfsck
+accepts.  Nearly all options have two equivalent names.  The short name is
+preceded by
+.B \-
+and the long name is preceded by
+.BR \-\- .
+.TP
+\fB\-b\fR, \fB\-\-basic\fR
+Do only a basic file system check or repair. This option limits fatfsck to
+checking/repairing the boot region, FAT and the root directory. All other
+directories and allocations are ignored. This is useful when you want to do a
+fast check/repair which makes sure that the volume will mount properly and that
+the root directory will be accessible.
+.TP
+\fB\-p\fR, \fB\-\-probe\fR
+Probe for a FAT file system. This runs some tests on the device to check if
+the file system is FAT.
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Suppresses informational messages. Only error/warning messages and the final
+summary is displayed during execution.
+.TP
+\fB\-r\fR, \fB\-\-repair\fR
+Repair on-disk inconsistencies encountered. 
+.TP
+\fB\-a\fR, \fB\-\-automatic\-repair\fR
+If the volume is marked dirty, then repair on-disk inconsistencies encountered (equivalent to
+the \fB\-r\fR/\fB\-\-repair\fR option). Otherwise exit immediately with no action.
+.TP
+\fB\-s\fR, \fB\-\-strict\fR
+Turns on strict checking. This includes checking things that are not normally
+required to make sure the volume follows FAT specifications. This may increase
+the execution time for fatfsck.
+.TP
+\fB\-t\fR, \fB\-\-timeout\fR SECONDS
+Timeout in seconds before fatfsck will abort the volume check/repair. If
+specified, this sets an upper limit on the execution time of fatfsck. After the
+timeout occurs, fatfsck will clear all its pending tasks and return as soon as
+possible.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Verbose output. This makes fatfsck print more information about what it's doing,
+for instance which directory/file it's currently processing.
+.SH EXIT STATUS
+\fB0\fR: Success. \fBfatfsck\fR did what it was instructed to do successfully.
+.TP
+\fB1\fR: Unknown error. Error came from outside \fBfatfsck\fR (libraries, operating system kernel, ...).
+.TP
+\fB2\fR: Invalid arguments. An error was detected when parsing the options.
+.TP
+\fB3\fR: FAT volume errors were detected (when checking) or could not be repaired (when repairing)
+.SH BUGS
+If you find a bug please send an email describing the problem to
+fat-support@tuxera.com.
+.hy
+.SH AUTHORS
+.B fatfsck
+was written by Sougata Santra, Tuxera Inc.
+.SH AVAILABILITY
+.B fatfsck
+is part of the
+.B Tuxera FATprogs
+package.

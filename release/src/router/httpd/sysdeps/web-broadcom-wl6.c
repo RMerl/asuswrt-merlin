@@ -1138,6 +1138,9 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int retval = 0;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
+#ifdef RTCONFIG_QTN
+	qcsapi_unsigned_int channel;
+#endif
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
@@ -1597,8 +1600,16 @@ wl_extent_channel(int unit)
 				return  CHSPEC_CHANNEL(bi->chanspec);
 		}
 	}
+#ifdef RTCONFIG_QTN
+	ret = rpc_qcsapi_get_channel(&channel);
+#endif
 
+#ifdef RTCONFIG_QTN
+	if (ret < 0) return 0;
+	else return channel;
+#else
 	return 0;
+#endif
 }
 
 int
@@ -2007,7 +2018,8 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		(wl_control_channel(unit) <= CH_MAX_2G_CHANNEL) :
 		nvram_match(strcat_r(prefix, "nband", tmp), "2")) {
 
-		if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta"))
+		if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta") &&
+		    !nvram_match(strcat_r(prefix, "mode", tmp), "psr"))
 			goto ERROR;
 
 		struct ether_addr bssid;
@@ -2022,7 +2034,7 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			if ((sta->rx_rate % 1000) == 0)
 				sprintf(rate_buf, "%6d Mbps ", sta->rx_rate / 1000);
 			else
-				sprintf(rate_buf, "%6.1fM Mbps", (double) sta->rx_rate / 1000);
+				sprintf(rate_buf, "%6.1f Mbps", (double) sta->rx_rate / 1000);
 		}
 	}
 #endif
@@ -2793,6 +2805,8 @@ static const char * wpa_key_mgmt_txt(int key_mgmt, int proto)
 	}
 }
 
+static char scan_result[WLC_SCAN_RESULT_BUF_LEN];
+
 int
 ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -2814,6 +2828,7 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 	int wl_authorized = 0;
 	wl_scan_params_t *params;
 	int params_size = WL_SCAN_PARAMS_FIXED_SIZE + NUMCHANS * sizeof(uint16);
+	int org_scan_time = 20, scan_time = 40;
 
 #ifdef RTN12
 	if (nvram_invmatch("sw_mode_ex", "2"))
@@ -2831,14 +2846,17 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 	memset(params, 0, params_size);
 	params->bss_type = DOT11_BSSTYPE_INFRASTRUCTURE;
 	memcpy(&params->bssid, &ether_bcast, ETHER_ADDR_LEN);
-//	params->scan_type = -1;
-	params->scan_type = DOT11_SCANTYPE_ACTIVE;
-//	params->scan_type = DOT11_SCANTYPE_PASSIVE;
+	params->scan_type = -1;
 	params->nprobes = -1;
 	params->active_time = -1;
 	params->passive_time = -1;
 	params->home_time = -1;
 	params->channel_num = 0;
+
+	/* extend scan channel time to get more AP probe resp */
+	wl_ioctl(WIF, WLC_GET_SCAN_CHANNEL_TIME, &org_scan_time, sizeof(org_scan_time));
+	if (org_scan_time < scan_time)
+		wl_ioctl(WIF, WLC_SET_SCAN_CHANNEL_TIME, &scan_time, sizeof(scan_time));
 
 	while ((ret = wl_ioctl(WIF, WLC_SCAN, params, params_size)) < 0 && count++ < 2)
 	{
@@ -2848,10 +2866,11 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 
 	free(params);
 
+	/* restore original scan channel time */
+	wl_ioctl(WIF, WLC_SET_SCAN_CHANNEL_TIME, &org_scan_time, sizeof(org_scan_time));
+
 	nvram_set("ap_selecting", "1");
 	fprintf(stderr, "Please wait (web hook) ");
-	fprintf(stderr, ".");
-	sleep(1);
 	fprintf(stderr, ".");
 	sleep(1);
 	fprintf(stderr, ".");
@@ -2864,10 +2883,10 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 	{
 		count = 0;
 
-		result = (wl_scan_results_t *)buf;
-		result->buflen = WLC_IOCTL_MAXLEN - sizeof(result);
+		result = (wl_scan_results_t *)scan_result;
+		result->buflen = htod32(WLC_SCAN_RESULT_BUF_LEN);
 
-		while ((ret = wl_ioctl(WIF, WLC_SCAN_RESULTS, result, WLC_IOCTL_MAXLEN)) < 0 && count++ < 2)
+		while ((ret = wl_ioctl(WIF, WLC_SCAN_RESULTS, result, WLC_SCAN_RESULT_BUF_LEN)) < 0 && count++ < 2)
 		{
 			fprintf(stderr, "set scan results command failed, retry %d\n", count);
 			sleep(1);
@@ -2997,6 +3016,9 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 					apinfos[ap_count].NetworkType = NetWorkType;
 
 					ap_count++;
+
+					if (ap_count >= MAX_NUMBER_OF_APINFO)
+						break;
 				}
 
 				ie = (struct bss_ie_hdr *) ((unsigned char *) info + sizeof(*info));
@@ -3814,12 +3836,10 @@ typedef struct wlc_ap_list_info
 #endif
 } wlc_ap_list_info_t;
 
-#define WLC_DUMP_BUF_LEN		(32 * 1024)
 #define WLC_MAX_AP_SCAN_LIST_LEN	50
 #define WLC_SCAN_RETRY_TIMES		5
 
 static wlc_ap_list_info_t ap_list[WLC_MAX_AP_SCAN_LIST_LEN];
-static char scan_result[WLC_DUMP_BUF_LEN];
 
 static char *
 wl_get_scan_results(char *ifname)
@@ -3836,7 +3856,7 @@ wl_get_scan_results(char *ifname)
 	}
 
 	memset(params, 0, params_size);
-	params->bss_type = DOT11_BSSTYPE_ANY;
+	params->bss_type = DOT11_BSSTYPE_INFRASTRUCTURE;
 	memcpy(&params->bssid, &ether_bcast, ETHER_ADDR_LEN);
 	params->scan_type = -1;
 	params->nprobes = -1;
@@ -3862,8 +3882,8 @@ retry:
 
 	sleep(2);
 
-	list->buflen = WLC_DUMP_BUF_LEN;
-	ret = wl_ioctl(ifname, WLC_SCAN_RESULTS, scan_result, WLC_DUMP_BUF_LEN);
+	list->buflen = htod32(WLC_SCAN_RESULT_BUF_LEN);
+	ret = wl_ioctl(ifname, WLC_SCAN_RESULTS, scan_result, WLC_SCAN_RESULT_BUF_LEN);
 	if (ret < 0 && retry_times++ < WLC_SCAN_RETRY_TIMES) {
 		printf("get scan result failed, retry %d\n", retry_times);
 		sleep(1);
@@ -3942,6 +3962,9 @@ wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				ap_list[ap_count].wep = bi->capability & DOT11_CAP_PRIVACY;
 #endif
 				ap_count++;
+
+				if (ap_count >= WLC_MAX_AP_SCAN_LIST_LEN)
+					break;
 			}
 		}
 		bi = (wl_bss_info_t*)((int8*)bi + bi->length);
@@ -4062,7 +4085,11 @@ ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
 	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta") &&
-	    !nvram_match(strcat_r(prefix, "mode", tmp), "psr"))
+	    !nvram_match(strcat_r(prefix, "mode", tmp), "psr")
+#ifdef RTCONFIG_BCM_7114
+	    && !(is_psta(nvram_get_int("wlc_band")) && (nvram_get_int("wlc_psta") == 3))
+#endif
+	)
 		goto PSTA_ERR;
 
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));

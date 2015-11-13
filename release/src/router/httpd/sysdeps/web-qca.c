@@ -269,7 +269,7 @@ typedef struct _WLANCONFIG_LIST {
 	unsigned int rssi;
 	unsigned int idle;
 	unsigned int txseq;
-	unsigned int rcseq;
+	unsigned int rxseq;
 	char caps[12];
 	char acaps[10];
 	char erp[7];
@@ -279,6 +279,12 @@ typedef struct _WLANCONFIG_LIST {
 	char rsn[4];
 	char wme[4];
 	char mode[31];
+	char ie[32];
+	char htcaps[10];
+	unsigned int u_acaps;
+	unsigned int u_erp;
+	unsigned int u_state_maxrate;
+	unsigned int u_psmode;
 } WLANCONFIG_LIST;
 
 #define MAX_STA_NUM 256
@@ -292,9 +298,9 @@ static int getSTAInfo(int unit, WIFI_STA_TABLE *sta_info)
 {
 	#define STA_INFO_PATH "/tmp/wlanconfig_athX_list"
 	FILE *fp;
-	int ret = 0;
+	int ret = 0, r1, r2, r3, l2_offset;
 	char *unit_name;
-	char *p, *ifname;
+	char *p, *ifname, *l2, *l3;
 	char *wl_ifnames;
 	char line_buf[300]; // max 14x
 
@@ -317,48 +323,47 @@ static int getSTAInfo(int unit, WIFI_STA_TABLE *sta_info)
 		doSystem("wlanconfig %s list > %s", ifname, STA_INFO_PATH);
 		fp = fopen(STA_INFO_PATH, "r");
 		if (fp) {
+/* wlanconfig ath1 list
+ADDR               AID CHAN TXRATE RXRATE RSSI IDLE  TXSEQ  RXSEQ  CAPS        ACAPS     ERP    STATE MAXRATE(DOT11) HTCAPS ASSOCTIME    IEs   MODE PSMODE
+00:10:18:55:cc:08    1  149  55M   1299M   63    0      0   65535               0        807              0              Q 00:10:33 IEEE80211_MODE_11A  0
+08:60:6e:8f:1e:e6    2  149 159M    866M   44    0      0   65535     E         0          b              0           WPSM 00:13:32 WME IEEE80211_MODE_11AC_VHT80  0
+08:60:6e:8f:1e:e8    1  157 526M    526M   51 4320      0   65535    EP         0          b              0          AWPSM 00:00:10 RSN WME IEEE80211_MODE_11AC_VHT80 0
+*/
 			//fseek(fp, 131, SEEK_SET);	// ignore header
 			fgets(line_buf, sizeof(line_buf), fp); // ignore header
+			l2 = strstr(line_buf, "ACAPS");
+			if (l2 != NULL)
+				l2_offset = (int)(l2 - line_buf);
+			else {
+				dbg("%s: ACAPS not found. [%s]\n", __func__, line_buf);
+				l2_offset = 79;
+				l2 = line_buf + l2_offset;
+			}
 			while ( fgets(line_buf, sizeof(line_buf), fp) ) {
-				WLANCONFIG_LIST *result = &sta_info->Entry[sta_info->Num++];
-				memset(result, 0, sizeof(*result));
-				sscanf(line_buf, "%s%u%u%s%s%u%u%u%u%s%s%s%s%s%s%s%s%s", 
-							result->addr, 
-							&result->aid, 
-							&result->chan, 
-							result->txrate, 
-							result->rxrate, 
-							&result->rssi, 
-							&result->idle, 
-							&result->txseq, 
-							&result->rcseq, 
-							result->caps, 
-							result->acaps, 
-							result->erp, 
-							result->state_maxrate, 
-							result->wps, 
-							result->conn_time, 
-							result->rsn, 
-							result->wme,
-							result->mode);
+				WLANCONFIG_LIST *r = &sta_info->Entry[sta_info->Num++];
+				memset(r, 0, sizeof(*r));
+
+				/* IEs may be empty string, find IEEE80211_MODE_ before parsing mode and psmode. */
+				r1 = 0;
+				l3 = strstr(line_buf, "IEEE80211_MODE_");
+				if (l3) {
+					*(l3 - 1) = '\0';
+					r1 = sscanf(l3, "IEEE80211_MODE_%s %d", r->mode, &r->u_psmode);
+				}
+				*(l2 - 1) = '\0';
+				r2 = sscanf(line_buf, "%s%u%u%s%s%u%u%u%u%[^\n]",
+					r->addr, &r->aid, &r->chan, r->txrate,
+					r->rxrate, &r->rssi, &r->idle, &r->txseq,
+					&r->rxseq, r->caps);
+				r3 = sscanf(l2, "%u%x%u%s%s%[^\n]",
+					&r->u_acaps, &r->u_erp, &r->u_state_maxrate, r->htcaps, r->conn_time, r->ie);
 #if 0
-				dbg("[%s][%u][%u][%s][%s][%u][%u][%u][%u][%s][%s][%s][%s][%s][%s][%s]\n", 
-					result->addr, 
-					result->aid, 
-					result->chan, 
-					result->txrate, 
-					result->rxrate, 
-					result->rssi, 
-					result->idle, 
-					result->txseq, 
-					result->rcseq, 
-					result->caps, 
-					result->acaps, 
-					result->erp, 
-					result->state_maxrate, 
-					result->wps, 
-					result->rsn, 
-					result->wme);
+				dbg("r %d,%d,%d - [%s][%u][%u][%s][%s][%u][%u][%u][%u][%s]"
+					"[%u][%u][%x][%s][%s][%s][%d]\n",
+					r1, r2, r3, r->addr, r->aid, r->chan, r->txrate, r->rxrate,
+					r->rssi, r->idle, r->txseq, r->rxseq, r->caps,
+					r->u_acaps, r->u_erp, r->u_state_maxrate, r->htcaps, r->ie,
+					r->mode, r->u_psmode);
 #endif
 			}
 
@@ -608,15 +613,16 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		ret += websWrite(wp, "%-18s%-4s%-8s%-4s%-4s%-4s%-5s%-5s%-12s\n",
 				   "MAC", "PSM", "PhyMode", "BW", "MCS", "SGI", "STBC", "Rate", "Connect Time");
 #else
-		ret += websWrite(wp, "%-18s%-7s%-7s%-12s\n",
-				   "MAC", "TXRATE", "RXRATE", "Connect Time");
+		ret += websWrite(wp, "%-17s %-15s %-6s %-6s %-11s\n",
+				   "MAC", "PhyMode", "TXRATE", "RXRATE", "Connect Time");
 #endif
 
 		if ((sta_info = malloc(sizeof(*sta_info))) != NULL) {
 			getSTAInfo(unit, sta_info);
 			for(i = 0; i < sta_info->Num; i++) {
-				ret += websWrite(wp, "%s %6s %6s %8s\n",
+				ret += websWrite(wp, "%-17s %-15s %6s %6s %11s\n",
 					sta_info->Entry[i].addr,
+					sta_info->Entry[i].mode,
 					sta_info->Entry[i].txrate,
 					sta_info->Entry[i].rxrate,
 					sta_info->Entry[i].conn_time
@@ -908,7 +914,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 							&result->rssi, 
 							&result->idle, 
 							&result->txseq, 
-							&result->rcseq, 
+							&result->rxseq,
 							result->caps, 
 							result->acaps, 
 							result->erp, 

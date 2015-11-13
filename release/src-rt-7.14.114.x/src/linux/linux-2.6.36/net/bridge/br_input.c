@@ -36,7 +36,7 @@ static int br_pass_frame_up(struct sk_buff *skb)
 	skb->dev = brdev;
 
 	return NF_HOOK(NFPROTO_BRIDGE, NF_BR_LOCAL_IN, skb, indev, NULL,
-		       netif_receive_skb);
+			netif_receive_skb);
 }
 
 /* note: already called with rcu_read_lock */
@@ -91,7 +91,15 @@ int br_handle_frame_finish(struct sk_buff *skb)
 			skb2 = skb;
 
 		br->dev->stats.multicast++;
-	} else if ((dst = __br_fdb_get(br, dest)) && dst->is_local) {
+	} else if (((dst = __br_fdb_get(br, dest)) && dst->is_local) ||
+#ifdef BCM_GMAC3
+		(htons(skb->protocol) == 0x88c7) ||
+		/* 0x88c7 is EAPOL Preauth frame, and for gmac3_enable/ATLAS configuration
+		 * Platforms,we are allowing this packet to reach upto EAPD-> NAS, as bridge
+		 * does not have the radio interfaces in it's port list.
+		 */
+#endif
+		0) {
 		skb2 = skb;
 		/* Do not forward the packet since it's local. */
 		skb = NULL;

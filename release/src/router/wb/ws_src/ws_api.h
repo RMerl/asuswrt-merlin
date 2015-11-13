@@ -43,7 +43,8 @@ typedef struct _GetServiceArea
 {
 	char 	status[MAX_STATUS_LEN];
 	char 	servicearea[MAX_URL_LEN];
-	char	time[MAX_TIME_LEN];   
+	char	time[MAX_TIME_LEN];
+	char	srcip[MAX_IP_LEN];
 }GetServiceArea, *pGetServiceArea;
 
 typedef struct _SrvInfo

@@ -154,6 +154,10 @@ int main()
 #else
 	strcpy(router_mac, nvram_safe_get("et0macaddr"));
 #endif
+#ifdef RTCONFIG_GMAC3
+        if(nvram_match("gmac3_enable", "1"))
+                strcpy(router_mac, nvram_safe_get("et2macaddr"));
+#endif
         inet_aton(router_ipaddr, &router_addr.sin_addr);
         memcpy(my_ipaddr,  &router_addr.sin_addr, 4);
 

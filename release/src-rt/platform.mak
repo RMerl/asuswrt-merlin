@@ -296,6 +296,10 @@ define platformKernelConfig
 					cp -f $(SRCBASE)/wl/sysdeps/default/clm/src/wlc_clm_data.c $(SRCBASE)/wl/clm/src/. ; \
 				fi; \
 			fi; \
+			if [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
+				mkdir $(SRCBASE)/wl/linux ; \
+				cp $(SRCBASE)/router/wl_arm/prebuilt/wl*.o $(SRCBASE)/wl/linux ; \
+			fi; \
 		fi; \
 	else \
 		[ -d $(SRCBASE)/wl/sysdeps/default ] && \

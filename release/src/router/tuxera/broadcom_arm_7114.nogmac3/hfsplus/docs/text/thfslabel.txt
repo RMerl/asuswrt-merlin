@@ -1,0 +1,52 @@
+THFSLABEL(8)                                                      THFSLABEL(8)
+
+
+
+NAME
+       thfslabel - Display/change the label on an HFS+ file system.
+
+SYNOPSIS
+       thfslabel [options] device [new-label]
+
+DESCRIPTION
+       thfslabel will display or change the file system label on the HFS+ file
+       system located on device.
+
+       If the optional argument new-label is not present, thfslabel will  sim‐
+       ply print the current file system label as a UTF-8 string.
+
+       If  the optional argument new-label is present, then thfslabel will set
+       the file system label to be the string new-label, given in  UTF-8  for‐
+       mat.
+       HFS+  file system labels can be at most 255 UTF-16 code units of decom‐
+       posed Unicode long; if new-label is longer than 255 UTF-16  code  units
+       of  decomposed  Unicode, thfslabel will truncate it and print a warning
+       message. Note that the string in new-label will be decomposed automati‐
+       cally by thfslabel.
+
+OPTIONS
+       Below is a summary of all the options that thfslabel accepts.
+
+       --output-mode=[mode]
+              Specify  the  output  mode  when printing the volume label. Cur‐
+              rently the supported output modes are raw and composed.
+              Raw mode means that the label is converted from UTF-16 to  UTF-8
+              without any further transformation. This implies that the output
+              will be in decomposed Unicode since  this  is  how  strings  are
+              stored in HFS+.
+              Composed mode means that the label is converted from the on-disk
+              decomposed form into composed Unicode, which is what most  oper‐
+              ating systems expect (Mac OS X being the exception).
+              The default behaviour (when this option is not given) is the be‐
+              haviour of the composed option.
+
+BUGS
+       If you find a bug please send an email describing the problem  to  hfs-
+       support@tuxera.com.
+
+AVAILABILITY
+       thfslabel is part of the Tuxera HFS+ Utilities package.
+
+
+
+Tuxera HFS+ Utilities 3014.8.10    Dec 2013                       THFSLABEL(8)

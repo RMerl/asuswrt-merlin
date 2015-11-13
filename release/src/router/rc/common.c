@@ -303,6 +303,11 @@ void init_switch_mode()
 		
 #ifdef RTCONFIG_RGMII_BRCM5301X
 		nvram_set("wl0.1_hwaddr", nvram_safe_get("lan_hwaddr"));
+#elif defined(RTCONFIG_GMAC3)
+                        if (nvram_match("gmac3_enable", "1"))
+				nvram_set("wl0.1_hwaddr", nvram_safe_get("et2macaddr"));
+			else
+				nvram_set("wl0.1_hwaddr", nvram_safe_get("et0macaddr"));
 #else
 		nvram_set("wl0.1_hwaddr", nvram_safe_get("et0macaddr"));
 #endif
@@ -1005,6 +1010,7 @@ void set_mac(const char *ifname, const char *nvname, int plus)
 	struct ifreq ifr;
 	int up;
 	int j;
+	char *et_hwaddr = NULL;
 
 	if ((sfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
 		_dprintf("%s: %s %d\n", ifname, __FUNCTION__, __LINE__);
@@ -1025,17 +1031,28 @@ void set_mac(const char *ifname, const char *nvname, int plus)
 	else {
 		_dprintf("%s: %s %d\n", ifname, __FUNCTION__, __LINE__);
 	}
-
-	if (!ether_atoe(nvram_safe_get(nvname), (unsigned char *)&ifr.ifr_hwaddr.sa_data)) {
 #ifdef RTCONFIG_RGMII_BRCM5301X
-		if (!ether_atoe(nvram_safe_get("lan_hwaddr"), (unsigned char *)&ifr.ifr_hwaddr.sa_data)) {
+	et_hwaddr = nvram_safe_get("lan_hwaddr");
+#elif defined(RTCONFIG_GMAC3)
+	if (nvram_match("gmac3_enable", "1"))
+		et_hwaddr = nvram_safe_get("et2macaddr");
+	else
+		et_hwaddr = nvram_safe_get("et0macaddr");
 #else
-		if (!ether_atoe(nvram_safe_get("et0macaddr"), (unsigned char *)&ifr.ifr_hwaddr.sa_data)) {
+	et_hwaddr = nvram_safe_get("et0macaddr");
 #endif
 
+	if (!ether_atoe(nvram_safe_get(nvname), (unsigned char *)&ifr.ifr_hwaddr.sa_data)) {
+		if (!ether_atoe(et_hwaddr, (unsigned char *)&ifr.ifr_hwaddr.sa_data)) {
+
 			// goofy et0macaddr, make something up
-#ifdef RTCONFIG_RGMII_BRCM5301X
+#ifdef RTCONFIG_RGMII_BRCM5301X 
 			nvram_set("lan_hwaddr", "00:01:23:45:67:89");
+#elif defined(RTCONFIG_GMAC3)
+			if (nvram_match("gmac3_enable", "1"))
+				nvram_set("et2macaddr", "00:01:23:45:67:89");
+			else
+				nvram_set("et0macaddr", "00:01:23:45:67:89");
 #else
 			nvram_set("et0macaddr", "00:01:23:45:67:89");
 #endif
@@ -1425,7 +1442,7 @@ void restart_lfp()
 }
 #endif
 
-#ifdef RTCONFIG_WIRELESSREPEATER
+#if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
 int setup_dnsmq(int mode)
 {
 	char v[32];
@@ -1447,6 +1464,9 @@ int setup_dnsmq(int mode)
 	eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "udp", "--dport", "53", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18018", tmp));
 
 	if(mode) {
+#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
+		if (!is_psta(nvram_get_int("wlc_band")) && !is_psr(nvram_get_int("wlc_band")))
+#endif
 		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":80", tmp));
 	
 		//sprintf(v, "%x my.%s", inet_addr("10.0.0.1"), get_productid());
@@ -1455,6 +1475,9 @@ int setup_dnsmq(int mode)
 	}
 	else {
 		// setup ebtables and iptables
+#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
+		if (!is_psta(nvram_get_int("wlc_band")) && !is_psr(nvram_get_int("wlc_band")))
+#endif
 		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18017", tmp));
 	
 		f_write_string("/proc/net/dnsmqctrl", "", 0, 0);

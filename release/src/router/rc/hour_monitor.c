@@ -20,6 +20,12 @@ void hm_traffic_analyzer_save()
 	char buf[128]; // path buff = 128
 	int db_mode;
 
+	// check file size is over 30MB or not
+	long int size = 30 * 1024; // 30MB
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), "bwdpi_sqlite -d %ld", size);
+	system(buf);
+
 	if(nvram_get_int("hour_monitor_debug") || nvram_get_int("sqlite_debug"))
 		debug = 1;
 	else
@@ -42,14 +48,14 @@ void hm_traffic_analyzer_save()
 
 	if(db_mode == 0)
 	{
-		sprintf(buf, "bwdpi_sqlite -e -s NULL");
+		snprintf(buf, sizeof(buf), "bwdpi_sqlite -e -s NULL");
 	}
 	else if(db_mode == 1)
 	{
 		if(!strcmp(nvram_safe_get("bwdpi_db_path"), ""))
-			sprintf(buf, "bwdpi_sqlite -e -s NULL");
+			snprintf(buf, sizeof(buf), "bwdpi_sqlite -e -s NULL");
 		else
-			sprintf(buf, "bwdpi_sqlite -e -p %s -s NULL", nvram_safe_get("bwdpi_db_path"));
+			snprintf(buf, sizeof(buf), "bwdpi_sqlite -e -p %s -s NULL", nvram_safe_get("bwdpi_db_path"));
 	}
 	else if(db_mode == 2)
 	{

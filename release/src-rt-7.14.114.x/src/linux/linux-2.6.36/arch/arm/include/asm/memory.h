@@ -198,6 +198,18 @@ static inline void *phys_to_virt(unsigned long x)
 	return (void *)(__phys_to_virt((unsigned long)(x)));
 }
 
+#if defined(CONFIG_BCM947XX) && defined(CONFIG_BCM_GMAC3)
+static inline unsigned long virt_to_phys_noacp(void *x)
+{
+	return __virt_to_phys_noacp((unsigned long)(x));
+}
+
+static inline int ddr_aliasing_enabled(void)
+{
+	return __ddr_aliasing_enabled();
+}
+#endif /* CONFIG_BCM947XX && CONFIG_BCM_GMAC3 */
+
 /*
  * Drivers should NOT use these either.
  */

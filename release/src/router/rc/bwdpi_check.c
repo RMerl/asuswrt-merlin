@@ -46,6 +46,9 @@ static void check_dpi_alive()
 		count -= 3;
 		if(count <= 0){
 			stop_dpi_engine_service(1);
+			// force to rebuild traditional qos or bandwidth limtier
+			add_iQosRules(get_wan_ifname(wan_primary_ifunit()));
+			start_iQos();
 			// force to rebuild firewall to avoid some loopback issue
 			start_firewall(wan_primary_ifunit(), 0);
 			pause();

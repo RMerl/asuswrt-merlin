@@ -49,7 +49,7 @@ void create_mbssid_vlan(void)
 {
 	if(nvram_get_int("wl1.1_bss_enabled") == 1){
 		if(nvram_match("wl1.1_lanaccess", "off") &&
-			!nvram_match("wl1.1_lanaccess", "")){
+			!nvram_match("wl1.1_lanaccess", "")){	// strange logic !? same happened below below
 			/* VID 4000 */
 			eval("vconfig", "add", "eth0", "4000");
 			eval("ifconfig", "vlan4000", "up");
@@ -389,6 +389,13 @@ QTN_RESET:
 				/* all country except EU */
 				dbG("[dfs] start nodfs scanning and selection\n");
 				start_nodfs_scan_qtn();
+			}
+		}else{
+			ret = qcsapi_wifi_scs_enable(WIFINAME, 0);
+			if (ret >= 0) {
+				logmessage("scs", "disable scs complete");
+			}else{
+				logmessage("scs", "disable scs not complete");
 			}
 		}
 	}

@@ -146,26 +146,22 @@ select {
 	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
 	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 
 .active {
-	background-color: #1F2D35;
 	color: #FFFFFF;
 	font-weight: bold;
 	border-width: 2px;
-	background: url(/images/svg_th_hover.png) repeat-x;"
+	background: #1F2D35 url(/images/svg_th_hover.png) repeat-x;
 }
 #tabs a.active {
-	background-color: #1F2D35;
 	color: #FFFFFF;
 	font-weight: bold;
 	border-width: 2px;
-	background: url(/images/svg_th_hover.png) repeat-x;"
+	background: #1F2D35 url(images/svg_th_hover.png) repeat-x;
 }
 #tabs a:hover {
-	/*background-color:#000000;*/
-	background: url(/images/svg_th_hover.png) repeat-x;"
+	background: url(/images/svg_th_hover.png) repeat-x;
 	color: #FFFFFF;
 	font-weight: bold;
 }

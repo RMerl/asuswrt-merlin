@@ -72,11 +72,12 @@ String.prototype.trim = function() {
 }
 
 var sw_mode = '<% nvram_get("sw_mode"); %>';
+var wlc_band = '<% nvram_get("wlc_band"); %>';
 /*Media Bridge mode
-Broadcom: sw_mode = 3, wlc_psta = 1
-MTK/QCA: sw_mode = 2, wlc_psta = 1
+Broadcom: sw_mode = 3 & wlc_psta = 1, sw_mode = 3 & wlc_psta = 3
+MTK/QCA: sw_mode = 2 & wlc_psta = 1
 */ 
-if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 //for Broadcom New Repeater mode reference by Media Bridge mode
 var new_repeater = false;	
@@ -93,7 +94,7 @@ var isSwMode = function(mode){
 
 	if(sw_mode == '2' && wlc_express == '0') ui_sw_mode = "re"; // Repeater
 	else if(sw_mode == '3' && wlc_psta == '0') ui_sw_mode = "ap"; // AP
-	else if(sw_mode == '3' && wlc_psta == '1') ui_sw_mode = "mb"; // MediaBridge
+	else if((sw_mode == '3' && wlc_psta == '1') || (sw_mode == '3' && wlc_psta == '3')) ui_sw_mode = "mb"; // MediaBridge
 	else if(sw_mode == '2' && wlc_express != '0') ui_sw_mode = "ew"; // Express Way
 	else if(sw_mode == '5') ui_sw_mode = 'hs'; // Hotspot
 	else ui_sw_mode = "rt"; // Router
@@ -316,7 +317,7 @@ var tr069_support = isSupport("tr069");
 var tor_support = isSupport("tor");
 var stainfo_support = isSupport("stainfo");
 var dhcp_override_support = isSupport("dhcp_override");
-var wtfast_support = isSupport("wtfast") && !is_CN;
+var wtfast_support = isSupport("wtfast");
 var powerline_support = isSupport("plc");
 var reboot_schedule_support = isSupport("reboot_schedule");
 var QISWIZARD = "QIS_wizard.htm";
@@ -351,6 +352,7 @@ if(tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') ==
 else if(!tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (location.hostname.search('router.asus') == -1)){
         isFromWAN = true;
 }
+var force_upgrade_support = isSupport("fupgrade");
 
 var gn_array_2g = <% wl_get_guestnetwork("0"); %>;
 var gn_array_5g = <% wl_get_guestnetwork("1"); %>;
@@ -790,7 +792,7 @@ if(bwdpi_support){
 	if(traffic_analyzer_support){	/* untranslated #Traffic_Analyzer# */
 		if(wtfast_support){
 			menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, Adaptive_QoS_add_br, "Game Boost", "<#Traffic_Analyzer#>" ,"<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
-			menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "AdaptiveQoS_Bandwidth_Monitor.asp", "Advanced_WTFast_Content.asp", "Main_TrafficMonitor_realtime.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
+			menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "AdaptiveQoS_Bandwidth_Monitor.asp", "GameBoost.asp", "Main_TrafficMonitor_realtime.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
 		}
 		else{
 			menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, Adaptive_QoS_add_br, "<#Traffic_Analyzer#>" ,"<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
@@ -800,7 +802,7 @@ if(bwdpi_support){
 	else{
 		if(wtfast_support){		
 			menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, Adaptive_QoS_add_br, "Game Boost", "<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
-			menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "AdaptiveQoS_Bandwidth_Monitor.asp", "Advanced_WTFast_Content.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
+			menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "AdaptiveQoS_Bandwidth_Monitor.asp", "GameBoost.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
 		}
 		else{
 			menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, Adaptive_QoS_add_br, "<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
@@ -811,7 +813,7 @@ if(bwdpi_support){
 else{
 	if(wtfast_support){	
 		menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "<#Menu_TrafficManager#>", "<#Parental_Control#>", "Game Boost", "<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
-		menuL1_link = new Array("", "index.asp", "Guest_network.asp", "QoS_EZQoS.asp", "ParentalControl.asp", "Advanced_WTFast_Content.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
+		menuL1_link = new Array("", "index.asp", "Guest_network.asp", "QoS_EZQoS.asp", "ParentalControl.asp", "GameBoost.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
 	}
 	else{
 		menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "<#Menu_TrafficManager#>", "<#Parental_Control#>", "<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
@@ -1163,7 +1165,7 @@ function remove_url(){
 	}
 
 	if(wtfast_support && sw_mode != 1){
-		remove_menuL1_item("Advanced_WTFast_Content.asp");
+		remove_menuL1_item("GameBoost.asp");
 	}
 }
 
@@ -1410,12 +1412,13 @@ function show_menu(){
 		if(current_url.indexOf("Main_TrafficMonitor") == 0){
 			traffic_L2_dx = 15;
 			traffic_L3_dx = 1;
-			L1 = 5;
+			if(wtfast_support)
+				L1 = 6;
+			else
+				L1 = 5;
+
 			L2 = traffic_L2_dx;
 			L3 = traffic_L3_dx;
-			if (wtfast_support){
-				L1++;
-			}
 		}
 
 	}
@@ -1751,8 +1754,7 @@ function addOnlineHelp(obj, keywordArray){
 	}
 
 	// exception start
-	if(keywordArray[0] == "ASUSWRT" && keywordArray[1] == "download" 
-			&& (keywordArray[2] == "master" || keywordArray[2] == "associated")){
+	if(keywordArray[0] == "ASUSWRT" && keywordArray[1] == "download" && keywordArray[2] == "master"){
 		faqLang.TW = "/tw/";
 		faqLang.CN = ".cn/";
 		faqLang.FR = "/fr/";
@@ -2020,7 +2022,12 @@ function cal_height(){
 		
 		if(navigator.appName.indexOf("Microsoft") >= 0)
 			contentObj[0].style.height = contentObj[0].clientHeight + 18 + "px";
-	}	
+	}
+	else if(wtfast_support && document.getElementById("Background_Management")){//WTFast
+		table_height = table_height + 10;
+		document.getElementById("Background_Management").style.height = table_height + "px";
+		tableClientHeight = document.getElementById("Background_Management").clientHeight;
+	}
 
 	/*// overflow
 	var isOverflow = parseInt(tableClientHeight) - parseInt(table_height);
@@ -2072,6 +2079,12 @@ function show_footer(){
 		}else{	//RT-N12
 			footer_code += "<td width=\"310\" id=\"bottom_help_link\" align=\"left\">&nbsp&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com"+ href_lang +"Networking/"+ model_name_supportsite + tracing_path_Manual +"\" target=\"_blank\"><#Manual#></a>&nbsp|&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com"+ href_lang +"Networking/" + model_name_supportsite + tracing_path_Utility +"\" target=\"_blank\"><#Utility#></a>";	
 		}
+	}
+	else if(based_modelid == "RT-N56UB1"){	//MODELDEP : RT-N56UB1
+		footer_code += "<td width=\"310\" id=\"bottom_help_link\" align=\"left\">&nbsp&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com/Networking/RTN56U_B1"+ tracing_path_Manual +"\" target=\"_blank\"><#Manual#></a>&nbsp|&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com/Networking/RTN56U_B1"+ tracing_path_Utility +"\" target=\"_blank\"><#Utility#></a>";
+	}
+	else if(based_modelid == "RT-N56UB2"){	//MODELDEP : RT-N56UB2
+		footer_code += "<td width=\"310\" id=\"bottom_help_link\" align=\"left\">&nbsp&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com/Networking/RTN56U_B2"+ tracing_path_Manual +"\" target=\"_blank\"><#Manual#></a>&nbsp|&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com/Networking/RTN56U_B2"+ tracing_path_Utility +"\" target=\"_blank\"><#Utility#></a>";
 	}
 	else if(based_modelid == "DSL-N55U"){	//MODELDEP : DSL-N55U
 		footer_code += "<td width=\"310\" id=\"bottom_help_link\" align=\"left\">&nbsp&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com/Networking/DSLN55U_Annex_A"+ tracing_path_Manual +"\" target=\"_blank\"><#Manual#></a>&nbsp|&nbsp<a style=\"font-weight: bolder;text-decoration:underline;cursor:pointer;\" href=\"http://www.asus.com/Networking/DSLN55U_Annex_A"+ tracing_path_Utility +"\" target=\"_blank\"><#Utility#></a>";

@@ -27,7 +27,11 @@ ifeq ($(RTCONFIG_BCM7),y)
 SRCFILE = broadcom_arm_7
 else
 ifeq ($(RTCONFIG_BCM_7114),y)
+ifneq ($(RTCONFIG_GMAC3),y)
+SRCFILE = broadcom_arm_7114.nogmac3
+else
 SRCFILE = broadcom_arm_7114
+endif
 else
 ifeq ($(ARMCPUSMP),up)
 SRCFILE = broadcom_arm_up

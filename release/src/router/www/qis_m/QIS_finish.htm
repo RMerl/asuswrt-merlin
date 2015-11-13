@@ -13,7 +13,7 @@
 <% secondary_wanlink(); %>
 
 var sw_mode = '<% nvram_get("sw_mode"); %>';
-if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
@@ -264,6 +264,7 @@ function showLoadingUpdate(){
 }
 
 function checkIsNewFirmware(){
+/*
 	if(parent.new_FW){
 		$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
 		$("#latestFW")[0].innerHTML = "" 
@@ -282,8 +283,11 @@ function checkIsNewFirmware(){
 		//document.getElementById("liveUpdate_div").style.display = "";
 	}
 	else{
+*/
 		goto_index();
+/*
 	}
+*/
 }
 
 var timer;
@@ -1317,31 +1321,31 @@ body{
 		<div>
 			<!--div>2.4 GHz</div-->
 			<div>2.4 GHz - <#QIS_finish_wireless_item1#></div>
-			<div id="ssid_2" style="padding: 5px 0;color:#007AFF"></div>
+			<div id="ssid_2" style="padding: 5px 0;color:#279FD9"></div>
 			<div><#Network_key#></div>
-			<div id="key2" style="padding: 5px 0;color:#007AFF"></div>
+			<div id="key2" style="padding: 5px 0;color:#279FD9"></div>
 		</div>
 		
 		<div id="5g_field" style="display:none">
 			<!--div>5 GHz</div-->
 			<div>5 GHz - <#QIS_finish_wireless_item1#></div>
-			<div id="ssid_5" style="padding: 5px 0;color:#007AFF"></div>
+			<div id="ssid_5" style="padding: 5px 0;color:#279FD9"></div>
 			<div><#Network_key#></div>
-			<div id="key5" style="padding: 5px 0;color:#007AFF"></div>
+			<div id="key5" style="padding: 5px 0;color:#279FD9"></div>
 		</div>
 		
 		<div id="5g_2_field" style="display:none">
 			<!--div>5 GHz-2</div-->
 			<div>5 GHz-2 - <#QIS_finish_wireless_item1#></div>
-			<div id="ssid_5_2" style="padding: 5px 0;color:#007AFF"></div>
+			<div id="ssid_5_2" style="padding: 5px 0;color:#279FD9"></div>
 			<div><#Network_key#></div>
-			<div id="key5_2" style="padding: 5px 0;color:#007AFF"></div>
+			<div id="key5_2" style="padding: 5px 0;color:#279FD9"></div>
 		</div>
 	</div>
 
 	<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
 		<div id="apply_button" style="width:100%;height:100%;display:table">
-			<div id="nextButton" style="display:table-cell;width:100%;height:100%;line-height:50px;;text-align:center;background-color:#007AFF" onclick="gotoNext();">
+			<div id="nextButton" style="display:table-cell;width:100%;height:100%;line-height:50px;;text-align:center;background-color:#279FD9" onclick="gotoNext();">
 				<div style="font-size:1em;color:#FFF;"><#CTL_finish#></div>
 			</div>
 		</div>
@@ -1532,7 +1536,7 @@ body{
 		<td id="tdWlcItem" align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"></td>	
 	</tr>
 	<tr class="wlcItem">
-	  <th width="180"><span id="wlcssid_item"><#Wireless_name#> (<#remote#>)</span></th>
+	  <th width="180"><span id="wlcssid_item"><#QIS_finish_wireless_item1#> (<#remote#>)</span></th>
 	  <td class="QISformtd">
 			<span id="wlcssid"></span>
 	  </td>

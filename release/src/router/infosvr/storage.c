@@ -51,6 +51,8 @@ int getStorageStatus(STORAGE_INFO_T *st)
 	st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_AAE_BASIC);
 #endif
 
+	st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_SWCTRL);
+
 	if(nvram_get_int("enable_webdav")) 	
 		st->u.wt.EnableWebDav = 1;
 	else

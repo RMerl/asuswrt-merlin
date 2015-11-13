@@ -252,7 +252,7 @@ ifeq ($(RTCONFIG_RALINK),y)
 #################################################################################
 obj-y += wireless_tools
 
-ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN300),$(RTN54U),$(RTAC1200HP),$(RTN56UB1),$(RTAC54U)),y)
+ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN300),$(RTN54U),$(RTAC1200HP),$(RTN56UB1),$(RTN56UB2),$(RTAC54U)),y)
 obj-y += reg
 endif
 
@@ -262,7 +262,7 @@ obj-y += rt2880_app
 else	#!ifneq ($(findstring linux-3.x,$(LINUXDIR)),)
 obj-y += ated
 obj-y += flash
-ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN300),$(RTN54U),$(RTAC1200HP),$(RTN56UB1),$(RTAC54U)),y)
+ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN300),$(RTN54U),$(RTAC1200HP),$(RTN56UB1),$(RTN56UB2),$(RTAC54U)),y)
 else
 obj-y += hw_nat
 endif
@@ -286,10 +286,6 @@ endif
 
 ifeq ($(ART2),y)
 obj-y += LinuxART2
-endif
-
-ifeq ($(RT4GAC55U),y)
-obj-y += usb-gobi
 endif
 
 else
@@ -400,17 +396,19 @@ endif
 obj-$(RTCONFIG_USB_PRINTER) += u2ec
 obj-$(RTCONFIG_USB_PRINTER) += LPRng
 
-ifneq ($(RT4GAC55U),y)
+ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
+obj-$(RTCONFIG_INTERNAL_GOBI) += usb-gobi
+else
 obj-$(RTCONFIG_USB_MODEM) += sdparm-1.02
 obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
 obj-$(RTCONFIG_USB_MODEM) += $(if $(RTCONFIG_QCA),,uqmi)
 endif
 
 ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
-ifeq ($(or $(RTN65U),$(RTAC55U),$(RTAC55UHP),$(RTN56UB1)),y)
+ifeq ($(or $(RTN65U),$(RTAC55U),$(RTAC55UHP),$(RTN56UB1),$(RTN56UB2)),y)
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
 else
-ifneq ($(RT4GAC55U),y)
+ifneq ($(RTCONFIG_INTERNAL_GOBI),y)
 obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.3
 endif
 endif
@@ -538,9 +536,10 @@ obj-y += libdaemon
 obj-y += avahi-0.6.31
 obj-y += expat-2.0.1
 else
-obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
+ifeq ($(or $(RTCONFIG_MEDIA_SERVER),$(RTCONFIG_BWDPI)),y)
+obj-y += mDNSResponder
 endif
-obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
+endif
 
 #add for snmpd
 SNMPD_CFLAGS += -D$(BUILD_NAME)
@@ -566,6 +565,7 @@ obj-$(RTCONFIG_TELENET) += lanauth
 obj-$(RTCONFIG_HTTPS) += openssl
 obj-$(RTCONFIG_HTTPS) += wget zlib
 obj-$(RTCONFIG_SSH) += dropbear
+obj-$(RTCONFIG_WTFAST) += wtfast
 #obj-$(RTCONFIG_ZEBRA) += zebra
 obj-$(RTCONFIG_QUAGGA) += quagga
 #	obj-$(RTCONFIG_IPP2P) += ipp2p
@@ -588,7 +588,7 @@ obj-$(RTCONFIG_WEBDAV) += libexif
 obj-$(RTCONFIG_IXIAEP) += ixia_endpoint$(BCMEX)
 
 # Add for ASUS Components
-obj-y += miniupnpc
+obj-$(RTCONFIG_UPNPC) += miniupnpc
 obj-y += miniupnpd$(MUVER)
 obj-y += igmpproxy
 obj-y += snooper
@@ -652,7 +652,7 @@ obj-$(RA_SKU) += ra_SingleSKU
 endif
 obj-$(RTCONFIG_BCMARM) += wl$(BCMEX)$(EX7)
 
-obj-$(RTCONFIG_RTL8365MB) += rtl_bin
+obj-$(RTCONFIG_EXT_RTL8365MB) += rtl_bin
 obj-$(RTCONFIG_LACP) += lacp
 
 #obj-y += bonnie
@@ -827,7 +827,7 @@ else	# RTCONFIG_BCMARM
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/lib/libcrc32c.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/net/sched/sch_tbf.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/net/sched/sch_hfsc.ko)
-ifeq ($(RTCONFIG_RTL8365MB),y)
+ifeq ($(RTCONFIG_EXT_RTL8365MB),y)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/char/rtl8365mb/rtl8365mb.ko)
 endif
 endif   # RTCONFIG_BCMARM
@@ -941,7 +941,7 @@ ifeq ($(RTAC53U),y)
 else
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv ctf/* . && rm -rf ctf || true
 endif
-ifeq ($(RTCONFIG_RTL8365MB),y)
+ifeq ($(RTCONFIG_EXT_RTL8365MB),y)
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/char && mv rtl8365mb/* . && rm -rf rtl8365mb || true
 endif
 	cd $(TARGETDIR)/lib/modules && rm -f */source || true
@@ -1177,6 +1177,7 @@ ifeq ($(RTCONFIG_CFEZ),y)
 	install -D envram_bin/envram $(TARGETDIR)/usr/sbin/envram
 endif
 endif
+
 	@echo ---
 
 	@rm -f $(TARGETDIR)/lib/modules/*/build
@@ -1253,7 +1254,7 @@ roldconf: config/conf
 	config/conf -o $(CONFIG_IN)
 	$(MAKE) shared-clean libdisk-clean rc-clean nvram$(BCMEX)-clean httpd-clean prebuilt-clean libbcmcrypto-clean
 #	@$(MAKE) iptables-clean ebtables-clean pppd-clean zebra-clean openssl-clean mssl-clean mdu-clean pppd-clean
-	$(MAKE) dnsmasq-clean iproute2-clean
+	$(MAKE) dnsmasq-clean iproute2-clean networkmap-clean
 ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) compressed-clean
 endif
@@ -1391,7 +1392,11 @@ bonnie-configure:
 bonnie-install:
 	install -D bonnie/bonnie++ $(INSTALLDIR)/bonnie/sbin/bonnie++
 	$(STRIP) $(INSTALLDIR)/bonnie/sbin/bonnie++
-	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/bonnie/lib/libstdc++.so.6
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -D $(shell dirname $(shell which $(CXX)))/../arm-brcm-linux-uclibcgnueabi/lib/libstdc++.so.6 $(INSTALLDIR)/bonnie/usr/lib/libstdc++.so.6
+else
+	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/bonnie/usr/lib/libstdc++.so.6
+endif
 
 bonnie-clean:
 	[ ! -f bonnie/Makefile ] || $(MAKE) -C bonnie clean
@@ -1489,6 +1494,8 @@ else
 endif
 	@-cp -f rc/prebuild/models/$(BUILD_NAME)/* rc/prebuild/
 	@$(MAKE) -C rc
+
+networkmap: shared
 
 bridge/stamp-h1:
 	cd bridge && CFLAGS="-Os -g $(EXTRACFLAGS)" \
@@ -2608,6 +2615,12 @@ dropbear/config.h:
 		--disable-pututxline --disable-loginfunc --disable-pam --enable-openpty
 	-@$(MAKE) -C dropbear clean
 
+wtfast-configure:
+	@true
+
+wtfast-install:
+	install -D wtfast/wtfslhd/wtfslhd $(INSTALLDIR)/wtfast/usr/sbin/wtfslhd
+
 # Media libraries
 
 sqlite/stamp-h1:
@@ -2733,7 +2746,7 @@ endif
 
 jpeg/stamp-h1:
 	cd jpeg && \
-	CFLAGS="-Os $(EXTRACFLAGS) -fPIC" CC=$(CC) AR2="touch" $(CONFIGURE) --enable-shared --enable-static --prefix=''
+	CFLAGS="-Os $(EXTRACFLAGS) -fPIC" CC=$(CC) AR2="touch" $(CONFIGURE) --enable-maxmem=1 --enable-shared --enable-static --prefix=''
 	touch $@
 
 jpeg: jpeg/stamp-h1
@@ -3402,6 +3415,7 @@ ifeq ($(RTCONFIG_BCMARM),y)
 else
 	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/ftpclient/usr/lib/libstdc++.so.6
 endif
+
 ftpclient-clean:
 	-@$(MAKE) -C ftpclient clean
 
@@ -3421,6 +3435,7 @@ ifeq ($(RTCONFIG_BCMARM),y)
 else
 	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/sambaclient/usr/lib/libstdc++.so.6
 endif
+
 sambaclient-clean:
 	-@$(MAKE) -C sambaclient clean
 	rm -rf sambaclient/stamp-h1
@@ -3441,6 +3456,7 @@ ifeq ($(RTCONFIG_BCMARM),y)
 else
 	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/usbclient/usr/lib/libstdc++.so.6
 endif
+
 usbclient-clean:
 	-@$(MAKE) -C usbclient clean
 	rm -rf usbclient/stamp-h1
@@ -4108,23 +4124,7 @@ qca-wifi-clean:
 qca-wifi-stage:
 	$(MAKE) -C qca-wifi stage
 
-qca-wifi-PLC:
-	$(MAKE) -C $@ TARGET_CROSS=$(CROSS_COMPILE) LINUX_KARCH=$(ARCH) LINUX_VERSION=$(LINUX_KERNEL) LINUX_DIR=$(LINUXDIR) && $(MAKE) $@-stage
-
-qca-wifi-PLC-install: qca-wifi-PLC
-	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< LINUX_VERSION=$(LINUX_KERNEL) install
-
-qca-wifi-PLC-clean:
-	$(MAKE) -C qca-wifi-PLC clean KERNELPATH=$(LINUXDIR)
-	$(RM) -f qca-wifi-PLC/lsdk_flags
-
-qca-wifi-PLC-stage:
-	$(MAKE) -C qca-wifi-PLC stage
-
 qca-hostap: qca-wifi
-	$(MAKE) -C $@
-
-qca-hostap-PLC: qca-wifi-PLC
 	$(MAKE) -C $@
 
 LinuxART2-install: LinuxART2
@@ -4169,11 +4169,6 @@ mastiff-install:
 mastiff-clean:
 	cd aaews && make clean 
 	echo $(INSTALLDIR)
-ifeq ($(RTCONFIG_BCMARM),y)
-LIBSTDCPP_PATH=$(shell dirname $(shell which $(CXX)))/../arm-brcm-linux-uclibcgnueabi/lib
-else
-LIBSTDCPP_PATH=$(TOP)/../../../tools/brcm/hndtools-mipsel-uclibc/lib
-endif
 
 
 #aaews: wb
@@ -4194,7 +4189,11 @@ aaews-install:
 	$(STRIP) -s $(INSTALLDIR)/wb/usr/lib/libws.so
 	install -D aaews/aaews $(INSTALLDIR)/wb/usr/sbin/aaews
 	$(STRIP) -s $(INSTALLDIR)/wb/usr/sbin/aaews
-	install -D $(LIBSTDCPP_PATH)/libstdc++.so.6 $(INSTALLDIR)/wb/usr/lib/libstdc++.so.6
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -D $(shell dirname $(shell which $(CXX)))/../arm-brcm-linux-uclibcgnueabi/lib/libstdc++.so.6 $(INSTALLDIR)/wb/usr/lib/libstdc++.so.6
+else
+	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/wb/usr/lib/libstdc++.so.6
+endif
 
 aaews-clean:
 	cd aaews && make clean

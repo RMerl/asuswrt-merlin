@@ -86,7 +86,7 @@
 <script>
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 var based_modelid = '<% nvram_get("productid"); %>';
-if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
@@ -268,7 +268,10 @@ function QIS_load_body(){
 	var showCase;
 	showCase = (document.getElementById("flag").value == "") ? "welcome" : document.getElementById("flag").value;
 	winW_H();
-
+	
+	document.getElementById("language_menu").innerHTML = '<% shown_language_css(); %>';
+	show_selected_language();
+	
 	if(based_modelid == "4G-AC55U" && sim_state == "1" && modem_autoapn == "1" && usb_modem_auto_spn.length == 0)
 		update_apn_progress();
 	else
@@ -563,6 +566,7 @@ function detect_httpd(){
 <div class="banner1" align="center">
 	<img src="images/New_ui/asustitle.png" width="218" height="54" align="left">
 	<span class="modelName_top" style="margin-top:20px;"><#Web_Title2#></span>
+	<ul id="language_menu" class="navigation"></ul>
 </div>
 <!--<![endif]-->
 <!--[if lte IE 6]>
@@ -616,7 +620,7 @@ function detect_httpd(){
 	<input type="hidden" name="action_script" value="restart_wan_if">
 	<input type="hidden" name="wan_unit" value="0">
 	<input type="hidden" name="action_wait" value="5">
-	<input type="hidden" name="modified" value="">  
+	<input type="hidden" name="modified" value=""> 
 	<!-- system -->                  
 	<input type="hidden" name="machine_name" value="<% nvram_get("machine_name"); %>">
 	<input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>">
@@ -705,7 +709,15 @@ function detect_httpd(){
 	<input type="hidden" name="action_wait" value="3">
 	<input type="hidden" name="x_Setting" value="1">
 </form>
-
+<form method="post" name="titleForm" id="titleForm" action="/start_apply.htm" target="hidden_frame">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="2">
+<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="flag" value="">
+</form>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 </body>
 </html>

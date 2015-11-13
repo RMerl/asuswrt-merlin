@@ -338,21 +338,22 @@ void btn_check(void)
 #if defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		if (!button_pressed(BTN_LED))
 #else
-		if (button_pressed(BTN_LED))
+		if ((!nvram_match("cpurev", "c0") && button_pressed(BTN_LED)) ||
+			(nvram_match("cpurev", "c0") && !button_pressed(BTN_LED)))
 #endif
 		{
 			TRACE_PT("button LED pressed\n");
 			nvram_set("btn_led", "1");
 		}
 #if defined(RTAC68U)
-		else
+		else if (!nvram_match("cpurev", "c0"))
 		{
 			TRACE_PT("button LED released\n");
 			nvram_set("btn_led", "0");
 		}
 #endif
 #endif
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 		if (button_pressed(BTN_LTE))
 		{
 			TRACE_PT("button LTE pressed\n");
@@ -579,7 +580,7 @@ void btn_check(void)
 	}
 
 	if (btn_pressed != 0) return;
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_QCA)
 	// wait until wl is ready
 	if (!nvram_get_int("wlready")) return;
 #endif
@@ -588,17 +589,17 @@ void btn_check(void)
 	if (wifi_sw_old != button_pressed(BTN_WIFI_SW))
 	{
 		wifi_sw_old = button_pressed(BTN_WIFI_SW);
-		if(wifi_sw_old != 0 && (!nvram_match("wl0_radio", "1") || !nvram_match("wl1_radio", "1")))
+		if(wifi_sw_old != 0 && (!nvram_match("wl0_HW_switch", "0") || !nvram_match("wl1_HW_switch", "0")))
 		{
 			TRACE_PT("button BTN_WIFI_SW pressed: ON\n");
 			nvram_set("wl0_radio", "1");
 			nvram_set("wl1_radio", "1");
 			nvram_set("wl0_HW_switch", "0");	// 0 to be ON
 			nvram_set("wl1_HW_switch", "0");	// 0 to be ON
-//			nvram_commit();
+			nvram_commit();
 			eval("radio", "on");			// ON
 		}
-		else if(wifi_sw_old == 0 && (!nvram_match("wl0_radio", "0") || !nvram_match("wl1_radio", "0")))
+		else if(wifi_sw_old == 0 && (!nvram_match("wl0_HW_switch", "1") || !nvram_match("wl1_HW_switch", "1")))
 		{
 			TRACE_PT("button BTN_WIFI_SW released: OFF\n");
 			eval("radio", "off");			// OFF
@@ -606,7 +607,7 @@ void btn_check(void)
 			nvram_set("wl1_radio", "0");
 			nvram_set("wl0_HW_switch", "1");	// 1 to be OFF
 			nvram_set("wl1_HW_switch", "1");	// 1 to be OFF
-//			nvram_commit();
+			nvram_commit();
 		}
 	}
 #endif	/* RTCONFIG_WIRELESS_SWITCH && RTCONFIG_QCA */
@@ -684,8 +685,8 @@ void btn_check(void)
 #if defined(RTAC1200G) || defined(RTAC1200GP)
 				eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 				eval("et", "robowr", "0", "0x1a", "0x01ff");
-				eval("wl", "-i", "eth3", "ledbh", "3", "2");
-				eval("wl", "-i", "eth2", "ledbh", "11", "2");
+				eval("wl", "-i", "eth1", "ledbh", "3", "7");
+				eval("wl", "-i", "eth2", "ledbh", "11", "7");
 				kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
 #endif
 			}
@@ -713,16 +714,33 @@ void btn_check(void)
 
 #if defined(RTAC68U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 #if defined(RTAC68U)
-	LED_status_changed = 0;
-	if (LED_status != LED_status_old)
-	{
-		if (LED_status_first)
+	if (nvram_match("cpurev", "c0")) {
+		if (!LED_status &&
+		    (LED_status != LED_status_old))
 		{
-			LED_status_first = 0;
-			LED_status_on = LED_status;
+			LED_status_changed = 1;
+			if (LED_status_first)
+			{
+				LED_status_first = 0;
+				LED_status_on = 0;
+			}
+			else
+				LED_status_on = 1- LED_status_on;
 		}
 		else
-			LED_status_changed = 1;
+			LED_status_changed = 0;
+	} else {
+		LED_status_changed = 0;
+		if (LED_status != LED_status_old)
+		{
+			if (LED_status_first)
+			{
+				LED_status_first = 0;
+				LED_status_on = LED_status;
+			}
+			else
+				LED_status_changed = 1;
+		}
 	}
 #elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 	if (!LED_status &&
@@ -744,7 +762,7 @@ void btn_check(void)
 	if (LED_status_changed)
 	{
 		TRACE_PT("button BTN_LED pressed\n");
-#ifdef RTCONFIG_LED_BTN_MODE
+#if 0
 #ifdef RTAC68U
 		if (nvram_get_int("btn_led_mode"))
 			reboot(RB_AUTOBOOT);
@@ -752,7 +770,8 @@ void btn_check(void)
 #endif
 
 #if defined(RTAC68U)
-		if (LED_status == LED_status_on)
+		if ((!nvram_match("cpurev", "c0") && (LED_status == LED_status_on)) ||
+			(nvram_match("cpurev", "c0") && LED_status_on))
 #elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		if (LED_status_on)
 #endif
@@ -760,7 +779,8 @@ void btn_check(void)
 		else
 			nvram_set_int("AllLED", 0);
 #if defined(RTAC68U)
-		if (LED_status == LED_status_on)
+		if ((!nvram_match("cpurev", "c0") && (LED_status == LED_status_on)) ||
+			(nvram_match("cpurev", "c0") && LED_status_on))
 #elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		if (LED_status_on)
 #endif
@@ -776,10 +796,6 @@ void btn_check(void)
 
 			if (wlonunit == -1 || wlonunit == 0) {
 #ifdef RTAC68U
-#ifdef RTCONFIG_LEDARRAY
-				eval("wl", "ledbh", "0", "7");
-				eval("wl", "ledbh", "9", "7");
-#endif
 				eval("wl", "ledbh", "10", "7");
 #elif defined(RTAC3200)
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
@@ -789,10 +805,6 @@ void btn_check(void)
 			}
 			if (wlonunit == -1 || wlonunit == 1) {
 #ifdef RTAC68U
-#ifdef RTCONFIG_LEDARRAY
-				eval("wl", "-i", "eth2", "ledbh", "0", "7");
-				eval("wl", "-i", "eth2", "ledbh", "9", "7");
-#endif
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
 #elif defined(RTAC3200)
 				eval("wl", "ledbh", "10", "7");
@@ -850,9 +862,13 @@ void btn_check(void)
 
 		if(LED_status_on){
 			led_control(LED_POWER, LED_ON);
-
+#if defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");
+			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01ff");
+#else
 			eval("et", "robowr", "0", "0x18", "0x01ff");
 			eval("et", "robowr", "0", "0x1a", "0x01ff");
+#endif
 			qcsapi_wifi_run_script("router_command.sh", "lan4_led_ctrl on");
 
 			if(nvram_match("wl0_radio", "1"))
@@ -925,9 +941,8 @@ void btn_check(void)
 						btn_count_setup_second = 0;
 						nvram_set("wps_ign_btn", "1");
 #ifdef RTCONFIG_WIFI_CLONE
-						if (nvram_match("x_Setting", "0")
-								&& (nvram_get_int("sw_mode") == SW_MODE_ROUTER
-									|| nvram_get_int("sw_mode") == SW_MODE_AP)) {
+						if (nvram_get_int("sw_mode") == SW_MODE_ROUTER
+									|| nvram_get_int("sw_mode") == SW_MODE_AP) {
 							nvram_set("wps_enrollee", "1");
 							nvram_set("wps_e_success", "0");
 						}
@@ -1226,10 +1241,10 @@ int timecheck_reboot(char *activeSchedule)
 		Date2Active += (activeSchedule[i]-'0') << (6-i);
 	}
 
-	if((current_time == Time2Active) && (Date2Active & current_date))       active = 1;
+	if((current_time == Time2Active) && (Date2Active & current_date))	active = 1;
 
 	//dbG("[watchdog] current_time=%d, ActiveTime=%d, current_date=%d, ActiveDate=%d, active=%d\n",
-	//      current_time, Time2Active, current_date, Date2Active, active);
+	//	current_time, Time2Active, current_date, Date2Active, active);
 
 	return active;
 }
@@ -1240,7 +1255,7 @@ int svcStatus[12] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 /* Check for time-reated service 	*/
 /* 1. Wireless Radio			*/
 /* 2. Guess SSID expire time 		*/
-/* 3. Reboot Schedule                   */
+/* 3. Reboot Schedule			*/
 //int timecheck(int argc, char *argv[])
 void timecheck(void)
 {
@@ -1369,7 +1384,7 @@ void timecheck(void)
 		//XXXXXXXXXXX
 		reboot_schedule = nvram_safe_get("reboot_schedule");
 		if(strlen(reboot_schedule) == 11 && atoi(reboot_schedule) > 2359)
-		{       
+		{
 			if(timecheck_reboot(reboot_schedule))
 			{
 				_dprintf("reboot plan alert...\n");
@@ -1377,7 +1392,7 @@ void timecheck(void)
 				eval("reboot");
 			}
 		}
-	}       
+	}
 	#endif 
 
 	return;
@@ -1420,6 +1435,10 @@ static void catch_sig(int sig)
 		btn_count_setup_second = 0;
 		wsc_timeout = WPS_TIMEOUT_COUNT;
 		alarmtimer(0, RUSHURGENT_PERIOD);
+
+#if (defined(PLN12) || defined(PLAC56))
+		set_wifiled(3);
+#endif
 	}
 	else if (sig == SIGUSR2)
 	{
@@ -1433,7 +1452,11 @@ static void catch_sig(int sig)
 		wsc_timeout = 1;
 		alarmtimer(NORMAL_PERIOD, 0);
 
+#if (defined(PLN12) || defined(PLAC56))
+		set_wifiled(1);
+#else
 		led_control_normal();
+#endif
 	}
 	else if (sig == SIGTSTP)
 	{
@@ -1843,11 +1866,11 @@ void led_check(int sig)
 	char *p1_node, *p2_node, *ehci_ports, *xhci_ports;
 
 	/* led indicates which usb port */
-        switch (get_model()) {
-                case MODEL_RTAC5300:
-                case MODEL_RTAC88U:
-                case MODEL_RTAC3100:
-                default:
+	switch (get_model()) {
+		case MODEL_RTAC5300:
+		case MODEL_RTAC88U:
+		case MODEL_RTAC3100:
+		default:
 			p1_node = nvram_safe_get("usb_path1_node");	// xhci node
 			p2_node = nvram_safe_get("usb_path2_node");	// ehci node
 			break;
@@ -2058,10 +2081,8 @@ static void client_check(void)
 	char buf[512];
 	int i, n = 0;
 
-#if (defined(PLN12) || defined(PLAC56))
 	if (!nvram_match("plc_ready", "1"))
 		return;
-#endif
 
 	/* every 2 seconds check */
 	if (client_check_cnt++ > 0) {
@@ -2208,10 +2229,27 @@ void httpd_check()
 	}
 }
 
+void dnsmasq_check()
+{
+	if (!pids("dnsmasq")) {
+		if(nvram_get_int("asus_mfg") == 1)
+			return;
+
+	if (!is_routing_enabled()
+#ifdef RTCONFIG_WIRELESSREPEATER
+		&& nvram_get_int("sw_mode") != SW_MODE_REPEATER
+#endif
+	)
+		return;
+
+		start_dnsmasq();
+		TRACE_PT("watchdog: dnsmasq died. start dnsmasq...\n");
+	}
+}
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 void watchdog_check()
 {
-#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA) || defined(RTCONFIG_BCM_7114)
 	/* Do nothing. */
 #else
 	if (!pids("watchdog")){
@@ -2408,44 +2446,71 @@ void modem_flow_check(void){
 
 static void auto_firmware_check()
 {
+#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
+	static int period = -1;
+	static int bootup_check = 0;
+#else
 	static int period = 5757;
 	static int bootup_check = 1;
+#endif
 	static int periodic_check = 0;
 	int cycle_manual = nvram_get_int("fw_check_period");
 	int cycle = (cycle_manual > 1) ? cycle_manual : 5760;
 	time_t now;
 	struct tm *tm;
+	static int rand_hr, rand_min;
 
 	if (!nvram_get_int("ntp_ready"))
 		return;
 
+#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
+	setenv("TZ", nvram_safe_get("time_zone_x"), 1);
+	time(&now);
+	tm = localtime(&now);
+	if ((tm->tm_hour >= 2) && (tm->tm_hour <= 6))	// 2 am to 6 am
+		periodic_check = 1;
+	else
+		periodic_check = 0;
+#else	
 	if (!bootup_check && !periodic_check)
 	{
 		time(&now);
 		tm = localtime(&now);
 
-		if ((tm->tm_hour == 2))	// every 48 hours at 2 am
+		if ((tm->tm_hour == (2 + rand_hr)) &&	// every 48 hours at 2 am + random offset
+		    (tm->tm_min == rand_min))
 		{
 			periodic_check = 1;
 			period = -1;
 		}
 	}
-#ifdef RTAC68U
-	else if (After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1"))) {
+#endif
+
+#if defined(RTAC68U)
+	else if (After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1")) && !nvram_get_int("PA") && !nvram_match("cpurev", "c0"))
+	{
 		periodic_check = 1;
 		nvram_set_int("fw_check_period", 10);
 	}
 #endif
 
 	if (bootup_check || periodic_check)
+#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
+		period = (period + 1) % 20;
+#else
 		period = (period + 1) % cycle;
+#endif
 	else
 		return;
 
 	if (!period)
 	{
 		if (bootup_check)
+		{
 			bootup_check = 0;
+			rand_hr = rand_seed_by_time() % 4;
+			rand_min = rand_seed_by_time() % 60;
+		}
 
 		eval("/usr/sbin/webs_update.sh");
 #ifdef RTCONFIG_DSL
@@ -2457,11 +2522,17 @@ static void auto_firmware_check()
 		    strlen(nvram_safe_get("webs_state_info")))
 		{
 			dbg("retrieve firmware information\n");
-#ifdef RTAC68U
-			if (!After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1")))
+
+#if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
+#if defined(RTAC68U)
+			if (!After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1")) || nvram_get_int("PA") || nvram_match("cpurev", "c0"))
+				return;
+#endif
+
+			if (nvram_get("login_ip") && !nvram_match("login_ip", ""))
 				return;
 
-			if (!nvram_match("login_ip", ""))
+			if (nvram_match("x_Setting", "0"))
 				return;
 
 			if (!nvram_get_int("webs_state_flag"))
@@ -2470,6 +2541,10 @@ static void auto_firmware_check()
 				return;
 			}
 
+//#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
+//			stop_httpd();
+//#endif
+//
 			nvram_set_int("auto_upgrade", 1);
 
 			eval("/usr/sbin/webs_upgrade.sh");
@@ -2480,8 +2555,10 @@ static void auto_firmware_check()
 				goto ERROR;
 			}
 
+#ifndef RTCONFIG_FORCE_AUTO_UPGRADE
 			nvram_set("restore_defaults", "1");
 			ResetDefault();
+#endif
 
 #ifdef RTCONFIG_DUAL_TRX
 			int count = 80;
@@ -2499,7 +2576,7 @@ static void auto_firmware_check()
 		}
 		else
 			dbg("could not retrieve firmware information!\n");
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
 ERROR:
 		nvram_set_int("auto_upgrade", 0);
 #endif
@@ -3158,6 +3235,7 @@ void watchdog(int sig)
 	ddns_check();
 	networkmap_check();
 	httpd_check();
+	dnsmasq_check();
 #ifdef RTAC87U
 	qtn_module_check();
 #endif
@@ -3261,7 +3339,7 @@ watchdog_main(int argc, char *argv[])
 	nvram_set("btn_wifi_sw", "0");
 #endif
 	nvram_unset("wps_ign_btn");
-#ifdef RT4GAC55U
+#ifdef RTCONFIG_INTERNAL_GOBI
 	nvram_set("btn_lte", "0");
 #endif
 

@@ -140,7 +140,6 @@ set40M_Channel_5G(char *channel)
 	nvram_set("wl1_nbw_cap", "1");
 	nvram_set("wl1_nctrlsb", "lower");
 #endif
-	nvram_set("wl1_obss_coex", "0");
 	eval("wlconf", "eth2", "down");
 	eval("wlconf", "eth2", "up");
 	eval("wlconf", "eth2", "start");
@@ -170,7 +169,6 @@ set80M_Channel_5G(char *channel)
 	nvram_set("wl1_nbw_cap", "1");
 	nvram_set("wl1_nctrlsb", "lower");
 #endif
-	nvram_set("wl1_obss_coex", "0");
 	eval("wlconf", "eth2", "down");
 	eval("wlconf", "eth2", "up");
 	eval("wlconf", "eth2", "start");
@@ -473,8 +471,8 @@ setAllLedOn(void)
 #ifdef RTCONFIG_TURBO
 			led_control(LED_TURBO, LED_ON);
 #endif
-			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
-			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
 #if defined(RTAC3200)
 			eval("wl", "ledbh", "10", "1");			// wl 5G low
 			eval("wl", "-i", "eth2", "ledbh", "10", "1");	// wl 2.4G
@@ -621,12 +619,11 @@ setAllLedOn(void)
 		{
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
-			eval("wl", "-i", "eth2", "ledbh", "3", "1");	// wl 2.4G
-			eval("wl", "-i", "eth3", "ledbh", "11", "1");	// wl 5G
+			eval("wl", "-i", "eth1", "ledbh", "3", "1");	// wl 2.4G
+			eval("wl", "-i", "eth2", "ledbh", "11", "1");	// wl 5G
 			led_control(LED_WPS, LED_ON);
 			led_control(LED_USB, LED_ON);
 			break;
-	
 		}
 	}
 
@@ -683,12 +680,12 @@ setWlOffLed(void)
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 			if (wlon_unit != 0) {
-                                eval("wl", "ledbh", "9", "0");                 // wl 2.4G
-                        } else {
-                                eval("wl", "-i", "eth2", "ledbh", "9", "0");   // wl 5G
-                                led_control(LED_5G, LED_OFF);
-                        }
-                        break;
+				eval("wl", "ledbh", "9", "0");			// wl 2.4G
+			} else {
+				eval("wl", "-i", "eth2", "ledbh", "9", "0");	// wl 5G
+				led_control(LED_5G, LED_OFF);
+			}
+			break;
 
 		case MODEL_RTAC5300:
 		{
@@ -826,8 +823,8 @@ setAllLedOff(void)
 #ifdef RTCONFIG_TURBO
 			led_control(LED_TURBO, LED_OFF);
 #endif
-			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
-			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
+			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
 #if defined(RTAC3200)
 			eval("wl", "ledbh", "10", "0");			// wl 5G low
 			eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 2.4G
@@ -959,12 +956,11 @@ setAllLedOff(void)
 		{
 			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
-			eval("wl", "-i", "eth2", "ledbh", "3", "0");	// wl 2.4G
-			eval("wl", "-i", "eth3", "ledbh", "11", "0");    // wl 5G
+			eval("wl", "-i", "eth1", "ledbh", "3", "0");	// wl 2.4G
+			eval("wl", "-i", "eth2", "ledbh", "11", "0");	// wl 5G
 			led_control(LED_WPS, LED_OFF);
 			led_control(LED_USB, LED_OFF);
 			break;
-	
 		}
 	}
 
@@ -1022,35 +1018,35 @@ setATEModeLedOn(void){
 		case MODEL_RTAC3200:
 		{
 			led_control(LED_WPS, LED_ON);
-                        led_control(LED_USB, LED_ON);
-                        led_control(LED_USB3, LED_ON);
+			led_control(LED_USB, LED_ON);
+			led_control(LED_USB3, LED_ON);
 #ifdef RTCONFIG_TURBO
-                        led_control(LED_TURBO, LED_ON);
+			led_control(LED_TURBO, LED_ON);
 #endif
-                        eval("et", "robowr", "0", "0x18", "0x01ff");    // lan/wan ethernet/giga led
-                        eval("et", "robowr", "0", "0x1a", "0x01e0");
-                        break;
+			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			break;
 		}
 		//case MODEL_RPAC68U:
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 		case MODEL_RTAC5300:
 		{
-                        led_control(LED_WPS, LED_ON);
-                        led_control(LED_WAN, LED_ON);
-                        led_control(LED_LAN, LED_ON);
+			led_control(LED_WPS, LED_ON);
+			led_control(LED_WAN, LED_ON);
+			led_control(LED_LAN, LED_ON);
 			led_control(LED_USB, LED_ON);
 			led_control(LED_USB3, LED_ON);
 
-			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
-			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
 #if defined(RTAC5300)
-                        eval("wl", "ledbh", "9", "1");                  // wl 5G low
-                        eval("wl", "-i", "eth2", "ledbh", "9", "1");    // wl 2.4G
-                        eval("wl", "-i", "eth3", "ledbh", "9", "1");    // wl 5G high
+			eval("wl", "ledbh", "9", "1");			// wl 5G low
+			eval("wl", "-i", "eth2", "ledbh", "9", "1");	// wl 2.4G
+			eval("wl", "-i", "eth3", "ledbh", "9", "1");	// wl 5G high
 #elif defined(RTAC88U) || defined(RTAC3100)
-                        eval("wl", "ledbh", "9", "1");                  // wl 2.4G
-                        eval("wl", "-i", "eth2", "ledbh", "9", "1");    // wl 5G
+			eval("wl", "ledbh", "9", "1");			// wl 2.4G
+			eval("wl", "-i", "eth2", "ledbh", "9", "1");	// wl 5G
 #endif
 			break;
 		}
@@ -1130,7 +1126,6 @@ setATEModeLedOn(void){
 			led_control(LED_WPS, LED_ON);
 			led_control(LED_USB, LED_ON);
 			break;
-	
 		}
 	}
 
@@ -1625,6 +1620,7 @@ static const char * wpa_cipher_txt(int cipher)
 	}
 }
 
+static char scan_result[WLC_SCAN_RESULT_BUF_LEN];
 
 int wlcscan_core(char *ofile, char *wif)
 {
@@ -1650,8 +1646,8 @@ int wlcscan_core(char *ofile, char *wif)
 	int params_size = WL_SCAN_PARAMS_FIXED_SIZE + NUMCHANS * sizeof(uint16);
 	FILE *fp;
 	int scanmode;
-
-	retval = 0;
+	int org_scan_time = 20, scan_time = 40;
+	int wait_time = 3;
 
 	params = (wl_scan_params_t*)malloc(params_size);
 	if (params == NULL)
@@ -1666,12 +1662,125 @@ int wlcscan_core(char *ofile, char *wif)
 	memcpy(&params->bssid, &ether_bcast, ETHER_ADDR_LEN);
 //	params->scan_type = -1;
 	params->scan_type = scanmode;
-//	params->scan_type = DOT11_SCANTYPE_PASSIVE;
 	params->nprobes = -1;
 	params->active_time = -1;
 	params->passive_time = -1;
 	params->home_time = -1;
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+	int band = WLC_BAND_ALL;
+	wl_ioctl(wif, WLC_GET_BAND, &band, sizeof(band));
+	if (band == WLC_BAND_5G)
+	{
+		if (wl_subband(wif, nvram_get_int("wlcscan_idx")+1) == 1)
+		{
+			params->channel_num = 4;
+			params->channel_list[0] = 36;
+			params->channel_list[1] = 40;
+			params->channel_list[2] = 44;
+			params->channel_list[3] = 48;
+		}
+		else if (wl_subband(wif, nvram_get_int("wlcscan_idx")+1) == 2)
+		{
+			params->channel_num = 4;
+			params->channel_list[0] = 52;
+			params->channel_list[1] = 56;
+			params->channel_list[2] = 60;
+			params->channel_list[3] = 64;
+		}
+		else if (wl_subband(wif, nvram_get_int("wlcscan_idx")+1) == 3)
+		{
+			if (wl_channel_valid(wif, 120))
+			{
+				params->channel_num = 11;
+				params->channel_list[0] = 100;
+				params->channel_list[1] = 104;
+				params->channel_list[2] = 108;
+				params->channel_list[3] = 112;
+				params->channel_list[4] = 116;
+				params->channel_list[5] = 120;
+				params->channel_list[6] = 124;
+				params->channel_list[7] = 128;
+				params->channel_list[8] = 132;
+				params->channel_list[9] = 136;
+				params->channel_list[10] = 140;
+			}
+			else
+			{
+				params->channel_num = 8;
+				params->channel_list[0] = 100;
+				params->channel_list[1] = 104;
+				params->channel_list[2] = 108;
+				params->channel_list[3] = 112;
+				params->channel_list[4] = 116;
+				params->channel_list[5] = 132;
+				params->channel_list[6] = 136;
+				params->channel_list[7] = 140;
+			}
+		}
+		else if (wl_subband(wif, nvram_get_int("wlcscan_idx")+1) == 4)
+		{
+			params->channel_num = 5;
+			params->channel_list[0] = 165;
+			params->channel_list[1] = 161;
+			params->channel_list[2] = 157;
+			params->channel_list[3] = 153;
+			params->channel_list[4] = 149;
+		}
+		else
+		{
+			free(params);
+			return retval;
+		}
+	}
+	else
+	{
+		if (nvram_get_int("wlcscan_idx") == 0)
+		{
+			params->channel_num = 6;
+			params->channel_list[0] = 1;
+			params->channel_list[1] = 2;
+			params->channel_list[2] = 3;
+			params->channel_list[3] = 4;
+			params->channel_list[4] = 5;
+			params->channel_list[5] = 6;
+		}
+		else if (nvram_get_int("wlcscan_idx") == 1)
+		{
+			if (wl_channel_valid(wif, 13))
+			{
+				params->channel_num = 7;
+				params->channel_list[0] = 7;
+				params->channel_list[1] = 8;
+				params->channel_list[2] = 9;
+				params->channel_list[3] = 10;
+				params->channel_list[4] = 11;
+				params->channel_list[5] = 12;
+				params->channel_list[6] = 13;
+			}
+			else
+			{
+				params->channel_num = 5;
+				params->channel_list[0] = 7;
+				params->channel_list[1] = 8;
+				params->channel_list[2] = 9;
+				params->channel_list[3] = 10;
+				params->channel_list[4] = 11;
+			}
+		}
+		else
+		{
+			free(params);
+			return retval;
+		}
+	}
+#else
 	params->channel_num = 0;
+#endif
+
+	/* extend scan channel time to get more AP probe resp */
+	wl_ioctl(wif, WLC_GET_SCAN_CHANNEL_TIME, &org_scan_time, sizeof(org_scan_time));
+	if (org_scan_time < scan_time)
+		wl_ioctl(wif, WLC_SET_SCAN_CHANNEL_TIME, &scan_time, sizeof(scan_time));
 
 	while ((ret = wl_ioctl(wif, WLC_SCAN, params, params_size)) < 0 &&
 				count++ < 2){
@@ -1681,25 +1790,28 @@ int wlcscan_core(char *ofile, char *wif)
 
 	free(params);
 
+	/* restore original scan channel time */
+	wl_ioctl(wif, WLC_SET_SCAN_CHANNEL_TIME, &org_scan_time, sizeof(org_scan_time));
+
 	nvram_set("ap_selecting", "1");
-	dbg("[rc] Please wait 4 seconds ");
-	sleep(1);
-	dbg(".");
-	sleep(1);
-	dbg(".");
-	sleep(1);
-	dbg(".");
-	sleep(1);
-	dbg(".\n\n");
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+	wait_time = 2;
+#endif
+	dbg("[rc] Please wait %d seconds ", wait_time);
+	do {
+		sleep(1);
+		dbg(".");
+	} while (--wait_time > 0);
+	dbg("\n\n");
 	nvram_set("ap_selecting", "0");
 
 	if (ret == 0){
 		count = 0;
 
-		result = (wl_scan_results_t *)buf;
-		result->buflen = WLC_IOCTL_MAXLEN - sizeof(result);
+		result = (wl_scan_results_t *)scan_result;
+		result->buflen = htod32(WLC_SCAN_RESULT_BUF_LEN);
 
-		while ((ret = wl_ioctl(wif, WLC_SCAN_RESULTS, result, WLC_IOCTL_MAXLEN)) < 0 && count++ < 2)
+		while ((ret = wl_ioctl(wif, WLC_SCAN_RESULTS, result, WLC_SCAN_RESULT_BUF_LEN)) < 0 && count++ < 2)
 		{
 			dbg("[rc] set scan results command failed, retry %d\n", count);
 			sleep(1);
@@ -1820,7 +1932,6 @@ int wlcscan_core(char *ofile, char *wif)
 #endif
 								NetWorkType = Ndis802_11OFDM5_N;
 						}
-
 						else
 							NetWorkType = Ndis802_11OFDM24_N;
 					}
@@ -1828,6 +1939,9 @@ int wlcscan_core(char *ofile, char *wif)
 					apinfos[ap_count].NetworkType = NetWorkType;
 
 					ap_count++;
+
+					if (ap_count >= MAX_NUMBER_OF_APINFO)
+						break;
 				}
 
 				ie = (struct bss_ie_hdr *) ((unsigned char *) info + sizeof(*info));
@@ -1868,39 +1982,39 @@ next_info:
 	if (ap_count == 0){
 		dbg("[wlc] No AP found!\n");
 	}else{
-		dbg("%-4s%4s%-33s%-18s%-9s%-16s%-9s%8s%3s%3s\n",
+		printf("%-4s%4s%-33s%-18s%-9s%-16s%-9s%8s%3s%3s\n",
 				"idx", "CH ", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode", "CC", "EC");
 		for (k = 0; k < ap_count; k++)
 		{
-			dbg("%2d. ", k + 1);
-			dbg("%3d ", apinfos[k].ctl_ch);
-			dbg("%-33s", apinfos[k].SSID);
-			dbg("%-18s", apinfos[k].BSSID);
+			printf("%2d. ", k + 1);
+			printf("%3d ", apinfos[k].ctl_ch);
+			printf("%-33s", apinfos[k].SSID);
+			printf("%-18s", apinfos[k].BSSID);
 
 			if (apinfos[k].wpa == 1)
-				dbg("%-9s%-16s", wpa_cipher_txt(apinfos[k].wid.pairwise_cipher), wpa_key_mgmt_txt(apinfos[k].wid.key_mgmt, apinfos[k].wid.proto));
+				printf("%-9s%-16s", wpa_cipher_txt(apinfos[k].wid.pairwise_cipher), wpa_key_mgmt_txt(apinfos[k].wid.key_mgmt, apinfos[k].wid.proto));
 			else if (apinfos[k].wep == 1)
-				dbg("WEP      Unknown         ");
+				printf("WEP      Unknown         ");
 			else
-				dbg("NONE     Open System     ");
-			dbg("%9d ", apinfos[k].RSSI_Quality);
+				printf("NONE     Open System     ");
+			printf("%9d ", apinfos[k].RSSI_Quality);
 
 			if (apinfos[k].NetworkType == Ndis802_11FH || apinfos[k].NetworkType == Ndis802_11DS)
-				dbg("%-7s", "11b");
+				printf("%-7s", "11b");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM5)
-				dbg("%-7s", "11a");
+				printf("%-7s", "11a");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM5_VHT)
-				dbg("%-7s", "11ac");
+				printf("%-7s", "11ac");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM5_N)
-				dbg("%-7s", "11a/n");
+				printf("%-7s", "11a/n");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM24)
-				dbg("%-7s", "11b/g");
+				printf("%-7s", "11b/g");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM24_N)
-				dbg("%-7s", "11b/g/n");
+				printf("%-7s", "11b/g/n");
 			else
-				dbg("%-7s", "unknown");
+				printf("%-7s", "unknown");
 
-			dbg("%3d", apinfos[k].ctl_ch);
+			printf("%3d", apinfos[k].ctl_ch);
 
 			if (	((apinfos[k].NetworkType == Ndis802_11OFDM5_VHT) ||
 				 (apinfos[k].NetworkType == Ndis802_11OFDM5_N) ||
@@ -1911,10 +2025,10 @@ next_info:
 				else
 					ht_extcha = 0;
 
-				dbg("%3d", ht_extcha);
+				printf("%3d", ht_extcha);
 			}
 
-			dbg("\n");
+			printf("\n");
 		}
 	}
 
@@ -2421,3 +2535,63 @@ wl_check_chanspec()
 	return ret;
 }
 #endif
+
+int wl_channel_valid(char *wif, int channel)
+{
+	int channels[MAXCHANNEL+1];
+	wl_uint32_list_t *list = (wl_uint32_list_t *) channels;
+	int i;
+
+	memset(channels, 0, sizeof(channels));
+	list->count = htod32(MAXCHANNEL);
+	if (wl_ioctl(wif, WLC_GET_VALID_CHANNELS , channels, sizeof(channels)) < 0)
+	{
+		dbg("error doing WLC_GET_VALID_CHANNELS\n");
+		return 0;
+	}
+
+	if (dtoh32(list->count) == 0)
+		return 0;
+
+	for (i = 0; i < dtoh32(list->count) && i < IW_MAX_FREQUENCIES; i++)
+		if (channel == dtoh32(list->element[i]))
+			return 1;
+
+	return 0;
+}
+
+int wl_subband(char *wif, int idx)
+{
+	int count = 0;
+	int band;
+
+	wl_ioctl(wif, WLC_GET_BAND, &band, sizeof(band));
+	if (band != WLC_BAND_5G)
+		return -1;
+
+	if (wl_channel_valid(wif, 36))
+	{
+		if (++count == idx)
+			return 1;
+	}
+
+	if (wl_channel_valid(wif, 52))
+	{
+		if (++count == idx)
+			return 2;
+	}
+
+	if (wl_channel_valid(wif, 100))
+	{
+		if (++count == idx)
+			return 3;
+	}
+
+	if (wl_channel_valid(wif, 149))
+	{
+		if (++count == idx)
+			return 4;
+	}
+
+	return -1;
+}

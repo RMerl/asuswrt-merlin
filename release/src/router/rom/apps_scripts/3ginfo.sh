@@ -95,4 +95,7 @@ cat /tmp/syslog.log |tail -n 50
 echo ">"
 echo "usblog>"
 cat /tmp/usb.log
+echo ">"
+echo "ps>"
+ps
 

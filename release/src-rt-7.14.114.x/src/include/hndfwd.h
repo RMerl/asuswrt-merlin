@@ -487,7 +487,7 @@ extern int fwder_flood(fwder_t * fwder, struct sk_buff *skb, void * osh,
 /** Fixup a GMAC forwarded packet, by deleting data offset, popping VLAN tag,
  * and stripping the CRC.
  */
-extern void fwder_fixup(fwder_t * fwder, struct sk_buff * skb);
+extern void fwder_fixup(fwder_t * fwder, struct sk_buff * skb, uint32 len);
 
 /** Request a GMAC forwarder to discard a packet. */
 extern void fwder_discard(fwder_t * fwder, struct sk_buff * skb);
@@ -611,8 +611,8 @@ fwder_transmit(struct fwder * fwder, struct sk_buff * skbs, int skb_cnt,
 	({ BCM_REFERENCE(fwder); BCM_REFERENCE(pkt);                               \
 	   BCM_REFERENCE(osh); BCM_REFERENCE(clone); })
 
-#define fwder_fixup(fwder, pkt)                                                \
-	({ BCM_REFERENCE(fwder); BCM_REFERENCE(pkt); })
+#define fwder_fixup(fwder, pkt, len)                                           \
+	({ BCM_REFERENCE(fwder); BCM_REFERENCE(pkt); BCM_REFERENCE(len)})
 
 #define fwder_discard(fwder, pkt)                                              \
 	({ BCM_REFERENCE(fwder); BCM_REFERENCE(pkt); })

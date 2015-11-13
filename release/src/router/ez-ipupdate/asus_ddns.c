@@ -637,6 +637,10 @@ int asus_private(void)
 	else
 	p = nvram_get ("et0macaddr");
 #endif
+#ifdef RTCONFIG_GMAC3
+	if(nvram_match("gmac3_enable", "1"))
+		p = nvram_safe_get ("et2macaddr");
+#endif
 	if (p == NULL)	{
 		PRINT ("ERROR: %s() can not take MAC address from et0macaddr\n");
 		return -1;

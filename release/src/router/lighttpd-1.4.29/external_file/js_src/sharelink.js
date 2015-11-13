@@ -404,7 +404,8 @@ function createThumbView(query_type, parent_url, folder_array, file_array){
 		html += '</td></tr>';
 		
 		html += '<tr><td>';
-		html += '<input type="button" class="btnDownload" value="' + m.getString("func_download") + '">';
+		//- Disable download function while selected the folder before we found the solution to download folder.
+		//html += '<input type="button" class="btnDownload" value="' + m.getString("func_download") + '">';
 		html += '</td></tr>';
 	
 		html += '</tbody>';

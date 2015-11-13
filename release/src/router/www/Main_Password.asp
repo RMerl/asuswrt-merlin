@@ -37,7 +37,7 @@
 	color:#fff;
 }
 .button{
-	background-color: #007AFF;
+	background-color: #279FD9;
 	border: 0px;
 	border-radius: 4px ;
 	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;

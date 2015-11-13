@@ -191,14 +191,16 @@ function ISP_Profile_Selection(isp){
 
 function validForm(){
 	if (!dsl_support){
-        if(document.form.switch_wantag.value == "manual"){
-			if(document.form.switch_wan1tagid.value == "" && document.form.switch_wan2tagid.value != "")
-                document.form.switch_stb_x.value = "3";
-            else if(document.form.switch_wan1tagid.value != "" && document.form.switch_wan2tagid.value == "")
-				document.form.switch_stb_x.value = "4";
-            else if(document.form.switch_wan1tagid.value == "" && document.form.switch_wan2tagid.value == "")
-				document.form.switch_stb_x.value = "0";
-				
+	if(document.form.switch_wantag.value == "manual"){
+		if(document.form.switch_wan1tagid.value == "" && document.form.switch_wan2tagid.value == "")
+			document.form.switch_stb_x.value = "0";
+		else if(document.form.switch_wan1tagid.value == "" && document.form.switch_wan2tagid.value != "")
+			document.form.switch_stb_x.value = "3";
+		else if(document.form.switch_wan1tagid.value != "" && document.form.switch_wan2tagid.value == "")
+			document.form.switch_stb_x.value = "4";
+		else
+			document.form.switch_stb_x.value = "6";
+
             if(document.form.switch_wan0tagid.value.length > 0 && !validator.rangeNull(document.form.switch_wan0tagid, 2, 4094, ""))
                 return false;
                 

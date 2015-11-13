@@ -798,9 +798,11 @@ function submitForm(){
 	document.getElementById("apply_button").style.display = "none";
 	document.getElementById("loadingIcon").style.display = "";
 	document.form.submit();
-	setTimeout(function(){
-		location.href = "/qis_m/QIS_finish.htm";
-	}, 500)
+	if(document.form.sw_mode.value == "1" || document.form.sw_mode.value == "3"){
+		setTimeout(function(){
+			location.href = "/qis_m/QIS_finish.htm";
+		}, 500)
+	}
 }
 
 function timezone_by_preferred_lang(v){
@@ -1551,7 +1553,7 @@ body{
 			<div id="smartcon_desc_button" style="display:table-cell;width:50%;vertical-align:middle;text-align:center;display:none" onclick="smartcon_desc_show();">
 				<div style="font-size:1em;color:#FFF"><#CTL_prev#></div>
 			</div>
-			<div id="btn_next_step" style="display:table-cell;width:100%;height:100%;line-height:50px;;text-align:center;background-color:#007AFF" onclick="submitForm();">
+			<div id="btn_next_step" style="display:table-cell;width:100%;height:100%;line-height:50px;;text-align:center;background-color:#279FD9" onclick="submitForm();">
 				<div style="font-size:1em;color:#FFF;"><#CTL_apply#></div>
 			</div>	
 		</div>

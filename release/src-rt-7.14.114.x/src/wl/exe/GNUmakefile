@@ -2,7 +2,7 @@
 # GNUmakefile for wl/exe
 #
 # Copyright (c) 2000, Broadcom Corp.
-# $Id: GNUmakefile 536165 2015-02-20 21:06:45Z $
+# $Id: GNUmakefile 586720 2015-09-16 07:18:44Z $
 
 WLAN_ComponentsInUse := bcmwifi ppr
 include ../../makefiles/WLAN_Common.mk

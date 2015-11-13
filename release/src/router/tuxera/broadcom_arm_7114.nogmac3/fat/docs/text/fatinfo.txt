@@ -1,0 +1,41 @@
+FATINFO(8)                                                          FATINFO(8)
+
+
+
+NAME
+       fatinfo - dump a file's attributes
+
+SYNOPSIS
+       fatinfo [options] device
+
+DESCRIPTION
+       fatinfo  will dump the boot-sector and volume information of a FAT vol‐
+       ume.
+
+OPTIONS
+       Below is a summary of all the options that fatinfo accepts.  Nearly all
+       options have two equivalent names.  The short name is preceded by - and
+       the long name is preceded by --.  Any single letter options, that don't
+       take  an  argument, can be combined into a single command, e.g.  -fv is
+       equivalent to -f -v.  Long named options  can  be  abbreviated  to  any
+       unique prefix of their name.
+
+       -a, --backup-boot--sector
+              Dump backup-boot-sector (the default is primary boot sector).
+
+       -b, --boot-tor
+              Dump backup-boot-sector (the default is primary boot sector).
+
+BUGS
+       There  are  no  known  problems with fatinfo.  If you find a bug please
+       send an email describing the problem to fat-support@tuxera.com.
+
+AUTHORS
+       fatinfo was written by Sougata Santra, Tuxera Inc.
+
+AVAILABILITY
+       fatinfo is part of the Tuxera FAT package.
+
+
+
+Tuxera TFATprogs 3014.9.11         June 2013                        FATINFO(8)

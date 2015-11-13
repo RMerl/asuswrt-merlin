@@ -51,6 +51,10 @@
 #ifdef CONFIG_MTD_NFLASH
 #include <hndnand.h>
 #endif
+#ifdef BCMCONFMTD
+#include <nand_core.h>
+#include <sbgci.h>
+#endif /* BCMCONFMTD */
 
 extern char __initdata saved_root_name[];
 
@@ -79,7 +83,7 @@ EXPORT_SYMBOL(ctf_attach_fn);
 /* To store real PHYS_OFFSET value */
 unsigned int ddr_phys_offset_va = -1;
 EXPORT_SYMBOL(ddr_phys_offset_va);
-unsigned int ddr_phys_offset2_va = 0xa8000000; /* Default value for NS */
+unsigned int ddr_phys_offset2_va = 0xa8000000;	/* Default value for NS */
 EXPORT_SYMBOL(ddr_phys_offset2_va);
 
 unsigned int coherence_win_sz = SZ_256M;
@@ -120,6 +124,15 @@ static struct clk_lookup board_clk_lookups[] = {
 extern int _memsize;
 
 extern int _chipid;
+
+#ifdef BCMCONFMTD
+#define NAND_ABSENT		0
+#define NAND_PRESENT		1
+
+#define NAND_RETRIES		1000000
+
+static int nand_present;
+#endif /* BCMCONFMTD */
 
 void __init board_map_io(void)
 {
@@ -178,6 +191,106 @@ early_printk("board_init_timer\n");
 	soc_init_timer();
 }
 
+#ifdef BCMCONFMTD
+/* Poll for command completion. Returns zero when complete. */
+static int
+nandcmd_poll(si_t *sih, nandregs_t *nc)
+{
+	osl_t *osh;
+	int i;
+	uint32 pollmask;
+
+	osh = si_osh(sih);
+
+	pollmask = NANDIST_CTRL_READY | NANDIST_FLASH_READY;
+	for (i = 0; i < NAND_RETRIES; i++) {
+		if ((R_REG(osh, &nc->intfc_status) & pollmask) == pollmask) {
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+/* Get nand present flag */
+static bool
+nand_present_reg_check(si_t *sih)
+{
+	uint origidx, intr_val = 0;
+	gciregs_t *gci = NULL;
+	uint32 nand_present_val = 0;
+
+	/* 53573/47189 series */
+	if (sih->ccrev == 54) {
+		gci = (gciregs_t *)si_switch_core(sih, GCI_CORE_ID, &origidx, &intr_val);
+		if (gci) {
+			W_REG(NULL, &gci->gci_indirect_addr, 7);
+			nand_present_val = R_REG(NULL, &gci->gci_chipsts);
+			nand_present_val &= SI_BCM53573_NAND_PRE_MASK;
+		}
+
+		/* Return to original core */
+		si_restore_core(sih, origidx, intr_val);
+
+		if (nand_present_val)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/* To know if nand flash is present or not */
+static int
+nand_present_check(si_t *sih)
+{
+	nandregs_t *nc;
+	osl_t *osh;
+	aidmp_t *ai;
+	uint32 id;
+
+	/* 53573/47189 series */
+	if (sih->ccrev == 54) {
+		if (nand_present_reg_check(sih)) {
+			return NAND_PRESENT;
+		} else {
+			return NAND_ABSENT;
+		}
+	} else if (sih->ccrev == 42) {
+		if ((nc = (nandregs_t *)si_setcore(sih, NS_NAND_CORE_ID, 0)) == NULL) {
+			return NAND_ABSENT;
+		}
+
+		osh = si_osh(sih);
+
+		W_REG(osh, &nc->cmd_start, NANDCMD_FLASH_RESET);
+		if (nandcmd_poll(sih, nc) < 0) {
+			return NAND_ABSENT;
+		}
+
+		W_REG(osh, &nc->cmd_start, NANDCMD_ID_RD);
+		if (nandcmd_poll(sih, nc) < 0) {
+			return NAND_ABSENT;
+		}
+
+		ai = (aidmp_t *)si_wrapperregs(sih);
+
+		/* Toggle as little endian */
+		OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
+
+		id = R_REG(osh, &nc->flash_device_id);
+
+		/* Toggle as big endian */
+		AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
+
+		id = id & 0xff;
+
+		if ((id != 0x00) && (id != 0xff))
+			return NAND_PRESENT;
+	}
+
+	return NAND_ABSENT;
+}
+#endif /* BCMCONFMTD */
+
 static int __init rootfs_mtdblock(void)
 {
 	int bootdev;
@@ -189,6 +302,9 @@ static int __init rootfs_mtdblock(void)
 
 	bootdev = soc_boot_dev((void *)sih);
 	knldev = soc_knl_dev((void *)sih);
+#ifdef BCMCONFMTD
+	nand_present = nand_present_check(sih);
+#endif /* BCMCONFMTD */
 
 	/* NANDBOOT */
 	if (bootdev == SOC_BOOTDEV_NANDFLASH &&
@@ -217,7 +333,8 @@ static int __init rootfs_mtdblock(void)
 	}
 
 #ifdef BCMCONFMTD
-	block++;
+	if (nand_present != NAND_PRESENT)
+		block++;
 #endif
 #ifdef CONFIG_FAILSAFE_UPGRADE
 	if (img_boot && simple_strtol(img_boot, NULL, 10))
@@ -268,16 +385,6 @@ void soc_watchdog(void)
 		si_watchdog_ms(sih, watchdog);
 }
 
-#define CFE_UPDATE 1           // added by Chen-I for mac/regulation update
-
-#ifdef CFE_UPDATE
-void bcm947xx_watchdog_disable(void)
-{
-	watchdog=0;
-	si_watchdog_ms(sih, 0);
-}
-#endif
-
 void __init board_init(void)
 {
 early_printk("board_init\n");
@@ -290,6 +397,8 @@ early_printk("board_init\n");
 
 	board_init_spi();
 
+	printk(KERN_NOTICE "ACP (Accelerator Coherence Port) %s\n",
+		(ACP_WAR_ENAB() || arch_is_coherent()) ? "enabled" : "disabled");
 
 	return;
 }
@@ -655,7 +764,8 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 			/* Reserve for NVRAM */
 			bcm947xx_flash_parts[nparts].size -= ROUNDUP(nvram_space, mtd->erasesize);
 #ifdef BCMCONFMTD
-			bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
+			if (nand_present != NAND_PRESENT)
+				bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
 #endif
 		}
 #else
@@ -666,7 +776,8 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 		bcm947xx_flash_parts[nparts].size -= ROUNDUP(nvram_space, mtd->erasesize);
 
 #ifdef BCMCONFMTD
-		bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
+		if (nand_present != NAND_PRESENT)
+			bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
 #endif
 #endif	/* CONFIG_FAILSAFE_UPGRADE */
 
@@ -721,7 +832,8 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 			bcm947xx_flash_parts[nparts].size -= ROUNDUP(nvram_space, mtd->erasesize);
 
 #ifdef BCMCONFMTD
-			bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
+			if (nand_present != NAND_PRESENT)
+				bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
 #endif
 			bcm947xx_flash_parts[nparts].offset = image_second_offset;
 			knl_size = bcm947xx_flash_parts[nparts].size;
@@ -752,12 +864,14 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 	}
 
 #ifdef BCMCONFMTD
-	/* Setup CONF MTD partition */
-	bcm947xx_flash_parts[nparts].name = "confmtd";
-	bcm947xx_flash_parts[nparts].size = mtd->erasesize * 4;
-	bcm947xx_flash_parts[nparts].offset = offset;
-	offset = bcm947xx_flash_parts[nparts].offset + bcm947xx_flash_parts[nparts].size;
-	nparts++;
+	if (nand_present != NAND_PRESENT) {
+		/* Setup CONF MTD partition */
+		bcm947xx_flash_parts[nparts].name = "confmtd";
+		bcm947xx_flash_parts[nparts].size = mtd->erasesize * 4;
+		bcm947xx_flash_parts[nparts].offset = offset;
+		offset = bcm947xx_flash_parts[nparts].offset + bcm947xx_flash_parts[nparts].size;
+		nparts++;
+	}
 #endif	/* BCMCONFMTD */
 
 	/* Setup nvram MTD partition */
@@ -1022,8 +1136,6 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 		nparts++;
 	}
 #endif
-	printk("ACP (Accelerator Coherence Port) %s(%x)\n",
-		(ACP_WAR_ENAB() || arch_is_coherent()) ? "enabled" : "disabled", coherence_flag);
 
 	return bcm947xx_nflash_parts;
 }

@@ -320,10 +320,10 @@ function validForm(){
 											<td>
 												<select id="NetOption" class="input_option" name="NetOption" onChange="append_value(this);">
 													<option value="-a"><#sockets_all#></option>
-													<option value="-t"><#sockets_TCP#></option>
-													<option value="-u"><#sockets_UDP#></option>
+													<option value="-ta"><#sockets_TCP#></option>
+													<option value="-ua"><#sockets_UDP#></option>
 													<option value="-w"><#sockets_RAW#></option>
-													<option value="-x"><#sockets_UNIX#></option>
+													<option value="-xa"><#sockets_UNIX#></option>
 													<option value="-l"><#sockets_listening#></option>
 													<option value="-r"><#Display_routingtable#></option>
  												</select>	
