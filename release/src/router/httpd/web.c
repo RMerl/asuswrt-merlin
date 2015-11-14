@@ -8391,20 +8391,19 @@ do_jffsupload_cgi(char *url, FILE *stream)
 
 	if (ret == 0)
 	{
-		websApply(stream, "UploadingJFFS.asp");
-#ifdef RTCONFIG_HTTPS
-		if(do_ssl)
-			shutdown(ssl_stream_fd, SHUT_RDWR);
-		else
-#endif
-			shutdown(fileno(stream), SHUT_RDWR);
-
 		if (f_size(JFFS_BACKUP_FILE) > 10) {
 			logmessage("httpd", "Restoring JFFS backup...");
 			system("rm -rf /jffs/*"); /* */
-			system("tar -xf /tmp/backup_jffs.tar -C /jffs");
+			system("/bin/tar -xf /tmp/backup_jffs.tar -C /jffs");
 			unlink(JFFS_BACKUP_FILE);
 			logmessage("httpd", "JFFS restore completed");
+			websApply(stream, "UploadingJFFS.asp");
+#ifdef RTCONFIG_HTTPS
+			if(do_ssl)
+				shutdown(ssl_stream_fd, SHUT_RDWR);
+			else
+#endif
+				shutdown(fileno(stream), SHUT_RDWR);
 		} else {
 			logmessage("httpd", "Error while restoring JFFS backup - no change made");
 		}

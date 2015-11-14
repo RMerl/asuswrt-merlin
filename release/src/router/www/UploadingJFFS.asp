@@ -1,4 +1,4 @@
-<html>
+﻿<html>
 <head>
 <title>ASUS Wireless Router Web Manager</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -9,8 +9,7 @@
 </head>
 <body>
 <script>
-parent.showLoading(3);
-setTimeout("parent.location.reload(true);", 3100);
+	parent.location.reload(true);
 </script>
 </body>
 </html>
