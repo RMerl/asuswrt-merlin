@@ -289,7 +289,7 @@ void do_filefrag(int argc, char *argv[])
 
 	if (argc > optind+1) {
 	print_usage:
-		com_err(0, 0, "Usage: filefrag [-dv] file");
+		com_err(0, 0, "Usage: filefrag [-dvr] file");
 		return;
 	}
 

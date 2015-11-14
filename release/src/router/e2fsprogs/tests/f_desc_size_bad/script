@@ -1,0 +1,17 @@
+if ! test -x $DEBUGFS_EXE; then
+        echo "$test_name: $test_description: skipped"
+	return 0
+fi
+
+DESCRIPTION="bad superblock s_desc_size"
+SKIP_GUNZIP=true
+touch $TMPFILE
+$MKE2FS -F -o Linux -O 64bit,extents -N 32 -b 1024 -g 512 -E desc_size=128 $TMPFILE 2048 > $test_name.log 2>&1
+$DEBUGFS -R "ssv desc_size 129" -w $TMPFILE >> $test_name.log 2>&1
+
+E2FSCK_TIME=200704102100
+export E2FSCK_TIME
+
+. $cmd_dir/run_e2fsck
+
+unset E2FSCK_TIME

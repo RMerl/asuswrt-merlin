@@ -66,6 +66,7 @@ errcode_t ext2fs_image_inode_write(ext2_filsys fs, int fd, int flags)
 	blk64_t		blk;
 	ssize_t		actual;
 	errcode_t	retval;
+	off_t		r;
 
 	buf = malloc(fs->blocksize * BUF_BLOCKS);
 	if (!buf)
@@ -97,7 +98,11 @@ errcode_t ext2fs_image_inode_write(ext2_filsys fs, int fd, int flags)
 					blk++;
 					left--;
 					cp += fs->blocksize;
-					lseek(fd, fs->blocksize, SEEK_CUR);
+					r = lseek(fd, fs->blocksize, SEEK_CUR);
+					if (r < 0) {
+						retval = errno;
+						goto errout;
+					}
 					continue;
 				}
 				/* Find non-zero blocks */
@@ -281,8 +286,8 @@ errcode_t ext2fs_image_bitmap_write(ext2_filsys fs, int fd, int flags)
 	ext2fs_generic_bitmap	bmap;
 	errcode_t		retval;
 	ssize_t			actual;
-	__u32			itr, cnt, size;
-	int			c, total_size;
+	size_t			c;
+	__u64			itr, cnt, size, total_size;
 	char			buf[1024];
 
 	if (flags & IMAGER_FLAG_INODEMAP) {
@@ -303,7 +308,7 @@ errcode_t ext2fs_image_bitmap_write(ext2_filsys fs, int fd, int flags)
 		}
 		bmap = fs->block_map;
 		itr = fs->super->s_first_data_block;
-		cnt = EXT2_BLOCKS_PER_GROUP(fs->super) * fs->group_desc_count;
+		cnt = EXT2_GROUPS_TO_BLOCKS(fs->super, fs->group_desc_count);
 		size = EXT2_BLOCKS_PER_GROUP(fs->super) / 8;
 	}
 	total_size = size * fs->group_desc_count;
@@ -337,9 +342,9 @@ errcode_t ext2fs_image_bitmap_write(ext2_filsys fs, int fd, int flags)
 			if (c > (int) sizeof(buf))
 				c = sizeof(buf);
 			actual = write(fd, buf, c);
-			if (actual == -1)
+			if (actual < 0)
 				return errno;
-			if (actual != c)
+			if ((size_t) actual != c)
 				return EXT2_ET_SHORT_WRITE;
 			size -= c;
 		}
@@ -355,7 +360,7 @@ errcode_t ext2fs_image_bitmap_read(ext2_filsys fs, int fd, int flags)
 {
 	ext2fs_generic_bitmap	bmap;
 	errcode_t		retval;
-	__u32			itr, cnt;
+	__u64			itr, cnt;
 	char			buf[1024];
 	unsigned int		size;
 	ssize_t			actual;
@@ -378,7 +383,7 @@ errcode_t ext2fs_image_bitmap_read(ext2_filsys fs, int fd, int flags)
 		}
 		bmap = fs->block_map;
 		itr = fs->super->s_first_data_block;
-		cnt = EXT2_BLOCKS_PER_GROUP(fs->super) * fs->group_desc_count;
+		cnt = EXT2_GROUPS_TO_BLOCKS(fs->super, fs->group_desc_count);
 		size = EXT2_BLOCKS_PER_GROUP(fs->super) / 8;
 	}
 

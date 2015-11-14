@@ -5,7 +5,7 @@
 datarootdir=@datarootdir@
 AWK=@AWK@
 DIR="${DIR-@datadir@/et}"
-ET_DIR="@ET_DIR@"
+ET_DIR="${ET_DIR-@ET_DIR@}"
 
 if test "$1" = "--build-tree" ; then
     shift;
@@ -51,12 +51,12 @@ if test -f ${BASE}.h && cmp -s ${BASE}.h.$$ ${BASE}.h ; then
     rm -f ${BASE}.h.$$
 else
     mv -f ${BASE}.h.$$ ${BASE}.h
-    chmod -w ${BASE}.h
+    chmod a-w ${BASE}.h
 fi
 $AWK -f "${DIR}/et_c.awk" "outfile=${BASE}.c.$$" "outfn=${BASE}.c" "$ROOT.et"
 if test -f ${BASE}.c && cmp -s ${BASE}.c.$$ ${BASE}.c ; then
     rm -f ${BASE}.c.$$
 else
     mv -f ${BASE}.c.$$ ${BASE}.c
-    chmod -w ${BASE}.c
+    chmod a-w ${BASE}.c
 fi

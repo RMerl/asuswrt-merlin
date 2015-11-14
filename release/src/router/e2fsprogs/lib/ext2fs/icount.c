@@ -181,6 +181,7 @@ errcode_t ext2fs_create_icount_tdb(ext2_filsys fs, char *tdb_dir,
 	errcode_t	retval;
 	char 		*fn, uuid[40];
 	ext2_ino_t	num_inodes;
+	mode_t		save_umask;
 	int		fd;
 
 	retval = alloc_icount(fs, flags,  &icount);
@@ -192,8 +193,14 @@ errcode_t ext2fs_create_icount_tdb(ext2_filsys fs, char *tdb_dir,
 		goto errout;
 	uuid_unparse(fs->super->s_uuid, uuid);
 	sprintf(fn, "%s/%s-icount-XXXXXX", tdb_dir, uuid);
+	icount->tdb_fn = fn;
+	save_umask = umask(077);
 	fd = mkstemp(fn);
-
+	if (fd < 0) {
+		retval = errno;
+		goto errout;
+	}
+	umask(save_umask);
 	/*
 	 * This is an overestimate of the size that we will need; the
 	 * ideal value is the number of used inodes with a count
@@ -204,18 +211,15 @@ errcode_t ext2fs_create_icount_tdb(ext2_filsys fs, char *tdb_dir,
 	 */
 	num_inodes = fs->super->s_inodes_count - fs->super->s_free_inodes_count;
 
-	icount->tdb_fn = fn;
 	icount->tdb = tdb_open(fn, num_inodes, TDB_NOLOCK | TDB_NOSYNC,
 			       O_RDWR | O_CREAT | O_TRUNC, 0600);
-	if (icount->tdb) {
-		close(fd);
-		*ret = icount;
-		return 0;
-	}
-
-	retval = errno;
 	close(fd);
-
+	if (icount->tdb == NULL) {
+		retval = errno;
+		goto errout;
+	}
+	*ret = icount;
+	return 0;
 errout:
 	ext2fs_free_icount(icount);
 	return(retval);

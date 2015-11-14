@@ -29,7 +29,7 @@ dgrp_t ext2fs_group_of_blk2(ext2_filsys fs, blk64_t blk)
 blk64_t ext2fs_group_first_block2(ext2_filsys fs, dgrp_t group)
 {
 	return fs->super->s_first_data_block +
-		((blk64_t)group * fs->super->s_blocks_per_group);
+		EXT2_GROUPS_TO_BLOCKS(fs->super, group);
 }
 
 /*
@@ -187,11 +187,8 @@ struct ext2_group_desc *ext2fs_group_desc(ext2_filsys fs,
 					  struct opaque_ext2_group_desc *gdp,
 					  dgrp_t group)
 {
-	if (fs->super->s_desc_size >= EXT2_MIN_DESC_SIZE_64BIT)
-		return (struct ext2_group_desc *)
-			((struct ext4_group_desc *) gdp + group);
-	else
-		return (struct ext2_group_desc *) gdp + group;
+	return (struct ext2_group_desc *)((char *)gdp +
+					  group * EXT2_DESC_SIZE(fs->super));
 }
 
 /* Do the same but as an ext4 group desc for internal use here */
@@ -494,5 +491,33 @@ void ext2fs_file_acl_block_set(ext2_filsys fs, struct ext2_inode *inode,
 	inode->i_file_acl = blk;
 	if (fs && fs->super->s_feature_incompat & EXT4_FEATURE_INCOMPAT_64BIT)
 		inode->osd2.linux2.l_i_file_acl_high = (__u64) blk >> 32;
+}
+
+/*
+ * Set the size of the inode
+ */
+errcode_t ext2fs_inode_size_set(ext2_filsys fs, struct ext2_inode *inode,
+				ext2_off64_t size)
+{
+	/* Only regular files get to be larger than 4GB */
+	if (!LINUX_S_ISREG(inode->i_mode) && (size >> 32))
+		return EXT2_ET_FILE_TOO_BIG;
+
+	/* If we're writing a large file, set the large_file flag */
+	if (LINUX_S_ISREG(inode->i_mode) &&
+	    ext2fs_needs_large_file_feature(size) &&
+	    (!EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
+					 EXT2_FEATURE_RO_COMPAT_LARGE_FILE) ||
+	     fs->super->s_rev_level == EXT2_GOOD_OLD_REV)) {
+		fs->super->s_feature_ro_compat |=
+					EXT2_FEATURE_RO_COMPAT_LARGE_FILE;
+		ext2fs_update_dynamic_rev(fs);
+		ext2fs_mark_super_dirty(fs);
+	}
+
+	inode->i_size = size & 0xffffffff;
+	inode->i_size_high = (size >> 32);
+
+	return 0;
 }
 

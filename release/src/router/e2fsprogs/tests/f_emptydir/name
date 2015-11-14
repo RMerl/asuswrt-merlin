@@ -1,0 +1,2 @@
+always iterate dir block 0 or e2fsck goes into infinite loop
+

@@ -96,10 +96,10 @@ ec	EXT2_ET_INODE_BITMAP_READ,
 	"Can't read an inode bitmap"
 
 ec	EXT2_ET_BLOCK_BITMAP_WRITE,
-	"Can't write an block bitmap"
+	"Can't write a block bitmap"
 
 ec	EXT2_ET_BLOCK_BITMAP_READ,
-	"Can't read an block bitmap"
+	"Can't read a block bitmap"
 
 ec	EXT2_ET_INODE_TABLE_WRITE,
 	"Can't write an inode table"
@@ -416,7 +416,7 @@ ec	EXT2_ET_EXTENT_INVALID_LENGTH,
 ec	EXT2_ET_IO_CHANNEL_NO_SUPPORT_64,
 	"I/O Channel does not support 64-bit block numbers"
 
-ec	EXT2_NO_MTAB_FILE,
+ec	EXT2_ET_NO_MTAB_FILE,
 	"Can't check if filesystem is mounted due to missing mtab file"
 
 ec	EXT2_ET_CANT_USE_LEGACY_BITMAPS,

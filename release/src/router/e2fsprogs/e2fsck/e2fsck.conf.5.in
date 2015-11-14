@@ -97,9 +97,8 @@ incorrectly set at the time when e2fsck is run.
 Historically this was usually due to some distributions
 having buggy init scripts and/or installers that didn't
 correctly detect this case and take appropriate
-countermeasures.  However, it's still possible, despite the
-best efforts of init script and installer authors to not be
-able to detect this misconfiguration, usually due to a
+countermeasures.  Unfortunately, this is occasionally
+true even today, usually due to a
 buggy or misconfigured virtualization manager or the
 installer not having access to a network time server
 during the installation process.  So by default, we allow

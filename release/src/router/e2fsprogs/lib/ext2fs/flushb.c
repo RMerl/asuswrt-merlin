@@ -70,7 +70,7 @@ errcode_t ext2fs_sync_device(int fd, int flushb)
 #warning BLKFLSBUF not defined
 #endif
 #ifdef FDFLUSH
-		ioctl (fd, FDFLUSH, 0);   /* In case this is a floppy */
+		return ioctl(fd, FDFLUSH, 0);   /* In case this is a floppy */
 #elif defined(__linux__)
 #warning FDFLUSH not defined
 #endif

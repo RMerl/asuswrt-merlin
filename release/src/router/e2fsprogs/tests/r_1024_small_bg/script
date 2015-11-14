@@ -10,13 +10,17 @@ E2FSCK=../e2fsck/e2fsck
 
 . $cmd_dir/scripts/resize_test
 
-if resize_test
-then
+resize_test
+RC=$?
+if [ $RC -eq 0 ]; then
 	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+elif [ $RC -eq 111 ]; then
+	echo "$test_name: $test_description: skipped"
 	touch $test_name.ok
 else
 	echo "$test_name: $test_description: failed"
-	touch $test_name.failed
+	ln $LOG $test_name.failed
 fi
 
 unset FEATURES SIZE_1 SIZE_2 LOG E2FSCK

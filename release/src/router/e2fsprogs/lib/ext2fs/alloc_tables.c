@@ -47,16 +47,17 @@ static blk64_t flexbg_offset(ext2_filsys fs, dgrp_t group, blk64_t start_blk,
 	flexbg = group / flexbg_size;
 	size = rem_grp * elem_size;
 
-	if (size > (int) (fs->super->s_blocks_per_group / 8))
-		size = (int) fs->super->s_blocks_per_group / 8;
+	if (size > (int) (fs->super->s_blocks_per_group / 4))
+		size = (int) fs->super->s_blocks_per_group / 4;
 
 	/*
-	 * Don't do a long search if the previous block
-	 * search is still valid.
+	 * Don't do a long search if the previous block search is still valid,
+	 * but skip minor obstructions such as group descriptor backups.
 	 */
-	if (start_blk && ext2fs_test_block_bitmap_range2(bmap, start_blk,
-							 elem_size))
-		return start_blk;
+	if (start_blk && start_blk < ext2fs_blocks_count(fs->super) &&
+	    ext2fs_get_free_blocks2(fs, start_blk, start_blk + size, elem_size,
+				    bmap, &first_free) == 0)
+		return first_free;
 
 	start_blk = ext2fs_group_first_block2(fs, flexbg_size * flexbg);
 	last_grp = group | (flexbg_size - 1);
@@ -83,11 +84,10 @@ static blk64_t flexbg_offset(ext2_filsys fs, dgrp_t group, blk64_t start_blk,
 errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 				      ext2fs_block_bitmap bmap)
 {
-	unsigned int	j;
 	errcode_t	retval;
-	blk64_t		group_blk, start_blk, last_blk, new_blk, blk;
+	blk64_t		group_blk, start_blk, last_blk, new_blk;
 	dgrp_t		last_grp = 0;
-	int		rem_grps = 0, flexbg_size = 0;
+	int		rem_grps = 0, flexbg_size = 0, table_offset = 0;
 
 	group_blk = ext2fs_group_first_block2(fs, group);
 	last_blk = ext2fs_group_last_block2(fs, group);
@@ -124,8 +124,22 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 	if (flexbg_size) {
 		blk64_t prev_block = 0;
 
+		table_offset = flexbg_size;
 		if (group % flexbg_size)
 			prev_block = ext2fs_block_bitmap_loc(fs, group - 1) + 1;
+		else if (last_grp == fs->group_desc_count-1) {
+			/*
+			 * If we are allocating for the last flex_bg
+			 * keep the metadata tables contiguous
+			 */
+			table_offset = last_grp & (flexbg_size - 1);
+			if (table_offset == 0)
+				table_offset = flexbg_size;
+			else
+				table_offset++;
+		}
+		/* FIXME: Take backup group descriptor blocks into account
+		 * if the flexbg allocations will grow to overlap them... */
 		start_blk = flexbg_offset(fs, group, prev_block, bmap,
 					  rem_grps, 1);
 		last_blk = ext2fs_group_last_block2(fs, last_grp);
@@ -156,7 +170,9 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 			prev_block = ext2fs_inode_bitmap_loc(fs, group - 1) + 1;
 		else
 			prev_block = ext2fs_block_bitmap_loc(fs, group) +
-				flexbg_size;
+				table_offset;
+		/* FIXME: Take backup group descriptor blocks into account
+		 * if the flexbg allocations will grow to overlap them... */
 		start_blk = flexbg_offset(fs, group, prev_block, bmap,
 					  rem_grps, 1);
 		last_blk = ext2fs_group_last_block2(fs, last_grp);
@@ -192,8 +208,10 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 				fs->inode_blocks_per_group;
 		else
 			prev_block = ext2fs_inode_bitmap_loc(fs, group) +
-				flexbg_size;
+				table_offset;
 
+		/* FIXME: Take backup group descriptor blocks into account
+		 * if the flexbg allocations will grow to overlap them... */
 		group_blk = flexbg_offset(fs, group, prev_block, bmap,
 					  rem_grps, fs->inode_blocks_per_group);
 		last_blk = ext2fs_group_last_block2(fs, last_grp);
@@ -205,19 +223,12 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 						bmap, &new_blk);
 		if (retval)
 			return retval;
-		for (j=0, blk = new_blk;
-		     j < fs->inode_blocks_per_group;
-		     j++, blk++) {
-			ext2fs_mark_block_bitmap2(bmap, blk);
-			if (flexbg_size) {
-				dgrp_t gr = ext2fs_group_of_blk2(fs, blk);
-				ext2fs_bg_free_blocks_count_set(fs, gr, ext2fs_bg_free_blocks_count(fs, gr) - 1);
-				ext2fs_free_blocks_count_add(fs->super, -1);
-				ext2fs_bg_flags_clear(fs, gr,
-						     EXT2_BG_BLOCK_UNINIT);
-				ext2fs_group_desc_csum_set(fs, gr);
-			}
-		}
+		if (flexbg_size)
+			ext2fs_block_alloc_stats_range(fs, new_blk,
+				       fs->inode_blocks_per_group, +1);
+		else
+			ext2fs_mark_block_bitmap_range2(fs->block_map,
+					new_blk, fs->inode_blocks_per_group);
 		ext2fs_inode_table_loc_set(fs, group, new_blk);
 	}
 	ext2fs_group_desc_csum_set(fs, group);

@@ -43,12 +43,9 @@ enum parse_mode { WHITESPACE, TOKEN, QUOTED_STRING };
 #define NEW_ARGV(old,n) (char **)realloc((char *)old,\
 					 (unsigned)(n+2)*sizeof(char*))
 
-char **ss_parse (sci_idx, line_ptr, argc_ptr)
-    int sci_idx;
-    register char *line_ptr;
-    int *argc_ptr;
+char **ss_parse(int sci_idx, register char *line_ptr, int *argc_ptr)
 {
-    register char **argv, *cp;
+    register char **argv, **new_argv, *cp;
     register int argc;
     register enum parse_mode parse_mode;
 
@@ -81,7 +78,13 @@ char **ss_parse (sci_idx, line_ptr, argc_ptr)
 		/* go to quoted-string mode */
 		parse_mode = QUOTED_STRING;
 		cp = line_ptr++;
-		argv = NEW_ARGV (argv, argc);
+		new_argv = NEW_ARGV (argv, argc);
+		if (new_argv == NULL) {
+			free(argv);
+			*argc_ptr = 0;
+			return NULL;
+		}
+		argv = new_argv;
 		argv[argc++] = cp;
 		argv[argc] = NULL;
 	    }
@@ -89,7 +92,13 @@ char **ss_parse (sci_idx, line_ptr, argc_ptr)
 		/* random-token mode */
 		parse_mode = TOKEN;
 		cp = line_ptr;
-		argv = NEW_ARGV (argv, argc);
+		new_argv = NEW_ARGV (argv, argc);
+		if (new_argv == NULL) {
+			free(argv);
+			*argc_ptr = 0;
+			return NULL;
+		}
+		argv = new_argv;
 		argv[argc++] = line_ptr;
 		argv[argc] = NULL;
 	    }

@@ -97,32 +97,32 @@ static const char *really_wanted[] = {
 /*
  * Global variables for options
  */
-char *devices[MAX_DEVICES];
-char *args[MAX_ARGS];
-int num_devices, num_args;
+static char *devices[MAX_DEVICES];
+static char *args[MAX_ARGS];
+static int num_devices, num_args;
 
-int verbose = 0;
-int doall = 0;
-int noexecute = 0;
-int serialize = 0;
-int skip_root = 0;
-int ignore_mounted = 0;
-int notitle = 0;
-int parallel_root = 0;
-int progress = 0;
-int progress_fd = 0;
-int force_all_parallel = 0;
-int num_running = 0;
-int max_running = 0;
-volatile int cancel_requested = 0;
-int kill_sent = 0;
-char *progname;
-char *fstype = NULL;
-struct fs_info *filesys_info = NULL, *filesys_last = NULL;
-struct fsck_instance *instance_list;
-const char *fsck_prefix_path = "/sbin:/sbin/fs.d:/sbin/fs:/etc/fs:/etc";
-char *fsck_path = 0;
-blkid_cache cache = NULL;
+static int verbose = 0;
+static int doall = 0;
+static int noexecute = 0;
+static int serialize = 0;
+static int skip_root = 0;
+static int ignore_mounted = 0;
+static int notitle = 0;
+static int parallel_root = 0;
+static int progress = 0;
+static int progress_fd = 0;
+static int force_all_parallel = 0;
+static int num_running = 0;
+static int max_running = 0;
+static volatile int cancel_requested = 0;
+static int kill_sent = 0;
+static char *progname;
+static char *fstype = NULL;
+static struct fs_info *filesys_info = NULL, *filesys_last = NULL;
+static struct fsck_instance *instance_list;
+static const char *fsck_prefix_path = "/sbin:/sbin/fs.d:/sbin/fs:/etc/fs:/etc";
+static char *fsck_path = 0;
+static blkid_cache cache = NULL;
 
 static char *string_copy(const char *s)
 {
@@ -728,7 +728,7 @@ static void fsck_device(struct fs_info *fs, int interactive)
 /*
  * Deal with the fsck -t argument.
  */
-struct fs_type_compile {
+static struct fs_type_compile {
 	char **list;
 	int *type;
 	int  negate;

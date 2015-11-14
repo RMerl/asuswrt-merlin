@@ -133,7 +133,7 @@ int main (int argc, char *argv[])
 	}
 
 
-	ext2fs_close(fs);
+	ext2fs_close_free(&fs);
 
 	print_resource_track(&global_rtrack);
 

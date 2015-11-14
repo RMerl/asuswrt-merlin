@@ -159,7 +159,7 @@ struct ext2_group_desc
 	__u16	bg_block_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+bitmap) LSB */
 	__u16	bg_inode_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+bitmap) LSB */
 	__u16	bg_itable_unused;	/* Unused inodes count */
-	__u16	bg_checksum;		/* crc16(s_uuid+grouo_num+group_desc)*/
+	__u16	bg_checksum;		/* crc16(s_uuid+group_num+group_desc)*/
 };
 
 /*
@@ -263,6 +263,11 @@ struct ext2_dx_countlimit {
 #else
 #define EXT2_DESC_PER_BLOCK(s)		(EXT2_BLOCK_SIZE(s) / EXT2_DESC_SIZE(s))
 #endif
+
+#define EXT2_GROUPS_TO_BLOCKS(s, g)   ((blk64_t) EXT2_BLOCKS_PER_GROUP(s) * \
+				       (g))
+#define EXT2_GROUPS_TO_CLUSTERS(s, g) ((blk64_t) EXT2_CLUSTERS_PER_GROUP(s) * \
+				       (g))
 
 /*
  * Constants relative to the data blocks
@@ -645,7 +650,8 @@ struct ext2_super_block {
 	__u32	s_usr_quota_inum;	/* inode number of user quota file */
 	__u32	s_grp_quota_inum;	/* inode number of group quota file */
 	__u32	s_overhead_blocks;	/* overhead blocks/clusters in fs */
-	__u32   s_reserved[108];        /* Padding to the end of the block */
+	__u32	s_backup_bgs[2];	/* If sparse_super2 enabled */
+	__u32   s_reserved[106];        /* Padding to the end of the block */
 	__u32	s_checksum;		/* crc32c(superblock) */
 };
 
@@ -696,6 +702,7 @@ struct ext2_super_block {
 #define EXT2_FEATURE_COMPAT_LAZY_BG		0x0040
 /* #define EXT2_FEATURE_COMPAT_EXCLUDE_INODE	0x0080 not used, legacy */
 #define EXT2_FEATURE_COMPAT_EXCLUDE_BITMAP	0x0100
+#define EXT4_FEATURE_COMPAT_SPARSE_SUPER2	0x0200
 
 
 #define EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER	0x0001

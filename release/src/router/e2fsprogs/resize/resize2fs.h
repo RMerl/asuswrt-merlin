@@ -77,6 +77,7 @@ typedef struct ext2_sim_progress *ext2_sim_progmeter;
 #define RESIZE_DEBUG_INODEMAP		0x0004
 #define RESIZE_DEBUG_ITABLEMOVE		0x0008
 #define RESIZE_DEBUG_RTRACK		0x0010
+#define RESIZE_DEBUG_MIN_CALC		0x0020
 
 #define RESIZE_PERCENT_COMPLETE		0x0100
 #define RESIZE_VERBOSE			0x0200
@@ -145,7 +146,7 @@ extern errcode_t resize_fs(ext2_filsys fs, blk64_t *new_size, int flags,
 extern errcode_t adjust_fs_info(ext2_filsys fs, ext2_filsys old_fs,
 				ext2fs_block_bitmap reserve_blocks,
 				blk64_t new_size);
-extern blk64_t calculate_minimum_resize_size(ext2_filsys fs);
+extern blk64_t calculate_minimum_resize_size(ext2_filsys fs, int flags);
 
 
 /* extent.c */
@@ -158,6 +159,9 @@ extern __u64 ext2fs_extent_translate(ext2_extent extent, __u64 old_loc);
 extern void ext2fs_extent_dump(ext2_extent extent, FILE *out);
 extern errcode_t ext2fs_iterate_extent(ext2_extent extent, __u64 *old_loc,
 				       __u64 *new_loc, __u64 *size);
+
+/* main.c */
+extern char *program_name;
 
 /* online.c */
 extern errcode_t online_resize_fs(ext2_filsys fs, const char *mtpt,

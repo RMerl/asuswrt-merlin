@@ -18,3 +18,5 @@ $prefix			@prefix@
 # Enable the documentation for the journal device mke2fs, tune2fs, and
 # e2fsck's man page
 JDEV			
+# Enable documentation for quota feature in mke2fs
+QUOTA_MAN_COMMENT	@QUOTA_MAN_COMMENT@

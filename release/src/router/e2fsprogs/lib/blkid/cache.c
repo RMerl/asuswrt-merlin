@@ -11,9 +11,6 @@
  */
 
 #include "config.h"
-#if HAVE_SECURE_GETENV
-#define _GNU_SOURCE
-#endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -167,8 +164,6 @@ void blkid_gc_cache(blkid_cache cache)
 
 	list_for_each_safe(p, pnext, &cache->bic_devs) {
 		blkid_dev dev = list_entry(p, struct blkid_struct_dev, bid_devs);
-		if (!p)
-			break;
 		if (stat(dev->bid_name, &st) < 0) {
 			DBG(DEBUG_CACHE,
 			    printf("freeing %s\n", dev->bid_name));

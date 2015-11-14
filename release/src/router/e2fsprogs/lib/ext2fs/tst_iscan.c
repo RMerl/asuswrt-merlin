@@ -26,7 +26,7 @@
 #include "ext2_fs.h"
 #include "ext2fs.h"
 
-blk_t test_vec[] = { 8, 12, 24, 34, 43, 44, 100, 0 };
+blk64_t test_vec[] = { 8, 12, 24, 34, 43, 44, 100, 0 };
 
 ext2_filsys	test_fs;
 ext2fs_block_bitmap bad_block_map, touched_map;
@@ -182,7 +182,7 @@ static void check_map(void)
 
 	for (i=0; test_vec[i]; i++) {
 		if (ext2fs_test_block_bitmap2(touched_map, test_vec[i])) {
-			printf("Bad block was touched --- %u\n", test_vec[i]);
+			printf("Bad block was touched --- %llu\n", test_vec[i]);
 			failed++;
 			first_no_comma = 1;
 		}

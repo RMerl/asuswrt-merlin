@@ -31,6 +31,19 @@ static unsigned int list_backups(ext2_filsys fs, unsigned int *three,
 	int mult = 3;
 	unsigned int ret;
 
+	if (fs->super->s_feature_compat & EXT4_FEATURE_COMPAT_SPARSE_SUPER2) {
+		if (*min == 1) {
+			*min += 1;
+			if (fs->super->s_backup_bgs[0])
+				return fs->super->s_backup_bgs[0];
+		}
+		if (*min == 2) {
+			*min += 1;
+			if (fs->super->s_backup_bgs[1])
+				return fs->super->s_backup_bgs[1];
+		}
+		return fs->group_desc_count;
+	}
 	if (!(fs->super->s_feature_ro_compat &
 	      EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER)) {
 		ret = *min;
@@ -120,12 +133,9 @@ errcode_t ext2fs_create_resize_inode(ext2_filsys fs)
 		dindir_dirty = inode_dirty = 1;
 		inode_size = apb*apb + apb + EXT2_NDIR_BLOCKS;
 		inode_size *= fs->blocksize;
-		inode.i_size = inode_size & 0xFFFFFFFF;
-		inode.i_size_high = (inode_size >> 32) & 0xFFFFFFFF;
-		if(inode.i_size_high) {
-			sb->s_feature_ro_compat |=
-				EXT2_FEATURE_RO_COMPAT_LARGE_FILE;
-		}
+		retval = ext2fs_inode_size_set(fs, &inode, inode_size);
+		if (retval)
+			goto out_free;
 		inode.i_ctime = fs->now ? fs->now : time(0);
 	}
 

@@ -24,11 +24,11 @@
 #include "ext2fs/ext2fs.h"
 #include "nls-enable.h"
 
-unsigned char mtime_key[] = "filesystem MTIME";
-unsigned char uuid_key[] = "filesystem UUID";
-unsigned char blksize_key[] = "filesystem BLKSIZE";
+static unsigned char mtime_key[] = "filesystem MTIME";
+static unsigned char uuid_key[] = "filesystem UUID";
+static unsigned char blksize_key[] = "filesystem BLKSIZE";
 
-char *prg_name;
+static char *prg_name;
 
 static void usage(void)
 {
@@ -48,8 +48,8 @@ static int check_filesystem(TDB_CONTEXT *tdb, io_channel channel)
 	io_channel_set_blksize(channel, SUPERBLOCK_OFFSET);
 	retval = io_channel_read_blk64(channel, 1, -SUPERBLOCK_SIZE, &super);
 	if (retval) {
-		com_err(prg_name,
-			retval, _("Failed to read the file system data \n"));
+		com_err(prg_name, retval,
+			"%s", _("Failed to read the file system data \n"));
 		return retval;
 	}
 
@@ -85,7 +85,7 @@ static int check_filesystem(TDB_CONTEXT *tdb, io_channel channel)
 	}
 	memcpy(s_uuid, tdb_data.dptr, sizeof(s_uuid));
 	if (memcmp(s_uuid, super.s_uuid, sizeof(s_uuid))) {
-		com_err(prg_name, 0,
+		com_err(prg_name, 0, "%s",
 			_("The file system UUID didn't match \n"));
 		return -1;
 	}
@@ -172,8 +172,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (mount_flags & EXT2_MF_MOUNTED) {
-		com_err(prg_name, retval, _("e2undo should only be run on "
-				"unmounted file system\n"));
+		com_err(prg_name, retval, "%s", _("e2undo should only be run "
+						"on unmounted file system\n"));
 		exit(1);
 	}
 

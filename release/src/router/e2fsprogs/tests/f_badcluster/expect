@@ -1,0 +1,198 @@
+Pass 1: Checking inodes, blocks, and sizes
+Inode 12 logical block 2 (physical block 1154) violates cluster allocation rules.
+Will fix in pass 1B.
+Inode 12, i_blocks is 32, should be 64.  Fix? yes
+
+Inode 16 logical block 5 (physical block 1173) violates cluster allocation rules.
+Will fix in pass 1B.
+Inode 16, i_size is 3072, should be 6144.  Fix? yes
+
+Inode 16, i_blocks is 32, should be 64.  Fix? yes
+
+Inode 17 logical block 0 (physical block 1186) violates cluster allocation rules.
+Will fix in pass 1B.
+Inode 17 logical block 2 (physical block 1184) violates cluster allocation rules.
+Will fix in pass 1B.
+Inode 17, i_blocks is 32, should be 64.  Fix? yes
+
+Inode 18 logical block 3 (physical block 1201) violates cluster allocation rules.
+Will fix in pass 1B.
+Inode 18, i_blocks is 32, should be 64.  Fix? yes
+
+
+Running additional passes to resolve blocks claimed by more than one inode...
+Pass 1B: Rescanning for multiply-claimed blocks
+Multiply-claimed block(s) in inode 12: 1154
+Multiply-claimed block(s) in inode 13: 1152 1153 1154
+Multiply-claimed block(s) in inode 14: 1648 1649 1650
+Multiply-claimed block(s) in inode 15: 1650
+Multiply-claimed block(s) in inode 16: 1173
+Multiply-claimed block(s) in inode 17: 1186 1185 1184
+Multiply-claimed block(s) in inode 18: 1201
+Pass 1C: Scanning directories for inodes with multiply-claimed blocks
+Pass 1D: Reconciling multiply-claimed blocks
+(There are 7 inodes containing multiply-claimed blocks.)
+
+File /a (inode #12, mod time Tue Jun 17 08:00:50 2014) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/b (inode #13, mod time Tue Jun 17 08:00:50 2014)
+Clone multiply-claimed blocks? yes
+
+File /b (inode #13, mod time Tue Jun 17 08:00:50 2014) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/a (inode #12, mod time Tue Jun 17 08:00:50 2014)
+Multiply-claimed blocks already reassigned or cloned.
+
+File /c (inode #14, mod time Tue Jun 17 08:00:50 2014) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/d (inode #15, mod time Tue Jun 17 08:00:50 2014)
+Clone multiply-claimed blocks? yes
+
+File /d (inode #15, mod time Tue Jun 17 08:00:50 2014) 
+  has 1 multiply-claimed block(s), shared with 1 file(s):
+	/c (inode #14, mod time Tue Jun 17 08:00:50 2014)
+Multiply-claimed blocks already reassigned or cloned.
+
+File /e (inode #16, mod time Tue Jun 17 08:00:50 2014) 
+  has 1 multiply-claimed block(s), shared with 0 file(s):
+Clone multiply-claimed blocks? yes
+
+File /f (inode #17, mod time Tue Jun 17 08:00:50 2014) 
+  has 1 multiply-claimed block(s), shared with 0 file(s):
+Clone multiply-claimed blocks? yes
+
+File /g (inode #18, mod time Tue Jun 17 08:00:50 2014) 
+  has 1 multiply-claimed block(s), shared with 0 file(s):
+Clone multiply-claimed blocks? yes
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong for group #0 (50, counted=47).
+Fix? yes
+
+Free blocks count wrong (800, counted=752).
+Fix? yes
+
+
+test_fs: ***** FILE SYSTEM WAS MODIFIED *****
+test_fs: 18/128 files (22.2% non-contiguous), 1296/2048 blocks
+Pass 1: Checking inodes, blocks, and sizes
+Inode 12, i_blocks is 64, should be 32.  Fix? yes
+
+Inode 16, i_blocks is 64, should be 32.  Fix? yes
+
+Inode 17, i_blocks is 64, should be 32.  Fix? yes
+
+Inode 18, i_blocks is 64, should be 32.  Fix? yes
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  -(1168--1200)
+Fix? yes
+
+Free blocks count wrong for group #0 (47, counted=50).
+Fix? yes
+
+Free blocks count wrong (752, counted=800).
+Fix? yes
+
+
+test_fs: ***** FILE SYSTEM WAS MODIFIED *****
+test_fs: 18/128 files (5.6% non-contiguous), 1248/2048 blocks
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_fs: 18/128 files (5.6% non-contiguous), 1248/2048 blocks
+debugfs: stat /a
+Inode: 12   Type: regular    Mode:  0644   Flags: 0x80000
+Generation: 1117152157    Version: 0x00000001
+User:     0   Group:     0   Size: 3072
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 32
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+atime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+mtime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+EXTENTS:
+(0-1):1136-1137, (2):1138
+debugfs: stat /b
+Inode: 13   Type: regular    Mode:  0644   Flags: 0x80000
+Generation: 1117152158    Version: 0x00000001
+User:     0   Group:     0   Size: 3072
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 32
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+atime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+mtime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+EXTENTS:
+(0-2):1152-1154
+debugfs: stat /c
+Inode: 14   Type: regular    Mode:  0644   Flags: 0x80000
+Generation: 1117152159    Version: 0x00000001
+User:     0   Group:     0   Size: 3072
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 32
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+atime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+mtime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+EXTENTS:
+(0-1):1216-1217, (2):1218
+debugfs: stat /d
+Inode: 15   Type: regular    Mode:  0644   Flags: 0x0
+Generation: 1117152160    Version: 0x00000001
+User:     0   Group:     0   Size: 3072
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 32
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+atime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+mtime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+BLOCKS:
+(TIND):1650
+TOTAL: 1
+
+debugfs: stat /e
+Inode: 16   Type: regular    Mode:  0644   Flags: 0x80000
+Generation: 1117152161    Version: 0x00000001
+User:     0   Group:     0   Size: 6144
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 32
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+atime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+mtime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+EXTENTS:
+(0-2):1664-1666, (5):1669
+debugfs: stat /f
+Inode: 17   Type: regular    Mode:  0644   Flags: 0x80000
+Generation: 1117152162    Version: 0x00000001
+User:     0   Group:     0   Size: 3072
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 32
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+atime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+mtime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+EXTENTS:
+(0):1232, (1):1233, (2):1234
+debugfs: stat /g
+Inode: 18   Type: regular    Mode:  0644   Flags: 0x80000
+Generation: 1117152163    Version: 0x00000001
+User:     0   Group:     0   Size: 3072
+File ACL: 0    Directory ACL: 0
+Links: 1   Blockcount: 32
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+atime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+mtime: 0x539ff5b2 -- Tue Jun 17 08:00:50 2014
+EXTENTS:
+(0-2):1680-1682, (3):1683
+debugfs: quit

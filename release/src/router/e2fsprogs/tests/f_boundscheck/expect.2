@@ -1,0 +1,25 @@
+ext2fs_check_desc: Corrupt group descriptor: bad block for inode table
+../e2fsck/e2fsck: Group descriptors look bad... trying backup blocks...
+../e2fsck/e2fsck: Bad magic number in super-block while using the backup blocks../e2fsck/e2fsck: going back to original superblock
+Note: if several inode or block bitmap blocks or part
+of the inode table require relocation, you may wish to try
+running e2fsck with the '-b 8193' option first.  The problem
+may lie only with the primary block group descriptors, and
+the backup block group descriptors may be OK.
+
+Inode table for group 1 is not in group.  (block 4294967295)
+WARNING: SEVERE DATA LOSS POSSIBLE.
+Relocate? yes
+
+One or more block group descriptor checksums are invalid.  Fix? yes
+
+Group descriptor 1 checksum is 0x6ea2, should be 0x7edd.  FIXED.
+Pass 1: Checking inodes, blocks, and sizes
+Error allocating 256 contiguous block(s) in block group 1 for inode table: Could not allocate block in ext2 filesystem
+e2fsck: aborted
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+
+test_filesys: ********** WARNING: Filesystem still has errors **********
+
+Exit status is 0

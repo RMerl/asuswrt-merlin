@@ -1,17 +1,3 @@
-all:: $(LIBRARY)_chk.a
-
-real-subdirs:: Makefile
-	$(E) "	MKDIR checker"
-	$(Q) mkdir -p checker
-
-clean::
-	$(RM) -rf checker
-
-$(LIBRARY)_chk.a: $(OBJS)
-	$(E) "	GEN_CHECKER_LIB $@"
-	$(Q) (test -r $@ && $(RM) -f $@.bak && $(MV) $@ $@.bak)
-	$(Q) (cd checker; $(ARGEN) $@ $(OBJS))
-	-$(Q) $(RANLIB) $@
-	$(Q) $(RM) -f ../$@
-	$(Q) (cd .. ; $(LN) $(LINK_BUILD_FLAGS) \
-	     `echo $(my_dir) | sed -e 's;lib/;;'`/$@ $@)
+# This is a placeholder so builds don't break after a "git pull"
+# which removed the checker infrastructure.  This file can be deleted
+# after e2fsprogs 1.44 is released

@@ -34,8 +34,8 @@ MK_CMDS=_SS_DIR_OVERRIDE=. ./mk_cmds
 .c.o:
 	$(E) "	CC $<"
 	$(Q) $(CC) $(ALL_CFLAGS) -c $<
+	$(Q) $(CHECK_CMD) $(ALL_CFLAGS) $<
 @PROFILE_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -g -pg -o profiled/$*.o -c $<
-@CHECKER_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -checker -g -o checker/$*.o -c $<
 @ELF_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -DSHARED_ELF_LIB -fPIC -o elfshared/$*.o -c $<
 @BSDLIB_CMT@	$(Q) $(CC) $(ALL_CFLAGS) $(BSDLIB_PIC_FLAG) -o pic/$*.o -c $<
 
@@ -62,7 +62,6 @@ all:: mk_cmds
 @MAKEFILE_ELF@
 @MAKEFILE_BSDLIB@
 @MAKEFILE_PROFILE@
-@MAKEFILE_CHECKER@
 
 CODE= $(SRCS) $(MKCMDSFILES)
 
@@ -127,7 +126,7 @@ installdirs::
 	$(E) "	MKINSTALLDIRS $(libdir) $(includedir)/ss $(datadir)/ss $(bindir)"
 	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(libdir) \
 		$(DESTDIR)$(includedir)/ss $(DESTDIR)$(datadir)/ss \
-		$(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/pkgconfig
+		$(DESTDIR)$(bindir) $(DESTDIR)$(pkgconfigdir)
 
 install:: libss.a $(INSTALL_HFILES) installdirs ss_err.h mk_cmds ss.pc
 	$(E) "	INSTALL_DATA $(DESTDIR)$(libdir)/libss.a"
@@ -149,23 +148,23 @@ install:: libss.a $(INSTALL_HFILES) installdirs ss_err.h mk_cmds ss.pc
 	$(Q) $(INSTALL) mk_cmds $(DESTDIR)$(bindir)/mk_cmds
 	$(E) "	INSTALL_DATA $(man1dir)/mk_cmds.1"
 	$(Q) $(INSTALL_DATA) $(srcdir)/mk_cmds.1 $(DESTDIR)$(man1dir)/mk_cmds.1
-	$(E) "	INSTALL_DATA $(libdir)/pkgconfig/ss.pc"
-	$(Q) $(INSTALL_DATA) ss.pc $(DESTDIR)$(libdir)/pkgconfig/ss.pc
+	$(E) "	INSTALL_DATA $(pkgconfigdir)/ss.pc"
+	$(Q) $(INSTALL_DATA) ss.pc $(DESTDIR)$(pkgconfigdir)/ss.pc
 
 uninstall::
 	$(RM) -f $(DESTDIR)$(libdir)/libss.a $(DESTDIR)$(bindir)/mk_cmds \
-		$(DESTDIR)$(libdir)/pkgconfig/ss.pc \
+		$(DESTDIR)$(pkgconfigdir)/ss.pc \
 		$(DESTDIR)$(man1dir)/mk_cmds.1 
 	$(RM) -rf $(DESTDIR)$(includedir)/ss $(DESTDIR)$(datadir)/ss
 
 test_ss: test_ss.o test_cmd.o $(DEPLIBSS) $(DEPLIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o $@ test_ss.o test_cmd.o $(ALL_CFLAGS) \
-		$(LIBSS) $(LIBCOM_ERR)
+	$(Q) $(CC) -o $@ test_ss.o test_cmd.o $(ALL_CFLAGS) $(ALL_LDFLAGS) \
+		$(LIBSS) $(LIBCOM_ERR) $(SYSLIBS)
 
 check:: all test_ss
 	$(E) "	RUN TEST test_ss"
-	-@(LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./test_ss -f $(srcdir)/test_script > test_out 2>&1; exit 0)
+	-@($(TESTENV) ./test_ss -f $(srcdir)/test_script > test_out 2>&1; exit 0)
 	$(Q) if diff test_out $(srcdir)/test_script_expected > test.diff; then \
 		true ; else echo "Regression test for ss library failed!"; exit 1 ; fi
 

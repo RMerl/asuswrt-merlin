@@ -4,6 +4,7 @@ VPATH = @srcdir@
 top_builddir = ../..
 my_dir = lib/ext2fs
 INSTALL = @INSTALL@
+DEPEND_CFLAGS = -I$(top_srcdir)/debugfs
 
 @MCONFIG@
 
@@ -14,6 +15,29 @@ MK_CMDS=	_SS_DIR_OVERRIDE=../ss ../ss/mk_cmds
 @RESIZER_CMT@RESIZE_LIB_OBJS = dupfs.o
 @TEST_IO_CMT@TEST_IO_LIB_OBJS = test_io.o
 @IMAGER_CMT@E2IMAGE_LIB_OBJS = imager.o
+
+DEBUG_OBJS= debug_cmds.o extent_cmds.o tst_cmds.o debugfs.o util.o \
+	ncheck.o icheck.o ls.o lsdel.o dump.o set_fields.o logdump.o \
+	htree.o unused.o e2freefrag.o filefrag.o extent_inode.o zap.o \
+	quota.o tst_libext2fs.o
+
+DEBUG_SRCS= debug_cmds.c extent_cmds.c tst_cmds.c \
+	$(top_srcdir)/debugfs/debugfs.c \
+	$(top_srcdir)/debugfs/util.c \
+	$(top_srcdir)/debugfs/ncheck.c \
+	$(top_srcdir)/debugfs/icheck.c \
+	$(top_srcdir)/debugfs/ls.c \
+	$(top_srcdir)/debugfs/lsdel.c \
+	$(top_srcdir)/debugfs/dump.c \
+	$(top_srcdir)/debugfs/set_fields.c \
+	$(top_srcdir)/debugfs/logdump.c \
+	$(top_srcdir)/debugfs/htree.c \
+	$(top_srcdir)/debugfs/unused.c \
+	$(top_srcdir)/debugfs/filefrag.c \
+	$(top_srcdir)/debugfs/extent_inode.c \
+	$(top_srcdir)/debugfs/zap.c \
+	$(top_srcdir)/debugfs/quota.c \
+	$(top_srcdir)/misc/e2freefrag.c
 
 OBJS= $(DEBUGFS_LIB_OBJS) $(RESIZE_LIB_OBJS) $(E2IMAGE_LIB_OBJS) \
 	$(TEST_IO_LIB_OBJS) \
@@ -169,6 +193,8 @@ SRCS= ext2_err.c \
 	$(srcdir)/version.c \
 	$(srcdir)/write_bb_file.c \
 	$(srcdir)/rbtree.c \
+	$(srcdir)/tst_libext2fs.c \
+	$(DEBUG_SRCS)
 
 HFILES= bitops.h ext2fs.h ext2_io.h ext2_fs.h ext2_ext_attr.h ext3_extents.h \
 	tdb.h qcow2.h
@@ -193,15 +219,14 @@ BSDLIB_INSTALL_DIR = $(root_libdir)
 @MAKEFILE_ELF@
 @MAKEFILE_BSDLIB@
 @MAKEFILE_PROFILE@
-@MAKEFILE_CHECKER@
 
 all:: ext2fs.pc
 
 .c.o:
 	$(E) "	CC $<"
 	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
+	$(Q) $(CHECK_CMD) $(ALL_CFLAGS) $<
 @PROFILE_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -g -pg -o profiled/$*.o -c $<
-@CHECKER_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -checker -g -o checker/$*.o -c $<
 @ELF_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -fPIC -o elfshared/$*.o -c $<
 @BSDLIB_CMT@	$(Q) $(CC) $(ALL_CFLAGS) $(BSDLIB_PIC_FLAG) -o pic/$*.o -c $<
 
@@ -223,77 +248,78 @@ ext2fs.pc: $(srcdir)/ext2fs.pc.in $(top_builddir)/config.status
 
 tst_badblocks: tst_badblocks.o $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_badblocks tst_badblocks.o $(STATIC_LIBEXT2FS) \
-		$(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_badblocks tst_badblocks.o $(ALL_LDFLAGS) \
+		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_icount: $(srcdir)/icount.c $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_icount $(srcdir)/icount.c -DDEBUG $(ALL_CFLAGS) \
-		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_icount $(srcdir)/icount.c -DDEBUG \
+		$(ALL_CFLAGS) $(ALL_LDFLAGS) \
+		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_iscan: tst_iscan.o $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_iscan tst_iscan.o $(STATIC_LIBEXT2FS) \
-		$(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_iscan tst_iscan.o $(ALL_LDFLAGS) \
+		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_getsize: tst_getsize.o $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_getsize tst_getsize.o $(STATIC_LIBEXT2FS) \
-		$(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_getsize tst_getsize.o $(ALL_LDFLAGS) \
+		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_ismounted: $(srcdir)/ismounted.c $(STATIC_LIBEXT2FS) \
 		$(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
 	$(Q) $(CC) -o tst_ismounted $(srcdir)/ismounted.c \
-		$(STATIC_LIBEXT2FS) -DDEBUG $(ALL_CFLAGS) \
-		$(STATIC_LIBCOM_ERR)
+		$(STATIC_LIBEXT2FS) -DDEBUG $(ALL_CFLAGS) $(ALL_LDFLAGS) \
+		$(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_byteswap: tst_byteswap.o $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_byteswap tst_byteswap.o $(STATIC_LIBEXT2FS) \
-		$(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_byteswap tst_byteswap.o $(ALL_LDFLAGS) \
+		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_bitops: tst_bitops.o $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_bitops tst_bitops.o $(ALL_CFLAGS) \
-		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_bitops tst_bitops.o $(ALL_CFLAGS) $(ALL_LDFLAGS) \
+		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_getsectsize: tst_getsectsize.o $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_sectgetsize tst_getsectsize.o \
-		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_sectgetsize tst_getsectsize.o $(ALL_LDFLAGS) \
+		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_types.o: $(srcdir)/tst_types.c ext2_types.h 
 
 tst_types: tst_types.o ext2_types.h 
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_types tst_types.o 
+	$(Q) $(CC) -o tst_types tst_types.o $(ALL_LDFLAGS) $(SYSLIBS)
 
 tst_super_size.o: $(srcdir)/tst_super_size.c $(srcdir)/ext2_fs.h
 
 tst_super_size: tst_super_size.o
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_super_size tst_super_size.o 
+	$(Q) $(CC) -o tst_super_size tst_super_size.o $(ALL_LDFLAGS) $(SYSLIBS)
 
 tst_fs_struct.o: $(srcdir)/tst_fs_struct.c $(srcdir)/ext2fs.h
 
 tst_fs_struct: tst_fs_struct.o
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_fs_struct tst_fs_struct.o 
+	$(Q) $(CC) -o tst_fs_struct tst_fs_struct.o $(ALL_LDFLAGS) $(SYSLIBS)
 
 tst_inode_size.o: $(srcdir)/tst_inode_size.c $(srcdir)/ext2_fs.h
 
 tst_inode_size: tst_inode_size.o
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_inode_size tst_inode_size.o 
+	$(Q) $(CC) -o tst_inode_size tst_inode_size.o $(ALL_LDFLAGS) $(SYSLIBS)
 
 ext2_tdbtool: tdbtool.o
 	$(E) "	LD $@"
-	$(Q) $(CC) -o ext2_tdbtool tdbtool.o tdb.o
+	$(Q) $(CC) -o ext2_tdbtool tdbtool.o tdb.o $(ALL_LDFLAGS) $(SYSLIBS)
 
-extent_dbg.c: $(srcdir)/extent_dbg.ct
-	$(E) "	MK_CMDS $<"
-	$(Q) $(MK_CMDS) $(srcdir)/extent_dbg.ct
+tst_cmds.c tst_cmds.h: tst_cmds.ct
+	$(E) "	MK_CMDS $@"
+	$(Q) $(MK_CMDS) $(srcdir)/tst_cmds.ct
 
 debug_cmds.c debug_cmds.h: $(top_srcdir)/debugfs/debug_cmds.ct
 	$(E) "	MK_CMDS $<"
@@ -302,10 +328,6 @@ debug_cmds.c debug_cmds.h: $(top_srcdir)/debugfs/debug_cmds.ct
 extent_cmds.c extent_cmds.h: $(top_srcdir)/debugfs/extent_cmds.ct
 	$(E) "	MK_CMDS $<"
 	$(Q) $(MK_CMDS) $(top_srcdir)/debugfs/extent_cmds.ct
-
-DEBUG_OBJS= debug_cmds.o debugfs.o util.o ncheck.o icheck.o ls.o \
-	lsdel.o dump.o set_fields.o logdump.o htree.o unused.o \
-	e2freefrag.o filefrag.o extent_inode.o extent_cmds.o
 
 debugfs.o: $(top_srcdir)/debugfs/debugfs.c
 	$(E) "	CC $<"
@@ -355,6 +377,14 @@ unused.o: $(top_srcdir)/debugfs/unused.c
 	$(E) "	CC $<"
 	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
 
+zap.o: $(top_srcdir)/debugfs/zap.c
+	$(E) "	CC $<"
+	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
+
+quota.o: $(top_srcdir)/debugfs/quota.c
+	$(E) "	CC $<"
+	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
+
 e2freefrag.o: $(top_srcdir)/misc/e2freefrag.c
 	$(E) "	CC $<"
 	$(Q) $(CC) $(ALL_CFLAGS) -DDEBUGFS -I$(top_srcdir)/debugfs -c $< -o $@
@@ -363,74 +393,90 @@ filefrag.o: $(top_srcdir)/debugfs/filefrag.c
 	$(E) "	CC $<"
 	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
 
+tst_libext2fs.o: $(srcdir)/tst_libext2fs.c
+	$(E) "	CC $<"
+	$(Q) $(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) $(DEPEND_CFLAGS) -c $< -o $@
+
 tst_bitmaps_cmd.c: tst_bitmaps_cmd.ct
 	$(E) "	MK_CMDS $@"
 	$(Q) DIR=$(srcdir) $(MK_CMDS) $(srcdir)/tst_bitmaps_cmd.ct
 
-tst_bitmaps: tst_bitmaps.o tst_bitmaps_cmd.o $(STATIC_LIBEXT2FS) \
-		$(DEPSTATIC_LIBSS) $(DEPSTATIC_LIBCOM_ERR)
+tst_bitmaps: tst_bitmaps.o tst_bitmaps_cmd.o $(srcdir)/blkmap64_rb.c \
+		$(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBSS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o $@ tst_bitmaps.o tst_bitmaps_cmd.o $(ALL_CFLAGS) \
-		$(STATIC_LIBEXT2FS) $(STATIC_LIBSS) $(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o $@ tst_bitmaps.o tst_bitmaps_cmd.o \
+		-DDEBUG_RB $(srcdir)/blkmap64_rb.c $(ALL_CFLAGS) \
+		$(ALL_LDFLAGS) $(STATIC_LIBEXT2FS) $(STATIC_LIBSS) \
+		$(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
-tst_extents: $(srcdir)/extent.c $(DEBUG_OBJS) $(DEPSTATIC_LIBSS) \
-	$(STATIC_LIBE2P) $(DEPLIBUUID) $(DEPLIBBLKID) $(DEPSTATIC_LIBCOM_ERR)
+tst_extents: $(srcdir)/extent.c $(DEBUG_OBJS) $(DEPSTATIC_LIBSS) libext2fs.a \
+	$(STATIC_LIBE2P) $(DEPLIBUUID) $(DEPLIBBLKID) $(DEPSTATIC_LIBCOM_ERR) \
+	$(DEPLIBQUOTA)
 	$(E) "	LD $@"
 	$(Q) $(CC) -o tst_extents $(srcdir)/extent.c \
-		$(ALL_CFLAGS) -DDEBUG $(DEBUG_OBJS) $(STATIC_LIBSS) \
-		$(STATIC_LIBE2P) $(STATIC_LIBEXT2FS) $(LIBBLKID) $(LIBUUID) \
-		$(STATIC_LIBCOM_ERR) -I $(top_srcdir)/debugfs
+		$(ALL_CFLAGS) $(ALL_LDFLAGS) -DDEBUG $(DEBUG_OBJS) \
+		$(STATIC_LIBSS) $(STATIC_LIBE2P) $(LIBQUOTA) \
+		$(STATIC_LIBEXT2FS) $(LIBBLKID) $(LIBUUID) \
+		$(STATIC_LIBCOM_ERR) $(SYSLIBS) -I $(top_srcdir)/debugfs
+
+tst_libext2fs: $(DEBUG_OBJS) \
+	$(DEPSTATIC_LIBSS) $(STATIC_LIBE2P) $(DEPLIBUUID) libext2fs.a \
+	$(DEPLIBBLKID) $(DEPSTATIC_LIBCOM_ERR) $(DEPLIBQUOTA)
+	$(E) "	LD $@"
+	$(Q) $(CC) -o tst_libext2fs $(ALL_LDFLAGS) -DDEBUG $(DEBUG_OBJS) \
+		$(STATIC_LIBSS) $(STATIC_LIBE2P) $(LIBQUOTA) \
+		$(STATIC_LIBEXT2FS) $(LIBBLKID) $(LIBUUID) \
+		$(STATIC_LIBCOM_ERR) $(SYSLIBS) -I $(top_srcdir)/debugfs
 
 tst_inline: $(srcdir)/inline.c $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_inline $(srcdir)/inline.c $(ALL_CFLAGS) -DDEBUG \
-		$(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) -o tst_inline $(srcdir)/inline.c $(ALL_CFLAGS) \
+		$(ALL_LDFLAGS) -DDEBUG $(STATIC_LIBEXT2FS) \
+		$(STATIC_LIBCOM_ERR) $(SYSLIBS)
 
 tst_csum: csum.c $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR) $(STATIC_LIBE2P) \
 		$(top_srcdir)/lib/e2p/e2p.h
 	$(E) "	LD $@"
 	$(Q) $(CC) -o tst_csum $(srcdir)/csum.c -DDEBUG \
-		$(ALL_CFLAGS) $(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) \
-		$(STATIC_LIBE2P)
+		$(ALL_CFLAGS) $(ALL_LDFLAGS) $(STATIC_LIBEXT2FS) \
+		$(STATIC_LIBCOM_ERR) $(STATIC_LIBE2P) $(SYSLIBS)
 
 tst_crc32c: $(srcdir)/crc32c.c $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR)
-	$(Q) $(CC) $(BUILD_LDFLAGS) $(ALL_CFLAGS) -o tst_crc32c $(srcdir)/crc32c.c \
-		-DUNITTEST $(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR)
+	$(Q) $(CC) $(ALL_LDFLAGS) $(ALL_CFLAGS) -o tst_crc32c $(srcdir)/crc32c.c \
+		-DUNITTEST $(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) \
+		$(SYSLIBS)
 
 mkjournal: mkjournal.c $(STATIC_LIBEXT2FS) $(DEPLIBCOM_ERR)
 	$(E) "	LD $@"
-	$(Q) $(CC) -o mkjournal $(srcdir)/mkjournal.c -DDEBUG $(STATIC_LIBEXT2FS) $(LIBCOM_ERR) $(ALL_CFLAGS)
+	$(Q) $(CC) -o mkjournal $(srcdir)/mkjournal.c -DDEBUG \
+		$(STATIC_LIBEXT2FS) $(LIBCOM_ERR) $(ALL_CFLAGS) $(SYSLIBS)
 
 check:: tst_bitops tst_badblocks tst_iscan tst_types tst_icount \
     tst_super_size tst_types tst_inode_size tst_csum tst_crc32c tst_bitmaps \
-    tst_inline
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_bitops
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_badblocks
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_iscan
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_types
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_icount
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_super_size
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_inode_size
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_csum
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_inline
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_crc32c
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) \
-		./tst_bitmaps -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
+    tst_inline tst_libext2fs
+	$(TESTENV) ./tst_bitops
+	$(TESTENV) ./tst_badblocks
+	$(TESTENV) ./tst_iscan
+	$(TESTENV) ./tst_types
+	$(TESTENV) ./tst_icount
+	$(TESTENV) ./tst_super_size
+	$(TESTENV) ./tst_inode_size
+	$(TESTENV) ./tst_csum
+	$(TESTENV) ./tst_inline
+	$(TESTENV) ./tst_crc32c
+	$(TESTENV) ./tst_bitmaps -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
 	diff $(srcdir)/tst_bitmaps_exp tst_bitmaps_out
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) \
-		./tst_bitmaps -t 2 -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
+	$(TESTENV) ./tst_bitmaps -t 2 -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
 	diff $(srcdir)/tst_bitmaps_exp tst_bitmaps_out
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) \
-		./tst_bitmaps -t 3 -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
+	$(TESTENV) ./tst_bitmaps -t 3 -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
 	diff $(srcdir)/tst_bitmaps_exp tst_bitmaps_out
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) \
-		./tst_bitmaps -l -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
+	$(TESTENV) ./tst_bitmaps -l -f $(srcdir)/tst_bitmaps_cmds > tst_bitmaps_out
 	diff $(srcdir)/tst_bitmaps_exp tst_bitmaps_out
 
 installdirs::
 	$(E) "	MKINSTALLDIRS $(libdir) $(includedir)/ext2fs"
 	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(libdir) \
-		$(DESTDIR)$(includedir)/ext2fs $(DESTDIR)$(libdir)/pkgconfig
+		$(DESTDIR)$(includedir)/ext2fs $(DESTDIR)$(pkgconfigdir)
 
 install:: all $(HFILES) $(HFILES_IN) installdirs ext2fs.pc
 	$(E) "	INSTALL_DATA $(libdir)/libext2fs.a"
@@ -445,24 +491,25 @@ install:: all $(HFILES) $(HFILES_IN) installdirs ext2fs.pc
 		echo "	INSTALL_DATA $(includedir)/ext2fs/$$i"; \
 		$(INSTALL_DATA) $$i $(DESTDIR)$(includedir)/ext2fs/$$i; \
 	done
-	$(E) "	INSTALL_DATA $(libdir)/pkgconfig/ext2fs.pc"
-	$(Q) $(INSTALL_DATA) ext2fs.pc $(DESTDIR)$(libdir)/pkgconfig/ext2fs.pc
+	$(E) "	INSTALL_DATA $(pkgconfigdir)/ext2fs.pc"
+	$(Q) $(INSTALL_DATA) ext2fs.pc $(DESTDIR)$(pkgconfigdir)/ext2fs.pc
 
 uninstall::
 	$(RM) -f $(DESTDIR)$(libdir)/libext2fs.a \
-		$(DESTDIR)$(libdir)/pkgconfig/ext2fs.pc
+		$(DESTDIR)$(pkgconfigdir)/ext2fs.pc
 	$(RM) -rf $(DESTDIR)$(includedir)/ext2fs 
 
 clean::
-	$(RM) -f \#* *.s *.o *.a *~ *.bak core profiled/* checker/* \
+	$(RM) -f \#* *.s *.o *.a *~ *.bak core profiled/* \
 		tst_badblocks tst_iscan ext2_err.et ext2_err.c ext2_err.h \
 		tst_byteswap tst_ismounted tst_getsize tst_sectgetsize \
 		tst_bitops tst_types tst_icount tst_super_size tst_csum \
 		tst_bitmaps tst_bitmaps_out tst_extents tst_inline \
 		tst_inline_data tst_inode_size tst_bitmaps_cmd.c \
-		ext2_tdbtool mkjournal debug_cmds.c extent_cmds.c \
+		ext2_tdbtool mkjournal debug_cmds.c tst_cmds.c extent_cmds.c \
 		../libext2fs.a ../libext2fs_p.a ../libext2fs_chk.a \
-		crc32c_table.h gen_crc32ctable tst_crc32c
+		crc32c_table.h gen_crc32ctable tst_crc32c tst_libext2fs \
+		ext2fs.pc ext2_types.h
 
 mostlyclean:: clean
 distclean:: clean
@@ -483,6 +530,10 @@ gen_crc32ctable: $(srcdir)/gen_crc32ctable.c
 crc32c_table.h: gen_crc32ctable
 	$(E) "	GEN32CTABLE $@"
 	$(Q) ./gen_crc32ctable > crc32c_table.h
+
+$(top_builddir)/$(my_dir)/ext2_types.h: $(srcdir)/ext2_types.h.in \
+		$(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=$(my_dir)/ext2_types.h ./config.status
 
 # +++ Dependency line eater +++
 # 
@@ -568,10 +619,11 @@ block.o: $(srcdir)/block.c $(top_builddir)/lib/config.h \
  $(srcdir)/ext2_ext_attr.h $(srcdir)/bitops.h
 bmap.o: $(srcdir)/bmap.c $(top_builddir)/lib/config.h \
  $(top_builddir)/lib/dirpaths.h $(srcdir)/ext2_fs.h \
- $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
- $(srcdir)/ext2_fs.h $(srcdir)/ext3_extents.h $(top_srcdir)/lib/et/com_err.h \
- $(srcdir)/ext2_io.h $(top_builddir)/lib/ext2fs/ext2_err.h \
- $(srcdir)/ext2_ext_attr.h $(srcdir)/bitops.h
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fsP.h \
+ $(srcdir)/ext2fs.h $(srcdir)/ext2_fs.h $(srcdir)/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h
 check_desc.o: $(srcdir)/check_desc.c $(top_builddir)/lib/config.h \
  $(top_builddir)/lib/dirpaths.h $(srcdir)/ext2_fs.h \
  $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
@@ -666,7 +718,7 @@ fileio.o: $(srcdir)/fileio.c $(top_builddir)/lib/config.h \
  $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
  $(srcdir)/ext2_fs.h $(srcdir)/ext3_extents.h $(top_srcdir)/lib/et/com_err.h \
  $(srcdir)/ext2_io.h $(top_builddir)/lib/ext2fs/ext2_err.h \
- $(srcdir)/ext2_ext_attr.h $(srcdir)/bitops.h
+ $(srcdir)/ext2_ext_attr.h $(srcdir)/bitops.h $(srcdir)/ext2fsP.h
 finddev.o: $(srcdir)/finddev.c $(top_builddir)/lib/config.h \
  $(top_builddir)/lib/dirpaths.h $(srcdir)/ext2_fs.h \
  $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
@@ -967,3 +1019,178 @@ write_bb_file.o: $(srcdir)/write_bb_file.c $(top_builddir)/lib/config.h \
  $(srcdir)/ext2_io.h $(top_builddir)/lib/ext2fs/ext2_err.h \
  $(srcdir)/ext2_ext_attr.h $(srcdir)/bitops.h
 rbtree.o: $(srcdir)/rbtree.c $(srcdir)/rbtree.h
+tst_libext2fs.o: $(srcdir)/tst_libext2fs.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fsP.h \
+ $(srcdir)/ext2fs.h $(srcdir)/ext2_fs.h $(srcdir)/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/debugfs/debugfs.h $(srcdir)/ext2fs.h \
+ $(top_srcdir)/lib/quota/quotaio.h $(top_srcdir)/lib/quota/dqblk_v2.h \
+ $(top_srcdir)/lib/quota/quotaio_tree.h $(top_srcdir)/lib/../e2fsck/dict.h
+debug_cmds.o: debug_cmds.c $(top_srcdir)/lib/ss/ss.h \
+ $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
+extent_cmds.o: extent_cmds.c $(top_srcdir)/lib/ss/ss.h \
+ $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
+tst_cmds.o: tst_cmds.c $(top_srcdir)/lib/ss/ss.h \
+ $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h
+debugfs.o: $(top_srcdir)/debugfs/debugfs.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h $(top_srcdir)/lib/e2p/e2p.h \
+ $(top_srcdir)/debugfs/../version.h $(top_srcdir)/debugfs/jfs_user.h \
+ $(srcdir)/kernel-jbd.h $(srcdir)/jfs_compat.h $(srcdir)/kernel-list.h
+util.o: $(top_srcdir)/debugfs/util.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/lib/ss/ss.h \
+ $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h \
+ $(top_srcdir)/debugfs/debugfs.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+ncheck.o: $(top_srcdir)/debugfs/ncheck.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+icheck.o: $(top_srcdir)/debugfs/icheck.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+ls.o: $(top_srcdir)/debugfs/ls.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+lsdel.o: $(top_srcdir)/debugfs/lsdel.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+dump.o: $(top_srcdir)/debugfs/dump.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+set_fields.o: $(top_srcdir)/debugfs/set_fields.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h $(top_srcdir)/lib/e2p/e2p.h
+logdump.o: $(top_srcdir)/debugfs/logdump.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h $(top_srcdir)/debugfs/jfs_user.h \
+ $(srcdir)/kernel-jbd.h $(srcdir)/jfs_compat.h $(srcdir)/kernel-list.h
+htree.o: $(top_srcdir)/debugfs/htree.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h $(top_srcdir)/lib/e2p/e2p.h
+unused.o: $(top_srcdir)/debugfs/unused.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+filefrag.o: $(top_srcdir)/debugfs/filefrag.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+extent_inode.o: $(top_srcdir)/debugfs/extent_inode.c \
+ $(top_builddir)/lib/config.h $(top_builddir)/lib/dirpaths.h \
+ $(top_srcdir)/debugfs/debugfs.h $(top_srcdir)/lib/ss/ss.h \
+ $(top_builddir)/lib/ss/ss_err.h $(top_srcdir)/lib/et/com_err.h \
+ $(srcdir)/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(srcdir)/ext2fs.h $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+zap.o: $(top_srcdir)/debugfs/zap.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+quota.o: $(top_srcdir)/debugfs/quota.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(top_srcdir)/debugfs/debugfs.h \
+ $(top_srcdir)/lib/ss/ss.h $(top_builddir)/lib/ss/ss_err.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/lib/quota/quotaio.h \
+ $(top_srcdir)/lib/quota/dqblk_v2.h $(top_srcdir)/lib/quota/quotaio_tree.h \
+ $(top_srcdir)/lib/../e2fsck/dict.h
+e2freefrag.o: $(top_srcdir)/misc/e2freefrag.c $(top_builddir)/lib/config.h \
+ $(top_builddir)/lib/dirpaths.h $(srcdir)/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(srcdir)/ext2fs.h \
+ $(srcdir)/ext3_extents.h $(top_srcdir)/lib/et/com_err.h $(srcdir)/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h $(srcdir)/ext2_ext_attr.h \
+ $(srcdir)/bitops.h $(top_srcdir)/misc/e2freefrag.h

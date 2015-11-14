@@ -119,11 +119,13 @@ static struct e2fsck_problem problem_table[] = {
 
 	/* Superblock corrupt */
 	{ PR_0_SB_CORRUPT,
-	  N_("\nThe @S could not be read or does not describe a correct ext2\n"
-	  "@f.  If the @v is valid and it really contains an ext2\n"
+	  N_("\nThe @S could not be read or does not describe a valid ext2/ext3/ext4\n"
+	  "@f.  If the @v is valid and it really contains an ext2/ext3/ext4\n"
 	  "@f (and not swap or ufs or something else), then the @S\n"
 	  "is corrupt, and you might try running e2fsck with an alternate @S:\n"
-	  "    e2fsck -b %S <@v>\n\n"),
+	  "    e2fsck -b 8193 <@v>\n"
+	  " or\n"
+	  "    e2fsck -b 32768 <@v>\n\n"),
 	  PROMPT_NONE, PR_FATAL },
 
 	/* Filesystem size is wrong */
@@ -223,7 +225,7 @@ static struct e2fsck_problem problem_table[] = {
 
 	/* Superblock has_journal flag is clear but has a journal */
 	{ PR_0_JOURNAL_HAS_JOURNAL,
-	  N_("@S has_@j flag is clear, but a @j %s is present.\n"),
+	  N_("@S has_@j flag is clear, but a @j is present.\n"),
 	  PROMPT_CLEAR, PR_PREEN_OK },
 
 	/* Superblock needs_recovery flag is set but not journal is present */
@@ -336,12 +338,12 @@ static struct e2fsck_problem problem_table[] = {
 	/* Last mount time is in the future */
 	{ PR_0_FUTURE_SB_LAST_MOUNT,
 	  N_("@S last mount time (%t,\n\tnow = %T) is in the future.\n"),
-	  PROMPT_FIX, PR_NO_OK },
+	  PROMPT_FIX, PR_PREEN_OK | PR_NO_OK },
 
 	/* Last write time is in the future */
 	{ PR_0_FUTURE_SB_LAST_WRITE,
 	  N_("@S last write time (%t,\n\tnow = %T) is in the future.\n"),
-	  PROMPT_FIX, PR_NO_OK },
+	  PROMPT_FIX, PR_PREEN_OK | PR_NO_OK },
 
 	{ PR_0_EXTERNAL_JOURNAL_HINT,
 	  N_("@S hint for external superblock @s %X.  "),
@@ -384,14 +386,14 @@ static struct e2fsck_problem problem_table[] = {
 	/* Last mount time is in the future (fudged) */
 	{ PR_0_FUTURE_SB_LAST_MOUNT_FUDGED,
 	  N_("@S last mount time is in the future.\n\t(by less than a day, "
-	     "probably due to the hardware clock being incorrectly set)  "),
-	  PROMPT_FIX, PR_PREEN_OK | PR_NO_OK },
+	     "probably due to the hardware clock being incorrectly set)\n"),
+	  PROMPT_NONE, PR_PREEN_OK | PR_NO_OK },
 
 	/* Last write time is in the future (fudged) */
 	{ PR_0_FUTURE_SB_LAST_WRITE_FUDGED,
 	  N_("@S last write time is in the future.\n\t(by less than a day, "
-	     "probably due to the hardware clock being incorrectly set).  "),
-	  PROMPT_FIX, PR_PREEN_OK | PR_NO_OK },
+	     "probably due to the hardware clock being incorrectly set)\n"),
+	  PROMPT_NONE, PR_PREEN_OK | PR_NO_OK },
 
 	/* Block group checksum (latch question) is invalid. */
 	{ PR_0_GDT_CSUM_LATCH,
@@ -433,6 +435,16 @@ static struct e2fsck_problem problem_table[] = {
 	  N_("ext2fs_check_desc: %m\n"),
 	  PROMPT_NONE, 0 },
 
+	/* 64bit is set but extents is unset. */
+	{ PR_0_64BIT_WITHOUT_EXTENTS,
+	  N_("@S 64bit filesystems needs extents to access the whole disk.  "),
+	  PROMPT_FIX, PR_PREEN_OK | PR_NO_OK},
+
+	/* The first_meta_bg is too big */
+	{ PR_0_FIRST_META_BG_TOO_BIG,
+	  N_("First_meta_bg is too big.  (%N, max value %g).  "),
+	  PROMPT_CLEAR, 0 },
+
 	/* Pass 1 errors */
 
 	/* Pass 1: Checking inodes, blocks, and sizes */
@@ -440,11 +452,11 @@ static struct e2fsck_problem problem_table[] = {
 	  N_("Pass 1: Checking @is, @bs, and sizes\n"),
 	  PROMPT_NONE, 0 },
 
-	/* Root directory is not an inode */
+	/* Root inode is not a directory */
 	{ PR_1_ROOT_NO_DIR, N_("@r is not a @d.  "),
 	  PROMPT_CLEAR, 0 },
 
-	/* Root directory has dtime set */
+	/* Root inode has dtime set */
 	{ PR_1_ROOT_DTIME,
 	  N_("@r has dtime set (probably due to old mke2fs).  "),
 	  PROMPT_FIX, PR_PREEN_OK },
@@ -960,6 +972,21 @@ static struct e2fsck_problem problem_table[] = {
 	  PROMPT_CLEAR, 0 },
 
 
+	/* Directory inode block <block> should be at block <otherblock> */
+	{ PR_1_COLLAPSE_DBLOCK,
+	  N_("@d @i %i @b %b should be at @b %c.  "),
+	  PROMPT_FIX, 0 },
+
+	/* Extents/inlinedata flag set on a device or socket inode */
+	{ PR_1_UNINIT_DBLOCK,
+	  N_("@d @i %i has @x marked uninitialized at @b %c.  "),
+	  PROMPT_FIX, PR_PREEN_OK },
+
+	/* Inode logical block (physical block ) is misaligned. */
+	{ PR_1_MISALIGNED_CLUSTER,
+	  N_("@i %i logical @b %b (physical @b %c) violates cluster allocation rules.\nWill fix in pass 1B.\n"),
+	  PROMPT_NONE, 0 },
+
 	/* Pass 1b errors */
 
 	/* Pass 1B: Rescan for duplicate/bad blocks */
@@ -1064,12 +1091,12 @@ static struct e2fsck_problem problem_table[] = {
 	  N_("@n @i number for '.' in @d @i %i.\n"),
 	  PROMPT_FIX, 0 },
 
-	/* Directory entry has bad inode number */
+	/* Entry 'xxxx' in /a/b/c has bad inode number.*/
 	{ PR_2_BAD_INO,
 	  N_("@E has @n @i #: %Di.\n"),
 	  PROMPT_CLEAR, 0 },
 
-	/* Directory entry has deleted or unused inode */
+	/* Entry 'xxxx' in /a/b/c has deleted/unused inode nnnnn.*/
 	{ PR_2_UNUSED_INODE,
 	  N_("@E has @D/unused @i %Di.  "),
 	  PROMPT_CLEAR, PR_PREEN_OK },
@@ -1710,6 +1737,21 @@ static struct e2fsck_problem problem_table[] = {
 	  N_("Update quota info for quota type %N"),
 	  PROMPT_NULL, PR_PREEN_OK },
 
+	/* Error setting block group checksum info */
+	{ PR_6_SET_BG_CHECKSUM,
+	  N_("Error setting @b @g checksum info: %m\n"),
+	  PROMPT_NULL, PR_FATAL },
+
+	/* Error writing file system info */
+	{ PR_6_FLUSH_FILESYSTEM,
+	  N_("Error writing file system info: %m\n"),
+	  PROMPT_NULL, PR_FATAL },
+
+	/* Error flushing writes to storage device */
+	{ PR_6_IO_FLUSH,
+	  N_("Error flushing writes to storage device: %m\n"),
+	  PROMPT_NULL, PR_FATAL },
+
 	{ 0 }
 };
 
@@ -1964,6 +2006,9 @@ int fix_problem(e2fsck_t ctx, problem_t code, struct problem_context *pctx)
 
 	if (ptr->flags & PR_AFTER_CODE)
 		answer = fix_problem(ctx, ptr->second_code, pctx);
+
+	if (answer && (ptr->prompt != PROMPT_NONE))
+		ctx->flags |= E2F_FLAG_PROBLEMS_FIXED;
 
 	return answer;
 }

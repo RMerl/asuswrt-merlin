@@ -4,8 +4,7 @@
 .pc
 patches
 build
-build.profiled
-build.static
+build[^/]*
 rpm.log
 TODO
 powerquest

@@ -107,7 +107,7 @@ int main (int argc, char *argv[])
 	retval = ext2fs_open(device_name, 0,
 			     0, 0, unix_io_manager, &fs);
 	if (retval) {
-		com_err(program_name, retval, _("while trying to open %s"),
+		com_err(program_name, retval, _("while trying to open '%s'"),
 			device_name);
 		exit(1);
 	}

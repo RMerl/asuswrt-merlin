@@ -172,10 +172,10 @@ static errcode_t get_chunk_info(ext2_filsys fs, struct chunk_info *info,
 
 	/* Display chunk information in KB */
 	if (info->real_free_chunks) {
-		info->min = (info->min * fs->blocksize) >> 10;
-		info->max = (info->max * fs->blocksize) >> 10;
-		info->avg = (info->avg / info->real_free_chunks *
-			     fs->blocksize) >> 10;
+		unsigned int scale = fs->blocksize >> 10;
+		info->min = info->min * scale;
+		info->max = info->max * scale;
+		info->avg = info->avg / info->real_free_chunks * scale;
 	} else {
 		info->min = 0;
 	}
@@ -215,7 +215,7 @@ static errcode_t get_chunk_info(ext2_filsys fs, struct chunk_info *info,
 
 static void close_device(char *device_name, ext2_filsys fs)
 {
-	int retval = ext2fs_close(fs);
+	int retval = ext2fs_close_free(&fs);
 
 	if (retval)
 		com_err(device_name, retval, "while closing the filesystem.\n");
@@ -277,6 +277,7 @@ int main(int argc, char *argv[])
 #ifdef DEBUGFS
 	if (check_fs_open(argv[0]))
 		return;
+	reset_getopt();
 #else
 	char *device_name;
 

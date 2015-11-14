@@ -318,6 +318,9 @@ profile_init(const char **files, profile_t *ret_profile)
         /* if the filenames list is not specified return an empty profile */
         if ( files ) {
 	    for (fs = files; !PROFILE_LAST_FILESPEC(*fs); fs++) {
+		if (array)
+			free_list(array);
+		array = NULL;
 		retval = get_dirlist(*fs, &array);
 		if (retval == 0) {
 			if (!array)
@@ -1542,7 +1545,7 @@ profile_get_integer(profile_t profile, const char *name, const char *subname,
 	    /* Empty string is no good.  */
 	    return PROF_BAD_INTEGER;
 	errno = 0;
-	ret_long = strtol (value, &end_value, 10);
+	ret_long = strtol(value, &end_value, 0);
 
 	/* Overflow or underflow.  */
 	if ((ret_long == LONG_MIN || ret_long == LONG_MAX) && errno != 0)
@@ -1584,7 +1587,7 @@ profile_get_uint(profile_t profile, const char *name, const char *subname,
 	    /* Empty string is no good.  */
 	    return PROF_BAD_INTEGER;
 	errno = 0;
-	ret_long = strtoul (value, &end_value, 10);
+	ret_long = strtoul(value, &end_value, 0);
 
 	/* Overflow or underflow.  */
 	if ((ret_long == ULONG_MAX) && errno != 0)

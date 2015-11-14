@@ -1,0 +1,1 @@
+resize2fs -M with inode table in middle of last block group

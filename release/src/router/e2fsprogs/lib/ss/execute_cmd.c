@@ -82,11 +82,8 @@ static struct _ss_request_entry * get_request (tbl, idx)
  * Notes:
  */
 
-static int check_request_table (rqtbl, argc, argv, sci_idx)
-    register ss_request_table *rqtbl;
-    int argc;
-    char *argv[];
-    int sci_idx;
+static int check_request_table(register ss_request_table *rqtbl, int argc,
+			       char *argv[], int sci_idx)
 {
 #ifdef __SABER__
     struct _ss_request_entry *request;
@@ -135,10 +132,7 @@ static int check_request_table (rqtbl, argc, argv, sci_idx)
  * Notes:
  */
 
-static int really_execute_command (sci_idx, argc, argv)
-    int sci_idx;
-    int argc;
-    char **argv[];
+static int really_execute_command(int sci_idx, int argc, char **argv[])
 {
     register ss_request_table **rqtbl;
     register ss_data *info;
@@ -168,9 +162,7 @@ static int really_execute_command (sci_idx, argc, argv)
  * Notes:
  */
 
-int ss_execute_command(sci_idx, argv)
-	int sci_idx;
-	register char *argv[];
+int ss_execute_command(int sci_idx, register char *argv[])
 {
 	register int i, argc;
 	char **argp;
@@ -202,9 +194,7 @@ int ss_execute_command(sci_idx, argv)
  * Notes:
  */
 
-int ss_execute_line (sci_idx, line_ptr)
-    int sci_idx;
-    char *line_ptr;
+int ss_execute_line(int sci_idx, char *line_ptr)
 {
     char **argv;
     int argc, ret;

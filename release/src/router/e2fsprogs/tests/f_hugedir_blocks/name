@@ -1,0 +1,1 @@
+crash e2fsck with a dir with an impossibly high logical blk offset

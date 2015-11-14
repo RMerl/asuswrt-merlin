@@ -1,0 +1,34 @@
+if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+
+test_description="meta_bg shrink"
+FEATURES="-t ext4 -O 64bit,meta_bg,^resize_inode -b 1024"
+SIZE_1=1G
+SIZE_2=48M
+LOG=$test_name.log
+E2FSCK=../e2fsck/e2fsck
+RESIZE2FS_OPTS=-f
+
+. $cmd_dir/scripts/resize_test
+
+export MKE2FS_FIRST_META_BG=2
+resize_test
+unset MKE2FS_FIRST_META_BG
+
+RC=$?
+if [ $RC -eq 0 ]; then
+	echo "$test_name: $test_description: ok"
+	touch $test_name.ok
+elif [ $RC -eq 111 ]; then
+	echo "$test_name: $test_description: skipped"
+	touch $test_name.ok
+else
+	echo "$test_name: $test_description: failed"
+	ln $LOG $test_name.failed
+fi
+
+unset FEATURES SIZE_1 SIZE_2 LOG E2FSCK
+
+else #if test -x $RESIZE2FS_EXE -a -x $DEBUGFS_EXE; then
+	echo "$test_name: $test_description: skipped"
+fi
+

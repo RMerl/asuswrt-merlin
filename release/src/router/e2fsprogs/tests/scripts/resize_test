@@ -1,13 +1,40 @@
 #!/bin/sh
 
-resize_test () {
+# old distros are missing "truncate", emulate it with "dd"
+truncate()
+{
+	[ "$1" = "-s" ] && size=$2 && shift 2
 
+	dd if=/dev/zero of=$1 bs=1 count=0 seek=$size >> $LOG 2>&1
+}
+
+resize_test () {
+DBG_FLAGS=63
+
+echo $test_description starting > $LOG
 rm -f $TMPFILE
 touch $TMPFILE
-echo $MKE2FS $FEATURES -qF $TMPFILE $SIZE_1 > $LOG
+
+# Verify that the $TMP filesystem handles $SIZE_2 sparse files.
+# If that fails, try the local filesystem instead.
+if truncate -s $SIZE_2 $TMPFILE 2> /dev/null; then
+	echo "using $TMPFILE" >> $LOG
+else
+	rm $TMPFILE
+	export TMPFILE=$(mktemp ./$test_name.tmp.XXXXXX)
+	touch $TMPFILE
+	echo "using $TMPFILE" >> $LOG
+	if ! truncate -s $SIZE_2 $TMPFILE >> $LOG 2>&1; then
+		rm $TMPFILE
+		return 111
+	fi
+fi
+> $TMPFILE
+
+echo $MKE2FS $FEATURES -qF $TMPFILE $SIZE_1 >> $LOG
 $MKE2FS $FEATURES -qF $TMPFILE $SIZE_1 >> $LOG
 
-OUT_TMP=$(mktemp -t csum-tmp.XXXXXX)
+OUT_TMP=$(mktemp ${TMPDIR:-/tmp}/csum-tmp.XXXXXX)
 
 date > $OUT_TMP
 cat $E2FSCK >> $OUT_TMP
@@ -31,39 +58,14 @@ rm -f $OUT_TMP
 echo $FSCK -fy $TMPFILE >> $LOG 2>&1 
 $FSCK -fy $TMPFILE >> $LOG 2>&1 
 
-echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 $TMPFILE $SIZE_2 >> $LOG 2>&1
-if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 $TMPFILE $SIZE_2 >> $LOG 2>&1
+echo $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS $TMPFILE $SIZE_2 >> $LOG 2>&1
 then
 	return 1
 fi
 
-echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
-if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
-then
-	dumpe2fs $TMPFILE >> $LOG
-	return 1
-fi
-
-echo $DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
-$DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
-
-echo $CRCSUM $OUT_TMP >> $LOG 2>&1
-CSUM_2=$($CRCSUM $OUT_TMP)
-echo Checksum is $CSUM_2 >> $LOG
-
-if test "$CSUM_1" != "$CSUM_2"
-then
-	return 1
-fi
-
-echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
-if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
-then
-	return 1
-fi
-
-echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
-if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
+echo $FSCK -fy $TMPFILE >> $LOG 2>&1
+if ! $FSCK -fy $TMPFILE >> $LOG 2>&1
 then
 	dumpe2fs $TMPFILE >> $LOG
 	return 1
@@ -81,14 +83,19 @@ then
 	return 1
 fi
 
-echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
-if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+# Uncomment to grab extra debugging image
+#
+#mv $TMPFILE /tmp/foo.img
+#return 0
+
+echo $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS -M $TMPFILE $SIZE_2 >> $LOG 2>&1
 then
 	return 1
 fi
 
-echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
-if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
+echo $FSCK -fy $TMPFILE >> $LOG 2>&1
+if ! $FSCK -fy $TMPFILE >> $LOG 2>&1
 then
 	dumpe2fs $TMPFILE >> $LOG
 	return 1
@@ -106,14 +113,39 @@ then
 	return 1
 fi
 
-echo $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
-if ! $RESIZE2FS $RESIZE2FS_OPTS -d 31 -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+echo $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS -M $TMPFILE $SIZE_2 >> $LOG 2>&1
 then
 	return 1
 fi
 
-echo $FSCK -fp $TMPFILE >> $LOG 2>&1 
-if ! $FSCK -fp $TMPFILE >> $LOG 2>&1
+echo $FSCK -fy $TMPFILE >> $LOG 2>&1
+if ! $FSCK -fy $TMPFILE >> $LOG 2>&1
+then
+	dumpe2fs $TMPFILE >> $LOG
+	return 1
+fi
+
+echo $DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+$DEBUGFS -R "dump /test/e2fsck $OUT_TMP" $TMPFILE >> $LOG 2>&1
+
+echo $CRCSUM $OUT_TMP >> $LOG 2>&1
+CSUM_2=$($CRCSUM $OUT_TMP)
+echo Checksum is $CSUM_2 >> $LOG
+
+if test "$CSUM_1" != "$CSUM_2"
+then
+	return 1
+fi
+
+echo $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+if ! $RESIZE2FS $RESIZE2FS_OPTS -d $DBG_FLAGS -M $TMPFILE $SIZE_2 >> $LOG 2>&1
+then
+	return 1
+fi
+
+echo $FSCK -fy $TMPFILE >> $LOG 2>&1
+if ! $FSCK -fy $TMPFILE >> $LOG 2>&1
 then
 	dumpe2fs $TMPFILE >> $LOG
 	return 1
@@ -134,6 +166,7 @@ then
 	return 1
 fi
 
+rm $TMPFILE
 return 0
 
 }

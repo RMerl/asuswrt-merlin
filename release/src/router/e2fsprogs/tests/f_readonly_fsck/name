@@ -1,0 +1,1 @@
+ensure that a readonly check doesn't modify the fs

@@ -68,7 +68,10 @@ The following stanzas are used in the
 .I mke2fs.conf
 file.  They will be described in more detail in future sections of this
 document.
-.TP 
+.TP
+.I [options]
+Contains relations which influence how mke2fs behaves.
+.TP
 .I [defaults]
 Contains relations which define the default parameters
 used by
@@ -84,6 +87,18 @@ the
 .B -T
 option to
 .BR mke2fs (8).
+.SH THE [options] STANZA
+The following relations are defined in the
+.I [options]
+stanza.
+.TP
+.I proceed_delay
+If this relation is set to a positive integer, then if mke2fs will
+proceed after waiting
+.I proceed_delay
+seconds, after asking the user for permission to proceed, even if the
+user has not answered the question.  Defaults to 0, which means to wait
+until the user answers the question one way or another.
 .SH THE [defaults] STANZA
 The following relations are defined in the 
 .I [defaults]
@@ -357,6 +372,18 @@ initialization noticeably, but it requires the kernel to finish
 initializing the filesystem in the background when the filesystem is
 first mounted.
 .TP
+.I journal_location
+This relation specifies the location of the journal.
+.TP
+.I num_backup_sb
+This relation indicates whether file systems with the
+.B sparse_super2
+feature enabled should be created with 0, 1, or 2 backup superblocks.
+.TP
+.I packed_meta_blocks
+This boolean relation specifes whether the allocation bitmaps, inode
+table, and journal should be located at the beginning of the file system.
+.TP
 .I inode_ratio
 This relation specifies the default inode ratio if the user does not
 specify one on the command line.
@@ -408,6 +435,78 @@ system feature is enabled.  It can be overridden via the
 .B \-C
 command line option to
 .BR mke2fs (8)
+.TP
+.I make_hugefiles
+This boolean relation enables the creation of pre-allocated files as
+part of formatting the file system.
+.TP
+.I hugefiles_uid
+This relation controls the user ownership for all of the files and
+directories created by the
+.I make_hugefiles
+feature.
+.TP
+.I hugefiles_gid
+This relation controls the group ownership for all of the files and
+directories created by the
+.I make_hugefiles
+feature.
+.TP
+.I hugefiles_umask
+This relation specifies the umask used when creating the files and
+directories by the
+.I make_hugefiles
+feature.
+.TP
+.I num_hugefiles
+This relation specifies the number of huge files to be created.  If this
+relation is not specified, or is set to zero, and the
+.I hugefiles_size
+relation is non-zero, then
+.I make_hugefiles
+will create as many huge files as can fit to fill the entire file system.
+.TP
+.I hugefiles_slack
+This relation specifies how much space should be reserved for other
+files.
+.TP
+.I hugefiles_size
+This relation specifies the size of the huge files.  If this relation is
+not specified, the default is to fill the entire file system.
+.TP
+.I hugefiles_align
+This relation specifies the alignment for the start block of the huge
+files.  It also forces the size of huge files to be a multiple of the
+requested alignment.  If this relation is not specified, no alignment
+requirement will be imposed on the huge files.
+.TP
+.I hugefiles_align_disk
+Thie relations specifies whether the alignment should be relative to the
+beginning of the hard drive (assuming that the starting offset of the
+partition is available to mke2fs).  The default value is false, which
+if will cause hugefile alignment to be relative to the beginning of the
+file system.
+.TP
+.I hugefiles_name
+This relation specifies the base file name for the huge files.
+.TP
+.I hugefiles_digits
+This relation specifies the (zero-padded) width of the field for the
+huge file number.
+.TP
+.I zero_hugefiles
+This boolean relation specifies whether or not zero blocks will be
+written to the hugefiles while
+.BR mke2fs(8)
+is creating them.  By default, zero blocks will be written to the huge
+files to avoid stale data from being made available to potentially
+untrusted user programs, unless the device supports a discard/trim
+operation which will take care of zeroing the device blocks.  By
+.I zero_hugefiles
+to false, this step will always be skipped, which can be useful if it is
+known that the disk has been previously erased, or if the user programs
+that will have access to the huge files are trusted to not reveal stale
+data.
 .SH THE [devices] STANZA
 Each tag in the
 .I [devices] 

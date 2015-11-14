@@ -25,8 +25,8 @@ extern char *optarg;
 
 #include "debugfs.h"
 
-ext2_ino_t	current_ino;
-ext2_extent_handle_t current_handle;
+static ext2_ino_t	current_ino;
+static ext2_extent_handle_t current_handle;
 
 static void dbg_print_extent(char *desc, struct ext2fs_extent *extent)
 {
@@ -264,15 +264,15 @@ void do_replace_node(int argc, char *argv[])
 		return;
 	}
 
-	extent.e_lblk = parse_ulong(argv[1], argv[0], "logical block", &err);
+	err = strtoblk(argv[0], argv[1], "logical block", &extent.e_lblk);
 	if (err)
 		return;
 
-	extent.e_len = parse_ulong(argv[2], argv[0], "logical block", &err);
+	extent.e_len = parse_ulong(argv[2], argv[0], "length", &err);
 	if (err)
 		return;
 
-	extent.e_pblk = parse_ulong(argv[3], argv[0], "logical block", &err);
+	err = strtoblk(argv[0], argv[3], "physical block", &extent.e_pblk);
 	if (err)
 		return;
 
@@ -338,18 +338,15 @@ void do_insert_node(int argc, char *argv[])
 		return;
 	}
 
-	extent.e_lblk = parse_ulong(argv[1], cmd,
-				    "logical block", &err);
+	err = strtoblk(cmd, argv[1], "logical block", &extent.e_lblk);
 	if (err)
 		return;
 
-	extent.e_len = parse_ulong(argv[2], cmd,
-				    "length", &err);
+	extent.e_len = parse_ulong(argv[2], cmd, "length", &err);
 	if (err)
 		return;
 
-	extent.e_pblk = parse_ulong(argv[3], cmd,
-				    "pysical block", &err);
+	err = strtoblk(cmd, argv[3], "physical block", &extent.e_pblk);
 	if (err)
 		return;
 
@@ -366,8 +363,8 @@ void do_set_bmap(int argc, char **argv)
 	const char	*usage = "[--uninit] <lblk> <pblk>";
 	struct ext2fs_extent extent;
 	errcode_t	retval;
-	blk_t		logical;
-	blk_t		physical;
+	blk64_t		logical;
+	blk64_t		physical;
 	char		*cmd = argv[0];
 	int		flags = 0;
 	int		err;
@@ -387,18 +384,16 @@ void do_set_bmap(int argc, char **argv)
 		return;
 	}
 
-	logical = parse_ulong(argv[1], cmd,
-				    "logical block", &err);
+	err = strtoblk(cmd, argv[1], "logical block", &logical);
 	if (err)
 		return;
 
-	physical = parse_ulong(argv[2], cmd,
-				    "physical block", &err);
+	err = strtoblk(cmd, argv[2], "physical block", &physical);
 	if (err)
 		return;
 
 	retval = ext2fs_extent_set_bmap(current_handle, logical,
-					(blk64_t) physical, flags);
+					physical, flags);
 	if (retval) {
 		com_err(cmd, retval, 0);
 		return;
@@ -520,7 +515,7 @@ void do_goto_block(int argc, char **argv)
 				       "block [level]", 0))
 		return;
 
-	if (strtoblk(argv[0], argv[1], &blk))
+	if (strtoblk(argv[0], argv[1], NULL, &blk))
 		return;
 
 	if (argc == 3) {

@@ -94,6 +94,10 @@ struct ext2_bitmap_ops {
 	 * May be NULL, in which case a generic function is used. */
 	errcode_t (*find_first_zero)(ext2fs_generic_bitmap bitmap,
 				     __u64 start, __u64 end, __u64 *out);
+	/* Find the first set bit between start and end, inclusive.
+	 * May be NULL, in which case a generic function is used. */
+	errcode_t (*find_first_set)(ext2fs_generic_bitmap bitmap,
+				    __u64 start, __u64 end, __u64 *out);
 };
 
 extern struct ext2_bitmap_ops ext2fs_blkmap64_bitarray;

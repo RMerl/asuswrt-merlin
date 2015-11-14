@@ -19,8 +19,17 @@ dump_bb
 ffzb 11 16
 ffzb 12 16
 ffzb 12 20
+ffsb 0 127
+ffsb 1 128
+ffsb 1 127
+ffsb 1 10
+ffsb 1 11
+ffsb 12 12
+ffsb 13 12
+ffsb 12 15
 clearb 13
 ffzb 12 20
+ffsb 13 18
 setb 13
 clearb 12 7
 testb 12 7
@@ -42,8 +51,15 @@ dump_ib
 ffzi 1 6
 ffzi 2 5
 ffzi 2 6
+ffsi 0 31
+ffsi 1 33
+ffsi 1 32
+ffsi 2 32
+ffsi 6 32
 cleari 4
 ffzi 2 6
+ffsi 4 32
+ffsi 5 32
 zeroi
 testi 5
 seti 5
@@ -95,5 +111,38 @@ clearb 2
 clearb 3
 clearb 7
 dump_bb
+ffsb 14 127
+ffsb 15 127
+ffsb 36 127
+ffsb 32 127
+ffsb 52 127
+ffsb 53 127
+ffsb 46 127
+ffsb 45 127
+ffsb 41 127
+ffsb 20 127
+ffsb 1 127
+ffsb 2 127
+ffsb 3 127
+ffsb 4 127
+ffsb 5 127
+ffsb 6 127
+ffsb 7 127
+ffsb 8 127
+ffzb 1 127
+ffzb 2 127
+ffzb 3 127
+ffzb 4 127
+ffzb 5 127
+ffzb 6 127
+ffzb 7 127
+ffzb 8 127
+ffzb 45 127
+ffzb 46 127
+ffzb 47 127
+ffzb 48 127
+ffzb 49 127
+ffzb 50 127
+ffzb 51 127
 quit
 

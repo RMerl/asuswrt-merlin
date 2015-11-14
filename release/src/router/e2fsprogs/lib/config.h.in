@@ -46,8 +46,17 @@
    */
 #undef HAVE_ALLOCA_H
 
+/* Define to 1 if you have the `argz_count' function. */
+#undef HAVE_ARGZ_COUNT
+
 /* Define to 1 if you have the <argz.h> header file. */
 #undef HAVE_ARGZ_H
+
+/* Define to 1 if you have the `argz_next' function. */
+#undef HAVE_ARGZ_NEXT
+
+/* Define to 1 if you have the `argz_stringify' function. */
+#undef HAVE_ARGZ_STRINGIFY
 
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
@@ -55,8 +64,22 @@
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE
 
+/* Define to 1 if you have the `blkid_probe_enable_partitions' function. */
+#undef HAVE_BLKID_PROBE_ENABLE_PARTITIONS
+
 /* Define to 1 if you have the `blkid_probe_get_topology' function. */
 #undef HAVE_BLKID_PROBE_GET_TOPOLOGY
+
+/* Define to 1 if the compiler understands __builtin_expect. */
+#undef HAVE_BUILTIN_EXPECT
+
+/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYCURRENT
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+#undef HAVE_CFPREFERENCESCOPYAPPVALUE
 
 /* Define to 1 if you have the `chflags' function. */
 #undef HAVE_CHFLAGS
@@ -103,6 +126,9 @@
 /* Define to 1 if Ext2 ioctls present */
 #undef HAVE_EXT2_IOCTLS
 
+/* Define to 1 if you have the `fadvise64' function. */
+#undef HAVE_FADVISE64
+
 /* Define to 1 if you have the `fallocate' function. */
 #undef HAVE_FALLOCATE
 
@@ -115,11 +141,17 @@
 /* Define to 1 if you have the `fdatasync' function. */
 #undef HAVE_FDATASYNC
 
+/* Define to 1 if you have the <features.h> header file. */
+#undef HAVE_FEATURES_H
+
 /* Define to 1 if you have the `fstat64' function. */
 #undef HAVE_FSTAT64
 
 /* Define to 1 if you have the `ftruncate64' function. */
 #undef HAVE_FTRUNCATE64
+
+/* Define to 1 if you have the `futimes' function. */
+#undef HAVE_FUTIMES
 
 /* Define to 1 if you have the `fwprintf' function. */
 #undef HAVE_FWPRINTF
@@ -163,7 +195,7 @@
 /* Define to 1 if you have the `getuid' function. */
 #undef HAVE_GETUID
 
-/* Define if you have the iconv() function. */
+/* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
 
 /* Define if you have the 'intmax_t' type in <stdint.h> or <inttypes.h>. */
@@ -197,6 +229,9 @@
 /* Define to 1 if you have the <linux/fd.h> header file. */
 #undef HAVE_LINUX_FD_H
 
+/* Define to 1 if you have the <linux/loop.h> header file. */
+#undef HAVE_LINUX_LOOP_H
+
 /* Define to 1 if you have the <linux/major.h> header file. */
 #undef HAVE_LINUX_MAJOR_H
 
@@ -206,14 +241,8 @@
 /* Define to 1 if llseek declared in unistd.h */
 #undef HAVE_LLSEEK_PROTOTYPE
 
-/* Define to 1 if you have the <locale.h> header file. */
-#undef HAVE_LOCALE_H
-
-/* Define if you have the 'long double' type. */
-#undef HAVE_LONG_DOUBLE
-
-/* Define if you have the 'long long' type. */
-#undef HAVE_LONG_LONG
+/* Define to 1 if the system has the type 'long long int'. */
+#undef HAVE_LONG_LONG_INT
 
 /* Define to 1 if you have the `lseek64' function. */
 #undef HAVE_LSEEK64
@@ -226,6 +255,9 @@
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the `mbrtowc' function. */
+#undef HAVE_MBRTOWC
 
 /* Define to 1 if you have the `mbstowcs' function. */
 #undef HAVE_MBSTOWCS
@@ -263,8 +295,8 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
-/* Define to 1 if you have the <nl_types.h> header file. */
-#undef HAVE_NL_TYPES_H
+/* Define to 1 if you have the `newlocale' function. */
+#undef HAVE_NEWLOCALE
 
 /* Define to 1 if you have the `open64' function. */
 #undef HAVE_OPEN64
@@ -281,6 +313,9 @@
 /* Define to 1 if you have the `posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
+/* Define to 1 if you have the `posix_fadvise64' function. */
+#undef HAVE_POSIX_FADVISE64
+
 /* Define to 1 if you have the `posix_memalign' function. */
 #undef HAVE_POSIX_MEMALIGN
 
@@ -290,8 +325,26 @@
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 
+/* Define to 1 if you have the `pread' function. */
+#undef HAVE_PREAD
+
+/* Define to 1 if you have the `pread64' function. */
+#undef HAVE_PREAD64
+
+/* Define if the <pthread.h> defines PTHREAD_MUTEX_RECURSIVE. */
+#undef HAVE_PTHREAD_MUTEX_RECURSIVE
+
+/* Define if the POSIX multithreading library has read/write locks. */
+#undef HAVE_PTHREAD_RWLOCK
+
 /* Define to 1 if you have the `putenv' function. */
 #undef HAVE_PUTENV
+
+/* Define to 1 if you have the `pwrite' function. */
+#undef HAVE_PWRITE
+
+/* Define to 1 if you have the `pwrite64' function. */
+#undef HAVE_PWRITE64
 
 /* Define to 1 if dirent has d_reclen */
 #undef HAVE_RECLEN_DIRENT
@@ -381,6 +434,12 @@
 /* Define to 1 if you have the `strtoull' function. */
 #undef HAVE_STRTOULL
 
+/* Define to 1 if `st_atim' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_ATIM
+
+/* Define to 1 if you have the `symlink' function. */
+#undef HAVE_SYMLINK
+
 /* Define to 1 if you have the `sync_file_range' function. */
 #undef HAVE_SYNC_FILE_RANGE
 
@@ -413,9 +472,6 @@
 
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 #undef HAVE_SYS_PRCTL_H
-
-/* Define to 1 if you have the <sys/queue.h> header file. */
-#undef HAVE_SYS_QUEUE_H
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
@@ -468,8 +524,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define if you have the 'unsigned long long' type. */
-#undef HAVE_UNSIGNED_LONG_LONG
+/* Define to 1 if the system has the type 'unsigned long long int'. */
+#undef HAVE_UNSIGNED_LONG_LONG_INT
+
+/* Define to 1 if you have the `uselocale' function. */
+#undef HAVE_USELOCALE
 
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
@@ -477,11 +536,18 @@
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME
 
+/* Define to 1 if you have the `utimes' function. */
+#undef HAVE_UTIMES
+
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 
 /* Define to 1 if you have the `valloc' function. */
 #undef HAVE_VALLOC
+
+/* Define to 1 or 0, depending whether the compiler supports simple visibility
+   declarations. */
+#undef HAVE_VISIBILITY
 
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
@@ -489,20 +555,23 @@
 /* Define if you have the 'wchar_t' type. */
 #undef HAVE_WCHAR_T
 
+/* Define to 1 if you have the `wcrtomb' function. */
+#undef HAVE_WCRTOMB
+
 /* Define to 1 if you have the `wcslen' function. */
 #undef HAVE_WCSLEN
+
+/* Define to 1 if you have the `wcsnlen' function. */
+#undef HAVE_WCSNLEN
 
 /* Define if you have the 'wint_t' type. */
 #undef HAVE_WINT_T
 
-/* Define to 1 if you have the `__argz_count' function. */
-#undef HAVE___ARGZ_COUNT
+/* Define to 1 if O_NOATIME works. */
+#undef HAVE_WORKING_O_NOATIME
 
-/* Define to 1 if you have the `__argz_next' function. */
-#undef HAVE___ARGZ_NEXT
-
-/* Define to 1 if you have the `__argz_stringify' function. */
-#undef HAVE___ARGZ_STRINGIFY
+/* Define to 1 if O_NOFOLLOW works. */
+#undef HAVE_WORKING_O_NOFOLLOW
 
 /* Define to 1 if you have the `__fsetlocking' function. */
 #undef HAVE___FSETLOCKING
@@ -540,6 +609,9 @@
 /* Define if <inttypes.h> exists and defines unusable PRI* macros. */
 #undef PRI_MACROS_BROKEN
 
+/* Define if the pthread_in_use() detection is hard. */
+#undef PTHREAD_IN_USE_DETECTION_HARD
+
 /* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
@@ -557,7 +629,9 @@
 
 /* Define as the maximum value of type 'size_t', if the system doesn't define
    it. */
-#undef SIZE_MAX
+#ifndef SIZE_MAX
+# undef SIZE_MAX
+#endif
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -573,8 +647,54 @@
 /* If the compiler supports a TLS storage class define it to that here */
 #undef TLS
 
+/* Define if the POSIX multithreading library can be used. */
+#undef USE_POSIX_THREADS
+
+/* Define if references to the POSIX multithreading library should be made
+   weak. */
+#undef USE_POSIX_THREADS_WEAK
+
+/* Define if the GNU Pth multithreading library can be used. */
+#undef USE_PTH_THREADS
+
+/* Define if references to the GNU Pth multithreading library should be made
+   weak. */
+#undef USE_PTH_THREADS_WEAK
+
+/* Define if the old Solaris multithreading library can be used. */
+#undef USE_SOLARIS_THREADS
+
+/* Define if references to the old Solaris multithreading library should be
+   made weak. */
+#undef USE_SOLARIS_THREADS_WEAK
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
 /* Define to 1 to build uuidd */
 #undef USE_UUIDD
+
+/* Define if the native Windows multithreading API can be used. */
+#undef USE_WINDOWS_THREADS
 
 /* version for gettext */
 #undef VERSION
@@ -594,8 +714,75 @@
 /* Define to 1 if Apple Darwin libintl workaround is needed */
 #undef _INTL_REDIRECT_MACROS
 
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE
+
+/* Please see the Gnulib manual for how to use these macros.
+
+   Suppress extern inline with HP-UX cc, as it appears to be broken; see
+   <http://lists.gnu.org/archive/html/bug-texinfo/2013-02/msg00030.html>.
+
+   Suppress extern inline with Sun C in standards-conformance mode, as it
+   mishandles inline functions that call each other.  E.g., for 'inline void f
+   (void) { } inline void g (void) { f (); }', c99 incorrectly complains
+   'reference to static identifier "f" in extern inline function'.
+   This bug was observed with Sun C 5.12 SunOS_i386 2011/11/16.
+
+   Suppress the use of extern inline on Apple's platforms, as Libc at least
+   through Libc-825.26 (2013-04-09) is incompatible with it; see, e.g.,
+   <http://lists.gnu.org/archive/html/bug-gnulib/2012-12/msg00023.html>.
+   Perhaps Apple will fix this some day.  */
+#if ((__GNUC__ \
+      ? defined __GNUC_STDC_INLINE__ && __GNUC_STDC_INLINE__ \
+      : (199901L <= __STDC_VERSION__ \
+         && !defined __HP_cc \
+         && !(defined __SUNPRO_C && __STDC__))) \
+     && !defined __APPLE__)
+# define _GL_INLINE inline
+# define _GL_EXTERN_INLINE extern inline
+#elif (2 < __GNUC__ + (7 <= __GNUC_MINOR__) && !defined __STRICT_ANSI__ \
+       && !defined __APPLE__)
+# if __GNUC_GNU_INLINE__
+   /* __gnu_inline__ suppresses a GCC 4.2 diagnostic.  */
+#  define _GL_INLINE extern inline __attribute__ ((__gnu_inline__))
+# else
+#  define _GL_INLINE extern inline
+# endif
+# define _GL_EXTERN_INLINE extern
+#else
+# define _GL_INLINE static _GL_UNUSED
+# define _GL_EXTERN_INLINE static _GL_UNUSED
+#endif
+
+#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
+# if defined __GNUC_STDC_INLINE__ && __GNUC_STDC_INLINE__
+#  define _GL_INLINE_HEADER_CONST_PRAGMA
+# else
+#  define _GL_INLINE_HEADER_CONST_PRAGMA \
+     _Pragma ("GCC diagnostic ignored \"-Wsuggest-attribute=const\"")
+# endif
+  /* Suppress GCC's bogus "no previous prototype for 'FOO'"
+     and "no previous declaration for 'FOO'"  diagnostics,
+     when FOO is an inline function in the header; see
+     <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54113>.  */
+# define _GL_INLINE_HEADER_BEGIN \
+    _Pragma ("GCC diagnostic push") \
+    _Pragma ("GCC diagnostic ignored \"-Wmissing-prototypes\"") \
+    _Pragma ("GCC diagnostic ignored \"-Wmissing-declarations\"") \
+    _GL_INLINE_HEADER_CONST_PRAGMA
+# define _GL_INLINE_HEADER_END \
+    _Pragma ("GCC diagnostic pop")
+#else
+# define _GL_INLINE_HEADER_BEGIN
+# define _GL_INLINE_HEADER_END
+#endif
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
@@ -603,15 +790,9 @@
 #undef inline
 #endif
 
-/* Define to `long int' if <sys/types.h> does not define. */
-#undef off_t
-
 /* Define as the type of the result of subtracting two pointers, if the system
    doesn't define it. */
 #undef ptrdiff_t
-
-/* Define to empty if the C compiler doesn't support this keyword. */
-#undef signed
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
@@ -620,4 +801,45 @@
    <inttypes.h> don't define. */
 #undef uintmax_t
 
-#include "dirpaths.h"
+#include <dirpaths.h>
+
+
+#define __libc_lock_t                   gl_lock_t
+#define __libc_lock_define              gl_lock_define
+#define __libc_lock_define_initialized  gl_lock_define_initialized
+#define __libc_lock_init                gl_lock_init
+#define __libc_lock_lock                gl_lock_lock
+#define __libc_lock_unlock              gl_lock_unlock
+#define __libc_lock_recursive_t                   gl_recursive_lock_t
+#define __libc_lock_define_recursive              gl_recursive_lock_define
+#define __libc_lock_define_initialized_recursive  gl_recursive_lock_define_initialized
+#define __libc_lock_init_recursive                gl_recursive_lock_init
+#define __libc_lock_lock_recursive                gl_recursive_lock_lock
+#define __libc_lock_unlock_recursive              gl_recursive_lock_unlock
+#define glthread_in_use  libintl_thread_in_use
+#define glthread_lock_init_func     libintl_lock_init_func
+#define glthread_lock_lock_func     libintl_lock_lock_func
+#define glthread_lock_unlock_func   libintl_lock_unlock_func
+#define glthread_lock_destroy_func  libintl_lock_destroy_func
+#define glthread_rwlock_init_multithreaded     libintl_rwlock_init_multithreaded
+#define glthread_rwlock_init_func              libintl_rwlock_init_func
+#define glthread_rwlock_rdlock_multithreaded   libintl_rwlock_rdlock_multithreaded
+#define glthread_rwlock_rdlock_func            libintl_rwlock_rdlock_func
+#define glthread_rwlock_wrlock_multithreaded   libintl_rwlock_wrlock_multithreaded
+#define glthread_rwlock_wrlock_func            libintl_rwlock_wrlock_func
+#define glthread_rwlock_unlock_multithreaded   libintl_rwlock_unlock_multithreaded
+#define glthread_rwlock_unlock_func            libintl_rwlock_unlock_func
+#define glthread_rwlock_destroy_multithreaded  libintl_rwlock_destroy_multithreaded
+#define glthread_rwlock_destroy_func           libintl_rwlock_destroy_func
+#define glthread_recursive_lock_init_multithreaded     libintl_recursive_lock_init_multithreaded
+#define glthread_recursive_lock_init_func              libintl_recursive_lock_init_func
+#define glthread_recursive_lock_lock_multithreaded     libintl_recursive_lock_lock_multithreaded
+#define glthread_recursive_lock_lock_func              libintl_recursive_lock_lock_func
+#define glthread_recursive_lock_unlock_multithreaded   libintl_recursive_lock_unlock_multithreaded
+#define glthread_recursive_lock_unlock_func            libintl_recursive_lock_unlock_func
+#define glthread_recursive_lock_destroy_multithreaded  libintl_recursive_lock_destroy_multithreaded
+#define glthread_recursive_lock_destroy_func           libintl_recursive_lock_destroy_func
+#define glthread_once_func            libintl_once_func
+#define glthread_once_singlethreaded  libintl_once_singlethreaded
+#define glthread_once_multithreaded   libintl_once_multithreaded
+

@@ -248,7 +248,10 @@ option is useful when removing the
 filesystem feature from a filesystem which has 
 an external journal (or is corrupted
 such that it appears to have an external journal), but that 
-external journal is not available.   
+external journal is not available.   If the filesystem appears to require
+journal replay, the
+.B \-f
+flag must be specified twice to proceed.
 .sp
 .B WARNING:
 Removing an external journal from a filesystem which was not cleanly unmounted
@@ -333,6 +336,13 @@ megabytes.   The size of the journal must be at least 1024 filesystem blocks
 and may be no more than 102,400 filesystem blocks.
 There must be enough free space in the filesystem to create a journal of
 that size.
+.TP
+.BI location =journal-location
+Specify the location of the journal.  The argument
+.I journal-location
+can either be specified as a block number, or if the number has a units
+suffix (e.g., 'M', 'G', etc.) interpret it as the offset from the
+beginning of the file system.
 @JDEV@.TP
 @JDEV@.BI device= external-journal
 @JDEV@Attach the filesystem to the journal block device located on
@@ -501,17 +511,25 @@ More than one filesystem feature can be cleared or set by separating
 features with commas.  Filesystem features prefixed with a 
 caret character ('^') will be cleared in the filesystem's superblock; 
 filesystem features without a prefix character or prefixed with a plus 
-character ('+') will be added to the filesystem.
+character ('+') will be added to the filesystem.  For a detailed
+description of the file system features, please see the man page
+.BR ext4 (5).
 .IP
 The following filesystem features can be set or cleared using
 .BR tune2fs :
 .RS 1.2i
 .TP
 .B dir_index
-Use hashed b-trees to speed up lookups in large directories.
+Use hashed b-trees to speed up lookups for large directories.
 .TP
 .B dir_nlink
 Allow more than 65000 subdirectories per directory.
+.TP
+.B extent
+Enable the use of extent trees to store the location of data blocks in inodes.
+.TP
+.B extra_isize
+Enable the extended inode fields used by ext4.
 .TP
 .B filetype
 Store file type information in directory entries.
@@ -531,9 +549,11 @@ Setting the filesystem feature is equivalent to using the
 .B \-j
 option.
 .TP
+.B huge_file
+Support files larger than 2 terabytes in size.
+.TP
 .B large_file
-Filesystem can contain files that are greater than 2GB.  (Modern kernels
-set this feature automatically when a file > 2GB is created.)
+Filesystem can contain files that are greater than 2GB.
 .TP
 .B resize_inode
 Reserve space so the block group descriptor table may grow in the
@@ -542,16 +562,17 @@ future.
 only supports clearing this filesystem feature.
 .TP
 .B mmp
-Enable or disable multiple mount protection (MMP) feature.  MMP helps to
-protect the filesystem from being multiply mounted and is useful in
-shared storage environments.
+Enable or disable multiple mount protection (MMP) feature.
+@QUOTA_MAN_COMMENT@.TP
+@QUOTA_MAN_COMMENT@.B quota
+@QUOTA_MAN_COMMENT@Enable internal file system quota inodes.
 .TP
 .B sparse_super
 Limit the number of backup superblocks to save space on large filesystems.
 .TP
 .B uninit_bg
-Allow the kernel to initialize bitmaps and inode tables and keep a high
-watermark for the unused inodes in a filesystem, to reduce
+Allow the kernel to initialize bitmaps and inode tables lazily, and to
+keep a high watermark for the unused inodes in a filesystem, to reduce
 .BR e2fsck (8)
 time.  This first e2fsck run after enabling this feature will take the
 full time, but subsequent e2fsck runs will take only a fraction of the
@@ -681,4 +702,5 @@ http://e2fsprogs.sourceforge.net.
 .BR debugfs (8),
 .BR dumpe2fs (8),
 .BR e2fsck (8),
-.BR mke2fs (8)
+.BR mke2fs (8),
+.BR ext4 (5)

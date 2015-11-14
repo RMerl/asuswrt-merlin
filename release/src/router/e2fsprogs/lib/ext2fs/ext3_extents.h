@@ -95,15 +95,20 @@ struct ext3_ext_path {
 	((struct ext3_extent_idx *) (((char *) (__hdr__)) +	\
 				     sizeof(struct ext3_extent_header)))
 #define EXT_HAS_FREE_INDEX(__path__) \
-	((__path__)->p_hdr->eh_entries < (__path__)->p_hdr->eh_max)
+	(ext2fs_le16_to_cpu((__path__)->p_hdr->eh_entries) < \
+	 ext2fs_le16_to_cpu((__path__)->p_hdr->eh_max))
 #define EXT_LAST_EXTENT(__hdr__) \
-	(EXT_FIRST_EXTENT((__hdr__)) + (__hdr__)->eh_entries - 1)
+	(EXT_FIRST_EXTENT((__hdr__)) + \
+	ext2fs_le16_to_cpu((__hdr__)->eh_entries) - 1)
 #define EXT_LAST_INDEX(__hdr__) \
-	(EXT_FIRST_INDEX((__hdr__)) + (__hdr__)->eh_entries - 1)
+	(EXT_FIRST_INDEX((__hdr__)) + \
+	ext2fs_le16_to_cpu((__hdr__)->eh_entries) - 1)
 #define EXT_MAX_EXTENT(__hdr__) \
-	(EXT_FIRST_EXTENT((__hdr__)) + (__hdr__)->eh_max - 1)
+	(EXT_FIRST_EXTENT((__hdr__)) + \
+	ext2fs_le16_to_cpu((__hdr__)->eh_max) - 1)
 #define EXT_MAX_INDEX(__hdr__) \
-	(EXT_FIRST_INDEX((__hdr__)) + (__hdr__)->eh_max - 1)
+	(EXT_FIRST_INDEX((__hdr__)) + \
+	ext2fs_le16_to_cpu((__hdr__)->eh_max) - 1)
 
 #endif /* _LINUX_EXT3_EXTENTS */
 

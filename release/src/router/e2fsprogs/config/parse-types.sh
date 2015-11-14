@@ -16,8 +16,15 @@ if test -z "$CPP"; then
     CPP="$CC -E"
 fi
 
-echo '#include <asm/types.h>' | $CPP - | \
-    sed -f sed.script | grep '^#' > asm_types.h
+/bin/echo -n "checking for __uNN types... "
+# can't check [ -f /usr/include/asm/types.h ] directly, since
+# the include path might be different if cross-compiling
+if echo '#include <asm/types.h>' | $CPP - 2> parse-types.log | \
+	sed -f sed.script | grep '^#' > asm_types.h; then
+	echo "using <asm/types.h>"
+else
+	echo "using generic types"
+fi
 
 rm sed.script
 
@@ -34,7 +41,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__U8_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __U8_TYPEDEF not defined
 #endif
 #ifdef __S8_TYPEDEF
@@ -43,7 +50,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__S8_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __S8_TYPEDEF not defined
 #endif
 #ifdef __U16_TYPEDEF
@@ -52,7 +59,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__U16_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __U16_TYPEDEF not defined
 #endif
 #ifdef __S16_TYPEDEF
@@ -61,7 +68,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__S16_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __S16_TYPEDEF not defined
 #endif
 
@@ -71,7 +78,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__U32_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __U32_TYPEDEF not defined
 #endif
 #ifdef __S32_TYPEDEF
@@ -80,7 +87,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__S32_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __S32_TYPEDEF not defined
 #endif
 
@@ -90,7 +97,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__U64_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __U64_TYPEDEF not defined
 #endif
 #ifdef __S64_TYPEDEF
@@ -99,7 +106,7 @@ int main(int argc, char **argv)
 		       (int) sizeof(__S64_TYPEDEF));
 		exit(1);
 	}
-#else
+#elif defined(__linux__)
 #warning __S64_TYPEDEF not defined
 #endif
 	return 0;
@@ -111,8 +118,10 @@ if ./asm_types
 then
     true
 else
-    echo "Problem detected with asm_types.h"
-    echo "" > asm_types.h
+    if [ "${CROSS_COMPILE}" != "1" ]; then
+	echo "Problem detected with asm_types.h"
+	echo "" > asm_types.h
+    fi
 fi
 rm asm_types.c asm_types
 

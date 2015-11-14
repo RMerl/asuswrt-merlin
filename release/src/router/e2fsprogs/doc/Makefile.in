@@ -14,10 +14,10 @@ INSTALL = @INSTALL@
 DVI=texi2dvi
 DVIPS=dvips -o "$@"
 INFO=@MAKEINFO@
-HTML=texi2html -split_chapter
+HTML=makeinfo --html --no-split
 PS2PDF=ps2pdf
 
-all:: libext2fs.info libext2fs.dvi
+all:: libext2fs.info libext2fs.dvi libext2fs.html
 
 install-doc-libs: libext2fs.info libext2fs.dvi
 	$(Q) $(RM) -rf $(DESTDIR)$(infodir)/libext2fs.info*
@@ -49,12 +49,9 @@ libext2fs.pdf: libext2fs.ps
 	$(E) "	PS2PDF $@"
 	-$(Q) $(PS2PDF) libext2fs.ps
 
-libext2fs_abt.html: $(srcdir)/libext2fs.texinfo
+libext2fs.html: $(srcdir)/libext2fs.texinfo
 	$(E) "	TEXI2HTML $@"
 	-$(Q) $(HTML) $(srcdir)/libext2fs.texinfo
-	-$(Q) if test -d libext2fs ; then \
-		mv libext2fs/* . ; rmdir libext2fs ; \
-		fi
 
 .PHONY: distclean
 distclean:: clean

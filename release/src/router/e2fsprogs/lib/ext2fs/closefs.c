@@ -35,8 +35,16 @@ static int test_root(unsigned int a, unsigned int b)
 
 int ext2fs_bg_has_super(ext2_filsys fs, dgrp_t group)
 {
-	if (!(fs->super->s_feature_ro_compat &
-	      EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER) || group <= 1)
+	if (group == 0)
+		return 1;
+	if (fs->super->s_feature_compat & EXT4_FEATURE_COMPAT_SPARSE_SUPER2) {
+		if (group == fs->super->s_backup_bgs[0] ||
+		    group == fs->super->s_backup_bgs[1])
+			return 1;
+		return 0;
+	}
+	if ((group <= 1) || !(fs->super->s_feature_ro_compat &
+			      EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER))
 		return 1;
 	if (!(group & 1))
 		return 0;
@@ -244,7 +252,7 @@ void ext2fs_update_dynamic_rev(ext2_filsys fs)
 }
 
 static errcode_t write_backup_super(ext2_filsys fs, dgrp_t group,
-				    blk_t group_block,
+				    blk64_t group_block,
 				    struct ext2_super_block *super_shadow)
 {
 	dgrp_t	sgrp = group;
@@ -279,7 +287,7 @@ errcode_t ext2fs_flush2(ext2_filsys fs, int flags)
 	dgrp_t		j;
 #endif
 	char	*group_ptr;
-	int	old_desc_blocks;
+	blk64_t	old_desc_blocks;
 	struct ext2fs_numeric_progress_struct progress;
 
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
@@ -302,7 +310,7 @@ errcode_t ext2fs_flush2(ext2_filsys fs, int flags)
 	       fs->desc_blocks);
 
 	/* swap the group descriptors */
-	for (j=0; j < fs->group_desc_count; j++) {
+	for (j = 0; j < fs->group_desc_count; j++) {
 		gdp = ext2fs_group_desc(fs, group_shadow, j);
 		ext2fs_swap_group_desc2(fs, gdp);
 	}
@@ -336,9 +344,11 @@ errcode_t ext2fs_flush2(ext2_filsys fs, int flags)
 	 * superblocks and group descriptors.
 	 */
 	group_ptr = (char *) group_shadow;
-	if (fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG)
+	if (fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG) {
 		old_desc_blocks = fs->super->s_first_meta_bg;
-	else
+		if (old_desc_blocks > fs->desc_blocks)
+			old_desc_blocks = fs->desc_blocks;
+	} else
 		old_desc_blocks = fs->desc_blocks;
 
 	ext2fs_numeric_progress_init(fs, &progress, NULL,
@@ -427,6 +437,18 @@ errout:
 		ext2fs_free_mem(&group_shadow);
 #endif
 	return retval;
+}
+
+errcode_t ext2fs_close_free(ext2_filsys *fs_ptr)
+{
+	errcode_t ret;
+	ext2_filsys fs = *fs_ptr;
+
+	ret = ext2fs_close2(fs, 0);
+	if (ret)
+		ext2fs_free(fs);
+	*fs_ptr = NULL;
+	return ret;
 }
 
 errcode_t ext2fs_close(ext2_filsys fs)

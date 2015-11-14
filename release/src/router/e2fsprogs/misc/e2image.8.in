@@ -8,10 +8,36 @@ e2image \- Save critical ext2/ext3/ext4 filesystem metadata to a file
 .SH SYNOPSIS
 .B e2image
 [
-.B \-rsIQa
+.B \-r|Q
+]
+[
+.B \-fr
 ]
 .I device
 .I image-file
+.br
+.B e2image
+.B \-I
+.I device
+.I image-file
+.br
+.B e2image
+.B \-ra
+[
+.B \-cfnp
+]
+[
+.B \-o
+.I src_offset
+]
+[
+.B \-O
+.I dest_offset
+]
+.I src_fs
+[
+.I dest_fs
+]
 .SH DESCRIPTION
 The
 .B e2image
@@ -29,6 +55,16 @@ option to those programs.  This can assist an expert in
 recovering catastrophically corrupted filesystems.  In the future,
 e2fsck will be enhanced to be able to use the image file to help
 recover a badly damaged filesystem.
+.PP
+When saving an e2image for debugging purposes, using either the
+.B \-r
+or
+.B \-Q
+options, the filesystem must be unmounted or be mounted read/only, in order
+for the image file to be in a consistent state.  This requirement can be
+overriden using the
+.B \-f
+option, but the resulting image file is very likely not going to be useful.
 .PP
 If
 .I image-file
@@ -189,8 +225,53 @@ only includes fs metadata, not regular file data.  The
 option can be specified to include all data.  This will
 give an image that is suitable to use to clone the entire FS or
 for backup purposes.  Note that this option only works with the
-raw or QCOW2 formats.
+raw or QCOW2 formats.  The
+.B \-p
+switch may be given to show progress.  If the file system is being
+cloned to a flash-based storage device (where reads are very fast and
+where it is desirable to avoid unnecessary writes to reduce write wear
+on the device), the
+.B \-c
+option which cause e2image to try reading a block from the destination
+to see if it is identical to the block which
+.B e2image
+is about to copy.  If the block is already the same, the write can be
+skipped.  The
+.B \-n
+option will cause all of the writes to be no-ops, and print the blocks
+that would have been written.
 .PP
+.SH OFFSETS
+Normally a filesystem starts at the beginning of a partition, and
+.B e2image
+is run on the partition.  When working with image files, you don't
+have the option of using the partition device, so you can specify
+the offset where the filesystem starts directly with the
+.B \-o
+option.  Similarly the
+.B \-O
+option specifies the offset that should be seeked to in the destination
+before writing the filesystem.
+.PP
+For example, if you have a
+.B dd
+image of a whole hard drive that contains an ext2 fs in a partition
+starting at 1 MiB, you can clone that fs with:
+.PP
+.br
+\	\fBe2image \-aro 1048576 img /dev/sda1\fR
+.br
+.PP
+Or you can clone a fs into an image file, leaving room in the first
+MiB for a partition table with:
+.PP
+.br
+\	\fBe2image -arO 1048576 /dev/sda1 img\fR
+.br
+.PP
+If you specify at least one offset, and only one file, an in-place
+move will be performed, allowing you to safely move the filesystem
+from one offset to another.
 .SH AUTHOR
 .B e2image
 was written by Theodore Ts'o (tytso@mit.edu).

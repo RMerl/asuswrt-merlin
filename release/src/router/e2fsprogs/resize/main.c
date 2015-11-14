@@ -36,7 +36,8 @@ extern int optind;
 
 #include "../version.h"
 
-char *program_name, *device_name, *io_options;
+char *program_name;
+static char *device_name, *io_options;
 
 static void usage (char *prog)
 {
@@ -151,10 +152,10 @@ static void bigalloc_check(ext2_filsys fs, int force)
 {
 	if (!force && EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
 				EXT4_FEATURE_RO_COMPAT_BIGALLOC)) {
-		fprintf(stderr, _("\nResizing bigalloc file systems has "
-				  "not been fully tested.  Proceed\n"
-				  "at your own risk!  Use the force option "
-				  "if you want to go ahead anyway.\n\n"));
+		fprintf(stderr, "%s", _("\nResizing bigalloc file systems has "
+					"not been fully tested.  Proceed at\n"
+					"your own risk!  Use the force option "
+					"if you want to go ahead anyway.\n\n"));
 		exit(1);
 	}
 }
@@ -180,6 +181,7 @@ int main (int argc, char ** argv)
 	ext2fs_struct_stat st_buf;
 	__s64		new_file_size;
 	unsigned int	sys_page_size = 4096;
+	unsigned int	blocksize;
 	long		sysval;
 	int		len, mount_flags;
 	char		*mtpt;
@@ -312,10 +314,42 @@ int main (int argc, char ** argv)
 	retval = ext2fs_open2(device_name, io_options, io_flags,
 			      0, 0, io_ptr, &fs);
 	if (retval) {
-		com_err (program_name, retval, _("while trying to open %s"),
-			 device_name);
-		printf (_("Couldn't find valid filesystem superblock.\n"));
+		com_err(program_name, retval, _("while trying to open %s"),
+			device_name);
+		printf("%s", _("Couldn't find valid filesystem superblock.\n"));
 		exit (1);
+	}
+	fs->default_bitmap_type = EXT2FS_BMAP64_RBTREE;
+
+	/*
+	 * Before acting on an unmounted filesystem, make sure it's ok,
+	 * unless the user is forcing it.
+	 *
+	 * We do ERROR and VALID checks even if we're only printing the
+	 * minimimum size, because traversal of a badly damaged filesystem
+	 * can cause issues as well.  We don't require it to be fscked after
+	 * the last mount time in this case, though, as this is a bit less
+	 * risky.
+	 */
+	if (!force && !(mount_flags & EXT2_MF_MOUNTED)) {
+		int checkit = 0;
+
+		if (fs->super->s_state & EXT2_ERROR_FS)
+			checkit = 1;
+
+		if ((fs->super->s_state & EXT2_VALID_FS) == 0)
+			checkit = 1;
+
+		if ((fs->super->s_lastcheck < fs->super->s_mtime) &&
+		    !print_min_size)
+			checkit = 1;
+
+		if (checkit) {
+			fprintf(stderr,
+				_("Please run 'e2fsck -f %s' first.\n\n"),
+				device_name);
+			exit(1);
+		}
 	}
 
 	/*
@@ -328,16 +362,9 @@ int main (int argc, char ** argv)
 		exit(1);
 	}
 
-	min_size = calculate_minimum_resize_size(fs);
+	min_size = calculate_minimum_resize_size(fs, flags);
 
 	if (print_min_size) {
-		if (!force && ((fs->super->s_state & EXT2_ERROR_FS) ||
-			       ((fs->super->s_state & EXT2_VALID_FS) == 0))) {
-			fprintf(stderr,
-				_("Please run 'e2fsck -f %s' first.\n\n"),
-				device_name);
-			exit(1);
-		}
 		printf(_("Estimated minimum size of the filesystem: %llu\n"),
 		       min_size);
 		exit(0);
@@ -360,10 +387,11 @@ int main (int argc, char ** argv)
 	 * defaults and for making sure the new filesystem doesn't
 	 * exceed the partition size.
 	 */
-	retval = ext2fs_get_device_size2(device_name, fs->blocksize,
+	blocksize = fs->blocksize;
+	retval = ext2fs_get_device_size2(device_name, blocksize,
 					 &max_size);
 	if (retval) {
-		com_err(program_name, retval,
+		com_err(program_name, retval, "%s",
 			_("while trying to determine filesystem size"));
 		exit(1);
 	}
@@ -380,8 +408,8 @@ int main (int argc, char ** argv)
 	} else {
 		new_size = max_size;
 		/* Round down to an even multiple of a pagesize */
-		if (sys_page_size > fs->blocksize)
-			new_size &= ~((sys_page_size / fs->blocksize)-1);
+		if (sys_page_size > blocksize)
+			new_size &= ~((sys_page_size / blocksize)-1);
 	}
 	if (!EXT2_HAS_INCOMPAT_FEATURE(fs->super,
 				       EXT4_FEATURE_INCOMPAT_64BIT)) {
@@ -389,7 +417,7 @@ int main (int argc, char ** argv)
 		if (new_size == (1ULL << 32))
 			new_size--;
 		else if (new_size > (1ULL << 32)) {
-			com_err(program_name, 0,
+			com_err(program_name, 0, "%s",
 				_("New size too large to be "
 				  "expressed in 32 bits\n"));
 			exit(1);
@@ -403,7 +431,7 @@ int main (int argc, char ** argv)
 	}
 	if (use_stride >= 0) {
 		if (use_stride >= (int) fs->super->s_blocks_per_group) {
-			com_err(program_name, 0,
+			com_err(program_name, 0, "%s",
 				_("Invalid stride length"));
 			exit(1);
 		}
@@ -417,7 +445,7 @@ int main (int argc, char ** argv)
 	 * automatically extend it in a sparse fashion by writing the
 	 * last requested block.
 	 */
-	new_file_size = ((__u64) new_size) * fs->blocksize;
+	new_file_size = ((__u64) new_size) * blocksize;
 	if ((__u64) new_file_size >
 	    (((__u64) 1) << (sizeof(st_buf.st_size)*8 - 1)) - 1)
 		fd = -1;
@@ -431,30 +459,23 @@ int main (int argc, char ** argv)
 		fprintf(stderr, _("The containing partition (or device)"
 			" is only %llu (%dk) blocks.\nYou requested a new size"
 			" of %llu blocks.\n\n"), max_size,
-			fs->blocksize / 1024, new_size);
+			blocksize / 1024, new_size);
 		exit(1);
 	}
 	if (new_size == ext2fs_blocks_count(fs->super)) {
-		fprintf(stderr, _("The filesystem is already %llu blocks "
-			"long.  Nothing to do!\n\n"), new_size);
+		fprintf(stderr, _("The filesystem is already %llu (%dk) "
+			"blocks long.  Nothing to do!\n\n"), new_size,
+			blocksize / 1024);
 		exit(0);
 	}
 	if (mount_flags & EXT2_MF_MOUNTED) {
 		bigalloc_check(fs, force);
 		retval = online_resize_fs(fs, mtpt, &new_size, flags);
 	} else {
-		if (!force && ((fs->super->s_lastcheck < fs->super->s_mtime) ||
-			       (fs->super->s_state & EXT2_ERROR_FS) ||
-			       ((fs->super->s_state & EXT2_VALID_FS) == 0))) {
-			fprintf(stderr,
-				_("Please run 'e2fsck -f %s' first.\n\n"),
-				device_name);
-			exit(1);
-		}
 		bigalloc_check(fs, force);
 		printf(_("Resizing the filesystem on "
 			 "%s to %llu (%dk) blocks.\n"),
-		       device_name, new_size, fs->blocksize / 1024);
+		       device_name, new_size, blocksize / 1024);
 		retval = resize_fs(fs, &new_size, flags,
 				   ((flags & RESIZE_PERCENT_COMPLETE) ?
 				    resize_progress_func : 0));
@@ -467,11 +488,11 @@ int main (int argc, char ** argv)
 			_("Please run 'e2fsck -fy %s' to fix the filesystem\n"
 			  "after the aborted resize operation.\n"),
 			device_name);
-		ext2fs_close(fs);
+		ext2fs_close_free(&fs);
 		exit(1);
 	}
-	printf(_("The filesystem on %s is now %llu blocks long.\n\n"),
-	       device_name, new_size);
+	printf(_("The filesystem on %s is now %llu (%dk) blocks long.\n\n"),
+	       device_name, new_size, blocksize / 1024);
 
 	if ((st_buf.st_size > new_file_size) &&
 	    (fd > 0)) {

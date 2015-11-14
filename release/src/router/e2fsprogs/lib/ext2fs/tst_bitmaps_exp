@@ -43,10 +43,28 @@ tst_bitmaps: ffzb 12 16
 ext2fs_find_first_zero_block_bitmap2() returned No such file or directory
 tst_bitmaps: ffzb 12 20
 First unmarked block is 17
+tst_bitmaps: ffsb 0 127
+ext2fs_find_first_set_block_bitmap2() returned Invalid argument
+tst_bitmaps: ffsb 1 128
+ext2fs_find_first_set_block_bitmap2() returned Invalid argument
+tst_bitmaps: ffsb 1 127
+First marked block is 12
+tst_bitmaps: ffsb 1 10
+ext2fs_find_first_set_block_bitmap2() returned No such file or directory
+tst_bitmaps: ffsb 1 11
+ext2fs_find_first_set_block_bitmap2() returned No such file or directory
+tst_bitmaps: ffsb 12 12
+First marked block is 12
+tst_bitmaps: ffsb 13 12
+ext2fs_find_first_set_block_bitmap2() returned Invalid argument
+tst_bitmaps: ffsb 12 15
+First marked block is 12
 tst_bitmaps: clearb 13
 Clearing block 13, was set before
 tst_bitmaps: ffzb 12 20
 First unmarked block is 13
+tst_bitmaps: ffsb 13 18
+First marked block is 14
 tst_bitmaps: setb 13
 Setting block 13, was clear before
 tst_bitmaps: clearb 12 7
@@ -91,10 +109,24 @@ tst_bitmaps: ffzi 2 5
 ext2fs_find_first_zero_inode_bitmap2() returned No such file or directory
 tst_bitmaps: ffzi 2 6
 First unmarked inode is 6
+tst_bitmaps: ffsi 0 31
+ext2fs_find_first_set_inode_bitmap2() returned Invalid argument
+tst_bitmaps: ffsi 1 33
+ext2fs_find_first_set_inode_bitmap2() returned Invalid argument
+tst_bitmaps: ffsi 1 32
+First marked inode is 2
+tst_bitmaps: ffsi 2 32
+First marked inode is 2
+tst_bitmaps: ffsi 6 32
+ext2fs_find_first_set_inode_bitmap2() returned No such file or directory
 tst_bitmaps: cleari 4
 Clearing inode 4, was set before
 tst_bitmaps: ffzi 2 6
 First unmarked inode is 4
+tst_bitmaps: ffsi 4 32
+First marked inode is 5
+tst_bitmaps: ffsi 5 32
+First marked inode is 5
 tst_bitmaps: zeroi
 Clearing inode bitmap.
 tst_bitmaps: testi 5
@@ -207,5 +239,71 @@ Clearing block 7, was set before
 tst_bitmaps: dump_bb
 block bitmap: b92a85e6c4680d000000000000000000
 bits set: 25
+tst_bitmaps: ffsb 14 127
+First marked block is 14
+tst_bitmaps: ffsb 15 127
+First marked block is 17
+tst_bitmaps: ffsb 36 127
+First marked block is 39
+tst_bitmaps: ffsb 32 127
+First marked block is 32
+tst_bitmaps: ffsb 52 127
+First marked block is 52
+tst_bitmaps: ffsb 53 127
+ext2fs_find_first_set_block_bitmap2() returned No such file or directory
+tst_bitmaps: ffsb 46 127
+First marked block is 46
+tst_bitmaps: ffsb 45 127
+First marked block is 46
+tst_bitmaps: ffsb 41 127
+First marked block is 44
+tst_bitmaps: ffsb 20 127
+First marked block is 24
+tst_bitmaps: ffsb 1 127
+First marked block is 1
+tst_bitmaps: ffsb 2 127
+First marked block is 4
+tst_bitmaps: ffsb 3 127
+First marked block is 4
+tst_bitmaps: ffsb 4 127
+First marked block is 4
+tst_bitmaps: ffsb 5 127
+First marked block is 5
+tst_bitmaps: ffsb 6 127
+First marked block is 6
+tst_bitmaps: ffsb 7 127
+First marked block is 8
+tst_bitmaps: ffsb 8 127
+First marked block is 8
+tst_bitmaps: ffzb 1 127
+First unmarked block is 2
+tst_bitmaps: ffzb 2 127
+First unmarked block is 2
+tst_bitmaps: ffzb 3 127
+First unmarked block is 3
+tst_bitmaps: ffzb 4 127
+First unmarked block is 7
+tst_bitmaps: ffzb 5 127
+First unmarked block is 7
+tst_bitmaps: ffzb 6 127
+First unmarked block is 7
+tst_bitmaps: ffzb 7 127
+First unmarked block is 7
+tst_bitmaps: ffzb 8 127
+First unmarked block is 9
+tst_bitmaps: ffzb 45 127
+First unmarked block is 45
+tst_bitmaps: ffzb 46 127
+First unmarked block is 48
+tst_bitmaps: ffzb 47 127
+First unmarked block is 48
+tst_bitmaps: ffzb 48 127
+First unmarked block is 48
+tst_bitmaps: ffzb 49 127
+First unmarked block is 50
+tst_bitmaps: ffzb 50 127
+First unmarked block is 50
+tst_bitmaps: ffzb 51 127
+First unmarked block is 53
 tst_bitmaps: quit
 tst_bitmaps: 

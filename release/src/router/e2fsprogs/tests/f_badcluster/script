@@ -1,0 +1,27 @@
+if test -x $DEBUGFS_EXE; then
+	IMAGE=$test_dir/../f_badcluster/image.gz
+	OUT=$test_name.log
+	EXP=$test_dir/expect
+	gzip -d < $IMAGE > $TMPFILE
+	$FSCK -fy $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed > $OUT
+	$FSCK -fy $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed >> $OUT
+	$FSCK -fy $TMPFILE 2>&1 | sed -f $cmd_dir/filter.sed >> $OUT
+	for i in a b c d e f g; do echo "stat /$i"; done > $TMPFILE.tmp
+	echo "quit" >> $TMPFILE.tmp
+	$DEBUGFS_EXE -f $TMPFILE.tmp $TMPFILE >> $OUT
+	rm -f $TMPFILE.tmp
+
+	cmp -s $OUT $EXP
+	status=$?
+
+	if [ "$status" = 0 ]; then
+		echo "$test_name: $test_description: ok"
+		touch $test_name.ok
+	else
+		echo "$test_name: $test_description: failed"
+		diff $DIFF_OPTS $EXP $OUT > $test_name.failed
+		rm -f $test_name.tmp
+	fi
+else
+	echo "$test_name: skipped"
+fi

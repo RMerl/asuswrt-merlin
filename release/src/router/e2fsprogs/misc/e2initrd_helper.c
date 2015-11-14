@@ -39,8 +39,8 @@ extern char *optarg;
 #include "../version.h"
 #include "nls-enable.h"
 
-const char * program_name = "e2initrd_helper";
-char * device_name;
+static const char * program_name = "e2initrd_helper";
+static char * device_name;
 static int open_flag;
 static int root_type;
 static blkid_cache cache = NULL;

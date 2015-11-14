@@ -99,7 +99,7 @@ void e2fsck_pass4(e2fsck_t ctx)
 	struct problem_context	pctx;
 	__u16	link_count, link_counted;
 	char	*buf = 0;
-	int	group, maxgroup;
+	dgrp_t	group, maxgroup;
 
 	init_resource_track(&rtrack, ctx->fs->io);
 

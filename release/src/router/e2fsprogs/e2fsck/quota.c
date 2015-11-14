@@ -15,21 +15,25 @@
 
 #include "e2fsck.h"
 #include "problem.h"
-#include "quota/mkquota.h"
 #include "quota/quotaio.h"
 
 static void move_quota_inode(ext2_filsys fs, ext2_ino_t from_ino,
 			     ext2_ino_t to_ino, int qtype)
 {
 	struct ext2_inode	inode;
+	errcode_t		retval;
 	char			qf_name[QUOTA_NAME_LEN];
 
 	/* We need the inode bitmap to be loaded */
 	if (ext2fs_read_bitmaps(fs))
 		return;
 
-	if (ext2fs_read_inode(fs, from_ino, &inode))
+	retval = ext2fs_read_inode(fs, from_ino, &inode);
+	if (retval) {
+		com_err("ext2fs_read_inode", retval, "%s",
+			_("in move_quota_inode"));
 		return;
+	}
 
 	inode.i_links_count = 1;
 	inode.i_mode = LINUX_S_IFREG | 0600;
@@ -38,7 +42,13 @@ static void move_quota_inode(ext2_filsys fs, ext2_ino_t from_ino,
 			EXT3_FEATURE_INCOMPAT_EXTENTS)
 		inode.i_flags |= EXT4_EXTENTS_FL;
 
-	ext2fs_write_new_inode(fs, to_ino, &inode);
+	retval = ext2fs_write_new_inode(fs, to_ino, &inode);
+	if (retval) {
+		com_err("ext2fs_write_new_inode", retval, "%s",
+			_("in move_quota_inode"));
+		return;
+	}
+
 	/* unlink the old inode */
 	quota_get_qf_name(qtype, QFMT_VFS_V1, qf_name);
 	ext2fs_unlink(fs, EXT2_ROOT_INO, qf_name, from_ino, 0);

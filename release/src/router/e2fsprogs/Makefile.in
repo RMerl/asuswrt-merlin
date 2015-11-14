@@ -13,9 +13,9 @@ INSTALL = @INSTALL@
 @DEBUGFS_CMT@DEBUGFS_DIR= debugfs
 @UUID_CMT@UUID_LIB_SUBDIR= lib/uuid
 @BLKID_CMT@BLKID_LIB_SUBDIR= lib/blkid
-@QUOTA_CMT@QUOTA_LIB_SUBDIR= lib/quota
+QUOTA_LIB_SUBDIR= lib/quota
 
-LIB_SUBDIRS=lib/et lib/ss lib/e2p $(UUID_LIB_SUBDIR) lib/ext2fs $(BLKID_LIB_SUBDIR) $(QUOTA_LIB_SUBDIR) intl
+LIB_SUBDIRS=lib/et lib/ss lib/e2p $(UUID_LIB_SUBDIR) $(BLKID_LIB_SUBDIR) $(QUOTA_LIB_SUBDIR) lib/ext2fs intl
 PROG_SUBDIRS=e2fsck $(DEBUGFS_DIR) misc $(RESIZE_DIR) tests/progs po
 SUBDIRS=util $(LIB_SUBDIRS) $(PROG_SUBDIRS) tests
 
@@ -73,10 +73,12 @@ install-libs: install-libs-recursive
 
 uninstall-libs: uninstall-libs-recursive
 
+coverage.txt: coverage.txt-recursive
+
 check-recursive: all
 
 TAGS clean-recursive distclean-recursive depend-recursive check-recursive \
-  mostlyclean-recursive realclean-recursive:
+  mostlyclean-recursive realclean-recursive coverage.txt-recursive:
 	@for subdir in $(SUBDIRS); do \
 	  if test -d $$subdir ; then \
 	    target=`echo $@|$(SED) 's/-recursive//'`; \
@@ -86,7 +88,7 @@ TAGS clean-recursive distclean-recursive depend-recursive check-recursive \
 	done
 
 all-progs-recursive install-progs-recursive install-strip-progs-recursive \
-  uninstall-progs-recursive: all-libs-recursive
+  uninstall-progs-recursive coverage.txt-progs-recursive: all-libs-recursive
 	@for subdir in $(PROG_SUBDIRS); do \
 	  if test -d $$subdir ; then \
 	    target=`echo $@|$(SED) 's/-progs-recursive//'`; \
@@ -97,7 +99,8 @@ all-progs-recursive install-progs-recursive install-strip-progs-recursive \
 
 all-libs-recursive install-libs-recursive install-strip-libs-recursive \
   uninstall-libs-recursive install-shlibs-libs-recursive \
-  install-shlibs-strip-libs-recursive uninstall-shlibs-libs-recursive:
+  install-shlibs-strip-libs-recursive uninstall-shlibs-libs-recursive \
+  coverage.txt-libs-recursive:
 	@for subdir in $(LIB_SUBDIRS); do \
 	  if test -d $$subdir ; then \
 	    target=`echo $@|$(SED) 's/-libs-recursive//'`; \
@@ -108,7 +111,7 @@ all-libs-recursive install-libs-recursive install-strip-libs-recursive \
 
 mostlyclean: mostlyclean-recursive mostlyclean-local
 
-clean: clean-recursive clean-local clean-doc
+clean:: clean-recursive clean-local clean-doc
 	$(RM) -f $(SUBS) 
 
 distclean: distclean-doc distclean-recursive

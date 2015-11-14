@@ -326,10 +326,12 @@ static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
 		state_fd = open("/var/lib/libuuid/clock.txt",
 				O_RDWR|O_CREAT, 0660);
 		(void) umask(save_umask);
-		state_f = fdopen(state_fd, "r+");
-		if (!state_f) {
-			close(state_fd);
-			state_fd = -1;
+		if (state_fd >= 0) {
+			state_f = fdopen(state_fd, "r+");
+			if (!state_f) {
+				close(state_fd);
+				state_fd = -1;
+			}
 		}
 	}
 	fl.l_type = F_WRLCK;
@@ -343,7 +345,6 @@ static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
 			if ((errno == EAGAIN) || (errno == EINTR))
 				continue;
 			fclose(state_f);
-			close(state_fd);
 			state_fd = -1;
 			break;
 		}
@@ -401,9 +402,10 @@ try_again:
 
 	if (state_fd > 0) {
 		rewind(state_f);
-		len = fprintf(state_f, 
+		len = fprintf(state_f,
 			      "clock: %04x tv: %016lu %08lu adj: %08d\n",
-			      clock_seq, last.tv_sec, last.tv_usec, adjustment);
+			      clock_seq, last.tv_sec, (long)last.tv_usec,
+			      adjustment);
 		fflush(state_f);
 		if (ftruncate(state_fd, len) < 0) {
 			fprintf(state_f, "                   \n");
@@ -411,7 +413,10 @@ try_again:
 		}
 		rewind(state_f);
 		fl.l_type = F_UNLCK;
-		fcntl(state_fd, F_SETLK, &fl);
+		if (fcntl(state_fd, F_SETLK, &fl) < 0) {
+			fclose(state_f);
+			state_fd = -1;
+		}
 	}
 
 	*clock_high = clock_reg >> 32;

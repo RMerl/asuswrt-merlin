@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Test to see if backtrace requires a library in /usr/lib
+# Returns true if the backtrace command works and requires a library in /usr/lib
+# This is a nasty workaround for Debian bug #708307, which is really a glibc bug
+#
+
+cat > /tmp/backtrace$$.c << EOF
+
+#include <execinfo.h>
+
+int main(int argc, char **argv)
+{
+       void *stack_syms[32];
+       int frames;
+
+       frames = backtrace(stack_syms, 32);
+       backtrace_symbols_fd(stack_syms, frames, 0);
+}
+EOF
+
+if ! cc -o /tmp/backtrace$$ /tmp/backtrace$$.c; then
+   exit 1
+fi
+
+if ! ldd /tmp/backtrace$$ > /tmp/backtrace$$.ldd 2>&1 ; then
+   exit 1
+fi
+
+grep -q /usr/lib /tmp/backtrace$$.ldd
+ret=$?
+
+/bin/rm -f /tmp/backtrace$$*
+exit $ret

@@ -87,7 +87,7 @@ void do_lsdel(int argc, char **argv)
 	time_t			now;
 	FILE			*out;
 
-	if (common_args_process(argc, argv, 1, 2, "ls_deleted_inodes",
+	if (common_args_process(argc, argv, 1, 2, "list_deleted_inodes",
 				"[secs]", 0))
 		return;
 

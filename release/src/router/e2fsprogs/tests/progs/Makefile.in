@@ -21,12 +21,13 @@ TEST_ICOUNT_OBJS=	test_icount.o test_icount_cmds.o
 
 SRCS=	$(srcdir)/test_rel.c 
 
-LIBS= $(LIBEXT2FS) $(LIBSS) $(LIBCOM_ERR)
+LIBS= $(LIBEXT2FS) $(LIBSS) $(LIBCOM_ERR) $(SYSLIBS)
 DEPLIBS= $(LIBEXT2FS) $(DEPLIBSS) $(DEPLIBCOM_ERR)
 
 .c.o:
 	$(E) "	CC $<"
 	$(Q) $(CC) -c $(ALL_CFLAGS) $< -o $@
+	$(Q) $(CHECK_CMD) $(ALL_CFLAGS) $<
 
 all:: $(PROGS)
 
@@ -50,7 +51,7 @@ test_icount_cmds.c: test_icount_cmds.ct
 	$(E) "	MK_CMDS $@"
 	$(Q) $(MK_CMDS) $(srcdir)/test_icount_cmds.ct
 
-clean:
+clean::
 	$(RM) -f $(PROGS) test_rel_cmds.c test_icount_cmds.c \
 		\#* *.s *.o *.a *~ core
 

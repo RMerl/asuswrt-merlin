@@ -25,7 +25,7 @@
  * checked, its bit is set in the block_ea_map bitmap.
  */
 struct ea_refcount_el {
-	blk_t	ea_blk;
+	blk64_t	ea_blk;
 	int	ea_count;
 };
 
@@ -111,7 +111,7 @@ static void refcount_collapse(ext2_refcount_t refcount)
  * 	specified position.
  */
 static struct ea_refcount_el *insert_refcount_el(ext2_refcount_t refcount,
-						 blk_t blk, int pos)
+						 blk64_t blk, int pos)
 {
 	struct ea_refcount_el 	*el;
 	errcode_t		retval;
@@ -153,7 +153,7 @@ static struct ea_refcount_el *insert_refcount_el(ext2_refcount_t refcount,
  * 	and we can't find an entry, create one in the sorted list.
  */
 static struct ea_refcount_el *get_refcount_el(ext2_refcount_t refcount,
-					      blk_t blk, int create)
+					      blk64_t blk, int create)
 {
 	int	low, high, mid;
 
@@ -206,7 +206,7 @@ retry:
 	return 0;
 }
 
-errcode_t ea_refcount_fetch(ext2_refcount_t refcount, blk_t blk,
+errcode_t ea_refcount_fetch(ext2_refcount_t refcount, blk64_t blk,
 				int *ret)
 {
 	struct ea_refcount_el	*el;
@@ -220,7 +220,7 @@ errcode_t ea_refcount_fetch(ext2_refcount_t refcount, blk_t blk,
 	return 0;
 }
 
-errcode_t ea_refcount_increment(ext2_refcount_t refcount, blk_t blk, int *ret)
+errcode_t ea_refcount_increment(ext2_refcount_t refcount, blk64_t blk, int *ret)
 {
 	struct ea_refcount_el	*el;
 
@@ -234,7 +234,7 @@ errcode_t ea_refcount_increment(ext2_refcount_t refcount, blk_t blk, int *ret)
 	return 0;
 }
 
-errcode_t ea_refcount_decrement(ext2_refcount_t refcount, blk_t blk, int *ret)
+errcode_t ea_refcount_decrement(ext2_refcount_t refcount, blk64_t blk, int *ret)
 {
 	struct ea_refcount_el	*el;
 
@@ -249,7 +249,7 @@ errcode_t ea_refcount_decrement(ext2_refcount_t refcount, blk_t blk, int *ret)
 	return 0;
 }
 
-errcode_t ea_refcount_store(ext2_refcount_t refcount, blk_t blk, int count)
+errcode_t ea_refcount_store(ext2_refcount_t refcount, blk64_t blk, int count)
 {
 	struct ea_refcount_el	*el;
 
@@ -277,7 +277,7 @@ void ea_refcount_intr_begin(ext2_refcount_t refcount)
 }
 
 
-blk_t ea_refcount_intr_next(ext2_refcount_t refcount,
+blk64_t ea_refcount_intr_next(ext2_refcount_t refcount,
 				int *ret)
 {
 	struct ea_refcount_el	*list;
@@ -310,7 +310,8 @@ errcode_t ea_refcount_validate(ext2_refcount_t refcount, FILE *out)
 	}
 	for (i=1; i < refcount->count; i++) {
 		if (refcount->list[i-1].ea_blk >= refcount->list[i].ea_blk) {
-			fprintf(out, "%s: list[%d].blk=%u, list[%d].blk=%u\n",
+			fprintf(out,
+				"%s: list[%d].blk=%llu, list[%d].blk=%llu\n",
 				bad, i-1, refcount->list[i-1].ea_blk,
 				i, refcount->list[i].ea_blk);
 			ret = EXT2_ET_INVALID_ARGUMENT;
@@ -370,7 +371,7 @@ int main(int argc, char **argv)
 	int	i = 0;
 	ext2_refcount_t refcount;
 	int		size, arg;
-	blk_t		blk;
+	blk64_t		blk;
 	errcode_t	retval;
 
 	while (1) {
@@ -396,20 +397,20 @@ int main(int argc, char **argv)
 		case BCODE_STORE:
 			blk = (blk_t) bcode_program[i++];
 			arg = bcode_program[i++];
-			printf("Storing blk %u with value %d\n", blk, arg);
+			printf("Storing blk %llu with value %d\n", blk, arg);
 			retval = ea_refcount_store(refcount, blk, arg);
 			if (retval)
 				com_err("ea_refcount_store", retval,
-					"while storing blk %u", blk);
+					"while storing blk %llu", blk);
 			break;
 		case BCODE_FETCH:
 			blk = (blk_t) bcode_program[i++];
 			retval = ea_refcount_fetch(refcount, blk, &arg);
 			if (retval)
 				com_err("ea_refcount_fetch", retval,
-					"while fetching blk %u", blk);
+					"while fetching blk %llu", blk);
 			else
-				printf("bcode_fetch(%u) returns %d\n",
+				printf("bcode_fetch(%llu) returns %d\n",
 				       blk, arg);
 			break;
 		case BCODE_INCR:
@@ -417,9 +418,9 @@ int main(int argc, char **argv)
 			retval = ea_refcount_increment(refcount, blk, &arg);
 			if (retval)
 				com_err("ea_refcount_increment", retval,
-					"while incrementing blk %u", blk);
+					"while incrementing blk %llu", blk);
 			else
-				printf("bcode_increment(%u) returns %d\n",
+				printf("bcode_increment(%llu) returns %d\n",
 				       blk, arg);
 			break;
 		case BCODE_DECR:
@@ -427,9 +428,9 @@ int main(int argc, char **argv)
 			retval = ea_refcount_decrement(refcount, blk, &arg);
 			if (retval)
 				com_err("ea_refcount_decrement", retval,
-					"while decrementing blk %u", blk);
+					"while decrementing blk %llu", blk);
 			else
-				printf("bcode_decrement(%u) returns %d\n",
+				printf("bcode_decrement(%llu) returns %d\n",
 				       blk, arg);
 			break;
 		case BCODE_VALIDATE:
@@ -446,7 +447,7 @@ int main(int argc, char **argv)
 				blk = ea_refcount_intr_next(refcount, &arg);
 				if (!blk)
 					break;
-				printf("\tblk=%u, count=%d\n", blk, arg);
+				printf("\tblk=%llu, count=%d\n", blk, arg);
 			}
 			break;
 		case BCODE_COLLAPSE:

@@ -1,0 +1,21 @@
+debugfs: list_quota user
+ user id     blocks    quota    limit      inodes    quota    limit
+       0      13312        0        0           2        0        0
+      34       1024        0        0           1        0        0
+     100       2048       32       50           2       20       30
+debugfs: list_quota group
+group id     blocks    quota    limit      inodes    quota    limit
+       0      16384        0        0           5        0        0
+debugfs: get_quota user 0
+ user id     blocks    quota    limit      inodes    quota    limit
+       0      13312        0        0           2        0        0
+debugfs: get_quota user 100
+ user id     blocks    quota    limit      inodes    quota    limit
+     100       2048       32       50           2       20       30
+debugfs: get_quota user 34
+ user id     blocks    quota    limit      inodes    quota    limit
+      34       1024        0        0           1        0        0
+debugfs: get_quota group 0
+group id     blocks    quota    limit      inodes    quota    limit
+       0      16384        0        0           5        0        0
+debugfs: 

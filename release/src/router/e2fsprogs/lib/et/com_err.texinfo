@@ -111,7 +111,6 @@ from the remainder of this package.
 
 @end titlepage
 
-@ifinfo
 @node Top, Why com_err?, (dir), (dir)
 
 @top A Common Error Description Library for UNIX
@@ -131,7 +130,6 @@ This manual documents the com_err library.
 @end menu
 
 @page
-@end ifinfo
 
 @node Why com_err?, Error codes, Top, Top
 @chapter Why com_err?

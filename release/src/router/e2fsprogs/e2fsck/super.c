@@ -22,6 +22,7 @@
 
 #define MIN_CHECK 1
 #define MAX_CHECK 2
+#define LOG2_CHECK 4
 
 static void check_super_value(e2fsck_t ctx, const char *descr,
 			      unsigned long value, int flags,
@@ -29,8 +30,9 @@ static void check_super_value(e2fsck_t ctx, const char *descr,
 {
 	struct		problem_context pctx;
 
-	if (((flags & MIN_CHECK) && (value < min_val)) ||
-	    ((flags & MAX_CHECK) && (value > max_val))) {
+	if ((flags & MIN_CHECK && value < min_val) ||
+	    (flags & MAX_CHECK && value > max_val) ||
+	    (flags & LOG2_CHECK && (value & (value - 1)) != 0)) {
 		clear_problem_context(&pctx);
 		pctx.num = value;
 		pctx.str = descr;
@@ -317,7 +319,7 @@ void check_resize_inode(e2fsck_t ctx)
 	struct problem_context	pctx;
 	int		i, gdt_off, ind_off;
 	dgrp_t		j;
-	blk64_t		blk, pblk;
+	blk_t		blk, pblk;
 	blk_t		expect;	/* for resize inode, which is 32-bit only */
 	__u32 		*dind_buf = 0, *ind_buf;
 	errcode_t	retval;
@@ -419,7 +421,7 @@ void check_resize_inode(e2fsck_t ctx)
 		for (j = 1; j < fs->group_desc_count; j++) {
 			if (!ext2fs_bg_has_super(fs, j))
 				continue;
-			expect = pblk + (j * fs->super->s_blocks_per_group);
+			expect = pblk + EXT2_GROUPS_TO_BLOCKS(fs->super, j);
 			if (ind_buf[ind_off] != expect)
 				goto resize_inode_invalid;
 			ind_off++;
@@ -527,26 +529,22 @@ void check_super_block(e2fsck_t ctx)
 			  MAX_CHECK, 0, ext2fs_blocks_count(sb) / 2);
 	check_super_value(ctx, "reserved_gdt_blocks",
 			  sb->s_reserved_gdt_blocks, MAX_CHECK, 0,
-			  fs->blocksize/4);
+			  fs->blocksize / sizeof(__u32));
+	check_super_value(ctx, "desc_size",
+			  sb->s_desc_size, MAX_CHECK | LOG2_CHECK, 0,
+			  EXT2_MAX_DESC_SIZE);
 	if (sb->s_rev_level > EXT2_GOOD_OLD_REV)
 		check_super_value(ctx, "first_ino", sb->s_first_ino,
 				  MIN_CHECK | MAX_CHECK,
 				  EXT2_GOOD_OLD_FIRST_INO, sb->s_inodes_count);
 	inode_size = EXT2_INODE_SIZE(sb);
 	check_super_value(ctx, "inode_size",
-			  inode_size, MIN_CHECK | MAX_CHECK,
+			  inode_size, MIN_CHECK | MAX_CHECK | LOG2_CHECK,
 			  EXT2_GOOD_OLD_INODE_SIZE, fs->blocksize);
 	if (sb->s_blocks_per_group != (sb->s_clusters_per_group *
 				       EXT2FS_CLUSTER_RATIO(fs))) {
 		pctx.num = sb->s_clusters_per_group * EXT2FS_CLUSTER_RATIO(fs);
 		pctx.str = "block_size";
-		fix_problem(ctx, PR_0_MISC_CORRUPT_SUPER, &pctx);
-		ctx->flags |= E2F_FLAG_ABORT; /* never get here! */
-		return;
-	}
-	if (inode_size & (inode_size - 1)) {
-		pctx.num = inode_size;
-		pctx.str = "inode_size";
 		fix_problem(ctx, PR_0_MISC_CORRUPT_SUPER, &pctx);
 		ctx->flags |= E2F_FLAG_ABORT; /* never get here! */
 		return;
@@ -578,6 +576,29 @@ void check_super_block(e2fsck_t ctx)
 		pctx.ino2 = should_be;
 		if (fix_problem(ctx, PR_0_INODE_COUNT_WRONG, &pctx)) {
 			sb->s_inodes_count = should_be;
+			ext2fs_mark_super_dirty(fs);
+		}
+	}
+
+	/* Is 64bit set and extents unset? */
+	if (EXT2_HAS_INCOMPAT_FEATURE(fs->super,
+				      EXT4_FEATURE_INCOMPAT_64BIT) &&
+	    !EXT2_HAS_INCOMPAT_FEATURE(fs->super,
+				       EXT3_FEATURE_INCOMPAT_EXTENTS) &&
+	    fix_problem(ctx, PR_0_64BIT_WITHOUT_EXTENTS, &pctx)) {
+		fs->super->s_feature_incompat |=
+			EXT3_FEATURE_INCOMPAT_EXTENTS;
+		ext2fs_mark_super_dirty(fs);
+	}
+
+	if ((fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG) &&
+	    (fs->super->s_first_meta_bg > fs->desc_blocks)) {
+		pctx.group = fs->desc_blocks;
+		pctx.num = fs->super->s_first_meta_bg;
+		if (fix_problem(ctx, PR_0_FIRST_META_BG_TOO_BIG, &pctx)) {
+			fs->super->s_feature_incompat &=
+				~EXT2_FEATURE_INCOMPAT_META_BG;
+			fs->super->s_first_meta_bg = 0;
 			ext2fs_mark_super_dirty(fs);
 		}
 	}
@@ -713,8 +734,11 @@ void check_super_block(e2fsck_t ctx)
 #ifndef EXT2_SKIP_UUID
 	/*
 	 * If the UUID field isn't assigned, assign it.
+	 * Skip if checksums are enabled and the filesystem is mounted,
+	 * if the id changes under the kernel remounting rw may fail.
 	 */
-	if (!(ctx->options & E2F_OPT_READONLY) && uuid_is_null(sb->s_uuid)) {
+	if (!(ctx->options & E2F_OPT_READONLY) && uuid_is_null(sb->s_uuid) &&
+	    (!csum_flag || !(ctx->mount_flags & EXT2_MF_MOUNTED))) {
 		if (fix_problem(ctx, PR_0_ADD_UUID, &pctx)) {
 			uuid_generate(sb->s_uuid);
 			fs->flags |= EXT2_FLAG_DIRTY;
@@ -945,6 +969,7 @@ int check_backup_super_block(e2fsck_t ctx)
 		    SUPER_INCOMPAT_DIFFERENT(s_feature_incompat) ||
 		    SUPER_RO_COMPAT_DIFFERENT(s_feature_ro_compat) ||
 		    SUPER_DIFFERENT(s_blocks_count) ||
+		    SUPER_DIFFERENT(s_blocks_count_hi) ||
 		    SUPER_DIFFERENT(s_inodes_count) ||
 		    memcmp(fs->super->s_uuid, backup_sb->s_uuid,
 			   sizeof(fs->super->s_uuid)))

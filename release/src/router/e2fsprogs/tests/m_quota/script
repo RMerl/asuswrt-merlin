@@ -1,0 +1,8 @@
+DESCRIPTION="enable quota feature on mkfs"
+FS_SIZE=131072
+MKE2FS_OPTS="-O quota"
+if [ "$QUOTA" != "y" ]; then
+	echo "$test_name: $DESCRIPTION: skipped"
+	return 0
+fi
+. $cmd_dir/run_mke2fs

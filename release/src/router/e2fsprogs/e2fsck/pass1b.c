@@ -88,8 +88,8 @@ static int process_pass1b_block(ext2_filsys fs, blk64_t	*blocknr,
 				int ref_offset, void *priv_data);
 static void delete_file(e2fsck_t ctx, ext2_ino_t ino,
 			struct dup_inode *dp, char *block_buf);
-static int clone_file(e2fsck_t ctx, ext2_ino_t ino,
-		      struct dup_inode *dp, char* block_buf);
+static errcode_t clone_file(e2fsck_t ctx, ext2_ino_t ino,
+			    struct dup_inode *dp, char* block_buf);
 static int check_if_fs_block(e2fsck_t ctx, blk64_t test_block);
 static int check_if_fs_cluster(e2fsck_t ctx, blk64_t cluster);
 
@@ -261,7 +261,7 @@ struct process_block_struct {
 	e2fsck_t	ctx;
 	ext2_ino_t	ino;
 	int		dup_blocks;
-	blk64_t		cur_cluster;
+	blk64_t		cur_cluster, phys_cluster;
 	struct ext2_inode *inode;
 	struct problem_context *pctx;
 };
@@ -299,6 +299,7 @@ static void pass1b(e2fsck_t ctx, char *block_buf)
 		if (pctx.errcode == EXT2_ET_BAD_BLOCK_IN_INODE_TABLE)
 			continue;
 		if (pctx.errcode) {
+			pctx.ino = ino;
 			fix_problem(ctx, PR_1B_ISCAN_ERROR, &pctx);
 			ctx->flags |= E2F_FLAG_ABORT;
 			return;
@@ -314,6 +315,7 @@ static void pass1b(e2fsck_t ctx, char *block_buf)
 		pb.dup_blocks = 0;
 		pb.inode = &inode;
 		pb.cur_cluster = ~0;
+		pb.phys_cluster = ~0;
 
 		if (ext2fs_inode_has_valid_blocks2(fs, &inode) ||
 		    (ino == EXT2_BAD_INO))
@@ -350,13 +352,14 @@ static int process_pass1b_block(ext2_filsys fs EXT2FS_ATTR((unused)),
 {
 	struct process_block_struct *p;
 	e2fsck_t ctx;
-	blk64_t	lc;
+	blk64_t	lc, pc;
 
 	if (HOLE_BLKADDR(*block_nr))
 		return 0;
 	p = (struct process_block_struct *) priv_data;
 	ctx = p->ctx;
 	lc = EXT2FS_B2C(fs, blockcnt);
+	pc = EXT2FS_B2C(fs, *block_nr);
 
 	if (!ext2fs_test_block_bitmap2(ctx->block_dup_map, *block_nr))
 		goto finish;
@@ -369,11 +372,19 @@ static int process_pass1b_block(ext2_filsys fs EXT2FS_ATTR((unused)),
 	p->dup_blocks++;
 	ext2fs_mark_inode_bitmap2(inode_dup_map, p->ino);
 
-	if (lc != p->cur_cluster)
+	/*
+	 * Qualifications for submitting a block for duplicate processing:
+	 * It's an extent/indirect block (and has a negative logical offset);
+	 * we've crossed a logical cluster boundary; or the physical cluster
+	 * suddenly changed, which indicates that blocks in a logical cluster
+	 * are mapped to multiple physical clusters.
+	 */
+	if (blockcnt < 0 || lc != p->cur_cluster || pc != p->phys_cluster)
 		add_dupe(ctx, p->ino, EXT2FS_B2C(fs, *block_nr), p->inode);
 
 finish:
 	p->cur_cluster = lc;
+	p->phys_cluster = pc;
 	return 0;
 }
 
@@ -543,7 +554,11 @@ static void pass1d(e2fsck_t ctx, char *block_buf)
 			pctx.dir = t->dir;
 			fix_problem(ctx, PR_1D_DUP_FILE_LIST, &pctx);
 		}
-		if (file_ok) {
+		/*
+		 * Even if the file shares blocks with itself, we still need to
+		 * clone the blocks.
+		 */
+		if (file_ok && (meta_data ? shared_len+1 : shared_len) != 0) {
 			fix_problem(ctx, PR_1D_DUP_BLOCKS_DEALT, &pctx);
 			continue;
 		}
@@ -610,8 +625,8 @@ static int delete_file_block(ext2_filsys fs,
 			    _("internal error: can't find dup_blk for %llu\n"),
 				*block_nr);
 	} else {
-		ext2fs_unmark_block_bitmap2(ctx->block_found_map, *block_nr);
-		ext2fs_block_alloc_stats2(fs, *block_nr, -1);
+		if ((*block_nr % EXT2FS_CLUSTER_RATIO(ctx->fs)) == 0)
+			ext2fs_block_alloc_stats2(fs, *block_nr, -1);
 		pb->dup_blocks++;
 	}
 	pb->cur_cluster = lc;
@@ -687,9 +702,10 @@ struct clone_struct {
 	errcode_t	errcode;
 	blk64_t		dup_cluster;
 	blk64_t		alloc_block;
-	ext2_ino_t	dir;
+	ext2_ino_t	dir, ino;
 	char	*buf;
 	e2fsck_t ctx;
+	struct ext2_inode	*inode;
 };
 
 static int clone_file_block(ext2_filsys fs,
@@ -737,13 +753,26 @@ static int clone_file_block(ext2_filsys fs,
 			decrement_badcount(ctx, *block_nr, p);
 
 		cs->dup_cluster = c;
-
+		/*
+		 * Let's try an implied cluster allocation.  If we get the same
+		 * cluster back, then we need to find a new block; otherwise,
+		 * we're merely fixing the problem of one logical cluster being
+		 * mapped to multiple physical clusters.
+		 */
+		new_block = 0;
+		retval = ext2fs_map_cluster_block(fs, cs->ino, cs->inode,
+						  blockcnt, &new_block);
+		if (retval == 0 && new_block != 0 &&
+		    EXT2FS_B2C(ctx->fs, new_block) !=
+		    EXT2FS_B2C(ctx->fs, *block_nr))
+			goto cluster_alloc_ok;
 		retval = ext2fs_new_block2(fs, 0, ctx->block_found_map,
 					   &new_block);
 		if (retval) {
 			cs->errcode = retval;
 			return BLOCK_ABORT;
 		}
+cluster_alloc_ok:
 		cs->alloc_block = new_block;
 
 	got_block:
@@ -779,8 +808,8 @@ static int clone_file_block(ext2_filsys fs,
 	return 0;
 }
 
-static int clone_file(e2fsck_t ctx, ext2_ino_t ino,
-		      struct dup_inode *dp, char* block_buf)
+static errcode_t clone_file(e2fsck_t ctx, ext2_ino_t ino,
+			    struct dup_inode *dp, char* block_buf)
 {
 	ext2_filsys fs = ctx->fs;
 	errcode_t	retval;
@@ -798,6 +827,8 @@ static int clone_file(e2fsck_t ctx, ext2_ino_t ino,
 	cs.dup_cluster = ~0;
 	cs.alloc_block = 0;
 	cs.ctx = ctx;
+	cs.ino = ino;
+	cs.inode = &dp->inode;
 	retval = ext2fs_get_mem(fs->blocksize, &cs.buf);
 	if (retval)
 		return retval;
@@ -817,7 +848,7 @@ static int clone_file(e2fsck_t ctx, ext2_ino_t ino,
 		goto errout;
 	}
 	if (cs.errcode) {
-		com_err("clone_file", cs.errcode,
+		com_err("clone_file", cs.errcode, "%s",
 			_("returned from clone_file_block"));
 		retval = cs.errcode;
 		goto errout;

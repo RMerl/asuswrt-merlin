@@ -1,0 +1,11 @@
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong (4294968254, counted=958).
+Fix? no
+
+test_filesys: 11/256 files (9.1% non-contiguous), 18446744069414585410/2048 blocks
+Exit status is 0
+crc did not change.  2466215161

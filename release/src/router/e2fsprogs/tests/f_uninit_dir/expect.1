@@ -1,0 +1,27 @@
+Pass 1: Checking inodes, blocks, and sizes
+Directory inode 12 has extent marked uninitialized at block 0.  Fix? yes
+
+Directory inode 14 has extent marked uninitialized at block 0.  Fix? yes
+
+Pass 2: Checking directory structure
+Directory inode 14, block #0, offset 0: directory corrupted
+Salvage? yes
+
+Missing '.' in directory inode 14.
+Fix? yes
+
+Setting filetype for entry '.' in ??? (14) to 2.
+Missing '..' in directory inode 14.
+Fix? yes
+
+Setting filetype for entry '..' in ??? (14) to 2.
+Pass 3: Checking directory connectivity
+'..' in /abc (14) is <The NULL inode> (0), should be / (2).
+Fix? yes
+
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 14/128 files (0.0% non-contiguous), 20/512 blocks
+Exit status is 1

@@ -144,7 +144,7 @@ main(int argc ATTR((unused)) , char **argv ATTR((unused)))
 	tv.tv_usec = 0;
 	time_reg = uuid_time(buf, &tv);
 	printf("UUID generated at %lu reports %lu (%ld.%ld)\n",
-	       time_gen, time_reg, tv.tv_sec, tv.tv_usec);
+	       time_gen, time_reg, tv.tv_sec, (long)tv.tv_usec);
 	/* allow 1s margin in case of rollover between sampling
 	 * the current time and when the UUID is generated. */
 	if (time_reg > time_gen + 1) {
@@ -154,7 +154,10 @@ main(int argc ATTR((unused)) , char **argv ATTR((unused)))
 		printf("UUID time comparison succeeded.\n");
 	}
 
-	uuid_parse(str, tst);
+	if (uuid_parse(str, tst) < 0) {
+		printf("UUID parse failed\n");
+		failed++;
+	}
 	if (!uuid_compare(buf, tst)) {
 		printf("UUID parse and compare succeeded.\n");
 	} else {

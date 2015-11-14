@@ -29,9 +29,10 @@ program will resize ext2, ext3, or ext4 file systems.  It can be used to
 enlarge or shrink an unmounted file system located on
 .IR device .
 If the filesystem is mounted, it can be used to expand the size of the
-mounted filesystem, assuming the kernel supports on-line resizing.  (As
-of this writing, the Linux 2.6 kernel supports on-line resize for
-filesystems mounted using ext3 and ext4.).
+mounted filesystem, assuming the kernel and the file system supports
+on-line resizing.  (Modern Linux 2.6 kernels will support on-line resize
+for file systems mounted using ext3 and ext4; ext3 file systems will
+require the use of file systems with the resize_inode feature enabled.)
 .PP
 The
 .I size
@@ -101,7 +102,9 @@ from the following list:
 	8	\-\ Debug moving the inode table
 .br
 	16	\-\ Print timing information
-.TP 
+.br
+	32	\-\ Debug minimum filesystem size (\-M) calculation
+.TP
 .B \-f
 Forces resize2fs to proceed with the filesystem resize operation, overriding
 some safety checks which resize2fs normally enforces.

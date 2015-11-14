@@ -18,6 +18,7 @@
 
 #include "ext2_fs.h"
 #include "ext2fs.h"
+#include "ext2fsP.h"
 
 struct ext2_file {
 	errcode_t		magic;
@@ -142,8 +143,7 @@ errcode_t ext2fs_file_flush(ext2_file_t file)
 			return retval;
 	}
 
-	retval = io_channel_write_blk(fs->io, file->physblock,
-				      1, file->buf);
+	retval = io_channel_write_blk64(fs->io, file->physblock, 1, file->buf);
 	if (retval)
 		return retval;
 
@@ -158,7 +158,7 @@ errcode_t ext2fs_file_flush(ext2_file_t file)
  */
 static errcode_t sync_buffer_position(ext2_file_t file)
 {
-	blk_t	b;
+	blk64_t	b;
 	errcode_t	retval;
 
 	b = file->pos / file->fs->blocksize;
@@ -194,9 +194,9 @@ static errcode_t load_buffer(ext2_file_t file, int dontfill)
 			return retval;
 		if (!dontfill) {
 			if (file->physblock) {
-				retval = io_channel_read_blk(fs->io,
-							     file->physblock,
-							     1, file->buf);
+				retval = io_channel_read_blk64(fs->io,
+							       file->physblock,
+							       1, file->buf);
 				if (retval)
 					return retval;
 			} else
@@ -298,6 +298,20 @@ errcode_t ext2fs_file_write(ext2_file_t file, const void *buf,
 		if (retval)
 			goto fail;
 
+		/*
+		 * OK, the physical block hasn't been allocated yet.
+		 * Allocate it.
+		 */
+		if (!file->physblock) {
+			retval = ext2fs_bmap2(fs, file->ino, &file->inode,
+					      BMAP_BUFFER,
+					      file->ino ? BMAP_ALLOC : 0,
+					      file->blockno, 0,
+					      &file->physblock);
+			if (retval)
+				goto fail;
+		}
+
 		file->flags |= EXT2_FILE_BUF_DIRTY;
 		memcpy(file->buf+start, ptr, c);
 		file->pos += c;
@@ -307,6 +321,15 @@ errcode_t ext2fs_file_write(ext2_file_t file, const void *buf,
 	}
 
 fail:
+	/* Update inode size */
+	if (count != 0 && EXT2_I_SIZE(&file->inode) < file->pos) {
+		errcode_t	rc;
+
+		rc = ext2fs_file_set_size2(file, file->pos);
+		if (retval == 0)
+			retval = rc;
+	}
+
 	if (written)
 		*written = count;
 	return retval;
@@ -371,6 +394,53 @@ ext2_off_t ext2fs_file_get_size(ext2_file_t file)
 	return size;
 }
 
+/* Zero the parts of the last block that are past EOF. */
+static errcode_t ext2fs_file_zero_past_offset(ext2_file_t file,
+					      ext2_off64_t offset)
+{
+	ext2_filsys fs = file->fs;
+	char *b = NULL;
+	ext2_off64_t off = offset % fs->blocksize;
+	blk64_t blk;
+	int ret_flags;
+	errcode_t retval;
+
+	if (off == 0)
+		return 0;
+
+	retval = sync_buffer_position(file);
+	if (retval)
+		return retval;
+
+	/* Is there an initialized block at the end? */
+	retval = ext2fs_bmap2(fs, file->ino, NULL, NULL, 0,
+			      offset / fs->blocksize, &ret_flags, &blk);
+	if (retval)
+		return retval;
+	if ((blk == 0) || (ret_flags & BMAP_RET_UNINIT))
+		return 0;
+
+	/* Zero to the end of the block */
+	retval = ext2fs_get_mem(fs->blocksize, &b);
+	if (retval)
+		return retval;
+
+	/* Read/zero/write block */
+	retval = io_channel_read_blk64(fs->io, blk, 1, b);
+	if (retval)
+		goto out;
+
+	memset(b + off, 0, fs->blocksize - off);
+
+	retval = io_channel_write_blk64(fs->io, blk, 1, b);
+	if (retval)
+		goto out;
+
+out:
+	ext2fs_free_mem(&b);
+	return retval;
+}
+
 /*
  * This function sets the size of the file, truncating it if necessary
  *
@@ -383,19 +453,28 @@ errcode_t ext2fs_file_set_size2(ext2_file_t file, ext2_off64_t size)
 
 	EXT2_CHECK_MAGIC(file, EXT2_ET_MAGIC_EXT2_FILE);
 
+	if (size && ext2fs_file_block_offset_too_big(file->fs, &file->inode,
+					(size - 1) / file->fs->blocksize))
+		return EXT2_ET_FILE_TOO_BIG;
 	truncate_block = ((size + file->fs->blocksize - 1) >>
-			  EXT2_BLOCK_SIZE_BITS(file->fs->super)) + 1;
+			  EXT2_BLOCK_SIZE_BITS(file->fs->super));
 	old_size = EXT2_I_SIZE(&file->inode);
 	old_truncate = ((old_size + file->fs->blocksize - 1) >>
-		      EXT2_BLOCK_SIZE_BITS(file->fs->super)) + 1;
+		      EXT2_BLOCK_SIZE_BITS(file->fs->super));
 
-	file->inode.i_size = size & 0xffffffff;
-	file->inode.i_size_high = (size >> 32);
+	retval = ext2fs_inode_size_set(file->fs, &file->inode, size);
+	if (retval)
+		return retval;
+
 	if (file->ino) {
 		retval = ext2fs_write_inode(file->fs, file->ino, &file->inode);
 		if (retval)
 			return retval;
 	}
+
+	retval = ext2fs_file_zero_past_offset(file, size);
+	if (retval)
+		return retval;
 
 	if (truncate_block >= old_truncate)
 		return 0;

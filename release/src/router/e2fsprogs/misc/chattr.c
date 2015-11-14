@@ -83,7 +83,7 @@ static unsigned long sf;
 static void usage(void)
 {
 	fprintf(stderr,
-		_("Usage: %s [-RVf] [-+=AaCcDdeijsSu] [-v version] files...\n"),
+		_("Usage: %s [-RVf] [-+=aAcCdDeijsStTu] [-v version] files...\n"),
 		program_name);
 	exit(1);
 }
@@ -263,8 +263,9 @@ static int chattr_dir_proc (const char * dir_name, struct dirent * de,
 
 		path = malloc(strlen (dir_name) + 1 + strlen (de->d_name) + 1);
 		if (!path) {
-			fprintf(stderr, _("Couldn't allocate path variable "
-					  "in chattr_dir_proc"));
+			fprintf(stderr, "%s",
+				_("Couldn't allocate path variable "
+				  "in chattr_dir_proc"));
 			return -1;
 		}
 		sprintf(path, "%s/%s", dir_name, de->d_name);

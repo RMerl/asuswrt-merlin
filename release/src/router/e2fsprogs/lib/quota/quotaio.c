@@ -30,8 +30,8 @@ static const char * const basenames[] = {
 
 /* Header in all newer quotafiles */
 struct disk_dqheader {
-	u_int32_t dqh_magic;
-	u_int32_t dqh_version;
+	__u32 dqh_magic;
+	__u32 dqh_version;
 } __attribute__ ((packed));
 
 /**
@@ -98,19 +98,6 @@ void update_grace_times(struct dquot *q)
 	}
 }
 
-static int release_blocks_proc(ext2_filsys fs, blk64_t *blocknr,
-			       e2_blkcnt_t blockcnt EXT2FS_ATTR((unused)),
-			       blk64_t ref_block EXT2FS_ATTR((unused)),
-			       int ref_offset EXT2FS_ATTR((unused)),
-			       void *private EXT2FS_ATTR((unused)))
-{
-	blk64_t	block;
-
-	block = *blocknr;
-	ext2fs_block_alloc_stats2(fs, block, -1);
-	return 0;
-}
-
 static int compute_num_blocks_proc(ext2_filsys fs, blk64_t *blocknr,
 			       e2_blkcnt_t blockcnt EXT2FS_ATTR((unused)),
 			       blk64_t ref_block EXT2FS_ATTR((unused)),
@@ -135,9 +122,9 @@ errcode_t quota_inode_truncate(ext2_filsys fs, ext2_ino_t ino)
 		inode.i_dtime = fs->now ? fs->now : time(0);
 		if (!ext2fs_inode_has_valid_blocks2(fs, &inode))
 			return 0;
-
-		ext2fs_block_iterate3(fs, ino, BLOCK_FLAG_READ_ONLY, NULL,
-				      release_blocks_proc, NULL);
+		err = ext2fs_punch(fs, ino, &inode, NULL, 0, ~0ULL);
+		if (err)
+			return err;
 		fs->flags &= ~EXT2_FLAG_SUPER_ONLY;
 		memset(&inode, 0, sizeof(struct ext2_inode));
 	} else {
@@ -210,11 +197,16 @@ static unsigned int quota_read_nomount(struct quota_file *qf,
 /*
  * Detect quota format and initialize quota IO
  */
-errcode_t quota_file_open(struct quota_handle *h, ext2_filsys fs,
+errcode_t quota_file_open(quota_ctx_t qctx, struct quota_handle *h,
 			  ext2_ino_t qf_ino, int type, int fmt, int flags)
 {
+	ext2_filsys fs = qctx->fs;
 	ext2_file_t e2_file;
 	errcode_t err;
+	int allocated_handle = 0;
+
+	if (type >= MAXQUOTAS)
+		return EINVAL;
 
 	if (fmt == -1)
 		fmt = QFMT_VFS_V1;
@@ -223,18 +215,42 @@ errcode_t quota_file_open(struct quota_handle *h, ext2_filsys fs,
 	if (err)
 		return err;
 
+	if (qf_ino == 0) {
+		if (type == USRQUOTA)
+			qf_ino = fs->super->s_usr_quota_inum;
+		else
+			qf_ino = fs->super->s_grp_quota_inum;
+	}
+
 	log_debug("Opening quota ino=%lu, type=%d", qf_ino, type);
 	err = ext2fs_file_open(fs, qf_ino, flags, &e2_file);
 	if (err) {
 		log_err("ext2fs_file_open failed: %s", error_message(err));
 		return err;
 	}
-	h->qh_qf.e2_file = e2_file;
 
+	if (!h) {
+		if (qctx->quota_file[type]) {
+			h = qctx->quota_file[type];
+			if (((flags & EXT2_FILE_WRITE) == 0) ||
+			    (h->qh_file_flags & EXT2_FILE_WRITE))
+				return 0;
+			(void) quota_file_close(qctx, h);
+		}
+		err = ext2fs_get_mem(sizeof(struct quota_handle), &h);
+		if (err) {
+			log_err("Unable to allocate quota handle");
+			return err;
+		}
+		allocated_handle = 1;
+	}
+
+	h->qh_qf.e2_file = e2_file;
 	h->qh_qf.fs = fs;
 	h->qh_qf.ino = qf_ino;
 	h->e2fs_write = quota_write_nomount;
 	h->e2fs_read = quota_read_nomount;
+	h->qh_file_flags = flags;
 	h->qh_io_flags = 0;
 	h->qh_type = type;
 	h->qh_fmt = fmt;
@@ -244,17 +260,22 @@ errcode_t quota_file_open(struct quota_handle *h, ext2_filsys fs,
 	if (h->qh_ops->check_file &&
 	    (h->qh_ops->check_file(h, type, fmt) == 0)) {
 		log_err("qh_ops->check_file failed");
-		ext2fs_file_close(e2_file);
-		return -1;
+		goto errout;
 	}
 
 	if (h->qh_ops->init_io && (h->qh_ops->init_io(h) < 0)) {
 		log_err("qh_ops->init_io failed");
-		ext2fs_file_close(e2_file);
-		return -1;
+		goto errout;
 	}
+	if (allocated_handle)
+		qctx->quota_file[type] = h;
 
 	return 0;
+errout:
+	ext2fs_file_close(e2_file);
+	if (allocated_handle)
+		ext2fs_free_mem(&h);
+	return -1;
 }
 
 static errcode_t quota_inode_init_new(ext2_filsys fs, ext2_ino_t ino)
@@ -320,12 +341,12 @@ errcode_t quota_file_create(struct quota_handle *h, ext2_filsys fs, int type, in
 		goto out_err;
 	}
 	h->qh_qf.ino = qf_inum;
+	h->qh_file_flags = EXT2_FILE_WRITE | EXT2_FILE_CREATE;
 	h->e2fs_write = quota_write_nomount;
 	h->e2fs_read = quota_read_nomount;
 
 	log_debug("Creating quota ino=%lu, type=%d", qf_inum, type);
-	err = ext2fs_file_open(fs, qf_inum,
-			EXT2_FILE_WRITE | EXT2_FILE_CREATE, &e2_file);
+	err = ext2fs_file_open(fs, qf_inum, h->qh_file_flags, &e2_file);
 	if (err) {
 		log_err("ext2fs_file_open failed: %d", err);
 		goto out_err;
@@ -358,7 +379,7 @@ out_err:
 /*
  * Close quotafile and release handle
  */
-errcode_t quota_file_close(struct quota_handle *h)
+errcode_t quota_file_close(quota_ctx_t qctx, struct quota_handle *h)
 {
 	if (h->qh_io_flags & IOFL_INFODIRTY) {
 		if (h->qh_ops->write_info && h->qh_ops->write_info(h) < 0)
@@ -369,12 +390,18 @@ errcode_t quota_file_close(struct quota_handle *h)
 	if (h->qh_ops->end_io && h->qh_ops->end_io(h) < 0)
 		return -1;
 	if (h->qh_qf.e2_file) {
+		__u64 new_size, size;
+
+		new_size = compute_inode_size(h->qh_qf.fs, h->qh_qf.ino);
 		ext2fs_file_flush(h->qh_qf.e2_file);
-		ext2fs_file_set_size2(h->qh_qf.e2_file,
-			compute_inode_size(h->qh_qf.fs, h->qh_qf.ino));
+		if (ext2fs_file_get_lsize(h->qh_qf.e2_file, &size))
+			new_size = 0;
+		if (size != new_size)
+			ext2fs_file_set_size2(h->qh_qf.e2_file, new_size);
 		ext2fs_file_close(h->qh_qf.e2_file);
 	}
-
+	if (qctx->quota_file[h->qh_type] == h)
+		ext2fs_free_mem(&qctx->quota_file[h->qh_type]);
 	return 0;
 }
 

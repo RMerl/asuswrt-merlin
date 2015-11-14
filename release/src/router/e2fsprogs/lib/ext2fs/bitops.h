@@ -157,6 +157,14 @@ extern errcode_t ext2fs_find_first_zero_inode_bitmap2(ext2fs_inode_bitmap bitmap
 						      ext2_ino_t start,
 						      ext2_ino_t end,
 						      ext2_ino_t *out);
+extern errcode_t ext2fs_find_first_set_block_bitmap2(ext2fs_block_bitmap bitmap,
+						     blk64_t start,
+						     blk64_t end,
+						     blk64_t *out);
+extern errcode_t ext2fs_find_first_set_inode_bitmap2(ext2fs_inode_bitmap bitmap,
+						      ext2_ino_t start,
+						      ext2_ino_t end,
+						      ext2_ino_t *out);
 extern blk64_t ext2fs_get_block_bitmap_start2(ext2fs_block_bitmap bitmap);
 extern ext2_ino_t ext2fs_get_inode_bitmap_start2(ext2fs_inode_bitmap bitmap);
 extern blk64_t ext2fs_get_block_bitmap_end2(ext2fs_block_bitmap bitmap);
@@ -198,6 +206,9 @@ extern void ext2fs_unmark_block_bitmap_range2(ext2fs_block_bitmap bitmap,
 extern errcode_t ext2fs_find_first_zero_generic_bmap(ext2fs_generic_bitmap bitmap,
 						     __u64 start, __u64 end,
 						     __u64 *out);
+extern errcode_t ext2fs_find_first_set_generic_bmap(ext2fs_generic_bitmap bitmap,
+						    __u64 start, __u64 end,
+						    __u64 *out);
 
 /*
  * The inline routines themselves...
@@ -244,7 +255,7 @@ _INLINE_ void ext2fs_fast_set_bit(unsigned int nr,void * addr)
 	unsigned char	*ADDR = (unsigned char *) addr;
 
 	ADDR += nr >> 3;
-	*ADDR |= (1 << (nr & 0x07));
+	*ADDR |= (unsigned char) (1 << (nr & 0x07));
 }
 
 _INLINE_ void ext2fs_fast_clear_bit(unsigned int nr, void * addr)
@@ -252,7 +263,7 @@ _INLINE_ void ext2fs_fast_clear_bit(unsigned int nr, void * addr)
 	unsigned char	*ADDR = (unsigned char *) addr;
 
 	ADDR += nr >> 3;
-	*ADDR &= ~(1 << (nr & 0x07));
+	*ADDR &= (unsigned char) ~(1 << (nr & 0x07));
 }
 
 
@@ -261,7 +272,7 @@ _INLINE_ void ext2fs_fast_set_bit64(__u64 nr, void * addr)
 	unsigned char	*ADDR = (unsigned char *) addr;
 
 	ADDR += nr >> 3;
-	*ADDR |= (1 << (nr & 0x07));
+	*ADDR |= (unsigned char) (1 << (nr & 0x07));
 }
 
 _INLINE_ void ext2fs_fast_clear_bit64(__u64 nr, void * addr)
@@ -269,7 +280,7 @@ _INLINE_ void ext2fs_fast_clear_bit64(__u64 nr, void * addr)
 	unsigned char	*ADDR = (unsigned char *) addr;
 
 	ADDR += nr >> 3;
-	*ADDR &= ~(1 << (nr & 0x07));
+	*ADDR &= (unsigned char) ~(1 << (nr & 0x07));
 }
 
 
@@ -358,7 +369,7 @@ _INLINE_ __u16 ext2fs_swab16(__u16 val)
 
 _INLINE_ __u16 ext2fs_swab16(__u16 val)
 {
-	return (val >> 8) | (val << 8);
+	return (val >> 8) | (__u16) (val << 8);
 }
 
 _INLINE_ __u32 ext2fs_swab32(__u32 val)
@@ -371,7 +382,7 @@ _INLINE_ __u32 ext2fs_swab32(__u32 val)
 
 _INLINE_ __u64 ext2fs_swab64(__u64 val)
 {
-	return (ext2fs_swab32(val >> 32) |
+	return (ext2fs_swab32((__u32) (val >> 32)) |
 		(((__u64)ext2fs_swab32(val & 0xFFFFFFFFUL)) << 32));
 }
 
@@ -600,7 +611,37 @@ _INLINE_ errcode_t ext2fs_find_first_zero_inode_bitmap2(ext2fs_inode_bitmap bitm
 	rv = ext2fs_find_first_zero_generic_bmap((ext2fs_generic_bitmap) bitmap,
 						 start, end, &o);
 	if (!rv)
+		*out = (ext2_ino_t) o;
+	return rv;
+}
+
+_INLINE_ errcode_t ext2fs_find_first_set_block_bitmap2(ext2fs_block_bitmap bitmap,
+						       blk64_t start,
+						       blk64_t end,
+						       blk64_t *out)
+{
+	__u64 o;
+	errcode_t rv;
+
+	rv = ext2fs_find_first_set_generic_bmap((ext2fs_generic_bitmap) bitmap,
+						start, end, &o);
+	if (!rv)
 		*out = o;
+	return rv;
+}
+
+_INLINE_ errcode_t ext2fs_find_first_set_inode_bitmap2(ext2fs_inode_bitmap bitmap,
+						       ext2_ino_t start,
+						       ext2_ino_t end,
+						       ext2_ino_t *out)
+{
+	__u64 o;
+	errcode_t rv;
+
+	rv = ext2fs_find_first_set_generic_bmap((ext2fs_generic_bitmap) bitmap,
+						start, end, &o);
+	if (!rv)
+		*out = (ext2_ino_t) o;
 	return rv;
 }
 
@@ -611,7 +652,7 @@ _INLINE_ blk64_t ext2fs_get_block_bitmap_start2(ext2fs_block_bitmap bitmap)
 
 _INLINE_ ext2_ino_t ext2fs_get_inode_bitmap_start2(ext2fs_inode_bitmap bitmap)
 {
-	return ext2fs_get_generic_bmap_start((ext2fs_generic_bitmap) bitmap);
+	return (ext2_ino_t) ext2fs_get_generic_bmap_start((ext2fs_generic_bitmap) bitmap);
 }
 
 _INLINE_ blk64_t ext2fs_get_block_bitmap_end2(ext2fs_block_bitmap bitmap)
@@ -621,7 +662,7 @@ _INLINE_ blk64_t ext2fs_get_block_bitmap_end2(ext2fs_block_bitmap bitmap)
 
 _INLINE_ ext2_ino_t ext2fs_get_inode_bitmap_end2(ext2fs_inode_bitmap bitmap)
 {
-	return ext2fs_get_generic_bmap_end((ext2fs_generic_bitmap) bitmap);
+	return (ext2_ino_t) ext2fs_get_generic_bmap_end((ext2fs_generic_bitmap) bitmap);
 }
 
 _INLINE_ int ext2fs_fast_test_block_bitmap_range2(ext2fs_block_bitmap bitmap,

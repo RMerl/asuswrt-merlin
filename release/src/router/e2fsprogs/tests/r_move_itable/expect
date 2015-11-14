@@ -3,7 +3,7 @@ resize2fs -p test.img 10000
 Resizing the filesystem on test.img to 10000 (1k) blocks.
 Begin pass 1 (max = 35)
 Extending the inode table     ----------------------------------------XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-The filesystem on test.img is now 9985 blocks long.
+The filesystem on test.img is now 9985 (1k) blocks long.
 
 Pass 1: Checking inodes, blocks, and sizes
 Pass 2: Checking directory structure
@@ -299,7 +299,7 @@ resize2fs -p test.img 20000
 Resizing the filesystem on test.img to 20000 (1k) blocks.
 Begin pass 1 (max = 39)
 Extending the inode table     ----------------------------------------XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-The filesystem on test.img is now 19969 blocks long.
+The filesystem on test.img is now 19969 (1k) blocks long.
 
 Filesystem did not have a UUID; generating one.
 
@@ -833,7 +833,7 @@ resize2fs -p test.img 30000
 Resizing the filesystem on test.img to 30000 (1k) blocks.
 Begin pass 1 (max = 39)
 Extending the inode table     ----------------------------------------XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-The filesystem on test.img is now 29953 blocks long.
+The filesystem on test.img is now 29953 (1k) blocks long.
 
 Filesystem did not have a UUID; generating one.
 
@@ -1603,7 +1603,7 @@ resize2fs -p test.img 40000
 Resizing the filesystem on test.img to 40000 (1k) blocks.
 Begin pass 1 (max = 40)
 Extending the inode table     ----------------------------------------XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-The filesystem on test.img is now 40000 blocks long.
+The filesystem on test.img is now 40000 (1k) blocks long.
 
 Filesystem did not have a UUID; generating one.
 

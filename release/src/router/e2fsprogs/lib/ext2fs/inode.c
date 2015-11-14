@@ -150,8 +150,11 @@ errcode_t ext2fs_open_inode_scan(ext2_filsys fs, int buffer_blocks,
 	scan->blocks_left = scan->fs->inode_blocks_per_group;
 	if (EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
 				       EXT4_FEATURE_RO_COMPAT_GDT_CSUM)) {
-		scan->inodes_left -=
-			ext2fs_bg_itable_unused(fs, scan->current_group);
+		__u32 unused = ext2fs_bg_itable_unused(fs, scan->current_group);
+		if (scan->inodes_left > unused)
+			scan->inodes_left -= unused;
+		else
+			scan->inodes_left = 0;
 		scan->blocks_left =
 			(scan->inodes_left +
 			 (fs->blocksize / scan->inode_size - 1)) *
@@ -243,8 +246,11 @@ static errcode_t get_next_blockgroup(ext2_inode_scan scan)
 	scan->blocks_left = fs->inode_blocks_per_group;
 	if (EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
 				       EXT4_FEATURE_RO_COMPAT_GDT_CSUM)) {
-		scan->inodes_left -=
-			ext2fs_bg_itable_unused(fs, scan->current_group);
+		__u32 unused = ext2fs_bg_itable_unused(fs, scan->current_group);
+		if (scan->inodes_left > unused)
+			scan->inodes_left -= unused;
+		else
+			scan->inodes_left = 0;
 		scan->blocks_left =
 			(scan->inodes_left +
 			 (fs->blocksize / scan->inode_size - 1)) *
@@ -270,9 +276,9 @@ errcode_t ext2fs_inode_scan_goto_blockgroup(ext2_inode_scan scan,
  * increasing order.
  */
 static errcode_t check_for_inode_bad_blocks(ext2_inode_scan scan,
-					    blk_t *num_blocks)
+					    blk64_t *num_blocks)
 {
-	blk_t	blk = scan->current_block;
+	blk64_t	blk = scan->current_block;
 	badblocks_list	bb = scan->fs->badblocks;
 
 	/*
@@ -329,7 +335,7 @@ static errcode_t check_for_inode_bad_blocks(ext2_inode_scan scan,
  */
 static errcode_t get_next_blocks(ext2_inode_scan scan)
 {
-	blk_t		num_blocks;
+	blk64_t		num_blocks;
 	errcode_t	retval;
 
 	/*

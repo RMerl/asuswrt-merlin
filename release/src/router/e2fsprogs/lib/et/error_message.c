@@ -17,9 +17,6 @@
  */
 
 #include "config.h"
-#if HAVE_SECURE_GETENV
-#define _GNU_SOURCE
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,8 +102,7 @@ typedef char *(*gettextf) (const char *);
 
 static gettextf com_err_gettext = NULL;
 
-gettextf set_com_err_gettext (new_proc)
-    gettextf new_proc;
+gettextf set_com_err_gettext(gettextf new_proc)
 {
     gettextf x = com_err_gettext;
 

@@ -59,6 +59,20 @@ mkinstalldirs = $(SHELL) $(MKINSTALLDIRS)
 @ifNotGNUmake@ E = @E@
 @ifNotGNUmake@ Q = @Q@
 
+@ifGNUmake@ CHECK=sparse
+@ifGNUmake@ CHECK_OPTS=-Wsparse-all -Wno-transparent-union -Wno-return-void -Wno-undef -Wno-non-pointer-null
+@ifGNUmake@ ifeq ("$(C)", "2")
+@ifGNUmake@   CHECK_CMD=$(CHECK) $(CHECK_OPTS) -Wbitwise -D__CHECK_ENDIAN__
+@ifGNUmake@ else
+@ifGNUmake@   ifeq ("$(C)", "1")
+@ifGNUmake@     CHECK_CMD=$(CHECK) $(CHECK_OPTS)
+@ifGNUmake@    else
+@ifGNUmake@     CHECK_CMD=@true
+@ifGNUmake@   endif
+@ifGNUmake@ endif
+
+@ifNotGNUmake@ CHECK_CMD=@true
+
 l = @INTL_LIBTOOL_SUFFIX_PREFIX@
 
 AR = ar
@@ -191,6 +205,7 @@ LTV_AGE=4
 .c.o:
 	$(E) "	CC $<"
 	$(Q) $(COMPILE) $<
+	$(Q) $(CHECK_CMD) $(ALL_CFLAGS) $<
 
 .y.c:
 	$(YACC) $(YFLAGS) --output $@ $<
@@ -473,13 +488,14 @@ id: ID
 ID: $(HEADERS) $(SOURCES)
 	here=`pwd`; cd $(srcdir) && mkid -f$$here/ID $(HEADERS) $(SOURCES)
 
+coverage.txt::
 
 mostlyclean:
 	rm -f *.a *.la *.o *.obj *.lo core core.*
 	rm -f libgnuintl.h libintl.h charset.alias ref-add.sed ref-del.sed
 	rm -f -r .libs _libs
 
-clean: mostlyclean
+clean:: mostlyclean
 
 distclean: clean
 	rm -f Makefile ID TAGS

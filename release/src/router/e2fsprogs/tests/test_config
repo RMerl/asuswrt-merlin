@@ -20,8 +20,8 @@ E2UNDO_EXE="../misc/e2undo"
 TEST_REL=../tests/progs/test_rel
 TEST_ICOUNT=../tests/progs/test_icount
 CRCSUM=../tests/progs/crcsum
-LD_LIBRARY_PATH=../lib:../lib/ext2fs:../lib/e2p:../lib/et:../lib/ss
-DYLD_LIBRARY_PATH=../lib:../lib/ext2fs:../lib/e2p:../lib/et:../lib/ss
+LD_LIBRARY_PATH=../lib:../lib/ext2fs:../lib/e2p:../lib/et:../lib/ss:${LD_LIBRARY_PATH}
+DYLD_LIBRARY_PATH=../lib:../lib/ext2fs:../lib/e2p:../lib/et:../lib/ss:${DYLD_LIBRARY_PATH}
 export LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH
 TZ=GMT0
@@ -32,5 +32,8 @@ E2FSCK_CONFIG=/dev/null
 export E2FSCK_CONFIG
 MKE2FS_CONFIG=./mke2fs.conf
 export MKE2FS_CONFIG
+unset MKE2FS_FIRST_META_BG
 E2FSPROGS_SKIP_PROGRESS=yes
 export E2FSPROGS_SKIP_PROGRESS
+EXT2FS_NO_MTAB_OK=yes
+export EXT2FS_NO_MTAB_OK

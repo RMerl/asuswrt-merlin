@@ -116,17 +116,17 @@ static const char *abbrevs[] = {
 	N_("Bbitmap"),
 	N_("ccompress"),
 	N_("Cconflicts with some other fs @b"),
-	N_("iinode"),
-	N_("Iillegal"),
-	N_("jjournal"),
-	N_("Ddeleted"),
 	N_("ddirectory"),
+	N_("Ddeleted"),
 	N_("eentry"),
 	N_("E@e '%Dn' in %p (%i)"),
 	N_("ffilesystem"),
 	N_("Ffor @i %i (%Q) is"),
 	N_("ggroup"),
 	N_("hHTREE @d @i"),
+	N_("iinode"),
+	N_("Iillegal"),
+	N_("jjournal"),
 	N_("llost+found"),
 	N_("Lis a link"),
 	N_("mmultiply-claimed"),
@@ -226,7 +226,8 @@ static void print_time(FILE *f, time_t t)
 			time_str = getenv("TZ");
 			if (!time_str)
 				time_str = "";
-			do_gmt = !strcmp(time_str, "GMT0");
+			do_gmt = !strcmp(time_str, "GMT") ||
+				!strcmp(time_str, "GMT0");
 		}
 #endif
 		time_str = asctime((do_gmt > 0) ? gmtime(&t) : localtime(&t));
@@ -450,7 +451,7 @@ static _INLINE_ void expand_percent_expression(FILE *f, ext2_filsys fs,
 		fprintf(f, "%*u", width, ctx->dir);
 		break;
 	case 'g':
-		fprintf(f, "%*d", width, ctx->group);
+		fprintf(f, "%*u", width, ctx->group);
 		break;
 	case 'i':
 		fprintf(f, "%*u", width, ctx->ino);
@@ -489,7 +490,7 @@ static _INLINE_ void expand_percent_expression(FILE *f, ext2_filsys fs,
 #endif
 		break;
 	case 'S':
-		fprintf(f, "%u", get_backup_sb(NULL, fs, NULL, NULL));
+		fprintf(f, "%llu", get_backup_sb(NULL, fs, NULL, NULL));
 		break;
 	case 's':
 		fprintf(f, "%*s", width, ctx->str ? ctx->str : "NULL");

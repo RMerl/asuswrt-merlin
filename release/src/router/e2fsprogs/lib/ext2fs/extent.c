@@ -29,6 +29,8 @@
 #include "ext2fsP.h"
 #include "e2image.h"
 
+#undef DEBUG
+
 /*
  * Definitions to be dropped in lib/ext2fs/ext2fs.h
  */
@@ -121,11 +123,39 @@ static void dbg_print_extent(char *desc, struct ext2fs_extent *extent)
 
 }
 
+static void dump_path(const char *tag, struct ext2_extent_handle *handle,
+		      struct extent_path *path)
+{
+	struct extent_path *ppp = path;
+	printf("%s: level=%d\n", tag, handle->level);
+
+	do {
+		printf("%s: path=%ld buf=%p entries=%d max_entries=%d left=%d "
+		       "visit_num=%d flags=0x%x end_blk=%llu curr=%p(%ld)\n",
+		       tag, (ppp - handle->path), ppp->buf, ppp->entries,
+		       ppp->max_entries, ppp->left, ppp->visit_num, ppp->flags,
+		       ppp->end_blk, ppp->curr, ppp->curr - (void *)ppp->buf);
+		printf("  ");
+		dbg_show_header((struct ext3_extent_header *)ppp->buf);
+		if (ppp->curr) {
+			printf("  ");
+			dbg_show_index(ppp->curr);
+			printf("  ");
+			dbg_show_extent(ppp->curr);
+		}
+		ppp--;
+	} while (ppp >= handle->path);
+	fflush(stdout);
+
+	return;
+}
+
 #else
 #define dbg_show_header(eh) do { } while (0)
 #define dbg_show_index(ix) do { } while (0)
 #define dbg_show_extent(ex) do { } while (0)
 #define dbg_print_extent(desc, ex) do { } while (0)
+#define dump_path(tag, handle, path) do { } while (0)
 #endif
 
 /*
@@ -160,7 +190,7 @@ errcode_t ext2fs_extent_header_verify(void *ptr, int size)
 /*
  * Begin functions to handle an inode's extent information
  */
-extern void ext2fs_extent_free(ext2_extent_handle_t handle)
+void ext2fs_extent_free(ext2_extent_handle_t handle)
 {
 	int			i;
 
@@ -177,13 +207,13 @@ extern void ext2fs_extent_free(ext2_extent_handle_t handle)
 	ext2fs_free_mem(&handle);
 }
 
-extern errcode_t ext2fs_extent_open(ext2_filsys fs, ext2_ino_t ino,
+errcode_t ext2fs_extent_open(ext2_filsys fs, ext2_ino_t ino,
 				    ext2_extent_handle_t *ret_handle)
 {
 	return ext2fs_extent_open2(fs, ino, NULL, ret_handle);
 }
 
-extern errcode_t ext2fs_extent_open2(ext2_filsys fs, ext2_ino_t ino,
+errcode_t ext2fs_extent_open2(ext2_filsys fs, ext2_ino_t ino,
 				    struct ext2_inode *inode,
 				    ext2_extent_handle_t *ret_handle)
 {
@@ -814,12 +844,31 @@ errcode_t ext2fs_extent_replace(ext2_extent_handle_t handle,
 	return 0;
 }
 
+static int splitting_at_eof(struct ext2_extent_handle *handle,
+			    struct extent_path *path)
+{
+	struct extent_path *ppp = path;
+	dump_path(__func__, handle, path);
+
+	if (handle->level == 0)
+		return 0;
+
+	do {
+		if (ppp->left)
+			return 0;
+		ppp--;
+	} while (ppp >= handle->path);
+
+	return 1;
+}
+
 /*
  * allocate a new block, move half the current node to it, and update parent
  *
  * handle will be left pointing at original record.
  */
-errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
+static errcode_t extent_node_split(ext2_extent_handle_t handle,
+				   int expand_allowed)
 {
 	errcode_t			retval = 0;
 	blk64_t				new_node_pblk;
@@ -834,6 +883,7 @@ errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
 	int				tocopy;
 	int				new_root = 0;
 	struct ext2_extent_info		info;
+	int				no_balance;
 
 	/* basic sanity */
 	EXT2_CHECK_MAGIC(handle, EXT2_ET_MAGIC_EXTENT_HANDLE);
@@ -874,7 +924,7 @@ errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
 			goto done;
 		goal_blk = extent.e_pblk;
 
-		retval = ext2fs_extent_node_split(handle);
+		retval = extent_node_split(handle, expand_allowed);
 		if (retval)
 			goto done;
 
@@ -888,6 +938,14 @@ errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
 	path = handle->path + handle->level;
 	if (!path->curr)
 		return EXT2_ET_NO_CURRENT_NODE;
+
+	/*
+	 * Normally, we try to split a full node in half.  This doesn't turn
+	 * out so well if we're tacking extents on the end of the file because
+	 * then we're stuck with a tree of half-full extent blocks.  This of
+	 * course doesn't apply to the root level.
+	 */
+	no_balance = expand_allowed ? splitting_at_eof(handle, path) : 0;
 
 	/* extent header of the current node we'll split */
 	eh = (struct ext3_extent_header *)path->buf;
@@ -904,7 +962,10 @@ errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
 		memset(newpath, 0,
 		       ((handle->max_depth+2) * sizeof(struct extent_path)));
 	} else {
-		tocopy = ext2fs_le16_to_cpu(eh->eh_entries) / 2;
+		if (no_balance)
+			tocopy = 1;
+		else
+			tocopy = ext2fs_le16_to_cpu(eh->eh_entries) / 2;
 	}
 
 #ifdef DEBUG
@@ -913,7 +974,7 @@ errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
 				handle->level);
 #endif
 
-	if (!tocopy) {
+	if (!tocopy && !no_balance) {
 #ifdef DEBUG
 		printf("Nothing to copy to new block!\n");
 #endif
@@ -1032,8 +1093,7 @@ errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
 		goto done;
 
 	/* new node hooked in, so update inode block count (do this here?) */
-	handle->inode->i_blocks += (handle->fs->blocksize *
-				    EXT2FS_CLUSTER_RATIO(handle->fs)) / 512;
+	ext2fs_iblk_add_blocks(handle->fs, handle->inode, 1);
 	retval = ext2fs_write_inode(handle->fs, handle->ino,
 				    handle->inode);
 	if (retval)
@@ -1045,6 +1105,11 @@ done:
 	free(block_buf);
 
 	return retval;
+}
+
+errcode_t ext2fs_extent_node_split(ext2_extent_handle_t handle)
+{
+	return extent_node_split(handle, 0);
 }
 
 errcode_t ext2fs_extent_insert(ext2_extent_handle_t handle, int flags,
@@ -1078,7 +1143,7 @@ errcode_t ext2fs_extent_insert(ext2_extent_handle_t handle, int flags,
 			printf("node full (level %d) - splitting\n",
 				   handle->level);
 #endif
-			retval = ext2fs_extent_node_split(handle);
+			retval = extent_node_split(handle, 1);
 			if (retval)
 				return retval;
 			path = handle->path + handle->level;
@@ -1092,8 +1157,10 @@ errcode_t ext2fs_extent_insert(ext2_extent_handle_t handle, int flags,
 			ix++;
 			path->left--;
 		}
-	} else
+	} else {
 		ix = EXT_FIRST_INDEX(eh);
+		path->left = -1;
+	}
 
 	path->curr = ix;
 
@@ -1357,6 +1424,9 @@ errcode_t ext2fs_extent_set_bmap(ext2_extent_handle_t handle,
 							       &next_extent);
 				if (retval)
 					goto done;
+				retval = ext2fs_extent_fix_parents(handle);
+				if (retval)
+					goto done;
 			} else
 				retval = ext2fs_extent_insert(handle,
 				      EXT2_EXTENT_INSERT_AFTER, &newextent);
@@ -1409,15 +1479,22 @@ errcode_t ext2fs_extent_set_bmap(ext2_extent_handle_t handle,
 		retval = ext2fs_extent_replace(handle, 0, &extent);
 		if (retval)
 			goto done;
+		retval = ext2fs_extent_fix_parents(handle);
+		if (retval)
+			goto done;
 	} else {
 		__u32	orig_length;
+		blk64_t	orig_lblk;
+		struct ext2fs_extent orig_extent;
+		errcode_t r2;
 
 #ifdef DEBUG
 		printf("(re/un)mapping in middle of extent\n");
 #endif
 		/* need to split this extent; later */
-
+		orig_lblk = extent.e_lblk;
 		orig_length = extent.e_len;
+		orig_extent = extent;
 
 		/* shorten pre-split extent */
 		extent.e_len = (logical - extent.e_lblk);
@@ -1429,8 +1506,13 @@ errcode_t ext2fs_extent_set_bmap(ext2_extent_handle_t handle,
 			/* insert new extent after current */
 			retval = ext2fs_extent_insert(handle,
 					EXT2_EXTENT_INSERT_AFTER, &newextent);
-			if (retval)
+			if (retval) {
+				r2 = ext2fs_extent_goto(handle, orig_lblk);
+				if (r2 == 0)
+					ext2fs_extent_replace(handle, 0,
+							      &orig_extent);
 				goto done;
+			}
 		}
 		/* add post-split extent */
 		extent.e_pblk += extent.e_len + 1;
@@ -1438,8 +1520,18 @@ errcode_t ext2fs_extent_set_bmap(ext2_extent_handle_t handle,
 		extent.e_len = orig_length - extent.e_len - 1;
 		retval = ext2fs_extent_insert(handle,
 				EXT2_EXTENT_INSERT_AFTER, &extent);
-		if (retval)
+		if (retval) {
+			if (physical) {
+				r2 = ext2fs_extent_goto(handle,
+							newextent.e_lblk);
+				if (r2 == 0)
+					ext2fs_extent_delete(handle, 0);
+			}
+			r2 = ext2fs_extent_goto(handle, orig_lblk);
+			if (r2 == 0)
+				ext2fs_extent_replace(handle, 0, &orig_extent);
 			goto done;
+		}
 	}
 
 done:

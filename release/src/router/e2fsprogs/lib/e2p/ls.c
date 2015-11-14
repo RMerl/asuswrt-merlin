@@ -259,6 +259,8 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 	else
 		fprintf(f, "Fragment size:            %u\n",
 			EXT2_CLUSTER_SIZE(sb));
+	if (sb->s_feature_incompat & EXT4_FEATURE_INCOMPAT_64BIT)
+		fprintf(f, "Group descriptor size:    %u\n", sb->s_desc_size);
 	if (sb->s_reserved_gdt_blocks)
 		fprintf(f, "Reserved GDT blocks:      %u\n",
 			sb->s_reserved_gdt_blocks);
@@ -365,6 +367,14 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 		default:
 			fprintf(f, "type %u\n", sb->s_jnl_backup_type);
 		}
+	}
+	if (sb->s_backup_bgs[0] || sb->s_backup_bgs[1]) {
+		fprintf(f, "Backup block groups:      ");
+		if (sb->s_backup_bgs[0])
+			fprintf(f, "%u ", sb->s_backup_bgs[0]);
+		if (sb->s_backup_bgs[1])
+			fprintf(f, "%u ", sb->s_backup_bgs[1]);
+		fputc('\n', f);
 	}
 	if (sb->s_snapshot_inum) {
 		fprintf(f, "Snapshot inode:           %u\n",

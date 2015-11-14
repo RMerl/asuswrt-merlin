@@ -36,11 +36,7 @@ extern int errno;
 #endif
 #include "ss_internal.h"
 
-void ss_help (argc, argv, sci_idx, info_ptr)
-    int argc;
-    char const * const *argv;
-    int sci_idx;
-    pointer info_ptr;
+void ss_help(int argc, char const * const *argv, int sci_idx, pointer info_ptr)
 {
     char *buffer;
     char const *request_name;
@@ -110,13 +106,14 @@ void ss_help (argc, argv, sci_idx, info_ptr)
     switch (child = fork()) {
     case -1:
 	ss_perror(sci_idx, errno, "Can't fork for pager");
+	(void) close(fd);
 	return;
     case 0:
 	(void) dup2(fd, 0); /* put file on stdin */
 	ss_page_stdin();
     default:
 	(void) close(fd); /* what can we do if it fails? */
-	while (wait(0) != child) {
+	while (wait(NULL) != child) {
 	    /* do nothing if wrong pid */
 	};
     }
@@ -128,10 +125,7 @@ void ss_help (argc, argv, sci_idx, info_ptr)
 #include <dirent.h>
 #endif
 
-void ss_add_info_dir(sci_idx, info_dir, code_ptr)
-    int sci_idx;
-    char *info_dir;
-    int *code_ptr;
+void ss_add_info_dir(int sci_idx, char *info_dir, int *code_ptr)
 {
     register ss_data *info;
     DIR *d;
@@ -165,10 +159,7 @@ void ss_add_info_dir(sci_idx, info_dir, code_ptr)
     *code_ptr = 0;
 }
 
-void ss_delete_info_dir(sci_idx, info_dir, code_ptr)
-    int sci_idx;
-    char *info_dir;
-    int *code_ptr;
+void ss_delete_info_dir(int sci_idx, char *info_dir, int *code_ptr)
 {
     register char **i_d;
     register char **info_dirs;

@@ -54,6 +54,7 @@ static int expand_dir_proc(ext2_filsys	fs,
 			return BLOCK_ABORT;
 		}
 		es->newblocks++;
+		ext2fs_block_alloc_stats2(fs, new_blk, +1);
 	}
 	if (blockcnt > 0) {
 		retval = ext2fs_new_dir_block(fs, 0, 0, &block);
@@ -80,7 +81,6 @@ static int expand_dir_proc(ext2_filsys	fs,
 	}
 	ext2fs_free_mem(&block);
 	*blocknr = new_blk;
-	ext2fs_block_alloc_stats2(fs, new_blk, +1);
 
 	if (es->done)
 		return (BLOCK_CHANGED | BLOCK_ABORT);

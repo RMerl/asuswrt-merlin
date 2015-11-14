@@ -42,6 +42,9 @@ errcode_t ext2fs_check_desc(ext2_filsys fs)
 
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
+	if (EXT2_DESC_SIZE(fs->super) & (EXT2_DESC_SIZE(fs->super) - 1))
+		return EXT2_ET_BAD_DESC_SIZE;
+
 	retval = ext2fs_allocate_subcluster_bitmap(fs, "check_desc map", &bmap);
 	if (retval)
 		return retval;

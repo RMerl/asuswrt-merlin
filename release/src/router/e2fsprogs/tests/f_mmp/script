@@ -1,7 +1,8 @@
 FSCK_OPT=-yf
 
-TMPFILE=$test_name.tmp
-> $TMPFILE
+# use current directory instead of /tmp becase tmpfs doesn't support DIO
+rm -f $TMPFILE
+TMPFILE=$(mktemp ./tmp-$test_name.XXXXXX)
 
 stat -f $TMPFILE | grep -q "Type: tmpfs"
 if [ $? = 0 ]; then
@@ -21,8 +22,8 @@ fi
 
 kill_debugfs() {
 	trap 0
-	PID=$(ps -o pid,command | grep -v awk |
-		awk "/debugfs -w $TMPFILE/ { print \$1 }")
+	PID=$(ps -o pid,command | grep -v grep |
+		grep "debugfs -w $TMPFILE" | awk "{ print \$1 }")
 	[ "x$PID" != "x" ] && kill -9 $PID
 }
 

@@ -2,7 +2,7 @@ AC_INIT(version.h)
 AC_PREREQ(2.54)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([lib/config.h])
-AH_BOTTOM([#include "dirpaths.h"])
+AH_BOTTOM([#include <dirpaths.h>])
 MCONFIG=./MCONFIG
 AC_SUBST_FILE(MCONFIG)
 BINARY_TYPE=bin
@@ -63,15 +63,6 @@ AC_SUBST(E2FSPROGS_MONTH)
 AC_SUBST(E2FSPROGS_DAY)
 AC_SUBST(E2FSPROGS_VERSION)
 AC_SUBST(E2FSPROGS_PKGVER)
-AC_CANONICAL_HOST
-dnl
-dnl Check to see if libdl exists for the sake of dlopen
-dnl
-DLOPEN_LIB=''
-AC_CHECK_LIB(dl, dlopen, 
-[DLOPEN_LIB=-ldl
-AC_DEFINE(HAVE_DLOPEN, 1, [Define to 1 if dlopen/libdl exists])])
-AC_SUBST(DLOPEN_LIB)
 dnl
 dnl Use diet libc
 dnl 
@@ -80,7 +71,23 @@ AC_ARG_WITH([diet-libc],
 [  --with-diet-libc        use diet libc],
 CC="diet cc -nostdinc"
 WITH_DIET_LIBC=yes
+if test -z "$LIBS"
+then
+	LIBS="-lcompat"
+else
+	LIBS="$LIBS -lcompat"
+fi
 AC_MSG_RESULT(CC=$CC))dnl
+dnl
+AC_CANONICAL_HOST
+dnl
+dnl Check to see if libdl exists for the sake of dlopen
+dnl
+DLOPEN_LIB=''
+AC_CHECK_LIB(dl, dlopen,
+[DLOPEN_LIB=-ldl
+AC_DEFINE(HAVE_DLOPEN, 1, [Define to 1 if dlopen/libdl exists])])
+AC_SUBST(DLOPEN_LIB)
 dnl
 AC_ARG_WITH([cc],
 AC_HELP_STRING([--with-cc],[no longer supported, use CC= instead]),
@@ -117,6 +124,7 @@ then
 else
     AC_MSG_RESULT([[(none)]])
 fi
+AC_USE_SYSTEM_EXTENSIONS
 dnl
 dnl Set default values for library extentions.  Will be dealt with after
 dnl parsing configuration opions, which may modify these
@@ -374,27 +382,18 @@ AC_MSG_RESULT([Disabling profiling libraries by default])
 AC_SUBST(PROFILE_CMT)
 AC_SUBST_FILE(MAKEFILE_PROFILE)
 dnl
-dnl handle --enable-checker
+dnl handle --enable-gcov
 dnl
-AC_ARG_ENABLE([checker],
-[  --enable-checker	  build checker libraries],
-if test "$enableval" = "no"
+AC_ARG_ENABLE([gcov],
+[  --enable-gcov	  	  build for coverage testing using gcov],
+if test "$enableval" = "yes"
 then
-	CHECKER_CMT=#
-	MAKEFILE_CHECKER=/dev/null
-	AC_MSG_RESULT([Disabling checker libraries])
-else
-	CHECKER_CMT=
-	MAKEFILE_CHECKER=$srcdir/lib/Makefile.checker
-	AC_MSG_RESULT([Building checker libraries])
+	CFLAGS="-g -fprofile-arcs -ftest-coverage"
+	LDFLAGS="-fprofile-arcs -ftest-coverage"
+	AC_MSG_RESULT([Enabling gcov support])
 fi
-,
-CHECKER_CMT=#
-MAKEFILE_CHECKER=/dev/null
-AC_MSG_RESULT([Disabling checker libraries by default])
 )
-AC_SUBST(CHECKER_CMT)
-AC_SUBST_FILE(MAKEFILE_CHECKER)
+
 dnl
 dnl Substitute library extensions
 dnl
@@ -479,8 +478,8 @@ then
 	AC_CHECK_LIB(uuid, uuid_generate,
 		[LIBUUID=`$PKG_CONFIG --libs uuid`;
 		 STATIC_LIBUUID=`$PKG_CONFIG --static --libs uuid`],
-		[AC_MSG_ERROR([external uuid library not found])],
-		[$LIBUUID])
+		[AC_MSG_ERROR([external uuid library not found])])
+	PROFILED_LIBUUID=$LIBUUID
 	UUID_CMT=#
 	AC_MSG_RESULT([Disabling private uuid library])
 else
@@ -531,9 +530,9 @@ then
 	AC_CHECK_LIB(blkid, blkid_get_cache,
 		[LIBBLKID=`$PKG_CONFIG --libs blkid`;
 		 STATIC_LIBBLKID=`$PKG_CONFIG --static --libs blkid`],
-		[AC_MSG_ERROR([external blkid library not found])],
-		[$LIBBLKID])
+		[AC_MSG_ERROR([external blkid library not found])], -luuid)
 	BLKID_CMT=#
+	PROFILED_LIBBLKID=$LIBBLKID
 	AC_MSG_RESULT([Disabling private blkid library])
 else
 	LIBBLKID='$(LIB)/libblkid'$LIB_EXT
@@ -565,18 +564,26 @@ AC_SUBST(BLKID_CMT)
 dnl
 dnl handle --enable-quota
 dnl
+QUOTA_MAN_COMMENT='.\"'
+QUOTA_CMT=
+AC_SUBST(QUOTA_MAN_COMMENT)
 PKG_PROG_PKG_CONFIG
 AH_TEMPLATE([CONFIG_QUOTA], [Define to 1 to enable quota support])
 AC_ARG_ENABLE([quota],
 [  --enable-quota	  enable quota support],
 if test "$enableval" = "no"
 then
+	QUOTA_CMT=#
 	AC_MSG_RESULT([Disabling quota support])
 else
+	QUOTA_CMT=
 	AC_DEFINE(CONFIG_QUOTA, 1)
 	AC_MSG_RESULT([Enabling quota support])
+	QUOTA_MAN_COMMENT=""
+	AC_SUBST(QUOTA_MAN_COMMENT)
 fi
 ,
+QUOTA_CMT=#
 AC_MSG_RESULT([Disabling quota support by default])
 )
 dnl
@@ -679,8 +686,14 @@ else
 	AC_MSG_RESULT([Enabling e4defrag support])
 fi
 ,
-AC_MSG_RESULT([Enabling e4defrag support by default])
-DEFRAG_CMT=
+if test -z "$WITH_DIET_LIBC"
+then
+	AC_MSG_RESULT([Enabling e4defrag support by default])
+	DEFRAG_CMT=
+else
+	AC_MSG_RESULT([Disabling e4defrag support by default])
+	DEFRAG_CMT="#"
+fi
 )
 AC_SUBST(DEFRAG_CMT)
 dnl
@@ -772,8 +785,14 @@ else
 fi]
 ,
 AC_DEFINE(USE_UUIDD, 1)
-UUIDD_CMT=""
-AC_MSG_RESULT([Building uuidd by default])
+if test -z "$UUID_CMT"
+then
+	UUIDD_CMT=""
+	AC_MSG_RESULT([Building uuidd by default])
+else
+	UUIDD_CMT="#"
+	AC_MSG_RESULT([Disabling uuidd by default])
+fi
 )
 AC_SUBST(UUIDD_CMT)
 dnl
@@ -858,15 +877,17 @@ AC_CHECK_HEADERS(m4_flatten([
 	linux/falloc.h
 	linux/fd.h
 	linux/major.h
+	linux/loop.h
 	net/if_dl.h
 	netinet/in.h
 	sys/disklabel.h
+	sys/disk.h
 	sys/file.h
 	sys/ioctl.h
 	sys/mkdev.h
 	sys/mman.h
+	sys/mount.h
 	sys/prctl.h
-	sys/queue.h
 	sys/resource.h
 	sys/select.h
 	sys/socket.h
@@ -879,12 +900,6 @@ AC_CHECK_HEADERS(m4_flatten([
 	sys/un.h
 	sys/wait.h
 ]))
-AC_CHECK_HEADERS(sys/disk.h sys/mount.h,,,
-[[
-#if HAVE_SYS_QUEUE_H
-#include <sys/queue.h>
-#endif
-]])
 AC_CHECK_HEADERS(net/if.h,,,
 [[
 #if HAVE_SYS_TYPES_H
@@ -900,6 +915,7 @@ dnl is not decleared.
 AC_CHECK_MEMBER(struct dirent.d_reclen,[AC_DEFINE(HAVE_RECLEN_DIRENT, 1,
 		       [Define to 1 if dirent has d_reclen])],,
 		[#include <dirent.h>])
+AC_CHECK_MEMBERS([struct stat.st_atim])
 dnl Check to see if ssize_t was declared
 AC_CHECK_TYPE(ssize_t,[AC_DEFINE(HAVE_TYPE_SSIZE_T, 1,
 		[Define to 1 if ssize_t declared])],,
@@ -944,7 +960,11 @@ AC_SUBST(SIZEOF_LONG)
 AC_SUBST(SIZEOF_LONG_LONG)
 AC_SUBST(SIZEOF_OFF_T)
 AC_C_BIGENDIAN
-BUILD_CC="$BUILD_CC" CPP="$CPP" /bin/sh $ac_aux_dir/parse-types.sh
+if test $cross_compiling = no; then
+  BUILD_CC="$BUILD_CC" CPP="$CPP" /bin/sh $ac_aux_dir/parse-types.sh
+else
+  CROSS_COMPILE="1" BUILD_CC="$BUILD_CC" CPP="$CPP" /bin/sh $ac_aux_dir/parse-types.sh
+fi
 ASM_TYPES_HEADER=./asm_types.h
 AC_SUBST_FILE(ASM_TYPES_HEADER)
 dnl
@@ -1015,13 +1035,17 @@ AC_CHECK_FUNCS(m4_flatten([
 	__secure_getenv
 	backtrace
 	blkid_probe_get_topology
+	blkid_probe_enable_partitions
 	chflags
+	fadvise64
 	fallocate
 	fallocate64
 	fchown
 	fdatasync
 	fstat64
 	ftruncate64
+	futimes
+	getcwd
 	getdtablesize
 	getmntinfo
 	getpwuid_r
@@ -1033,19 +1057,27 @@ AC_CHECK_FUNCS(m4_flatten([
 	mallinfo
 	mbstowcs
 	memalign
+	mempcpy
 	mmap
 	msync
 	nanosleep
 	open64
 	pathconf
 	posix_fadvise
+	posix_fadvise64
 	posix_memalign
 	prctl
+	pread
+	pwrite
+	pread64
+	pwrite64
 	secure_getenv
 	setmntent
 	setresgid
 	setresuid
+	snprintf
 	srandom
+	stpcpy
 	strcasecmp
 	strdup
 	strnlen
@@ -1055,6 +1087,7 @@ AC_CHECK_FUNCS(m4_flatten([
 	sysconf
 	usleep
 	utime
+	utimes
 	valloc
 ]))
 dnl
@@ -1196,8 +1229,13 @@ dnl Allow specification of the multiarch arch
 dnl
 AC_ARG_WITH([multiarch],
 [  --with-multiarch=ARCH specify the multiarch triplet],
-libdir=$libdir/$withval
-root_libdir=$root_libdir/$withval
+if test "$withval" = "lib64"; then
+    libdir=/usr/lib64
+    root_libdir=/lib64
+else
+    libdir=$libdir/$withval
+    root_libdir=$root_libdir/$withval
+fi
 )dnl
 dnl
 dnl See if -static works.  This could fail if the linker does not
@@ -1266,16 +1304,17 @@ fi
 if test "$USE_INCLUDED_LIBINTL" = "yes" ; then
 	INCLUDES=$INCLUDES' -I$(top_builddir)/intl -I$(top_srcdir)/intl'
 fi
+if test -n "$WITH_DIET_LIBC" ; then
+	INCLUDES="$INCLUDES -D_REENTRANT"
+fi
 AC_SUBST(INCLUDES)
+AM_MKINSTALLDIRS
 dnl
 dnl Build CFLAGS
 dnl
 if test $cross_compiling = no; then
-   BUILD_CFLAGS="$CFLAGS $CPPFLAGS"
+   BUILD_CFLAGS="$CFLAGS $CPPFLAGS $INCLUDES -DHAVE_CONFIG_H"
    BUILD_LDFLAGS="$LDFLAGS"
-else
-   BUILD_CFLAGS=
-   BUILD_LDFLAGS=
 fi
 AC_SUBST(BUILD_CFLAGS)
 AC_SUBST(BUILD_LDFLAGS)

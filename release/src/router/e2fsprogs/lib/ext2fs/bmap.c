@@ -18,7 +18,7 @@
 #include <errno.h>
 
 #include "ext2_fs.h"
-#include "ext2fs.h"
+#include "ext2fsP.h"
 
 #if defined(__GNUC__) && !defined(NO_INLINE_FUNCS)
 #define _BMAP_INLINE_	__inline__
@@ -67,7 +67,7 @@ static _BMAP_INLINE_ errcode_t block_ind_bmap(ext2_filsys fs, int flags,
 #endif
 
 	if (!b && (flags & BMAP_ALLOC)) {
-		b = nr ? ((blk_t *) block_buf)[nr-1] : 0;
+		b = nr ? ext2fs_le32_to_cpu(((blk_t *)block_buf)[nr - 1]) : ind;
 		retval = ext2fs_alloc_block(fs, b,
 					    block_buf + fs->blocksize, &b);
 		if (retval)
@@ -140,7 +140,7 @@ static errcode_t extent_bmap(ext2_filsys fs, ext2_ino_t ino,
 static errcode_t implied_cluster_alloc(ext2_filsys fs, ext2_ino_t ino,
 				       struct ext2_inode *inode,
 				       ext2_extent_handle_t handle,
-				       blk64_t block, blk64_t *phys_blk)
+				       blk64_t lblk, blk64_t *phys_blk)
 {
 	blk64_t	base_block, pblock = 0;
 	int i;
@@ -149,10 +149,19 @@ static errcode_t implied_cluster_alloc(ext2_filsys fs, ext2_ino_t ino,
 					EXT4_FEATURE_RO_COMPAT_BIGALLOC))
 		return 0;
 
-	base_block = block & ~EXT2FS_CLUSTER_MASK(fs);
+	base_block = lblk & ~EXT2FS_CLUSTER_MASK(fs);
+	/*
+	 * Except for the logical block (lblk) that was passed in, search all
+	 * blocks in this logical cluster for a mapping to a physical cluster.
+	 * If any such map exists, calculate the physical block that maps to
+	 * the logical block and return that.
+	 *
+	 * The old code wouldn't even look if (block % cluster_ratio) == 0;
+	 * this is incorrect if we're allocating blocks in reverse order.
+	 */
 	for (i = 0; i < EXT2FS_CLUSTER_RATIO(fs); i++) {
-		if (block == base_block)
-			return 0;
+		if (base_block + i == lblk)
+			continue;
 		extent_bmap(fs, ino, inode, handle, 0, 0,
 			    base_block + i, 0, 0, &pblock);
 		if (pblock)
@@ -160,8 +169,37 @@ static errcode_t implied_cluster_alloc(ext2_filsys fs, ext2_ino_t ino,
 	}
 	if (pblock == 0)
 		return 0;
-	*phys_blk = pblock - i + (block - base_block);
+	*phys_blk = pblock - i + (lblk - base_block);
 	return 0;
+}
+
+/* Try to map a logical block to an already-allocated physical cluster. */
+errcode_t ext2fs_map_cluster_block(ext2_filsys fs, ext2_ino_t ino,
+				   struct ext2_inode *inode, blk64_t lblk,
+				   blk64_t *pblk)
+{
+	ext2_extent_handle_t handle;
+	errcode_t retval;
+
+	/* Need bigalloc and extents to be enabled */
+	*pblk = 0;
+	if (!EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
+					EXT4_FEATURE_RO_COMPAT_BIGALLOC) ||
+	    !(inode->i_flags & EXT4_EXTENTS_FL))
+		return 0;
+
+	retval = ext2fs_extent_open2(fs, ino, inode, &handle);
+	if (retval)
+		goto out;
+
+	retval = implied_cluster_alloc(fs, ino, inode, handle, lblk, pblk);
+	if (retval)
+		goto out2;
+
+out2:
+	ext2fs_extent_free(handle);
+out:
+	return retval;
 }
 
 static errcode_t extent_bmap(ext2_filsys fs, ext2_ino_t ino,
@@ -217,8 +255,10 @@ got_block:
 	set_extent:
 		retval = ext2fs_extent_set_bmap(handle, block,
 						blk64, 0);
-		if (retval)
+		if (retval) {
+			ext2fs_block_alloc_stats2(fs, blk64, -1);
 			return retval;
+		}
 		/* Update inode after setting extent */
 		retval = ext2fs_read_inode(fs, ino, inode);
 		if (retval)
@@ -229,6 +269,27 @@ got_block:
 	return 0;
 }
 
+int ext2fs_file_block_offset_too_big(ext2_filsys fs,
+				     struct ext2_inode *inode,
+				     blk64_t offset)
+{
+	blk64_t addr_per_block, max_map_block;
+
+	/* Kernel seems to cut us off at 4294967294 blocks */
+	if (offset >= (1ULL << 32) - 1)
+		return 1;
+
+	if (inode->i_flags & EXT4_EXTENTS_FL)
+		return 0;
+
+	addr_per_block = fs->blocksize >> 2;
+	max_map_block = addr_per_block;
+	max_map_block += addr_per_block * addr_per_block;
+	max_map_block += addr_per_block * addr_per_block * addr_per_block;
+	max_map_block += 12;
+
+	return offset >= max_map_block;
+}
 
 errcode_t ext2fs_bmap2(ext2_filsys fs, ext2_ino_t ino, struct ext2_inode *inode,
 		       char *block_buf, int bmap_flags, blk64_t block,
@@ -256,6 +317,9 @@ errcode_t ext2fs_bmap2(ext2_filsys fs, ext2_ino_t ino, struct ext2_inode *inode,
 		inode = &inode_buf;
 	}
 	addr_per_block = (blk_t) fs->blocksize >> 2;
+
+	if (ext2fs_file_block_offset_too_big(fs, inode, block))
+		return EXT2_ET_FILE_TOO_BIG;
 
 	if (!block_buf) {
 		retval = ext2fs_get_array(2, fs->blocksize, &buf);

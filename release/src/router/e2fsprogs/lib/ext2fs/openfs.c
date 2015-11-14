@@ -37,17 +37,24 @@ blk64_t ext2fs_descriptor_block_loc2(ext2_filsys fs, blk64_t group_block,
 				     dgrp_t i)
 {
 	int	bg;
-	int	has_super = 0;
+	int	has_super = 0, group_zero_adjust = 0;
 	blk64_t	ret_blk;
+
+	/*
+	 * On a bigalloc FS with 1K blocks, block 0 is reserved for non-ext4
+	 * stuff, so adjust for that if we're being asked for group 0.
+	 */
+	if (i == 0 && fs->blocksize == 1024 && EXT2FS_CLUSTER_RATIO(fs) > 1)
+		group_zero_adjust = 1;
 
 	if (!(fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG) ||
 	    (i < fs->super->s_first_meta_bg))
-		return (group_block + i + 1);
+		return group_block + i + 1 + group_zero_adjust;
 
 	bg = EXT2_DESC_PER_BLOCK(fs->super) * i;
 	if (ext2fs_bg_has_super(fs, bg))
 		has_super = 1;
-	ret_blk = ext2fs_group_first_block2(fs, bg) + has_super;
+	ret_blk = ext2fs_group_first_block2(fs, bg);
 	/*
 	 * If group_block is not the normal value, we're trying to use
 	 * the backup group descriptors and superblock --- so use the
@@ -57,10 +64,21 @@ blk64_t ext2fs_descriptor_block_loc2(ext2_filsys fs, blk64_t group_block,
 	 * have the infrastructure in place to do that.
 	 */
 	if (group_block != fs->super->s_first_data_block &&
-	    ((ret_blk + fs->super->s_blocks_per_group) <
-	     ext2fs_blocks_count(fs->super)))
+	    ((ret_blk + has_super + fs->super->s_blocks_per_group) <
+	     ext2fs_blocks_count(fs->super))) {
 		ret_blk += fs->super->s_blocks_per_group;
-	return ret_blk;
+
+		/*
+		 * If we're going to jump forward a block group, make sure
+		 * that we adjust has_super to account for the next group's
+		 * backup superblock (or lack thereof).
+		 */
+		if (ext2fs_bg_has_super(fs, bg + 1))
+			has_super = 1;
+		else
+			has_super = 0;
+	}
+	return ret_blk + has_super + group_zero_adjust;
 }
 
 blk_t ext2fs_descriptor_block_loc(ext2_filsys fs, blk_t group_block, dgrp_t i)
@@ -102,6 +120,7 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 	unsigned int	blocks_per_group, io_flags;
 	blk64_t		group_block, blk;
 	char		*dest, *cp;
+	int		group_zero_adjust = 0;
 #ifdef WORDS_BIGENDIAN
 	unsigned int	groups_per_block;
 	struct ext2_group_desc *gdp;
@@ -253,6 +272,18 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 		retval = EXT2_ET_CORRUPT_SUPERBLOCK;
 		goto cleanup;
 	}
+
+	/*
+	 * bigalloc requires cluster-aware bitfield operations, which at the
+	 * moment means we need EXT2_FLAG_64BITS.
+	 */
+	if (EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
+				       EXT4_FEATURE_RO_COMPAT_BIGALLOC) &&
+	    !(flags & EXT2_FLAG_64BITS)) {
+		retval = EXT2_ET_CANT_USE_LEGACY_BITMAPS;
+		goto cleanup;
+	}
+
 	if (!EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
 					EXT4_FEATURE_RO_COMPAT_BIGALLOC) &&
 	    (fs->super->s_log_block_size != fs->super->s_log_cluster_size)) {
@@ -330,18 +361,32 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 		goto cleanup;
 	if (!group_block)
 		group_block = fs->super->s_first_data_block;
+	/*
+	 * On a FS with a 1K blocksize, block 0 is reserved for bootloaders
+	 * so we must increment block numbers to any group 0 items.
+	 *
+	 * However, we cannot touch group_block directly because in the meta_bg
+	 * case, the ext2fs_descriptor_block_loc2() function will interpret
+	 * group_block != s_first_data_block to mean that we want to access the
+	 * backup group descriptors.  This is not what we want if the caller
+	 * set superblock == 0 (i.e. auto-detect the superblock), which is
+	 * what's going on here.
+	 */
 	if (group_block == 0 && fs->blocksize == 1024)
-		group_block = 1; /* Deal with 1024 blocksize && bigalloc */
+		group_zero_adjust = 1;
 	dest = (char *) fs->group_desc;
 #ifdef WORDS_BIGENDIAN
 	groups_per_block = EXT2_DESC_PER_BLOCK(fs->super);
 #endif
-	if (fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG)
+	if (fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG) {
 		first_meta_bg = fs->super->s_first_meta_bg;
-	else
+		if (first_meta_bg > fs->desc_blocks)
+			first_meta_bg = fs->desc_blocks;
+	} else
 		first_meta_bg = fs->desc_blocks;
 	if (first_meta_bg) {
-		retval = io_channel_read_blk(fs->io, group_block+1,
+		retval = io_channel_read_blk(fs->io, group_block +
+					     group_zero_adjust + 1,
 					     first_meta_bg, dest);
 		if (retval)
 			goto cleanup;
@@ -407,10 +452,11 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
 
 	return 0;
 cleanup:
-	if (flags & EXT2_FLAG_NOFREE_ON_ERROR)
-		*ret_fs = fs;
-	else
+	if (!(flags & EXT2_FLAG_NOFREE_ON_ERROR)) {
 		ext2fs_free(fs);
+		fs = NULL;
+	}
+	*ret_fs = fs;
 	return retval;
 }
 
@@ -439,8 +485,20 @@ errcode_t ext2fs_set_data_io(ext2_filsys fs, io_channel new_io)
 
 errcode_t ext2fs_rewrite_to_io(ext2_filsys fs, io_channel new_io)
 {
+	errcode_t err;
+
 	if ((fs->flags & EXT2_FLAG_IMAGE_FILE) == 0)
 		return EXT2_ET_NOT_IMAGE_FILE;
+	err = io_channel_set_blksize(new_io, fs->blocksize);
+	if (err)
+		return err;
+	if ((new_io == fs->image_io) || (new_io == fs->io))
+		return 0;
+	if ((fs->image_io != fs->io) &&
+	    fs->image_io)
+		io_channel_close(fs->image_io);
+	if (fs->io)
+		io_channel_close(fs->io);
 	fs->io = fs->image_io = new_io;
 	fs->flags |= EXT2_FLAG_DIRTY | EXT2_FLAG_RW |
 		EXT2_FLAG_BB_DIRTY | EXT2_FLAG_IB_DIRTY;

@@ -62,15 +62,16 @@ static errcode_t dos_write_blk(io_channel channel, unsigned long block,
 static errcode_t dos_flush(io_channel channel);
 
 static struct struct_io_manager struct_dos_manager = {
-        EXT2_ET_MAGIC_IO_MANAGER,
-        "DOS I/O Manager",
-        dos_open,
-        dos_close,
-        dos_set_blksize,
-        dos_read_blk,
-        dos_write_blk,
-        dos_flush
+	.magic		= EXT2_ET_MAGIC_IO_MANAGER,
+	.name		= "DOS I/O Manager",
+	.open		= dos_open,
+	.close		= dos_close,
+	.set_blksize	= dos_set_blksize,
+	.read_blk	= dos_read_blk,
+	.write_blk	= dos_write_blk,
+	.flush		= dos_flush
 };
+
 io_manager dos_io_manager = &struct_dos_manager;
 
 /*

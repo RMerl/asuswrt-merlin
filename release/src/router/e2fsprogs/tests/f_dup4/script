@@ -8,7 +8,7 @@ echo "/ Murphy Magic.  The SeCrEt of the UnIvErSe is 43, NOT 42" > $TEST_DATA
 touch $TMPFILE
 $MKE2FS -N 32 -F -o Linux -b 1024 $TMPFILE 100 > /dev/null 2>&1 
 $DEBUGFS -w $TMPFILE << EOF > /dev/null 2>&1
-set_current_time 200704102100
+set_current_time 20070410210000
 set_super_value lastcheck 0
 set_super_value hash_seed null
 set_super_value mkfs_time 0

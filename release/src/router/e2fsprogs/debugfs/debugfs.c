@@ -37,11 +37,26 @@ extern char *optarg;
 #include "../version.h"
 #include "jfs_user.h"
 
+#ifndef BUFSIZ
+#define BUFSIZ 8192
+#endif
+
+/* 64KiB is the minimium blksize to best minimize system call overhead. */
+#ifndef IO_BUFSIZE
+#define IO_BUFSIZE 64*1024
+#endif
+
+/* Block size for `st_blocks' */
+#ifndef S_BLKSIZE
+#define S_BLKSIZE 512
+#endif
+
 ss_request_table *extra_cmds;
 const char *debug_prog_name;
 int sci_idx;
 
 ext2_filsys	current_fs = NULL;
+quota_ctx_t	current_qctx;
 ext2_ino_t	root, cwd;
 
 static void open_filesystem(char *device, int open_flags, blk64_t superblock,
@@ -117,10 +132,9 @@ static void open_filesystem(char *device, int open_flags, blk64_t superblock,
 	return;
 
 errout:
-	retval = ext2fs_close(current_fs);
+	retval = ext2fs_close_free(&current_fs);
 	if (retval)
 		com_err(device, retval, "while trying to close filesystem");
-	current_fs = NULL;
 }
 
 void do_open_filesys(int argc, char **argv)
@@ -167,8 +181,8 @@ void do_open_filesys(int argc, char **argv)
 				return;
 			break;
 		case 's':
-			superblock = parse_ulong(optarg, argv[0],
-						 "superblock number", &err);
+			err = strtoblk(argv[0], optarg,
+				       "superblock block number", &superblock);
 			if (err)
 				return;
 			break;
@@ -187,7 +201,8 @@ void do_open_filesys(int argc, char **argv)
 	return;
 
 print_usage:
-	fprintf(stderr, "%s: Usage: open [-s superblock] [-b blocksize] [-c] "
+	fprintf(stderr, "%s: Usage: open [-s superblock] [-b blocksize] "
+		"[-d image_filename] [-c] [-i] [-f] [-e] [-D] "
 #ifndef READ_ONLY
 		"[-w] "
 #endif
@@ -223,10 +238,11 @@ static void close_filesystem(NOARGS)
 		if (retval)
 			com_err("ext2fs_write_block_bitmap", retval, 0);
 	}
-	retval = ext2fs_close(current_fs);
+	if (current_qctx)
+		quota_release_context(&current_qctx);
+	retval = ext2fs_close_free(&current_fs);
 	if (retval)
 		com_err("ext2fs_close", retval, 0);
-	current_fs = NULL;
 	return;
 }
 
@@ -263,16 +279,17 @@ void do_init_filesys(int argc, char **argv)
 	struct ext2_super_block param;
 	errcode_t	retval;
 	int		err;
+	blk64_t		blocks;
 
 	if (common_args_process(argc, argv, 3, 3, "initialize",
-				"<device> <blocksize>", CHECK_FS_NOTOPEN))
+				"<device> <blocks>", CHECK_FS_NOTOPEN))
 		return;
 
 	memset(&param, 0, sizeof(struct ext2_super_block));
-	ext2fs_blocks_count_set(&param, parse_ulong(argv[2], argv[0],
-						    "blocks count", &err));
+	err = strtoblk(argv[0], argv[2], "blocks count", &blocks);
 	if (err)
 		return;
+	ext2fs_blocks_count_set(&param, blocks);
 	retval = ext2fs_initialize(argv[1], 0, &param,
 				   unix_io_manager, &current_fs);
 	if (retval) {
@@ -518,7 +535,6 @@ static void internal_dump_inode_extra(FILE *out,
 	struct ext2_ext_attr_entry *entry;
 	__u32 *magic;
 	char *start, *end;
-	unsigned int storage_size;
 
 	fprintf(out, "Size of extra inode fields: %u\n", inode->i_extra_isize);
 	if (inode->i_extra_isize > EXT2_INODE_SIZE(current_fs->super) -
@@ -527,9 +543,6 @@ static void internal_dump_inode_extra(FILE *out,
 				inode->i_extra_isize);
 		return;
 	}
-	storage_size = EXT2_INODE_SIZE(current_fs->super) -
-			EXT2_GOOD_OLD_INODE_SIZE -
-			inode->i_extra_isize;
 	magic = (__u32 *)((char *)inode + EXT2_GOOD_OLD_INODE_SIZE +
 			inode->i_extra_isize);
 	if (*magic == EXT2_EXT_ATTR_MAGIC) {
@@ -540,17 +553,19 @@ static void internal_dump_inode_extra(FILE *out,
 		while (!EXT2_EXT_IS_LAST_ENTRY(entry)) {
 			struct ext2_ext_attr_entry *next =
 				EXT2_EXT_ATTR_NEXT(entry);
-			if (entry->e_value_size > storage_size ||
-					(char *) next >= end) {
+			char *name = EXT2_EXT_ATTR_NAME(entry);
+			char *value = start + entry->e_value_offs;
+
+			if (name + entry->e_name_len >= end ||
+			    value + entry->e_value_size >= end ||
+			    (char *) next >= end) {
 				fprintf(out, "invalid EA entry in inode\n");
 				return;
 			}
 			fprintf(out, "  ");
-			dump_xattr_string(out, EXT2_EXT_ATTR_NAME(entry),
-					  entry->e_name_len);
+			dump_xattr_string(out, name, entry->e_name_len);
 			fprintf(out, " = \"");
-			dump_xattr_string(out, start + entry->e_value_offs,
-						entry->e_value_size);
+			dump_xattr_string(out, value, entry->e_value_size);
 			fprintf(out, "\" (%u)\n", entry->e_value_size);
 			entry = next;
 		}
@@ -1016,7 +1031,7 @@ void do_freei(int argc, char *argv[])
 	    !ext2fs_test_inode_bitmap2(current_fs->inode_map,inode))
 		com_err(argv[0], 0, "Warning: inode already clear");
 	while (len-- > 0)
-		ext2fs_unmark_inode_bitmap2(current_fs->inode_map, inode);
+		ext2fs_unmark_inode_bitmap2(current_fs->inode_map, inode++);
 	ext2fs_mark_ib_dirty(current_fs);
 }
 
@@ -1559,22 +1574,38 @@ void do_find_free_inode(int argc, char *argv[])
 }
 
 #ifndef READ_ONLY
-static errcode_t copy_file(int fd, ext2_ino_t newfile)
+static errcode_t copy_file(int fd, ext2_ino_t newfile, int bufsize,
+			   int make_holes)
 {
 	ext2_file_t	e2_file;
-	errcode_t	retval;
+	errcode_t	retval, close_ret;
 	int		got;
 	unsigned int	written;
-	char		buf[8192];
+	char		*buf;
 	char		*ptr;
+	char		*zero_buf;
+	int		cmp;
 
 	retval = ext2fs_file_open(current_fs, newfile,
 				  EXT2_FILE_WRITE, &e2_file);
 	if (retval)
 		return retval;
 
+	retval = ext2fs_get_mem(bufsize, &buf);
+	if (retval) {
+		com_err("copy_file", retval, "can't allocate buffer\n");
+		goto out_close;
+	}
+
+	/* This is used for checking whether the whole block is zero */
+	retval = ext2fs_get_memzero(bufsize, &zero_buf);
+	if (retval) {
+		com_err("copy_file", retval, "can't allocate zero buffer\n");
+		goto out_free_buf;
+	}
+
 	while (1) {
-		got = read(fd, buf, sizeof(buf));
+		got = read(fd, buf, bufsize);
 		if (got == 0)
 			break;
 		if (got < 0) {
@@ -1582,6 +1613,22 @@ static errcode_t copy_file(int fd, ext2_ino_t newfile)
 			goto fail;
 		}
 		ptr = buf;
+
+		/* Sparse copy */
+		if (make_holes) {
+			/* Check whether all is zero */
+			cmp = memcmp(ptr, zero_buf, got);
+			if (cmp == 0) {
+				 /* The whole block is zero, make a hole */
+				retval = ext2fs_file_lseek(e2_file, got,
+							   EXT2_SEEK_CUR, NULL);
+				if (retval)
+					goto fail;
+				got = 0;
+			}
+		}
+
+		/* Normal copy */
 		while (got > 0) {
 			retval = ext2fs_file_write(e2_file, ptr,
 						   got, &written);
@@ -1592,11 +1639,15 @@ static errcode_t copy_file(int fd, ext2_ino_t newfile)
 			ptr += written;
 		}
 	}
-	retval = ext2fs_file_close(e2_file);
-	return retval;
 
 fail:
-	(void) ext2fs_file_close(e2_file);
+	ext2fs_free_mem(&zero_buf);
+out_free_buf:
+	ext2fs_free_mem(&buf);
+out_close:
+	close_ret = ext2fs_file_close(e2_file);
+	if (retval == 0)
+		retval = close_ret;
 	return retval;
 }
 
@@ -1608,6 +1659,8 @@ void do_write(int argc, char *argv[])
 	ext2_ino_t	newfile;
 	errcode_t	retval;
 	struct ext2_inode inode;
+	int		bufsize = IO_BUFSIZE;
+	int		make_holes = 0;
 
 	if (common_args_process(argc, argv, 3, 3, "write",
 				"<native file> <new file>", CHECK_FS_RW))
@@ -1663,16 +1716,40 @@ void do_write(int argc, char *argv[])
 	inode.i_atime = inode.i_ctime = inode.i_mtime =
 		current_fs->now ? current_fs->now : time(0);
 	inode.i_links_count = 1;
-	inode.i_size = statbuf.st_size;
+	retval = ext2fs_inode_size_set(current_fs, &inode, statbuf.st_size);
+	if (retval) {
+		com_err(argv[2], retval, 0);
+		close(fd);
+		return;
+	}
 	if (current_fs->super->s_feature_incompat &
-	    EXT3_FEATURE_INCOMPAT_EXTENTS)
+	    EXT3_FEATURE_INCOMPAT_EXTENTS) {
+		int i;
+		struct ext3_extent_header *eh;
+
+		eh = (struct ext3_extent_header *) &inode.i_block[0];
+		eh->eh_depth = 0;
+		eh->eh_entries = 0;
+		eh->eh_magic = ext2fs_cpu_to_le16(EXT3_EXT_MAGIC);
+		i = (sizeof(inode.i_block) - sizeof(*eh)) /
+			sizeof(struct ext3_extent);
+		eh->eh_max = ext2fs_cpu_to_le16(i);
 		inode.i_flags |= EXT4_EXTENTS_FL;
+	}
 	if (debugfs_write_new_inode(newfile, &inode, argv[0])) {
 		close(fd);
 		return;
 	}
 	if (LINUX_S_ISREG(inode.i_mode)) {
-		retval = copy_file(fd, newfile);
+		if (statbuf.st_blocks < statbuf.st_size / S_BLKSIZE) {
+			make_holes = 1;
+			/*
+			 * Use I/O blocksize as buffer size when
+			 * copying sparse files.
+			 */
+			bufsize = statbuf.st_blksize;
+		}
+		retval = copy_file(fd, newfile, bufsize, make_holes);
 		if (retval)
 			com_err("copy_file", retval, 0);
 	}
@@ -2027,11 +2104,13 @@ void do_bmap(int argc, char *argv[])
 	ino = string_to_inode(argv[1]);
 	if (!ino)
 		return;
-	blk = parse_ulong(argv[2], argv[0], "logical_block", &err);
+	err = strtoblk(argv[0], argv[2], "logical block", &blk);
+	if (err)
+		return;
 
 	errcode = ext2fs_bmap2(current_fs, ino, 0, 0, 0, blk, 0, &pblk);
 	if (errcode) {
-		com_err("argv[0]", errcode,
+		com_err(argv[0], errcode,
 			"while mapping logical block %llu\n", blk);
 		return;
 	}
@@ -2067,6 +2146,39 @@ void do_imap(int argc, char *argv[])
 	       "\tlocated at block %lu, offset 0x%04lx\n", ino, group,
 	       block_nr, offset);
 
+}
+
+void do_idump(int argc, char *argv[])
+{
+	ext2_ino_t	ino;
+	unsigned char	*buf;
+	errcode_t	err;
+	int		isize;
+
+	if (common_args_process(argc, argv, 2, 2, argv[0],
+				"<file>", 0))
+		return;
+	ino = string_to_inode(argv[1]);
+	if (!ino)
+		return;
+
+	isize = EXT2_INODE_SIZE(current_fs->super);
+	err = ext2fs_get_mem(isize, &buf);
+	if (err) {
+		com_err(argv[0], err, "while allocating memory");
+		return;
+	}
+
+	err = ext2fs_read_inode_full(current_fs, ino,
+				     (struct ext2_inode *)buf, isize);
+	if (err) {
+		com_err(argv[0], err, "while reading inode %d", ino);
+		goto err;
+	}
+
+	do_byte_hexdump(stdout, buf, isize);
+err:
+	ext2fs_free_mem(&buf);
 }
 
 #ifndef READ_ONLY
@@ -2172,10 +2284,14 @@ void do_punch(int argc, char *argv[])
 	ino = string_to_inode(argv[1]);
 	if (!ino)
 		return;
-	start = parse_ulong(argv[2], argv[0], "logical_block", &err);
-	if (argc == 4)
-		end = parse_ulong(argv[3], argv[0], "logical_block", &err);
-	else
+	err = strtoblk(argv[0], argv[2], "logical block", &start);
+	if (err)
+		return;
+	if (argc == 4) {
+		err = strtoblk(argv[0], argv[3], "logical block", &end);
+		if (err)
+			return;
+	} else
 		end = ~0;
 
 	errcode = ext2fs_punch(current_fs, ino, 0, 0, start, end);
@@ -2234,20 +2350,12 @@ try_again:
 
 void do_dump_mmp(int argc EXT2FS_ATTR((unused)), char *argv[])
 {
-	struct ext2_super_block *sb;
 	struct mmp_struct *mmp_s;
 	time_t t;
 	errcode_t retval = 0;
 
 	if (check_fs_open(argv[0]))
 		return;
-
-	sb  = current_fs->super;
-	if (sb->s_mmp_block <= sb->s_first_data_block ||
-	    sb->s_mmp_block >= ext2fs_blocks_count(sb)) {
-		com_err(argv[0], EXT2_ET_MMP_BAD_BLOCK, "while dumping it.\n");
-		return;
-	}
 
 	if (current_fs->mmp_buf == NULL) {
 		retval = ext2fs_get_mem(current_fs->blocksize,
@@ -2282,7 +2390,7 @@ void do_dump_mmp(int argc EXT2FS_ATTR((unused)), char *argv[])
 static int source_file(const char *cmd_file, int ss_idx)
 {
 	FILE		*f;
-	char		buf[256];
+	char		buf[BUFSIZ];
 	char		*cp;
 	int		exit_status = 0;
 	int		retval;
@@ -2383,8 +2491,11 @@ int main(int argc, char **argv)
 						"block size", 0);
 			break;
 		case 's':
-			superblock = parse_ulong(optarg, argv[0],
-						 "superblock number", 0);
+			retval = strtoblk(argv[0], optarg,
+					  "superblock block number",
+					  &superblock);
+			if (retval)
+				return 1;
 			break;
 		case 'c':
 			catastrophic = 1;

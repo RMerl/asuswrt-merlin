@@ -1,0 +1,6875 @@
+# Esperanto translations for e2fsprogs.
+# Copyright (C) 2014 Theodore Tso (msgids)
+# This file is distributed under the same license as the e2fsprogs package.
+#
+# Prave, "paŝo" ne estas traduko de "pass",
+# sed ĝi tre klaras kaj bone esprimas la faradon.
+#
+# Benno Schulenberg <benno@vertaalt.nl>, 2012, 2013, 2014.
+#
+#. The strings in e2fsck's problem.c can be very hard to translate,
+#. since the strings are expanded in two different ways.  First of all,
+#. there is an @-expansion, where strings like "@i" are expanded to
+#. "inode", and so on.  In order to make it easier for translators, the
+#. e2fsprogs po template file has been enhanced with comments that show
+#. the @-expansion, for the strings in the problem.c file.
+#.
+#. Translators are free to use the @-expansion facility if they so
+#. choose, by providing translations for strings in e2fsck/message.c.
+#. These translation can completely replace an expansion; for example,
+#. if "bblock" (which indicated that "@b" would be expanded to "block")
+#. is translated as "ddatenverlust", then "@d" will be expanded to
+#. "datenverlust".  Alternatively, translators can simply not use the
+#. @-expansion facility at all.
+#.
+#. The second expansion which is done for e2fsck's problem.c messages is
+#. a dynamic %-expansion, which expands %i as an inode number, and so
+#. on.  A table of these expansions can be found below.  Note that
+#. %-expressions that begin with "%D" and "%I" are two-character
+#. expansions; so for example, "%Iu" expands to the inode's user id
+#. ownership field (inode->i_uid).  Also the "%B" expansion is special:
+#. it can expand to either the string "indirect block" (possibly preceded
+#. by the word "double" or "triple"), or the string "block #" immediately
+#. followed by an integer indicating a block sequence number.
+#.  
+#. 	%b	<blk>			block number
+#. 	%B	"indirect block" | "block #"<blkcount>	string | string+integer
+#. 	%c	<blk2>			block number
+#. 	%Di	<dirent> -> ino		inode number
+#. 	%Dn	<dirent> -> name	string
+#. 	%Dr	<dirent> -> rec_len
+#. 	%Dl	<dirent> -> name_len
+#. 	%Dt	<dirent> -> filetype
+#. 	%d	<dir> 			inode number
+#. 	%g	<group>			integer
+#. 	%i	<ino>			inode number
+#. 	%Is	<inode> -> i_size
+#. 	%IS	<inode> -> i_extra_isize
+#. 	%Ib	<inode> -> i_blocks
+#. 	%Il	<inode> -> i_links_count
+#. 	%Im	<inode> -> i_mode
+#. 	%IM	<inode> -> i_mtime
+#. 	%IF	<inode> -> i_faddr
+#. 	%If	<inode> -> i_file_acl
+#. 	%Id	<inode> -> i_dir_acl
+#. 	%Iu	<inode> -> i_uid
+#. 	%Ig	<inode> -> i_gid
+#. 	%It	<str>			file type
+#. 	%j	<ino2>			inode number
+#. 	%m	<com_err error message>
+#. 	%N	<num>
+#. 	%p		ext2fs_get_pathname of directory <ino>
+#. 	%P		ext2fs_get_pathname of <dirent>->ino with <ino2> as
+#. 				the containing directory.  (If dirent is NULL
+#. 				then return the pathname of directory <ino2>)
+#. 	%q		ext2fs_get_pathname of directory <dir>
+#. 	%Q		ext2fs_get_pathname of directory <ino> with <dir> as
+#. 				the containing directory.
+#. 	%s	<str>			miscellaneous string
+#. 	%S		backup superblock
+#. 	%X	<num>	hexadecimal format
+#.
+msgid ""
+msgstr ""
+"Project-Id-Version: e2fsprogs-1.42.12-pre2\n"
+"Report-Msgid-Bugs-To: tytso@alum.mit.edu\n"
+"POT-Creation-Date: 2015-05-17 21:26-0400\n"
+"PO-Revision-Date: 2014-08-31 18:44+0200\n"
+"Last-Translator: Benno Schulenberg <benno@vertaalt.nl>\n"
+"Language-Team: Esperanto <translation-team-eo@lists.sourceforge.net>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 1.0\n"
+
+#: e2fsck/badblocks.c:23 misc/mke2fs.c:211
+#, c-format
+msgid "Bad block %u out of range; ignored.\n"
+msgstr "Malbona bloko %u estas ekster gamo; ĝi ignoriĝas.\n"
+
+#: e2fsck/badblocks.c:46
+msgid "while sanity checking the bad blocks inode"
+msgstr "dum sankontrolo de malbonbloka i-nodo"
+
+#: e2fsck/badblocks.c:58
+msgid "while reading the bad blocks inode"
+msgstr "dum legado de malbonbloka i-nodo"
+
+#: e2fsck/badblocks.c:72 e2fsck/scantest.c:107 e2fsck/unix.c:1345
+#: e2fsck/unix.c:1434 misc/badblocks.c:1242 misc/badblocks.c:1250
+#: misc/badblocks.c:1264 misc/badblocks.c:1276 misc/dumpe2fs.c:604
+#: misc/e2image.c:1396 misc/e2image.c:1580 misc/e2image.c:1599
+#: misc/mke2fs.c:227 misc/tune2fs.c:1955 misc/tune2fs.c:2044 resize/main.c:317
+#, c-format
+msgid "while trying to open %s"
+msgstr "dum provo de malfermi %s"
+
+#: e2fsck/badblocks.c:83
+#, c-format
+msgid "while trying popen '%s'"
+msgstr "dum provo de malfermi dukton al '%s'"
+
+#: e2fsck/badblocks.c:94 misc/mke2fs.c:234
+msgid "while reading in list of bad blocks from file"
+msgstr "dum legado de listo de malbonaj blokoj el dosiero"
+
+#: e2fsck/badblocks.c:105
+msgid "while updating bad block inode"
+msgstr "dum ĝisdatigo de malbonbloka i-nodo"
+
+#: e2fsck/badblocks.c:133
+#, c-format
+msgid "Warning: illegal block %u found in bad block inode.  Cleared.\n"
+msgstr "Averto: nevalida bloko %u troviĝis malbonbloka i-nodo.  Viŝiĝis.\n"
+
+#: e2fsck/ehandler.c:55
+#, c-format
+msgid "Error reading block %lu (%s) while %s.  "
+msgstr "Eraro dum legado de bloko %lu (%s) dum %s.  "
+
+#: e2fsck/ehandler.c:58
+#, c-format
+msgid "Error reading block %lu (%s).  "
+msgstr "Eraro dum legado de bloko %lu (%s).  "
+
+#: e2fsck/ehandler.c:61 e2fsck/ehandler.c:110
+msgid "Ignore error"
+msgstr "Ignori eraron"
+
+#: e2fsck/ehandler.c:62
+msgid "Force rewrite"
+msgstr "Devigi reskribon"
+
+#: e2fsck/ehandler.c:104
+#, c-format
+msgid "Error writing block %lu (%s) while %s.  "
+msgstr "Eraro dum skribado de bloko %lu (%s) dum %s.  "
+
+#: e2fsck/ehandler.c:107
+#, c-format
+msgid "Error writing block %lu (%s).  "
+msgstr "Eraro dum skribado de bloko %lu (%s).  "
+
+#: e2fsck/emptydir.c:57
+msgid "empty dirblocks"
+msgstr "vakaj ujaj blokoj"
+
+#: e2fsck/emptydir.c:62
+msgid "empty dir map"
+msgstr "vaka uja mapo"
+
+#: e2fsck/emptydir.c:98
+#, c-format
+msgid "Empty directory block %u (#%d) in inode %u\n"
+msgstr "Vaka uja bloko %u (#%d) en i-nodo %u\n"
+
+#: e2fsck/extend.c:22
+#, c-format
+msgid "%s: %s filename nblocks blocksize\n"
+msgstr "Uzmaniero de %s:  %s DOSIERNOMO BLOKNOMBRO BLOKGRANDO\n"
+
+#: e2fsck/extend.c:44
+#, c-format
+msgid "Illegal number of blocks!\n"
+msgstr "Nevalida nombro de blokoj!\n"
+
+#: e2fsck/extend.c:50
+#, c-format
+msgid "Couldn't allocate block buffer (size=%d)\n"
+msgstr "Mankas sufiĉa memoro por asigni bufron (grando=%d)\n"
+
+#: e2fsck/flushb.c:35
+#, c-format
+msgid "Usage: %s disk\n"
+msgstr "Uzmaniero:  %s DISKO\n"
+
+#: e2fsck/flushb.c:64
+#, c-format
+msgid "BLKFLSBUF ioctl not supported!  Can't flush buffers.\n"
+msgstr ""
+"La 'ioctl(BLKFLSBUF)' ne subtenatas!  Ne eblas peli bufrajn enhavojn.\n"
+
+#: e2fsck/iscan.c:44
+#, c-format
+msgid "Usage: %s [-F] [-I inode_buffer_blocks] device\n"
+msgstr "Uzmaniero:  %s [-F] [-I BUFROBLOKNOMBRO] APARATO\n"
+
+#: e2fsck/iscan.c:81 e2fsck/unix.c:972
+#, c-format
+msgid "while opening %s for flushing"
+msgstr "dum malfermo de %s por elbufrigo"
+
+#: e2fsck/iscan.c:86 e2fsck/unix.c:978 resize/main.c:290
+#, c-format
+msgid "while trying to flush %s"
+msgstr "dum provo de elbufrigi %s"
+
+#: e2fsck/iscan.c:110
+#, c-format
+msgid "while trying to open '%s'"
+msgstr "dum provo de malfermi '%s'"
+
+#: e2fsck/iscan.c:119 e2fsck/scantest.c:114 misc/e2image.c:1290
+msgid "while opening inode scan"
+msgstr "dum malfermo de i-noda skano"
+
+#: e2fsck/iscan.c:127 misc/e2image.c:1309
+msgid "while getting next inode"
+msgstr "dum preno de sekva i-nodo"
+
+#: e2fsck/iscan.c:136
+#, c-format
+msgid "%u inodes scanned.\n"
+msgstr "Skaniĝis %u i-nodoj.\n"
+
+#: e2fsck/journal.c:524
+msgid "reading journal superblock\n"
+msgstr "dum legado de kaŝprotokola ĉefbloko\n"
+
+#: e2fsck/journal.c:581
+#, c-format
+msgid "%s: no valid journal superblock found\n"
+msgstr "%s: ne troviĝis valida kaŝprotokola ĉefbloko\n"
+
+#: e2fsck/journal.c:590
+#, c-format
+msgid "%s: journal too short\n"
+msgstr "%s: kaŝprotokolo tro mallongas\n"
+
+#: e2fsck/journal.c:881
+#, c-format
+msgid "%s: recovering journal\n"
+msgstr "%s: restaŭriĝas kaŝprotokolo...\n"
+
+#: e2fsck/journal.c:883
+#, c-format
+msgid "%s: won't do journal recovery while read-only\n"
+msgstr "%s: ne restaŭriĝos kaŝprotokolo en nurlega stato\n"
+
+#: e2fsck/journal.c:910
+#, c-format
+msgid "while trying to re-open %s"
+msgstr "dum provo de remalfermi %s"
+
+# ****************************************************************
+# *** La sekvaj mallongigoj preskaŭ ĉiuj uziĝas en la traduko. ***
+# ****************************************************************
+#: e2fsck/message.c:113
+msgid "aextended attribute"
+msgstr "aetendita atributo"
+
+#: e2fsck/message.c:114
+msgid "Aerror allocating"
+msgstr "Aeraro dum asigno"
+
+#: e2fsck/message.c:115
+msgid "bblock"
+msgstr "bbloko"
+
+#: e2fsck/message.c:116
+msgid "Bbitmap"
+msgstr "Bbitmapo"
+
+#: e2fsck/message.c:117
+msgid "ccompress"
+msgstr "c<senuza>"
+
+#: e2fsck/message.c:118
+msgid "Cconflicts with some other fs @b"
+msgstr "Ckonfliktas kun alia dosiersistema bloko"
+
+#: e2fsck/message.c:119
+msgid "ddirectory"
+msgstr "ddosierujo"
+
+#: e2fsck/message.c:120
+msgid "Ddeleted"
+msgstr "Dforigita"
+
+#: e2fsck/message.c:121
+msgid "eentry"
+msgstr "eero"
+
+#: e2fsck/message.c:122
+msgid "E@e '%Dn' in %p (%i)"
+msgstr "Eero '%Dn' en %p (%i)"
+
+#: e2fsck/message.c:123
+msgid "ffilesystem"
+msgstr "fdosiersistemo"
+
+#: e2fsck/message.c:124
+msgid "Ffor @i %i (%Q) is"
+msgstr "Fpor @i %i (%Q) estas"
+
+#: e2fsck/message.c:125
+msgid "ggroup"
+msgstr "ggrupo"
+
+#: e2fsck/message.c:126
+msgid "hHTREE @d @i"
+msgstr "h'HTREE'-a uja @i"
+
+#: e2fsck/message.c:127
+msgid "iinode"
+msgstr "ii-nodo"
+
+#: e2fsck/message.c:128
+msgid "Iillegal"
+msgstr "Inevalida"
+
+#: e2fsck/message.c:129
+msgid "jjournal"
+msgstr "jkaŝprotokolo"
+
+#: e2fsck/message.c:130
+msgid "llost+found"
+msgstr "llost+found"
+
+#: e2fsck/message.c:131
+msgid "Lis a link"
+msgstr "Lestas ligo"
+
+#: e2fsck/message.c:132
+msgid "mmultiply-claimed"
+msgstr "mpluroble posedata"
+
+#: e2fsck/message.c:133
+msgid "ninvalid"
+msgstr "nmalvalida"
+
+#: e2fsck/message.c:134
+msgid "oorphaned"
+msgstr "oorfa"
+
+#: e2fsck/message.c:135
+msgid "pproblem in"
+msgstr "pproblemo en"
+
+#: e2fsck/message.c:136
+msgid "qquota"
+msgstr "qkvoto"
+
+#: e2fsck/message.c:137
+msgid "rroot @i"
+msgstr "rradika @i"
+
+#: e2fsck/message.c:138
+msgid "sshould be"
+msgstr "sdevus esti"
+
+#: e2fsck/message.c:139
+msgid "Ssuper@b"
+msgstr "Sĉefbloko"
+
+#: e2fsck/message.c:140
+msgid "uunattached"
+msgstr "unekonektita"
+
+#: e2fsck/message.c:141
+msgid "vdevice"
+msgstr "vaparato"
+
+#: e2fsck/message.c:142
+msgid "xextent"
+msgstr "xamplekso"
+
+#: e2fsck/message.c:143
+msgid "zzero-length"
+msgstr "znullonga"
+
+#: e2fsck/message.c:154
+msgid "<The NULL inode>"
+msgstr "<La NULL-a i-nodo>"
+
+#: e2fsck/message.c:155
+msgid "<The bad blocks inode>"
+msgstr "<La malbonbloka i-nodo>"
+
+#: e2fsck/message.c:157
+msgid "<The user quota inode>"
+msgstr "<La uzantkvota i-nodo>"
+
+#: e2fsck/message.c:158
+msgid "<The group quota inode>"
+msgstr "<La grupkvota i-nodo>"
+
+#: e2fsck/message.c:159
+msgid "<The boot loader inode>"
+msgstr "<La startiga i-nodo>"
+
+#: e2fsck/message.c:160
+msgid "<The undelete directory inode>"
+msgstr "<La malforiguja i-nodo>"
+
+#: e2fsck/message.c:161
+msgid "<The group descriptor inode>"
+msgstr "<La gruppriaĵa i-nodo>"
+
+#: e2fsck/message.c:162
+msgid "<The journal inode>"
+msgstr "<La kaŝprotokola i-nodo>"
+
+#: e2fsck/message.c:163
+msgid "<Reserved inode 9>"
+msgstr "<Rezervita i-nodo 9>"
+
+#: e2fsck/message.c:164
+msgid "<Reserved inode 10>"
+msgstr "<Rezervita i-nodo 10>"
+
+#: e2fsck/message.c:334
+msgid "regular file"
+msgstr "normala dosiero"
+
+#: e2fsck/message.c:336
+msgid "directory"
+msgstr "dosierujo"
+
+#: e2fsck/message.c:338
+msgid "character device"
+msgstr "signo-aparato"
+
+#: e2fsck/message.c:340
+msgid "block device"
+msgstr "blokaparato"
+
+#: e2fsck/message.c:342
+msgid "named pipe"
+msgstr "nomita dukto"
+
+#: e2fsck/message.c:344
+msgid "symbolic link"
+msgstr "simbola ligo"
+
+#: e2fsck/message.c:346 misc/uuidd.c:162
+msgid "socket"
+msgstr "konektilo"
+
+#: e2fsck/message.c:348
+#, c-format
+msgid "unknown file type with mode 0%o"
+msgstr "nekonata dosiertipo kun moduso 0%o"
+
+#: e2fsck/message.c:423
+msgid "indirect block"
+msgstr "nerekta bloko"
+
+#: e2fsck/message.c:425
+msgid "double indirect block"
+msgstr "duoble nerekta bloko"
+
+#: e2fsck/message.c:427
+msgid "triple indirect block"
+msgstr "trioble nerekta bloko"
+
+#: e2fsck/message.c:429
+msgid "translator block"
+msgstr "traduka bloko"
+
+#: e2fsck/message.c:431
+msgid "block #"
+msgstr "bloko #"
+
+#: e2fsck/pass1b.c:222
+msgid "multiply claimed inode map"
+msgstr "mapo de pluroble posedataj i-nodoj"
+
+#: e2fsck/pass1b.c:625 e2fsck/pass1b.c:746
+#, c-format
+msgid "internal error: can't find dup_blk for %llu\n"
+msgstr ""
+
+# FIXME -- is a debug message?
+#: e2fsck/pass1b.c:852
+msgid "returned from clone_file_block"
+msgstr ""
+
+#: e2fsck/pass1b.c:874
+#, c-format
+msgid "internal error: couldn't lookup EA block record for %llu"
+msgstr ""
+
+#: e2fsck/pass1b.c:886
+#, c-format
+msgid "internal error: couldn't lookup EA inode record for %u"
+msgstr ""
+
+#: e2fsck/pass1.c:475 e2fsck/pass2.c:782
+msgid "reading directory block"
+msgstr "legante dosierujan blokon"
+
+#: e2fsck/pass1.c:634
+msgid "in-use inode map"
+msgstr "mapo de uzataj i-nodoj"
+
+#: e2fsck/pass1.c:645
+msgid "directory inode map"
+msgstr "mapo de dosierujaj i-nodoj"
+
+#: e2fsck/pass1.c:655
+msgid "regular file inode map"
+msgstr "mapo de normaldosieraj i-nodoj"
+
+#: e2fsck/pass1.c:664 misc/e2image.c:1265
+msgid "in-use block map"
+msgstr "mapo de uzataj blokoj"
+
+#: e2fsck/pass1.c:730
+msgid "opening inode scan"
+msgstr "malfermante i-nodan skanon"
+
+#: e2fsck/pass1.c:764
+msgid "getting next inode from scan"
+msgstr "prenante sekvan i-nodon el skano"
+
+#: e2fsck/pass1.c:1279
+msgid "Pass 1"
+msgstr "Paŝo 1"
+
+#: e2fsck/pass1.c:1336
+#, c-format
+msgid "reading indirect blocks of inode %u"
+msgstr "legante nerektajn blokojn de i-nodo %u"
+
+#: e2fsck/pass1.c:1386
+msgid "bad inode map"
+msgstr "mapo de malbonaj i-nodoj"
+
+#: e2fsck/pass1.c:1409
+msgid "inode in bad block map"
+msgstr "i-nodo en mapo de difektaj blokoj"
+
+#: e2fsck/pass1.c:1429
+msgid "imagic inode map"
+msgstr "mapo de 'imagic'-i-nodoj"
+
+#: e2fsck/pass1.c:1456
+msgid "multiply claimed block map"
+msgstr "mapo de pluroble posedataj i-nodoj"
+
+#: e2fsck/pass1.c:1567
+msgid "ext attr block map"
+msgstr "mapo de blokoj kun etenditaj atributoj"
+
+#: e2fsck/pass1.c:2516
+#, c-format
+msgid "%6lu(%c): expecting %6lu got phys %6lu (blkcnt %lld)\n"
+msgstr ""
+
+#: e2fsck/pass1.c:2898
+msgid "block bitmap"
+msgstr "bloka bitmapo"
+
+#: e2fsck/pass1.c:2904
+msgid "inode bitmap"
+msgstr "i-noda bitmapo"
+
+#: e2fsck/pass1.c:2910
+msgid "inode table"
+msgstr "i-noda tabelo"
+
+#: e2fsck/pass2.c:283
+msgid "Pass 2"
+msgstr "Paŝo 2"
+
+#: e2fsck/pass2.c:806
+msgid "Can not continue."
+msgstr "Ne eblas daŭrigi."
+
+#: e2fsck/pass3.c:77
+msgid "inode done bitmap"
+msgstr "bitmapo de traktitaj i-nodoj"
+
+#: e2fsck/pass3.c:86
+msgid "Peak memory"
+msgstr "Pinta memoruzo"
+
+#: e2fsck/pass3.c:148
+msgid "Pass 3"
+msgstr "Paŝo 3"
+
+#: e2fsck/pass3.c:340
+msgid "inode loop detection bitmap"
+msgstr "bitmapo por i-noda buklorekono"
+
+#: e2fsck/pass4.c:196
+msgid "Pass 4"
+msgstr "Paŝo 4"
+
+#: e2fsck/pass5.c:74
+msgid "Pass 5"
+msgstr "Paŝo 5"
+
+#: e2fsck/problem.c:51
+msgid "(no prompt)"
+msgstr "(neniu invito)"
+
+#: e2fsck/problem.c:52
+msgid "Fix"
+msgstr "Ĉu ripari"
+
+#: e2fsck/problem.c:53
+msgid "Clear"
+msgstr "Ĉu viŝi"
+
+#: e2fsck/problem.c:54
+msgid "Relocate"
+msgstr "Ĉu alilokigi"
+
+#: e2fsck/problem.c:55
+msgid "Allocate"
+msgstr "Ĉu asigni"
+
+#: e2fsck/problem.c:56
+msgid "Expand"
+msgstr "Ĉu etendigi"
+
+#: e2fsck/problem.c:57
+msgid "Connect to /lost+found"
+msgstr "Ĉu konektigi al /lost+found"
+
+#: e2fsck/problem.c:58
+msgid "Create"
+msgstr "Ĉu krei"
+
+#: e2fsck/problem.c:59
+msgid "Salvage"
+msgstr "Ĉu savi"
+
+#: e2fsck/problem.c:60
+msgid "Truncate"
+msgstr "Ĉu trunki"
+
+#: e2fsck/problem.c:61
+msgid "Clear inode"
+msgstr "Ĉu viŝi i-nodon"
+
+#: e2fsck/problem.c:62
+msgid "Abort"
+msgstr "Ĉu ĉesi"
+
+#: e2fsck/problem.c:63
+msgid "Split"
+msgstr "Ĉu fendi"
+
+#: e2fsck/problem.c:64
+msgid "Continue"
+msgstr "Ĉu daŭrigi"
+
+#: e2fsck/problem.c:65
+msgid "Clone multiply-claimed blocks"
+msgstr "Ĉu kloni pluroble posedatajn blokojn"
+
+#: e2fsck/problem.c:66
+msgid "Delete file"
+msgstr "Ĉu forigi dosieron"
+
+#: e2fsck/problem.c:67
+msgid "Suppress messages"
+msgstr "Ĉu malebligi mesaĝojn"
+
+#: e2fsck/problem.c:68
+msgid "Unlink"
+msgstr "Ĉu malligi"
+
+#: e2fsck/problem.c:69
+msgid "Clear HTree index"
+msgstr "Ĉu viŝi 'HTree'-an indekson"
+
+#: e2fsck/problem.c:70
+msgid "Recreate"
+msgstr "Ĉu reestigi"
+
+#: e2fsck/problem.c:79
+msgid "(NONE)"
+msgstr "(NENIU)"
+
+#: e2fsck/problem.c:80
+msgid "FIXED"
+msgstr "RIPARITA"
+
+#: e2fsck/problem.c:81
+msgid "CLEARED"
+msgstr "VIŜITA"
+
+#: e2fsck/problem.c:82
+msgid "RELOCATED"
+msgstr "ALILOKIGITA"
+
+#: e2fsck/problem.c:83
+msgid "ALLOCATED"
+msgstr "ASIGNITA"
+
+#: e2fsck/problem.c:84
+msgid "EXPANDED"
+msgstr "ETENDIGITA"
+
+#: e2fsck/problem.c:85
+msgid "RECONNECTED"
+msgstr "REKONEKTITA"
+
+#: e2fsck/problem.c:86
+msgid "CREATED"
+msgstr "KREITA"
+
+#: e2fsck/problem.c:87
+msgid "SALVAGED"
+msgstr "SAVITA"
+
+#: e2fsck/problem.c:88
+msgid "TRUNCATED"
+msgstr "TRUNKITA"
+
+#: e2fsck/problem.c:89
+msgid "INODE CLEARED"
+msgstr "I-NODO VIŜITA"
+
+#: e2fsck/problem.c:90
+msgid "ABORTED"
+msgstr "ĈESIGITA"
+
+#: e2fsck/problem.c:91
+msgid "SPLIT"
+msgstr "FENDITA"
+
+#: e2fsck/problem.c:92
+msgid "CONTINUING"
+msgstr "DAŬRIGITA"
+
+#: e2fsck/problem.c:93
+msgid "MULTIPLY-CLAIMED BLOCKS CLONED"
+msgstr "PLUROBLE POSEDATAJ BLOKOJ KLONIĜIS"
+
+#: e2fsck/problem.c:94
+msgid "FILE DELETED"
+msgstr "DOSIERO FORIGIĜIS"
+
+#: e2fsck/problem.c:95
+msgid "SUPPRESSED"
+msgstr "MALEBLIGITAJ"
+
+#: e2fsck/problem.c:96
+msgid "UNLINKED"
+msgstr "MALLIGITA"
+
+#: e2fsck/problem.c:97
+msgid "HTREE INDEX CLEARED"
+msgstr "'HTREE'-A INDEKSO VIŜITA"
+
+#: e2fsck/problem.c:98
+msgid "WILL RECREATE"
+msgstr "ESTOS REESTIGATA"
+
+#. @-expanded: block bitmap for group %g is not in group.  (block %b)\n
+#: e2fsck/problem.c:107
+msgid "@b @B for @g %g is not in @g.  (@b %b)\n"
+msgstr "bloka @B por @g %g ne estas en @g.  (@b %b)\n"
+
+#. @-expanded: inode bitmap for group %g is not in group.  (block %b)\n
+#: e2fsck/problem.c:111
+msgid "@i @B for @g %g is not in @g.  (@b %b)\n"
+msgstr "i-noda @B por @g %g ne estas en @g.  (@b %b)\n"
+
+#. @-expanded: inode table for group %g is not in group.  (block %b)\n
+#. @-expanded: WARNING: SEVERE DATA LOSS POSSIBLE.\n
+#: e2fsck/problem.c:116
+msgid ""
+"@i table for @g %g is not in @g.  (@b %b)\n"
+"WARNING: SEVERE DATA LOSS POSSIBLE.\n"
+msgstr ""
+"i-noda tabelo por @g %g ne estas en @g.  (@b %b)\n"
+"AVERTO: SEVERA PERDO DE DATUMOJN EBLAS.\n"
+
+#. @-expanded: \n
+#. @-expanded: The superblock could not be read or does not describe a valid ext2/ext3/ext4\n
+#. @-expanded: filesystem.  If the device is valid and it really contains an ext2/ext3/ext4\n
+#. @-expanded: filesystem (and not swap or ufs or something else), then the superblock\n
+#. @-expanded: is corrupt, and you might try running e2fsck with an alternate superblock:\n
+#. @-expanded:     e2fsck -b 8193 <device>\n
+#. @-expanded:  or\n
+#. @-expanded:     e2fsck -b 32768 <device>\n
+#. @-expanded: \n
+#: e2fsck/problem.c:122
+msgid ""
+"\n"
+"The @S could not be read or does not describe a valid ext2/ext3/ext4\n"
+"@f.  If the @v is valid and it really contains an ext2/ext3/ext4\n"
+"@f (and not swap or ufs or something else), then the @S\n"
+"is corrupt, and you might try running e2fsck with an alternate @S:\n"
+"    e2fsck -b 8193 <@v>\n"
+" or\n"
+"    e2fsck -b 32768 <@v>\n"
+"\n"
+msgstr ""
+
+#. @-expanded: The filesystem size (according to the superblock) is %b blocks\n
+#. @-expanded: The physical size of the device is %c blocks\n
+#. @-expanded: Either the superblock or the partition table is likely to be corrupt!\n
+#: e2fsck/problem.c:133
+msgid ""
+"The @f size (according to the @S) is %b @bs\n"
+"The physical size of the @v is %c @bs\n"
+"Either the @S or the partition table is likely to be corrupt!\n"
+msgstr ""
+"La dosiersistema grando estas %b blokoj (laŭ la ĉefbloko);\n"
+"la fizika aparata grando estas %c blokoj.\n"
+"Aŭ la ĉefbloko aŭ la subdiskiga tabelo estas difekta!\n"
+
+#. @-expanded: superblock block_size = %b, fragsize = %c.\n
+#. @-expanded: This version of e2fsck does not support fragment sizes different\n
+#. @-expanded: from the block size.\n
+#: e2fsck/problem.c:140
+msgid ""
+"@S @b_size = %b, fragsize = %c.\n"
+"This version of e2fsck does not support fragment sizes different\n"
+"from the @b size.\n"
+msgstr ""
+"En @S: block_size = %b, fragsize = %c.\n"
+"Ĉi tiu versio de 'e2fsck' ne subtenas fragmentgrandojn kiuj\n"
+"malsamas al blokgrando.\n"
+
+#. @-expanded: superblock blocks_per_group = %b, should have been %c\n
+#: e2fsck/problem.c:147
+msgid "@S @bs_per_group = %b, should have been %c\n"
+msgstr "En @S: blocks_per_group = %b, devus esti %c\n"
+
+#. @-expanded: superblock first_data_block = %b, should have been %c\n
+#: e2fsck/problem.c:152
+msgid "@S first_data_@b = %b, should have been %c\n"
+msgstr "En @S: first_data_block = %b, devus esti %c\n"
+
+#. @-expanded: filesystem did not have a UUID; generating one.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:157
+msgid ""
+"@f did not have a UUID; generating one.\n"
+"\n"
+msgstr ""
+"Dosiersistemo ne havas UUID-on; unu generiĝas.\n"
+"\n"
+
+#: e2fsck/problem.c:162
+#, c-format
+msgid ""
+"Note: if several inode or block bitmap blocks or part\n"
+"of the inode table require relocation, you may wish to try\n"
+"running e2fsck with the '-b %S' option first.  The problem\n"
+"may lie only with the primary block group descriptors, and\n"
+"the backup block group descriptors may be OK.\n"
+"\n"
+msgstr ""
+
+#. @-expanded: Corruption found in superblock.  (%s = %N).\n
+#: e2fsck/problem.c:171
+msgid "Corruption found in @S.  (%s = %N).\n"
+msgstr "Troviĝis difekto en @S; (%s = %N).\n"
+
+#. @-expanded: Error determining size of the physical device: %m\n
+#: e2fsck/problem.c:176
+#, c-format
+msgid "Error determining size of the physical @v: %m\n"
+msgstr "Eraro dum eltrovo de grando de fizika aparato: %m\n"
+
+#. @-expanded: inode count in superblock is %i, should be %j.\n
+#: e2fsck/problem.c:181
+msgid "@i count in @S is %i, @s %j.\n"
+msgstr "I-noda nombro en ĉefbloko estas %i, @s %j.\n"
+
+#: e2fsck/problem.c:185
+msgid "The Hurd does not support the filetype feature.\n"
+msgstr ""
+
+#. @-expanded: superblock has an invalid journal (inode %i).\n
+#: e2fsck/problem.c:190
+#, c-format
+msgid "@S has an @n @j (@i %i).\n"
+msgstr "Ĉefbloko havas malvalidan kaŝprotokolon (@i %i).\n"
+
+#. @-expanded: External journal has multiple filesystem users (unsupported).\n
+#: e2fsck/problem.c:195
+msgid "External @j has multiple @f users (unsupported).\n"
+msgstr ""
+"Ekstera kaŝprotokolo havas plurajn dosiersistemajn uzantojn (ne "
+"subtenatas).\n"
+
+#. @-expanded: Can't find external journal\n
+#: e2fsck/problem.c:200
+msgid "Can't find external @j\n"
+msgstr "Ne eblas trovi eksteran kaŝprotokolon.\n"
+
+#. @-expanded: External journal has bad superblock\n
+#: e2fsck/problem.c:205
+msgid "External @j has bad @S\n"
+msgstr "Ekstera kaŝprotokolo havas malbonan ĉefblokon.\n"
+
+#. @-expanded: External journal does not support this filesystem\n
+#: e2fsck/problem.c:210
+msgid "External @j does not support this @f\n"
+msgstr "Ekstera kaŝprotokolo ne subtenas ĉi tiun dosiersistemon.\n"
+
+#. @-expanded: filesystem journal superblock is unknown type %N (unsupported).\n
+#. @-expanded: It is likely that your copy of e2fsck is old and/or doesn't support this journal 
+#. @-expanded: format.\n
+#. @-expanded: It is also possible the journal superblock is corrupt.\n
+#: e2fsck/problem.c:215
+msgid ""
+"@f @j @S is unknown type %N (unsupported).\n"
+"It is likely that your copy of e2fsck is old and/or doesn't support this @j "
+"format.\n"
+"It is also possible the @j @S is corrupt.\n"
+msgstr ""
+
+#. @-expanded: journal superblock is corrupt.\n
+#: e2fsck/problem.c:223
+msgid "@j @S is corrupt.\n"
+msgstr "Kaŝprotokola ĉefbloko estas difekta.\n"
+
+#. @-expanded: superblock has_journal flag is clear, but a journal is present.\n
+#: e2fsck/problem.c:228
+msgid "@S has_@j flag is clear, but a @j is present.\n"
+msgstr "Maljesas ĉefbloka flago 'has_journal', sed ekzistas kaŝprotokolo.\n"
+
+#. @-expanded: superblock needs_recovery flag is set, but no journal is present.\n
+#: e2fsck/problem.c:233
+msgid "@S needs_recovery flag is set, but no @j is present.\n"
+msgstr "Jesas ĉefbloka flago 'needs_recovery', sed ne ekzistas @j.\n"
+
+#. @-expanded: superblock needs_recovery flag is clear, but journal has data.\n
+#: e2fsck/problem.c:238
+msgid "@S needs_recovery flag is clear, but @j has data.\n"
+msgstr "Maljesas ĉefbloka flago 'needs_recovery', sed @j enhavas datumojn.\n"
+
+#. @-expanded: Clear journal
+#: e2fsck/problem.c:243
+msgid "Clear @j"
+msgstr "Ĉu viŝi kaŝprotokolon"
+
+#. @-expanded: filesystem has feature flag(s) set, but is a revision 0 filesystem.  
+#: e2fsck/problem.c:248 e2fsck/problem.c:707
+msgid "@f has feature flag(s) set, but is a revision 0 @f.  "
+msgstr "Dosiersistemo havas jesajn funkciajn flagojn, sed estas revizio 0.  "
+
+#. @-expanded: %s orphaned inode %i (uid=%Iu, gid=%Ig, mode=%Im, size=%Is)\n
+#: e2fsck/problem.c:253
+msgid "%s @o @i %i (uid=%Iu, gid=%Ig, mode=%Im, size=%Is)\n"
+msgstr "%s orfan i-nodon %i (uid=%Iu, gid=%Ig, moduso=%Im, grando=%Is)\n"
+
+#. @-expanded: illegal %B (%b) found in orphaned inode %i.\n
+#: e2fsck/problem.c:258
+msgid "@I %B (%b) found in @o @i %i.\n"
+msgstr "@I %B (%b) troviĝis en @o @i %i.\n"
+
+#. @-expanded: Already cleared %B (%b) found in orphaned inode %i.\n
+#: e2fsck/problem.c:263
+msgid "Already cleared %B (%b) found in @o @i %i.\n"
+msgstr "Jamviŝita %B (%b) troviĝis en @o @i %i.\n"
+
+#. @-expanded: illegal orphaned inode %i in superblock.\n
+#: e2fsck/problem.c:268
+#, c-format
+msgid "@I @o @i %i in @S.\n"
+msgstr "@I @o @i %i en @S.\n"
+
+#. @-expanded: illegal inode %i in orphaned inode list.\n
+#: e2fsck/problem.c:273
+#, c-format
+msgid "@I @i %i in @o @i list.\n"
+msgstr "@I @i %i en listo de orfaj i-nodoj.\n"
+
+#. @-expanded: journal superblock has an unknown read-only feature flag set.\n
+#: e2fsck/problem.c:278
+msgid "@j @S has an unknown read-only feature flag set.\n"
+msgstr "Kaŝprotokola @S havas nekonatan jesan nurlegan funkcian flagon.\n"
+
+#. @-expanded: journal superblock has an unknown incompatible feature flag set.\n
+#: e2fsck/problem.c:283
+msgid "@j @S has an unknown incompatible feature flag set.\n"
+msgstr "Kaŝprotokola @S havas nekonatan jesan nekongruan funkcian flagon.\n"
+
+#. @-expanded: journal version not supported by this e2fsck.\n
+#: e2fsck/problem.c:288
+msgid "@j version not supported by this e2fsck.\n"
+msgstr "La kaŝprotokola versio ne subtenatas por ĉi tiu 'e2fsck'.\n"
+
+#. @-expanded: Moving journal from /%s to hidden inode.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:293
+#, c-format
+msgid ""
+"Moving @j from /%s to hidden @i.\n"
+"\n"
+msgstr ""
+"Kaŝprotokolo moviĝas de /%s al kaŝita i-nodo.\n"
+"\n"
+
+#. @-expanded: Error moving journal: %m\n
+#. @-expanded: \n
+#: e2fsck/problem.c:298
+#, c-format
+msgid ""
+"Error moving @j: %m\n"
+"\n"
+msgstr ""
+"Eraro dum movo de kaŝprotokolo: %m\n"
+"\n"
+
+#. @-expanded: Found invalid V2 journal superblock fields (from V1 journal).\n
+#. @-expanded: Clearing fields beyond the V1 journal superblock...\n
+#. @-expanded: \n
+#: e2fsck/problem.c:303
+msgid ""
+"Found @n V2 @j @S fields (from V1 @j).\n"
+"Clearing fields beyond the V1 @j @S...\n"
+"\n"
+msgstr ""
+
+#. @-expanded: Run journal anyway
+#: e2fsck/problem.c:309
+msgid "Run @j anyway"
+msgstr "Ĉu tamen ruli kaŝprotokolon"
+
+#. @-expanded: Recovery flag not set in backup superblock, so running journal anyway.\n
+#: e2fsck/problem.c:314
+msgid "Recovery flag not set in backup @S, so running @j anyway.\n"
+msgstr "Restaŭra flago maljesas en savkopia @S, tamen ruliĝas @j.\n"
+
+#. @-expanded: Backing up journal inode block information.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:319
+msgid ""
+"Backing up @j @i @b information.\n"
+"\n"
+msgstr ""
+"Fariĝas savkopio de la informoj en kaŝprotokola @i.\n"
+"\n"
+
+#. @-expanded: filesystem does not have resize_inode enabled, but s_reserved_gdt_blocks\n
+#. @-expanded: is %N; should be zero.  
+#: e2fsck/problem.c:324
+msgid ""
+"@f does not have resize_@i enabled, but s_reserved_gdt_@bs\n"
+"is %N; @s zero.  "
+msgstr ""
+"Dosiersistemo havas maljesan 'resize_inode', sed 's_reserved_gdt_blocks'\n"
+"estas %N; @s nulo.  "
+
+#. @-expanded: Resize_inode not enabled, but the resize inode is non-zero.  
+#: e2fsck/problem.c:330
+msgid "Resize_@i not enabled, but the resize @i is non-zero.  "
+msgstr "Maljesas 'resize_inode', sed la regrandiga @i estas nenula.  "
+
+#. @-expanded: Resize inode not valid.  
+#: e2fsck/problem.c:335
+msgid "Resize @i not valid.  "
+msgstr "La regrandiga @i malvalidas.  "
+
+#. @-expanded: superblock last mount time (%t,\n
+#. @-expanded: \tnow = %T) is in the future.\n
+#: e2fsck/problem.c:340
+msgid ""
+"@S last mount time (%t,\n"
+"\tnow = %T) is in the future.\n"
+msgstr ""
+"En @S: tempo de lasta surmeto (%t,\n"
+"    nun = %T) estas en la estonteco.\n"
+
+#. @-expanded: superblock last write time (%t,\n
+#. @-expanded: \tnow = %T) is in the future.\n
+#: e2fsck/problem.c:345
+msgid ""
+"@S last write time (%t,\n"
+"\tnow = %T) is in the future.\n"
+msgstr ""
+"En @S: tempo de lasta skribo (%t,\n"
+"    nun = %T) estas en la estonteco.\n"
+
+#. @-expanded: superblock hint for external superblock should be %X.  
+#: e2fsck/problem.c:349
+#, c-format
+msgid "@S hint for external superblock @s %X.  "
+msgstr "Ĉefbloka indiko por ekstera @S @s %X.  "
+
+#. @-expanded: Adding dirhash hint to filesystem.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:354
+msgid ""
+"Adding dirhash hint to @f.\n"
+"\n"
+msgstr ""
+"Aldoniĝas 'dirhash'-a indiko al @f.\n"
+"\n"
+
+#. @-expanded: group descriptor %g checksum is %04x, should be %04y.  
+#: e2fsck/problem.c:359
+msgid "@g descriptor %g checksum is %04x, should be %04y.  "
+msgstr "kontrolsumo de gruppriaĵo %g estas %04x, @s %04y.  "
+
+#. @-expanded: group descriptor %g marked uninitialized without feature set.\n
+#: e2fsck/problem.c:364
+#, c-format
+msgid "@g descriptor %g marked uninitialized without feature set.\n"
+msgstr ""
+
+#. @-expanded: group descriptor %g has invalid unused inodes count %b.  
+#: e2fsck/problem.c:369
+msgid "@g descriptor %g has invalid unused inodes count %b.  "
+msgstr ""
+
+#. @-expanded: Last group block bitmap uninitialized.  
+#: e2fsck/problem.c:374
+msgid "Last @g @b @B uninitialized.  "
+msgstr "Lasta grupa bloka bitmapo estas sen pravalorizo.  "
+
+#: e2fsck/problem.c:379
+#, c-format
+msgid "Journal transaction %i was corrupt, replay was aborted.\n"
+msgstr "Kaŝprotokola transakcio %i estis difekta; refarado abortiĝis.\n"
+
+#: e2fsck/problem.c:383
+msgid "The test_fs flag is set (and ext4 is available).  "
+msgstr ""
+
+#. @-expanded: superblock last mount time is in the future.\n
+#. @-expanded: \t(by less than a day, probably due to the hardware clock being incorrectly 
+#. @-expanded: set)\n
+#: e2fsck/problem.c:388
+#, fuzzy
+msgid ""
+"@S last mount time is in the future.\n"
+"\t(by less than a day, probably due to the hardware clock being incorrectly "
+"set)\n"
+msgstr ""
+"En @S la tempo de lasta surmeto estas en la estonteco.\n"
+"    (je malpli ol unu tago, probable kaŭze de malbona alĝustigo de fizika "
+"horloĝo)  "
+
+#. @-expanded: superblock last write time is in the future.\n
+#. @-expanded: \t(by less than a day, probably due to the hardware clock being incorrectly 
+#. @-expanded: set)\n
+#: e2fsck/problem.c:394
+#, fuzzy
+msgid ""
+"@S last write time is in the future.\n"
+"\t(by less than a day, probably due to the hardware clock being incorrectly "
+"set)\n"
+msgstr ""
+"En @S la tempo de lasta skribo estas en la estonteco.\n"
+"    (je malpli ol unu tago, probable kaŭze de malbona alĝustigo de fizika "
+"horloĝo)  "
+
+#. @-expanded: One or more block group descriptor checksums are invalid.  
+#: e2fsck/problem.c:400
+msgid "One or more @b @g descriptor checksums are invalid.  "
+msgstr "Unu aŭ pluraj blokgrupaj priaĵoj havas nevalidan kontrolsumon.  "
+
+#. @-expanded: Setting free inodes count to %j (was %i)\n
+#: e2fsck/problem.c:405
+msgid "Setting free @is count to %j (was %i)\n"
+msgstr "Nombro de liberaj i-nodoj agordiĝas al %j (estis %i)\n"
+
+#. @-expanded: Setting free blocks count to %c (was %b)\n
+#: e2fsck/problem.c:410
+msgid "Setting free @bs count to %c (was %b)\n"
+msgstr "Nombro de liberaj blokoj agordiĝas al %c (estis %b)\n"
+
+#. @-expanded: Making quota inode %i (%Q) hidden.\n
+#: e2fsck/problem.c:415
+msgid "Making @q @i %i (%Q) hidden.\n"
+msgstr "La kvota @i %i (%Q) fariĝas kaŝita.\n"
+
+#. @-expanded: superblock has invalid MMP block.  
+#: e2fsck/problem.c:420
+msgid "@S has invalid MMP block.  "
+msgstr "Ĉefbloko havas nevalidan MMP-blokon.  "
+
+#. @-expanded: superblock has invalid MMP magic.  
+#: e2fsck/problem.c:425
+msgid "@S has invalid MMP magic.  "
+msgstr "Ĉefbloko havas nevalidan maginumeron por MMP.  "
+
+#: e2fsck/problem.c:430
+#, c-format
+msgid "ext2fs_open2: %m\n"
+msgstr "ext2fs_open2(): %m\n"
+
+#: e2fsck/problem.c:435
+#, c-format
+msgid "ext2fs_check_desc: %m\n"
+msgstr "ext2fs_check_desc(): %m\n"
+
+# FIXME -- missing "of"?
+#. @-expanded: superblock 64bit filesystems needs extents to access the whole disk.  
+#: e2fsck/problem.c:440
+msgid "@S 64bit filesystems needs extents to access the whole disk.  "
+msgstr ""
+"@S de 64-bitaj dosiersistemoj bezonas ampleksojn por atingi la tutan "
+"diskon.  "
+
+#: e2fsck/problem.c:445
+msgid "First_meta_bg is too big.  (%N, max value %g).  "
+msgstr ""
+
+#. @-expanded: Pass 1: Checking inodes, blocks, and sizes\n
+#: e2fsck/problem.c:452
+msgid "Pass 1: Checking @is, @bs, and sizes\n"
+msgstr "Paŝo 1: Kontrolo de i-nodoj, blokoj kaj grandoj...\n"
+
+#. @-expanded: root inode is not a directory.  
+#: e2fsck/problem.c:456
+msgid "@r is not a @d.  "
+msgstr "@r ne estas @d.  "
+
+#. @-expanded: root inode has dtime set (probably due to old mke2fs).  
+#: e2fsck/problem.c:461
+msgid "@r has dtime set (probably due to old mke2fs).  "
+msgstr "@r havas 'dtime'-an valoron (probable kaŭze de olda 'mke2fs').  "
+
+#. @-expanded: Reserved inode %i (%Q) has invalid mode.  
+#: e2fsck/problem.c:466
+msgid "Reserved @i %i (%Q) has @n mode.  "
+msgstr "Rezervita i-nodo %i (%Q) havas nevalidan moduson.  "
+
+#. @-expanded: deleted inode %i has zero dtime.  
+#: e2fsck/problem.c:471
+#, c-format
+msgid "@D @i %i has zero dtime.  "
+msgstr "@D @i %i havas nulan 'dtime'.  "
+
+#. @-expanded: inode %i is in use, but has dtime set.  
+#: e2fsck/problem.c:476
+#, c-format
+msgid "@i %i is in use, but has dtime set.  "
+msgstr "@i %i uziĝas, sed havas 'dtime'-an valoron.  "
+
+#. @-expanded: inode %i is a zero-length directory.  
+#: e2fsck/problem.c:481
+#, c-format
+msgid "@i %i is a @z @d.  "
+msgstr "@i %i estas @d kun nula longo.  "
+
+#. @-expanded: group %g's block bitmap at %b conflicts with some other fs block.\n
+#: e2fsck/problem.c:486
+msgid "@g %g's @b @B at %b @C.\n"
+msgstr "bloka @B (%b) de @g %g @C.\n"
+
+#. @-expanded: group %g's inode bitmap at %b conflicts with some other fs block.\n
+#: e2fsck/problem.c:491
+msgid "@g %g's @i @B at %b @C.\n"
+msgstr "i-noda @B (%b) de @g %g @C.\n"
+
+#. @-expanded: group %g's inode table at %b conflicts with some other fs block.\n
+#: e2fsck/problem.c:496
+msgid "@g %g's @i table at %b @C.\n"
+msgstr "i-noda tabelo (%b) de @g %g @C.\n"
+
+#. @-expanded: group %g's block bitmap (%b) is bad.  
+#: e2fsck/problem.c:501
+msgid "@g %g's @b @B (%b) is bad.  "
+msgstr "bloka @B (%b) de @g %g malbonas.  "
+
+#. @-expanded: group %g's inode bitmap (%b) is bad.  
+#: e2fsck/problem.c:506
+msgid "@g %g's @i @B (%b) is bad.  "
+msgstr "i-noda @B (%b) de @g %g malbonas.  "
+
+#. @-expanded: inode %i, i_size is %Is, should be %N.  
+#: e2fsck/problem.c:511
+msgid "@i %i, i_size is %Is, @s %N.  "
+msgstr "@i %i, 'i_size' estas %Is, @s %N.  "
+
+#. @-expanded: inode %i, i_blocks is %Ib, should be %N.  
+#: e2fsck/problem.c:516
+msgid "@i %i, i_@bs is %Ib, @s %N.  "
+msgstr "@i %i, 'i_blocks' estas %Ib, @s %N.  "
+
+#. @-expanded: illegal %B (%b) in inode %i.  
+#: e2fsck/problem.c:521
+msgid "@I %B (%b) in @i %i.  "
+msgstr "@I %B (%b) en @i %i.  "
+
+#. @-expanded: %B (%b) overlaps filesystem metadata in inode %i.  
+#: e2fsck/problem.c:526
+msgid "%B (%b) overlaps @f metadata in @i %i.  "
+msgstr "%B (%b) parte kovras dosiersistemajn metadatumojn en @i %i.  "
+
+#. @-expanded: inode %i has illegal block(s).  
+#: e2fsck/problem.c:531
+#, c-format
+msgid "@i %i has illegal @b(s).  "
+msgstr "I-nodo %i havas nevalida(j)n bloko(j)n.  "
+
+#. @-expanded: Too many illegal blocks in inode %i.\n
+#: e2fsck/problem.c:536
+#, c-format
+msgid "Too many illegal @bs in @i %i.\n"
+msgstr "Tro multaj nevalidaj blokoj en i-nodo %i.\n"
+
+#. @-expanded: illegal %B (%b) in bad block inode.  
+#: e2fsck/problem.c:541
+msgid "@I %B (%b) in bad @b @i.  "
+msgstr "@I %B (%b) en malbonbloka @i.  "
+
+#. @-expanded: Bad block inode has illegal block(s).  
+#: e2fsck/problem.c:546
+msgid "Bad @b @i has illegal @b(s).  "
+msgstr "Malbonbloka i-nodo havas nevalida(j)n bloko(j)n.  "
+
+#. @-expanded: Duplicate or bad block in use!\n
+#: e2fsck/problem.c:551
+msgid "Duplicate or bad @b in use!\n"
+msgstr "Duobla aŭ malbona bloko uziĝas!\n"
+
+#. @-expanded: Bad block %b used as bad block inode indirect block.  
+#: e2fsck/problem.c:556
+msgid "Bad @b %b used as bad @b @i indirect @b.  "
+msgstr "Malbona bloko %b uziĝas kiel nerekta bloko de malbonbloka i-nodo.  "
+
+#. @-expanded: \n
+#. @-expanded: The bad block inode has probably been corrupted.  You probably\n
+#. @-expanded: should stop now and run e2fsck -c to scan for bad blocks\n
+#. @-expanded: in the filesystem.\n
+#: e2fsck/problem.c:561
+msgid ""
+"\n"
+"The bad @b @i has probably been corrupted.  You probably\n"
+"should stop now and run e2fsck -c to scan for bad blocks\n"
+"in the @f.\n"
+msgstr ""
+"\n"
+"La malbonbloka i-nodo verŝajne difektiĝis.  Probable vi\n"
+"devus nun halti ĉian faradon kaj ruli 'e2fsck -c' por\n"
+"trovi eblajn malbonajn blokojn en la dosiersistemo.\n"
+
+#. @-expanded: \n
+#. @-expanded: If the block is really bad, the filesystem can not be fixed.\n
+#: e2fsck/problem.c:568
+msgid ""
+"\n"
+"If the @b is really bad, the @f can not be fixed.\n"
+msgstr ""
+"\n"
+"Se la bloko vere malbonas, ne eblas ripari la dosiersistemon.\n"
+
+#. @-expanded: You can remove this block from the bad block list and hope\n
+#. @-expanded: that the block is really OK.  But there are no guarantees.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:573
+msgid ""
+"You can remove this @b from the bad @b list and hope\n"
+"that the @b is really OK.  But there are no guarantees.\n"
+"\n"
+msgstr ""
+"Vi povas forigi ĉi tiun blokon de la malbonbloka listo\n"
+"kaj esperi ke la bloko fakte bonas.  Sed tio ne garantias.\n"
+"\n"
+
+#. @-expanded: The primary superblock (%b) is on the bad block list.\n
+#: e2fsck/problem.c:579
+msgid "The primary @S (%b) is on the bad @b list.\n"
+msgstr "La unua ĉefbloko (%b) estas en la malbonbloka listo.\n"
+
+#. @-expanded: Block %b in the primary group descriptors is on the bad block list\n
+#: e2fsck/problem.c:584
+msgid "Block %b in the primary @g descriptors is on the bad @b list\n"
+msgstr "Bloko %b en la unuaj gruppriaĵoj estas en la malbonbloka listo.\n"
+
+#. @-expanded: Warning: Group %g's superblock (%b) is bad.\n
+#: e2fsck/problem.c:590
+msgid "Warning: Group %g's @S (%b) is bad.\n"
+msgstr "Averto: ĉefbloko %b de grupo %g malbonas.\n"
+
+#. @-expanded: Warning: Group %g's copy of the group descriptors has a bad block (%b).\n
+#: e2fsck/problem.c:595
+msgid "Warning: Group %g's copy of the @g descriptors has a bad @b (%b).\n"
+msgstr ""
+"Averto: en grupo %g la kopio de la gruppriaĵoj havas malbonan blokon (%b).\n"
+
+#. @-expanded: Programming error?  block #%b claimed for no reason in process_bad_block.\n
+#: e2fsck/problem.c:601
+msgid "Programming error?  @b #%b claimed for no reason in process_bad_@b.\n"
+msgstr ""
+"**Programmiso?**  Bloko %b senrezone pretendiĝis en process_bad_block().\n"
+
+#. @-expanded: error allocating %N contiguous block(s) in block group %g for %s: %m\n
+#: e2fsck/problem.c:607
+msgid "@A %N contiguous @b(s) in @b @g %g for %s: %m\n"
+msgstr "@A de %N koneksaj blokoj en @b @g %g por %s: %m\n"
+
+#. @-expanded: error allocating block buffer for relocating %s\n
+#: e2fsck/problem.c:612
+#, c-format
+msgid "@A @b buffer for relocating %s\n"
+msgstr "@A de blokbufro por transloki %s\n"
+
+#. @-expanded: Relocating group %g's %s from %b to %c...\n
+#: e2fsck/problem.c:617
+msgid "Relocating @g %g's %s from %b to %c...\n"
+msgstr "De @g %g translokiĝas %s de %b al %c...\n"
+
+#. @-expanded: Relocating group %g's %s to %c...\n
+#: e2fsck/problem.c:622
+#, c-format
+msgid "Relocating @g %g's %s to %c...\n"
+msgstr "De @g %g translokiĝas %s al %c...\n"
+
+#. @-expanded: Warning: could not read block %b of %s: %m\n
+#: e2fsck/problem.c:627
+msgid "Warning: could not read @b %b of %s: %m\n"
+msgstr "Averto: malsukcesis legi blokon %b de %s: %m\n"
+
+#. @-expanded: Warning: could not write block %b for %s: %m\n
+#: e2fsck/problem.c:632
+msgid "Warning: could not write @b %b for %s: %m\n"
+msgstr "Averto: malsukcesis skribi blokon %b por %s: %m\n"
+
+#. @-expanded: error allocating inode bitmap (%N): %m\n
+#: e2fsck/problem.c:637 e2fsck/problem.c:1501
+msgid "@A @i @B (%N): %m\n"
+msgstr "@A de i-noda @B (%N): %m\n"
+
+#. @-expanded: error allocating block bitmap (%N): %m\n
+#: e2fsck/problem.c:642
+msgid "@A @b @B (%N): %m\n"
+msgstr "@A de bloka @B (%N): %m\n"
+
+#. @-expanded: error allocating icount link information: %m\n
+#: e2fsck/problem.c:647
+#, c-format
+msgid "@A icount link information: %m\n"
+msgstr "@A de 'icount'-a liginformo: %m\n"
+
+#. @-expanded: error allocating directory block array: %m\n
+#: e2fsck/problem.c:652
+#, c-format
+msgid "@A @d @b array: %m\n"
+msgstr "@A de uja blokaro: %m\n"
+
+#. @-expanded: Error while scanning inodes (%i): %m\n
+#: e2fsck/problem.c:657
+#, c-format
+msgid "Error while scanning @is (%i): %m\n"
+msgstr "Eraro dum skanado de i-nodoj (%i): %m\n"
+
+#. @-expanded: Error while iterating over blocks in inode %i: %m\n
+#: e2fsck/problem.c:662
+#, c-format
+msgid "Error while iterating over @bs in @i %i: %m\n"
+msgstr "Eraro dum iteracio je blokoj en @i %i: %m\n"
+
+#. @-expanded: Error storing inode count information (inode=%i, count=%N): %m\n
+#: e2fsck/problem.c:667
+msgid "Error storing @i count information (@i=%i, count=%N): %m\n"
+msgstr ""
+"Eraro dum skribado de informo pri i-noda nombro (@i=%i, nombro=%N): %m\n"
+
+#. @-expanded: Error storing directory block information (inode=%i, block=%b, num=%N): %m\n
+#: e2fsck/problem.c:672
+msgid "Error storing @d @b information (@i=%i, @b=%b, num=%N): %m\n"
+msgstr ""
+"Eraro dum skribado de informo pri uja bloko (@i=%i, @b=%b, numero=%N): %m\n"
+
+#. @-expanded: Error reading inode %i: %m\n
+#: e2fsck/problem.c:678
+#, c-format
+msgid "Error reading @i %i: %m\n"
+msgstr "Eraro dum legado de @i %i: %m\n"
+
+#. @-expanded: inode %i has imagic flag set.  
+#: e2fsck/problem.c:686
+#, c-format
+msgid "@i %i has imagic flag set.  "
+msgstr "@i %i havas jesan flagon 'imagic'.  "
+
+#. @-expanded: Special (device/socket/fifo/symlink) file (inode %i) has immutable\n
+#. @-expanded: or append-only flag set.  
+#: e2fsck/problem.c:691
+#, c-format
+msgid ""
+"Special (@v/socket/fifo/symlink) file (@i %i) has immutable\n"
+"or append-only flag set.  "
+msgstr ""
+"Speciala @i %i (aparato/konektilo/vicmemoro) havas jesan flagon\n"
+"'immutable' aŭ 'append-only'.  "
+
+#. @-expanded: inode %i has compression flag set on filesystem without compression support.  
+#: e2fsck/problem.c:697
+#, c-format
+msgid "@i %i has @cion flag set on @f without @cion support.  "
+msgstr ""
+"@i %i havas jesan densigan flagon en dosiersistemo sen subteno por densigo.  "
+
+#. @-expanded: Special (device/socket/fifo) inode %i has non-zero size.  
+#: e2fsck/problem.c:702
+#, c-format
+msgid "Special (@v/socket/fifo) @i %i has non-zero size.  "
+msgstr "Speciala @i %i (aparato/konektilo/vicmemoro) havas nenulan grandon.  "
+
+#. @-expanded: journal inode is not in use, but contains data.  
+#: e2fsck/problem.c:712
+msgid "@j @i is not in use, but contains data.  "
+msgstr "Kaŝprotokola i-nodo ne uziĝas, sed enhavas datumojn.  "
+
+#. @-expanded: journal is not regular file.  
+#: e2fsck/problem.c:717
+msgid "@j is not regular file.  "
+msgstr "Kaŝprotokolo ne estas normala dosiero.  "
+
+#. @-expanded: inode %i was part of the orphaned inode list.  
+#: e2fsck/problem.c:722
+#, c-format
+msgid "@i %i was part of the @o @i list.  "
+msgstr "I-nodo %i estis en la listo de orfaj i-nodoj.  "
+
+#. @-expanded: inodes that were part of a corrupted orphan linked list found.  
+#: e2fsck/problem.c:728
+msgid "@is that were part of a corrupted orphan linked list found.  "
+msgstr "Troviĝis i-nodoj kiuj estis anoj en difekta listo de orfoj.  "
+
+#. @-expanded: error allocating refcount structure (%N): %m\n
+#: e2fsck/problem.c:733
+msgid "@A refcount structure (%N): %m\n"
+msgstr "@A de 'refcount'-a strukturo (%N): %m\n"
+
+#. @-expanded: Error reading extended attribute block %b for inode %i.  
+#: e2fsck/problem.c:738
+msgid "Error reading @a @b %b for @i %i.  "
+msgstr "Eraro dum legado de @b %b de etenditaj atributoj por @i %i.  "
+
+#. @-expanded: inode %i has a bad extended attribute block %b.  
+#: e2fsck/problem.c:743
+msgid "@i %i has a bad @a @b %b.  "
+msgstr "@i %i havas malbonan blokon %b de etenditaj atributoj.  "
+
+#. @-expanded: Error reading extended attribute block %b (%m).  
+#: e2fsck/problem.c:748
+msgid "Error reading @a @b %b (%m).  "
+msgstr "Eraro dum legado de @b %b de etenditaj atributoj (%m).  "
+
+#. @-expanded: extended attribute block %b has reference count %r, should be %N.  
+#: e2fsck/problem.c:753
+msgid "@a @b %b has reference count %r, @s %N.  "
+msgstr "@b %b de etenditaj atributoj havas referencnombron %r, @s %N.  "
+
+#. @-expanded: Error writing extended attribute block %b (%m).  
+#: e2fsck/problem.c:758
+msgid "Error writing @a @b %b (%m).  "
+msgstr "Eraro dum skribado de @b %b de etenditaj atributoj (%m).  "
+
+#. @-expanded: extended attribute block %b has h_blocks > 1.  
+#: e2fsck/problem.c:763
+msgid "@a @b %b has h_@bs > 1.  "
+msgstr "@b %b de etenditaj atributoj havas 'h_blocks > 1'.  "
+
+#. @-expanded: error allocating extended attribute block %b.  
+#: e2fsck/problem.c:768
+msgid "@A @a @b %b.  "
+msgstr "@A de @b %b por etenditaj atributoj.  "
+
+#. @-expanded: extended attribute block %b is corrupt (allocation collision).  
+#: e2fsck/problem.c:773
+msgid "@a @b %b is corrupt (allocation collision).  "
+msgstr "@b %b de etenditaj atributoj estas difekta (asigna kolizio).  "
+
+#. @-expanded: extended attribute block %b is corrupt (invalid name).  
+#: e2fsck/problem.c:778
+msgid "@a @b %b is corrupt (@n name).  "
+msgstr "@b %b de etenditaj atributoj estas difekta (malvalida nomo).  "
+
+#. @-expanded: extended attribute block %b is corrupt (invalid value).  
+#: e2fsck/problem.c:783
+msgid "@a @b %b is corrupt (@n value).  "
+msgstr "@b %b de etenditaj atributoj estas difekta (malvalida valoro).  "
+
+#. @-expanded: inode %i is too big.  
+#: e2fsck/problem.c:788
+#, c-format
+msgid "@i %i is too big.  "
+msgstr "@i %i tro grandas.  "
+
+#. @-expanded: %B (%b) causes directory to be too big.  
+#: e2fsck/problem.c:792
+msgid "%B (%b) causes @d to be too big.  "
+msgstr "%B (%b) estigas dosierujon tro granda.  "
+
+#: e2fsck/problem.c:797
+msgid "%B (%b) causes file to be too big.  "
+msgstr "%B (%b) estigas dosieron tro granda.  "
+
+#: e2fsck/problem.c:802
+msgid "%B (%b) causes symlink to be too big.  "
+msgstr "%B (%b) estigas simbolan ligon tro granda.  "
+
+#. @-expanded: inode %i has INDEX_FL flag set on filesystem without htree support.\n
+#: e2fsck/problem.c:807
+#, c-format
+msgid "@i %i has INDEX_FL flag set on @f without htree support.\n"
+msgstr ""
+"@i %i havas jesan flagon 'INDEX_FL' en dosiersistemo sen subteno por "
+"'HTREE'.\n"
+
+#. @-expanded: inode %i has INDEX_FL flag set but is not a directory.\n
+#: e2fsck/problem.c:812
+#, c-format
+msgid "@i %i has INDEX_FL flag set but is not a @d.\n"
+msgstr "@i %i havas jesan flagon 'INDEX_FL' sed ne estas @d.\n"
+
+#. @-expanded: HTREE directory inode %i has an invalid root node.\n
+#: e2fsck/problem.c:817
+#, c-format
+msgid "@h %i has an @n root node.\n"
+msgstr "@h %i havas malvalidan radikan nodon.\n"
+
+#. @-expanded: HTREE directory inode %i has an unsupported hash version (%N)\n
+#: e2fsck/problem.c:822
+msgid "@h %i has an unsupported hash version (%N)\n"
+msgstr "@h %i havas nesubtenatan haketan version (%N).\n"
+
+#. @-expanded: HTREE directory inode %i uses an incompatible htree root node flag.\n
+#: e2fsck/problem.c:827
+#, c-format
+msgid "@h %i uses an incompatible htree root node flag.\n"
+msgstr "@h %i uzas nekongruan flagon por 'HTREE'-a radika nodo.\n"
+
+#. @-expanded: HTREE directory inode %i has a tree depth (%N) which is too big\n
+#: e2fsck/problem.c:832
+msgid "@h %i has a tree depth (%N) which is too big\n"
+msgstr "@h %i havas arban profundon (%N) kiu tro grandas\n"
+
+#. @-expanded: Bad block inode has an indirect block (%b) that conflicts with\n
+#. @-expanded: filesystem metadata.  
+#: e2fsck/problem.c:837
+msgid ""
+"Bad @b @i has an indirect @b (%b) that conflicts with\n"
+"@f metadata.  "
+msgstr ""
+"Malbonbloka @i havas nerektan blokon (%b) kiu konfliktas\n"
+"kun dosiersistemaj metadatumoj.  "
+
+#. @-expanded: Resize inode (re)creation failed: %m.
+#: e2fsck/problem.c:843
+#, c-format
+msgid "Resize @i (re)creation failed: %m."
+msgstr "Malsukcesis (re)kreado de regrandiga @i: %m."
+
+#. @-expanded: inode %i has a extra size (%IS) which is invalid\n
+#: e2fsck/problem.c:848
+msgid "@i %i has a extra size (%IS) which is @n\n"
+msgstr "@i %i havas kroman grandon (%IS) kiu malvalidas\n"
+
+#. @-expanded: extended attribute in inode %i has a namelen (%N) which is invalid\n
+#: e2fsck/problem.c:853
+msgid "@a in @i %i has a namelen (%N) which is @n\n"
+msgstr "@a en @i %i havas nomlongon (%N) kiu malvalidas\n"
+
+#. @-expanded: extended attribute in inode %i has a value offset (%N) which is invalid\n
+#: e2fsck/problem.c:858
+msgid "@a in @i %i has a value offset (%N) which is @n\n"
+msgstr "@a en @i i havas valoran pozicion (%N) kiu malvalidas\n"
+
+#. @-expanded: extended attribute in inode %i has a value block (%N) which is invalid (must be 0)\n
+#: e2fsck/problem.c:863
+msgid "@a in @i %i has a value @b (%N) which is @n (must be 0)\n"
+msgstr "@a en @i i havas valoran blokon (%N) kiu malvalidas (devus esti 0)\n"
+
+#. @-expanded: extended attribute in inode %i has a value size (%N) which is invalid\n
+#: e2fsck/problem.c:868
+msgid "@a in @i %i has a value size (%N) which is @n\n"
+msgstr "@a en @i i havas valoran grandon (%N) kiu malvalidas\n"
+
+#. @-expanded: extended attribute in inode %i has a hash (%N) which is invalid\n
+#: e2fsck/problem.c:873
+msgid "@a in @i %i has a hash (%N) which is @n\n"
+msgstr "@a en @i i havas haketon (%N) kiu malvalidas\n"
+
+# XXX  what is %It??
+#. @-expanded: inode %i is a %It but it looks like it is really a directory.\n
+#: e2fsck/problem.c:878
+msgid "@i %i is a %It but it looks like it is really a directory.\n"
+msgstr "@i %i estas %It sed ŝajnas ke ĝi vere estas ujo.\n"
+
+#. @-expanded: Error while reading over extent tree in inode %i: %m\n
+#: e2fsck/problem.c:883
+#, c-format
+msgid "Error while reading over @x tree in @i %i: %m\n"
+msgstr "Eraro dum legado tra arbo de ampleksoj en @i %i: %m\n"
+
+#. @-expanded: Failed to iterate extents in inode %i\n
+#. @-expanded: \t(op %s, blk %b, lblk %c): %m\n
+#: e2fsck/problem.c:888
+msgid ""
+"Failed to iterate extents in @i %i\n"
+"\t(op %s, blk %b, lblk %c): %m\n"
+msgstr ""
+"Malsukcesis iteracio je ampleksoj en @i %i\n"
+"    (op %s, blk %b, lblk %c): %m\n"
+
+#. @-expanded: inode %i has an invalid extent\n
+#. @-expanded: \t(logical block %c, invalid physical block %b, len %N)\n
+#: e2fsck/problem.c:894
+msgid ""
+"@i %i has an @n extent\n"
+"\t(logical @b %c, @n physical @b %b, len %N)\n"
+msgstr ""
+"@i %i havas malvalidan amplekson\n"
+"    (logika @b %c, @n fizika @b %b, longo %N)\n"
+
+#. @-expanded: inode %i has an invalid extent\n
+#. @-expanded: \t(logical block %c, physical block %b, invalid len %N)\n
+#: e2fsck/problem.c:899
+msgid ""
+"@i %i has an @n extent\n"
+"\t(logical @b %c, physical @b %b, @n len %N)\n"
+msgstr ""
+"@i %i havas malvalidan amplekson\n"
+"    (logika @b %c, fizika @b %b, @n longo %N)\n"
+
+#. @-expanded: inode %i has EXTENTS_FL flag set on filesystem without extents support.\n
+#: e2fsck/problem.c:904
+#, c-format
+msgid "@i %i has EXTENTS_FL flag set on @f without extents support.\n"
+msgstr ""
+"@i %i havas jesan flagon 'EXTENTS_FL' en dosiersistemo sen subteno por "
+"ampleksoj.\n"
+
+#. @-expanded: inode %i is in extent format, but superblock is missing EXTENTS feature\n
+#: e2fsck/problem.c:909
+#, c-format
+msgid "@i %i is in extent format, but @S is missing EXTENTS feature\n"
+msgstr "@i %i estas en ampleksa aranĝo, sed @S ne havas funkcion 'EXTENTS'\n"
+
+#. @-expanded: inode %i missing EXTENT_FL, but is in extents format\n
+#: e2fsck/problem.c:914
+#, c-format
+msgid "@i %i missing EXTENT_FL, but is in extents format\n"
+msgstr "@i %i estas en ampleksa aranĝo, sed ne havas 'EXTENT_FL'\n"
+
+#: e2fsck/problem.c:919
+#, c-format
+msgid "Fast symlink %i has EXTENT_FL set.  "
+msgstr "Rapida simbola ligo %i havas jesan flagon 'EXTENT_FL'.  "
+
+#. @-expanded: inode %i has out of order extents\n
+#. @-expanded: \t(invalid logical block %c, physical block %b, len %N)\n
+#: e2fsck/problem.c:924
+msgid ""
+"@i %i has out of order extents\n"
+"\t(@n logical @b %c, physical @b %b, len %N)\n"
+msgstr ""
+"@i %i havas neordajn ampleksojn\n"
+"   (@n logika @b %c, fizika @b %b, longo %N)\n"
+
+#. @-expanded: inode %i has an invalid extent node (blk %b, lblk %c)\n
+#: e2fsck/problem.c:928
+msgid "@i %i has an invalid extent node (blk %b, lblk %c)\n"
+msgstr "@i %i havas malvalidan ampleksan nodon (blk %b, lblk %c)\n"
+
+#. @-expanded: Error converting subcluster block bitmap: %m\n
+#: e2fsck/problem.c:933
+#, c-format
+msgid "Error converting subcluster @b @B: %m\n"
+msgstr "Eraro dum konverto de subfaska bloka @B: %m\n"
+
+#. @-expanded: quota inode is not regular file.  
+#: e2fsck/problem.c:938
+msgid "@q @i is not regular file.  "
+msgstr "La kvota @i ne estas normala dosiero.  "
+
+#. @-expanded: quota inode is not in use, but contains data.  
+#: e2fsck/problem.c:943
+msgid "@q @i is not in use, but contains data.  "
+msgstr "La kvota @i ne uziĝas, sed enhavas datumojn.  "
+
+#. @-expanded: quota inode is visible to the user.  
+#: e2fsck/problem.c:948
+msgid "@q @i is visible to the user.  "
+msgstr "La kvota @i estas videbla por uzanto.  "
+
+#. @-expanded: The bad block inode looks invalid.  
+#: e2fsck/problem.c:953
+msgid "The bad @b @i looks @n.  "
+msgstr "La malbonbloka @i ŝajnas @n.  "
+
+#. @-expanded: inode %i has zero length extent\n
+#. @-expanded: \t(invalid logical block %c, physical block %b)\n
+#: e2fsck/problem.c:958
+msgid ""
+"@i %i has zero length extent\n"
+"\t(@n logical @b %c, physical @b %b)\n"
+msgstr ""
+"@i %i havas nullongan amplekson\n"
+"    (@n logika @b %c, fizika @b %b)\n"
+
+#. @-expanded: Interior extent node level %N of inode %i:\n
+#. @-expanded: Logical start %b does not match logical start %c at next level.  
+#: e2fsck/problem.c:965
+msgid ""
+"Interior @x node level %N of @i %i:\n"
+"Logical start %b does not match logical start %c at next level.  "
+msgstr ""
+"Interna ampleksa noda nivelo %N de @i %i:\n"
+"Logika komenco %b ne kongruas kun logika komenco %c je posta nivelo.  "
+
+#. @-expanded: inode %i, end of extent exceeds allowed value\n
+#. @-expanded: \t(logical block %c, physical block %b, len %N)\n
+#: e2fsck/problem.c:971
+msgid ""
+"@i %i, end of extent exceeds allowed value\n"
+"\t(logical @b %c, physical @b %b, len %N)\n"
+msgstr ""
+"@i %i, fino de amplekso transpasas permesatan valoron\n"
+"    (logika @b %c, fizika @b %b, longo %N)\n"
+
+#. @-expanded: directory inode %i block %b should be at block %c.  
+#: e2fsck/problem.c:977
+msgid "@d @i %i @b %b should be at @b %c.  "
+msgstr "bloko %b de uja @i %i devus esti je bloko %c.  "
+
+#. @-expanded: directory inode %i has extent marked uninitialized at block %c.  
+#: e2fsck/problem.c:982
+#, c-format
+msgid "@d @i %i has @x marked uninitialized at @b %c.  "
+msgstr "uja @i %i havas amplekson markitan kiel sen pravalorizo je @b %c.  "
+
+#. @-expanded: inode %i logical block %b (physical block %c) violates cluster allocation rules.\n
+#. @-expanded: Will fix in pass 1B.\n
+#: e2fsck/problem.c:987
+msgid ""
+"@i %i logical @b %b (physical @b %c) violates cluster allocation rules.\n"
+"Will fix in pass 1B.\n"
+msgstr ""
+
+#. @-expanded: \n
+#. @-expanded: Running additional passes to resolve blocks claimed by more than one inode...\n
+#. @-expanded: Pass 1B: Rescanning for multiply-claimed blocks\n
+#: e2fsck/problem.c:994
+msgid ""
+"\n"
+"Running additional passes to resolve @bs claimed by more than one @i...\n"
+"Pass 1B: Rescanning for @m @bs\n"
+msgstr ""
+"\n"
+"Aldonaj paŝoj por solvi blokoj kiuj posedatas de pli ol unu i-nodo.\n"
+"Paŝo 1B: Reskanaado por pluroble posedataj blokoj...\n"
+
+#. @-expanded: multiply-claimed block(s) in inode %i:
+#: e2fsck/problem.c:1000
+#, c-format
+msgid "@m @b(s) in @i %i:"
+msgstr "pluroble posedata(j) bloko(j) en i-nodo %i:"
+
+#: e2fsck/problem.c:1015
+#, c-format
+msgid "Error while scanning inodes (%i): %m\n"
+msgstr "Eraro dum skanado de i-nodoj (%i): %m\n"
+
+#. @-expanded: error allocating inode bitmap (inode_dup_map): %m\n
+#: e2fsck/problem.c:1020
+#, c-format
+msgid "@A @i @B (@i_dup_map): %m\n"
+msgstr "@A de i-noda @B ('inode_dup_map()'): %m\n"
+
+#. @-expanded: Error while iterating over blocks in inode %i (%s): %m\n
+#: e2fsck/problem.c:1025
+#, c-format
+msgid "Error while iterating over @bs in @i %i (%s): %m\n"
+msgstr "Eraro dum iteracio je blokoj en @i %i (%s): %m\n"
+
+#. @-expanded: Error adjusting refcount for extended attribute block %b (inode %i): %m\n
+#: e2fsck/problem.c:1030 e2fsck/problem.c:1345
+msgid "Error adjusting refcount for @a @b %b (@i %i): %m\n"
+msgstr ""
+"Eraro dum alĝustigo de referencnombro por @b %b de etenditaj atributoj (@i "
+"%i): %m\n"
+
+#. @-expanded: Pass 1C: Scanning directories for inodes with multiply-claimed blocks\n
+#: e2fsck/problem.c:1035
+msgid "Pass 1C: Scanning directories for @is with @m @bs\n"
+msgstr ""
+"Paŝo 1C: Skanado de dosierujoj por i-nodoj kun pluroble posedataj blokoj...\n"
+
+#. @-expanded: Pass 1D: Reconciling multiply-claimed blocks\n
+#: e2fsck/problem.c:1041
+msgid "Pass 1D: Reconciling @m @bs\n"
+msgstr "Paŝo 1D: Solvado de pluroble posedataj blokoj...\n"
+
+#. @-expanded: File %Q (inode #%i, mod time %IM) \n
+#. @-expanded:   has %r multiply-claimed block(s), shared with %N file(s):\n
+#: e2fsck/problem.c:1046
+msgid ""
+"File %Q (@i #%i, mod time %IM) \n"
+"  has %r @m @b(s), shared with %N file(s):\n"
+msgstr ""
+"Dosiero %Q (@i %i, modifa tempo %IM) \n"
+"  havas %r pluroble posedata(j)n bloko(j)n, kunhave kun %N dosiero(j):\n"
+
+#. @-expanded: \t%Q (inode #%i, mod time %IM)\n
+#: e2fsck/problem.c:1052
+msgid "\t%Q (@i #%i, mod time %IM)\n"
+msgstr ""
+
+#. @-expanded: \t<filesystem metadata>\n
+#: e2fsck/problem.c:1057
+msgid "\t<@f metadata>\n"
+msgstr "    <dosiersistemaj metadatumoj>\n"
+
+#. @-expanded: (There are %N inodes containing multiply-claimed blocks.)\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1062
+msgid ""
+"(There are %N @is containing @m @bs.)\n"
+"\n"
+msgstr ""
+"(Ekzistas %N i-nodoj kiuj havas pluroble posedatajn blokojn.)\n"
+"\n"
+
+#. @-expanded: multiply-claimed blocks already reassigned or cloned.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1067
+msgid ""
+"@m @bs already reassigned or cloned.\n"
+"\n"
+msgstr ""
+"pluroble posedataj blokoj jam reasigniĝis aŭ kloniĝis.\n"
+"\n"
+
+#: e2fsck/problem.c:1080
+#, c-format
+msgid "Couldn't clone file: %m\n"
+msgstr "Malsukcesis kloni dosieron: %m\n"
+
+#. @-expanded: Pass 2: Checking directory structure\n
+#: e2fsck/problem.c:1086
+msgid "Pass 2: Checking @d structure\n"
+msgstr "Paŝo 2: Kontrolo de dosieruja strukturo...\n"
+
+#. @-expanded: invalid inode number for '.' in directory inode %i.\n
+#: e2fsck/problem.c:1091
+#, c-format
+msgid "@n @i number for '.' in @d @i %i.\n"
+msgstr "@n i-noda numero por '.' en uja @i %i.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has invalid inode #: %Di.\n
+#: e2fsck/problem.c:1096
+msgid "@E has @n @i #: %Di.\n"
+msgstr "@E havas malvalidan i-nodan nombron: %Di.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has deleted/unused inode %Di.  
+#: e2fsck/problem.c:1101
+msgid "@E has @D/unused @i %Di.  "
+msgstr "@E havas forigitan/neuzatan i-nodon %Di.  "
+
+#. @-expanded: entry '%Dn' in %p (%i) is a link to '.'  
+#: e2fsck/problem.c:1106
+msgid "@E @L to '.'  "
+msgstr "@E @L al '.'  "
+
+#. @-expanded: entry '%Dn' in %p (%i) points to inode (%Di) located in a bad block.\n
+#: e2fsck/problem.c:1111
+msgid "@E points to @i (%Di) located in a bad @b.\n"
+msgstr "@E referencas al @i (%Di) kiu estas en malbona bloko.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is a link to directory %P (%Di).\n
+#: e2fsck/problem.c:1116
+msgid "@E @L to @d %P (%Di).\n"
+msgstr "@E @L al @d %P (%Di).\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is a link to the root inode.\n
+#: e2fsck/problem.c:1121
+msgid "@E @L to the @r.\n"
+msgstr "@E @L al @r.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has illegal characters in its name.\n
+#: e2fsck/problem.c:1126
+msgid "@E has illegal characters in its name.\n"
+msgstr "@E havas nevalidajn signojn en sia nomo.\n"
+
+#. @-expanded: Missing '.' in directory inode %i.\n
+#: e2fsck/problem.c:1131
+#, c-format
+msgid "Missing '.' in @d @i %i.\n"
+msgstr "Mankas '.' en uja @i %i.\n"
+
+#. @-expanded: Missing '..' in directory inode %i.\n
+#: e2fsck/problem.c:1136
+#, c-format
+msgid "Missing '..' in @d @i %i.\n"
+msgstr "Mankas '..' en uja @i %i.\n"
+
+#. @-expanded: First entry '%Dn' (inode=%Di) in directory inode %i (%p) should be '.'\n
+#: e2fsck/problem.c:1141
+msgid "First @e '%Dn' (@i=%Di) in @d @i %i (%p) @s '.'\n"
+msgstr "Unua @e '%Dn' (@i=%Di) en uja @i %i (%p) @s '.'\n"
+
+#. @-expanded: Second entry '%Dn' (inode=%Di) in directory inode %i should be '..'\n
+#: e2fsck/problem.c:1146
+msgid "Second @e '%Dn' (@i=%Di) in @d @i %i @s '..'\n"
+msgstr "Dua @e '%Dn' (@i=%Di) en uja @i %i @s '..'\n"
+
+#. @-expanded: i_faddr for inode %i (%Q) is %IF, should be zero.\n
+#: e2fsck/problem.c:1151
+msgid "i_faddr @F %IF, @s zero.\n"
+msgstr "'i_faddr' @F %IF, @s nulo.\n"
+
+#. @-expanded: i_file_acl for inode %i (%Q) is %If, should be zero.\n
+#: e2fsck/problem.c:1156
+msgid "i_file_acl @F %If, @s zero.\n"
+msgstr "'i_file_acl' @F %If, @s nulo.\n"
+
+#. @-expanded: i_dir_acl for inode %i (%Q) is %Id, should be zero.\n
+#: e2fsck/problem.c:1161
+msgid "i_dir_acl @F %Id, @s zero.\n"
+msgstr "'i_dir_acl' @F %Id, @s nulo.\n"
+
+#. @-expanded: i_frag for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1166
+msgid "i_frag @F %N, @s zero.\n"
+msgstr "'i_frag' @F %N, @s nulo.\n"
+
+#. @-expanded: i_fsize for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1171
+msgid "i_fsize @F %N, @s zero.\n"
+msgstr "'i_fsize' @F %N, @s nulo.\n"
+
+#. @-expanded: inode %i (%Q) has invalid mode (%Im).\n
+#: e2fsck/problem.c:1176
+msgid "@i %i (%Q) has @n mode (%Im).\n"
+msgstr "@i %i (%Q) havas nevalidan moduson (%Im).\n"
+
+#. @-expanded: directory inode %i, %B, offset %N: directory corrupted\n
+#: e2fsck/problem.c:1181
+msgid "@d @i %i, %B, offset %N: @d corrupted\n"
+msgstr "uja @i %i, %B, pozicio %N: @d difektas\n"
+
+#. @-expanded: directory inode %i, %B, offset %N: filename too long\n
+#: e2fsck/problem.c:1186
+msgid "@d @i %i, %B, offset %N: filename too long\n"
+msgstr "uja @i %i, %B, pozicio %N: dosiernomo tro longas\n"
+
+#. @-expanded: directory inode %i has an unallocated %B.  
+#: e2fsck/problem.c:1191
+msgid "@d @i %i has an unallocated %B.  "
+msgstr "uja @i %i havas neasignatan %B.  "
+
+#. @-expanded: '.' directory entry in directory inode %i is not NULL terminated\n
+#: e2fsck/problem.c:1196
+#, c-format
+msgid "'.' @d @e in @d @i %i is not NULL terminated\n"
+msgstr "uja @e '.' en uja @i %i ne finiĝas per NULL\n"
+
+#. @-expanded: '..' directory entry in directory inode %i is not NULL terminated\n
+#: e2fsck/problem.c:1201
+#, c-format
+msgid "'..' @d @e in @d @i %i is not NULL terminated\n"
+msgstr "uja @e '..' en uja @i %i ne finiĝas per NULL\n"
+
+#. @-expanded: inode %i (%Q) is an illegal character device.\n
+#: e2fsck/problem.c:1206
+msgid "@i %i (%Q) is an @I character @v.\n"
+msgstr "@i %i (%Q) estas @I signo-aparato.\n"
+
+#. @-expanded: inode %i (%Q) is an illegal block device.\n
+#: e2fsck/problem.c:1211
+msgid "@i %i (%Q) is an @I @b @v.\n"
+msgstr "@i %i (%Q) estas @I blokaparato.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is duplicate '.' entry.\n
+#: e2fsck/problem.c:1216
+msgid "@E is duplicate '.' @e.\n"
+msgstr "@E estas duobla @e '.'.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is duplicate '..' entry.\n
+#: e2fsck/problem.c:1221
+msgid "@E is duplicate '..' @e.\n"
+msgstr "@E estas duobla @e '..'.\n"
+
+#: e2fsck/problem.c:1226 e2fsck/problem.c:1526
+#, c-format
+msgid "Internal error: couldn't find dir_info for %i.\n"
+msgstr ""
+
+#. @-expanded: entry '%Dn' in %p (%i) has rec_len of %Dr, should be %N.\n
+#: e2fsck/problem.c:1231
+msgid "@E has rec_len of %Dr, @s %N.\n"
+msgstr "@E havas 'rec_len' %Dr, @s %N.\n"
+
+#. @-expanded: error allocating icount structure: %m\n
+#: e2fsck/problem.c:1236
+#, c-format
+msgid "@A icount structure: %m\n"
+msgstr "@A de 'icount'-a strukturo: %m\n"
+
+#. @-expanded: Error iterating over directory blocks: %m\n
+#: e2fsck/problem.c:1241
+#, c-format
+msgid "Error iterating over @d @bs: %m\n"
+msgstr "Eraro dum iteracio je ujaj blokoj: %m\n"
+
+#. @-expanded: Error reading directory block %b (inode %i): %m\n
+#: e2fsck/problem.c:1246
+msgid "Error reading @d @b %b (@i %i): %m\n"
+msgstr "Eraro dum legado de uja bloko %b (i-nodo %i): %m\n"
+
+#. @-expanded: Error writing directory block %b (inode %i): %m\n
+#: e2fsck/problem.c:1251
+msgid "Error writing @d @b %b (@i %i): %m\n"
+msgstr "Eraro dum skribado de uja bloko %b (i-nodo %i): %m\n"
+
+#. @-expanded: error allocating new directory block for inode %i (%s): %m\n
+#: e2fsck/problem.c:1256
+#, c-format
+msgid "@A new @d @b for @i %i (%s): %m\n"
+msgstr "@A de nova uja @b por @i %i (%s): %m\n"
+
+#. @-expanded: Error deallocating inode %i: %m\n
+#: e2fsck/problem.c:1261
+#, c-format
+msgid "Error deallocating @i %i: %m\n"
+msgstr ""
+
+#. @-expanded: directory entry for '.' in %p (%i) is big.\n
+#: e2fsck/problem.c:1266
+#, c-format
+msgid "@d @e for '.' in %p (%i) is big.\n"
+msgstr "uja @e por '.' en %p (%i) estas granda.\n"
+
+#. @-expanded: inode %i (%Q) is an illegal FIFO.\n
+#: e2fsck/problem.c:1271
+msgid "@i %i (%Q) is an @I FIFO.\n"
+msgstr "@i %i (%Q) estas @I vicmemoro.\n"
+
+#. @-expanded: inode %i (%Q) is an illegal socket.\n
+#: e2fsck/problem.c:1276
+msgid "@i %i (%Q) is an @I socket.\n"
+msgstr "@i %i (%Q) estas @I konektilo.\n"
+
+#. @-expanded: Setting filetype for entry '%Dn' in %p (%i) to %N.\n
+#: e2fsck/problem.c:1281
+msgid "Setting filetype for @E to %N.\n"
+msgstr "Agordiĝas dosiertipo por @E al %N.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has an incorrect filetype (was %Dt, should be %N).\n
+#: e2fsck/problem.c:1286
+msgid "@E has an incorrect filetype (was %Dt, @s %N).\n"
+msgstr "@E havas malĝustan dosiertipon (estas %Dt, @s %N).\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has filetype set.\n
+#: e2fsck/problem.c:1291
+msgid "@E has filetype set.\n"
+msgstr "@E havas dosiertipon agordita.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has a zero-length name.\n
+#: e2fsck/problem.c:1296
+msgid "@E has a @z name.\n"
+msgstr "@E havas nomon kun nula longo.\n"
+
+#. @-expanded: Symlink %Q (inode #%i) is invalid.\n
+#: e2fsck/problem.c:1301
+msgid "Symlink %Q (@i #%i) is @n.\n"
+msgstr "Simbola ligo %Q (@i %i) malvalidas.\n"
+
+#. @-expanded: extended attribute block for inode %i (%Q) is invalid (%If).\n
+#: e2fsck/problem.c:1306
+msgid "@a @b @F @n (%If).\n"
+msgstr "@b de etenditaj atributoj @F malvalida (%If).\n"
+
+#. @-expanded: filesystem contains large files, but lacks LARGE_FILE flag in superblock.\n
+#: e2fsck/problem.c:1311
+msgid "@f contains large files, but lacks LARGE_FILE flag in @S.\n"
+msgstr ""
+"@f enhavas grandajn dosierojn, sed maljesas flago 'LARGE_FILE' en @S.\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B not referenced\n
+#: e2fsck/problem.c:1316
+msgid "@p @h %d: %B not referenced\n"
+msgstr "@p @h %d: %B ne referenciĝas\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B referenced twice\n
+#: e2fsck/problem.c:1321
+msgid "@p @h %d: %B referenced twice\n"
+msgstr "@p @h %d: %B referenciĝas duoble\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has bad min hash\n
+#: e2fsck/problem.c:1326
+msgid "@p @h %d: %B has bad min hash\n"
+msgstr "@p @h %d: %B havas malvalidan minimuman haketon\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has bad max hash\n
+#: e2fsck/problem.c:1331
+msgid "@p @h %d: %B has bad max hash\n"
+msgstr "@p @h %d: %B havas malvalidan maksimuman haketon\n"
+
+#. @-expanded: invalid HTREE directory inode %d (%q).  
+#: e2fsck/problem.c:1336
+msgid "@n @h %d (%q).  "
+msgstr "@n @h %d (%q).  "
+
+#. @-expanded: problem in HTREE directory inode %d (%q): bad block number %b.\n
+#: e2fsck/problem.c:1340
+msgid "@p @h %d (%q): bad @b number %b.\n"
+msgstr "@p @h %d (%q): malvalida bloknumero %b.\n"
+
+#. @-expanded: problem in HTREE directory inode %d: root node is invalid\n
+#: e2fsck/problem.c:1350
+#, c-format
+msgid "@p @h %d: root node is @n\n"
+msgstr "@p @h %d: radika nodo estas @n\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has invalid limit (%N)\n
+#: e2fsck/problem.c:1355
+msgid "@p @h %d: %B has @n limit (%N)\n"
+msgstr "@p @h %d: %B havas malvalidan limon (%N)\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has invalid count (%N)\n
+#: e2fsck/problem.c:1360
+msgid "@p @h %d: %B has @n count (%N)\n"
+msgstr "@p @h %d: %B havas malvalidan nombron (%N)\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has an unordered hash table\n
+#: e2fsck/problem.c:1365
+msgid "@p @h %d: %B has an unordered hash table\n"
+msgstr "@p @h %d: %B havas neordigitan haketan tabelon\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has invalid depth (%N)\n
+#: e2fsck/problem.c:1370
+msgid "@p @h %d: %B has @n depth (%N)\n"
+msgstr "@p @h %d: %B havas malvalidan profundon (%N)\n"
+
+#. @-expanded: Duplicate entry '%Dn' in %p (%i) found.  
+#: e2fsck/problem.c:1375
+msgid "Duplicate @E found.  "
+msgstr "Duobla @E troviĝis.  "
+
+#. @-expanded: entry '%Dn' in %p (%i) has a non-unique filename.\n
+#. @-expanded: Rename to %s
+#: e2fsck/problem.c:1380
+#, no-c-format
+msgid ""
+"@E has a non-unique filename.\n"
+"Rename to %s"
+msgstr ""
+"@E havas neunikan dosiernomon.\n"
+"Ĉu alinomi al %s"
+
+#. @-expanded: Duplicate entry '%Dn' found.\n
+#. @-expanded: \tMarking %p (%i) to be rebuilt.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1385
+msgid ""
+"Duplicate @e '%Dn' found.\n"
+"\tMarking %p (%i) to be rebuilt.\n"
+"\n"
+msgstr ""
+"Duobla @e '%Dn' troviĝis.\n"
+"    Markiĝas %p (%i) por rekonstruo.\n"
+"\n"
+
+#. @-expanded: i_blocks_hi for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1390
+msgid "i_blocks_hi @F %N, @s zero.\n"
+msgstr "'i_blocks_hi' @F %N, @s nulo.\n"
+
+#. @-expanded: Unexpected block in HTREE directory inode %d (%q).\n
+#: e2fsck/problem.c:1395
+msgid "Unexpected @b in @h %d (%q).\n"
+msgstr ""
+
+#. @-expanded: entry '%Dn' in %p (%i) references inode %Di in group %g where _INODE_UNINIT is set.\n
+#: e2fsck/problem.c:1399
+msgid "@E references @i %Di in @g %g where _INODE_UNINIT is set.\n"
+msgstr "@E referencas i-nodon %Di en @g %g kie jesas '_INODE_UNINIT'.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) references inode %Di found in group %g's unused inodes area.\n
+#: e2fsck/problem.c:1404
+msgid "@E references @i %Di found in @g %g's unused inodes area.\n"
+msgstr "@E referencas i-nodon %Di kiu troviĝas je neuzataj i-nodoj de @g %g.\n"
+
+#. @-expanded: i_file_acl_hi for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1409
+msgid "i_file_acl_hi @F %N, @s zero.\n"
+msgstr "'i_file_acl_hi' @F %N, @s nulo.\n"
+
+#. @-expanded: Pass 3: Checking directory connectivity\n
+#: e2fsck/problem.c:1416
+msgid "Pass 3: Checking @d connectivity\n"
+msgstr "Paŝo 3: Kontrolo de konektoj inter dosierujoj...\n"
+
+#. @-expanded: root inode not allocated.  
+#: e2fsck/problem.c:1421
+msgid "@r not allocated.  "
+msgstr "@r ne asignatas.  "
+
+#. @-expanded: No room in lost+found directory.  
+#: e2fsck/problem.c:1426
+msgid "No room in @l @d.  "
+msgstr "Ne estas plu da spaco en dosierujo '@l'.  "
+
+#. @-expanded: Unconnected directory inode %i (%p)\n
+#: e2fsck/problem.c:1431
+#, c-format
+msgid "Unconnected @d @i %i (%p)\n"
+msgstr "Nekonektita dosieruja @i %i (%p)\n"
+
+#. @-expanded: /lost+found not found.  
+#: e2fsck/problem.c:1436
+msgid "/@l not found.  "
+msgstr "/@l ne troviĝis.  "
+
+#. @-expanded: '..' in %Q (%i) is %P (%j), should be %q (%d).\n
+#: e2fsck/problem.c:1441
+msgid "'..' in %Q (%i) is %P (%j), @s %q (%d).\n"
+msgstr "'..' en %Q (%i) estas %P (%j), devus esti %q (%d).\n"
+
+#. @-expanded: Bad or non-existent /lost+found.  Cannot reconnect.\n
+#: e2fsck/problem.c:1446
+msgid "Bad or non-existent /@l.  Cannot reconnect.\n"
+msgstr "Malbonas aŭ ne ekzistas /@l.  Ne eblas rekonekti.\n"
+
+#. @-expanded: Could not expand /lost+found: %m\n
+#: e2fsck/problem.c:1451
+#, c-format
+msgid "Could not expand /@l: %m\n"
+msgstr "Malsukcesis etendi /@l: %m\n"
+
+#: e2fsck/problem.c:1456
+#, c-format
+msgid "Could not reconnect %i: %m\n"
+msgstr "Malsukcesis rekonekti %i: m\n"
+
+#. @-expanded: Error while trying to find /lost+found: %m\n
+#: e2fsck/problem.c:1461
+#, c-format
+msgid "Error while trying to find /@l: %m\n"
+msgstr "Eraro dum serĉo de /@l: %m\n"
+
+#. @-expanded: ext2fs_new_block: %m while trying to create /lost+found directory\n
+#: e2fsck/problem.c:1466
+#, c-format
+msgid "ext2fs_new_@b: %m while trying to create /@l @d\n"
+msgstr "ext2fs_new_block(): %m dum kreado de dosierujo /@l\n"
+
+#. @-expanded: ext2fs_new_inode: %m while trying to create /lost+found directory\n
+#: e2fsck/problem.c:1471
+#, c-format
+msgid "ext2fs_new_@i: %m while trying to create /@l @d\n"
+msgstr "ext2fs_new_inode(): %m dum kreado de dosierujo /@l\n"
+
+#. @-expanded: ext2fs_new_dir_block: %m while creating new directory block\n
+#: e2fsck/problem.c:1476
+#, c-format
+msgid "ext2fs_new_dir_@b: %m while creating new @d @b\n"
+msgstr "ext2fs_new_dir_block(): %m dum kreado de nova uja bloko\n"
+
+#. @-expanded: ext2fs_write_dir_block: %m while writing the directory block for /lost+found\n
+#: e2fsck/problem.c:1481
+#, c-format
+msgid "ext2fs_write_dir_@b: %m while writing the @d @b for /@l\n"
+msgstr "ext2fs_write_dir_block(): %m dum skribado de uja bloko por /@l\n"
+
+#. @-expanded: Error while adjusting inode count on inode %i\n
+#: e2fsck/problem.c:1486
+#, c-format
+msgid "Error while adjusting @i count on @i %i\n"
+msgstr "Eraro dum alĝustigo de i-noda nombro je i-nodo %i\n"
+
+#. @-expanded: Couldn't fix parent of inode %i: %m\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1491
+#, c-format
+msgid ""
+"Couldn't fix parent of @i %i: %m\n"
+"\n"
+msgstr ""
+
+#. @-expanded: Couldn't fix parent of inode %i: Couldn't find parent directory entry\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1496
+#, c-format
+msgid ""
+"Couldn't fix parent of @i %i: Couldn't find parent @d @e\n"
+"\n"
+msgstr ""
+"Ne eblas fiksi padron de @i %i: maleblis trovi ujeron por padro\n"
+"\n"
+
+#. @-expanded: Error creating root directory (%s): %m\n
+#: e2fsck/problem.c:1506
+#, c-format
+msgid "Error creating root @d (%s): %m\n"
+msgstr "Eraro dum kreado de radika dosierujo (%s): %m\n"
+
+#. @-expanded: Error creating /lost+found directory (%s): %m\n
+#: e2fsck/problem.c:1511
+#, c-format
+msgid "Error creating /@l @d (%s): %m\n"
+msgstr "Eraro dum kreado de dosierujo /@l (%s): %m\n"
+
+#. @-expanded: root inode is not a directory; aborting.\n
+#: e2fsck/problem.c:1516
+msgid "@r is not a @d; aborting.\n"
+msgstr "@r ne estas dosierujo -- ĉesigo.\n"
+
+#. @-expanded: Cannot proceed without a root inode.\n
+#: e2fsck/problem.c:1521
+msgid "Cannot proceed without a @r.\n"
+msgstr "Ne eblas daŭrigi sen @r.\n"
+
+#. @-expanded: /lost+found is not a directory (ino=%i)\n
+#: e2fsck/problem.c:1531
+#, c-format
+msgid "/@l is not a @d (ino=%i)\n"
+msgstr "/@l ne estas dosierujo (i-nodo=%i)\n"
+
+#: e2fsck/problem.c:1538
+msgid "Pass 3A: Optimizing directories\n"
+msgstr "Paŝo 3A: Optimumigo de dosierujoj...\n"
+
+#: e2fsck/problem.c:1543
+#, c-format
+msgid "Failed to create dirs_to_hash iterator: %m\n"
+msgstr ""
+
+#: e2fsck/problem.c:1548
+msgid "Failed to optimize directory %q (%d): %m\n"
+msgstr "Fiaskis optimumigo de dosierujo %q (%d): %m\n"
+
+#: e2fsck/problem.c:1553
+msgid "Optimizing directories: "
+msgstr "Optimumigo de dosierujoj: "
+
+#: e2fsck/problem.c:1570
+msgid "Pass 4: Checking reference counts\n"
+msgstr "Paŝo 4: Kontrolo de nombroj de referencoj...\n"
+
+#. @-expanded: unattached zero-length inode %i.  
+#: e2fsck/problem.c:1575
+#, c-format
+msgid "@u @z @i %i.  "
+msgstr "@u @i %i kun nula longo.  "
+
+#. @-expanded: unattached inode %i\n
+#: e2fsck/problem.c:1580
+#, c-format
+msgid "@u @i %i\n"
+msgstr "@u @i %i\n"
+
+#. @-expanded: inode %i ref count is %Il, should be %N.  
+#: e2fsck/problem.c:1585
+msgid "@i %i ref count is %Il, @s %N.  "
+msgstr "referencnombro de @i %i estas %Il, @s %N.  "
+
+#. @-expanded: WARNING: PROGRAMMING BUG IN E2FSCK!\n
+#. @-expanded: \tOR SOME BONEHEAD (YOU) IS CHECKING A MOUNTED (LIVE) FILESYSTEM.\n
+#. @-expanded: inode_link_info[%i] is %N, inode.i_links_count is %Il.  They should be the same!\n
+#: e2fsck/problem.c:1589
+msgid ""
+"WARNING: PROGRAMMING BUG IN E2FSCK!\n"
+"\tOR SOME BONEHEAD (YOU) IS CHECKING A MOUNTED (LIVE) FILESYSTEM.\n"
+"@i_link_info[%i] is %N, @i.i_links_count is %Il.  They @s the same!\n"
+msgstr ""
+"**AVERTO**: ebla programmiso en 'e2fsck', aŭ pli probable\n"
+"    IU STULTULO (vi) kontrolas VIVAN (SURMETATAN) DOSIERSISTEMON.\n"
+"\n"
+"inode_link_info[%i] estas %N, inode.i_links_count estas %Il -- ili devus "
+"egali!\n"
+
+#. @-expanded: Pass 5: Checking group summary information\n
+#: e2fsck/problem.c:1599
+msgid "Pass 5: Checking @g summary information\n"
+msgstr "Paŝo 5: Kontrolo de grupa resuma informo...\n"
+
+#. @-expanded: Padding at end of inode bitmap is not set. 
+#: e2fsck/problem.c:1604
+msgid "Padding at end of @i @B is not set. "
+msgstr "Ŝtopado je fino de i-noda bitmapo ne agordiĝas. "
+
+#. @-expanded: Padding at end of block bitmap is not set. 
+#: e2fsck/problem.c:1609
+msgid "Padding at end of @b @B is not set. "
+msgstr "Ŝtopado je fino de bloka bitmapo ne agordiĝas. "
+
+#. @-expanded: block bitmap differences: 
+#: e2fsck/problem.c:1614
+msgid "@b @B differences: "
+msgstr "Malsamoj en bloka bitmapo: "
+
+#. @-expanded: inode bitmap differences: 
+#: e2fsck/problem.c:1634
+msgid "@i @B differences: "
+msgstr "Malsamoj en i-noda bitmapo: "
+
+#. @-expanded: Free inodes count wrong for group #%g (%i, counted=%j).\n
+#: e2fsck/problem.c:1654
+msgid "Free @is count wrong for @g #%g (%i, counted=%j).\n"
+msgstr ""
+"Nombro de liberaj i-nodoj malĝustas por grupo %g (estas %i, nombriĝis %j).\n"
+
+#. @-expanded: Directories count wrong for group #%g (%i, counted=%j).\n
+#: e2fsck/problem.c:1659
+msgid "Directories count wrong for @g #%g (%i, counted=%j).\n"
+msgstr ""
+"Nombro de dosierujoj malĝustas por grupo %g (estas %i, nombriĝis %j).\n"
+
+#. @-expanded: Free inodes count wrong (%i, counted=%j).\n
+#: e2fsck/problem.c:1664
+msgid "Free @is count wrong (%i, counted=%j).\n"
+msgstr "Nombro de liberaj i-nodoj malĝustas (estas %i, nombriĝis %j).\n"
+
+#. @-expanded: Free blocks count wrong for group #%g (%b, counted=%c).\n
+#: e2fsck/problem.c:1669
+msgid "Free @bs count wrong for @g #%g (%b, counted=%c).\n"
+msgstr ""
+"Nombro de liberaj blokoj malĝustas por grupo %g (estas %b, nombriĝis %c)\n"
+
+#. @-expanded: Free blocks count wrong (%b, counted=%c).\n
+#: e2fsck/problem.c:1674
+msgid "Free @bs count wrong (%b, counted=%c).\n"
+msgstr "Nombro de liberaj blokoj malĝustas (estas %b, nombriĝis %c)\n"
+
+#. @-expanded: PROGRAMMING ERROR: filesystem (#%N) bitmap endpoints (%b, %c) don't match calculated bitmap 
+#. @-expanded: endpoints (%i, %j)\n
+#: e2fsck/problem.c:1679
+msgid ""
+"PROGRAMMING ERROR: @f (#%N) @B endpoints (%b, %c) don't match calculated @B "
+"endpoints (%i, %j)\n"
+msgstr ""
+
+#: e2fsck/problem.c:1685
+msgid "Internal error: fudging end of bitmap (%N)\n"
+msgstr ""
+
+#. @-expanded: Error copying in replacement inode bitmap: %m\n
+#: e2fsck/problem.c:1690
+#, c-format
+msgid "Error copying in replacement @i @B: %m\n"
+msgstr "Eraro dum kopiado de anstataŭa i-noda @B: %m\n"
+
+#. @-expanded: Error copying in replacement block bitmap: %m\n
+#: e2fsck/problem.c:1695
+#, c-format
+msgid "Error copying in replacement @b @B: %m\n"
+msgstr "Eraro dum kopiado de anstataŭa bloka @B: %m\n"
+
+#. @-expanded: group %g block(s) in use but group is marked BLOCK_UNINIT\n
+#: e2fsck/problem.c:1720
+#, c-format
+msgid "@g %g @b(s) in use but @g is marked BLOCK_UNINIT\n"
+msgstr ""
+"@g %g havas blokojn uzatajn, sed la @g estas markita kiel 'BLOCK_UNINIT'\n"
+
+#. @-expanded: group %g inode(s) in use but group is marked INODE_UNINIT\n
+#: e2fsck/problem.c:1725
+#, c-format
+msgid "@g %g @i(s) in use but @g is marked INODE_UNINIT\n"
+msgstr ""
+"@g %g havas i-nodojn uzatajn, sed la @g estas markita kiel 'INODE_UNINIT'\n"
+
+#. @-expanded: Recreate journal
+#: e2fsck/problem.c:1732
+msgid "Recreate @j"
+msgstr "Ĉu rekrei kaŝprotokolon"
+
+#: e2fsck/problem.c:1737
+msgid "Update quota info for quota type %N"
+msgstr "Ĉu ĝisdatigi kvotan informon por kvottipo %N"
+
+#. @-expanded: Error setting block group checksum info: %m\n
+#: e2fsck/problem.c:1742
+#, c-format
+msgid "Error setting @b @g checksum info: %m\n"
+msgstr "Eraro dum agordo de blokgrupa kontrolsumo: %m\n"
+
+#: e2fsck/problem.c:1747
+#, c-format
+msgid "Error writing file system info: %m\n"
+msgstr "Eraro dum skribado de dosiersistema informo: %m\n"
+
+#: e2fsck/problem.c:1752
+#, c-format
+msgid "Error flushing writes to storage device: %m\n"
+msgstr "Eraro dum elbufrigo de skriboj al memoraparato: %m\n"
+
+#: e2fsck/problem.c:1871
+#, c-format
+msgid "Unhandled error code (0x%x)!\n"
+msgstr "Netraktata erarkodo (0x%x)!\n"
+
+#: e2fsck/problem.c:1996 e2fsck/problem.c:2000
+msgid "IGNORED"
+msgstr "IGNORIĜIS"
+
+#: e2fsck/scantest.c:79
+#, c-format
+msgid "Memory used: %d, elapsed time: %6.3f/%6.3f/%6.3f\n"
+msgstr "Uzata memoro: %d, pasinta tempo: %6.3f/%6.3f/%6.3f\n"
+
+#: e2fsck/scantest.c:98
+#, c-format
+msgid "size of inode=%d\n"
+msgstr "grando de i-nodo=%d\n"
+
+#: e2fsck/scantest.c:119
+msgid "while starting inode scan"
+msgstr "dum komenco de skano de i-nodoj"
+
+#: e2fsck/scantest.c:130
+msgid "while doing inode scan"
+msgstr "dum skanado de i-nodoj"
+
+#: e2fsck/super.c:190
+#, c-format
+msgid "while calling ext2fs_block_iterate for inode %d"
+msgstr "dum alvoko de 'ext2fs_block_iterate()' por i-nodo %d"
+
+#: e2fsck/super.c:213
+#, c-format
+msgid "while calling ext2fs_adjust_ea_refcount2 for inode %d"
+msgstr "dum alvoko de 'ext2fs_adjust_ea_refcount2()' por i-nodo %d"
+
+#: e2fsck/super.c:274
+msgid "Truncating"
+msgstr "Trunkiĝas"
+
+#: e2fsck/super.c:275
+msgid "Clearing"
+msgstr "Viŝiĝas"
+
+#: e2fsck/unix.c:74
+#, c-format
+msgid ""
+"Usage: %s [-panyrcdfvtDFV] [-b superblock] [-B blocksize]\n"
+"\t\t[-I inode_buffer_blocks] [-P process_inode_size]\n"
+"\t\t[-l|-L bad_blocks_file] [-C fd] [-j external_journal]\n"
+"\t\t[-E extended-options] device\n"
+msgstr ""
+"Uzmaniero:  %s [-pnycfktvDFV] [-b ĉefbloko] [-B blokgrando]\n"
+"                   [-C dosierpriaĵo] [-E etenditaj_opcioj]\n"
+"                   [-I i_noda_bufroblokoj] [-j ekstera_kaŝprotokolo]\n"
+"                   [-l|-L malbonbloka_dosiero]  aparato\n"
+
+#: e2fsck/unix.c:80
+msgid ""
+"\n"
+"Emergency help:\n"
+" -p                   Automatic repair (no questions)\n"
+" -n                   Make no changes to the filesystem\n"
+" -y                   Assume \"yes\" to all questions\n"
+" -c                   Check for bad blocks and add them to the badblock "
+"list\n"
+" -f                   Force checking even if filesystem is marked clean\n"
+msgstr ""
+"\n"
+"Kriza helpo:\n"
+" -p    aŭtomate ripari (sen demandoj)\n"
+" -n    neniel ŝanĝi la dosiersistemon\n"
+" -y    supozi 'jes' je ĉiu demando\n"
+" -c    kontroli por malbonaj blokoj kaj aldoni ilin al malbonbloka listo\n"
+" -f    devigi kontrolon, eĉ se dosiersistemo estas markita kiel pura\n"
+
+#: e2fsck/unix.c:86
+msgid ""
+" -v                   Be verbose\n"
+" -b superblock        Use alternative superblock\n"
+" -B blocksize         Force blocksize when looking for superblock\n"
+" -j external_journal  Set location of the external journal\n"
+" -l bad_blocks_file   Add to badblocks list\n"
+" -L bad_blocks_file   Set badblocks list\n"
+msgstr ""
+" -v    eligi detalojn pri la farado\n"
+" -b <numero>        uzenda alternativa ĉefbloko\n"
+" -B <nombro>        deviga blokgrando dum serĉo de ĉefbloko\n"
+" -j <pado>          loko de la ekstera kaŝprotokolo\n"
+" -l <dosiernomo>    aldoni al malbonbloka listo\n"
+" -L <dosiernomo>    uzenda kiel malbonbloka listo\n"
+
+#: e2fsck/unix.c:131
+#, c-format
+msgid "%s: %u/%u files (%0d.%d%% non-contiguous), %llu/%llu blocks\n"
+msgstr "%s: %u/%u dosieroj (%0d.%d%% nekontinua), %llu/%llu blokoj\n"
+
+#: e2fsck/unix.c:157
+#, c-format
+msgid ""
+"\n"
+"%12u inode used (%2.2f%%, out of %u)\n"
+msgid_plural ""
+"\n"
+"%12u inodes used (%2.2f%%, out of %u)\n"
+msgstr[0] ""
+"\n"
+"%12u i-nodo uzita (%2.2f%%, el de %u)\n"
+msgstr[1] ""
+"\n"
+"%12u i-nodoj uzitaj (%2.2f%%, el de %u)\n"
+
+#: e2fsck/unix.c:161
+#, c-format
+msgid "%12u non-contiguous file (%0d.%d%%)\n"
+msgid_plural "%12u non-contiguous files (%0d.%d%%)\n"
+msgstr[0] "%12u nekontinua dosiero (%0d.%d%%)\n"
+msgstr[1] "%12u nekontinuaj dosieroj (%0d.%d%%)\n"
+
+#: e2fsck/unix.c:166
+#, c-format
+msgid "%12u non-contiguous directory (%0d.%d%%)\n"
+msgid_plural "%12u non-contiguous directories (%0d.%d%%)\n"
+msgstr[0] "%12u nekontinua dosierujo (%0d.%d%%)\n"
+msgstr[1] "%12u nekontinuaj dosierujoj (%0d.%d%%)\n"
+
+#: e2fsck/unix.c:171
+#, c-format
+msgid "             # of inodes with ind/dind/tind blocks: %u/%u/%u\n"
+msgstr ""
+"             nombro de i-nodoj kun nerektaj blokoj: %u simple, %u duoble, %u "
+"trioble\n"
+
+#: e2fsck/unix.c:179
+msgid "             Extent depth histogram: "
+msgstr "             histogramo de ampleksa profundo: "
+
+#: e2fsck/unix.c:188
+#, c-format
+msgid "%12llu block used (%2.2f%%, out of %llu)\n"
+msgid_plural "%12llu blocks used (%2.2f%%, out of %llu)\n"
+msgstr[0] "%12llu bloko uzita (%2.2f%%, el de %llu)\n"
+msgstr[1] "%12llu blokoj uzitaj (%2.2f%%, el de %llu)\n"
+
+#: e2fsck/unix.c:192
+#, c-format
+msgid "%12u bad block\n"
+msgid_plural "%12u bad blocks\n"
+msgstr[0] "%12u difekta bloko\n"
+msgstr[1] "%12u difektaj blokoj\n"
+
+#: e2fsck/unix.c:194
+#, c-format
+msgid "%12u large file\n"
+msgid_plural "%12u large files\n"
+msgstr[0] "%12u granda dosiero\n"
+msgstr[1] "%12u grandaj dosieroj\n"
+
+#: e2fsck/unix.c:196
+#, c-format
+msgid ""
+"\n"
+"%12u regular file\n"
+msgid_plural ""
+"\n"
+"%12u regular files\n"
+msgstr[0] ""
+"\n"
+"%12u normala dosiero\n"
+msgstr[1] ""
+"\n"
+"%12u normalaj dosieroj\n"
+
+#: e2fsck/unix.c:198
+#, c-format
+msgid "%12u directory\n"
+msgid_plural "%12u directories\n"
+msgstr[0] "%12u dosierujo\n"
+msgstr[1] "%12u dosierujoj\n"
+
+#: e2fsck/unix.c:200
+#, c-format
+msgid "%12u character device file\n"
+msgid_plural "%12u character device files\n"
+msgstr[0] "%12u signo-aparato\n"
+msgstr[1] "%12u signo-aparatoj\n"
+
+#: e2fsck/unix.c:203
+#, c-format
+msgid "%12u block device file\n"
+msgid_plural "%12u block device files\n"
+msgstr[0] "%12u blokaparato\n"
+msgstr[1] "%12u blokaparatoj\n"
+
+#: e2fsck/unix.c:205
+#, c-format
+msgid "%12u fifo\n"
+msgid_plural "%12u fifos\n"
+msgstr[0] "%12u vicmemoro\n"
+msgstr[1] "%12u vicmemoroj\n"
+
+#: e2fsck/unix.c:207
+#, c-format
+msgid "%12u link\n"
+msgid_plural "%12u links\n"
+msgstr[0] "%12u ligo\n"
+msgstr[1] "%12u ligoj\n"
+
+#: e2fsck/unix.c:209
+#, c-format
+msgid "%12u symbolic link"
+msgid_plural "%12u symbolic links"
+msgstr[0] "%12u simbola ligo"
+msgstr[1] "%12u simbolaj ligoj"
+
+#: e2fsck/unix.c:211
+#, c-format
+msgid " (%u fast symbolic link)\n"
+msgid_plural " (%u fast symbolic links)\n"
+msgstr[0] " (%u rapida simbola ligo)\n"
+msgstr[1] " (%u rapidaj simbolaj ligoj)\n"
+
+#: e2fsck/unix.c:215
+#, c-format
+msgid "%12u socket\n"
+msgid_plural "%12u sockets\n"
+msgstr[0] "%12u konektilo\n"
+msgstr[1] "%12u konektiloj\n"
+
+#: e2fsck/unix.c:219
+#, c-format
+msgid "%12u file\n"
+msgid_plural "%12u files\n"
+msgstr[0] "%12u dosiero\n"
+msgstr[1] "%12u dosieroj\n"
+
+#: e2fsck/unix.c:232 misc/badblocks.c:993 misc/tune2fs.c:2122 misc/util.c:316
+#: resize/main.c:261
+#, c-format
+msgid "while determining whether %s is mounted."
+msgstr "dum eltrovo se %s estas surmetata."
+
+#: e2fsck/unix.c:253
+#, c-format
+msgid "Warning!  %s is mounted.\n"
+msgstr "Averto!  %s estas surmetata.\n"
+
+#: e2fsck/unix.c:256
+#, c-format
+msgid "Warning!  %s is in use.\n"
+msgstr "Averto!  %s uziĝas.\n"
+
+#: e2fsck/unix.c:262
+#, c-format
+msgid "%s is mounted.\n"
+msgstr "%s estas surmetata.\n"
+
+#: e2fsck/unix.c:264
+#, c-format
+msgid "%s is in use.\n"
+msgstr "%s uziĝas.\n"
+
+#: e2fsck/unix.c:266
+msgid ""
+"Cannot continue, aborting.\n"
+"\n"
+msgstr ""
+"Ne eblas daŭrigi -- ĉesigo.\n"
+"\n"
+
+#: e2fsck/unix.c:268
+msgid ""
+"\n"
+"\n"
+"WARNING!!!  The filesystem is mounted.   If you continue you ***WILL***\n"
+"cause ***SEVERE*** filesystem damage.\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"**AVERTO**!!  La dosiersistemo estas surmetata!!\n"
+"    Se vi kontinuas, vi **KAŬZOS** **SEVERAJN** dosiersistemajn difektojn.\n"
+"\n"
+
+#: e2fsck/unix.c:273
+msgid "Do you really want to continue"
+msgstr "Ĉu vi vere volas kontinui"
+
+#: e2fsck/unix.c:275
+msgid "check aborted.\n"
+msgstr "kontrolo ĉesigiĝis.\n"
+
+#: e2fsck/unix.c:368
+msgid " contains a file system with errors"
+msgstr " enhavas dosiersistemon kun eraroj"
+
+#: e2fsck/unix.c:370
+msgid " was not cleanly unmounted"
+msgstr " ne demetiĝis tutkorekte"
+
+#: e2fsck/unix.c:372
+msgid " primary superblock features different from backup"
+msgstr " unua ĉefbloko havas aliajn funkciojn ol savkopia"
+
+#: e2fsck/unix.c:376
+#, c-format
+msgid " has been mounted %u times without being checked"
+msgstr " surmetiĝis %u fojojn sen esti kontrolata"
+
+#: e2fsck/unix.c:383
+msgid " has filesystem last checked time in the future"
+msgstr " havas tempon de kontrolo en la estonteco"
+
+#: e2fsck/unix.c:389
+#, c-format
+msgid " has gone %u days without being checked"
+msgstr " pasis %u tagojn sen kontrolo"
+
+#: e2fsck/unix.c:398
+msgid ", check forced.\n"
+msgstr "; perforta kontrolo.\n"
+
+#: e2fsck/unix.c:431
+#, c-format
+msgid "%s: clean, %u/%u files, %llu/%llu blocks"
+msgstr "%s: pura, %u/%u dosieroj, %llu/%llu blokoj"
+
+#: e2fsck/unix.c:451
+msgid " (check deferred; on battery)"
+msgstr " (kontrolo prokrastis; sur baterio)"
+
+# FIXME: maybe *upon* next mount?
+#: e2fsck/unix.c:454
+msgid " (check after next mount)"
+msgstr " (kontroliĝos je sekva surmeto)"
+
+#: e2fsck/unix.c:456
+#, c-format
+msgid " (check in %ld mounts)"
+msgstr " (kontroliĝos en %ld surmetoj)"
+
+#: e2fsck/unix.c:606
+#, c-format
+msgid "ERROR: Couldn't open /dev/null (%s)\n"
+msgstr "Eraro: fiaskis malfermi /dev/null (%s)\n"
+
+#: e2fsck/unix.c:675
+msgid "Invalid EA version.\n"
+msgstr "Malvalida versio de EA.\n"
+
+#: e2fsck/unix.c:702
+#, c-format
+msgid "Unknown extended option: %s\n"
+msgstr "Nekonata etendita opcio: %s\n"
+
+#: e2fsck/unix.c:727
+#, c-format
+msgid ""
+"Syntax error in e2fsck config file (%s, line #%d)\n"
+"\t%s\n"
+msgstr ""
+
+#: e2fsck/unix.c:797
+#, c-format
+msgid "Error validating file descriptor %d: %s\n"
+msgstr ""
+
+#: e2fsck/unix.c:801
+msgid "Invalid completion information file descriptor"
+msgstr ""
+
+#: e2fsck/unix.c:816
+msgid "Only one of the options -p/-a, -n or -y may be specified."
+msgstr ""
+
+#: e2fsck/unix.c:837
+#, c-format
+msgid "The -t option is not supported on this version of e2fsck.\n"
+msgstr ""
+
+#: e2fsck/unix.c:868 e2fsck/unix.c:942 misc/tune2fs.c:879 misc/tune2fs.c:1174
+#: misc/tune2fs.c:1192
+#, c-format
+msgid "Unable to resolve '%s'"
+msgstr ""
+
+#: e2fsck/unix.c:921
+msgid "The -n and -D options are incompatible."
+msgstr ""
+
+#: e2fsck/unix.c:926
+msgid "The -n and -c options are incompatible."
+msgstr ""
+
+#: e2fsck/unix.c:931
+msgid "The -n and -l/-L options are incompatible."
+msgstr ""
+
+#: e2fsck/unix.c:985
+msgid "The -c and the -l/-L options may not be both used at the same time.\n"
+msgstr ""
+
+#: e2fsck/unix.c:1032
+#, c-format
+msgid ""
+"E2FSCK_JBD_DEBUG \"%s\" not an integer\n"
+"\n"
+msgstr ""
+
+#: e2fsck/unix.c:1041
+#, c-format
+msgid ""
+"\n"
+"Invalid non-numeric argument to -%c (\"%s\")\n"
+"\n"
+msgstr ""
+
+#: e2fsck/unix.c:1132
+#, c-format
+msgid ""
+"MMP interval is %u seconds and total wait time is %u seconds. Please "
+"wait...\n"
+msgstr ""
+
+#: e2fsck/unix.c:1149 e2fsck/unix.c:1154
+msgid "while checking MMP block"
+msgstr ""
+
+#: e2fsck/unix.c:1156 misc/tune2fs.c:2049
+msgid ""
+"If you are sure the filesystem is not in use on any node, run:\n"
+"'tune2fs -f -E clear_mmp {device}'\n"
+msgstr ""
+
+#: e2fsck/unix.c:1207
+msgid "Error: ext2fs library version out of date!\n"
+msgstr ""
+
+#: e2fsck/unix.c:1214
+msgid "while trying to initialize program"
+msgstr ""
+
+#: e2fsck/unix.c:1237
+#, c-format
+msgid "\tUsing %s, %s\n"
+msgstr ""
+
+#: e2fsck/unix.c:1249
+msgid "need terminal for interactive repairs"
+msgstr ""
+
+#: e2fsck/unix.c:1303
+#, c-format
+msgid "%s: %s trying backup blocks...\n"
+msgstr ""
+
+#: e2fsck/unix.c:1305
+msgid "Superblock invalid,"
+msgstr "Ĉefbloko nevalidas,"
+
+#: e2fsck/unix.c:1306
+msgid "Group descriptors look bad..."
+msgstr "Gruppriaĵoj aspektas malbonaj..."
+
+#: e2fsck/unix.c:1316
+#, c-format
+msgid "%s: %s while using the backup blocks"
+msgstr "%s: %s dum uzado de savkopiaj blokoj"
+
+#: e2fsck/unix.c:1320
+#, c-format
+msgid "%s: going back to original superblock\n"
+msgstr "%s: reiriĝas al originala ĉefbloko\n"
+
+#: e2fsck/unix.c:1349
+msgid ""
+"The filesystem revision is apparently too high for this version of e2fsck.\n"
+"(Or the filesystem superblock is corrupt)\n"
+"\n"
+msgstr ""
+
+#: e2fsck/unix.c:1356
+msgid "Could this be a zero-length partition?\n"
+msgstr "Ĉu eble ĉi tiu estas nullonga subdisko?\n"
+
+#: e2fsck/unix.c:1358
+#, c-format
+msgid "You must have %s access to the filesystem or be root\n"
+msgstr "Vi bezonas havi %s atingon al la dosiersistemo, aŭ esti ĉefuzanto\n"
+
+#: e2fsck/unix.c:1364
+msgid "Possibly non-existent or swap device?\n"
+msgstr "Ĉu eble aparato ne ekzistas aŭ estas 'swap'?\n"
+
+#: e2fsck/unix.c:1366
+msgid "Filesystem mounted or opened exclusively by another program?\n"
+msgstr ""
+
+#: e2fsck/unix.c:1370
+msgid "Possibly non-existent device?\n"
+msgstr "Ĉu eble aparato ne ekzistas?\n"
+
+#: e2fsck/unix.c:1373
+msgid ""
+"Disk write-protected; use the -n option to do a read-only\n"
+"check of the device.\n"
+msgstr ""
+
+#: e2fsck/unix.c:1437
+msgid "Get a newer version of e2fsck!"
+msgstr ""
+
+#: e2fsck/unix.c:1480
+#, c-format
+msgid "while checking ext3 journal for %s"
+msgstr "dum kontrolado de Ext3-kaŝprotokolo por %s"
+
+#: e2fsck/unix.c:1492
+msgid ""
+"Warning: skipping journal recovery because doing a read-only filesystem "
+"check.\n"
+msgstr ""
+"Averto: transsaltiĝas kaŝprotokola restaŭro, ĉar fariĝas nurlega kontrolo de "
+"dosiersistemo.\n"
+
+#: e2fsck/unix.c:1504
+#, c-format
+msgid "unable to set superblock flags on %s\n"
+msgstr ""
+
+#: e2fsck/unix.c:1511
+#, c-format
+msgid "while recovering ext3 journal of %s"
+msgstr "dum restaŭrado de Ext3-kaŝprotokolo por %s"
+
+#: e2fsck/unix.c:1534
+#, c-format
+msgid "%s has unsupported feature(s):"
+msgstr ""
+
+#: e2fsck/unix.c:1549
+#, c-format
+msgid "%s: warning: compression support is experimental.\n"
+msgstr ""
+
+#: e2fsck/unix.c:1555
+#, c-format
+msgid ""
+"%s: e2fsck not compiled with HTREE support,\n"
+"\tbut filesystem %s has HTREE directories.\n"
+msgstr ""
+
+#: e2fsck/unix.c:1607
+#, c-format
+msgid "%s: %s while reading bad blocks inode\n"
+msgstr "%s: %s dum legado de malbonbloka i-nodo\n"
+
+#: e2fsck/unix.c:1610
+msgid "This doesn't bode well, but we'll try to go on...\n"
+msgstr ""
+
+#: e2fsck/unix.c:1652
+#, c-format
+msgid "Creating journal (%d blocks): "
+msgstr "Kreado de kaŝprotokolo (%d blokoj): "
+
+#: e2fsck/unix.c:1662
+msgid " Done.\n"
+msgstr " Pretas.\n"
+
+#: e2fsck/unix.c:1664
+msgid ""
+"\n"
+"*** journal has been re-created - filesystem is now ext3 again ***\n"
+msgstr ""
+"\n"
+"*** kaŝprotokolo rekreiĝis -- dosiersistemo estas denove ext3 ***\n"
+
+#: e2fsck/unix.c:1688
+msgid "Restarting e2fsck from the beginning...\n"
+msgstr ""
+
+#: e2fsck/unix.c:1692
+msgid "while resetting context"
+msgstr ""
+
+#: e2fsck/unix.c:1699
+msgid "aborted"
+msgstr ""
+
+#: e2fsck/unix.c:1706
+#, c-format
+msgid "%s: e2fsck canceled.\n"
+msgstr ""
+
+#: e2fsck/unix.c:1741 e2fsck/util.c:67
+#, c-format
+msgid ""
+"\n"
+"%s: ***** FILE SYSTEM WAS MODIFIED *****\n"
+msgstr ""
+"\n"
+"%s: ***** DOSIERSISTEMO MODIFIĜIS *****\n"
+
+#: e2fsck/unix.c:1745
+#, c-format
+msgid "%s: ***** REBOOT LINUX *****\n"
+msgstr "%s: ***** RESTARTIGU LINUKSON *****\n"
+
+#: e2fsck/unix.c:1753 e2fsck/util.c:73
+#, c-format
+msgid ""
+"\n"
+"%s: ********** WARNING: Filesystem still has errors **********\n"
+"\n"
+msgstr ""
+"\n"
+"%s: ********** AVERTO: Dosiersistemo ankoraŭ enhavas erarojn **********\n"
+"\n"
+
+#: e2fsck/util.c:190 misc/util.c:86
+msgid "yY"
+msgstr "jJyY"
+
+#: e2fsck/util.c:191
+msgid "nN"
+msgstr "nN"
+
+#: e2fsck/util.c:205
+msgid "<y>"
+msgstr "<j>"
+
+#: e2fsck/util.c:207
+msgid "<n>"
+msgstr "<n>"
+
+#: e2fsck/util.c:209
+msgid " (y/n)"
+msgstr " (j/n)"
+
+#: e2fsck/util.c:223
+msgid "cancelled!\n"
+msgstr ""
+
+#: e2fsck/util.c:238
+msgid "yes\n"
+msgstr "jes\n"
+
+#: e2fsck/util.c:240
+msgid "no\n"
+msgstr "ne\n"
+
+#: e2fsck/util.c:250
+#, c-format
+msgid ""
+"%s? no\n"
+"\n"
+msgstr ""
+"%s? ne\n"
+"\n"
+
+#: e2fsck/util.c:254
+#, c-format
+msgid ""
+"%s? yes\n"
+"\n"
+msgstr ""
+"%s? jes\n"
+"\n"
+
+#: e2fsck/util.c:258
+msgid "yes"
+msgstr "jes"
+
+#: e2fsck/util.c:258
+msgid "no"
+msgstr "ne"
+
+#: e2fsck/util.c:273
+#, c-format
+msgid "e2fsck_read_bitmaps: illegal bitmap block(s) for %s"
+msgstr ""
+
+#: e2fsck/util.c:278
+msgid "reading inode and block bitmaps"
+msgstr ""
+
+#: e2fsck/util.c:286
+#, c-format
+msgid "while retrying to read bitmaps for %s"
+msgstr ""
+
+#: e2fsck/util.c:298
+msgid "writing block and inode bitmaps"
+msgstr ""
+
+#: e2fsck/util.c:303
+#, c-format
+msgid "while rewriting block and inode bitmaps for %s"
+msgstr ""
+
+#: e2fsck/util.c:315
+#, c-format
+msgid ""
+"\n"
+"\n"
+"%s: UNEXPECTED INCONSISTENCY; RUN fsck MANUALLY.\n"
+"\t(i.e., without -a or -p options)\n"
+msgstr ""
+
+#: e2fsck/util.c:396
+#, c-format
+msgid "Memory used: %luk/%luk (%luk/%luk), "
+msgstr ""
+
+#: e2fsck/util.c:400
+#, c-format
+msgid "Memory used: %lu, "
+msgstr ""
+
+#: e2fsck/util.c:407
+#, c-format
+msgid "time: %5.2f/%5.2f/%5.2f\n"
+msgstr ""
+
+#: e2fsck/util.c:412
+#, c-format
+msgid "elapsed time: %6.3f\n"
+msgstr ""
+
+#: e2fsck/util.c:447 e2fsck/util.c:461
+#, c-format
+msgid "while reading inode %lu in %s"
+msgstr ""
+
+#: e2fsck/util.c:475 e2fsck/util.c:488
+#, c-format
+msgid "while writing inode %lu in %s"
+msgstr ""
+
+#: e2fsck/util.c:637
+msgid "while allocating zeroizing buffer"
+msgstr ""
+
+#: e2fsck/util.c:785
+msgid ""
+"UNEXPECTED INCONSISTENCY: the filesystem is being modified while fsck is "
+"running.\n"
+msgstr ""
+
+#: misc/badblocks.c:72
+msgid "done                                                 \n"
+msgstr ""
+
+#: misc/badblocks.c:97
+#, c-format
+msgid ""
+"Usage: %s [-b block_size] [-i input_file] [-o output_file] [-svwnf]\n"
+"       [-c blocks_at_once] [-d delay_factor_between_reads] [-e "
+"max_bad_blocks]\n"
+"       [-p num_passes] [-t test_pattern [-t test_pattern [...]]]\n"
+"       device [last_block [first_block]]\n"
+msgstr ""
+
+#: misc/badblocks.c:108
+#, c-format
+msgid ""
+"%s: The -n and -w options are mutually exclusive.\n"
+"\n"
+msgstr ""
+
+#: misc/badblocks.c:223
+#, c-format
+msgid "%6.2f%% done, %s elapsed. (%d/%d/%d errors)"
+msgstr "%6.2f%% fariĝis, %s pasis. (%d/%d/%d eraroj)"
+
+#: misc/badblocks.c:328
+msgid "Testing with random pattern: "
+msgstr "Testante kun hazarda aranĝo: "
+
+#: misc/badblocks.c:346
+msgid "Testing with pattern 0x"
+msgstr "Testante kun aranĝo 0x"
+
+#: misc/badblocks.c:378 misc/badblocks.c:451
+msgid "during seek"
+msgstr ""
+
+#: misc/badblocks.c:389
+#, c-format
+msgid "Weird value (%ld) in do_read\n"
+msgstr "Stranga valoro (%ld) en 'do_read()'\n"
+
+#: misc/badblocks.c:476
+msgid "during ext2fs_sync_device"
+msgstr "dum 'ext2fs_sync_device()'"
+
+#: misc/badblocks.c:496 misc/badblocks.c:758
+msgid "while beginning bad block list iteration"
+msgstr "dum komenco de iteracio je malbonbloka listo"
+
+#: misc/badblocks.c:511 misc/badblocks.c:611 misc/badblocks.c:769
+msgid "while allocating buffers"
+msgstr "dum asigno de bufroj"
+
+#: misc/badblocks.c:515
+#, c-format
+msgid "Checking blocks %lu to %lu\n"
+msgstr "Kontrolante blokojn %lu al %lu\n"
+
+#: misc/badblocks.c:520
+msgid "Checking for bad blocks in read-only mode\n"
+msgstr "Kontrolante por malbonaj blokoj en nurlega moduso\n"
+
+#: misc/badblocks.c:529
+msgid "Checking for bad blocks (read-only test): "
+msgstr "Kontrolante por malbonaj blokoj (nurlega testo): "
+
+#: misc/badblocks.c:536 misc/badblocks.c:643 misc/badblocks.c:685
+#: misc/badblocks.c:832
+msgid "Too many bad blocks, aborting test\n"
+msgstr "Tro multaj malbonaj blokoj -- ĉesigo de testo\n"
+
+#: misc/badblocks.c:618
+msgid "Checking for bad blocks in read-write mode\n"
+msgstr "Kontrolante por malbonaj blokoj en lega-skriba moduso\n"
+
+#: misc/badblocks.c:620 misc/badblocks.c:782
+#, c-format
+msgid "From block %lu to %lu\n"
+msgstr "De bloko %lu al %lu\n"
+
+#: misc/badblocks.c:675
+msgid "Reading and comparing: "
+msgstr "Legante kaj komparante: "
+
+#: misc/badblocks.c:781
+msgid "Checking for bad blocks in non-destructive read-write mode\n"
+msgstr "Kontrolante por malbonaj blokoj en nedetrua lega-skriba moduso\n"
+
+#: misc/badblocks.c:787
+msgid "Checking for bad blocks (non-destructive read-write test)\n"
+msgstr "Kontrolante por malbonaj blokoj (nedetrua lega-skriba testo)\n"
+
+#: misc/badblocks.c:794
+msgid ""
+"\n"
+"Interrupt caught, cleaning up\n"
+msgstr ""
+"\n"
+"Interrompo alvenis -- ordigante\n"
+
+#: misc/badblocks.c:877
+#, c-format
+msgid "during test data write, block %lu"
+msgstr "dum testa datuma skribo, bloko %lu"
+
+#: misc/badblocks.c:998 misc/util.c:321
+#, c-format
+msgid "%s is mounted; "
+msgstr "%s estas surmetata; "
+
+#: misc/badblocks.c:1000
+msgid "badblocks forced anyway.  Hope /etc/mtab is incorrect.\n"
+msgstr "'badblocks' tamen perfortiĝas.  Esperu ke /etc/mtab ĝustas.\n"
+
+#: misc/badblocks.c:1005
+msgid "it's not safe to run badblocks!\n"
+msgstr "ne estas sendanĝera ruli 'badblocks'!\n"
+
+#: misc/badblocks.c:1010 misc/util.c:332
+#, c-format
+msgid "%s is apparently in use by the system; "
+msgstr "%s ŝajne uziĝas per la sistemo; "
+
+#: misc/badblocks.c:1013
+msgid "badblocks forced anyway.\n"
+msgstr "'badblocks' tamen perfortiĝas.\n"
+
+#: misc/badblocks.c:1033
+#, c-format
+msgid "invalid %s - %s"
+msgstr ""
+
+#: misc/badblocks.c:1127
+#, c-format
+msgid "Too big max bad blocks count %u - maximum is %u"
+msgstr ""
+
+#: misc/badblocks.c:1154
+#, c-format
+msgid "can't allocate memory for test_pattern - %s"
+msgstr ""
+
+#: misc/badblocks.c:1184
+msgid "Maximum of one test_pattern may be specified in read-only mode"
+msgstr ""
+
+#: misc/badblocks.c:1190
+msgid "Random test_pattern is not allowed in read-only mode"
+msgstr ""
+
+#: misc/badblocks.c:1204
+msgid ""
+"Couldn't determine device size; you must specify\n"
+"the size manually\n"
+msgstr ""
+
+#: misc/badblocks.c:1210
+msgid "while trying to determine device size"
+msgstr ""
+
+#: misc/badblocks.c:1215
+msgid "last block"
+msgstr ""
+
+#: misc/badblocks.c:1221
+msgid "first block"
+msgstr ""
+
+#: misc/badblocks.c:1224
+#, c-format
+msgid "invalid starting block (%llu): must be less than %llu"
+msgstr ""
+
+#: misc/badblocks.c:1231
+#, c-format
+msgid "invalid end block (%llu): must be 32-bit value"
+msgstr ""
+
+#: misc/badblocks.c:1287
+msgid "while creating in-memory bad blocks list"
+msgstr ""
+
+#: misc/badblocks.c:1296
+msgid "input file - bad format"
+msgstr ""
+
+#: misc/badblocks.c:1304 misc/badblocks.c:1313
+msgid "while adding to in-memory bad block list"
+msgstr ""
+
+#: misc/badblocks.c:1338
+#, c-format
+msgid "Pass completed, %u bad blocks found. (%d/%d/%d errors)\n"
+msgstr ""
+
+#: misc/chattr.c:86
+#, c-format
+msgid "Usage: %s [-RVf] [-+=aAcCdDeijsStTu] [-v version] files...\n"
+msgstr "Uzmaniero:  %s [-RVf] [-+=AaCcDdeijSsTtu] [-v VERSIO] DOSIERO...\n"
+
+#: misc/chattr.c:155
+#, c-format
+msgid "bad version - %s\n"
+msgstr "malbona versio - %s\n"
+
+#: misc/chattr.c:201 misc/lsattr.c:116
+#, c-format
+msgid "while trying to stat %s"
+msgstr ""
+
+#: misc/chattr.c:208
+#, c-format
+msgid "while reading flags on %s"
+msgstr ""
+
+#: misc/chattr.c:213 misc/chattr.c:225
+#, c-format
+msgid "Flags of %s set as "
+msgstr ""
+
+#: misc/chattr.c:234
+#, c-format
+msgid "while setting flags on %s"
+msgstr ""
+
+#: misc/chattr.c:242
+#, c-format
+msgid "Version of %s set as %lu\n"
+msgstr ""
+
+#: misc/chattr.c:246
+#, c-format
+msgid "while setting version on %s"
+msgstr ""
+
+#: misc/chattr.c:267
+msgid "Couldn't allocate path variable in chattr_dir_proc"
+msgstr ""
+
+#: misc/chattr.c:307
+msgid "= is incompatible with - and +\n"
+msgstr ""
+
+#: misc/chattr.c:315
+msgid "Must use '-v', =, - or +\n"
+msgstr ""
+
+#: misc/dumpe2fs.c:55
+#, c-format
+msgid "Usage: %s [-bfhixV] [-o superblock=<num>] [-o blocksize=<num>] device\n"
+msgstr ""
+
+#: misc/dumpe2fs.c:159
+msgid "blocks"
+msgstr "blokoj"
+
+#: misc/dumpe2fs.c:169
+msgid "clusters"
+msgstr ""
+
+#: misc/dumpe2fs.c:197
+#, c-format
+msgid "Group %lu: (Blocks "
+msgstr "Grupo %lu: (Blokoj "
+
+#: misc/dumpe2fs.c:205
+#, c-format
+msgid "  Checksum 0x%04x"
+msgstr "  Kontrolsumo 0x%04x"
+
+#: misc/dumpe2fs.c:207
+#, c-format
+msgid " (EXPECTED 0x%04x)"
+msgstr " (ATENDIĜIS 0x%04x)"
+
+#: misc/dumpe2fs.c:208
+#, c-format
+msgid ", unused inodes %u\n"
+msgstr ", neuzitaj i-nodoj %u\n"
+
+#: misc/dumpe2fs.c:213
+#, c-format
+msgid "  %s superblock at "
+msgstr "  %s ĉefbloko je "
+
+#: misc/dumpe2fs.c:214
+msgid "Primary"
+msgstr "Unua"
+
+#: misc/dumpe2fs.c:214
+msgid "Backup"
+msgstr "Savkopia"
+
+#: misc/dumpe2fs.c:218
+msgid ", Group descriptors at "
+msgstr ", Grupaj priaĵoj je "
+
+#: misc/dumpe2fs.c:222
+msgid ""
+"\n"
+"  Reserved GDT blocks at "
+msgstr ""
+"\n"
+"  Rezervitaj GDT-blokoj je "
+
+#: misc/dumpe2fs.c:229
+msgid " Group descriptor at "
+msgstr " Gruppriaĵo je "
+
+#: misc/dumpe2fs.c:235
+msgid "  Block bitmap at "
+msgstr "  Bloka bitmapo je "
+
+#: misc/dumpe2fs.c:239
+msgid ", Inode bitmap at "
+msgstr ", i-noda bitmapo je "
+
+#: misc/dumpe2fs.c:243
+msgid ""
+"\n"
+"  Inode table at "
+msgstr ""
+"\n"
+"  I-noda tabelo je "
+
+#: misc/dumpe2fs.c:249
+#, c-format
+msgid ""
+"\n"
+"  %u free %s, %u free inodes, %u directories%s"
+msgstr ""
+
+#: misc/dumpe2fs.c:256
+#, c-format
+msgid ", %u unused inodes\n"
+msgstr ", %u neuzitaj i-nodoj\n"
+
+#: misc/dumpe2fs.c:259
+msgid "  Free blocks: "
+msgstr "  Liberaj blokoj: "
+
+#: misc/dumpe2fs.c:274
+msgid "  Free inodes: "
+msgstr "  Liberaj i-nodoj: "
+
+#: misc/dumpe2fs.c:310
+msgid "while printing bad block list"
+msgstr ""
+
+#: misc/dumpe2fs.c:316
+#, c-format
+msgid "Bad blocks: %u"
+msgstr "Difektaj blokoj: %u"
+
+#: misc/dumpe2fs.c:345 misc/tune2fs.c:347
+msgid "while reading journal inode"
+msgstr "dum legado de kaŝprotokola i-nodo"
+
+#: misc/dumpe2fs.c:351
+msgid "while opening journal inode"
+msgstr "dum malfermo de kaŝprotokola i-nodo"
+
+#: misc/dumpe2fs.c:357
+msgid "while reading journal super block"
+msgstr "dum legado de kaŝprotokola ĉefbloko"
+
+#: misc/dumpe2fs.c:364
+msgid "Journal superblock magic number invalid!\n"
+msgstr "Malvalidas maginumero de la kaŝprotokola ĉefbloko!\n"
+
+#: misc/dumpe2fs.c:367
+msgid "Journal features:        "
+msgstr "Kaŝprotokolaj kapabloj:    "
+
+#: misc/dumpe2fs.c:380
+msgid "Journal size:             "
+msgstr "Kaŝprotokola grando:       "
+
+#: misc/dumpe2fs.c:391
+#, c-format
+msgid ""
+"Journal length:           %u\n"
+"Journal sequence:         0x%08x\n"
+"Journal start:            %u\n"
+msgstr ""
+"Kaŝprotokola longo:        %u\n"
+"Kaŝprotokola sekvenco:     0x%08x\n"
+"Kaŝprotokola komenco:      %u\n"
+
+#: misc/dumpe2fs.c:398
+#, c-format
+msgid "Journal errno:            %d\n"
+msgstr "Kaŝprotokola erarnumero:   %d\n"
+
+#: misc/dumpe2fs.c:415 misc/tune2fs.c:196
+msgid "while reading journal superblock"
+msgstr "dum legado de kaŝprotokola ĉefbloko"
+
+#: misc/dumpe2fs.c:423
+msgid "Couldn't find journal superblock magic numbers"
+msgstr "Ne eblas trovi kaŝprotokolajn maginumerojn"
+
+#: misc/dumpe2fs.c:427
+#, c-format
+msgid ""
+"\n"
+"Journal block size:       %u\n"
+"Journal length:           %u\n"
+"Journal first block:      %u\n"
+"Journal sequence:         0x%08x\n"
+"Journal start:            %u\n"
+"Journal number of users:  %u\n"
+msgstr ""
+"\n"
+"Kaŝprotokola blokgrando:   %u\n"
+"Kaŝprotokola longo:        %u\n"
+"Kaŝprotokola unua bloko:   %u\n"
+"Kaŝprotokola sekvenco:     0x%08x\n"
+"Kaŝprotokola komenco:      %u\n"
+"Kaŝprotokola uzantnombro:  %u\n"
+
+#: misc/dumpe2fs.c:440
+#, c-format
+msgid "Journal users:            %s\n"
+msgstr "Kaŝprotokolaj uzantoj:     %s\n"
+
+#: misc/dumpe2fs.c:456 misc/mke2fs.c:743 misc/tune2fs.c:1211
+msgid "Couldn't allocate memory to parse options!\n"
+msgstr "Mankas sufiĉa memoro por analizi opciojn!\n"
+
+#: misc/dumpe2fs.c:482
+#, c-format
+msgid "Invalid superblock parameter: %s\n"
+msgstr ""
+
+#: misc/dumpe2fs.c:497
+#, c-format
+msgid "Invalid blocksize parameter: %s\n"
+msgstr ""
+
+#: misc/dumpe2fs.c:508
+#, c-format
+msgid ""
+"\n"
+"Bad extended option(s) specified: %s\n"
+"\n"
+"Extended options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid extended options are:\n"
+"\tsuperblock=<superblock number>\n"
+"\tblocksize=<blocksize>\n"
+msgstr ""
+
+#: misc/dumpe2fs.c:568 misc/mke2fs.c:1734
+#, c-format
+msgid "\tUsing %s\n"
+msgstr "    Uziĝas %s\n"
+
+#: misc/dumpe2fs.c:606 misc/e2image.c:1582 misc/tune2fs.c:2060
+#: resize/main.c:319
+msgid "Couldn't find valid filesystem superblock.\n"
+msgstr "Malsukcesis trovi validan dosiersisteman ĉefblokon.\n"
+
+#: misc/dumpe2fs.c:634
+#, c-format
+msgid ""
+"\n"
+"%s: %s: error reading bitmaps: %s\n"
+msgstr ""
+
+#: misc/e2image.c:101
+#, c-format
+msgid "Usage: %s [ -r|Q ] [ -fr ] device image-file\n"
+msgstr "Uzmaniero:  %s [-r|Q] [-fr] APARATO BILDODOSIERO\n"
+
+#: misc/e2image.c:103
+#, c-format
+msgid "       %s -I device image-file\n"
+msgstr "            %s -I APARATO BILDODOSIERO\n"
+
+#: misc/e2image.c:104
+#, c-format
+msgid ""
+"       %s -ra  [  -cfnp  ] [ -o src_offset ] [ -O dest_offset ] src_fs "
+"[ dest_fs ]\n"
+msgstr ""
+"            %s -ra  [-cfnp] [-o fontpozicio] [-O celpozicio] font-ds [cel-"
+"ds]\n"
+
+#: misc/e2image.c:169 misc/e2image.c:576 misc/e2image.c:582
+#: misc/e2image.c:1178
+msgid "while allocating buffer"
+msgstr "dum asigno de bufro"
+
+#: misc/e2image.c:174
+#, c-format
+msgid "Writing block %llu\n"
+msgstr "Skribado de bloko %llu\n"
+
+#: misc/e2image.c:188
+#, c-format
+msgid "error writing block %llu"
+msgstr "eraro dum skribado de bloko %llu"
+
+#: misc/e2image.c:191
+msgid "error in generic_write()"
+msgstr "eraro en 'generic_write()'"
+
+#: misc/e2image.c:208
+msgid "Error: header size is bigger than wrt_size\n"
+msgstr "Eraro: ĉapa grando pli grandas o 'wrt_size'\n"
+
+#: misc/e2image.c:213
+msgid "Couldn't allocate header buffer\n"
+msgstr "Mankas sufiĉa memoro por asigni bufron por ĉapo\n"
+
+#: misc/e2image.c:241
+msgid "while writing superblock"
+msgstr "dum skribado de ĉefbloko"
+
+#: misc/e2image.c:250
+msgid "while writing inode table"
+msgstr "dum skribado de i-noda tabelo"
+
+#: misc/e2image.c:258
+msgid "while writing block bitmap"
+msgstr "dum skribado de bloka bitmapo"
+
+#: misc/e2image.c:266
+msgid "while writing inode bitmap"
+msgstr "dum skribado de i-noda bitmapo"
+
+#: misc/e2image.c:502
+#, c-format
+msgid "Corrupt directory block %llu: bad rec_len (%d)\n"
+msgstr "Difekta uja bloko %llu: malbona 'rec_len' (%d)\n"
+
+#: misc/e2image.c:514
+#, c-format
+msgid "Corrupt directory block %llu: bad name_len (%d)\n"
+msgstr "Difekta uja bloko %llu: malbona 'name_len' (%d)\n"
+
+#: misc/e2image.c:555
+#, c-format
+msgid "%llu / %llu blocks (%d%%)"
+msgstr "%llu / %llu blokoj (de %d%%)"
+
+#: misc/e2image.c:586 misc/e2image.c:626
+msgid "Copying "
+msgstr "Kopiado "
+
+#: misc/e2image.c:623
+msgid ""
+"Stopping now will destroy the filesystem, interrupt again if you are sure\n"
+msgstr "Halti nun detruos la dosiersistemon; interrompu denove se vi certas.\n"
+
+#: misc/e2image.c:649
+#, c-format
+msgid " %s remaining at %.2f MB/s"
+msgstr " restas %s je %.2f MB/s"
+
+#: misc/e2image.c:661 misc/e2image.c:1188
+#, c-format
+msgid "error reading block %llu"
+msgstr "eraro dum legado de bloko %llu"
+
+#: misc/e2image.c:715
+#, c-format
+msgid "Copied %llu / %llu blocks (%d%%) in %s "
+msgstr "Kopiiĝis %llu / %llu blokoj (de %d%%) en %s "
+
+#: misc/e2image.c:719
+#, c-format
+msgid "at %.2f MB/s"
+msgstr "je %.2f MB/s"
+
+#: misc/e2image.c:755
+msgid "while allocating l1 table"
+msgstr "dum asigno de l1-tabelo"
+
+#: misc/e2image.c:800
+msgid "while allocating l2 cache"
+msgstr "dum asigno de l2-kaŝmemoro"
+
+#: misc/e2image.c:823
+msgid ""
+"Warning: There are still tables in the cache while putting the cache, data "
+"will be lost so the image may not be valid.\n"
+msgstr ""
+"Averto: ankoraŭ ekzistas tabeloj en la kaŝmemoro dum sia konservado, tial "
+"datumoj perdiĝos kaj la bildo eble malvalidas.\n"
+
+#: misc/e2image.c:1145
+msgid "while allocating ext2_qcow2_image"
+msgstr "dum asigno de 'ext2_qcow2_image'"
+
+#: misc/e2image.c:1152
+msgid "while initializing ext2_qcow2_image"
+msgstr "dum pravalorizo de 'ext2_qcow2_image'"
+
+#: misc/e2image.c:1211 misc/e2image.c:1229
+msgid "Programming error: multiple sequential refcount blocks created!\n"
+msgstr ""
+
+#: misc/e2image.c:1269
+msgid "while allocating block bitmap"
+msgstr "dum asigno de bloka bitmapo"
+
+#: misc/e2image.c:1278
+#, fuzzy
+msgid "while allocating scramble block bitmap"
+msgstr "dum asigno de kirlita bloka bitmapo"
+
+#: misc/e2image.c:1285
+msgid "Scanning inodes...\n"
+msgstr "Skanado de i-nodoj...\n"
+
+#: misc/e2image.c:1297
+msgid "Can't allocate block buffer"
+msgstr "Mankas sufiĉa memoro por asigni bufron por bloko"
+
+#: misc/e2image.c:1336 misc/e2image.c:1350
+#, c-format
+msgid "while iterating over inode %u"
+msgstr "dum iteracio je i-nodo %u"
+
+#: misc/e2image.c:1381
+msgid "Raw and qcow2 images cannot be installed"
+msgstr "Krudajn kaj QCOW2-bildojn ne eblas instali"
+
+#: misc/e2image.c:1403
+msgid "error reading bitmaps"
+msgstr "eraro dum legado de bitmapoj"
+
+#: misc/e2image.c:1415
+msgid "while opening device file"
+msgstr "dum malfermo de aparatdosiero"
+
+#: misc/e2image.c:1426
+msgid "while restoring the image table"
+msgstr "dum restaŭro de bilda tabelo"
+
+#: misc/e2image.c:1523
+msgid "-a option can only be used with raw or QCOW2 images."
+msgstr "Opcio '-a' uzeblas nur kun krudaj aŭ QCOW2-bildoj."
+
+#: misc/e2image.c:1529
+msgid "Offsets are only allowed with raw images."
+msgstr "Pozicioj uzeblas nur kun krudaj bildoj."
+
+#: misc/e2image.c:1534
+msgid "Move mode is only allowed with raw images."
+msgstr "Movmoduso uzeblas nur kun krudaj bildoj."
+
+#: misc/e2image.c:1539
+msgid "Move mode requires all data mode."
+msgstr "Movmoduso postulas 'all-data' moduson"
+
+#: misc/e2image.c:1549
+msgid "checking if mounted"
+msgstr "kontrolo je surmeto"
+
+#: misc/e2image.c:1556
+msgid ""
+"\n"
+"Running e2image on a R/W mounted filesystem can result in an\n"
+"inconsistent image which will not be useful for debugging purposes.\n"
+"Use -f option if you really want to do that.\n"
+msgstr ""
+"\n"
+"Ruli 'e2image' je skribeble surmetata dosiersistemo povas rezulti\n"
+"en malkohera bildo kiu ne utilos por serĉo de programmisoj.\n"
+"Uzu opcio '-f' se vi vere volas fari tion.\n"
+
+#: misc/e2image.c:1608
+msgid "QCOW2 image can not be written to the stdout!\n"
+msgstr "Ne eblas skribi QCOW2-bildon al ĉefeligujo!\n"
+
+#: misc/e2image.c:1614
+msgid "Can not stat output\n"
+msgstr "Malsukcesis eltrovi statinformon pri eligujo\n"
+
+#: misc/e2image.c:1624
+#, c-format
+msgid "Image (%s) is compressed\n"
+msgstr "Bildo (%s) estas densigita\n"
+
+#: misc/e2image.c:1627
+#, c-format
+msgid "Image (%s) is encrypted\n"
+msgstr "Bildo (%s) estas ĉifrita\n"
+
+#: misc/e2image.c:1630
+#, c-format
+msgid "while trying to convert qcow2 image (%s) into raw image (%s)"
+msgstr "dum konverto de QCOW2-bildo (%s) al kruda bildo (%s)"
+
+#: misc/e2image.c:1639
+msgid "The -c option only supported in raw mode\n"
+msgstr "Opcio '-c' uzeblas nur en kruda moduso\n"
+
+#: misc/e2image.c:1644
+msgid "The -c option not supported when writing to stdout\n"
+msgstr "Opcio '-c' ne uzeblas dum skribado al ĉefeligujo\n"
+
+#: misc/e2image.c:1651
+msgid "while allocating check_buf"
+msgstr "dum asigno de 'check_buf'"
+
+#: misc/e2image.c:1657
+msgid "The -p option only supported in raw mode\n"
+msgstr "Opcio '-p' uzeblas nur en kruda moduso\n"
+
+#: misc/e2image.c:1667
+#, c-format
+msgid "%d blocks already contained the data to be copied\n"
+msgstr "Estis %d blokoj kiuj jam enhavis la kopiendajn datumojn\n"
+
+#: misc/e2label.c:58
+#, c-format
+msgid "e2label: cannot open %s\n"
+msgstr "e2label: ne eblas malfermi %s\n"
+
+#: misc/e2label.c:63
+#, c-format
+msgid "e2label: cannot seek to superblock\n"
+msgstr "e2label: ne eblas salti al ĉefbloko\n"
+
+#: misc/e2label.c:68
+#, c-format
+msgid "e2label: error reading superblock\n"
+msgstr "e2label: eraro dum legado de ĉefbloko\n"
+
+#: misc/e2label.c:72
+#, c-format
+msgid "e2label: not an ext2 filesystem\n"
+msgstr "e2label: ne estas Ext2-dosiersistemo\n"
+
+#: misc/e2label.c:97 misc/tune2fs.c:2225
+#, c-format
+msgid "Warning: label too long, truncating.\n"
+msgstr "Averto: etikedo tro longas, ĝi trunkiĝas.\n"
+
+#: misc/e2label.c:100
+#, c-format
+msgid "e2label: cannot seek to superblock again\n"
+msgstr "e2label: ne eblas resalti al ĉefbloko\n"
+
+#: misc/e2label.c:105
+#, c-format
+msgid "e2label: error writing superblock\n"
+msgstr "e2label: eraro dum skribado de ĉefbloko\n"
+
+#: misc/e2label.c:117 misc/tune2fs.c:871
+#, c-format
+msgid "Usage: e2label device [newlabel]\n"
+msgstr "Uzmaniero:  e2label APARATO [NOVETIKEDO]\n"
+
+#: misc/e2undo.c:36
+#, c-format
+msgid "Usage: %s <transaction file> <filesystem>\n"
+msgstr ""
+
+#: misc/e2undo.c:52
+msgid "Failed to read the file system data \n"
+msgstr ""
+
+#: misc/e2undo.c:62 misc/e2undo.c:83 misc/e2undo.c:108 misc/e2undo.c:206
+#, c-format
+msgid "Failed tdb_fetch %s\n"
+msgstr ""
+
+#: misc/e2undo.c:70
+#, c-format
+msgid "The file system Mount time didn't match %u\n"
+msgstr ""
+
+#: misc/e2undo.c:89
+msgid "The file system UUID didn't match \n"
+msgstr ""
+
+#: misc/e2undo.c:163
+#, c-format
+msgid "Failed tdb_open %s\n"
+msgstr ""
+
+#: misc/e2undo.c:169
+#, c-format
+msgid "Error while determining whether %s is mounted.\n"
+msgstr ""
+
+#: misc/e2undo.c:175
+msgid "e2undo should only be run on unmounted file system\n"
+msgstr ""
+
+#: misc/e2undo.c:184
+#, c-format
+msgid "Failed to open %s\n"
+msgstr "Malsukcesis malfermi %s\n"
+
+#: misc/e2undo.c:210
+#, c-format
+msgid "Replayed transaction of size %zd at location %llu\n"
+msgstr ""
+
+#: misc/e2undo.c:216
+#, c-format
+msgid "Failed write %s\n"
+msgstr ""
+
+#: misc/fsck.c:343
+#, c-format
+msgid "WARNING: couldn't open %s: %s\n"
+msgstr "AVERTO: malsukcesis malfermi %s: %s\n"
+
+#: misc/fsck.c:353
+#, c-format
+msgid "WARNING: bad format on line %d of %s\n"
+msgstr "AVERTO: malvalida sintakso en linio %d de %s\n"
+
+#: misc/fsck.c:370
+msgid ""
+"WARNING: Your /etc/fstab does not contain the fsck passno\n"
+"\tfield.  I will kludge around things for you, but you\n"
+"\tshould fix your /etc/fstab file as soon as you can.\n"
+"\n"
+msgstr ""
+"WARNING: /etc/fstab ne enhavas le sesan kampon (vicnumeron por 'fsck')\n"
+"    Ĉi tiu problemo nun ĉirkaŭiriĝos kaj evitiĝos, sed vi devus\n"
+"    korekti vian dosieron /etc/fstab la plej frue ke vi povas.\n"
+"\n"
+
+#: misc/fsck.c:478
+#, c-format
+msgid "fsck: %s: not found\n"
+msgstr "fsck: %s ne troviĝis\n"
+
+#: misc/fsck.c:594
+#, c-format
+msgid "%s: wait: No more child process?!?\n"
+msgstr "%s: wait: Ne plu ekzistas ida procezo!!\n"
+
+#: misc/fsck.c:616
+#, c-format
+msgid "Warning... %s for device %s exited with signal %d.\n"
+msgstr "Averto... %s por aparato %s finis kun signalo %d.\n"
+
+#: misc/fsck.c:622
+#, c-format
+msgid "%s %s: status is %x, should never happen.\n"
+msgstr "%s %s: elirstato estas %x -- tio devus neniam okazi.\n"
+
+#: misc/fsck.c:661
+#, c-format
+msgid "Finished with %s (exit status %d)\n"
+msgstr "Finkontrolis aparaton %s (elirstato estas %d)\n"
+
+#: misc/fsck.c:721
+#, c-format
+msgid "%s: Error %d while executing fsck.%s for %s\n"
+msgstr "%s: Eraro %d dum rulado de 'fsck.%s' por %s\n"
+
+#: misc/fsck.c:742
+msgid ""
+"Either all or none of the filesystem types passed to -t must be prefixed\n"
+"with 'no' or '!'.\n"
+msgstr ""
+"Aŭ ĉiuj aŭ neniuj de la dosiersistemaj tipoj je opcio '-t'\n"
+"devus esti prefiksitaj kun 'no' aŭ '!'.\n"
+
+#: misc/fsck.c:761
+msgid "Couldn't allocate memory for filesystem types\n"
+msgstr "Mankas sufiĉa memoro por dosiersistemaj tipoj\n"
+
+#: misc/fsck.c:884
+#, c-format
+msgid ""
+"%s: skipping bad line in /etc/fstab: bind mount with nonzero fsck pass "
+"number\n"
+msgstr ""
+"%s: transsaltiĝas malbona linio en /etc/fstab: 'bind'-surmeto havas nenulan "
+"sesan kampon (vicnumeron por 'fsck')\n"
+
+#: misc/fsck.c:911
+#, c-format
+msgid "fsck: cannot check %s: fsck.%s not found\n"
+msgstr "fsck: ne eblas kontroli %s: 'fsck.%s' ne troviĝas\n"
+
+#: misc/fsck.c:967
+msgid "Checking all file systems.\n"
+msgstr "Kontrolo de ĉiuj dosiersistemoj.\n"
+
+#: misc/fsck.c:1058
+#, c-format
+msgid "--waiting-- (pass %d)\n"
+msgstr "--atendado-- (paŝo %d)\n"
+
+#: misc/fsck.c:1078
+msgid ""
+"Usage: fsck [-AMNPRTV] [ -C [ fd ] ] [-t fstype] [fs-options] [filesys ...]\n"
+msgstr ""
+"Uzmaniero:  fsck [-AMNPRTV] [-C [dosierpriaĵo]] [-t dosiersistemtipo]\n"
+"                 [dosiersistemopcioj] [dosiersistemo...]\n"
+
+#: misc/fsck.c:1120
+#, c-format
+msgid "%s: too many devices\n"
+msgstr "%s: tro da aparatoj\n"
+
+#: misc/fsck.c:1153 misc/fsck.c:1239
+#, c-format
+msgid "%s: too many arguments\n"
+msgstr "%s: tro da argumentoj\n"
+
+#: misc/lsattr.c:74
+#, c-format
+msgid "Usage: %s [-RVadlv] [files...]\n"
+msgstr ""
+
+#: misc/lsattr.c:84
+#, c-format
+msgid "While reading flags on %s"
+msgstr ""
+
+#: misc/lsattr.c:91
+#, c-format
+msgid "While reading version on %s"
+msgstr ""
+
+#: misc/mke2fs.c:123
+#, c-format
+msgid ""
+"Usage: %s [-c|-l filename] [-b block-size] [-C cluster-size]\n"
+"\t[-i bytes-per-inode] [-I inode-size] [-J journal-options]\n"
+"\t[-G flex-group-size] [-N number-of-inodes]\n"
+"\t[-m reserved-blocks-percentage] [-o creator-os]\n"
+"\t[-g blocks-per-group] [-L volume-label] [-M last-mounted-directory]\n"
+"\t[-O feature[,...]] [-r fs-revision] [-E extended-option[,...]]\n"
+"\t[-t fs-type] [-T usage-type ] [-U UUID] [-jnqvDFKSV] device [blocks-"
+"count]\n"
+msgstr ""
+
+#: misc/mke2fs.c:252
+#, c-format
+msgid "Running command: %s\n"
+msgstr "Ruliĝas komando: %s\n"
+
+#: misc/mke2fs.c:256
+#, c-format
+msgid "while trying to run '%s'"
+msgstr "dum provo de ruli '%s'"
+
+#: misc/mke2fs.c:263
+msgid "while processing list of bad blocks from program"
+msgstr "dum traktado de listo de malbonaj blokoj el programo"
+
+#: misc/mke2fs.c:290
+#, c-format
+msgid "Block %d in primary superblock/group descriptor area bad.\n"
+msgstr ""
+
+#: misc/mke2fs.c:292
+#, c-format
+msgid "Blocks %u through %u must be good in order to build a filesystem.\n"
+msgstr ""
+
+#: misc/mke2fs.c:295
+msgid "Aborting....\n"
+msgstr "Abortiĝas...\n"
+
+#: misc/mke2fs.c:315
+#, c-format
+msgid ""
+"Warning: the backup superblock/group descriptors at block %u contain\n"
+"\tbad blocks.\n"
+"\n"
+msgstr ""
+
+#: misc/mke2fs.c:334
+msgid "while marking bad blocks as used"
+msgstr "dum markado de malbonaj blokoj kiel uzataj"
+
+#: misc/mke2fs.c:386
+msgid "Writing inode tables: "
+msgstr "Skribiĝas i-nodaj tabeloj: "
+
+#: misc/mke2fs.c:407
+#, c-format
+msgid ""
+"\n"
+"Could not write %d blocks in inode table starting at %llu: %s\n"
+msgstr ""
+"\n"
+"Malsukcesis skribi %d blokojn en i-noda tabelo ekde %llu: %s\n"
+
+#: misc/mke2fs.c:421 misc/mke2fs.c:2479 misc/mke2fs.c:2764
+msgid "done                            \n"
+msgstr "farita                          \n"
+
+#: misc/mke2fs.c:432
+msgid "while creating root dir"
+msgstr "dum kreado de radika dosierujo"
+
+#: misc/mke2fs.c:439
+msgid "while reading root inode"
+msgstr "dum legado de radika i-nodo"
+
+#: misc/mke2fs.c:451
+msgid "while setting root inode ownership"
+msgstr "dum agordo de posedeco de radika i-nodo"
+
+#: misc/mke2fs.c:469
+msgid "while creating /lost+found"
+msgstr "dum kreado de dosierujo '/lost+found'"
+
+#: misc/mke2fs.c:476
+msgid "while looking up /lost+found"
+msgstr "dum serĉado de dosierujo '/lost+found'"
+
+#: misc/mke2fs.c:489
+msgid "while expanding /lost+found"
+msgstr "dum etendado de dosierujo '/lost+found'"
+
+#: misc/mke2fs.c:504
+msgid "while setting bad block inode"
+msgstr "dum agordo de malbonbloka i-nodo"
+
+#: misc/mke2fs.c:531
+#, c-format
+msgid "Out of memory erasing sectors %d-%d\n"
+msgstr "Mankas sufiĉa memoro dum viŝado de sektoroj %d-%d\n"
+
+#: misc/mke2fs.c:541
+#, c-format
+msgid "Warning: could not read block 0: %s\n"
+msgstr "Averto: malsukcesis legi blokon 0: %s\n"
+
+#: misc/mke2fs.c:557
+#, c-format
+msgid "Warning: could not erase sector %d: %s\n"
+msgstr "Averto: malsukcesis viŝi sektoron %d: %s\n"
+
+#: misc/mke2fs.c:573
+msgid "while initializing journal superblock"
+msgstr "dum pravalorizo de kaŝprotokola ĉefbloko"
+
+#: misc/mke2fs.c:581
+msgid "Zeroing journal device: "
+msgstr "Nulpleniĝas kaŝprotokola aparato: "
+
+#: misc/mke2fs.c:593
+#, c-format
+msgid "while zeroing journal device (block %llu, count %d)"
+msgstr "dum nulplenigo de kaŝprotokola aparato (bloko %llu, numero %d)"
+
+#: misc/mke2fs.c:611
+msgid "while writing journal superblock"
+msgstr "dum skribado de kaŝprotokola ĉefbloko"
+
+#: misc/mke2fs.c:626
+#, c-format
+msgid "Creating filesystem with %llu %dk blocks and %u inodes\n"
+msgstr "Kreado de dosiersistemo kun %llu blokoj (de %dK) kaj %u i-nodoj\n"
+
+#: misc/mke2fs.c:634
+#, c-format
+msgid ""
+"warning: %llu blocks unused.\n"
+"\n"
+msgstr ""
+"Averto: %llu blokoj ne uziĝas.\n"
+"\n"
+
+#: misc/mke2fs.c:639
+#, c-format
+msgid "Filesystem label=%s\n"
+msgstr "Dosiersistema etikedo=%s\n"
+
+#: misc/mke2fs.c:642
+#, c-format
+msgid "OS type: %s\n"
+msgstr "Mastrumsistema tipo: %s\n"
+
+#: misc/mke2fs.c:644
+#, c-format
+msgid "Block size=%u (log=%u)\n"
+msgstr "Blokgrando=%u (log=%u)\n"
+
+#: misc/mke2fs.c:648
+#, c-format
+msgid "Cluster size=%u (log=%u)\n"
+msgstr "Faska grando=%u (log=%u)\n"
+
+#: misc/mke2fs.c:652
+#, c-format
+msgid "Fragment size=%u (log=%u)\n"
+msgstr "Fragmenta grando=%u (log=%u)\n"
+
+#: misc/mke2fs.c:654
+#, c-format
+msgid "Stride=%u blocks, Stripe width=%u blocks\n"
+msgstr "'Stride'-paŝo=%u blokoj, 'stripe'-larĝo=%u blokoj\n"
+
+#: misc/mke2fs.c:656
+#, c-format
+msgid "%u inodes, %llu blocks\n"
+msgstr "%u i-nodoj, %llu blokoj\n"
+
+#: misc/mke2fs.c:658
+#, c-format
+msgid "%llu blocks (%2.2f%%) reserved for the super user\n"
+msgstr "%llu blokoj (%2.2f%%) rezerviĝas por la ĉefuzanto\n"
+
+#: misc/mke2fs.c:661
+#, c-format
+msgid "First data block=%u\n"
+msgstr "Unua datumbloko=%u\n"
+
+#: misc/mke2fs.c:663
+#, c-format
+msgid "Root directory owner=%u:%u\n"
+msgstr "Posedanto de radika dosierujo=%u:%u\n"
+
+#: misc/mke2fs.c:665
+#, c-format
+msgid "Maximum filesystem blocks=%lu\n"
+msgstr "Maksimuma nombro de dosiersistemaj blokoj=%lu\n"
+
+#: misc/mke2fs.c:669
+#, c-format
+msgid "%u block groups\n"
+msgstr "%u blokgrupoj\n"
+
+#: misc/mke2fs.c:671
+#, c-format
+msgid "%u block group\n"
+msgstr "%u blokgrupo\n"
+
+#: misc/mke2fs.c:674
+#, c-format
+msgid "%u blocks per group, %u clusters per group\n"
+msgstr "%u blokoj po grupo, %u faskoj po grupo\n"
+
+#: misc/mke2fs.c:677
+#, c-format
+msgid "%u blocks per group, %u fragments per group\n"
+msgstr "%u blokoj po grupo, %u fragmentoj po grupo\n"
+
+#: misc/mke2fs.c:679
+#, c-format
+msgid "%u inodes per group\n"
+msgstr "%u i-nodoj po grupo\n"
+
+#: misc/mke2fs.c:688
+#, c-format
+msgid "Filesystem UUID: %s\n"
+msgstr "Dosiersistema UUID=%s\n"
+
+#: misc/mke2fs.c:689
+msgid "Superblock backups stored on blocks: "
+msgstr "Ĉefblokaj savkopioj gardiĝas en blokoj: "
+
+#: misc/mke2fs.c:766
+#, c-format
+msgid "%s requires '-O 64bit'\n"
+msgstr "%s bezonas '-O 64bit'\n"
+
+#: misc/mke2fs.c:772
+#, c-format
+msgid "'%s' must be before 'resize=%u'\n"
+msgstr "'%s' devas esti antaŭ 'resize=%u'\n"
+
+#: misc/mke2fs.c:785
+#, c-format
+msgid "Invalid desc_size: '%s'\n"
+msgstr "Nevalida 'desc_size': '%s'\n"
+
+#: misc/mke2fs.c:798
+#, c-format
+msgid "Invalid offset: %s\n"
+msgstr "Nevalida pozicio: %s\n"
+
+#: misc/mke2fs.c:812 misc/tune2fs.c:1239
+#, c-format
+msgid "Invalid mmp_update_interval: %s\n"
+msgstr "Nevalida 'mmp_update_interval': %s\n"
+
+#: misc/mke2fs.c:826
+#, c-format
+msgid "Invalid # of backup superblocks: %s\n"
+msgstr "Malvalida nombro de savkopiaj ĉefblokoj: %s\n"
+
+#: misc/mke2fs.c:848
+#, c-format
+msgid "Invalid stride parameter: %s\n"
+msgstr "Malvalida argumento por 'stride': %s\n"
+
+#: misc/mke2fs.c:863
+#, c-format
+msgid "Invalid stripe-width parameter: %s\n"
+msgstr "Malvalida argumento por 'stripe'-larĝo: %s\n"
+
+#: misc/mke2fs.c:886
+#, c-format
+msgid "Invalid resize parameter: %s\n"
+msgstr "Malvalida argumento por 'resize': %s\n"
+
+#: misc/mke2fs.c:893
+msgid "The resize maximum must be greater than the filesystem size.\n"
+msgstr ""
+
+#: misc/mke2fs.c:917
+msgid "On-line resizing not supported with revision 0 filesystems\n"
+msgstr ""
+
+#: misc/mke2fs.c:944 misc/mke2fs.c:953
+#, c-format
+msgid "Invalid root_owner: '%s'\n"
+msgstr "Nevalida radikposedanto: '%s'\n"
+
+#: misc/mke2fs.c:978
+#, c-format
+msgid "Invalid quotatype parameter: %s\n"
+msgstr "Malvalida argumento por 'quotatype': %s\n"
+
+#: misc/mke2fs.c:989
+#, c-format
+msgid ""
+"\n"
+"Bad option(s) specified: %s\n"
+"\n"
+"Extended options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid extended options are:\n"
+"\tmmp_update_interval=<interval>\n"
+"\tnum_backup_sb=<0|1|2>\n"
+"\tstride=<RAID per-disk data chunk in blocks>\n"
+"\tstripe-width=<RAID stride * data disks in blocks>\n"
+"\toffset=<offset to create the file system>\n"
+"\tresize=<resize maximum size in blocks>\n"
+"\tpacked_meta_blocks=<0 to disable, 1 to enable>\n"
+"\tlazy_itable_init=<0 to disable, 1 to enable>\n"
+"\tlazy_journal_init=<0 to disable, 1 to enable>\n"
+"\troot_uid=<uid of root directory>\n"
+"\troot_gid=<gid of root directory>\n"
+"\ttest_fs\n"
+"\tdiscard\n"
+"\tnodiscard\n"
+"\tquotatype=<usr OR grp>\n"
+"\n"
+msgstr ""
+
+#: misc/mke2fs.c:1015
+#, c-format
+msgid ""
+"\n"
+"Warning: RAID stripe-width %u not an even multiple of stride %u.\n"
+"\n"
+msgstr ""
+
+#: misc/mke2fs.c:1055
+#, c-format
+msgid ""
+"Syntax error in mke2fs config file (%s, line #%d)\n"
+"\t%s\n"
+msgstr ""
+
+#: misc/mke2fs.c:1068 misc/tune2fs.c:449
+#, c-format
+msgid "Invalid filesystem option set: %s\n"
+msgstr "Nevalida dosiersistema opcio agordiĝas: %s\n"
+
+#: misc/mke2fs.c:1080 misc/tune2fs.c:390
+#, c-format
+msgid "Invalid mount option set: %s\n"
+msgstr "Nevalida surmeta opcio agordiĝas: %s\n"
+
+#: misc/mke2fs.c:1220
+#, c-format
+msgid ""
+"\n"
+"Your mke2fs.conf file does not define the %s filesystem type.\n"
+msgstr ""
+
+#: misc/mke2fs.c:1224
+msgid ""
+"You probably need to install an updated mke2fs.conf file.\n"
+"\n"
+msgstr ""
+
+#: misc/mke2fs.c:1228
+msgid "Aborting...\n"
+msgstr "Abortiĝas...\n"
+
+#: misc/mke2fs.c:1269
+#, c-format
+msgid ""
+"\n"
+"Warning: the fs_type %s is not defined in mke2fs.conf\n"
+"\n"
+msgstr ""
+
+#: misc/mke2fs.c:1449
+msgid "Couldn't allocate memory for new PATH.\n"
+msgstr "Mankas sufiĉa memoro por nova 'PATH'.\n"
+
+#: misc/mke2fs.c:1490
+#, c-format
+msgid "Couldn't init profile successfully (error: %ld).\n"
+msgstr ""
+
+#: misc/mke2fs.c:1523
+#, c-format
+msgid "invalid block size - %s"
+msgstr "nevalida blokgrando: %s"
+
+#: misc/mke2fs.c:1527
+#, c-format
+msgid "Warning: blocksize %d not usable on most systems.\n"
+msgstr "Averto: blokgrando %d ne uzeblas en plejmulto de sistemoj.\n"
+
+#: misc/mke2fs.c:1543
+#, c-format
+msgid "invalid cluster size - %s"
+msgstr "nevalida faskgrando: %s"
+
+#: misc/mke2fs.c:1553
+msgid "'-R' is deprecated, use '-E' instead"
+msgstr "opcio '-R' arkaikas; uzu '-E' anstataŭe"
+
+#: misc/mke2fs.c:1565
+msgid "Illegal number for blocks per group"
+msgstr "Nevalida nombro de blokoj po grupo"
+
+#: misc/mke2fs.c:1570
+msgid "blocks per group must be multiple of 8"
+msgstr "blokoj po grupo devas esti oblo de 8"
+
+#: misc/mke2fs.c:1578
+msgid "Illegal number for flex_bg size"
+msgstr "Malvalida nombro por grando de 'flex_bg'"
+
+#: misc/mke2fs.c:1584
+msgid "flex_bg size must be a power of 2"
+msgstr "Grando de 'flex_bg' devas esti potenco de 2"
+
+#: misc/mke2fs.c:1589
+#, c-format
+msgid "flex_bg size (%lu) must be less than or equal to 2^31"
+msgstr "Grando de 'flex_bg' (%lu) devas esti malpli ol (aŭ egale al) 2^31"
+
+#: misc/mke2fs.c:1600
+#, c-format
+msgid "invalid inode ratio %s (min %d/max %d)"
+msgstr "nevalida i-noda rilato %s (min %d/maks %d)"
+
+#: misc/mke2fs.c:1610
+#, c-format
+msgid "invalid inode size - %s"
+msgstr "nevalida i-noda grando: %s"
+
+#: misc/mke2fs.c:1623
+msgid ""
+"Warning: -K option is deprecated and should not be used anymore. Use '-E "
+"nodiscard' extended option instead!\n"
+msgstr ""
+
+#: misc/mke2fs.c:1634
+msgid "in malloc for bad_blocks_filename"
+msgstr "mankas sufiĉa memoro en 'bad_blocks_filename()'"
+
+#: misc/mke2fs.c:1647
+#, c-format
+msgid "invalid reserved blocks percent - %s"
+msgstr "nevalida elcento de rezervitaj blokoj: %s"
+
+#: misc/mke2fs.c:1662
+#, c-format
+msgid "bad num inodes - %s"
+msgstr "nevalida nombro de i-nodoj: %s"
+
+#: misc/mke2fs.c:1679
+#, c-format
+msgid "bad revision level - %s"
+msgstr "nevalida revizia nivelo: %s"
+
+#: misc/mke2fs.c:1684
+#, c-format
+msgid "while trying to create revision %d"
+msgstr ""
+
+#: misc/mke2fs.c:1698
+msgid "The -t option may only be used once"
+msgstr "Opcio '-t' uzeblas nur unu fojon"
+
+#: misc/mke2fs.c:1706
+msgid "The -T option may only be used once"
+msgstr "Opcio '-T' uzeblas nur unu fojon"
+
+#: misc/mke2fs.c:1759 misc/mke2fs.c:2845
+#, c-format
+msgid "while trying to open journal device %s\n"
+msgstr "dum provo de malfermi kaŝprotokolan aparaton %s\n"
+
+#: misc/mke2fs.c:1765
+#, c-format
+msgid "Journal dev blocksize (%d) smaller than minimum blocksize %d\n"
+msgstr ""
+"Blokgrando %d de kaŝprotokola aparato estas pli malgranda ol minimuma "
+"blokgrando %d\n"
+
+#: misc/mke2fs.c:1771
+#, c-format
+msgid "Using journal device's blocksize: %d\n"
+msgstr "Blokgrando de kaŝprotokola aparato uziĝas: %d\n"
+
+#: misc/mke2fs.c:1782
+#, c-format
+msgid "invalid blocks '%s' on device '%s'"
+msgstr "nevalidaj blokoj '%s' en aparato '%s'"
+
+#: misc/mke2fs.c:1804
+msgid "filesystem"
+msgstr "dosiersistemo"
+
+#: misc/mke2fs.c:1817 resize/main.c:395
+msgid "while trying to determine filesystem size"
+msgstr "dum eltrovo de dosiersistema grando"
+
+#: misc/mke2fs.c:1823
+msgid ""
+"Couldn't determine device size; you must specify\n"
+"the size of the filesystem\n"
+msgstr ""
+"Malsukcesis eltrovi aparatan grandon;\n"
+"necesas indiki la grandon de la dosiersistemo\n"
+
+#: misc/mke2fs.c:1830
+msgid ""
+"Device size reported to be zero.  Invalid partition specified, or\n"
+"\tpartition table wasn't reread after running fdisk, due to\n"
+"\ta modified partition being busy and in use.  You may need to reboot\n"
+"\tto re-read your partition table.\n"
+msgstr ""
+
+#: misc/mke2fs.c:1847
+msgid "Filesystem larger than apparent device size."
+msgstr "Dosiersistemo pli grandas ol ŝajna aparata grando."
+
+#: misc/mke2fs.c:1867
+msgid "Failed to parse fs types list\n"
+msgstr "Malsukcesis analizi liston de dosiersistemaj tipoj\n"
+
+#: misc/mke2fs.c:1908
+msgid "while trying to determine hardware sector size"
+msgstr ""
+
+#: misc/mke2fs.c:1914
+msgid "while trying to determine physical sector size"
+msgstr ""
+
+#: misc/mke2fs.c:1946
+msgid "while setting blocksize; too small for device\n"
+msgstr "dum agordo de blokgrando; ĝi tro malgrandas por aparato\n"
+
+#: misc/mke2fs.c:1951
+#, c-format
+msgid ""
+"Warning: specified blocksize %d is less than device physical sectorsize %d\n"
+msgstr ""
+
+#: misc/mke2fs.c:1975
+#, c-format
+msgid ""
+"%s: Size of device (0x%llx blocks) %s too big to be expressed\n"
+"\tin 32 bits using a blocksize of %d.\n"
+msgstr ""
+
+#: misc/mke2fs.c:1991
+msgid "fs_types for mke2fs.conf resolution: "
+msgstr ""
+
+#: misc/mke2fs.c:1998
+msgid "Filesystem features not supported with revision 0 filesystems\n"
+msgstr ""
+
+#: misc/mke2fs.c:2006
+msgid "Sparse superblocks not supported with revision 0 filesystems\n"
+msgstr ""
+
+#: misc/mke2fs.c:2018
+msgid "Journals not supported with revision 0 filesystems\n"
+msgstr "Kaŝprotokoloj ne subtenatas en dosiersistemoj de revizio 0\n"
+
+#: misc/mke2fs.c:2032
+#, c-format
+msgid "invalid reserved blocks percent - %lf"
+msgstr "nevalida elcento de rezervitaj blokoj: %lf"
+
+#: misc/mke2fs.c:2049
+msgid ""
+"Extents MUST be enabled for a 64-bit filesystem.  Pass -O extents to "
+"rectify.\n"
+msgstr ""
+
+#: misc/mke2fs.c:2069
+msgid "The cluster size may not be smaller than the block size.\n"
+msgstr "Faskgrando ne povas esti pli malgranda ol blokgrando.\n"
+
+#: misc/mke2fs.c:2075
+msgid "specifying a cluster size requires the bigalloc feature"
+msgstr "indiki faskgrandon bezonas la 'bigalloc'-kapablon"
+
+#: misc/mke2fs.c:2094
+#, c-format
+msgid "warning: Unable to get device geometry for %s\n"
+msgstr ""
+
+#: misc/mke2fs.c:2097
+#, c-format
+msgid "%s alignment is offset by %lu bytes.\n"
+msgstr ""
+
+#: misc/mke2fs.c:2099
+#, c-format
+msgid ""
+"This may result in very poor performance, (re)-partitioning suggested.\n"
+msgstr ""
+
+#: misc/mke2fs.c:2120
+#, c-format
+msgid "%d-byte blocks too big for system (max %d)"
+msgstr ""
+
+#: misc/mke2fs.c:2124
+#, c-format
+msgid ""
+"Warning: %d-byte blocks too big for system (max %d), forced to continue\n"
+msgstr ""
+
+#: misc/mke2fs.c:2180
+msgid "Can't support bigalloc feature without extents feature"
+msgstr ""
+
+#: misc/mke2fs.c:2187
+msgid ""
+"The resize_inode and meta_bg features are not compatible.\n"
+"They can not be both enabled simultaneously.\n"
+msgstr ""
+
+#: misc/mke2fs.c:2196
+msgid ""
+"\n"
+"Warning: the bigalloc feature is still under development\n"
+"See https://ext4.wiki.kernel.org/index.php/Bigalloc for more information\n"
+"\n"
+msgstr ""
+
+#: misc/mke2fs.c:2207
+msgid "reserved online resize blocks not supported on non-sparse filesystem"
+msgstr ""
+
+#: misc/mke2fs.c:2216
+msgid "blocks per group count out of range"
+msgstr "nombro de blokoj po grupo estas ekster gamo"
+
+#: misc/mke2fs.c:2240
+msgid "Flex_bg feature not enabled, so flex_bg size may not be specified"
+msgstr ""
+
+#: misc/mke2fs.c:2252
+#, c-format
+msgid "invalid inode size %d (min %d/max %d)"
+msgstr "nevalida i-nodgrando %d (min %d/maks %d)"
+
+#: misc/mke2fs.c:2270
+#, c-format
+msgid "too many inodes (%llu), raise inode ratio?"
+msgstr "tro multaj i-nodoj (%llu); ĉu altigi la i-nodan rilaton?"
+
+#: misc/mke2fs.c:2277
+#, c-format
+msgid "too many inodes (%llu), specify < 2^32 inodes"
+msgstr "tro multaj i-nodoj (%llu); indiku malpli ol 2^32 i-nodoj"
+
+#: misc/mke2fs.c:2291
+#, c-format
+msgid ""
+"inode_size (%u) * inodes_count (%u) too big for a\n"
+"\tfilesystem with %llu blocks, specify higher inode_ratio (-i)\n"
+"\tor lower inode count (-N).\n"
+msgstr ""
+
+#: misc/mke2fs.c:2418
+#, c-format
+msgid ""
+"Overwriting existing filesystem; this can be undone using the command:\n"
+"    e2undo %s %s\n"
+"\n"
+msgstr ""
+
+#: misc/mke2fs.c:2432
+msgid "while trying to setup undo file\n"
+msgstr ""
+
+#: misc/mke2fs.c:2458
+msgid "Discarding device blocks: "
+msgstr ""
+
+#: misc/mke2fs.c:2474
+msgid "failed - "
+msgstr ""
+
+#: misc/mke2fs.c:2596
+msgid "while setting up superblock"
+msgstr ""
+
+#: misc/mke2fs.c:2612
+msgid "Discard succeeded and will return 0s - skipping inode table wipe\n"
+msgstr ""
+
+#: misc/mke2fs.c:2700
+#, c-format
+msgid "unknown os - %s"
+msgstr "nekonata mastrumsistemo: %s"
+
+#: misc/mke2fs.c:2752
+msgid "Allocating group tables: "
+msgstr "Asigno de grupaj tabeloj: "
+
+#: misc/mke2fs.c:2760
+msgid "while trying to allocate filesystem tables"
+msgstr "dum asigno de dosiersistemaj tabeloj"
+
+#: misc/mke2fs.c:2769
+msgid ""
+"\n"
+"\twhile converting subcluster bitmap"
+msgstr ""
+"\n"
+"    dum konverto de subfaska bloka bitmapo"
+
+#: misc/mke2fs.c:2812
+#, c-format
+msgid "while zeroing block %llu at end of filesystem"
+msgstr "dum nulplenigo de bloko %llu je fino de dosiersistemo"
+
+#: misc/mke2fs.c:2826
+msgid "while reserving blocks for online resize"
+msgstr ""
+
+#: misc/mke2fs.c:2838 misc/tune2fs.c:712
+msgid "journal"
+msgstr "kaŝprotokolo"
+
+#: misc/mke2fs.c:2850
+#, c-format
+msgid "Adding journal to device %s: "
+msgstr "Aldoniĝas kaŝprotokolo al aparato %s: "
+
+#: misc/mke2fs.c:2857
+#, c-format
+msgid ""
+"\n"
+"\twhile trying to add journal to device %s"
+msgstr ""
+"\n"
+"    dum provo de aldoni kaŝprotokolon al aparato %s"
+
+#: misc/mke2fs.c:2862 misc/mke2fs.c:2893 misc/tune2fs.c:741 misc/tune2fs.c:760
+msgid "done\n"
+msgstr "pretas\n"
+
+#: misc/mke2fs.c:2869
+msgid "Skipping journal creation in super-only mode\n"
+msgstr "Transsaltiĝas kreado de kaŝprotokolo en nurĉefa moduso\n"
+
+#: misc/mke2fs.c:2880
+#, c-format
+msgid "Creating journal (%u blocks): "
+msgstr "Kreado de kaŝprotokolo (%u blokoj): "
+
+#: misc/mke2fs.c:2889
+msgid ""
+"\n"
+"\twhile trying to create journal"
+msgstr ""
+"\n"
+"    dum provo de krei kaŝprotokolon"
+
+#: misc/mke2fs.c:2901 misc/tune2fs.c:516
+msgid ""
+"\n"
+"Error while enabling multiple mount protection feature."
+msgstr ""
+
+#: misc/mke2fs.c:2906
+#, c-format
+msgid "Multiple mount protection is enabled with update interval %d seconds.\n"
+msgstr ""
+
+#: misc/mke2fs.c:2923
+msgid "Writing superblocks and filesystem accounting information: "
+msgstr ""
+
+#: misc/mke2fs.c:2930
+msgid ""
+"\n"
+"Warning, had trouble writing out superblocks."
+msgstr ""
+
+#: misc/mke2fs.c:2932
+msgid ""
+"done\n"
+"\n"
+msgstr ""
+"pretas\n"
+"\n"
+
+#: misc/mklost+found.c:50
+msgid "Usage: mklost+found\n"
+msgstr ""
+
+#: misc/partinfo.c:41
+#, c-format
+msgid ""
+"Usage:  %s device...\n"
+"\n"
+"Prints out the partition information for each given device.\n"
+"For example: %s /dev/hda\n"
+"\n"
+msgstr ""
+
+#: misc/partinfo.c:51
+#, c-format
+msgid "Cannot open %s: %s"
+msgstr ""
+
+#: misc/partinfo.c:57
+#, c-format
+msgid "Cannot get geometry of %s: %s"
+msgstr ""
+
+#: misc/partinfo.c:65
+#, c-format
+msgid "Cannot get size of %s: %s"
+msgstr ""
+
+#: misc/partinfo.c:71
+#, c-format
+msgid "%s: h=%3d s=%3d c=%4d   start=%8d size=%8lu end=%8d\n"
+msgstr ""
+
+#: misc/tune2fs.c:112
+msgid "Please run e2fsck on the filesystem.\n"
+msgstr ""
+
+#: misc/tune2fs.c:121
+#, c-format
+msgid ""
+"Usage: %s [-c max_mounts_count] [-e errors_behavior] [-g group]\n"
+"\t[-i interval[d|m|w]] [-j] [-J journal_options] [-l]\n"
+"\t[-m reserved_blocks_percent] [-o [^]mount_options[,...]] [-p "
+"mmp_update_interval]\n"
+"\t[-r reserved_blocks_count] [-u user] [-C mount_count] [-L volume_label]\n"
+"\t[-M last_mounted_dir] [-O [^]feature[,...]]\n"
+"\t[-Q quota_options]\n"
+"\t[-E extended-option[,...]] [-T last_check_time] [-U UUID]\n"
+"\t[ -I new_inode_size ] device\n"
+msgstr ""
+
+#: misc/tune2fs.c:203
+msgid "Journal superblock not found!\n"
+msgstr "Kaŝprotokola ĉefbloko ne troviĝis!\n"
+
+#: misc/tune2fs.c:261
+msgid "while trying to open external journal"
+msgstr "dum provo de malfermi eksteran kaŝprotokolon"
+
+#: misc/tune2fs.c:267 misc/tune2fs.c:1963
+#, c-format
+msgid "%s is not a journal device.\n"
+msgstr "%s ne estas kaŝprotokola aparato.\n"
+
+#: misc/tune2fs.c:277 misc/tune2fs.c:1974
+msgid "Filesystem's UUID not found on journal device.\n"
+msgstr "Dosiersistema UUID ne troviĝis en kaŝprotokola aparato.\n"
+
+#: misc/tune2fs.c:301
+msgid ""
+"Cannot locate journal device. It was NOT removed\n"
+"Use -f option to remove missing journal device.\n"
+msgstr ""
+
+#: misc/tune2fs.c:310
+msgid "Journal removed\n"
+msgstr "Kaŝprotokolo forigiĝis\n"
+
+#: misc/tune2fs.c:354
+msgid "while reading bitmaps"
+msgstr "dum legado de bitmapoj"
+
+#: misc/tune2fs.c:362
+msgid "while clearing journal inode"
+msgstr "dum viŝado de kaŝprotokola i-nodo"
+
+#: misc/tune2fs.c:373
+msgid "while writing journal inode"
+msgstr "dum skribado de kaŝprotokola i-nodo"
+
+#: misc/tune2fs.c:405 misc/tune2fs.c:418
+msgid "(and reboot afterwards!)\n"
+msgstr "(kaj poste restartigu la komputilon!)\n"
+
+#: misc/tune2fs.c:452
+#, c-format
+msgid "Clearing filesystem feature '%s' not supported.\n"
+msgstr ""
+
+#: misc/tune2fs.c:458
+#, c-format
+msgid "Setting filesystem feature '%s' not supported.\n"
+msgstr ""
+
+#: misc/tune2fs.c:467
+msgid ""
+"The has_journal feature may only be cleared when the filesystem is\n"
+"unmounted or mounted read-only.\n"
+msgstr ""
+
+#: misc/tune2fs.c:476
+msgid ""
+"The needs_recovery flag is set.  Please run e2fsck before clearing\n"
+"the has_journal flag.\n"
+msgstr ""
+
+#: misc/tune2fs.c:495
+msgid ""
+"Setting filesystem feature 'sparse_super' not supported\n"
+"for filesystems with the meta_bg feature enabled.\n"
+msgstr ""
+
+#: misc/tune2fs.c:508
+msgid ""
+"The multiple mount protection feature can't\n"
+"be set if the filesystem is mounted or\n"
+"read-only.\n"
+msgstr ""
+
+#: misc/tune2fs.c:526
+#, c-format
+msgid "Multiple mount protection has been enabled with update interval %ds.\n"
+msgstr ""
+
+#: misc/tune2fs.c:535
+msgid ""
+"The multiple mount protection feature cannot\n"
+"be disabled if the filesystem is readonly.\n"
+msgstr ""
+
+#: misc/tune2fs.c:543
+msgid "Error while reading bitmaps\n"
+msgstr ""
+
+#: misc/tune2fs.c:552
+#, c-format
+msgid "Magic number in MMP block does not match. expected: %x, actual: %x\n"
+msgstr ""
+
+#: misc/tune2fs.c:557
+msgid "while reading MMP block."
+msgstr ""
+
+#: misc/tune2fs.c:589
+msgid ""
+"Clearing the flex_bg flag would cause the the filesystem to be\n"
+"inconsistent.\n"
+msgstr ""
+
+#: misc/tune2fs.c:600
+msgid ""
+"The huge_file feature may only be cleared when the filesystem is\n"
+"unmounted or mounted read-only.\n"
+msgstr ""
+
+#: misc/tune2fs.c:660
+msgid ""
+"\n"
+"Warning: '^quota' option overrides '-Q'arguments.\n"
+msgstr ""
+
+#: misc/tune2fs.c:705
+msgid "The filesystem already has a journal.\n"
+msgstr "Dosiersistemo jam havas kaŝprotokolon.\n"
+
+#: misc/tune2fs.c:725
+#, c-format
+msgid ""
+"\n"
+"\twhile trying to open journal on %s\n"
+msgstr ""
+"\n"
+"    dum provo de malfermi kaŝprotokolon en %s\n"
+
+#: misc/tune2fs.c:729
+#, c-format
+msgid "Creating journal on device %s: "
+msgstr "Kreado de kaŝprotokolo en aparato %s: "
+
+#: misc/tune2fs.c:737
+#, c-format
+msgid "while adding filesystem to journal on %s"
+msgstr "dum aldoniĝo de dosiersistemo al kaŝprotokolo en %s"
+
+#: misc/tune2fs.c:743
+msgid "Creating journal inode: "
+msgstr "Kreado de kaŝprotokola i-nodo: "
+
+#: misc/tune2fs.c:757
+msgid ""
+"\n"
+"\twhile trying to create journal file"
+msgstr ""
+"\n"
+"    dum provo de krei kaŝprotokola dosiero"
+
+#: misc/tune2fs.c:832
+msgid "Couldn't allocate memory to parse quota options!\n"
+msgstr ""
+
+#: misc/tune2fs.c:854
+msgid ""
+"\n"
+"Bad quota options specified.\n"
+"\n"
+"Following valid quota options are available (pass by separating with "
+"comma):\n"
+"\t[^]usrquota\n"
+"\t[^]grpquota\n"
+"\n"
+"\n"
+msgstr ""
+
+#: misc/tune2fs.c:914
+#, c-format
+msgid "Couldn't parse date/time specifier: %s"
+msgstr ""
+
+#: misc/tune2fs.c:942 misc/tune2fs.c:955
+#, c-format
+msgid "bad mounts count - %s"
+msgstr ""
+
+#: misc/tune2fs.c:971
+#, c-format
+msgid "bad error behavior - %s"
+msgstr ""
+
+#: misc/tune2fs.c:998
+#, c-format
+msgid "bad gid/group name - %s"
+msgstr ""
+
+#: misc/tune2fs.c:1031
+#, c-format
+msgid "bad interval - %s"
+msgstr ""
+
+#: misc/tune2fs.c:1060
+#, c-format
+msgid "bad reserved block ratio - %s"
+msgstr ""
+
+#: misc/tune2fs.c:1075
+msgid "-o may only be specified once"
+msgstr ""
+
+#: misc/tune2fs.c:1084
+msgid "-O may only be specified once"
+msgstr ""
+
+#: misc/tune2fs.c:1101
+#, c-format
+msgid "bad reserved blocks count - %s"
+msgstr ""
+
+#: misc/tune2fs.c:1130
+#, c-format
+msgid "bad uid/user name - %s"
+msgstr ""
+
+#: misc/tune2fs.c:1147
+#, c-format
+msgid "bad inode size - %s"
+msgstr ""
+
+#: misc/tune2fs.c:1154
+#, c-format
+msgid "Inode size must be a power of two- %s"
+msgstr ""
+
+#: misc/tune2fs.c:1248
+#, c-format
+msgid "mmp_update_interval too big: %lu\n"
+msgstr ""
+
+#: misc/tune2fs.c:1253
+#, c-format
+msgid "Setting multiple mount protection update interval to %lu second\n"
+msgid_plural ""
+"Setting multiple mount protection update interval to %lu seconds\n"
+msgstr[0] ""
+msgstr[1] ""
+
+#: misc/tune2fs.c:1276
+#, c-format
+msgid "Invalid RAID stride: %s\n"
+msgstr ""
+
+#: misc/tune2fs.c:1291
+#, c-format
+msgid "Invalid RAID stripe-width: %s\n"
+msgstr ""
+
+#: misc/tune2fs.c:1306
+#, c-format
+msgid "Invalid hash algorithm: %s\n"
+msgstr ""
+
+#: misc/tune2fs.c:1312
+#, c-format
+msgid "Setting default hash algorithm to %s (%d)\n"
+msgstr ""
+
+#: misc/tune2fs.c:1331
+msgid ""
+"\n"
+"Bad options specified.\n"
+"\n"
+"Extended options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid extended options are:\n"
+"\tclear_mmp\n"
+"\thash_alg=<hash algorithm>\n"
+"\tmount_opts=<extended default mount options>\n"
+"\tstride=<RAID per-disk chunk size in blocks>\n"
+"\tstripe_width=<RAID stride*data disks in blocks>\n"
+"\ttest_fs\n"
+"\t^test_fs\n"
+msgstr ""
+
+#: misc/tune2fs.c:1798
+msgid "Failed to read inode bitmap\n"
+msgstr ""
+
+#: misc/tune2fs.c:1803
+msgid "Failed to read block bitmap\n"
+msgstr ""
+
+#: misc/tune2fs.c:1820 resize/resize2fs.c:931
+msgid "blocks to be moved"
+msgstr ""
+
+#: misc/tune2fs.c:1823
+msgid "Failed to allocate block bitmap when increasing inode size\n"
+msgstr ""
+
+#: misc/tune2fs.c:1829
+msgid "Not enough space to increase inode size \n"
+msgstr ""
+
+#: misc/tune2fs.c:1834
+msgid "Failed to relocate blocks during inode resize \n"
+msgstr ""
+
+#: misc/tune2fs.c:1866
+msgid ""
+"Error in resizing the inode size.\n"
+"Run e2undo to undo the file system changes. \n"
+msgstr ""
+
+#: misc/tune2fs.c:1893
+msgid "Couldn't allocate memory for tdb filename\n"
+msgstr ""
+
+#: misc/tune2fs.c:1914
+#, c-format
+msgid "while trying to delete %s"
+msgstr ""
+
+#: misc/tune2fs.c:1922
+#, c-format
+msgid ""
+"To undo the tune2fs operation please run the command\n"
+"    e2undo %s %s\n"
+"\n"
+msgstr ""
+
+#: misc/tune2fs.c:2056
+#, c-format
+msgid ""
+"MMP block magic is bad. Try to fix it by running:\n"
+"'e2fsck -f %s'\n"
+msgstr ""
+
+#: misc/tune2fs.c:2074
+#, c-format
+msgid "The inode size is already %lu\n"
+msgstr ""
+
+#: misc/tune2fs.c:2081
+msgid "Shrinking inode size is not supported\n"
+msgstr ""
+
+#: misc/tune2fs.c:2086
+#, c-format
+msgid "Invalid inode size %lu (max %d)\n"
+msgstr ""
+
+#: misc/tune2fs.c:2133
+#, c-format
+msgid "Setting maximal mount count to %d\n"
+msgstr ""
+
+#: misc/tune2fs.c:2139
+#, c-format
+msgid "Setting current mount count to %d\n"
+msgstr ""
+
+#: misc/tune2fs.c:2144
+#, c-format
+msgid "Setting error behavior to %d\n"
+msgstr ""
+
+#: misc/tune2fs.c:2149
+#, c-format
+msgid "Setting reserved blocks gid to %lu\n"
+msgstr ""
+
+#: misc/tune2fs.c:2154
+#, c-format
+msgid "interval between checks is too big (%lu)"
+msgstr ""
+
+#: misc/tune2fs.c:2161
+#, c-format
+msgid "Setting interval between checks to %lu seconds\n"
+msgstr ""
+
+#: misc/tune2fs.c:2168
+#, c-format
+msgid "Setting reserved blocks percentage to %g%% (%llu blocks)\n"
+msgstr ""
+
+#: misc/tune2fs.c:2174
+#, c-format
+msgid "reserved blocks count is too big (%llu)"
+msgstr ""
+
+#: misc/tune2fs.c:2181
+#, c-format
+msgid "Setting reserved blocks count to %llu\n"
+msgstr ""
+
+#: misc/tune2fs.c:2187
+msgid ""
+"\n"
+"The filesystem already has sparse superblocks.\n"
+msgstr ""
+
+#: misc/tune2fs.c:2191
+msgid ""
+"\n"
+"Setting the sparse superblock flag not supported\n"
+"for filesystems with the meta_bg feature enabled.\n"
+msgstr ""
+
+#: misc/tune2fs.c:2202
+#, c-format
+msgid ""
+"\n"
+"Sparse superblock flag set.  %s"
+msgstr ""
+
+#: misc/tune2fs.c:2207
+msgid ""
+"\n"
+"Clearing the sparse superblock flag not supported.\n"
+msgstr ""
+
+#: misc/tune2fs.c:2215
+#, c-format
+msgid "Setting time filesystem last checked to %s\n"
+msgstr ""
+
+#: misc/tune2fs.c:2221
+#, c-format
+msgid "Setting reserved blocks uid to %lu\n"
+msgstr ""
+
+#: misc/tune2fs.c:2253
+msgid "Error in using clear_mmp. It must be used with -f\n"
+msgstr ""
+
+#: misc/tune2fs.c:2271
+msgid ""
+"The quota feature may only be changed when the filesystem is unmounted.\n"
+msgstr ""
+
+#: misc/tune2fs.c:2292
+msgid "The UUID may only be changed when the filesystem is unmounted.\n"
+msgstr ""
+
+#: misc/tune2fs.c:2322
+msgid "Invalid UUID format\n"
+msgstr ""
+
+#: misc/tune2fs.c:2337
+msgid "Need to update journal superblock.\n"
+msgstr "Necesas ĝisdatigi kaŝprotokolan ĉefblokon.\n"
+
+#: misc/tune2fs.c:2358
+msgid "The inode size may only be changed when the filesystem is unmounted.\n"
+msgstr ""
+"Nur eblas ŝanĝi i-nodan grandon kiam dosiersistemo ne estas surmetata.\n"
+
+#: misc/tune2fs.c:2366
+msgid ""
+"Changing the inode size not supported for filesystems with the flex_bg\n"
+"feature enabled.\n"
+msgstr ""
+
+#: misc/tune2fs.c:2379
+#, c-format
+msgid "Setting inode size %lu\n"
+msgstr "Argordiĝas i-noda grando al %lu\n"
+
+#: misc/tune2fs.c:2382
+msgid "Failed to change inode size\n"
+msgstr "Fiaskis ŝanĝo de i-noda grando\n"
+
+#: misc/tune2fs.c:2393
+#, c-format
+msgid "Setting stride size to %d\n"
+msgstr ""
+
+#: misc/tune2fs.c:2398
+#, c-format
+msgid "Setting stripe width to %d\n"
+msgstr ""
+
+#: misc/tune2fs.c:2405
+#, c-format
+msgid "Setting extended default mount options to '%s'\n"
+msgstr ""
+
+#: misc/util.c:93
+msgid "<proceeding>\n"
+msgstr ""
+
+#: misc/util.c:97
+#, c-format
+msgid "Proceed anyway (or wait %d seconds) ? (y,n) "
+msgstr ""
+
+#: misc/util.c:101
+msgid "Proceed anyway? (y,n) "
+msgstr ""
+
+#: misc/util.c:132
+#, c-format
+msgid "\tlast mounted on %s on %s"
+msgstr ""
+
+#: misc/util.c:135
+#, c-format
+msgid "\tlast mounted on %s"
+msgstr ""
+
+#: misc/util.c:138
+#, c-format
+msgid "\tcreated on %s"
+msgstr ""
+
+#: misc/util.c:141
+#, c-format
+msgid "\tlast modified on %s"
+msgstr ""
+
+#: misc/util.c:175
+#, c-format
+msgid "Found a %s partition table in %s\n"
+msgstr ""
+
+#: misc/util.c:202
+#, c-format
+msgid "The file %s does not exist and no size was specified.\n"
+msgstr ""
+
+#: misc/util.c:210
+#, c-format
+msgid "Creating regular file %s\n"
+msgstr "Kreiĝas normala dosiero %s\n"
+
+#: misc/util.c:213
+#, c-format
+msgid "Could not open %s: %s\n"
+msgstr "Malsukcesis malfermi %s: %s\n"
+
+#: misc/util.c:216
+msgid ""
+"\n"
+"The device apparently does not exist; did you specify it correctly?\n"
+msgstr ""
+
+#: misc/util.c:238
+#, c-format
+msgid "%s is not a block special device.\n"
+msgstr ""
+
+#: misc/util.c:260
+#, c-format
+msgid "%s contains a %s file system labelled '%s'\n"
+msgstr "%s enhavas %s-dosiersistemon kun etikedo '%s'\n"
+
+#: misc/util.c:263
+#, c-format
+msgid "%s contains a %s file system\n"
+msgstr "%s enhavas %s-dosiersistemon\n"
+
+#: misc/util.c:300
+#, c-format
+msgid "%s is entire device, not just one partition!\n"
+msgstr ""
+
+#: misc/util.c:323
+msgid "mke2fs forced anyway.  Hope /etc/mtab is incorrect.\n"
+msgstr ""
+
+#: misc/util.c:328
+#, c-format
+msgid "will not make a %s here!\n"
+msgstr ""
+
+#: misc/util.c:335
+msgid "mke2fs forced anyway.\n"
+msgstr ""
+
+#: misc/util.c:351
+msgid "Couldn't allocate memory to parse journal options!\n"
+msgstr ""
+
+#: misc/util.c:376
+#, c-format
+msgid ""
+"\n"
+"Could not find journal device matching %s\n"
+msgstr ""
+
+#: misc/util.c:403
+msgid ""
+"\n"
+"Bad journal options specified.\n"
+"\n"
+"Journal options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid journal options are:\n"
+"\tsize=<journal size in megabytes>\n"
+"\tdevice=<journal device>\n"
+"\tlocation=<journal location>\n"
+"\n"
+"The journal size must be between 1024 and 10240000 filesystem blocks.\n"
+"\n"
+msgstr ""
+
+#: misc/util.c:434
+msgid ""
+"\n"
+"Filesystem too small for a journal\n"
+msgstr ""
+"\n"
+"Dosiersistemo tro malgrandas por havi kaŝprotokolon.\n"
+
+#: misc/util.c:441
+#, c-format
+msgid ""
+"\n"
+"The requested journal size is %d blocks; it must be\n"
+"between 1024 and 10240000 blocks.  Aborting.\n"
+msgstr ""
+
+#: misc/util.c:449
+msgid ""
+"\n"
+"Journal size too big for filesystem.\n"
+msgstr ""
+"\n"
+"Kaŝprotokola grando tro grandas por dosiersistemo.\n"
+
+#: misc/util.c:463
+#, c-format
+msgid ""
+"This filesystem will be automatically checked every %d mounts or\n"
+"%g days, whichever comes first.  Use tune2fs -c or -i to override.\n"
+msgstr ""
+
+#: misc/uuidd.c:49
+#, c-format
+msgid "Usage: %s [-d] [-p pidfile] [-s socketpath] [-T timeout]\n"
+msgstr ""
+
+#: misc/uuidd.c:51
+#, c-format
+msgid "       %s [-r|t] [-n num] [-s socketpath]\n"
+msgstr ""
+
+#: misc/uuidd.c:53
+#, c-format
+msgid "       %s -k\n"
+msgstr ""
+
+#: misc/uuidd.c:155
+msgid "bad arguments"
+msgstr ""
+
+#: misc/uuidd.c:173
+msgid "connect"
+msgstr ""
+
+#: misc/uuidd.c:192
+msgid "write"
+msgstr ""
+
+#: misc/uuidd.c:200
+msgid "read count"
+msgstr ""
+
+#: misc/uuidd.c:206
+msgid "bad response length"
+msgstr ""
+
+#: misc/uuidd.c:271
+#, c-format
+msgid "uuidd daemon already running at pid %s\n"
+msgstr ""
+
+#: misc/uuidd.c:279
+#, c-format
+msgid "Couldn't create unix stream socket: %s"
+msgstr ""
+
+#: misc/uuidd.c:308
+#, c-format
+msgid "Couldn't bind unix socket %s: %s\n"
+msgstr ""
+
+#: misc/uuidd.c:316
+#, c-format
+msgid "Couldn't listen on unix socket %s: %s\n"
+msgstr ""
+
+#: misc/uuidd.c:354
+#, c-format
+msgid "Error reading from client, len = %d\n"
+msgstr ""
+
+#: misc/uuidd.c:362
+#, c-format
+msgid "operation %d, incoming num = %d\n"
+msgstr ""
+
+#: misc/uuidd.c:381
+#, c-format
+msgid "Generated time UUID: %s\n"
+msgstr ""
+
+#: misc/uuidd.c:391
+#, c-format
+msgid "Generated random UUID: %s\n"
+msgstr ""
+
+#: misc/uuidd.c:400
+#, c-format
+msgid "Generated time UUID %s and subsequent UUID\n"
+msgid_plural "Generated time UUID %s and %d subsequent UUIDs\n"
+msgstr[0] ""
+msgstr[1] ""
+
+#: misc/uuidd.c:421
+#, c-format
+msgid "Generated %d UUID's:\n"
+msgstr ""
+
+#: misc/uuidd.c:433
+#, c-format
+msgid "Invalid operation %d\n"
+msgstr ""
+
+#: misc/uuidd.c:477 misc/uuidd.c:499
+#, c-format
+msgid "Bad number: %s\n"
+msgstr ""
+
+#: misc/uuidd.c:534 misc/uuidd.c:563
+#, c-format
+msgid "Error calling uuidd daemon (%s): %s\n"
+msgstr ""
+
+#: misc/uuidd.c:544
+#, c-format
+msgid "%s and subsequent UUID\n"
+msgid_plural "%s and subsequent %d UUIDs\n"
+msgstr[0] ""
+msgstr[1] ""
+
+#: misc/uuidd.c:548
+msgid "List of UUID's:\n"
+msgstr ""
+
+#: misc/uuidd.c:569
+#, c-format
+msgid "Unexpected reply length from server %d\n"
+msgstr ""
+
+#: misc/uuidd.c:586
+#, c-format
+msgid "Couldn't kill uuidd running at pid %d: %s\n"
+msgstr ""
+
+#: misc/uuidd.c:592
+#, c-format
+msgid "Killed uuidd running at pid %d\n"
+msgstr ""
+
+#: misc/uuidgen.c:32
+#, c-format
+msgid "Usage: %s [-r] [-t]\n"
+msgstr ""
+
+#: resize/extent.c:202
+msgid "# Extent dump:\n"
+msgstr ""
+
+#: resize/extent.c:203
+#, c-format
+msgid "#\tNum=%llu, Size=%llu, Cursor=%llu, Sorted=%llu\n"
+msgstr ""
+
+#: resize/main.c:44
+#, c-format
+msgid ""
+"Usage: %s [-d debug_flags] [-f] [-F] [-M] [-P] [-p] device [new_size]\n"
+"\n"
+msgstr ""
+
+#: resize/main.c:66
+msgid "Extending the inode table"
+msgstr ""
+
+#: resize/main.c:69
+msgid "Relocating blocks"
+msgstr ""
+
+#: resize/main.c:72
+msgid "Scanning inode table"
+msgstr ""
+
+#: resize/main.c:75
+msgid "Updating inode references"
+msgstr ""
+
+#: resize/main.c:78
+msgid "Moving inode table"
+msgstr ""
+
+#: resize/main.c:81
+msgid "Unknown pass?!?"
+msgstr ""
+
+#: resize/main.c:84
+#, c-format
+msgid "Begin pass %d (max = %lu)\n"
+msgstr ""
+
+#: resize/main.c:155
+msgid ""
+"\n"
+"Resizing bigalloc file systems has not been fully tested.  Proceed at\n"
+"your own risk!  Use the force option if you want to go ahead anyway.\n"
+"\n"
+msgstr ""
+
+#: resize/main.c:273
+#, c-format
+msgid "while opening %s"
+msgstr ""
+
+#: resize/main.c:281
+#, c-format
+msgid "while getting stat information for %s"
+msgstr ""
+
+#: resize/main.c:349
+#, c-format
+msgid ""
+"Please run 'e2fsck -f %s' first.\n"
+"\n"
+msgstr ""
+
+#: resize/main.c:368
+#, c-format
+msgid "Estimated minimum size of the filesystem: %llu\n"
+msgstr ""
+
+#: resize/main.c:405
+#, c-format
+msgid "Invalid new size: %s\n"
+msgstr ""
+
+#: resize/main.c:421
+msgid "New size too large to be expressed in 32 bits\n"
+msgstr ""
+
+#: resize/main.c:429
+#, c-format
+msgid "New size smaller than minimum (%llu)\n"
+msgstr ""
+
+#: resize/main.c:435
+msgid "Invalid stride length"
+msgstr ""
+
+#: resize/main.c:459
+#, c-format
+msgid ""
+"The containing partition (or device) is only %llu (%dk) blocks.\n"
+"You requested a new size of %llu blocks.\n"
+"\n"
+msgstr ""
+
+#: resize/main.c:466
+#, c-format
+msgid ""
+"The filesystem is already %llu (%dk) blocks long.  Nothing to do!\n"
+"\n"
+msgstr ""
+"La dosiersistemo jam havas %llu blokojn (de %dK).  Nenio farendas.\n"
+"\n"
+
+#: resize/main.c:476
+#, c-format
+msgid "Resizing the filesystem on %s to %llu (%dk) blocks.\n"
+msgstr "Dosiersistemo sur %s regrandigiĝas al %llu blokoj (de %dK).\n"
+
+#: resize/main.c:485
+#, c-format
+msgid "while trying to resize %s"
+msgstr "dum provo de regrandigi %s"
+
+#: resize/main.c:488
+#, c-format
+msgid ""
+"Please run 'e2fsck -fy %s' to fix the filesystem\n"
+"after the aborted resize operation.\n"
+msgstr ""
+
+#: resize/main.c:494
+#, c-format
+msgid ""
+"The filesystem on %s is now %llu (%dk) blocks long.\n"
+"\n"
+msgstr ""
+"Dosiersistemo sur %s nun havas %llu blokojn (de %dK).\n"
+"\n"
+
+#: resize/main.c:509
+#, c-format
+msgid "while trying to truncate %s"
+msgstr ""
+
+#: resize/online.c:82
+msgid "kernel does not support online resize with sparse_super2"
+msgstr ""
+
+#: resize/online.c:87
+#, c-format
+msgid "Filesystem at %s is mounted on %s; on-line resizing required\n"
+msgstr ""
+
+#: resize/online.c:91
+msgid "On-line shrinking not supported"
+msgstr ""
+
+#: resize/online.c:116
+msgid "Filesystem does not support online resizing"
+msgstr ""
+
+#: resize/online.c:125
+msgid "Not enough reserved gdt blocks for resizing"
+msgstr ""
+
+#: resize/online.c:132
+msgid "Kernel does not support resizing a file system this large"
+msgstr ""
+
+#: resize/online.c:140
+#, c-format
+msgid "while trying to open mountpoint %s"
+msgstr ""
+
+#: resize/online.c:145
+#, c-format
+msgid "Old resize interface requested.\n"
+msgstr ""
+
+#: resize/online.c:164 resize/online.c:181
+msgid "Permission denied to resize filesystem"
+msgstr ""
+
+#: resize/online.c:167 resize/online.c:187
+msgid "While checking for on-line resizing support"
+msgstr ""
+
+#: resize/online.c:184
+msgid "Kernel does not support online resizing"
+msgstr ""
+
+#: resize/online.c:223
+#, c-format
+msgid "Performing an on-line resize of %s to %llu (%dk) blocks.\n"
+msgstr ""
+
+#: resize/online.c:233
+msgid "While trying to extend the last group"
+msgstr ""
+
+#: resize/online.c:287
+#, c-format
+msgid "While trying to add group #%d"
+msgstr ""
+
+#: resize/online.c:298
+#, c-format
+msgid ""
+"Filesystem at %s is mounted on %s, and on-line resizing is not supported on "
+"this system.\n"
+msgstr ""
+
+#: resize/resize2fs.c:402
+#, c-format
+msgid "inodes (%llu) must be less than %u"
+msgstr ""
+
+#: resize/resize2fs.c:691
+msgid "reserved blocks"
+msgstr ""
+
+#: resize/resize2fs.c:936
+msgid "meta-data blocks"
+msgstr ""
+
+#: resize/resize2fs.c:1039 resize/resize2fs.c:1836
+msgid "new meta blocks"
+msgstr "novaj metablokoj"
+
+#: resize/resize2fs.c:2056
+msgid "Should never happen!  No sb in last super_sparse bg?\n"
+msgstr ""
+
+#: resize/resize2fs.c:2061
+msgid "Should never happen!  Unexpected old_desc in super_sparse bg?\n"
+msgstr ""
+
+#: resize/resize2fs.c:2139
+msgid "Should never happen: resize inode corrupt!\n"
+msgstr ""
+
+#: lib/ext2fs/ext2_err.c:11
+msgid "EXT2FS Library version 1.42.13"
+msgstr ""
+
+#: lib/ext2fs/ext2_err.c:12
+msgid "Wrong magic number for ext2_filsys structure"
+msgstr "Malĝustas magia numero por strukturo 'ext2_filsys'"
+
+#: lib/ext2fs/ext2_err.c:13
+msgid "Wrong magic number for badblocks_list structure"
+msgstr "Malĝustas magia numero por strukturo 'badblocks_list'"
+
+#: lib/ext2fs/ext2_err.c:14
+msgid "Wrong magic number for badblocks_iterate structure"
+msgstr "Malĝustas magia numero por strukturo 'badblocks_iterate'"
+
+#: lib/ext2fs/ext2_err.c:15
+msgid "Wrong magic number for inode_scan structure"
+msgstr "Malĝustas magia numero por strukturo 'inode_scan'"
+
+#: lib/ext2fs/ext2_err.c:16
+msgid "Wrong magic number for io_channel structure"
+msgstr "Malĝustas magia numero por strukturo 'io_channel'"
+
+#: lib/ext2fs/ext2_err.c:17
+msgid "Wrong magic number for unix io_channel structure"
+msgstr "Malĝustas magia numero por Uniksa strukturo 'io_channel'"
+
+#: lib/ext2fs/ext2_err.c:18
+msgid "Wrong magic number for io_manager structure"
+msgstr "Malĝustas magia numero por strukturo 'io_manager'"
+
+#: lib/ext2fs/ext2_err.c:19
+msgid "Wrong magic number for block_bitmap structure"
+msgstr "Malĝustas magia numero por strukturo 'block_bitmap'"
+
+#: lib/ext2fs/ext2_err.c:20
+msgid "Wrong magic number for inode_bitmap structure"
+msgstr "Malĝustas magia numero por strukturo 'inode_bitmap'"
+
+#: lib/ext2fs/ext2_err.c:21
+msgid "Wrong magic number for generic_bitmap structure"
+msgstr "Malĝustas magia numero por strukturo 'generic_bitmap'"
+
+#: lib/ext2fs/ext2_err.c:22
+msgid "Wrong magic number for test io_channel structure"
+msgstr "Malĝustas magia numero por strukturo 'test io_channel'"
+
+#: lib/ext2fs/ext2_err.c:23
+msgid "Wrong magic number for directory block list structure"
+msgstr "Malĝustas magia numero por strukturo 'block list'"
+
+#: lib/ext2fs/ext2_err.c:24
+msgid "Wrong magic number for icount structure"
+msgstr "Malĝustas magia numero por strukturo 'icount'"
+
+#: lib/ext2fs/ext2_err.c:25
+msgid "Wrong magic number for Powerquest io_channel structure"
+msgstr "Malĝustas magia numero por strukturo 'Powerquest io_channel'"
+
+#: lib/ext2fs/ext2_err.c:26
+msgid "Wrong magic number for ext2 file structure"
+msgstr "Malĝustas magia numero por strukturo 'ext2 file'"
+
+#: lib/ext2fs/ext2_err.c:27
+msgid "Wrong magic number for Ext2 Image Header"
+msgstr "Malĝustas magia numero por 'Ext2 Image Header'"
+
+#: lib/ext2fs/ext2_err.c:28
+msgid "Wrong magic number for inode io_channel structure"
+msgstr "Malĝustas magia numero por strukturo 'io_channel'"
+
+#: lib/ext2fs/ext2_err.c:29
+msgid "Wrong magic number for ext4 extent handle"
+msgstr "Malĝustas magia numero por 'ext4 extent handle'"
+
+#: lib/ext2fs/ext2_err.c:30
+msgid "Bad magic number in super-block"
+msgstr "Malbonas magia numero en ĉefbloko"
+
+#: lib/ext2fs/ext2_err.c:31
+msgid "Filesystem revision too high"
+msgstr "Dosiersistema revizio tro altas"
+
+#: lib/ext2fs/ext2_err.c:32
+msgid "Attempt to write to filesystem opened read-only"
+msgstr "Provo de skribi al dosiersistemo kiu malfermiĝis kiel nurlega"
+
+#: lib/ext2fs/ext2_err.c:33
+msgid "Can't read group descriptors"
+msgstr "Malsukcesis legi grupajn priaĵojn"
+
+#: lib/ext2fs/ext2_err.c:34
+msgid "Can't write group descriptors"
+msgstr "Malsukcesis skribi grupajn priaĵojn"
+
+#: lib/ext2fs/ext2_err.c:35
+msgid "Corrupt group descriptor: bad block for block bitmap"
+msgstr "Difekta gruppriaĵo: malbona bloko por bloka bitmapo"
+
+#: lib/ext2fs/ext2_err.c:36
+msgid "Corrupt group descriptor: bad block for inode bitmap"
+msgstr "Difekta gruppriaĵo: malbona bloko por i-noda bitmapo"
+
+#: lib/ext2fs/ext2_err.c:37
+msgid "Corrupt group descriptor: bad block for inode table"
+msgstr "Difekta gruppriaĵo: malbona bloko por i-noda tabelo"
+
+#: lib/ext2fs/ext2_err.c:38
+msgid "Can't write an inode bitmap"
+msgstr "Malsukcesis skribi i-nodan bitmapon"
+
+#: lib/ext2fs/ext2_err.c:39
+msgid "Can't read an inode bitmap"
+msgstr "Malsukcesis legi i-nodan bitmapon"
+
+#: lib/ext2fs/ext2_err.c:40
+msgid "Can't write a block bitmap"
+msgstr "Malsukcesis skribi blokan bitmapon"
+
+#: lib/ext2fs/ext2_err.c:41
+msgid "Can't read a block bitmap"
+msgstr "Malsukcesis legi blokan bitmapon"
+
+#: lib/ext2fs/ext2_err.c:42
+msgid "Can't write an inode table"
+msgstr "Malsukcesis skribi i-nodan tabelon"
+
+#: lib/ext2fs/ext2_err.c:43
+msgid "Can't read an inode table"
+msgstr "Malsukcesis legi i-nodan tabelon"
+
+#: lib/ext2fs/ext2_err.c:44
+msgid "Can't read next inode"
+msgstr "Malsukcesis legi sekvan i-nodon"
+
+#: lib/ext2fs/ext2_err.c:45
+msgid "Filesystem has unexpected block size"
+msgstr "Dosiersistemo havas neatenditan blokgrandon"
+
+#: lib/ext2fs/ext2_err.c:46
+msgid "EXT2 directory corrupted"
+msgstr "EXT2-dosierujo estas difekta"
+
+#: lib/ext2fs/ext2_err.c:47
+msgid "Attempt to read block from filesystem resulted in short read"
+msgstr "Provo de legi blokon el dosiersistemo rezultis en mallonga lego"
+
+#: lib/ext2fs/ext2_err.c:48
+msgid "Attempt to write block to filesystem resulted in short write"
+msgstr "Provo de skribi blokon al dosiersistemo rezultis en mallonga skribo"
+
+#: lib/ext2fs/ext2_err.c:49
+msgid "No free space in the directory"
+msgstr "Dosierujo ne havas liberan spacon"
+
+#: lib/ext2fs/ext2_err.c:50
+msgid "Inode bitmap not loaded"
+msgstr "I-noda bitmapo ne estas ŝargata"
+
+#: lib/ext2fs/ext2_err.c:51
+msgid "Block bitmap not loaded"
+msgstr "Bloka bitmapo ne estas ŝargata"
+
+#: lib/ext2fs/ext2_err.c:52
+msgid "Illegal inode number"
+msgstr "Nevalida i-noda numero"
+
+#: lib/ext2fs/ext2_err.c:53
+msgid "Illegal block number"
+msgstr "Nevalida bloka numero"
+
+#: lib/ext2fs/ext2_err.c:54
+msgid "Internal error in ext2fs_expand_dir"
+msgstr "**interna programmiso** en 'ext2fs_expand_dir()'"
+
+#: lib/ext2fs/ext2_err.c:55
+msgid "Not enough space to build proposed filesystem"
+msgstr "Malsufiĉas spaco por konstrui proponata dosiersistemo"
+
+#: lib/ext2fs/ext2_err.c:56
+msgid "Illegal block number passed to ext2fs_mark_block_bitmap"
+msgstr "Nevalida bloknumero doniĝis al 'ext2fs_mark_block_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:57
+msgid "Illegal block number passed to ext2fs_unmark_block_bitmap"
+msgstr "Nevalida bloknumero doniĝis al 'ext2fs_unmark_block_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:58
+msgid "Illegal block number passed to ext2fs_test_block_bitmap"
+msgstr "Nevalida bloknumero doniĝis al 'ext2fs_test_block_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:59
+msgid "Illegal inode number passed to ext2fs_mark_inode_bitmap"
+msgstr "Nevalida i-nodnumero doniĝis al 'ext2fs_mark_inode_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:60
+msgid "Illegal inode number passed to ext2fs_unmark_inode_bitmap"
+msgstr "Nevalida i-nodnumero doniĝis al 'ext2fs_unmark_inode_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:61
+msgid "Illegal inode number passed to ext2fs_test_inode_bitmap"
+msgstr "Nevalida i-nodnumero doniĝis al 'ext2fs_test_inode_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:62
+msgid "Attempt to fudge end of block bitmap past the real end"
+msgstr "Provo de smurfi la finon de bloka bitmapo trans la vera fino"
+
+#: lib/ext2fs/ext2_err.c:63
+msgid "Attempt to fudge end of inode bitmap past the real end"
+msgstr "Provo de smurfi la finon de i-noda bitmapo trans la vera fino"
+
+#: lib/ext2fs/ext2_err.c:64
+msgid "Illegal indirect block found"
+msgstr "Troviĝis nevalida nerekta bloko"
+
+#: lib/ext2fs/ext2_err.c:65
+msgid "Illegal doubly indirect block found"
+msgstr "Troviĝis nevalida duoble nerekta bloko"
+
+#: lib/ext2fs/ext2_err.c:66
+msgid "Illegal triply indirect block found"
+msgstr "Troviĝis nevalida trioble nerekta bloko"
+
+#: lib/ext2fs/ext2_err.c:67
+msgid "Block bitmaps are not the same"
+msgstr "Blokaj bitmapoj ne samas"
+
+#: lib/ext2fs/ext2_err.c:68
+msgid "Inode bitmaps are not the same"
+msgstr "I-nodaj bitmapoj ne samas"
+
+#: lib/ext2fs/ext2_err.c:69
+msgid "Illegal or malformed device name"
+msgstr "Nevalida aŭ misformita aparatnomo"
+
+#: lib/ext2fs/ext2_err.c:70
+msgid "A block group is missing an inode table"
+msgstr "Mankas i-noda tabelo en iu bloka grupo"
+
+#: lib/ext2fs/ext2_err.c:71
+msgid "The ext2 superblock is corrupt"
+msgstr "La Ext2-ĉefbloko estas difekta"
+
+#: lib/ext2fs/ext2_err.c:72
+msgid "Illegal generic bit number passed to ext2fs_mark_generic_bitmap"
+msgstr "Nevalida komuna bitnumero doniĝis al 'ext2fs_mark_generic_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:73
+msgid "Illegal generic bit number passed to ext2fs_unmark_generic_bitmap"
+msgstr "Nevalida komuna bitnumero doniĝis al 'ext2fs_unmark_generic_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:74
+msgid "Illegal generic bit number passed to ext2fs_test_generic_bitmap"
+msgstr "Nevalida komuna bitnumero doniĝis al 'ext2fs_test_generic_bitmap()'"
+
+#: lib/ext2fs/ext2_err.c:75
+msgid "Too many symbolic links encountered."
+msgstr "Troviĝis tro multaj da simbolaj ligoj."
+
+#: lib/ext2fs/ext2_err.c:76
+msgid "The callback function will not handle this case"
+msgstr "La referencvoka funkcio ne kapablas trakti ĉi tiun kazon"
+
+#: lib/ext2fs/ext2_err.c:77
+msgid "The inode is from a bad block in the inode table"
+msgstr "La i-nodo estas el malbona bloko en la i-noda tabelo"
+
+#: lib/ext2fs/ext2_err.c:78
+msgid "Filesystem has unsupported feature(s)"
+msgstr "Dosiersistemo havas nesubtenata(j)n kapablo(j)n"
+
+#: lib/ext2fs/ext2_err.c:79
+msgid "Filesystem has unsupported read-only feature(s)"
+msgstr "Dosiersistemo havas nesubtenata(j)n nurlega(j)n kapablo(j)n"
+
+#: lib/ext2fs/ext2_err.c:80
+msgid "IO Channel failed to seek on read or write"
+msgstr "En-eliga kanalo malsukcesis fari 'seek' je legado aŭ skribado"
+
+#: lib/ext2fs/ext2_err.c:81
+msgid "Memory allocation failed"
+msgstr "Mankas sufiĉa memoro"
+
+#: lib/ext2fs/ext2_err.c:82
+msgid "Invalid argument passed to ext2 library"
+msgstr "Nevalida argumento doniĝis al Ext2-biblioteko"
+
+#: lib/ext2fs/ext2_err.c:83
+msgid "Could not allocate block in ext2 filesystem"
+msgstr "Malsukcesis asigni blokon en Ext2-dosiersistemo"
+
+#: lib/ext2fs/ext2_err.c:84
+msgid "Could not allocate inode in ext2 filesystem"
+msgstr "Malsukcesis asigni i-nodon en Ext2-dosiersistemo"
+
+#: lib/ext2fs/ext2_err.c:85
+msgid "Ext2 inode is not a directory"
+msgstr "Ext2-i-nodo ne estas dosierujo"
+
+#: lib/ext2fs/ext2_err.c:86
+msgid "Too many references in table"
+msgstr "Tro multaj referencoj en tabelo"
+
+#: lib/ext2fs/ext2_err.c:87
+msgid "File not found by ext2_lookup"
+msgstr "Dosiero ne troviĝis per 'ext2_lookup()'"
+
+#: lib/ext2fs/ext2_err.c:88
+msgid "File open read-only"
+msgstr "Dosiero estas malferma nurlege"
+
+#: lib/ext2fs/ext2_err.c:89
+msgid "Ext2 directory block not found"
+msgstr "Ext2-dosieruja bloko ne troviĝis"
+
+#: lib/ext2fs/ext2_err.c:90
+msgid "Ext2 directory already exists"
+msgstr "Ext2-dosierujo jam ekzistas"
+
+#: lib/ext2fs/ext2_err.c:91
+msgid "Unimplemented ext2 library function"
+msgstr "Nerealigita funkcio en Ext2-biblioteko"
+
+#: lib/ext2fs/ext2_err.c:92
+msgid "User cancel requested"
+msgstr "Nuligo petiĝis de uzanto"
+
+#: lib/ext2fs/ext2_err.c:93
+msgid "Ext2 file too big"
+msgstr "Ext2-dosiero tro grandas"
+
+#: lib/ext2fs/ext2_err.c:94
+msgid "Supplied journal device not a block device"
+msgstr "Indikata kaŝprotokola aparato ne estas blokaparato"
+
+#: lib/ext2fs/ext2_err.c:95
+msgid "Journal superblock not found"
+msgstr "Kaŝprotokola ĉefbloko ne troviĝis"
+
+#: lib/ext2fs/ext2_err.c:96
+msgid "Journal must be at least 1024 blocks"
+msgstr "Kaŝprotokolo devas esti minimume 1024 blokoj"
+
+#: lib/ext2fs/ext2_err.c:97
+msgid "Unsupported journal version"
+msgstr "Nesubtenata kaŝprotokola versio"
+
+#: lib/ext2fs/ext2_err.c:98
+msgid "Error loading external journal"
+msgstr "Eraro dum ŝargo de ekstera kaŝprotokolo"
+
+#: lib/ext2fs/ext2_err.c:99
+msgid "Journal not found"
+msgstr "Kaŝprotokolo ne troviĝis"
+
+#: lib/ext2fs/ext2_err.c:100
+msgid "Directory hash unsupported"
+msgstr "Uja haketo ne subtenatas"
+
+#: lib/ext2fs/ext2_err.c:101
+msgid "Illegal extended attribute block number"
+msgstr "Nevalida numero de bloko de etenditaj atributoj"
+
+#: lib/ext2fs/ext2_err.c:102
+msgid "Cannot create filesystem with requested number of inodes"
+msgstr "Ne eblas krei dosiersistemon kun la petata nombro de i-nodoj"
+
+#: lib/ext2fs/ext2_err.c:103
+msgid "E2image snapshot not in use"
+msgstr "Snapŝoto de 'e2image' ne uziĝas"
+
+#: lib/ext2fs/ext2_err.c:104
+msgid "Too many reserved group descriptor blocks"
+msgstr "Tro multe da rezervitaj gruppriaĵaj blokoj"
+
+#: lib/ext2fs/ext2_err.c:105
+msgid "Resize inode is corrupt"
+msgstr "Regrandiga i-nodo estas difekta"
+
+#: lib/ext2fs/ext2_err.c:106
+msgid "Tried to set block bmap with missing indirect block"
+msgstr "Provo de agordi blokan bitmapon kun mankanta nerekta bloko"
+
+#: lib/ext2fs/ext2_err.c:107
+msgid "TDB: Success"
+msgstr "TDB: Sukceso"
+
+#: lib/ext2fs/ext2_err.c:108
+msgid "TDB: Corrupt database"
+msgstr "TDB: Difekta datumbazo"
+
+#: lib/ext2fs/ext2_err.c:109
+msgid "TDB: IO Error"
+msgstr "TDB: En-eliga eraro"
+
+#: lib/ext2fs/ext2_err.c:110
+msgid "TDB: Locking error"
+msgstr "TDB: Rigla eraro"
+
+#: lib/ext2fs/ext2_err.c:111
+msgid "TDB: Out of memory"
+msgstr "TDB: Mankas sufiĉa memoro"
+
+#: lib/ext2fs/ext2_err.c:112
+msgid "TDB: Record exists"
+msgstr "TDB: Rikordo ekzistas"
+
+#: lib/ext2fs/ext2_err.c:113
+msgid "TDB: Lock exists on other keys"
+msgstr "TDB: Riglo ekzistas je aliaj ŝlosiloj"
+
+#: lib/ext2fs/ext2_err.c:114
+msgid "TDB: Invalid parameter"
+msgstr "TDB: Nevalida parametro"
+
+#: lib/ext2fs/ext2_err.c:115
+msgid "TDB: Record does not exist"
+msgstr "TDB: Rikordo ne ekzistas"
+
+#: lib/ext2fs/ext2_err.c:116
+msgid "TDB: Write not permitted"
+msgstr "TDB: Skribo ne permesatas"
+
+#: lib/ext2fs/ext2_err.c:117
+msgid "Ext2fs directory block list is empty"
+msgstr "Ext2-dosieruja bloka listo vakas"
+
+#: lib/ext2fs/ext2_err.c:118
+msgid "Attempt to modify a block mapping via a read-only block iterator"
+msgstr "Provo de ŝanĝi blokasignon per nurlega blokiterilo"
+
+#: lib/ext2fs/ext2_err.c:119
+msgid "Wrong magic number for ext4 extent saved path"
+msgstr "Malĝustas maginumero por 'ext4 extent saved path'"
+
+#: lib/ext2fs/ext2_err.c:120
+msgid "Wrong magic number for 64-bit generic bitmap"
+msgstr "Malĝustas maginumero por 64-bita komuna bitmapo"
+
+#: lib/ext2fs/ext2_err.c:121
+msgid "Wrong magic number for 64-bit block bitmap"
+msgstr "Malĝustas maginumero por 64-bita bloka bitmapo"
+
+#: lib/ext2fs/ext2_err.c:122
+msgid "Wrong magic number for 64-bit inode bitmap"
+msgstr "Malĝustas maginumero por 64-bita i-noda bitmapo"
+
+#: lib/ext2fs/ext2_err.c:123
+msgid "Wrong magic number --- RESERVED_13"
+msgstr "Malĝustas maginumero -- RESERVED_13"
+
+#: lib/ext2fs/ext2_err.c:124
+msgid "Wrong magic number --- RESERVED_14"
+msgstr "Malĝustas maginumero -- RESERVED_14"
+
+#: lib/ext2fs/ext2_err.c:125
+msgid "Wrong magic number --- RESERVED_15"
+msgstr "Malĝustas maginumero -- RESERVED_15"
+
+#: lib/ext2fs/ext2_err.c:126
+msgid "Wrong magic number --- RESERVED_16"
+msgstr "Malĝustas maginumero -- RESERVED_16"
+
+#: lib/ext2fs/ext2_err.c:127
+msgid "Wrong magic number --- RESERVED_17"
+msgstr "Malĝustas maginumero -- RESERVED_17"
+
+#: lib/ext2fs/ext2_err.c:128
+msgid "Wrong magic number --- RESERVED_18"
+msgstr "Malĝustas maginumero -- RESERVED_18"
+
+#: lib/ext2fs/ext2_err.c:129
+msgid "Wrong magic number --- RESERVED_19"
+msgstr "Malĝustas maginumero -- RESERVED_19"
+
+#: lib/ext2fs/ext2_err.c:130
+msgid "Corrupt extent header"
+msgstr "Difekta ampleksa ĉapo"
+
+#: lib/ext2fs/ext2_err.c:131
+msgid "Corrupt extent index"
+msgstr "Difekta ampleksa indekso"
+
+#: lib/ext2fs/ext2_err.c:132
+msgid "Corrupt extent"
+msgstr "Difekta amplekso"
+
+#: lib/ext2fs/ext2_err.c:133
+msgid "No free space in extent map"
+msgstr "Ampleksmapo ne havas liberan spacon"
+
+#: lib/ext2fs/ext2_err.c:134
+msgid "Inode does not use extents"
+msgstr "I-nodo ne uzas ampleksojn"
+
+#: lib/ext2fs/ext2_err.c:135
+msgid "No 'next' extent"
+msgstr "Malestas 'next'-amplekso"
+
+#: lib/ext2fs/ext2_err.c:136
+msgid "No 'previous' extent"
+msgstr "Malestas 'previous'-amplekso"
+
+#: lib/ext2fs/ext2_err.c:137
+msgid "No 'up' extent"
+msgstr "Malestas 'up'-amplekso"
+
+#: lib/ext2fs/ext2_err.c:138
+msgid "No 'down' extent"
+msgstr "Malestas 'down'-amplekso"
+
+#: lib/ext2fs/ext2_err.c:139
+msgid "No current node"
+msgstr "Neniu aktuala nodo"
+
+#: lib/ext2fs/ext2_err.c:140
+msgid "Ext2fs operation not supported"
+msgstr "tiu Ext2fs-operacio ne subtenatas"
+
+#: lib/ext2fs/ext2_err.c:141
+msgid "No room to insert extent in node"
+msgstr "Mankas spaco por enmeti amplekson en nodo"
+
+#: lib/ext2fs/ext2_err.c:142
+msgid "Splitting would result in empty node"
+msgstr "Fendo rezultus en vaka nodo"
+
+#: lib/ext2fs/ext2_err.c:143
+msgid "Extent not found"
+msgstr "Amplekso ne troviĝis"
+
+#: lib/ext2fs/ext2_err.c:144
+msgid "Operation not supported for inodes containing extents"
+msgstr "Operacio ne subtenatas por i-nodoj kiuj enhavas ampleksojn"
+
+#: lib/ext2fs/ext2_err.c:145
+msgid "Extent length is invalid"
+msgstr "Ampleksa longo malvalidas"
+
+#: lib/ext2fs/ext2_err.c:146
+msgid "I/O Channel does not support 64-bit block numbers"
+msgstr "En-eliga kanalo ne subtenas 64-bitajn bloknumerojn"
+
+#: lib/ext2fs/ext2_err.c:147
+msgid "Can't check if filesystem is mounted due to missing mtab file"
+msgstr ""
+"Ne eblas kontroli se dosiersistemo estas muntita, ĉar mankas dosiero 'mtab'"
+
+#: lib/ext2fs/ext2_err.c:148
+msgid "Filesystem too large to use legacy bitmaps"
+msgstr "Dosiersistemo tro grandas por uzi arkaikajn bitmapojn"
+
+#: lib/ext2fs/ext2_err.c:149
+msgid "MMP: invalid magic number"
+msgstr "MMP: nevalida magia numero"
+
+#: lib/ext2fs/ext2_err.c:150
+msgid "MMP: device currently active"
+msgstr "MMP: aparato nune aktivas"
+
+#: lib/ext2fs/ext2_err.c:151
+msgid "MMP: fsck being run"
+msgstr "MMP: 'fsck' rulas"
+
+#: lib/ext2fs/ext2_err.c:152
+msgid "MMP: block number beyond filesystem range"
+msgstr "MMP: bloknumero transpasas dosiersisteman gamon"
+
+#: lib/ext2fs/ext2_err.c:153
+msgid "MMP: undergoing an unknown operation"
+msgstr "MMP: spertas nekonatan operacion"
+
+#: lib/ext2fs/ext2_err.c:154
+msgid "MMP: filesystem still in use"
+msgstr "MMP: dosiersistemo ankoraŭ uziĝas"
+
+#: lib/ext2fs/ext2_err.c:155
+msgid "MMP: open with O_DIRECT failed"
+msgstr "MMP: malsukcesis malfermo kun 'O_DIRECT'"
+
+#: lib/ext2fs/ext2_err.c:156
+msgid "Block group descriptor size incorrect"
+msgstr "Malĝustas grando de blokgruppriaĵo"
+
+#: lib/ext2fs/ext2_err.c:157
+msgid "Inode checksum does not match inode"
+msgstr "Kontrolsumo de i-nodo ne konkordas kun i-nodo"
+
+#: lib/ext2fs/ext2_err.c:158
+msgid "Inode bitmap checksum does not match bitmap"
+msgstr "Kontrolsumo de i-noda bitmapo ne konkordas kun bitmapo"
+
+#: lib/ext2fs/ext2_err.c:159
+msgid "Extent block checksum does not match extent block"
+msgstr "Kontrolsumo de 'extent'-bloko ne konkordas kun bloko"
+
+#: lib/ext2fs/ext2_err.c:160
+msgid "Directory block does not have space for checksum"
+msgstr "Dosieruja bloko ne havas spacon por kontrolsumo"
+
+#: lib/ext2fs/ext2_err.c:161
+msgid "Directory block checksum does not match directory block"
+msgstr "Kontrolsumo de dosieruja bloko ne konkordas kun dosieruja bloko"
+
+#: lib/ext2fs/ext2_err.c:162
+msgid "Extended attribute block checksum does not match block"
+msgstr "Kontrolsumo de bloko de etenditaj atributoj ne konkordas kun bloko"
+
+#: lib/ext2fs/ext2_err.c:163
+msgid "Superblock checksum does not match superblock"
+msgstr "Kontrolsumo de ĉefbloko ne konkordas kun ĉefbloko"
+
+#: lib/ext2fs/ext2_err.c:164
+msgid "Unknown checksum algorithm"
+msgstr "Nekonata kontrolsuma algoritmo"
+
+#: lib/ext2fs/ext2_err.c:165
+msgid "MMP block checksum does not match MMP block"
+msgstr "Kontrolsumo de MMP-bloko ne konkordas kun MMP-bloko"
+
+#: lib/ext2fs/ext2_err.c:166
+msgid "Ext2 file already exists"
+msgstr "Ext2-dosiero jam ekzistas"
+
+#: e2fsck/prof_err.c:11
+msgid "Profile version 0.0"
+msgstr ""
+
+#: e2fsck/prof_err.c:12
+msgid "Bad magic value in profile_node"
+msgstr ""
+
+#: e2fsck/prof_err.c:13
+msgid "Profile section not found"
+msgstr ""
+
+#: e2fsck/prof_err.c:14
+msgid "Profile relation not found"
+msgstr ""
+
+#: e2fsck/prof_err.c:15
+msgid "Attempt to add a relation to node which is not a section"
+msgstr ""
+
+#: e2fsck/prof_err.c:16
+msgid "A profile section header has a non-zero value"
+msgstr ""
+
+#: e2fsck/prof_err.c:17
+msgid "Bad linked list in profile structures"
+msgstr ""
+
+#: e2fsck/prof_err.c:18
+msgid "Bad group level in profile structures"
+msgstr ""
+
+#: e2fsck/prof_err.c:19
+msgid "Bad parent pointer in profile structures"
+msgstr ""
+
+#: e2fsck/prof_err.c:20
+msgid "Bad magic value in profile iterator"
+msgstr ""
+
+#: e2fsck/prof_err.c:21
+msgid "Can't set value on section node"
+msgstr ""
+
+#: e2fsck/prof_err.c:22
+msgid "Invalid argument passed to profile library"
+msgstr ""
+
+#: e2fsck/prof_err.c:23
+msgid "Attempt to modify read-only profile"
+msgstr ""
+
+#: e2fsck/prof_err.c:24
+msgid "Profile section header not at top level"
+msgstr ""
+
+#: e2fsck/prof_err.c:25
+msgid "Syntax error in profile section header"
+msgstr ""
+
+#: e2fsck/prof_err.c:26
+msgid "Syntax error in profile relation"
+msgstr ""
+
+#: e2fsck/prof_err.c:27
+msgid "Extra closing brace in profile"
+msgstr ""
+
+#: e2fsck/prof_err.c:28
+msgid "Missing open brace in profile"
+msgstr ""
+
+#: e2fsck/prof_err.c:29
+msgid "Bad magic value in profile_t"
+msgstr ""
+
+#: e2fsck/prof_err.c:30
+msgid "Bad magic value in profile_section_t"
+msgstr ""
+
+#: e2fsck/prof_err.c:31
+msgid "Iteration through all top level section not supported"
+msgstr ""
+
+#: e2fsck/prof_err.c:32
+msgid "Invalid profile_section object"
+msgstr ""
+
+#: e2fsck/prof_err.c:33
+msgid "No more sections"
+msgstr ""
+
+#: e2fsck/prof_err.c:34
+msgid "Bad nameset passed to query routine"
+msgstr ""
+
+#: e2fsck/prof_err.c:35
+msgid "No profile file open"
+msgstr ""
+
+#: e2fsck/prof_err.c:36
+msgid "Bad magic value in profile_file_t"
+msgstr ""
+
+#: e2fsck/prof_err.c:37
+msgid "Couldn't open profile file"
+msgstr ""
+
+#: e2fsck/prof_err.c:38
+msgid "Section already exists"
+msgstr ""
+
+#: e2fsck/prof_err.c:39
+msgid "Invalid boolean value"
+msgstr "Malvalida bulea valoro"
+
+#: e2fsck/prof_err.c:40
+msgid "Invalid integer value"
+msgstr "Malvalida entjera valoro"
+
+#: e2fsck/prof_err.c:41
+msgid "Bad magic value in profile_file_data_t"
+msgstr ""

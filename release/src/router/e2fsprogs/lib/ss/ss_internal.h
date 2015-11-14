@@ -94,6 +94,7 @@ char **ss_rl_completion(const char *text, int start, int end);
 
 extern ss_data **_ss_table;
 extern char *ss_et_msgs[];
+extern char *_ss_pager_name;
 
 #ifdef USE_SIGPROCMASK
 /* fake sigmask, sigblock, sigsetmask */

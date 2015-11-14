@@ -1,0 +1,4 @@
+DESCRIPTION="mkfs with 64bit and flex_bg"
+FS_SIZE=1M
+MKE2FS_OPTS="-O 64bit,extents,flex_bg"
+. $cmd_dir/run_mke2fs

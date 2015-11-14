@@ -164,6 +164,9 @@ typedef struct journal_revoke_header_s
 #define JFS_FLAG_LAST_TAG	8	/* last tag in this descriptor block */
 
 
+#define UUID_SIZE 16
+#define JFS_USERS_MAX 48
+#define JFS_USERS_SIZE (UUID_SIZE * JFS_USERS_MAX)
 /*
  * The journal superblock.  All fields are in big-endian byte order.
  */
@@ -208,7 +211,8 @@ typedef struct journal_superblock_s
 	__u32	s_padding[44];
 
 /* 0x0100 */
-	__u8	s_users[16*48];		/* ids of all fs'es sharing the log */
+	__u8	s_users[JFS_USERS_SIZE];		/* ids of all fs'es sharing the log */
+
 /* 0x0400 */
 } journal_superblock_t;
 

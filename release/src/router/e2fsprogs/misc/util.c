@@ -13,6 +13,9 @@
 #define _LARGEFILE64_SOURCE
 
 #include "config.h"
+#include <fcntl.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_ERRNO_H
@@ -21,8 +24,12 @@
 #ifdef HAVE_LINUX_MAJOR_H
 #include <linux/major.h>
 #endif
+#include <sys/types.h>
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 #include <time.h>
 
@@ -33,6 +40,8 @@
 #include "nls-enable.h"
 #include "blkid/blkid.h"
 #include "util.h"
+
+char *journal_location_string = NULL;
 
 #ifndef HAVE_STRCASECMP
 int strcasecmp (char *s1, char *s2)
@@ -64,46 +73,205 @@ char *get_progname(char *argv_zero)
 		return cp+1;
 }
 
-void proceed_question(void)
+static jmp_buf alarm_env;
+
+static void alarm_signal(int signal)
+{
+	longjmp(alarm_env, 1);
+}
+
+void proceed_question(int delay)
 {
 	char buf[256];
 	const char *short_yes = _("yY");
 
 	fflush(stdout);
 	fflush(stderr);
-	fputs(_("Proceed anyway? (y,n) "), stdout);
+	if (delay > 0) {
+		if (setjmp(alarm_env)) {
+			signal(SIGALRM, SIG_IGN);
+			printf("%s", _("<proceeding>\n"));
+			return;
+		}
+		signal(SIGALRM, alarm_signal);
+		printf(_("Proceed anyway (or wait %d seconds) ? (y,n) "),
+		       delay);
+		alarm(delay);
+	} else
+		fputs(_("Proceed anyway? (y,n) "), stdout);
 	buf[0] = 0;
 	if (!fgets(buf, sizeof(buf), stdin) ||
-	    strchr(short_yes, buf[0]) == 0)
+	    strchr(short_yes, buf[0]) == 0) {
+		putc('\n', stdout);
 		exit(1);
+	}
+	signal(SIGALRM, SIG_IGN);
 }
 
-void check_plausibility(const char *device)
+static void print_ext2_info(const char *device)
+
 {
-	int val;
+	struct ext2_super_block	*sb;
+	ext2_filsys		fs;
+	errcode_t		retval;
+	time_t 			tm;
+	char			buf[80];
+
+	retval = ext2fs_open2(device, 0, EXT2_FLAG_64BITS, 0, 0,
+			      unix_io_manager, &fs);
+	if (retval)
+		return;
+	sb = fs->super;
+
+	if (sb->s_mtime) {
+		tm = sb->s_mtime;
+		if (sb->s_last_mounted[0]) {
+			memset(buf, 0, sizeof(buf));
+			strncpy(buf, sb->s_last_mounted,
+				sizeof(sb->s_last_mounted));
+			printf(_("\tlast mounted on %s on %s"), buf,
+			       ctime(&tm));
+		} else
+			printf(_("\tlast mounted on %s"), ctime(&tm));
+	} else if (sb->s_mkfs_time) {
+		tm = sb->s_mkfs_time;
+		printf(_("\tcreated on %s"), ctime(&tm));
+	} else if (sb->s_wtime) {
+		tm = sb->s_wtime;
+		printf(_("\tlast modified on %s"), ctime(&tm));
+	}
+	ext2fs_close_free(&fs);
+}
+
+/*
+ * return 1 if there is no partition table, 0 if a partition table is
+ * detected, and -1 on an error.
+ */
+static int check_partition_table(const char *device)
+{
+#ifdef HAVE_BLKID_PROBE_ENABLE_PARTITIONS
+	blkid_probe pr;
+	const char *value;
+	int ret;
+
+	pr = blkid_new_probe_from_filename(device);
+	if (!pr)
+		return -1;
+
+        ret = blkid_probe_enable_partitions(pr, 1);
+        if (ret < 0)
+		goto errout;
+
+	ret = blkid_probe_enable_superblocks(pr, 0);
+	if (ret < 0)
+		goto errout;
+
+	ret = blkid_do_fullprobe(pr);
+	if (ret < 0)
+		goto errout;
+
+	ret = blkid_probe_lookup_value(pr, "PTTYPE", &value, NULL);
+	if (ret == 0)
+		fprintf(stderr, _("Found a %s partition table in %s\n"),
+			value, device);
+	else
+		ret = 1;
+
+errout:
+	blkid_free_probe(pr);
+	return ret;
+#else
+	return -1;
+#endif
+}
+
+/*
+ * return 1 if the device looks plausible, creating the file if necessary
+ */
+int check_plausibility(const char *device, int flags, int *ret_is_dev)
+{
+	int fd, ret, is_dev = 0;
 	ext2fs_struct_stat s;
+	int fl = O_RDONLY;
+	blkid_cache cache = NULL;
+	char *fs_type = NULL;
+	char *fs_label = NULL;
 
-	val = ext2fs_stat(device, &s);
-
-	if(val == -1) {
-		fprintf(stderr, _("Could not stat %s --- %s\n"),
+	fd = ext2fs_open_file(device, fl, 0666);
+	if ((fd < 0) && (errno == ENOENT) && (flags & NO_SIZE)) {
+		fprintf(stderr, _("The file %s does not exist and no "
+				  "size was specified.\n"), device);
+		exit(1);
+	}
+	if ((fd < 0) && (errno == ENOENT) && (flags & CREATE_FILE)) {
+		fl |= O_CREAT;
+		fd = ext2fs_open_file(device, fl, 0666);
+		if (fd >= 0 && (flags & VERBOSE_CREATE))
+			printf(_("Creating regular file %s\n"), device);
+	}
+	if (fd < 0) {
+		fprintf(stderr, _("Could not open %s: %s\n"),
 			device, error_message(errno));
 		if (errno == ENOENT)
 			fputs(_("\nThe device apparently does not exist; "
 				"did you specify it correctly?\n"), stderr);
 		exit(1);
 	}
+
+	if (ext2fs_fstat(fd, &s) < 0) {
+		perror("stat");
+		exit(1);
+	}
+	close(fd);
+
+	if (S_ISBLK(s.st_mode))
+		is_dev = 1;
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 	/* On FreeBSD, all disk devices are character specials */
-	if (!S_ISBLK(s.st_mode) && !S_ISCHR(s.st_mode))
-#else
-	if (!S_ISBLK(s.st_mode))
+	if (S_ISCHR(s.st_mode))
+		is_dev = 1;
 #endif
-	{
+	if (ret_is_dev)
+		*ret_is_dev = is_dev;
+
+	if ((flags & CHECK_BLOCK_DEV) && !is_dev) {
 		printf(_("%s is not a block special device.\n"), device);
-		proceed_question();
-		return;
+		return 0;
 	}
+
+	/*
+	 * Note: we use the older-style blkid API's here because we
+	 * want as much functionality to be available when using the
+	 * internal blkid library, when e2fsprogs is compiled for
+	 * non-Linux systems that will probably not have the libraries
+	 * from util-linux available.  We only use the newer
+	 * blkid-probe interfaces to access functionality not
+	 * available in the original blkid library.
+	 */
+	if ((flags & CHECK_FS_EXIST) && blkid_get_cache(&cache, NULL) >= 0) {
+		fs_type = blkid_get_tag_value(cache, "TYPE", device);
+		if (fs_type)
+			fs_label = blkid_get_tag_value(cache, "LABEL", device);
+		blkid_put_cache(cache);
+	}
+
+	if (fs_type) {
+		if (fs_label)
+			printf(_("%s contains a %s file system "
+				 "labelled '%s'\n"), device, fs_type, fs_label);
+		else
+			printf(_("%s contains a %s file system\n"), device,
+			       fs_type);
+		if (strncmp(fs_type, "ext", 3) == 0)
+			print_ext2_info(device);
+		free(fs_type);
+		free(fs_label);
+		return 0;
+	}
+
+	ret = check_partition_table(device);
+	if (ret >= 0)
+		return ret;
 
 #ifdef HAVE_LINUX_MAJOR_H
 #ifndef MAJOR
@@ -131,9 +299,10 @@ void check_plausibility(const char *device)
 	      MINOR(s.st_rdev)%16 == 0))) {
 		printf(_("%s is entire device, not just one partition!\n"),
 		       device);
-		proceed_question();
+		return 0;
 	}
 #endif
+	return 1;
 }
 
 void check_mount(const char *device, int force, const char *type)
@@ -150,7 +319,7 @@ void check_mount(const char *device, int force, const char *type)
 	}
 	if (mount_flags & EXT2_MF_MOUNTED) {
 		fprintf(stderr, _("%s is mounted; "), device);
-		if (force > 2) {
+		if (force >= 2) {
 			fputs(_("mke2fs forced anyway.  Hope /etc/mtab is "
 				"incorrect.\n"), stderr);
 			return;
@@ -162,7 +331,7 @@ void check_mount(const char *device, int force, const char *type)
 	if (mount_flags & EXT2_MF_BUSY) {
 		fprintf(stderr, _("%s is apparently in use by the system; "),
 			device);
-		if (force > 2) {
+		if (force >= 2) {
 			fputs(_("mke2fs forced anyway.\n"), stderr);
 			return;
 		}
@@ -218,6 +387,12 @@ void parse_journal_opts(const char *opts)
 			journal_size = strtoul(arg, &p, 0);
 			if (*p)
 				journal_usage++;
+		} else if (!strcmp(token, "location")) {
+			if (!arg) {
+				journal_usage++;
+				continue;
+			}
+			journal_location_string = strdup(arg);
 		} else if (strcmp(token, "v1_superblock") == 0) {
 			journal_flags |= EXT2_MKJOURNAL_V1_SUPER;
 			continue;
@@ -231,7 +406,8 @@ void parse_journal_opts(const char *opts)
 			"\tis set off by an equals ('=') sign.\n\n"
 			"Valid journal options are:\n"
 			"\tsize=<journal size in megabytes>\n"
-			"\tdevice=<journal device>\n\n"
+			"\tdevice=<journal device>\n"
+			"\tlocation=<journal location>\n\n"
 			"The journal size must be between "
 			"1024 and 10240000 filesystem blocks.\n\n"), stderr);
 		free(buf);

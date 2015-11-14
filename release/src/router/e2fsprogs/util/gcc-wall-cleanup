@@ -16,7 +16,6 @@
 /In file included from/d
 /In function `.*':/d
 /zero-length format string/d
-/warning: missing initializer/d
 /warning: (near initialization for/d
 /^[ 	]*from/d
 

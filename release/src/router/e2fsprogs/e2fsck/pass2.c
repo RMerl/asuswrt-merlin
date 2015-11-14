@@ -351,9 +351,9 @@ static int check_dot(e2fsck_t ctx,
 {
 	struct ext2_dir_entry *nextdir;
 	unsigned int	rec_len, new_len;
-	int	status = 0;
-	int	created = 0;
-	int	problem = 0;
+	int		status = 0;
+	int		created = 0;
+	problem_t	problem = 0;
 
 	if (!dirent->inode)
 		problem = PR_2_MISSING_DOT;
@@ -410,7 +410,7 @@ static int check_dotdot(e2fsck_t ctx,
 			struct ext2_dir_entry *dirent,
 			ext2_ino_t ino, struct problem_context *pctx)
 {
-	int		problem = 0;
+	problem_t	problem = 0;
 	unsigned int	rec_len;
 
 	if (!dirent->inode)
@@ -727,7 +727,7 @@ static int check_dir_block(ext2_filsys fs,
 	struct check_dir_struct	*cd;
 	char 			*buf;
 	e2fsck_t		ctx;
-	int			problem;
+	problem_t		problem;
 	struct ext2_dx_root_info *root;
 	struct ext2_dx_countlimit *limit;
 	static dict_t de_dict;
@@ -795,6 +795,7 @@ static int check_dir_block(ext2_filsys fs,
 	dx_dir = e2fsck_get_dx_dir_info(ctx, ino);
 	if (dx_dir && dx_dir->numblocks) {
 		if (db->blockcnt >= dx_dir->numblocks) {
+			pctx.dir = ino;
 			if (fix_problem(ctx, PR_2_UNEXPECTED_HTREE_BLOCK,
 					&pctx)) {
 				clear_htree(ctx, ino);
@@ -844,7 +845,7 @@ out_htree:
 	dict_init(&de_dict, DICTCOUNT_T_MAX, dict_de_cmp);
 	prev = 0;
 	do {
-		int group;
+		dgrp_t group;
 		ext2_ino_t first_unused_inode;
 
 		problem = 0;
@@ -1132,7 +1133,7 @@ out_htree:
 		}
 	}
 	if (dir_modified) {
-		cd->pctx.errcode = ext2fs_write_dir_block(fs, block_nr, buf);
+		cd->pctx.errcode = ext2fs_write_dir_block3(fs, block_nr, buf, 0);
 		if (cd->pctx.errcode) {
 			if (!fix_problem(ctx, PR_2_WRITE_DIRBLOCK,
 					 &cd->pctx))
@@ -1171,8 +1172,8 @@ static int deallocate_inode_block(ext2_filsys fs,
 	if ((*block_nr < fs->super->s_first_data_block) ||
 	    (*block_nr >= ext2fs_blocks_count(fs->super)))
 		return 0;
-	ext2fs_unmark_block_bitmap2(p->ctx->block_found_map, *block_nr);
-	ext2fs_block_alloc_stats2(fs, *block_nr, -1);
+	if ((*block_nr % EXT2FS_CLUSTER_RATIO(fs)) == 0)
+		ext2fs_block_alloc_stats2(fs, *block_nr, -1);
 	p->num++;
 	return 0;
 }
@@ -1189,7 +1190,6 @@ static void deallocate_inode(e2fsck_t ctx, ext2_ino_t ino, char* block_buf)
 	struct del_block	del_block;
 
 	e2fsck_read_inode(ctx, ino, &inode, "deallocate_inode");
-	e2fsck_clear_inode(ctx, ino, &inode, 0, "deallocate_inode");
 	clear_problem_context(&pctx);
 	pctx.ino = ino;
 
@@ -1215,8 +1215,6 @@ static void deallocate_inode(e2fsck_t ctx, ext2_ino_t ino, char* block_buf)
 			return;
 		}
 		if (count == 0) {
-			ext2fs_unmark_block_bitmap2(ctx->block_found_map,
-					ext2fs_file_acl_block(fs, &inode));
 			ext2fs_block_alloc_stats2(fs,
 				  ext2fs_file_acl_block(fs, &inode), -1);
 		}
@@ -1224,9 +1222,10 @@ static void deallocate_inode(e2fsck_t ctx, ext2_ino_t ino, char* block_buf)
 	}
 
 	if (!ext2fs_inode_has_valid_blocks2(fs, &inode))
-		return;
+		goto clear_inode;
 
-	if (LINUX_S_ISREG(inode.i_mode) && EXT2_I_SIZE(&inode) >= 0x80000000UL)
+	if (LINUX_S_ISREG(inode.i_mode) &&
+	    ext2fs_needs_large_file_feature(EXT2_I_SIZE(&inode)))
 		ctx->large_files--;
 
 	del_block.ctx = ctx;
@@ -1239,6 +1238,10 @@ static void deallocate_inode(e2fsck_t ctx, ext2_ino_t ino, char* block_buf)
 		ctx->flags |= E2F_FLAG_ABORT;
 		return;
 	}
+clear_inode:
+	/* Inode may have changed by block_iterate, so reread it */
+	e2fsck_read_inode(ctx, ino, &inode, "deallocate_inode");
+	e2fsck_clear_inode(ctx, ino, &inode, 0, "deallocate_inode");
 }
 
 /*
@@ -1256,8 +1259,8 @@ static void clear_htree(e2fsck_t ctx, ext2_ino_t ino)
 }
 
 
-extern int e2fsck_process_bad_inode(e2fsck_t ctx, ext2_ino_t dir,
-				    ext2_ino_t ino, char *buf)
+int e2fsck_process_bad_inode(e2fsck_t ctx, ext2_ino_t dir,
+			     ext2_ino_t ino, char *buf)
 {
 	ext2_filsys fs = ctx->fs;
 	struct ext2_inode	inode;
@@ -1265,7 +1268,7 @@ extern int e2fsck_process_bad_inode(e2fsck_t ctx, ext2_ino_t dir,
 	int			not_fixed = 0;
 	unsigned char		*frag, *fsize;
 	struct problem_context	pctx;
-	int	problem = 0;
+	problem_t		problem = 0;
 
 	e2fsck_read_inode(ctx, ino, &inode, "process_bad_inode");
 
@@ -1362,7 +1365,8 @@ extern int e2fsck_process_bad_inode(e2fsck_t ctx, ext2_ino_t dir,
 		}
 	}
 
-	if (!(fs->super->s_feature_incompat & 
+	if ((fs->super->s_creator_os == EXT2_OS_LINUX) &&
+	    !(fs->super->s_feature_incompat &
 	     EXT4_FEATURE_INCOMPAT_64BIT) &&
 	    inode.osd2.linux2.l_i_file_acl_high != 0) {
 		pctx.num = inode.osd2.linux2.l_i_file_acl_high;
@@ -1411,7 +1415,7 @@ static int allocate_dir_block(e2fsck_t ctx,
 			      struct problem_context *pctx)
 {
 	ext2_filsys fs = ctx->fs;
-	blk64_t			blk;
+	blk64_t			blk = 0;
 	char			*block;
 	struct ext2_inode	inode;
 
@@ -1427,11 +1431,17 @@ static int allocate_dir_block(e2fsck_t ctx,
 	/*
 	 * First, find a free block
 	 */
-	pctx->errcode = ext2fs_new_block2(fs, 0, ctx->block_found_map, &blk);
-	if (pctx->errcode) {
-		pctx->str = "ext2fs_new_block";
-		fix_problem(ctx, PR_2_ALLOC_DIRBOCK, pctx);
-		return 1;
+	e2fsck_read_inode(ctx, db->ino, &inode, "allocate_dir_block");
+	pctx->errcode = ext2fs_map_cluster_block(fs, db->ino, &inode,
+						 db->blockcnt, &blk);
+	if (pctx->errcode || blk == 0) {
+		pctx->errcode = ext2fs_new_block2(fs, 0,
+						  ctx->block_found_map, &blk);
+		if (pctx->errcode) {
+			pctx->str = "ext2fs_new_block";
+			fix_problem(ctx, PR_2_ALLOC_DIRBOCK, pctx);
+			return 1;
+		}
 	}
 	ext2fs_mark_block_bitmap2(ctx->block_found_map, blk);
 	ext2fs_mark_block_bitmap2(fs->block_map, blk);
@@ -1452,7 +1462,7 @@ static int allocate_dir_block(e2fsck_t ctx,
 		return 1;
 	}
 
-	pctx->errcode = ext2fs_write_dir_block(fs, blk, block);
+	pctx->errcode = ext2fs_write_dir_block3(fs, blk, block, 0);
 	ext2fs_free_mem(&block);
 	if (pctx->errcode) {
 		pctx->str = "ext2fs_write_dir_block";
@@ -1463,10 +1473,16 @@ static int allocate_dir_block(e2fsck_t ctx,
 	/*
 	 * Update the inode block count
 	 */
-	e2fsck_read_inode(ctx, db->ino, &inode, "allocate_dir_block");
 	ext2fs_iblk_add_blocks(fs, &inode, 1);
-	if (inode.i_size < (db->blockcnt+1) * fs->blocksize)
-		inode.i_size = (db->blockcnt+1) * fs->blocksize;
+	if (EXT2_I_SIZE(&inode) < (db->blockcnt+1) * fs->blocksize) {
+		pctx->errcode = ext2fs_inode_size_set(fs, &inode,
+					(db->blockcnt+1) * fs->blocksize);
+		if (pctx->errcode) {
+			pctx->str = "ext2fs_inode_size_set";
+			fix_problem(ctx, PR_2_ALLOC_DIRBOCK, pctx);
+			return 1;
+		}
+	}
 	e2fsck_write_inode(ctx, db->ino, &inode, "allocate_dir_block");
 
 	/*

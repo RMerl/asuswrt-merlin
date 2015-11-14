@@ -145,6 +145,43 @@ errout:
 	return retval;
 }
 
+static errcode_t mark_uninit_bg_group_blocks(ext2_filsys fs)
+{
+	dgrp_t			i;
+	blk64_t			blk;
+	ext2fs_block_bitmap	bmap = fs->block_map;
+
+	for (i = 0; i < fs->group_desc_count; i++) {
+		if (!ext2fs_bg_flags_test(fs, i, EXT2_BG_BLOCK_UNINIT))
+			continue;
+
+		ext2fs_reserve_super_and_bgd(fs, i, bmap);
+
+		/*
+		 * Mark the blocks used for the inode table
+		 */
+		blk = ext2fs_inode_table_loc(fs, i);
+		if (blk)
+			ext2fs_mark_block_bitmap_range2(bmap, blk,
+						fs->inode_blocks_per_group);
+
+		/*
+		 * Mark block used for the block bitmap
+		 */
+		blk = ext2fs_block_bitmap_loc(fs, i);
+		if (blk)
+			ext2fs_mark_block_bitmap2(bmap, blk);
+
+		/*
+		 * Mark block used for the inode bitmap
+		 */
+		blk = ext2fs_inode_bitmap_loc(fs, i);
+		if (blk)
+			ext2fs_mark_block_bitmap2(bmap, blk);
+	}
+	return 0;
+}
+
 static errcode_t read_bitmaps(ext2_filsys fs, int do_inode, int do_block)
 {
 	dgrp_t i;
@@ -225,8 +262,8 @@ static errcode_t read_bitmaps(ext2_filsys fs, int do_inode, int do_block)
 		}
 		blk = (fs->image_header->offset_blockmap /
 		       fs->blocksize);
-		blk_cnt = (blk64_t)EXT2_CLUSTERS_PER_GROUP(fs->super) *
-			fs->group_desc_count;
+		blk_cnt = EXT2_GROUPS_TO_CLUSTERS(fs->super,
+						  fs->group_desc_count);
 		while (block_nbytes > 0) {
 			retval = io_channel_read_blk64(fs->image_io, blk++,
 						     1, block_bitmap);
@@ -292,6 +329,14 @@ static errcode_t read_bitmaps(ext2_filsys fs, int do_inode, int do_block)
 			ino_itr += inode_nbytes << 3;
 		}
 	}
+
+	/* Mark group blocks for any BLOCK_UNINIT groups */
+	if (do_block) {
+		retval = mark_uninit_bg_group_blocks(fs);
+		if (retval)
+			goto cleanup;
+	}
+
 success_cleanup:
 	if (inode_bitmap)
 		ext2fs_free_mem(&inode_bitmap);

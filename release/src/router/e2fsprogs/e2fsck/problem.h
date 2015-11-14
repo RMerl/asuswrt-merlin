@@ -18,7 +18,7 @@ struct problem_context {
 	struct ext2_dir_entry *dirent;
 	blk64_t	blk, blk2;
 	e2_blkcnt_t	blkcount;
-	int		group;
+	dgrp_t		group;
 	__u32		csum1, csum2;
 	__u64	num;
 	const char *str;
@@ -248,6 +248,12 @@ struct problem_context {
 
 /* Checking group descriptor failed */
 #define PR_0_CHECK_DESC_FAILED			0x000045
+
+/* 64bit is set but extents are not set. */
+#define PR_0_64BIT_WITHOUT_EXTENTS		0x000048
+
+/* The first_meta_bg is too big */
+#define PR_0_FIRST_META_BG_TOO_BIG		0x000049
 
 /*
  * Pass 1 errors
@@ -562,6 +568,25 @@ struct problem_context {
 #define PR_1_EXTENT_INDEX_START_INVALID	0x01006D
 
 #define PR_1_EXTENT_END_OUT_OF_BOUNDS	0x01006E
+
+/* Inode has inline data, but superblock is missing INLINE_DATA feature. */
+#define PR_1_INLINE_DATA_FEATURE       0x01006F
+
+/* INLINE_DATA feature is set in a non-inline-data filesystem */
+#define PR_1_INLINE_DATA_SET	       0x010070
+
+/* file metadata collides with critical metadata */
+#define PR_1_CRITICAL_METADATA_COLLISION	0x010071
+
+/* Directory inode has a missing block (hole) */
+#define PR_1_COLLAPSE_DBLOCK		0x010072
+
+/* uninit directory block */
+#define PR_1_UNINIT_DBLOCK		0x010073
+
+/* Inode logical block is misaligned */
+#define PR_1_MISALIGNED_CLUSTER		0x010074
+
 /*
  * Pass 1b errors
  */
@@ -1033,6 +1058,15 @@ struct problem_context {
 
 /* Update quota information if it is inconsistent */
 #define PR_6_UPDATE_QUOTAS		0x060002
+
+/* Error setting block group checksum info */
+#define PR_6_SET_BG_CHECKSUM		0x060003
+
+/* Error writing file system info */
+#define PR_6_FLUSH_FILESYSTEM		0x060004
+
+/* Error flushing writes to storage device */
+#define PR_6_IO_FLUSH			0x060005
 
 /*
  * Function declarations

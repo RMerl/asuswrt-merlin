@@ -18,7 +18,7 @@ status=$?
 echo Exit status is $status >> $OUT
 
 $DEBUGFS -w $TMPFILE << EOF > /dev/null 2>&1
-set_current_time 201301151400
+set_current_time 20130115140000
 set_super_value lastcheck 0
 set_super_value hash_seed null
 set_super_value mkfs_time 0

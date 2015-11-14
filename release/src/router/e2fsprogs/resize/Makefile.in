@@ -28,16 +28,17 @@ SRCS= $(srcdir)/extent.c \
 	$(srcdir)/resource_track.c \
 	$(srcdir)/sim_progress.c
 
-LIBS= $(LIBE2P) $(LIBEXT2FS) $(LIBCOM_ERR) $(LIBINTL)
+LIBS= $(LIBE2P) $(LIBEXT2FS) $(LIBCOM_ERR) $(LIBINTL) $(SYSLIBS)
 DEPLIBS= $(LIBE2P) $(LIBEXT2FS) $(DEPLIBCOM_ERR)
 
 STATIC_LIBS= $(STATIC_LIBE2P) $(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) \
-	$(LIBINTL)
+	$(LIBINTL) $(SYSLIBS)
 DEPSTATIC_LIBS= $(STATIC_LIBE2P) $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR) 
 
 .c.o:
 	$(E) "	CC $<"
 	$(Q) $(CC) -c $(ALL_CFLAGS) $< -o $@
+	$(Q) $(CHECK_CMD) $(ALL_CFLAGS) $<
 
 all:: $(PROGS) $(TEST_PROGS) $(MANPAGES) 
 
@@ -91,8 +92,7 @@ uninstall:
 	done
 
 test_extent.out: test_extent $(srcdir)/test_extent.in
-	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./test_extent < $(srcdir)/test_extent.in \
-		> test_extent.out
+	$(TESTENV) ./test_extent < $(srcdir)/test_extent.in > test_extent.out
 
 check:: test_extent.out
 	$(Q) if cmp -s test_extent.out $(srcdir)/test_extent.in ; then \
@@ -103,7 +103,7 @@ check:: test_extent.out
 		exit 1 ; \
 	fi
 
-clean:
+clean::
 	$(RM) -f $(PROGS) $(TEST_PROGS) $(MANPAGES) \#* *.s *.o *.a *~ core \
 		resize2fs.static test_extent.out
 

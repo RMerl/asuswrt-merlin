@@ -82,5 +82,6 @@ http://e2fsprogs.sourceforge.net.
 .SH SEE ALSO
 .BR e2fsck (8),
 .BR mke2fs (8),
-.BR tune2fs (8)
+.BR tune2fs (8).
+.BR ext4 (5)
 

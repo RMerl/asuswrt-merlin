@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 		optind++;
 	}
 	if (sk < 0) {
-		fprintf(stderr, _("startkb should be positive, not %Lu\n"), sk);
+		fprintf(stderr, _("startkb should be positive, not %llu\n"),sk);
 		exit(1);
 	}
 
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Now, go looking for the superblock! */
-	printf(_("starting at %Lu, with %u byte increments\n"), sk, skiprate);
+	printf(_("starting at %llu, with %u byte increments\n"), sk, skiprate);
 	if (print_jnl_copies)
 		printf(_("[*] probably superblock written in the ext3 "
 			 "journal superblock,\n\tso start/end/grp wrong\n"));

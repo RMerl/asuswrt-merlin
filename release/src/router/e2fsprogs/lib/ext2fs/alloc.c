@@ -27,48 +27,17 @@
 #include "ext2fs.h"
 
 /*
- * Check for uninit block bitmaps and deal with them appropriately
+ * Clear the uninit block bitmap flag if necessary
  */
-static void check_block_uninit(ext2_filsys fs, ext2fs_block_bitmap map,
-			       dgrp_t group)
+static void clear_block_uninit(ext2_filsys fs, dgrp_t group)
 {
-	blk_t		i;
-	blk64_t		blk, super_blk, old_desc_blk, new_desc_blk;
-	int		old_desc_blocks;
-
 	if (!(EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
 					 EXT4_FEATURE_RO_COMPAT_GDT_CSUM)) ||
 	    !(ext2fs_bg_flags_test(fs, group, EXT2_BG_BLOCK_UNINIT)))
 		return;
 
-	blk = ext2fs_group_first_block2(fs, group);
+	/* uninit block bitmaps are now initialized in read_bitmaps() */
 
-	ext2fs_super_and_bgd_loc2(fs, group, &super_blk,
-				  &old_desc_blk, &new_desc_blk, 0);
-
-	if (fs->super->s_feature_incompat &
-	    EXT2_FEATURE_INCOMPAT_META_BG)
-		old_desc_blocks = fs->super->s_first_meta_bg;
-	else
-		old_desc_blocks = fs->desc_blocks + fs->super->s_reserved_gdt_blocks;
-
-	for (i=0; i < fs->super->s_blocks_per_group; i++, blk++)
-		ext2fs_fast_unmark_block_bitmap2(map, blk);
-
-	blk = ext2fs_group_first_block2(fs, group);
-	for (i=0; i < fs->super->s_blocks_per_group; i++, blk++) {
-		if ((blk == super_blk) ||
-		    (old_desc_blk && old_desc_blocks &&
-		     (blk >= old_desc_blk) &&
-		     (blk < old_desc_blk + old_desc_blocks)) ||
-		    (new_desc_blk && (blk == new_desc_blk)) ||
-		    (blk == ext2fs_block_bitmap_loc(fs, group)) ||
-		    (blk == ext2fs_inode_bitmap_loc(fs, group)) ||
-		    (blk >= ext2fs_inode_table_loc(fs, group) &&
-		     (blk < ext2fs_inode_table_loc(fs, group)
-		      + fs->inode_blocks_per_group)))
-			ext2fs_fast_mark_block_bitmap2(map, blk);
-	}
 	ext2fs_bg_flags_clear(fs, group, EXT2_BG_BLOCK_UNINIT);
 	ext2fs_group_desc_csum_set(fs, group);
 	ext2fs_mark_super_dirty(fs);
@@ -93,10 +62,11 @@ static void check_inode_uninit(ext2_filsys fs, ext2fs_inode_bitmap map,
 		ext2fs_fast_unmark_inode_bitmap2(map, ino);
 
 	ext2fs_bg_flags_clear(fs, group, EXT2_BG_INODE_UNINIT);
+	/* Mimics what the kernel does */
+	ext2fs_bg_flags_clear(fs, group, EXT2_BG_BLOCK_UNINIT);
 	ext2fs_group_desc_csum_set(fs, group);
 	ext2fs_mark_ib_dirty(fs);
 	ext2fs_mark_super_dirty(fs);
-	check_block_uninit(fs, fs->block_map, group);
 }
 
 /*
@@ -167,8 +137,8 @@ errcode_t ext2fs_new_inode(ext2_filsys fs, ext2_ino_t dir,
 errcode_t ext2fs_new_block2(ext2_filsys fs, blk64_t goal,
 			   ext2fs_block_bitmap map, blk64_t *ret)
 {
-	blk64_t	i;
-	int	c_ratio;
+	errcode_t retval;
+	blk64_t	b = 0;
 
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
@@ -178,29 +148,21 @@ errcode_t ext2fs_new_block2(ext2_filsys fs, blk64_t goal,
 		return EXT2_ET_NO_BLOCK_BITMAP;
 	if (!goal || (goal >= ext2fs_blocks_count(fs->super)))
 		goal = fs->super->s_first_data_block;
-	i = goal;
-	c_ratio = 1 << ext2fs_get_bitmap_granularity(map);
-	if (c_ratio > 1)
-		goal &= ~EXT2FS_CLUSTER_MASK(fs);
-	check_block_uninit(fs, map,
-			   (i - fs->super->s_first_data_block) /
-			   EXT2_BLOCKS_PER_GROUP(fs->super));
-	do {
-		if (((i - fs->super->s_first_data_block) %
-		     EXT2_BLOCKS_PER_GROUP(fs->super)) == 0)
-			check_block_uninit(fs, map,
-					   (i - fs->super->s_first_data_block) /
-					   EXT2_BLOCKS_PER_GROUP(fs->super));
+	goal &= ~EXT2FS_CLUSTER_MASK(fs);
 
-		if (!ext2fs_fast_test_block_bitmap2(map, i)) {
-			*ret = i;
-			return 0;
-		}
-		i = (i + c_ratio) & ~(c_ratio - 1);
-		if (i >= ext2fs_blocks_count(fs->super))
-			i = fs->super->s_first_data_block;
-	} while (i != goal);
-	return EXT2_ET_BLOCK_ALLOC_FAIL;
+	retval = ext2fs_find_first_zero_block_bitmap2(map,
+			goal, ext2fs_blocks_count(fs->super) - 1, &b);
+	if ((retval == ENOENT) && (goal != fs->super->s_first_data_block))
+		retval = ext2fs_find_first_zero_block_bitmap2(map,
+			fs->super->s_first_data_block, goal - 1, &b);
+	if (retval == ENOENT)
+		return EXT2_ET_BLOCK_ALLOC_FAIL;
+	if (retval)
+		return retval;
+
+	clear_block_uninit(fs, ext2fs_group_of_blk2(fs, b));
+	*ret = b;
+	return 0;
 }
 
 errcode_t ext2fs_new_block(ext2_filsys fs, blk_t goal,
@@ -295,8 +257,11 @@ errcode_t ext2fs_get_free_blocks2(ext2_filsys fs, blk64_t start, blk64_t finish,
 	b &= ~(c_ratio - 1);
 	finish &= ~(c_ratio -1);
 	do {
-		if (b+num-1 > ext2fs_blocks_count(fs->super))
+		if (b + num - 1 >= ext2fs_blocks_count(fs->super)) {
+			if (finish > start)
+				return EXT2_ET_BLOCK_ALLOC_FAIL;
 			b = fs->super->s_first_data_block;
+		}
 		if (ext2fs_fast_test_block_bitmap_range2(map, b, num)) {
 			*ret = b;
 			return 0;

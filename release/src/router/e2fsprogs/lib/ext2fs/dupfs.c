@@ -40,6 +40,9 @@ errcode_t ext2fs_dup_handle(ext2_filsys src, ext2_filsys *dest)
 	fs->block_map = 0;
 	fs->badblocks = 0;
 	fs->dblist = 0;
+	fs->mmp_buf = 0;
+	fs->mmp_cmp = 0;
+	fs->mmp_fd = -1;
 
 	io_channel_bumpcount(fs->io);
 	if (fs->icache)
@@ -86,6 +89,28 @@ errcode_t ext2fs_dup_handle(ext2_filsys src, ext2_filsys *dest)
 		retval = ext2fs_copy_dblist(src->dblist, &fs->dblist);
 		if (retval)
 			goto errout;
+	}
+	if (src->mmp_buf) {
+		retval = ext2fs_get_mem(src->blocksize, &fs->mmp_buf);
+		if (retval)
+			goto errout;
+		memcpy(fs->mmp_buf, src->mmp_buf, src->blocksize);
+	}
+	if (src->mmp_fd >= 0) {
+		fs->mmp_fd = dup(src->mmp_fd);
+		if (fs->mmp_fd < 0) {
+			retval = EXT2_ET_MMP_OPEN_DIRECT;
+			goto errout;
+		}
+	}
+	if (src->mmp_cmp) {
+		int align = ext2fs_get_dio_alignment(src->mmp_fd);
+
+		retval = ext2fs_get_memalign(src->blocksize, align,
+					     &fs->mmp_cmp);
+		if (retval)
+			goto errout;
+		memcpy(fs->mmp_cmp, src->mmp_cmp, src->blocksize);
 	}
 	*dest = fs;
 	return 0;

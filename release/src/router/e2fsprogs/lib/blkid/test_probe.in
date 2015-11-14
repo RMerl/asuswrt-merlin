@@ -21,11 +21,11 @@ do
 		echo "non-existent"
 		continue
 	fi
-	if [ "$i" = "swap0" ]; then
+	if [ "$i" = "swap0" ] && which mkswap > /dev/null;  then
 		# swap is native-endian, so regenerate before testing
 		dd if=/dev/zero of=$IMAGE bs=16k count=64 2> /dev/null
 		mkswap -v0 $IMAGE > /dev/null
-	elif [ "$i" = "swap1" ]; then
+	elif [ "$i" = "swap1" ] && which mkswap > /dev/null; then
 		# swap is native-endian, so regenerate before testing
 		dd if=/dev/zero of=$IMAGE bs=16k count=64 2> /dev/null
 		# check if mkswap supports the "-U" option

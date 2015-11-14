@@ -165,7 +165,7 @@ main(int argc, char **argv)
 		printf("Warning: not a time-based UUID, so UUID time "
 		       "decoding will likely not work!\n");
 	}
-	printf("UUID time is: (%ld, %ld): %s\n", tv.tv_sec, tv.tv_usec,
+	printf("UUID time is: (%ld, %ld): %s\n", tv.tv_sec, (long)tv.tv_usec,
 	       ctime(&time_reg));
 
 	return 0;

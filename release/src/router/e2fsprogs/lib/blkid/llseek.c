@@ -36,7 +36,7 @@
 #define my_llseek lseek64
 
 #elif defined(HAVE_LLSEEK)
-#include <syscall.h>
+#include <sys/syscall.h>
 
 #ifndef HAVE_LLSEEK_PROTOTYPE
 extern long long llseek(int fd, long long offset, int origin);

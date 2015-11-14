@@ -91,8 +91,6 @@ blkid_dev blkid_get_dev(blkid_cache cache, const char *devname, int flags)
 		 */
 		list_for_each_safe(p, pnext, &cache->bic_devs) {
 			blkid_dev dev2;
-			if (!p)
-				break;
 			dev2 = list_entry(p, struct blkid_struct_dev, bid_devs);
 			if (dev2->bid_flags & BLKID_BID_FL_VERIFIED)
 				continue;

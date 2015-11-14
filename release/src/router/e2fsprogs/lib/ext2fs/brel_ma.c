@@ -27,24 +27,24 @@
 #include "ext2fs.h"
 #include "brel.h"
 
-static errcode_t bma_put(ext2_brel brel, blk_t old,
+static errcode_t bma_put(ext2_brel brel, blk64_t old,
 			struct ext2_block_relocate_entry *ent);
-static errcode_t bma_get(ext2_brel brel, blk_t old,
+static errcode_t bma_get(ext2_brel brel, blk64_t old,
 			struct ext2_block_relocate_entry *ent);
 static errcode_t bma_start_iter(ext2_brel brel);
-static errcode_t bma_next(ext2_brel brel, blk_t *old,
+static errcode_t bma_next(ext2_brel brel, blk64_t *old,
 			 struct ext2_block_relocate_entry *ent);
-static errcode_t bma_move(ext2_brel brel, blk_t old, blk_t new);
-static errcode_t bma_delete(ext2_brel brel, blk_t old);
+static errcode_t bma_move(ext2_brel brel, blk64_t old, blk64_t new);
+static errcode_t bma_delete(ext2_brel brel, blk64_t old);
 static errcode_t bma_free(ext2_brel brel);
 
 struct brel_ma {
 	__u32 magic;
-	blk_t max_block;
+	blk64_t max_block;
 	struct ext2_block_relocate_entry *entries;
 };
 
-errcode_t ext2fs_brel_memarray_create(char *name, blk_t max_block,
+errcode_t ext2fs_brel_memarray_create(char *name, blk64_t max_block,
 				      ext2_brel *new_brel)
 {
 	ext2_brel		brel = 0;
@@ -102,7 +102,7 @@ errout:
 	return retval;
 }
 
-static errcode_t bma_put(ext2_brel brel, blk_t old,
+static errcode_t bma_put(ext2_brel brel, blk64_t old,
 			struct ext2_block_relocate_entry *ent)
 {
 	struct brel_ma 	*ma;
@@ -114,7 +114,7 @@ static errcode_t bma_put(ext2_brel brel, blk_t old,
 	return 0;
 }
 
-static errcode_t bma_get(ext2_brel brel, blk_t old,
+static errcode_t bma_get(ext2_brel brel, blk64_t old,
 			struct ext2_block_relocate_entry *ent)
 {
 	struct brel_ma 	*ma;
@@ -134,7 +134,7 @@ static errcode_t bma_start_iter(ext2_brel brel)
 	return 0;
 }
 
-static errcode_t bma_next(ext2_brel brel, blk_t *old,
+static errcode_t bma_next(ext2_brel brel, blk64_t *old,
 			  struct ext2_block_relocate_entry *ent)
 {
 	struct brel_ma 	*ma;
@@ -151,7 +151,7 @@ static errcode_t bma_next(ext2_brel brel, blk_t *old,
 	return 0;
 }
 
-static errcode_t bma_move(ext2_brel brel, blk_t old, blk_t new)
+static errcode_t bma_move(ext2_brel brel, blk64_t old, blk64_t new)
 {
 	struct brel_ma 	*ma;
 
@@ -165,7 +165,7 @@ static errcode_t bma_move(ext2_brel brel, blk_t old, blk_t new)
 	return 0;
 }
 
-static errcode_t bma_delete(ext2_brel brel, blk_t old)
+static errcode_t bma_delete(ext2_brel brel, blk64_t old)
 {
 	struct brel_ma 	*ma;
 

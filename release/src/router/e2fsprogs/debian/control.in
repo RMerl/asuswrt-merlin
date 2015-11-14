@@ -9,8 +9,8 @@ Source: e2fsprogs
 Section: admin
 Priority: required
 Maintainer: Theodore Y. Ts'o <tytso@mit.edu>
-Build-Depends: texi2html (>= 1.76), gettext, texinfo, pkg-config, DIETLIBC_DEFINES gcc-multilib [mips mipsel], debhelper (>= 7.0), UTIL_LINUX_NG_DEFINES m4
-Standards-Version: 3.9.4
+Build-Depends: gettext, texinfo, pkg-config, DIETLIBC_DEFINES gcc-multilib [mips mipsel], debhelper (>= 7.0), UTIL_LINUX_NG_DEFINES m4
+Standards-Version: 3.9.6
 Homepage: http://e2fsprogs.sourceforge.net
 
 ifdef(`E2FSCK_STATIC',``
@@ -124,6 +124,7 @@ Description: runtime components for the Universally Unique ID library
  different CPU’s. It is used by libuuid as well as the uuidgen
  program.
 
+ifdef(`UDEB_PKGS',``
 Package: libuuid1-udeb
 XC-Package-Type: udeb
 Section: debian-installer
@@ -135,6 +136,7 @@ Description: stripped down universally unique id library, for debian-installer
  See RFC 4122 for more information.
  .
  This is a minimal package for debian-installer.
+'')dnl
 
 Package: uuid-dev
 Section: libdevel
@@ -159,6 +161,7 @@ Description: block device id library
  filesystems by hard-coded device names, but via a logical naming 
  system instead.
 
+ifdef(`UDEB_PKGS',``
 Package: libblkid1-udeb
 XC-Package-Type: udeb
 Section: debian-installer
@@ -173,6 +176,7 @@ Description: stripped down block device id library, for debian-installer
  system instead.
  .
  This is a minimal package for debian-installer.
+'')dnl
 
 Package: libblkid-dev
 Section: libdevel
@@ -189,6 +193,7 @@ Description: block device id library - headers and static libraries
  This package contains the development environment for the blkid library.
 '')dnl
 
+ifdef(`UDEB_PKGS',``
 Package: e2fsprogs-udeb
 XC-Package-Type: udeb
 Section: debian-installer
@@ -199,8 +204,9 @@ Description: stripped-down versions of e2fsprogs, for debian-installer
  This package is an e2fsprogs package built for a reduced size, so that
  it can help to save space in debian-installer.
  .
- Don't attempt to install this package, it has no support for a couple of
+ Don'''``t attempt to install this package, it has no support for a couple of
  features you surely want.  Anyway it should refuse to install.
+'')dnl
 
 Package: e2fslibs
 Section: libs
@@ -253,7 +259,8 @@ Description: ext2/ext3/ext4 file system utilities
  hard disks on Debian and other Linux systems.
  .
  This package contains programs for creating, checking, and maintaining
- ext2/3/4-based file systems.
+ ext2/3/4-based file systems.  It also includes the "badblocks" program,
+ which can be used to scan for bad blocks on a disk or other storage device.
 
 Package: e2fsprogs-dbg
 Section: debug

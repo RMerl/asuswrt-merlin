@@ -71,42 +71,7 @@ struct undo_private_data {
 	ext2_loff_t offset;
 };
 
-static errcode_t undo_open(const char *name, int flags, io_channel *channel);
-static errcode_t undo_close(io_channel channel);
-static errcode_t undo_set_blksize(io_channel channel, int blksize);
-static errcode_t undo_read_blk64(io_channel channel, unsigned long long block,
-				 int count, void *data);
-static errcode_t undo_write_blk64(io_channel channel, unsigned long long block,
-				  int count, const void *data);
-static errcode_t undo_read_blk(io_channel channel, unsigned long block,
-			       int count, void *data);
-static errcode_t undo_write_blk(io_channel channel, unsigned long block,
-				int count, const void *data);
-static errcode_t undo_flush(io_channel channel);
-static errcode_t undo_write_byte(io_channel channel, unsigned long offset,
-				int size, const void *data);
-static errcode_t undo_set_option(io_channel channel, const char *option,
-				 const char *arg);
-static errcode_t undo_get_stats(io_channel channel, io_stats *stats);
-
-static struct struct_io_manager struct_undo_manager = {
-	EXT2_ET_MAGIC_IO_MANAGER,
-	"Undo I/O Manager",
-	undo_open,
-	undo_close,
-	undo_set_blksize,
-	undo_read_blk,
-	undo_write_blk,
-	undo_flush,
-	undo_write_byte,
-	undo_set_option,
-	undo_get_stats,
-	undo_read_blk64,
-	undo_write_blk64,
-};
-
-io_manager undo_io_manager = &struct_undo_manager;
-static io_manager undo_io_backing_manager ;
+static io_manager undo_io_backing_manager;
 static char *tdb_file;
 static int actual_size;
 
@@ -621,3 +586,21 @@ static errcode_t undo_get_stats(io_channel channel, io_stats *stats)
 
 	return retval;
 }
+
+static struct struct_io_manager struct_undo_manager = {
+	.magic		= EXT2_ET_MAGIC_IO_MANAGER,
+	.name		= "Undo I/O Manager",
+	.open		= undo_open,
+	.close		= undo_close,
+	.set_blksize	= undo_set_blksize,
+	.read_blk	= undo_read_blk,
+	.write_blk	= undo_write_blk,
+	.flush		= undo_flush,
+	.write_byte	= undo_write_byte,
+	.set_option	= undo_set_option,
+	.get_stats	= undo_get_stats,
+	.read_blk64	= undo_read_blk64,
+	.write_blk64	= undo_write_blk64,
+};
+
+io_manager undo_io_manager = &struct_undo_manager;

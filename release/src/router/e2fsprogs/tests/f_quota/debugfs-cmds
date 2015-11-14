@@ -1,0 +1,7 @@
+list_quota user
+list_quota group
+get_quota user 0
+get_quota user 100
+get_quota user 34
+get_quota group 0
+

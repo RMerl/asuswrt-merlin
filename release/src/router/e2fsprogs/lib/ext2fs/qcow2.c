@@ -60,8 +60,10 @@ struct ext2_qcow2_hdr *qcow2_read_header(int fd)
 		return NULL;
 	memset(buffer, 0, sizeof(struct ext2_qcow2_hdr));
 
-	if (ext2fs_llseek(fd, 0, SEEK_SET < 0))
+	if (ext2fs_llseek(fd, 0, SEEK_SET < 0)) {
+		ext2fs_free_mem(&buffer);
 		return NULL;
+	}
 
 	size = read(fd, buffer, sizeof(struct ext2_qcow2_hdr));
 	if (size != sizeof(struct ext2_qcow2_hdr)) {
@@ -91,8 +93,10 @@ static int qcow2_read_l1_table(struct ext2_qcow2_image *img)
 	if (ret)
 		return ret;
 
-	if (ext2fs_llseek(fd, img->l1_offset, SEEK_SET) < 0)
+	if (ext2fs_llseek(fd, img->l1_offset, SEEK_SET) < 0) {
+		ext2fs_free_mem(&table);
 		return errno;
+	}
 
 	size = read(fd, table, l1_size);
 	if (size != l1_size) {
@@ -231,13 +235,17 @@ int qcow2_write_raw_image(int qcow2_fd, int raw_fd,
 	}
 
 	/* Resize the output image to the filesystem size */
-	if (ext2fs_llseek(raw_fd, img.image_size - 1, SEEK_SET) < 0)
-		return errno;
+	if (ext2fs_llseek(raw_fd, img.image_size - 1, SEEK_SET) < 0) {
+		ret = errno;
+		goto out;
+	}
 
 	((char *)copy_buf)[0] = 0;
 	size = write(raw_fd, copy_buf, 1);
-	if (size != 1)
-		return errno;
+	if (size != 1) {
+		ret = errno;
+		goto out;
+	}
 
 out:
 	if (copy_buf)

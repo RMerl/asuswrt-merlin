@@ -33,6 +33,7 @@ DOCS=   doc/ext2ed-design.pdf doc/user-guide.pdf doc/ext2fs-overview.pdf \
 
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $< -o $@
+	$(CHECK_CMD) $(ALL_CFLAGS) $<
 
 .SUFFIXES: .sgml .ps .pdf .html
 
@@ -64,7 +65,7 @@ ext2ed.8: $(DEP_SUBSTITUTE) $(srcdir)/ext2ed.8.in
 ext2ed.conf: $(DEP_SUBSTITUTE) $(srcdir)/ext2ed.conf.in
 	$(SUBSTITUTE_UPTIME) $(srcdir)/ext2ed.conf.in ext2ed.conf
 
-clean:
+clean::
 	$(RM) -f ext2ed $(OBJS) $(DOCS) ext2ed.conf ext2ed.8
 	-rmdir doc
 

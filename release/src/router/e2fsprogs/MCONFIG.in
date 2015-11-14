@@ -29,6 +29,7 @@ man5dir = $(mandir)/man5
 man8dir = $(mandir)/man8
 infodir = @infodir@
 datadir = @datadir@
+pkgconfigdir = $(libdir)/pkgconfig
 
 @SET_MAKE@
 
@@ -50,9 +51,23 @@ datadir = @datadir@
 @ifNotGNUmake@ ES = @ES@
 @ifNotGNUmake@ Q = @Q@
 
+@ifGNUmake@ CHECK=sparse
+@ifGNUmake@ CHECK_OPTS=-Wsparse-all -Wno-transparent-union -Wno-return-void -Wno-undef -Wno-non-pointer-null
+@ifGNUmake@ ifeq ("$(C)", "2")
+@ifGNUmake@   CHECK_CMD=$(CHECK) $(CHECK_OPTS) -Wbitwise -D__CHECK_ENDIAN__
+@ifGNUmake@ else
+@ifGNUmake@   ifeq ("$(C)", "1")
+@ifGNUmake@     CHECK_CMD=$(CHECK) $(CHECK_OPTS)
+@ifGNUmake@    else
+@ifGNUmake@     CHECK_CMD=@true
+@ifGNUmake@   endif
+@ifGNUmake@ endif
+
+@ifNotGNUmake@ CHECK_CMD=@true
+
 CC = @CC@
 BUILD_CC = @BUILD_CC@
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ @DEFS@
 CPPFLAGS = @INCLUDES@
 ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 LDFLAGS = @LDFLAGS@
@@ -96,11 +111,13 @@ LIBUUID = @LIBUUID@ @SOCKET_LIB@
 LIBQUOTA = @STATIC_LIBQUOTA@
 LIBBLKID = @LIBBLKID@ @PRIVATE_LIBS_CMT@ $(LIBUUID)
 LIBINTL = @LIBINTL@
+SYSLIBS = @LIBS@
 DEPLIBSS = $(LIB)/libss@LIB_EXT@
 DEPLIBCOM_ERR = $(LIB)/libcom_err@LIB_EXT@
 DEPLIBUUID = @DEPLIBUUID@
 DEPLIBQUOTA = @DEPSTATIC_LIBQUOTA@
 DEPLIBBLKID = @DEPLIBBLKID@ @PRIVATE_LIBS_CMT@ $(DEPLIBUUID)
+TESTENV = LD_LIBRARY_PATH="$(LIB):$${LD_LIBRARY_PATH}" DYLD_LIBRARY_PATH="$(LIB):$${DYLD_LIBRARY_PATH}"
 
 STATIC_LIBSS = $(LIB)/libss@STATIC_LIB_EXT@ @DLOPEN_LIB@
 STATIC_LIBCOM_ERR = $(LIB)/libcom_err@STATIC_LIB_EXT@ @SEM_INIT_LIB@
@@ -201,8 +218,9 @@ MANMODE=	444
 
 DEP_LIB_MAKEFILES = $(top_srcdir)/lib/Makefile.library \
 	$(top_srcdir)/lib/Makefile.elf-lib  \
-	$(top_srcdir)/lib/Makefile.bsd-lib $(top_srcdir)/lib/Makefile.darwin-lib \
-	$(top_srcdir)/lib/Makefile.solaris-lib $(top_srcdir)/lib/Makefile.checker \
+	$(top_srcdir)/lib/Makefile.bsd-lib \
+	$(top_srcdir)/lib/Makefile.darwin-lib \
+	$(top_srcdir)/lib/Makefile.solaris-lib \
 	$(top_srcdir)/lib/Makefile.profile
 
 $(top_builddir)/config.status: $(top_srcdir)/configure
@@ -234,13 +252,21 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/MCONFIG \
 @MAINTAINER_CMT@$(top_srcdir)/configure: $(top_srcdir)/configure.in
 @MAINTAINER_CMT@	cd $(top_srcdir) && autoheader && autoconf
 
+coverage.txt: Makefile $(SRCS)
+	if test -n "$(SRCS)"; then \
+		gcov -s $(top_srcdir) -o . $(SRCS) > coverage.txt 2>&1 ; \
+	fi
+
+clean::
+	$(RM) -f *.gcda *.gcov *.gcno coverage.txt
+
 #
 # Make depend magic...
 #
 
 .depend: Makefile $(SRCS) $(top_srcdir)/depfix.sed $(top_srcdir)/wordwrap.pl
 	if test -n "$(SRCS)" ; then \
-		$(CC) -M $(ALL_CFLAGS) $(SRCS) | \
+		$(CC) -M $(ALL_CFLAGS) $(DEPEND_CFLAGS) $(SRCS) | \
 			$(SED) -f $(top_srcdir)/depfix.sed \
 			    -e 's; $(srcdir)/; $$(srcdir)/;g' \
 			    -e 's; $(top_srcdir)/; $$(top_srcdir)/;g' \

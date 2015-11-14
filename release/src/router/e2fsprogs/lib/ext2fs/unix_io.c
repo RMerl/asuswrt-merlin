@@ -1,13 +1,13 @@
 /*
  * unix_io.c --- This is the Unix (well, really POSIX) implementation
- * 	of the I/O manager.
+ *	of the I/O manager.
  *
  * Implements a one-block write-through cache.
  *
  * Includes support for Windows NT support under Cygwin.
  *
  * Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
- * 	2002 by Theodore Ts'o.
+ *	2002 by Theodore Ts'o.
  *
  * %Begin-Header%
  * This file may be redistributed under the terms of the GNU Library
@@ -97,51 +97,9 @@ struct unix_private_data {
 #define IS_ALIGNED(n, align) ((((unsigned long) n) & \
 			       ((unsigned long) ((align)-1))) == 0)
 
-static errcode_t unix_open(const char *name, int flags, io_channel *channel);
-static errcode_t unix_close(io_channel channel);
-static errcode_t unix_set_blksize(io_channel channel, int blksize);
-static errcode_t unix_read_blk(io_channel channel, unsigned long block,
-			       int count, void *data);
-static errcode_t unix_write_blk(io_channel channel, unsigned long block,
-				int count, const void *data);
-static errcode_t unix_flush(io_channel channel);
-static errcode_t unix_write_byte(io_channel channel, unsigned long offset,
-				int size, const void *data);
-static errcode_t unix_set_option(io_channel channel, const char *option,
-				 const char *arg);
-static errcode_t unix_get_stats(io_channel channel, io_stats *stats)
-;
-static void reuse_cache(io_channel channel, struct unix_private_data *data,
-		 struct unix_cache *cache, unsigned long long block);
-static errcode_t unix_read_blk64(io_channel channel, unsigned long long block,
-			       int count, void *data);
-static errcode_t unix_write_blk64(io_channel channel, unsigned long long block,
-				int count, const void *data);
-static errcode_t unix_discard(io_channel channel, unsigned long long block,
-			      unsigned long long count);
-
-static struct struct_io_manager struct_unix_manager = {
-	EXT2_ET_MAGIC_IO_MANAGER,
-	"Unix I/O Manager",
-	unix_open,
-	unix_close,
-	unix_set_blksize,
-	unix_read_blk,
-	unix_write_blk,
-	unix_flush,
-	unix_write_byte,
-	unix_set_option,
-	unix_get_stats,
-	unix_read_blk64,
-	unix_write_blk64,
-	unix_discard,
-};
-
-io_manager unix_io_manager = &struct_unix_manager;
-
 static errcode_t unix_get_stats(io_channel channel, io_stats *stats)
 {
-	errcode_t 	retval = 0;
+	errcode_t	retval = 0;
 
 	struct unix_private_data *data;
 
@@ -172,6 +130,28 @@ static errcode_t raw_read_blk(io_channel channel,
 	size = (count < 0) ? -count : count * channel->block_size;
 	data->io_stats.bytes_read += size;
 	location = ((ext2_loff_t) block * channel->block_size) + data->offset;
+
+#ifdef HAVE_PREAD64
+	/* Try an aligned pread */
+	if ((channel->align == 0) ||
+	    (IS_ALIGNED(buf, channel->align) &&
+	     IS_ALIGNED(size, channel->align))) {
+		actual = pread64(data->dev, buf, size, location);
+		if (actual == size)
+			return 0;
+	}
+#elif HAVE_PREAD
+	/* Try an aligned pread */
+	if ((sizeof(off_t) >= sizeof(ext2_loff_t)) &&
+	    ((channel->align == 0) ||
+	     (IS_ALIGNED(buf, channel->align) &&
+	      IS_ALIGNED(size, channel->align)))) {
+		actual = pread(data->dev, buf, size, location);
+		if (actual == size)
+			return 0;
+	}
+#endif /* HAVE_PREAD */
+
 	if (ext2fs_llseek(data->dev, location, SEEK_SET) != location) {
 		retval = errno ? errno : EXT2_ET_LLSEEK_FAILED;
 		goto error_out;
@@ -242,6 +222,28 @@ static errcode_t raw_write_blk(io_channel channel,
 	data->io_stats.bytes_written += size;
 
 	location = ((ext2_loff_t) block * channel->block_size) + data->offset;
+
+#ifdef HAVE_PWRITE64
+	/* Try an aligned pwrite */
+	if ((channel->align == 0) ||
+	    (IS_ALIGNED(buf, channel->align) &&
+	     IS_ALIGNED(size, channel->align))) {
+		actual = pwrite64(data->dev, buf, size, location);
+		if (actual == size)
+			return 0;
+	}
+#elif HAVE_PWRITE
+	/* Try an aligned pwrite */
+	if ((sizeof(off_t) >= sizeof(ext2_loff_t)) &&
+	    ((channel->align == 0) ||
+	     (IS_ALIGNED(buf, channel->align) &&
+	      IS_ALIGNED(size, channel->align)))) {
+		actual = pwrite(data->dev, buf, size, location);
+		if (actual == size)
+			return 0;
+	}
+#endif /* HAVE_PWRITE */
+
 	if (ext2fs_llseek(data->dev, location, SEEK_SET) != location) {
 		retval = errno ? errno : EXT2_ET_LLSEEK_FAILED;
 		goto error_out;
@@ -476,7 +478,7 @@ static errcode_t unix_open(const char *name, int flags, io_channel *channel)
 	int		f_nocache = 0;
 	ext2fs_struct_stat st;
 #ifdef __linux__
-	struct 		utsname ut;
+	struct		utsname ut;
 #endif
 
 	if (name == 0)
@@ -818,7 +820,8 @@ static errcode_t unix_write_blk64(io_channel channel, unsigned long long block,
 			cache = reuse;
 			reuse_cache(channel, data, cache, block);
 		}
-		memcpy(cache->buf, cp, channel->block_size);
+		if (cache->buf != cp)
+			memcpy(cache->buf, cp, channel->block_size);
 		cache->dirty = !writethrough;
 		count--;
 		block++;
@@ -931,10 +934,10 @@ static errcode_t unix_discard(io_channel channel, unsigned long long block,
 
 	if (channel->flags & CHANNEL_FLAGS_BLOCK_DEVICE) {
 #ifdef BLKDISCARD
-		__uint64_t range[2];
+		__u64 range[2];
 
-		range[0] = (__uint64_t)(block) * channel->block_size;
-		range[1] = (__uint64_t)(count) * channel->block_size;
+		range[0] = (__u64)(block) * channel->block_size;
+		range[1] = (__u64)(count) * channel->block_size;
 
 		ret = ioctl(data->dev, BLKDISCARD, &range);
 #else
@@ -963,3 +966,22 @@ static errcode_t unix_discard(io_channel channel, unsigned long long block,
 unimplemented:
 	return EXT2_ET_UNIMPLEMENTED;
 }
+
+static struct struct_io_manager struct_unix_manager = {
+	.magic		= EXT2_ET_MAGIC_IO_MANAGER,
+	.name		= "Unix I/O Manager",
+	.open		= unix_open,
+	.close		= unix_close,
+	.set_blksize	= unix_set_blksize,
+	.read_blk	= unix_read_blk,
+	.write_blk	= unix_write_blk,
+	.flush		= unix_flush,
+	.write_byte	= unix_write_byte,
+	.set_option	= unix_set_option,
+	.get_stats	= unix_get_stats,
+	.read_blk64	= unix_read_blk64,
+	.write_blk64	= unix_write_blk64,
+	.discard	= unix_discard,
+};
+
+io_manager unix_io_manager = &struct_unix_manager;

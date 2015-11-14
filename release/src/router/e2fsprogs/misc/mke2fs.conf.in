@@ -1,5 +1,5 @@
 [defaults]
-	base_features = sparse_super,filetype,resize_inode,dir_index,ext_attr
+	base_features = sparse_super,large_file,filetype,resize_inode,dir_index,ext_attr
 	default_mntopts = acl,user_xattr
 	enable_periodic_fsck = 0
 	blocksize = 4096

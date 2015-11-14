@@ -15,9 +15,6 @@
  */
 
 #include "config.h"
-#if HAVE_SECURE_GETENV
-#define _GNU_SOURCE
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -42,7 +39,6 @@ extern int errno;
 #endif
 
 static char MORE[] = "more";
-extern char *_ss_pager_name;
 extern char *getenv PROTOTYPE((const char *));
 
 char *ss_safe_getenv(const char *arg)
@@ -131,7 +127,7 @@ static int write_all(int fd, char *buf, size_t count)
 	return c;
 }
 
-void ss_page_stdin()
+void ss_page_stdin(void)
 {
 	int i;
 	sigset_t mask;

@@ -39,6 +39,8 @@ extern "C" {
 #define SUPERBLOCK_OFFSET	1024
 #define SUPERBLOCK_SIZE		1024
 
+#define UUID_STR_SIZE 37
+
 /*
  * The last ext2fs revision level that this version of the library is
  * able to support.
@@ -64,14 +66,20 @@ extern "C" {
 #include <ext2fs/ext3_extents.h>
 #endif /* EXT2_FLAT_INCLUDES */
 
-typedef __u32		ext2_ino_t;
-typedef __u32		blk_t;
-typedef __u64		blk64_t;
-typedef __u32		dgrp_t;
-typedef __u32		ext2_off_t;
-typedef __u64		ext2_off64_t;
-typedef __s64		e2_blkcnt_t;
-typedef __u32		ext2_dirhash_t;
+#ifdef __CHECK_ENDIAN__
+#define __bitwise __attribute__((bitwise))
+#else
+#define __bitwise
+#endif
+
+typedef __u32 __bitwise		ext2_ino_t;
+typedef __u32 __bitwise		blk_t;
+typedef __u64 __bitwise		blk64_t;
+typedef __u32 __bitwise		dgrp_t;
+typedef __u32 __bitwise		ext2_off_t;
+typedef __u64 __bitwise		ext2_off64_t;
+typedef __s64 __bitwise		e2_blkcnt_t;
+typedef __u32 __bitwise		ext2_dirhash_t;
 
 #if EXT2_FLAT_INCLUDES
 #include "com_err.h"
@@ -544,7 +552,8 @@ typedef struct ext2_icount *ext2_icount_t;
 					 EXT3_FEATURE_COMPAT_HAS_JOURNAL|\
 					 EXT2_FEATURE_COMPAT_RESIZE_INODE|\
 					 EXT2_FEATURE_COMPAT_DIR_INDEX|\
-					 EXT2_FEATURE_COMPAT_EXT_ATTR)
+					 EXT2_FEATURE_COMPAT_EXT_ATTR|\
+					 EXT4_FEATURE_COMPAT_SPARSE_SUPER2)
 
 /* This #ifdef is temporary until compression is fully supported */
 #ifdef ENABLE_COMPRESSION
@@ -626,6 +635,12 @@ typedef struct stat ext2fs_struct_stat;
  * function prototypes
  */
 
+/* The LARGE_FILE feature should be set if we have stored files 2GB+ in size */
+static inline int ext2fs_needs_large_file_feature(unsigned long long file_size)
+{
+	return file_size >= 0x80000000ULL;
+}
+
 /* alloc.c */
 extern errcode_t ext2fs_new_inode(ext2_filsys fs, ext2_ino_t dir, int mode,
 				  ext2fs_inode_bitmap map, ext2_ino_t *ret);
@@ -671,6 +686,8 @@ void ext2fs_inode_alloc_stats2(ext2_filsys fs, ext2_ino_t ino,
 			       int inuse, int isdir);
 void ext2fs_block_alloc_stats(ext2_filsys fs, blk_t blk, int inuse);
 void ext2fs_block_alloc_stats2(ext2_filsys fs, blk64_t blk, int inuse);
+void ext2fs_block_alloc_stats_range(ext2_filsys fs, blk64_t blk,
+				    blk_t num, int inuse);
 
 /* alloc_tables.c */
 extern errcode_t ext2fs_allocate_tables(ext2_filsys fs);
@@ -851,6 +868,8 @@ extern blk64_t ext2fs_file_acl_block(ext2_filsys fs,
 				     const struct ext2_inode *inode);
 extern void ext2fs_file_acl_block_set(ext2_filsys fs,
 				      struct ext2_inode *inode, blk64_t blk);
+extern errcode_t ext2fs_inode_size_set(ext2_filsys fs, struct ext2_inode *inode,
+				       ext2_off64_t size);
 
 /* block.c */
 extern errcode_t ext2fs_block_iterate(ext2_filsys fs,
@@ -894,6 +913,9 @@ extern errcode_t ext2fs_bmap2(ext2_filsys fs, ext2_ino_t ino,
 			      struct ext2_inode *inode,
 			      char *block_buf, int bmap_flags, blk64_t block,
 			      int *ret_flags, blk64_t *phys_blk);
+errcode_t ext2fs_map_cluster_block(ext2_filsys fs, ext2_ino_t ino,
+				   struct ext2_inode *inode, blk64_t lblk,
+				   blk64_t *pblk);
 
 #if 0
 /* bmove.c */
@@ -909,6 +931,7 @@ extern errcode_t ext2fs_check_desc(ext2_filsys fs);
 /* closefs.c */
 extern errcode_t ext2fs_close(ext2_filsys fs);
 extern errcode_t ext2fs_close2(ext2_filsys fs, int flags);
+extern errcode_t ext2fs_close_free(ext2_filsys *fs);
 extern errcode_t ext2fs_flush(ext2_filsys fs);
 extern errcode_t ext2fs_flush2(ext2_filsys fs, int flags);
 extern int ext2fs_bg_has_super(ext2_filsys fs, dgrp_t group_block);
@@ -1162,6 +1185,9 @@ extern errcode_t ext2fs_set_generic_bitmap_range(ext2fs_generic_bitmap bmap,
 extern errcode_t ext2fs_find_first_zero_generic_bitmap(ext2fs_generic_bitmap bitmap,
 						       __u32 start, __u32 end,
 						       __u32 *out);
+extern errcode_t ext2fs_find_first_set_generic_bitmap(ext2fs_generic_bitmap bitmap,
+						       __u32 start, __u32 end,
+						       __u32 *out);
 
 /* gen_bitmap64.c */
 
@@ -1308,6 +1334,10 @@ extern errcode_t ext2fs_check_mount_point(const char *device, int *mount_flags,
 					  char *mtpt, int mtlen);
 
 /* punch.c */
+/*
+ * NOTE: This function removes from an inode the blocks "start", "end", and
+ * every block in between.
+ */
 extern errcode_t ext2fs_punch(ext2_filsys fs, ext2_ino_t ino,
 			      struct ext2_inode *inode,
 			      char *block_buf, blk64_t start,
@@ -1346,7 +1376,10 @@ extern errcode_t ext2fs_add_journal_device(ext2_filsys fs,
 					   ext2_filsys journal_dev);
 extern errcode_t ext2fs_add_journal_inode(ext2_filsys fs, blk_t num_blocks,
 					  int flags);
+extern errcode_t ext2fs_add_journal_inode2(ext2_filsys fs, blk_t num_blocks,
+					   blk64_t goal, int flags);
 extern int ext2fs_default_journal_size(__u64 num_blocks);
+extern int ext2fs_journal_sb_start(int blocksize);
 
 /* openfs.c */
 extern errcode_t ext2fs_open(const char *name, int flags, int superblock,
@@ -1356,6 +1389,11 @@ extern errcode_t ext2fs_open2(const char *name, const char *io_options,
 			      int flags, int superblock,
 			      unsigned int block_size, io_manager manager,
 			      ext2_filsys *ret_fs);
+/*
+ * The dgrp_t argument to these two functions is not actually a group number
+ * but a block number offset within a group table!  Convert with the formula
+ * (group_number / groups_per_block).
+ */
 extern blk64_t ext2fs_descriptor_block_loc2(ext2_filsys fs,
 					blk64_t group_block, dgrp_t i);
 extern blk_t ext2fs_descriptor_block_loc(ext2_filsys fs, blk_t group_block,
@@ -1467,8 +1505,8 @@ extern void ext2fs_mark_ib_dirty(ext2_filsys fs);
 extern void ext2fs_mark_bb_dirty(ext2_filsys fs);
 extern int ext2fs_test_ib_dirty(ext2_filsys fs);
 extern int ext2fs_test_bb_dirty(ext2_filsys fs);
-extern int ext2fs_group_of_blk(ext2_filsys fs, blk_t blk);
-extern int ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino);
+extern dgrp_t ext2fs_group_of_blk(ext2_filsys fs, blk_t blk);
+extern dgrp_t ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino);
 extern blk_t ext2fs_group_first_block(ext2_filsys fs, dgrp_t group);
 extern blk_t ext2fs_group_last_block(ext2_filsys fs, dgrp_t group);
 extern blk_t ext2fs_inode_data_blocks(ext2_filsys fs,
@@ -1501,7 +1539,7 @@ extern __u64 ext2fs_div64_ceil(__u64 a, __u64 b);
 #ifndef EXT2_CUSTOM_MEMORY_ROUTINES
 #include <string.h>
 /*
- *  Allocate memory
+ *  Allocate memory.  The 'ptr' arg must point to a pointer.
  */
 _INLINE_ errcode_t ext2fs_get_mem(unsigned long size, void *ptr)
 {
@@ -1548,7 +1586,7 @@ _INLINE_ errcode_t ext2fs_get_arrayzero(unsigned long count,
 }
 
 /*
- * Free memory
+ * Free memory.  The 'ptr' arg must point to a pointer.
  */
 _INLINE_ errcode_t ext2fs_free_mem(void *ptr)
 {
@@ -1562,7 +1600,7 @@ _INLINE_ errcode_t ext2fs_free_mem(void *ptr)
 }
 
 /*
- *  Resize memory
+ *  Resize memory.  The 'ptr' arg must point to a pointer.
  */
 _INLINE_ errcode_t ext2fs_resize_mem(unsigned long EXT2FS_ATTR((unused)) old_size,
 				     unsigned long size, void *ptr)
@@ -1663,14 +1701,14 @@ _INLINE_ int ext2fs_test_bb_dirty(ext2_filsys fs)
 /*
  * Return the group # of a block
  */
-_INLINE_ int ext2fs_group_of_blk(ext2_filsys fs, blk_t blk)
+_INLINE_ dgrp_t ext2fs_group_of_blk(ext2_filsys fs, blk_t blk)
 {
 	return ext2fs_group_of_blk2(fs, blk);
 }
 /*
  * Return the group # of an inode number
  */
-_INLINE_ int ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino)
+_INLINE_ dgrp_t ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino)
 {
 	return (ino - 1) / fs->super->s_inodes_per_group;
 }
@@ -1680,7 +1718,7 @@ _INLINE_ int ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino)
  */
 _INLINE_ blk_t ext2fs_group_first_block(ext2_filsys fs, dgrp_t group)
 {
-	return ext2fs_group_first_block2(fs, group);
+	return (blk_t) ext2fs_group_first_block2(fs, group);
 }
 
 /*
@@ -1688,13 +1726,13 @@ _INLINE_ blk_t ext2fs_group_first_block(ext2_filsys fs, dgrp_t group)
  */
 _INLINE_ blk_t ext2fs_group_last_block(ext2_filsys fs, dgrp_t group)
 {
-	return ext2fs_group_last_block2(fs, group);
+	return (blk_t) ext2fs_group_last_block2(fs, group);
 }
 
 _INLINE_ blk_t ext2fs_inode_data_blocks(ext2_filsys fs,
 					struct ext2_inode *inode)
 {
-	return ext2fs_inode_data_blocks2(fs, inode);
+	return (blk_t) ext2fs_inode_data_blocks2(fs, inode);
 }
 
 /*

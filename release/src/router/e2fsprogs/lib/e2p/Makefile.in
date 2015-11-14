@@ -50,13 +50,12 @@ BSDLIB_INSTALL_DIR = $(root_libdir)
 @MAKEFILE_ELF@
 @MAKEFILE_BSDLIB@
 @MAKEFILE_PROFILE@
-@MAKEFILE_CHECKER@
 
 .c.o:
 	$(E) "	CC $<"
 	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
+	$(Q) $(CHECK_CMD) $(ALL_CFLAGS) $<
 @PROFILE_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -g -pg -o profiled/$*.o -c $<
-@CHECKER_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -checker -g -o checker/$*.o -c $<
 @ELF_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -fPIC -o elfshared/$*.o -c $<
 @BSDLIB_CMT@	$(Q) $(CC) $(ALL_CFLAGS) $(BSDLIB_PIC_FLAG) -o pic/$*.o -c $<
 
@@ -81,7 +80,7 @@ check::	tst_ostype tst_feature
 installdirs::
 	$(E) "	MKINSTALLDIRS $(libdir) $(includedir)/e2p"
 	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(libdir) \
-		$(DESTDIR)$(includedir)/e2p $(DESTDIR)$(libdir)/pkgconfig
+		$(DESTDIR)$(includedir)/e2p $(DESTDIR)$(pkgconfigdir)
 
 install:: all installdirs 
 	$(E) "	INSTALL_DATA $(libdir)/libe2p.a"
@@ -92,16 +91,16 @@ install:: all installdirs
 	  echo "	INSTALL_DATA $(includedir)/e2p/$$i"; \
 	  $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(includedir)/e2p/$$i; \
 	done
-	$(E) "	INSTALL_DATA $(libdir)/pkgconfig/e2p.pc"
-	$(Q) $(INSTALL_DATA) e2p.pc $(DESTDIR)$(libdir)/pkgconfig/e2p.pc
+	$(E) "	INSTALL_DATA $(pkgconfigdir)/e2p.pc"
+	$(Q) $(INSTALL_DATA) e2p.pc $(DESTDIR)$(pkgconfigdir)/e2p.pc
 
 uninstall::
 	$(RM) -f $(DESTDIR)$(libdir)/libe2p.a \
-		$(DESTDIR)$(libdir)/pkgconfig/e2p.pc
+		$(DESTDIR)$(pkgconfigdir)/e2p.pc
 	$(RM) -rf $(DESTDIR)$(includedir)/e2p
 
 clean::
-	$(RM) -f \#* *.s *.o *.a *~ *.bak core profiled/* checker/*
+	$(RM) -f \#* *.s *.o *.a *~ *.bak core profiled/*
 	$(RM) -f ../libe2p.a ../libe2p_p.a tst_ostype tst_feature
 
 mostlyclean:: clean

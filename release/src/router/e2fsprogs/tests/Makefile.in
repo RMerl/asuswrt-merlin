@@ -17,6 +17,7 @@ test_one: $(srcdir)/test_one.in Makefile mke2fs.conf
 	@echo "Creating test_one script..."
 	@echo "#!/bin/sh" > test_one
 @HTREE_CMT@	@echo "HTREE=y" >> test_one
+@QUOTA_CMT@	@echo "QUOTA=y" >> test_one
 	@echo "SRCDIR=@srcdir@" >> test_one
 	@echo "DIFF_OPTS=@UNI_DIFF_OPTS@" >> test_one
 	@cat $(srcdir)/test_one.in >> test_one

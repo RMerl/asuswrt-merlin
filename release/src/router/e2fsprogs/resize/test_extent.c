@@ -109,6 +109,8 @@ void do_test(FILE *in, FILE *out)
 		} else
 			fputs("# Syntax error\n", out);
 	}
+	if (extent)
+		ext2fs_free_extent_table(extent);
 }
 
 #ifdef __GNUC__

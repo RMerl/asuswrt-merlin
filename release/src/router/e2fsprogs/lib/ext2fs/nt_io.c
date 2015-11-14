@@ -230,17 +230,15 @@ static errcode_t nt_write_blk(io_channel channel, unsigned long block,
 static errcode_t nt_flush(io_channel channel);
 
 static struct struct_io_manager struct_nt_manager = {
-	EXT2_ET_MAGIC_IO_MANAGER,
-	"NT I/O Manager",
-	nt_open,
-	nt_close,
-	nt_set_blksize,
-	nt_read_blk,
-	nt_write_blk,
-	nt_flush
+	.magic		= EXT2_ET_MAGIC_IO_MANAGER,
+	.name		= "NT I/O Manager",
+	.open		= nt_open,
+	.close		= nt_close,
+	.set_blksize	= nt_set_blksize,
+	.read_blk	= nt_read_blk,
+	.write_blk	= nt_write_blk,
+	.flush		= nt_flush
 };
-
-
 
 //
 // function to get API

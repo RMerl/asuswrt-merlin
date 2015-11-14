@@ -1,0 +1,1 @@
+infinite loop due to off by one error when finding free space for inode table relocation

@@ -63,19 +63,17 @@ static errcode_t inode_write_blk64(io_channel channel,
 				unsigned long long block, int count, const void *data);
 
 static struct struct_io_manager struct_inode_manager = {
-	EXT2_ET_MAGIC_IO_MANAGER,
-	"Inode I/O Manager",
-	inode_open,
-	inode_close,
-	inode_set_blksize,
-	inode_read_blk,
-	inode_write_blk,
-	inode_flush,
-	inode_write_byte,
-	NULL,
-	NULL,
-	inode_read_blk64,
-	inode_write_blk64
+	.magic		= EXT2_ET_MAGIC_IO_MANAGER,
+	.name		= "Inode I/O Manager",
+	.open		= inode_open,
+	.close		= inode_close,
+	.set_blksize	= inode_set_blksize,
+	.read_blk	= inode_read_blk,
+	.write_blk	= inode_write_blk,
+	.flush		= inode_flush,
+	.write_byte	= inode_write_byte,
+	.read_blk64	= inode_read_blk64,
+	.write_blk64	= inode_write_blk64
 };
 
 io_manager inode_io_manager = &struct_inode_manager;

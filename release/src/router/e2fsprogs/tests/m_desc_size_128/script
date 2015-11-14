@@ -1,0 +1,4 @@
+DESCRIPTION="enable 128-byte group descriptor on mkfs"
+FS_SIZE=131072
+MKE2FS_OPTS="-b 1024 -O 64bit,extents -g 1024 -N 8192 -E desc_size=128"
+. $cmd_dir/run_mke2fs

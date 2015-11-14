@@ -90,5 +90,10 @@ request do_dump_mmp, "Dump MMP information",
 request do_extent_open, "Open inode for extent manipulation",
 	extent_open, eo;
 
-end;
+request do_list_quota, "List quota",
+	lost_quota, lq;
 
+request do_get_quota, "Get quota",
+	get_quota, gq;
+
+end;

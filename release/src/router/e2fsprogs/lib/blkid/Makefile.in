@@ -47,7 +47,6 @@ BSDLIB_INSTALL_DIR = $(root_libdir)
 @MAKEFILE_ELF@
 @MAKEFILE_BSDLIB@
 @MAKEFILE_PROFILE@
-@MAKEFILE_CHECKER@
 
 LIBS_BLKID=	$(STATIC_LIBBLKID) $(STATIC_LIBUUID)
 DEPLIBS_BLKID=	$(DEPSTATIC_LIBBLKID) $(DEPSTATIC_LIBUUID)
@@ -55,8 +54,8 @@ DEPLIBS_BLKID=	$(DEPSTATIC_LIBBLKID) $(DEPSTATIC_LIBUUID)
 .c.o:
 	$(E) "	CC $<"
 	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
+	$(Q) $(CHECK_CMD) $(ALL_CFLAGS) $<
 @PROFILE_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -g -pg -o profiled/$*.o -c $<
-@CHECKER_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -checker -g -o checker/$*.o -c $<
 @ELF_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -fPIC -o elfshared/$*.o -c $<
 @BSDLIB_CMT@	$(Q) $(CC) $(ALL_CFLAGS) $(BSDLIB_PIC_FLAG) -o pic/$*.o -c $<
 
@@ -117,7 +116,7 @@ tst_tag: $(srcdir)/tag.c $(DEPLIBS_BLKID)
 
 tst_types: tst_types.o blkid_types.h 
 	$(E) "	LD $@"
-	$(Q) $(CC) -o tst_types tst_types.o 
+	$(Q) $(CC) -o tst_types $(ALL_LDFLAGS) tst_types.o
 
 ../../misc/blkid.o: $(top_srcdir)/misc/blkid.c blkid.h
 	$(E) "	CC $@"
@@ -147,7 +146,7 @@ blkid.pc: $(srcdir)/blkid.pc.in $(top_builddir)/config.status
 installdirs::
 	$(E) "	MKINSTALLDIRS $(libdir) $(includedir)/blkid"
 	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(libdir) \
-		$(DESTDIR)$(includedir)/blkid $(DESTDIR)$(libdir)/pkgconfig
+		$(DESTDIR)$(includedir)/blkid $(DESTDIR)$(pkgconfigdir)
 
 install:: all installdirs 
 	$(E) "	INSTALL_DATA $(libdir)/libblkid.a"
@@ -162,12 +161,12 @@ install:: all installdirs
 		echo "	INSTALL_DATA $(man3dir)/$$i"; \
 		$(INSTALL_DATA) $$i $(DESTDIR)$(man3dir)/$$i; \
 	done
-	$(E) "	INSTALL_DATA $(libdir)/pkgconfig/blkid.pc"
-	$(Q) $(INSTALL_DATA) blkid.pc $(DESTDIR)$(libdir)/pkgconfig/blkid.pc
+	$(E) "	INSTALL_DATA $(pkgconfigdir)/blkid.pc"
+	$(Q) $(INSTALL_DATA) blkid.pc $(DESTDIR)$(pkgconfigdir)/blkid.pc
 
 uninstall::
 	$(RM) -f $(DESTDIR)$(libdir)/libblkid.a \
-		$(DESTDIR)$(libdir)/pkgconfig/blkid.pc
+		$(DESTDIR)$(pkgconfigdir)/blkid.pc
 	$(RM) -rf $(DESTDIR)$(includedir)/blkid
 	for i in $(SMANPAGES); do \
 		$(RM) -f $(DESTDIR)$(man3dir)/$$i; \
@@ -178,7 +177,7 @@ clean::
 		tst_devno tst_getsize tst_probe tst_read tst_resolve tst_save \
 		tst_tag tst_types tests/*.out tests/*.ok \
 		tests/*.img results test_probe core profiled/* \
-		checker/* blkid.h blkid_types.h ../libblkid.a ../libblkid_p.a \
+		blkid.h blkid_types.h ../libblkid.a ../libblkid_p.a \
 		$(SMANPAGES) blkid
 	@echo rmdir tests/tmp tests
 	@(rmdir tests/tmp tests 2> /dev/null ; exit 0)

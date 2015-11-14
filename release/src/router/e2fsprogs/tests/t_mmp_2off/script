@@ -1,7 +1,8 @@
 FSCK_OPT=-yf
 
-TMPFILE=$test_name.tmp
-> $TMPFILE
+# use current directory instead of /tmp becase tmpfs doesn't support DIO
+rm -f $TMPFILE
+TMPFILE=$(mktemp ./tmp-$test_name.XXXXXX)
 
 stat -f $TMPFILE | grep -q "Type: tmpfs"
 if [ $? = 0 ]; then

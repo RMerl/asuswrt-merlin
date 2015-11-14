@@ -5,7 +5,7 @@
 
 Summary: Utilities for managing ext2/ext3/ext4 filesystems
 Name: e2fsprogs
-Version: 1.42.8
+Version: 1.42.13
 Release: 0
 License: GPLv2
 Group: System Environment/Base

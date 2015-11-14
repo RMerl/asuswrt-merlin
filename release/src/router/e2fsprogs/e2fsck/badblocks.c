@@ -42,7 +42,7 @@ void read_bad_blocks_file(e2fsck_t ctx, const char *bad_blocks_file,
 	retval = ext2fs_block_iterate(fs, EXT2_BAD_INO, 0, 0,
 				      check_bb_inode_blocks, 0);
 	if (retval) {
-		com_err("ext2fs_block_iterate", retval,
+		com_err("ext2fs_block_iterate", retval, "%s",
 			_("while sanity checking the bad blocks inode"));
 		goto fatal;
 	}
@@ -54,7 +54,7 @@ void read_bad_blocks_file(e2fsck_t ctx, const char *bad_blocks_file,
 	if (!replace_bad_blocks) {
 		retval = ext2fs_read_bb_inode(fs, &bb_list);
 		if (retval) {
-			com_err("ext2fs_read_bb_inode", retval,
+			com_err("ext2fs_read_bb_inode", retval, "%s",
 				_("while reading the bad blocks inode"));
 			goto fatal;
 		}
@@ -90,7 +90,7 @@ void read_bad_blocks_file(e2fsck_t ctx, const char *bad_blocks_file,
 	else
 		pclose(f);
 	if (retval) {
-		com_err("ext2fs_read_bb_FILE", retval,
+		com_err("ext2fs_read_bb_FILE", retval, "%s",
 			_("while reading in list of bad blocks from file"));
 		goto fatal;
 	}
@@ -101,7 +101,7 @@ void read_bad_blocks_file(e2fsck_t ctx, const char *bad_blocks_file,
 	printf("%s: Updating bad block inode.\n", ctx->device_name);
 	retval = ext2fs_update_bb_inode(fs, bb_list);
 	if (retval) {
-		com_err("ext2fs_update_bb_inode", retval,
+		com_err("ext2fs_update_bb_inode", retval, "%s",
 			_("while updating bad block inode"));
 		goto fatal;
 	}
@@ -111,6 +111,8 @@ void read_bad_blocks_file(e2fsck_t ctx, const char *bad_blocks_file,
 
 fatal:
 	ctx->flags |= E2F_FLAG_ABORT;
+	if (bb_list)
+		ext2fs_badblocks_list_free(bb_list);
 	return;
 
 }

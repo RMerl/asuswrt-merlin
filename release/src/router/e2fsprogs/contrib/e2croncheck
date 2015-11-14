@@ -23,7 +23,7 @@ VOLUME=root
 SNAPSIZE=100m
 EMAIL=sysadmin@example.com
 
-TMPFILE=`mktemp -t e2fsck.log.XXXXXXXXXX`
+TMPFILE=`mktemp ${TMPDIR:-/tmp}/e2fsck.log.XXXXXXXXXX`
 
 OPTS="-Fttv -C0"
 #OPTS="-Fttv -E fragcheck"

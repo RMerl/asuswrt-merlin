@@ -151,7 +151,7 @@ static void e2fsck_discard_inodes(e2fsck_t ctx, dgrp_t group,
 
 #define NO_BLK ((blk64_t) -1)
 
-static void print_bitmap_problem(e2fsck_t ctx, int problem,
+static void print_bitmap_problem(e2fsck_t ctx, problem_t problem,
 			    struct problem_context *pctx)
 {
 	switch (problem) {
@@ -196,17 +196,16 @@ static void check_block_bitmaps(e2fsck_t ctx)
 	ext2_filsys fs = ctx->fs;
 	blk64_t	i;
 	unsigned int	*free_array;
-	int	group = 0;
+	dgrp_t		g, group = 0;
 	unsigned int	blocks = 0;
 	blk64_t	free_blocks = 0;
 	blk64_t first_free = ext2fs_blocks_count(fs->super);
 	unsigned int	group_free = 0;
 	int	actual, bitmap;
 	struct problem_context	pctx;
-	int	problem, save_problem, fixit, had_problem;
+	problem_t	problem, save_problem;
+	int		fixit, had_problem;
 	errcode_t	retval;
-	int		csum_flag;
-	int		skip_group = 0;
 	int	old_desc_blocks = 0;
 	int	count = 0;
 	int	cmp_block = 0;
@@ -253,15 +252,10 @@ static void check_block_bitmaps(e2fsck_t ctx)
 		goto errout;
 	}
 
-	csum_flag = EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
-					       EXT4_FEATURE_RO_COMPAT_GDT_CSUM);
 redo_counts:
 	had_problem = 0;
 	save_problem = 0;
 	pctx.blk = pctx.blk2 = NO_BLK;
-	if (csum_flag &&
-	    (ext2fs_bg_flags_test(fs, group, EXT2_BG_BLOCK_UNINIT)))
-		skip_group++;
 	for (i = B2C(fs->super->s_first_data_block);
 	     i < ext2fs_blocks_count(fs->super);
 	     i += EXT2FS_CLUSTER_RATIO(fs)) {
@@ -292,15 +286,11 @@ redo_counts:
 				actual_buf);
 		if (retval)
 			goto no_optimize;
-		if (ext2fs_bg_flags_test(fs, group, EXT2_BG_BLOCK_UNINIT))
-			memset(bitmap_buf, 0, nbytes);
-		else {
-			retval = ext2fs_get_block_bitmap_range2(fs->block_map,
-					B2C(i), fs->super->s_clusters_per_group,
-					bitmap_buf);
-			if (retval)
-				goto no_optimize;
-		}
+		retval = ext2fs_get_block_bitmap_range2(fs->block_map,
+				B2C(i), fs->super->s_clusters_per_group,
+				bitmap_buf);
+		if (retval)
+			goto no_optimize;
 		if (memcmp(actual_buf, bitmap_buf, nbytes) != 0)
 			goto no_optimize;
 		n = ext2fs_bitcount(actual_buf, nbytes);
@@ -310,73 +300,7 @@ redo_counts:
 		goto next_group;
 	no_optimize:
 
-		if (skip_group) {
-			if (first_block_in_bg) {
-				super_blk = 0;
-				old_desc_blk = 0;
-				new_desc_blk = 0;
-				ext2fs_super_and_bgd_loc2(fs, group, &super_blk,
-					 &old_desc_blk, &new_desc_blk, 0);
-
-				if (fs->super->s_feature_incompat &
-						EXT2_FEATURE_INCOMPAT_META_BG)
-					old_desc_blocks =
-						fs->super->s_first_meta_bg;
-				else
-					old_desc_blocks = fs->desc_blocks +
-					fs->super->s_reserved_gdt_blocks;
-
-				count = 0;
-				cmp_block = fs->super->s_clusters_per_group;
-				if (group == (int)fs->group_desc_count - 1)
-					cmp_block = EXT2FS_NUM_B2C(fs,
-						    ext2fs_group_blocks_count(fs, group));
-			}
-
-			bitmap = 0;
-			if (EQ_CLSTR(i, super_blk) ||
-			    (old_desc_blk && old_desc_blocks &&
-			     GE_CLSTR(i, old_desc_blk) &&
-			     LE_CLSTR(i, old_desc_blk + old_desc_blocks-1)) ||
-			    (new_desc_blk && EQ_CLSTR(i, new_desc_blk)) ||
-			    EQ_CLSTR(i, ext2fs_block_bitmap_loc(fs, group)) ||
-			    EQ_CLSTR(i, ext2fs_inode_bitmap_loc(fs, group)) ||
-			    (GE_CLSTR(i, ext2fs_inode_table_loc(fs, group)) &&
-			     LE_CLSTR(i, (ext2fs_inode_table_loc(fs, group) +
-					  fs->inode_blocks_per_group - 1)))) {
-				bitmap = 1;
-				actual = (actual != 0);
-				count++;
-				cmp_block--;
-			} else if ((EXT2FS_B2C(fs, i) - count -
-				    EXT2FS_B2C(fs, fs->super->s_first_data_block)) %
-				   fs->super->s_clusters_per_group == 0) {
-				/*
-				 * When the compare data blocks in block bitmap
-				 * are 0, count the free block,
-				 * skip the current block group.
-				 */
-				if (ext2fs_test_block_bitmap_range2(
-					    ctx->block_found_map,
-					    EXT2FS_B2C(fs, i),
-					    cmp_block)) {
-					/*
-					 * -1 means to skip the current block
-					 * group.
-					 */
-					blocks = fs->super->s_clusters_per_group - 1;
-					group_free = cmp_block;
-					free_blocks += cmp_block;
-					/*
-					 * The current block group's last block
-					 * is set to i.
-					 */
-					i += EXT2FS_C2B(fs, cmp_block - 1);
-					bitmap = 1;
-					goto do_counts;
-				}
-			}
-		} else if (redo_flag)
+		if (redo_flag)
 			bitmap = actual;
 		else
 			bitmap = ext2fs_fast_test_block_bitmap2(fs->block_map, i);
@@ -395,14 +319,15 @@ redo_counts:
 			 */
 			problem = PR_5_BLOCK_USED;
 
-			if (skip_group) {
+			if (ext2fs_bg_flags_test(fs, group,
+						 EXT2_BG_BLOCK_UNINIT)) {
 				struct problem_context pctx2;
 				pctx2.blk = i;
 				pctx2.group = group;
-				if (fix_problem(ctx, PR_5_BLOCK_UNINIT,&pctx2)){
-					ext2fs_bg_flags_clear(fs, group, EXT2_BG_BLOCK_UNINIT);
-					skip_group = 0;
-				}
+				if (fix_problem(ctx, PR_5_BLOCK_UNINIT,
+						&pctx2))
+					ext2fs_bg_flags_clear(fs, group,
+							EXT2_BG_BLOCK_UNINIT);
 			}
 		}
 		if (pctx.blk == NO_BLK) {
@@ -410,8 +335,8 @@ redo_counts:
 			save_problem = problem;
 		} else {
 			if ((problem == save_problem) &&
-			    (pctx.blk2 == i-1))
-				pctx.blk2++;
+			    (pctx.blk2 == i - EXT2FS_CLUSTER_RATIO(fs)))
+				pctx.blk2 += EXT2FS_CLUSTER_RATIO(fs);
 			else {
 				print_bitmap_problem(ctx, save_problem, &pctx);
 				pctx.blk = pctx.blk2 = i;
@@ -456,16 +381,10 @@ redo_counts:
 			group ++;
 			blocks = 0;
 			group_free = 0;
-			skip_group = 0;
 			if (ctx->progress)
 				if ((ctx->progress)(ctx, 5, group,
 						    fs->group_desc_count*2))
 					goto errout;
-			if (csum_flag &&
-			    (i != ext2fs_blocks_count(fs->super)-1) &&
-			    ext2fs_bg_flags_test(fs, group, 
-						EXT2_BG_BLOCK_UNINIT))
-				skip_group++;
 		}
 	}
 	if (pctx.blk != NO_BLK)
@@ -497,15 +416,15 @@ redo_counts:
 	} else if (fixit == 0)
 		ext2fs_unmark_valid(fs);
 
-	for (i = 0; i < fs->group_desc_count; i++) {
-		if (free_array[i] != ext2fs_bg_free_blocks_count(fs, i)) {
-			pctx.group = i;
-			pctx.blk = ext2fs_bg_free_blocks_count(fs, i);
-			pctx.blk2 = free_array[i];
+	for (g = 0; g < fs->group_desc_count; g++) {
+		if (free_array[g] != ext2fs_bg_free_blocks_count(fs, g)) {
+			pctx.group = g;
+			pctx.blk = ext2fs_bg_free_blocks_count(fs, g);
+			pctx.blk2 = free_array[g];
 
 			if (fix_problem(ctx, PR_5_FREE_BLOCK_COUNT_GROUP,
 					&pctx)) {
-				ext2fs_bg_free_blocks_count_set(fs, i, free_array[i]);
+				ext2fs_bg_free_blocks_count_set(fs, g, free_array[g]);
 				ext2fs_mark_super_dirty(fs);
 			} else
 				ext2fs_unmark_valid(fs);
@@ -535,14 +454,15 @@ static void check_inode_bitmaps(e2fsck_t ctx)
 	unsigned int	free_inodes = 0;
 	int		group_free = 0;
 	int		dirs_count = 0;
-	int		group = 0;
+	dgrp_t		group = 0;
 	unsigned int	inodes = 0;
 	ext2_ino_t	*free_array;
 	ext2_ino_t	*dir_array;
 	int		actual, bitmap;
 	errcode_t	retval;
 	struct problem_context	pctx;
-	int		problem, save_problem, fixit, had_problem;
+	problem_t	problem, save_problem;
+	int		fixit, had_problem;
 	int		csum_flag;
 	int		skip_group = 0;
 	int		redo_flag = 0;
@@ -856,7 +776,7 @@ static void check_block_end(e2fsck_t ctx)
 	clear_problem_context(&pctx);
 
 	end = ext2fs_get_block_bitmap_start2(fs->block_map) +
-		((blk64_t)EXT2_CLUSTERS_PER_GROUP(fs->super) * fs->group_desc_count) - 1;
+		EXT2_GROUPS_TO_CLUSTERS(fs->super, fs->group_desc_count) - 1;
 	pctx.errcode = ext2fs_fudge_block_bitmap_end2(fs->block_map, end,
 						     &save_blocks_count);
 	if (pctx.errcode) {

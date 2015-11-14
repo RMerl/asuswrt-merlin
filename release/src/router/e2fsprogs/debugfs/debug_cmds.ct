@@ -188,7 +188,17 @@ request do_zap_block, "Zap block: fill with 0, pattern, flip bits etc.",
 	zap_block, zap;
 
 request do_block_dump, "Dump contents of a block",
-	block_dump, bd;
+	block_dump, bdump, bd;
+
+request do_list_quota, "List quota",
+	list_quota, lq;
+
+request do_get_quota, "Get quota",
+	get_quota, gq;
+
+request do_idump, "Dump the inode structure in hex",
+	inode_dump, idump, id;
+
 
 end;
 

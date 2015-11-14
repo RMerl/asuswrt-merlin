@@ -28,9 +28,11 @@ fi
 
 . $TEST_CONFIG
 
-TMPFILE=$(mktemp -t e2fsprogs-tmp.XXXXXX)
-
 test_name=`echo $test_dir | sed -e 's;.*/;;'`
+
+TMPFILE=$(mktemp ${TMPDIR:-/tmp}/e2fsprogs-tmp-$test_name.XXXXXX)
+trap 'rm -f $TMPFILE ; exit' 1 2 15
+
 if [ -f $test_dir ] ; then
 	exit 0;
 fi
