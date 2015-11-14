@@ -2,6 +2,9 @@ include ../.config
 
 CC = gcc
 CFLAGS = -O3 -Wall
+ifeq ($(BCMWL6A),y)
+export CFLAGS += -DBCMWL6A
+endif
 
 all: trx_asus
 

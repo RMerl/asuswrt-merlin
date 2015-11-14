@@ -11,7 +11,7 @@
 
 #define TRX_MAGIC		0x30524448
 #define TRX_MAX_OFFSET		4
-#define TRX_MAX_LEN		((32 * 1024 * 1024) - ((256 + 128) * 1024))		// 32MB - (256K cfe + 128K cfg)
+#define TRX_MAX_LEN		((64 * 1024 * 1024) - ((256 + 128) * 1024))		// 64MB - (256K cfe + 128K cfg)
 
 typedef struct {
 	uint32_t magic;
@@ -133,7 +133,13 @@ typedef struct {
 	version_t fs;
 	char 	  productid[MAX_STRING];
 	version_t hw[MAX_VER*2];
+#ifdef BCMWL6A
+	uint16_t  sn;
+	uint16_t  en;
+	char	  pad[28];
+#else
 	char	  pad[32];
+#endif
 } TAIL;
 
 /* usage:
@@ -147,6 +153,10 @@ int create_asus(const char *optarg)
 	char *next, *pid, *ver, *fname, *p;
 	TAIL asus_tail;
 	uint32_t v1, v2, v3, v4;
+#ifdef BCMWL6A
+	char *sn, *en;
+	char tmp[10];
+#endif
 
 	memset(&asus_tail, 0, sizeof(TAIL));
 
@@ -165,6 +175,20 @@ int create_asus(const char *optarg)
 	asus_tail.kernel.minor = (uint8_t)v2;
 	asus_tail.fs.major = (uint8_t)v3;
 	asus_tail.fs.minor = (uint8_t)v4;
+
+#ifdef BCMWL6A
+	sn = strsep(&next, ",");
+	if(!sn) return 0;
+
+	en = strsep(&next, ",");
+	if(!en) return 0;
+
+	sscanf(sn, "%d", &v1);
+	asus_tail.sn = (uint16_t)v1;
+
+	sscanf(en, "%d-%s", &v1, tmp);
+	asus_tail.en = (uint16_t)v1;
+#endif
 
 	fname = strsep(&next, ",");
 	if(!fname) return 0;
