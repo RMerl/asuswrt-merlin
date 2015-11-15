@@ -59,7 +59,6 @@
 }
 </style>
 <script>
-var dhcp_staticlist_array = '<% nvram_get("dhcp_staticlist"); %>';
 
 if(pptpd_support){
 	var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
@@ -79,8 +78,8 @@ var pool_start_end = parseInt(pool_start.split(".")[3]);
 var pool_end_end = parseInt(pool_end.split(".")[3]);
 
 var static_enable = '<% nvram_get("dhcp_static_x"); %>';
-var dhcp_staticlists = '<% nvram_get("dhcp_staticlist"); %>';
-var staticclist_row = dhcp_staticlists.split('&#60');
+var dhcp_staticlist_array = '<% nvram_get("dhcp_staticlist"); %>';
+var staticclist_row = dhcp_staticlist_array.split('&#60');
 
 var lan_domain_curr = '<% nvram_get("lan_domain"); %>';
 var dhcp_gateway_curr = '<% nvram_get("dhcp_gateway_x"); %>';
@@ -103,7 +102,7 @@ function initial(){
 	showtext(document.getElementById("LANIP"), '<% nvram_get("lan_ipaddr"); %>');
 	if((inet_network(document.form.lan_ipaddr.value)>=inet_network(document.form.dhcp_start.value))&&(inet_network(document.form.lan_ipaddr.value)<=inet_network(document.form.dhcp_end.value))){
 			document.getElementById('router_in_pool').style.display="";
-	}else if(dhcp_staticlists != ""){
+	}else if(dhcp_staticlist_array != ""){
 			for(var i = 1; i < staticclist_row.length; i++){
 					var static_ip = staticclist_row[i].split('&#62')[1];
 					if(static_ip == document.form.lan_ipaddr.value){
@@ -112,6 +111,9 @@ function initial(){
 			}
 	}
 	//}Viz 2011.10
+    
+	// aswild 2015.11
+	sort_dhcp_staticlist();
 	showdhcp_staticlist();
 	setTimeout("showLANIPList();", 1000);
 
@@ -143,6 +145,46 @@ function initial(){
 	//}
 
 	addOnlineHelp(document.getElementById("faq"), ["set", "up", "specific", "IP", "address"]);
+}
+
+// aswild 2015.11
+// sort the DHCP static reservation list by IP address when loading
+// new/edited rows will still end up at the bottom until a page reload
+function sort_dhcp_staticlist() {
+	// first, parse the array into an array of objects
+	var dhcp_staticlist_rows = dhcp_staticlist_array.split('&#60');
+	var dhcp_staticlist_objects = [];
+
+	for (var i = 1; i < dhcp_staticlist_rows.length; i++)
+	{
+		var dhcp_staticlist_cols = dhcp_staticlist_rows[i].split('&#62');
+		dhcp_staticlist_objects[i-1] = {'mac': dhcp_staticlist_cols[0],
+								'ip':  dhcp_staticlist_cols[1],
+								'name':dhcp_staticlist_cols[2]};
+	}
+
+	// sort by IP using this function
+	dhcp_staticlist_objects.sort(function(a, b) {
+		var ipbytes_a = a.ip.split('.');
+		var ipbytes_b = b.ip.split('.');
+		var ip_a = '';
+		var ip_b = '';
+
+		for (var i = 0; i < 4; i++) {
+			ip_a += Array(4-ipbytes_a[i].length).join('0') + ipbytes_a[i];
+			ip_b += Array(4-ipbytes_b[i].length).join('0') + ipbytes_b[i];
+		}
+		// do final comparison knowing that JS will parse the numeric strings as numbers
+		return ip_a - ip_b;
+	});
+
+	// re-write dhcp_staticlist_array using the new values
+	dhcp_staticlist_array = '';
+	for (var i = 0; i < dhcp_staticlist_objects.length; i++) {
+		dhcp_staticlist_array += '&#60' + dhcp_staticlist_objects[i].mac;
+		dhcp_staticlist_array += '&#62' + dhcp_staticlist_objects[i].ip;
+		dhcp_staticlist_array += '&#62' + dhcp_staticlist_objects[i].name;
+	}
 }
 
 function addRow(obj, head){
@@ -546,7 +588,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 						return true;
 		}
 
-		if(dhcp_staticlists != ""){
+		if(dhcp_staticlist_array != ""){
 			for(var i = 1; i < staticclist_row.length; i++){
 					var static_subnet ="";
 					var static_end ="";
