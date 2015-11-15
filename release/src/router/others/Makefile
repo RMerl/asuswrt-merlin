@@ -37,11 +37,7 @@ ifeq ($(RTCONFIG_OPENVPN),y)
 endif
 
 # Entware setup script
-ifeq ($(RTCONFIG_BCMARM),y)
-	install -m 0700 entware.arm/entware-setup.sh $(INSTALLDIR)/usr/sbin
-else
-	install -m 0700 entware.mips/entware-setup.sh $(INSTALLDIR)/usr/sbin
-endif
+	install -m 0700 entware-setup.sh $(INSTALLDIR)/usr/sbin
 
 # Postconf helper script
 	install -m 0755 helper.sh $(INSTALLDIR)/usr/sbin
