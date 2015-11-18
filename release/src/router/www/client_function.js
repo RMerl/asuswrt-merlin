@@ -613,6 +613,7 @@ function genClientList(){
 	for(var i = 0; i < leaseArray.mac.length; i += 1) {
 		if(typeof clientList[leaseArray.mac[i]] != "undefined"){
 			clientList[leaseArray.mac[i]].ipMethod = "DHCP";
+			clientList[leaseArray.mac[i]].hostname = leaseArray.hostname[i];
 		}
 	}
 
@@ -626,7 +627,9 @@ function genClientList(){
 			continue;
 		}
 
-		clientList[thisClientMacAddr].hostname = thisClient[2];
+		if (thisClient[2] != "")
+			clientList[thisClientMacAddr].hostname = thisClient[2];
+
 		if(typeof clientList[thisClientMacAddr] != "undefined"){
 			if(clientList[thisClientMacAddr].ipMethod == "DHCP") {
 				if(clientList[thisClientMacAddr].ip == thisClient[1] || clientList[thisClientMacAddr].ip == "offline")
