@@ -18,12 +18,6 @@ echo -e "$INFO the old ones will be saved on Entware partition with name"
 echo -e "$INFO like /tmp/mnt/sda1/jffs_scripts_backup.tgz"
 echo
 
-if [ "$(nvram get jffs2_scripts)" != "1" ] ; then
-  echo -e "$ERROR Please, enable JFFS custom scripts and configs at"
-  echo -e "$ERROR \"Administration > System\" WebUI page! Exiting..."
-  exit 1
-fi
-
 case $(uname -m) in
   armv7l)
     PART_TYPES='ext2|ext3|ext4'
@@ -120,5 +114,10 @@ EOF
 eval sed -i 's,__Partition__,$entPartition,g' /jffs/scripts/post-mount
 chmod +x /jffs/scripts/post-mount
 
+if [ "$(nvram get jffs2_scripts)" != "1" ] ; then
+  echo -e "$INFO Enabling custom scripts and configs from /jffs..."
+  nvram set jffs2_scripts=1
+  nvram commit
+fi
 
 wget -qO - $INST_URL | sh
