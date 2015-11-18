@@ -1493,6 +1493,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "dnsfilter_custom2", "8.8.8.8"},     /* User-defined DNS filter 2 */
 	{ "dnsfilter_custom3", "8.8.8.8"},     /* User-defined DNS filter 3 */
 #endif
+#ifdef RTCONFIG_DNSSEC
+	{ "dnssec_enable", "0" },
+#endif
 	{ "fw_enable_x", "1" },
 	{ "fw_dos_x", "0" },
 	{ "fw_log_x", "none" },

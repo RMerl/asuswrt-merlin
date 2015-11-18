@@ -1,0 +1,11 @@
+#! /bin/sh
+
+rm -rf testkey testkey.pub testsignature testsignature2 \
+    testdata testtmp \
+    testciphertext testcleartext
+
+case "$EMULATOR" in
+    wine*)
+	find . -type l -name '*.dll' -exec rm -f '{}' ';'
+	;;
+esac

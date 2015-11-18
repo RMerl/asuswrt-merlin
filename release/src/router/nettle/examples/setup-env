@@ -1,0 +1,16 @@
+#! /bin/sh
+
+set -e
+
+# Workaround, it seems difficult to convince wine to put ../lib into PATH.
+case "$EMULATOR" in
+    wine*)
+	for f in ../.lib/*.dll ; do
+	  ln -sf "$f" .
+	done
+	;;
+esac
+
+if [ -x rsa-keygen$EXEEXT ] ; then
+  $EMULATOR ./rsa-keygen -r rsa-decrypt$EXEEXT -o testkey || exit 1
+fi

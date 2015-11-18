@@ -1,0 +1,47 @@
+What is GNU Nettle? A quote from the introduction in the Nettle Manual:
+
+  Nettle is a cryptographic library that is designed to fit easily in more
+  or less any context: In crypto toolkits for object-oriented languages
+  (C++, Python, Pike, ...), in applications like LSH or GNUPG, or even in
+  kernel space. In most contexts, you need more than the basic
+  cryptographic algorithms, you also need some way to keep track of available
+  algorithms, their properties and variants. You often have some algorithm
+  selection process, often dictated by a protocol you want to implement.
+  
+  And as the requirements of applications differ in subtle and not so
+  subtle ways, an API that fits one application well can be a pain to use
+  in a different context. And that is why there are so many different
+  cryptographic libraries around.
+  
+  Nettle tries to avoid this problem by doing one thing, the low-level
+  crypto stuff, and providing a simple but general interface to it.
+  In particular, Nettle doesn't do algorithm selection. It doesn't do
+  memory allocation. It doesn't do any I/O.
+  
+  The idea is that one can build several application and context specific
+  interfaces on top of Nettle, and share the code, test cases, benchmarks,
+  documentation, etc. Examples are the Nettle module for the Pike
+  language, and LSH, which both use an object-oriented abstraction on top
+  of the library.
+
+GNU Nettle is free software; you can redistribute it and/or modify it
+under the terms contained in the files COPYING* (see the manual for
+information on how these licenses apply).
+
+If you have downloaded a Nettle release, build it with the usual
+./configure && make && make check && make install (see the INSTALL
+file for further instructions).
+
+You can also get Nettle from git, see
+http://www.lysator.liu.se/~nisse/nettle/ for current instructions. In
+particular, you need to run the ./.bootstrap script after checkout and
+before running ./configure.
+
+Read the manual. Mail me if you have any questions or suggestions.
+
+You may want to subscribe to the nettle-bugs mailing list. See
+<URL: http://lists.lysator.liu.se/mailman/listinfo/nettle-bugs>.
+
+
+Happy hacking,
+/Niels Möller <nisse@lysator.liu.se>

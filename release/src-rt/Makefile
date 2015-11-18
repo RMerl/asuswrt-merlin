@@ -899,6 +899,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_IGD2/d" $(1); \
 		echo "RTCONFIG_IGD2=y" >>$(1); \
 	fi; \
+	if [ "$(DNSSEC)" = "y" ]; then \
+		sed -i "/RTCONFIG_DNSSEC/d" $(1); \
+		echo "RTCONFIG_DNSSEC=y" >>$(1); \
+	fi; \
 	if [ "$(HTTPS)" = "y" ]; then \
 		sed -i "/RTCONFIG_HTTPS/d" $(1); \
 		echo "RTCONFIG_HTTPS=y" >>$(1); \

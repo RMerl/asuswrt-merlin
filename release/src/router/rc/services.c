@@ -1325,7 +1325,7 @@ void start_dnsmasq()
 			}
 			free(nv);
 		}
-#endif
+#endif /* DNSFilter */
 
 		/* DNS server */
 		fprintf(fp, "dhcp-option=lan,option6:23,[::]\n");
@@ -1371,6 +1371,16 @@ void start_dnsmasq()
 #endif
 #ifdef RTCONFIG_OPENVPN
 	write_vpn_dnsmasq_config(fp);
+#endif
+#ifdef RTCONFIG_DNSSEC
+	if (nvram_match("dnssec_enable", "1")) {
+		fprintf(fp, "conf-file=/etc/dnssec-trust-anchors\n"
+		            "dnssec\n");
+
+		/* If NTP isn't set yet, wait until rc's ntp signals us to start validating time */
+		if (!nvram_match("ntp_ready","1"))
+			fprintf(fp, "dnssec-no-timecheck\n");
+	}
 #endif
 
 	append_custom_config("dnsmasq.conf",fp);
@@ -1426,6 +1436,17 @@ void stop_dnsmasq(void)
 
 void reload_dnsmasq(void)
 {
+
+#ifdef RTCONFIG_DNSSEC
+	if (nvram_match("dnssec_enable", "1") && (!nvram_match("ntp_ready","1"))) {
+		/* Don't reload, as it would prematurely enable timestamp validation */
+		stop_dnsmasq();
+		sleep(1);
+		start_dnsmasq();
+	}
+	else
+#endif
+
 	/* notify dnsmasq */
 	kill_pidfile_s("/var/run/dnsmasq.pid", SIGHUP);
 }

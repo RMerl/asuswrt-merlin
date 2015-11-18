@@ -1,0 +1,124 @@
+#! /bin/sh
+
+if [ -z "$srcdir" ] ; then
+  srcdir=`pwd`
+fi
+
+print_raw () {
+    printf "%s" "$1" > "$2"
+}
+
+print_nl () {
+    printf "%s\n" "$1" > "$2"
+}
+
+test_advanced () {
+    print_raw "$1" test.in
+    if $EMULATOR ../tools/sexp-conv -s advanced <test.in | tr -d '\r' >test1.out ; then
+	true
+    else
+	exit 1
+    fi
+    print_nl "$2" test2.out
+
+    if cmp test1.out test2.out ; then
+	true
+    else
+	exit 1;
+    fi
+}
+
+test_advanced_hex () {
+    print_raw "$1" test.in
+    if $EMULATOR ../tools/sexp-conv -s hex <test.in | tr -d '\r' >test1.out ; then
+	true
+    else
+	exit 1
+    fi
+    print_nl "$2" test2.out
+
+    if cmp test1.out test2.out ; then
+	true
+    else
+	exit 1;
+    fi
+}
+
+test_transport () {
+    print_raw "$1" test.in
+    if $EMULATOR ../tools/sexp-conv -s transport <test.in | tr -d '\r' >test1.out ; then
+	true
+    else
+	exit 1
+    fi
+    print_nl "$2" test2.out
+
+    if cmp test1.out test2.out ; then
+	true
+    else
+	exit 1;
+    fi
+}
+
+test_canonical () {
+    print_raw "$1" test.in
+    if $EMULATOR ../tools/sexp-conv -s canonical <test.in >test1.out ; then
+	true
+    else
+	exit 1
+    fi
+    print_raw "$2" test2.out
+
+    if cmp test1.out test2.out ; then
+	true
+    else
+	exit 1;
+    fi
+}
+
+test_advanced '0:' '""'
+test_advanced '3:foo' 'foo'
+test_advanced '12:fooooooooooo' 'fooooooooooo'
+test_advanced '10:fooooooooo' 'fooooooooo'
+test_advanced '4:3des' '"3des"' 
+test_advanced '"foo"' 'foo' 
+test_advanced '4:foo
+' '"foo\n"'
+# Having the string end with a \ breaks with sysv echo. \x seems harmless.
+test_advanced '3:"\x' '"\"\\x"' 
+test_advanced '()' '()' 
+test_advanced '(foo bar baz)' '(foo bar
+     baz)' 
+test_advanced '; comment
+()' '; comment
+()' 
+test_advanced '(foo ; gazonk
+bar)' '(foo ; gazonk
+     bar)'
+
+test_advanced '(foo[bar]foo)' '(foo [bar]foo)'
+
+test_advanced '(#aabb#)' '(|qrs=|)'
+test_advanced '(|qrs=|)' '(|qrs=|)'
+test_advanced_hex '(|qrs=|)' '(#aabb#)'
+test_advanced_hex '(#aabb#)' '(#aabb#)'
+test_advanced_hex '{MToR}' '#11#'
+test_advanced_hex '|EQ==|' '#11#'
+
+test_transport '0:' '{MDo=}'
+test_transport '()' '{KCk=}'
+test_transport '1:A' '{MTpB}'
+test_transport 'foo' '{Mzpmb28=}'
+test_transport '(foo bar baz)' '{KDM6Zm9vMzpiYXIzOmJheik=}'
+
+test_canonical '""' '0:'
+test_canonical '{MDo=}' '0:'
+test_canonical '{KCk=}' '()'
+test_canonical '{MTpB}' '1:A'
+test_canonical 'foo' '3:foo'
+test_canonical 'fooooooooooo' '12:fooooooooooo'
+test_canonical 'fooooooooo' '10:fooooooooo'
+test_canonical '(foo bar baz)' '(3:foo3:bar3:baz)' 
+test_canonical '{KDM6Zm9vMzpiYXIzOmJheik=}' '(3:foo3:bar3:baz)' 
+
+exit 0

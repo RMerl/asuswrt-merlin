@@ -130,6 +130,10 @@ function initial(){
 		}
 	}
 
+	if (isSupport("dnssec")){
+		document.getElementById("dnssec_tr").style.display = "";
+	}
+
 	//Viz keep this, disabled temporarily. if(!tmo_support){
 			document.form.sip_server.disabled = true;
 			document.form.sip_server.parentNode.parentNode.style.display = "none";
@@ -721,6 +725,13 @@ function validate_hostname(o){
 				<td colspan="2" style="text-align:left;">
 					<input type="radio" value="1" name="lan_dns_fwd_local"  onclick="return change_common_radio(this, 'LANHostConfig', 'lan_dns_fwd_local', '1')" <% nvram_match("lan_dns_fwd_local", "1", "checked"); %> /><#checkbox_Yes#>
 					<input type="radio" value="0" name="lan_dns_fwd_local"  onclick="return change_common_radio(this, 'LANHostConfig', 'lan_dns_fwd_local', '0')" <% nvram_match("lan_dns_fwd_local", "0", "checked"); %> /><#checkbox_No#>
+				</td>
+			  </tr>
+			  <tr id="dnssec_tr" style="display:none;">
+     				<th>Enable DNSSEC support</th>
+				<td colspan="2" style="text-align:left;">
+					<input type="radio" value="1" name="dnssec_enable" <% nvram_match("dnssec_enable", "1", "checked"); %> /><#checkbox_Yes#>
+					<input type="radio" value="0" name="dnssec_enable" <% nvram_match("dnssec_enable", "0", "checked"); %> /><#checkbox_No#>
 				</td>
 			  </tr>
 			  <tr>

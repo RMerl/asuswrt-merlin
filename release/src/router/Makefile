@@ -1635,19 +1635,40 @@ ifeq ($(RTCONFIG_DHDAP),y)
 endif
 
 
-dnsmasq:
+dnsmasq:  $(if $(RTCONFIG_DNSSEC),nettle,)
 	@$(SEP)
 	@$(MAKE) -C dnsmasq \
-	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_AUTH -DNO_LOOP -DNO_INOTIFY \
+	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_AUTH -DNO_LOOP -DNO_INOTIFY -DNO_GMP \
 		$(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6) \
 		$(if $(RTCONFIG_USB_EXTRAS)||$(RTCONFIG_TR069),,-DNO_SCRIPT) \
-		$(if $(RTCONFIG_USB_EXTRAS),,-DNO_TFTP)" \
+		$(if $(RTCONFIG_USB_EXTRAS),,-DNO_TFTP) \
+		$(if $(RTCONFIG_DNSSEC),-I$(TOP)/nettle/include -I$(TOP)/gmp -DHAVE_DNSSEC -DHAVE_DNSSEC_STATIC,)" \
 	CFLAGS="-Os -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
-	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections"
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections \
+		$(if $(RTCONFIG_DNSSEC),-L$(TOP)/nettle/lib -L$(TOP)/gmp/.libs,)" \
+	$(if $(RTCONFIG_DNSSEC),PKG_CONFIG_PATH="$(TOP)/nettle/lib/pkgconfig",)
 
 dnsmasq-install:
 	install -D dnsmasq/src/dnsmasq $(INSTALLDIR)/dnsmasq/usr/sbin/dnsmasq
 	$(STRIP) $(INSTALLDIR)/dnsmasq/usr/sbin/dnsmasq
+
+nettle/stamp-h1: gmp
+	@cd nettle && \
+	CPPFLAGS="-I$(TOP)/gmp" \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -fPIC -ffunction-sections -fdata-sections" \
+	LDFLAGS="-L$(TOP)/gmp/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
+	$(CONFIGURE) prefix=$(TOP)/nettle --enable-mini-gmp
+	@touch nettle/stamp-h1
+
+nettle: nettle/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C nettle
+	@$(MAKE) -C nettle install
+
+nettle-clean:
+	-@$(MAKE) -C nettle clean
+	@rm -f nettle/stamp-h1
+	@rm -rf nettle/include nettle/lib
 
 iptables:
 	@$(SEP)

@@ -1,0 +1,46 @@
+#! /bin/sh
+
+# Check that all exported symbols use the nettle prefix.
+
+if [ -z "$srcdir" ] ; then
+  srcdir=`pwd`
+fi
+
+: ${NM:=nm}
+
+# * nm on aix seems to generate bogus output including random binary
+#   data. Using -g is a workaround to get rid of that. But nm -g
+#   doesn't work on Solaris-2.4, so try nm -g first, and plain nm if
+#   -g isn't recognized.
+#
+# * gcc on x86 generates functions like __i686.get_pc_thunk.bx in pic
+#   code.
+
+( $NM -g ../libnettle.a || $NM ../libnettle.a ) \
+    | grep ' [DRT] ' | egrep -v '( |^|\.)(\.?_?(_?nettle_)|get_pc_thunk)' \
+    | sort -k3 > test1.out
+
+if [ -s test1.out ] ; then
+    echo Exported symbols in libnettle.a, lacking the nettle prefix:
+    cat test1.out
+    exit 1
+fi
+
+if [ -s ../libhogweed.a ] ; then
+    PATTERN='\.?_?_?nettle_|get_pc_thunk'
+    if grep '^#define.*NETTLE_USE_MINI_GMP.*1$' ../version.h >/dev/null ; then
+	PATTERN="$PATTERN|_?(mp_|mpz_|mpn_)"
+    fi
+    ( $NM -g ../libhogweed.a || $NM ../libhogweed.a ) \
+	| grep ' [DRT] ' | egrep -v "( |^|\.)($PATTERN)" \
+	| sort -k3 > test1.out
+
+    if [ -s test1.out ] ; then
+	echo Exported symbols in libhogweed.a, lacking the nettle prefix:
+	cat test1.out
+	exit 1
+    fi
+fi
+
+exit 0
+

@@ -1,0 +1,12 @@
+#! /bin/sh
+
+set -e
+
+# Workaround, it seems difficult to convince wine to put ../lib into PATH.
+case "$EMULATOR" in
+    wine*)
+	for f in ../.lib/*.dll ; do
+	  ln -sf "$f" .
+	done
+	;;
+esac

@@ -1,0 +1,100 @@
+# Makefile settings shared between Makefiles.
+
+CC = @CC@
+CXX = @CXX@
+CFLAGS = @CFLAGS@
+CXXFLAGS = @CXXFLAGS@
+CCPIC = @CCPIC@
+CPPFLAGS = @CPPFLAGS@
+DEFS = @DEFS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+LIBOBJS = @LIBOBJS@
+EMULATOR = @EMULATOR@
+NM = @NM@
+
+OBJEXT = @OBJEXT@
+EXEEXT = @EXEEXT@
+
+CC_FOR_BUILD = @CC_FOR_BUILD@
+EXEEXT_FOR_BUILD = @EXEEXT_FOR_BUILD@
+
+DEP_FLAGS = @DEP_FLAGS@
+DEP_PROCESS = @DEP_PROCESS@
+
+PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
+PACKAGE_NAME = @PACKAGE_NAME@
+PACKAGE_STRING = @PACKAGE_STRING@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_VERSION = @PACKAGE_VERSION@
+
+LIBNETTLE_MAJOR = @LIBNETTLE_MAJOR@
+LIBNETTLE_MINOR = @LIBNETTLE_MINOR@
+LIBNETTLE_SONAME = @LIBNETTLE_SONAME@
+LIBNETTLE_FILE = @LIBNETTLE_FILE@
+LIBNETTLE_FILE_SRC = @LIBNETTLE_FILE_SRC@
+LIBNETTLE_FORLINK = @LIBNETTLE_FORLINK@
+LIBNETTLE_LIBS = @LIBNETTLE_LIBS@
+LIBNETTLE_LINK = @LIBNETTLE_LINK@
+
+LIBHOGWEED_MAJOR = @LIBHOGWEED_MAJOR@
+LIBHOGWEED_MINOR = @LIBHOGWEED_MINOR@
+LIBHOGWEED_SONAME = @LIBHOGWEED_SONAME@
+LIBHOGWEED_FILE = @LIBHOGWEED_FILE@
+LIBHOGWEED_FILE_SRC = @LIBHOGWEED_FILE_SRC@
+LIBHOGWEED_FORLINK = @LIBHOGWEED_FORLINK@
+LIBHOGWEED_LIBS = @LIBHOGWEED_LIBS@
+LIBHOGWEED_LINK = @LIBHOGWEED_LINK@
+
+GMP_NUMB_BITS = @GMP_NUMB_BITS@
+
+AR = @AR@
+ARFLAGS = cru
+AUTOCONF = autoconf
+AUTOHEADER = autoheader
+M4 = @M4@
+MAKEINFO = makeinfo
+RANLIB = @RANLIB@
+LN_S = @LN_S@
+
+prefix	=	@prefix@
+exec_prefix =	@exec_prefix@
+datarootdir =	@datarootdir@
+bindir =	@bindir@
+libdir =	@libdir@
+includedir =	@includedir@
+infodir =	@infodir@
+
+# PRE_CPPFLAGS and PRE_LDFLAGS lets each Makefile.in prepend its own
+# flags before CPPFLAGS and LDFLAGS. While EXTRA_CFLAGS are added at the end.
+
+COMPILE = $(CC) $(PRE_CPPFLAGS) $(CPPFLAGS) $(DEFS) $(CFLAGS) $(EXTRA_CFLAGS) $(DEP_FLAGS)
+COMPILE_CXX = $(CXX) $(PRE_CPPFLAGS) $(CPPFLAGS) $(DEFS) $(CXXFLAGS) $(DEP_FLAGS)
+LINK = $(CC) $(CFLAGS) $(PRE_LDFLAGS) $(LDFLAGS)
+LINK_CXX = $(CXX) $(CXXFLAGS) $(PRE_LDFLAGS) $(LDFLAGS)
+
+# Default rule. Must be here, since config.make is included before the
+# usual targets.
+default: all
+
+# For some reason the suffixes list must be set before the rules.
+# Otherwise BSD make won't build binaries e.g. aesdata. On the other
+# hand, AIX make has the opposite idiosyncrasies to BSD, and the AIX
+# compile was broken when .SUFFIXES was moved here from Makefile.in.
+
+.SUFFIXES:
+.SUFFIXES: .asm .c .$(OBJEXT) .p$(OBJEXT) .html .dvi .info .exe .pdf .ps .texinfo
+
+# Disable builtin rule
+%$(EXEEXT) : %.c
+.c:
+
+# Keep object files
+.PRECIOUS: %.o
+
+.PHONY: all check install uninstall clean distclean mostlyclean maintainer-clean distdir \
+	all-here check-here install-here clean-here distclean-here mostlyclean-here \
+	maintainer-clean-here distdir-here \
+	install-shared install-info install-headers \
+	uninstall-shared uninstall-info uninstall-headers \
+	dist distcleancheck

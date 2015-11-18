@@ -398,6 +398,10 @@ config RTCONFIG_IGD2
 	bool "UPNP: IGD2 support"
 	default n
 
+config RTCONFIG_DNSSEC
+	bool "dnsmasq: Enable DNSSEC support"
+	default n
+
 config RTCONFIG_USB_EXTRAS
 	bool "Additional modules and utilities"
 	depends on RTCONFIG_USB

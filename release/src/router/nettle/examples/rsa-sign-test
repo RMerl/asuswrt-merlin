@@ -1,0 +1,17 @@
+#! /bin/sh
+
+if [ -z "$srcdir" ] ; then
+  srcdir=`pwd`
+fi
+
+data="$srcdir/nettle-benchmark.c"
+
+if [ -x rsa-sign$EXEEXT ] ; then
+  if $EMULATOR ./rsa-sign testkey < "$data" > testsignature ; then
+    exit 0;
+  else
+    exit 1
+  fi
+else
+  exit 77
+fi

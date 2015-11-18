@@ -1,0 +1,27 @@
+#! /bin/sh
+
+if [ -z "$srcdir" ] ; then
+  srcdir=`pwd`
+fi
+
+data="$srcdir/nettle-benchmark.c"
+
+if [ -x rsa-encrypt$EXEEXT ] ; then
+  if $EMULATOR ./rsa-encrypt -r rsa-decrypt$EXEEXT testkey.pub < "$data" > testciphertext ; then
+    :
+  else
+    exit 1
+  fi
+  if $EMULATOR ./rsa-decrypt testkey < testciphertext > testcleartext ; then
+    :
+  else
+    exit 1
+  fi
+  if cmp "$data" testcleartext ; then
+    exit 0
+  else
+    exit 1
+  fi
+else
+  exit 77
+fi

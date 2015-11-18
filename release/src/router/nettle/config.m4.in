@@ -1,0 +1,12 @@
+define(<srcdir>, <<@srcdir@>>)dnl
+define(<SYMBOL_PREFIX>, <@ASM_SYMBOL_PREFIX@><$1>)dnl
+define(<ELF_STYLE>, <@ASM_ELF_STYLE@>)dnl
+define(<COFF_STYLE>, <@ASM_COFF_STYLE@>)dnl
+define(<TYPE_FUNCTION>, <@ASM_TYPE_FUNCTION@>)dnl
+define(<TYPE_PROGBITS>, <@ASM_TYPE_PROGBITS@>)dnl
+define(<ALIGN_LOG>, <@ASM_ALIGN_LOG@>)dnl
+define(<W64_ABI>, <@W64_ABI@>)dnl
+define(<RODATA>, <@ASM_RODATA@>)dnl
+divert(1)
+@ASM_MARK_NOEXEC_STACK@
+divert

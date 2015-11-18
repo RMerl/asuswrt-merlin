@@ -1,0 +1,19 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+# Uses Requires.private and Libs.private, under the assumption that
+# when using shared libraries, the ELF dependencies from libhogweed.so
+# to nettle and gmp work.
+
+Name: Hogweed
+Description: Nettle low-level cryptographic library (public-key algorithms)
+URL: http://www.lysator.liu.se/~nisse/nettle
+Version: @PACKAGE_VERSION@
+Requires: @IF_NOT_SHARED@ nettle
+Requires.private: @IF_SHARED@ nettle
+Libs: -L${libdir} -lhogweed @IF_NOT_SHARED@ @LIBS@
+Libs.private: @IF_SHARED@ @LIBS@
+Cflags: -I${includedir}
+

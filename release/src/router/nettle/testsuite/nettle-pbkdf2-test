@@ -1,0 +1,33 @@
+#! /bin/sh
+
+if [ -z "$srcdir" ] ; then
+  srcdir=`pwd`
+fi
+
+test_pbkdf2 () {
+    password="$1"
+    salt="$2"
+    iters="$3"
+    expected="$4"
+    # Relies on division rounding down; breaks if
+    # $expected contains more than one space.
+    length=`expr "$expected" : '.*' / 2`
+
+    # Delete carriage return characters, needed when testing with
+    # wine.
+    printf "%s" "$password" | $EMULATOR ../tools/nettle-pbkdf2 \
+	-i "$iters" -l "$length" "$salt" | tr -d '\r' > test1.out
+    echo "$expected" | tr -d '\r' > test2.out
+
+    if cmp test1.out test2.out ; then
+	true
+    else
+	exit 1;
+    fi
+}
+
+test_pbkdf2 passwd salt 1 "55ac046e56e3089f ec1691c22544b605"
+test_pbkdf2 Password NaCl 80000 "4ddcd8f60b98be21 830cee5ef22701f9"
+
+exit 0
+

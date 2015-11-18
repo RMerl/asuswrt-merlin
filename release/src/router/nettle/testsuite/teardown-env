@@ -1,0 +1,9 @@
+#! /bin/sh
+
+rm -rf testkey.priv testkey.pub testtmp testsignature testsignature2
+
+case "$EMULATOR" in
+    wine*)
+	find . -type l -name '*.dll' -exec rm -f '{}' ';'
+	;;
+esac
