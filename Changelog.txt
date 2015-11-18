@@ -6,9 +6,16 @@ Asuswrt-Merlin Changelog
     - NEW: Added RT-AC3100 support
     - NEW: Backup/Restore of the content of the JFFS
            partition (under Administration Restore/Save Settings)
+    - NEW: Added DNSSEC support.  Can be enabled under LAN -> DHCP.
     - CHANGED: Increased user account limit from 16 to 32 on
                the VPN server pages.
+    - CHANGED: Updated e2fsprogs to 1.42.13
+    - CHANGED: Increased maximum entries in Parental Control
+               (time scheduler) to 32.
     - FIXED: CTF not automatically disabled when enabling IPTraffic.
+    - FIXED: Openvpn clients 3 through 5 were all run on the first
+             CPU core.  They are now properly alternated like the
+             first two (odd on CPU1, even on CPU0)
 
 
 378.56_2 (2-Nov-2015)

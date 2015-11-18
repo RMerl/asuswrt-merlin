@@ -83,10 +83,9 @@ Networking:
    - Act as a WINS server
    - Allows tweaking TCP/UDP connection tracking timeouts
    - CIFS client support (for mounting remote SMB share on the router)
-   - Layer7 iptables matching (N16/N66/AC66 only)
+   - Layer7 iptables matching (N66/AC66 only)
    - User-defined options for WAN DHCP queries (required by some ISPs)
-   - Advanced OpenVPN client and server support (all models except 
-     RT-N16)
+   - Advanced OpenVPN client and server support
    - Netfilter ipset module, for efficient blacklist implementation
    - Configurable min/max UPNP ports
    - IPSec kernel support (N16/N66/AC66 only)
@@ -96,6 +95,7 @@ Networking:
    - TOR support, individual client control
    - Policy routing for the OpenVPN client (based on source or
      destination IPs), sometimes referred to as "selective routing")
+   - DNSSEC support
 
 
 Web interface:
