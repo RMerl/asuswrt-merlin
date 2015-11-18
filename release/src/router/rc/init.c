@@ -913,6 +913,8 @@ misc_defaults(int restore_defaults)
 	nvram_set("freeze_duck", "0");
 #endif
 	nvram_unset("ateCommand_flag");
+
+	nvram_set("ntp_ready", "0");
 }
 
 /* ASUS use erase nvram to reset default only */
