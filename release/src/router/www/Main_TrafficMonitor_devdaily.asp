@@ -53,6 +53,8 @@ function redraw() {
 	rows = 0;
 	filtered = 0;
 
+	genClientList();
+
 	grid = '<table width="730px" class="FormTable_NWM">';
 	grid += "<tr><th style=\"height:30px;\"><#Date#></th>";
 	grid += "<th>Host</th>";
@@ -123,11 +125,13 @@ function redraw() {
 
 			var h = b[1];
 			var clientObj;
+			var clientName;
 
 			if (getRadioValue(document.form._f_show_hostnames) == 1) {
 				clientObj = clientFromIP(b[1]);
-				if ((clientObj) && (clientObj.name != "")) {
-					h = "<b>" + clientObj.name + '</b>  <small>(' + b[1] + ')</small>';
+				if (clientObj) {
+					clientName = (clientObj.nickName == "") ? clientObj.hostname : clientObj.nickName;
+					h = "<b>" + clientName.shorter(24) + '</b> <small>(' + b[1] + ')</small>';
 				}
 			}
 

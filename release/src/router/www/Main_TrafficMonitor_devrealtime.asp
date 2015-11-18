@@ -104,6 +104,7 @@ function redraw() {
 	if ((updating) || (cstats_busy)) return;
 
 	var hostslisted = [];
+	genClientList();
 
 	var grid;
 	var i, b, x;
@@ -178,11 +179,13 @@ function redraw() {
 
 		var h = b[0];
 		var clientObj;
+		var clientName;
 
 		if (getRadioValue(document.form._f_show_hostnames) == 1) {
 			clientObj = clientFromIP(b[0]);
-			if ((clientObj) && (clientObj.name != "")) {
-				h = "<b>" + clientObj.name + '</b>  <small>(' + b[0] + ')</small>';
+			if (clientObj) {
+				clientName = (clientObj.nickName == "") ? clientObj.hostname : clientObj.nickName;
+				h = "<b>" + clientName.shorter(16) + '</b> <small>(' + b[0] + ')</small>';
 			}
 		}
 
