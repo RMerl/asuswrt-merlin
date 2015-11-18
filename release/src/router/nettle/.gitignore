@@ -60,3 +60,5 @@ tools/nettle-pbkdf2
 tools/pkcs1-conv
 tools/sexp-conv
 twofishdata
+nettle.html
+nettle.info
