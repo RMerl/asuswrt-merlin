@@ -260,8 +260,8 @@ static int refresh_sig(void)
 }
 
 static int safe_leave(int signo){
-	fclose(fp_upnp);
-	fclose(fp_smb);
+//	fclose(fp_upnp);
+//	fclose(fp_smb);
 	file_unlock(lock);
 	file_unlock(mdns_lock);
 	file_unlock(nvram_lock);
@@ -757,7 +757,7 @@ int main(int argc, char *argv[])
         }
 
 	//fp_upnp = fopen("/tmp/upnp.log", "w");
-	fp_smb = fopen("tmp/smb.log", "w");
+	//fp_smb = fopen("tmp/smb.log", "w");
 
 	//Initial Shared Memory
 	//client tables
