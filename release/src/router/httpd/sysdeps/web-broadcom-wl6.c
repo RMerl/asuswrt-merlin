@@ -1138,9 +1138,6 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int retval = 0;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
-#ifdef RTCONFIG_QTN
-	qcsapi_unsigned_int channel;
-#endif
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
@@ -1600,16 +1597,7 @@ wl_extent_channel(int unit)
 				return  CHSPEC_CHANNEL(bi->chanspec);
 		}
 	}
-#ifdef RTCONFIG_QTN
-	ret = rpc_qcsapi_get_channel(&channel);
-#endif
-
-#ifdef RTCONFIG_QTN
-	if (ret < 0) return 0;
-	else return channel;
-#else
 	return 0;
-#endif
 }
 
 int
@@ -1633,17 +1621,7 @@ wl_control_channel(int unit)
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
 #ifdef RTCONFIG_QTN
-	qcsapi_unsigned_int p_channel;
-#endif
-
-#ifdef RTCONFIG_QTN
-	if (unit == 1) {
-		if (rpc_qcsapi_get_channel(&p_channel) >= 0) {
-			return p_channel;
-		} else {
-			return 0;
-		}
-	}
+	qcsapi_unsigned_int channel;
 #endif
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
@@ -1674,8 +1652,16 @@ wl_control_channel(int unit)
 				return CHSPEC_CHANNEL(bi->chanspec);
 		}
 	}
+#ifdef RTCONFIG_QTN
+	ret = rpc_qcsapi_get_channel(&channel);
+#endif
 
+#ifdef RTCONFIG_QTN
+	if (ret < 0) return 0;
+	else return channel;
+#else
 	return 0;
+#endif
 }
 
 int
