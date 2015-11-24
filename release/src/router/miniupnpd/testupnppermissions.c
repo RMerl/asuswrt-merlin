@@ -1,5 +1,5 @@
 /* $Id: testupnppermissions.c,v 1.3 2009/09/14 15:24:46 nanard Exp $ */
-/* (c) 2007-2009 Thomas Bernard
+/* (c) 2007-2015 Thomas Bernard
  * MiniUPnP Project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  */
@@ -35,7 +35,7 @@ print_upnpperm(const struct upnpperm * p)
 
 int main(int argc, char * * argv)
 {
-	int i, r;
+	int i, r, ret;
 	struct upnpperm p;
 	if(argc < 2) {
 		fprintf(stderr, "Usage:   %s \"permission line\" [...]\n", argv[0]);
@@ -43,8 +43,7 @@ int main(int argc, char * * argv)
 		return 1;
 	}
 	openlog("testupnppermissions", LOG_PERROR, LOG_USER);
-/*	for(i=0; i<argc; i++)
-		printf("%2d '%s'\n", i, argv[i]); */
+	ret = 0;
 	for(i=1; i<argc; i++) {
 		printf("%2d '%s'\n", i, argv[i]);
 		memset(&p, 0, sizeof(struct upnpperm));
@@ -54,9 +53,10 @@ int main(int argc, char * * argv)
 			print_upnpperm(&p);
 		} else {
 			printf("Permission read failed, please check its correctness\n");
+			ret++;
 		}
 		putchar('\n');
 	}
-	return 0;
+	return ret;
 }
 

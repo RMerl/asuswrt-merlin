@@ -60,7 +60,7 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
 
 int init_ssl(void)
 {
-	SSL_METHOD *method;
+	const SSL_METHOD *method;
 	SSL_library_init();
 	SSL_load_error_strings();
 	method = TLSv1_server_method();

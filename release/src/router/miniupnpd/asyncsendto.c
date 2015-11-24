@@ -1,4 +1,4 @@
-/* $Id: asyncsendto.c,v 1.6 2014/05/19 14:26:56 nanard Exp $ */
+/* $Id: asyncsendto.c,v 1.7 2015/09/03 18:19:20 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -11,10 +11,12 @@
 #include <sys/queue.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <syslog.h>
 #include <errno.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
+#include <inttypes.h>
 
 #include "asyncsendto.h"
 #include "upnputils.h"

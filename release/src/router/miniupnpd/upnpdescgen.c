@@ -1,7 +1,7 @@
 /* $Id: upnpdescgen.c,v 1.77 2014/03/10 11:04:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -140,14 +140,14 @@ static const struct XMLElt rootDesc[] =
 #else
 	{"device", INITHELPER(5,12)},
 #endif
-	{"/major", "1"},
-	{"/minor", "0"},
+	{"/major", UPNP_VERSION_MAJOR_STR},
+	{"/minor", UPNP_VERSION_MINOR_STR},
 /* 5 */
 	{"/deviceType", DEVICE_TYPE_IGD},
 		/* urn:schemas-upnp-org:device:InternetGatewayDevice:1 or 2 */
 #ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
 	{"/friendlyName", friendly_name/*ROOTDEV_FRIENDLYNAME*/},	/* required */
-	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
+	{"/manufacturer", manufacturer_name/*ROOTDEV_MANUFACTURER*/},		/* required */
 /* 8 */
 	{"/manufacturerURL", manufacturer_url/*ROOTDEV_MANUFACTURERURL*/},	/* optional */
 	{"/modelDescription", model_description/*ROOTDEV_MODELDESCRIPTION*/}, /* recommended */
@@ -155,12 +155,12 @@ static const struct XMLElt rootDesc[] =
 	{"/modelNumber", modelnumber},
 	{"/modelURL", model_url/*ROOTDEV_MODELURL*/},
 #else
-	{"/friendlyName", ROOTDEV_FRIENDLYNAME},        /* required */
-	{"/manufacturer", ROOTDEV_MANUFACTURER},        /* required */
+	{"/friendlyName", ROOTDEV_FRIENDLYNAME},	/* required */
+	{"/manufacturer", ROOTDEV_MANUFACTURER},	/* required */
 /* 8 */
-	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},  /* optional */
+	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
 	{"/modelDescription", ROOTDEV_MODELDESCRIPTION}, /* recommended */
-	{"/modelName", ROOTDEV_MODELNAME},      /* required */
+	{"/modelName", ROOTDEV_MODELNAME},	/* required */
 	{"/modelNumber", modelnumber},
 	{"/modelURL", ROOTDEV_MODELURL},
 #endif
@@ -976,7 +976,8 @@ genServiceDesc(int * len, const struct serviceDesc * s)
 	str = strcat_char(str, len, &tmplen, '>');
 
 	str = strcat_str(str, len, &tmplen,
-		"<specVersion><major>1</major><minor>0</minor></specVersion>");
+		"<specVersion><major>" UPNP_VERSION_MAJOR_STR "</major>"
+		"<minor>" UPNP_VERSION_MINOR_STR "</minor></specVersion>");
 
 	i = 0;
 	str = strcat_str(str, len, &tmplen, "<actionList>");

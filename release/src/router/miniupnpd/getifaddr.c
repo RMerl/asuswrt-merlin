@@ -1,4 +1,4 @@
-/* $Id: getifaddr.c,v 1.23 2014/05/06 14:40:53 nanard Exp $ */
+/* $Id: getifaddr.c,v 1.19 2013/12/13 14:28:40 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -24,7 +24,7 @@
 #if defined(USE_GETIFADDRS) || defined(ENABLE_IPV6) || defined(ENABLE_PCP)
 #include <ifaddrs.h>
 #endif
-#if BCMARM
+#if defined(BCMARM)
 #include "ifaddrs.c"
 #endif
 

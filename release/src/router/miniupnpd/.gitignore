@@ -1,9 +1,4 @@
-.*
 *.o
-*.a
-*.lo
-*.la
-*.d
 *.bak
 config.h
 ipfw/testipfwrdr
@@ -13,11 +8,15 @@ testgetifaddr
 testgetifstats
 testupnpdescgen
 testupnppermissions
-version.h
 testgetroute
 testasyncsendto
 testportinuse
 netfilter/testiptcrdr
 netfilter/testiptcrdr_dscp
 netfilter/testiptcrdr_peer
-
+testdescs
+validateupnppermissions
+validategetifaddr
+testssdppktgen
+validatessdppktgen
+version.h

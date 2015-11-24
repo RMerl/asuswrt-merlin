@@ -1,4 +1,4 @@
-/* $Id: ipfwaux.h,v 1.3 2011/02/20 23:43:41 nanard Exp $ */
+/* $Id: ipfwaux.h,v 1.6 2015/09/04 14:20:58 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -10,6 +10,8 @@
 #define IPFWAUX_H
 
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip_fw.h>
 

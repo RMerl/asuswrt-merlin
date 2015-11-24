@@ -1,4 +1,28 @@
-$Id: Changelog.txt,v 1.398 2015/04/26 14:43:27 nanard Exp $
+$Id: Changelog.txt,v 1.408 2015/11/16 19:29:42 nanard Exp $
+
+2015/11/16:
+  Fix bsd/getroute.c get_src_for_route_to() when args are NULL
+
+2015/11/02:
+  use LOG_INFO instead of LOG_ERR for PCP PEER and MAP success
+
+2015/10/30:
+  fix : properly call find_ipv6_addr() with the 1st LAN interface
+  use name server from query in SOAP responses (continued)
+
+2015/10/24:
+  move SSDP_PACKET_MAX_LEN definition to config.h. also set default to 1024.
+
+2015/09/22:
+  cleanup UPNP_VERSION macro / add UPNP_VERSION_MAJOR, UPNP_VERSION_MINOR
+  Dont use packed structs anymore to read/write PCP messages
+
+2015/09/15:
+  use name server from query in SOAP responses
+
+2015/08/25:
+  better bind socket to right interface(s),
+    using struct ip_mreqn, SO_BINDTODEVICE
 
 2015/04/30:
   Adding linux/nftables support

@@ -1,4 +1,4 @@
-/* $Id: minissdp.c,v 1.73 2015/01/17 11:26:05 nanard Exp $ */
+/* $Id: minissdp.c,v 1.77 2015/08/26 07:36:52 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2015 Thomas Bernard
@@ -35,29 +35,43 @@
 #define SL_SSDP_MCAST_ADDR "FF05::C"
 #define GL_SSDP_MCAST_ADDR "FF0E::C"
 
-/* maximum lenght of SSDP packets we are generating
- * (reception is done in a 1500byte buffer) */
-#ifdef ENABLE_HTTPS
-#define SSDP_PACKET_MAX_LEN 768
-#else
-#define SSDP_PACKET_MAX_LEN 512
-#endif
-
 /* AddMulticastMembership()
- * param s		socket
- * param ifaddr	ip v4 address
+ * param s			socket
+ * param lan_addr	lan address
  */
 static int
-AddMulticastMembership(int s, in_addr_t ifaddr)
+AddMulticastMembership(int s, struct lan_addr_s * lan_addr)
 {
+#ifndef HAVE_IP_MREQN
+	/* The ip_mreqn structure appeared in Linux 2.4. */
 	struct ip_mreq imr;	/* Ip multicast membership */
+#else	/* HAVE_IP_MREQN */
+	struct ip_mreqn imr;	/* Ip multicast membership */
+#endif	/* HAVE_IP_MREQN */
 
     /* setting up imr structure */
     imr.imr_multiaddr.s_addr = inet_addr(SSDP_MCAST_ADDR);
     /*imr.imr_interface.s_addr = htonl(INADDR_ANY);*/
-    imr.imr_interface.s_addr = ifaddr;	/*inet_addr(ifaddr);*/
+#ifndef HAVE_IP_MREQN
+	imr.imr_interface.s_addr = lan_addr->addr.s_addr;
+#else	/* HAVE_IP_MREQN */
+    imr.imr_address.s_addr = lan_addr->addr.s_addr;
+#ifndef MULTIPLE_EXTERNAL_IP
+#ifdef ENABLE_IPV6
+	imr.imr_ifindex = lan_addr->index;
+#else	/* ENABLE_IPV6 */
+    imr.imr_ifindex = if_nametoindex(lan_addr->ifname);
+#endif	/* ENABLE_IPV6 */
+#else	/* MULTIPLE_EXTERNAL_IP */
+    imr.imr_ifindex = 0;
+#endif	/* MULTIPLE_EXTERNAL_IP */
+#endif	/* HAVE_IP_MREQN */
 
+#ifndef HAVE_IP_MREQN
 	if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&imr, sizeof(struct ip_mreq)) < 0)
+#else	/* HAVE_IP_MREQN */
+	if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&imr, sizeof(struct ip_mreqn)) < 0)
+#endif	/* HAVE_IP_MREQN */
 	{
         syslog(LOG_ERR, "setsockopt(udp, IP_ADD_MEMBERSHIP): %m");
 		return -1;
@@ -155,6 +169,20 @@ OpenAndConfSSDPReceiveSocket(int ipv6)
 		       "OpenAndConfSSDPReceiveSocket");
 	}
 
+#if defined(SO_BINDTODEVICE) && !defined(MULTIPLE_EXTERNAL_IP)
+	/* One and only one LAN interface */
+	if(lan_addrs.lh_first != NULL && lan_addrs.lh_first->list.le_next == NULL
+	   && strlen(lan_addrs.lh_first->ifname) > 0)
+	{
+		if(setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
+		              lan_addrs.lh_first->ifname,
+		              strlen(lan_addrs.lh_first->ifname)) < 0)
+		    syslog(LOG_WARNING, "%s: setsockopt(udp%s, SO_BINDTODEVICE, %s): %m",
+			       "OpenAndConfSSDPReceiveSocket", ipv6 ? "6" : "",
+			       lan_addrs.lh_first->ifname);
+	}
+#endif /* defined(SO_BINDTODEVICE) && !defined(MULTIPLE_EXTERNAL_IP) */
+
 	if(bind(s, (struct sockaddr *)&sockname, sockname_len) < 0)
 	{
 		syslog(LOG_ERR, "%s: bind(udp%s): %m",
@@ -181,7 +209,7 @@ OpenAndConfSSDPReceiveSocket(int ipv6)
 	{
 		for(lan_addr = lan_addrs.lh_first; lan_addr != NULL; lan_addr = lan_addr->list.le_next)
 		{
-			if(AddMulticastMembership(s, lan_addr->addr.s_addr) < 0)
+			if(AddMulticastMembership(s, lan_addr) < 0)
 			{
 				syslog(LOG_WARNING,
 				       "Failed to add multicast membership for interface %s",
@@ -499,7 +527,7 @@ static struct {
 	{"urn:schemas-upnp-org:service:Layer3Forwarding:", 1, uuidvalue_igd},
 #endif
 #ifdef ENABLE_6FC_SERVICE
-	{"url:schemas-upnp-org:service:WANIPv6FirewallControl:", 1, uuidvalue_wcd},
+	{"urn:schemas-upnp-org:service:WANIPv6FirewallControl:", 1, uuidvalue_wcd},
 #endif
 /* we might want to support urn:schemas-wifialliance-org:device:WFADevice:1
  * urn:schemas-wifialliance-org:device:WFADevice:1

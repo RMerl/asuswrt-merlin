@@ -29,6 +29,8 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef PCP_MSG_STRUCT_H_INCLUDED
+#define PCP_MSG_STRUCT_H_INCLUDED
 
 #define PCP_OPCODE_ANNOUNCE   0
 #define PCP_OPCODE_MAP        1
@@ -135,14 +137,8 @@ typedef enum pcp_options  {
 } pcp_options_t;
 
 
-#ifdef _WIN32
-#pragma warning (push)
-#pragma warning (disable:4200)
-#endif /* _WIN32 */
-
-#pragma pack(push, 1)
-
 /* PCP common request header*/
+#if 0
 typedef struct pcp_request {
   uint8_t     ver;
   uint8_t     r_opcode;
@@ -152,8 +148,11 @@ typedef struct pcp_request {
                         by the ipv4 mapped ipv6 */
   uint8_t     next_data[0];
 } pcp_request_t;
+#endif
+#define PCP_COMMON_REQUEST_SIZE (24)
 
 /* PCP common response header*/
+#if 0
 typedef struct pcp_response {
   uint8_t     ver;
   uint8_t     r_opcode;    /* R indicates Request (0) or Response (1)
@@ -166,16 +165,22 @@ typedef struct pcp_response {
   uint32_t    reserved1[3];/* For requests that were successfully parsed this must be sent as 0 */
   uint8_t     next_data[0];
 } pcp_response_t;
+#endif
+#define PCP_COMMON_RESPONSE_SIZE (24)
 
 
+#if 0
 typedef struct pcp_options_hdr {
   uint8_t     code;             /* Most significant bit indicates if this option is mandatory (0) or optional (1) */
   uint8_t     reserved;         /* MUST be set to 0 on transmission and MUST be ignored on reception */
   uint16_t    len;              /* indicates the length of the enclosed data in octets (see RFC) */
   uint8_t     next_data[0];     /* */
 } pcp_options_hdr_t;
+#endif
+#define PCP_OPTION_HDR_SIZE (4)
 
 /* same for both request and response */
+#if 0
 typedef struct pcp_map_v2 {
   uint32_t    nonce[3];
   uint8_t     protocol;   /* 6 = TCP, 17 = UDP, 0 = 'all protocols' */
@@ -186,7 +191,10 @@ typedef struct pcp_map_v2 {
       * ipv4 will be represented by the ipv4 mapped ipv6 */
   uint8_t     next_data[0];
 } pcp_map_v2_t;
+#endif
+#define PCP_MAP_V2_SIZE (36)
 
+#if 0
 /* same for both request and response */
 typedef struct pcp_map_v1 {
   uint8_t     protocol;
@@ -197,8 +205,11 @@ typedef struct pcp_map_v1 {
                             by the ipv4 mapped ipv6 */
   uint8_t     next_data[0];
 } pcp_map_v1_t;
+#endif
+#define PCP_MAP_V1_SIZE (24)
 
 /* same for both request and response */
+#if 0
 typedef struct pcp_peer_v1 {
   uint8_t     protocol;
   uint8_t     reserved[3];
@@ -211,8 +222,11 @@ typedef struct pcp_peer_v1 {
   struct in6_addr peer_ip;
   uint8_t     next_data[0];
 } pcp_peer_v1_t;
+#endif
+#define PCP_PEER_V1_SIZE (44)
 
 /* same for both request and response */
+#if 0
 typedef struct pcp_peer_v2 {
   uint32_t    nonce[3];
   uint8_t     protocol;
@@ -226,30 +240,41 @@ typedef struct pcp_peer_v2 {
   struct in6_addr peer_ip;
   uint8_t     next_data[0];
 } pcp_peer_v2_t;
+#endif
+#define PCP_PEER_V2_SIZE (56)
 
 #ifdef PCP_SADSCP
+#if 0
 typedef struct pcp_sadscp_req {
     uint32_t  nonce[3];
     uint8_t   tolerance_fields;
     uint8_t   app_name_length;
     char      app_name[0];
 }  pcp_sadscp_req_t;
+#endif
+#define PCP_SADSCP_REQ_SIZE (14)
 
+#if 0
 typedef struct pcp_sadscp_resp {
     uint32_t  nonce[3];
-#define PCP_SADSCP_MASK ((1<<6)-1)
     uint8_t   a_r_dscp_value;
     uint8_t   reserved[3];
 }  pcp_sadscp_resp_t;
 #endif
+#define PCP_SADSCP_MASK ((1<<6)-1)
+#endif /* PCP_SADSCP */
 
+#if 0
 typedef struct pcp_prefer_fail_option {
    uint8_t   option;
    uint8_t   reserved;
    uint16_t  len;
    uint8_t   next_data[0];
 } pcp_prefer_fail_option_t;
+#endif
+#define PCP_PREFER_FAIL_OPTION_SIZE (4)
 
+#if 0
 typedef struct pcp_3rd_party_option{
    uint8_t  option;
    uint8_t  reserved;
@@ -257,22 +282,28 @@ typedef struct pcp_3rd_party_option{
    struct in6_addr ip;
    uint8_t  next_data[0];
 } pcp_3rd_party_option_t;
+#endif
+#define PCP_3RD_PARTY_OPTION_SIZE (20)
 
 #ifdef PCP_FLOWP
+#if 0
 typedef struct pcp_flow_priority_option{
    uint8_t  option;
    uint8_t  reserved;
    uint16_t len;
    uint8_t  dscp_up;
    uint8_t  dscp_down;
-#define PCP_DSCP_MASK ((1<<6)-1)
    uint8_t  reserved2;
    /* most significant bit is used for response */
    uint8_t  response_bit;
    uint8_t  next_data[0];
 } pcp_flow_priority_option_t;
 #endif
+#define PCP_DSCP_MASK ((1<<6)-1)
+#define PCP_FLOW_PRIORITY_OPTION_SIZE (8)
+#endif
 
+#if 0
 typedef struct pcp_filter_option {
     uint8_t  option;
     uint8_t  reserved1;
@@ -282,9 +313,7 @@ typedef struct pcp_filter_option {
     uint16_t peer_port;
     struct in6_addr peer_ip;
 }pcp_filter_option_t;
+#endif
+#define PCP_FILTER_OPTION_SIZE (24)
 
-#pragma pack(pop)
-
-#ifdef _WIN32
-#pragma warning (pop)
-#endif /* _WIN32 */
+#endif /* PCP_MSG_STRUCT_H_INCLUDED */

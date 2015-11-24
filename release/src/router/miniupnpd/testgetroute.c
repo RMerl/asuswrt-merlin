@@ -1,7 +1,7 @@
 /* $Id: testgetroute.c,v 1.5 2013/02/06 12:07:36 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -75,6 +75,13 @@ main(int argc, char ** argv)
 	}
 
 	if (dst) {
+		syslog(LOG_DEBUG, "calling get_src_for_route_to(%p, NULL, NULL, %p)",
+		       dst, &index);
+		r = get_src_for_route_to (dst, NULL, NULL, &index);
+		syslog(LOG_DEBUG, "get_src_for_route_to() returned %d", r);
+		if(r >= 0) {
+			syslog(LOG_DEBUG, "index=%d", index);
+		}
 		syslog(LOG_DEBUG, "calling get_src_for_route_to(%p, %p, %p(%u), %p)",
 		       dst, src, &src_len, (unsigned)src_len, &index);
 		r = get_src_for_route_to (dst, src, &src_len, &index);
