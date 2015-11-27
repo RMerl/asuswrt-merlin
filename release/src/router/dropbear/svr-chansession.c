@@ -814,7 +814,7 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		login_free_entry(li);
 
 #ifdef DO_MOTD
-		if (svr_opts.domotd) {
+		if (svr_opts.domotd && !chansess->cmd) {
 			/* don't show the motd if ~/.hushlogin exists */
 
 			/* 12 == strlen("/.hushlogin\0") */

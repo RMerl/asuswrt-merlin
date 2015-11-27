@@ -39,4 +39,7 @@ rm "$RELDIR/.hgtags"
 
 ls -l $ARCHIVE
 openssl sha -sha256 $ARCHIVE
-echo "Done to $ARCHIVE"
+echo Done to
+echo "$ARCHIVE"
+echo Sign it with
+echo gpg2 --detach-sign -a -u F29C6773 "$ARCHIVE"

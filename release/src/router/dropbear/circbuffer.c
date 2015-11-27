@@ -37,9 +37,8 @@ circbuffer * cbuf_new(unsigned int size) {
 	}
 
 	cbuf = (circbuffer*)m_malloc(sizeof(circbuffer));
-	if (size > 0) {
-		cbuf->data = (unsigned char*)m_malloc(size);
-	}
+	/* data is malloced on first write */
+	cbuf->data = NULL;
 	cbuf->used = 0;
 	cbuf->readpos = 0;
 	cbuf->writepos = 0;
@@ -50,8 +49,10 @@ circbuffer * cbuf_new(unsigned int size) {
 
 void cbuf_free(circbuffer * cbuf) {
 
-	m_burn(cbuf->data, cbuf->size);
-	m_free(cbuf->data);
+	if (cbuf->data) {
+		m_burn(cbuf->data, cbuf->size);
+		m_free(cbuf->data);
+	}
 	m_free(cbuf);
 }
 
@@ -104,6 +105,11 @@ unsigned char* cbuf_writeptr(circbuffer *cbuf, unsigned int len) {
 
 	if (len > cbuf_writelen(cbuf)) {
 		dropbear_exit("Bad cbuf write");
+	}
+
+	if (!cbuf->data) {
+		/* lazy allocation */
+		cbuf->data = (unsigned char*)m_malloc(cbuf->size);
 	}
 
 	return &cbuf->data[cbuf->writepos];

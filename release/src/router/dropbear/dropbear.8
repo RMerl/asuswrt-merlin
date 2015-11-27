@@ -3,11 +3,10 @@
 dropbear \- lightweight SSH server
 .SH SYNOPSIS
 .B dropbear
-[\-RFEmwsgjki] [\-b
+[\fIflag arguments\fR] [\-b
 .I banner\fR] 
 [\-r
-.I hostkeyfile\fR] [\-p
-.IR [address:]port ]
+.I hostkeyfile\fR] [\-p [\fIaddress\fR:]\fIport\fR]
 .SH DESCRIPTION
 .B dropbear
 is a small SSH server 
@@ -54,7 +53,7 @@ Disable local port forwarding.
 .B \-k
 Disable remote port forwarding.
 .TP
-.B \-p \fI[address:]port
+.B \-p\fR [\fIaddress\fR:]\fIport
 Listen on specified 
 .I address
 and TCP
@@ -128,7 +127,7 @@ Disable PTY allocation. Note that a user can still obtain most of the
 same functionality with other means even if no-pty is set.
 
 .TP
-.B command="\fIforced_command\fR"
+.B command=\fR"\fIforced_command\fR"
 Disregard the command provided by the user and always run \fIforced_command\fR.
 
 The authorized_keys file and its containing ~/.ssh directory must only be

@@ -1,3 +1,28 @@
+2015.70 - 26 November 2015
+
+- Fix server password authentication on Linux, broke in 2015.69
+
+2015.69 - 25 November 2015
+
+- Fix crash when forwarded TCP connections fail to connect (bug introduced in 2015.68)
+
+- Avoid hang on session close when multiple sessions are started, affects Qt Creator
+  Patch from Andrzej Szombierski
+
+- Reduce per-channel memory consumption in common case, increase default
+  channel limit from 100 to 1000 which should improve SOCKS forwarding for modern
+  webpages
+
+- Handle multiple command line arguments in a single flag, thanks to Guilhem Moulin
+
+- Manpage improvements from Guilhem Moulin
+
+- Build fixes for Android from Mike Frysinger
+
+- Don't display the MOTD when an explicit command is run from Guilhem Moulin
+
+- Check curve25519 shared secret isn't zero
+
 2015.68 - Saturday 8 August 2015
 
 - Reduce local data copying for improved efficiency. Measured 30%

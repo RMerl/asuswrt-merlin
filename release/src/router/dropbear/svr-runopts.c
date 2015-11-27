@@ -112,13 +112,14 @@ static void printhelp(const char * progname) {
 
 void svr_getopts(int argc, char ** argv) {
 
-	unsigned int i;
+	unsigned int i, j;
 	char ** next = 0;
 	int nextisport = 0;
 	char* recv_window_arg = NULL;
 	char* keepalive_arg = NULL;
 	char* idle_timeout_arg = NULL;
 	char* keyfile = NULL;
+	char c;
 
 
 	/* see printhelp() for options */
@@ -168,28 +169,11 @@ void svr_getopts(int argc, char ** argv) {
 #endif
 
 	for (i = 1; i < (unsigned int)argc; i++) {
-		if (nextisport) {
-			addportandaddress(argv[i]);
-			nextisport = 0;
-			continue;
-		}
-	  
-		if (next) {
-			*next = argv[i];
-			if (*next == NULL) {
-				dropbear_exit("Invalid null argument");
-			}
-			next = 0x00;
+		if (argv[i][0] != '-' || argv[i][1] == '\0')
+			dropbear_exit("Invalid argument: %s", argv[i]);
 
-			if (keyfile) {
-				addhostkey(keyfile);
-				keyfile = NULL;
-			}
-			continue;
-		}
-
-		if (argv[i][0] == '-') {
-			switch (argv[i][1]) {
+		for (j = 1; (c = argv[i][j]) != '\0' && !next && !nextisport; j++) {
+			switch (c) {
 				case 'b':
 					next = &svr_opts.bannerfile;
 					break;
@@ -278,10 +262,37 @@ void svr_getopts(int argc, char ** argv) {
 					exit(EXIT_SUCCESS);
 					break;
 				default:
-					fprintf(stderr, "Unknown argument %s\n", argv[i]);
+					fprintf(stderr, "Invalid option -%c\n", c);
 					printhelp(argv[0]);
 					exit(EXIT_FAILURE);
 					break;
+			}
+		}
+
+		if (!next && !nextisport)
+			continue;
+
+		if (c == '\0') {
+			i++;
+			j = 0;
+			if (!argv[i]) {
+				dropbear_exit("Missing argument");
+			}
+		}
+
+		if (nextisport) {
+			addportandaddress(&argv[i][j]);
+			nextisport = 0;
+		} else if (next) {
+			*next = &argv[i][j];
+			if (*next == NULL) {
+				dropbear_exit("Invalid null argument");
+			}
+			next = 0x00;
+
+			if (keyfile) {
+				addhostkey(keyfile);
+				keyfile = NULL;
 			}
 		}
 	}
@@ -540,6 +551,6 @@ void load_all_hostkeys() {
 #endif /* DROPBEAR_ECDSA */
 
 	if (!any_keys) {
-		dropbear_exit("No hostkeys available");
+		dropbear_exit("No hostkeys available. 'dropbear -R' may be useful or run dropbearkey.");
 	}
 }

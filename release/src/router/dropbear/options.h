@@ -206,7 +206,10 @@ If you test it please contact the Dropbear author */
  * PAM challenge/response.
  * You can't enable both PASSWORD and PAM. */
 
+/* This requires crypt() */
+#ifdef HAVE_CRYPT
 #define ENABLE_SVR_PASSWORD_AUTH
+#endif
 /* PAM requires ./configure --enable-pam */
 /*#define ENABLE_SVR_PAM_AUTH */
 #define ENABLE_SVR_PUBKEY_AUTH
@@ -217,9 +220,12 @@ If you test it please contact the Dropbear author */
 #define ENABLE_SVR_PUBKEY_OPTIONS
 #endif
 
+/* This requires getpass. */
+#ifdef HAVE_GETPASS
 #define ENABLE_CLI_PASSWORD_AUTH
-#define ENABLE_CLI_PUBKEY_AUTH
 #define ENABLE_CLI_INTERACT_AUTH
+#endif
+#define ENABLE_CLI_PUBKEY_AUTH
 
 /* A default argument for dbclient -i <privatekey>. 
 Homedir is prepended unless path begins with / */

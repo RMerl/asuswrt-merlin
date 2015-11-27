@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2015.68"
+#define DROPBEAR_VERSION "2015.70"
 #endif
 
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
@@ -150,7 +150,7 @@
 								RECV_WINDOWEXTEND bytes */
 #define MAX_RECV_WINDOW (1024*1024) /* 1 MB should be enough */
 
-#define MAX_CHANNELS 100 /* simple mem restriction, includes each tcp/x11
+#define MAX_CHANNELS 1000 /* simple mem restriction, includes each tcp/x11
 							connection, so can't be _too_ small */
 
 #define MAX_STRING_LEN (MAX(MAX_CMD_LEN, 2400)) /* Sun SSH needs 2400 for algos,

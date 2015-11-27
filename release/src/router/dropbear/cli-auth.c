@@ -324,6 +324,7 @@ int cli_auth_try() {
 	return DROPBEAR_FAILURE;
 }
 
+#if defined(ENABLE_CLI_PASSWORD_AUTH) || defined(ENABLE_CLI_INTERACT_AUTH)
 /* A helper for getpass() that exits if the user cancels. The returned
  * password is statically allocated by getpass() */
 char* getpass_or_cancel(char* prompt)
@@ -347,3 +348,4 @@ char* getpass_or_cancel(char* prompt)
 	}
 	return password;
 }
+#endif
