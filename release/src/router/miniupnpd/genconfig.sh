@@ -109,8 +109,8 @@ echo "" >> ${CONFIGFILE}
 cat >> ${CONFIGFILE} <<EOF
 /* UPnP version reported in XML descriptions
  * 1.0 / 1.1 / 2.0 depending on which UDA (UPnP Device Architecture) Version */
-#define UPNP_VERSION_MAJOR	2
-#define UPNP_VERSION_MINOR	0
+#define UPNP_VERSION_MAJOR	1
+#define UPNP_VERSION_MINOR	1
 #define UPNP_VERSION_MAJOR_STR	XSTR(UPNP_VERSION_MAJOR)
 #define UPNP_VERSION_MINOR_STR	XSTR(UPNP_VERSION_MINOR)
 EOF
