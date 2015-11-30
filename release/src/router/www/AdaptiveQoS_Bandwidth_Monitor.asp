@@ -1412,15 +1412,6 @@ function cancel(){
 																	</table>											
 																</div>												
 															</td>
-															<td>						
-																<div id="5" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
-																	<table>
-																		<tr>			
-																			<td><div style="width:73px;"><#Empty#></div></td>
-																		</tr>
-																	</table>			
-																</div>					
-															</td>
 														</tr>
 													</table>
 												</div>
