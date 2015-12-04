@@ -78,14 +78,18 @@ static const struct ChanType *svr_chantypes[] = {
 };
 
 static void
-svr_session_cleanup(void) {
+svr_session_cleanup(void)
+{
 	/* free potential public key options */
 	svr_pubkey_options_cleanup();
+}
 
-	m_free(svr_ses.addrstring);
-	m_free(svr_ses.remotehost);
-	m_free(svr_ses.childpids);
-	svr_ses.childpidsize = 0;
+static void
+svr_sessionloop() {
+	if (svr_ses.connect_time != 0 
+		&& monotonic_now() - svr_ses.connect_time >= AUTH_TIMEOUT) {
+		dropbear_close("Timeout before auth");
+	}
 }
 
 void svr_session(int sock, int childpipe) {
@@ -93,6 +97,8 @@ void svr_session(int sock, int childpipe) {
 	size_t len;
 
 	common_session_init(sock, sock);
+
+	svr_ses.connect_time = monotonic_now();;
 
 	/* Initialise server specific parts of the session */
 	svr_ses.childpipe = childpipe;
@@ -128,15 +134,13 @@ void svr_session(int sock, int childpipe) {
 
 	/* exchange identification, version etc */
 	send_session_identification();
-	
-	kexfirstinitialise(); /* initialise the kex state */
 
 	/* start off with key exchange */
 	send_msg_kexinit();
 
 	/* Run the main for loop. NULL is for the dispatcher - only the client
 	 * code makes use of it */
-	session_loop(NULL);
+	session_loop(svr_sessionloop);
 
 	/* Not reached */
 
@@ -146,7 +150,6 @@ void svr_session(int sock, int childpipe) {
 void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 
 	char fmtbuf[300];
-	int i;
 
 	if (!sessinitdone) {
 		/* before session init */
@@ -178,15 +181,6 @@ void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 	{
 		/* must be after we've done with username etc */
 		session_cleanup();
-	}
-
-	if (svr_opts.hostkey) {
-		sign_key_free(svr_opts.hostkey);
-		svr_opts.hostkey = NULL;
-	}
-	for (i = 0; i < DROPBEAR_MAX_PORTS; i++) {
-		m_free(svr_opts.addresses[i]);
-		m_free(svr_opts.ports[i]);
 	}
 
 	exit(exitcode);

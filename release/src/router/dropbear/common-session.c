@@ -1,7 +1,7 @@
 /*
  * Dropbear - a SSH2 server
  * 
- * Copyright (c) Matt Johnston
+ * Copyright (c) 2002,2003 Matt Johnston
  * All rights reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,7 +34,6 @@
 #include "kex.h"
 #include "channel.h"
 #include "runopts.h"
-#include "netio.h"
 
 static void checktimeouts();
 static long select_timeout();
@@ -54,29 +53,17 @@ int exitflag = 0; /* GLOBAL */
 void common_session_init(int sock_in, int sock_out) {
 	time_t now;
 
-#ifdef DEBUG_TRACE
-	debug_start_net();
-#endif
-
 	TRACE(("enter session_init"))
 
 	ses.sock_in = sock_in;
 	ses.sock_out = sock_out;
 	ses.maxfd = MAX(sock_in, sock_out);
 
-	if (sock_in >= 0) {
-		setnonblocking(sock_in);
-	}
-	if (sock_out >= 0) {
-		setnonblocking(sock_out);
-	}
-
 	ses.socket_prio = DROPBEAR_PRIO_DEFAULT;
 	/* Sets it to lowdelay */
 	update_channel_prio();
 
 	now = monotonic_now();
-	ses.connect_time = now;
 	ses.last_packet_time_keepalive_recv = now;
 	ses.last_packet_time_idle = now;
 	ses.last_packet_time_any_sent = 0;
@@ -91,6 +78,8 @@ void common_session_init(int sock_in, int sock_out) {
 	ses.maxfd = MAX(ses.maxfd, ses.signal_pipe[0]);
 	ses.maxfd = MAX(ses.maxfd, ses.signal_pipe[1]);
 	
+	kexfirstinitialise(); /* initialise the kex state */
+
 	ses.writepayload = buf_new(TRANS_MAX_PAYLOAD_LEN);
 	ses.transseq = 0;
 
@@ -151,7 +140,6 @@ void session_loop(void(*loophandler)()) {
 
 	/* main loop, select()s for all sockets in use */
 	for(;;) {
-		const int writequeue_has_space = (ses.writequeue_len <= 2*TRANS_MAX_PAYLOAD_LEN);
 
 		timeout.tv_sec = select_timeout();
 		timeout.tv_usec = 0;
@@ -159,33 +147,21 @@ void session_loop(void(*loophandler)()) {
 		FD_ZERO(&readfd);
 		dropbear_assert(ses.payload == NULL);
 
+		/* during initial setup we flush out the KEXINIT packet before
+		 * attempting to read the remote version string, which might block */
+		if (ses.sock_in != -1 && (ses.remoteident || isempty(&ses.writequeue))) {
+			FD_SET(ses.sock_in, &readfd);
+		}
+		if (ses.sock_out != -1 && !isempty(&ses.writequeue)) {
+			FD_SET(ses.sock_out, &writefd);
+		}
+		
 		/* We get woken up when signal handlers write to this pipe.
 		   SIGCHLD in svr-chansession is the only one currently. */
 		FD_SET(ses.signal_pipe[0], &readfd);
 
 		/* set up for channels which can be read/written */
-		setchannelfds(&readfd, &writefd, writequeue_has_space);
-
-		/* Pending connections to test */
-		set_connect_fds(&writefd);
-
-		/* We delay reading from the input socket during initial setup until
-		after we have written out our initial KEXINIT packet (empty writequeue). 
-		This means our initial packet can be in-flight while we're doing a blocking
-		read for the remote ident.
-		We also avoid reading from the socket if the writequeue is full, that avoids
-		replies backing up */
-		if (ses.sock_in != -1 
-			&& (ses.remoteident || isempty(&ses.writequeue)) 
-			&& writequeue_has_space) {
-			FD_SET(ses.sock_in, &readfd);
-		}
-
-		/* Ordering is important, this test must occur after any other function
-		might have queued packets (such as connection handlers) */
-		if (ses.sock_out != -1 && !isempty(&ses.writequeue)) {
-			FD_SET(ses.sock_out, &writefd);
-		}
+		setchannelfds(&readfd, &writefd);
 
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
 
@@ -234,12 +210,10 @@ void session_loop(void(*loophandler)()) {
 				process_packet();
 			}
 		}
-
+		
 		/* if required, flush out any queued reply packets that
 		were being held up during a KEX */
 		maybe_flush_reply_queue();
-
-		handle_connect_fds(&writefd);
 
 		/* process pipes etc for the channels, ses.dataallowed == 0
 		 * during rekeying ) */
@@ -262,15 +236,6 @@ void session_loop(void(*loophandler)()) {
 	/* Not reached */
 }
 
-static void cleanup_buf(buffer **buf) {
-	if (!*buf) {
-		return;
-	}
-	buf_burn(*buf);
-	buf_free(*buf);
-	*buf = NULL;
-}
-
 /* clean up a session on exit */
 void session_cleanup() {
 	
@@ -282,47 +247,24 @@ void session_cleanup() {
 		return;
 	}
 
-	/* BEWARE of changing order of functions here. */
-
-	/* Must be before extra_session_cleanup() */
-	chancleanup();
-
 	if (ses.extra_session_cleanup) {
 		ses.extra_session_cleanup();
 	}
 
-	/* After these are freed most functions will fail */
-#ifdef DROPBEAR_CLEANUP
-	/* listeners call cleanup functions, this should occur before
-	other session state is freed. */
-	remove_all_listeners();
-
-	remove_connect_pending();
-
-	while (!isempty(&ses.writequeue)) {
-		buf_free(dequeue(&ses.writequeue));
+	chancleanup();
+	
+	/* Cleaning up keys must happen after other cleanup
+	functions which might queue packets */
+	if (ses.session_id) {
+		buf_burn(ses.session_id);
+		buf_free(ses.session_id);
+		ses.session_id = NULL;
 	}
-
-	m_free(ses.remoteident);
-	m_free(ses.authstate.pw_dir);
-	m_free(ses.authstate.pw_name);
-	m_free(ses.authstate.pw_shell);
-	m_free(ses.authstate.pw_passwd);
-	m_free(ses.authstate.username);
-#endif
-
-	cleanup_buf(&ses.session_id);
-	cleanup_buf(&ses.hash);
-	cleanup_buf(&ses.payload);
-	cleanup_buf(&ses.readbuf);
-	cleanup_buf(&ses.writepayload);
-	cleanup_buf(&ses.kexhashbuf);
-	cleanup_buf(&ses.transkexinit);
-	if (ses.dh_K) {
-		mp_clear(ses.dh_K);
+	if (ses.hash) {
+		buf_burn(ses.hash);
+		buf_free(ses.hash);
+		ses.hash = NULL;
 	}
-	m_free(ses.dh_K);
-
 	m_burn(ses.keys, sizeof(struct key_context));
 	m_free(ses.keys);
 
@@ -331,8 +273,10 @@ void session_cleanup() {
 
 void send_session_identification() {
 	buffer *writebuf = buf_new(strlen(LOCAL_IDENT "\r\n") + 1);
-	buf_putbytes(writebuf, (const unsigned char *) LOCAL_IDENT "\r\n", strlen(LOCAL_IDENT "\r\n"));
-	writebuf_enqueue(writebuf, 0);
+	buf_putbytes(writebuf, LOCAL_IDENT "\r\n", strlen(LOCAL_IDENT "\r\n"));
+	buf_putbyte(writebuf, 0x0); /* packet type */
+	buf_setpos(writebuf, 0);
+	enqueue(&ses.writequeue, writebuf);
 }
 
 static void read_session_identification() {
@@ -451,15 +395,15 @@ static int ident_readln(int fd, char* buf, int count) {
 }
 
 void ignore_recv_response() {
-	/* Do nothing */
+	// Do nothing
 	TRACE(("Ignored msg_request_response"))
 }
 
 static void send_msg_keepalive() {
-	time_t old_time_idle = ses.last_packet_time_idle;
-	struct Channel *chan = get_any_ready_channel();
-
 	CHECKCLEARTOWRITE();
+	time_t old_time_idle = ses.last_packet_time_idle;
+
+	struct Channel *chan = get_any_ready_channel();
 
 	if (chan) {
 		/* Channel requests are preferable, more implementations
@@ -490,11 +434,6 @@ static void checktimeouts() {
 	time_t now;
 	now = monotonic_now();
 	
-	if (IS_DROPBEAR_SERVER && ses.connect_time != 0
-		&& now - ses.connect_time >= AUTH_TIMEOUT) {
-			dropbear_close("Timeout before auth");
-	}
-
 	/* we can't rekey if we haven't done remote ident exchange yet */
 	if (ses.remoteident == NULL) {
 		return;
@@ -535,39 +474,20 @@ static void checktimeouts() {
 	}
 }
 
-static void update_timeout(long limit, long now, long last_event, long * timeout) {
-	TRACE2(("update_timeout limit %ld, now %ld, last %ld, timeout %ld",
-		limit, now, last_event, *timeout))
-	if (last_event > 0 && limit > 0) {
-		*timeout = MIN(*timeout, last_event+limit-now);
-		TRACE2(("new timeout %ld", *timeout))
-	}
-}
-
 static long select_timeout() {
 	/* determine the minimum timeout that might be required, so
 	as to avoid waking when unneccessary */
-	long timeout = LONG_MAX;
-	long now = monotonic_now();
-
-	update_timeout(KEX_REKEY_TIMEOUT, now, ses.kexstate.lastkextime, &timeout);
-
-	if (ses.authstate.authdone != 1 && IS_DROPBEAR_SERVER) {
-		/* AUTH_TIMEOUT is only relevant before authdone */
-		update_timeout(AUTH_TIMEOUT, now, ses.connect_time, &timeout);
-	}
-
-	if (ses.authstate.authdone) {
-		update_timeout(opts.keepalive_secs, now, 
-			MAX(ses.last_packet_time_keepalive_recv, ses.last_packet_time_keepalive_sent),
-			&timeout);
-	}
-
-	update_timeout(opts.idle_timeout_secs, now, ses.last_packet_time_idle,
-		&timeout);
-
-	/* clamp negative timeouts to zero - event has already triggered */
-	return MAX(timeout, 0);
+	long ret = LONG_MAX;
+	if (KEX_REKEY_TIMEOUT > 0)
+		ret = MIN(KEX_REKEY_TIMEOUT, ret);
+	/* AUTH_TIMEOUT is only relevant before authdone */
+	if (ses.authstate.authdone != 1 && AUTH_TIMEOUT > 0)
+		ret = MIN(AUTH_TIMEOUT, ret);
+	if (opts.keepalive_secs > 0)
+		ret = MIN(opts.keepalive_secs, ret);
+	if (opts.idle_timeout_secs > 0)
+		ret = MIN(opts.idle_timeout_secs, ret);
+	return ret;
 }
 
 const char* get_user_shell() {
@@ -623,11 +543,6 @@ void update_channel_prio() {
 
 	TRACE(("update_channel_prio"))
 
-	if (ses.sock_out < 0) {
-		TRACE(("leave update_channel_prio: no socket"))
-		return;
-	}
-
 	new_prio = DROPBEAR_PRIO_BULK;
 	for (i = 0; i < ses.chansize; i++) {
 		struct Channel *channel = ses.channels[i];
@@ -658,7 +573,7 @@ void update_channel_prio() {
 	}
 
 	if (new_prio != ses.socket_prio) {
-		TRACE(("Dropbear priority transitioning %d -> %d", ses.socket_prio, new_prio))
+		TRACE(("Dropbear priority transitioning %4.4s -> %4.4s", (char*)&ses.socket_prio, (char*)&new_prio))
 		set_sock_priority(ses.sock_out, new_prio);
 		ses.socket_prio = new_prio;
 	}

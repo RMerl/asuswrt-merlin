@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_GENRSA_H_
-#define DROPBEAR_GENRSA_H_
+#ifndef _GENRSA_H_
+#define _GENRSA_H_
 
 #include "rsa.h"
 
@@ -33,4 +33,4 @@ dropbear_rsa_key * gen_rsa_priv_key(unsigned int size);
 
 #endif /* DROPBEAR_RSA */
 
-#endif /* DROPBEAR_GENRSA_H_ */
+#endif /* _GENRSA_H_ */

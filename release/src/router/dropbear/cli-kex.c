@@ -79,7 +79,7 @@ void send_msg_kexdh_init() {
 				}
 				cli_ses.curve25519_param = gen_kexcurve25519_param();
 			}
-			buf_putstring(ses.writepayload, (const char*)cli_ses.curve25519_param->pub, CURVE25519_LEN);
+			buf_putstring(ses.writepayload, cli_ses.curve25519_param->pub, CURVE25519_LEN);
 #endif
 			break;
 	}
@@ -322,7 +322,7 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 		}
 
 		/* Compare hostnames */
-		if (strncmp(cli_opts.remotehost, (const char *) buf_getptr(line, hostlen),
+		if (strncmp(cli_opts.remotehost, buf_getptr(line, hostlen),
 					hostlen) != 0) {
 			continue;
 		}
@@ -334,7 +334,7 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 			continue;
 		}
 
-		if (strncmp((const char *) buf_getptr(line, algolen), algoname, algolen) != 0) {
+		if (strncmp(buf_getptr(line, algolen), algoname, algolen) != 0) {
 			TRACE(("algo doesn't match"))
 			continue;
 		}
@@ -346,7 +346,7 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 		}
 
 		/* Now we're at the interesting hostkey */
-		ret = cmp_base64_key(keyblob, keybloblen, (const unsigned char *) algoname, algolen,
+		ret = cmp_base64_key(keyblob, keybloblen, algoname, algolen,
 						line, &fingerprint);
 
 		if (ret == DROPBEAR_SUCCESS) {
@@ -382,9 +382,9 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 		fseek(hostsfile, 0, SEEK_END); /* In case it wasn't opened append */
 		buf_setpos(line, 0);
 		buf_setlen(line, 0);
-		buf_putbytes(line, (const unsigned char *) cli_opts.remotehost, hostlen);
+		buf_putbytes(line, cli_opts.remotehost, hostlen);
 		buf_putbyte(line, ' ');
-		buf_putbytes(line, (const unsigned char *) algoname, algolen);
+		buf_putbytes(line, algoname, algolen);
 		buf_putbyte(line, ' ');
 		len = line->size - line->pos;
 		/* The only failure with base64 is buffer_overflow, but buf_getwriteptr

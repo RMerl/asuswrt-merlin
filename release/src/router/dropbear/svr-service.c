@@ -30,13 +30,13 @@
 #include "ssh.h"
 #include "auth.h"
 
-static void send_msg_service_accept(char *name, int len);
+static void send_msg_service_accept(unsigned char *name, int len);
 
 /* processes a SSH_MSG_SERVICE_REQUEST, returning 0 if finished,
  * 1 if not */
 void recv_msg_service_request() {
 
-	char * name;
+	unsigned char * name;
 	unsigned int len;
 
 	TRACE(("enter recv_msg_service_request"))
@@ -73,7 +73,7 @@ void recv_msg_service_request() {
 
 }
 
-static void send_msg_service_accept(char *name, int len) {
+static void send_msg_service_accept(unsigned char *name, int len) {
 
 	TRACE(("accepting service %s", name))
 

@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_AUTH_H_
-#define DROPBEAR_AUTH_H_
+#ifndef _AUTH_H_
+#define _AUTH_H_
 
 #include "includes.h"
 #include "signkey.h"
@@ -133,8 +133,8 @@ struct PubKeyOptions {
 	int no_x11_forwarding_flag;
 	int no_pty_flag;
 	/* "command=" option. */
-	char * forced_command;
+	unsigned char * forced_command;
 };
 #endif
 
-#endif /* DROPBEAR_AUTH_H_ */
+#endif /* _AUTH_H_ */

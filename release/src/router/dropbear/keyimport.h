@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_KEYIMPORT_H_
-#define DROPBEAR_KEYIMPORT_H_
+#ifndef _KEYIMPORT_H_
+#define _KEYIMPORT_H_
 
 #include "includes.h"
 #include "signkey.h"
@@ -39,4 +39,4 @@ int import_write(const char *filename, sign_key *key, char *passphrase,
 sign_key *import_read(const char *filename, char *passphrase, int filetype);
 int import_encrypted(const char* filename, int filetype);
 
-#endif /* DROPBEAR_KEYIMPORT_H_ */
+#endif /* _KEYIMPORT_H_ */

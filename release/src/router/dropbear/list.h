@@ -1,5 +1,5 @@
-#ifndef DROPBEAR_DROPBEAR_LIST_H
-#define DROPBEAR_DROPBEAR_LIST_H
+#ifndef _DROPBEAR_LIST_H
+#define _DROPBEAR_LIST_H
 
 struct _m_list;
 
@@ -25,4 +25,4 @@ void list_append(m_list *list, void *item);
 void * list_remove(m_list_elem *elem);
 
 
-#endif /* DROPBEAR_DROPBEAR_LIST_H */
+#endif /* _DROPBEAR_LIST_H */

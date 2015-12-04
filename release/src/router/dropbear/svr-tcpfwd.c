@@ -33,7 +33,6 @@
 #include "listener.h"
 #include "runopts.h"
 #include "auth.h"
-#include "netio.h"
 
 #ifndef ENABLE_SVR_REMOTETCPFWD
 
@@ -65,7 +64,7 @@ static const struct ChanType svr_chan_tcpremote = {
  * similar to the request-switching in chansession.c */
 void recv_msg_global_request_remotetcp() {
 
-	char* reqname = NULL;
+	unsigned char* reqname = NULL;
 	unsigned int namelen;
 	unsigned int wantreply = 0;
 	int ret = DROPBEAR_FAILURE;
@@ -120,7 +119,7 @@ static int matchtcp(void* typedata1, void* typedata2) {
 static int svr_cancelremotetcp() {
 
 	int ret = DROPBEAR_FAILURE;
-	char * bindaddr = NULL;
+	unsigned char * bindaddr = NULL;
 	unsigned int addrlen;
 	unsigned int port;
 	struct Listener * listener = NULL;
@@ -155,7 +154,7 @@ out:
 static int svr_remotetcpreq() {
 
 	int ret = DROPBEAR_FAILURE;
-	char * request_addr = NULL;
+	unsigned char * request_addr = NULL;
 	unsigned int addrlen;
 	struct TCPListener *tcpinfo = NULL;
 	unsigned int port;
@@ -232,12 +231,13 @@ const struct ChanType svr_chan_tcpdirect = {
  * address */
 static int newtcpdirect(struct Channel * channel) {
 
-	char* desthost = NULL;
+	unsigned char* desthost = NULL;
 	unsigned int destport;
-	char* orighost = NULL;
+	unsigned char* orighost = NULL;
 	unsigned int origport;
 	char portstring[NI_MAXSERV];
-	unsigned int len;
+	int sock;
+	int len;
 	int err = SSH_OPEN_ADMINISTRATIVELY_PROHIBITED;
 
 	TRACE(("newtcpdirect channel %d", channel->index))
@@ -270,7 +270,19 @@ static int newtcpdirect(struct Channel * channel) {
 	}
 
 	snprintf(portstring, sizeof(portstring), "%d", destport);
-	channel->conn_pending = connect_remote(desthost, portstring, channel_connect_done, channel);
+	sock = connect_remote(desthost, portstring, 1, NULL);
+	if (sock < 0) {
+		err = SSH_OPEN_CONNECT_FAILED;
+		TRACE(("leave newtcpdirect: sock failed"))
+		goto out;
+	}
+
+	ses.maxfd = MAX(ses.maxfd, sock);
+
+	 /* We don't set readfd, that will get set after the connection's
+	 * progress succeeds */
+	channel->writefd = sock;
+	channel->initconn = 1;
 
 	channel->prio = DROPBEAR_CHANNEL_PRIO_UNKNOWABLE;
 	

@@ -58,7 +58,7 @@ void recv_msg_userauth_pk_ok() {
 	buffer* keybuf = NULL;
 	char* algotype = NULL;
 	unsigned int algolen;
-	enum signkey_type keytype;
+	int keytype;
 	unsigned int remotelen;
 
 	TRACE(("enter recv_msg_userauth_pk_ok"))
@@ -141,7 +141,7 @@ void cli_buf_put_sign(buffer* buf, sign_key *key, int type,
 static void send_msg_userauth_pubkey(sign_key *key, int type, int realsign) {
 
 	const char *algoname = NULL;
-	unsigned int algolen;
+	int algolen;
 	buffer* sigbuf = NULL;
 
 	TRACE(("enter send_msg_userauth_pubkey"))
@@ -152,10 +152,10 @@ static void send_msg_userauth_pubkey(sign_key *key, int type, int realsign) {
 	buf_putstring(ses.writepayload, cli_opts.username,
 			strlen(cli_opts.username));
 
-	buf_putstring(ses.writepayload, SSH_SERVICE_CONNECTION,
+	buf_putstring(ses.writepayload, SSH_SERVICE_CONNECTION, 
 			SSH_SERVICE_CONNECTION_LEN);
 
-	buf_putstring(ses.writepayload, AUTH_METHOD_PUBKEY,
+	buf_putstring(ses.writepayload, AUTH_METHOD_PUBKEY, 
 			AUTH_METHOD_PUBKEY_LEN);
 
 	buf_putbyte(ses.writepayload, realsign);

@@ -161,14 +161,5 @@ void remove_listener(struct Listener* listener) {
 	}
 	ses.listeners[listener->index] = NULL;
 	m_free(listener);
-}
 
-void remove_all_listeners(void) {
-	unsigned int i;
-	for (i = 0; i < ses.listensize; i++) {
-		if (ses.listeners[i]) {
-			remove_listener(ses.listeners[i]);
-		}
-	}
-	m_free(ses.listeners);
 }

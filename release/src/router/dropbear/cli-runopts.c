@@ -38,7 +38,7 @@ static void parse_hostname(const char* orighostarg);
 static void parse_multihop_hostname(const char* orighostarg, const char* argv0);
 static void fill_own_user();
 #ifdef ENABLE_CLI_PUBKEY_AUTH
-static void loadidentityfile(const char* filename, int warnfail);
+static void loadidentityfile(const char* filename);
 #endif
 #ifdef ENABLE_CLI_ANYTCPFWD
 static void addforward(const char* str, m_list *fwdlist);
@@ -65,7 +65,7 @@ static void printhelp() {
 					"-y -y Don't perform any remote host key checking (caution)\n"
 					"-s    Request a subsystem (use by external sftp)\n"
 #ifdef ENABLE_CLI_PUBKEY_AUTH
-					"-i <identityfile>   (multiple allowed, default %s)\n"
+					"-i <identityfile>   (multiple allowed)\n"
 #endif
 #ifdef ENABLE_CLI_AGENTFWD
 					"-A    Enable agent auth forwarding\n"
@@ -95,9 +95,6 @@ static void printhelp() {
 					"-v    verbose (compiled with DEBUG_TRACE)\n"
 #endif
 					,DROPBEAR_VERSION, cli_opts.progname,
-#ifdef ENABLE_CLI_PUBKEY_AUTH
-					DROPBEAR_DEFAULT_CLI_AUTHKEY,
-#endif
 					DEFAULT_RECV_WINDOW, DEFAULT_KEEPALIVE, DEFAULT_IDLE_TIMEOUT);
 					
 }
@@ -105,30 +102,25 @@ static void printhelp() {
 void cli_getopts(int argc, char ** argv) {
 	unsigned int i, j;
 	char ** next = 0;
-	enum {
+	unsigned int cmdlen;
 #ifdef ENABLE_CLI_PUBKEY_AUTH
-		OPT_AUTHKEY,
+	int nextiskey = 0; /* A flag if the next argument is a keyfile */
 #endif
 #ifdef ENABLE_CLI_LOCALTCPFWD
-		OPT_LOCALTCPFWD,
+	int nextislocal = 0;
 #endif
 #ifdef ENABLE_CLI_REMOTETCPFWD
-		OPT_REMOTETCPFWD,
+	int nextisremote = 0;
 #endif
 #ifdef ENABLE_CLI_NETCAT
-		OPT_NETCAT,
+	int nextisnetcat = 0;
 #endif
-		/* a flag (no arg) if 'next' is NULL, a string-valued option otherwise */
-		OPT_OTHER
-	} opt;
-	unsigned int cmdlen;
 	char* dummy = NULL; /* Not used for anything real */
 
 	char* recv_window_arg = NULL;
 	char* keepalive_arg = NULL;
 	char* idle_timeout_arg = NULL;
 	char *host_arg = NULL;
-	char c;
 
 	/* see printhelp() for options */
 	cli_opts.progname = argv[0];
@@ -161,7 +153,7 @@ void cli_getopts(int argc, char ** argv) {
 	cli_opts.proxycmd = NULL;
 #endif
 #ifndef DISABLE_ZLIB
-	opts.compress_mode = DROPBEAR_COMPRESS_ON;
+	opts.enable_compress = 1;
 #endif
 #ifdef ENABLE_USER_ALGO_LIST
 	opts.cipher_list = NULL;
@@ -177,23 +169,54 @@ void cli_getopts(int argc, char ** argv) {
 
 	fill_own_user();
 
+	/* Iterate all the arguments */
 	for (i = 1; i < (unsigned int)argc; i++) {
-		/* Handle non-flag arguments such as hostname or commands for the remote host */
-		if (argv[i][0] != '-')
-		{
-			if (host_arg == NULL) {
-				host_arg = argv[i];
-				continue;
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+		if (nextiskey) {
+			/* Load a hostkey since the previous argument was "-i" */
+			loadidentityfile(argv[i]);
+			nextiskey = 0;
+			continue;
+		}
+#endif
+#ifdef ENABLE_CLI_REMOTETCPFWD
+		if (nextisremote) {
+			TRACE(("nextisremote true"))
+			addforward(argv[i], cli_opts.remotefwds);
+			nextisremote = 0;
+			continue;
+		}
+#endif
+#ifdef ENABLE_CLI_LOCALTCPFWD
+		if (nextislocal) {
+			TRACE(("nextislocal true"))
+			addforward(argv[i], cli_opts.localfwds);
+			nextislocal = 0;
+			continue;
+		}
+#endif
+#ifdef ENABLE_CLI_NETCAT
+		if (nextisnetcat) {
+			TRACE(("nextisnetcat true"))
+			add_netcat(argv[i]);
+			nextisnetcat = 0;
+			continue;
+		}
+#endif
+		if (next) {
+			/* The previous flag set a value to assign */
+			*next = argv[i];
+			if (*next == NULL) {
+				dropbear_exit("Invalid null argument");
 			}
-			/* Commands to pass to the remote host. No more flag handling,
-			commands are consumed below */
-			break;
+			next = NULL;
+			continue;
 		}
 
-		/* Begins with '-' */
-		opt = OPT_OTHER;
-		for (j = 1; (c = argv[i][j]) != '\0' && !next && opt == OPT_OTHER; j++) {
-			switch (c) {
+		if (argv[i][0] == '-') {
+			/* A flag *waves* */
+
+			switch (argv[i][1]) {
 				case 'y': /* always accept the remote hostkey */
 					if (cli_opts.always_accept_key) {
 						/* twice means no checking at all */
@@ -206,7 +229,12 @@ void cli_getopts(int argc, char ** argv) {
 					break;
 #ifdef ENABLE_CLI_PUBKEY_AUTH
 				case 'i': /* an identityfile */
-					opt = OPT_AUTHKEY;
+					/* Keep scp happy when it changes "-i file" to "-ifile" */
+					if (strlen(argv[i]) > 2) {
+						loadidentityfile(&argv[i][2]);
+					} else  {
+						nextiskey = 1;
+					}
 					break;
 #endif
 				case 't': /* we want a pty */
@@ -226,7 +254,7 @@ void cli_getopts(int argc, char ** argv) {
 					break;
 #ifdef ENABLE_CLI_LOCALTCPFWD
 				case 'L':
-					opt = OPT_LOCALTCPFWD;
+					nextislocal = 1;
 					break;
 				case 'g':
 					opts.listen_fwd_all = 1;
@@ -234,12 +262,12 @@ void cli_getopts(int argc, char ** argv) {
 #endif
 #ifdef ENABLE_CLI_REMOTETCPFWD
 				case 'R':
-					opt = OPT_REMOTETCPFWD;
+					nextisremote = 1;
 					break;
 #endif
 #ifdef ENABLE_CLI_NETCAT
 				case 'B':
-					opt = OPT_NETCAT;
+					nextisnetcat = 1;
 					break;
 #endif
 #ifdef ENABLE_CLI_PROXYCMD
@@ -305,85 +333,50 @@ void cli_getopts(int argc, char ** argv) {
 				case 'b':
 					next = &dummy;
 				default:
-					fprintf(stderr,
-						"WARNING: Ignoring unknown option -%c\n", c);
+					fprintf(stderr, 
+						"WARNING: Ignoring unknown argument '%s'\n", argv[i]);
 					break;
 			} /* Switch */
-		}
+			
+			/* Now we handle args where they might be "-luser" (no spaces)*/
+			if (next && strlen(argv[i]) > 2) {
+				*next = &argv[i][2];
+				next = NULL;
+			}
 
-		if (!next && opt == OPT_OTHER) /* got a flag */
-			continue;
+			continue; /* next argument */
 
-		if (c == '\0') {
-			i++;
-			j = 0;
-			if (!argv[i])
-				dropbear_exit("Missing argument");
-		}
+		} else {
+			TRACE(("non-flag arg: '%s'", argv[i]))
 
-#ifdef ENABLE_CLI_PUBKEY_AUTH
-		if (opt == OPT_AUTHKEY) {
-			TRACE(("opt authkey"))
-			loadidentityfile(&argv[i][j], 1);
-		}
-		else
-#endif
-#ifdef ENABLE_CLI_REMOTETCPFWD
-		if (opt == OPT_REMOTETCPFWD) {
-			TRACE(("opt remotetcpfwd"))
-			addforward(&argv[i][j], cli_opts.remotefwds);
-		}
-		else
-#endif
-#ifdef ENABLE_CLI_LOCALTCPFWD
-		if (opt == OPT_LOCALTCPFWD) {
-			TRACE(("opt localtcpfwd"))
-			addforward(&argv[i][j], cli_opts.localfwds);
-		}
-		else
-#endif
-#ifdef ENABLE_CLI_NETCAT
-		if (opt == OPT_NETCAT) {
-			TRACE(("opt netcat"))
-			add_netcat(&argv[i][j]);
-		}
-		else
-#endif
-		if (next) {
-			/* The previous flag set a value to assign */
-			*next = &argv[i][j];
-			if (*next == NULL)
-				dropbear_exit("Invalid null argument");
-			next = NULL;
-		}
-	}
+			/* Either the hostname or commands */
 
-	/* Done with options/flags; now handle the hostname (which may not
-	 * start with a hyphen) and optional command */
+			if (host_arg == NULL) {
+				host_arg = argv[i];
+			} else {
 
-	if (host_arg == NULL) { /* missing hostname */
-		printhelp();
-		exit(EXIT_FAILURE);
-	}
-	TRACE(("host is: %s", host_arg))
+				/* this is part of the commands to send - after this we
+				 * don't parse any more options, and flags are sent as the
+				 * command */
+				cmdlen = 0;
+				for (j = i; j < (unsigned int)argc; j++) {
+					cmdlen += strlen(argv[j]) + 1; /* +1 for spaces */
+				}
+				/* Allocate the space */
+				cli_opts.cmd = (char*)m_malloc(cmdlen);
+				cli_opts.cmd[0] = '\0';
 
-	if (i < (unsigned int)argc) {
-		/* Build the command to send */
-		cmdlen = 0;
-		for (j = i; j < (unsigned int)argc; j++)
-			cmdlen += strlen(argv[j]) + 1; /* +1 for spaces */
+				/* Append all the bits */
+				for (j = i; j < (unsigned int)argc; j++) {
+					strlcat(cli_opts.cmd, argv[j], cmdlen);
+					strlcat(cli_opts.cmd, " ", cmdlen);
+				}
+				/* It'll be null-terminated here */
 
-		/* Allocate the space */
-		cli_opts.cmd = (char*)m_malloc(cmdlen);
-		cli_opts.cmd[0] = '\0';
-
-		/* Append all the bits */
-		for (j = i; j < (unsigned int)argc; j++) {
-			strlcat(cli_opts.cmd, argv[j], cmdlen);
-			strlcat(cli_opts.cmd, " ", cmdlen);
+				/* We've eaten all the options and flags */
+				break;
+			}
 		}
-		/* It'll be null-terminated here */
-		TRACE(("cmd is: %s", cli_opts.cmd))
 	}
 
 	/* And now a few sanity checks and setup */
@@ -391,6 +384,11 @@ void cli_getopts(int argc, char ** argv) {
 #ifdef ENABLE_USER_ALGO_LIST
 	parse_ciphers_macs();
 #endif
+
+	if (host_arg == NULL) {
+		printhelp();
+		exit(EXIT_FAILURE);
+	}
 
 #ifdef ENABLE_CLI_PROXYCMD                                                                                                                                   
 	if (cli_opts.proxycmd) {
@@ -446,14 +444,6 @@ void cli_getopts(int argc, char ** argv) {
 	}
 #endif
 
-#if defined(DROPBEAR_DEFAULT_CLI_AUTHKEY) && defined(ENABLE_CLI_PUBKEY_AUTH)
-	{
-		char *expand_path = expand_homedir_path(DROPBEAR_DEFAULT_CLI_AUTHKEY);
-		loadidentityfile(expand_path, 0);
-		m_free(expand_path);
-	}
-#endif
-
 	/* The hostname gets set up last, since
 	 * in multi-hop mode it will require knowledge
 	 * of other flags such as -i */
@@ -465,18 +455,14 @@ void cli_getopts(int argc, char ** argv) {
 }
 
 #ifdef ENABLE_CLI_PUBKEY_AUTH
-static void loadidentityfile(const char* filename, int warnfail) {
+static void loadidentityfile(const char* filename) {
 	sign_key *key;
 	enum signkey_type keytype;
-
-	TRACE(("loadidentityfile %s", filename))
 
 	key = new_sign_key();
 	keytype = DROPBEAR_SIGNKEY_ANY;
 	if ( readhostkey(filename, key, &keytype) != DROPBEAR_SUCCESS ) {
-		if (warnfail) {
-			fprintf(stderr, "Failed loading keyfile '%s'\n", filename);
-		}
+		fprintf(stderr, "Failed loading keyfile '%s'\n", filename);
 		sign_key_free(key);
 	} else {
 		key->type = keytype;
@@ -497,14 +483,11 @@ multihop_passthrough_args() {
 	m_list_elem *iter;
 	/* Fill out -i, -y, -W options that make sense for all
 	 * the intermediate processes */
-#ifdef ENABLE_CLI_PUBKEY_AUTH
 	for (iter = cli_opts.privkeys->first; iter; iter = iter->next)
 	{
 		sign_key * key = (sign_key*)iter->item;
 		len += 3 + strlen(key->filename);
 	}
-#endif /* ENABLE_CLI_PUBKEY_AUTH */
-
 	len += 30; /* space for -W <size>, terminator. */
 	ret = m_malloc(len);
 	total = 0;
@@ -526,7 +509,6 @@ multihop_passthrough_args() {
 		total += written;
 	}
 
-#ifdef ENABLE_CLI_PUBKEY_AUTH
 	for (iter = cli_opts.privkeys->first; iter; iter = iter->next)
 	{
 		sign_key * key = (sign_key*)iter->item;
@@ -535,7 +517,6 @@ multihop_passthrough_args() {
 		dropbear_assert((unsigned int)written < size);
 		total += written;
 	}
-#endif /* ENABLE_CLI_PUBKEY_AUTH */
 
 	/* if args were passed, total will be not zero, and it will have a space at the end, so remove that */
 	if (total > 0) 
@@ -613,7 +594,7 @@ static void parse_multihop_hostname(const char* orighostarg, const char* argv0) 
 				passthrough_args, remainder);
 #ifndef DISABLE_ZLIB
 		/* The stream will be incompressible since it's encrypted. */
-		opts.compress_mode = DROPBEAR_COMPRESS_OFF;
+		opts.enable_compress = 0;
 #endif
 		m_free(passthrough_args);
 	}

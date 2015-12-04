@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_SIGNKEY_H_
-#define DROPBEAR_SIGNKEY_H_
+#ifndef _SIGNKEY_H_
+#define _SIGNKEY_H_
 
 #include "buffer.h"
 #include "dss.h"
@@ -101,4 +101,4 @@ int cmp_base64_key(const unsigned char* keyblob, unsigned int keybloblen,
 
 void** signkey_key_ptr(sign_key *key, enum signkey_type type);
 
-#endif /* DROPBEAR_SIGNKEY_H_ */
+#endif /* _SIGNKEY_H_ */

@@ -2,8 +2,8 @@
  * Copyright (c) 2002,2003 Matt Johnston
  * All rights reserved. See LICENSE for the license. */
 
-#ifndef DROPBEAR_OPTIONS_H_
-#define DROPBEAR_OPTIONS_H_
+#ifndef _OPTIONS_H_
+#define _OPTIONS_H_
 
 /* Define compile-time options below - the "#ifndef DROPBEAR_XXX .... #endif"
  * parts are to allow for commandline -DDROPBEAR_XXX options etc. */
@@ -98,19 +98,10 @@ much traffic. */
 #define DROPBEAR_TWOFISH256
 #define DROPBEAR_TWOFISH128
 
-/* Enable CBC mode for ciphers. This has security issues though
- * is the most compatible with older SSH implementations */
-#define DROPBEAR_ENABLE_CBC_MODE
-
 /* Enable "Counter Mode" for ciphers. This is more secure than normal
- * CBC mode against certain attacks. It is recommended for security
- * and forwards compatibility */
+ * CBC mode against certain attacks. This adds around 1kB to binary 
+ * size and is recommended for most cases */
 #define DROPBEAR_ENABLE_CTR_MODE
-
-/* Twofish counter mode is disabled by default because it 
-has not been tested for interoperability with other SSH implementations.
-If you test it please contact the Dropbear author */
-/* #define DROPBEAR_TWOFISH_CTR */
 
 /* You can compile with no encryption if you want. In some circumstances
  * this could be safe security-wise, though make sure you know what
@@ -179,11 +170,6 @@ If you test it please contact the Dropbear author */
 #define DROPBEAR_ZLIB_WINDOW_BITS 15 
 #endif
 
-/* Server won't allow zlib compression until after authentication. Prevents
-   flaws in the zlib library being unauthenticated exploitable flaws.
-   Some old ssh clients may not support the alternative zlib@openssh.com method */
-#define DROPBEAR_SERVER_DELAY_ZLIB 1
-
 /* Whether to do reverse DNS lookups. */
 /*#define DO_HOST_LOOKUP */
 
@@ -206,10 +192,7 @@ If you test it please contact the Dropbear author */
  * PAM challenge/response.
  * You can't enable both PASSWORD and PAM. */
 
-/* This requires crypt() */
-#ifdef HAVE_CRYPT
 #define ENABLE_SVR_PASSWORD_AUTH
-#endif
 /* PAM requires ./configure --enable-pam */
 /*#define ENABLE_SVR_PAM_AUTH */
 #define ENABLE_SVR_PUBKEY_AUTH
@@ -220,16 +203,9 @@ If you test it please contact the Dropbear author */
 #define ENABLE_SVR_PUBKEY_OPTIONS
 #endif
 
-/* This requires getpass. */
-#ifdef HAVE_GETPASS
 #define ENABLE_CLI_PASSWORD_AUTH
-#define ENABLE_CLI_INTERACT_AUTH
-#endif
 #define ENABLE_CLI_PUBKEY_AUTH
-
-/* A default argument for dbclient -i <privatekey>. 
-Homedir is prepended unless path begins with / */
-#define DROPBEAR_DEFAULT_CLI_AUTHKEY ".ssh/id_dropbear"
+#define ENABLE_CLI_INTERACT_AUTH
 
 /* This variable can be used to set a password for client
  * authentication on the commandline. Beware of platforms
@@ -300,7 +276,7 @@ Homedir is prepended unless path begins with / */
 
 /* This is used by the scp binary when used as a client binary. If you're
  * not using the Dropbear client, you'll need to change it */
-#define DROPBEAR_PATH_SSH_PROGRAM "/usr/bin/dbclient"
+#define _PATH_SSH_PROGRAM "/usr/bin/dbclient"
 
 /* Whether to log commands executed by a client. This only logs the 
  * (single) command sent to the server, not what a user did in a 
@@ -348,4 +324,4 @@ be overridden at runtime with -I. 0 disables idle timeouts */
  * in sysoptions.h */
 #include "sysoptions.h"
 
-#endif /* DROPBEAR_OPTIONS_H_ */
+#endif /* _OPTIONS_H_ */

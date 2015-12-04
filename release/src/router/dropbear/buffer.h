@@ -22,15 +22,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_BUFFER_H_
+#ifndef _BUFFER_H_
 
-#define DROPBEAR_BUFFER_H_
+#define _BUFFER_H_
 
 #include "includes.h"
 
 struct buf {
-	/* don't manipulate data member outside of buffer.c - it
-	is a pointer into the malloc holding buffer itself */
+
 	unsigned char * data;
 	unsigned int len; /* the used size */
 	unsigned int pos;
@@ -41,8 +40,7 @@ struct buf {
 typedef struct buf buffer;
 
 buffer * buf_new(unsigned int size);
-/* Possibly returns a new buffer*, like realloc() */
-buffer * buf_resize(buffer *buf, unsigned int newsize);
+void buf_resize(buffer *buf, unsigned int newsize);
 void buf_free(buffer* buf);
 void buf_burn(buffer* buf);
 buffer* buf_newcopy(buffer* buf);
@@ -56,15 +54,15 @@ unsigned char buf_getbool(buffer* buf);
 void buf_putbyte(buffer* buf, unsigned char val);
 unsigned char* buf_getptr(buffer* buf, unsigned int len);
 unsigned char* buf_getwriteptr(buffer* buf, unsigned int len);
-char* buf_getstring(buffer* buf, unsigned int *retlen);
+unsigned char* buf_getstring(buffer* buf, unsigned int *retlen);
 buffer * buf_getstringbuf(buffer *buf);
 void buf_eatstring(buffer *buf);
 void buf_putint(buffer* buf, unsigned int val);
-void buf_putstring(buffer* buf, const char* str, unsigned int len);
+void buf_putstring(buffer* buf, const unsigned char* str, unsigned int len);
 void buf_putbufstring(buffer *buf, const buffer* buf_str);
 void buf_putbytes(buffer *buf, const unsigned char *bytes, unsigned int len);
 void buf_putmpint(buffer* buf, mp_int * mp);
 int buf_getmpint(buffer* buf, mp_int* mp);
 unsigned int buf_getint(buffer* buf);
 
-#endif /* DROPBEAR_BUFFER_H_ */
+#endif /* _BUFFER_H_ */

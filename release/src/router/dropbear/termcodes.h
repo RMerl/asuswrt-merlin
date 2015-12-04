@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_TERMCODES_H_
-#define DROPBEAR_TERMCODES_H_
+#ifndef _TERMCODES_H_
+#define _TERMCODES_H_
 
 #define TERMCODE_NONE 0
 #define TERMCODE_CONTROL 1
@@ -43,4 +43,4 @@ struct TermCode {
 
 extern const struct TermCode termcodes[];
 
-#endif /* DROPBEAR_TERMCODES_H_ */
+#endif /* _TERMCODES_H_ */

@@ -46,15 +46,17 @@ buffer* buf_new(unsigned int size) {
 		dropbear_exit("buf->size too big");
 	}
 
-	buf = (buffer*)m_malloc(sizeof(buffer)+size);
+	buf = (buffer*)m_malloc(sizeof(buffer));
 
 	if (size > 0) {
-		buf->data = (unsigned char*)buf + sizeof(buffer);
+		buf->data = (unsigned char*)m_malloc(size);
 	} else {
 		buf->data = NULL;
 	}
 
 	buf->size = size;
+	buf->pos = 0;
+	buf->len = 0;
 
 	return buf;
 
@@ -63,6 +65,7 @@ buffer* buf_new(unsigned int size) {
 /* free the buffer's data and the buffer itself */
 void buf_free(buffer* buf) {
 
+	m_free(buf->data)
 	m_free(buf);
 }
 
@@ -75,18 +78,17 @@ void buf_burn(buffer* buf) {
 
 /* resize a buffer, pos and len will be repositioned if required when
  * downsizing */
-buffer* buf_resize(buffer *buf, unsigned int newsize) {
+void buf_resize(buffer *buf, unsigned int newsize) {
 
 	if (newsize > BUF_MAX_SIZE) {
 		dropbear_exit("buf->size too big");
 	}
 
-	buf = m_realloc(buf, sizeof(buffer)+newsize);
-	buf->data = (unsigned char*)buf + sizeof(buffer);
+	buf->data = m_realloc(buf->data, newsize);
 	buf->size = newsize;
 	buf->len = MIN(newsize, buf->len);
 	buf->pos = MIN(newsize, buf->pos);
-	return buf;
+
 }
 
 /* Create a copy of buf, allocating required memory etc. */
@@ -97,9 +99,7 @@ buffer* buf_newcopy(buffer* buf) {
 
 	ret = buf_new(buf->len);
 	ret->len = buf->len;
-	if (buf->len > 0) {
-	    memcpy(ret->data, buf->data, buf->len);
-	}
+	memcpy(ret->data, buf->data, buf->len);
 	return ret;
 }
 
@@ -127,7 +127,7 @@ void buf_setpos(buffer* buf, unsigned int pos) {
 	buf->pos = pos;
 }
 
-/* increment the position by incr, increasing the buffer length if required */
+/* increment the postion by incr, increasing the buffer length if required */
 void buf_incrwritepos(buffer* buf, unsigned int incr) {
 	if (incr > BUF_MAX_INCR || buf->pos + incr > buf->size) {
 		dropbear_exit("Bad buf_incrwritepos");
@@ -203,10 +203,10 @@ unsigned char* buf_getwriteptr(buffer* buf, unsigned int len) {
 /* Return a null-terminated string, it is malloced, so must be free()ed
  * Note that the string isn't checked for null bytes, hence the retlen
  * may be longer than what is returned by strlen */
-char* buf_getstring(buffer* buf, unsigned int *retlen) {
+unsigned char* buf_getstring(buffer* buf, unsigned int *retlen) {
 
 	unsigned int len;
-	char* ret;
+	unsigned char* ret;
 	len = buf_getint(buf);
 	if (len > MAX_STRING_LEN) {
 		dropbear_exit("String too long");
@@ -225,15 +225,15 @@ char* buf_getstring(buffer* buf, unsigned int *retlen) {
 
 /* Return a string as a newly allocated buffer */
 buffer * buf_getstringbuf(buffer *buf) {
-	buffer *ret = NULL;
-	unsigned int len = buf_getint(buf);
-	if (len > MAX_STRING_LEN) {
-		dropbear_exit("String too long");
-	}
-	ret = buf_new(len);
-	memcpy(buf_getwriteptr(ret, len), buf_getptr(buf, len), len);
-	buf_incrpos(buf, len);
-	buf_incrlen(ret, len);
+	buffer *ret;
+	unsigned char* str;
+	unsigned int len;
+	str = buf_getstring(buf, &len);
+	ret = m_malloc(sizeof(*ret));
+	ret->data = str;
+	ret->len = len;
+	ret->size = len;
+	ret->pos = 0;
 	return ret;
 }
 
@@ -262,16 +262,16 @@ void buf_putint(buffer* buf, int unsigned val) {
 }
 
 /* put a SSH style string into the buffer, increasing buffer len if required */
-void buf_putstring(buffer* buf, const char* str, unsigned int len) {
+void buf_putstring(buffer* buf, const unsigned char* str, unsigned int len) {
 	
 	buf_putint(buf, len);
-	buf_putbytes(buf, (const unsigned char*)str, len);
+	buf_putbytes(buf, str, len);
 
 }
 
 /* puts an entire buffer as a SSH string. ignore pos of buf_str. */
 void buf_putbufstring(buffer *buf, const buffer* buf_str) {
-	buf_putstring(buf, (const char*)buf_str->data, buf_str->len);
+	buf_putstring(buf, buf_str->data, buf_str->len);
 }
 
 /* put the set of len bytes into the buffer, incrementing the pos, increasing

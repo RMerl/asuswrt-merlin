@@ -91,7 +91,7 @@ int svr_pubkey_allows_pty() {
 /* Set chansession command to the one forced 
  * by any 'command' public key option. */
 void svr_pubkey_set_forced_command(struct ChanSess *chansess) {
-	if (ses.authstate.pubkey_options && ses.authstate.pubkey_options->forced_command) {
+	if (ses.authstate.pubkey_options) {
 		if (chansess->cmd) {
 			/* original_command takes ownership */
 			chansess->original_command = chansess->cmd;
@@ -120,7 +120,7 @@ static int match_option(buffer *options_buf, const char *opt_name) {
 	if (options_buf->len - options_buf->pos < len) {
 		return DROPBEAR_FAILURE;
 	}
-	if (strncasecmp((const char *) buf_getptr(options_buf, len), opt_name, len) == 0) {
+	if (strncasecmp(buf_getptr(options_buf, len), opt_name, len) == 0) {
 		buf_incrpos(options_buf, len);
 		return DROPBEAR_SUCCESS;
 	}

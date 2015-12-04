@@ -21,27 +21,27 @@ from a private key by using
 .P
 Encrypted private keys are not supported, use ssh-keygen(1) to decrypt them
 first.
-.SH ARGUMENTS
+.SH OPTIONS
 .TP
-.I input_type
+.B input type
 Either 
 .I dropbear
 or 
 .I openssh
 .TP
-.I output_type
+.B output type
 Either 
 .I dropbear
 or 
 .I openssh
 .TP
-.I input_file
+.B input file
 An existing Dropbear or OpenSSH private key file
 .TP
-.I output_file
-The path to write the converted private key file. For client authentication ~/.ssh/id_dropbear is loaded by default
+.B output file
+The path to write the converted private key file
 .SH EXAMPLE
- # dropbearconvert openssh dropbear ~/.ssh/id_rsa ~/.ssh/id_dropbear
+ # dropbearconvert openssh dropbear ~/.ssh/id_rsa ~/.ssh/dropbear_priv
 .SH AUTHOR
 Matt Johnston (matt@ucc.asn.au).
 .SH SEE ALSO

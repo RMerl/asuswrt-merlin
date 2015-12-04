@@ -138,9 +138,9 @@ signkey_key_ptr(sign_key *key, enum signkey_type type) {
  * on return is set to the type read (useful when type = _ANY) */
 int buf_get_pub_key(buffer *buf, sign_key *key, enum signkey_type *type) {
 
-	char *ident;
+	unsigned char* ident;
 	unsigned int len;
-	enum signkey_type keytype;
+	int keytype;
 	int ret = DROPBEAR_FAILURE;
 
 	TRACE2(("enter buf_get_pub_key"))
@@ -187,7 +187,6 @@ int buf_get_pub_key(buffer *buf, sign_key *key, enum signkey_type *type) {
 		if (eck) {
 			if (*eck) {
 				ecc_free(*eck);
-				m_free(*eck);
 				*eck = NULL;
 			}
 			*eck = buf_get_ecdsa_pub_key(buf);
@@ -209,9 +208,9 @@ int buf_get_pub_key(buffer *buf, sign_key *key, enum signkey_type *type) {
  * on return is set to the type read (useful when type = _ANY) */
 int buf_get_priv_key(buffer *buf, sign_key *key, enum signkey_type *type) {
 
-	char *ident;
+	unsigned char* ident;
 	unsigned int len;
-	enum signkey_type keytype;
+	int keytype;
 	int ret = DROPBEAR_FAILURE;
 
 	TRACE2(("enter buf_get_priv_key"))
@@ -256,7 +255,6 @@ int buf_get_priv_key(buffer *buf, sign_key *key, enum signkey_type *type) {
 		if (eck) {
 			if (*eck) {
 				ecc_free(*eck);
-				m_free(*eck);
 				*eck = NULL;
 			}
 			*eck = buf_get_ecdsa_priv_key(buf);
@@ -357,21 +355,18 @@ void sign_key_free(sign_key *key) {
 #ifdef DROPBEAR_ECC_256
 	if (key->ecckey256) {
 		ecc_free(key->ecckey256);
-		m_free(key->ecckey256);
 		key->ecckey256 = NULL;
 	}
 #endif
 #ifdef DROPBEAR_ECC_384
 	if (key->ecckey384) {
 		ecc_free(key->ecckey384);
-		m_free(key->ecckey384);
 		key->ecckey384 = NULL;
 	}
 #endif
 #ifdef DROPBEAR_ECC_521
 	if (key->ecckey521) {
 		ecc_free(key->ecckey521);
-		m_free(key->ecckey521);
 		key->ecckey521 = NULL;
 	}
 #endif
@@ -515,7 +510,7 @@ void buf_put_sign(buffer* buf, sign_key *key, enum signkey_type type,
  * signature blob */
 int buf_verify(buffer * buf, sign_key *key, buffer *data_buf) {
 	
-	char *type_name = NULL;
+	unsigned char * type_name = NULL;
 	unsigned int type_name_len = 0;
 	enum signkey_type type;
 

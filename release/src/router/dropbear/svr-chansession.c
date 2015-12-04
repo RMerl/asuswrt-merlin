@@ -234,7 +234,7 @@ static int newchansess(struct Channel *channel) {
 
 	struct ChanSess *chansess;
 
-	TRACE(("new chansess %p", (void*)channel))
+	TRACE(("new chansess %p", channel))
 
 	dropbear_assert(channel->typedata == NULL);
 
@@ -343,7 +343,7 @@ static void closechansess(struct Channel *channel) {
  * or x11/authagent forwarding. These are passed to appropriate handlers */
 static void chansessionrequest(struct Channel *channel) {
 
-	char * type = NULL;
+	unsigned char * type = NULL;
 	unsigned int typelen;
 	unsigned char wantreply;
 	int ret = 1;
@@ -406,7 +406,7 @@ out:
 static int sessionsignal(struct ChanSess *chansess) {
 
 	int sig = 0;
-	char* signame = NULL;
+	unsigned char* signame = NULL;
 	int i;
 
 	if (chansess->pid == 0) {
@@ -557,7 +557,7 @@ static void get_termmodes(struct ChanSess *chansess) {
 static int sessionpty(struct ChanSess * chansess) {
 
 	unsigned int termlen;
-	char namebuf[65];
+	unsigned char namebuf[65];
 	struct passwd * pw = NULL;
 
 	TRACE(("enter sessionpty"))
@@ -583,7 +583,7 @@ static int sessionpty(struct ChanSess * chansess) {
 		return DROPBEAR_FAILURE;
 	}
 	
-	chansess->tty = m_strdup(namebuf);
+	chansess->tty = (char*)m_strdup(namebuf);
 	if (!chansess->tty) {
 		dropbear_exit("Out of memory"); /* TODO disconnect */
 	}
@@ -603,7 +603,6 @@ static int sessionpty(struct ChanSess * chansess) {
 	return DROPBEAR_SUCCESS;
 }
 
-#ifndef USE_VFORK
 static void make_connection_string(struct ChanSess *chansess) {
 	char *local_ip, *local_port, *remote_ip, *remote_port;
 	size_t len;
@@ -625,7 +624,6 @@ static void make_connection_string(struct ChanSess *chansess) {
 	m_free(remote_ip);
 	m_free(remote_port);
 }
-#endif
 
 /* Handle a command request from the client. This is used for both shell
  * and command-execution requests, and passes the command to
@@ -814,7 +812,7 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		login_free_entry(li);
 
 #ifdef DO_MOTD
-		if (svr_opts.domotd && !chansess->cmd) {
+		if (svr_opts.domotd) {
 			/* don't show the motd if ~/.hushlogin exists */
 
 			/* 12 == strlen("/.hushlogin\0") */

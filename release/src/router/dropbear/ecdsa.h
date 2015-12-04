@@ -1,5 +1,5 @@
-#ifndef DROPBEAR_ECDSA_H_
-#define DROPBEAR_ECDSA_H_
+#ifndef _ECDSA_H_
+#define _ECDSA_H_
 
 #include "includes.h"
 #include "buffer.h"
@@ -32,4 +32,4 @@ int signkey_is_ecdsa(enum signkey_type type);
 
 #endif
 
-#endif /* DROPBEAR_ECDSA_H_ */
+#endif /* _ECDSA_H_ */

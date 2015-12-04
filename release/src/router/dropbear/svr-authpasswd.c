@@ -33,8 +33,6 @@
 
 #ifdef ENABLE_SVR_PASSWORD_AUTH
 
-/* not constant time when strings are differing lengths. 
- string content isn't leaked, and crypt hashes are predictable length. */
 static int constant_time_strcmp(const char* a, const char* b) {
 	size_t la = strlen(a);
 	size_t lb = strlen(b);
@@ -52,7 +50,7 @@ void svr_auth_password() {
 	
 	char * passwdcrypt = NULL; /* the crypt from /etc/passwd or /etc/shadow */
 	char * testcrypt = NULL; /* crypt generated from the user's password sent */
-	char * password;
+	unsigned char * password;
 	unsigned int passwordlen;
 
 	unsigned int changepw;
@@ -75,7 +73,7 @@ void svr_auth_password() {
 	password = buf_getstring(ses.payload, &passwordlen);
 
 	/* the first bytes of passwdcrypt are the salt */
-	testcrypt = crypt(password, passwdcrypt);
+	testcrypt = crypt((char*)password, passwdcrypt);
 	m_burn(password, passwordlen);
 	m_free(password);
 

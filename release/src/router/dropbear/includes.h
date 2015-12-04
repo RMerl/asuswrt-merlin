@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_INCLUDES_H_
-#define DROPBEAR_INCLUDES_H_
+#ifndef _INCLUDES_H_
+#define _INCLUDES_H_
 
 
 #include "config.h"
@@ -177,4 +177,4 @@ typedef u_int32_t uint32_t;
 # define UNUSED(x) x 
 #endif
 
-#endif /* DROPBEAR_INCLUDES_H_ */
+#endif /* _INCLUDES_H_ */

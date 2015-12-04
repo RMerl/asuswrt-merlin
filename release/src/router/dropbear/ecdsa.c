@@ -83,9 +83,9 @@ ecc_key *buf_get_ecdsa_pub_key(buffer* buf) {
 	ecc_key *new_key = NULL;
 
 	/* string   "ecdsa-sha2-[identifier]" */
-	key_ident = (unsigned char*)buf_getstring(buf, &key_ident_len);
+	key_ident = buf_getstring(buf, &key_ident_len);
 	/* string   "[identifier]" */
-	identifier = (unsigned char*)buf_getstring(buf, &identifier_len);
+	identifier = buf_getstring(buf, &identifier_len);
 
 	if (key_ident_len != identifier_len + strlen("ecdsa-sha2-")) {
 		TRACE(("Bad identifier lengths"))
@@ -131,7 +131,6 @@ ecc_key *buf_get_ecdsa_priv_key(buffer *buf) {
 
 	if (buf_getmpint(buf, new_key->k) != DROPBEAR_SUCCESS) {
 		ecc_free(new_key);
-		m_free(new_key);
 		return NULL;
 	}
 
@@ -140,10 +139,10 @@ ecc_key *buf_get_ecdsa_priv_key(buffer *buf) {
 
 void buf_put_ecdsa_pub_key(buffer *buf, ecc_key *key) {
 	struct dropbear_ecc_curve *curve = NULL;
-	char key_ident[30];
+	unsigned char key_ident[30];
 
 	curve = curve_for_dp(key->dp);
-	snprintf(key_ident, sizeof(key_ident), "ecdsa-sha2-%s", curve->name);
+	snprintf((char*)key_ident, sizeof(key_ident), "ecdsa-sha2-%s", curve->name);
 	buf_putstring(buf, key_ident, strlen(key_ident));
 	buf_putstring(buf, curve->name, strlen(curve->name));
 	buf_put_ecc_raw_pubkey_string(buf, key);
@@ -161,7 +160,7 @@ void buf_put_ecdsa_sign(buffer *buf, ecc_key *key, buffer *data_buf) {
 	hash_state hs;
 	unsigned char hash[64];
 	void *e = NULL, *p = NULL, *s = NULL, *r;
-	char key_ident[30];
+	unsigned char key_ident[30];
 	buffer *sigbuf = NULL;
 
 	TRACE(("buf_put_ecdsa_sign"))
@@ -222,7 +221,7 @@ void buf_put_ecdsa_sign(buffer *buf, ecc_key *key, buffer *data_buf) {
 		}
 	}
 
-	snprintf(key_ident, sizeof(key_ident), "ecdsa-sha2-%s", curve->name);
+	snprintf((char*)key_ident, sizeof(key_ident), "ecdsa-sha2-%s", curve->name);
 	buf_putstring(buf, key_ident, strlen(key_ident));
 	/* enough for nistp521 */
 	sigbuf = buf_new(200);
@@ -409,7 +408,7 @@ int buf_ecdsa_verify(buffer *buf, ecc_key *key, buffer *data_buf) {
 out:
 	ltc_ecc_del_point(mG);
 	ltc_ecc_del_point(mQ);
-	ltc_deinit_multi(r, s, v, w, u1, u2, p, e, m, NULL);
+	mp_clear_multi(r, s, v, w, u1, u2, p, e, m, NULL);
 	if (mp != NULL) { 
 		ltc_mp.montgomery_deinit(mp);
 	}

@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_RUNOPTS_H_
-#define DROPBEAR_RUNOPTS_H_
+#ifndef _RUNOPTS_H_
+#define _RUNOPTS_H_
 
 #include "includes.h"
 #include "signkey.h"
@@ -44,11 +44,7 @@ typedef struct runopts {
 	/* TODO: add a commandline flag. Currently this is on by default if compression
 	 * is compiled in, but disabled for a client's non-final multihop stages. (The
 	 * intermediate stages are compressed streams, so are uncompressible. */
-	enum {
-		DROPBEAR_COMPRESS_DELAYED, /* Server only */
-		DROPBEAR_COMPRESS_ON,
-		DROPBEAR_COMPRESS_OFF,
-	} compress_mode;
+	int enable_compress;
 #endif
 
 #ifdef ENABLE_USER_ALGO_LIST
@@ -170,4 +166,4 @@ void parse_ciphers_macs();
 
 void print_version(void);
 
-#endif /* DROPBEAR_RUNOPTS_H_ */
+#endif /* _RUNOPTS_H_ */

@@ -527,7 +527,7 @@ static void fmonty(limb *x2, limb *z2,  /* output 2Q */
 
   memcpy(origx, x, 10 * sizeof(limb));
   fsum(x, z);
-  fdifference(z, origx);  /* does x - z */
+  fdifference(z, origx);  // does x - z
 
   memcpy(origxprime, xprime, sizeof(limb) * 10);
   fsum(xprime, zprime);
@@ -554,7 +554,7 @@ static void fmonty(limb *x2, limb *z2,  /* output 2Q */
   fproduct(x2, xx, zz);
   freduce_degree(x2);
   freduce_coefficients(x2);
-  fdifference(zz, xx);  /* does zz = xx - zz */
+  fdifference(zz, xx);  // does zz = xx - zz
   memset(zzz + 10, 0, sizeof(limb) * 9);
   fscalar_product(zzz, zz, 121665);
   /* No need to call freduce_degree here:
@@ -641,9 +641,9 @@ cmult(limb *resultx, limb *resultz, const u8 *n, const limb *q) {
   memcpy(resultz, nqz, sizeof(limb) * 10);
 }
 
-/* -----------------------------------------------------------------------------
- * Shamelessly copied from djb's code
- * ----------------------------------------------------------------------------- */
+// -----------------------------------------------------------------------------
+// Shamelessly copied from djb's code
+// -----------------------------------------------------------------------------
 static void
 crecip(limb *out, const limb *z) {
   limb z2[10];

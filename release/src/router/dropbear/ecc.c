@@ -86,6 +86,11 @@ static int ecc_is_point(ecc_key *key)
 {
 	mp_int *prime, *b, *t1, *t2;
 	int err;
+
+	prime = m_malloc(sizeof(mp_int));
+	b = m_malloc(sizeof(mp_int));
+	t1 = m_malloc(sizeof(mp_int));
+	t2 = m_malloc(sizeof(mp_int));
 	
 	m_mp_alloc_init_multi(&prime, &b, &t1, &t2, NULL);
 	

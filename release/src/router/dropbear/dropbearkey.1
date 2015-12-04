@@ -9,11 +9,13 @@ dropbearkey \- create private keys for the use with dropbear(8) or dbclient(1)
 .I file
 [\-s
 .IR bits ]
-[\-y]
 .SH DESCRIPTION
 .B dropbearkey
 generates a
-\fIRSA\fR, \fIDSS\fR, or \fIECDSA\fR
+.I RSA 
+.I DSS,
+or
+.I ECDSA
 format SSH private key, and saves it to a file for the use with the
 Dropbear client or server.
 Note that 
@@ -31,25 +33,18 @@ or
 .TP
 .B \-f \fIfile
 Write the secret key to the file
-\fIfile\fR. For client authentication ~/.ssh/id_dropbear is loaded by default
+.IR file .
 .TP
 .B \-s \fIbits
 Set the key size to
 .I bits
 bits, should be multiple of 8 (optional). 
-.TP
-.B \-y
-Just print the publickey and fingerprint for the private key in \fIfile\fR.
 .SH NOTES
 The program dropbearconvert(1) can be used to convert between Dropbear and OpenSSH key formats.
 .P
 Dropbear does not support encrypted keys. 
 .SH EXAMPLE
-generate a host-key:
  # dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key
-
-extract a public key suitable for authorized_keys from private key:
- # dropbearkey -y -f id_rsa | grep "^ssh-rsa " >> authorized_keys
 .SH AUTHOR
 Matt Johnston (matt@ucc.asn.au).
 .br

@@ -188,7 +188,7 @@ void svr_auth_pam() {
 
 	pam_handle_t* pamHandlep = NULL;
 
-	char * password = NULL;
+	unsigned char * password = NULL;
 	unsigned int passwordlen;
 
 	int rc = PAM_SUCCESS;

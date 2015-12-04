@@ -238,24 +238,14 @@ void recv_msg_newkeys() {
 void kexfirstinitialise() {
 	ses.kexstate.donefirstkex = 0;
 
-#ifdef DISABLE_ZLIB
-	ses.compress_algos = ssh_nocompress;
-#else
-	switch (opts.compress_mode)
-	{
-		case DROPBEAR_COMPRESS_DELAYED:
-			ses.compress_algos = ssh_delaycompress;
-			break;
-
-		case DROPBEAR_COMPRESS_ON:
-			ses.compress_algos = ssh_compress;
-			break;
-
-		case DROPBEAR_COMPRESS_OFF:
-			ses.compress_algos = ssh_nocompress;
-			break;
-	}
+#ifndef DISABLE_ZLIB
+	if (opts.enable_compress) {
+		ses.compress_algos = ssh_compress;
+	} else
 #endif
+	{
+		ses.compress_algos = ssh_nocompress;
+	}
 	kexinitialise();
 }
 
@@ -313,7 +303,7 @@ static void hashkeys(unsigned char *out, unsigned int outlen,
 		hash_desc->done(&hs2, tmpout);
 		memcpy(&out[offset], tmpout, MIN(outlen - offset, hash_desc->hashsize));
 	}
-	m_burn(&hs2, sizeof(hash_state));
+
 }
 
 /* Generate the actual encryption/integrity keys, using the results of the
@@ -413,7 +403,6 @@ static void gen_new_keys() {
 	m_burn(C2S_key, sizeof(C2S_key));
 	m_burn(S2C_IV, sizeof(S2C_IV));
 	m_burn(S2C_key, sizeof(S2C_key));
-	m_burn(&hs, sizeof(hash_state));
 
 	TRACE(("leave gen_new_keys"))
 }
@@ -511,7 +500,7 @@ void recv_msg_kexinit() {
 
 	/* start the kex hash */
 	local_ident_len = strlen(LOCAL_IDENT);
-	remote_ident_len = strlen(ses.remoteident);
+	remote_ident_len = strlen((char*)ses.remoteident);
 
 	kexhashbuf_len = local_ident_len + remote_ident_len
 		+ ses.transkexinit->len + ses.payload->len
@@ -525,18 +514,17 @@ void recv_msg_kexinit() {
 		read_kex_algos();
 
 		/* V_C, the client's version string (CR and NL excluded) */
-	    buf_putstring(ses.kexhashbuf, LOCAL_IDENT, local_ident_len);
+	    buf_putstring(ses.kexhashbuf,
+			(unsigned char*)LOCAL_IDENT, local_ident_len);
 		/* V_S, the server's version string (CR and NL excluded) */
 	    buf_putstring(ses.kexhashbuf, ses.remoteident, remote_ident_len);
 
 		/* I_C, the payload of the client's SSH_MSG_KEXINIT */
 	    buf_putstring(ses.kexhashbuf,
-			(const char*)ses.transkexinit->data, ses.transkexinit->len);
+			ses.transkexinit->data, ses.transkexinit->len);
 		/* I_S, the payload of the server's SSH_MSG_KEXINIT */
-	    buf_setpos(ses.payload, ses.payload_beginning);
-	    buf_putstring(ses.kexhashbuf, 
-	    	(const char*)buf_getptr(ses.payload, ses.payload->len-ses.payload->pos),
-	    	ses.payload->len-ses.payload->pos);
+	    buf_setpos(ses.payload, 0);
+	    buf_putstring(ses.kexhashbuf, ses.payload->data, ses.payload->len);
 		ses.requirenext = SSH_MSG_KEXDH_REPLY;
 	} else {
 		/* SERVER */
@@ -546,17 +534,16 @@ void recv_msg_kexinit() {
 		/* V_C, the client's version string (CR and NL excluded) */
 	    buf_putstring(ses.kexhashbuf, ses.remoteident, remote_ident_len);
 		/* V_S, the server's version string (CR and NL excluded) */
-	    buf_putstring(ses.kexhashbuf, LOCAL_IDENT, local_ident_len);
+	    buf_putstring(ses.kexhashbuf, 
+				(unsigned char*)LOCAL_IDENT, local_ident_len);
 
 		/* I_C, the payload of the client's SSH_MSG_KEXINIT */
-	    buf_setpos(ses.payload, ses.payload_beginning);
-	    buf_putstring(ses.kexhashbuf, 
-	    	(const char*)buf_getptr(ses.payload, ses.payload->len-ses.payload->pos),
-	    	ses.payload->len-ses.payload->pos);
+	    buf_setpos(ses.payload, 0);
+	    buf_putstring(ses.kexhashbuf, ses.payload->data, ses.payload->len);
 
 		/* I_S, the payload of the server's SSH_MSG_KEXINIT */
 	    buf_putstring(ses.kexhashbuf,
-			(const char*)ses.transkexinit->data, ses.transkexinit->len);
+			ses.transkexinit->data, ses.transkexinit->len);
 
 		ses.requirenext = SSH_MSG_KEXDH_INIT;
 	}
@@ -631,20 +618,16 @@ void free_kexdh_param(struct kex_dh_param *param)
 void kexdh_comb_key(struct kex_dh_param *param, mp_int *dh_pub_them,
 		sign_key *hostkey) {
 
-	DEF_MP_INT(dh_p);
-	DEF_MP_INT(dh_p_min1);
+	mp_int dh_p;
 	mp_int *dh_e = NULL, *dh_f = NULL;
 
-	m_mp_init_multi(&dh_p, &dh_p_min1, NULL);
+	/* read the prime and generator*/
+	m_mp_init(&dh_p);
 	load_dh_p(&dh_p);
 
-	if (mp_sub_d(&dh_p, 1, &dh_p_min1) != MP_OKAY) { 
-		dropbear_exit("Diffie-Hellman error");
-	}
-
-	/* Check that dh_pub_them (dh_e or dh_f) is in the range [2, p-2] */
-	if (mp_cmp(dh_pub_them, &dh_p_min1) != MP_LT 
-			|| mp_cmp_d(dh_pub_them, 1) != MP_GT) {
+	/* Check that dh_pub_them (dh_e or dh_f) is in the range [1, p-1] */
+	if (mp_cmp(dh_pub_them, &dh_p) != MP_LT 
+			|| mp_cmp_d(dh_pub_them, 0) != MP_GT) {
 		dropbear_exit("Diffie-Hellman error");
 	}
 	
@@ -655,7 +638,7 @@ void kexdh_comb_key(struct kex_dh_param *param, mp_int *dh_pub_them,
 	}
 
 	/* clear no longer needed vars */
-	mp_clear_multi(&dh_p, &dh_p_min1, NULL);
+	mp_clear_multi(&dh_p, NULL);
 
 	/* From here on, the code needs to work with the _same_ vars on each side,
 	 * not vice-versaing for client/server */
@@ -703,9 +686,6 @@ void kexecdh_comb_key(struct kex_ecdh_param *param, buffer *pub_them,
 	ecc_key *Q_C, *Q_S, *Q_them;
 
 	Q_them = buf_get_ecc_raw_pubkey(pub_them, algo_kex->ecc_curve);
-	if (Q_them == NULL) {
-		dropbear_exit("ECC error");
-	}
 
 	ses.dh_K = dropbear_ecc_shared_secret(Q_them, &param->key);
 
@@ -760,7 +740,6 @@ void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *buf_pub_
 	unsigned char out[CURVE25519_LEN];
 	const unsigned char* Q_C = NULL;
 	const unsigned char* Q_S = NULL;
-	char zeroes[CURVE25519_LEN] = {0};
 
 	if (buf_pub_them->len != CURVE25519_LEN)
 	{
@@ -768,11 +747,6 @@ void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *buf_pub_
 	}
 
 	curve25519_donna(out, param->priv, buf_pub_them->data);
-
-	if (constant_time_memcmp(zeroes, out, CURVE25519_LEN) == 0) {
-		dropbear_exit("Bad curve25519");
-	}
-
 	m_mp_alloc_init_multi(&ses.dh_K, NULL);
 	bytes_to_mp(ses.dh_K, out, CURVE25519_LEN);
 	m_burn(out, sizeof(out));
@@ -790,9 +764,9 @@ void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *buf_pub_
 	/* K_S, the host key */
 	buf_put_pub_key(ses.kexhashbuf, hostkey, ses.newkeys->algo_hostkey);
 	/* Q_C, client's ephemeral public key octet string */
-	buf_putstring(ses.kexhashbuf, (const char*)Q_C, CURVE25519_LEN);
+	buf_putstring(ses.kexhashbuf, Q_C, CURVE25519_LEN);
 	/* Q_S, server's ephemeral public key octet string */
-	buf_putstring(ses.kexhashbuf, (const char*)Q_S, CURVE25519_LEN);
+	buf_putstring(ses.kexhashbuf, Q_S, CURVE25519_LEN);
 	/* K, the shared secret */
 	buf_putmpint(ses.kexhashbuf, ses.dh_K);
 
@@ -824,7 +798,6 @@ static void finish_kexhashbuf(void) {
 
 	buf_burn(ses.kexhashbuf);
 	buf_free(ses.kexhashbuf);
-	m_burn(&hs, sizeof(hash_state));
 	ses.kexhashbuf = NULL;
 	
 	/* first time around, we set the session_id to H */
@@ -832,6 +805,7 @@ static void finish_kexhashbuf(void) {
 		/* create the session_id, this never needs freeing */
 		ses.session_id = buf_newcopy(ses.hash);
 	}
+
 }
 
 /* read the other side's algo list. buf_match_algo is a callback to match

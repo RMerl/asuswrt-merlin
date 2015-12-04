@@ -1,5 +1,5 @@
-#ifndef DROPBEAR_HAVE_LOGINREC_H_
-#define DROPBEAR_HAVE_LOGINREC_H_
+#ifndef _HAVE_LOGINREC_H_
+#define _HAVE_LOGINREC_H_
 
 /*
  * Copyright (c) 2000 Andre Lucas.  All rights reserved.
@@ -182,4 +182,4 @@ char *line_fullname(char *dst, const char *src, size_t dstsize);
 char *line_stripname(char *dst, const char *src, size_t dstsize);
 char *line_abbrevname(char *dst, const char *src, size_t dstsize);
 
-#endif /* DROPBEAR_HAVE_LOGINREC_H_ */
+#endif /* _HAVE_LOGINREC_H_ */

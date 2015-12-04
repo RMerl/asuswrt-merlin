@@ -4,16 +4,8 @@
 
 #include <signal.h>
 
-/* portability macros for compiler-specific code attributes */
-#ifdef __GNUC__
-#define ATTRIB_NORETURN __attribute__((noreturn))
-#else
-#define ATTRIB_NORETURN
-#endif
-
-
 /* this is the default LibTomCrypt macro  */
-void crypt_argchk(char *v, char *s, int d) ATTRIB_NORETURN;
+void crypt_argchk(char *v, char *s, int d);
 #define LTC_ARGCHK(x) if (!(x)) { crypt_argchk(#x, __FILE__, __LINE__); }
 #define LTC_ARGCHKVD(x) LTC_ARGCHK(x)
 

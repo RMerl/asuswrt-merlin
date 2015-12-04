@@ -22,9 +22,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_SERVICE_H_
-#define DROPBEAR_SERVICE_H_
+#ifndef _SERVICE_H_
+#define _SERVICE_H_
 
 void recv_msg_service_request(); /* Server */
 
-#endif /* DROPBEAR_SERVICE_H_ */
+#endif /* _SERVICE_H_ */

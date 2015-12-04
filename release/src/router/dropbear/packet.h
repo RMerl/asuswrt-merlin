@@ -22,20 +22,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_PACKET_H_
+#ifndef _PACKET_H_
 
-#define DROPBEAR_PACKET_H_
+#define _PACKET_H_
 
 #include "includes.h"
-#include "queue.h"
-#include "buffer.h"
 
 void write_packet();
 void read_packet();
 void decrypt_packet();
 void encrypt_packet();
-
-void writebuf_enqueue(buffer * writebuf, unsigned char packet_type);
 
 void process_packet();
 
@@ -50,4 +46,4 @@ typedef struct PacketType {
 
 #define INIT_READBUF 128
 
-#endif /* DROPBEAR_PACKET_H_ */
+#endif /* _PACKET_H_ */

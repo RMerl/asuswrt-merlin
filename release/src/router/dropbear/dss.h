@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_DSS_H_
-#define DROPBEAR_DSS_H_
+#ifndef _DSS_H_
+#define _DSS_H_
 
 #include "includes.h"
 #include "buffer.h"
@@ -53,4 +53,4 @@ void dss_key_free(dropbear_dss_key *key);
 
 #endif /* DROPBEAR_DSS */
 
-#endif /* DROPBEAR_DSS_H_ */
+#endif /* _DSS_H_ */

@@ -22,14 +22,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_RANDOM_H_
-#define DROPBEAR_RANDOM_H_
+#ifndef _RANDOM_H_
+#define _RANDOM_H_
 
 #include "includes.h"
 
 void seedrandom();
 void genrandom(unsigned char* buf, unsigned int len);
-void addrandom(unsigned char * buf, unsigned int len);
+void addrandom(char * buf, unsigned int len);
 void gen_random_mpint(mp_int *max, mp_int *rand);
 
-#endif /* DROPBEAR_RANDOM_H_ */
+#endif /* _RANDOM_H_ */

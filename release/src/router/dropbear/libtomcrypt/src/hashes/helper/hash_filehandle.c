@@ -26,7 +26,6 @@
 int hash_filehandle(int hash, FILE *in, unsigned char *out, unsigned long *outlen)
 {
 #ifdef LTC_NO_FILE
-    (void)hash; (void)in; (void)out; (void)outlen;
     return CRYPT_NOP;
 #else
     hash_state md;

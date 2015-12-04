@@ -30,7 +30,6 @@
 #include "session.h"
 #include "dbrandom.h"
 #include "crypto_desc.h"
-#include "netio.h"
 
 static void cli_dropbear_exit(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 static void cli_dropbear_log(int priority, const char* format, va_list param);
@@ -47,7 +46,7 @@ int main(int argc, char ** argv) {
 #endif
 
 	int sock_in, sock_out;
-	struct dropbear_progress_connection *progress = NULL;
+	char* error = NULL;
 
 	_dropbear_exit = cli_dropbear_exit;
 	_dropbear_log = cli_dropbear_log;
@@ -73,11 +72,16 @@ int main(int argc, char ** argv) {
 	} else
 #endif
 	{
-		progress = connect_remote(cli_opts.remotehost, cli_opts.remoteport, cli_connected, &ses);
-		sock_in = sock_out = -1;
+		int sock = connect_remote(cli_opts.remotehost, cli_opts.remoteport, 
+				0, &error);
+		sock_in = sock_out = sock;
 	}
 
-	cli_session(sock_in, sock_out, progress);
+	if (sock_in < 0) {
+		dropbear_exit("%s", error);
+	}
+
+	cli_session(sock_in, sock_out);
 
 	/* not reached */
 	return -1;
@@ -87,7 +91,6 @@ int main(int argc, char ** argv) {
 static void cli_dropbear_exit(int exitcode, const char* format, va_list param) {
 
 	char fmtbuf[300];
-	char exitmsg[500];
 
 	if (!sessinitdone) {
 		snprintf(fmtbuf, sizeof(fmtbuf), "Exited: %s",
@@ -99,15 +102,12 @@ static void cli_dropbear_exit(int exitcode, const char* format, va_list param) {
 				cli_opts.remoteport, format);
 	}
 
-	/* Arguments to the exit printout may be unsafe to use after session_cleanup() */
-	vsnprintf(exitmsg, sizeof(exitmsg), fmtbuf, param);
-
 	/* Do the cleanup first, since then the terminal will be reset */
 	session_cleanup();
 	/* Avoid printing onwards from terminal cruft */
 	fprintf(stderr, "\n");
 
-	dropbear_log(LOG_INFO, "%s", exitmsg);;
+	_dropbear_log(LOG_INFO, fmtbuf, param);
 	exit(exitcode);
 }
 

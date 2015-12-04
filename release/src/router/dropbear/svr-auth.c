@@ -36,7 +36,7 @@
 #include "dbrandom.h"
 
 static void authclear();
-static int checkusername(char *username, unsigned int userlen);
+static int checkusername(unsigned char *username, unsigned int userlen);
 
 /* initialise the first time for a session, resetting all parameters */
 void svr_authinitialise() {
@@ -100,7 +100,7 @@ void send_msg_userauth_banner(buffer *banner) {
  * checking, and handle success or failure */
 void recv_msg_userauth_request() {
 
-	char *username = NULL, *servicename = NULL, *methodname = NULL;
+	unsigned char *username = NULL, *servicename = NULL, *methodname = NULL;
 	unsigned int userlen, servicelen, methodlen;
 	int valid_user = 0;
 
@@ -227,7 +227,7 @@ out:
 
 /* Check that the username exists and isn't disallowed (root), and has a valid shell.
  * returns DROPBEAR_SUCCESS on valid username, DROPBEAR_FAILURE on failure */
-static int checkusername(char *username, unsigned int userlen) {
+static int checkusername(unsigned char *username, unsigned int userlen) {
 
 	char* listshell = NULL;
 	char* usershell = NULL;
@@ -333,14 +333,14 @@ void send_msg_userauth_failure(int partial, int incrfail) {
 	typebuf = buf_new(30); /* long enough for PUBKEY and PASSWORD */
 
 	if (ses.authstate.authtypes & AUTH_TYPE_PUBKEY) {
-		buf_putbytes(typebuf, (const unsigned char *)AUTH_METHOD_PUBKEY, AUTH_METHOD_PUBKEY_LEN);
+		buf_putbytes(typebuf, AUTH_METHOD_PUBKEY, AUTH_METHOD_PUBKEY_LEN);
 		if (ses.authstate.authtypes & AUTH_TYPE_PASSWORD) {
 			buf_putbyte(typebuf, ',');
 		}
 	}
 	
 	if (ses.authstate.authtypes & AUTH_TYPE_PASSWORD) {
-		buf_putbytes(typebuf, (const unsigned char *)AUTH_METHOD_PASSWORD, AUTH_METHOD_PASSWORD_LEN);
+		buf_putbytes(typebuf, AUTH_METHOD_PASSWORD, AUTH_METHOD_PASSWORD_LEN);
 	}
 
 	buf_putbufstring(ses.writepayload, typebuf);
@@ -392,8 +392,7 @@ void send_msg_userauth_success() {
 	/* authdone must be set after encrypt_packet() for 
 	 * delayed-zlib mode */
 	ses.authstate.authdone = 1;
-	ses.connect_time = 0;
-
+	svr_ses.connect_time = 0;
 
 	if (ses.authstate.pw_uid == 0) {
 		ses.allowprivport = 1;

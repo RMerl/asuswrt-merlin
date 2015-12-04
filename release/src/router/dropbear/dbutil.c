@@ -150,44 +150,18 @@ void dropbear_log(int priority, const char* format, ...) {
 
 
 #ifdef DEBUG_TRACE
-
-static double debug_start_time = -1;
-
-void debug_start_net()
-{
-	if (getenv("DROPBEAR_DEBUG_NET_TIMESTAMP"))
-	{
-    	/* Timestamps start from first network activity */
-	    struct timeval tv;
-	    gettimeofday(&tv, NULL);
-	    debug_start_time = tv.tv_sec + (tv.tv_usec / 1000000.0);
-	    TRACE(("Resetting Dropbear TRACE timestamps"))
-	}
-}
-
-static double time_since_start()
-{
-    double nowf;
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    nowf = tv.tv_sec + (tv.tv_usec / 1000000.0);
-    if (debug_start_time < 0)
-    {
-        debug_start_time = nowf;
-        return 0;
-    }
-    return nowf - debug_start_time;
-}
-
 void dropbear_trace(const char* format, ...) {
 	va_list param;
+	struct timeval tv;
 
 	if (!debug_trace) {
 		return;
 	}
 
+	gettimeofday(&tv, NULL);
+
 	va_start(param, format);
-	fprintf(stderr, "TRACE  (%d) %f: ", getpid(), time_since_start());
+	fprintf(stderr, "TRACE  (%d) %d.%d: ", getpid(), (int)tv.tv_sec, (int)tv.tv_usec);
 	vfprintf(stderr, format, param);
 	fprintf(stderr, "\n");
 	va_end(param);
@@ -196,6 +170,7 @@ void dropbear_trace(const char* format, ...) {
 void dropbear_trace2(const char* format, ...) {
 	static int trace_env = -1;
 	va_list param;
+	struct timeval tv;
 
 	if (trace_env == -1) {
 		trace_env = getenv("DROPBEAR_TRACE2") ? 1 : 0;
@@ -205,13 +180,192 @@ void dropbear_trace2(const char* format, ...) {
 		return;
 	}
 
+	gettimeofday(&tv, NULL);
+
 	va_start(param, format);
-	fprintf(stderr, "TRACE2 (%d) %f: ", getpid(), time_since_start());
+	fprintf(stderr, "TRACE2 (%d) %d.%d: ", getpid(), (int)tv.tv_sec, (int)tv.tv_usec);
 	vfprintf(stderr, format, param);
 	fprintf(stderr, "\n");
 	va_end(param);
 }
 #endif /* DEBUG_TRACE */
+
+void set_sock_nodelay(int sock) {
+	int val;
+
+	/* disable nagle */
+	val = 1;
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*)&val, sizeof(val));
+}
+
+void set_sock_priority(int sock, enum dropbear_prio prio) {
+
+	int iptos_val = 0, so_prio_val = 0, rc;
+
+	/* Don't log ENOTSOCK errors so that this can harmlessly be called
+	 * on a client '-J' proxy pipe */
+
+	/* set the TOS bit for either ipv4 or ipv6 */
+#ifdef IPTOS_LOWDELAY
+	if (prio == DROPBEAR_PRIO_LOWDELAY) {
+		iptos_val = IPTOS_LOWDELAY;
+	} else if (prio == DROPBEAR_PRIO_BULK) {
+		iptos_val = IPTOS_THROUGHPUT;
+	}
+#if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
+	rc = setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, (void*)&iptos_val, sizeof(iptos_val));
+	if (rc < 0 && errno != ENOTSOCK) {
+		TRACE(("Couldn't set IPV6_TCLASS (%s)", strerror(errno)));
+	}
+#endif
+	rc = setsockopt(sock, IPPROTO_IP, IP_TOS, (void*)&iptos_val, sizeof(iptos_val));
+	if (rc < 0 && errno != ENOTSOCK) {
+		TRACE(("Couldn't set IP_TOS (%s)", strerror(errno)));
+	}
+#endif
+
+#ifdef SO_PRIORITY
+	if (prio == DROPBEAR_PRIO_LOWDELAY) {
+		so_prio_val = TC_PRIO_INTERACTIVE;
+	} else if (prio == DROPBEAR_PRIO_BULK) {
+		so_prio_val = TC_PRIO_BULK;
+	}
+	/* linux specific, sets QoS class. see tc-prio(8) */
+	rc = setsockopt(sock, SOL_SOCKET, SO_PRIORITY, (void*) &so_prio_val, sizeof(so_prio_val));
+	if (rc < 0 && errno != ENOTSOCK)
+		dropbear_log(LOG_WARNING, "Couldn't set SO_PRIORITY (%s)",
+				strerror(errno));
+#endif
+
+}
+
+/* Listen on address:port. 
+ * Special cases are address of "" listening on everything,
+ * and address of NULL listening on localhost only.
+ * Returns the number of sockets bound on success, or -1 on failure. On
+ * failure, if errstring wasn't NULL, it'll be a newly malloced error
+ * string.*/
+int dropbear_listen(const char* address, const char* port,
+		int *socks, unsigned int sockcount, char **errstring, int *maxfd) {
+
+	struct addrinfo hints, *res = NULL, *res0 = NULL;
+	int err;
+	unsigned int nsock;
+	struct linger linger;
+	int val;
+	int sock;
+
+	TRACE(("enter dropbear_listen"))
+	
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC; /* TODO: let them flag v4 only etc */
+	hints.ai_socktype = SOCK_STREAM;
+
+	/* for calling getaddrinfo:
+	 address == NULL and !AI_PASSIVE: local loopback
+	 address == NULL and AI_PASSIVE: all interfaces
+	 address != NULL: whatever the address says */
+	if (!address) {
+		TRACE(("dropbear_listen: local loopback"))
+	} else {
+		if (address[0] == '\0') {
+			TRACE(("dropbear_listen: all interfaces"))
+			address = NULL;
+		}
+		hints.ai_flags = AI_PASSIVE;
+	}
+	err = getaddrinfo(address, port, &hints, &res0);
+
+	if (err) {
+		if (errstring != NULL && *errstring == NULL) {
+			int len;
+			len = 20 + strlen(gai_strerror(err));
+			*errstring = (char*)m_malloc(len);
+			snprintf(*errstring, len, "Error resolving: %s", gai_strerror(err));
+		}
+		if (res0) {
+			freeaddrinfo(res0);
+			res0 = NULL;
+		}
+		TRACE(("leave dropbear_listen: failed resolving"))
+		return -1;
+	}
+
+
+	nsock = 0;
+	for (res = res0; res != NULL && nsock < sockcount;
+			res = res->ai_next) {
+
+		/* Get a socket */
+		socks[nsock] = socket(res->ai_family, res->ai_socktype,
+				res->ai_protocol);
+
+		sock = socks[nsock]; /* For clarity */
+
+		if (sock < 0) {
+			err = errno;
+			TRACE(("socket() failed"))
+			continue;
+		}
+
+		/* Various useful socket options */
+		val = 1;
+		/* set to reuse, quick timeout */
+		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &val, sizeof(val));
+		linger.l_onoff = 1;
+		linger.l_linger = 5;
+		setsockopt(sock, SOL_SOCKET, SO_LINGER, (void*)&linger, sizeof(linger));
+
+#if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
+		if (res->ai_family == AF_INET6) {
+			int on = 1;
+			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, 
+						&on, sizeof(on)) == -1) {
+				dropbear_log(LOG_WARNING, "Couldn't set IPV6_V6ONLY");
+			}
+		}
+#endif
+
+		set_sock_nodelay(sock);
+
+		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+			err = errno;
+			close(sock);
+			TRACE(("bind(%s) failed", port))
+			continue;
+		}
+
+		if (listen(sock, DROPBEAR_LISTEN_BACKLOG) < 0) {
+			err = errno;
+			close(sock);
+			TRACE(("listen() failed"))
+			continue;
+		}
+
+		*maxfd = MAX(*maxfd, sock);
+
+		nsock++;
+	}
+
+	if (res0) {
+		freeaddrinfo(res0);
+		res0 = NULL;
+	}
+
+	if (nsock == 0) {
+		if (errstring != NULL && *errstring == NULL) {
+			int len;
+			len = 20 + strlen(strerror(err));
+			*errstring = (char*)m_malloc(len);
+			snprintf(*errstring, len, "Error listening: %s", strerror(err));
+		}
+		TRACE(("leave dropbear_listen: failure, %s", strerror(err)))
+		return -1;
+	}
+
+	TRACE(("leave dropbear_listen: success, %d socks bound", nsock))
+	return nsock;
+}
 
 /* Connect to a given unix socket. The socket is blocking */
 #ifdef ENABLE_CONNECT_UNIX
@@ -235,6 +389,93 @@ int connect_unix(const char* path) {
 	return fd;
 }
 #endif
+
+/* Connect via TCP to a host. Connection will try ipv4 or ipv6, will
+ * return immediately if nonblocking is set. On failure, if errstring
+ * wasn't null, it will be a newly malloced error message */
+
+/* TODO: maxfd */
+int connect_remote(const char* remotehost, const char* remoteport,
+		int nonblocking, char ** errstring) {
+
+	struct addrinfo *res0 = NULL, *res = NULL, hints;
+	int sock;
+	int err;
+
+	TRACE(("enter connect_remote"))
+
+	if (errstring != NULL) {
+		*errstring = NULL;
+	}
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_family = PF_UNSPEC;
+
+	err = getaddrinfo(remotehost, remoteport, &hints, &res0);
+	if (err) {
+		if (errstring != NULL && *errstring == NULL) {
+			int len;
+			len = 100 + strlen(gai_strerror(err));
+			*errstring = (char*)m_malloc(len);
+			snprintf(*errstring, len, "Error resolving '%s' port '%s'. %s", 
+					remotehost, remoteport, gai_strerror(err));
+		}
+		TRACE(("Error resolving: %s", gai_strerror(err)))
+		return -1;
+	}
+
+	sock = -1;
+	err = EADDRNOTAVAIL;
+	for (res = res0; res; res = res->ai_next) {
+
+		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (sock < 0) {
+			err = errno;
+			continue;
+		}
+
+		if (nonblocking) {
+			setnonblocking(sock);
+		}
+
+		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+			if (errno == EINPROGRESS && nonblocking) {
+				TRACE(("Connect in progress"))
+				break;
+			} else {
+				err = errno;
+				close(sock);
+				sock = -1;
+				continue;
+			}
+		}
+
+		break; /* Success */
+	}
+
+	if (sock < 0 && !(errno == EINPROGRESS && nonblocking)) {
+		/* Failed */
+		if (errstring != NULL && *errstring == NULL) {
+			int len;
+			len = 20 + strlen(strerror(err));
+			*errstring = (char*)m_malloc(len);
+			snprintf(*errstring, len, "Error connecting: %s", strerror(err));
+		}
+		TRACE(("Error connecting: %s", strerror(err)))
+	} else {
+		/* Success */
+		set_sock_nodelay(sock);
+	}
+
+	freeaddrinfo(res0);
+	if (sock > 0 && errstring != NULL && *errstring != NULL) {
+		m_free(*errstring);
+	}
+
+	TRACE(("leave connect_remote: sock %d\n", sock))
+	return sock;
+}
 
 /* Sets up a pipe for a, returning three non-blocking file descriptors
  * and the pid. exec_fn is the function that will actually execute the child process,
@@ -371,6 +612,88 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 	execv(usershell, argv);
 }
 
+void get_socket_address(int fd, char **local_host, char **local_port,
+						char **remote_host, char **remote_port, int host_lookup)
+{
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+	
+	if (local_host || local_port) {
+		addrlen = sizeof(addr);
+		if (getsockname(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
+			dropbear_exit("Failed socket address: %s", strerror(errno));
+		}
+		getaddrstring(&addr, local_host, local_port, host_lookup);		
+	}
+	if (remote_host || remote_port) {
+		addrlen = sizeof(addr);
+		if (getpeername(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
+			dropbear_exit("Failed socket address: %s", strerror(errno));
+		}
+		getaddrstring(&addr, remote_host, remote_port, host_lookup);		
+	}
+}
+
+/* Return a string representation of the socket address passed. The return
+ * value is allocated with malloc() */
+void getaddrstring(struct sockaddr_storage* addr, 
+			char **ret_host, char **ret_port,
+			int host_lookup) {
+
+	char host[NI_MAXHOST+1], serv[NI_MAXSERV+1];
+	unsigned int len;
+	int ret;
+	
+	int flags = NI_NUMERICSERV | NI_NUMERICHOST;
+
+#ifndef DO_HOST_LOOKUP
+	host_lookup = 0;
+#endif
+	
+	if (host_lookup) {
+		flags = NI_NUMERICSERV;
+	}
+
+	len = sizeof(struct sockaddr_storage);
+	/* Some platforms such as Solaris 8 require that len is the length
+	 * of the specific structure. Some older linux systems (glibc 2.1.3
+	 * such as debian potato) have sockaddr_storage.__ss_family instead
+	 * but we'll ignore them */
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
+	if (addr->ss_family == AF_INET) {
+		len = sizeof(struct sockaddr_in);
+	}
+#ifdef AF_INET6
+	if (addr->ss_family == AF_INET6) {
+		len = sizeof(struct sockaddr_in6);
+	}
+#endif
+#endif
+
+	ret = getnameinfo((struct sockaddr*)addr, len, host, sizeof(host)-1, 
+			serv, sizeof(serv)-1, flags);
+
+	if (ret != 0) {
+		if (host_lookup) {
+			/* On some systems (Darwin does it) we get EINTR from getnameinfo
+			 * somehow. Eew. So we'll just return the IP, since that doesn't seem
+			 * to exhibit that behaviour. */
+			getaddrstring(addr, ret_host, ret_port, 0);
+			return;
+		} else {
+			/* if we can't do a numeric lookup, something's gone terribly wrong */
+			dropbear_exit("Failed lookup: %s", gai_strerror(ret));
+		}
+	}
+
+	if (ret_host) {
+		*ret_host = m_strdup(host);
+	}
+	if (ret_port) {
+		*ret_port = m_strdup(serv);
+	}
+}
+
 #ifdef DEBUG_TRACE
 void printhex(const char * label, const unsigned char * buf, int len) {
 
@@ -504,12 +827,12 @@ out:
 
 /* make sure that the socket closes */
 void m_close(int fd) {
-	int val;
 
 	if (fd == -1) {
 		return;
 	}
 
+	int val;
 	do {
 		val = close(fd);
 	} while (val < 0 && errno == EINTR);
@@ -613,24 +936,6 @@ int m_str_to_uint(const char* str, unsigned int *val) {
 	}
 }
 
-/* Returns malloced path. inpath beginning with '/' is returned as-is,
-otherwise home directory is prepended */
-char * expand_homedir_path(const char *inpath) {
-	struct passwd *pw = NULL;
-	if (inpath[0] != '/') {
-		pw = getpwuid(getuid());
-		if (pw && pw->pw_dir) {
-			int len = strlen(inpath) + strlen(pw->pw_dir) + 2;
-			char *buf = m_malloc(len);
-			snprintf(buf, len, "%s/%s", pw->pw_dir, inpath);
-			return buf;
-		}
-	}
-
-	/* Fallback */
-	return m_strdup(inpath);
-}
-
 int constant_time_memcmp(const void* a, const void *b, size_t n)
 {
 	const char *xa = a, *xb = b;
@@ -695,5 +1000,4 @@ time_t monotonic_now() {
 	/* Fallback for everything else - this will sometimes go backwards */
 	return time(NULL);
 }
-
 

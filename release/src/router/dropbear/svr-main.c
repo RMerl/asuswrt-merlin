@@ -138,6 +138,7 @@ void main_noinetd() {
 	}
 
 	for (i = 0; i < listensockcount; i++) {
+		set_sock_priority(listensocks[i], DROPBEAR_PRIO_LOWDELAY);
 		FD_SET(listensocks[i], &fds);
 	}
 
@@ -342,7 +343,6 @@ static void sigchld_handler(int UNUSED(unused)) {
 
 	sa_chld.sa_handler = sigchld_handler;
 	sa_chld.sa_flags = SA_NOCLDSTOP;
-	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
 		dropbear_exit("signal() error");
 	}
@@ -402,9 +402,9 @@ static void commonsetup() {
 }
 
 /* Set up listening sockets for all the requested ports */
-static size_t listensockets(int *socks, size_t sockcount, int *maxfd) {
-
-	unsigned int i, n;
+static size_t listensockets(int *sock, size_t sockcount, int *maxfd) {
+	
+	unsigned int i;
 	char* errstring = NULL;
 	size_t sockpos = 0;
 	int nsock;
@@ -415,7 +415,7 @@ static size_t listensockets(int *socks, size_t sockcount, int *maxfd) {
 
 		TRACE(("listening on '%s:%s'", svr_opts.addresses[i], svr_opts.ports[i]))
 
-		nsock = dropbear_listen(svr_opts.addresses[i], svr_opts.ports[i], &socks[sockpos], 
+		nsock = dropbear_listen(svr_opts.addresses[i], svr_opts.ports[i], &sock[sockpos], 
 				sockcount - sockpos,
 				&errstring, maxfd);
 
@@ -424,14 +424,6 @@ static size_t listensockets(int *socks, size_t sockcount, int *maxfd) {
 							svr_opts.ports[i], errstring);
 			m_free(errstring);
 			continue;
-		}
-
-		for (n = 0; n < (unsigned int)nsock; n++) {
-			int sock = socks[sockpos + n];
-			set_sock_priority(sock, DROPBEAR_PRIO_LOWDELAY);
-#ifdef DROPBEAR_SERVER_TCP_FAST_OPEN
-			set_listen_fast_open(sock);
-#endif
 		}
 
 		sockpos += nsock;

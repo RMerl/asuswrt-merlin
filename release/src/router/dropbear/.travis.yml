@@ -3,9 +3,7 @@ compiler:
   - gcc
 
 script: 
-  - autoconf && autoheader && ./configure $BUNDLEDLIBTOM CFLAGS="-O2 -Wall -Wno-pointer-sign $WEXTRAFLAGS" --prefix=$HOME/inst 
-  - test "$NOWRITEV" && sed -i s/HAVE_WRITEV/DONT_HAVE_WRITEV/ config.h || true
-  - make install
+  - autoconf && autoheader && ./configure $BUNDLEDLIBTOM CFLAGS="-O2 -Wall -Wno-pointer-sign" --prefix=$HOME/inst && make install
   - ~/inst/bin/dropbearkey -t rsa -f testrsa
   - ~/inst/bin/dropbearkey -t dss -f testdss
   - ~/inst/bin/dropbearkey -t ecdsa -f testec256 -s 256
@@ -17,7 +15,6 @@ before_install:
   - sudo apt-get install -qq libz-dev libtomcrypt-dev libtommath-dev
 
 env: 
-  - BUNDLEDLIBTOM=--disable-bundled-libtom WEXTRAFLAGS=-Werror
+  - BUNDLEDLIBTOM=--disable-bundled-libtom
   - BUNDLEDLIBTOM=--enable-bundled-libtom
   - MULTI=1
-  - NOWRITEV=1

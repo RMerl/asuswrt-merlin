@@ -39,8 +39,8 @@
  * that ai_family is AF_INET. Don't use it for another purpose.
  */
 
-#ifndef DROPBEAR_FAKE_RFC2553_H
-#define DROPBEAR_FAKE_RFC2553_H
+#ifndef _FAKE_RFC2553_H
+#define _FAKE_RFC2553_H
 
 #include "includes.h"
 #include <sys/types.h>

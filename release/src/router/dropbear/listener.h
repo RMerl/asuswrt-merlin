@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef DROPBEAR_LISTENER_H
-#define DROPBEAR_LISTENER_H
+#ifndef _LISTENER_H
+#define _LISTENER_H
 
 #define MAX_LISTENERS 20
 #define LISTENER_EXTEND_SIZE 1
@@ -60,6 +60,4 @@ struct Listener * get_listener(int type, void* typedata,
 
 void remove_listener(struct Listener* listener);
 
-void remove_all_listeners(void);
-
-#endif /* DROPBEAR_LISTENER_H */
+#endif /* _LISTENER_H */
