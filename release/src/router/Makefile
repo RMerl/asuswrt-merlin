@@ -335,6 +335,7 @@ obj-y += httpd json-c
 obj-y += www
 obj-y += bridge
 obj-y += dnsmasq
+obj-$(RTCONFIG_DNSSEC) += nettle
 obj-y += etc
 # obj-y += vlan # use Busybox vconfig
 #obj-y += utils
