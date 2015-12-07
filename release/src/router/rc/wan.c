@@ -743,7 +743,10 @@ start_igmpproxy(char *wan_ifname)
 		*altnet ? altnet : "0.0.0.0/0",
 		nvram_get("lan_ifname") ? : "br0");
 
+	append_custom_config("igmpproxy.conf", fp);
 	fclose(fp);
+	use_custom_config("igmpproxy", igmpproxy_conf);
+	run_postconf("igmpproxy", igmpproxy_conf);
 
 	eval("/usr/sbin/igmpproxy", igmpproxy_conf);
 }
