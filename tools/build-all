@@ -6,10 +6,6 @@ build_fw()
 	FWPATH=$1
 	echo "*** $(date +%R) - Starting building $FWMODEL..."
 	cd ~/$FWPATH
-	make cleankernel clean &>/dev/null
-	rm .config
-	rm image/*.trx
-
 	make $FWMODEL &>/dev/null
 
 	if [ $? -eq 0 ]; then
@@ -26,30 +22,67 @@ build_fw()
 	fi
 }
 
+clean_tree()
+{
+	FWPATH=$1
+	SDKPATH=$2
+	FWMODEL=$3
+	echo "*** $(date +%R) - Cleaning up $FWMODEL..."
+	cd ~/$FWPATH/$SDKPATH
+	make cleankernel clean &>/dev/null 2>&1
+
+#	if [ "$FWPATH" != "asuswrt" ]; then
+		echo "*** $(date +%R) - Updating $FWMODEL tree..."
+		rsync -a --del ~/asuswrt/ ~/$FWPATH
+#	fi
+
+	make cleankernel clean &>/dev/null 2>&1
+	rm .config image/*.trx &>/dev/null
+
+	echo -e "*** $(date +%R) - $FWMODEL code ready.\n"
+}
+
 # Initial cleanup
 
+echo "--- $(date +%R) - Global cleanup..."
 rm ~/images/*
 cp ~/asuswrt/README-merlin.txt ~/images/
 cp ~/asuswrt/Changelog.txt ~/images/
 
 
-# Launch all builds in parallel, then wait for them to complete
+# Update all model trees
 
-build_fw asuswrt/release/src-rt-6.x rt-n66u &
+echo "--- $(date +%R) - Preparing trees"
+clean_tree asuswrt.n66 release/src-rt-6.x rt-n66u
+clean_tree asuswrt.ac56 release/src-rt-6.x.4708 rt-ac56u
+clean_tree asuswrt.ac68 release/src-rt-6.x.4708 rt-ac68u
+clean_tree asuswrt.ac66 release/src-rt-6.x rt-ac66u
+clean_tree asuswrt.ac87 release/src-rt-6.x.4708 rt-ac87u
+clean_tree asuswrt.ac3200 release/src-rt-7.x.main/src rt-ac3200
+clean_tree asuswrt.ac3100 release/src-rt-7.14.114.x/src rt-ac3100
+clean_tree asuswrt.ac88 release/src-rt-7.14.114.x/src rt-ac88u
+echo -e "--- $(date +%R) - All trees ready!\n"
+
+# Launch parallel builds
+
+echo "--- $(date +%R) - Launching all builds"
+build_fw asuswrt.n66/release/src-rt-6.x rt-n66u &
 sleep 20
 build_fw asuswrt.ac56/release/src-rt-6.x.4708 rt-ac56u &
 sleep 20
 build_fw asuswrt.ac68/release/src-rt-6.x.4708 rt-ac68u &
 sleep 20
-build_fw asuswrt.ac/release/src-rt-6.x rt-ac66u &
+build_fw asuswrt.ac66/release/src-rt-6.x rt-ac66u &
 sleep 20
 build_fw asuswrt.ac87/release/src-rt-6.x.4708 rt-ac87u &
 sleep 20
 build_fw asuswrt.ac3200/release/src-rt-7.x.main/src rt-ac3200 &
 sleep 20
-#build_fw asuswrt.n16/release/src-rt rt-n16 &
-#sleep 10
-echo "--- $(date +%R) - Builds launched, please wait..."
+build_fw asuswrt.ac3100/release/src-rt-7.14.114.x/src rt-ac3100 &
+sleep 20
+build_fw asuswrt.ac88/release/src-rt-7.14.114.x/src rt-ac88u &
+sleep 10
+echo "--- $(date +%R) - All builds launched, please wait..."
 
 wait
 
