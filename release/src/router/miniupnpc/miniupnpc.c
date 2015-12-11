@@ -1213,7 +1213,7 @@ UPNP_GetValidIGD(struct UPNPDev * devlist,
 			/* parserootdesc(desc[i].xml, desc[i].size, data); */
 
 			FILE *xml_fd;
-			xml_fd = fopen("/tmp/upnpc_xml.log", "a");
+			xml_fd = fopen("/tmp/upnpc_xml.log", "w");
 			fprintf(xml_fd, "============= XML ==============\n");
 			fprintf(xml_fd, "%s\n", desc[i].xml);
 			parsedescxml(desc[i].xml, &IGDInfo.friendlyName, &IGDInfo.iconUrl);
