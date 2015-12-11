@@ -1298,12 +1298,12 @@ function oui_query(mac){
 	var tab = new Array();
 	tab = mac.split(mac.substr(2,1));
 	$.ajax({
-		url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
+		url: 'https://services11.ieee.org/RST/standards-ra-web/rest/assignments/download/?registry=MA-L&format=html&text='+ tab[0] + tab[1] + tab[2],
 		type: 'GET',
 		success: function(response) {
 			if(document.getElementById("edit_client_block").style.display == "none") return true;
 			if(response.responseText.search("Sorry!") == -1) {
-				var retData = response.responseText.split("pre")[1].split("(hex)")[1].split(tab[0] + tab[1] + tab[2])[0].split("&lt;/");
+				var retData = response.responseText.split("pre")[1].split("(hex)")[1].split(tab[0] + tab[1] + tab[2])[0].split("\n");
 				document.getElementById('manufacturer_field').value = retData[0].trim();
 				document.getElementById('manufacturer_field').title = "";
 				if(retData[0].trim().length > 28) {

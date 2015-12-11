@@ -723,11 +723,11 @@ function oui_query_set_cookie(mac) {
 	var tab = new Array();
 	tab = mac.split(mac.substr(2,1));
 	$.ajax({
-	    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
+	    url: 'https://services11.ieee.org/RST/standards-ra-web/rest/assignments/download/?registry=MA-L&format=html&text='+ tab[0] + tab[1] + tab[2],
 		type: 'GET',
 	    success: function(response) {
 	    	if(response.responseText.search("Sorry!") == -1) {
-				var retData = response.responseText.split("pre")[1].split("(hex)")[1].split(tab[0] + tab[1] + tab[2])[0].split("&lt;/");
+				var retData = response.responseText.split("pre")[1].split("(hex)")[1].split(tab[0] + tab[1] + tab[2])[0].split("\n");
 				if(ouiClientList == null) {
 					ouiClientList = "";
 				}
@@ -1635,7 +1635,7 @@ function oui_query_card(mac) {
 	var tab = new Array();
 	tab = mac.split(mac.substr(2,1));
 	$.ajax({
-		url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
+		url: 'https://services11.ieee.org/RST/standards-ra-web/rest/assignments/download/?registry=MA-L&format=html&text='+ tab[0] + tab[1] + tab[2],
 		type: 'GET',
 		success: function(response) {
 			if(document.getElementById("edit_client_block") == null) return true;
@@ -1644,7 +1644,8 @@ function oui_query_card(mac) {
 			}
 			else {
 				if(response.responseText.search("Sorry!") == -1) {
-					var retData = response.responseText.split("pre")[1].split("(hex)")[1].split(tab[0] + tab[1] + tab[2])[0].split("&lt;/");
+					var retData = response.responseText.split("pre")[1].split("(hex)")[1].split(tab[0] + tab[1] + tab[2])[0].split("\n");
+
 					document.getElementById("client_manufacturer_field").value = retData[0].trim();
 					document.getElementById("client_manufacturer_field").title = "";
 					if(retData[0].trim().length > 28) {
@@ -2756,7 +2757,7 @@ function oui_query(mac){
 	var tab = new Array();
 	tab = mac.split(mac.substr(2,1));
 	$.ajax({
-	    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
+	    url: 'https://services11.ieee.org/RST/standards-ra-web/rest/assignments/download/?registry=MA-L&format=html&text='+ tab[0] + tab[1] + tab[2],
 		type: 'GET',
 	    success: function(response) {
 			if(overlib.isOut) return nd();
@@ -2765,7 +2766,8 @@ function oui_query(mac){
 			else
 				var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
 			if(response.responseText.search("Sorry!") == -1) {
-				var retData = response.responseText.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("&lt;/");
+				var retData = response.responseText.split("pre")[1].split("(hex)")[1].split(tab[0] + tab[1] + tab[2])[0].split("\n");
+
 				overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
 				overlibStrTmp += retData[0];
 			}
