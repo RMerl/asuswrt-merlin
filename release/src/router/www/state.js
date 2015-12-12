@@ -521,7 +521,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 	
 	banner_code +='<form method="post" name="canceldiagForm" action="apply.cgi" target="hidden_frame">\n';
 	banner_code +='<input type="hidden" name="action_mode" value="apply">\n';
-	banner_code +='<input type="hidden" name="action_script" value="stop_dsl_diag">\n';
+	banner_code +='<input type="hidden" name="rc_service" value="stop_dsl_diag">\n';
 	banner_code +='<input type="hidden" name="action_wait" value="">\n';	
 	banner_code +='</form>\n';
 	
@@ -734,7 +734,7 @@ tabtitle[8] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "
 tabtitle[9] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "<#Connections#>");
 tabtitle[10] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>", "SMTP Client", "<#smart_connect_rule#>");
 if(bwdpi_support){
-	tabtitle[11] = new Array("", "<#Bandwidth_monitor#>", "<#menu5_3_2#>", "<#Adaptive_History#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>");
+	tabtitle[11] = new Array("", "<#Bandwidth_monitor#>", "<#menu5_3_2#>", "<#Adaptive_History#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "Spectrum");
 	tabtitle[12] = new Array("", "<#AiProtection_Home#>", "<#Parental_Control#>", "Ad Blocking", "Key Guard", "DNS Filtering");
 	tabtitle[13] = new Array("", "Time Limits", "<#AiProtection_filter#>");
 	tabtitle[14] = new Array("", "Traffic Monitor", "Statistic");
@@ -3430,7 +3430,7 @@ function refreshStatus(xhr){
 			if(find_storage){
 				document.getElementById("usb_status").onclick = function(){openHint(24,2);}				
 			}
-			else if(find_modem){
+			else if(modem_support && find_modem){
 				document.getElementById("usb_status").onclick = function(){openHint(24,7);}	
 			}			
 			else{

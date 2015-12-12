@@ -1905,6 +1905,9 @@ void del_upload_icon(char *value) {
 #ifdef RTCONFIG_QTN
 #define NVRAM_MODIFIED_WL_QTN_BIT	4
 #endif
+#define NVRAM_MODIFIED_DUALWAN_ADDUSB		8          /* ex: {wan, none}  =>  {wan, usb} */
+#define NVRAM_MODIFIED_DUALWAN_EXCHANGE		16	       /* ex: {wan, usb}   =>  {usb, wan}   {wan, lan} => {lan, wan}*/
+#define NVRAM_MODIFIED_DUALWAN_REBOOT		32		   /* Other cases */
 
 int validate_instance(webs_t wp, char *name, json_object *root)
 {
@@ -2013,7 +2016,6 @@ int validate_instance(webs_t wp, char *name, json_object *root)
 		}
 	}
 #endif
-
 	return found;
 }
 
@@ -2027,6 +2029,9 @@ static int validate_apply(webs_t wp, json_object *root) {
 	int nvram_modified_wl = 0;
 	int acc_modified = 0;
 	int ret;
+#ifdef RTCONFIG_DUALWAN
+	int wans_dualwan_usb = 0;
+#endif
 #ifdef RTCONFIG_USB
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 	int got_modem_data = 0;
@@ -2238,8 +2243,42 @@ static int validate_apply(webs_t wp, json_object *root) {
 
 #ifdef RTCONFIG_DUALWAN//Cherry Cho added for exchanging settings of dualwan in 2014/10/20.
 				if(!strcmp(name, "wans_dualwan")){
+					char *orig_wans_dualwan, *wans_dualwan;
+					char *orig_primary, *orig_second, *new_primary, *new_second;
+					char *tmp;
+
 					save_index_to_interface();
 					save_interface_to_index(value);
+
+					orig_wans_dualwan = nvram_safe_get("wans_dualwan");
+					tmp = strdup(orig_wans_dualwan);
+					vstrsep(tmp, " ", &orig_primary, &orig_second);
+
+					wans_dualwan = value;
+					tmp = strdup(value);
+					vstrsep(tmp, " ", &new_primary, &new_second);
+					//_dprintf("validate_apply: orig_primary = %s orig_second = %s new_primary = %s new_second = %s\n", orig_primary, orig_second, new_primary, new_second);
+
+					if( strstr(orig_wans_dualwan, "none") && (strstr(orig_wans_dualwan, "usb") == NULL) && 
+					    strstr(wans_dualwan, "usb") && (strstr(wans_dualwan, "none") == NULL) &&
+					   (strstr(wans_dualwan, orig_primary) || strstr(wans_dualwan, orig_second)) ){ //Add USB
+						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_ADDUSB\n");
+						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_ADDUSB;
+					}
+					else if( strstr(orig_wans_dualwan, "usb") && (strstr(orig_wans_dualwan, "none") == NULL) && 
+					    strstr(wans_dualwan, "none") && (strstr(wans_dualwan, "usb") == NULL) &&
+					   (strstr(wans_dualwan, orig_primary) || strstr(wans_dualwan, orig_second)) ){ //Remove USB
+						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_ADDUSB Remove\n");
+						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_ADDUSB;
+					}
+					else if(!strcmp(orig_primary, new_second) && !strcmp(orig_second, new_primary)){ // Exchange Value
+						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_EXCHANGE\n");
+						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_EXCHANGE;
+					}
+					else{
+						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_REBOOT\n");
+						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_REBOOT;
+					}
 				}
 #endif
 
@@ -2250,7 +2289,8 @@ static int validate_apply(webs_t wp, json_object *root) {
 #endif				
 
 				nvram_set(name, value);
-				nvram_modified = 1;
+				if(strcmp(name, "wans_dualwan")) //not wans_dualwan
+					nvram_modified = 1;
 				_dprintf("set %s=%s\n", name, value);
 
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
@@ -2312,6 +2352,11 @@ static int validate_apply(webs_t wp, json_object *root) {
 		update_dsl_iptv_variables();
 		nvram_modified = 1;
 	}
+#endif
+
+#ifdef RTCONFIG_DUALWAN
+	nvram_modified |= wans_dualwan_usb;
+	//_dprintf("validate_apply: nvram_modified = %X\n", nvram_modified);
 #endif
 
 	if(nvram_modified)
@@ -2938,6 +2983,9 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 	char *wan_unit = websGetVar(wp, "wan_unit", "0");
 	char notify_cmd[128];
 	int do_apply;
+#ifdef RTCONFIG_DUALWAN
+	char new_action_script[128], new_action_wait[16];
+#endif	
 
 	// assign control variables
 	action_mode = websGetVar(wp, "action_mode", "");
@@ -2977,6 +3025,29 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 #endif
 			}
 #endif
+
+#ifdef RTCONFIG_DUALWAN
+			memset(new_action_script, 0, sizeof(new_action_script));
+			memset(new_action_wait, 0, sizeof(new_action_wait));
+			//_dprintf("has_modify = 0X%X\n\n", has_modify);
+			if( (has_modify & 1) == 0){
+				if( ((has_modify & NVRAM_MODIFIED_DUALWAN_ADDUSB) == NVRAM_MODIFIED_DUALWAN_ADDUSB) || 
+					((has_modify & NVRAM_MODIFIED_DUALWAN_EXCHANGE) == NVRAM_MODIFIED_DUALWAN_EXCHANGE)){
+					//_dprintf("ej_update_variables: start_multipath\n");
+					strcpy(new_action_script, "start_multipath");
+					action_script = (char *)new_action_script;
+					strcpy(new_action_wait, "10");
+					action_wait = (char *)new_action_wait;
+				}
+				else if( (has_modify & NVRAM_MODIFIED_DUALWAN_REBOOT) == NVRAM_MODIFIED_DUALWAN_REBOOT){
+					strcpy(new_action_script, "reboot");
+					action_script = (char *)new_action_script;
+					strcpy(new_action_wait, nvram_safe_get("reboot_time"));
+					action_wait = (char *)new_action_wait;					
+				}
+			}
+#endif			
+
 			if (strlen(action_script) > 0) {
 				char *p1, *p2;
 
@@ -4112,17 +4183,15 @@ static int ej_get_parameter(int eid, webs_t wp, int argc, char_t **argv){
 
 	last_was_escaped = FALSE;
 
-	//char *value = websGetVar(wp, argv[0], "");
+	char *value = websGetVar(wp, argv[0], "");
+	if(value != NULL){
+		if(strstr(value, "javascript")){
+			return ret;		
+		}	
+	}
 	//websWrite(wp, "%s", value);
 	for (c = websGetVar(wp, argv[0], ""); *c; c++){
-		if (isprint((int)*c) &&
-			*c != '"' && *c != '&' && *c != '<' && *c != '>' && *c != '\\' &&  *c != '(' && *c != ')' &&
-			((!last_was_escaped) || !isdigit(*c)))
-		{
-			ret += websWrite(wp, "%c", *c);
-			last_was_escaped = FALSE;
-		}
-		else if ((*c & 0x80) != 0)
+		if (isalnum(*c) != 0 || *c == '-' || *c == '_' || *c == '.' || *c == '/' || *c == ':')
 		{
 			ret += websWrite(wp, "%c", *c);
 			last_was_escaped = FALSE;
@@ -5255,10 +5324,10 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 
 	p_client_info_tab = (P_CLIENT_DETAIL_INFO_TABLE)shared_client_info;
 	for(i=0; i<p_client_info_tab->ip_mac_num; i++) {
-		if(strcmp(p_client_info_tab->user_define[i], ""))
-			strlcpy(dev_name, p_client_info_tab->user_define[i], sizeof (dev_name));
+		if(strcmp((const char *)p_client_info_tab->user_define[i], ""))
+			strlcpy(dev_name, (const char *)p_client_info_tab->user_define[i], sizeof (dev_name));
 		else
-			strlcpy(dev_name, p_client_info_tab->device_name[i], sizeof (dev_name));
+			strlcpy(dev_name, (const char *)p_client_info_tab->device_name[i], sizeof (dev_name));
 
 		memset(output_buf, 0, 128);
 		memset(devname, 0, LINE_SIZE);
@@ -9060,7 +9129,11 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			login_try++;
 			last_login_timestamp = login_timestamp_tmp;
 			websWrite(wp,"<HTML><HEAD>\n" );
-			websWrite(wp,"<script>parent.location.href='/Main_Login.asp?error_status=%d';</script>\n",ACCOUNTFAIL);
+			if(login_try >= MAX_login){
+				lock_flag = 1;
+				websWrite(wp,"<script>parent.location.href='/Main_Login.asp?error_status=%d&lock_time=%ld';</script>\n",LOGINLOCK, dt);
+			}else
+				websWrite(wp,"<script>parent.location.href='/Main_Login.asp?error_status=%d';</script>\n",ACCOUNTFAIL);
 			websWrite(wp,"</HEAD></HTML>\n" );	
 		}
 		return 0;
@@ -10893,7 +10966,7 @@ int ej_apps_fsck_log(int eid, webs_t wp, int argc, char **argv)
 {
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
-	char file_name[32], d_port[16], *d_dot;
+	char file_name[32], d_port[16]/*, *d_dot*/;
 	char *port_path = websGetVar(wp, "diskmon_usbport", "-1");
 	int ret, all_disk;
 
@@ -10908,8 +10981,8 @@ int ej_apps_fsck_log(int eid, webs_t wp, int argc, char **argv)
 		 * don't compare it with hub port number in disk_info->port.
 		 */
 		strlcpy(d_port, disk_info->port, sizeof(d_port));
-		if (!strchr(port_path, '.') && d_dot)
-			*d_dot = '\0';
+		/*if (!strchr(port_path, '.') && d_dot)
+			*d_dot = '\0';*/
 		if (!all_disk && strcmp(d_port, port_path))
 			continue;
 
@@ -13324,10 +13397,10 @@ ej_get_clientlist(int eid, webs_t wp, int argc, char **argv){
 		memset(mac_buf, 0, 32);
 		memset(devname, 0, LINE_SIZE);
 
-		if(strcmp(p_client_info_tab->user_define[i], ""))
-			strcpy(dev_name, p_client_info_tab->user_define[i]);
+		if(strcmp((const char *)p_client_info_tab->user_define[i], ""))
+			strcpy(dev_name, (const char *)p_client_info_tab->user_define[i]);
 		else
-			strcpy(dev_name, p_client_info_tab->device_name[i]);
+			strcpy(dev_name, (const char *)p_client_info_tab->device_name[i]);
 
 	    if(p_client_info_tab->exist[i]==1) {
 		len = strlen(dev_name);

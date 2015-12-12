@@ -591,68 +591,73 @@ static int plc_write_to_flash(char *nvm_path, char *pib_path)
 }
 
 /*
+ * write default .nvm and .pib to flash
+ */
+int default_plc_write_to_flash(void)
+{
+	FILE *fp;
+	int len, i;
+	char cmd[64], buf[64];
+	char mac[18], dak[48], nmk[48];
+	unsigned char emac[ETHER_ADDR_LEN], enmk[PLC_KEY_LEN];
+
+	doSystem("cp %s %s", DEFAULT_NVM_PATH, BOOT_NVM_PATH);
+	doSystem("cp %s %s", DEFAULT_PIB_PATH, BOOT_PIB_PATH);
+
+	// modify .pib
+	// MAC
+	if (!__getPLC_para(emac, OFFSET_PLC_MAC)) {
+		_dprintf("READ PLC MAC: Out of scope\n");
+	}
+	else {
+		if (emac[0] != 0xff) {
+			if (ether_etoa(emac, mac))
+				doSystem("/usr/local/bin/modpib %s -M %s", BOOT_PIB_PATH, mac);
+
+			// DAK
+			if (__getPLC_PWD(emac, buf)) {
+				sprintf(cmd, "/usr/local/bin/hpavkey -D %s", buf);
+				fp = popen(cmd, "r");
+				if (fp) {
+					len = fread(buf, 1, sizeof(buf), fp);
+					pclose(fp);
+					if (len > 1) {
+						buf[len - 1] = '\0';
+
+						for (i = 0; i < PLC_KEY_LEN; i++) {
+							if (i == 0)
+								sprintf(dak, "%c%c", buf[0], buf[1]);
+							else
+								sprintf(dak, "%s:%c%c", dak, buf[i*2], buf[i*2+1]);
+						}
+						doSystem("/usr/local/bin/modpib %s -D %s", BOOT_PIB_PATH, dak);
+					}
+				}
+			}
+		}
+	}
+
+	// NMK
+	if (!__getPLC_para(enmk, OFFSET_PLC_NMK))
+		_dprintf("READ PLC NMK: Out of scope\n");
+	else {
+		if (enmk[0] != 0xff && enmk[1] != 0xff && enmk[2] != 0xff) {
+			if (key_etoa(enmk, nmk))
+				doSystem("/usr/local/bin/modpib %s -N %s", BOOT_PIB_PATH, nmk);
+		}
+	}
+
+	return plc_write_to_flash(BOOT_NVM_PATH, BOOT_PIB_PATH);
+}
+
+/*
  * write default .nvm and .pib to flash, if plc partition is empty.
  * reload .nvm and .pib to /tmp from flash for plchost utility
  */
 int load_plc_setting(void)
 {
-	if (plc_read_from_flash(BOOT_NVM_PATH, BOOT_PIB_PATH)) {
-		FILE *fp;
-		int len, i;
-		char cmd[64], buf[64];
-		char mac[18], dak[48], nmk[48];
-		unsigned char emac[ETHER_ADDR_LEN], enmk[PLC_KEY_LEN];
-
-		doSystem("cp %s %s", DEFAULT_NVM_PATH, BOOT_NVM_PATH);
-		doSystem("cp %s %s", DEFAULT_PIB_PATH, BOOT_PIB_PATH);
-
-		// modify .pib
-		// MAC
-		if (!__getPLC_para(emac, OFFSET_PLC_MAC)) {
-			_dprintf("READ PLC MAC: Out of scope\n");
-		}
-		else {
-			if (emac[0] != 0xff) {
-				if (ether_etoa(emac, mac))
-					doSystem("/usr/local/bin/modpib %s -M %s", BOOT_PIB_PATH, mac);
-
-				// DAK
-				if (__getPLC_PWD(emac, buf)) {
-					sprintf(cmd, "/usr/local/bin/hpavkey -D %s", buf);
-					fp = popen(cmd, "r");
-					if (fp) {
-						len = fread(buf, 1, sizeof(buf), fp);
-						pclose(fp);
-						if (len > 1) {
-							buf[len - 1] = '\0';
-
-							for (i = 0; i < PLC_KEY_LEN; i++) {
-								if (i == 0)
-									sprintf(dak, "%c%c", buf[0], buf[1]);
-								else
-									sprintf(dak, "%s:%c%c", dak, buf[i*2], buf[i*2+1]);
-							}
-							doSystem("/usr/local/bin/modpib %s -D %s", BOOT_PIB_PATH, dak);
-						}
-					}
-				}
-			}
-		}
-
-		// NMK
-		if (!__getPLC_para(enmk, OFFSET_PLC_NMK))
-			_dprintf("READ PLC NMK: Out of scope\n");
-		else {
-			if (enmk[0] != 0xff && enmk[1] != 0xff && enmk[2] != 0xff) {
-				if (key_etoa(enmk, nmk))
-					doSystem("/usr/local/bin/modpib %s -N %s", BOOT_PIB_PATH, nmk);
-			}
-		}
-
-		if (plc_write_to_flash(BOOT_NVM_PATH, BOOT_PIB_PATH))
-			return -1;
-	}
-
+	if (plc_read_from_flash(BOOT_NVM_PATH, BOOT_PIB_PATH))
+		return default_plc_write_to_flash();
 	return 0;
 }
 
@@ -671,7 +676,6 @@ void set_plc_flag(int flag)
 
 /*
  * write user .nvm or .pib to flash
- * case0: reset to default
  * case1: backup .nvm
  * case2: backup .pib
  * case3: backup .nvm and .pib
@@ -679,9 +683,6 @@ void set_plc_flag(int flag)
 void save_plc_setting(void)
 {
 	switch (atoi(nvram_safe_get("plc_flag"))) {
-	case 0:
-		plc_write_to_flash(DEFAULT_NVM_PATH, DEFAULT_PIB_PATH);
-		break;
 	case 1:
 		plc_write_to_flash(USER_NVM_PATH, BOOT_PIB_PATH);
 		break;

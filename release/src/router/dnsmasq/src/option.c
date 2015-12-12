@@ -445,7 +445,7 @@ static struct {
   { LOPT_PXE_SERV, ARG_DUP, "<service>", gettext_noop("Boot service for PXE menu."), NULL },
   { LOPT_TEST, 0, NULL, gettext_noop("Check configuration syntax."), NULL },
   { LOPT_ADD_MAC, OPT_ADD_MAC, NULL, gettext_noop("Add requestor's MAC address to forwarded DNS queries."), NULL },
-  { LOPT_ADD_SBNET, ARG_ONE, "<v4 pref>[,<v6 pref>]", gettext_noop("Add requestor's IP subnet to forwarded DNS queries."), NULL },
+  { LOPT_ADD_SBNET, ARG_ONE, "<v4 pref>[,<v6 pref>]", gettext_noop("Add specified IP subnet to forwarded DNS queries."), NULL },
   { LOPT_DNSSEC, OPT_DNSSEC_PROXY, NULL, gettext_noop("Proxy DNSSEC validation results from upstream nameservers."), NULL },
   { LOPT_INCR_ADDR, OPT_CONSEC_ADDR, NULL, gettext_noop("Attempt to allocate sequential IP addresses to DHCP clients."), NULL },
   { LOPT_CONNTRACK, OPT_CONNTRACK, NULL, gettext_noop("Copy connection-track mark from queries to upstream connections."), NULL },
@@ -721,6 +721,20 @@ static void do_usage(void)
 }
 
 #define ret_err(x) do { strcpy(errstr, (x)); return 0; } while (0)
+
+static char *parse_mysockaddr(char *arg, union mysockaddr *addr) 
+{
+  if (inet_pton(AF_INET, arg, &addr->in.sin_addr) > 0)
+    addr->sa.sa_family = AF_INET;
+#ifdef HAVE_IPV6
+  else if (inet_pton(AF_INET6, arg, &addr->in6.sin6_addr) > 0)
+    addr->sa.sa_family = AF_INET6;
+#endif
+  else
+    return _("bad address");
+   
+  return NULL;
+}
 
 char *parse_server(char *arg, union mysockaddr *addr, union mysockaddr *source_addr, char *interface, int *flags)
 {
@@ -1585,7 +1599,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	    li = match_suffix->next;
 	    free(match_suffix->suffix);
 	    free(match_suffix);
-	  }    
+	  }
 	break;
       }
 
@@ -1593,10 +1607,45 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
       set_option_bool(OPT_CLIENT_SUBNET);
       if (arg)
 	{
+          char *err, *end;
 	  comma = split(arg);
-	  if (!atoi_check(arg, &daemon->addr4_netmask) || 
-	      (comma && !atoi_check(comma, &daemon->addr6_netmask)))
-	     ret_err(gen_err);
+
+          struct mysubnet* new = opt_malloc(sizeof(struct mysubnet));
+          if ((end = split_chr(arg, '/')))
+	    {
+	      /* has subnet+len */
+	      err = parse_mysockaddr(arg, &new->addr);
+	      if (err)
+		ret_err(err);
+	      if (!atoi_check(end, &new->mask))
+		ret_err(gen_err);
+	      new->addr_used = 1;
+	    } 
+	  else if (!atoi_check(arg, &new->mask))
+	    ret_err(gen_err);
+	    
+          daemon->add_subnet4 = new;
+
+          new = opt_malloc(sizeof(struct mysubnet));
+          if (comma)
+            {
+              if ((end = split_chr(comma, '/')))
+                {
+                  /* has subnet+len */
+                  err = parse_mysockaddr(comma, &new->addr);
+                  if (err)
+                    ret_err(err);
+                  if (!atoi_check(end, &new->mask))
+                    ret_err(gen_err);
+                  new->addr_used = 1;
+                }
+              else
+                {
+                  if (!atoi_check(comma, &new->mask))
+                    ret_err(gen_err);
+                }
+            }
+          daemon->add_subnet6 = new;
 	}
       break;
 

@@ -1076,23 +1076,30 @@ void join_multicast(int dienow)
 	    
 	    if ((daemon->doing_dhcp6 || daemon->relay6) &&
 		setsockopt(daemon->dhcp6fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) == -1)
-	      err = 1;
+	      err = errno;
 	    
 	    inet_pton(AF_INET6, ALL_SERVERS, &mreq.ipv6mr_multiaddr);
 	    
 	    if (daemon->doing_dhcp6 && 
 		setsockopt(daemon->dhcp6fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) == -1)
-	      err = 1;
+	      err = errno;
 	    
 	    inet_pton(AF_INET6, ALL_ROUTERS, &mreq.ipv6mr_multiaddr);
 	    
 	    if (daemon->doing_ra &&
 		setsockopt(daemon->icmp6fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) == -1)
-	      err = 1;
+	      err = errno;
 	    
 	    if (err)
 	      {
 		char *s = _("interface %s failed to join DHCPv6 multicast group: %s");
+		errno = err;
+
+#ifdef HAVE_LINUX_NETWORK
+		if (errno == ENOMEM)
+		  my_syslog(LOG_ERR, _("try increasing /proc/sys/net/core/optmem_max"));
+#endif
+
 		if (dienow)
 		  die(s, iface->name, EC_BADNET);
 		else

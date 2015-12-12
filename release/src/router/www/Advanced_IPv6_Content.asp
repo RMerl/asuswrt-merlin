@@ -22,7 +22,12 @@
 
 <% wan_get_parameter(); %>
 
-var wan_proto_orig = '<% nvram_get("wan_proto"); %>';
+var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
+var wans_flag = (wans_dualwan_orig.search("none") == -1) ? true:false;
+if(wans_flag)
+	var wan_proto_orig = '<% nvram_get("wan0_proto"); %>';
+else
+	var wan_proto_orig = '<% nvram_get("wan_proto"); %>';	
 var ipv6_proto_orig = '<% nvram_get("ipv6_service"); %>';
 var ipv6_tun6rd_dhcp = '<% nvram_get("ipv6_6rd_dhcp"); %>';
 var wan0_ipaddr = '<% nvram_get("wan0_ipaddr"); %>'; 

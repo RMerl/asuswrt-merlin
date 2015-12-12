@@ -44,6 +44,9 @@
 #include <shared.h>
 #include <wlscan.h>
 #include <sysinfo.h>
+#ifdef RTCONFIG_BCM7
+#include <dirent.h>
+#endif
 
 #ifdef RTCONFIG_QTN
 #include "web-qtn.h"
@@ -1669,7 +1672,7 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret = 0;
 	int channel_24 = 0, channel_50 = 0;
-#ifdef RTAC3200
+#if defined(RTAC3200) || defined(RTAC5300)
 	int channel_50_2 = 0;
 #endif
 	channel_24 = wl_control_channel(0);
@@ -1677,7 +1680,7 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 	if (!(channel_50 = wl_control_channel(1)))
 		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
 	else
-#ifndef RTAC3200
+#if !defined(RTAC3200) && !defined(RTAC5300)
 		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, channel_50);
 #else
 	{
@@ -2004,8 +2007,7 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		(wl_control_channel(unit) <= CH_MAX_2G_CHANNEL) :
 		nvram_match(strcat_r(prefix, "nband", tmp), "2")) {
 
-		if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta") &&
-		    !nvram_match(strcat_r(prefix, "mode", tmp), "psr"))
+		if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta"))
 			goto ERROR;
 
 		struct ether_addr bssid;
@@ -2017,10 +2019,88 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 		sta_info_t *sta = wl_sta_info(name, &bssid);
 		if (sta && (sta->flags & WL_STA_SCBSTATS)) {
+			if (dtoh32(sta->rx_rate) == -1)
+				goto ERROR;
+
 			if ((sta->rx_rate % 1000) == 0)
-				sprintf(rate_buf, "%6d Mbps ", sta->rx_rate / 1000);
+				sprintf(rate_buf, "%6d Mbps", sta->rx_rate / 1000);
 			else
 				sprintf(rate_buf, "%6.1f Mbps", (double) sta->rx_rate / 1000);
+		}
+	} else {
+		if (!nvram_match(strcat_r(prefix, "mode", tmp), "psr"))
+			goto ERROR;
+
+//		char eabuf[32];
+		int s;
+		struct ifreq ifr;
+		unsigned char wlta[6];
+
+		if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+			goto ERROR;
+
+		strcpy(ifr.ifr_name, "br0");
+		if (ioctl(s, SIOCGIFHWADDR, &ifr))
+			goto ERROR;
+
+		memcpy(wlta, ifr.ifr_hwaddr.sa_data, ETHER_ADDR_LEN);
+		if (nvram_match(strcat_r(prefix, "mode", tmp), "psr"))
+			wlta[0] |= 0x02;
+
+//		dbg("%s TA: %s\n", name, ether_etoa((const unsigned char *)wlta, eabuf));
+
+		DIR *dir_to_open = NULL;
+		char dir_path[128];
+		int n, j;
+		struct dirent **namelist;
+
+		sprintf(dir_path, "/sys/class/net");
+		dir_to_open = opendir(dir_path);
+		if (dir_to_open)
+		{
+			closedir(dir_to_open);
+			n = scandir(dir_path, &namelist, 0, alphasort);
+
+			snprintf(prefix, sizeof(prefix), "wl%d.", unit);
+
+			for (j= 0; j< n; j++)
+			{
+				if (namelist[j]->d_name[0] == '.')
+				{
+					free(namelist[j]);
+					continue;
+				}
+				else if (strncmp(prefix, namelist[j]->d_name, 4))
+				{
+					free(namelist[j]);
+					continue;
+				}
+
+				strcpy(tmp, namelist[j]->d_name);
+				free(namelist[j]);
+
+				strcpy(ifr.ifr_name, tmp);
+				if (ioctl(s, SIOCGIFHWADDR, &ifr))
+					goto ERROR;
+
+//				dbg("%s macaddr: %s\n", tmp, ether_etoa((const unsigned char *)ifr.ifr_hwaddr.sa_data, eabuf));
+
+				if (!memcmp(wlta, ifr.ifr_hwaddr.sa_data, 6)) {
+					if (wl_ioctl(tmp, WLC_GET_RATE, &rate, sizeof(int)))
+					{
+						dbg("can not get rate info of %s\n", tmp);
+						goto ERROR;
+					}
+					else
+					{
+						rate = dtoh32(rate);
+						if ((rate == -1) || (rate == 0))
+							sprintf(rate_buf, "auto");
+						else
+							sprintf(rate_buf, "%d%s Mbps", (rate / 2), (rate & 1) ? ".5" : "");
+					}
+				}
+			}
 		}
 	}
 #endif

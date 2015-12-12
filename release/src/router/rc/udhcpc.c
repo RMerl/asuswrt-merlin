@@ -885,9 +885,9 @@ _dprintf("%s: IFUP.\n", __FUNCTION__);
 	else
 #endif
 	if(nvram_match("lan_proto", "static"))
-		ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
 	else
-		ifconfig(lan_ifname, IFUP, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
 
 	expires_lan(lan_ifname, 0);
 
@@ -969,7 +969,7 @@ _dprintf("%s: IFUP.\n", __FUNCTION__);
 	}
 #endif
 
-	ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"),
+	ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_safe_get("lan_ipaddr"),
 		nvram_safe_get("lan_netmask"));
 
 	lan_up(lan_ifname);

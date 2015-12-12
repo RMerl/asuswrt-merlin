@@ -16,7 +16,7 @@
 <script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
-if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
+if(parent.location.pathname !== "/index.asp" && parent.location.pathname !== "/") top.location.href = "../index.asp";
 
 <% wl_get_parameter(); %>
 var flag = '<% get_parameter("flag"); %>';

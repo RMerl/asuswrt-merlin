@@ -12,6 +12,7 @@
 
 #include "rc.h"
 #include "shared.h"
+#include "version.h"
 #include "interface.h"
 
 #include <termios.h>
@@ -1120,7 +1121,7 @@ void generate_switch_para(void)
 			/* WAN L1 L2 L3 L4 (L5 L6 L7 L8) CPU */	/*vision: WAN L1 L2 L3 L4 */
 			int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 4, 5, 7 };
 #else	// RTCONFIG_EXT_RTL8365MB
-			/* WAN L1 L2 L3 L4 CPU */	/*vision: WAN L1 L2 L3 L4 */
+			/* WAN L1 L2 L3 L4 CPU */		/*vision: WAN L1 L2 L3 L4 */
 			int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 4, 7 };
 #endif
 			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
@@ -1652,14 +1653,14 @@ void init_switch()
 char *get_lan_hwaddr(void)
 {
 #ifdef RTCONFIG_BCMARM
-        switch(get_model()) {
-                case MODEL_RTAC87U:
-                case MODEL_RTAC5300:
-                case MODEL_RTAC88U:
+	switch(get_model()) {
+		case MODEL_RTAC87U:
+		case MODEL_RTAC5300:
+		case MODEL_RTAC88U:
 			return cfe_nvram_safe_get("et1macaddr");
-                default:
+		default:
 			return cfe_nvram_safe_get("et0macaddr");
-        }
+	}
 #endif
 	return nvram_safe_get("et0macaddr");
 }
@@ -1761,6 +1762,11 @@ reset_mssid_hwaddr(int unit)
 			case MODEL_RTAC5300:
 			case MODEL_RTAC88U:
 			case MODEL_RTAC3100:
+#ifdef RTAC3200
+				if (unit < 2)
+					snprintf(macaddr_str, sizeof(macaddr_str), "%d:macaddr", 1 - unit);
+				else
+#endif
 				snprintf(macaddr_str, sizeof(macaddr_str), "%d:macaddr", unit);
 				break;
 			case MODEL_RTAC1200G:
@@ -1779,7 +1785,7 @@ reset_mssid_hwaddr(int unit)
 				break;
 		}
 
-		macaddr_strp = nvram_get(macaddr_str);
+		macaddr_strp = cfe_nvram_get(macaddr_str);
 		if (macaddr_strp)
 		{
 			if (!mssid_mac_validate(macaddr_strp))
@@ -1812,6 +1818,54 @@ reset_mssid_hwaddr(int unit)
 		} else return;
 	}
 }
+
+#if defined(RTCONFIG_BCMARM) && defined(RTCONFIG_PROXYSTA)
+void
+reset_psr_hwaddr()
+{
+	char macaddr_name[10], macaddr_str[18], macbuf[13];
+	char *macaddr_p;
+	unsigned char mac_binary[6];
+	unsigned long long macvalue;
+	unsigned char *macp;
+	int model = get_model();
+	int unit = 0;
+
+	if (!(is_psr(nvram_get_int("wlc_band")) && !nvram_get_int("wlc_band")))
+		return;
+
+	memset(mac_binary, 0x0, 6);
+	memset(macbuf, 0x0, 13);
+
+	switch(model) {
+		case MODEL_RTAC3200:
+			unit = 1;
+			break;
+	}
+
+	snprintf(macaddr_name, sizeof(macaddr_name), "%d:macaddr", unit);
+
+	macaddr_p = cfe_nvram_get(macaddr_name);
+	if (macaddr_p)
+	{
+		ether_atoe(macaddr_p, mac_binary);
+		sprintf(macbuf, "%02X%02X%02X%02X%02X%02X",
+				mac_binary[0],
+				mac_binary[1],
+				mac_binary[2],
+				mac_binary[3],
+				mac_binary[4],
+				mac_binary[5]);
+		macvalue = strtoll(macbuf, (char **) NULL, 16);
+		macvalue++;
+
+		macp = (unsigned char*) &macvalue;
+		memset(macaddr_str, 0, sizeof(macaddr_str));
+		sprintf(macaddr_str, "%02X:%02X:%02X:%02X:%02X:%02X", *(macp+5), *(macp+4), *(macp+3), *(macp+2), *(macp+1), *(macp+0));
+		nvram_set(macaddr_name, macaddr_str);
+	}
+}
+#endif
 
 #if defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114)
 static int
@@ -2287,7 +2341,8 @@ void init_syspara(void)
 
 #ifdef RTCONFIG_ODMPID
 	if (nvram_match("odmpid", "ASUS") ||
-		!is_valid_hostname(nvram_safe_get("odmpid")))
+		!is_valid_hostname(nvram_safe_get("odmpid")) ||
+		!strcmp(RT_BUILD_NAME, nvram_safe_get("odmpid")))
 		nvram_set("odmpid", "");
 #endif
 
@@ -2726,7 +2781,7 @@ void generate_wl_para(int unit, int subunit)
 	// convert wlc_xxx to wlX_ according to wlc_band == unit
 	if (is_ure(unit)) {
 		if (subunit==-1) {
-			nvram_set("ure_disable", "0");
+			nvram_set("ure_disable", is_routing_enabled() ? "0" : "1");
 
 			nvram_set(strcat_r(prefix, "ssid", tmp), nvram_safe_get("wlc_ssid"));
 			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), nvram_safe_get("wlc_auth_mode"));
@@ -2749,7 +2804,6 @@ void generate_wl_para(int unit, int subunit)
 		}
 		else if (subunit==1) {
 			nvram_set(strcat_r(prefix, "bss_enabled", tmp), "1");
-			//nvram_set(strcat_r(prefix, "hwaddr", tmp), nvram_safe_get("et0macaddr"));
 /*
 			nvram_set(strcat_r(prefix, "ssid", tmp), nvram_safe_get("wlc_ure_ssid"));
 			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), nvram_safe_get("wlc_auth_mode"));
@@ -3529,7 +3583,7 @@ set_wan_tag(char *interface) {
 			eval("et", "robowr", "0x34", "0x6", "0x300e");
 		}
 		else {	/* manual */
-						      /* WAN L1 L2 L3 L4 CPU */
+							/* WAN L1 L2 L3 L4 CPU */
 			const int ports[SWPORT_COUNT] = { 4, 3, 2, 1, 0, 5 };
 
 			if (switch_stb != SWCFG_STB4 && switch_stb != SWCFG_STB34)
@@ -3663,7 +3717,7 @@ set_wan_tag(char *interface) {
 			eval("et", "robowr", "0x34", "0x6", "0x300e");
 		}
 		else {	/* manual */
-						      /* WAN L1 L2 L3 L4 CPU */
+							/* WAN L1 L2 L3 L4 CPU */
 			const int ports[SWPORT_COUNT] = { 4, 0, 1, 2, 3, 5 };
 
 			if (switch_stb != SWCFG_STB4 && switch_stb != SWCFG_STB34)
@@ -3797,7 +3851,7 @@ set_wan_tag(char *interface) {
 			eval("et", "robowr", "0x34", "0x6", "0x300e");
 		}
 		else {	/* manual */
-						      /* WAN L1 L2 L3 L4 CPU */
+							/* WAN L1 L2 L3 L4 CPU */
 			const int ports[SWPORT_COUNT] = { 0, 4, 3, 2, 1, 5 };
 
 			if (switch_stb != SWCFG_STB4 && switch_stb != SWCFG_STB34)
@@ -4215,6 +4269,7 @@ set_wan_tag(char *interface) {
 #endif
 			}
 			eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+			eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 			eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 		}
 		/* Set Wan port PRIO */
@@ -4230,15 +4285,18 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0009");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 			else if (nvram_match("switch_wantag", "maxis_fiber")) {
 				/* Just forward packets between WAN & L3, without untag */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0009");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", "0x0335"); /* vlan id=821 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0009");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", "0x0336"); /* vlan id=822 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 			else {  /* Nomo case. */
@@ -4251,6 +4309,7 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x1009");	/* un:p3, f:p0 3*/
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 		}
@@ -4262,12 +4321,12 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 
 				if(gmac3_enable) {
-					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x00111"); /* 0 4 8 */
+					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x00111"); /* fwd: 0 4 8 */
 				} else {
 #ifdef RTCONFIG_RGMII_BRCM5301X
-					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0091"); /* 0 4 7 */
+					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0091"); /* fwd: 0 4 7 */
 #else
-					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0031"); /* 0 4 5 */
+					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0031"); /* fwd: 0 4 5 */
 #endif
 				}
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
@@ -4285,6 +4344,7 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x2011");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 		}
@@ -4296,6 +4356,7 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0009");		/* f:30 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 			else {
@@ -4312,6 +4373,7 @@ set_wan_tag(char *interface) {
 				else
 					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x2009"); /* un:3 , f:30 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			    }
 			}
@@ -4329,6 +4391,7 @@ set_wan_tag(char *interface) {
 				else
 					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x2011");	/* un:4, f:40 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 		}
@@ -4350,15 +4413,16 @@ set_wan_tag(char *interface) {
 			sprintf(vlan_entry, "0x%x", wan_vid);
 
 			if(gmac3_enable) {
-				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0110");	/* 4, 8 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0110");	/* f: 4, 8 */
 			} else {
 #ifdef RTCONFIG_RGMII_BRCM5301X
-				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0090");	/* 4, 7 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0090");	/* f: 4, 7 */
 #else
-				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0030");	/* 4, 5 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0030");	/* f: 4, 5 */
 #endif
 			}
 			eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+			eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 			eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 		}
 		/* Set Wan port PRIO */
@@ -4372,17 +4436,20 @@ set_wan_tag(char *interface) {
 				/* Just forward packets between WAN & L3, without untag */
 				sprintf(vlan_entry, "0x%x", voip_vid);
 				_dprintf("vlan entry: %s\n", vlan_entry);
-				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0012");	/* 4 1 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0012");	/* f: 4 1 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 			else if (nvram_match("switch_wantag", "maxis_fiber")) {
 				/* Just forward packets between WAN & L3, without untag */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0012");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", "0x0335"); /* vlan id=821 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0012");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", "0x0336"); /* vlan id=822 */
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 			else {  /* Nomo case. */
@@ -4395,6 +4462,7 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0412");	/* un:1, f:41*/
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 		}
@@ -4406,12 +4474,12 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 
 				if(gmac3_enable) {
-					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0111");	/* 0 4 8 */
+					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0111");	/* fwd: 0 4 8 */
 				} else {
 #ifdef RTCONFIG_RGMII_BRCM5301X
-					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0091");	/* 0 4 7 */
+					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0091");	/* fwd: 0 4 7 */
 #else
-					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0031");	/* 0 4 5 */
+					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0031");	/* fwd: 0 4 5 */
 #endif
 				}
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
@@ -4429,6 +4497,7 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0211");	/* un:0 f:40 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 		}
@@ -4440,6 +4509,7 @@ set_wan_tag(char *interface) {
 				_dprintf("vlan entry: %s\n", vlan_entry);
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0012");		/* f:41 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 			else {
@@ -4456,6 +4526,7 @@ set_wan_tag(char *interface) {
 				else
 					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0412");	/* un:1 , f:41 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			    }
 			}
@@ -4473,6 +4544,7 @@ set_wan_tag(char *interface) {
 				else
 					eval("et", "-i", "eth0", "robowr", "0x05", "0x83", "0x0211"); /* un:0, f:40 */
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0000");
 				eval("et", "-i", "eth0", "robowr", "0x05", "0x80", "0x0080");
 			}
 		}
@@ -4543,7 +4615,7 @@ set_wan_tag(char *interface) {
 				/* Set vlan table entry register */
 				sprintf(vlan_entry, "0x%x", iptv_vid);
 				_dprintf("vlan entry: %s\n", vlan_entry);
-				eval("et", "robowr", "0x05", "0x83", "0x0403");
+				eval("et", "robowr", "0x05", "0x83", "0x0403");		/* un: 1, fwd; 0,1*/
 				eval("et", "robowr", "0x05", "0x81", vlan_entry);
 				eval("et", "robowr", "0x05", "0x80", "0x0080");
 			}
@@ -4713,7 +4785,7 @@ set_wan_tag(char *interface) {
 	case MODEL_RTN66U:
 	case MODEL_RTAC66U:
 	case MODEL_RTAC1200G:
-        case MODEL_RTAC1200GP:
+	case MODEL_RTAC1200GP:
 		if (wan_vid) { /* config wan port */
 			eval("vconfig", "rem", "vlan2");
 			sprintf(port_id, "%d", wan_vid);
@@ -5078,7 +5150,7 @@ set_wan_tag(char *interface) {
 			eval("et", "robowr", "0x34", "0x6", "0x300e");
 		}
 		else {	/* manual */
-						      /* WAN L1 L2 L3 L4 CPU */
+							/* WAN L1 L2 L3 L4 CPU */
 			const int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 4, 5 };
 
 			if (switch_stb != SWCFG_STB4 && switch_stb != SWCFG_STB34)
@@ -5268,12 +5340,9 @@ void wlconf_post(const char *ifname)
 		eval("wl", "-i", ifname, "radioreg", "0x892", "0x5068", "cr0");
 	}
 #endif
-#if defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114) || (defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_WIRELESSREPEATER))
-#if defined(RTCONFIG_PROXYSTA) && (defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114))
-	if (is_psta(unit) || is_psr(unit))
-#else
+
+#ifdef RTCONFIG_BCMWL6
 	if (is_ure(unit))
-#endif
 		eval("wl", "-i", ifname, "allmulti", "1");
 #endif
 }

@@ -1212,6 +1212,7 @@ UPNP_GetValidIGD(struct UPNPDev * devlist,
 			memset(urls, 0, sizeof(struct UPNPUrls));
 			/* parserootdesc(desc[i].xml, desc[i].size, data); */
 
+#ifdef DEBUG
 			FILE *xml_fd;
 			xml_fd = fopen("/tmp/upnpc_xml.log", "w");
 			fprintf(xml_fd, "============= XML ==============\n");
@@ -1222,7 +1223,8 @@ UPNP_GetValidIGD(struct UPNPDev * devlist,
                 	fprintf(xml_fd, "    F Name:   %s\n", IGDInfo.friendlyName);
 			fprintf(xml_fd, "    Icon URL: %s\n", IGDInfo.iconUrl);
 			fprintf(xml_fd, "================================\n\n");
-			//syslog(LOG_NOTICE, "parse icon url: %s", IGDInfo.iconUrl);
+			syslog(LOG_NOTICE, "parse icon url: %s", IGDInfo.iconUrl);
+#endif
 
 			strcpy(dev->DevInfo.hostname, IGDInfo.hostname);
 			strcpy(dev->DevInfo.type, IGDInfo.type);
@@ -1261,8 +1263,10 @@ UPNP_GetValidIGD(struct UPNPDev * devlist,
 				    }
 				}
 			get_icon:
-//                                syslog(LOG_NOTICE, "Real icon url: %s", realIconUrl);
+#ifdef DEBUG
+                                syslog(LOG_NOTICE, "Real icon url: %s", realIconUrl);
                                 fprintf(xml_fd, "Real icon url: %s\n", realIconUrl);
+#endif
                                 sprintf(iconFile, "/tmp/upnpicon/%s.ico", IGDInfo.hostname);
 
 				icon = miniwget_getaddr(realIconUrl, &iconSize,
@@ -1297,7 +1301,9 @@ UPNP_GetValidIGD(struct UPNPDev * devlist,
 				desc[i].is_igd = 1;
 				n_igd++;
 			}
+#ifdef DEBUG
 			fclose(xml_fd);
+#endif
 		}
 		else
 			memset(dev->DevInfo.hostname, 0, 65);

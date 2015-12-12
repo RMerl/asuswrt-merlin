@@ -1232,11 +1232,8 @@ int dnssec_validate_ds(time_t now, struct dns_header *header, size_t plen, char 
    
   /* If we return STAT_NO_SIG, name contains the name of the DS query */
   if (val == STAT_NO_SIG)
-    {
-      *keyname = 0;
-      return val;
-    }  
-
+    return val;
+  
   /* If the key needed to validate the DS is on the same domain as the DS, we'll
      loop getting nowhere. Stop that now. This can happen of the DS answer comes
      from the DS's zone, and not the parent zone. */

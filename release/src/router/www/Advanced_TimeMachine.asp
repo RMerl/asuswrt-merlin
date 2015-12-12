@@ -249,9 +249,8 @@ function applyRule(){
 								1. <#TimeMach_enable#><br>
 								2. <#TimeMach_target#> <br>
 								3. <#TimeMach_usage_limit#><br>
-								4. <#TimeMach_backup#> ( <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/3FEED048-5AC2-4B97-ABAE-DE609DDBC151/" target="_blank" style="text-decoration:underline;"><#TimeMach_AppleURL#></a> )<br>
-								5. <a href="https://www.youtube.com/watch?v=Bc3oYW1cmcQ" target="_blank" style="text-decoration:underline;"><#TimeMach_tutol#></a><br>
-								6. <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/25DFAE22-873C-4796-91C4-5CF1F08A2064/" target="_blank" style="text-decoration:underline;"><#TimeMach_FAQ#></a><br>
+								4. <#TimeMach_backup#> ( <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/3FEED048-5AC2-4B97-ABAE-DE609DDBC151/" target="_blank" style="text-decoration:underline;"><#TimeMach_AppleURL#></a> )<br>								
+								5. <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/25DFAE22-873C-4796-91C4-5CF1F08A2064/" target="_blank" style="text-decoration:underline;"><#TimeMach_FAQ#></a><br>
 								<span style="color:#FC0">
 									* <#TimeMach_recommand1#> <br>
 									* <#TimeMach_recommand2#> <br>

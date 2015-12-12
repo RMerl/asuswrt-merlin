@@ -15,17 +15,17 @@
 	border-radius: 10px;
 }
 .switch_circle{
-	width: 23px;
-	height: 23px;
+	width: 26px;
+	height: 26px;
 	border-radius: 16px;
 	background-color: #FFF;
-	margin-top: -20px;
+	margin-top: -21px;
 	box-shadow: 0px 4px 4px #444;
 }
-/*icon*/
+/*Icon*/
 .switch_circle > div{
-	width: 14px;
-	height: 14px;
+	width: 16px;
+	height: 16px;
 	position: absolute;
 	margin: 5px 0 0 5px;
 }

@@ -541,6 +541,13 @@ struct iname {
   struct iname *next;
 };
 
+/* subnet parameters from command line */
+struct mysubnet {
+  union mysockaddr addr;
+  int addr_used;
+  int mask;
+};
+
 /* resolv-file parms from command-line */
 struct resolvc {
   struct resolvc *next;
@@ -935,9 +942,9 @@ extern struct daemon {
   struct auth_zone *auth_zones;
   struct interface_name *int_names;
   char *mxtarget;
-  int addr4_netmask;
-  int addr6_netmask;
-  char *lease_file; 
+  struct mysubnet *add_subnet4;
+  struct mysubnet *add_subnet6;
+  char *lease_file;
   char *username, *groupname, *scriptuser;
   char *luascript;
   char *authserver, *hostmaster;

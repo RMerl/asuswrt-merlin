@@ -23,6 +23,7 @@ extern int set_plc_all_led_onoff(int on);
 #define BOOT_NVM_PATH		"/tmp/asus.nvm"
 #define BOOT_PIB_PATH		"/tmp/asus.pib"
 
+extern int default_plc_write_to_flash(void);
 extern void set_plc_flag(int flag);
 extern int load_plc_setting(void);
 extern void save_plc_setting(void);

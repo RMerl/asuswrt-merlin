@@ -114,24 +114,7 @@ function initial(){
 	addWANOption(document.form.wans_primary, wans_caps_primary.split(" "));
 	addWANOption(document.form.wans_second, wans_caps_secondary.split(" "));
 
-    if(based_modelid == "4G-AC55U"){
-    	document.getElementById("wans_mode_option").style.display = "none";
-    	document.getElementById("wans_mode_fo").style.display = "";
-
-    	if( wans_mode_orig == "lb")
-    		document.form.wans_mode.value = "fo";
-    	else
-    		document.form.wans_mode.value = wans_mode_orig;
-
-		document.getElementById("fo_detection_count_hd").innerHTML = "<#Failover_retry_count#>";
-		document.getElementById("fo_seconds").style.display = "none";
-		document.getElementById("fo_tail_msg").style.display = "";		
-    	document.getElementById("wandog_title").innerHTML = "<#Enable_user_target#>";
-
-    	update_consume_bytes();
-    }
-    else
-    	document.form.wans_mode.value = wans_mode_orig;
+   	document.form.wans_mode.value = wans_mode_orig;
 
 	form_show(wans_flag);		
 	setTimeout("showLANIPList();", 1000);
@@ -141,9 +124,7 @@ function initial(){
                 document.form.wans_lanport2.remove(0);   //Secondary LAN1
 	}
 
-	if(based_modelid == "4G-AC55U"){
-		update_detection_time();
-	}
+	update_detection_time();
 }
 
 function form_show(v){
@@ -167,13 +148,14 @@ function form_show(v){
 		appendLANoption1(document.form.wans_primary);
 		appendModeOption2("0");
 		document.form.wandog_enable_radio[1].checked = true;		
-		document.form.wandog_enable_radio[0].disabled = true;
-		document.form.wandog_enable_radio[1].disabled = true;
 		document.getElementById("wans_mode_tr").style.display = "none";
-		document.getElementById("watchdog_table").style.display = "none";		
+		document.getElementById("wandog_fb_count_tr").style.display = "none";	
 		document.getElementById("routing_table").style.display = "none";
 		document.getElementById("wans_standby_tr").style.display = "none";
 		inputCtrl(document.form.wans_standby, 0);
+		document.getElementById("fo_detection_count_hd").innerHTML = "<#dualwan_pingtime_detect3#>";
+		document.getElementById("sentence1").style.display = "none";
+		document.getElementById("sentence2").style.display = "none";		
 	}else{ //DualWAN enabled
 		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];
 		if(wans_dualwan_orig.split(" ")[1] == "none"){
@@ -219,13 +201,16 @@ function form_show(v){
 			}
 			else{
 				document.getElementById("wans_standby_tr").style.display = "none";
-				inputCtrl(document.form.wans_standby, 0);		
-			}
+				inputCtrl(document.form.wans_standby, 0);
+			}	
 		}
 
 		appendModeOption(document.form.wans_mode.value);
 		show_wans_rules();
 		document.getElementById("wans_mode_tr").style.display = "";
+		document.getElementById("fo_detection_count_hd").innerHTML = "<#dualwan_pingtime_detect2#>";
+		document.getElementById("sentence1").style.display = "";
+		document.getElementById("sentence2").style.display = "";		
 	}		
 }
 
@@ -276,8 +261,6 @@ function applyRule(){
 				document.form.wandog_enable.value = "0";
 
 			if(!validator.range(document.form.wandog_interval, 1, 9))
-				return false;
-			if(!validator.range(document.form.wandog_delay, 0, 99))
 				return false;
 		}		
 	}
@@ -339,13 +322,10 @@ function applyRule(){
 		}
 	}
 
-	if(wans_dualwan_orig != document.form.wans_dualwan.value){
-		var reboot_time	= eval("<% get_default_reboot_time(); %>");
-		if(based_modelid =="DSL-AC68U")
-			reboot_time += 70;
-		document.form.action_script.value = "reboot";
-		document.form.action_wait.value = reboot_time;
-	}
+	var reboot_time	= eval("<% get_default_reboot_time(); %>");
+	if(based_modelid =="DSL-AC68U")
+		reboot_time += 70;
+	document.form.action_wait.value = reboot_time;
 
 	if(document.form.wans_standby.value == "1" && document.form.wans_standby.value != wans_standby_orig){
 		document.getElementById("detect_time_confirm").style.display = "block";
@@ -507,10 +487,11 @@ function appendModeOption(v){
 			}				
 			
 			appendModeOption2("0");
-			document.form.wandog_enable_radio[1].checked = true;				
-			document.form.wandog_enable_radio[0].disabled = true;
-			document.form.wandog_enable_radio[1].disabled = true;
-			document.getElementById("watchdog_table").style.display = "none";
+			document.form.wandog_enable_radio[1].checked = true;
+			document.getElementById("fo_detection_count_hd").innerHTML = "<#dualwan_pingtime_detect3#>";
+			document.getElementById("sentence1").style.display = "none";
+			document.getElementById("sentence2").style.display = "none";
+			document.getElementById("wandog_fb_count_tr").style.display = "none";			
 			document.getElementById("routing_table").style.display = "";
 			document.getElementById("fb_span").style.display = "none";
 			document.form.wans_mode.value = "lb";
@@ -533,26 +514,23 @@ function appendModeOption(v){
 			document.getElementById('Routing_rules_table').style.display = "none";
 			document.getElementById('wans_RoutingRules_Block').style.display = "none";
 			
-			document.form.wandog_enable_radio[0].disabled = false;
-			document.form.wandog_enable_radio[1].disabled = false;
 			if(wandog_enable_orig == "1")
 				document.form.wandog_enable_radio[0].checked = true;
 			else
 				document.form.wandog_enable_radio[1].checked = true;
 			appendModeOption2(wandog_enable_orig);
 
-			document.getElementById("watchdog_table").style.display = "";
+			document.getElementById("fo_detection_count_hd").innerHTML = "<#dualwan_pingtime_detect#>";
+			document.getElementById("sentence1").style.display = "";
+			document.getElementById("sentence2").style.display = "";
+			document.getElementById("wandog_fb_count_tr").style.display = "none";
 			document.getElementById("routing_table").style.display = "none";
-
 			document.getElementById("fb_span").style.display = "";
-
-			add_option_count(document.form.wandog_interval, document.form.wandog_maxfail, wandog_maxfail_orig);
 
 			if(document.form.wans_mode.value == "fb" ? true : false)
 			{
 				document.getElementById("fb_checkbox").checked = true;
 				document.getElementById("wandog_fb_count_tr").style.display = "";
-				add_option_count(document.form.wandog_interval, document.form.wandog_fb_count, wandog_fb_count_orig);
 				document.form.wans_mode.value = "fb";
 			}
 			else
@@ -882,11 +860,9 @@ function hotstandby_act(enable){
 }
 
 function update_detection_time(){
-	if(based_modelid == "4G-AC55U"){
-		document.getElementById("fo_detection_time").innerHTML = parseInt(document.form.wandog_interval.value)*parseInt(document.form.wandog_maxfail.value);
-		if(document.form.wans_mode.value == "fb")
-			document.getElementById("fb_detection_time").innerHTML = parseInt(document.form.wandog_interval.value)*parseInt(document.form.wandog_fb_count.value);
-	}
+	document.getElementById("fo_detection_time").innerHTML = parseInt(document.form.wandog_interval.value)*parseInt(document.form.wandog_maxfail.value);
+	if(document.form.wans_mode.value == "fb")
+		document.getElementById("fb_detection_time").innerHTML = parseInt(document.form.wandog_interval.value)*parseInt(document.form.wandog_fb_count.value);
 }
 
 function update_consume_bytes(){
@@ -946,7 +922,7 @@ function remain_origins(){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
-<input type="hidden" name="action_script" value="start_multipath">
+<input type="hidden" name="action_script" value="reboot">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
@@ -1082,8 +1058,6 @@ function remain_origins(){
 										  			document.getElementById("fb_checkbox").onclick = function(){
 										  				document.form.wans_mode.value = (this.checked == true ? "fb" : "fo");
 										  				document.getElementById("wandog_fb_count_tr").style.display = (this.checked == true ? "" : "none");
-										  				if(document.getElementById("wandog_fb_count_tr").style.display == "")
-															add_option_count(document.form.wandog_interval, document.form.wandog_fb_count, wandog_fb_count_orig);
 														update_detection_time();
 										  			}
 										  		</script>
@@ -1142,46 +1116,35 @@ function remain_origins(){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;" id="watchdog_table">
 					<thead>
 					<tr>
-						<td colspan="2"><#dualwan_pingtime_wd#></td>
+						<td colspan="2"><#dualwan_pingtime_wd2#></td>
 					</tr>
 					</thead>
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,4);"><#Delay#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,3);"><#Retry_interval2#></a></th>
 						<td>
-		        		<input type="text" name="wandog_delay" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_delay"); %>" onKeyPress="return validator.isNumber(this, event);" placeholder="0" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;<#Second#>
+		        		<input type="text" name="wandog_interval" class="input_3_table" maxlength="1" value="<% nvram_get("wandog_interval"); %>" onblur="update_consume_bytes();update_detection_time();" onKeyPress="return validator.isNumber(this, event);" placeholder="5" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;<#Second#><div><span id="consume_bytes_warning" style="display:none;"></span></div>
 						</td>
 					</tr>
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,3);"><#Retry_interval#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,5);"><div id="fo_detection_count_hd"><#dualwan_pingtime_detect2#></div></a></th>
 						<td>
-		        		<input type="text" name="wandog_interval" class="input_3_table" maxlength="1" value="<% nvram_get("wandog_interval"); %>" onblur="add_option_count(this, document.form.wandog_maxfail, document.form.wandog_maxfail.value);add_option_count(this, document.form.wandog_fb_count, document.form.wandog_fb_count.value);update_consume_bytes();update_detection_time();" onKeyPress="return validator.isNumber(this, event);" placeholder="5" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;<#Second#><div><span id="consume_bytes_warning" style="display:none;"></span></div>
-						</td>
-					</tr>
-
-					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,5);"><div id="fo_detection_count_hd"><#dualwan_pingtime_detect#></div></a></th>
-						<td>
-									<select name="wandog_maxfail" class="input_option" onchange="update_detection_time();">
-									</select>&nbsp;&nbsp;<span id="fo_seconds" style="color:#FFFFFF;"><#Second#></span>
-									<span id="fo_tail_msg" style="display: none">(<#dualwan_pingtime_detect#>: <span id="fo_detection_time"></span>&nbsp;&nbsp;<#Second#>)</span>
+							<div><span id="sentence1" style="color:#FFFFFF;">Continous&nbsp;</span><input type="text" name="wandog_maxfail" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_maxfail"); %>" onKeyPress="return validator.isNumber(this, event);" onchange="update_detection_time();" placeholder="5" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;times <span id="sentence2" style="color:#FFFFFF;">( = <span id="fo_detection_time" style="color:#FFFFFF;"></span>&nbsp;&nbsp;<#Second#>) detect network failed.</span></div>
 						</td>
 					</tr>
 
 					<tr id="wandog_fb_count_tr">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,6);"><div id="fb_detection_count_hd"><#dualwan_pingtime_fb_detect#></div></a></th>	
-						<td>     		
-									<select name="wandog_fb_count" class="input_option" onchange="update_detection_time();">
-									</select>&nbsp;&nbsp;<span id="fb_seconds" style="color:#FFFFFF;"><#Second#></span>
-									<span id="fb_tail_msg" style="display: none">(<#dualwan_pingtime_fb_detect#>: <span id="fb_detection_time"></span>&nbsp;&nbsp;<#Second#>)</span>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,6);"><div id="fb_detection_count_hd"><#dualwan_pingtime_fb_detect2#></div></a></th>	
+						<td>
+							<div style="float:left;">Continous detect Primary WAN successfully over&nbsp;<input type="text" name="wandog_fb_count" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_fb_count"); %>" onKeyPress="return validator.isNumber(this, event);" onchange="update_detection_time();" placeholder="5" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;times ( = <span style="color:#FFFFFF;" id="fb_detection_time"></span>&nbsp;&nbsp;<#Second#>).</div>
 						</td>
 					</tr>
 					
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);"><div id="wandog_title"><#wandog_enable#></div></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);"><div id="wandog_title"><#wandog_enable2#></div></a></th>
 				        <td>
-					 		<input type="radio" value="1" id="wandog_enable_radio1" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "1", "checked"); %> onClick="appendModeOption2(this.value);"><label for="wandog_enable_radio1"><#checkbox_Yes#></label>
+					 		<input type="radio" value="1" id="wandog_enable_radio1" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "1", "checked"); %> onClick="appendModeOption2(this.value);"><label for="wandogRre_enable_radio1"><#checkbox_Yes#></label>
 	 						<input type="radio" value="0" id="wandog_enable_radio2" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "0", "checked"); %> onClick="appendModeOption2(this.value);"><label for="wandog_enable_radio2"><#checkbox_No#></label>
 						</td>
 					</tr>	

@@ -283,7 +283,8 @@ int main(int argc, char *argv[])
 #endif
 #if 0
 #ifdef RTCONFIG_RECVFILE
-	fprintf(fp, "use recvfile = yes\n");
+	if(!nvram_get_int("stop_samba_recv"))
+		fprintf(fp, "use recvfile = yes\n");
 #endif
 #endif
 	fprintf(fp, "force directory mode = 0777\n");

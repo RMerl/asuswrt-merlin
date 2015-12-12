@@ -351,7 +351,7 @@ GEN_CONF:
 
 		if (wl_client(unit, subunit)) {
 			if (nvram_match(wl_nvname("mode", unit, subunit), "wet")) {
-				ifconfig(ifname, IFUP|IFF_ALLMULTI, NULL, NULL);
+				ifconfig(ifname, IFUP | IFF_ALLMULTI, NULL, NULL);
 			}
 			if (nvram_get_int(wl_nvname("radio", unit, 0))) {
 				snprintf(wl, sizeof(wl), "%d", unit);
@@ -1504,11 +1504,6 @@ void start_lan(void)
 
 	if ((sfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) return;
 
-/*#ifdef RTCONFIG_WIRELESSREPEATER
-	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_match("lan_proto", "dhcp"))
-		nvram_set("lan_ipaddr", nvram_default_get("lan_ipaddr"));
-#endif//*/
-
 #ifdef RTCONFIG_GMAC3
 	/* In 3GMAC mode, bring up the GMAC forwarding interfaces.
 	 * Then bringup the primary wl interfaces that avail of hw switching.
@@ -1639,7 +1634,7 @@ void start_lan(void)
 				} else {
 #endif
 					// bring up interface
-					if (ifconfig(ifname, IFUP, NULL, NULL) != 0) {
+					if (ifconfig(ifname, IFUP | IFF_ALLMULTI, NULL, NULL) != 0) {
 #if defined(RTAC56U) || defined(RTAC56S)
 						if(strncmp(ifname, "eth2", 4)==0)
 							nvram_set("5g_fail", "1");	// gpio led
@@ -1806,7 +1801,7 @@ gmac3_no_swbr:
 	}
 	// --- this shouldn't happen ---
 	else if (*lan_ifname) {
-		ifconfig(lan_ifname, IFUP, NULL, NULL);
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, NULL, NULL);
 #ifdef CONFIG_BCMWL5
 		wlconf(lan_ifname, -1, -1);
 #endif
@@ -1850,20 +1845,14 @@ gmac3_no_swbr:
 #endif
 
 	// bring up and configure LAN interface
-/*#ifdef RTCONFIG_WIRELESSREPEATER
-	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED)
-		ifconfig(lan_ifname, IFUP, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
-	else
-#endif
-		ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));//*/
 #ifdef RTCONFIG_DHCP_OVERRIDE
 	if(nvram_match("lan_proto", "static") || nvram_get_int("sw_mode") == SW_MODE_AP)
 #else
 	if(nvram_match("lan_proto", "static"))
 #endif
-		ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
 	else
-		ifconfig(lan_ifname, IFUP, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
 
 #ifdef RTCONFIG_QCA
 	gen_qca_wifi_cfgs();
@@ -3642,7 +3631,7 @@ void start_lan_wl(void)
 				} else {
 #endif
 					// bring up interface
-					if (ifconfig(ifname, IFUP, NULL, NULL) != 0) {
+					if (ifconfig(ifname, IFUP | IFF_ALLMULTI, NULL, NULL) != 0) {
 #ifdef RTCONFIG_QTN
 						if (strcmp(ifname, "wifi0"))
 #endif
@@ -4386,14 +4375,10 @@ void start_lan_wlc(void)
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
 
 	// bring up and configure LAN interface
-	/*if(nvram_get_int("wlc_state") != WLC_STATE_CONNECTED)
-		ifconfig(lan_ifname, IFUP, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
-	else
-		ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));//*/
 	if(nvram_match("lan_proto", "static"))
-		ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
 	else
-		ifconfig(lan_ifname, IFUP, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
 
 	if(nvram_match("lan_proto", "dhcp"))
 	{

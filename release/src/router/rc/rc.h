@@ -1122,9 +1122,6 @@ extern char *cfe_nvram_safe_get(const char *name);
 extern char *cfe_nvram_get_raw(const char *name);
 extern char *cfe_nvram_safe_get_raw(const char *name);
 extern int cfe_nvram_set(const char *name);
-#if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
-int cfe_nvram_set_x(const char *name);
-#endif
 extern int factory_debug();
 #if !(defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM))
 extern char *ATE_BRCM_PREFIX(void);

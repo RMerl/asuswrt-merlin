@@ -452,8 +452,13 @@ void dhcp_packet(time_t now, int pxe_fd)
 #endif
   
   while(retry_send(sendmsg(fd, &msg, 0)));
+
+  /* This can fail when, eg, iptables DROPS destination 255.255.255.255 */
+  if (errno != 0)
+    my_syslog(MS_DHCP | LOG_WARNING, _("Error sending DHCP packet to %s: %s"),
+	      inet_ntoa(dest.sin_addr), strerror(errno));
 }
- 
+
 /* check against secondary interface addresses */
 static int check_listen_addrs(struct in_addr local, int if_index, char *label,
 			      struct in_addr netmask, struct in_addr broadcast, void *vparam)

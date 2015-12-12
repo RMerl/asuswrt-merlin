@@ -496,7 +496,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_txpower",		"100"		},
 
 #if defined (RTCONFIG_RALINK) || defined (RTCONFIG_BCMWL6)
-#if defined(RTAC53U)
+#if defined(RTAC53U) || defined(RTAC1200G) || defined(RTAC1200GP)
 	/* RT-AC53U disable txbf by default */
 	{ "wl_txbf", "0" },
 #else
@@ -1619,6 +1619,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_wanac", "0"},
 	{ "smbd_simpler_naming", "0"},
 	{ "smbd_enable_smb2", "0"},
+	{ "enable_samba_tuxera", "0"},
 
 #ifdef RTCONFIG_NFS
 	{ "nfsd_enable", "0"},

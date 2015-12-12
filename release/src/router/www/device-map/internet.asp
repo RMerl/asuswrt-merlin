@@ -689,21 +689,31 @@ function manualSetup(){
 				<script type="text/javascript">
 						$('#radio_dualwan_enable').iphoneSwitch(parent.wans_flag, 
 							 function() {
-								if(wans_dualwan.split(" ")[0] == "usb")
+								if(wans_dualwan.split(" ")[0] == "usb"){
 									document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" wan";
-								else
+									document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
+									document.internetForm.action_script.value = "reboot";
+								}
+								else{
 									document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" usb";
-								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
-								document.internetForm.action_script.value = "reboot";
+									document.internetForm.action_wait.value = '10';
+									document.internetForm.action_script.value = "start_multipath";
+								}
 								parent.showLoading();
 								document.internetForm.submit();
 								return true;
 							 },
 							 function() {
+								if(wans_dualwan.split(" ")[1] == "usb"){
+									document.internetForm.action_wait.value = '10';
+									document.internetForm.action_script.value = "start_multipath";
+								}							 	
+								else{
+									document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
+									document.internetForm.action_script.value = "reboot";
+								}	 	
 								document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" none";
 								document.internetForm.wan_unit.value = 0;
-								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
-								document.internetForm.action_script.value = "reboot";
 								document.internetForm.wans_mode.value = "fo";
 								parent.showLoading();
 								document.internetForm.submit();

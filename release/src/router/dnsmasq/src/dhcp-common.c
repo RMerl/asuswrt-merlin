@@ -599,7 +599,7 @@ static const struct opttab_t opttab6[] = {
   { "sntp-server", 31,  OT_ADDR_LIST },
   { "information-refresh-time", 32, OT_TIME },
   { "FQDN", 39, OT_INTERNAL | OT_RFC1035_NAME },
-  { "ntp-server", 56,  OT_ADDR_LIST },
+  { "ntp-server", 56,  0 },
   { "bootfile-url", 59, OT_NAME },
   { "bootfile-param", 60, OT_CSTRING },
   { NULL, 0, 0 }

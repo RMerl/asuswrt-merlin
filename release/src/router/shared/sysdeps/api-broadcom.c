@@ -588,13 +588,13 @@ int check_imagefile(char *fname)
 		return 0;
 	}
 
-#if defined(RTCONFIG_BCMWL6A) && (!defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114))
+#if defined(RTCONFIG_BCMWL6A) && !(defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114))
 	doSystem("nvram set cpurev=`cat /dev/mtd0 | grep cpurev | cut -d \"=\" -f 2`");
 	if (nvram_match("cpurev", "c0") &&
 	   (!version.sn ||
 	    !version.en ||
 	     version.sn < 380 ||
-	    (version.sn == 380 && version.en < 760)))
+	    (version.sn == 380 && version.en < 943)))
 	{
 		dbg("version check fail!\n");
 		return 0;

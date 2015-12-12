@@ -423,7 +423,6 @@ function initial(){
 		}, getXMLAndRedirect);
 	};
 
-	console.log(getflag);
 	if(getflag == "vpnClient" || getflag == "background" || action_script == "saveNvram"){
 		return false;
 	}
@@ -552,7 +551,8 @@ function initial(){
 	else if(action_script == "reboot"){
 		parent.stopFlag = 1;
 		parent.showLoading(restart_time);
-		setTimeout("parent.parent.location.href='"+next_page+"';", (restart_time+2)*1000);
+		if(!current_page.indexOf("Advanced_WAN_Content.asp"))
+			setTimeout("parent.parent.location.href='"+next_page+"';", (restart_time+2)*1000);
 	}else if(action_script == "start_sig_check"){	//check signature, do nothing
 		
 	}

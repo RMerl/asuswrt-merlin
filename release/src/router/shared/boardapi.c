@@ -32,7 +32,7 @@ static int gpio_values_loaded = 0;
 int btn_rst_gpio = 0x0ff;
 int btn_wps_gpio = 0xff;
 
-static int led_gpio_table[LED_ID_MAX];
+int led_gpio_table[LED_ID_MAX];
 
 int wan_port = 0xff;
 int fan_gpio = 0xff;
@@ -136,8 +136,8 @@ int init_gpio(void)
 	int i;
 
 #ifdef RTCONFIG_INTERNAL_GOBI
-	void get_gpio_values_once(void);
-	get_gpio_values_once();		// for filling data to led_gpio_table[]
+	void get_gpio_values_once(0);
+	get_gpio_values_once(0);		// for filling data to led_gpio_table[]
 #endif	/* RTCONFIG_INTERNAL_GOBI */
 
 	/* btn input */
@@ -271,11 +271,11 @@ static int __get_gpio(char *name)
 }
 
 // this is shared by every process, so, need to get nvram for first time it called per process
-void get_gpio_values_once(void)
+void get_gpio_values_once(int force)
 {
 	int i;
 	//int model;
-	if (gpio_values_loaded) return;
+	if (gpio_values_loaded && !force) return;
 
 	gpio_values_loaded = 1;
 	//model = get_model();
@@ -372,7 +372,7 @@ int button_pressed(int which)
 	int use_gpio;
 	int gpio_value;
 
-	get_gpio_values_once();
+	get_gpio_values_once(0);
 	switch(which) {
 		case BTN_RESET:
 			use_gpio = btn_rst_gpio;
@@ -477,7 +477,7 @@ int do_led_control(int which, int mode)
 	if (which < 0 || which >= LED_ID_MAX || mode < 0 || mode >= LED_FAN_MODE_MAX)
 		return -1;
 
-	get_gpio_values_once();
+	get_gpio_values_once(0);
 	use_gpio = led_gpio_table[which];
 	gpio_nr = use_gpio & 0xFF;
 

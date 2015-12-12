@@ -685,7 +685,7 @@ function register_event(){
 	var duration = 0;
 	var mode = "";
 	var traffic_chart = document.getElementById('traffic_chart').getContext('2d');
-    flow_obj = new Chart(traffic_chart);	
+	flow_obj = new Chart(traffic_chart);
 	var pie= document.getElementById("pie_chart").getContext("2d");
 	pie_obj = new Chart(pie);
 	$( "#datepicker" ).datepicker({
@@ -702,7 +702,8 @@ function register_event(){
 			if(date < 10)
 				date = "0" + date.toString();
 			
-			date_string = year + "/" + month + "/" + date + "/" + hour;	
+			date_string = year + "/" + month + "/" + date + "/" + hour;
+			date_second += 86400; // shift 24 hour to make traffic chart correct
 			if(document.getElementById('duration_option').value == "monthly"){
 				duration = 31;
 				mode = "day";

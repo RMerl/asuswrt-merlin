@@ -124,7 +124,7 @@ void dualwan_control(void)
 #if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
 	if (strcmp(nvram_safe_get("model"), MODEL_PROTECT) != 0){
 #else
-	if (strcmp(cfe_nvram_safe_get_raw("model"), MODEL_PROTECT) != 0){
+	if (strcmp(cfe_nvram_safe_get("model"), MODEL_PROTECT) != 0){
 #endif
 		_dprintf("illegal, cannot enable DualWAN\n");
 		return;

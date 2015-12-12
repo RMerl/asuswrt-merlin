@@ -24,8 +24,9 @@
 	text-align:left;
 }
 </style>
-<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="QISMobilePlugin.js"></script>
+<script language="JavaScript" type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="../validator.js"></script>
 <script type="text/javascript">
 var now_flag = '<% get_parameter("flag"); %>';
 var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
@@ -119,13 +120,13 @@ function submitForm(){
 			if(document.applyForm.switch_wantag.value == ''){
 				document.applyForm.switch_wantag.value = 'none';
 			}
-			else if(document.applyForm.switch_wantag.value == 'manual'){
+			else if(document.applyForm.switch_wantag.value == 'manual'){		
 				document.applyForm.switch_wan0tagid.value = document.applyForm._switch_wan0tagid.value;
 				document.applyForm.switch_wan0prio.value = document.applyForm._switch_wan0prio.value;
 				document.applyForm.switch_wan1tagid.value = document.applyForm._switch_wan1tagid.value;
 				document.applyForm.switch_wan1prio.value = document.applyForm._switch_wan1prio.value;
 				document.applyForm.switch_wan2tagid.value = document.applyForm._switch_wan2tagid.value;
-				document.applyForm.switch_wan2prio.value = document.applyForm._switch_wan2prio.value;		
+				document.applyForm.switch_wan2prio.value = document.applyForm._switch_wan2prio.value;
 			}
 		}
 	}
@@ -173,6 +174,47 @@ function submitForm(){
 	// uinfi
 	if(document.applyForm.specialisp.checked){
 		set_ISP_profile();
+		if(document.applyForm.switch_wantag.value == "manual"){
+			if(document.applyForm.switch_wan1tagid.value == "" && document.applyForm.switch_wan2tagid.value == "")
+				document.applyForm.switch_stb_x.value = "0";
+			else if(document.applyForm.switch_wan1tagid.value == "" && document.applyForm.switch_wan2tagid.value != "")
+				document.applyForm.switch_stb_x.value = "3";
+			else if(document.applyForm.switch_wan1tagid.value != "" && document.applyForm.switch_wan2tagid.value == "")
+				document.applyForm.switch_stb_x.value = "4";
+			else
+				document.applyForm.switch_stb_x.value = "6";
+
+	        if(document.applyForm.switch_wan0tagid.value.length > 0 && !validator.rangeNull(document.applyForm.switch_wan0tagid, 2, 4094, "")){
+	        	document.applyForm.switch_wan0tagid.focus();
+	            return false;
+	        }
+	            
+			if(document.applyForm.switch_wan1tagid.value.length > 0 && !validator.rangeNull(document.applyForm.switch_wan1tagid, 2, 4094, ""))}{
+				document.applyForm.switch_wan1tagid.focus();
+	            return false;
+			}
+			
+	        if(document.applyForm.switch_wan2tagid.value.length > 0 && !validator.rangeNull(document.applyForm.switch_wan2tagid, 2, 4094, "")){
+	        	document.applyForm.switch_wan2tagid.focus();
+				return false;           
+	        }
+
+	        if(document.applyForm.switch_wan0prio.value.length > 0 && !validator.range(document.applyForm.switch_wan0prio, 0, 7)){
+	        	document.applyForm.switch_wan0prio.focus();
+	            return false;
+	        }
+
+	        if(document.applyForm.switch_wan1prio.value.length > 0 && !validator.range(document.applyForm.switch_wan1prio, 0, 7)){
+	        	document.applyForm.switch_wan1prio.focus();
+	            return false;
+	        }
+
+	        if(document.applyForm.switch_wan2prio.value.length > 0 && !validator.range(document.applyForm.switch_wan2prio, 0, 7)){
+	        	document.applyForm.switch_wan2prio.focus();
+	            return false;
+	        }
+	    }
+
 		parent.document.QKform.switch_wantag.value = document.applyForm.switch_wantag.value;
 		parent.document.QKform.switch_wan0tagid.value = document.applyForm.switch_wan0tagid.value;
 		parent.document.QKform.switch_wan0prio.value = document.applyForm.switch_wan0prio.value;
@@ -283,7 +325,7 @@ function ISP_Profile_Selection(isp){
 
 function set_ISP_profile(){
         if(document.applyForm.switch_wantag.value == "unifi_home") {
-								document.applyForm.switch_stb_x.value = "4";
+				document.applyForm.switch_stb_x.value = "4";
                 document.applyForm.switch_wan0tagid.value = "500";
                 document.applyForm.switch_wan0prio.value = "0";
                 document.applyForm.switch_wan1tagid.value = "600";
@@ -292,7 +334,7 @@ function set_ISP_profile(){
                 document.applyForm.switch_wan2prio.value = "0";
         }
         else if(document.applyForm.switch_wantag.value == "unifi_biz") {
-								document.applyForm.switch_stb_x.value = "0";
+				document.applyForm.switch_stb_x.value = "0";
                 document.applyForm.switch_wan0tagid.value = "500";
                 document.applyForm.switch_wan0prio.value = "0";
                 document.applyForm.switch_wan1tagid.value = "0";
@@ -301,7 +343,7 @@ function set_ISP_profile(){
                 document.applyForm.switch_wan2prio.value = "0";
         }
         else if(document.applyForm.switch_wantag.value == "singtel_mio") {
-								document.applyForm.switch_stb_x.value = "6";
+				document.applyForm.switch_stb_x.value = "6";
                 document.applyForm.switch_wan0tagid.value = "10";
                 document.applyForm.switch_wan0prio.value = "0";
                 document.applyForm.switch_wan1tagid.value = "20";
@@ -310,7 +352,7 @@ function set_ISP_profile(){
                 document.applyForm.switch_wan2prio.value = "4";
         }
         else if(document.applyForm.switch_wantag.value == "singtel_others") {
-								document.applyForm.switch_stb_x.value = "4";
+				document.applyForm.switch_stb_x.value = "4";
                 document.applyForm.switch_wan0tagid.value = "10";
                 document.applyForm.switch_wan0prio.value = "0";
                 document.applyForm.switch_wan1tagid.value = "20";
@@ -364,13 +406,13 @@ function set_ISP_profile(){
                 document.applyForm.switch_wan2prio.value = "0";
         }
 
-	if(document.applyForm.switch_wantag.value == "maxis_fiber_sp_iptv" || 
-	   document.applyForm.switch_wantag.value == "maxis_fiber_iptv" ||
-	   document.applyForm.switch_wantag.value == "meo"
-	) {
-		document.applyForm.mr_enable_x.value = "1";
-		document.applyForm.emf_enable.value = "1";
-	}
+		if(document.applyForm.switch_wantag.value == "maxis_fiber_sp_iptv" || 
+		   document.applyForm.switch_wantag.value == "maxis_fiber_iptv" ||
+		   document.applyForm.switch_wantag.value == "meo"
+		) {
+			document.applyForm.mr_enable_x.value = "1";
+			document.applyForm.emf_enable.value = "1";
+		}
         if(document.applyForm.switch_wantag.value == "meo")
                 document.applyForm.ttl_inc_enable = "1";
 }

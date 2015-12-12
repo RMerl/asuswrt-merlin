@@ -1365,7 +1365,7 @@ void receive_query(struct listener *listen, time_t now)
 
 #ifdef HAVE_AUTH
       /* find queries for zones we're authoritative for, and answer them directly */
-      if (!auth_dns)
+      if (!auth_dns && !option_bool(OPT_LOCALISE))
 	for (zone = daemon->auth_zones; zone; zone = zone->next)
 	  if (in_zone(zone, daemon->namebuff, NULL))
 	    {
@@ -1904,7 +1904,7 @@ unsigned char *tcp_request(int confd, time_t now,
 	  
 #ifdef HAVE_AUTH
 	  /* find queries for zones we're authoritative for, and answer them directly */
-	  if (!auth_dns)
+	  if (!auth_dns && !option_bool(OPT_LOCALISE))
 	    for (zone = daemon->auth_zones; zone; zone = zone->next)
 	      if (in_zone(zone, daemon->namebuff, NULL))
 		{

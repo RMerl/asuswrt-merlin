@@ -828,7 +828,7 @@ function change_apn_mode(){
 
 					<tr>
 						<th width="40%">
-							<a class="hintstyle" href="javascript:void(0);" onclick="openHint(21,1);"><#menu5_4_4#></a>
+							<a class="hintstyle" href="javascript:void(0);" onclick="openHint(21,1);"><#Tele_Standards#></a>
 						</th>
 						<td>
 							<select name="modem_enable_option" id="modem_enable_option" class="input_option" onchange="switch_modem_mode(this.value);reloadProfile();">
@@ -843,7 +843,7 @@ function change_apn_mode(){
 					</tr>
 
           			<tr id="modem_enable_div_tr" style="display:none;">
-						<th><#menu5_4_4#></th>
+						<th>Telecommunications Standards</th>
 	            		<td>
 							<div id="modem_enable_div" style="color:#FFFFFF; margin-left:1px;"></div>
 						</td>

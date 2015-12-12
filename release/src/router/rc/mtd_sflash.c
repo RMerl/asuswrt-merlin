@@ -123,6 +123,56 @@ mtd_erase(const char *mtd)
 	return 0;
 }
 
+int
+mtd_unlock(const char *mtdname)
+{
+	int mtd_fd;
+	mtd_info_t mtd_info;
+	erase_info_t erase_info;
+	int ret;
+
+	if(!wait_action_idle(5)) return 0;
+	set_action(ACT_ERASE_NVRAM);
+
+	ret = 0;
+	/* Open MTD device */
+	if ((mtd_fd = mtd_open(mtdname, O_RDWR)) < 0) {
+		perror(mtdname);
+		return errno;
+	}
+
+	/* Get sector size */
+	if (ioctl(mtd_fd, MEMGETINFO, &mtd_info) != 0) {
+		perror(mtdname);
+		close(mtd_fd);
+		return errno;
+	}
+
+	ret = 1;
+	erase_info.length = mtd_info.erasesize;
+
+	for (erase_info.start = 0;
+	     erase_info.start < mtd_info.size;
+	     erase_info.start += mtd_info.erasesize) {
+		printf("Unlocking 0x%x - 0x%x\n", erase_info.start, (erase_info.start + erase_info.length) - 1);
+		fflush(stdout);
+
+		(void) ioctl(mtd_fd, MEMUNLOCK, &erase_info);
+	}
+	
+	char buf[2];
+	read(mtd_fd, &buf, sizeof(buf));
+	close(mtd_fd);
+
+	set_action(ACT_IDLE);
+
+	if(ret) printf("\"%s\" successfully unlocked.\n", mtdname);
+	else printf("Error unlocking MTD \"%s\".\n", mtdname);
+	sleep(1);
+
+	return ret;
+}
+
 static char *
 base64enc(const char *p, char *buf, int len)
 {

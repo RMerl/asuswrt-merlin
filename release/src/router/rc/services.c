@@ -2752,7 +2752,11 @@ _dprintf("%s:\n", __FUNCTION__);
 	start_klogd();
 
 #if defined(DUMP_PREV_OOPS_MSG) && defined(RTCONFIG_BCMARM)
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+	eval("et", "dump", "oops");
+#else
 	eval("et", "dump_oops");
+#endif
 #endif
 
 	return 0;
@@ -5261,9 +5265,9 @@ check_ddr_done:
 		case MODEL_APN12HP:
 		case MODEL_RTN66U:
 		case MODEL_RTN18U:
-		//case MODEL_RTAC5300:
-		//case MODEL_RTAC3100:
-		//case MODEL_RTAC88U:
+		case MODEL_RTAC5300:
+		case MODEL_RTAC3100:
+		case MODEL_RTAC88U:
 		//case MODEL_RTAC1200G:
 			set_wltxpower();
 			break;

@@ -524,12 +524,14 @@ function next_step(flag){
 		
 		if(document.applyForm.specialisp.checked){
 			if(document.applyForm.switch_wantag.value == "manual"){//Check VID
-				if(document.applyForm.switch_wan1tagid.value == "" && document.applyForm.switch_wan2tagid.value != "")
-					document.applyForm.switch_stb_x.value = "3";
-		        else if(document.applyForm.switch_wan1tagid.value != "" && document.applyForm.switch_wan2tagid.value == "")
-					document.applyForm.switch_stb_x.value = "4";
-		        else if(document.applyForm.switch_wan1tagid.value == "" && document.applyForm.switch_wan2tagid.value == "")
+				if(document.applyForm.switch_wan1tagid.value == "" && document.applyForm.switch_wan2tagid.value == "")
 					document.applyForm.switch_stb_x.value = "0";
+				else if(document.applyForm.switch_wan1tagid.value == "" && document.applyForm.switch_wan2tagid.value != "")
+					document.applyForm.switch_stb_x.value = "3";
+				else if(document.applyForm.switch_wan1tagid.value != "" && document.applyForm.switch_wan2tagid.value == "")
+					document.applyForm.switch_stb_x.value = "4";
+				else
+					document.applyForm.switch_stb_x.value = "6";
 
 		        if(document.applyForm.switch_wan0tagid.value.length > 0 && !validator.rangeNull(document.applyForm.switch_wan0tagid, 2, 4094, "")){
 		        	document.applyForm.switch_wan0tagid.focus();

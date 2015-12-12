@@ -1075,3 +1075,7 @@ config RTCONFIG_BONJOUR
 config RTCONFIG_FORCE_AUTO_UPGRADE
 	bool "Force auto update"
 	default n
+
+config RTCONFIG_TUXERA_SMBD
+	bool "tuxera smbd"
+	default n

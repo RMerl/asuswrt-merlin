@@ -19,6 +19,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <style>
 .transition_style{
 	-webkit-transition: all 0.2s ease-in-out;
@@ -28,19 +29,19 @@
 }
 </style>
 <script>
+window.onresize = function() {
+	if(document.getElementById("agreement_panel").style.display == "block") {
+		cal_panel_block("agreement_panel", 0.25);
+	}
+}
 function initial(){
 	show_menu();
-	$("#switch").click(function(){
-		enable_record();
-	});
 	if(document.form.bwdpi_wh_enable.value == 1){
-		document.getElementById("switch").checked = true;
 		document.getElementById("log_field").style.display = "";
 		getWebHistory();
 		genClientListOption();
 	}
 	else{	
-		document.getElementById("switch").checked = false;
 		document.getElementById("log_field").style.display = "none";
 	}	
 }
@@ -190,20 +191,53 @@ function change_page(flag){
 		getWebHistory("", page);
 	}
 }
-
-function enable_record(){
-	if(document.getElementById("switch").checked)
-		document.form.bwdpi_wh_enable.value = 1;
-	else	
-		document.form.bwdpi_wh_enable.value = 0;
-												
+function eula_confirm(){
+	document.form.TM_EULA.value = 1;
+	document.form.bwdpi_wh_enable.value = 1;
 	document.form.submit();
+}
+
+function cancel(){
+	curState = 0;
+	$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
+	$("#agreement_panel").fadeOut(100);
+	document.getElementById("hiddenMask").style.visibility = "hidden";
+}
+function cal_panel_block(obj){
+	var blockmarginLeft;
+	if (window.innerWidth)
+		winWidth = window.innerWidth;
+	else if ((document.body) && (document.body.clientWidth))
+		winWidth = document.body.clientWidth;
+		
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth >1050){	
+		winPadding = (winWidth-1050)/2;	
+		winWidth = 1105;
+		blockmarginLeft= (winWidth*0.2)+winPadding;
+	}
+	else if(winWidth <=1050){
+		blockmarginLeft= (winWidth)*0.2 + document.body.scrollLeft;	
+	}
+
+	if(obj == "demo_background")
+		document.getElementById(obj).style.marginLeft = (blockmarginLeft + 25)+"px";
+	else
+		document.getElementById(obj).style.marginLeft = blockmarginLeft+"px";
 }
 </script>
 </head>
 <body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
+<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;"></div>
+<div id="hiddenMask" class="popup_bg" style="z-index:999;">
+	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
+	<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
+</div>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -215,6 +249,7 @@ function enable_record(){
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="bwdpi_wh_enable" value="<% nvram_get("bwdpi_wh_enable"); %>">
+<input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
@@ -240,17 +275,36 @@ function enable_record(){
 										<table style="margin-left:0px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 											<th>Enable Web History</th>
 											<td>
-												<div class="switch_field" >
-													<label for="switch">
-														<input id="switch" class="switch" type="checkbox" style="display:none" <% nvram_match("bwdpi_wh_enable", "1", "checked"); %>>
-														<div class="switch_container" >
-															<div class="switch_bar"></div>
-															<div class="switch_circle transition_style">
-																<div></div>
-															</div>
-														</div>
-													</label>
-												</div>
+												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="bwdpi_wh_enable"></div>
+															<script type="text/javascript">
+																$('#bwdpi_wh_enable').iphoneSwitch('<% nvram_get("bwdpi_wh_enable"); %>',
+																	function(){
+																		if(document.form.TM_EULA.value == 0){
+																			if(document.form.preferred_lang.value == "JP"){
+																				$.get("JP_tm_eula.htm", function(data){
+																					document.getElementById('agreement_panel').innerHTML= data;
+																				});
+																			}
+																			else{
+																				$.get("tm_eula.htm", function(data){
+																					document.getElementById('agreement_panel').innerHTML= data;
+																				});
+																			}	
+																			dr_advise();
+																			cal_panel_block("agreement_panel", 0.25);
+																			$("#agreement_panel").fadeIn(300);
+																			return false;
+																		}
+																			
+																			document.form.bwdpi_wh_enable.value = 1;
+																			document.form.submit();
+																	},
+																	function(){
+																		document.form.bwdpi_wh_enable.value = 0;
+																		document.form.submit();
+																	}
+																);
+															</script>
 											</td>
 										</table>
 									</div>

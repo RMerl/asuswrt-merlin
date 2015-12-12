@@ -378,12 +378,13 @@ enum ASUS_IOCTL_SUBCMD {
 /*
  * interface of CPU to LAN
  */
-#if defined(RTCONFIG_SOC_QCA9557) || defined(RTCONFIG_QCA953X) || defined(RTCONFIG_QCA956X)
+#if defined(RTCONFIG_SOC_QCA9557) || defined(RTCONFIG_QCA956X)
 #define MII_IFNAME	"eth0"
 #elif defined(RTCONFIG_SOC_IPQ8064)
 #define MII_IFNAME	"switch0"
-#elif defined(PLN12)
+#elif defined(RTCONFIG_QCA953X)
 #define MII_IFNAME	"eth1"
+#else
 #error Define MII_IFNAME interface!
 #endif
 

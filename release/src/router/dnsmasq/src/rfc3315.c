@@ -1323,14 +1323,14 @@ static struct dhcp_netid *add_options(struct state *state, int do_refresh)
       
       if (opt_cfg->opt == OPTION6_REFRESH_TIME)
 	done_refresh = 1;
+       
+      if (opt_cfg->opt == OPTION6_DNS_SERVER)
+	done_dns = 1;
       
       if (opt_cfg->flags & DHOPT_ADDR6)
 	{
 	  int len, j;
 	  struct in6_addr *a;
-	  
-	  if (opt_cfg->opt == OPTION6_DNS_SERVER)
-	    done_dns = 1;
 	  
 	  for (a = (struct in6_addr *)opt_cfg->val, len = opt_cfg->len, j = 0; 
 	       j < opt_cfg->len; j += IN6ADDRSZ, a++)

@@ -401,13 +401,12 @@ static void wan_led_control(int sig) {
 	}
 }
 
-int do_ping_detect(int wan_unit){
-#ifdef RTCONFIG_DUALWAN
-	char cmd[256];
-#endif
+int do_ping_detect(int wan_unit)
+{
 #if 0
 	char buf[16], *next;
 	char prefix_wan[8], nvram_name[16], wan_dns[256];
+	char cmd[256];
 
 	memset(prefix_wan, 0, 8);
 	sprintf(prefix_wan, "wan%d_", wan_unit);
@@ -427,7 +426,9 @@ int do_ping_detect(int wan_unit){
 //elif defined(RTCONFIG_DUALWAN)
 #endif
 #if defined(RTCONFIG_DUALWAN)
+	char cmd[256];
 #if 0
+
 	csprintf("wanduck: ping %s to %s...", wandog_target, PING_RESULT_FILE);
 	sprintf(cmd, "ping -c 1 -w 2 %s >/dev/null && touch %s", wandog_target, PING_RESULT_FILE);
 	system(cmd);
@@ -441,7 +442,7 @@ int do_ping_detect(int wan_unit){
 	FILE *fp;
 
 	csprintf("wanduck: ping %s...", wandog_target);
-	snprintf(cmd, 256, "ping -c 1 -w 2 %s", wandog_target);
+	snprintf(cmd, 256, "ping -c1 -w2 -s32 -t128 -Mdont %s", wandog_target);
 	if((fp = popen(cmd, "r")) != NULL){
 		char *p, var[256];
 
@@ -457,9 +458,9 @@ int do_ping_detect(int wan_unit){
 		fclose(fp);
 	}
 #endif
-#else
+#else // RTCONFIG_DUALWAN
 	return 1;
-#endif
+#endif // RTCONFIG_DUALWAN
 	_dprintf("\n ping failed.\n");
 	return 0;
 }

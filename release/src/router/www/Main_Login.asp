@@ -198,6 +198,8 @@ var remaining_time;
 remaining_time = 60 - lock_time;
 var countdownid, rtime_obj;
 
+var redirect_page = '<% get_parameter("page"); %>';
+
 function initial(){
 	var flag = '<% get_parameter("error_status"); %>';
 
@@ -295,7 +297,6 @@ function countdownfunc(){
 }
 
 function login(){
-	var redirect_page = '<% get_parameter("page"); %>';
 
 	var trim = function(val){
 		val = val+'';
@@ -357,7 +358,7 @@ function login(){
 	document.form.login_authorization.value = btoa(document.form.login_username.value + ':' + document.form.login_passwd.value);
 	document.form.login_username.disabled = true;
 	document.form.login_passwd.disabled = true;
-	if(redirect_page == "" || redirect_page == "Logout.asp" || redirect_page == "Main_Login.asp")
+	if(redirect_page == "" || redirect_page == "Logout.asp" || redirect_page == "Main_Login.asp" || redirect_page.indexOf(" ") != -1 || (redirect_page.indexOf(".asp") == -1 && redirect_page.indexOf(".htm") == -1))
 		document.form.next_page.value = "index.asp";
 	else
 		document.form.next_page.value = redirect_page;

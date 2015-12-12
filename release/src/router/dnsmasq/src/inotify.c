@@ -90,6 +90,9 @@ void inotify_dnsmasq_init()
   
   if (daemon->inotifyfd == -1)
     die(_("failed to create inotify: %s"), NULL, EC_MISC);
+
+  if (option_bool(OPT_NO_RESOLV))
+    return;
   
   for (res = daemon->resolv_files; res; res = res->next)
     {

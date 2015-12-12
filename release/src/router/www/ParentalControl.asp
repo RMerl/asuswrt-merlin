@@ -1044,12 +1044,6 @@ function show_inner_tab(){
 							<li><#ParentalCtrl_Desc4#></li>
 							<li><#ParentalCtrl_Desc5#></li>							
 						</ol>
-						<ul>
-							<li>
-								<a target="_blank" style="cursor:pointer;text-decoration: underline;" href="http://www.youtube.com/v/IbsuvSjG0xM"><#Video_Link1#></a>
-								<!--span onclick="location.href='#';document.body.style.overflow='hidden';document.getElementById('ParentalCtrlHelp').style.display='';">Click to open tutorial video.</span-->
-							</li>	
-						</ul>
 						<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;"><#ParentalCtrl_default#></ol>
 					</td>
 				</tr>

@@ -1,3 +1,24 @@
+version 2.76
+            Include 0.0.0.0/8 in DNS rebind checks. This range 
+	    translates to hosts on  the local network, or, at 
+	    least, 0.0.0.0 accesses the local host, so could
+	    be targets for DNS rebinding. See RFC 5735 section 3 
+	    for details. Thanks to Stephen Röttger for the bug report.
+
+	    Enhance --add-subnet to allow arbitrary subnet addresses.
+            Thanks to Ed Barsley for the patch.
+
+	    Respect the --no-resolv flag in inotify code. Fixes bug
+	    which caused dnsmasq to fail to start if a resolv-file 
+	    was a dangling symbolic link, even of --no-resolv set.
+	    Thanks to Alexander Kurtz for spotting the problem.
+
+	    Fix crash when an A or AAAA record is defined locally,
+	    in a hosts file, and an upstream server sends a reply
+	    that the same name is empty. Thanks to Edwin Török for
+	    the patch.
+
+	
 version 2.75
             Fix reversion on 2.74 which caused 100% CPU use when a 
 	    dhcp-script is configured. Thanks to Adrian Davey for

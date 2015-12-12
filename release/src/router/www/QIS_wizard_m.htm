@@ -10,21 +10,34 @@
 <!--link rel="shortcut icon" href="images/favicon.png"-->
 <link rel="icon" href="images/favicon.png">
 <title><#Web_Title#> - Quickly Internet Setup</title>
-<link rel="stylesheet" type="text/css" href="css/qis.css">
-<link rel="stylesheet" type="text/css" href="css/icon.css">
+<link rel="stylesheet" type="text/css" href="css/icon-qis.css">
 <!--link rel="stylesheet" type="text/css" href="css/jquery.mobile.css"-->
 <!--link rel="stylesheet" type="text/css" href="/other.css">
 <link rel="stylesheet" type="text/css" href="/qis/qis_style.css">
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css"-->
 <style>
+body{
+	margin-left: 0px;
+	background-color:#000 !important; /*#AAD1E0*/
+	overflow-x: hidden; 
+	overflow-y: hidden;
+}
 .ios_iframe{
 	overflow: scroll !important;
 	-webkit-overflow-scrolling:touch !important;
 }
-body{
-    overflow-x: hidden; 
-    overflow-y: hidden;
+.filter_effect{
+	-webkit-filter: blur(5px);
+}
+#nav_rp:hover, #nav_ap:hover, #nav_mb:hover, #nav_info:hover, #nav_express_2g:hover, #nav_express_5g:hover, #nav_back:hover{
+	background-color:#555;
+}
+#pap_manual_band_option-button, #pap_manual_auth_option-button, #pap_ip_advanced_option-button{
+	padding: 22px;
+}
+a.ui-btn{
+	height:30px;
 }
 
 </style>

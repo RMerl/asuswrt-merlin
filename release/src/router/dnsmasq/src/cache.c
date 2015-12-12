@@ -265,10 +265,11 @@ char *cache_get_name(struct crec *crecp)
 
 char *cache_get_cname_target(struct crec *crecp)
 {
-  if (crecp->addr.cname.uid != SRC_INTERFACE)
-    return cache_get_name(crecp->addr.cname.target.cache);
+  if ((crecp->flags & F_CONFIG) &&
+      crecp->addr.cname.uid == SRC_INTERFACE)
+    return crecp->addr.cname.target.int_name->name;
 
-  return crecp->addr.cname.target.int_name->name;
+  return cache_get_name(crecp->addr.cname.target.cache);
 }
 
 
@@ -481,7 +482,7 @@ struct crec *cache_insert(char *name, struct all_addr *addr,
 	 existing record is for an A or AAAA and
 	 the record we're trying to insert is the same, 
 	 just drop the insert, but don't error the whole process. */
-      if ((flags & (F_IPV4 | F_IPV6)) && (flags & F_FORWARD))
+      if ((flags & (F_IPV4 | F_IPV6)) && (flags & F_FORWARD) && addr)
 	{
 	  if ((flags & F_IPV4) && (new->flags & F_IPV4) &&
 	      new->addr.addr.addr.addr4.s_addr == addr->addr.addr4.s_addr)

@@ -629,26 +629,47 @@ struct subnet_opt {
 #endif
 };
 
+static void *get_addrp(union mysockaddr *addr, const short family) 
+{
+#ifdef HAVE_IPV6
+  if (family == AF_INET6)
+    return &addr->in6.sin6_addr;
+#endif
+
+  return &addr->in.sin_addr;
+}
+
 static size_t calc_subnet_opt(struct subnet_opt *opt, union mysockaddr *source)
 {
   /* http://tools.ietf.org/html/draft-vandergaast-edns-client-subnet-02 */
   
   int len;
   void *addrp;
+  int sa_family = source->sa.sa_family;
 
 #ifdef HAVE_IPV6
   if (source->sa.sa_family == AF_INET6)
     {
-      opt->family = htons(2);
-      opt->source_netmask = daemon->addr6_netmask;
-      addrp = &source->in6.sin6_addr;
+      opt->source_netmask = daemon->add_subnet6->mask;
+      if (daemon->add_subnet6->addr_used) 
+	{
+	  sa_family = daemon->add_subnet6->addr.sa.sa_family;
+	  addrp = get_addrp(&daemon->add_subnet6->addr, sa_family);
+	} 
+      else 
+	addrp = &source->in6.sin6_addr;
     }
   else
 #endif
     {
-      opt->family = htons(1);
-      opt->source_netmask = daemon->addr4_netmask;
-      addrp = &source->in.sin_addr;
+      opt->source_netmask = daemon->add_subnet4->mask;
+      if (daemon->add_subnet4->addr_used)
+	{
+	  sa_family = daemon->add_subnet4->addr.sa.sa_family;
+	  addrp = get_addrp(&daemon->add_subnet4->addr, sa_family);
+	} 
+      else 
+	addrp = &source->in.sin_addr;
     }
   
   opt->scope_netmask = 0;
@@ -656,6 +677,11 @@ static size_t calc_subnet_opt(struct subnet_opt *opt, union mysockaddr *source)
   
   if (opt->source_netmask != 0)
     {
+#ifdef HAVE_IPV6
+      opt->family = htons(sa_family == AF_INET6 ? 2 : 1);
+#else
+      opt->family = htons(1);
+#endif
       len = ((opt->source_netmask - 1) >> 3) + 1;
       memcpy(opt->addr, addrp, len);
       if (opt->source_netmask & 7)
@@ -728,11 +754,16 @@ int private_net(struct in_addr addr, int ban_localhost)
   in_addr_t ip_addr = ntohl(addr.s_addr);
 
   return
-    (((ip_addr & 0xFF000000) == 0x7F000000) && ban_localhost)  /* 127.0.0.0/8    (loopback) */ || 
-    ((ip_addr & 0xFFFF0000) == 0xC0A80000)  /* 192.168.0.0/16 (private)  */ ||
+    (((ip_addr & 0xFF000000) == 0x7F000000) && ban_localhost)  /* 127.0.0.0/8    (loopback) */ ||
+    ((ip_addr & 0xFF000000) == 0x00000000)  /* RFC 5735 section 3. "here" network */ ||
     ((ip_addr & 0xFF000000) == 0x0A000000)  /* 10.0.0.0/8     (private)  */ ||
     ((ip_addr & 0xFFF00000) == 0xAC100000)  /* 172.16.0.0/12  (private)  */ ||
-    ((ip_addr & 0xFFFF0000) == 0xA9FE0000)  /* 169.254.0.0/16 (zeroconf) */ ;
+    ((ip_addr & 0xFFFF0000) == 0xC0A80000)  /* 192.168.0.0/16 (private)  */ ||
+    ((ip_addr & 0xFFFF0000) == 0xA9FE0000)  /* 169.254.0.0/16 (zeroconf) */ ||
+    ((ip_addr & 0xFFFFFF00) == 0xC0000200)  /* 192.0.2.0/24   (test-net) */ ||
+    ((ip_addr & 0xFFFFFF00) == 0xC6336400)  /* 198.51.100.0/24(test-net) */ ||
+    ((ip_addr & 0xFFFFFF00) == 0xCB007100)  /* 203.0.113.0/24 (test-net) */ ||
+    ((ip_addr & 0xFFFFFFFF) == 0xFFFFFFFF)  /* 255.255.255.255/32 (broadcast)*/ ;
 }
 
 static unsigned char *do_doctor(unsigned char *p, int count, struct dns_header *header, size_t qlen, char *name, int *doctored)
@@ -2334,4 +2365,3 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
   
   return len;
 }
-
