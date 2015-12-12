@@ -4,7 +4,7 @@
  *
  * Definitions subject to change without notice.
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 479464 2014-05-21 06:15:33Z $
+ * $Id: wlioctl.h 532344 2015-02-05 19:21:37Z $
  */
 
 #ifndef _wlioctl_h_
@@ -6136,5 +6136,14 @@ typedef struct {
 	uint32 config;	/* MODE: AUTO (-1), Disable (0), Enable (1) */
 	uint32 status;	/* Current state: Disabled (0), Enabled (1) */
 } wl_config_t;
+
+#ifdef BCM_SECURE_DMA
+/* cma mem details */
+typedef struct cma_meminfo {
+	dma_addr_t	mem_base; /* support both 32/64 bit platform */
+	uint32		mem_size; /* reserved cma memory size */
+}
+cma_meminfo_t;
+#endif /* BCM_SECURE_DMA */
 
 #endif /* _wlioctl_h_ */

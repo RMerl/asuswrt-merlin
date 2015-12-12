@@ -2,7 +2,7 @@
  * Misc utility routines for accessing chip-specific features
  * of the SiliconBackplane-based Broadcom chips.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: siutils.c 419467 2013-08-21 09:19:48Z $
+ * $Id: siutils.c 505047 2014-09-26 07:54:55Z $
  */
 
 #include <bcm_cfg.h>
@@ -1477,6 +1477,10 @@ BCMATTACHFN(si_detach)(si_t *sih)
 	nvram_exit((void *)si_local); /* free up nvram buffers */
 #endif 
 
+#if defined(STB)
+	nvram_exit((void *)sih);
+#endif /* defined(STB) */
+
 	if (BUSTYPE(sih->bustype) == PCI_BUS) {
 		if (sii->pch)
 			pcicore_deinit(sii->pch);
@@ -2194,17 +2198,57 @@ exit:
 	return rate;
 }
 
+/** returns value in [Hz] units */
+static uint32
+BCMINITFN(si_ns_alp_clock)(si_t *sih)
+{
+	osl_t *osh;
+	uint32 *genpll_base;
+	uint32 val;
+	uint32 pdiv, ndiv_int, mdiv, clkrate;
+
+	osh = si_osh(sih);
+
+	/* reg map for genpll base address */
+	genpll_base = (uint32 *)REG_MAP(0x1800C140, 4096);
+
+	/* get divider integer from the cru_genpll_control5 */
+	val = R_REG(osh, (genpll_base + 0x5));
+	ndiv_int = (val >> 20) & 0x3ff;
+	if (ndiv_int == 0)
+		ndiv_int = 1 << 10;
+
+	/* get pdiv from the cru_genpll_control6 */
+	val = R_REG(osh, (genpll_base + 0x6));
+	pdiv = (val >> 24) & 0x7;
+	if (pdiv == 0)
+		pdiv = 1 << 3;
+
+	/* get mdiv from the cru_genpll_control7 */
+	val = R_REG(osh, (genpll_base + 0x7));
+	mdiv = val & 0xff;
+	if (mdiv == 0)
+		mdiv = 1 << 8;
+
+	/* caculate clock rate based on 25MHz reference clock */
+	clkrate = (25000000 / (pdiv * mdiv)) * ndiv_int;
+
+	/* round to the nearest Hz */
+	clkrate = ((clkrate + 500000) / 1000000) * 1000000;
+
+	/* reg unmap */
+	REG_UNMAP((void *)genpll_base);
+
+	return clkrate;
+}
+
 uint32
 BCMINITFN(si_alp_clock)(si_t *sih)
 {
 	if (PMUCTL_ENAB(sih))
 		return si_pmu_alp_clock(sih, si_osh(sih));
-	else if (BCM4707_CHIP(CHIPID(sih->chip))) {
-		if (sih->chippkg == BCM4709_PKG_ID)
-			return NS_ALP_CLOCK;
-		else
-			return NS_SLOW_ALP_CLOCK;
-	}
+	else if (BCM4707_CHIP(CHIPID(sih->chip)))
+		return si_ns_alp_clock(sih);
 
 	return ALP_CLOCK;
 }
@@ -2441,12 +2485,6 @@ BCMATTACHFN(si_corepciid)(si_t *sih, uint func, uint16 *pcivendor, uint16 *pcide
 		subclass = PCI_SERIAL_USB;
 		progif = 0x30; /* XHCI */
 		device = BCM47XX_USB30H_ID;
-		break;
-	case NS_SDIO3_CORE_ID:
-		class = PCI_CLASS_BASE;
-		subclass = PCI_BASE_SDHCI;
-		progif = 0x1; /* PCI_SDHCI_IFDMA */
-		device = BCM47XX_SDIO3H_ID;
 		break;
 	case ROBO_CORE_ID:
 		/* Don't use class NETWORK, so wl/et won't attempt to recognize it */
@@ -2986,11 +3024,19 @@ BCMATTACHFN(si_coded_devpathvar)(si_t *sih, char *varname, int var_len, const ch
 {
 	char pathname[SI_DEVPATH_BUFSZ + 32];
 	char devpath[SI_DEVPATH_BUFSZ + 32];
+	char devpath_pcie[SI_DEVPATH_BUFSZ + 32];
 	char *p;
 	int idx;
 	int len1;
 	int len2;
+	int len3 = 0;
 
+	if (BUSTYPE(sih->bustype) == PCI_BUS) {
+		snprintf(devpath_pcie, SI_DEVPATH_BUFSZ, "pcie/%u/%u",
+			OSL_PCIE_DOMAIN((SI_INFO(sih))->osh),
+			OSL_PCIE_BUS((SI_INFO(sih))->osh));
+		len3 = strlen(devpath_pcie);
+	}
 	/* try to get compact devpath if it exist */
 	if (si_devpath(sih, devpath, SI_DEVPATH_BUFSZ) == 0) {
 		/* eliminate ending '/' (if present) */
@@ -3011,6 +3057,12 @@ BCMATTACHFN(si_coded_devpathvar)(si_t *sih, char *varname, int var_len, const ch
 			/* check that both lengths match and if so compare */
 			/* the strings (minus trailing '/'s if present */
 			if ((len1 == len2) && (memcmp(p, devpath, len1) == 0)) {
+				snprintf(varname, var_len, "%d:%s", idx, name);
+				return varname;
+			}
+
+			/* try the new PCIe devpath format if it exists */
+			if (len3 && (len3 == len2) && (memcmp(p, devpath_pcie, len3) == 0)) {
 				snprintf(varname, var_len, "%d:%s", idx, name);
 				return varname;
 			}

@@ -1,7 +1,7 @@
 /*
  * NVRAM variable manipulation (direct mapped flash)
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -179,29 +179,29 @@ int
 BCMINITFN(nvram_resetgpio_init)(void *si)
 {
 #if 0
-        char *value;
+	char *value;
 #endif
-        int gpio;
-        si_t *sih;
+	int gpio;
+	si_t *sih;
 
-        sih = (si_t *)si;
+	sih = (si_t *)si;
 #if 0
-        value = nvram_get("reset_gpio");
-        if (!value)
-                return -1;
+	value = nvram_get("reset_gpio");
+	if (!value)
+		return -1;
 
-        gpio = (int) bcm_atoi(value);
-        if (gpio > 31)
-                return -1;
+	gpio = (int) bcm_atoi(value);
+	if (gpio > 31)
+		return -1;
 #else
-        gpio = bcmgpio_getpin(WPS_GPIO_BUTTON_VALUE);
-        if ((gpio > 31) || (gpio < 0))
-                return -1;
+	gpio = bcmgpio_getpin(WPS_GPIO_BUTTON_VALUE);
+	if ((gpio > 31) || (gpio < 0))
+		return -1;
 #endif
-        /* Setup GPIO input */
-        si_gpioouten(sih, ((uint32) 1 << gpio), 0, GPIO_DRV_PRIORITY);
+	/* Setup GPIO input */
+	si_gpioouten(sih, ((uint32) 1 << gpio), 0, GPIO_DRV_PRIORITY);
 
-        return gpio;
+	return gpio;
 }
 
 int

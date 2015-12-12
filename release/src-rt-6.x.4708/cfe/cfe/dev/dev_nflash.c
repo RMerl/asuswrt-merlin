@@ -1,7 +1,7 @@
 /*
  * Broadcom chipcommon NAND flash interface
  *
- * Copyright (C) 2013, Broadcom Corporation
+ * Copyright (C) 2015, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: dev_nflash.c 421468 2013-09-03 09:48:30Z $
+ * $Id: dev_nflash.c 497378 2014-08-19 04:20:32Z $
  */
 
 #include "lib_types.h"
@@ -485,6 +485,9 @@ nflash_cfe_probe(cfe_driver_t *drv,
 		break;
 	case NFL_VENDOR_ZENTEL:
 		sprintf(type, "Zentel");
+		break;
+	case NFL_VENDOR_WINBOND:
+		sprintf(type, "Winbond");
 		break;
 	default:
 		sprintf(type, "Unknown type %d", nflash->info->type);

@@ -3,7 +3,7 @@
  *
  * Despite its file name, OTP contents is also parsed in this file.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom.c 427949 2013-10-07 06:04:47Z $
+ * $Id: bcmsrom.c 499106 2014-08-27 15:15:26Z $
  */
 
 #include <bcm_cfg.h>
@@ -63,13 +63,6 @@
 #include <bcm_ol_msg.h>
 #endif
 
-
-#if defined(BCMDBG_ERR) || defined(WLTEST)
-#define	BS_ERROR(args)	printf args
-#else
-#define	BS_ERROR(args)
-#endif
-
 #define SROM_OFFSET(sih)  ((sih->ccrev > 31) ? \
 	(((sih->cccaps & CC_CAP_SROM) == 0) ? NULL : \
 	 ((uint8 *)curmap + PCI_16KB0_CCREGS_OFFSET + CC_SROM_OTP)) : \
@@ -89,6 +82,11 @@ extern char *_vars;
 extern uint _varsz;
 
 #define SROM_CIS_SINGLE	1
+
+#if defined(STB) && defined(BCMEXTNVM)
+extern int BCMATTACHFN(init_sromvars_map)(si_t *sih, uint chipId, void *buf, uint nbytes);
+#endif /* (STB) && (BCMEXTNVM) */
+
 
 
 static int initvars_srom_si(si_t *sih, osl_t *osh, void *curmap, char **vars, uint *count);
@@ -1444,7 +1442,8 @@ static char BCMATTACHDATA(defaultsromvars_wltest)[] =
 static bool srvars_inited = FALSE; /* Use OTP/SROM as global variables */
 
 /* BCMHOSTVARS is enabled only if WLTEST is enabled or BCMEXTNVM is enabled */
-#if defined(BCMHOSTVARS) || (defined(BCMUSBDEV_BMAC) || defined(BCM_BMAC_VARS_APPEND))
+#if defined(BCMHOSTVARS) || (defined(BCMUSBDEV_BMAC) || defined(BCM_BMAC_VARS_APPEND)) \
+	|| (defined(STB) && defined(BCMEXTNVM))
 /* It must end with pattern of "END" */
 static uint
 BCMATTACHFN(srom_vars_len)(char *vars)
@@ -5337,6 +5336,23 @@ BCMATTACHFN(initvars_srom_pci)(si_t *sih, void *curmap, char **vars, uint *count
 	BS_ERROR(("srom rev:%d\n", sromrev));
 
 
+#if defined(STB) && defined(BCMEXTNVM)
+	if (err) {
+		BS_ERROR(("wl:srom/otp not programmed, using external nvram file\n"));
+		/* read from vars file */
+		if (!init_sromvars_map(sih, sih->chip, (void *)sih->wl_sromvars_map,
+			sizeof(sih->wl_sromvars_map))) {
+			unsigned int len;
+			base = vp = (char *)sih->wl_sromvars_map;
+			len = srom_vars_len((char *)sih->wl_sromvars_map);
+			vp += len;
+			*vp++ = '\0';
+			goto varsdone;
+		}
+	}
+#endif /* (STB) && (BCMEXTNVM) */
+
+
 	/* We want internal/wltest driver to come up with default sromvars so we can
 	 * program a blank SPROM/OTP.
 	 */
@@ -5512,7 +5528,11 @@ errout:
 #else
 	if (base)
 #endif 
+#if (defined(STB) && defined(BCMEXTNVM))
+		;
+#else
 		MFREE(osh, base, MAXSZ_NVRAM_VARS);
+#endif /* (STB) && (BCMEXTNVM) */
 
 	MFREE(osh, srom, SROM_MAX);
 	return err;

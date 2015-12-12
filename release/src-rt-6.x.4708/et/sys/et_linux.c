@@ -2,7 +2,7 @@
  * Linux device driver for
  * Broadcom BCM47XX 10/100/1000 Mbps Ethernet Controller
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et_linux.c 485161 2014-06-13 21:26:34Z $
+ * $Id: et_linux.c 485723 2014-06-17 05:07:54Z $
  */
 
 #include <et_cfg.h>
@@ -131,7 +131,7 @@
 	 ((((struct ethervlan_header *)(evh))->ether_type == HTON16(ETHER_TYPE_IP)) || \
 	 (((struct ethervlan_header *)(evh))->ether_type == HTON16(ETHER_TYPE_IPV6))))
 #endif /* PLC */
-#define PKTCMC  2
+#define PKTCMC  32
 struct pktc_data {
 	void	*chead;		/* chain head */
 	void	*ctail;		/* chain tail */
@@ -2685,11 +2685,17 @@ et_ctf_forward(et_info_t *et, struct sk_buff *skb)
 #ifdef HNDCTF
 	int ret;
 #ifdef CONFIG_IP_NF_DNSMQ
-	if (dnsmq_hit_hook&&dnsmq_hit_hook(skb))
-		return (BCME_ERROR);
+	bool dnsmq_hit = FALSE;
+
+	if (dnsmq_hit_hook && dnsmq_hit_hook(skb))
+		dnsmq_hit = TRUE;
 #endif
 	/* try cut thru first */
-	if (CTF_ENAB(et->cih) && (ret = ctf_forward(et->cih, skb, skb->dev)) != BCME_ERROR) {
+	if (CTF_ENAB(et->cih) &&
+#ifdef CONFIG_IP_NF_DNSMQ
+		!dnsmq_hit &&
+#endif
+		(ret = ctf_forward(et->cih, skb, skb->dev)) != BCME_ERROR) {
 		if (ret == BCME_EPERM) {
 			PKTFRMNATIVE(et->osh, skb);
 			PKTFREE(et->osh, skb, FALSE);

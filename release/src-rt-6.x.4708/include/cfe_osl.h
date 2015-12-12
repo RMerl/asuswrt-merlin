@@ -1,7 +1,7 @@
 /*
  * CFE boot loader OS Abstraction Layer.
  *
- * Copyright (C) 2013, Broadcom Corporation
+ * Copyright (C) 2015, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: cfe_osl.h 419467 2013-08-21 09:19:48Z $
+ * $Id: cfe_osl.h 505047 2014-09-26 07:54:55Z $
  */
 
 #ifndef _cfe_osl_h_
@@ -48,6 +48,8 @@
 /* PCI device bus # and slot # */
 #define OSL_PCI_BUS(osh)	(0)
 #define OSL_PCI_SLOT(osh)	(0)
+#define	OSL_PCIE_DOMAIN(osh)	({BCM_REFERENCE(osh); 0;})
+#define	OSL_PCIE_BUS(osh)	({BCM_REFERENCE(osh); 0;})
 
 /* register access macros */
 #ifdef IL_BIGENDIAN

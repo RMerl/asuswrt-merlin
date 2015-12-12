@@ -2,7 +2,7 @@
  * Misc utility routines for accessing the SOC Interconnects
  * of Broadcom HNBU chips.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: siutils.h 419467 2013-08-21 09:19:48Z $
+ * $Id: siutils.h 499106 2014-08-27 15:15:26Z $
  */
 
 #ifndef	_siutils_h_
@@ -25,6 +25,12 @@
 #if defined(WLC_HIGH) && !defined(WLC_LOW)
 #include "bcm_rpc.h"
 #endif
+
+#if defined(STB) && defined(BCMEXTNVM)
+#include "bcmsrom_fmt.h"
+#endif /* (STB) && (BCMEXTNVM) */
+
+
 
 #include <bcmutils.h>
 /*
@@ -59,9 +65,15 @@ struct si_pub {
 #if defined(WLC_HIGH) && !defined(WLC_LOW)
 	rpc_info_t *rpc;
 #endif
+
 #ifdef SI_ENUM_BASE_VARIABLE
 	uint32  si_enum_base;
 #endif /* SI_ENUM_BASE_VARIABLE */
+
+#if defined(STB) && defined(BCMEXTNVM)
+	char 	wl_sromvars_map[VARS_MAX];
+#endif /* (STB) && (BCMEXTNVM) */
+
 };
 
 /* for HIGH_ONLY driver, the si_t must be writable to allow states sync from BMAC to HIGH driver

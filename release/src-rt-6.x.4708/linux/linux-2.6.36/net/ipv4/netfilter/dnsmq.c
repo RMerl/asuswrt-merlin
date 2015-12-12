@@ -8,7 +8,6 @@
  * 	- increase module usage count as soon as we have rules inside
  * 	  a table
  */
-//#include <linux/config.h>
 #include <linux/cache.h>
 #include <linux/skbuff.h>
 #include <linux/kmod.h>
@@ -16,6 +15,8 @@
 #include <linux/netdevice.h>
 #include <linux/module.h>
 #include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <net/addrconf.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
 #include <linux/in.h>
@@ -34,7 +35,8 @@
 
 #define DEBUGP(format, args...)
 
-unsigned int  dnsmq_ip=0;
+unsigned int dnsmq_ip=0;
+//struct in6_addr dnsmq_ipv6;
 char dnsmq_name[32];
 unsigned char dnsmq_mac[ETH_ALEN] = { 0x00, 0xe0, 0x11, 0x22, 0x33, 0x44 };
 typedef int (*dnsmqHitHook)(struct sk_buff *skb);
@@ -42,23 +44,23 @@ dnsmqHitHook dnsmq_hit_hook = NULL;
 
 static inline void dnsmq_hit_hook_func(dnsmqHitHook hook_func)
 {
-	dnsmq_hit_hook = hook_func;	
+	dnsmq_hit_hook = hook_func;
 }
 
 void dump_packet(struct sk_buff *skb, char *title)
 {
 	int i;
 
-	if(nvram_match("dnsmq_debug", "1")) {
+	if (nvram_match("dnsmq_debug", "1")) {
 		printk("dump packet[%s] %x %x %x", title, skb->len, skb->mac_len, skb->data_len);
-		if(skb->dev) printk("%s\n", skb->dev->name);
+		if (skb->dev) printk("%s\n", skb->dev->name);
 		else printk("\n");
 
-		if(skb && skb->data) {
-		for(i=0;i<skb->len&&i<120;i++) { 
-			if(i%16==0) printk("\n");
-			printk("%x ", skb->data[i]);
-		}
+		if (skb && skb->data) {
+			for(i=0;i<skb->len&&i<160;i++) {
+				if (i%16 == 0) printk("\n");
+				printk("%02X ",*((unsigned char*)(skb->data+i)));
+			}
 		}
 		printk("\n\n\n");
 	}
@@ -109,14 +111,14 @@ static inline int dnschar_cmp(char a, char b)
 {
 	char a1;
 
-	if(a==b) return 0;
+	if (a == b) return 0;
 
-	if(a>='a'&&a<='z') a1 = 'A' + a - 'a';
-	else if(a>='A'&&a<='Z') a1 = 'a' + a - 'A';
+	if (a>='a'&&a<='z') a1 = 'A' + a - 'a';
+	else if (a>='A'&&a<='Z') a1 = 'a' + a - 'A';
 	else return 1;
 
-	if(a1==b) return 0;
-	
+	if (a1 == b) return 0;
+
 	return 1;
 }
 
@@ -125,13 +127,13 @@ static inline int dnsmq_hit(struct udphdr *udph)
 	dns_query_packet *dns_query;
 	int i, j;
 
-	dns_query = (dns_query_packet *)((unsigned char *)udph + sizeof(struct udphdr)); 
+	dns_query = (dns_query_packet *)((unsigned char *)udph + sizeof(struct udphdr));
 
 	j = 0;
 	//printk("dns hit\n");
 	for(i=0;dns_query->queries.name[i]!=0;i++) {
 		//printk("%x %x %x\n", i, dns_query->queries.name[i], dnsmq_name[i]);
-		if(dnschar_cmp(dns_query->queries.name[i],dnsmq_name[j])) return 0;
+		if (dnschar_cmp(dns_query->queries.name[i],dnsmq_name[j])) return 0;
 		j++;
 	}
 	return 1;
@@ -142,57 +144,90 @@ static inline int dnsmq_func(struct sk_buff *skb)
 	struct ethhdr *ethh;
 	struct vlan_ethhdr *vethh;
 	struct iphdr *iph;
+	struct ipv6hdr *ip6h;
 	struct udphdr *udph;
 	struct tcphdr *tcph;
 	u32 hlen;
 	u16 proto;
-	
-	if(dnsmq_ip==0) return 0;
 
-	if(!skb || !skb->data) return 0;
+	if (dnsmq_ip == 0) return 0;
+
+	if (!skb || !skb->data) return 0;
 
 	ethh = (struct ethhdr *)skb->data;
 
 	proto = ntohs(ethh->h_proto);
 
-	if(proto == ETH_P_IP) hlen = ETH_HLEN;
+	if (proto == ETH_P_IP || proto == ETH_P_IPV6) hlen = ETH_HLEN;
 	else if (proto == ETH_P_8021Q) {
 		vethh = (struct vlan_ethhdr *)skb->data;
-		if(vethh->h_vlan_encapsulated_proto == htons(ETH_P_IP))
+		if (vethh->h_vlan_encapsulated_proto == htons(ETH_P_IP) ||
+			vethh->h_vlan_encapsulated_proto == htons(ETH_P_IPV6)) {
 			hlen = VLAN_ETH_HLEN;
-		else return 0;
+			if (vethh->h_vlan_encapsulated_proto == htons(ETH_P_IPV6))
+				proto = ETH_P_IPV6;
+			else
+				proto = ETH_P_IP;
+		} else return 0;
 	}
 	else return 0;
 
-	iph = (struct iphdr *)(skb->data+hlen);
+	if (proto == ETH_P_IPV6) {
+		ip6h = (struct ipv6hdr *)(skb->data+hlen);
 
-	// IP & DNS & Looking for my host name
-	if(iph->protocol==IPPROTO_UDP) {
-		udph = (struct udphdr *)(skb->data+hlen+(iph->ihl<<2));
-		if(ntohs(udph->dest)==53) {
-			if(dnsmq_hit(udph)) {
+		// IP & DNS & Looking for my host name
+		if (ip6h->nexthdr == IPPROTO_UDP) {
+			udph = (struct udphdr *)(skb->data+hlen+sizeof(struct ipv6hdr));
+			if (ntohs(udph->dest) == 53) {
+				if (dnsmq_hit(udph)) {
+					memcpy(ethh->h_dest, dnsmq_mac, ETH_ALEN);
+					//dump_packet(skb, "ipv6 dnshit");
+					return 1;
+				}
+			}
+		}
+#if 0
+		// IP & HTTP & Original Locol IP & Looking for my host name
+		else if (ip6h->nexthdr == IPPROTO_TCP) {
+			tcph = (struct tcphdr *)(skb->data+hlen+sizeof(struct ipv6hdr));
+			if (ipv6_addr_equal(&ip6h->daddr, &dnsmq_ipv6) && ntohs(tcph->dest) == 80) {
 				memcpy(ethh->h_dest, dnsmq_mac, ETH_ALEN);
-				//dump_packet(skb, "dnshit");
+				//dump_packet(skb, "ipv6 httphit");
+				return 1;
+			}
+		}
+#endif
+	} else {
+		iph = (struct iphdr *)(skb->data+hlen);
+
+		// IP & DNS & Looking for my host name
+		if (iph->protocol == IPPROTO_UDP) {
+			udph = (struct udphdr *)(skb->data+hlen+(iph->ihl<<2));
+			if (ntohs(udph->dest) == 53) {
+				if (dnsmq_hit(udph)) {
+					memcpy(ethh->h_dest, dnsmq_mac, ETH_ALEN);
+					//dump_packet(skb, "dnshit");
+					return 1;
+				}
+			}
+		}
+		// IP & HTTP & Original Locol IP & Looking for my host name
+		else if (iph->protocol == IPPROTO_TCP) {
+			tcph = (struct tcphdr *)(skb->data+hlen+(iph->ihl<<2));
+			if (iph->daddr == dnsmq_ip && ntohs(tcph->dest) == 80) {
+				memcpy(ethh->h_dest, dnsmq_mac, ETH_ALEN);
+				//dump_packet(skb, "httphit");
 				return 1;
 			}
 		}
 	}
-	// IP & HTTP & Original Locol IP & Looking for my host name
-	else if(iph->protocol==IPPROTO_TCP) {
-		tcph = (struct tcphdr *)(skb->data+hlen+(iph->ihl<<2));
-		if(iph->daddr==dnsmq_ip && ntohs(tcph->dest)==80) {
-			memcpy(ethh->h_dest, dnsmq_mac, ETH_ALEN);
-			//dump_packet(skb, "httphit");
-			return 1;
-		}
-	}
+
 	return 0;
 }
 
 static int dnsmq_ctrl(struct file *file, const char *buffer, unsigned long length, void *data)
 {
 	char s[32];
-	char str[32];
 	char *ptr;
 	int i, j;
 
@@ -201,17 +236,18 @@ static int dnsmq_ctrl(struct file *file, const char *buffer, unsigned long lengt
 		memcpy(s, buffer, length);
 		s[length] = 0;
 		for(i=0;i<length;i++) {
-			if(s[i]==' ') break;
-		}	
-		if(i<length) {
+			if (s[i] == ' ') break;
+		}
+		if (i<length) {
 			s[i] = 0;
 			ptr = s + i + 1;
 			dnsmq_ip = simple_strtoul(s, NULL, 16);
+//			ipv6_addr_set_v4mapped(dnsmq_ip, &dnsmq_ipv6);
 
 			// convert to dnsname format
 			j=0;
 			for(;i<length;i++) {
-				if(s[i]=='.') {
+				if (s[i] == '.') {
 					s[i]=0;
 					dnsmq_name[j]=strlen(ptr);
 					memcpy(dnsmq_name+j+1, ptr, strlen(ptr));
@@ -222,15 +258,15 @@ static int dnsmq_ctrl(struct file *file, const char *buffer, unsigned long lengt
 			dnsmq_name[j]=strlen(ptr);
 			memcpy(dnsmq_name+j+1, ptr, strlen(ptr));
 			dnsmq_name[j+1+strlen(ptr)]=0;
-		}	
+		}
 	}
-	else dnsmq_ip=0;	 
+	else dnsmq_ip=0;
 
 	printk("dnsmq ctrl: %x %s\n", dnsmq_ip, dnsmq_name);
-	
-	if(dnsmq_ip==0) dnsmq_hit_hook_func (NULL);
+
+	if (dnsmq_ip == 0) dnsmq_hit_hook_func (NULL);
 	else dnsmq_hit_hook_func(dnsmq_func);
-	
+
 	return length;
 }
 
@@ -241,7 +277,7 @@ static int __init init(void)
 
 	p = create_proc_entry("dnsmqctrl", 0200, init_net.proc_net);
 
-	if(p) {
+	if (p) {
 		//p->owner = THIS_MODULE;
 		p->write_proc = dnsmq_ctrl;
 	}

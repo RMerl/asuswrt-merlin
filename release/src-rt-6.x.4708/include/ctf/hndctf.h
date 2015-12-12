@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndctf.h 472914 2014-04-25 20:04:32Z $
+ * $Id: hndctf.h 485723 2014-06-17 05:07:54Z $
  */
 
 #ifndef _HNDCTF_H_
@@ -358,7 +358,7 @@ extern ctf_t *_ctf_attach(osl_t *osh, uint8 *name, uint32 *msg_level,
 extern ctf_t *kcih;
 
 /* Hot bridge cache lkup */
-#define MAXBRCHOT		4
+#define MAXBRCHOT		64
 #define MAXBRCHOTIF		4
 #define CTF_BRC_HOT_HASH(da) 	((((uint8 *)da)[4] ^ ((uint8 *)da)[5]) & (MAXBRCHOT - 1))
 #define CTF_HOTBRC_CMP(hbrc, da, rxifp) \

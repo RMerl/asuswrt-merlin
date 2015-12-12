@@ -1,7 +1,7 @@
 /*
  * Broadcom chipcommon NAND flash interface
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nflash.c 419467 2013-08-21 09:19:48Z $
+ * $Id: nflash.c 501990 2014-09-11 10:54:46Z $
  */
 
 #include <typedefs.h>
@@ -224,7 +224,7 @@ nflash_check_id(uint8 *id)
 		break;
 	default:
 //		printf("No NAND flash type found\n");
-		name = " ";
+		name = "Unknown";
 		break;
 	}
 
@@ -353,6 +353,11 @@ nflash_init(si_t *sih)
 		plane_sz = (8 << ((nflash.id[4] >> 4) & 0x7));
 		plane_num = (1 << ((nflash.id[4] >> 2) & 0x3));
 		nflash.size = plane_sz * plane_num;
+
+		/* Spansion S34ML01G1 does not support id[4]. Override flash size to 128MB  */
+		if ((nflash.id[0] == NFL_VENDOR_AMD) &&
+			(nflash.id[1] == 0xf1) && (nflash.id[2] == 0x80) && (nflash.id[3] == 0x1d))
+			nflash.size = 128;
 
 		for (i = 0; i < 32; i++) {
 			if ((0x1 << i) == nflash.size) {

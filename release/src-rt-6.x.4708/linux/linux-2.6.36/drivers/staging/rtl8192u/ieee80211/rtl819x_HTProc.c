@@ -438,7 +438,7 @@ bool HTIOTActIsDisableMCS15(struct ieee80211_device* ieee)
 
 #ifdef TODO
 	// Apply for 819u only
-#if (HAL_CODE_BASE==RTL8192)
+#if HAL_CODE_BASE==RTL8192
 
 #if (DEV_BUS_TYPE == USB_INTERFACE)
 	// Alway disable MCS15 by Jerry Chang's request.by Emily, 2008.04.15

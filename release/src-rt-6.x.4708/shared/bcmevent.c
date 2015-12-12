@@ -1,7 +1,7 @@
 /*
  * bcmevent read-only data shared by kernel or app layers
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -60,9 +60,6 @@ const bcmevent_name_t bcmevent_names[] = {
 	{ WLC_E_ROAM_PREP, "ROAM_PREP" },
 	{ WLC_E_PFN_NET_FOUND, "PFNFOUND_IND" },
 	{ WLC_E_PFN_NET_LOST, "PFNLOST_IND" },
-#if defined(IBSS_PEER_DISCOVERY_EVENT)
-	{ WLC_E_IBSS_ASSOC, "IBSS_ASSOC" },
-#endif /* defined(IBSS_PEER_DISCOVERY_EVENT) */
 	{ WLC_E_RADIO, "RADIO" },
 	{ WLC_E_PSM_WATCHDOG, "PSM_WATCHDOG" },
 	{ WLC_E_PROBREQ_MSG, "PROBE_REQ_MSG" },
@@ -139,21 +136,6 @@ const bcmevent_name_t bcmevent_names[] = {
 #endif /* WLWNM */
 #if defined(WL_PROXDETECT)
 	{ WLC_E_PROXD, "WLC_E_PROXD" },
-#endif
-#ifdef WLAWDL
-	{ WLC_E_AWDL_AW_EXT_END, "WLC_E_AWDL_AW_EXT_END" },
-	{ WLC_E_AWDL_AW_EXT_START, "WLC_E_AWDL_AW_EXT_START"},
-	{ WLC_E_AWDL_AW_START, "WLC_E_AWDL_AW_START" },
-	{ WLC_E_AWDL_RADIO_OFF, "WLC_E_AWDL_RADIO_OFF"},
-	{ WLC_E_AWDL_PEER_STATE, "WLC_E_AWDL_PEER_STATE"},
-	{ WLC_E_AWDL_SYNC_STATE_CHANGED, "WLC_E_AWDL_SYNC_STATE_CHANGED"},
-	{ WLC_E_AWDL_CHIP_RESET, "WLC_E_AWDL_CHIP_RESET"},
-	{ WLC_E_AWDL_INTERLEAVED_SCAN_START, "WLC_E_AWDL_SCAN_INTERLEAVED_START"},
-	{ WLC_E_AWDL_INTERLEAVED_SCAN_STOP, "WLC_E_AWDL_SCAN_INTERLEAVED_STOP" },
-	{ WLC_E_AWDL_PEER_CACHE_CONTROL, "WLC_E_AWDL_PEER_CACHE_CONTROL" },
-	{ WLC_E_CSA_START_IND, "WLC_E_CSA_START_IND" },
-	{ WLC_E_CSA_DONE_IND, "WLC_E_CSA_DONE_IND" },
-	{ WLC_E_CSA_FAILURE_IND, "WLC_E_CSA_FAILURE_IND" },
 #endif
 	{ WLC_E_CCA_CHAN_QUAL, "CCA_BASED_CHANNEL_QUALITY" },
 	{ WLC_E_BSSID, "BSSID_CHANGED" },

@@ -396,7 +396,7 @@ static comp_t encode_comp_t(unsigned long value)
 	return exp;
 }
 
-#if ACCT_VERSION==1==2
+#if ACCT_VERSION==1
 /*
  * encode an u64 into a comp2_t (24 bits)
  *
@@ -516,7 +516,7 @@ static void do_acct_process(struct bsd_acct_struct *acct,
 	ac.ac_etime = encode_comp_t(elapsed < (unsigned long) -1l ?
 	                       (unsigned long) elapsed : (unsigned long) -1l);
 #endif
-#if ACCT_VERSION==1==2
+#if ACCT_VERSION==1
 	{
 		/* new enlarged etime field */
 		comp2_t etime = encode_comp2_t(elapsed);
@@ -532,7 +532,7 @@ static void do_acct_process(struct bsd_acct_struct *acct,
 #if ACCT_VERSION==2
 	ac.ac_ahz = AHZ;
 #endif
-#if ACCT_VERSION==1==2
+#if ACCT_VERSION==1
 	/* backward-compatible 16 bit fields */
 	ac.ac_uid16 = ac.ac_uid;
 	ac.ac_gid16 = ac.ac_gid;

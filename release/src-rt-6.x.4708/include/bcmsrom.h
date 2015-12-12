@@ -1,7 +1,7 @@
 /*
  * Misc useful routines to access NIC local SROM/OTP .
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,13 +15,20 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom.h 419467 2013-08-21 09:19:48Z $
+ * $Id: bcmsrom.h 499106 2014-08-27 15:15:26Z $
  */
 
 #ifndef	_bcmsrom_h_
 #define	_bcmsrom_h_
 
 #include <bcmsrom_fmt.h>
+
+#if defined(BCMDBG_ERR) || defined(WLTEST)
+#define	BS_ERROR(args)	printf args
+#else
+#define	BS_ERROR(args)
+#endif
+
 
 /* Prototypes */
 extern int srom_var_init(si_t *sih, uint bus, void *curmap, osl_t *osh,

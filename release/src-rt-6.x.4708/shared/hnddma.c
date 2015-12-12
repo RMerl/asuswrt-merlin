@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA module.
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hnddma.c 442497 2013-12-11 19:47:56Z $
+ * $Id: hnddma.c 497985 2014-08-21 10:43:51Z $
  */
 
 #include <bcm_cfg.h>
@@ -160,6 +160,10 @@ typedef struct dma_info {
 	uint16		rs0cd;		/* cached value of rcvstatus0 currdescr */
 	uint16		xs0cd;		/* cached value of xmtstatus0 currdescr */
 	uint16		xs0cd_snapshot;	/* snapshot of xmtstatus0 currdescr */
+#ifdef BCM_SECURE_DMA
+	struct sec_cma_info sec_cma_info_rx;
+	struct sec_cma_info sec_cma_info_tx;
+#endif
 } dma_info_t;
 
 /*
@@ -849,7 +853,12 @@ dma64_dd_upd(dma_info_t *di, dma64dd_t *ddring, dmaaddr_t pa, uint outidx, uint3
 	}
 
 #if defined(BCM47XX_CA9) && !defined(__NetBSD__)
+#ifndef BCM_SECURE_DMA
 	DMA_MAP(di->osh, (void *)(((uint)(&ddring[outidx])) & ~0x1f), 32, DMA_TX, NULL, NULL);
+#else
+	SECURE_DMA_DD_MAP(di->osh, (void *)(((uint)(&ddring[outidx])) & ~0x1f),
+		32, DMA_TX, NULL, NULL);
+#endif
 #endif /* BCM47XX_CA9 && !__NetBSD__ */
 }
 
@@ -1397,11 +1406,14 @@ _dma_rxfill(dma_info_t *di)
 
 		if (DMASGLIST_ENAB)
 			bzero(&di->rxp_dmah[rxout], sizeof(hnddma_seg_map_t));
-
+#ifdef BCM_SECURE_DMA
+		pa = SECURE_DMA_MAP(di->osh, PKTDATA(di->osh, p), di->rxbufsize, DMA_RX,
+			NULL, NULL, &di->sec_cma_info_rx, 0);
+#else
 		pa = DMA_MAP(di->osh, PKTDATA(di->osh, p),
 		              di->rxbufsize, DMA_RX, p,
 		              &di->rxp_dmah[rxout]);
-
+#endif
 		ASSERT(ISALIGNED(PHYSADDRLO(pa), 4));
 
 		/* save the free packet pointer */
@@ -2245,8 +2257,12 @@ dma32_txfast(dma_info_t *di, void *p0, bool commit)
 			bzero(&di->txp_dmah[txout], sizeof(hnddma_seg_map_t));
 
 		/* get physical address of buffer start */
+#ifdef BCM_SECURE_DMA
+		pa = SECURE_DMA_MAP(di->osh, data, len, DMA_TX, p, &di->txp_dmah[txout],
+			&di->sec_cma_info_tx, 0);
+#else
 		pa = DMA_MAP(di->osh, data, len, DMA_TX, p, &di->txp_dmah[txout]);
-
+#endif
 		if (DMASGLIST_ENAB) {
 			map = &di->txp_dmah[txout];
 
@@ -2395,8 +2411,11 @@ dma32_getnexttxp(dma_info_t *di, txd_range_t range)
 			if (j > 1)
 				i = NEXTTXD(i);
 		}
-
+#ifdef BCM_SECURE_DMA
+		SECURE_DMA_UNMAP(di->osh, pa, size, DMA_TX, NULL, NULL, &di->sec_cma_info_tx, 0);
+#else
 		DMA_UNMAP(di->osh, pa, size, DMA_TX, txp, map);
+#endif
 	}
 
 	di->txin = i;
@@ -2446,8 +2465,12 @@ dma32_getnextrxp(dma_info_t *di, bool forceall)
 	PHYSADDRHISET(pa, 0);
 
 	/* clear this packet from the descriptor ring */
+#ifdef BCM_SECURE_DMA
+	SECURE_DMA_UNMAP(di->osh, pa, di->rxbufsize, DMA_RX, NULL, NULL, &di->sec_cma_info_rx, 0);
+#else
 	DMA_UNMAP(di->osh, pa,
 	          di->rxbufsize, DMA_RX, rxp, &di->rxp_dmah[i]);
+#endif
 
 	W_SM(&di->rxd32[i].addr, 0xdeadbeef);
 
@@ -2884,8 +2907,11 @@ dma64_txunframed(dma_info_t *di, void *buf, uint len, bool commit)
 
 	if (len == 0)
 		return 0;
-
+#ifdef BCM_SECURE_DMA
+	pa = SECURE_DMA_MAP(di->osh, buf, len, DMA_TX, NULL, NULL, &di->sec_cma_info_tx, 0);
+#else
 	pa = DMA_MAP(di->osh, buf, len, DMA_TX, NULL, &di->txp_dmah[txout]);
+#endif
 
 	flags = (D64_CTRL1_SOF | D64_CTRL1_IOC | D64_CTRL1_EOF);
 
@@ -2967,7 +2993,19 @@ dma64_txfast(dma_info_t *di, void *p0, bool commit)
 		if (DMASGLIST_ENAB)
 			bzero(&di->txp_dmah[txout], sizeof(hnddma_seg_map_t));
 
+#ifdef BCM_SECURE_DMA
+
+		if (DMASGLIST_ENAB) {
+			pa = SECURE_DMA_MAP(di->osh, data, len, DMA_TX, p, &di->txp_dmah[txout],
+				&di->sec_cma_info_tx, 0);
+		}
+		else {
+			pa = SECURE_DMA_MAP(di->osh, data, len, DMA_TX, NULL, NULL,
+				&di->sec_cma_info_tx, 0);
+		}
+#else
 		pa = DMA_MAP(di->osh, data, len, DMA_TX, p, &di->txp_dmah[txout]);
+#endif
 
 		if (DMASGLIST_ENAB) {
 			map = &di->txp_dmah[txout];
@@ -3142,7 +3180,8 @@ dma64_getnexttxp(dma_info_t *di, txd_range_t range)
 		hnddma_seg_map_t *map = NULL;
 		uint size, j, nsegs;
 
-#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__))
+#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__)) || \
+	defined(BCM_SECURE_DMA)
 		dmaaddr_t pa;
 		PHYSADDRLOSET(pa, (BUS_SWAP32(R_SM(&di->txd64[i].addrlow)) - di->dataoffsetlow));
 		PHYSADDRHISET(pa, (BUS_SWAP32(R_SM(&di->txd64[i].addrhigh)) - di->dataoffsethigh));
@@ -3157,7 +3196,8 @@ dma64_getnexttxp(dma_info_t *di, txd_range_t range)
 				break;
 			}
 		} else {
-#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__))
+#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__)) || \
+	defined(BCM_SECURE_DMA)
 			size = (BUS_SWAP32(R_SM(&di->txd64[i].ctrl2)) & D64_CTRL2_BC_MASK);
 #endif
 			nsegs = 1;
@@ -3177,6 +3217,10 @@ dma64_getnexttxp(dma_info_t *di, txd_range_t range)
 
 #if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__))
 		DMA_UNMAP(di->osh, pa, size, DMA_TX, txp, map);
+#endif
+
+#ifdef BCM_SECURE_DMA
+	SECURE_DMA_UNMAP(di->osh, pa, size, DMA_TX, NULL, NULL, &di->sec_cma_info_tx, 0);
 #endif
 	}
 
@@ -3198,7 +3242,8 @@ dma64_getnextrxp(dma_info_t *di, bool forceall)
 {
 	uint16 i, curr;
 	void *rxp;
-#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__))
+#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__)) || \
+	defined(BCM_SECURE_DMA)
 	dmaaddr_t pa;
 #endif
 
@@ -3227,13 +3272,18 @@ dma64_getnextrxp(dma_info_t *di, bool forceall)
 	ASSERT(rxp);
 	di->rxp[i] = NULL;
 
-#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__))
+#if ((!defined(__mips__) && !defined(BCM47XX_CA9)) || defined(__NetBSD__)) || \
+	defined(BCM_SECURE_DMA)
 	PHYSADDRLOSET(pa, (BUS_SWAP32(R_SM(&di->rxd64[i].addrlow)) - di->dataoffsetlow));
 	PHYSADDRHISET(pa, (BUS_SWAP32(R_SM(&di->rxd64[i].addrhigh)) - di->dataoffsethigh));
 
 	/* clear this packet from the descriptor ring */
+#ifdef BCM_SECURE_DMA
+	SECURE_DMA_UNMAP(di->osh, pa, di->rxbufsize, DMA_RX, NULL, NULL, &di->sec_cma_info_rx, 0);
+#else
 	DMA_UNMAP(di->osh, pa,
 	          di->rxbufsize, DMA_RX, rxp, &di->rxp_dmah[i]);
+#endif
 
 	W_SM(&di->rxd64[i].addrlow, 0xdeadbeef);
 	W_SM(&di->rxd64[i].addrhigh, 0xdeadbeef);

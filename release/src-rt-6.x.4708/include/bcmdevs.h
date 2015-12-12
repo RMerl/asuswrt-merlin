@@ -1,7 +1,7 @@
 /*
  * Broadcom device-specific manifest constants.
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdevs.h 473931 2014-04-30 04:10:44Z $
+ * $Id: bcmdevs.h 542850 2015-03-21 04:06:48Z $
  */
 
 #ifndef	_BCMDEVS_H
@@ -227,7 +227,7 @@
 #define	BCM4716_DEVICE_ID	0x4722		/* 4716 base devid */
 #define	BCM47XX_USB30H_ID	0x472a		/* 47xx usb 3.0 host */
 #define	BCM47XX_USB30D_ID	0x472b		/* 47xx usb 3.0 device */
-#define	BCM47XX_SDIO3H_ID	0x472c		/* 47xx sdio 3 host */
+#define BCM47XX_SDIO3H_ID	0x472c		/* 47xx sdio 3 host */
 #define BCM47XX_SMBUS_EMU_ID	0x47fe		/* 47xx emulated SMBus device */
 #define	BCM47XX_XOR_EMU_ID	0x47ff		/* 47xx emulated XOR engine */
 #define	EPI41210_DEVICE_ID	0xa0fa		/* bcm4210 */
@@ -303,8 +303,11 @@
 #define	BCM4704_CHIP_ID		0x4704		/* 4704 chipcommon chipid */
 #define	BCM4706_CHIP_ID		0x5300		/* 4706 chipcommon chipid */
 #define BCM4707_CHIP_ID		53010		/* 4707 chipcommon chipid */
+#define BCM47094_CHIP_ID	53030		/* 4707 chipcommon chipid */
 #define BCM53018_CHIP_ID	53018		/* 53018 chipcommon chipid */
-#define BCM4707_CHIP(chipid)	(((chipid) == BCM4707_CHIP_ID) || ((chipid) == BCM53018_CHIP_ID))
+#define BCM4707_CHIP(chipid)	(((chipid) == BCM4707_CHIP_ID) || \
+				((chipid) == BCM53018_CHIP_ID) || \
+				((chipid) == BCM47094_CHIP_ID))
 #define	BCM4710_CHIP_ID		0x4710		/* 4710 chipid */
 #define	BCM4712_CHIP_ID		0x4712		/* 4712 chipcommon chipid */
 #define	BCM4716_CHIP_ID		0x4716		/* 4716 chipcommon chipid */

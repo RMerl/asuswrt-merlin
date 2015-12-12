@@ -2,7 +2,7 @@
  * Misc utility routines for accessing PMU corerev specific features
  * of the SiliconBackplane-based Broadcom chips.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndpmu.c 419467 2013-08-21 09:19:48Z $
+ * $Id: hndpmu.c 504082 2014-09-22 22:55:26Z $
  */
 
 /*
@@ -633,7 +633,11 @@ BCMINITFN(si_pmu_fast_pwrup_delay)(si_t *sih, osl_t *osh)
 		break;
 	case BCM4360_CHIP_ID:
 	case BCM4352_CHIP_ID:
-		pmudelay = ISSIM_ENAB(sih) ? 70 : 1000;
+		if (CHIPREV(sih->chiprev) < 4) {
+			pmudelay = ISSIM_ENAB(sih) ? 70 : 1500;
+		} else {
+			pmudelay = ISSIM_ENAB(sih) ? 70 : 3000;
+		}
 		break;
 	case BCM4328_CHIP_ID:
 		pmudelay = 7000;
@@ -1745,7 +1749,20 @@ static const pmu_res_depend_t BCMATTACHDATA(bcm4350_res_depend)[] = {
 
 
 static const pmu_res_updown_t BCMATTACHDATA(bcm4360_res_updown)[] = {
-	{RES4360_BBPLLPWRSW_PU,		0x00100001}
+	{RES4360_BBPLLPWRSW_PU,		0x00200001}
+};
+
+static const pmu_res_updown_t BCMATTACHDATA(bcm4360B1_res_updown)[] = {
+	/* Need to change elements here, should get default values for this - 4360B1 */
+	{RES4360_REGULATOR,		0x00000001}, /* 0 */
+	{RES4360_ILP_AVAIL,		0x00000001},
+	{RES4360_ILP_REQ,		0x00000001},
+	{RES4360_XTAL_LDO_PU,		0x00000001},
+	{RES4360_XTAL_PU,		0x00860002}, /* Changed for 4360B1 */
+	{RES4360_ALP_AVAIL,		0x00000000},
+	{RES4360_BBPLLPWRSW_PU,		0x00020001}, /* Changed for 4360B1 */
+	{RES4360_HT_AVAIL,		0x00080001}, /* Changed for 4360B1 */
+	{RES4360_OTP_PU,		0x00000000}
 };
 
 static const pmu_res_depend_t BCMATTACHDATA(bcm4324a0_res_depend)[] = {
@@ -1987,9 +2004,14 @@ si_pmu_res_masks(si_t *sih, uint32 *pmin, uint32 *pmax)
 		/* use chip default */
 		break;
 
-	case BCM4360_CHIP_ID:
-	case BCM43460_CHIP_ID:
+	case BCM4360_CHIP_ID: /* 4360B1 */
 	case BCM4352_CHIP_ID:
+		if (CHIPREV(sih->chiprev) >= 0x4) {
+			min_mask = 0x103;
+		}
+		/* Continue - Don't break */
+	case BCM43460_CHIP_ID:
+
 	case BCM43526_CHIP_ID:
 		if (CHIPREV(sih->chiprev) >= 0x3) {
 			int cst_ht = CST4360_RSRC_INIT_MODE(sih->chipst) & 0x1;
@@ -2409,8 +2431,14 @@ BCMATTACHFN(si_pmu_res_init)(si_t *sih, osl_t *osh)
 		break;
 	case BCM4360_CHIP_ID:
 	case BCM4352_CHIP_ID:
-		pmu_res_updown_table = bcm4360_res_updown;
-		pmu_res_updown_table_sz = ARRAYSIZE(bcm4360_res_updown);
+		if (CHIPREV(sih->chiprev) < 4) {
+			pmu_res_updown_table = bcm4360_res_updown;
+			pmu_res_updown_table_sz = ARRAYSIZE(bcm4360_res_updown);
+		} else {
+			/* FOR 4360B1 */
+			pmu_res_updown_table = bcm4360B1_res_updown;
+			pmu_res_updown_table_sz = ARRAYSIZE(bcm4360B1_res_updown);
+		}
 		break;
 	case BCM43143_CHIP_ID:
 		/* POR values for up/down and dependency tables are sufficient. */
@@ -2529,14 +2557,37 @@ BCMATTACHFN(si_pmu_res_init)(si_t *sih, osl_t *osh)
 
 #ifndef BCMPCIDEV
 	if (((CHIPID(sih->chip) == BCM4360_CHIP_ID) || (CHIPID(sih->chip) == BCM4352_CHIP_ID)) &&
-	    (CHIPREV(sih->chiprev) < 4) &&
-	    ((CST4360_RSRC_INIT_MODE(sih->chipst) & 1) == 0)) {
+		(CHIPREV(sih->chiprev) < 4) &&
+		((CST4360_RSRC_INIT_MODE(sih->chipst) & 1) == 0)) {
 		/* BBPLL */
 		W_REG(osh, &cc->pllcontrol_addr, 6);
-		W_REG(osh, &cc->pllcontrol_data, 0x09048560);
+		W_REG(osh, &cc->pllcontrol_data, 0x09048562);
 		/* AVB PLL */
 		W_REG(osh, &cc->pllcontrol_addr, 14);
-		W_REG(osh, &cc->pllcontrol_data, 0x09048560);
+		W_REG(osh, &cc->pllcontrol_data, 0x09048562);
+		si_pmu_pllupd(sih);
+	} else if (((CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+		(CHIPID(sih->chip) == BCM4352_CHIP_ID)) &&
+		(CHIPREV(sih->chiprev) >= 4) &&
+		((CST4360_RSRC_INIT_MODE(sih->chipst) & 1) == 0)) {
+		/* Changes for 4360B1 */
+
+		/* Enable REFCLK bit 11 */
+		W_REG(osh, &cc->chipcontrol_addr, 1);
+		OR_REG(osh, &cc->chipcontrol_data, 0x800);
+		/* BBPLL */
+		W_REG(osh, &cc->pllcontrol_addr, 6);
+		W_REG(osh, &cc->pllcontrol_data, 0x080004e2);
+
+		W_REG(osh, &cc->pllcontrol_addr, 7);
+		W_REG(osh, &cc->pllcontrol_data, 0xE);
+		/* AVB PLL */
+		W_REG(osh, &cc->pllcontrol_addr, 14);
+		W_REG(osh, &cc->pllcontrol_data, 0x080004e2);
+
+		W_REG(osh, &cc->pllcontrol_addr, 15);
+		W_REG(osh, &cc->pllcontrol_data, 0xE);
+
 		si_pmu_pllupd(sih);
 	}
 #endif /* BCMPCIDEV */
@@ -2573,6 +2624,16 @@ BCMATTACHFN(si_pmu_res_init)(si_t *sih, osl_t *osh)
 	if (max_mask) {
 		PMU_MSG(("Changing max_res_mask to 0x%x\n", max_mask));
 		W_REG(osh, &cc->max_res_mask, max_mask);
+	}
+
+	/* request htavail thru pcie core */
+	if (((CHIPID(sih->chip) == BCM4360_CHIP_ID) || (CHIPID(sih->chip) == BCM4352_CHIP_ID)) &&
+	    (BUSTYPE(sih->bustype) == PCI_BUS) &&
+	    (CHIPREV(sih->chiprev) < 4)) {
+		uint32 pcie_clk_ctl_st;
+
+		pcie_clk_ctl_st = si_corereg(sih, 3, 0x1e0, 0, 0);
+		si_corereg(sih, 3, 0x1e0, ~0, (pcie_clk_ctl_st | CCS_HTAREQ));
 	}
 
 	si_pmu_wait_for_steady_state(osh, cc);

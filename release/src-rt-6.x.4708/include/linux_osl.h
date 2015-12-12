@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.h 469495 2014-04-10 14:25:54Z $
+ * $Id: linux_osl.h 532344 2015-02-05 19:21:37Z $
  */
 
 #ifndef _linux_osl_h_
@@ -73,8 +73,12 @@ extern void osl_pci_write_config(osl_t *osh, uint offset, uint size, uint val);
 /* PCI device bus # and slot # */
 #define OSL_PCI_BUS(osh)	osl_pci_bus(osh)
 #define OSL_PCI_SLOT(osh)	osl_pci_slot(osh)
+#define OSL_PCIE_DOMAIN(osh)	osl_pcie_domain(osh)
+#define OSL_PCIE_BUS(osh)	osl_pcie_bus(osh)
 extern uint osl_pci_bus(osl_t *osh);
 extern uint osl_pci_slot(osl_t *osh);
+extern uint osl_pcie_domain(osl_t *osh);
+extern uint osl_pcie_bus(osl_t *osh);
 extern struct pci_dev *osl_pci_device(osl_t *osh);
 
 /* Pkttag flag should be part of public information */
@@ -142,6 +146,7 @@ extern uint osl_malloc_failed(osl_t *osh);
 
 extern uint osl_dma_consistent_align(void);
 extern void *osl_dma_alloc_consistent(osl_t *osh, uint size, uint16 align, uint *tot, ulong *pap);
+extern void osl_sec_cma_baseaddr_memsize(osl_t *osh, dma_addr_t *cma_baseaddr, uint32 *cma_memsize);
 extern void osl_dma_free_consistent(osl_t *osh, void *va, uint size, ulong pa);
 
 /* map/unmap direction */
@@ -151,6 +156,11 @@ extern void osl_dma_free_consistent(osl_t *osh, void *va, uint size, ulong pa);
 /* map/unmap shared (dma-able) memory */
 #define	DMA_UNMAP(osh, pa, size, direction, p, dmah) \
 	osl_dma_unmap((osh), (pa), (size), (direction))
+#define	SECURE_DMA_UNMAP(osh, pa, size, direction, p, dmah, pcma, offset) \
+	osl_sec_dma_unmap((osh), (pa), (size), (direction), (p), (dmah), (pcma), (offset))
+
+#define PHYS_TO_PAGE(pa) pfn_to_page(PFN_DOWN((u32)pa))
+
 extern uint osl_dma_map(osl_t *osh, void *va, uint size, int direction, void *p,
 	hnddma_seg_map_t *txp_dmah);
 extern void osl_dma_unmap(osl_t *osh, uint pa, uint size, int direction);
@@ -961,6 +971,11 @@ extern uint osl_pktalloced(osl_t *osh);
 	} \
 	osl_dma_map((osh), (va), sz, (direction), (p), (dmah)); \
 })
+#define	SECURE_DMA_MAP(osh, va, size, direction, p, dmah, pcma, offset) \
+	osl_sec_dma_map((osh), (va), (size), (direction), (p), (dmah), (pcma), (offset))
+#define	SECURE_DMA_DD_MAP(osh, va, size, direction, p, dmah) \
+	osl_sec_dma_dd_map((osh), (va), (size), (direction), (p), (dmah))
+
 #if defined(__mips__)
 #define	_DMA_MAP(osh, va, size, direction, p, dmah) \
 	dma_cache_inv((uint)(va), (size))
@@ -975,6 +990,10 @@ extern uint osl_pktalloced(osl_t *osh);
 #else /* CTFMAP */
 #define	DMA_MAP(osh, va, size, direction, p, dmah) \
 	osl_dma_map((osh), (va), (size), (direction), (p), (dmah))
+#define	SECURE_DMA_MAP(osh, va, size, direction, p, dmah, pcma, offset) \
+		osl_sec_dma_map((osh), (va), (size), (direction), (p), (dmah), (pcma), (offset))
+#define	SECURE_DMA_DD_MAP(osh, va, size, direction, p, dmah) \
+	osl_sec_dma_dd_map((osh), (va), (size), (direction), (p), (dmah))
 #endif /* CTFMAP */
 
 #ifdef PKTC
@@ -1055,4 +1074,63 @@ extern int bcmp(const void *b1, const void *b2, size_t len);
 extern void bzero(void *b, size_t len);
 #endif /* ! BCMDRIVER */
 
+#ifdef BCM_SECURE_DMA
+
+#define CMA_BUFSIZE_4K	4096
+#define CMA_BUFSIZE_2K	2048
+#define CMA_BUFSIZE_512	512
+
+#define	CMA_BUFNUM		2048
+#define CMA_DMA_DESC_MEMBLOCK	(0x80000)	/* 512K bytes */
+#define CMA_DMA_DATA_MEMBLOCK	(CMA_BUFSIZE_4K*CMA_BUFNUM)		/* 2048 page size buffers */
+#define	CMA_MEMBLOCK		(CMA_DMA_DESC_MEMBLOCK + CMA_DMA_DATA_MEMBLOCK)
+#if defined(__ARM_ARCH_7A__)
+#define CONT_ARMREGION	0x02		/* Region CMA */
+#else
+#define CONT_MIPREGION	0x00		/* To access the MIPs mem, Not yet... */
+#endif
+
+#define SEC_DMA_ALIGN	(1<<16)
+typedef struct sec_mem_elem {
+	size_t			size;
+	int				direction;
+	phys_addr_t		pa_cma; 	/* physical  address */
+	void			*va;     	/* virtual address of driver pkt */
+	dma_addr_t		dma_handle; /* bus address assign by linux */
+	void			*vac;       /* virtual address of cma buffer */
+	struct	sec_mem_elem	*next;
+} sec_mem_elem_t;
+
+typedef struct sec_cma_info {
+	struct sec_mem_elem *sec_alloc_list;
+	struct sec_mem_elem *sec_alloc_list_tail;
+} sec_cma_info_t;
+
+extern void osl_sec_dma_setup_contig_mem(osl_t *osh, unsigned long memsize, int regn);
+extern int osl_sec_dma_alloc_contig_mem(osl_t *osh, unsigned long memsize, int regn);
+extern int osl_sec_dma_alloc_mips_contig_mem(osl_t *osh, unsigned long memsize, int regn);
+extern void osl_sec_dma_init_elem_mem_block(osl_t *osh, size_t mbsize, int max,
+	sec_mem_elem_t **list);
+extern sec_mem_elem_t *osl_sec_dma_alloc_mem_elem(osl_t *osh, void *va, uint size,
+	int direction, struct sec_cma_info *ptr_cma_info, uint offset);
+extern void osl_sec_dma_free_mem_elem(osl_t *osh, sec_mem_elem_t *sec_mem_elem);
+extern sec_mem_elem_t *osl_sec_dma_find_elem(osl_t *osh, struct sec_cma_info *ptr_cma_info,
+	void *va);
+extern sec_mem_elem_t *osl_sec_dma_find_rem_elem(osl_t *osh, struct sec_cma_info *ptr_cma_info,
+	dma_addr_t dma_handle);
+extern dma_addr_t osl_sec_dma_map(osl_t *osh, void *va, uint size, int direction, void *p,
+	hnddma_seg_map_t *dmah, void *ptr_cma_info, uint offset);
+extern dma_addr_t osl_sec_dma_dd_map(osl_t *osh, void *va, uint size, int direction, void *p,
+	hnddma_seg_map_t *dmah);
+extern void osl_sec_dma_unmap(osl_t *osh, dma_addr_t dma_handle, uint size, int direction,
+	void *p, hnddma_seg_map_t *map, void *ptr_cma_info, uint offset);
+extern void *osl_sec_dma_ioremap(osl_t *osh, struct page *page, size_t size, bool iscache,
+	bool isdecr);
+extern void osl_sec_dma_deinit_elem_mem_block(osl_t *osh, size_t mbsize, int max,
+	void *sec_list_base);
+extern void osl_sec_dma_free_contig_mem(osl_t *osh, u32 memsize, int regn);
+extern void osl_sec_dma_iounmap(osl_t *osh, void *contig_base_va, size_t size);
+extern void *osl_sec_dma_alloc_consistent(osl_t *osh, uint size, uint16 align_bits, ulong *pap);
+
+#endif /* BCM_SECURE_DMA */
 #endif	/* _linux_osl_h_ */

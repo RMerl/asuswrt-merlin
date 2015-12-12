@@ -2,7 +2,7 @@
  * Code copied from openssl distribution and
  * Modified just enough so that compiles and runs standalone
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hmac_sha256.c 281526 2011-09-02 17:10:12Z $
+ * $Id: hmac_sha256.c 507064 2014-10-08 09:00:43Z $
  */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -164,11 +164,12 @@ hmac_sha256_n(const void *key, int key_len,
 
 	memcpy(&data[data_len], text, text_len);
 	data_len += (int)text_len;
-	memcpy(&data[data_len], (uchar *)&digest_bitlen, sizeof(uint16));
-	data_len += sizeof(uint16);
+	data[data_len++] = digest_bitlen & 0xFF;
+	data[data_len++] = (digest_bitlen >> 8) & 0xFF;
 
 	for (i = 0; i < ((int)digest_len + SHA256_DIGEST_LENGTH - 1) / SHA256_DIGEST_LENGTH; i++) {
-		*(uint16 *)data = (uint16) i + 1;
+		data[0] = (i + 1) & 0xFF;
+		data[1] = ((i + 1) >> 8) & 0xFF;
 		hmac_sha256(key, key_len, data, data_len, digest_tmp, NULL);
 		memcpy(&digest[(i*SHA256_DIGEST_LENGTH)], digest_tmp, SHA256_DIGEST_LENGTH);
 	}

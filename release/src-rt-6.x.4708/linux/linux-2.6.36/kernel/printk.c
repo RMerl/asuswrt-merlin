@@ -274,8 +274,8 @@ void dump_previous_oops(void)
 			printk("%c", local_buf[i]);
 		printk("\n____________________________________________________________________________\n");
 
-		memcpy(local_buf, oopsbuf->buf, oopsbuf->len);
-		local_buf_len = oopsbuf->len;
+		memset(local_buf, 0, oopsbuf->len);
+		local_buf_len = 0;
 	}
 }
 EXPORT_SYMBOL(dump_previous_oops);

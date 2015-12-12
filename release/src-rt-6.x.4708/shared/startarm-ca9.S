@@ -1,7 +1,7 @@
 /*
  * BCM53XXX ARM/Cortext A9 boot code for standalone apps.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -4386,9 +4386,16 @@ l2cc_init:
 	ldr	r2,[r1,r2]
 	ldr	r1,=CID_ID_MASK
 	and	r2,r2,r1
+	ldr	r1,=0xcf12	/* NS Ax/Bx */
+	cmp	r2,r1
+	beq	l2cc_256k
+	ldr	r1,=0xcf26
+	cmp	r2,r1
+	beq	l2cc_256k
 	ldr	r1,=0xcf19
 	cmp	r2,r1
 	bge	l2cc_512k
+l2cc_256k:
 	ldr	r1,=0x0a130000
 	ldr	r4,=0x111
 	b	l2cc_inv
