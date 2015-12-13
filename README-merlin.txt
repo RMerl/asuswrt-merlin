@@ -56,7 +56,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.380_858 source code from Asus
+   - Based on 3.0.0.4.380_1031 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -88,7 +88,7 @@ Networking:
    - Advanced OpenVPN client and server support
    - Netfilter ipset module, for efficient blacklist implementation
    - Configurable min/max UPNP ports
-   - IPSec kernel support (N16/N66/AC66 only)
+   - IPSec kernel support (N66/AC66 only)
    - DNS-based Filtering, can be applied globally or per client
    - Custom DDNS (through a user script)
    - Advanced NAT loopback (as an alternative to the default one)
@@ -172,11 +172,6 @@ to have a USB disk plugged in.  This space will survive reboots (but it
 flashing!).  It will also be available fairly early at boot (before 
 USB disks).
 
-The option is enabled by default.  You can however disable it (NOT
-recommended, as various features such as the Traffic Analyzer 
-will depend on it), or, reformat it from the 
-Administration -> System page.
-
 On that page you will also find an option called "Enable custom 
 scripts and configs".  If you intend to use custom scripts or 
 config files, then you need to enable this option.  This is not 
@@ -191,6 +186,8 @@ rarely get written to.  Storing files that constantly get written
 to (like very busy logfiles) is NOT recommended - use a 
 USB disk for that.
 
+You can backup and restore the content of the JFFS2 partition, 
+from the same page you can backup/restore the router configuration.
 
 
 ** User scripts **
@@ -408,6 +405,7 @@ The list of available config overrides:
         through init-start first if it doesn't exist!)
  * group, gshadow, passwd, shadow (only .add versions supported)
  * hosts (for /etc/hosts)
+ * igmpproxy.conf
  * minidlna.conf
  * mt-daap.service
  * pptpd.conf
@@ -459,9 +457,10 @@ The list of available postconf scripts is:
  * group.postconf
  * gshadow.postconf
  * hosts.postconf
+ * igmpproxy.postconf
  * minidlna.postconf
  * mt-daap.postconf
- * openvpnclient1.postconf (and openvpnclient2.postconf)
+ * openvpnclient1.postconf (up to openvpnclient5.postconf)
  * openvpnserver1.postconf (and openvpnserver2.postconf)
  * passwd.postconf
  * pptpd.postconf
@@ -555,9 +554,6 @@ Access your router through SSH/Telnet, and run
 Note that Entware requires the JFFS partition to be enabled, and an 
 ext2/ext3/ext4 formatted USB disk (NTFS, HFS+ and FAT32 are not supported).
 
-Since 378.51 Entware also has a ARM-based repository, for 
-AC56/AC68/AC87/AC3200 routers, provided by Zyxmon.
-
 
 
 ** DNSFilter **
@@ -592,7 +588,7 @@ the default filter to "None", and only filter out specific devices.
 
 ** Layer7-based Netfilter module **
 Support for layer7 rules in iptables has been enabled on MIPS-based
-routers (RT-N16/N66/AC66).  You will need to manually configure the 
+routers (RT-N66/AC66).  You will need to manually configure the 
 iptables rules to make use of it - there is no web interface exposing 
 this.  The defined protocols can be found in /etc/l7-protocols.
 
