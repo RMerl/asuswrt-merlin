@@ -136,22 +136,22 @@ openvpn_unit = '<% nvram_get("vpn_client_unit"); %>';
 
 switch (openvpn_unit) {
 	case "1":
-		client_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
+		client_state = (<% sysinfo("pid.vpnclient1"); %> > 0 ? 2 : 0);
 		break;
 	case "2":
-		client_state = (<% sysinfo("pid.vpnclient2"); %> > 0);
+		client_state = (<% sysinfo("pid.vpnclient2"); %> > 0 ? 2 : 0);
 		break;
 	case "3":
-		client_state = (<% sysinfo("pid.vpnclient3"); %> > 0);
+		client_state = (<% sysinfo("pid.vpnclient3"); %> > 0 ? 2 : 0);
 		break;
 	case "4":
-		client_state = (<% sysinfo("pid.vpnclient4"); %> > 0);
+		client_state = (<% sysinfo("pid.vpnclient4"); %> > 0 ? 2 : 0);
 		break;
 	case "5":
-		client_state = (<% sysinfo("pid.vpnclient5"); %> > 0);
+		client_state = (<% sysinfo("pid.vpnclient5"); %> > 0 ? 2 : 0);
 		break;
 	default:
-		client_state = false;
+		client_state = 0;
 		break;
 }
 
@@ -449,7 +449,7 @@ function cal_panel_block(){
 function applyRule(){
 	showLoading();
 
-	if (client_state) {
+	if (client_state != 0) {
 		document.form.action_script.value = "restart_vpnclient"+openvpn_unit;
 	}
 
@@ -486,7 +486,7 @@ function applyRule(){
 
 	if (((enforce_ori != getRadioValue(document.form.vpn_client_enforce)) ||
 	     (policy_ori != document.form.vpn_client_rgw.value)) &&
-	    (!client_state))
+	    (client_state == 0))
 		document.form.action_script.value += "start_vpnrouting"+openvpn_unit;
 
 	document.form.submit();
@@ -944,7 +944,7 @@ function getConnStatus() {
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
 							<script type="text/javascript">
 
-								$('#radio_service_enable').iphoneSwitch((client_state!=0),
+								$('#radio_service_enable').iphoneSwitch((client_state > 0),
 									 function() {
 										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
 										parent.showLoading();
