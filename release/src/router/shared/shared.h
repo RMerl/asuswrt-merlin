@@ -438,9 +438,27 @@ enum led_id {
 	LED_SIG3,
 	LED_SIG4,
 #endif
+#if (defined(PLN12) || defined(PLAC56))
+	PLC_WAKE,
+	LED_POWER_RED,
+	LED_2G_GREEN,
+	LED_2G_ORANGE,
+	LED_2G_RED,
+	LED_5G_GREEN,
+	LED_5G_ORANGE,
+	LED_5G_RED,
+#endif
+#ifdef RTCONFIG_MMC_LED
+	LED_MMC,
+#endif
+#ifdef RTCONFIG_RESET_SWITCH
+	LED_RESET_SWITCH,
+#endif
+#ifdef RTAC5300
+	RPM_FAN,	/* use to control FAN RPM (Hi/Lo) */
+#endif
 	LED_SWITCH,
 	LED_5G_FORCED,	/* Will handle ledbh & nvram flag */
-
 	LED_ID_MAX,	/* last item */
 };
 
@@ -511,25 +529,6 @@ struct ifaces_stats {
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(ary) (sizeof(ary) / sizeof((ary)[0]))
-#endif
-#if (defined(PLN12) || defined(PLAC56))
-	PLC_WAKE,
-	LED_POWER_RED,
-	LED_2G_GREEN,
-	LED_2G_ORANGE,
-	LED_2G_RED,
-	LED_5G_GREEN,
-	LED_5G_ORANGE,
-	LED_5G_RED,
-#endif
-#ifdef RTCONFIG_MMC_LED
-	LED_MMC,
-#endif
-#ifdef RTCONFIG_RESET_SWITCH
-	LED_RESET_SWITCH,
-#endif
-#ifdef RTAC5300
-	RPM_FAN,	/* use to control FAN RPM (Hi/Lo) */
 #endif
 
 #if defined(RTCONFIG_HAS_5G)
