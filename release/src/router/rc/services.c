@@ -7506,7 +7506,7 @@ void setup_leds()
 	model = get_model();
 
 	if (nvram_get_int("led_disable") == 1) {
-		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC56S) || (model == MODEL_RTAC68U) || (model == MODEL_RTAC87U) || (model == MODEL_RTAC3200) || (model == MODEL_RTAC88U) || (model == MODEL_RTAC3100) || (model == MODEL_RTAC3100)) {
+		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC56S) || (model == MODEL_RTAC68U) || (model == MODEL_RTAC87U) || (model == MODEL_RTAC3200) || (model == MODEL_RTAC88U) || (model == MODEL_RTAC3100) || (model == MODEL_RTAC5300)) {
 			setAllLedOff();
 			if (model == MODEL_RTAC87U)
 				led_control_atomic(LED_5G, LED_OFF);
@@ -7531,7 +7531,11 @@ void setup_leds()
 		led_control_atomic(LED_ALL, LED_ON);
 #endif
 
-		if (nvram_match("wl1_radio", "1")) {
+		if (nvram_match("wl1_radio", "1")
+#if defined(RTAC3200) || defined(RTAC5300)
+		    || nvram_match("wl2_radio", "1")
+#endif
+		   ) {
 			led_control_atomic(LED_5G_FORCED, LED_ON);
 		}
 		if (nvram_match("wl0_radio", "1")) {
@@ -7542,6 +7546,10 @@ void setup_leds()
 #endif
 		led_control_atomic(LED_SWITCH, LED_ON);
 		led_control_atomic(LED_POWER, LED_ON);
+
+#if defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
+#endif
 	}
 }
 
