@@ -21,11 +21,11 @@ echo
 case $(uname -m) in
   armv7l)
     PART_TYPES='ext2|ext3|ext4'
-    INST_URL='http://entware.zyxmon.org/binaries/armv7/installer/entware_install.sh'
+    INST_URL='http://pkg.entware.net/binaries/armv7/installer/entware_install.sh'
     ;;
   mips)
     PART_TYPES='ext2|ext3'
-    INST_URL='http://entware.zyxmon.org/binaries/mipsel/installer/installer.sh'
+    INST_URL='http://pkg.entware.net/binaries/mipsel/installer/installer.sh'
     ;;
   *)
     echo "This is unsupported platform, sorry."
