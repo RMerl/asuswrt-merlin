@@ -38,6 +38,7 @@ Supported devices are:
  * RT-AC3200
  * RT-AC88U
  * RT-AC3100
+ * RT-AC5300
 
 Devices that are no longer officially supported (but forked builds might
 exist from other developers):

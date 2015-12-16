@@ -3,7 +3,7 @@ Asuswrt-Merlin Changelog
 
 380.57 (xx-xxx-2015)
     - NEW: Merged with 380_1031 GPL
-    - NEW: Added RT-AC3100 support
+    - NEW: Added RT-AC3100 and RT-AC5300 support
     - NEW: Added RT-AC68U HW Revision C1 support
     - NEW: Backup/Restore of the content of the JFFS
            partition (under Administration Restore/Save Settings)
@@ -18,6 +18,7 @@ Asuswrt-Merlin Changelog
     - CHANGED: Updated Openssl to 1.0.2e.
     - CHANGED: Downgraded Dropbear to 2014.66, too many issues in
                the recent releases.
+    - CHANGED: Improvements to VPN Status page
     - FIXED: CTF not automatically disabled when enabling IPTraffic.
     - FIXED: Openvpn clients 3 through 5 were all run on the first
              CPU core.  They are now properly alternated like the
@@ -30,6 +31,8 @@ Asuswrt-Merlin Changelog
              current (lease) hostname.
    - FIXED: MAC queries sent to the OUI database were broken due to
             changes on the IEEE website
+   - FIXED: Applying changes to OpenVPN client page would start the
+            client even if it was disabled/stopped.
 
 
 378.56_2 (2-Nov-2015)
