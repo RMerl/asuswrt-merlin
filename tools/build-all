@@ -61,6 +61,7 @@ clean_tree asuswrt.ac87 release/src-rt-6.x.4708 rt-ac87u
 clean_tree asuswrt.ac3200 release/src-rt-7.x.main/src rt-ac3200
 clean_tree asuswrt.ac3100 release/src-rt-7.14.114.x/src rt-ac3100
 clean_tree asuswrt.ac88 release/src-rt-7.14.114.x/src rt-ac88u
+clean_tree asuswrt.ac5300 release/src-rt-7.14.114.x/src rt-ac5300
 echo -e "--- $(date +%R) - All trees ready!\n"
 
 # Launch parallel builds
@@ -81,6 +82,8 @@ sleep 20
 build_fw asuswrt.ac3100/release/src-rt-7.14.114.x/src rt-ac3100 &
 sleep 20
 build_fw asuswrt.ac88/release/src-rt-7.14.114.x/src rt-ac88u &
+sleep 20
+build_fw asuswrt.ac5300/release/src-rt-7.14.114.x/src rt-ac5300 &
 sleep 10
 echo "--- $(date +%R) - All builds launched, please wait..."
 
