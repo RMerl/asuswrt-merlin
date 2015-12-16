@@ -619,7 +619,11 @@ endif
 obj-$(RTCONFIG_JFFS2USERICON) += lltdc
 
 obj-$(RTCONFIG_TOAD) += toad
+ifeq ($(RTCONFIG_BCM_7114),y)
+obj-$(RTCONFIG_BCMBSD) += bsd_arm_7114
+else
 obj-$(RTCONFIG_BCMBSD) += bsd
+endif
 obj-$(RTCONFIG_BCMSSD) += ssd
 obj-y += networkmap
 obj-y += infosvr
