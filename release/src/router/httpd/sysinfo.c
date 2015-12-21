@@ -136,7 +136,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					count++;
 				}
 				if (count > 1) {
-					tmp = nvram_get("cpurev", "");
+					tmp = nvram_get("cpurev");
 					if ((tmp) && (*tmp))
 						sprintf(result, "%s&nbsp;&nbsp;-&nbsp;&nbsp; Rev. %s (Cores: %d)", model, tmp, count);
 					else
