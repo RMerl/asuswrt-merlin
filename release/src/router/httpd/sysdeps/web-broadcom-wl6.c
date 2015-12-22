@@ -1607,7 +1607,7 @@ int
 ej_wl_extent_channel(int eid, webs_t wp, int argc, char_t **argv)
 {
 
-#ifdef RTAC3200
+#if defined(RTAC3200) || defined(RTAC5300)
 	return websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", wl_extent_channel(0), wl_extent_channel(1), wl_extent_channel(2));
 #else
 	return websWrite(wp, "[\"%d\", \"%d\"]", wl_extent_channel(0), wl_extent_channel(1));
