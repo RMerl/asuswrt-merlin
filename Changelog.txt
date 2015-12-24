@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.57 (xx-xxx-2015)
+380.57 (24-Dec-2015)
     - NEW: Merged with 380_1031 GPL
     - NEW: Added RT-AC3100 and RT-AC5300 support
     - NEW: Added RT-AC68U HW Revision C1 support
@@ -17,7 +17,7 @@ Asuswrt-Merlin Changelog
     - CHANGED: Updated miniupnpd to 1.9.20151119.
     - CHANGED: Updated Openssl to 1.0.2e.
     - CHANGED: Downgraded Dropbear to 2014.66, too many issues in
-               the recent releases.
+               the newer releases.
     - CHANGED: Improvements to VPN Status page
     - FIXED: CTF not automatically disabled when enabling IPTraffic.
     - FIXED: Openvpn clients 3 through 5 were all run on the first
