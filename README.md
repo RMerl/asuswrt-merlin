@@ -20,7 +20,7 @@ At this time, the supported devices are:
 - RT-AC88U
 - RT-AC3100
 - RT-AC5300
-- 
+
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
 "U" counterparts, they are just different packages aimed at large 
