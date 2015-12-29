@@ -3094,8 +3094,16 @@ start_wan(void)
 #endif
 
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
-	f_write_string("/proc/sys/net/bridge/bridge-nf-call-iptables", "0", 0, 0);
-	f_write_string("/proc/sys/net/bridge/bridge-nf-call-ip6tables", "0", 0, 0);
+	#ifdef RTCONFIG_BCMARM
+		// for ARM platform, we have enabled BRIDGE_NETFILTER and the default behaviour
+		// is to pass bridged IPv4 & IPv6 traffic to iptables' chains
+		f_write_string("/proc/sys/net/bridge/bridge-nf-call-iptables", "1", 0, 0);
+		f_write_string("/proc/sys/net/bridge/bridge-nf-call-ip6tables", "1", 0, 0);
+	#else
+		// for MIPS platform, the BRIDGE_NETFILTER feature is not yet enabled
+		f_write_string("/proc/sys/net/bridge/bridge-nf-call-iptables", "0", 0, 0);
+		f_write_string("/proc/sys/net/bridge/bridge-nf-call-ip6tables", "0", 0, 0);
+	#endif
 #endif
 
 	/* Report stats */
