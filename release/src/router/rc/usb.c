@@ -2229,7 +2229,7 @@ void stop_samba(void)
 #define MEDIA_SERVER_APP	"minidlna"
 
 /*
- * 1. if (dms_dbdir) exist and file.db there, use it
+ * 1. if (dms_dbdir) exist and files.db there, use it
  * 2. find the first and the largest write-able directory in /tmp/mnt
  * 3. /var/cache/minidlna
  */
@@ -2285,7 +2285,7 @@ void find_dms_dbdir(char *dbdir)
 
 	/* if previous dms_dbdir there, use it */
 	if(!strcmp(dbdir_t, nvram_default_get("dms_dbdir"))) {
-		sprintf(dbfile, "%s/file.db", dbdir_t);
+		sprintf(dbfile, "%s/files.db", dbdir_t);
 		if (check_if_file_exist(dbfile)) {
 			strcpy(dbdir, dbdir_t);
 			found = 1;
