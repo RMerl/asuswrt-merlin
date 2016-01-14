@@ -1,6 +1,13 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.58 (xx-xxx-2016)
+    - NEW: Merged with 380_1354 GPL
+    - FIXED: PPTP static route handling script was broken
+    - FIXED: minidlna would check for the wrong database filename
+             at start time
+
+
 380.57 (24-Dec-2015)
     - NEW: Merged with 380_1031 GPL
     - NEW: Added RT-AC3100 and RT-AC5300 support
