@@ -410,7 +410,7 @@ function initial(){
 
 		return false; //wired
 	};
-
+	
 	if(getflag == "finishQIS"){
 		if(isWLclient()){
 			if(action_script.search("restart_wireless") != -1){
@@ -419,9 +419,10 @@ function initial(){
 			}
 		}
 
-		setTimeout(function(){
+		return;
+		/*setTimeout(function(){
 			parent.parent.location.href = '/index.asp';
-		}, restart_time*1000);
+		}, restart_time*1000);*/
 	}	
 	else if(getflag == "liveUpdate"){
 		setTimeout(function(){

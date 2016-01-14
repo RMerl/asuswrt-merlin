@@ -118,6 +118,7 @@ bool	tune_kernel;		/* may alter kernel settings */
 int	connect_delay = 1000;	/* wait this many ms after connect script */
 int	req_unit = -1;		/* requested interface unit */
 int	req_minunit = -1;	/* requested minimal interface unit */
+char	req_ifname[32];		/* requested interface name */
 bool	multilink = 0;		/* Enable multilink operation */
 char	*bundle_name = NULL;	/* bundle name for multilink */
 bool	dump_options;		/* print out option values */
@@ -291,6 +292,10 @@ option_t general_options[] = {
     { "minunit", o_int, &req_minunit,
       "PPP interface minimal unit number",
       OPT_PRIO | OPT_LLIMIT, 0, 0 },
+
+    { "ifname", o_string, req_ifname,
+      "PPP interface name to use if possible",
+      OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, sizeof(req_ifname) },
 
     { "dump", o_bool, &dump_options,
       "Print out option values after parsing all options", 1 },

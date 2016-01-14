@@ -167,9 +167,6 @@ extern int get_wan_proto(void);
 extern int get_ipv6_service(void);
 #define ipv6_enabled()	(get_ipv6_service() != IPV6_DISABLED)
 extern const char *ipv6_router_address(struct in6_addr *in6addr);
-#if 1 /* temporary till httpd route table redo */
-extern void ipv6_set_flags(char *flagstr, int flags);
-#endif
 extern const char *ipv6_gateway_address(void);
 #else
 #define ipv6_enabled()	(0)
@@ -654,7 +651,12 @@ static inline int dualwan_unit__usbif(int unit)
 static inline int dualwan_unit__nonusbif(int unit)
 {
 	int type = get_dualwan_by_unit(unit);
+#ifdef RTCONFIG_MULTICAST_IPTV
+        return (type == WANS_DUALWAN_IF_WAN || type == WANS_DUALWAN_IF_DSL || type == WANS_DUALWAN_IF_LAN || 
+		type == WAN_UNIT_IPTV || type == WAN_UNIT_VOIP);
+#else
 	return (type == WANS_DUALWAN_IF_WAN || type == WANS_DUALWAN_IF_DSL || type == WANS_DUALWAN_IF_LAN);
+#endif
 }
 extern int get_usbif_dualwan_unit(void);
 extern int get_primaryif_dualwan_unit(void);
@@ -670,7 +672,11 @@ static inline int dualwan_unit__usbif(int unit)
 
 static inline int dualwan_unit__nonusbif(int unit)
 {
+#ifdef RTCONFIG_MULTICAST_IPTV
+	return (unit == WAN_UNIT_FIRST || unit == WAN_UNIT_IPTV || unit == WAN_UNIT_VOIP);
+#else
 	return (unit == WAN_UNIT_FIRST);
+#endif
 }
 static inline int get_usbif_dualwan_unit(void)
 {

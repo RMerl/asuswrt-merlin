@@ -1,0 +1,61 @@
+@node VTY shell
+@chapter VTY shell
+
+@command{vtysh} is integrated shell of Quagga software.
+
+To use vtysh please specify ---enable-vtysh to configure script.  To use
+PAM for authentication use ---with-libpam option to configure script.
+
+vtysh only searches @value{INSTALL_PREFIX_ETC} path for vtysh.conf which
+is the vtysh configuration file.  Vtysh does not search current
+directory for configuration file because the file includes user
+authentication settings.
+
+Currently, vtysh.conf has only two commands.
+
+@menu
+* VTY shell username::
+* VTY shell integrated configuration::
+@end menu
+
+@node VTY shell username
+@section VTY shell username
+
+@deffn {Command} {username @var{username} nopassword} {}
+
+With this set, user foo does not need password authentication for user vtysh.
+With PAM vtysh uses PAM authentication mechanism.
+
+If vtysh is compiled without PAM authentication, every user can use vtysh
+without authentication. vtysh requires read/write permission
+to the various daemons vty sockets, this can be accomplished through use
+of unix groups and the --enable-vty-group configure option.
+
+@end deffn
+
+@node VTY shell integrated configuration
+@section VTY shell integrated configuration
+
+@deffn {Command} {service integrated-vtysh-config} {}
+Write out integrated Quagga.conf file when 'write file' is issued.
+
+This command controls the behaviour of vtysh when it is told to write out
+the configuration.  Per default, vtysh will instruct each daemon to write
+out their own config files when @command{write file} is issued.  However, if
+@command{service integrated-vtysh-config} is set, when @command{write file}
+is issued, vtysh will instruct the daemons will write out a Quagga.conf with
+all daemons' commands integrated into it. 
+
+Vtysh per default behaves as if @command{write-conf daemon} is set. Note
+that both may be set at same time if one wishes to have both Quagga.conf and
+daemon specific files written out. Further, note that the daemons are
+hard-coded to first look for the integrated Quagga.conf file before looking
+for their own file.
+
+We recommend you do not mix the use of the two types of files. Further, it
+is better not to use the integrated Quagga.conf file, as any syntax error in
+it can lead to /all/ of your daemons being unable to start up. Per daemon
+files are more robust as impact of errors in configuration are limited to
+the daemon in whose file the error is made.
+
+@end deffn

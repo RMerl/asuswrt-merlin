@@ -74,10 +74,7 @@ int ra_init(const char *ifname, const struct in6_addr *ifid)
 	sock = socket(AF_INET6, SOCK_RAW | SOCK_CLOEXEC, IPPROTO_ICMPV6);
 #else
 	sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
-	if (sock >= 0 && fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-		close(sock);
-		sock = -1;
-	}
+	sock = fflags(sock, O_CLOEXEC);
 #endif
 	if (sock < 0)
 		return -1;
@@ -93,10 +90,7 @@ int ra_init(const char *ifname, const struct in6_addr *ifid)
 	rtnl = socket(AF_NETLINK, SOCK_DGRAM | SOCK_CLOEXEC, NETLINK_ROUTE);
 #else
 	rtnl = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
-	if (rtnl >= 0 && fcntl(rtnl, F_SETFD, FD_CLOEXEC) < 0) {
-		close(rtnl);
-		rtnl = -1;
-	}
+	rtnl = fflags(rtnl, O_CLOEXEC);
 #endif
 	if (rtnl < 0)
 		return -1;

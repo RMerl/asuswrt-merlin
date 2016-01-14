@@ -136,7 +136,7 @@ int init_gpio(void)
 	int i;
 
 #ifdef RTCONFIG_INTERNAL_GOBI
-	void get_gpio_values_once(0);
+	void get_gpio_values_once(int);
 	get_gpio_values_once(0);		// for filling data to led_gpio_table[]
 #endif	/* RTCONFIG_INTERNAL_GOBI */
 

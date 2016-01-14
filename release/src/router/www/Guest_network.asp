@@ -22,7 +22,6 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <style>
 .WL_MAC_Block{
 	border:1px outset #999;

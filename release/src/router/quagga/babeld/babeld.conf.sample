@@ -1,0 +1,30 @@
+debug babel common
+!debug babel kernel
+!debug babel filter
+!debug babel timeout
+!debug babel interface
+!debug babel route
+!debug babel all
+
+router babel
+! network wlan0
+! network eth0
+! redistribute kernel
+! no redistribute static
+
+! The defaults are fine for a wireless interface
+
+!interface wlan0
+
+! A few optimisation tweaks are optional but recommended on a wired interface
+! Disable link quality estimation, enable split horizon processing, and
+! increase the hello and update intervals.
+
+!interface eth0
+! babel wired
+! babel split-horizon
+! babel hello-interval 12000
+! babel update-interval 36000
+
+! log file /var/log/quagga/babeld.log
+log stdout

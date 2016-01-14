@@ -774,7 +774,8 @@ function hideClients_Block_mac(){
 
 function setClientIP_mac(devname, macaddr){
 	document.form.qos_ip_x_0.value = macaddr;
-	document.form.qos_service_name_x_0.value = devname;
+	if(document.form.qos_service_name_x_0.value.length == 0)
+		document.form.qos_service_name_x_0.value = devname;
 
 	hideClients_Block_mac();
 	over_var = 0;

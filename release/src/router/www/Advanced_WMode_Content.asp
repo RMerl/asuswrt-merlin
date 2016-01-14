@@ -262,16 +262,18 @@ function rescan(){
 function showLANIPList(){
 	var code = "";
 	var show_name = "";
+	var show_title = "";
 	if(wds_aplist != ""){
 		for(var i = 0; i < wds_aplist.length ; i++){
 			wds_aplist[i][0] = decodeURIComponent(wds_aplist[i][0]);
 			if(wds_aplist[i][0] && wds_aplist[i][0].length > 12)
-				show_name = wds_aplist[i][0].substring(0, 10) + "..";
+				show_name = wds_aplist[i][0].substring(0, 10) + "...";
 			else
 				show_name = wds_aplist[i][0];
-			
+			show_title = wds_aplist[i][0];
+
 			if(wds_aplist[i][1]){
-				code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP('+i+');"><strong>'+show_name+'</strong>';
+				code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP('+i+');" title="'+show_title+'"><strong>'+show_name+'</strong>';
 				if(show_name && show_name.length > 0)
 					code += '( '+wds_aplist[i][1]+')';
 				else

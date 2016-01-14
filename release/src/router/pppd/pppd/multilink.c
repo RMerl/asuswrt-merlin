@@ -204,7 +204,7 @@ mp_join_bundle()
 			/* make sure the string is null-terminated */
 			rec.dptr[rec.dsize-1] = 0;
 			/* parse the interface number */
-			parse_num(rec.dptr, "IFNAME=ppp", &unit);
+			parse_num(rec.dptr, "IFUNIT=ppp", &unit);
 			/* check the pid value */
 			if (!parse_num(rec.dptr, "PPPD_PID=", &pppd_pid)
 			    || !process_exists(pppd_pid)
@@ -269,6 +269,7 @@ void mp_bundle_terminated()
 	if (!demand) {
 		remove_pidfiles(1);
 		script_unsetenv("IFNAME");
+		script_unsetenv("IFUNIT");
 	}
 
 	lock_db();
@@ -420,7 +421,7 @@ owns_unit(key, unit)
 	TDB_DATA kd, vd;
 	int ret = 0;
 
-	slprintf(ifkey, sizeof(ifkey), "IFNAME=ppp%d", unit);
+	slprintf(ifkey, sizeof(ifkey), "IFUNIT=ppp%d", unit);
 	kd.dptr = ifkey;
 	kd.dsize = strlen(ifkey);
 	vd = tdb_fetch(pppdb, kd);

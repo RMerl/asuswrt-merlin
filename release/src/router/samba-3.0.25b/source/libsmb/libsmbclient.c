@@ -931,7 +931,7 @@ smbc_server(SMBCCTX *context,
  * Connect to a server for getting/setting attributes, possibly on an existing
  * connection.  This works similarly to smbc_server().
  */
-static SMBCSRV *
+SMBCSRV *
 smbc_attr_server(SMBCCTX *context,
                  const char *server,
                  const char *share, 

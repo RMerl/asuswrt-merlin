@@ -57,7 +57,12 @@ maddr " | "  mroute " | " monitor " }"
 .RI "[ " DEVICE " ]"
 
 .ti -8
-.BR "ip addr" " { " add " | " del " } " 
+.BR "ip addr" " { " add " | " change " | " replace " } "
+.IB IFADDR " dev " STRING
+.RI "[ " LIFETIME " ]"
+
+.ti -8
+.BR "ip addr del"
 .IB IFADDR " dev " STRING
 
 .ti -8
@@ -95,6 +100,17 @@ maddr " | "  mroute " | " monitor " }"
 .IR FLAG " := "
 .RB "[ " permanent " | " dynamic " | " secondary " | " primary " | "\
 tentative " | " deprecated " ]"
+
+.ti -8
+.IR LIFETIME " := [ "
+.BI valid_lft " LFT"
+.RB "| " preferred_lft
+.IR  LFT " ]"
+
+.ti -8
+.IR LFT " := [ "
+.BR forever " |"
+.IR SECONDS " ]"
 
 .ti -8
 .BR "ip route" " { "
@@ -254,7 +270,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR DEV " ]"
 
 .ti -8
-.BR "ip neigh" " { " show " | " flush " } [ " to
+.BR "ip neigh" " { " show " | " flush " } [ " proxy " ] [ " to
 .IR PREFIX " ] [ "
 .B  dev
 .IR DEV " ] [ "
@@ -631,6 +647,20 @@ valid inside this site.
 - the address is valid only inside this host.
 .in -8
 
+.TP
+.BI valid_lft " LFT"
+the valid lifetime of this address; see section 5.5.4 of
+RFC 4862. When it expires, the address is removed by the kernel.
+Defaults to
+.BR "forever" .
+
+.TP
+.BI preferred_lft " LFT"
+the preferred lifetime of this address; see section 5.5.4
+of RFC 4862. When it expires, the address is no longer used for new
+outgoing connections. Defaults to
+.BR "forever" .
+
 .SS ip address delete - delete protocol address
 .B Arguments:
 coincide with the arguments of
@@ -800,6 +830,10 @@ the prefix selecting the neighbours to list.
 .TP
 .BI dev " NAME"
 only list the neighbours attached to this device.
+
+.TP
+.BI proxy
+list neighbour proxies.
 
 .TP
 .B unused

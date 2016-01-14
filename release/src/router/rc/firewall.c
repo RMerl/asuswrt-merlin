@@ -890,6 +890,12 @@ void convert_routes(void)
 	char *nv, *nvp, *b;
 	char *ip, *netmask, *gateway, *metric, *interface;
 	char wroutes[4096], lroutes[4096], mroutes[4096];
+	int wan_max_unit;
+#ifdef RTCONFIG_MULTICAST_IPTV
+	wan_max_unit = WAN_UNIT_MULTICAST_IPTV_MAX;
+#else
+	wan_max_unit = WAN_UNIT_MAX;
+#endif
 
 	/* Disable Static if it's not enable */
 	wroutes[0] = 0;
@@ -923,7 +929,7 @@ void convert_routes(void)
 
 	nvram_set("lan_route", lroutes);
 
-	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
 		nvram_set(strcat_r(prefix, "route", tmp), wroutes);
@@ -1393,8 +1399,14 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char name[PATH_MAX];
+	int wan_max_unit;
+#ifdef RTCONFIG_MULTICAST_IPTV
+	wan_max_unit = WAN_UNIT_MULTICAST_IPTV_MAX;
+#else
+	wan_max_unit = WAN_UNIT_MAX;
+#endif
 
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+	for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
@@ -1569,7 +1581,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 
 	/* Trigger port setting */
 	if (is_nat_enabled() && nvram_match("autofw_enable_x", "1"))
-	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
@@ -1633,7 +1645,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		}
 #endif
 
-		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 				continue;
@@ -1668,7 +1680,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	symlink(name, NAT_RULES);
 
 	int need_apply = 0;
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+	for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit)
 		if(unit || get_wanports_status(unit))
 			++need_apply;
 
@@ -2416,6 +2428,20 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", 3838, logaccept);	// oleg patch
 		}
 
+#ifdef RTCONFIG_MULTICAST_IPTV
+		char movistar_wan[6];
+		if(nvram_invmatch("wan0_pppoe_ifname", ""))
+			strcpy(movistar_wan, nvram_safe_get("wan0_pppoe_ifname"));
+		else
+			strcpy(movistar_wan, nvram_safe_get("wan0_ifname"));
+		if(nvram_match("switch_wantag", "movistar")) {
+			fprintf(fp, "-A INPUT -i %s -s 10.0.0.0/255.0.0.0 -j DROP\n", movistar_wan);
+			fprintf(fp, "-A INPUT -i %s -s 172.16.0.0/255.255.15.0 -j DROP\n", movistar_wan);
+                        fprintf(fp, "-A INPUT -i vlan2 -s 172.16.0.0/255.255.15.0 -j ACCEPT\n");
+                        fprintf(fp, "-A INPUT -i vlan3 -s 10.31.255.134/255.255.255.255 -j ACCEPT\n");
+                }
+#endif
+
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 		//Add for pptp server
 		if (nvram_match("pptpd_enable", "1")) {
@@ -3059,6 +3085,12 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #endif
 	int v4v6_ok = IPT_V4;
 
+	int wan_max_unit;
+#ifdef RTCONFIG_MULTICAST_IPTV
+	wan_max_unit = WAN_UNIT_MULTICAST_IPTV_MAX;
+#else
+	wan_max_unit = WAN_UNIT_MAX;
+#endif
 	if ((fp=fopen("/tmp/filter_rules", "w"))==NULL) return;
 
 #ifdef RTCONFIG_IPV6
@@ -3157,7 +3189,7 @@ TRACE_PT("writing Parental Control\n");
 			ip = (get_ipv6_service() == IPV6_6IN4) ?
 				nvram_safe_get("ipv6_tun_v4end") : NULL;
 #endif
-			for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+			for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
 				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 				if (nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 					continue;
@@ -3192,11 +3224,25 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p udp -d 224.0.0.0/4 ! --dport 1900 -j %s\n", logaccept);
 		}
 
+#ifdef RTCONFIG_MULTICAST_IPTV
+		char movistar_wan[6];
+		if(nvram_invmatch("wan0_pppoe_ifname", ""))
+			strcpy(movistar_wan, nvram_safe_get("wan0_pppoe_ifname"));
+		else
+			strcpy(movistar_wan, nvram_safe_get("wan0_ifname"));
+                if(nvram_match("switch_wantag", "movistar")) {
+			fprintf(fp, "-A INPUT -i %s -s 10.0.0.0/255.0.0.0 -j DROP\n", movistar_wan);
+			fprintf(fp, "-A INPUT -i %s -s 172.16.0.0/255.255.15.0 -j DROP\n", movistar_wan);
+                        fprintf(fp, "-A INPUT -i vlan2 -s 172.16.0.0/255.255.15.0 -j ACCEPT\n");
+                        fprintf(fp, "-A INPUT -i vlan3 -s 10.31.255.134/255.255.255.255 -j ACCEPT\n");
+                }
+#endif
+
 		/* enable incoming packets from broken dhcp servers, which are sending replies
 		 * from addresses other than used for query, this could lead to lower level
 		 * of security, but it does not work otherwise (conntrack does not work) :-(
 		 */
-		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 				continue;
@@ -3294,7 +3340,7 @@ TRACE_PT("writing Parental Control\n");
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 		//Add for pptp server
 		if (nvram_match("pptpd_enable", "1")) {
-			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+			for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 				if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 					continue;
@@ -3324,7 +3370,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 
 #ifdef RTCONFIG_TR069
-		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 				continue;
@@ -3407,7 +3453,7 @@ TRACE_PT("writing Parental Control\n");
 // ~ oleg patch
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
 
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+	for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
@@ -3546,7 +3592,7 @@ TRACE_PT("writing Parental Control\n");
 
 	/* DoS protection */
 	if (nvram_get_int("fw_enable_x") && nvram_get_int("fw_dos_x"))
-	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if (nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
@@ -3608,7 +3654,7 @@ TRACE_PT("writing Parental Control\n");
 					setting = filter_conv(protoptr, flagptr, iprange_ex_conv(srcip, srcipbuf), srcport, iprange_ex_conv(dstip, dstipbuf), dstport);
 					if (srcip) v4v6_ok = ipt_addr_compact(srcipbuf, v4v6_ok, (v4v6_ok == IPT_V4));
 					if (dstip) v4v6_ok = ipt_addr_compact(dstipbuf, v4v6_ok, (v4v6_ok == IPT_V4));
-					for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+					for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 						snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 						if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 							continue;
@@ -3647,7 +3693,7 @@ TRACE_PT("writing Parental Control\n");
 		// ICMP
 		foreach(ptr, nvram_safe_get("filter_lw_icmp_x"), icmplist)
 		{
-			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+			for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 				if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 					continue;
@@ -3681,7 +3727,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 		// Default
-		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 				continue;
@@ -3707,7 +3753,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 
 	// Block VPN traffic
-	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if (nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
@@ -3812,7 +3858,7 @@ TRACE_PT("write porttrigger\n");
 
 	/* Trigger port setting */
 	if (is_nat_enabled() && nvram_match("autofw_enable_x", "1"))
-	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if (nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
@@ -3836,7 +3882,7 @@ TRACE_PT("write porttrigger\n");
 
 TRACE_PT("write wl filter\n");
 
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+	for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
@@ -4204,14 +4250,24 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_if;
 	char *wan_ip;
+        int wan_max_unit;
+#ifdef RTCONFIG_MULTICAST_IPTV
+        wan_max_unit = WAN_UNIT_MULTICAST_IPTV_MAX;
+#else
+        wan_max_unit = WAN_UNIT_MAX;
+#endif
 
 	if(nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1){
-		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 				continue;
 
 			wan_if = get_wan_ifname(unit);
+#ifdef RTCONFIG_MULTICAST_IPTV
+                        if(strstr(nvram_safe_get("iptv_wan_ifnames"), wan_if))
+                                continue;
+#endif
 			add_iQosRules(wan_if);
 		}
 	}
@@ -4297,7 +4353,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	/* In Bangladesh, ISPs force the packet TTL as 1 at modem side to block ip sharing.
 	 * Increase the TTL once the packet come at WAN with TTL=1 */
 	if (nvram_match("ttl_inc_enable", "1")) {
-		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+		for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
 			wan_if = get_wan_ifname(unit);
 			eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", wan_if, "-m", "ttl", "--ttl-eq", "1", "-j", "TTL", "--ttl-set", "64");
 #ifdef RTCONFIG_IPV6
@@ -4317,8 +4373,12 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 				eval("iptables", "-t", "mangle", "-F", "BWDPI_FILTER");
 
 			// for dual-wan case, it has mutli-mangle rules
-			for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+			for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
 				wan_if = get_wan_ifname(unit);
+#ifdef RTCONFIG_MULTICAST_IPTV
+	                        if(strstr(nvram_safe_get("iptv_wan_ifnames"), wan_if))
+        	                        continue;
+#endif
 				eval("iptables", "-t", "mangle", "-A", "BWDPI_FILTER", "-i", wan_if, "-p", "udp", "--sport", "68", "--dport", "67", "-j", "DROP");
 				eval("iptables", "-t", "mangle", "-A", "BWDPI_FILTER", "-i", wan_if, "-p", "udp", "--sport", "67", "--dport", "68", "-j", "DROP");
 				eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", wan_if, "-p", "udp", "-j", "BWDPI_FILTER");
@@ -4536,6 +4596,18 @@ int start_firewall(int wanunit, int lanunit)
 	} else
 		mcast_ifname = NULL;
 
+#ifdef RTCONFIG_MULTICAST_IPTV
+	char iptv_ifname[IFNAMSIZ+1];
+        if(nvram_match("switch_wantag", "maxis_fiber_sp_iptv")
+        || nvram_match("switch_wantag", "maxis_fiber_iptv")
+        ) 
+		strcpy(iptv_ifname, nvram_safe_get("iptv_wan_ifnames"));
+	if(nvram_match("switch_wantag", "movistar"))
+		strcpy(iptv_ifname, "vlan2");
+
+               	mcast_ifname = iptv_ifname;
+#endif
+
 	/* Block obviously spoofed IP addresses */
 	if (!(dir = opendir("/proc/sys/net/ipv4/conf")))
 		perror("/proc/sys/net/ipv4/conf");
@@ -4576,7 +4648,11 @@ int start_firewall(int wanunit, int lanunit)
 	}
 	/* nat setting */
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
-	if(nvram_match("wans_mode", "lb")){
+	if(nvram_match("wans_mode", "lb")
+#ifdef RTCONFIG_MULTICAST_IPTV
+	|| nvram_match("switch_wantag", "movistar")
+#endif
+	){
 		nat_setting2(lan_if, lan_ip, logaccept, logdrop);
 
 #ifdef WEB_REDIRECT

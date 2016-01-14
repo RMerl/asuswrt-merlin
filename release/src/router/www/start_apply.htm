@@ -473,7 +473,16 @@ function initial(){
 				}
 				else if(getflag == "no_wait"){	//for internet_type 
 					//no wait
-				}else{
+				
+				}
+				else if(getflag == "static"){
+					if(isMobile())
+						qis_delay_redirect('/qis_m/QIS_wireless.htm');
+					else
+						qis_delay_redirect('/qis/QIS_wireless.htm');		
+				}
+				else{
+				
 					if(isMobile())
 						setTimeout("qis_delay_redirect('/qis_m/QIS_verify_detect.htm');", restart_time*1000);
 					else
@@ -507,7 +516,6 @@ function initial(){
 				}
 				else{			
 					parent.showLoading(restart_time, "waiting");
-
 					if(isWLclient()) {
 							setTimeout(getXMLAndRedirect, restart_time*1000);
 					}

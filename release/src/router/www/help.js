@@ -97,6 +97,13 @@ function suspendconn(wan_index, wanenable){
 		document.internetForm_title.wan_enable.value = wanenable;
 		document.internetForm_title.wan_unit.value = wan_index;
 	}
+	else if(wan_index == dsl_index) {
+		document.internetForm_title.dslx_link_enable.value = wanenable;
+		if(wanenable)
+			document.internetForm_title.action_script.value = "start_dslwan_if 0";
+		else
+			document.internetForm_title.action_script.value = "stop_dslwan_if 0";
+	}
 	else{
 		document.internetForm_title.wan_enable.value = wanenable;
 	}
@@ -2842,6 +2849,8 @@ function goToWAN(index){
 		else
 			document.titleForm.current_page.value = "Advanced_Modem_Content.asp";
 	}
+	else if(index == dsl_index)
+		document.titleForm.current_page.value = "Advanced_DSL_Content.asp";
 	else
 		document.titleForm.current_page.value = "Advanced_WAN_Content.asp";
 	document.titleForm.action_mode.value = "change_wan_unit";

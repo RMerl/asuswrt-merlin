@@ -151,7 +151,8 @@ var pie_flag;
 			tooltipTemplate_pie: "<@if (label){@><@=label@>: <@}@><@= displayValue @> <@= unit @>",		//for Traffic Chart	
 
 			// String - Template string for single tooltips
-			multiTooltipTemplate: "<@= value @>",
+			//multiTooltipTemplate: "<@= value @> <@= unit @>",				// for Bar graph
+			multiTooltipTemplate: "<@= displayedValue @> <@= unit @>",				// for Bar graph
 
 			// String - Colour behind the legend colour block
 			multiTooltipKeyBackground: '#fff',
@@ -432,7 +433,7 @@ var pie_flag;
 				numberOfSteps = minSteps;
 				stepValue = graphRange / numberOfSteps;
 			}
-
+			
 			return {
 				steps : numberOfSteps,
 				stepValue : stepValue,
@@ -903,7 +904,8 @@ var pie_flag;
 			this.draw();
 			if (ChartElements.length > 0){
 				// If we have multiple datasets, show a MultiTooltip for all of the data points at that index
-				if (this.datasets && this.datasets.length > 1) {
+				//if (this.datasets && this.datasets.length > 1) {
+				if (this.datasets[0].bars) {
 					var dataArray,
 						dataIndex;
 
@@ -1174,11 +1176,8 @@ var pie_flag;
 			// ctx.lineTo(this.controlPoints.outer.x,this.controlPoints.outer.y);
 			// ctx.stroke();
 
-			// ctx.restore();
-
-
-
-		}
+			//ctx.restore();		
+			}
 	});
 
 	Chart.Arc = Chart.Element.extend({
@@ -1441,7 +1440,7 @@ var pie_flag;
 			this.yLabels = [];
 
 			var stepDecimalPlaces = getDecimalPlaces(this.stepValue);
-			var unit_scale = "KB";
+			var unit_scale = "Bytes";
 			var unit_value = 0;
 			for (var i=0; i<=this.steps; i++){
 				unit_value = template(this.templateString,{value:(this.min + (i * this.stepValue)).toFixed(stepDecimalPlaces)});
@@ -2057,8 +2056,8 @@ var pie_flag;
 				calculateBarWidth : function(datasetCount){
 					//The padding between datasets is to the right of each bar, providing that there are more than 1 dataset
 					var baseWidth = this.calculateBaseWidth() - ((datasetCount - 1) * options.barDatasetSpacing);
-
-					return (baseWidth / datasetCount);
+					//return (baseWidth / datasetCount);
+					return 19;
 				}
 			});
 
@@ -2108,7 +2107,9 @@ var pie_flag;
 						strokeColor : dataset.strokeColor,
 						fillColor : dataset.fillColor,
 						highlightFill : dataset.highlightFill || dataset.fillColor,
-						highlightStroke : dataset.highlightStroke || dataset.strokeColor
+						highlightStroke : dataset.highlightStroke || dataset.strokeColor,
+						unit : dataset.unit[index],
+						displayedValue: dataset.displayedValue[index]
 					}));
 				},this);
 
@@ -2181,7 +2182,8 @@ var pie_flag;
 				height : this.chart.height,
 				width : this.chart.width,
 				ctx : this.chart.ctx,
-				textColor : this.options.scaleFontColor,
+				//textColor : this.options.scaleFontColor,
+				textColor : "#FFF",
 				fontSize : this.options.scaleFontSize,
 				fontStyle : this.options.scaleFontStyle,
 				fontFamily : this.options.scaleFontFamily,
@@ -2201,7 +2203,8 @@ var pie_flag;
 				xLabels : labels,
 				font : helpers.fontString(this.options.scaleFontSize, this.options.scaleFontStyle, this.options.scaleFontFamily),
 				lineWidth : this.options.scaleLineWidth,
-				lineColor : this.options.scaleLineColor,
+				//lineColor : this.options.scaleLineColor,
+				lineColor : "#212C30",
 				gridLineWidth : (this.options.scaleShowGridLines) ? this.options.scaleGridLineWidth : 0,
 				gridLineColor : (this.options.scaleShowGridLines) ? this.options.scaleGridLineColor : "rgba(0,0,0,0)",
 				padding : (this.options.showScale) ? 0 : (this.options.barShowStroke) ? this.options.barStrokeWidth : 0,
@@ -3120,11 +3123,7 @@ var pie_flag;
 
 	var root = this,
 		Chart = root.Chart,
-		helpers = Chart.helpers;
-
-
-
-	Chart.Type.extend({
+		helpers = Chart.helpers;	Chart.Type.extend({
 		name: "Radar",
 		defaults:{
 			//Boolean - Whether to show lines for each scale point
@@ -3417,11 +3416,7 @@ var pie_flag;
 					if (point.hasValue()){
 						point.transition(this.scale.getPointPosition(index, this.scale.calculateCenterOffset(point.value)), easeDecimal);
 					}
-				},this);
-
-
-
-				//Draw the line between all the points
+				},this);				//Draw the line between all the points
 				ctx.lineWidth = this.options.datasetStrokeWidth;
 				ctx.strokeStyle = dataset.strokeColor;
 				ctx.beginPath();
@@ -3453,9 +3448,5 @@ var pie_flag;
 		}
 
 	});
-
-
-
-
 
 }).call(this);

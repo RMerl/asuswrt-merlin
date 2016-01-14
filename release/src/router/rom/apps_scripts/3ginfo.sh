@@ -26,6 +26,10 @@ echo ">"
 echo "dualwan nvram:>"
 nvram show|grep ^wans_
 echo ">"
+echo "wan state:>"
+nvram show|grep state |grep wan0_
+nvram show|grep state |grep wan1_
+echo ">"
 echo "modem nvram:>"
 nvram get Dev3G
 echo ">"

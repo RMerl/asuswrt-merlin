@@ -1,0 +1,26 @@
+#%PAM-1.0
+#
+
+##### if running quagga as root:
+# Only allow root (and possibly wheel) to use this because enable access
+# is unrestricted.
+auth       sufficient   /lib/security/$ISA/pam_rootok.so
+
+# Uncomment the following line to implicitly trust users in the "wheel" group.
+#auth       sufficient   /lib/security/$ISA/pam_wheel.so trust use_uid
+# Uncomment the following line to require a user to be in the "wheel" group.
+#auth       required     /lib/security/$ISA/pam_wheel.so use_uid
+###########################################################
+
+# If using quagga privileges and with a seperate group for vty access, then
+# access can be controlled via the vty access group, and pam can simply
+# check for valid user/password, eg:
+#
+# only allow local users.
+#auth       required     /lib/security/$ISA/pam_securetty.so
+#auth       required     /lib/security/$ISA/pam_stack.so service=system-auth
+#auth       required     /lib/security/$ISA/pam_nologin.so
+#account    required     /lib/security/$ISA/pam_stack.so service=system-auth
+#password   required     /lib/security/$ISA/pam_stack.so service=system-auth
+#session    required     /lib/security/$ISA/pam_stack.so service=system-auth
+#session    optional     /lib/security/$ISA/pam_console.so

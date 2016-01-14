@@ -20,16 +20,18 @@ current_extendno=`echo $current_extendno | sed s/-g.*//;`
 forsq=`nvram get apps_sq`
 model=`nvram get productid`
 model="$model#"
-if [ "$model" == "RT-AC68U#" ] || [ "$model" == "RT-AC56S#" ] || [ "$model" == "RT-AC56U#" ] || [ "$model" == "RT-N18U#" ]; then
+model_31="0"
+model_30="0"
+if [ "$model" == "RT-N18U#" ]; then
+	model_31="1"
+elif [ "$model" == "RT-AC68U#" ] || [ "$model" == "RT-AC56S#" ] || [ "$model" == "RT-AC56U#" ]; then
 	model_30="1"	#Use another info after middle firmware
-else
-	model_30="0"
 fi
-tmo=`nvram show | grep rc_support | grep tmo`
+
 if [ "$forsq" == "1" ]; then
-	if [ "$tmo" != "" ]; then
-		echo "---- update sq tmo----" > /tmp/webs_upgrade.log
-                wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_tmo.zip -O /tmp/wlan_update.txt
+	if [ "$model_31" == "1" ]; then
+		echo "---- update sq normal for model_31 ----" > /tmp/webs_upgrade.log
+		wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_31.zip -O /tmp/wlan_update.txt
 	elif [ "$model_30" == "1" ]; then
 		echo "---- update sq normal for model_30 ----" > /tmp/webs_upgrade.log
 		wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_30.zip -O /tmp/wlan_update.txt
@@ -38,9 +40,9 @@ if [ "$forsq" == "1" ]; then
                 wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt		
 	fi
 else
-	if [ "$tmo" != "" ]; then
-                echo "---- update real tmo----" > /tmp/webs_upgrade.log
-                wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_tmo.zip -O /tmp/wlan_update.txt
+	if [ "$model_31" == "1" ]; then
+		echo "---- update real normal for model_31 ----" > /tmp/webs_upgrade.log
+		wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_31.zip -O /tmp/wlan_update.txt
 	elif [ "$model_30" == "1" ]; then
 		echo "---- update real normal for model_30 ----" > /tmp/webs_upgrade.log
 		wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_30.zip -O /tmp/wlan_update.txt

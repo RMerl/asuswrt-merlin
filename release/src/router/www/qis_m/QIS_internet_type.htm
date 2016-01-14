@@ -155,9 +155,10 @@ function submitForm(){
 		parent.document.QKform.wan_proto.value = document.applyForm.wan_proto.value;
 		parent.document.QKform.wan_dhcpenable_x.value = 1;
 		parent.document.QKform.wan_dnsenable_x.value = 1;
-		location.href = "QIS_verify_detect.htm";                // avoid redirect to internet_isp and internet_ip
-		return true;
+		//location.href = "QIS_verify_detect.htm";                // avoid redirect to internet_isp and internet_ip
+		//return true;
 		//document.applyForm.next_page.value = "QIS_internet_isp.htm";
+		document.applyForm.next_page.value = "QIS_wireless.htm";
 	}
 	
 	parent.document.QKform.wan_proto.value = document.applyForm.wan_proto.value;
@@ -465,7 +466,7 @@ function next_step(flag){
 			document.applyForm.wan_proto.value = "dhcp";
 			parent.document.QKform.wan_dhcpenable_x.value = 1;
 			parent.document.QKform.wan_dnsenable_x.value = 1;
-			document.applyForm.next_page.value = "QIS_internet_isp.htm";
+			document.applyForm.next_page.value = "QIS_wireless.htm";
 		}
 		else if(document.applyForm.dhcp_type[1].checked){	//static IP
 			document.applyForm.wan_proto.value = "static";
@@ -568,7 +569,7 @@ function dhcp_next(){
 	parent.document.QKform.wan_dnsenable_x.value = 1;
 	document.applyForm.next_page.value = "QIS_internet_isp.htm";
 	parent.document.QKform.wan_proto.value = document.applyForm.wan_proto.value;
-	location.href = "QIS_verify_detect.htm";                // avoid redirect to internet_isp and internet_ip
+	location.href = "QIS_wireless.htm";                // avoid redirect to internet_isp and internet_ip
 	return true;
 }
 

@@ -16,6 +16,14 @@ enum {
 	WAN_UNIT_MAX
 };
 
+#ifdef RTCONFIG_MULTICAST_IPTV
+enum {
+        WAN_UNIT_IPTV=10,
+        WAN_UNIT_VOIP,
+        WAN_UNIT_MULTICAST_IPTV_MAX
+};
+#endif
+
 enum {
 	WAN_STATE_INITIALIZING=0,
 	WAN_STATE_CONNECTING,

@@ -340,7 +340,7 @@ endif
 
 #general rsasign file
 ifeq ($(HTTPS),y)
-ifeq ($(or $(BCM7),$(BCM_7114)),y)
+ifeq ($(or $(BCM7),$(BCM_7114),$(BCM9)),y)
 ifneq ("$(wildcard $(SRCBASE)/../../../buildtools/private.pem)","")
 	openssl sha1 -sign $(SRCBASE)/../../../buildtools/private.pem -out image/$(IMGNAME)_rsa.zip image/$(IMGNAME).trx
 endif
@@ -868,6 +868,10 @@ define RouterOptions
 				sed -i "/RTCONFIG_USB_LESSMODEM/d" $(1); \
 				echo "RTCONFIG_USB_LESSMODEM=y" >>$(1); \
 			fi; \
+			if [ "$(DYNMODEM)" = "y" ]; then \
+				sed -i "/RTCONFIG_DYN_MODEM/d" $(1); \
+				echo "RTCONFIG_DYN_MODEM=y" >>$(1); \
+			fi; \
 		fi; \
 		if [ "$(PRINTER)" = "y" ]; then \
 			sed -i "/RTCONFIG_USB_PRINTER/d" $(1); \
@@ -1265,10 +1269,6 @@ define RouterOptions
 		sed -i "/RTCONFIG_TRAFFIC_CONTROL/d" $(1); \
 		echo "RTCONFIG_TRAFFIC_CONTROL=y" >>$(1); \
 	fi; \
-	if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
-		sed -i "/RTCONFIG_CTF_PPTP_L2TP/d" $(1); \
-		echo "RTCONFIG_CTF_PPTP_L2TP=y" >>$(1); \
-	fi; \
 	if [ "$(BCM5301X_TRAFFIC_MONITOR)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCM5301X_TRAFFIC_MONITOR/d" $(1); \
 		echo "RTCONFIG_BCM5301X_TRAFFIC_MONITOR=y" >>$(1); \
@@ -1463,6 +1463,14 @@ define RouterOptions
 	if [ "$(TUXERA_SMBD)" = "y" ]; then \
 		sed -i "/RTCONFIG_TUXERA_SMBD/d" $(1); \
 		echo "RTCONFIG_TUXERA_SMBD=y" >>$(1); \
+	fi; \
+	if [ "$(QUAGGA)" = "y" ]; then \
+		sed -i "/RTCONFIG_QUAGGA/d" $(1); \
+		echo "RTCONFIG_QUAGGA=y" >>$(1); \
+	fi; \
+	if [ "$(MULTICASTIPTV)" = "y" ]; then \
+		sed -i "/RTCONFIG_MULTICAST_IPTV/d" $(1); \
+		echo "RTCONFIG_MULTICAST_IPTV=y" >>$(1); \
 	fi; \
 	)
 	$(call platformRouterOptions, $(1))
@@ -1773,7 +1781,7 @@ endef
 
 define KernelConfig
 	@( \
-	if [ "$(TUNEK)" != "n" ]; then \
+if [ "$(TUNEK)" != "n" ]; then \
 	sed -i "/CONFIG_NVRAM_SIZE/d" $(1); \
 	echo "CONFIG_NVRAM_SIZE="$(NVRAM_SIZE) >>$(1); \
 	sed -i "/CONFIG_CC_OPTIMIZE_FOR_SIZE/d" $(1); \
@@ -1904,14 +1912,6 @@ define KernelConfig
 				echo "# CONFIG_USB_XHCI_HCD_DEBUGGING is not set" >>$(1); \
 			fi; \
 		fi; \
-	fi; \
-	if [ "$(SHP)" = "y" ] || [ "$(LFP)" = "y" ]; then \
-		sed -i "/CONFIG_IP_NF_LFP/d" $(1); \
-		echo "CONFIG_IP_NF_LFP=y" >>$(1); \
- 	fi; \
-	if [ "$(DNSMQ)" = "y" ]; then \
-		sed -i "/CONFIG_IP_NF_DNSMQ/d" $(1); \
-		echo "CONFIG_IP_NF_DNSMQ=y" >>$(1); \
 	fi; \
 	if [ "$(IPV6SUPP)" = "y" ]; then \
 		sed -i "/CONFIG_IPV6 is not set/d" $(1); \
@@ -2049,6 +2049,14 @@ define KernelConfig
 		sed -i "/CONFIG_EXT4_FS/d" $(1); \
 		echo "# CONFIG_EXT4_FS is not set" >>$(1); \
 	fi; \
+fi; \
+	if [ "$(SHP)" = "y" ] || [ "$(LFP)" = "y" ]; then \
+		sed -i "/CONFIG_IP_NF_LFP/d" $(1); \
+		echo "CONFIG_IP_NF_LFP=y" >>$(1); \
+ 	fi; \
+	if [ "$(DNSMQ)" = "y" ]; then \
+		sed -i "/CONFIG_IP_NF_DNSMQ/d" $(1); \
+		echo "CONFIG_IP_NF_DNSMQ=y" >>$(1); \
 	fi; \
 	if [ "$(USB)" = "" ]; then \
 		sed -i "/CONFIG_MSDOS_PARTITION/d" $(1); \
@@ -2225,12 +2233,6 @@ define KernelConfig
 		echo "CONFIG_RTAC3200=y" >>$(1); \
 	else \
 		echo "# CONFIG_RTAC3200 is not set" >>$(1); \
-	fi; \
-	sed -i "/CONFIG_CTF_PPTP_L2TP/d" $(1); \
-	if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
-		echo "CONFIG_CTF_PPTP_L2TP=y" >>$(1); \
-	else \
-		echo "# CONFIG_CTF_PPTP_L2TP is not set" >>$(1); \
 	fi; \
 	if [ "$(GMAC3)" = "y" ]; then \
 		sed -i "/CONFIG_BCM_GMAC3/d" $(1); \

@@ -1336,7 +1336,7 @@ void restart_lfp()
 }
 #endif
 
-#if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
+#ifdef CONFIG_BCMWL5
 int setup_dnsmq(int mode)
 {
 	char v[32];

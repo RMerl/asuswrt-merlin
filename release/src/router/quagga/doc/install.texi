@@ -1,0 +1,285 @@
+@node  Installation
+@chapter Installation
+
+@cindex How to install Quagga
+@cindex Installation
+@cindex Installing Quagga
+@cindex Building the system
+@cindex Making Quagga
+
+There are three steps for installing the software: configuration,
+compilation, and installation.
+
+@menu
+* Configure the Software::
+* Build the Software::
+* Install the Software::
+@end menu
+
+The easiest way to get Quagga running is to issue the following
+commands:
+
+@example
+% configure
+% make
+% make install
+@end example
+
+@node Configure the Software
+@section Configure the Software
+
+@menu
+* The Configure script and its options::
+* Least-Privilege support::
+* Linux notes::
+@end menu
+
+@node The Configure script and its options
+@subsection The Configure script and its options
+
+@cindex Configuration options
+@cindex Options for configuring
+@cindex Build options
+@cindex Distribution configuration
+@cindex Options to @code{./configure}
+ 
+Quagga has an excellent configure script which automatically detects most
+host configurations.  There are several additional configure options you can
+use to turn off IPv6 support, to disable the compilation of specific
+daemons, and to enable SNMP support.
+
+@table @option
+@item --disable-ipv6
+Turn off IPv6 related features and daemons.  Quagga configure script
+automatically detects IPv6 stack.  But sometimes you might want to
+disable IPv6 support of Quagga.
+@item --disable-zebra
+Do not build zebra daemon.
+@item --disable-ripd
+Do not build ripd.
+@item --disable-ripngd
+Do not build ripngd.
+@item --disable-ospfd
+Do not build ospfd.
+@item --disable-ospf6d
+Do not build ospf6d.
+@item --disable-bgpd
+Do not build bgpd.
+@item --disable-bgp-announce
+Make @command{bgpd} which does not make bgp announcements at all.  This
+feature is good for using @command{bgpd} as a BGP announcement listener.
+@item --enable-netlink
+Force to enable @sc{gnu}/Linux netlink interface.  Quagga configure
+script detects netlink interface by checking a header file.  When the header
+file does not match to the current running kernel, configure script will
+not turn on netlink support.
+@item --enable-snmp
+Enable SNMP support.  By default, SNMP support is disabled.
+@item --disable-opaque-lsa
+Disable support for Opaque LSAs (RFC2370) in ospfd.
+@item --disable-ospfapi
+Disable support for OSPF-API, an API to interface directly with ospfd.
+OSPF-API is enabled if --enable-opaque-lsa is set.
+@item --disable-ospfclient
+Disable building of the example OSPF-API client.
+@item --disable-ospf-te
+Disable support for OSPF Traffic Engineering Extension (internet-draft) this
+requires support for Opaque LSAs.
+@item --enable-multipath=@var{ARG}
+Enable support for Equal Cost Multipath. @var{ARG} is the maximum number
+of ECMP paths to allow, set to 0 to allow unlimited number of paths.
+@item --disable-rtadv
+Disable support IPV6 router advertisement in zebra.
+@item --enable-gcc-rdynamic
+Pass the @command{-rdynamic} option to the linker driver.  This is in most
+cases neccessary for getting usable backtraces.  This option defaults to on
+if the compiler is detected as gcc, but giving an explicit enable/disable is
+suggested.
+@item --enable-backtrace
+Controls backtrace support for the crash handlers. This is autodetected by
+default. Using the switch will enforce the requested behaviour, failing with
+an error if support is requested but not available.  On BSD systems, this
+needs libexecinfo, while on glibc support for this is part of libc itself.
+@end table
+
+You may specify any combination of the above options to the configure
+script.  By default, the executables are placed in @file{/usr/local/sbin} 
+and the configuration files in @file{/usr/local/etc}. The @file{/usr/local/}
+installation prefix and other directories may be changed using the following 
+options to the configuration script.
+
+@table @option
+@item --prefix=@var{prefix}
+Install architecture-independent files in @var{prefix} [/usr/local].
+@item --sysconfdir=@var{dir}
+Look for configuration files in @var{dir} [@var{prefix}/etc]. Note
+that sample configuration files will be installed here.
+@item --localstatedir=@var{dir}
+Configure zebra to use @var{dir} for local state files, such
+as pid files and unix sockets.
+@end table
+
+@example
+% ./configure --disable-ipv6
+@end example
+
+This command will configure zebra and the routing daemons.
+
+@node Least-Privilege support
+@subsection Least-Privilege support
+
+@cindex Quagga Least-Privileges
+@cindex Quagga Privileges
+
+Additionally, you may configure zebra to drop its elevated privileges
+shortly after startup and switch to another user. The configure script will
+automatically try to configure this support. There are three configure
+options to control the behaviour of Quagga daemons.
+
+@table @option
+@item --enable-user=@var{user}
+Switch to user @var{ARG} shortly after startup, and run as user @var{ARG}
+in normal operation.
+@item --enable-group=@var{group}
+Switch real and effective group to @var{group} shortly after
+startup. 
+@item --enable-vty-group=@var{group}
+Create Unix Vty sockets (for use with vtysh) with group owndership set to
+@var{group}. This allows one to create a seperate group which is
+restricted to accessing only the Vty sockets, hence allowing one to
+delegate this group to individual users, or to run vtysh setgid to
+this group.
+@end table
+
+The default user and group which will be configured is 'quagga' if no user
+or group is specified. Note that this user or group requires write access to
+the local state directory (see --localstatedir) and requires at least read
+access, and write access if you wish to allow daemons to write out their
+configuration, to the configuration directory (see --sysconfdir).
+
+On systems which have the 'libcap' capabilities manipulation library
+(currently only linux), the quagga system will retain only minimal
+capabilities required, further it will only raise these capabilities for
+brief periods. On systems without libcap, quagga will run as the user
+specified and only raise its uid back to uid 0 for brief periods.
+
+@node Linux notes
+@subsection Linux Notes
+
+@cindex Configuring Quagga
+@cindex Building on Linux boxes
+@cindex Linux configurations
+
+There are several options available only to @sc{gnu}/Linux systems:
+@footnote{@sc{gnu}/Linux has very flexible kernel configuration features}.  If
+you use @sc{gnu}/Linux, make sure that the current kernel configuration is
+what you want.  Quagga will run with any kernel configuration but some
+recommendations do exist.
+
+@table @var
+
+@item CONFIG_NETLINK
+Kernel/User netlink socket. This is a brand new feature which enables an
+advanced interface between the Linux kernel and zebra (@pxref{Kernel Interface}).
+
+@item CONFIG_RTNETLINK
+Routing messages.
+This makes it possible to receive netlink routing messages.  If you
+specify this option, @command{zebra} can detect routing information
+updates directly from the kernel (@pxref{Kernel Interface}).
+
+@item CONFIG_IP_MULTICAST
+IP: multicasting.  
+This option should be specified when you use @command{ripd} (@pxref{RIP}) or
+@command{ospfd} (@pxref{OSPFv2}) because these protocols use multicast.
+
+@end table
+
+IPv6 support has been added in @sc{gnu}/Linux kernel version 2.2.  If you
+try to use the Quagga IPv6 feature on a @sc{gnu}/Linux kernel, please
+make sure the following libraries have been installed.  Please note that
+these libraries will not be needed when you uses @sc{gnu} C library 2.1
+or upper.
+
+@table @code
+
+@item inet6-apps
+The @code{inet6-apps} package includes basic IPv6 related libraries such
+as @code{inet_ntop} and @code{inet_pton}.  Some basic IPv6 programs such
+as @command{ping}, @command{ftp}, and @command{inetd} are also
+included. The @code{inet-apps} can be found at
+@uref{ftp://ftp.inner.net/pub/ipv6/}.
+
+@item net-tools
+The @code{net-tools} package provides an IPv6 enabled interface and
+routing utility.  It contains @command{ifconfig}, @command{route},
+@command{netstat}, and other tools.  @code{net-tools} may be found at
+@uref{http://www.tazenda.demon.co.uk/phil/net-tools/}.
+
+@end table
+@c A - end of footnote 
+
+@node Build the Software
+@section Build the Software
+
+After configuring the software, you will need to compile it for your
+system. Simply issue the command @command{make} in the root of the source
+directory and the software will be compiled. If you have *any* problems
+at this stage, be certain to send a bug report @xref{Bug Reports}.
+
+@example
+% ./configure
+.
+.
+.
+./configure output
+.
+.
+.
+% make
+@end example
+@c A - End of node, Building the Software
+
+
+@node Install the Software
+@comment  node-name,  next,  previous,  up
+@section Install the Software
+
+Installing the software to your system consists of copying the compiled
+programs and supporting files to a standard location. After the
+installation process has completed, these files have been copied
+from your work directory to @file{/usr/local/bin}, and @file{/usr/local/etc}.
+
+To install the Quagga suite, issue the following command at your shell
+prompt: @command{make install}.
+
+@example
+%
+% make install
+%
+@end example
+
+Quagga daemons have their own terminal interface or VTY.  After
+installation, you have to setup each beast's port number to connect to
+them.  Please add the following entries to @file{/etc/services}.
+
+@example
+zebrasrv      2600/tcp		  # zebra service
+zebra         2601/tcp		  # zebra vty
+ripd          2602/tcp		  # RIPd vty
+ripngd        2603/tcp		  # RIPngd vty
+ospfd         2604/tcp		  # OSPFd vty
+bgpd          2605/tcp		  # BGPd vty
+ospf6d        2606/tcp		  # OSPF6d vty
+ospfapi       2607/tcp		  # ospfapi
+isisd         2608/tcp		  # ISISd vty
+pimd          2611/tcp		  # PIMd vty
+@end example
+
+If you use a FreeBSD newer than 2.2.8, the above entries are already
+added to @file{/etc/services} so there is no need to add it. If you
+specify a port number when starting the daemon, these entries may not be
+needed.
+
+You may need to make changes to the config files in
+@file{@value{INSTALL_PREFIX_ETC}/*.conf}. @xref{Config Commands}.

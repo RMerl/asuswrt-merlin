@@ -1,0 +1,276 @@
+#!/sbin/sh
+#
+# Copyright 2007 Sun Microsystems, Inc. All rights reserved.
+# Use is subject to license terms.
+#
+# This file is part of Quagga.
+#
+# Quagga is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# Quagga is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Quagga; see the file COPYING.  If not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+#
+# Starts/stops the given daemon
+
+SMFINCLUDE=/lib/svc/share/smf_include.sh
+ROUTEADMINCLUDE=/lib/svc/share/routing_include.sh
+GLOBAL_OPTIONS="PAfiug"
+DAEMON_PATH=@sbindir@
+USER=@enable_user@
+GROUP=@enable_group@
+
+# handle upgrade of daemon-args SMF property to new routeadm properties
+# used during upgrade too by routeadm.
+# relevant to S10U4+ only.
+handle_routeadm_upgrade () {
+	GLOBAL_OPTIONS="PAfiug"
+	
+	daemon_args=`get_daemon_args $SMF_FMRI`
+	
+	if [ -n "$daemon_args" ]; then
+		set_daemon_value_property "$SMF_FMRI" "$daemon_args" \
+			"$GLOBAL_OPTIONS" "P" vty_port 0
+		set_daemon_value_property "$SMF_FMRI" "$daemon_args" \
+			"$GLOBAL_OPTIONS" "A" vty_address
+		set_daemon_value_property "$SMF_FMRI" "$daemon_args" \
+			"$GLOBAL_OPTIONS" "f" config_file
+		set_daemon_value_property "$SMF_FMRI" "$daemon_args" \
+			"$GLOBAL_OPTIONS" "i" pid_file
+		set_daemon_value_property "$SMF_FMRI" "$daemon_args" \
+			"$GLOBAL_OPTIONS" "u" user
+		set_daemon_value_property "$SMF_FMRI" "$daemon_args" \
+			"$GLOBAL_OPTIONS" "g" group
+		
+		case "$1" in
+		zebra)
+			set_daemon_boolean_property "$SMF_FMRI" "$daemon_args" \
+				"${GLOBAL_OPTIONS}b" "b" batch true false
+			;;
+		ripd|ripngd)
+			set_daemon_boolean_property "$SMF_FMRI" "$daemon_args" \
+				"${GLOBAL_OPTIONS}r" "r" retain true false
+			;;
+		bgpd)
+			set_daemon_boolean_property "$SMF_FMRI" "$daemon_args" \
+				"${GLOBAL_OPTIONS}rnp" "r" retain true false
+			set_daemon_boolean_property "$SMF_FMRI" "$daemon_args" \
+				"${GLOBAL_OPTIONS}rnp" "n" no_kernel true false
+			set_daemon_value_property "$SMF_FMRI" "$daemon_args" \
+				"${GLOBAL_OPTIONS}rnp" "p" bgp_port
+		esac
+		clear_daemon_args $SMF_FMRI
+	fi
+}
+
+upgrade_config () {
+	DAEMON=$1
+	# handle upgrade of SUNWzebra to Quagga
+	if [ -d "/etc/quagga" -a ! -f "/etc/quagga/${DAEMON}.conf" ] ; then
+		if [ -f "/etc/sfw/zebra/${DAEMON}.conf" ] ; then
+			cp "/etc/sfw/zebra/${DAEMON}.conf" \
+				"/etc/quagga/${DAEMON}.conf.upgrade" \
+				|| exit $SMF_EXIT_ERR_FATAL
+			chown "${USER}:${GROUP}" "/etc/quagga/${DAEMON}.conf.upgrade" \
+				|| exit $SMF_EXIT_ERR_FATAL
+			chmod 0600 "/etc/quagga/${DAEMON}.conf.upgrade" \
+				|| exit $SMF_EXIT_ERR_FATAL
+			mv "/etc/quagga/${DAEMON}.conf.upgrade" "/etc/quagga/${DAEMON}.conf" \
+				|| exit $SMF_EXIT_ERR_FATAL
+		fi
+	fi
+
+	if [ ! -f "/etc/quagga/${DAEMON}.conf" ] ; then
+		touch "/etc/quagga/${DAEMON}.conf.new" \
+			|| exit $SMF_EXIT_ERR_FATAL
+		chown "${USER}:${GROUP}" "/etc/quagga/${DAEMON}.conf.new" \
+			|| exit $SMF_EXIT_ERR_FATAL
+		chmod 0600 "/etc/quagga/${DAEMON}.conf.new" \
+			|| exit $SMF_EXIT_ERR_FATAL
+		mv "/etc/quagga/${DAEMON}.conf.new" "/etc/quagga/${DAEMON}.conf" \
+			|| exit $SMF_EXIT_ERR_FATAL
+	fi
+}
+
+# Relevant to S10+
+quagga_is_globalzone () {
+	if [ "${QUAGGA_INIT_ZONENAME:=`/sbin/zonename`}" = "global" \
+		-o `/sbin/zonename -t` = "exclusive" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+routeadm_daemon_args () {
+	# globals
+	args="`get_daemon_option_from_property $SMF_FMRI config_file f`"
+	args="${args} `get_daemon_option_from_property $SMF_FMRI vty_port P`"
+	args="${args} `get_daemon_option_from_property $SMF_FMRI vty_address A`"
+	args="${args} `get_daemon_option_from_property $SMF_FMRI pid_file i`"
+	
+	# user and group we need for config file upgrade..
+	SMF_USER=`get_routeadm_property $SMF_FMRI user`
+	SMF_GROUP=`get_routeadm_property()$SMF_FMRI group`
+	if [ "${SMF_USER}" ] ; then
+		USER="${SMF_USER}"
+		args="${args} -u ${SMF_USER}"
+	fi
+	if [ "${SMF_GROUP}" ] ; then 
+		GROUP="${SMF_GROUP}"
+		args="${args} -g ${SMF_GROUP}"
+	fi
+
+	case $1 in
+	zebra)
+		args="${args} `get_daemon_option_from_boolean_property $SMF_FMRI batch -b true`"
+		;;
+	ripd|ripngd)
+		args="${args} `get_daemon_option_from_boolean_property $SMF_FMRI retain -r true`"
+		;;
+	bgpd)
+		args="${args} `get_daemon_option_from_boolean_property $SMF_FMRI retain -r true`"
+		args="${args} `get_daemon_option_from_boolean_property $SMF_FMRI no_kernel -n true`"
+		args="${args} `get_daemon_option_from_property $SMF_FMRI bgp_port p 179`"
+		;;
+	esac
+	echo ${args}
+}
+
+# Include smf functions, if available. If not, define smf_present to indicate
+# there is no SMF. Should allow this script to work pre-S10.
+if [ -f "$SMFINCLUDE" ] ; then
+	. "$SMFINCLUDE";
+	
+	# source the SMF-routeadm include if present..
+	if [ -f "$ROUTEADMINCLUDE" ] ; then
+		. "$ROUTEADMINCLUDE"
+	fi
+else
+	# pre-SMF system, fake up any functions and exit codes
+	# which SMFINCLUDE usually provides.
+	smf_present () {
+		return 1
+	}
+	SMF_EXIT_OK=0;
+	SMF_EXIT_ERR_CONFIG=96;
+	SMF_EXIT_ERR_FATAL=95;
+fi
+	
+# if there's no SMF, set some default DAEMON_ARGS
+smf_present || DAEMON_ARGS=""
+
+usage () {
+	if smf_present ; then
+		echo "Usage: $0 <daemon>";
+	else
+		echo "Usage: $0 <stop|start> <daemon> <daemon arguments>";
+	fi
+	echo "The --pid_file argument is implied";
+	echo "This help message: $0 <help|usage>";
+}
+
+# parse arguments, different according to SMF or not.
+case $1 in
+	'help' | 'usage')
+		usage
+		exit $SMF_EXIT_OK
+		;;
+esac
+
+if smf_present ; then
+	QUAGGA_METHOD="start"
+else
+	QUAGGA_METHOD="$1"
+	shift;
+fi
+
+DAEMON="$1"
+
+# daemon path must be given
+if [ -z "$DAEMON_PATH/$DAEMON" ]; then
+	usage
+	exit $SMF_EXIT_ERR_FATAL
+fi
+
+# only bgpd is suitable for running in a non-global zone, at this
+# time.
+case "${DAEMON}" in
+	bgpd)
+	;;
+	zebra | ospfd | ospf6d | ripd | ripngd )
+		quagga_is_globalzone || exit $SMF_EXIT_OK
+	;;
+	*)
+		usage
+		exit $SMF_EXIT_ERR_CONFIG;
+	;;
+esac
+
+# Older Quagga SMF packages pass daemon args on the commandline
+# Newer SMF routeadm model uses properties for each argument
+# so we must handle that.
+if [ smf_present -a -f "$ROUTEADMINCLUDE" ]; then
+	handle_routeadm_upgrade $DAEMON;
+	DAEMON_ARGS=`routeadm_daemon_args`;
+else
+	if [ $# -gt 0 ] ; then
+		shift
+		DAEMON_ARGS="$@"
+	fi
+fi
+
+upgrade_config "$DAEMON"
+
+if [ ! -f "@sysconfdir@/${DAEMON}.conf" ] ; then
+	echo "Could not find config file, @sysconfdir@/${DAEMON}.conf"
+	exit $SMF_EXIT_ERR_CONFIG
+fi
+
+# we need @quagga_statedir@ to exist, it probably is on tmpfs.
+if [ ! -d @quagga_statedir@ ] ; then
+	mkdir -p @quagga_statedir@
+	chown @enable_user@:@enable_group@ @quagga_statedir@
+	chmod 751 @quagga_statedir@
+fi
+
+PIDFILE="@quagga_statedir@/${DAEMON}.pid"
+
+start () {
+	if [ ! -x "$DAEMON_PATH/$DAEMON" ] ; then
+		echo "Error, could not find daemon, $DAEMON_PATH/$DAEMON"
+		exit $SMF_EXIT_ERR_FATAL
+	fi
+	eval exec $DAEMON_PATH/$DAEMON $DAEMON_ARGS --pid_file ${PIDFILE} &
+}
+
+stop_by_pidfile () {
+	if [ -f "${PIDFILE}" ]; then
+		/usr/bin/kill -TERM `/usr/bin/cat "${PIDFILE}"`
+	fi
+}
+
+case "$QUAGGA_METHOD" in
+'start')
+	start
+	;;
+'stop')
+	stop_by_pidfile
+	;;
+
+*)
+	usage
+	exit $SMF_EXIT_ERR_FATAL
+	;;
+esac	
+
+exit $SMF_EXIT_OK;

@@ -1,0 +1,14 @@
+[Unit]
+Description=GNU Zebra routing manager
+After=syslog.target network.target
+ConditionPathExists=/etc/quagga/zebra.conf
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/quagga
+ExecStartPre=/sbin/ip route flush proto zebra
+ExecStart=/usr/sbin/zebra -d $ZEBRA_OPTS -f /etc/quagga/zebra.conf
+Restart=on-abort
+
+[Install]
+WantedBy=network.target

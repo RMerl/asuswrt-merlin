@@ -332,7 +332,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR DEV " ]"
 
 .ti -8
-.BR "ip neigh" " { " show " | " flush " } [ " to
+.BR "ip neigh" " { " show " | " flush " } [ " proxy " ] [ " to
 .IR PREFIX " ] [ "
 .B  dev
 .IR DEV " ] [ "
@@ -1465,6 +1465,10 @@ the prefix selecting the neighbours to list.
 .TP
 .BI dev " NAME"
 only list the neighbours attached to this device.
+
+.TP
+.BI proxy
+list neighbour proxies.
 
 .TP
 .B unused

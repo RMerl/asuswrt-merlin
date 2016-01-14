@@ -407,14 +407,14 @@ function submitQoS(){
 				return;
 			}
 			else if(document.form.qos_type.value == 0 && document.form.obw.value == 0){		// To check field is 0 && Traditional QoS
-				alert("Upload Bandwidth can not be 0");
+				alert("Upload Bandwidth can not be 0");	/* untranslated */
 				document.form.obw.focus();
 				document.form.obw.select();
 				return;
 			
 			}
 			else if(document.form.obw.value.split(".").length > 2){		//To check more than two point symbol
-				alert("The format of field of upload bandwidth is invalid");
+				alert("The format of field of upload bandwidth is invalid"); /* untranslated */
 				document.form.obw.focus();
 				document.form.obw.select();
 				return;	
@@ -427,13 +427,13 @@ function submitQoS(){
 				return;
 			}
 			else if(document.form.qos_type.value == 0 && document.form.ibw.value == 0){		// To check field is 0 && Traditional QoS
-				alert("Download Bandwidth can not be 0");
+				alert("Download Bandwidth can not be 0");	/* untranslated */
 				document.form.ibw.focus();
 				document.form.ibw.select();
 				return;
 			}
 			else if(document.form.ibw.value.split(".").length > 2){
-				alert("The format of field of download bandwidth is invalid");
+				alert("The format of field of download bandwidth is invalid");	/* untranslated */
 				document.form.ibw.focus();
 				document.form.ibw.select();
 				return;	
@@ -468,6 +468,11 @@ function submitQoS(){
 			}
 		}
 		else{		//Bandwidth Limiter
+			if(document.form.PC_devicename.value != ""){
+				alert("You must press add icon to add a new rule first.");	//untranslated
+				return false;
+			}
+			
 			document.form.qos_bw_rulelist.value = qos_bw_rulelist;	
 		}
 	}	
@@ -848,9 +853,21 @@ function addRow_main(obj, length){
 		document.getElementById("download_rate").focus();
 		return false;
 	}
-	
+
+	if(document.getElementById("download_rate").value.split(".").length > 2 || document.getElementById("download_rate").value < 0.1){
+		alert("<#min_bound#> : 0.1 Mb/s");
+		document.getElementById("download_rate").focus();
+		return false;
+	}
+        
 	if(document.getElementById("upload_rate").value == ""){
 		alert("<#JS_fieldblank#>");
+		document.getElementById("upload_rate").focus();
+		return false;
+	}
+        
+	if(document.getElementById("upload_rate").value.split(".").length > 2 || document.getElementById("upload_rate").value < 0.1){
+		alert("<#min_bound#> : 0.1 Mb/s");
 		document.getElementById("upload_rate").focus();
 		return false;
 	}
@@ -1297,6 +1314,8 @@ function check_field(){
 																document.getElementById('upload_tr').style.display = "none";
 																document.getElementById('download_tr').style.display = "none";
 																document.getElementById('qos_type_tr').style.display = "none";
+																document.getElementById('bandwidth_setting_tr').style.display = "none";
+																document.getElementById('list_table').style.display = "none";
 	
 																if(bwdpi_support){																	
 																	
@@ -1317,7 +1336,7 @@ function check_field(){
 												<input id="bw_limit_type" name="qos_type" value="2" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "2","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 8)"><label for="bw_limit_type"><#Bandwidth_Limiter#></label></a>
 											</td>
 										</tr>
-										<tr id="bandwidth_setting_tr" style="">
+										<tr id="bandwidth_setting_tr" style="display:none">
 											<th>Bandwidth Setting</th>
 											<td colspan="2">
 												<input id="auto" name="bw_setting_name" onClick="bandwidth_setting();" type="radio"><label for="auto">Automatic</label>

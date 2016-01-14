@@ -1306,10 +1306,13 @@ radius_init(char *msg)
 *  Extracts the port number from the interface name
 ***********************************************************************/
 static int
-get_client_port(char *ifname)
+get_client_port(char *_ifname)
 {
     int port;
-    if (sscanf(ifname, "ppp%d", &port) == 1) {
+    if (strcmp(ifname, _ifname) == 0) {
+	return ifunit;
+    }
+    if (sscanf(_ifname, "ppp%d", &port) == 1) {
 	return port;
     }
     return rc_map2id(ifname);

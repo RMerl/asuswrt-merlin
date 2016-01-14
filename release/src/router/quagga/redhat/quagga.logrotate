@@ -1,0 +1,63 @@
+/var/log/quagga/zebra.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/zebra.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/quagga/babeld.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/babeld.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/quagga/bgpd.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/bgpd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/quagga/isisd.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/isisd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/quagga/ospfd.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/ospfd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/quagga/ospf6d.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/ospf6d.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/quagga/ripd.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/ripd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/quagga/ripngd.log {
+    notifempty
+    missingok
+    postrotate
+	/bin/kill -USR1 `cat /var/run/quagga/ripngd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}

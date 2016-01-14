@@ -1,0 +1,2 @@
+PKG=QUAGGAlibs
+NAME="@PACKAGE_NAME@ - @PACKAGE_NAME@ common runtime libraries"

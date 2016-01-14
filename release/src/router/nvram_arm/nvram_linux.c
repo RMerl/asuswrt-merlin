@@ -212,7 +212,7 @@ nvram_commit(void)
 
 	if (nvram_get(ASUS_STOP_COMMIT) != NULL)
 	{
-		cprintf("# skip nvram commit #\n");
+		printf("# skip nvram commit #\n");
 		return ret;
 	}
 

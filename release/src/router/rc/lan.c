@@ -846,18 +846,23 @@ del_lan_routes(char *lan_ifname)
 #if defined(RTCONFIG_QCA)||defined(RTCONFIG_RALINK)
 char *get_hwaddr(const char *ifname)
 {
-	int s;
+	int s = -1;
 	struct ifreq ifr;
 	char eabuf[32];
+	char *p = NULL;
 
 	if (ifname == NULL) return NULL;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) return NULL;
 
 	strcpy(ifr.ifr_name, ifname);
-	if (ioctl(s, SIOCGIFHWADDR, &ifr)) return NULL;
+	if (ioctl(s, SIOCGIFHWADDR, &ifr)) goto error;
 
-	return strdup(ether_etoa(ifr.ifr_hwaddr.sa_data, eabuf));
+	p = strdup(ether_etoa((const unsigned char *)ifr.ifr_hwaddr.sa_data, eabuf));
+
+error:
+	close(s);
+	return p;
 }
 #endif
 
@@ -1767,8 +1772,8 @@ void start_lan(void)
 								return;
 							}
 						}
-						close(s);
 					}
+					close(s);
 				}
 #endif
 #ifdef RTCONFIG_GMAC3

@@ -1,0 +1,623 @@
+@c -*-texinfo-*-
+@c This is part of the Quagga Manual.
+@c @value{COPYRIGHT_STR}
+@c See file quagga.texi for copying conditions.
+@node RIP
+@chapter RIP
+
+RIP -- Routing Information Protocol is widely deployed interior gateway
+protocol.  RIP was developed in the 1970s at Xerox Labs as part of the
+XNS routing protocol.  RIP is a @dfn{distance-vector} protocol and is
+based on the @dfn{Bellman-Ford} algorithms.  As a distance-vector
+protocol, RIP router send updates to its neighbors periodically, thus
+allowing the convergence to a known topology.  In each update, the
+distance to any given network will be broadcasted to its neighboring
+router.
+
+@command{ripd} supports RIP version 2 as described in RFC2453 and RIP
+version 1 as described in RFC1058.
+
+@menu
+* Starting and Stopping ripd::  
+* RIP Configuration::           
+* RIP Version Control::
+* How to Announce RIP route::   
+* Filtering RIP Routes::        
+* RIP Metric Manipulation::     
+* RIP distance::                
+* RIP route-map::               
+* RIP Authentication::          
+* RIP Timers::                  
+* Show RIP Information::        
+* RIP Debug Commands::          
+@end menu
+
+@node Starting and Stopping ripd
+@section Starting and Stopping ripd
+
+The default configuration file name of @command{ripd}'s is
+@file{ripd.conf}.  When invocation @command{ripd} searches directory
+@value{INSTALL_PREFIX_ETC}.  If @file{ripd.conf} is not there next
+search current directory.
+
+RIP uses UDP port 520 to send and receive RIP packets.  So the user must have
+the capability to bind the port, generally this means that the user must
+have superuser privileges.  RIP protocol requires interface information
+maintained by @command{zebra} daemon.  So running @command{zebra}
+is mandatory to run @command{ripd}.  Thus minimum sequence for running
+RIP is like below:
+
+@example
+@group
+# zebra -d
+# ripd -d
+@end group
+@end example
+
+Please note that @command{zebra} must be invoked before @command{ripd}.
+
+To stop @command{ripd}.  Please use @command{kill `cat
+/var/run/ripd.pid`}.  Certain signals have special meaningss to @command{ripd}.
+
+@table @samp
+@item SIGHUP
+Reload configuration file @file{ripd.conf}.  All configurations are
+reseted.  All routes learned so far are cleared and removed from routing
+table.
+@item SIGUSR1
+Rotate @command{ripd} logfile.
+@item SIGINT
+@itemx SIGTERM
+@command{ripd} sweeps all installed RIP routes then terminates properly.
+@end table
+
+@command{ripd} invocation options.  Common options that can be specified
+(@pxref{Common Invocation Options}).
+
+@table @samp
+@item -r
+@itemx --retain
+When the program terminates, retain routes added by @command{ripd}.
+@end table
+
+@menu
+* RIP netmask::                 
+@end menu
+
+@node RIP netmask
+@subsection RIP netmask
+
+The netmask features of @command{ripd} support both version 1 and version 2 of
+RIP.  Version 1 of RIP originally contained no netmask information.  In
+RIP version 1, network classes were originally used to determine the
+size of the netmask.  Class A networks use 8 bits of mask, Class B
+networks use 16 bits of masks, while Class C networks use 24 bits of
+mask.  Today, the most widely used method of a network mask is assigned
+to the packet on the basis of the interface that received the packet.
+Version 2 of RIP supports a variable length subnet mask (VLSM).  By
+extending the subnet mask, the mask can be divided and reused.  Each
+subnet can be used for different purposes such as large to middle size
+LANs and WAN links.  Quagga @command{ripd} does not support the non-sequential
+netmasks that are included in RIP Version 2.
+
+In a case of similar information with the same prefix and metric, the
+old information will be suppressed.  Ripd does not currently support
+equal cost multipath routing.
+
+
+@node RIP Configuration
+@section RIP Configuration
+
+@deffn Command {router rip} {}
+The @code{router rip} command is necessary to enable RIP.  To disable
+RIP, use the @code{no router rip} command.  RIP must be enabled before
+carrying out any of the RIP commands.
+@end deffn
+
+@deffn Command {no router rip} {}
+Disable RIP.
+@end deffn
+
+@deffn {RIP Command} {network @var{network}} {}
+@deffnx {RIP Command} {no network @var{network}} {}
+Set the RIP enable interface by @var{network}.  The interfaces which
+have addresses matching with @var{network} are enabled.
+
+This group of commands either enables or disables RIP interfaces between
+certain numbers of a specified network address.  For example, if the
+network for 10.0.0.0/24 is RIP enabled, this would result in all the
+addresses from 10.0.0.0 to 10.0.0.255 being enabled for RIP.  The @code{no
+network} command will disable RIP for the specified network.
+@end deffn
+
+@deffn {RIP Command} {network @var{ifname}} {}
+@deffnx {RIP Command} {no network @var{ifname}} {}
+Set a RIP enabled interface by @var{ifname}.  Both the sending and
+receiving of RIP packets will be enabled on the port specified in the
+@code{network ifname} command.  The @code{no network ifname} command will disable
+RIP on the specified interface.
+@end deffn
+
+@deffn {RIP Command} {neighbor @var{a.b.c.d}} {}
+@deffnx {RIP Command} {no neighbor @var{a.b.c.d}} {}
+Specify RIP neighbor.  When a neighbor doesn't understand multicast,
+this command is used to specify neighbors.  In some cases, not all
+routers will be able to understand multicasting, where packets are sent
+to a network or a group of addresses.  In a situation where a neighbor
+cannot process multicast packets, it is necessary to establish a direct
+link between routers.  The neighbor command allows the network
+administrator to specify a router as a RIP neighbor.  The @code{no
+neighbor a.b.c.d} command will disable the RIP neighbor.
+@end deffn
+
+Below is very simple RIP configuration.  Interface @code{eth0} and
+interface which address match to @code{10.0.0.0/8} are RIP enabled.
+
+@example
+@group
+!
+router rip
+ network 10.0.0.0/8
+ network eth0
+!
+@end group
+@end example
+
+Passive interface
+
+@deffn {RIP command} {passive-interface (@var{IFNAME}|default)} {}
+@deffnx {RIP command} {no passive-interface @var{IFNAME}} {}
+This command sets the specified interface to passive mode.  On passive mode
+interface, all receiving packets are processed as normal and ripd does
+not send either multicast or unicast RIP packets except to RIP neighbors
+specified with @code{neighbor} command. The interface may be specified
+as @var{default} to make ripd default to passive on all interfaces. 
+
+The default is to be passive on all interfaces.
+@end deffn
+
+RIP split-horizon
+
+@deffn {Interface command} {ip split-horizon} {}
+@deffnx {Interface command} {no ip split-horizon} {}
+Control split-horizon on the interface.  Default is @code{ip
+split-horizon}.  If you don't perform split-horizon on the interface,
+please specify @code{no ip split-horizon}.
+@end deffn
+
+@node RIP Version Control
+@section RIP Version Control
+
+RIP can be configured to send either Version 1 or Version 2 packets.
+The default is to send RIPv2 while accepting both RIPv1 and RIPv2 (and
+replying with packets of the appropriate version for REQUESTS /
+triggered updates). The version to receive and send can be specified
+globally, and further overriden on a per-interface basis if needs be
+for send and receive seperately (see below).
+
+It is important to note that RIPv1 can not be authenticated. Further,
+if RIPv1 is enabled then RIP will reply to REQUEST packets, sending the
+state of its RIP routing table to any remote routers that ask on
+demand. For a more detailed discussion on the security implications of
+RIPv1 see @ref{RIP Authentication}.
+
+@deffn {RIP Command} {version @var{version}} {}
+Set RIP version to accept for reads and send.  @var{version}
+can be either `1'' or `2''. 
+
+Disabling RIPv1 by specifying version 2 is STRONGLY encouraged,
+@xref{RIP Authentication}. This may become the default in a future
+release.
+
+Default: Send Version 2, and accept either version.
+@end deffn
+
+@deffn {RIP Command} {no version} {}
+Reset the global version setting back to the default.
+@end deffn
+
+@deffn {Interface command} {ip rip send version @var{version}} {}
+@var{version} can be `1', `2' or `1 2'.
+
+This interface command overrides the global rip version setting, and
+selects which version of RIP to send packets with, for this interface
+specifically. Choice of RIP Version 1, RIP Version 2, or both versions. 
+In the latter case, where `1 2' is specified, packets will be both
+broadcast and multicast.
+
+Default: Send packets according to the global version (version 2)
+@end deffn
+
+@deffn {Interface command} {ip rip receive version @var{version}} {}
+@var{version} can be `1', `2' or `1 2'.
+
+This interface command overrides the global rip version setting, and
+selects which versions of RIP packets will be accepted on this
+interface. Choice of RIP Version 1, RIP Version 2, or both.
+
+Default: Accept packets according to the global setting (both 1 and 2).
+@end deffn
+
+@node How to Announce RIP route
+@section How to Announce RIP route
+
+@deffn {RIP command} {redistribute kernel} {}
+@deffnx {RIP command} {redistribute kernel metric <0-16>} {}
+@deffnx {RIP command} {redistribute kernel route-map @var{route-map}} {}
+@deffnx {RIP command} {no redistribute kernel} {}
+@code{redistribute kernel} redistributes routing information from
+kernel route entries into the RIP tables. @code{no redistribute kernel}
+disables the routes.
+@end deffn
+
+@deffn {RIP command} {redistribute static} {}
+@deffnx {RIP command} {redistribute static metric <0-16>} {}
+@deffnx {RIP command} {redistribute static route-map @var{route-map}} {}
+@deffnx {RIP command} {no redistribute static} {}
+@code{redistribute static} redistributes routing information from
+static route entries into the RIP tables. @code{no redistribute static}
+disables the routes.
+@end deffn
+
+@deffn {RIP command} {redistribute connected} {}
+@deffnx {RIP command} {redistribute connected metric <0-16>} {}
+@deffnx {RIP command} {redistribute connected route-map @var{route-map}} {}
+@deffnx {RIP command} {no redistribute connected} {}
+Redistribute connected routes into the RIP tables.  @code{no
+redistribute connected} disables the connected routes in the RIP tables.
+This command redistribute connected of the interface which RIP disabled.
+The connected route on RIP enabled interface is announced by default.
+@end deffn
+
+@deffn {RIP command} {redistribute ospf} {}
+@deffnx {RIP command} {redistribute ospf metric <0-16>} {}
+@deffnx {RIP command} {redistribute ospf route-map @var{route-map}} {}
+@deffnx {RIP command} {no redistribute ospf} {}
+@code{redistribute ospf} redistributes routing information from
+ospf route entries into the RIP tables. @code{no redistribute ospf}
+disables the routes.
+@end deffn
+
+@deffn {RIP command} {redistribute bgp} {}
+@deffnx {RIP command} {redistribute bgp metric <0-16>} {}
+@deffnx {RIP command} {redistribute bgp route-map @var{route-map}} {}
+@deffnx {RIP command} {no redistribute bgp} {}
+@code{redistribute bgp} redistributes routing information from
+bgp route entries into the RIP tables. @code{no redistribute bgp}
+disables the routes.
+@end deffn
+
+If you want to specify RIP only static routes:
+
+@deffn {RIP command} {default-information originate} {}
+@end deffn
+
+@deffn {RIP command} {route @var{a.b.c.d/m}} {}
+@deffnx {RIP command} {no route @var{a.b.c.d/m}} {}
+This command is specific to Quagga.  The @code{route} command makes a static
+route only inside RIP. This command should be used only by advanced
+users who are particularly knowledgeable about the RIP protocol.  In
+most cases, we recommend creating a static route in Quagga and
+redistributing it in RIP using @code{redistribute static}.
+@end deffn
+
+@node  Filtering RIP Routes
+@section Filtering RIP Routes
+
+RIP routes can be filtered by a distribute-list.
+
+@deffn Command {distribute-list @var{access_list} @var{direct} @var{ifname}} {}
+You can apply access lists to the interface with a @code{distribute-list}
+command.  @var{access_list} is the access list name.  @var{direct} is
+@samp{in} or @samp{out}.  If @var{direct} is @samp{in} the access list
+is applied to input packets.
+
+The @code{distribute-list} command can be used to filter the RIP path.
+@code{distribute-list} can apply access-lists to a chosen interface.
+First, one should specify the access-list.  Next, the name of the
+access-list is used in the distribute-list command.  For example, in the
+following configuration @samp{eth0} will permit only the paths that
+match the route 10.0.0.0/8
+
+@example
+@group
+!
+router rip
+ distribute-list private in eth0
+!
+access-list private permit 10 10.0.0.0/8
+access-list private deny any
+!
+@end group
+@end example
+@end deffn
+
+@code{distribute-list} can be applied to both incoming and outgoing data.
+
+@deffn Command {distribute-list prefix @var{prefix_list} (in|out) @var{ifname}} {}
+You can apply prefix lists to the interface with a
+@code{distribute-list} command.  @var{prefix_list} is the prefix list
+name.  Next is the direction of @samp{in} or @samp{out}.  If
+@var{direct} is @samp{in} the access list is applied to input packets.
+@end deffn
+
+@node RIP Metric Manipulation
+@section RIP Metric Manipulation
+
+RIP metric is a value for distance for the network.  Usually
+@command{ripd} increment the metric when the network information is
+received.  Redistributed routes' metric is set to 1.
+
+@deffn {RIP command} {default-metric <1-16>} {}
+@deffnx {RIP command} {no default-metric <1-16>} {}
+This command modifies the default metric value for redistributed routes.  The
+default value is 1.  This command does not affect connected route
+even if it is redistributed by @command{redistribute connected}.  To modify
+connected route's metric value, please use @command{redistribute
+connected metric} or @command{route-map}.  @command{offset-list} also
+affects connected routes.
+@end deffn
+
+@deffn {RIP command} {offset-list @var{access-list} (in|out)} {}
+@deffnx {RIP command} {offset-list @var{access-list} (in|out) @var{ifname}} {}
+@end deffn
+
+@node RIP distance
+@section RIP distance
+
+Distance value is used in zebra daemon.  Default RIP distance is 120.
+
+@deffn {RIP command} {distance <1-255>} {}
+@deffnx {RIP command} {no distance <1-255>} {}
+Set default RIP distance to specified value.
+@end deffn
+
+@deffn {RIP command} {distance <1-255> @var{A.B.C.D/M}} {}
+@deffnx {RIP command} {no distance <1-255> @var{A.B.C.D/M}} {}
+Set default RIP distance to specified value when the route's source IP
+address matches the specified prefix.
+@end deffn
+
+@deffn {RIP command} {distance <1-255> @var{A.B.C.D/M} @var{access-list}} {}
+@deffnx {RIP command} {no distance <1-255> @var{A.B.C.D/M} @var{access-list}} {}
+Set default RIP distance to specified value when the route's source IP
+address matches the specified prefix and the specified access-list.
+@end deffn
+
+@node RIP route-map
+@section RIP route-map
+
+Usage of @command{ripd}'s route-map support.
+
+Optional argument route-map MAP_NAME can be added to each @code{redistribute}
+statement.
+
+@example
+redistribute static [route-map MAP_NAME]
+redistribute connected [route-map MAP_NAME]
+.....
+@end example
+
+Cisco applies route-map _before_ routes will exported to rip route table. 
+In current Quagga's test implementation, @command{ripd} applies route-map
+after routes are listed in the route table and before routes will be
+announced to an interface (something like output filter). I think it is not
+so clear, but it is draft and it may be changed at future.
+
+Route-map statement (@pxref{Route Map}) is needed to use route-map
+functionality.
+
+@deffn {Route Map} {match interface @var{word}} {}
+This command match to incoming interface.  Notation of this match is
+different from Cisco. Cisco uses a list of interfaces - NAME1 NAME2
+... NAMEN.  Ripd allows only one name (maybe will change in the
+future).  Next - Cisco means interface which includes next-hop of
+routes (it is somewhat similar to "ip next-hop" statement).  Ripd
+means interface where this route will be sent. This difference is
+because "next-hop" of same routes which sends to different interfaces
+must be different. Maybe it'd be better to made new matches - say
+"match interface-out NAME" or something like that.
+@end deffn
+
+@deffn {Route Map} {match ip address @var{word}} {}
+@deffnx {Route Map} {match ip address prefix-list @var{word}} {}
+Match if route destination is permitted by access-list.
+@end deffn
+
+@deffn {Route Map} {match ip next-hop @var{word}} {}
+@deffnx {Route Map} {match ip next-hop prefix-list @var{word}} {}
+Match if route next-hop (meaning next-hop listed in the rip route-table
+as displayed by "show ip rip") is permitted by access-list.
+@end deffn
+
+@deffn {Route Map} {match metric <0-4294967295>} {}
+This command match to the metric value of RIP updates.  For other
+protocol compatibility metric range is shown as <0-4294967295>.  But
+for RIP protocol only the value range <0-16> make sense.
+@end deffn
+
+@deffn {Route Map} {set ip next-hop A.B.C.D} {}
+This command set next hop value in RIPv2 protocol.  This command does
+not affect RIPv1 because there is no next hop field in the packet.
+@end deffn
+
+@deffn {Route Map} {set metric <0-4294967295>} {}
+Set a metric for matched route when sending announcement.  The metric
+value range is very large for compatibility with other protocols.  For
+RIP, valid metric values are from 1 to 16.
+@end deffn
+
+@node RIP Authentication
+@section RIP Authentication
+
+RIPv2 allows packets to be authenticated via either an insecure plain
+text password, included with the packet, or via a more secure MD5 based
+@acronym{HMAC, keyed-Hashing for Message AuthentiCation},
+RIPv1 can not be authenticated at all, thus when authentication is
+configured @code{ripd} will discard routing updates received via RIPv1
+packets.
+
+However, unless RIPv1 reception is disabled entirely, 
+@xref{RIP Version Control}, RIPv1 REQUEST packets which are received,
+which query the router for routing information, will still be honoured
+by @code{ripd}, and @code{ripd} WILL reply to such packets. This allows 
+@code{ripd} to honour such REQUESTs (which sometimes is used by old
+equipment and very simple devices to bootstrap their default route),
+while still providing security for route updates which are received.
+
+In short: Enabling authentication prevents routes being updated by
+unauthenticated remote routers, but still can allow routes (I.e. the
+entire RIP routing table) to be queried remotely, potentially by anyone
+on the internet, via RIPv1.
+
+To prevent such unauthenticated querying of routes disable RIPv1,
+@xref{RIP Version Control}.
+
+@deffn {Interface command} {ip rip authentication mode md5} {}
+@deffnx {Interface command} {no ip rip authentication mode md5} {}
+Set the interface with RIPv2 MD5 authentication.
+@end deffn
+
+@deffn {Interface command} {ip rip authentication mode text} {}
+@deffnx {Interface command} {no ip rip authentication mode text} {}
+Set the interface with RIPv2 simple password authentication.
+@end deffn
+
+@deffn {Interface command} {ip rip authentication string @var{string}} {}
+@deffnx {Interface command} {no ip rip authentication string @var{string}} {}
+RIP version 2 has simple text authentication.  This command sets
+authentication string.  The string must be shorter than 16 characters.
+@end deffn
+
+@deffn {Interface command} {ip rip authentication key-chain @var{key-chain}} {}
+@deffnx {Interface command} {no ip rip authentication key-chain @var{key-chain}} {}
+Specifiy Keyed MD5 chain.
+@end deffn
+
+@example
+!
+key chain test
+ key 1
+  key-string test
+!
+interface eth1
+ ip rip authentication mode md5
+ ip rip authentication key-chain test
+!
+@end example
+
+@node RIP Timers
+@section RIP Timers
+
+@deffn {RIP command} {timers basic @var{update} @var{timeout} @var{garbage}} {}
+
+RIP protocol has several timers.  User can configure those timers' values
+by @code{timers basic} command.
+
+The default settings for the timers are as follows: 
+
+@itemize @bullet 
+@item
+The update timer is 30 seconds. Every update timer seconds, the RIP
+process is awakened to send an unsolicited Response message containing
+the complete routing table to all neighboring RIP routers.
+
+@item
+The timeout timer is 180 seconds. Upon expiration of the timeout, the
+route is no longer valid; however, it is retained in the routing table
+for a short time so that neighbors can be notified that the route has
+been dropped.
+
+@item
+The garbage collect timer is 120 seconds.  Upon expiration of the
+garbage-collection timer, the route is finally removed from the routing
+table.
+
+@end itemize
+
+The @code{timers basic} command allows the the default values of the timers
+listed above to be changed.
+@end deffn
+
+@deffn {RIP command} {no timers basic} {}
+The @code{no timers basic} command will reset the timers to the default
+settings listed above.
+@end deffn
+
+@node Show RIP Information
+@section Show RIP Information
+
+To display RIP routes.
+
+@deffn Command {show ip rip} {}
+Show RIP routes.
+@end deffn
+
+The command displays all RIP routes. For routes that are received
+through RIP, this command will display the time the packet was sent and
+the tag information.  This command will also display this information
+for routes redistributed into RIP.
+
+@c Exmaple here.
+
+@deffn Command {show ip rip status} {}
+The command displays current RIP status.  It includes RIP timer,
+filtering, version, RIP enabled interface and RIP peer inforation.
+@end deffn
+
+@example
+@group
+ripd> @b{show ip rip status}
+Routing Protocol is "rip"
+  Sending updates every 30 seconds with +/-50%, next due in 35 seconds
+  Timeout after 180 seconds, garbage collect after 120 seconds
+  Outgoing update filter list for all interface is not set
+  Incoming update filter list for all interface is not set
+  Default redistribution metric is 1
+  Redistributing: kernel connected
+  Default version control: send version 2, receive version 2 
+    Interface        Send  Recv
+  Routing for Networks:
+    eth0
+    eth1
+    1.1.1.1
+    203.181.89.241
+  Routing Information Sources:
+    Gateway          BadPackets BadRoutes  Distance Last Update
+@end group
+@end example
+
+@node RIP Debug Commands
+@section RIP Debug Commands
+
+Debug for RIP protocol.
+
+@deffn Command {debug rip events} {}
+Debug rip events.
+@end deffn
+
+@code{debug rip} will show RIP events.  Sending and receiving
+packets, timers, and changes in interfaces are events shown with @command{ripd}.
+
+@deffn Command {debug rip packet} {}
+Debug rip packet.
+@end deffn
+
+@code{debug rip packet} will display detailed information about the RIP
+packets.  The origin and port number of the packet as well as a packet
+dump is shown.
+
+@deffn Command {debug rip zebra} {}
+Debug rip between zebra communication.
+@end deffn
+
+This command will show the communication between @command{ripd} and
+@command{zebra}.  The main information will include addition and deletion of
+paths to the kernel and the sending and receiving of interface information.
+
+@deffn Command {show debugging rip} {}
+Display @command{ripd}'s debugging option.
+@end deffn
+
+@code{show debugging rip} will show all information currently set for ripd
+debug.

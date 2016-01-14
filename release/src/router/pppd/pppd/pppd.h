@@ -323,6 +323,7 @@ extern int	connect_delay;	/* Time to delay after connect script */
 extern int	max_data_rate;	/* max bytes/sec through charshunt */
 extern int	req_unit;	/* interface unit number to use */
 extern int	req_minunit;	/* interface minimal unit number to use */
+extern char	req_ifname[];	/* interface name to use */
 extern bool	multilink;	/* enable multilink operation */
 extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
 extern char	*bundle_name;	/* bundle name for multilink */
@@ -653,6 +654,7 @@ void netif_set_mtu __P((int, int)); /* Set PPP interface MTU */
 int  netif_get_mtu __P((int));      /* Get PPP interface MTU */
 int  sifvjcomp __P((int, int, int, int));
 				/* Configure VJ TCP header compression */
+int  sifname __P((int, const char *));/* Configure i/f name */
 int  sifup __P((int));		/* Configure i/f up for one protocol */
 int  sifnpmode __P((int u, int proto, enum NPmode mode));
 				/* Set mode for handling packets for proto */

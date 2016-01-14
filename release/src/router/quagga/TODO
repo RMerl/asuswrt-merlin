@@ -1,0 +1,209 @@
+
+			   Quagga TODO list
+                             2013-03-29
+
+
+This is the Quagga primary TODO list.  It is on git because that way changes
+pass through the usual process just like code does, therefore they will have
+the same visibility.
+
+If you are working on something beyond a simple fix, to avoid double work it
+is a good idea to submit a patch to this TODO list when you are starting,
+listing what you're doing.  Also, as others may have done just that, check
+the list before starting.
+
+Google Summer of Code 2013 note:  this list double-serves as idea list for the
+Summer of Code.  Ideas considered suitable for students are marked with a star
+after the number, like this: "[Q999*] achieve world peace".  They will also
+have extended descriptions.  Nevertheless, if you'd like to do something else,
+just write a mail to the mailing list: quagga-dev@lists.quagga.net
+
+"GSoC-Mentors:" listings are preliminary at this point.
+
+
+Overall
+=======
+
+[Q000] improve unit test architecture
+
+[Q001] kick invalid runtime tests from configure.ac, use list of supported
+		OSes and their APIs instead.
+	Priority: low
+	State: patch half-done 2013-03-29 David Lamparter
+
+[Q002*] clean up zebra IPC, remove code duplication, align to common API
+	Priority: high
+	GSoC-Mentors: David Lamparter, Christian Franke
+
+	Quagga posesses an IPC mechanism to exchange route information among
+	the different daemons and Zebra, the kernel-interface.  This mechanism
+	is implemented in libzebra, but is currently used in all sorts of
+	different ways in the individual protocol daemons.  Also, in the future
+	the entire protocol needs to be redone in an extensible way, so we're
+	able to support MPLS, BFD, Multi-Topology/Instance, VRFs, ...
+
+	This TODO entry only refers to the first-step API cleanup.  All the
+	daemons need to use a single, well-defined libzebra API.  Only after
+	this has been addressed can we look upon changing the protocol itself,
+	since by then it will be encapsulated inside libzebra.
+
+[Q003] add multi-instance / multi-topology support to the individual protocols
+
+[Q004] MPLS support
+	State: work in progress 2013-03-29 Renato Westphal, Timo Teräs
+
+[Q005] BFD support
+	State: two old implementations exist, contact Hasso Tepper
+
+
+library
+=======
+
+[L000] improve route_table speed, eg strided lookups for common prefix depths.
+
+[L001] ipv6 addresses need concept of valid/preferred
+
+[L002] implement a generic daemon access/control protocol (eg D-Bus like?
+		simplified SNMP-a-like?  NETCONF?)
+
+[L003] extend vty command definitions to allow them to be self-documenting
+		i18n command help strings
+
+[L004] create a common libspf (for ospfd, ospf6d and possibly isisd and more).
+		cf. TODO item [O000] for the ospfd/ospf6d specific variant
+
+[L005] stabilise the API (possibly including symbol/library versioning voodoo)
+
+[L006] Document the exported API (DocBook/Doxygen?)
+
+[LE00] incorporate library changes from Euro-IX branch, except threading
+
+[LE01] incorporate threading library support from Euro-IX branch
+
+
+zebra
+=====
+
+[Z000] Pointopoint address configuration.
+	Priority: low
+	State: patch done & tested 2013-03-29 David Lamparter
+
+[Z001] Add support for valid and preferred lifetimes to IPv6 addresses
+
+[Z002] proper support for (at least) 1-level recursive routes
+	Priority: high
+
+[Z003] Ability to set src on routes, where systems support it.
+
+[Z004] Ability to apply route-maps to daemon route updates.
+
+
+bgpd
+====
+
+[B000] HUP signal support (reload configuration file).
+
+[B001*] BGP multi-path extension, relaxed mode
+	Priority: medium
+       Implemented, patch will be sent shortly
+       Pradosh Mohapatra, Cumulus Networks
+
+[B002] move FSM state to be per-connection, not per-peer.
+
+[B003] Add support for internal and minimum-metric MED setting
+
+
+ripd
+====
+
+[R000] Multipath support.
+
+
+ospfd/ospf6d
+============
+
+[O000] move SPF to common code
+
+[O001] extend code sharing between ospfd and ospf6d beyond SPF
+
+[O002*] OSPF testing replay tool
+	Priority: medium
+	GSoC-Mentors: Martin Winter, Christian Franke, David Lamparter
+
+	In order to extensively test OSPF implementations, a tool to fake an
+	OSPF neighbor is immensely useful.  This tool needs to be capable of
+	forming an adjacency and pushing LSAs to the device to be tested.  To
+	maintain the adjacency, some minimal state tracking is useful.
+
+	In total, the tool needs to form an adjacency, read and push LSAs, and
+	output received LSAs.  Additional tools to generate LSAs from
+	specifications as well as verify received LSA correctness can then be
+	built on top of that.
+
+	The tool needs to support IPv4 and IPv6, possibly split into 2 tools
+	with some code sharing.
+
+ospfd:
+
+[O400] Demand circuits.
+	Priority: very low
+
+[O401] Multiple instances.
+	Priority: medium
+
+[O402] HUP signal treatment.
+	Priority: medium
+	State: patch on ML needs review 2012-06-04 Mattias Walström
+
+ospf6d:
+
+[O600*] fix ospf6d in general
+	Priority: high
+	State: patches tickling in from Cumulus Networks 2013-03-29 Dinesh Dutt
+        Implemented: p2p link support, ABR, Stub area/Totally Stubby area,
+        SPF throttling, Improving state machine to get performance/scale,
+        max-metric support, Improving ECMP to be > 4, Various other bug fixes
+
+
+[O601*] OSPFv3 autoconfiguration, prefix assignment and sourcedest routing
+	Priority: medium
+	State: work in progress 2013-03-29 Edward Seabrook
+	GSoC-Mentors: David Lamparter
+
+	OSPFv3 application in the homenet is being designed to use several
+	extensions to the base protocol.  In order of dependency,
+	autoconfiguration, prefix assignment and sourcedest routing should
+	be implemented.
+
+	This task requires a good level of OSPF understanding plus proper
+	ability to follow IETF discussion about these points.  Also, since work
+	has already started on this, improvements must obviously build on top
+	of that.
+
+isisd
+=====
+
+[I000] reassess isisd TODO
+
+[I001*] IS-IS testing replay tool
+	Priority: medium
+	GSoC-Mentors: Martin Winter, Christian Franke, David Lamparter
+
+	see [O002*].
+
+[I002] Mesh groups (RFC2973)
+
+[I003] Crypto authentication (RFC3567)
+
+
+vtysh
+=====
+
+[V000] untangle readline specific bits
+
+[V001] add a vtyd with a vty (ie telnet) frontend (as opposed to readline)
+
+[V002] (=> [L002]) use daemon control protocol
+
+[V003] better AAA support than just PAM, eg krb5, SASL, LDAP...
+

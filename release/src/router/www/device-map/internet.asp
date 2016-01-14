@@ -657,9 +657,10 @@ function manualSetup(){
 						$('#radio_wan_enable').iphoneSwitch('<% nvram_get("wan_enable"); %>', 
 							 function() {
 								document.internetForm.wan_enable.value = "1";
-								if (dsl_support) {
+								if (dsl_support && wans_dualwan.split(" ")[wan_unit] == "dsl") {
 									document.internetForm.dslx_link_enable.value = "1";
 									document.internetForm.dslx_link_enable.disabled = false;
+									document.internetForm.action_script.value = "start_dslwan_if 0";
 								}
 								parent.showLoading();
 								document.internetForm.submit();	
@@ -667,9 +668,10 @@ function manualSetup(){
 							 },
 							 function() {
 								document.internetForm.wan_enable.value = "0";
-								if (dsl_support) {
+								if (dsl_support && wans_dualwan.split(" ")[wan_unit] == "dsl") {
 									document.internetForm.dslx_link_enable.value = "0";
 									document.internetForm.dslx_link_enable.disabled = false;
+									document.internetForm.action_script.value = "stop_dslwan_if 0";
 								}
 								parent.showLoading();
 								document.internetForm.submit();	

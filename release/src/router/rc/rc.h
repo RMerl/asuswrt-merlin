@@ -654,7 +654,7 @@ extern int pppstatus(void);
 extern void time_zone_x_mapping(void);
 extern void stop_if_misc(void);
 extern int mssid_mac_validate(const char *macaddr);
-#ifdef RTCONFIG_WIRELESSREPEATER
+#ifdef CONFIG_BCMWL5
 extern int setup_dnsmq(int mode);
 #endif
 
@@ -1013,6 +1013,7 @@ extern void stop_klogd(void);
 extern int start_syslogd(void);
 extern int start_klogd(void);
 extern int start_logger(void);
+extern void start_dfs(void);
 extern void handle_notifications(void);
 extern void stop_watchdog(void);
 extern int start_watchdog(void);

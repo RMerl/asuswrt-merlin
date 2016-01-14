@@ -1243,38 +1243,38 @@ static int start_bandwidth_limiter(void)
 			sscanf(addr_new, "%02X:%02X:%02X:%02X:%02X:%02X",&s[0],&s[1],&s[2],&s[3],&s[4],&s[5]);
 			fprintf(f,
 				"\n"
-				"$TCA parent 1:1 classid 1:%d htb rate %skbit ceil %skbit prio %s\n"
+				"$TCA parent 1:1 classid 1:%d htb rate %skbit ceil %skbit prio %d\n"
 				"$TQA parent 1:%d handle %d: $SFQ\n"
-				"$TFA parent 1: protocol ip prio %s u32 match u16 0x0800 0xFFFF at -2 match u32 0x%02X%02X%02X%02X 0xFFFFFFFF at -12 match u16 0x%02X%02X 0xFFFF at -14 flowid 1:%d"
+				"$TFA parent 1: protocol ip prio %d u32 match u16 0x0800 0xFFFF at -2 match u32 0x%02X%02X%02X%02X 0xFFFFFFFF at -12 match u16 0x%02X%02X 0xFFFF at -14 flowid 1:%d"
 				"\n"
-				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %s\n"
+				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
 				"$TQAU parent 2:%d handle %d: $SFQ\n"
-				"$TFAU parent 2: prio %s protocol ip handle %d fw flowid 2:%d\n"
-				, class, dlc, dlc, prio
+				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
+				, class, dlc, dlc, class
 				, class, class
-				, prio, s[2], s[3], s[4], s[5], s[0], s[1], class
-				, class, upc, upc, prio
+				, class, s[2], s[3], s[4], s[5], s[0], s[1], class
+				, class, upc, upc, class
 				, class, class
-				, prio, class, class
+				, class, class, class
 			);
 		}
 		else if (addr_type == TYPE_IP || addr_type == TYPE_IPRANGE)
 		{
 			fprintf(f,
 				"\n"
-				"$TCA parent 1:1 classid 1:%d htb rate %skbit ceil %skbit prio %s\n"
+				"$TCA parent 1:1 classid 1:%d htb rate %skbit ceil %skbit prio %d\n"
 				"$TQA parent 1:%d handle %d: $SFQ\n"
-				"$TFA parent 1: prio %s protocol ip handle %d fw flowid 1:%d\n"
+				"$TFA parent 1: prio %d protocol ip handle %d fw flowid 1:%d\n"
 				"\n"
-				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %s\n"
+				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
 				"$TQAU parent 2:%d handle %d: $SFQ\n"
-				"$TFAU parent 2: prio %s protocol ip handle %d fw flowid 2:%d\n"
-				, class, dlc, dlc, prio
+				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
+				, class, dlc, dlc, class
 				, class, class
-				, prio, class, class
-				, class, upc, upc, prio
+				, class, class, class
+				, class, upc, upc, class
 				, class, class
-				, prio, class, class
+				, class, class, class
 			);
 		}
 		else if (addr_type == TYPE_GUEST)

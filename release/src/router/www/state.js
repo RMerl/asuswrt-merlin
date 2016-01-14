@@ -320,12 +320,21 @@ var dhcp_override_support = isSupport("dhcp_override");
 var wtfast_support = isSupport("wtfast");
 var powerline_support = isSupport("plc");
 var reboot_schedule_support = isSupport("reboot_schedule");
+var app_support = false;
+if( based_modelid == "RT-AC5300" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3200" 
+ || based_modelid == "RT-AC87U" || based_modelid == "RT-AC87R"
+ ||based_modelid == "RT-AC68U" || based_modelid == "RT-AC68R" || based_modelid == "RT-AC68P" || based_modelid == "RT-AC68W"
+ || based_modelid == "RT-AC66U" || based_modelid == "RT-AC66R" 
+ || based_modelid == "RT-AC56U" 
+ || based_modelid == "RT-N66U" || based_modelid == "RT-N66R" || based_modelid == "RT-N66W"){
+	app_support = true;	 
+ }
 var QISWIZARD = "QIS_wizard.htm";
 
 var wl_version = "<% nvram_get("wl_version"); %>";
 var sdk_version_array = new Array();
 sdk_version_array = wl_version.split(".");
-var sdk_7_up = (sdk_version_array[0] >= 7) ? true : false;
+var sdk_7 = sdk_version_array[0] == 7 ? true : false;
 
 // Todo: Support repeater mode
 /*if(isMobile() && sw_mode != 2 && !dsl_support)
@@ -359,7 +368,9 @@ var gn_array_5g = <% wl_get_guestnetwork("1"); %>;
 var gn_array_5g_2 = <% wl_get_guestnetwork("2"); %>;
 
 //notification value
-var notice_acpw_is_default = '<% check_acpw(); %>';
+var notice_pw_is_default = '<% check_pw(); %>';
+if(notice_pw_is_default == 1 && window.location.pathname.toUpperCase().search("QIS_") < 0)	//force to change http_passwd / http_username & except QIS settings
+		location.href = 'Main_Password.asp?nextPage=' + window.location.pathname.substring(1 ,window.location.pathname.length);
 var noti_auth_mode_2g = '<% nvram_get("wl0_auth_mode_x"); %>';
 var noti_auth_mode_5g = '<% nvram_get("wl1_auth_mode_x"); %>';
 var st_ftp_mode = '<% nvram_get("st_ftp_mode"); %>';
@@ -437,6 +448,7 @@ var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var wans_dualwan_array = new Array();
 wans_dualwan_array = wans_dualwan_orig.split(" ");
 var usb_index = wans_dualwan_array.getIndexByValue("usb");
+var dsl_index = wans_dualwan_array.getIndexByValue("dsl");
 var active_wan_unit = '<% get_wan_unit(); %>';
 var wan0_enable = '<% nvram_get("wan0_enable"); %>';
 var wan1_enable = '<% nvram_get("wan1_enable"); %>';
@@ -511,6 +523,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<input type="hidden" name="wan_enable" value="<% nvram_get("wan_enable"); %>">\n';
 	banner_code +='<input type="hidden" name="wan_unit" value="<% get_wan_unit(); %>">\n';
 	banner_code +='<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">\n';
+	banner_code +='<input type="hidden" name="dslx_link_enable" value="<% nvram_get("dslx_link_enable"); %>">\n';
 	banner_code +='</form>\n';
 
 	banner_code +='<form method="post" name="rebootForm" action="apply.cgi" target="hidden_frame">\n';
@@ -570,6 +583,48 @@ function show_banner(L3){// L3 = The third Level of Menu
 
 	banner_code +='<td width="30" id="notification_status1" class="notificationOn"><div id="notification_status" class="notificationOn"></div><div id="notification_desc" class=""></div></td>\n';
 
+	//APP Link
+	if(app_support){
+		banner_code +='<td width="30"><div id="app_icon" style="cursor:pointer;padding-right:10px;">App</div>';
+		//banner_code +='<div id="app_link_table" style="display:none;width:325px;height:360px;position:absolute;background-color:rgb(35, 38, 41);z-index:10;margin-top:13px;margin-left:-205px;;border-radius:5px;box-shadow:3px 3px 4px #000;opacity:.95">';
+		banner_code +='<div id="app_link_table" style="display:none;width:325px;height:245px;position:absolute;background-color:rgb(35, 38, 41);z-index:10;margin-top:13px;margin-left:-205px;;border-radius:5px;box-shadow:3px 3px 4px #000;opacity:.95">';
+		banner_code +='<div style="padding:10px;">';
+		banner_code +='<div id="cancel_app" style="width:20px;height:20px;background:url(\'images/button-close.png\') no-repeat;position:absolute;right:10px;"></div>';
+		banner_code +='</div>';
+		//ASUS Router icon
+		banner_code +='<div style="padding:10px;border-bottom:1px solid #666;">';
+		banner_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
+		banner_code +='<div style="width:75px;height:75px;background:url(\'images/New_ui/asus_router.png\') no-repeat;"></div>';
+		banner_code +='</div>';
+		banner_code +='<div style="display:table-cell;">';
+		banner_code +='<div style="padding:5px 0 5px 15px;font-size:22px;">ASUS Router</div>';
+		banner_code +='<div style="padding:5px 0 5px 15px;font-size:14px;color:#BDBDBD">ASUS Router is a revolution app to manage your home network.</div>';
+		banner_code +='</div>';	
+		banner_code +='</div>';
+		//Play Store
+		banner_code +='<div style="padding:20px 10px;">';
+		banner_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
+		banner_code +='<div><img src="images/New_ui/asus_router_android_qr.png" style="width:75px;height:75px;"></div>';
+		banner_code +='</div>';
+		banner_code +='<div style="display:table-cell;vertical-align:middle;width:100%;text-align:center">';
+		banner_code +='<div style="padding-left: 30px;"><a href="https://play.google.com/store/apps/details?id=com.asus.aihome" target="_blank"><div style="width:172px;height:60px;background:url(\'images/cloudsync/googleplay.png\') no-repeat;"></div></a></div>';
+		banner_code +='</div>';	
+		banner_code +='</div>';
+		//AppStore
+		banner_code +='<div style="padding:20px 10px;display:none">';
+		banner_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
+		banner_code +='<div><img src="images/New_ui/asus_router_android_qr.png" style="width:75px;height:75px;"></div>';
+		banner_code +='</div>';
+		banner_code +='<div style="display:table-cell;vertical-align:middle;width:100%;text-align:center">';
+		banner_code +='<div style="padding-left: 30px;"><a href="https://itunes.apple.com/app/asus-router/id1033794044" target="_blank"><div style="width:172px;height:51px;background:url(\'images/cloudsync/AppStore.png\') no-repeat;"></div></a></div>';
+		banner_code +='</div>';	
+		banner_code +='</div>';
+		
+		banner_code +='</div>';
+		banner_code +='</td>\n';
+	}
+	// APP Link End
+
 	if(bwdpi_support && qos_enable_flag && qos_type_flag == "1")
 		banner_code +='<td width="30"><div id="bwdpi_status" class=""></div></td>\n';	
 
@@ -578,7 +633,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 
 	if(cooler_support)
 		banner_code +='<td width="30"><div id="cooler_status" class="" style="display:none;"></div></td>\n';
-
+	
 	if(multissid_support != -1)
 		banner_code +='<td width="30"><div id="guestnetwork_status" class="guestnetworkstatusoff"></div></td>\n';
 
@@ -653,9 +708,37 @@ function show_banner(L3){// L3 = The third Level of Menu
 
 	show_loading_obj();
 	show_top_status();
-
 	updateStatus();
 
+	if(app_support && !isIE8){
+		document.body.addEventListener('click', show_app_table, false);
+	}
+}
+
+function show_app_table(evt){
+	var target = document.getElementById("app_link_table");
+	if(evt.srcElement.id == "app_icon" || evt.srcElement.id == "cancel_app"){
+		if(target.style.display == "none"){
+			target.style.display = "";		
+		}
+		else{
+			target.style.display = "none";
+		}				
+	}
+	else if(evt.srcElement.offsetParent == null){
+		if(target.style.display == ""){
+			target.style.display = "none";
+		}			
+		
+	}
+	else if((evt.srcElement.id != "null" && evt.srcElement.id == "app_link_table") || (evt.srcElement.offsetParent.id != "null" && evt.srcElement.offsetParent.id) == "app_link_table"){	
+		return true;
+	}
+	else{
+		if(target.style.display == ""){
+			target.style.display = "none";
+		}	
+	}
 }
 function set_traffic_show(flag){ //0:hide 1:show
 	traffic_warning_cookie = date_year + '.' + date_month + ':' + flag;
@@ -1586,17 +1669,12 @@ function show_menu(){
 
 	/*-- notification start --*/
 	cookie.unset("notification_history");
-	if(notice_acpw_is_default == 1){	//case1
-		if(default_psk_support){
-			location.href = 'Main_Password.asp?nextPage=' + window.location.pathname.substring(1 ,window.location.pathname.length);
-		}
-		else{
-			notification.array[0] = 'noti_acpw';
-			notification.acpw = 1;
-			notification.desc[0] = '<#ASUSGATE_note1#>';
-			notification.action_desc[0] = '<#ASUSGATE_act_change#>';
-			notification.clickCallBack[0] = "location.href = 'Advanced_System_Content.asp?af=http_passwd2';"
-		}
+	if(notice_pw_is_default == 1){	//case1
+		notification.array[0] = 'noti_acpw';
+		notification.acpw = 1;
+		notification.desc[0] = '<#ASUSGATE_note1#>';
+		notification.action_desc[0] = '<#ASUSGATE_act_change#>';
+		notification.clickCallBack[0] = "location.href = 'Advanced_System_Content.asp?af=http_passwd2';";	
 	}else
 		notification.acpw = 0;
 /*
@@ -1972,7 +2050,10 @@ function cal_height(){
 	var optionHeight = 52;
 	var manualOffSet = 25;
 	var table_height = Math.round(optionHeight*calculate_height - manualOffSet*calculate_height/14 - document.getElementById("tabMenu").clientHeight);	
-	if(navigator.appName.indexOf("Microsoft") < 0)
+
+	if(navigator.userAgent.search("MSIE 8") > -1)
+		var contentObj = document.querySelectorAll('.content');
+	else if(navigator.appName.indexOf("Microsoft") < 0)
 		var contentObj = document.getElementsByClassName("content");
 	else
 		var contentObj = getElementsByClassName_iefix("table", "content");

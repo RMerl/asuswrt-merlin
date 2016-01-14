@@ -1071,10 +1071,8 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 
 	list[0] = 0;
 	list[1] = 0;
-	snprintf(tmpfix, sizeof(tmpfix), "wl%d_", band);
 	if (nvram_invmatch(strcat_r(prefix, "macmode", tmp), "disabled")) {
-		nv = nvp =
-		    strdup(nvram_safe_get(strcat_r(tmpfix, "maclist_x", tmp)));
+		nv = nvp = strdup(nvram_safe_get(strcat_r(prefix, "maclist_x", tmp)));
 		if (nv) {
 			while ((b = strsep(&nvp, "<")) != NULL) {
 				if (strlen(b) == 0)

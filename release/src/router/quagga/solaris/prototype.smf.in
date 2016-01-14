@@ -1,0 +1,8 @@
+i pkginfo=$abs_builddir/pkginfo.smf.full
+i depend=$abs_builddir/depend.smf
+i copying=$abs_top_srcdir/COPYING
+i i.manifest
+i r.manifest
+f manifest var/svc/manifest/network/quagga.xml 0444 root bin
+#f none var/svc/profile/@PACKAGE_TARNAME@_options.xml=$abs_builddir/options.xml 0755 root sys
+f none lib/svc/method/quagga=$abs_builddir/quagga.init 0755 root bin

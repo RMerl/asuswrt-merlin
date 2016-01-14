@@ -1,0 +1,31 @@
+set timeout 30
+set test_name "testcommands"
+
+if {![info exists env(QUAGGA_TEST_COMMANDS)]} {
+	# sadly, the test randomly fails when configure parameters differ from
+	# what was used to create testcommands.refout.  this can be fixed by
+	# shipping a matching vtysh_cmd.c, which we'll add after 0.99.23
+	unresolved "$test_name"
+	exit 0
+}
+
+spawn sh -c "./testcommands -e 0 < $env(srcdir)/testcommands.in | diff -au - $env(srcdir)/testcommands.refout"
+
+expect {
+	eof {
+	}
+	timeout {
+		exp_close
+		fail "$test_name: timeout"
+	}
+}
+
+catch wait result
+set os_error    [lindex $result 2]
+set exit_status [lindex $result 3]
+
+if { $os_error == 0 && $exit_status == 0 } {
+	pass "$test_name"
+} else {
+	fail "$test_name"
+}

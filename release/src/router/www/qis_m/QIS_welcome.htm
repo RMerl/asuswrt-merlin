@@ -209,7 +209,18 @@ function detect_if_wan_plug(flag){
 		}
 	});	
 }
-
+function startDetect(){
+	if(parent.powerline_support)
+		update_plc_info();
+	else{
+		if((autodet_state == "2" && autodet_auxstate == "6") || (wanstate  == 2 && wansbstate == 0 && wanauxstate == 0)){
+			submitForm(1);
+		}
+		else{
+			update_wan_info();
+		}
+	}	
+}
 function update_wan_info(flag){
 	$.ajax({
 		url: '../start_autodet.asp',
@@ -439,7 +450,7 @@ function uploadSetting(){
 		<div id="model_welcome_field"><#Web_Title2#></div>
 
 		<div class="button_welcome">
-			<div id="btn_next_step" class="button_active" onclick="update_wan_info();">START</div>
+			<div id="btn_next_step" class="button_active" onclick="startDetect();">START</div>
 			<div id="loadingIcon" style="width:100%;margin-top:20px;display:none;"><img src="/images/InternetScan.gif"></div>
 		</div>
 	</div>

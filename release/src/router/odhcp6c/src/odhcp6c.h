@@ -16,6 +16,8 @@
 #include <stdbool.h>
 #include <netinet/in.h>
 
+#include "stubs.h"
+
 #define _unused __attribute__((unused))
 #define _packed __attribute__((packed))
 

@@ -1,0 +1,11 @@
+
+                  _______________________________
+                 /    _________     _________    \
+From Peer A --->|(A)-|Best     |   |         |-[A]|--->To Peer A
+From Peer B --->|(B)-|Path     |-->|Local-RIB|-[B]|--->To Peer B
+From Peer C --->|(C)-|Selection|   |         |-[C]|--->To Peer C
+From Peer D --->|(D)-|_________|   |_________|-[D]|--->To Peer D
+                 \_______________________________/
+
+Key:  (X) - 'In'  Filter applied to Peer X's announcements
+      [X] - 'Out' Filter applied to announcements to Peer X

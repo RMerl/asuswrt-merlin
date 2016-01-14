@@ -485,6 +485,7 @@ obj-$(RTCONFIG_TUXERA_HFS) += tuxera
 endif
 obj-$(RTCONFIG_EBTABLES) += ebtables
 obj-$(RTCONFIG_IPV6) += odhcp6c
+obj-$(RTCONFIG_6RELAYD) += 6relayd
 #obj-$(RTCONFIG_IPV6) += ecmh
 
 obj-$(RTCONFIG_MEDIA_SERVER) += zlib
@@ -1336,6 +1337,19 @@ else
 		--disable-tls --disable-rpath --disable-nls \
 		--disable-debugfs --disable-imager --disable-resizer --disable-defrag --disable-uuidd
 endif
+
+6relayd: 6relayd/Makefile
+	@EXT_CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -fPIC" \
+	EXT_LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	PREFIX="/usr" \
+	$(MAKE) -C 6relayd
+
+6relayd-install: 6relayd
+	install -D 6relayd/src/6relayd $(INSTALLDIR)/6relayd/usr/sbin/6relayd
+	$(STRIP) $(INSTALLDIR)/6relayd/usr/sbin/6relayd
+
+6relayd-clean:
+	-@$(MAKE) -C 6relayd clean
 
 e2fsprogs: e2fsprogs/Makefile
 	$(MAKE) -C $@ $(PARALLEL_BUILD)

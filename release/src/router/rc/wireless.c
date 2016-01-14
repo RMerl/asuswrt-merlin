@@ -81,7 +81,7 @@ void notify_nas(const char *ifname)
 #else	/* !CONFIG_BCMWL5 */
 
 	if (!foreach_wif(1, NULL, security_on)) return;
-	
+
 	int i;
 	int unit;
 
@@ -118,7 +118,7 @@ static int lock = -1;
 
 static void wlcscan_safeleave(int signo) {
 	signal(SIGTERM, SIG_IGN);
-	
+
 	nvram_set_int("wlc_scan_state", WLCSCAN_STATE_STOPPED);
 	file_unlock(lock);
 	exit(0);
@@ -138,26 +138,19 @@ int wlcscan_main(void)
 
 	/* clean APSCAN_INFO */
 	lock = file_lock("sitesurvey");
-	if ((fp = fopen(APSCAN_INFO, "w")) != NULL){
+	if ((fp = fopen(APSCAN_INFO, "w")) != NULL) {
 		fclose(fp);
 	}
 	file_unlock(lock);
-	
+
 	nvram_set_int("wlc_scan_state", WLCSCAN_STATE_INITIALIZING);
 	/* Starting scanning */
 	i = 0;
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
-#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
-		int count = 0;
-		nvram_set_int("wlcscan_idx", 0);
-WLCSCAN_LOOP:
-#endif
+#ifdef RTCONFIG_BCM_7114
+		wlcscan_core_escan(APSCAN_INFO, word);
+#else
 		wlcscan_core(APSCAN_INFO, word);
-#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
-		if (count++ < 2) {
-			nvram_set_int("wlcscan_idx", count);
-			goto WLCSCAN_LOOP;
-		}
 #endif
 		// suppose only two or less interface handled
 		nvram_set_int("wlc_scan_state", WLCSCAN_STATE_2G+i);
@@ -173,10 +166,13 @@ WLCSCAN_LOOP:
 #endif /* CONFIG_BCMWL5 || (RTCONFIG_RALINK && RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_QCA) */
 
 #ifdef RTCONFIG_WIRELESSREPEATER
+#define NOTIFY_IDLE 0
+#define NOTIFY_CONN 1
+#define NOTIFY_DISCONN -1
 
 static void wlcconnect_safeleave(int signo) {
 	signal(SIGTERM, SIG_IGN);
-	
+
 	nvram_set_int("wlc_state", WLC_STATE_STOPPED);
 	nvram_set_int("wlc_sbstate", WLC_STOPPED_REASON_MANUAL);
 
@@ -189,8 +185,9 @@ static void wlcconnect_safeleave(int signo) {
 int wlcconnect_main(void)
 {
 _dprintf("%s: Start to run...\n", __FUNCTION__);
-	int ret;
-	int old_ret = -1;
+	int ret, old_ret = -1;
+	int link_setup = 0, wlc_count = 0;
+	int wanduck_notify = NOTIFY_IDLE;
 #if defined(RTCONFIG_BLINK_LED)
 	int unit = nvram_get_int("wlc_band");
 	char *led_gpio = NULL, ifname[IFNAMSIZ];
@@ -200,38 +197,29 @@ _dprintf("%s: Start to run...\n", __FUNCTION__);
 
 	nvram_set_int("wlc_state", WLC_STATE_INITIALIZING);
 	nvram_set_int("wlc_sbstate", WLC_STOPPED_REASON_NONE);
-	// prepare nvram
-	// wl_mode_x = 3 ==> wet
-	// wl_mode_x = 4 ==> ure
-	
 	nvram_set_int("wlc_state", WLC_STATE_CONNECTING);
 
-	int link_setup = 0, wlc_count = 0;
-#define NOTIFY_IDLE 0
-#define NOTIFY_CONN 1
-#define NOTIFY_DISCONN -1
-	int wanduck_notify = NOTIFY_IDLE;
-	while(1) {
+	while (1) {
 		ret = wlcconnect_core();
-		if(ret == WLC_STATE_CONNECTED) nvram_set_int("wlc_state", WLC_STATE_CONNECTED);
-		else if(ret == WLC_STATE_CONNECTING) {
+		if (ret == WLC_STATE_CONNECTED) nvram_set_int("wlc_state", WLC_STATE_CONNECTED);
+		else if (ret == WLC_STATE_CONNECTING) {
 			nvram_set_int("wlc_state", WLC_STATE_STOPPED);
 			nvram_set_int("wlc_sbstate", WLC_STOPPED_REASON_AUTH_FAIL);
 		}
-		else if(ret == WLC_STATE_INITIALIZING) {
+		else if (ret == WLC_STATE_INITIALIZING) {
 			nvram_set_int("wlc_state", WLC_STATE_STOPPED);
 			nvram_set_int("wlc_sbstate", WLC_STOPPED_REASON_NO_SIGNAL);
 		}
 
 		// let ret be two value: connected, disconnected.
-		if(ret != WLC_STATE_CONNECTED)
+		if (ret != WLC_STATE_CONNECTED)
 			ret = WLC_STATE_CONNECTING;
-		else if(nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED) 
+		else if (nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED)
 			ret = WLC_STATE_CONNECTING;
 
-		if(link_setup == 1){
-			if(ret != WLC_STATE_CONNECTED){
-				if(wlc_count < 3){
+		if (link_setup == 1) {
+			if (ret != WLC_STATE_CONNECTED) {
+				if (wlc_count < 3) {
 					wlc_count++;
 _dprintf("Ready to disconnect...%d.\n", wlc_count);
 #ifdef RTCONFIG_RALINK
@@ -253,27 +241,32 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 				wlc_count = 0;
 		}
 
-		if(ret != old_ret){
-			if(link_setup == 0){
-				if(ret == WLC_STATE_CONNECTED)
+		if (ret != old_ret) {
+			if (link_setup == 0) {
+				if (ret == WLC_STATE_CONNECTED)
 					link_setup = 1;
-				/*else{
+				/*else {
 					sleep(5);
 					continue;
 				}//*/
 			}
 
-			if(link_setup){
-				if(ret == WLC_STATE_CONNECTED)
+			if (link_setup) {
+				if (ret == WLC_STATE_CONNECTED)
 					wanduck_notify = NOTIFY_CONN;
 				else
 					wanduck_notify = NOTIFY_DISCONN;
 
 				// notify the change to init.
-				if(ret == WLC_STATE_CONNECTED)
+				if (ret == WLC_STATE_CONNECTED)
 					notify_rc_and_wait("restart_wlcmode 1");
 				else
+				{
 					notify_rc_and_wait("restart_wlcmode 0");
+#ifdef CONFIG_BCMWL5
+					notify_rc("restart_wireless");
+#endif
+				}
 
 #if defined(RTCONFIG_BLINK_LED)
 #if defined(RTCONFIG_QCA)
@@ -294,7 +287,7 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 			}
 
 #ifdef WEB_REDIRECT
-			if(wanduck_notify == NOTIFY_DISCONN){
+			if (wanduck_notify == NOTIFY_DISCONN) {
 				wanduck_notify = NOTIFY_IDLE;
 
 				logmessage("notify wanduck", "wlc_state change!");
@@ -306,8 +299,10 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 
 			old_ret = ret;
 		}
+
 		sleep(5);
 	}
+
 	return 0;
 }
 
@@ -319,7 +314,7 @@ void repeater_pap_disable(void)
 	i = 0;
 
 	foreach(word, nvram_safe_get("wl_ifnames"), next) {
-		if(nvram_get_int("wlc_band")==i) {
+		if (nvram_get_int("wlc_band") == i) {
 			eval("ebtables", "-t", "filter", "-I", "FORWARD", "-i", word, "-j", "DROP");
 			break;
 		}

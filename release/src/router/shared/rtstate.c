@@ -503,6 +503,13 @@ int get_dualwan_by_unit(int unit)
 		wans_dualwan = nvram_default_get("wans_dualwan");
 	}
 
+#ifdef RTCONFIG_MULTICAST_IPTV
+	if(unit == WAN_UNIT_IPTV)
+		return WAN_UNIT_IPTV;
+        if(unit == WAN_UNIT_VOIP)
+                return WAN_UNIT_VOIP;
+#endif
+
 	i = 0;
 	foreach(word, wans_dualwan, next) {
 		if(i==unit) {

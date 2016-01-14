@@ -379,7 +379,10 @@ function show_wsc_status(wps_infos){
 		document.getElementById("switchWPSbtn").style.display = "";
 	}
 
-	if(wps_infos[12].firstChild.nodeValue == 0){
+	if(based_modelid == "RT-AC87U" || based_modelid == "RT-AC87R"){
+		document.getElementById("switchWPSbtn").style.display = "none";
+	}
+	else if(wps_infos[12].firstChild.nodeValue == 0){
 			document.getElementById("wps_band_word").innerHTML = "2.4GHz";
 			band_string = "2.4GHz";
 			currentBand = 0;

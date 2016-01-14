@@ -30,6 +30,11 @@ static int rctest_main(int argc, char *argv[])
 	else if (strcmp(argv[1], "rc_service")==0) {
 		notify_rc(argv[2]);
 	}
+#ifdef RTCONFIG_BCM_7114
+	else if (strcmp(argv[1], "spect")==0) {
+		start_dfs();
+	}
+#endif
 	else if(strcmp(argv[1], "get_phy_status")==0) {
 		int mask;
 		mask = atoi(argv[2]);
@@ -812,6 +817,8 @@ int main(int argc, char **argv)
 	else if (!strcmp(base, "wlcconnect")) {
 		return wlcconnect_main();
 	}
+#endif
+#ifdef CONFIG_BCMWL5
 	else if (!strcmp(base, "setup_dnsmq")) {
 		if(argc != 2)
 			return 0;

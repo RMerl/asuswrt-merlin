@@ -1,0 +1,31 @@
+set timeout 10
+set testprefix "testbgpmpattr "
+set aborted 0
+set color 1
+
+spawn "./testbgpmpattr"
+
+# proc simpletest { start } {
+
+simpletest "IPv6: IPV6 MP Reach, global nexthop, 1 NLRI"
+simpletest "IPv6-2: IPV6 MP Reach, global nexthop, 2 NLRIs"
+simpletest "IPv6-default: IPV6 MP Reach, global nexthop, 2 NLRIs + default"
+simpletest "IPv6-lnh: IPV6 MP Reach, global+local nexthops, 2 NLRIs + default"
+simpletest "IPv6-nhlen: IPV6 MP Reach, inappropriate nexthop length"
+simpletest "IPv6-nhlen2: IPV6 MP Reach, invalid nexthop length"
+simpletest "IPv6-nhlen3: IPV6 MP Reach, nexthop length overflow"
+simpletest "IPv6-nhlen4: IPV6 MP Reach, nexthop length short"
+simpletest "IPv6-nlri: IPV6 MP Reach, NLRI bitlen overflow"
+simpletest "IPv4: IPv4 MP Reach, 2 NLRIs + default"
+simpletest "IPv4-nhlen: IPv4 MP Reach, nexthop lenth overflow"
+simpletest "IPv4-nlrilen: IPv4 MP Reach, nlri lenth overflow"
+simpletest "IPv4-MLVPN: IPv4/MPLS-labeled VPN MP Reach, RD, Nexthop, 3 NLRIs"
+simpletest "IPv6-bug: IPv6, global nexthop, 1 default NLRI"
+simpletest "IPv6-unreach: IPV6 MP Unreach, 1 NLRI"
+simpletest "IPv6-unreach2: IPV6 MP Unreach, 2 NLRIs"
+simpletest "IPv6-unreach-default: IPV6 MP Unreach, 2 NLRIs + default"
+simpletest "IPv6-unreach-nlri: IPV6 MP Unreach, NLRI bitlen overflow"
+simpletest "IPv4-unreach: IPv4 MP Unreach, 2 NLRIs + default"
+simpletest "IPv4-unreach-nlrilen: IPv4 MP Unreach, nlri length overflow"
+simpletest "IPv4-unreach-MLVPN: IPv4/MPLS-labeled VPN MP Unreach, RD, 3 NLRIs"
+

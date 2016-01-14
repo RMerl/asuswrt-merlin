@@ -1,0 +1,13 @@
+i pkginfo=$abs_builddir/pkginfo.libs.full
+i depend=$abs_builddir/depend.libs
+i copying=$abs_top_srcdir/COPYING
+d none @libdir@=$DESTDIR/@libdir@ 0755 root bin
+s none @libdir@/libzebra.so.0=libzebra.so.0.0.0
+f none @libdir@/libzebra.so.0.0.0=$DESTDIR/@libdir@/libzebra.so.0.0.0 0755 root bin
+s none @libdir@/libzebra.so=libzebra.so.0.0.0
+s none @libdir@/libospf.so.0=libospf.so.0.0.0
+f none @libdir@/libospf.so.0.0.0=$DESTDIR/@libdir@/libospf.so.0.0.0 0755 root bin
+s none @libdir@/libospf.so=libospf.so.0.0.0
+f none @libdir@/libospfapiclient.so.0.0.0=$DESTDIR/@libdir@/libospfapiclient.so.0.0.0 0755 root bin
+s none @libdir@/libospfapiclient.so.0=libospfapiclient.so.0.0.0
+s none @libdir@/libospfapiclient.so=libospfapiclient.so.0.0.0

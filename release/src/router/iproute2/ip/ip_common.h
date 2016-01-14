@@ -34,3 +34,7 @@ extern int do_multiroute(int argc, char **argv);
 extern int do_xfrm(int argc, char **argv);
 
 extern struct rtnl_handle rth;
+
+#ifndef	INFINITY_LIFE_TIME
+#define     INFINITY_LIFE_TIME      0xFFFFFFFFU
+#endif

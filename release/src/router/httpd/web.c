@@ -1960,6 +1960,24 @@ int validate_instance(webs_t wp, char *name, json_object *root)
 				found = NVRAM_MODIFIED_BIT;
 			}
 		}
+#ifdef RTCONFIG_MULTICAST_IPTV
+                if(nvram_match("switch_wantag", "movistar")){
+                        sprintf(prefix, "wan10_");//IPTV
+                        value = websGetVar(wp, strcat_r(prefix, name+4, tmp), NULL);
+                        if(value && strcmp(nvram_safe_get(tmp), value)) {
+                                dbG("nvram set %s = %s\n", tmp, value);
+                                nvram_set(tmp, value);
+                                found = NVRAM_MODIFIED_BIT;
+                        }
+                        sprintf(prefix, "wan11_");//VoIP
+                        value = websGetVar(wp, strcat_r(prefix, name+4, tmp), NULL);
+                        if(value && strcmp(nvram_safe_get(tmp), value)) {
+                                dbG("nvram set %s = %s\n", tmp, value);
+                                nvram_set(tmp, value);
+                                found = NVRAM_MODIFIED_BIT;
+                        }
+                }
+#endif
 	}
 #ifdef RTCONFIG_DSL
 	else if(strncmp(name, "dsl", 3)==0) {
@@ -4887,7 +4905,6 @@ static int ipv6_client_numbers(void)
 }
 #endif
 
-#if 0
 int
 ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -5000,219 +5017,242 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 }
 #endif
 
-#if 0 /* temporary till httpd route table redo */
-static void INET6_displayroutes(webs_t wp)
+
+#ifndef RTF_PREFIX_RT
+#define RTF_PREFIX_RT	0x00080000
+#endif
+#ifndef RTF_EXPIRES
+#define RTF_EXPIRES	0x00400000
+#endif
+#ifndef RTF_ROUTEINFO
+#define RTF_ROUTEINFO	0x00800000
+#endif
+
+const static struct {
+	unsigned int flag;
+	char name;
+} route_flags[] = {
+	{ RTF_UP,        'U' },
+	{ RTF_GATEWAY,   'G' },
+	{ RTF_HOST,      'H' },
+//	{ RTF_DYNAMIC,   'N' },
+//	{ RTF_MODIFIED,  'M' },
+	{ RTF_REJECT,    'R' },
+#ifdef RTCONFIG_IPV6
+	{ RTF_DEFAULT,   'D' },
+	{ RTF_ADDRCONF,  'A' },
+	{ RTF_PREFIX_RT, 'P' },
+	{ RTF_EXPIRES,   'E' },
+	{ RTF_ROUTEINFO, 'I' },
+//	{ RTF_CACHE,     'C' },
+//	{ RTF_LOCAL,     'L' },
+#endif
+};
+
+#ifdef RTCONFIG_IPV6
+static int inet_raddr6_pton(const char *src, void *dst, void *buf)
 {
-	char addr6[128], *naddr6;
-	/* In addr6x, we store both 40-byte ':'-delimited ipv6 addresses.
-	 * We read the non-delimited strings into the tail of the buffer
-	 * using fscanf and then modify the buffer by shifting forward
-	 * while inserting ':'s and the nul terminator for the first string.
-	 * Hence the strings are at addr6x and addr6x+40.  This generates
-	 * _much_ less code than the previous (upstream) approach. */
-	char addr6x[80];
-	char iface[16], flags[16];
-	int iflags, metric, refcnt, use, prefix_len, slen;
-	struct sockaddr_in6 snaddr6;
-	int ret = 0;
+	char *sptr = (char *) src;
+	char *dptr = buf;
+	int i;
 
-	FILE *fp = fopen("/proc/net/ipv6_route", "r");
+	for (i = 0; *sptr && i < 32; i++) {
+		if (i && (i % 4) == 0)
+			*dptr++ = ':';
+		*dptr++ = *sptr++;
+	} *dptr = '\0';
 
-	ret += websWrite(wp, "\nIPv6 routing table\n%-44s%-40s"
-			  "Flags Metric Ref    Use Iface\n",
-			  "Destination", "Next Hop");
+	return inet_pton(AF_INET6, buf, dst);
+}
 
-	while (1) {
-		int r;
-		r = fscanf(fp, "%32s%x%*s%x%32s%x%x%x%x%s\n",
-				addr6x+14, &prefix_len, &slen, addr6x+40+7,
-				&metric, &use, &refcnt, &iflags, iface);
-		if (r != 9) {
-			if ((r < 0) && feof(fp)) { /* EOF with no (nonspace) chars read. */
-				break;
-			}
- ERROR:
-			perror("fscanf");
-			return;
-		}
+static int ipv6_route_table(webs_t wp)
+{
+	FILE *fp;
+	char buf[256], *str, *dev, *sflags, *route, fmt[sizeof("%999s")];
+	char sdest[INET6_ADDRSTRLEN], snexthop[INET6_ADDRSTRLEN], ifname[16];
+	struct in6_addr dest, nexthop;
+	int flags, ref, use, metric, prefix;
+	int i, pass, maxlen, routing, ret = 0;
 
-		/* Do the addr6x shift-and-insert changes to ':'-delimit addresses.
-		 * For now, always do this to validate the proc route format, even
-		 * if the interface is down. */
-		{
-			int i = 0;
-			char *p = addr6x+14;
+	fp = fopen("/proc/net/ipv6_route", "r");
+	if (fp == NULL)
+		return 0;
 
-			do {
-				if (!*p) {
-					if (i == 40) { /* nul terminator for 1st address? */
-						addr6x[39] = 0;	/* Fixup... need 0 instead of ':'. */
-						++p;	/* Skip and continue. */
-						continue;
-					}
-					goto ERROR;
-				}
-				addr6x[i++] = *p++;
-				if (!((i+1) % 5)) {
-					addr6x[i++] = ':';
-				}
-			} while (i < 40+28+7);
-		}
-
-		if (!(iflags & RTF_UP)) { /* Skip interfaces that are down. */
-			continue;
-		}
-
-		ipv6_set_flags(flags, (iflags & IPV6_MASK));
-
-		r = 0;
-		do {
-			inet_pton(AF_INET6, addr6x + r,
-					  (struct sockaddr *) &snaddr6.sin6_addr);
-			snaddr6.sin6_family = AF_INET6;
-			naddr6 = INET6_rresolve((struct sockaddr_in6 *) &snaddr6,
-						   0x0fff /* Apparently, upstream never resolves. */
-						   );
-
-			if (!r) {			/* 1st pass */
-				snprintf(addr6, sizeof(addr6), "%s/%d", naddr6, prefix_len);
-				r += 40;
-				free(naddr6);
-			} else {			/* 2nd pass */
-				/* Print the info. */
-				ret += websWrite(wp, "%-43s %-39s %-5s %-6d %-2d %7d %-8s\n",
-						addr6, naddr6, flags, metric, refcnt, use, iface);
-				free(naddr6);
-				break;
-			}
-		} while (1);
+	pass = maxlen = 0;
+	routing = is_routing_enabled();
+again:
+	if (pass) {
+		ret += websWrite(wp, fmt, "Destination & Next Hop");
+		ret += websWrite(wp, "%-9s%s\n",
+				 "Flags", "Metric Ref    Use Type Iface");
 	}
+	while ((str = fgets(buf, sizeof(buf), fp)) != NULL) {
+		if (sscanf(str, "%32s%x%*s%*x%32s%x%x%x%x%15s",
+			   sdest, &prefix, snexthop,
+			   &metric, &ref, &use, &flags, ifname) != 8)
+			continue;
 
-	return;
+		/* Skip down and cache routes */
+		if ((flags & (RTF_UP | RTF_CACHE)) != RTF_UP)
+			continue;
+		/* Skip interfaces here */
+		if (strcmp(ifname, "lo") == 0)
+			continue;
+
+		/* Parse dst, reuse buf */
+		if (inet_raddr6_pton(sdest, &dest, str) < 1)
+			break;
+		if (prefix || !IN6_IS_ADDR_UNSPECIFIED(&dest)) {
+			inet_ntop(AF_INET6, &dest, sdest, sizeof(sdest));
+			if (prefix != 128) {
+				i = strlen(sdest);
+				snprintf(sdest + i, sizeof(sdest) - i, "/%d", prefix);
+			}
+		} else
+			snprintf(sdest, sizeof(sdest), "default");
+
+		/* Parse nexthop, reuse buf */
+		if (inet_raddr6_pton(snexthop, &nexthop, str) < 1)
+			break;
+		inet_ntop(AF_INET6, &nexthop, snexthop, sizeof(snexthop));
+
+		/* Format addresses, reuse buf */
+		route = str;
+		i = snprintf(str, buf + sizeof(buf) - str, ((flags & RTF_NONEXTHOP) ||
+			     IN6_IS_ADDR_UNSPECIFIED(&nexthop)) ? "%s" : "%s via %s",
+			     sdest, snexthop);
+		if (pass == 0) {
+			if (maxlen < i)
+				maxlen = i;
+			continue;
+		} else
+			str += i + 1;
+
+		/* Parse flags, reuse buf */
+		sflags = str;
+		for (i = 0; i < ARRAY_SIZE(route_flags); i++) {
+			if (flags & route_flags[i].flag)
+				*str++ = route_flags[i].name;
+		}
+		*str++ = '\0';
+
+		/* Replace known interfaces with LAN/WAN/MAN */
+		dev = NULL;
+		if (nvram_match("lan_ifname", ifname)) /* br0, wl0, etc */
+			dev = "LAN";
+		else if (routing && strcmp(get_wan6face(), ifname) == 0)
+			dev = "WAN";
+
+		ret = websWrite(wp, fmt, route);
+		ret += websWrite(wp, "%-9s%-6d %-2d %7d %-4s %s\n",
+				 sflags, metric, ref, use, dev ? : "", ifname);
+	}
+	if (pass++ == 0) {
+		/* NB: 48 is to fit IPv4 routing table header */
+		snprintf(fmt, sizeof(fmt), "%%-%ds", max(maxlen + 1, 48));
+		if (maxlen > 0)
+			rewind(fp);
+		goto again;
+	}
+	fclose(fp);
+
+	return ret;
 }
 #endif
-#endif
 
-#if 0
 static int ipv4_route_table(webs_t wp)
 {
 	FILE *fp;
-	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
-	char buf[256], *dev, *sflags, *str;
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
+	char buf[256], *str, *dev, *sflags, *ifname;
 	struct in_addr dest, gateway, mask;
 	int flags, ref, use, metric;
-	int unit, ret = 0;
-
-	ret += websWrite(wp, "%-16s%-16s%-16s%s\n",
-			 "Destination", "Gateway", "Genmask",
-			 "Flags Metric Ref    Use Iface");
+	int i, unit, routing, ret = 0;
 
 	fp = fopen("/proc/net/route", "r");
 	if (fp == NULL)
 		return 0;
 
+	routing = is_routing_enabled();
+
+	ret += websWrite(wp, "%-16s%-16s%-16s%-9s%s\n",
+			 "Destination", "Gateway", "Genmask",
+			 "Flags", "Metric Ref    Use Type Iface");
+
 	while ((str = fgets(buf, sizeof(buf), fp)) != NULL) {
-		dev = strsep(&str, " \t");
-		if (!str || dev == str)
+		ifname = strsep(&str, " \t");
+		if (!str || ifname == str)
 			continue;
 		if (sscanf(str, "%x%x%x%d%u%d%x", &dest.s_addr, &gateway.s_addr,
 			   &flags, &ref, &use, &metric, &mask.s_addr) != 7)
 			continue;
 
-		/* Parse flags, reuse buf */
-		sflags = str;
-		if (flags & RTF_UP)
-			*str++ = 'U';
-		if (flags & RTF_GATEWAY)
-			*str++ = 'G';
-		if (flags & RTF_HOST)
-			*str++ = 'H';
-		*str++ = '\0';
-
 		/* Skip interfaces here */
-		if (strcmp(dev, "lo") == 0)
+		if (strcmp(ifname, "lo") == 0)
 			continue;
 
+		/* Parse flags, reuse buf */
+		sflags = str;
+		for (i = 0; i < ARRAY_SIZE(route_flags); i++) {
+			if (flags & route_flags[i].flag)
+				*str++ = route_flags[i].name;
+		}
+		*str++ = '\0';
+
 		/* Replace known interfaces with LAN/WAN/MAN */
-		if (nvram_match("lan_ifname", dev)) /* br0, wl0, etc */
+		dev = NULL;
+		if (nvram_match("lan_ifname", ifname)) /* br0, wl0, etc */
 			dev = "LAN";
-		else {
+		else if (routing) {
 			/* Tricky, it's better to move wan_ifunit/wanx_ifunit to shared instead */
 			for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 				wan_prefix(unit, prefix);
-				if (nvram_match(strcat_r(prefix, "pppoe_ifname", tmp), dev)) {
+				if (nvram_match(strcat_r(prefix, "pppoe_ifname", tmp), ifname)) {
 					dev = "WAN";
 					break;
 				}
-				if (nvram_match(strcat_r(prefix, "ifname", tmp), dev)) {
+				if (nvram_match(strcat_r(prefix, "ifname", tmp), ifname)) {
 					char *wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 					dev = (strcmp(wan_proto, "dhcp") == 0 ||
 					       strcmp(wan_proto, "static") == 0 ) ? "WAN" : "MAN";
 					break;
 				}
 			}
+#ifdef RTCONFIG_DUALWAN
+			if (dev) {
+				snprintf(str, sizeof(buf) - (str - buf), "%s%d", dev, unit);
+				dev = str;
+			}
+#endif
 		}
 
 		ret += websWrite(wp, "%-16s", dest.s_addr == INADDR_ANY ? "default" : inet_ntoa(dest));
 		ret += websWrite(wp, "%-16s", gateway.s_addr == INADDR_ANY ? "*" : inet_ntoa(gateway));
-		ret += websWrite(wp, "%-16s%-6s%-6d %-2d %7d %s\n",
-				 inet_ntoa(mask), sflags, metric, ref, use, dev);
+		ret += websWrite(wp, "%-16s%-9s%-6d %-2d %7d %-4s %s\n",
+				 inet_ntoa(mask), sflags, metric, ref, use, dev ? : "", ifname);
 	}
 	fclose(fp);
 
 	return ret;
 }
-#endif
 
-#if 0
 int
 ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret;
-#ifdef RTCONFIG_IPV6
-#if 1 /* temporary till httpd route table redo */
-	FILE *fp;
-	char buf[256];
-	unsigned int fl = 0;
-	int found = 0;
-#endif
-#endif
 
 	ret = ipv4_route_table(wp);
 
 #ifdef RTCONFIG_IPV6
 	if (get_ipv6_service() != IPV6_DISABLED) {
-
-#if 1 /* temporary till httpd route table redo */
-	if ((fp = fopen("/proc/net/if_inet6", "r")) == (FILE*)0)
-		return ret;
-
-	while (fgets(buf, 256, fp) != NULL)
-	{
-		if(strstr(buf, "br0") == (char*) 0)
-			continue;
-
-		if (sscanf(buf, "%*s %*02x %*02x %02x", &fl) != 1)
-			continue;
-
-		if ((fl & 0xF0) == 0x20)
-		{
-			/* Link-Local Address is ready */
-			found = 1;
-			break;
-		}
-	}
-	fclose(fp);
-
-	if (found)
-		INET6_displayroutes(wp);
-#endif
+		ret += websWrite(wp, "\n"
+				     "IPv6 routing table\n");
+		ret += ipv6_route_table(wp);
 	}
 #endif
 
 	return ret;
 }
-#endif
 
 static int ej_get_arp_table(int eid, webs_t wp, int argc, char_t **argv){
 	const int MAX = 80;
@@ -7139,6 +7179,7 @@ wps_finish:
 		nvram_set("wtf_game_list", wtf_game_list);
 		nvram_set("wtf_server_list", wtf_server_list);
 		nvram_set("wtf_session_hash", wtf_session_hash);
+		nvram_set("wtf_release", "stage");//for download new firmware
 		/*--*/
 
 		notify_rc("start_wtfast");
@@ -12653,6 +12694,22 @@ ej_cpu_core_num(int eid, webs_t wp, int argc, char_t **argv){
 }
 
 static int
+ej_check_pw(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int retval = 0;
+	char result[32];
+
+	strcpy(result, "0");
+
+	if(!strcmp(nvram_default_get("http_passwd"), nvram_safe_get("http_passwd")))
+		strcpy(result, "1");
+
+	retval += websWrite(wp, result);
+
+	return retval;
+}
+
+static int
 ej_check_acpw(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int retval = 0;
@@ -13714,6 +13771,7 @@ struct ej_handler ej_handlers[] = {
 	{ "vpn_crt_client", ej_vpn_crt_client},
 #endif
 	{ "nvram_clean_get", ej_nvram_clean_get},
+	{ "check_pw", ej_check_pw},
 	{ "radio_status", ej_radio_status},
 	{ "check_acpw", ej_check_acpw},
 	{ "check_acorpw", ej_check_acorpw},

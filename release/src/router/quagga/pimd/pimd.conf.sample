@@ -1,0 +1,41 @@
+!
+! pimd sample configuration file
+! $QuaggaId: $Format:%an, %ai, %h$ $
+!
+hostname quagga-pimd-router
+password zebra
+!enable password zebra
+!
+!log file pimd.log
+log stdout
+!
+line vty
+ exec-timeout 60
+!
+!debug igmp
+!debug pim
+!debug pim zebra
+!
+ip multicast-routing
+!
+! ! You may want to enable ssmpingd for troubleshooting
+! ! See http://www.venaas.no/multicast/ssmping/
+! !
+! ip ssmpingd 1.1.1.1
+! ip ssmpingd 2.2.2.2
+!
+! ! HINTS:
+! !  - Enable "ip pim ssm" on the interface directly attached to the
+! !    multicast source host (if this is the first-hop router)
+! !  - Enable "ip pim ssm" on pim-routers-facing interfaces
+! !  - Enable "ip igmp" on IGMPv3-hosts-facing interfaces
+! !  - In order to inject IGMPv3 local membership information in the
+! !    PIM protocol state, enable both "ip pim ssm" and "ip igmp" on
+! !    the same interface; otherwise PIM won't advertise
+! !    IGMPv3-learned membership to other PIM routers
+!
+interface eth0
+ ip pim ssm
+ ip igmp
+
+! -x-

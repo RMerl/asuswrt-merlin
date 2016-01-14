@@ -1,0 +1,111 @@
+.TH OSPF6D 8 "25 November 2004" "Quagga OSPFv3 daemon" "Version 0.97.3"
+.SH NAME
+ospf6d \- an OSPFv3 routing engine for use with Quagga routing software.
+.SH SYNOPSIS
+.B ospf6d
+[
+.B \-dhv
+] [
+.B \-f
+.I config-file
+] [
+.B \-i
+.I pid-file
+] [
+.B \-P
+.I port-number
+] [
+.B \-A
+.I vty-address
+] [
+.B \-u
+.I user
+] [
+.B \-g
+.I group
+]
+.SH DESCRIPTION
+.B ospf6d
+is a routing component that works with the
+.B Quagga
+routing engine.
+.SH OPTIONS
+Options available for the
+.B ospf6d
+command:
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-daemon\fR
+Runs in daemon mode, forking and exiting from tty.
+.TP
+\fB\-f\fR, \fB\-\-config-file \fR\fIconfig-file\fR 
+Specifies the config file to use for startup. If not specified this
+option will likely default to \fB\fI/usr/local/etc/ospf6d.conf\fR.
+.TP
+\fB\-g\fR, \fB\-\-group \fR\fIgroup\fR
+Specify the group to run as. Default is \fIquagga\fR.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+A brief message.
+.TP
+\fB\-i\fR, \fB\-\-pid_file \fR\fIpid-file\fR
+When ospf6d starts its process identifier is written to
+\fB\fIpid-file\fR.  The init system uses the recorded PID to stop or
+restart ospf6d.  The likely default is \fB\fI/var/run/ospf6d.pid\fR.
+.TP
+\fB\-P\fR, \fB\-\-vty_port \fR\fIport-number\fR 
+Specify the port that the ospf6d VTY will listen on. This defaults to
+2606, as specified in \fB\fI/etc/services\fR.
+.TP
+\fB\-A\fR, \fB\-\-vty_addr \fR\fIvty-address\fR
+Specify the address that the ospf6d VTY will listen on. Default is all
+interfaces.
+.TP
+\fB\-u\fR, \fB\-\-user \fR\fIuser\fR
+Specify the user to run as. Default is \fIquagga\fR.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Print the version and exit.
+.SH FILES
+.TP
+.BI /usr/local/sbin/ospf6d
+The default location of the 
+.B ospf6d
+binary.
+.TP
+.BI /usr/local/etc/ospf6d.conf
+The default location of the 
+.B ospf6d
+config file.
+.TP
+.BI $(PWD)/ospf6d.log 
+If the 
+.B ospf6d
+process is config'd to output logs to a file, then you will find this
+file in the directory where you started \fBospf6d\fR.
+.SH WARNING
+This man page is intended to be a quick reference for command line
+options. The definitive document is the Info file \fBQuagga\fR.
+.SH DIAGNOSTICS
+The ospf6d process may log to standard output, to a VTY, to a log
+file, or through syslog to the system logs. \fBospf6d\fR supports many
+debugging options, see the Info file, or the source for details.
+.SH "SEE ALSO"
+.BR bgpd (8),
+.BR ripd (8),
+.BR ripngd (8),
+.BR ospfd (8),
+.BR isisd (8),
+.BR zebra (8),
+.BR vtysh (1)
+.SH BUGS
+.B ospf6d
+eats bugs for breakfast. If you have food for the maintainers try
+.BI http://bugzilla.quagga.net
+.SH AUTHORS
+See
+.BI http://www.zebra.org
+and
+.BI http://www.quagga.net
+or the Info file for an accurate list of authors.
+

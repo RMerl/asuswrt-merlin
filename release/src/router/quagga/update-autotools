@@ -1,0 +1,28 @@
+#! /bin/sh
+#
+# When local system does not have the latest autoconf/automake
+#        -- Kunihiro Ishiguro <kunihiro@zebra.org>
+#
+
+rm -f config.cache Makefile.in aclocal.m4 config.h.in configure
+rm -rf config.guess config.sub ltmain.sh
+rm -rf autom4te.cache
+
+echo "This $0 script is deprecated, and will be removed at some stage."
+echo "Please use the 'autoreconf' command included with autoconf."
+
+echo "TOOLS VERIONS:"
+for tool in autoheader autoconf libtool libtoolize aclocal automake; do
+  $tool --version | head -1
+done
+
+echo "ACLOCAL:"
+aclocal -I m4
+echo "AUTOHEADER:"
+autoheader
+echo "AUTOCONF:"
+autoconf
+echo "LIBTOOLIZE:"
+libtoolize -c
+echo "AUTOMAKE"
+automake --gnu --add-missing --copy

@@ -1,0 +1,125 @@
+.TH PIM 8 "10 December 2008" "Quagga PIM daemon" "Version 0.99.11"
+.SH NAME
+pimd \- a PIM routing for use with Quagga Routing Suite.
+.SH SYNOPSIS
+.B pimd
+[
+.B \-dhvZ
+] [
+.B \-f
+.I config-file
+] [
+.B \-i
+.I pid-file
+] [
+.B \-z
+.I path
+] [
+.B \-P
+.I port-number
+] [
+.B \-A
+.I vty-address
+] [
+.B \-u
+.I user
+] [
+.B \-g
+.I group
+]
+.SH DESCRIPTION
+.B pimd
+is a protocol-independent multicast component that works with the
+.B Quagga
+Routing Suite.
+.SH OPTIONS
+Options available for the
+.B pimd
+command:
+.TP
+\fB\-d\fR, \fB\-\-daemon\fR
+Runs in daemon mode, forking and exiting from tty.
+.TP
+\fB\-f\fR, \fB\-\-config-file \fR\fIconfig-file\fR 
+Specifies the config file to use for startup. If not specified this
+option will likely default to \fB\fI/usr/local/etc/pimd.conf\fR.
+.TP
+\fB\-g\fR, \fB\-\-group \fR\fIgroup\fR
+Specify the group to run as. Default is \fIquagga\fR.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+A brief message.
+.TP
+\fB\-i\fR, \fB\-\-pid_file \fR\fIpid-file\fR
+When pimd starts its process identifier is written to
+\fB\fIpid-file\fR.  The init system uses the recorded PID to stop or
+restart pimd.  The likely default is \fB\fI/var/run/pimd.pid\fR.
+.TP
+\fB\-z\fR, \fB\-\-socket \fR\fIpath\fR
+Specify the socket path for contacting the zebra daemon.
+The likely default is \fB\fI/var/run/zserv.api\fR.
+.TP
+\fB\-P\fR, \fB\-\-vty_port \fR\fIport-number\fR 
+Specify the port that the pimd VTY will listen on. This defaults to
+2611, as specified in \fB\fI/etc/services\fR.
+.TP
+\fB\-A\fR, \fB\-\-vty_addr \fR\fIvty-address\fR
+Specify the address that the pimd VTY will listen on. Default is all
+interfaces.
+.TP
+\fB\-u\fR, \fB\-\-user \fR\fIuser\fR
+Specify the user to run as. Default is \fIquagga\fR.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Print the version and exit.
+.TP
+\fB\-Z\fR, \fB\-\-debug_zclient\fR
+Enable logging information for zclient debugging.
+.SH FILES
+.TP
+.BI /usr/local/sbin/pimd
+The default location of the 
+.B pimd
+binary.
+.TP
+.BI /usr/local/etc/pimd.conf
+The default location of the 
+.B pimd
+config file.
+.TP
+.BI /var/run/pimd.pid
+The default location of the 
+.B pimd
+pid file.
+.TP
+.BI /var/run/zserv.api
+The default location of the 
+.B zebra
+unix socket file.
+.TP
+.BI $(PWD)/pimd.log 
+If the 
+.B pimd
+process is config'd to output logs to a file, then you will find this
+file in the directory where you started \fBpimd\fR.
+.SH WARNING
+This man page is intended to be a quick reference for command line
+options.
+.SH DIAGNOSTICS
+The pimd process may log to standard output, to a VTY, to a log
+file, or through syslog to the system logs.
+.SH "SEE ALSO"
+.BR zebra (8),
+.BR vtysh (1)
+.SH BUGS
+\fBpimd\fR is in early development at the moment and is not ready for
+production use.
+
+.B pimd
+eats bugs for breakfast. If you have food for the maintainers try
+.BI https://github.com/udhos/qpimd
+.SH AUTHORS
+See
+.BI https://github.com/udhos/qpimd
+for an accurate list of authors.
+

@@ -23,7 +23,6 @@ p{
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 
 <script type="text/JavaScript">
 var aplist = new Array();

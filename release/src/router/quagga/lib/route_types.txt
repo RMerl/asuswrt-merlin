@@ -1,0 +1,78 @@
+# Canonical Zserv route types information registry for Quagga.
+#
+# Used to construct route_types.c and route_types.h
+#
+# comma-seperated fields of either 2 fields (help strings) or 7 fields.
+# White space before and after the comma seperators is stripped.
+# Lines /beginning/ with # are comments.
+#
+####
+# 7 field line has format:
+# ZServ route type, canonical name, daemon, route char, ipv4, ipv6, short desc
+#
+# Zserv route type: 	Corresponding with zebra.h. Key field.
+# canonical name:	Typically derived from the route type definition.
+#			Used in 'redistribute' commands in daemons.
+#			Key field.
+# daemon:		The daemon which may originates this route type
+#			for redistribution to other daemons.
+#			NULL if not applicable.
+#			M:N definitions of type:daemon are allowed.
+#			Used to construct vty command strings.
+# route char:		Single character to denote the route, if applicable.
+#			Used to denote route type where space is tight,
+#			e.g. 'show ip route' / 'show ipv6 route'.
+#			'X' is reserved as the 'not needed' placeholder.
+# ipv4:			IPv4 capable? yes/no, or 1/0.
+# ipv6:			IPv6 capable? ditto.
+# short desc:		Very brief description. Used in header of
+#			'show ip route'. May be specified as NULL
+#			if the canonical name suffices.
+#
+# Key fields obviously must be a unique ASCII alpha-numeric word.
+#   Lower-case is required, brevity is optional but highly desirable.
+#
+####
+# 2 field format:
+#
+# Zserv route type, Long description
+#
+# Long description:     Full description, but should try fit on a line.
+####
+
+##  type                cname      daemon  C    4  6  short help
+ZEBRA_ROUTE_SYSTEM,     system,    NULL,   'X', 0, 0, "Reserved"
+ZEBRA_ROUTE_KERNEL,     kernel,    zebra,  'K', 1, 1, "kernel route"
+ZEBRA_ROUTE_CONNECT,    connected, zebra,  'C', 1, 1, "connected"
+ZEBRA_ROUTE_STATIC,     static,    zebra,  'S', 1, 1, "static"
+ZEBRA_ROUTE_RIP,        rip,       ripd,   'R', 1, 0, "RIP"
+ZEBRA_ROUTE_RIPNG,      ripng,     ripngd, 'R', 0, 1, "RIPng"
+ZEBRA_ROUTE_OSPF,       ospf,      ospfd,  'O', 1, 0, "OSPF"
+ZEBRA_ROUTE_OSPF6,      ospf6,     ospf6d, 'O', 0, 1, "OSPFv6"
+ZEBRA_ROUTE_ISIS,       isis,      isisd,  'I', 1, 1, "IS-IS"
+ZEBRA_ROUTE_BGP,        bgp,       bgpd,   'B', 1, 1, "BGP"
+ZEBRA_ROUTE_PIM,	pim,	   pimd,   'P', 1, 0, "PIM"
+# HSLS and OLSR both are AFI independent (so: 1, 1), however
+# we want to disable for them for general Quagga distribution.
+# This at least makes it trivial for users of these protocols
+# to 'switch on' redist support (direct numeric entry remaining
+# possible).
+ZEBRA_ROUTE_HSLS,       hsls,      hslsd,  'H', 0, 0, "HSLS"
+ZEBRA_ROUTE_OLSR,       olsr,      olsrd,  'o', 0, 0, "OLSR"
+ZEBRA_ROUTE_BABEL,      babel,     babeld, 'A', 1, 1, "Babel"
+
+## help strings
+ZEBRA_ROUTE_SYSTEM, "Reserved route type, for internal use only"
+ZEBRA_ROUTE_KERNEL, "Kernel routes (not installed via the zebra RIB)"
+ZEBRA_ROUTE_CONNECT,"Connected routes (directly attached subnet or host)"
+ZEBRA_ROUTE_STATIC, "Statically configured routes"
+ZEBRA_ROUTE_RIP,    "Routing Information Protocol (RIP)"
+ZEBRA_ROUTE_RIPNG,  "Routing Information Protocol next-generation (IPv6) (RIPng)"
+ZEBRA_ROUTE_OSPF,   "Open Shortest Path First (OSPFv2)"
+ZEBRA_ROUTE_OSPF6,  "Open Shortest Path First (IPv6) (OSPFv3)"
+ZEBRA_ROUTE_ISIS,   "Intermediate System to Intermediate System (IS-IS)"
+ZEBRA_ROUTE_BGP,    "Border Gateway Protocol (BGP)"
+ZEBRA_ROUTE_PIM,    "Protocol Independent Multicast (PIM)"
+ZEBRA_ROUTE_HSLS,   "Hazy-Sighted Link State Protocol (HSLS)"
+ZEBRA_ROUTE_OLSR,   "Optimised Link State Routing (OLSR)"
+ZEBRA_ROUTE_BABEL,  "Babel routing protocol (Babel)"

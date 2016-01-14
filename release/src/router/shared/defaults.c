@@ -725,7 +725,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_acs_fcs_mode", "0", 0 },		/* acsd disable FCS mode */
 	{ "wl_dcs_csa_unicast", "0", 0 },	/* disable unicast csa */
 	{ "wl_acs_excl_chans", "", 0 },		/* acsd exclude chanspec list */
-#if defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114)
+#if defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114) || defined(RTCONFIG_BCM9)
 	{ "wl_acs_dfs", "2", 0 },		/* acsd fcs disable init DFS chan */
 #else
 	{ "wl_acs_dfs", "0", 0 },		/* acsd fcs disable init DFS chan */
@@ -997,6 +997,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "sr_rulelist", ""},
 	{ "dr_enable_x", "1" }, // oleg patch
 	{ "mr_enable_x", "0" }, // oleg patch
+	{ "mr_altnet_x", "" },
 
 	// Domain Name
 	{ "local_domain", "router.asus.com"},
@@ -1872,6 +1873,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "modem_pass_v6", ""},
 	{ "modem_ttlsid", ""},
 	{ "modem_mode", "0"}, // 0: auto, 2: 2G only, 3: 3G only, 4: 4G only, 43: 4G/3G.
+	{ "modem_lte_band", "auto"}, // auto, B3, B7, B20, B38.
 	{ "modem_running", "0"},
 #ifdef RTCONFIG_USB_MODEM_PIN
 	{ "modem_pincode_opt", "1"},
@@ -2570,6 +2572,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "wtf_enable_games", ""},
 #endif
 	{ "guard_mode",	"0"},
+#ifdef RTCONFIG_QUAGGA
+       	{ "quagga_enable", "0"},          // 0: Disable, 1: enable quagga(zebra + ripd)
+	{ "zebra_passwd", "zebra"},       // Set password for vty interface. If there is no password, a vty won? accept connections.(default: zebra)
+       	{ "zebra_enpasswd", "zebra"},     // Set enable password for VTY.(default: zebra)
+	{ "rip_hostname", "ripd"},        // Set hostname of the ripd.(default: ripd)
+	{ "rip_passwd", "zebra"},         // Set password for vty interface. If there is no password, a vty won? accept connections.(default: zebra)
+#endif
 	{ NULL, NULL }
 }; // router_defaults
 
@@ -2906,8 +2915,17 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsllog_pathmodeup", ""},
 	{ "dsllog_interleavedepthdown", ""},
 	{ "dsllog_interleavedepthup", ""},
+	{ "dsllog_xdslmode", ""},
 	{ "dsllog_tcm", ""},
 	{ "dsllog_vdslcurrentprofile", ""},
+	{ "dsllog_inpdown", ""},
+	{ "dsllog_inpup", ""},
+	{ "dsllog_snrmpbds", ""},
+	{ "dsllog_snrmpbus", ""},
+	{ "dsllog_latndown", ""},
+	{ "dsllog_latnup", ""},
+	{ "dsllog_satndown", ""},
+	{ "dsllog_satnup", ""},
 #endif
 
 #endif

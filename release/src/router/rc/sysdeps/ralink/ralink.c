@@ -59,6 +59,8 @@ char *wlc_nvname(char *keyword);
 #define VHT_SUPPORT /* 11AC */
 #endif
 
+#undef OLD_ACL  //for standalone acl policy
+
 #define xR_MAX	3
 typedef struct _roaming_info
 {
@@ -593,7 +595,7 @@ void gen_macmode(int mac_filter[], int band)
 {
 	int i,j;
 	char temp[128], prefix_mssid[] = "wlXXXXXXXXXX_mssid_";
-
+#ifdef OLD_ACL
 	snprintf(temp, sizeof(temp), "wl%d_macmode", band);
 	mac_filter[0] = check_macmode(nvram_get(temp));
 	_dprintf("mac_filter[0] = %d\n", mac_filter[0]);
@@ -630,6 +632,21 @@ void gen_macmode(int mac_filter[], int band)
 			j++;
 		}
 	}
+#else
+	for (i = 0,j = 0; i < MAX_NO_MSSID; i++)
+	{
+		if (i)
+			sprintf(prefix_mssid, "wl%d.%d_", band, i);
+		else
+			sprintf(prefix_mssid, "wl%d_", band);
+
+		if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", temp), "1"))
+			continue;
+		
+		mac_filter[j] = check_macmode(nvram_safe_get(strcat_r(prefix_mssid, "macmode", temp)));
+		j++;
+	}
+#endif	
 }
 //Ren.E
 
@@ -2252,8 +2269,12 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "WscVendorPinCode=%s\n", nvram_safe_get("secret_code"));
 //	fprintf(fp, "ApCliWscPinCode=%s\n", nvram_safe_get("secret_code"));	// removed from SDK 3.3.0.0
 
+#if !defined(OLD_ACL)			
+	memset(mac_filter,0,sizeof(mac_filter));
+#endif	
 	//AccessPolicy0
 	gen_macmode(mac_filter, band); //Ren
+#ifdef OLD_ACL	
 	str = nvram_safe_get(strcat_r(prefix, "macmode", tmp));
 
 	if (str && strlen(str))
@@ -2293,30 +2314,66 @@ int gen_ralink_config(int band, int is_iNIC)
 		for (i = 0; i < ssid_num; i++)
 			fprintf(fp, "AccessPolicy%d=%d\n", i, 0);
 	}
+#else
+	for (i = 0; i < MAX_NO_MSSID; i++)
+		fprintf(fp, "AccessPolicy%d=%d\n", i, mac_filter[i]);
 
+#endif	 //OLD_ACL	
+
+#ifdef OLD_ACL
 	list[0]=0;
 	list[1]=0;
 	if (nvram_invmatch(strcat_r(prefix, "macmode", tmp), "disabled"))
 	{
 		nv = nvp = strdup(nvram_safe_get(strcat_r(prefix, "maclist_x", tmp)));
-		if (nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if (strlen(b)==0) continue;
-				if (list[0]==0)
-					sprintf(list, "%s", b);
-				else
-					sprintf(list, "%s;%s", list, b);
-			}
-			free(nv);
-		}
-	}
+#else
+	for (i = 0,j = 0; i < MAX_NO_MSSID; i++)
+	{
 
+		list[0]=0;
+		list[1]=0;
+		if (i)
+			sprintf(prefix_mssid, "wl%d.%d_", band, i);
+		else
+			sprintf(prefix_mssid, "wl%d_", band);
+
+
+		if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", temp), "1"))
+			continue;
+
+		if (nvram_invmatch(strcat_r(prefix_mssid, "macmode", tmp), "disabled"))
+		{
+			nv = nvp = strdup(nvram_safe_get(strcat_r(prefix_mssid, "maclist_x", tmp)));
+#endif //OLD_ACL	
+			if (nv) {
+				while ((b = strsep(&nvp, "<")) != NULL) {
+					if (strlen(b)==0) continue;
+					if (list[0]==0)
+						sprintf(list, "%s", b);
+					else
+						sprintf(list, "%s;%s", list, b);
+				}
+				free(nv);
+			}
+#ifdef OLD_ACL
+	}
 	// AccessControlLis0~3
 	for (i = 0; i < ssid_num; i++)
 		if(mac_filter[i] != 0)
 			fprintf(fp, "AccessControlList%d=%s\n", i, list);
 		else
 			fprintf(fp, "AccessControlList%d=%s\n", i, "");
+#else
+			fprintf(fp, "AccessControlList%d=%s\n", j, list);
+		}
+		else
+			fprintf(fp, "AccessControlList%d=%s\n", j, "");
+		j++;
+#endif		
+
+#if !defined(OLD_ACL)			
+	} //for loop
+#endif
 
 	if (sw_mode != SW_MODE_REPEATER && !nvram_match(strcat_r(prefix, "mode_x", tmp), "0"))
 	{

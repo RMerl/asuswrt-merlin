@@ -71,46 +71,6 @@ static reply_handler dhcpv6_handle_rebind_reply;
 static reply_handler dhcpv6_handle_reconfigure;
 static int dhcpv6_commit_advert(void);
 
-#if defined(__UCLIBC__) \
- && (__UCLIBC_MAJOR__ == 0 \
- && (__UCLIBC_MINOR__ < 9 || (__UCLIBC_MINOR__ == 9 && __UCLIBC_SUBLEVEL__ < 33)))
-#undef dn_comp
-#define dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr) \
-	dn_encode(exp_dn, comp_dn, length)
-
-#define NS_MAXCDNAME 255 /* max compressed domain name length */
-#define NS_MAXLABEL   63 /* max label length */
-
-static int dn_encode(const char *src, uint8_t *dst, int length)
-{
-	uint8_t *buf, *ptr;
-	int len;
-
-	if (src == NULL || dst == NULL)
-		return -1;
-
-	buf = ptr = alloca(strlen(src) + 2);
-	while (src && *src) {
-		uint8_t *lenptr = ptr++;
-		for (len = 0; *src && *src != '.'; len++)
-			*ptr++ = *src++;
-		if (len == 0 || len > NS_MAXLABEL)
-			return -1;
-		*lenptr = len;
-		if (*src)
-			src++;
-	}
-	*ptr++ = 0;
-
-	len = ptr - buf;
-	if (len > NS_MAXCDNAME || len > length)
-		return -1;
-
-	memcpy(dst, buf, len);
-	return len;
-}
-#endif
-
 
 // RFC 3315 - 5.5 Timeout and Delay values
 static struct dhcpv6_retx dhcpv6_retx[_DHCPV6_MSG_MAX] = {
@@ -157,10 +117,7 @@ int init_dhcpv6(const char *ifname, unsigned int options, int sol_timeout)
 	sock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
 #else
 	sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	if (sock >= 0 && fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-		close(sock);
-		sock = -1;
-	}
+	sock = fflags(sock, O_CLOEXEC);
 #endif
 	if (sock < 0)
 		return -1;

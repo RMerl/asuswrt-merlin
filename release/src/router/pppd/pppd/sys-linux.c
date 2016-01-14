@@ -2268,6 +2268,47 @@ int sifvjcomp (int u, int vjcomp, int cidcomp, int maxcid)
 
 /********************************************************************
  *
+ * sifname - Config the interface name.
+ */
+int sifname (int unit, const char *newname)
+{
+    struct ifreq ifr;
+    int ifindex;
+
+    if (strcmp(ifname, newname) == 0)
+	return 1;
+
+    memset(&ifr, 0, sizeof(ifr));
+    strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+
+    /* Get and keep interface index */
+    if (ioctl(sock_fd, SIOCGIFINDEX, (caddr_t) &ifr) < 0) {
+	error("ioctl (SIOCGIFINDEX): %m (line %d)", __LINE__);
+	return 0;
+    }
+    ifindex = ifr.ifr_ifindex;
+
+    /* Set new interface name, patterns such as "vpn%d" are allowed
+     * by kernel, the lowest available slot will be used */
+    strlcpy(ifr.ifr_newname, newname, sizeof(ifr.ifr_newname));
+    if (ioctl(sock_fd, SIOCSIFNAME, (caddr_t) &ifr) < 0) {
+	error("Couldn't set interface name %s: %m", ifr.ifr_newname);
+	return 0;
+    }
+
+    /* Get new interface name back */
+    ifr.ifr_ifindex = ifindex;
+    if (ioctl(sock_fd, SIOCGIFNAME, (caddr_t) &ifr) < 0) {
+	error("ioctl (SIOCGIFNAME): %m (line %d)", __LINE__);
+        return 0;
+    }
+
+    strcpy(ifname, ifr.ifr_name);
+    return 1;
+}
+
+/********************************************************************
+ *
  * sifup - Config the interface up and enable IP packets to pass.
  */
 

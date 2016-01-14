@@ -171,6 +171,8 @@ void log_buf_kexec_setup(void)
 #endif
 
 #ifdef CONFIG_DUMP_PREV_OOPS_MSG
+extern int oops_mem;
+
 struct oopsbuf_s {
 	char sig[8];
 	uint32_t len;
@@ -189,7 +191,9 @@ void enable_oopsbuf(int onoff)
 
 static inline void copy_char_to_oopsbuf(char c)
 {
-	if (likely(!save_oopsmsg))
+	if (!oopsbuf)
+		return;
+	else if (likely(!save_oopsmsg))
 		return;
 	else if (unlikely((oopsbuf->len + 1) >= MAX_PREV_OOPS_MSG_LEN))
 		return;
@@ -211,7 +215,10 @@ int prepare_and_dump_previous_oops(void)
 #endif
 //	printk("* KERNEL: prepare_and_dump_oops: %08x::%d\n", CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR, MAX_PREV_OOPS_MSG_LEN);
 
-	oopsbuf = (struct oopsbuf_s *) (CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+	if (oops_mem)
+		oopsbuf = (struct oopsbuf_s *) (CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+	else
+		return 0;
 
 	if (strncmp(oopsbuf->sig, OOPSBUF_SIG, strlen(OOPSBUF_SIG))) {
 		u = oopsbuf->sig;
@@ -220,6 +227,7 @@ int prepare_and_dump_previous_oops(void)
 			oopsbuf->len);
 	}
 	if (oopsbuf->len > 32 && oopsbuf->len < MAX_PREV_OOPS_MSG_LEN) {
+		memset(local_buf, 0, sizeof(local_buf));
 		memcpy(local_buf, oopsbuf->buf, oopsbuf->len);
 		local_buf_len = oopsbuf->len;
 #if 0
@@ -262,14 +270,20 @@ void dump_previous_oops(void)
 {
 	int i;
 
+	if(oopsbuf && local_buf_len) {
+		printk("\n\n[dump prev ops] from %x, local len(%d)\n", (unsigned int) oopsbuf, local_buf_len);
+	} else {
+		return;	// oopsbuf failed !!
+	}
+
 	if (local_buf_len) {
 		printk("_ Reboot message ... _______________________________________________________\n");
 		for (i = 0; i < local_buf_len; i++)
 			printk("%c", local_buf[i]);
 		printk("\n____________________________________________________________________________\n");
 
-		memcpy(local_buf, oopsbuf->buf, oopsbuf->len);
-		local_buf_len = oopsbuf->len;
+		memset(local_buf, 0, oopsbuf->len);
+		local_buf_len = 0;
 	}
 }
 EXPORT_SYMBOL(dump_previous_oops);

@@ -1,0 +1,17 @@
+i pkginfo=$abs_builddir/pkginfo.doc.full
+i depend=$abs_builddir/depend.doc
+i copying=$abs_top_srcdir/COPYING
+d none @infodir@=$DESTDIR/@infodir@ 0755 root bin
+#f none @infodir@/dir=$DESTDIR/@infodir@/dir 0644 root bin
+f none @infodir@/quagga.info=$DESTDIR/@infodir@/quagga.info 0644 root bin
+d none @mandir@=$DESTDIR/@mandir@ 0755 root bin
+d none @mandir@/man1=$DESTDIR/@mandir@/man1 0755 root bin
+f none @mandir@/man1/vtysh.1=$DESTDIR/@mandir@/man1/vtysh.1 0644 root bin
+d none @mandir@/man8=$DESTDIR/@mandir@/man8 0755 root bin
+f none @mandir@/man8/bgpd.8=$DESTDIR/@mandir@/man8/bgpd.8 0644 root bin
+f none @mandir@/man8/ospf6d.8=$DESTDIR/@mandir@/man8/ospf6d.8 0644 root bin
+f none @mandir@/man8/ospfd.8=$DESTDIR/@mandir@/man8/ospfd.8 0644 root bin
+f none @mandir@/man8/ripd.8=$DESTDIR/@mandir@/man8/ripd.8 0644 root bin
+f none @mandir@/man8/ripngd.8=$DESTDIR/@mandir@/man8/ripngd.8 0644 root bin
+f none @mandir@/man8/zebra.8=$DESTDIR/@mandir@/man8/zebra.8 0644 root bin
+f none @mandir@/man8/isisd.8=$DESTDIR/@mandir@/man8/isisd.8 0644 root bin

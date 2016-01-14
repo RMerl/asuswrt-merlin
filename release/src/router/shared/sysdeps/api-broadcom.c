@@ -594,7 +594,7 @@ int check_imagefile(char *fname)
 	   (!version.sn ||
 	    !version.en ||
 	     version.sn < 380 ||
-	    (version.sn == 380 && version.en < 943)))
+	    (version.sn == 380 && version.en < 738)))
 	{
 		dbg("version check fail!\n");
 		return 0;

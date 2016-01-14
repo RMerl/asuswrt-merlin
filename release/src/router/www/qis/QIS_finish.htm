@@ -200,6 +200,7 @@ function doLiveUpdate(_do){
 	}
 	else{
 		goto_index();
+		setTimeout("parent.location.href='/index.asp'", 3000);
 	}
 }
 
@@ -1130,6 +1131,15 @@ function QKfinish_load_body(){
 		parent.set_step("t3");
 		parent.document.getElementById("LoadingBar").style.visibility = 'hidden';
 	}
+	
+	setTimeout("check_fimware();", 1000);
+	
+}
+
+function check_fimware(){
+	if(!parent.new_FW){
+		gotoNext();
+	}	
 }
 
 function iAmAlive(){
@@ -1205,14 +1215,14 @@ function goto_index(){
 		}	
 	}	
 
-	if(document.restartForm.action_wait.value == 0){
+	/*if(document.restartForm.action_wait.value == 0){
 		document.getElementById('loadingIcon').style.display = '';
 	}
 	else{
 		document.getElementById("QISmain").style.display = "none";
 		document.getElementById("liveUpdate_div").style.display = "none";
 		document.getElementById('qisFinish_div').style.display = '';
-	}
+	}*/
 
 	if(parent.based_modelid == "4G-AC55U" && wans_mode == "lb"){
 		document.restartForm.wans_mode.disabled = false;
@@ -1228,6 +1238,15 @@ function gotoAdvSetting(){
 function startLiveDetect(){
 	document.getElementById('loadingIcon').style.display = '';
 	parent.detect_update();
+}
+
+function redirect_index(){
+	if(parent.new_FW){
+		return checkIsNewFirmware();
+	}
+	else{
+		parent.location.href = "/index.asp";
+	}
 }
 
 function gotoNext(){
@@ -1636,7 +1655,8 @@ function chkMBConState(){
 </div>
 
 <div id="applyBtn" class="apply_gen" style="margin-top:30px">
-	<input type="button" id="nextButton" value="<#CTL_finish#>" onclick="gotoNext();" class="button_gen">
+	<!--input type="button" id="nextButton" value="<#CTL_finish#>" onclick="gotoNext();" class="button_gen"-->
+	<input type="button" id="nextButton" value="<#CTL_finish#>" onclick="redirect_index();" class="button_gen">
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
 </div>

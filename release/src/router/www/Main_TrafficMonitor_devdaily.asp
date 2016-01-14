@@ -21,7 +21,6 @@
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script type='text/javascript'>
 daily_history = [];
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;

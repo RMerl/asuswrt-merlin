@@ -180,6 +180,7 @@ function doLiveUpdate(_do){
 	}
 	else{
 		goto_index();
+		setTimeout("parent.location.href='/index.asp'", 3000);
 	}
 }
 
@@ -1075,6 +1076,14 @@ function QKfinish_load_body(){
 		//parent.set_step("t3");
 		parent.document.getElementById("LoadingBar").style.visibility = 'hidden';
 	}
+	
+	setTimeout("check_fimware();", 1000);
+}
+
+function check_fimware(){
+	if(!parent.new_FW){
+		gotoNext();
+	}	
 }
 
 function iAmAlive(){
@@ -1140,6 +1149,15 @@ function gotoAdvSetting(){
 function startLiveDetect(){
 	document.getElementById('loadingIcon').style.display = '';
 	parent.detect_update();
+}
+
+function redirect_index(){
+	if(parent.new_FW){
+		return checkIsNewFirmware();
+	}
+	else{
+		parent.location.href = "/index.asp";
+	}
 }
 
 function gotoNext(){
@@ -1345,7 +1363,7 @@ body{
 
 	<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
 		<div id="apply_button" style="width:100%;height:100%;display:table">
-			<div id="nextButton" style="display:table-cell;width:100%;height:100%;line-height:50px;;text-align:center;background-color:#279FD9" onclick="gotoNext();">
+			<div id="nextButton" style="display:table-cell;width:100%;height:100%;line-height:50px;;text-align:center;background-color:#279FD9" onclick="redirect_index();">
 				<div style="font-size:1em;color:#FFF;"><#CTL_finish#></div>
 			</div>
 		</div>

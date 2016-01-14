@@ -793,9 +793,13 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 																	</li>
 																</ul>
 															</td>
-															<td align="right" valign="top"  nowrap="nowrap">
-																<a href="https://play.google.com/store/apps/details?id=com.asustek.aicloud" target="_blank"><img border="0" src="/images/cloudsync/googleplay.png" width="100px"></a>
-																<a href="https://itunes.apple.com/us/app/aicloud-lite/id527118674" target="_blank"><img src="/images/cloudsync/AppStore.png" border="0"  width="100px"></a>
+															<td>							
+																<a href="https://play.google.com/store/apps/details?id=com.asustek.aicloud" target="_blank">
+																	<div style="width:172px;height:51px;background:url('images/cloudsync/googleplay.png') no-repeat;background-size:75%;"></div>
+																</a>																
+																<a href="https://itunes.apple.com/us/app/aicloud-lite/id527118674" target="_blank">
+																	<div style="width:172px;height:51px;background:url('images/cloudsync/AppStore.png') no-repeat;background-size:75%;"></div>
+																</a>	
 															</td>
 														</tr>
 													</table>

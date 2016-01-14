@@ -4,7 +4,7 @@
  *
  * Copyright 2004, Broadcom Corporation
  * All Rights Reserved.
- * 
+ *
  * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
  * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
  * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
@@ -694,7 +694,6 @@ dump_bss_info(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *bi)
 	return retval;
 }
 
-
 static int
 wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
@@ -799,11 +798,13 @@ print_rate_buf_compact(int raw_rate, char *buf)
 {
 	if (!buf) return NULL;
 
-	if (raw_rate == -1) sprintf(buf, "        ");
+	if (raw_rate == -1)
+		sprintf(buf, "        ");
 	else if ((raw_rate % 1000) == 0)
 		sprintf(buf, "%d", raw_rate / 1000);
 	else
 		sprintf(buf, "%.1f", (double) raw_rate / 1000);
+
 	return buf;
 }
 
@@ -1103,7 +1104,8 @@ wl_control_channel(int unit)
 
 			if (dtoh32(bi->version) != LEGACY_WL_BSS_INFO_VERSION && bi->n_cap)
 				return bi->ctl_ch;
-
+			else
+				return (bi->chanspec & WL_CHANSPEC_CHAN_MASK);
 		}
 	}
 
@@ -1356,6 +1358,9 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int unit_max = 0, unit_cur = -1;
 	int rate = 0;
 	char rate_buf[32];
+	struct ether_addr bssid;
+	unsigned char bssid_null[6] = {0x0,0x0,0x0,0x0,0x0,0x0};
+	int sta_rate;
 
 	sprintf(rate_buf, "0 Mbps");
 
@@ -1371,18 +1376,38 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	wl_ioctl(name, WLC_GET_INSTANCE, &unit_cur, sizeof(unit_cur));
 	if (unit != unit_cur)
 		goto ERROR;
-	else if (wl_ioctl(name, WLC_GET_RATE, &rate, sizeof(int)))
-	{
+	else if (wl_ioctl(name, WLC_GET_RATE, &rate, sizeof(int))) {
 		dbg("can not get rate info of %s\n", name);
 		goto ERROR;
-	}
-	else
-	{
+	} else {
 		rate = dtoh32(rate);
 		if ((rate == -1) || (rate == 0))
 			sprintf(rate_buf, "auto");
 		else
 			sprintf(rate_buf, "%d%s Mbps", (rate / 2), (rate & 1) ? ".5" : "");
+	}
+
+	if (nvram_match(strcat_r(prefix, "mode", tmp), "wet")) {
+		if (wl_ioctl(name, WLC_GET_BSSID, &bssid, ETHER_ADDR_LEN) != 0)
+			goto ERROR;
+		else if (!memcmp(&bssid, bssid_null, 6))
+			goto ERROR;
+
+		sta_info_t *sta = wl_sta_info(name, &bssid);
+		if (sta && (sta->flags & WL_STA_SCBSTATS)) {
+
+			if ((dtoh32(sta->tx_rate) == -1) &&
+				(dtoh32(sta->rx_rate) == -1))
+				goto ERROR;
+
+			sta_rate = max(sta->tx_rate, sta->rx_rate);
+			rate = max(rate * 500, sta_rate);
+
+			if ((rate % 1000) == 0)
+				sprintf(rate_buf, "%6d Mbps", rate / 1000);
+			else
+				sprintf(rate_buf, "%6.1f Mbps", (double) rate / 1000);
+		}
 	}
 
 ERROR:
@@ -2093,21 +2118,21 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 				info->ie_offset = sizeof(wl_bss_info_107_t);
 			}
 
-			for(i = 0; i < result->count; i++)
+			for (i = 0; i < result->count; i++)
 			{
 				if (info->SSID_len > 32/* || info->SSID_len == 0*/)
 					goto next_info;
 #if 0
 				SSID_valid = 1;
-				for(j = 0; j < info->SSID_len; j++)
+				for (j = 0; j < info->SSID_len; j++)
 				{
-					if(info->SSID[j] < 32 || info->SSID[j] > 126)
+					if (info->SSID[j] < 32 || info->SSID[j] > 126)
 					{
 						SSID_valid = 0;
 						break;
 					}
 				}
-				if(!SSID_valid)
+				if (!SSID_valid)
 					goto next_info;
 #endif
 				bssidp = (unsigned char *)&info->BSSID;
@@ -2121,7 +2146,7 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 				idx_same = -1;
 				for (k = 0; k < ap_count; k++)	// deal with old version of Broadcom Multiple SSID (share the same BSSID)
 				{
-					if(strcmp(apinfos[k].BSSID, macstr) == 0 && strcmp(apinfos[k].SSID, (char *)info->SSID) == 0)
+					if (strcmp(apinfos[k].BSSID, macstr) == 0 && strcmp(apinfos[k].SSID, (char *)info->SSID) == 0)
 					{
 						idx_same = k;
 						break;
@@ -2145,7 +2170,6 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 //					strcpy(apinfos[ap_count].SSID, info->SSID);
 					memset(apinfos[ap_count].SSID, 0x0, 33);
 					memcpy(apinfos[ap_count].SSID, info->SSID, info->SSID_len);
-//					apinfos[ap_count].channel = info->chanspec;
 					apinfos[ap_count].channel = (uint8)(info->chanspec & WL_CHANSPEC_CHAN_MASK);
 					apinfos[ap_count].ctl_ch = info->ctl_ch;
 
@@ -2486,11 +2510,11 @@ ej_urelease(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 #if 0
-static bool find_ethaddr_in_list(void *ethaddr, struct maclist *list){
+static bool find_ethaddr_in_list(void *ethaddr, struct maclist *list) {
 	int i;
 
-	for(i = 0; i < list->count; ++i)
-		if(!bcmp(ethaddr, (void *)&list->ea[i], ETHER_ADDR_LEN))
+	for (i = 0; i < list->count; ++i)
+		if (!bcmp(ethaddr, (void *)&list->ea[i], ETHER_ADDR_LEN))
 			return TRUE;
 
 	return FALSE;
@@ -2548,7 +2572,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 		goto exit;
 
 	/* build authenticated sta list */
-	for(i = 0; i < auth->count; ++i) {
+	for (i = 0; i < auth->count; ++i) {
 		sta = wl_sta_info(name, &auth->ea[i]);
 		if (!sta) continue;
 
@@ -2557,43 +2581,43 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 		else
 			ret += websWrite(wp, ", ");
 
-		if(from_app == 0)
+		if (from_app == 0)
 			ret += websWrite(wp, "[");
 
 		ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[i], ea));
 
-		if(from_app == 1){
+		if (from_app == 1) {
 			ret += websWrite(wp, ":{");
 			ret += websWrite(wp, "\"isWL\":");
 		}
 
 		value = (sta->flags & WL_STA_ASSOC) ? "Yes" : "No";
-		if(from_app == 0)
+		if (from_app == 0)
 			ret += websWrite(wp, ", \"%s\"", value);
 		else
 			ret += websWrite(wp, "\"%s\"", value);
 
 		value = (sta->flags & WL_STA_AUTHO) ? "Yes" : "No";
-		if(from_app == 0)
+		if (from_app == 0)
 			ret += websWrite(wp, ", \"%s\"", value);
 
-		if(from_app == 1){
+		if (from_app == 1) {
 			ret += websWrite(wp, ",\"rssi\":");
 		}
 
 		memcpy(&scb_val.ea, &auth->ea[i], ETHER_ADDR_LEN);
-		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t))){
-			if(from_app == 0)
+		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t))) {
+			if (from_app == 0)
 				ret += websWrite(wp, ", \"%d\"", 0);
 			else
 				ret += websWrite(wp, "\"%d\"", 0);
-		}else{
-			if(from_app == 0)
+		} else {
+			if (from_app == 0)
 				ret += websWrite(wp, ", \"%d\"", scb_val.val);
 			else
 				ret += websWrite(wp, "\"%d\"", scb_val.val);
 		}
-		if(from_app == 0)
+		if (from_app == 0)
 			ret += websWrite(wp, "]");
 		else
 			ret += websWrite(wp, "}");
@@ -2617,7 +2641,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 			if (wl_ioctl(name_vif, WLC_GET_VAR, auth, mac_list_size))
 				goto exit;
 
-			for(ii = 0; ii < auth->count; ii++) {
+			for (ii = 0; ii < auth->count; ii++) {
 				sta = wl_sta_info(name_vif, &auth->ea[ii]);
 				if (!sta) continue;
 
@@ -2626,43 +2650,43 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 				else
 					ret += websWrite(wp, ", ");
 
-				if(from_app == 0)
+				if (from_app == 0)
 					ret += websWrite(wp, "[");
 
 				ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[ii], ea));
 
-				if(from_app == 1){
+				if (from_app == 1) {
 					ret += websWrite(wp, ":{");
 					ret += websWrite(wp, "\"isWL\":");
 				}
 
 				value = (sta->flags & WL_STA_ASSOC) ? "Yes" : "No";
-				if(from_app == 0)
+				if (from_app == 0)
 					ret += websWrite(wp, ", \"%s\"", value);
 				else
 					ret += websWrite(wp, "\"%s\"", value);
 
 				value = (sta->flags & WL_STA_AUTHO) ? "Yes" : "No";
-				if(from_app == 0)
+				if (from_app == 0)
 					ret += websWrite(wp, ", \"%s\"", value);
 
-				if(from_app == 1){
+				if (from_app == 1) {
 					ret += websWrite(wp, ",\"rssi\":");
 				}
 
 				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
-				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t))){
-					if(from_app == 0)
+				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t))) {
+					if (from_app == 0)
 						ret += websWrite(wp, ", \"%d\"", 0);
 					else
 						ret += websWrite(wp, "\"%d\"", 0);
-				}else{
-					if(from_app == 0)
+				} else {
+					if (from_app == 0)
 						ret += websWrite(wp, ", \"%d\"", scb_val.val);
 					else
 						ret += websWrite(wp, "\"%d\"", scb_val.val);
 				}
-				if(from_app == 0)
+				if (from_app == 0)
 					ret += websWrite(wp, "]");
 				else
 					ret += websWrite(wp, "}");
@@ -2722,7 +2746,7 @@ static int wl_stainfo_list(int eid, webs_t wp, int argc, char_t **argv, int unit
 		goto exit;
 
 	/* build authenticated sta list */
-	for(i = 0; i < auth->count; ++i) {
+	for (i = 0; i < auth->count; ++i) {
 		sta = wl_sta_info(name, &auth->ea[i]);
 		if (!sta) continue;
 
@@ -2764,7 +2788,7 @@ static int wl_stainfo_list(int eid, webs_t wp, int argc, char_t **argv, int unit
 			if (wl_ioctl(name_vif, WLC_GET_VAR, auth, mac_list_size))
 				goto exit;
 
-			for(ii = 0; ii < auth->count; ii++) {
+			for (ii = 0; ii < auth->count; ii++) {
 				sta = wl_sta_info(name_vif, &auth->ea[ii]);
 				if (!sta) continue;
 
@@ -2858,8 +2882,8 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 	auth = malloc(mac_list_size);
 	//wme = malloc(mac_list_size);
 
-	//if(!auth || !wme)
-	if(!auth)
+	//if (!auth || !wme)
+	if (!auth)
 		goto exit;
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
@@ -2880,7 +2904,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 			goto exit;*/
 
 		/* build authenticated/associated sta list */
-		for(i = 0; i < auth->count; ++i) {
+		for (i = 0; i < auth->count; ++i) {
 			sta = wl_sta_info(name, &auth->ea[i]);
 			if (!sta) continue;
 
@@ -2923,7 +2947,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 				if (wl_ioctl(name_vif, WLC_GET_VAR, auth, mac_list_size))
 					goto exit;
 
-				for(ii = 0; ii < auth->count; ii++) {
+				for (ii = 0; ii < auth->count; ii++) {
 					sta = wl_sta_info(name_vif, &auth->ea[ii]);
 					if (!sta) continue;
 
@@ -2998,7 +3022,7 @@ wl_get_scan_results(char *ifname)
 	}
 
 	memset(params, 0, params_size);
-	params->bss_type = DOT11_BSSTYPE_INFRASTRUCTURE;
+	params->bss_type = DOT11_BSSTYPE_ANY;
 	memcpy(&params->bssid, &ether_bcast, ETHER_ADDR_LEN);
 	params->scan_type = -1;
 	params->nprobes = -1;
@@ -3064,7 +3088,6 @@ wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	if (wl_get_scan_results(name) == NULL)
 		return 0;
 
-	memset(ap_list, 0, sizeof(ap_list));
 	if (list->count == 0)
 		return 0;
 	else if (list->version != WL_BSS_INFO_VERSION &&
@@ -3075,6 +3098,7 @@ wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		return 0;
 	}
 
+	memset(ap_list, 0, sizeof(ap_list));
 	bi = list->bss_info;
 	for (i = 0; i < list->count; i++) {
 	/* Convert version 107 to 108 */
@@ -3086,19 +3110,22 @@ wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		}
 
 		if (bi->ie_length) {
-			if (ap_count < WLC_MAX_AP_SCAN_LIST_LEN){
+			if (ap_count < WLC_MAX_AP_SCAN_LIST_LEN) {
 #if 0
 				ap_list[ap_count].used = TRUE;
 #endif
 				memcpy(ap_list[ap_count].BSSID, (uint8 *)&bi->BSSID, 6);
 				strncpy((char *)ap_list[ap_count].ssid, (char *)bi->SSID, bi->SSID_len);
 				ap_list[ap_count].ssid[bi->SSID_len] = '\0';
-#if 0
 				ap_list[ap_count].ssidLen= bi->SSID_len;
+#if 0
 				ap_list[ap_count].ie_buf = (uint8 *)(((uint8 *)bi) + bi->ie_offset);
 				ap_list[ap_count].ie_buflen = bi->ie_length;
 #endif
-				ap_list[ap_count].channel = (uint8)(bi->chanspec & WL_CHANSPEC_CHAN_MASK);
+				if (dtoh32(bi->version) != LEGACY_WL_BSS_INFO_VERSION && bi->n_cap)
+					ap_list[ap_count].channel = bi->ctl_ch;
+				else
+					ap_list[ap_count].channel = bi->chanspec & WL_CHANSPEC_CHAN_MASK;
 #if 0
 				ap_list[ap_count].wep = bi->capability & DOT11_CAP_PRIVACY;
 #endif

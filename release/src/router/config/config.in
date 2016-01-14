@@ -945,10 +945,6 @@ config RTCONFIG_TRAFFIC_CONTROL
 	bool "Traffic control for alert limited traffic"
 	default n
 
-config RTCONFIG_CTF_PPTP_L2TP
-	bool "Speedup NAT for PPTP and L2TP"
-	default n
-	
 config RTCONFIG_BCM5301X_TRAFFIC_MONITOR
 	bool "read BCM5301x register for traffic monitor"
 	default n
@@ -1068,6 +1064,10 @@ config RTCONFIG_UPNPC
 	bool "UPNP client support"
 	default y
 
+config RTCONFIG_MULTICAST_IPTV
+	bool "Multicsat IPTV"
+	default n
+
 config RTCONFIG_BONJOUR
 	bool "Apple device query support"
 	default y
@@ -1078,4 +1078,13 @@ config RTCONFIG_FORCE_AUTO_UPGRADE
 
 config RTCONFIG_TUXERA_SMBD
 	bool "tuxera smbd"
+	default n
+
+config RTCONFIG_DYN_MODEM
+	bool "Dynamic enable the USB Modem"
+	default n
+
+config RTCONFIG_6RELAYD
+	bool "IPv6 Relay support"
+	depends on RTCONFIG_IPV6
 	default n

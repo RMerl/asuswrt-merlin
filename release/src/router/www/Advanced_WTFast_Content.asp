@@ -221,7 +221,10 @@ var wtfast_rulelist_array = new Array();
 var wtfast_rulelist_row = wtfast_rulelist.split('<');
 for(var i = 1; i < wtfast_rulelist_row.length; i ++) {
 	var  wtfast_rulelist_col = wtfast_rulelist_row[i].split('>');
-	wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], wtfast_rulelist_col[3]];
+	if(wtfast_rulelist_col.length == 4)
+		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], "none", wtfast_rulelist_col[3]];
+	else	
+		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], wtfast_rulelist_col[3], wtfast_rulelist_col[4]];
 }
 
 var saved_username = decodeURIComponent('<% nvram_char_to_ascii("", "wtf_username"); %>');
@@ -327,7 +330,7 @@ function show_info(){
 	document.getElementById("contact_email").innerHTML = email;
 	document.getElementById("account_type").innerHTML = wtfast_status.Account_Type;
 	if(document.getElementById("account_type").innerHTML == "Expired"){
-		document.getElementById("account_type").innerHTML = "Free";
+		document.getElementById("account_type").innerHTML = "Basic";
 		document.getElementById("ended_date_td").style.display = "none";
 		document.getElementById("ended_date_th").style.display = "none";
 	}
@@ -483,7 +486,7 @@ function addRule(){
 		});
 
 		if(addRule){
-			wtfast_rulelist_array.push([rule_enable, document.form.clientmac_x_0.value, document.form.server_list.value, document.form.game_list.value]);
+			wtfast_rulelist_array.push([rule_enable, document.form.clientmac_x_0.value, document.form.server_list.value, "none", document.form.game_list.value]);
 			if(rule_enable == "1" && (wtf_enable_games.indexOf(document.form.game_list.value) == -1)){
 				wtf_enable_games += "<" + document.form.game_list.value;
 			}
@@ -500,7 +503,7 @@ function update_rulelist(AapplyCheck){
 	var wtfast_rulelist_value = "";
 
 	Object.keys(wtfast_rulelist_array).forEach(function(key) {
-			wtfast_rulelist_value += "<" + wtfast_rulelist_array[key][0] + ">" + wtfast_rulelist_array[key][1] + ">" + wtfast_rulelist_array[key][2]+ ">" + wtfast_rulelist_array[key][3];
+			wtfast_rulelist_value += "<" + wtfast_rulelist_array[key][0] + ">" + wtfast_rulelist_array[key][1] + ">" + wtfast_rulelist_array[key][2]+ ">" + wtfast_rulelist_array[key][3] + ">" + wtfast_rulelist_array[key][4];
 		});
 	wtfast_rulelist = wtfast_rulelist_value;
 
@@ -634,7 +637,7 @@ function show_rulelist(){
 			var select = document.getElementById(game_list_id);
 
 			for(var j = 0; j < select.length; j++){
-				if(select[j].value == wtfast_rulelist_array[key][3]){
+				if(select[j].value == wtfast_rulelist_array[key][4]){
 					select.selectedIndex = j;
 					break;
 				}
@@ -685,7 +688,7 @@ function enable_wtfast_rule(index, enable){
 function change_game(r){
 	var key = r.id.substr(9);
 	var select = document.getElementById(r.id);
-	wtfast_rulelist_array[key][3] = select.value;
+	wtfast_rulelist_array[key][4] = select.value;
 	update_rulelist(1);
 }
 
@@ -1153,6 +1156,7 @@ function clean_macerr(){
 						<div style="color:#FFCC00; margin-left: 25px; margin-top: 5px; font-family:calibri; font-size:10px;">* Please relogin when starting a new game.</div>
 						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:10px;">* GPN performance will be varied by your ISP or location.</div>
 						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:10px;">* Game list will be updated automatically.</div>
+						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:10px;">* Please note that this feature is currently in early adopt stage and will be receiving regular updates.</div>
 						<div id="applyBtn" align="center" style="margin-top:20px; display:none;">
 							<input class="wtfast_button" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 						</div>

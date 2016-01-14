@@ -113,18 +113,10 @@ define platformKernelConfig
                         fi; \
 		else \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
-				if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
-					cp -f $(SRCBASE)/router/ctf_arm/bcm6_up_pptp_l2tp/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-				else \
-					cp -f $(SRCBASE)/router/ctf_arm/bcm6_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-				fi; \
+				cp -f $(SRCBASE)/router/ctf_arm/bcm6_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 				cp -f $(SRCBASE)/router/ufsd/broadcom_arm_up/ufsd.ko.46_up router/ufsd/broadcom_arm/ufsd.ko; \
 			else \
-				if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
-					cp -f $(SRCBASE)/router/ctf_arm/bcm6_pptp_l2tp/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-				else \
-					cp -f $(SRCBASE)/router/ctf_arm/bcm6/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-				fi; \
+				cp -f $(SRCBASE)/router/ctf_arm/bcm6/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			fi; \
 		fi; \
 	fi; \
@@ -264,15 +256,36 @@ define platformKernelConfig
 				mkdir -p $(SRCBASE)/../../dhd/src/dhd/linux ; \
 				cp $(SRCBASE)/router/wl_arm_7/prebuilt/dhd.o $(SRCBASE)/../../dhd/src/dhd/linux ; \
 			fi; \
+			if [ -d $(SRCBASE)/router/et_arm_7/prebuilt ]; then \
+				mkdir -p $(SRCBASE)/et/linux ; \
+				cp $(SRCBASE)/router/et_arm_7/prebuilt/et.o $(SRCBASE)/et/linux ; \
+			fi; \
 		elif [ "$(BCM_7114)" = "y" ]; then \
 			if [ -d $(SRCBASE)/router/wl_arm_7114/prebuilt ]; then \
 				mkdir -p $(SRCBASE)/../dhd/src/dhd/linux ; \
 				cp $(SRCBASE)/router/wl_arm_7114/prebuilt/dhd.o $(SRCBASE)/../dhd/src/dhd/linux ; \
 			fi; \
+			if [ -d $(SRCBASE)/router/et_arm_7114/prebuilt ]; then \
+				mkdir -p $(SRCBASE)/et/linux ; \
+				cp $(SRCBASE)/router/et_arm_7114/prebuilt/et.o $(SRCBASE)/et/linux ; \
+			fi; \
 		elif [ "$(BCM_10)" = "y" ]; then \
 			if [ -d $(SRCBASE)/router/wl_arm_10/prebuilt ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
 				cp $(SRCBASE)/router/wl_arm_10/prebuilt/wl*.o $(SRCBASE)/wl/linux ; \
+			fi; \
+			if [ -d $(SRCBASE)/router/et_arm_10/prebuilt ]; then \
+				mkdir -p $(SRCBASE)/et/linux ; \
+				cp $(SRCBASE)/router/et_arm_10/prebuilt/et.o $(SRCBASE)/et/linux ; \
+			fi; \
+		elif [ "$(BCM9)" = "y" ]; then \
+			if [ -d $(SRCBASE)/router/wl_arm_9/prebuilt ]; then \
+				mkdir $(SRCBASE)/wl/linux ; \
+				cp $(SRCBASE)/router/wl_arm_9/prebuilt/wl*.o $(SRCBASE)/wl/linux ; \
+			fi; \
+			if [ -d $(SRCBASE)/router/et_arm_9/prebuilt ]; then \
+				mkdir -p $(SRCBASE)/et/linux ; \
+				cp $(SRCBASE)/router/et_arm_9/prebuilt/et.o $(SRCBASE)/et/linux ; \
 			fi; \
 		else \
 			if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \
@@ -299,6 +312,10 @@ define platformKernelConfig
 			if [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
 				cp $(SRCBASE)/router/wl_arm/prebuilt/wl*.o $(SRCBASE)/wl/linux ; \
+			fi; \
+			if [ -d $(SRCBASE)/router/et_arm/prebuilt ]; then \
+				mkdir -p $(SRCBASE)/et/linux ; \
+				cp $(SRCBASE)/router/et_arm/prebuilt/et.o $(SRCBASE)/et/linux ; \
 			fi; \
 		fi; \
 	else \

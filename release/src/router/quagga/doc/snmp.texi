@@ -1,0 +1,185 @@
+@node SNMP Support
+@chapter SNMP Support
+
+@acronym{SNMP,Simple Network Managing Protocol} is a widely implemented
+feature for collecting network information from router and/or host.
+Quagga itself does not support SNMP agent (server daemon) functionality
+but is able to connect to a SNMP agent using the SMUX protocol
+(@cite{RFC1227}) or the AgentX protocol (@cite{RFC2741}) and make the
+routing protocol MIBs available through it.
+
+@menu
+* Getting and installing an SNMP agent::
+* AgentX configuration::
+* SMUX configuration::
+* MIB and command reference::
+* Handling SNMP Traps::
+@end menu
+
+@node Getting and installing an SNMP agent
+@section Getting and installing an SNMP agent
+
+There are several SNMP agent which support SMUX or AgentX. We recommend to use the latest
+version of @code{net-snmp} which was formerly known as @code{ucd-snmp}.
+It is free and open software and available at @uref{http://www.net-snmp.org/}
+and as binary package for most Linux distributions.
+@code{net-snmp} has to be compiled with @code{--with-mib-modules=agentx} to
+be able to accept connections from Quagga using AgentX protocol or with
+@code{--with-mib-modules=smux} to use SMUX protocol.
+
+Nowadays, SMUX is a legacy protocol. The AgentX protocol should be
+preferred for any new deployment. Both protocols have the same coverage.
+
+@node AgentX configuration
+@section AgentX configuration
+
+To enable AgentX protocol support, Quagga must have been build with the
+@code{--enable-snmp} or @code{--enable-snmp=agentx} option. Both the
+master SNMP agent (snmpd) and each of the Quagga daemons must be
+configured. In @code{/etc/snmp/snmpd.conf}, @code{master agentx}
+directive should be added. In each of the Quagga daemons, @code{agentx}
+command will enable AgentX support.
+
+@example
+/etc/snmp/snmpd.conf:
+	#
+	# example access restrictions setup
+	#
+	com2sec readonly default public
+	group MyROGroup v1 readonly
+	view all included .1 80
+	access MyROGroup "" any noauth exact all none none
+	#
+	# enable master agent for AgentX subagents
+	#
+	master agentx
+
+/etc/quagga/ospfd.conf:
+	! ... the rest of ospfd.conf has been omitted for clarity ...
+	!
+	agentx
+	!
+@end example
+
+Upon successful connection, you should get something like this in the
+log of each Quagga daemons:
+
+@example
+2012/05/25 11:39:08 ZEBRA: snmp[info]: NET-SNMP version 5.4.3 AgentX subagent connected
+@end example
+
+Then, you can use the following command to check everything works as expected:
+
+@example
+# snmpwalk -c public -v1 localhost .1.3.6.1.2.1.14.1.1
+OSPF-MIB::ospfRouterId.0 = IpAddress: 192.168.42.109
+[...]
+@end example
+
+The AgentX protocol can be transported over a Unix socket or using TCP
+or UDP. It usually defaults to a Unix socket and depends on how NetSNMP
+was built. If need to configure Quagga to use another transport, you can
+configure it through @code{/etc/snmp/quagga.conf}:
+
+@example
+/etc/snmp/quagga.conf:
+	[snmpd]
+	# Use a remote master agent
+	agentXSocket tcp:192.168.15.12:705
+@end example
+
+@node SMUX configuration
+@section SMUX configuration
+
+To enable SMUX protocol support, Quagga must have been build with the
+@code{--enable-snmp=smux} option.
+
+A separate connection has then to be established between the
+SNMP agent (snmpd) and each of the Quagga daemons. This connections
+each use different OID numbers and passwords. Be aware that this OID
+number is not the one that is used in queries by clients, it is solely
+used for the intercommunication of the daemons.
+
+In the following example the ospfd daemon will be connected to the
+snmpd daemon using the password "quagga_ospfd". For testing it is
+recommending to take exactly the below snmpd.conf as wrong access
+restrictions can be hard to debug.
+
+@example
+/etc/snmp/snmpd.conf:
+	#
+	# example access restrictions setup
+	#
+	com2sec readonly default public
+	group MyROGroup v1 readonly
+	view all included .1 80
+	access MyROGroup "" any noauth exact all none none
+	#
+	# the following line is relevant for Quagga
+	#
+	smuxpeer .1.3.6.1.4.1.3317.1.2.5 quagga_ospfd
+
+/etc/quagga/ospf:
+	! ... the rest of ospfd.conf has been omitted for clarity ...
+	!
+	smux peer .1.3.6.1.4.1.3317.1.2.5 quagga_ospfd
+	!
+@end example
+
+After restarting snmpd and quagga, a successful connection can be verified in
+the syslog and by querying the SNMP daemon:
+
+@example
+snmpd[12300]: [smux_accept] accepted fd 12 from 127.0.0.1:36255 
+snmpd[12300]: accepted smux peer: \
+	oid GNOME-PRODUCT-ZEBRA-MIB::ospfd, quagga-0.96.5
+
+# snmpwalk -c public -v1 localhost .1.3.6.1.2.1.14.1.1
+OSPF-MIB::ospfRouterId.0 = IpAddress: 192.168.42.109
+@end example
+
+Be warned that the current version (5.1.1) of the Net-SNMP daemon writes a line
+for every SNMP connect to the syslog which can lead to enormous log file sizes.
+If that is a problem you should consider to patch snmpd and comment out the
+troublesome @code{snmp_log()} line in the function
+@code{netsnmp_agent_check_packet()} in @code{agent/snmp_agent.c}.
+
+@node MIB and command reference
+@section MIB and command reference
+
+The following OID numbers are used for the interprocess communication of snmpd and
+the Quagga daemons with SMUX only.
+@example
+            (OIDs below .iso.org.dod.internet.private.enterprises)
+zebra	.1.3.6.1.4.1.3317.1.2.1 .gnome.gnomeProducts.zebra.zserv
+bgpd	.1.3.6.1.4.1.3317.1.2.2 .gnome.gnomeProducts.zebra.bgpd
+ripd	.1.3.6.1.4.1.3317.1.2.3 .gnome.gnomeProducts.zebra.ripd
+ospfd	.1.3.6.1.4.1.3317.1.2.5 .gnome.gnomeProducts.zebra.ospfd
+ospf6d	.1.3.6.1.4.1.3317.1.2.6 .gnome.gnomeProducts.zebra.ospf6d
+@end example
+
+Sadly, SNMP has not been implemented in all daemons yet. The following
+OID numbers are used for querying the SNMP daemon by a client:
+@example
+zebra	.1.3.6.1.2.1.4.24   .iso.org.dot.internet.mgmt.mib-2.ip.ipForward
+ospfd	.1.3.6.1.2.1.14	    .iso.org.dot.internet.mgmt.mib-2.ospf
+bgpd	.1.3.6.1.2.1.15	    .iso.org.dot.internet.mgmt.mib-2.bgp 
+ripd	.1.3.6.1.2.1.23	    .iso.org.dot.internet.mgmt.mib-2.rip2
+ospf6d	.1.3.6.1.3.102	    .iso.org.dod.internet.experimental.ospfv3
+@end example
+
+The following syntax is understood by the Quagga daemons for configuring SNMP using SMUX:
+@deffn {Command} {smux peer @var{oid}} {}
+@deffnx {Command} {no smux peer @var{oid}} {}
+@end deffn
+
+@deffn {Command} {smux peer @var{oid} @var{password}} {}
+@deffnx {Command} {no smux peer @var{oid} @var{password}} {}
+@end deffn
+
+Here is the syntax for using AgentX:
+@deffn {Command} {agentx} {}
+@deffnx {Command} {no agentx} {}
+@end deffn
+
+@include snmptrap.texi

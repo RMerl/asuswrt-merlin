@@ -351,6 +351,9 @@ int update_dsl_iptv_variables()
 		}
 		else {	//ptm
 			snprintf(prefix, sizeof(prefix), "dsl8.%d_", unit);
+
+			nvram_set("dslx_transmode", "ptm");
+			notify_rc("restart_dsl_setting");
 		}
 
 		nvram_set(strcat_r(prefix, "enable", tmp), "1");

@@ -1,0 +1,113 @@
+.TH RIPD 8 "25 November 2004" "Quagga RIP daemon" "Version 0.97.3"
+.SH NAME
+ripd \- a RIP routing engine for use with Quagga routing software.
+.SH SYNOPSIS
+.B ripd
+[
+.B \-dhrv
+] [
+.B \-f
+.I config-file
+] [
+.B \-i
+.I pid-file
+] [
+.B \-P
+.I port-number
+] [
+.B \-A
+.I vty-address
+] [
+.B \-u
+.I user
+] [
+.B \-g
+.I group
+]
+.SH DESCRIPTION
+.B ripd
+is a routing component that works with the
+.B Quagga
+routing engine.
+.SH OPTIONS
+Options available for the
+.B ripd
+command:
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-daemon\fR
+Runs in daemon mode, forking and exiting from tty.
+.TP
+\fB\-f\fR, \fB\-\-config-file \fR\fIconfig-file\fR
+Specifies the config file to use for startup. If not specified this
+option will likely default to \fB\fI/usr/local/etc/ripd.conf\fR.
+.TP
+\fB\-g\fR, \fB\-\-group \fR\fIgroup\fR
+Specify the group to run as. Default is \fIquagga\fR.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+A brief message.
+.TP
+\fB\-i\fR, \fB\-\-pid_file \fR\fIpid-file\fR
+When ripd starts its process identifier is written to
+\fB\fIpid-file\fR.  The init system uses the recorded PID to stop or
+restart ripd.  The likely default is \fB\fI/var/run/ripd.pid\fR.
+.TP
+\fB\-P\fR, \fB\-\-vty_port \fR\fIport-number\fR 
+Specify the port that the ripd VTY will listen on. This defaults to
+2602, as specified in \fB\fI/etc/services\fR.
+.TP
+\fB\-A\fR, \fB\-\-vty_addr \fR\fIvty-address\fR
+Specify the address that the ripd VTY will listen on. Default is all
+interfaces.
+.TP
+\fB\-u\fR, \fB\-\-user \fR\fIuser\fR
+Specify the user to run as. Default is \fIquagga\fR.
+.TP
+\fB\-r\fR, \fB\-\-retain\fR 
+When the program terminates, retain routes added by \fBripd\fR.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Print the version and exit.
+.SH FILES
+.TP
+.BI /usr/local/sbin/ripd
+The default location of the 
+.B ripd
+binary.
+.TP
+.BI /usr/local/etc/ripd.conf
+The default location of the 
+.B ripd
+config file.
+.TP
+.BI $(PWD)/ripd.log 
+If the 
+.B ripd
+process is config'd to output logs to a file, then you will find this
+file in the directory where you started \fBripd\fR.
+.SH WARNING
+This man page is intended to be a quick reference for command line
+options. The definitive document is the Info file \fBQuagga\fR.
+.SH DIAGNOSTICS
+The ripd process may log to standard output, to a VTY, to a log
+file, or through syslog to the system logs. \fBripd\fR supports many
+debugging options, see the Info file, or the source for details.
+.SH "SEE ALSO"
+.BR bgpd (8),
+.BR ripngd (8),
+.BR ospfd (8),
+.BR ospf6d (8),
+.BR isisd (8),
+.BR zebra (8),
+.BR vtysh (1)
+.SH BUGS
+.B ripd
+eats bugs for breakfast. If you have food for the maintainers try
+.BI http://bugzilla.quagga.net
+.SH AUTHORS
+See
+.BI http://www.zebra.org
+and
+.BI http://www.quagga.net
+or the Info file for an accurate list of authors.

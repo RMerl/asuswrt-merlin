@@ -1,0 +1,112 @@
+--------------------------------------------------------------------------
+Building and Installing Quagga from releases or snapshots:
+
+The 'INSTALL' file contains generic instructions on how to use 'configure'
+scripts.
+
+Quagga requires a C compiler (and associated header files and
+libraries) supporting the C99 standard.
+
+Quagga requires a reasonable make.  It is considered a bug if quagga
+does not compile with the system make on recent FreeBSD, NetBSD or
+OpenBSD, and a very serious bug if it does not compile with GNU make.
+
+Quagga expects a POSIX.2 compliant system, more or less.  Clean
+workarounds for POSIX non-compliance are welcome.
+
+It is considered a bug if Quagga fails to build and run on any of the
+following systems (where .x indicates the most recent release), or
+such systems "-current" versions.  Or, it might be that this list is
+out of date and will be updated.  (Note that considering it a bug is
+not a guarantee of support, merely "we agree that it is broken".)
+
+  Dragonfly ?
+  FreeBSD (stable branches currently supported, plus perhaps one)
+  FreeBSD-current
+  Linux [kernel/distribution information needed]
+  NetBSD 4.x
+  NetBSD 5.x
+  NetBSD 6.x
+  NetBSD-current
+  OpenBSD ? [info needed on what should work]
+  Solaris (modern/supported versions, including OpenSolaris forks) 
+
+On BSD systems, installing libexecinfo is strongly recommended in order
+to get backtrace support.
+
+For further Quagga specific information on 'configure' and build-time
+configuration of the software, please read the Quagga info
+documentation, (doc/quagga.info).  To read the info page included with
+the Quagga sources without first installing Quagga:
+
+  cd doc
+  # one of the following, depending on your info viewer preferences
+  info quagga.info
+  pinfo -r quagga.info
+  emacs -eval '(info "quagga.info")'
+
+The Quagga website (http://www.quagga.net) currently has the info
+files available in various formats.
+
+--------------------------------------------------------------------------
+Building Quagga from git checkouts:
+
+In order to build from git, you will need recent versions of several GNU
+tools, particularly autoconf, automake, libtool, GNU awk and texinfo.  Note
+that the CVS snapshots on the Quagga website should not require these tools;
+everything is already setup ready to run 'configure'.  If you have trouble
+building from CVS checkout it is recommended that you try a CVS snapshot
+instead.
+
+We declare that the following versions should work for building from
+CVS checkouts.  Earlier versions may work, but failure to do so is not
+a bug.  Required versions can be moved earlier if no problems, or
+later after a judgement that a system without a higher version is
+deficient is made.
+
+	[TODO: this list is out of date as of 2013-07]
+	automake:	1.9.6 (released 2005-07-10)
+	autoconf:	2.59 (2.60 on 2006-06-26 is too recent to require)
+	libtool:	1.5.22 (released 2005-12-18)
+	texinfo:	4.7 (released 2004-04-10; 4.8 is not yet common)
+	GNU AWK:	3.1.5 (released 2005-08-12)
+
+For running tests, one also needs:
+
+	DejaGnu:
+
+[TODO: texinfo 4.6 is now ancient and this should be revisited/fixed]
+Because some systems provide texinfo 4.6 (4.7 is new), quagga.info is
+checked in so that texinfo will generally not be invoked.  When
+texinfo 4.7 is widespread, quagga.info will be removed from CVS and
+texinfo will become required again.  (4.7 has figure support, needed
+for the route server docs, which is why 4.6 doesn't work.)
+
+In order to create PostScript or PDF versions of the Texinfo documentation,
+you will need the convert utility, from the ImageMagick toolset installed,
+and epstopdf from the TeTeX suite.
+
+To create the required autotools files (Makefile.in, configure, etc.),
+run "./bootstrap.sh".  After this you may run configure as for a
+snapshot or release.
+
+Please refer to "Building and Installing Quagga" above for further
+instructions.
+
+--------------------------------------------------------------------------
+Notes on required versions:
+
+The general goal is to use a modern baseline of tools, while not
+imposing pain on those tracking supported (or almost supported) stable
+distributions.  The notes below explain what versions are present in
+various environments.
+
+NetBSD 4 provides texinfo 4.7.
+NetBSD 5 and 6 provides texinfo 4.8
+
+Fedora Core ? provides autoconf 2.59.
+
+OpenBSD 3.6 provides texinfo 4.2.
+OpenBSD [3.6] ports provides automake 1.4-p6 autoconf 2.5.9 libtool 1.5.8
+
+--------------------------------------------------------------------------

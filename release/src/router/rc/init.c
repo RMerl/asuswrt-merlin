@@ -709,6 +709,31 @@ wan_defaults(void)
 
 		++unit;
 	}
+
+#ifdef RTCONFIG_MULTICAST_IPTV
+_dprintf("**** wan default: define MULTICAST_IPTV ***\n");
+	if( nvram_get_int("switch_stb_x") > 5 ) {
+	        unit = WAN_UNIT_IPTV;
+        	foreach (word, nvram_safe_get("iptv_wan_ifnames"), next) {
+                	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	                nvram_set(strcat_r(prefix, "ifname", tmp), word);
+//Yaudbg
+_dprintf("*** Multicast IPTV defaults: nvram add: %s ****\n", word);
+			if(nvram_match("switch_wantag", "singtel"))
+				nvram_set(strcat_r(prefix, "vendorid", tmp),"S_iptvsys");
+
+	                for (t = router_defaults; t->name; t++) {
+        	                if(strncmp(t->name, "wan_", 4)!=0) continue;
+
+                	        if(!nvram_get(strcat_r(prefix, &t->name[4], tmp))){
+                        	        _dprintf("_set %s = %s\n", tmp, t->value);
+                                	nvram_set(tmp, t->value);
+	                        }
+        	        }
+                	++unit;
+        	}
+	}
+#endif
 }
 
 void
@@ -807,6 +832,11 @@ void clean_modem_state(int flag){
 	nvram_unset("usb_modem_auto_pass");
 
 	nvram_unset("usb_modem_act_signal");
+	nvram_unset("usb_modem_act_cellid");
+	nvram_unset("usb_modem_act_lac");
+	nvram_unset("usb_modem_act_rsrq");
+	nvram_unset("usb_modem_act_rsrp");
+	nvram_unset("usb_modem_act_rssi");
 	nvram_unset("usb_modem_act_operation");
 	nvram_unset("usb_modem_act_imsi");
 	nvram_unset("usb_modem_act_iccid");
@@ -930,7 +960,6 @@ restore_defaults(void)
 	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
 	int unit;
 	int i;
-	FILE *fp;
 
 	nvram_unset(ASUS_STOP_COMMIT);
 	nvram_unset(LED_CTRL_HIPRIO);
@@ -1093,20 +1122,21 @@ restore_defaults(void)
 	}
 
 	/* Unset all usb_path related nvram variables, e.g. usb_path1, usb_path2.4.3, usb_path_. */
-	if ((fp = popen("nvram show|grep \"^usb_path[_1-9]\"|grep -v \"_diskmon\"", "r")) != NULL) {
-		char *p, var[256];
+	char buf[MAX_NVRAM_SPACE];
+	char *name, *p;
 
-		var[0] = '\0';
-		while (fgets(var, sizeof(var), fp)) {
-			if (strncmp(var, "usb_path", 8))
-				continue;
+	nvram_getall(buf, sizeof(buf));
+	for (name = buf; *name; name += strlen(name) + 1) {
+		if (strncmp(name, "usb_path", 8))
+			continue;
 
-			if ((p = strchr(var, '=')) != NULL)
-				*p = '\0';
+		if (strstr(name, "_diskmon"))
+			continue;
 
-			nvram_unset(var);
-		}
-		fclose(fp);
+		if ((p = strchr(name, '=')) != NULL)
+			*p = '\0';
+
+		nvram_unset(name);
 	}
 
 #ifdef RTCONFIG_USB_MODEM
@@ -1192,7 +1222,7 @@ restore_defaults(void)
 				nvram_set("reboot_time", "140");// default is 70 sec
 			break;
 		case MODEL_DSLAC68U:
-			nvram_set("reboot_time", "140");	// default is 70 sec
+			nvram_set("reboot_time", "170");	// default is 70 sec
 			break;
 #endif
 		case MODEL_RTN14UHP:
@@ -1735,7 +1765,7 @@ static int set_basic_ifname_vars(char *wan, char *lan, char *wl2g, char *wl5g, c
 }
 #endif
 
-#ifdef RTCONFIG_GMAC3
+#ifdef RTCONFIG_BCM_7114
 #define GMAC3_ENVRAM_RESTORE(name)				\
 do {								\
 	char *var;						\
@@ -1780,6 +1810,7 @@ gmac3_restore_nvram()
 	nvram_unset("fwddevs");
 }
 
+#ifdef RTCONFIG_GMAC3
 /* Override GAMC3 nvram */
 static void
 gmac3_override_nvram()
@@ -1874,7 +1905,6 @@ gmac3_override_nvram()
 	/* vlan ports/hw are left in init_switch */
 }
 
-#ifdef RTCONFIG_BCM_7114
 void chk_gmac3_excludes()
 {
 	if(nvram_match("stop_gmac3", "1")	// disable gmac3
@@ -1907,7 +1937,10 @@ int init_nvram(void)
 #if defined(RTCONFIG_DUALWAN)
 	char wan_if[10];
 #endif
+
+#ifdef RTCONFIG_GMAC3
 	char *hw_name = "et0";
+#endif
 
 #if defined (CONFIG_BCMWL5) && defined(RTCONFIG_TCODE)
 	refresh_cfe_nvram();
@@ -3828,8 +3861,6 @@ int init_nvram(void)
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "vlan1 wl0 wl1 wl2");
 
-		hw_name = "et0";
-
 #ifdef RTCONFIG_GMAC3
 		if(nvram_match("gmac3_enable", "1"))
 			hw_name = "et2";
@@ -4097,12 +4128,14 @@ int init_nvram(void)
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
 		add_rc_support("WIFI_LOGO");
-		if (model == MODEL_RTAC1200GP)
-			add_rc_support("update");
+		add_rc_support("update");
+		if (model == MODEL_RTAC1200GP) {
+			if(!strncmp(nvram_safe_get("territory_code"), "UK", 2))
+				add_rc_support("repeater");
+		}
 		if (model == MODEL_RTAC1200G) {
 			add_rc_support("noitunes");
 			add_rc_support("nodm");
-			add_rc_support("noftp");
 			add_rc_support("noaidisk");
 		}
 
@@ -4121,7 +4154,10 @@ int init_nvram(void)
 		ldo_patch();
 		set_tcode_misc();
 #if defined(RTAC88U) || defined(RTAC3100)
-		nvram_set("et_rxlazy_timeout",  "1000");
+		if(nvram_match("lazy_et", "1"))
+			nvram_set("et_rxlazy_timeout",  "1000");
+		else
+			nvram_set("et_rxlazy_timeout",  "300");
 #endif
 
 		nvram_set("0:ledbh9", "0x7");
@@ -4131,7 +4167,6 @@ int init_nvram(void)
 
 		nvram_set("rgmii_port", "5");
 #else
-		hw_name = "et0";
 		nvram_unset("rgmii_port");
 #endif
 #ifdef RTCONFIG_GMAC3
@@ -4861,6 +4896,24 @@ int init_nvram(void)
 	}
 #endif
 
+#ifdef RTCONFIG_MULTICAST_IPTV
+        if(nvram_match("switch_wantag", "singtel")) {
+                nvram_set("iptv_wan_ifnames", "vlan30 vlan40");
+        }
+        else if(nvram_match("switch_wantag", "maxis_fiber_sp_iptv")) {
+                nvram_set("iptv_wan_ifnames", "vlan15");
+		nvram_set("iptv_ifname", "vlan15");
+        }
+        else if(nvram_match("switch_wantag", "maxis_fiber_iptv")) {
+                nvram_set("iptv_wan_ifnames", "vlan823");
+		nvram_set("iptv_ifname", "vlan823");
+        }
+	else if(nvram_match("switch_wantag", "movistar")) {
+		nvram_set("iptv_wan_ifnames", "vlan2 vlan3");
+		nvram_set("iptv_ifname", "vlan2");
+	}
+#endif
+
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
 	char word[256], *next;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
@@ -5164,11 +5217,13 @@ int init_nvram(void)
 #endif
 #endif
 
+	if(!nvram_get_int("enable_samba_manual")){
 #ifdef RTCONFIG_TUXERA_SMBD
-	nvram_set("enable_samba_tuxera", "1");
+		nvram_set("enable_samba_tuxera", "1");
 #else
-	nvram_set("enable_samba_tuxera", "0");
+		nvram_set("enable_samba_tuxera", "0");
 #endif
+	}
 
 #ifdef RTCONFIG_BCMFA
 	add_rc_support("bcmfa");
@@ -5866,9 +5921,11 @@ static void sysinit(void)
 	post_syspara(); // adjust nvram variable after restore_defaults
 #endif
 
-#ifdef RTCONFIG_GMAC3
 #ifdef RTCONFIG_BCM_7114
+#ifdef RTCONFIG_GMAC3
 	chk_gmac3_excludes();
+#else
+	gmac3_restore_nvram();
 #endif
 #endif
 

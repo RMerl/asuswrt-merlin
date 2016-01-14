@@ -116,7 +116,7 @@ function gen_ptype_list(url){
 	ptypelist.push(["Setting Problem", "Setting_Problem"]);	
 	ptypelist.push(["Connection/Speed Problem", "Connection_or_Speed_Problem"]);
 	ptypelist.push(["Compatibility Problem", "Compatibility_Problem"]);
-	ptypelist.push(["Translation of Suggestion", "Translation_of_Suggestion"]);
+	ptypelist.push(["Translated Suggestion", "Translated_Suggestion"]);
 	ptypelist.push(["<#Adaptive_Others#>", "Other_Problem"]);
 	free_options(document.form.fb_ptype);
 	document.form.fb_ptype.options.length = ptypelist.length;
@@ -237,10 +237,10 @@ function Reload_pdesc(obj, url){
 		desclist.push(["with other network devices","Compatible Problem"]);
 
 	}
-	else if(ptype == "Translation_of_Suggestion"){
+	else if(ptype == "Translated_Suggestion"){
 		
 		desclist.splice(0,1);
-		desclist.push(["Translation of Suggestion","Translation"]);		
+		desclist.push(["Translated Suggestion","Translation"]);		
 	}
 	else{	//Other_Problem
 		

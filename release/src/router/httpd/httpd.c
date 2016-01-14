@@ -738,7 +738,7 @@ handle_request(void)
 	struct mime_handler *handler;
 	struct except_mime_handler *exhandler;
 	struct mime_referer *doreferer;
-	int mime_exception, do_referer, login_state;
+	int mime_exception, do_referer, login_state = -1;
 	int fromapp=0;
 	int cl = 0, flags;
 	int auth_result = 1;

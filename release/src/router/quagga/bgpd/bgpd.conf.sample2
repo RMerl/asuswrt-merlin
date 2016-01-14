@@ -1,0 +1,77 @@
+!
+! Zebra configuration saved from vty
+!   2002/07/01 03:16:33
+!
+hostname bgpd
+password zebra
+log file bgpd.log
+log stdout
+!
+router bgp 7675
+ no bgp default ipv4-unicast
+ neighbor 3ffe:506:1000::2 remote-as 7675
+ neighbor fe80::200:c0ff:fe30:9be3 remote-as 9377
+ neighbor fe80::200:c0ff:fe30:9be3 interface sit3
+ neighbor fe80::210:5aff:fe6b:3cee remote-as 7675
+ neighbor fe80::210:5aff:fe6b:3cee interface eth0
+ neighbor fe80::290:27ff:fe51:84c7 remote-as 4691
+ neighbor fe80::290:27ff:fe51:84c7 description DTI 
+ neighbor fe80::290:27ff:fe51:84c7 interface sit7
+ neighbor fe80::2a0:c9ff:fec8:82ec remote-as 7530
+ neighbor fe80::2a0:c9ff:fec8:82ec description IRI 
+ neighbor fe80::2a0:c9ff:fec8:82ec interface sit8
+ neighbor fe80::2e0:18ff:fe98:2725 remote-as 2500
+ neighbor fe80::2e0:18ff:fe98:2725 description WIDE 
+ neighbor fe80::2e0:18ff:fe98:2725 interface sit5
+ neighbor fe80::2e0:18ff:fea8:bf5 remote-as 65000
+ neighbor fe80::2e0:18ff:fea8:bf5 interface sit6
+!
+ address-family ipv6
+ network 3ffe:506::/33
+ network 3ffe:1800:e800::/40
+ aggregate-address 3ffe:506::/32
+ redistribute connected
+ neighbor 3ffe:506:1000::2 activate
+ neighbor fe80::200:c0ff:fe30:9be3 activate
+ neighbor fe80::200:c0ff:fe30:9be3 route-map set-nexthop out
+ neighbor fe80::210:5aff:fe6b:3cee activate
+ neighbor fe80::290:27ff:fe51:84c7 activate
+ neighbor fe80::290:27ff:fe51:84c7 route-map set-nexthop out
+ neighbor fe80::2a0:c9ff:fec8:82ec activate
+ neighbor fe80::2a0:c9ff:fec8:82ec route-map set-nexthop out
+ neighbor fe80::2e0:18ff:fe98:2725 activate
+ neighbor fe80::2e0:18ff:fe98:2725 distribute-list nla1 out
+ neighbor fe80::2e0:18ff:fe98:2725 route-map set-nexthop out
+ neighbor fe80::2e0:18ff:fea8:bf5 activate
+ neighbor fe80::2e0:18ff:fea8:bf5 route-map set-nexthop out
+ exit-address-family
+!
+ipv6 access-list all permit any
+ipv6 access-list nla1 deny 3ffe:506::/33
+ipv6 access-list nla1 permit 3ffe:506::/32
+ipv6 access-list nla1 deny any
+ipv6 access-list ntt-nla1 permit 3ffe:1800:0:ffff::c/127
+ipv6 access-list ntt-nla1 deny 3ffe:1800:e800::/41
+ipv6 access-list ntt-nla1 permit 3ffe:1800:e800::/40
+ipv6 access-list ntt-nla1 deny any
+!
+ipv6 prefix-list 6bone-filter seq 5 permit 3ffe::/17 ge 24 le 24
+ipv6 prefix-list 6bone-filter seq 10 permit 3ffe:8000::/17 ge 28 le 28
+ipv6 prefix-list 6bone-filter seq 12 deny 3ffe::/16
+ipv6 prefix-list 6bone-filter seq 15 permit 2000::/3 ge 16 le 16
+ipv6 prefix-list 6bone-filter seq 20 permit 2001::/16 ge 35 le 35
+!
+route-map set-nexthop permit 10
+ match ipv6 address all
+ set ipv6 next-hop global 3ffe:506::1
+ set ipv6 next-hop local fe80::cbb5:591a
+ set ip next-hop 203.181.89.26
+ set community 7675:0
+!
+route-map set-link-local permit 10
+ match ipv6 address all
+ set ipv6 next-hop local fe80::cbb5:591a
+ set ipv6 next-hop global 3ffe:1800:0:ffff::d
+!
+line vty
+!

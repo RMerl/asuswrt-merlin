@@ -1,0 +1,216 @@
+#
+#
+# Some randomly chosen valid commands
+#
+#
+area 0 virtual-link 1.2.3.4 authentication null message-digest-key 1 md5 VARIABLE
+area 0 virtual-link 1.2.3.4 dead-interval 1 hello-interval 1 retransmit-interval 1 transmit-delay 1
+area 0 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 dead-interval 1 retransmit-interval 1
+area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 hello-interval 1 dead-interval 1
+area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 transmit-delay 1 dead-interval 1
+clear bgp 1 out
+clear bgp ipv6 2001:db8::1 out
+clear bgp view VARIABLE * soft
+clear ip bgp 1.2.3.4 ipv4 multicast out
+ipv6 nd prefix 2001:db8::/32 infinite infinite no-autoconfig
+ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1
+network 1.0.0.0/8 area 0
+no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval hello-interval transmit-delay
+no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval retransmit-interval transmit-delay
+no area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval dead-interval retransmit-interval hello-interval
+no area 1.2.3.4 virtual-link 1.2.3.4 transmit-delay retransmit-interval retransmit-interval hello-interval
+no bgp graceful-restart
+no ipv6 nd mtu 1
+no neighbor 1.2.3.4 distribute-list 1 in
+no neighbor 2001:db8::1 send-community both
+no neighbor VARIABLE maximum-prefix
+redistribute isis route-map VARIABLE metric 0 metric-type 2
+redistribute rip metric 0 route-map VARIABLE metric-type 1
+show bgp community VARIABLE local-AS no-export VARIABLE exact-match
+show bgp ipv6 community no-advertise no-export no-export no-export
+show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match
+show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match
+show bgp view VARIABLE
+show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE
+show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS
+show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise
+show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE
+show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS
+show ip bgp community no-advertise local-AS no-advertise VARIABLE
+show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match
+show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match
+show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match
+show ipv6 bgp community no-export no-export VARIABLE VARIABLE
+show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match
+show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match
+show ipv6 mbgp community local-AS local-AS no-export no-export exact-match
+show ipv6 mbgp community no-export no-export local-AS no-export exact-match
+show ipv6 ospf6 database as-external dump
+show ipv6 ospf6 database inter-prefix 1.2.3.4 detail
+show ipv6 ospf6 database intra-prefix 1.2.3.4 internal
+#
+#
+# Slightly Fuzzed commands
+#
+#
+a8ra 0 range 1.0.0.0/8 adverOise
+accept-lifetime VARIABE 1 VA6IABLE 19I3 VARIABLE 1 VARIABLE 1993
+arAea 1.2.M.4 virtual-link 1.2.3.4 dead-interval 1 dead-interval 1 dead-inter6val 1 transmit-delay 1
+area 0 virtu0al-link 1.2.3.i hello-interval 1 ello-interval 1 transmit-delay 1 retransmit-interval 1
+area 0 virtual-lin 1.2.3.4 retransmit-interval 1 tranwmit-delay 1 retransmit-interval 1 retransmit-interval 1
+area 0 virtual-link 1.2.3.4 retransmit-interal 1 trasmit-dely 1
+area 1.2.3.4 virtual-link 1.2.3.4 deadCinterval 1  dead-intervalK 1 retransmit-interval 1 dead-interval 1
+area 1.2.3.4 virtual-link 1.2.3.4 dead-intervalo I1 dead-interval 1 retransmit-interval1 dead-interval 1
+area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 dead-interva 1 retransmit-interval 1 transmit-delay 1
+area 1.2.3.4 virtuyl-link 1.2.3.4 dead-interval 1 dead-inervalI 1 retransmit-interval 1 dead-interval 1
+area 1.2.3.4 virual-link 1.2.34 retransmit-interval 1 dead-interval 1 dead-interva 1
+area1.2.83.4 virtual-link 1.2.3.4 retra0smit-interval 1 dead-interval 1 dead-interval 1
+clear bgAp 2001g:dbK::1
+clear ip bgp 1.2.3.4 pv4 mlticat out
+cleau bg i2001:db8::1 rsclient
+de:ug ospf6 messag2 lsreq :recv
+how ip bgp communiQy no-advertise no-adve:tise no-advertise
+ip route 1.0Q0.0/8 1.2.3.s4 reGject
+ipv6 nd prefix 2O01:db8::/32 0 infinEite off-link
+ipv6 nwd prefix 2001:db8::/32 0 infinite oUUff-link
+ipv6 route 2001:db8::/32q2001:db8:k: blackhole 1
+kshow ip rIute bgp
+matcch peer .2.30.4
+mcogin
+mhow ipv6 mbgp community o-advertise yocal-AS no-advertise
+neighbor1.2..4 attribute-unchnged next-hop
+neihbcr 2001:d b8::1 distribute-list 1 in
+nko key-tqring
+no area 0 viertual-link 1.2.3k.4 retransmit-iterval retransmit-interval retransmit-interval hello-interval
+no area 0 virtual-link 1.2.3.4 dead-intaerval dead-intervIl hello-interval retransmit-interval
+no area 0 virtual-link 1.2.3.4 retransmit-interval retransmit-intervIl dead-interval tranImit-deqlay
+no area 0 virtual-link S1.2.3.4 d-ead-interval hello-interval transmit-deay transmit-delay
+no area 1.2.3.4 virtua -link 1.2.3.4 transmit-delay hello-interval hello-interval retransmt-interval
+no area 1.2.3.4 virtual-link 1.2.3.4 dea-iterval retransmit-interva- dead-interval hello-interval
+no area 1.2.3.4 virtual-link 1.2.3.4 hello-interSval dead-interval retransmit-interval transmitdelay
+no a:rea 1.2.3.4 virtual-link 1.2.3.4 retransmit-interSvalW dead-interval retransmit-interval hello-interval
+noarea 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval trynsmit-delay hello-interval
+no area 1.2.3.4 virtual-link 1.2.3.4 transmt:delay retransmit-interval retransmit-interval dead-Mnterval
+no ares 1.2.3.4 virtual-link 1.2.3.4 dead-interval retransmit-interval dead-inesval retransmit-interval
+no ayrea 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval transmi-delay hello-interval
+no bg2 grace2fuy-restart
+no debug ospk6 nter2face
+noimatch ipv6 addrMss VARIABLE
+nomStch iA next-hop prefix-list
+no neighbCr 200 :db8::1oroute-map VARIABLE export
+no neighbor VARIABLE attributeaw8changed next-hop
+no orea 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval ead-interval retransmit-inteSval hello-interval
+no ospcdead-inkerval
+no redistribute kernelrote-map VARIABLE metric 0
+no redistribute s4taik metric 0
+nos Ceighbor 1.2.3.4 route-mapEVARIABLE in
+o :neighbor VAIABLE attribute-unchanged next-hop
+ooa router ip
+redistribute isis meGtric-type2 Q route-map VARIABLE
+redistribute static metric-type 1 metri 0 rowute-map VARIABLE
+set-Koveroadbit
+sh2w ipv6 mbgp  comAunity VARIABLE
+shgw bgp ipv6 community no-export VARIABLE no-xport no-expmrt
+shiow Wgp neighbors
+shoAw ip bgpipv4 unicast com6munity no-export no-export no-advertise no-export exact-match
+sho bgp view gARIABLE nyeighbors 2001:db8::1 received-routes
+shoow bgp ommunity local-AS no--export
+show6 bgp community no-advertise local4-AS no-advertise VARIABLE exact-math
+show8 bgp view VARIABLE ipv4 multicast community ARIABLE VARIABLE local-S
+show bgp cCommunity VARIABLE VOARIABL no-advertise
+show bgp cimAunity loal-AS local-AS no-export local-AS
+show bgp cmmunity n-advertise no-export local-S no-advertise
+show bgp communi0y no-export no-Cexport no-0xport no-export
+show bgp communityOlocal-A no-advertise local-WAS
+show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match
+show bgp communiy no-export no-adsvertise VARIABLOE local-AS
+show bgp communiYty no-export VARIABLE VARIABLE locali-AS exact-math
+show bgp commuUityW no-advertis local-AS no-advertise no-advertise
+show bgp commuWnity VAIABLE local-AS no-advertise n-export
+show bgp com:unity no-exportqno-export VARIABLE no-expoIrt exact-match
+show bgp ipv6 community local-AS no-expor no-xport VARIABCLE
+show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE
+show bgp ipv6 community no-advertise no6-export lcal-AS local-AS
+show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math
+show bgp ipv6 comm-unity no-advertise no-export local-AS local-kS exact-match
+show bgp ipv6 community no-export local-AS no-adertise no-adve-tie
+show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE
+show bgp naighbors 201:db8::1 rUeceived-routes
+show bgp viewVAIABLE ipv4 multicast community VARIABLE4no-export no-advertise local-AS
+show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS
+show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export
+show bgp view VARIABLE ipv4 multicast omsunity local-AS VARIABLE no-advertise nUo-export
+show bgp view VARIABLE ipv4 mutiast community no-export no-export VARIBLE no-export
+show bgp view VARIABLE ipv4 unicast 0community VARIABqLE local-AS no-export VARIABwE
+show bgp view VARIABLE ipv4 unicast communeity no-export AcRIABLE no-advertise local-AS
+show bgp view VARIABLE ipv4 unicasU comunity no-export VARIABL no-advertise
+show bgp view VARIABLE ipv6 unicast cocmmunity VARIABLE no-advet6ise VARIABLE
+show bgp view VARIABLE ipvk4 unicast communty no-advertie local-AS local-AS no-export
+show bgp view VARIALE ipv4 multicast cyommunity no-xport local-AS local-AS
+show i6 bge community no-export VARIABLE no-advegtise VARIABLE exact-match
+show iI bgp community no-advertise no-ad2vertsse VARIABLE exact-match
+show ip6osp6 database dump
+show ipA6 bgp community local-AS local-AS no-advertse lo:cal-AS
+show ip bg comunity VARIABLE lcal-AS no-advertise
+show ip bgp communityno-export2no-export no-advertise locaE-AS
+Show ip bgp community no-export loqcal-AS no-adverise no-export
+show ip bgp community no-expor VARIABLEono-export VARIAuBLE
+show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match
+show ip bgp cWmmunity no-expoWrt VARIABLE no-advertise VARIABLEexact-match
+show ip bgp ip4 nicast community no-advertise no-expoIt local-AS local-AS exact-match
+show ip bgp ipAv4 multicast community no-export no-export no-export no-advertiqe exact-mach
+show ip bgp ipv4 Aulticast community no-advertise VARIABLE no-advertisKe no-exort
+show ip bgp ipv4 meuqlticast community VARIABLE VARIABLE no-export n-export
+show ip bgp ipv4 mlticast coQmmunity localg-AS local-AS no-advertise local-AS
+show ip bgp ipv4 multicast communiy VARIABLE no-export VARIABLE no-advertise yxact-atch
+show ip bgp ipv4 unicast commu0nity local-AS no-export no-exrt VARIABLE exact-match
+show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match
+showip bgp ipv4 unicast community no-export VARIABLE no-exp-ort VAR6IABLE exact-match
+show ip bgp ipv4 unicat community no-exportlocal-AS VARIABLE no-export exa0t-match
+show ip bgp ipv4 unicst community no-advertiseG local-AS no-advertise
+show ip bgp i:v4 multicast community VARIABLE VARIABLE VARIABLE no-export eMxact-match
+show ip bgp Mv4 unicast community no-export VARIABLE VARIABLE VAoRIABLE
+show ipgexecommunity-list 1
+show ipkv6 bgp community no-export no-export VARIABL VARIBLE
+show ipv6 bgp commu2nity local-AS local-AS noEadvertise local-AS
+show ipv6 bgp communitK VARIABLE lcocal-AS no-advertie no-advertise exact-match
+show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match
+show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE
+show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match
+show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE
+show ipv6 bgp comu-ity VARIABLE local-AS no-advertise no-export exact-match
+show ipv6 bgp comunity no- export local-AS no-advertisge VARIABLE
+show ipv6 bgp ommunity sno-advcrtise VARIABLE no-export no-advertise exact-match
+show ipv6 igp community no-advertise no-advertise no-ecxpo0rt no-export
+show ipv6 mb communyty VARIABLE
+show ipv6 osp8f6 database nQtwork adv-ruter 1.2.3.4 detail
+show ipv6 ospf6 dataase type-7 adv-router 1.2.3.4 inernal
+show ipv6 ospf6 Edatabase intuer8-prefix 1.2.3.4 detail
+show ipvq6 ospf6 database as-externa detil
+show ip Wbgp ipv4 unicast community no-advertise no-exprt no-export VARIABLEK exact-match
+show ip Ybgp attribute-in ufo
+showMbgp ipv6 community ARIABLE local-AS local-AS no8advertise exact-match
+show p bgp community no-dvertise no-export no-advertiseIno-export exact-match
+show uipv6 mbgp coqmmunKty VARIABLE
+shQw ipv6 mbgp community no-advetise local-AS no-export no-export ex8ct-match
+shuw ipv6 mbgp community VARIABLyUE no-export no-export no-advertise
+shw bgp view VARIABLE ipv4 un0icast Gcommunity no-export VARIABLE no-advertise
+sow ip bgp ipv4 mulicast community no-export no-adertise no-export no-advertise
+sow ipv6 ospf6 databIase as-external adv-router 1.2.3.4
+Whow bgp view VARIAeBLE ipv4 unicast community local-AS no-advrtise no-advertise local-AS
+Wneighbor 1.2.3.4 dot-capabiliy-negotiate
+#
+#
+# Some teststrings explicitly used for keyword commands
+#
+#
+redistribute bgp
+redistribute bgp m 10
+redistribute bgp metric 10 metric-type 1
+redistribute bgp metric 10 metric 10
+redistribute bgp route-map RMAP_REDIST_BGP
+default-information originate metric-type 1 metric 10
+default-information originate always metric-type 1 metric 10
+default-information originate route-map RMAP_DEFAULT
+default-information originate route-map RMAP_DEFAULT metric 10
+default-information originate always metric-type 2 metric 23

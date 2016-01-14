@@ -668,8 +668,10 @@ link_terminated(unit)
     }
     if (!hungup)
 	lcp_lowerdown(0);
-    if (!doing_multilink && !demand)
+    if (!doing_multilink && !demand) {
 	script_unsetenv("IFNAME");
+	script_unsetenv("IFUNIT");
+    }
 
     /*
      * Run disconnector script, if requested.

@@ -322,7 +322,6 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/AiProtection_HomeProtection.asp
 	rm -rf $(INSTALLDIR)/www/AiProtection_WebProtector.asp
 	rm -rf $(INSTALLDIR)/www/images/New_ui/QoS_quick
-	rm -rf $(INSTALLDIR)/www/css/icon.css
 ifneq ($(RTCONFIG_PARENTALCTRL),y)
 	rm -rf $(INSTALLDIR)/www/blocking.asp
 endif

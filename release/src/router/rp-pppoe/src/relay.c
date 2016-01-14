@@ -999,7 +999,7 @@ relayHandlePADI(PPPoEInterface const *iface,
 
     /* Can a client legally be behind this interface? */
     if (!iface->clientOK) {
-	syslog(LOG_ERR,
+	syslog(LOG_DEBUG,
 	       "PADI packet from %02x:%02x:%02x:%02x:%02x:%02x on interface %s not permitted",
 	       packet->ethHdr.h_source[0],
 	       packet->ethHdr.h_source[1],
@@ -1092,7 +1092,7 @@ relayHandlePADO(PPPoEInterface const *iface,
 
     /* Can a server legally be behind this interface? */
     if (!iface->acOK) {
-	syslog(LOG_ERR,
+	syslog(LOG_DEBUG,
 	       "PADO packet from %02x:%02x:%02x:%02x:%02x:%02x on interface %s not permitted",
 	       packet->ethHdr.h_source[0],
 	       packet->ethHdr.h_source[1],
@@ -1208,7 +1208,7 @@ relayHandlePADR(PPPoEInterface const *iface,
 
     /* Can a client legally be behind this interface? */
     if (!iface->clientOK) {
-	syslog(LOG_ERR,
+	syslog(LOG_DEBUG,
 	       "PADR packet from %02x:%02x:%02x:%02x:%02x:%02x on interface %s not permitted",
 	       packet->ethHdr.h_source[0],
 	       packet->ethHdr.h_source[1],
@@ -1325,7 +1325,7 @@ relayHandlePADS(PPPoEInterface const *iface,
 
     /* Can a server legally be behind this interface? */
     if (!iface->acOK) {
-	syslog(LOG_ERR,
+	syslog(LOG_DEBUG,
 	       "PADS packet from %02x:%02x:%02x:%02x:%02x:%02x on interface %s not permitted",
 	       packet->ethHdr.h_source[0],
 	       packet->ethHdr.h_source[1],

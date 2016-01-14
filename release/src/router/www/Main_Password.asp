@@ -20,6 +20,7 @@
 	background-size: 1280px 1076px;
 	background-position: center 0%;
 	margin: 0px; 
+	background:#283437\9;
 }
 .title_name {
 	font-family:Arial;
@@ -46,7 +47,6 @@
 	font-family: Arial;
 	font-size: 28pt;
 	color:#fff;
-	color:#000\9; /* IE6 IE7 IE8 */
 	text-align:center;
 	vertical-align:center
 }
@@ -59,13 +59,13 @@
 }
 .form_input{
 	background-color:rgba(255,255,255,0.2);
+	background-color:#576D73\9;
 	border-radius: 4px;
 	padding:26px 22px;
 	width: 480px;
 	border: 0;
 	height:25px;
 	color:#fff;
-	color:#000\9; /* IE6 IE7 IE8 */
 	font-size:28px
 }
 .form_input_text{
@@ -80,6 +80,26 @@
 }
 </style>
 <script>
+/* String splice function */
+String.prototype.splice = function( idx, rem, s ) {
+    return (this.slice(0,idx) + s + this.slice(idx + Math.abs(rem)));
+};
+
+/* String repeat function */
+String.prototype.repeat = function(times) {
+   return (new Array(times + 1)).join(this);
+};
+
+String.prototype.strReverse = function() {
+	var newstring = "";
+	for (var s=0; s < this.length; s++) {
+		newstring = this.charAt(s) + newstring;
+	}
+	return newstring;
+	//strOrig = ' texttotrim ';
+	//strReversed = strOrig.revstring();
+};
+	
 var is_KR_sku = (function(){
 	var ttc = '<% nvram_get("territory_code"); %>';
 	return (ttc.search("KR") == -1) ? false : true;
@@ -104,28 +124,93 @@ function initial(){
 	document.getElementById("loginTable").style.display = "";
 	document.form.login_username.focus();
 
-	document.form.http_username.onkeyup = function(e){
-		if(e.keyCode == 13){
-			document.form.http_passwd.focus();
-		}
-	};
+	if(navigator.userAgent.search("MSIE 8") === -1){
+		document.form.http_username.onkeyup = function(e){
+			if(e.keyCode == 13){
+				document.form.http_passwd.focus();
+			}
+		};
 
-	document.form.http_passwd.onkeyup = function(e){
-		if(e.keyCode == 13){
-			document.form.http_passwd_2.focus();
-		}
-	};
+		document.form.http_passwd.onkeyup = function(e){
+			if(e.keyCode == 13){
+				document.form.http_passwd_2.focus();
+			}
+		};
 
-	document.form.http_passwd_2.onkeyup = function(e){
-		if(e.keyCode == 13){
-			submitForm();
-		}
-	};
+		document.form.http_passwd_2.onkeyup = function(e){
+			if(e.keyCode == 13){
+				submitForm();
+			}
+		};
+	}
 }
 
-function submitForm(){
+// ---------- Viz add common string check for password 2015.09 start--------
+function check_common_string(pwd, flag){
+	//Sequential
+	var termAlphas = "abcdefghijklmnopqrstuvwxyz";
+	var termNumerics = "01234567890";
+	var termSymbols = "~!@#$%^&*()_+";
+	var termKeyboards1 = "qwertyuiop";
+	var termKeyboards2 = "asdfghjkl";
+	var termKeyboards3 = "zxcvbnm";
+	var termCommon5 = ["123123","abc123","letmein","master","qazwsx","admin"];
+	var termCommon8 = ["adminpassword","loginpassword","passw0rd","password","useradmin","userpassword"];
+	var nSeqString = 0;
+	if(flag == "httpd_password"){	//at lease length 5		
+		if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termNumerics.toLowerCase().indexOf(pwd) != -1 || termNumerics.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termSymbols.toLowerCase().indexOf(pwd) != -1 || termSymbols.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards1.toLowerCase().indexOf(pwd) != -1 || termKeyboards1.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards3.toLowerCase().indexOf(pwd) != -1 || termKeyboards3.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		for(var s=0;s<termCommon5.length;s++){
+			if(pwd == termCommon5[s])	{ nSeqString++; }	
+		}
+		for(var t=0;t<termCommon8.length;t++){
+			if(pwd == termCommon8[t])	{ nSeqString++; }	
+		}		
+	}
+	else if(flag == "wpa_key"){	//at lease length 8
+		if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termNumerics.toLowerCase().indexOf(pwd) != -1 || termNumerics.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termSymbols.toLowerCase().indexOf(pwd) != -1 || termSymbols.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards1.toLowerCase().indexOf(pwd) != -1 || termKeyboards1.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		for(var s=0;s<termCommon8.length;s++){
+			if(pwd == termCommon8[s])	{ nSeqString++; }	
+		}		
+	}
+	
+	//pure repeat character string
+	if(pwd == pwd.charAt(0).repeat(pwd.length)) { nSeqString++; }
+	
+	if(nSeqString > 0)
+		return true;
+	else		
+		return false;
+}
+// ---------- Viz add common string check for password 2015.09 end--------
+
+function validForm(){
 	if(!validator.chkLoginId(document.form.http_username)){
 		return false;
+	}
+	
+	if(document.form.http_passwd.value == ""){
+			showError("<#File_Pop_content_alert_desc6#>");
+			document.form.http_passwd.value = "";
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;
+		}
+		
+	if(document.form.http_passwd.value != document.form.http_passwd_2.value){
+			showError("<#File_Pop_content_alert_desc7#>");
+			document.form.http_passwd.value = "";
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;                   
 	}
 
 	if(is_KR_sku){		/* MODELDEP by Territory Code */
@@ -138,15 +223,41 @@ function submitForm(){
 			return false;
 		}
 	}
+	
+	if(document.form.http_passwd.value == '<% nvram_default_get("http_passwd"); %>'){
+			showError("<#QIS_adminpass_confirm0#>");
+			document.form.http_passwd.value = "";
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;
+	}
+	
+	//confirm common string combination	#JS_common_passwd#
+	var is_common_string = check_common_string(document.form.http_passwd.value, "httpd_password");
+	if(document.form.http_passwd.value.length > 0 && is_common_string){
+		if(confirm("<#JS_common_passwd#>")){
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;	
+		}	
+	}
 
-	document.getElementById("error_status_field").style.display = "none";
-	document.form.submit();
-
-	var nextPage = decodeURIComponent('<% get_ascii_parameter("nextPage"); %>');
-	setTimeout(function(){
-		location.href = (nextPage != "") ? nextPage : "index.asp";
-	}, 1000);
+	return true;	
 }
+
+function submitForm(){
+	if(validForm()){
+		document.getElementById("error_status_field").style.display = "none";		
+		document.form.submit();
+
+		var nextPage = decodeURIComponent('<% get_ascii_parameter("nextPage"); %>');
+		setTimeout(function(){
+			location.href = (nextPage != "") ? nextPage : "index.asp";
+		}, 200);
+	}
+	else
+		return;
+}	
 
 
 var validator = {
@@ -181,21 +292,16 @@ var validator = {
 	},
 
 	chkLoginPw: function(obj){
-		if(obj.value == ""){
-			showError("<#File_Pop_content_alert_desc6#>");
+		
+		if(obj.value.length > 0 && obj.value.length < 5){
+			showError("<#JS_short_password#>");
 			obj.value = "";
 			obj.focus();
 			obj.select();
 			return false;
-		}
-		else if(obj.value == '<% nvram_default_get("http_passwd"); %>'){
-			showError("<#QIS_adminpass_confirm0#>");
-			obj.value = "";
-			obj.focus();
-			obj.select();
-			return false;
-		}
-		else if(obj.value.charAt(0) == '"'){
+		}		
+
+		if(obj.value.charAt(0) == '"'){
 			showError('<#JS_validstr1#> ["]');
 			obj.value = "";
 			obj.focus();
@@ -217,37 +323,15 @@ var validator = {
 				obj.select();
 				return false;
 			}
-		}
-
-		if(obj.value != document.form.http_passwd_2.value){
-			showError("<#File_Pop_content_alert_desc7#>");
-			obj.value = "";
-			obj.focus();
-			obj.select();
-			return false;			
-		}
+		}		
 
 		return true;
 	},
 	
 	chkLoginPw_KR: function(obj){		//Alphabets, numbers, specialcharacters mixed
-		var string_length = obj.value.length;
-
-		if(obj.value == ""){
-			showError("<#File_Pop_content_alert_desc6#>");
-			obj.value = "";
-			obj.focus();
-			obj.select();
-			return false;
-		}
-		else if(obj.value == '<% nvram_default_get("http_passwd"); %>'){
-			showError("<#QIS_adminpass_confirm0#>");
-			obj.value = "";
-			obj.focus();
-			obj.select();
-			return false;
-		}
-		else if(!/[A-Za-z]/.test(obj.value) || !/[0-9]/.test(obj.value) || string_length < 8
+		var string_length = obj.value.length;		
+		
+		if(!/[A-Za-z]/.test(obj.value) || !/[0-9]/.test(obj.value) || string_length < 8
 				|| !/[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]/.test(obj.value)){
 				
 				showError("<#JS_validPWD#>");
@@ -271,15 +355,7 @@ var validator = {
 			obj.select();
 			return false;
 		}
-
-		if(obj.value != document.form.http_passwd_2.value){
-			showError("<#File_Pop_content_alert_desc7#>");
-			obj.value = "";
-			obj.focus();
-			obj.select();
-			return false;			
-		}
-
+		
 		return true;
 	}
 }
@@ -360,7 +436,7 @@ function showError(str){
 					<tr align="right" style="height:68px;">
 						<td colspan="2">
 							<div style="text-align: center;float:right; margin:50px 0px 0px 78px;">
-								<input type="button" class="button" onclick="submitForm();" value="<#CTL_modify#>">
+								<input type="button" class="button" tabindex="4" onclick="submitForm();" value="<#CTL_modify#>">
 							</div>	
 						</td>
 					</tr>
