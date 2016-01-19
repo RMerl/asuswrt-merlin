@@ -1305,13 +1305,6 @@ function update_vpn_client_state() {
 												</td>
 											</tr>
 											<tr>
-												<th>Let the OS manage socket buffers</th>
-												<td>
-													<input type="radio" name="vpn_server_sockbuf" class="input" value="1" <% nvram_match_x("", "vpn_server_sockbuf", "1", "checked"); %>><#checkbox_Yes#>
-													<input type="radio" name="vpn_server_sockbuf" class="input" value="0" <% nvram_match_x("", "vpn_server_sockbuf", "0", "checked"); %>><#checkbox_No#>
-												</td>
-											</tr>
-											<tr>
 												<th><#menu5_5#></th>
 												<td>
 													<select name="vpn_server_firewall" class="input_option">

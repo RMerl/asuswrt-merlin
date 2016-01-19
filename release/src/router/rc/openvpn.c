@@ -818,12 +818,6 @@ void start_vpnserver(int serverNum)
 	else
 		fprintf(fp_client, "proto tcp-client\n");
 
-	// Don't explicitely set socket buffer size
-	sprintf(&buffer[0], "vpn_server%d_sockbuf", serverNum);
-	if (nvram_match(&buffer[0], "1")) {
-		fprintf(fp, "rcvbuf 0\nsndbuf 0\n");
-	}
-
 	//port
 	sprintf(&buffer[0], "vpn_server%d_port", serverNum);
 	fprintf(fp, "port %d\n", nvram_get_int(&buffer[0]));
