@@ -146,19 +146,22 @@ bool dont_mute (unsigned int flags); /* check muting filter */
 
 #define MSG_TEST(flags) (unlikely((((unsigned int)flags) & M_DEBUG_LEVEL) <= x_debug_level) && dont_mute (flags))
 
+/* Macro to ensure (and teach static analysis tools) we exit on fatal errors */
+#define EXIT_FATAL(flags) do { if ((flags) & M_FATAL) _exit(1); } while (false)
+
 #if defined(HAVE_CPP_VARARG_MACRO_ISO) && !defined(__LCLINT__)
 # define HAVE_VARARG_MACROS
-# define msg(flags, ...) do { if (MSG_TEST(flags)) x_msg((flags), __VA_ARGS__); } while (false)
+# define msg(flags, ...) do { if (MSG_TEST(flags)) x_msg((flags), __VA_ARGS__); EXIT_FATAL(flags); } while (false)
 # ifdef ENABLE_DEBUG
-#  define dmsg(flags, ...) do { if (MSG_TEST(flags)) x_msg((flags), __VA_ARGS__); } while (false)
+#  define dmsg(flags, ...) do { if (MSG_TEST(flags)) x_msg((flags), __VA_ARGS__); EXIT_FATAL(flags); } while (false)
 # else
 #  define dmsg(flags, ...)
 # endif
 #elif defined(HAVE_CPP_VARARG_MACRO_GCC) && !defined(__LCLINT__)
 # define HAVE_VARARG_MACROS
-# define msg(flags, args...) do { if (MSG_TEST(flags)) x_msg((flags), args); } while (false)
+# define msg(flags, args...) do { if (MSG_TEST(flags)) x_msg((flags), args); EXIT_FATAL(flags); } while (false)
 # ifdef ENABLE_DEBUG
-#  define dmsg(flags, args...) do { if (MSG_TEST(flags)) x_msg((flags), args); } while (false)
+#  define dmsg(flags, args...) do { if (MSG_TEST(flags)) x_msg((flags), args); EXIT_FATAL(flags); } while (false)
 # else
 #  define dmsg(flags, args...)
 # endif
@@ -213,9 +216,14 @@ const char *msg_flags_string (const unsigned int flags, struct gc_arena *gc);
 FILE *msg_fp(const unsigned int flags);
 
 /* Fatal logic errors */
-#define ASSERT(x) do { if (!(x)) assert_failed(__FILE__, __LINE__); } while (false)
+#ifndef ENABLE_SMALL
+#define ASSERT(x) do { if (!(x)) assert_failed(__FILE__, __LINE__, #x); } while (false)
+#else
+#define ASSERT(x) do { if (!(x)) assert_failed(__FILE__, __LINE__, NULL); } while (false)
+#endif
 
-void assert_failed (const char *filename, int line);
+void assert_failed (const char *filename, int line, const char *condition)
+  __attribute__((__noreturn__));
 
 #ifdef ENABLE_DEBUG
 void crash (void); /* force a segfault (debugging only) */

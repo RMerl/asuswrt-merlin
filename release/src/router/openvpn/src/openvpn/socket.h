@@ -42,11 +42,6 @@
 #define OPENVPN_PORT 1194
 
 /*
- * Maximum size passed passed to setsockopt SNDBUF/RCVBUF
- */
-#define SOCKET_SND_RCV_BUF_MAX 1000000
-
-/*
  * Number of seconds that "resolv-retry infinite"
  * represents.
  */
@@ -382,6 +377,11 @@ void setenv_in_addr_t (struct env_set *es,
 		       const char *name_prefix,
 		       in_addr_t addr,
 		       const unsigned int flags);
+
+void setenv_in6_addr (struct env_set *es,
+                      const char *name_prefix,
+                      const struct in6_addr *addr,
+                      const unsigned int flags);
 
 void setenv_link_socket_actual (struct env_set *es,
 				const char *name_prefix,

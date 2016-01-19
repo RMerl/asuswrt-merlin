@@ -62,6 +62,9 @@ run_up_down (const char *command,
 	     const struct plugin_list *plugins,
 	     int plugin_type,
 	     const char *arg,
+#ifdef WIN32
+	     DWORD adapter_index,
+#endif
 	     const char *dev_type,
 	     int tun_mtu,
 	     int link_mtu,
@@ -82,6 +85,9 @@ run_up_down (const char *command,
   setenv_str (es, "dev", arg);
   if (dev_type)
     setenv_str (es, "dev_type", dev_type);
+#ifdef WIN32
+  setenv_int (es, "dev_idx", adapter_index);
+#endif
 
   if (!ifconfig_local)
     ifconfig_local = "";
@@ -1035,7 +1041,9 @@ get_user_pass_cr (struct user_pass *up,
 
   if (!up->defined)
     {
-      const bool from_stdin = (!auth_file || !strcmp (auth_file, "stdin"));
+      bool from_authfile = (auth_file && !streq (auth_file, "stdin"));
+      bool username_from_stdin = false;
+      bool password_from_stdin = false;
 
       if (flags & GET_USER_PASS_PREVIOUS_CREDS_FAILED)
 	msg (M_WARN, "Note: previous '%s' credentials failed", prefix);
@@ -1045,7 +1053,7 @@ get_user_pass_cr (struct user_pass *up,
        * Get username/password from management interface?
        */
       if (management
-	  && ((auth_file && streq (auth_file, "management")) || (from_stdin && (flags & GET_USER_PASS_MANAGEMENT)))
+	  && ((auth_file && streq (auth_file, "management")) || (!from_authfile && (flags & GET_USER_PASS_MANAGEMENT)))
 	  && management_query_user_pass_enabled (management))
 	{
 	  const char *sc = NULL;
@@ -1082,18 +1090,59 @@ get_user_pass_cr (struct user_pass *up,
 	  if (!strlen (up->password))
 	    strcpy (up->password, "ok");
 	}
-	  
+      else if (from_authfile)
+        {
+          /*
+           * Try to get username/password from a file.
+           */
+          FILE *fp;
+          char password_buf[USER_PASS_LEN] = { '\0' };
+
+          warn_if_group_others_accessible (auth_file);
+
+          fp = platform_fopen (auth_file, "r");
+          if (!fp)
+            msg (M_ERR, "Error opening '%s' auth file: %s", prefix, auth_file);
+
+          if ((flags & GET_USER_PASS_PASSWORD_ONLY) == 0)
+            {
+              /* Read username first */
+               if (fgets (up->username, USER_PASS_LEN, fp) == NULL)
+                 msg (M_FATAL, "Error reading username from %s authfile: %s",
+                      prefix,
+                      auth_file);
+             }
+          chomp (up->username);
+
+          if (fgets (password_buf, USER_PASS_LEN, fp) != NULL)
+            {
+              chomp (password_buf);
+            }
+
+          if (flags & GET_USER_PASS_PASSWORD_ONLY && !password_buf[0])
+                msg (M_FATAL, "Error reading password from %s authfile: %s", prefix, auth_file);
+
+          if (password_buf[0])
+            strncpy(up->password, password_buf, USER_PASS_LEN);
+          else
+            password_from_stdin = 1;
+
+          fclose (fp);
+
+          if (!(flags & GET_USER_PASS_PASSWORD_ONLY) && strlen (up->username) == 0)
+            msg (M_FATAL, "ERROR: username from %s authfile '%s' is empty", prefix, auth_file);
+        }
+      else
+        {
+          username_from_stdin = true;
+          password_from_stdin = true;
+        }
+
       /*
        * Get username/password from standard input?
        */
-      else if (from_stdin)
+      if (username_from_stdin || password_from_stdin)
 	{
-#ifndef WIN32
-	  /* did we --daemon'ize before asking for passwords? */
-	  if ( !isatty(0) && !isatty(2) )
-	    { msg(M_FATAL, "neither stdin nor stderr are a tty device, can't ask for %s password.  If you used --daemon, you need to use --askpass to make passphrase-protected keys work, and you can not use --auth-nocache.", prefix ); }
-#endif
-
 #ifdef ENABLE_CLIENT_CR
 	  if (auth_challenge && (flags & GET_USER_PASS_DYNAMIC_CHALLENGE))
 	    {
@@ -1124,7 +1173,7 @@ get_user_pass_cr (struct user_pass *up,
 	      buf_printf (&user_prompt, "Enter %s Username:", prefix);
 	      buf_printf (&pass_prompt, "Enter %s Password:", prefix);
 
-	      if (!(flags & GET_USER_PASS_PASSWORD_ONLY))
+	      if (username_from_stdin && !(flags & GET_USER_PASS_PASSWORD_ONLY))
 		{
 		  if (!get_console_input (BSTR (&user_prompt), true, up->username, USER_PASS_LEN))
 		    msg (M_FATAL, "ERROR: could not read %s username from stdin", prefix);
@@ -1132,7 +1181,7 @@ get_user_pass_cr (struct user_pass *up,
 		    msg (M_FATAL, "ERROR: %s username is empty", prefix);
 		}
 
-	      if (!get_console_input (BSTR (&pass_prompt), false, up->password, USER_PASS_LEN))
+	      if (password_from_stdin && !get_console_input (BSTR (&pass_prompt), false, up->password, USER_PASS_LEN))
 		msg (M_FATAL, "ERROR: could not not read %s password from stdin", prefix);
 
 #ifdef ENABLE_CLIENT_CR
@@ -1157,52 +1206,6 @@ get_user_pass_cr (struct user_pass *up,
 		}
 #endif
 	    }
-	}
-      else
-	{
-	  /*
-	   * Get username/password from a file.
-	   */
-	  FILE *fp;
-      
-#ifndef ENABLE_PASSWORD_SAVE
-	  /*
-	   * Unless ENABLE_PASSWORD_SAVE is defined, don't allow sensitive passwords
-	   * to be read from a file.
-	   */
-	  if (flags & GET_USER_PASS_SENSITIVE)
-	    msg (M_FATAL, "Sorry, '%s' password cannot be read from a file", prefix);
-#endif
-
-	  warn_if_group_others_accessible (auth_file);
-
-	  fp = platform_fopen (auth_file, "r");
-	  if (!fp)
-	    msg (M_ERR, "Error opening '%s' auth file: %s", prefix, auth_file);
-
-	  if (flags & GET_USER_PASS_PASSWORD_ONLY)
-	    {
-	      if (fgets (up->password, USER_PASS_LEN, fp) == NULL)
-		msg (M_FATAL, "Error reading password from %s authfile: %s",
-		     prefix,
-		     auth_file);
-	    }
-	  else
-	    {
-	      if (fgets (up->username, USER_PASS_LEN, fp) == NULL
-		  || fgets (up->password, USER_PASS_LEN, fp) == NULL)
-		msg (M_FATAL, "Error reading username and password (must be on two consecutive lines) from %s authfile: %s",
-		     prefix,
-		     auth_file);
-	    }
-      
-	  fclose (fp);
-      
-	  chomp (up->username);
-	  chomp (up->password);
-      
-	  if (!(flags & GET_USER_PASS_PASSWORD_ONLY) && strlen (up->username) == 0)
-	    msg (M_FATAL, "ERROR: username from %s authfile '%s' is empty", prefix, auth_file);
 	}
 
       string_mod (up->username, CC_PRINT, CC_CRLF, 0);
@@ -1647,7 +1650,7 @@ argv_extract_cmd_name (const char *path)
 {
   if (path)
     {
-      char *path_cp = strdup(path); /* POSIX basename() implementaions may modify its arguments */
+      char *path_cp = string_alloc(path, NULL); /* POSIX basename() implementaions may modify its arguments */
       const char *bn = basename (path_cp);
       if (bn)
 	{

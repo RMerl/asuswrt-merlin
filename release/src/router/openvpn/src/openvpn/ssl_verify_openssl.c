@@ -200,7 +200,7 @@ extract_x509_field_ssl (X509_NAME *x509, const char *field_name, char *out,
 }
 
 result_t
-x509_get_username (char *common_name, int cn_len,
+backend_x509_get_username (char *common_name, int cn_len,
     char * x509_username_field, X509 *peer_cert)
 {
 #ifdef ENABLE_X509ALTUSERNAME
@@ -585,6 +585,8 @@ x509_verify_crl(const char *crl_file, X509 *peer_cert, const char *subject)
   BIO *in=NULL;
   int n,i;
   result_t retval = FAILURE;
+  struct gc_arena gc = gc_new();
+  char *serial;
 
   in = BIO_new_file (crl_file, "r");
 
@@ -609,7 +611,8 @@ x509_verify_crl(const char *crl_file, X509 *peer_cert, const char *subject)
   for (i = 0; i < n; i++) {
     revoked = (X509_REVOKED *)sk_X509_REVOKED_value(X509_CRL_get_REVOKED(crl), i);
     if (ASN1_INTEGER_cmp(revoked->serialNumber, X509_get_serialNumber(peer_cert)) == 0) {
-      msg (D_HANDSHAKE, "CRL CHECK FAILED: %s is REVOKED",subject);
+      serial = backend_x509_get_serial_hex(peer_cert, &gc);
+      msg (D_HANDSHAKE, "CRL CHECK FAILED: %s (serial %s) is REVOKED", subject, (serial ? serial : "NOT AVAILABLE"));
       goto end;
     }
   }
@@ -618,6 +621,7 @@ x509_verify_crl(const char *crl_file, X509 *peer_cert, const char *subject)
   msg (D_HANDSHAKE, "CRL CHECK OK: %s",subject);
 
 end:
+  gc_free(&gc);
   BIO_free(in);
   if (crl)
     X509_CRL_free (crl);

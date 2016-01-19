@@ -63,6 +63,9 @@ void run_up_down (const char *command,
 		  const struct plugin_list *plugins,
 		  int plugin_type,
 		  const char *arg,
+#ifdef WIN32
+		  DWORD adapter_index,
+#endif
 		  const char *dev_type,
 		  int tun_mtu,
 		  int link_mtu,
@@ -239,7 +242,7 @@ struct static_challenge_info {};
  * Flags for get_user_pass and management_query_user_pass
  */
 #define GET_USER_PASS_MANAGEMENT    (1<<0)
-#define GET_USER_PASS_SENSITIVE     (1<<1)
+/* GET_USER_PASS_SENSITIVE     (1<<1)  not used anymore */
 #define GET_USER_PASS_PASSWORD_ONLY (1<<2)
 #define GET_USER_PASS_NEED_OK       (1<<3)
 #define GET_USER_PASS_NOFATAL       (1<<4)

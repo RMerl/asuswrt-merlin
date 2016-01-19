@@ -486,8 +486,10 @@ static const char usage_message[] =
   "Client options (when connecting to a multi-client server):\n"
   "--client         : Helper option to easily configure client mode.\n"
   "--auth-user-pass [up] : Authenticate with server using username/password.\n"
-  "                  up is a file containing username/password on 2 lines,\n"
-  "                  or omit to prompt from console.\n"
+  "                  up is a file containing the username on the first line,\n"
+  "                  and a password on the second. If either the password or both\n"
+  "                  the username and the password are omitted OpenVPN will prompt\n"
+  "                  for them from console.\n"
   "--pull           : Accept certain config file options from the peer as if they\n"
   "                  were part of the local config file.  Must be specified\n"
   "                  when connecting to a '--mode server' remote host.\n"
@@ -713,6 +715,7 @@ static const char usage_message[] =
   "                       optional parameter controls the initial state of ex.\n"
   "--show-net-up   : Show " PACKAGE_NAME "'s view of routing table and net adapter list\n"
   "                  after TAP adapter is up and routes have been added.\n"
+  "--block-outside-dns   : Block DNS on other network adapters to prevent DNS leaks\n"
   "Windows Standalone Options:\n"
   "\n"
   "--show-adapters : Show all TAP-Windows adapters.\n"
@@ -800,10 +803,6 @@ init_options (struct options *o, const bool init_gc)
 #ifdef ENABLE_FEATURE_TUN_PERSIST
   o->persist_mode = 1;
 #endif
-#ifndef WIN32
-  o->rcvbuf = 65536;
-  o->sndbuf = 65536;
-#endif
 #ifdef TARGET_LINUX
   o->tuntap_options.txqueuelen = 100;
 #endif
@@ -816,6 +815,7 @@ init_options (struct options *o, const bool init_gc)
   o->tuntap_options.dhcp_lease_time = 31536000; /* one year */
   o->tuntap_options.dhcp_masq_offset = 0;       /* use network address as internal DHCP server address */
   o->route_method = ROUTE_METHOD_ADAPTIVE;
+  o->block_outside_dns = false;
 #endif
 #if P2MP_SERVER
   o->real_hash_size = 256;
@@ -965,13 +965,11 @@ get_ip_addr (const char *ip_string, int msglevel, bool *error)
  * "/nn" is optional, default to /64 if missing
  *
  * return true if parsing succeeded, modify *network and *netbits
- * return address part without "/nn" in *printable_ipv6 (if != NULL)
  */
 bool
 get_ipv6_addr( const char * prefix_str, struct in6_addr *network,
-	       unsigned int * netbits, char ** printable_ipv6, int msglevel )
+	       unsigned int * netbits, int msglevel)
 {
-    int rc;
     char * sep, * endp;
     int bits;
     struct in6_addr t_network;
@@ -998,20 +996,13 @@ get_ipv6_addr( const char * prefix_str, struct in6_addr *network,
 
     if ( sep != NULL ) *sep = '\0';
 
-    rc = inet_pton( AF_INET6, prefix_str, &t_network );
-
-    if ( rc == 1 && printable_ipv6 != NULL )
-      {
-	*printable_ipv6 = string_alloc( prefix_str, NULL );
-      }
-
-    if ( sep != NULL ) *sep = '/';
-
-    if ( rc != 1 )
+    if ( inet_pton( AF_INET6, prefix_str, &t_network ) != 1 )
       {
 	msg (msglevel, "IPv6 prefix '%s': invalid IPv6 address", prefix_str);
 	return false;
       }
+
+    if ( sep != NULL ) *sep = '/';
 
     if ( netbits != NULL )
       {
@@ -1024,12 +1015,35 @@ get_ipv6_addr( const char * prefix_str, struct in6_addr *network,
     return true;		/* parsing OK, values set */
 }
 
+/**
+ * Returns newly allocated string containing address part without "/nn".
+ *
+ * If gc != NULL, the allocated memory is registered in the supplied gc.
+ */
+static char *
+get_ipv6_addr_no_netbits (const char *addr, struct gc_arena *gc)
+{
+  const char *end = strchr (addr, '/');
+  char *ret = NULL;
+  if (NULL == end)
+    {
+      ret = string_alloc (addr, gc);
+    }
+  else
+    {
+      size_t len = end - addr;
+      ret = gc_malloc (len + 1, true, gc);
+      memcpy (ret, addr, len);
+    }
+  return ret;
+}
+
 static bool ipv6_addr_safe_hexplusbits( const char * ipv6_prefix_spec )
 {
     struct in6_addr t_addr;
     unsigned int t_bits;
 
-    return get_ipv6_addr( ipv6_prefix_spec, &t_addr, &t_bits, NULL, M_WARN );
+    return get_ipv6_addr( ipv6_prefix_spec, &t_addr, &t_bits, M_WARN );
 }
 
 static char *
@@ -1271,7 +1285,7 @@ option_iroute_ipv6 (struct options *o,
 
   ALLOC_OBJ_GC (ir, struct iroute_ipv6, &o->gc);
 
-  if ( !get_ipv6_addr (prefix_str, &ir->network, &ir->netbits, NULL, msglevel ))
+  if ( !get_ipv6_addr (prefix_str, &ir->network, &ir->netbits, msglevel ))
     {
       msg (msglevel, "in --iroute-ipv6 %s: Bad IPv6 prefix specification",
 	   prefix_str);
@@ -1585,6 +1599,7 @@ show_settings (const struct options *o)
   SHOW_STR (ca_path);
   SHOW_STR (dh_file);
   SHOW_STR (cert_file);
+  SHOW_STR (extra_certs_file);
 
 #ifdef MANAGMENT_EXTERNAL_KEY
   if((o->management_flags & MF_EXTERNAL_KEY))
@@ -1665,6 +1680,7 @@ show_settings (const struct options *o)
 #ifdef WIN32
   SHOW_BOOL (show_net_up);
   SHOW_INT (route_method);
+  SHOW_BOOL (block_outside_dns);
   show_tuntap_options (&o->tuntap_options);
 #endif
 #endif
@@ -2616,7 +2632,7 @@ check_file_access(const int type, const char *file, const int mode, const char *
   /* Is the directory path leading to the given file accessible? */
   if (type & CHKACC_DIRPATH)
     {
-      char *fullpath = strdup(file);  /* POSIX dirname() implementaion may modify its arguments */
+      char *fullpath = string_alloc (file, NULL);  /* POSIX dirname() implementaion may modify its arguments */
       char *dirpath = dirname(fullpath);
 
       if (platform_access (dirpath, mode|X_OK) != 0)
@@ -3473,6 +3489,15 @@ usage_small (void)
   openvpn_exit (OPENVPN_EXIT_STATUS_USAGE); /* exit point */
 }
 
+#ifdef WIN32
+void show_windows_version(const unsigned int flags)
+{
+  struct gc_arena gc = gc_new ();
+  msg (flags, "Windows version %s", win32_version_string (&gc, true));
+  gc_free (&gc);
+}
+#endif
+
 void
 show_library_versions(const unsigned int flags)
 {
@@ -3498,6 +3523,9 @@ usage_version (void)
 {
   msg (M_INFO|M_NOPREFIX, "%s", title_string);
   show_library_versions( M_INFO|M_NOPREFIX );
+#ifdef WIN32
+  show_windows_version( M_INFO|M_NOPREFIX );
+#endif
   msg (M_INFO|M_NOPREFIX, "Originally developed by James Yonan");
   msg (M_INFO|M_NOPREFIX, "Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>");
 #ifndef ENABLE_SMALL
@@ -3761,7 +3789,10 @@ read_inline_file (struct in_src *is, const char *close_tag, struct gc_arena *gc)
 
   while (in_src_get (is, line, sizeof (line)))
     {
-      if (!strncmp (line, close_tag, strlen (close_tag)))
+      char *line_ptr = line;
+      /* Remove leading spaces */
+      while (isspace(*line_ptr)) line_ptr++;
+      if (!strncmp (line_ptr, close_tag, strlen (close_tag)))
 	{
 	  endtagfound = true;
 	  break;
@@ -3853,7 +3884,7 @@ read_config_file (struct options *options,
   const int max_recursive_levels = 10;
   FILE *fp;
   int line_num;
-  char line[OPTION_LINE_SIZE];
+  char line[OPTION_LINE_SIZE+1];
   char *p[MAX_PARMS];
 
   ++level;
@@ -3871,6 +3902,10 @@ read_config_file (struct options *options,
               int offset = 0;
 	      CLEAR (p);
 	      ++line_num;
+          if (strlen(line) == OPTION_LINE_SIZE)
+              msg (msglevel, "In %s:%d: Maximum optione line length (%d) exceeded, line starts with %s",
+                   file, line_num, OPTION_LINE_SIZE, line);
+
               /* Ignore UTF-8 BOM at start of stream */
               if (line_num == 1 && strncmp (line, "\xEF\xBB\xBF", 3) == 0)
                 offset = 3;
@@ -4467,10 +4502,9 @@ add_option (struct options *options,
   else if (streq (p[0], "ifconfig-ipv6") && p[1] && p[2] )
     {
       unsigned int netbits;
-      char * ipv6_local;
 
       VERIFY_PERMISSION (OPT_P_UP);
-      if ( get_ipv6_addr( p[1], NULL, &netbits, &ipv6_local, msglevel ) &&
+      if ( get_ipv6_addr( p[1], NULL, &netbits, msglevel ) &&
            ipv6_addr_safe( p[2] ) )
         {
 	  if ( netbits < 64 || netbits > 124 )
@@ -4479,11 +4513,7 @@ add_option (struct options *options,
 	      goto err;
 	    }
 
-          if (options->ifconfig_ipv6_local)
-            /* explicitly ignoring this is a const char */
-            free ((char *) options->ifconfig_ipv6_local);
-
-	  options->ifconfig_ipv6_local = ipv6_local;
+	  options->ifconfig_ipv6_local = get_ipv6_addr_no_netbits (p[1], &options->gc);
 	  options->ifconfig_ipv6_netbits = netbits;
 	  options->ifconfig_ipv6_remote = p[2];
         }
@@ -5558,7 +5588,7 @@ add_option (struct options *options,
       unsigned int netbits = 0;
 
       VERIFY_PERMISSION (OPT_P_GENERAL);
-      if ( ! get_ipv6_addr (p[1], &network, &netbits, NULL, lev) )
+      if ( ! get_ipv6_addr (p[1], &network, &netbits, lev) )
 	{
 	  msg (msglevel, "error parsing --server-ipv6 parameter");
 	  goto err;
@@ -5669,7 +5699,7 @@ add_option (struct options *options,
       unsigned int netbits = 0;
 
       VERIFY_PERMISSION (OPT_P_GENERAL);
-      if ( ! get_ipv6_addr (p[1], &network, &netbits, NULL, lev ) )
+      if ( ! get_ipv6_addr (p[1], &network, &netbits, lev ) )
 	{
 	  msg (msglevel, "error parsing --ifconfig-ipv6-pool parameters");
 	  goto err;
@@ -5930,7 +5960,7 @@ add_option (struct options *options,
 
       VERIFY_PERMISSION (OPT_P_INSTANCE);
 
-      if ( ! get_ipv6_addr( p[1], &local, &netbits, NULL, msglevel ) )
+      if ( ! get_ipv6_addr( p[1], &local, &netbits, msglevel ) )
 	{
 	  msg (msglevel, "cannot parse --ifconfig-ipv6-push addresses");
 	  goto err;
@@ -5938,7 +5968,7 @@ add_option (struct options *options,
 
       if ( p[2] )
 	{
-	  if ( !get_ipv6_addr( p[2], &remote, NULL, NULL, msglevel ) )
+	  if ( !get_ipv6_addr( p[2], &remote, NULL, msglevel ) )
 	    {
 	      msg( msglevel, "cannot parse --ifconfig-ipv6-push addresses");
 	      goto err;
@@ -5948,7 +5978,7 @@ add_option (struct options *options,
 	{
 	  if ( ! options->ifconfig_ipv6_local ||
 	       ! get_ipv6_addr( options->ifconfig_ipv6_local, &remote, 
-				NULL, NULL, msglevel ) )
+				NULL, msglevel ) )
 	    {
 	      msg( msglevel, "second argument to --ifconfig-ipv6-push missing and no global --ifconfig-ipv6 address set");
 	      goto err;
@@ -6230,6 +6260,22 @@ add_option (struct options *options,
       VERIFY_PERMISSION (OPT_P_IPWIN32);
       options->tuntap_options.register_dns = true;
     }
+#ifdef WIN32
+  else if (streq (p[0], "block-outside-dns") && !p[1])
+    {
+      VERIFY_PERMISSION (OPT_P_IPWIN32);
+      if (win_wfp_init_funcs())
+      {
+        options->block_outside_dns = true;
+      }
+      else
+      {
+        msg (msglevel_fc, "Failed to enable --block-outside-dns. "
+                       "Maybe WFP is not supported on your system?");
+	      goto err;
+      }
+    }
+#endif
   else if (streq (p[0], "rdns-internal"))
      /* standalone method for internal use
       *
