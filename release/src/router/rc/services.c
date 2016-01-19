@@ -6631,6 +6631,13 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 	else if (!strcmp(script, "eco_guard")) {
 		start_ecoguard();
 	}
+#ifdef RTCONFIG_QUAGGA
+	else if (strcmp(script, "quagga") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_quagga();
+		if(action & RC_SERVICE_START) start_quagga();
+	}
+#endif
  	else
 	{
 		fprintf(stderr,
@@ -6992,13 +6999,6 @@ void set_acs_ifnames()
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e");
 	}
-#ifdef RTCONFIG_QUAGGA
-	else if (strcmp(script, "quagga") == 0)
-	{
-		if(action & RC_SERVICE_STOP) stop_quagga();
-		if(action & RC_SERVICE_START) start_quagga();
-	}
-#endif
 	else
 	{
 		if (nvram_match("acs_band1", "1"))
