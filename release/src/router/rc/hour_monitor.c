@@ -111,7 +111,7 @@ int hour_monitor_function_check()
 		value |= TRAFFIC_ANALYZER;
 
 	// networkmap
-	if(pidof("networkmap") != -1)
+	if((pidof("networkmap") != -1) && (nvram_get_int("nmap_hm_scan")))
 		value |= NETWORKMAP;
 	
 	if(debug)
