@@ -3,6 +3,12 @@ Asuswrt-Merlin Changelog
 
 380.58 (xx-xxx-2016)
     - NEW: Merged with 380_1354 GPL
+    - NEW: Added Tweaks and Hacks settings to Tools -> Other Settings.
+           These are UNSUPPORTED tweaks, intended mostly for 
+           experimentation, or very specific situations.  If unsure how
+           to apply these, manually reboot after changing them.
+    - CHANGED: Updated OpenVPN to 2.3.10
+    - CHANGED: Updated openssl to 1.0.2f
     - FIXED: PPTP static route handling script was broken
     - FIXED: minidlna would check for the wrong database filename
              at start time
