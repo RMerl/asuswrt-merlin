@@ -912,6 +912,34 @@ function done_validating(action){
 						</td>
 					</tr>
 				</table>
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+                                        <thead>
+						<tr>
+							<td colspan="2">Advanced Tweaks and Hacks</td>
+						</tr>
+					</thead>
+					<tr>
+						<th>Networkmap: hourly full network rescans (default: Yes)</th>
+						<td>
+							<input type="radio" name="nmap_hm_scan" class="input" value="1" <% nvram_match_x("", "nmap_hm_scan", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="nmap_hm_scan" class="input" value="0" <% nvram_match_x("", "nmap_hm_scan", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
+					<tr>
+						<th>Samba: Enable SMB2 protocol (default: No)</th>
+						<td>
+							<input type="radio" name="smbd_enable_smb2" class="input" value="1" <% nvram_match_x("", "smbd_enable_smb2", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="smbd_enable_smb2" class="input" value="0" <% nvram_match_x("", "smbd_enable_smb2", "0", "checked"); %>><#checkbox_No#>
+						</td>
+	                                </tr>
+					<tr>
+						<th>Memory Management: Regularly flush caches (ARM only) (default: Yes)</th>
+						<td>
+							<input type="radio" name="drop_caches" class="input" value="1" <% nvram_match_x("", "drop_caches", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="drop_caches" class="input" value="0" <% nvram_match_x("", "drop_caches", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
+				</table>
 				<div class="apply_gen">
 					<input name="button" type="button" class="button_gen" onclick="validate();" value="<#CTL_apply#>"/>
 			        </div>
