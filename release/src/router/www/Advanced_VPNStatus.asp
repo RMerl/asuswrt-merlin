@@ -82,7 +82,6 @@ function refreshState(){
 			case 3:
 				client_state = vpnc_state_t3;
 				client_errno = vpnc_errno_t3;
-				break;
                                 client_server = " (<% nvram_get("vpn_client3_addr"); %> " + 
                                                 "<% nvram_get("vpn_client3_proto"); %>:" +
                                                 "<% nvram_get("vpn_client3_port"); %>)";
@@ -93,7 +92,7 @@ function refreshState(){
                                 client_server = " (<% nvram_get("vpn_client4_addr"); %> " + 
                                                 "<% nvram_get("vpn_client4_proto"); %>:" +
                                                 "<% nvram_get("vpn_client4_port"); %>)";
-			break;
+				break;
 			case 5:
 				client_state = vpnc_state_t5;
 				client_errno = vpnc_errno_t5;
@@ -557,7 +556,7 @@ function show_vpnc_rulelist(){
 				</table>
 
 			<br>
-				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<table width="100%" id="client3" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
 							<td>OpenVPN Client 3<span id="client3_Block_Running" style="background: transparent;"></span></td>
@@ -571,7 +570,7 @@ function show_vpnc_rulelist(){
 
 				</table>
 			<br>
-				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<table width="100%" id="client4" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
 							<td>OpenVPN Client 4<span id="client4_Block_Running" style="background: transparent;"></span></td>
@@ -585,7 +584,7 @@ function show_vpnc_rulelist(){
 
 				</table>
 			<br>
-				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+				<table width="100%" id="client5" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 					<thead>
 						<tr>
 							<td>OpenVPN Client 5<span id="client5_Block_Running" style="background: transparent;"></span></td>
