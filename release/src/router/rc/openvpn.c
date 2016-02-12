@@ -438,7 +438,7 @@ void start_vpnclient(int clientNum)
 	// Start the VPN client
 	sprintf(&buffer[0], "/etc/openvpn/vpnclient%d", clientNum);
 	sprintf(&buffer2[0], "/etc/openvpn/client%d", clientNum);
-	taskset_ret = cpu_eval(NULL, (clientNum % 2 == 0 ? CPU1 : CPU0), &buffer[0], "--cd", &buffer2[0], "--config", "config.ovpn");
+	taskset_ret = cpu_eval(NULL, (clientNum % 2 == 0 ? CPU0 : CPU1), &buffer[0], "--cd", &buffer2[0], "--config", "config.ovpn");
 
 	vpnlog(VPN_LOG_INFO,"Starting OpenVPN client %d", clientNum);
 
