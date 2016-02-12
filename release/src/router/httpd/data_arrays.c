@@ -51,6 +51,7 @@
 #include "data_arrays.h"
 #include "httpd.h"
 
+#include <net/route.h>
 
 int
 ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
@@ -395,92 +396,127 @@ static int ipv4_route_table_array(webs_t wp)
 }
 
 
+#ifndef RTF_PREFIX_RT
+#define RTF_PREFIX_RT  0x00080000
+#endif
+#ifndef RTF_EXPIRES
+#define RTF_EXPIRES    0x00400000
+#endif
+#ifndef RTF_ROUTEINFO
+#define RTF_ROUTEINFO  0x00800000
+#endif
+
+const static struct {
+       unsigned int flag;
+       char name;
+} route_flags[] = {
+       { RTF_UP,        'U' },
+       { RTF_GATEWAY,   'G' },
+       { RTF_HOST,      'H' },
+//     { RTF_DYNAMIC,   'N' },
+//     { RTF_MODIFIED,  'M' },
+       { RTF_REJECT,    'R' },
 #ifdef RTCONFIG_IPV6
-int
-INET6_displayroutes_array(webs_t wp)
+       { RTF_DEFAULT,   'D' },
+       { RTF_ADDRCONF,  'A' },
+       { RTF_PREFIX_RT, 'P' },
+       { RTF_EXPIRES,   'E' },
+       { RTF_ROUTEINFO, 'I' },
+//     { RTF_CACHE,     'C' },
+//     { RTF_LOCAL,     'L' },
+#endif
+};
+
+
+#ifdef RTCONFIG_IPV6
+static
+int INET6_displayroutes_array(webs_t wp)
 {
-	char addr6[128], *naddr6;
-	/* In addr6x, we store both 40-byte ':'-delimited ipv6 addresses.
-	 * We read the non-delimited strings into the tail of the buffer
-	 * using fscanf and then modify the buffer by shifting forward
-	 * while inserting ':'s and the nul terminator for the first string.
-	 * Hence the strings are at addr6x and addr6x+40.  This generates
-	 * _much_ less code than the previous (upstream) approach. */
-	char addr6x[80];
-	char iface[16], flags[16];
-	int iflags, metric, refcnt, use, prefix_len, slen;
-	struct sockaddr_in6 snaddr6;
-	int ret = 0;
+	FILE *fp;
+	char buf[256], *str, *dev, *sflags, *route;
+	char sdest[INET6_ADDRSTRLEN], snexthop[INET6_ADDRSTRLEN], ifname[16];
+	struct in6_addr dest, nexthop;
+	int flags, ref, use, metric, prefix;
+	int i, pass, maxlen, routing, ret = 0;
 
-	FILE *fp = fopen("/proc/net/ipv6_route", "r");
+	fp = fopen("/proc/net/ipv6_route", "r");
+	if (fp == NULL)
+		return 0;
 
-	while (1) {
-		int r;
-		r = fscanf(fp, "%32s%x%*s%x%32s%x%x%x%x%s\n",
-				addr6x+14, &prefix_len, &slen, addr6x+40+7,
-				&metric, &use, &refcnt, &iflags, iface);
-		if (r != 9) {
-			if ((r < 0) && feof(fp)) { /* EOF with no (nonspace) chars read. */
-				break;
-			}
-ERROR:
-			perror("fscanf");
-			return ret;
-		}
-
-		/* Do the addr6x shift-and-insert changes to ':'-delimit addresses.
-		 * For now, always do this to validate the proc route format, even
-		 * if the interface is down. */
-		{
-			int i = 0;
-			char *p = addr6x+14;
-
-			do {
-				if (!*p) {
-					if (i == 40) { /* nul terminator for 1st address? */
-						addr6x[39] = 0;	/* Fixup... need 0 instead of ':'. */
-						++p;	/* Skip and continue. */
-						continue;
-					}
-					goto ERROR;
-				}
-				addr6x[i++] = *p++;
-				if (!((i+1) % 5)) {
-					addr6x[i++] = ':';
-				}
-			} while (i < 40+28+7);
-		}
-
-		if (!(iflags & RTF_UP)) { /* Skip interfaces that are down. */
+	pass = maxlen = 0;
+	routing = is_routing_enabled();
+again:
+	while ((str = fgets(buf, sizeof(buf), fp)) != NULL) {
+		if (sscanf(str, "%32s%x%*s%*x%32s%x%x%x%x%15s",
+			   sdest, &prefix, snexthop,
+			   &metric, &ref, &use, &flags, ifname) != 8)
 			continue;
-		}
 
-		ipv6_set_flags(flags, (iflags & IPV6_MASK));
+		/* Skip down and cache routes */
+		if ((flags & (RTF_UP | RTF_CACHE)) != RTF_UP)
+			continue;
+		/* Skip interfaces here */
+		if (strcmp(ifname, "lo") == 0)
+			continue;
 
-		r = 0;
-		do {
-			inet_pton(AF_INET6, addr6x + r,
-					  (struct sockaddr *) &snaddr6.sin6_addr);
-			snaddr6.sin6_family = AF_INET6;
-			naddr6 = INET6_rresolve((struct sockaddr_in6 *) &snaddr6,
-						   0x0fff /* Apparently, upstream never resolves. */
-						   );
-
-			if (!r) {			/* 1st pass */
-				snprintf(addr6, sizeof(addr6), "%s/%d", naddr6, prefix_len);
-				r += 40;
-				free(naddr6);
-			} else {			/* 2nd pass */
-				/* Print the info. */
-				ret += websWrite(wp, "[\"%3s\", \"%s\", \"%s\", \"%d\", \"%d\", \"%d\", \"%s\"],\n",
-						addr6, naddr6, flags, metric, refcnt, use, iface);
-				free(naddr6);
-				break;
+		/* Parse dst, reuse buf */
+		if (inet_raddr6_pton(sdest, &dest, str) < 1)
+			break;
+		if (prefix || !IN6_IS_ADDR_UNSPECIFIED(&dest)) {
+			inet_ntop(AF_INET6, &dest, sdest, sizeof(sdest));
+			if (prefix != 128) {
+				i = strlen(sdest);
+				snprintf(sdest + i, sizeof(sdest) - i, "/%d", prefix);
 			}
-		} while (1);
-	}
+		} else
+			snprintf(sdest, sizeof(sdest), "default");
 
-	return ret;;
+		/* Parse nexthop, reuse buf */
+		if (inet_raddr6_pton(snexthop, &nexthop, str) < 1)
+			break;
+		inet_ntop(AF_INET6, &nexthop, snexthop, sizeof(snexthop));
+
+		/* Format addresses, reuse buf */
+		route = str;
+		i = snprintf(str, buf + sizeof(buf) - str, ((flags & RTF_NONEXTHOP) ||
+			     IN6_IS_ADDR_UNSPECIFIED(&nexthop)) ? "%s" : "%s via %s",
+			     sdest, snexthop);
+		if (pass == 0) {
+			if (maxlen < i)
+				maxlen = i;
+			continue;
+		} else
+			str += i + 1;
+
+		/* Parse flags, reuse buf */
+		sflags = str;
+		for (i = 0; i < ARRAY_SIZE(route_flags); i++) {
+			if (flags & route_flags[i].flag)
+				*str++ = route_flags[i].name;
+		}
+		*str++ = '\0';
+
+		/* Replace known interfaces with LAN/WAN/MAN */
+		dev = NULL;
+		if (nvram_match("lan_ifname", ifname)) /* br0, wl0, etc */
+			dev = "LAN";
+		else if (routing && strcmp(get_wan6face(), ifname) == 0)
+			dev = "WAN";
+
+		/* Print the info. */
+		ret += websWrite(wp, "[\"%3s\", \"%s\", \"%s\", \"%d\", \"%d\", \"%d\", \"%s\", \"%s\"],\n",
+		                      sdest, ((flags & RTF_NONEXTHOP) || IN6_IS_ADDR_UNSPECIFIED(&nexthop)) ? "" : snexthop,
+                                      sflags, metric, ref, use, dev ? : "", ifname);
+
+	}
+	if (pass++ == 0) {
+		if (maxlen > 0)
+			rewind(fp);
+		goto again;
+	}
+	fclose(fp);
+
+	return ret;
 }
 #endif
 
@@ -489,12 +525,6 @@ int
 ej_get_route_array(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret = 0;
-#ifdef RTCONFIG_IPV6
-	FILE *fp;
-	char buf[256];
-	unsigned int fl = 0;
-	int found = 0;
-#endif
 
 	ret += websWrite(wp, "var routearray = [");
 	ret += ipv4_route_table_array(wp);
@@ -503,29 +533,6 @@ ej_get_route_array(int eid, webs_t wp, int argc, char_t **argv)
 	ret += websWrite(wp, "var routev6array = [");
 #ifdef RTCONFIG_IPV6
 	if (get_ipv6_service() != IPV6_DISABLED) {
-
-	if ((fp = fopen("/proc/net/if_inet6", "r")) == (FILE*)0) {
-		ret += websWrite(wp, "[]];\n");
-		return ret;
-	}
-	while (fgets(buf, 256, fp) != NULL)
-	{
-		if(strstr(buf, "br0") == (char*) 0)
-			continue;
-
-		if (sscanf(buf, "%*s %*02x %*02x %02x", &fl) != 1)
-			continue;
-
-		if ((fl & 0xF0) == 0x20)
-		{
-			/* Link-Local Address is ready */
-			found = 1;
-			break;
-		}
-	}
-	fclose(fp);
-
-	if (found)
 		INET6_displayroutes_array(wp);
 	}
 #endif

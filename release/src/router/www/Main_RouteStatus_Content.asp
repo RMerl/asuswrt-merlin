@@ -67,12 +67,13 @@ function show_routev6() {
 	var code, i, line;
 
 	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
-	code += '<thead><tr><td colspan="6">IPv6 Routing table</td></tr></thead>';
-	code += '<tr><th width="50%">Destination<br><span style="color:#FFCC00;">Next Hop</span></th>';
+	code += '<thead><tr><td colspan="7">IPv6 Routing table</td></tr></thead>';
+	code += '<tr><th width="40%">Destination<br><span style="color:#FFCC00;">Next Hop</span></th>';
 	code += '<th width="10%">Flags</th>';
 	code += '<th width="10%">Metric</th>';
 	code += '<th width="10%">Ref</th>';
 	code += '<th width="10%">Use</th>';
+	code += '<th width="10%">Dev</th>';
 	code += '<th width="10%">Iface</th>';
 	code += '</tr>';
 
@@ -87,10 +88,11 @@ function show_routev6() {
 			code += '<td>' + line[4] + '</td>';
 			code += '<td>' + line[5] + '</td>';
 			code += '<td>' + line[6] + '</td>';
+			code += '<td>' + line[7] + '</td>';
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="6"><span>No IPv6 routes.</span></td></tr>';
+		code += '<tr><td colspan="7"><span>No IPv6 routes.</span></td></tr>';
 	}
 
 	code += '</tr></table>';

@@ -5050,7 +5050,7 @@ const static struct {
 };
 
 #ifdef RTCONFIG_IPV6
-static int inet_raddr6_pton(const char *src, void *dst, void *buf)
+int inet_raddr6_pton(const char *src, void *dst, void *buf)
 {
 	char *sptr = (char *) src;
 	char *dptr = buf;
@@ -5065,6 +5065,7 @@ static int inet_raddr6_pton(const char *src, void *dst, void *buf)
 	return inet_pton(AF_INET6, buf, dst);
 }
 
+#if 0
 static int ipv6_route_table(webs_t wp)
 {
 	FILE *fp;
@@ -5159,7 +5160,9 @@ again:
 	return ret;
 }
 #endif
+#endif // 0
 
+#if 0
 static int ipv4_route_table(webs_t wp)
 {
 	FILE *fp;
@@ -5253,6 +5256,7 @@ ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+#endif // 0
 
 static int ej_get_arp_table(int eid, webs_t wp, int argc, char_t **argv){
 	const int MAX = 80;
