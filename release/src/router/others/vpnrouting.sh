@@ -22,7 +22,7 @@ create_client_list(){
 			TARGET_LOOKUP=$VPN_TBL
 			VPN_PRIO=$((VPN_PRIO+1))
 			RULE_PRIO=$VPN_PRIO
-			TARGET_NAME="VPN"
+			TARGET_NAME="VPN client "$VPN_UNIT
 		fi
 		VPN_IP=$(echo $ENTRY | cut -d ">" -f 2)
 		if [ "$VPN_IP" != "0.0.0.0" ]
@@ -45,7 +45,7 @@ create_client_list(){
 		if [ "$SRCC" != "" -o "$DSTC" != "" ]
 		then
 			ip rule add $SRCC $SRCA $DSTC $DSTA table $TARGET_LOOKUP priority $RULE_PRIO
-			logger -t "openvpn-routing" "Added $VPN_IP to $DST_IP through $TARGET_NAME to routing policy"
+			logger -t "openvpn-routing" "Adding route for $VPN_IP to $DST_IP through $TARGET_NAME"
 		fi
 	done
 	IFS=$OLDIFS
@@ -86,35 +86,30 @@ init_table(){
 if [ "$dev" == "tun11" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client1_clientlist)
-	VPN_TBL=111
 	VPN_REDIR=$(nvram get vpn_client1_rgw)
 	VPN_FORCE=$(nvram get vpn_client1_enforce)
 	VPN_UNIT=1
 elif [ "$dev" == "tun12" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client2_clientlist)
-	VPN_TBL=112
 	VPN_REDIR=$(nvram get vpn_client2_rgw)
 	VPN_FORCE=$(nvram get vpn_client2_enforce)
 	VPN_UNIT=2
 elif [ "$dev" == "tun13" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client3_clientlist)
-	VPN_TBL=113
 	VPN_REDIR=$(nvram get vpn_client3_rgw)
 	VPN_FORCE=$(nvram get vpn_client3_enforce)
 	VPN_UNIT=3
 elif [ "$dev" == "tun14" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client4_clientlist)
-	VPN_TBL=114
 	VPN_REDIR=$(nvram get vpn_client4_rgw)
 	VPN_FORCE=$(nvram get vpn_client4_enforce)
 	VPN_UNIT=4
 elif [ "$dev" == "tun15" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client5_clientlist)
-	VPN_TBL=115
 	VPN_REDIR=$(nvram get vpn_client5_rgw)
 	VPN_FORCE=$(nvram get vpn_client5_enforce)
 	VPN_UNIT=5
@@ -123,6 +118,7 @@ else
 	exit 0
 fi
 
+VPN_TBL="ovpnc"$VPN_UNIT
 START_PRIO=$((1000+(200*($VPN_UNIT-1))))
 END_PRIO=$(($START_PRIO+199))
 WAN_PRIO=$START_PRIO
@@ -187,7 +183,7 @@ then
 	for NET in $NET_LIST
 	do
 		ip route del $NET dev $dev
-		logger -t "openvpn-routing" "Removing route for $NET to $dev from routing tables"
+		logger -t "openvpn-routing" "Removing route for $NET to $dev from main routing table"
 	done
 
 # Update policy rules
@@ -213,7 +209,7 @@ then
 fi	# End route-up
 
 ip route flush cache
-logger -t "openvpn-routing" "Completed routing policy configuration"
+logger -t "openvpn-routing" "Completed routing policy configuration for client $VPN_UNIT"
 run_custom_script
 
 exit 0
