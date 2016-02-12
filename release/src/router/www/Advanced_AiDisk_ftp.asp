@@ -444,7 +444,7 @@ function resultOfSwitchWanStatus(){
 
 function onEvent(){
 	// account action buttons
-	if(get_manage_type(PROTOCOL) == 1 && accounts.length < 6){
+	if(get_manage_type(PROTOCOL) == 1 && accounts.length < 11){
 		changeActionButton(document.getElementById("createAccountBtn"), 'User', 'Add', 0);
 		
 		document.getElementById("createAccountBtn").onclick = function(){
@@ -463,7 +463,7 @@ function onEvent(){
 		document.getElementById("createAccountBtn").onclick = function(){};
 		document.getElementById("createAccountBtn").onmouseover = function(){};
 		document.getElementById("createAccountBtn").onmouseout = function(){};
-		document.getElementById("createAccountBtn").title = (accounts.length < 6)?"<#AddAccountTitle#>":"<#account_overflow#>";
+		document.getElementById("createAccountBtn").title = (accounts.length < 11)?"<#AddAccountTitle#>":"<#account_overflow#>";
 	}
 	
 	if(this.accounts.length > 0 && this.selectedAccount != null && this.selectedAccount.length > 0 && this.accounts[0] != this.selectedAccount){
