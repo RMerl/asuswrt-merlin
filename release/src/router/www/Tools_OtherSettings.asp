@@ -946,6 +946,13 @@ function done_validating(action){
 							<input type="radio" name="upnp_secure" class="input" value="0" <% nvram_match_x("", "upnp_secure", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
+					<tr>
+						<th>DLNA: Run a full media rescan at start (default: Yes)</th>
+						<td>
+							<input type="radio" name="dms_rescan" class="input" value="1" <% nvram_match_x("", "dms_rescan", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="dms_rescan" class="input" value="0" <% nvram_match_x("", "dms_rescan", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
 				</table>
 				<div class="apply_gen">
 					<input name="button" type="button" class="button_gen" onclick="validate();" value="<#CTL_apply#>"/>
