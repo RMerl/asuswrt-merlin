@@ -600,12 +600,12 @@ sub process_file($)
 
 	if ($opt_parse_idl_tree) {
 		$pidl = LoadStructure($idl_file);
-		defined $pidl || die "Failed to load $idl_file";
+		$pidl || die "Failed to load $idl_file";
 	} else {
 		require Parse::Pidl::IDL;
 
 		$pidl = Parse::Pidl::IDL::parse_file($idl_file, \@opt_incdirs);
-		defined @$pidl || die "Failed to parse $idl_file";
+		@$pidl || die "Failed to parse $idl_file";
 	}
 
 	require Parse::Pidl::Typelist;
