@@ -1,4 +1,4 @@
-.TH DJPEG 1 "22 August 1997"
+.TH DJPEG 1 "21 November 2014"
 .SH NAME
 djpeg \- decompress a JPEG file to an image file
 .SH SYNOPSIS
@@ -55,15 +55,19 @@ default options are chosen for highest quality output.)  Currently, this is
 equivalent to \fB\-dct fast \-nosmooth \-onepass \-dither ordered\fR.
 .TP
 .B \-grayscale
-Force gray-scale output even if JPEG file is color.  Useful for viewing on
+Force grayscale output even if JPEG file is color.  Useful for viewing on
 monochrome displays; also,
 .B djpeg
 runs noticeably faster in this mode.
 .TP
+.B \-rgb
+Force RGB output even if JPEG file is grayscale.
+.TP
 .BI \-scale " M/N"
 Scale the output image by a factor M/N.  Currently the scale factor must be
-1/1, 1/2, 1/4, or 1/8.  Scaling is handy if the image is larger than your
-screen; also,
+M/8, where M is an integer between 1 and 16 inclusive, or any reduced fraction
+thereof (such as 1/2, 3/4, etc.)  Scaling is handy if the image is larger than
+your screen; also,
 .B djpeg
 runs much faster when scaling down the output.
 .TP
@@ -73,7 +77,7 @@ emitted if
 .B \-colors
 or
 .B \-grayscale
-is specified, or if the JPEG file is gray-scale; otherwise, 24-bit full-color
+is specified, or if the JPEG file is grayscale; otherwise, 24-bit full-color
 format is emitted.
 .TP
 .B \-gif
@@ -87,12 +91,12 @@ emitted if
 .B \-colors
 or
 .B \-grayscale
-is specified, or if the JPEG file is gray-scale; otherwise, 24-bit full-color
+is specified, or if the JPEG file is grayscale; otherwise, 24-bit full-color
 format is emitted.
 .TP
 .B \-pnm
 Select PBMPLUS (PPM/PGM) output format (this is the default format).
-PGM is emitted if the JPEG file is gray-scale or if
+PGM is emitted if the JPEG file is grayscale or if
 .B \-grayscale
 is specified; otherwise PPM is emitted.
 .TP
@@ -100,8 +104,8 @@ is specified; otherwise PPM is emitted.
 Select RLE output format.  (Requires URT library.)
 .TP
 .B \-targa
-Select Targa output format.  Gray-scale format is emitted if the JPEG file is
-gray-scale or if
+Select Targa output format.  Grayscale format is emitted if the JPEG file is
+grayscale or if
 .B \-grayscale
 is specified; otherwise, colormapped format is emitted if
 .B \-colors
@@ -114,14 +118,28 @@ Use integer DCT method (default).
 .TP
 .B \-dct fast
 Use fast integer DCT (less accurate).
+In libjpeg-turbo, the fast method is generally about 5-15% faster than the int
+method when using the x86/x86-64 SIMD extensions (results may vary with other
+SIMD implementations, or when using libjpeg-turbo without SIMD extensions.)  If
+the JPEG image was compressed using a quality level of 85 or below, then there
+should be little or no perceptible difference between the two algorithms.  When
+decompressing images that were compressed using quality levels above 85,
+however, the difference between the fast and int methods becomes more
+pronounced.  With images compressed using quality=97, for instance, the fast
+method incurs generally about a 4-6 dB loss (in PSNR) relative to the int
+method, but this can be larger for some images.  If you can avoid it, do not
+use the fast method when decompressing images that were compressed using
+quality levels above 97.  The algorithm often degenerates for such images and
+can actually produce a more lossy output image than if the JPEG image had been
+compressed using lower quality levels.
 .TP
 .B \-dct float
 Use floating-point DCT method.
-The float method is very slightly more accurate than the int method, but is
-much slower unless your machine has very fast floating-point hardware.  Also
-note that results of the floating-point method may vary slightly across
-machines, while the integer methods should give the same results everywhere.
-The fast integer method is much less accurate than the other two.
+The float method is mainly a legacy feature.  It does not produce significantly
+more accurate results than the int method, and it is much slower.  The float
+method may also give different results on different machines due to varying
+roundoff behavior, whereas the integer methods should give the same results on
+all machines.
 .TP
 .B \-dither fs
 Use Floyd-Steinberg dithering in color quantization.
@@ -159,7 +177,7 @@ faster and needs less memory, but it produces a lower-quality image.
 is ignored unless you also say
 .B \-colors
 .IR N .
-Also, the one-pass method is always used for gray-scale output (the two-pass
+Also, the one-pass method is always used for grayscale output (the two-pass
 method is no improvement then).
 .TP
 .BI \-maxmemory " N"
@@ -172,6 +190,10 @@ selects 4000000 bytes.  If more space is needed, temporary files will be used.
 .BI \-outfile " name"
 Send output image to the named file, not to standard output.
 .TP
+.BI \-memsrc
+Load input file into memory before decompressing.  This feature was implemented
+mainly as a way of testing the in-memory source manager (jpeg_mem_src().)
+.TP
 .B \-verbose
 Enable debug printout.  More
 .BR \-v 's
@@ -180,6 +202,9 @@ give more output.  Also, version information is printed at startup.
 .B \-debug
 Same as
 .BR \-verbose .
+.TP
+.B \-version
+Print version information and exit.
 .SH EXAMPLES
 .LP
 This example decompresses the JPEG file foo.jpg, quantizes it to
@@ -242,12 +267,12 @@ Wallace, Gregory K.  "The JPEG Still Picture Compression Standard",
 Communications of the ACM, April 1991 (vol. 34, no. 4), pp. 30-44.
 .SH AUTHOR
 Independent JPEG Group
-.SH BUGS
-Arithmetic coding is not supported for legal reasons.
 .PP
+This file was modified by The libjpeg-turbo Project to include only information
+relevant to libjpeg-turbo, to wordsmith certain sections, and to describe
+features not present in libjpeg.
+.SH BUGS
 To avoid the Unisys LZW patent,
 .B djpeg
 produces uncompressed GIF files.  These are larger than they should be, but
 are readable by standard GIF decoders.
-.PP
-Still not as fast as we'd like.

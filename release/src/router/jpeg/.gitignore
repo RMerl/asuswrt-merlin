@@ -9,4 +9,11 @@ config.log
 config.status
 jconfig.h
 Makefile
-stamp-h1
+stamp-h*
+tjbench
+tjbenchtest
+wrjpgcom
+rdjpgcom
+jcstest
+djpeg
+cjpeg

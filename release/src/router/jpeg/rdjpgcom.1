@@ -1,8 +1,11 @@
-.TH RDJPGCOM 1 "11 October 1997"
+.TH RDJPGCOM 1 "02 April 2009"
 .SH NAME
 rdjpgcom \- display text comments from a JPEG file
 .SH SYNOPSIS
 .B rdjpgcom
+[
+.B \-raw
+]
 [
 .B \-verbose
 ]
@@ -25,6 +28,12 @@ file.  The maximum size of a COM block is 64K, but you can have as many of
 them as you like in one JPEG file.
 .SH OPTIONS
 .TP
+.B \-raw
+Normally
+.B rdjpgcom
+escapes non-printable characters in comments, for security reasons.
+This option avoids that.
+.PP
 .B \-verbose
 Causes
 .B rdjpgcom

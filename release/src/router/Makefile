@@ -2786,11 +2786,11 @@ endif
 
 jpeg/stamp-h1:
 	cd jpeg && \
-	CFLAGS="-Os $(EXTRACFLAGS) -fPIC" CC=$(CC) AR2="touch" $(CONFIGURE) --enable-maxmem=1 --enable-shared --enable-static --prefix=''
+	CFLAGS="-Os $(EXTRACFLAGS) -fPIC" CC=$(CC) AR2="touch" $(CONFIGURE) --enable-shared --enable-static --without-turbojpeg --without-mem-srcdst --prefix=''
 	touch $@
 
 jpeg: jpeg/stamp-h1
-	@$(MAKE) -C jpeg LIBTOOL="" O=o A=a CC=$(CC) AR2="touch" libjpeg.a libjpeg.so $(PARALLEL_BUILD)
+	@$(MAKE) -C jpeg CC=$(CC) AR2="touch" $(PARALLEL_BUILD)
 
 jpeg-clean:
 	-@$(MAKE) -C jpeg clean
@@ -2799,7 +2799,7 @@ jpeg-clean:
 jpeg-install: jpeg
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
-	install -D jpeg/libjpeg.so $(INSTALLDIR)/jpeg/usr/lib/libjpeg.so
+	install -D jpeg/.libs/libjpeg.so $(INSTALLDIR)/jpeg/usr/lib/libjpeg.so
 	$(STRIP) $(INSTALLDIR)/jpeg/usr/lib/libjpeg.so
 endif
 
@@ -2922,7 +2922,7 @@ minidlna-configure:
 		-I$(TOP)/libvorbis/include -I$(TOP)/shared" \
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections \
 		-L$(TOP)/zlib -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections \
-		-L$(TOP)/zlib -L$(TOP)/sqlite/.libs -L$(TOP)/jpeg -L$(TOP)/libvorbis/lib/.libs \
+		-L$(TOP)/zlib -L$(TOP)/sqlite/.libs -L$(TOP)/jpeg/.libs -L$(TOP)/libvorbis/lib/.libs \
 		-L$(TOP)/libogg/src/.libs -L$(TOP)/libexif/libexif/.libs -L$(TOP)/flac/src/libFLAC/.libs \
 		-L$(TOP)/ffmpeg/libavutil -L$(TOP)/ffmpeg/libavcodec -L$(TOP)/ffmpeg/libavformat \
 		-L$(TOP)/libid3tag/.libs" \

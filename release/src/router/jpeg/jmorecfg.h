@@ -1,26 +1,17 @@
 /*
  * jmorecfg.h
  *
+ * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1991-1997, Thomas G. Lane.
- * This file is part of the Independent JPEG Group's software.
+ * Modified 1997-2009 by Guido Vollbeding.
+ * libjpeg-turbo Modifications:
+ * Copyright (C) 2009, 2011, 2014-2015, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains additional configuration options that customize the
  * JPEG software for special applications or support machine-dependent
  * optimizations.  Most users will not need to touch this file.
  */
-
-
-/*
- * Define BITS_IN_JSAMPLE as either
- *   8   for 8-bit sample values (the usual setting)
- *   12  for 12-bit sample values
- * Only 8 and 12 are legal data precisions for lossy JPEG according to the
- * JPEG standard, and the IJG code does not support anything else!
- * We do not support run-time selection of data precision, sorry.
- */
-
-#define BITS_IN_JSAMPLE  8	/* use 8 or 12 */
 
 
 /*
@@ -32,7 +23,7 @@
  * bytes of storage, whether actually used in an image or not.)
  */
 
-#define MAX_COMPONENTS  10	/* maximum number of image components */
+#define MAX_COMPONENTS  10      /* maximum number of image components */
 
 
 /*
@@ -62,16 +53,16 @@ typedef unsigned char JSAMPLE;
 #else /* not HAVE_UNSIGNED_CHAR */
 
 typedef char JSAMPLE;
-#ifdef CHAR_IS_UNSIGNED
+#ifdef __CHAR_UNSIGNED__
 #define GETJSAMPLE(value)  ((int) (value))
 #else
 #define GETJSAMPLE(value)  ((int) (value) & 0xFF)
-#endif /* CHAR_IS_UNSIGNED */
+#endif /* __CHAR_UNSIGNED__ */
 
 #endif /* HAVE_UNSIGNED_CHAR */
 
-#define MAXJSAMPLE	255
-#define CENTERJSAMPLE	128
+#define MAXJSAMPLE      255
+#define CENTERJSAMPLE   128
 
 #endif /* BITS_IN_JSAMPLE == 8 */
 
@@ -84,8 +75,8 @@ typedef char JSAMPLE;
 typedef short JSAMPLE;
 #define GETJSAMPLE(value)  ((int) (value))
 
-#define MAXJSAMPLE	4095
-#define CENTERJSAMPLE	2048
+#define MAXJSAMPLE      4095
+#define CENTERJSAMPLE   2048
 
 #endif /* BITS_IN_JSAMPLE == 12 */
 
@@ -113,11 +104,11 @@ typedef unsigned char JOCTET;
 #else /* not HAVE_UNSIGNED_CHAR */
 
 typedef char JOCTET;
-#ifdef CHAR_IS_UNSIGNED
+#ifdef __CHAR_UNSIGNED__
 #define GETJOCTET(value)  (value)
 #else
 #define GETJOCTET(value)  ((value) & 0xFF)
-#endif /* CHAR_IS_UNSIGNED */
+#endif /* __CHAR_UNSIGNED__ */
 
 #endif /* HAVE_UNSIGNED_CHAR */
 
@@ -134,11 +125,11 @@ typedef char JOCTET;
 #ifdef HAVE_UNSIGNED_CHAR
 typedef unsigned char UINT8;
 #else /* not HAVE_UNSIGNED_CHAR */
-#ifdef CHAR_IS_UNSIGNED
+#ifdef __CHAR_UNSIGNED__
 typedef char UINT8;
-#else /* not CHAR_IS_UNSIGNED */
+#else /* not __CHAR_UNSIGNED__ */
 typedef short UINT8;
-#endif /* CHAR_IS_UNSIGNED */
+#endif /* __CHAR_UNSIGNED__ */
 #endif /* HAVE_UNSIGNED_CHAR */
 
 /* UINT16 must hold at least the values 0..65535. */
@@ -151,21 +142,30 @@ typedef unsigned int UINT16;
 
 /* INT16 must hold at least the values -32768..32767. */
 
-#ifndef XMD_H			/* X11/xmd.h correctly defines INT16 */
+#ifndef XMD_H                   /* X11/xmd.h correctly defines INT16 */
 typedef short INT16;
 #endif
 
 /* INT32 must hold at least signed 32-bit values. */
 
-#ifndef XMD_H			/* X11/xmd.h correctly defines INT32 */
+#ifndef XMD_H                   /* X11/xmd.h correctly defines INT32 */
+#ifndef _BASETSD_H_		/* Microsoft defines it in basetsd.h */
+#ifndef _BASETSD_H		/* MinGW is slightly different */
+#ifndef QGLOBAL_H		/* Qt defines it in qglobal.h */
+#define __INT32_IS_ACTUALLY_LONG
 typedef long INT32;
+#endif
+#endif
+#endif
 #endif
 
 /* Datatype used for image dimensions.  The JPEG standard only supports
  * images up to 64K*64K due to 16-bit fields in SOF markers.  Therefore
  * "unsigned int" is sufficient on all machines.  However, if you need to
  * handle larger images and you don't mind deviating from the spec, you
- * can change this datatype.
+ * can change this datatype.  (Note that changing this datatype will
+ * potentially require modifying the SIMD code.  The x86-64 SIMD extensions,
+ * in particular, assume a 32-bit JDIMENSION.)
  */
 
 typedef unsigned int JDIMENSION;
@@ -181,39 +181,31 @@ typedef unsigned int JDIMENSION;
  */
 
 /* a function called through method pointers: */
-#define METHODDEF(type)		static type
+#define METHODDEF(type)         static type
 /* a function used only in its module: */
-#define LOCAL(type)		static type
+#define LOCAL(type)             static type
 /* a function referenced thru EXTERNs: */
-#define GLOBAL(type)		type
+#define GLOBAL(type)            type
 /* a reference to a GLOBAL function: */
-#define EXTERN(type)		extern type
+#define EXTERN(type)            extern type
 
 
-/* This macro is used to declare a "method", that is, a function pointer.
- * We want to supply prototype parameters if the compiler can cope.
- * Note that the arglist parameter must be parenthesized!
- * Again, you can customize this if you need special linkage keywords.
+/* Originally, this macro was used as a way of defining function prototypes
+ * for both modern compilers as well as older compilers that did not support
+ * prototype parameters.  libjpeg-turbo has never supported these older,
+ * non-ANSI compilers, but the macro is still included because there is some
+ * software out there that uses it.
  */
 
-#ifdef HAVE_PROTOTYPES
 #define JMETHOD(type,methodname,arglist)  type (*methodname) arglist
-#else
-#define JMETHOD(type,methodname,arglist)  type (*methodname) ()
-#endif
 
 
-/* Here is the pseudo-keyword for declaring pointers that must be "far"
- * on 80x86 machines.  Most of the specialized coding for 80x86 is handled
- * by just saying "FAR *" where such a pointer is needed.  In a few places
- * explicit coding is needed; see uses of the NEED_FAR_POINTERS symbol.
+/* libjpeg-turbo no longer supports platforms that have far symbols (MS-DOS),
+ * but again, some software relies on this macro.
  */
 
-#ifdef NEED_FAR_POINTERS
-#define FAR  far
-#else
+#undef FAR
 #define FAR
-#endif
 
 
 /*
@@ -226,11 +218,11 @@ typedef unsigned int JDIMENSION;
 #ifndef HAVE_BOOLEAN
 typedef int boolean;
 #endif
-#ifndef FALSE			/* in case these macros already exist */
-#define FALSE	0		/* values of boolean */
+#ifndef FALSE                   /* in case these macros already exist */
+#define FALSE   0               /* values of boolean */
 #endif
 #ifndef TRUE
-#define TRUE	1
+#define TRUE    1
 #endif
 
 
@@ -256,20 +248,17 @@ typedef int boolean;
  * (You may HAVE to do that if your compiler doesn't like null source files.)
  */
 
-/* Arithmetic coding is unsupported for legal reasons.  Complaints to IBM. */
-
 /* Capability options common to encoder and decoder: */
 
-#define DCT_ISLOW_SUPPORTED	/* slow but accurate integer algorithm */
-#define DCT_IFAST_SUPPORTED	/* faster, less accurate integer method */
-#define DCT_FLOAT_SUPPORTED	/* floating-point: accurate, fast on fast HW */
+#define DCT_ISLOW_SUPPORTED     /* slow but accurate integer algorithm */
+#define DCT_IFAST_SUPPORTED     /* faster, less accurate integer method */
+#define DCT_FLOAT_SUPPORTED     /* floating-point: accurate, fast on fast HW */
 
 /* Encoder capability options: */
 
-#undef  C_ARITH_CODING_SUPPORTED    /* Arithmetic coding back end? */
 #define C_MULTISCAN_FILES_SUPPORTED /* Multiple-scan JPEG files? */
-#define C_PROGRESSIVE_SUPPORTED	    /* Progressive JPEG? (Requires MULTISCAN)*/
-#define ENTROPY_OPT_SUPPORTED	    /* Optimization of entropy coding parms? */
+#define C_PROGRESSIVE_SUPPORTED     /* Progressive JPEG? (Requires MULTISCAN)*/
+#define ENTROPY_OPT_SUPPORTED       /* Optimization of entropy coding parms? */
 /* Note: if you selected 12-bit data precision, it is dangerous to turn off
  * ENTROPY_OPT_SUPPORTED.  The standard Huffman tables are only good for 8-bit
  * precision, so jchuff.c normally uses entropy optimization to compute
@@ -282,57 +271,106 @@ typedef int boolean;
 
 /* Decoder capability options: */
 
-#undef  D_ARITH_CODING_SUPPORTED    /* Arithmetic coding back end? */
 #define D_MULTISCAN_FILES_SUPPORTED /* Multiple-scan JPEG files? */
-#define D_PROGRESSIVE_SUPPORTED	    /* Progressive JPEG? (Requires MULTISCAN)*/
-#define SAVE_MARKERS_SUPPORTED	    /* jpeg_save_markers() needed? */
+#define D_PROGRESSIVE_SUPPORTED     /* Progressive JPEG? (Requires MULTISCAN)*/
+#define SAVE_MARKERS_SUPPORTED      /* jpeg_save_markers() needed? */
 #define BLOCK_SMOOTHING_SUPPORTED   /* Block smoothing? (Progressive only) */
-#define IDCT_SCALING_SUPPORTED	    /* Output rescaling via IDCT? */
+#define IDCT_SCALING_SUPPORTED      /* Output rescaling via IDCT? */
 #undef  UPSAMPLE_SCALING_SUPPORTED  /* Output rescaling at upsample stage? */
 #define UPSAMPLE_MERGING_SUPPORTED  /* Fast path for sloppy upsampling? */
-#define QUANT_1PASS_SUPPORTED	    /* 1-pass color quantization? */
-#define QUANT_2PASS_SUPPORTED	    /* 2-pass color quantization? */
+#define QUANT_1PASS_SUPPORTED       /* 1-pass color quantization? */
+#define QUANT_2PASS_SUPPORTED       /* 2-pass color quantization? */
 
 /* more capability options later, no doubt */
 
 
 /*
- * Ordering of RGB data in scanlines passed to or from the application.
- * If your application wants to deal with data in the order B,G,R, just
- * change these macros.  You can also deal with formats such as R,G,B,X
- * (one extra byte per pixel) by changing RGB_PIXELSIZE.  Note that changing
- * the offsets will also change the order in which colormap data is organized.
- * RESTRICTIONS:
- * 1. The sample applications cjpeg,djpeg do NOT support modified RGB formats.
- * 2. These macros only affect RGB<=>YCbCr color conversion, so they are not
- *    useful if you are using JPEG color spaces other than YCbCr or grayscale.
- * 3. The color quantizer modules will not behave desirably if RGB_PIXELSIZE
- *    is not 3 (they don't understand about dummy color components!).  So you
- *    can't use color quantization if you change that value.
+ * The RGB_RED, RGB_GREEN, RGB_BLUE, and RGB_PIXELSIZE macros are a vestigial
+ * feature of libjpeg.  The idea was that, if an application developer needed
+ * to compress from/decompress to a BGR/BGRX/RGBX/XBGR/XRGB buffer, they could
+ * change these macros, rebuild libjpeg, and link their application statically
+ * with it.  In reality, few people ever did this, because there were some
+ * severe restrictions involved (cjpeg and djpeg no longer worked properly,
+ * compressing/decompressing RGB JPEGs no longer worked properly, and the color
+ * quantizer wouldn't work with pixel sizes other than 3.)  Further, since all
+ * of the O/S-supplied versions of libjpeg were built with the default values
+ * of RGB_RED, RGB_GREEN, RGB_BLUE, and RGB_PIXELSIZE, many applications have
+ * come to regard these values as immutable.
+ *
+ * The libjpeg-turbo colorspace extensions provide a much cleaner way of
+ * compressing from/decompressing to buffers with arbitrary component orders
+ * and pixel sizes.  Thus, we do not support changing the values of RGB_RED,
+ * RGB_GREEN, RGB_BLUE, or RGB_PIXELSIZE.  In addition to the restrictions
+ * listed above, changing these values will also break the SIMD extensions and
+ * the regression tests.
  */
 
-#define RGB_RED		0	/* Offset of Red in an RGB scanline element */
-#define RGB_GREEN	1	/* Offset of Green */
-#define RGB_BLUE	2	/* Offset of Blue */
-#define RGB_PIXELSIZE	3	/* JSAMPLEs per RGB scanline element */
+#define RGB_RED         0       /* Offset of Red in an RGB scanline element */
+#define RGB_GREEN       1       /* Offset of Green */
+#define RGB_BLUE        2       /* Offset of Blue */
+#define RGB_PIXELSIZE   3       /* JSAMPLEs per RGB scanline element */
 
+#define JPEG_NUMCS 17
+
+#define EXT_RGB_RED        0
+#define EXT_RGB_GREEN      1
+#define EXT_RGB_BLUE       2
+#define EXT_RGB_PIXELSIZE  3
+
+#define EXT_RGBX_RED       0
+#define EXT_RGBX_GREEN     1
+#define EXT_RGBX_BLUE      2
+#define EXT_RGBX_PIXELSIZE 4
+
+#define EXT_BGR_RED        2
+#define EXT_BGR_GREEN      1
+#define EXT_BGR_BLUE       0
+#define EXT_BGR_PIXELSIZE  3
+
+#define EXT_BGRX_RED       2
+#define EXT_BGRX_GREEN     1
+#define EXT_BGRX_BLUE      0
+#define EXT_BGRX_PIXELSIZE 4
+
+#define EXT_XBGR_RED       3
+#define EXT_XBGR_GREEN     2
+#define EXT_XBGR_BLUE      1
+#define EXT_XBGR_PIXELSIZE 4
+
+#define EXT_XRGB_RED       1
+#define EXT_XRGB_GREEN     2
+#define EXT_XRGB_BLUE      3
+#define EXT_XRGB_PIXELSIZE 4
+
+static const int rgb_red[JPEG_NUMCS] = {
+  -1, -1, RGB_RED, -1, -1, -1, EXT_RGB_RED, EXT_RGBX_RED,
+  EXT_BGR_RED, EXT_BGRX_RED, EXT_XBGR_RED, EXT_XRGB_RED,
+  EXT_RGBX_RED, EXT_BGRX_RED, EXT_XBGR_RED, EXT_XRGB_RED,
+  -1
+};
+
+static const int rgb_green[JPEG_NUMCS] = {
+  -1, -1, RGB_GREEN, -1, -1, -1, EXT_RGB_GREEN, EXT_RGBX_GREEN,
+  EXT_BGR_GREEN, EXT_BGRX_GREEN, EXT_XBGR_GREEN, EXT_XRGB_GREEN,
+  EXT_RGBX_GREEN, EXT_BGRX_GREEN, EXT_XBGR_GREEN, EXT_XRGB_GREEN,
+  -1
+};
+
+static const int rgb_blue[JPEG_NUMCS] = {
+  -1, -1, RGB_BLUE, -1, -1, -1, EXT_RGB_BLUE, EXT_RGBX_BLUE,
+  EXT_BGR_BLUE, EXT_BGRX_BLUE, EXT_XBGR_BLUE, EXT_XRGB_BLUE,
+  EXT_RGBX_BLUE, EXT_BGRX_BLUE, EXT_XBGR_BLUE, EXT_XRGB_BLUE,
+  -1
+};
+
+static const int rgb_pixelsize[JPEG_NUMCS] = {
+  -1, -1, RGB_PIXELSIZE, -1, -1, -1, EXT_RGB_PIXELSIZE, EXT_RGBX_PIXELSIZE,
+  EXT_BGR_PIXELSIZE, EXT_BGRX_PIXELSIZE, EXT_XBGR_PIXELSIZE, EXT_XRGB_PIXELSIZE,
+  EXT_RGBX_PIXELSIZE, EXT_BGRX_PIXELSIZE, EXT_XBGR_PIXELSIZE, EXT_XRGB_PIXELSIZE,
+  -1
+};
 
 /* Definitions for speed-related optimizations. */
-
-
-/* If your compiler supports inline functions, define INLINE
- * as the inline keyword; otherwise define it as empty.
- */
-
-#ifndef INLINE
-#ifdef __GNUC__			/* for instance, GNU C knows about inline */
-#define INLINE __inline__
-#endif
-#ifndef INLINE
-#define INLINE			/* default is to define it as empty */
-#endif
-#endif
-
 
 /* On some machines (notably 68000 series) "int" is 32 bits, but multiplying
  * two 16-bit shorts is faster than multiplying two ints.  Define MULTIPLIER
@@ -340,24 +378,21 @@ typedef int boolean;
  */
 
 #ifndef MULTIPLIER
-#define MULTIPLIER  int		/* type for fastest integer multiply */
+#ifndef WITH_SIMD
+#define MULTIPLIER  int         /* type for fastest integer multiply */
+#else
+#define MULTIPLIER short  /* prefer 16-bit with SIMD for parellelism */
+#endif
 #endif
 
 
 /* FAST_FLOAT should be either float or double, whichever is done faster
  * by your compiler.  (Note that this type is only used in the floating point
  * DCT routines, so it only matters if you've defined DCT_FLOAT_SUPPORTED.)
- * Typically, float is faster in ANSI C compilers, while double is faster in
- * pre-ANSI compilers (because they insist on converting to double anyway).
- * The code below therefore chooses float if we have ANSI-style prototypes.
  */
 
 #ifndef FAST_FLOAT
-#ifdef HAVE_PROTOTYPES
 #define FAST_FLOAT  float
-#else
-#define FAST_FLOAT  double
-#endif
 #endif
 
 #endif /* JPEG_INTERNAL_OPTIONS */
