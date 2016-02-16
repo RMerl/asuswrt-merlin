@@ -1,9 +1,9 @@
-/* $Id: ipfwrdr.c,v 1.12 2012/02/11 13:10:57 nanard Exp $ */
+/* $Id: ipfwrdr.c,v 1.16 2016/02/12 13:44:01 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2009 Jardel Weyrich
- * (c) 2011-2012 Thomas Bernard
+ * (c) 2011-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution
  */
@@ -430,7 +430,7 @@ get_portmappings_in_range(unsigned short startport,
                           int proto,
                           unsigned int * number)
 {
-	unsigned short * array = NULL;
+	unsigned short *array = NULL, *array2 = NULL;
 	unsigned int capacity = 128;
 	int i, count_rules, total_rules = 0;
 	struct ip_fw * rules = NULL;
@@ -459,12 +459,14 @@ get_portmappings_in_range(unsigned short startport,
 		    && eport <= endport) {
 			if(*number >= capacity) {
 				capacity += 128;
-				array = realloc(array, sizeof(unsigned short)*capacity);
-				if(!array) {
+				array2 = realloc(array, sizeof(unsigned short)*capacity);
+				if(!array2) {
 					syslog(LOG_ERR, "get_portmappings_in_range() : realloc(%lu) error", sizeof(unsigned short)*capacity);
 					*number = 0;
+					free(array);
 					goto error;
 				}
+				array = array2;
 			}
 			array[*number] = eport;
 			(*number)++;
@@ -476,3 +478,71 @@ error:
 	return array;
 }
 
+int
+update_portmapping_desc_timestamp(const char * ifname,
+                   unsigned short eport, int proto,
+                   const char * desc, unsigned int timestamp)
+{
+	UNUSED(ifname);
+	del_desc_time(eport, proto);
+	add_desc_time(eport, proto, desc, timestamp);
+	return 0;
+}
+
+int
+update_portmapping(const char * ifname, unsigned short eport, int proto,
+                   unsigned short iport, const char * desc,
+                   unsigned int timestamp)
+{
+	int i, count_rules, total_rules = 0;
+	struct ip_fw * rules = NULL;
+	int r = -1;
+	char iaddr[16];
+	char rhost[16];
+	int found;
+
+	if (ipfw_validate_protocol(proto) < 0)
+		return -1;
+	if (ipfw_validate_ifname(ifname) < 0)
+		return -1;
+
+	do {
+		count_rules = ipfw_fetch_ruleset(&rules, &total_rules, 10);
+		if (count_rules < 0)
+			goto error;
+	} while (count_rules == 10);
+
+	found = 0;
+	iaddr[0] = '\0';
+	rhost[0] = '\0';
+
+	for (i=0; i<total_rules-1; i++) {
+		const struct ip_fw const * ptr = &rules[i];
+		if (proto == ptr->fw_prot && eport == ptr->fw_uar.fw_pts[0]) {
+			if (inet_ntop(AF_INET, &ptr->fw_fwd_ip.sin_addr, iaddr, sizeof(iaddr)) == NULL) {
+				syslog(LOG_ERR, "inet_ntop(): %m");
+				goto error;
+			}
+			if ((ptr->fw_src.s_addr != 0) &&
+			    (inet_ntop(AF_INET, &ptr->fw_src.s_addr, rhost, sizeof(rhost)) == NULL)) {
+				syslog(LOG_ERR, "inet_ntop(): %m");
+				goto error;
+			}
+			found = 1;
+			if (ipfw_exec(IP_FW_DEL, (struct ip_fw *)ptr, sizeof(*ptr)) < 0)
+				goto error;
+			del_desc_time(eport, proto);
+			break;
+		}
+	}
+	ipfw_free_ruleset(&rules);
+	rules = NULL;
+
+	if(found)
+		r = add_redirect_rule2(ifname, rhost, eport, iaddr, iport, proto, desc, timestamp);
+
+error:
+	if (rules != NULL)
+		ipfw_free_ruleset(&rules);
+	return r;
+}

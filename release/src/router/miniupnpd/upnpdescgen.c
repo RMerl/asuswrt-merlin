@@ -1,4 +1,5 @@
 /* $Id: upnpdescgen.c,v 1.77 2014/03/10 11:04:53 nanard Exp $ */
+/* vim: tabstop=4 shiftwidth=4 noexpandtab */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2015 Thomas Bernard
@@ -23,6 +24,7 @@
 
 
 /* Event magical values codes */
+#define SETUPREADY_MAGICALVALUE (248)
 #define CONNECTIONSTATUS_MAGICALVALUE (249)
 #define FIREWALLENABLED_MAGICALVALUE (250)
 #define INBOUNDPINHOLEALLOWED_MAGICALVALUE (251)
@@ -46,6 +48,10 @@ static const char * const upnpdefaultvalues[] =
 	0,
 	"IP_Routed"/*"Unconfigured"*/, /* 1 default value for ConnectionType */
 	"3600", /* 2 default value for PortMappingLeaseDuration */
+	"Unconfigured",	/* 3 default value for ConnectionStatus */
+	"0", /* 4 default value for RSIPAvailable */
+	"1", /* 5 default value for NATEnabled */
+	"ERROR_NONE", /* 6 default value for LastConnectionError */
 };
 
 static const char * const upnpallowedvalues[] =
@@ -109,13 +115,20 @@ static const int upnpallowedranges[] = {
 
 static const char * magicargname[] = {
 	0,
-	"StartPort",
-	"EndPort",
-	"RemoteHost",
-	"RemotePort",
-	"InternalClient",
-	"InternalPort",
-	"IsWorking"
+	"StartPort",		/* 1 */
+	"EndPort",			/* 2 */
+	"RemoteHost",		/* 3 */
+	"RemotePort",		/* 4 */
+	"InternalClient",	/* 5 */
+	"InternalPort",		/* 6 */
+	"IsWorking",		/* 7 */
+#ifdef ENABLE_DP_SERVICE
+	"ProtocolType",		/* 8 */
+	"InMessage",		/* 9 */
+	"OutMessage",		/* 10 */
+	"ProtocolList",		/* 11 */
+	"RoleList",			/* 12 */
+#endif /* ENABLE_DP_SERVICE */
 };
 
 static const char xmlver[] =
@@ -261,7 +274,7 @@ static const struct XMLElt rootDesc[] =
 #ifdef ENABLE_6FC_SERVICE
 /* 58 */
 	{"/serviceType", "urn:schemas-upnp-org:service:WANIPv6FirewallControl:1"},
-	{"/serviceId", "urn:upnp-org:serviceId:WANIPv6FC1"},
+	{"/serviceId", "urn:upnp-org:serviceId:WANIPv6Firewall1"},
 	{"/controlURL", WANIP6FC_CONTROLURL},
 	{"/eventSubURL", WANIP6FC_EVENTURL},
 	{"/SCPDURL", WANIP6FC_PATH},
@@ -282,7 +295,7 @@ static const struct XMLElt rootDesc[] =
 #ifdef ENABLE_L3F_SERVICE
 /* 60 / 65 = SERVICES_OFFSET+2 */
 	{"/serviceType", "urn:schemas-upnp-org:service:Layer3Forwarding:1"},
-	{"/serviceId", "urn:upnp-org:serviceId:Layer3Forwarding1"},
+	{"/serviceId", "urn:upnp-org:serviceId:L3Forwarding1"},
 	{"/controlURL", L3F_CONTROLURL}, /* The Layer3Forwarding service is only */
 	{"/eventSubURL", L3F_EVENTURL}, /* recommended, not mandatory */
 	{"/SCPDURL", L3F_PATH},
@@ -480,24 +493,30 @@ static const struct action WANIPCnActions[] =
 /* ignore "warning: missing initializer" */
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
+/* struct stateVar :
+ * {name, itype(&event), idefault, iallowedlist, ieventvalue} */
 static const struct stateVar WANIPCnVars[] =
 {
 /* 0 */
 #if 0
 	{"ConnectionType", 0, 0/*1*/}, /* required */
 	{"PossibleConnectionTypes", 0|0x80, 0, 14, 15},
-#endif
+#elif 0
 	{"ConnectionType", 0, 1, 14, 15}, /* required */
 	{"PossibleConnectionTypes", 0|0x80, 0, 0, 15},
+#else
+	{"ConnectionType", 0, 1, 0, 15}, /* required */
+	{"PossibleConnectionTypes", 0|0x80, 0, 14, 15},
+#endif
 	 /* Required
 	  * Allowed values : Unconfigured / IP_Routed / IP_Bridged */
-	{"ConnectionStatus", 0|0x80, 0/*1*/, 18,
+	{"ConnectionStatus", 0|0x80, 3, 18,
 	 CONNECTIONSTATUS_MAGICALVALUE }, /* required */
 	 /* Allowed Values : Unconfigured / Connecting(opt) / Connected
 	  *                  PendingDisconnect(opt) / Disconnecting (opt)
 	  *                  Disconnected */
 	{"Uptime", 3, 0},	/* Required */
-	{"LastConnectionError", 0, 0, 25},	/* required : */
+	{"LastConnectionError", 0, 6, 25},	/* required : */
 	 /* Allowed Values : ERROR_NONE(req) / ERROR_COMMAND_ABORTED(opt)
 	  *                  ERROR_NOT_ENABLED_FOR_INTERNET(opt)
 	  *                  ERROR_USER_DISCONNECT(opt)
@@ -507,8 +526,8 @@ static const struct stateVar WANIPCnVars[] =
 	  *                  ERROR_NO_CARRIER(opt)
 	  *                  ERROR_IP_CONFIGURATION(opt)
 	  *                  ERROR_UNKNOWN(opt) */
-	{"RSIPAvailable", 1, 0}, /* required */
-	{"NATEnabled", 1, 0},    /* required */
+	{"RSIPAvailable", 1, 4}, /* required */
+	{"NATEnabled", 1, 5},    /* required */
 	{"ExternalIPAddress", 0|0x80, 0, 0,
 	 EXTERNALIPADDRESS_MAGICALVALUE}, /* required. Default : empty string */
 	{"PortMappingNumberOfEntries", 2|0x80, 0, 0,
@@ -743,17 +762,38 @@ static const struct serviceDesc scpd6FC =
 
 #ifdef ENABLE_DP_SERVICE
 /* UPnP-gw-DeviceProtection-v1-Service.pdf */
+
+static const struct argument SendSetupMessageArgs[] =
+{
+	{1|0x80|(8<<2), 6},		/* ProtocolType : in ProtocolType / A_ARG_TYPE_String */
+	{1|0x80|(9<<2), 5},		/* InMessage : in InMessage / A_ARG_TYPE_Base64 */
+	{2|0x80|(10<<2), 5},	/* OutMessage : out OutMessage / A_ARG_TYPE_Base64 */
+	{0, 0}
+};
+
+static const struct argument GetSupportedProtocolsArgs[] =
+{
+	{2|0x80|(11<<2), 1},	/* ProtocolList : out ProtocolList / SupportedProtocols */
+	{0, 0}
+};
+
+static const struct argument GetAssignedRolesArgs[] =
+{
+	{2|0x80|(12<<2), 6},	/* RoleList : out RoleList / A_ARG_TYPE_String */
+	{0, 0}
+};
+
 static const struct action DPActions[] =
 {
-	{"SendSetupMessage", 0},
-	{"GetSupportedProtocols", 0},
-	{"GetAssignedRoles", 0},
+	{"SendSetupMessage", SendSetupMessageArgs},
+	{"GetSupportedProtocols", GetSupportedProtocolsArgs},
+	{"GetAssignedRoles", GetAssignedRolesArgs},
 	{0, 0}
 };
 
 static const struct stateVar DPVars[] =
 {
-	{"SetupReady", 1|0x80},
+	{"SetupReady", 1|0x80, 0, 0, SETUPREADY_MAGICALVALUE},
 	{"SupportedProtocols", 0},
 	{"A_ARG_TYPE_ACL", 0},
 	{"A_ARG_TYPE_IdentityList", 0},
@@ -1168,6 +1208,13 @@ genEventVars(int * len, const struct serviceDesc * s)
 			switch(v->ieventvalue) {
 			case 0:
 				break;
+#ifdef ENABLE_DP_SERVICE
+			case SETUPREADY_MAGICALVALUE:
+				/* always ready for setup */
+				snprintf(tmp, sizeof(tmp), "%d", 1);
+				str = strcat_str(str, len, &tmplen, tmp);
+				break;
+#endif
 			case CONNECTIONSTATUS_MAGICALVALUE:
 				/* or get_wan_connection_status_str(ext_if_name) */
 				str = strcat_str(str, len, &tmplen,

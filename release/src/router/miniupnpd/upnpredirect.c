@@ -1,7 +1,8 @@
-/* $Id: upnpredirect.c,v 1.85 2014/12/09 09:17:54 nanard Exp $ */
-/* MiniUPnP project
+/* $Id: upnpredirect.c,v 1.90 2016/02/12 12:59:41 nanard Exp $ */
+/* vim: tabstop=4 shiftwidth=4 noexpandtab
+ * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -55,9 +56,37 @@ static int
 proto_atoi(const char * protocol)
 {
 	int proto = IPPROTO_TCP;
-	if(strcmp(protocol, "UDP") == 0)
+	if(strcasecmp(protocol, "UDP") == 0)
 		proto = IPPROTO_UDP;
+#ifdef IPPROTO_UDPLITE
+	else if(strcasecmp(protocol, "UDPLITE") == 0)
+		proto = IPPROTO_UDPLITE;
+#endif /* IPPROTO_UDPLITE */
 	return proto;
+}
+
+/* proto_itoa()
+ * convert IPPROTO_UDP, IPPROTO_UDP, etc. to "UDP", "TCP" */
+static const char *
+proto_itoa(int proto)
+{
+	const char * protocol;
+	switch(proto) {
+	case IPPROTO_UDP:
+		protocol = "UDP";
+		break;
+	case IPPROTO_TCP:
+		protocol = "TCP";
+		break;
+#ifdef IPPROTO_UDPLITE
+	case IPPROTO_UDPLITE:
+		protocol = "UDPLITE";
+		break;
+#endif /* IPPROTO_UDPLITE */
+	default:
+		protocol = "*UNKNOWN*";
+	}
+	return protocol;
 }
 
 #ifdef ENABLE_LEASEFILE
@@ -80,7 +109,7 @@ lease_file_add(unsigned short eport,
 	}
 
 	fprintf(fd, "%s:%hu:%s:%hu:%u:%s\n",
-	        ((proto==IPPROTO_TCP)?"TCP":"UDP"), eport, iaddr, iport,
+	        proto_itoa(proto), eport, iaddr, iport,
 	        timestamp, desc);
 	fclose(fd);
 
@@ -113,7 +142,7 @@ lease_file_remove(unsigned short eport, int proto)
 		return 0;
 	}
 
-	snprintf( str, sizeof(str), "%s:%u", ((proto==IPPROTO_TCP)?"TCP":"UDP"), eport);
+	snprintf( str, sizeof(str), "%s:%u", proto_itoa(proto), eport);
 	str_size = strlen(str);
 
 	tmp = mkstemp(tmpfilename);
@@ -254,6 +283,7 @@ int reload_from_lease_file()
  *          -1 failed to redirect
  *          -2 already redirected
  *          -3 permission check failed
+ *          -4 already redirected (other mechanism)
  */
 int
 upnp_redirect(const char * rhost, unsigned short eport,
@@ -263,6 +293,7 @@ upnp_redirect(const char * rhost, unsigned short eport,
 {
 	int proto, r;
 	char iaddr_old[32];
+	char rhost_old[32];
 	unsigned short iport_old;
 	struct in_addr address;
 	unsigned int timestamp;
@@ -279,27 +310,72 @@ upnp_redirect(const char * rhost, unsigned short eport,
 		                 "%hu->%s:%hu %s", eport, iaddr, iport, protocol);
 		return -3;
 	}
+	/* IGDv1 (WANIPConnection:1 Service Template Version 1.01 / Nov 12, 2001)
+	 * - 2.2.20.PortMappingDescription :
+	 *  Overwriting Previous / Existing Port Mappings:
+	 * If the RemoteHost, ExternalPort, PortMappingProtocol and InternalClient
+	 * are exactly the same as an existing mapping, the existing mapping values
+	 * for InternalPort, PortMappingDescription, PortMappingEnabled and
+	 * PortMappingLeaseDuration are overwritten.
+	 *  Rejecting a New Port Mapping:
+	 * In cases where the RemoteHost, ExternalPort and PortMappingProtocol
+	 * are the same as an existing mapping, but the InternalClient is
+	 * different, the action is rejected with an appropriate error.
+	 *  Add or Reject New Port Mapping behavior based on vendor implementation:
+	 * In cases where the ExternalPort, PortMappingProtocol and InternalClient
+	 * are the same, but RemoteHost is different, the vendor can choose to
+	 * support both mappings simultaneously, or reject the second mapping
+	 * with an appropriate error.
+	 *
+	 * - 2.4.16.AddPortMapping
+	 * This action creates a new port mapping or overwrites an existing
+	 * mapping with the same internal client. If the ExternalPort and
+	 * PortMappingProtocol pair is already mapped to another internal client,
+	 * an error is returned.
+	 *
+	 * IGDv2 (WANIPConnection:2 Service Standardized DCP (SDCP) Sep 10, 2010)
+	 * Protocol ExternalPort RemoteHost InternalClient Result
+	 *     =         =           ≠           ≠         Failure
+	 *     =         =           ≠           =         Failure or success
+	 *                                                 (vendor specific)
+	 *     =         =           =           ≠         Failure
+	 *     =         =           =           =         Success (overwrite)
+	 */
+	rhost_old[0] = '\0';
 	r = get_redirect_rule(ext_if_name, eport, proto,
 	                      iaddr_old, sizeof(iaddr_old), &iport_old, 0, 0,
-	                      0, 0,
+	                      rhost_old, sizeof(rhost_old),
 	                      &timestamp, 0, 0);
 	if(r == 0) {
-		/* if existing redirect rule matches redirect request return success
-		 * xbox 360 does not keep track of the port it redirects and will
-		 * redirect another port when receiving ConflictInMappingEntry */
-		if(strcmp(iaddr, iaddr_old)==0 && iport==iport_old) {
-			syslog(LOG_INFO, "ignoring redirect request as it matches existing redirect");
+		if(strcmp(iaddr, iaddr_old)==0 &&
+		   ((rhost == NULL && rhost_old[0]=='\0') ||
+		    (rhost && (strcmp(rhost, "*") == 0) && rhost_old[0]=='\0') ||
+		    (rhost && (strcmp(rhost, rhost_old) == 0)))) {
+			syslog(LOG_INFO, "updating existing port mapping %hu %s (rhost '%s') => %s:%hu",
+				eport, protocol, rhost_old, iaddr_old, iport_old);
+			timestamp = (leaseduration > 0) ? time(NULL) + leaseduration : 0;
+			if(iport != iport_old) {
+				r = update_portmapping(ext_if_name, eport, proto, iport, desc, timestamp);
+			} else {
+				r = update_portmapping_desc_timestamp(ext_if_name, eport, proto, desc, timestamp);
+			}
+#ifdef ENABLE_LEASEFILE
+			if(r == 0) {
+				lease_file_remove(eport, proto);
+				lease_file_add(eport, iaddr, iport, proto, desc, timestamp);
+			}
+#endif /* ENABLE_LEASEFILE */
+			return r;
 		} else {
-
-			syslog(LOG_INFO, "port %hu protocol %s already redirected to %s:%hu",
-				eport, protocol, iaddr_old, iport_old);
+			syslog(LOG_INFO, "port %hu %s (rhost '%s') already redirected to %s:%hu",
+				eport, protocol, rhost_old, iaddr_old, iport_old);
 			return -2;
 		}
 #ifdef CHECK_PORTINUSE
 	} else if (port_in_use(ext_if_name, eport, proto, iaddr, iport) > 0) {
 		syslog(LOG_INFO, "port %hu protocol %s already in use",
 		       eport, protocol);
-		return -2;
+		return -4;
 #endif /* CHECK_PORTINUSE */
 	} else {
 		timestamp = (leaseduration > 0) ? time(NULL) + leaseduration : 0;
@@ -308,8 +384,6 @@ upnp_redirect(const char * rhost, unsigned short eport,
 		return upnp_redirect_internal(rhost, eport, iaddr, iport, proto,
 		                              desc, timestamp);
 	}
-
-	return 0;
 }
 
 int
@@ -413,6 +487,10 @@ upnp_get_redirection_infos_by_index(int index,
 		                 : 0;
 		if(proto == IPPROTO_TCP)
 			memcpy(protocol, "TCP", 4);
+#ifdef IPPROTO_UDPLITE
+		else if(proto == IPPROTO_UDPLITE)
+			memcpy(protocol, "UDPLITE", 8);
+#endif /* IPPROTO_UDPLITE */
 		else
 			memcpy(protocol, "UDP", 4);
 		return 0;
@@ -547,7 +625,7 @@ get_upnp_rules_state_list(int max_rules_number_target)
 		if(tmp->to_remove)
 		{
 			syslog(LOG_NOTICE, "remove port mapping %hu %s because it has expired",
-			       tmp->eport, (tmp->proto==IPPROTO_TCP)?"TCP":"UDP");
+			       tmp->eport, proto_itoa(tmp->proto));
 			_upnp_delete_redir(tmp->eport, tmp->proto);
 			*p = tmp->next;
 			free(tmp);
@@ -588,6 +666,10 @@ remove_unused_rules(struct rule_state * list)
 		{
 			if(packets == list->packets && bytes == list->bytes)
 			{
+				syslog(LOG_DEBUG, "removing unused mapping %hu %s : still "
+				       "%" PRIu64 "packets %" PRIu64 "bytes",
+				       list->eport, proto_itoa(list->proto),
+				       packets, bytes);
 				_upnp_delete_redir(list->eport, list->proto);
 				n++;
 			}
@@ -644,7 +726,7 @@ write_ruleset_details(int s)
 		             "%2d %s %s:%hu->%s:%hu "
 		             "'%s' %u %" PRIu64 " %" PRIu64 "\n",
 		             /*"'%s' %llu %llu\n",*/
-		             i, proto==IPPROTO_TCP?"TCP":"UDP", rhost,
+		             i, proto_itoa(proto), rhost,
 		             eport, iaddr, iport, desc, timestamp, packets, bytes);
 		write(s, buffer, n);
 		i++;

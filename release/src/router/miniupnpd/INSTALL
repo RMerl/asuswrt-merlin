@@ -1,5 +1,5 @@
 MiniUPnP project.
-(c) 2006-2014 Thomas Bernard
+(c) 2006-2016 Thomas Bernard
 Homepage : http://miniupnp.free.fr/
 Mirror: http://miniupnp.tuxfamily.org/
 github: https://github.com/miniupnp/miniupnp
@@ -26,19 +26,16 @@ To Build and Install :
    pass out on $int_if from any to 239.0.0.0/8 keep state
    pass in on $int_if from any to 239.0.0.0/8 keep state
 - dont forget to " pfctl -f /etc/pf.conf "
-- you can check your modifications are taken into accout with
+- you can check your modifications are taken into account with
   "pfctl -s nat" and "pfctl -s rule". Look for the "rdr-anchor miniupnpd"
   (if applicable) and/or "anchor miniupnpd" lines.
+- OpenBSD users may need to add a multicast_host= line to /etc/rc.conf.local
+  see $man 8 netstart
 - install as root using :
   # make install
   or
   # PREFIX=/usr/local make install
 - run as root : The daemon needs rights to modify pf rules.
-
-edit the /etc/miniupnpd.conf file to set options. Almost all options are also
-available through command line switches.
-To stop the daemon use :
-  > kill `cat /var/run/miniupnpd.pid`
 
 =========================== *BSD,*Solaris/ipf =============================
 
@@ -112,6 +109,15 @@ How to get libiptc with its headers on debian :
   > make
 - it is now possible to compile miniupnpd using the following command :
   > IPTABLESPATH=/path/to/iptables-x.x.x make -f Makefile.linux
+
+======================== Linux/netfilter nftables =========================
+
+work is in progress. To build :
+ > make -f Makefile.linux_nft
+
+see :
+http://miniupnp.tuxfamily.org/forum/viewtopic.php?p=4370
+https://github.com/miniupnp/miniupnp/pull/114
 
 =========================== Configuration =============================
 Edit the /etc/miniupnpd.conf file to set options. Almost all options are

@@ -228,7 +228,7 @@ read_learn_dscp_line(struct dscp_values *dscpvalues, char *p)
 				dscpvalues->dscp_value = 38;
 				break;
 			default:
-				fprintf(stderr, "Unknown AF value %u \n", af_value);
+				fprintf(stderr, "Unknown AF value %d \n", af_value);
 				goto exit_err_and_cleanup;
 			}
 			}

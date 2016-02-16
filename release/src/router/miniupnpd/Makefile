@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.87 2015/11/05 11:16:13 nanard Exp $
+# $Id: Makefile,v 1.88 2016/02/10 20:32:43 nanard Exp $
 # MiniUPnP project
 # http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
 # Author: Thomas Bernard
@@ -223,34 +223,34 @@ depend:	config.h
 	testssdppktgen.c
 
 miniupnpd: config.h $(ALLOBJS)
-	$(CC) $(CFLAGS) -o $@ $(ALLOBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(ALLOBJS) $(LIBS)
 
 # BSDmake :
-#	$(CC) $(CFLAGS) -o $@ $> $(LIBS)
+#	$(CC) $(LDFLAGS) -o $@ $> $(LIBS)
 
 miniupnpdctl:	config.h $(MINIUPNPDCTLOBJS)
-	$(CC) $(CFLAGS) -o $@ $(MINIUPNPDCTLOBJS)
+	$(CC) $(LDFLAGS) -o $@ $(MINIUPNPDCTLOBJS)
 
 testupnpdescgen:	config.h $(TESTUPNPDESCGENOBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTUPNPDESCGENOBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(TESTUPNPDESCGENOBJS) $(LIBS)
 
 testgetifstats:	config.h $(TESTGETIFSTATSOBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTGETIFSTATSOBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(TESTGETIFSTATSOBJS) $(LIBS)
 
 testgetifaddr:	config.h $(TESTGETIFADDROBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTGETIFADDROBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(TESTGETIFADDROBJS) $(LIBS)
 
 testupnppermissions:	config.h $(TESTUPNPPERMISSIONSOBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTUPNPPERMISSIONSOBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(TESTUPNPPERMISSIONSOBJS) $(LIBS)
 
 testgetroute:	config.h $(TESTGETROUTEOBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTGETROUTEOBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(TESTGETROUTEOBJS) $(LIBS)
 
 testasyncsendto:	config.h $(TESTASYNCSENDTOOBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTASYNCSENDTOOBJS)
+	$(CC) $(LDFLAGS) -o $@ $(TESTASYNCSENDTOOBJS)
 
 testportinuse:	config.h $(TESTPORTINUSEOBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTPORTINUSEOBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(TESTPORTINUSEOBJS) $(LIBS)
 
 # gmake :
 #	$(CC) $(CFLAGS) -o $@ $^

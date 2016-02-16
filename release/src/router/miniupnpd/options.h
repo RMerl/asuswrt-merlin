@@ -51,6 +51,7 @@ enum upnpconfigoptions {
 #ifdef USE_NETFILTER
 	UPNPFORWARDCHAIN,
 	UPNPNATCHAIN,
+	UPNPNATPOSTCHAIN,
 #endif
 #ifdef USE_PF
 	UPNPANCHOR,				/* anchor */

@@ -1,7 +1,7 @@
 /* $Id: upnpglobalvars.c,v 1.39 2014/12/10 09:49:22 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -84,27 +84,41 @@ unsigned int num_dscp_values = 0;
 unsigned int nextruletoclean_timestamp = 0;
 
 #ifdef USE_PF
+/* "rdr-anchor miniupnpd" or/and "anchor miniupnpd" in pf.conf */
 const char * anchor_name = "miniupnpd";
 const char * queue = 0;
 const char * tag = 0;
 #endif
 
 #ifdef USE_NETFILTER
-/* chain name to use, both in the nat table
- * and the filter table */
-const char * miniupnpd_nat_chain = "UPNP";
-const char * miniupnpd_peer_chain = "UPNP-PCP-PEER";
-const char * miniupnpd_forward_chain = "UPNP";
-#ifdef ENABLE_UPNPPINHOLE
-const char * miniupnpd_v6_filter_chain = "UPNP";
-#endif
+/* chain names to use in the nat and filter tables. */
 
-#endif
+/* iptables -t nat -N MINIUPNPD
+ * iptables -t nat -A PREROUTING -i <ext_if_name> -j MINIUPNPD */
+const char * miniupnpd_nat_chain = "UPNP";
+
+/* iptables -t nat -N MINIUPNPD-POSTROUTING
+ * iptables -t nat -A POSTROUTING -o <ext_if_name> -j MINIUPNPD-POSTROUTING */
+const char * miniupnpd_nat_postrouting_chain = "UPNP-POSTROUTING";
+
+/* iptables -t filter -N MINIUPNPD
+ * iptables -t filter -A FORWARD -i <ext_if_name> ! -o <ext_if_name> -j MINIUPNPD */
+const char * miniupnpd_forward_chain = "UPNP";
+
+#ifdef ENABLE_UPNPPINHOLE
+/* ip6tables -t filter -N MINIUPNPD
+ * ip6tables -t filter -A FORWARD -i <ext_if_name> ! -o <ext_if_name> -j MINIUPNPD */
+const char * miniupnpd_v6_filter_chain = "UPNP";
+#endif /* ENABLE_UPNPPINHOLE */
+
+#endif /* USE_NETFILTER */
+
 #ifdef ENABLE_NFQUEUE
 int nfqueue = -1;
 int n_nfqix = 0;
 unsigned nfqix[MAX_LAN_ADDR];
-#endif
+#endif /* ENABLE_NFQUEUE */
+
 struct lan_addr_list lan_addrs;
 
 #ifdef ENABLE_IPV6

@@ -1,7 +1,7 @@
 /* $Id: upnppinhole.c,v 1.7 2014/12/09 09:13:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -86,6 +86,21 @@ upnp_check_outbound_pinhole(int proto, int * timeout)
 	return 0;
 }
 #endif
+
+int
+upnp_find_inboundpinhole(const char * raddr, unsigned short rport,
+                         const char * iaddr, unsigned short iport,
+                         int proto, char * desc, int desc_len, unsigned int * leasetime)
+{
+#if defined(USE_PF) || defined(USE_NETFILTER)
+	int uid;
+	uid = find_pinhole(NULL, raddr, rport, iaddr, iport, proto,
+	                   desc, desc_len, leasetime);
+	return uid;
+#else
+	return -42;
+#endif
+}
 
 /* upnp_add_inboundpinhole()
  * returns:  1 on success

@@ -72,3 +72,8 @@ upnpglobalvars.o:	../upnpglobalvars.c ../upnpglobalvars.h
 	$(CC) -c -o $@ $<
 
 
+#depends
+testiptcrdr.o: testiptcrdr.c iptcrdr.c
+testiptcrdr_dscp.o:	testiptcrdr_dscp.c iptcrdr.c
+testiptcrdr_peer.o:	testiptcrdr_peer.c iptcrdr.c
+test_nfct_get.o:	test_nfct_get.c nfct_get.c

@@ -16,7 +16,7 @@
 
 #ifdef USE_NETFILTER
 const char * miniupnpd_nat_chain = "MINIUPNPD";
-const char * miniupnpd_peer_chain = "MINIUPNPD-PCP-PEER";
+const char * miniupnpd_nat_postrouting_chain = "MINIUPNPD-POSTROUTING";
 const char * miniupnpd_forward_chain = "MINIUPNPD";
 #endif /* USE_NETFILTER */
 

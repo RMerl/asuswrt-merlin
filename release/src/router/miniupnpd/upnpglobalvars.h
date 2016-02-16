@@ -1,7 +1,7 @@
 /* $Id: upnpglobalvars.h,v 1.38 2014/03/10 11:04:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -121,7 +121,7 @@ extern const char * tag;
 
 #ifdef USE_NETFILTER
 extern const char * miniupnpd_nat_chain;
-extern const char * miniupnpd_peer_chain;
+extern const char * miniupnpd_nat_postrouting_chain;
 extern const char * miniupnpd_forward_chain;
 #ifdef ENABLE_UPNPPINHOLE
 extern const char * miniupnpd_v6_filter_chain;

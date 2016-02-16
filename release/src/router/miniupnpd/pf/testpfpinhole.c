@@ -1,7 +1,8 @@
 /* $Id: testpfpinhole.c,v 1.12 2014/05/15 21:23:43 nanard Exp $ */
-/* MiniUPnP project
+/* vim: tabstop=4 shiftwidth=4 noexpandtab
+ * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2012-2014 Thomas Bernard
+ * (c) 2012-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -61,7 +62,10 @@ int main(int argc, char * *argv)
 	return 1;
 #else
 	int uid;
+	int uid2;
 	int ret;
+	unsigned int timestamp;
+	(void)argc; (void)argv;
 
 	openlog("testpfpinhole", LOG_PERROR, LOG_USER);
 	if(init_redirect() < 0) {
@@ -79,6 +83,13 @@ int main(int argc, char * *argv)
 		fprintf(stderr, "add_pinhole() failed\n");
 	}
 	printf("add_pinhole() returned %d\n", uid);
+
+	uid2 = find_pinhole("ep0", NULL, 0, "dead:beef::42:42", 8080, IPPROTO_UDP, NULL, 0, &timestamp);
+	if(uid2 < 0) {
+		fprintf(stderr, "find_pinhole() failed\n");
+	} else {
+		printf("find_pinhole() uid=%d timestamp=%u\n", uid2, timestamp);
+	}
 
 	print_pinhole(1);
 	print_pinhole(2);

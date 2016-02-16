@@ -61,6 +61,7 @@ static const struct {
 #ifdef USE_NETFILTER
 	{ UPNPFORWARDCHAIN, "upnp_forward_chain"},
 	{ UPNPNATCHAIN, "upnp_nat_chain"},
+	{ UPNPNATPOSTCHAIN, "upnp_nat_postrouting_chain"},
 #endif
 #ifdef ENABLE_NATPMP
 	{ UPNPENABLENATPMP, "enable_natpmp"},

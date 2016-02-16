@@ -1,7 +1,7 @@
-/* $Id: upnpsoap.c,v 1.135 2015/02/10 15:01:24 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.144 2016/02/12 12:35:03 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2015 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -427,6 +427,13 @@ AddPortMapping(struct upnphttp * h, const char * action, const char * ns)
 	eport = (unsigned short)atoi(ext_port);
 	iport = (unsigned short)atoi(int_port);
 
+	if (strcmp(ext_port, "*") == 0 || eport == 0)
+	{
+		ClearNameValueList(&data);
+		SoapError(h, 716, "Wildcard not permited in ExtPort");
+		return;
+	}
+
 	leaseduration = leaseduration_str ? atoi(leaseduration_str) : 0;
 #ifdef IGD_V2
 	/* PortMappingLeaseDuration can be either a value between 1 and
@@ -445,14 +452,6 @@ AddPortMapping(struct upnphttp * h, const char * action, const char * ns)
 	       action, eport, int_ip, iport, protocol, desc, leaseduration,
 	       r_host ? r_host : "NULL");
 
-	/* TODO : be compliant with IGD spec for updating existing port mappings.
-	See "WANIPConnection:1 Service Template Version 1.01" 2.2.20.PortMappingDescription :
-	Overwriting Previous / Existing Port Mappings:
-	If the RemoteHost, ExternalPort, PortMappingProtocol and InternalClient are
-	exactly the same as an existing mapping, the existing mapping values for InternalPort,
-	PortMappingDescription, PortMappingEnabled and PortMappingLeaseDuration are
-	overwritten.
-	*/
 	r = upnp_redirect(r_host, eport, int_ip, iport, protocol, desc, leaseduration);
 
 	ClearNameValueList(&data);
@@ -474,7 +473,7 @@ AddPortMapping(struct upnphttp * h, const char * action, const char * ns)
              ExternalPort must be a wildcard and cannot be a specific port
              value (deprecated in IGD v2)
      * 728 - NoPortMapsAvailable
-             There are not enough free prots available to complete the mapping
+             There are not enough free ports available to complete the mapping
              (added in IGD v2)
 	 * 729 - ConflictWithOtherMechanisms (added in IGD v2) */
 	switch(r)
@@ -484,6 +483,11 @@ AddPortMapping(struct upnphttp * h, const char * action, const char * ns)
 		                   action, ns/*SERVICE_TYPE_WANIPC*/);
 		BuildSendAndCloseSoapResp(h, body, bodylen);
 		break;
+	case -4:
+#ifdef IGD_V2
+		SoapError(h, 729, "ConflictWithOtherMechanisms");
+		break;
+#endif /* IGD_V2 */
 	case -2:	/* already redirected */
 	case -3:	/* not permitted */
 		SoapError(h, 718, "ConflictInMappingEntry");
@@ -900,7 +904,7 @@ GetGenericPortMappingEntry(struct upnphttp * h, const char * action, const char 
 	unsigned short eport, iport;
 	const char * m_index;
 	char * endptr;
-	char protocol[4], iaddr[32];
+	char protocol[8], iaddr[32];
 	char desc[64];
 	char rhost[40];
 	unsigned int leaseduration = 0;
@@ -1187,7 +1191,11 @@ GetDefaultConnectionService(struct upnphttp * h, const char * action, const char
 	static const char resp[] =
 		"<u:%sResponse "
 		"xmlns:u=\"%s\">"
+#ifdef IGD_V2
+		"<NewDefaultConnectionService>%s:WANConnectionDevice:2,"
+#else
 		"<NewDefaultConnectionService>%s:WANConnectionDevice:1,"
+#endif
 		SERVICE_ID_WANIPC "</NewDefaultConnectionService>"
 		"</u:%sResponse>";
 	/* example from UPnP_IGD_Layer3Forwarding 1.0.pdf :
@@ -1985,7 +1993,7 @@ SendSetupMessage(struct upnphttp * h, const char * action, const char * ns)
 	static const char resp[] =
 		"<u:%sResponse "
 		"xmlns:u=\"%s\">"
-		"<NewOutMessage>%s</NewOutMessage>"
+		"<OutMessage>%s</OutMessage>"
 		"</u:%sResponse>";
 	char body[1024];
 	int bodylen;
@@ -1995,8 +2003,8 @@ SendSetupMessage(struct upnphttp * h, const char * action, const char * ns)
 	const char * OutMessage = "";	/* base64 */
 
 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data);
-	ProtocolType = GetValueFromNameValueList(&data, "NewProtocolType");	/* string */
-	InMessage = GetValueFromNameValueList(&data, "NewInMessage");	/* base64 */
+	ProtocolType = GetValueFromNameValueList(&data, "ProtocolType");	/* string */
+	InMessage = GetValueFromNameValueList(&data, "InMessage");	/* base64 */
 
 	if(ProtocolType == NULL || InMessage == NULL)
 	{
@@ -2026,7 +2034,7 @@ GetSupportedProtocols(struct upnphttp * h, const char * action, const char * ns)
 	static const char resp[] =
 		"<u:%sResponse "
 		"xmlns:u=\"%s\">"
-		"<NewProtocolList>%s</NewProtocolList>"
+		"<ProtocolList><![CDATA[%s]]></ProtocolList>"
 		"</u:%sResponse>";
 	char body[1024];
 	int bodylen;
@@ -2052,7 +2060,7 @@ GetAssignedRoles(struct upnphttp * h, const char * action, const char * ns)
 	static const char resp[] =
 		"<u:%sResponse "
 		"xmlns:u=\"%s\">"
-		"<NewRoleList>%s</NewRoleList>"
+		"<RoleList>%s</RoleList>"
 		"</u:%sResponse>";
 	char body[1024];
 	int bodylen;
@@ -2170,14 +2178,14 @@ ExecuteSoapAction(struct upnphttp * h, const char * action, int n)
 			len = strlen(soapMethods[i].methodName);
 			if((len == methodlen) && memcmp(p, soapMethods[i].methodName, len) == 0) {
 #ifdef DEBUG
-				syslog(LOG_DEBUG, "Remote Call of SoapMethod '%s'",
-				       soapMethods[i].methodName);
+				syslog(LOG_DEBUG, "Remote Call of SoapMethod '%s' %s",
+				       soapMethods[i].methodName, namespace);
 #endif /* DEBUG */
 				soapMethods[i].methodImpl(h, soapMethods[i].methodName, namespace);
 				return;
 			}
 		}
-		syslog(LOG_NOTICE, "SoapMethod: Unknown: %.*s", methodlen, p);
+		syslog(LOG_NOTICE, "SoapMethod: Unknown: %.*s %s", methodlen, p, namespace);
 	} else {
 		syslog(LOG_NOTICE, "cannot parse SoapAction");
 	}

@@ -1,5 +1,5 @@
 MiniUPnP project
-(c) 2006-2014 Thomas Bernard
+(c) 2006-2016 Thomas Bernard
 webpage: http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
 github: https://github.com/miniupnp/miniupnp
 freecode: http://freecode.com/projects/miniupnp
@@ -16,7 +16,9 @@ the network.
 See http://www.upnp.org/ for more details on UPnP.
 During the year 2011, support for IGD v2 has been added.
 In 2012, IGD v2 WANIPv6FirewallControl has been implemented.
-It is not yes enabled by default because it still needs testing.
+
+IGD2 is still not enabled by default because of interoperability
+issues.
 
 Support for the NAT Port Mapping Protocol (NAT-PMP) has been
 added. See information about NAT-PMP here :
@@ -25,7 +27,7 @@ http://miniupnp.free.fr/nat-pmp.html
 NAT-PMP is the precursor of Port Control Protocol (PCP).
 In 2013, support for PCP has been added too.
 
-Read the INSTALL files for instructions to compile, install and
+Read the INSTALL file for instructions to compile, install and
 configure miniupnpd on your system.
 
 Report bugs to miniupnp@free.fr on the web forum

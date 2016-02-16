@@ -1,6 +1,6 @@
-/* $Id: commonrdr.h,v 1.9 2014/02/11 09:36:15 nanard Exp $ */
+/* $Id: commonrdr.h,v 1.10 2016/02/12 12:34:39 nanard Exp $ */
 /* MiniUPnP project
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
@@ -52,5 +52,16 @@ unsigned short *
 get_portmappings_in_range(unsigned short startport, unsigned short endport,
                           int proto, unsigned int * number);
 
-#endif
+/* update the port mapping internal port, decription and timestamp */
+int
+update_portmapping(const char * ifname, unsigned short eport, int proto,
+                   unsigned short iport, const char * desc,
+                   unsigned int timestamp);
 
+/* update the port mapping decription and timestamp */
+int
+update_portmapping_desc_timestamp(const char * ifname,
+                   unsigned short eport, int proto,
+                   const char * desc, unsigned int timestamp);
+
+#endif

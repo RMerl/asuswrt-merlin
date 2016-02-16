@@ -1,7 +1,7 @@
-/* $Id: testiptcrdr.c,v 1.18 2012/04/24 22:41:53 nanard Exp $ */
+/* $Id: testiptcrdr.c,v 1.21 2016/02/12 12:35:50 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -11,7 +11,7 @@
 #include <syslog.h>
 
 #include "iptcrdr.c"
-#include "../commonrdr.h"
+/*#include "../commonrdr.h"*/
 
 #ifndef PRIu64
 #define PRIu64 "llu"
@@ -22,19 +22,39 @@ main(int argc, char ** argv)
 {
 	unsigned short eport, iport;
 	const char * iaddr;
-	printf("Usage %s <ext_port> <internal_ip> <internal_port>\n", argv[0]);
+	int r;
+	int proto = IPPROTO_TCP;
+	printf("Usage %s <ext_port> <internal_ip> <internal_port> [TCP/UDP]\n", argv[0]);
 
 	if(argc<4)
 		return -1;
 	openlog("testiptcrdr", LOG_PERROR|LOG_CONS, LOG_LOCAL0);
+	if(init_redirect() < 0)
+		return -1;
 	eport = (unsigned short)atoi(argv[1]);
 	iaddr = argv[2];
 	iport = (unsigned short)atoi(argv[3]);
-	printf("trying to redirect port %hu to %s:%hu\n", eport, iaddr, iport);
-	if(addnatrule(IPPROTO_TCP, eport, iaddr, iport, NULL) < 0)
+	if(argc >= 4) {
+		if(strcasecmp(argv[4], "udp") == 0)
+			proto = IPPROTO_UDP;
+	}
+	printf("trying to redirect port %hu to %s:%hu proto %d\n",
+	       eport, iaddr, iport, proto);
+	if(addnatrule(proto, eport, iaddr, iport, NULL) < 0)
 		return -1;
-	if(add_filter_rule(IPPROTO_TCP, NULL, iaddr, iport) < 0)
+	r = addmasqueraderule(proto, eport, iaddr, iport, NULL);
+	syslog(LOG_DEBUG, "addmasqueraderule() returned %d", r);
+	if(add_filter_rule(proto, NULL, iaddr, iport) < 0)
 		return -1;
+#if 0
+	/* TEST */
+	if(proto == IPPROTO_UDP) {
+		if(addpeernatrule(proto, "8.8.8.8"/*eaddr*/, eport, iaddr, iport, NULL, 0) < 0)
+			fprintf(stderr, "addpeenatrule failed\n");
+	}
+#endif
+	/*update_portmapping_desc_timestamp(NULL, eport, proto, "updated desc", time(NULL)+42);*/
+	update_portmapping(NULL, eport, proto, iport+1, "updated rule", time(NULL)+42);
 	/* test */
 	{
 		unsigned short p1, p2;
@@ -57,14 +77,15 @@ main(int argc, char ** argv)
 		}
 		else
 		{
-			printf("redirected port %hu to %s:%hu proto %d   packets=%" PRIu64 " bytes=%" PRIu64 "\n",
-			       p1, addr, p2, proto2, packets, bytes);
+			printf("redirected port %hu to %s:%hu proto %d   packets=%" PRIu64 " bytes=%" PRIu64 " ts=%u desc='%s'\n",
+			       p1, addr, p2, proto2, packets, bytes, timestamp, desc);
 		}
 	}
 	printf("trying to list nat rules :\n");
-	list_redirect_rule(argv[1]);
+	list_redirect_rule(NULL);
 	printf("deleting\n");
-	delete_redirect_and_filter_rules(eport, IPPROTO_TCP);
+	delete_redirect_and_filter_rules(eport, proto);
+	shutdown_redirect();
 	return 0;
 }
 

@@ -1,4 +1,32 @@
-$Id: Changelog.txt,v 1.408 2015/11/16 19:29:42 nanard Exp $
+$Id: Changelog.txt,v 1.421 2016/02/12 12:34:37 nanard Exp $
+
+2016/02/12:
+  return error 729 - ConflictWithOtherMechanisms if IGD v2 is enabled.
+  add iptc_init() check in iptcrdr.c/init_redirect()
+  add update_portmapping() / update_portmapping_desc_timestamp() functions
+
+2016/02/11:
+  use Linux libuuid uuid_generate() / BSD uuid_create() API
+
+2016/01/28:
+  renamed iptables chain MINIUPNPD-PCP-PEER to MINIUPNPD-POSTROUTING
+  implemented "IGD2 Port Triggering" with netfilter/iptables
+
+2016/01/18:
+  fix pcpserver.c CreatePCPMap_FW() : check pinhole before adding
+
+2015/12/16:
+  improve syslog message for incoming HTTP requests
+
+2015/12/13:
+  --disable-pppconn to disable WanPPPConnection
+  more fixes in DeviceProtection service
+
+2015/12/12:
+  add commandline option to genconfig.sh to set UPnP (UDA) version
+  advertise correct service and device versions when IGDv2 is enabled
+  fix action arguments for DeviceProtection service
+  fix event subscription renewal (include SID in response)
 
 2015/11/16:
   Fix bsd/getroute.c get_src_for_route_to() when args are NULL

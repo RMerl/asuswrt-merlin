@@ -1,4 +1,4 @@
-/* $Id: ipfrdr.c,v 1.16 2013/05/20 00:07:47 nanard Exp $ */
+/* $Id: ipfrdr.c,v 1.18 2016/02/12 14:12:25 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2007 Darren Reed
@@ -723,7 +723,7 @@ unsigned short *
 get_portmappings_in_range(unsigned short startport, unsigned short endport,
                           int proto, unsigned int * number)
 {
-	unsigned short * array;
+	unsigned short *array, *array2;
 	unsigned int capacity;
 	unsigned short eport;
 	ipfgeniter_t iter;
@@ -742,7 +742,7 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 		syslog(LOG_ERR, "get_portmappings_in_range() : calloc error");
 		return NULL;
 	}
-	
+
 	memset(&obj, 0, sizeof(obj));
 	obj.ipfo_rev = IPFILTER_VERSION;
 	obj.ipfo_ptr = &iter;
@@ -761,10 +761,10 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 			    "get_portmappings_in_range");
 			break;
 		}
-		
+
 		if (strcmp(ipn.in_tag.ipt_tag, group_name) != 0)
 			continue;
-		
+
 #if IPFILTER_VERSION >= 5000000
 		eport = ntohs(ipn.in_dpmin);
 		if( (eport == ntohs(ipn.in_dpmax))
@@ -781,13 +781,15 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 			{
 				/* need to increase the capacity of the array */
 				capacity += 128;
-				array = realloc(array, sizeof(unsigned short)*capacity);
-				if(!array)
+				array2 = realloc(array, sizeof(unsigned short)*capacity);
+				if(!array2)
 				{
 					syslog(LOG_ERR, "get_portmappings_in_range() : realloc(%lu) error", sizeof(unsigned short)*capacity);
 					*number = 0;
+					free(array);
 					return NULL;
 				}
+				array = array2;
 			}
 			array[*number] = eport;
 			(*number)++;
@@ -795,3 +797,26 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 	} while (ipn.in_next != NULL);
 	return array;
 }
+
+/* update the port mapping internal port, decription and timestamp */
+int
+update_portmapping(const char * ifname, unsigned short eport, int proto,
+                   unsigned short iport, const char * desc,
+                   unsigned int timestamp)
+{
+	/* TODO: implement update_portmapping() */
+	syslog(LOG_ERR, __FILE__ " update_portmapping() is not implemented");
+	return -1;
+}
+
+/* update the port mapping decription and timestamp */
+int
+update_portmapping_desc_timestamp(const char * ifname,
+                   unsigned short eport, int proto,
+                   const char * desc, unsigned int timestamp)
+{
+	del_redirect_desc(eport, proto);
+	add_redirect_desc(eport,proto, timestamp, desc);
+	return 0;
+}
+

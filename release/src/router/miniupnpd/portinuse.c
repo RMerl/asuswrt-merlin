@@ -79,7 +79,7 @@ port_in_use(const char *if_name,
 		ip_addr_str[0] = '\0';
 	}
 
-	syslog(LOG_DEBUG, "Check protocol %s for port %d on ext_if %s %s, %08X",
+	syslog(LOG_DEBUG, "Check protocol %s for port %u on ext_if %s %s, %08X",
 	    (proto==IPPROTO_TCP)?"tcp":"udp", eport, if_name,
 	    ip_addr_str, (unsigned)ip_addr.s_addr);
 
@@ -101,7 +101,7 @@ port_in_use(const char *if_name,
 			/* TODO add IPV6 support if enabled
 			 * Presently assumes IPV4 */
 #ifdef DEBUG
-			syslog(LOG_DEBUG, "port_in_use check port %d and address %s", tmp_port, eaddr);
+			syslog(LOG_DEBUG, "port_in_use check port %u and address %s", tmp_port, eaddr);
 #endif
 			if (tmp_port == eport) {
 				char tmp_addr[4];

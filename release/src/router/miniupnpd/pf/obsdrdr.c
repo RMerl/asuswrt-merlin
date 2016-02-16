@@ -1,7 +1,8 @@
-/* $Id: obsdrdr.c,v 1.84 2015/02/08 08:55:55 nanard Exp $ */
-/* MiniUPnP project
+/* $Id: obsdrdr.c,v 1.86 2016/02/12 13:11:03 nanard Exp $ */
+/* vim: tabstop=4 shiftwidth=4 noexpandtab
+ * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2015 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -71,7 +72,7 @@
 #error "USE_PF macro is undefined, check consistency between config.h and Makefile"
 #else
 
-/* list too keep timestamps for port mappings having a lease duration */
+/* list to keep timestamps for port mappings having a lease duration */
 struct timestamp_entry {
 	struct timestamp_entry * next;
 	unsigned int timestamp;
@@ -110,6 +111,26 @@ remove_timestamp_entry(unsigned short eport, int proto)
 		}
 		p = &(e->next);
 		e = *p;
+	}
+}
+
+static void
+add_timestamp_entry(unsigned short eport, int proto, unsigned timestamp)
+{
+	struct timestamp_entry * tmp;
+	tmp = malloc(sizeof(struct timestamp_entry));
+	if(tmp)
+	{
+		tmp->next = timestamp_list;
+		tmp->timestamp = timestamp;
+		tmp->eport = eport;
+		tmp->protocol = (short)proto;
+		timestamp_list = tmp;
+	}
+	else
+	{
+		syslog(LOG_ERR, "add_timestamp_entry() malloc(%lu) error",
+		       sizeof(struct timestamp_entry));
 	}
 }
 
@@ -361,18 +382,7 @@ add_redirect_rule2(const char * ifname,
 #endif
 	}
 	if(r == 0 && timestamp > 0)
-	{
-		struct timestamp_entry * tmp;
-		tmp = malloc(sizeof(struct timestamp_entry));
-		if(tmp)
-		{
-			tmp->next = timestamp_list;
-			tmp->timestamp = timestamp;
-			tmp->eport = eport;
-			tmp->protocol = (short)proto;
-			timestamp_list = tmp;
-		}
-	}
+		add_timestamp_entry(eport, proto, timestamp);
 	return r;
 }
 
@@ -604,10 +614,20 @@ error:
 	return -1;
 }
 
+#define priv_delete_redirect_rule(ifname, eport, proto, iport, \
+                                  iaddr, rhost, rhostlen) \
+        priv_delete_redirect_rule_check_desc(ifname, eport, proto, iport, \
+                                             iaddr, rhost, rhostlen, 0, NULL)
+/* if check_desc is true, only delete the rule if the description differs.
+ * returns : -1 : error / rule not found
+ *            0 : rule deleted
+ *            1 : rule untouched
+ */
 static int
-priv_delete_redirect_rule(const char * ifname, unsigned short eport,
+priv_delete_redirect_rule_check_desc(const char * ifname, unsigned short eport,
                           int proto, unsigned short * iport,
-                          in_addr_t * iaddr)
+                          in_addr_t * iaddr, char * rhost, int rhostlen,
+                          int check_desc, const char * desc)
 {
 	int i, n;
 	struct pfioc_rule pr;
@@ -683,6 +703,20 @@ priv_delete_redirect_rule(const char * ifname, unsigned short eport,
 				*iaddr = pr.rule.rdr.addr.v.a.addr.v4.s_addr;
 			}
 #endif
+			if(rhost && rhostlen > 0)
+			{
+				if (pr.rule.src.addr.v.a.addr.v4.s_addr == 0)
+					rhost[0] = '\0'; /* empty string */
+				else
+					inet_ntop(AF_INET, &pr.rule.src.addr.v.a.addr.v4.s_addr,
+					          rhost, rhostlen);
+			}
+			if(check_desc) {
+				if((desc == NULL && pr.rule.label[0] == '\0') ||
+				   (desc && 0 == strcmp(desc, pr.rule.label))) {
+					return 1;
+				}
+			}
 			pr.action = PF_CHANGE_GET_TICKET;
         	if(ioctl(dev, DIOCCHANGERULE, &pr) < 0)
 			{
@@ -708,7 +742,7 @@ int
 delete_redirect_rule(const char * ifname, unsigned short eport,
                     int proto)
 {
-	return priv_delete_redirect_rule(ifname, eport, proto, NULL, NULL);
+	return priv_delete_redirect_rule(ifname, eport, proto, NULL, NULL, NULL, 0);
 }
 
 static int
@@ -782,7 +816,7 @@ delete_redirect_and_filter_rules(const char * ifname, unsigned short eport,
 	int r;
 	unsigned short iport;
 	in_addr_t iaddr;
-	r = priv_delete_redirect_rule(ifname, eport, proto, &iport, &iaddr);
+	r = priv_delete_redirect_rule(ifname, eport, proto, &iport, &iaddr, NULL, 0);
 	if(r == 0)
 	{
 		r = priv_delete_filter_rule(ifname, iport, proto, iaddr);
@@ -977,6 +1011,69 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 	}
 	return array;
 }
+
+/* update the port mapping internal port, decription and timestamp */
+int
+update_portmapping(const char * ifname, unsigned short eport, int proto,
+                   unsigned short iport, const char * desc,
+                   unsigned int timestamp)
+{
+	unsigned short old_iport;
+	in_addr_t iaddr;
+	char iaddr_str[16];
+	char rhost[32];
+
+	if(priv_delete_redirect_rule(ifname, eport, proto, &old_iport, &iaddr, rhost, sizeof(rhost)) < 0)
+		return -1;
+	if (priv_delete_filter_rule(ifname, old_iport, proto, iaddr) < 0)
+		return -1;
+
+	inet_ntop(AF_INET, &iaddr, iaddr_str, sizeof(iaddr_str));
+
+	if(add_redirect_rule2(ifname, rhost, eport, iaddr_str, iport, proto,
+	                      desc, timestamp) < 0)
+		return -1;
+	if(add_filter_rule2(ifname, rhost, iaddr_str, eport, iport, proto, desc) < 0)
+		return -1;
+
+	return 0;
+}
+
+/* update the port mapping decription and timestamp */
+int
+update_portmapping_desc_timestamp(const char * ifname,
+                   unsigned short eport, int proto,
+                   const char * desc, unsigned int timestamp)
+{
+	unsigned short iport;
+	in_addr_t iaddr;
+	char iaddr_str[16];
+	char rhost[32];
+	int r;
+
+	r = priv_delete_redirect_rule_check_desc(ifname, eport, proto, &iport, &iaddr, rhost, sizeof(rhost), 1, desc);
+	if(r < 0)
+		return -1;
+	if(r == 1) {
+		/* only change timestamp */
+		remove_timestamp_entry(eport, proto);
+		add_timestamp_entry(eport, proto, timestamp);
+		return 0;
+	}
+	if (priv_delete_filter_rule(ifname, iport, proto, iaddr) < 0)
+		return -1;
+
+	inet_ntop(AF_INET, &iaddr, iaddr_str, sizeof(iaddr_str));
+
+	if(add_redirect_rule2(ifname, rhost, eport, iaddr_str, iport, proto,
+	                      desc, timestamp) < 0)
+		return -1;
+	if(add_filter_rule2(ifname, rhost, iaddr_str, eport, iport, proto, desc) < 0)
+		return -1;
+
+	return 0;
+}
+
 
 /* this function is only for testing */
 #if TEST

@@ -20,3 +20,5 @@ support IGD v2 : http://upnp.org/specs/gw/igd2/
    - ipfw/ipf : TODO
 
 implement port_in_use() for NetBSD
+
+- Do we need to TRIM arguments from SOAP ?

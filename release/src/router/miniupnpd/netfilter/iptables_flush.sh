@@ -4,7 +4,7 @@ IPTABLES=/sbin/iptables
 
 #flush all rules owned by miniupnpd
 $IPTABLES -t nat -F MINIUPNPD
-$IPTABLES -t nat -F MINIUPNPD-PCP-PEER
+$IPTABLES -t nat -F MINIUPNPD-POSTROUTING
 $IPTABLES -t filter -F MINIUPNPD
 $IPTABLES -t mangle -F MINIUPNPD
 
