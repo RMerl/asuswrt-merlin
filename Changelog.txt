@@ -12,6 +12,11 @@ Asuswrt-Merlin Changelog
     - FIXED: PPTP static route handling script was broken
     - FIXED: minidlna would check for the wrong database filename
              at start time
+    - FIXED: Wrong status shown for VPN Client 3
+    - FIXED: OpenVPN clients were run on the wrong CPU cores.
+             Now, odd instances correctly run on the second core.
+    - FIXED: Using DNSFilter with default mode set to "router" would
+             prevent using the router for IPv6 lookups.
 
 
 380.57 (24-Dec-2015)
