@@ -5032,8 +5032,9 @@ void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip) {
 				    "-A DNSFILTERF -d %s -j ACCEPT\n",
 				server[1], server[1]);
 		}
-		fprintf(fp, "-A DNSFILTERI -j DROP\n"
-			    "-A DNSFILTERF -j DROP\n");
+		fprintf(fp, "-A DNSFILTERI -j %s\n"
+			    "-A DNSFILTERF -j DROP\n",
+		            (dnsmode == 11 ? "ACCEPT" : "DROP"));
 	}
 }
 #endif	// RTCONFIG_IPV6
