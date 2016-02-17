@@ -1170,7 +1170,8 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		":OUTPUT ACCEPT [0:0]\n"
 		":VSERVER - [0:0]\n"
 		":LOCALSRV - [0:0]\n"
-		":VUPNP - [0:0]\n");
+		":VUPNP - [0:0]\n"
+		":PUPNP - [0:0]\n");
 
 #ifdef RTCONFIG_YANDEXDNS
 	fprintf(fp,
@@ -1303,6 +1304,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
         {
 		/* call UPNP chain */
 		fprintf(fp, "-A VSERVER -j VUPNP\n");
+//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
 	}
 
 #if 0
@@ -1427,7 +1429,8 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				":OUTPUT ACCEPT [0:0]\n"
 				":VSERVER - [0:0]\n"
 				":LOCALSRV - [0:0]\n"
-				":VUPNP - [0:0]\n");
+				":VUPNP - [0:0]\n"
+				":PUPNP - [0:0]\n");
 #ifdef RTCONFIG_YANDEXDNS
 			fprintf(fp,
 				":YADNS - [0:0]\n");
@@ -1489,7 +1492,8 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				":OUTPUT ACCEPT [0:0]\n"
 				":VSERVER - [0:0]\n"
 				":LOCALSRV - [0:0]\n"
-				":VUPNP - [0:0]\n");
+				":VUPNP - [0:0]\n"
+				":PUPNP - [0:0]\n");
 #ifdef RTCONFIG_YANDEXDNS
 		fprintf(fp,
 				":YADNS - [0:0]\n");
@@ -1594,6 +1598,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
         {
                 /* call UPNP chain */
                 fprintf(fp, "-A VSERVER -j VUPNP\n");
+//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
 	}
 #if 0
 	if (is_nat_enabled() && !nvram_match("sp_battle_ips", "0") && inet_addr_(wan_ip))	// oleg patch
@@ -1737,7 +1742,8 @@ void redirect_setting(void)
 				":POSTROUTING ACCEPT [0:0]\n"
 				":OUTPUT ACCEPT [0:0]\n"
 				":VSERVER - [0:0]\n"
-				":VUPNP - [0:0]\n");
+				":VUPNP - [0:0]\n"
+				":PUPNP - [0:0]\n");
 #ifdef RTCONFIG_YANDEXDNS
 		fprintf(redirect_fp,
 				":YADNS - [0:0]\n");

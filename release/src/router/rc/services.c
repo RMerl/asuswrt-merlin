@@ -3193,6 +3193,7 @@ void start_upnp(void)
 					"enable_upnp=%s\n"
 					"enable_natpmp=%s\n"
 					"secure_mode=%s\n"
+					"upnp_nat_postrouting_chain=PUPNP\n"
 					"upnp_forward_chain=FUPNP\n"
 					"upnp_nat_chain=VUPNP\n"
 					"notify_interval=%d\n"
