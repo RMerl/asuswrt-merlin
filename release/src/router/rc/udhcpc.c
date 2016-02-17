@@ -569,7 +569,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 {
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
-	char clientid[sizeof("61:") + (32+32+1)*2];
+	char clientid[sizeof("61:") + (128*2) + 1];
 #if defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181)
 	unsigned char optbuf[sizeof(struct viopt_hdr) + 128];
 	unsigned char hwaddr[6];
@@ -592,7 +592,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		NULL,		/* -Oip6rd rfc */
 		NULL,		/* -Oip6rd comcast */
 #endif
-#ifdef RTCONFIG_DSL
+#if 1
 		NULL, NULL,	/* -x 61:wan_clientid */
 #endif
 #ifdef RTCONFIG_TR069
@@ -656,20 +656,12 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 
 #ifdef RTCONFIG_DSL
 	value = nvram_safe_get(strcat_r(prefix, "clientid", tmp));
+#else
+	value = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
+#endif
 	if (*value) {
 		int len = snprintf(clientid, sizeof(clientid), "61:");
 		bin2hex(clientid + len, sizeof(clientid) - len, value, strlen(value));
-		dhcp_argv[index++] = "-x";
-		dhcp_argv[index++] = clientid;
-	}
-#endif
-
-	value = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
-	if (*value) {
-		char *ptr = clientid;
-		ptr += sprintf(ptr, "61:");
-		while (*value && (ptr - clientid) < sizeof(clientid) - 2)
-			ptr += sprintf(ptr, "%02x", *value++);
 		dhcp_argv[index++] = "-x";
 		dhcp_argv[index++] = clientid;
 	}
