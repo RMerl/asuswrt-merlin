@@ -7767,7 +7767,7 @@ void restart_cstats(void)
 int get_dns_filter(int proto, int mode, char **server)
 {
 	int count = 0;
-	static const char *server_table[13][2] = {
+	static char *server_table[13][2] = {
 		{"", ""},				/* 0: Unfiltered (handled separately below) */
 		{"208.67.222.222", ""},	/* 1: OpenDNS */
 		{"199.85.126.10", ""},	/* 2: Norton Connect Safe A (Security) */
@@ -7783,7 +7783,7 @@ int get_dns_filter(int proto, int mode, char **server)
 		{"8.26.56.26", ""}		/* 12: Comodo Secure DNS */
         };
 #ifdef RTCONFIG_IPV6
-	static const char *server6_table[][2] = {
+	static char *server6_table[][2] = {
 		{"", ""},		/* 0: Unfiltered (handled separately below) */
 		{"", ""},		/* 1: OpenDNS */
 		{"", ""},		/* 2: Norton Connect Safe A (Security) */
