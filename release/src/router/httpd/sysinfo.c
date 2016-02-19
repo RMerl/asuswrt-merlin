@@ -70,6 +70,7 @@ typedef unsigned long long u64;
 #include <linux/major.h>
 #include <rtk_switch.h>
 #include <rtk_types.h>
+#include <sys/ioctl.h>
 
 #define RTKSWITCH_DEV   "/dev/rtkswitch"
 
@@ -378,7 +379,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 			states[0] = states[1] = states[2] = states[3] = 0;
 
-			GetPhyStatus_rtk(&states);
+			GetPhyStatus_rtk((int *)&states);
 
 			snprintf(result, sizeof result, "[[\"%d\", \"%d\"],"
 			                                " [\"%d\", \"%d\"],"
@@ -578,7 +579,7 @@ exit:
 void GetPhyStatus_rtk(int *states)
 {
 	int model;
-	int *o;
+	const int *o;
 	int fd = open(RTKSWITCH_DEV, O_RDONLY);
 
 	if (fd < 0) {
