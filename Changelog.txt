@@ -9,6 +9,13 @@ Asuswrt-Merlin Changelog
            to apply these, manually reboot after changing them.
     - CHANGED: Updated OpenVPN to 2.3.10
     - CHANGED: Updated openssl to 1.0.2f
+    - CHANGED: Updated miniupnpd to 20160215 git snapshot
+    - CHANGED: if you set an OpenVPN client DNS mode to "Exclusive"
+               and you enable policy-based routing, then those policies
+               will also determine which DNS to use (the tunnel's or
+               the ISP's).  This is based on DNSFilter's technology.
+               You no longer need to use DNSFilter to control
+               the DNS used by your OpenVPN clients.
     - FIXED: PPTP static route handling script was broken
     - FIXED: minidlna would check for the wrong database filename
              at start time
@@ -17,6 +24,13 @@ Asuswrt-Merlin Changelog
              Now, odd instances correctly run on the second core.
     - FIXED: Using DNSFilter with default mode set to "router" would
              prevent using the router for IPv6 lookups.
+    - FIXED: Account limit wasn't properly allowing up to 10 
+             clients for SMB/FTP (patch by vit9696)
+    - FIXED: Having multiple OpenVPN clients configured with
+             multiple "Accept DNS configuration" modes would
+             only apply the last client's setting.  Now, we
+             apply the most restrictive setting of all
+             configured clients.
 
 
 380.57 (24-Dec-2015)
