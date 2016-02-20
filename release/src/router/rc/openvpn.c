@@ -1721,7 +1721,7 @@ int write_vpn_resolv(FILE* f)
 	struct dirent *file;
 	char *fn, ch, num, buf[24];
 	FILE *dnsf;
-	int strictlevel = 0, ch2;
+	int strictlevel = 0, ch2, level;
 
 	if ( chdir("/etc/openvpn/dns") )
 		return 0;
@@ -1738,6 +1738,14 @@ int write_vpn_resolv(FILE* f)
 
 		if ( sscanf(fn, "client%c.resol%c", &num, &ch) == 2 )
 		{
+			snprintf(&buf[0], sizeof(buf), "vpn_client%c_adns", num);
+			level = nvram_get_int(&buf[0]);
+
+			// Don't modify dnsmasq if policy routing is enabled and dns mode set to "Exclusive"
+			snprintf(&buf[0], sizeof(buf), "vpn_client%c_rgw", num);
+			if ((nvram_get_int(&buf[0]) == 3 ) && (level == 3))
+				continue;
+
 			if ( (dnsf = fopen(fn, "r")) == NULL )
 				continue;
 
@@ -1753,7 +1761,10 @@ int write_vpn_resolv(FILE* f)
 
 			snprintf(&buf[0], sizeof(buf), "vpn_client%c_adns", num);
 
-			strictlevel = nvram_get_int(&buf[0]);
+			// Only return the highest active level, so one exclusive client
+			// will override a relaxed client.
+			if (level > strictlevel)
+				strictlevel = level;
 		}
 	}
 	vpnlog(VPN_LOG_EXTRA, "Done with DNS entries...");
