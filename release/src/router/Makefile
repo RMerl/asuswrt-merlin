@@ -1681,7 +1681,7 @@ nettle/stamp-h1:
 
 nettle: nettle/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C nettle
+	@$(MAKE) -C nettle $(PARALLEL_BUILD)
 	@$(MAKE) -C nettle install
 
 nettle-clean:
@@ -2336,7 +2336,7 @@ quagga/stamp-h1:
 	@touch $@
 
 quagga: quagga/stamp-h1
-	@$(MAKE) -C quagga CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD)
+	@$(MAKE) -C quagga CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) $(PARALLEL_BUILD)
 
 quagga-clean:
 	-@$(MAKE) -C quagga clean
@@ -2558,7 +2558,7 @@ iperf-clean:
 	[ ! -f iperf/Makefile ] || $(MAKE) -C iperf distclean
 
 libevent-2.0.21: libevent-2.0.21/Makefile
-	$(MAKE) -C $@ && $(MAKE) $@-stage
+	$(MAKE) -C $@ $(PARALLEL_BUILD) && $(MAKE) $@-stage
 
 libevent-2.0.21/Makefile:
 	$(MAKE) libevent-2.0.21-configure
@@ -2629,7 +2629,7 @@ rstats: nvram$(BCMEX) shared
 
 dropbear: dropbear/config.h
 	@$(SEP)
-	@$(MAKE) -C dropbear PROGRAMS="dropbear dbclient dropbearkey scp" MULTI=1
+	@$(MAKE) -C dropbear PROGRAMS="dropbear dbclient dropbearkey scp" MULTI=1 $(PARALLEL_BUILD)
 
 dropbear-install:
 	install -D dropbear/dropbearmulti $(INSTALLDIR)/dropbear/usr/bin/dropbearmulti
@@ -3196,7 +3196,7 @@ openpam-clean:
 	@rm -f openpam/Makefile
 
 openvpn: shared openssl lzo openpam zlib openvpn/Makefile
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 openvpn/Makefile:
 	$(MAKE) openvpn-configure
@@ -3553,7 +3553,7 @@ webdav_client$(BCMEX)-clean:
 #add by gauss
 #add install libcurl
 curl-7.21.7: curl-7.21.7/Makefile
-	@$(MAKE) -C curl-7.21.7 && $(MAKE) $@-stage
+	@$(MAKE) -C curl-7.21.7 $(PARALLEL_BUILD) && $(MAKE) $@-stage
 
 curl-7.21.7/Makefile:
 	$(MAKE) curl-7.21.7-configure
@@ -3611,6 +3611,7 @@ net-snmp-5.7.2/stamp-h1: shared nvram$(BCMEX) $(if $(RTCONFIG_QTN),libqcsapi_cli
 	@touch net-snmp-5.7.2/stamp-h1
 
 net-snmp-5.7.2: net-snmp-5.7.2/stamp-h1
+	@$(MAKE) -C net-snmp-5.7.2 $(PARALLEL_BUILD)
 
 net-snmp-5.7.2-install:
 	@$(MAKE) -C net-snmp-5.7.2 install
@@ -3746,7 +3747,7 @@ db-4.8.30/build_unix/stamp-h1:
 
 db-4.8.30: db-4.8.30/build_unix/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C db-4.8.30/build_unix
+	@$(MAKE) -C db-4.8.30/build_unix $(PARALLEL_BUILD)
 
 db-4.8.30-install: db-4.8.30
 	install -D db-4.8.30/build_unix/.libs/libdb-4.8.so $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
@@ -3849,7 +3850,7 @@ expat-2.0.1-clean:
 #avahi-0.6.31
 avahi-0.6.31: shared nvram$(BCMEX) expat-2.0.1 libdaemon avahi-0.6.31/Makefile
 	@$(SEP)
-	@$(MAKE) -C avahi-0.6.31
+	@$(MAKE) -C avahi-0.6.31 $(PARALLEL_BUILD)
  
 avahi-0.6.31/Makefile:
 	$(MAKE) avahi-0.6.31-configure
