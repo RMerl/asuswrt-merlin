@@ -1488,7 +1488,7 @@ function update_vpn_client_state() {
 												<th>Global Log verbosity</th>
 												<td>
 													<input type="text" maxlength="1" class="input_6_table"name="vpn_loglevel" onKeyPress="return validator.isNumber(this,event);"onblur="validate_number_range(this, 0, 9)" value="<% nvram_get("vpn_loglevel"); %>">
-													<span style="color:#FC0">Between 0 and 9. Default: 3</span>
+													<span style="color:#FC0">(Between 0 and 9. Default: 3)</span>
 												</td>
 											</tr>
 											<tr id="server_ccd">
