@@ -1020,7 +1020,6 @@ void start_vpnserver(int serverNum)
 				fprintf(fp, "client-cert-not-required\n");
 				fprintf(fp, "username-as-common-name\n");
 			}
-			fprintf(fp, "duplicate-cn\n");
 		}
 
 		fprintf(fp_client, "ns-cert-type server\n");
