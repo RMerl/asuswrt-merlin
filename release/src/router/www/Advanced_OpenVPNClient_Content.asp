@@ -1180,6 +1180,13 @@ function getConnStatus() {
 					</thead>
 
 					<tr>
+						<th>Global Log verbosity<br><i>(0-9, default=3)</i></th>
+						<td>
+							<input type="text" maxlength="1" class="input_6_table" name="vpn_loglevel" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 0, 9)" value="<% nvram_get("vpn_loglevel"); %>">
+						</td>
+					</tr>
+
+					<tr>
 						<th><#vpn_openvpn_PollInterval#><br><i>( <#zero_disable#> )</i></th>
 						<td>
 							<input type="text" maxlength="4" class="input_6_table" name="vpn_client_poll" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 0, 1440)" value="<% nvram_get("vpn_client_poll"); %>">
