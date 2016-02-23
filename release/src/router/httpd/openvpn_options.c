@@ -433,6 +433,11 @@ add_option (char *p[], int line, int unit)
 		sprintf(buf, "vpn_client%d_cipher", unit);
 		nvram_set(buf, p[1]);
 	}
+	else if (streq (p[0], "auth") && p[1])
+	{
+		sprintf(buf, "vpn_client%d_digest", unit);
+		nvram_set(buf, p[1]);
+	}
 	else if (streq (p[0], "redirect-gateway") && (!p[1] || streq (p[1], "def1")))	// Only handle if default GW
 	{
 		sprintf(buf, "vpn_client%d_rgw", unit);
@@ -682,6 +687,8 @@ void reset_client_setting(int unit){
 	sprintf(nv, "vpn_client%d_retry", unit);
 	nvram_set(nv, "-1");
 	sprintf(nv, "vpn_client%d_cipher", unit);
+	nvram_set(nv, "default");
+	sprintf(nv, "vpn_client%d_digest", unit);
 	nvram_set(nv, "default");
 	sprintf(nv, "vpn_client%d_rgw", unit);
 	nvram_set(nv, "0");

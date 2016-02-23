@@ -236,6 +236,9 @@ void start_vpnclient(int clientNum)
 	sprintf(&buffer[0], "vpn_client%d_cipher", clientNum);
 	if ( !nvram_contains_word(&buffer[0], "default") )
 		fprintf(fp, "cipher %s\n", nvram_safe_get(&buffer[0]));
+	sprintf(&buffer[0], "vpn_client%d_digest", clientNum);
+	if ( !nvram_contains_word(&buffer[0], "default") )
+		fprintf(fp, "auth %s\n", nvram_safe_get(&buffer[0]));
 	sprintf(&buffer[0], "vpn_client%d_rgw", clientNum);
 	nvi = nvram_get_int(&buffer[0]);
 	if (nvi == 1)
@@ -836,6 +839,13 @@ void start_vpnserver(int serverNum)
 	if ( !nvram_contains_word(&buffer[0], "default") ) {
 		fprintf(fp, "cipher %s\n", nvram_safe_get(&buffer[0]));
 		fprintf(fp_client, "cipher %s\n", nvram_safe_get(&buffer[0]));
+	}
+
+	//digest
+	sprintf(&buffer[0], "vpn_server%d_digest", serverNum);
+	if ( !nvram_contains_word(&buffer[0], "default") ) {
+		fprintf(fp, "auth %s\n", nvram_safe_get(&buffer[0]));
+		fprintf(fp_client, "auth %s\n", nvram_safe_get(&buffer[0]));
 	}
 
 	//compression
