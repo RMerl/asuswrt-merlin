@@ -7,6 +7,9 @@ Asuswrt-Merlin Changelog
            These are UNSUPPORTED tweaks, intended mostly for 
            experimentation, or very specific situations.  If unsure how
            to apply these, manually reboot after changing them.
+    - NEW: Added setting to configure OpenVPN's auth digest algo.
+    - NEW: Added setting to configure OpenVPN's logging verbosity.
+           Note that this setting is global to all clients/servers.
     - CHANGED: Updated OpenVPN to 2.3.10
     - CHANGED: Updated openssl to 1.0.2f
     - CHANGED: Updated miniupnpd to 20160215 git snapshot
