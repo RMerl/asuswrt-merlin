@@ -517,7 +517,6 @@ void notice_set(const char *path, const char *format, ...)
 //	#define _x_dprintf(args...)	syslog(LOG_DEBUG, args);
 #define _x_dprintf(args...)	do { } while (0);
 
-
 // -----------------------------------------------------------------------------
 #define ACT_COMM_LEN	20
 struct action_s {
@@ -598,7 +597,7 @@ int wait_action_idle(int n)
 }
 
 const char *get_wanip(void)
-{
+{	
 	char tmp[100], prefix[]="wanXXXXXX_";
 	int unit=0;
 
@@ -742,7 +741,6 @@ const char *getifaddr(char *ifname, int family, int flags)
 
 	return _getifaddr(ifname, family, flags, buf, sizeof(buf));
 }
-
 
 int is_intf_up(const char* ifname)
 {
@@ -1080,8 +1078,7 @@ long backup_rx = 0;
 long backup_tx = 0;
 int backup_set = 0;
 
-unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2
-)		
+unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2)		
 {
 	char word[100], word1[100], *next, *next1;
 	char tmp[100];
@@ -1262,7 +1259,6 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 
 	return 0;
 }
-
 
 // 0: Not private subnet, 1: A class, 2: B class, 3: C class.
 int is_private_subnet(const char *ip)
@@ -1791,7 +1787,6 @@ int get_yandex_dns(int family, int mode, char **server, int max_count)
 	return count;
 }
 #endif
-
 
 #ifdef RTCONFIG_BWDPI
 /*
