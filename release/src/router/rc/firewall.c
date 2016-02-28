@@ -1365,7 +1365,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 
 		/* masquerade lan to lan */
 		if (nvram_match("fw_nat_loopback", "2"))
-			fprintf(fp, "-A POSTROUTING %s -m mark --mark 0xb400 -j MASQUERADE\n" , p);
+			fprintf(fp, "-A POSTROUTING %s -m mark --mark 0x8000/0x8000 -j MASQUERADE\n" , p);
 		else if (nvram_match("fw_nat_loopback", "1")) {
 			ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 			fprintf(fp, "-A POSTROUTING %s -o %s -s %s -d %s -j MASQUERADE\n", p, lan_if, lan_class, lan_class);
@@ -1671,7 +1671,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		// masquerade lan to lan
 
 		if (nvram_match("fw_nat_loopback", "2"))
-	 		fprintf(fp, "-A POSTROUTING %s -m mark --mark 0xb400 -j MASQUERADE\n", p);
+			fprintf(fp, "-A POSTROUTING %s -m mark --mark 0x8000/0x8000 -j MASQUERADE\n", p);
 		else if (nvram_match("fw_nat_loopback", "1")) {
 			ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 			fprintf(fp, "-A POSTROUTING %s -o %s -s %s -d %s -j MASQUERADE\n", p, lan_if, lan_class, lan_class);
@@ -4131,7 +4131,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 /* For NAT loopback */
 	if (nvram_match("fw_nat_loopback", "2"))
 		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
-	     		"-d", wan_ip, "-j", "MARK", "--set-mark", "0xb400");
+		     "-d", wan_ip, "-j", "MARK", "--set-mark", "0x8000/0x8000");
 
 /* Workaround for neighbour solicitation flood from Comcast */
 #ifdef RTCONFIG_IPV6
@@ -4320,7 +4320,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 		if (nvram_match("fw_nat_loopback", "2"))
 			eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
-			     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xb400");
+			     "-d", wan_ip, "-j", "MARK", "--set-mark", "0x8000/0x8000");
 	}
 #endif
 
