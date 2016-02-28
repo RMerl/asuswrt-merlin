@@ -20,15 +20,19 @@ create_client_list(){
 		then
 			continue
 		fi
-		TARGET_ROUTE=$(echo $ENTRY | cut -d ">" -f 4)
-		if [ "$TARGET_ROUTE" = "VPN" ]
+
+		VPN_IP=$(echo $ENTRY | cut -d ">" -f 2)
+		if [ "$VPN_IP" != "0.0.0.0" ]
 		then
-			VPN_IP=$(echo $ENTRY | cut -d ">" -f 2)
-			if [ "$VPN_IP" != "0.0.0.0" ]
+			TARGET_ROUTE=$(echo $ENTRY | cut -d ">" -f 4)
+			if [ "$TARGET_ROUTE" = "VPN" ]
 			then
 				echo iptables -t nat -A DNSVPN$instance -s $VPN_IP -j DNAT --to-destination $server >> $dnsscript
+				logger -t "openvpn-updown" "Forcing $VPN_IP to use DNS server $server"
+			else
+				echo iptables -t nat -I DNSVPN$instance -s $VPN_IP -j RETURN >> $dnsscript
+				logger -t "openvpn-updown" "Excluding $VPN_IP from forced DNS routing"
 			fi
-			logger -t "openvpn-updown" "Forcing $VPN_IP to use DNS server $server"
 		fi
 	done
 	IFS=$OLDIFS
