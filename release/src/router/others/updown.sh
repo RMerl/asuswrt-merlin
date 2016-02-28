@@ -41,7 +41,7 @@ if [ -f $resolvfile ]; then rm $resolvfile; fileexists=1; fi
 
 if [ $script_type == 'up' ]
 then
-	echo iptables -t nat -N DNSVPN$instance > $dnsscript
+	echo iptables -t nat -N DNSVPN$instance >> $dnsscript
 
 	if [ $instance != 0 -a $(nvram get vpn_client$(echo $instance)_rgw) == 2 -a $(nvram get vpn_client$(echo $instance)_adns) == 3 ]
 	then
@@ -50,9 +50,9 @@ then
 		setdns=-1
 	fi
 
-	for optionname in $(set | grep "^foreign_option_" | sed "s/^\(.*\)=.*$/\1/g")
+	for optionname in `set | grep "^foreign_option_" | sed "s/^\(.*\)=.*$/\1/g"`
 	do
-		option=$(eval "echo \\$$optionname")
+		option=`eval "echo \\$$optionname"`
 		if echo $option | grep "dhcp-option WINS "; then echo $option | sed "s/ WINS /=44,/" >> $conffile; fi
 		if echo $option | grep "dhcp-option DNS"
 		then
