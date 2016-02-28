@@ -456,10 +456,15 @@ enum led_id {
 #ifdef RTAC5300
 	RPM_FAN,	/* use to control FAN RPM (Hi/Lo) */
 #endif
-	LED_SWITCH,
-	LED_5G_FORCED,	/* Will handle ledbh & nvram flag */
 	LED_ID_MAX,	/* last item */
 };
+
+// Outside of enum to avoid conflicting with Asus's code
+enum led_merlin_id {
+	LED_SWITCH = LED_ID_MAX + 1,
+	LED_5G_FORCED,
+};
+
 
 enum led_fan_mode_id {
 	LED_OFF = 0,
