@@ -318,12 +318,15 @@ upnp_event_notify_connect(struct upnp_event_notify * obj)
 	p += 7;	/* http:// */
 #ifdef ENABLE_IPV6
 	if(*p == '[') {	/* ip v6 */
+		obj->addrstr[i++] = '[';
 		p++;
 		obj->ipv6 = 1;
 		while(*p != ']' && i < (sizeof(obj->addrstr)-1))
 			obj->addrstr[i++] = *(p++);
 		if(*p == ']')
 			p++;
+		if(i < (sizeof(obj->addrstr)-1))
+			obj->addrstr[i++] = ']';
 	} else {
 #endif
 		while(*p != '/' && *p != ':' && i < (sizeof(obj->addrstr)-1))
@@ -349,9 +352,16 @@ upnp_event_notify_connect(struct upnp_event_notify * obj)
 	obj->path = p;
 #ifdef ENABLE_IPV6
 	if(obj->ipv6) {
+		char addrstr_tmp[48];
 		struct sockaddr_in6 * sa = (struct sockaddr_in6 *)&addr;
 		sa->sin6_family = AF_INET6;
-		inet_pton(AF_INET6, obj->addrstr, &(sa->sin6_addr));
+		i = (int)strlen(obj->addrstr);
+		if(i > 2) {
+			i -= 2;
+			memcpy(addrstr_tmp, obj->addrstr + 1, i);
+			addrstr_tmp[i] = '\0';
+			inet_pton(AF_INET6, addrstr_tmp, &(sa->sin6_addr));
+		}
 		sa->sin6_port = htons(port);
 		addrlen = sizeof(struct sockaddr_in6);
 	} else {
@@ -385,7 +395,11 @@ static void upnp_event_prepare(struct upnp_event_notify * obj)
 	static const char notifymsg[] =
 		"NOTIFY %s HTTP/1.1\r\n"
 		"Host: %s%s\r\n"
-		"Content-Type: text/xml\r\n"
+#if (UPNP_VERSION_MAJOR == 1) && (UPNP_VERSION_MINOR == 0)
+		"Content-Type: text/xml\r\n"	/* UDA v1.0 */
+#else
+		"Content-Type: text/xml; charset=\"utf-8\"\r\n"	/* UDA v1.1 or later */
+#endif
 		"Content-Length: %d\r\n"
 		"NT: upnp:event\r\n"
 		"NTS: upnp:propchange\r\n"

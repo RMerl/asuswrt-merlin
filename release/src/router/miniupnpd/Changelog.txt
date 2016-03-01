@@ -1,4 +1,13 @@
-$Id: Changelog.txt,v 1.421 2016/02/12 12:34:37 nanard Exp $
+$Id: Changelog.txt,v 1.425 2016/02/20 19:11:58 nanard Exp $
+
+2016/02/19:
+  set IPv6 Hop limit to 10
+  fix HOST: header of event notifications in IPv6
+  be more compliant on 64bit machines : ui4 in [0;2^32-1]
+
+2016/02/16:
+  minor changes to follow UDA 1.1 more closely.
+  more argument checking in Soap methods.
 
 2016/02/12:
   return error 729 - ConflictWithOtherMechanisms if IGD v2 is enabled.

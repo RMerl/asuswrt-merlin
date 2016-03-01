@@ -2,7 +2,7 @@
 /* vim: tabstop=4 shiftwidth=4 noexpandtab */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2015 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -237,9 +237,9 @@ static const struct XMLElt rootDesc[] =
 			"urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1"},
 	/*{"/serviceId", "urn:upnp-org:serviceId:WANCommonInterfaceConfig"}, */
 	{"/serviceId", "urn:upnp-org:serviceId:WANCommonIFC1"}, /* required */
+	{"/SCPDURL", WANCFG_PATH},
 	{"/controlURL", WANCFG_CONTROLURL},
 	{"/eventSubURL", WANCFG_EVENTURL},
-	{"/SCPDURL", WANCFG_PATH},
 /* 38 */
 	{"device", INITHELPER(39,12)},
 /* 39 */
@@ -268,16 +268,16 @@ static const struct XMLElt rootDesc[] =
 		/* urn:schemas-upnp-org:service:WANIPConnection:2 for v2 */
 	{"/serviceId", SERVICE_ID_WANIPC},
 		/* urn:upnp-org:serviceId:WANIPConn1 or 2 */
+	{"/SCPDURL", WANIPC_PATH},
 	{"/controlURL", WANIPC_CONTROLURL},
 	{"/eventSubURL", WANIPC_EVENTURL},
-	{"/SCPDURL", WANIPC_PATH},
 #ifdef ENABLE_6FC_SERVICE
 /* 58 */
 	{"/serviceType", "urn:schemas-upnp-org:service:WANIPv6FirewallControl:1"},
 	{"/serviceId", "urn:upnp-org:serviceId:WANIPv6Firewall1"},
+	{"/SCPDURL", WANIP6FC_PATH},
 	{"/controlURL", WANIP6FC_CONTROLURL},
 	{"/eventSubURL", WANIP6FC_EVENTURL},
-	{"/SCPDURL", WANIP6FC_PATH},
 #endif
 /* 58 / 63 = SERVICES_OFFSET*/
 #if defined(HAS_DUMMY_SERVICE) || defined(ENABLE_L3F_SERVICE) || defined(ENABLE_DP_SERVICE)
@@ -288,17 +288,17 @@ static const struct XMLElt rootDesc[] =
 /* 60 / 65 = SERVICES_OFFSET+2 */
 	{"/serviceType", "urn:schemas-dummy-com:service:Dummy:1"},
 	{"/serviceId", "urn:dummy-com:serviceId:dummy1"},
+	{"/SCPDURL", DUMMY_PATH},
 	{"/controlURL", "/dummy"},
 	{"/eventSubURL", "/dummy"},
-	{"/SCPDURL", DUMMY_PATH},
 #endif
 #ifdef ENABLE_L3F_SERVICE
 /* 60 / 65 = SERVICES_OFFSET+2 */
 	{"/serviceType", "urn:schemas-upnp-org:service:Layer3Forwarding:1"},
 	{"/serviceId", "urn:upnp-org:serviceId:L3Forwarding1"},
+	{"/SCPDURL", L3F_PATH},
 	{"/controlURL", L3F_CONTROLURL}, /* The Layer3Forwarding service is only */
 	{"/eventSubURL", L3F_EVENTURL}, /* recommended, not mandatory */
-	{"/SCPDURL", L3F_PATH},
 #endif
 #ifdef ENABLE_DP_SERVICE
 /* InternetGatewayDevice v2 :
@@ -309,9 +309,9 @@ static const struct XMLElt rootDesc[] =
 /* 65 / 70 = SERVICES_OFFSET+7 */
 	{"/serviceType", "urn:schemas-upnp-org:service:DeviceProtection:1"},
 	{"/serviceId", "urn:upnp-org:serviceId:DeviceProtection1"},
+	{"/SCPDURL", DP_PATH},
 	{"/controlURL", DP_CONTROLURL},
 	{"/eventSubURL", DP_EVENTURL},
-	{"/SCPDURL", DP_PATH},
 #endif
 	{0, 0}
 };
@@ -952,6 +952,13 @@ genXML(char * str, int * len, int * tmplen,
 			/*printf("<%s>\n", eltname); */
 			str = strcat_char(str, len, tmplen, '<');
 			str = strcat_str(str, len, tmplen, eltname);
+			if(memcmp(eltname, "root ", 5) == 0) {
+				char configid_str[16];
+				/* add configId attribute, required by UDA 1.1 */
+				snprintf(configid_str, sizeof(configid_str), "\"%u\"", upnp_configid);
+				str = strcat_str(str, len, tmplen, " configId=");
+				str = strcat_str(str, len, tmplen, configid_str);
+			}
 			str = strcat_char(str, len, tmplen, '>');
 			k = (unsigned long)p[i].data;
 			i = k & 0xffff;
@@ -1105,6 +1112,14 @@ genServiceDesc(int * len, const struct serviceDesc * s)
 		str = strcat_str(str, len, &tmplen, "</name><dataType>");
 		str = strcat_str(str, len, &tmplen, upnptypes[vars[i].itype & 0x0f]);
 		str = strcat_str(str, len, &tmplen, "</dataType>");
+		/*if(vars[i].defaultValue) */
+		if(vars[i].idefault)
+		{
+		  str = strcat_str(str, len, &tmplen, "<defaultValue>");
+		  /*str = strcat_str(str, len, &tmplen, vars[i].defaultValue); */
+		  str = strcat_str(str, len, &tmplen, upnpdefaultvalues[vars[i].idefault]);
+		  str = strcat_str(str, len, &tmplen, "</defaultValue>");
+		}
 		if(vars[i].iallowedlist)
 		{
 		  if((vars[i].itype & 0x0f) == 0)
@@ -1126,14 +1141,6 @@ genServiceDesc(int * len, const struct serviceDesc * s)
 			str = strcat_int(str, len, &tmplen, upnpallowedranges[vars[i].iallowedlist+1]);
 		    str = strcat_str(str, len, &tmplen, "</maximum></allowedValueRange>");
 		  }
-		}
-		/*if(vars[i].defaultValue) */
-		if(vars[i].idefault)
-		{
-		  str = strcat_str(str, len, &tmplen, "<defaultValue>");
-		  /*str = strcat_str(str, len, &tmplen, vars[i].defaultValue); */
-		  str = strcat_str(str, len, &tmplen, upnpdefaultvalues[vars[i].idefault]);
-		  str = strcat_str(str, len, &tmplen, "</defaultValue>");
 		}
 		str = strcat_str(str, len, &tmplen, "</stateVariable>");
 		/*str = strcat_char(str, len, &tmplen, '\n'); // TEMP ! */

@@ -1,7 +1,7 @@
 /* $Id: minissdp.c,v 1.77 2015/08/26 07:36:52 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2015 Thomas Bernard
+ * (c) 2006-2016 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -296,6 +296,9 @@ OpenAndConfSSDPNotifySocketIPv6(unsigned int if_index)
 {
 	int s;
 	unsigned int loop = 0;
+	/* UDA 2.0 : The hop limit of each IP packet for a Site-Local scope
+	 * multicast message SHALL be configurable and SHOULD default to 10 */
+	int hop_limit = 10;
 	struct sockaddr_in6 sockname;
 
 	s = socket(PF_INET6, SOCK_DGRAM, 0);
@@ -313,6 +316,12 @@ OpenAndConfSSDPNotifySocketIPv6(unsigned int if_index)
 	if(setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop, sizeof(loop)) < 0)
 	{
 		syslog(LOG_ERR, "setsockopt(udp_notify, IPV6_MULTICAST_LOOP): %m");
+		close(s);
+		return -1;
+	}
+	if(setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &hop_limit, sizeof(hop_limit)) < 0)
+	{
+		syslog(LOG_ERR, "setsockopt(udp_notify, IPV6_MULTICAST_HOPS): %m");
 		close(s);
 		return -1;
 	}
@@ -621,10 +630,14 @@ SendSSDPNotifies(int s, const char * host, unsigned short http_port,
 {
 #ifdef ENABLE_IPV6
 	struct sockaddr_storage sockname;
+	/* UDA 1.1 AnnexA and UDA 2.0 only allow/define the use of
+	 * Link-Local and Site-Local multicast scopes */
 	static struct { const char * p1, * p2; } const mcast_addrs[] =
 		{ { LL_SSDP_MCAST_ADDR, "[" LL_SSDP_MCAST_ADDR "]" },	/* Link Local */
 		  { SL_SSDP_MCAST_ADDR, "[" SL_SSDP_MCAST_ADDR "]" },	/* Site Local */
+#ifndef UPNP_STRICT
 		  { GL_SSDP_MCAST_ADDR, "[" GL_SSDP_MCAST_ADDR "]" },	/* Global */
+#endif /* ! UPNP_STRICT */
 		  { NULL, NULL } };
 	int j;
 #else /* ENABLE_IPV6 */
