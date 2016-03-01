@@ -12,13 +12,15 @@ Asuswrt-Merlin Changelog
            Note that this setting is global to all clients/servers.
     - CHANGED: Updated OpenVPN to 2.3.10
     - CHANGED: Updated openssl to 1.0.2f
-    - CHANGED: Updated miniupnpd to 20160215 git snapshot
+    - CHANGED: Updated miniupnpd to 1.9.20160222
     - CHANGED: if you set an OpenVPN client DNS mode to "Exclusive"
                and you enable policy-based routing, then those policies
                will also determine which DNS to use (the tunnel's or
                the ISP's).  This is based on DNSFilter's technology.
                You no longer need to use DNSFilter to control
                the DNS used by your OpenVPN clients.
+    - CHANGED: Made OpenVPN traffic bypass CTF, which resolves
+               some throughput issues with it
     - FIXED: PPTP static route handling script was broken
     - FIXED: minidlna would check for the wrong database filename
              at start time
@@ -34,6 +36,8 @@ Asuswrt-Merlin Changelog
              only apply the last client's setting.  Now, we
              apply the most restrictive setting of all
              configured clients.
+    - FIXED: RT-AC68U 2.4 GHz was broken if CTF was disabled
+             (downgraded wifi driver to  6.37.14.105)
 
 
 380.57 (24-Dec-2015)
