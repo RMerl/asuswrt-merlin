@@ -1595,6 +1595,10 @@ function card_confirm(callBack) {
 					success: function(response){
 						genClientList();
 						switch(callBack) {
+							case "DNSFilter" :
+								showDropdownClientList('setclientmac', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
+								show_dnsfilter_list();
+								break;
 							case "DHCP" :
 								showDropdownClientList('setClientIP', 'mac>ip', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 								showdhcp_staticlist();

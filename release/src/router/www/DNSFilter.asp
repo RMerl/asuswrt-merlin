@@ -13,7 +13,7 @@
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
-<link rel="stylesheet" type="text/css" href="/calendar/fullcalendar.css">
+<link rel="stylesheet" type="text/css" href="/device-map/device-map.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
@@ -34,14 +34,8 @@ function initial(){
 	show_menu();
 	show_footer();
 
-	if(!ParentalCtrl2_support){		
-		document.getElementById('FormTitle').style.webkitBorderRadius = "3px";
-		document.getElementById('FormTitle').style.MozBorderRadius = "3px";
-		document.getElementById('FormTitle').style.BorderRadius = "3px";	
-	}
-	
-	gen_mainTable();	
-	setTimeout("showLANIPList();", 1000);
+	show_dnsfilter_list();
+	showDropdownClientList('setclientmac', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 
 	// dnsfilter_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable, otherwise hide it
 	showhide("dnsfilter_mode",document.form.dnsfilter_enable_x.value);
@@ -52,52 +46,27 @@ function initial(){
 }
 
 /*------------ Mouse event of fake LAN IP select menu {-----------------*/
-function setClientIP(devname, macaddr){
-	document.form.rule_devname.value = devname;
+function setclientmac(macaddr){
 	document.form.rule_mac.value = macaddr;
 	hideClients_Block();
-	over_var = 0;
 }
 
-function showLANIPList(){
-	var htmlCode = "";
-	for(var i=0; i<clientList.length;i++){
-		var clientObj = clientList[clientList[i]];
-
-		if(clientObj.ip == "offline") clientObj.ip = "";
-		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
-
-		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
-		htmlCode += clientObj.name;
-		htmlCode += '\', \'';
-		htmlCode += clientObj.mac;
-		htmlCode += '\');"><strong>';
-		htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';
-	}
-
-	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
-}
 
 function pullLANIPList(obj){
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
 	if(isMenuopen == 0){
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';
-		document.form.rule_devname.focus();
-		isMenuopen = 1;
+		element.style.display = 'block';
+		document.form.rule_mac.focus();
 	}
 	else
 		hideClients_Block();
 }
 
-var over_var = 0;
-var isMenuopen = 0;
-
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
-	isMenuopen = 0;
-	//valid_IP_form(document.form.rule_devname, 0);
 }
 
 function gen_modeselect(name, value, onchange){
@@ -120,35 +89,77 @@ function gen_modeselect(name, value, onchange){
 	return code;
 }
 
-function gen_mainTable(){
+function show_dnsfilter_list(){
 	var code = "";
 
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
-	code +='<thead><tr><td colspan="4"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;64)</td></tr></thead>';
-	code +='<tr><th width="40%"><#ParentalCtrl_username#></th>';
-	code +='<th width="20%"><#ParentalCtrl_hwaddr#></th>';
-	code +='<th width="15%">Filter Mode</th>';
-	code +='<th width="10%"><#list_add_delete#></th></tr>';
+	code +='<thead><tr><td colspan="3"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;64)</td></tr></thead>';
+	code +='<tr><th width="65%"><#ParentalCtrl_username#></th>';
+	code +='<th width="20%">Filter Mode</th>';
+	code +='<th width="15%"><#list_add_delete#></th></tr>';
 
-	code +='<tr><td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="rule_devname" onkeypress="return is_alphanum(this,event);" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();};validator.safeName(this);">';
-	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
-	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
-	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="rule_mac" onKeyPress="return validator.isHWAddr(this,event)"></td>';
+	code +='<tr><td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" style="margin-left:10px;width:255px;" class="input_macaddr_table" name="rule_mac" onClick="hideClients_Block();" onKeyPress="return validator.isHWAddr(this,event)">';
+	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_client#>">';
+	code +='<div id="ClientList_Block_PC" style="margin:0 0 0 52px" class="clientlist_dropdown"></div></td>';
 	code +='<td style="border-bottom:2px solid #000;">'+gen_modeselect("rule_mode", "-1", "")+'</td>';
 	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(64)" value=""></td></tr>';
 
 	if(dnsfilter_rule_list_row == "")
-		code +='<tr><td style="color:#FFCC00;" colspan="10"><#IPConnection_VSList_Norule#></td>';
+		code +='<tr><td style="color:#FFCC00;" colspan="3"><#IPConnection_VSList_Norule#></td>';
 	else{
-		for(i=1; i<dnsfilter_rule_list_row.length; i++){
+		//user icon
+		var userIconBase64 = "NoIcon";
+		var clientName, deviceType, deviceVender; 
+		for(var i=1; i<dnsfilter_rule_list_row.length; i++){
+
 			var ruleArray = dnsfilter_rule_list_row[i].split('&#62');
-			var rule_devname = ruleArray[0];
-			var rule_mac = ruleArray[1];
+			var mac = ruleArray[1];
 			var rule_mode = ruleArray[2];
 
+			if(clientList[mac]) {
+				clientName = (clientList[mac].nickName == "") ? clientList[mac].name : clientList[mac].nickName;
+				deviceType = clientList[mac].type;
+				deviceVender = clientList[mac].vendor;
+			}
+			else {
+				clientName = ruleArray[0]; // TODO: Use some kind of default name, or empty string?
+				deviceType = 0;
+				deviceVender = "";
+			}
 			code +='<tr id="row'+i+'">';
-			code +='<td title="'+rule_devname+'">'+ rule_devname +'</td>';
-			code +='<td title="'+rule_mac+'">'+ rule_mac +'</td>';
+			code +='<td title="'+clientName+'">';
+
+			code += '<table width="100%"><tr><td style="width:35%;border:0;float:right;padding-right:30px;">';
+			if(clientList[mac] == undefined) {
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+			}
+			else {
+				if(usericon_support) {
+					userIconBase64 = getUploadIcon(mac.replace(/\:/g, ""));
+				}
+				if(userIconBase64 != "NoIcon") {
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+				}
+				else if(deviceType != "0" || deviceVender == "") {
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+				}
+				else if(deviceVender != "" ) {
+					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
+					if(venderIconClassName != "") {
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+					}
+					else {
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+					}
+				}
+			}
+
+			code += '</td><td id="client_info_'+i+'" style="width:65%;text-align:left;border:0;">';
+			code += '<div>' + clientName + '</div>';
+			code += '<div>' + mac + '</div>';
+			code += '</td></tr></table>';
+			code +='</td>';
+
 			code +='<td>'+gen_modeselect("rule_mode"+i, rule_mode, "changeRow_main(this);")+'</td>';
 			code +='<td><input class=\"remove_btn\" type=\"button\" onclick=\"deleteRow_main(this);\" value=\"\"/></td>';
 		}
@@ -159,17 +170,11 @@ function gen_mainTable(){
 	document.getElementById("mainTable").style.display = "";
 	document.getElementById("mainTable").innerHTML = code;
 	$("#mainTable").fadeIn();
-	showLANIPList();
+	showDropdownClientList('setclientmac', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 }
 
 function applyRule(){
-	var dnsfilter_rulelist_tmp = "";
-
-	for(i=1; i<dnsfilter_rule_list_row.length; i++){
-		dnsfilter_rulelist_tmp += "<";
-		dnsfilter_rulelist_tmp += dnsfilter_rule_list_row[i].replace(/&#62/g, ">" );
-	}
-	document.form.dnsfilter_rulelist.value = dnsfilter_rulelist_tmp;
+	document.form.dnsfilter_rulelist.value = dnsfilter_rule_list.replace(/&#62/g, ">") ;
 
 	showLoading();
 	document.form.submit();
@@ -207,15 +212,6 @@ function addRow_main(upper){
 		return false;
 	}
 
-	if(!validator.string(document.form.rule_devname))
-		return false;
-
-	if(document.form.rule_devname.value == ""){
-		alert("<#JS_fieldblank#>");
-		document.form.rule_devname.focus();
-		return false;
-	}
-
 	if(document.form.rule_mac.value == ""){
 		alert("<#JS_fieldblank#>");
 		document.form.rule_mac.focus();
@@ -229,62 +225,57 @@ function addRow_main(upper){
 	}
 
 	dnsfilter_rule_list += "<";
-	dnsfilter_rule_list += document.form.rule_devname.value + "&#62";
+	dnsfilter_rule_list += "&#62";	// Formerly name field
 	dnsfilter_rule_list += document.form.rule_mac.value + "&#62";
 	dnsfilter_rule_list += document.form.rule_mode.value;
 
 	dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
 
-	gen_mainTable();
+	show_dnsfilter_list();
 }
 
 function deleteRow_main(r){
-	var j=r.parentNode.parentNode.rowIndex;
-	document.getElementById(r.parentNode.parentNode.parentNode.parentNode.id).deleteRow(j);
+	var delIndex = r.parentNode.parentNode.rowIndex;
+	dnsfilter_rule_list = "";
 
-	var dnsfilter_devname = "";
-	var dnsfilter_mac = "";
-	var dnsfilter_mode = "";
-	var dnsfilter_rulelist_tmp = "";
-
-	for(i=3; i<document.getElementById('mainTable_table').rows.length; i++){
-		dnsfilter_devname = document.getElementById('mainTable_table').rows[i].cells[0].title;
-		dnsfilter_mac = document.getElementById('mainTable_table').rows[i].cells[1].title;
-		dnsfilter_mode = document.getElementById('mainTable_table').rows[i].cells[2].childNodes[0].value;
-
-		dnsfilter_rulelist_tmp += "<";
-		dnsfilter_rulelist_tmp += dnsfilter_devname + "&#62";
-		dnsfilter_rulelist_tmp += dnsfilter_mac + "&#62";
-		dnsfilter_rulelist_tmp += dnsfilter_mode;
+	for(var i = 1; i < dnsfilter_rule_list_row.length; i++)
+	{
+		var ruleArray = dnsfilter_rule_list_row[i].split('&#62');
+		if( (delIndex) != i+2)
+		{
+			dnsfilter_rule_list += "<";
+			dnsfilter_rule_list += "&#62";       // Formerly name field
+			dnsfilter_rule_list += ruleArray[1] + "&#62";
+			dnsfilter_rule_list += ruleArray[2];
+		}
 	}
 
-	dnsfilter_rule_list = dnsfilter_rulelist_tmp;
-	dnsfilter_rule_list_row = dnsfilter_rulelist_tmp.split('<');
-
-	gen_mainTable();
+	dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
+	show_dnsfilter_list();
 }
 
 function changeRow_main(r){
-	var dnsfilter_devname = "";
-	var dnsfilter_mac = "";
-	var dnsfilter_mode = "";
-	var dnsfilter_rulelist_tmp = "";
+	var index = r.parentNode.parentNode.rowIndex;
+	dnsfilter_rule_list = "";
 
-	for(i=3; i<document.getElementById('mainTable_table').rows.length; i++){
-		dnsfilter_devname = document.getElementById('mainTable_table').rows[i].cells[0].title;
-		dnsfilter_mac = document.getElementById('mainTable_table').rows[i].cells[1].title;
-		dnsfilter_mode = document.getElementById('mainTable_table').rows[i].cells[2].childNodes[0].value;
+	for(var i = 1; i < dnsfilter_rule_list_row.length; i++)
+	{
+		var ruleArray = dnsfilter_rule_list_row[i].split('&#62');
 
-		dnsfilter_rulelist_tmp += "<";
-		dnsfilter_rulelist_tmp += dnsfilter_devname + "&#62";
-		dnsfilter_rulelist_tmp += dnsfilter_mac + "&#62";
-		dnsfilter_rulelist_tmp += dnsfilter_mode;
+		dnsfilter_rule_list += "<";
+		dnsfilter_rule_list += "&#62";       // Formerly name field
+		dnsfilter_rule_list += ruleArray[1] + "&#62";
+
+		if( (index) == i+2)
+		{
+			dnsfilter_rule_list += r.value;
+		} else {
+			dnsfilter_rule_list += ruleArray[2];
+		}
 	}
 
-	dnsfilter_rule_list = dnsfilter_rulelist_tmp;
-	dnsfilter_rule_list_row = dnsfilter_rulelist_tmp.split('<');
-
-	gen_mainTable();
+	dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
+	show_dnsfilter_list();
 }
 </script>
 </head>
