@@ -3190,7 +3190,7 @@ function ajaxCallJsonp(target){
 }
 
 function oui_query_full_vendor(mac){
-	if(clientList[mac].vendor != "") {
+	if ((typeof clientList[mac] != "undefined") && (clientList[mac].vendor != "")) {
 		setTimeout(function(){
 			var overlibStrTmp = retOverLibStr(clientList[mac]);
 			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
@@ -3199,7 +3199,7 @@ function oui_query_full_vendor(mac){
 		}, 1);
 	}
 	else {
-		if('<% nvram_get("x_Setting"); %>' == '1' && wanConnectStatus && clientList[mac].internetState) {
+		if('<% nvram_get("x_Setting"); %>' == '1' && wanConnectStatus && ((typeof clientList[mac] == "undefined") || (clientList[mac].internetState))) {
 			var queryStr = mac.replace(/\:/g, "").splice(6,6,"");
 			$.ajax({
 			 	url: 'https://services11.ieee.org/RST/standards-ra-web/rest/assignments/download/?registry=MA-L&format=html&text='+ queryStr,
@@ -3207,7 +3207,11 @@ function oui_query_full_vendor(mac){
 			 	success: function(response) {
 					if(overlib.isOut) return nd();
 
-					var overlibStrTmp = retOverLibStr(clientList[mac]);
+					if (typeof clientList[mac] != "undefined")
+						var overlibStrTmp  = retOverLibStr(clientList[mac]);
+					else
+						var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
+
 					if(response.search("Sorry!") == -1) {
 						if(response.search(queryStr) != -1) {
 							var retData = response.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("</");
