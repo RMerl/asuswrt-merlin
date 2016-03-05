@@ -169,7 +169,10 @@ check_ace:
 	beq     1f                              @ It's BCM53573
 	ldr     r3, =53574                      @ BCM53574_CHIP_ID
 	cmp     r5, r3                          @ r5 to store chip id
-	bne	no_acp				@ Neither BCM53573 nor 53574
+	beq     1f                              @ It's BCM53574
+	ldr     r3, =47452                      @ BCM47452_CHIP_ID
+	cmp     r5, r3                          @ r5 to store chip id
+	bne	no_acp				@ Neither BCM53573/53574 nor BCM47452
 1:
 	ldr     r3, =ddr_phys_offset2_va
 	ldr     r0, =PAGE_OFFSET

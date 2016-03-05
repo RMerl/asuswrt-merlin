@@ -33,7 +33,7 @@ extern "C" {
 /* set up (server) listening sockfd
  */
 int
-setup_listener( const char* ipaddr, int port, int* sockfd );
+setup_listener( const char* ipaddr, int port, int* sockfd, int bklog );
 
 
 /* set up the socket to receive multicast data
@@ -103,6 +103,13 @@ get_rcvbuf( int sockfd, size_t* const len );
 int
 set_nblock( int fd, int set );
 
+/* retrieve string address, int port of local/remote
+   end of the socket
+ */
+int
+get_sockinfo (int sockfd, char* addr, size_t alen, int* port);
+int
+get_peerinfo (int sockfd, char* addr, size_t alen, int* port);
 
 #ifdef __cplusplus
 }

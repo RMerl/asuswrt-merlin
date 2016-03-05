@@ -1132,11 +1132,10 @@ function QKfinish_load_body(){
 		parent.document.getElementById("LoadingBar").style.visibility = 'hidden';
 	}
 	
-	setTimeout("check_fimware();", 1000);
-	
+	if(!parent.sysReboot) setTimeout("check_firmware();", 1000);
 }
 
-function check_fimware(){
+function check_firmware(){
 	if(!parent.new_FW){
 		gotoNext();
 	}	
@@ -1189,6 +1188,7 @@ function goto_index(){
 	if(parent.sysReboot){
 		document.restartForm.action_wait.value = parent.rebootTime;
 		document.restartForm.action_script.value = "reboot";
+		document.getElementById('loadingIcon').style.display = '';
 	}
 	else{
 		if(parent.restartTime){
@@ -1241,8 +1241,14 @@ function startLiveDetect(){
 }
 
 function redirect_index(){
+	parent.document.getElementById("btn_gotoindex").onclick = "";
+	parent.document.getElementById("btn_gotoindex").style.cursor = "";
+	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";	
 	if(parent.new_FW){
 		return checkIsNewFirmware();
+	}
+	else if(parent.sysReboot){
+		return gotoNext();		
 	}
 	else{
 		parent.location.href = "/index.asp";

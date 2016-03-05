@@ -5,6 +5,7 @@
 #
 
 obj-$(CONFIG_RTL8365MB) += rtl8365mb.o
+obj-$(CONFIG_RTL8370MB) += rtl8365mb.o
 
 RTL8365MB_SRC := $(srctree)/drivers/char/rtl8365mb
 RTL8365MB_PRE := ../../../../../router/rtl_bin/prebuilt
@@ -12,9 +13,13 @@ BCM_INC := ../../../../../include
 
 KBUILD_CFLAGS += -I$(srctree)/drivers/char/rtl8365mb -I$(BCM_INC)
 
+ifdef CONFIG_RTL8370MB
+KBUILD_CFLAGS += -DCONFIG_RTL8370MB
+endif
+
 ifneq (,$(wildcard $(RTL8365MB_SRC)/rtk_switch.c))
 	rtl8365mb-objs := acl.o cpu.o dot1x.o eee.o igmp.o interrupt.o l2.o leaky.o led.o mirror.o oam.o port.o ptp.o \
-			qos.o rate.o rldp.o rtk_switch.o rtl8367c_asicdrv_acl.o rtl8367c_asicdrv.o \
+			qos.o rate.o rldp.o rtk_switch.o rtl8367c_asicdrv_acl.o rtl8367c_asicdrv.o rtl8370n-vb_testmode.o \
 			rtl8367c_asicdrv_cputag.o rtl8367c_asicdrv_dot1x.o rtl8367c_asicdrv_eav.o rtl8367c_asicdrv_eee.o \
 			rtl8367c_asicdrv_fc.o rtl8367c_asicdrv_green.o rtl8367c_asicdrv_hsb.o rtl8367c_asicdrv_igmp.o \
 			rtl8367c_asicdrv_inbwctrl.o rtl8367c_asicdrv_interrupt.o rtl8367c_asicdrv_led.o \

@@ -908,13 +908,15 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	ret += websWrite(wp, "\n");
 	ret += websWrite(wp, "Stations List                           \n");
 	ret += websWrite(wp, "----------------------------------------\n");
-	ret += websWrite(wp, "%-18s%-11s%-11s%-8s%-4s%-8s%-8s%-12s\n",
-				"MAC", "Associated", "Authorized", "   RSSI", "PSM", "Tx rate", "Rx rate", "Connect Time");
+	ret += websWrite(wp, "%-4s%-18s%-11s%-11s%-8s%-4s%-8s%-8s%-12s\n",
+				"idx", "MAC", "Associated", "Authorized", "   RSSI", "PSM", "Tx rate", "Rx rate", "Connect Time");
 
 	/* build authenticated sta list */
 	for (i = 0; i < auth->count; i ++) {
 		sta = wl_sta_info(name, &auth->ea[i]);
 		if (!sta) continue;
+
+		ret += websWrite(wp, "    ");
 
 		ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[i], ea));
 
@@ -963,6 +965,8 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			for (ii = 0; ii < auth->count; ii++) {
 				sta = wl_sta_info(name_vif, &auth->ea[ii]);
 				if (!sta) continue;
+
+				ret += websWrite(wp, "%-3d ", i);
 
 				ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[ii], ea));
 
@@ -2534,13 +2538,10 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 	int ii;
 	int ret = 0;
 	sta_info_t *sta;
-	int from_app = 0;
 	char *name_t = NULL;
+	int from_app = 0;
 
-	if (ejArgs(argc, argv, "%s", &name_t) < 1) {
-		//_dprintf("name_t = NULL\n");
-	} else if (!strncmp(name_t, "appobj", 6))
-		from_app = 1;
+	from_app = check_user_agent(user_agent);
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
@@ -2586,7 +2587,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 
 		ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[i], ea));
 
-		if (from_app == 1) {
+		if (from_app != 0) {
 			ret += websWrite(wp, ":{");
 			ret += websWrite(wp, "\"isWL\":");
 		}
@@ -2601,7 +2602,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 		if (from_app == 0)
 			ret += websWrite(wp, ", \"%s\"", value);
 
-		if (from_app == 1) {
+		if (from_app != 0) {
 			ret += websWrite(wp, ",\"rssi\":");
 		}
 

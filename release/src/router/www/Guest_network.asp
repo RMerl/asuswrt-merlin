@@ -23,42 +23,6 @@
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
 <style>
-.WL_MAC_Block{
-	border:1px outset #999;
-	background-color:#576D73;
-	position:absolute;
-	*margin-top:27px;	
-	margin-left:107px;
-	*margin-left:-133px;
-	width:255px;
-	text-align:left;	
-	height:auto;
-	overflow-y:auto;
-	z-index:200;
-	padding: 1px;
-	display:none;
-}
-.WL_MAC_Block div{
-	background-color:#576D73;
-	height:auto;
-	*height:20px;
-	line-height:20px;
-	text-decoration:none;
-	font-family: Lucida Console;
-	padding-left:2px;
-}
-.WL_MAC_Block a{
-	background-color:#EFEFEF;
-	color:#FFF;
-	font-size:12px;
-	font-family:Arial, Helvetica, sans-serif;
-	text-decoration:none;	
-}
-.WL_MAC_Block div:hover, .WL_MAC_Block a:hover{
-	background-color:#3366FF;
-	color:#FFFFFF;
-	cursor:default;
-}
 </style>
 <script>
 var radio_2 = '<% nvram_get("wl0_radio"); %>';
@@ -132,7 +96,7 @@ function initial(){
 		document.getElementById("wl_NOnly_note").innerHTML="* Please change the guest network authentication to WPA2 Personal AES.";	
 	}
 
-	setTimeout("showWLMACList();", 1000);	
+	setTimeout("showDropdownClientList('setClientmac', 'mac', 'wl', 'WL_MAC_List_Block', 'pull_arrow', 'all');", 1000);	
 }
 
 function change_wl_expire_radio(){
@@ -642,7 +606,7 @@ function show_wl_maclist_x(){
 			if(clientList[clientMac]) {
 				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
 				deviceType = clientList[clientMac].type;
-				deviceVender = clientList[clientMac].dpiVender;
+				deviceVender = clientList[clientMac].vendor;
 			}
 			else {
 				clientName = "New device";
@@ -653,25 +617,25 @@ function show_wl_maclist_x(){
 			code +='<td width="80%" align="center">';
 			code += '<table style="width:100%;"><tr><td style="width:40%;height:56px;border:0px;float:right;">';
 			if(clientList[clientMac] == undefined) {
-				code += '<div style="height:56px;" class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="width:81px;text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
-				else if( (deviceType != "0" && deviceType != "6") || deviceVender == "") {
-					code += '<div style="height:56px;" class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' +clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+				else if(deviceType != "0" || deviceVender == "") {
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' +clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
-					if(venderIconClassName != "") {
-						code += '<div style="height:56px;" class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+					if(venderIconClassName != "" && !downsize_4m_support) {
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
 					}
 					else {
-						code += '<div style="height:56px;" class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
 					}
 				}
 			}
@@ -784,52 +748,26 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 }
 
 //Viz add 2013.01 pull out WL client mac START
-function pullWLMACList(obj){	
+function pullWLMACList(obj){
+	var element = document.getElementById('WL_MAC_List_Block');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("WL_MAC_List_Block").style.display = "block";
+		element.style.display = "block";
 		document.form.wl_maclist_x_0.focus();		
-		isMenuopen = 1;
 	}
 	else
 		hideClients_Block();
 }
 
-var over_var = 0;
-var isMenuopen = 0;
-
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById("WL_MAC_List_Block").style.display="none";
-	isMenuopen = 0;
-}
-
-function showWLMACList(){
-	var code = "";
-	var show_macaddr = "";
-	var wireless_flag = 0;
-	for(i=0;i<clientList.length;i++){
-		if(clientList[clientList[i]].isWL != 0){		//0: wired, 1: 2.4GHz, 2: 5GHz, filter clients under current band
-			wireless_flag = 1;
-			var clientName = (clientList[clientList[i]].nickName == "") ? clientList[clientList[i]].name : clientList[clientList[i]].nickName;
-			code += '<a title=' + clientList[i] + '><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+clientList[i]+'\');"><strong>' + clientName + '</strong> ';
-			code += ' </div></a>';
-		}
-	}
-			
-	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	document.getElementById("WL_MAC_List_Block").innerHTML = code;
-	
-	if(wireless_flag == 0)
-		document.getElementById("pull_arrow").style.display = "none";
-	else
-		document.getElementById("pull_arrow").style.display = "";
 }
 
 function setClientmac(macaddr){
 	document.form.wl_maclist_x_0.value = macaddr;
 	hideClients_Block();
-	over_var = 0;
 }
 // end
 </script>
@@ -1099,8 +1037,8 @@ function setClientmac(macaddr){
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 25);"><#Access_Time#></a></th>
 								<td>
 									<input type="radio" value="1" name="wl_expire_radio" class="content_input_fd" onClick="">
-									<input type="text" maxlength="2" name="wl_expire_hr" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 0, 23)" autocorrect="off" autocapitalize="off"> <#Hour#>
-									<input type="text" maxlength="2" name="wl_expire_min" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 0, 59)" autocorrect="off" autocapitalize="off"> <#Minute#>
+									<input type="text" maxlength="2" name="wl_expire_hr" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 0);" autocorrect="off" autocapitalize="off"> <#Hour#>
+									<input type="text" maxlength="2" name="wl_expire_min" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 1);" autocorrect="off" autocapitalize="off"> <#Minute#>
 									<input type="radio" value="0" name="wl_expire_radio" class="content_input_fd" onClick=""><#Limitless#>
 								</td>
 							</tr>
@@ -1144,8 +1082,8 @@ function setClientmac(macaddr){
 									<tr>
 										<td width="80%">
 											<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off" placeholder="ex: <% nvram_get("lan_hwaddr"); %>" style="width:255px;">
-											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="<#select_wireless_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
-											<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
+											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="<#select_wireless_MAC#>">
+											<div id="WL_MAC_List_Block" class="clientlist_dropdown" style="margin-left:107px;"></div>
 										</td>
 										<td width="20%">	
 											<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, 64);" value="">

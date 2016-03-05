@@ -1135,5 +1135,11 @@ config RTL8365MB
 	help
 	  rtl8365mb driver
 
+config RTL8370MB
+	tristate "rtl8370mb driver"
+	default n
+	help
+	  rtl8370mb driver
+
 endmenu
 

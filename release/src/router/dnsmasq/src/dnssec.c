@@ -1005,6 +1005,19 @@ int dnssec_validate_by_ds(time_t now, struct dns_header *header, size_t plen, ch
   if (crecp->flags & F_NEG)
     return STAT_INSECURE_DS;
   
+  /* 4035 5.2 
+     If the validator does not support any of the algorithms listed in an
+     authenticated DS RRset, then the resolver has no supported
+     authentication path leading from the parent to the child.  The
+     resolver should treat this case as it would the case of an
+     authenticated NSEC RRset proving that no DS RRset exists,  */
+  for (recp1 = crecp; recp1; recp1 = cache_find_by_name(recp1, name, now, F_DS))
+    if (hash_find(ds_digest_name(recp1->addr.ds.digest)))
+      break;
+  
+  if (!recp1)
+    return STAT_INSECURE_DS;
+
   /* NOTE, we need to find ONE DNSKEY which matches the DS */
   for (valid = 0, j = ntohs(header->ancount); j != 0 && !valid; j--) 
     {

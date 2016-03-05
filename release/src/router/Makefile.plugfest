@@ -1,0 +1,2057 @@
+#
+# Broadcom Linux Router Makefile
+#
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# $Id: Makefile 545800 2015-04-01 18:23:25Z $
+#
+
+ifneq (true,$(parallel))
+  .NOTPARALLEL:
+endif
+
+include .config
+include .config.plt
+
+CPU ?=
+MAKE_ARGS ?=
+
+LINUX_VERSION ?= 2_6_36
+
+ARCH = arm
+PLT ?= arm
+
+# Get ARCH from PLT argument
+ifneq ($(findstring arm,$(PLT)),)
+ARCH := arm
+endif
+
+# uClibc wrapper
+ifeq ($(CONFIG_UCLIBC),y)
+PLATFORM := $(PLT)-uclibc
+else ifeq ($(CONFIG_GLIBC),y)
+PLATFORM := $(PLT)-glibc
+else
+PLATFORM := $(PLT)
+endif
+
+# Source bases
+export PLATFORM LIBDIR USRLIBDIR LINUX_VERSION
+
+export BCM_KVERSIONSTRING := $(subst _,.,$(LINUX_VERSION))
+
+WLAN_ComponentsInUse := bcmwifi clm ppr olpc
+include ../makefiles/WLAN_Common.mk
+export SRCBASE := $(WLAN_SrcBaseA)
+export BASEDIR := $(WLAN_TreeBaseA)
+export TOP = $(CURDIR)
+
+ifeq (2_6_36,$(LINUX_VERSION))
+export 	LINUXDIR := $(BASEDIR)/components/opensource/linux/linux-2.6.36
+export 	KBUILD_VERBOSE := 1
+export	BUILD_MFG := 0
+SUBMAKE_SETTINGS = SRCBASE=$(SRCBASE) BASEDIR=$(BASEDIR)
+else ifeq (2_6,$(LINUX_VERSION))
+export 	LINUXDIR := $(SRCBASE)/linux/linux-2.6
+export 	KBUILD_VERBOSE := 1
+export	BUILD_MFG := 0
+SUBMAKE_SETTINGS  = SRCBASE=$(SRCBASE)
+else
+export 	LINUXDIR := $(SRCBASE)/linux/linux
+SUBMAKE_SETTINGS  = SRCBASE=$(SRCBASE)
+endif
+
+# Router Source Base Directory
+export SRCBASE_ROUTER := $(abspath $(BASEDIR)/src/router)
+
+# Opensource bases
+OPENSOURCE_BASE_DIR := $(BASEDIR)/components/opensource
+DNSMASQ_DIR := $(OPENSOURCE_BASE_DIR)/dnsmasq
+LIBNFNETLINK_DIR := $(OPENSOURCE_BASE_DIR)/netfilter/libnfnetlink
+LIBMNL_DIR := $(OPENSOURCE_BASE_DIR)/netfilter/libmnl
+LIBNETFILTER_QUEUE_DIR := $(OPENSOURCE_BASE_DIR)/netfilter/libnetfilter_queue
+LIBNETFILTER_CONNTRACK_DIR := $(OPENSOURCE_BASE_DIR)/netfilter/libnetfilter_conntrack
+SALSA_DIR := $(OPENSOURCE_BASE_DIR)/salsa
+ALSALIB_DIR := $(OPENSOURCE_BASE_DIR)/alsa-lib
+ALSAUTILS_DIR := $(OPENSOURCE_BASE_DIR)/alsa-utils
+APLAY_DIR := $(ALSAUTILS_DIR)/aplay
+AMIXER_DIR := $(ALSAUTILS_DIR)/amixer
+ALSACTL_DIR := $(ALSAUTILS_DIR)/alsactl
+MDNSRESPONDERDIR := $(OPENSOURCE_BASE_DIR)/mDNSResponder
+LIBSQLITE3_DIR := $(OPENSOURCE_BASE_DIR)/sqlite3
+LIBJSONC_DIR := $(OPENSOURCE_BASE_DIR)/jsonc
+LIBXML2_DIR := $(OPENSOURCE_BASE_DIR)/libxml2
+
+#Visualization Directories
+VISSOURCE_BASE_DIR := $(BASEDIR)/components/apps/visualization
+VISDCOLL_DIR := $(VISSOURCE_BASE_DIR)/datacollector
+VISDCON_DIR := $(VISSOURCE_BASE_DIR)/dataconcentrator
+#
+# Cross-compile environment variables
+#
+
+# Build platform
+export BUILD := i386-pc-linux-gnu
+export HOSTCC := gcc
+
+ifeq ($(PLATFORM),mipsel)
+export CROSS_COMPILE := mipsel-linux-
+export CONFIGURE := ./configure mipsel-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../mipsel-linux && pwd -P)
+endif
+
+ifeq ($(PLATFORM),mipsel-uclibc)
+ifeq (2_6_36,$(LINUX_VERSION))
+export CROSS_COMPILE := mipsel-uclibc-linux-2.6.36-
+CFLAGS += -D__EXPORTED_HEADERS__ -fPIC
+else ifeq (2_6,$(LINUX_VERSION))
+export CROSS_COMPILE := mipsel-uclibc-linux26-
+else
+export CROSS_COMPILE := mipsel-uclibc-
+endif
+export CONFIGURE := ./configure mipsel-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+endif
+
+ifeq ($(PLATFORM),mipsel-glibc)
+ifeq (2_6_36,$(LINUX_VERSION))
+export CROSS_COMPILE := mipsel-glibc-linux-2.6.36-
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+CFLAGS += -D__EXPORTED_HEADERS__ -fPIC
+else ifeq (2_6,$(LINUX_VERSION))
+export CROSS_COMPILE := mipsel-linux-linux26-
+else
+export CROSS_COMPILE := mipsel-linux-
+export CONFIGURE := ./configure mipsel-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../mipsel-linux && pwd -P)
+endif
+endif
+
+ifeq ($(PLATFORM),arm-uclibc)
+export CROSS_COMPILE := arm-brcm-linux-uclibcgnueabi-
+export CONFIGURE := ./configure arm-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+export CFLAGS += -fno-strict-aliasing
+SUBMAKE_SETTINGS += ARCH=$(ARCH)
+EXTRA_LDFLAGS := -lgcc_s
+endif
+
+
+ifeq ($(CONFIG_RTR_OPTIMIZE_SIZE),y)
+export CFLAGS += -Os
+export OPTCFLAGS = -Os
+else
+export CFLAGS += -O2
+export OPTCFLAGS = -O2
+endif
+
+#look at driver configuration
+WLCFGDIR=$(SRCBASE)/wl/config
+
+ifeq ($(CONFIG_NVRAM),y)
+export CFLAGS += -DBCMNVRAM
+endif
+
+ifeq ($(CONFIG_BCMWPA2),y)
+export CFLAGS += -DBCMWPA2
+endif
+
+ifeq ($(RTCONFIG_DHDAP),y)
+export CONFIG_DHDAP
+export CFLAGS += -D__CONFIG_DHDAP__
+
+export SRCBASE_DHD := $(abspath $(SRCBASE)/../dhd/src)
+export SRCBASE_SYS := $(SRCBASE_DHD)
+
+# include toplevel Make for firmware
+include Makefile.fw
+endif
+
+
+ifeq ($(RTCONFIG_GMAC3),y)
+export CFLAGS += -D__CONFIG_GMAC3__
+endif
+
+ifeq ($(CONFIG_USBAP),y)
+export CFLAGS += -D__CONFIG_USBAP__
+endif
+
+ifeq ($(CONFIG_BCMQOS),y)
+export CFLAGS += -DBCMQOS
+endif
+
+ifeq ($(LINUX_VERSION)$(PLT),2_6_36arm)
+ifeq ($(CONFIG_VISUALIZATION),y)
+export CFLAGS += -D__CONFIG_VISUALIZATION__ -DCONFIG_VISUALIZATION_ENABLED
+endif
+endif
+
+ifeq ($(CONFIG_WPS),y)
+export CFLAGS += -D__CONFIG_WPS__
+# WFA WPS 2.0 Testbed extra caps
+#export CFLAGS += -DWFA_WPS_20_TESTBED
+endif
+
+ifeq ($(CONFIG_NFC),y)
+# WPS_NFC
+export CFLAGS += -D__CONFIG_NFC__
+endif
+
+ifeq ($(CONFIG_EMF),y)
+export CFLAGS += -D__CONFIG_EMF__
+export CONFIG_EMF_ENABLED := $(CONFIG_EMF)
+endif
+
+ifeq ($(CONFIG_IGMP_PROXY),y)
+export CFLAGS += -D__CONFIG_IGMP_PROXY__
+endif
+
+ifeq ($(CONFIG_WL_ACI),y)
+export CFLAGS += -D__CONFIG_WL_ACI__
+endif
+
+ifeq ($(CONFIG_TRAFFIC_MGMT_RSSI_POLICY),y)
+export CFLAGS += -DTRAFFIC_MGMT_RSSI_POLICY
+endif
+
+#if !defined(BCMDBG)
+obj-$(CONFIG_UTELNETD) += utelnetd
+#endif
+
+MNL_CFLAGS:="-I$(LIBMNL_DIR)/install/include"
+MNL_LIBS:="-L$(LIBMNL_DIR)/install/lib -lmnl"
+
+NFNETLINK_CFLAGS:="-I$(LIBNFNETLINK_DIR)/install/include"
+NFNETLINK_LIBS:="-L$(LIBNFNETLINK_DIR)/install/lib -lnfnetlink"
+
+NETFILTER_CONNTRACK_CFLAGS:="-I$(LIBNETFILTER_CONNTRACK_DIR)/install/include"
+NETFILTER_CONNTRACK_LIBS:="-L$(LIBNETFILTER_CONNTRACK_DIR)/install/lib -lnetfilter_conntrack"
+
+NETFILTER_QUEUE_CFLAGS:="-I$(LIBNETFILTER_QUEUE_DIR)/install/include"
+NETFILTER_QUEUE_LIBS:="-L$(LIBNETFILTER_QUEUE_DIR)/install/lib -lnetfilter_queue"
+
+ifeq ($(CONFIG_SOUND),y)
+export CFLAGS += -D__CONFIG_SOUND__
+endif
+
+ifeq ($(CONFIG_VOIP),y)
+export CFLAGS += -DBCMVOIP
+endif
+
+ifeq ($(CONFIG_SQUASHFS), y)
+ROOT_IMG := target.squashfs
+else
+ROOT_IMG := target.cramfs
+endif
+
+ifeq ($(CONFIG_WAPI),y)
+export CFLAGS += -DBCMWAPI_WAI -DBCMWAPI_WPI
+endif
+
+ifeq ($(CONFIG_PHYMON_UTILITY),y)
+export CFLAGS += -DPHYMON
+endif
+
+ifneq (2_4,$(LINUX_VERSION))
+CRAMFSDIR := cramfs
+else
+CRAMFSDIR := $(LINUXDIR)/scripts/cramfs
+endif
+
+ifeq ($(CONFIG_BCMDCS),y)
+export CFLAGS += -DBCM_DCS
+endif
+
+ifeq ($(CONFIG_EXTACS),y)
+export CFLAGS += -DEXT_ACS
+endif
+
+ifeq ($(CONFIG_BCMBSD),y)
+export CFLAGS += -DBCM_BSD
+endif
+
+ifeq ($(CONFIG_BCMSSD),y)
+export CFLAGS += -DBCM_SSD
+endif
+
+ifeq ($(CONFIG_TOAD),y)
+export CFLAGS += -D__CONFIG_TOAD__
+endif
+
+ifeq ($(CONFIG_MFP),y)
+export CFLAGS += -DMFP
+endif
+
+ifeq ($(CONFIG_HSPOT),y)
+export CFLAGS += -DNAS_GTK_PER_STA -DHSPOT_OSEN
+endif
+
+ifeq ($(CONFIG_SIGMA),y)
+export CFLAGS += -D__CONFIG_SIGMA__
+endif
+
+ifeq ($(CONFIG_MINI_ROUTER), y)
+export CFLAGS += -D__CONFIG_ROUTER_MINI__
+endif
+
+ifeq ($(CONFIG_WNM), y)
+export CFLAGS += -DWLWNM
+endif
+
+export CC := $(CROSS_COMPILE)gcc
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip
+export SIZE := $(CROSS_COMPILE)size
+
+ifneq ("$(LINUX_VERSION)","2_4")
+export MKSYM := $(shell which $(TOP)/misc/mksym.pl)
+endif
+
+#
+# Install and target directories
+#
+
+export PLATFORMDIR := $(TOP)/$(PLATFORM)
+export INSTALLDIR := $(PLATFORMDIR)/install
+export TARGETDIR := $(PLATFORMDIR)/target
+
+define STRIP_DEBUG_SYMBOLS
+	@dbgsymf=$(basename $(1))_dbgsym$(suffix $(1)); \
+	if [ "$(1)" -nt "$${dbgsymf}" ]; then \
+	   echo "#- $0"; \
+	   ls -ln $1 | awk '{printf "Orig  size: %10d bytes, %s\n",$$5,$$NF}'; \
+	   cp -p -v $1 $$dbgsymf; $(STRIP) -d $(1); touch $$dbgsymf; \
+	   ls -ln $1 | awk '{printf "Strip size: %10d bytes, %s\n",$$5,$$NF}'; \
+	fi
+endef
+
+# USB AP support
+# note : the dongle target is only for after pre-build
+obj-$(CONFIG_USBAP) += bmac dongle
+
+# DHD AP support (PCIe full dongle)
+obj-$(RTCONFIG_DHDAP) += dhd pciefd dhd_monitor
+
+# always build libbcmcrypto
+obj-y += libbcmcrypto
+
+#
+# Configuration
+#
+
+#ifdef BCMSOUND
+obj-$(CONFIG_SIGMA) += sigma
+obj-$(CONFIG_SALSA) += salsa
+obj-$(CONFIG_ALSALIB) += alsalib
+obj-$(CONFIG_LIBZ) += libz
+obj-$(CONFIG_LIBID3TAG) += libid3tag
+obj-$(CONFIG_LIBMAD) += libmad
+obj-$(CONFIG_MADPLAY) += madplay
+obj-$(CONFIG_APLAY) += aplay
+obj-$(CONFIG_AMIXER) += amixer
+obj-$(CONFIG_ALSACTL) += alsactl
+obj-$(CONFIG_AIRPLAY) += airplay
+#endif
+obj-$(CONFIG_MDNSRESPONDER) += mdnsresponder
+obj-$(CONFIG_NVRAM) += nvram
+obj-$(CONFIG_SHARED) += shared
+obj-$(CONFIG_LIBBCM) += libbcm
+obj-$(CONFIG_HTTPD) += httpd
+obj-$(CONFIG_RC) += rc
+ifeq ($(LINUX_VERSION)$(PLT),2_6_36arm)
+obj-$(CONFIG_VISUALIZATION) += libsqlite3 libjsonc libxml2 visdcoll visdcon
+obj-$(CONFIG_TREND_IQOS) += libjsonc
+endif
+obj-$(CONFIG_WWW) += www
+obj-$(CONFIG_GLIBC) += lib
+obj-$(CONFIG_UCLIBC) += lib
+obj-$(CONFIG_WLCONF) += wlconf
+obj-$(CONFIG_BRIDGE) += bridge
+obj-$(CONFIG_BUSYBOX) += busybox
+obj-$(CONFIG_DNSMASQ) += dnsmasq
+obj-$(CONFIG_IPTABLES) += iptables
+obj-$(CONFIG_LIBIPT) += iptables
+# Build only for kernel >= 2.6.36.
+ifeq ($(call wlan_version_ge,$(BCM_KVERSIONSTRING),2.6.36),TRUE)
+obj-$(CONFIG_LIBSTDCPP) += libstdcpp
+obj-$(CONFIG_LIBFLOW) += libflow
+obj-$(CONFIG_LIBMNL) += libmnl
+obj-$(CONFIG_LIBNFNETLINK) += libnfnetlink
+obj-$(CONFIG_LIBNETFILTER_CONNTRACK) += libnetfilter_conntrack
+obj-$(CONFIG_LIBNETFILTER_QUEUE) += libnetfilter_queue
+endif
+obj-$(CONFIG_HSPOT) += hspot_ap
+obj-$(CONFIG_NAS) += nas
+obj-$(CONFIG_WAPI) += wapi/wapid
+obj-$(CONFIG_WAPI_IAS) += wapi/as
+obj-$(CONFIG_SES) += ses/ses
+obj-$(CONFIG_SES_CL) += ses/ses_cl
+obj-$(CONFIG_EZC) += ezc
+obj-$(CONFIG_NETCONF) += netconf
+obj-$(CONFIG_NTP) += ntpclient
+obj-$(CONFIG_PPP) += ppp
+obj-$(CONFIG_UDHCPD) += udhcpd
+obj-$(CONFIG_IGD) += igd
+obj-$(CONFIG_LIBUPNP) += libupnp
+obj-$(CONFIG_FFMPEG) += ffmpeg
+obj-$(CONFIG_DLNA_DMR) += dlna/dmr
+obj-$(CONFIG_DLNA_DMS) += dlna/dms
+obj-$(CONFIG_SAMBA) += samba
+obj-$(CONFIG_UTILS) += utils
+ifeq ($(RTCONFIG_DHDAP),y)
+obj-$(CONFIG_WLEXE) += wlexe
+endif
+obj-$(CONFIG_ETC) += etc
+obj-$(CONFIG_VLAN) += vlan
+obj-$(CONFIG_WPS) += wps
+obj-$(CONFIG_NFC) += nfc
+obj-$(CONFIG_EMF) += emf
+obj-$(CONFIG_EMF) += igs
+obj-$(CONFIG_IGMP_PROXY) += igmp
+obj-$(CONFIG_WL_ACI) += aci
+ifeq (2_6,$(LINUX_VERSION))
+obj-y += udev
+obj-y += hotplug2
+#if defined(BCMDBG)
+obj-$(CONFIG_NVRAM) += crashlog
+#endif
+endif
+obj-$(CONFIG_LLD2D) += lltd/wrt54g-linux
+#if defined(BCMDBG)
+obj-$(CONFIG_UTELNETD) += utelnetd
+#endif
+#if defined(PHYMON)
+obj-$(CONFIG_PHYMON_UTILITY) += phymon
+#endif
+#if defined(EXT_ACS)
+obj-$(CONFIG_EXTACS) += acsd
+#endif
+#if defined(BCM_BSD)
+obj-$(CONFIG_BCMBSD) += bsd
+#endif
+#if defined(BCM_SSD)
+obj-$(CONFIG_BCMSSD) += ssd
+#endif
+#if defined(TOAD)
+obj-$(CONFIG_TOAD) += toad
+#endif
+
+obj-$(CONFIG_VMSTAT) += vmstat
+ifeq ($(LINUX_VERSION)$(PLT),2_6_36arm)
+obj-$(CONFIG_MPSTAT) += mpstat
+obj-$(CONFIG_TASKSET) += taskset
+endif
+
+ifeq ($(LINUX_VERSION),2_6_36)
+IPROUTE2_DIR = iproute2-3.1.0
+IPUTILS_DIR = iputils-s20101006
+else
+IPROUTE2_DIR = iproute2
+IPUTILS_DIR = iputils
+endif
+obj-$(CONFIG_RADVD) += radvd
+ifneq (,${CONFIG_IPROUTE2}${CONFIG_BCMQOS})
+  obj-y += iproute2
+endif
+obj-$(CONFIG_IPUTILS) += iputils
+ifneq (,$(filter y,${CONFIG_DHCPV6S} ${CONFIG_DHCPV6C}))
+  obj-y += dhcp6
+endif
+#obj-$(CONFIG_DHCPV6S) += dhcp6s
+#obj-$(CONFIG_DHCPV6C) += dhcp6c
+
+# BUZZZ tools: function call tracing, performance monitoring, event history
+obj-$(CONFIG_BUZZZ) += buzzz
+
+# Gigle apps
+obj-$(CONFIG_PLC) += plc
+ifeq ($(CONFIG_PLC),y)
+export CFLAGS += -D__CONFIG_PLC__ -D__CONFIG_URE__
+CFLAGS	+= -DPLC -DWPS_LONGPUSH_DISABLE
+endif
+
+#ifdef __CONFIG_TREND_IQOS__
+ifeq ($(LINUX_VERSION),2_6_36)
+ifeq ($(CONFIG_TREND_IQOS),y)
+export IQOS_DIR := $(BASEDIR)/components/vendor/trend/iqos
+obj-$(CONFIG_TREND_IQOS) += iqos
+obj-$(CONFIG_TREND_IQOS) += bcmiqosd
+# Speedtest_cli
+obj-$(CONFIG_TREND_IQOS) += speedtest-cli
+# curl
+obj-$(CONFIG_TREND_IQOS) += curl
+export CFLAGS += -D__CONFIG_TREND_IQOS__ -DCONFIG_TREND_IQOS_ENABLED
+endif
+endif
+#endif /* __CONFIG_TREND_IQOS__ */
+
+# always build eap dispatcher
+obj-y += eapd/linux
+
+ifeq ($(CONFIG_VOIP),y)
+obj-y += voipd
+endif
+
+
+obj-clean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-clean)
+obj-install := $(foreach obj,$(obj-y),$(obj)-install)
+
+# separate the libraries which need to be built first
+obj-prelibs =$(filter nvram libbcmcrypto shared netconf libupnp libz libid3tag ffmpeg libbcm nfc libsqlite3 libjsonc libxml2 pciefd, $(obj-y))
+# remaining libraries that are built next
+obj-postlibs := $(filter-out $(obj-prelibs), $(obj-y))
+
+ifneq (2_4,$(LINUX_VERSION))
+ifneq ($(shell grep "CONFIG_BLK_DEV_INITRD=y" $(LINUXDIR)/.config),)
+ifeq ($(shell grep "CONFIG_BLK_DEV_RAM=y" $(LINUXDIR)/.config),)
+export BUILD_MFG := 1
+export WLTEST := 1
+endif
+endif
+endif
+
+ifneq ($(WLTEST),1)
+ifneq ($(shell grep "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config),)
+export WLTEST := 1
+endif
+endif
+
+ifeq ($(WLTEST),1)
+export CFLAGS += -DWLTEST
+endif
+
+ifeq ($(RTCONFIG_DHDAP),y)
+ifeq ($(RTCONFIG_WLEXE),y)
+export CONFIG_WLEXE
+export RWL ?= 0
+endif
+endif
+
+#
+# Basic rules
+#
+
+# Following export values will be used in wl/config/wlconfig_apdef
+export CONFIG_MFP
+export CONFIG_HSPOT
+export CONFIG_WNM
+
+all: version check_kernel_config obj_prelibs
+	+$(MAKE) $(MAKE_ARGS) post_preplibs
+
+obj_prelibs:
+	+$(MAKE) parallel=true $(MAKE_ARGS) ARCH=$(ARCH) $(obj-prelibs)
+
+obj_postlibs:
+	+$(MAKE) parallel=true $(MAKE_ARGS) ARCH=$(ARCH) $(obj-postlibs)
+
+post_preplibs:  obj_postlibs
+        # Also build kernel
+
+ifneq (2_4,$(LINUX_VERSION))
+ifneq ($(BUILD_MFG), 1)
+ifdef ECLOUD_BUILD_ID
+	# EMAKE build
+	$(MAKE) -C ${LINUXDIR} $(SUBMAKE_SETTINGS) zImage
+else # ECLOUD_BUILD_ID
+	# GMAKE build
+	(echo '.NOTPARALLEL:' ; cat ${LINUXDIR}/Makefile) |\
+	    $(MAKE) -C ${LINUXDIR} -f - $(SUBMAKE_SETTINGS) zImage
+endif # ECLOUD_BUILD_ID
+	+$(MAKE) CONFIG_SQUASHFS=$(CONFIG_SQUASHFS) -C $(SRCBASE)/router/compressed ARCH=$(ARCH)
+endif # BUILD_MFG
+else  # LINUXDIR
+ifdef ECLOUD_BUILD_ID
+	# EMAKE build
+	$(if $(shell grep "CONFIG_EMBEDDED_RAMDISK=y" ${LINUXDIR}/.config),,\
+	  $(MAKE) -C ${LINUXDIR} $(SUBMAKE_SETTINGS) zImage)
+else # ECLOUD_BUILD_ID
+	# GMAKE build
+	$(if $(shell grep "CONFIG_EMBEDDED_RAMDISK=y" ${LINUXDIR}/.config),, \
+	  (echo '.NOTPARALLEL:' ; cat ${LINUXDIR}/Makefile) | \
+	  $(MAKE) -C ${LINUXDIR} -f - $(SUBMAKE_SETTINGS) zImage \
+	 )
+endif # ECLOUD_BUILD_ID
+endif # LINUXDIR
+ifdef ECLOUD_BUILD_ID
+	# EMAKE build
+ifeq (2_6_36,$(LINUX_VERSION))
+	# The each Kernel modules xx.mod.c need the symbols in vmlinux,
+	# So how can we do the make modules before the vmlinux is ready?
+	$(if $(shell grep "CONFIG_MODULES=y" ${LINUXDIR}/.config), \
+	  $(MAKE) -C ${LINUXDIR} modules)
+else
+	$(if $(shell grep "CONFIG_MODULES=y" ${LINUXDIR}/.config), \
+	  $(MAKE) -C ${LINUXDIR} -f - $(SUBMAKE_SETTINGS) MFG_WAR=1 zImage ; \
+	  $(MAKE) -C ${LINUXDIR} modules)
+endif
+else # ECLOUD_BUILD_ID
+	# GMAKE build
+ifeq (2_6_36,$(LINUX_VERSION))
+	# The each Kernel modules xx.mod.c need the symbols in vmlinux,
+	# So how can we do the make modules before the vmlinux is ready?
+	$(if $(shell grep "CONFIG_MODULES=y" ${LINUXDIR}/.config), \
+	  (echo '.NOTPARALLEL:' ; cat ${LINUXDIR}/Makefile) | $(MAKE) -C ${LINUXDIR} -f - $(SUBMAKE_SETTINGS) MFG_WAR=1 zImage ; \
+	  (echo '.NOTPARALLEL:' ; cat ${LINUXDIR}/Makefile) | $(MAKE) -C ${LINUXDIR} -f - ARCH=$(ARCH) modules)
+else
+	$(if $(shell grep "CONFIG_MODULES=y" ${LINUXDIR}/.config), \
+	  (echo '.NOTPARALLEL:' ; cat ${LINUXDIR}/Makefile) | $(MAKE) -C ${LINUXDIR} -f - ARCH=$(ARCH) modules \
+	 )
+endif
+endif # ECLOUD_BUILD_ID
+	# Preserve the debug versions of these and strip for release
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/vmlinux)
+ifneq (2_4,$(LINUX_VERSION))
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/wl/wl.ko)
+ifeq ("$(CONFIG_USBAP)","y")
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/wl/wl_high/wl_high.ko)
+endif # CONFIG_USBAP
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/et/et.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/ctf/ctf.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/dhd/dhd.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/bcm57xx/bcm57xx.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/emf/emf.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/igs/igs.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/dpsta/dpsta.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/connector/cn.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/scsi/scsi_wait_scan.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/usb/host/xhci-hcd.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/usb/host/ehci-hcd.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/usb/host/ohci-hcd.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/lib/libcrc32c.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/net/sched/sch_tbf.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/net/sched/sch_hfsc.ko)
+else # LINUXDIR
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/wl/wl.o)
+ifeq ("$(CONFIG_USBAP)","y")
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/wl/wl_high/wl_high.o)
+endif # CONFIG_USBAP
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/et/et.o)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/ctf/ctf.o)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/dhd/dhd.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/bcm57xx/bcm57xx.o)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/emf/emf.o)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/igs/igs.o)
+endif # LINUXDIR
+
+
+# well, we should always be able to use the BOM, but right now, the last build step on
+# the build machine doesn't have it, so we don't rerun this is the file already
+# exists
+
+version:  $(SRCBASE)/include/epivers.h
+
+$(SRCBASE)/include/epivers.h:
+	$(MAKE) -C $(SRCBASE)/include
+ifeq ($(RTCONFIG_DHDAP),y)
+	$(MAKE) -C $(SRCBASE_DHD)/include
+	$(MAKE) pciefd-version
+endif
+
+
+router-clean: $(obj-clean) config-clean
+	rm -rf $(TARGETDIR)
+	rm -f $(PLATFORMDIR)/linux.trx $(PLATFORMDIR)/linux-gzip.trx
+	rm -f $(PLATFORMDIR)/vmlinuz $(PLATFORMDIR)/vmlinuz-gzip
+	rm -f $(PLATFORMDIR)/target.cramfs $(PLATFORMDIR)/target.squashfs
+	rm -rf $(INSTALLDIR)/busybox
+
+clean: router-clean
+	@echo cleaning LINUXDIR = $(LINUXDIR)
+ifneq (2_4,$(LINUX_VERSION))
+	# we need to pass some conf file for cleaning 2.6. The kbuild clean doesn't seem to
+	# to load the .config the way our wl Makefile  is expecting.
+	$(MAKE) CONFIG_WL_CONF=wlconfig_lx_router_ap -C $(LINUXDIR) $(SUBMAKE_SETTINGS) clean
+	$(MAKE) -C $(SRCBASE)/router/compressed ARCH=$(ARCH) clean
+else
+	$(MAKE) -C $(LINUXDIR) $(SUBMAKE_SETTINGS) clean
+endif
+	$(MAKE) -C $(SRCBASE)/cfe/build/broadcom/bcm947xx ARCH=$(ARCH) clean
+	[ ! -f $(SRCBASE)/tools/misc/Makefile ] || $(MAKE) -C $(SRCBASE)/tools/misc clean
+
+distclean mrproper: clean
+	rm -f .config .config.plt $(LINUXDIR)/.config
+
+install package: $(filter-out lib-install,$(obj-install)) check_kernel_config
+	# Install binaries into target directory
+	install -d $(TARGETDIR)
+	for dir in $(wildcard $(patsubst %,$(INSTALLDIR)/%,$(obj-y))) ; do \
+	    (cd $${dir} && tar cpf - .) | (cd $(TARGETDIR) && tar xpf -) \
+	done
+	# optimize the crypto library by removing unneeded symbols
+	$(if $(wildcard libbcmcrypto),+$(MAKE) -C libbcmcrypto optimize)
+ifneq ("$(CONFIG_WAPI)$(CONFIG_WAPI_IAS)","")
+	# optimize the OPENSSL library by removing unneeded symbols
+#	[ ! -d wapi/wapid ] || $(MAKE) -C wapi/wapid optimize
+endif
+	# Install (and possibly optimize) C library
+	+$(MAKE) lib-install
+	# Install modules into filesystem
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -C $(LINUXDIR) $(SUBMAKE_SETTINGS) \
+		modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR) ; \
+	fi
+ifneq (2_4,$(LINUX_VERSION))
+ifeq ("$(CONFIG_USBAP)","y")
+	# Don't delete wl_high.ko for USBAP
+	find $(TARGETDIR) -name "wl_*.ko" | sed s/\.\*wl_high\\\.ko//g | xargs rm -rf
+else
+	find $(TARGETDIR) -name "wl_*.ko" | xargs rm -rf
+endif
+else # Linux 2.4
+ifeq ("$(CONFIG_USBAP)","y")
+	# Don't delete wl_high.o for USBAP
+	find $(TARGETDIR) -name "wl_*.o" | sed s/\.\*wl_high\\\.o//g | xargs rm -rf
+else
+	find $(TARGETDIR) -name "wl_*.o" | xargs rm -rf
+endif
+endif
+	# Prepare filesystem
+	cd $(TARGETDIR) && $(TOP)/misc/rootprep.sh
+
+ifeq ($(CONFIG_SQUASHFS), y)
+ifeq (2_6_36,$(LINUX_VERSION))
+	+$(MAKE) -C squashfs-4.2 mksquashfs
+	squashfs-4.2/mksquashfs $(TARGETDIR) $(PLATFORMDIR)/$(ROOT_IMG) -noappend -all-root
+else
+	# Make sure mksquashfs 3.0 is used
+	+$(MAKE) -C squashfs mksquashfs
+	squashfs/mksquashfs $(TARGETDIR) $(PLATFORMDIR)/$(ROOT_IMG) -noappend -all-root
+endif
+else # CONFIG_SQUASHFS
+	# Make sure mkcramfs-2.0 is used
+	+$(MAKE) -C $(CRAMFSDIR) mkcramfs
+	# '-u 0 -g 0' will set the uid and gid of all the files to 0 (root)
+	# These options are currently only available on our version of mkcramfs
+	$(CRAMFSDIR)/mkcramfs -u 0 -g 0 $(TARGETDIR) $(PLATFORMDIR)/$(ROOT_IMG)
+endif # CONFIG_SQUASHFS
+
+ifneq (2_4,$(LINUX_VERSION))
+	# Package kernel and filesystem
+ifeq ($(BUILD_MFG), 1)
+	cd $(TARGETDIR) ; \
+	find . | cpio -o -H newc | gzip > $(LINUXDIR)/usr/initramfs_data.cpio.gz
+	ls -l $(LINUXDIR)/usr/initramfs_data.cpio.gz
+ifdef ECLOUD_BUILD_ID
+	# EMAKE build
+	$(MAKE) -C ${LINUXDIR} $(SUBMAKE_SETTINGS) zImage
+	+$(MAKE) CONFIG_SQUASHFS=$(CONFIG_SQUASHFS) -C $(SRCBASE)/router/compressed ARCH=$(ARCH)
+else # ECLOUD_BUILD_ID
+	# GMAKE build
+	(echo '.NOTPARALLEL:' ; cat ${LINUXDIR}/Makefile) | $(MAKE) -C ${LINUXDIR} -f - $(SUBMAKE_SETTINGS) zImage
+	+$(MAKE) CONFIG_SQUASHFS=$(CONFIG_SQUASHFS) -C $(SRCBASE)/router/compressed ARCH=$(ARCH)
+endif # ECLOUD_BUILD_ID
+else # BUILD_MFG
+	cp $(SRCBASE)/router/compressed/vmlinuz $(PLATFORMDIR)/
+	trx -o $(PLATFORMDIR)/linux.trx $(PLATFORMDIR)/vmlinuz $(PLATFORMDIR)/$(ROOT_IMG)
+	cp $(SRCBASE)/router/compressed/vmlinuz-gzip $(PLATFORMDIR)/
+	trx -o $(PLATFORMDIR)/linux-gzip.trx $(PLATFORMDIR)/vmlinuz-gzip $(PLATFORMDIR)/$(ROOT_IMG)
+endif # BUILD_MFG
+	# Pad self-booting Linux to a 64 KB boundary
+	cp $(SRCBASE)/router/compressed/zImage $(PLATFORMDIR)/
+else # LINUXDIR
+ifdef ECLOUD_BUILD_ID
+	# EMAKE build
+	# Package kernel and filesystem
+	$(if $(shell grep "CONFIG_EMBEDDED_RAMDISK=y" ${LINUXDIR}/.config), \
+		cp ${PLATFORMDIR}/${ROOT_IMG} ${LINUXDIR}/arch/mips/ramdisk/$${CONFIG_EMBEDDED_RAMDISK_IMAGE} ; \
+		$(MAKE) -C ${LINUXDIR} $(SUBMAKE_SETTINGS) zImage \
+		, \
+		cp $(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/vmlinuz $(PLATFORMDIR)/ ; \
+		trx -o $(PLATFORMDIR)/linux.trx $(PLATFORMDIR)/vmlinuz $(PLATFORMDIR)/$(ROOT_IMG) ; \
+		cp $(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/vmlinuz-gzip $(PLATFORMDIR)/ ; \
+		trx -o $(PLATFORMDIR)/linux-gzip.trx $(PLATFORMDIR)/vmlinuz-gzip $(PLATFORMDIR)/$(ROOT_IMG) ; \
+	)
+else # ECLOUD_BUILD_ID
+	# GMAKE build
+	# Package kernel and filesystem
+	$(if $(shell grep "CONFIG_EMBEDDED_RAMDISK=y" ${LINUXDIR}/.config), \
+		cp ${PLATFORMDIR}/${ROOT_IMG} ${LINUXDIR}/arch/mips/ramdisk/$${CONFIG_EMBEDDED_RAMDISK_IMAGE} ; \
+		(echo '.NOTPARALLEL:' ; cat ${LINUXDIR}/Makefile) | \
+		$(MAKE) -C ${LINUXDIR} -f - $(SUBMAKE_SETTINGS) zImage \
+		, \
+		cp $(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/vmlinuz $(PLATFORMDIR)/ ; \
+		trx -o $(PLATFORMDIR)/linux.trx $(PLATFORMDIR)/vmlinuz $(PLATFORMDIR)/$(ROOT_IMG) ; \
+		cp $(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/vmlinuz-gzip $(PLATFORMDIR)/ ; \
+		trx -o $(PLATFORMDIR)/linux-gzip.trx $(PLATFORMDIR)/vmlinuz-gzip $(PLATFORMDIR)/$(ROOT_IMG) ; \
+	)
+endif # ECLOUD_BUILD_ID
+	# Pad self-booting Linux to a 64 KB boundary
+	cp $(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/zImage $(PLATFORMDIR)/
+endif # LINUXDIR
+	dd conv=sync bs=64k < $(PLATFORMDIR)/zImage > $(PLATFORMDIR)/linux.bin
+	# Append filesystem to self-booting Linux
+	cat $(PLATFORMDIR)/$(ROOT_IMG) >> $(PLATFORMDIR)/linux.bin
+
+# sibling target is specific for release build scripts used. src/router/misc/toplevel-release.mk will do it.
+# Create linux-ap.trx or linux-apsta.trx and copy to $(SIBLING_INSTALL_DIR) foldir.
+sibling:
+ifneq ($(BUILD_MFG), 1)
+	if grep -q "CONFIG_WL_USE_AP=y" $(LINUXDIR)/.config ; then \
+                cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+                sed -e "s/CONFIG_WL_USE_AP=y/# CONFIG_WL_USE_AP is not set/g" $(LINUXDIR)/.config.chk | \
+                sed -e "s/# CONFIG_WL_USE_APSTA is not set/CONFIG_WL_USE_APSTA=y/g" > \
+                $(LINUXDIR)/.config ; \
+                rm -f $(LINUXDIR)/.config.chk ; \
+		cp $(SIBLING_INSTALL_DIR)/linux.trx $(SIBLING_INSTALL_DIR)/linux-ap.trx ; \
+		$(MAKE) oldconfig ; \
+		$(MAKE) wps-clean ; \
+		$(MAKE) all ; \
+		$(MAKE) install ; \
+		cp $(PLATFORMDIR)/linux.trx $(SIBLING_INSTALL_DIR)/linux-apsta.trx ; \
+		cp $(PLATFORMDIR)/linux-gzip.trx $(SIBLING_INSTALL_DIR)/linux-apsta-gzip.trx ; \
+	elif grep -q "CONFIG_WL_USE_APSTA=y" $(LINUXDIR)/.config ; then \
+                cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+                sed -e "s/CONFIG_WL_USE_APSTA=y/# CONFIG_WL_USE_APSTA is not set/g" $(LINUXDIR)/.config.chk | \
+                sed -e "s/# CONFIG_WL_USE_AP is not set/CONFIG_WL_USE_AP=y/g" > \
+                $(LINUXDIR)/.config ; \
+                rm -f $(LINUXDIR)/.config.chk ; \
+		cp $(SIBLING_INSTALL_DIR)/linux.trx $(SIBLING_INSTALL_DIR)/linux-apsta.trx ; \
+		$(MAKE) oldconfig ; \
+		$(MAKE) wps-clean ; \
+		$(MAKE) all ; \
+		$(MAKE) install ; \
+		cp $(PLATFORMDIR)/linux.trx $(SIBLING_INSTALL_DIR)/linux-ap.trx ; \
+		cp $(PLATFORMDIR)/linux-gzip.trx $(SIBLING_INSTALL_DIR)/linux-ap-gzip.trx ; \
+	fi
+endif
+	# MFG will not build TRX
+	@true;
+
+#
+# Configuration rules
+#
+
+conf mconf:
+	+$(MAKE) -C config LINUXDIR=${LINUXDIR}
+	@LINUXDIR=${LINUXDIR} ./config/$@ ./config/Config
+	# Also configure kernel
+	+$(MAKE) LINUXDIR=${LINUXDIR} k$@
+
+oldconf: .config
+	+$(MAKE) -C config LINUXDIR=${LINUXDIR}
+	@LINUXDIR=${LINUXDIR} ./config/conf -o ./config/Config
+	# Also configure kernel
+	+$(MAKE) LINUXDIR=${LINUXDIR} k$@
+
+kconf:
+	+$(MAKE) -C $(LINUXDIR) $(SUBMAKE_SETTINGS) config
+
+kmconf: check_kernel_config
+	+$(MAKE) -C $(LINUXDIR) $(SUBMAKE_SETTINGS) menuconfig
+
+koldconf: check_kernel_config
+	+$(MAKE) -C $(LINUXDIR) $(SUBMAKE_SETTINGS) oldconfig
+
+# Convenience
+config: conf
+
+menuconfig: mconf
+
+oldconfig: oldconf
+
+# Platform file
+.config.plt:
+	@echo "PLT=$(PLT)" > $@
+	@echo "LINUX_VERSION=$(LINUX_VERSION)" >> $@
+
+# Default configurations
+.config:
+ifneq (2_4,$(LINUX_VERSION))
+	cp config/defconfig-2.6 $@
+else
+	cp config/defconfig $@
+endif
+	+$(MAKE) SRCBASE=$(SRCBASE) LINUXDIR=$(LINUXDIR) oldconfig
+
+$(LINUXDIR)/.config:
+ifneq (2_4,$(LINUX_VERSION))
+	cp $(LINUXDIR)/arch/$(ARCH)/defconfig-2.6-bcm947xx $@
+else
+	cp $(LINUXDIR)/arch/$(ARCH)/defconfig-bcm947xx $@
+endif
+
+# Overwrite Kernel .config
+check_kernel_config: $(LINUXDIR)/.config
+	cp $(LINUXDIR)/.config $(LINUXDIR)/.config.tmp
+ifeq ($(CONFIG_SQUASHFS), y)
+	if ! grep -q "CONFIG_SQUASHFS=y" $(LINUXDIR)/.config ; then \
+		cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+		sed -e "s/CONFIG_CRAMFS=y/# CONFIG_CRAMFS is not set/g" $(LINUXDIR)/.config.chk | \
+		sed -e "s/# CONFIG_SQUASHFS is not set/CONFIG_SQUASHFS=y/g" > \
+		$(LINUXDIR)/.config ; \
+		rm -f $(LINUXDIR)/.config.chk ; \
+	fi
+endif
+ifeq ($(CONFIG_CRAMFS), y)
+	if ! grep -q "CONFIG_CRAMFS=y" $(LINUXDIR)/.config ; then \
+		cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+		sed -e "s/CONFIG_SQUASHFS=y/# CONFIG_SQUASHFS is not set/g" $(LINUXDIR)/.config.chk | \
+		sed -e "s/# CONFIG_CRAMFS is not set/CONFIG_CRAMFS=y/g" > \
+		$(LINUXDIR)/.config ; \
+		rm -f $(LINUXDIR)/.config.chk ; \
+	fi
+endif
+ifeq ($(CONFIG_SHRINK_MEMORY), y)
+	if ! grep -q "CONFIG_SHRINKMEM=y" $(LINUXDIR)/.config ; then \
+		cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+		sed -e "s/# CONFIG_SHRINKMEM is not set/CONFIG_SHRINKMEM=y/g" $(LINUXDIR)/.config.chk > \
+		$(LINUXDIR)/.config ; \
+		rm -f $(LINUXDIR)/.config.chk ; \
+	fi
+else
+	if grep -q "CONFIG_SHRINKMEM=y" $(LINUXDIR)/.config ; then \
+		cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+		sed -e "s/CONFIG_SHRINKMEM=y/# CONFIG_SHRINKMEM is not set/g" $(LINUXDIR)/.config.chk > \
+		$(LINUXDIR)/.config ; \
+		rm -f $(LINUXDIR)/.config.chk ; \
+	fi
+endif
+ifeq ($(CONFIG_PLC), y)
+	if ! grep -q "CONFIG_PLC=y" $(LINUXDIR)/.config ; then \
+		cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+		sed -e "s/# CONFIG_PLC is not set/CONFIG_PLC=y/g" $(LINUXDIR)/.config.chk > \
+		$(LINUXDIR)/.config ; \
+		rm -f $(LINUXDIR)/.config.chk ; \
+	fi
+else
+	if grep -q "CONFIG_PLC=y" $(LINUXDIR)/.config ; then \
+		cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+		sed -e "s/CONFIG_PLC=y/# CONFIG_PLC is not set/g" $(LINUXDIR)/.config.chk > \
+		$(LINUXDIR)/.config ; \
+		rm -f $(LINUXDIR)/.config.chk ; \
+	fi
+endif
+	# Do not override CONFIG_PLAT_MUX_CONSOLE if CONFIG_NFC is disable, others may enable it.
+ifeq ($(CONFIG_NFC), y)
+	if ! grep -q "CONFIG_PLAT_MUX_CONSOLE=y" $(LINUXDIR)/.config ; then \
+		cp $(LINUXDIR)/.config $(LINUXDIR)/.config.chk ; \
+		sed -e "s/# CONFIG_PLAT_MUX_CONSOLE is not set/CONFIG_PLAT_MUX_CONSOLE=y/g" $(LINUXDIR)/.config.chk > \
+		$(LINUXDIR)/.config ; \
+		rm -f $(LINUXDIR)/.config.chk ; \
+	fi
+endif
+	# Make kernel config again if changed
+	$(if $(shell [ ! cmp ${LINUXDIR}/.config ${LINUXDIR}/.config.tmp >/dev/null 2>&1 ] && echo "y"), \
+	+$(MAKE) -C ${LINUXDIR} $(SUBMAKE_SETTINGS) oldconfig < /dev/null \
+	)
+
+#
+# Overrides
+#
+
+ifneq (2_4,$(LINUX_VERSION))
+# See if .config has changed. This file gets a new date stamp at each build,
+# so we always have exactly 4 lines of diffs. Anything else, we rebuild.
+BB_DIFF_LINES=$(shell diff busybox-1.x/.config busybox-1.x/configs/bbconfig-$(CONFIG_BUSYBOX_CONFIG) | wc -l)
+
+busybox-1.x/.config:
+	cd $(@D) && cp configs/bbconfig-$(CONFIG_BUSYBOX_CONFIG) .config && $(MAKE) oldconfig
+
+busybox-1.x/Config.h: dummy
+	cd $(@D) && rm -f Config.h && ln -sf include/autoconf.h Config.h && touch Config.h
+ifneq ($(BB_DIFF_LINES),4)
+	cd $(@D) && cp configs/bbconfig-$(CONFIG_BUSYBOX_CONFIG) .config && $(MAKE) clean
+endif
+
+.PHONY: busybox
+busybox: busybox-1.x/.config busybox-1.x/Config.h
+	+$(MAKE) -C busybox-1.x ARCH=$(ARCH) INSTALL
+
+busybox-install:
+	+$(MAKE) -C busybox-1.x ARCH=$(ARCH) CONFIG_PREFIX=$(INSTALLDIR)/busybox install
+
+busybox-clean:
+	+$(MAKE) -C busybox-1.x ARCH=$(ARCH) clean
+
+rc: netconf nvram shared
+	+$(MAKE) LINUXDIR=$(LINUXDIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) -C rc
+ifneq ($(CONFIG_BUSYBOX),)
+rc: busybox-1.x/Config.h
+endif
+else #linux-2.6
+CURBBCFG := $(CONFIG_BUSYBOX_CONFIG).h
+OLDBBCFG := $(shell basename $$(readlink busybox/Config.h) 2> /dev/null)
+busybox/Config.h: dummy
+ifneq ($(OLDBBCFG),$(CURBBCFG))
+	cd busybox && rm -f Config.h && ln -sf configs/$(CURBBCFG) Config.h && touch Config.h
+endif
+
+busybox: busybox/Config.h
+	+$(MAKE) -C busybox STRIPTOOL=$(STRIP)
+
+busybox-install:
+	+$(MAKE) -C busybox STRIPTOOL=$(STRIP) PREFIX=$(INSTALLDIR)/busybox install
+
+rc: netconf nvram shared
+ifneq ($(CONFIG_BUSYBOX),)
+rc: busybox/Config.h
+endif
+endif #linux-2.6
+
+rc-install: rc
+	+$(MAKE) LINUXDIR=$(LINUXDIR) INSTALLDIR=$(INSTALLDIR)/rc -C rc install
+
+lib-install:
+	+$(MAKE) LX_VERS=$(LINUX_VERSION) INSTALLDIR=$(INSTALLDIR)/lib ARCH=$(ARCH) -C lib install
+
+www:
+	+$(MAKE) -C www/$(CONFIG_VENDOR) INSTALLDIR=$(INSTALLDIR)/www
+
+www-install:
+	+$(MAKE) -C www/$(CONFIG_VENDOR) install INSTALLDIR=$(INSTALLDIR)/www
+
+www-clean:
+	+$(MAKE) -C www/$(CONFIG_VENDOR) clean INSTALLDIR=$(INSTALLDIR)/www
+
+ifeq ($(CONFIG_MDNSRESPONDER),y)
+mdnsresponder:
+	+$(MAKE) -C $(MDNSRESPONDERDIR)/mDNSPosix HAVE_UCLIBC=1 os=linux-$(ARCH)
+
+mdnsresponder-install:
+	+$(MAKE) -C $(MDNSRESPONDERDIR)/mDNSPosix \
+		HAVE_UCLIBC=1 \
+		os=linux-$(ARCH) \
+		DISTDIR=$(INSTALLDIR)/mdnsresponder \
+		dist
+	echo -e "hosts: files mdns dns" > $(INSTALLDIR)/mdnsresponder/etc/nsswitch.conf
+
+mdnsresponder-clean:
+	+$(MAKE) -C $(MDNSRESPONDERDIR)/mDNSPosix HAVE_UCLIBC=1 os=linux-$(ARCH) clean
+endif
+
+#ifdef BCMSOUND
+ifeq ($(CONFIG_SOUND),y)
+
+ALSALIB_INSTALL_DIR := $(INSTALLDIR)/alsalib/usr
+ifeq ($(CONFIG_SALSA),y)
+ALSA_IMPL_DIR := $(SALSA_DIR)
+else
+ifeq ($(CONFIG_ALSALIB),y)
+ALSA_IMPL_DIR := $(ALSALIB_INSTALL_DIR)
+endif
+endif
+
+ifeq ($(CONFIG_SALSA),y)
+# Soft-link libasound.a to libsalsa.a because alsa-utils (aplay, amixer) link against -lasound.
+salsa:
+	[ -f $(SALSA_DIR)/Makefile ] || \
+	(cd $(SALSA_DIR); ./configure --host=$(ARCH)-uclibc-linux26 --disable-dependency-tracking --prefix=$(SALSA_DIR) CC=$(CROSS_COMPILE)gcc)
+	[ -f $(SALSA_DIR)/src/.libs/libsalsa.so.0.0.1 ] || \
+	($(MAKE) -C $(SALSA_DIR) ; $(MAKE) -C $(SALSA_DIR) install ; rm -f $(SALSA_DIR)/lib/libasound.a ; ln -s $(SALSA_DIR)/lib/libsalsa.a $(SALSA_DIR)/lib/libasound.a)
+
+salsa-install:
+	install -d $(INSTALLDIR)/usr/lib
+	install -m 755  $(SALSA_DIR)/lib/libsalsa.so.0.0.1 $(INSTALLDIR)/usr/lib/libsalsa.so
+	$(STRIP) $(INSTALLDIR)/usr/lib/libsalsa.so
+
+salsa-clean:
+	$(MAKE) -C $(SALSA_DIR) clean
+	$(MAKE) -C $(SALSA_DIR) distclean
+	rm -rf $(SALSA_DIR)/src/.libs
+	rm -f $(SALSA_DIR)/Makefile
+else
+ifeq ($(CONFIG_ALSALIB),y)
+alsalib:
+	[ -f $(ALSALIB_DIR)/Makefile ] || \
+	(cd $(ALSALIB_DIR); ./configure \
+	--host=$(ARCH)-uclibc-linux26 \
+	--without-versioned \
+	--disable-dependency-tracking \
+	--disable-python \
+	--disable-alisp \
+	--prefix=$(ALSALIB_INSTALL_DIR) \
+	CC=$(CROSS_COMPILE)gcc \
+	CPP=$(CROSS_COMPILE)cpp \
+	CXX=$(CROSS_COMPILE)g++)
+	[ -f $(ALSALIB_DIR)/src/.libs/libasound.so.2.0.0 ] || \
+	($(MAKE) -C $(ALSALIB_DIR) ; $(MAKE) -C $(ALSALIB_DIR) install)
+
+alsalib-install:
+	[ -f $(ALSALIB_DIR)/Makefile ] && \
+	($(MAKE) -C $(ALSALIB_DIR) distclean)
+	cd $(ALSALIB_DIR) && \
+	./configure \
+	--host=$(ARCH)-uclibc-linux26 \
+	--without-versioned \
+	--disable-dependency-tracking \
+	--disable-python \
+	--disable-alisp \
+	--prefix=/usr \
+	CC=$(CROSS_COMPILE)gcc \
+	CPP=$(CROSS_COMPILE)cpp \
+	CXX=$(CROSS_COMPILE)g++
+	$(MAKE) -C $(ALSALIB_DIR)
+	install -m 755 $(ALSALIB_DIR)/src/.libs/libasound.so.2.0.0 $(ALSALIB_INSTALL_DIR)/lib
+	install -m 755 $(ALSALIB_DIR)/modules/mixer/simple/.libs/*.so $(ALSALIB_INSTALL_DIR)/lib/alsa-lib/smixer
+	rm -rf $(ALSALIB_INSTALL_DIR)/include
+	rm -rf $(ALSALIB_INSTALL_DIR)/bin
+	rm -rf $(ALSALIB_INSTALL_DIR)/lib/pkgconfig
+	rm -rf $(ALSALIB_INSTALL_DIR)/share/aclocal
+	rm -f $(ALSALIB_INSTALL_DIR)/lib/*.la
+	rm -f $(ALSALIB_INSTALL_DIR)/lib/alsa-lib/smixer/*.la
+	$(STRIP) $(ALSALIB_INSTALL_DIR)/lib/libasound.so.2.0.0
+	$(STRIP) \
+	$(ALSALIB_INSTALL_DIR)/lib/alsa-lib/smixer/smixer-sbase.so \
+	$(ALSALIB_INSTALL_DIR)/lib/alsa-lib/smixer/smixer-hda.so \
+	$(ALSALIB_INSTALL_DIR)/lib/alsa-lib/smixer/smixer-ac97.so
+
+alsalib-clean:
+	$(MAKE) -C $(ALSALIB_DIR) clean
+	$(MAKE) -C $(ALSALIB_DIR) distclean
+	rm -rf $(ALSALIB_DIR)/src/.libs
+	rm -f $(ALSALIB_DIR)/Makefile
+endif
+endif
+ifeq ($(CONFIG_APLAY),y)
+aplay:
+	[ -f $(APLAY_DIR)/Makefile ] || \
+	(cd $(ALSAUTILS_DIR); \
+	./configure \
+	--host=$(ARCH)-uclibc-linux26 \
+	--disable-dependency-tracking \
+	--disable-nls \
+	--disable-alsamixer \
+	--disable-alsatest \
+	--disable-xmlto \
+	--with-alsa-prefix=$(ALSA_IMPL_DIR)/lib \
+	--with-alsa-inc-prefix=$(ALSA_IMPL_DIR)/include \
+	--prefix=$(ALSAUTILS_DIR) \
+	CC=$(CROSS_COMPILE)gcc)
+	($(MAKE) -C $(APLAY_DIR) ; $(MAKE) -C $(APLAY_DIR) install)
+
+aplay-install:
+	install -d $(INSTALLDIR)/aplay/usr/sbin
+	install -m 755 $(APLAY_DIR)/aplay $(INSTALLDIR)/aplay/usr/sbin
+
+aplay-clean:
+	$(MAKE) -C $(APLAY_DIR) clean
+	rm -f $(APLAY_DIR)/Makefile
+endif
+ifeq ($(CONFIG_AMIXER),y)
+amixer:
+	[ -f $(AMIXER_DIR)/Makefile ] || \
+	(cd $(ALSAUTILS_DIR); \
+	./configure \
+	--host=$(ARCH)-uclibc-linux26 \
+	--disable-dependency-tracking \
+	--disable-nls \
+	--disable-alsamixer \
+	--disable-alsatest \
+	--disable-xmlto \
+	--with-alsa-prefix=$(ALSA_IMPL_DIR)/lib \
+	--with-alsa-inc-prefix=$(ALSA_IMPL_DIR)/include \
+	--prefix=$(ALSAUTILS_DIR) \
+	CC=$(CROSS_COMPILE)gcc)
+	($(MAKE) -C $(AMIXER_DIR) ; $(MAKE) -C $(AMIXER_DIR) install)
+
+amixer-install:
+	install -d $(INSTALLDIR)/amixer/usr/sbin
+	install -m 755 $(AMIXER_DIR)/amixer $(INSTALLDIR)/amixer/usr/sbin
+
+amixer-clean:
+	$(MAKE) -C $(AMIXER_DIR) clean
+	rm -f $(AMIXER_DIR)/Makefile
+endif
+
+ifeq ($(CONFIG_ALSALIB),y)
+ifeq ($(CONFIG_ALSACTL),y)
+alsactl:
+	[ -f $(ALSACTL_DIR)/Makefile ] || \
+	(cd $(ALSAUTILS_DIR); \
+	./configure \
+	--host=$(ARCH)-uclibc-linux26 \
+	--disable-dependency-tracking \
+	--disable-nls \
+	--disable-alsamixer \
+	--disable-alsatest \
+	--disable-xmlto \
+	--with-alsa-prefix=$(ALSA_IMPL_DIR)/lib \
+	--with-alsa-inc-prefix=$(ALSA_IMPL_DIR)/include \
+	--prefix=$(ALSAUTILS_DIR) \
+	CC=$(CROSS_COMPILE)gcc)
+	($(MAKE) -C $(ALSACTL_DIR) ; $(MAKE) -C $(ALSACTL_DIR) install)
+
+alsactl-install:
+	install -d $(INSTALLDIR)/alsactl/usr/sbin
+	install -m 755 $(ALSACTL_DIR)/alsactl $(INSTALLDIR)/alsactl/usr/sbin
+
+alsactl-clean:
+	$(MAKE) -C $(ALSACTL_DIR) clean
+	rm -f $(ALSACTL_DIR)/Makefile
+endif
+endif
+
+ifeq ($(CONFIG_AIRPLAY),y)
+ifeq ($(CONFIG_SALSA),y)
+airplay: mdnsresponder salsa
+	+$(MAKE) -C $(AIRPLAYDIR)/Platform/Platform_Linux \
+		MDNSROOT=$(MDNSRESPONDERDIR) \
+		ALSAROOT=$(realpath $(ALSA_IMPL_DIR)) \
+		USE_SALSA=1 \
+		debug=1 \
+		daemon
+airplay-clean:
+	$(MAKE) -C $(AIRPLAYDIR)/Platform/Platform_Linux \
+		MDNSROOT=$(MDNSRESPONDERDIR) \
+		ALSAROOT=$(realpath $(ALSA_IMPL_DIR)) \
+		USE_SALSA=1 \
+		debug=1 \
+		clean
+else
+ifeq ($(CONFIG_ALSALIB),y)
+airplay: mdnsresponder alsalib
+	+$(MAKE) -C $(AIRPLAYDIR)/Platform/Platform_Linux \
+		MDNSROOT=$(MDNSRESPONDERDIR) \
+		ALSAROOT=$(realpath $(ALSA_IMPL_DIR)) \
+		debug=1 \
+		daemon
+airplay-clean:
+	$(MAKE) -C $(AIRPLAYDIR)/Platform/Platform_Linux \
+		MDNSROOT=$(MDNSRESPONDERDIR) \
+		ALSAROOT=$(realpath $(ALSA_IMPL_DIR)) \
+		debug=1 \
+		clean
+endif
+endif
+
+airplay-install: mDNSResponder-install
+	install -D -m 755 $(AIRPLAYDIR)/Platform/Platform_Linux/obj/airplayd \
+		$(INSTALLDIR)/airplay/usr/sbin/airplayd
+endif
+endif
+#endif
+
+#ifdef __CONFIG_TREND_IQOS__
+ifeq ($(LINUX_VERSION),2_6_36)
+ifeq ($(CONFIG_TREND_IQOS),y)
+
+iqos-install:
+	+$(MAKE) -C $(IQOS_DIR) install INSTALLDIR=$(INSTALLDIR)/iqos
+iqos-clean:
+	+$(MAKE) -C $(IQOS_DIR) clean
+.PHONY: iqos-install iqos-clean
+
+CURL_DIR := $(OPENSOURCE_BASE_DIR)/curl
+curl:
+	+$(MAKE) -C $(CURL_DIR)
+curl-install:
+	+$(MAKE) -C $(CURL_DIR) install INSTALLDIR=$(INSTALLDIR)/curl
+curl-clean:
+	+$(MAKE) -C $(CURL_DIR) clean
+.PHONY: curl curl-install curl-clean
+endif
+endif
+#endif /* __CONFIG_TREND_IQOS__ */
+
+
+
+dhd:
+ifeq ($(RTCONFIG_DHDAP),y)
+ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
+	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe
+endif
+endif
+
+dhd-clean :
+ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
+	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe clean
+endif
+
+dhd-install :
+ifeq ($(RTCONFIG_DHDAP),y)
+ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
+	install -d $(INSTALLDIR)/dhd/usr/sbin
+	install $(SRCBASE_DHD)/dhd/exe/dhd $(INSTALLDIR)/dhd/usr/sbin
+	$(STRIP) $(INSTALLDIR)/dhd/usr/sbin/dhd
+endif
+endif
+
+.PHONY: dhd_monitor
+
+dhd_monitor: shared nvram
+ifeq ($(RTCONFIG_DHDAP),y)
+	+$(MAKE) LINUXDIR=$(LINUXDIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) -C dhd_monitor dhd_monitor
+endif
+
+dhd_monitor-install: dhd_monitor
+ifeq ($(RTCONFIG_DHDAP),y)
+	+$(MAKE) -C dhd_monitor INSTALLDIR=$(INSTALLDIR)/dhd_monitor install
+endif
+
+dhd_monitor-clean:
+ifeq ($(RTCONFIG_DHDAP),y)
+	+$(MAKE) -C dhd_monitor clean
+endif
+
+
+# XXX libusb and bcmdl are obseleted after USBAP high driver image embeds the low driver
+# To re-build bcmdl target, set BUILD_BCMDL to 1
+BUILD_BCMDL := 0
+
+ifeq ($(BUILD_BCMDL), 1)
+prep-libusb:
+	$(if $(wildcard ${SRCBASE}/usbdev/libusb/), \
+	   ( cd $(SRCBASE)/usbdev/libusb \
+	     && ./configure --host=$(PLT)-linux CC=$(CROSS_COMPILE)gcc \
+	   ) \
+	 )
+
+libusb: prep-libusb
+	$(if $(wildcard ${SRCBASE}/usb/libusb), \
+	  +$(MAKE) -C ${SRCBASE}/usbdev/libusb \
+	)
+
+bcmdl :	libusb
+ifneq (2_4,$(LINUX_VERSION))
+	+$(MAKE) TARGETENV=linux26mips -C $(SRCBASE)/usbdev/usbdl
+else
+	+$(MAKE) TARGETENV=linuxmips -C $(SRCBASE)/usbdev/usbdl
+
+endif
+
+bcmdl-install:
+	install -d $(TARGETDIR)/sbin
+	install -D $(SRCBASE)/usbdev/usbdl/bcmdl $(TARGETDIR)/sbin/bcmdl
+else	# BUILD_BCMDL
+libusb:
+	# So that generic rule does not take precedence
+	@true
+
+bcmdl:
+	# So that generic rule does not take precedence
+	@true
+
+bcmdl-install :
+	install -d $(INSTALLDIR)/dongle/sbin
+	install -D $(SRCBASE)/usbdev/usbdl/mips_$(LINUX_VERSION)/bcmdl $(INSTALLDIR)/dongle/sbin/bcmdl
+#	install -D $(SRCBASE)/dongle/rte/test/run-arm-thumb-cm3-poll-ai-uc/hello.bin.trx $(INSTALLDIR)/dongle/bin/hello.bin.trx
+endif	# BUILD_BCMDL
+
+bridge:
+ifneq (2_4,$(LINUX_VERSION))
+	+$(MAKE) -C bridge-1.x
+else
+	+$(MAKE) -C bridge brctl/brctl
+endif
+
+dongle :
+
+bridge-install:
+ifneq (2_4,$(LINUX_VERSION))
+	install -D bridge-1.x/brctl/brctl $(INSTALLDIR)/bridge/usr/sbin/brctl
+else
+	install -D bridge/brctl/brctl $(INSTALLDIR)/bridge/usr/sbin/brctl
+endif
+	$(STRIP) $(INSTALLDIR)/bridge/usr/sbin/brctl
+
+bridge-clean:
+ifneq (2_4,$(LINUX_VERSION))
+	-$(MAKE) -C bridge-1.x clean
+else
+	-$(MAKE) -C bridge clean
+endif
+
+ifeq ($(call wlan_version_ge,$(BCM_KVERSIONSTRING),2.6.36),TRUE)
+dnsmasq:
+	+$(MAKE) -C $(DNSMASQ_DIR)
+
+dnsmasq-install:
+	install -D $(DNSMASQ_DIR)/src/dnsmasq $(INSTALLDIR)/dnsmasq/usr/sbin/dnsmasq
+	$(STRIP) $(INSTALLDIR)/dnsmasq/usr/sbin/dnsmasq
+else
+dnsmasq-install:
+	install -D dnsmasq/dnsmasq $(INSTALLDIR)/dnsmasq/usr/sbin/dnsmasq
+	$(STRIP) $(INSTALLDIR)/dnsmasq/usr/sbin/dnsmasq
+endif
+
+libstdcpp:
+	# So that generic rule does not take precedence
+	@:
+
+libstdcpp-install:
+	install -D $(TOOLCHAIN)/usr/lib/libstdc++.so.6.0.14 $(INSTALLDIR)/libstdcpp/usr/lib/libstdc++.so.6.0.14
+	+ldconfig -N -n -r $(INSTALLDIR)/libstdcpp usr/lib
+	+$(STRIP) $(INSTALLDIR)/libstdcpp/usr/lib/libstdc++.so.6.0.14
+
+libmnl:
+	[ -f $(LIBMNL_DIR)/Makefile ] || \
+	(cd $(LIBMNL_DIR); \
+	 CC=$(CC) ./configure \
+	    --target=$(PLATFORM)-linux \
+	    --host=$(PLATFORM)-linux \
+	    --build=`/bin/arch`-linux \
+	    --with-kernel=$(LINUXDIR) \
+	    --prefix=$(LIBMNL_DIR)/install)
+	+$(MAKE) -C $(LIBMNL_DIR)
+	+$(MAKE) -C $(LIBMNL_DIR) install-strip
+
+libmnl-install:
+	install -d $(INSTALLDIR)/libmnl/usr/lib
+	cp -rf $(LIBMNL_DIR)/install/lib/* $(INSTALLDIR)/libmnl/usr/lib
+
+libmnl-clean:
+	+$(MAKE) -C $(LIBMNL_DIR) KERNEL_DIR=$(LINUXDIR) clean
+
+libnfnetlink:
+	[ -f $(LIBNFNETLINK_DIR)/Makefile ] || \
+	(cd $(LIBNFNETLINK_DIR); \
+	 CC=$(CC) ./configure \
+	    --target=$(PLATFORM)-linux \
+	    --host=$(PLATFORM)-linux \
+	    --build=`/bin/arch`-linux \
+	    --with-kernel=$(LINUXDIR) \
+	    --prefix=$(LIBNFNETLINK_DIR)/install)
+	+$(MAKE) -C $(LIBNFNETLINK_DIR)
+	+$(MAKE) -C $(LIBNFNETLINK_DIR) install-strip
+
+libnfnetlink-install:
+	install -d $(INSTALLDIR)/libnfnetlink/usr/lib
+	cp -rf $(LIBNFNETLINK_DIR)/install/lib/* $(INSTALLDIR)/libnfnetlink/usr/lib
+
+libnfnetlink-clean:
+	+$(MAKE) -C $(LIBNFNETLINK_DIR) KERNEL_DIR=$(LINUXDIR) clean
+
+libnetfilter_conntrack: libmnl libnfnetlink
+	[ -f $(LIBNETFILTER_CONNTRACK_DIR)/Makefile ] || \
+	(cd $(LIBNETFILTER_CONNTRACK_DIR); \
+	 CC=$(CC) ./configure \
+	    --target=$(PLATFORM)-linux \
+	    --host=$(PLATFORM)-linux \
+	    --build=`/bin/arch`-linux \
+	    --with-kernel=$(LINUXDIR) \
+	    --prefix=$(LIBNETFILTER_CONNTRACK_DIR)/install \
+        LIBNFNETLINK_CFLAGS=$(NFNETLINK_CFLAGS) LIBNFNETLINK_LIBS=$(NFNETLINK_LIBS) \
+        LIBMNL_CFLAGS=$(MNL_CFLAGS) LIBMNL_LIBS=$(MNL_LIBS))
+	+$(MAKE) -C $(LIBNETFILTER_CONNTRACK_DIR)
+	+$(MAKE) -C $(LIBNETFILTER_CONNTRACK_DIR) install-strip
+
+libnetfilter_conntrack-install:
+	install -d $(INSTALLDIR)/libnetfilter_conntrack/usr/lib
+	cp -rf $(LIBNETFILTER_CONNTRACK_DIR)/install/lib/* $(INSTALLDIR)/libnetfilter_conntrack/usr/lib
+
+libnetfilter_conntrack-clean:
+	+$(MAKE) -C $(LIBNETFILTER_CONNTRACK_DIR) KERNEL_DIR=$(LINUXDIR) clean
+
+libnetfilter_queue: libmnl libnfnetlink
+	[ -f $(LIBNETFILTER_QUEUE_DIR)/Makefile ] || \
+	(cd $(LIBNETFILTER_QUEUE_DIR); \
+	 CC=$(CC) ./configure \
+	    --target=$(PLATFORM)-linux \
+	    --host=$(PLATFORM)-linux \
+	    --build=`/bin/arch`-linux \
+	    --with-kernel=$(LINUXDIR) \
+	    --prefix=$(LIBNETFILTER_QUEUE_DIR)/install \
+        LIBNFNETLINK_CFLAGS=$(NFNETLINK_CFLAGS) LIBNFNETLINK_LIBS=$(NFNETLINK_LIBS) \
+        LIBMNL_CFLAGS=$(MNL_CFLAGS) LIBMNL_LIBS=$(MNL_LIBS))
+	+$(MAKE) -C $(LIBNETFILTER_QUEUE_DIR)
+	+$(MAKE) -C $(LIBNETFILTER_QUEUE_DIR) install-strip
+
+libnetfilter_queue-install:
+	install -d $(INSTALLDIR)/libnetfilter_queue/usr/lib
+	cp -rf $(LIBNETFILTER_QUEUE_DIR)/install/lib/* $(INSTALLDIR)/libnetfilter_queue/usr/lib
+
+libnetfilter_queue-clean:
+	+$(MAKE) -C $(LIBNETFILTER_QUEUE_DIR) KERNEL_DIR=$(LINUXDIR) clean
+
+LIBFLOW_DIR := $(BASEDIR)/components/shared/libflow
+
+libflow: libnetfilter_conntrack
+	$(MAKE) -C $(LIBFLOW_DIR) LIBMNL_CFLAGS=$(MNL_CFLAGS) LIBMNL_LIBS=$(MNL_LIBS) LIBNFNETLINK_CFLAGS=$(NFNETLINK_CFLAGS) LIBNFNETLINK_LIBS=$(NFNETLINK_LIBS) LIBNETFILTER_CONNTRACK_CFLAGS=$(NETFILTER_CONNTRACK_CFLAGS) LIBNETFILTER_CONNTRACK_LIBS=$(NETFILTER_CONNTRACK_LIBS)
+
+libflow-install:
+	install -d $(INSTALLDIR)/libflow/usr/lib
+	install -D $(LIBFLOW_DIR)/libflow.so $(INSTALLDIR)/libflow/usr/lib
+	$(STRIP) $(INSTALLDIR)/libflow/usr/lib/libflow.so
+
+libflow-clean:
+	$(MAKE) -C $(LIBFLOW_DIR) clean
+
+libsqlite3:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	[ -f $(LIBSQLITE3_DIR)/Makefile ] || \
+	(cd $(LIBSQLITE3_DIR); \
+	 CC=$(CC) ./configure \
+            --target=$(PLATFORM)-linux \
+            --host=$(PLATFORM)-linux \
+            --enable-static=no \
+            --prefix=$(LIBSQLITE3_DIR)/installbin)
+	+$(MAKE) -C $(LIBSQLITE3_DIR)
+	+$(MAKE) -C $(LIBSQLITE3_DIR) install-strip
+endif
+
+libsqlite3-install:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	install -d $(INSTALLDIR)/libsqlite3/usr/lib
+	cp -rf $(LIBSQLITE3_DIR)/installbin/lib/libsqlite3.so* $(INSTALLDIR)/libsqlite3/usr/lib
+endif
+
+libsqlite3-clean:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	+$(MAKE) -C $(LIBSQLITE3_DIR) clean
+endif
+
+libjsonc:
+	[ -f $(LIBJSONC_DIR)/Makefile ] || \
+        (cd $(LIBJSONC_DIR); \
+         CC=$(CC) ./configure \
+            --target=$(PLATFORM)-linux \
+            --host=$(PLATFORM)-linux \
+            --disable-oldname-compat \
+            --enable-static=no \
+            --prefix=$(LIBJSONC_DIR)/installbin)
+	+$(MAKE) -C $(LIBJSONC_DIR)
+	+$(MAKE) -C $(LIBJSONC_DIR) install-strip
+
+libjsonc-install:
+	install -d $(INSTALLDIR)/libjsonc/usr/lib
+	cp -rf $(LIBJSONC_DIR)/installbin/lib/libjson-c.so* $(INSTALLDIR)/libjsonc/usr/lib
+
+libjsonc-clean:
+	+$(MAKE) -C $(LIBJSONC_DIR) clean
+
+libxml2:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	[ -f $(LIBXML2_DIR)/Makefile ] || \
+        (cd $(LIBXML2_DIR); \
+         CC=$(CC) ./configure \
+            --target=$(PLATFORM)-linux \
+            --host=$(PLATFORM)-linux \
+            --with-python=no \
+            --without-zlib \
+            --without-ftp \
+            --without-http \
+            --without-html \
+            --without-debug \
+            --without-docbook \
+            --without-catalog \
+            --without-schemas \
+            --enable-static=no \
+            --prefix=$(LIBXML2_DIR)/installbin)
+	+$(MAKE) -C $(LIBXML2_DIR)
+	+$(MAKE) -C $(LIBXML2_DIR) install-strip
+endif
+
+libxml2-install:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	install -d $(INSTALLDIR)/libxml2/usr/lib
+	cp -rf $(LIBXML2_DIR)/installbin/lib/libxml2.so* $(INSTALLDIR)/libxml2/usr/lib
+endif
+
+libxml2-clean:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	+$(MAKE) -C $(LIBXML2_DIR) clean
+endif
+
+visdcoll:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	[ -f $(VISDCOLL_DIR)/Makefile ] || \
+        (cd $(VISDCOLL_DIR); \
+         CC=$(CC) ./configure \
+            --target=$(PLATFORM)-linux \
+            --host=$(PLATFORM)-linux \
+            --prefix=$(VISDCOLL_DIR)/installbin)
+	+$(MAKE) -C $(VISDCOLL_DIR)
+	+$(MAKE) -C $(VISDCOLL_DIR) install-strip
+endif
+
+visdcoll-install:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	install -d $(INSTALLDIR)/visdcoll/usr/sbin
+	cp -rf $(VISDCOLL_DIR)/installbin/bin/* $(INSTALLDIR)/visdcoll/usr/sbin
+endif
+
+visdcoll-clean:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	+$(MAKE) -C $(VISDCOLL_DIR) clean
+endif
+
+visdcon:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	[ -f $(VISDCON_DIR)/Makefile ] || \
+        (cd $(VISDCON_DIR); \
+         CC=$(CC) ./configure \
+            --target=$(PLATFORM)-linux \
+            --host=$(PLATFORM)-linux \
+            --prefix=$(VISDCON_DIR)/installbin)
+	+$(MAKE) -C $(VISDCON_DIR)
+	+$(MAKE) -C $(VISDCON_DIR) install-strip
+endif
+
+visdcon-install:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	install -d $(INSTALLDIR)/visdcon/usr/sbin
+	cp -rf $(VISDCON_DIR)/installbin/bin/* $(INSTALLDIR)/visdcon/usr/sbin
+endif
+
+visdcon-clean:
+ifeq ($(CONFIG_VISUALIZATION),y)
+	+$(MAKE) -C $(VISDCON_DIR) clean
+endif
+
+ifeq ($(CONFIG_LIBNFNETLINK),y)
+# iptables will try to link with netfilter's libs if enabled.
+IPTABLES_DEPS := libnfnetlink
+endif
+
+ifeq ($(CONFIG_IPV6),y)
+DOIPV6=1
+else
+DOIPV6=0
+endif
+
+ifeq (2_6_36,$(LINUX_VERSION))
+iptables: $(IPTABLES_DEPS)
+	+$(MAKE) -C iptables-1.4.12 BINDIR=/usr/sbin LIBDIR=/usr/lib \
+	    KERNEL_DIR=$(LINUXDIR)
+
+iptables-install:
+ifeq ($(CONFIG_IPTABLES),y)
+	install -d $(INSTALLDIR)/iptables/usr/lib/iptables
+	install iptables-1.4.12/src/extensions/*.so $(INSTALLDIR)/iptables/usr/lib/iptables
+	$(STRIP) $(INSTALLDIR)/iptables/usr/lib/iptables/*.so
+	install -d $(INSTALLDIR)/iptables/usr/sbin
+	cp -rf iptables-1.4.12/src/install/sbin/* $(INSTALLDIR)/iptables/usr/sbin
+	install -d $(INSTALLDIR)/iptables/usr/lib
+	cp -rf iptables-1.4.12/src/install/lib/* $(INSTALLDIR)/iptables/usr/lib
+else
+	# So that generic rule does not take precedence
+	@true
+endif
+iptables-clean:
+	-$(MAKE) -C iptables-1.4.12 KERNEL_DIR=$(LINUXDIR) clean
+
+else ifeq (2_6,$(LINUX_VERSION))
+iptables:
+	+$(MAKE) -C iptables-1.x BINDIR=/usr/sbin LIBDIR=/usr/lib \
+	    KERNEL_DIR=$(LINUXDIR) DO_IPV6=$(DOIPV6)
+
+iptables-install:
+ifeq ($(CONFIG_IPTABLES),y)
+	install -d $(INSTALLDIR)/iptables/usr/lib/iptables
+	install iptables-1.x/extensions/*.so $(INSTALLDIR)/iptables/usr/lib/iptables
+	$(STRIP) $(INSTALLDIR)/iptables/usr/lib/iptables/*.so
+	install -D iptables-1.x/iptables $(INSTALLDIR)/iptables/usr/sbin/iptables
+	$(STRIP) $(INSTALLDIR)/iptables/usr/sbin/iptables
+	install -D iptables-1.x/iptables-restore $(INSTALLDIR)/iptables/usr/sbin/iptables-restore # BCMQOS
+	$(STRIP) $(INSTALLDIR)/iptables/usr/sbin/iptables-restore # BCMQOS
+else
+	# So that generic rule does not take precedence
+	@true
+endif
+iptables-clean:
+	-$(MAKE) -C iptables-1.x KERNEL_DIR=$(LINUXDIR) DO_IPV6=$(DOIPV6) clean
+else # linux-2.6
+iptables:
+	+$(MAKE) -C iptables BINDIR=/usr/sbin LIBDIR=/usr/lib \
+	    KERNEL_DIR=$(LINUXDIR)
+#DO_IPV6=1
+
+iptables-install:
+ifeq ($(CONFIG_IPTABLES),y)
+	install -d $(INSTALLDIR)/iptables/usr/lib/iptables
+	install iptables/extensions/*.so $(INSTALLDIR)/iptables/usr/lib/iptables
+	$(STRIP) $(INSTALLDIR)/iptables/usr/lib/iptables/*.so
+	install -D iptables/iptables $(INSTALLDIR)/iptables/usr/sbin/iptables
+	$(STRIP) $(INSTALLDIR)/iptables/usr/sbin/iptables
+else
+	# So that generic rule does not take precedence
+	@true
+endif
+iptables-clean:
+	-$(MAKE) -C iptables KERNEL_DIR=$(LINUXDIR) DO_IPV6=$(DOIPV6) clean
+
+endif # linux-2.6
+
+nas: nvram shared
+
+netconf: iptables
+ifeq ($(CONFIG_NETCONF),y)
+	+$(MAKE) LINUXDIR=$(LINUXDIR) -C netconf
+
+else
+	# In case of "Prerequisite 'iptables' is newer than target 'netconf'"
+	@true
+endif
+
+ntpclient-install:
+	install -D ntpclient/ntpclient $(INSTALLDIR)/ntpclient/usr/sbin/ntpclient
+	$(STRIP) $(INSTALLDIR)/ntpclient/usr/sbin/ntpclient
+
+ppp :
+	+$(MAKE) -C ppp/pppoecd $* INSTALLDIR=$(INSTALLDIR)/ppp
+
+ppp-install:
+	+$(MAKE) -C ppp/pppoecd install INSTALLDIR=$(INSTALLDIR)/ppp
+
+ppp-clean:
+	+$(MAKE) -C ppp/pppoecd clean INSTALLDIR=$(INSTALLDIR)/ppp
+
+udhcpd-install:
+	install -D udhcpd/udhcpd $(INSTALLDIR)/udhcpd/usr/sbin/udhcpd
+	$(STRIP) $(INSTALLDIR)/udhcpd/usr/sbin/udhcpd
+	cd $(INSTALLDIR)/udhcpd/usr/sbin && ln -sf udhcpd udhcpc
+
+wlconf: nvram shared
+
+vlan:
+	+$(MAKE) -C vlan CROSS=$(CROSS_COMPILE) STRIPTOOL=$(STRIP)
+
+vlan-install:
+	+$(MAKE) install -C vlan \
+	    CROSS=$(CROSS_COMPILE) STRIPTOOL=$(STRIP) INSTALLDIR=$(INSTALLDIR)
+
+vlan-clean:
+	$(MAKE) -C vlan clean
+
+buzzz:
+	+$(MAKE) -C buzzz CROSS=$(CROSS_COMPILE) STRIPTOOL=$(STRIP)
+
+buzzz-install:
+	install -d $(TARGETDIR)
+	+$(MAKE) -C buzzz CROSS=$(CROSS_COMPILE) STRIPTOOL=$(STRIP)  INSTALLDIR=$(INSTALLDIR) install
+
+buzzz-clean:
+	$(MAKE) -C buzzz clean
+
+emf:
+	+$(MAKE) -C emf/emfconf CROSS=$(CROSS_COMPILE)
+
+emf-install:
+ifeq ($(CONFIG_EMF),y)
+	install -d $(TARGETDIR)
+	+$(MAKE) install -C emf/emfconf \
+	    CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR)
+
+endif
+
+emf-clean:
+	$(MAKE) -C emf/emfconf clean
+
+igs:
+	+$(MAKE) -C emf/igsconf CROSS=$(CROSS_COMPILE)
+
+igs-install:
+ifeq ($(CONFIG_EMF),y)
+	install -d $(TARGETDIR)
+	+$(MAKE) -C emf/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+
+endif
+
+igs-clean:
+	$(MAKE) -C emf/igsconf clean
+
+igmp:
+	$(MAKE) -C igmp CROSS=$(CROSS_COMPILE)
+
+igmp-install:
+ifeq ($(CONFIG_IGMP_PROXY),y)
+	install -d $(TARGETDIR)
+	+$(MAKE) -C igmp CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+endif
+
+igmp-clean:
+	$(MAKE) -C igmp clean
+
+wps: nvram shared
+ifneq (,$(and $(filter y,$(CONFIG_WPS)),$(wildcard wps/Makefile)))
+	+$(MAKE) -C wps EXTRA_LDFLAGS=$(EXTRA_LDFLAGS)
+
+else
+	# Prevent to use generic rules"
+	@true
+endif
+
+wps-install:
+ifeq ($(CONFIG_WPS),y)
+	+$(if $(wildcard wps/Makefile), \
+	    $(MAKE) -C wps INSTALLDIR=$(INSTALLDIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) install \
+	   , \
+	    @true \
+	  )
+else
+	# Prevent to use generic rules"
+	@true
+endif
+
+wps-clean:
+ifeq ($(CONFIG_WPS),y)
+	[ ! -f wps/Makefile ] || $(MAKE) -C wps clean
+else
+	# Prevent to use generic rules"
+	@true
+endif
+
+# NFC
+nfc:
+ifneq (,$(and $(filter y,$(CONFIG_NFC)),$(wildcard nfc/Makefile)))
+	+$(MAKE) -C nfc EXTRA_LDFLAGS=$(EXTRA_LDFLAGS)
+else
+	# Prevent to use generic rules"
+	@true
+endif
+
+nfc-install:
+ifeq ($(CONFIG_NFC),y)
+	+$(if $(wildcard nfc/Makefile), \
+	    $(MAKE) -C nfc INSTALLDIR=$(INSTALLDIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) install \
+	   , \
+	    @true \
+	  )
+else
+	# Prevent to use generic rules"
+	@true
+endif
+
+nfc-clean:
+ifeq ($(CONFIG_NFC),y)
+	[ ! -f nfc/Makefile ] || $(MAKE) -C nfc clean
+else
+	# Prevent to use generic rules"
+	@true
+endif
+
+ifneq (2_4,$(LINUX_VERSION))
+udev:
+	+$(MAKE) -C udev CROSS_COMPILE=$(CROSS_COMPILE)
+
+udev-install:
+	install -d $(TARGETDIR)
+	+$(MAKE) install-udevtrigger -C udev \
+	    CROSS_COMPILE=$(CROSS_COMPILE) DESTDIR=$(INSTALLDIR) prefix=/udev
+
+udev-clean:
+	$(MAKE) -C udev clean
+
+hotplug2:
+	+$(MAKE) -C hotplug2 CROSS_COMPILE=$(CROSS_COMPILE)
+
+hotplug2-install:
+	install -d $(TARGETDIR)
+	install -d $(INSTALLDIR)/hotplug2
+	+$(MAKE) install -C hotplug2 \
+	    CROSS_COMPILE=$(CROSS_COMPILE) PREFIX=$(INSTALLDIR)
+
+hotplug2-clean:
+	$(MAKE) -C hotplug2 clean
+endif
+
+
+IPROUTE2_SUBDIRS := lib
+
+ifeq (2_4,$(LINUX_VERSION))
+UCLIBC_IPV6=$(TOP)/lib/mipsel-uclibc/libc.so.0
+ifeq ($(CONFIG_IPROUTE2),y)
+IPROUTE2_SUBDIRS += ip
+endif
+endif
+
+ifeq ($(CONFIG_BCMQOS),y)
+IPROUTE2_SUBDIRS += tc
+endif
+
+radvd/Makefile: radvd/configure radvd/Makefile.in
+	[ ! -d $(@D) ] || (cd $(@D) && CC=$(CC) ./configure --host=$(PLT)-linux)
+
+.PHONY: radvd
+radvd: radvd/Makefile flex dummy
+	+$(if $(wildcard $@/),$(MAKE) -C radvd CC=${CC} radvd_LDADD="-L../flex -lfl",@true)
+
+.PHONY: radvd-install
+radvd-install:
+	[ ! -d radvd ] || install -D -m 755 radvd/radvd $(INSTALLDIR)/radvd/usr/sbin/radvd
+	[ ! -d radvd ] || $(STRIP) $(INSTALLDIR)/radvd/usr/sbin/radvd
+
+.PHONY: radvd-clean
+radvd-clean:
+	[ ! -f radvd/Makefile ] || $(MAKE) -C radvd distclean
+
+flex/Makefile: flex/configure flex/Makefile.in
+	[ ! -d $(@D) ] || (cd $(@D) && CC=$(CC) ./configure --host=$(PLT)-linux)
+
+.PHONY: flex
+flex: flex/Makefile dummy
+	+$(if $(wildcard $@/),$(MAKE) libfl.a -C $@ CC=${CC} RANLIB=${RANLIB},@true)
+
+iproute2:
+ifneq ($(LINUX_VERSION),2_6_36)
+	+$(if $(wildcard $@/), \
+	    $(MAKE) -C $@ KERNEL_INCLUDE=$(LINUXDIR)/include CC=$(CC) \
+	         AR=$(AR) SUBDIRS="$(IPROUTE2_SUBDIRS)" LDLIBS="$(UCLIBC_IPV6)" \
+	   , \
+	    @true \
+	  )
+else
+	+$(if $(wildcard $(IPROUTE2_DIR)/), \
+	    $(MAKE) -C $(IPROUTE2_DIR) KERNEL_INCLUDE=$(LINUXDIR)/include CC=$(CC) \
+	         AR=$(AR) SUBDIRS="$(IPROUTE2_SUBDIRS)" LDLIBS="$(UCLIBC_IPV6)" \
+	   , \
+	    @true \
+	  )
+
+endif
+
+iproute2-clean:
+	[ ! -d $(IPROUTE2_DIR) ] || $(MAKE) -C $(IPROUTE2_DIR) clean
+
+iproute2-install:
+ifeq ($(CONFIG_BCMQOS),y)
+	[ ! -d $(IPROUTE2_DIR) ] || install -D -m 755 $(IPROUTE2_DIR)/tc/tc $(INSTALLDIR)/iproute2/usr/sbin/tc
+	[ ! -d $(IPROUTE2_DIR) ] || $(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/tc
+endif
+ifeq ($(CONFIG_IPROUTE2),y)
+	[ ! -d $(IPROUTE2_DIR) ] || install -D -m 755 $(IPROUTE2_DIR)/ip/ip $(INSTALLDIR)/iproute2/usr/sbin/ip
+	[ ! -d $(IPROUTE2_DIR) ] || $(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/ip
+endif
+
+iputils:
+ifneq ($(LINUX_VERSION),2_6_36)
+	[ ! -d $@ ] || [ -f $@/include-glibc/bits/socket.h ] || ( \
+	    cd $@/include-glibc/bits && ln -s ../socketbits.h socket.h \
+	)
+endif
+	+$(if $(wildcard $(IPUTILS_DIR)), \
+	    $(MAKE) -C $(IPUTILS_DIR) KERNEL_INCLUDE=$(LINUXDIR)/include \
+	    LINUX_VERSION=$(LINUX_VERSION) CC=$(CC) LDLIBS= \
+	   , \
+	    @true \
+	  )
+
+iputils-clean:
+	[ ! -d $(IPUTILS_DIR) ] || $(MAKE) -C $(IPUTILS_DIR) clean
+
+iputils-install:
+	[ ! -d $(IPUTILS_DIR) ] || install -D -m 755 $(IPUTILS_DIR)/ping6 $(INSTALLDIR)/iputils/usr/sbin/ping6
+	[ ! -d $(IPUTILS_DIR) ] || $(STRIP) $(INSTALLDIR)/iputils/usr/sbin/ping6
+	[ ! -d $(IPUTILS_DIR) ] || install -D -m 755 $(IPUTILS_DIR)/traceroute6 $(INSTALLDIR)/iputils/usr/sbin/traceroute6
+	[ ! -d $(IPUTILS_DIR) ] || $(STRIP) $(INSTALLDIR)/iputils/usr/sbin/traceroute6
+	[ ! -d $(IPUTILS_DIR) ] || install -D -m 755 $(IPUTILS_DIR)/tracepath6 $(INSTALLDIR)/iputils/usr/sbin/tracepath6
+	[ ! -d $(IPUTILS_DIR) ] || $(STRIP) $(INSTALLDIR)/iputils/usr/sbin/tracepath6
+
+dhcp6: dummy
+#dhcp6s dhcp6c: dummy
+	[ ! -d dhcp6 ] || [ -f dhcp6/Makefile ] || ( \
+	    cd dhcp6 && ./configure CC=gcc CFLAGS+="-I../shared" \
+	)
+ifeq ($(CONFIG_UCLIBC),y)
+	+$(if $(wildcard dhcp6/), \
+	    $(MAKE) dhcp6s dhcp6c -C dhcp6 CC=$(CC) LIBS="$(UCLIBC_IPV6)" \
+	   , \
+	    @true \
+	  )
+else
+	+$(if $(wildcard dhcp6/), \
+	    $(MAKE) dhcp6s dhcp6c -C dhcp6 CC=$(CC) \
+	        LIBS="-lresolv -L../libbcmcrypto -lbcmcrypto \
+	              -L$(INSTALLDIR)/libbcmcrypto/usr/lib" \
+	   , \
+	    @true \
+	  )
+endif
+
+dhcp6-install: $(if $(filter y,${CONFIG_DHCPV6S}),dhcp6s-install) \
+               $(if $(filter y,${CONFIG_DHCPV6C}),dhcp6c-install)
+	@true # Keep this rule from falling through to generic and failing.
+
+dhcp6s-install: dhcp6
+	[ ! -d dhcp6 ] || install -D -m 755 dhcp6/dhcp6s $(INSTALLDIR)/dhcp6s/usr/sbin/dhcp6s
+	[ ! -d dhcp6 ] || $(STRIP) $(INSTALLDIR)/dhcp6s/usr/sbin/dhcp6s
+
+dhcp6c-install: dhcp6
+	[ ! -d dhcp6 ] || install -D -m 755 dhcp6/dhcp6c $(INSTALLDIR)/dhcp6c/usr/sbin/dhcp6c
+	[ ! -d dhcp6 ] || $(STRIP) $(INSTALLDIR)/dhcp6c/usr/sbin/dhcp6c
+
+dhcp6s-clean dhcp6c-clean:
+#dhcp6s-clean dhcp6c-clean:
+dhcp6-clean:
+
+SRC_WL = ../../../wl-exe/wl/src/wl/exe
+
+.PHONY: wlexe
+wlexe:
+ifeq ($(CONFIG_WLEXE),y)
+ifneq ($(wildcard $(SRCBASE_SYS)/wl/exe/GNUmakefile),)
+ifeq ($(ARCH),arm)
+	$(MAKE) TARGETARCH=arm_le ARCH_SFX="" TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRC_WL)
+else
+	$(MAKE) TARGETARCH=mips ARCH_SFX="" TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_SYS)/wl/exe
+endif
+	[ -d wlexe ] || install -d wlexe
+	install $(SRC_WL)/wl wlexe
+ifeq ($(ARCH),arm)
+	install $(SRC_WL)/socket_noasd/arm_le/wl_server_socket wlexe
+else
+	install $(SRC_WL)/socket_noasd/mips/wl_server_socket wlexe
+endif
+endif
+endif
+
+.PHONY: wlexe-clean
+wlexe-clean:
+ifneq ($(wildcard $(SRC_WL)/GNUmakefile),)
+	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRC_WL) clean
+	$(RM) wlexe/wl
+	$(RM) wlexe/wl_server_socket
+endif
+
+.PHONY: wlexe-install
+wlexe-install:
+ifeq ($(CONFIG_WLEXE),y)
+ifneq ($(wildcard $(SRC_WL)/GNUmakefile),)
+	[ ! -d wlexe ] || install -D -m 755 wlexe/wl $(INSTALLDIR)/wlexe/usr/sbin/wl
+	[ ! -d wlexe ] || install -D -m 755 wlexe/wl_server_socket $(INSTALLDIR)/wlexe/usr/sbin/wl_server_socket
+	[ ! -d wlexe ] || $(STRIP) $(INSTALLDIR)/wlexe/usr/sbin/wl
+	[ ! -d wlexe ] || $(STRIP) $(INSTALLDIR)/wlexe/usr/sbin/wl_server_socket
+endif
+endif
+
+#
+# Generic rules
+#
+
+%:
+	+$(if $(wildcard $*/),$(MAKE) -C $* EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) ARCH=$(ARCH),@true)
+
+%-clean:
+	[ ! -d $* ] || $(MAKE) -C $* clean
+
+%-install:
+	+$(if $(wildcard $*/), \
+	  $(MAKE) -C $* install INSTALLDIR=$(INSTALLDIR)/$*, \
+	  @true \
+	 )
+
+$(obj-y) $(obj-n) $(obj-clean) $(obj-install): dummy
+
+.PHONY: all clean distclean mrproper install package check_kernel_config
+.PHONY: conf mconf oldconf kconf kmconf config menuconfig oldconfig
+.PHONY: dummy netconf
+.PHONY: libstdcpp libstdcpp-install
+.PHONY: libmnl libmnl-install libmnl-clean
+.PHONY: libnfnetlink libnfnetlink-install libnfnetlink-clean
+.PHONY: libnetfilter_conntrack libnetfilter_conntrack-install libnetfilter_conntrack-clean
+.PHONY: libnetfilter_queue libnetfilter_queue-install libnetfilter_queue-clean
+.PHONY: libflow libflow-install libflow-clean
+ifeq ($(CONFIG_VISUALIZATION),y)
+.PHONY: libsqlite3 libsqlite3-install libsqlite3-clean
+.PHONY: libjsonc libjsonc-install libjsonc-clean
+.PHONY: libxml2 libxml2-install libxml2-clean
+.PHONY: visdcoll visdcoll-install visdcoll-clean
+.PHONY: visdcon visdcon-install visdcon-clean
+endif

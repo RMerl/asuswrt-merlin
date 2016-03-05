@@ -161,11 +161,7 @@ function submitForm(){
 				document.mbform.sw_mode.value = 2;
 			}
 			else{
-				if(based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC5300")
-					document.mbform.wlc_psta.value = 3;
-				else
-					document.mbform.wlc_psta.value = 1;
-							
+				document.mbform.wlc_psta.value = 1;							
 				document.mbform.sw_mode.value = 3;
 			}
 			document.mbform.submit();
@@ -559,11 +555,11 @@ var retValHandler = {
 			</div>
 			<div class="row">
 				<label><#IPConnection_x_ExternalSubnetMask_itemname#></label>
-				<input name="lan_netmask_m" type="text" placeholder="" autocapitalization="off" maxlength="65" autocorrect="off" autocapitalize="off">
+				<input name="lan_netmask_m" type="text" placeholder="" autocapitalize="off" maxlength="65" autocorrect="off" autocapitalize="off">
 			</div>
 			<div class="row_end">
 				<label><#IPConnection_x_ExternalGateway_itemname#></label>
-				<input name="lan_gateway_m" type="text" placeholder="" autocapitalization="off" maxlength="65" autocorrect="off" autocapitalize="off">
+				<input name="lan_gateway_m" type="text" placeholder="" autocapitalize="off" maxlength="65" autocorrect="off" autocapitalize="off">
 			</div>
 		</div>
 	</fieldset>	
@@ -588,7 +584,7 @@ var retValHandler = {
 			</div>
 			<div class="row_end">
 				<label><#IPConnection_x_DNSServer2_itemname#></label>
-				<input name="lan_dns2_x_m" type="text" placeholder="" autocapitalization="off" maxlength="65" autocorrect="off" autocapitalize="off">
+				<input name="lan_dns2_x_m" type="text" placeholder="" autocapitalize="off" maxlength="65" autocorrect="off" autocapitalize="off">
 			</div>
 		</div>
 	</fieldset>

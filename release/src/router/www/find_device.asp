@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -151,15 +151,15 @@ var thisDevice;
 		name: '<% nvram_get("productid"); %>',
 		ipaddr: '<% nvram_get("lan_ipaddr"); %>',
 		mac: '<% nvram_get("et0macaddr"); %>',
-		other: "1>2>0",		
+		other: "1",
 		ssid:'<% nvram_get("wl_ssid"); %>',
-		netmask:'<% nvram_get("lan_netmask"); %>'
-
+		netmask:'<% nvram_get("lan_netmask"); %>',
+		opmode:'<% nvram_get("sw_mode"); %>'
 	}
 
 	if (('<% nvram_get("sw_mode"); %>' == '2' || '<% nvram_get("sw_mode"); %>' == '3') && '<% nvram_get("lan_proto"); %>' == 'dhcp' && '<% nvram_get("lan_state_t"); %>' != '2')
 		thisDeviceObj.ipaddr = '<% nvram_default_get("lan_ipaddr"); %>';
-	thisDevice = [thisDeviceObj.type, thisDeviceObj.name, thisDeviceObj.ipaddr, thisDeviceObj.mac, thisDeviceObj.other,thisDeviceObj.ssid,thisDeviceObj.netmask].join(">");
+	thisDevice = [thisDeviceObj.type, thisDeviceObj.name, thisDeviceObj.ipaddr, thisDeviceObj.mac, thisDeviceObj.other,thisDeviceObj.ssid,thisDeviceObj.netmask, thisDeviceObj.opmode].join(">");
 })()
 
 var direct_dut=0;

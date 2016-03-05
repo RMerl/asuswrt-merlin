@@ -14,7 +14,7 @@ OPENSSL_LDLIBS="-lssl -lcrypto"
 
 GDB_CFLAGS=-g
 export LIBS="$LIBS $OPENSSL_LDLIBS "
-export CFLAGS="$OPENSSL_CFLAGS $GDB_CFLAGS -O2 -fPIC"
+export CFLAGS="-DDEAD_LOCK_MONITOR $OPENSSL_CFLAGS $GDB_CFLAGS -O2 -fPIC"
 export LDFLAGS="$OPENSSL_LDFLAGS -lstdc++" 
 mkdir -p pjlib/lib
 mkdir -p pjlib-util/lib

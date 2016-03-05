@@ -236,6 +236,11 @@ do_ej(char *path, FILE *stream)
 		}
 	}
 
+	if(!strncmp(nvram_safe_get("territory_code"), "JP", 2) && strcmp(nvram_safe_get("ATEMODE"), "1")){
+		nvram_set("preferred_lang", "JP");
+		lang = "JP";	
+	}
+
 	if (load_dictionary (lang, &kw))	{
 		no_translate = 0;
 	}

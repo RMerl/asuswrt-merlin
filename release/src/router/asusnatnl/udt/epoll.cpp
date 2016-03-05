@@ -42,7 +42,7 @@ written by
    #include <sys/epoll.h>
    #include <unistd.h>
 #endif
-#ifdef ARM64
+#if defined(ARM64) or defined(PJ_ANDROID)
 	#include <sys/select.h>
 #endif
 #include <algorithm>

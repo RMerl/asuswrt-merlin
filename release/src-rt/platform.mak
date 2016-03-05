@@ -18,6 +18,13 @@ export HOST := arm-linux
 export TOOLS := $(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3
 export RTVER := 0.9.32.1
 export BCMSUB := brcmarm
+else ifeq ($(RTCONFIG_BCM_ARM_GCLIBC),y)
+export CROSS_COMPILE ?= arm-buildroot-linux-gnueabi-
+export CONFIGURE := ./configure arm-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../.. && pwd -P)
+export CFLAGS += -fno-strict-aliasing
+SUBMAKE_SETTINGS += ARCH=$(ARCH)
+EXTRA_LDFLAGS := "-lgcc_s -lwlcsm"
 else
 ifeq ($(EXTRACFLAGS),)
 export EXTRACFLAGS := -DBCMWPA2 -fno-delete-null-pointer-checks -mips32$(MIPS32) -mtune=mips32$(MIPS32)
@@ -106,15 +113,10 @@ define platformKernelConfig
 				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			fi; \
 		elif [ "$(BCM9)" = "y" ]; then \
-                        if [ "$(ARMCPUSMP)" = "up" ]; then \
-                                cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
-                        else \
                                 cp -f $(SRCBASE)/router/ctf_arm/bcm9/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
-                        fi; \
 		else \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm6_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-				cp -f $(SRCBASE)/router/ufsd/broadcom_arm_up/ufsd.ko.46_up router/ufsd/broadcom_arm/ufsd.ko; \
 			else \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm6/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			fi; \
@@ -279,6 +281,21 @@ define platformKernelConfig
 				cp $(SRCBASE)/router/et_arm_10/prebuilt/et.o $(SRCBASE)/et/linux ; \
 			fi; \
 		elif [ "$(BCM9)" = "y" ]; then \
+			if [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME) ]; then \
+				if [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/linux ]; then \
+					cp -rf $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/linux $(SRCBASE)/wl/. ; \
+				fi; \
+				if [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/clm ]; then \
+					cp -f $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/clm/src/wlc_clm_data.c $(SRCBASE)/wl/clm/src/. ; \
+				fi; \
+			elif [ -d $(SRCBASE)/wl/sysdeps/default ]; then \
+				if [ -d $(SRCBASE)/wl/sysdeps/default/linux ]; then \
+					cp -rf $(SRCBASE)/wl/sysdeps/default/linux $(SRCBASE)/wl/. ; \
+				fi; \
+				if [ -d $(SRCBASE)/wl/sysdeps/default/clm ]; then \
+					cp -f $(SRCBASE)/wl/sysdeps/default/clm/src/wlc_clm_data.c $(SRCBASE)/wl/clm/src/. ; \
+				fi; \
+			fi; \
 			if [ -d $(SRCBASE)/router/wl_arm_9/prebuilt ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
 				cp $(SRCBASE)/router/wl_arm_9/prebuilt/wl*.o $(SRCBASE)/wl/linux ; \

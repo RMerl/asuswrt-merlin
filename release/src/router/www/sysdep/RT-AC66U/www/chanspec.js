@@ -321,6 +321,15 @@ function wl_chanspec_list_change(){
 						extend_channel_value = [""];				
 						if (bw_cap != "0" && bw_cap != "1" && wl_channel_list_5g_2.getIndexByValue("165") >= 0 ) // rm 165, If not [20 MHz] or not [Auto]
 								wl_channel_list_5g_2.splice(wl_channel_list_5g_2.getIndexByValue("165"),1);
+
+						if(country == "E0"){	//weather radar channels
+							if(wl_channel_list_5g_2.getIndexByValue("120") >= 0)
+								wl_channel_list_5g_2.splice(wl_channel_list_5g_2.getIndexByValue("120"),1);
+							if(wl_channel_list_5g_2.getIndexByValue("124") >= 0)
+								wl_channel_list_5g_2.splice(wl_channel_list_5g_2.getIndexByValue("124"),1);
+							if(wl_channel_list_5g_2.getIndexByValue("128") >= 0)
+								wl_channel_list_5g_2.splice(wl_channel_list_5g_2.getIndexByValue("128"),1);
+						}
 						
 						if(bw_cap == "0"){	// [20/40/80 MHz] (auto)
 							document.getElementById('wl_nctrlsb_field').style.display = "";

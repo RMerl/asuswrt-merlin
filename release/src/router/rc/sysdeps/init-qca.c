@@ -138,23 +138,19 @@ static void init_switch_qca(void)
 		modprobe(*qmod);
 	}
 #endif
+	char *wan0_ifname = nvram_safe_get("wan0_ifname");
+
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+	wan0_ifname = MII_IFNAME;
+#endif
 
 	generate_switch_para();
 
 	// TODO: replace to nvram controlled procedure later
-#ifdef RTCONFIG_RALINK_RT3052
-	if (is_routing_enabled())
-		config_3052(nvram_get_int("switch_stb_x"));
-#else
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
-	eval("ifconfig", MII_IFNAME, "hw", "ether", nvram_safe_get("et0macaddr"));
-#endif
-	if (strlen(nvram_safe_get("wan0_ifname"))) {
-		eval("ifconfig", nvram_safe_get("wan0_ifname"), "hw",
-		     "ether", nvram_safe_get("et0macaddr"));
+	if (strlen(wan0_ifname)) {
+		eval("ifconfig", wan0_ifname, "hw", "ether", nvram_safe_get("et1macaddr"));
 	}
 	config_switch();
-#endif
 
 #ifdef RTCONFIG_SHP
 	if (nvram_get_int("qos_enable") || nvram_get_int("lfp_disable_force")) {
@@ -192,7 +188,7 @@ void init_switch(void)
 char *get_lan_hwaddr(void)
 {
 	/* TODO: handle exceptional model */
-        return nvram_safe_get("et0macaddr");
+        return nvram_safe_get("et1macaddr");
 }
 
 /**

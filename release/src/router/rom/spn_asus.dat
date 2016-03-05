@@ -51,8 +51,8 @@
 22005,Vip GPRS,*99#,vipmobile,vipmobile,vipmobile,Vip GPRS
 22201,TIM,*99#,,,ibox.tim.it,TIM Web
 22201,TIM,*99#,WAPTIM,WAPTIM,wap.tim.it,WAP TIM
-22210,Vodafone,*99#,,,mobile.vodafone.it,Acc. Internet da cell
-22210,Vodafone,*99#,,,web.omnitel.it,Tethering Internet
+22210,Vodafone,*99#,,,mobile.vodafone.it,Vodafone
+22210,Vodafone,*99#,,,web.omnitel.it,Vodafone
 22233,PosteMobile,*99#,,,wap.postemobile.it,PosteMobile
 22234,BT internet,*99#,,,internet.btitalia.it,BT internet
 22288,Wind,*99#,,,internet.wind,WIND DUN
@@ -890,8 +890,9 @@
 60201,Mobinil,*99***1#,,,Mobinilweb,Mobinil Web
 60202,Vodafone,*99***1#,,,internet.vodafone.net,Vodafone Internet
 60203,Etisalat,*99***1#,,,Etisalat,Etisalat Wep
-60400,Internet Meditel,*99#,MEDINET,MEDINET,internet1.meditel.ma,Meditel
-60401,3G IAM,*99#,,,www.iamgprs1.ma,IAM
+60400,Meditel,*99#,MEDINET,MEDINET,internet1.meditel.ma,Meditel
+60401,IAM,*99#,,,www.iamgprs1.ma,IAM
+60402,Inwi,*99#,,,www.inwi.ma,Inwi
 60503,TUNISIANA INTERNET,*99#,Internet,internet,Internet.tunisiana.com,Tunisiana
 61203,Omobile,*99#,buro,buro,orangecimobile,Orange
 61701,Orange World,,,,orangeworld,Orange

@@ -139,26 +139,28 @@ function reset_diag_state(){
 <div id="fb_success_dsl_0" style="display:none;">
 	<br>
 	<br>
-	<div class="feedback_info_0">Thanks for taking the time to submit your feedback.</div>	<!-- untranslated -->
+	<div class="feedback_info_0"><#feedback_thanks#></div>
 	<br>
 </div>
 
 <div id="fb_success_router_0" style="display:none;">
         <br>
         <br>
-        <div class="feedback_info_0">Thanks for taking the time to submit your feedback.</div>
+        <div class="feedback_info_0"><#feedback_thanks#></div>
         <br>
 </div>
 
 <div id="fb_fail_dsl" style="display:none;" class="feedback_info_1">
-	However system currently experiencing issue connecting to mail server, it could be caused by your ISP blocked SMTP port 25. Thus please send us an email directly ( <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a>). Simply copy from following text area and paste as mail content.
+	<#feedback_fail0#>
+	<br>
+	<#feedback_fail1#> : ( <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a>) <#feedback_fail2#>
 	<br>
 </div>
 
 <div id="fb_fail_router" style="display:none;" class="feedback_info_1">
-	Sorry, you didn’t send feedback successfully. Please confirm that you have internet access, and then send your comments/suggestions again. Thank you!
+	<#feedback_fail0#>
 	<br>
-	However system currently experiencing issue connecting to mail server, it could be caused by your ISP blocked SMTP port 25. Thus please send us an email directly ( <a href="mailto:router_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">router_feedback@asus.com </a>). Simply copy from following text area and paste as mail content.
+	<#feedback_fail1#> : ( <a href="mailto:router_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">router_feedback@asus.com </a>) <#feedback_fail2#>
 	<br>
 </div>
 
@@ -169,7 +171,7 @@ function reset_diag_state(){
 
 <div id="fb_success_dsl_1" style="display:none;">
 	<br>
-	<div class="feedback_info_1">We are working hard to improve the firmware of <#Web_Title2#> and your feedback is very important to us. However due to the volume of feedback, please expect a slight delay in email responses.</div>
+	<div class="feedback_info_1">We are working hard to improve the firmware of <#Web_Title2#> and your feedback is very important to us. We will use your feedbacks and comments to strive to improve your ASUS experience.</div>
 	<br>
 	<br>
 	<div class="feedback_info_1">To get help from other users, you could post your question in the <a href="http://vip.asus.com/forum/topic.aspx?board_id=11&SLanguage=en-us" style="color:#FFCC00;" target="_blank">ASUS VIP Forum</a>.</div>
@@ -180,7 +182,7 @@ function reset_diag_state(){
 <div id="fb_success_router_1" style="display:none;">	
 	<br>
 	<div class="feedback_info_1"> 
-	We value every piece of feedback we receive. We cannot respond individually to every one, but we will use your comments as we strive to improve your ASUS experience.
+	<#feedback_success_rt#>
 	</div>
 	<br>
 	<br>

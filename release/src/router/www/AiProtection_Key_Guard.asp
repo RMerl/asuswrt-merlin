@@ -7,9 +7,9 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <title><#Web_Title#> - Key Guard</title>
-<link rel="stylesheet" type="text/css" href="ParentalControl.css">
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/general.js"></script>
@@ -43,45 +43,6 @@
 
 .ruleclass{
 }
-
-#ClientList_Management_PC{
-	border:1px outset #999;
-	background-color:#576D73;
-	position:absolute;
-	*margin-top:27px;	
-	margin-left:10px;
-	*margin-left:-263px;
-	width:255px;
-	*width:270px;
-	text-align:left;	
-	height:auto;
-	overflow-y:auto;
-	z-index:200;
-	padding: 1px;
-	display:none;
-}
-#ClientList_Management_PC div{
-	background-color:#576D73;
-	height:auto;
-	*height:20px;
-	line-height:20px;
-	text-decoration:none;
-	font-family: Lucida Console;
-	padding-left:2px;
-}
-
-#ClientList_Management_PC a{
-	background-color:#EFEFEF;
-	color:#FFF;
-	font-size:12px;
-	font-family:Arial, Helvetica, sans-serif;
-	text-decoration:none;	
-}
-#ClientList_Management_PC div:hover, #ClientList_Block a:hover{
-	background-color:#3366FF;
-	color:#FFFFFF;
-	cursor:default;
-}	
 </style>
 <script>
 var kg_device_enable = '<% nvram_get("kg_device_enable"); %>'.replace(/&#62/g, ">");
@@ -100,7 +61,7 @@ function initial(){
 	show_rule(document.form.kg_enable.value);
 
 	gen_mainTable();
-	setTimeout("showLANIPList();", 1000);	
+	setTimeout("showDropdownClientList('setClientIP', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');", 1000);
 
 	document.form.kg_wan_enable_tmp.checked = ('<% nvram_get("kg_wan_enable"); %>' == 1) ? true : false;
 	document.form.kg_powersaving_enable_tmp.checked = ('<% nvram_get("kg_powersaving_enable"); %>' == 1) ? true : false;
@@ -126,33 +87,14 @@ function setClientIP(devname, macaddr){
 	document.form.PC_devicename.value = devname;
 	document.form.PC_mac.value = macaddr;
 	hideClients_Block();
-	over_var = 0;
 }
 
-function showLANIPList(){
-	var htmlCode = "";
-	for(var i=0; i<clientList.length;i++){
-		var clientObj = clientList[clientList[i]];
-
-		if(clientObj.ip == "offline") clientObj.ip = "";
-		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
-
-		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
-		htmlCode += clientObj.name;
-		htmlCode += '\', \'';
-		htmlCode += clientObj.mac;
-		htmlCode += '\');"><strong>';
-		htmlCode += clientObj.name;
-		htmlCode += "</strong></div></a><!--[if lte IE 6.5]><script>alert(\"<#ALERT_TO_CHANGE_BROWSER#>\");</script><![endif]-->";	
-	}
-
-	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
-}
-
-function pullLANIPList(obj){	
+function pullLANIPList(obj){
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';		
+		element.style.display = 'block';		
 		document.form.PC_devicename.focus();		
 		isMenuopen = 1;
 	}
@@ -160,12 +102,9 @@ function pullLANIPList(obj){
 		hideClients_Block();
 }
 
-var over_var = 0;
-var isMenuopen = 0;
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
-	isMenuopen = 0;
 	//validator.validIPForm(document.form.PC_devicename, 0);
 }
 /*----------} Mouse event of fake LAN IP select menu-----------------*/
@@ -180,11 +119,11 @@ function gen_mainTable(){
 	code +='<th width="15%"><#list_add_delete#></th></tr>';
 
 	code +='<tr><td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
-	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" autocorrect="off" autocapitalize="off">';
-	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
-	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
+	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">';
+	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>">';
+	code +='<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-top:25px;margin-left:10px;"></div></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="PC_mac" onKeyPress="return validator.isHWAddr(this,event)" autocorrect="off" autocapitalize="off"></td>';
-	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
+	code +='<td style="border-bottom:2px solid #000;"><input class="add_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
 	if(kg_devicename == "" && kg_mac == "")
 		code +='<tr><td style="color:#FFCC00;" colspan="4"><#IPConnection_VSList_Norule#></td>';
 	else{
@@ -203,7 +142,7 @@ function gen_mainTable(){
 	$("#mainTable").fadeIn();
 	document.getElementById("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
 
-	showLANIPList();
+	showDropdownClientList('setClientIP', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 }
 
 function selectAll(obj, tab, flag){

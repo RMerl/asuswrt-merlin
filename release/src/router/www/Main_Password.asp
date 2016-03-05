@@ -122,22 +122,22 @@ function initial(){
 
 	document.getElementById("loginTable").style.height = windowHeight + "px";
 	document.getElementById("loginTable").style.display = "";
-	document.form.login_username.focus();
+	document.form.http_username_x.focus();
 
 	if(navigator.userAgent.search("MSIE 8") === -1){
-		document.form.http_username.onkeyup = function(e){
+		document.form.http_username_x.onkeyup = function(e){
 			if(e.keyCode == 13){
-				document.form.http_passwd.focus();
+				document.form.http_passwd_x.focus();
 			}
 		};
 
-		document.form.http_passwd.onkeyup = function(e){
+		document.form.http_passwd_x.onkeyup = function(e){
 			if(e.keyCode == 13){
-				document.form.http_passwd_2.focus();
+				document.form.http_passwd_2_x.focus();
 			}
 		};
 
-		document.form.http_passwd_2.onkeyup = function(e){
+		document.form.http_passwd_2_x.onkeyup = function(e){
 			if(e.keyCode == 13){
 				submitForm();
 			}
@@ -193,51 +193,51 @@ function check_common_string(pwd, flag){
 // ---------- Viz add common string check for password 2015.09 end--------
 
 function validForm(){
-	if(!validator.chkLoginId(document.form.http_username)){
+	if(!validator.chkLoginId(document.form.http_username_x)){
 		return false;
 	}
 	
-	if(document.form.http_passwd.value == ""){
+	if(document.form.http_passwd_x.value == ""){
 			showError("<#File_Pop_content_alert_desc6#>");
-			document.form.http_passwd.value = "";
-			document.form.http_passwd.focus();
-			document.form.http_passwd.select();
+			document.form.http_passwd_x.value = "";
+			document.form.http_passwd_x.focus();
+			document.form.http_passwd_x.select();
 			return false;
 		}
 		
-	if(document.form.http_passwd.value != document.form.http_passwd_2.value){
+	if(document.form.http_passwd_x.value != document.form.http_passwd_2_x.value){
 			showError("<#File_Pop_content_alert_desc7#>");
-			document.form.http_passwd.value = "";
-			document.form.http_passwd.focus();
-			document.form.http_passwd.select();
+			document.form.http_passwd_x.value = "";
+			document.form.http_passwd_x.focus();
+			document.form.http_passwd_x.select();
 			return false;                   
 	}
 
 	if(is_KR_sku){		/* MODELDEP by Territory Code */
-		if(!validator.chkLoginPw_KR(document.form.http_passwd)){
+		if(!validator.chkLoginPw_KR(document.form.http_passwd_x)){
 			return false;
 		}
 	}
 	else{
-		if(!validator.chkLoginPw(document.form.http_passwd)){
+		if(!validator.chkLoginPw(document.form.http_passwd_x)){
 			return false;
 		}
 	}
 	
-	if(document.form.http_passwd.value == '<% nvram_default_get("http_passwd"); %>'){
+	if(document.form.http_passwd_x.value == '<% nvram_default_get("http_passwd"); %>'){
 			showError("<#QIS_adminpass_confirm0#>");
-			document.form.http_passwd.value = "";
-			document.form.http_passwd.focus();
-			document.form.http_passwd.select();
+			document.form.http_passwd_x.value = "";
+			document.form.http_passwd_x.focus();
+			document.form.http_passwd_x.select();
 			return false;
 	}
 	
 	//confirm common string combination	#JS_common_passwd#
-	var is_common_string = check_common_string(document.form.http_passwd.value, "httpd_password");
-	if(document.form.http_passwd.value.length > 0 && is_common_string){
+	var is_common_string = check_common_string(document.form.http_passwd_x.value, "httpd_password");
+	if(document.form.http_passwd_x.value.length > 0 && is_common_string){
 		if(confirm("<#JS_common_passwd#>")){
-			document.form.http_passwd.focus();
-			document.form.http_passwd.select();
+			document.form.http_passwd_x.focus();
+			document.form.http_passwd_x.select();
 			return false;	
 		}	
 	}
@@ -247,13 +247,20 @@ function validForm(){
 
 function submitForm(){
 	if(validForm()){
-		document.getElementById("error_status_field").style.display = "none";		
+		document.getElementById("error_status_field").style.display = "none";
+		document.form.http_username.value = document.form.http_username_x.value;
+		document.form.http_passwd.value = document.form.http_passwd_x.value;
+		document.form.http_username_x.disabled = true;
+		document.form.http_passwd_x.disabled = true;
+		document.form.http_passwd_2_x.disabled = true;
+		document.form.btn_modify.style.display = "none";
+		document.getElementById('loadingIcon').style.display = '';
 		document.form.submit();
 
 		var nextPage = decodeURIComponent('<% get_ascii_parameter("nextPage"); %>');
 		setTimeout(function(){
 			location.href = (nextPage != "") ? nextPage : "index.asp";
-		}, 200);
+		}, 3000);
 	}
 	else
 		return;
@@ -379,6 +386,8 @@ function showError(str){
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="login_authorization" value="">
 <input name="foilautofill" style="display: none;" type="password">
+<input type="hidden" name="http_username" value="">
+<input type="hidden" name="http_passwd" value="">
 <table id="loginTable" align="center" cellpadding="0" cellspacing="0" style="display:none">
 	<tr>
 		<td>
@@ -410,21 +419,21 @@ function showError(str){
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:20px 0px 0px 78px;">
-								<input type="text" id="login_username" name="http_username" tabindex="1" class="form_input" maxlength="20" value="" autocapitalization="off" autocomplete="off" placeholder="<#Router_Login_Name#>">
+								<input type="text" name="http_username_x" tabindex="1" class="form_input" maxlength="20" value="" autocapitalize="off" autocomplete="off" placeholder="<#Router_Login_Name#>">
 							</div>
 						</td>
 					</tr>
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:30px 0px 0px 78px;">
-								<input type="password" autocapitalization="off" autocomplete="off" value="" name="http_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="<#PASS_new#>">
+								<input type="password" autocapitalize="off" autocomplete="off" value="" name="http_passwd_x" tabindex="2" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="<#PASS_new#>">
 							</div>
 						</td>
 					</tr>
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:30px 0px 0px 78px;">
-								<input type="password" autocapitalization="off" autocomplete="off" value="" name="http_passwd_2" tabindex="3" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="<#Confirmpassword#>">
+								<input type="password" autocapitalize="off" autocomplete="off" value="" name="http_passwd_2_x" tabindex="3" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="<#Confirmpassword#>">
 							</div>
 						</td>
 					</tr>
@@ -436,8 +445,11 @@ function showError(str){
 					<tr align="right" style="height:68px;">
 						<td colspan="2">
 							<div style="text-align: center;float:right; margin:50px 0px 0px 78px;">
-								<input type="button" class="button" tabindex="4" onclick="submitForm();" value="<#CTL_modify#>">
-							</div>	
+								<input name="btn_modify" type="button" class="button" tabindex="4" onclick="submitForm();" value="<#CTL_modify#>">								
+							</div>
+							<div id="loadingIcon" style="display:none; margin:50px 0px 0px 0px;">
+								<img style="width:35px;height:35px;" src="/images/InternetScan.gif">
+							</div>
 						</td>
 					</tr>
 				</table>

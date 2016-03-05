@@ -1,0 +1,76 @@
+.\"
+.\" udpxrec.1
+.\"
+.\" Original: (pcherenkov@gmail.com)
+.\"
+.TH udpxrec 1 "November 18, 2012" "Version 1.0" "udpxrec manual page"
+
+.SH NAME
+udpxrec \- a programmable multicast traffic recording utility.
+
+.SH SYNOPSIS
+.B udpxrec
+[\-v] [\-b \fI<begin_time>\fP] [\-e \fI<end_time>\fP] [\-M \fI<maxfilesize>\fP] [\-p \fI<pidfile>\fP] [\-B \fI<bufsizeK>\fP]
+[\-n \fI<nice_incr>\fP] [\-u \fI<seconds_to_wait>\fP] [\-m \fI<mcast_ifc_addr>\fP] [\-l \fI<logfile>\fP] \-c \fI<src_addr>\fP:\fI<port>\fP \fI<dstfile>\fP
+
+.SH DESCRIPTION
+.PP
+udpxrec is a utility designed to record (save into a disk file) a segment of multicast network traffic; the amount of data saved/recorded could be specified in length (KB) or duration (seconds).
+
+.SH OPTIONS
+udpxrec accepts the following options:
+
+.TP 8
+.B \-v
+Enable verbose output [default = \fIdisabled\fP].
+.TP 8
+.B \-T
+Do NOT run as a daemon [default = \fIdaemon if root\fP].
+.TP 8
+.B \-m \fI<mcast_ifc_addr>\fP
+IPv4 address/interface of (multicast) source [default = \fI0.0.0.0\fP].
+.TP 8
+.B \-l \fI<logfile>\fP
+Log output to file [default = \fIstderr\fP].
+.TP 8
+.B \-n \fI<nice_incr>\fP
+Nice value increment [default = \fI0\fP].
+.TP 8
+.B \-B \fI<sizeK>\fP
+Buffer size (65536, 32Kb, 1Mb) for inbound (multicast) data [default = \fI2048 bytes\fP].
+.TP 8
+.B \-R \fI<msgs>\fP
+Maximum number of messages to buffer (\fI\-1\fP = \fIall\fP) [default = \fI1\fP].
+.TP 8
+.B \-b \fI<begin_time>\fP
+Begin recording at \fI[+]dd:hh24:mi.ss\fP, '\fB+\fP' signifies relative timing (in N hours/min/sec).
+.TP 8
+.B \-e \fI<endtime>\fP
+Stop recording at \fI[+]dd:hh24:mi.ss\fP, '\fB+\fP' signifies relative timing (in N hours/min/sec).
+.TP 8
+.B \-M \fI<maxfilesize>\fP
+Maximum size of destination file.
+.TP 8
+.B \-p \fI<pidfile>\fP
+Pidfile for this process [\fBMUST be specified if daemon\fP].
+.TP 8
+.B \-u \fI<seconds_to_wait>\fP
+Seconds to wait before updating on how long till recording starts.
+
+.SH EXAMPLES
+.PP
+.B udpxrec \-b 15:45.00 \-e +2:00.00 \-M 1.5Gb \-n 2 \-B 64K \-c 224.0.11.31:5050  /opt/video/tv5.mpg
+.PP
+Begin recording multicast channel 224.0.11.31:5050 at 15:45 today,
+finish recording in two hours or if destination file size >= 1.5 Gb;
+set socket buffer to 64Kb; increment nice value by 2;
+write captured video to /opt/video/tv5.mpg.
+
+.SH AUTHORS
+Pavel V. Cherenkov and all the good people who submitted patches or otherwise contributed to the project.
+
+.SH "SEE ALSO"
+.BR udpxy (1)
+
+.\" __EOF__
+

@@ -37,11 +37,6 @@ function initial(){
 
 	if(!rrsut_support)
 		document.getElementById("rrsLink").style.display = "none";
-		
-	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4){
-		document.getElementById("smart_sync_link").style.display = "none";
-		document.getElementById("rrsLink").style.display = "none";
-	}	
 
 	if(aicloudipk_support){
 		document.form.action_script.value = "restart_setting_webdav";

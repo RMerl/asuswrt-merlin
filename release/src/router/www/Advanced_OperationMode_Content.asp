@@ -282,13 +282,16 @@ function saveMode(){
 				document.getElementById("syncCheckbox").innerHTML = "<#qis_ssid_desc1#>";
 				document.getElementById("syncCheckbox_5_2").innerHTML = "<#qis_ssid_desc2#>";
 				document.getElementById('routerSSID').style.height="520px";
-			}
-
-			if(smart_connect_support){
 				document.getElementById("smart_connect_table").style.display="";
 				document.getElementById('routerSSID').style.height="620px";
 				change_smart_con('<% nvram_get("smart_connect_x"); %>');
 			}
+
+			/*if(smart_connect_support){
+				document.getElementById("smart_connect_table").style.display="";
+				document.getElementById('routerSSID').style.height="620px";
+				change_smart_con('<% nvram_get("smart_connect_x"); %>');
+			}*/
 			
 			cal_panel_block("routerSSID", 0.25);
 			$("#routerSSID").fadeIn(300);

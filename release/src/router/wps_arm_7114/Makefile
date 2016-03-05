@@ -22,10 +22,10 @@ export BLDTYPE = release
 #export BLDTYPE = debug
 
 
-include $(TOP)/.config
+-include $(TOP)/.config
 
 # linux kernel config
-include $(LINUXDIR)/.config
+-include $(LINUXDIR)/.config
 
 export WPSSRC = $(SRCBASE)/wps
 

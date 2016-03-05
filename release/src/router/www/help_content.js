@@ -14,7 +14,7 @@ helpcontent[0] = new Array("",
 			"<#WLANConfig11b_WEPKey_itemtype1#>",
 			"<#WLANConfig11b_WEPKey_itemtype2#>",
 			"<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
-			"To locate the 40MHz channel in combination with the control channel", //<#WLANConfig11b_EChannel_itemdesc#>
+			"<#WLANConfig11b_EChannel_itemdesc#>",
 			"<#WLANConfig11b_TxPower_help1#>",
 			"<#WLANConfig11b_TxPower_help#>",
 			"WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
@@ -63,15 +63,15 @@ helpcontent[3] = new Array("",
 							"<#WLANConfig11b_x_EnhanInter_itemdesc#>", //21
 							"<#WLANConfig11b_x_IgmpSnEnable_itemdesc#>",
 							"<#WLANConfig11b_x_SchedEnable_itemdesc#>",
-							"<#WLANConfig11b_x_ExpBeam_desc#> (It's also called [Explicit Beamforming].)",
-							"<#WLANConfig11b_x_ImpBeam_desc#> (It's also called [Implicit Beamforming].)",
+							"<#WLANConfig11b_x_ExpBeam_desc#> (It's also called [Explicit Beamforming].)",	/* untranslated */
+							"<#WLANConfig11b_x_ImpBeam_desc#> (It's also called [Implicit Beamforming].)",	/* untranslated */
 							"<#WLANConfig11b_x_AMPDU_desc#>",
 							"<#WLANConfig11b_x_ACK_desc#>",
 							"<#WLANConfig11b_x_TurboQAM_desc#> <#WLANConfig11b_x_Auto#>",
 							"<#WLANConfig11b_x_ReduceUSB3_desc#>",
 							"<#RTS_for_AMPDU#>",
 							"<#WLANConfig11b_x_roamingassit_desc#>",	//31
-							"Provide Airtime Fairness between multiple links",
+							"Provide Airtime Fairness between multiple links",	/* untranslated */
 							"<#WLANConfig11b_x_Auto#>"
 							 );
 
@@ -159,9 +159,10 @@ helpcontent[11] = new Array("",
 							"<#LANHostConfig_x_NTPServer_itemdesc#>",
 							"<#QIS_pass_desc2#> <#LANHostConfig_x_Password_itemdesc#>",
 							"<#QIS_pass_desc2#> <#File_Pop_content_alert_desc3#>",
-							"This feature allows browser to redirect to failed connection warning page when Internet is down, if disabled warning page would not appear.",
-							"To set your clock forward one hour in the spring when DST (Daylight Saving Time) starts",
-							"To set your clock back one hour in the fall when DST (Daylight Saving Time) ends");
+							"This feature allows browser to redirect to failed connection warning page when Internet is down, if disabled warning page would not appear.",	/* untranslated */
+							"To set your clock forward one hour in the spring when DST (Daylight Saving Time) starts",	/* untranslated */
+							"To set your clock back one hour in the fall when DST (Daylight Saving Time) ends"	/* untranslated */
+		);
 //Log
 helpcontent[12] = new Array("",
 							"<#General_x_SystemUpTime_itemdesc#>",
@@ -262,8 +263,8 @@ helpcontent[24] = new Array("",
 							"<#qis_wireless_help1#>",											//0,22	
 							"<#qis_wireless_help2#>");										//0,23
 
-//DSL
-helpcontent[25] = new Array("",
+//DSL	/* untranslated */
+helpcontent[25] = new Array("",	
 							"<#DSL_Stab_Adjustment#>",
 							"<#DSL_SRA_itemdesc#>",
 							"<#DSL_Bitswap_id#>",
@@ -307,8 +308,11 @@ helpcontent[28] = new Array("",
 							"<#Mobile_Usage_Limit_Desc#>",
 							"<#Mobile_Usage_Alert_Desc#>",
 							"<#Mobile_SMS_Noti_Desc#>");
-
+						
 //Switch Control
 helpcontent[29] = new Array("",
-							"This item had various names: Port Trunking/ Bonding/ Teaming/ Link Aggregation/ 802.3ad.");/*untranslated*/
+							"This item had various names: Port Trunking/ Bonding/ Teaming/ Link Aggregation/ 802.3ad.");	/*untranslated*/
 
+helpcontent[30] = new Array("",
+							"Send alert before monthly alert is reached",/*untranslated*/
+							"Cut-off internet if monthly limit is reached");/*untranslated*/

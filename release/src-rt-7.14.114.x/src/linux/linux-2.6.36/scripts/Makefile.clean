@@ -7,6 +7,9 @@ src := $(obj)
 PHONY := __clean
 __clean:
 
+# Read auto.conf if it exists, otherwise ignore
+-include include/config/auto.conf
+
 # Shorthand for $(Q)$(MAKE) scripts/Makefile.clean obj=dir
 # Usage:
 # $(Q)$(MAKE) $(clean)=dir

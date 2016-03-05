@@ -698,13 +698,6 @@ int start_nodfs_scan_qtn(void)
 		logmessage("nodfs_scan", "scan not complete");
 	}
 
-	qcsapi_retval = qcsapi_wifi_scs_enable(WIFINAME, 1);
-	if (qcsapi_retval >= 0) {
-		logmessage("scs", "enable scs complete");
-	}else{
-		logmessage("scs", "enable scs not complete");
-	}
-
 	return 1;
 }
 

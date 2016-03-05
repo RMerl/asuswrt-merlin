@@ -26,7 +26,7 @@ var profile = function(_profile){
 	if(_profile == null)
 		_profile = ["", "", "", "", "", "", "", "", ""];
 	var band_s = parseInt(_profile[2]);
-	this.band = (based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300") ? ((band_s >= 1 && band_s <= 14) ? "2.4GHz": ((band_s >= 36 && band_s <= 48) ? "5GHz-1":((band_s >= 149 && band_s <= 165) ? "5GHz-2":"undefine"))):_profile[0] == "2G" ? "2.4GHz": "5GHz",
+	this.band = (based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300") ? ((band_s >= 1 && band_s <= 14) ? "2.4GHz": ((band_s >= 36 && band_s <= 64) ? "5GHz-1":((band_s >= 100 && band_s <= 165) ? "5GHz-2":"undefine"))):_profile[0] == "2G" ? "2.4GHz": "5GHz",
 	this.ssid = decodeURIComponent(_profile[1]),
 	this.channel = _profile[2],
 	this.auth = _profile[3],
@@ -314,7 +314,7 @@ var btnAction = {
 
 	"goPreStage" : function(){
 		btnAction.curState = "initial";
-		viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRecan"]);
+		viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRescan"]);
 	},
 
 	"submitForm" : function(){
@@ -363,7 +363,7 @@ var viewHandler = {
 		document.getElementById("localAP").style.display = "none";
 		document.getElementById("btnPre").style.display = "none";
 		document.getElementById("btnManual").style.display = "none";
-		document.getElementById("btnRecan").style.display = "none";
+		document.getElementById("btnRescan").style.display = "none";
 		document.getElementById("btnNext").style.display = "none";
 		document.getElementById("btnSubmit").style.display = "none";
 		for(var i=0; i<_arr.length; i++){
@@ -532,7 +532,7 @@ var retValHandler = {
 				}
 				else{ // DUT IP doesn't change
 					btnAction.curState = "showResult";
-					viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRecan"]);
+					viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRescan"]);
 					showSiteTable();
 				}
 			}
@@ -591,9 +591,9 @@ var bindEvent = {
 			var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table width="100%"><tr>';
 			var connectedHint = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connected#></span></td>';
 			var unEncrypt = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span></td>';
-			var unSupport = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_non_support_Auth#></span></td>';	/*Non supported Authentication Method.*/
+			var unSupport = "<td style=\"border:0px;\"><span style=\"color:#FFCC00;\"><#APSurvey_msg_non_support_Auth#></span></td>";
 			var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" id="thekey_tmp" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;" autocomplete="off" autocorrect="off" autocapitalize="off"><input type="checkbox" onclick="pass_checked(this, document.getElementById(\'thekey_tmp\'));"><span style="color:#FFF"><#QIS_show_pass#></span></td>';
-			var connectBtn = '<td style="border:0px;text-align:right"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.saveWlcVar('+ bindEvent.idx +', false)" class="button_gen"></td></tr>';
+			var connectBtn = '<td style="border:0px;text-align:right"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.saveWlcVar('+ bindEvent.idx +', false)" class="button_gen_long"></td></tr>';
 			var wep_auth = "<tr><td style=\"border:0px;\"><span style=\"margin-left:5px;color:#FFFFFF;\"><#WLANConfig11b_AuthenticationMethod_itemname#></span><select id=\"thekey_wep_method_tmp\" class=\"input_option\" style=\"margin-left:5px;\"><option value=\"open\" selected>open</option><option value=\"shared\">shared</option></select>";
 			var wepkeyIndex = '<span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select id="thekey_index_tmp" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td></tr>';
 			var endOfRow = '</table></td></tr>';
@@ -911,7 +911,7 @@ function pass_checked(obj1, obj2){
 
 function QKInternet_load_body(){
 	parent.set_step("t2");
-	viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRecan"]);
+	viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRescan"]);
 
 	if(btnAction.curState == "showResult"){
 		showSiteTable();
@@ -1055,7 +1055,7 @@ function QKInternet_load_body(){
 						<option value="psk2">WPA2-Personal</option>
 		  		</select>
 					<div id="wl_nmode_hint_manual" style="margin-top:5px;color:#FC0;">
-						<#WLANConfig11n_automode_limition_hint#> <#WLANConfig11n_automode_limition_hint1#><!--Please change to WPA2-Personal.-->
+						<#WLANConfig11n_automode_limition_hint#> <#WLANConfig11n_automode_limition_hint1#>
 					</div>
 				</td>
 	  	</tr>
@@ -1138,10 +1138,10 @@ function QKInternet_load_body(){
 	<!-- buttons -->
 	<div class="apply_gen" style="margin-top:10px">
 		<input id="btnPre" type="button" value="<#CTL_Cancel#>" onclick='btnAction.goPreStage();' class="button_gen" >
-		<input id="btnSubmit" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.submitForm();" class="button_gen" >
-		<input id="btnManual" type="button" value="<#Manual_Setting_btn#>" onclick="btnAction.manual();" class="button_gen">
-		<input id="btnRecan" type="button" value="<#QIS_rescan#>" onclick="btnAction.curState='Rescanning';btnAction.rescan();" class="button_gen">
-		<input id="btnNext" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.saveWlcVar(-1)" class="button_gen">
+		<input id="btnSubmit" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.submitForm();" class="button_gen_long" >
+		<input id="btnManual" type="button" value="<#Manual_Setting_btn#>" onclick="btnAction.manual();" class="button_gen_long">
+		<input id="btnRescan" type="button" value="<#QIS_rescan#>" onclick="btnAction.curState='Rescanning';btnAction.rescan();" class="button_gen_long">
+		<input id="btnNext" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.saveWlcVar(-1)" class="button_gen_long">
 		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 	</div> 
 </div> 

@@ -7,6 +7,8 @@ modem_vid=`nvram get usb_modem_act_vid`
 modem_pid=`nvram get usb_modem_act_pid`
 modem_dev=`nvram get usb_modem_act_dev`
 
+usb_gobi2=`nvram get usb_gobi2`
+
 
 # $1: ifname.
 _get_qcqmi_by_usbnet(){
@@ -38,30 +40,44 @@ _get_qcqmi_by_usbnet(){
 
 
 if [ "$modem_type" == "gobi" ]; then
-	qcqmi=`_get_qcqmi_by_usbnet $modem_dev`
-	echo "Got qcqmi: $qcqmi."
+	if [ "$usb_gobi2" == "1" ]; then
+		echo "Gobi2: Pause the autoconnect."
+		at_ret=`$at_lock modem_at.sh "+CAUTOCONNECT=0" |grep "OK" 2>/dev/null`
+		if [ "$at_ret" != "OK" ]; then
+			echo "Gobi2: Fail to stop the autoconnect."
+			exit 0
+		fi
+		at_ret=`$at_lock modem_at.sh "+CWWAN=0" |grep "OK" 2>/dev/null`
+		if [ "$at_ret" != "OK" ]; then
+			echo "Gobi2: Fail to stop the connection."
+			exit 0
+		fi
+	else
+		qcqmi=`_get_qcqmi_by_usbnet $modem_dev`
+		echo "Got qcqmi: $qcqmi."
 
-	cmd_pipe="/tmp/pipe"
+		cmd_pipe="/tmp/pipe"
 
-	gobi_pid=`pidof gobi`
-	if [ "$gobi_pid" == "" ]; then
-		gobi d &
+		gobi_pid=`pidof gobi`
+		if [ "$gobi_pid" == "" ]; then
+			gobi d &
+			sleep 1
+		fi
+
+		# connect to GobiNet.
+		echo -n "1,$qcqmi" >> $cmd_pipe
+		sleep 1
+
+		# WDS stop the data session
+		echo -n "4" >> $cmd_pipe
+		sleep 1
+
+		echo -n "12" >> $cmd_pipe
+		sleep 1
+
+		echo -n "99" >> $cmd_pipe
 		sleep 1
 	fi
-
-	# connect to GobiNet.
-	echo -n "1,$qcqmi" >> $cmd_pipe
-	sleep 1
-
-	# WDS stop the data session
-	echo -n "4" >> $cmd_pipe
-	sleep 1
-
-	echo -n "12" >> $cmd_pipe
-	sleep 1
-
-	echo -n "99" >> $cmd_pipe
-	sleep 1
 
 	echo "Gobi: Successfull to stop network."
 fi

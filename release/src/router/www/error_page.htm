@@ -53,6 +53,7 @@ body{
 	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
 	height: 68px;
 	width: 300px;
+	/*width: 220px;*/
 	font-size: 28pt;
 	color:#fff;
 	color:#000\9; /* IE6 IE7 IE8 */
@@ -124,6 +125,14 @@ li{
 .button_background{
 	background-color: transparent;
 }
+
+.connect{
+	-webkit-animation: connecting 3s infinite linear;
+	-moz-animation: connecting 3s infinite linear;
+	-o-animation: connecting 3s infinite linear;
+	animation: connecting 3s infinite linear;				
+}
+
 /*for mobile device*/
 @media screen and (max-width: 1000px){
 	.title_name {
@@ -192,6 +201,24 @@ li{
 	li{
 		margin: 10px 0;
 	}
+	
+	.connect{
+		-webkit-animation: connecting 3s infinite linear;
+		-moz-animation: connecting 3s infinite linear;
+		-o-animation: connecting 3s infinite linear;
+		animation: connecting 3s infinite linear;				
+	}
+}
+
+@keyframes connecting {
+	0% {
+		left: 30px;
+	}
+	50% {
+		left: 220px;
+	}
+		100% {
+	left: 30px;
 }
 </style>
 <script type="text/javascript">
@@ -210,7 +237,6 @@ var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
 <% wanstate(); %>
-
 //2014.05 Viz add for T-MOBILE 
 var isSupport = function(_ptn){return ('<% nvram_get("rc_support"); %>'.search(_ptn) == -1) ? false : true;}
 var tmo_support = isSupport("tmo");
@@ -300,7 +326,7 @@ function initial(){
 	else if(casenum == 2){
 		html_code += "<ul>";					
 		html_code += "<li>";
-		if(wansbstate == 2 || wanauxstate == 3){
+		if(wansbstate == 2 || wanauxstate == 3){	//Authentication Failed
 			showtext($("#failReason1")[0], "<#web_redirect_reason2_1#>");			
 			html_code += "<div>";
 			html_code += "<span><#web_redirect_suggestion2_1#></span>";
@@ -310,15 +336,34 @@ function initial(){
 				pppoeLink();
 			});
 		}
-		else{
-			showtext($("#failReason1")[0], "<#web_redirect_reason2_2#>");
-			html_code += "<div>";
-			html_code += "<span><#web_redirect_suggestion2_2#></span>";
-			html_code += "<span><#web_redirect_suggestion2_2_desc#></span>";
-			html_code += "</div>";	
+		else if(wansbstate == 1){		//No Response
+		
+		
+		}
+		else if(wansbstate == 10){		//Terminal due to lack of activity
+		
+		
+		}
+		else{	//Connecting
+			//showtext($("#failReason1")[0], "<#web_redirect_reason2_2#>");
+			//html_code += "<div>";
+			//html_code += "<span><#web_redirect_suggestion2_2#></span>";
+			//html_code += "<span><#web_redirect_suggestion2_2_desc#></span>";
+			//html_code += "</div>";
+			$("#animation_field").show();
+			detect_ppp_connect();
+			$("#page_title").html("Please Wait for Internet Reconnecting");
+			$("#reason_title").hide();
+			$("#reason_field").hide();
+			$("#suggest_title").hide();
+			$("#suggestion").hide();
+			$("#case_content").hide();
+			$("#back_btn").show();
 			$("#wanLink").click(function(){
-				detectLink();
+				//detectLink();
+				history.go(-1);
 			});
+			$("#wanLink").html("<#prev_page#>");
 		}	
 		
 		html_code += "</li>";					
@@ -494,7 +539,7 @@ function detect_router(){
 }
 
 function detect_general(){
-	if(wans_flag){
+	if(wans_flag){		//Dual WAN
 		if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB"){
 			top.location.href = '/Advanced_Modem_Content.asp';
 		}else if(dsl_support){
@@ -506,7 +551,7 @@ function detect_general(){
 		else
 			top.location.href = '/Advanced_WAN_Content.asp';
 	}
-	else{
+	else{		//Single WAN
 		if(dsl_support)                 
 			top.location.href = '/Advanced_DSL_Content.asp';
 		else if(sw_mode == 3)
@@ -514,6 +559,26 @@ function detect_general(){
 		else
 			top.location.href = '/Advanced_WAN_Content.asp';
 	}
+}
+
+function detect_ppp_connect(){
+	$.ajax({
+		url: '/WAN_info.asp',
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout(detect_ppp_connect, 1000);
+		},
+		success: function(response){
+			if( wanstate == "2"  && wansbstate == "0" && wanauxstate == "0"){
+				//history.go(-1);
+				top.location.href = document.referrer;
+			}
+			else{
+				setTimeout(detect_ppp_connect, 1000);
+			}
+							
+		}
+	});									
 }
 </script>
 
@@ -524,22 +589,38 @@ function detect_general(){
 			<div class="div_td img_gap">
 				<div class="login_img"></div>
 			</div>
-			<div class="div_td title_text"><#web_redirect_message#></div>
+			<div id="page_title" class="div_td title_text"><#web_redirect_message#></div>
 		</div>		
 		<div class="prod_madelName"><#Web_Title2#></div>
 		
-		<div class="p1 title_gap"><#web_redirect_fail_reason0#></div>	
-		<div>
+		<div id="reason_title" class="p1 title_gap"><#web_redirect_fail_reason0#></div>	
+		<div id="reason_field">
 			<div class="p1 title_gap"></div>
 			<div class="nologin">
 				<div id="failReason1"></div>
 			</div>
 		</div>
 		
-		<div class="p1 title_gap"><#web_redirect_suggestion0#></div>	
+		<div id="suggest_title" class="p1 title_gap"><#web_redirect_suggestion0#></div>	
 		<div>
 			<div class="p1 title_gap"></div>
 			<div class="nologin">
+				<div id="animation_field" style="display:none">
+					<div style="display:table">
+						<div style="display:table-row">
+							<div style="display:table-cell">
+								<div style="width:120px;height:100px;background:url('images/Model_product.png') no-repeat;background-size:100%;"></div>
+							</div>
+							<div style="display:table-cell;width:300px;vertical-align:middle;position:relative">
+								<div style="width:200px;height:3px;background:#279FD9;margin-left:30px;"></div>
+								<div class="connect" style="width:12px;height:12px;border-radius:100px;position:absolute;background:#FFF;top:49px;left:30px;"></div>
+							</div>						
+							<div style="display:table-cell">
+								<div style="width:110px;height:110px;background:url('images/Internet.png')"></div>
+							</div>						
+						</div>
+					</div>
+				</div>
 				<div id="case_content"></div>
 				<div id="suggestion">
 					<ul>
@@ -550,7 +631,9 @@ function detect_general(){
 				</div>
 			</div>
 		</div>
-		<div id="wanLink" class='button'><#btn_go#></div>
+		<div>
+		<div id="wanLink" class='button' onclick="history.go(-1)"><#btn_go#></div>
+		<!--div id="back_btn" class='button' style="display:none">Back</div-->	
 		<div id="submitBtn" class='button button_background' style="display:none"></div>
 	</div>
 </body>

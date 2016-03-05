@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -816,7 +817,8 @@ static int dhcpv6_handle_advert(enum dhcpv6_msg orig, const int rc,
 			if (inf_max_rt >= DHCPV6_INF_MAX_RT_MIN &&
 					inf_max_rt <= DHCPV6_INF_MAX_RT_MAX)
 				cand.inf_max_rt = inf_max_rt;
-		} else if (otype == DHCPV6_OPT_IA_PD && request_prefix) {
+		} else if (otype == DHCPV6_OPT_IA_PD && request_prefix &&
+					olen >= -4 + sizeof(struct dhcpv6_ia_hdr)) {
 			struct dhcpv6_ia_hdr *h = (struct dhcpv6_ia_hdr*)&odata[-4];
 			uint8_t *oend = odata + olen, *d;
 			dhcpv6_for_each_option(&h[1], oend, otype, olen, d) {
@@ -826,7 +828,8 @@ static int dhcpv6_handle_advert(enum dhcpv6_msg orig, const int rc,
 					have_pd = p->prefix;
 				}
 			}
-		} else if (otype == DHCPV6_OPT_IA_NA) {
+		} else if (otype == DHCPV6_OPT_IA_NA &&
+					olen >= -4 + sizeof(struct dhcpv6_ia_hdr)) {
 			struct dhcpv6_ia_hdr *h = (struct dhcpv6_ia_hdr*)&odata[-4];
 			uint8_t *oend = odata + olen, *d;
 			dhcpv6_for_each_option(&h[1], oend, otype, olen, d)
@@ -990,7 +993,7 @@ static int dhcpv6_handle_reply(enum dhcpv6_msg orig, _unused const int rc,
 				if (code != DHCPV6_Success)
 					continue;
 
-				dhcpv6_parse_ia(ia_hdr, odata + olen + sizeof(*ia_hdr));
+				dhcpv6_parse_ia(ia_hdr, odata + olen);
 				passthru = false;
 			} else if (otype == DHCPV6_OPT_STATUS && olen >= 2) {
 				uint8_t *mdata = (olen > 2) ? &odata[2] : NULL;
@@ -1189,7 +1192,7 @@ static int dhcpv6_parse_ia(void *opt, void *end)
 				if (elen > 64)
 					elen = 64;
 
-				if (elen <= 32 || elen <= entry.length) {
+				if (entry.length < 32 || elen <= entry.length) {
 					ok = false;
 					continue;
 				}
@@ -1294,16 +1297,22 @@ static int dhcpv6_calc_refresh_timers(void)
 
 
 static void dhcpv6_log_status_code(const uint16_t code, const char *scope,
-		const void *status_msg, const int len)
+		const void *status_msg, int len)
 {
-	uint8_t buf[len + 3];
+	const char *src = status_msg;
+	char buf[len + 3];
+	char *dst = buf;
 
-	memset(buf, 0, sizeof(buf));
 	if (len) {
-		buf[0] = '(';
-		memcpy(&buf[1], status_msg, len);
-		buf[len + 1] = ')';
+		*dst++ = '(';
+		while (len--) {
+			*dst = isprint((unsigned char)*src) ? *src : '?';
+			src++;
+			dst++;
+		}
+		*dst++ = ')';
 	}
+	*dst = 0;
 
 	syslog(LOG_WARNING, "Server returned %s status %i %s",
 		scope, code, buf);
@@ -1366,6 +1375,7 @@ static void dhcpv6_handle_ia_status_code(const enum dhcpv6_msg orig,
 	}
 }
 
+// Note this always takes ownership of cand->ia_na and cand->ia_pd
 static void dhcpv6_add_server_cand(const struct dhcpv6_server_cand *cand)
 {
 	size_t cand_len, i;
@@ -1388,7 +1398,10 @@ static void dhcpv6_add_server_cand(const struct dhcpv6_server_cand *cand)
 			break;
 	}
 
-	odhcp6c_insert_state(STATE_SERVER_CAND, i * sizeof(*c), cand, sizeof(*cand));
+	if (odhcp6c_insert_state(STATE_SERVER_CAND, i * sizeof(*c), cand, sizeof(*cand))) {
+		free(cand->ia_na);
+		free(cand->ia_pd);
+	}
 }
 
 static void dhcpv6_clear_all_server_cand(void)

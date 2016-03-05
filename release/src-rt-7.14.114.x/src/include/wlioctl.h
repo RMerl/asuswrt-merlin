@@ -19,7 +19,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 586916 2015-09-16 21:09:07Z $
+ * $Id: wlioctl.h 606599 2015-12-16 03:55:13Z $
  */
 
 #ifndef _wlioctl_h_
@@ -328,9 +328,9 @@ typedef struct wl_bss_info {
 	uint16		ie_offset;		/* offset at which IEs start, from beginning */
 	uint32		ie_length;		/* byte length of Information Elements */
 	int16		SNR;			/* average SNR of during frame reception */
-        uint16          vht_mcsmap;             /* STA's Associated vhtmcsmap */
-        uint16          vht_mcsmap_prop;        /* STA's Associated prop vhtmcsmap */
-        uint16          vht_txmcsmap_prop;      /* prop VHT tx mcs prop */
+	uint16		vht_mcsmap;		/* STA's Associated vhtmcsmap */
+	uint16		vht_mcsmap_prop;	/* STA's Associated prop vhtmcsmap */
+	uint16		vht_txmcsmap_prop;	/* prop VHT tx mcs prop */
 	/* Add new fields here */
 	/* variable length Information Elements */
 } wl_bss_info_t;
@@ -1248,6 +1248,17 @@ typedef struct wl_ioctl {
 	uint needed;	/* bytes needed (optional) */
 } wl_ioctl_t;
 
+#ifdef CONFIG_COMPAT
+typedef struct compat_wl_ioctl {
+	uint cmd;	/**< common ioctl definition */
+	uint32 buf;	/**< pointer to user buffer */
+	uint len;	/**< length of user buffer */
+	uint8 set;		/**< 1=set IOCTL; 0=query IOCTL */
+	uint used;	/**< bytes read or written (optional) */
+	uint needed;	/**< bytes needed (optional) */
+} compat_wl_ioctl_t;
+#endif /* CONFIG_COMPAT */
+
 #define WL_NUM_RATES_CCK			4 /* 1, 2, 5.5, 11 Mbps */
 #define WL_NUM_RATES_OFDM			8 /* 6, 9, 12, 18, 24, 36, 48, 54 Mbps SISO/CDD */
 #define WL_NUM_RATES_MCS_1STREAM	8 /* MCS 0-7 1-stream rates - SISO/CDD/STBC/MCS */
@@ -1874,7 +1885,8 @@ enum wl_cnt_xtlv_id {
 #define WL_XTLV_CNTBUF_MAX_SIZE ((uint)(OFFSETOF(wl_cnt_info_t, data)) +        \
 		(uint)BCM_XTLV_HDR_SIZE + (uint)sizeof(wl_cnt_wlc_t) +          \
 		(uint)BCM_XTLV_HDR_SIZE + WL_CNT_MCST_STRUCT_SZ +              \
-		(uint)BCM_XTLV_HDR_SIZE + WL_CNT_MCXST_STRUCT_SZ)
+		(uint)BCM_XTLV_HDR_SIZE + WL_CNT_MCXST_STRUCT_SZ +            \
+		(uint)sizeof(xtlv_desc_t))
 
 #define WL_CNTBUF_MAX_SIZE MAX(WL_XTLV_CNTBUF_MAX_SIZE, (uint)sizeof(wl_cnt_ver_11_t))
 
@@ -6466,6 +6478,48 @@ typedef struct wl_wsec_info {
 	wl_wsec_info_tlv_t tlvs[1]; /* tlv data follows */
 } wl_wsec_info_t;
 
+/* Data structures for Interface Create/Remove  */
+
+#define WL_INTERFACE_CREATE_VER	(0)
+
+/*
+ * The flags filed of the wl_interface_create is designed to be
+ * a Bit Mask. As of now only Bit 0 and Bit 1 are used as mentioned below.
+ * The rest of the bits can be used, incase we have to provide
+ * more information to the dongle
+ */
+
+/*
+ * Bit 0 of flags field is used to inform whether the interface requested to
+ * be created is STA or AP.
+ * 0 - Create a STA interface
+ * 1 - Create an AP interface
+ */
+#define WL_INTERFACE_CREATE_STA	(0 << 0)
+#define WL_INTERFACE_CREATE_AP	(1 << 0)
+
+/*
+ * Bit 1 of flags field is used to inform whether MAC is present in the
+ * data structure or not.
+ * 0 - Ignore mac_addr field
+ * 1 - Use the mac_addr field
+ */
+#define WL_INTERFACE_MAC_DONT_USE	(0 << 1)
+#define WL_INTERFACE_MAC_USE		(1 << 1)
+
+typedef struct wl_interface_create {
+	uint16	ver;			/* version of this struct */
+	uint32  flags;			/* flags that defines the operation */
+	struct	ether_addr   mac_addr;	/* Optional Mac address */
+} wl_interface_create_t;
+
+typedef struct wl_interface_info {
+	uint16	ver;			/* version of this struct */
+	struct ether_addr    mac_addr;	/* MAC address of the interface */
+	char	ifname[BCM_MSG_IFNAME_MAX]; /* name of interface */
+	uint8	bsscfgidx;		/* source bsscfg index */
+} wl_interface_info_t;
+
 /* no default structure packing */
 #include <packed_section_end.h>
 
@@ -6705,7 +6759,8 @@ typedef enum wl_stamon_cfg_cmd_type {
 	STAMON_CFG_CMD_ADD = 1,
 	STAMON_CFG_CMD_ENB = 2,
 	STAMON_CFG_CMD_DSB = 3,
-	STAMON_CFG_CMD_CNT = 4
+	STAMON_CFG_CMD_CNT = 4,
+	STAMON_CFG_CMD_RSTCNT = 5
 } wl_stamon_cfg_cmd_type_t;
 
 typedef struct wlc_stamon_sta_config {

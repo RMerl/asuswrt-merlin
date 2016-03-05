@@ -11,18 +11,62 @@
 
 // define function bit, you can define more functions as below
 #define TM_WRS_MAIL		0x01
-#define TRAFFIC_CONTROL_MAIL	0x02
+#define TRAFFIC_LIMITER_MAIL	0x02
 #define CONFIRM_MAIL		0x04
 
-#define MAIL_CONTENT	"/tmp/push_mail"
-#define MAIL_CONF	"/etc/email/email.conf"
+#define MAIL_CONTENT		"/tmp/push_mail"
+#define MAIL_CONF		"/etc/email/email.conf"
 
-static int debug = 0;
 static int value = 0;
+
+/* debug message */
+#define AM_DEBUG		"/tmp/AM_DEBUG"
+#define MyDBG(fmt,args...) \
+	if(isFileExist(AM_DEBUG) > 0) { \
+		dbg("[ALERT MAIL][%s:(%d)]"fmt, __FUNCTION__, __LINE__, ##args); \
+	}
+
+static int isFileExist(char *fname)
+{
+	struct stat fstat;
+	
+	if (lstat(fname,&fstat)==-1)
+		return 0;
+	if (S_ISREG(fstat.st_mode))
+		return 1;
+	
+	return 0;
+}
+
+#ifdef RTCONFIG_TRAFFIC_LIMITER
+static
+void am_traffic_limiter_mail()
+{
+	unsigned int flag = traffic_limiter_read_bit("alert");
+	unsigned int val = traffic_limiter_read_bit("count"); // have sent
+	char *path = NULL;
+	int send = 0;
+
+	if((flag & 0x1) && !(val & 0x01)){
+		// send alert SMS
+		if(nvram_get_int("modem_sms_limit")) traffic_limiter_sendSMS("alert", 0);
+		send = 1;
+	}
+	if((flag & 0x2) && !(val & 0x02)){
+		// send alert SMS
+		if(nvram_get_int("modem_sms_limit")) traffic_limiter_sendSMS("alert", 1);
+		send = 1;
+	}
+
+	// send alert mail
+	if(send) am_send_mail(TRAFFIC_LIMITER_MAIL , path);
+}
+#endif
+
 
 /*
 	type :
-		as define function TM_WRS_MAIL, TRAFFIC_CONTROL_MAIL, etc.
+		as define function TM_WRS_MAIL, TRAFFIC_LIMITER_MAIL, etc.
 
 	path :
 		attachment file or some information in file, if no file, path will be NULL
@@ -40,6 +84,8 @@ void am_send_mail(int type, char *path)
 	memset(title, 0, sizeof(title));
 	memset(date, 0, sizeof(date));
 	memset(smtp_auth_pass, 0, sizeof(smtp_auth_pass));
+
+	MyDBG("type=%d, path=%s\n", type, path);
 
 	// get current date
 	time(&now);
@@ -73,9 +119,9 @@ void am_send_mail(int type, char *path)
 	if(type == TM_WRS_MAIL)
 		snprintf(title, sizeof(title), "AiProtection alert! %s", date);
 #endif
-#ifdef RTCONFIG_TRAFFIC_CONTROL
-	if(type == TRAFFIC_CONTROL_MAIL)
-		snprintf(title, sizeof(title), "Traffic control alert! %s", date);
+#ifdef RTCONFIG_TRAFFIC_LIMITER
+	if(type == TRAFFIC_LIMITER_MAIL)
+		snprintf(title, sizeof(title), "Traffic Limiter alert! %s", date);
 #endif
 	if(type == CONFIRM_MAIL)
 		snprintf(title, sizeof(title), "%s Mail Alert Verify", nvram_safe_get("productid"));
@@ -117,31 +163,38 @@ void am_send_mail(int type, char *path)
 		fprintf(fp, "\n");
 		fprintf(fp, "ASUS AiProtection FAQ:\n");
 		fprintf(fp, "http://www.asus.com/support/FAQ/1012070/\n");
-		logmessage("alert mail", "AiProtection send mail");
+		logmessage("ALERT MAIL", "AiProtection send mail");
+		MyDBG("AiProtection send mail\n");
 	}
 #endif
-#ifdef RTCONFIG_TRAFFIC_CONTROL
-	if(type == TRAFFIC_CONTROL_MAIL)
+#ifdef RTCONFIG_TRAFFIC_LIMITER
+	if(type == TRAFFIC_LIMITER_MAIL)
 	{
-		int count = nvram_get_int("traffic_control_count");
+		unsigned int flag = traffic_limiter_read_bit("alert");
+		unsigned int val = traffic_limiter_read_bit("count"); // have sent
+		
 		fprintf(fp, "Dear user,\n\n");
-		fprintf(fp, "Traffic Control configuration as below:\n\n");
-		if((count & 1) == 1){
+		fprintf(fp, "Traffic limiter configuration as below:\n\n");
+		if((flag & 0x1) && !(val & 0x1)){
 			fprintf(fp, "\t<Primary WAN>\n");
-			fprintf(fp, "\tRouter Current Traffic: %.2f GB\n", atof(nvram_safe_get("traffic_control_realtime_0")));
-			fprintf(fp, "\tAlert Traffic: %.2f GB\n", atof(nvram_safe_get("traffic_control_alert_max")));
-			fprintf(fp, "\tMAX Traffic: %.2f GB\n\n", atof(nvram_safe_get("traffic_control_limit_max")));
+			fprintf(fp, "\tRouter Current Traffic: %.2f GB\n", traffic_limiter_get_realtime(0));
+			fprintf(fp, "\tAlert Traffic: %.2f GB\n", nvram_get_double("tl0_alert_max"));
+			fprintf(fp, "\tMAX Traffic: %.2f GB\n\n", nvram_get_double("tl0_limit_max"));
+			traffic_limiter_set_bit("count", 0);
+			MyDBG("Traffic limiter send mail - primary\n");
 		}
-		if((count & 2) == 2){
+		if((flag & 0x2) && !(val & 0x2)){
 			fprintf(fp, "\t<Secondary WAN>\n");
-			fprintf(fp, "\tRouter Current Traffic: %.2f GB\n", atof(nvram_safe_get("traffic_control_realtime_1")));
-			fprintf(fp, "\tAlert Traffic: %.2f GB\n", atof(nvram_safe_get("traffic_control_alert_max")));
-			fprintf(fp, "\tMAX Traffic: %.2f GB\n\n", atof(nvram_safe_get("traffic_control_limit_max")));
+			fprintf(fp, "\tRouter Current Traffic: %.2f GB\n", traffic_limiter_get_realtime(1));
+			fprintf(fp, "\tAlert Traffic: %.2f GB\n", nvram_get_double("tl1_alert_max"));
+			fprintf(fp, "\tMAX Traffic: %.2f GB\n\n", nvram_get_double("tl1_limit_max"));
+			traffic_limiter_set_bit("count", 1);
+			MyDBG("Traffic limiter send mail - secondary\n");
 		}
 		fprintf(fp, "Your internet traffic usage have reached the alert vlaue. If you are in limited traffic usage, please get more attention.\n\n");
 		fprintf(fp, "Thanks,\n");
 		fprintf(fp, "ASUSTeK Computer Inc.\n");
-		logmessage("alert mail", "Traffic control send mail");
+		logmessage("ALERT MAIL", "Traffic limter send mail");
 	}
 #endif
 	if(type == CONFIRM_MAIL)
@@ -151,7 +204,8 @@ void am_send_mail(int type, char *path)
 		fprintf(fp, "http://router.asus.com/\n\n");
 		fprintf(fp, "Thanks,\n");
 		fprintf(fp, "ASUSTeK Computer Inc.\n");
-		logmessage("alert mail", "Confirm Mail");
+		logmessage("ALERT MAIL", "Confirm Mail");
+		MyDBG("Confirm Mail\n");
 	}
 	status = pclose(fp);
 	if(status == -1) _dprintf("%s : errno %d (%s)\n", __FUNCTION__, errno, strerror(errno));
@@ -162,83 +216,20 @@ void am_send_mail(int type, char *path)
 static
 void am_tm_wrs_mail()
 {
-	debug = nvram_get_int("alert_mail_debug");
-
 	char path[33];
 	memset(path, 0, sizeof(path));
 
 	// AiProtection wrs_vp.txt
 	int flag = merge_log(path, sizeof(path));
 
-	if(debug)
-	{
-		dbg("%s : flag = %d, path = %s\n", __FUNCTION__, flag, path);
-		logmessage("alert mail", "AiProtection - flag = %d, path = %s", flag, path);
-	}
-
 	// check flag and path
 	if(flag && strcmp(path, "")) am_send_mail(TM_WRS_MAIL , path);
-}
-#endif
-
-#ifdef RTCONFIG_TRAFFIC_CONTROL
-static
-int traffic_control_realtime_check()
-{
-	int val = 0;
-	FILE *fp;
-	char buf[3];
-
-	memset(buf, 0, sizeof(buf));
-
-	if((fp = fopen("/tmp/traffic_control_alert_mail", "r")) != NULL)
-	{
-		if(fgets(buf, sizeof(buf), fp) != NULL)
-		{
-			if(strstr(buf, "1"))
-				val = 1;
-			else
-				val = 0;
-
-		}
-		fclose(fp);
-	}
-
-	return val;
-}
-
-static
-void am_traffic_control_mail()
-{
-	debug = nvram_get_int("alert_mail_debug");
-
-	char *path = NULL;
-	int flag = 0;
-
-	// realtime traffic (database + realtime in both wan interface)
-	if(nvram_get_int("traffic_control_alert_enable"))
-		flag = traffic_control_realtime_check();
-
-	if(debug)
-	{
-		dbg("%s : flag = %d, path = %s\n", __FUNCTION__, flag, path);
-		logmessage("alert mail", "traffic control - flag = %d, path = %s", flag, path);
-	}
-
-	// check flag only
-	if(flag){
-		// send alert SMS
-		if(nvram_get_int("modem_sms_limit")) traffic_control_sendSMS(0);
-		am_send_mail(TRAFFIC_CONTROL_MAIL , path);
-	}
 }
 #endif
 
 static
 int alert_mail_function_check()
 {
-	debug = nvram_get_int("alert_mail_debug");
-
 	// intial global variable
 	value = 0;
 
@@ -246,15 +237,11 @@ int alert_mail_function_check()
 	if(nvram_get_int("wrs_enable") || nvram_get_int("wrs_cc_enable") || nvram_get_int("wrs_vp_enable"))
 		value |= TM_WRS_MAIL;
 
-	// traffic control mail
-	if(nvram_get_int("traffic_control_alert_enable") || nvram_get_int("traffic_control_limit_enable"))
-		value |= TRAFFIC_CONTROL_MAIL;
+	// traffic limiter mail
+	if(nvram_get_int("tl0_alert_enable") || nvram_get_int("tl1_alert_enable"))
+		value |= TRAFFIC_LIMITER_MAIL;
 
-	if(debug)
-	{
-		dbg("%s : value = %d(0x%x)\n", __FUNCTION__, value, value);
-		logmessage("alert mail", "value = %d(0x%x)", value, value);
-	}
+	MyDBG("value = %d(0x%x)\n", value, value);
 
 	return value;
 }
@@ -265,12 +252,12 @@ void alert_mail_service()
 	if(!alert_mail_function_check()) return;
 
 #ifdef RTCONFIG_BWDPI
-	if((value & TM_WRS_MAIL) != 0)
+	if(value & TM_WRS_MAIL)
 		am_tm_wrs_mail();
 #endif
 
-#ifdef RTCONFIG_TRAFFIC_CONTROL
-	if((value & TRAFFIC_CONTROL_MAIL) != 0)
-		am_traffic_control_mail();
+#ifdef RTCONFIG_TRAFFIC_LIMITER
+	if(value & TRAFFIC_LIMITER_MAIL)
+		am_traffic_limiter_mail();
 #endif
 }

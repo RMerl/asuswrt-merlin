@@ -941,8 +941,8 @@ config RTCONFIG_ADBLOCK
 	bool "Streaming and Pop-Up window Ad Blocking "
 	default n
 
-config RTCONFIG_TRAFFIC_CONTROL
-	bool "Traffic control for alert limited traffic"
+config RTCONFIG_TRAFFIC_LIMITER
+	bool "Traffic Limiter (data limit) for Internet traffic"
 	default n
 
 config RTCONFIG_BCM5301X_TRAFFIC_MONITOR
@@ -995,6 +995,9 @@ config RTCONFIG_JFFS2USERICON
 
 config RTCONFIG_EXT_RTL8365MB
 	bool "rtl8365mb driver flag"
+
+config RTCONFIG_EXT_RTL8370MB
+	bool "rtl8370mb driver flag"
 
 config RTCONFIG_TOR
 	bool "The orion router function"
@@ -1080,11 +1083,35 @@ config RTCONFIG_TUXERA_SMBD
 	bool "tuxera smbd"
 	default n
 
+config RTCONFIG_BCMASPMD
+	bool "bcm aspmd"
+	default n
+
+config RTCONFIG_WLCLMLOAD
+	bool "bcm clm specefic-load"
+	default n
+
+config RTCONFIG_MUMIMO
+	bool "bcm mu-mimo support"
+	default n
+
 config RTCONFIG_DYN_MODEM
 	bool "Dynamic enable the USB Modem"
 	default n
+
+config RTCONFIG_NOTIFICATION_CENTER
+	bool "Notification Center"
+	default y
 
 config RTCONFIG_6RELAYD
 	bool "IPv6 Relay support"
 	depends on RTCONFIG_IPV6
 	default n
+
+config RTCONFIG_PORT_BASED_VLAN
+	bool "Port based vlan support"
+	default n
+
+config RTCONFIG_NOIPTV
+        bool "No IPTV support"
+        default n

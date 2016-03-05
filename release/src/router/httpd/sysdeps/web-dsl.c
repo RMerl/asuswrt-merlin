@@ -239,6 +239,41 @@ int ej_get_isp_list(int eid, webs_t wp, int argc, char_t **argv){
 	return 0;
 }
 
+/*******************************************************************
+* NAME: ej_get_isp_dhcp_opt_list
+* AUTHOR: Andy Chiu
+* CREATE DATE: 2016/01/20
+* DESCRIPTION: return the ISP_DHCP_opt_List.txt
+* INPUT:
+* OUTPUT:
+* RETURN:
+* NOTE:
+*******************************************************************/
+int ej_get_isp_dhcp_opt_list(int eid, webs_t wp, int argc, char_t **argv){
+	char *name;
+	FILE* fpIsp;
+	char bufIsp[512];
+
+	fpIsp = fopen("/www/ISP_DHCP_Opt_List.txt","r");
+	if (fpIsp != NULL)
+	{
+	  // read out UTF-8 3 bytes header
+	        fread(bufIsp,3,1,fpIsp);
+		while(!feof(fpIsp))
+		{
+			char* ret_fgets;
+			ret_fgets = fgets(bufIsp,sizeof(bufIsp),fpIsp);
+			if (ret_fgets != NULL)
+			{
+				websWrite(wp, bufIsp);
+				websWrite(wp, "\n");
+			}
+		}
+		fclose(fpIsp);
+	}
+	return 0;
+}
+
 int ej_get_DSL_WAN_list(int eid, webs_t wp, int argc, char_t **argv){
 	char buf[MAX_LINE_SIZE];
 	char buf2[MAX_LINE_SIZE];

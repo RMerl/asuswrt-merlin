@@ -74,7 +74,16 @@ start_pppd(int unit)
 	mode_t mask;
 	int ret = 0;
 
-_dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
+	_dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
+
+#ifdef RTCONFIG_DUALWAN
+	if (!strstr(nvram_safe_get("wans_dualwan"), "none")
+		&& (!strcmp(nvram_safe_get("wans_mode"), "fo") || !strcmp(nvram_safe_get("wans_mode"), "fb"))
+		&& (wan_primary_ifunit() != unit)) {
+		_dprintf("%s: skip non-primary unit %d\n", __FUNCTION__, unit);
+		return;
+	}
+#endif
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	sprintf(options, "/tmp/ppp/options.wan%d", unit);
@@ -210,8 +219,8 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 	/* echo failures */
 	if (!(nvram_match(strcat_r(prefix, "proto", tmp), "pppoe") && dualwan_unit__nonusbif(unit)) ||
 	    nvram_get_int(strcat_r(prefix, "ppp_echo", tmp))) {
-		fprintf(fp, "lcp-echo-interval 6\n");
-		fprintf(fp, "lcp-echo-failure 10\n");
+		fprintf(fp, "lcp-echo-interval %d\n", nvram_get_int(strcat_r(prefix, "lcp_intv", tmp)) ? : 6);
+		fprintf(fp, "lcp-echo-failure %d\n", nvram_get_int(strcat_r(prefix, "lcp_fail", tmp)) ? : 10);
 	}
 
 	/* pptp has Echo Request/Reply, l2tp has Hello packets */
@@ -223,13 +232,13 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 	fprintf(fp, "linkname wan%d\n", unit);
 
 #ifdef RTCONFIG_IPV6
-	switch (get_ipv6_service()) {
+	switch (get_ipv6_service_by_unit(unit)) {
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
-		if (nvram_match("ipv6_ifdev", "ppp"))
+		if (nvram_match(ipv6_nvname_by_unit("ipv6_ifdev", unit), "ppp"))
 			fprintf(fp, "+ipv6\n");
 		break;
-        }
+	}
 #endif
 
 	/* user specific options */
@@ -266,9 +275,9 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 			"hide-avps no\n"
 			"section cmd\n\n",
 			options,
-                        nvram_invmatch(strcat_r(prefix, "heartbeat_x", tmp), "") ?
-                                nvram_safe_get(strcat_r(prefix, "heartbeat_x", tmp)) :
-                                nvram_safe_get(strcat_r(prefix, "gateway_x", tmp)),
+			nvram_invmatch(strcat_r(prefix, "heartbeat_x", tmp), "") ?
+				nvram_safe_get(strcat_r(prefix, "heartbeat_x", tmp)) :
+				nvram_safe_get(strcat_r(prefix, "gateway_x", tmp)),
 			nvram_invmatch(strcat_r(prefix, "hostname", tmp), "") ?
 				nvram_safe_get(strcat_r(prefix, "hostname", tmp)) : "localhost",
 			nvram_get_int(strcat_r(prefix, "pppoe_maxfail", tmp))  ? : 32767,

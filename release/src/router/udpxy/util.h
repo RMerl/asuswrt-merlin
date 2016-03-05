@@ -35,6 +35,11 @@ extern "C" {
 ssize_t
 save_buffer( const void* buf, size_t len, const char* filename );
 
+/* read text file into a buffer
+ *
+ */
+ssize_t
+txtf_read (const char* fpath, char* dst, size_t maxlen, FILE* log);
 
 /* start process as a daemon
  *
@@ -192,8 +197,27 @@ get_sizeval( const char* envar, const ssize_t deflt );
 /* retrieve/reset string representation of pid,
  */
 const char*
-get_pidstr( int reset );
+get_pidstr( int reset, const char* pfx );
 
+/* retrieve system info string
+ */
+const char*
+get_sysinfo (int* perr);
+
+/* return 1 if err is one of the errors signifying possibility of a block, 0 otherwise.
+ */
+int
+would_block(int err);
+
+/* return 1 if this kind of error should not be captures in syslog, 0 otherwise.
+ */
+int
+no_fault(int err);
+
+/* populate info string with application's credentials (version, patch, etc.)
+ */
+void
+mk_app_info(const char *appname, char *info, size_t infolen);
 
 #ifdef __cplusplus
 }

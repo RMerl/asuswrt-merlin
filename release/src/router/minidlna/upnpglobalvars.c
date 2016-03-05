@@ -95,3 +95,4 @@ short int scanning = 0;
 volatile short int quitting = 0;
 volatile uint32_t updateID = 0;
 const char *force_sort_criteria = NULL;
+short int rescan_db = 0;

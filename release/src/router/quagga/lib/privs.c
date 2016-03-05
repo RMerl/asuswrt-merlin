@@ -608,6 +608,8 @@ zprivs_init(struct zebra_privs_t *zprivs)
       return;
     }
 
+//Rawny: disable user lookup
+#if 0
   if (zprivs->user)
     {
       if ( (pwentry = getpwnam (zprivs->user)) )
@@ -666,6 +668,7 @@ zprivs_init(struct zebra_privs_t *zprivs)
           exit (1);
         }
     }
+#endif
   
 #ifdef HAVE_CAPABILITIES
   zprivs_caps_init (zprivs);

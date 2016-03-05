@@ -524,7 +524,22 @@ var validator = {
 			}
 			
 			return true;
-		}	
+		}
+		else if(keyPressed == 47){
+			j = 0;
+			
+			for(i = 0; i < o.value.length; i++){
+				if(o.value.charAt(i) == '.'){
+					j++;
+				}
+			}
+			
+			if( j < 3){
+				return false;
+			}
+			
+			return true;
+		}
 		return false;
 	},
 
@@ -1761,7 +1776,7 @@ var validator = {
 					obj.select();
 					return false;
 				}else{
-					if(obj.value.split("/")[1] == "" || obj.value.split("/")[1] == 0 || obj.value.split("/")[1] > 30){
+					if(obj.value.split("/")[1] == "" || obj.value.split("/")[1] == 0 || obj.value.split("/")[1] > 32){
 						alert(obj.value + " <#JS_validip#>");
 						obj.value = "";
 						obj.focus();

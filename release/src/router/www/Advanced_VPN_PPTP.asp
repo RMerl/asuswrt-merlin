@@ -54,8 +54,8 @@ var pptpd_sr_rulelist_array = decodeURIComponent(pptpd_sr_rulelist_array_ori);
 var pptpd_sr_edit_username = "";
 
 var max_shift = "";	/*MODELDEP (include dict #PPTP_desc2# #vpn_max_clients# #vpn_maximum_clients#) : 
-				RT-AC5300/RT-AC3200/RT-AC3100/RT-AC88U/RT-AC87U/RT-AC68U/RT-AC66U/RT-AC56U/RT-N66U/RT-N18U */
-if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC3100" ||
+				RT-AC5300/RT-AC5300R/RT-AC3200/RT-AC3100/RT-AC88U/RT-AC87U/RT-AC68U/RT-AC66U/RT-AC56U/RT-N66U/RT-N18U */
+if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC3100" ||
 		based_modelid == "RT-AC88U" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" ||
 		based_modelid == "RT-AC66U" || based_modelid == "RT-AC56U" ||
 		based_modelid == "RT-N66U" || based_modelid == "RT-N18U"){
@@ -185,9 +185,9 @@ function formShowAndHide(server_enable, server_type) {
 		document.getElementById("pptp_samba").style.display = "none";
 		document.getElementById("PPTP_setting").style.display = "none";
 		document.getElementById("tbAdvanced").style.display = "none";
-		if(document.form.VPNServer_mode.value != "pptpd") {
-			document.getElementById("divApply").style.display = "none";
-		}
+		//if(document.form.VPNServer_mode.value != "pptpd") {
+		//	document.getElementById("divApply").style.display = "none";
+		//}
 	}
 }
 
@@ -457,14 +457,13 @@ function del_Row(rowdata){
 	var pptpd_clientlist_value = "";
 	var rowLength = document.getElementById("pptpd_clientlist_table").rows.length;
 	for(var k = 0; k < rowLength; k += 1) {
-		for(var j = 1; j < document.getElementById("pptpd_clientlist_table").rows[k].cells.length - 1; j += 1) {
+		for(var j = 1; j < document.getElementById("pptpd_clientlist_table").rows[k].cells.length - 2; j += 1) {	//cell 1 & 2
 			if(j == 1)
-				pptpd_clientlist_value += "<";
-			else {
-				pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[1].innerHTML;
+				pptpd_clientlist_value += "<";				
+			else
 				pptpd_clientlist_value += ">";
-				pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[2].innerHTML;
-			}
+				
+			pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[j].innerHTML;
 		}
 	}
 

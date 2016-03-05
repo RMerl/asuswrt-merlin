@@ -1839,21 +1839,19 @@ char *trimNL(char *str)
 
 char *get_process_name_by_pid(const int pid)
 {
-	char* name = (char*)calloc(1024,sizeof(char));
-	if(name){
-		sprintf(name, "/proc/%d/cmdline",pid);
-		FILE* f = fopen(name,"r");
-		if(f){
-			size_t size;
-			size = fread(name, sizeof(char), 1024, f);
-			if(size>0){
-				if('\n'==name[size-1])
-				name[size-1]='\0';
-			}
-			else memset(name, 0, 1024);
-			fclose(f);
+	static char name[1024];
+	sprintf(name, "/proc/%d/cmdline",pid);
+	FILE* f = fopen(name,"r");
+	if(f){
+		size_t size;
+		size = fread(name, sizeof(char), 1024, f);
+		if(size>0){
+			if('\n'==name[size-1])
+			name[size-1]='\0';
 		}
 		else memset(name, 0, 1024);
+		fclose(f);
 	}
+	else memset(name, 0, 1024);
 	return name;
 }

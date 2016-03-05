@@ -1093,19 +1093,57 @@ dump_bss_info(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *bi)
 		if (bi->vht_cap) {
 			int i;
 			uint mcs;
+#ifdef RTCONFIG_BCM_7114
+#define VHT_PROP_MCS_MAP_NONE                    3
+ 			uint prop_mcs = VHT_PROP_MCS_MAP_NONE;
+#endif
 			retval += websWrite(wp, "\tVHT Capabilities: \n");
 			retval += websWrite(wp, "\tSupported VHT (tx) Rates:\n");
 			for (i = 1; i <= VHT_CAP_MCS_MAP_NSS_MAX; i++) {
 				mcs = VHT_MCS_MAP_GET_MCS_PER_SS(i, dtoh16(bi->vht_txmcsmap));
-				if (mcs != VHT_CAP_MCS_MAP_NONE)
+#ifdef RTCONFIG_BCM_7114
+				if (dtoh16(bi->length) >= (OFFSETOF(wl_bss_info_t,
+					vht_txmcsmap_prop) +
+					ROUNDUP(dtoh32(bi->ie_length), 4) +
+					sizeof(uint16))) {
+						prop_mcs = VHT_MCS_MAP_GET_MCS_PER_SS(i,
+						dtoh16(bi->vht_txmcsmap_prop));
+				}
+#endif
+				if (mcs != VHT_CAP_MCS_MAP_NONE){
+#ifdef RTCONFIG_BCM_7114
+					if (prop_mcs != VHT_PROP_MCS_MAP_NONE)
+						retval += websWrite(wp, "\t\tNSS: %d MCS: %s\n", i,
+							(mcs == VHT_CAP_MCS_MAP_0_9 ? "0-11" :
+							(mcs == VHT_CAP_MCS_MAP_0_8 ? "0-8, 10-11" : "0-7, 10-11")));
+					else
+#endif
 					retval += websWrite(wp, "\t\tNSS: %d MCS: %s\n", i,
 						(mcs == VHT_CAP_MCS_MAP_0_9 ? "0-9" :
 						(mcs == VHT_CAP_MCS_MAP_0_8 ? "0-8" : "0-7")));
+				}
 			}
 			retval += websWrite(wp, "\tSupported VHT (rx) Rates:\n");
 			for (i = 1; i <= VHT_CAP_MCS_MAP_NSS_MAX; i++) {
 				mcs = VHT_MCS_MAP_GET_MCS_PER_SS(i, dtoh16(bi->vht_rxmcsmap));
+#ifdef RTCONFIG_BCM_7114
+				if (dtoh16(bi->length) >= (OFFSETOF(wl_bss_info_t,
+					vht_txmcsmap_prop) +
+					ROUNDUP(dtoh32(bi->ie_length), 4) +
+					sizeof(uint16))) {
+						prop_mcs = VHT_MCS_MAP_GET_MCS_PER_SS(i,
+						dtoh16(bi->vht_txmcsmap_prop));
+				}
+#endif
+
 				if (mcs != VHT_CAP_MCS_MAP_NONE)
+#ifdef RTCONFIG_BCM_7114
+					if (prop_mcs != VHT_PROP_MCS_MAP_NONE)
+						retval += websWrite(wp, "\t\tNSS: %d MCS: %s\n", i,
+							(mcs == VHT_CAP_MCS_MAP_0_9 ? "0-11" :
+							(mcs == VHT_CAP_MCS_MAP_0_8 ? "0-8, 10-11" : "0-7, 10-11")));
+					else
+#endif
 					retval += websWrite(wp, "\t\tNSS: %d MCS: %s\n", i,
 						(mcs == VHT_CAP_MCS_MAP_0_9 ? "0-9" :
 						(mcs == VHT_CAP_MCS_MAP_0_8 ? "0-8" : "0-7")));
@@ -1398,21 +1436,28 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	ret += websWrite(wp, "----------------------------------------\n");
 #ifdef RTCONFIG_BCMARM
 #ifndef RTCONFIG_QTN
-	ret += websWrite(wp, "%-18s%-11s%-11s%-8s%-4s%-4s%-5s%-8s%-8s%-12s\n",
-				"MAC", "Associated", "Authorized", "   RSSI", "PSM", "SGI", "STBC", "Tx rate", "Rx rate", "Connect Time");
+#ifdef RTCONFIG_MUMIMO
+	ret += websWrite(wp, "%-4s%-18s%-11s%-11s%-8s%-4s%-4s%-5s%-5s%-8s%-8s%-12s\n",
+				"idx", "MAC", "Associated", "Authorized", "   RSSI", "PSM", "SGI", "STBC", "MUBF", "Tx rate", "Rx rate", "Connect Time");
 #else
-	ret += websWrite(wp, "%-18s%-11s%-11s%-8s%-8s%-8s%-12s\n",
-				"MAC", "Associated", "Authorized", "   RSSI", "Tx rate", "Rx rate", "Connect Time");
-#endif
+	ret += websWrite(wp, "%-4s%-18s%-11s%-11s%-8s%-4s%-4s%-5s%-8s%-8s%-12s\n",
+				"idx", "MAC", "Associated", "Authorized", "   RSSI", "PSM", "SGI", "STBC", "Tx rate", "Rx rate", "Connect Time");
+#endif // RTCONFIG_MUMIMO
 #else
-	ret += websWrite(wp, "%-18s%-11s%-11s%-8s%-4s%-8s%-8s%-12s\n",
-				"MAC", "Associated", "Authorized", "   RSSI", "PSM", "Tx rate", "Rx rate", "Connect Time");
-#endif
+	ret += websWrite(wp, "%-4s%-18s%-11s%-11s%-8s%-8s%-8s%-12s\n",
+				"idx", "MAC", "Associated", "Authorized", "   RSSI", "Tx rate", "Rx rate", "Connect Time");
+#endif // RTCONFIG_QTN
+#else
+	ret += websWrite(wp, "%-4s%-18s%-11s%-11s%-8s%-4s%-8s%-8s%-12s\n",
+				"idx", "MAC", "Associated", "Authorized", "   RSSI", "PSM", "Tx rate", "Rx rate", "Connect Time");
+#endif // RTCONFIG_BCMARM
 
 	/* build authenticated sta list */
 	for (i = 0; i < auth->count; i ++) {
 		sta = wl_sta_info(name, &auth->ea[i]);
 		if (!sta) continue;
+
+		ret += websWrite(wp, "    ");
 
 		ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[i], ea));
 
@@ -1428,10 +1473,18 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		{
 #ifdef RTCONFIG_BCMARM
 #ifndef RTCONFIG_QTN
+#ifdef RTCONFIG_MUMIMO
+			ret += websWrite(wp, "%-4s%-4s%-5s%-5s",
+				(sta->flags & WL_STA_PS) ? "Yes" : "No",
+				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "Yes" : "No",
+				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "Yes" : "No",
+				((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "Yes" : "No");
+#else
 			ret += websWrite(wp, "%-4s%-4s%-5s",
 				(sta->flags & WL_STA_PS) ? "Yes" : "No",
 				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "Yes" : "No",
 				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "Yes" : "No");
+#endif
 #endif
 #else
 			ret += websWrite(wp, "%-4s",
@@ -1471,6 +1524,8 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				sta = wl_sta_info(name_vif, &auth->ea[ii]);
 				if (!sta) continue;
 
+				ret += websWrite(wp, "%-3d ", i);
+
 				ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[ii], ea));
 
 				ret += websWrite(wp, "%-11s%-11s", (sta->flags & WL_STA_ASSOC) ? "Yes" : " ", (sta->flags & WL_STA_AUTHO) ? "Yes" : "");
@@ -1484,10 +1539,18 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				if (sta->flags & WL_STA_SCBSTATS)
 				{
 #ifdef RTCONFIG_BCMARM
+#ifdef RTCONFIG_MUMIMO
+					ret += websWrite(wp, "%-4s%-4s%-5s%-5s",
+						(sta->flags & WL_STA_PS) ? "Yes" : "No",
+						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "Yes" : "No",
+						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "Yes" : "No",
+						((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "Yes" : "No");
+#else
 					ret += websWrite(wp, "%-4s%-4s%-5s",
 						(sta->flags & WL_STA_PS) ? "Yes" : "No",
 						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "Yes" : "No",
 						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "Yes" : "No");
+#endif
 #else
 					ret += websWrite(wp, "%-4s",
 						(sta->flags & WL_STA_PS) ? "Yes" : "No");
@@ -1665,7 +1728,7 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret = 0;
 	int channel_24 = 0, channel_50 = 0;
-#if defined(RTAC3200) || defined(RTAC5300)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
 	int channel_50_2 = 0;
 #endif
 	channel_24 = wl_control_channel(0);
@@ -1673,7 +1736,7 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 	if (!(channel_50 = wl_control_channel(1)))
 		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
 	else
-#if !defined(RTAC3200) && !defined(RTAC5300)
+#if !defined(RTAC3200) && !defined(RTAC5300) && !defined(RTAC5300R)
 		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, channel_50);
 #else
 	{
@@ -3388,12 +3451,8 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 	int ret = 0;
 	sta_info_t *sta;
 	int from_app = 0;
-	char *name_t = NULL;
 
-	if (ejArgs(argc, argv, "%s", &name_t) < 1) {
-		//_dprintf("name_t = NULL\n");
-	} else if (!strncmp(name_t, "appobj", 6))
-		from_app = 1;
+	from_app = check_user_agent(user_agent);
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
@@ -3439,7 +3498,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 
 		ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[i], ea));
 
-		if (from_app == 1) {
+		if (from_app != 0) {
 			ret += websWrite(wp, ":{");
 			ret += websWrite(wp, "\"isWL\":");
 		}
@@ -3454,7 +3513,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 		if (from_app == 0)
 			ret += websWrite(wp, ", \"%s\"", value);
 
-		if (from_app == 1) {
+		if (from_app != 0) {
 			ret += websWrite(wp, ",\"rssi\":");
 		}
 
@@ -3508,7 +3567,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 
 				ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[ii], ea));
 
-				if (from_app == 1) {
+				if (from_app != 0) {
 					ret += websWrite(wp, ":{");
 					ret += websWrite(wp, "\"isWL\":");
 				}
@@ -3523,7 +3582,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 				if (from_app == 0)
 					ret += websWrite(wp, ", \"%s\"", value);
 
-				if (from_app == 1) {
+				if (from_app != 0) {
 					ret += websWrite(wp, ",\"rssi\":");
 				}
 
@@ -4145,11 +4204,7 @@ ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
 	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta") &&
-	    !nvram_match(strcat_r(prefix, "mode", tmp), "psr")
-#ifdef RTCONFIG_BCM_7114
-	    && !(is_psta(nvram_get_int("wlc_band")) && (nvram_get_int("wlc_psta") == 3))
-#endif
-	)
+	    !nvram_match(strcat_r(prefix, "mode", tmp), "psr"))
 		goto PSTA_ERR;
 
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));

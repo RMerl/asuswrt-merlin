@@ -106,6 +106,10 @@ ifeq ($(RTCONFIG_EXT_RTL8365MB),y)
 CFLAGS += -I$(LINUXDIR)/drivers/char/rtl8365mb
 OBJS += rtl_8365mb.o
 endif
+ifeq ($(RTCONFIG_EXT_RTL8370MB),y)
+CFLAGS += -I$(LINUXDIR)/drivers/char/rtl8365mb
+OBJS += rtl_8365mb.o
+endif
 endif
 
 ifeq ($(RTCONFIG_USB),y)

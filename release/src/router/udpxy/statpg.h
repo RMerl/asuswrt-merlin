@@ -167,8 +167,8 @@ static const char* ACLIENT_TABLE[] = {
 
 
 static const char* ACLIENT_REC_FMT[] = {
-    "<tr><td>%d</td><td>%s:%d</td><td>%s:%d</td><td>%s</td></tr>\n",
-    "<tr class=\"uneven\"><td>%d</td><td>%s:%d</td><td>%s:%d</td><td>%s</td></tr>\n" };
+    "<tr><td>%d</td><td>%s:%d</td><td>%s:%d%s</td><td>%s</td></tr>\n",
+    "<tr class=\"uneven\"><td>%d</td><td>%s:%d</td><td>%s:%d%s</td><td>%s</td></tr>\n" };
 
 
 static const char REDIRECT_SCRIPT_FMT[] =

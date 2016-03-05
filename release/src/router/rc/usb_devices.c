@@ -19,6 +19,10 @@
 #include <usb_info.h>
 #include <disk_initial.h>
 
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_NOTIFICATION_CENTER)
+#include <libnt.h>
+#endif
+
 #define MAX_RETRY_LOCK 1
 
 #ifdef RTCONFIG_USB_PRINTER
@@ -3322,6 +3326,57 @@ after_change_xhcimode:
 	}
 
 	if(!isdigit(*ptr)){ // disk
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+		char buf[MAX_NVRAM_SPACE], str[32];
+		char *name;
+		int plugged_disk = 0;
+		int ntevent_firstdisk = nvram_get_int("ntevent_firstdisk");
+		int ntevent_nodiskuse = nvram_get_int("ntevent_nodiskuse");
+#if defined(RTCONFIG_USB_XHCI) || defined(RTCONFIG_ETRON_XHCI)
+		int ntevent_disableusb3 = nvram_get_int("ntevent_disableusb3");
+		int usb_usb3 = nvram_get_int("usb_usb3");
+#endif
+
+		if(!ntevent_firstdisk){
+			nvram_getall(buf, sizeof(buf));
+			for(name = buf; *name; name += strlen(name)+1){
+				// non usb nvrams
+				if(strncmp(name, "usb_path", 8))
+					continue;
+
+				// non disk utility nvrams
+				if(strstr(name, "_diskmon_"))
+					continue;
+
+				if(!isdigit(*(name+8)))
+					continue;
+
+				plugged_disk = 1;
+				break;
+			}
+
+			if(!plugged_disk){
+				usb_dbg("(%s): Got the first storage on Port %s.\n", device_name, usb_port);
+				snprintf(str, 32, "0x%x", HINT_USB_FIRSTIME_CHECK_EVENT);
+				eval("Notify_Event2NC", str, "");
+				nvram_set("ntevent_firstdisk", "1");
+
+				if(!ntevent_nodiskuse)
+					nvram_set("ntevent_nodiskuse", "1");
+
+#if defined(RTCONFIG_USB_XHCI) || defined(RTCONFIG_ETRON_XHCI)
+				if(!usb_usb3 && !ntevent_disableusb3){
+					snprintf(str, 32, "0x%x", HINT_USB3_WITHOUT_ENHANCE_EVENT);
+					eval("Notify_Event2NC", str, "");
+					nvram_set("ntevent_disableusb3", "1");
+				}
+#endif
+
+				nvram_commit();
+			}
+		}
+#endif
+
 		// set USB common nvram.
 		set_usb_common_nvram(action, device_name, usb_node, "storage");
 

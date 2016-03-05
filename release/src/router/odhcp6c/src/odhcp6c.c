@@ -516,11 +516,11 @@ void odhcp6c_add_state(enum odhcp6c_state state, const void *data, size_t len)
 		memcpy(n, data, len);
 }
 
-void odhcp6c_insert_state(enum odhcp6c_state state, size_t offset, const void *data, size_t len)
+int odhcp6c_insert_state(enum odhcp6c_state state, size_t offset, const void *data, size_t len)
 {
 	ssize_t len_after = state_len[state] - offset;
 	if (len_after < 0)
-		return;
+		return -1;
 
 	uint8_t *n = odhcp6c_resize_state(state, len);
 	if (n) {
@@ -529,6 +529,8 @@ void odhcp6c_insert_state(enum odhcp6c_state state, size_t offset, const void *d
 		memmove(sdata + offset + len, sdata + offset, len_after);
 		memcpy(sdata + offset, data, len);
 	}
+
+	return 0;
 }
 
 size_t odhcp6c_remove_state(enum odhcp6c_state state, size_t offset, size_t len)
@@ -617,7 +619,7 @@ static void odhcp6c_expire_list(enum odhcp6c_state state, uint32_t elapsed)
 	uint8_t *start = odhcp6c_get_state(state, &len);
 	for (struct odhcp6c_entry *c = (struct odhcp6c_entry*)start;
 			(uint8_t*)c < &start[len] && &c->auxtarget[c->auxlen] <= &start[len];
-			c = (struct odhcp6c_entry*)(&c->auxtarget[c->auxlen])) {
+			) {
 		if (c->t1 < elapsed)
 			c->t1 = 0;
 		else if (c->t1 != UINT32_MAX)
@@ -638,8 +640,12 @@ static void odhcp6c_expire_list(enum odhcp6c_state state, uint32_t elapsed)
 		else if (c->valid != UINT32_MAX)
 			c->valid -= elapsed;
 
-		if (!c->valid)
+		if (!c->valid) {
 			odhcp6c_remove_state(state, ((uint8_t*)c) - start, sizeof(*c) + c->auxlen);
+			start = odhcp6c_get_state(state, &len);
+		} else {
+			c = (struct odhcp6c_entry*)(&c->auxtarget[c->auxlen]);
+		}
 	}
 }
 

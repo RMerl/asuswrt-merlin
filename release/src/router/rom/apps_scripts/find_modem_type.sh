@@ -8,6 +8,7 @@ home="$node_home/"`cd $node_home && find -name "$modem_act_path" 2>/dev/null`
 modem_enable=`nvram get modem_enable`
 modem_vid=`cat $home/idVendor 2>/dev/null`
 modem_pid=`cat $home/idProduct 2>/dev/null`
+usb_gobi2=`nvram get usb_gobi2`
 
 if [ "$modem_vid" == "" -o "$modem_pid" == "" ]; then
 	echo "type=unknown"
@@ -73,14 +74,17 @@ _find_act_type(){
 	fi
 }
 
-type=`_find_act_type`
-if [ "$modem_enable" == "4" ]; then
+if [ "$usb_gobi2" == "1" ]; then
+	type="gobi"
+elif [ "$modem_enable" == "4" ]; then
 	type="wimax"
 # Some dongles are worked strange with QMI. e.q. Huawei EC306.
 elif [ "$modem_enable" == "2" -a "$type" == "qmi" ]; then
 	type="tty"
 elif [ "$modem_vid" == "19d2" -a "$modem_pid" == "1589" ]; then # ZTE MF193A
 	type="tty"
+else
+	type=`_find_act_type`
 fi
 echo "type=$type."
 

@@ -20,7 +20,11 @@ extern void ate_ctl_plc_led(void);
 extern int set_plc_all_led_onoff(int on);
 
 #define PLC_LOCK_FILE		"/tmp/plc_lock"
+#if defined(PLN12)
 #define BOOT_NVM_PATH		"/tmp/asus.nvm"
+#else
+#define BOOT_NVM_PATH		"/usr/local/bin/asus.nvm"
+#endif
 #define BOOT_PIB_PATH		"/tmp/asus.pib"
 
 extern int default_plc_write_to_flash(void);

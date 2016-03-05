@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -82,6 +83,8 @@ get_request( const char* src, size_t srclen,
  * @param clen      length of command buffer
  * @param opt       buffer for the parsed options c-string
  * @param optlen    length of options buffer
+ * @param tail      buffer for tail (whatever is beyond options)
+ * @param tlen      length of tail buffer
  *
  * @return 0 if success: cmd and opt get get populated
  *         non-zero if an error ocurred
@@ -89,10 +92,11 @@ get_request( const char* src, size_t srclen,
 int
 parse_param( const char* s, size_t slen,
              char* cmd,     size_t clen,
-             char* opt,     size_t optlen )
+             char* opt,     size_t optlen,
+             char* tail,    size_t tlen)
 {
     const char DLM = '/';
-    unsigned i, j;
+    size_t i, j, n = 0;
 
     assert( s && cmd && (clen > (size_t)0) && opt && (optlen > (size_t)0) );
 
@@ -108,16 +112,32 @@ parse_param( const char* s, size_t slen,
     for( j = 0; (i < slen) && (j < clen) && s[i] && (s[i] != DLM); ) {
         cmd[j++] = s[i++];
     }
-    if( j >= clen ) return 1;
+    if( j >= clen ) return EOVERFLOW;
     cmd[ j ] = '\0';
 
     /* skip dividing delimiter */
-    if( DLM == s[i] ) ++i;
+    if( DLM == s[i] )
+        ++i;
 
-    /* copy the rest into opt */
-    if( i < slen ) {
-        (void) strncpy( opt, s + i, optlen );
-        opt[ optlen - 1 ] = '\0';
+    /* over the edge yet? */
+    if (i >= slen)
+        return 0;
+
+    /* look for '?' separating options from tail */
+    n = strcspn(s + i, "?");
+    if (n < optlen) {
+        (void) strncpy( opt, s + i, n );
+        opt[n] = '\0';
+    }
+    else
+        return EOVERFLOW;
+
+    i += n;
+    if (i >= slen) return 0;
+
+    if (tail && tlen > 0) {
+        (void) strncpy(tail, s + i, tlen);
+        tail[tlen - 1] = '\0';
     }
 
     return 0;

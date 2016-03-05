@@ -219,7 +219,7 @@ function remove_disk(){
 				<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 				<input type="hidden" name="action_mode" value="apply">
 				<input type="hidden" name="action_script" value="reboot">
-				<input type="hidden" name="action_wait" value="160">
+				<input type="hidden" name="action_wait" value="<% get_default_reboot_time(); %>">
 				<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 				<input type="hidden" name="usb_usb3" value="<% nvram_get("usb_usb3"); %>">
 			

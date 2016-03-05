@@ -1026,7 +1026,7 @@ function cal_panel_block(){
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
 			<input type="hidden" name="action_wait" value="5">
-			<input type="hidden" name="action_script" value="restart_vpnd">
+			<input type="hidden" name="action_script" value="restart_vpnd;restart_openvpnd">
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 			<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">

@@ -365,7 +365,7 @@ function show_ISP_list(){
 			if(document.form.modem_isp.options.length > 0)
 				continue;
 			else{
-				alert(Untranslated.ISP_not_support);
+				alert("<#HSDPAConfig_Country_hint#>");
 				document.form.modem_country.focus();
 				document.form.modem_country.selectedIndex = countrylist.length-1;
 				break;

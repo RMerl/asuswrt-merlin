@@ -553,7 +553,7 @@ void stop_usb_program(int mode)
 #endif
 }
 
-void stop_usb(void)
+void stop_usb(int f_force)
 {
 	int disabled = !nvram_get_int("usb_enable");
 
@@ -564,7 +564,7 @@ void stop_usb(void)
 
 #if defined(RTCONFIG_SAMBASRV) || defined(RTCONFIG_FTP)
 	// only stop storage services if disabled
-	if (disabled || !nvram_get_int("usb_storage")) {
+	if (disabled || !nvram_get_int("usb_storage") || f_force) {
 		// Unmount all partitions
 		remove_storage_main(0);
 
@@ -575,9 +575,9 @@ void stop_usb(void)
 
 	remove_usb_led_module();
 
-	if (disabled || nvram_get_int("usb_ohci") != 1) modprobe_r(USBOHCI_MOD);
-	if (disabled || nvram_get_int("usb_uhci") != 1) modprobe_r(USBUHCI_MOD);
-	if (disabled || nvram_get_int("usb_usb2") != 1) modprobe_r(USB20_MOD);
+	if (disabled || nvram_get_int("usb_ohci") != 1 || f_force) modprobe_r(USBOHCI_MOD);
+	if (disabled || nvram_get_int("usb_uhci") != 1 || f_force) modprobe_r(USBUHCI_MOD);
+	if (disabled || nvram_get_int("usb_usb2") != 1 || f_force) modprobe_r(USB20_MOD);
 
 #if defined(RTN56UB1) ||  defined(RTN56UB2)		
 	modprobe_r(USB20_MOD);
@@ -589,12 +589,12 @@ void stop_usb(void)
 #elif defined(RTCONFIG_XHCIMODE)
 	modprobe_r(USB30_MOD);
 #else
-	if (disabled || nvram_get_int("usb_usb3") != 1) modprobe_r(USB30_MOD);
+	if (disabled || nvram_get_int("usb_usb3") != 1 || f_force) modprobe_r(USB30_MOD);
 #endif
 #endif
 
 	// only unload core modules if usb is disabled
-	if (disabled) {
+	if (disabled || f_force) {
 		umount("/proc/bus/usb"); // unmount usb device filesystem
 		modprobe_r(USBOHCI_MOD);
 		modprobe_r(USBUHCI_MOD);
@@ -606,7 +606,7 @@ void stop_usb(void)
 		/* If both bled and USB Bus traffic statistics are enabled,
 		 * don't remove USB core and USB common kernel module.
 		 */
-		if (!((nvram_get_int("led_usb_gpio") | nvram_get_int("led_usb3_gpio")) & GPIO_BLINK_LED)) {
+		if (!((nvram_get_int("led_usb_gpio") | nvram_get_int("led_usb3_gpio")) & GPIO_BLINK_LED) || f_force) {
 #endif
 			modprobe_r(USBCORE_MOD);
 #if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3,2,0))
@@ -618,6 +618,16 @@ void stop_usb(void)
 	}
 }
 
+void restart_usb(int stopit)
+{
+	stop_usb(1);
+
+	if(stopit)
+		return;
+
+	sleep(2);
+	start_usb();
+}
 
 #ifdef RTCONFIG_USB_PRINTER
 void start_usblpsrv(void)
@@ -1094,8 +1104,11 @@ _dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 #endif
 
 #ifdef RTCONFIG_DSL_TCLINUX
-	eval("req_dsl_drv", "runtcc");
-	eval("req_dsl_drv", "dumptcc");
+	if(nvram_match("dslx_diag_enable", "1") && nvram_match("dslx_diag_state", "1")) {
+		eval("req_dsl_drv", "runtcc");
+		eval("req_dsl_drv", "dumptcc");
+	}
+	nvram_set("dsltmp_diag_log_path", "");
 #endif
 
 	if(!g_reboot && nvram_match("apps_mounted_path", mnt->mnt_dir))
@@ -1404,12 +1417,11 @@ done:
 
 #ifdef RTCONFIG_DSL_TCLINUX
 		if(ret == MOUNT_VAL_RW) {
-			nvram_set("dslx_diag_log_path", mountpoint);
-			if(nvram_match("dslx_diag_enable", "1") && nvram_match("dslx_diag_state", "1"))
-				start_dsl_diag();
-		}
-		else {
-			logmessage("DSL Diagnostic", "start failed");
+			if(nvram_match("dsltmp_diag_log_path", "")) {
+				nvram_set("dsltmp_diag_log_path", mountpoint);
+				if(nvram_match("dslx_diag_enable", "1") && nvram_match("dslx_diag_state", "1"))
+					start_dsl_diag();
+			}
 		}
 #endif
 
@@ -1943,12 +1955,15 @@ start_ftpd(void)
 	pid_t pid;
 	char *vsftpd_argv[] = { "vsftpd", "/etc/vsftpd.conf", NULL };
 
-	if(getpid()!=1) {
+	if (getpid() != 1) {
 		notify_rc_after_wait("start_ftpd");
 		return;
 	}
 
 	if (nvram_match("enable_ftp", "0")) return;
+
+	if (!sd_partition_num() && !nvram_match("usb_debug", "1"))
+		return;
 
 	write_ftpd_conf();
 
@@ -2071,12 +2086,14 @@ int suit_double_quote(const char *output, const char *input, int outsize){
 
 	return dst-output;
 }
+
 #if 0
 #ifdef RTCONFIG_BCMARM
 extern void del_samba_rules(void);
 extern void add_samba_rules(void);
 #endif
 #endif
+
 void
 start_samba(void)
 {
@@ -2100,6 +2117,9 @@ start_samba(void)
 	    (nvram_match("smbd_wins", "0"))) {
 		return;
 	}
+
+	if (!sd_partition_num() && !nvram_match("usb_debug", "1"))
+		return;
 
 #ifdef RTCONFIG_GROCTRL
 	enable_gro(2);
@@ -2336,6 +2356,9 @@ void start_dms(void)
 		return;
 	}
 
+	if (!sd_partition_num() && !nvram_match("usb_debug", "1"))
+		return;
+
 	if (!is_routing_enabled() && !is_lan_connected())
 		set_invoke_later(INVOKELATER_DMS);
 
@@ -2344,9 +2367,9 @@ void start_dms(void)
 
 	if (nvram_get_int("dms_enable") != 0) {
 
-		if ((!once) && (nvram_get_int("dms_rescan") == 0)) {
-			// no forced rescan
-			argv[--index] = NULL;
+		if (/*(!once) &&*/ (nvram_get_int("dms_rebuild") == 0)) {
+			if (check_if_file_exist("/usr/sbin/minidlna"))	// non-destructive rescan
+				argv[--index] = "-r";
 		}
 
 		if ((f = fopen(argv[2], "w")) != NULL) {
@@ -2554,15 +2577,14 @@ void stop_dms(void)
 	// killall_tk(MEDIA_SERVER_APP);
 }
 
-
 // it is called by rc only
 void force_stop_dms(void)
 {
 	killall_tk(MEDIA_SERVER_APP);
 
+	if (!check_if_file_exist("/usr/sbin/minidlna"))
 	eval("rm", "-rf", nvram_safe_get("dms_dbdir"));
 }
-
 
 void
 write_mt_daapd_conf(char *servername)
@@ -2620,7 +2642,7 @@ start_mt_daapd()
 {
 	char servername[32];
 
-	if(getpid()!=1) {
+	if (getpid() != 1) {
 		notify_rc("start_mt_daapd");
 		return;
 	}
@@ -2628,12 +2650,15 @@ start_mt_daapd()
 	if (nvram_invmatch("daapd_enable", "1"))
 		return;
 
+	if (!sd_partition_num() && !nvram_match("usb_debug", "1"))
+		return;
+
 	if (is_valid_hostname(nvram_safe_get("daapd_friendly_name")))
 		strncpy(servername, nvram_safe_get("daapd_friendly_name"), sizeof(servername));
 	else
 		servername[0] = '\0';
-	if(strlen(servername)==0) strncpy(servername, get_productid(), sizeof(servername));
-	write_mt_daapd_conf(servername);
+	if (strlen(servername)==0) strncpy(servername, get_productid(), sizeof(servername));
+		write_mt_daapd_conf(servername);
 
 #if !(defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS))
 	if (is_routing_enabled())
@@ -2756,9 +2781,11 @@ void write_webdav_server_pem()
 
 void start_webdav(void)	// added by Vanic
 {
+#ifdef RTCONFIG_WEBDAV
 	pid_t pid, pid1;
 	char *lighttpd_argv[] = { "/usr/sbin/lighttpd", "-f", "/tmp/lighttpd.conf", "-D", NULL };
 	char *lighttpd_monitor_argv[] = { "/usr/sbin/lighttpd-monitor", NULL };
+#endif
 
 	if(getpid()!=1) {
 		notify_rc("start_webdav");
@@ -3156,6 +3183,26 @@ void stop_cloudsync(int type)
 //#endif
 
 #ifdef RTCONFIG_USB
+int sd_partition_num()
+{
+	FILE *procpt;
+	char line[128], ptname[32];
+	int ma, mi, sz;
+	int count = 0;
+
+	if ((procpt = fopen("/proc/partitions", "r"))) {
+		while (fgets(line, sizeof(line), procpt)) {
+			if (sscanf(line, " %d %d %d %[^\n ]", &ma, &mi, &sz, ptname) != 4)
+				continue;
+
+			if (!strncmp(ptname, "sd", 2))
+				count++;
+		}
+	}
+
+	return count;
+}
+
 void start_nas_services(int force)
 {
 	if(!force && getpid() != 1){

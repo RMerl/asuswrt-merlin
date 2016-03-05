@@ -126,7 +126,7 @@ function retAppsDom(macAddr){
 	}
 
 	if(appCode == '')
-		appCode = '<div class="appTraffic erHint dots">No Traffic in the list</div>';
+		appCode = '<div class="appTraffic erHint dots"><#Bandwidth_monitor_noList#></div>';
 
 	return $(appCode);
 }
@@ -141,6 +141,7 @@ function drawClient(){
 	var clientCodeToObj;
 	for(var i=0; i<rogClientList.length; i++){
 		var clientCode = "";
+		var clientObj = clientList[rogClientList[i]];
 
 		// init a ROG Client
 		clientCode += '<div id=' + rogClientList[i] + '><table><tr>';
@@ -148,23 +149,36 @@ function drawClient(){
 		// Icon
 		clientCode += '<td style="width:70px;">';
 		if(usericon_support) {
-			var clientMac = clientList[clientList[i]].mac.replace(/\:/g, "");
+			var clientMac = rogClientList[i].replace(/\:/g, "");
 			userIconBase64 = getUploadIcon(clientMac);
 		}
 		if(userIconBase64 != "NoIcon") {
 			clientCode += '<div id="';
 			clientCode += rogClientList[i].replace(/:/g, "");
-			clientCode += '_Icon" class="userIcons">';
-			clientCode += '<img id="imgUserIcon_'+ i +'" class="imgUserIcon" src="' + userIconBase64 + '">';
+			clientCode += '_Icon" class="userIcons" style="background-image:url('+userIconBase64+');background-size:50px;">';
 			clientCode += '</div>';
 		}
-		else {
+		else if(clientObj.type != "0" || clientObj.vendor == "") {
 			clientCode += '<div id="';
 			clientCode += rogClientList[i].replace(/:/g, "");
-			clientCode += '_Icon" class="trafficIcons type';
-			clientCode += clientList[rogClientList[i]].type;
+			clientCode += '_Icon" class="clientIcon type';
+			clientCode += clientObj.type;
 			clientCode += '"></div>';
 		}
+		else if(clientObj.vendor != "") {
+			var clientListCSS = "";
+			var venderIconClassName = getVenderIconClassName(clientObj.vendor.toLowerCase());
+			if(venderIconClassName != "" && !downsize_4m_support) {
+				clientListCSS = "venderIcon " + venderIconClassName;
+			}
+			else {
+				clientListCSS = "clientIcon type" + clientObj.type;
+			}
+			clientCode += '<div id="';
+			clientCode += rogClientList[i].replace(/:/g, "");
+			clientCode += '_Icon" class="' + clientListCSS + '"></div>';
+		}
+
 		clientCode += '</td>';
 
 		// Name
@@ -188,8 +202,9 @@ function drawClient(){
 				Param.selectedClient = this.id;
 				$(".appTraffic").remove();			
 				updateBarPercent(this.id);
-				$(".trafficIcons").removeClass("clicked");
+				$(".clientIcon").removeClass("clicked");
 				$(".userIcons").removeClass("clicked");
+				$(".venderIcon").removeClass("clicked");
 				$("#" + this.id.replace(/:/g, "") + "_Icon").addClass("clicked");
 				$("#" + cookie.get("ROG_SEL_ID").replace(/:/g, "") + "_Apps").css("display", "none");
 				cookie.set("ROG_SEL_ID", this.id, 30);
@@ -198,8 +213,9 @@ function drawClient(){
 				$("#" + this.id.replace(/:/g, "") + "_Apps").slideUp("fast", function(){
 					Param.selectedClient = '';
 					$(".appTraffic").remove();
-					$(".trafficIcons").removeClass("clicked");
+					$(".clientIcon").removeClass("clicked");
 					$(".userIcons").removeClass("clicked");
+					$(".venderIcon").removeClass("clicked");
 					cookie.set("ROG_SEL_ID", "", 30);
 				});
 			}
@@ -211,8 +227,9 @@ function drawClient(){
 		if(rogClientList[i] == cookie.get("ROG_SEL_ID")){
 			Param.selectedClient = rogClientList[i];
 			$(".appTraffic").remove();
-			$(".trafficIcons").removeClass("clicked");
+			$(".clientIcon").removeClass("clicked");
 			$(".userIcons").removeClass("clicked");
+			$(".venderIcon").removeClass("clicked");
 			$("#" + rogClientList[i].replace(/:/g, "") + "_Icon").addClass("clicked");
 		}
 

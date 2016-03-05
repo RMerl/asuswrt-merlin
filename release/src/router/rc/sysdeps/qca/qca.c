@@ -240,7 +240,7 @@ static inline void __choose_mrate(char *prefix, int *mcast_phy, int *mcast_mcs, 
 	*rate=150000;
 	char tmp[128];
 
-	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
+	if (ipv6_enabled() && nvram_get_int(ipv6_nvname("ipv6_radvd"))) {
 		if (!strncmp(prefix, "wl0", 3)) {
 			phy = 2;
 			mcs = 2;	/* 2G: OFDM 12Mbps */
@@ -972,7 +972,13 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	{   
 	   	if(!flag_8021x)
 		{   
-			sprintf(tmpstr, "wpa_passphrase=%s\n",nvram_safe_get(strcat_r(prefix_mssid, "wpa_psk",temp)));
+			char nv[65];
+
+			strcpy(nv, nvram_safe_get(strcat_r(prefix_mssid, "wpa_psk",temp)));
+			if (strlen(nv) == 64)
+				sprintf(tmpstr, "wpa_psk=%s\n", nv);
+			else
+				sprintf(tmpstr, "wpa_passphrase=%s\n", nv);
 			fprintf(fp, "%s", tmpstr);
 		}	
 	}	

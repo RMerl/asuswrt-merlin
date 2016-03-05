@@ -5,6 +5,10 @@ CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(TOP)/zlib
 CFLAGS += -I$(TOP)/push_log
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
 
+ifeq ($(RTCONFIG_BCM_7114),y)
+CFLAGS += -I$(SRCBASE)/../dhd/components/shared/
+endif
+
 ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -DRalink_WPS
 CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
@@ -41,8 +45,8 @@ ifeq ($(RTCONFIG_BWDPI),y)
 CFLAGS += -I$(TOP)/bwdpi/ -I$(TOP)/sqlite -I$(TOP)/bwdpi_sqlite
 endif
 
-ifeq ($(RTCONFIG_TRAFFIC_CONTROL),y)
-CFLAGS += -I$(TOP)/traffic_control
+ifeq ($(RTCONFIG_TRAFFIC_LIMITER),y)
+CFLAGS += -I$(TOP)/traffic_limiter
 CFLAGS += -I$(TOP)/sqlite
 endif
 
@@ -95,7 +99,7 @@ LIBS += -L$(TOP)/push_log -lpush_log
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
-CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DTYPEDEF_FLOAT_T
 CFLAGS += -I$(SRCBASE)/common/include
 LIBS += -lgcc_s
 ifeq ($(RTCONFIG_QTN),y)
@@ -130,8 +134,8 @@ LIBS += -L$(TOP)/sqlite/.libs -lsqlite3
 LIBS += -lpthread
 endif
 
-ifeq ($(RTCONFIG_TRAFFIC_CONTROL),y)
-LIBS += -L$(TOP)/traffic_control -ltraffic_control
+ifeq ($(RTCONFIG_TRAFFIC_LIMITER),y)
+LIBS += -L$(TOP)/traffic_limiter -ltraffic_limiter
 LIBS += -L$(TOP)/sqlite/.libs -lsqlite3
 endif
 
@@ -155,6 +159,15 @@ else
 vpath %.c sysdeps
 endif
 
+ifeq ($(RTCONFIG_NOTIFICATION_CENTER),y)
+CFLAGS  += -I$(TOP)/sqlite
+CFLAGS  += -I$(TOP)/nt_center/lib
+CFLAGS  += -DASUSWRT_SDK
+LIBS += -L$(TOP)/nt_center/lib/ -lnt
+LIBS += -L$(TOP)/sqlite/.libs -lsqlite3
+LIBS += -lpthread #Depend on sqlite
+endif
+
 all: httpd #test_apps
 
 #test_apps: apps.c
@@ -172,6 +185,7 @@ install: all
 	@echo " [httpd] Installing to $(INSTALLDIR)"
 	@install -D httpd $(INSTALLDIR)/usr/sbin/httpd
 	@$(STRIP) $(INSTALLDIR)/usr/sbin/httpd
+	@cd $(INSTALLDIR)/usr/sbin/; ln -sf httpd httpds
 	@chmod 0500 $(INSTALLDIR)/usr/sbin/httpd
 	#@install -m 0755 test_apps $(INSTALLDIR)/usr/sbin
 	#@$(STRIP) $(INSTALLDIR)/usr/sbin/test_apps

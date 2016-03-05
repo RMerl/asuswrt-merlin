@@ -755,7 +755,7 @@ function updateCloudStatus(){
 							_cloud_ftpclient_msg += ": </b><br />";
 							_cloud_ftpclient_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponentSafe(cloud_ftpclient_obj) + "</span>";
 						}
-						else if(cloud_dropbox_msg){
+						else if(cloud_ftpclient_msg){
 							_cloud_ftpclient_msg += cloud_ftpclient_msg;
 						}
 						else{
@@ -820,7 +820,7 @@ function updateCloudStatus(){
 						if(cloud_usbclient_status != "")
 							_cloud_usbclient_status = cloud_usbclient_status;
 						else
-							_cloud_v_status = "";
+							_cloud_usbclient_status = "";
 	
 						document.getElementById("cloudStatus_usbclient").innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _cloud_usbclient_msg +'\');">'+ _cloud_usbclient_status +'</div>';
 					}
@@ -873,7 +873,7 @@ function updateCloudStatus(){
 						if(cloud_sambaclient_status != "")
 							_cloud_sambaclient_status = cloud_sambaclient_status;
 						else
-							_cloud_v_status = "";
+							_cloud_sambaclient_status = "";
 	
 						document.getElementById("cloudStatus_sambaclient").innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _cloud_sambaclient_msg +'\');">'+ _cloud_sambaclient_status +'</div>';
 					}
@@ -1768,7 +1768,7 @@ function onDropBoxLogin(token, uid){
 		<table>
 			<tr>
 				<td>
-					<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:20px;margin-left:30px;"><#Cloudsync_Get_Invitation#></div>	<!-- You have got a new invitation! -->
+					<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:20px;margin-left:30px;"><#Cloudsync_Get_Invitation#></div>
 				</td>
 			</tr>
 		</table>
@@ -1959,7 +1959,7 @@ function onDropBoxLogin(token, uid){
 								<#HSDPAConfig_Password_itemname#>
 							</th>			
 							<td>
-								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" class="input_32_table" style="height: 23px;" value="" autocorrect="off" autocapitalize="off">
+								<input id="cloud_password" name="cloud_password" type="password" autocapitalize="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" class="input_32_table" style="height: 23px;" value="" autocorrect="off" autocapitalize="off">
 							</td>
 						  </tr>						  				
 					  								
@@ -1992,16 +1992,16 @@ function onDropBoxLogin(token, uid){
 								<#routerSync_Security_code#>
 							</th>
 							<td>
-								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" autocorrect="off" autocapitalize="off"><#OTP_Auth#><!--OTP Authentication--></div>
+								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" autocorrect="off" autocapitalize="off"><#OTP_Auth#></div>
 							</td>
 						  </tr>
 						  <tr height="45px;" id="captcha_tr" style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								<#Captcha#>	<!-- Captcha -->
+								<#Captcha#>
 							</th>			
 							<td style="height:85px;">
 								<div style="height:25px;"><input id="captcha_field" name="captcha_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-top:8px;" autocomplete="off" autocorrect="off" autocapitalize="off"></div>
-								<div id="captcha_hint" style="color:#FC0;height:25px;margin-top:10px;"><#Captcha_note#></div>	<!-- Please input the captcha -->
+								<div id="captcha_hint" style="color:#FC0;height:25px;margin-top:10px;"><#Captcha_note#></div>
 								<div>
 									<iframe id="captcha_iframe" frameborder="0" scrolling="no" src="" style="width:230px;height:80px;*width:210px;*height:87px;margin:-60px 0 0 160px;*margin-left:165px;"></iframe>
 								</div>

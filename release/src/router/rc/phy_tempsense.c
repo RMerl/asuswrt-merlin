@@ -50,7 +50,7 @@ static int status = -1;
 static int duty_cycle = 0;
 static int status_old = 0;
 static double tempavg_24 = 0.000;
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 static double tempavg_5l = 0.000;
 static double tempavg_5h = 0.000;
 #else
@@ -103,19 +103,19 @@ phy_tempsense_mon()
 {
 	char buf[WLC_IOCTL_SMLEN];
 	char buf2[WLC_IOCTL_SMLEN];
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 	char buf3[WLC_IOCTL_SMLEN];
 #endif
 	int ret;
 	unsigned int *ret_int = NULL;
 	unsigned int *ret_int2 = NULL;
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 	unsigned int *ret_int3 = NULL;
 #endif
 
 	strcpy(buf, "phy_tempsense");
 	strcpy(buf2, "phy_tempsense");
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 	strcpy(buf3, "phy_tempsense");
 #endif
 	if ((ret = wl_ioctl("eth1", WLC_GET_VAR, buf, sizeof(buf))))
@@ -123,14 +123,14 @@ phy_tempsense_mon()
 
 	if ((ret = wl_ioctl("eth2", WLC_GET_VAR, buf2, sizeof(buf2))))
 		return ret;
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 	if ((ret = wl_ioctl("eth3", WLC_GET_VAR, buf3, sizeof(buf3))))
 		return ret;
 #endif
 
 	ret_int = (unsigned int *)buf;
 	ret_int2 = (unsigned int *)buf2;
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 	ret_int3 = (unsigned int *)buf3;	
 #endif
 
@@ -138,7 +138,7 @@ phy_tempsense_mon()
 	{
 		count++;
 		tempavg_24 = *ret_int;
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 		tempavg_5l = *ret_int2;
 		tempavg_5h = *ret_int3;
 #else
@@ -148,7 +148,7 @@ phy_tempsense_mon()
 	else
 	{
 		tempavg_24 = (tempavg_24 * 4 + *ret_int) / 5;
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 		tempavg_5l = (tempavg_5l * 4 + *ret_int2) / 5;
 		tempavg_5h = (tempavg_5h * 4 + *ret_int2) / 5;
 #else
@@ -158,7 +158,7 @@ phy_tempsense_mon()
 #if 0
 	tempavg_max = (((tempavg_24) > (tempavg_50)) ? (tempavg_24) : (tempavg_50));
 #else 
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 	tempavg_max = (tempavg_24 + tempavg_5l + tempavg_5h) / 2;
 #else
 	tempavg_max = (tempavg_24 + tempavg_50) / 2;

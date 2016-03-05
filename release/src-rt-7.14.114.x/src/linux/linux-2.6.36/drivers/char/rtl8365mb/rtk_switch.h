@@ -15,6 +15,7 @@
 #define __RTK_SWITCH_H__
 
 #include <rtk_types.h>
+#include <port.h>
 #ifdef _CFE_
 #include "lib_types.h"
 #include "lib_printf.h"
@@ -103,6 +104,10 @@ typedef enum rtk_switch_maxPktLen_linkSpeed_e {
      CASEID(GET_CPU),				\
      CASEID(SET_CPU),				\
      CASEID(GET_RTK_PHYSTATES),			\
+     CASEID(GET_PHY_REG9),			\
+     CASEID(SET_PHY_REG9),			\
+     CASEID(GET_TMODE),				\
+     CASEID(SET_TMODE),				\
      CASEID(MAX_REQ),				\
 }
 
@@ -738,5 +743,9 @@ extern rtk_uint32 rtk_switch_maxLutAddrNumber_get(void);
  *
  */
 extern rtk_uint32 rtk_switch_maxTrunkId_get(void);
+
+extern rtk_api_ret_t rtk_port_phyTestMode_set(rtk_port_t port, rtk_port_phy_test_mode_t mode);
+
+extern rtk_api_ret_t rtk_port_phyTestMode_get(rtk_port_t port, rtk_port_phy_test_mode_t *pMode);
 
 #endif

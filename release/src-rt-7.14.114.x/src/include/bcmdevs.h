@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdevs.h 544468 2015-03-27 09:51:33Z $
+ * $Id: bcmdevs.h 590848 2015-10-06 07:54:06Z $
  */
 
 #ifndef	_BCMDEVS_H
@@ -370,6 +370,12 @@
 #define BCM4366_CHIP_ID		0x4366		/* 4366 chipcommon chipid */
 #define BCM4365_CHIP(chipid)	((CHIPID(chipid) == BCM4365_CHIP_ID) || \
 				(CHIPID(chipid) == BCM4366_CHIP_ID))
+#define BCM43602_CHIP_ID	0xaa52		/* 43602 chipcommon chipid */
+#define BCM43462_CHIP_ID	0xa9c6		/* 43462 chipcommon chipid */
+#define BCM43522_CHIP_ID	0xaa02		/* 43522 chipcommon chipid */
+#define BCM43602_CHIP(chipid)	((CHIPID(chipid) == BCM43602_CHIP_ID) || \
+				(CHIPID(chipid) == BCM43462_CHIP_ID) || \
+				(CHIPID(chipid) == BCM43522_CHIP_ID)) /* 43602 variations */
 #define	BCM4342_CHIP_ID		4342		/* 4342 chipcommon chipid (OTP, RBBU) */
 #define	BCM4402_CHIP_ID		0x4402		/* 4402 chipid */
 #define	BCM4704_CHIP_ID		0x4704		/* 4704 chipcommon chipid */
@@ -395,8 +401,11 @@
 #define	BCM5357_CHIP_ID		0x5357		/* 5357 chipcommon chipid */
 #define	BCM53572_CHIP_ID	53572		/* 53572 chipcommon chipid */
 #define	BCM53573_CHIP_ID	53573		/* 53573 chipcommon chipid */
-#define BCM53573_CHIP(chipid)	(CHIPID(chipid) == BCM53573_CHIP_ID)
-#define BCM53573_CHIP_GRPID	BCM53573_CHIP_ID
+#define	BCM53574_CHIP_ID	53574		/* 53574 chipcommon chipid */
+#define BCM53573_CHIP(chipid)	((CHIPID(chipid) == BCM53573_CHIP_ID) || \
+				(CHIPID(chipid) == BCM53574_CHIP_ID))
+#define BCM53573_CHIP_GRPID	BCM53573_CHIP_ID : \
+				case BCM53574_CHIP_ID
 
 /* Package IDs */
 #define	BCM4303_PKG_ID		2		/* 4303 package id */

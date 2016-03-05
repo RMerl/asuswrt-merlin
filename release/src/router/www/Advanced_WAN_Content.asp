@@ -83,8 +83,6 @@ function initial(){
 	change_wan_type(document.form.wan_proto.value, 0);	
 	fixed_change_wan_type(document.form.wan_proto.value);
 	genWANSoption();
-	//change_wan_unit(document.form.wan_unit);
-	change_wan_type(document.form.wan_proto.value, 0);	
 
 	var wan_type = document.form.wan_proto.value;
 	if(wan_type == "pppoe" || wan_type == "pptp" || wan_type == "l2tp" ||
@@ -186,7 +184,7 @@ function genWANSoption(){
 
 function applyRule(){
 	if(ctf.dhcpToPppoe() && ctf.getLevel() == 2){
-		if(confirm("Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm.")){
+		if(confirm("<#ctf_confirm#>")){
 			document.form.ctf_disable_force.value = 0;
 			document.form.ctf_fa_mode.value = 0;	
 			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
@@ -401,13 +399,23 @@ function validForm(){
 	}
 
 	if(productid == "DSL-AC68U" || productid == "DSL-AC68R"){      //MODELDEP: DSL-AC68U,DSL-AC68R
-		if((document.form.ewan_vid.value >= 1 && document.form.ewan_vid.value <= 3) ||
-			(document.form.ewan_vid.value == 20) ||
-			(document.form.ewan_vid.value >= 100 && document.form.ewan_vid.value <= 107) ||
-			(document.form.ewan_vid.value >= 4000 && document.form.ewan_vid.value <= 4002)){
-			alert("It is a kept value, please change VLAN ID."); /* untranslated */
-			document.form.ewan_vid.focus();
-			return false;
+		if(document.form.ewan_dot1q.value == 1) {
+			if(!validator.range(document.form.ewan_vid, 1, 4094)) {
+				document.form.ewan_vid.focus();
+				return false;
+			}
+			if((document.form.ewan_vid.value >= 1 && document.form.ewan_vid.value <= 3) ||
+				(document.form.ewan_vid.value == 20) ||
+				(document.form.ewan_vid.value >= 100 && document.form.ewan_vid.value <= 107) ||
+				(document.form.ewan_vid.value >= 4000 && document.form.ewan_vid.value <= 4002)){
+				alert("VLAN ID " + document.form.ewan_vid.value + " is reserved for internal usage. Please change to another one."); /* untranslated */
+				document.form.ewan_vid.focus();
+				return false;
+			}
+			if(!validator.range(document.form.ewan_dot1p, 0, 7)) {
+				document.form.ewan_dot1p.focus();
+				return false;
+			}
 		}
 	}
 	
@@ -489,6 +497,9 @@ function change_wan_type(wan_type, flag){
 		if(based_modelid.toUpperCase().substr(0,3) != "DSL"){
 			inputCtrl(document.form.wan_ppp_echo[0], 1);
 			inputCtrl(document.form.wan_ppp_echo[1], 1);
+			inputCtrl(document.form.wan_lcp_intv, 1);
+			inputCtrl(document.form.wan_lcp_fail, 1);
+			lcp_control();
 		}
 	}
 	else if(wan_type == "pptp"){
@@ -515,6 +526,8 @@ function change_wan_type(wan_type, flag){
 		document.getElementById("vpn_dhcp").style.display = "none";
 		inputCtrl(document.form.wan_ppp_echo[0], 0);
 		inputCtrl(document.form.wan_ppp_echo[1], 0);
+		inputCtrl(document.form.wan_lcp_intv, 0);
+		inputCtrl(document.form.wan_lcp_fail, 0);
 	}
 	else if(wan_type == "l2tp"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
@@ -540,6 +553,8 @@ function change_wan_type(wan_type, flag){
 		document.getElementById("vpn_dhcp").style.display = "none";
 		inputCtrl(document.form.wan_ppp_echo[0], 0);
 		inputCtrl(document.form.wan_ppp_echo[1], 0);
+		inputCtrl(document.form.wan_lcp_intv, 0);
+		inputCtrl(document.form.wan_lcp_fail, 0);
 	}
 	else if(wan_type == "static"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 0);
@@ -565,6 +580,8 @@ function change_wan_type(wan_type, flag){
 		document.getElementById("vpn_dhcp").style.display = "none";
 		inputCtrl(document.form.wan_ppp_echo[0], 0);
 		inputCtrl(document.form.wan_ppp_echo[1], 0);
+		inputCtrl(document.form.wan_lcp_intv, 0);
+		inputCtrl(document.form.wan_lcp_fail, 0);
 	}
 	else{	// Automatic IP or 802.11 MD or ""		
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
@@ -590,6 +607,8 @@ function change_wan_type(wan_type, flag){
 		document.getElementById("vpn_dhcp").style.display = "none";
 		inputCtrl(document.form.wan_ppp_echo[0], 0);
 		inputCtrl(document.form.wan_ppp_echo[1], 0);
+		inputCtrl(document.form.wan_lcp_intv, 0);
+		inputCtrl(document.form.wan_lcp_fail, 0);
 	}
 }
 
@@ -619,8 +638,7 @@ function fixed_change_wan_type(wan_type){
 			document.form.wan_dnsenable_x[1].checked = 0;
 			change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', 1);	
 		}		
-	}else if(wan_type == "pptp"	|| wan_type == "l2tp"){
-		
+	}else if(wan_type == "pptp"	|| wan_type == "l2tp"){	
 		if(wan_type == original_wan_type){
 			document.form.wan_dnsenable_x[0].checked = original_dnsenable;
 			document.form.wan_dnsenable_x[1].checked = !original_dnsenable;
@@ -641,8 +659,7 @@ function fixed_change_wan_type(wan_type){
 		document.form.wan_dnsenable_x[0].disabled = true;
 		change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', 0);
 	}
-	else{	// wan_type == "dhcp"
-		
+	else{	// wan_type == "dhcp"	
 		if(wan_type == original_wan_type){
 			document.form.wan_dnsenable_x[0].checked = original_dnsenable;
 			document.form.wan_dnsenable_x[1].checked = !original_dnsenable;
@@ -698,9 +715,7 @@ function change_wan_dhcp_enable(flag){
 		inputCtrl(document.form.wan_gateway_x, !wan_dhcpenable);
 	}
 	// 2008.03 James. patch for Oleg's patch. }
-	else if(wan_type == "pptp"
-			|| wan_type == "l2tp"
-			){
+	else if(wan_type == "pptp"|| wan_type == "l2tp"){
 		if(flag == 1){
 			if(wan_type == original_wan_type){
 				document.form.wan_dhcpenable_x[0].checked = original_wan_dhcpenable;
@@ -792,6 +807,17 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 /* password item show or not */
 function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
+}
+
+function lcp_control(){
+	if(document.form.wan_ppp_echo[0].checked){
+		inputCtrl(document.form.wan_lcp_intv, 1);
+		inputCtrl(document.form.wan_lcp_fail, 1);
+	}
+	else{
+		inputCtrl(document.form.wan_lcp_intv, 0);
+		inputCtrl(document.form.wan_lcp_fail, 0);	
+	}
 }
 
 </script>
@@ -958,7 +984,7 @@ function pass_checked(obj){
 						<tr>
 							<th>VLAN ID</th>
 							<td>
-								<input type="text" name="ewan_vid" maxlength="4" class="input_6_table" value="<% nvram_get("ewan_vid"); %>" onKeyPress="return validator.isNumber(this,event);"> ( 0 ~ 4095 )
+								<input type="text" name="ewan_vid" maxlength="4" class="input_6_table" value="<% nvram_get("ewan_vid"); %>" onKeyPress="return validator.isNumber(this,event);"> ( 1 ~ 4094 )
 							</td>
 						</tr>
 						<tr>
@@ -1095,10 +1121,18 @@ function pass_checked(obj){
 		<tr>
 			<th><a class="hintstyle" href="javascript:void(0);">Enable PPP Echo Detect</a></th><!--untranslated-->
 			<td>
-				<input type="radio" name="wan_ppp_echo" class="input" value="1" <% nvram_match("wan_ppp_echo", "1", "checked"); %> /><#checkbox_Yes#>
-				<input type="radio" name="wan_ppp_echo" class="input" value="0" <% nvram_match("wan_ppp_echo", "0", "checked"); %> /><#checkbox_No#>
+				<input type="radio" name="wan_ppp_echo" class="input" value="1" <% nvram_match("wan_ppp_echo", "1", "checked"); %> onclick="lcp_control()"/><#checkbox_Yes#>
+				<input type="radio" name="wan_ppp_echo" class="input" value="0" <% nvram_match("wan_ppp_echo", "0", "checked"); %> onclick="lcp_control()"/><#checkbox_No#>
 			</td>
-		</tr>		
+		</tr>
+		<tr>
+			<th><a class="hintstyle" href="javascript:void(0);">LCP Echo Interval</a></th><!--untranslated-->
+            <td><input type="text" maxlength="6" class="input_6_table" name="wan_lcp_intv" value="<% nvram_get("wan_lcp_intv"); %>" onkeypress="return validator.isNumber(this, event)" autocorrect="off" autocapitalize="off"/></td>
+		</tr>	
+		<tr>
+			<th><a class="hintstyle" href="javascript:void(0);">LCP Echo Failure</a></th><!--untranslated-->
+            <td><input type="text" maxlength="6" class="input_6_table" name="wan_lcp_fail" value="<% nvram_get("wan_lcp_fail"); %>" onkeypress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"/></td>
+		</tr>			
           </table>
 
       <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -1115,7 +1149,7 @@ function pass_checked(obj){
           	<!-- 2008.03 James. patch for Oleg's patch. } -->
         	</tr>
 		<tr id="vpn_dhcp">
-		<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,);"-->Enable VPN + DHCP Connection<!--/a--></th>
+		<th><#PPPConnection_x_vpn_dhcp_itemname#></th>
 		<td><input type="radio" name="wan_vpndhcp" class="input" value="1" onclick="return change_common_radio(this, 'IPConnection', 'wan_vpndhcp', 1)" <% nvram_match("wan_vpndhcp", "1", "checked"); %> /><#checkbox_Yes#>
 		    <input type="radio" name="wan_vpndhcp" class="input" value="0" onclick="return change_common_radio(this, 'IPConnection', 'wan_vpndhcp', 0)" <% nvram_match("wan_vpndhcp", "0", "checked"); %> /><#checkbox_No#>
 		</td>

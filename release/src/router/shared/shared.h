@@ -112,7 +112,7 @@ enum {
 #define GIF_LINKLOCAL  0x0001  /* return link-local addr */
 #define GIF_PREFIXLEN  0x0002  /* return addr & prefix */
 
-#define EXTEND_AIHOME_API_LEVEL		1
+#define EXTEND_AIHOME_API_LEVEL		6
 #define EXTEND_HTTPD_AIHOME_VER		0
 
 #define EXTEND_ASSIA_API_LEVEL		1
@@ -164,7 +164,10 @@ extern char *upper_strstr(const char *const str, const char *const target);
 extern void chld_reap(int sig);
 extern int get_wan_proto(void);
 #ifdef RTCONFIG_IPV6
+extern char *ipv6_nvname(const char *name);
+extern char *ipv6_nvname_by_unit(const char *name, int unit);
 extern int get_ipv6_service(void);
+extern int get_ipv6_service_by_unit(int unit);
 #define ipv6_enabled()	(get_ipv6_service() != IPV6_DISABLED)
 extern const char *ipv6_router_address(struct in6_addr *in6addr);
 extern const char *ipv6_gateway_address(void);
@@ -187,6 +190,9 @@ extern int get_radio(int unit, int subunit);
 extern void set_radio(int on, int unit, int subunit);
 extern int nvram_get_int(const char *key);
 extern int nvram_set_int(const char *key, int value);
+extern double nvram_get_double(const char *key);
+extern int nvram_set_double(const char *key, double value);
+
 //	extern long nvram_xget_long(const char *name, long min, long max, long def);
 #ifdef RTCONFIG_SSH
 extern int nvram_get_file(const char *key, const char *fname, int max);
@@ -290,6 +296,7 @@ enum {
 	MODEL_RTAC88U,
 	MODEL_RTAC3100,
 	MODEL_RTAC5300,
+	MODEL_RTAC5300R,
 	MODEL_RTN14UHP,
 	MODEL_RTN10U,
 	MODEL_RTN10P,
@@ -453,7 +460,7 @@ enum led_id {
 #ifdef RTCONFIG_RESET_SWITCH
 	LED_RESET_SWITCH,
 #endif
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 	RPM_FAN,	/* use to control FAN RPM (Hi/Lo) */
 #endif
 	LED_ID_MAX,	/* last item */
@@ -493,6 +500,7 @@ static inline int have_usb3_led(int model)
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
 			return 1;
 	}
 	return 0;
@@ -828,7 +836,6 @@ extern int free_caches(const char *clean_mode, const int clean_time, const unsig
 extern void iface_name_str(enum iface_id id, char *str);
 extern int load_ifaces_stats(struct ifaces_stats *old, struct ifaces_stats *new, char *exclude);
 extern int update_6rd_info(void);
-extern const char *get_wanip(void);
 extern int is_private_subnet(const char *ip);
 extern const char *get_wanface(void);
 extern const char *get_wanip(void);
@@ -836,7 +843,6 @@ extern int is_intf_up(const char* ifname);
 extern uint32_t crc_calc(uint32_t crc, const char *buf, int len);
 #ifdef RTCONFIG_IPV6
 extern const char *get_wan6face(void);
-extern int get_ipv6_service(void);
 extern const char *ipv6_router_address(struct in6_addr *in6addr);
 extern const char *ipv6_address(const char *ipaddr6);
 extern const char *ipv6_prefix(struct in6_addr *in6addr);
@@ -872,7 +878,16 @@ extern void StampToDate(unsigned long timestamp, char *date);
 extern int check_filesize_over(char *path, long int size);
 extern time_t get_last_month_timestamp();
 extern int get_iface_hwaddr(char *name, unsigned char *hwaddr);
-#define xstart(args...)	_xstart(args, NULL)
+#ifdef RTCONFIG_TRAFFIC_LIMITER
+extern int TL_UNIT_S; // traffic limiter dual wan unit start
+extern int TL_UNIT_E; // traffic limiter dual wan unit end
+extern unsigned int traffic_limiter_read_bit(const char *type);
+extern void traffic_limiter_set_bit(const char *type, int unit);
+extern void traffic_limiter_clear_bit(const char *type, int unit);
+extern double traffic_limiter_get_realtime(int unit);
+extern int traffic_limiter_dualwan_check(char *dualwan_mode);
+#endif
+#define xstart(args...) _xstart(args, NULL)
 extern int _xstart(const char *cmd, ...);
 extern void run_custom_script(char *name, char *args);
 extern void run_custom_script_blocking(char *name, char *args);
@@ -1130,7 +1145,7 @@ static inline int is_usb3_port(char *usb_node)
 #define WAN0DEV "vlan2"
 #endif
 
-#ifdef RTAC5300
+#if defined(RTAC5300) || defined(RTAC5300R)
 #define CPU_PORT "7"
 #define WAN0DEV "vlan2"
 #endif

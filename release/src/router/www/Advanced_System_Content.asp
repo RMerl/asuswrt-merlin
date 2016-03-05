@@ -12,6 +12,7 @@
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="pwdmeter.css">
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -19,45 +20,6 @@
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language-"JavaScript" type="text/javascript" src="/merlin.js"></script>
-<style>
-#ClientList_Block_PC{
-	border:1px outset #999;
-	background-color:#576D73;
-	position:absolute;
-	*margin-top:27px;	
-	margin-left:121px;
-	*margin-left:-353px;
-	width:345px;
-	text-align:left;	
-	height:auto;
-	overflow-y:auto;
-	z-index:200;
-	padding: 1px;
-	display:none;
-}
-#ClientList_Block_PC div{
-	background-color:#576D73;
-	height:auto;
-	*height:20px;
-	line-height:20px;
-	text-decoration:none;
-	font-family: Lucida Console;
-	padding-left:2px;
-}
-
-#ClientList_Block_PC a{
-	background-color:#EFEFEF;
-	color:#FFF;
-	font-size:12px;
-	font-family:Arial, Helvetica, sans-serif;
-	text-decoration:none;	
-}
-#ClientList_Block_PC div:hover, #ClientList_Block a:hover{
-	background-color:#3366FF;
-	color:#FFFFFF;
-	cursor:default;
-}	
-</style>
 <script>
 time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
 time_mon = uptimeStr.substring(9,12);
@@ -235,7 +197,7 @@ function applyRule(){
 		}
 
 		if(document.form.http_clientlist.value != '<% nvram_get("http_clientlist"); %>'){
-			document.form.action_script.value = "restart_time;restart_httpd";
+			document.form.action_script.value = "restart_time;restart_httpd;restart_upnp";
 		}
 
 		if(document.form.http_passwd2.value.length > 0){
@@ -273,7 +235,7 @@ function applyRule(){
 				|| document.form.misc_httpport_x.value != '<% nvram_get("misc_httpport_x"); %>'
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
 			){
-			document.form.action_script.value = "restart_time;restart_httpd";
+			document.form.action_script.value = "restart_time;restart_httpd;restart_upnp";
 			if(document.form.http_enable.value == "0"){	//HTTP
 				if(isFromWAN)
 					document.form.flag.value = "http://" + location.hostname + ":" + document.form.misc_httpport_x.value;
@@ -908,53 +870,23 @@ function keyBoardListener(evt){
 		addRow(document.form.http_client_ip_x_0, 4);
 }
 
-//Viz add 2012.02 LAN client ip { start
-
-function showLANIPList(){
-	var htmlCode = "";
-
-	if(clientList.length == 0){
-				document.getElementById("pull_arrow").style.display = "none";
-	}
-	else{
-		for(var i=0; i<clientList.length;i++){
-			var clientObj = clientList[clientList[i]];
-
-			if(clientObj.ip == "offline") clientObj.ip = "";
-			if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
-
-			htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
-			htmlCode += clientObj.ip;
-			htmlCode += '\');"><strong>';
-			htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
-			htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-		}
-
-		document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
-	}
-}
-
 function setClientIP(ipaddr){
 	document.form.http_client_ip_x_0.value = ipaddr;
 	hideClients_Block();
-	over_var = 0;
 }
-
-var over_var = 0;
-var isMenuopen = 0;
 
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
-	isMenuopen = 0;
 }
 
 function pullLANIPList(obj){
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';		
+		element.style.display = 'block';		
 		document.form.http_client_ip_x_0.focus();		
-		isMenuopen = 1;
 	}
 	else
 		hideClients_Block();
@@ -1050,7 +982,7 @@ function display_spec_IP(flag){
 	else{
 		document.getElementById("http_client_table").style.display = "";
 		document.getElementById("http_clientlist_Block").style.display = "";
-		setTimeout("showLANIPList();", 1000);
+		setTimeout("showDropdownClientList('setClientIP', 'ip', 'all', 'ClientList_Block_PC', 'pull_arrow', 'online');", 1000);
 	}
 }
 
@@ -1371,8 +1303,8 @@ function paste_password(){
 									<div>
 										<select name="dst_start_m" class="input_option"></select>&nbsp;<#month#> &nbsp;
 										<select name="dst_start_w" class="input_option"></select>&nbsp;
-										<select name="dst_start_d" class="input_option"></select>&nbsp;<#weekday#> &nbsp;
-										<select name="dst_start_h" class="input_option"></select>&nbsp;<#hour_time#> &nbsp;
+										<select name="dst_start_d" class="input_option"></select>&nbsp;<#diskUtility_week#> & <#Day#> &nbsp;
+										<select name="dst_start_h" class="input_option"></select>&nbsp;<#Hour#> &nbsp;
 									</div>
 								</div>
 					</td>	
@@ -1384,8 +1316,8 @@ function paste_password(){
 									<div>
 										<select name="dst_end_m" class="input_option"></select>&nbsp;<#month#> &nbsp;
 										<select name="dst_end_w" class="input_option"></select>&nbsp;
-										<select name="dst_end_d" class="input_option"></select>&nbsp;<#weekday#> &nbsp;
-										<select name="dst_end_h" class="input_option"></select>&nbsp;<#hour_time#> &nbsp;
+										<select name="dst_end_d" class="input_option"></select>&nbsp;<#diskUtility_week#> & <#Day#> &nbsp;
+										<select name="dst_end_h" class="input_option"></select>&nbsp;<#Hour#> &nbsp;
 									</div>
 								</div>
 					</td>
@@ -1490,9 +1422,9 @@ function paste_password(){
 				<tr>
 						<!-- client info -->
 					<td width="80%">
-						<input type="text" class="input_32_table" maxlength="18" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" autocorrect="off" autocapitalize="off">
-						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">	
-						<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
+						<input type="text" class="input_32_table" maxlength="18" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
+						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_client#>">	
+						<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:122px;width:345px;"></div>	
 					 </td>
 					 <td width="20%">	
 						<input class="add_btn" type="button" onClick="addRow(document.form.http_client_ip_x_0, 4);" value="">

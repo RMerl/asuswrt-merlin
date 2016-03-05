@@ -3,7 +3,7 @@ include ../common.mak
 ASUSWRTTOOLSDIR = $(SRCBASE)/router/tools/Lnx_AsusWrtDictPrep
 ASUSWRTTOOLSDIR2 = $(SRCBASE)/router/tools/Lnx_ToolHelp
 
-MODELS_HAVE_USB3 = "DSL-AC68U RT-AC3200 RT-AC87U RT-AC69U RT-AC68U RT-AC56S RT-AC56U RT-AC55U RT-AC55UHP RT-N18U RT-N65U RT-AC88U RT-AC3100 RT-AC5300"
+MODELS_HAVE_USB3 = "DSL-AC68U RT-AC3200 RT-AC87U RT-AC69U RT-AC68U RT-AC56S RT-AC56U RT-AC55U RT-AC55UHP RT-N18U RT-N65U RT-AC88U RT-AC3100 RT-AC5300 RT-AC5300R"
 
 all:
 
@@ -78,22 +78,19 @@ ifeq ($(RTCONFIG_8M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/wifi_hw_sw.png
 	rm -rf $(INSTALLDIR)/www/images/qis/security_key.png
 	rm -rf $(INSTALLDIR)/www/images/qis/select_wireless.jpg
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-listover.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/vender-listover.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/Bandwidth_Limiter.png
-	cd $(INSTALLDIR)/www/images/New_ui/networkmap && ln -sf client-list.png client-listover.png && ln -sf vender-list.png vender-listover.png && cd $(TOP)/www
+	cd $(INSTALLDIR)/www/images/New_ui/networkmap && ln -sf vender-list.png vender-listover.png && cd $(TOP)/www
 endif
 ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync/invite_model.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/bg.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-list.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-listover.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-list.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/vender-list.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/vender-listover.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client.svg
 	rm -rf $(INSTALLDIR)/www/Main_ConnStatus_Content.asp
 	rm -rf $(INSTALLDIR)/www/svghtc
-	rm -rf $(INSTALLDIR)/www/svg.js
 	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
 	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_last24.asp
 	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_realtime.asp
@@ -369,7 +366,7 @@ ifneq ($(RTCONFIG_SNMPD), y)
 	rm -rf $(INSTALLDIR)/www/Advanced_SNMP_Content.asp
 endif
 
-ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), RT-AC3200 RT-AC5300))
+ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), RT-AC3200 RT-AC5300 RT-AC5300R RT-AC88U))
 	rm -rf $(INSTALLDIR)/www/Advanced_Smart_Connect.asp
 	rm -rf $(INSTALLDIR)/www/images/New_ui/smart_connect.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/smart_connect_concept.gif
@@ -410,7 +407,7 @@ ifeq ($(BUILD_NAME),4G-AC55U)
 endif
 
 
-ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), RT-AC88U RT-AC3100 RT-AC5300 RT-AC3200))
+ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), RT-AC88U RT-AC3100 RT-AC5300 RT-AC5300R RT-AC3200))
 	rm -rf $(INSTALLDIR)/www/QIS_wizard_m.htm
 	rm -rf $(INSTALLDIR)/www/css/effect.css
 	rm -rf $(INSTALLDIR)/www/qis_m
@@ -459,4 +456,13 @@ ifneq ($(RTCONFIG_WTFAST), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/logout_hover.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade_hover.svg	
+endif
+
+ifeq ($(RTCONFIG_NOIPTV), y)
+	rm -rf $(INSTALLDIR)/www/Advanced_IPTV_Content.asp
+endif
+
+ifneq ($(RTCONFIG_TRAFFIC_LIMITER), y)
+	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_TrafficLimiter.asp
+	rm -rf $(INSTALLDIR)/www/ajax/getTrafficLimiter.asp
 endif

@@ -79,6 +79,8 @@ int rtkswitch_ioctl(int val, int val2, int val3)
 	case GET_REG:
 	case SET_EXT_MODE:
 	case SET_CPU:
+	case GET_TMODE:
+	case GET_PHY_REG9:
 		p = (void*)&value;
 		value = (unsigned int)val2;
 		break;
@@ -86,6 +88,8 @@ int rtkswitch_ioctl(int val, int val2, int val3)
 	/* w/ 2 options */
 	case TEST_REG:
 	case SET_REG:
+	case SET_TMODE:
+	case SET_PHY_REG9:
 		p = (void*)&asics;
 		asics.rtk_reg = (rtk_uint32)val2;
 		asics.rtk_val = (rtk_uint32)val3;
@@ -138,17 +142,32 @@ int config_rtkswitch(int argc, char *argv[])
 	return rtkswitch_ioctl(val, val2, val3);
 }
 
+#if defined(RTCONFIG_EXT_RTL8370MB)
+#define MAX_RTL_PORTS 8
+#else
+#define MAX_RTL_PORTS 4
+#endif
 typedef struct {
-	unsigned int link[4];
-	unsigned int speed[4];
+	unsigned int link[MAX_RTL_PORTS];
+	unsigned int speed[MAX_RTL_PORTS];
 } phyState;
 
-int ext_rtk_phyState(int verbose)
+int ext_rtk_phyState(int verbose, char* BCMPorts)
 {
 	int model;
-	char buf[32];
+	char buf[64];
 	int *o;
+#if defined(RTCONFIG_EXT_RTL8370MB)
+#ifdef RTAC5300R
+	/* L1=R2,L2=R3,L3=R4,L4=B3,L5=R0,L6=R1,L7=R5,L8=B4,T1=B1<>R7,T2=B2<>R6*/
+	const char *portMark = "L1=%C;L2=%C;L3=%C;L4=%C;L5=%C;L6=%C;L7=%C;L8=%C;T1=%C;T2=%C;";
+#else
+	const char *portMark = "P0=%C;P1=%C;P2=%C;P3=%C;P4=%C;P5=%C;P6=%C;P7=%C;";
+#endif
+#else
 	const char *portMark = "L5=%C;L6=%C;L7=%C;L8=%C;";
+#endif
+	int i, ret;
 	int fd = open(RTKSWITCH_DEV, O_RDONLY);
 
 	if (fd < 0) {
@@ -158,18 +177,26 @@ int ext_rtk_phyState(int verbose)
 
 	phyState pS;
 
-	pS.link[0] = pS.link[1] = pS.link[2] = pS.link[3] = 0;
-	pS.speed[0] = pS.speed[1] = pS.speed[2] = pS.speed[3] = 0;
+	for(i = 0 ; i < MAX_RTL_PORTS ; i++){
+		pS.link[i] = 0;
+		pS.speed[i] = 0;
+	}
 
         switch(model = get_model()) {
         case MODEL_RTAC5300:
+        case MODEL_RTAC5300R:
 		{
 		/* RTK_LAN  BRCM_LAN  WAN  POWER */
 		/* R0 R1 R2 R3 B4 B0 B1 B2 B3 */
 		/* L8 L7 L6 L5 L4 L3 L2 L1 W0 */
 		
-		const int porder[4] = {3,2,1,0};
+#if defined(RTCONFIG_EXT_RTL8370MB)
+		const int porder[MAX_RTL_PORTS] = {2,3,4,0,1,5,6,7};
 		o = porder;
+#else
+		const int porder[MAX_RTL_PORTS] = {3,2,1,0};
+		o = porder;
+#endif
 
 		break;
 		}
@@ -201,16 +228,52 @@ int ext_rtk_phyState(int verbose)
 
 	close(fd);
 
+#if defined(RTCONFIG_EXT_RTL8370MB)
+	sprintf(buf, portMark,
+#ifndef RTAC5300R
+		(pS.link[o[0]] == 1) ? (pS.speed[o[0]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[1]] == 1) ? (pS.speed[o[1]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[2]] == 1) ? (pS.speed[o[2]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[4]] == 1) ? (pS.speed[o[4]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[5]] == 1) ? (pS.speed[o[5]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[6]] == 1) ? (pS.speed[o[6]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[7]] == 1) ? (pS.speed[o[7]] == 2) ? 'G' : 'M': 'X'
+#else
+		(pS.link[o[0]] == 1) ? (pS.speed[o[0]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[1]] == 1) ? (pS.speed[o[1]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[2]] == 1) ? (pS.speed[o[2]] == 2) ? 'G' : 'M': 'X',
+		BCMPorts[2],
+		(pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[4]] == 1) ? (pS.speed[o[4]] == 2) ? 'G' : 'M': 'X',
+		(pS.link[o[5]] == 1) ? (pS.speed[o[5]] == 2) ? 'G' : 'M': 'X',
+		BCMPorts[1],
+		(pS.link[o[7]] == 1) ? (BCMPorts[4] == 'G' && pS.speed[o[7]] == 2) ? 'G' : 'X': 'X', 	// T1: BCM_P1/RTL_P7
+		(pS.link[o[6]] == 1) ? (BCMPorts[3] == 'G' && pS.speed[o[6]] == 2) ? 'G' : 'X': 'X'	// T2: BCM_P2/RTL_P6
+#endif
+		);
+#else
 	sprintf(buf, portMark,
 		(pS.link[o[0]] == 1) ? (pS.speed[o[0]] == 2) ? 'G' : 'M': 'X',
 		(pS.link[o[1]] == 1) ? (pS.speed[o[1]] == 2) ? 'G' : 'M': 'X',
 		(pS.link[o[2]] == 1) ? (pS.speed[o[2]] == 2) ? 'G' : 'M': 'X',
 		(pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 'G' : 'M': 'X');
+#endif
 
 	if(verbose)
 		printf("%s\n", buf);
 
-	return (pS.link[o[0]] == 1)|(pS.link[o[1]] == 1)|(pS.link[o[2]] == 1)|(pS.link[o[3]] == 1);
+	ret = 0;
+	for(i = 0; i < MAX_RTL_PORTS; i++){
+#ifdef RTAC5300R
+		if(i >= 6) continue;
+#endif
+		if(pS.link[o[i]] == 1){
+			ret = 1;
+			break;
+		}
+	}
+	return ret;
 }
 
 void usage(char *cmd)
@@ -228,11 +291,15 @@ void usage(char *cmd)
         	case GET_REG:
 		case SET_EXT_MODE:
 		case SET_CPU:
+		case GET_PHY_REG9:
+		case GET_TMODE:
 			rtk_cmds_pa[ci] = 1;
                 	break;
 
         	case TEST_REG:
         	case SET_REG:
+		case SET_PHY_REG9:
+		case SET_TMODE:
 			rtk_cmds_pa[ci] = 2;
                 	break;
 

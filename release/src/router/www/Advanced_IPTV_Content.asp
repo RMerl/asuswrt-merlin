@@ -69,6 +69,30 @@ function initial(){
 		document.form.switch_stb_x.remove(5);	//LAN1 & LAN2
 		document.form.switch_stb_x.remove(1);	//LAN1
 	}
+	else if(based_modelid == "RT-AC5300R"){ //MODELDEP: RT-AC5300R : TRUNK ports
+		document.getElementById("switch_stb_x").options[3].text = "LAN4"; 	 //P3
+		document.getElementById("switch_stb_x").options[4].text = "LAN8";	 //P4
+		document.getElementById("switch_stb_x").options[6].text = "LAN4 & LAN8"; //P3+P4
+		document.form.switch_stb_x.remove(5);   //LAN1 & LAN2
+		document.form.switch_stb_x.remove(2);   //LAN2
+		document.form.switch_stb_x.remove(1);   //LAN1
+		document.getElementById("voip_lan").innerHTML = "LAN4";	//P3
+		document.getElementById("iptv_lan").innerHTML = "LAN8"; //P4
+		document.getElementById("voip_port3").innerHTML = "LAN port 4"; //P3
+		document.getElementById("iptv_port4").innerHTML = "LAN port 8"; //P4
+	}
+	else if(based_modelid == "RT-AC53"){
+		document.getElementById("switch_stb_x").options[3].text = "LAN1";
+		document.getElementById("switch_stb_x").options[4].text = "LAN2";
+		document.getElementById("switch_stb_x").options[6].text = "LAN1 & LAN2";
+		document.form.switch_stb_x.remove(6);
+		document.form.switch_stb_x.remove(4);
+		document.form.switch_stb_x.remove(3);
+		document.getElementById("voip_lan").innerHTML = "LAN1";
+		document.getElementById("iptv_lan").innerHTML = "LAN2";
+		document.getElementById("voip_port3").innerHTML = "LAN port 1";
+		document.getElementById("iptv_port4").innerHTML = "LAN port 2";
+	}
 
 	if( based_modelid != "RT-AC3200" &&
 		based_modelid != "RT-AC87U" && 
@@ -390,7 +414,7 @@ function change_rmvlan(){
 		<tr id="wan_stb_x">
 		<th width="30%"><#Layer3Forwarding_x_STB_itemname#></th>
 		<td align="left">
-		    <select name="switch_stb_x" class="input_option">
+		    <select id="switch_stb_x" name="switch_stb_x" class="input_option">
 			<option value="0" <% nvram_match( "switch_stb_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 			<option value="1" <% nvram_match( "switch_stb_x", "1", "selected"); %>>LAN1</option>
 			<option value="2" <% nvram_match( "switch_stb_x", "2", "selected"); %>>LAN2</option>
@@ -403,11 +427,11 @@ function change_rmvlan(){
 		</tr>
 		<tr id="wan_iptv_x">
 	  	<th width="30%">IPTV STB Port</th>
-	  	<td>LAN4</td>
+	  	<td id="iptv_lan">LAN4</td>
 		</tr>
 		<tr id="wan_voip_x">
 	  	<th width="30%">VoIP Port</th>
-	  	<td>LAN3</td>
+	  	<td id="voip_lan">LAN3</td>
 		</tr>
 		<tr id="wan_internet_x">
 	  	<th width="30%"><#Internet#></th>
@@ -417,14 +441,14 @@ function change_rmvlan(){
 	  	</td>
 		</tr>
 	    	<tr id="wan_iptv_port4_x">
-	    	<th width="30%">LAN port 4</th>
+	    	<th id="iptv_port4" width="30%">LAN port 4</th>
 	  	<td>
 			VID&nbsp;<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;&nbsp;&nbsp;
 			PRIO&nbsp;<input type="text" name="switch_wan1prio" class="input_3_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">
 	  	</td>
 		</tr>
 		<tr id="wan_voip_port3_x">
-	  	<th width="30%">LAN port 3</th>
+	  	<th id="voip_port3" width="30%">LAN port 3</th>
 	  	<td>
 			VID&nbsp;<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;&nbsp;&nbsp;
 			PRIO&nbsp;<input type="text" name="switch_wan2prio" class="input_3_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">

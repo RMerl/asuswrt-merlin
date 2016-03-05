@@ -1,6 +1,6 @@
 /* @(#) common definitions for udpxy
  *
- * Copyright 2008-2011 Pavel V. Cherenkov (pcherenkov@gmail.com)
+ * Copyright 2008-2012 Pavel V. Cherenkov (pcherenkov@gmail.com)
  *
  *  This file is part of udpxy.
  *
@@ -30,7 +30,8 @@ static const int ERR_PARAM      =  1;    /* invalid parameter(s) */
 static const int ERR_REQ        =  2;    /* error parsing request */
 static const int ERR_INTERNAL   =  3;    /* internal error */
 
-static const int LQ_BACKLOG = 1;    /* server backlog value */
+static const int LQ_BACKLOG = 16;    /* server backlog value */
+static const int RCV_LWMARK = 0;     /* low watermaek on the receiving (m-cast) socket */
 
 /* max size of string with IPv4 address */
 #define IPADDR_STR_SIZE 16
@@ -41,11 +42,18 @@ static const int LQ_BACKLOG = 1;    /* server backlog value */
 /* max length of an HTTP command */
 #define MAX_CMD_LEN     31
 
+/* max length of a command parameter (address:port, etc.) */
+#define MAX_PARAM_LEN   79
+
+/* max length of a command's supplementary part (URI-embedded variables) */
+#define MAX_TAIL_LEN    255
+
 static const int    ETHERNET_MTU        = 1500;
 
 /* socket timeouts in seconds */
 #define RLY_SOCK_TIMEOUT   5
 #define SRVSOCK_TIMEOUT    1
+#define SSEL_TIMEOUT       1
 
 /* time-out (sec) to hold buffered data
  * before sending/flushing to client(s) */
@@ -65,6 +73,11 @@ typedef u_short flag_t;
 
 /* max size of string with IPv4 address */
 #define IPADDR_STR_SIZE 16
+
+typedef struct tmfd {
+    int     fd;
+    time_t  atime;
+} tmfd_t;
 
 #endif /* UDPXY_H_0110081654 */
 

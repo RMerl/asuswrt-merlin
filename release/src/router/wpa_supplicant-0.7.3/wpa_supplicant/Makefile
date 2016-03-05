@@ -743,15 +743,15 @@ ifeq ($(CONFIG_TLS), openssl)
 ifdef TLS_FUNCS
 CFLAGS += -DEAP_TLS_OPENSSL
 OBJS += ../src/crypto/tls_openssl.o
-LIBS += -lssl
+LIBS += -lssl-1.0.0q
 endif
 OBJS += ../src/crypto/crypto_openssl.o
 OBJS_p += ../src/crypto/crypto_openssl.o
 ifdef NEED_FIPS186_2_PRF
 OBJS += ../src/crypto/fips_prf_openssl.o
 endif
-LIBS += -lcrypto
-LIBS_p += -lcrypto
+LIBS += -lcrypto-1.0.0q
+LIBS_p += -lcrypto-1.0.0q
 endif
 
 ifeq ($(CONFIG_TLS), gnutls)

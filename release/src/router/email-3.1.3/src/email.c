@@ -41,6 +41,11 @@
 #include "error.h"
 #include "mimeutils.h"
 
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+	int  report_f = 0;
+	int  sendId = 0;
+	char shell[64] = {0};
+#endif
 static void
 defaultDestr(void *ptr)
 {
@@ -100,6 +105,10 @@ usage(void)
 	    "    -b, -blank-mail           Allows you to send a blank email\n"
 	    "    -e, -encrypt              Encrypt the e-mail for first recipient before "
 	    "sending\n"
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+	    "    -l, -script shell         Exec script when mail send successful/Error\n"
+	    "    -z, -id number            For identify ActMail server event\n"
+#endif
 	    "    -s, -subject subject      Subject of message\n"
 	    "    -r, -smtp-server server   Specify a temporary SMTP server for sending\n"
 	    "    -p, -smtp-port port       Specify the SMTP port to connect to\n"
@@ -209,7 +218,11 @@ main(int argc, char **argv)
 	int opt_index = 0;          /* for getopt */
 	char *cc_string = NULL;
 	char *bcc_string = NULL;
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+	const char *opts = "f:n:a:p:oVedvtb?c:s:r:u:i:g:m:H:x:l:z:";
+#else
 	const char *opts = "f:n:a:p:oVedvtb?c:s:r:u:i:g:m:H:x:";
+#endif
 	FILE *fp;
 	char tmp[128]={0};
 
@@ -262,6 +275,15 @@ main(int argc, char **argv)
 		case 'V':
 			Mopts.verbose = true;
 			break;
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+		case 'l':
+			snprintf(shell, sizeof(shell), "%s", xstrdup(optarg));
+			break;
+		case 'z':
+			report_f = 1;
+			sendId = atoi(xstrdup(optarg));
+			break;
+#endif
 		case 'p':
 			setConfValue("SMTP_PORT", xstrdup(optarg));
 			break;

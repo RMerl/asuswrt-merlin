@@ -10,6 +10,8 @@ install: all
 ifeq ($(BUILD_NAME), RT-AC66U)
 	install lld2d.rtac66u $(INSTALLDIR)/usr/sbin/lld2d
 	install lld2d.rtac66r $(INSTALLDIR)/usr/sbin/lld2d.rtac66r
+	install lld2d.rtac66w $(INSTALLDIR)/usr/sbin/lld2d.rtac66w
+	install lld2d.rtac1750 $(INSTALLDIR)/usr/sbin/lld2d.rtac1750
 	install icon.rtn66u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtn66u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else ifeq ($(BUILD_NAME), RT-N66U)

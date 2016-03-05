@@ -159,12 +159,7 @@ function initial(){
 	cal_panel_block("agreement_panel", 0.25);
 
 	if(!rrsut_support)
-		document.getElementById("rrsLink").style.display = "none";
-	
-	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4){
-		document.getElementById("smart_sync_link").style.display = "none";
-		document.getElementById("rrsLink").style.display = "none";
-	}		
+		document.getElementById("rrsLink").style.display = "none";		
 }
 
 function valid_is_wan_ip(ip_obj){
@@ -669,8 +664,8 @@ The English version of this agreement is the controlling version. Any translatio
 This agreement constitutes the entire agreement between you and ASUS with respect to AiCloud 2.0 and supersedes all previous communications, representations, understandings and agreements, either oral or written, between you and ASUS regarding AiCloud 2.0. This agreement may not be modified or waived except in writing and signed by an officer or other authorized representative of each party. If any provision is held invalid, all other provisions shall remain valid, unless such invalidity would frustrate the purpose of this agreement. The failure of either party to enforce any rights granted hereunder or to take action against the other party in the event of any breach hereunder will not waive that party’s as to subsequent enforcement of rights or subsequent action in the event of future breaches. AiCloud 2.0 reserves the right to: (a) add or remove functions and features or to provide updates, upgrades or programming fixes to AiCloud 2.0 with or without prior notice to you; (b) require you to agree to a new agreement in order to use any new version of AiCloud 2.0 that it releases; or (c) require you to upgrade to a new version of AiCloud 2.0 by discontinuing service or support to any prior version of AiCloud 2.0 without notice.
 </div>
 			<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;">
-				<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel();" value="<#CTL_Disagree#>">
-				<input class="button_gen" type="button"  onclick="_confirm();" value="<#CTL_Agree#>">
+				<input class="button_gen_long" type="button" style="margin-left:20%;margin-top:18px;" onclick="cancel();" value="<#CTL_Disagree#>">
+				<input class="button_gen_long" type="button"  onclick="_confirm();" value="<#CTL_Agree#>">
 			</div>
 	</div>
 	<div id="hiddenMask" class="popup_bg" style="z-index:999;">

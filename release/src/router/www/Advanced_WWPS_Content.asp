@@ -720,7 +720,7 @@ function _change_wl_advanced_unit_status(__unit){
 							$('#radio_wps_enable').iphoneSwitch('<% nvram_get("wps_enable"); %>', 
 								 function() {
 									if(wl_ssid_closed == 1){
-										alert("If you want to enable WPS, you need to disable hiding " + band_string + " SSID first");
+										alert(band_string + " : <#note_hide_SSID_WPS#>");
 										$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 										return false;
 									}
@@ -742,7 +742,7 @@ function _change_wl_advanced_unit_status(__unit){
 											if(	document.form.wl0_auth_mode_x.value == "shared"
 											||	document.form.wl0_auth_mode_x.value == "psk"	||	document.form.wl0_auth_mode_x.value == "wpa"
 											||	document.form.wl0_auth_mode_x.value == "open" && (document.form.wl0_wep_x.value == "1" || document.form.wl0_wep_x.value == "2")){
-												alert("If you want to enable WPS, you need to cheange " + band_string + " Authentication Method to WPA2 or WPA-Auto first");
+												alert(band_string + " : <#note_auth_wpa_WPS#>");
 												$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 												return false;									
 											}
@@ -757,7 +757,7 @@ function _change_wl_advanced_unit_status(__unit){
 											if(	document.form.wl1_auth_mode_x.value == "shared"
 											||	document.form.wl1_auth_mode_x.value == "psk"	||	document.form.wl1_auth_mode_x.value == "wpa"
 											||	document.form.wl1_auth_mode_x.value == "open" && (document.form.wl1_wep_x.value == "1" || document.form.wl1_wep_x.value == "2")){
-												alert("If you want to enable WPS, you need to cheange " + band_string + " Authentication Method to WPA2 or WPA-Auto first");
+												alert(band_string + " : <#note_auth_wpa_WPS#>");
 												$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 												return false;									
 											}
@@ -773,7 +773,7 @@ function _change_wl_advanced_unit_status(__unit){
 											if(	document.form.wl2_auth_mode_x.value == "shared"
 											||	document.form.wl2_auth_mode_x.value == "psk"	||	document.form.wl2_auth_mode_x.value == "wpa"
 											||	document.form.wl2_auth_mode_x.value == "open" && (document.form.wl2_wep_x.value == "1" || document.form.wl2_wep_x.value == "2")){
-												alert("If you want to enable WPS, you need to cheange " + band_string + " Authentication Method to WPA2 or WPA-Auto first");
+												alert(band_string + " : <#note_auth_wpa_WPS#>");
 												$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 												return false;									
 											}

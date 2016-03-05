@@ -17,7 +17,6 @@
  */
 #include "config.h"
 
-#ifdef HAVE_INOTIFY
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -29,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifdef HAVE_INOTIFY
 #include <sys/resource.h>
 #include <poll.h>
 #ifdef HAVE_SYS_INOTIFY_H
@@ -36,6 +36,7 @@
 #else
 #include "linux/inotify.h"
 #include "linux/inotify-syscalls.h"
+#endif
 #endif
 #include "libav.h"
 
@@ -49,6 +50,9 @@
 #include "playlist.h"
 #include "log.h"
 
+static time_t next_pl_fill = 0;
+
+#ifdef HAVE_INOTIFY
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 #define DESIRED_WATCH_LIMIT 65536
@@ -64,7 +68,6 @@ struct watch
 
 static struct watch *watches;
 static struct watch *lastwatch = NULL;
-static time_t next_pl_fill = 0;
 
 char *get_path_from_wd(int wd)
 {
@@ -277,6 +280,7 @@ int add_dir_watch(int fd, char * path, char * filename)
 
 	return(i);
 }
+#endif
 
 int
 inotify_insert_file(char * name, const char * path)
@@ -365,11 +369,20 @@ inotify_insert_file(char * name, const char * path)
 		inotify_remove_file(path);
 		next_pl_fill = 1;
 	}
-	else if( ts < st.st_mtime )
+	else if( !ts )
 	{
-		if( ts > 0 )
-			DPRINTF(E_DEBUG, L_INOTIFY, "%s is newer than the last db entry.\n", path);
+		DPRINTF(E_DEBUG, L_INOTIFY, "Adding: %s\n", path);
+	}
+	else if( ts != st.st_mtime )
+	{
+		DPRINTF(E_DEBUG, L_INOTIFY, "%s is %s than the last db entry.\n", path, (ts < st.st_mtime) ? "older" : "newer");
 		inotify_remove_file(path);
+	}
+	else
+	{
+		if( ts == st.st_mtime )
+			DPRINTF(E_DEBUG, L_INOTIFY, "%s already exists\n", path);
+		return 0;
 	}
 
 	/* Find the parentID.  If it's not found, create all necessary parents. */
@@ -441,7 +454,6 @@ inotify_insert_directory(int fd, char *name, const char * path)
 	struct dirent * e;
 	char *id, *parent_buf, *esc_name;
 	char path_buf[PATH_MAX];
-	int wd;
 	enum file_types type = TYPE_UNKNOWN;
 	media_types dir_types = ALL_MEDIA;
 	struct media_dir_s* media_path;
@@ -454,27 +466,34 @@ inotify_insert_directory(int fd, char *name, const char * path)
 	}
 	if( sql_get_int_field(db, "SELECT ID from DETAILS where PATH = '%q'", path) > 0 )
 	{
+		fd = 0;
 		DPRINTF(E_DEBUG, L_INOTIFY, "%s already exists\n", path);
-		return 0;
-	}
-
- 	parent_buf = strdup(path);
-	id = sql_get_text_field(db, "SELECT OBJECT_ID from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
-	                            " where d.PATH = '%q' and REF_ID is NULL", dirname(parent_buf));
-	if( !id )
-		id = sqlite3_mprintf("%s", BROWSEDIR_ID);
-	insert_directory(name, path, BROWSEDIR_ID, id+2, get_next_available_id("OBJECTS", id));
-	sqlite3_free(id);
-	free(parent_buf);
-
-	wd = add_watch(fd, path);
-	if( wd == -1 )
-	{
-		DPRINTF(E_ERROR, L_INOTIFY, "add_watch() failed\n");
 	}
 	else
 	{
-		DPRINTF(E_INFO, L_INOTIFY, "Added watch to %s [%d]\n", path, wd);
+		parent_buf = strdup(path);
+		id = sql_get_text_field(db, "SELECT OBJECT_ID from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
+	                            " where d.PATH = '%q' and REF_ID is NULL", dirname(parent_buf));
+		if( !id )
+			id = sqlite3_mprintf("%s", BROWSEDIR_ID);
+		insert_directory(name, path, BROWSEDIR_ID, id+2, get_next_available_id("OBJECTS", id));
+		sqlite3_free(id);
+		free(parent_buf);
+	}
+
+	if( fd > 0 )
+	{
+#ifdef HAVE_INOTIFY
+		int wd = add_watch(fd, path);
+		if( wd == -1 )
+		{
+			DPRINTF(E_ERROR, L_INOTIFY, "add_watch() failed\n");
+		}
+else
+		{
+			DPRINTF(E_INFO, L_INOTIFY, "Added watch to %s [%d]\n", path, wd);
+		}
+#endif
 	}
 
 	media_path = media_dirs;
@@ -616,7 +635,12 @@ inotify_remove_directory(int fd, const char * path)
 
 	/* Invalidate the scanner cache so we don't insert files into non-existent containers */
 	valid_cache = 0;
-	remove_watch(fd, path);
+	if( fd > 0 )
+	{
+#ifdef HAVE_INOTIFY
+		remove_watch(fd, path);
+#endif
+	}
 	sql = sqlite3_mprintf("SELECT ID from DETAILS where (PATH > '%q/' and PATH <= '%q/%c')"
 	                      " or PATH = '%q'", path, path, 0xFF, path);
 	if( (sql_get_table(db, sql, &result, &rows, NULL) == SQLITE_OK) )
@@ -640,6 +664,7 @@ inotify_remove_directory(int fd, const char * path)
 	return ret;
 }
 
+#ifdef HAVE_INOTIFY
 void *
 start_inotify()
 {

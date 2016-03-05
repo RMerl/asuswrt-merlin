@@ -142,7 +142,7 @@ function initial(){
 		var flag = '<% get_parameter("flag"); %>';		
 		var smart_connect_flag_t;
 
-		if(based_modelid == "RT-AC5300")
+		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R")
 			inputCtrl(document.form.smart_connect_t, 1);
 
 		document.getElementById("smartcon_enable_field").style.display = "";
@@ -248,7 +248,7 @@ function genBWTable(_unit){
 				based_modelid == "RT-AC66U" || 
 				based_modelid == "RT-AC3200" || 
 				based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U" ||
-				based_modelid == "RT-AC5300" ||
+				based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" ||
 				based_modelid == "RT-AC53U") && document.form.wl_nmode_x.value == 1){		//N only
 				bws = [0, 1, 2];
 				bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];
@@ -304,7 +304,7 @@ function applyRule(){
 
 	if(validForm()){
         if(document.form.wl_closed[0].checked && document.form.wps_enable.value == 1){ 
-            if(!confirm("<#wireless_JS_Hide_SSID#>")){	/*Selecting Hide SSID will disable WPS. Are you sure ?*/
+            if(!confirm("<#wireless_JS_Hide_SSID#>")){
                 return false;           
             }
  
@@ -314,14 +314,14 @@ function applyRule(){
         if(document.form.wps_enable.value == 1){
             if(document.form.wps_dualband.value == "1" || document.form.wl_unit.value == document.form.wps_band.value){         //9: RT-AC87U dual band WPS
                 if(document.form.wl_auth_mode_x.value == "open" && document.form.wl_wep_x.value == "0"){
-					if(!confirm("<#wireless_JS_WPS_open#>"))	/*Are you sure to configure WPS in Open System (no security) ?*/
+					if(!confirm("<#wireless_JS_WPS_open#>"))
 						return false;           
                 }
                 
                 if( document.form.wl_auth_mode_x.value == "shared"
                  || document.form.wl_auth_mode_x.value == "psk" || document.form.wl_auth_mode_x.value == "wpa"
                  || document.form.wl_auth_mode_x.value == "open" && (document.form.wl_wep_x.value == "1" || document.form.wl_wep_x.value == "2")){              //open wep case
-                    if(!confirm("<#wireless_JS_disable_WPS#>"))	/*Selecting WEP or TKIP Encryption will disable the WPS. Are you sure ?*/
+                    if(!confirm("<#wireless_JS_disable_WPS#>"))
                         return false;   
 					
                     document.form.wps_enable.value = "0";   
@@ -335,7 +335,8 @@ function applyRule(){
 			}
 		}
 
-               if(smart_connect_support && document.form.smart_connect_x.value != 0 && based_modelid == "RT-AC5300")
+               if(smart_connect_support && document.form.smart_connect_x.value != 0 
+			&& (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"))
                        document.form.smart_connect_x.value = document.form.smart_connect_t.value;
 
 		showLoading();
@@ -603,15 +604,19 @@ function tmo_wl_nmode(){
 }
 
 function enableSmartCon(val){
-
 	document.form.smart_connect_x.value = val;
 
-	if(val == 0){
-		if(based_modelid=="RT-AC5300"){
+	if(based_modelid=="RT-AC5300" || based_modelid=="RT-AC5300R"){
+		if(val == 0){
 			document.getElementById("smart_connect_field").style.display = "none";
 			document.getElementById("smartcon_rule_link").style.display = "none";
+		}else if(val > 0){
+			document.getElementById("smart_connect_field").style.display = "";
+			document.getElementById("smartcon_rule_link").style.display = "table-cell";
 		}
+	}
 
+	if(val == 0 || (val == 2 && wl_unit == 0)){
 		document.getElementById("wl_unit_field").style.display = "";
 		document.form.wl_nmode_x.disabled = "";
 		document.getElementById("wl_optimizexbox_span").style.display = "";
@@ -622,29 +627,23 @@ function enableSmartCon(val){
 			regen_5G_mode(document.form.wl_nmode_x, wl_unit)		
 		}else{
 			free_options(document.form.wl_nmode_x);
-			obj.options[0] = new Option("<#Auto#>", 0);
-			obj.options[1] = new Option("N only", 1);
-			obj.options[2] = new Option("Legacy", 2);
+			document.form.wl_nmode_x.options[0] = new Option("<#Auto#>", 0);
+			document.form.wl_nmode_x.options[1] = new Option("N only", 1);
+			document.form.wl_nmode_x.options[2] = new Option("Legacy", 2);
 		}
-		change_wl_nmode(document.form.wl_nmode_x);
-	}
-	else if(val > 0){
-		if(based_modelid=="RT-AC5300"){
-			document.getElementById("smart_connect_field").style.display = "";
-			document.getElementById("smartcon_rule_link").style.display = "table-cell";
-		}
-
+		change_wl_nmode(document.form.wl_nmode_x);		
+	}else{
 		document.getElementById("wl_unit_field").style.display = "none";
 		regen_auto_option(document.form.wl_nmode_x);
 		document.getElementById("wl_optimizexbox_span").style.display = "none";
 		document.getElementById("wl_gmode_checkbox").style.display = "none";
 		regen_auto_option(document.form.wl_bw);
 		regen_auto_option(document.form.wl_channel);
-		regen_auto_option(document.form.wl_nctrlsb);
+		regen_auto_option(document.form.wl_nctrlsb);			
 	}
-	if(based_modelid=="RT-AC5300")
+	
+	if(based_modelid=="RT-AC5300" || based_modelid=="RT-AC5300R")
 		_change_smart_connect(val);
-
 }
 
 function regen_auto_option(obj){
@@ -766,7 +765,7 @@ function regen_auto_option(obj){
 			<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" id="WLgeneral" class="FormTable">
 
 			<tr id="smartcon_enable_field" style="display:none;">
-			  	<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(13,1);"><#smart_connect_enable#></a></th>	<!-- Enable Smart Connect -->
+			  	<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(13,1);"><#smart_connect_enable#></a></th>
 			  	<td>
 			    	<div id="smartcon_enable_block" style="display:none;">
 			    		<span style="color:#FFF;" id="smart_connect_enable_word">&nbsp;&nbsp;</span>
@@ -787,7 +786,15 @@ function regen_auto_option(obj){
 
 								$('#radio_smartcon_enable').iphoneSwitch( smart_connect_flag_t > 0, 
 								 function() {
-									enableSmartCon(1);
+								 	if(based_modelid != "RT-AC5300" && based_modelid != "RT-AC5300R")
+										enableSmartCon(1);
+									else{
+										if(document.form.smart_connect_t.value)
+											enableSmartCon(document.form.smart_connect_t.value);
+										else
+											enableSmartCon(smart_connect_flag_t);
+
+									}
 								 },
 								 function() {
 									enableSmartCon(0);
@@ -799,7 +806,7 @@ function regen_auto_option(obj){
 				<tr id="smart_connect_field" style="display:none;">                     
 					<th>Smart Connect</th>                                            
 					<td id="smart_connect_switch">
-					<select name="smart_connect_t" class="input_option" onChange="_change_smart_connect(this.value);">
+					<select name="smart_connect_t" class="input_option" onChange="enableSmartCon(this.value);">
 						<option class="content_input_fd" value="1" >Tri-band Smart Connect (2.4GHz, 5GHz-1 and 5GHz-2)</optio>
 						<option class="content_input_fd" value="2">5GHz Smart Connect (5GHz-1 and 5GHz-2)</option>
 					</select>                       
@@ -977,12 +984,12 @@ function regen_auto_option(obj){
 			  	</tr>
 			  
 				<tr style="display:none">
-					<th><#WLANConfig11b_x_mfp#></th>	<!-- Protected Management Frames -->
+					<th><#WLANConfig11b_x_mfp#></th>
 					<td>
 				  		<select name="wl_mfp" class="input_option" >
 								<option value="0" <% nvram_match("wl_mfp", "0", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-								<option value="1" <% nvram_match("wl_mfp", "1", "selected"); %>><#WLANConfig11b_x_mfp_opt1#></option>	<!-- Capable -->
-								<option value="2" <% nvram_match("wl_mfp", "2", "selected"); %>><#WLANConfig11b_x_mfp_opt2#></option>	<!-- Required -->
+								<option value="1" <% nvram_match("wl_mfp", "1", "selected"); %>><#WLANConfig11b_x_mfp_opt1#></option>
+								<option value="2" <% nvram_match("wl_mfp", "2", "selected"); %>><#WLANConfig11b_x_mfp_opt2#></option>
 				  		</select>
 					</td>
 			  	</tr>

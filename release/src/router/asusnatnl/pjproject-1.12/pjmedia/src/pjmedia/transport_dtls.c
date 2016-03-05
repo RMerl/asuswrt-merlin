@@ -742,14 +742,18 @@ static pj_status_t create_ssl(transport_dtls *dtls)
     SSL_CTX *ctx;
     pjmedia_dtls_cert *cert;
     int mode, rc;
-    pj_status_t status;
+	pj_status_t status;
+	char *openssl_ver;
         
     pj_assert(dtls);
 
     cert = dtls->cert;
 
     /* Make sure OpenSSL library has been initialized */
-    init_openssl();
+	init_openssl();
+
+	openssl_ver = SSLeay_version(SSLEAY_VERSION);
+	PJ_LOG(4, (THIS_FILE, "create_ssl() OpenSSL version=[%s]", openssl_ver));
 
     /* Determine SSL method to use */
     switch (PJ_SSL_SOCK_PROTO_DTLS1) {

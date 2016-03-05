@@ -90,6 +90,9 @@ int rtkswitch_ioctl(int val, int val2)
 	case 16:	/* power up all ports */
 	case 17:	/* power down all ports */
 	case 21:
+#ifdef RTN56U
+	case 26:	/* WAN port force 1G mode */
+#endif
 	case 27:
 	case 41:	/* check realtek switch normal */
 	case 114:	/* power up WAN port(s) */

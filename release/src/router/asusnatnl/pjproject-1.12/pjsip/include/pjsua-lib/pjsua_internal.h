@@ -326,6 +326,7 @@ struct pjsua_data
     /* Threading: */
 	pj_bool_t		 thread_quit_flag;  /**< Thread quit flag.	*/
 	pj_thread_t		*thread[4];	    /**< Array of threads.	*/
+	pj_thread_t		*monitor_thread[4];	    /**< Array of threads.	*/
 
     /* STUN and resolver */
     pj_stun_config	 stun_cfg;  /**< Global STUN settings.		*/
@@ -404,6 +405,8 @@ struct pjsua_data
 	int disable_compress;   
 	// transport cfg.
 	pjsua_transport_config  rtp_cfg;
+
+	pj_timestamp worker_thread_ts;
 };
 
 

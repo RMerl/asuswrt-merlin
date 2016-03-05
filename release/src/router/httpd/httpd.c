@@ -219,6 +219,7 @@ static int match_one( const char* pattern, int patternlen, const char* string );
 static void handle_request(void);
 void send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
 void __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
+int check_user_agent(char* user_agent);
 
 /* added by Joey */
 //2008.08 magic{
@@ -667,6 +668,28 @@ int web_write(const char *buffer, int len, FILE *stream)
 	}
 	return r;
 }
+
+int check_user_agent(char* user_agent){
+
+	int fromapp = 0;
+
+	if(user_agent != NULL){
+		char *cp1=NULL, *app_router=NULL, *app_platform=NULL, *app_framework=NULL, *app_verison=NULL;
+		cp1 = strdup(user_agent);
+
+		vstrsep(cp1, "-", &app_router, &app_platform, &app_framework, &app_verison);
+
+		if(app_router != NULL && app_framework != NULL && strcmp( app_router, "asusrouter") == 0){
+				fromapp=FROM_ASUSROUTER;
+			if(strcmp( app_framework, "DUTUtil") == 0)
+				fromapp=FROM_DUTUtil;
+			else if(strcmp( app_framework, "ASSIA") == 0)
+				fromapp=FROM_ASSIA;
+		}
+	}
+	return fromapp;
+}
+
 #if 0
 void
 do_file(char *path, FILE *stream)
@@ -827,6 +850,27 @@ handle_request(void)
 							_dprintf("%s", Accept_Language);
 							nvram_set("ui_Setting", "1");
 							nvram_set("preferred_lang", Accept_Language);
+
+						#ifdef RTCONFIG_DSL_TCLINUX
+							if(!strcmp(Accept_Language, "CZ") || !strcmp(Accept_Language, "DE")) {
+								int do_restart = 0;
+								if( nvram_match("dslx_annex", "4")
+									&& nvram_match("dsltmp_adslsyncsts", "down")
+								){
+									_dprintf("DSL: auto switch to annex b/j\n");
+									nvram_set("dslx_annex", "6");
+									do_restart = 1;
+								}
+								if(!strcmp(Accept_Language, "DE")
+									&& nvram_match("dslx_vdsl_profile", "0")) {
+									_dprintf("DSL: auto switch to 17a multi mode\n");
+									nvram_set("dslx_vdsl_profile", "1");
+									do_restart = 1;
+								}
+								if (do_restart)
+									notify_rc("restart_dsl_setting");
+							}
+						#endif
 						}
 
 						break;
@@ -975,20 +1019,13 @@ handle_request(void)
 		file += strlen(GETAPPSTR);
 	}
 
-	if(useragent != NULL){
-		char *cp1=NULL, *app_router=NULL, *app_platform=NULL, *app_framework=NULL, *app_verison=NULL;
-		cp1 = strdup(useragent);
+	memset(user_agent, 0, sizeof(user_agent));
+	if(useragent != NULL)
+		strncpy(user_agent, useragent, sizeof(user_agent)-1);
+	else
+		strcpy(user_agent, "");
 
-		vstrsep(cp1, "-", &app_router, &app_platform, &app_framework, &app_verison);
-
-		if(app_router != NULL && app_framework != NULL && strcmp( app_router, "asusrouter") == 0){
-				fromapp=FROM_ASUSROUTER;
-			if(strcmp( app_framework, "DUTUtil") == 0)
-				fromapp=FROM_DUTUtil;
-			else if(strcmp( app_framework, "ASSIA") == 0)
-				fromapp=FROM_ASSIA;
-		}
-	}
+	fromapp = check_user_agent(useragent);
 
 	//printf("httpd url: %s file: %s\n", url, file);
 	//_dprintf("httpd url: %s file: %s\n", url, file);
@@ -1047,9 +1084,10 @@ handle_request(void)
 	for (handler = &mime_handlers[0]; handler->pattern; handler++) {
 		if (match(handler->pattern, url))
 		{
-
+			nvram_set("httpd_handle_request", url);
+			nvram_set_int("httpd_handle_request_fromapp", fromapp);
 			if(login_state==3 && !fromapp) { // few pages can be shown even someone else login
-				if(!(mime_exception&MIME_EXCEPTION_MAINPAGE || strncmp(file, "Main_Login.asp?error_status=9", 29)==0)) {
+				if(!(mime_exception&MIME_EXCEPTION_MAINPAGE || strncmp(file, "Main_Login.asp?error_status=9", 29)==0 || ((!handler->auth) && strncmp(file, "Main_Login.asp", 14) != 0))) {
 					if(strcasecmp(method, "post") == 0){
 						if (handler->input) {
 							handler->input(file, conn_fp, cl, boundary);
@@ -1059,7 +1097,6 @@ handle_request(void)
 					return;
 				}
 			}
-
 			if (handler->auth) {
 				if ((mime_exception&MIME_EXCEPTION_NOAUTH_FIRST)&&!x_Setting) {
 					//skip_auth=1;
@@ -1106,19 +1143,16 @@ handle_request(void)
 			}else{
 			}
 
-	
 			if(!strcmp(file, "Logout.asp")){
 				http_logout(login_ip_tmp, cookies, fromapp);
 				send_login_page(fromapp, ISLOGOUT, NULL, 0);
 				return;
 			}
-
 			if (strcasecmp(method, "post") == 0 && !handler->input) {
 				send_error(501, "Not Implemented", NULL, "That method is not implemented.");
 				return;
 			}
 // 2007.11 James. for QISxxx.htm pages }
-
 			if (handler->input) {
 				handler->input(file, conn_fp, cl, boundary);
 #if defined(linux)
@@ -1141,7 +1175,6 @@ handle_request(void)
 				}
 #endif
 			}
-
 			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,"uploadIconFile.tar")) && !(strstr(file,"backup_jffs.tar")) && !(strstr(file,"networkmap.tar")) && !(strstr(file,".CFG")) && !(strstr(file,".log")) && !check_if_file_exist(file)
 #ifdef RTCONFIG_USB_MODEM
 					&& !strstr(file, "modemlog.txt")
@@ -1166,14 +1199,6 @@ handle_request(void)
 				send_headers( 200, "Ok", handler->extra_header, handler->mime_type, fromapp);
 			}
 
-			if(strncmp(url, "login.cgi", strlen(url))==0){	//set user-agent
-				memset(user_agent, 0, sizeof(user_agent));
-				if(useragent != NULL)
-					strncpy(user_agent, useragent, sizeof(user_agent)-1);
-				else
-					strcpy(user_agent, "");
-			}
-
 			if (strcasecmp(method, "head") != 0 && handler->output) {
 				handler->output(file, conn_fp);
 			}
@@ -1191,6 +1216,8 @@ handle_request(void)
 		else
 			send_error( 404, "Not Found", (char*) 0, "File not found." );
 	}
+	nvram_unset("httpd_handle_request");
+	nvram_unset("httpd_handle_request_fromapp");
 }
 
 asus_token_t* search_token_in_list(char* token, asus_token_t **prev)

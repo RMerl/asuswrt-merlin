@@ -66,14 +66,21 @@ endif
 
 	mkdir -p $(INSTALLDIR)/usr/sbin
 ifeq ($(RTCONFIG_USB),y)
+ifneq ($(APP),none)
 	install -m 0755 apps_scripts/asusrouter $(INSTALLDIR)/rom/.asusrouter
 	install -m 0755 apps_scripts/app_*.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/check_spectrum.sh $(INSTALLDIR)/usr/sbin
+endif
 ifeq ($(RTCONFIG_USB_MODEM),y)
 	install -m 0644 spn_*.dat $(INSTALLDIR)/rom
 	install -m 0755 apps_scripts/find_modem_*.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/modem_*.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/3ginfo.sh $(INSTALLDIR)/usr/sbin
+ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
+ifeq ($(RT4GAC55U),y)
+	install -m 0755 apps_scripts/gobi_update.sh $(INSTALLDIR)/usr/sbin
+endif
+endif
 endif
 endif
 
@@ -135,12 +142,6 @@ ifeq ($(RTCONFIG_DNSSEC),y)
 	cp rom/etc/dnssec-trust-anchors $(INSTALLDIR)/rom/etc/dnssec-trust-anchors
 else
 	rm -rf $(INSTALLDIR)/rom/etc/dnssec-trust-anchors
-endif
-
-ifeq ($(RTCONFIG_DUALWAN),y)
-	cp -rf rom/etc/static_routes $(INSTALLDIR)/rom/etc/
-else
-	rm -rf $(INSTALLDIR)/rom/etc/static_routes
 endif
 
 ifeq ($(RTCONFIG_RALINK_RT3883),y)
