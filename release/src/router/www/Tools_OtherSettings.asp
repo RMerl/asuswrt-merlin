@@ -710,7 +710,7 @@ function done_validating(action){
 					</tr>
 
 					<tr id="rstats_stime_tr">
-						<th>Save frequency:</th>
+						<th>Save frequency</th>
 						<td>
 							<select name="rstats_stime" class="input_option" >
 								<option value="1" <% nvram_match("rstats_stime", "1","selected"); %>>Every 1 hour</option>
