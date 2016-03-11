@@ -7095,13 +7095,13 @@ _dprintf("nat_rule: skip the 2nd start_nat_rules.\n");
 
 	retry = 1;
 	while(lstat(NAT_RULES, &s) || !S_ISLNK(s.st_mode) || (len = readlink(NAT_RULES, ln, sizeof(ln))) <= 0){
-		if(retry > 1){
+		if(retry > 6){
 _dprintf("nat_rule: the nat rule file was gone.\n");
 			return;
 		}
 
 _dprintf("nat_rule: the nat rule file was not ready. wait %d seconds...\n", retry);
-		sleep(1);
+		sleep(retry);
 		++retry;
 	}
 
@@ -7116,17 +7116,7 @@ _dprintf("nat_rule: the nat rule file was not ready. wait %d seconds...\n", retr
 	setup_ct_timeout(TRUE);
 	setup_udp_timeout(TRUE);
 
-	// Quite a few functions will blindly attempt to manipulate iptables, colliding with us.
-	// Retry a few times with increasing wait time to resolve collision. 
-	for ( i = 1; i <= 5; i++ ) {
-		if (eval("iptables-restore", NAT_RULES)) {
-			_dprintf("iptables-restore failed - attempt: %d ...\n", i);
-			sleep(1);
-		} else {
-			i = 6;
-		}
-	}
-
+	eval("iptables-restore", NAT_RULES);
 	run_custom_script("nat-start", NULL);
 
 	return;
