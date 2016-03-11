@@ -3082,7 +3082,7 @@ void start_upnp(void)
 	char *nv, *nvp, *b;
 	int upnp_enable, upnp_mnp_enable, upnp_port;
 	int unit, i, httpx_port;
-#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)
 	FILE *ifp = NULL;
 	char tmpstr[80];
 	int statDownloadMaster = 0;
@@ -3239,7 +3239,7 @@ void start_upnp(void)
 				}
 #endif
 
-#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)
 				ifp = fopen("/opt/lib/ipkg/status", "r");
 				if (ifp) {
 					while (fgets(tmpstr, 80, ifp)) {
@@ -6726,7 +6726,7 @@ check_ddr_done:
 		update_resolvconf();
 	}
 	else if (strcmp(script, "app") == 0) {
-#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)
 		if(action & RC_SERVICE_STOP)
 			stop_app();
 #endif
