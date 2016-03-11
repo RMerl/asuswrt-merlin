@@ -417,6 +417,13 @@ wl_vif_hwaddr_set(const char *name)
 		return;
 	}
 
+#ifdef RTCONFIG_QTN
+	if(strcmp(name, "wl1.1") == 0 ||
+		strcmp(name, "wl1.2") == 0 ||
+		strcmp(name, "wl1.3") == 0)
+		return;
+#endif
+
 	fprintf(stderr, "NET: Setting %s hw addr to %s\n", name, ea);
 	ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
 	ether_atoe(ea, (unsigned char *)ifr.ifr_hwaddr.sa_data);
