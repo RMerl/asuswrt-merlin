@@ -2502,9 +2502,11 @@ TRACE_PT("writing Parental Control\n");
 
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
 	}
+#if 0
 	else {
 		/* firewall disabled && web access from wan disabled */
 		/* reject this connection */
+
 		if(!nvram_match("misc_http_x", "1")){
 			fprintf(fp, "-A INPUT -d %s -p tcp --dport 80 -j DROP\n", wan_ipaddr); // http
 			fprintf(fp, "-A INPUT -d %s -p tcp --dport 23 -j DROP\n", wan_ipaddr); // telnet
@@ -2523,6 +2525,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 		}
 	}
+#endif /* 0 */
 
 /* apps_dm DHT patch */
 	if (nvram_match("apps_dl_share", "1"))
@@ -3450,6 +3453,7 @@ TRACE_PT("writing Parental Control\n");
 
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
 	}
+#if 0
 	else {
 		/* firewall disabled && web access from wan disabled */
 		/* reject this connection */
@@ -3478,6 +3482,7 @@ TRACE_PT("writing Parental Control\n");
 			}
 		}
 	}
+#endif /* 0 */
 
 /* apps_dm DHT patch */
 	if (nvram_match("apps_dl_share", "1"))
