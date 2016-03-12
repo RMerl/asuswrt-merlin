@@ -3201,32 +3201,35 @@ function oui_query_full_vendor(mac){
 			overlibStrTmp += clientList[mac].vendor;
 			return overlib(overlibStrTmp);
 		}, 1);
+	} else {
+		return oui_query_web(mac);
 	}
-	else {
-		if('<% nvram_get("x_Setting"); %>' == '1' && wanConnectStatus && ((typeof clientList[mac] == "undefined") || (clientList[mac].internetState))) {
-			var queryStr = mac.replace(/\:/g, "").splice(6,6,"");
-			$.ajax({
-			 	url: 'https://services11.ieee.org/RST/standards-ra-web/rest/assignments/download/?registry=MA-L&format=html&text='+ queryStr,
-				type: 'GET',
-			 	success: function(response) {
-					if(overlib.isOut) return nd();
+}
 
-					if (typeof clientList[mac] != "undefined")
-						var overlibStrTmp  = retOverLibStr(clientList[mac]);
-					else
-						var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
+function oui_query_web(mac){
+	if('<% nvram_get("x_Setting"); %>' == '1' && wanConnectStatus && ((typeof clientList[mac] == "undefined") || (clientList[mac].internetState))) {
+		var queryStr = mac.replace(/\:/g, "").splice(6,6,"");
+		$.ajax({
+			url: 'https://services11.ieee.org/RST/standards-ra-web/rest/assignments/download/?registry=MA-L&format=html&text='+ queryStr,
+			type: 'GET',
+			success: function(response) {
+				if(overlib.isOut) return nd();
 
-					if(response.search("Sorry!") == -1) {
-						if(response.search(queryStr) != -1) {
-							var retData = response.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("</");
-							overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
-							overlibStrTmp += retData[0];
-						}
+				if (typeof clientList[mac] != "undefined")
+					var overlibStrTmp  = retOverLibStr(clientList[mac]);
+				else
+					var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
+
+				if(response.search("Sorry!") == -1) {
+					if(response.search(queryStr) != -1) {
+						var retData = response.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("</");
+						overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
+						overlibStrTmp += retData[0];
 					}
-					return overlib(overlibStrTmp);
 				}
-			});
-		}
+                                return overlib(overlibStrTmp);
+			}
+		});
 	}
 }
 
