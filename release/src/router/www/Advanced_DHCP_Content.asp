@@ -18,6 +18,7 @@
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script language="JavaScript" type="text/javascript" src="/merlin_ws_dhcp.js"></script>
 <style>
 #ClientList_Block_PC{
 	border:1px outset #999;
