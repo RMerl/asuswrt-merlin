@@ -85,8 +85,8 @@ function display_clients(clientsarray, obj) {
 	code += '<thead><tr>';
 	code += '<td width="15%">MAC</td>';
 	code += '<td width="16%">IP</td>';
-	code += '<td width="16%">Name</td><td width="10%">RSSI</td><td width="18%">Rx / Tx Rate</td><td width="12%">Connected</td>';
-	code += '<td width="8%">Flags</td>';
+	code += '<td width="16%">Name</td><td width="10%">RSSI</td><td width="16%">Rx / Tx Rate</td><td width="12%">Connected</td>';
+	code += '<td width="10%">Flags</td>';
 	code += '</tr></thead>';
 
 	if (clientsarray.length > 1) {
@@ -232,7 +232,7 @@ function setRefresh(obj) {
 									<br><br>
 									<div id="wifi52headerblock"></div>
 									<div id="wifi52block"></div>
-									<div>Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated, <span class="wifiheader">G</span>=Guest</div>
+									<div>Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">M</span>=MU Beamforming,<span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated, <span class="wifiheader">G</span>=Guest</div>
 									<br>
 									<div class="apply_gen">
 										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen" >
