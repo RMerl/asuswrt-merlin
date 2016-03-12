@@ -62,7 +62,7 @@ function show_leases() {
 			code += '<td>' + Days + "d " + Hours + "h " + Minutes + "m "+ Seconds + "s" + '</td>';
 
 			overlib_str = "<p><#MAC_Address#>:</p>" + line[1];
-			code += '<td><span class="ClientName" onclick="oui_query(\'' + line[1] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span></td>'; 
+			code += '<td><span class="ClientName" onclick="oui_query_web(\'' + line[1] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span></td>'; 
 			code += '<td>' + line[2] + '</td>';
 			code += '<td>' + line[3] + '</td>';
 			code += '</tr>';

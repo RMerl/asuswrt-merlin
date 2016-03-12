@@ -96,7 +96,7 @@ function display_clients(clientsarray, obj) {
 
 			// MAC
 			overlib_str = "<p><#MAC_Address#>:</p>" + client[0];
-			code += '<td><span style="margin-top:-15px; color: white;" class="link" onclick="oui_query(\'' + client[0] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ client[0] +'</span></td>'; 
+			code += '<td><span style="margin-top:-15px; color: white;" class="link" onclick="oui_query_web(\'' + client[0] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ client[0] +'</span></td>'; 
 
 			code += '<td>' + client[1] + '</td>';	// IP
 			code += '<td>' + client[2] + '</td>';	// Name
