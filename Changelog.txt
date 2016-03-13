@@ -11,7 +11,7 @@ Asuswrt-Merlin Changelog
     - NEW: Added setting to configure OpenVPN's logging verbosity.
            Note that this setting is global to all clients/servers.
     - CHANGED: Updated OpenVPN to 2.3.10
-    - CHANGED: Updated openssl to 1.0.2f
+    - CHANGED: Updated openssl to 1.0.2g
     - CHANGED: Updated miniupnpd to 1.9.20160222
     - CHANGED: if you set an OpenVPN client DNS mode to "Exclusive"
                and you enable policy-based routing, then those policies
