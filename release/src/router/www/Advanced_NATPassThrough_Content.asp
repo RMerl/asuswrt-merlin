@@ -116,7 +116,7 @@ function applyRule(){
 						</tr>
 
 						<tr>
-							<th><#NAT_SIP_Passthrough#></th>
+							<th>Enable SIP NAT helper</th>
 						<td>
 												<select name="fw_pt_sip" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_sip", "0","selected"); %>><#btn_disable#></option>
