@@ -726,7 +726,9 @@ start_igmpproxy(char *wan_ifname)
 		_dprintf("start udpxy [%s]\n", wan_ifname);
 		eval("/usr/sbin/udpxy",
 			"-m", wan_ifname,
-			"-p", nvram_get("udpxy_enable_x"),
+			"-p", nvram_safe_get("udpxy_enable_x"),
+			"-B", "65536",
+			"-c", nvram_safe_get("udpxy_clients"),
 			"-a", nvram_get("lan_ifname") ? : "br0");
 	}
 

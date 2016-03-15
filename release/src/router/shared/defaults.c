@@ -1896,6 +1896,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 	{ "udpxy_enable_x", "0"},
+	{ "udpxy_clients", "10" },
 
 	/* traffic monitor - added by jerry5 2009/07 */
 	{"rstats_enable", "1"},

@@ -3015,6 +3015,15 @@ endif
 snooper-clean:
 	$(MAKE) -C snooper clean
 
+udpxy:
+	$(MAKE) -C $@ release NO_UDPXREC=yes \
+	CDEFS="-O2 -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
+	LDFLAGS="-Wl,--gc-sections"
+
+udpxy-install:
+	install -D udpxy/udpxy $(INSTALLDIR)/udpxy/usr/sbin/udpxy
+	$(STRIP) $(INSTALLDIR)/udpxy/usr/sbin/udpxy
+
 netconf: $(IPTABLES)
 	+$(MAKE) LINUXDIR=$(LINUXDIR) -C netconf
 
