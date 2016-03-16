@@ -53,6 +53,8 @@ get_request( const char* src, size_t srclen,
  * @param clen      length of command buffer
  * @param opt       buffer for the parsed options c-string
  * @param optlen    length of options buffer
+ * @param tail      buffer for tail (whatever is beyond options)
+ * @param tlen      length of tail buffer
  *
  * @return 0 if success: cmd and opt get get populated
  *         non-zero if an error ocurred
@@ -60,7 +62,8 @@ get_request( const char* src, size_t srclen,
 int
 parse_param( const char* s, size_t slen,
              char* cmd,     size_t clen,
-             char* opt,     size_t optlen );
+             char* opt,     size_t optlen,
+             char* tail,    size_t tlen);
 
 
 /* parse options of upd-relay command into IP address

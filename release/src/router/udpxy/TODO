@@ -1,0 +1,15 @@
+
+FEATURES:
+*. separate multicast-connect timeout (as vs. unified read timeout);
+*. switch to another channel on timeout (on connect, on read)
+*. allow unicast UDP stream as source
+*. winamp support
+*. PCH 2xx, 3xx support (content-length headers)
+
+
+DEV:
+*. switch to allow trace levels (need a level to trace all packets in/out, for instance)
+
+
+# EOF
+

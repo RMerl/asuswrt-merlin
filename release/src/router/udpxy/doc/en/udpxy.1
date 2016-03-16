@@ -1,0 +1,207 @@
+.\"
+.\" udpxy.1
+.\"
+.\" Original: (pcherenkov@gmail.com)
+.\"
+.TH udpxy 1 "November 17, 2012" "Version 1.0" "udpxy manual page"
+
+.SH NAME
+udpxy \- a UDP-to-HTTP multicast traffic relay daemon.
+
+.SH SYNOPSIS
+.B udpxy
+[\-vTS] [\-a \fI<listenaddr>\fP] [\-m \fI<mcast_ifc_addr>\fP] [\-c \fI<clients>\fP]
+[\-l \fI<logfile>\fP] [\-B \fI<sizeK>\fP] [\-R \fI<msgs>\fP] [\-H \fI<sec>\fP]
+[\-n \fI<nice_incr>\fP] [\-M \fI<sec>\fP] \-p \fI<port>\fP
+
+.SH DESCRIPTION
+.PP
+udpxy is a \fIUDP-to-HTTP multicast traffic relay daemon\fP: it forwards UDP traffic
+from a given multicast subscription to the requesting HTTP client.
+.PP
+udpxy listens (on a dedicated address/port) for HTTP requests issued by clients.
+A client request should be structured as:
+.PP
+http://{\fIaddress\fP}:{\fIport\fP}/{\fIcmd\fP}/{\fImgroup_address\fP}[\fBSEP\fP]{\fImgroup_port\fP}
+.TP 8
+.B [SEP]
+:|%|~|+|\-|^
+.TP 8
+.B {cmd}
+udp|rtp
+
+.PP
+where \fIaddress\fP and \fIport\fP match the listening \fIaddress/port\fP combination of udpxy,
+and \fImgroup_address\fP:\fImgroup_port\fP identify the multicast group/channel to subscribe to.
+
+.PP
+.TP 8
+.B udp
+\fIudp\fP command will have udpxy probe for known types of payload
+(such as \fIMPEG\-TS\fP and \fIRTP over MPEG\-TS\fP);
+.TP 8
+.B rtp
+\fIrtp\fP command makes udpxy assume \fIRTP over MPEG\-TS\fP payload, thus skipping the probes.
+
+.PP
+udpxy will start a separate \fIclient process\fP for each new relay request (within the specified limit
+on active clients).
+The client process will relay/forward all network traffic received (via a UDP socket) from the
+specified multicast group to the requesting HTTP connection.
+
+.PP
+udpxy also supports a few administrative requests:
+
+.PP
+.TP 8
+.B status
+http://\fIaddress\fP:\fIport\fP/\fBstatus\fP/
+to send back an HTML page with daemon status and client statistics.
+.TP 8
+.B restart
+http://\fIaddress\fP:\fIport\fP/\fBrestart\fP/
+to close all active connections and restart.
+
+
+.SH EXAMPLES
+.PP
+http://192.168.0.12:5056/udp/224.0.2.26:24012
+.PP
+http://192.168.0.12:5056/rtp/224.0.2.26:24012
+.PP
+http://192.168.0.15:5056/rtp/224.0.2.26^24055
+.PP
+http://192.168.0.15:5056/status/
+
+.SH OPTIONS
+udpxy accepts the following options:
+.TP 8
+.B \-v
+Enable verbose output [default = \fIdisabled\fP].
+.TP 8
+.B \-S
+Enable client statistics [default = \fIdisabled\fP].
+.TP 8
+.B \-T
+Do NOT run as a daemon [default = \fIdaemon if root\fP].
+.TP 8
+.B \-a \fI<listenaddr>\fP
+IPv4 address/interface to listen on [default = \fI0.0.0.0\fP].
+.TP 8
+.B \-m \fI<mcast_ifc_addr>\fP
+IPv4 address/interface of (multicast) source [default = \fI0.0.0.0\fP].
+.TP 8
+.B \-c \fI<clients>\fP
+Maximum number of clients to accept [default = \fI3\fP, max = \fI5000\fP].
+.TP 8
+.B \-l \fI<logfile>\fP
+Log output to file [default = \fIstderr\fP].
+.TP 8
+.B \-B \fI<sizeK>\fP
+Buffer size (65536, 32Kb, 1Mb) for inbound (multicast) data [default = \fI2048 bytes\fP].
+.TP 8
+.B \-R \fI<msgs>\fP
+Maximum number of messages to buffer (\fI\-1\fP = \fIall\fP) [default = \fI1\fP].
+.TP 8
+.B \-H \fI<sec>\fP
+Maximum time (in seconds) to hold data in a buffer (\fI\-1\fP = \fIunlimited\fP) [default = \fI1\fP].
+.TP 8
+.B \-n \fI<nice_incr>\fP
+Nice value increment [default = \fI0\fP].
+.TP 8
+.B \-M \fI<sec>\fP
+Renew multicast subscription every M seconds (\fIskip\fP if \fI0\fP) [default = \fI0\fP].
+.TP 8
+.B \-p \fI<port>\fP
+Port to listen on.
+
+.SH PAYLOAD TYPES AND HANDLING
+
+.PP
+udpxy recognizes \fIMPEG\-TS\fP and \fIRTP over MPEG\-TS\fP payloads within relayed packets;
+if udpxy encounters RTP payload it automatically 'translates' it to MPEG\-TS (by stripping RTP headers)
+so that media players not recognizing RTP could still play back the stream.
+.PP
+So far, no translation is performed for other payload types.
+
+.SH RECORDING MPEG TRAFFIC
+.PP
+udpxy includes functionality to record captured traffic as
+\fIraw MPEG\-TS stream\fP into a file. This functionality is enabled through \fBudpxrec\fP:
+a bundled\-in application that is linked together with udpxy (as one executable).
+.PP
+udpxrec is invoked via a symbolic link (named \fBudpxrec\fP) to the udpxy executable
+(i.e. \fBdo not rename\fP udpxy executable).
+.PP
+udpxrec creates MPEG files encapsulating MPEG\-TS segments; certain media players
+will \fBNOT\fP play such files; in order to make them playable the stream must be transcoded
+to MPEG\-PS; vlc 'knows' how to do such transcoding, here is a command-line example:
+.PP
+.B vlc input\-ts.mpg \-\-sout="#std{access=file,mux=ps,dst=out-ps.mpg}"
+.PP
+The resulting MPEG-PS file can be played back by most media players.
+
+
+.SH ENVIRONMENT
+udpxy utilizes the following environment variables to compliment its
+command\-line options; the variables are considered for the options that
+most people would not need to change too often (or simply inconvenient
+to use from the command line).
+.PP
+\fBNB\fP: If there is a command-line switch that would intersect in functionality
+with an environment variable, the switch \fIalways\fP has higher priority.
+.PP
+.TP 8
+.B UDPXY_RCV_TMOUT
+timeout (sec) on the \fIinbound\fP data stream (\fImulticast\fP), default=\fI5\fP;
+.TP 8
+.B UDPXY_DHOLD_TMOUT
+timeout (sec) to hold buffered data before sending/flushing to client(s), default=\fI1\fP;
+.TP 8
+.B UDPXY_SREAD_TMOUT
+timeout (sec) to \fIread\fP from the listening socked (handling HTTP requests), default=\fI1\fP;
+.TP 8
+.B UDPXY_SWRITE_TMOUT
+timeout (sec) to \fIwrite\fP to the listening socked (handling HTTP requests), default=\fI1\fP;
+.TP 8
+.B UDPXY_SSEL_TMOUT
+timeout (sec) to \fIselect(2)\fP in server loop (unused if \fIpselect(2)\fP is employed), default=\fI30\fP;
+.TP 8
+.B UDPXY_LQ_BACKLOG
+size of the listener socket's \fIbacklog\fP, default=\fI16\fP;
+.TP 8
+.B UDPXY_SRV_RLWMARK
+low watermaek on the receiving (m\-cast) socket, default=\fI0\fP (\fInot set\fP);
+.TP 8
+.B UDPXY_SSOCKBUF_NOSYNC
+do not sync \fIinbound\fP (UDP) socket's buffer size (with the value set by \fI\-B\fP), default=\fI1\fP (\fIsync\fP);
+.TP 8
+.B UDPXY_DSOCKBUF_NOSYNC
+do not sync \fIoutbound\fP (TCP) socket's buffer size (with the value set by \fI\-B\fP), default=\fI1\fP (\fIsync\fP);
+.TP 8
+.B UDPXY_TCP_NODELAY
+disable \fINagle algorithm\fP on the newly accepted socket (faster channel switching), default=\fI1\fP;
+.TP 8
+.B UDPXY_HTTP200_FTR_FILE
+append contents of the given text file to the \fIHTTP 200\fP response, default=\fInone\fP;
+.TP 8
+.B UDPXY_HTTP200_FTR_LN
+append the text (line) to the \fIHTTP 200\fP response, default=\fInone\fP;
+.TP 8
+.B UDPXY_ALLOW_PAUSES
+if blocked on a \fIwrite(2)\fP, keep reading data until the buffer (\fB\-B\fP \fI<sizeK>\fP) is full, default=\fIdisabled\fP;
+.TP 8
+.B UDPXY_PAUSE_MSEC
+allow only \fIN\fP milliseconds of reading data when blocked on a \fIwrite(2)\fP.
+.TP 8
+.B UDPXY_CONTENT_TYPE
+specify custom \fBContent\-Type\fP in \fIHTTP\fP responses.
+
+.SH AUTHORS
+Pavel V. Cherenkov and all the good people who submitted patches or otherwise contributed to the project.
+
+.SH "SEE ALSO"
+.BR udpxrec (1)
+
+.\" __EOF__
+

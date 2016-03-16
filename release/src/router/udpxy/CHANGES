@@ -1,6 +1,6 @@
 # @(#) list changes to udpxy from build to build
 #
-# Copyright 2008-2011 Pavel V. Cherenkov (pcherenkov@gmail.com)
+# Copyright 2008-2012 Pavel V. Cherenkov (pcherenkov@gmail.com)
 #
 #  This file is part of udpxy.
 #
@@ -161,6 +161,74 @@ Build 18 (9-Jan-2011)
 Build 19 (9-Jan-2011)
     (*) MAX limit of clients (-c option) upped to 5,000 (five thousand)
 
+Build 20 (18-Jun-2011)
+    (*) FIXED: player sends last request's traffic to any client with invalid request;
+    (*) FIXED: unsupported HTTP requests (those that the parser does not handle) are denied [ID: 3294265]
+
+    (*) Added UDPXY_SREAD_TMOUT, UDPXY_SWRITE_TMOUT evn parameters to set read/write timeouts on HTTP server's socket;
+    (*) Added UDPXY_HTTP200_FTR_LN, UDPXY_HTTP200_FTR_FILE env parameters to allow appending 1 line or contents
+        of a text file to HTTP 200 (successful request processing) response;
+    (*) Added Content-type entry to HTTP response;
+    (*) Added conditional compilation of udpxrec - use NO_UDPXREC=yes make [mode] to *NOT* build udpxrec into the udpxy
+        binary
+
+Build 21 (25-Nov-2011)
+    (*) FIXED: defunct processes appear at a high volume of requests;
+    (*) FIXED: ECONNRESET, ECONNABORTED and EPROTO in accept cause server to exit prematurely;
+    (*) FIXED: accept() handled only one request per iteration (select notification);
+    (*) Low watermark enforced for incoming requests;
+
+Patch 1 (13-Dec-2011)
+    (*) FIXED: "variable set but not used" warnings under gcc 4.6.1 
+    (*) FIXED: conflict with dirent.h (DT_UNKNOWN) resolved;
+
+Patch 2 (20-Dec-2011)
+    (*) FIXED: misc build errors and inconsistencies
+
+Patch 4 (9-Feb-2012)
+    (*) FIXED: SIGSEGV caused by dpkt.c:upxfmt_NAME[] having less members than indexes used (RAW was missing);
+    (*) rdebug (release with debug symbols), ldebug (lean with debug symbols) targets added;
+
+Build 22 was skipped to avoid confusion with patches and betas pulled off github;
+
+Build 23 (3-Jul-2012)
+    (*) HTTP response lines are now separated by CRLF (not just LF), as per RFC2616;
+    (*) SO_REUSEPORT used (where available) to allow more that one client
+        to subscribe to the same channel on BSD-derived systems;
+    (*) optimization patches by Alexey Suhinin integrated (tcp_nodelay, pause_timeout, mstream_type);
+    (*) sloop.c uses syscall.h & -DUSE_SELECT to alternate between select(2)- and pselect(2)-based implementations of server loop
+    (*) FIXED: idle timeout displayed incorrectly in select(2)-based version;
+    (*) HTTP response includes 'Server:' clause;
+
+Patch 1 (31-Aug-2012)
+    (*) Added the capability to capture the HTTP variables submitted via URI beyond command/options 
+        Example: http://hostname:port/udp/mcaddr:mcport?aa=1&bb=2&cc=3 - '?aa=1&bb=2&cc=3' part is now
+                 preserved (for each client) and displayed in status page as part of Destination column;
+    (*) Added README.russian;
+
+Patch 2 (14-Oct-2012)
+    (*) Static linking enabled through LDFLAGS=-static (as a prefix to make);
+    (*) EPIPE and other 'not really errors' should not go to syslog (time-outs still WILL);
+
+Patch 3 (18-Nov-2012)
+    (*) Makefile changed towards better GNU compatibility: added $PREFIX, $DESTDIR, $CPPFLAGS; dist & install-strip targets;
+    (*) English-language udpxy.1, udpxrec.1 man pages added;
+    (*) icc, Sun C & HP-UX C compiler support dropped (Makefile);
+
+Patch 4 (9-Dec-2012)
+    (*) manpage & Makefile corrections applied (integrated patches from Alex Z (ad_user));
+Patch 5 (13-Dec-2012)
+    (*) Makefile corrections (purged deprecated options & variables);
+Patch 6 (23-Dec-2012)
+    (*) report_status() adjusts report-buffer size for client tails;
+    (*) attempt to fix strict-aliasing compiler warnings in sock_info();
+    (*) optimizing: removed difftime() as redundant on a POSIX system (may affect non-POSIX ports).
+Patch 7 (24-Dec-2012)
+    (*) more work on report_status() to prevent memory exhaustion when using 'tails' in requests;
+Patch 8 (5-Jan-2013)
+    (*) UDPXY_CONTENT_TYPE - can specify custom HTTP Content-Type.
+    (*) FIXED: more memory for report header & items;
+    (*) Socket is made (temporarily) blocking when sending report results;
 
 # __EOF__
 
