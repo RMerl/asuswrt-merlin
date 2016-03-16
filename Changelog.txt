@@ -13,6 +13,8 @@ Asuswrt-Merlin Changelog
     - CHANGED: Updated OpenVPN to 2.3.10
     - CHANGED: Updated openssl to 1.0.2g
     - CHANGED: Updated miniupnpd to 1.9.20160222
+    - CHANGED: Updated udpxy to 1.0-build 23-10 (backport from GPL 
+               380_2345)
     - CHANGED: if you set an OpenVPN client DNS mode to "Exclusive"
                and you enable policy-based routing, then those policies
                will also determine which DNS to use (the tunnel's or
@@ -38,6 +40,9 @@ Asuswrt-Merlin Changelog
              configured clients.
     - FIXED: RT-AC68U 2.4 GHz was broken if CTF was disabled
              (downgraded wifi driver to  6.37.14.105)
+    - FIXED: Diasbling the SIP NAT helper would also drop all port 5060 
+             traffic.  Some users need to keep the SIP helper disabled 
+             with their SIP client.  Reverted that GPL 858 change.
 
 
 380.57 (24-Dec-2015)
