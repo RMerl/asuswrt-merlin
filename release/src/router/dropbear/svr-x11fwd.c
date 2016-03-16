@@ -42,11 +42,29 @@ static void x11accept(struct Listener* listener, int sock);
 static int bindport(int fd);
 static int send_msg_channel_open_x11(int fd, struct sockaddr_in* addr);
 
+/* Check untrusted xauth strings for metacharacters */
+/* Returns DROPBEAR_SUCCESS/DROPBEAR_FAILURE */
+static int
+xauth_valid_string(const char *s)
+{
+	size_t i;
+
+	for (i = 0; s[i] != '\0'; i++) {
+		if (!isalnum(s[i]) &&
+		    s[i] != '.' && s[i] != ':' && s[i] != '/' &&
+		    s[i] != '-' && s[i] != '_') {
+			return DROPBEAR_FAILURE;
+		}
+	}
+	return DROPBEAR_SUCCESS;
+}
+
+
 /* called as a request for a session channel, sets up listening X11 */
 /* returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
 int x11req(struct ChanSess * chansess) {
 
-	int fd;
+	int fd = -1;
 
 	if (!svr_pubkey_allows_x11fwd()) {
 		return DROPBEAR_FAILURE;
@@ -62,6 +80,11 @@ int x11req(struct ChanSess * chansess) {
 	chansess->x11authcookie = buf_getstring(ses.payload, NULL);
 	chansess->x11screennum = buf_getint(ses.payload);
 
+	if (xauth_valid_string(chansess->x11authprot) == DROPBEAR_FAILURE ||
+		xauth_valid_string(chansess->x11authcookie) == DROPBEAR_FAILURE) {
+		dropbear_log(LOG_WARNING, "Bad xauth request");
+		goto fail;
+	}
 	/* create listening socket */
 	fd = socket(PF_INET, SOCK_STREAM, 0);
 	if (fd < 0) {
@@ -159,7 +182,7 @@ void x11setauth(struct ChanSess *chansess) {
 		return;
 	}
 
-	/* popen is a nice function - code is strongly based on OpenSSH's */
+	/* code is strongly based on OpenSSH's */
 	authprog = popen(XAUTH_COMMAND, "w");
 	if (authprog) {
 		fprintf(authprog, "add %s %s %s\n",
