@@ -1,6 +1,11 @@
 #!/bin/sh
 
 PARAM=$*
+if [ "$PARAM" == "" ]
+then
+	# Add paramaters equivalent to those passed for up command
+	PARAM="$dev $tun_mtu $link_mtu $ifconfig_local $ifconfig_remote"
+fi
 
 create_client_list(){
 	IFS="<"
