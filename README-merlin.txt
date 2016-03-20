@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 380.58 (xx-xxx-2016)
+Asuswrt-Merlin - build 380.58 (20-Mar-2016)
 ===========================================
 
 About
@@ -38,7 +38,7 @@ Supported devices are:
  * RT-AC3200
  * RT-AC88U
  * RT-AC3100
- * RT-AC5300
+ * RT-AC5300U
 
 Devices that are no longer officially supported (but forked builds might
 exist from other developers):
@@ -93,7 +93,8 @@ Networking:
    - DNS-based Filtering, can be applied globally or per client
    - Custom DDNS (through a user script)
    - Advanced NAT loopback (as an alternative to the default one)
-   - TOR support, individual client control
+   - TOR support, individual client control (based on experimental code
+     from Asus)
    - Policy routing for the OpenVPN client (based on source or
      destination IPs), sometimes referred to as "selective routing")
    - DNSSEC support
@@ -103,7 +104,7 @@ Web interface:
    - Optionally save traffic stats to disk (USB or JFFS partition)
    - Enhanced traffic monitoring: added monthly, as well as per IP 
      monitoring
-   - Name field on the DHCP reservation list and Wireless ACL list
+   - Hostname field on the DHCP reservation page
    - System info summary page
    - Wifi icon reports the state of both radios
    - Display the Ethernet port states

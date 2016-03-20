@@ -1,12 +1,15 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.58 (xx-xxx-2016)
+380.58 (20-Mar-2016)
     - NEW: Merged with 380_1354 GPL
     - NEW: Added Tweaks and Hacks settings to Tools -> Other Settings.
            These are UNSUPPORTED tweaks, intended mostly for 
            experimentation, or very specific situations.  If unsure how
            to apply these, manually reboot after changing them.
+           One of new settings there lets you disable hourly network
+           rescans, to resolve issues with NAS/printers coming out
+           of sleep every hour.
     - NEW: Added setting to configure OpenVPN's auth digest algo.
     - NEW: Added setting to configure OpenVPN's logging verbosity.
            Note that this setting is global to all clients/servers.
@@ -23,6 +26,8 @@ Asuswrt-Merlin Changelog
                the DNS used by your OpenVPN clients.
     - CHANGED: Made OpenVPN traffic bypass CTF, which resolves
                some throughput issues with it
+    - CHANGED: Disabled X11 Forwarding support in Dropbear,
+               for security reasons.
     - FIXED: PPTP static route handling script was broken
     - FIXED: minidlna would check for the wrong database filename
              at start time
