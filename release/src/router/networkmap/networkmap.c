@@ -98,6 +98,7 @@ struct apple_model_handler apple_model_handlers[] = {
 	{ "n71map",     "iPhone 6s",    "10" },
 	{ "n66ap",      "iPhone 6s Plus","10" },
 	{ "n66map",     "iPhone 6s Plus","10" },
+	{ "n69ap",      "iPhone SE",    "10" },
         { "n45ap",      "iPod touch",	"21" },
         { "n72ap",      "iPod touch 2G","21" },
         { "n18ap",      "iPod touch 3G","21" },
