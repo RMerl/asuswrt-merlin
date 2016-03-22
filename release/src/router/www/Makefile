@@ -457,6 +457,7 @@ ifneq ($(RTCONFIG_WTFAST), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade_hover.svg	
 endif
+rm -rf $(INSTALLDIR)/www/js/fire.js
 
 ifeq ($(RTCONFIG_NOIPTV), y)
 	rm -rf $(INSTALLDIR)/www/Advanced_IPTV_Content.asp
