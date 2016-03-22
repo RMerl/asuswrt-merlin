@@ -31,7 +31,7 @@
 	*margin-top:22px;	
 	margin-left:-4px;
 	*margin-left:-263px;
-	width:192px;
+	width:220px;
 	*width:192px;
 	text-align:left;	
 	height:auto;
@@ -50,7 +50,6 @@
 	text-decoration:none;
 	font-family: calibri;
 	font-size:14px;
-	padding-left:2px;
 }
 
 #ClientList_Block_PC a{
@@ -60,7 +59,9 @@
 	font-family:Arial, Helvetica, sans-serif;
 	text-decoration:none;	
 }
-
+#ClientList_Block_PC strong {
+	padding-left: 3px;
+}
 #ClientList_Block_PC div:hover, #ClientList_Block a:hover{
 	background-color:#3366FF;
 	color:#FFFFFF;
@@ -202,18 +203,13 @@ select::-ms-expand { display: none; }
 	border:0;
  	cursor:pointer;
 }
-
-.IconCustomize{
-	width: 60px;
-	margin-left:7px;
-}
 </style>
 <script>
 
 var rule_default_state = "1";
 var cur_rule_enable = rule_default_state;
 var rule_enable_array = [];
-var MAX_RULE_NUM = 1;
+var MAX_RULE_NUM = 5; //Original Value: 1
 var enable_num = 0;
 var orig_wtfast_rulelist = decodeURIComponent('<% nvram_char_to_ascii("", "wtf_rulelist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
 var wtfast_rulelist = orig_wtfast_rulelist;
@@ -221,8 +217,9 @@ var wtfast_rulelist_array = new Array();
 var wtfast_rulelist_row = wtfast_rulelist.split('<');
 for(var i = 1; i < wtfast_rulelist_row.length; i ++) {
 	var  wtfast_rulelist_col = wtfast_rulelist_row[i].split('>');
-	if(wtfast_rulelist_col.length == 4)
+	if(wtfast_rulelist_col.length == 4){
 		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], "none", wtfast_rulelist_col[3]];
+	}
 	else	
 		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], wtfast_rulelist_col[3], wtfast_rulelist_col[4]];
 }
@@ -262,11 +259,10 @@ if(saved_server_list != ""){
 	}][0];
 */
 
-var date = new Date();
-
 $.ajaxSetup({
     timeout: 5000
 });
+
 
 function initial(){
 	var sVer = navigator.userAgent.indexOf("MSIE") ;
@@ -279,8 +275,12 @@ function initial(){
 	  rv = -1;
 	}
 	show_menu();
-	document.getElementById("_GameBoost").innerHTML = '<table><tbody><tr><td><div class="_GameBoost"></div></td><td><div style="width:120px;">Game Boost</div></td></tr></tbody></table>';
+	document.getElementById("_GameBoost").innerHTML = '<table><tbody><tr><td><div class="_GameBoost"></div></td><td><div style="width:120px;"><#Game_Boost#></div></td></tr></tbody></table>';
 	document.getElementById("_GameBoost").className = "menu_clicked";
+
+	var GB_login_str = "<#Game_Boost_login#>";
+	GB_login_str = GB_login_str.replace(/WTFast/gi,"<span><img src=\"/images/wtfast_logo.png\" style=\"margin-bottom:-5px; margin-left:10px;\"></span>");
+	document.getElementById("Game_Boost_login_div").innerHTML = GB_login_str;
 
 	if(saved_username != "" &&  saved_passwd != ""){
 		document.getElementById("wtf_username").value = saved_username;
@@ -294,17 +294,32 @@ function initial(){
 
 	if( sVer!= -1 || rv == 11)
   		document.getElementById("pull_arrow").style.marginLeft = "-4px";
+
 }
 
-function create_server_list(index){
-	var id = "server_list"+index;
+function _create_server_list(name, index, showauto){
+	var id = name + index;
 	var select = document.getElementById(id);
 
 	select.length = 0;
-	select.options[0] = new Option( "Auto", "auto");
+	if (showauto){
+		select.options[select.length] = new Option( "Auto", "auto");
+	} else { 
+		select.options[select.length] = new Option( "-", "none");
+	}
+
 	Object.keys(wtfast_status.Server_List).forEach(function(key) {
 		select.options[select.length] = new Option( wtfast_status.Server_List[key], wtfast_status.Server_List[key]);
 	});
+}
+
+function create_server_list(index){
+	_create_server_list("server_1_list", index, true);
+	_create_server_list("server_2_list", index, false);
+}
+
+function allow_multiple_servers() {
+	return wtfast_status.Account_Type == "Advanced";
 }
 
 function create_game_list(index){
@@ -321,6 +336,7 @@ function create_game_list(index){
 
 function show_info(){
 	var email = wtfast_status.eMail;
+	var date = new Date();
 
 	if(email.length > 45){
 		document.getElementById("contact_email").title = email;
@@ -328,19 +344,22 @@ function show_info(){
 		email = email + "...";
 	}
 	document.getElementById("contact_email").innerHTML = email;
-	document.getElementById("account_type").innerHTML = wtfast_status.Account_Type;
-	if(document.getElementById("account_type").innerHTML == "Expired"){
-		document.getElementById("account_type").innerHTML = "Basic";
-		document.getElementById("ended_date_td").style.display = "none";
-		document.getElementById("ended_date_th").style.display = "none";
+	if(wtfast_status.Days_Left == 0){
+		document.getElementById("account_type").innerHTML = "<#GB_account_type0#>";
+		document.getElementById("ended_date").innerHTML = "<#GB_ended_date_type0#>";
+		document.getElementById("days_left").style.display = "none";
+		document.getElementById("days_title").style.display = "none";
 	}
 	else{
-		document.getElementById("ended_date_td").style.display = "";
+		if(wtfast_status.Account_Type == "Basic")
+			document.getElementById("account_type").innerHTML = "<#GB_account_type1#>";
+		else if(wtfast_status.Account_Type == "Advanced")
+			document.getElementById("account_type").innerHTML = "<#GB_account_type2#>";
 		date.setDate(date.getDate() + wtfast_status.Days_Left);
 		var date_str = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
-		document.getElementById("ended_date_td").style.display = "";
-		document.getElementById("ended_date_th").style.display = "";
 		document.getElementById("ended_date").innerHTML = date_str;
+		document.getElementById("days_left").style.display = "";
+		document.getElementById("days_title").style.display = "";
 		document.getElementById("days_left").innerHTML = wtfast_status.Days_Left + "&nbsp" + "Days";
 	}
 	document.getElementById("max_computers").innerHTML = wtfast_status.Max_Computers;
@@ -360,20 +379,6 @@ function applyRule(){
 	showLoading();
 	document.form.submit();
 }
-
-function done_validating(action){
-	refreshpage();
-}
-
-function prevent_lock(rule_num){
-	if(document.form.wl_macmode.value == "allow" && rule_num == ""){
-		alert("<#FirewallConfig_MFList_accept_hint1#>");
-		return false;
-	}
-
-	return true;
-}
-
 
 function check_macaddr(obj,flag){
 	if(flag == 1){
@@ -399,11 +404,12 @@ function check_macaddr(obj,flag){
 }
 
 function pullLANList(obj){	
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
 	if(isMenuopen == 0){		
 		obj.src = "images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';		
-		document.form.clientmac_x_0.focus();		
-		isMenuopen = 1;
+		element.style.display = 'block';		
+		document.form.clientmac_x_0.focus();
 	}
 	else
 		hideClients_Block();
@@ -461,6 +467,7 @@ function addRule(){
 	*/
 	if(rule_num == MAX_RULE_NUM){
 		alert("<#JS_itemlimit1#> " + MAX_RULE_NUM + " <#JS_itemlimit2#>");
+		change_add_btn(0);
 		return false;
 	}
 
@@ -473,6 +480,7 @@ function addRule(){
 		alert("<#JS_fieldblank#>");
 		document.form.clientmac_x_0.focus();
 		document.form.clientmac_x_0.select();
+		change_add_btn(0);
 		return false;
 	}
 	else if(check_macaddr(document.form.clientmac_x_0, check_hwaddr_flag(document.form.clientmac_x_0)) == true){
@@ -486,7 +494,7 @@ function addRule(){
 		});
 
 		if(addRule){
-			wtfast_rulelist_array.push([rule_enable, document.form.clientmac_x_0.value, document.form.server_list.value, "none", document.form.game_list.value]);
+			wtfast_rulelist_array.push([rule_enable, document.form.clientmac_x_0.value, document.form.server_1_list.value, document.form.server_2_list.value, document.form.game_list.value]);
 			if(rule_enable == "1" && (wtf_enable_games.indexOf(document.form.game_list.value) == -1)){
 				wtf_enable_games += "<" + document.form.game_list.value;
 			}
@@ -499,7 +507,7 @@ function addRule(){
 
 }
 
-function update_rulelist(AapplyCheck){
+function update_rulelist(ApplyCheck){
 	var wtfast_rulelist_value = "";
 
 	Object.keys(wtfast_rulelist_array).forEach(function(key) {
@@ -507,7 +515,7 @@ function update_rulelist(AapplyCheck){
 		});
 	wtfast_rulelist = wtfast_rulelist_value;
 
-	if(AapplyCheck){
+	if(ApplyCheck){
 		if(orig_wtfast_rulelist != wtfast_rulelist)
 			show_apply(1);
 		else
@@ -558,7 +566,7 @@ function show_rulelist(){
 			if(clientList[clientMac]) {
 				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
 				deviceType = clientList[clientMac].type;
-				deviceVender = clientList[clientMac].dpiVender;
+				deviceVender = clientList[clientMac].vendor;
 				clientIP = clientList[clientMac].ip;
 			}
 			else {
@@ -567,26 +575,26 @@ function show_rulelist(){
 				deviceVender = "";
 				clientIP = "";
 			}
-			if(clientList[clientMac] == undefined) {
-				code += '<div style="height:56px;" class="clientIcon IconCustomize type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+			if(typeof(clientList[clientMac]) == "undefined") {
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WTFast\')"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="width:80px;text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div style="width:80px;text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WTFast\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
-				else if( (deviceType != "0" && deviceType != "6") || deviceVender == "") {
-					code += '<div style="height:56px;" class="clientIcon IconCustomize type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+				else if(deviceType != "0" || deviceVender == "") {
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WTFast\')"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
-					if(venderIconClassName != "") {
-						code += '<div style="height:56px;" class="venderIcon ' + venderIconClassName + ' IconCustomize" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+					if(venderIconClassName != "" && !downsize_4m_support) {
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WTFast\')"></div>';
 					}
 					else {
-						code += '<div style="height:56px;" class="clientIcon IconCustomize type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WTFast\')"></div>';
 					}
 				}
 			}
@@ -605,11 +613,19 @@ function show_rulelist(){
 				code += '<td style="width:26%;"><select id="game_list' + key + '"style="width:160px; background-position:143px;" name="game_list'+ key + '" onchange="change_game(this);">';
 			code += '</select></td>';
 
-			if(wtfast_rulelist_array[key][0] == "0")
-				code += '<td style="width:14%;"><select id="server_list' + key + '" class="wtfast_input_option" style="color:#949393; border: 1px solid #949393;" name="server_list'+ key + '" onchange="change_server(this);">';
-			else
-				code += '<td style="width:14%;"><select id="server_list' + key + '" class="wtfast_input_option" name="server_list'+ key + '" onchange="change_server(this);">';
-			code += '</select></td>';
+			if(wtfast_rulelist_array[key][0] == "0"){
+				code += '<td style="width:14%;">';
+				code += '<select data-server_number="1" data-row="' + key + '" id="server_1_list' + key + '" class="wtfast_input_option" style="color:#949393; border: 1px solid #949393;" name="server_1_list'+ key + '" onchange="change_server($(this));"></select>';	
+				code += '<div class="server_2_list_div"><select data-server_number="2" data-row="' + key + '" id="server_2_list' + key + '" class="wtfast_input_option" style="color:#949393; border: 1px solid #949393; margin-top: 10px;" name="server_2_list' + key + '" onchange="change_server($(this));"></select></div>';
+				code += '</td>';
+			}
+			else{
+				code += '<td style="width:14%;">';
+				code += '<select data-server_number="1" data-row="' + key + '" id="server_1_list' + key + '" class="wtfast_input_option" name="server_1_list'+ key + '" onchange="change_server($(this));"></select>';
+				code += '<div class="server_2_list_div"><select data-server_number="2" data-row="' + key + '" id="server_2_list' + key + '" class="wtfast_input_option" style="margin-top: 10px;" name="server_2_list' + key + '" onchange="change_server($(this));"></select></div>';			
+				code += '</td>';
+			}
+	
 			code += '<td style="width:15%"><div><img src = "images/New_ui/delete.svg" onMouseOver="this.src=\'images/New_ui/delete_hover.svg\'" onMouseOut="this.src=\'images/New_ui/delete.svg\'"style="width:25px; height:25px; cursor:pointer;" onclick="delRule(this);"></div></td>';
 			code += '</tr>';
 			code += '<tr><td colspan="5"><div style="width:100%;height:1px;background-color:#660000"></div></td></tr>'
@@ -644,15 +660,28 @@ function show_rulelist(){
 			}			
 
 			create_server_list(key);
-			var server_list_id = "server_list" + key;
-			select = document.getElementById(server_list_id);
+			var server_1_list_id = "server_1_list" + key;
+			var server_1_list_select = document.getElementById(server_1_list_id);
 
-			for(var j = 0; j < select.length; j++){
-				if(select[j].value == wtfast_rulelist_array[key][2]){
-					select.selectedIndex = j;
+			for(var j = 0; j < server_1_list_select.length; j++){
+				if(server_1_list_select[j].value == wtfast_rulelist_array[key][2]){
+					server_1_list_select.selectedIndex = j;
 					break;
 				}
 			}
+
+			var server_2_list_id = "server_2_list" + key;
+			var server_2_list_select = document.getElementById(server_2_list_id);
+
+			for(var j = 0; j < server_2_list_select.length; j++){
+				if(server_2_list_select[j].value == wtfast_rulelist_array[key][3]){
+					server_2_list_select.selectedIndex = j;
+					break;
+				}
+			}
+
+			update_server_list_visibilities($(server_1_list_select));
+
 		});
 	}
 
@@ -692,50 +721,42 @@ function change_game(r){
 	update_rulelist(1);
 }
 
-function change_server(r){
-	var key = r.id.substr(11);
-	var select = document.getElementById(r.id);
-	wtfast_rulelist_array[key][2] = select.value;
-	update_rulelist(1);
+function update_server_list_visibilities(target) {
+	var server_number = target.data("server_number");
+	var row = target.data("row");
+	var server = target.val();
+	var container = target.closest("td");
+
+	if(server == "auto") {
+		container.children(".server_2_list_div").hide();
+	} 
+	else if(allow_multiple_servers()) {
+		container.children(".server_2_list_div").show();
+	}
+	else{
+		container.children(".server_2_list_div").hide();
+	}
 }
 
-var over_var = 0;
-var isMenuopen = 0;
+function change_server(target){
+	var server_number = target.data("server_number");
+	var row = target.data("row");
+	var server = target.val();
+	var container = target.closest("td");
+
+	wtfast_rulelist_array[row][server_number + 1] = server;
+	update_server_list_visibilities(target);
+	update_rulelist(1);
+}
 
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById("ClientList_Block_PC").style.display="none";
-	isMenuopen = 0;
-}
-
-function showClientList(){
-	var htmlCode = "";
-	for(var i=0; i<clientList.length;i++){
-		var clientObj = clientList[clientList[i]];
-		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
-		var clientIP = "";
-		if(clientObj.ip != "offline") {
-			clientIP = clientObj.ip;
-		}
-		htmlCode += '<a title=' + clientList[i] + '><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\'';
-		htmlCode += clientObj.mac;
-		htmlCode += '\');"><strong>';
-		if(clientName.length > 30) {
-			htmlCode += clientName.substring(0, 28) + "..";
-		}
-		else {
-			htmlCode += clientName;
-		}
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	}
-
-	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function setClientmac(macaddr){
 	document.form.clientmac_x_0.value = macaddr;
 	hideClients_Block();
-	over_var = 0;
 	change_add_btn(1);
 }
 
@@ -743,6 +764,14 @@ function reset_rule_state(){
 	enable_num = 0;
 	Object.keys(wtfast_rulelist_array).forEach(function(key) {
 		wtfast_rulelist_array[key][0] = "0";
+	});
+	update_rulelist(0);
+	orig_wtfast_rulelist = wtfast_rulelist;
+}
+
+function reset_proxy2(){
+	Object.keys(wtfast_rulelist_array).forEach(function(key) {
+		wtfast_rulelist_array[key][3] = "none";
 	});
 	update_rulelist(0);
 	orig_wtfast_rulelist = wtfast_rulelist;
@@ -784,18 +813,19 @@ function show_management_page(show){
 	[ToDo] callback function to handle the response from wtfast web server.
 */
 function checkLoginStatus(){
-	if(wtfast_status.Login_status == 1 && (wtfast_status.eMail != undefined && wtfast_status.eMail != "")){
+	if(wtfast_status.Login_status == 1 && (typeof(wtfast_status.eMail) != "undefined" && wtfast_status.eMail != "")){
 		show_info();
 		show_login_page(0);
 		show_management_page(1);
-		showClientList();
+		showDropdownClientList('setClientmac', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 		show_rulelist();
+		update_server_list_visibilities($("server_1_list"));
 		create_server_list("");
 		create_game_list("");
 		stopFire();
 	}
 	else{
-		if(wtfast_status.Error != undefined){
+		if(typeof(wtfast_status.Error) != "undefined"){
 			document.getElementById("error_msg").style.display = "";
 			document.getElementById("error_msg").innerHTML = "* " + wtfast_status.Error;
 		}
@@ -832,6 +862,9 @@ function wtf_login(){
 					Object.keys(wtfast_status.Server_List).forEach(function(key) {
 						server_list += "<"+ wtfast_status.Server_List[key];
 					});
+
+					if(wtfast_status.Account_Type != "Advanced")
+						reset_proxy2();
 				}
 
 				$.ajax({
@@ -854,9 +887,9 @@ function wtf_login(){
 					}
 				});
 
-				checkLoginStatus();
+				setTimeout("checkLoginStatus();", 5000);
 		
-			}, 
+			},
 			error: function(XMLHttpRequest, textStatus){
 				if(textStatus == "timeout"){
 					document.getElementById("error_msg").style.display = "";
@@ -864,8 +897,10 @@ function wtf_login(){
 				}
 			},
 			complete: function(){
-				document.getElementById("loadingIcon_login").style.display = "none";
-				document.getElementById("login_button").style.display = "";
+				setTimeout(function(){
+					document.getElementById("loadingIcon_login").style.display = "none";
+					document.getElementById("login_button").style.display = "";
+				}, 6000);
 			}
 		});
 	}
@@ -906,25 +941,30 @@ function wtf_logout(){
 				show_login_page(1);
 				document.getElementById("loadingIcon_logout").style.display = "none";
 				document.getElementById("logout_button").style.display = "";
-			}
+			}		
 		});
 	}
 
 }
 
+function return_to_login(){
+	show_management_page(0);
+	show_login_page(1);
+	document.getElementById("loadingIcon_logout").style.display = "none";
+	document.getElementById("logout_button").style.display = "";	
+}
+
 function open_link(page){
-	if(page == "subscribe"){
-		tourl = "https://www.wtfast.com/Subscription/Index/new";
-		link = window.open(tourl, "WTFast","toolbar=yes,location=yes,directories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=480");	
-	}
-	else if(page == "newAccoubt"){
-		tourl = "https://www.wtfast.com/Account/Create";
-		link = window.open(tourl, "WTFast","toolbar=yes,location=yes,directories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=480");	
-	}
-	else if(page == "supportGames"){
-		tourl = "https://www.wtfast.com/pages/supported_games/";
-		link = window.open(tourl, "WTFast","toolbar=yes,location=yes,directories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=480");	
-	}	
+	var tourl;
+
+	if(page == "terms")
+		tourl = "https://www.wtfast.com/pages/terms/";
+	else if(page == "privacy")
+		tourl = "https://www.wtfast.com/pages/privacy/";
+	else
+		tourl = "https://www.wtfast.com/pages/asus_router/";
+	
+	link = window.open(tourl, "WTFast","toolbar=yes,location=yes,directories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=480");
 }
 
 function check_value(obj){
@@ -980,7 +1020,7 @@ function clean_macerr(){
 <input type="hidden" name="current_page" value="Advanced_WTFast_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_WTFast_Content.asp">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_wait" value="3">
+<input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="action_script" value="restart_wtfast_rule">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -999,32 +1039,32 @@ function clean_macerr(){
 			</td>
 			<td style="height:75px; vertical-align: top;">
 				<div style="margin-left:15px; margin-right:10px; color:#EAE9E9; font-size:13px; font-weight:bolder;">
-					Game Boost,an exclusive gamer private network(GPN) powered by WTFast automatically performs route optimization, choosing the most efficient route for your game packets.
+					<#Game_Boost_desc1#>
 				</div>
 			</td>
 		</tr>
 		<tr>
 			<td style="vertical-align: top;">
 				<div style="font-size:12px; margin-left:15px; margin-right:10px;">
-				<p style="color:#EBE8E8; font-size:13px;font-weight:bolder;">Benefits to enable Game Boost on ASUS router:</p>
+				<p style="color:#EBE8E8; font-size:13px;font-weight:bolder;"><#Game_Boost_Benefit#> :</p>
 				<ul type="disc">
-					<li style="line-height:15px; margin-left:-25px; margin-top:-10px; color:#949393;">Reduce average ping time and variation.</li>
-					<li style="line-height:15px; margin-left:-25px; color:#949393;">Reduce average packet loss rate.</li>
-					<li style="line-height:15px; margin-left:-25px; color:#949393;">Cross platform supported <br>(Windows, Macintosh, Linux, Mobile, Console game).</li>
-					<li style="line-height:15px; margin-left:-25px; color:#949393;">Utility free for your PCs, reserve CPU/RAM usage for game.</li>
-					<li style="line-height:15px; margin-left:-25px; color:#949393;">Life time free of one device acceleration.</li>
+					<li style="line-height:15px; margin-left:-25px; margin-top:-10px; color:#949393;"><#Game_Boost_Benefit1#></li>
+					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit2#></li>
+					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit3#><br>(Windows, Macintosh, Linux, Mobile, Console game).</li>
+					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit4#></li>
+					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit5#></li>
 				</ul>
 				</div>
 			</td>
 		</tr>
 		</table>
 		<table style="margin-top:10px;  width:760px;">
-			<tr><td colspan="2" style="color:#EBE8E8; font-size:20px; font-weight:bold; text-align:center;">Enter<span><img src="/images/wtfast_logo.png"  style="    margin-bottom:-5px; margin-left:10px;"></span> account here</td></tr>
+			<tr><td colspan="2" style="color:#EBE8E8; font-size:20px; font-weight:bold; text-align:center;"><div id="Game_Boost_login_div"></div></td></tr>
 			<tr>
 				<th style="width:254px; height:35px; color:#949393; font-size:14px; text-align:right; padding-right:15px;">E-Mail</th><!--untranslated-->
 				<td style="color:#949393; font-size:14px; text-align:left;">
 				<input type="text" maxlength="32" class="login_input" id="wtf_username" name="wtf_username" value="" onkeypress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off" >
-				<span ><a id="link" href="javascript:open_link('newAccoubt')" style="margin-left:5px;text-decoration:underline;color:#949393;">Create A Free Account</a></span>
+				<span ><a id="link" href="javascript:open_link('newAccount')" style="margin-left:5px;text-decoration:underline;color:#949393;"><#create_free_acc#></a></span>
 				</td>
 			</tr>
 			<tr>
@@ -1038,17 +1078,17 @@ function clean_macerr(){
 			</tr>
 			<tr>
 				<td colspan="2" style="height:35px;text-align:center;">
-					<input id="login_button" class="wtfast_button" style="background-color:#A80000; opacity:0.9;" onclick="wtf_login();" type="button" value="Login"/>
+					<input id="login_button" class="wtfast_button" style="background-color:#A80000; opacity:0.9;" onclick="wtf_login();" type="button" value="<#CTL_login#>"/>
 					<img id="loadingIcon_login" style="display:none;" src="images/InternetScan.gif">
 				</td>
 			</tr>
 		</table>
-		<div style="color:#949393; font-size:12px; text-align:center;">* Note: New patch will be updated regularly, please keep your firmware stay up to date.</div>
+		<div style="color:#949393; font-size:12px; text-align:center;">* <#note_up_to_date#></div>
 		<div>
 			<canvas id="fire" style="width:760px;height:430px; display:block;position:absolute; top:491px; z-index:-1;"></canvas>
 			<img id="fire_pic" style="position: absolute; top: 499px; z-index: -1; margin-left: 3px;display:none;" src="images/fire.jpg">
 		</div>
-		<div style="color:#949393; font-size:12px; text-align:right; margin-top: 146px; margin-right: 20px;">Ver. 1.0.0.3_15.1102</div>
+		<div style="color:#949393; font-size:12px; text-align:right; margin-top: 146px; margin-right: 20px;">Ver. 1.0.0.4_16.0105</div>
 		</div><!--WTFast_login_div-->
 
 		<div id="ManagementPage" style="display:none;">
@@ -1062,7 +1102,7 @@ function clean_macerr(){
 								<tr>
 									<td>
 										<div style="float:left; margin-left:20px; margin-top:-10px;"><img src="images/New_ui/game.svg" style="width:77px; height:77px;"></div>
-										<div style="color:#EBE8E8; font-size:26px; font-weight:bold; font-family:calibri; float:left; margin-top:12px; margin-left:6px;">Game Boost Management</div>										
+										<div style="color:#EBE8E8; font-size:26px; font-weight:bold; font-family:calibri; float:left; margin-top:12px; margin-left:6px;"><#Game_Boost_management#></div>										
 									</td>
 									<td align="right">
 										<img onclick="go_setting('GameBoost.asp')" style="width:40px; cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="Back to Game Boost" src="images/wtfast_back.svg" onMouseOver="this.src='images/wtfast_back_hover.svg'" onMouseOut="this.src='images/wtfast_back.svg'">
@@ -1073,7 +1113,7 @@ function clean_macerr(){
 						<table id="MainTable1" width="710px" height="160px" border="0" align="left" cellpadding="4" cellspacing="0" style="margin-left:20px;">
 							<thead>
 								<tr>
-									<td colspan="2" align="left" style="color:#FFFFFF; font-size:18px; font-family:calibri;">Game Boost Information</td>
+									<td colspan="2" align="left" style="color:#FFFFFF; font-size:18px; font-family:calibri;"><#Game_Boost_lnformation#></td>
 							  	</tr>
 							  	<tr>
 									<td colspan="2"><div style="width:100%; height:2px; background-color:#B80000"></div></td>
@@ -1081,10 +1121,10 @@ function clean_macerr(){
 							</thead>
 							<tr style="vertical-align:bottom; color:#949393; font-family:calibri; font-size:16px;">
 								<th  align="left" style="width:50%;">
-									<div style="float:left;">Account</div>
+									<div style="float:left;"><#AiDisk_Account#></div>
 									<div style="float:left; margin-left:10px;"><img id="logout_button" title="<#t1Logout#>" src="images/New_ui/logout.svg" onMouseOver="this.src='images/New_ui/logout_hover.svg'" onMouseOut="this.src='images/New_ui/logout.svg'"style="width:17px; height:17px; cursor:pointer;" onclick="wtf_logout();"><img id="loadingIcon_logout" style="margin-left:10px; display:none;" src="/images/InternetScan.gif"></div>
 								</th>
-								<th  align="left">Account Type</th><!--untranslated-->
+								<th  align="left"><#account_type#></th>
 							</tr>
 							<tr style="vertical-align:top; color:#EAE9E9; font-family:calibri; font-size:15px;">
 								<td>
@@ -1097,17 +1137,17 @@ function clean_macerr(){
 							</tr>
 							<tr style="vertical-align:bottom; color:#949393; font-family:calibri; font-size:16px;">
 								<th align="left">
-									<div style="float:left;">Maximum Computers</div><!--untranslated-->
+									<div style="float:left;"><#max_computers#></div>
 									<div style="float:left; margin-left:10px;"><img id="upgrade_button" title="Upgrade" src="images/New_ui/upgrade.svg" onMouseOver="this.src='images/New_ui/upgrade_hover.svg'" onMouseOut="this.src='images/New_ui/upgrade.svg'"style="width:20px; height:20px; cursor:pointer;" onclick="open_link('subscribe');"></div>
 								</th>
-								<th id="ended_date_th" align="left">Ended Date</th>
+								<th id="ended_date_th" align="left"><#GB_ended_date#></th>
 							</tr>
 							<tr style="vertical-align:top; color:#EAE9E9; font-family:calibri; font-size:15px;">
 								<td>
 							  		<span id="max_computers"></span>
 								</td>
 								<td id="ended_date_td">
-							  		<span id="ended_date"></span><span style="margin-left:10px;">( Days Left: <span id="days_left"></span> )</span> <!--untranslated-->
+							  		<span id="ended_date"></span><span id="days_title" style="margin-left:10px;">( Days Left: <span id="days_left"></span> )</span> <!--untranslated-->
 								</td>
 							</tr>			
 						</table>
@@ -1115,12 +1155,12 @@ function clean_macerr(){
 						<table id="MainTable2" width="710px" border="0" align="left" cellpadding="4" cellspacing="0" style="text-align:center; margin-left:20px; margin-top:40px;">
 							<thead>
 								<tr>
-									<td colspan="5" align="left" style="color:#FFFFFF; font-size:18px; font-family:calibri;">Game Boost Rules List</td><!--untranslated-->
+									<td colspan="5" align="left" style="color:#FFFFFF; font-size:18px; font-family:calibri;"><#GB_rulelist#></td>
 								</tr>
 							</thead>
 							<tr style="vertical-align:bottom; color:#949393; font-family:calibri; font-size:16px;">
 								<th width="15%"><#WLANConfig11b_WirelessCtrl_button1name#>/<#WLANConfig11b_WirelessCtrl_buttonname#></th>
-								<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);" style="vertical-align:bottom; color:#949393; font-family:calibri; font-size:16px;">Client</th><!--untranslated-->
+								<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);" style="vertical-align:bottom; color:#949393; font-family:calibri; font-size:16px;"><#ParentalCtrl_hwaddr#></th>
 								<th width="26%"><#AiProtection_filter_stream1#></th>
 								<th width="14%"><#LANHostConfig_x_DDNSServer_itemname#></th>
 								<th width="15%"><#list_add_delete#></th>
@@ -1135,17 +1175,21 @@ function clean_macerr(){
 
 								<td>
 									<input type="text" class="wtfast_input_option" maxlength="17" name="clientmac_x_0" style="width:180px; border-right:0px;" onKeyPress="return validator.isHWAddr(this,event);" onKeyUp="check_value(this);" onKeyDown="clean_macerr();" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off" placeholder="ex: <% nvram_get("lan_hwaddr"); %>">
-										<img id="pull_arrow" src="images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANList(this);" title="<#select_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
+										<img id="pull_arrow" src="images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANList(this);" title="<#select_MAC#>">
 										<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div> 
 								</td>
 								<td>
 									<select id="game_list" name="game_list" style="width:160px; background-position:143px;" onchange=""></select>
 								</td>
 								<td>
-									<select id="server_list" name="server_list" onchange=""></select>
+									<select data-server_number="1" id="server_1_list" name="server_1_list" onchange="update_server_list_visibilities($(this));"></select>
+									<div class="server_2_list_div" style="display: none; margin-top: 10px;">
+										<select data-server_number="2" id="server_2_list" name="server_2_list" onchange="update_server_list_visibilities($(this));"></select>	
+									</div>
 								</td>
+															
 								<td align="center">
-									<div id="addCircle" class="addCircle"><img id="add_btn" src="images/New_ui/add.svg" onMouseOver="this.src='images/New_ui/add_hover.svg'" onMouseOut="this.src='images/New_ui/add.svg'" style="width:25px; height:25px; cursor:pointer;" onClick="addRule();"></div>
+									<div data-server_number="2" id="addCircle" class="addCircle"><img id="add_btn" src="images/New_ui/add.svg" onMouseOver="this.src='images/New_ui/add_hover.svg'" onMouseOut="this.src='images/New_ui/add.svg'" style="width:25px; height:25px; cursor:pointer;" onClick="addRule();"></div>
 								</td>
 							</tr>
 							<tr>
@@ -1153,10 +1197,9 @@ function clean_macerr(){
 							</tr>
 						</table>
 						<table cellspacing="0"><tr><td><div id="wtfast_rulelist_Block"></div></td></tr></table>
-						<div style="color:#FFCC00; margin-left: 25px; margin-top: 5px; font-family:calibri; font-size:10px;">* Please relogin when starting a new game.</div>
-						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:10px;">* GPN performance will be varied by your ISP or location.</div>
-						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:10px;">* Game list will be updated automatically.</div>
-						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:10px;">* Please note that this feature is currently in early adopt stage and will be receiving regular updates.</div>
+						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note1#></div>
+						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note2#></div>
+						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note3#></div>
 						<div id="applyBtn" align="center" style="margin-top:20px; display:none;">
 							<input class="wtfast_button" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 						</div>

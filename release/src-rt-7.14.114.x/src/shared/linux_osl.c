@@ -1132,12 +1132,9 @@ osl_pktfastfree(osl_t *osh, struct sk_buff *skb)
 	ctfpool = (ctfpool_t *)CTFPOOLPTR(osh, skb);
 	//ASSERT(ctfpool != NULL);
         if (ctfpool == NULL) {
-                if (skb->destructor)
-                        dev_kfree_skb_any(skb);
-                else
-                        dev_kfree_skb(skb);
-
-                return;
+		printk("%s: ctfpool cannot be found in this skb! free skb.\n", __FUNCTION__);
+		dev_kfree_skb(skb);
+		return;
         }
 
 	/* if osh is a fwder osh, reset the fwder buf */

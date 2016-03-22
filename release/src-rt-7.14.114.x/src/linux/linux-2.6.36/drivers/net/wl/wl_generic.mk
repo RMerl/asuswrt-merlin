@@ -49,13 +49,17 @@ endif
         WLAN_ComponentsInUse += clm
     endif
     include $(src)/$(SRCBASE_OFFSET)/makefiles/WLAN_Common.mk
-    
+
     ifeq ($(WLFILES_SRC),)
          $(error WLFILES_SRC is undefined in $(WLCFGDIR)/$(WLCONFFILE))
     endif
-    
+
     ifeq ($(WLCLMAPI),1)
-    CLM_TYPE ?= router
+      ifeq ($(WLCLMLOAD),1)
+        CLM_TYPE ?= min
+      else
+        CLM_TYPE ?= router
+      endif
     $(call WLAN_GenClmCompilerRule,$(src)/$(SRCBASE_OFFSET)/wl/clm/src,$(src)/$(SRCBASE_OFFSET))
     endif
     

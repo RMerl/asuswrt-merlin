@@ -52,7 +52,7 @@ void create_mbssid_vlan(void)
 			!nvram_match("wl1.1_lanaccess", "")){
 			/* VID 4000 */
 			eval("vconfig", "add", "eth0", "4000");
-			eval("ifconfig", "vlan4000", "up");
+			eval("ifconfig", "vlan4000", "hw", "ether", nvram_safe_get("lan_hwaddr"), "up");
 			eval("brctl", "addif", "br0", "vlan4000");
 			eval("et", "robowr", "0x05", "0x81", "0x0fa0");
 			eval("et", "robowr", "0x05", "0x83", "0x00a0");
@@ -71,7 +71,7 @@ void create_mbssid_vlan(void)
 			!nvram_match("wl1.2_lanaccess", "")){
 			/* VID 4001 */
 			eval("vconfig", "add", "eth0", "4001");
-			eval("ifconfig", "vlan4001", "up");
+			eval("ifconfig", "vlan4001", "hw", "ether", nvram_safe_get("lan_hwaddr"), "up");
 			eval("brctl", "addif", "br0", "vlan4001");
 			eval("et", "robowr", "0x05", "0x81", "0x0fa1");
 			eval("et", "robowr", "0x05", "0x83", "0x00a0");
@@ -90,7 +90,7 @@ void create_mbssid_vlan(void)
 			!nvram_match("wl1.3_lanaccess", "")){
 			/* VID 4002 */
 			eval("vconfig", "add", "eth0", "4002");
-			eval("ifconfig", "vlan4002", "up");
+			eval("ifconfig", "vlan4002", "hw", "ether", nvram_safe_get("lan_hwaddr"), "up");
 			eval("brctl", "addif", "br0", "vlan4002");
 			eval("et", "robowr", "0x05", "0x81", "0x0fa2");
 			eval("et", "robowr", "0x05", "0x83", "0x00a0");

@@ -250,6 +250,8 @@ stop_wps_method(void)
 
 	usleep(100*1000);
 
+	int status = nvram_get_int("wps_proc_status");
+	if (status != 2 && status != 7)
 	restart_wps_monitor();
 
 	return 0;

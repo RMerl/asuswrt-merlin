@@ -6,10 +6,10 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<title><#Web_Title#> - Bandwidth Limiter</title><!--untranslated-->
-<link rel="stylesheet" type="text/css" href="ParentalControl.css">
+<title><#Web_Title#> - <#Bandwidth_Limiter#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <script type="text/javascript" src="state.js"></script>
 <script type="text/javascript" src="popup.js"></script>
 <script type="text/javascript" src="general.js"></script>
@@ -42,8 +42,6 @@
 </style>
 <script>
 var qos_bw_rulelist = "<% nvram_get("qos_bw_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
-var over_var = 0;
-var isMenuopen = 0;
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 
@@ -55,15 +53,16 @@ function initial(){
 	else
 		showhide("list_table",1);
 	
-	showLANIPList();	
+	showDropdownClientList('setClientIP', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');	
 }
 
 function pullLANIPList(obj){
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';		
-		document.form.PC_devicename.focus();		
-		isMenuopen = 1;
+		element.style.display = 'block';		
+		document.form.PC_devicename.focus();
 	}
 	else
 		hideClients_Block();
@@ -72,15 +71,13 @@ function pullLANIPList(obj){
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
-	isMenuopen = 0;
-
 }
 var PC_mac = "";
 function setClientIP(devname, macaddr){
 	document.form.PC_devicename.value = devname;
 	PC_mac = macaddr;
 	hideClients_Block();
-	over_var = 0;
+	showDropdownClientList('setClientIP', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 }
 	
 function deleteRow_main(obj){
@@ -219,13 +216,13 @@ function genMain_table(){
 	code += '<input type="checkbox" checked>';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeyup="device_filter(this);" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>" autocorrect="off" autocapitalize="off" autocomplete="off">';
-	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
-	code += '<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>';	
+	code += '<input type="text" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeyup="device_filter(this);" placeholder="<#AiProtection_client_select#>" autocorrect="off" autocapitalize="off" autocomplete="off">';
+	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>">';
+	code += '<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-top:25px;margin-left:10px;"></div>';	
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;text-align:right;"><input type="text" id="download_rate" class="input_6_table" maxlength="6" onkeypress="return bandwidth_code(this, event);"><span style="margin: 0 5px;color:#FFF;">Mb/s</span></td>';
 	code += '<td style="border-bottom:2px solid #000;text-align:right;"><input type="text" id="upload_rate" class="input_6_table" maxlength="6" onkeypress="return bandwidth_code(this, event);"><span style="margin: 0 5px;color:#FFF;">Mb/s</span></td>';
-	code += '<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onclick="addRow_main(this, 32)" value=""></td>';
+	code += '<td style="border-bottom:2px solid #000;"><input class="add_btn" type="button" onclick="addRow_main(this, 32)" value=""></td>';
 	code += '</tr>';
 	
 	if(qos_bw_rulelist == ""){
@@ -271,7 +268,7 @@ function genMain_table(){
 	code += '</tbody>';	
 	code += '</table>';
 	document.getElementById('mainTable').innerHTML = code;
-	showLANIPList();
+	showDropdownClientList('setClientIP', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 }
 
 function bandwidth_code(o,event){
@@ -297,7 +294,7 @@ function device_filter(obj){
 	var target_obj = document.getElementById("ClientList_Block_PC");
 	if(obj.value == ""){
 		hideClients_Block();
-		showLANIPList();
+		showDropdownClientList('setClientIP', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 	}
 	else{
 		obj.src = "/images/arrow-top.gif"
@@ -310,37 +307,12 @@ function device_filter(obj){
 			if(clientList[i].indexOf(obj.value) == -1 && clientName.indexOf(obj.value) == -1)
 				continue;
 			
-			code += '<a title=' + clientList[i] + '><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'' + clientName + '\', \'' + clientObj.mac + '\');"><strong>' + clientName + '</strong> ';
+			code += '<a title=' + clientList[i] + '><div style="height:auto;" onclick="setClientIP(\'' + clientName + '\', \'' + clientObj.mac + '\');"><strong>' + clientName + '</strong> ';
 			code += ' </div></a>';
 		}		
 		
 		document.getElementById("ClientList_Block_PC").innerHTML = code;		
 	}
-}
-
-function showLANIPList(){
-	var code = "";
-	for(var i = 0; i < clientList.length; i += 1) {
-		var clientObj = clientList[clientList[i]];
-		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
-
-		code += '<a title=' + clientList[i] + '><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'' + clientName + '\', \'' + clientObj.mac + '\');"><strong>' + clientName + '</strong> ';
-		code += ' </div></a>';
-	}
-	
-	code +="<!--[if lte IE 6.5]><script>alert(\"<#ALERT_TO_CHANGE_BROWSER#>\");</script><![endif]-->";	
-	document.getElementById("ClientList_Block_PC").innerHTML = code;
-}
-
-function pullLANIPList(obj){
-	if(isMenuopen == 0){		
-		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';		
-		document.form.PC_devicename.focus();		
-		isMenuopen = 1;
-	}
-	else
-		hideClients_Block();
 }
 
 var qos_enable_ori = "<% nvram_get("qos_enable"); %>";					
@@ -446,13 +418,13 @@ function enable_check(obj){
 									<table width="730px">
 										<tr>
 											<td align="left" class="formfonttitle">
-												<div  style="width:400px"><#menu5_3_2#> - Bandwidth Limiter</div><!--untranslated-->
+												<div  style="width:400px"><#menu5_3_2#> - <#Bandwidth_Limiter#></div>
 											</td>
 											<td align="right">
 												<div>
 													<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 														<option value="1" ><#Adaptive_QoS_Conf#></option>
-														<option value="2" selected>Bandwidth Limiter</option><!--untranslated-->											
+														<option value="2" selected><#Bandwidth_Limiter#></option>
 													</select>	    
 												</div>
 											</td>
@@ -468,9 +440,8 @@ function enable_check(obj){
 											</td>
 											<td>&nbsp;&nbsp;</td>
 											<td style="font-size: 14px;">
-												<!--untranslated-->
-												<div>Bandwidth Limiter allows you to control the max connection speed of the client device. You can select the host name from target or fill in IP address / IP Range / MAC address for limited speed profile setting.</div>
-												<div><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1013333/" target="_blank">Bandwidth Limiter FAQ</a></div>	
+												<div><#Bandwidth_Limiter_hint#></div>
+												<div><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1013333/" target="_blank"><#Bandwidth_Limiter#> FAQ</a></div>	
 											</td>
 										</tr>
 									</table>

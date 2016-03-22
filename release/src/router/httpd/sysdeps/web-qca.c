@@ -335,7 +335,6 @@ ADDR               AID CHAN TXRATE RXRATE RSSI IDLE  TXSEQ  RXSEQ  CAPS        A
 			if (l2 != NULL)
 				l2_offset = (int)(l2 - line_buf);
 			else {
-				dbg("%s: ACAPS not found. [%s]\n", __func__, line_buf);
 				l2_offset = 79;
 				l2 = line_buf + l2_offset;
 			}
@@ -643,6 +642,9 @@ static int ej_wl_sta_list(int unit, webs_t wp)
 	char *value;
 	int firstRow = 1;
 	int i;
+	int from_app = 0;
+
+	from_app = check_user_agent(user_agent);
 
 	if ((sta_info = malloc(sizeof(*sta_info))) != NULL)
 	{
@@ -654,19 +656,40 @@ static int ej_wl_sta_list(int unit, webs_t wp)
 			else
 				websWrite(wp, ", ");
 
-			websWrite(wp, "[");
+			if (from_app == 0)
+				websWrite(wp, "[");
 
 			websWrite(wp, "\"%s\"", sta_info->Entry[i].addr);
 
+			if (from_app != 0) {
+				websWrite(wp, ":{");
+				websWrite(wp, "\"isWL\":");
+			}
+
 			value = "Yes";
-			websWrite(wp, ", \"%s\"", value);
+			if (from_app == 0)
+				websWrite(wp, ", \"%s\"", value);
+			else
+				websWrite(wp, "\"%s\"", value);
 
 			value = "";
-			websWrite(wp, ", \"%s\"", value);
 
-			websWrite(wp, ", \"%d\"", sta_info->Entry[i].rssi);
+			if (from_app == 0)
+				websWrite(wp, ", \"%s\"", value);
+	
+			if (from_app != 0) {
+				websWrite(wp, ",\"rssi\":");
+			}
 
-			websWrite(wp, "]");
+			if (from_app == 0)
+				websWrite(wp, ", \"%d\"", sta_info->Entry[i].rssi);
+			else
+				websWrite(wp, "\"%d\"", sta_info->Entry[i].rssi);
+
+			if (from_app == 0)
+				websWrite(wp, "]");
+			else
+				websWrite(wp, "}");
 		}
 		free(sta_info);
 	}

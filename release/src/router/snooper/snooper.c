@@ -259,11 +259,11 @@ int main(int argc, char *argv[])
 		ifbridge = NULL;
 
 	openlog(name, 0, LOG_USER);
-	log_info("started on %s%s%s", ifswitch, ifbridge ? "/" : "", ifbridge ? : "");
+	log_info("started on %s%s%s", ifswitch, ifbridge ? "@" : "", ifbridge ? : "");
 
 	ifindex = if_nametoindex(ifswitch);
 	if (ifindex == 0) {
-		log_error("%s: %s", ifbridge ? : ifswitch, strerror(errno));
+		log_error("%s: %s", ifswitch, strerror(errno));
 		return 1;
 	}
 

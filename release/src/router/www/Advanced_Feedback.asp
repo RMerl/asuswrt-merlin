@@ -113,10 +113,10 @@ function check_wan_state(){
 function gen_ptype_list(url){
 	ptypelist = new Array();
 	ptypelist.push(["<#Select_menu_default#> ...", "No_selected"]);
-	ptypelist.push(["Setting Problem", "Setting_Problem"]);	
-	ptypelist.push(["Connection/Speed Problem", "Connection_or_Speed_Problem"]);
-	ptypelist.push(["Compatibility Problem", "Compatibility_Problem"]);
-	ptypelist.push(["Translated Suggestion", "Translated_Suggestion"]);
+	ptypelist.push(["<#feedback_setting_problem#>", "Setting_Problem"]);	
+	ptypelist.push(["<#feedback_conn_problem#>", "Connection_or_Speed_Problem"]);
+	ptypelist.push(["<#feedback_compat_problem#>", "Compatibility_Problem"]);
+	ptypelist.push(["<#feedback_translation#>", "Translated_Suggestion"]);
 	ptypelist.push(["<#Adaptive_Others#>", "Other_Problem"]);
 	free_options(document.form.fb_ptype);
 	document.form.fb_ptype.options.length = ptypelist.length;
@@ -442,7 +442,7 @@ function change_dsl_diag_enable(value) {
 </td>
 </tr>
 <tr>
-<th>Name of the Subscribed Plan/Service/Package *</th>
+<th>Subscribed Plan/Service/Package *</th>	<!-- untranslated  -->
 <td>
 	<input type="text" name="fb_Subscribed_Info" maxlength="50" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
 </td>
@@ -455,11 +455,11 @@ function change_dsl_diag_enable(value) {
 </tr>
 
 <tr>
-<th>Extra information for debugging *</th>
+<th><#feedback_extra_info#> *</th>
 <td>
 	<input type="checkbox" class="input" name="attach_syslog" id="attach_syslog_id"><label for="attach_syslog_id"><#System_Log#></label>&nbsp;&nbsp;&nbsp;
-	<input type="checkbox" class="input" name="attach_cfgfile" id="attach_cfgfile_id"><label for="attach_cfgfile_id">Setting file</label>&nbsp;&nbsp;&nbsp;
-	<span id="attach_iptables_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_iptables" id="attach_iptables_id"><label for="attach_iptables_id">Iptable setting</label></span>
+	<input type="checkbox" class="input" name="attach_cfgfile" id="attach_cfgfile_id"><label for="attach_cfgfile_id"><#feedback_setting_file#></label>&nbsp;&nbsp;&nbsp;
+	<span id="attach_iptables_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_iptables" id="attach_iptables_id"><label for="attach_iptables_id"><#feedback_iptable_setting#></label></span>
 	<span id="attach_modem_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_modemlog" id="attach_modemlog_id"><label for="attach_modemlog_id">3G/4G log</label></span>
 </td>
 </tr>
@@ -525,16 +525,16 @@ function change_dsl_diag_enable(value) {
 	</th>
 	<td>
 		<textarea name="fb_comment" maxlength="2000" cols="55" rows="8" style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" onKeyDown="textCounter(this,document.form.msglength,2000);" onKeyUp="textCounter(this,document.form.msglength,2000)"></textarea>
-		<span style="color:#FC0">Maximum of 2000 characters - characters left : </span>
+		<span style="color:#FC0"><#feedback_max_counts#> : </span>
 		<input type="text" class="input_6_table" name="msglength" id="msglength" maxlength="4" value="2000" autocorrect="off" autocapitalize="off" readonly>
 	</td>
 </tr>
 
-<tr align="center">
+<tr>
 	<td colspan="2">
-		<div style="margin-left:-680px;"><#feedback_optional#></div>
-		<input class="button_gen" name="btn_send" onclick="applyRule()" type="button" value="Send"/>
-	</td>	
+		<div><#feedback_optional#></div>
+		<input class="button_gen" style="margin-left: 305px;" name="btn_send" onclick="applyRule()" type="button" value="Send"/>
+	</td>
 </tr>
 
 <tr>

@@ -98,10 +98,10 @@ override CFLAGS += -DIEEE8021X_EAPOL
 
 ifeq ($(CONFIG_TLS), openssl)
 override CFLAGS += -DEAP_TLS_OPENSSL
-override CFLAGS += -I$(TOP)/openssl/include
+override CFLAGS += -I$(TOP)/openssl-1.0.0q/include
 OBJS_both += ../crypto/tls_openssl.o
 OBJS_both += ../crypto/crypto_openssl.o
-LIBS += -L$(TOP)/openssl -lssl -lcrypto
+LIBS += -L$(TOP)/openssl-1.0.0q -lssl-1.0.0q -lcrypto-1.0.0q
 override CFLAGS += -DINTERNAL_SHA256
 endif
 

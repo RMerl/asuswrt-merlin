@@ -508,6 +508,9 @@ int start_timemachine()
 	if(!nvram_match("timemachine_enable", "1"))
 		return -1;
 
+	if(!sd_partition_num() && !nvram_match("usb_debug", "1"))
+		return -1;
+
 	if(nvram_safe_get("tm_device_name") == NULL)
 	{
 		_dprintf("Timemachine: no device name to backup\n");

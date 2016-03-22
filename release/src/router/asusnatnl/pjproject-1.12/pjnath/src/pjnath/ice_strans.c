@@ -1357,10 +1357,11 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice2(pj_ice_strans *ice_st,
 
 		if (!pj_ice_strans_tp_is_upnp_tcp(cand->transport_id)) {
 			/* Must have address */
-			pj_assert(pj_sockaddr_has_addr(&cand->addr));
-			{
-				char buf[PJ_INET6_ADDRSTRLEN+10];
-			}
+			//pj_assert(pj_sockaddr_has_addr(&cand->addr));
+			if (!pj_sockaddr_has_addr(&cand->addr)) {
+				status = PJNATH_EICENOHOSTCAND;
+				goto on_error;
+			} 
 
 			/* Add the candidate */
 			status = pj_ice_sess_add_cand(ice_st->ice, comp->comp_id, 
@@ -1376,8 +1377,10 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice2(pj_ice_strans *ice_st,
 				cand->enabled);
 		} else {
 			/* Must have address */
-			pj_assert(pj_sockaddr_has_addr(&cand->addr));
-			{
+			if (!pj_sockaddr_has_addr(&cand->addr)) {
+				status = PJNATH_EICENOHOSTCAND;
+				goto on_error;
+			} else {
 				char buf[PJ_INET6_ADDRSTRLEN+10];
 				// DEAN for assertion fail
 				PJ_LOG(6, (ice_st->obj_name, "pj_ice_strans_init_ice() cand->tcp_addr=%s", 

@@ -95,7 +95,7 @@ var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
 if(isMobile() && tmo_support && sw_mode != 2 && qisFlag != "sitesurvey_rep" && qisFlag != "sitesurvey_mb")
 	location.href = "MobileQIS_Login.asp";
 
-if(isMobile() && (based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300"))
+if(isMobile() && (based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"))
 	location.href = "QIS_wizard_m.htm";	
 	
 var parent_macaddr = '<% nvram_get("lan_hwaddr"); %>';
@@ -494,7 +494,7 @@ function detect_httpd(){
     			document.getElementById('loading_block2').style.display = "none";
     			document.getElementById('loading_block3').style.display = "";
 				if(findasus_support){
-    				document.getElementById('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
+    				document.getElementById('loading_block3').innerHTML = "<div><#OP_AP_hint#></div>";
 				}else{
 					document.getElementById('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
 				}						
@@ -585,7 +585,7 @@ function detect_httpd(){
 <table width="998px"  border="0" align="center" cellpadding="0" cellspacing="0" background="/images/New_ui/middown_bg.png">
   <tr>
 		<td style="width:218px;*width:263px;" valign="top">
-			<div class="m_qis_r" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div class="_index"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
+			<div class="m_qis_r" id="btn_gotoindex" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div class="_index"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
 			<div class="lefttabhead" style="margin-left:15px;" id="option0"><table width="192px" height="37px"><tbody><tr><td><#QIS_title#></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t1" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep1.png"></td><td><div class="qismenu"><#QIS_step2#></div></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t2" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep2.png"></td><td><div class="qismenu"><#QIS_step3#></div></td></tr></tbody></table></div>

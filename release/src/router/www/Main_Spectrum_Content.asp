@@ -11,7 +11,6 @@
 <title><#Web_Title#> - Spectrum</title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
-<script src='svg.js' data-path="/svghtc/" data-debug="false"></script>	
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>

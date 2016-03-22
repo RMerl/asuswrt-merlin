@@ -25,7 +25,7 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 		container = '<div class="iphone_switch_container" style="height:'+settings.switch_height+'px; width:'+settings.switch_width+'px; position: relative; overflow: hidden">';
 		
 		// make the switch image based on starting state
-		image = '<img id="iphone_switch" class="iphone_switch" src="'+settings.switch_container_path+'" style="height:'+settings.switch_height+'px; width:'+settings.switch_width+'px; background-image:url('+settings.switch_path+'); background-repeat:no-repeat; background-position:'+(state == '1' ? 0 : -37)+'px" /></div>';
+		image = '<img id="iphone_switch" class="iphone_switch" src="'+settings.switch_container_path+'" style="border-radius:7px;height:'+settings.switch_height+'px; width:'+settings.switch_width+'px; background-image:url('+settings.switch_path+'); background-repeat:no-repeat; background-position:'+(state == '1' ? 0 : -37)+'px" /></div>';
 
 		// insert into placeholder
 		jQuery(this).html(container + image);

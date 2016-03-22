@@ -9,7 +9,6 @@
 	JS_validclientname : "Client device name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash \"-\" or under line \"_\".",
 	ASUSGATE_act_feedback : "Feedback now",
 	ASUSGATE_DSL_setting : "Go setting DSL",
-	ISP_not_support : 'We currently do not support this location, please use "Manual".',
 	period_time_validation : 'The value of check period can\'t be less than',
 	filter_lw_date_valid : 'Please select at least one day or disable this feature.',
 	ctf_fa_hint : 'System will reboot automatically after enable AiProtection for function working fine. Please click apply to enable this function or click cancel to back to page.'
@@ -346,7 +345,7 @@ function overHint(itemNum){
 		statusmenu = "<div class='StatusHint'>DSL :</div>";
 		if(wan_diag_state == "1" && allUsbStatus.search("storage") >= 0){
 			lineDesc = "Diagnostic debug log capture in progress.<br>";
-			lineDesc += show_diagTime();
+			lineDesc += show_diagTime(boottime_update);
 		}
 		else if(wan_line_state == "up")
 			lineDesc = "Link up";
@@ -632,7 +631,7 @@ function overHint(itemNum){
 						else{
 							if(first_link_auxstatus == "1"){
 								if( wans_dualwan_array[0] == "lan"){
-									statusmenu += "<span><#Check_cable#> <#Port_Mapping_item1#> : "+wans_lanport+"</span>";
+									statusmenu += "<span><#Check_cable#> : <#Port_Mapping_item1#> "+wans_lanport+"</span>";
 								}
 								else	
 									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
@@ -705,7 +704,7 @@ function overHint(itemNum){
 						else{
 							if(link_auxstatus == "1"){
 								if( wans_dualwan_array[0] == "lan"){
-									statusmenu += "<span><#Check_cable#> <#Port_Mapping_item1#> : "+wans_lanport+"</span>";
+									statusmenu += "<span><#Check_cable#> : <#Port_Mapping_item1#> "+wans_lanport+"</span>";
 								}
 								else	
 									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
@@ -817,7 +816,7 @@ function overHint(itemNum){
 						else{
 							if(secondary_link_auxstatus == "1"){
 								if( wans_dualwan_array[1] == "lan"){
-									statusmenu += "<span><#Check_cable#> <#Port_Mapping_item1#> : "+wans_lanport+"</span>";
+									statusmenu += "<span><#Check_cable#> : <#Port_Mapping_item1#> "+wans_lanport+"</span>";
 								}
 								else	
 									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
@@ -878,13 +877,12 @@ function overHint(itemNum){
 		return overlib(statusmenu, OFFSETX, -160, LEFT, DELAY, 400);
 }
 
-function show_diagTime(){
+function show_diagTime(boottime_update){
 				
-	Etime = debug_end_time - boottime;
+	Etime = debug_end_time - boottime_update;
 	EHours = Math.floor(Etime / 3600);	
 	EMinutes = Math.floor(Etime % 3600 / 60);	
-	boottime += 1;
-	//setTimeout("show_diagTime();", 1000);
+	
 	if(EHours <= 0 && EMinutes <= 0)
 		return "<#mssid_time_remaining#> : <span>0</span> <#Hour#> <span>0</span> <#Minute#>";
 	else

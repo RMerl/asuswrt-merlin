@@ -19,6 +19,8 @@
  */
 
 #include <sys/stat.h>
+#include <sys/utsname.h>
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -36,8 +38,19 @@
 #include <limits.h>
 
 #include "util.h"
+#include "uopt.h"
 #include "mtrace.h"
 #include "osdef.h"
+
+extern const char  COMPILE_MODE[];
+extern const char  VERSION[];
+extern const int   BUILDNUM;
+extern const char  BUILD_TYPE[];
+extern const int   PATCH;
+
+static char s_sysinfo [80] = "\0";
+
+extern struct udpxy_opt g_uopt;
 
 /* write buffer to a file
  *
@@ -76,6 +89,47 @@ save_buffer( const void* buf, size_t len, const char* filename )
 
     (void)close(fd);
     return (rc ? -1 : ((ssize_t)len - left));
+}
+
+
+/* read text file into a buffer
+ *
+ */
+ssize_t
+txtf_read (const char* fpath, char* dst, size_t maxlen, FILE* log)
+{
+    int rc = 0, fd = -1;
+    ssize_t n = 0;
+    ssize_t left = maxlen - 1;
+    char *p = dst;
+
+    assert (fpath && dst && maxlen);
+    fd = open (fpath, O_RDONLY, 0);
+    if (-1 == fd) {
+        mperror (log, errno, "%s open %s", __func__, fpath);
+        return -1;
+    }
+
+    while (left > 0) {
+        n = read (fd, p, maxlen - 1);
+        if (!n) break;
+        if (n < 0) {
+            n = 0; rc = errno;
+            if (EINTR != rc) {
+                mperror (log, errno, "%s read %s", __func__, fpath);
+                break;
+            }
+            rc = 0;
+        }
+        left -= (size_t)n;
+        p += n;
+    }
+    if (!rc) *p = '\0';
+
+    if (-1 == close (fd)) {
+        mperror (log, errno, "%s close %s", __func__, fpath);
+    }
+    return (rc ? -1 : ((ssize_t)maxlen - left - 1));
 }
 
 
@@ -275,23 +329,39 @@ set_pidfile( const char* appname, int port, char* buf, size_t len )
 }
 
 
+int
+would_block(int err)
+{
+    return (EAGAIN == err) || (EWOULDBLOCK == err);
+}
+
+
+int
+no_fault(int err)
+{
+    return (EPIPE == err) || (ECONNRESET == err) || would_block(err);
+}
+
+
 /* write buffer to designated socket/file
  */
 ssize_t
 write_buf( int fd, const char* data, const ssize_t len, FILE* log )
 {
     ssize_t n = 0, nwr = 0, error = IO_ERR;
+    int err = 0;
 
     for( n = 0; errno = 0, n < len ; ) {
         nwr = write( fd, &(data[n]), len - n );
         if( nwr <= 0 ) {
-            if( EINTR == errno ) {
+            err = errno;
+            if( EINTR == err ) {
                 TRACE( (void)tmfprintf( log,
                             "%s interrupted\n", __func__ ) );
                 continue;
             }
             else {
-                if( EAGAIN == errno )
+                if( would_block(err) )
                     error = IO_BLK;
 
                 break;
@@ -311,8 +381,13 @@ write_buf( int fd, const char* data, const ssize_t len, FILE* log )
     }
 
     if( nwr <= 0 ) {
-        if( log )
-            mperror( log, errno, "%s: write", __func__ );
+        if( log ) {
+            if (IO_BLK == error)
+                (void)tmfprintf( log, "%s: socket time-out on write", __func__);
+            else if( !no_fault(err) || g_uopt.is_verbose )
+                mperror( log, errno, "%s: write", __func__ );
+        }
+
         return error;
     }
 
@@ -327,12 +402,13 @@ write_buf( int fd, const char* data, const ssize_t len, FILE* log )
 ssize_t
 read_buf( int fd, char* data, const ssize_t len, FILE* log )
 {
-    ssize_t n = 0, nrd = 0;
+    ssize_t n = 0, nrd = 0, err = 0;
 
     for( n = 0; errno = 0, n < len ; ) {
         nrd = read( fd, &(data[n]), len - n );
         if( nrd <= 0 ) {
-            if( EINTR == errno ) {
+            err = errno;
+            if( EINTR == err ) {
                 TRACE( (void)tmfprintf( log,
                         "%s interrupted\n", __func__ ) );
                 errno = 0;
@@ -359,7 +435,12 @@ read_buf( int fd, char* data, const ssize_t len, FILE* log )
     }
 
     if( nrd < 0 ) {
-        if( log ) mperror( log, errno, "%s: read", __func__ );
+        if( log ) {
+            if( would_block(err) )
+                (void)tmfprintf( log, "%s: socket time-out on read", __func__);
+            else if( !no_fault(err) || g_uopt.is_verbose )
+                mperror( log, errno, "%s: read", __func__ );
+        }
     }
 
     return n;
@@ -482,7 +563,7 @@ tmfprintf( FILE* stream, const char* format, ... )
     char tstamp[ 80 ] = {'\0'};
     size_t ts_len = sizeof(tstamp) - 1;
     struct timeval tv_now;
-    const char* pidstr = get_pidstr( NO_RESET );
+    const char* pidstr = get_pidstr( NO_RESET, NULL );
 
     (void)gettimeofday( &tv_now, NULL );
 
@@ -522,7 +603,7 @@ tmfputs( const char* s, FILE* stream )
     char tstamp[ 80 ] = {'\0'};
     size_t ts_len = sizeof(tstamp) - 1;
     struct timeval tv_now;
-    const char* pidstr = get_pidstr( NO_RESET );
+    const char* pidstr = get_pidstr( NO_RESET, NULL );
 
     (void)gettimeofday( &tv_now, NULL );
 
@@ -963,18 +1044,60 @@ get_sizeval( const char* envar, const ssize_t deflt )
 /* retrieve/reset string representation of pid
  */
 const char*
-get_pidstr( int reset )
+get_pidstr( int reset, const char* pfx )
 {
     static char pidstr[ 24 ];
     static pid_t pid = 0;
 
     if( 1 == reset || (0 == pid) ) {
         pid = getpid();
-        (void) snprintf( pidstr, sizeof(pidstr), "%d", pid );
+        if (pfx) {
+            (void) snprintf (pidstr, sizeof(pidstr)-1, "%s(%d)", pfx, pid);
+        } else {
+            (void) snprintf (pidstr, sizeof(pidstr)-1, "%d", pid );
+        }
+        pidstr [sizeof(pidstr)-1] = '\0';
     }
 
     return pidstr;
 }
+
+
+/* retrieve system info string
+ */
+const char*
+get_sysinfo (int* perr)
+{
+    struct utsname uts;
+    int rc = 0;
+
+    if (s_sysinfo[0]) return s_sysinfo;
+
+    (void) memset (&uts, 0, sizeof(uts));
+    errno = 0; rc = uname (&uts);
+    if (perr) *perr = errno;
+
+    if (0 == rc) {
+        s_sysinfo [sizeof(s_sysinfo)-1] = '\0';
+        (void) snprintf (s_sysinfo, sizeof(s_sysinfo)-1, "%s %s %s",
+            uts.sysname, uts.release, uts.machine);
+    }
+    return s_sysinfo;
+}
+
+
+void
+mk_app_info(const char *appname, char *info, size_t infolen)
+{
+    assert(info);
+    if ('\0' == *info) {
+        (void) snprintf(info, infolen,
+                "%s %s-%d.%d (%s) %s [%s]", appname, VERSION,
+                BUILDNUM, PATCH, BUILD_TYPE,
+            COMPILE_MODE, get_sysinfo(NULL) );
+    }
+}
+
 
 /* __EOF__ */
 

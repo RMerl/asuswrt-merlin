@@ -189,7 +189,30 @@ extern char *upper_strstr(const char *const str, const char *const target){
 }
 
 #ifdef RTCONFIG_IPV6
-int get_ipv6_service(void)
+char *ipv6_nvname_by_unit(const char *name, int unit)
+{
+	static char name_ipv6[128];
+
+	if (strncmp(name, "ipv6_", sizeof("ipv6_") - 1) != 0) {
+		_dprintf("Wrong ipv6 nvram namespace: \"%s\"\n", name);
+		return (char *)name;
+	}
+
+	unit = wan_primary_ifunit();
+	if (unit == 0)
+		return (char *)name;
+
+	snprintf(name_ipv6, sizeof(name_ipv6), "ipv6%d_%s", unit, name + sizeof("ipv6_") - 1);
+
+	return name_ipv6;
+}
+
+char *ipv6_nvname(const char *name)
+{
+	return ipv6_nvname_by_unit(name, wan_primary_ifunit());
+}
+
+int get_ipv6_service_by_unit(int unit)
 {
 	static const struct {
 		char *name;
@@ -206,12 +229,17 @@ int get_ipv6_service(void)
 	char *value;
 	int i;
 
-	value = nvram_safe_get("ipv6_service");
+	value = nvram_safe_get(ipv6_nvname_by_unit("ipv6_service", unit));
 	for (i = 0; services[i].name; i++) {
 		if (strcmp(value, services[i].name) == 0)
 			return services[i].service;
 	}
 	return IPV6_DISABLED;
+}
+
+int get_ipv6_service(void)
+{
+	return get_ipv6_service_by_unit(wan_primary_ifunit());
 }
 
 const char *ipv6_router_address(struct in6_addr *in6addr)
@@ -222,10 +250,10 @@ const char *ipv6_router_address(struct in6_addr *in6addr)
 
 	addr6[0] = '\0';
 
-	if ((p = nvram_get("ipv6_rtr_addr")) && *p) {
+	if ((p = nvram_get(ipv6_nvname("ipv6_rtr_addr"))) && *p) {
 		inet_pton(AF_INET6, p, &addr);
 	}
-	else if ((p = nvram_get("ipv6_prefix")) && *p) {
+	else if ((p = nvram_get(ipv6_nvname("ipv6_prefix"))) && *p) {
 		inet_pton(AF_INET6, p, &addr);
 		addr.s6_addr16[7] = htons(0x0001);
 	}
@@ -263,8 +291,8 @@ const char *ipv6_prefix(struct in6_addr *in6addr)
 
 	prefix[0] = '\0';
 
-	if (inet_pton(AF_INET6, nvram_safe_get("ipv6_rtr_addr"), &addr) > 0) {
-		r = nvram_get_int("ipv6_prefix_length") ? : 64;
+	if (inet_pton(AF_INET6, nvram_safe_get(ipv6_nvname("ipv6_rtr_addr")), &addr) > 0) {
+		r = nvram_get_int(ipv6_nvname("ipv6_prefix_length")) ? : 64;
 		for (r = 128 - r, i = 15; r > 0; r -= 8) {
 			if (r >= 8)
 				addr.s6_addr[i--] = 0;
@@ -598,17 +626,16 @@ int wait_action_idle(int n)
 
 const char *get_wanip(void)
 {	
-	char tmp[100], prefix[]="wanXXXXXX_";
-	int unit=0;
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
 
 	return nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 }
 
 int get_wanstate(void)
 {
-	char tmp[100], prefix[]="wanXXXXX_";
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
 
@@ -617,7 +644,7 @@ int get_wanstate(void)
 
 const char *get_wanface(void)
 {
-	return get_wan_ifname(0);
+	return get_wan_ifname(wan_primary_ifunit());
 }
 
 #ifdef RTCONFIG_IPV6
@@ -626,7 +653,7 @@ const char *get_wan6face(void)
 	switch (get_ipv6_service()) {
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
-		return get_wan6_ifname(0);
+		return get_wanface();
 	case IPV6_6TO4:
 		return "v6to4";
 	case IPV6_6IN4:
@@ -642,22 +669,21 @@ int update_6rd_info(void)
 	char tmp[100], prefix[]="wanXXXXX_";
 	char addr6[INET6_ADDRSTRLEN + 1], *value;
 	struct in6_addr addr;
-	int unit = 0;
 
-	if (get_ipv6_service() != IPV6_6RD || !nvram_get_int("ipv6_6rd_dhcp"))
+	if (get_ipv6_service() != IPV6_6RD || !nvram_get_int(ipv6_nvname("ipv6_6rd_dhcp")))
 		return -1;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
 
 	value = nvram_safe_get(strcat_r(prefix, "6rd_prefix", tmp));
 	if (*value ) {
 		/* try to compact IPv6 prefix */
 		if (inet_pton(AF_INET6, value, &addr) > 0)
 			value = (char *) inet_ntop(AF_INET6, &addr, addr6, sizeof(addr6));
-		nvram_set("ipv6_6rd_prefix", value);
-		nvram_set("ipv6_6rd_router", nvram_safe_get(strcat_r(prefix, "6rd_router", tmp)));
-		nvram_set("ipv6_6rd_prefixlen", nvram_safe_get(strcat_r(prefix, "6rd_prefixlen", tmp)));
-		nvram_set("ipv6_6rd_ip4size", nvram_safe_get(strcat_r(prefix, "6rd_ip4size", tmp)));
+		nvram_set(ipv6_nvname("ipv6_6rd_prefix"), value);
+		nvram_set(ipv6_nvname("ipv6_6rd_router"), nvram_safe_get(strcat_r(prefix, "6rd_router", tmp)));
+		nvram_set(ipv6_nvname("ipv6_6rd_prefixlen"), nvram_safe_get(strcat_r(prefix, "6rd_prefixlen", tmp)));
+		nvram_set(ipv6_nvname("ipv6_6rd_ip4size"), nvram_safe_get(strcat_r(prefix, "6rd_ip4size", tmp)));
 		return 1;
 	}
 
@@ -876,6 +902,19 @@ int nvram_set_int(const char *key, int value)
 	return nvram_set(key, nvramstr);
 }
 
+double nvram_get_double(const char *key)
+{
+	return atof(nvram_safe_get(key));
+}
+
+int nvram_set_double(const char *key, double value)
+{
+	char nvramstr[33];
+
+	snprintf(nvramstr, sizeof(nvramstr), "%.9g", value);
+	return nvram_set(key, nvramstr);
+}
+
 #if defined(RTCONFIG_SSH) || defined(RTCONFIG_HTTPS)
 int nvram_get_file(const char *key, const char *fname, int max)
 {
@@ -1038,6 +1077,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTAC88U:
 	case MODEL_RTAC3100:
 	case MODEL_RTAC5300:
+	case MODEL_RTAC5300R:
 	case MODEL_RTAC1200G:
 	case MODEL_RTAC1200GP:
 		strcpy(vlan, "vlan1");
@@ -1424,11 +1464,7 @@ int is_psta(int unit)
 {
 	if (unit < 0) return 0;
 	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
-		((nvram_get_int("wlc_psta") == 1)
-#ifdef RTCONFIG_BCM_7114
-		|| (nvram_get_int("wlc_psta") == 3)
-#endif
-		) &&
+		(nvram_get_int("wlc_psta") == 1) &&
 		((nvram_get_int("wlc_band") == unit)
 #ifdef PXYSTA_DUALBAND
 		|| (nvram_match("exband", "1") && nvram_get_int("wlc_band_ex") == unit)
@@ -1950,6 +1986,128 @@ long fappend(FILE *out, const char *fname)
 	fclose(in);
 	return r;
 }
+
+
+int internet_ready(void)
+{
+	if(nvram_get_int("ntp_ready") == 1)
+		return 1;
+	return 0;
+}
+
+void set_no_internet_ready(void)
+{
+	nvram_set("ntp_ready", "0");
+}
+
+#ifdef RTCONFIG_TRAFFIC_LIMITER
+static char *traffic_limiter_get_path(const char *type)
+{
+	if (type == NULL)
+		return NULL;
+	else if (strcmp(type, "limit") == 0)
+		return "/tmp/tl_limit";
+	else if (strcmp(type, "alert") == 0)
+		return "/tmp/tl_alert";
+	else if (strcmp(type, "count") == 0)
+		return "/tmp/tl_count";
+
+	return NULL;
+}
+
+unsigned int traffic_limiter_read_bit(const char *type)
+{
+	char *path;
+	char buf[sizeof("4294967295")];
+	unsigned int val = 0;
+	int debug = nvram_get_int("tl_debug");
+
+	path = traffic_limiter_get_path(type);
+	if (path && f_read_string(path, buf, sizeof(buf)) > 0)
+		val = strtoul(buf, NULL, 10);
+
+	if (debug) dbg("%s : path = %s, val=%u\n", __FUNCTION__, path ? : "NULL", val);
+	return val;
+}
+
+void traffic_limiter_set_bit(const char *type, int unit)
+{
+	char *path;
+	char buf[sizeof("4294967295")];
+	unsigned int val = 0;
+	int debug = nvram_get_int("tl_debug");
+
+	path = traffic_limiter_get_path(type);
+	if (path) {
+		val = traffic_limiter_read_bit(type);
+		val |= (1U << unit);
+		snprintf(buf, sizeof(buf), "%u", val);
+		f_write_string(path, buf, 0, 0);
+	}
+
+	if (debug) dbg("%s : path = %s, val=%u\n", __FUNCTION__, path ? : "NULL", val);
+}
+
+void traffic_limiter_clear_bit(const char *type, int unit)
+{
+	char *path;
+	char buf[sizeof("4294967295")];
+	unsigned int val = 0;
+	int debug = nvram_get_int("tl_debug");
+
+	path = traffic_limiter_get_path(type);
+	if (path) {
+		val = traffic_limiter_read_bit(type);
+		val &= ~(1U << unit);
+		snprintf(buf, sizeof(buf), "%u", val);
+		f_write_string(path, buf, 0, 0);
+	}
+
+	if (debug) dbg("%s : path = %s, val=%u\n", __FUNCTION__, path ? : "NULL", val);
+}
+
+double traffic_limiter_get_realtime(int unit)
+{
+	char path[PATH_MAX];
+	char buf[32];
+	double val = 0;
+
+	snprintf(path, sizeof(path), "/tmp/tl%d_realtime", unit);
+	if (f_read_string(path, buf, sizeof(buf)) > 0)
+		val = atof(buf);
+
+	return val;
+}
+
+int TL_UNIT_S; // traffic limiter dual wan unit start
+int TL_UNIT_E; // traffic limiter dual wan unit end
+
+int traffic_limiter_dualwan_check(char *dualwan_mode)
+{
+	int ret = 1;
+
+	/* check daul wan mode */
+	if (!strcmp(dualwan_mode, "lb"))
+	{
+		// load balance
+		TL_UNIT_S = WAN_UNIT_FIRST;
+		TL_UNIT_E = WAN_UNIT_MAX;
+	}
+	else if (!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))
+	{
+		// fail over or fail back
+		TL_UNIT_S = wan_primary_ifunit();
+		TL_UNIT_E = wan_primary_ifunit() + 1;
+	}
+	else
+	{
+		printf("%s : can't identify daulwan_mode\n", __FUNCTION__);
+		ret = 0;
+	}
+
+	return ret;
+}
+#endif
 
 void run_custom_script(char *name, char *args)
 {

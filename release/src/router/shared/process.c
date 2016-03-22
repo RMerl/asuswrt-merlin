@@ -22,17 +22,18 @@ char *psname(int pid, char *buffer, int maxlen)
 	char buf[512];
 	char path[64];
 	char *p;
+	int fn = 0;
 
 	if (maxlen <= 0) return NULL;
 	*buffer = 0;
 	sprintf(path, "/proc/%d/stat", pid);
-	if ((f_read_string(path, buf, sizeof(buf)) > 4) && ((p = strrchr(buf, ')')) != NULL)) {
+	if (((fn=f_read_string(path, buf, sizeof(buf))) > 4) && ((p = strrchr(buf, ')')) != NULL)) {
 		*p = 0;
 		if (((p = strchr(buf, '(')) != NULL) && (atoi(buf) == pid)) {
 			strlcpy(buffer, p + 1, maxlen);
 		}
 	}
-	return buffer;
+	return fn <= 0 ? "" : buffer;
 }
 
 /* There is a race condition when a brand new daemon starts up using the double-fork method.

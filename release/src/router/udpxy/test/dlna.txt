@@ -1,0 +1,3 @@
+contentFeatures.dlna.org: 1
+contentFeatures.dlna.org: DLNA.ORG_OP=11
+

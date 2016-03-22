@@ -7,7 +7,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
-<link rel="icon" href="images/favicon.png"><title><#Web_Title#> - <#Menu_usb_application#></title>
+<link rel="icon" href="images/favicon.png"><title><#Web_Title#> - <#Game_Boost#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
@@ -171,7 +171,7 @@ function check_game_boost(){
 											<td align="left">
 												
 												<div style="display:table-cell;background:url('/images/New_ui/game.svg');width:77px;height:77px;"></div>
-												<div class="formfonttitle" style="display:table-cell;font-size:26px;font-weight:bold;color:#EBE8E8;vertical-align:middle">Game Boost</div>
+												<div class="formfonttitle" style="display:table-cell;font-size:26px;font-weight:bold;color:#EBE8E8;vertical-align:middle"><#Game_Boost#></div>
 											</td>
 										</tr>
 									</table>
@@ -186,7 +186,7 @@ function check_game_boost(){
 										<tbody>
 											<tr>
 												<td style="width:200px">
-													<div style="padding: 5px 0;font-size:20px;">Internet Game Boost</div>													
+													<div style="padding: 5px 0;font-size:20px;"><#Game_Boost_internet#></div>													
 												</td>
 												<td colspan="2">
 													<div style="padding: 5px 10px;font-size:20px;color:#FFCC66">WTFast GPN</div>
@@ -203,20 +203,20 @@ function check_game_boost(){
 												</td>
 												<td style="width:400px;height:120px;">
 													<div style="font-size:16px;color:#949393;padding-left:10px;">
-														Game Boost,an exclusive gamer private network(GPN) powered by WTFast automatically performs route optimization, choosing the most efficient route for your game packets. Life-Time free for one device, cross platforms supported.
+														<#Game_Boost_desc#>
 													</div>
 												</td>
 												<td>
-													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="location.href='Advanced_WTFast_Content.asp';">Go</div>
+													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="location.href='Advanced_WTFast_Content.asp';"><#btn_go#></div>
 												</td>
 											</tr>
 											<tr style="height:50px;"></tr>
 											<tr>
 												<td>
-													<div style="padding: 5px 0;font-size:20px;">LAN Boost</div>
+													<div style="padding: 5px 0;font-size:20px;"><#Game_Boost_lan#></div>
 												</td>
 												<td colspan="2">
-													<div style="padding: 5px 10px;font-size:20px;color:#FFCC66;">One Click Game First mode</div>
+													<div style="padding: 5px 10px;font-size:20px;color:#FFCC66;"><#Game_Boost_lan_title#></div>
 												</td>
 											</tr>
 											<tr>
@@ -230,7 +230,7 @@ function check_game_boost(){
 												</td>
 												<td style="width:400px;height:120px;">
 													<div style="height:60px;font-size:16px;color:#A0A0A0;padding-left:10px;">
-														Adaptive QoS optimizes inbound and outbound bandwidth on both wired and wireless connections. Applications and tasks can be prioritized easily using drag-and-drop presets for gaming.										
+														<#Game_Boost_lan_desc#>
 													</div>
 												</td>
 												<td>
@@ -253,10 +253,10 @@ function check_game_boost(){
 											<tr style="height:50px;"></tr>
 											<tr>
 												<td>
-													<div style="padding: 5px 0;font-size:20px;">Real-Time Network Protection</div>
+													<div style="padding: 5px 0;font-size:20px;"><#Game_Boost_AiProtection#></div>
 												</td>
 												<td colspan="2">
-													<div style="padding: 5px 10px;font-size:20px;color:#FFCC66;">AiProtection</div>
+													<div style="padding: 5px 10px;font-size:20px;color:#FFCC66;"><#AiProtection_title#></div>
 												</td>
 											</tr>
 											<tr>
@@ -270,12 +270,11 @@ function check_game_boost(){
 												</td>
 												<td style="width:400px;height:120px;vertical-align:initial">
 													<div style="height:60px;margin-top:15px;font-size:16px;color:#949393;padding-left:10px;">
-														AiProtection, incorporating state-of-the-art, three-pronged security from Trend Micro™, gives you enterprise-level security in the home — making ASUS routers equipped with this feature the most secure home routers you can buy! It constantly monitors the health and safety of your network for total peace of mind.
-You can temporally turn off anti-virus on your PCs to reserve system resources for gaming.
+														<#Game_Boost_AiProtection_desc#>
 													</div>
 												</td>
 												<td>
-													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="location.href='AiProtection_HomeProtection.asp';">Go</div>
+													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="location.href='AiProtection_HomeProtection.asp';"><#btn_go#></div>
 												</td>
 											</tr>	
 										</tbody>

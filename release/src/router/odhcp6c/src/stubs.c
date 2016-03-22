@@ -29,7 +29,10 @@
 #define NS_MAXCDNAME 255 /* max compressed domain name length */
 #define NS_MAXLABEL   63 /* max label length */
 
-int dn_encode(const char *src, uint8_t *dst, int length)
+int __attribute__ ((weak))
+dn_comp(const char *src, uint8_t *dst, int length, 
+	uint8_t __attribute__((unused)) **dnptrs,
+	uint8_t __attribute__((unused)) **lastdnptr)
 {
 	uint8_t *buf, *ptr;
 	int len;

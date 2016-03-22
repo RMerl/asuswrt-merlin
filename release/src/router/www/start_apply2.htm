@@ -419,10 +419,11 @@ function initial(){
 			}
 		}
 
+		if(action_script == "reboot"){
+			setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+		}
+
 		return;
-		/*setTimeout(function(){
-			parent.parent.location.href = '/index.asp';
-		}, restart_time*1000);*/
 	}	
 	else if(getflag == "liveUpdate"){
 		setTimeout(function(){
@@ -474,7 +475,7 @@ function initial(){
 		} 
 		else if(getflag == "adv_ap_mode"){
 			if(parent.findasus_support){
-				parent.parent.document.getElementById('drword').innerHTML = "You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.";
+				parent.parent.document.getElementById('drword').innerHTML = "<#OP_AP_hint#>";
 			}else{
 				parent.parent.document.getElementById('drword').innerHTML = "<#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#>";
 			}

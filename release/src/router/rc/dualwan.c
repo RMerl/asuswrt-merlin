@@ -16,6 +16,10 @@
 #define MODEL_PROTECT "RT-AC5300"
 #endif
 
+#if defined(RTAC5300R)
+#define MODEL_PROTECT "RT-AC5300R"
+#endif
+
 #if defined(RTAC87U)
 #define MODEL_PROTECT "RT-AC87U"
 // #define WANDEV_SING "vlan2 vlan3"	not supported now
@@ -46,7 +50,7 @@
 #endif
 
 #ifdef RTCONFIG_HW_DUALWAN
-void init_dualwan(void)
+int init_dualwan(int argc, char *argv[])
 {
 	int unit = 0;
 	int caps;

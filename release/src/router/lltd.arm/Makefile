@@ -24,6 +24,9 @@ else ifeq ($(RTAC68U), y)
 	install lld2d.rtac68r $(INSTALLDIR)/usr/sbin/lld2d.rtac68r
 	install lld2d.rtac68w $(INSTALLDIR)/usr/sbin/lld2d.rtac68w
 	install lld2d.rtac68rw $(INSTALLDIR)/usr/sbin/lld2d.rtac68rw
+	install lld2d.rtac1900 $(INSTALLDIR)/usr/sbin/lld2d.rtac1900
+	install lld2d.rtac1900p $(INSTALLDIR)/usr/sbin/lld2d.rtac1900p
+	install lld2d.rtac66u_v2 $(INSTALLDIR)/usr/sbin/lld2d.rtac66u_v2
 	install icon.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else ifeq ($(BUILD_NAME), RT-AC88U)

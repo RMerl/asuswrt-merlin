@@ -22,9 +22,18 @@ ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
+ifeq ($(RTCONFIG_NOTIFICATION_CENTER),y)
+CFLAGS  += -I$(TOP)/sqlite
+CFLAGS  += -I$(TOP)/nt_center/lib
+CFLAGS  += -DASUSWRT_SDK
+LDFLAGS += -L$(TOP)/nt_center/lib/ -lnt
+LDFLAGS += -L$(TOP)/sqlite/.libs -lsqlite3
+LDFLAGS += -lpthread
+endif
+
 include $(SRCBASE)/.config
 
-#CFLAGS	+= -DDEBUG #-DDEBUG_MORE 
+#CFLAGS	+= -DDEBUG #-DDEBUG_MORE #-DDEBUG_FUNCTION
 CFLAGS  += -DNMP_DB
 
 all: $(EXEC) asusdiscovery arpstorm

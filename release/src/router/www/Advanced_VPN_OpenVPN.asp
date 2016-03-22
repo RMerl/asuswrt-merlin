@@ -147,7 +147,7 @@ function initial(){
 	show_menu();		
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
 
-	formShowAndHide(vpn_server_enable, vpn_server_mode);
+	formShowAndHide(vpn_server_enable, "openvpn");
 	//check DUT is belong to private IP.
 
 	if(realip_support){
@@ -196,7 +196,7 @@ function formShowAndHide(server_enable, server_type) {
 		document.getElementById('openvpn_export').style.display = "";	
 		document.getElementById('OpenVPN_setting').style.display = "";
 		document.getElementById("divAdvanced").style.display = "none";
-		if(vpn_server_enable == '0' || vpn_server_mode == 'pptpd')
+		if(vpn_server_enable == '0')
 			document.getElementById('openvpn_export').style.display = "none";
 		else
 			document.getElementById('openvpn_export').style.display = "";	
@@ -218,9 +218,9 @@ function formShowAndHide(server_enable, server_type) {
 		document.getElementById("openvpn_export").style.display = "none";
 		document.getElementById("OpenVPN_setting").style.display = "none";
 		document.getElementById("divAdvanced").style.display = "none";
-		if(vpn_server_mode != "openvpn") {
-			document.getElementById("divApply").style.display = "none";
-		}
+		//if(vpn_server_mode != "openvpn") {
+		//	document.getElementById("divApply").style.display = "none";
+		//}
 	}
 }
 
@@ -672,7 +672,7 @@ function showOpenVPNClients(uname){
 }
 
 function check_vpn_server_state(){
-	if(vpn_server_enable == '1' && vpn_server_mode == 'openvpn' && service_state != '2'){
+	if(vpn_server_enable == '1' && service_state != '2'){
 		document.getElementById('export_div').style.display = "none";
 		document.getElementById('openvpn_initial').style.display = "";
 		update_vpn_server_state();
@@ -742,7 +742,7 @@ function showMailPanel(){
 function switchMode(mode){
 	if(mode == "1"){		//general setting
 		document.getElementById("OpenVPN_setting").style.display = "";
-		if(vpn_server_enable == "1" && vpn_server_mode == "openvpn"){
+		if(vpn_server_enable == "1"){
 			document.getElementById("openvpn_export").style.display = "";
 		}
 		else{
@@ -1182,7 +1182,7 @@ function update_vpn_client_state() {
 											</td>
 										</tr>
 										<tr>
-											<th><#vpn_enable#></th>
+											<th><#vpn_openvpn_enable#></th>
 											<td>
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_VPNServer_enable"></div>												
 												<script type="text/javascript">													

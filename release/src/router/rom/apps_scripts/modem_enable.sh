@@ -32,6 +32,8 @@ modem_user_v6=`nvram get modem_user_v6`
 modem_pass_v6=`nvram get modem_pass_v6`
 modem_reg_time=`nvram get modem_reg_time`
 
+usb_gobi2=`nvram get usb_gobi2`
+
 at_lock="flock -x /tmp/at_cmd_lock"
 pdp_old=0
 
@@ -158,6 +160,22 @@ _find_usb_path(){
 	echo "$ret"
 }
 
+_get_pdp_str(){
+	str=""
+
+	if [ "$modem_pdp" -eq "1" ]; then
+		str="PPP"
+	elif [ "$modem_pdp" -eq "2" ]; then
+		str="IPV6"
+	elif [ "$modem_pdp" -eq "3" ]; then
+		str="IPV4V6"
+	else
+		str="IP"
+	fi
+
+	echo "$str"
+}
+
 
 if [ "$modem_type" == "" ]; then
 	find_modem_type.sh
@@ -202,7 +220,7 @@ fi
 echo "VAR: modem_enable($modem_enable) modem_autoapn($modem_autoapn) modem_act_node($modem_act_node) modem_type($modem_type) modem_vid($modem_vid) modem_pid($modem_pid)";
 echo "     modem_isp($modem_isp) modem_apn($modem_apn)";
 
-if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim" -o "$modem_type" == "gobi" ]; then
+if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim" -o "$modem_type" == "gobi" ] || [ "$usb_gobi2" == "1" ]; then
 	nvram_reset=`nvram get modem_act_reset`
 	#if [ "$nvram_reset" == "1" -o "$modem_vid" == "6610" -a "$modem_pid" == "644" ]; then # ZTE MF880
 	if [ "$nvram_reset" == "1" ]; then
@@ -333,86 +351,123 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	fi
 
 	if [ "$modem_type" == "gobi" ]; then
-		qcqmi=`_get_qcqmi_by_usbnet $modem_dev`
-		echo "Got qcqmi: $qcqmi."
+		if [ "$usb_gobi2" == "1" ]; then
+			echo "Gobi2: Pause the autoconnect."
+			at_ret=`$at_lock modem_at.sh "+CAUTOCONNECT=0" |grep "OK" 2>/dev/null`
+			if [ "$at_ret" != "OK" ]; then
+				echo "Gobi2: Fail to stop the autoconnect."
+				exit 0
+			fi
+			at_ret=`$at_lock modem_at.sh "+CWWAN=0" |grep "OK" 2>/dev/null`
+			if [ "$at_ret" != "OK" ]; then
+				echo "Gobi2: Fail to stop the connection."
+				exit 0
+			fi
 
-		cmd_pipe="/tmp/pipe"
+			pdp_str=`_get_pdp_str`
+			echo "Gobi2: set the PDP be $pdp_str & APN be $modem_apn."
+			at_ret=`$at_lock modem_at.sh '+CGDCONT=1,"'$pdp_str'","'$modem_apn'"' |grep "OK" 2>/dev/null`
+			if [ "$at_ret" != "OK" ]; then
+				echo "Gobi2: Fail to set the APN profile."
+				exit 0
+			fi
 
-		gobi_pid=`pidof gobi`
-		if [ "$gobi_pid" != "" ]; then
+			if [ "$modem_user" != "" -o "$modem_pass" != "" ]; then
+				echo "Gobi2: Set the PPP profile."
+				#if [ "$modem_authmode" == "3" ]; then
+				#	modem_authmode=2 # When auth type is BOTH, choose CHAP.
+				#fi
+				#at_ret=`$at_lock modem_at.sh '$QCPDPP=1,'$modem_authmode',"'$modem_pass'","'$modem_user'"' |grep "OK" 2>/dev/null`
+				at_ret=`$at_lock modem_at.sh '$PPP='$modem_user','$modem_pass |grep "OK" 2>/dev/null`
+				if [ "$at_ret" != "OK" ]; then
+					echo "Gobi2: Fail to set the PPP profile."
+					exit 0
+				fi
+			fi
+		else
+			qcqmi=`_get_qcqmi_by_usbnet $modem_dev`
+			echo "Got qcqmi: $qcqmi."
+
+			cmd_pipe="/tmp/pipe"
+
+			gobi_pid=`pidof gobi`
+			if [ "$gobi_pid" != "" ]; then
+				# connect to GobiNet.
+				echo -n "1,$qcqmi" >> $cmd_pipe
+				sleep 2
+
+				# WDS stop the data session
+				echo -n "4" >> $cmd_pipe
+				sleep 1
+
+				echo -n "12" >> $cmd_pipe
+				sleep 1
+
+				# disconnect to GobiNet.
+				echo -n "2" >> $cmd_pipe
+				sleep 1
+
+				#echo -n "99" >> $cmd_pipe
+				#sleep 1
+			fi
+
+			echo "Gobi($qcqmi): set the ISP profile."
+			if [ "$gobi_pid" == "" ]; then
+				gobi d &
+				sleep 1
+			fi
+
 			# connect to GobiNet.
 			echo -n "1,$qcqmi" >> $cmd_pipe
 			sleep 2
 
-			# WDS stop the data session
-			echo -n "4" >> $cmd_pipe
-			sleep 1
-
-			echo -n "12" >> $cmd_pipe
-			sleep 1
-
-			# disconnect to GobiNet.
-			echo -n "2" >> $cmd_pipe
-			sleep 1
-
-			#echo -n "99" >> $cmd_pipe
-			#sleep 1
-		fi
-
-		echo "Gobi($qcqmi): set the ISP profile."
-		if [ "$gobi_pid" == "" ]; then
-			gobi d &
-			sleep 1
-		fi
-
-		# connect to GobiNet.
-		echo -n "1,$qcqmi" >> $cmd_pipe
-		sleep 2
-
-		# WDS set the autoconnect & roaming
-		# autoconnect: 0, disable; 1, enable; 2, pause.
-		# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
-		echo "Pause the connection."
-		if [ "$modem_roaming" != "1" ]; then
-			echo "Disable roaming."
-			echo -n "7,2,1" >> $cmd_pipe
-		else
-			echo "Enable roaming."
-			echo -n "7,2,0" >> $cmd_pipe
-		fi
-		sleep 1
-
-		if [ "$pdp_old" -eq "1" ]; then
-			# WDS start the data session
-			if [ "$modem_pdp" -eq "1" ]; then
-				# PPP
-				echo -n "11,8,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
-			elif [ "$modem_pdp" -eq "2" ]; then
-				# IPv6
-				echo -n "11,6,$modem_apn_v6,$modem_user_v6,$modem_pass_v6" >> $cmd_pipe
-			elif [ "$modem_pdp" -eq "3" ]; then
-				# IPv4v6
-				echo -n "11,4,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
-				sleep 3
-				echo -n "11,6,$modem_apn_v6,$modem_user_v6,$modem_pass_v6" >> $cmd_pipe
+			# WDS set the autoconnect & roaming
+			# autoconnect: 0, disable; 1, enable; 2, pause.
+			# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
+			echo "Pause the connection."
+			if [ "$modem_roaming" != "1" ]; then
+				echo "Disable roaming."
+				echo -n "7,2,1" >> $cmd_pipe
 			else
-				# IPv4
-				echo -n "11,4,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+				echo "Enable roaming."
+				echo -n "7,2,0" >> $cmd_pipe
 			fi
-			sleep 3
-		else
-			# set the default profile to auto-connect.
-			if [ -z "$modem_isp" ]; then
-				modem_isp="space"
-			fi
-			echo -n "5,$modem_pdp,$modem_isp,$modem_apn,$modem_authmode,$modem_user,$modem_pass" >> $cmd_pipe
 			sleep 1
+
+			if [ "$pdp_old" -eq "1" ]; then
+				# WDS start the data session
+				if [ "$modem_pdp" -eq "1" ]; then
+					# PPP
+					echo -n "11,8,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+				elif [ "$modem_pdp" -eq "2" ]; then
+					# IPv6
+					echo -n "11,6,$modem_apn_v6,$modem_user_v6,$modem_pass_v6" >> $cmd_pipe
+				elif [ "$modem_pdp" -eq "3" ]; then
+					# IPv4v6
+					echo -n "11,4,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+					sleep 3
+					echo -n "11,6,$modem_apn_v6,$modem_user_v6,$modem_pass_v6" >> $cmd_pipe
+				else
+					# IPv4
+					echo -n "11,4,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+				fi
+				sleep 3
+			else
+				# set the default profile to auto-connect.
+				if [ -z "$modem_isp" ]; then
+					modem_isp="space"
+				fi
+				echo -n "5,$modem_pdp,$modem_isp,$modem_apn,$modem_authmode,$modem_user,$modem_pass" >> $cmd_pipe
+				sleep 1
+			fi
 		fi
 
 		echo "Gobi: Successfull to set the ISP profile."
 	else
 		echo "$modem_type: set the ISP profile."
-		at_ret=`$at_lock modem_at.sh "+CGDCONT=1,\"IP\",\"$modem_apn\"" |grep "OK" 2>/dev/null`
+		pdp_str=`_get_pdp_str`
+		echo "$modem_type: set the PDP be $pdp_str."
+		at_ret=`$at_lock modem_at.sh '+CGDCONT=1,"'$pdp_str'","'$modem_apn'"' |grep "OK" 2>/dev/null`
 		if [ "$at_ret" != "OK" ]; then
 			echo "$modem_type: Fail to set the profile."
 			exit 0
@@ -472,10 +527,10 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	modem_status.sh setmode $modem_mode
 
 	# check the register state after set COPS.
+	echo "CGATT: 1. Check the register state..."
 	at_ret=`$at_lock modem_at.sh '+CGATT?' 2>/dev/null`
 	ret=`echo -n "$at_ret" |grep "OK"`
 	if [ "$ret" == "OK" ]; then
-		echo "CGATT: 1. Check the register state..."
 		tries=1
 		at_ret=`echo -n "$at_ret" |grep "+CGATT: 1"`
 		while [ $tries -le 30 -a "$at_ret" == "" ]; do
@@ -606,26 +661,35 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			echo "Successfull to reset the modem."
 			nvram unset usb_modem_reset_huawei
 		fi
+
 		echo "QMI: Successfull to set the ISP profile."
 	elif [ "$modem_type" == "gobi" ]; then
-		# WDS set the autoconnect & roaming
-		# autoconnect: 0, disable; 1, enable; 2, pause.
-		# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
 		echo "Connect the line automatically."
-		if [ "$modem_roaming" != "1" ]; then
-			echo "Disable roaming."
-			echo -n "7,1,1" >> $cmd_pipe
-		elif [ "$modem_roaming_mode" == "1" ]; then
-			echo "roaming manually..."
-			echo -n "7,1,0" >> $cmd_pipe
+		if [ "$usb_gobi2" == "1" ]; then
+			at_ret=`$at_lock modem_at.sh "+CAUTOCONNECT=1" |grep "OK" 2>/dev/null`
+			if [ "$at_ret" != "OK" ]; then
+				echo "Gobi2: Fail to start the autoconnect."
+				exit 0
+			fi
 		else
-			echo "roaming automatically..."
-			echo -n "7,1,0" >> $cmd_pipe
-		fi
-		sleep 1
+			# WDS set the autoconnect & roaming
+			# autoconnect: 0, disable; 1, enable; 2, pause.
+			# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
+			if [ "$modem_roaming" != "1" ]; then
+				echo "Disable roaming."
+				echo -n "7,1,1" >> $cmd_pipe
+			elif [ "$modem_roaming_mode" == "1" ]; then
+				echo "roaming manually..."
+				echo -n "7,1,0" >> $cmd_pipe
+			else
+				echo "roaming automatically..."
+				echo -n "7,1,0" >> $cmd_pipe
+			fi
+			sleep 1
 
-		echo -n "99" >> $cmd_pipe
-		sleep 1
+			echo -n "99" >> $cmd_pipe
+			sleep 1
+		fi
 
 		modem_status.sh rate
 		modem_status.sh band
@@ -658,11 +722,11 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 	fi
 
-	if [ "$modem_type" == "qmi" -o "$modem_type" == "gobi" ]; then
+	if [ "$modem_type" == "qmi" ]; then
+		echo "CGATT: 2. Check the register state..."
 		at_ret=`$at_lock modem_at.sh '+CGATT?' 2>/dev/null`
 		ret=`echo -n "$at_ret" |grep "OK"`
 		if [ "$ret" == "OK" ]; then
-			echo "CGATT: 2. Check the register state..."
 			tries=1
 			at_ret=`echo -n "$at_ret" |grep "+CGATT: 1"`
 			while [ $tries -le 30 -a "$at_ret" == "" ]; do
@@ -682,6 +746,26 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		else # the result from CDMA2000 can be "COMMAND NOT SUPPORT", "ERROR".
 			echo "CGATT: Don't support +CGATT."
 		fi
+	elif [ "$modem_type" == "gobi" ]; then
+		echo "Gobi: Check if the IP is bounded..."
+		at_ret=`$at_lock modem_at.sh '$CWWANS' |grep '$CWWANS:1' 2>/dev/null`
+		if [ "$at_ret" == "" ]; then
+			tries=1
+			while [ $tries -le 30 -a "$at_ret" == "" ]; do
+				echo "Gobi: wait for renewing the IP...$tries"
+				sleep 1
+
+				at_ret=`$at_lock modem_at.sh '$CWWANS' |grep '$CWWANS:1' 2>/dev/null`
+				tries=$((tries+1))
+			done
+
+			if [ "$at_ret" == "" ]; then
+				echo "Gobi: Fail to renew the IP. Please check."
+				exit 7
+			fi
+		fi
+
+		echo "Gobi: Successfull to get the IP."
 	fi
 
 	echo "modem_enable: done."

@@ -413,11 +413,32 @@ void config_switch()
 				//VoIP Port: P1 tag
 				__setup_vlan(14, 0, 0x00000012);
 			}
+#ifdef RTCONFIG_MULTICAST_IPTV
+			else if (!strcmp(nvram_safe_get("switch_wantag"), "movistar")) {
+#if 0	//set in set_wan_tag() since (switch_stb_x > 6) and need vlan interface by vconfig.
+				system("rtkswitch 40 1");			/* admin all frames on all ports */
+				/* Internet/STB/VoIP:	untag: N/A;   port: P4, P9 */
+				__setup_vlan(6, 0, 0x00000210);
+				__setup_vlan(2, 0, 0x00000210);
+				__setup_vlan(3, 0, 0x00000210);
+#endif
+			}
+#endif
 			else if (!strcmp(nvram_safe_get("switch_wantag"), "meo")) {
 				system("rtkswitch 40 1");			/* admin all frames on all ports */
 				system("rtkswitch 38 1");			/* VoIP: P0 */
 				/* Internet/VoIP:	untag: P9;   port: P0, P4, P9 */
 				__setup_vlan(12, 0, 0x02000211);
+			}
+			else if (!strcmp(nvram_safe_get("switch_wantag"), "vodafone")) {
+				system("rtkswitch 40 1");			/* admin all frames on all ports */
+				system("rtkswitch 38 3");			/* Vodafone: P0  IPTV: P1 */
+				/* Internet:	untag: P9;   port: P4, P9 */
+				__setup_vlan(100, 1, 0x02000210);
+				/* IPTV:	untag: N/A;  port: P0, P4 */
+				__setup_vlan(101, 0, 0x00000011);
+				/* Vodafone:	untag: P1;   port: P0, P1, P4 */
+				__setup_vlan(105, 1, 0x00020013);
 			}
 			else {
 				/* Cherry Cho added in 2011/7/11. */
@@ -544,6 +565,11 @@ void config_switch()
 			sprintf(parm_buf, "%d", controlrate_broadcast);
 			eval("rtkswitch", "25", parm_buf);
 		}
+
+#ifdef RTN56U
+		if (nvram_match("switch_wanport_force_1g", "1"))
+			eval("rtkswitch", "26");
+#endif
 	}
 	else if (is_apmode_enabled())
 	{
@@ -1406,6 +1432,69 @@ set_wan_tag(char *interface) {
 			eval("vconfig", "set_egress_map", wan_dev, "0", nvram_get("switch_wan0prio"));
 		break;
 	}
+
+#ifdef RTCONFIG_MULTICAST_IPTV
+	{
+		int iptv_vid, voip_vid, iptv_prio, voip_prio, switch_stb;
+		int mang_vid, mang_prio;
+
+		iptv_vid  = nvram_get_int("switch_wan1tagid") & 0x0fff;
+		voip_vid  = nvram_get_int("switch_wan2tagid") & 0x0fff;
+		iptv_prio = nvram_get_int("switch_wan1prio") & 0x7;
+		voip_prio = nvram_get_int("switch_wan2prio") & 0x7;
+		mang_vid  = nvram_get_int("switch_wan3tagid") & 0x0fff;
+		mang_prio = nvram_get_int("switch_wan3prio") & 0x7;
+
+		switch_stb = nvram_get_int("switch_stb_x");
+		if (switch_stb >= 7) {
+			system("rtkswitch 40 1");			/* admin all frames on all ports */
+			if(wan_vid) { /* config wan port */
+				__setup_vlan(wan_vid, 0, 0x00000210);	/* config WAN & WAN_MAC port */
+			}
+
+			if (iptv_vid) { /* config IPTV on wan port */
+				sprintf(wan_dev, "vlan%d", iptv_vid);
+				nvram_set("wan10_ifname", wan_dev);
+				sprintf(port_id, "%d", iptv_vid);
+				eval("vconfig", "add", interface, port_id);
+
+				__setup_vlan(iptv_vid, iptv_prio, 0x00000210);	/* config WAN & WAN_MAC port */
+
+				if (iptv_prio) { /* config priority */
+					eval("vconfig", "set_egress_map", wan_dev, "0", (char *)iptv_prio);
+				}
+			}
+		}
+		if (switch_stb >= 8) {
+			if (voip_vid) { /* config voip on wan port */
+				sprintf(wan_dev, "vlan%d", voip_vid);
+				nvram_set("wan11_ifname", wan_dev);
+				sprintf(port_id, "%d", voip_vid);
+				eval("vconfig", "add", interface, port_id);
+
+				__setup_vlan(voip_vid, voip_prio, 0x00000210);	/* config WAN & WAN_MAC port */
+
+				if (voip_prio) { /* config priority */
+					eval("vconfig", "set_egress_map", wan_dev, "0", (char *)voip_prio);
+				}
+			}
+		}
+		if (switch_stb >=9 ) {
+			if (mang_vid) { /* config tr069 on wan port */
+				sprintf(wan_dev, "vlan%d", mang_vid);
+				nvram_set("wan12_ifname", wan_dev);
+				sprintf(port_id, "%d", mang_vid);
+				eval("vconfig", "add", interface, port_id);
+
+				__setup_vlan(mang_vid, mang_prio, 0x00000210);	/* config WAN & WAN_MAC port */
+
+				if (mang_prio) { /* config priority */
+					eval("vconfig", "set_egress_map", wan_dev, "0", (char *)iptv_prio);
+				}
+			}
+		}
+	}
+#endif
 }
 
 #ifdef RA_SINGLE_SKU

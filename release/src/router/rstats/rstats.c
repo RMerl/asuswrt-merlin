@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <stdint.h>
 #include <syslog.h>
+#include <ctype.h>
 
 #include <bcmnvram.h>
 #include <shutils.h>
@@ -55,6 +56,11 @@
 #define Y2K		1447240271UL
 
 #define INTERVAL		30
+#if defined(RTCONFIG_WANPORT2)
+#define MAX_BW			2000
+#else
+#define MAX_BW			1000
+#endif
 
 #ifdef RTCONFIG_ISP_METER
 	#define MTD_WRITE_INTERVEL	60
@@ -63,8 +69,15 @@
 #define MAX_NSPEED		((24 * SHOUR) / INTERVAL)
 #define MAX_NDAILY		62
 #define MAX_NMONTHLY	25
-#define MAX_SPEED_IF	10
-#define MAX_ROLLOVER	(225 * M)
+/* INTERNET:	2
+ * WIRED:	1
+ * BRIDGE:	1
+ * WIFI_2G:	4
+ * WIFI_5G:	4 x number of 5g bands
+ */
+#define MAX_SPEED_IF	25
+
+#define MAX_ROLLOVER	(MAX_BW * INTERVAL / 8ULL * M)
 
 #define MAX_COUNTER	2
 #define RX 			0
@@ -80,6 +93,27 @@
 #define HI_BACK		5
 
 #define RA_OFFSET_ISP_METER	0x4FF00
+
+enum if_id {
+	IFID_INTERNET = 0,	/* INTERNET */
+	IFID_INTERNET1,		/* INTERNET1 */
+	IFID_WIRED,		/* WIRED */
+	IFID_BRIDGE,		/* BRIDGE */
+	IFID_WIRELESS0,		/* WIRELESS0 */
+	IFID_WIRELESS0_1,	/* WIRELESS0.1 */
+	IFID_WIRELESS0_2,	/* WIRELESS0.2 */
+	IFID_WIRELESS0_3,	/* WIRELESS0.3 */
+	IFID_WIRELESS1,		/* WIRELESS1 */
+	IFID_WIRELESS1_1,	/* WIRELESS1.1 */
+	IFID_WIRELESS1_2,	/* WIRELESS1.2 */
+	IFID_WIRELESS1_3,	/* WIRELESS1.3 */
+	IFID_WIRELESS2,		/* WIRELESS2 */
+	IFID_WIRELESS2_1,	/* WIRELESS2.1 */
+	IFID_WIRELESS2_2,	/* WIRELESS2.2 */
+	IFID_WIRELESS2_3,	/* WIRELESS2.3 */
+
+	IFID_MAX
+};
 
 typedef struct {
 	uint32_t xtime;
@@ -109,8 +143,8 @@ typedef struct {
 typedef struct {
 	char ifname[12];
 	long utime;
-	unsigned long speed[MAX_NSPEED][MAX_COUNTER];
-	unsigned long last[MAX_COUNTER];
+	unsigned long long speed[MAX_NSPEED][MAX_COUNTER];
+	unsigned long long last[MAX_COUNTER];
 	int tail;
 	int sync;
 } speed_t;
@@ -337,6 +371,8 @@ static int decomp(const char *fname, void *buffer, int size, int max)
 {
 	char s[256];
 	int n;
+	FILE *fp;
+	long file_size = 0;
 
 	_dprintf("%s: fname=%s\n", __FUNCTION__, fname);
 
@@ -344,17 +380,32 @@ static int decomp(const char *fname, void *buffer, int size, int max)
 
 	n = 0;
 	sprintf(s, "gzip -dc %s > %s", fname, uncomp_fn);
-	if (system(s) == 0) {
-		n = f_read(uncomp_fn, buffer, size * max);
-		_dprintf("%s: n=%d\n", __FUNCTION__, n);
-		if (n <= 0) n = 0;
-			else n = n / size;
+	if (system(s)) {
+		_dprintf("%s: %s != 0\n", __func__, s);
+		goto exit_decomp;
 	}
-	else {
-		_dprintf("%s: %s != 0\n", __FUNCTION__, s);
+	if (!(fp = fopen(uncomp_fn, "r")))
+		goto exit_decomp;
+
+	fseek(fp, 0, SEEK_END);
+	file_size = ftell(fp);
+	fclose(fp);
+	if ((size * max) != file_size) {
+		_dprintf("%s: filesize mismatch! (%ld/%ld)\n", (size * max), file_size);
+		goto exit_decomp;
 	}
+
+	n = f_read(uncomp_fn, buffer, size * max);
+	_dprintf("%s: n=%d\n", __func__, n);
+	if (n <= 0)
+		n = 0;
+	else
+		n = n / size;
+
+exit_decomp:
 	unlink(uncomp_fn);
 	memset((char *)buffer + (size * n), 0, (max - n) * size);
+
 	return n;
 }
 
@@ -638,7 +689,7 @@ static void save_histjs(void)
 }
 
 
-static void bump(data_t *data, int *tail, int max, uint32_t xnow, unsigned long *counter)
+static void bump(data_t *data, int *tail, int max, uint32_t xnow, unsigned long long *counter)
 {
 	int t, i;
 	t = *tail;
@@ -660,6 +711,54 @@ static void bump(data_t *data, int *tail, int max, uint32_t xnow, unsigned long 
 	}
 }
 
+/**
+ * Convert ifname_desc returned by netdev_calc() to if_id enumeration.
+ * @desc:	Pointer to "INTERNET", "WIRED", "BRIDGE", etc
+ * 		Ref to netdev_calc().
+ * @return:
+ * 	-1:	invalid parameter
+ *  if_id	enumeration
+ */
+static enum if_id desc_to_id(char *desc)
+{
+	enum if_id id = IFID_MAX;
+	char *d = desc + 9, *s = desc + 10;
+
+	if (!desc)
+		return -1;
+
+	if (!strcmp(desc, "INTERNET"))
+		id = IFID_INTERNET;
+	else if (!strcmp(desc, "INTERNET1"))
+		id = IFID_INTERNET1;
+	else if (!strcmp(desc, "WIRED"))
+		id = IFID_WIRED;
+	else if (!strcmp(desc, "BRIDGE"))
+		id = IFID_BRIDGE;
+	else if (!strncmp(desc, "WIRELESS0", 9)) {
+		if (*d == '\0')
+			id = IFID_WIRELESS0;
+		else if (*d == '.' && *s >= '0' && *s <= '2' && *(s + 1) == '\0')
+			id = IFID_WIRELESS0 + *s - '0' + 1;
+	} else if (!strncmp(desc, "WIRELESS1", 9)) {
+		if (*d == '\0')
+			id = IFID_WIRELESS1;
+		else if (*d == '.' && *s >= '0' && *s <= '2' && *(s + 1) == '\0')
+			id = IFID_WIRELESS1 + *s - '0' + 1;
+	} else if (!strncmp(desc, "WIRELESS2", 9)) {
+		if (*d == '\0')
+			id = IFID_WIRELESS2;
+		else if (*d == '.' && *s >= '0' && *s <= '2' && *(s + 1) == '\0')
+			id = IFID_WIRELESS2 + *s - '0' + 1;
+	}
+
+	if (id < 0 || id == IFID_MAX)
+		_dprintf("%s: Unknown desc [%s]\n", __func__, desc);
+
+	return id;
+
+}
+
 static void calc(void)
 {
 	FILE *f;
@@ -667,22 +766,28 @@ static void calc(void)
 	char *ifname;
 	char ifname_desc[12], ifname_desc2[12];
 	char *p;
-	unsigned long counter[MAX_COUNTER];
-	unsigned long rx2, tx2;
+	unsigned long long counter[MAX_COUNTER];
+	unsigned long long rx2, tx2;
 	speed_t *sp;
-	int i, j;
+	int i, j, t;
 	time_t now;
 	time_t mon;
 	struct tm *tms;
 	uint32_t c;
 	uint32_t sc;
-	unsigned long diff;
+	unsigned long long diff;
 	long tick;
 	int n;
 	char *exclude;
+	enum if_id id;
+	struct tmp_speed_s {
+		char desc[20];
+		unsigned long long counter[MAX_COUNTER];
+	} tmp_speed[IFID_MAX], *tmp;
 #ifdef RTCONFIG_ISP_METER
         char traffic[64];
 #endif
+
 #ifdef RTCONFIG_QTN
 	qcsapi_unsigned_int l_counter_value;
 #endif
@@ -695,6 +800,7 @@ static void calc(void)
 	if ((f = fopen("/proc/net/dev", "r")) == NULL) return;
 	fgets(buf, sizeof(buf), f);	// header
 	fgets(buf, sizeof(buf), f);	// "
+	memset(tmp_speed, 0, sizeof(tmp_speed));
 	while (fgets(buf, sizeof(buf), f)) {
 		if ((p = strchr(buf, ':')) == NULL) continue;
 			//_dprintf("\n=== %s\n", buf);
@@ -704,7 +810,7 @@ static void calc(void)
 		if ((strcmp(ifname, "lo") == 0) || (find_word(exclude, ifname))) continue;
 
 		// <rx bytes, packets, errors, dropped, fifo errors, frame errors, compressed, multicast><tx ...>
-		if (sscanf(p + 1, "%lu%*u%*u%*u%*u%*u%*u%*u%lu", &counter[0], &counter[1]) != 2) continue;
+		if (sscanf(p + 1, "%llu%*u%*u%*u%*u%*u%*u%*u%llu", &counter[0], &counter[1]) != 2) continue;
 
 //TODO: like httpd/web.c ej_netdev()
 #ifdef RTCONFIG_BCM5301X_TRAFFIC_MONITOR
@@ -713,18 +819,57 @@ static void calc(void)
 		}
 #endif
 
-		if(!netdev_calc(ifname, ifname_desc, &counter[0], &counter[1], ifname_desc2, &rx2, &tx2))
+		if (!netdev_calc(ifname, ifname_desc, (unsigned long*) &counter[0], (unsigned long*) &counter[1], ifname_desc2, (unsigned long*) &rx2, (unsigned long*) &tx2))
 			continue;
-		//_dprintf(">>> %s, %s, %lu, %lu, %s, %lu, %lu, %s <<<\n",ifname, ifname_desc, counter[0], counter[1], ifname_desc2, rx2, tx2);
+		//_dprintf(">>> %s, %s, %llu, %llu, %s, %llu, %llu <<<\n",ifname, ifname_desc, counter[0], counter[1], ifname_desc2, rx2, tx2);
 #ifdef RTCONFIG_QTN		
 		if (!strcmp(ifname, nvram_safe_get("wl_ifname")))
-				strcpy(ifname_desc2, "WIRELESS1");
+			strcpy(ifname_desc2, "WIRELESS1");
 #endif			
 loopagain:
 
+		id = desc_to_id(ifname_desc);
+		if (id < 0 || id >= IFID_MAX)
+			continue;
+		tmp = &tmp_speed[id];
+		strcpy(tmp->desc, ifname_desc);
+		for (i = 0; i < ARRAY_SIZE(tmp->counter); ++i)
+			tmp->counter[i] += counter[i];
+
+#ifdef RTCONFIG_QTN  //RT-AC87
+		if(!rpc_qtn_ready())	continue;
+		if (strlen(ifname_desc2))
+		{
+			strcpy(ifname_desc, ifname_desc2);
+			qcsapi_interface_get_counter(WIFINAME, qcsapi_total_bytes_received, &l_counter_value);
+			counter[0] = l_counter_value;
+			qcsapi_interface_get_counter(WIFINAME, qcsapi_total_bytes_sent, &l_counter_value);
+			counter[1] = l_counter_value;
+			strcpy(ifname_desc2, "");
+			goto loopagain;
+		}
+#else
+		if (strlen(ifname_desc2))
+		{
+			strcpy(ifname_desc, ifname_desc2);
+			counter[0] = rx2;
+			counter[1] = tx2;
+                        strcpy(ifname_desc2, "");
+                        goto loopagain;
+		}
+
+#endif
+	}
+	fclose(f);
+
+	for (t = 0, tmp = tmp_speed; t < ARRAY_SIZE(tmp_speed); ++t, ++tmp) {
+		/* skip unused item. */
+		if (tmp->desc[0] == '\0')
+			continue;
+
 		sp = speed;
 		for (i = speed_count; i > 0; --i) {
-			if (strcmp(sp->ifname, ifname_desc) == 0) break;
+			if (strcmp(sp->ifname, tmp->desc) == 0) break;
 			++sp;
 		}
 
@@ -736,7 +881,7 @@ loopagain:
 			i = speed_count++;
 			sp = &speed[i];
 			memset(sp, 0, sizeof(*sp));
-			strcpy(sp->ifname, ifname_desc);
+			strcpy(sp->ifname, tmp->desc);
 			sp->sync = 1;
 			sp->utime = current_uptime;
 		}
@@ -744,8 +889,8 @@ loopagain:
 			//_dprintf("%s: sync %s\n", __FUNCTION__, ifname_desc);
 			sp->sync = -1;
 
-			memcpy(sp->last, counter, sizeof(sp->last));
-			memset(counter, 0, sizeof(counter));
+			memcpy(sp->last, tmp->counter, sizeof(sp->last));
+			memset(tmp->counter, 0, sizeof(tmp->counter));
 		}
 		else {
 
@@ -753,12 +898,12 @@ loopagain:
 
 			tick = current_uptime - sp->utime;
 			n = tick / INTERVAL;
-
+	
 			sp->utime += (n * INTERVAL);
 			//_dprintf("%s: %s n=%d tick=%d\n", __FUNCTION__, ifname, n, tick);
 
 			for (i = 0; i < MAX_COUNTER; ++i) {
-				c = counter[i];
+				c = tmp->counter[i];
 				sc = sp->last[i];
 				if (c < sc) {
 					diff = (0xFFFFFFFF - sc + 1) + c;
@@ -768,31 +913,31 @@ loopagain:
 					 diff = c - sc;
 				}
 				sp->last[i] = c;
-				counter[i] = diff;
+				tmp->counter[i] = diff;
 			}
 
 			for (j = 0; j < n; ++j) {
 				sp->tail = (sp->tail + 1) % MAX_NSPEED;
 				for (i = 0; i < MAX_COUNTER; ++i) {
-					sp->speed[sp->tail][i] = counter[i] / n;
+					sp->speed[sp->tail][i] = tmp->counter[i] / n;
 				}
 			}
 		}		
 
 		// todo: split, delay
 
-		if (now > Y2K && strcmp(ifname_desc, "INTERNET")==0) {	
+		if (now > Y2K && strcmp(tmp->desc, "INTERNET")==0) {
 			/* Skip this if the time&date is not set yet */
 			/* Skip non-INTERNET interface only 	     */
 			tms = localtime(&now);
 			bump(history.daily, &history.dailyp, MAX_NDAILY,
-				(tms->tm_year << 16) | ((uint32_t)tms->tm_mon << 8) | tms->tm_mday, counter);
+				(tms->tm_year << 16) | ((uint32_t)tms->tm_mon << 8) | tms->tm_mday, tmp->counter);
 			n = nvram_get_int("rstats_offset");
 			if ((n < 1) || (n > 31)) n = 1;
 			mon = now + ((1 - n) * (60 * 60 * 24));
 			tms = localtime(&mon);
 			bump(history.monthly, &history.monthlyp, MAX_NMONTHLY,
-				(tms->tm_year << 16) | ((uint32_t)tms->tm_mon << 8), counter);
+				(tms->tm_year << 16) | ((uint32_t)tms->tm_mon << 8), tmp->counter);
 #ifdef RTCONFIG_ISP_METER
 			today_rx = last_day_rx + (history.daily[history.dailyp].counter[0]/K);
 			today_tx = last_day_tx + (history.daily[history.dailyp].counter[1]/K);
@@ -816,32 +961,7 @@ _dprintf("CUR MONTH Tx= %lu = %lu + %llu - %lu\n",month_tx,last_month_tx,(histor
 #endif
 #endif
 		}
-
-#ifdef RTCONFIG_QTN  //RT-AC87
-		if(!rpc_qtn_ready())	continue;
-		if (strlen(ifname_desc2)) 
-		{
-			strcpy(ifname_desc, ifname_desc2);
-			qcsapi_interface_get_counter(WIFINAME, qcsapi_total_bytes_received, &l_counter_value);
-			counter[0] = l_counter_value;
-			qcsapi_interface_get_counter(WIFINAME, qcsapi_total_bytes_sent, &l_counter_value);
-			counter[1] = l_counter_value;
-			strcpy(ifname_desc2, "");
-			goto loopagain;
-		}
-#else
-		if (strlen(ifname_desc2)) 
-		{
-			strcpy(ifname_desc, ifname_desc2);
-			counter[0] = rx2;
-			counter[1] = tx2;
-                        strcpy(ifname_desc2, "");
-                        goto loopagain;
-		}
-#endif
-
-	}			
-	fclose(f);
+	}
 			
 	// cleanup stale entries
 	for (i = 0; i < speed_count; ++i) {

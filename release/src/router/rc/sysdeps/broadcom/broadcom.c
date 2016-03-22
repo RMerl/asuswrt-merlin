@@ -93,14 +93,16 @@ typedef u_int8_t __u8;
 //End
 char cmd[32];
 
-#ifdef RTCONFIG_EXT_RTL8365MB
-extern int ext_rtk_phyState(int v);
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
+extern int ext_rtk_phyState(int v, char* BCMPorts);
 #endif
 
 int
 set40M_Channel_2G(char *channel)
 {
+#ifdef RTCONFIG_BCMWL6
 	char str[8];
+#endif
 
 	if (channel==NULL || !isValidChannel(1, channel))
 		return 0;
@@ -126,8 +128,10 @@ set40M_Channel_2G(char *channel)
 int
 set40M_Channel_5G(char *channel)
 {
+#ifdef RTCONFIG_BCMWL6
 	char str[8];
 	int ch = 0;
+#endif
 
 	if (channel==NULL || !isValidChannel(0, channel))
 		return 0;
@@ -156,8 +160,10 @@ set40M_Channel_5G(char *channel)
 int
 set80M_Channel_5G(char *channel)
 {
+#ifdef RTCONFIG_BCMWL6
 	char str[8];
 	int ch = 0;
+#endif
 
 	if (channel==NULL || !isValidChannel(0, channel))
 		return 0;
@@ -224,7 +230,7 @@ int
 GetPhyStatus(int verbose)
 {
 	int ports[5];
-#ifdef RTCONFIG_EXT_RTL8365MB
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
 	int ext = 0;
 #endif
 	int i, ret, lret=0, model, mask;
@@ -261,7 +267,7 @@ GetPhyStatus(int verbose)
 	case MODEL_RTAC3100:
 		/* WAN L1 L2 L3 L4 */
 		ports[0]=4; ports[1]=3; ports[2]=2; ports[3]=1; ports[4]=0;
-#ifdef RTCONFIG_EXT_RTL8365MB
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
 		ext = 1;
 #endif
 		break;
@@ -296,7 +302,18 @@ GetPhyStatus(int verbose)
 		ext = 1;
 #endif
 		break;
+	case MODEL_RTAC5300R:
+		/* WAN L8 L4 TRUNK2 TRUNK1 */
+		ports[0]=0; ports[1]=4; ports[2]=3; ports[3]=2; ports[4]=1;
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
+		ext = 1;
+#endif
+		break;
 	}
+
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
+	char PStatus[5]="XXXXX";
+#endif
 
 	memset(out_buf, 0, 30);
 	for (i=0; i<5; i++) {
@@ -305,8 +322,11 @@ GetPhyStatus(int verbose)
 		if (get_phy_status(mask)==0) {/*Disconnect*/
 			if (i==0)
 				sprintf(out_buf, "W0=X;");
-			else
+			else {
+#ifndef RTAC5300R
 				sprintf(out_buf, "%sL%d=X;", out_buf, i);
+#endif
+			}
 		}
 		else { /*Connect, keep check speed*/
 			mask = 0;
@@ -316,8 +336,13 @@ GetPhyStatus(int verbose)
 			if (i==0)
 				sprintf(out_buf, "W0=%s;", (ret & 2)? "G":"M");
 			else {
+#ifndef RTAC5300R
 				lret = 1;
 				sprintf(out_buf, "%sL%d=%s;", out_buf, i, (ret & 2)? "G":"M");
+#else
+				PStatus[i] = (ret & 2)? 'G':'M';
+				if (i < 3) lret = 1;
+#endif
 			}
 		}
 	}
@@ -337,15 +362,15 @@ GetPhyStatus(int verbose)
 	}
 #endif
 	if (verbose)
-#ifdef RTCONFIG_EXT_RTL8365MB
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
 		printf("%s", out_buf);
 #else
 		puts(out_buf);
 #endif
 
-#ifdef RTCONFIG_EXT_RTL8365MB
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
 	if (ext)
-		lret |= ext_rtk_phyState(verbose);
+		lret |= ext_rtk_phyState(verbose, PStatus);
 #endif
 	return lret;
 }
@@ -467,10 +492,11 @@ setAllLedOn(void)
 		case MODEL_RTAC68U:
 		case MODEL_RTAC3200:
 		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 		{
-#if defined(RTAC68U) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#if defined(RTAC68U) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 			led_control(LED_USB, LED_ON);
 			led_control(LED_USB3, LED_ON);
 #endif
@@ -483,7 +509,7 @@ setAllLedOn(void)
 			eval("wl", "ledbh", "10", "1");			// wl 5G low
 			eval("wl", "-i", "eth2", "ledbh", "10", "1");	// wl 2.4G
 			eval("wl", "-i", "eth3", "ledbh", "10", "1");	// wl 5G high
-#elif defined(RTAC5300)
+#elif defined(RTAC5300) || defined(RTAC5300R)
 			eval("wl", "ledbh", "9", "1");			// wl 5G low
 			eval("wl", "-i", "eth2", "ledbh", "9", "1");	// wl 2.4G
 			eval("wl", "-i", "eth3", "ledbh", "9", "1");	// wl 5G high
@@ -498,14 +524,16 @@ setAllLedOn(void)
 #if defined(RTAC3200)
 			led_control(LED_WPS, LED_ON);
 			led_control(LED_WAN, LED_ON);
-#elif defined (RTAC88U) || defined (RTAC3100) || defined (RTAC5300)
+#elif defined (RTAC88U) || defined (RTAC3100) || defined (RTAC5300) || defined(RTAC5300R)
 			led_control(LED_WPS, LED_ON);
 			led_control(LED_WAN, LED_ON);
 			led_control(LED_LAN, LED_ON);
 #endif
-			/* 4360's fake 5g led */
 #ifdef RTAC68U
+			 /* 4360's fake 5g led */
 			led_control(LED_5G, LED_ON);
+			if (!strcmp(get_productid(), "RT-AC66U V2"))
+			led_control(LED_WAN, LED_ON);
 #endif
 			break;
 		}
@@ -694,6 +722,7 @@ setWlOffLed(void)
 			break;
 
 		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
 		{
 			if (wlon_unit != 0 && wlon_unit_ex != 0)
 				eval("wl", "-i", "eth1", "ledbh", "9", "0");	// wl 2.4G
@@ -819,10 +848,11 @@ setAllLedOff(void)
 		case MODEL_RTAC68U:
 		case MODEL_RTAC3200:
 		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 		{
-#if defined(RTAC68U) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#if defined(RTAC68U) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 			led_control(LED_USB, LED_OFF);
 			led_control(LED_USB3, LED_OFF);
 #endif
@@ -835,7 +865,7 @@ setAllLedOff(void)
 			eval("wl", "ledbh", "10", "0");			// wl 5G low
 			eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 2.4G
 			eval("wl", "-i", "eth3", "ledbh", "10", "0");	// wl 5G high
-#elif defined (RTAC5300)
+#elif defined (RTAC5300) || defined(RTAC5300R)
 			eval("wl", "ledbh", "9", "0");			// wl 5G low
 			eval("wl", "-i", "eth2", "ledbh", "9", "0");	// wl 2.4G
 			eval("wl", "-i", "eth3", "ledbh", "9", "0");	// wl 5G high
@@ -850,14 +880,16 @@ setAllLedOff(void)
 #if defined(RTAC3200)
 			led_control(LED_WPS, LED_OFF);
 			led_control(LED_WAN, LED_OFF);
-#elif defined (RTAC88U) || defined (RTAC3100) || defined (RTAC5300)
+#elif defined (RTAC88U) || defined (RTAC3100) || defined (RTAC5300) || defined(RTAC5300R)
 			led_control(LED_WPS, LED_OFF);
 			led_control(LED_WAN, LED_OFF);
 			led_control(LED_LAN, LED_OFF);
 #endif
-			/* 4360's fake 5g led */
 #ifdef RTAC68U
+			/* 4360's fake 5g led */
 			led_control(LED_5G, LED_OFF);
+			if (!strcmp(get_productid(), "RT-AC66U V2"))
+			led_control(LED_WAN, LED_OFF);
 #endif
 #ifdef RTCONFIG_FAKE_ETLAN_LED
 			led_control(LED_LAN, LED_OFF);
@@ -1037,6 +1069,7 @@ setATEModeLedOn(void) {
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
 		{
 			led_control(LED_WPS, LED_ON);
 			led_control(LED_WAN, LED_ON);
@@ -1046,7 +1079,7 @@ setATEModeLedOn(void) {
 
 			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
-#if defined(RTAC5300)
+#if defined(RTAC5300) || defined(RTAC5300R)
 			eval("wl", "ledbh", "9", "1");			// wl 5G low
 			eval("wl", "-i", "eth2", "ledbh", "9", "1");	// wl 2.4G
 			eval("wl", "-i", "eth3", "ledbh", "9", "1");	// wl 5G high
@@ -1286,7 +1319,7 @@ int Get_ChannelList_5G(void)
 #endif
 }
 
-#if defined(RTAC3200) || defined(RTAC5300)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
 int Get_ChannelList_5G_2(void)
 {
 	return Get_channel_list(2);
@@ -1672,7 +1705,7 @@ int wlcscan_core(char *ofile, char *wif)
 	params->active_time = -1;
 	params->passive_time = -1;
 	params->home_time = -1;
-#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 	int band = WLC_BAND_ALL;
 	wl_ioctl(wif, WLC_GET_BAND, &band, sizeof(band));
 	if (band == WLC_BAND_5G)
@@ -1799,7 +1832,7 @@ int wlcscan_core(char *ofile, char *wif)
 	/* restore original scan channel time */
 	wl_ioctl(wif, WLC_SET_SCAN_CHANNEL_TIME, &org_scan_time, sizeof(org_scan_time));
 
-#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 	wait_time = 2;
 #endif
 	dbg("[rc] Please wait %d seconds ", wait_time);
@@ -2067,14 +2100,14 @@ next_info:
 		if ((fp = fopen(ofile, "a")) == NULL) {
 			printf("[wlcscan] Output %s error\n", ofile);
 		} else {
-#if defined(RTAC3200) || defined(RTAC5300)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
 			int unit = 0;
 			char prefix[] = "wlXXXXXXXXXX_", tmp[100];
 			wl_ioctl(wif, WLC_GET_INSTANCE, &unit, sizeof(unit));
 			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #endif
 			for (i = 0; i < ap_count; i++) {
-#if defined(RTAC3200) || defined(RTAC5300)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
 				if (!strcmp(wif, "eth1") && (apinfos[i].ctl_ch > 48))
 					continue;
 				if (!strcmp(wif, "eth3")) {
@@ -3224,7 +3257,7 @@ wl_check_chanspec()
 }
 #endif
 
-#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 int wl_channel_valid(char *wif, int channel)
 {
 	int channels[MAXCHANNEL+1];

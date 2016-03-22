@@ -17,6 +17,11 @@ else
 fi
 
 modem_act_node=`nvram get $act_node`
+if [ -n "$3" -a "$3" == "bulk" -a "$modem_act_node" == "" ]; then
+	act_node=$act_node1
+	modem_act_node=`nvram get $act_node`
+fi
+
 if [ "$modem_act_node" == "" ]; then
 	find_modem_node.sh
 
@@ -26,7 +31,7 @@ if [ "$modem_act_node" == "" ]; then
 		exit 1
 	fi
 fi
-echo "modem_act_node=$act_node"
+#echo "modem_act_node=$act_node"
 
 if [ -n "$2" ]; then
 	waited_sec=$2

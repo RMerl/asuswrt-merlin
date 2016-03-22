@@ -388,7 +388,13 @@ static int find_vlan_slot(int vid, unsigned int *vawd1)
 	unsigned int i, r, v, value;
 
 #if defined(RTCONFIG_RALINK_MT7620)
-	for(i = 3, idx = -1; idx < 0 && i < 16; ++i) {	/* skip vlan index 0~2 */
+	i = 0;				/* search vlan index from 0 */
+#elif defined(RTCONFIG_RALINK_MT7621)
+	i = 4;				/* skip vlan index 1~3. MT7621 donot use vid=0 */
+#endif	/* RTCONFIG_RALINK_MT7621 */
+
+	for(idx = -1; idx < 0 && i < 16; ++i) {
+#if defined(RTCONFIG_RALINK_MT7620)
 		if ((r = mt7620_reg_read(REG_ESW_VLAN_ID_BASE + 4*(i>>1), &value))) {
 			_dprintf("read VTIM1~8, i %d offset %x fail. (r = %d)\n", i, REG_ESW_VLAN_ID_BASE + 4*(i>>1), r);
 			continue;
@@ -402,7 +408,6 @@ static int find_vlan_slot(int vid, unsigned int *vawd1)
 		if ((vid <= 0 && v != (i + 1)) && (vid > 0 && v != vid))
 			continue;
 #elif defined(RTCONFIG_RALINK_MT7621)
-	for(i = 4, idx = -1; idx < 0 && i < 16; ++i) {	/* skip vlan index 1~3. MT7621 donot use vid=0 */
 		if (!(i&1))
 			v=mt7621_vtim[(i>>1)][0];
 		else
@@ -1314,7 +1319,7 @@ static void create_Vlan(int bitmask)
 		mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*WAN_PORT), 0x20ff0003); //Egress VLAN Tag Attribution=tagged
 		mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*CPU_PORT), 0x20ff0003); //port6(CPU), Egress VLAN Tag Attribution=tagged
 		mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*WAN_PORT), 0x81000000); //user port, admit all frames
-		mt7620_vlan_set(1, vid, portmap, vid);
+		mt7620_vlan_set(-1, vid, portmap, vid);
 #elif defined(RTCONFIG_RALINK_MT7621)
 		portmap[P5_PORT]='1';
 		mt7621_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*WAN_PORT), 0x20ff0003); //Egress VLAN Tag Attribution=tagged
@@ -1322,7 +1327,7 @@ static void create_Vlan(int bitmask)
 		mt7621_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*CPU_PORT), 0x20ff0003); //port6(GE1), Egress VLAN Tag Attribution=tagged
 		mt7621_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*WAN_PORT), 0x81000000); //user port, admit all frames
 		mt7621_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*P5_PORT), 0x81000000);  //user port, admit all frames
-		mt7621_vlan_set(1, vid, portmap, vid);
+		mt7621_vlan_set(-1, vid, portmap, vid);
 #endif
 	}
 	else {	//IPTV, VoIP port

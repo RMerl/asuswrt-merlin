@@ -282,5 +282,6 @@ void file_unlock(int lockfd)
         if (lockfd >= 0) {
                 ftruncate(lockfd, 0);
                 close(lockfd);
-        }
+        } else
+        	syslog(LOG_DEBUG, "Error %d un-locking, proceeding anyway", errno);
 }

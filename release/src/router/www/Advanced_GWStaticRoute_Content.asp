@@ -11,58 +11,20 @@
 <title><#Web_Title#> - <#menu5_2_3#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<style>
-#ClientList_Block_PC{
-	border:1px outset #999;
-	background-color:#576D73;
-	position:absolute;
-	*margin-top:27px;
-	margin-left:2px;
-	*margin-left:-223px;
-	width:185px;
-	text-align:left;	
-	height:auto;
-	overflow-y:auto;
-	z-index:200;
-	padding: 1px;
-	display:none;
-}
-#ClientList_Block_PC div{
-	background-color:#576D73;
-	height:auto;
-	*height:20px;
-	line-height:20px;
-	text-decoration:none;
-	font-family: Lucida Console;
-	padding-left:2px;
-}
-
-#ClientList_Block_PC a{
-	background-color:#EFEFEF;
-	color:#FFF;
-	font-size:12px;
-	font-family:Arial, Helvetica, sans-serif;
-	text-decoration:none;	
-}
-#ClientList_Block_PC div:hover, #ClientList_Block a:hover{
-	background-color:#3366FF;
-	color:#FFFFFF;
-	cursor:default;
-}	
-</style>
 <script>
 var sr_rulelist_array = '<% nvram_get("sr_rulelist"); %>';
 
 function initial(){
 	show_menu();
 	showsr_rulelist();
-	setTimeout("showLANIPList();", 1000);
+	setTimeout("showDropdownClientList('setClientIP', 'ip', 'all', 'ClientList_Block_PC', 'pull_arrow', 'online');", 1000);
 }
 
 function applyRule(){
@@ -189,7 +151,7 @@ function addRow_Group(upper){
 					if(document.form.sr_ipaddr_x_0.value == document.getElementById('sr_rulelist_table').rows[i].cells[0].innerHTML 
 						&& document.form.sr_gateway_x_0.value == document.getElementById('sr_rulelist_table').rows[i].cells[2].innerHTML){
 						alert("<#JS_duplicate#>");
-						document.form.sr_gateway_x_0.value="";
+						document.form.sr_ipaddr_x_0.value="";
 						document.form.sr_ipaddr_x_0.focus();
 						document.form.sr_ipaddr_x_0.select();
 						return false;
@@ -253,7 +215,7 @@ function showsr_rulelist(){
 		for(var i = 1; i < sr_rulelist_row.length; i++){
 			code +='<tr id="row'+i+'">';
 			var sr_rulelist_col = sr_rulelist_row[i].split('&#62');
-			var wid=[34, 18, 18, 8, 10];
+			var wid=[20, 20, 28, 8, 12];
 				for(var j = 0; j < sr_rulelist_col.length; j++){
 					code +='<td width="'+wid[j]+'%">'+ sr_rulelist_col[j] +'</td>';		//IP  width="98"
 				}
@@ -265,50 +227,24 @@ function showsr_rulelist(){
 	document.getElementById("sr_rulelist_Block").innerHTML = code;
 }
 
-
-//Viz add 2012.02 LAN client ip { start
-
-function showLANIPList(){
-	var htmlCode = "";
-	for(var i=0; i<clientList.length;i++){
-		var clientObj = clientList[clientList[i]];
-
-		if(clientObj.ip == "offline") clientObj.ip = "";
-		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
-
-		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
-		htmlCode += clientObj.ip;
-		htmlCode += '\');"><strong>';
-		htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	}
-
-	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
-}
-
 function setClientIP(ipaddr){
 	document.form.sr_gateway_x_0.value = ipaddr;
 	hideClients_Block();
-	over_var = 0;
 }
 
-
-var over_var = 0;
-var isMenuopen = 0;
 
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
-	isMenuopen = 0;
 }
 
 function pullLANIPList(obj){
-	
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';		
-		document.form.sr_ipaddr_x_0.focus();		
-		isMenuopen = 1;
+		element.style.display = 'block';		
+		document.form.sr_gateway_x_0.focus();
 	}
 	else
 		hideClients_Block();
@@ -401,15 +337,15 @@ function Ctrl_LANIPList(obj){
 			  
 			  <tr>
 			  	<!-- client info -->		
-					<td width="18%">
-						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
-					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
-					<td width="34%"><input type="text" class="input_20_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:180px;" onKeyPress="return validator.isIPAddr(this, event)"  onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" autocorrect="off" autocapitalize="off">
-					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_IP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
-					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
+					<td width="20%">
+						<input type="text" class="input_15_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
+					<td width="20%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
+					<td width="28%"><input type="text" class="input_15_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:160px;" onKeyPress="return validator.isIPAddr(this, event)"  onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
+					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_IP#>">
+					<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:7px;"></div>
 					</td>
 					<td width="8%"><input type="text" maxlength="3" class="input_3_table" name="sr_matric_x_0"  onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off"></td>
-					<td width="10%">
+					<td width="12%">
 						<select name="sr_if_x_0" class="input_option" style="width:62px;" onchange="Ctrl_LANIPList(this);">
 							<option value="LAN">LAN</option>
 							<option value="MAN">MAN</option>

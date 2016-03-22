@@ -92,9 +92,15 @@ int wait_rc_service(int wait)
 	char p1[16];
 
 	psname(nvram_get_int("rc_service_pid"), p1, sizeof(p1));
+
 	while (*nvram_safe_get("rc_service")) {
-		if(--i < 0)
+		if(--i < 0) {
+			/* now the dead go peace */
+			if(!*p1)
+				nvram_set("rc_service", "");
 			return 0;
+		}
+
 		if(first_try){
 			logmessage_normal("rc_service", "waitting \"%s\" via %s ...", nvram_safe_get("rc_service"), p1);
 			first_try = 0;
@@ -102,8 +108,8 @@ int wait_rc_service(int wait)
 
 		_dprintf("%d: wait for previous script(%d/%d): %s %d %s.\n", getpid(), i, wait, nvram_safe_get("rc_service"), nvram_get_int("rc_service_pid"), p1);
 		sleep(1);
-
 	}
+
 	return 1;
 }
 
@@ -122,7 +128,7 @@ static int notify_rc_internal(const char *event_name, bool do_wait, int wait)
 		return -1;
 
 	psname(getpid(), p2, sizeof(p2));
-	_dprintf("%s %d:notify_rc: %s\n", p2, getpid(), event_name);
+	_dprintf("<rc_service> [i:%s] %d:notify_rc %s", p2, getpid(), event_name);
 	logmessage_normal("rc_service", "%s %d:notify_rc %s", p2, getpid(), event_name);
 
 	// finish the last rc_service as soon as possibly.

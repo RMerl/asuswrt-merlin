@@ -655,7 +655,7 @@ static inline void __choose_mrate(char *prefix, int *mcast_phy, int *mcast_mcs)
 	int phy = 3, mcs = 7;			/* HTMIX 65/150Mbps */
 	char tmp[128];
 
-	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
+	if (ipv6_enabled() && nvram_get_int(ipv6_nvname("ipv6_radvd"))) {
 		if (!strncmp(prefix, "wl0", 3)) {
 			phy = 2; mcs = 2;	/* 2G: OFDM 12Mbps */
 		} else {

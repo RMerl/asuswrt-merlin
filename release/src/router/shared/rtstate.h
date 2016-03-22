@@ -62,8 +62,7 @@ enum {
 enum {
 	WAN_AUXSTATE_NONE=0,		// STATE FOR NO ERROR or OK
 	WAN_AUXSTATE_NOPHY,
-	WAN_AUXSTATE_NO_INTERNET_ACTIVITY,
-	WAN_AUXSTATE_PPP_AUTH_FAIL
+	WAN_AUXSTATE_NO_INTERNET_ACTIVITY
 };
 
 #ifdef RTCONFIG_IPV6
@@ -290,6 +289,7 @@ enum {
 
 int wan_primary_ifunit(void);
 extern int is_wan_connect(int unit);
+extern int is_phy_connect(int unit);
 extern int get_wan_state(int unit);
 extern int get_wan_unit(char *ifname);
 extern char *get_wan_ifname(int unit);

@@ -16,18 +16,6 @@
 #ifndef _STUBS_H
 #define _STUBS_H 1
 
-#if defined(__UCLIBC__) \
- && (__UCLIBC_MAJOR__ == 0 \
- && (__UCLIBC_MINOR__ < 9 || (__UCLIBC_MINOR__ == 9 && __UCLIBC_SUBLEVEL__ < 33)))
-
-#undef dn_comp
-#define dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr) \
-	dn_encode(exp_dn, comp_dn, length)
-
-
-#endif
-
-extern int dn_encode(const char *src, uint8_t *dst, int length);
 extern int fflags(int sock, int flags);
 
 #endif

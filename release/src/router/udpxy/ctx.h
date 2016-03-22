@@ -52,6 +52,8 @@ struct client_ctx
 
     struct tput_stat
                 tstat;
+
+    char        tail[ MAX_TAIL_LEN + 1 ];
 };
 
 
@@ -65,6 +67,14 @@ struct tps_data {
 };
 
 
+/* server request components */
+struct srv_request {
+    char        cmd[ MAX_CMD_LEN + 1 ];
+    char        param[ MAX_PARAM_LEN + 1 ];
+    char        tail[ MAX_TAIL_LEN + 1 ];
+};
+
+
 /* context of the server */
 struct server_ctx
 {
@@ -74,7 +84,8 @@ struct server_ctx
     char        mcast_ifc_addr[ IPADDR_STR_SIZE ];
     struct in_addr
                 mcast_inaddr;
-    char        cmd[ MAX_CMD_LEN + 1 ];
+
+    struct srv_request rq;  /* (current) request to process */
 
     size_t      clfree,
                 clmax;

@@ -17,6 +17,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with udpxy.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -58,17 +59,13 @@ extern FILE*  g_flog;
 extern volatile sig_atomic_t g_quit;
 extern const char g_udpxrec_app[];
 
-extern const char  COMPILE_MODE[];
-extern const char  VERSION[];
-extern const int   BUILDNUM;
-
 static volatile sig_atomic_t g_alarm = 0;
 
 /* globals
  */
 
 struct udpxrec_opt g_recopt;
-
+static char g_app_info[ 80 ] = {0};
 
 /* handler for signals requestin application exit
  */
@@ -94,14 +91,10 @@ must_quit() { return g_quit; }
 static void
 usage( const char* app, FILE* fp )
 {
-    extern const char  VERSION[];
-    extern const int   BUILDNUM;
     extern const char  UDPXY_COPYRIGHT_NOTICE[];
     extern const char  UDPXY_CONTACT[];
-    extern const char  COMPILE_MODE[];
 
-    (void) fprintf(fp, "%s %s (build %d) %s\n", app, VERSION, BUILDNUM,
-            COMPILE_MODE );
+    (void) fprintf(fp, "%s\n", g_app_info);
     (void) fprintf(fp, "usage: %s [-v] [-b begin_time] [-e end_time] "
             "[-M maxfilesize] [-p pidfile] [-B bufsizeK] [-n nice_incr] "
             "[-m mcast_ifc_addr] [-l logfile] "
@@ -139,6 +132,7 @@ usage( const char* app, FILE* fp )
     (void) fprintf( fp, "  %s\n\n", UDPXY_CONTACT );
     return;
 }
+
 
 /* update wait status
  *
@@ -293,7 +287,7 @@ record()
     struct dstream_ctx ds;
     ssize_t nmsgs = 0;
     ssize_t nrcv = -1, lrcv = -1, t_delta = 0;
-    int64_t n_total = 0;
+    uint64_t n_total = 0;
     ssize_t nwr = -1, lwr = -1;
     sig_atomic_t quit = 0;
     struct rdata_opt ropt;
@@ -305,10 +299,10 @@ record()
     extern const char CMD_UDP[];
 
     /* NOPs to eliminate warnings in lean version */
+    (void)&t_delta; (void)&lrcv;
     t_delta = lrcv = lwr = 0; quit=0;
 
     check_fragments( NULL, 0, 0, 0, 0, g_flog );
-
 
     /* init */
     do {
@@ -399,14 +393,14 @@ record()
 
         if( nrcv > 0 ) {
             if( g_recopt.max_fsize &&
-                ((n_total + nrcv) >= g_recopt.max_fsize) ) {
+                ((int64_t)(n_total + nrcv) >= g_recopt.max_fsize) ) {
                 break;
             }
 
             nwr = write_data( &ds, data, nrcv, destfd );
             if( -1 == nwr ) { rc = ERR_INTERNAL; break; }
 
-            n_total += nwr;
+            n_total += (size_t)nwr;
             /*
             TRACE( tmfprintf( g_flog, "Wrote [%ld] to file, total=[%ld]\n",
                         (long)nwr, (long)n_total ) );
@@ -421,16 +415,16 @@ record()
 
     } /* record loop */
 
-    (void) tmfprintf( g_flog, "Recording to file=[%s] stopped at filesize=[%ld] bytes\n",
-                      g_recopt.dstfile, (long)n_total );
+    (void) tmfprintf( g_flog, "Recording to file=[%s] stopped at filesize=[%lu] bytes\n",
+                      g_recopt.dstfile, (u_long)n_total );
 
     /* CLEANUP
      */
     (void) alarm(0);
 
-    TRACE( (void)tmfprintf( g_flog, "Exited record loop: wrote [%ld] bytes to file [%s], "
+    TRACE( (void)tmfprintf( g_flog, "Exited record loop: wrote [%lu] bytes to file [%s], "
                     "rc=[%d], alarm=[%ld], quit=[%ld]\n",
-                    (long)n_total, g_recopt.dstfile, rc, g_alarm, (long)quit ) );
+                    (u_long)n_total, g_recopt.dstfile, rc, g_alarm, (long)quit ) );
 
     free_dstream_ctx( &ds );
     if( data ) free( data );
@@ -538,13 +532,14 @@ int udpxrec_main( int argc, char* const argv[] )
     extern int optind, optopt;
     extern const char IPv4_ALL[];
 
+    mk_app_info(g_udpxrec_app, g_app_info, sizeof(g_app_info) - 1);
+
     if( argc < 2 ) {
         usage( argv[0], stderr );
         return ERR_PARAM;
     }
 
-    init_recopt( &g_recopt );
-
+    rc = init_recopt( &g_recopt );
     while( (0 == rc) && (-1 != (ch = getopt( argc, argv, OPTMASK ))) ) {
         switch(ch) {
             case 'T':   no_daemon = 1; break;
@@ -781,11 +776,7 @@ int udpxrec_main( int argc, char* const argv[] )
 
         TRACE( fprint_recopt( g_flog, &g_recopt ) );
 
-        (void) snprintf( app_finfo, sizeof(app_finfo),
-                "%s %s (build %d) %s", g_udpxrec_app, VERSION, BUILDNUM,
-            COMPILE_MODE );
-
-        TRACE( printcmdln( g_flog, app_finfo, argc, argv ) );
+        TRACE( printcmdln( g_flog, g_app_info, argc, argv ) );
 
         if( g_recopt.bg_time ) {
             if( 0 != (rc = verify_channel()) || g_quit )
@@ -818,6 +809,7 @@ int udpxrec_main( int argc, char* const argv[] )
 
     return rc;
 }
+
 
 /* __EOF__ */
 

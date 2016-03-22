@@ -7751,3 +7751,11 @@ si_serial_baudrate_get(si_t *sih, void* param, void* arg)
 	return BCME_OK;
 }
 #endif /* WLTEST && DONGLEBUILD */
+
+#ifdef BCMDBG
+void
+assfail(char *expr, char *file, int line)
+{
+	printf("Assertion failed: %s, file: %s, line: %d\n", expr, file, line);
+}
+#endif

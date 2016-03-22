@@ -75,9 +75,14 @@ function QKinternettype_load_body(){
 		
 		if(parent.get_internet_type_reducedmode() == "enable")
 			blocking("dhcppppoe_sec", false);
-	
-		ISP_Profile_Selection(original_switch_wantag);
-		hide_specialISP();
+		
+		if(parent.noiptv_support)
+			document.getElementById("specialISP_tr").style.display = "none";
+		else{
+			ISP_Profile_Selection(original_switch_wantag);
+			hide_specialISP();
+		}
+
 		if( parent.based_modelid != "RT-AC3200" &&
 			parent.based_modelid != "RT-AC87U" &&
 			parent.based_modelid != "RT-AC68U" &&
@@ -433,7 +438,7 @@ function hide_specialISP(){
 
 	if(!document.applyForm.specialisp.checked){
 		document.getElementById("special_ISP_img").style.display = "none";
-		document.getElementById("sparcial_ISP_field").style.display = "none";
+		document.getElementById("special_ISP_field").style.display = "none";
 		document.getElementById("tblsetting").style.width = "600px";
 		if(isIE){
 			document.getElementById("tblsetting").style.marginLeft = "50px";
@@ -444,7 +449,7 @@ function hide_specialISP(){
 	}
 	else{
 		document.getElementById("special_ISP_img").style.display = "";
-		document.getElementById("sparcial_ISP_field").style.display = "";
+		document.getElementById("special_ISP_field").style.display = "";
 		document.getElementById("tblsetting").style.width = "400px";
 		document.getElementById("tblsetting").style.marginLeft = "50px";
 		if(isIE){
@@ -520,9 +525,9 @@ function detect_if_wan_plug(flag){
 
 <body onLoad="QKinternettype_load_body();" onunload="" onKeyPress="submitenter(this,event)">
 
-<form method="post" name="applyForm">                          
+<form method="post" name="applyForm">
 <input type="hidden" name="current_page" value="QIS_internet_type.htm">
-<input type="hidden" name="next_page" value="/qis/QIS_finish.htm">   
+<input type="hidden" name="next_page" value="/qis/QIS_finish.htm">
 <input type="hidden" name="prev_page" value="/qis/QIS_detect.htm">
 <input type="hidden" name="wan_proto" value="">
 <input type="hidden" name="switch_stb_x" value="">
@@ -634,7 +639,7 @@ function detect_if_wan_plug(flag){
 
 <div id="special_ISP_img" style="margin-top:0px;margin-left:500px;display:none;"><img width="220px" height="300px" src="/images/qis/border.png"></div>
 
-<div id="sparcial_ISP_field" style="margin-top:-360px;margin-left:450px;display:none;">
+<div id="special_ISP_field" style="margin-top:-360px;margin-left:450px;display:none;">
 	<!--p class="QISGeneralFont" style="font-style:normal;color:#66CCFF;font-size:12px;font-weight:bolder;"><#PPPConnection_x_HostNameForISP_sectionname#></p-->
 	<div style="margin-left:70px;margin-top:65px;line-height:25px;">
 		<span>

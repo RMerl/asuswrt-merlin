@@ -5,7 +5,7 @@
 #include <rc.h>
 
 // define function bit, you can define more functions as below
-#define TRAFFIC_CONTROL		0x01
+#define TRAFFIC_LIMITER		0x01
 #define TRAFFIC_ANALYZER	0x02
 #define NETWORKMAP		0x04
 
@@ -76,16 +76,16 @@ void hm_traffic_analyzer_save()
 	system(buf);
 }
 
-void hm_traffic_control_save()
+void hm_traffic_limiter_save()
 {
-	if(nvram_get_int("hour_monitor_debug") || nvram_get_int("traffic_control_debug"))
+	if(nvram_get_int("hour_monitor_debug") || nvram_get_int("tl_debug"))
 		debug = 1;
 	else
 		debug = 0;
 	
-	if(debug) dbg("%s : traffic_control is saving ... \n", __FUNCTION__);
+	if(debug) dbg("%s : traffic_limiter is saving ... \n", __FUNCTION__);
 
-	eval("traffic_control", "-w");
+	eval("traffic_limiter", "-w");
 }
 
 static void hm_networkmap_rescan()
@@ -102,9 +102,9 @@ int hour_monitor_function_check()
 	// intial global variable
 	value = 0;
 
-	// traffic control
-	if(nvram_get_int("traffic_control_enable"))
-		value |= TRAFFIC_CONTROL;
+	// traffic limiter
+	if(nvram_get_int("tl_enable"))
+		value |= TRAFFIC_LIMITER;
 
 	// traffic analyzer
 	if(nvram_get_int("bwdpi_db_enable"))
@@ -128,8 +128,8 @@ static void hour_monitor_call_fucntion()
 	// check function enable or not
 	if(!hour_monitor_function_check()) exit(0);
 
-	if((value & TRAFFIC_CONTROL) != 0)
-		hm_traffic_control_save();
+	if((value & TRAFFIC_LIMITER) != 0)
+		hm_traffic_limiter_save();
 
 	if((value & TRAFFIC_ANALYZER) != 0)
 		hm_traffic_analyzer_save();
@@ -145,8 +145,8 @@ static void hour_monitor_save_database()
 	// check function enable or not
 	if(!hour_monitor_function_check()) exit(0);
 
-	if((value & TRAFFIC_CONTROL) != 0)
-		hm_traffic_control_save();
+	if((value & TRAFFIC_LIMITER) != 0)
+		hm_traffic_limiter_save();
 
 	if((value & TRAFFIC_ANALYZER) != 0)
 		hm_traffic_analyzer_save();

@@ -24,18 +24,7 @@
 #include <stdio.h>
 #include "udpxy.h"
 
-/* data-stream format type */
-typedef enum {
-    DT_FIRST   = -1,
-
-    DT_UNKNOWN,     /* no assumptions */
-    DT_TS,          /* MPEG-TS */
-    DT_RTP_TS,      /* RTP over MPEG-TS */
-    DT_UDS,         /* UDS file format */
-    DT_RAW,         /* read AS-IS */
-
-    DT_LAST
-} upxfmt_t;
+typedef int upxfmt_t;
 
 
 /*  data stream context

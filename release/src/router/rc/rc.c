@@ -121,13 +121,11 @@ static int rctest_main(int argc, char *argv[])
 			else stop_phy_tempsense();
 		}
 #endif
-#ifdef RTCONFIG_BCMWL6
-#ifdef RTCONFIG_PROXYSTA
+#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 		else if (strcmp(argv[1], "psta_monitor") == 0) {
 			if(on) start_psta_monitor();
 			else stop_psta_monitor();
 		}
-#endif
 #endif
 #ifdef RTCONFIG_IPERF
 		else if (strcmp(argv[1], "monitor") == 0) {
@@ -321,10 +319,8 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_FANCTRL
 	{ "phy_tempsense",		phy_tempsense_main		},
 #endif
-#ifdef RTCONFIG_BCMWL6
-#ifdef RTCONFIG_PROXYSTA
+#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 	{ "psta_monitor",		psta_monitor_main		},
-#endif
 #endif
 #ifdef RTCONFIG_IPERF
 	{ "monitor",			monitor_main			},
@@ -354,7 +350,7 @@ static const applets_t applets[] = {
 	{ "halt",			reboothalt_main			},
 	{ "reboot",			reboothalt_main			},
 	{ "ntp", 			ntp_main			},
-#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_EXT_RTL8365MB)
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
 	{ "rtkswitch",			config_rtkswitch		},
 #elif defined(RTCONFIG_QCA)
 	{ "rtkswitch",			config_rtkswitch		},
@@ -362,10 +358,8 @@ static const applets_t applets[] = {
 	{ "delay_exec",			delay_main			},
 
 	{ "wanduck",			wanduck_main			},
-#ifdef RTCONFIG_DUALWAN
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) && defined(RTCONFIG_DUALWAN)
 	{ "dualwan",			dualwan_control			},
-#endif
 #endif
 	{ "tcpcheck",			tcpcheck_main			},
 	{ "autodet", 			autodet_main			},
@@ -508,12 +502,26 @@ int main(int argc, char **argv)
 		restart_wireless();
 		return 0;
 	}
+#ifdef RTCONFIG_BCM_7114
+	else if(!strcmp(base, "stop_wl")){
+                stop_wl_bcm();
+                return 0;
+        }
+#endif
 	else if(!strcmp(base, "nvram_erase")){
 		nvram_set(ASUS_STOP_COMMIT, "1");
 		erase_nvram();
 		return 0;
 	}
 #ifdef RTCONFIG_USB
+	else if(!strcmp(base, "restart_usb")){
+		int f_stop = 0;
+		if(argc == 2)
+			f_stop = atoi(argv[1]);
+		printf("%s usb...\n", f_stop ? "stop" : "restart");
+		restart_usb(f_stop);
+		return 0;
+	}
 	else if(!strcmp(base, "get_apps_name")){
 		if(argc != 2){
 			printf("Usage: get_apps_name [File name]\n");
@@ -806,12 +814,10 @@ int main(int argc, char **argv)
 	}
 #endif
 #endif
-#ifdef RTCONFIG_DUALWAN
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) && defined(RTCONFIG_DUALWAN)
 	else if (!strcmp(base, "dualwan")){
 		dualwan_control();
 	}
-#endif
 #endif
 #ifdef RTCONFIG_WIRELESSREPEATER
 	else if (!strcmp(base, "wlcconnect")) {

@@ -4,8 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7, IE=EmulateIE10" />
-<meta name="svg.render.forceflash" content="false" />
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
 <title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_1#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
@@ -14,7 +13,6 @@
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <script language="JavaScript" type="text/javascript" src="help.js"></script>
-<script src='svg.js' data-path="/svghtc/" data-debug="false"></script>
 <script language="JavaScript" type="text/javascript" src="state.js"></script>
 <script language="JavaScript" type="text/javascript" src="general.js"></script>
 <script language="JavaScript" type="text/javascript" src="tmmenu.js"></script>

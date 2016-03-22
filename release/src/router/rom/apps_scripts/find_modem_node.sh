@@ -5,6 +5,8 @@
 modem_act_path=`nvram get usb_modem_act_path`
 modem_type=`nvram get usb_modem_act_type`
 modem_vid=`nvram get usb_modem_act_vid`
+modem_pid=`nvram get usb_modem_act_pid`
+usb_gobi2=`nvram get usb_gobi2`
 dev_home=/dev
 
 at_lock="flock -x /tmp/at_cmd_lock"
@@ -212,6 +214,21 @@ _except_first_int_dev(){
 	done
 }
 
+# $1: VID, $2: PID.
+_get_gobi_device(){
+	if [ -z "$1" ] || [ -z "$2" ]; then
+		echo "0"
+		return
+	fi
+
+	if [ "$1" == "1478" ] && [ "$2" == "36902" -o "$2" == "36903" ]; then
+		echo "1"
+		return
+	fi
+
+	echo "0"
+}
+
 
 act_devs=`_find_act_devs`
 echo "act_devs=$act_devs."
@@ -219,12 +236,20 @@ echo "act_devs=$act_devs."
 io_devs=`_find_in_out_devs "$act_devs"`
 echo "io_devs=$io_devs."
 
+is_gobi=`_get_gobi_device $modem_vid $modem_pid`
+
 if [ "$modem_type" == "tty" ] && [ "$modem_vid" == "6610" -o "$modem_vid" == "1032" ]; then # e.q. ZTE MF637U, ROYAL Q110.
 	first_int_dev=`_find_first_int_dev "$io_devs"`
 	echo "first_int_dev=$first_int_dev."
 
 	first_bulk_dev=""
 	echo "first_bulk_dev=$first_bulk_dev."
+elif [ "$usb_gobi2" != "" ] && [ "$is_gobi" == "1" ]; then # TM-AC1900v2
+	first_int_dev=`_find_first_int_dev "$io_devs"`
+	echo "first_int_dev=$first_int_dev."
+
+	first_bulk_dev=""
+	echo "Can't get the bulk node."
 else
 	dial_devs=`_find_dial_devs "$io_devs"`
 	echo "dial_devs=$dial_devs."

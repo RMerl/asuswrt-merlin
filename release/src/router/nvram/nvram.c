@@ -39,11 +39,211 @@
 #include <rtconfig.h>
 #include <bcmnvram.h>
 
+/*******************************************************************
+* NAME: _secure_romfile
+* AUTHOR: Andy Chiu
+* CREATE DATE: 2015/06/08
+* DESCRIPTION: replace account /password by '1' with the same string length
+* INPUT:  path: the rom file path
+* OUTPUT:
+* RETURN:  0: success, -1:failed
+* NOTE: Andy Chiu, 2015/12/18. Add new tokens.
+*           Andy Chiu, 2015/12/24. Add new tokens.
+*	     Andy Chiu, 2016/02/18. Add new token, wtf_username.
+*******************************************************************/
+static int _secure_conf(char* buf)
+{
+	char name[128], *item;
+	int i, flag;
+	const char *keyword_token[] = {"http_username", "pppoe_username", "passwd", "password", ""};	//Andy Chiu, 2015/12/18
+	
+	const char *token1[] = {"wan_pppoe_passwd", "modem_pass", "modem_pincode",
+		"http_passwd", "wan0_pppoe_passwd", "dslx_pppoe_passwd", "ddns_passwd_x",
+		"wl_wpa_psk",	"wlc_wpa_psk",  "wlc_wep_key",
+		"wl0_wpa_psk", "wl0.1_wpa_psk", "wl0.2_wpa_psk", "wl0.3_wpa_psk",
+		"wl1_wpa_psk", "wl1.1_wpa_psk", "wl1.2_wpa_psk", "wl1.3_wpa_psk",
+		"wl0.1_key1", "wl0.1_key2", "wl0.1_key3", "wl0.1_key4",
+		"wl0.2_key1", "wl0.2_key2", "wl0.2_key3", "wl0.2_key4",
+		"wl0.3_key1", "wl0.3_key2", "wl0.3_key3", "wl0.3_key4",
+		"wl0_key1", "wl0_key2", "wl0_key3", "wl0_key4",
+		"wl1.1_key1", "wl1.1_key2", "wl1.1_key3", "wl1.1_key4",
+		"wl1.2_key1", "wl1.2_key2", "wl1.2_key3", "wl1.2_key4",
+		"wl1.3_key1", "wl1.3_key2", "wl1.3_key3", "wl1.3_key4",
+		"wl_key1", "wl_key2", "wl_key3", "wl_key4",
+		"wl1_key1", "wl1_key2", "wl1_key3", "wl1_key4",
+		"wl0_phrase_x", "wl0.1_phrase_x", "wl0.2_phrase_x", "wl0.3_phrase_x",
+		"wl1_phrase_x", "wl1.1_phrase_x", "wl1.2_phrase_x", "wl1.3_phrase_x",
+		"wl_phrase_x", "vpnc_openvpn_pwd", "PM_SMTP_AUTH_USER", "PM_MY_EMAIL", "PM_SMTP_AUTH_PASS", "wtf_username", ""};
+
+	const char *token2[] = {"acc_list", "pptpd_clientlist", ""};
+	//admin>99999<Family>99999999<aaaaa>9999999<bbbbb>999999
+	//pptpd_clientlist=<aaaaaaaaa>999999999<bbbbbbbbbb>9999999999
+
+	const char vpnc_token[] = "vpnc_clientlist";
+//	qwrety>PPTP>asdf>aaaaaaaaaa>999999999999<qe3rtuio>L2TP>waesrdio>bbbbbbbbb>9999999999999<wqertuio>OpenVPN>1>ccccccccc>999999999999
+
+	const char cloud_token[] = "cloud_sync";
+//	0>aaaaaaaaaaa>9999999999>none>0>/tmp/mnt/SANDISK_32G/aaa>1
+
+	if(!buf)
+		return -1;
+
+	//fprintf(stderr, "[%s, %d]\n", __FUNCTION__, __LINE__);
+	for (item = buf; *item; item += strlen(item) + 1)
+	{
+		//get name of item
+		char *ptr = strchr(item, '=');
+		if(!ptr)	//invalid item
+			continue;
+		memset(name, 0, sizeof(name));
+		strncpy(name, item, ptr - item);
+		flag = 0;
+		//skip '='
+		++ptr;
+		//fprintf(stderr, "[%s, %d]item(%s), name(%s), val(%s)\n", __FUNCTION__, __LINE__, item, name, ptr);
+
+		//check the password keyword token
+		for(i = 0; strlen(keyword_token[i]) > 0; ++i)
+		{
+			if(strstr(name, keyword_token[i]))
+			{
+				//replace the value
+				memset(ptr, '1', strlen(ptr));
+				//fprintf(stderr, "[%s, %d]<%s>replace(%s)\n", __FUNCTION__, __LINE__, name, ptr);
+				flag = 1;
+				break;
+			}
+		}
+		if(flag)
+			continue;
+		
+		//check the first token group
+		for(i = 0; strlen(token1[i]) > 0; ++i)
+		{
+			if(!strcmp(name, token1[i]))
+			{
+				//replace the value
+				memset(ptr, '1', strlen(ptr));
+				//fprintf(stderr, "[%s, %d]<%s>replace(%s)\n", __FUNCTION__, __LINE__, name, ptr);
+				flag = 1;
+				break;
+			}
+		}
+		if(flag)
+			continue;
+
+		//check the 2nd token group
+		//admin>99999<Family>99999999<aaaaa>9999999<bbbbb>999999
+		for(i = 0; strlen(token2[i]) > 0; ++i)
+		{
+			if(!strcmp(name, token2[i]))
+			{
+				//replace the value
+				char *b = ptr, *e;
+				do
+				{
+					b = strchr(b, '>');
+					if(b)
+						++b;
+					else
+						break;
+					e = strchr(b, '<');
+
+					if(e)
+					{
+						memset(b, '1', e-b);
+						b = e + 1;
+					}
+					else
+						memset(b, '1', strlen(b));
+
+				}while(b);
+				//fprintf(stderr, "[%s, %d]<%s>replace(%s)\n", __FUNCTION__, __LINE__, name, ptr);
+				flag = 1;
+				break;
+			}
+		}
+		if(flag)
+			continue;
+
+		//check vpnc token
+		//qwrety>PPTP>asdf>aaaaaaaaaa>999999999999<qe3rtuio>L2TP>waesrdio>bbbbbbbbb>9999999999999<wqertuio>OpenVPN>1>ccccccccc>999999999999
+		if(!strcmp(name, vpnc_token))
+		{
+			char *b = ptr, *e;
+			if(*b == '<')
+				++b;
+			do{
+				int j;
+				for(j = 0; j < 4; ++j)
+				{
+					b = strchr(b, '>');
+					if(b)
+						++b;
+					else
+						break;
+				}
+
+				if(b)
+				{
+					e = strchr(b, '<');
+					if(e)
+					{
+						memset(b, '1', e - b);
+						b = e + 1;
+					}
+					else
+					{
+						memset(b, '1', strlen(b));
+						b = NULL;
+					}
+				}
+			}while(b);
+			//fprintf(stderr, "[%s, %d]<%s>replace(%s)\n", __FUNCTION__, __LINE__, name, ptr);
+		}
+
+		//check cloud sync token
+		//0>aaaaaaaaaaa>9999999999>none>0>/tmp/mnt/SANDISK_32G/aaa>1
+		if(!strcmp(name, cloud_token))
+		{
+			char *b = ptr, *e;
+			if(*b == '<')
+				++b;
+			do{
+				int j;
+				for(j = 0; j < 2; ++j)
+				{
+					b = strchr(b, '>');
+					if(b)
+						++b;
+					else
+						break;
+				}
+
+				if(b)
+				{
+					e = strchr(b, '>');
+					if(e)
+					{
+						memset(b, '1', e - b);
+						b = strchr(e, '<');
+					}
+					else	//invalid
+					{
+						b = NULL;
+					}
+				}
+			}while(b);
+			//fprintf(stderr, "[%s, %d]<%s>replace(%s)\n", __FUNCTION__, __LINE__, name, ptr);
+		}
+	}
+	return 0;
+}
 
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: nvram [get name] [set name=value] [unset name] [show] [save file] [restore file]\n");
+	fprintf(stderr, "usage: nvram [get name] [set name=value] [unset name] [show] [save file] [restore file] [fb_save file]\n");
 	exit(0);
 }
 
@@ -335,6 +535,7 @@ main(int argc, char **argv)
 {
 	char *name, *value, *buf;
 	int size;
+	char *tmpbuf;	//Andy Chiu, 2015/06/09
 #ifdef RTCONFIG_CFE_NVRAM_CHK
 	int ret = 0;
 	FILE *fp;
@@ -396,6 +597,32 @@ main(int argc, char **argv)
 				nvram_save_new(*argv, buf);
 			}
 			
+		}
+		//Andy Chiu, 2015/06/09
+		else if (!strncmp(*argv, "fb_save", 7))
+		{
+			if (*++argv)
+			{
+				tmpbuf = malloc(MAX_NVRAM_SPACE);
+				if(!tmpbuf)
+				{
+					fprintf(stderr, "Can NOT alloc memory!!!");
+					return 0;
+				}
+				nvram_getall(buf, MAX_NVRAM_SPACE);
+				memcpy(tmpbuf, buf, MAX_NVRAM_SPACE);
+				_secure_conf(tmpbuf);
+#if 0
+				FILE *fp = fopen("/tmp/var/fb_conf.test", "w");
+				if(fp)
+				{
+					fwrite(tmpbuf, 1, MAX_NVRAM_SPACE, fp);
+					fclose(fp);
+				}
+#endif
+				nvram_save_new(*argv, tmpbuf);
+				free(tmpbuf);
+			}
 		}
 		else if (!strncmp(*argv, "restore", 7)) 
 		{

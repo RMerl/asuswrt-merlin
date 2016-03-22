@@ -1515,10 +1515,16 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		li = opt_malloc(sizeof(struct list));
 		if (*arg == '*')
 		  {
-		    li->next = match_suffix;
-		    match_suffix = li;
-		    /* Have to copy: buffer is overwritten */
-		    li->suffix = opt_string_alloc(arg+1);
+		    /* "*" with no suffix is a no-op */
+		    if (arg[1] == 0)
+		      free(li);
+		    else
+		      {
+			li->next = match_suffix;
+			match_suffix = li;
+			/* Have to copy: buffer is overwritten */
+			li->suffix = opt_string_alloc(arg+1);
+		      }
 		  }
 		else
 		  {

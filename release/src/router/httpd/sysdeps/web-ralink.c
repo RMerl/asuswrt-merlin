@@ -994,6 +994,9 @@ int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 	RT_802_11_MAC_TABLE_2G *mp2;
 	char *value;
 	int rssi, cnt;
+	int from_app = 0;
+
+	from_app = check_user_agent(user_agent);
 
 	memset(mac, 0, sizeof(mac));
 
@@ -1030,7 +1033,9 @@ int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 			firstRow = 0;
 		else
 			websWrite(wp, ", ");
-		websWrite(wp, "[");
+
+		if (from_app == 0)
+			websWrite(wp, "[");
 
 		sprintf(mac, "%02X:%02X:%02X:%02X:%02X:%02X",
 				mp2->Entry[i].Addr[0], mp2->Entry[i].Addr[1],
@@ -1038,16 +1043,35 @@ int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 				mp2->Entry[i].Addr[4], mp2->Entry[i].Addr[5]);
 		websWrite(wp, "\"%s\"", mac);
 
+		if (from_app != 0) {
+			websWrite(wp, ":{");
+			websWrite(wp, "\"isWL\":");
+		}
+
 		value = "Yes";
-		websWrite(wp, ", \"%s\"", value);
+		if (from_app == 0)
+			websWrite(wp, ", \"%s\"", value);
+		else
+			websWrite(wp, "\"%s\"", value);
 
 		value = "";
-		websWrite(wp, ", \"%s\"", value);
+		if (from_app == 0)
+			websWrite(wp, ", \"%s\"", value);
+
+		if (from_app != 0)
+			websWrite(wp, ",\"rssi\":");
 
 		rssi = rssi / cnt;
-		websWrite(wp, ", \"%d\"", rssi);
+		if (from_app == 0)
+			websWrite(wp, ", \"%d\"", rssi);
+		else
+			websWrite(wp, "\"%d\"", rssi);
 
-		websWrite(wp, "]");
+
+		if (from_app == 0)
+			websWrite(wp, "]");
+		else
+			websWrite(wp, "}");
 	}
 
 	/* error/exit */
@@ -1065,6 +1089,9 @@ int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 	RT_802_11_MAC_TABLE_5G *mp;
 	char *value;
 	int rssi, cnt;
+	int from_app = 0;
+
+	from_app = check_user_agent(user_agent);
 
 	memset(mac, 0, sizeof(mac));
 
@@ -1101,7 +1128,9 @@ int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 			firstRow = 0;
 		else
 			websWrite(wp, ", ");
-		websWrite(wp, "[");
+
+		if (from_app == 0)
+			websWrite(wp, "[");
 
 		sprintf(mac, "%02X:%02X:%02X:%02X:%02X:%02X",
 				mp->Entry[i].Addr[0], mp->Entry[i].Addr[1],
@@ -1109,16 +1138,35 @@ int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 				mp->Entry[i].Addr[4], mp->Entry[i].Addr[5]);
 		websWrite(wp, "\"%s\"", mac);
 
+		if (from_app != 0) {
+			websWrite(wp, ":{");
+			websWrite(wp, "\"isWL\":");
+		}
+
 		value = "Yes";
-		websWrite(wp, ", \"%s\"", value);
+		if (from_app == 0)
+			websWrite(wp, ", \"%s\"", value);
+		else
+			websWrite(wp, "\"%s\"", value);
 
 		value = "";
-		websWrite(wp, ", \"%s\"", value);
+		if (from_app == 0)
+			websWrite(wp, ", \"%s\"", value);
+
+		if (from_app != 0)
+			websWrite(wp, ",\"rssi\":");
 
 		rssi = rssi / cnt;
-		websWrite(wp, ", \"%d\"", rssi);
+		if (from_app == 0)
+			websWrite(wp, ", \"%d\"", rssi);
+		else
+			websWrite(wp, "\"%d\"", rssi);
 
-		websWrite(wp, "]");
+
+		if (from_app == 0)
+			websWrite(wp, "]");
+		else
+			websWrite(wp, "}");
 	}
 
 	/* error/exit */

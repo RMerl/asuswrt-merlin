@@ -328,7 +328,7 @@ function enable_whole_security(){
 }
 function check_login_name_password(){
 
-	if('<% check_acorpw(); %>' == '1'){
+	if(<% check_acorpw(); %> == 1){
 		document.getElementById('login_password').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'><#checkbox_No#></a>";
 		document.getElementById('login_password').className = "status_no";	
 		document.getElementById('login_password').onmouseover = function(){overHint(10);}
@@ -341,7 +341,7 @@ function check_login_name_password(){
 }
 
 function check_wireless_password(){
-	var nScore = '<% check_passwd_strength("wl_key"); %>';
+	var nScore = <% check_passwd_strength("wl_key"); %>;
 	var oScore = document.getElementById("score");
 	if (nScore >= 0 && nScore < 20) { sComplexity = "<#PASS_score0#>"; }
 	else if (nScore >= 20 && nScore < 40) { sComplexity = "<#PASS_score1#>"; }
@@ -364,7 +364,7 @@ function check_wireless_password(){
 }
 
 function check_wireless_encryption(){
-	if('<% check_wireless_encryption(); %>' == '1'){		
+	if(<% check_wireless_encryption(); %> == "1"){		
 		document.getElementById('wireless_encryption').innerHTML = "<#PASS_score3#>";
 		document.getElementById('wireless_encryption').className = "status_yes";
 	}

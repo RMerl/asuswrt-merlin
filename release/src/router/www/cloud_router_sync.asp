@@ -664,7 +664,7 @@ function confirm_folderTree(){
 function show_invitation(share_link_url){
 	var invite_content = "";
 	var sync_rule_desc = "";
-	document.getElementById('invite_desc').innerHTML = "<#sync_router_Invit_desc2#>: "+document.form.router_sync_desc.value;	/*Sync description*/
+	document.getElementById('invite_desc').innerHTML = "<#sync_router_Invit_desc2#>: "+document.form.router_sync_desc.value;
 	document.getElementById('invite_path').innerHTML = document.form.cloud_dir.value;
 	if(document.form.router_sync_rule.value == 0)
 		sync_rule_desc = "Two way sync";
@@ -673,7 +673,7 @@ function show_invitation(share_link_url){
 	else
 		sync_rule_desc = "Client to host";
 		
-	document.getElementById('invite_rule').innerHTML = "<#sync_router_Invit_desc4#>: "+sync_rule_desc;	/*Sync rule*/
+	document.getElementById('invite_rule').innerHTML = "<#sync_router_Invit_desc4#>: "+sync_rule_desc;
 	//document.getElementById('invite_share').innerHTML = url_name + "/" +share_link_url;
 	document.getElementById('invite_share').innerHTML = "http://"+ theUrl +"/" + share_link_url;
 	document.getElementById("mailto").innerHTML = appendMailTo();
@@ -889,7 +889,7 @@ function show_view_info(obj_id){
 	share_link_hashed = f23.s52e(hash_url);
 
 	//document.getElementById('invite_desc').innerHTML = "Sync description: "+document.form.router_sync_desc.value;
-	document.getElementById('invite_desc').innerHTML = "<#sync_router_Invit_desc2#>: "+router_synclist_desc[j];	/*Sync description*/
+	document.getElementById('invite_desc').innerHTML = "<#sync_router_Invit_desc2#>: "+router_synclist_desc[j];
 	//document.getElementById('invite_path').innerHTML = document.form.cloud_dir.value;	
 	document.getElementById('invite_path').innerHTML = router_synclist_localfolder[j];	
 	if(router_synclist_rule[j] == 0)
@@ -899,7 +899,7 @@ function show_view_info(obj_id){
 	else
 		sync_rule_desc = "Client to host";	
 	
-	document.getElementById('invite_rule').innerHTML = "<#sync_router_Invit_desc4#>: "+sync_rule_desc;	/*Sync rule*/
+	document.getElementById('invite_rule').innerHTML = "<#sync_router_Invit_desc4#>: "+sync_rule_desc;
 	document.getElementById('invite_share').innerHTML = "http://"+ theUrl +"/"+share_link_hashed;	
 	document.getElementById('invite_captcha').innerHTML = "<#routerSync_Security_code#>: "+ router_synclist_captcha[j];
 	document.getElementById('invite_captcha').innerHTML += "<br><br>We strongly suggest you giving this code separately to your friends.";
@@ -910,8 +910,7 @@ function show_view_info(obj_id){
 
 function appendMailTo(){
 	var mailtoCode = '<a href="mailto:?subject=Router%20Sync%20Invitation&body=';
-	mailtoCode += "Hi,%0D%0A"; 
-	mailtoCode += "lets share our files with smart sync!"; 
+	mailtoCode += "<#sync_router_Invit_desc1#>"; 
 	mailtoCode += "%0D%0A%0D%0A"; 
 	mailtoCode += document.getElementById('invite_desc').innerHTML.replace(/ /g, "%20") + "%0D%0A"; 
 	mailtoCode += "Sync%20path:%20" + document.getElementById('invite_path').innerHTML.replace(/ /g, "%20") + "%0D%0A"; 
@@ -1060,13 +1059,13 @@ function checkDDNSReturnCode(){
 		<table style="margin-left:20px;word-break:break-all;word-wrap:break-word;">
 			<tr >
 				<td>
-					<div><#sync_router_Invit_desc1#><!--Hi, lets share our files with Smart Sync! --></div>
+					<div><#sync_router_Invit_desc1#></div>
 				</td>
 			</tr>
 			<tr>
 				<td>
 					<div id="invite_desc" style="margin-top:10px;width:440px;"></div>
-					<div><#sync_router_Invit_desc3#>:	<!-- Sync path -->
+					<div><#sync_router_Invit_desc3#>:
 						<span id="invite_path" style="text-decoration:underline;width:440px;"></span>
 					</div>
 					<div id="invite_rule"></div>
@@ -1074,7 +1073,7 @@ function checkDDNSReturnCode(){
 			</tr>
 			<tr>
 				<td>
-					<div style="margin-top:10px;width:440px;"><#sync_router_Invit_desc5#></div>	<!-- Please connect your device to ASUS router through WiFi or ethernet and click the link below to reconfirm this invitation. -->
+					<div style="margin-top:10px;width:440px;"><#sync_router_Invit_desc5#></div>
 				</td>
 			</tr>
 			<tr>

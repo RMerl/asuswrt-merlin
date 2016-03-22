@@ -310,11 +310,11 @@ void wofa_dump(struct bcmstrbuf *b, struct wofa * wofa);
 
 /** Nvram radio to CPU mapping specification for up to FWDER_MAX_RADIO radios */
 #define FWDER_CPUMAP_NVAR      "fwd_cpumap"
+#define FWDER_CPUMAP_NVAR2     "fwd_radio_cpumap"
 
 
 /* Default Radio CPU Map for ATLAS BCM4709acdcrh (Config #1) */
-#define BCM4709ACDCRH_CPUMAP    "d:l:5:163:0 d:x:2:163:0 d:u:5:169:1"
-#define FWDER_CPUMAP_DEFAULT    BCM4709ACDCRH_CPUMAP
+#define FWDER_CPUMAP_DEFAULT    "d:l:5:163:0 d:x:2:169:1 d:u:5:169:1"
 
 /* Number of Forwarder (sockets) */
 #define FWDER_MAX_UNIT          (2)

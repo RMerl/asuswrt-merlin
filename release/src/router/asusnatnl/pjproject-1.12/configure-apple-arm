@@ -4,7 +4,7 @@ CURRENTPATH=`pwd`
 #OPENSSL_VER=1.0.1c
 OPENSSL_PATH="${CURRENTPATH}/../openssl/platforms/"
 OPENSSL_LIB_PATH="${CURRENTPATH}/../release/ios/lib/"
-OPENSSL_INC_PATH="${CURRENTPATH}/../openssl-1.0.1l/include/"
+OPENSSL_INC_PATH="${CURRENTPATH}/../openssl-1.0.1p/include/"
 ##### BZIP2
 BZIP2_DIR=${CURRENTPATH}/third_party/bzip2
 BZIP2_CFLAGS=-I$BZIP2_DIR

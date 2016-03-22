@@ -24,160 +24,258 @@ body {
 .tbg2a{font-family :Verdana;font-size : 10px;text-align:center;color:#197b30;font-weight:normal;background-color:#9fccdd;}
 .tbg1a{font-family :Verdana;font-size : 10px;text-align:center;color:#23344d;font-weight:normal;background-color:#9fccdd}
 .clientIcon{
-	width:80px;
-	height:60px;
-	background-image:url('/images/New_ui/networkmap/client-list.png');
+	margin: 0 auto;
+	width: 50px;
+	height: 50px;
+	background-color: #798D94;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	border-width: 1px;
+	border-style: double;
+	border-color: #3E4243;
+	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
-	background-position:50% 61.10%;
+	background-position:0% 0.5%;
 	cursor:pointer;
+	background-size: 900%;
 }
 .clientIcon:hover{
-	background-image:url('/images/New_ui/networkmap/client-listover.png') !important;
+	background-color: #FFFFFF;
+}
+.clientIcon.clicked {
+	background-color: #FFFFFF;
 }
 .clientIcon_no_hover{
-	width:80px;
-	height:60px;
-	background-image:url('/images/New_ui/networkmap/client-list.png');
+	width: 50px;
+	height: 50px;
+	background-color: #798D94;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	border-width: 1px;
+	border-style: double;
+	border-color: #3E4243;
+	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
-	background-position:50% 61.10%;
+	background-position:0% 0.5%;
 	cursor:pointer;
+	background-size: 900%;
 }
 .clientIcon_clicked{
-	width:80px;
-	height:60px;
-	background-image:url('/images/New_ui/networkmap/client-listover.png') !important;
+	margin: 0 auto;
+	width: 50px;
+	height: 50px;
+	background-color: #FFFFFF;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	border-width: 1px;
+	border-style: double;
+	border-color: #3E4243;
+	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
+	background-position:0% 0.5%;
 	cursor:pointer;
+	background-size: 900%;
 }
 .venderIcon {
-	width:80px;
-	height:60px;
+	margin: 0 auto;
+	width:54px;
+	height:54px;
 	background-image:url('/images/New_ui/networkmap/vender-list.png');
 	background-repeat:no-repeat;
 	background-position:52% 71.8%;
 	cursor:pointer;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
 }
 .venderIcon:hover {
 	background-image:url('/images/New_ui/networkmap/vender-listover.png') !important;
 }
+.venderIcon.clicked {
+	background-image:url('/images/New_ui/networkmap/vender-listover.png') !important;
+}
 .venderIcon_no_hover {
-	width:80px;
-	height:60px;
+	width:54px;
+	height:54px;
 	background-image:url('/images/New_ui/networkmap/vender-list.png');
 	background-repeat:no-repeat;
 	background-position:52% 71.8%;
 	cursor:pointer;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
 }
 .venderIcon_clicked{
-	width:80px;
-	height:60px;
+	margin: 0 auto;
+	width:54px;
+	height:54px;
 	background-image:url('/images/New_ui/networkmap/vender-listover.png') !important;
 	background-repeat:no-repeat;
 	cursor:pointer;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
 }
 /*
-Unknown			0 
-Windows			1
+Unknown			0
+Windows device  1
 Router			2
-AP				3
-NAS				4
-IPCam			5
-Unknown			6
-PlayStation		7
-XBox			8
-Android			9
-iOS				10
-AppleTV			11
-Setup Box		12
-NB				13
-Macintosh		14
+Router			3
+NAS/Server		4
+IP Cam			5
+Macbook			6
+Game Console	7
+Game Console	8
+Android Phone	9
+iPhone			10
+Apple TV		11
+Set-top Box 	12
+Windows device  13
+iMac			14
 ROG				15
-PlayStation4	16
-XBoxOne			17
+Game Console	16
+Game Console	17
 Printer			18
+Windows Phone	19
+Android Tablet 	20
+iPad			21
+Linux Device	22
+Smart TV		23
+Repeater		24
+Kindle			25
+Scanner			26
+Chromecast		27
+ASUS smartphone	28
+ASUS Pad 		29
+Windows			30
+Android			31
+Mac OS			32
+Smartphone		33
+Desktop			34
 */
 .type0{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% -1.5% !important;
+	background-image:url('/images/New_ui/networkmap/client.svg') !important;;
+	background-size: 100%;
 }
 .type1{
-	background-position:52% 58.2% !important;
+	background-position:16.5% 16.5% !important;
 }
 .type2{
-	background-position:52% -0.1% !important;
+	background-position:66.5% 50% !important;
 }
 .type3{
-	/* Same as type 2 */
-	background-position:52% -0.1% !important;
+	background-position:66.5% 50% !important;
 }
 .type4{
-	background-position:52% 6.40% !important;
+	background-position:83% 50% !important;
 }
 .type5{
-	background-position:52% 12.85% !important;
+	background-position:66.5% 83.3% !important;
 }
 .type6{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% -1.5% !important;
+	background-position:49.8% 33% !important;
 }
 .type7{
-	background-position:52% 71.15% !important;
+	background-position:100.2% 16.5% !important;
 }
 .type8{
-	background-position:52% 90.6% !important;
+	background-position:100.2% 16.5% !important;
 }
 .type9{
-	background-position:52% 19.35% !important;
+	background-position:33.3% 16.35% !important;
 }
 .type10{
-	background-position:52% 25.82% !important;
+	background-position:49.8% 16.5% !important;
 }
 .type11{
-	background-position:52% 32.3% !important;
+	background-position:49.8% 49.5% !important;
 }
 .type12{
-	background-position:52% 38.78% !important;
+	background-position:100.2% 67% !important;
 }
 .type13{
-	background-position:52% 45.25% !important;
+	background-position:100.2% 16.5% !important;
 }
 .type14{
-	background-position:52% 51.72% !important;
+	background-position:49.8% 66.5% !important;
 }
 .type15{
-	background-position:52% 64.68% !important;
+	background-position:100.2% 83% !important;
 }
 .type16{
-	background-position:52% 77.63% !important;
+	background-position:100.2% 16.5% !important;
 }
 .type17{
-	background-position:52% 84.12% !important;
+	background-position:100.2% 16.5% !important;
 }
 .type18{
-	background-position:52% 97.08% !important;
+	background-position:83% 33% !important;
+}
+.type19{
+	background-position:16.5% 50.5% !important;
+}
+.type20{
+	background-position:33.3% 33% !important;
+}
+.type21{
+	background-position:49.8% 82.85% !important;
+}
+.type22{
+	background-position:-0.2% 16.5% !important;
+}
+.type23{
+	background-position:83% 82.5% !important;
+}
+.type24{
+	background-position:66.5% 67% !important;
+}
+.type25{
+	background-position:100.4% 100.2% !important;
+}
+.type26{
+	background-position:83% 16.4% !important;
+}
+.type27{
+	background-position:83% 0% !important;
+}
+.type28{
+	background-position:66.4% 16.5% !important;
+}
+.type29{
+	background-position:66.7% 100% !important;
+}
+.type30{
+	background-position:16.5% 0% !important;
+}
+.type31{
+	background-position:33.3% 0% !important;
+}
+.type32{
+	background-position:49.8% 0% !important;
+}
+.type33{
+	background-position:100% 32.7% !important;
+}
+.type34{
+	background-position:100% 50% !important;
 }
 
 .type0:hover{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% 68% !important;
-}
-.type6:hover{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% 68% !important;
+	background-color: #FFFFFF;
 }
 
 .type0.clicked{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% 68% !important;
-}
-.type6.clicked{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% 68% !important;
+	background-image:url('/images/New_ui/networkmap/client.svg');
+	background-size: 100%;
+	background-color: #FFFFFF;
 }
 
 .type0_viewMode{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% -1.5% !important;
+	background-image:url('/images/New_ui/networkmap/client.svg');
+	background-size: 100%;
 }
 
 .adobe{
@@ -263,7 +361,7 @@ Printer			18
 }
 
 .clientBg{
-	font-family:Courier New, Courier, mono;
+	font-family:monospace, Courier New, Courier;
 	width:293px;
 	height:85px;
 	background-image:url('/images/New_ui/networkmap/bg.png');
@@ -333,9 +431,9 @@ Printer			18
 	border-radius: 5px;
 	z-index: 200;
 	background-color:#2B373B;
-	margin-left: 100px;
+	margin-left: 80px;
 	margin-top: -320px;
-	width:425px;
+	width:495px;
 	height:auto;
 	box-shadow: 3px 3px 10px #000;
 	display:block;
@@ -364,45 +462,38 @@ Printer			18
 	border-collapse: collapse;
 }
 .client_icon_list div{
-	background-image:url('/images/New_ui/networkmap/client-list.png');
+	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
-	height:55px;
+	height:60px;
 	width:60px;
 	cursor:pointer;
-	background-position:-21px 0%;
+	background-position:0% 0.5%;
+	background-size: 900%;
+	background-color: #788D94;
+	border-radius: 10px;
 }
 .client_icon_list div:hover{
-	background-image:url('/images/New_ui/networkmap/client-listover.png');
+	background-color: #FFFFFF;
 }
 .client_icon_list td{
 	border: 1px solid #1A1C1D;
 	border-collapse: collapse;
 }
-.client_icon_list td:hover{
-	border-radius: 7px;
-	background-color:#84C1FF;
-}
 .client_upload_div{
 	cursor: pointer;
 	background-image:none !important;
-	border: 2px dashed #A1A99F;
+	background-color: #2B373B !important;
+	border: 2px dashed #A1A99F !important;
 	width: 56px !important;
-	height: 50px !important;
+	height: 56px !important;
 	text-align: center;
-	line-height: 50px;
+	line-height: 56px;
 	color: #A1A99F;
 	font-size: 50px;
 }
 .client_upload_div:hover{
-	cursor: pointer;
-	background-image:none !important;
-	border: 2px dashed #FFFFFF;
-	width: 56px !important;
-	height: 50px !important;
-	text-align: center;
-	line-height: 50px;
+	border: 2px dashed #FFFFFF !important;
 	color: #FFFFFF;
-	font-size: 50px;
 }
 .client_upload_file{
 	cursor: pointer;
@@ -413,10 +504,6 @@ Printer			18
 	height:55px !important;
 	margin-top: -52px;
 	margin-left: -2px;
-}
-.client_icon_list_td:hover {
-	cursor: pointer;
-	background-color:#2B373B !important;
 }
 .client_input_text_disabled {
 	background:#475a5f;
@@ -458,16 +545,16 @@ Printer			18
 	-moz-border-radius: 5px;
 	border-radius: 5px;
 	position: relative;
-	margin-top: 3px;
+	margin-top: 1px;
 }
 .imgUserIcon_card{
 	cursor: pointer;
 	position: relative; 
 	width: 52px;
 	height: 52px;
-	-webkit-border-radius: 5px;
-	-moz-border-radius: 5px;
-	border-radius: 5px;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
 }
 .clientlist_expander {
 	cursor: pointer;
@@ -649,4 +736,58 @@ Printer			18
 	background: -ms-linear-gradient(top, #A21717 0%,#B71010 50%,#FF4848 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #A21717 0%,#B71010 70%,#FF4848 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#A21717', endColorstr='#FF4848',GradientType=0 ); /* IE6-9 */
+}
+
+.clientTitle {
+	font-family: Arial, Helvetica, sans-serif;
+	height: 25px;
+	line-height: 25px;
+}
+
+.clientlist_dropdown {
+	border:1px outset #999;
+	background-color:#576D73;
+	position:absolute;
+	*margin-top:26px;	
+	margin-left:159px;
+	*margin-left:-189px;
+	width:255px;
+	text-align:left;	
+	height:auto;
+	overflow-y:auto;
+	z-index:200;
+	padding: 1px;
+	display:none;
+}
+.clientlist_dropdown div {
+	background-color:#576D73;
+	height:auto;
+	*height:20px;
+	line-height:20px;
+	text-decoration:none;
+	font-family: Lucida Console;
+}
+
+.clientlist_dropdown a {
+	background-color:#EFEFEF;
+	color:#FFF;
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	text-decoration:none;	
+}
+.clientlist_dropdown strong {
+	padding-left: 3px;
+}
+.clientlist_dropdown div:hover, .clientlist_dropdown a:hover {
+	background-color:#3366FF;
+	color:#FFFFFF;
+	cursor:default;
+}	
+.clientlist_dropdown_expand {
+	text-align: center !important;
+	color: #A0A0A0 !important;
+	text-decoration: underline !important;
+	cursor: pointer !important;
+	text-align: right !important;
+	padding: 0 3px !important;
 }

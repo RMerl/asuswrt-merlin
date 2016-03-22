@@ -199,7 +199,7 @@ uint32_t robo_ioctl_len(int fd, int write, int page, int reg, uint32_t *value, u
 	return ret;
 }
 
-uint32_t traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx)
+void traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx)
 {
 	int fd, model;
 	uint32_t value;
@@ -212,7 +212,7 @@ uint32_t traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx)
 	strcat_r(ifname, "ports", port_name);
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0) return 0;
+	if (fd < 0) return;
 
 	/* RX */
 	foreach (port, nvram_safe_get(port_name), next) {
@@ -244,7 +244,7 @@ uint32_t traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx)
 		}
 	}
 	close(fd);
-	return 1;
+	return;
 }
 #endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
 #endif /* MISSING_PRIVATE */

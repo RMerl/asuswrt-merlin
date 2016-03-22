@@ -445,8 +445,8 @@ wofa_lkup(struct wofa * wofa, uint16 * symbol, const int port)
 	/* Lkup the cached hit entry first */
 	if (hash16 == dict->cached[port].hash16) {
 		sym = dict->cached[port].sym;
-		if (__wofa_sym48_cmp16(symbol, sym->key.u16) == 0) {
-			goto found_symbol;
+		if ((sym->data != WOFA_DATA_INVALID) && (__wofa_sym48_cmp16(symbol, sym->key.u16) == 0)) {
+				goto found_symbol;
 		}
 	}
 
@@ -471,7 +471,7 @@ wofa_lkup(struct wofa * wofa, uint16 * symbol, const int port)
 		/* Walk the bins for the hashed bucket */
 		while ((uintptr)sym < (uintptr)end) {
 
-			if (sym->hash16 == hash16) {
+			if ((sym->data != WOFA_DATA_INVALID) && (sym->hash16 == hash16)) {
 				/* Test exact match */
 				if (__wofa_sym48_cmp16(symbol, sym->key.u16) == 0) {
 
@@ -1008,6 +1008,11 @@ fwder_init(void)
 	{   /* Initialize the radio to fwder_unit mapping from FWDER_CPUMAP_NVAR */
 		const char * fwder_cpumap_nvar;
 		fwder_cpumap_nvar = getvar(NULL, FWDER_CPUMAP_NVAR);
+
+		if (fwder_cpumap_nvar == NULL) {
+			/* If not present, try a older nvram name */
+			fwder_cpumap_nvar = getvar(NULL, FWDER_CPUMAP_NVAR2);
+		}
 
 		if (fwder_cpumap_nvar == NULL) {
 			fwder_cpumap_nvar = FWDER_CPUMAP_DEFAULT; /* default cpumap */

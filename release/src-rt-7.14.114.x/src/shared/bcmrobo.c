@@ -77,6 +77,7 @@
 #define PAGE_VTBL	0x05	/* ARL/VLAN Table access page */
 #define PAGE_FC		0x0a	/* Flow control register page */
 #define PAGE_GPHY_MII_P0	0x10	/* Port0 Internal GPHY MII registers page */
+#define PAGE_GPHY_MII_P1	0x11	/* Port1 Internal GPHY MII registers page */
 #define PAGE_GPHY_MII_P4	0x14	/* Last/Port4 Internal GPHY MII registers page */
 #ifdef ETAGG
 #define PAGE_TRUNKING	0x32	/* MAC-base Trunking registers page */
@@ -980,6 +981,11 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	uint8 val8;
 	uint16 reg_val;
 #endif
+#ifdef _CFE_
+#ifdef RTAC5300R
+	uint16 val16;
+#endif
+#endif
 //#endif /* _CFE_ */
 	int lan_portenable = 0;
 	int rc;
@@ -1236,6 +1242,16 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	/* See if one of the ports is connected to plc chipset */
 	robo->plc_hw = (getvar(vars, "plc_vifs") != NULL);
 #endif /* PLC */
+
+#ifdef _CFE_
+#ifdef RTAC5300R
+	/* disable p1 to void looping */
+	if (ROBO_IS_BCM5301X(robo->devid) && mdcport == 0 && phyaddr == 30) {
+		val16 = 0x1940;
+		robo->ops->write_reg(robo, PAGE_GPHY_MII_P1, 0x00, &val16, sizeof(val16));
+	}
+#endif
+#endif
 
 #ifndef RTAC68U
 	/* reset p5 reg when needs to link up it in ac88u/ac87u */

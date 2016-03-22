@@ -87,6 +87,17 @@ ipup_main(int argc, char **argv)
 	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, wan_ifname);
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
+#ifdef DEBUG_RCTEST // Left for UI debug
+	int max_count = nvram_get_int("ppp_delay_sec");
+	int count;
+	if(max_count > 0){
+		for(count = 1; count <= max_count; ++count){
+			_dprintf("%s: unit=%d ifname=%s sleep %d seconds...\n", __FUNCTION__, unit, wan_ifname, count);
+			sleep(1);
+		}
+	}
+#endif
+
 	/* Stop triggering demand connection */
 	if (nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp)))
 		nvram_set_int(strcat_r(prefix, "pppoe_demand", tmp), 1);

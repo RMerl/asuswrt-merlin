@@ -140,7 +140,7 @@ function initial(){
 		(apps_state_switch == 5 || apps_state_switch == "") && 
 		(apps_state_autorun == 4 || apps_state_autorun == "") && 
 		(apps_state_install == 5 || apps_state_install == "")){
-		show_apps();
+		setTimeout('show_apps();', 500);
 	}
 	else{
 		setTimeout("update_appstate();", 2000);
@@ -636,30 +636,37 @@ function show_apps(){
 
 		// apps_action
 		if(apps_array[i][3] == "yes"){ //installed
-			htmlcode += '<span class="app_action" onclick="apps_form(\'remove\',\''+ apps_array[i][0] +'\',\'\');">Uninstall</span>\n';
+			htmlcode += '<span class="app_action" onclick="apps_form(\'remove\',\''+ apps_array[i][0] +'\',\'\');">Uninstall</span>\n';	/* untranslated */
 			if(apps_array[i][4] == "yes")		//enable
-				htmlcode += '<span class="app_action" onclick="apps_form(\'enable\',\''+ apps_array[i][0] +'\',\'no\');">Disable</span>\n';
+				htmlcode += '<span class="app_action" onclick="apps_form(\'enable\',\''+ apps_array[i][0] +'\',\'no\');"><#WLANConfig11b_WirelessCtrl_buttonname#></span>\n';
 			else
-				htmlcode += '<span class="app_action" onclick="apps_form(\'enable\',\''+ apps_array[i][0] +'\',\'yes\');">Enable</span>\n';
-		}
-		else{
-			if(apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "aicloud" || apps_array[i][0] == "mediaserver2")
-				htmlcode += '<span class="app_action" onclick="_appname=\''+apps_array[i][0]+'\';divdisplayctrl(\'none\', \'\', \'none\', \'none\');location.href=\'#\';">Install</span>\n';
-			else
-				htmlcode += '<span class="app_action" onclick="apps_form(\'install\',\''+ apps_array[i][0] +'\',\''+ partitions_array[i] +'\');">Install</span>\n';
-		}
+				htmlcode += '<span class="app_action" onclick="apps_form(\'enable\',\''+ apps_array[i][0] +'\',\'yes\');"><#WLANConfig11b_WirelessCtrl_button1name#></span>\n';
 
-		if(apps_array[i][0] == "downloadmaster"){
-			if(apps_array[i][3] == "yes"){
-				htmlcode += '<span class="app_action" onclick="divdisplayctrl(\'none\', \'none\', \'none\', \'\');">Help</span>\n';
+			if(sw_mode == 3 || document.getElementById("connect_status").className == "connectstatuson")
+				htmlcode += '<span class="app_action" onclick="apps_form(\'update\',\''+ apps_array[i][0] +'\',\'\');">Check update</span>\n';	/* untranslated */
+	
+			if(apps_array[i][0] == "downloadmaster"){
+				htmlcode += '<span class="app_action" onclick="divdisplayctrl(\'none\', \'none\', \'none\', \'\');"><#CTL_help#></span>\n';
+
+				cookie.set("dm_install", apps_array[i][3], 1000);
+				cookie.set("dm_enable", apps_array[i][4], 1000);
 			}
 
-			cookie.set("dm_install", apps_array[i][3], 1000);
-			cookie.set("dm_enable", apps_array[i][4], 1000);
-		}
+			if(	cookie.get("apps_last") == apps_array[i][0] &&
+					hasNewVer(apps_array[i]) && 
+					(sw_mode == 3 || document.getElementById("connect_status").className == "connectstatuson"))
+				htmlcode += '</div><div style="color:#FC0;margin-top:10px;"><span class="app_action" onclick="apps_form(\'upgrade\',\''+ apps_array[i][0] +'\',\'\');"><#update_available#></span>\n';	
+			else if(cookie.get("apps_last") == apps_array[i][0])
+				htmlcode += "</div><div style=\"color:#FC0;margin-top:10px;margin-left:10px;\"><span class=\"app_no_action\" onclick=\"\">The version is up-to-date.</span>\n";	/* untranslated */				                   
 
-		if(hasNewVer(apps_array[i]))
-			htmlcode += '</div><div style="color:#FC0;margin-top:10px;"><span class="app_action" onclick="apps_form(\'upgrade\',\''+ apps_array[i][0] +'\',\'\');"><#update_available#></span>\n';
+		}
+		else{
+			
+			if(apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "aicloud" || apps_array[i][0] == "mediaserver2")
+				htmlcode += '<span class="app_action" onclick="_appname=\''+apps_array[i][0]+'\';divdisplayctrl(\'none\', \'\', \'none\', \'none\');location.href=\'#\';">Install</span>\n';		/* untranslated */
+			else
+				htmlcode += '<span class="app_action" onclick="apps_form(\'install\',\''+ apps_array[i][0] +'\',\''+ partitions_array[i] +'\');">Install</span>\n';		/* untranslated */
+		}
 		
 		htmlcode += '</div><br/><br/></td></tr>\n';
 	
@@ -677,6 +684,7 @@ function show_apps(){
 	stoppullstate = 1;
 	calHeight(1);
 	cookie.set("hwaddr", '<% nvram_get("lan_hwaddr"); %>', 1000);
+	cookie.set("apps_last", "", 1000);
 }
 
 /* 

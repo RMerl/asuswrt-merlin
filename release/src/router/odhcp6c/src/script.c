@@ -105,7 +105,9 @@ static void ipv6_to_env(const char *name,
 		buf_len += strlen(&buf[buf_len]);
 		buf[buf_len++] = ' ';
 	}
-	buf[buf_len - 1] = '\0';
+	if (buf[buf_len - 1] == ' ')
+		buf_len--;
+	buf[buf_len] = '\0';
 	putenv(buf);
 }
 
@@ -118,14 +120,17 @@ static void fqdn_to_env(const char *name, const uint8_t *fqdn, size_t len)
 	char *buf = realloc(NULL, len + buf_len + 2);
 	memcpy(buf, name, buf_len);
 	buf[buf_len++] = '=';
-	int l = 1;
-	while (l > 0 && fqdn < fqdn_end) {
-		l = dn_expand(fqdn, fqdn_end, fqdn, &buf[buf_len], buf_size - buf_len);
+	while (fqdn < fqdn_end) {
+		int l = dn_expand(fqdn, fqdn_end, fqdn, &buf[buf_len], buf_size - buf_len);
+		if (l <= 0)
+			break;
 		fqdn += l;
 		buf_len += strlen(&buf[buf_len]);
 		buf[buf_len++] = ' ';
 	}
-	buf[buf_len - 1] = '\0';
+	if (buf[buf_len - 1] == ' ')
+		buf_len--;
+	buf[buf_len] = '\0';
 	putenv(buf);
 }
 
@@ -156,7 +161,10 @@ static void entry_to_env(const char *name, const void *data, size_t len, enum en
 {
 	size_t buf_len = strlen(name);
 	const struct odhcp6c_entry *e = data;
-	char *buf = realloc(NULL, buf_len + 2 + (len / sizeof(*e)) * 144);
+	// Worst case: ENTRY_PREFIX with iaid != 1 and exclusion
+	const size_t max_entry_len = (INET6_ADDRSTRLEN-1 + 5 + 22 + 15 + 10 +
+				      INET6_ADDRSTRLEN-1 + 11 + 1);
+	char *buf = realloc(NULL, buf_len + 2 + (len / sizeof(*e)) * max_entry_len);
 	memcpy(buf, name, buf_len);
 	buf[buf_len++] = '=';
 
@@ -164,34 +172,42 @@ static void entry_to_env(const char *name, const void *data, size_t len, enum en
 		inet_ntop(AF_INET6, &e[i].target, &buf[buf_len], INET6_ADDRSTRLEN);
 		buf_len += strlen(&buf[buf_len]);
 		if (type != ENTRY_HOST) {
-			buf_len += snprintf(&buf[buf_len], 6, "/%"PRIu16, e[i].length);
+			snprintf(&buf[buf_len], 6, "/%"PRIu16, e[i].length);
+			buf_len += strlen(&buf[buf_len]);
 			if (type == ENTRY_ROUTE) {
 				buf[buf_len++] = ',';
 				if (!IN6_IS_ADDR_UNSPECIFIED(&e[i].router)) {
 					inet_ntop(AF_INET6, &e[i].router, &buf[buf_len], INET6_ADDRSTRLEN);
 					buf_len += strlen(&buf[buf_len]);
 				}
-				buf_len += snprintf(&buf[buf_len], 24, ",%u", e[i].valid);
-				buf_len += snprintf(&buf[buf_len], 12, ",%u", e[i].priority);
+				snprintf(&buf[buf_len], 23, ",%u,%u", e[i].valid, e[i].priority);
+				buf_len += strlen(&buf[buf_len]);
 			} else {
-				buf_len += snprintf(&buf[buf_len], 24, ",%u,%u", e[i].preferred, e[i].valid);
+				snprintf(&buf[buf_len], 23, ",%u,%u", e[i].preferred, e[i].valid);
+				buf_len += strlen(&buf[buf_len]);
 			}
 
-			if (type == ENTRY_PREFIX && ntohl(e[i].iaid) != 1)
-				buf_len += snprintf(&buf[buf_len], 16, ",class=%08x", ntohl(e[i].iaid));
+			if (type == ENTRY_PREFIX && ntohl(e[i].iaid) != 1) {
+				snprintf(&buf[buf_len], 16, ",class=%08x", ntohl(e[i].iaid));
+				buf_len += strlen(&buf[buf_len]);
+			}
 
 			if (type == ENTRY_PREFIX && e[i].priority) {
 				// priority and router are abused for prefix exclusion
-				buf_len += snprintf(&buf[buf_len], 12, ",excluded=");
+				snprintf(&buf[buf_len], 11, ",excluded=");
+				buf_len += strlen(&buf[buf_len]);
 				inet_ntop(AF_INET6, &e[i].router, &buf[buf_len], INET6_ADDRSTRLEN);
 				buf_len += strlen(&buf[buf_len]);
-				buf_len += snprintf(&buf[buf_len], 24, "/%u", e[i].priority);
+				snprintf(&buf[buf_len], 12, "/%u", e[i].priority);
+				buf_len += strlen(&buf[buf_len]);
 			}
 		}
 		buf[buf_len++] = ' ';
 	}
 
-	buf[buf_len - 1] = '\0';
+	if (buf[buf_len - 1] == ' ')
+		buf_len--;
+	buf[buf_len] = '\0';
 	putenv(buf);
 }
 
@@ -210,14 +226,16 @@ static void search_to_env(const char *name, const uint8_t *start, size_t len)
 		*c++ = ' ';
 	}
 
-	c[-1] = '\0';
+	if (c[-1] == ' ')
+		c--;
+	*c = '\0';
 	putenv(buf);
 }
 
 
 static void int_to_env(const char *name, int value)
 {
-	size_t len = 12 + strlen(name);
+	size_t len = 13 + strlen(name);
 	char *buf = realloc(NULL, len);
 	snprintf(buf, len, "%s=%d", name, value);
 	putenv(buf);
@@ -272,7 +290,8 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 			size_t prefix6len = rule->prefix6_len;
 			prefix6len = (prefix6len % 8 == 0) ? prefix6len / 8 : prefix6len / 8 + 1;
 
-			if (olen < sizeof(struct dhcpv6_s46_rule) + prefix6len)
+			if (prefix6len > sizeof(in6) ||
+			    olen < sizeof(struct dhcpv6_s46_rule) + prefix6len)
 				continue;
 
 			memcpy(&in6, rule->ipv6_prefix, prefix6len);
@@ -301,7 +320,8 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 					size_t prefix6len = dmr->dmr_prefix6_len;
 					prefix6len = (prefix6len % 8 == 0) ? prefix6len / 8 : prefix6len / 8 + 1;
 
-					if (olen < sizeof(struct dhcpv6_s46_dmr) + prefix6len)
+					if (prefix6len > sizeof(in6) ||
+					    olen < sizeof(struct dhcpv6_s46_dmr) + prefix6len)
 						continue;
 
 					memcpy(&in6, dmr->dmr_ipv6_prefix, prefix6len);
@@ -320,7 +340,8 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 			size_t prefix6len = bind->bindprefix6_len;
 			prefix6len = (prefix6len % 8 == 0) ? prefix6len / 8 : prefix6len / 8 + 1;
 
-			if (olen < sizeof(struct dhcpv6_s46_v4v6bind) + prefix6len)
+			if (prefix6len > sizeof(in6) ||
+			    olen < sizeof(struct dhcpv6_s46_v4v6bind) + prefix6len)
 				continue;
 
 			memcpy(&in6, bind->bind_ipv6_prefix, prefix6len);
@@ -353,13 +374,15 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 void script_call(const char *status, int delay, bool resume)
 {
 	time_t now = odhcp6c_get_milli_time() / 1000;
+	bool running_script = false;
 
 	if (running) {
 		kill(running, SIGTERM);
 		delay -= now - started;
+		running_script = true;
 	}
 
-	if (resume || !action[0])
+	if (resume || !running_script || !action[0])
 		strncpy(action, status, sizeof(action) - 1);
 
 	pid_t pid = fork();

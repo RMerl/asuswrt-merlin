@@ -85,8 +85,8 @@ function display_clients(clientsarray, obj) {
 	code += '<thead><tr>';
 	code += '<td width="15%">MAC</td>';
 	code += '<td width="16%">IP</td>';
-	code += '<td width="16%">Name</td><td width="10%">RSSI</td><td width="18%">Rx / Tx Rate</td><td width="12%">Connected</td>';
-	code += '<td width="8%">Flags</td>';
+	code += '<td width="16%">Name</td><td width="10%">RSSI</td><td width="16%">Rx / Tx Rate</td><td width="12%">Connected</td>';
+	code += '<td width="10%">Flags</td>';
 	code += '</tr></thead>';
 
 	if (clientsarray.length > 1) {
@@ -96,7 +96,7 @@ function display_clients(clientsarray, obj) {
 
 			// MAC
 			overlib_str = "<p><#MAC_Address#>:</p>" + client[0];
-			code += '<td><span style="margin-top:-15px; color: white;" class="link" onclick="oui_query(\'' + client[0] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ client[0] +'</span></td>'; 
+			code += '<td><span style="margin-top:-15px; color: white;" class="link" onclick="oui_query_web(\'' + client[0] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ client[0] +'</span></td>'; 
 
 			code += '<td>' + client[1] + '</td>';	// IP
 			code += '<td>' + client[2] + '</td>';	// Name
@@ -232,7 +232,7 @@ function setRefresh(obj) {
 									<br><br>
 									<div id="wifi52headerblock"></div>
 									<div id="wifi52block"></div>
-									<div>Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated, <span class="wifiheader">G</span>=Guest</div>
+									<div>Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">M</span>=MU Beamforming,<span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated, <span class="wifiheader">G</span>=Guest</div>
 									<br>
 									<div class="apply_gen">
 										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen" >

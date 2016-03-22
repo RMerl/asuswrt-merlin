@@ -60,9 +60,12 @@ ENTRY(__mach_head_fixup)
 	ldr	r1, =53573		@ BCM53573_CHIP_ID
 	cmp	r3, r1
 	beq     3f                      @ It's BCM53573
-	ldr     r1, =53574              @ BCM53574_CHIP_ID
+	ldr	r1, =53574		@ BCM53574_CHIP_ID
+	cmp	r3, r1
+	beq     3f                      @ It's BCM53574
+	ldr     r1, =47452              @ BCM47452_CHIP_ID
 	cmp     r3, r1
-	bne	no_cci_snoop		@ Neither BCM53573 nor 53574
+	bne	no_cci_snoop		@ Neither BCM53573/53574 nor BCM47452
 3:
 	/* Enable CCI400 S4 snoop request for CA7 on BCM53573 */
 	ldr	r0, =0x18305000		@ CCI400 S4 snoop control register base for CA7

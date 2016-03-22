@@ -27,7 +27,7 @@ iface_get_id(int fd, const char *device)
 {
         struct ifreq    ifr;
         memset(&ifr, 0, sizeof(ifr));
-        strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
+        strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
         if (ioctl(fd, SIOCGIFINDEX, &ifr) == -1) {
                 perror("iface_get_id ERR:\n");
                 return -1;

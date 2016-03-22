@@ -11,7 +11,7 @@
 <title><#Web_Title#> - <#menu5_3_2#></title>
 <link rel="stylesheet" type="text/css" href="/index_style.css"> 
 <link rel="stylesheet" type="text/css" href="/form_style.css">
-
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
@@ -22,44 +22,6 @@
 .Portrange{
 	font-size: 12px;
 	font-family: Lucida Console;
-}
-
-#ClientList_Block_PC{
-	border:1px outset #999;
-	background-color:#576D73;
-	position:absolute;
-	margin-top:25px;
-	margin-left:3px;
-	*margin-left:-125px;
-	width:255px;
-	*width:259px;
-	text-align:left;
-	height:auto;
-	overflow-y:auto;
-	z-index:200;
-	padding: 1px;
-	display:none;
-}
-#ClientList_Block_PC div{
-	background-color:#576D73;
-	height:20px;
-	line-height:20px;
-	text-decoration:none;
-	font-family: Lucida Console;
-	padding-left:2px;
-}
-
-#ClientList_Block_PC a{
-	background-color:#EFEFEF;
-	color:#FFF;
-	font-size:12px;
-	font-family:Arial, Helvetica, sans-serif;
-	text-decoration:none;	
-}
-#ClientList_Block_PC div:hover, #ClientList_Block a:hover{
-	background-color:#3366FF;
-	color:#FFFFFF;
-	cursor:default;
 }
 </style>
 <script>
@@ -88,7 +50,7 @@ function initial(){
 	if('<% nvram_get("qos_enable"); %>' == "1")
 		document.getElementById('is_qos_enable_desc').style.display = "none";
 		
-	setTimeout("showLANIPList();", 1000);
+	setTimeout("showDropdownClientList('setClientIP_mac', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow_mac', 'all');", 1000);
 }
 
 function applyRule(){	
@@ -293,7 +255,7 @@ function showqos_rulelist(){
 			overlib_str[i] ="";			
 			code +='<tr id="row'+i+'">';
 			var qos_rulelist_col = qos_rulelist_row[i].split('>');
-			var wid=[21, 20, 14, 12, 15, 9];						
+			var wid=[20, 20, 10, 14, 15, 15];						
 				for(var j = 0; j < qos_rulelist_col.length; j++){
 						if(j != 0 && j !=2 && j!=5){
 							code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';
@@ -343,8 +305,8 @@ function showqos_rulelist(){
 								code += '</select></td>';
 						}
 				}
-				code +='<td  width="9%">';
-				code +='<input class="remove_btn" type="button" onclick="del_Row(this);"/></td></tr>';
+				code +='<td  width="6%">';
+				code +='<input class="remove_btn" type="button" onclick="del_Row(this);" style="width:36px;"/></td></tr>';
 		}
 	}
 	code +='</table>';
@@ -731,45 +693,21 @@ function valid_IPorMAC(obj){
 	}	
 }
 
-
-function showLANIPList(){
-	var htmlCode = "";
-	for(var i=0; i<clientList.length;i++){
-		var clientObj = clientList[clientList[i]];
-
-		if(clientObj.ip == "offline") clientObj.ip = "";
-		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
-
-		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP_mac(\'';
-		htmlCode += clientObj.name;
-		htmlCode += '\', \'';
-		htmlCode += clientObj.mac;
-		htmlCode += '\');"><strong>';
-		htmlCode += clientObj.name;
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	}
-
-	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
-}
-
 function pullLANIPList(obj){
-	if(isMenuopen_mac == 0){		
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
+	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';		
-		document.form.qos_ip_x_0.focus();		
-		isMenuopen_mac = 1;
+		element.style.display = 'block';		
+		document.form.qos_ip_x_0.focus();
 	}
 	else
 		hideClients_Block_mac();
 }
 
-var over_var = 0;
-var isMenuopen_mac = 0;
-
 function hideClients_Block_mac(){
 	document.getElementById("pull_arrow_mac").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
-	isMenuopen_mac = 0;
 }
 
 function setClientIP_mac(devname, macaddr){
@@ -778,7 +716,6 @@ function setClientIP_mac(devname, macaddr){
 		document.form.qos_service_name_x_0.value = devname;
 
 	hideClients_Block_mac();
-	over_var = 0;
 }
 
 //Viz add 2013.03 for "iptables rule -p xxx --d port", that xxx is not allowed to set null
@@ -887,7 +824,7 @@ function linkport(obj){
 								<th><#list_add_delete#></th>
 							</tr>							
 							<tr>
-								<td width="21%">							
+								<td width="20%">							
 									<input type="text" maxlength="32" class="input_12_table" style="float:left;width:105px;" placeholder="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="<#select_service#>">
 									<div id="QoSList_Block" class="QoSList_Block" onclick="hideClients_Block()"></div>
@@ -895,12 +832,12 @@ function linkport(obj){
 								<td width="20%">
 									<input type="text" maxlength="17" class="input_15_table" name="qos_ip_x_0" style="width:100px;float:left" autocorrect="off" autocapitalize="off">
 									<img id="pull_arrow_mac" class="pull_arrow"height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>">
-									<div id="ClientList_Block_PC" class="ClientList_Block_PC" ></div>
+									<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:2px;margin-top: 25px;"></div>
 								</td>
 								
 								
-								<td width="14%"><input type="text" maxlength="32" class="input_12_table" name="qos_port_x_0" onKeyPress="return validator.isPortRange(this, event)" autocorrect="off" autocapitalize="off"></td>
-								<td width="12%">
+								<td width="10%"><input type="text" maxlength="32" class="input_6_table" name="qos_port_x_0" onKeyPress="return validator.isPortRange(this, event)" autocorrect="off" autocapitalize="off"></td>
+								<td width="14%">
 									<select name="qos_proto_x_0" class="input_option" style="width:75px;" onChange="linkport(this);">
 										<option value="tcp">TCP</option>
 										<option value="udp">UDP</option>
@@ -916,7 +853,7 @@ function linkport(obj){
 									<input type="text" class="input_3_table" maxlength="7" onKeyPress="return validator.isNumber(this,event);" onblur="conv_to_transf();" name="qos_max_transferred_x_0" autocorrect="off" autocapitalize="off"> KB
 									<input type="hidden" name="qos_transferred_x_0" value="">
 								</td>
-								<td width="9%">
+								<td width="15%">
 									<select name='qos_prio_x_0' class="input_option" style="width:87px;"> <!--style="width:auto;"-->
 										<option value='0'><#Highest#></option>
 										<option value='1' selected><#High#></option>
@@ -926,7 +863,7 @@ function linkport(obj){
 									</select>
 								</td>
 								
-								<td width="9%">
+								<td width="6%">
 									<input type="button" class="add_btn" onClick="addRow_Group(128);">
 								</td>
 							</tr>

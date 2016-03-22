@@ -24,7 +24,12 @@ PCIEFD_EMBED_HEADER		:= $(SRCBASE_DHD)/shared/rtecdc_router.h
 
 # All firmware targets must be defined here
 #PCIEFD_TARGETS_LIST		:= 43602a1
+ifeq ($(or $(RTAC88U),$(RTAC3100),$(RTAC5300),$(RTAC5300R)), y)
 PCIEFD_TARGETS_LIST		+= 4366b1
+#else ifeq ($(or $(RTAC5300R)), y)
+else
+PCIEFD_TARGETS_LIST		+= 4366c0
+endif
 
 obj-pciefd			:= $(patsubst %,%-obj,$(PCIEFD_TARGETS_LIST))
 clean-pciefd			:= $(patsubst %,%-clean,$(PCIEFD_TARGETS_LIST))
@@ -47,7 +52,7 @@ FW_43602a1_OS_PATH		:= $(FW_43602a1_SRCBASE)/hndrte
 ifeq ($(WLTEST),1)
     FW_43602a1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-ringer-dmaindex16
 else
-        FW_43602a1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-ringer-dmaindex16
+        FW_43602a1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-ringer-dmaindex16
 endif
 
 
@@ -64,17 +69,72 @@ else
         FW_4366b1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)
 endif
 
+# 4366c0-roml target
+FW_4366c0_SRCBASE		:= $(abspath $(SRCBASE)/../4365/src)
+FW_4366c0_CHIPID		:= 4366c0
+FW_4366c0_BUILD_PREFIX		:= $(FW_4366c0_CHIPID)-roml
+FW_4366c0_MAKE_PATH		:= $(FW_4366c0_SRCBASE)/dongle/make/wl
+FW_4366c0_BUILD_PATH		:= $(FW_4366c0_SRCBASE)/../build/dongle/$(FW_4366c0_BUILD_PREFIX)
+FW_4366c0_OS_PATH		:= $(FW_4366c0_SRCBASE)/../components/threadx
+ifeq ($(WLTEST),1)
+    FW_4366c0_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)
+else
+        FW_4366c0_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)
+endif
 
+
+### When doing wl clmload - no incremental clm use and start the initial wlc_clm_data.c with min.clm
+# The following are needed for clm_blob creation
+#   1. CLM_BLOBS specified should have a corresponding xxx.clm types file in wl/clm/types
+#   2. CHIP specified in the corresponding xxx-roml.mk file
+# If more than one clm_blob file needs to be generated, add to the CLM_BLOBS_xxx
+#   (e.g) CLM_BLOBS_43602a1 += 43602a1_access2
+ifeq ($(WLCLMLOAD),1)
+	FW_43602a1_TARGET	:= $(addsuffix -noclminc-clm_min,$(FW_43602a1_TARGET))
+	FW_4366b1_TARGET	:= $(addsuffix -noclminc-clm_min,$(FW_4366b1_TARGET))
+	FW_4366c0_TARGET	:= $(addsuffix -noclminc-clm_min,$(FW_4366c0_TARGET))
+	CLM_BLOBS_43602a1	:= 43602a1_access
+	CLM_BLOBS_4366b1	:= 4366_access
+	CLM_BLOBS_4366c0	:= 4366_access
+endif
+
+# Create clm_blobs only if none already there
+# Copy clm blob to corresponding .../src/wl/clm/src
+# This is the place externally created blobs would be placed for install
+#
 # All rules start here
 $(obj-pciefd):
 	@echo "TARGETS : $(PCIEFD_TARGETS_LIST)"
 	$(eval R_CHIP := $(patsubst %-obj,%,$@))
+	$(eval R_CLM_BLOBS := $(CLM_BLOBS_$(R_CHIP)))
+	$(eval CLMBASE := $(FW_$(R_CHIP)_SRCBASE)/wl/clm)
+	$(eval GOTPRIV_$(R_CHIP) := "$(wildcard $(CLMBASE)/private)")
+	$(info "R_CHIP = $(R_CHIP) $@ ")
+	$(info "R_CLM_BLOBS = $(R_CLM_BLOBS)  WLCLMLOAD = $(WLCLMLOAD) ...")
+	$(info "TARGET = $(FW_$(R_CHIP)_TARGET) ...")
+	$(info "GOTPRIV_$(R_CHIP) = $(GOTPRIV_$(R_CHIP))  CURRENTLY THERE...")
+	@if [ -d $(FW_$(R_CHIP)_SRCBASE)/wl/sys ] && [ -d $(FW_$(R_CHIP)_OS_PATH) ]; then \
+	if [ ! -f $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/.tcchked ]; then \
+		if [ "$(findstring threadx,$(FW_$(R_CHIP)_OS_PATH))" = "threadx" ]; then \
+			$(MAKE) CLM_BLOBS="$(R_CLM_BLOBS)" CROSS_COMPILE=arm-none-eabi -C $(FW_$(R_CHIP)_MAKE_PATH) $(FW_$(R_CHIP)_BUILD_PREFIX)/$(FW_$(R_CHIP)_TARGET)/tcchk TCPATHCHK=0; \
+		else \
+			install -d $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET); \
+			touch $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/.tcchked; \
+		fi \
+	fi \
+	fi
 	@if [ -d $(FW_$(R_CHIP)_SRCBASE)/wl/sys ]; then \
-	if [ -d $(FW_$(R_CHIP)_OS_PATH) ]; then \
+	if [ -d $(FW_$(R_CHIP)_OS_PATH) ] && [ -f $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/.tcchked ]; then \
 		if [ -d $(FW_$(R_CHIP)_BUILD_PATH)/.prebuilt ]; then \
-			cp -rpf $(FW_$(R_CHIP)_BUILD_PATH)/.prebuilt $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET); \
+			cp -rpf $(FW_$(R_CHIP)_BUILD_PATH)/.prebuilt/* $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET); \
 		fi && \
-		$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(FW_$(R_CHIP)_MAKE_PATH) $(FW_$(R_CHIP)_BUILD_PREFIX)/$(FW_$(R_CHIP)_TARGET) && \
+		if [ "$(GOTPRIV_$(R_CHIP))" != "" ]; then \
+			echo "CREATING clm blobs $(R_CLM_BLOBS) for $(R_CHIP) ........" && \
+			$(MAKE) CLM_BLOBS="$(R_CLM_BLOBS)" CROSS_COMPILE=arm-none-eabi -C $(FW_$(R_CHIP)_MAKE_PATH) $(FW_$(R_CHIP)_BUILD_PREFIX)/$(FW_$(R_CHIP)_TARGET); \
+		else \
+			echo "NOT CREATING clm blobs for $(R_CHIP) ........" && \
+			$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(FW_$(R_CHIP)_MAKE_PATH) $(FW_$(R_CHIP)_BUILD_PREFIX)/$(FW_$(R_CHIP)_TARGET); \
+		fi && \
 		if [ -f $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/rtecdc_$(FW_$(R_CHIP)_CHIPID).h ]; then \
 			cp $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/rtecdc_$(FW_$(R_CHIP)_CHIPID).h $(SRCBASE_DHD)/shared/ && \
 			echo "#include <rtecdc_$(FW_$(R_CHIP)_CHIPID).h>" >> $(PCIEFD_EMBED_HEADER).tmp.$(FW_$(R_CHIP)_CHIPID) && \
@@ -85,6 +145,12 @@ $(obj-pciefd):
 		fi && \
 		if [ -f $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/wlc_clm_data_inc.c ]; then \
 			cp $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/wlc_clm_data_inc.c $(FW_$(R_CHIP)_SRCBASE)/wl/clm/src/wlc_clm_data_inc.c.GEN; \
+		fi && \
+		if [ -f $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/*.clm_blob ]; then \
+			echo "Save clm blobs $(R_CLM_BLOBS) for $(R_CHIP) ...." && \
+			cp $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/*.clm_blob $(FW_$(R_CHIP)_SRCBASE)/wl/clm/src; \
+		else \
+			echo "No clm blobs for $(R_CHIP) ...."; \
 		fi && \
 		if [ ! -d $(FW_$(R_CHIP)_BUILD_PATH)/.prebuilt ]; then \
 			cd $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET) && \
@@ -102,10 +168,10 @@ $(obj-pciefd):
 
 $(clean-pciefd):
 	$(eval R_CHIP := $(patsubst %-clean,%,$@))
+	$(RM) $(TARGETDIR)/etc/brcm/clm/*.clm_blob
 	@if [ -d $(FW_$(R_CHIP)_SRCBASE)/wl/sys ]; then \
 		if [ -d $(FW_$(R_CHIP)_OS_PATH) ]; then \
-			$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(FW_$(R_CHIP)_MAKE_PATH) $(FW_$(R_CHIP)_BUILD_PREFIX)/$(FW_$(R_CHIP)_TARGET)/clean && \
-			$(RM) -f $(SRCBASE_DHD)/shared/rtecdc_$(FW_$(R_CHIP)_CHIPID).h; \
+			$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(FW_$(R_CHIP)_MAKE_PATH) $(FW_$(R_CHIP)_BUILD_PREFIX)/$(FW_$(R_CHIP)_TARGET)/clean; \
 		fi \
 	fi
 
@@ -131,9 +197,27 @@ pciefd: pciefd-cleangen $(obj-pciefd)
 
 pciefd-clean: pciefd-cleangen $(clean-pciefd)
 
+
+ifeq  ($(WLCLMLOAD),1)
+# Note:
+#   This install will work for atlasII or other 4366 or 43602 boards
+#   CHIP_ID checks should match the clm_blobs in wlc_channel.c and rc.c for clm_dload
+#
+pciefd-install:
+	@echo WLCLMLOAD = $(WLCLMLOAD) Start pciefd-install
+	@echo FW_43602a1_BUILD_PATH = $(FW_43602a1_BUILD_PATH) FW_43602a1_TARGET = $(FW_43602a1_TARGET)
+	@echo FW_4366b1_BUILD_PATH = $(FW_4366b1_BUILD_PATH) FW_4366b1_TARGET = $(FW_4366b1_TARGET)
+	@echo FW_4366c0_BUILD_PATH = $(FW_4366c0_BUILD_PATH) FW_4366c0_TARGET = $(FW_4366c0_TARGET)
+	install -d $(TARGETDIR)/etc/brcm/clm
+	install -D $(FW_43602a1_SRCBASE)/wl/clm/src/*clm_blob $(TARGETDIR)/etc/brcm/clm
+	install -D $(FW_4366b1_SRCBASE)/wl/clm/src/*clm_blob $(TARGETDIR)/etc/brcm/clm
+	install -D $(FW_4366c0_SRCBASE)/wl/clm/src/*clm_blob $(TARGETDIR)/etc/brcm/clm
+	@true
+else
 pciefd-install:
 	# Nothing to be done here
 	@true
+endif
 
 pciefd-version: $(version-pciefd)
 

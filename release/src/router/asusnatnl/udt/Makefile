@@ -58,7 +58,6 @@ ifeq ($(arch), ARM)
    CPPFLAGS += -frtti -fexceptions 
   # LDLIBS += -L/home/charles0000/android-toolchain/arm-linux-androideabi/lib 
    LDFLAGS = -lstdc++
-   CFLAGS += -DANDROID
    ANDROID_ARCH=arm
    EABI=eabi
 endif
@@ -77,9 +76,10 @@ endif
 ifeq ($(arch), MIPS)
 LDFLAGS= -lstdc++
 endif
-#ifeq ($(os), ANDROID)
-#   CFLAGS += -DANDROID
-#endif
+
+ifeq ($(os), ANDROID)
+   CFLAGS += -DANDROID
+endif
 
 SRC=$(wildcard *.cpp)
 OBJS=$(patsubst %c, %o, $(SRC)) 

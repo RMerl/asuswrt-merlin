@@ -37,7 +37,6 @@
 #include "mkpg.h"
 
 extern FILE* g_flog;
-static const size_t MAX_CLIENT_LEN = 80 + (3 * (IPADDR_STR_SIZE + 5) );
 
 
 /* generate throughput statistic string
@@ -68,6 +67,7 @@ mk_client_entries( const struct server_ctx* ctx,
     prbuf_t pb = NULL;
     int n = -1;
     size_t i = 0, total = 0;
+    ssize_t max_cli_mem = 0, max_cli_tail = 0;
     char tpinfo[ 32 ];
 
     assert( ctx && buf && len );
@@ -90,11 +90,17 @@ mk_client_entries( const struct server_ctx* ctx,
                     ctx->cl[i].pid,
                     client->src_addr, client->src_port,
                     client->mcast_addr, client->mcast_port,
+                    client->tail ? client->tail : "",
                     tpstat_str( &(client->tstat), tpinfo,
                                 sizeof(tpinfo) ) );
             if( n <= 0 ) break;
-            else
-                total += n;
+
+            if (n > max_cli_mem)
+                max_cli_mem = n;
+            if (client->tail && (ssize_t)strlen(client->tail) > max_cli_tail)
+                max_cli_tail = strlen(client->tail);
+
+            total += n;
         } /* loop */
 
         /* table footer */
@@ -109,9 +115,13 @@ mk_client_entries( const struct server_ctx* ctx,
         *len = total;
     }
     else {
-        TRACE( (void)tmfprintf( g_flog,
+        (void)tmfprintf( g_flog,
                 "Error preparing status (client) HTML: "
-                "insufficient memory\n" ) );
+                "insufficient memory: %ld bytes allowed, "
+                "%ld clients, max memory per client: %ld bytes, "
+                "max client tail: %ld bytes\n",
+                (long)*len, (long)ctx->clmax, (long)max_cli_mem,
+                (long)max_cli_tail);
     }
 
     (void) prbuf_close( pb );
@@ -138,6 +148,7 @@ mk_status_page( const struct server_ctx* ctx,
     const unsigned delay_msec = 3000;
 
     size_t text_size = 0, HEADER_SIZE = 0;
+    static size_t MIN_PER_CLI = 80 + (3 * (IPADDR_STR_SIZE + 5) );
 
     extern const char  UDPXY_COPYRIGHT_NOTICE[];
     extern const char  COMPILE_MODE[];
@@ -165,8 +176,11 @@ mk_status_page( const struct server_ctx* ctx,
         }
         if( n <= 0 ) break;
 
-        for( num_clients = 0, i = 0; i < ctx->clmax; ++i ) {
-            if( ctx->cl[i].pid > 0 ) ++num_clients;
+        for(text_size = 0, num_clients = 0, i = 0; i < ctx->clmax; ++i ) {
+            if( ctx->cl[i].pid > 0 ) {
+                ++num_clients;
+                text_size += MIN_PER_CLI + strlen(ctx->cl[i].tail);
+            }
         }
 
         if( ! (options & MSO_SKIP_CLIENTS) ) {
@@ -174,7 +188,14 @@ mk_status_page( const struct server_ctx* ctx,
                 HEADER_SIZE =  strlen(ACLIENT_TABLE[0]);
                 HEADER_SIZE += strlen(ACLIENT_TABLE[1]);
 
-                text_size = HEADER_SIZE + (MAX_CLIENT_LEN * num_clients);
+                text_size += HEADER_SIZE;
+                if (text_size > *len) {
+                    (void) tmfprintf(g_flog, "Client portion of memory [%ld bytes] > "
+                        "[%ld bytes] of the page buffer.\n",
+                        (long)text_size, (long)*len);
+                    n = -1; break;
+                }
+
                 client_text = malloc( text_size );
                 if( NULL == client_text ) {
                     mperror( g_flog, errno, "%s: calloc", __func__ );
@@ -201,9 +222,9 @@ mk_status_page( const struct server_ctx* ctx,
     } while(0);
 
     if( -1 == n ) {
-        TRACE( (void)tmfprintf( g_flog,
+        (void)tmfprintf( g_flog,
                 "Error preparing status HTML: "
-                "insufficient memory size=[%lu]\n", (u_long)(*len) ));
+                "insufficient memory size=[%lu]\n", (u_long)(*len));
     }
     else {
         *len = prbuf_len( pb );

@@ -64,6 +64,24 @@
 #define SMB_SESSON_ANDX_REQ     5
 #define SMB_SESSON_ANDX_RSP     6
 
+//for Notification Center trigger flag
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+enum
+{
+	FLAG_SAMBA_INLAN = 0,
+	FLAG_OSX_INLAN,
+	FLAG_XBOX_PS,
+	FLAG_UPNP_RENDERER
+};
+#endif
+
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1) || defined(RTCONFIG_BRCM_NAND_JFFS2))
+#define NMP_CLIENT_LIST_FILENAME        "/jffs/nmp_client_list"
+#else
+#define NMP_CLIENT_LIST_FILENAME        "/tmp/nmp_client_list"
+#endif
+#define NCL_LIMIT 524288   //nmp_client_list limit size(512KB)
+
 #ifdef DEBUG
 	#define NMP_DEBUG(fmt, args...) _dprintf(fmt, ## args)
 	//#define NMP_DEBUG(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
@@ -96,12 +114,13 @@ typedef struct {
 	unsigned char   user_define[255][16];
 	unsigned char   device_name[255][32];
 	unsigned char	apple_model[255][16];
+	char		pad[2];
         int             type[255];
         int             http[255];
         int             printer[255];
         int             itune[255];
 	int		exist[255];
-#if 0//def RTCONFIG_BWDPI
+#ifdef RTCONFIG_BWDPI
 	char		bwdpi_host[255][32];
 	char		bwdpi_vendor[255][100];
 	char		bwdpi_type[255][100];
@@ -109,12 +128,15 @@ typedef struct {
 #endif
         int             ip_mac_num;
 	int 		detail_info_num;
+	char		delete_mac[13];
+	char		pad1[3];
 } CLIENT_DETAIL_INFO_TABLE, *P_CLIENT_DETAIL_INFO_TABLE;
 
 typedef struct Raw_socket {
         int raw_sockfd;
         int raw_buflen;
         char device;
+	char pad[3];
         unsigned char *raw_buffer;
 }r_socket;
 
@@ -137,6 +159,7 @@ typedef struct
   	unsigned char dest_hwaddr[6];
   	unsigned char source_hwaddr[6];
   	unsigned short  frame_type;
+	char		pad[2];
 } ETH_HEADER;
 
 /* NetBIOS Datagram header: 14 Bytes */
@@ -149,6 +172,7 @@ typedef struct
   unsigned short src_port;
   unsigned short datagram_len;
   unsigned short packet_off;
+  char		 pad[2];
 } NETBIOS_D_HEADER;
 
 /* NetBIOS Datagram data section */
@@ -187,6 +211,7 @@ typedef struct
   unsigned char name_flags6[2];
   unsigned char mac_addr[6];
   unsigned char name_info[58];
+  char		pad[3];
 } NBNS_RESPONSE;
 
 struct LPDProtocol
@@ -194,6 +219,7 @@ struct LPDProtocol
     unsigned char cmd_code;  	/* command code */
     unsigned char options[32];  /* Queue name */
     unsigned char lf;
+    char	  pad[2];
 };
 
 //for itune
@@ -316,5 +342,5 @@ typedef struct
 } MY_DEVICE_INFO;
 
 int FindHostname(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab);
-int FindAllApp( unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab);
+int FindAllApp( unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab, int i);
 int asusdiscovery();

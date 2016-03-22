@@ -281,6 +281,10 @@ extern int ej_wps_info(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit);
 extern int ej_wl_status_2g_array(int eid, webs_t wp, int argc, char_t **argv);
 
+/* web.c/web-*.c */
+extern char user_agent[1024];
+extern int check_user_agent(char* user_agent);
+
 #ifdef RTCONFIG_HTTPS
 extern char *pwenc(const char *input);
 extern int check_model_name(void);

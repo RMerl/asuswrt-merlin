@@ -39,6 +39,7 @@
   <vpn>vpn_client5_errno=<% nvram_get("vpn_client5_errno"); %></vpn>
   <vpn>vpn_server1_state=<% nvram_get("vpn_server1_state"); %></vpn>
   <vpn>vpn_server2_state=<% nvram_get("vpn_server2_state"); %></vpn>
+  <sys>uptimeStr=<% uptime(); %></sys>
   <qtn>qtn_state=<% nvram_get("qtn_ready"); %></qtn>
   <usb>'<% show_usb_path(); %>'</usb>
   <usb>modem_enable=<% nvram_get("modem_enable"); %></usb>

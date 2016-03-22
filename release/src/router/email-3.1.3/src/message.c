@@ -56,6 +56,9 @@
 #include "message.h"
 #include "mimeutils.h"
 #include "error.h"
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+#include <libnt.h>
+#endif
 
 /**
  * All functions below are pretty self explanitory.  
@@ -554,5 +557,19 @@ createMail(void)
 	if(sendmail(global_msg) == ERROR) {
 		properExit(ERROR);
 	}
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+	else {
+		extern int report_f;
+		extern int sendId;
+		if(report_f) {
+			NOTIFY_EVENT_T *e = initial_nt_event();
+			e->event = RESERVATION_MAIL_REPORT_EVENT;
+			e->mail_t.MsendId = sendId;
+			e->mail_t.MsendStatus = MAIL_SUCCESS;
+			send_notify_event(e, NOTIFY_MAIL_SERVICE_SOCKET_PATH);
+			nt_event_free(e);
+		}
+	}
+#endif
 }
 

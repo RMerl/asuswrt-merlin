@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wpsapi.h 323636 2012-03-26 10:29:39Z $
+ * $Id: wpsapi.h 593076 2015-10-15 08:54:05Z $
  */
 
 #ifndef _WPSAPI_
@@ -54,6 +54,7 @@ int wps_getProcessStates();
 void wps_setProcessStates(int state);
 void wps_setStaDevName(unsigned char *str);
 void wps_setPinFailInfo(uint8 *mac, char *name, char *state);
+uint32 wps_createM8StaPskKey(void *g_mc);
 
 #ifdef __cplusplus
 }

@@ -720,8 +720,13 @@ function show_dlna_path(){
 		for(var i = 1; i < dms_dir_x_array_row.length; i++){
 			var tmp_type = "";
 			code +='<tr id="row'+i+'">';
-			
-			code +='<td width="45%" class="dlna_path_td" title="'+ dms_dir_x_array_row[i] +'">'+ dms_dir_x_array_row[i] +'</td>';
+			if(dms_dir_x_array_row[i].length > 35){
+				temp = dms_dir_x_array_row[i].substr(0,35) + "...";
+				code +='<td width="45%" class="dlna_path_td" title="'+ dms_dir_x_array_row[i] +'">'+ temp +'</td>';
+			}
+			else{
+				code +='<td width="45%" class="dlna_path_td" title="'+ dms_dir_x_array_row[i] +'">'+ dms_dir_x_array_row[i] +'</td>';
+			}
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("A")>=0? "Audio " : "";
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("P")>=0? "Image " : "";
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("V")>=0? "Video " : "";

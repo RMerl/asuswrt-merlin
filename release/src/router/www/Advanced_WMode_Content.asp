@@ -49,7 +49,7 @@
 	font-family:Arial, Helvetica, sans-serif;
 	text-decoration:none;	
 }
-#WDSAPList div:hover, #ClientList_Block a:hover{
+#WDSAPList div:hover {
 	background-color:#3366FF;
 	color:#FFFFFF;
 	cursor:default;

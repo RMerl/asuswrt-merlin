@@ -50,6 +50,20 @@ int is_wan_connect(int unit){
 		return 0;
 }
 
+int is_phy_connect(int unit){
+	char tmp[100], prefix[]="wanXXXXXX_";
+	int wan_state, wan_sbstate, wan_auxstate;
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	wan_auxstate = nvram_get_int(strcat_r(prefix, "auxstate_t", tmp));
+
+	if(wan_auxstate == 0 || wan_auxstate == 2)
+		return 1;
+	else
+		return 0;
+}
+
 int get_wan_state(int unit)
 {
 	char tmp[100], prefix[]="wanXXXXXX_";
@@ -181,7 +195,7 @@ char *get_wan6_ifname(int unit)
 	wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 
 
-	if(strcmp(nvram_safe_get("ipv6_ifdev"), "eth")==0) {
+	if(strcmp(nvram_safe_get(ipv6_nvname("ipv6_ifdev")), "eth")==0) {
 		wan_ifname=nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 //		dbG("wan6_ifname: %s\n", wan_ifname);
 		return wan_ifname;

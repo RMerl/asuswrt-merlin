@@ -785,6 +785,12 @@ function register_event(){
 			setTimeout(function(){
 				get_wan_data("all", mode, duration, date_second, date_string);	
 			}, 1500);
+			
+			document.getElementById('router').className = "block_filter_pressed";
+			document.getElementById('apps').className = "block_filter";
+			document.getElementById('graphical_info_block').style.display = "";
+			document.getElementById('detail_info_block').style.display = "none";
+			document.getElementById('top5_info_block').style.backgroundColor = color[0];
 			/*setTimeout(function(){		
 				get_client_info();
 				get_client_used_app_data(top5_client_array[0], "detail", duration, date_second, date_string);

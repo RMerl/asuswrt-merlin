@@ -75,6 +75,8 @@ init_server_ctx( struct server_ctx* ctx,
     (void) memset( ctx->cl, 0, max * sizeof(struct client_ctx) );
     ctx->clfree = ctx->clmax = max;
 
+    (void) memset( &ctx->rq, 0, sizeof(ctx->rq) );
+
     if( 0 != pipe(ctx->cpipe) ) {
         mperror( g_flog, errno, "%s: pipe", __func__ );
         return ERR_INTERNAL;
@@ -198,6 +200,9 @@ add_client( struct server_ctx* ctx,
 
     client->mcast_port = mport;
 
+    if (ctx->rq.tail[0])
+        (void) strcpy( client->tail, ctx->rq.tail );
+
     rc = get_src_info( client, sockfd );
     if( 0 != rc ) {
         client->pid = 0;
@@ -235,6 +240,7 @@ delete_client( struct server_ctx* ctx, pid_t cpid )
 
     client = &(ctx->cl[ index ]);
     client->pid = 0;
+    client->tail[0] = '\0';
 
     ctx->clfree++;
 

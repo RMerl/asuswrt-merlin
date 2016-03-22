@@ -28,28 +28,30 @@ typedef enum _UA_ERROR{
 	AAE_UP_ERROR,
 	AAE_LISTPF_ERROR,
 	AAE_UNKNOWN_ERROR,
-	TUNNEL_INIT_ERROR,  
+	TUNNEL_INIT_ERROR,
+	SEGMENTATION_FAULT,
+	SIGABRT_GET,
 }UA_ERROR;
 
 
 typedef struct  _LOG_CFG
 {
 	int			log_level;
-	const char* log_filename;
+	char* 			log_filename;
 	int			log_file_flags;
 	int			syslog_facility;
 } LOG_CFG;	  
 
 typedef struct _ACCOUNT_CFG
 {
-	const char*	account;
-	const char* password;
+	char*	account;
+	char*	password;
 }ACCOUNT_CFG;
 
 typedef struct _DEVICE_INFO_CFG
 {
-	const char*	device_id;
-	const char* device_pwd;
+	char*	device_id;
+	char*	device_pwd;
 }DEVICE_INFO_CFG;
 
 typedef struct _MEDIA_CFG

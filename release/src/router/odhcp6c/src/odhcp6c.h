@@ -337,7 +337,7 @@ bool odhcp6c_is_bound(void);
 void odhcp6c_clear_state(enum odhcp6c_state state);
 void odhcp6c_add_state(enum odhcp6c_state state, const void *data, size_t len);
 void odhcp6c_append_state(enum odhcp6c_state state, const void *data, size_t len);
-void odhcp6c_insert_state(enum odhcp6c_state state, size_t offset, const void *data, size_t len);
+int odhcp6c_insert_state(enum odhcp6c_state state, size_t offset, const void *data, size_t len);
 size_t odhcp6c_remove_state(enum odhcp6c_state state, size_t offset, size_t len);
 void* odhcp6c_move_state(enum odhcp6c_state state, size_t *len);
 void* odhcp6c_get_state(enum odhcp6c_state state, size_t *len);
