@@ -3084,9 +3084,9 @@ void start_upnp(void)
 	int unit, i, httpx_port;
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)
 	FILE *ifp = NULL;
-	char tmpstr[80];
 	int statDownloadMaster = 0;
 #endif
+	char tmpstr[80];
 	int min_lifetime, max_lifetime;
 
 	if (getpid() != 1) {
