@@ -3,12 +3,17 @@ Asuswrt-Merlin Changelog
 
 380.59 (xx-xxx-2016)
     - NEW: Merged with 380_2345 GPL
+    - NEW: Option on OpenVPN client/server page to reset them back to the factory
+           default settings.  Key/certs are renamed with the .old extension in case
+           you need to recover them.
     - CHANGED: WAN -> NAT Passthrough now allows you to determine wether or not to load
                the NAT helper module for h323, rtsp and sip.  Asus's old behaviour is
                "Enabled + NAT Helper".
     - CHANGED: DNSFilter client dropdown now uses Asus's new one integrated with networkmap.
     - CHANGED: minidlna now supports refreshing an existing database, so the Tweak setting
                was updated accordingly
+    - FIXED: Daily/Monthly traffic monitoring shows invalid values on the RT-AC88U/3100/5300,
+             even with CTF disabled.
 
 
 380.58 (20-Mar-2016)
