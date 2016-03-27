@@ -1564,7 +1564,7 @@ struct nvram_tuple router_defaults[] = {
 	// NVRAM for start_usb
 	{ "usb_enable", "1"},
 #ifdef RTCONFIG_USB_XHCI
-#if defined(RTAC87U) || defined(DSL_AC68U)
+#if defined(RTAC87U) || defined(DSL_AC68U) || defined (RTAC3200) || defined(RTAC5300)
 	{ "usb_usb3", "1"},
 #else
 	{ "usb_usb3", "0"},
