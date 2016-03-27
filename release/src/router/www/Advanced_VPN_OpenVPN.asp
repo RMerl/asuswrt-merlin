@@ -1023,6 +1023,19 @@ function update_vpn_client_state() {
 		}
 	});	
 }
+
+function defaultSettings() {
+	if (confirm("WARNING: This will reset this OpenVPN server to factory default settings!\n\nProceed?")) {
+		document.form.action_script.value = "stop_vpnserver" + openvpn_unit + ";clearvpnserver" + openvpn_unit;
+		enable_openvpn(0);
+		document.form.VPNServer_enable.value = "0";
+		parent.showLoading();
+		document.form.submit();
+	} else {
+		return false;
+	}
+}
+
 </script>
 </head>
 <body onload="initial();">
@@ -1571,6 +1584,7 @@ function update_vpn_client_state() {
 									</div>
 
 									<div id="divApply" class="apply_gen" style="display:none;">
+										<input type="button" id="restoreButton" class="button_gen" value="<#Setting_factorydefault_value#>" onclick="defaultSettings();">
 										<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 									</div>
 								</td>

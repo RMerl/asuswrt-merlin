@@ -775,6 +775,7 @@ extern void create_openvpn_passwd();
 extern int check_ovpn_server_enabled(int unit);
 extern int check_ovpn_client_enabled(int unit);
 extern void update_vpnrouting(int unit);
+extern void reset_vpn_settings(int type, int unit);
 #endif
 
 // wanduck.c

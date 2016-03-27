@@ -808,6 +808,16 @@ function getConnStatus() {
 	}
 }
 
+function defaultSettings() {
+	if (confirm("WARNING: This will reset this OpenVPN client to factory default settings!\n\nProceed?")) {
+		document.form.action_script.value = "stop_vpnclient" + openvpn_unit + ";clearvpnclient" + openvpn_unit;
+		showLoading();
+		document.form.submit();
+	} else {
+		return false;
+	}
+}
+
 </script>
 </head>
 
@@ -1321,6 +1331,7 @@ function getConnStatus() {
 					</tr>
 					</table>
 					<div class="apply_gen">
+						<input type="button" id="restoreButton" class="button_gen" value="<#Setting_factorydefault_value#>" onclick="defaultSettings();">
 						<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
 			        </div>
 				</td></tr>
