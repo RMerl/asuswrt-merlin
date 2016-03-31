@@ -52,9 +52,9 @@ case "$1" in
         else
             if [ "$2" != "" -a "0$(echo $2 | tr -d ' ')" -ge 0 ] 2>/dev/null; then
                 $dir/$stms sch_clear # clear scheduled tasks when sunset is enabled
-                sun=`l=$2;wget -q -O - http://weather.yahooapis.com/forecastrss?w=$l | grep astronomy | awk -F\" '{print $4}' | awk -F\" '{split($1, A, " ");split(A[1], B, ":");HR=B[1];MIN=B[2];if(A[2] == "pm") HR+=12;$1=sprintf("%d %d", MIN, HR);}1'`
+                sun=`l=$2;wget -q -O - http://xml.weather.yahoo.com/forecastrss?w=$l | grep astronomy | awk -F\" '{print $4}' | awk -F\" '{split($1, A, " ");split(A[1], B, ":");HR=B[1];MIN=B[2];if(A[2] == "pm") HR+=12;$1=sprintf("%d %d", MIN, HR);}1'`
                 if [ "$sun" = "" ] ; then logger -p3 -s -t stealthMode Weather sunset time error!; exit 1; else cru a stealthsunset $sun "* * * $dir/$stms on"; fi
-                sur=`l=$2;wget -q -O - http://weather.yahooapis.com/forecastrss?w=$l | grep astronomy | awk -F\" '{print $2}' | awk -F\" '{split($1, A, " ");split(A[1], B, ":");HR=B[1];MIN=B[2];if(A[2] == "pm") HR+=12;$1=sprintf("%d %d", MIN, HR);}1'`
+                sur=`l=$2;wget -q -O - http://xml.weather.yahoo.com/forecastrss?w=$l | grep astronomy | awk -F\" '{print $2}' | awk -F\" '{split($1, A, " ");split(A[1], B, ":");HR=B[1];MIN=B[2];if(A[2] == "pm") HR+=12;$1=sprintf("%d %d", MIN, HR);}1'`
                 if [ "$sur" = "" ] ; then logger -p3 -s -t stealthMode Weather sunrise time error!; exit 1; else cru a stealthsunrise $sur "* * * $dir/$stms off"; fi
                 logger -p6 -s -t stealthMode Sunset city code: $2, sunset: $( echo $sun | awk '{$1=sprintf("%02d", $1); $2=sprintf("%02d", $2); print $2":"$1 }' ), sunrise: $( echo $sur | awk '{$1=sprintf("%02d", $1); $2=sprintf("%02d", $2); print $2":"$1 }' )
                 HOUR=$(date +%k); SUNRUN=$( echo $sun | awk '{ print $2 }' ); SURRUN=$( echo $sur | awk '{ print $2 }' ); if [ "$HOUR" -ge "$SURRUN" -a "$HOUR" -le "$SUNRUN" ] ; then
