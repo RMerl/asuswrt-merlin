@@ -39,7 +39,7 @@ case "$1" in
         # check internet connection
         CONERR=1
         # ping for check internet connection
-        YAHOOAPIS="weather.yahooapis.com"
+        YAHOOAPIS="weather.yahoo.com"
         if [ `echo $YAHOOAPIS | wc -c` -gt 2 ]; then
           ping -q -w 1 -c 1 $YAHOOAPIS > /dev/null
           if [ $? == 0 ]; then CONERR=0; fi
