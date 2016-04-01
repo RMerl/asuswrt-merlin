@@ -49,7 +49,7 @@ void create_mbssid_vlan(void)
 {
 	if(nvram_get_int("wl1.1_bss_enabled") == 1){
 		if(nvram_match("wl1.1_lanaccess", "off") &&
-			!nvram_match("wl1.1_lanaccess", "")){
+			!nvram_match("wl1.1_lanaccess", "")){	// strange logic !? same happened below below
 			/* VID 4000 */
 			eval("vconfig", "add", "eth0", "4000");
 			eval("ifconfig", "vlan4000", "hw", "ether", nvram_safe_get("lan_hwaddr"), "up");
@@ -181,10 +181,10 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 					dbG("[lanaccess] wifi1 lanaccess off\n");
 					// libqcsapi_client/qtn/qtn_vlan.h
 					// QVLAN_VID_ALL: 0xffff
-					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */, 0);
-					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_bind, 4000 /* vid */, 0);
+					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */);
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_add, 4000 /* vid */);
 				}else{
-					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_unbind, 4000 /* vid */, 0);
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_del, 4000 /* vid */);
 				}
 			}
 		}
@@ -204,10 +204,10 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 					dbG("[lanaccess] wifi2 lanaccess off\n");
 					// libqcsapi_client/qtn/qtn_vlan.h
 					// QVLAN_VID_ALL: 0xffff
-					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */, 0);
-					qcsapi_wifi_vlan_config("wifi2", e_qcsapi_vlan_bind, 4001 /* vid */, 0);
+					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */);
+					qcsapi_wifi_vlan_config("wifi2", e_qcsapi_vlan_add, 4001 /* vid */);
 				}else{
-					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_unbind, 4001 /* vid */, 0);
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_del, 4001 /* vid */);
 				}
 			}
 		}
@@ -227,10 +227,10 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 					dbG("[lanaccess] wifi3 lanaccess off\n");
 					// libqcsapi_client/qtn/qtn_vlan.h
 					// QVLAN_VID_ALL: 0xffff
-					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */, 0);
-					qcsapi_wifi_vlan_config("wifi3", e_qcsapi_vlan_bind, 4002 /* vid */, 0);
+					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */);
+					qcsapi_wifi_vlan_config("wifi3", e_qcsapi_vlan_add, 4002 /* vid */);
 				}else{
-					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_unbind, 4002 /* vid */, 0);
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_del, 4002 /* vid */);
 				}
 			}
 		}
@@ -389,6 +389,13 @@ QTN_RESET:
 				/* all country except EU */
 				dbG("[dfs] start nodfs scanning and selection\n");
 				start_nodfs_scan_qtn();
+			}
+		}else{
+			ret = qcsapi_wifi_scs_enable(WIFINAME, 0);
+			if (ret >= 0) {
+				logmessage("scs", "disable scs complete");
+			}else{
+				logmessage("scs", "disable scs not complete");
 			}
 		}
 	}
