@@ -1,0 +1,15 @@
+# libmnl pkg-config file
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libmnl
+Description: Minimalistic Netlink communication library
+URL: http://netfilter.org/projects/libmnl/
+Version: @VERSION@
+Requires:
+Conflicts:
+Libs: -L${libdir} -lmnl
+Cflags: -I${includedir}
