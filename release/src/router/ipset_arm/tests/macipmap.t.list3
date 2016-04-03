@@ -1,0 +1,10 @@
+Name: test
+Type: bitmap:ip,mac
+Header: range 2.0.0.1-2.1.0.0 timeout x
+Size in memory: 1056920
+References: 0
+Number of entries: 3
+Members:
+2.0.0.1,00:11:22:33:44:56 timeout x
+2.0.0.2,00:11:22:33:44:55 timeout x
+2.1.0.0 timeout x

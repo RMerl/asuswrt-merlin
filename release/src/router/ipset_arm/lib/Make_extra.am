@@ -1,0 +1,101 @@
+IPSET_MODSDIR=${libdir}/ipset
+
+if ENABLE_SETTYPE_MODULES
+AM_CFLAGS += -DENABLE_SETTYPE_MODULES \
+	         -DIPSET_MODSDIR="\"$(IPSET_MODSDIR)\""
+IPSET_SETTYPE_MODULES = yes
+IPSET_SETTYPE_DYN = $(if $(findstring all,$(SETTYPE_MODLIST)), \
+	                           $(IPSET_SETTYPE_LIST), $(SETTYPE_MODLIST))
+else
+IPSET_SETTYPE_DYN =
+endif
+
+IPSET_SETTYPE_STATIC = $(filter-out $(IPSET_SETTYPE_DYN), \
+	                     $(IPSET_SETTYPE_LIST))
+IPSET_SETTYPE_DYNAMIC = $(filter $(IPSET_SETTYPE_LIST), \
+	                     $(IPSET_SETTYPE_DYN))
+IPSET_SETTYPE_STATIC_OBJECTS  = $(patsubst %.c, %.lo, $(IPSET_SETTYPE_STATIC))
+
+IPSET_SETTYPE_DYNAMIC_OBJECTS = $(patsubst %.c, %.lo, $(IPSET_SETTYPE_DYNAMIC))
+IPSET_SETTYPE_DYNAMIC_MODULES = $(patsubst %.c, %.la, $(IPSET_SETTYPE_DYNAMIC))
+IPSET_SETTYPE_DYNAMIC_LTFLAGS = -shared -module -avoid-version
+IPSET_SETTYPE_ALL_MODULES = $(patsubst %.c, %.la, $(IPSET_SETTYPE_STATIC)) \
+	$(IPSET_SETTYPE_DYNAMIC_MODULES)
+
+BUILT_SOURCES = ipset_settype_check types_init.c ipset_settype_modules
+CLEANFILES = ipset_settype_check types_init.c $(IPSET_SETTYPE_ALL_MODULES)
+
+ipset_%.lo: ipset_%.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`; \
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -D_INIT=ipset_$*_init \
+		$(if $(findstring ipset_$*.c,$(IPSET_SETTYPE_STATIC)), -DTYPE_INCLUSIVE,)\
+		-MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< && \
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LTCOMPILE) -D_INIT=ipset_$*_init \
+		$(if $(findstring ipset_$*.c,$(IPSET_SETTYPE_STATIC)), -DTYPE_INCLUSIVE,)\
+		-c -o $@ $<
+
+ipset_%.la: $(lib_LTLIBRARIES) ipset_%.lo
+	$(AM_V_CCLD)lobj="$(patsubst %.la, %.lo, $@)"; \
+	$(LIBTOOL) --silent --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+		$(CFLAGS) $(IPSET_SETTYPE_DYNAMIC_LTFLAGS) $(LDFLAGS) -o $@ \
+		-rpath $(IPSET_MODSDIR) $$lobj $(LIBS) $(top_builddir)/lib/libipset.la
+
+types_init.c: $(IPSET_SETTYPE_STATIC_OBJECTS)
+	$(AM_V_GEN)static_list=`echo $(patsubst %.c,%,$(IPSET_SETTYPE_STATIC))`; \
+	echo -n "" > $@; \
+	for i in $$static_list; do \
+		echo "extern void $${i}_init(void);" >> $@; \
+	done; \
+	echo "void ipset_types_init(void);" >> $@; \
+	echo "void ipset_types_init(void)" >> $@; \
+	echo "{" >> $@; \
+	for i in $$static_list; do \
+		echo "	""$${i}_init();" >> $@; \
+	done; \
+	echo "}" >> $@;
+
+ipset_settype_check:
+	@list="$(IPSET_SETTYPE_MODULES) $(IPSET_SETTYPE_STATIC_OBJECTS)"; \
+	test -f $@ || echo "$$list" > $@; \
+	if test "$$list" != "`cat $@`"; then \
+		$(MAKE) clean; \
+		echo "$$list" > $@; \
+	fi
+
+ipset_settype_modules: $(lib_LTLIBRARIES) $(IPSET_SETTYPE_DYNAMIC_OBJECTS) \
+	$(IPSET_SETTYPE_DYNAMIC_MODULES)
+
+install-data-local: install-settype-modules
+uninstall-local: uninstall-settype-modules
+
+install-settype-modules: ipset_settype_modules
+	@$(NORMAL_INSTALL)
+	@list='$(IPSET_SETTYPE_DYNAMIC_MODULES)'; \
+	test -n "$(IPSET_MODSDIR)" || list=; \
+	list2=; for p in $$list; do \
+		if test -f $$p; then \
+			list2="$$list2 $$p"; \
+		else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+		echo " $(MKDIR_P) '$(DESTDIR)$(IPSET_MODSDIR)'"; \
+		$(MKDIR_P) "$(DESTDIR)$(IPSET_MODSDIR)" || exit 1; \
+		echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(IPSET_MODSDIR)'"; \
+		$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(IPSET_MODSDIR)"; \
+	}
+
+uninstall-settype-modules:
+	@$(NORMAL_UNINSTALL)
+	@list='$(IPSET_SETTYPE_DYNAMIC_MODULES)'; \
+	test -n "$(IPSET_MODSDIR)" || list=; \
+	for p in $$list; do \
+		$(am__strip_dir) \
+		echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(IPSET_MODSDIR)/$$f'"; \
+		$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(IPSET_MODSDIR)/$$f"; \
+	done
+
+.PHONY: ipset_settype_check ipset_settype_modules ipset_settype_modules-stamp \
+	install-settype-modules uninstall-settype-modules

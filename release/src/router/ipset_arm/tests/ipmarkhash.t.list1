@@ -1,0 +1,11 @@
+Name: test
+Type: hash:ip,mark
+Header: family inet markmask 0xffffffff hashsize 1024 maxelem 65536
+Size in memory: 384
+References: 0
+Number of entries: 4
+Members:
+1.255.255.255,0x00000005
+2.0.0.0,0x00000005
+2.0.255.255,0x00000080
+2.1.0.0,0x00000080

@@ -1,0 +1,4 @@
+NOSTDINC_FLAGS += -I$(KDIR)/include
+EXTRA_CFLAGS := -DCONFIG_IP_SET_MAX=$(IP_SET_MAX)
+
+obj-$(CONFIG_NET_EMATCH_IPSET) += em_ipset.o

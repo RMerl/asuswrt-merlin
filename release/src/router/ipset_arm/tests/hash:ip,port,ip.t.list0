@@ -1,0 +1,11 @@
+Name: test
+Type: hash:ip,port,ip
+Header: family inet hashsize 1024 maxelem 65536 timeout x
+Size in memory: 840
+References: 0
+Number of entries: 4
+Members:
+2.0.0.0,tcp:5,1.1.1.1 timeout x
+2.0.0.1,tcp:5,1.1.1.1 timeout x
+2.1.0.0,tcp:128,2.2.2.2 timeout x
+2.1.0.1,tcp:128,2.2.2.2 timeout x

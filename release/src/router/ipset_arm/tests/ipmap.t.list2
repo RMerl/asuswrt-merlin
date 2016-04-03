@@ -1,0 +1,9 @@
+Name: test
+Type: bitmap:ip
+Header: range 2.0.0.0-2.0.255.255
+Size in memory: 8352
+References: 0
+Number of entries: 2
+Members:
+2.0.0.0
+2.0.255.255

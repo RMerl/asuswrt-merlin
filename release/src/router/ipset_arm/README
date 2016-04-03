@@ -1,0 +1,89 @@
+This is the ipset source tree. Follow the next steps to install ipset.
+If you upgrade from an earlier 5.x release, please read the UPGRADE
+instructions too.
+
+0. You need the source tree of your kernel (version >= 2.6.32)
+   and it have to be configured with ip6tables support enabled,
+   modules compiled. For kernel versions < 2.6.39 please apply
+   the netlink.patch against your kernel tree, which adds the
+   new subsystem identifier for ipset.
+
+   Recompile and install the patched kernel and its modules. Please note,
+   you have to run the patched kernel for ipset to work.
+
+   The ipset source code depends on the libmnl library so the library
+   must be installed. You can download the libmnl library from
+
+	git://git.netfilter.org/libmnl.git
+
+1. Initialize the compiling environment for ipset. The packages automake,
+   autoconf, pkg-config and libtool are required.
+
+   % ./autogen.sh
+
+2. Run `./configure` and then compile the ipset binary and the kernel
+   modules.
+
+   Configure parameters can be used to to override the default path
+   to the kernel source tree (/lib/modules/`uname -r`/build),
+   the maximum number of sets (256), the default hash sizes (1024).
+   See `./configure --help`.
+
+   % ./configure
+   % make
+   % make modules
+
+3. Install the binary and the kernel modules
+
+   # make install
+   # make modules_install
+
+   After installing the modules, you can run the testsuite as well.
+   Please note, several assumptions must be met for the testsuite:
+
+	- no sets defined
+	- iptables/ip6tables rules are not set up
+	- the destination for kernel logs is /var/log/kern.log
+	- the networks 10.255.255.0/24 and 1002:1002:1002:1002::/64
+	  are not in use
+	- sendip utility is installed
+
+   # make tests
+
+4. Cleanup the source tree
+
+   % make clean
+   % make modules_clean
+
+That's it! 
+
+Read the ipset(8) and iptables(8), ip6tables(8) manpages on how to use
+ipset and its match and target from iptables.
+
+Compatibilities and incompatibilities:
+
+- The ipset 6.x userspace utility contains a backward compatibility
+  interface to support the commandline syntax of ipset 4.x.
+  The commandline syntax of ipset 6.x is fully compatible with 5.x.
+- The ipset 6.x userspace utility can't talk to the kernel part of ipset 5.x
+  or 4.x.
+- The ipset 6.x kernel part can't talk to the userspace utility from
+  ipset 5.x or 4.x.
+- The ipset 6.x kernel part can work together with the set match and SET
+  target from iptables 1.4.7 and below, however if you need the IPv6 support
+  from ipset 6.x, then you have to use iptables 1.4.9 or above.
+
+The ipset 6.x can interpret the commandline syntax of ipset 4.x, however
+some internal changes mean different behaviour:
+
+- The "--matchunset" flag for the macipmap type is ignored and not used
+  anymore.
+- The "--probes" and "--resize" parameters of the hash types are ignored
+  and not used anymore.
+- The "--from", "--to" and "--network" parameters of the ipporthash,
+  ipportiphash and ipportnethash types are ignored and not used anymore.
+- The hash types are not resized when new entries are added by the SET
+  target. If you use a set together with the SET target, create it with
+  the proper size because it won't be resized automatically.
+- The iptree, iptreemap types are not implemented in ipset 6.x. The types
+  are automatically substituted with the hash:ip type.

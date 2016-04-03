@@ -1,0 +1,8 @@
+Name: test
+Type: hash:ip
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 8352
+References: 0
+Members:
+192.168.68.69
+2.0.0.1

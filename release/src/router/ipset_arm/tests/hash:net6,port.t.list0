@@ -1,0 +1,12 @@
+Name: test
+Type: hash:net,port
+Header: family inet6 hashsize 128 maxelem 65536 timeout x
+Size in memory: 2352
+References: 0
+Number of entries: 5
+Members:
+192:160::/27,ipv6-icmp:echo-request timeout x
+192:168:68::95,ipv6-icmp:port-unreachable timeout x
+1:1:1::1,tcp:8 timeout x
+2::/24,tcp:8 timeout x
+3::1,tcp:8 timeout x

@@ -1,0 +1,8 @@
+Name: test
+Type: hash:net,port
+Header: family inet6 hashsize 128 maxelem 65536 timeout 5
+Size in memory: 2352
+References: 0
+Number of entries: 5
+Members:
+1:1:1::1,tcp:8 timeout 0

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# -4|-6 dirs pkt-count
+
+set -e
+
+if [ "$1" = "-4" ]; then
+    cmd=iptables
+    proto=ipv4
+    src=10.255.255.64
+    dst=127.0.0.1
+else
+    cmd=ip6tables
+    proto=ipv6
+    src=1002:1002:1002:1002::32
+    dst=::1
+fi
+
+$cmd -A INPUT -m set --match-set test $2 -j DROP
+for x in `seq 1 $3`; do
+    sendip -p $proto -id $dst -is $src -p tcp -td 80 -ts 1025 $dst
+done
+$cmd -D INPUT -m set --match-set test $2 -j DROP
+

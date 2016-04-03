@@ -1,0 +1,9 @@
+Name: test
+Type: hash:mac
+Header: hashsize 1024 maxelem 2 skbinfo
+Size in memory: 448
+References: 0
+Number of entries: 2
+Members:
+01:02:03:04:05:06 skbprio 1:10
+01:02:03:04:05:07 skbprio 1:12 skbqueue 8

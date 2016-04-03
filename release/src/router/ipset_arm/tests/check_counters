@@ -1,0 +1,11 @@
+#!/bin/bash
+
+ipset=${IPSET_BIN:-../src/ipset}
+
+read ip p packets b bytes <<< $($ipset l $1 | grep ^$2)
+test -z "$packets" -o -z "$bytes" && exit 1
+test $packets -ne $3 -o $bytes -ne $4 && exit 1
+exit 0
+
+
+

@@ -1,0 +1,582 @@
+6.29
+  - Suppress unnecessary stderr in command loop for resize and list
+  - Correction in comment test
+  - Support chroot buildroots (reported by Jan Engelhardt)
+  - Fix "configure" breakage due to pkg-config related changes
+    (reported by Jan Engelhardt)
+
+6.28
+  - Support older pkg-config packages
+  - Add bash completion to the install routine (Mart Frauenlob)
+  - Fix misleading error message with comment extension
+  - Test added to check 0.0.0.0/0,iface to be matched in
+    hash:net,iface type
+  - Fix link with libtool >= 2.4.4 (Olivier Blin)
+
+6.27
+  - Handle uint64_t alignment issue in ipset tool
+
+6.26
+  - Out of bound access in hash:net* types fixed (reported by Dave Jones):
+    new tests added to the testsuite to verify the fix
+  - Warn about loaded in ip_set modules at module installation
+  - Use IPSET_BIN in resize-and-list.sh and suppress echoing of loop
+    variable
+  - Manpage typo corrections (David Wittman)
+  - Fix grammar error in manpage (Neutron Soutmun)
+
+6.25.1
+  - ipset manpage: refer to iptables-extensions
+  - Update userspace header file from the kernel tree
+  - Handle 'extern "C" {' in check_libmap.sh
+
+6.25
+  - Add element count to all set types header
+  - Add element count to hash headers (Eric B Munson)
+  - Support linking libipset to C++ programs (reported by Pavel Odintsov)
+  - ipset: propose rewording in manpage (Neutron Soutmun)
+  - More compatibility checking and simplifications to support the
+    2.6.32 kernel tree
+  - Compatibility: define RCU_INIT_POINTER when __rcu is not defined
+  - Compatibility: check kernel source for list_last_entry
+    (CentOS7, reported by Ricardo Klein)
+  - Make possible to pass extra flags to sparse
+
+6.24
+  - The "extra" subdirectory for kernel modules may have a full subtree
+    (reported by Jesper Dangaard Brouer)
+  - Add more compatibility checkings to support older kernel releases
+  - Make_global.am: Don't include host headers (Baruch Siach)
+  - Alignment problem between 64bit kernel 32bit userspace fixed
+    (reported by Sven-Haegar Koch)
+  - Add script to check libipset.map for missing symbols
+  - Update libipset.map with ipset_parse_tcp_udp_port (Thomas Backlund)
+  - libipset: Bump lib version and update map file (Neutron Soutmun)
+  - Bash utilities updated
+  - ipset: Fix hyphen used as minus sign in manpage (Neutron Soutmun)
+
+6.23
+  - The utils are updated from their sources
+  - Order create and add options in manpage so that generic ones
+    come first
+  - Centralise generic create options (family, hashsize, maxelem)
+    on top of man page in the generic options section. (Mart Frauenlob)
+  - Support glibc < 2.9 (fixes bugzilla id #891)
+  - Add description of hash:mac set type to man page. (Mart Frauenlob)
+  - Add missing space for skbinfo option synopsis. (Mart Frauenlob)
+  - The library/API versions were forgotten to bump (reported by
+    Sergei Zhirikov)
+  - Retry printing when sprintf fails (reported by Stig Thormodsrud)
+
+6.22
+  - hash:mac type added to ipset
+  - Add test to check mark mapping
+  - ipset: remove extran newline on debug output (Holger Eitzenberger)
+  - ipset: avoid duplicate command flags (Holger Eitzenberger)
+  - Remove a duplicate debug print (Holger Eitzenberger)
+  - ipset: man: Add the skbinfo extension documentation. (Anton Danilov)
+  - libipset: Add userspace support of the skbinfo extension of the list
+    set type. (Anton Danilov)
+  - libipset: Add userspace support of the skbinfo extension of the hash
+    set types. (Anton Danilov)
+  - libipset: Add userspace support of the skbinfo extension of the
+    bitmap set types. (Anton Danilov)
+  - libipset: Add userspace code for the skbinfo extension support.
+    (Anton Danilov)
+  - Make possible to compile ipset with IPSET_DEBUG from the dist.
+    (Clinton Roy)
+  - libipset: print third element in debugging (Sergey Popovich)
+  - ipset: Handle missing leading zeros in ethernet address parser
+    (Janeks Jaunups)
+  - ipset: Pass IPSET_BIN to test scripts to change binary location
+    (Neutron Soutmun)
+  - ipset: Fix grammar error in manpage (Neutron Soutmun)
+  - ipset: Fix printf format warning (Neutron Soutmun)
+
+6.21.1
+  - The bash utilities are updated
+  - Fix libipset library release versioning (reported by Mathieu Bridon)
+
+6.21
+  - ipset: add userspace support for forceadd (Josh Hunt)
+  - kernel: uapi: fix MARKMASK attr ABI breakage (Florian Westphal)
+  - lib: fix ifname 'physdev:' prefix parsing (Florian Westphal)
+  - Prepare the kernel for create option flags when no extension is needed
+  - print mark & mark mask in hex rather then decimal (Vytas Dauksa)
+  - add markmask for hash:ip,mark data type (Vytas Dauksa)
+  - add hash:ip,mark data type to ipset (Vytas Dauksa)
+  - ipset: manpage: correct add action synopsis for hash:net,port,net.
+    (Mart Frauenlob)
+  - ipset: manpage: remove spare comma for hash:net,net test action.
+    (Mart Frauenlob)
+  - Fix all set output from list/save when set with counters in use.
+    (Sergey Popovich)
+  - ipset: Fix malformed output from list/save for ICMP types in port field
+    (Sergey Popovich)
+  - ipset: fix timeout data type size (Nikolay Martynov)
+
+6.20.1
+  - build: fix incorrect library versioning (Jan Engelhardt)
+  - netfilter: ipset: Fix configure failure when --with-kmod=no
+    (Oliver Smith)
+  - Avoid clashing with configured kernel in [CONFIG_]IP_SET_MAX
+
+6.20
+  - Missing comment support added to hash:ip,port,ip and hash:net,iface
+    types
+  - Compatibility code is modified not to rely on kernel version numbers
+  - Add userspace code to support hash:net,port,net kernel module
+    (Oliver Smith)
+  - Tests added to check comment extension
+  - Add new userspace set revisions for comment support (Oliver Smith)
+  - Support comments in the userspace library (Oliver Smith)
+  - Rework the "fake" argument parsing for ipset restore (Oliver Smith)
+  - Add userspace code to support hash:net,net kernel module
+    (Oliver Smith)
+  - Add test to verify CIDR tracking
+  - configure: uclinux is also linux (Gustavo Zacarias)
+  - Add specifying protocol for bitmap:port (Quentin Armitage)
+  - Remove artifical restriction of netmask values for hash:ip type
+    (Reported by Quentin Armitage, netfilter bugzilla id #844)
+  - Make sure called test scripts can be executed (reported by Tomas Budai)
+  - Manpage fix: not just identical, but compatible type of sets can be
+    swapped (Reported by Quentin Armitage, netfilter bugzilla id #843)
+  - Fix error message typo (Reported by Quentin Armitage, netfilter bugzilla
+    id #843)
+  - Parse option "family" first, because other options may depend on it
+    (Bug reported by Quentin Armitage, closed netfilter bugzilla #841)
+  - Change 2nd parameter type of ipset_parse_elem (Quentin Armitage)
+  - Report broken netlink messages in debug mode
+  - Fix hyphen used as minus sign in manpage (Neutron Soutmun)
+  - libipset.pc must be installed via 'make install' (Eric Leblond)
+
+6.19
+  - Check at modules_install whether depmod ignores the extra subdir
+    (reported by Husnu Demir and tian fang)
+  - The utils are updated from their sources
+  - Manpage typing error correction (reported by Husnu Demir)
+  - Update testsuite as the trailing space was eliminated at listings
+  - Add sparse checking support to userspace
+  - Improve XML output: add element tag and root element (suggested by Lucas
+    Hamie)
+  - Manpage updates
+  - Add new testsuite entries to verify counters and the new type
+    implementation
+  - Introduce the new set type revisions with counter support
+  - Support counters in the ipset library
+  - The uapi include split in the package itself
+
+6.18
+ - Kernel part bugfix release
+
+6.17
+ - Fix revision printing in XML mode (reported by Mart Frauenlob)
+ - Correct "Suspicious condition (assignment + comparison)" (Thomas Jarosch)
+ - Fix error path when protocol number is used with port range
+ - Interactive mode error after syntax error (reported by Mart Frauenlob)
+ - The ipset_bash_completion tool is added
+ - The ipset_list tool is added
+
+6.16
+ - Remove all modules before testing resize
+ - build: support for Linux 3.7 UAPI (Jan Engelhardt)
+
+6.15
+ - Fix interactive mode (Fredrik Eriksson)
+ - Use gethostbyname2 instead of getaddrinfo
+ - Make tests/check_cidrs.sh script executable
+ - Add tests to check completely ranges with hash types
+ - Make easier to apply the netlink.patch
+ - Support protocol numbers as well, not only protocol names
+ - Add (back) the debug flag to configure
+ - Add simple test to check cidr book-keeping
+
+6.14
+ - Support to match elements marked with "nomatch" in hash:*net* sets
+ - Coding style fixes
+ - The set type revision number is added to the header part of listing
+ - Help prints list type revision and terse description
+ - Add /0 network support to hash:net,iface type
+ - Fix errors when compiling in debug mode (Krunal Patel)
+ - Make sure IPPROTO_UDPLITE is defined
+ - build: restore -version-info (Jan Engelhardt)
+
+6.13
+ - Explain in more detail src/dst for hash:net,iface
+ - ipset help lists set types multiple times, fixed 
+   (reported by Mr Dash Four)
+ - The commandline parser was too permissive, make it more strict
+ - Allow saving to/restoring from a file without shell redirection
+ - Fix typo of word "unkown" to "unknown" (Neutron Soutmun)
+
+6.12.1
+ - Enable silent (kernel style) compile messages
+ - Fix build failed on --disable-dependency-tracking
+   (Neutron Soutmun)
+ - Add tarball target to Makefile
+
+6.12
+ - Cleanup generated files by make tidy
+ - Add more CC warning option to debug mode
+ - Report syntax error messages immediately
+ - Suppress false syntax error messages
+ - Add configure summary for the ipset userspace tool
+ - Add dynamic module support to ipset userspace tool
+   (Neutron Soutmun)
+ - Move ipset_port_usage() into lib (Neutron Soutmun)
+ - Fix invalid assignment to const void pointer (bug reported by Seblu)
+ - Remove unused variables (warnings fixed)
+ - Fix timeout value overflow bug at large timeout parameters
+   (bug reported by Andreas Herz)
+ - Improve ipset help text messages (Mr Dash Four)
+
+6.11
+ - Support hostnames and service names with dash
+ - Exceptions support added to hash:*net* types
+ - Log warning when a hash type of set gets full
+ - Set types moved into libipset library
+ - Library map file added in order to support library versioning
+ - doc: Linux 2.6.39 already has the defs (Jan Engelhardt)
+ - build: install libipset in the right place (Jan Engelhardt)
+ - Provide a pkgconfig file (Jan Engelhardt)
+ - build: make distcheck work and use POSIX mode for tarball generation
+   (Jan Engelhardt)
+ - build: install libipset/linux_ip_set_list.h (Jan Engelhardt)
+ - build: include libipset/nfproto.h (Jan Engelhardt)
+ - build: process include/libipset/ (Jan Engelhardt)
+ - build: use AC_CONFIG_AUX_DIR and stash away tools (Jan Engelhardt)
+ - Update .gitignore (Jan Engelhardt)
+
+6.10
+ - Tests added to check ICMP/ICMPv6 type/code parsing
+ - ICMP/ICMPv6 type/code parser bug fixed (bug reported by Sabitov)
+ - ipset: fix lookup of tcp port names (Stephen Hemminger)
+ - Optionally disable building the kernel module (Mathieu Bridon)
+ - Make tidy complete
+
+6.9
+ - build: move ipset_errcode into library (Jan Engelhardt)
+ - build: abort autogen on subcommand failure (Jan Engelhardt)
+ - ipset: use NFPROTO_ constants (Jan Engelhardt)
+ - Propagate "expose userspace-relevant parts in ip_set.h" to ipset source
+
+6.8
+ - Update the manpage and document the limits in hash:net,iface.
+ - README file corrections from Richard Lucassen
+
+6.7
+ - Whitespace and coding fixes, detected by checkpatch.pl
+ - hash:net,iface type introduced
+ - hash:* tests may seem to fail due to the too wide grep pattern, fix them
+ - Remove iptree tests and compatibility element parsing
+ - hash:net test may seem to fail due to the too wide grep pattern, fix it
+ - Fix long time uncovered bug at adding string attributes to the netlink
+   messages
+ - Fix warnings reported by valgrind
+ - Remove supporting set types iptree and iptreemap
+
+6.6
+ - Restore with bitmap:port and list:set types did not work, fixed
+ - Accept "\r\n" terminated COMMIT command in restore files
+ - Fix the message sequence number book-keeping
+ - Protocol-level debugging support added
+ - hash:net stress test in range notation added
+ - ipset_mnl_query: in debug mode print the errno returned by the cb
+   function
+ - Accept "\r\n" terminated lines in restore files
+ - Remove outdated checking of IPv6 support from configure.ac
+
+6.5
+ - Support range for IPv4 at adding/deleting elements for hash:*net* types
+ - Disable type revisions which are not supported both by the kernel and
+   ipset
+ - Update ipset help text to reflect SCTP and UDPLITE support
+ - Ignore -n flag (list just setnames) when sets are to be saved
+
+6.4
+ - Get rid of the trailing empty line at listing sets
+ - Fix XML listing, remove broken unused "elements" tag
+ - Support listing setnames and headers too
+ - Sorting is dependent on the locale settings, use LC_ALL=C
+ - Use unified diff output in tests
+
+6.3
+ - Testsuite changes: keep temporary files
+ - bitmap:ip,mac type requires "src" for MAC: manpage is updated to reflect
+   the change
+ - Testsuite checks added (SET target and dir parameter checks)
+
+6.2
+ - Manpage update
+
+6.1
+ - Manpage was not installed (reported by Mark A. Ziesemer)
+ - SCTP, UDPLITE support to the hash:*port* types added
+
+6.0
+ - Print protocol version together with ipset version
+ - Testsuite compatibility with debugging enabled
+ - Allow "new" as a commad alias to "create"
+ - ipset: improve command argument parsing (Holger Eitzenberger)
+ - ipset: avoid the unnecessary argv[] loop (Holger Eitzenberger)
+ - ipset: pass ipset_arg argument pointer (Holger Eitzenberger)
+ - Separate ipset errnos completely from system ones and bump protocol
+   version
+ - Fix the spelling error fix :-) (Ferenc Wagner)
+ - Resolving IP addresses did not work at listing/saving sets, fixed
+ - ipset: fix spelling error (Holger Eitzenberger)
+ - ipset: fix the Netlink sequence number (Holger Eitzenberger)
+ - ipset: turn Set name[] into a const pointer (Holger Eitzenberger)
+ - Check ICMP and ICMPv6 with the set match and target in the testsuite
+ - Avoid possible syntax clashing at saving hostnames
+
+5.3
+ - Set the non-debug compiling the default
+ - Testsuite fix of ospf replaced with vrrp.
+ - Fix build with NDEBUG defined (Holger Eitzenberger)
+ - Do session initialization once (Holger Eitzenberger)
+ - Make IPv4 and IPv6 address handling similar (Holger Eitzenberger)
+ - Show correct line numbers in restore output for parser errors
+   (Holger Eitzenberger)
+ - Replace ospf with vrrp in the testsuite
+ - Remove autogenerated files (Jan Engelhardt)
+ - Use only AC_CANONICAL_HOST (Jan Engelhardt)
+
+5.2
+ - Handle internal printing errors
+ - Use cast to void * instead of memcpy as Sparc workaround at sockaddr_XXX
+   (suggested by Jan Engelhardt)
+ - Listing/saving of large sets could produce broken listing, fixed.
+ - Support libtool < 2.2
+
+5.1
+ - Test cases for IPv6 restore and more complex restore sessions added
+ - Restore mode did not work for IPv6, fixed (reported by Elie Rosenblum)
+ - libipset: static annotations (Jan Engelhardt)
+ - libipset: const annotations (Jan Engelhardt)
+ - libipset: remove redundant casts (Jan Engelhardt)
+ - libipset: remove redundant indirection via union name (Jan Engelhardt) 
+ - libipset: ipset_strncpy is really a strlcpy-type operation
+   (Jan Engelhardt)
+ - Prevent calling Makefile directly in the kernel/ subdirectory
+ - Put back the Sparc specific workaround at getaddrinfo
+   (reported by Jan Engelhardt)
+ - Check old system kernel header files
+ - Check from `configure` that the kernel source is patched with
+   netlink.patch
+ - Use configure to detect compiler warning flags
+ - Try to solve PKG_CHECK_MODULES issue (reported by Rob Sterenborg)
+ - Fix incorrect comparison in check_allowed (reported by Jan Engelhardt)
+
+5.0
+ - New main branch - ipset completely rewritten
+
+4.2
+  - Checking null entries when listing/saving hash types of sets
+    deleted because it's unnecessary and can mask possible errors.
+
+4.1
+  - Manpage fixes and corrections (Jan Engelhardt)
+
+4.0
+  - New protocol is introduced to handle aligment issues properly
+    (bug reported by Georg Chini)
+  - Binding support is removed
+
+3.1
+  - Correct format specifiers and change %i to %d (Jan Engelhardt)
+
+3.0
+  - New kernel-userspace protocol release
+  - Bigendian and 64/32bit fixes (Stefan Gula, bugzilla id 593)
+  - tests/runtests.sh changed to support old bash shells
+
+2.5.0
+  - On parisc architecture cast increases required aligment (bugzilla
+    id 582), fixed.
+  - Respect LDFLAGS settings at compile time (Peter Volkov).
+
+2.4.8
+  - In order to disable the extra warning flags, NO_EXTRA_WARN_FLAGS
+    variable added to userspace Makefile
+
+2.4.5
+  - Some compiler warning options are too aggressive and
+    therefore disabled.
+
+2.4.4
+  - Premature checking prevents to add valid elements to hash
+    types, fixed (bug reported by JC Janos).
+  - Local variable shadows another variable, fixed (reported
+    by Jan Engelhardt).
+  - More compiler warning options added and warnings fixed.
+
+2.4.3
+  - Include file <limits.h> was missing from userspace set type
+    modules, reported by Krzysztof Oledzki and Sven Wegener.
+
+2.4.2
+  - Only kernel part changes, see kernel/ChangeLog
+
+2.4.1
+  - macipmap type reported misleading deprecated separator
+    tokens and printed the old one at listing set elements
+    (bug reported by Krzysztof Oledzki)
+  - Warn only once about deprecated separator tokens in
+    restore mode.
+
+2.4
+  - Added KBUILD_OUTPUT support (Sven Wegener)
+  - Fix memory leak in ipset_iptreemap (Sven Wegener)
+  - Fix multiple compiler warnings (Sven Wegener)
+  - ipportiphash, ipportnethash and setlist types added
+  - binding marked as deprecated functionality
+  - element separator token changed to ',' in anticipating
+    IPv6 addresses, old separator tokens are still supported
+  - unnecessary includes removed
+  - ipset does not try to resolve IP addresses when listing
+    the content of sets (default changed)
+  - manpage updated
+  - ChangeLog forked for kernel part
+
+2.3.3a
+ - Fix to compile ipset with 2.4.26.x tree statically (bug reported by
+   G.W. Haywood)
+
+2.3.3
+ - compatibility for the 2.6.x kernel tree improved and compiler warnings
+   fixed (Jan Engelhardt)
+ - compatibility fixes for the 2.4.36.x kernel tree added
+
+2.3.2
+ - including limits.h for UINT_MAX is required with glibc-2.8 (pud)
+ - needless cast from and to void pointers cleanups in iptreemap (Sven Wegener)
+ - Initial ipset release with kernel modules included.
+
+2.3.1
+ - segfault on --unbind :all: :all: fixed (reported by bugzilla,
+   report and patch sent by Tom Eastep)
+ - User input parameters are sanitized everywhere
+ - Initial testsuite added and 'test' target to the Makefile
+   added: few bugs discovered and fixed
+   - typo in macipmap type prevented to use max size set of this type
+   - *map types are made sure to allow and use max size of sets
+
+2.3.0
+ - jiffies rollover bug in iptree type fixed (reported by Lukasz Nierycho
+   and others)
+ - endiannes bug in iptree type fixed (spotted by Jan Engelhardt)
+ - iptreemap type added (submitted by Sven Wegener)  
+ - 2.6.22/23 compatibility fixes (Jeremy Jacque)
+ - typo fixes in ipset (Neville D)
+ - separator changed to ':' from '%' (old one still supported) in ipset
+
+2.2.9a
+ - use correct type (socklen_t) for getsockopt (H. Nakano)
+ - incorrect return codes fixed (Tomasz Lemiech, Alexey Bortnikov)
+ - kernel header dependency removed (asm/bitops.h)
+ - ipset now tries to load in the ip_set kernel module if the protocol
+   is not available
+
+2.2.9
+ - 'ipset -N' did not generate proper return code
+ - 'limit' module parameter added to the kernel modules of the
+   iphash, ipporthash, nethash and iptree type of sets so that
+   the maximal number of elements can now be limited
+ - zero valued entries (port 0 or IP address 0.0.0.0) were
+   detected as members of the hash/tree kind of sets
+   (reported by Andrew Kraslavsky)
+ - list and save operations used the external identifier
+   of the sets for the bindings instead of the internal one
+   (reported by Amin Azez)
+
+2.2.8
+ - Nasty off-by-one bug fixed in iptree type of sets
+   (bug reported by Pablo Sole)
+
+2.2.7
+ All patches were submitted by Jones Desougi
+ - missing or confusing error message fixes for ipporthash
+ - minor correction in debugging in nethash
+ - copy-paste bug in kernel set types at memory allocation
+   checking fixed
+ - unified memory allocations in ipset
+
+2.2.6
+ - memory allocation in iptree is changed to GFP_ATOMIC because
+   we hold a lock (bug reported by Radek Hladik)
+ - compatibility fix: __nocast is not defined in all 2.6 branches
+   (problem reported by Ming-Ching Tiew)
+ - manpage corrections
+
+2.2.5
+ - garbage collector of iptree type of sets is fixed: flushing
+   sets/removing kernel module could corrupt the timer
+ - new ipporthash type added
+ - manpage fixes and corrections
+
+2.2.4
+ - half-fixed memory allocation bug in iphash and nethash finally
+   completely fixed (bug reported by Nikolai Malykh)
+ - restrictions to enter zero-valued entries into all non-hash type sets
+   were removed
+ - Too strict check on the set size of ipmap type was corrected 
+
+2.2.3
+ - memory allocation bug in iphash and nethash in connection with the SET
+   target was fixed (bug reported by Nikolai Malykh)
+ - lockhelp.h was removed from the 2.6.13 kernel tree, ip_set.c is
+   updated accordingly (Cardoso Didier, Samir Bellabes)
+ - manpage is updated to clearly state the command order in restore mode
+
+2.2.2
+ - Jiffies rollover bug in ip_set_iptree reported and fixed by Rob Nielsen
+ - Compiler warning in the non-SMP case fixed (Marcus Sundberg)
+ - slab cache names shrunk in order to be compatible with 2.4.* (Marcus
+   Sundberg)
+
+2.2.1
+ - Magic number in ip_set_nethash.h was mistyped (bug reported by Rob
+   Carlson)
+ - ipset can now test IP addresses in nethash type of sets (i.e. addresses
+   in netblocks added to the set)
+
+2.2.0
+ - Locking bug in ip_set_nethash.c (Clifford Wolf and Rob Carlson)
+ - Makefile contained an unnecessary variable in IPSET_LIB_DIR (Clifford
+   Wolf)
+ - Safety checkings of restore in ipset was incomplete (Robin H. Johnson)
+ - More careful resizing by avoiding locking completely
+ - stdin stored internally in a temporary file, so we can feed 'ipset -R'
+   from a pipe
+ - iptree maptype added
+
+2.1
+ - Lock debugging used with debugless lock definiton (Piotr Chytla and
+   others).
+ - Bindings were not properly filled out at listing (kernel)
+ - When listing sets from kernel, id was not added to the set structure
+   (ipset)
+ - nethash maptype added
+ - ipset manpage corrections (macipmap)
+
+2.0.1
+ - Missing -fPIC in Makefile (Robert Iakobashvili)
+ - Cut'n'paste bug at saving macipmap types (Vincent Bernat).
+ - Bug in printing/saving SET targets reported and fixed by Michal
+   Pokrywka
+
+2.0
+ - Chaining of sets are changed: child sets replaced by bindings
+ - Kernel-userspace communication reorganized to minimize the number
+   of syscalls
+ - Save and restore functionality implemented
+ - iphash type reworked: clashing resolved by double-hashing and by
+   dynamically growing the set
+
+1.0
+ - Renamed to ipset
+ - Rewritten to support child pools
+ - portmap, iphash pool support added
+ - too much other mods here and there to list...
+

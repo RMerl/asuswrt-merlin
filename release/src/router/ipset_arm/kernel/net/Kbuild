@@ -1,0 +1,9 @@
+NOSTDINC_FLAGS += -I$(KDIR)/include
+EXTRA_CFLAGS := -DCONFIG_IP_SET_MAX=$(IP_SET_MAX)
+
+obj-m += netfilter/
+obj-m += sched/
+
+# It's for me...
+incdirs := $(M) $(KDIR)/include/linux/netfilter $(KDIR)/include/linux/netfilter/ipset
+clean-files := $(foreach dir,$(incdirs),$(wildcard $(dir)/*~))

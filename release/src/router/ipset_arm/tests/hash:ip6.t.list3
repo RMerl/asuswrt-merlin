@@ -1,0 +1,10 @@
+Name: test
+Type: hash:ip
+Header: family inet6 hashsize 128 maxelem 65536 netmask 64 timeout x
+Size in memory: 704
+References: 0
+Number of entries: 3
+Members:
+192:168:68:: timeout x
+200:100:10:: timeout x
+2:: timeout x
