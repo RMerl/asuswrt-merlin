@@ -1,0 +1,50 @@
+libnfnetlink - userspace library for handling of netfilter netlink messages
+(C) 2001-2005 Netfilter Core Team <coreteam@netfilter.org>
+===========================================================================
+
+What is nfnetlink?
+
+nfnetlink is a netlink(7) based kernel/userspace transport layer.  It
+provides a unified kernel/userspace interface for the various netfilter
+subsystems, such as connection tracking, logging and queueing.  
+
+
+What is libnfnetlink?
+
+libnfnetlink is a userspace library that provides some low-level
+nfnetlink handling functions.  It is used as a foundation for other, netfilter
+subsystem specific libraries such as libnfnetlink_conntrack, libnfnetlink_log
+and libnfnetlink_queue.
+
+
+Prerequirements for libnfnetlink
+
+You will need kernel headers from a kernel that has nfnetlink support.  The
+first official kernel release to include nfnetlink support is 2.6.14.  
+You can specify the location of your kernel sources using the "--with-kernel="
+configure option.
+
+
+Where can I find documentation?
+
+At the moment, you will have to RTFS.  Sorry, but we have barely enough
+manpower to keep development ongoing.  If you want to conribute documentation,
+please contact us.
+
+
+It has bugs.  Where do I report them?
+
+Please report all libnfnetlink bugs to https://bugzilla.netfilter.org/, using
+the "libnfnetlink" Product.
+
+
+License
+
+This library is released under GPLv2+.
+
+
+Where do I get support?
+
+The netfilter@lists.netfilter.org and netfilter-devel@lists.netfilter.org
+mailinglists server as support forum.
+
