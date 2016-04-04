@@ -755,7 +755,15 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	//fprintf(fp2,"ifconfig %s up\n",wif);
 	fprintf(fp2,"iwpriv %s hide_ssid %d\n",wif,nvram_get_int(strcat_r(prefix, "closed", tmp)));
 	if (!nvram_get_int(strcat_r(prefix, "closed", tmp))) {
-		fprintf(fp2, "iwconfig %s essid \"%s\"\n", wif, nvram_get(strcat_r(prefix, "ssid", tmp)));
+		int n;
+		char nv[33], buf[128];
+
+		snprintf(nv, sizeof(nv), "%s", nvram_safe_get(strcat_r(prefix, "ssid",tmp)));
+		//replace SSID each char to "\char"
+		memset(buf, 0x0, sizeof(buf));
+		for (n = 0; n < strlen(nv); n++)
+			sprintf(buf, "%s\\%c", buf, nv[n]);
+		fprintf(fp2, "iwconfig %s essid %s\n", wif, buf);
 	}
 	
 	if(subnet==0 && rep_mode==0 )
@@ -888,6 +896,11 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp),"radius"))
 	   	{
 		   	//wep
+			if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "shared"))
+				fprintf(fp2, "iwpriv %s authmode 2\n", wif);
+			else
+				fprintf(fp2, "iwpriv %s authmode 1\n", wif);
+
 		   	str = nvram_safe_get(strcat_r(prefix_mssid, "key", temp));
 			sprintf(tmpstr, "%skey%s", prefix_mssid, str);
 			fprintf(fp2,"iwconfig %s key [%s]\n",wif,str); //key index
@@ -974,7 +987,7 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		{   
 			char nv[65];
 
-			strcpy(nv, nvram_safe_get(strcat_r(prefix_mssid, "wpa_psk",temp)));
+			snprintf(nv, sizeof(nv), "%s", nvram_safe_get(strcat_r(prefix_mssid, "wpa_psk",temp)));
 			if (strlen(nv) == 64)
 				sprintf(tmpstr, "wpa_psk=%s\n", nv);
 			else
@@ -1049,10 +1062,14 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		{
 			memset(CC, 0, sizeof(CC));
 	        	FRead(CC, OFFSET_COUNTRY_CODE, 2);
-	                if(!strcmp(CC,"TW"))//old NCC
-				fprintf(fp3, "wifitool %s block_acs_channel 52,56,60,64\n",wif);
-			//else if(!strcmp(CC,"AA"))//new NCC
-			//	fprintf(fp3, "wifitool %s block_acs_channel 36,40,44,48\n",wif);
+			//for TW, acs but skip 5G band1 & band2
+	                if(!strcmp(CC,"TW")
+#if defined(RTCONFIG_TCODE)
+			  || !strncmp(nvram_safe_get("territory_code"), "TW", 2) 
+
+#endif
+			)
+				fprintf(fp3, "wifitool %s block_acs_channel 36,40,44,48,52,56,60,64\n",wif);
 		}	
 #endif		
 	   	fprintf(fp3, "iwconfig %s channel auto\n",wif);

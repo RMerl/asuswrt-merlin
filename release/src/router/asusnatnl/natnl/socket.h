@@ -31,8 +31,10 @@
 #include <ws2tcpip.h>
 #endif /*WIN32*/
 
+#include <natnl_lib.h>
 #include <string.h>
 #include <common.h>
+#include <pjlib.h>
 
 #define BACKLOG 10
 #define ADDRSTRLEN (INET6_ADDRSTRLEN + 9)
@@ -46,17 +48,23 @@
 #define SIN6(sa) ((struct sockaddr_in6 *)sa)
 #define PADDR(a) ((struct sockaddr *)a)
 
-typedef struct socket {
+typedef struct socket_s {         // dean : Rename it from socket tot socket_s due to name conflicts with libusrsctp.
     int fd;                       /* Socket file descriptor to send/recv on */
     int type;                     /* SOCK_STREAM or SOCK_DGRAM */
     struct sockaddr_storage addr; /* IP and port */
 	socklen_t addr_len;           /* Length of sockaddr type */
 	uint16_t lport;               /* The port which local client should be connected. */
 	uint16_t rport;               /* The port which remote client should connect to. */
-	uint8_t qos_priority;         /* TheQoS priority. */
+	char rip[MAX_IP_LEN];         /* The remote device ip address string */
+	uint8_t qos_priority;         /* The QoS priority. */
+	uint8_t disable_flow_control; /* The flag for disable flow control. */
+	uint16_t speed_limit;         /* The speed limit in KBytes/s unit. */
 	int inst_id;                  /* The instance id of SDK. */
 	int call_id;                  /* The identity of tunnel. */
 	int client_id;                /* The identity of session. */
+	char im_dest_deviceid[128];   /* The device_id of destination for sending message. */
+	int im_timeout_sec;			  /* The timeout value in second unit for sending message. */
+	int parent_client_id;         /* The parent client id. Used for RTSP udp session. */
 } socket_t;
 
 #define SOCK_FD(s) ((s)->fd)
@@ -66,8 +74,9 @@ typedef struct socket {
 
 // DEAN modified
 /* Add rport parameter */
-int sock_create(socket_t **sock, char *host, char *port, char *rport, int ipver, int sock_type,
-                      int is_serv, int conn, uint8_t qos_priority, int inst_id, int call_id);
+int sock_create(socket_t **sock, char *host, char *port, char *rip, char *rport, int ipver, int sock_type,
+                      int is_serv, int conn, uint8_t qos_priority, uint8_t disable_flow_control, 
+					  uint16_t speed_limit, int inst_id, int call_id);
 socket_t *sock_copy(socket_t *sock);
 int sock_connect(socket_t *sock, int is_serv);
 socket_t *sock_accept(socket_t *serv_sock);
@@ -81,6 +90,7 @@ char *sock_get_str(socket_t *s, char *buf, int len);
 char *sock_get_addrstr(socket_t *s, char *buf, int len);
 uint16_t sock_get_port(socket_t *s);
 int sock_recv(socket_t *sock, socket_t *from, char *data, int len);
+int sock_recv_whole_data(socket_t *sock, socket_t *from, char *data, int len);
 int sock_send(socket_t *to, char *data, int len);
 int isipaddr(char *ip, int ipver);
 

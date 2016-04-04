@@ -42,6 +42,11 @@
 #define NFC_IP_CONE_NAT		0x0800
 #define NFC_IP_CONE_NAT_ALTERED	0x1000
 
+/* LFP */
+#ifdef CONFIG_IP_NF_LFP
+#define NFC_LFP_ENABLE		(1<<30)
+#endif /* CONFIG_IP_NF_LFP */
+
 /* IP Hooks */
 /* After promisc drops, checksum checks. */
 #define NF_IP_PRE_ROUTING	0

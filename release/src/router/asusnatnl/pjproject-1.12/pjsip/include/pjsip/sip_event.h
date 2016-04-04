@@ -96,7 +96,7 @@ struct pjsip_event
         /** Timer event. */
         struct
         {
-            pj_timer_entry *entry;      /**< The timer entry.           */
+            struct pj_timer_entry *entry;      /**< The timer entry.           */
         } timer;
 
         /** Transaction state has changed event. */
@@ -106,7 +106,7 @@ struct pjsip_event
             {
                 pjsip_rx_data   *rdata; /**< The incoming message.      */
                 pjsip_tx_data   *tdata; /**< The outgoing message.      */
-                pj_timer_entry  *timer; /**< The timer.                 */
+                struct pj_timer_entry  *timer; /**< The timer.                 */
                 pj_status_t      status;/**< Transport error status.    */
                 void            *data;  /**< Generic data.              */
             } src;

@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Check that LD_PRELOAD'ing libumem works. This is how it can be used
+# to replace malloc for any program.
+#
+
+FILE=Makefile.am
+TMPLOC=`mktemp -d /tmp/umem_test4.XXXXXX`
+trap 'rm -rf $TMPLOC' 1 2 15
+
+LD_PRELOAD=.libs/libumem.so /usr/bin/ldd /bin/ls >$TMPLOC/log 2>&1
+
+# Check we got the expected result
+ret=0
+grep -E '(symbol lookup error|undefined symbol)' $TMPLOC/log >/dev/null 2>&1
+if [ "$?" = "0" ]; then
+  # Matched = failed to load up libumem
+  ret=1
+fi
+
+rm -rf $TMPLOC
+
+exit $ret

@@ -1,0 +1,10 @@
+#! /bin/sh
+
+make clean && make \
+	CC=mipsel-linux-gcc \
+	C++=mipsel-linux-g++ \
+	AR=mipsel-linux-ar \
+	RANLIB=mipsel-linux-ranlib \
+	LD=mipsel-linux-ld \
+	os=LINUX \
+	arch=MIPS

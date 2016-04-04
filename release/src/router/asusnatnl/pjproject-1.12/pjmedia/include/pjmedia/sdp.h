@@ -424,7 +424,7 @@ struct pjmedia_sdp_media
     /** Media descriptor line ("m=" line) */
     struct
     {
-	pj_str_t    media;		/**< Media type ("audio", "video")  */
+	pj_str_t    media;		/**< Media type ("audio", "video", "application")  dean : application is WebRTC data channel*/ 
 	pj_uint16_t port;		/**< Port number.		    */
 	unsigned    port_count;		/**< Port count, used only when >2  */
 	pj_str_t    transport;		/**< Transport ("RTP/AVP")	    */

@@ -359,7 +359,7 @@ elif [ "$1" == "signal" ]; then
 	echo "$signal"
 	echo "done."
 elif [ "$1" == "fullsignal" ]; then
-	if [ "$ret" -eq "1" ]; then
+	if [ "$is_gobi" -eq "1" ]; then
 		fullstr=`$at_lock modem_at.sh '+CGCELLI' |grep "+CGCELLI:" |awk '{FS="CGCELLI:"; print $2}' 2>/dev/null`
 		if [ "$fullstr" == "" ]; then
 			echo "Fail to get the full signal information from $modem_act_node."
@@ -1072,12 +1072,26 @@ elif [ "$1" == "number" ]; then
 	at_ret=`$at_lock modem_at.sh '+CNUM' 2>/dev/null`
 	ret=`echo "$at_ret" |grep "^[0-9+].*$" 2>/dev/null`
 	if [ "$ret" == "" ]; then
-		echo "Fail to get the Phone number from $modem_act_node."
-		exit 46
+		echo "47:Fail to get the Phone number from $modem_act_node."
+		exit 47
 	fi
 
 	nvram set usb_modem_act_num=$ret
 
+	echo "done."
+elif [ "$1" == "smsc" ]; then
+	echo "Getting SMS centre..."
+	at_ret=`$at_lock modem_at.sh '+CSCA?' |grep "+CSCA: " 2>/dev/null`
+	if [ "$at_ret" == "" ]; then
+		echo "48:Fail to get the SMSC from $modem_act_node."
+		exit 48
+	fi
+
+	smsc=`echo -n "$at_ret" |awk '{FS="\""; print $2}' 2>/dev/null`
+
+	nvram set usb_modem_act_smsc=$smsc
+
+	echo "smsc=$smsc."
 	echo "done."
 fi
 

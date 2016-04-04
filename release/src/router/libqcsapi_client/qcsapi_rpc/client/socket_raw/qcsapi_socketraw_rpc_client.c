@@ -45,6 +45,7 @@ EH0*/
 #include <qcsapi_rpc/client/qcsapi_rpc_client.h>
 #include <qcsapi_rpc/generated/qcsapi_rpc.h>
 #include <qcsapi_rpc_common/common/rpc_raw.h>
+#include <qcsapi_rpc_common/client/qftc.h>
 #include <unistd.h>
 
 int main(int argc, char **argv)
@@ -82,6 +83,14 @@ int main(int argc, char **argv)
 	argv[2] = argv[0];
 	ret = qcsapi_main(&output, argc - 2, &argv[2]);
 	clnt_destroy(clnt);
+
+	if (!ret && !strcmp(argv[3], "send_file")) {
+		if (qftc_start(argv[4], argv[1], dst_mac) < 0) {
+			printf("send_file command failed\n");
+		} else {
+			printf("complete\n");
+		}
+	}
 
 	return ret;
 }

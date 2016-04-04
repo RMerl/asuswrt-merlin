@@ -821,11 +821,12 @@ void generate_switch_para(void)
 #ifdef RTCONFIG_DUALWAN
 			if (cfg != SWCFG_BRIDGE) {
 				int wan1cfg = nvram_get_int("wans_lanport");
+				int unit;
+				char nv[16];
+				int vid;
 
 				nvram_unset("vlan3ports");
 				nvram_unset("vlan3hwname");
-				nvram_unset("vlan4ports");
-				nvram_unset("vlan4hwname");
 
 				switch_gen_config(wan, ports, wancfg, 1, "t");
 				nvram_set("vlan2ports", wan);
@@ -855,6 +856,14 @@ void generate_switch_para(void)
 					}
 
 					switch_gen_config(wan, ports, wan1cfg, 1, "t");
+					if(nvram_match("ewan_dot1q", "1"))
+						vid = nvram_get_int("ewan_vid");
+					else
+						vid = 4;
+					snprintf(nv, sizeof(nv), "vlan%dports", vid);
+					nvram_set(nv, wan);
+					snprintf(nv, sizeof(nv), "vlan%dhwname", vid);
+					nvram_set(nv, "et0");
 				}
 				else {
 					switch_gen_config(lan, ports, cfg, 0, "*");
@@ -863,26 +872,22 @@ void generate_switch_para(void)
 					nvram_set("lanports", lan);
 				}
 
-				int unit;
-				char prefix[8], nvram_ports[16];
-
 				for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
-					memset(prefix, 0, 8);
-					sprintf(prefix, "%d", unit);
-
-					memset(nvram_ports, 0, 16);
-					sprintf(nvram_ports, "wan%sports", (unit == WAN_UNIT_FIRST)?"":prefix);
+					if(unit == WAN_UNIT_FIRST)
+						snprintf(nv, sizeof(nv), "wanports");
+					else
+						snprintf(nv, sizeof(nv), "wan%dports", unit);
 
 					if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN) {
 						switch_gen_config(wan, ports, wancfg, 1, NULL);
-						nvram_set(nvram_ports, wan);
+						nvram_set(nv, wan);
 					}
 					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN) {
 						switch_gen_config(wan, ports, wan1cfg, 1, NULL);
-						nvram_set(nvram_ports, wan);
+						nvram_set(nv, wan);
 					}
 					else
-						nvram_unset(nvram_ports);
+						nvram_unset(nv);
 				}
 			}
 			else {
@@ -1126,13 +1131,8 @@ void generate_switch_para(void)
 			/* WAN L1 L2 L3 L4 (L5 L6 L7 L8) CPU */	/*vision: WAN L1 L2 L3 L4 */
 			int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 4, 5, 7 };
 #else	// RTCONFIG_EXT_RTL8365MB
-#ifdef RTCONFIG_EXT_RTL8370MB
-			/* WAN L1 L2 L3 L4 CPU */		/*vision: WAN L1 L2 L3 L4 */
-			int ports[SWPORT_COUNT] = { 0, 4, 3, 2, 1, 7 };
-#else
 			/* WAN L1 L2 L3 L4 CPU */		/*vision: WAN L1 L2 L3 L4 */
 			int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 4, 7 };
-#endif
 #endif
 			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
 			wan_phyid = ports[0];	// record the phy num of the wan port on the case
@@ -3315,10 +3315,19 @@ void generate_wl_para(int unit, int subunit)
 		}
 
 #ifdef RTCONFIG_MUMIMO
+#ifdef RTCONFIG_PROXYSTA
+		/* mu_feature is not enabled for client modes. */
+        	if (is_psta(unit) || is_psr(unit)) {
+			nvram_set(strcat_r(prefix, "mu_features", tmp), "0");
+		} else {
+#endif
 		if (nvram_match(strcat_r(prefix, "mumimo", tmp), "1"))
 			nvram_set(strcat_r(prefix, "mu_features", tmp), "0x8000");
 		else
 			nvram_set(strcat_r(prefix, "mu_features", tmp), "0");
+#ifdef RTCONFIG_PROXYSTA
+		}
+#endif
 #endif
 
 #ifdef RTCONFIG_BCMARM
@@ -3781,6 +3790,34 @@ set_wan_tag(char *interface) {
 			eval("et", "robowr", "0x34", "0x8", "0x0100e014");	/*0000|0000|0101*/ /*Just forward without untag*/
 			eval("et", "robowr", "0x34", "0x6", "0x300e");
 		}
+                else if (nvram_match("switch_wantag", "meo")) {
+                        /* vlan0ports= 0 1 2 5 */
+                        eval("et", "robowr", "0x34", "0x8", "0x010001e7");
+                        eval("et", "robowr", "0x34", "0x6", "0x3000");
+                        /* vlan12ports= 3 4 5 */				/* untag||forward */
+                        eval("et", "robowr", "0x34", "0x8", "0x0100c038");      /*0000|0011|1000*/ /*Just forward without untag*/
+                        eval("et", "robowr", "0x34", "0x6", "0x300c");
+		}
+                else if (nvram_match("switch_wantag", "vodafone")) {
+                        /* vlan0ports= 0 1 2 5t */
+                        eval("et", "robowr", "0x34", "0x8", "0x010000E3");
+                        eval("et", "robowr", "0x34", "0x6", "0x3000");
+                        /* vlan100ports= 3t 4t 5t */
+                        eval("et", "robowr", "0x34", "0x8", "0x01064038");
+                        eval("et", "robowr", "0x34", "0x6", "0x3064");
+                        /* vlan101ports= 3t 4t */
+                        eval("et", "robowr", "0x34", "0x8", "0x01065018");
+                        eval("et", "robowr", "0x34", "0x6", "0x3065");
+                        /* vlan105ports= 2 3t 4t */
+                        eval("et", "robowr", "0x34", "0x8", "0x0106961C");
+                        eval("et", "robowr", "0x34", "0x6", "0x3069");
+
+                        /* WAN port: tag=100 & prio=1 */
+                        eval("et", "robowr", "0x34", "0x10", "0x2064");
+                        /* LAN4: tag=105 & prio=1 */
+                        eval("et", "robowr", "0x34", "0x16", "0x2069");
+                }
+
 		else {	/* manual */
 							/* WAN L1 L2 L3 L4 CPU */
 			const int ports[SWPORT_COUNT] = { 4, 0, 1, 2, 3, 5 };
@@ -4460,6 +4497,7 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
 
 	case MODEL_RTAC5300:
 	case MODEL_RTAC5300R:
+				/* If enable gmac3, CPU port is 8 */
 #ifdef RTCONFIG_RGMII_BRCM5301X
 				/* P0  P1 P2 P3 P4 P5 		P7 */
 				/* WAN L1 L2 L3 L4 L5 L6 L7 L8 	CPU*/
@@ -4497,29 +4535,36 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
                                 eval("et", "robowr", "0x34", "0x16", tag_register);
 
                                 char vlan_cmd[64];
+                                if (gmac3_enable) {
+                                        sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 5u 7 8t\"");
+                                        system(vlan_cmd);
+                                        sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 8t\"");
+                                        system(vlan_cmd);
+                                        sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
+                                        system(vlan_cmd);
+                                        sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 3 4t\"");
+                                        system(vlan_cmd);
+                                } else {
 #ifdef RTCONFIG_RGMII_BRCM5301X
-                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 7t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 2 ports \"0 5\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 7t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 3 4t\"");
-                                system(vlan_cmd);
+	                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 7t\"");
+        	                        system(vlan_cmd);
+                                	sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 7t\"");
+	                                system(vlan_cmd);
+        	                        sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
+                	                system(vlan_cmd);
+                        	        sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 3 4t\"");
+                                	system(vlan_cmd);
 #else
-                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 5t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 2 ports \"0 5\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 5t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 3 4t\"");
-                                system(vlan_cmd);
+	                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 5t\"");
+        	                        system(vlan_cmd);
+                                	sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 5t\"");
+	                                system(vlan_cmd);
+        	                        sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
+                	                system(vlan_cmd);
+                        	        sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 3 4t\"");
+                                	system(vlan_cmd);
 #endif
+				}
                                 break;
                         }
 			if (nvram_match("switch_wantag", "m1_fiber") ||
@@ -4724,6 +4769,7 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
 
 	case MODEL_RTAC3100:
 	case MODEL_RTAC88U:
+				/* If enable gmac3, CPU port is 8 */
 #ifdef RTCONFIG_RGMII_BRCM5301X
 				/* P4  P3 P2 P1 P0 P5 		P7 */
 				/* WAN L1 L2 L3 L4 L5 L6 L7 L8 	CPU*/
@@ -4761,30 +4807,36 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
                                 eval("et", "robowr", "0x34", "0x12", tag_register);
 
                                 char vlan_cmd[64];
+	                        if (gmac3_enable) {
+        	                        sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 5u 7 8t\"");
+                	                system(vlan_cmd);
+	                                sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 8t\"");
+          	 	                system(vlan_cmd);
+                        	        sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
+                                	system(vlan_cmd);
+	                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 1 4t\"");
+        	                        system(vlan_cmd);
+                	        } else {
 #ifdef RTCONFIG_RGMII_BRCM5301X
-                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 7t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 2 ports \"4 7\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 7t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 1 4t\"");
-                                system(vlan_cmd);
+                        	        sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 7t\"");
+	                                system(vlan_cmd);
+                        	        sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 7t\"");
+                                	system(vlan_cmd);
+	                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
+        	                        system(vlan_cmd);
+                	                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 1 4t\"");
+                        	        system(vlan_cmd);
 #else
-                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 5t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 2 ports \"4 7\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 5t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 1 4t\"");
-                                system(vlan_cmd);
+                                	sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 5t\"");
+	                                system(vlan_cmd);
+                        	        sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 5t\"");
+                                	system(vlan_cmd);
+	                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
+        	                        system(vlan_cmd);
+	                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 1 4t\"");
+        	                        system(vlan_cmd);
 #endif
-
+				}
                                 break;
                         }
 			if (nvram_match("switch_wantag", "m1_fiber") ||
@@ -5194,6 +5246,24 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
 			eval("vconfig", "set_egress_map", wan_dev, "0", nvram_get("switch_wan0prio"));
 
 		if (nvram_match("switch_stb_x", "3")) {	// P2
+                        if (nvram_match("switch_wantag", "vodafone")) { //Config by robocfg
+                                iptv_prio = iptv_prio << 13;
+                                sprintf(tag_register, "0x%x", (iptv_prio | iptv_vid));
+                                eval("et", "robowr", "0x34", "0x14", tag_register);
+
+                                char vlan_cmd[64];
+                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"0 1 2 5t\"");
+                                system(vlan_cmd);
+                                sprintf(vlan_cmd, "robocfg vlan 2 ports \"4 5\"");
+                                system(vlan_cmd);
+                                sprintf(vlan_cmd, "robocfg vlan 100 ports \"3t 4t 5t\"");
+                                system(vlan_cmd);
+                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"3t 4t\"");
+                                system(vlan_cmd);
+                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"2 3t 4t\"");
+                                system(vlan_cmd);
+                                break;
+                        }
 			if (nvram_match("switch_wantag", "m1_fiber") ||
 			   nvram_match("switch_wantag", "maxis_fiber_sp")
 			) {
@@ -5232,17 +5302,28 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
 		}
 		else if (nvram_match("switch_stb_x", "4")) { // P3
 			/* config LAN 4 = IPTV */
-			iptv_prio = iptv_prio << 13;
-			sprintf(tag_register, "0x%x", (iptv_prio | iptv_vid));
-			eval("et", "robowr", "0x34", "0x16", tag_register);
-			_dprintf("lan 4 tag register: %s\n", tag_register);
-			/* Set vlan table entry register */
-			sprintf(vlan_entry, "0x%x", iptv_vid);
-			_dprintf("vlan entry: %s\n", vlan_entry);
-			eval("et", "robowr", "0x05", "0x83", "0x1018");
-			eval("et", "robowr", "0x05", "0x81", vlan_entry);
-			eval("et", "robowr", "0x05", "0x80", "0x0000");
-			eval("et", "robowr", "0x05", "0x80", "0x0080");
+                        if (nvram_match("switch_wantag", "meo")) {
+                                /* Just forward packets between port 0 & 4, without untag */
+                                sprintf(vlan_entry, "0x%x", iptv_vid);
+                                _dprintf("vlan entry: %s\n", vlan_entry);
+                                eval("et", "robowr", "0x05", "0x83", "0x0038");
+                                eval("et", "robowr", "0x05", "0x81", vlan_entry);
+                                eval("et", "robowr", "0x05", "0x80", "0x0000");
+                                eval("et", "robowr", "0x05", "0x80", "0x0080");
+                        }
+                        else {  /* Nomo case, untag it. */
+				iptv_prio = iptv_prio << 13;
+				sprintf(tag_register, "0x%x", (iptv_prio | iptv_vid));
+				eval("et", "robowr", "0x34", "0x16", tag_register);
+				_dprintf("lan 4 tag register: %s\n", tag_register);
+				/* Set vlan table entry register */
+				sprintf(vlan_entry, "0x%x", iptv_vid);
+				_dprintf("vlan entry: %s\n", vlan_entry);
+				eval("et", "robowr", "0x05", "0x83", "0x1018");
+				eval("et", "robowr", "0x05", "0x81", vlan_entry);
+				eval("et", "robowr", "0x05", "0x80", "0x0000");
+				eval("et", "robowr", "0x05", "0x80", "0x0080");
+			}
 		}
 		else if (nvram_match("switch_stb_x", "6")) {
 			/* config LAN 3 = VoIP */	// P2
@@ -5372,19 +5453,27 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
                         if (nvram_match("switch_wantag", "vodafone")) { //Config by robocfg
                                 iptv_prio = iptv_prio << 13;
                                 sprintf(tag_register, "0x%x", (iptv_prio | iptv_vid));
-                                eval("et", "robowr", "0x34", "0x16", tag_register);
 
-                                char vlan_cmd[64];
-                                sprintf(vlan_cmd, "robocfg vlan 1 ports \"1 2 3 8t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 2 ports \"0 8\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 100 ports \"0t 4t 8t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 101 ports \"0t 4t\"");
-                                system(vlan_cmd);
-                                sprintf(vlan_cmd, "robocfg vlan 105 ports \"0t 3 4t\"");
-                                system(vlan_cmd);
+				/* vlan 1 */
+                                eval("et", "robowr", "0x05", "0x83", "0x1D0E");
+                                eval("et", "robowr", "0x05", "0x81", "0x0001"); 
+                                eval("et", "robowr", "0x05", "0x80", "0x0000");
+                                eval("et", "robowr", "0x05", "0x80", "0x0080");
+				/* vlan 100 */
+                                eval("et", "robowr", "0x05", "0x83", "0x0111");
+                                eval("et", "robowr", "0x05", "0x81", "0x0064");
+                                eval("et", "robowr", "0x05", "0x80", "0x0000");
+                                eval("et", "robowr", "0x05", "0x80", "0x0080");
+				/* vlan 101 */
+                                eval("et", "robowr", "0x05", "0x83", "0x0011");
+                                eval("et", "robowr", "0x05", "0x81", "0x0065");
+                                eval("et", "robowr", "0x05", "0x80", "0x0000");
+                                eval("et", "robowr", "0x05", "0x80", "0x0080");
+				/* vlan 105 */
+                                eval("et", "robowr", "0x05", "0x83", "0x1019");
+                                eval("et", "robowr", "0x05", "0x81", "0x0069");
+                                eval("et", "robowr", "0x05", "0x80", "0x0000");
+                                eval("et", "robowr", "0x05", "0x80", "0x0080");
                                 break;
                         }
 			if (nvram_match("switch_wantag", "m1_fiber") ||
@@ -6004,6 +6093,8 @@ void set_acs_ifnames()
 	int unit;
 	int dfs_in_use = 0;
 
+	wl_check_5g_band_group();
+
 	unit = 0;
 	memset(acs_ifnames, 0, sizeof(acs_ifnames));
 
@@ -6033,11 +6124,10 @@ void set_acs_ifnames()
 
 	nvram_set("acs_ifnames", acs_ifnames);
 
-	if(!nvram_get("acs_2g_ch_no_restrict"))
-		nvram_set("acs_2g_ch_no_restrict", "1");
+	/* exclude acsd from selecting chanspec 12, 12u, 13, 13u, 14, 14u */
+	nvram_set("wl0_acs_excl_chans", "0x100c,0x190a,0x100d,0x190b,0x100e,0x190c");
 
 #if defined(RTAC3200)
-	nvram_set("wl0_acs_excl_chans", "");
 	if (nvram_match("wl1_country_code", "E0")) {
 		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
 		nvram_set("wl1_acs_excl_chans",
@@ -6061,7 +6151,6 @@ void set_acs_ifnames()
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
 	}
 #elif defined(RTAC5300)|| defined(RTAC5300R)
-	nvram_set("wl0_acs_excl_chans", "");
 	if (nvram_match("wl1_country_code", "E0")) {
 		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80*/
 		nvram_set("wl1_acs_excl_chans",
@@ -6085,7 +6174,6 @@ void set_acs_ifnames()
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
 	}
 #elif defined(RTAC88U) || defined(RTAC3100)
-	nvram_set("wl0_acs_excl_chans", "");
 	if (nvram_match("wl1_country_code", "E0") || nvram_match("wl1_country_code", "JP") || nvram_match("mr_test", "1"))
 		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
 		nvram_set("wl1_acs_excl_chans",
@@ -6097,7 +6185,6 @@ void set_acs_ifnames()
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
 #elif defined(RTAC1200GP)
-	nvram_set("wl0_acs_excl_chans", "");
 	if (nvram_match("wl1_country_code", "E0"))
 		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
 		nvram_set("wl1_acs_excl_chans",

@@ -52,11 +52,7 @@ conversion specifiers. Also the number of arguments printed are limited to 8 and
 stack size is limited to 32.
 When set to 0 AuC formats the output, pass the formatted line to the LHOST that
 prints it. */
-#ifdef TOPAZ_PLATFORM
-	#define AUC_LHOST_PRINT_FORMAT	1
-#else
-	#define AUC_LHOST_PRINT_FORMAT	0
-#endif
+#define AUC_LHOST_PRINT_FORMAT	1
 #define PRINT_STACK_SIZE	32
 
 #if defined(MUC_BUILD)

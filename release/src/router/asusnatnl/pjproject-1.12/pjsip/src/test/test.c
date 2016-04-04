@@ -104,7 +104,7 @@ static pj_status_t init_report(void)
     
     pj_ansi_sprintf(tmp, "pjsip-static-bench-%s-%s.htm", PJ_OS_NAME, PJ_CC_NAME);
 
-    status = pj_file_open(NULL, tmp, PJ_O_WRONLY, &fd_report);
+    status = pj_file_open(NULL, tmp, PJ_O_WRONLY, &fd_report, NULL);
     if (status != PJ_SUCCESS)
 	return status;
 

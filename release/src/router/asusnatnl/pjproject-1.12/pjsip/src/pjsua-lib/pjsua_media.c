@@ -19,6 +19,7 @@
  */
 #include <pjmedia/natnl_stream.h>
 #include <pjmedia/stream.h>
+#include <pjmedia/transport_sctp.h>
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
 
@@ -912,6 +913,29 @@ on_error:
 	return status;
 }
 
+static void on_sctp_connection_complete(pjmedia_transport *tp, 
+										pj_status_t status,
+										pj_sockaddr *turn_mapped_addr)
+{
+	unsigned id;
+	pj_bool_t found = PJ_FALSE;
+
+	for (id=0; id<pjsua_var[tp->inst_id].ua_cfg.max_calls; ++id) {
+		if (pjsua_var[tp->inst_id].calls[id].med_tp == tp ||
+			pjsua_var[tp->inst_id].calls[id].med_orig == tp || 
+			pjmedia_transport_dtls_get_member(pjsua_var[tp->inst_id].calls[id].med_orig) == tp) // Must check deeper to find transport_ice.
+		{
+			found = PJ_TRUE;
+			break;
+		}
+	}
+
+	if (pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete) {
+		pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete(tp->inst_id, 
+			id, status, turn_mapped_addr);
+	}
+}
+
 static void on_dtls_handshake_complete(pjmedia_transport *tp, 
 									   pj_status_t status,
 									   pj_sockaddr *turn_mapped_addr)
@@ -921,16 +945,24 @@ static void on_dtls_handshake_complete(pjmedia_transport *tp,
 
 	for (id=0; id<pjsua_var[tp->inst_id].ua_cfg.max_calls; ++id) {
 		if (pjsua_var[tp->inst_id].calls[id].med_tp == tp ||
-			pjsua_var[tp->inst_id].calls[id].med_orig == tp) 
+			pjsua_var[tp->inst_id].calls[id].med_orig == tp || 
+			pjmedia_transport_dtls_get_member(pjsua_var[tp->inst_id].calls[id].med_orig) == tp) // Must check deeper to find transport_ice.
 		{
 			found = PJ_TRUE;
 			break;
 		}
 	}
 
-	if (pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete) {
-		pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete(tp->inst_id, 
-			id, tp->tunnel_type, status, turn_mapped_addr);
+	// Perform SCTP connect.
+	if (pjsua_var[tp->inst_id].calls[id].use_sctp ||
+		pjsua_var[tp->inst_id].calls[id].med_tp->use_sctp) {
+		if (found)
+			pjmedia_sctp_session_create(pjsua_var[tp->inst_id].calls[id].med_tp, turn_mapped_addr);
+	} else {
+		if (pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete) {
+			pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete(tp->inst_id, 
+				id, status, turn_mapped_addr);
+		}
 	}
 }
 
@@ -948,8 +980,9 @@ static void on_ice_complete(pjmedia_transport *tp,
     PJSUA_LOCK(tp->inst_id);
 
     for (id=0; id<pjsua_var[tp->inst_id].ua_cfg.max_calls; ++id) {
-	if (pjsua_var[tp->inst_id].calls[id].med_tp == tp ||
-	    pjsua_var[tp->inst_id].calls[id].med_orig == tp) 
+		if (pjsua_var[tp->inst_id].calls[id].med_tp == tp ||
+			pjsua_var[tp->inst_id].calls[id].med_orig == tp ||
+			pjmedia_transport_dtls_get_member(pjsua_var[tp->inst_id].calls[id].med_orig) == tp) // Must check deeper to find transport_ice.
 	{
 	    found = PJ_TRUE;
 	    break;
@@ -1014,21 +1047,20 @@ static void on_ice_complete(pjmedia_transport *tp,
 	// DEAN
 #if defined(PJMEDIA_HAS_DTLS) && (PJMEDIA_HAS_DTLS != 0)
 	if (result == PJ_SUCCESS) {
-		pjmedia_dtls_do_handshake(pjsua_var[tp->inst_id].calls[id].med_tp,
+		pjmedia_transport *dtls = pjmedia_transport_sctp_get_member(pjsua_var[tp->inst_id].calls[id].med_tp);
+		pjmedia_dtls_do_handshake(dtls,
 			turn_mapped_addr);
 	} else {
 		if (pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete) {
 			pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete(tp->inst_id, 
-				id, tp->tunnel_type,
-				result,
+				id, result,
 				turn_mapped_addr);
 		}
 	}
 #else
 	if (pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete) {
 		pjsua_var[tp->inst_id].ua_cfg.cb.on_ice_complete(tp->inst_id, 
-												id, tp->tunnel_type,
-												result,
+												id, result,
 												turn_mapped_addr);
 	}
 #endif
@@ -1682,7 +1714,8 @@ static int find_audio_index(const pjmedia_sdp_session *sdp,
 	const pjmedia_sdp_media *m = sdp->media[i];
 
 	/* Skip if media is not audio */
-	if (pj_stricmp2(&m->desc.media, "audio") != 0)
+	if (pj_stricmp2(&m->desc.media, "audio") != 0 &&
+		pj_stricmp2(&m->desc.media, "application") != 0) // dean : application is for WebRTC data channel.
 	    continue;
 
 	/* Skip if media is disabled */
@@ -1691,7 +1724,9 @@ static int find_audio_index(const pjmedia_sdp_session *sdp,
 
 	/* Skip if transport is not supported */
 	if (pj_stricmp2(&m->desc.transport, "RTP/AVP") != 0 &&
-	    pj_stricmp2(&m->desc.transport, "RTP/SAVP") != 0)
+		pj_stricmp2(&m->desc.transport, "RTP/SAVP") != 0 &&
+		pj_stricmp2(&m->desc.transport, "DTLS/SCTP") != 0 &&   // dean : DTLS/SCTP is for WebRTC data channel.
+		pj_stricmp2(&m->desc.transport, "RTP/SCTP") != 0)  // dean : RTP/SCTP is for UDT replacement.
 	{
 	    continue;
 	}
@@ -1739,7 +1774,9 @@ pj_status_t pjsua_media_channel_init(pjsua_inst_id inst_id,
 #if defined(PJMEDIA_HAS_DTLS) && (PJMEDIA_HAS_DTLS != 0)
 	pjsua_acc *acc = &pjsua_var[inst_id].acc[call->acc_id];
 	pjmedia_dtls_setting dtls_opt;
+	pjmedia_sctp_setting sctp_opt;
 	pjmedia_transport *dtls = NULL;
+	pjmedia_transport *sctp = NULL;
 #elif defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
 	pjsua_acc *acc = &pjsua_var[inst_id].acc[call->acc_id];
 	pjmedia_srtp_setting dtls_opt;
@@ -1777,11 +1814,11 @@ pj_status_t pjsua_media_channel_init(pjsua_inst_id inst_id,
 			}
 		}
 #endif
-		/* Always create DTLS adapter */
+		/* Always create DTLS transport */
 		pjmedia_dtls_setting_default(&dtls_opt);
 		dtls_opt.close_member_tp = PJ_FALSE;
-			if (use_custom_med_tp)
-				custom_med_tp_flags |= PJSUA_MED_TP_CLOSE_MEMBER;
+		if (use_custom_med_tp)
+			custom_med_tp_flags |= PJSUA_MED_TP_CLOSE_MEMBER;
 		/* If media session has been ever established, let's use remote's 
 		 * preference in SRTP usage policy, especially when it is stricter.
 		 */
@@ -1811,9 +1848,43 @@ pj_status_t pjsua_media_channel_init(pjsua_inst_id inst_id,
 			return status;
 		}
 
-		/* Set SRTP as current media transport */
+		/* Set DTLS as current media transport */
 		call->med_orig = call->med_tp;
 		call->med_tp = dtls;
+
+		if(call->med_tp && call->med_tp->dest_uri && call->med_tp->dest_uri->ptr)
+		{
+			PJ_LOG(4,(THIS_FILE, "call->med_tp->dest_uri->ptr=[%p]", call->med_tp->dest_uri->ptr));
+			free(call->med_tp->dest_uri->ptr);
+			free(call->med_tp->dest_uri);
+		}
+
+		if (call->med_orig->dest_uri)
+		{
+			call->med_tp->dest_uri = malloc(sizeof(pj_str_t));
+			call->med_tp->dest_uri->ptr = malloc(call->med_orig->dest_uri->slen);
+			call->med_tp->dest_uri->slen = call->med_orig->dest_uri->slen;
+			pj_memcpy(call->med_tp->dest_uri->ptr, call->med_orig->dest_uri->ptr, call->med_tp->dest_uri->slen);
+		}
+
+		/* Always create SCTP transport */
+		pjmedia_sctp_setting_default(&sctp_opt);
+		sctp_opt.use = call->use_sctp ? PJMEDIA_SCTP_MANDATORY : PJMEDIA_SCTP_DISABLED;
+
+		// Connection complete callback
+		sctp_opt.cb.on_sctp_connection_complete = on_sctp_connection_complete;
+		status = pjmedia_transport_sctp_create(pjsua_var[inst_id].med_endpt, 
+			call->med_tp,
+			&sctp_opt, &sctp);
+		if (status != PJ_SUCCESS) {
+			if (sip_err_code)
+				*sip_err_code = PJSIP_SC_INTERNAL_SERVER_ERROR;
+			return status;
+		}
+
+		/* Set SCTP as current media transport */
+		call->med_orig = call->med_tp;
+		call->med_tp = sctp;
 
 		if(call->med_tp && call->med_tp->dest_uri && call->med_tp->dest_uri->ptr)
 		{
@@ -2029,9 +2100,16 @@ pj_status_t pjsua_media_channel_create_sdp(pjsua_inst_id inst_id,
     pjmedia_transport_info_init(&tpinfo);
     pjmedia_transport_get_info(call->med_tp, &tpinfo);
 
-    /* Create SDP */
-    status = pjmedia_endpt_create_sdp(pjsua_var[inst_id].med_endpt, pool, MAX_MEDIA,
-				      &tpinfo.sock_info, &sdp);
+	if (/*(call->med_tp->use_sctp && pjsua_var[inst_id].media_cfg.enable_secure_data) || */
+		(rem_sdp &&	pjmedia_get_meida_type(rem_sdp, call->audio_idx) == PJMEDIA_TYPE_APPLICATION)) {
+		/* Create SDP */
+		status = pjmedia_endpt_create_application_sdp(pjsua_var[inst_id].med_endpt, pool, MAX_MEDIA,
+			&tpinfo.sock_info, &sdp);
+	} else {
+		/* Create SDP */
+		status = pjmedia_endpt_create_sdp(pjsua_var[inst_id].med_endpt, pool, MAX_MEDIA,
+							 &tpinfo.sock_info, &sdp);
+	}
     if (status != PJ_SUCCESS) {
 	if (sip_status_code) *sip_status_code = 500;
 	return status;

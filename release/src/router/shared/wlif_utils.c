@@ -597,7 +597,8 @@ get_wsec(wsec_info_t *info, unsigned char *mac, char *osifname)
 	value = nvram_safe_get(strcat_r(wl_prefix, "nas_dbg", comb));
 	info->debug = (int)strtoul(value, NULL, 0);
 
-
+	/* get mfp setting */
+	info->mfp = atoi(nvram_safe_get(strcat_r(wl_prefix, "mfp", comb)));
 
 	return WLIFU_WSEC_SUCCESS;
 }

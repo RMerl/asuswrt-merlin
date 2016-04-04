@@ -15,6 +15,7 @@
 #define QRPC_RAW_SOCK_PROT	11
 #define QFTP_RAW_SOCK_PROT	22
 #define ETH_P_OUI_EXT		0x88B7
+#define ETH_P_OLD_OUI_EXT	0x88B5
 #define QUANTENNA_OUI		0x002686
 
 #define QFTP_DATA_PKT_HDR_SIZE	(sizeof(struct q_raw_ethoui_hdr) +\
@@ -48,6 +49,11 @@ struct qrpc_frame_hdr {
 	uint8_t			sub_type;
 	uint8_t			sid;
 	uint16_t		seq;
+} __attribute__ ((packed));
+
+struct qrpc_old_frame_hdr {
+	struct ethhdr   eth_hdr;
+	uint16_t        seq;
 } __attribute__ ((packed));
 
 struct qrpc_raw_ethpkt {
@@ -91,4 +97,5 @@ extern int qrpc_clnt_raw_config_dst(const int sock, const char *const srcif_name
 				struct q_raw_ethoui_hdr *pkt_outbuf,
 				uint8_t qprot);
 extern int qrpc_raw_read_timeout(const int sock_fd, const int timeout);
+extern int qrpc_is_old_rpc(struct ethhdr *const eh);
 #endif

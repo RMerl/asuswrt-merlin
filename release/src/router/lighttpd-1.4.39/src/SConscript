@@ -1,0 +1,260 @@
+import os
+import re
+import types
+import itertools
+from collections import OrderedDict
+
+# search any file, not just executables
+def WhereIsFile(file, paths):
+	for d in paths:
+		f = os.path.join(d, file)
+		if os.path.isfile(f):
+			try:
+				st = os.stat(f)
+			except OSError:
+				# os.stat() raises OSError, not IOError if the file
+				# doesn't exist, so in this case we let IOError get
+				# raised so as to not mask possibly serious disk or
+				# network issues.
+				continue
+			return os.path.normpath(f)
+	return None
+
+def FlattenLibs(libs):
+	if isinstance(libs, basestring):
+		return [libs]
+	else:
+		return [item for sublibs in libs for item in FlattenLibs(sublibs)]
+
+# removes all but the *LAST* occurance of a lib in the list
+def RemoveDuplicateLibs(libs):
+	libs = FlattenLibs(libs)
+	# remove empty strings from list
+	libs = list(filter(lambda x: x != '', libs))
+	return list(reversed(OrderedDict.fromkeys(reversed(libs))))
+
+Import('env')
+
+def GatherLibs(env, *libs):
+	return RemoveDuplicateLibs(env['LIBS'] + list(libs) + [env['APPEND_LIBS']])
+
+common_src = Split("base64.c buffer.c log.c \
+	keyvalue.c chunk.c  \
+	http_chunk.c stream.c fdevent.c \
+	stat_cache.c plugin.c joblist.c etag.c array.c \
+	data_string.c data_count.c data_array.c \
+	data_integer.c md5.c data_fastcgi.c \
+	fdevent_select.c fdevent_libev.c \
+	fdevent_poll.c fdevent_linux_sysepoll.c \
+	fdevent_solaris_devpoll.c fdevent_solaris_port.c \
+	fdevent_freebsd_kqueue.c \
+	data_config.c \
+	inet_ntop_cache.c crc32.c \
+	connections-glue.c \
+	configfile-glue.c \
+	http-header-glue.c \
+	splaytree.c network_writev.c \
+	network_write_mmap.c network_write_no_mmap.c \
+	network_write.c network_linux_sendfile.c \
+	network_freebsd_sendfile.c  \
+	network_solaris_sendfilev.c network_openssl.c \
+	status_counter.c safe_memclear.c network_darwin_sendfile.c \
+")
+
+src = Split("server.c response.c connections.c network.c \
+	configfile.c configparser.c request.c proc_open.c")
+
+lemon = env.Program('lemon', 'lemon.c', LIBS = GatherLibs(env))
+
+def Lemon(env, input):
+	parser = env.Command([input.replace('.y', '.c'),input.replace('.y', '.h')], input, '(cd sconsbuild/build; ../../' + lemon[0].path + ' -q ../../$SOURCE ../../src/lempar.c)')
+	env.Depends(parser, lemon)
+
+configparser = Lemon(env, 'configparser.y')
+mod_ssi_exprparser = Lemon(env, 'mod_ssi_exprparser.y')
+
+## the modules and how they are built
+modules = {
+	'mod_access' : { 'src' : [ 'mod_access.c' ] },
+	'mod_alias' : { 'src' : [ 'mod_alias.c' ] },
+	'mod_cgi' : { 'src' : [ 'mod_cgi.c' ] },
+	'mod_fastcgi' : { 'src' : [ 'mod_fastcgi.c' ] },
+	'mod_scgi' : { 'src' : [ 'mod_scgi.c' ] },
+	'mod_extforward' : { 'src' : [ 'mod_extforward.c' ] },
+	'mod_staticfile' : { 'src' : [ 'mod_staticfile.c' ] },
+	'mod_dirlisting' : { 'src' : [ 'mod_dirlisting.c' ], 'lib' : [ env['LIBPCRE'] ] },
+	'mod_indexfile' : { 'src' : [ 'mod_indexfile.c' ] },
+	'mod_setenv' : { 'src' : [ 'mod_setenv.c' ] },
+	'mod_rrdtool' : { 'src' : [ 'mod_rrdtool.c' ] },
+	'mod_usertrack' : { 'src' : [ 'mod_usertrack.c' ] },
+	'mod_proxy' : { 'src' : [ 'mod_proxy.c' ] },
+	'mod_userdir' : { 'src' : [ 'mod_userdir.c' ] },
+	'mod_secdownload' : { 'src' : [ 'mod_secdownload.c' ] },
+	'mod_accesslog' : { 'src' : [ 'mod_accesslog.c' ] },
+	'mod_simple_vhost' : { 'src' : [ 'mod_simple_vhost.c' ] },
+	'mod_evhost' : { 'src' : [ 'mod_evhost.c' ] },
+	'mod_expire' : { 'src' : [ 'mod_expire.c' ] },
+	'mod_status' : { 'src' : [ 'mod_status.c' ] },
+	'mod_compress' : { 'src' : [ 'mod_compress.c' ], 'lib' : [ env['LIBZ'], env['LIBBZ2'] ] },
+	'mod_redirect' : { 'src' : [ 'mod_redirect.c' ], 'lib' : [ env['LIBPCRE'] ] },
+	'mod_rewrite' : { 'src' : [ 'mod_rewrite.c' ], 'lib' : [ env['LIBPCRE'] ] },
+	'mod_auth' : {
+		'src' : [ 'mod_auth.c', 'http_auth.c' ],
+		'lib' : [ env['LIBCRYPT'], env['LIBLDAP'], env['LIBLBER'] ] },
+	'mod_webdav' : { 'src' : [ 'mod_webdav.c' ], 'lib' : [ env['LIBXML2'], env['LIBSQLITE3'], env['LIBUUID'] ] },
+	'mod_mysql_vhost' : { 'src' : [ 'mod_mysql_vhost.c' ], 'lib' : [ env['LIBMYSQL'] ] },
+#	'mod_uploadprogress' : { 'src' : [ 'mod_uploadprogress.c' ] },
+	'mod_evasive' : { 'src' : [ 'mod_evasive.c' ] },
+	'mod_ssi' : { 'src' : [ 'mod_ssi_exprparser.c', 'mod_ssi_expr.c', 'mod_ssi.c' ], 'lib' : [ env['LIBPCRE'] ] },
+	'mod_flv_streaming' : { 'src' : [ 'mod_flv_streaming.c' ] },
+	'mod_cml': {
+		'src' : [ 'mod_cml_lua.c', 'mod_cml.c', 'mod_cml_funcs.c' ],
+		'lib' : [ env['LIBPCRE'], env['LIBMEMCACHE'], env['LIBLUA'] ] 
+	},
+}
+
+if env['with_memcache']:
+	modules[mod_trigger_b4_dl] = { 'src' : [ 'mod_trigger_b4_dl.c' ], 'lib' : [ env['LIBPCRE'], env['LIBMEMCACHE'] ] }
+
+if env['with_lua']:
+	modules['mod_magnet'] = { 'src' : [ 'mod_magnet.c', 'mod_magnet_cache.c' ], 'lib' : [ env['LIBLUA'] ] }
+
+staticenv = env.Clone(CPPFLAGS=[ env['CPPFLAGS'], '-DLIGHTTPD_STATIC', '-DOPENSSL_NO_KRB5'])
+
+## all the core-sources + the modules
+staticsrc = src + common_src
+
+staticlib = env['LIBS']
+staticinit = ''
+for module in modules.keys():
+	staticsrc += modules[module]['src']
+	staticinit += "PLUGIN_INIT(%s)\n"%module
+	if modules[module].has_key('lib'):
+		staticlib += modules[module]['lib']
+
+def WriteStaticPluginHeader(target, source, env):
+	do_write = True
+	data = env['STATICINIT']
+	# only touch the file if content actually changes
+	try:
+		with open(target[0].abspath, 'r') as f:
+			do_write = (data != f.read())
+	except IOError:
+		pass
+	if do_write:
+		with open(target[0].abspath, 'w+') as f:
+			f.write(env['STATICINIT'])
+
+env['STATICINIT'] = staticinit
+staticheader = env.AlwaysBuild(env.Command('plugin-static.h', [], WriteStaticPluginHeader))
+
+## turn all src-files into objects
+staticobj = []
+static_plugin_obj = None
+for cfile in staticsrc:
+	if cfile == 'plugin.c':
+		static_plugin_obj = [ staticenv.Object('static-' + cfile.replace('.c', ''), cfile) ]
+		staticobj += static_plugin_obj
+	else:
+		staticobj += [ staticenv.Object('static-' + cfile.replace('.c', ''), cfile) ]
+env.Depends(static_plugin_obj, 'plugin-static.h')
+
+## includes all modules, but links dynamically against other libs
+staticbin = staticenv.Program('../static/build/lighttpd',
+	staticobj,
+	LIBS = GatherLibs(env, staticlib)
+	)
+
+## you might have to adjust the list of libs and the order for your setup
+## this is tricky, be warned
+fullstaticlib = []
+
+## try to calculate the libs for fullstatic with ldd
+## 1. find the lib
+## 2. check the deps
+## 3. add them to the libs
+#searchlibs = os.pathsep.join([ '/lib/', '/usr/lib/', '/usr/local/lib/' ])
+searchlibs = []
+searchpathre = re.compile(r'\bSEARCH_DIR\("=([^"]+)"\)')
+f = os.popen('ld --verbose | grep SEARCH_DIR', 'r')
+for aword in searchpathre.findall(f.read()):
+	searchlibs += [ aword]
+f.close
+
+lddre = re.compile(r'^\s+lib([^=-]+)(?:-[\.0-9]+)?\.so\.[0-9]+ =>', re.MULTILINE)
+for libs in staticlib:
+	if type(libs) is types.StringType: libs = [ libs ]
+	for lib in libs:
+		fullstaticlib += [ lib ]
+		solibpath = WhereIsFile('lib' + lib + '.so', paths = searchlibs)
+		if solibpath is None:
+			continue
+
+		f = os.popen('ldd ' + solibpath, 'r')
+		for aword in lddre.findall(f.read()):
+			fullstaticlib += [ aword ]
+		f.close
+
+## includes all modules, linked statically
+fullstaticbin = staticenv.Program('../fullstatic/build/lighttpd',
+	staticobj,
+	LIBS = GatherLibs(env, fullstaticlib),
+	LINKFLAGS= [staticenv['LINKFLAGS'], '-static']
+	)
+
+Alias('static', staticbin)
+Alias('fullstatic', fullstaticbin)
+
+implib = 'lighttpd.exe.a'
+bin_targets = ['lighttpd']
+bin_linkflags = [ env['LINKFLAGS'] ]
+if env['COMMON_LIB'] == 'lib':
+	common_lib = env.SharedLibrary('liblighttpd', common_src, LINKFLAGS = [ env['LINKFLAGS'], '-Wl,--export-dynamic' ])
+else:
+	src += common_src
+	common_lib = []
+	if env['COMMON_LIB'] == 'bin':
+		bin_linkflags += [ '-Wl,--export-all-symbols', '-Wl,--out-implib=build/' + implib ]
+		bin_targets += [ implib ]
+	else:
+		bin_linkflags += [ '-Wl,--export-dynamic' ]
+
+instbin = env.Program(bin_targets, src, LINKFLAGS = bin_linkflags, LIBS = GatherLibs(env, env['LIBS'], common_lib, env['LIBDL']))
+env.Depends(instbin, configparser)
+
+if env['COMMON_LIB'] == 'bin':
+	common_lib = instbin[1]
+
+env['SHLIBPREFIX'] = ''
+instlib = []
+for module in modules.keys():
+	libs = [ common_lib ]
+	if modules[module].has_key('lib'):
+		libs +=  modules[module]['lib']
+	instlib += env.SharedLibrary(module, modules[module]['src'], LIBS= GatherLibs(env, libs))
+env.Alias('modules', instlib)
+
+inst = []
+
+if env['build_dynamic']:
+	Default(instbin[0], instlib)
+	inst += env.Install('${sbindir}', instbin[0])
+	inst += env.Install('${libdir}', instlib)
+	if env['COMMON_LIB'] == 'lib':
+		Default(common_lib)
+		inst += env.Install('${bindir}', common_lib)
+
+if env['build_static']:
+	Default(staticbin)
+	inst += env.Install('${sbindir}', staticbin)
+
+if env['build_fullstatic']:
+	Default(fullstaticbin)
+	inst += env.Install('${sbindir}', fullstaticbin)
+
+env.Alias('dynamic', instbin)
+# default all to be installed
+env.Alias('install', inst)
+
+pkgdir = '.'
+tarname = env['package'] + '-' + env['version']

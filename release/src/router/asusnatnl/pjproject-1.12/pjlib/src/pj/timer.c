@@ -34,12 +34,23 @@
 #include <pj/assert.h>
 #include <pj/errno.h>
 #include <pj/lock.h>
+#include <pj/log.h>
+#include <pj/rand.h>
+
+#define THIS_FILE	"timer.c"
 
 #define HEAP_PARENT(X)	(X == 0 ? 0 : (((X) - 1) / 2))
 #define HEAP_LEFT(X)	(((X)+(X))+1)
 
 
 #define DEFAULT_MAX_TIMED_OUT_PER_POLL  (64)
+
+enum
+{
+    F_DONT_CALL = 1,
+    F_DONT_ASSERT = 2,
+    F_SET_ID = 4
+};
 
 
 /**
@@ -113,7 +124,8 @@ PJ_INLINE(void) unlock_timer_heap( pj_timer_heap_t *ht )
 }
 
 
-static void copy_node( pj_timer_heap_t *ht, int slot, pj_timer_entry *moved_node )
+static void copy_node( pj_timer_heap_t *ht, pj_size_t slot, 
+		       pj_timer_entry *moved_node )
 {
     PJ_CHECK_STACK();
 
@@ -121,7 +133,7 @@ static void copy_node( pj_timer_heap_t *ht, int slot, pj_timer_entry *moved_node
     ht->heap[slot] = moved_node;
     
     // Update the corresponding slot in the parallel <timer_ids_> array.
-    ht->timer_ids[moved_node->_timer_id] = slot;
+    ht->timer_ids[moved_node->_timer_id] = (int)slot;
 }
 
 static pj_timer_id_t pop_freelist( pj_timer_heap_t *ht )
@@ -224,7 +236,7 @@ static pj_timer_entry * remove_node( pj_timer_heap_t *ht, size_t slot)
     
     if (slot < ht->cur_size)
     {
-	int parent;
+	pj_size_t parent;
 	pj_timer_entry *moved_node = ht->heap[ht->cur_size];
 	
 	// Move the end node to the location being removed and update
@@ -297,7 +309,7 @@ static pj_status_t schedule_entry( pj_timer_heap_t *ht,
     {
 	// Obtain the next unique sequence number.
 	// Set the entry
-	entry->_timer_id = pop_freelist(ht);    
+	entry->_timer_id = pop_freelist(ht);
 	entry->_timer_value = *future_time;
 	insert_node( ht, entry);
 	return 0;
@@ -309,31 +321,37 @@ static pj_status_t schedule_entry( pj_timer_heap_t *ht,
 
 static int cancel( pj_timer_heap_t *ht, 
 		   pj_timer_entry *entry, 
-		   int dont_call)
+		   unsigned flags)
 {
   long timer_node_slot;
 
   PJ_CHECK_STACK();
 
   // Check to see if the timer_id is out of range
-  if (entry->_timer_id < 0 || (pj_size_t)entry->_timer_id > ht->max_size)
+  if (entry->_timer_id < 0 || (pj_size_t)entry->_timer_id > ht->max_size) {
+    entry->_timer_id = -1;
     return 0;
+  }
 
   timer_node_slot = ht->timer_ids[entry->_timer_id];
 
-  if (timer_node_slot < 0) // Check to see if timer_id is still valid.
+  if (timer_node_slot < 0) { // Check to see if timer_id is still valid.
+    entry->_timer_id = -1;
     return 0;
+  }
 
   if (entry != ht->heap[timer_node_slot])
     {
-      //pj_assert(entry == ht->heap[timer_node_slot]);
+      if ((flags & F_DONT_ASSERT) == 0)
+	  pj_assert(entry == ht->heap[timer_node_slot]);
+      entry->_timer_id = -1;
       return 0;
     }
   else
     {
       remove_node( ht, timer_node_slot);
 
-      if (dont_call == 0)
+      if ((flags & F_DONT_CALL) == 0)
         // Call the close hook.
 	(*ht->callback)(ht, entry);
       return 1;
@@ -448,13 +466,33 @@ PJ_DEF(pj_timer_entry*) pj_timer_entry_init( pj_timer_entry *entry,
     entry->id = id;
     entry->user_data = user_data;
     entry->cb = cb;
+    entry->_grp_lock = NULL;
 
     return entry;
 }
 
-PJ_DEF(pj_status_t) pj_timer_heap_schedule( pj_timer_heap_t *ht,
-					    pj_timer_entry *entry, 
-					    const pj_time_val *delay)
+PJ_DEF(pj_bool_t) pj_timer_entry_running( pj_timer_entry *entry )
+{
+    return (entry->_timer_id >= 1);
+}
+
+#if PJ_TIMER_DEBUG
+static pj_status_t schedule_w_grp_lock_dbg(pj_timer_heap_t *ht,
+                                           pj_timer_entry *entry,
+                                           const pj_time_val *delay,
+                                           pj_bool_t set_id,
+                                           int id_val,
+					   pj_grp_lock_t *grp_lock,
+					   const char *src_file,
+					   int src_line)
+#else
+static pj_status_t schedule_w_grp_lock(pj_timer_heap_t *ht,
+                                       pj_timer_entry *entry,
+                                       const pj_time_val *delay,
+                                       pj_bool_t set_id,
+                                       int id_val,
+                                       pj_grp_lock_t *grp_lock)
+#endif
 {
     pj_status_t status;
     pj_time_val expires;
@@ -466,28 +504,106 @@ PJ_DEF(pj_status_t) pj_timer_heap_schedule( pj_timer_heap_t *ht,
     //PJ_ASSERT_RETURN(entry->_timer_id < 1, PJ_EINVALIDOP);
 	if (entry->_timer_id >= 1) return PJ_EINVALIDOP; 
 
+#if PJ_TIMER_DEBUG
+    entry->src_file = src_file;
+    entry->src_line = src_line;
+#endif
     pj_gettickcount(&expires);
     PJ_TIME_VAL_ADD(expires, *delay);
     
     lock_timer_heap(ht);
     status = schedule_entry(ht, entry, &expires);
+    if (status == PJ_SUCCESS) {
+	if (set_id)
+	    entry->id = id_val;
+	entry->_grp_lock = grp_lock;
+	if (entry->_grp_lock) {
+	    pj_grp_lock_add_ref(entry->_grp_lock);
+	}
+    }
     unlock_timer_heap(ht);
 
     return status;
 }
 
-PJ_DEF(int) pj_timer_heap_cancel( pj_timer_heap_t *ht,
-				  pj_timer_entry *entry)
+
+#if PJ_TIMER_DEBUG
+PJ_DEF(pj_status_t) pj_timer_heap_schedule_dbg( pj_timer_heap_t *ht,
+						pj_timer_entry *entry,
+						const pj_time_val *delay,
+						const char *src_file,
+						int src_line)
+{
+    return schedule_w_grp_lock_dbg(ht, entry, delay, PJ_FALSE, 1, NULL,
+                                   src_file, src_line);
+}
+
+PJ_DEF(pj_status_t) pj_timer_heap_schedule_w_grp_lock_dbg(
+						pj_timer_heap_t *ht,
+						pj_timer_entry *entry,
+						const pj_time_val *delay,
+						int id_val,
+                                                pj_grp_lock_t *grp_lock,
+						const char *src_file,
+						int src_line)
+{
+    return schedule_w_grp_lock_dbg(ht, entry, delay, PJ_TRUE, id_val,
+                                   grp_lock, src_file, src_line);
+}
+
+#else
+PJ_DEF(pj_status_t) pj_timer_heap_schedule( pj_timer_heap_t *ht,
+                                            pj_timer_entry *entry,
+                                            const pj_time_val *delay)
+{
+    return schedule_w_grp_lock(ht, entry, delay, PJ_FALSE, 1, NULL);
+}
+
+PJ_DEF(pj_status_t) pj_timer_heap_schedule_w_grp_lock(pj_timer_heap_t *ht,
+                                                      pj_timer_entry *entry,
+                                                      const pj_time_val *delay,
+                                                      int id_val,
+                                                      pj_grp_lock_t *grp_lock)
+{
+    return schedule_w_grp_lock(ht, entry, delay, PJ_TRUE, id_val, grp_lock);
+}
+#endif
+
+static int cancel_timer(pj_timer_heap_t *ht,
+			pj_timer_entry *entry,
+			unsigned flags,
+			int id_val)
 {
     int count;
 
     PJ_ASSERT_RETURN(ht && entry, PJ_EINVAL);
 
     lock_timer_heap(ht);
-    count = cancel(ht, entry, 1);
+    count = cancel(ht, entry, flags | F_DONT_CALL);
+    if (flags & F_SET_ID) {
+	entry->id = id_val;
+    }
+    if (entry->_grp_lock) {
+	pj_grp_lock_t *grp_lock = entry->_grp_lock;
+	entry->_grp_lock = NULL;
+	pj_grp_lock_dec_ref(grp_lock);
+    }
     unlock_timer_heap(ht);
 
     return count;
+}
+
+PJ_DEF(int) pj_timer_heap_cancel( pj_timer_heap_t *ht,
+				  pj_timer_entry *entry)
+{
+    return cancel_timer(ht, entry, 0, 0);
+}
+
+PJ_DEF(int) pj_timer_heap_cancel_if_active(pj_timer_heap_t *ht,
+                                           pj_timer_entry *entry,
+                                           int id_val)
+{
+    return cancel_timer(ht, entry, F_SET_ID | F_DONT_ASSERT, id_val);
 }
 
 PJ_DEF(unsigned) pj_timer_heap_poll( pj_timer_heap_t *ht, 
@@ -513,11 +629,23 @@ PJ_DEF(unsigned) pj_timer_heap_poll( pj_timer_heap_t *ht,
             count < ht->max_entries_per_poll ) 
     {
 	pj_timer_entry *node = remove_node(ht, 0);
+	pj_grp_lock_t *grp_lock;
+
 	++count;
 
+	grp_lock = node->_grp_lock;
+	node->_grp_lock = NULL;
+
 	unlock_timer_heap(ht);
+
+	PJ_RACE_ME(5);
+
 	if (node->cb)
 	    (*node->cb)(ht, node);
+
+	if (grp_lock)
+	    pj_grp_lock_dec_ref(grp_lock);
+
 	lock_timer_heap(ht);
     }
     if (ht->cur_size && next_delay) {
@@ -528,9 +656,9 @@ PJ_DEF(unsigned) pj_timer_heap_poll( pj_timer_heap_t *ht,
     } else if (next_delay) {
 	next_delay->sec = next_delay->msec = PJ_MAXINT32;
     }
-	unlock_timer_heap(ht);
+    unlock_timer_heap(ht);
 
-	return count;
+    return count;
 }
 
 PJ_DEF(pj_size_t) pj_timer_heap_count( pj_timer_heap_t *ht )
@@ -544,10 +672,8 @@ PJ_DEF(pj_status_t) pj_timer_heap_earliest_time( pj_timer_heap_t * ht,
 					         pj_time_val *timeval)
 {
     pj_assert(ht->cur_size != 0);
-	if (ht->cur_size == 0) {
-		printf("pj_timer_heap_earliest_time() array not found.\n");
+    if (ht->cur_size == 0)
         return PJ_ENOTFOUND;
-	}
 
     lock_timer_heap(ht);
     *timeval = ht->heap[0]->_timer_value;
@@ -556,59 +682,44 @@ PJ_DEF(pj_status_t) pj_timer_heap_earliest_time( pj_timer_heap_t * ht,
     return PJ_SUCCESS;
 }
 
-PJ_DEF(pj_int32_t) pj_timeval_diff(pj_time_val2 *diff_time,
-                                                      pj_time_val2 *end_time,
-                                                      pj_time_val2 *start_time)
+#if PJ_TIMER_DEBUG
+PJ_DEF(void) pj_timer_heap_dump(pj_timer_heap_t *ht)
 {
-    pj_time_val2 temp_diff;
+    lock_timer_heap(ht);
 
-    if(diff_time==NULL) {
-        diff_time=&temp_diff;
+    PJ_LOG(3,(THIS_FILE, "Dumping timer heap:"));
+    PJ_LOG(3,(THIS_FILE, "  Cur size: %d entries, max: %d",
+			 (int)ht->cur_size, (int)ht->max_size));
+
+    if (ht->cur_size) {
+	unsigned i;
+	pj_time_val now;
+
+	PJ_LOG(3,(THIS_FILE, "  Entries: "));
+	PJ_LOG(3,(THIS_FILE, "    _id\tId\tElapsed\tSource"));
+	PJ_LOG(3,(THIS_FILE, "    ----------------------------------"));
+
+	pj_gettickcount(&now);
+
+	for (i=0; i<(unsigned)ht->cur_size; ++i) {
+	    pj_timer_entry *e = ht->heap[i];
+	    pj_time_val delta;
+
+	    if (PJ_TIME_VAL_LTE(e->_timer_value, now))
+		delta.sec = delta.msec = 0;
+	    else {
+		delta = e->_timer_value;
+		PJ_TIME_VAL_SUB(delta, now);
+	    }
+
+	    PJ_LOG(3,(THIS_FILE, "    %d\t%d\t%d.%03d\t%s:%d",
+		      e->_timer_id, e->id,
+		      (int)delta.sec, (int)delta.msec,
+		      e->src_file, e->src_line));
+	}
     }
 
-    diff_time->sec =end_time->sec -start_time->sec ;
-    diff_time->usec=end_time->usec-start_time->usec;
-
-    /* Using while instead of if below makes the code slightly more robust. */
-
-    while(diff_time->usec<0) {
-        diff_time->usec+=1000000;
-        diff_time->sec -=1;
-    }
-
-    return 1000000LL*diff_time->sec+ diff_time->usec;
-
+    unlock_timer_heap(ht);
 }
-
-PJ_DEF(void) pj_timeval_print(char *title, pj_time_val2 *tv) 
-{
-#if 1
-	PJ_UNUSED_ARG(title);
-	PJ_UNUSED_ARG(tv);
-#else
-    pj_time_val2 temp;
-
-    if(tv==NULL) {
-        tv=&temp;
-    }
-
-    pj_gettimeofday2(tv);
-    PJ_LOG(4, ("time_trace", "%s %llu", title, tv->sec*1000000ULL+tv->usec));
 #endif
-}
 
-PJ_DEF(void) pj_timediff_print(char *title, pj_time_val2 *start_time, pj_time_val2 *end_time) 
-{
-#if 1
-	PJ_UNUSED_ARG(title);
-	PJ_UNUSED_ARG(start_time);
-	PJ_UNUSED_ARG(end_time);
-#else
-    pj_time_val2 diff_time;
-    pj_int32_t diff;
-
-    diff = pj_timeval_diff(&diff_time, end_time, start_time);
-
-    PJ_LOG(4, ("time_trace", "%s %d", title, diff));
-#endif
-}

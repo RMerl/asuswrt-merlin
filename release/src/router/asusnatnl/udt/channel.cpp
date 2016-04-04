@@ -381,8 +381,7 @@ int CChannel::sendto(const sockaddr* addr, CPacket& packet) const
 
 resend:
 	  // DEAN, check if this is tunnel data. If true, update last_data time.
-	  is_tnl_data = (size >= TCP_OR_UDP_TOTAL_HEADER_SIZE &&  // TUNNEL_HEADER + UDT_HEADER
-		  (m_pktBuffer[TCP_SESS_MSG_TYPE_INDEX] == 5 || m_pktBuffer[TCP_SESS_MSG_TYPE_INDEX] == 6));
+	  is_tnl_data = pjmedia_natnl_udt_packet_is_tnl_data(&m_pktBuffer[0], size);
 
 	  pj_assert(size < sizeof(m_pktBuffer));
 		
@@ -422,6 +421,9 @@ resend:
 
    return res;
 }
+
+extern int natnl_handle_recv_msg(pjsua_call_id call_id, pjmedia_transport *tp, 
+								 char *data, int data_len);
 
 int CChannel::recvfrom(sockaddr* addr, CPacket& packet) const
 {
@@ -466,9 +468,13 @@ int CChannel::recvfrom(sockaddr* addr, CPacket& packet) const
 			rb = stream->rbuff.next;
 			stream->rbuff_cnt--;
 			//PJ_LOG(4, ("channel.cpp", "rbuff_cnt=%d", stream->rbuff_cnt));
-            pj_list_erase(rb);
-
-			if (!check_packet_integrity(rb)) {
+			pj_list_erase(rb);
+			/*if (rb->len > 0 && 
+				((pj_uint32_t *)rb->buff)[0] == NO_CTL_SESS_MGR_HEADER_MAGIC) {  // check the magic
+					char *data = (char *)&rb->buff[sizeof(NO_CTL_SESS_MGR_HEADER_MAGIC)];
+					int len = rb->len - sizeof(NO_CTL_SESS_MGR_HEADER_MAGIC);
+					natnl_handle_recv_msg(call->index, call->tnl_stream->med_tp, data, len);
+			} else */if (!check_packet_integrity(rb)) {
 				int ds = UMIN(packet.m_PacketVector[1].iov_len, rb->len - sizeof(natnl_hdr) - CPacket::m_iPktHdrSize);
 				memcpy(packet.m_PacketVector[0].iov_base, &rb->buff[sizeof(natnl_hdr)], packet.m_PacketVector[0].iov_len);
 				memcpy(packet.m_PacketVector[1].iov_base, &rb->buff[packet.m_PacketVector[0].iov_len+sizeof(natnl_hdr)], ds);

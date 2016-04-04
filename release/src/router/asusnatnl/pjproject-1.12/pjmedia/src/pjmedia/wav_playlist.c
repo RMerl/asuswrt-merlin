@@ -351,7 +351,7 @@ PJ_DEF(pj_status_t) pjmedia_wav_playlist_create(pj_pool_t *pool,
 	
 	/* Open file. */
 	status = pj_file_open( pool, filename, PJ_O_RDONLY, 
-			       &fport->fd_list[index]);
+			       &fport->fd_list[index], NULL);
 	if (status != PJ_SUCCESS)
 	    goto on_error;
 	

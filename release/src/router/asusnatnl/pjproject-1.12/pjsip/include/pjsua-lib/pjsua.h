@@ -391,6 +391,18 @@ typedef struct pjsua_logging_config
      */
     void       (*cb)(pjsua_inst_id inst_id, int level, const char *data, int len);
 
+	// The maximum size of the log file.
+	int        log_file_size;
+
+	// The number of rotate log file.
+	int        log_rotate_number;
+
+	// The flag file to enable log dynamically.
+	pj_str_t   log_flag_file; 
+
+	// Disable console log.
+	unsigned   disable_console_log; 
+
 
 } pjsua_logging_config;
 
@@ -1091,7 +1103,6 @@ typedef struct pjsua_callback
      */
 	void (*on_ice_complete)(pjsua_inst_id inst_id, 
 					pjsua_call_id call_id, 
-					natnl_tunnel_type tnl_type,
 					pj_status_t status,
 					pj_sockaddr *turn_mapped_addr);
 
@@ -3494,6 +3505,7 @@ PJ_DEF(pjsua_call_id) alloc_call_id(pjsua_inst_id inst_id);
  * @param dst_uri	URI to be put in the To header (normally is the same
  *			as the target URI).
  * @param options	Options (must be zero at the moment).
+ * @param use_sctp	Indicate to use UDT or SCTP as flow control. 0 : use UDT, 1 : use SCTP..
  * @param user_data	Arbitrary user data to be attached to the call, and
  *			can be retrieved later.
  * @param msg_data	Optional headers etc to be added to outgoing INVITE
@@ -3506,6 +3518,7 @@ PJ_DECL(pj_status_t) pjsua_call_make_call(pjsua_inst_id inst_id,
 					  pjsua_acc_id acc_id,
 					  const pj_str_t *dst_uri,
 					  unsigned options,
+					  int use_sctp,
 					  void *user_data,
 					  const pjsua_msg_data *msg_data,
 					  pjsua_call_id *p_call_id);
@@ -4364,6 +4377,8 @@ extern const pjsip_method pjsip_message_method;
  * @param msg_data	Optional list of headers etc to be included in outgoing
  *			request. The body descriptor in the msg_data is 
  *			ignored.
+ * @param s_rport	The remote port which the MESSAGE send to.
+ * @param s_timeout	The timeout value.
  * @param user_data	Optional user data, which will be given back when
  *			the IM callback is called.
  *
@@ -4376,6 +4391,7 @@ PJ_DECL(pj_status_t) pjsua_im_send(pjsua_inst_id inst_id,
 				   const pj_str_t *content,
 				   const pjsua_msg_data *msg_data,
 				   char *s_rport,
+				   char *s_timeout,
 				   void *user_data);
 
 
@@ -5537,6 +5553,10 @@ pjsua_media_transports_attach( pjsua_inst_id inst_id,
 			       pj_bool_t auto_delete);
 
 
+
+
+/* Init random seed */
+PJ_DECL(void) pj_init_random_seed(void);
 /**
  * @}
  */

@@ -81,7 +81,7 @@ hex2bin(const char *value, size_t *size)
 	if (size)
 		*size = ptr - dst;
 
-	return dst;
+	return (char *) dst;
 }
 #endif
 
@@ -175,7 +175,7 @@ opt_get(const void *buf, size_t size, unsigned char id)
 static char
 *stropt(const struct opt_hdr *opt, char *buf)
 {
-	strncpy(buf, opt->data, opt->len);
+	strncpy(buf, (char *) opt->data, opt->len);
 	buf[opt->len] = '\0';
 	return buf;
 }
@@ -298,7 +298,7 @@ bound(void)
 	int unit, ifunit;
 	int changed = 0;
 #ifdef RTCONFIG_TR069
-	int size;
+	size_t size = 0;
 #endif
 
 	/* Figure out nvram variable name prefix for this i/f */
@@ -683,20 +683,20 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	/* Client ID */
 	value = nvram_safe_get(strcat_r(prefix, "clientid", tmp));
 //	value = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
-	if (*value) {
+	if (nvram_get_int(strcat_r(prefix, "clientid_type", tmp))) {
+		if (get_duid(&duid)) {
+			/* RFC4361 implementation, use WAN number as IAID.
+			 * This also fits odhcp6c behavior for IA_NA for the WAN0 */
+			unsigned long iaid = htonl(unit + 1);
+			len = snprintf(clientid, sizeof(clientid), "61:ff");
+			len += bin2hex(clientid + len, sizeof(clientid) - len, &iaid, sizeof(iaid));
+			bin2hex(clientid + len, sizeof(clientid) - len, &duid, sizeof(duid));
+			dhcp_argv[index++] = "-x";
+			dhcp_argv[index++] = clientid;
+		}
+	} else if (*value) {
 		len = snprintf(clientid, sizeof(clientid), "61:");
 		bin2hex(clientid + len, sizeof(clientid) - len, value, strlen(value));
-		dhcp_argv[index++] = "-x";
-		dhcp_argv[index++] = clientid;
-	}
-
-	else if (nvram_get_int(strcat_r(prefix, "clientid_type", tmp)) && get_duid(&duid)) {
-		/* RFC4361 implementation, use WAN number as IAID.
-		 * This also fits odhcp6c behavior for IA_NA for the WAN0 */
-		unsigned long iaid = htonl(unit + 1);
-		len = snprintf(clientid, sizeof(clientid), "61:ff");
-		len += bin2hex(clientid + len, sizeof(clientid) - len, &iaid, sizeof(iaid));
-		bin2hex(clientid + len, sizeof(clientid) - len, &duid, sizeof(duid));
 		dhcp_argv[index++] = "-x";
 		dhcp_argv[index++] = clientid;
 	}
@@ -1067,7 +1067,8 @@ deconfig6(char *wan_ifname)
 		nvram_set(ipv6_nvname("ipv6_wan_addr"), "");
 	}
 
-	if (nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
+	if (get_ipv6_service() == IPV6_NATIVE_DHCP &&
+		nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
 		if (nvram_invmatch(ipv6_nvname("ipv6_prefix"), "") ||
 		    nvram_get_int(ipv6_nvname("ipv6_prefix_length")) != 0) {
 			eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
@@ -1083,6 +1084,10 @@ deconfig6(char *wan_ifname)
 		nvram_set(ipv6_nvname("ipv6_get_domain"), "");
 		if (nvram_get_int(ipv6_nvname("ipv6_dnsenable")))
 			update_resolvconf();
+#ifdef RTCONFIG_6RELAYD
+		if (get_ipv6_service() == IPV6_PASSTHROUGH)
+			stop_6relayd();
+#endif
 	}
 
 	return 0;
@@ -1127,7 +1132,8 @@ bound6(char *wan_ifname, int bound)
 		eval("ip", "-6", "addr", "add", value, "dev", wan_ifname);
 
 	prefix_changed = 0;
-	if (nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
+	if (get_ipv6_service() == IPV6_NATIVE_DHCP &&
+		nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
 		value = safe_getenv("PREFIXES");
 		if (*value) {
 			foreach(tmp, value, next) {
@@ -1181,6 +1187,11 @@ skip:
 	if (dns_changed && nvram_get_int(ipv6_nvname("ipv6_dnsenable")))
 		update_resolvconf();
 
+#ifdef RTCONFIG_6RELAYD
+	if (dns_changed && get_ipv6_service() == IPV6_PASSTHROUGH)
+		start_6relayd();
+#endif
+
 	if (bound == 1 || wanaddr_changed || prefix_changed) {
 		char *address = nvram_safe_get(ipv6_nvname("ipv6_wan_addr"));
 		char *prefix = nvram_safe_get(ipv6_nvname("ipv6_prefix"));
@@ -1228,6 +1239,11 @@ ra_updated6(char *wan_ifname)
 	if (dns_changed && nvram_get_int(ipv6_nvname("ipv6_dnsenable")))
 		update_resolvconf();
 
+#ifdef RTCONFIG_6RELAYD
+	if (dns_changed && get_ipv6_service() == IPV6_PASSTHROUGH)
+		start_6relayd();
+#endif
+
 	return 0;
 }
 
@@ -1258,7 +1274,7 @@ int dhcp6c_wan(int argc, char **argv)
 int
 start_dhcp6c(void)
 {
-	char *wan_ifname = (char *)get_wan6face();
+	char *wan_ifname = (char *) get_wan6face();
 	char *dhcp6c_argv[] = { "odhcp6c",
 #ifndef RTCONFIG_BCMARM
 		"-f",
@@ -1285,12 +1301,19 @@ start_dhcp6c(void)
 #endif
 
 	/* Check if enabled */
-	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
+	if (get_ipv6_service() != IPV6_NATIVE_DHCP
+#ifdef RTCONFIG_6RELAYD
+		&& get_ipv6_service() != IPV6_PASSTHROUGH
+#endif
+	)
 		return 0;
 
 	if (!wan_ifname || *wan_ifname == '\0')
 		return -1;
 
+#ifdef RTCONFIG_6RELAYD
+	stop_6relayd();
+#endif
 	stop_dhcp6c();
 
 	if (get_duid(&duid)) {
@@ -1299,7 +1322,8 @@ start_dhcp6c(void)
 		dhcp6c_argv[index++] = duid_arg;
 	}
 
-	if (nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
+	if (get_ipv6_service() == IPV6_NATIVE_DHCP &&
+		nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
 		/* Generate IA_PD IAID from the last 7 digits of WAN MAC */
 		unsigned long iaid = ether_atoe(nvram_safe_get("wan0_hwaddr"), duid.ea) ?
 			((unsigned long)(duid.ea[3] & 0x0f) << 16) |
@@ -1313,7 +1337,11 @@ start_dhcp6c(void)
 		dhcp6c_argv[index++] = prefix_arg;
 	}
 
-	if (nvram_get_int(ipv6_nvname("ipv6_dnsenable"))) {
+	if (nvram_get_int(ipv6_nvname("ipv6_dnsenable"))
+#ifdef RTCONFIG_6RELAYD
+		|| get_ipv6_service() == IPV6_PASSTHROUGH
+#endif
+		) {
 		dhcp6c_argv[index++] = "-r23";	/* dns */
 		dhcp6c_argv[index++] = "-r24";	/* domain */
 	}

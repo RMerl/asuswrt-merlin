@@ -144,10 +144,10 @@ int get_wan_unit(char *ifname)
 char *get_wanx_ifname(int unit)
 {
 	char *wan_ifname;
-	char tmp[100], prefix[]="wanXXXXXXXXXX_";
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-	wan_ifname=nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+	wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
 	return wan_ifname;
 }
@@ -156,8 +156,8 @@ char *get_wanx_ifname(int unit)
 char *get_wan_ifname(int unit)
 {
 	char *wan_proto, *wan_ifname;
-	char tmp[100], prefix[]="wanXXXXXXXXXX_";
-	
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
+
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 
@@ -165,62 +165,30 @@ char *get_wan_ifname(int unit)
 
 #ifdef RTCONFIG_USB_MODEM
 	if (dualwan_unit__usbif(unit)) {
-		if(!strcmp(wan_proto, "dhcp"))
+		if (strcmp(wan_proto, "dhcp") == 0)
 			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 		else
 			wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
-	}
-	else
+	} else
 #endif
-	if(strcmp(wan_proto, "pppoe") == 0 ||
-		strcmp(wan_proto, "pptp") == 0 ||
-		strcmp(wan_proto, "l2tp") == 0)
+	if (strcmp(wan_proto, "pppoe") == 0 ||
+	    strcmp(wan_proto, "pptp") == 0 ||
+	    strcmp(wan_proto, "l2tp") == 0) {
+#ifdef RTCONFIG_IPV6
+		int service = get_ipv6_service_by_unit(unit);
+		if ((service == IPV6_NATIVE_DHCP || service == IPV6_MANUAL) &&
+		    nvram_match(ipv6_nvname("ipv6_ifdev"), "eth"))
+			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+		else
+#endif
 		wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
-	else
+	} else
 		wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
 	//_dprintf("wan_ifname: %s\n", wan_ifname);
 
 	return wan_ifname;
 }
-
-#ifdef RTCONFIG_IPV6
-
-char *get_wan6_ifname(int unit)
-{
-	char *wan_proto, *wan_ifname;
-	char tmp[100], prefix[]="wanXXXXXXXXXX_";
-	
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-	wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
-
-
-	if(strcmp(nvram_safe_get(ipv6_nvname("ipv6_ifdev")), "eth")==0) {
-		wan_ifname=nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-//		dbG("wan6_ifname: %s\n", wan_ifname);
-		return wan_ifname;
-	}
-
-#ifdef RTCONFIG_USB_MODEM
-	if (dualwan_unit__usbif(unit)) {
-		if(!strcmp(wan_proto, "dhcp"))
-			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-		else
-			wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
-	}
-	else
-#endif
-	if(strcmp(wan_proto, "pppoe") == 0 ||
-		strcmp(wan_proto, "pptp") == 0 ||
-		strcmp(wan_proto, "l2tp") == 0)
-		wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
-	else wan_ifname=nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-
-//	dbG("wan6_ifname: %s\n", wan_ifname);
-	return wan_ifname;
-}
-
-#endif
 
 // OR all lan port status
 int get_lanports_status(void)

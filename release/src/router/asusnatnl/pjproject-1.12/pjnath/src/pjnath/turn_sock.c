@@ -44,13 +44,13 @@ struct pj_turn_sock
     pj_turn_sock_cb	 cb;
     void		*user_data;
 
-    pj_lock_t		*lock;
+    pj_bool_t		 is_destroying;
+    pj_grp_lock_t	*grp_lock;
 
     pj_turn_alloc_param	 alloc_param;
     pj_stun_config	 cfg;
     pj_turn_sock_cfg	 setting;
 
-    pj_bool_t		 destroy_request;
     pj_timer_entry	 timer;
 
     int			 af;
@@ -106,6 +106,7 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
 
 
 
+static void turn_sock_on_destroy(void *comp);
 static void destroy(pj_turn_sock *turn_sock);
 static void timer_cb(pj_timer_heap_t *th, pj_timer_entry *e);
 
@@ -117,6 +118,7 @@ PJ_DEF(void) pj_turn_sock_cfg_default(pj_turn_sock_cfg *cfg)
     cfg->qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     cfg->qos_ignore_error = PJ_TRUE;
 }
+
 
 /*
  * Create.
@@ -179,14 +181,20 @@ PJ_DEF(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
 	pj_memcpy(&turn_sock->cb, cb, sizeof(*cb));
     }
 
-    /* Create lock */
-    status = pj_lock_create_recursive_mutex(pool, turn_sock->obj_name, 
-					    &turn_sock->lock);
+    /* Session lock */
+    if (setting && setting->grp_lock) {
+	turn_sock->grp_lock = setting->grp_lock;
+    } else {
+	status = pj_grp_lock_create(pool, NULL, &turn_sock->grp_lock);
 	if (status != PJ_SUCCESS) {
-		PJ_LOG(1, ("turn_session.c", "!!! TURN DEALLOCATE !!! in pj_turn_sock_create() destroy turn_sock for creating mutex failed."));
-		destroy(turn_sock);
-		return status;
+	    pj_pool_release(pool);
+	    return status;
+	}
     }
+
+    pj_grp_lock_add_ref(turn_sock->grp_lock);
+    pj_grp_lock_add_handler(turn_sock->grp_lock, pool, turn_sock,
+                            &turn_sock_on_destroy);
 
     /* Init timer */
     pj_timer_entry_init(&turn_sock->timer, TIMER_NONE, turn_sock, &timer_cb);
@@ -200,11 +208,11 @@ PJ_DEF(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
 	// DEAN Added 2013-03-19
 	sess_cb.on_turn_srv_allocated = &turn_on_allocated;
     status = pj_turn_session_create(cfg, pool->obj_name, af, conn_type,
-				    &sess_cb, 0, turn_sock, &turn_sock->sess);
-	if (status != PJ_SUCCESS) {
-		PJ_LOG(1, ("turn_session.c", "!!! TURN DEALLOCATE !!! in pj_turn_sock_create() destroy turn_sock for creating turn session failed."));
-		destroy(turn_sock);
-		return status;
+                                    turn_sock->grp_lock, &sess_cb, 0,
+                                    turn_sock, &turn_sock->sess);
+    if (status != PJ_SUCCESS) {
+	destroy(turn_sock);
+	return status;
     }
 
     /* Note: socket and ioqueue will be created later once the TURN server
@@ -218,14 +226,31 @@ PJ_DEF(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
 /*
  * Destroy.
  */
+static void turn_sock_on_destroy(void *comp)
+{
+    pj_turn_sock *turn_sock = (pj_turn_sock*) comp;
+
+    if (turn_sock->pool) {
+	pj_pool_t *pool = turn_sock->pool;
+	PJ_LOG(4,(turn_sock->obj_name, "TURN socket destroyed"));
+	turn_sock->pool = NULL;
+	pj_pool_release(pool);
+    }
+}
+
 static void destroy(pj_turn_sock *turn_sock)
 {
-    if (turn_sock->lock) {
-	pj_lock_acquire(turn_sock->lock);
+    PJ_LOG(4,(turn_sock->obj_name, "TURN socket destroy request, ref_cnt=%d",
+	      pj_grp_lock_get_ref(turn_sock->grp_lock)));
+
+    pj_grp_lock_acquire(turn_sock->grp_lock);
+    if (turn_sock->is_destroying) {
+	pj_grp_lock_release(turn_sock->grp_lock);
+	return;
     }
 
+    turn_sock->is_destroying = PJ_TRUE;
     if (turn_sock->sess) {
-	pj_turn_session_set_user_data(turn_sock->sess, NULL);
 	pj_turn_session_shutdown(turn_sock->sess);
 	turn_sock->sess = NULL;
     }
@@ -236,39 +261,29 @@ static void destroy(pj_turn_sock *turn_sock)
 		pj_activesock_close(turn_sock->active_sock);
 		turn_sock->active_sock = NULL;
     }
-
-    if (turn_sock->lock) {
-	pj_lock_release(turn_sock->lock);
-	pj_lock_destroy(turn_sock->lock);
-	turn_sock->lock = NULL;
-    }
-
-    if (turn_sock->pool) {
-	pj_pool_t *pool = turn_sock->pool;
-	turn_sock->pool = NULL;
-	pj_pool_release(pool);
-    }
+    pj_grp_lock_dec_ref(turn_sock->grp_lock);
+    pj_grp_lock_release(turn_sock->grp_lock);
 }
-
 
 PJ_DEF(void) pj_turn_sock_destroy(pj_turn_sock *turn_sock)
 {
-    pj_lock_acquire(turn_sock->lock);
-    turn_sock->destroy_request = PJ_TRUE;
-
-    if (turn_sock->sess) {
-		pj_turn_session_shutdown(turn_sock->sess);
-		/* This will ultimately call our state callback, and when
-		 * session state is DESTROYING we will schedule a timer to
-		 * destroy ourselves.
-		 */
-		pj_lock_release(turn_sock->lock);
-    } else {
-		pj_lock_release(turn_sock->lock);
-		PJ_LOG(1, ("turn_session.c", "!!! TURN DEALLOCATE !!! in pj_turn_sock_destroy() destroy turn_sock."));
-		destroy(turn_sock);
+    pj_grp_lock_acquire(turn_sock->grp_lock);
+    if (turn_sock->is_destroying) {
+	pj_grp_lock_release(turn_sock->grp_lock);
+	return;
     }
 
+    if (turn_sock->sess) {
+	pj_turn_session_shutdown(turn_sock->sess);
+	/* This will ultimately call our state callback, and when
+	 * session state is DESTROYING we will schedule a timer to
+	 * destroy ourselves.
+	 */
+    } else {
+	destroy(turn_sock);
+    }
+
+    pj_grp_lock_release(turn_sock->grp_lock);
 }
 
 
@@ -331,6 +346,15 @@ PJ_DEF(void*) pj_turn_sock_get_user_data(pj_turn_sock *turn_sock)
     return turn_sock->user_data;
 }
 
+/*
+ * Get group lock.
+ */
+PJ_DEF(pj_grp_lock_t *) pj_turn_sock_get_grp_lock(pj_turn_sock *turn_sock)
+{
+    PJ_ASSERT_RETURN(turn_sock, NULL);
+    return turn_sock->grp_lock;
+}
+
 /**
  * Get info.
  */
@@ -354,7 +378,7 @@ PJ_DEF(pj_status_t) pj_turn_sock_get_info(pj_turn_sock *turn_sock,
  */
 PJ_DEF(pj_status_t) pj_turn_sock_lock(pj_turn_sock *turn_sock)
 {
-    return pj_lock_acquire(turn_sock->lock);
+    return pj_grp_lock_acquire(turn_sock->grp_lock);
 }
 
 /**
@@ -362,7 +386,7 @@ PJ_DEF(pj_status_t) pj_turn_sock_lock(pj_turn_sock *turn_sock)
  */
 PJ_DEF(pj_status_t) pj_turn_sock_unlock(pj_turn_sock *turn_sock)
 {
-    return pj_lock_release(turn_sock->lock);
+    return pj_grp_lock_release(turn_sock->grp_lock);
 }
 
 /*
@@ -413,6 +437,8 @@ PJ_DEF(pj_status_t) pj_turn_sock_alloc2(pj_turn_sock *turn_sock,
     PJ_ASSERT_RETURN(turn_sock && domain && turn_cnt <= MAX_TURN_SERVER_COUNT, PJ_EINVAL);
     PJ_ASSERT_RETURN(turn_sock->sess, PJ_EINVALIDOP);
 
+    pj_grp_lock_acquire(turn_sock->grp_lock);
+
     /* Copy alloc param. We will call session_alloc() only after the 
      * server address has been resolved.
      */
@@ -433,6 +459,7 @@ PJ_DEF(pj_status_t) pj_turn_sock_alloc2(pj_turn_sock *turn_sock,
 		if (status != PJ_SUCCESS) {
 			PJ_LOG(1, ("turn_sock.c", "!!! TURN DEALLOCATE !!! in pj_turn_sock_alloc2() pj_turn_session_set_credential failed=%d", status));
 			sess_fail(turn_sock, "Error setting credential", status);
+	    	pj_grp_lock_release(turn_sock->grp_lock);
 			return status;
 		}
     }
@@ -451,13 +478,14 @@ PJ_DEF(pj_status_t) pj_turn_sock_alloc2(pj_turn_sock *turn_sock,
 	if (status != PJ_SUCCESS) {
 		PJ_LOG(1, ("turn_sock.c", "!!! TURN DEALLOCATE !!! in pj_turn_sock_alloc2() pj_turn_session_set_server failed=%d", status));
 		sess_fail(turn_sock, "Error setting TURN server", status);
+		pj_grp_lock_release(turn_sock->grp_lock);
 		return status;
     }
 
     /* Done for now. The next work will be done when session state moved
      * to RESOLVED state.
      */
-
+    pj_grp_lock_release(turn_sock->grp_lock);
     return PJ_SUCCESS;
 }
 
@@ -519,12 +547,15 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
     if (!turn_sock)
         return PJ_FALSE;
 
+    pj_grp_lock_acquire(turn_sock->grp_lock);
+
     /* TURN session may have already been destroyed here.
      * See ticket #1557 (http://trac.pjsip.org/repos/ticket/1557).
      */
 	if (!turn_sock->sess) {
 		PJ_LOG(1, ("turn_sock.c", "!!! TURN DEALLOCATE !!! in on_connect_complete() turn_sock->sess is NULL status=%d", status));
 		sess_fail(turn_sock, "TURN session already destroyed", status);
+		pj_grp_lock_release(turn_sock->grp_lock);
 		return PJ_FALSE;
     }
 
@@ -536,6 +567,7 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
 				turn_sock->turn_cnt, turn_sock->curr_turn));
 			sess_fail(turn_sock, "TCP connect() error", status);
 			turn_sock->curr_turn = 0;
+			pj_grp_lock_release(turn_sock->grp_lock);
 			PJ_LOG(3, (__FILE__, "Failed(%d) connect to all turn servers.", status));
 		} else {
 
@@ -560,9 +592,11 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
 				PJ_LOG(1, ("turn_sock.c", "!!! TURN DEALLOCATE !!! in on_connect_complete() pj_turn_session_set_server failed status=%d", 
 					status));
 				sess_fail(turn_sock, "Error setting TURN server", status);
+				pj_grp_lock_release(turn_sock->grp_lock);
 				return status;
 			}
 		}
+		pj_grp_lock_release(turn_sock->grp_lock);
 		return PJ_FALSE;
     }
 
@@ -583,9 +617,11 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
 		PJ_LOG(1, ("turn_sock.c", "!!! TURN DEALLOCATE !!! in on_connect_complete() pj_turn_session_alloc failed status=%d", 
 			status));
 		sess_fail(turn_sock, "Error sending ALLOCATE", status);
+		pj_grp_lock_release(turn_sock->grp_lock);
 		return PJ_FALSE;
     }
 
+    pj_grp_lock_release(turn_sock->grp_lock);
     return PJ_TRUE;
 }
 
@@ -645,9 +681,9 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
     pj_bool_t ret = PJ_TRUE;
 
     turn_sock = (pj_turn_sock*) pj_activesock_get_user_data(asock);
-    pj_lock_acquire(turn_sock->lock);
+    pj_grp_lock_acquire(turn_sock->grp_lock);
 
-    if (status == PJ_SUCCESS && turn_sock->sess) {
+    if (status == PJ_SUCCESS && turn_sock->sess && !turn_sock->is_destroying) {
 	/* Report incoming packet to TURN session, repeat while we have
 	 * "packet" in the buffer (required for stream-oriented transports)
 	 */
@@ -682,7 +718,7 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
 		pj_memmove(data, ((char*)data)+parsed_len, *remainder);
 	    } else {
 		*remainder = 0;
-		}
+	    }
 	    size = *remainder;
 
 	    //PJ_LOG(5,(turn_sock->pool->obj_name, 
@@ -712,7 +748,7 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
     }
 
 on_return:
-    pj_lock_release(turn_sock->lock);
+    pj_grp_lock_release(turn_sock->grp_lock);
 
     return ret;
 }
@@ -734,7 +770,7 @@ static pj_status_t turn_on_send_pkt(pj_turn_session *sess,
     pj_bool_t is_stun = PJ_FALSE;
     pj_bool_t is_tnl_data = PJ_FALSE;
 
-    if (turn_sock == NULL) {
+    if (turn_sock == NULL || turn_sock->is_destroying) {
 	/* We've been destroyed */
 	// https://trac.pjsip.org/repos/ticket/1316
 	//pj_assert(!"We should shutdown gracefully");
@@ -753,7 +789,7 @@ static pj_status_t turn_on_send_pkt(pj_turn_session *sess,
 		is_tnl_data = (((pj_uint8_t*)pkt)[pkt_len] == 1);
 
     if(is_stun || !is_tnl_data) {
-        pj_ioqueue_op_key_t *op_key = (pj_ioqueue_op_key_t*)malloc(sizeof(pj_ioqueue_op_key_t));
+        pj_ioqueue_op_key_t *op_key = (pj_ioqueue_op_key_t*)pj_mem_alloc(sizeof(pj_ioqueue_op_key_t));
         pj_ioqueue_op_key_init(op_key, sizeof(pj_ioqueue_op_key_t));
 	    status = pj_activesock_send(turn_sock->active_sock, op_key,
 			        pkt, &len, PJ_IOQUEUE_URGENT_DATA);
@@ -796,7 +832,7 @@ static void turn_on_rx_data(pj_turn_session *sess,
 {
     pj_turn_sock *turn_sock = (pj_turn_sock*) 
 			   pj_turn_session_get_user_data(sess);
-    if (turn_sock == NULL) {
+    if (turn_sock == NULL || turn_sock->is_destroying) {
 	/* We've been destroyed */
 	return;
     }
@@ -881,7 +917,6 @@ static void turn_on_state(pj_turn_session *sess,
 			&flag, sizeof(flag));
 		if (status != PJ_SUCCESS) {
 			PJ_LOG(2, (THIS_FILE, "turn_on_state() Failed to set SO_RCVBUF option. status=[%d]", status));
-			return;
 		}
 
 		flag = turn_sock->setting.sock_send_buf_size ? turn_sock->setting.sock_send_buf_size : PJ_SOCKET_SND_BUFFER_SIZE;
@@ -889,7 +924,6 @@ static void turn_on_state(pj_turn_session *sess,
 			&flag, sizeof(flag));
 		if (status != PJ_SUCCESS) {
 			PJ_LOG(2, (THIS_FILE, "turn_on_state() Failed to set SO_SNDBUF option. status=[%d]", status));
-			return;
 		}
 	}
 
@@ -906,10 +940,11 @@ static void turn_on_state(pj_turn_session *sess,
 
 	/* Create active socket */
 	pj_activesock_cfg_default(&asock_cfg);
+	asock_cfg.grp_lock = turn_sock->grp_lock;
 	asock_cfg.concurrency = 1;
 	asock_cfg.whole_data = PJ_TRUE;
 
-    pj_bzero(&asock_cb, sizeof(asock_cb));
+	pj_bzero(&asock_cb, sizeof(asock_cb));
 	asock_cb.on_data_read = &on_data_read;
 	asock_cb.on_connect_complete = &on_connect_complete;
 	status = pj_activesock_create(turn_sock->pool, sock,
@@ -956,14 +991,12 @@ static void turn_on_state(pj_turn_session *sess,
 	turn_sock->sess = NULL;
 	pj_turn_session_set_user_data(sess, NULL);
 
-	if (turn_sock->timer.id) {
-	    pj_timer_heap_cancel(turn_sock->cfg.timer_heap, &turn_sock->timer);
-	    turn_sock->timer.id = 0;
-	}
-
-	turn_sock->timer.id = TIMER_DESTROY;
-	pj_timer_heap_schedule(turn_sock->cfg.timer_heap, &turn_sock->timer, 
-			       &delay);
+	pj_timer_heap_cancel_if_active(turn_sock->cfg.timer_heap,
+	                               &turn_sock->timer, 0);
+	pj_timer_heap_schedule_w_grp_lock(turn_sock->cfg.timer_heap,
+	                                  &turn_sock->timer,
+	                                  &delay, TIMER_DESTROY,
+	                                  turn_sock->grp_lock);
     }
 }
 

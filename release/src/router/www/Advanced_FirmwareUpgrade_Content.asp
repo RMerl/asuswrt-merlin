@@ -95,6 +95,7 @@ function initial(){
 	if ("<% nvram_get("jffs2_enable"); %>" == "1") document.getElementById("jffs_warning").style.display="";
 	if(!live_update_support || !HTTPS_support){
 		document.getElementById("update").style.display = "none";
+		document.getElementById("linkpage_div").style.display = "";
 		document.getElementById("linkpage").style.display = "";
 		helplink = get_helplink();
 		document.getElementById("linkpage").href = helplink;
@@ -110,47 +111,6 @@ function initial(){
 		document.getElementById("asus_link").href = "http://www.asus.com/us/supportonly/RT-AC68R/";
 		document.getElementById("asus_link").innerHTML = "http://www.asus.com/us/supportonly/RT-AC68R/";
 	}
-}
-
-function get_helplink(){
-
-			var href_lang = get_supportsite_lang();
-			var model_name_supportsite = based_modelid.replace("-", "");
-			model_name_supportsite = model_name_supportsite.replace("+", "Plus");
-			if(based_modelid =="RT-N12" || hw_ver.search("RTN12") != -1){   //MODELDEP : RT-N12
-				if( hw_ver.search("RTN12HP") != -1){    //RT-N12HP
-                                	var getlink="http://www.asus.com"+ href_lang +"Networking/RTN12HP/HelpDesk_Download/";
-				}else if(hw_ver.search("RTN12B1") != -1){ //RT-N12B1
-					var getlink="http://www.asus.com"+ href_lang +"Networking/RTN12_B1/HelpDesk_Download/";
-				}else if(hw_ver.search("RTN12C1") != -1){ //RT-N12C1
-					var getlink="http://www.asus.com"+ href_lang +"Networking/RTN12_C1/HelpDesk_Download/";
-				}else if(hw_ver.search("RTN12D1") != -1){ //RT-N12D1
-					var getlink="http://www.asus.com"+ href_lang +"Networking/RTN12_D1/HelpDesk_Download/";
-				}else{  //RT-N12
-					var getlink="http://www.asus.com"+ href_lang +"Networking/"+ model_name_supportsite +"/HelpDesk_Download/";
-				}
-			}
-			else if(productid == "DSL-N55U"){	//MODELDEP : DSL-N55U	US site
-				var getlink="http://www.asus.com/Networking/DSLN55U_Annex_A/HelpDesk_Download/";
-			}
-			else if(productid == "DSL-N55U-B"){	//MODELDEP : DSL-N55U-B   US site
-				var getlink="http://www.asus.com/Networking/DSLN55U_Annex_B/HelpDesk_Download/";
-			}
-			else{
-				if(based_modelid == "DSL-AC68U" || based_modelid == "DSL-AC68R" || based_modelid == "RT-N11P" || based_modelid == "RT-N300" || based_modelid == "RT-N12+")
-					href_lang = "/us/"; //MODELDEP:  US site, global only
-				
-				if(odmpid == "RT-N12+")
-					model_name_supportsite = "RTN12Plus";	//MODELDEP: RT-N12+
-				else if(odmpid == "RT-AC1200G+")
-					model_name_supportsite = "RTAC1200GPlus";
-				else if(odmpid.search("RT-N12E_B") != -1)       //RT-N12E_B or RT-N12E_B1
-					model_name_supportsite = "RTN12E_B1";
-
-				var getlink="http://www.asus.com"+href_lang+"Networking/" +model_name_supportsite+ "/HelpDesk_Download/";
-			}
-		
-			return getlink;
 }
 
 var exist_firmver="<% nvram_get("firmver"); %>";

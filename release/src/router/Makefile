@@ -1,7 +1,7 @@
 #
 # Broadcom Linux Router Makefile
 #
-# Copyright 2005, Broadcom Corporation
+# Copyright 2016, Broadcom
 # All Rights Reserved.
 #
 # THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
@@ -613,7 +613,7 @@ obj-$(RTCONFIG_PPTPD) += pptpd
 obj-$(RTCONFIG_WEBDAV) += sqlite
 obj-$(RTCONFIG_WEBDAV) += libxml2
 obj-$(RTCONFIG_WEBDAV) += pcre-8.31
-obj-$(RTCONFIG_WEBDAV) += lighttpd-1.4.29
+obj-$(RTCONFIG_WEBDAV) += lighttpd-1.4.39
 obj-$(RTCONFIG_WEBDAV) += libexif
 
 obj-$(RTCONFIG_IXIAEP) += ixia_endpoint$(BCMEX)
@@ -736,7 +736,8 @@ obj-$(RTCONFIG_CLOUDCHECK) += cloudcheck
 
 obj-$(RTCONFIG_GETREALIP) += ministun
 
-ifneq ($(find lighttpd-1.4.29, $(obj-y)),"")
+
+ifneq ($(find lighttpd-1.4.39, $(obj-y)),"")
 released_dir += APP-IPK
 endif
 
@@ -1194,6 +1195,7 @@ endif
 #ifeq ($(RTCONFIG_SPEEDTEST),y)
 	# for speedtest
 	install -D curl-7.21.7/src/.libs/curl $(TARGETDIR)/usr/sbin/curl
+	install -D curl-7.21.7/ddns-start.sh $(TARGETDIR)/usr/sbin/ddns-start.sh
 	$(STRIP) $(TARGETDIR)/usr/sbin/curl
 #endif
 
@@ -1851,9 +1853,9 @@ upnp: nvram$(BCMEX) shared $(IPTABLES)
 
 miniupnpd/config.h: shared/version.h
 ifeq ($(RTCONFIG_IGD2),y)
-	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg $(if $(RTCONFIG_IPV6),--ipv6,) --igd2
+	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile $(if $(RTCONFIG_IPV6),--ipv6,) --igd2
 else
-	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg
+	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile
 endif
 
 miniupnpd: $(IPTABLES) miniupnpd/config.h
@@ -3223,6 +3225,7 @@ clm-clean:
 		$(RM) $(TARGETDIR)/etc/brcm/clm/$(clmb).clm_blob )
 
 SRC_WLEXE = $(SRCBASE_SYS)/wl/exe
+SRC_PRE_WLEXE = $(SRCBASE)/wl/exe
 
 .PHONY: wlexe
 
@@ -3233,7 +3236,7 @@ endif
 
 wlexe: $(SRC_WLEXE)/../../include/epivers.h
 ifeq ($(RTCONFIG_WLEXE),y)
-ifneq ($(wildcard $(SRCBASE)/wl/exe/*.c),)
+ifneq ($(wildcard $(SRC_WLEXE)/*.c),)
 
 ifneq ($(wildcard $(SRC_WLEXE)/GNUmakefile),)
 ifeq ($(ARCH),arm)
@@ -3253,7 +3256,7 @@ endif
 
 else
 	[ -d wlexe ] || install -d wlexe
-	install $(SRCBASE)/wl/exe/prebuilt/wl wlexe
+	install $(SRC_PRE_WLEXE)/prebuilt/wl wlexe
 
 endif
 endif
@@ -3525,51 +3528,52 @@ nas$(BCMEX)$(EX7): nvram$(BCMEX)
 eapd$(BCMEX)$(EX7)-clean:
 	-@cd eapd$(BCMEX)$(EX7)/linux && make clean
 
-lighttpd-1.4.29/stamp-h1:
+lighttpd-1.4.39/stamp-h1:
 ifneq ($(RTCONFIG_QTN),y)
-	cd lighttpd-1.4.29 && ./preconfigure-script touch $@
+	cd lighttpd-1.4.39 && ./preconfigure-script touch $@
 else
-	cd lighttpd-1.4.29 && ./preconfigure-script-qtn touch $@
+	cd lighttpd-1.4.39 && ./preconfigure-script-qtn touch $@
 endif
 
-lighttpd-1.4.29: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl lighttpd-1.4.29/stamp-h1
-	$(MAKE) -C lighttpd-1.4.29 $(PARALLEL_BUILD)
+lighttpd-1.4.39: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl lighttpd-1.4.39/stamp-h1
+	$(MAKE) -C lighttpd-1.4.39 $(PARALLEL_BUILD)
+
 ifeq ($(RTCONFIG_BCMARM),y)
-ifeq ($(RTCONFIG_QTN),y)
-	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild-arm-qtn
+#ifeq ($(RTCONFIG_QTN),y)
+#	$(MAKE) -C lighttpd-1.4.39 copy-prebuild-arm-qtn
+#else
+	$(MAKE) -C lighttpd-1.4.39 copy-prebuild-arm
+#endif
 else
-	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild-arm
-endif
-else
-	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild
+	$(MAKE) -C lighttpd-1.4.39 copy-prebuild
 endif
 
-lighttpd-1.4.29-install: lighttpd-1.4.29
-	install -D lighttpd-1.4.29/src/.libs/lighttpd $(INSTALLDIR)/lighttpd-1.4.29/usr/sbin/lighttpd
-	install -D lighttpd-1.4.29/src/.libs/lighttpd-monitor $(INSTALLDIR)/lighttpd-1.4.29/usr/sbin/lighttpd-monitor
-	install -D lighttpd-1.4.29/src/.libs/lighttpd-arpping $(INSTALLDIR)/lighttpd-1.4.29/usr/sbin/lighttpd-arpping
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.29/usr/sbin/lighttpd
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.29/usr/sbin/lighttpd-monitor
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.29/usr/sbin/lighttpd-arpping
+lighttpd-1.4.39-install: lighttpd-1.4.39
+	install -D lighttpd-1.4.39/src/.libs/lighttpd $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd
+	install -D lighttpd-1.4.39/src/.libs/lighttpd-monitor $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-monitor
+	install -D lighttpd-1.4.39/src/.libs/lighttpd-arpping $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-arpping
+	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd
+	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-monitor
+	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-arpping
 
-	install -d $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/
-	install -D lighttpd-1.4.29/src/.libs/*.so $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/
-	install -D samba-3.5.8/source3/bin/libsmbclient.so.0 $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/libsmbclient.so.0
-	install -D sqlite/.libs/libsqlite3.so.0 $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/libsqlite3.so.0
-	install -D libexif/libexif/.libs/libexif.so.12 $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/libexif.so.12
+	install -d $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/
+	install -D lighttpd-1.4.39/src/.libs/*.so $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/
+	install -D samba-3.5.8/source3/bin/libsmbclient.so.0 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libsmbclient.so.0
+	install -D sqlite/.libs/libsqlite3.so.0 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libsqlite3.so.0
+	install -D libexif/libexif/.libs/libexif.so.12 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libexif.so.12
 
-	mkdir -p $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd/css && mkdir -p $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd/js
-	cp -rf  lighttpd-1.4.29/external_file/css/ $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd
-	cp -rf  lighttpd-1.4.29/external_file/js/ $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd
-	cp -f APP-IPK/AiCloud-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd
-	cp -f APP-IPK/SmartSync-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd/smartsync_control
+	mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/css && mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/js
+	cp -rf  lighttpd-1.4.39/external_file/css/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd
+	cp -rf  lighttpd-1.4.39/external_file/js/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd
+	cp -f APP-IPK/AiCloud-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd
+	cp -f APP-IPK/SmartSync-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/smartsync_control
 
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/*.so
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/*.so.0
+	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/*.so
+	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/*.so.0
 
-lighttpd-1.4.29-clean:
-	-@$(MAKE) -C lighttpd-1.4.29 clean
-	@rm -f lighttpd-1.4.29/stamp-h1
+lighttpd-1.4.39-clean:
+	-@$(MAKE) -C lighttpd-1.4.39 clean
+	@rm -f lighttpd-1.4.39/stamp-h1
 
 pcre-8.31/stamp-h1:
 	cd pcre-8.31 && \

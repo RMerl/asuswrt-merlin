@@ -185,6 +185,13 @@ body {
 	border-bottom-color: #6297A9;
 }
 
+/*for Safari*/
+@media screen and (-webkit-min-device-pixel-ratio:0){
+	.menu, .m0_r, .menu_clicked, .m_qis_r, .m_qis_r_blocked{
+		border: 1px solid #6B7071;
+	}	
+}
+
 /*for Firefox*/
 @-moz-document url-prefix(){
 	.menu, .m0_r, .menu_clicked{

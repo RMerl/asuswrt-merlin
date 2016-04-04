@@ -408,7 +408,8 @@ PJ_DEF(pj_status_t) pjsip_endpt_add_capability( pjsip_endpoint *endpt,
     PJ_ASSERT_RETURN(endpt!=NULL && count>0 && tags, PJ_EINVAL);
     PJ_ASSERT_RETURN(htype==PJSIP_H_ACCEPT || 
 		     htype==PJSIP_H_ALLOW ||
-		     htype==PJSIP_H_SUPPORTED,
+			 htype==PJSIP_H_SUPPORTED ||
+			 htype==PJSIP_H_TNL_SUPPORTED,
 		     PJ_EINVAL);
 
     /* Find the header. */
@@ -423,10 +424,13 @@ PJ_DEF(pj_status_t) pjsip_endpt_add_capability( pjsip_endpoint *endpt,
 	    break;
 	case PJSIP_H_ALLOW:
 	    hdr = pjsip_allow_hdr_create(endpt->pool);
-	    break;
+		break;
 	case PJSIP_H_SUPPORTED:
-	    hdr = pjsip_supported_hdr_create(endpt->pool);
-	    break;
+		hdr = pjsip_supported_hdr_create(endpt->pool);
+		break;
+	case PJSIP_H_TNL_SUPPORTED:
+		hdr = pjsip_tnl_supported_hdr_create(endpt->pool);
+		break;
 	default:
 	    return PJ_EINVAL;
 	}

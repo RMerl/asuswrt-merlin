@@ -2291,12 +2291,18 @@ static inline int32
 et_ctf_forward(et_info_t *et, struct sk_buff *skb)
 {
 #ifdef CONFIG_IP_NF_DNSMQ
-	if (dnsmq_hit_hook&&dnsmq_hit_hook(skb))
-		return (BCME_ERROR);
+	bool dnsmq_hit = FALSE;
+
+	if (dnsmq_hit_hook && dnsmq_hit_hook(skb))
+		dnsmq_hit = TRUE;
 #endif
 #ifdef HNDCTF
 	/* try cut thru first */
-	if (CTF_ENAB(et->cih) && ctf_forward(et->cih, skb, skb->dev) != BCME_ERROR)
+	if (CTF_ENAB(et->cih) &&
+#ifdef CONFIG_IP_NF_DNSMQ
+		!dnsmq_hit &&
+#endif
+		ctf_forward(et->cih, skb, skb->dev) != BCME_ERROR)
 		return (BCME_OK);
 
 	/* clear skipct flag before sending up */

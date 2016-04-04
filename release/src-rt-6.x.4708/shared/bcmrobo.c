@@ -49,7 +49,10 @@
 		        ((len) == 2) ? *((uint16 *)(var)) : \
 		        *((uint32 *)(var)))
 
+#if defined(RTAC87U) || defined(CONFIG_RTAC87U) || defined(RTAC88U) || defined(CONFIG_RTAC88U)
 void robo_chk_regs(robo_info_t *robo);
+#endif
+
 /*
  * Switch can be programmed through SPI interface, which
  * has a rreg and a wreg functions to read from and write to
@@ -943,10 +946,12 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	robo_info_t *robo;
 	uint32 reset, idx;
 //#ifndef	_CFE_
+#if !defined(_CFE_) || defined(RTAC87U) || defined(CONFIG_RTAC87U) || defined(RTAC88U) || defined(CONFIG_RTAC88U)
 	const char *et1port, *et1phyaddr;
 	int mdcport = 0, phyaddr = 0;
 	uint8 val8;
 //#endif /* _CFE_ */
+#endif
 	int lan_portenable = 0;
 	int rc;
 
@@ -1176,8 +1181,8 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	if (robo->pwrsave_wake_time == 0)
 		robo->pwrsave_wake_time = PWRSAVE_WAKE_TIME;
 	robo->pwrsave_mode_auto = getintvar(robo->vars, "switch_mode_auto");
-#endif /* _CFE_ */
 
+#if defined(RTAC87U) || defined(CONFIG_RTAC87U) || defined(RTAC88U) || defined(CONFIG_RTAC88U)
 	/* Determining what all phys need to be included in
 	 * power save operation
 	 */
@@ -1188,8 +1193,8 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	et1phyaddr = getvar(vars, "et1phyaddr");
 	if (et1phyaddr)
 		phyaddr = bcm_atoi(et1phyaddr);
+#endif
 
-#ifndef	_CFE_
 	if ((mdcport == 0) && (phyaddr == 4))
 		/* For 5325F switch we need to do only phys 0-3 */
 		robo->pwrsave_phys = 0xf;
@@ -1203,6 +1208,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	robo->plc_hw = (getvar(vars, "plc_vifs") != NULL);
 #endif /* PLC */
 
+#if defined(RTAC87U) || defined(CONFIG_RTAC87U) || defined(RTAC88U) || defined(CONFIG_RTAC88U)
 	/* reset p5 reg when needs to link up it in ac87u, ac88u */
 	if (ROBO_IS_BCM5301X(robo->devid) && mdcport == 0 && phyaddr == 30) {
 		val8 = 0xfb;
@@ -1210,6 +1216,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 
 		robo_chk_regs(robo);
 	}
+#endif
 
 #ifdef BCMFA
 	robo->aux_pid = -1;
@@ -1347,8 +1354,10 @@ robo_fa_imp_port_upd(robo_info_t *robo, char *port, int pid, int vid, int pdescs
 
 	if ((pid == robo->aux_pid)
 	/* Ugly, hard code to search port "5". */
+#if defined(RTAC87U) || defined(CONFIG_RTAC87U) || defined(RTAC88U) || defined(CONFIG_RTAC88U)
 	|| (strchr(port, FLAG_LAN) || strchr(port, FLAG_UNTAG) ||
 		(vid == 2 && !strcmp(port, "5")))
+#endif
 	) {
 		if (BCM4707_CHIP(CHIPID(robo->sih->chip)) && (pid != pdescsz - 1) &&
 		    FA_ON(getintvar(robo->vars, "ctf_fa_mode"))) {
@@ -2319,6 +2328,7 @@ bcm_robo_enable_switch(robo_info_t *robo)
 	return ret;
 }
 
+#if defined(RTAC87U) || defined(CONFIG_RTAC87U) || defined(RTAC88U) || defined(CONFIG_RTAC88U)
 void
 robo_chk_regs(robo_info_t *robo)
 {
@@ -2353,6 +2363,7 @@ robo_chk_regs(robo_info_t *robo)
 	}
 
 }
+#endif
 
 #ifdef BCMDBG
 void
@@ -2942,10 +2953,6 @@ void
 robo_plc_hw_init(robo_info_t *robo)
 {
 	uint8 val8;
-#if 0
-	const char *et1port, *et1phyaddr;
-	int mdcport = 0, phyaddr = 0;
-#endif
 
 	ASSERT(robo);
 
@@ -2955,25 +2962,11 @@ robo_plc_hw_init(robo_info_t *robo)
 	/* Enable management interface access */
 	if (robo->ops->enable_mgmtif)
 		robo->ops->enable_mgmtif(robo);
-#if 0
-	et1port = getvar(vars, "et1mdcport");
-	if (et1port)
-		mdcport = bcm_atoi(et1port);
 
-	et1phyaddr = getvar(vars, "et1phyaddr");
-
-	if (et1phyaddr)
-		phyaddr = bcm_atoi(et1phyaddr);
-#endif
 	if (robo->devid == DEVID53115) {
 		/* Fix the duplex mode and speed for Port 5 */
 		val8 = ((1 << 6) | (1 << 2) | 3);
 		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIP5O, &val8, sizeof(val8));
-#if 0
-	} else if (ROBO_IS_BCM5301X(robo->devid) && mdcport == 0 && phyaddr == 30) {
-		val8 = 0xfb;
-		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIP5O, &val8, sizeof(val8));
-#endif
 	} else if ((robo->sih->chip == BCM5357_CHIP_ID) &&
 	           (robo->sih->chippkg == BCM5358_PKG_ID)) {
 		/* Fix the duplex mode and speed for Port 4 (MII port). Force

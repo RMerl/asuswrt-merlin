@@ -37,7 +37,8 @@ PJ_DEF(pj_status_t) pj_syslog_facility(int facility)
 PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
                                   const char *pathname, 
                                   unsigned flags,
-                                  pj_oshandle_t *fd)
+								  pj_oshandle_t *fd,
+								  unsigned *size)
 {
     char mode[8];
     char *p = mode;
@@ -59,7 +60,7 @@ PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
              */
         }
     } else {
-        if ((flags & PJ_O_RDONLY) == PJ_O_RDONLY) {
+        if (flags != PJ_O_RDWR && (flags & PJ_O_RDONLY) == PJ_O_RDONLY) {
             *p++ = 'r';
             if ((flags & PJ_O_WRONLY) == PJ_O_WRONLY)
                 *p++ = '+';
@@ -77,6 +78,11 @@ PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
     *fd = fopen(pathname, mode);
     if (*fd == NULL)
         return PJ_RETURN_OS_ERROR(errno);
+
+	if ((flags & PJ_O_APPEND) == PJ_O_APPEND) {
+		if (size)
+			pj_file_getpos(*fd, size);
+	}
 
     return PJ_SUCCESS;
 }

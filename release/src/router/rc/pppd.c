@@ -81,7 +81,7 @@ start_pppd(int unit)
 		&& (!strcmp(nvram_safe_get("wans_mode"), "fo") || !strcmp(nvram_safe_get("wans_mode"), "fb"))
 		&& (wan_primary_ifunit() != unit)) {
 		_dprintf("%s: skip non-primary unit %d\n", __FUNCTION__, unit);
-		return;
+		return -1;
 	}
 #endif
 
@@ -235,8 +235,15 @@ start_pppd(int unit)
 	switch (get_ipv6_service_by_unit(unit)) {
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
-		if (nvram_match(ipv6_nvname_by_unit("ipv6_ifdev", unit), "ppp"))
+		if (nvram_match(ipv6_nvname_by_unit("ipv6_ifdev", unit), "ppp")
+#ifdef RTCONFIG_DUALWAN
+			&& !(!strstr(nvram_safe_get("wans_dualwan"), "none") &&
+			     !strcmp(nvram_safe_get("wans_mode"), "lb") &&
+			     unit != wan_primary_ifunit())
+#endif
+		)
 			fprintf(fp, "+ipv6\n");
+
 		break;
 	}
 #endif

@@ -63,7 +63,7 @@
 #if defined(PJ_ENABLE_EXTRA_CHECK) && PJ_ENABLE_EXTRA_CHECK != 0
 #   define PJ_ASSERT_RETURN(expr,retval)    \
 	    do { \
-		if (!(expr)) { pj_assert(expr); return retval; } \
+		if (!(expr)) { /*pj_assert(expr);*/ return retval; } \
 	    } while (0)
 #else
 #   define PJ_ASSERT_RETURN(expr,retval)    pj_assert(expr)

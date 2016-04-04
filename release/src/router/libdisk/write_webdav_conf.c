@@ -228,20 +228,21 @@ int main(int argc, char *argv[]) {
 	if (fp==NULL) return -1;
 	
 	/* Load modules */
+	fprintf(fp, "server.modules+=(\"mod_aicloud_invite\")\n");
 	fprintf(fp, "server.modules+=(\"mod_aicloud_auth\")\n");
 #ifndef APP_IPKG
 	fprintf(fp, "server.modules+=(\"mod_alias\")\n");
-	fprintf(fp, "server.modules+=(\"mod_userdir\")\n");
+	//fprintf(fp, "server.modules+=(\"mod_userdir\")\n");
 	fprintf(fp, "server.modules+=(\"mod_aidisk_access\")\n");
-	fprintf(fp, "server.modules+=(\"mod_sharelink\")\n");
-	fprintf(fp, "server.modules+=(\"mod_create_captcha_image\")\n");
+	fprintf(fp, "server.modules+=(\"mod_aicloud_sharelink\")\n");
+	//fprintf(fp, "server.modules+=(\"mod_create_captcha_image\")\n");
 	fprintf(fp, "server.modules+=(\"mod_query_field_json\")\n");
 	fprintf(fp, "server.modules+=(\"mod_webdav\")\n");
 	fprintf(fp, "server.modules+=(\"mod_smbdav\")\n");
-	fprintf(fp, "server.modules+=(\"mod_redirect\")\n");
+	//fprintf(fp, "server.modules+=(\"mod_redirect\")\n");
 	fprintf(fp, "server.modules+=(\"mod_compress\")\n");
-	fprintf(fp, "server.modules+=(\"mod_usertrack\")\n");
-	fprintf(fp, "server.modules+=(\"mod_rewrite\")\n");
+	//fprintf(fp, "server.modules+=(\"mod_usertrack\")\n");
+	//fprintf(fp, "server.modules+=(\"mod_rewrite\")\n");
 	
 	if (nvram_match("st_webdav_mode", "2")){
 		fprintf(fp, "server.modules+=(\"mod_access\")\n");
@@ -249,17 +250,17 @@ int main(int argc, char *argv[]) {
 	}
 #else
 	fprintf(fp, "server.modules+=(\"aicloud_mod_alias\")\n");
-    fprintf(fp, "server.modules+=(\"aicloud_mod_userdir\")\n");
+    //fprintf(fp, "server.modules+=(\"aicloud_mod_userdir\")\n");
     fprintf(fp, "server.modules+=(\"aicloud_mod_aidisk_access\")\n");
-    fprintf(fp, "server.modules+=(\"aicloud_mod_sharelink\")\n");
-    fprintf(fp, "server.modules+=(\"aicloud_mod_create_captcha_image\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_aicloud_sharelink\")\n");
+    //fprintf(fp, "server.modules+=(\"aicloud_mod_create_captcha_image\")\n");
     fprintf(fp, "server.modules+=(\"aicloud_mod_query_field_json\")\n");
 	fprintf(fp, "server.modules+=(\"aicloud_mod_webdav\")\n");
     fprintf(fp, "server.modules+=(\"aicloud_mod_smbdav\")\n");
-    fprintf(fp, "server.modules+=(\"aicloud_mod_redirect\")\n");
+    //fprintf(fp, "server.modules+=(\"aicloud_mod_redirect\")\n");
     fprintf(fp, "server.modules+=(\"aicloud_mod_compress\")\n");
-    fprintf(fp, "server.modules+=(\"aicloud_mod_usertrack\")\n");
-    fprintf(fp, "server.modules+=(\"aicloud_mod_rewrite\")\n");
+    //fprintf(fp, "server.modules+=(\"aicloud_mod_usertrack\")\n");
+    //fprintf(fp, "server.modules+=(\"aicloud_mod_rewrite\")\n");
 	
     if (webdav_match("st_webdav_mode", 2)){
         fprintf(fp, "server.modules+=(\"aicloud_mod_access\")\n");

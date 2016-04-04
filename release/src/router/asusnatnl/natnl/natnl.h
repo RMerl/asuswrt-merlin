@@ -65,8 +65,6 @@ extern void pjsua_media_config_dup(pj_pool_t *pool,
 PJ_DECL(pj_status_t) natnl_logging_endpt_create(pjsua_inst_id inst_id,
 												const pjsua_logging_config *log_cfg);
 
-void init_random_seed(void);
-
 //PJ_DECL(pj_status_t) natnl_logging_endpt_destroy(pjsua_inst_id inst_id);
 
 PJ_DECL(pj_status_t) natnl_create(pjsua_inst_id inst_id);
@@ -91,6 +89,10 @@ PJ_DECL(pj_status_t) natnl_init(pjsua_inst_id inst_id,
 
 PJ_DECL(pjsua_call *) pjsua_get_call(pjsua_inst_id inst_id, pjsua_call_id call_id);
 PJ_DECL(pjmedia_transport *) pjsua_get_media_transport(pjsua_inst_id inst_id, pjsua_call_id call_id);
+
+extern struct natnl_callback natnl_callback;
+PJ_DECL(void) natnl_call_callback(struct natnl_tnl_event *tnl_event);
+PJ_DECL(void) natnl_call_callback2(struct natnl_tnl_event *tnl_event, int use_pj_log);
 
 PJ_END_DECL
 

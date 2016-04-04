@@ -362,6 +362,16 @@ void btn_check(void)
 			nvram_set("btn_lte", "1");
 		}
 #endif
+#ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+		if (button_pressed(BTN_SWMODE_SW_ROUTER) != nvram_get_int("swmode_switch"))
+		{
+			TRACE_PT("Switch changeover\n");
+			nvram_set("switch_mode", "1");
+		}
+#endif
+#endif
+
 		return;
 	}
 
@@ -2106,10 +2116,40 @@ int count_stable=0;
 
 void swmode_check()
 {
-	char tmp[10];
+#if defined(PLAC66U)
+	int pre_sw_mode=nvram_get_int("sw_mode");
 
+	if (!button_pressed(BTN_SWMODE_SW_ROUTER))
+		sw_mode = SW_MODE_ROUTER;
+	else    sw_mode = SW_MODE_AP;
+
+	if ((sw_mode != pre_sw_mode) && !flag_sw_mode) {
+		if( sw_mode == SW_MODE_ROUTER )
+			_dprintf("[%s], switch to ROUTER Mode!\n", __FUNCTION__);
+		else
+			_dprintf("[%s], switch to AP Mode!\n", __FUNCTION__);
+			
+		flag_sw_mode=1;
+		count_stable=0;
+	}
+	else if (flag_sw_mode == 1 && nvram_invmatch("asus_mfg", "1")) {
+		if (sw_mode != pre_sw_mode) {
+			if (++count_stable>4) { // stable for more than 5 second
+				fprintf(stderr, "Reboot to switch sw mode ..\n");
+				flag_sw_mode=0;
+				/* sw mode changed: restore defaults */
+				led_control(LED_POWER, LED_OFF);
+				alarmtimer(0, 0);
+				nvram_set("restore_defaults", "1");
+				if (notify_rc_after_wait("resetdefault")) {     /* Send resetdefault rc_service failed. */
+					alarmtimer(NORMAL_PERIOD, 0);
+				}
+			}
+		}
+		else flag_sw_mode = 0;
+	}
+#else
 	if (!nvram_get_int("swmode_switch")) return;
-
 	pre_sw_mode = sw_mode;
 
 	if (button_pressed(BTN_SWMODE_SW_REPEATER))
@@ -2141,8 +2181,9 @@ void swmode_check()
 		}
 		else flag_sw_mode = 0;
 	}
+#endif	/* Model */
 }
-#endif
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef WEB_REDIRECT
 void wanduck_check(void)
 {
@@ -2308,10 +2349,14 @@ void networkmap_check()
 
 void httpd_check()
 {
+#ifdef RTCONFIG_HTTPS
 	int enable = nvram_get_int("http_enable");
-
 	if ((enable != 1 && !pids("httpd")) ||
-	    (enable != 0 && !pids("httpds"))) {
+	    (enable != 0 && !pids("httpds")))
+#else
+	if (!pids("httpd"))
+#endif
+	{
 		logmessage("watchdog", "restart httpd");
 		stop_httpd();
 		nvram_set("last_httpd_handle_request", nvram_safe_get("httpd_handle_request"));

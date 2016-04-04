@@ -105,11 +105,7 @@ else
 	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
 endif
 
-ifeq ($(RTCONFIG_HTTPS),y)
 	cp -f webs_scripts/ssl_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
-else
-	cp -f webs_scripts/nozip_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
-endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
 	cp -f webs_scripts/sig_upgrade.sh $(INSTALLDIR)/usr/sbin/sig_upgrade.sh

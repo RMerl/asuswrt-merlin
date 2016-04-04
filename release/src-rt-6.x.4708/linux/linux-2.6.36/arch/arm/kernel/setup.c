@@ -122,6 +122,11 @@ static struct stack stacks[NR_CPUS];
 char elf_platform[ELF_PLATFORM_SIZE];
 EXPORT_SYMBOL(elf_platform);
 
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+int oops_mem = 0;
+EXPORT_SYMBOL(oops_mem);
+#endif
+
 static const char *cpu_name;
 static const char *machine_name;
 static char __initdata cmd_line[COMMAND_LINE_SIZE];
@@ -769,6 +774,7 @@ void __init setup_arch(char **cmdline_p)
 	struct tag *tags = (struct tag *)&init_tags;
 	struct machine_desc *mdesc;
 	char *from = default_command_line;
+	int ret;
 
 	unwind_init();
 
@@ -824,8 +830,12 @@ void __init setup_arch(char **cmdline_p)
 	paging_init(mdesc);
 
 #ifdef CONFIG_DUMP_PREV_OOPS_MSG
-        //if( reserve_bootmem(0x0, 0x2000, BOOTMEM_EXCLUSIVE) < 0 )
-	reserve_bootmem(virt_to_phys((void *)CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR), CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN, BOOTMEM_EXCLUSIVE);
+	ret = reserve_bootmem(virt_to_phys((void *)CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR), CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		printk(KERN_WARNING "DUMP_OOPS reservation failed - "
+			"memory is in use (0x%lx)\n", (unsigned long)CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+	else
+		oops_mem = 1;
 #endif
 
 	request_standard_resources(&meminfo, mdesc);

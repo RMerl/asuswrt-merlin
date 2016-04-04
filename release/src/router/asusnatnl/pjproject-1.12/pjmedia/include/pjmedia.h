@@ -64,6 +64,7 @@
 #include <pjmedia/transport_loop.h>
 #include <pjmedia/transport_srtp.h>
 #include <pjmedia/transport_dtls.h>
+#include <pjmedia/transport_sctp.h>
 #include <pjmedia/transport_tcp.h>
 #include <pjmedia/transport_udp.h>
 #include <pjmedia/wav_playlist.h>

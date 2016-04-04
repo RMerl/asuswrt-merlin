@@ -50,8 +50,6 @@ static struct lfp_port_s lfp_ports[NR_ALL_LFP_PORTS] = {
 };
 static int next_slot = NR_STATIC_LFP_PORTS;
 
-#define NFC_LFP_ENABLE (1<<29)
-
 typedef int (*lfpHitHook)(int pf, unsigned int hook, struct sk_buff *skb);
 lfpHitHook lfp_hit_hook = NULL;
 

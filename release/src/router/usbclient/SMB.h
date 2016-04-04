@@ -16,7 +16,7 @@
 #define UNSUPPORT_ENCODING              912
 
 #ifndef NVRAM_
-#define TOKENFILE_RECORD "/opt/etc/.smartsync/smb_tokenfile"
+#define TOKENFILE_RECORD "/opt/etc/.smartsync/usb_tokenfile"
 #endif
 #define NOTIFY_PATH "/tmp/notify/usb"
 

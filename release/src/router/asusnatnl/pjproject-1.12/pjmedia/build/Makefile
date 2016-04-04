@@ -10,6 +10,9 @@ SRTP_INC=$(CC_INC)$(THIRD_PARTY)/build/srtp \
 BZIP2_INC=$(CC_INC)$(THIRD_PARTY)/bzip2
 BZIP2_LIBS=-lbzip2-$(TARGET_NAME)
 
+USRSCTP_INC=$(CC_INC)$(THIRD_PARTY)/usrsctp/usrsctplib
+USRSCTP_LIBS=-lusrsctp-$(TARGET_NAME)
+
 include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
@@ -35,7 +38,8 @@ export _CFLAGS 	:= $(CC_CFLAGS) $(OS_CFLAGS) $(HOST_CFLAGS) $(M_CFLAGS) \
 		   $(CC_INC)../../pjsip/include \
 		   $(CC_INC)../.. \
 		   $(SRTP_INC) \
-		   $(BZIP2_INC)
+		   $(BZIP2_INC) \
+		   $(USRSCTP_INC)
 
 export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 		   $(HOST_CXXFLAGS) $(CXXFLAGS)
@@ -48,7 +52,6 @@ export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJMEDIA_LIB)) \
 		   -L$(PJDIR)/third_party/lib \
 		   $(APP_THIRD_PARTY_LIBS) \
 		   $(APP_THIRD_PARTY_EXT) \
-		   $(BZIP2_LIBS) \
 		   $(CC_LDFLAGS) $(OS_LDFLAGS) $(M_LDFLAGS) $(HOST_LDFLAGS) \
 		   $(LDFLAGS) 
 
@@ -67,7 +70,7 @@ export PJMEDIA_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			sdp.o sdp_cmp.o sdp_neg.o session.o silencedet.o \
 			sound_legacy.o sound_port.o stereo_port.o \
 			stream.o natnl_stream.o tonegen.o transport_adapter_sample.o \
-			transport_ice.o transport_loop.o \
+			transport_ice.o transport_loop.o transport_sctp.o \
 			transport_srtp.o transport_dtls.o transport_udp.o transport_tcp.o\
 			wav_player.o wav_playlist.o wav_writer.o wave.o \
 			wsola.o
@@ -94,7 +97,12 @@ export PJMEDIA_AUDIODEV_CFLAGS += $(_CFLAGS)
 export PJSDP_SRCDIR = ../src/pjmedia
 export PJSDP_OBJS += 	$(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			errno.o sdp.o sdp_cmp.o sdp_neg.o
-export PJSDP_CFLAGS += $(_CFLAGS)
+
+ifneq (,$(findstring darwin,$(TARGET_NAME)))
+    USER_SPACE_CFLAGS+=-D__APPLE_USE_RFC_2292 -U__APPLE__ -D__Userspace_os_Darwin -DHAVE_SCONN_LEN
+endif
+
+export PJSDP_CFLAGS += $(_CFLAGS) $(USER_SPACE_CFLAGS)
 
 
 ###############################################################################

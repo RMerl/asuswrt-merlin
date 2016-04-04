@@ -205,6 +205,12 @@ PJ_DECL(pj_status_t) pjmedia_endpt_create_sdp( pjmedia_endpt *endpt,
 					       const pjmedia_sock_info sock_info[],
 					       pjmedia_sdp_session **p_sdp );
 
+PJ_DECL(pj_status_t) pjmedia_endpt_create_application_sdp( pjmedia_endpt *endpt,
+														 pj_pool_t *pool,
+														 unsigned stream_cnt,
+														 const pjmedia_sock_info sock_info[],
+														 pjmedia_sdp_session **p_sdp );
+
 
 /**
  * Dump media endpoint capabilities.
@@ -230,6 +236,11 @@ PJ_DECL(pj_status_t) pjmedia_endpt_dump(pjmedia_endpt *endpt);
  */
 PJ_DECL(pj_status_t) pjmedia_endpt_atexit(pjmedia_endpt *endpt,
 					  pjmedia_endpt_exit_callback func);
+
+
+PJ_DECL(pjmedia_type) pjmedia_get_meida_type( const pjmedia_sdp_session *sdp, int media_index);
+
+PJ_DECL(pj_pool_t *) pjmedia_get_pool( pjmedia_endpt *endpt);
 
 
 

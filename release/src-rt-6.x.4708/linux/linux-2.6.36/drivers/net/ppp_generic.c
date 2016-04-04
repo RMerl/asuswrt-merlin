@@ -2839,6 +2839,9 @@ ppp_disconnect_channel(struct channel *pch)
 		if (--ppp->n_channels == 0)
 			wake_up_interruptible(&ppp->file.rwait);
 		ppp_unlock(ppp);
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+		ppp->ctfpch = NULL;
+#endif
 		if (atomic_dec_and_test(&ppp->file.refcnt))
 			ppp_destroy_interface(ppp);
 		err = 0;
@@ -2970,7 +2973,6 @@ ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
 	if(ppp) pch = ppp->ctfpch;
 
 	if (pch == NULL){
-		printk("pch ==NULL/n");
 		return (BCME_ERROR);
 	}
 

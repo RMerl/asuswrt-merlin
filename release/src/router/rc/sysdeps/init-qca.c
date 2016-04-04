@@ -258,7 +258,10 @@ void config_switch(void)
 	int controlrate_multicast;
 	int controlrate_broadcast;
 	int merge_wan_port_into_lan_ports;
-
+#if defined(RTAC55U)
+	int i,j,bitmask,vid[4],pri[4];
+	char temp[30];
+#endif
 	dbG("link down all ports\n");
 	eval("rtkswitch", "17");	// link down all ports
 
@@ -287,7 +290,6 @@ void config_switch(void)
 	system("rtkswitch 8 0"); // init, rtkswitch 114,115,14,15 need it
 	if (is_routing_enabled()) {
 		char parm_buf[] = "XXX";
-
 		stbport = atoi(nvram_safe_get("switch_stb_x"));
 		if (stbport < 0 || stbport > 6) stbport = 0;
 		dbG("ISP Profile/STB: %s/%d\n", nvram_safe_get("switch_wantag"), stbport);
@@ -393,6 +395,33 @@ void config_switch(void)
 				__setup_vlan(14, 0, 0x00000012);
 			}
 			else {
+
+#if defined(RTAC55U)  
+				/*
+ 				 * switch_wan1tagid: LAN4 
+ 				 * switch_wan2tagid: LAN3
+ 				 * switch_wan3tagid: LAN2 
+ 				 * switch_wan4tagid: LAN1 
+ 				 *
+ 				 */
+				if (!strcmp(nvram_safe_get("switch_wantag"), "manual")) 
+				{
+					bitmask=0; //bit3:LAN1, bit2:LAN2, bit1:LAN3, bit0:LAN4
+					for(i=0;i<4;i++)
+					{
+						memset(temp,0,sizeof(temp));
+						sprintf(temp, "switch_wan%dtagid",i+1);
+						if(strcmp(nvram_safe_get(temp), ""))
+							bitmask+=(1<<i);
+					}
+					
+					memset(temp,0,sizeof(temp));
+					sprintf(temp, "rtkswitch 38 %d",bitmask);
+					system(temp);		
+				}
+				else
+#endif
+				{
 				/* Cherry Cho added in 2011/7/11. */
 				/* Initialize VLAN and set Port Isolation */
 				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") && strcmp(nvram_safe_get("switch_wan2tagid"), ""))
@@ -403,6 +432,9 @@ void config_switch(void)
 					system("rtkswitch 38 2");		// 2 = 0x10 VoIP: P1
 				else
 					system("rtkswitch 38 0");		//No IPTV and VoIP ports
+				}
+
+
 
 				/*++ Get and set Vlan Information */
 				if(strcmp(nvram_safe_get("switch_wan0tagid"), "") != 0) {
@@ -419,6 +451,56 @@ void config_switch(void)
 					__setup_vlan(vlan_val, prio_val, 0x02000210);
 				}
 
+#if defined(RTAC55U)
+				if (!strcmp(nvram_safe_get("switch_wantag"), "manual")) 
+				{
+					for(i=0;i<4;i++)
+					{
+						vid[i]=-1; pri[i]=-1;
+						memset(temp,0,sizeof(temp));
+						sprintf(temp, "switch_wan%dtagid",i+1);
+						if(strcmp(nvram_safe_get(temp), "")!=0)
+						{
+							if ((p = nvram_get(temp)) != NULL) {
+								t = atoi(p);
+								if((t >= 2) && (t <= 4094))
+									vid[i] = t;
+							}
+
+							
+							memset(temp,0,sizeof(temp));
+							sprintf(temp, "switch_wan%dprio",i+1);
+							if((p = nvram_get(temp)) != NULL && *p != '\0')
+								pri[i] = atoi(p);
+
+						}
+					}
+					
+					/* LAN4: 0x00010011
+ 					*  LAN3: 0x00020012
+ 					*  LAN2: 0x00040014
+ 					*  LAN1: 0x00080018
+ 					*/				
+					for(i=0;i<4;i++)
+					{
+						if(vid[i]!=-1)
+						{	
+							mask=0x10;
+							for(j=0;j<4;j++)
+								if(vid[i]==vid[j])
+								{
+									mask|=(0x1<<i | 0x1<<j);
+									mask|=(0x1<<(i+16) | 0x1<<(j+16));
+								}
+							__setup_vlan(vid[i], pri[i], mask);
+						}
+					
+					}
+		
+				}
+				else
+#endif
+				{
 				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") != 0) {
 					// IPTV on LAN4 (port 0)
 					if ((p = nvram_get("switch_wan1tagid")) != NULL) {
@@ -456,6 +538,9 @@ void config_switch(void)
 
 					__setup_vlan(vlan_val, prio_val, mask);
 				}
+				
+				}
+
 
 			}
 		}
@@ -878,7 +963,7 @@ void init_syspara(void)
 #else
 	//TODO: separate for different chipset solution
 	nvram_set("et0macaddr", macaddr);
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+#if (defined(PLN12) || defined(PLAC56))
 	nvram_set("et1macaddr", macaddr);
 #else
 	nvram_set("et1macaddr", macaddr2);

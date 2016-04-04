@@ -12,6 +12,7 @@
 #define	WME_AC_BK	1		/* background */
 #define	WME_AC_VI	2		/* video */
 #define	WME_AC_VO	3		/* voice */
+#define	WME_AC_NUM	4
 
 enum {
 	IEEE80211_WMMPARAMS_CWMIN	= 1,
@@ -19,7 +20,7 @@ enum {
 	IEEE80211_WMMPARAMS_AIFS	= 3,
 	IEEE80211_WMMPARAMS_TXOPLIMIT	= 4,
 	IEEE80211_WMMPARAMS_ACM		= 5,
-	IEEE80211_WMMPARAMS_NOACKPOLICY	= 6,	
+	IEEE80211_WMMPARAMS_NOACKPOLICY	= 6,
 };
 
 #endif

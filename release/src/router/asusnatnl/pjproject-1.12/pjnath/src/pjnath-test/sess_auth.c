@@ -173,8 +173,8 @@ static int server_thread(void *unused)
 	PJ_FD_ZERO(&readset);
 	PJ_FD_SET(server->sock, &readset);
 
-	if (pj_sock_select(server->sock+1, &readset, NULL, NULL, &delay)==1 &&
-	    PJ_FD_ISSET(server->sock, &readset)) 
+	if (pj_sock_select((int)server->sock+1, &readset, NULL, NULL, &delay)==1 
+	    && PJ_FD_ISSET(server->sock, &readset)) 
 	{
 	    char pkt[1000];
 	    pj_ssize_t len;
@@ -247,7 +247,7 @@ static int create_std_server(pj_stun_auth_type auth_type,
     pj_bzero(&sess_cb, sizeof(sess_cb));
     sess_cb.on_rx_request = &server_on_rx_request;
     sess_cb.on_send_msg = &server_send_msg;
-    status = pj_stun_session_create(&stun_cfg, "server", &sess_cb, PJ_FALSE, &server->sess);
+    status = pj_stun_session_create(&stun_cfg, "server", &sess_cb, PJ_FALSE, NULL, &server->sess);
     if (status != PJ_SUCCESS) {
 	destroy_server();
 	return -10;
@@ -386,8 +386,8 @@ static int client_thread(void *unused)
 	PJ_FD_ZERO(&readset);
 	PJ_FD_SET(client->sock, &readset);
 
-	if (pj_sock_select(client->sock+1, &readset, NULL, NULL, &delay)==1 &&
-	    PJ_FD_ISSET(client->sock, &readset)) 
+	if (pj_sock_select((int)client->sock+1, &readset, NULL, NULL, &delay)==1 
+	    && PJ_FD_ISSET(client->sock, &readset)) 
 	{
 	    char pkt[1000];
 	    pj_ssize_t len;
@@ -479,7 +479,7 @@ static int run_client_test(const char *title,
     pj_bzero(&sess_cb, sizeof(sess_cb));
     sess_cb.on_request_complete = &client_on_request_complete;
     sess_cb.on_send_msg = &client_send_msg;
-    status = pj_stun_session_create(&stun_cfg, "client", &sess_cb, PJ_FALSE, &client->sess);
+    status = pj_stun_session_create(&stun_cfg, "client", &sess_cb, PJ_FALSE, NULL, &client->sess);
     if (status != PJ_SUCCESS) {
 	destroy_client_server();
 	return -200;

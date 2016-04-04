@@ -48,7 +48,8 @@ PJ_DEF(pj_status_t) pj_syslog_facility(int facility)
 PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
                                   const char *pathname, 
                                   unsigned flags,
-                                  pj_oshandle_t *fd)
+                                  pj_oshandle_t *fd,
+								  unsigned *size)
 {
     PJ_DECL_UNICODE_TEMP_BUF(wpathname,256)
     HANDLE hFile;
@@ -85,6 +86,11 @@ PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
             dwCreationDisposition |= OPEN_EXISTING;
     }
 
+	if (!flags) {
+		dwDesiredAccess |= GENERIC_WRITE;
+		dwCreationDisposition |= TRUNCATE_EXISTING;
+	}
+
     if (dwDesiredAccess == 0) {
         pj_assert(!"Invalid file open flags");
         return PJ_EINVAL;
@@ -109,6 +115,8 @@ PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
 	    pj_file_close(hFile);
 	    return status;
 	}
+	if (size)
+		pj_file_getpos(hFile, size);
     }
 
     *fd = hFile;

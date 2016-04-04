@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndctf.h 494938 2014-08-05 00:39:24Z $
+ * $Id: hndctf.h 559201 2015-05-27 00:24:11Z $
  */
 
 #ifndef _HNDCTF_H_
@@ -43,6 +43,11 @@
 #define CTF_ACTION_PPPOE_ADD	(1 << 8)
 #define CTF_ACTION_PPPOE_DEL	(1 << 9)
 #define CTF_ACTION_BR_AS_TXIF	(1 << 10)
+#define CTF_ACTION_PPTP_ADD     (1 << 11)
+#define CTF_ACTION_PPTP_DEL     (1 << 12)
+#define CTF_ACTION_L2TP_ADD     (1 << 13)
+#define CTF_ACTION_L2TP_DEL     (1 << 14)
+
 
 #define CTF_SUSPEND_TCP		(1 << 0)
 #define CTF_SUSPEND_UDP		(1 << 1)
@@ -111,6 +116,17 @@ do { \
 	((uint16 *)(d))[0] = ((uint16 *)(s))[0]; \
 } while (0)
 
+#define NIPQUAD(addr) \
+	((unsigned char *)&addr)[0], \
+	((unsigned char *)&addr)[1], \
+	((unsigned char *)&addr)[2], \
+	((unsigned char *)&addr)[3]
+
+
+#ifdef CTF_PPTP
+#define ctf_pptp_cache(ci, f, h) (CTF_ENAB((ci)) ? ((ci))->fn.pptp_cache((ci), (f), (h)) : BCME_OK)
+#endif /* CTF_PPTP */
+
 #define PPPOE_ETYPE_OFFSET	12
 #define PPPOE_VER_OFFSET	14
 #define PPPOE_SESID_OFFSET	16
@@ -168,6 +184,10 @@ typedef int32 (*ctf_fa_register_t)(ctf_t *ci, ctf_fa_cb_t facb, void *fa);
 typedef void (*ctf_live_t)(ctf_t *ci, ctf_ipc_t *ipc, bool v6);
 #endif /* BCMFA */
 
+#ifdef CTF_PPTP
+typedef int32 (*ctf_pptp_cache_t)(ctf_t *ci, uint32 lock_fgoff, uint32 hoplmt);
+#endif /* CTF_PPTP */
+
 /* For broadstream iqos */
 typedef int (*ctf_fwdcb_t)(void *skb, ctf_ipc_t *ipc);
 typedef int32 (*ctf_fwdcb_register_t)(ctf_t *ci, ctf_fwdcb_t fwdcb);
@@ -203,6 +223,9 @@ typedef struct ctf_fn {
 	void			*detach_cb_arg;
 	ctf_dev_vlan_add_t	dev_vlan_add;
 	ctf_dev_vlan_delete_t	dev_vlan_delete;
+#ifdef CTF_PPTP
+	ctf_pptp_cache_t	pptp_cache;
+#endif /* CTF_PPTP */
 	ctf_dump_t		dump;
 	ctf_cfg_req_process_t	cfg_req_process;
 #ifdef BCMFA
@@ -274,6 +297,9 @@ struct ctf_ipc {
 	struct	ether_addr	sa;		/* MAC address of sender */
 	uint8			tos;		/* IPv4 tos or IPv6 traff class excl ECN */
 	uint16			pppoe_sid;	/* PPPOE session to use */
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	void			*pppox_opt;
+#endif	/* CTF_PPTP || CTF_L2TP */
 	void			*ppp_ifp;	/* PPP interface handle */
 	uint32			hits;		/* Num frames matching ipc entry */
 	uint64			*bytecnt_ptr;	/* Pointer to the byte counter */
@@ -287,6 +313,50 @@ struct ctf_ipc {
 	int			susp_cnt;
 };
 
+struct ctf_ppp_sk {
+	struct pppox_sock       *po;             /* pointer to pppoe socket */
+	unsigned char           pppox_protocol;  /* 0:pppoe/1:l2tp/ 2:pptp */
+	struct  ether_addr      dhost;  /* Remote MAC addr of host the pppox socket is bound to */
+};
+
+typedef struct ctf_ppp {
+	struct ctf_ppp_sk	psk;
+	unsigned short		pppox_id;       /* PPTP peer call id if wan type is pptp */
+						/* PPPOE session ID if wan type is PPPOE */
+} ctf_ppp_t;
+
+#ifdef CTF_PPTP
+/* PPTP */
+typedef struct ctf_pppopptp {
+	uint8   sk_pmtudisc;		/* iph->frag_off */
+	uint32  rt_dst_mtrc_lock_fgoff;	/* iph->frag_off */
+	uint32  rt_dst_mtrc_hoplmt;	/* iph->ttl */
+} ctf_pppopptp_t;
+#endif /* CTF_PPTP */
+
+#ifdef CTF_L2TP
+/* L2TP */
+struct ctf_pppol2tp_inet {
+	uint32	saddr;	/* src IP address of tunnel */
+	uint32	daddr;	/* src IP address of tunnel */
+	uint16	sport;	/* src port                 */
+	uint16	dport;	/* dst port                 */
+	uint8	tos;	/* IP tos	        */
+	uint8	ttl;
+};
+
+struct ctf_pppol2tp_session
+{
+	uint16	optver;
+	uint32	l2tph_len;
+	uint32	tunnel_id;
+	uint32	session_id;
+	uint32	peer_tunnel_id;
+	uint32	peer_session_id;
+};
+
+#endif /* CTF_L2TP */
+
 extern ctf_t *ctf_kattach(osl_t *osh, uint8 *name);
 extern void ctf_kdetach(ctf_t *kci);
 extern ctf_attach_t ctf_attach_fn;
@@ -295,8 +365,8 @@ extern ctf_t *_ctf_attach(osl_t *osh, uint8 *name, uint32 *msg_level,
 extern ctf_t *kcih;
 
 /* Hot bridge cache lkup */
-#define MAXBRCHOT	256
-#define MAXBRCHOTIF	4
+#define MAXBRCHOT		256
+#define MAXBRCHOTIF		4
 #define CTF_BRC_HOT_HASH(da) 	((((uint8 *)da)[4] ^ ((uint8 *)da)[5]) & (MAXBRCHOT - 1))
 #define CTF_HOTBRC_CMP(hbrc, da, rxifp) \
 ({ \

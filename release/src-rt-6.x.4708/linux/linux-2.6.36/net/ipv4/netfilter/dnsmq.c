@@ -262,7 +262,7 @@ static int dnsmq_ctrl(struct file *file, const char *buffer, unsigned long lengt
 	}
 	else dnsmq_ip=0;
 
-	printk("dnsmq ctrl: %x %s\n", dnsmq_ip, dnsmq_name);
+	printk(KERN_DEBUG "dnsmq ctrl: %x %s\n", dnsmq_ip, dnsmq_name);
 
 	if (dnsmq_ip == 0) dnsmq_hit_hook_func (NULL);
 	else dnsmq_hit_hook_func(dnsmq_func);

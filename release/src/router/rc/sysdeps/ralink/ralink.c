@@ -1290,11 +1290,26 @@ int gen_ralink_config(int band, int is_iNIC)
 				{	
 					if(strlen(tmpstr))
 						sprintf(tmpstr,"%s;",tmpstr);
+					//autochannel selection  but skip 5G band1 & band2, TW only
+					if(
+#if defined(RTCONFIG_TCODE)
+					  !strncmp(nvram_safe_get("territory_code"), "TW", 2) ||
 
-					if(nvram_match("reg_spec","NCC"))  //skip band2
-						sprintf(tmpstr,"%s%d;%d;%d;%d",tmpstr,52,56,60,64);
-					else if (nvram_match("reg_spec","NCC2")) //skip band1
-						sprintf(tmpstr,"%s%d;%d;%d;%d",tmpstr,36,40,44,48);
+#endif
+#ifdef RTCONFIG_HAS_5G
+					   nvram_match("wl_reg_5g","5G_BAND24") ||
+#endif
+#if defined(RTCONFIG_NEW_REGULATION_DOMAIN)
+					   (nvram_match("reg_spec","NCC")  || 
+                                            nvram_match("reg_spec","NCC2")) 
+#else
+					   
+					   (nvram_match(strcat_r(prefix, "country_code", tmp), "TW") ||
+					    nvram_match(strcat_r(prefix, "country_code", tmp), "Z3"))
+#endif
+					 )
+						sprintf(tmpstr,"%s%d;%d;%d;%d;%d;%d;%d;%d",tmpstr,36,40,44,48,52,56,60,64);
+
 				}	
 #endif				
 				

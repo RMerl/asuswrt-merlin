@@ -36,11 +36,7 @@ else
 ifeq ($(ARMCPUSMP),up)
 SRCFILE = broadcom_arm_up
 else
-ifeq ($(RTCONFIG_RECVFILE),y)
-SRCFILE = broadcom_arm.recvfile
-else
 SRCFILE = broadcom_arm
-endif
 endif # ARMCPUSMP
 endif # RTCONFIG_BCM_7114
 endif # RTCONFIG_BCM7
@@ -51,6 +47,10 @@ DSTDIR = $(INSTALLDIR)/lib/modules/2.6.22.19/kernel/fs
 endif
 endif
 
+#ifeq ($(BUILD_NAME),DSL-AC68U)
+#SRCFILE = broadcom_arm_dsl_ac68u
+#DSTDIR = $(INSTALLDIR)/lib/modules/2.6.36.4brcmarm/kernel/fs
+#endif
 
 export DSTDIR
 
@@ -97,11 +97,13 @@ endif
 endif
 ifeq ($(or $(RTCONFIG_TFAT),$(RTCONFIG_TUXERA_NTFS),$(RTCONFIG_TUXERA_HFS)),y)
 	install  -m 0644 -D $(SRCFILE)/VERSION-INFO $(INSTALLDIR)/rom/Tuxera-VERSION-INFO
-#ifeq ($(and $(RTCONFIG_BCMARM),$(RTCONFIG_SAMBA3)),y)
+ifeq ($(and $(RTCONFIG_BCMARM),$(RTCONFIG_SAMBA3)),y)
 #	install -D $(SRCFILE)/samba/lib/libstdc++.so.6.0.14 $(INSTALLDIR)/usr/lib/libstdc++.so.6.0.14
 #	cd $(INSTALLDIR)/usr/lib && ln -sf libstdc++.so.6.0.14 libstdc++.so.6 && ln -sf libstdc++.so.6.0.14 libstdc++.so
-#	install -D $(SRCFILE)/samba/smbd $(INSTALLDIR)/usr/bin/smbd
-#endif
+ifeq ($(RTCONFIG_BCM_7114),y)
+	install -D $(SRCFILE)/samba/smbd $(INSTALLDIR)/usr/bin/smbd
+endif
+endif
 endif
 
 .phony: all clean install

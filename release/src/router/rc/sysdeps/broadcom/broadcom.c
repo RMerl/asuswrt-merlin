@@ -3255,6 +3255,52 @@ wl_check_chanspec()
 
 	return ret;
 }
+
+#define CHANNEL_5G_BAND_GROUP(c) \
+	(((c) < 52) ? 1 : (((c) < 100) ? 2 : (((c) < 149) ? 3 : 4)))
+
+void
+wl_check_5g_band_group()
+{
+	wl_uint32_list_t *list;
+	chanspec_t c;
+	int ret = 0, i, count;
+	char data_buf[WLC_IOCTL_MAXLEN];
+	char word[256], *next;
+	char tmp[100], tmp2[100], prefix[] = "wlXXXXXXXXXX_";
+	int unit = 0;
+	unsigned int band5grp;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit++);
+		c = 0;
+
+		if (unit == 1) continue;
+
+		memset(data_buf, 0, WLC_IOCTL_MAXLEN);
+		ret = wl_iovar_getbuf(word, "chanspecs", &c, sizeof(chanspec_t),
+			data_buf, WLC_IOCTL_MAXLEN);
+		if (ret < 0) {
+			dbg("failed to get valid chanspec list\n");
+			continue;
+		}
+
+		list = (wl_uint32_list_t *)data_buf;
+		count = dtoh32(list->count);
+
+		if (!count) {
+			dbg("number of valid chanspec is 0\n");
+			continue;
+		} else
+			for (i = 0, band5grp = 0; i < count; i++) {
+				c = (chanspec_t)dtoh32(list->element[i]);
+				band5grp |= 1 << (CHANNEL_5G_BAND_GROUP(wf_chspec_ctlchan(c)) - 1);
+			}
+
+		sprintf(tmp2, "%x", band5grp);
+		nvram_set(strcat_r(prefix, "band5grp", tmp), tmp2);
+	}
+}
 #endif
 
 #if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)

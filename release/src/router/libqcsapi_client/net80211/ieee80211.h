@@ -36,7 +36,6 @@
 #include "net80211/_ieee80211.h"
 #include "net80211/ieee80211_qos.h"
 #include "net80211/ieee80211_dfs_reentry.h"
-#include <qtn/qtn_config.h>
 
 /*
  * 802.11 protocol definitions.
@@ -335,10 +334,10 @@ struct ieee80211_vht_mu_rpt_poll {
 #define IEEE80211_HTC3_AC_CONSTRAINT	0x40
 #define IEEE80211_HTC3_MORE_PPDU_RDG	0x80
 
-
-
-
-
+#define IEEE80211_BW_RANGE		25
+#define IEEE80211_CHAN_SPACE		5
+#define IEEE80211_SEC_CHAN_OFFSET	4
+#define IEEE80211_40M_CENT_FREQ_OFFSET	2
 
 /*
  * Country/Region Codes from MS WINNLS.H
@@ -776,10 +775,57 @@ struct ieee80211_extcap_param {
 	u_int8_t ext_cap[8];
 } __packed;
 
+
+#define IEEE8021P_PRIORITY_NUM			8
+#define IEEE80211_DSCP_MAX_EXCEPTIONS		21
+#define IP_DSCP_NUM				64
+
+/* byte 0 */
+#define IEEE80211_EXTCAP_20_40_COEXISTENCE      0x1
 /* byte 7 */
 #define IEEE80211_EXTCAP_OPMODE_NOTIFICATION	0x40
 #define IEEE80211_EXTCAP_MAX_MSDU_IN_AMSDU	0xC0
 #define IEEE80211_EXTCAP_MAX_MSDU_IN_AMSDU_S	6
+
+/*
+ * 20/40 MHZ BSS coexistence information element.
+ */
+struct ieee80211_20_40_coex_param {
+	u_int8_t param_id;
+	u_int8_t param_len;
+	u_int8_t coex_param;
+} __packed;
+
+#define WLAN_20_40_BSS_COEX_INFO_REQ            BIT(0)
+#define WLAN_20_40_BSS_COEX_40MHZ_INTOL         BIT(1)
+#define WLAN_20_40_BSS_COEX_20MHZ_WIDTH_REQ     BIT(2)
+#define WLAN_20_40_BSS_COEX_OBSS_EXEMPT_REQ     BIT(3)
+#define WLAN_20_40_BSS_COEX_OBSS_EXEMPT_GRNT    BIT(4)
+
+/*
+ * 20/40 MHZ BSS intolerant channel report information element.
+ */
+struct ieee80211_20_40_in_ch_rep {
+	u_int8_t param_id;
+	u_int8_t param_len;
+	u_int8_t reg;
+	u_int8_t chan[0];
+} __packed;
+
+/*
+ * Overlapping BSS Scan Parameter information element.
+ */
+struct ieee80211_obss_scan_ie {
+	u_int8_t param_id;
+	u_int8_t param_len;
+	u_int16_t obss_passive_dwell;
+	u_int16_t obss_active_dwell;
+	u_int16_t obss_trigger_interval;
+	u_int16_t obss_passive_total;
+	u_int16_t obss_active_total;
+	u_int16_t obss_channel_width_delay;
+	u_int16_t obss_activity_threshold;
+} __packed;
 
 /*
  * Atheros Advanced Capability information element.
@@ -905,12 +951,8 @@ enum ieee80211_vsp_version {
 
 #ifdef CONFIG_QVSP
 
-#ifdef TOPAZ_PLATFORM
 /* Disable Station side control for QTM-Lite */
 #define IEEE80211_QTN_VSP_VERSION	IEEE80211_QTN_VSP_V_NONE
-#else
-#define IEEE80211_QTN_VSP_VERSION	IEEE80211_QTN_VSP_V1
-#endif
 struct ieee80211_ie_vsp_item {
 	uint8_t	index;
 	uint32_t	value;
@@ -939,14 +981,8 @@ struct ieee80211_ie_vsp {
 
 #define IEEE80211_QTN_FLAGS_ENVY	(IEEE80211_QTN_BRIDGEMODE | IEEE80211_QTN_BF_VER1)
 #define IEEE80211_QTN_FLAGS_ENVY_DFLT	IEEE80211_QTN_BF_VER1
-#ifdef TXBF_6_STA_BF
 #define IEEE80211_QTN_CAPS_DFLT		IEEE80211_QTN_BF_VER2 | IEEE80211_QTN_BF_VER3 | \
 					IEEE80211_QTN_BF_VER4 | IEEE80211_QTN_TX_AMSDU
-#else
-#define IEEE80211_QTN_CAPS_DFLT		IEEE80211_QTN_BF_VER2 | IEEE80211_QTN_BF_VER3 | \
-					IEEE80211_QTN_TX_AMSDU
-#endif
-
 /*
  * These flags are used in the following two fields.
  * - qtn_ie_flags contains the sender's settings, except in an association response, where
@@ -1036,6 +1072,7 @@ struct ieee80211_action {
 #define IEEE80211_ACTION_PUB_GAS_CREQ		12  /* GAS Comeback Request */
 #define IEEE80211_ACTION_PUB_GAS_CRESP		13  /* GAS Comeback Response */
 #define IEEE80211_ACTION_PUB_TDLS_DISC_RESP	14  /* TDLS Discovery Response */
+#define IEEE80211_ACTION_PUB_20_40_COEX         0  /* 20/40 coex */
 
 static __inline__ int ieee80211_action_is_a_gas(const struct ieee80211_action *ia)
 {
@@ -1295,6 +1332,11 @@ struct ieee80211_ie_qtn_rm_txstats {
 	uint64_t tx_bytes;
 	uint32_t tx_pkts;
 	uint32_t tx_discard;
+	/**
+	 * The number of dropped data packets failed to transmit through
+	 * wireless media for each traffic category(TC).
+	 */
+	uint32_t tx_wifi_drop[WME_AC_NUM];
 	uint32_t tx_err;
 	uint32_t tx_ucast;		/* unicast */
 	uint32_t tx_mcast;		/* multicast */
@@ -2187,6 +2229,16 @@ struct ieee80211_qtn_ext_bssid {
 	uint8_t rbs_bssid[QTN_MAX_RBS_NUM][IEEE80211_ADDR_LEN]; /* BSSID of rbs */
 } __packed;
 
+struct ieee80211_qtn_ext_state {
+	uint8_t id;				/* IEEE80211_ELEMID_VENDOR */
+	uint8_t len;				/* 8 */
+	uint8_t qtn_ie_oui[3];			/* QTN_OUI - 0x00, 0x26, 0x86 */
+	uint8_t qtn_ie_type;			/* QTN_OUI_EXTENDER_STATE */
+#define QTN_EXT_MBS_OCAC	BIT(0)		/* MBS OCAC on-going */
+	uint8_t state1;				/* record extender specific states */
+	uint8_t __rsvd[3];
+} __packed;
+
 /*
  * 802.11n AMPDU delimiters and frame structure
  */
@@ -2282,9 +2334,11 @@ struct ieee80211_ie_htcap {
 #define IEEE80211_11AC_MCS_VAL_ERR		-1
 #define IEEE80211_HT_EQUAL_MCS_START		0
 #define IEEE80211_HT_EQUAL_MCS_2SS_MAX		15
+#define IEEE80211_HT_EQUAL_MCS_3SS_MAX		23
 #define IEEE80211_EQUAL_MCS_32			32
 #define IEEE80211_UNEQUAL_MCS_START		33
 #define IEEE80211_HT_UNEQUAL_MCS_2SS_MAX	38
+#define IEEE80211_HT_UNEQUAL_MCS_3SS_MAX	52
 #define IEEE80211_UNEQUAL_MCS_MAX		76
 #define IEEE80211_UNEQUAL_MCS_BIT		0x40
 #define IEEE80211_AC_MCS_MASK			0xFF
@@ -2654,9 +2708,10 @@ struct ieee80211_ie_htinfo {
 #define	IEEE80211_HTINFO_CHOFF_SCA			1
 #define	IEEE80211_HTINFO_CHOFF_SCB			3
 
-#define IEEE80211_HTINFO_B1_REC_TXCHWIDTH_40	0x04
+#define IEEE80211_HTINFO_B1_SEC_CHAN_OFFSET		0x03
+#define IEEE80211_HTINFO_B1_REC_TXCHWIDTH_40		0x04
 #define IEEE80211_HTINFO_B1_RIFS_MODE			0x08
-#define IEEE80211_HTINFO_B1_CONTROLLED_ACCESS	0x10
+#define IEEE80211_HTINFO_B1_CONTROLLED_ACCESS		0x10
 #define IEEE80211_HTINFO_B2_NON_GF_PRESENT		0x04
 #define IEEE80211_HTINFO_B2_OBSS_PROT			0x10
 #define IEEE80211_HTINFO_B4_DUAL_BEACON			0x40
@@ -2665,7 +2720,6 @@ struct ieee80211_ie_htinfo {
 #define IEEE80211_HTINFO_B5_LSIGTXOPPROT		0x02
 #define IEEE80211_HTINFO_B5_PCO_ACTIVE			0x04
 #define IEEE80211_HTINFO_B5_40MHZPHASE			0x08
-
 
 /* get macros */
 /* control channel (all bits) */
@@ -2800,6 +2854,8 @@ enum {
 	IEEE80211_ELEMID_HTINFO		= 61,
 	IEEE80211_ELEMID_SEC_CHAN_OFF	= 62,	/* Secondary Channel Offset */
 	IEEE80211_ELEMID_20_40_BSS_COEX = 72,	/* 20/40 BSS Coexistence */
+	IEEE80211_ELEMID_20_40_IT_CH_REP   = 73,  /* 20/40 BSS Intolerant channel report */
+	IEEE80211_ELEMID_OBSS_SCAN	   = 74,   /* Overlapping BSS scan parameter  */
 	IEEE80211_ELEMID_TDLS_LINK_ID	   = 101, /* TDLS Link Identifier */
 	IEEE80211_ELEMID_TDLS_WKUP_SCHED   = 102, /* TDLS Wakeup Schedule */
 	IEEE80211_ELEMID_TDLS_CS_TIMING    = 104, /* TDLS Channel Switch Timing */
@@ -2886,7 +2942,7 @@ struct ieee80211_country_ie {
 
 #define IEEE80211_CHALLENGE_LEN		128
 
-#define IEEE80211_SUPPCHAN_LEN		26
+#define IEEE80211_SUPPCHAN_LEN		52
 
 #define	IEEE80211_RATE_BASIC		0x80
 #define	IEEE80211_RATE_VAL			0x7f
@@ -2924,8 +2980,8 @@ struct ieee80211_country_ie {
 #define QTN_OUI_SCS             0x12            /* SCS status report and control */
 #define QTN_OUI_QWME            0x13            /* WME IE between QSTA */
 #define QTN_OUI_EXTENDER_ROLE	0x14		/* WDS Extender Role */
-
-#define QTN_OUI_EXTENDER_BSSID	0x15	/* Extender BSSID */
+#define QTN_OUI_EXTENDER_BSSID	0x15		/* Extender BSSID */
+#define QTN_OUI_EXTENDER_STATE	0x16		/* Extender specific states */
 
 #define QTN_OUI_EXTENDER_ROLE_NONE	0x00	/* NONE Role */
 #define QTN_OUI_EXTENDER_ROLE_MBS	0x01	/* MBS Role */
@@ -2953,8 +3009,13 @@ struct ieee80211_country_ie {
 #define	RSN_OUI			0xac0f00
 #define	RSN_VERSION		1		/* current supported version */
 
+#define WFA_OUI			0x9A6F50
+#define WFA_TYPE_OSEN		0x12
+#define WFA_AKM_TYPE_OSEN	0x1
+
 #define	BCM_OUI			0x4C9000	/* Apple Products */
 #define	BCM_OUI_TYPE		0x01
+#define BCM_OUI_VHT_TYPE	0x0804
 
 #define	BCM_OUI_2		0x181000	/* iPad */
 #define	BCM_OUI_2_TYPE		0x02
@@ -3013,6 +3074,7 @@ struct ieee80211_ie_vhtcap {
 } __packed;
 
 /* VHT capabilities flags */
+#define IEEE80211_VHTCAP_C_CHWIDTH			0x0000000C
 #define IEEE80211_VHTCAP_C_RX_LDPC			0x00000010
 #define IEEE80211_VHTCAP_C_SHORT_GI_80			0x00000020
 #define IEEE80211_VHTCAP_C_SHORT_GI_160			0x00000040
@@ -3057,6 +3119,10 @@ struct ieee80211_ie_vhtcap {
 /* B5 Short GI for 80MHz support */
 #define IEEE80211_VHTCAP_GET_SGI_80MHZ(vhtcap) \
 	(((vhtcap)->vht_cap[0] & 0x20) >> 5)
+
+/* B6 Short GI for 160MHz support */
+#define IEEE80211_VHTCAP_GET_SGI_160MHZ(vhtcap) \
+	(((vhtcap)->vht_cap[0] & 0x40) >> 6)
 
 /* B7 TX STBC */
 #define IEEE80211_VHTCAP_GET_TXSTBC(vhtcap) \
@@ -3356,6 +3422,14 @@ struct ieee80211_timout_int_ie {
 	u_int32_t	timout_int_value;		/* in tus */
 } __packed;
 
+struct ieee80211_ie_brcm_vht {
+	uint8_t id;
+	uint8_t len;
+	uint8_t brcm_vht_oui[3];
+	uint16_t brcm_vht_type;
+	uint8_t vht_ies[0];
+}__packed;
+
 /*
  * Add the Quantenna OUI to a frame
  */
@@ -3628,7 +3702,6 @@ static __inline__ int ieee80211_is_bcst(const void *p)
 	return (p16[0] == 0xFFFF) && (p16[1] == 0xFFFF) && (p16[2] == 0xFFFF);
 }
 
-#ifdef TOPAZ_PLATFORM
 /*
  * IEEE802.11w spec - Table 8-38 and section 11.1.7
  */
@@ -3676,7 +3749,20 @@ static __inline__ int ieee80211_mgmt_is_robust(const struct ieee80211_frame *wh)
 	return is_robust_mgmt;
 }
 #endif
-#endif
+
+/* QTN Extender */
+#define	IEEE80211_QTN_WDS_MASK		0x0003
+#define	IEEE80211_QTN_EXTDR_ALLMASK	0xFFFF
+#define	IEEE80211_QTN_EXTDR_MASK_SHIFT	16
+
+#define	IEEE80211_QTN_WDS_ONLY		0x0000	/* 0 = Plain WDS; No WDS Extender */
+#define	IEEE80211_QTN_WDS_MBS		0x0001	/* 1 = MBS-Master Base Station */
+#define	IEEE80211_QTN_WDS_RBS		0x0002	/* 2 = RBS-Repeater/Remote Base Station */
+
+static __inline__ uint32_t ieee80211_extdr_combinate(uint16_t flags, uint16_t mask)
+{
+	return (mask << IEEE80211_QTN_EXTDR_MASK_SHIFT) | flags;
+}
 
 #define IEEE80211_N_RATE_PREFIX 0x7F000000
 #define IEEE80211_AC_RATE_PREFIX 0x7E000000
@@ -3708,6 +3794,12 @@ static __inline__ int ieee80211_mgmt_is_robust(const struct ieee80211_frame *wh)
 
 #define IEEE80211_MU_GRP_POS(mu_grp, _grp)	\
 	(((mu_grp).pos[(_grp) >> 2] >> (((_grp) & 0x3) << 1)) & 0x3)
+
+#define	IEEE80211_VAP_STATE_DISABLED			0
+#define	IEEE80211_VAP_STATE_ENABLED			1
+
+#define IEEE80211_MIN_BSS_GROUP	1 /* 0 - Default internal group. 1 - 31 User configurable group id */
+#define IEEE80211_MAX_BSS_GROUP	32
 
 #endif /* _NET80211_IEEE80211_H_ */
 

@@ -1400,6 +1400,9 @@ ALL:
 		service = get_ipv6_service();
 		switch (service) {
 		case IPV6_NATIVE_DHCP:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
 			set_default_accept_ra(1);
 		case IPV6_6IN4:
 		case IPV6_6TO4:
@@ -1421,9 +1424,18 @@ void start_lan_ipv6(void)
 	char *lan_ifname = strdup(nvram_safe_get("lan_ifname"));
 	char *dualwan_wans = nvram_safe_get("wans_dualwan");
 	char *dualwan_mode = nvram_safe_get("wans_mode");
+	int unit, ipv6_service = 0;
 
-	if (!(!strstr(dualwan_mode, "none") &&
+	if (!(!strstr(dualwan_wans, "none") &&
 		(!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))))
+		return;
+
+	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+		if (get_ipv6_service_by_unit(unit) != IPV6_DISABLED) {
+			ipv6_service = 1;
+			break;
+		}
+	if (!ipv6_service)
 		return;
 
 	set_intf_ipv6_dad(lan_ifname, 0, 1);
@@ -1437,13 +1449,13 @@ void stop_lan_ipv6(void)
 	char *dualwan_wans = nvram_safe_get("wans_dualwan");
 	char *dualwan_mode = nvram_safe_get("wans_mode");
 
-	if (!(!strstr(dualwan_mode, "none") &&
+	if (!(!strstr(dualwan_wans, "none") &&
 		(!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))))
 		return;
 
 	stop_ipv6();
 	set_intf_ipv6_dad(lan_ifname, 0, 0);
-	config_ipv6(ipv6_enabled() && is_routing_enabled(), 0);
+	config_ipv6(0, 1);
 }
 
 void restart_dnsmasq_ipv6(void)
@@ -1451,7 +1463,7 @@ void restart_dnsmasq_ipv6(void)
 	char *dualwan_wans = nvram_safe_get("wans_dualwan");
 	char *dualwan_mode = nvram_safe_get("wans_mode");
 
-	if (!(!strstr(dualwan_mode, "none") &&
+	if (!(!strstr(dualwan_wans, "none") &&
 		(!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))))
 		return;
 
@@ -2113,7 +2125,7 @@ void stop_lan(void)
 #ifdef RTCONFIG_IPV6
 	stop_ipv6();
 	set_intf_ipv6_dad(lan_ifname, 0, 0);
-	config_ipv6(ipv6_enabled() && is_routing_enabled(), 1);
+	config_ipv6(0, 1);
 #endif
 
 	ifconfig("lo", 0, NULL, NULL);

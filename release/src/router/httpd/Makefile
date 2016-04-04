@@ -86,6 +86,8 @@ ifeq ($(RTCONFIG_HTTPS),y)
 OBJS += pwenc.o
 endif
 
+OBJS += $(if $(wildcard web_hook.c), web_hook.o, prebuild/web_hook$(BCMEX).o)
+
 LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 # for ceil()
 LIBS += -lm
@@ -202,6 +204,8 @@ ifeq ($(RTCONFIG_HTTPS),y)
 pwenc.o:
 	@-cp -f ./prebuild/pwenc$(BCMEX).o pwenc.o
 endif
+web_hook.o:
+	@-cp -f ./prebuild/web_hook$(BCMEX).o web_hook.o
 endif
 
 %.o: %.c .%.depend

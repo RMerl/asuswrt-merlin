@@ -109,7 +109,8 @@ PJ_DEF(pj_status_t) pj_syslog_facility(int facility);
 PJ_DECL(pj_status_t) pj_file_open(pj_pool_t *pool,
                                   const char *pathname, 
                                   unsigned flags,
-                                  pj_oshandle_t *fd);
+								  pj_oshandle_t *fd,
+								  unsigned *size);
 
 /**
  * Close an opened file descriptor.

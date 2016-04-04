@@ -19,30 +19,13 @@ current_extendno=`echo $current_extendno | sed s/-g.*//;`
 # get firmware information
 forsq=`nvram get apps_sq`
 model=`nvram get productid`
-swisscom=`nvram show | grep rc_support | grep swisscom`
-tmo=`nvram show | grep rc_support | grep tmo`
+model="$model#"
 if [ "$forsq" == "1" ]; then
-	if [ "$swisscom" != "" ]; then
-                echo "---- update sq swisscom----" > /tmp/webs_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
-	elif [ "$tmo" != "" ]; then
-		echo "---- update sq tmo----" > /tmp/webs_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_tmo.zip -O /tmp/wlan_update.txt
-	else
-                echo "---- update sq normal----" > /tmp/webs_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt		
-	fi
+	echo "---- update sq normal----" > /tmp/webs_upgrade.log
+	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt
 else
-	if [ "$swisscom" != "" ]; then
-                echo "---- update real swisscom----" > /tmp/webs_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
-        elif [ "$tmo" != "" ]; then
-                echo "---- update real tmo----" > /tmp/webs_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_tmo.zip -O /tmp/wlan_update.txt
-	else
-                echo "---- update real normal----" > /tmp/webs_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
-	fi
+	echo "---- update real normal----" > /tmp/webs_upgrade.log
+	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
 fi	
 
 if [ "$?" != "0" ]; then
@@ -72,8 +55,8 @@ else
 		nvram set webs_state_flag=1	# Do upgrade
 	elif [ "$current_buildno" -eq "$buildno" ]; then
 		if [ "$current_firm" -lt "$firmver"]; then 
-				echo "---- firmver: $firmver ----" >> /tmp/webs_upgrade.log
-				nvram set webs_state_flag=1	# Do upgrade
+			echo "---- firmver: $firmver ----" >> /tmp/webs_upgrade.log
+			nvram set webs_state_flag=1	# Do upgrade
 		elif [ "$current_firm" -eq "$firmver" ]; then
 			if [ "$current_extendno" -lt "$lextendno" ]; then
 				echo "---- lextendno: $lextendno ----" >> /tmp/webs_upgrade.log

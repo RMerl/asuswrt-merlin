@@ -133,6 +133,7 @@ typedef struct pj_stun_tsx_cb
  */
 PJ_DECL(pj_status_t) pj_stun_client_tsx_create(	pj_stun_config *cfg,
 					        pj_pool_t *pool,
+					    pj_grp_lock_t *grp_lock,
 						const pj_stun_tsx_cb *cb,
 						pj_stun_client_tsx **p_tsx);
 
@@ -159,15 +160,25 @@ pj_stun_client_tsx_schedule_destroy(pj_stun_client_tsx *tsx,
 
 
 /**
- * Destroy a STUN client transaction immediately. This function can be 
- * called at any time to stop the transaction and destroy it.
+ * Destroy the STUN transaction immediately after the transaction is complete.
+ * Application normally calls this function in the on_complete() callback.
+ *
+ * @param tsx		The STUN transaction.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pj_stun_client_tsx_destroy(pj_stun_client_tsx *tsx);
+
+
+/**
+ * Stop the client transaction.
  *
  * @param tsx		The STUN transaction.
  *
  * @return		PJ_SUCCESS on success or PJ_EINVAL if the parameter
  *			is NULL.
  */
-PJ_DECL(pj_status_t) pj_stun_client_tsx_destroy(pj_stun_client_tsx *tsx);
+PJ_DECL(pj_status_t) pj_stun_client_tsx_stop(pj_stun_client_tsx *tsx);
 
 
 /**

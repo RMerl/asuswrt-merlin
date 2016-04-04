@@ -1,0 +1,480 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Cache-control" content="no-cache">
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link rel="apple-touch-icon" href="/smb/css/appicon.png">
+<link rel="apple-touch-startup-image" href="/smb/css/startup.png">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>AiCloud</title>
+<link rel="stylesheet" href="/smb/css/style-status.css" />
+<style>
+.myButton {
+-moz-box-shadow:inset 0px 1px 0px 0px #fff6af;
+-webkit-box-shadow:inset 0px 1px 0px 0px #fff6af;
+box-shadow:inset 0px 1px 0px 0px #fff6af;
+background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffec64), color-stop(1, #ffab23));
+background:-moz-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+background:-webkit-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+background:-o-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+background:-ms-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+background:linear-gradient(to bottom, #ffec64 5%, #ffab23 100%);
+filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffec64', endColorstr='#ffab23',GradientType=0);
+background-color:#ffec64;
+-moz-border-radius:6px;
+-webkit-border-radius:6px;
+border-radius:6px;
+border:1px solid #ffaa22;
+display:inline-block;
+cursor:pointer;
+color:#333333;
+font-family:Verdana;
+font-size:13px;
+font-weight:bold;
+padding:10px 55px;
+text-decoration:none;
+text-shadow:0px 1px 0px #ffee66;
+}
+.myButton:hover {
+background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffab23), color-stop(1, #ffec64));
+background:-moz-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+background:-webkit-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+background:-o-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+background:-ms-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+background:linear-gradient(to bottom, #ffab23 5%, #ffec64 100%);
+filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffab23', endColorstr='#ffec64',GradientType=0);
+background-color:#ffab23;
+}
+.myButton:active {
+position:relative;
+top:1px;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type='text/javascript' src='/smb/js/davclient_tools.js'></script>
+<script type="text/javascript">
+var this_url;
+var m = new lang();
+var g_storage = new myStorage();
+var g_captcha = -1;
+var g_security_code_needed = 0;
+var g_auth_type = 0;
+
+$("document").ready(function() {
+	
+	$(".table_x").hide();
+  	$(".tr_security_code").hide();
+  	
+  	$(window).resize(adjustUI);
+  			
+	var invite_token = $("input#invite_token").val();
+	var ua = navigator.userAgent.toLowerCase();
+	
+	if( navigator.userAgent.match(/(iPhone|iPod|iPad);?/i) ||
+    	 navigator.userAgent.match(/android/i)) {
+    	 	
+    	var store_url = "";
+    	var is_android = false;
+    	var is_ios = false;
+    	 
+    	if (navigator.userAgent.match(/android/i)) {
+    		store_url = "market://details?id=com.asustek.aicloud";
+    		is_android = true;
+  		}
+  		else if(navigator.userAgent.match(/(iPhone|iPod|iPad);?/i)){
+  			store_url = "https://itunes.apple.com/app/asus-aicloud/id527118674";
+  			is_ios = true;
+  		}
+  		
+  		adjustUI();
+  		
+  		$("#table_android").show();
+  			
+  		if( invite_token !="" ) {
+  			var lanuch_url = "";
+  			var protocol = window.location.protocol;
+	  		protocol = protocol.substring(0, protocol.indexOf(":"));
+	  			
+	  		var default_port = (protocol=="https") ? "443" : "80";
+	  			
+  			if(is_android){
+	  			lanuch_url = "intent:#Intent;action=com.asustek.aicloud.INVITE_ACTION";
+	  			lanuch_url += ";S.protocol=" + protocol;
+	  			lanuch_url += ";S.hostname=" + window.location.hostname;
+	  			lanuch_url += ";S.port=" + ( (window.location.port=="") ? default_port : window.location.port );
+	  			lanuch_url += ";S.invite_token=" + invite_token;
+	  			lanuch_url += ";end";
+  			}
+  			else if(is_ios){
+  				lanuch_url = "asusaicloud2://";
+  				lanuch_url += "aicloudweb?";
+  				lanuch_url += "protocol=" + protocol;
+  				lanuch_url += "&hostname=" + window.location.hostname;
+  				lanuch_url += "&port=" + ( (window.location.port=="") ? default_port : window.location.port );
+  				lanuch_url += "&invite_token=" + invite_token;
+  			}
+  			
+  			$("#launch_app").attr("href", lanuch_url);
+  		}
+  		
+  		$("#launch_store").attr("href", store_url);
+  		
+  		return;
+    }
+    
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$('#lb_username').text(m.getString('title_username2'));
+	$('#lb_password').text(m.getString('title_password2'));
+	$('#lb_password_confirm').text(m.getString('title_password_confirm'));
+	$('#lb_security_code').text(m.getString('title_security_code'));
+	$('#lb_tutorial_1').text(m.getString('title_invite_tutorial_1'));
+	
+	var browserVer = navigator.userAgent.toLowerCase();
+	if( isIE() && 
+		getInternetExplorerVersion() <= 7 ){
+		
+		$("#table_register").remove();
+		
+		var append_html = '<table border="0" cellpadding="0" cellspacing="3" style="position: relative;left:40px;padding-top:20px"><tbody><tr><td width="240px">';
+		append_html += '<font color="white" size="4">';
+		append_html += '<label>';
+		append_html += m.getString('msg_browsersupport');
+		append_html += '</label>';
+		append_html += '</font>';
+		append_html += '</td>';
+		append_html += '</tr>';									 
+		append_html += '</tbody>';
+		append_html += '</table>';
+		$(append_html).appendTo($("#main"));
+		
+		return;
+	}
+	
+	$("#table_loading").show();
+	adjustUI();
+	
+	var param = {};
+	param.action = "get_invite_info";
+	param.token = invite_token;
+	
+	$.ajax({
+		url: '/' + invite_token,
+	  	data: param,
+	  	type: 'POST',
+	  	dataType: 'json',
+	  	timeout: 20000,
+	  	error: function(){
+			alert('Fail to load data!');
+	  	},
+	  	success: function(json_data){
+	  		
+	  		if(json_data.result!="OK"){
+	  			alert(m.getString("msg_token_invalid"));
+	  			return;
+	  		}
+	  		
+	  		var data = json_data.data;
+	  		
+	  		g_security_code_needed = parseInt(data.need_security_code);
+	  		g_auth_type = parseInt(data.auth_type);
+	  		
+	  		if(g_security_code_needed==1){
+	  			$(".tr_security_code").show();
+	  		}
+	  		else{
+	  			$(".tr_security_code").hide();
+	  		}
+	  			  		
+	  		adjustUI();
+				
+			$("#table_loading").hide();
+			$("#table_tutorial").hide();
+			$("#table_register").show();
+			
+			$("input#username").focus();
+	  	}
+	});
+	
+});
+
+function adjustUI(){
+	var logo_left = ($(document).width() - $("div#login_logo").width())/2;
+	$("div#login_logo").css("left", logo_left);	
+}
+
+function doOK(e) {
+	
+	var username = $('input#username').val();
+	var password = $('input#password').val();
+	var password_confirm = $('input#password_confirm').val();
+	var invite_token = $("input#invite_token").val();
+	var security_code = $("input#security_code").val();
+	
+	if(password!=password_confirm){
+		alert(m.getString("msg_err_password_matched"));
+		return;
+	}
+	
+	if(g_security_code_needed==1 && security_code==""){
+		alert("Please input security code!");
+		return;
+	}
+	
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var window_location = window.location.href.slice(0,b);
+	
+	var param = {};
+	param.action = "register";
+	param.token = invite_token;
+	param.username = username;
+	param.password = password;
+	param.security_code = security_code;
+	
+	$.ajax({
+		url: '/' + invite_token,
+	  	data: param,
+	  	type: 'POST',
+	  	dataType: 'text',
+	  	timeout: 20000,
+	  	error: function(){
+			alert(m.getString("msg_err_account_create"));
+	  	},
+	  	success: function(data){
+	  		if(data=="OK"){
+	  			var msg = "<p>" + m.getString("title_invite_tutorial_2") + "</p>";
+				msg += "<a href='" + window_location + "' target='_blank' style='text-decoration:none;'><p style='color:#FFD200;font-weight:bold'>" + window_location + "</p></a>";				
+				msg += "<p style='color:#FFD200;font-weight:bold'>" + m.getString("title_username") + ": " + username + "</p>";
+				msg += "<p style='color:#FFD200;font-weight:bold'>" + m.getString("title_password") + ": " + password + "</p>";
+				
+				$('#lb_tutorial_2').html(msg);
+				  			
+				$('#lb_tutorial_3').html("<p>" + m.getString("title_invite_tutorial_3") + "</p>");
+	  			
+	  			$("#table_register").fadeOut("slow", function(){
+	  				$("#table_tutorial").fadeIn("slow", function(){
+	  					
+	  				});
+	  			});
+	  			
+	  			/*
+	  			var client = new davlib.DavClient();
+				client.initialize();
+				
+				client.LOGOUT("/", function(error){
+					if(error[0]==2){
+						window.location = window_location;
+					}
+				});
+				*/
+	  		}
+	  		else if(data=="ACCOUNT_EXISTED"){
+	  			alert(m.getString("msg_err_account_existed"));
+	  			return;
+	  		}
+	  		else if(data=="TOKEN_INVALID"){
+	  			alert(m.getString("msg_token_invalid"));
+	  			return;
+	  		}
+	  		else if(data=="SECURITY_CODE_INVALID"){
+	  			alert(m.getString("msg_security_code_invalid"));
+	  			return;
+	  		}
+	  		else{
+	  			alert(m.getString("msg_err_account_create"));
+	  			return;
+	  		}
+	 	}
+	});
+}
+
+function doLogin(){
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var window_location = window.location.href.slice(0,b);
+	window.location = window_location;
+	/*
+	var client = new davlib.DavClient();
+	client.initialize();
+				
+	client.LOGOUT("/", function(error){
+		if(error[0]==2){
+			window.location = window_location;
+		}
+	});
+	*/
+}
+/*
+function login(url, username, password){
+	var auth = "";
+	
+	var auth = "Basic " + Base64.encode(username + ":" + password);
+	
+	var client = new davlib.DavClient();
+	client.initialize();
+	
+	client.LOGOUT(url, function(error){	
+		if(error[0]==2){
+			client.PROPFIND(url, auth, function(error, statusstring, content){		
+				if(error==401){
+					alert("Fail to login!");
+				}
+				else{
+					alert(username+", "+password);
+					setTimeout(function(){
+						//window.location.reload(true);
+						window.location = url;
+					}, 100);
+				}
+			});
+		}
+	});
+		
+	
+}
+*/
+
+function onKeyHandler(e){
+	if(e.keyCode==13)
+		doOK(e);
+}
+
+</script>
+</head>
+<body style='padding-top:20px;margin:0;background-color:#313131'>
+
+<table id="logo" width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody><tr height="128px">
+		<tr><td valign="middle" align="center"><div id="login_logo"></div></td></tr>		
+	</tr></tbody>
+</table>
+
+<table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody>
+		<tr>
+		<td valign="middle" align="center">
+			<div style="width:300px;height:88px;background-color:#595F62;padding-top:10px">
+				<div id="title1">Welcome.</div>
+				<div id="title2">Register Your Account.</div>
+			</div>
+		</td>
+		</tr>
+		<tr height="7px"></tr>
+	</tbody>
+</table>
+
+<table width="100%" height="100%">
+	<tbody><tr>
+		<td valign="top" align="center">
+		
+			<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
+				<tbody><tr>
+					<td align="left" background="" height="106" alt="">		
+						<div id="main" style="width:300px;height:auto;background-color:#595F62;padding: 0 0 10px 0;">
+							<table id="table_register" class="table_x" border="0" cellpadding="0" cellspacing="3">
+								<tbody>
+									<tr>
+										<td>
+											<label class="table_label_x" id="lb_username">Username :</label>
+										</td>
+									</tr>
+									<tr height="5px"></tr>
+									<tr>
+					          			<td>
+					          				<input id="username" name="username" type="text" maxlength="20" autocapitalize="off">
+					          			</td>
+					          		</tr>
+					          		<tr style="height:10px"></tr>
+                                  	<tr> 
+                                    	<td>
+                                    		<label class="table_label_x" id="lb_password">Password :</label>
+                                    	</td>
+                                  	</tr>
+					          		<tr height="5px"></tr>
+					          		<tr> 
+					            		<td>
+					            			<input id="password" name="password" type="text" maxlength="16" autocapitalize="off" onkeydown="return onKeyHandler(event)">
+					            		</td>
+					          		</tr>
+					           		<tr style="height:10px"></tr>
+					          		<tr> 
+                                    	<td>
+                                    		<label class="table_label_x" id="lb_password_confirm">Password Confirm:</label>
+                                    	</td>
+                                  	</tr>
+					          		<tr height="5px"></tr>
+					          		<tr> 
+					            		<td>
+					            			<input id="password_confirm" name="password_confirm" type="text" maxlength="16" autocapitalize="off" onkeydown="return onKeyHandler(event)">
+					            		</td>
+					          		</tr>
+					          		<tr class="tr_security_code" style="height:10px"></tr>
+					          		<tr class="tr_security_code"> 
+                                    	<td>
+                                    		<label class="table_label_x" id="lb_security_code">Security Code:</label>
+                                    	</td>
+                                  	</tr>
+					          		<tr class="tr_security_code" height="5px"></tr>
+					          		<tr class="tr_security_code"> 
+					            		<td>
+					            			<input id="security_code" name="security_code" type="text" maxlength="4" autocapitalize="off" onkeydown="return onKeyHandler(event)">
+					            		</td>
+					          		</tr>
+					          		<tr style="height:10px"></tr>
+					          		<tr> 
+					          			<td colspan="2" align="center"><div id="ok" onClick="doOK();"></div></td>
+					        		</tr>
+					        	</tbody>
+					    	</table>
+					    	<table id="table_tutorial" class="table_x" border="0" cellpadding="0" cellspacing="3">
+								<tbody>
+									<tr>
+										<td>
+											<p class="table_label_x" id="lb_tutorial_1">恭喜你註冊成功!</p>
+											<p class="table_label_x_small" id="lb_tutorial_2">請輸入帳密後登入使用AiCloud!</p>
+											<p class="table_label_x_small" id="lb_tutorial_3">請輸入帳密後登入使用AiCloud!</p>
+										</td>
+									</tr>
+									<tr> 
+					          			<td colspan="2" align="center"><div id="ok" onClick="doLogin();"></div></td>
+					        		</tr>
+								</tbody>
+							</table>
+							<table id="table_android" class="table_x" border="0" cellpadding="0" cellspacing="3">
+								<tbody>
+									<tr>
+										<td>
+											<p class="table_label_x_small">Hi! I share AiCloud for you, please open AiCloud app and register an account.</p>
+											<p><a href="#" id="launch_app" class="myButton">Open AiCloud</a></p>
+											<p class="table_label_x_small">If you have not yet installed AiCloud app, please click the link to download and install.<p>
+											<p><a href="#" id="launch_store" class="myButton">Install AiCloud</a></p>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+							<table id="table_loading" class="table_x" border="0" cellpadding="0" cellspacing="3">
+								<tbody>
+									<tr>
+										<td>
+											<p class="table_label_x">Loading...</p>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+				    	</div>
+					</td>
+				</tr></tbody>
+			</table>
+		
+		</td>
+	</tr></tbody>
+</table>
+
+
+</body>
+</html>

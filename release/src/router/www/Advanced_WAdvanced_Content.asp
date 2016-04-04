@@ -413,58 +413,11 @@ function initial(){
 	
 	/*location_code Setting*/		
 	if(location_list_support){
-		generate_region();
+		document.getElementById('region_div').innerHTML = '<% generate_region(); %>';
 		document.getElementById('region_tr').style.display = "";
 	}
 
 	control_TimeField();
-}
-
-/* MODELDEP by Territory Code */
-function generate_region(){
-	//var region_name = ["Asia", "Australia", "Brazil", "Canada", "China", "Europe", "Japan", "Korea", "Malaysia", "Middle East", "Russia", "Singapore", "Turkey", "Taiwan", "Ukraine", "United States"];
-	//var region_value = ["APAC", "AU", "BZ", "CA", "CN", "EU", "JP", "KR", "MY", "ME", "RU", "SG", "TR", "TW", "UA", "US"];
-	var region_name = ["Asia", "China", "Europe", "Korea", "Russia", "Singapore", "United States"];	//Viz mod 2015.06.15
-	var region_value = ["AP", "CN", "EU", "KR", "RU", "SG", "US"]; //Viz mod 2015.06.15
-	var current_region = '<% nvram_get("location_code"); %>';
-	var isUsing_AU_sku = (function(){
-		if( based_modelid !== "RT-AC87U" && based_modelid !== "RT-AC68U" && based_modelid !== "RT-AC66U" && 
-			based_modelid !== "RT-N66U" && based_modelid !== "RT-N18U" && based_modelid != "RT-AC51U" &&
-			based_modelid !== "RT-N12+" && based_modelid !== "RT-N12D1" && based_modelid !== "RT-N12HP_B1" && 
-			based_modelid !== "RT-N12HP" && based_modelid !== "RT-AC55U" && based_modelid !== "RT-AC1200" && 
-			based_modelid != "RT-AC51U" && based_modelid !== "RT-AC88U" && based_modelid !== "RT-AC5300" && 
-			based_modelid !== "RT-AC5300R" && based_modelid !== "RT-AC55U"
-		  )	return false;
-	
-		if(ttc.search("CN") == 0 ) 
-			return true;
-		
-		return false;	
-	})();
-
-	if(current_region == '')
-		current_region = ttc.split("/")[0];
-
-	if(isUsing_AU_sku){
-		region_name.push("Australia");
-		region_value.push("XX");
-	} 
-
-	if(based_modelid == "RT-AC51U"){	//remove US
-		var idx = region_value.getIndexByValue("US");
-		region_value.splice(idx, 1);
-		region_name.splice(idx, 1);
-	}
-
-	if( region_value.indexOf(ttc.split("/")[0]) < 0 ) {	//territory_code mismatch location_code list
-		region_name.splice(0, 0, "Default");
-		region_value.splice(0, 0, ttc.split("/")[0]);
-	}
-	else{
-		region_name.splice(region_value.indexOf(ttc.split("/")[0]), 1, region_name[region_value.indexOf(ttc.split("/")[0])]+" (Default)")
-	}
-
-	add_options_x2(document.form.location_code, region_name, region_value, current_region);
 }
 
 function adjust_tx_power(){
@@ -575,6 +528,13 @@ function applyRule(){
 				document.form.action_script.value = "reboot";
 				document.form.action_wait.value = reboot_needed_time;
 			}				
+		}
+
+		if(based_modelid == "RT-AC87U" && "<% nvram_get("wl_unit"); %>" == "1"){
+			if(document.form.wl_mumimo.value != "<% nvram_get("wl_mumimo"); %>"){
+				document.form.action_script.value = "reboot";
+				document.form.action_wait.value = reboot_needed_time;				
+			}
 		}
 		
 		document.form.wl_sched.value = wifi_schedule_value;	
@@ -1071,7 +1031,6 @@ function showclock(){
 	corrected_timezone();
 }
 
-
 function show_wifi_schedule(){
 	document.getElementById("titl_desc").style.display = "none";
 	document.getElementById("WAdvTable").style.display = "none";
@@ -1163,6 +1122,31 @@ function control_TimeField(){
 	else{
 		document.getElementById("wl_sched_enable").style.display = "none";
 		document.form.wl_timesched.disabled = true;
+	}
+}
+
+function handle_mimo(value){
+	if(value == 1 && document.form.wl_txbf.value == 0){
+		document.form.wl_txbf.value = 1;
+	}
+}
+
+function handle_beamforming(value){
+	if(value == 0 && document.form.wl_mumimo.value == 1){
+		var string = "";
+		if("<% nvram_get("wl_unit"); %>" == 0){
+			string = "It will disable MU-MIMO while disabling Explicit Beamforming";
+		}
+		else{
+			string = "It will disable MU-MIMO while disabling 802.11ac Beamforming";
+		}
+		
+		if(confirm(string)){
+			document.form.wl_mumimo.value = 0;
+		}
+		else{
+			return false;
+		}
 	}
 }
 </script>
@@ -1529,7 +1513,7 @@ function control_TimeField(){
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="">Multi-User MIMO<sup id="mu_mimo_sup"> *BETA</sup</a></th>
 						<td>
 							<div style="display:table-cell;vertical-align:middle">
-								<select name="wl_mumimo" class="input_option" disabled>
+								<select name="wl_mumimo" class="input_option" onchange="handle_mimo(this.value)" disabled>
 									<option value="0" <% nvram_match("wl_mumimo", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 									<option value="1" <% nvram_match("wl_mumimo", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
 								</select>
@@ -1540,7 +1524,7 @@ function control_TimeField(){
 					<tr id="wl_txbf_field">
 						<th><a id="wl_txbf_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);"><#WLANConfig11b_x_ExpBeam#></a></th>
 						<td>
-							<select name="wl_txbf" class="input_option">
+							<select name="wl_txbf" class="input_option" onchange="handle_beamforming(this.value)">
 									<option value="0" <% nvram_match("wl_txbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 									<option value="1" <% nvram_match("wl_txbf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
@@ -1575,7 +1559,7 @@ function control_TimeField(){
 					</tr>
 					<tr id="region_tr" style="display:none">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#WLANConfig11b_x_Region#></a></th>
-						<td><select name="location_code" class="input_option"></select></td>
+						<td><div id="region_div"></div></td>
 					</tr>
 				</table>				
 						<div class="apply_gen" id="apply_btn">

@@ -86,63 +86,7 @@ struct muc_tx_stats {
 	 * The number of packets held, waiting for BA to complete.
 	 */
 	u_int32_t	pkt_push_back;
-	u_int32_t	tx_timeout;
 
-	/**
-	 * This counter shows the number of MPDUs or AMPDUs which needed to be retried
-	 * by the hardware.
-	 *
-	 * For an MPDU, it indicates that no ACK was received from the peer.
-	 *
-	 * For an AMPDU, it indicates that no BACK was received from the peer.
-	 * In this case, all subframes within the aggregate failed, and the hardware
-	 * has requeued the entire aggregate for retransmission.
-	 *
-	 * If all hardware retries fail, the packet is returned back to the MAC for
-	 * software retries.
-	 *
-	 * \sa tx_sw_retry.
-	 */
-	u_int32_t	tx_hw_retry;
-
-	/**
-	 * This counter shows the number of non-aggregate MPDUs that have been resent
-	 * by software for retransmission after an initial transmission failure.
-	 *
-	 * Transmission failure is when no ACK has been received from the peer after the
-	 * configured number of hardware retries.
-	 */
-	u_int32_t	tx_sw_retry_noagg;
-
-	/**
-	 * This counter shows the number of AMPDUs that have been repackaged
-	 * by software for retransmission after an initial transmission failure.
-	 *
-	 * Transmission failure is when an AMPDU fails to receive a full block
-	 * ACK (some subframes are incorrectly received).  The repackaged AMPDU
-	 * contains a subset of the subframes from the original AMPDU.
-	 */
-	u_int32_t	tx_sw_retry;
-	u_int32_t	tx_xretry;
-	u_int32_t	tx_pspoll_deagg;
-
-	/**
-	 * This counter shows the number of packets (AMPDU subframes) for which all retry
-	 * attempts have failed.
-	 *
-	 * \note This counter represents genuine packet loss.
-	 */
-	u_int32_t	tx_xattempts;
-
-	/**
-	 * This counter shows the number of non-aggregate MPDUs for which all retry
-	 * attempts have failed.
-	 *
-	 * \note This counter represents genuine packet loss.
-	 */
-	u_int32_t	tx_xattempts_noagg;
-	u_int32_t	tx_done_failed;
-	u_int32_t	tx_cca_defer_cnt;
 	u_int32_t	pkt_to_hw;
 	u_int32_t	pkt_to_hw_deferred;
 	u_int32_t	fd_absent;
@@ -152,13 +96,7 @@ struct muc_tx_stats {
 	u_int32_t	pkt_add_q;
 	u_int32_t	pkt_qtn_hardstart;
 	u_int32_t	tx_reserved;
-	u_int32_t	tx_released;
 	u_int32_t	tx_reserve_fail;
-	u_int32_t	tx_release_err;
-	u_int32_t	tx_mu_reserved;
-	u_int32_t	tx_mu_released;
-	u_int32_t	tx_mu_reserve_fail;
-	u_int32_t	tx_mu_release_err;
 	u_int32_t	txalert_mu_ndp_update;
 	u_int32_t	txalert_mu_rpt_poll;
 	u_int32_t	txalert_mu_queue_full;
@@ -172,8 +110,6 @@ struct muc_tx_stats {
 	u_int32_t	txalert_ndp_update;
 	u_int32_t	tx_ndp_q_occupied;
 	u_int32_t	tx_ndp_start;
-	u_int32_t	txdone_mgmt;
-	u_int32_t	txdone_data;
 	u_int32_t	tx_pwr;
 	u_int32_t	bcn_scheme_power_save;
 	u_int32_t	bcn_scheme;
@@ -205,10 +141,6 @@ struct muc_tx_stats {
 	u_int32_t	ba_del;
 	u_int32_t	fd_free_nodeclean;
 	u_int32_t	msdu_expired;
-	u_int32_t	last_ack_ssq;
-	u_int32_t	last_sent_seq;
-	u_int32_t	ampdu_subframe_failure;
-	u_int32_t	ampdu_subframe_done;
 	u_int32_t	tx_window_locked;
 	u_int32_t	tx_window_failed;
 	u_int32_t	tx_restrict_probe;
@@ -284,10 +216,8 @@ struct muc_tx_stats {
 	uint32_t	tx_beacon_done;
 	uint32_t	sfs_peer_rts;
 	uint32_t	sfs_peer_rts_flags;
-	uint32_t	sfs_ap_local_rts;
-	uint32_t	sfs_ap_local_rts_flags;
-	uint32_t	sfs_sta_local_rts;
-	uint32_t	sfs_sta_local_rts_flags;
+	uint32_t	sfs_local_rts;
+	uint32_t	sfs_local_rts_flags;
 	uint32_t	sfs_dyn_wmm;
 	uint32_t	sfs_dyn_wmm_flags;
 	uint32_t	auc_wmm_ps_notify;
@@ -295,6 +225,24 @@ struct muc_tx_stats {
 	uint32_t	qtn_bcn_stop;
 	uint32_t	mu_grp_snd_queue_is_not_empty;
 	uint32_t	mu_prec_snd_queue_is_not_empty;
+	uint32_t	mu_group_delete;
+	uint32_t	mu_group_install;
+	uint32_t	mu_group_rate_node_updates;
+	uint32_t	mu_update_rates_mu;
+	uint32_t	mu_update_rates_su;
+	uint32_t	autocs_sample_bits;
+	uint32_t	autocs_adjust_bits;
+	uint32_t	autocs_step_size;
+	uint32_t	autocs_cs_thresh;
+	uint32_t	autocs_min_rssi;
+	uint32_t	bmps_null_tx_success;
+	uint32_t	bmps_null_tx_fail;
+	uint32_t	bmps_null_tx_timeout;
+	uint32_t	txqueue_g1q0_deadline_frozen;	/* beacon deadline register frozen counter */
+	uint32_t	auc_ipc_retry;
+	uint32_t	auc_ipc_hwm;
+	uint32_t	auc_ipc_send_delay;
+	uint32_t	auc_ipc_send_delay_hwm;
 };
 
 /**
@@ -314,7 +262,6 @@ struct muc_rx_stats {
 	 * This counter shows the number of descriptors pushed to the hardware
 	 * for receive buffers.
 	 */
-	u_int32_t	rxdesc_push_to_hw;
 	u_int32_t	rxdesc_get_from_queue;
 	u_int32_t	rxdesc_push_to_host;
 	u_int32_t	rxdesc_non_aggr_push_to_host;
@@ -342,7 +289,6 @@ struct muc_rx_stats {
 	u_int32_t	accel_msdu;
 	u_int32_t	accel_no_buffer;
 	u_int32_t	accel_fwt_lu_timeout;
-	u_int32_t	accel_fwt_false_miss;
 	u_int32_t	accel_mcast_send;
 	u_int32_t	accel_mcast_drop;
 	u_int32_t	accel_no_match;
@@ -821,8 +767,11 @@ struct muc_rx_stats {
 	 * forwording to the external filter (HotSpot functionality).
 	 */
 	uint32_t	accel_mc_drop_l2_ext_filter;
+
+	uint32_t	rx_frame_addressed_to_wrong_bss;
 };
 
+#define MUC_LEGACY_NUM_RATES	12
 #define MUC_HT_NUM_RATES	77
 #define MUC_VHT_NUM_RATES	40
 struct muc_rx_rates {

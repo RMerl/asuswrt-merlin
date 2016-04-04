@@ -36,7 +36,7 @@ ifneq ($(KERNELRELEASE),)
 include $(src)/../wl_generic.mk
 else
 # Normal makefile
-KERNELDIR := wl_sta_onchip_g
+KERNELDIR := $(BASEDIR)/src-rt-7.x.main/src/linux/linux-2.6.36
 all:
 	$(MAKE) -C $(KERNELDIR) M=`pwd`
 clean:

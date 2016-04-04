@@ -62,8 +62,8 @@ static pj_status_t create_relay(pj_turn_srv *srv,
 				const alloc_request *req,
 				pj_turn_relay_res *relay);
 static void destroy_relay(pj_turn_relay_res *relay);
-static void on_rx_from_peer(pj_ioqueue_key_t *key, 
-                            pj_ioqueue_op_key_t *op_key, 
+static void on_rx_from_peer(pj_ioqueue_key_t *key,
+                            pj_ioqueue_op_key_t *op_key,
                             pj_ssize_t bytes_read);
 static pj_status_t stun_on_send_msg(pj_stun_session *sess,
 				    void *token,
@@ -124,7 +124,7 @@ static pj_status_t parse_allocate_req(alloc_request *cfg,
 
     /* Check if we can satisfy the bandwidth */
     if (cfg->bandwidth > MAX_CLIENT_BANDWIDTH) {
-	pj_stun_session_respond(sess, rdata, 
+	pj_stun_session_respond(sess, rdata,
 				PJ_STUN_SC_ALLOCATION_QUOTA_REACHED,
 			        "Invalid bandwidth", NULL, PJ_TRUE,
 				src_addr, src_addr_len);
@@ -136,7 +136,7 @@ static pj_status_t parse_allocate_req(alloc_request *cfg,
 	          pj_stun_msg_find_attr(req, PJ_STUN_ATTR_REQ_TRANSPORT, 0);
     if (attr_req_tp == NULL) {
 	pj_stun_session_respond(sess, rdata, PJ_STUN_SC_BAD_REQUEST,
-			        "Missing REQUESTED-TRANSPORT attribute", 
+			        "Missing REQUESTED-TRANSPORT attribute",
 				NULL, PJ_TRUE, src_addr, src_addr_len);
 	return PJ_STATUS_FROM_STUN_CODE(PJ_STUN_SC_BAD_REQUEST);
     }
@@ -156,9 +156,9 @@ static pj_status_t parse_allocate_req(alloc_request *cfg,
 					   0);
     if (attr_res_token) {
 	/* We don't support RESERVATION-TOKEN for now */
-	pj_stun_session_respond(sess, rdata, 
+	pj_stun_session_respond(sess, rdata,
 				PJ_STUN_SC_BAD_REQUEST,
-				"RESERVATION-TOKEN is not supported", NULL, 
+				"RESERVATION-TOKEN is not supported", NULL,
 				PJ_TRUE, src_addr, src_addr_len);
 	return PJ_STATUS_FROM_STUN_CODE(PJ_STUN_SC_BAD_REQUEST);
     }
@@ -170,7 +170,7 @@ static pj_status_t parse_allocate_req(alloc_request *cfg,
 	cfg->lifetime = attr_lifetime->value;
 	if (cfg->lifetime < MIN_LIFETIME) {
 	    pj_stun_session_respond(sess, rdata, PJ_STUN_SC_BAD_REQUEST,
-				    "LIFETIME too short", NULL, 
+				    "LIFETIME too short", NULL,
 				    PJ_TRUE, src_addr, src_addr_len);
 	    return PJ_STATUS_FROM_STUN_CODE(PJ_STUN_SC_BAD_REQUEST);
 	}
@@ -206,7 +206,7 @@ static pj_status_t send_allocate_response(pj_turn_allocation *alloc,
 
     /* Add LIFETIME. */
     pj_stun_msg_add_uint_attr(tdata->pool, tdata->msg,
-			      PJ_STUN_ATTR_LIFETIME, 
+			      PJ_STUN_ATTR_LIFETIME,
 			      (unsigned)alloc->relay.lifetime);
 
     /* Add BANDWIDTH */
@@ -222,10 +222,10 @@ static pj_status_t send_allocate_response(pj_turn_allocation *alloc,
 				  PJ_STUN_ATTR_XOR_MAPPED_ADDR, PJ_TRUE,
 				  &alloc->hkey.clt_addr,
 				  pj_sockaddr_get_len(&alloc->hkey.clt_addr));
-    
+
     /* Send the response */
     return pj_stun_session_send_msg(srv_sess, transport, PJ_TRUE,
-				    PJ_FALSE, &alloc->hkey.clt_addr, 
+				    PJ_FALSE, &alloc->hkey.clt_addr,
 				    pj_sockaddr_get_len(&alloc->hkey.clt_addr),
 				    tdata);
 }
@@ -255,9 +255,9 @@ static pj_status_t init_cred(pj_turn_allocation *alloc, const pj_stun_msg *req)
     PJ_ASSERT_RETURN(nonce != NULL, PJ_EBUG);
 
     /* Lookup the password */
-    status = pj_turn_get_password(NULL, NULL, &realm->value, 
-				  &user->value, alloc->pool, 
-				  &alloc->cred.data.static_cred.data_type, 
+    status = pj_turn_get_password(NULL, NULL, &realm->value,
+				  &user->value, alloc->pool,
+				  &alloc->cred.data.static_cred.data_type,
 				  &alloc->cred.data.static_cred.data);
     if (status != PJ_SUCCESS)
 	return status;
@@ -314,7 +314,7 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
     alloc->hkey.tp_type = transport->listener->tp_type;
     pj_memcpy(&alloc->hkey.clt_addr, src_addr, src_addr_len);
 
-    status = pj_lock_create_recursive_mutex(pool, alloc->obj_name, 
+    status = pj_lock_create_recursive_mutex(pool, alloc->obj_name,
 					    &alloc->lock);
     if (status != PJ_SUCCESS) {
 	goto on_error;
@@ -327,7 +327,7 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
     alloc->ch_table = pj_hash_create(pool, PEER_TABLE_SIZE);
 
     /* Print info */
-    pj_ansi_strcpy(alloc->info, 
+    pj_ansi_strcpy(alloc->info,
 		   pj_turn_tp_type_name(transport->listener->tp_type));
     alloc->info[3] = ':';
     pj_sockaddr_print(src_addr, alloc->info+4, sizeof(alloc->info)-4, 3);
@@ -338,7 +338,7 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
     sess_cb.on_rx_request = &stun_on_rx_request;
     sess_cb.on_rx_indication = &stun_on_rx_indication;
     status = pj_stun_session_create(&srv->core.stun_cfg, alloc->obj_name,
-				    &sess_cb, PJ_FALSE, &alloc->sess);
+				    &sess_cb, PJ_FALSE, NULL, &alloc->sess);
     if (status != PJ_SUCCESS) {
 	goto on_error;
     }
@@ -371,9 +371,9 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
 	goto on_error;
 
     /* Done */
-    pj_sockaddr_print(&alloc->relay.hkey.addr, str_tmp, 
+    pj_sockaddr_print(&alloc->relay.hkey.addr, str_tmp,
 		      sizeof(str_tmp), 3);
-    PJ_LOG(4,(alloc->obj_name, "Client %s created, relay addr=%s:%s", 
+    PJ_LOG(4,(alloc->obj_name, "Client %s created, relay addr=%s:%s",
 	      alloc->info, pj_turn_tp_type_name(req.tp_type), str_tmp));
 
     /* Success */
@@ -383,7 +383,7 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
 on_error:
     /* Send reply to the ALLOCATE request */
     pj_strerror(status, str_tmp, sizeof(str_tmp));
-    pj_stun_session_respond(srv_sess, rdata, PJ_STUN_SC_BAD_REQUEST, str_tmp, 
+    pj_stun_session_respond(srv_sess, rdata, PJ_STUN_SC_BAD_REQUEST, str_tmp,
 			    transport, PJ_TRUE, src_addr, src_addr_len);
 
     /* Cleanup */
@@ -396,7 +396,7 @@ on_error:
 static void destroy_relay(pj_turn_relay_res *relay)
 {
     if (relay->timer.id) {
-	pj_timer_heap_cancel(relay->allocation->server->core.timer_heap, 
+	pj_timer_heap_cancel(relay->allocation->server->core.timer_heap,
 			     &relay->timer);
 	relay->timer.id = PJ_FALSE;
     }
@@ -482,8 +482,8 @@ PJ_DEF(void) pj_turn_allocation_on_transport_closed( pj_turn_allocation *alloc,
 
 
 /* Initiate shutdown sequence for this allocation and start destroy timer.
- * Once allocation is marked as shutting down, any packets will be 
- * rejected/discarded 
+ * Once allocation is marked as shutting down, any packets will be
+ * rejected/discarded
  */
 static void alloc_shutdown(pj_turn_allocation *alloc)
 {
@@ -501,7 +501,7 @@ static void alloc_shutdown(pj_turn_allocation *alloc)
 	 * shutdown request.
 	 */
 	return;
-    } 
+    }
 
     pj_assert(alloc->relay.timer.id == TIMER_ID_NONE);
 
@@ -530,7 +530,7 @@ static pj_status_t resched_timeout(pj_turn_allocation *alloc)
 
     pj_assert(alloc->relay.timer.id != TIMER_ID_DESTROY);
     if (alloc->relay.timer.id != 0) {
-	pj_timer_heap_cancel(alloc->server->core.timer_heap, 
+	pj_timer_heap_cancel(alloc->server->core.timer_heap,
 			     &alloc->relay.timer);
 	alloc->relay.timer.id = TIMER_ID_NONE;
     }
@@ -539,7 +539,7 @@ static pj_status_t resched_timeout(pj_turn_allocation *alloc)
     delay.msec = 0;
 
     alloc->relay.timer.id = TIMER_ID_TIMEOUT;
-    status = pj_timer_heap_schedule(alloc->server->core.timer_heap, 
+    status = pj_timer_heap_schedule(alloc->server->core.timer_heap,
 				    &alloc->relay.timer, &delay);
     if (status != PJ_SUCCESS) {
 	alloc->relay.timer.id = TIMER_ID_NONE;
@@ -565,8 +565,8 @@ static void relay_timeout_cb(pj_timer_heap_t *heap, pj_timer_entry *e)
 
 	e->id = TIMER_ID_NONE;
 
-	PJ_LOG(4,(alloc->obj_name, 
-		  "Client %s refresh timed-out, shutting down..", 
+	PJ_LOG(4,(alloc->obj_name,
+		  "Client %s refresh timed-out, shutting down..",
 		  alloc->info));
 
 	alloc_shutdown(alloc);
@@ -574,7 +574,7 @@ static void relay_timeout_cb(pj_timer_heap_t *heap, pj_timer_entry *e)
     } else if (e->id == TIMER_ID_DESTROY) {
 	e->id = TIMER_ID_NONE;
 
-	PJ_LOG(4,(alloc->obj_name, "Client %s destroying..", 
+	PJ_LOG(4,(alloc->obj_name, "Client %s destroying..",
 		  alloc->info));
 
 	destroy_allocation(alloc);
@@ -600,10 +600,10 @@ static pj_status_t create_relay(pj_turn_srv *srv,
     pj_status_t status;
 
     pj_bzero(relay, sizeof(*relay));
-    
+
     relay->allocation = alloc;
     relay->tp.sock = PJ_INVALID_SOCKET;
-    
+
     /* TODO: get the requested address family from somewhere */
     af = alloc->transport->listener->addr.addr.sa_family;
 
@@ -621,10 +621,10 @@ static pj_status_t create_relay(pj_turn_srv *srv,
 
     /* Lifetime and timeout */
     relay->lifetime = req->lifetime;
-    pj_timer_entry_init(&relay->timer, TIMER_ID_NONE, relay, 
+    pj_timer_entry_init(&relay->timer, TIMER_ID_NONE, relay,
 			&relay_timeout_cb);
     resched_timeout(alloc);
-    
+
     /* Transport type */
     relay->hkey.tp_type = req->tp_type;
 
@@ -676,7 +676,7 @@ static pj_status_t create_relay(pj_turn_srv *srv,
 
 	pj_sockaddr_init(af, &bound_addr, NULL, port);
 
-	status = pj_sock_bind(relay->tp.sock, &bound_addr, 
+	status = pj_sock_bind(relay->tp.sock, &bound_addr,
 			      pj_sockaddr_get_len(&bound_addr));
 	if (status == PJ_SUCCESS)
 	    break;
@@ -684,7 +684,7 @@ static pj_status_t create_relay(pj_turn_srv *srv,
 
     if (status != PJ_SUCCESS) {
 	/* Unable to allocate port */
-	PJ_LOG(4,(THIS_FILE, "Unable to allocate relay, giving up: err %d", 
+	PJ_LOG(4,(THIS_FILE, "Unable to allocate relay, giving up: err %d",
 		  status));
 	pj_sock_close(relay->tp.sock);
 	relay->tp.sock = PJ_INVALID_SOCKET;
@@ -695,14 +695,14 @@ static pj_status_t create_relay(pj_turn_srv *srv,
     namelen = sizeof(relay->hkey.addr);
     status = pj_sock_getsockname(relay->tp.sock, &relay->hkey.addr, &namelen);
     if (status != PJ_SUCCESS) {
-	PJ_LOG(4,(THIS_FILE, "pj_sock_getsockname() failed: err %d", 
+	PJ_LOG(4,(THIS_FILE, "pj_sock_getsockname() failed: err %d",
 		  status));
 	pj_sock_close(relay->tp.sock);
 	relay->tp.sock = PJ_INVALID_SOCKET;
 	return status;
     }
     if (!pj_sockaddr_has_addr(&relay->hkey.addr)) {
-	pj_sockaddr_copy_addr(&relay->hkey.addr, 
+	pj_sockaddr_copy_addr(&relay->hkey.addr,
 			      &alloc->transport->listener->addr);
     }
     if (!pj_sockaddr_has_addr(&relay->hkey.addr)) {
@@ -718,7 +718,7 @@ static pj_status_t create_relay(pj_turn_srv *srv,
     status = pj_ioqueue_register_sock(pool, srv->core.ioqueue, relay->tp.sock,
 				      relay, &icb, &relay->tp.key);
     if (status != PJ_SUCCESS) {
-	PJ_LOG(4,(THIS_FILE, "pj_ioqueue_register_sock() failed: err %d", 
+	PJ_LOG(4,(THIS_FILE, "pj_ioqueue_register_sock() failed: err %d",
 		  status));
 	pj_sock_close(relay->tp.sock);
 	relay->tp.sock = PJ_INVALID_SOCKET;
@@ -736,12 +736,12 @@ static pj_status_t create_relay(pj_turn_srv *srv,
 /* Create and send error response */
 static void send_reply_err(pj_turn_allocation *alloc,
 			   const pj_stun_rx_data *rdata,
-			   pj_bool_t cache, 
+			   pj_bool_t cache,
 			   int code, const char *errmsg)
 {
     pj_status_t status;
 
-    status = pj_stun_session_respond(alloc->sess, rdata, code, errmsg, NULL, 
+    status = pj_stun_session_respond(alloc->sess, rdata, code, errmsg, NULL,
 				     cache, &alloc->hkey.clt_addr,
 				     pj_sockaddr_get_len(&alloc->hkey.clt_addr.addr));
     if (status != PJ_SUCCESS) {
@@ -786,9 +786,9 @@ static void send_reply_ok(pj_turn_allocation *alloc,
 	}
     }
 
-    status = pj_stun_session_send_msg(alloc->sess, NULL, PJ_TRUE, 
-				      PJ_FALSE, &alloc->hkey.clt_addr,  
-				      pj_sockaddr_get_len(&alloc->hkey.clt_addr), 
+    status = pj_stun_session_send_msg(alloc->sess, NULL, PJ_TRUE,
+				      PJ_FALSE, &alloc->hkey.clt_addr,
+				      pj_sockaddr_get_len(&alloc->hkey.clt_addr),
 				      tdata);
     if (status != PJ_SUCCESS) {
 	alloc_err(alloc, "Error sending STUN success response", status);
@@ -806,7 +806,7 @@ static pj_turn_permission *create_permission(pj_turn_allocation *alloc,
 
     perm = PJ_POOL_ZALLOC_T(alloc->pool, pj_turn_permission);
     pj_memcpy(&perm->hkey.peer_addr, peer_addr, addr_len);
-    
+
     perm->allocation = alloc;
     perm->channel = PJ_TURN_INVALID_CHANNEL;
 
@@ -814,8 +814,8 @@ static pj_turn_permission *create_permission(pj_turn_allocation *alloc,
     perm->expiry.sec += PJ_TURN_PERM_TIMEOUT;
 
     /* Register to hash table (only the address part!) */
-    pj_hash_set(alloc->pool, alloc->peer_table, 
-		pj_sockaddr_get_addr(&perm->hkey.peer_addr), 
+    pj_hash_set(alloc->pool, alloc->peer_table,
+		pj_sockaddr_get_addr(&perm->hkey.peer_addr),
 	        pj_sockaddr_get_addr_len(&perm->hkey.peer_addr), 0, perm);
 
     return perm;
@@ -834,13 +834,13 @@ static pj_turn_permission *check_permission_expiry(pj_turn_permission *perm)
     }
 
     /* Remove from permission hash table */
-    pj_hash_set(NULL, alloc->peer_table, 
-		pj_sockaddr_get_addr(&perm->hkey.peer_addr), 
+    pj_hash_set(NULL, alloc->peer_table,
+		pj_sockaddr_get_addr(&perm->hkey.peer_addr),
 	        pj_sockaddr_get_addr_len(&perm->hkey.peer_addr), 0, NULL);
 
     /* Remove from channel hash table, if assigned a channel number */
     if (perm->channel != PJ_TURN_INVALID_CHANNEL) {
-	pj_hash_set(NULL, alloc->ch_table, &perm->channel, 
+	pj_hash_set(NULL, alloc->ch_table, &perm->channel,
 		    sizeof(perm->channel), 0, NULL);
     }
 
@@ -858,10 +858,10 @@ lookup_permission_by_addr(pj_turn_allocation *alloc,
     PJ_UNUSED_ARG(addr_len);
 
     /* Lookup in peer hash table */
-    perm = (pj_turn_permission*) 
-	   pj_hash_get(alloc->peer_table, 
+    perm = (pj_turn_permission*)
+	   pj_hash_get(alloc->peer_table,
 		       pj_sockaddr_get_addr(peer_addr),
-		       pj_sockaddr_get_addr_len(peer_addr), 
+		       pj_sockaddr_get_addr_len(peer_addr),
 		       NULL);
     return perm ? check_permission_expiry(perm) : NULL;
 }
@@ -880,7 +880,7 @@ lookup_permission_by_chnum(pj_turn_allocation *alloc,
     return perm ? check_permission_expiry(perm) : NULL;
 }
 
-/* Update permission because of data from client to peer. 
+/* Update permission because of data from client to peer.
  * Return PJ_TRUE is permission is found.
  */
 static pj_bool_t refresh_permission(pj_turn_permission *perm)
@@ -916,7 +916,7 @@ PJ_DEF(void) pj_turn_allocation_on_rx_client_pkt(pj_turn_allocation *alloc,
 	 * our stun_on_rx_request() or stun_on_rx_indication()
 	 * callbacks.
 	 *
-	 * Note: currently it is necessary to specify the 
+	 * Note: currently it is necessary to specify the
 	 * PJ_STUN_NO_FINGERPRINT_CHECK otherwise the FINGERPRINT
 	 * attribute inside STUN Send Indication message will mess up
 	 * with fingerprint checking.
@@ -929,7 +929,7 @@ PJ_DEF(void) pj_turn_allocation_on_rx_client_pkt(pj_turn_allocation *alloc,
 
 	status = pj_stun_session_on_rx_pkt(alloc->sess, pkt->pkt, pkt->len,
 					   options, NULL, &parsed_len,
-					   &pkt->src.clt_addr, 
+					   &pkt->src.clt_addr,
 					   pkt->src_addr_len);
 
 	if (pkt->transport->listener->tp_type == PJ_TURN_TP_UDP) {
@@ -962,7 +962,7 @@ PJ_DEF(void) pj_turn_allocation_on_rx_client_pkt(pj_turn_allocation *alloc,
 	/* For UDP check the packet length */
 	if (alloc->transport->listener->tp_type == PJ_TURN_TP_UDP) {
 	    if (pkt->len < pj_ntohs(cd->length)+sizeof(*cd)) {
-		PJ_LOG(4,(alloc->obj_name, 
+		PJ_LOG(4,(alloc->obj_name,
 			  "ChannelData from %s discarded: UDP size error",
 			  alloc->info));
 		goto on_return;
@@ -975,7 +975,7 @@ PJ_DEF(void) pj_turn_allocation_on_rx_client_pkt(pj_turn_allocation *alloc,
 	perm = lookup_permission_by_chnum(alloc, pj_ntohs(cd->ch_number));
 	if (!perm) {
 	    /* Discard */
-	    PJ_LOG(4,(alloc->obj_name, 
+	    PJ_LOG(4,(alloc->obj_name,
 		      "ChannelData from %s discarded: ch#0x%x not found",
 		      alloc->info, pj_ntohs(cd->ch_number)));
 	    goto on_return;
@@ -998,7 +998,7 @@ on_return:
 
 
 /*
- * Handle incoming packet from peer. This function is called by 
+ * Handle incoming packet from peer. This function is called by
  * on_rx_from_peer().
  */
 static void handle_peer_pkt(pj_turn_allocation *alloc,
@@ -1009,7 +1009,7 @@ static void handle_peer_pkt(pj_turn_allocation *alloc,
     pj_turn_permission *perm;
 
     /* Lookup permission */
-    perm = lookup_permission_by_addr(alloc, src_addr, 
+    perm = lookup_permission_by_addr(alloc, src_addr,
 				     pj_sockaddr_get_len(src_addr));
     if (perm == NULL) {
 	/* No permission, discard data */
@@ -1049,23 +1049,23 @@ static void handle_peer_pkt(pj_turn_allocation *alloc,
 	pj_stun_tx_data *tdata;
 	pj_status_t status;
 
-	status = pj_stun_session_create_ind(alloc->sess, 
+	status = pj_stun_session_create_ind(alloc->sess,
 					    PJ_STUN_DATA_INDICATION, &tdata);
 	if (status != PJ_SUCCESS) {
 	    alloc_err(alloc, "Error creating Data indication", status);
 	    return;
 	}
 
-	pj_stun_msg_add_sockaddr_attr(tdata->pool, tdata->msg, 
+	pj_stun_msg_add_sockaddr_attr(tdata->pool, tdata->msg,
 				      PJ_STUN_ATTR_XOR_PEER_ADDR, PJ_TRUE,
 				      src_addr, pj_sockaddr_get_len(src_addr));
 	pj_stun_msg_add_binary_attr(tdata->pool, tdata->msg,
-				    PJ_STUN_ATTR_DATA, 
+				    PJ_STUN_ATTR_DATA,
 				    (const pj_uint8_t*)pkt, len);
 
-	pj_stun_session_send_msg(alloc->sess, NULL, PJ_FALSE, 
-				 PJ_FALSE, &alloc->hkey.clt_addr, 
-				 pj_sockaddr_get_len(&alloc->hkey.clt_addr), 
+	pj_stun_session_send_msg(alloc->sess, NULL, PJ_FALSE,
+				 PJ_FALSE, &alloc->hkey.clt_addr,
+				 pj_sockaddr_get_len(&alloc->hkey.clt_addr),
 				 tdata);
     }
 }
@@ -1073,8 +1073,8 @@ static void handle_peer_pkt(pj_turn_allocation *alloc,
 /*
  * ioqueue notification on RX packets from the relay socket.
  */
-static void on_rx_from_peer(pj_ioqueue_key_t *key, 
-                            pj_ioqueue_op_key_t *op_key, 
+static void on_rx_from_peer(pj_ioqueue_key_t *key,
+                            pj_ioqueue_op_key_t *op_key,
                             pj_ssize_t bytes_read)
 {
     pj_turn_relay_res *rel;
@@ -1096,7 +1096,7 @@ static void on_rx_from_peer(pj_ioqueue_key_t *key,
 	rel->tp.src_addr_len = sizeof(rel->tp.src_addr);
 	status = pj_ioqueue_recvfrom(key, op_key,
 				     rel->tp.rx_pkt, &bytes_read, 0,
-				     &rel->tp.src_addr, 
+				     &rel->tp.src_addr,
 				     &rel->tp.src_addr_len);
 
 	if (status != PJ_EPENDING && status != PJ_SUCCESS)
@@ -1156,14 +1156,14 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
     /* Refuse to serve any request if we've been shutdown */
     if (alloc->relay.lifetime == 0) {
 	/* Reject with 437 if we're shutting down */
-	send_reply_err(alloc, rdata, PJ_TRUE, 
+	send_reply_err(alloc, rdata, PJ_TRUE,
 		       PJ_STUN_SC_ALLOCATION_MISMATCH, NULL);
 	return PJ_SUCCESS;
     }
 
     if (msg->hdr.type == PJ_STUN_REFRESH_REQUEST) {
-	/* 
-	 * Handle REFRESH request 
+	/*
+	 * Handle REFRESH request
 	 */
 	pj_stun_lifetime_attr *lifetime;
 	pj_stun_bandwidth_attr *bandwidth;
@@ -1176,6 +1176,9 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
 	bandwidth = (pj_stun_bandwidth_attr*)
 	            pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_BANDWIDTH, 0);
 
+	/* TODO: process bandwidth */
+	PJ_UNUSED_ARG(bandwidth);
+
 	if (lifetime && lifetime->value==0) {
 	    /*
 	     * This is deallocation request.
@@ -1186,7 +1189,7 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
 	    send_reply_ok(alloc, rdata);
 
 	    /* Shutdown allocation */
-	    PJ_LOG(4,(alloc->obj_name, 
+	    PJ_LOG(4,(alloc->obj_name,
 		      "Client %s request to dealloc, shutting down",
 		      alloc->info));
 
@@ -1196,7 +1199,7 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
 	    /*
 	     * This is a refresh request.
 	     */
-	    
+
 	    /* Update lifetime */
 	    if (lifetime) {
 		alloc->relay.lifetime = lifetime->value;
@@ -1226,7 +1229,7 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
 		    pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_XOR_PEER_ADDR, 0);
 
 	if (!ch_attr || !peer_attr) {
-	    send_reply_err(alloc, rdata, PJ_TRUE, 
+	    send_reply_err(alloc, rdata, PJ_TRUE,
 			   PJ_STUN_SC_BAD_REQUEST, NULL);
 	    return PJ_SUCCESS;
 	}
@@ -1234,14 +1237,14 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
 	/* Find permission with the channel number */
 	p1 = lookup_permission_by_chnum(alloc, PJ_STUN_GET_CH_NB(ch_attr->value));
 
-	/* If permission is found, this is supposed to be a channel bind 
+	/* If permission is found, this is supposed to be a channel bind
 	 * refresh. Make sure it's for the same peer.
 	 */
 	if (p1) {
 	    if (pj_sockaddr_cmp(&p1->hkey.peer_addr, &peer_attr->sockaddr)) {
 		/* Address mismatch. Send 400 */
-		send_reply_err(alloc, rdata, PJ_TRUE, 
-			       PJ_STUN_SC_BAD_REQUEST, 
+		send_reply_err(alloc, rdata, PJ_TRUE,
+			       PJ_STUN_SC_BAD_REQUEST,
 			       "Peer address mismatch");
 		return PJ_SUCCESS;
 	    }
@@ -1262,7 +1265,7 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
 	p2 = lookup_permission_by_addr(alloc, &peer_attr->sockaddr,
 				       pj_sockaddr_get_len(&peer_attr->sockaddr));
 	if (p2 && p2->channel != PJ_TURN_INVALID_CHANNEL) {
-	    send_reply_err(alloc, rdata, PJ_TRUE, PJ_STUN_SC_BAD_REQUEST, 
+	    send_reply_err(alloc, rdata, PJ_TRUE, PJ_STUN_SC_BAD_REQUEST,
 			   "Peer address already assigned a channel number");
 	    return PJ_SUCCESS;
 	}
@@ -1279,8 +1282,8 @@ static pj_status_t stun_on_rx_request(pj_stun_session *sess,
 	p2->channel = PJ_STUN_GET_CH_NB(ch_attr->value);
 
 	/* Register to hash table */
-	pj_assert(sizeof(p2->channel==2));
-	pj_hash_set(alloc->pool, alloc->ch_table, &p2->channel, 
+	pj_assert(sizeof(p2->channel)==2);
+	pj_hash_set(alloc->pool, alloc->ch_table, &p2->channel,
 		    sizeof(p2->channel), 0, p2);
 
 	/* Update */
@@ -1367,7 +1370,7 @@ static pj_status_t stun_on_rx_indication(pj_stun_session *sess,
 
     /* Relay the data to peer */
     len = data_attr->length;
-    pj_sock_sendto(alloc->relay.tp.sock, data_attr->data, 
+    pj_sock_sendto(alloc->relay.tp.sock, data_attr->data,
 		   &len, 0, &peer_attr->sockaddr,
 		   pj_sockaddr_get_len(&peer_attr->sockaddr));
 

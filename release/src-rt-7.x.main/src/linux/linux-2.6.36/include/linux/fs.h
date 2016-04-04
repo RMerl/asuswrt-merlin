@@ -9,6 +9,9 @@
 #include <linux/limits.h>
 #include <linux/ioctl.h>
 #include <linux/blk_types.h>
+#if defined(CONFIG_BCM_RECVFILE)
+#include <linux/net.h>
+#endif
 
 /*
  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
@@ -1504,6 +1507,9 @@ struct file_operations {
 	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *, loff_t *, size_t, unsigned int);
 	ssize_t (*splice_read)(struct file *, loff_t *, struct pipe_inode_info *, size_t, unsigned int);
 	int (*setlease)(struct file *, long, struct file_lock **);
+#if defined(CONFIG_BCM_RECVFILE)
+	ssize_t (*splice_write_from_socket)(struct file *, struct socket *, loff_t __user *, size_t);
+#endif
 };
 
 struct inode_operations {

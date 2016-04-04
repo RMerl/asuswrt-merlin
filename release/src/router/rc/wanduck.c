@@ -1154,6 +1154,10 @@ csprintf("wanduck: try to get usb_if=%s.\n", usb_if);
 				eval("modem_status.sh", "hwver");
 			if(strlen(nvram_safe_get("usb_modem_act_swver")) <= 0)
 				eval("modem_status.sh", "swver");
+#ifdef RTCONFIG_USB_SMS_MODEM
+			if(strlen(nvram_safe_get("usb_modem_act_smsc")) <= 0)
+				eval("modem_status.sh", "smsc");
+#endif
 		}
 #endif
 
@@ -1583,13 +1587,15 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	else
 		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
 
-	if(nvram_match("http_enable", "1")){
+#ifdef RTCONFIG_HTTPS
+	if (nvram_get_int("http_enable") == 1) {
 		strcpy(dut_proto, "https://");
-		strcpy(dut_port, nvram_safe_get("https_lanport"));
-	}
-	else{
+		snprintf(dut_port, sizeof(dut_port), "%d", nvram_get_int("https_lanport") ? : 443);
+	} else
+#endif
+	{
 		strcpy(dut_proto, "http://");
-		strcpy(dut_port, "80");
+		snprintf(dut_port, sizeof(dut_port), "%d", /*nvram_get_int("http_lanport") ? :*/ 80);
 	}
 
 	if(strstr(url, "hotspot-detect") || strstr(url, "generate_204")){
@@ -2110,8 +2116,24 @@ int switch_wan_line(const int wan_unit, const int restart_other){
 	}
 #endif
 
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_DUALWAN)
+	int ipv6_service = 0;
+	/* Start each configured and enabled wan connection and its undelying i/f */
+	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+		if (get_ipv6_service_by_unit(unit) != IPV6_DISABLED) {
+			ipv6_service = 1;
+			break;
+		}
+#endif
+
 	// restart the primary line.
-	if(get_wan_state(wan_unit) == WAN_STATE_CONNECTED)
+	if (get_wan_state(wan_unit) == WAN_STATE_CONNECTED
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_DUALWAN)
+		&& !(!strstr(dualwan_wans, "none")
+			&& (!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))
+			&& ipv6_service)
+#endif
+	)
 		snprintf(cmd, 32, "restart_wan_line %d", wan_unit);
 	else
 		snprintf(cmd, 32, "restart_wan_if %d", wan_unit);

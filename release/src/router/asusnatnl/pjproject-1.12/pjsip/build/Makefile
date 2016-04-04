@@ -7,6 +7,11 @@ include ../../build.mak
 include ../../version.mak
 include $(PJDIR)/build/common.mak
 
+THIRD_PARTY:=$(PJDIR)/third_party
+
+UMEM_INC=$(CC_INC)$(THIRD_PARTY)/umem
+UMEM_LIBS=-L$(THIRD_PARTY)/lib -lumem-$(TARGET_NAME) -ldl
+
 RULES_MAK := $(PJDIR)/build/rules.mak
 
 PJLIB_LIB:=../../pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
@@ -28,7 +33,8 @@ export _CFLAGS 	:= $(CC_CFLAGS) $(OS_CFLAGS) $(HOST_CFLAGS) $(M_CFLAGS) \
 		   $(CC_INC)../../pjlib/include \
 		   $(CC_INC)../../pjlib-util/include \
 		   $(CC_INC)../../pjnath/include \
-		   $(CC_INC)../../pjmedia/include
+		   $(CC_INC)../../pjmedia/include \
+		   $(UMEM_INC)
 export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 		   $(HOST_CXXFLAGS) $(CXXFLAGS)
 
@@ -96,7 +102,8 @@ export TEST_OBJS += dlg_core_test.o dns_test.o msg_err_test.o \
 		    tsx_uas_test.o txdata_test.o uri_test.o \
 		    inv_offer_answer_test.o
 export TEST_CFLAGS += $(_CFLAGS)
-export TEST_LDFLAGS += $(PJ_LDFLAGS) $(PJ_LDLIBS) $(LDFLAGS)
+export TEST_LDFLAGS += $(PJ_LDFLAGS) $(PJ_LDLIBS) $(LDFLAGS) \
+		       $(UMEM_LIBS)
 export TEST_EXE := ../bin/pjsip-test-$(TARGET_NAME)$(HOST_EXE)
 
 	

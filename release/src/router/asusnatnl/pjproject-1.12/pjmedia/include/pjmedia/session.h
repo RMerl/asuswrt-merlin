@@ -429,6 +429,10 @@ pjmedia_session_set_dtmf_callback(pjmedia_session *session,
  */
 PJ_DECL(pj_status_t) pjmedia_session_destroy(pjmedia_session *session);
 
+PJ_DECL(pj_status_t) pjmedia_session_get_stream_info(pjmedia_session *session,
+													 unsigned index,
+													 pjmedia_stream_info **p_stream_info);
+
 #if 0 // 2013-10-20 DEAN, deprecated
 PJ_DECL(pj_status_t)
 pjmedia_session_set_nsmd_callback(pjmedia_session *session,

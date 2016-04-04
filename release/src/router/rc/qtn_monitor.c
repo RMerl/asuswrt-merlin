@@ -252,7 +252,6 @@ qtn_monitor_main(int argc, char *argv[])
 	sigset_t sigs_to_catch;
 	int ret, retval = 0;
 	time_t start_time = uptime();
-	uint32_t p_channel;
 
 	/* write pid */
 	if ((fp = fopen("/var/run/qtn_monitor.pid", "w")) != NULL)
@@ -311,7 +310,6 @@ QTN_RESET:
 #if defined(RTCONFIG_JFFS2ND_BACKUP)
 	check_2nd_jffs();
 #endif
-
 	nvram_set("qtn_ready", "1");
 
 	if(nvram_get_int("AllLED") == 0) setAllLedOff();
@@ -390,13 +388,6 @@ QTN_RESET:
 				dbG("[dfs] start nodfs scanning and selection\n");
 				start_nodfs_scan_qtn();
 			}
-		}else{
-			ret = qcsapi_wifi_scs_enable(WIFINAME, 0);
-			if (ret >= 0) {
-				logmessage("scs", "disable scs complete");
-			}else{
-				logmessage("scs", "disable scs not complete");
-			}
 		}
 	}
 	if(nvram_get_int("sw_mode") == SW_MODE_AP &&
@@ -417,9 +408,10 @@ ERROR:
 
 	if (nvram_get_int("led_disable") == 1) {
 		setAllLedOff_qtn();
-//                                qcsapi_wifi_run_script("router_command.sh", "wifi_led_off");
-//                                qcsapi_led_set(1, 0);
+//		qcsapi_wifi_run_script("router_command.sh", "wifi_led_off");
+//		qcsapi_led_set(1, 0);
 	}
+
 	return retval;
 }
 #endif

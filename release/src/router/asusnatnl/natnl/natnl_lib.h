@@ -20,9 +20,32 @@ extern "C" {
 #define MAX_USER_PORT_COUNT 15
 #define MAX_TUNNEL_PORT_COUNT 8
 #define MAX_TEXT_LEN 64 
+#define MAX_PORT_LEN 6 
+#define MAX_IP_LEN 64 
 
 #define MAX_CALLS_COUNT 4
 
+
+/* 
+The structure is used to make a instant message port pair between local device and remote device.
+When the tunnel is built. The application can connect to 127.0.0.1:lport for 
+accessing the service of remote device.
+*/
+struct natnl_im_port {
+	// dest_device_id. The device_id of destination for sending message.
+	char dest_device_id[128];  
+
+	// Local device to listen 127.0.0.1:lport. If assign 0, it will be chosen by operating system.
+	char lport[MAX_PORT_LEN]; 
+
+	// Remote device to connect to 127.0.0.1:rport.
+	char rport[MAX_PORT_LEN]; 
+
+	// The timeout value for instant message.
+	int timeout_sec;
+};
+
+typedef struct natnl_im_port natnl_im_port;
 
 /*
 This structure should be passed in natnl_dll_init API for initialization of SDK.
@@ -81,7 +104,19 @@ struct natnl_config {
 
 		// Only available when 0x1110 is set to log_file_flags. 
 		// Same as the facility argument of openlog(). (default: LOG_USER)
-		int syslog_facility;    
+		int syslog_facility;
+
+		// The maximum size (KBytes unit) of the log file. Set 0 to disable log rotate mechanism.
+		int log_file_size;
+
+		// The number of rotate log file.
+		int log_rotate_number;
+
+		// The flag file to enable log dynamically.
+		char log_flag_file[256]; 
+
+		// Disable console log or not, 0: enable, 1: disable.
+		int disable_console_log;
 		                        
 	} log_cfg;			 
 
@@ -164,6 +199,17 @@ struct natnl_config {
 	//     In this case, the certificate of server side or the file path 
 	//     of trusted CA certificate list must be assigned to trusted_ca_certs.
 	int verify_server_peer;
+
+	// Use SCTP for packet control.
+	// 0 : Use UDT for packet control.
+	// 1 : Use SCTP for packet control.
+	int use_sctp;
+
+	// The number of instant message port.
+	int im_port_count;
+
+	// The array of instant message port.
+	natnl_im_port im_ports[MAX_USER_PORT_COUNT];
 };
 
 //Global declare, nantl_config structure basic config
@@ -174,22 +220,32 @@ The structure is used to make a tunnel between local device and remote device.
 When the tunnel is built. The application can connect to 127.0.0.1:lport for 
 accessing the service of remote device.
 */
-typedef struct natnl_srv_port {
+struct natnl_srv_port {
 	// Local device to listen 127.0.0.1:lport. If assign 0, it will be chosen by operating system.
-	char lport[6]; 
+	char lport[MAX_PORT_LEN];
 
 	// Remote device to connect to 127.0.0.1:rport.
-	char rport[6]; 
+	char rport[MAX_PORT_LEN];
 
 	// 0~99, 
 	// 0 (Default) : the highest priority.
 	// 99 : the lowest priority.
-	int qos_priority; 
+	int qos_priority;
+
+	// 0 (Default) : Enable UDT or SCTP flow control.
+	// 1 : Disable UDT or SCTP flow control.
+	int disable_flow_control;
+
+	// The speed limit in KBytes/s unit. The valid range is 0~65535.
+	// 0 (Default) : unlimited.
+	int speed_limit;
+
+	// IP address of Remote device. If not assigned, 127.0.0.1 will be used.
+	char rip[MAX_IP_LEN];
 };
 
 typedef struct natnl_srv_port natnl_tnl_port;
 
-#if 0
 /*
 The structure to be passed in on_natnl_tnl_state callback.
 */
@@ -197,28 +253,28 @@ struct natnl_tnl_event {
 	// The call handle that is output by natnl_make_call.
 	int                  call_id;
 
-	// natnl_event enum defined in nantl_event.h.
+	// The callback event.
 	natnl_event          event_code;                    
 	
-	// string of event, might be empty string by case.
+	// The string of event, might be empty string by case.
     char                 event_text[MAX_TEXT_LEN]; 
 	
-	// natnl_status_code defined in natnl_event.h.
+	// The callback status code.
 	natnl_status_code    status_code;              
 	
-	// string of error, might be empty string by case.
+	// The string of error, might be empty string by case.
 	char                 status_text[MAX_TEXT_LEN];
 
-	// the user agent type 
+	// The user agent type 
 	// 0 is unknown
 	// 1 is UAC, 
 	// 2 is UAS*/                  
 	int                  ua_type;
 
-	// the session id of tunnel.
+	// The session id of tunnel.
 	char                 session_id[MAX_TEXT_LEN]; 
 	
-	// the NAT type, since v1.1.0.6
+	// The NAT type, since v1.1.0.6
 	// 0 is UNKNOWN. 
 	// 1 is ERR_UNKNOWN. 
 	// 2 is OPEN. 
@@ -230,7 +286,7 @@ struct natnl_tnl_event {
 	// 8 is PORT RESTRICTED.
 	int                  nat_type;
 	
-	// the tunnel type, since v1.1.0.6.
+	// The tunnel type, since v1.1.0.6.
 	// 0 is UNKNOWN, 
 	// 1 is TCP, 
 	// 2 is TURN. 
@@ -285,7 +341,6 @@ struct natnl_tnl_event {
 	// for communication with TURN server.
 	char                 turn_mapped_address[MAX_TEXT_LEN]; 
 };
-#endif
 
 /**
 * (since 1.8.0.0)
@@ -367,7 +422,15 @@ struct natnl_tnl_info {
 
 	// The array of current used tunnel port pair. The maximum size of this array is defined in MAX_TUNNEL_PORT_COUNT. 
 	natnl_tnl_port tnl_ports[MAX_TUNNEL_PORT_COUNT];
+};
 
+/*
+The structure defines the callback function of asusnatnl library.
+*/
+struct natnl_callback {
+	/* The callback function will be called 
+	when the tunnel state changed or error occur. */
+    void (*on_natnl_tnl_event)(struct natnl_tnl_event *tnl_event);
 };
 
 /*
@@ -378,6 +441,10 @@ struct natnl_tnl_transfer_speed {
 	int rx_speed;   // the download speed.
 	int tx_speed;   // the upload speed.
 };
+
+
+//Global declare, natnl_callback structure.
+extern struct natnl_callback natnl_callback;
 
 
 #if defined(NATNL_LIB) || defined(__APPLE__)
@@ -418,13 +485,26 @@ NATNL_LIB_API int WINAPI natnl_lib_init(struct natnl_config *cfg);
 
 /**^M
  * Initialize SDK^M
- * @param [in]  cfg. The natnl_config structure for basic setting.^M
- * @return 0 : For success. ^M
- *  60000004 : The instance of SDK was already initialized.^M
- *  60000008 : There are too many instances.^M
- *  non-zero : For another error.^M
+ * @param [in]  cfg. The natnl_config structure for basic setting.
+ * @param [in]  app_data. The app data for instance identification. 
+ * @return 0 : For success. 
+ *  60000004 : The instance of SDK was already initialized.
+ *  60000008 : There are too many instances.
+ *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init2(struct natnl_config *cfg, void *app_data);
+
+/**^M
+ * Initialize SDK^M
+ * @param [in]  cfg. The natnl_config structure for basic setting.
+ * @param [in]  app_data. The app data for instance identification. 
+ * @param [in]  natnl_cb. The callback structure for event notification to application.
+ * @return 0 : For success. 
+ *  60000004 : The instance of SDK was already initialized.
+ *  60000008 : There are too many instances.
+ *  non-zero : For another error.
+ */
+NATNL_LIB_API int WINAPI natnl_lib_init3(struct natnl_config *cfg, struct natnl_callback *natnl_cb, void *app_data);
 
 /**
  * Initialize SDK
@@ -438,6 +518,7 @@ NATNL_LIB_API int WINAPI natnl_lib_init2(struct natnl_config *cfg, void *app_dat
 NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id(struct natnl_config *cfg, int *inst_id);
 
 /**
+
  * Initialize SDK
  * @param [in]  cfg.     The natnl_config structure for basic setting.
  * @param [out] inst_id. A int pointer for instance id output. 
@@ -448,6 +529,19 @@ NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id(struct natnl_config *cfg, i
  *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id2(struct natnl_config *cfg, int *inst_id, void *app_data);
+
+/**
+ * Initialize SDK
+ * @param [in]  cfg.     The natnl_config structure for basic setting.
+ * @param [out] inst_id. A int pointer for instance id output. 
+ * @param [in]  app_data. The app data for instance identification. 
+ * @param [in]  natnl_cb. The callback structure for event notification to application.
+ * @return 0 : For success. 
+ *  60000004 : SDK was initialized.
+ *  60000008 : There are too many instances.
+ *  non-zero : For another error.
+ */
+NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id3(struct natnl_config *cfg, int *inst_id, struct natnl_callback *natnl_cb, void *app_data);
 
 NATNL_LIB_API int WINAPI natnl_pool_dump(int detail);
 
@@ -489,14 +583,15 @@ NATNL_LIB_API int WINAPI natnl_lib_deinit_all(void);
 /**
  * Build the tunnel with remote device.
  * @param [in]  device_id.           The device_id of remote device.
- * @param [in]  tnl_port_cnt.      The number of tunnel port pair (lport,rport,qos_priority). The maximum value is defined in MAX_TUNNEL_PORT_COUNT.
+ * @param [in]  tnl_port_cnt.        The number of tunnel port pair (lport,rport,qos_priority). The maximum value is defined in MAX_TUNNEL_PORT_COUNT.
  * @param [in]  tnl_ports.           The array of tunnel port pair.
  * @param [in]  user_id (Discarded). The user_id is sent to UAS for identity authentication.
  * @param [in]  timeout_sec.         The timeout value in seconds. If call isn't made in timeout_sec, 
                                          SDK will notify application NATNL_TNL_EVENT_MAKECALL_FAILED event with 
 							             NATNL_SC_MAKE_CALL_TIMEOUT status code. 
 							         If this value is 0, it represents that wait forever.
- * @param [out]	tnl_info.		 The structure to be used in natnl_read_tnl_info API.
+ * @param [in]  use_sctp.            Indicate to use UDT or SCTP as flow control. 0 : use UDT, 1 : use SCTP.
+ * @param [out]	tnl_info.		     The structure to be used in natnl_read_tnl_info API.
  * @return 0 : For success. 
  *     70004 : Invalid argument.
  *  60000005 : SDK isn't initialized, please initialize it first.
@@ -504,7 +599,7 @@ NATNL_LIB_API int WINAPI natnl_lib_deinit_all(void);
  */
 NATNL_LIB_API int WINAPI natnl_make_call(char *device_id, int tnl_port_cnt, 
                                 natnl_tnl_port tnl_ports[], char *user_id,
-								int timeout_sec, struct natnl_tnl_info *tnl_info);
+								int timeout_sec, int use_sctp, struct natnl_tnl_info *tnl_info);
 
 /**
  * Build the tunnel with remote device.
@@ -516,6 +611,7 @@ NATNL_LIB_API int WINAPI natnl_make_call(char *device_id, int tnl_port_cnt,
                                          SDK will notify application NATNL_TNL_EVENT_MAKECALL_FAILED event with 
                                          NATNL_SC_MAKE_CALL_TIMEOUT status code. 
                                      If this value is 0, it represents that wait forever.
+ * @param [in]  use_sctp.            Indicate to use UDT or SCTP as flow control. 0 : use UDT, 1 : use SCTP.
  * @param [in]  inst_id.             The instance id of SDK that is output by natnl_lib_init_with_inst_id. 
                                      Default is 1.
  * @param [out]	tnl_info.		 The structure to be used in natnl_read_tnl_info API.
@@ -526,7 +622,7 @@ NATNL_LIB_API int WINAPI natnl_make_call(char *device_id, int tnl_port_cnt,
  */
 NATNL_LIB_API int WINAPI natnl_make_call_with_inst_id(char *device_id, int tnl_port_cnt, 
                                 natnl_tnl_port tnl_ports[], char *user_id,
-								int timeout_sec, int inst_id, struct natnl_tnl_info *tnl_info);
+								int timeout_sec, int use_sctp, int inst_id, struct natnl_tnl_info *tnl_info);
 
 /**
  * Build the tunnel with remote device.
@@ -538,6 +634,7 @@ NATNL_LIB_API int WINAPI natnl_make_call_with_inst_id(char *device_id, int tnl_p
                                        SDK will notify application NATNL_TNL_EVENT_MAKECALL_FAILED event with 
 							           NATNL_SC_MAKE_CALL_TIMEOUT status code. 
 							       If this value is 0, it represents that wait forever.
+ * @param [in]  use_sctp.          Indicate to use UDT or SCTP as flow control. 0 : use UDT, 1 : use SCTP.
  * @param [in]  inst_id.           The instance id of SDK that is output by natnl_lib_init_with_inst_id. 
                                    Default is 1.
  * @param [in]  caller_device_pwd. The caller device password, this value must be set when use fase_init mode.
@@ -549,7 +646,8 @@ NATNL_LIB_API int WINAPI natnl_make_call_with_inst_id(char *device_id, int tnl_p
  */
 NATNL_LIB_API int WINAPI natnl_make_call_with_inst_id2(char *device_id, int tnl_port_cnt, 
                                 natnl_tnl_port tnl_ports[], char *user_id,
-								int timeout_sec, int inst_id, char *caller_device_pwd, struct natnl_tnl_info *tnl_info);
+								int timeout_sec, int use_sctp, int inst_id, 
+								char *caller_device_pwd, struct natnl_tnl_info *tnl_info);
 
 /**
  * Terminate the tunnel with remote device.
@@ -691,6 +789,38 @@ NATNL_LIB_API int WINAPI natnl_tunnel_port(int call_id,
 NATNL_LIB_API int WINAPI natnl_tunnel_port_with_inst_id(int call_id, 
 						int action, int tnl_port_cnt, 
 						natnl_tnl_port tnl_ports[],
+						int inst_id);
+
+/**
+* Adjust im lport/rport pair.
+* @param [in]  action.         The adjustment type. 1 : add im port, 2 : remove im port.
+* @param [in]  im_port_cnt.    The number of im port pair (lport,rport).
+* @param [in]  im_ports.       The array of im port pair.
+ * @return 0 : for success. 
+ *        -1 : exceed number limit of tunnel port if action is 1.
+ *        -2 : unknown action.
+ *  60000005 : the instance of SDK isn't initialized, please initialize it first.
+ *  non-zero : for another error.
+ */
+NATNL_LIB_API int WINAPI natnl_instant_msg_port(int action, 
+						int im_port_cnt, 
+						natnl_im_port im_ports[]);
+
+/**
+ * Adjust im lport/rport pair.
+ * @param [in]  action.         The adjustment type. 1 : add im port, 2 : remove im port.
+ * @param [in]  im_port_cnt.    The number of im port pair (lport,rport).
+ * @param [in]  im_ports.       The array of im port pair.
+ * @param [in]  inst_id.        The instance id of SDK that is output by natnl_lib_init_with_inst_id. Default is 1.
+ * @return 0 : for success. 
+ *        -1 : exceed number limit of tunnel port if action is 1.
+ *        -2 : unknown action.
+ *  60000005 : the instance of SDK isn't initialized, please initialize it first.
+ *  non-zero : for another error.
+ */
+NATNL_LIB_API int WINAPI natnl_instant_msg_port_with_inst_id(int action, 
+						int im_port_cnt, 
+						natnl_im_port im_ports[],
 						int inst_id);
 
 /**
@@ -869,46 +999,6 @@ NATNL_LIB_API int WINAPI natnl_set_tnl_transfer_speed_limit_with_inst_id (
 						int call_id,
 						struct natnl_tnl_transfer_speed limit_speed,
 						int inst_id);
-
-/**
- * Add UPnP port mapping. (No need to call natnl_lib_init before using)
- * @param [in]  iport.         The local port to add  port mapping.
- * @param [in]  eport.         The external port to add UPnP port mapping.
- * @param [in]  proto.         It must be UDP or TCP.
- * @param [in]  leaseDuration. Life time of this port mapping in seconds. 
-                               0 is permanent duration.
- * @return   0 : for success. 
- *         715 WildCardNotPermittedInSrcIP : The source IP address cannot be wild-carded.
- *         716 WildCardNotPermittedInExtPort : The external port cannot be wild-carded.
- *         718 ConflictInMappingEntry : The port mapping entry specified conflicts
- *                     with a mapping assigned previously to another client.
- *         724 SamePortValuesRequired : Internal and External port values
- *                              must be the same.
- *         725 OnlyPermanentLeasesSupported : The NAT implementation only supports
- *                  permanent lease times on port mappings.
- *         726 RemoteHostOnlySupportsWildcard : RemoteHost must be a wild-card
- *                             and cannot be a specific IP address or DNS name
- *         727 ExternalPortOnlySupportsWildcard : ExternalPort must be a wild-card and
- *                                        cannot be a specific port value.
- *    non-zero : For another error. 
- */
-NATNL_LIB_API int WINAPI natnl_add_upnp_mapping(
-						const char * iport,
-						const char * eport,
-						const char * proto,
-						const char * leaseDuration);
-
-/**
- * Delete UPnP port mapping. (No need to call natnl_lib_init before using)
- * @param [in]  eport. The external port to be delete.
- * @param [in]  proto. It must be UDP or TCP.
- * @return   0 : for success. 
- *    714 NoSuchEntryInArray : The specified value does not exist in the array.
- *    non-zero : For another error. 
- */
-NATNL_LIB_API int WINAPI natnl_del_upnp_mapping(
-						const char * eport,
-						const char * proto);
 
 /**
  * !!! NOTICE !!! Please don't call this in callback function directly or deadlock will occur.

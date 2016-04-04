@@ -244,7 +244,7 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
  * containing presence information can be quite large (>1500).
  */
 #ifndef PJSIP_MAX_PKT_LEN
-#   define PJSIP_MAX_PKT_LEN		4000
+#   define PJSIP_MAX_PKT_LEN		6000
 #endif
 
 

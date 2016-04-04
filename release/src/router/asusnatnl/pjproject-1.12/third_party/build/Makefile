@@ -1,4 +1,4 @@
-DIRS = resample milenage srtp bzip2
+DIRS = resample milenage srtp bzip2 umem usrsctp
 
 include ../../build.mak
 include $(PJDIR)/build/common.mak

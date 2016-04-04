@@ -20,6 +20,7 @@ body{
 	background-size: 1280px 1076px;
 	background-position: center 0%;
 	margin: 0px; 
+	background:#283437\9;
 }
 .title_name {
 	font-size: 2.5em;
@@ -54,9 +55,8 @@ body{
 	height: 68px;
 	width: 300px;
 	/*width: 220px;*/
-	font-size: 28pt;
+	font-size: 20pt;
 	color:#fff;
-	color:#000\9; /* IE6 IE7 IE8 */
 	text-align: center;
 	float:right; 
 	margin:25px 0 0 78px;
@@ -64,6 +64,7 @@ body{
 }
 .form_input{
 	background-color:rgba(255,255,255,0.2);
+	background-color:#576D73\9;
 	border-radius: 4px;
 	padding:26px 22px;
 	width: 480px;
@@ -76,13 +77,13 @@ body{
 .nologin{
 	margin:10px 0px 0px 78px;
 	background-color:rgba(255,255,255,0.2);
+	background-color:#576D73\9;
 	padding:20px;
 	line-height:36px;
 	border-radius: 5px;
 	width: 480px;
 	border: 0;
 	color:#fff;
-	color:#000\9; /* IE6 IE7 IE8 */
 	font-size:28px;
 }
 .div_table{
@@ -509,13 +510,17 @@ function send_setting(){
 
 		error: function(xhr){
 			setTimeout(send_setting, 1000);
-			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/Main_Login.asp?page=error_page.htm?flag=6_1";
+			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/updateSubnet.htm";
 		},
 
 		success: function(response){
 			setTimeout(detect_router, 5000);
 		}
 	});
+}
+
+if (!window.location.origin) {
+  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
 }
 
 function iAmAlive(json){

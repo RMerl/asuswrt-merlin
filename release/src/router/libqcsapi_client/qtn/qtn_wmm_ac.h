@@ -71,4 +71,9 @@
 	 ((_ac) == WME_AC_BK) ? 0 :	\
 	  (_ac))
 
+#define QTN_TID_MAP_UNUSED(_tid) ( \
+	(_tid == QTN_TID_2) ? QTN_TID_BK : \
+	(_tid == QTN_TID_3) ? QTN_TID_BE : \
+	(_tid))
+
 #endif	/* _QTN_WMM_AC_H */

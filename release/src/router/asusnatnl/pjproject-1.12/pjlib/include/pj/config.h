@@ -20,6 +20,7 @@
 #ifndef __PJ_CONFIG_H__
 #define __PJ_CONFIG_H__
 
+
 /**
  * @file config.h
  * @brief PJLIB Main configuration settings.
@@ -409,7 +410,7 @@
  * Default: 4000
  */
 #ifndef PJ_LOG_MAX_SIZE
-#  define PJ_LOG_MAX_SIZE	    4000
+#  define PJ_LOG_MAX_SIZE	    6000
 #endif
 
 /**
@@ -461,6 +462,27 @@
  */
 #ifndef PJ_POOL_DEBUG
 #  define PJ_POOL_DEBUG		    0
+#endif
+
+
+/**
+ * Enable timer heap debugging facility. When this is enabled, application
+ * can call pj_timer_heap_dump() to show the contents of the timer heap
+ * along with the source location where the timer entries were scheduled.
+ * See https://trac.pjsip.org/repos/ticket/1527 for more info.
+ *
+ * Default: 0
+ */
+#ifndef PJ_TIMER_DEBUG
+#  define PJ_TIMER_DEBUG	    0
+#endif
+
+
+/**
+ * Set this to 1 to enable debugging on the group lock. Default: 0
+ */
+#ifndef PJ_GRP_LOCK_DEBUG
+#  define PJ_GRP_LOCK_DEBUG	0
 #endif
 
 
@@ -1107,6 +1129,14 @@
  */
 #ifndef PJ_TODO
 #  define PJ_TODO(id)	    TODO___##id:
+#endif
+
+/**
+ * Simulate race condition by sleeping the thread in strategic locations.
+ * Default: no!
+ */
+#ifndef PJ_RACE_ME
+#  define PJ_RACE_ME(x)
 #endif
 
 /**

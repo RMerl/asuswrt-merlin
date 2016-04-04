@@ -170,32 +170,35 @@ void log_buf_kexec_setup(void)
 }
 #endif
 
-#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+extern int oops_mem;
+
 struct oopsbuf_s {
-         char sig[8];
-         uint32_t len;
-         char buf[0];
+	char sig[8];
+	uint32_t len;
+	char buf[0];
 };
 
-#define OOPSBUF_SIG     "OopsBuf"
+#define OOPSBUF_SIG	"OopsBuf"
 #define MAX_PREV_OOPS_MSG_LEN   (CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN - sizeof(struct oopsbuf_s))
 static struct oopsbuf_s *oopsbuf = NULL;
 static int save_oopsmsg = 0;
 
 void enable_oopsbuf(int onoff)
 {
-        save_oopsmsg = !!onoff;
+	save_oopsmsg = !!onoff;
 }
 
 static inline void copy_char_to_oopsbuf(char c)
 {
+	if (!oopsbuf)
+		return;
+	else if (likely(!save_oopsmsg))
+		return;
+	else if (unlikely((oopsbuf->len + 1) >= MAX_PREV_OOPS_MSG_LEN))
+		return;
 
-        if (likely(!save_oopsmsg))
-                return;
-        else if (unlikely((oopsbuf->len + 1) >= MAX_PREV_OOPS_MSG_LEN))
-                return;
-
-        oopsbuf->buf[oopsbuf->len++] = c;
+	oopsbuf->buf[oopsbuf->len++] = c;
 }
 
 static char local_buf[CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN];
@@ -204,59 +207,62 @@ static int local_buf_len = 0;
 int prepare_and_dump_previous_oops(void)
 {
 #if 0
-        int len;
+	int len;
 #endif
-        unsigned char *u;
+	unsigned char *u;
 #if 0
-        char *p, *q, log_prefix[] = "<?>>>>XXXXXX";
+	char *p, *q, log_prefix[] = "<?>>>>XXXXXX";
 #endif
-        //printk("* KERNEL: prepare_and_dump_oops: %08x::%d\n", CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR, MAX_PREV_OOPS_MSG_LEN);
+	//printk("* KERNEL: prepare_and_dump_oops: %08x::%d\n", CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR, MAX_PREV_OOPS_MSG_LEN);
 
-        oopsbuf = (struct oopsbuf_s *) (CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+	if (oops_mem)
+		oopsbuf = (struct oopsbuf_s *) (CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+	else
+		return 0;
 
-        if (strncmp(oopsbuf->sig, OOPSBUF_SIG, strlen(OOPSBUF_SIG))) {
-                u = oopsbuf->sig;
-                printk("* Invalid signature of oopsbuf: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X (len %u)\n",
-                        u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7],
-                        oopsbuf->len);
-        }
-        if (oopsbuf->len > 32 && oopsbuf->len < MAX_PREV_OOPS_MSG_LEN) {
+	if (strncmp(oopsbuf->sig, OOPSBUF_SIG, strlen(OOPSBUF_SIG))) {
+		u = oopsbuf->sig;
+		printk("* Invalid signature of oopsbuf: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X (len %u)\n",
+			u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7],
+			oopsbuf->len);
+	}
+	if (oopsbuf->len > 32 && oopsbuf->len < MAX_PREV_OOPS_MSG_LEN) {
 		memcpy(local_buf, oopsbuf->buf, oopsbuf->len);
 		local_buf_len = oopsbuf->len;
 #if 0
-                /* Fix-up oops message.
-                 * If message is broken by NULL character, use space character instead.
-                 * If character is not printable, use the '.' character instead.
-                 */
-                for (p = oopsbuf->buf, len = oopsbuf->len; len > 0; len--, p++) {
-                        if (*p == '\0')
-                                *p = ' ';
-                        else if (!isprint(*p) && *p != '\n')
-                                *p = '.';
-                }
-                *p = '\0';
+		/* Fix-up oops message.
+		 * If message is broken by NULL character, use space character instead.
+		 * If character is not printable, use the '.' character instead.
+		 */
+		for (p = oopsbuf->buf, len = oopsbuf->len; len > 0; len--, p++) {
+			if (*p == '\0')
+				*p = ' ';
+			else if (!isprint(*p) && *p != '\n')
+				*p = '.';
+		}
+		*p = '\0';
 
-                p = oopsbuf->buf;
-                printk("_ Reboot message ... _______________________________________________________\n");
-                while ((q = strsep(&p, "\n"))) {
-                        if (q[0] == '<' && q[2] == '>' && q[1] >= '0' && q[1] <= '9') {
-                                strncpy(log_prefix, q, 3);
-                                log_prefix[3] = '\0';
-                                q += 3;
-                        } else {
-                                log_prefix[0] = '\0';
-                        }
-                        printk("%s>>> %s\n", log_prefix, q);
-                }
-                printk("____________________________________________________________________________\n");
+		p = oopsbuf->buf;
+		printk("_ Reboot message ... _______________________________________________________\n");
+		while ((q = strsep(&p, "\n"))) {
+			if (q[0] == '<' && q[2] == '>' && q[1] >= '0' && q[1] <= '9') {
+				strncpy(log_prefix, q, 3);
+				log_prefix[3] = '\0';
+				q += 3;
+			} else {
+				log_prefix[0] = '\0';
+			}
+			printk("%s>>> %s\n", log_prefix, q);
+		}
+		printk("____________________________________________________________________________\n");
 #endif
-        }
+	}
 
-        /* Initialize oopsbuf */
-        strcpy(oopsbuf->sig, OOPSBUF_SIG);
-        oopsbuf->len = 0;
-        memset(oopsbuf->buf, 0, MAX_PREV_OOPS_MSG_LEN);
-        return 0;
+	/* Initialize oopsbuf */
+	strcpy(oopsbuf->sig, OOPSBUF_SIG);
+	oopsbuf->len = 0;
+	memset(oopsbuf->buf, 0, MAX_PREV_OOPS_MSG_LEN);
+	return 0;
 }
 
 void dump_previous_oops(void)
@@ -269,8 +275,8 @@ void dump_previous_oops(void)
 			printk("%c", local_buf[i]);
 		printk("\n____________________________________________________________________________\n");
 
-		memcpy(local_buf, oopsbuf->buf, oopsbuf->len);
-		local_buf_len = oopsbuf->len;
+		memset(local_buf, 0, oopsbuf->len);
+		local_buf_len = 0;
 	}
 }
 EXPORT_SYMBOL(dump_previous_oops);
@@ -646,7 +652,7 @@ static void emit_log_char(char c)
 	if (logged_chars < log_buf_len)
 		logged_chars++;
 #ifdef CONFIG_DUMP_PREV_OOPS_MSG
-        copy_char_to_oopsbuf(c);
+	copy_char_to_oopsbuf(c);
 #endif
 }
 
@@ -1471,7 +1477,7 @@ EXPORT_SYMBOL(register_console);
 
 int unregister_console(struct console *console)
 {
-        struct console *a, *b;
+	struct console *a, *b;
 	int res = 1;
 
 #ifdef CONFIG_A11Y_BRAILLE_CONSOLE

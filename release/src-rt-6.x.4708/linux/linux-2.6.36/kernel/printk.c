@@ -170,12 +170,9 @@ void log_buf_kexec_setup(void)
 }
 #endif
 
-/*
-#define CONFIG_DUMP_PREV_OOPS_MSG 1
-#define CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR 0xC0000000
-#define	CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN 0x2000
-*/
-#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+extern int oops_mem;
+
 struct oopsbuf_s {
          char sig[8];
          uint32_t len;
@@ -194,8 +191,9 @@ void enable_oopsbuf(int onoff)
 
 static inline void copy_char_to_oopsbuf(char c)
 {
-
-        if (likely(!save_oopsmsg))
+	if (!oopsbuf)
+		return;
+	else if (likely(!save_oopsmsg))
                 return;
         else if (unlikely((oopsbuf->len + 1) >= MAX_PREV_OOPS_MSG_LEN))
                 return;
@@ -217,7 +215,10 @@ int prepare_and_dump_previous_oops(void)
 #endif
         //printk("* KERNEL: prepare_and_dump_oops: %08x::%d\n", CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR, MAX_PREV_OOPS_MSG_LEN);
 
-        oopsbuf = (struct oopsbuf_s *) (CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+	if (oops_mem)
+		oopsbuf = (struct oopsbuf_s *) (CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+	else
+		return 0;
 
         if (strncmp(oopsbuf->sig, OOPSBUF_SIG, strlen(OOPSBUF_SIG))) {
                 u = oopsbuf->sig;

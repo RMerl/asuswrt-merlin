@@ -1200,7 +1200,7 @@ PJ_DEF(pj_status_t) pjmedia_sdp_parse( int inst_id,
 		*len = sdp_len;
 		memcpy(*buf, sdp_buf, sdp_len);
 	}
-	PJ_LOG(4, ("sdp.c", "pjmedia_sdp_parse() %.*s", sdp_len, sdp_buf));
+	PJ_LOG(4, ("sdp.c", "pjmedia_sdp_parse() %.*s", *len, *buf));
 
     ctx.last_error = PJ_SUCCESS;
 
@@ -1472,12 +1472,12 @@ PJ_DEF(pj_status_t) pjmedia_sdp_validate(const pjmedia_sdp_session *sdp)
 
 		/* Payload type is between 0 and 127. 
 		 */
-		CHECK( pt <= 127, PJMEDIA_SDP_EINPT);
+		CHECK( pt <= 127 || pt >= 5000, PJMEDIA_SDP_EINPT); // dean : 5000 is WebRTC data channel
 
 		/* If port is not zero, then for each dynamic payload type, an
 		 * rtpmap attribute must be specified.
 		 */
-		if (m->desc.port != 0 && pt >= 96) {
+		if (m->desc.port != 0 && pt >= 96 && pt <= 127) { // dean : There is no rtpmap for WebRTC data channel.
 		    const pjmedia_sdp_attr *a;
 
 		    a = pjmedia_sdp_media_find_attr(m, &STR_RTPMAP, 
@@ -1495,16 +1495,18 @@ PJ_DEF(pj_status_t) pjmedia_sdp_validate(const pjmedia_sdp_session *sdp)
 PJ_DEF(pj_status_t) pjmedia_sdp_transport_cmp( const pj_str_t *t1,
 					       const pj_str_t *t2)
 {
-    static const pj_str_t ID_RTP_AVP  = { "RTP/AVP", 7 };
-    static const pj_str_t ID_RTP_SAVP = { "RTP/SAVP", 8 };
+	static const pj_str_t ID_RTP_AVP  = { "RTP/AVP", 7 };
+	static const pj_str_t ID_RTP_SAVP = { "RTP/SAVP", 8 };
+	static const pj_str_t ID_DTLS_SCTP = { "DTLS/SCTP", 9 }; // dean : DTLS/SCTP is for WebRTC data channel
+	static const pj_str_t ID_RTP_SCTP = { "RTP/SCTP", 8 }; // dean : RTP/SCTP is for UDT replacement
 
     /* Exactly equal? */
     if (pj_stricmp(t1, t2) == 0)
 	return PJ_SUCCESS;
 
     /* Compatible? */
-    if ((!pj_stricmp(t1, &ID_RTP_AVP) || !pj_stricmp(t1, &ID_RTP_SAVP)) &&
-        (!pj_stricmp(t2, &ID_RTP_AVP) || !pj_stricmp(t2, &ID_RTP_SAVP)))
+	if ((!pj_stricmp(t1, &ID_RTP_AVP) || !pj_stricmp(t1, &ID_RTP_SAVP) || !pj_stricmp(t1, &ID_DTLS_SCTP) || !pj_stricmp(t1, &ID_RTP_SCTP)) &&
+		(!pj_stricmp(t2, &ID_RTP_AVP) || !pj_stricmp(t2, &ID_RTP_SAVP) || !pj_stricmp(t2, &ID_DTLS_SCTP) || !pj_stricmp(t2, &ID_RTP_SCTP)))
 	return PJ_SUCCESS;
 
     return PJMEDIA_SDP_ETPORTNOTEQUAL;

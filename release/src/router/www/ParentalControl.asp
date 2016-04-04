@@ -209,6 +209,7 @@ function initial(){
 		document.getElementById('PC_enable').innerHTML = "<#ParentalCtrl_Enable_TS#>";
 		document.getElementById('switch_menu').style.display = "";
 	}
+	document.getElementById('disable_NAT').href = "Advanced_SwitchCtrl_Content.asp?af=ctf_disable_force";	//this id is include in string : #ParentalCtrl_disable_NAT#
 
 	show_footer();
 	init_array(array);
@@ -1025,7 +1026,11 @@ function show_inner_tab(){
 							<li><#ParentalCtrl_Desc4#></li>
 							<li><#ParentalCtrl_Desc5#></li>							
 						</ol>
-						<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;"><#ParentalCtrl_default#></ol>
+						<span id="desc_note" style="color:#FC0;"><#ADSL_FW_note#></span>
+						<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;">
+							<li><#ParentalCtrl_default#></li>
+							<li><#ParentalCtrl_disable_NAT#></li>
+						</ol>	
 					</td>
 				</tr>
 			</table>

@@ -120,11 +120,13 @@
 #define EMAC_PHY_ADDR_SCAN		(32)	// scan bus for addr
 
 /* Flash memory sizes */
+#define FLASH_64MB			(64*1024*1024)
 #define FLASH_32MB			(32*1024*1024)
 #define FLASH_16MB			(16*1024*1024)
 #define FLASH_8MB			(8*1024*1024)
 #define FLASH_4MB			(4*1024*1024)
 #define FLASH_2MB			(2*1024*1024)
+#define FLASH_256KB			(256*1024)
 #define FLASH_64KB			(64*1024)
 #define DEFAULT_FLASH_SIZE		(FLASH_8MB)
 #define FLASH_SIZE_JEDEC		(0)

@@ -451,7 +451,7 @@ static pj_status_t test_init(void)
     if (g_app.cfg.log_file) {
 	status = pj_file_open(g_app.pool, g_app.cfg.log_file, 
 			      PJ_O_WRONLY,
-			      &g_app.log_fd);
+			      &g_app.log_fd, NULL);
 	if (status != PJ_SUCCESS) {
 	    jbsim_perror("Error writing output file", status);
 	    goto on_error;

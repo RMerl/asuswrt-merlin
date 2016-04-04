@@ -196,6 +196,86 @@ int c_rpc_qcsapi_get_ap_properties()
 }
 
 /*=============================================================================
+FUNCTION:               c_rpc_qcsapi_show_vlan_config
+DESCRIPTION:            Get VLAN configuration
+ARGUMENTS PASSED:
+RETURN VALUE:           0:success, other:error
+=============================================================================*/
+#define QVLAN_MODE_ACCESS		0
+#define QVLAN_MODE_TRUNK		1
+#define QVLAN_MODE_HYBRID		2
+#define QVLAN_MODE_DYNAMIC		3
+#define QVLAN_SHIFT_MODE		16
+#define QVLAN_MASK_MODE			0xffff0000
+#define QVLAN_MASK_VID			0x00000fff
+#define QVLAN_VID_MAX			4096
+
+#define bitsz_var(var)			(sizeof(var) * 8)
+#define bitsz_ptr(ptr)			bitsz_var((ptr)[0])
+#define is_set_a(a, i)			((a)[(i) / bitsz_ptr(a)] & (1 << ((i) % bitsz_ptr(a))))
+#define is_clr_a(a, i)			(is_set_a(a, i) == 0)
+int c_rpc_qcsapi_show_vlan_config()
+{
+	qcsapi_vlan_config *vcfg;
+	int qcsapi_retval = 0;
+	uint16_t vmode;
+	uint16_t vid;
+	uint16_t i, j;
+
+	vcfg = (qcsapi_vlan_config *)malloc(sizeof(struct qcsapi_data_2Kbytes));
+	if (!vcfg)
+		return -ENOMEM;
+	memset(vcfg, 0, sizeof(*vcfg));
+
+	qcsapi_retval = qcsapi_wifi_show_vlan_config(WIFINAME, (struct qcsapi_data_2Kbytes *)vcfg, NULL);
+	if (qcsapi_retval < 0) {
+		free(vcfg);
+		return qcsapi_retval;
+	}
+
+	vmode = ((vcfg->vlan_cfg & QVLAN_MASK_MODE) >> QVLAN_SHIFT_MODE);
+	vid = (vcfg->vlan_cfg & QVLAN_MASK_VID);
+
+	switch (vmode) {
+	case QVLAN_MODE_TRUNK:
+	case QVLAN_MODE_HYBRID:
+		if (vmode == QVLAN_MODE_TRUNK) {
+			printf("Trunk, default VLAN %u\n", vid);
+		} else {
+			printf("Hybrid, default VLAN %u\n", vid);
+		}
+
+		printf("Member of VLAN(s): ");
+		for (i = 0; i < QVLAN_VID_MAX; i++) {
+			if (is_set_a(vcfg->member_bitmap, i)) {
+				printf("%u,", i);
+			}
+		}
+
+		printf("\nUntagged VLAN(s): ");
+		for (i = 0; i < QVLAN_VID_MAX; i++) {
+			if (is_set_a(vcfg->member_bitmap, i) &&
+					is_clr_a(vcfg->tag_bitmap, i)) {
+				printf("%u,", i);
+			}
+		}
+
+		break;
+	case QVLAN_MODE_ACCESS:
+		printf("Access, VLAN %u\n", vid);
+		break;
+	case QVLAN_MODE_DYNAMIC:
+		printf("Dynamic\n");
+		break;
+	default:
+		printf("VLAN disabled\n");
+	}
+
+	free(vcfg);
+	return 0;
+}
+
+/*=============================================================================
 FUNCTION:		print_help
 DESCRIPTION:		Print the supported option list
 ARGUMENTS PASSED:
@@ -210,6 +290,7 @@ void print_help()
 	printf("\t-c: get Current ssid\n");
 	printf("\t-s: start Scan\n");
 	printf("\t-g: Get ap properties\n");
+	printf("\t-v: show VLAN configurations\n");
 	printf("\t-u: Use UDP as the transport layer for RPC (default to TCP)\n");
 	return;
 }
@@ -224,7 +305,7 @@ void process_option(int argc, char **argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "hwrcsg")) != -1){
+	while ((c = getopt(argc, argv, "hwrcsgv")) != -1){
 		switch (c) {
 		case 'h':	//Help print
 			print_help();
@@ -243,6 +324,9 @@ void process_option(int argc, char **argv)
 			break;
 		case 'g':	//get the ap properties list
 			c_rpc_qcsapi_get_ap_properties();
+			break;
+		case 'v':
+			c_rpc_qcsapi_show_vlan_config();
 			break;
 		case 'u':	//use UDP as the transport. Default is TCP
 			s_c_rpc_use_udp = 1;

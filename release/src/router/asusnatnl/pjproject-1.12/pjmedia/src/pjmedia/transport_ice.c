@@ -189,6 +189,7 @@ static const pj_str_t STR_RTCP		= { "rtcp", 4 };
 static const pj_str_t STR_BANDW_RR	= { "RR", 2 };
 static const pj_str_t STR_BANDW_RS	= { "RS", 2 };
 static const pj_str_t STR_X_ADAPTER3	= { "X-adapter3", 10};
+static const pj_str_t STR_FINGERPRINT	= { "fingerprint", 11 };
 
 enum {
     COMP_RTP = 1,
@@ -304,10 +305,10 @@ static void set_no_ice(struct transport_ice *tp_ice, const char *reason,
 
 /* Create SDP candidate attribute */
 static int print_sdp_cand_attr(char *buffer, int max_len,
-			       const pj_ice_sess_cand *cand)
+			       const pj_ice_sess_cand *cand, int use_sctp)
 {
     char ipaddr[PJ_INET6_ADDRSTRLEN+2];
-    int len, len2, len3, len4;
+    int len, len2, len3, len4, len5;
 	char *trans_type = "UDP";
 	pj_parsed_time adding_ptime, ending_ptime;
 
@@ -375,25 +376,32 @@ static int print_sdp_cand_attr(char *buffer, int max_len,
 	return -1;
 	}
 
-	len4 = 0;
+	// DEAN. Don't create generation tag on UAC for compatibility.
+	// WebRTC generation
+	/*if (use_sctp)
+		len4 = pj_ansi_snprintf(buffer+len+len2+len3, max_len-len-len2-len3, " generation 0");
+	else*/
+		len4 = 0;
+
+	len5 = 0;
 	// timestamp
 	pj_time_decode(&cand->adding_time, &adding_ptime);
 	pj_time_decode(&cand->ending_time, &ending_ptime);
 	if (cand->transport_id == 4) 
-		len4 = pj_ansi_snprintf(buffer+len+len2+len3, max_len-len-len2-len3,
+		len5 = pj_ansi_snprintf(buffer+len+len2+len3+len4, max_len-len-len2-len3-len4,
 			" TCP %s START:%04d-%02d-%02d_%02d:%02d:%02d.%03d END:%04d-%02d-%02d_%02d:%02d:%02d.%03d",
 			cand->enabled ? "Enabled" : "Disabled",
 			adding_ptime.year, adding_ptime.mon+1, adding_ptime.day, adding_ptime.hour, adding_ptime.min, adding_ptime.sec, adding_ptime.msec,
 			ending_ptime.year, ending_ptime.mon+1, ending_ptime.day, ending_ptime.hour, ending_ptime.min, ending_ptime.sec, ending_ptime.msec);
 	else
-		len4 = pj_ansi_snprintf(buffer+len+len2+len3, max_len-len-len2-len3,
+		len5 = pj_ansi_snprintf(buffer+len+len2+len3+len4, max_len-len-len2-len3-len4,
 		" %s START:%04d-%02d-%02d_%02d:%02d:%02d.%03d END:%04d-%02d-%02d_%02d:%02d:%02d.%03d",
 		cand->enabled ? "Enabled" : "Disabled",
 		adding_ptime.year, adding_ptime.mon+1, adding_ptime.day, adding_ptime.hour, adding_ptime.min, adding_ptime.sec, adding_ptime.msec,
 		ending_ptime.year, ending_ptime.mon+1, ending_ptime.day, ending_ptime.hour, ending_ptime.min, ending_ptime.sec, ending_ptime.msec);
 
 
-    return len+len2+len3+len4;
+    return len+len2+len3+len4+len5;
 }
 
 
@@ -655,7 +663,7 @@ static pj_status_t encode_session_in_sdp(struct transport_ice *tp_ice,
 	    /* Print and add local candidate in the pair */
 	    value.ptr = attr_buf;
 	    value.slen = print_sdp_cand_attr(attr_buf, ATTR_BUF_LEN, 
-					     check->lcand);
+					     check->lcand, tp_ice->base.use_sctp);
 	    if (value.slen < 0) {
 		pj_assert(!"Not enough attr_buf to print candidate");
 		return PJ_EBUG;
@@ -760,7 +768,7 @@ static pj_status_t encode_session_in_sdp(struct transport_ice *tp_ice,
 		pj_str_t value;
 
 		value.slen = print_sdp_cand_attr(attr_buf, ATTR_BUF_LEN, 
-						 &cand[i]);
+						 &cand[i], tp_ice->base.use_sctp);
 		if (value.slen < 0) {
 		    pj_assert(!"Not enough attr_buf to print candidate");
 		    return PJ_EBUG;
@@ -779,24 +787,27 @@ static pj_status_t encode_session_in_sdp(struct transport_ice *tp_ice,
     }
 
     /* Removing a=rtcp line when there is only one component. */
-    if (comp_cnt == 1) {
-	attr = pjmedia_sdp_attr_find(m->attr_count, m->attr, &STR_RTCP, NULL);
-	if (attr)
-	    pjmedia_sdp_attr_remove(&m->attr_count, m->attr, attr);
-        /* If RTCP is not in use, we MUST send b=RS:0 and b=RR:0. */
-        pj_assert(m->bandw_count + 2 <= PJ_ARRAY_SIZE(m->bandw));
-        if (m->bandw_count + 2 <= PJ_ARRAY_SIZE(m->bandw)) {
-            m->bandw[m->bandw_count] = PJ_POOL_ZALLOC_T(sdp_pool,
-                                                        pjmedia_sdp_bandw);
-            pj_memcpy(&m->bandw[m->bandw_count]->modifier, &STR_BANDW_RS,
-                      sizeof(pj_str_t));
-            m->bandw_count++;
-            m->bandw[m->bandw_count] = PJ_POOL_ZALLOC_T(sdp_pool,
-                                                        pjmedia_sdp_bandw);
-            pj_memcpy(&m->bandw[m->bandw_count]->modifier, &STR_BANDW_RR,
-                      sizeof(pj_str_t));
-            m->bandw_count++;
-        }
+	if (comp_cnt == 1) {
+		const pj_str_t STR_APPLICATION = { "application", 11};
+		attr = pjmedia_sdp_attr_find(m->attr_count, m->attr, &STR_RTCP, NULL);
+		if (attr)
+			pjmedia_sdp_attr_remove(&m->attr_count, m->attr, attr);
+		if (pj_strcmp(&sdp_local->media[media_index]->desc.media, &STR_APPLICATION) != 0) {
+			/* If RTCP is not in use, we MUST send b=RS:0 and b=RR:0. */
+			pj_assert(m->bandw_count + 2 <= PJ_ARRAY_SIZE(m->bandw));
+			if (m->bandw_count + 2 <= PJ_ARRAY_SIZE(m->bandw)) {
+				m->bandw[m->bandw_count] = PJ_POOL_ZALLOC_T(sdp_pool,
+															pjmedia_sdp_bandw);
+				pj_memcpy(&m->bandw[m->bandw_count]->modifier, &STR_BANDW_RS,
+						  sizeof(pj_str_t));
+				m->bandw_count++;
+				m->bandw[m->bandw_count] = PJ_POOL_ZALLOC_T(sdp_pool,
+															pjmedia_sdp_bandw);
+				pj_memcpy(&m->bandw[m->bandw_count]->modifier, &STR_BANDW_RR,
+						  sizeof(pj_str_t));
+				m->bandw_count++;
+			}
+		}
     }
     
 
@@ -985,6 +996,12 @@ static pj_status_t parse_cand(const char *obj_name,
 			token = strtok(NULL, " ");
 		if (token)
 			token = strtok(NULL, " ");
+		
+		if (token && pj_ansi_stricmp(token, "generation") == 0) {
+			token = strtok(NULL, " ");
+			if (token)
+				token = strtok(NULL, " ");
+		}
 
 		if (token && pj_ansi_stricmp(token, "TCP") == 0) {
 			cand->type = PJ_ICE_CAND_TYPE_RELAYED_TCP;

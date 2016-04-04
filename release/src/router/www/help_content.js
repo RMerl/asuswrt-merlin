@@ -137,7 +137,7 @@ helpcontent[7] = new Array("",
 //Firewall
 helpcontent[8] = new Array("",
 						   "<#FirewallConfig_WanLanLog_itemdesc#>",
-						   "<#FirewallConfig_x_WanWebEnable_itemdesc#>",
+						   "<#FirewallConfig_x_WanWebEnable_itemdesc#> Notice that this option will control http and https port access from WAN interface.",	/* untranslated */
 						   "<#FirewallConfig_x_WanWebPort_itemdesc#>",
 						   "<#FirewallConfig_x_WanLPREnable_itemdesc#>",
 						   "<#FirewallConfig_x_WanPingEnable_itemdesc#>",
@@ -311,7 +311,9 @@ helpcontent[28] = new Array("",
 						
 //Switch Control
 helpcontent[29] = new Array("",
-							"This item had various names: Port Trunking/ Bonding/ Teaming/ Link Aggregation/ 802.3ad.");	/*untranslated*/
+							"This item had various names: Port Trunking/ Bonding/ Teaming/ Link Aggregation/ 802.3ad.",	/*untranslated*/
+							"When NAT Acceleration enabled, switch can handle the network packets by itself and bypass CPU. It can increases NAT throughput but some applications may not work precisely, such as time scheduling."	/*untranslated*/
+							);
 
 helpcontent[30] = new Array("",
 							"Send alert before monthly alert is reached",/*untranslated*/

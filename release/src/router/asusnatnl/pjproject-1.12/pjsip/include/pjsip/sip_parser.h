@@ -355,8 +355,9 @@ typedef struct pjsip_parser_const_t
     const pj_str_t pjsip_RECEIVED_STR;	/**< "received" string const.   */
     const pj_str_t pjsip_Q_STR;		/**< "q" string constant.	*/
     const pj_str_t pjsip_EXPIRES_STR;	/**< "expires" string constant. */
-    const pj_str_t pjsip_TAG_STR;	/**< "tag" string constant.	*/
-    const pj_str_t pjsip_RPORT_STR;	/**< "rport" string const.	*/
+	const pj_str_t pjsip_TAG_STR;	/**< "tag" string constant.	*/
+	const pj_str_t pjsip_RPORT_STR;	/**< "rport" string const.	*/
+	const pj_str_t pjsip_TIMEOUT_STR;	/**< "timeout" string const.	*/
 
     pj_cis_t pjsip_HOST_SPEC;		/**< For scanning host part.	*/
     pj_cis_t pjsip_DIGIT_SPEC;		/**< Decimal digits		*/

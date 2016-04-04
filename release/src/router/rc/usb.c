@@ -526,7 +526,7 @@ void stop_usb_program(int mode)
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 #if (defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)) && defined(RTCONFIG_CLOUDSYNC)
-	if(pids("inotify") || pids("asuswebstorage") || pids("webdav_client") || pids("dropbox_client") || pids("ftpclient") || pids("sambaclient")){
+	if(pids("inotify") || pids("asuswebstorage") || pids("webdav_client") || pids("dropbox_client") || pids("ftpclient") || pids("sambaclient") || pids("usbclient")){
 		_dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 		stop_cloudsync(-1);
 	}
@@ -1450,7 +1450,7 @@ done:
 		if(!nvram_get_int("enable_cloudsync") || strlen(cloud_setting) <= 0)
 			return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 
-		if(pids("asuswebstorage") && pids("webdav_client") && pids("dropbox_client") && pids("ftpclient") && pids("sambaclient"))
+		if(pids("asuswebstorage") && pids("webdav_client") && pids("dropbox_client") && pids("ftpclient") && pids("sambaclient") && pids("usbclient"))
 			return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 
 		nv = nvp = strdup(cloud_setting);
@@ -1466,7 +1466,7 @@ done:
 					++count;
 				}
 
-				if(type == 1 || type == 2 || type == 3 || type == 4 || type == 5){
+				if(type == 1 || type == 2 || type == 3 || type == 4 || type == 5){ //20150619 magic add type 4 sambclient and type 5 usbclient
 					if(strlen(cloud_setting_buf) > 0)
 						sprintf(cloud_setting_buf, "%s<%s", cloud_setting_buf, b);
 					else
@@ -1955,12 +1955,13 @@ start_ftpd(void)
 	pid_t pid;
 	char *vsftpd_argv[] = { "vsftpd", "/etc/vsftpd.conf", NULL };
 
+	if (!nvram_get_int("enable_ftp"))
+		return;
+
 	if (getpid() != 1) {
 		notify_rc_after_wait("start_ftpd");
 		return;
 	}
-
-	if (nvram_match("enable_ftp", "0")) return;
 
 	if (!sd_partition_num() && !nvram_match("usb_debug", "1"))
 		return;
@@ -2482,7 +2483,6 @@ void start_dms(void)
 				"db_dir=%s\n"
 				"enable_tivo=%s\n"
 				"strict_dlna=%s\n"
-				"presentation_url=http://%s:80/\n"
 				"inotify=yes\n"
 				"notify_interval=600\n"
 				"album_art_names=Cover.jpg/cover.jpg/Thumb.jpg/thumb.jpg\n",
@@ -2491,8 +2491,17 @@ void start_dms(void)
 				is_valid_hostname(nvram_get("dms_friendly_name")) ? nvram_get("dms_friendly_name") : get_productid(),
 				dbdir,
 				nvram_get_int("dms_tivo") ? "yes" : "no",
-				nvram_get_int("dms_stdlna") ? "yes" : "no",
-				nvram_safe_get("lan_ipaddr"));
+				nvram_get_int("dms_stdlna") ? "yes" : "no");
+
+			fprintf(f, "presentation_url=");
+#ifdef RTCONFIG_HTTPS
+			if (nvram_get_int("http_enable") == 1) {
+				fprintf(f, "%s://%s:%d/\n", "https", nvram_safe_get("lan_ipaddr"), nvram_get_int("https_lanport") ? : 443);
+			} else
+#endif
+			{
+				fprintf(f, "%s://%s:%d/\n", "http", nvram_safe_get("lan_ipaddr"), /*nvram_get_int("http_lanport") ? :*/ 80);
+			}
 
 			for (i = 0; i < dircount; i++)
 			{
@@ -2925,6 +2934,7 @@ void start_cloudsync(int fromUI)
 	char *cmd5_argv[] = { "nice", "-n", "10", "dropbox_client", NULL };
 	char *cmd6_argv[] = { "nice", "-n", "10", "ftpclient", NULL};
 	char *cmd7_argv[] = { "nice", "-n", "10", "sambaclient", NULL};
+	char *cmd8_argv[] = { "nice", "-n", "10", "usbclient", NULL};
 	char buf[32];
 
 	memset(buf, 0, 32);
@@ -3008,6 +3018,18 @@ void start_cloudsync(int fromUI)
 
 				if(pids("inotify") && pids("sambaclient"))
 					logmessage("sambaclient", "daemon is started");
+			}
+			else if(type == 5){
+				if(!pids("inotify"))
+					_eval(cmd1_argv, NULL, 0, &pid);
+
+				if(!pids("usbclient")){
+					_eval(cmd8_argv, NULL, 0, &pid);
+					sleep(2); // wait usbclient.
+				}
+
+				if(pids("inotify") && pids("usbclient"))
+					logmessage("usbclient", "daemon is started");
 			}
 			else if(type == 0){
 				char *b_bak, *ptr_b_bak;
@@ -3114,7 +3136,7 @@ void stop_cloudsync(int type)
 	}
 
 	if(type == 1){
-		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("ftpclient") && !pids("sambaclient"))
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("ftpclient") && !pids("sambaclient") && !pids("usbclient"))
 			killall_tk("inotify");
 
 		if(pids("webdav_client"))
@@ -3123,7 +3145,7 @@ void stop_cloudsync(int type)
 		logmessage("Webdav_client", "daemon is stopped");
 	}
 	else if(type == 2){
-		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("webdav_client") && !pids("sambaclient"))
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("webdav_client") && !pids("sambaclient") && !pids("usbclient"))
 			killall_tk("inotify");
 
 		if(pids("ftpclient"))
@@ -3132,7 +3154,7 @@ void stop_cloudsync(int type)
 		logmessage("ftp client", "daemon is stoped");
 	}
 	else if(type == 3){
-		if(pids("inotify") && !pids("asuswebstorage") && !pids("webdav_client") && !pids("ftpclient") && !pids("sambaclient"))
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("webdav_client") && !pids("ftpclient") && !pids("sambaclient") && !pids("usbclient"))
 			killall_tk("inotify");
 
 		if(pids("dropbox_client"))
@@ -3141,7 +3163,7 @@ void stop_cloudsync(int type)
 		logmessage("dropbox_client", "daemon is stoped");
 	}
 	else if(type == 4){
-		if(pids("inotify") && !pids("asuswebstorage") && !pids("webdav_client") && !pids("ftpclient") && !pids("dropbox_client"))
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("webdav_client") && !pids("ftpclient") && !pids("dropbox_client") && !pids("usbclient"))
 			killall_tk("inotify");
 
 		if(pids("sambaclient"))
@@ -3149,8 +3171,17 @@ void stop_cloudsync(int type)
 
 		logmessage("sambaclient", "daemon is stoped");
 	}
+	else if(type == 5){
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("webdav_client") && !pids("ftpclient") && !pids("dropbox_client") && !pids("sambaclient"))
+			killall_tk("inotify");
+
+		if(pids("usbclient"))
+			killall_tk("usbclient");
+
+		logmessage("usbclient", "daemon is stoped");
+	}
 	else if(type == 0){
-		if(pids("inotify") && !pids("webdav_client") && !pids("dropbox_client") && !pids("ftpclient") && !pids("sambaclient"))
+		if(pids("inotify") && !pids("webdav_client") && !pids("dropbox_client") && !pids("ftpclient") && !pids("sambaclient")  && !pids("usbclient"))
 			killall_tk("inotify");
 
 		if(pids("asuswebstorage"))
@@ -3165,7 +3196,11 @@ void stop_cloudsync(int type)
 	if(pids("sambaclient"))
 			killall_tk("sambaclient");
 
-		logmessage("Cloudsync client and Webdav_client and dropbox_client ftp_client", "daemon is stopped");
+	if(pids("usbclient"))
+			killall_tk("usbclient");
+
+		logmessage("Cloudsync client and Webdav_client and dropbox_client ftp_client sambaclient usb_client", "daemon is stopped");
+
 	}
 	else{
   	if(pids("inotify"))

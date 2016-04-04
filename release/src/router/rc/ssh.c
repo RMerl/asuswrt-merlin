@@ -44,58 +44,66 @@ char *get_parsed_key(const char *name, char *buf)
 	return buf;
 }
 
-void start_sshd(void)
+int start_sshd(void)
 {
-	int dirty = 0;
-	char buf[3500];
+	char buf[3500], *port;
+	char *dropbear_argv[] = { "dropbear",
+		"-p", buf,	/* -p [address:]port */
+		"-a",
+		NULL,		/* -s */
+		NULL, NULL,	/* -W receive_window_buffer */
+		NULL, NULL,	/* -a or -j -k */
+		NULL };
+	int index = 4;
 
-        if (!nvram_match("sshd_enable", "1"))
-                return;
+	if (!nvram_get_int("sshd_enable"))
+		return 0;
+
+	if (getpid() != 1) {
+		notify_rc("start_sshd");
+		return 0;
+	}
 
 	mkdir("/etc/dropbear", 0700);
 	mkdir("/root/.ssh", 0700);
 
 	f_write_string("/root/.ssh/authorized_keys", get_parsed_key("sshd_authkeys", buf), 0, 0700);
 
-	dirty |= check_host_key("rsa", "sshd_hostkey", "/etc/dropbear/dropbear_rsa_host_key");
-	dirty |= check_host_key("dss", "sshd_dsskey",  "/etc/dropbear/dropbear_dss_host_key");
-	dirty |= check_host_key("ecdsa", "sshd_ecdsakey",  "/etc/dropbear/dropbear_ecdsa_host_key");
-	if (dirty)
+	if (check_host_key("rsa", "sshd_hostkey", "/etc/dropbear/dropbear_rsa_host_key") |
+	    check_host_key("dss", "sshd_dsskey",  "/etc/dropbear/dropbear_dss_host_key") |
+	    check_host_key("ecdsa", "sshd_ecdsakey",  "/etc/dropbear/dropbear_ecdsa_host_key"))
 		nvram_commit_x();
 
-/*
-	xstart("dropbear", "-a", "-p", nvram_safe_get("sshd_port"), nvram_get_int("sshd_pass") ? "" : "-s");
-*/
+	port = buf;
+	if (is_routing_enabled() && nvram_get_int("sshd_wan") != 1)
+		port += snprintf(buf, sizeof(buf), "%s:", nvram_safe_get("lan_ipaddr"));
+	snprintf(port, sizeof(buf) - (port - buf), "%d", nvram_get_int("sshd_port") ? : 22);
 
-	char *argv[9];
-	int argc;
-	char *p;
+	if (!nvram_get_int("sshd_pass"))
+		dropbear_argv[index++] = "-s";
 
-	argv[0] = "dropbear";
-	argv[1] = "-p";
-	argv[2] = nvram_safe_get("sshd_port");
-	argc = 3;
-
-	if (!nvram_get_int("sshd_pass")) argv[argc++] = "-s";
+	if (nvram_get_int("sshd_rwb")) {
+		dropbear_argv[index++] = "-W";
+		dropbear_argv[index++] = nvram_safe_get("sshd_rwb");
+	}
 
 	if (nvram_get_int("sshd_forwarding")) {
-		argv[argc++] = "-a";
+		dropbear_argv[index++] = "-a";
 	} else {
-		argv[argc++] = "-j";
-		argv[argc++] = "-k";
+		dropbear_argv[index++] = "-j";
+		dropbear_argv[index++] = "-k";
 	}
 
-	if (((p = nvram_get("sshd_rwb")) != NULL) && (*p)) {
-		argv[argc++] = "-W";
-		argv[argc++] = p;
-	}
-
-	argv[argc] = NULL;
-	_eval(argv, NULL, 0, NULL);
-
+	return _eval(dropbear_argv, NULL, 0, NULL);
 }
 
 void stop_sshd(void)
 {
-	killall("dropbear", SIGTERM);
+	if (getpid() != 1) {
+		notify_rc("stop_sshd");
+		return;
+	}
+
+	if (pids("dropbear"))
+		killall_tk("dropbear");
 }

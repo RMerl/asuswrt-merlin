@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <pj/errno.h>
+#include <pj/sock.h>
 
 #ifdef ROUTER
 #include <sys/ioctl.h>
@@ -161,6 +162,23 @@ static _inline_ int natnl_wl_ioctl(char *name, int cmd, void *buf, int len)
 		return ret;
 }
 #endif
+
+static _inline_ int natnl_get_ip_addr_ver(const pj_str_t *host)
+{
+	pj_in_addr dummy;
+	pj_in6_addr dummy6;
+
+	/* First check with inet_aton() */
+	if (pj_inet_aton(host, &dummy) > 0)
+		return 4;
+
+	/* Then check if this is an IPv6 address */
+	if (pj_inet_pton(pj_AF_INET6(), host, &dummy6) == PJ_SUCCESS)
+		return 6;
+
+	/* Not an IP address */
+	return 0;
+}
 
 #endif /* COMMON_H */
 

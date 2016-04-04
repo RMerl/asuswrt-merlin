@@ -35,6 +35,7 @@
 #include <pj/errno.h>
 #include <pj/sock.h>
 #include <pj/compat/socket.h>
+#include <pj/rand.h>
 
 #if !defined(PJ_LINUX_KERNEL) || PJ_LINUX_KERNEL==0
     /*
@@ -262,11 +263,11 @@ PJ_DEF(pj_status_t) pj_ioqueue_create( pj_pool_t *pool,
 
 	key = PJ_POOL_ALLOC_T(pool, pj_ioqueue_key_t);
 	key->ref_count = 0;
-	rc = pj_mutex_create_recursive(pool, NULL, &key->mutex);
+	rc = pj_lock_create_recursive_mutex(pool, NULL, &key->lock);
 	if (rc != PJ_SUCCESS) {
 	    key = ioqueue->free_list.next;
 	    while (key != &ioqueue->free_list) {
-		pj_mutex_destroy(key->mutex);
+		pj_lock_destroy(key->lock);
 		key = key->next;
 	    }
 	    pj_mutex_destroy(ioqueue->ref_cnt_mutex);
@@ -323,19 +324,19 @@ PJ_DEF(pj_status_t) pj_ioqueue_destroy(pj_ioqueue_t *ioqueue)
     /* Destroy reference counters */
     key = ioqueue->active_list.next;
     while (key != &ioqueue->active_list) {
-	pj_mutex_destroy(key->mutex);
+	pj_lock_destroy(key->lock);
 	key = key->next;
     }
 
     key = ioqueue->closing_list.next;
     while (key != &ioqueue->closing_list) {
-	pj_mutex_destroy(key->mutex);
+	pj_lock_destroy(key->lock);
 	key = key->next;
     }
 
     key = ioqueue->free_list.next;
     while (key != &ioqueue->free_list) {
-	pj_mutex_destroy(key->mutex);
+	pj_lock_destroy(key->lock);
 	key = key->next;
     }
 
@@ -349,9 +350,10 @@ PJ_DEF(pj_status_t) pj_ioqueue_destroy(pj_ioqueue_t *ioqueue)
  *
  * Register a socket to ioqueue.
  */
-PJ_DEF(pj_status_t) pj_ioqueue_register_sock( pj_pool_t *pool,
+PJ_DEF(pj_status_t) pj_ioqueue_register_sock2(pj_pool_t *pool,
 					      pj_ioqueue_t *ioqueue,
 					      pj_sock_t sock,
+					      pj_grp_lock_t *grp_lock,
 					      void *user_data,
 					      const pj_ioqueue_callback *cb,
                                               pj_ioqueue_key_t **p_key)
@@ -403,7 +405,7 @@ PJ_DEF(pj_status_t) pj_ioqueue_register_sock( pj_pool_t *pool,
     key = (pj_ioqueue_key_t*)pj_pool_zalloc(pool, sizeof(pj_ioqueue_key_t));
 #endif
 
-    rc = ioqueue_init_key(pool, ioqueue, key, sock, user_data, cb);
+    rc = ioqueue_init_key(pool, ioqueue, key, sock, grp_lock, user_data, cb);
     if (rc != PJ_SUCCESS) {
 	key = NULL;
 	goto on_return;
@@ -422,7 +424,7 @@ PJ_DEF(pj_status_t) pj_ioqueue_register_sock( pj_pool_t *pool,
     status = os_epoll_ctl(ioqueue->epfd, EPOLL_CTL_ADD, sock, &ev);
     if (status < 0) {
 	rc = pj_get_os_error();
-	pj_mutex_destroy(key->mutex);
+	pj_lock_destroy(key->lock);
 	key = NULL;
 	TRACE_((THIS_FILE, 
                 "pj_ioqueue_register_sock error: os_epoll_ctl rc=%d", 
@@ -437,10 +439,25 @@ PJ_DEF(pj_status_t) pj_ioqueue_register_sock( pj_pool_t *pool,
     //TRACE_((THIS_FILE, "socket registered, count=%d", ioqueue->count));
 
 on_return:
+    if (rc != PJ_SUCCESS) {
+	if (key && key->grp_lock)
+	    pj_grp_lock_dec_ref_dbg(key->grp_lock, "ioqueue", 0);
+    }
     *p_key = key;
     pj_lock_release(ioqueue->lock);
     
     return rc;
+}
+
+PJ_DEF(pj_status_t) pj_ioqueue_register_sock( pj_pool_t *pool,
+					      pj_ioqueue_t *ioqueue,
+					      pj_sock_t sock,
+					      void *user_data,
+					      const pj_ioqueue_callback *cb,
+					      pj_ioqueue_key_t **p_key)
+{
+    return pj_ioqueue_register_sock2(pool, ioqueue, sock, NULL, user_data,
+                                     cb, p_key);
 }
 
 #if PJ_IOQUEUE_HAS_SAFE_UNREG
@@ -497,7 +514,7 @@ PJ_DEF(pj_status_t) pj_ioqueue_unregister( pj_ioqueue_key_t *key)
      * the key. We need to lock the key before ioqueue here to prevent
      * deadlock.
      */
-    pj_mutex_lock(key->mutex);
+    pj_ioqueue_lock_key(key);
 
     /* Also lock ioqueue */
     pj_lock_acquire(ioqueue->lock);
@@ -531,9 +548,34 @@ PJ_DEF(pj_status_t) pj_ioqueue_unregister( pj_ioqueue_key_t *key)
     decrement_counter(key);
 
     /* Done. */
-    pj_mutex_unlock(key->mutex);
+    if (key->grp_lock) {
+	/* just dec_ref and unlock. we will set grp_lock to NULL
+	 * elsewhere */
+	pj_grp_lock_t *grp_lock = key->grp_lock;
+	// Don't set grp_lock to NULL otherwise the other thread
+	// will crash. Just leave it as dangling pointer, but this
+	// should be safe
+	//key->grp_lock = NULL;
+	pj_grp_lock_dec_ref_dbg(grp_lock, "ioqueue", 0);
+	pj_grp_lock_release(grp_lock);
+    } else {
+	pj_ioqueue_unlock_key(key);
+    }
 #else
-    pj_mutex_destroy(key->mutex);
+    if (key->grp_lock) {
+	/* set grp_lock to NULL and unlock */
+	pj_grp_lock_t *grp_lock = key->grp_lock;
+	// Don't set grp_lock to NULL otherwise the other thread
+	// will crash. Just leave it as dangling pointer, but this
+	// should be safe
+	//key->grp_lock = NULL;
+	pj_grp_lock_dec_ref_dbg(grp_lock, "ioqueue", 0);
+	pj_grp_lock_release(grp_lock);
+    } else {
+	pj_ioqueue_unlock_key(key);
+    }
+
+    pj_lock_destroy(key->lock);
 #endif
 
     return PJ_SUCCESS;
@@ -592,6 +634,10 @@ static void scan_closing_keys(pj_ioqueue_t *ioqueue)
 
 	if (PJ_TIME_VAL_GTE(now, h->free_time)) {
 	    pj_list_erase(h);
+	    // Don't set grp_lock to NULL otherwise the other thread
+	    // will crash. Just leave it as dangling pointer, but this
+	    // should be safe
+	    //h->grp_lock = NULL;
 	    pj_list_push_back(&ioqueue->free_list, h);
 	}
 	h = next;
@@ -666,6 +712,7 @@ PJ_DEF(int) pj_ioqueue_poll( pj_ioqueue_t *ioqueue, const pj_time_val *timeout)
 	    queue[processed].key = h;
 	    queue[processed].event_type = READABLE_EVENT;
 	    ++processed;
+	    continue;
 	}
 
 	/*
@@ -679,6 +726,7 @@ PJ_DEF(int) pj_ioqueue_poll( pj_ioqueue_t *ioqueue, const pj_time_val *timeout)
 	    queue[processed].key = h;
 	    queue[processed].event_type = WRITEABLE_EVENT;
 	    ++processed;
+	    continue;
 	}
 
 #if PJ_HAS_TCP
@@ -693,23 +741,47 @@ PJ_DEF(int) pj_ioqueue_poll( pj_ioqueue_t *ioqueue, const pj_time_val *timeout)
 	    queue[processed].key = h;
 	    queue[processed].event_type = WRITEABLE_EVENT;
 	    ++processed;
+	    continue;
 	}
 #endif /* PJ_HAS_TCP */
-	
+
 	/*
 	 * Check for error condition.
 	 */
-	if (events[i].events & EPOLLERR && (h->connecting) && !IS_CLOSING(h)) {
-		
+	if ((events[i].events & EPOLLERR) && !IS_CLOSING(h)) {
+	    /*
+	     * We need to handle this exception event.  If it's related to us
+	     * connecting, report it as such.  If not, just report it as a
+	     * read event and the higher layers will handle it.
+	     */
+	    if (h->connecting) {
 #if PJ_IOQUEUE_HAS_SAFE_UNREG
-	    increment_counter(h);
-#endif		
-	    queue[processed].key = h;
-	    queue[processed].event_type = EXCEPTION_EVENT;
-	    ++processed;
+		increment_counter(h);
+#endif
+		queue[processed].key = h;
+		queue[processed].event_type = EXCEPTION_EVENT;
+		++processed;
+	    } else if (key_has_pending_read(h) || key_has_pending_accept(h)) {
+#if PJ_IOQUEUE_HAS_SAFE_UNREG
+		increment_counter(h);
+#endif
+		queue[processed].key = h;
+		queue[processed].event_type = READABLE_EVENT;
+		++processed;
+	    }
+	    continue;
 	}
     }
+    for (i=0; i<processed; ++i) {
+	if (queue[i].key->grp_lock)
+	    pj_grp_lock_add_ref_dbg(queue[i].key->grp_lock, "ioqueue", 0);
+    }
+
+    PJ_RACE_ME(5);
+
     pj_lock_release(ioqueue->lock);
+
+    PJ_RACE_ME(5);
 
     /* Now process the events. */
     for (i=0; i<processed; ++i) {
@@ -731,6 +803,10 @@ PJ_DEF(int) pj_ioqueue_poll( pj_ioqueue_t *ioqueue, const pj_time_val *timeout)
 #if PJ_IOQUEUE_HAS_SAFE_UNREG
 	decrement_counter(queue[i].key);
 #endif
+
+	if (queue[i].key->grp_lock)
+	    pj_grp_lock_dec_ref_dbg(queue[i].key->grp_lock,
+	                            "ioqueue", 0);
     }
 
     /* Special case:

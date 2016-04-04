@@ -86,6 +86,9 @@ extern const char *rt_swpjverno;
 enum {
 	IPV6_DISABLED = 0,
 	IPV6_NATIVE_DHCP,
+#ifdef RTCONFIG_6RELAYD
+	IPV6_PASSTHROUGH,
+#endif
 	IPV6_6TO4,
 	IPV6_6IN4,
 	IPV6_6RD,
@@ -110,7 +113,8 @@ enum {
 #endif
 
 #define GIF_LINKLOCAL  0x0001  /* return link-local addr */
-#define GIF_PREFIXLEN  0x0002  /* return addr & prefix */
+#define GIF_PREFIXLEN  0x0002  /* return prefix length */
+#define GIF_PREFIX     0x0004  /* return prefix, not addr */
 
 #define EXTEND_AIHOME_API_LEVEL		6
 #define EXTEND_HTTPD_AIHOME_VER		0
@@ -122,6 +126,7 @@ enum {
 	FROM_ASUSROUTER,
 	FROM_DUTUtil,
 	FROM_ASSIA,
+	FROM_IFTTT,
 	FROM_UNKNOWN
 };
 
@@ -182,8 +187,8 @@ extern void set_action(int a);
 extern int check_action(void);
 extern int wait_action_idle(int n);
 extern int wl_client(int unit, int subunit);
-extern const char *_getifaddr(char *ifname, int family, int flags, char *buf, int size);
-extern const char *getifaddr(char *ifname, int family, int flags);
+extern const char *_getifaddr(const char *ifname, int family, int flags, char *buf, int size);
+extern const char *getifaddr(const char *ifname, int family, int flags);
 extern long uptime(void);
 extern char *wl_nvname(const char *nv, int unit, int subunit);
 extern int get_radio(int unit, int subunit);
@@ -244,7 +249,7 @@ extern int is_no_partition(const char *discname);
 
 // id.c
 enum {
-	MODEL_UNKNOWN,
+	MODEL_UNKNOWN = 0,
 	MODEL_DSLN55U,
 	MODEL_DSLAC68U,
 	MODEL_EAN66,
@@ -844,6 +849,10 @@ extern const char *get_wan6face(void);
 extern const char *ipv6_router_address(struct in6_addr *in6addr);
 extern const char *ipv6_address(const char *ipaddr6);
 extern const char *ipv6_prefix(struct in6_addr *in6addr);
+#if 0 /* unused */
+extern const char *ipv6_prefix(const char *ifname);
+extern int ipv6_prefix_len(const char *ifname);
+#endif
 extern void reset_ipv6_linklocal_addr(const char *ifname, int flush);
 extern int with_ipv6_linklocal_addr(const char *ifname);
 #if 1 /* temporary till httpd route table redo */
@@ -913,9 +922,6 @@ extern int notify_rc_and_period_wait(const char *event_name, int wait);
 extern char *get_wanx_ifname(int unit);
 extern int get_lanports_status(void);
 extern int set_wan_primary_ifunit(const int unit);
-#ifdef RTCONFIG_IPV6
-extern char *get_wan6_ifname(int unit);
-#endif
 #ifdef RTCONFIG_USB
 extern char *get_usb_xhci_port(int port);
 extern char *get_usb_ehci_port(int port);

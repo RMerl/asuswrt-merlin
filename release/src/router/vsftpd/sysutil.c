@@ -1045,6 +1045,11 @@ vsf_sysutil_next_dirent(const char* session_user, const char *base_dir, struct v
 			free(share_name);
 			return DENIED_DIR;
 		}
+		if(test_if_System_folder(share_name)){
+			free(mount_path);
+			free(share_name);
+			return DENIED_DIR;
+		}
 	}
 
 	if(layer > SHARE_LAYER){

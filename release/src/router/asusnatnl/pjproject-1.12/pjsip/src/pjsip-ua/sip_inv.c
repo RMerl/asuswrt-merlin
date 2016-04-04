@@ -778,6 +778,7 @@ PJ_DEF(pj_status_t) pjsip_inv_create_uac( pjsip_dialog *dlg,
     inv->options = options;
     inv->notify = PJ_TRUE;
     inv->cause = (pjsip_status_code) 0;
+	inv->use_sctp = PJ_FALSE;
 
     /* Create flip-flop pool (see ticket #877) */
     /* (using inv->obj_name as temporary variable for pool names */
@@ -899,8 +900,9 @@ PJ_DEF(pj_status_t) pjsip_inv_verify_request2(pjsip_rx_data *rdata,
 					      pjsip_tx_data **p_tdata)
 {
     pjsip_msg *msg;
-    pjsip_allow_hdr *allow;
-    pjsip_supported_hdr *sup_hdr;
+	pjsip_allow_hdr *allow;
+	pjsip_supported_hdr *sup_hdr;
+	pjsip_tnl_supported_hdr *tnl_sup_hdr;
     pjsip_require_hdr *req_hdr;
     pjsip_contact_hdr *c_hdr;
     int code = 200;
@@ -1231,7 +1233,23 @@ PJ_DEF(pj_status_t) pjsip_inv_verify_request2(pjsip_rx_data *rdata,
     if (rem_option & PJSIP_INV_REQUIRE_TIMER) {
 	    pj_assert(*options & PJSIP_INV_SUPPORT_TIMER);
 	    *options |= PJSIP_INV_REQUIRE_TIMER;
-    }
+	}
+
+	/* Check Supported header */
+	tnl_sup_hdr = (pjsip_tnl_supported_hdr*)
+		pjsip_msg_find_hdr(msg, PJSIP_H_TNL_SUPPORTED, NULL);
+	if (tnl_sup_hdr) {
+		unsigned i;
+		const pj_str_t STR_SCTP = { "SCTP", 4};
+
+		for (i=0; i<tnl_sup_hdr->count; ++i) {
+			if (pj_stricmp(&tnl_sup_hdr->values[i], &STR_SCTP)==0)
+				rem_option |= PJSIP_INV_TNL_REQUIRE_SCTP;
+		}
+	}
+	if (rem_option & PJSIP_INV_TNL_REQUIRE_SCTP) {
+		*options |= PJSIP_INV_TNL_REQUIRE_SCTP;
+	}
 
 on_return:
 
@@ -1625,7 +1643,7 @@ PJ_DEF(pj_status_t) pjsip_inv_invite( pjsip_inv_session *inv,
     if (hdr) {
 	pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)
 			  pjsip_hdr_shallow_clone(tdata->pool, hdr));
-    }
+	}
 
     /* Add Require header. */
     if ((inv->options & PJSIP_INV_REQUIRE_100REL) ||
@@ -1645,7 +1663,16 @@ PJ_DEF(pj_status_t) pjsip_inv_invite( pjsip_inv_session *inv,
 
     status = pjsip_timer_update_req(inv, tdata);
     if (status != PJ_SUCCESS)
-	goto on_return;
+		goto on_return;
+
+	if (inv->use_sctp) {
+		/* Add Tnl-Supported header */
+		hdr = pjsip_endpt_get_capability(inv->dlg->endpt, PJSIP_H_TNL_SUPPORTED, NULL);
+		if (hdr) {
+			pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)
+				pjsip_hdr_shallow_clone(tdata->pool, hdr));
+		}
+	}
 
     /* Done. */
     *p_tdata = tdata;
@@ -2636,7 +2663,15 @@ PJ_DEF(pj_status_t) pjsip_inv_update (	int inst_id,
     if (hdr) {
 	pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)
 			  pjsip_hdr_shallow_clone(tdata->pool, hdr));
-    }
+	}
+
+	if (inv->use_sctp) {
+		hdr = pjsip_endpt_get_capability(inv->dlg->endpt, PJSIP_H_TNL_SUPPORTED, NULL);
+		if (hdr) {
+			pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)
+				pjsip_hdr_shallow_clone(tdata->pool, hdr));
+		}
+	}
 
     status = pjsip_timer_update_req(inv, tdata);
     if (status != PJ_SUCCESS)

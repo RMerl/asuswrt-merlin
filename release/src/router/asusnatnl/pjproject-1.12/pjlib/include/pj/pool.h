@@ -903,6 +903,10 @@ PJ_DECL(void) pj_caching_pool_destroy( pj_caching_pool *ch_pool );
  * @}	// PJ_CACHING_POOL
  */
 
+PJ_DECL(void *) pj_mem_alloc( pj_size_t size);
+
+PJ_DECL(void) pj_mem_free( void *buf, pj_size_t size);
+
 #  if PJ_FUNCTIONS_ARE_INLINED
 #    include "pool_i.h"
 #  endif

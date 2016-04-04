@@ -78,11 +78,11 @@ PJ_DEF(void) pj_caching_pool_init( int inst_id, pj_caching_pool *cp,
     cp->factory.on_block_alloc = &cpool_on_block_alloc;
     cp->factory.on_block_free = &cpool_on_block_free;
 	cp->factory.inst_id = inst_id;
-	printf("inst_id=%d\n", cp->factory.inst_id);
+	//printf("inst_id=%d\n", cp->factory.inst_id);
     //modified by Charles
     pool = pj_pool_create_on_buf(inst_id, "cachingpool", cp->pool_buf, 2*sizeof(cp->pool_buf));
     pj_lock_create_simple_mutex(pool, "cachingpool", &cp->lock);
-	printf("%p\n", ((pj_mutex_t *)cp->lock));
+	//printf("%p\n", ((pj_mutex_t *)cp->lock));
 }
 
 PJ_DEF(void) pj_caching_pool_destroy( pj_caching_pool *cp )

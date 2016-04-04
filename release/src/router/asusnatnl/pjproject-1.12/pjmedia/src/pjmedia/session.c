@@ -57,6 +57,8 @@ static const pj_str_t ID_IP4 = { "IP4", 3};
 static const pj_str_t ID_IP6 = { "IP6", 3};
 static const pj_str_t ID_RTP_AVP = { "RTP/AVP", 7 };
 static const pj_str_t ID_RTP_SAVP = { "RTP/SAVP", 8 };
+static const pj_str_t ID_DTLS_SCTP = { "DTLS/SCTP", 9 }; // dean added for WebRTC data channel.
+static const pj_str_t ID_RTP_SCTP = { "RTP/SCTP", 8 }; // dean : RTP/SCTP is for UDT replacement
 //static const pj_str_t ID_SDP_NAME = { "pjmedia", 7 };
 static const pj_str_t ID_RTPMAP = { "rtpmap", 6 };
 static const pj_str_t ID_TELEPHONE_EVENT = { "telephone-event", 15 };
@@ -202,11 +204,15 @@ PJ_DEF(pj_status_t) pjmedia_stream_info_from_sdp(
 
     if (pj_stricmp(&local_m->desc.media, &ID_AUDIO) == 0) {
 
-	si->type = PJMEDIA_TYPE_AUDIO;
+		si->type = PJMEDIA_TYPE_AUDIO;
 
-    } else if (pj_stricmp(&local_m->desc.media, &ID_VIDEO) == 0) {
+	} else if (pj_stricmp(&local_m->desc.media, &ID_VIDEO) == 0) {
 
-	si->type = PJMEDIA_TYPE_VIDEO;
+		si->type = PJMEDIA_TYPE_VIDEO;
+
+	} else if (pj_stricmp(&local_m->desc.media, &ID_APPLICATION) == 0) { // dean : application is for WebRTC data channel.
+
+		si->type = PJMEDIA_TYPE_APPLICATION;
 
     } else {
 
@@ -232,11 +238,19 @@ PJ_DEF(pj_status_t) pjmedia_stream_info_from_sdp(
 
     if (pj_stricmp(&local_m->desc.transport, &ID_RTP_AVP) == 0) {
 
-	si->proto = PJMEDIA_TP_PROTO_RTP_AVP;
+		si->proto = PJMEDIA_TP_PROTO_RTP_AVP;
 
-    } else if (pj_stricmp(&local_m->desc.transport, &ID_RTP_SAVP) == 0) {
+	} else if (pj_stricmp(&local_m->desc.transport, &ID_RTP_SAVP) == 0) {
 
-	si->proto = PJMEDIA_TP_PROTO_RTP_SAVP;
+		si->proto = PJMEDIA_TP_PROTO_RTP_SAVP;
+
+	} else if (pj_stricmp(&local_m->desc.transport, &ID_DTLS_SCTP) == 0) {
+
+		si->proto = PJMEDIA_TP_PROTO_DTLS_SCTP;
+
+	} else if (pj_stricmp(&local_m->desc.transport, &ID_RTP_SCTP) == 0) {
+
+		si->proto = PJMEDIA_TP_PROTO_RTP_SCTP;
 
     } else {
 
@@ -401,7 +415,7 @@ PJ_DEF(pj_status_t) pjmedia_stream_info_from_sdp(
      * For static payload types, get the info from codec manager.
      * For dynamic payload types, MUST get the rtpmap.
      */
-    if (pt < 96) {
+    if (pt < 96 || pt == 5000) { // dean : 5000 is for WebRTC data channel.
 	pj_bool_t has_rtpmap;
 
 	rtpmap = NULL;
@@ -911,6 +925,14 @@ PJ_DEF(pj_status_t) pjmedia_session_get_stream(  pjmedia_session *session,
 					       pjmedia_stream **p_stream)
 {
     *p_stream = session->stream[index];
+	return PJ_SUCCESS;
+}
+
+PJ_DEF(pj_status_t) pjmedia_session_get_stream_info(pjmedia_session *session,
+													unsigned index,
+													pjmedia_stream_info **p_stream_info)
+{
+	*p_stream_info = &session->stream_info[index];
 	return PJ_SUCCESS;
 }
 

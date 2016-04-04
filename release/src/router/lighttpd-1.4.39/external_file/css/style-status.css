@@ -1,0 +1,80 @@
+html{
+margin:0 0;
+padding:0px;
+font-family:"Segoe UI",Arial;
+}
+body{
+display: block;
+overflow: hidden;
+}
+
+input,#ok {
+background:transparent url("/smb/css/style-theme.png") no-repeat top left;
+}
+
+#login_logo{
+width:300px;
+height:76px;
+background:transparent url("/smb/css/logo.jpg") no-repeat top left;
+position: absolute;
+top: 60px;
+}
+
+#ok{
+background-position: -200px -390px;
+width:40px;
+height:40px;
+float:right;
+}
+#title1{
+color:#fff;
+font-size:30px
+}
+#title2{
+color:#fff;
+font-size:20px
+}
+input {
+font-size: 14px;
+text-shadow: 0px 1px 0px white;
+outline: none;
+background-position: 0 -540px;
+-webkit-border-radius: 0;
+-moz-border-radius: 0;
+border-radius: 0;
+border: 0;
+-webkit-box-shadow: 0 0 0;
+-moz-box-shadow: 0 0 0;
+box-shadow: 0 0 0;
+padding-left:3px;
+}
+div.cap_num{
+width:40px;
+height:40px;
+float:right;
+}
+.unselectable {
+-moz-user-select: -moz-none;
+-khtml-user-select: none;
+-webkit-user-select: none;
+-o-user-select: none;
+user-select: none;
+}
+.table_x{
+position: relative;
+padding: 20px 40px 0 40px;
+font-size: 20px;
+display:none;
+}
+.table_x input{
+width:220px;
+height:36px;
+font-size: 20px;
+}
+.table_x .table_label_x{
+color:#ffffff;	
+}
+.table_x .table_label_x_small{
+color:#ffffff;	
+font-size:16px;	
+}

@@ -1471,6 +1471,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_WTFAST/d" $(1); \
 		echo "RTCONFIG_WTFAST=y" >>$(1); \
 	fi; \
+	if [ "$(IFTTT)" = "y" ]; then \
+		sed -i "/RTCONFIG_IFTTT/d" $(1); \
+		echo "RTCONFIG_IFTTT=y" >>$(1); \
+	fi; \
 	if [ "$(REBOOT_SCHEDULE)" = "y" ]; then \
 		sed -i "/RTCONFIG_REBOOT_SCHEDULE/d" $(1); \
 		echo "RTCONFIG_REBOOT_SCHEDULE=y" >>$(1); \

@@ -10,11 +10,13 @@
 
 #ifdef RTCONFIG_TRAFFIC_LIMITER
 
+#define IFPATH_MAX 64
+
 static int traffic_limiter_is_first = 1;
 
 void traffic_limiter_sendSMS(const char *type, int unit)
 {
-	char phone[32], message[PATH_MAX];
+	char phone[32], message[IFPATH_MAX];
 	char *at_cmd[] = {"modem_status.sh", "send_sms", phone, message, NULL};
 	char buf[32];
 
@@ -37,7 +39,7 @@ void traffic_limiter_sendSMS(const char *type, int unit)
 
 static double traffic_limiter_get_max(const char *type, int unit)
 {
-	char path[PATH_MAX];
+	char path[IFPATH_MAX];
 	char buf[32];
 
 	snprintf(path, sizeof(path), "/tmp/tl%d_%s_max", unit, type);
@@ -49,7 +51,7 @@ static double traffic_limiter_get_max(const char *type, int unit)
 
 static void traffic_limiter_set_max(const char *type, int unit, double value)
 {
-	char path[PATH_MAX];
+	char path[IFPATH_MAX];
 	char buf[32];
 
 	snprintf(path, sizeof(path), "/tmp/tl%d_%s_max", unit, type);

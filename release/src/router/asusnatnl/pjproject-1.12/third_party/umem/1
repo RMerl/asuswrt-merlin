@@ -1,0 +1,90 @@
+#C++ = g++ -g
+PJDIR=../../pjproject-1.12
+
+include ../pjproject-1.12/build.mak
+include ../pjproject-1.12/build/host-$(HOST_NAME).mak
+-include ../user.mak
+include ../version.mak
+
+ifndef os
+   os = LINUX
+endif
+
+ifndef arch
+   arch = IA32
+endif
+
+
+CC      = $(PJ_CC)
+C++	= $(PJ_CXX)
+CFLAGS = -I. -I./sys 
+
+OUTPUT=output-${os}${arch}
+
+SRC=$(wildcard usrsctplib/*.c)
+OBJS=$(patsubst %c, %o, $(SRC)) 
+OUT_OBJS=$(OUTPUT)/init_lib.o $(OUTPUT)/umem_agent_support.o $(OUTPUT)/umem_fail.o $(OUTPUT)/umem_fork.o $(OUTPUT)/umem_update_thread.o $(OUTPUT)/vmem_mmap.o $(OUTPUT)/vmem_sbrk.o $(OUTPUT)/envvar.o $(OUTPUT)/getpcstack.o $(OUTPUT)/misc.o $(OUTPUT)/vmem_base.o $(OUTPUT)/umem.o $(OUTPUT)/vmem.o
+DIR = $(shell pwd)
+OS = $(shell uname -s)
+LIB_NAME=libumem
+LIBRARY = $(LIB_NAME).a
+ifeq ($(OS), Darwin)
+YYY = $(CFLAGS) 
+XXX = $(findstring armv7s, $(YYY))
+ifeq ($(XXX),)
+XXX = $(findstring armv7, $(YYY))
+ifeq ($(XXX),)
+XXX = $(findstring i386, $(YYY))
+ifeq ($(XXX),)
+XXX = $(findstring arm64, $(YYY))
+ifeq ($(XXX),)
+XXX = $(findstring x86_64, $(YYY))
+endif
+endif
+endif
+endif
+ifeq ($(XXX),)
+LIBRARY = $(LIB_NAME).a
+else
+LIBRARY = $(LIB_NAME)-$(XXX).a
+endif
+endif
+
+AR=ar
+ANDROID_GCC=$(ANDROID_ARCH)-linux-android$(EABI)-gcc
+ANDROID_STRIP=$(ANDROID_ARCH)-linux-android$(EABI)-strip
+ANDROID_AR=$(ANDROID_ARCH)-linux-android$(EABI)-ar
+ANDROID_RANLIB=$(ANDROID_ARCH)-linux-android$(EABI)-ranlib
+ifeq ($(PJ_CC),$(ANDROID_GCC))
+RANLIB=$(ANDROID_RANLIB)
+AR=$(ANDROID_AR)
+endif
+
+
+
+all: $(LIBRARY)
+
+$(OUTPUT)/%.o:%.c
+	mkdir -p $(dir $@)
+	$(CC)	-c $(CPPFLAGS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS)  $< -o $@
+
+#%.o: %.c %.h
+#	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $< 
+
+libusrsctp.so: $(OBJS)
+ifneq ($(os), OSX)
+	$(CC) -shared -o $(LDLIBS) $@ $^
+else
+	$(CC) -dynamiclib -o libusrsctp.dylib -lstdc -lpthread -lm $^
+endif
+
+#$(LIBRARY): $(OBJS)
+$(LIBRARY): $(OUT_OBJS)
+	$(AR) -rcs $@ $^
+
+clean:
+	rm -f *.o *.so *.dylib *.a 
+	rm -rf output-*
+
+install:
+	export LD_LIBRARY_PATH=$(DIR):$$LD_LIBRARY_PATH

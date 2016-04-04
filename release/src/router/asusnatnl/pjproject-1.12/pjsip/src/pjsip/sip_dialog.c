@@ -1312,6 +1312,18 @@ static void dlg_beautify_response(pjsip_dialog *dlg,
 	    }
 	}
 
+	/* Add Tnl-Supported header in 2xx response. */
+	if (st_class==2 && 
+		pjsip_msg_find_hdr(tdata->msg, PJSIP_H_TNL_SUPPORTED, NULL)==NULL) 
+	{
+		c_hdr = pjsip_endpt_get_capability(dlg->endpt,
+			PJSIP_H_TNL_SUPPORTED, NULL);
+		if (c_hdr) {
+			hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, c_hdr);
+			pjsip_msg_add_hdr(tdata->msg, hdr);
+		}
+	}
+
     }
 
     /* Add To tag in all responses except 100 */

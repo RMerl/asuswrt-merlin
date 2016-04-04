@@ -37,8 +37,10 @@
 #include <list.h>
 #include <message.h>
 
+#include <pjsua-lib/pjsua.h>
 #include <pjmedia/transport.h>
 #include <pj/timer.h>
+#include <pj/log.h>
 
 /* 2013-03-20 DEAN Added, for bandwidth control */
 #include <pj/bandwidth.h>
@@ -68,8 +70,8 @@ enum client_status {
 	CLIENT_STATUS_WORKING,
 	CLIENT_STATUS_SUSPENDED,
 	CLIENT_STATUS_RESUMING,
-	CLIENT_STATUS_DESTORYING,
-	CLIENT_STATUS_DESTORYED,
+	CLIENT_STATUS_DESTROYING = 6,  // for alignment with im_session_status
+	CLIENT_STATUS_DESTROYED,
 };
 
 enum client_role {
@@ -131,11 +133,24 @@ typedef struct client
 	pj_thread_t *resume_thread;
 
 	int qos_priority;
+	int disable_flow_control; /* The flag for disable flow control. */
+	int speed_limit;          /* The speed limit in KBytes/s unit. */
 	int qos_cnt;
 
 	pj_mutex_t *lock;
 	int inst_id;        // The instance id of SDK.
 	int call_id;        // The identity of tunnel.
+
+	pj_band_t            *client_tx_band;  // sending bandwidth
+
+	int rtsp_msg_check_mode;   // For RTSP content check
+	unsigned rtsp_cseq;        // For RTSP content check
+	int rtsp_state;            // For RTSP content check
+
+	char im_dest_deviceid[128];   /* The device_id of destination for sending message. */
+	void *im_user_data;
+	int im_timeout_sec;			  /* The timeout value in second unit for sending message. */
+	struct timeval      im_request_timeout;     // for check timeout.
 } client_t;
 
 /* Call specific data */
@@ -144,6 +159,7 @@ typedef struct call_data
 	pj_timer_entry      timer;
 
 	fd_set              client_fds;
+	int					nfds;
 	list_t             *clients;
 	list_t             *client_locks;
 
@@ -176,10 +192,11 @@ typedef struct call_data
 
 client_t *client_create(uint16_t id, socket_t *tcp_sock, pjmedia_transport *tp,
                         int connected);
-//client_t *client_get_client_by_tp(struct call_data *cd, pjmedia_transport *tp);
 client_t *client_copy(client_t *dst, client_t *src, size_t len);
 int client_cmp(client_t *c1, client_t *c2, size_t len);
 void client_free(client_t **c);
+void disconnect_and_remove_client(uint16_t id, list_t *clients,
+								  fd_set *fds, int full_disconnect, int type);
 void mutex_free(pj_mutex_t **c);
 int client_connect_tcp(client_t *c);
 void client_disconnect_tcp(client_t *c);
@@ -194,6 +211,7 @@ int client_recv_udp_msg(client_t *client, char *data, int data_len,
 
 int client_send_lo_data(client_t *c);
 int client_recv_lo_data(client_t *c, struct call_data *cd);
+int client_recv_lo_whole_data(client_t *c, struct call_data *cd);
 int client_send_tnl_data(client_t *c);
 int client_recv_tnl_data(client_t *c, char *data, int data_len,
 						uint32_t pkt_id, uint8_t msg_type);
@@ -201,17 +219,19 @@ int client_got_ack(client_t *c, uint8_t ack_type);
 int client_send_hello(client_t *c, char *host, char *port,
                       uint16_t req_id);
 int client_send_helloack(client_t *c, uint16_t req_id);
+int client_send_helloack2(client_t *c);
+int client_send_webrtc_datachannel_open_ack(pjmedia_transport *tp);
 int client_got_helloack(client_t *c);
 int client_send_goodbye(client_t *c);
-int client_send_goodbye_by_id(pjmedia_transport *tp, uint16_t id, uint8_t sock_type); //DEAN added
-#if 0
-int client_check_and_send_keepalive(client_t *client, struct timeval curr_tv);
-#endif
 void client_udp_reset_keepalive(client_t *client);
 int client_udp_timed_out(client_t *client, struct timeval curr_tv);
+int client_im_timed_out(client_t *client);
 void client_set_status(client_t *client, enum client_status status);
 int client_is_working(client_t *client);
 int client_suspend_all(int inst_id, int call_id);
+int client_rtsp_teardown_session(client *rtsp_c);
+int client_rtsp_request_check(client *c);
+int client_rtsp_response_check(client *c);
 
 /* Function pointers to use when making a list_t of clients */
 #define p_client_copy ((void* (*)(void *, const void *, size_t))&client_copy)
@@ -228,14 +248,30 @@ int client_suspend_all(int inst_id, int call_id);
 #define p_packet_cmp ((int (*)(const void *, const void *, size_t))&packet_cmp)
 #define p_packet_free ((void (*)(void **))&packet_free)
 
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+
+extern PJ_DEF(int) natnl_get_im_nfds(int inst_id);
+extern PJ_DEF(void) natnl_set_im_nfds(int inst_id, int nfds);
+
 /* Inline functions as wrappers for handling the file descriptors in the
  * client's sockets */
 
-static _inline_ void client_add_fd_to_set(client_t *c, fd_set *set)
+static _inline_ void client_add_fd_to_set(client_t *c, fd_set *set, struct call_data *cd)
 {
     if (c != NULL && c->sock != NULL)
-        if(SOCK_FD(c->sock) >= 0 && !FD_ISSET(SOCK_FD(c->sock), set))
-            FD_SET(SOCK_FD(c->sock), set);
+		if(SOCK_FD(c->sock) >= 0 && !FD_ISSET(SOCK_FD(c->sock), set)) {
+			uint16_t port;
+			FD_SET(SOCK_FD(c->sock), set);
+			if (cd)
+				cd->nfds = max(cd->nfds, SOCK_FD(c->sock));
+			else {
+				int nfds = natnl_get_im_nfds(c->inst_id);
+				natnl_set_im_nfds(c->inst_id, max(nfds, SOCK_FD(c->sock)));
+			}
+
+			port = sock_get_port(c->sock);
+			PJ_LOG(6, ("client.h", "LOG client_add_fd_to_set sock_type=%d, dst_port=%d, fd=%d, max_nfds=%d", c->sock->type, port, SOCK_FD(c->sock), natnl_get_im_nfds(c->inst_id)));
+		}
 }
 
 #if 0

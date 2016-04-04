@@ -77,9 +77,9 @@ ifeq ($(arch), MIPS)
 LDFLAGS= -lstdc++
 endif
 
-ifeq ($(os), ANDROID)
-   CFLAGS += -DANDROID
-endif
+#ifeq ($(os), ANDROID)
+#   CFLAGS += -DANDROID
+#endif
 
 SRC=$(wildcard *.cpp)
 OBJS=$(patsubst %c, %o, $(SRC)) 

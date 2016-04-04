@@ -180,7 +180,7 @@ static CLIENT *_clnt_pci_create(int sock_fd,
 	struct msghdr msg;
 	//u_int sendsz, recvsz;
 
-	wait.tv_sec = 5;
+	wait.tv_sec = 15;
 	wait.tv_usec = 0;
 
 	cl = (CLIENT *) malloc(sizeof(CLIENT));

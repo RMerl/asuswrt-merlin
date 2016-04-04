@@ -70,6 +70,11 @@
  * STUN transaction has timed out
  */
 #define PJNATH_ESTUNTIMEDOUT	    (PJNATH_ERRNO_START+4)  /* 370004 */
+/**
+ * @hideinitializer
+ * Invalid DTLS record.
+ */
+#define PJNATH_EINDTLSRECORD	    (PJNATH_ERRNO_START+5)  /* 370005 */
 
 
 /**

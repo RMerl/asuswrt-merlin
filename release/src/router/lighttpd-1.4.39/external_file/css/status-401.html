@@ -1,0 +1,410 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Cache-control" content="no-cache">
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link rel="apple-touch-icon" href="/smb/css/appicon.png">
+<link rel="apple-touch-startup-image" href="/smb/css/startup.png">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>AiCloud</title>
+<style>
+html{
+margin:0 0;
+padding:0px;
+font-family:"Segoe UI",Arial;
+}
+body{
+display: block;
+overflow: hidden;
+}
+
+input,#ok {
+background:transparent url("/smb/css/style-theme.png") no-repeat top left;
+}
+
+#login_logo{
+width:300px;
+height:76px;
+background:transparent url("/smb/css/logo.jpg") no-repeat top left;
+position: absolute;
+top: 60px;
+}
+
+#ok{
+background-position: -200px -390px;
+width:40px;
+height:40px;
+float:right;
+}
+#title1{
+color:#fff;
+font-size:30px
+}
+#title2{
+color:#fff;
+font-size:20px
+}
+input {
+font-size: 14px;
+text-shadow: 0px 1px 0px white;
+outline: none;
+background-position: 0 -540px;
+-webkit-border-radius: 0;
+-moz-border-radius: 0;
+border-radius: 0;
+border: 0;
+-webkit-box-shadow: 0 0 0;
+-moz-box-shadow: 0 0 0;
+box-shadow: 0 0 0;
+padding-left:3px;
+}
+div.cap_num{
+width:40px;
+height:40px;
+float:right;
+}
+.unselectable {
+-moz-user-select: -moz-none;
+-khtml-user-select: none;
+-webkit-user-select: none;
+-o-user-select: none;
+user-select: none;
+}
+.table_x{
+position: relative;
+padding: 20px 40px 0 40px;
+font-size: 20px;
+display:none;
+}
+.table_x input{
+width:220px;
+height:36px;
+font-size: 20px;
+}
+.table_x .table_label_x{
+color:#ffffff;	
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type='text/javascript' src='/smb/js/davclient_tools.js'></script>
+<script type="text/javascript">
+var this_url;
+var m = new lang();
+var g_storage = new myStorage();
+var g_captcha = -1;
+
+function makeid(){
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 20; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
+
+$("document").ready(function() {
+	//- create access token
+	var asus_token = ( g_storage.get('asus_token') == undefined ) ? '' : g_storage.get('asus_token');
+	if(asus_token==""){
+		asus_token = makeid() + ";";
+	}
+	
+	$.cookie('asus_token', asus_token);
+	
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$('label#username').text(m.getString('title_username2'));
+	$('label#password').text(m.getString('title_password2'));
+	$('label#captcha').text(m.getString('title_captcha'));
+	
+	this_url = $("input.urlInfo").attr("value");
+	
+	if(this_url!="/"){
+		$("div#title1").text(m.getString('title_login'));
+		$("div#title2").text(this_url);
+	}
+	
+	var browserVer = navigator.userAgent.toLowerCase();
+	if( isIE() && 
+		getInternetExplorerVersion() <= 7 ){
+		
+		$("table#table_login").remove();
+		
+		var append_html = '<table border="0" cellpadding="0" cellspacing="3" style="position: relative;left:40px;padding-top:20px"><tbody><tr><td width="240px">';
+		append_html += '<font color="white" size="4">';
+		append_html += '<label>';
+		append_html += m.getString('msg_browsersupport');
+		append_html += '</label>';
+		append_html += '</font>';
+		append_html += '</td>';
+		append_html += '</tr>';									 
+		append_html += '</tbody>';
+		append_html += '</table>';
+		$(append_html).appendTo($("#main"));
+		
+		return;
+	}
+	
+	$(".captcha").css("display","none");	
+	
+	generateCaptcha();
+	
+	adjustUI();
+	
+	$(window).resize(adjustUI);
+	
+	$("table#table_login").css("display", "block");
+	
+	$("input#username").focus();
+});
+
+function generateCaptcha(){
+	
+	if(this_url!="/")
+		return;
+		
+	$.ajax({
+		url: 'GetCaptchaImage',
+		data: '',
+		type: 'GET',
+		dataType: 'xml',
+		timeout: 20000,
+		error: function(){
+			//alert('Error loading XML document');
+		},
+		success: function(xml){		
+				
+			var data = parseXml(xml);
+			var captcha_enable = $(data).find('enable').text();
+			if(captcha_enable==1){
+				var image_data1 = $(data).find('img1').text();
+				var image_data1 = $(data).find('img1').text();
+				var image_data2 = $(data).find('img2').text();
+				var image_data3 = $(data).find('img3').text();
+				var image_data4 = $(data).find('img4').text();
+				g_captcha = $(data).find('code').text();
+				
+				var captcha_pattern = "";
+				$("#captcha_pattern").empty();
+				
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data4 + ")'></div>";
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data3 + ")'></div>";
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data2 + ")'></div>";
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data1 + ")'></div>";
+				
+				$(captcha_pattern).appendTo("#captcha_pattern");
+				
+				$(".captcha").css("display","block");
+				
+				$("#main").css("height",420);
+			}
+			
+		}
+	});
+}
+
+function adjustUI(){
+	var logo_left = ($(document).width() - $("div#login_logo").width())/2;
+	$("div#login_logo").css("left", logo_left);	
+}
+
+function doOK(e) {
+	var captcha = $('input#captcha').val();
+	var user = "";
+	var pass = "";
+	var auth = "";
+	
+	if(g_captcha!=-1&&captcha!=g_captcha){
+		alert(m.getString('msg_error_captcha'));
+	}
+	else{
+		user = $('input#username').val();
+		pass = $('input#password').val();
+		auth = "Basic " + Base64.encode(user + ":" + pass);
+	}
+	
+	var client = new davlib.DavClient();
+	client.initialize();
+	
+	g_storage.set('openurl', this_url);	
+	
+	/*
+	//var enc = "crypt:6166393232616536393164633730316238643463326264313735363031393961:3d593c297c1c6539356237383035663530353462633939646666313138643561";
+	var enc = "";
+	g_storage.set('openurl', this_url);
+	
+	client.OAUTH(this_url, auth, enc, function(error, statusstring, content){		
+		
+		if(error==401){
+			
+			$('input#password').attr("value","");
+			
+			var the_left = parseInt($('div#login_logo').css("left"));
+			
+			for(var i=0; i<6; i++){
+				
+				var x = i%2;
+				var new_left = 0;
+				if(x==0)
+					new_left = the_left + i*5;
+				else if(x==1)
+					new_left = the_left - i*5;
+				
+				$('div#login_logo').animate({
+			    	left: new_left
+			  	}, 100, function(){
+			  		if(i=5)	
+			  			adjustUI();
+			  	});
+			}
+			
+		}
+		else{
+			$.cookie("TestAuth", content);
+			
+			setTimeout(function(){
+				window.location.reload(true);
+			}, 100);
+			
+		}
+	});
+	*/
+	
+	client.PROPFIND(this_url, auth, function(error, statusstring, content){		
+		if(error==401){
+			$('input#password').attr("value","");
+			
+			var the_left = parseInt($('div#login_logo').css("left"));
+			
+			for(var i=0; i<6; i++){
+				
+				var x = i%2;
+				var new_left = 0;
+				if(x==0)
+					new_left = the_left + i*5;
+				else if(x==1)
+					new_left = the_left - i*5;
+				
+				$('div#login_logo').animate({
+			    	left: new_left
+			  	}, 100, function(){
+			  		if(i=5)	
+			  			adjustUI();
+			  	});
+			}
+			
+		}
+		else{
+			setTimeout(function(){
+				window.location.reload(true);
+			}, 100);
+		}
+	});
+}
+
+function onKeyHandler(e){
+	if(e.keyCode==13)
+		doOK(e);
+}
+
+</script>
+</head>
+<body style='padding-top:20px;margin:0;background-color:#313131'>
+
+<table id="logo" width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody><tr height="128px">
+		<tr><td valign="middle" align="center"><div id="login_logo"></div></td></tr>		
+	</tr></tbody>
+</table>
+
+<table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody>
+		<tr>
+		<td valign="middle" align="center">
+			<div style="width:300px;height:88px;background-color:#595F62;padding-top:10px">
+				<div id="title1">Welcome.</div>
+				<div id="title2">Who’s coming home?</div>
+			</div>
+		</td>
+		</tr>
+		<tr height="7px"></tr>
+	</tbody>
+</table>
+
+<table width="100%" height="100%">
+	<tbody><tr>
+		<td valign="middle" align="center">
+		
+			<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
+				<tbody><tr>
+					<td align="left" background="" height="106" alt="">		
+						<div id="main" style="width:300px;height:385px;background-color:#595F62">
+							<table id="table_login" class="table_x" border="0" cellpadding="0" cellspacing="3">
+								<tbody>
+									<tr>
+										<td>
+											<label class="table_label_x" id="username">Username :</label>
+										</td>
+									</tr>
+									<tr height="5px"></tr>
+									<tr>
+					          			<td>
+					          				<input id="username" name="username" type="text" maxlength="20" autocapitalize="off">
+					          			</td>
+					          		</tr>
+					          		<tr style="height:10px"></tr>
+                                  	<tr> 
+                                    	<td>
+                                    		<label class="table_label_x" id="password">Password :</label>
+                                    	</td>
+                                  	</tr>
+					          		<tr height="5px"></tr>
+					          		<tr> 
+					            		<td>
+					            			<input id="password" name="password" type="password" maxlength="16" onkeydown="return onKeyHandler(event)">
+					            		</td>
+					          		</tr>
+					           		<tr style="height:10px"></tr>
+					          		<tr class="captcha" style="display:none">
+										<td>
+											<font color="white" size="4">
+												<label id="captcha">Random no. :</label>
+											</font>
+										</td>
+									</tr>
+									<tr class="captcha" height="5px" style="display:none"></tr>
+									<tr class="captcha" style="display:none">
+					          			<td>
+					          				<input id="captcha" name="captcha" type="text" autocapitalize="off" maxlength="4" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)">
+					          			</td>
+					          		</tr>
+					          		<tr class="captcha" height="5px" style="display:none"></tr>
+					          		<tr class="captcha" style="display:none">
+					          			<td>
+					          				<div id="captcha_pattern" class="unselectable" name="captcha_pattern" style="width:220px;height:40px;float:left" onclick="generateCaptcha()"></div>
+					          			</td>
+					          		</tr>
+					          		<tr style="height:10px"></tr>
+					          		<tr> 
+					          			<td colspan="2" align="center"><div id="ok" onClick="doOK();"></div></td>
+					        		</tr>
+					        	</tbody>
+					    	</table>
+				    	</div>
+					</td>
+				</tr></tbody>
+			</table>
+		
+		</td>
+	</tr></tbody>
+</table>
+
+</body>
+</html>

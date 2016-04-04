@@ -1,0 +1,9 @@
+#! /bin/sh
+
+make clean && make \
+	CC="i586-poky-linux-uclibc-gcc  -m32 -march=i586 --sysroot=/opt/clanton-tiny/1.4.2/sysroots/i586-poky-linux-uclibc" \
+	C++="i586-poky-linux-uclibc-gi++  -m32 -march=i586 --sysroot=/opt/clanton-tiny/1.4.2/sysroots/i586-poky-linux-uclibc" \
+	AR=i586-poky-linux-uclibc-ar \
+	RANLIB=i586-poky-linux-uclibc-ranlib
+	os=LINUX \
+	arch=i586

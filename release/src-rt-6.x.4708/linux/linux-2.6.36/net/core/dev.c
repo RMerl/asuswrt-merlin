@@ -96,6 +96,7 @@
 #include <linux/ethtool.h>
 #include <linux/notifier.h>
 #include <linux/skbuff.h>
+#include <linux/netfilter_ipv4.h>
 #include <net/net_namespace.h>
 #include <net/sock.h>
 #include <linux/rtnetlink.h>
@@ -2098,7 +2099,6 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
 				 struct netdev_queue *txq)
 {
 	spinlock_t *root_lock = qdisc_lock(q);
-	bool contended = qdisc_is_running(q);
 	int rc;
 
 	/*
@@ -2107,8 +2107,6 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
 	 * This permits __QDISC_STATE_RUNNING owner to get the lock more often
 	 * and dequeue packets faster.
 	 */
-	if (unlikely(contended))
-		spin_lock(&q->busylock);
 
 	spin_lock(root_lock);
 	if (unlikely(test_bit(__QDISC_STATE_DEACTIVATED, &q->state))) {
@@ -2124,30 +2122,20 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
 		if (!(dev->priv_flags & IFF_XMIT_DST_RELEASE))
 			skb_dst_force(skb);
 		__qdisc_update_bstats(q, skb->len);
-		if (sch_direct_xmit(skb, q, dev, txq, root_lock)) {
-			if (unlikely(contended)) {
-				spin_unlock(&q->busylock);
-				contended = false;
-			}
+		if (sch_direct_xmit(skb, q, dev, txq, root_lock))
 			__qdisc_run(q);
-		} else
+		else
 			qdisc_run_end(q);
 
 		rc = NET_XMIT_SUCCESS;
 	} else {
 		skb_dst_force(skb);
 		rc = qdisc_enqueue_root(skb, q);
-		if (qdisc_run_begin(q)) {
-			if (unlikely(contended)) {
-				spin_unlock(&q->busylock);
-				contended = false;
-			}
+		if (qdisc_run_begin(q))
 			__qdisc_run(q);
-		}
 	}
 	spin_unlock(root_lock);
-	if (unlikely(contended))
-		spin_unlock(&q->busylock);
+
 	return rc;
 }
 
@@ -2194,7 +2182,11 @@ int BCMFASTPATH_HOST dev_queue_xmit(struct sk_buff *skb)
 #ifdef CONFIG_NET_CLS_ACT
 	skb->tc_verd = SET_TC_AT(skb->tc_verd, AT_EGRESS);
 #endif
+#ifdef CONFIG_IP_NF_LFP
+	if (q->enqueue && !(skb->nfcache & NFC_LFP_ENABLE)) {
+#else
 	if (q->enqueue) {
+#endif
 		rc = __dev_xmit_skb(skb, q, dev, txq);
 		goto out;
 	}

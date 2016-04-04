@@ -10,6 +10,10 @@ menu "Broadcom HND network devices"
 	depends on PCI
 config HND
 	bool "Broadcom HND network device support"
+config RTAC87U
+	bool "RT-AC87U support"
+config RTAC88U
+	bool "RT-AC88U support"
 config ET
 	tristate "10/100 Ethernet support"
 	depends on HND
@@ -28,9 +32,6 @@ endchoice
 config BCM_CTF
 	tristate "BCMCTF support"
 	depends on HND
-config CTF_PPTP_L2TP
-	bool "CTF PPTP/L2TP support"
-	depends on BCM_CTF
 config BCM_FA
         bool "BCM HW Flow Accelerator support"
         depends on BCM_CTF

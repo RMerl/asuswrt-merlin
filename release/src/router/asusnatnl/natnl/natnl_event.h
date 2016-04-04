@@ -38,6 +38,7 @@ typedef enum natnl_event
 	NATNL_TNL_EVENT_UNREG_OK		= 60111,	/**< since v1.3.2.0  NATNL un-register device successfully */
 	NATNL_TNL_EVENT_UNREG_FAILED	= 60112,	/**< since v1.3.2.0  NATNL un-register device failed */
 	NATNL_TNL_EVENT_IDLE_TIMEOUT	= 60113,	/**< since v1.6.1.2  NATNL idle timeout */
+	NATNL_TNL_EVENT_DEADLOCK		= 60114,	/**< since v2.0.0.0  NATNL SDK deadlock. APP should restart the program. */
 	//NATNL_TNL_EVENT_CFG_UPDATE_OK	= 60113,	/**< since v1.3.3.0  NATNL un-register device successfully */
 	//NATNL_TNL_EVENT_CFG_UPDATE_FAILED= 60114	/**< since v1.3.3.0  NATNL un-register device failed */
 
@@ -371,6 +372,7 @@ typedef enum natnl_status_code
 	NATNL_SC_CONNECT_TO_SIP_TIMEOUT			= 60000013,	// SDK fails to connect to SIP server with connection timeout.
 	NATNL_SC_INSTANT_MSG_TOO_LONG			= 60000014,	// the instant message is too long. The maximum length is 1024 bytes.
 	NATNL_SC_UDT_CONNECT_FAILED				= 60000015,	// UDT connect failed.
+	NATNL_SC_SCTP_CONNECT_FAILED			= 60000016,	// SCTP connect failed.
 
 } natnl_status_code;
 

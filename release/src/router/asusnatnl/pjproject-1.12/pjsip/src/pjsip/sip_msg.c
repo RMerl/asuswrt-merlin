@@ -132,14 +132,15 @@ const pjsip_hdr_name_info_t pjsip_hdr_names[] =
     { "Route",		     5, NULL },   // PJSIP_H_ROUTE,
     { "Server",		     6, NULL },   // PJSIP_H_SERVER,
     { "Subject",	     7, "s" },    // PJSIP_H_SUBJECT,
-    { "Supported",	     9, "k" },    // PJSIP_H_SUPPORTED,
+	{ "Supported",	     9, "k" },    // PJSIP_H_SUPPORTED,
     { "Timestamp",	     9, NULL },   // PJSIP_H_TIMESTAMP,
-    { "To",		     2, "t" },    // PJSIP_H_TO,
-    { "Unsupported",	    11, NULL },   // PJSIP_H_UNSUPPORTED,
+	{ "To",		     2, "t" },    // PJSIP_H_TO,
+	{ "Unsupported",	    11, NULL },   // PJSIP_H_UNSUPPORTED,
     { "User-Agent",	    10, NULL },   // PJSIP_H_USER_AGENT,
     { "Via",		     3, "v" },    // PJSIP_H_VIA,
     { "Warning",	     7, NULL },   // PJSIP_H_WARNING,
-    { "WWW-Authenticate",   16, NULL },   // PJSIP_H_WWW_AUTHENTICATE,
+	{ "WWW-Authenticate",   16, NULL },   // PJSIP_H_WWW_AUTHENTICATE,
+	{ "Tnl-Supported",	    13, NULL },   // PJSIP_H_TNL_SUPPORTED,
 
     { "_Unknown-Header",    15, NULL },   // PJSIP_H_OTHER,
 };
@@ -1934,6 +1935,29 @@ PJ_DEF(pjsip_unsupported_hdr*) pjsip_unsupported_hdr_create(pj_pool_t *pool)
 {
     void *mem = pj_pool_alloc(pool, sizeof(pjsip_unsupported_hdr));
     return pjsip_unsupported_hdr_init(pool, mem);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Tnl-Supported header.
+ */
+PJ_DEF(pjsip_tnl_supported_hdr*) pjsip_tnl_supported_hdr_init( pj_pool_t *pool,
+							   void *mem )
+{
+    pjsip_tnl_supported_hdr *hdr = (pjsip_tnl_supported_hdr*) mem;
+    
+    PJ_UNUSED_ARG(pool);
+
+    init_hdr(hdr, PJSIP_H_TNL_SUPPORTED, &generic_array_hdr_vptr);
+    hdr->count = 0;
+    return hdr;
+}
+
+PJ_DEF(pjsip_tnl_supported_hdr*) pjsip_tnl_supported_hdr_create(pj_pool_t *pool)
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_tnl_supported_hdr));
+    return pjsip_tnl_supported_hdr_init(pool, mem);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

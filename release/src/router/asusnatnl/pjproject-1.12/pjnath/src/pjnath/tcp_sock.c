@@ -974,12 +974,16 @@ static pj_status_t tcp_on_send_pkt(pj_tcp_session *sess,
 
 	// check if the pkt is udptunnel control packet
 	// if true, prepare op_key and urgent flag
-	is_tnl_data = (pkt_len >= TCP_OR_UDP_TOTAL_HEADER_SIZE && 
-		((pj_uint16_t*)pkt)[0] == NATNL_UDT_HEADER_MAGIC && 
-		(pkt[TCP_SESS_MSG_TYPE_INDEX] == 5 || pkt[TCP_SESS_MSG_TYPE_INDEX] == 6));
+	status = pj_dtls_record_check((const pj_uint8_t*)pkt, pkt_len);
+	if (status == PJ_SUCCESS) // It is not a DTLS record, so should do another check.
+		is_tnl_data = PJ_TRUE;
+	else
+		is_tnl_data = (pkt_len >= TCP_OR_UDP_TOTAL_HEADER_SIZE && 
+			((pj_uint16_t*)pkt)[0] == NATNL_UDT_HEADER_MAGIC && 
+			(pkt[TCP_SESS_MSG_TYPE_INDEX] == 5 || pkt[TCP_SESS_MSG_TYPE_INDEX] == 6));
 
 	if (!is_tnl_data) { 
-			pj_ioqueue_op_key_t *op_key = (pj_ioqueue_op_key_t*)malloc(sizeof(pj_ioqueue_op_key_t));
+			pj_ioqueue_op_key_t *op_key = (pj_ioqueue_op_key_t*)pj_mem_alloc(sizeof(pj_ioqueue_op_key_t));
 			pj_ioqueue_op_key_init(op_key, sizeof(pj_ioqueue_op_key_t));
 			status = pj_activesock_send(*asock, op_key,
 				pkt, &len, PJ_IOQUEUE_URGENT_DATA);
@@ -1141,7 +1145,7 @@ static pj_status_t tcp_client_on_send_pkt(pj_tcp_session *sess,
 		(pkt[TCP_SESS_MSG_TYPE_INDEX] == 5 || pkt[TCP_SESS_MSG_TYPE_INDEX] == 6));
 	//dump_bin(pkt, len);
 	if (!is_tnl_data) { 
-		pj_ioqueue_op_key_t *op_key = (pj_ioqueue_op_key_t*)malloc(sizeof(pj_ioqueue_op_key_t));
+		pj_ioqueue_op_key_t *op_key = (pj_ioqueue_op_key_t*)pj_mem_alloc(sizeof(pj_ioqueue_op_key_t));
 		pj_ioqueue_op_key_init(op_key, sizeof(pj_ioqueue_op_key_t));
 		status = pj_activesock_send(*asock, op_key,
 			pkt, &len, PJ_IOQUEUE_URGENT_DATA);

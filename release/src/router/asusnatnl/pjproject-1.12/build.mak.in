@@ -12,7 +12,7 @@ export ac_prefix := @prefix@
 LIB_SUFFIX = $(TARGET_NAME).a
 
 # Determine which party libraries to use
-export APP_THIRD_PARTY_LIBS := -lresample-$(TARGET_NAME) -lmilenage-$(TARGET_NAME) -lsrtp-$(TARGET_NAME) -lbzip2-$(TARGET_NAME)
+export APP_THIRD_PARTY_LIBS := -lresample-$(TARGET_NAME) -lmilenage-$(TARGET_NAME) -lsrtp-$(TARGET_NAME) -lbzip2-$(TARGET_NAME) -lusrsctp-$(TARGET_NAME) -lumem-$(TARGET_NAME)
 export APP_THIRD_PARTY_EXT :=
 export APP_THIRD_PARTY_LIB_FILES = $(PJ_DIR)/third_party/lib/libresample-$(LIB_SUFFIX) $(PJ_DIR)/third_party/lib/libmilenage-$(LIB_SUFFIX) $(PJ_DIR)/third_party/lib/libsrtp-$(LIB_SUFFIX)
 

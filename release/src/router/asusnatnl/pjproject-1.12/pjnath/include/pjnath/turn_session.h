@@ -428,7 +428,10 @@ PJ_DECL(const char*) pj_turn_state_name(pj_turn_state_t state);
  * @param name		Optional name to identify this session in the log.
  * @param af		Address family of the client connection. Currently
  *			pj_AF_INET() and pj_AF_INET6() are supported.
- * @param conn_type	Connection type to the TURN server. 
+ * @param conn_type	Connection type to the TURN server.
+ * @param grp_lock	Optional group lock object to be used by this session.
+ * 			If this value is NULL, the session will create
+ * 			a group lock internally.
  * @param cb		Callback to receive events from the TURN session.
  * @param options	Option flags, currently this value must be zero.
  * @param user_data	Arbitrary application data to be associated with
@@ -443,6 +446,7 @@ PJ_DECL(pj_status_t) pj_turn_session_create(const pj_stun_config *cfg,
 					    const char *name,
 					    int af,
 					    pj_turn_tp_type conn_type,
+					    pj_grp_lock_t *grp_lock,
 					    const pj_turn_session_cb *cb,
 					    unsigned options,
 					    void *user_data,
@@ -517,6 +521,16 @@ PJ_DECL(pj_status_t) pj_turn_session_set_user_data(pj_turn_session *sess,
  * @return		The user/application data.
  */
 PJ_DECL(void*) pj_turn_session_get_user_data(pj_turn_session *sess);
+
+
+/**
+ * Get the group lock for this TURN session.
+ *
+ * @param sess		The TURN client session.
+ *
+ * @return	        The group lock.
+ */
+PJ_DECL(pj_grp_lock_t *) pj_turn_session_get_grp_lock(pj_turn_session *sess);
 
 
 /**

@@ -17,6 +17,7 @@
 #include "muc_txrx_stats.h"
 #include "qtn/qvsp_common.h"
 #include "qtn/shared_defs.h"
+#include "qtn/txbf_common.h"
 
 /* packed definitions for each compiler */
 #if defined(MUC_BUILD) || defined(DSP_BUILD) || defined(AUC_BUILD)
@@ -155,6 +156,7 @@ struct host_txdesc {
 #define IEEE80211_LOWGAIN_TXPOW_MIN	9
 
 #define IEEE80211_CHAN_SEC_SHIFT	4
+#define IEEE80211_24G_CHAN_SEC_SHIFT	1
 
 struct host_ioctl_hifinfo {
 	uint32_t	hi_mboxstart;			/* Start address for mbox */
@@ -323,13 +325,16 @@ struct qtn_baparams_args {
 #define IOCTL_DEV_SET_CHAN_POWER_TABLE	60	/* Set MuC power table */
 #define	IOCTL_DEV_ENABLE_VLAN		61	/* Set Global Vlan mode */
 #define	IOCTL_DEV_NODE_UPDATE		62	/* Update node information again after association */
-#define IOCTL_DEV_FWT_SW_SYNC		63	/* sync FWT timestamp base between Lhost and MUC */
+#define IOCTL_DEV_AIRTIME_CONTROL       63      /* control node tx airtime accumulation start|stop */
+#define IOCTL_DEV_SUSPEND_OFF_CHANNEL   64      /* suspend/resume all off-channel mechanisms globally */
+#define IOCTL_DEV_MU_GROUP_UPDATE	65	/* Update MU groups: nodes and qmats */
 
 #define IOCTL_DEV_CMD_MEMDBG_DUMP	1	/* Dump MuC memory */
 #define IOCTL_DEV_CMD_MEMDBG_DUMPCFG	2	/* Configuration for dumping MuC memory */
 #define IOCTL_DEV_CMD_MEMDBG_DUMPNODES	3	/* Configuration for dumping MuC nodes */
 #define IOCTL_DEV_CMD_SET_DRV_DBG	4	/* Set MUC debug message level*/
 #define IOCTL_DEV_CMD_GET_DRV_DBG	5	/* Get MUC debug message level*/
+#define IOCTL_DEV_CMD_RF_REG_DUMP	6	/* Dump Rfic6 write fegister */
 
 #define	IOCTL_DEVATTACH_DEVFLAG_MASK			0xFFFF0000
 #define	IOCTL_DEVATTACH_DEVFLAG_MASK_S			16
@@ -405,7 +410,7 @@ struct qtn_csa_info {
 	uint32_t	post_notification_tu;	/* post channel change notification */
 	uint32_t	freq_band;		/* freqency band info */
 	uint32_t	channel;		/* channel to switch to */
-
+	uint8_t		sta_dfs_strict_mode;
 #define QTN_CSA_STATUS_MUC_SCHEDULED		0x00000001
 #define QTN_CSA_STATUS_MUC_ERROR_SCHED		0x00000010
 #define QTN_CSA_STATUS_MUC_PRE			0x00000002
@@ -546,6 +551,18 @@ struct qtn_scs_scan_info {
 };
 
 #define QTN_SCS_MAX_OC_INFO	32
+struct qtn_scs_data_history {
+#define QTN_SCS_FILTER_WINDOW_SZ	5
+#define QTN_SCS_FILTER_MEDIAN_IDX	(QTN_SCS_FILTER_WINDOW_SZ / 2)
+	uint32_t idx;
+	uint32_t buffer[QTN_SCS_FILTER_WINDOW_SZ];
+};
+
+struct qtn_scs_stats_history {
+	struct qtn_scs_data_history lp_errs[QTN_SCS_MAX_OC_INFO];
+	struct qtn_scs_data_history sp_errs[QTN_SCS_MAX_OC_INFO];
+};
+
 struct qtn_scs_oc_info {
 	uint32_t	off_channel;
 	uint32_t	off_chan_bw_sel;
@@ -577,6 +594,7 @@ struct qtn_scs_info_set {
 	uint32_t	valid_index; /* 0 or 1 */
 	struct qtn_scs_info scs_info[2];
 	struct qtn_scs_scan_info scan_info[IEEE80211_CHAN_MAX];
+	struct qtn_scs_stats_history stats_history;
 };
 
 struct qtn_remain_chan_info {
@@ -702,12 +720,43 @@ struct qtn_ocac_info {
 	uint64_t		tsf_log[OCAC_TSF_LOG_NUM];	/* event tsf log, written by MuC */
 };
 
+enum bmps_state_e {
+	BMPS_STATE_OFF		= 0,		/* STA exits BMPS mode */
+	BMPS_STATE_WAKE		= 1,		/* in BMPS mode, and is fully powered on */
+						/* with PM set to 0 */
+	BMPS_STATE_SLEEP	= 2,		/* in BMPS mode, and is fully powered off */
+						/* with PM set to 1 */
+	BMPS_STATE_WAKE_TO_SLEEP	= 3,	/* in BMPS mode, and is transitting from */
+						/* power-on to power-off by sending Null frame */
+						/* with PM=1 to AP */
+	BMPS_STATE_LEAK_WINDOW	= 4,		/* in BMPS mode, and Null frame with PM=1 */
+						/* has been sent, TX path is paused, */
+						/* but RX patgh is still running to */
+						/* receive packets from leaky AP */
+	BMPS_STATE_SLEEP_TO_WAKE	= 5,	/* in BMPS mode, and is transitting from */
+						/* power-off to power-on by sending */
+						/* Null frame with PM=0 to AP */
+	BMPS_STATE_BEACON_SNOOP	= 6,		/* in BMPS mode, and RX chain is powered up */
+						/* to receive beacon */
+	BMPS_STATE_MAX		= BMPS_STATE_BEACON_SNOOP,
+};
+
+struct qtn_bmps_info {
+	uint32_t	null_txdesc_host;	/* null frame in virtual address */
+	uint32_t	null_txdesc_bus;	/* null frame in physical address */
+	uint16_t	null_frame_len;		/* the frame length of null */
+	uint16_t	tx_node_idx;		/* the node index that null frame to */
+	enum bmps_state_e	state;		/* shared BMPS status */
+};
+
 struct qtn_rf_rxgain_params
 {
-	uint8_t *gain_entry_tbl;
 	uint8_t lna_on_indx;
 	uint8_t max_gain_idx;
-	uint16_t cs_threshold_value;
+	int16_t cs_thresh_dbm;
+	int16_t cca_prim_dbm;
+	int16_t cca_sec_scs_off_dbm;
+	int16_t cca_sec_scs_on_dbm;
 };
 
 /* MuC fops requst */
@@ -760,6 +809,31 @@ enum qdrv_cmd_muc_memdbgcnf_s {
 #endif
 #define FOPS_FD_UBOOT_ENV		12
 
+#ifdef TOPAZ_RFIC6_PLATFORM
+#define LHOST_CAL_FILES         {       \
+        NULL,                           \
+        "/proc/bootcfg/bf_factor",      \
+        "/tmp/txpower.txt",             \
+        "/proc/bootcfg/txpower.cal",    \
+        "/proc/bootcfg/dc_iq.cal",      \
+        "/mnt/jffs2/mon.out",           \
+        "/mnt/jffs2/gmon.out",          \
+        "/mnt/jffs2/pecount.out",       \
+        "/proc/bootcfg/pdetector.cal",  \
+        "/mnt/jffs2/profile_ep_muc",    \
+        "/mnt/jffs2/profile_dcache_muc",\
+        "/mnt/jffs2/profile_iptr_muc",  \
+        "/proc/bootcfg/env",            \
+        "/etc/mtest",           \
+        "/proc/bootcfg/rx_iq.cal", \
+				"/mnt/jffs2/profile_iptr_auc",	\
+				"/proc/bootcfg/bf_factor_2g",	\
+				"/tmp/txpower_2g.txt",		\
+				"/proc/bootcfg/dc_iq_2g.cal",	\
+				"/proc/bootcfg/pdetector_2g.cal",\
+				"/tmp/bond_opt.txt",	         \
+}
+#else
 #define LHOST_CAL_FILES		{	\
 	NULL,				\
 	"/proc/bootcfg/bf_factor",	\
@@ -774,10 +848,11 @@ enum qdrv_cmd_muc_memdbgcnf_s {
 	"/mnt/jffs2/profile_dcache_muc",\
 	"/mnt/jffs2/profile_iptr_muc",	\
 	"/proc/bootcfg/env",		\
-	"/etc/mtest",			\
+  "/etc/mtest",           \
 	"/proc/bootcfg/rx_iq.cal",	\
 	"/mnt/jffs2/profile_iptr_auc",	\
 }
+#endif
 
 #define MUC_CAL_FILES		{	\
 	NULL,				\
@@ -909,6 +984,13 @@ struct lhost_txdesc
 
 #define MUC_RXSTATUS_DONE		0x1
 
+#define MUC_RXSTATUS_MIC_ERR		0x00000002
+#define MUC_RXSTATUS_MIC_ERR_S		1
+#define MUC_RXSTATUS_NCIDX		0x00000FFC
+#define MUC_RXSTATUS_NCIDX_S		2
+#define MUC_RXSTATUS_RXLEN		0xFFFF0000
+#define MUC_RXSTATUS_RXLEN_S		16
+
 struct qtn_link_margin_info {
 	uint32_t	mcs;
 	uint32_t	bw;
@@ -951,12 +1033,24 @@ struct qtn_mu_grp_args {
 	int32_t rank;
 };
 
-struct qtn_fwt_sw_params {
-	uint32_t muc_hz;
-	uint32_t muc_jiffies_base;
-	uint64_t *muc_fwt_ts_mirror;
-	uint64_t *muc_fwt_ts_mirror_bus;
-	uint64_t m2h_op;
+enum grp_op {
+	MU_GRP_NONE = 0,
+	MU_GRP_INST,
+	MU_GRP_DELE,
+};
+
+struct qtn_mu_group_update_args {
+	enum grp_op op;
+	struct upd_grp {
+		int grp_id;
+		unsigned int ap_devid;
+		uint8_t ap_macaddr[IEEE80211_ADDR_LEN];
+		struct upd_nodes {
+			int as_sta;
+			struct ieee80211_vht_mu_grp grp;
+			uint8_t macaddr[IEEE80211_ADDR_LEN];
+		} nodes[QTN_MU_NODES_PER_GROUP];
+	} groups[QTN_MU_QMAT_MAX_SLOTS];
 };
 
 #endif	// _LHOST_MUC_COMM_H

@@ -399,7 +399,10 @@ function validForm(){
 		return false;
 	}	
 
-	if (HTTPS_support && (document.form.http_enable[0].selected != true) && !validator.range(document.form.https_lanport, 1, 65535) && !tmo_support)
+
+	/*if (!validator.range(document.form.http_lanport, 1, 65535))
+		return false;*/
+	if (HTTPS_support && !validator.range(document.form.https_lanport, 1, 65535) && !tmo_support)
 		return false;
 		
 	if (document.form.misc_http_x[0].checked) {
@@ -414,8 +417,8 @@ function validForm(){
 		document.form.misc_httpsport_x.value = '<% nvram_get("misc_httpsport_x"); %>';
 	}	
 
-	if(document.form.sshd_enable[0].checked){
-		if (!validator.range(document.form.sshd_port, 0, 65535))
+	if(document.form.sshd_enable.value != 0){
+		if (!validator.range(document.form.sshd_port, 1, 65535))
 			return false;
 	}
 	else{
@@ -942,7 +945,7 @@ function clean_scorebar(obj){
 function check_sshd_enable(obj_value){
 	var state;
 
-	if (obj_value == 1)
+	if (obj_value != 0)
 		state = "";
 	else
 		state = "none";

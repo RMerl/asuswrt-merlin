@@ -52,6 +52,7 @@
 #ifdef HNDCTF
 #include <linux/if.h>
 #include <linux/if_vlan.h>
+#include <linux/if_pppox.h>
 #include <linux/in.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
@@ -125,8 +126,9 @@ ip_conntrack_is_ipc_allowed(struct sk_buff *skb, u_int32_t hooknum)
 		/* Add ipc entry if packet is received on ctf enabled interface
 		 * and the packet is not a defrag'd one.
 		 */
-		if (ctf_isenabled(kcih, dev) && (skb->len <= dev->mtu))
+		if (ctf_isenabled(kcih, dev) && (skb->len <= dev->mtu)) {
 			skb->nfcache |= NFC_CTF_ENABLED;
+		}
 	}
 
 	/* Add the cache entries only if the device has registered and
@@ -140,8 +142,8 @@ ip_conntrack_is_ipc_allowed(struct sk_buff *skb, u_int32_t hooknum)
 
 void
 ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
-                      struct nf_conn *ct, enum ip_conntrack_info ci,
-                      struct nf_conntrack_tuple *manip)
+		      struct nf_conn *ct, enum ip_conntrack_info ci,
+		      struct nf_conntrack_tuple *manip)
 {
 	ctf_ipc_t ipc_entry;
 	struct hh_cache *hh;
@@ -233,11 +235,11 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	rt = (struct rtable *)skb_dst(skb);
 
 	nud_flags = NUD_PERMANENT | NUD_REACHABLE | NUD_STALE | NUD_DELAY | NUD_PROBE;
-#ifdef CTF_PPPOE
+#if defined(CTF_PPPOE) || defined(CTF_PPTP) || defined(CTF_L2TP)
 	if ((skb_dst(skb) != NULL) && (skb_dst(skb)->dev != NULL) &&
 	    (skb_dst(skb)->dev->flags & IFF_POINTOPOINT))
 		nud_flags |= NUD_NOARP;
-#endif
+#endif /* CTF_PPPOE | CTF_PPTP | CTF_L2TP */
 
 	if ((rt == NULL) || (
 #ifdef CONFIG_IPV6
@@ -296,11 +298,145 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		ipc_entry.txif = (void *)vlan_dev_real_dev(skb_dst(skb)->dev);
 		ipc_entry.vid = vlan_dev_vlan_id(skb_dst(skb)->dev);
 		ipc_entry.action = ((vlan_dev_vlan_flags(skb_dst(skb)->dev) & 1) ?
-		                    CTF_ACTION_TAG : CTF_ACTION_UNTAG);
+				    CTF_ACTION_TAG : CTF_ACTION_UNTAG);
 	} else {
 		ipc_entry.txif = skb_dst(skb)->dev;
 		ipc_entry.action = CTF_ACTION_UNTAG;
 	}
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	if (((skb_dst(skb)->dev->flags & IFF_POINTOPOINT) || (skb->dev->flags & IFF_POINTOPOINT) )) {
+		int pppunit = 0;
+		struct net_device  *pppox_tx_dev=NULL;
+		ctf_ppp_t ctfppp;
+
+		/* For pppoe interfaces fill the session id and header add/del actions */
+		if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
+			/* Transmit interface and sid will be populated by pppoe module */
+			ipc_entry.ppp_ifp = skb_dst(skb)->dev;
+		} else if (skb->dev->flags & IFF_POINTOPOINT) {
+			ipc_entry.ppp_ifp = skb->dev;
+		} else{
+			ipc_entry.ppp_ifp = NULL;
+			ipc_entry.pppoe_sid = 0xffff;
+		}
+
+		if (ipc_entry.ppp_ifp){
+			struct net_device  *pppox_tx_dev=NULL;
+			ctf_ppp_t ctfppp;
+			if (ppp_get_conn_pkt_info(ipc_entry.ppp_ifp,&ctfppp)){
+				return;
+			}
+			else {
+				if(ctfppp.psk.pppox_protocol == PX_PROTO_OE){
+					goto PX_PROTO_PPPOE;
+				}
+#ifdef CTF_PPTP
+				else if (ctfppp.psk.pppox_protocol == PX_PROTO_PPTP){
+					struct pptp_opt *opt;
+					if (ctfppp.psk.po == NULL)
+						return;
+					opt=&ctfppp.psk.po->proto.pptp;
+					if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT){
+						ipc_entry.action |= CTF_ACTION_PPTP_ADD;
+
+						/* For PPTP, to get rt information*/
+						if ((manip != NULL) && (HOOK2MANIP(hooknum) == IP_NAT_MANIP_SRC)){
+							struct flowi fl = { .oif = 0,
+							    .nl_u = { .ip4_u =
+								      { .daddr = opt->dst_addr.sin_addr.s_addr,
+									.saddr = opt->src_addr.sin_addr.s_addr,
+									.tos = RT_TOS(0) } },
+							    .proto = IPPROTO_GRE };
+							if (ip_route_output_key(&init_net,&rt, &fl) ) {
+								return;
+							}
+							if (rt == NULL)
+								return;
+
+							if (skb_dst(skb)->hh == NULL) {
+								memcpy(ipc_entry.dhost.octet, rt->dst.neighbour->ha, ETH_ALEN);
+							}
+
+						}
+
+						pppox_tx_dev = rt->dst.dev;
+						memcpy(ipc_entry.shost.octet, rt->dst.dev->dev_addr, ETH_ALEN);
+						ctf_pptp_cache(kcih,
+							dst_metric(&rt->dst, RTAX_LOCK)&(1<<RTAX_MTU),
+							dst_metric(&rt->dst, RTAX_HOPLIMIT));
+					}
+					else{
+						ipc_entry.action |= CTF_ACTION_PPTP_DEL;
+					}
+
+					ipc_entry.pppox_opt = &ctfppp.psk.po->proto.pptp;
+				}
+#endif
+#ifdef CTF_L2TP
+				else if (ctfppp.psk.pppox_protocol == PX_PROTO_OL2TP){
+					struct l2tp_opt *opt;
+					if (ctfppp.psk.po == NULL)
+						return;
+					opt=&ctfppp.psk.po->proto.l2tp;
+					if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT){
+						ipc_entry.action |= CTF_ACTION_L2TP_ADD;
+
+						/* For PPTP, to get rt information*/
+						if ((manip != NULL) && (HOOK2MANIP(hooknum) == IP_NAT_MANIP_SRC)){
+							struct flowi fl = { .oif = 0,
+							    .nl_u = { .ip4_u =
+								      { .daddr = opt->inet.daddr,
+									.saddr = opt->inet.saddr,
+									.tos = RT_TOS(0) } },
+							    .proto = IPPROTO_UDP };
+							if (ip_route_output_key(&init_net,&rt, &fl) ) {
+								return;
+							}
+							if (rt == NULL)
+								return;
+
+							if (skb_dst(skb)->hh == NULL) {
+								memcpy(ipc_entry.dhost.octet, rt->dst.neighbour->ha, ETH_ALEN);
+							}
+						}
+
+						opt->inet.ttl = dst_metric(&rt->dst, RTAX_HOPLIMIT);
+						pppox_tx_dev = rt->dst.dev;
+						memcpy(ipc_entry.shost.octet, rt->dst.dev->dev_addr, ETH_ALEN);
+					}
+					else{
+						ipc_entry.action |= CTF_ACTION_L2TP_DEL;
+					}
+
+					ipc_entry.pppox_opt = &ctfppp.psk.po->proto.l2tp;
+				}
+#endif
+				else
+					return;
+
+				/* For vlan interfaces fill the vlan id and the tag/untag actions */
+				if(pppox_tx_dev){
+					if (pppox_tx_dev ->priv_flags & IFF_802_1Q_VLAN) {
+						ipc_entry.txif = (void *)vlan_dev_real_dev(pppox_tx_dev);
+						ipc_entry.vid = vlan_dev_vlan_id(pppox_tx_dev);
+						ipc_entry.action |= ((vlan_dev_vlan_flags(pppox_tx_dev) & 1) ?
+								     CTF_ACTION_TAG : CTF_ACTION_UNTAG);
+					} else {
+						ipc_entry.txif = pppox_tx_dev;
+						ipc_entry.action |= CTF_ACTION_UNTAG;
+					}
+				}
+			}
+		}
+	}
+
+	if (ipc_entry.action &
+		(CTF_ACTION_L2TP_ADD | CTF_ACTION_L2TP_DEL | CTF_ACTION_PPTP_ADD | CTF_ACTION_PPTP_DEL)) {
+		goto PX_PROTO_PPTP_L2TP;
+	}
+PX_PROTO_PPPOE:
+#endif /* CTF_PPTP | CTF_L2TP */
 
 #ifdef CTF_PPPOE
 	/* For pppoe interfaces fill the session id and header add/del actions */
@@ -315,6 +451,10 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		ipc_entry.pppoe_sid = *(uint16 *)&skb->ctf_pppoe_cb[2];
 		ipc_entry.ppp_ifp = skb->dev;
 	}
+#endif
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+PX_PROTO_PPTP_L2TP:
 #endif
 
 	if (((ipc_entry.tuple.proto == IPPROTO_TCP) && (kcih->ipc_suspend & CTF_SUSPEND_TCP_MASK)) ||
@@ -441,8 +581,9 @@ ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout)
 	if (!CTF_ENAB(kcih))
 		return (0);
 
-	if (!(ct->ctf_flags & CTF_FLAGS_CACHED))
+	if (!(ct->ctf_flags & CTF_FLAGS_CACHED)) {
 		return (0);
+	}
 
 	orig = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
 
@@ -558,7 +699,7 @@ EXPORT_SYMBOL(ip_conntrack_ipct_default_fwd_set);
 
 uint32
 ip_conntrack_ipct_resume(struct sk_buff *skb, u_int32_t hooknum,
-                      struct nf_conn *ct, enum ip_conntrack_info ci)
+			 struct nf_conn *ct, enum ip_conntrack_info ci)
 {
 	struct iphdr *iph;
 	struct tcphdr *tcph;
@@ -757,10 +898,10 @@ nf_ct_invert_tuple(struct nf_conntrack_tuple *inverse,
 {
 	memset(inverse, 0, sizeof(*inverse));
 
-	inverse->src.l3num = orig->src.l3num;
 	if (l3proto->invert_tuple(inverse, orig) == 0)
 		return false;
 
+	inverse->src.l3num = orig->src.l3num;
 	inverse->dst.dir = !orig->dst.dir;
 
 	inverse->dst.protonum = orig->dst.protonum;

@@ -2539,6 +2539,7 @@ void parseCloudInfo_forsize(char *parentherf)
         int fail = 0;
         FolderTmp_size=(CloudFile *)malloc(sizeof(struct node));
         memset(FolderTmp_size,0,sizeof(FolderTmp_size));
+        FolderTmp_size->next = NULL; //2016.2.25 by tina
         p = strtok(buf,split);
         int i=0;
         while(p != NULL && i <= 8)
@@ -2721,6 +2722,7 @@ int parseCloudInfo_tree(char *parentherf,int index)
         DEBUG("BUF:%s\n",buf);
         FolderTmp=(CloudFile *)malloc(sizeof(struct node));
         memset(FolderTmp,0,sizeof(FolderTmp));
+        FolderTmp->next = NULL; //2016.2.25 by tina
         p=strtok(buf,split);
         int i=0;
         //DEBUG("p:%s\n",p);
@@ -2868,8 +2870,8 @@ int parseCloudInfo_tree(char *parentherf,int index)
         else
         {
             free_CloudFile_item(FolderTmp);
-            fclose(fp);
-            return 912;
+            //fclose(fp); //2016.2.25 by tina
+            //return 912; //2016.2.25 by tina
         }
     }
     fclose(fp);

@@ -1,7 +1,7 @@
 /*SH1
 *******************************************************************************
 **                                                                           **
-**         Copyright (c) 2009 - 2014 Quantenna Communications Inc            **
+**         Copyright (c) 2009 - 2015 Quantenna Communications Inc            **
 **                                                                           **
 **  File        : qcsapi.h                                                   **
 **  Description :                                                            **
@@ -61,6 +61,7 @@ EH1*/
 #include <qtn/shared_defs.h>
 #include <qtn/qvsp_data.h>
 #include <qtn/wlan_ioctl.h>
+#include <qtn/qtn_wmm_ac.h>
 
 #include <common/ruby_pm.h>
 #include <common/uboot_header.h>
@@ -121,7 +122,6 @@ extern "C" {
 #define QCSAPI_RESTORE_FG_AP		0x00000004
 #define QCSAPI_RESTORE_FG_STA		0x00000008
 
-#define LOCAL_GET_CONFIG_SCRIPT			"/scripts/get_wifi_config"
 #define LOCAL_GET_PER_SSID_CONFIG_SCRIPT		"/scripts/get_per_ssid_config"
 #define LOCAL_UPDATE_PER_SSID_CONFIG_SCRIPT		"/scripts/update_per_ssid_config"
 
@@ -141,6 +141,16 @@ extern "C" {
 
 #define QCSAPI_RSSI_OR_SNR_FACTOR	10
 #define QCSAPI_RSSI_OR_SNR_NZERO_CORRECT_VALUE	5
+
+#define QCSAPI_BRCTL_IGMP_SNOOPING	"brctl igmpsnoop"
+#define QCSAPI_IGMP_SNOOPING_FILE_PATH	"/sys/class/net/"
+#define QCSAPI_IGMP_SNOOPING_STATE	"/bridge/igmp_snoop_state"
+#define QCSAPI_IGMP_SNOOPING_DISABLE	0
+#define QCSAPI_IGMP_SNOOPING_ENABLE	1
+
+#define MAX_BOOT_CAC_DURATION	2048
+
+#define DEFAULT_CORE_FILE_PATH		"/var/log/core/"
 
 /**
  * @defgroup APIOverview Overview and conventions
@@ -166,11 +176,6 @@ extern "C" {
 
 int local_wifi_get_rf_chipid(int *chipid);
 
-int local_get_parameter(const char *ifname,
-				const char *param_name,
-				char *param_value,
-				const size_t max_param_len,
-				const char *script_path);
 /**
  * \ingroup APIOverview
  */
@@ -197,8 +202,8 @@ int local_get_parameter(const char *ifname,
  *
  * After the parameter list, the return values are documented.
  *
- * \return Details of the return value (generally >= 0 indicates, success,
- * < 0 indicates failure). See the section @ref mysection4_1_4 "QCSAPI return values"
+ * \return Details of the return value (generally \>= 0 indicates success,
+ * \< 0 indicates failure). See the section @ref mysection4_1_4 "QCSAPI return values"
  * for details of the different return values.
  *
  * In addition to this, there may be extra documentation and references to
@@ -753,6 +758,16 @@ enum qcsapi_errno
 	 * <c>QCS API error 1052: Operation is not supported on this interface</c>
 	 */
 	qcsapi_iface_invalid = qcsapi_errno_base + 52,
+	/**
+	 * This error code is returned when the QCSAPI call is attempting to add too many
+	 * values to multi-configuration options. For example, if more than three radius
+	 * servers are added
+	 *
+	 * <c>call_qcsapi</c> printed error message:
+	 *
+	 * <c>QCS API error 1054: Exceeds the allowed multi-config limit</c>
+	 */
+	qcsapi_exceed_config_number = qcsapi_errno_base + 53,
 };
 
 /*
@@ -1055,6 +1070,15 @@ typedef enum {
 	qcsapi_GI_fixed,
 	qcsapi_stbc,
 	qcsapi_beamforming,
+	qcsapi_short_slot,
+	qcsapi_short_preamble,
+	qcsapi_rts_cts,
+	qcsapi_40M_only,
+	qcsapi_obss_coexist,
+	qcsapi_11g_protection,
+	qcsapi_11n_protection,
+	qcsapi_qlink,
+	qcsapi_sta_dfs_strict,
 	qcsapi_nosuch_option = 0
 } qcsapi_option_type;
 
@@ -1073,6 +1097,7 @@ typedef enum {
 	qcsapi_bandwidth,
 	qcsapi_spatial_stream,
 	qcsapi_interface_types,
+	qcsapi_rf_chip_verid,
 	qcsapi_nosuch_parameter = 0
 } qcsapi_board_parameter_type;
 
@@ -1087,13 +1112,12 @@ typedef enum {
 	QCSAPI_SERVICE_DHCP_CLIENT = 2,
 	QCSAPI_SERVICE_HTTPD = 3,
 	QCSAPI_SERVICE_MONITOR_TEMPERATURE = 4,
+	QCSAPI_SERVICE_QEVT = 5,
 	QCSAPI_NOSUCH_SERVICE = -1,
 } qcsapi_service_name;
 
 /**
  * \brief Enumeration used to map start_index in /etc/init.d/
- *
- * \sa qcsapi_service_start_index
  */
 typedef enum {
 	qcsapi_service_maui_start_index = 90,
@@ -1101,24 +1125,51 @@ typedef enum {
 	qcsapi_service_dhclient_start_index = 91,
 	qcsapi_service_httpd_start_index = 92,
 	qcsapi_service_monitor_temp_start_index = 70,
+	qcsapi_service_qevt_start_index = 41,
 	qcsapi_service_no_such_index = -1,
 } qcsapi_service_start_index;
 
 /**
  * \brief Enumeration used to find the service action
- *
- * \sa qcsapi_service_action
  */
 typedef enum {
 	QCSAPI_SERVICE_START = 0,
 	QCSAPI_SERVICE_STOP = 1,
 	QCSAPI_SERVICE_ENABLE = 2,
 	QCSAPI_SERVICE_DISABLE = 3,
+	QCSAPI_SERVICE_STATUS = 4,
 	QCSAPI_NOSUCH_ACTION = -1,
 } qcsapi_service_action;
 
 /**
- * Maximum number of bandwidths + 1
+ * \brief Enumeration used to identify the module to perform log actions on.
+ *
+ * This enumeration is used to specify which module to apply log level actions to.
+ *
+ * \sa qcsapi_set_log_level
+ * \sa qcsapi_get_log_level
+ */
+typedef enum {
+	/**
+	 * get/set the log level of wpa_supplicant
+	 */
+	QCSAPI_WPA_SUPPLICANT = 0,
+	/**
+	 * get/set the log level of hostapd
+	 */
+	QCSAPI_HOSTAPD = 1,
+	/**
+	 * get/set the log level of the Linux kernel
+	 */
+	QCSAPI_KERNEL = 2,
+	/**
+	 * placeholder - unknown module
+	 */
+	QCSAPI_NOSUCH_MODULE = -1,
+} qcsapi_log_module_name;
+
+/**
+ * Maximum number of bandwidths + 1.
  */
 #define MAX_NUM_OF_BANDWIDTHS  5
 
@@ -1148,10 +1199,6 @@ typedef enum
         /**
          * Placeholder - unknown bandwidth (indicates error).
          */
-
-	/**
-	 * Placeholder - unknown bandwidth (indicates error).
-	 */
 	qcsapi_nosuch_bw
 } qcsapi_bw;
 
@@ -1237,7 +1284,78 @@ typedef enum
 {
 	qcsapi_11nac_disable = 0,
 	qcsapi_11nac_enable = 1
-}qcsapi_11nac_stat;
+} qcsapi_11nac_stat;
+
+/**
+ * \brief This enumeration represents the preferred band to use on the device.
+ *
+ * This enumeration represents the band in use on the device.
+ *
+ * This enumeration is used to set the preferred bandwidth.
+ */
+
+typedef enum
+{
+	qcsapi_band_2_4ghz = 0,
+	qcsapi_band_5ghz = 1,
+	qcsapi_nosuch_band = 2
+}qcsapi_pref_band;
+
+/**
+ * \brief This enumeration represents the current RF Chip ID.
+ *
+ * This enumeration represents the Chip ID.
+ *
+ * This enumeration is used to get the current RF Chip ID.
+ */
+
+typedef enum
+{
+	qcsapi_rf_chipid_2_4ghz = 0,
+	qcsapi_rf_chipid_5ghz = 1,
+	qcsapi_rf_chipid_dual = 2,
+	qcsapi_nosuch_chipid = 3
+}qcsapi_rf_chip_id;
+
+/**
+ * \brief This enumeration represents the current Phy Mode.
+ *
+ * This enumeration represents the Phy Mode.
+ *
+ * This enumeration is used to get the current RF Phy Mode.
+ */
+
+typedef enum
+{
+	qcsapi_phy_mode_11b = 0,
+	qcsapi_phy_mode_11g = 1,
+	qcsapi_phy_mode_11ng = 2,
+	qcsapi_phy_mode_11ng40 = 3,
+	qcsapi_phy_mode_11a = 4,
+	qcsapi_phy_mode_11na = 5,
+	qcsapi_phy_mode_11na40 = 6,
+	qcsapi_phy_mode_11ac20 = 7,
+	qcsapi_phy_mode_11ac40 = 8,
+	qcsapi_phy_mode_11ac80Edgeplus = 9,
+	qcsapi_phy_mode_11ac80Cntrplus = 10,
+	qcsapi_phy_mode_11ac80Cntrminus = 11,
+	qcsapi_phy_mode_11ac80Edgeminus = 12,
+	qcsapi_nosuch_phymode = 13
+} qcsapi_phy_mode;
+
+/**
+ * \brief This enumeration represents the vco lock detect mode status.
+ *
+ * This enumeration represents the vco lock detect mode status.
+ *
+ * This enumeration is used to set/get vco lock detect mode stats.
+ */
+
+typedef enum
+{
+	qcsapi_vco_lock_detect_mode_disable = 0,
+	qcsapi_vco_lock_detect_mode_enable = 1
+} qcsapi_vco_lock_detect_mode_stat;
 
 /**
  * \brief This enumeration represents the state of the MAC address filtering.
@@ -1305,11 +1423,22 @@ typedef enum
 	 * This represents the live image partition - the partition that should be
 	 * upgraded.
 	 */
-	qcsapi_live_image = 0,
+	qcsapi_image_linux_live = 0,
+	qcsapi_live_image = qcsapi_image_linux_live,
 	/**
 	 * This represents the safety image partition - this should not be touched.
 	 */
-	qcsapi_safety_image,
+	qcsapi_image_linux_safety,
+	qcsapi_safety_image = qcsapi_image_linux_safety,
+	/**
+	 * This represents the live uboot image partition - the partition that should be
+	 * upgraded.
+	 */
+	qcsapi_image_uboot_live,
+	/**
+	 * This represents the safety uboot image partition - this should not be touched.
+	 */
+	qcsapi_image_uboot_safety,
 	/**
 	 * Placeholder - indicates an error.
 	 */
@@ -1397,6 +1526,10 @@ typedef enum
 	 */
 	qcsapi_wps_pbc_in_m1,
 	/**
+	 * The RF band of third party
+	 */
+	qcsapi_wps_third_party_band,
+	/**
 	 * Last configuration error of WPS registrar
 	 */
 	qcsapi_wps_last_config_error,
@@ -1421,37 +1554,61 @@ typedef enum
  */
 typedef enum {
 	/**
-	 * Command to bind VLAN to a wireless interface.
+	 * Set the VLAN ID of an interface
 	 */
-	e_qcsapi_vlan_bind,
+	e_qcsapi_vlan_add = 0x00000001,
 	/**
-	 * Command to unbind VLAN from a wireless interface.
+	 * Clear the VLAN ID of an interface
 	 */
-	e_qcsapi_vlan_unbind,
+	e_qcsapi_vlan_del = 0x00000002,
 	/**
-	* Enable passthrough for packets with a specified VLAN tag.
-	*/
-	e_qcsapi_vlan_passthru,
+	 * Set an default VLAN ID of an interface
+	 */
+	e_qcsapi_vlan_pvid = 0x00000004,
 	/**
-	* Disable passthrough for packets with a specified VLAN tag.
-	*/
-	e_qcsapi_vlan_unpassthru,
+	 * Set a VLAN mode of an interface
+	 */
+	e_qcsapi_vlan_mode = 0x00000008,
 	/**
-	* Enable 802.1X dynamic VLAN
-	*/
-	e_qcsapi_vlan_dynamic,
+	 * Set an interface as the VLAN access mode
+	 */
+	e_qcsapi_vlan_access = 0x00000010,
 	/**
-	* Disable 802.1X dynamic VLAN
-	*/
-	e_qcsapi_vlan_undynamic,
+	 * Set an interface as the VLAN trunk mode
+	 */
+	e_qcsapi_vlan_trunk = 0x00000020,
 	/**
-	* Enable VLAN functionality
-	*/
-	e_qcsapi_vlan_enable,
+	 * Set an interface as the VLAN hybrid mode
+	 */
+	e_qcsapi_vlan_hybrid = 0x00000040,
 	/**
-	* Disable VLAN functionality
-	*/
-	e_qcsapi_vlan_disable
+	 * Set the VLAN tag of an interface
+	 */
+	e_qcsapi_vlan_tag = 0x00000100,
+	/**
+	 * Clear the VLAN tag of an interface
+	 */
+	e_qcsapi_vlan_untag = 0x00000200,
+	/**
+	 * Enable 802.1X dynamic VLAN
+	 */
+	e_qcsapi_vlan_dynamic = 0x00000400,
+	/**
+	 * Disable 802.1X dynamic VLAN
+	 */
+	e_qcsapi_vlan_undynamic = 0x00000800,
+	/**
+	 * Enable VLAN functionality
+	 */
+	e_qcsapi_vlan_enable = 0x00001000,
+	/**
+	 * Disable VLAN functionality
+	 */
+	e_qcsapi_vlan_disable = 0x00002000,
+	/**
+	 * Reset all VLAN information
+	 */
+	e_qcsapi_vlan_reset = 0x00004000,
 } qcsapi_vlan_cmd;
 
 /**
@@ -1542,6 +1699,26 @@ typedef enum {
 } qcsapi_emac_switch;
 
 /**
+ * \brief Enumeration to control airtime accumulation
+ *
+ * \sa qcsapi_wifi_node_tx_airtime_accum_control
+ * \sa qcsapi_wifi_tx_airtime_accum_control
+ */
+typedef enum {
+	/**
+	 * start airtime accumulation
+	 */
+	qcsapi_accum_airtime_start = 1 << 0,
+
+	/**
+	 * stop airtime accumulation
+	 */
+	qcsapi_accum_airtime_stop = 1 << 1,
+
+}qcsapi_airtime_control;
+
+
+/**
  * Basic signed int array definition for internal consistency.
  */
 typedef int		qcsapi_int_a32[32];
@@ -1557,6 +1734,7 @@ typedef	uint64_t	qcsapi_unsigned_int64;
 #define MACFILTERINGMACFMT	"%02x:%02x:%02x:%02x:%02x:%02x"
 #define MAC_ADDR_SIZE		ETHER_ADDR_LEN
 #define MAC_ADDR_STRING_LENGTH	18
+#define MAC_ADDR_LIST_SIZE	8
 
 /**
  * \brief Convenience definition to represent a 6 byte MAC address.
@@ -1566,7 +1744,8 @@ typedef	uint64_t	qcsapi_unsigned_int64;
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a MAC address.
  */
-typedef uint8_t			qcsapi_mac_addr[ MAC_ADDR_SIZE ];
+typedef uint8_t		qcsapi_mac_addr[ MAC_ADDR_SIZE ];
+typedef uint8_t		qcsapi_mac_addr_list[ MAC_ADDR_LIST_SIZE * MAC_ADDR_SIZE ];
 
 #define QCSAPI_SSID_MAXLEN	(IW_ESSID_MAX_SIZE + 1)
 #define QCSAPI_SSID_MAXNUM	32
@@ -1580,6 +1759,9 @@ typedef uint8_t			qcsapi_mac_addr[ MAC_ADDR_SIZE ];
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 64 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_64bytes {
 	uint8_t data[64];
@@ -1592,6 +1774,9 @@ struct qcsapi_data_64bytes {
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 128 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_128bytes {
 	uint8_t data[128];
@@ -1604,6 +1789,9 @@ struct qcsapi_data_128bytes {
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 256 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_256bytes {
 	uint8_t data[256];
@@ -1616,6 +1804,9 @@ struct qcsapi_data_256bytes {
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 512 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_512bytes {
 	uint8_t data[512];
@@ -1628,6 +1819,9 @@ struct qcsapi_data_512bytes {
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 1024 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_1Kbytes {
 	uint8_t data[1024];
@@ -1640,6 +1834,9 @@ struct qcsapi_data_1Kbytes {
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 2048 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_2Kbytes {
 	uint8_t data[2048];
@@ -1652,6 +1849,9 @@ struct qcsapi_data_2Kbytes {
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 3072 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_3Kbytes {
 	uint8_t data[3072];
@@ -1664,10 +1864,75 @@ struct qcsapi_data_3Kbytes {
  *
  * \note This type should not be considered a string as embedded NULL bytes
  * are allowed as part of a 4096 byte array.
+ *
+ * \note This type is not RPC endian-safe and should not be used to
+ * pass integer values.
  */
 struct qcsapi_data_4Kbytes {
 	uint8_t data[4096];
 };
+
+
+/**
+ * \brief Convenience definition to represent a 32 integer array.
+ *
+ * Convenience definition to represent a 32 integer array.
+ *
+ * \note This type is RPC endian-safe and can be used to
+ * pass structures that are not pure byte sequences.
+ */
+struct qcsapi_int_array32 {
+	int32_t val[32];
+};
+
+/**
+ * \brief Convenience definition to represent a 128 integer array.
+ *
+ * Convenience definition to represent a 128 integer array.
+ *
+ * \note This type is RPC endian-safe and can be used to
+ * pass structures that are not pure byte sequences.
+ */
+struct qcsapi_int_array128 {
+	int32_t val[128];
+};
+
+/**
+ * \brief Convenience definition to represent a 256 integer array.
+ *
+ * Convenience definition to represent a 256 integer array.
+ *
+ * \note This type is RPC endian-safe and can be used to
+ * pass structures that are not pure byte sequences.
+ */
+struct qcsapi_int_array256 {
+	int32_t val[256];
+};
+
+/**
+ * \brief Convenience definition to represent a 768 integer array.
+ *
+ * Convenience definition to represent a 768 integer array.
+ *
+ * \note This type is RPC endian-safe and can be used to
+ * pass structures that are not pure byte sequences.
+ */
+struct qcsapi_int_array768 {
+	int32_t val[768];
+};
+
+/**
+ * \brief Convenience definition to represent a 1024 integer array.
+ *
+ * Convenience definition to represent a 1024 integer array.
+ *
+ * \note This type is RPC endian-safe and can be used to
+ * pass structures that are not pure byte sequences.
+ */
+struct qcsapi_int_array1024 {
+	int32_t val[1024];
+};
+
 
 /**
  * \anchor SSID_RULES
@@ -1773,7 +2038,23 @@ typedef char	string_512[ 513 ];
  * NULL terminating character.
  */
 typedef char	string_1024[ 1025 ];
-
+/**
+ * \brief Convenience definition for a string of size 2048.
+ *
+ * Convenience definition for a string of size 2048.
+ *
+ * This type can contain a string of maximum size 2048 bytes, plus the
+ * NULL terminating character.
+ */
+typedef char	string_2048[ 2049 ];
+/**
+ * \brief Convenience definition for a string of size 4096.
+ *
+ * Convenience definition for a string of size 4096.
+ *
+ * This type can contain a string of maximum size 4096 bytes, plus the
+ * NULL terminating character.
+ */
 typedef char	string_4096[ 4097 ];
 
 #define IEEE80211_PROTO_11B	0x00000001
@@ -1797,6 +2078,9 @@ typedef char	string_4096[ 4097 ];
 #define IEEE8021P_PRIORITY_ID7	7
 
 #define IEEE8021P_PRIORITY_NUM	8
+
+#define IEEE80211_QOS_MAP_DSCP_EXCEPT_MAX	21
+#define IEEE80211_QOS_MAP_MAX	255
 
 #define QCSAPI_WIFI_AC_MAP_SIZE	(64)
 
@@ -1882,6 +2166,10 @@ typedef struct qcsapi_ap_properties
 	 */
 	int			ap_channel;
 	/**
+	 * The max supported bandwidth of the AP.
+	 */
+	int			ap_bw;
+	/**
 	 * The RSSI of the AP, in the range [0 - 68].
 	 */
 	int			ap_RSSI;
@@ -1900,7 +2188,7 @@ typedef struct qcsapi_ap_properties
 	/**
 	 * The fastest data rate this AP is capable of sending
 	 */
-	int			ap_best_data_rate;
+	uint32_t		ap_best_data_rate;
 	/**
 	 * The capability of WPS.
 	 */
@@ -1913,6 +2201,18 @@ typedef struct qcsapi_ap_properties
 	 * QHop role (e.g. 0-None, 1-MBS, 2-RBS)
 	 */
 	int			ap_qhop_role;
+	/**
+	 * Beacon interval
+	 */
+	int			ap_beacon_interval;
+	/**
+	 * DTIM interval
+	 */
+	int			ap_dtim_interval;
+	/**
+	 * Operating mode is infrastructure(ess) or adhoc(ibss)
+	 */
+	int			ap_is_ess;
 } qcsapi_ap_properties;
 
 /**
@@ -1938,6 +2238,11 @@ typedef struct qcsapi_node_stats
 	 * The number of transmit discards to the node.
 	 */
         uint32_t	tx_discard;
+	/**
+	 * The number of dropped data packets failed to transmit through
+	 * wireless media for each traffic category(TC).
+	 */
+        uint32_t	tx_wifi_drop[WMM_AC_NUM];
 	/**
 	 * The number of transmit errors to the node.
 	 */
@@ -2041,6 +2346,16 @@ typedef struct _qcsapi_interface_stats
 	 * The number of discarded transmit packets on the interface.
 	 */
 	uint32_t tx_discard;
+	/**
+	 * The number of dropped data packets failed to transmit through
+	 * wireless media for each traffic category(TC).
+	 */
+        uint32_t	tx_wifi_drop[WMM_AC_NUM];
+	/**
+	 * The number of data packets transmitted through
+	 * wireless media for each traffic category(TC).
+	 */
+        uint32_t	tx_wifi_sent[WMM_AC_NUM];
 	/**
 	 * The number of transmit errors on the interface.
 	 */
@@ -2229,6 +2544,8 @@ typedef struct _qcsapi_mlme_stats
 	unsigned int diassoc;
 } qcsapi_mlme_stats;
 
+#define QCSAPI_MLME_STATS_MAX_MACS	128
+
 /**
  * \brief Structure containing the list of macs.
  *
@@ -2237,7 +2554,6 @@ typedef struct _qcsapi_mlme_stats
  *
  * \sa qcsapi_wifi_get_mlme_stats_macs_list
  */
-#define QCSAPI_MLME_STATS_MAX_MACS	128
 typedef struct _qcsapi_mlme_stats_macs {
 	/**
 	 * MAC addresses existing in mlme stats
@@ -2365,6 +2681,10 @@ typedef struct qcsapi_scs_ranking_rpt {
 	 * Number of times the channel was used
 	 */
 	uint32_t times[QCSAPI_SCS_REPORT_CHAN_NUM];
+	/**
+	 * Channel availability status
+	 */
+	uint8_t chan_avail_status[QCSAPI_SCS_REPORT_CHAN_NUM];
 } qcsapi_scs_ranking_rpt;
 
 /**
@@ -2446,10 +2766,11 @@ typedef struct qcsapi_scs_param_rpt {
 	uint32_t scs_signed_param_flag;
 } qcsapi_scs_param_rpt;
 
+#define QCSAPI_ASSOC_MAX_RECORDS	32
+
 /**
  * Used with API 'qcsapi_wifi_get_assoc_records'
  */
-#define QCSAPI_ASSOC_MAX_RECORDS	32
 typedef struct qcsapi_assoc_records {
 	/**
 	 * MAC addresses of remote nodes that have associated
@@ -2461,7 +2782,26 @@ typedef struct qcsapi_assoc_records {
 	uint32_t timestamp[QCSAPI_ASSOC_MAX_RECORDS];
 } qcsapi_assoc_records;
 
-/**@}*/
+
+/**
+ * Used with API 'qcsapi_wifi_node_get_tx_airtime'
+ */
+typedef struct _qcsapi_node_tx_airtime {
+	/**
+	 * MAC address of the node
+	 */
+	qcsapi_mac_addr addr;
+
+	/**
+	 * current instantaneous airtime
+	 */
+	uint32_t tx_airtime;
+
+	/**
+	 * cumulative airtime during the period from start to stop
+	 */
+	uint32_t tx_airtime_accum;
+}qcsapi_node_tx_airtime;
 
 
 #define TABLE_SIZE( TABLE )	(sizeof( TABLE ) / sizeof( (TABLE)[ 0 ] ))
@@ -2473,7 +2813,7 @@ typedef struct qcsapi_assoc_records {
 /* Channel 0 means channel auto */
 #define QCSAPI_ANY_CHANNEL	0
 #define QCSAPI_MIN_CHANNEL	1
-#define QCSAPI_MAX_CHANNEL	(IEEE80211_CHAN_MAX)
+#define QCSAPI_MAX_CHANNEL	IEEE80211_CHAN_MAX
 
 #define RESTORE_DEFAULT_CONFIG	"/scripts/restore_default_config"
 
@@ -2516,6 +2856,11 @@ typedef struct _qcsapi_csw_record {
 	 * \link ieee80211_csw_reason \endlink
 	 */
 	uint32_t reason[QCSAPI_CSW_MAX_RECORDS];
+	/**
+	 * The MAC address of the associated station which
+	 * required the AP to change channel via SCS mechanism.
+	 */
+	qcsapi_mac_addr csw_record_mac[QCSAPI_CSW_MAX_RECORDS];
 } qcsapi_csw_record;
 
 /**
@@ -2611,6 +2956,7 @@ typedef enum {
 	qcsapi_extender_verbose,
 	qcsapi_extender_roaming,
 	qcsapi_extender_bgscan_interval,
+	qcsapi_extender_mbs_rssi_margin,
 	qcsapi_extender_nosuch_param = 0
 } qcsapi_extender_type;
 
@@ -2689,186 +3035,254 @@ typedef enum {
 	qcsapi_interface_status_running,
 } qcsapi_interface_status_code;
 
+
 /**
- * request parameter for 11h and 11k measurement
+ * Basic measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_basic_s {
+	/**
+	 * offset to start measurement, based on microsecond
+	 */
+	uint16_t offset;
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+	/**
+	 * channel to execute the measurement, based on IEEEE channel number
+	 */
+	uint8_t channel;
+};
+
+/**
+ * CCA measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_cca_s {
+	/**
+	 * offset to start measurement, based on microsecond
+	 */
+	uint16_t offset;
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+	/**
+	 * channel to execute the measurement, based on IEEEE channel number
+	 */
+	uint8_t channel;
+};
+
+/**
+ * RPI measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_rpi_s {
+	/**
+	 * offset to start measurement, based on microsecond
+	 */
+	uint16_t offset;
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+	/**
+	 * channel to execute the measurement, based on IEEEE channel number
+	 */
+	uint8_t channel;
+};
+
+/**
+ * Channel Load measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_chan_load_s {
+	/**
+	 * operating class, with channel and region to decide which frequency to execute
+	 */
+	uint8_t op_class;
+	/**
+	 * IEEE channel number, with operating class and region to decide which frequency to execute
+	 */
+	uint8_t channel;
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+};
+
+/**
+ * Noise histogram measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_noise_his_s {
+	/**
+	 * operating class, with channel and region to decide which frequency to execute
+	 */
+	uint8_t op_class;
+	/**
+	 * IEEE channel number, with operating class and region to decide which frequency to execute
+	 */
+	uint8_t channel;
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+};
+
+/**
+ * Beacon measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_beacon_s {
+	/**
+	 * operating class, with channel and region to decide which frequency to execute
+	 */
+	uint8_t op_class;
+	/**
+	 * IEEE channel number, with operating class and region to decide which frequency to execute
+	 */
+	uint8_t channel;
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+	/**
+	 * beacon measurement mode, 0 passive, 1 active, 2 table
+	 */
+	uint8_t mode;
+	/**
+	 * specified bssid for beacon measurement
+	 */
+	uint8_t bssid[6];
+};
+
+/**
+ * Frame measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_frame_s {
+	/**
+	 * operating class, with channel and region to decide which frequency to execute
+	 */
+	uint8_t op_class;
+	/**
+	 * IEEE channel number, with operating class and region to decide which frequency to execute
+	 */
+	uint8_t channel;
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+	/**
+	 * frame type, currently only frame count report(1) is supported
+	 */
+	uint8_t type;
+	/**
+	 * specified mac address for frame measurement
+	 */
+	uint8_t mac_address[6];
+};
+
+/**
+ * Transmit stream/category measurement parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_tran_steam_cat_s {
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+	/**
+	 * specified mac_address for measurement
+	 */
+	uint8_t peer_sta[6];
+	/**
+	 * traffic ID
+	 */
+	uint8_t tid;
+	/**
+	 * bin 0
+	 */
+	uint8_t bin0;
+};
+
+/**
+ * Multicast diagnostics report parameter
+ *
+ * \sa _qcsapi_measure_request_param
+ */
+struct qcsapi_measure_multicast_diag_s {
+	/**
+	 * duration to do the measurement, based on microsecond
+	 */
+	uint16_t duration;
+	/**
+	 * specified group mac_address for measurement
+	 */
+	uint8_t group_mac[6];
+};
+
+/**
+ * Request parameter union for 11h and 11k measurement
+ *
+ * \sa qcsapi_wifi_get_node_param
  */
 typedef union _qcsapi_measure_request_param {
 	/**
 	 * basic measurement paramter
 	 */
-	struct _basic {
-		/**
-		 * offset to start measurement, based on microsecond
-		 */
-		uint16_t offset;
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-		/**
-		 * channel to execute the measurement, based on IEEEE channel number
-		 */
-		uint8_t channel;
-	} basic;
+	struct qcsapi_measure_basic_s basic;
 	/**
 	 * CCA measurement paramter
 	 */
-	struct _cca {
-		/**
-		 * offset to start measurement, based on microsecond
-		 */
-		uint16_t offset;
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-		/**
-		 * channel to execute the measurement, based on IEEEE channel number
-		 */
-		uint8_t channel;
-	} cca;
+	struct qcsapi_measure_cca_s cca;
 	/**
 	 * RPI measurement paramter
 	 */
-	struct _rpi {
-		/**
-		 * offset to start measurement, based on microsecond
-		 */
-		uint16_t offset;
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-		/**
-		 * channel to execute the measurement, based on IEEEE channel number
-		 */
-		uint8_t channel;
-	} rpi;
+	struct qcsapi_measure_rpi_s rpi;
 	/**
 	 * Channel Load measurement paramter
 	 */
-	struct _chan_load {
-		/**
-		 * operating class, with channel and region to decide which frequency to execute
-		 */
-		uint8_t op_class;
-		/**
-		 * IEEE channel number, with operating class and region to decide which frequency to execute
-		 */
-		uint8_t channel;
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-	} chan_load;
+	struct qcsapi_measure_chan_load_s chan_load;
 	/**
 	 * Noise histogram measurement paramter
 	 */
-	struct _noise_his {
-		/**
-		 * operating class, with channel and region to decide which frequency to execute
-		 */
-		uint8_t op_class;
-		/**
-		 * IEEE channel number, with operating class and region to decide which frequency to execute
-		 */
-		uint8_t channel;
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-	} noise_his;
+	struct qcsapi_measure_noise_his_s noise_his;
 	/**
 	 * Beacon measurement paramter
 	 */
-	struct _beacon {
-		/**
-		 * operating class, with channel and region to decide which frequency to execute
-		 */
-		uint8_t op_class;
-		/**
-		 * IEEE channel number, with operating class and region to decide which frequency to execute
-		 */
-		uint8_t channel;
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-		/**
-		 * beacon measurement mode, 0 passive, 1 active, 2 table
-		 */
-		uint8_t mode;
-		/**
-		 * specified bssid for beacon measurement
-		 */
-		uint8_t bssid[6];
-	} beacon;
+	struct qcsapi_measure_beacon_s beacon;
 	/**
 	 * Frame measurement paramter
 	 */
-	struct _frame {
-		/**
-		 * operating class, with channel and region to decide which frequency to execute
-		 */
-		uint8_t op_class;
-		/**
-		 * IEEE channel number, with operating class and region to decide which frequency to execute
-		 */
-		uint8_t channel;
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-		/**
-		 * frame type, currently only frame count report(1) is supported
-		 */
-		uint8_t type;
-		/**
-		 * specified mac_address for frame measurement
-		 */
-		uint8_t mac_address[6];
-	} frame;
+	struct qcsapi_measure_frame_s frame;
 	/**
 	 * transmit stream/category measurement
 	 */
-	struct _tran_steam_cat {
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-		/**
-		 * specified mac_address for measurement
-		 */
-		uint8_t peer_sta[6];
-		/**
-		 * traffic ID
-		 */
-		uint8_t tid;
-		/**
-		 * bin 0
-		 */
-		uint8_t bin0;
-	} tran_stream_cat;
+	struct qcsapi_measure_tran_steam_cat_s tran_stream_cat;
 	/**
 	 * multicast diagnostics report
 	 */
-	struct _multicast_diag {
-		/**
-		 * duration to do the measurement, based on microsecond
-		 */
-		uint16_t duration;
-		/**
-		 * specified group mac_address for measurement
-		 */
-		uint8_t group_mac[6];
-	} multicast_diag;
+	struct qcsapi_measure_multicast_diag_s multicast_diag;
 } qcsapi_measure_request_param;
 
 
 /**
 * Neighbor report item
+*
+* \sa _qcsapi_measure_report_result
 */
-struct _neighbor_item {
+struct qcsapi_measure_neighbor_item_s {
 	uint8_t bssid[6];
 	uint32_t bssid_info;
 	uint8_t operating_class;
@@ -2877,20 +3291,135 @@ struct _neighbor_item {
 };
 
 /**
- * report parameter for 11h and 11k measurement
+ * Transmit power control report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_tpc_s {
+	int8_t link_margin;
+	int8_t tx_power;
+};
+
+/**
+ * Noise histogram measurement report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_noise_histogram_s {
+	uint8_t antenna_id;
+	uint8_t anpi;
+	uint8_t ipi[11];
+} ;
+
+/**
+ * Beacon measurement report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_beacon_s {
+	uint8_t rep_frame_info;
+	uint8_t rcpi;
+	uint8_t rsni;
+	uint8_t bssid[6];
+	uint8_t antenna_id;
+	uint32_t parent_tsf;
+};
+
+/**
+ * Frame measurement report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_frame_s {
+	uint32_t sub_ele_report;
+	uint8_t ta[6];
+	uint8_t bssid[6];
+	uint8_t phy_type;
+	uint8_t avg_rcpi;
+	uint8_t last_rsni;
+	uint8_t last_rcpi;
+	uint8_t antenna_id;
+	uint16_t frame_count;
+};
+
+/**
+ * Transmit stream/category report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_tran_stream_cat_s {
+	uint8_t reason;
+	uint32_t tran_msdu_cnt;
+	uint32_t msdu_discard_cnt;
+	uint32_t msdu_fail_cnt;
+	uint32_t msdu_mul_retry_cnt;
+	uint32_t qos_lost_cnt;
+	uint32_t avg_queue_delay;
+	uint32_t avg_tran_delay;
+	uint8_t bin0_range;
+	uint32_t bins[6];
+};
+
+/**
+ * Multicast diagnostics report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_multicast_diag_s {
+	uint8_t reason;
+	uint32_t mul_rec_msdu_cnt;
+	uint16_t first_seq_num;
+	uint16_t last_seq_num;
+	uint16_t mul_rate;
+};
+
+/**
+ * TPC measurement report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_tpc_report_s {
+	int8_t tx_power;
+	int8_t link_margin;
+};
+
+/**
+ * Link measurement report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_link_measure_s {
+	struct qcsapi_measure_rpt_tpc_report_s tpc_report;
+	uint8_t recv_antenna_id;
+	uint8_t tran_antenna_id;
+	uint8_t rcpi;
+	uint8_t rsni;
+};
+
+/**
+ * Neighbor measurement report
+ *
+ * \sa _qcsapi_measure_report_result
+ */
+struct qcsapi_measure_rpt_neighbor_report_s {
+	uint8_t item_num;
+	struct qcsapi_measure_neighbor_item_s items[3];
+};
+
+/**
+ * Report results for 11h and 11k measurement
+ *
+ * \sa qcsapi_wifi_get_node_param
  */
 typedef union _qcsapi_measure_report_result {
 	/**
-	 * common place to store results if no specified
+	 * Common place to store results if no specified
 	 */
 	int common[16];
 	/**
 	 * Transmit power control report
 	 */
-	struct _rpt_tpc {
-		int8_t link_margin;
-		int8_t tx_power;
-	} tpc;
+	struct qcsapi_measure_rpt_tpc_s tpc;
 	/**
 	 * Basic measurement report
 	 */
@@ -2910,82 +3439,124 @@ typedef union _qcsapi_measure_report_result {
 	/**
 	 * Noise histogram measurement report
 	 */
-	struct _rpt_noise_histogram {
-		uint8_t antenna_id;
-		uint8_t anpi;
-		uint8_t ipi[11];
-	} noise_histogram;
+	struct qcsapi_measure_rpt_noise_histogram_s noise_histogram;
 	/**
 	 * Beacon measurement report
 	 */
-	struct _rpt_beacon {
-		uint8_t rep_frame_info;
-		uint8_t rcpi;
-		uint8_t rsni;
-		uint8_t bssid[6];
-		uint8_t antenna_id;
-		uint32_t parent_tsf;
-	} beacon;
+	struct qcsapi_measure_rpt_beacon_s beacon;
 	/**
 	 * Frame measurement report
 	 */
-	struct _rpt_frame {
-		uint32_t sub_ele_report;
-		uint8_t ta[6];
-		uint8_t bssid[6];
-		uint8_t phy_type;
-		uint8_t avg_rcpi;
-		uint8_t last_rsni;
-		uint8_t last_rcpi;
-		uint8_t antenna_id;
-		uint16_t frame_count;
-	} frame;
+	struct qcsapi_measure_rpt_frame_s frame;
 	/**
 	 * Transmit stream/category report
 	 */
-	struct _rpt_tran_stream_cat {
-		uint8_t reason;
-		uint32_t tran_msdu_cnt;
-		uint32_t msdu_discard_cnt;
-		uint32_t msdu_fail_cnt;
-		uint32_t msdu_mul_retry_cnt;
-		uint32_t qos_lost_cnt;
-		uint32_t avg_queue_delay;
-		uint32_t avg_tran_delay;
-		uint8_t bin0_range;
-		uint32_t bins[6];
-	} tran_stream_cat;
+	struct qcsapi_measure_rpt_tran_stream_cat_s tran_stream_cat;
 	/**
 	 * Multicast diagnostics report
 	 */
-	struct _rpt_multicast_diag {
-		uint8_t reason;
-		uint32_t mul_rec_msdu_cnt;
-		uint16_t first_seq_num;
-		uint16_t last_seq_num;
-		uint16_t mul_rate;
-	} multicast_diag;
+	struct qcsapi_measure_rpt_multicast_diag_s multicast_diag;
 	/**
 	 * Link measurement
 	 */
-	struct _rpt_link_measure {
-		struct _rpt_tpc_report {
-			int8_t tx_power;
-			int8_t link_margin;
-		} tpc_report;
-		uint8_t recv_antenna_id;
-		uint8_t tran_antenna_id;
-		uint8_t rcpi;
-		uint8_t rsni;
-	} link_measure;
+	struct qcsapi_measure_rpt_link_measure_s link_measure;
 	/**
 	 * Neighbor report
 	 */
-	struct _rpt_neighbor_report {
-		uint8_t item_num;
-		struct _neighbor_item items[3];
-	} neighbor_report;
+	struct qcsapi_measure_rpt_neighbor_report_s neighbor_report;
 } qcsapi_measure_report_result;
+
+
+/**
+ * The maximum number of MAC addresses within the qcsapi_mac_list
+ * structure.
+ *
+ * \sa qcsapi_mac_list
+ * \sa qcsapi_get_client_mac_list
+ */
+#define QCSAPI_MAX_MACS_IN_LIST		200
+#define QCSAPI_MAX_MACS_SIZE		1200 //QCSAPI_MAX_MACS_IN_LIST * MAC_ADDR_SIZE
+
+/**
+ * Structure to contain the results for a call to qcsapi_get_client_mac_list
+ *
+ * \sa qcsapi_get_client_mac_list
+ */
+struct qcsapi_mac_list {
+	/**
+	 * Flags for the resulting list returned.
+	 *
+	 * \li 0x1 - The returned addresses are behind a four address node.
+	 * \li 0x2 - The returned address list is truncated.
+	 */
+	uint32_t flags;
+	/**
+	 * The number of entries returned in the MAC address array.
+	 */
+	uint32_t num_entries;
+	/**
+	 * The array of MAC addresses behind the node.
+	 */
+	uint8_t macaddr[QCSAPI_MAX_MACS_SIZE];
+};
+
+#define QCSAPI_NUM_ANT 5
+struct qcsapi_sample_assoc_data {
+	qcsapi_mac_addr mac_addr;
+	uint8_t assoc_id;
+	uint8_t bw;
+	uint8_t tx_stream;
+	uint8_t rx_stream;
+	uint32_t time_associated;	/*Unit: seconds*/
+	uint32_t achievable_tx_phy_rate;
+	uint32_t achievable_rx_phy_rate;
+	uint32_t rx_packets;
+	uint32_t tx_packets;
+	uint32_t rx_errors;
+	uint32_t tx_errors;
+	uint32_t rx_dropped;
+	uint32_t tx_dropped;
+	uint32_t tx_wifi_drop[WMM_AC_NUM];
+	uint32_t rx_ucast;
+	uint32_t tx_ucast;
+	uint32_t rx_mcast;
+	uint32_t tx_mcast;
+	uint32_t rx_bcast;
+	uint32_t tx_bcast;
+	uint16_t link_quality;
+	uint32_t ip_addr;
+	uint64_t rx_bytes;
+	uint64_t tx_bytes;
+	uint32_t last_rssi_dbm[QCSAPI_NUM_ANT];
+	uint32_t last_rcpi_dbm[QCSAPI_NUM_ANT];
+	uint32_t last_evm_dbm[QCSAPI_NUM_ANT];
+	uint32_t last_hw_noise[QCSAPI_NUM_ANT];
+	uint8_t protocol;
+	uint8_t vendor;
+}__packed;
+
+/**
+ * per-interface VLAN configuration.\n
+ * The definition must be in sync with 'struct qtn_vlan_config' in include/qtn/qtn_vlan.h
+ */
+typedef struct _qcsapi_vlan_config {
+	/**
+	 *  VLAN mode: Access, Trunk, Hybrid, Dynamic or Disabled
+	 */
+        uint32_t	vlan_cfg;
+	/**
+	 * VLAN member bitmap -- indicate to which VLANs the interface belongs\n
+	 * Bit X set to 1 in the bitmap indicates the interfaces belongs to VLAN 'X'
+	 */
+	uint32_t	member_bitmap[4096 / 32];
+	/**
+	 * VLAN tagging bitmap -- indicate on which VLANs should packets be sent with tags on\n
+	 * Bit X set to 1 in the bitmap indicates VLAN 'X' packets are sent with tags on
+	 */
+	uint32_t	tag_bitmap[4096 / 32];
+} qcsapi_vlan_config;
+
+/**@}*/
 
 /* parameter-specific */
 
@@ -3086,7 +3657,7 @@ extern int      qcsapi_get_service_action_enum(const char * lookup_action, qcsap
  *
  * \callqcsapi
  *
- * <c>call_qcsapi service_control  <service_name> <start/stop/enable/disable> </c>
+ * <c>call_qcsapi service_control \<service_name\> \<start/stop/enable/disable\> </c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -3103,7 +3674,7 @@ extern int      qcsapi_service_control(qcsapi_service_name service, qcsapi_servi
  *
  * \callqcsapi
  *
- * <c>call_qcsapi wfa_cert <1|0> </c>
+ * <c>call_qcsapi wfa_cert \<1|0\> </c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -3561,7 +4132,7 @@ extern int	qcsapi_wifi_get_scs_dfs_reentry_request(const char *ifname, qcsapi_un
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_start_dfs_s_radio.
+ * \note This API is deprecated and replaced with qcsapi_wifi_start_dfs_s_radio.
  */
 extern int qcsapi_wifi_start_ocac(const char *ifname, uint16_t channel);
 
@@ -3580,7 +4151,7 @@ extern int qcsapi_wifi_start_ocac(const char *ifname, uint16_t channel);
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_stop_dfs_s_radio.
+ * \note This API is deprecated and replaced with qcsapi_wifi_stop_dfs_s_radio.
  */
 extern int qcsapi_wifi_stop_ocac(const char *ifname);
 
@@ -3600,7 +4171,7 @@ extern int qcsapi_wifi_stop_ocac(const char *ifname);
  *
  * The output will be the word "Disabled" or "Enabled" unless an error occurs.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_get_dfs_s_radio_status.
+ * \note This API is deprecated and replaced with qcsapi_wifi_get_dfs_s_radio_status.
  */
 extern int	qcsapi_wifi_get_ocac_status(const char *ifname, qcsapi_unsigned_int *status);
 
@@ -3623,7 +4194,7 @@ extern int	qcsapi_wifi_get_ocac_status(const char *ifname, qcsapi_unsigned_int *
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_dwell_time.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_dwell_time.
  */
 extern int	qcsapi_wifi_set_ocac_dwell_time(const char *ifname, uint16_t dwell_time);
 
@@ -3646,7 +4217,7 @@ extern int	qcsapi_wifi_set_ocac_dwell_time(const char *ifname, uint16_t dwell_ti
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_duration.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_duration.
  */
 extern int	qcsapi_wifi_set_ocac_duration(const char *ifname, uint16_t duration);
 
@@ -3668,7 +4239,7 @@ extern int	qcsapi_wifi_set_ocac_duration(const char *ifname, uint16_t duration);
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_cac_time.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_cac_time.
  */
 extern int	qcsapi_wifi_set_ocac_cac_time(const char *ifname, uint16_t cac_time);
 
@@ -3690,7 +4261,7 @@ extern int	qcsapi_wifi_set_ocac_cac_time(const char *ifname, uint16_t cac_time);
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_report_only.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_report_only.
  */
 extern int	qcsapi_wifi_set_ocac_report_only(const char *ifname, uint16_t enable);
 
@@ -3723,7 +4294,7 @@ extern int	qcsapi_wifi_set_ocac_report_only(const char *ifname, uint16_t enable)
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_thrshld.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_dfs_s_radio_thrshld.
  */
 extern int	qcsapi_wifi_set_ocac_thrshld(const char *ifname,
 					    const char *param_name,
@@ -3906,6 +4477,27 @@ extern int	qcsapi_wifi_set_dfs_s_radio_wea_cac_time(const char *ifname, uint32_t
 
 /**
  * \internal
+ * \brief Set the dwell time on off-channel for a weather channel.
+ *
+ * API sets the dwell time for a specified weather channel, ie. the duration on
+ * off channel within a beacon interval.
+ * Unit is in milliseconds.
+ *
+ * \param ifname \wifi0
+ * \param dwell_time Dwell time on the specified weather channel in a beacon interval.
+ *
+ * \return 0 on success or negative values on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_dfs_s_radio_wea_dwell_time \<WiFi interface\> &lt;dwelltime&gt;</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_wifi_set_dfs_s_radio_wea_dwell_time(const char *ifname, uint16_t dwell_time);
+
+/**
+ * \internal
  * \brief Set the DFS seamless entry report only mode.
  *
  * API sets the DFS seamless entry as report only mode, that means, don't switch channel
@@ -3956,6 +4548,25 @@ extern int	qcsapi_wifi_set_dfs_s_radio_report_only(const char *ifname, uint16_t 
 extern int	qcsapi_wifi_set_dfs_s_radio_thrshld(const char *ifname,
 					    const char *param_name,
 					    uint16_t threshold);
+
+/**
+ * \internal
+ * \brief Set channel metric margin for SCS channel ranking to switch from DFS-channel to Non-DFS-channel
+ *
+ * This API controls the channel metric margin SCS used for channel ranking to switch from DFS-channel to Non-DFS-channel
+ *
+ * \param ifname \wifi0
+ * \param leavedfs_chan_mtrc_mrgn value that indicates the channel metric margin.
+ *
+ * \return 0 on success or negative values on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_scs_leavedfs_chan_mtrc_mrgn \<WiFi interface\> &lt;leavedfs_chan_mtrc_mrgn&gt;</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_wifi_set_scs_leavedfs_chan_mtrc_mrgn(const char *ifname, uint8_t leavedfs_chan_mtrc_mrgn);
 
 /**@}*/
 
@@ -4305,6 +4916,127 @@ extern int qcsapi_set_soc_mac_addr(const char *ifname, const qcsapi_mac_addr soc
  */
 extern int qcsapi_get_custom_value(const char *custom_key, string_128 custom_value);
 
+/**
+ * @brief Set a custom value.
+ *
+ * This API sets the value of a custom key contained in a file named <c>/etc/custom/<i>key</i></c>.
+ *
+ * \note The filename must not have the substring '..' as any part or the filename
+ * will be rejected as invalid.
+ *
+ * \param custom_key The custom key name
+ * \param custom_value A pointer to string to put into custom key file, which must be at most 128 bytes.
+ * Empty string could be used to delete existing key file.
+ *
+ * \return 0 if the custom key is valid and contians a valid value
+ * \return -qcsapi_configuration_error if the custom key has not been defined
+ * \return -qcsapi_configuration_error if the key includes the string ".."
+ * \return -qcsapi_configuration_error if the custom key value is an empty string
+ * and the key file doesn't exist.
+ * \return -qcsapi_configuration_error if the custom key value is longer than 128 bytes
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_custom_value \<key\> \<value\></c>
+ */
+extern int qcsapi_set_custom_value(const char *custom_key, const char *custom_value);
+
+/**
+ * \brief Get default BSS state.
+ *
+ * \note This API will always return 1 currently. It is a stub only.
+ *
+ * \param enable buffer to return the default state. 1: enabled, 0: disabled
+ * \sa qcsapi_wifi_get_vap_state
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_vap_default_state </c>
+ *
+ * Unless an error occurs, the output will be the default VAP state.
+ */
+extern int qcsapi_wifi_get_vap_default_state(int *enable);
+
+/**
+ * \brief Set default BSS state.
+ *
+ * \note This API will not currently set the default VAP state for the given API. It is a stub only.
+ *
+ * \param enable the default BSS state - 1: enabled, 0: disabled
+ * \sa qcsapi_wifi_set_vap_state
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_vap_default_state \<enable\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_vap_default_state(const int enable);
+
+/**
+ * \brief Get state for a specified BSS.
+ *
+ * \note This API will always return 1 currently. It is a stub only.
+ *
+ * \param ifname \wifiX
+ * \param enable buffer to return BSS state - 1: enabled 0: disabled
+ * \sa qcsapi_wifi_get_vap_default_state
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_vap_state \<wifi interface\></c>
+ *
+ * Unless an error occurs, the output will be the state for the given SSID.
+ */
+extern int qcsapi_wifi_get_vap_state(const char *ifname, int *enable);
+
+/**
+ * \brief Set state for a specified BSS.
+ *
+ * \note This API will not currently set the VAP state for the given API. It is a stub only.
+ *
+ * \param ifname \wifiX
+ * \param enable the BSS state - 1: enabled 0 disabled
+ * \sa qcsapi_wifi_set_vap_state
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_vap_state \<wifi interface\> \<enable\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_vap_state(const char *ifname, const int enable);
+
+/**
+ * \brief This API is used to get incremented keep alive counter value.
+ *
+ * \param ifname \wifi interface name
+ * \return >= 0 incremented keep alive counter value on success, < 0 on error.
+ * Unless an error occurs, the output will be incremented keep alive counter which is
+ * maintained in driver.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_ep_status \<wifi interface\> </c>
+ */
+extern int qcsapi_get_ep_status(const char *ifname, qcsapi_unsigned_int *ep_status);
+
 /**@}*/
 
 /**@addtogroup ParameterConfAPIs
@@ -4637,23 +5369,23 @@ extern int	qcsapi_interface_get_status( const char *ifname, char *interface_stat
 /**
  * @brief Set an interface IP address or netmask.
  *
- * Setup Ip address or netmask of the interfaces.
+ * Setup IP address or netmask of the interfaces.
  *
  * \param ifname
  * \param ipaddr|netmask
  * \param ip_val|netmask_val Value of ipaddress or netmask to set the interface.
  *
- * \return 0 if set the interface Ipaddress or netmask.
+ * \return 0 if set the interface IP address or netmask.
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_ip \<network interface\> <ipaddr|netmask> <ip_val|netmask_val></c>
+ * <c>call_qcsapi set_ip \<network interface\> { ipaddr \<ip_val\> | netmask \<netmask\> }</c>
  *
  * Output is complete message or an error message.
  *
- * To Set the Ip address of br0 interface, enter:
+ * To Set the IP address of br0 interface, enter:
  *
  * <c>call_qcsapi set_ip br0 ipaddr ip_val</c>
  */
@@ -4662,7 +5394,7 @@ extern int      qcsapi_interface_set_ip4( const char *ifname, const char *if_par
 /**
  * @brief Get an interface IP Address and netmask.
  *
- * Determine Ip address and netmask of the interface.
+ * Determine IP address and netmask of the interface.
  *
  * \param ifname
  * \param ipaddr/netmask return parameter to show the interface IP Aaddress or netmask.
@@ -4673,15 +5405,15 @@ extern int      qcsapi_interface_set_ip4( const char *ifname, const char *if_par
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_ip \<network interface\> <ipaddr|netmask></c>
+ * <c>call_qcsapi get_ip \<network interface\> { ipaddr | netmask }</c>
  *
- * Output is Ip Address or netmask of the interface  or an error message.
+ * Output is IP address or netmask of the interface, or an error message.
  *
  * To get netmask of br0 interface, enter:
  *
  * <c>call_qcsapi get_ip br0 netmask</c>
  *
- * To get the Ip address and netmask of bridge interface br0, enter:
+ * To get the IP address and netmask of bridge interface br0, enter:
  *
  * <c>call_qcsapi get_ip br0</c>
  */
@@ -4779,7 +5511,7 @@ extern int	qcsapi_interface_get_mac_addr( const char *ifname, qcsapi_mac_addr cu
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_mac_addr \<network device\> <mac address></c>
+ * <c>call_qcsapi set_mac_addr \<network device\> \<mac address\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
@@ -4817,56 +5549,7 @@ extern int	qcsapi_pm_get_counter(const char *ifname,
 				      qcsapi_counter_type qcsapi_counter,
 				      const char *pm_interval,
 				      qcsapi_unsigned_int *p_counter_value);
-/**@}*/
 
-/**@addtogroup PowerAPIs
- *@{*/
-
-/**
- * \brief enable/disable L1 state for the ASPM of PCIE.
- *
- * when enabling the L1 state, the latency time can be set with parameter(0 ~ 6) for L1 entry.
- * 0 - 1us
- * 1 - 2us
- * 2 - 4us
- * 3 - 8us
- * 4 - 16us
- * 5 - 32us
- * 6 - 64us
- *
- * \param enable 0/1
- * \param latency - time for L1 entry
- *
- * \return 0 if success.
- * \return A negative value if an error occurred.
- *
- * \callqcsapi
- *
- * <c>call_qcsapi set_aspm_l1 \<enable\> \<latency\></c>
- *
- * See @ref mysection4_1_4 "QCSAPI Return Values" for error codes and messages.
- */
-extern int	qcsapi_set_aspm_l1( int enable, int latency);
-
-/**
- * \brief enter/exit L1 state of PCIE link.
- *
- * \param enter 0/1
- *
- * \return 0 if success.
- * \return A negative value if an error occurred.
- *
- * \callqcsapi
- *
- * <c>call_qcsapi set_l1 \<enter\></c>
- *
- * See @ref mysection4_1_4 "QCSAPI Return Values" for error codes and messages.
- */
-extern int	qcsapi_set_l1( int enter );
-/**@}*/
-
-/**@addtogroup NetInterfaceAPIs
- *@{*/
 /**
  * \brief Get the Elapsed Time in the current PM Interval
  *
@@ -5014,9 +5697,138 @@ extern int	qcsapi_eth_dscp_map(qcsapi_eth_dscp_oper oper,
  */
 extern int qcsapi_get_eth_info(const char * ifname, const qcsapi_eth_info_type eth_info_type);
 
+/**
+ * @brief Get nodes or client MAC addresses behind the associated QTN node.
+ *
+ * For a Quantenna device running in four address mode, obtain the list of
+ * all device MAC addresses behind the bridge. This is possible due to the
+ * use of four address mode headers on Quantenna->Quantenna devices.
+ *
+ * \param ifname \wifi0
+ * \param index index of the associated node.
+ * \param mac_address_list buffer to store the returned MAC addresses.
+ *
+ * \return >=0 on success, <0 on error.
+ *
+ * The return buffer will contain a maximum of QCSAPI_MAX_MACS_IN_LIST MAC
+ * addresses as per the struct qcsapi_mac_list, along with the number of
+ * entries contained in the array. The flags field of the MAC address list
+ * structure indicates if the results are truncated.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_client_mac_list \<WiFi interface\> \<index\></c>
+ *
+ * Unless an error occurs, the output will contain either a single MAC
+ * address (for non-Quantenna three address nodes), or for four address
+ * capable nodes, output such as below:
+ *
+\code{.unparsed}
+
+quantenna # call_qcsapi get_client_mac_list wifi0 24
+Node supports 4 address
+        F0:1F:AF:2F:CE:B2
+        00:26:86:F0:3A:36
+        00:26:86:F0:39:62
+        00:19:E3:35:71:3D
+
+quantenna # show_assoc 24
+MAC                Idx  AID   Type Mode   Vendor   BW   Assoc   Auth   BA State   TDLS State        VAP PowerSaveSchemes
+00:26:86:f0:3a:36   24   12    sta   ac      qtn   80     525      1   00430043         none      wifi0                0
+
+\endcode
+</c>
+ *
+ * In the above example, the node with index 24 has four MAC addresses
+ * behind the wireless. Two are Ethernet based clients, the other two are
+ * the WiFi and Bridge MAC address of the Quantenna STA itself.
+ *
+ * \sa qcsapi_mac_list
+ * \sa QCSAPI_MAX_MACS_IN_LIST
+ */
+extern int qcsapi_get_client_mac_list(const char *ifname, int index,
+				      struct qcsapi_mac_list *mac_address_list);
+
+/**
+ * \brief Get IGMP snooping state
+ *
+ * Get the IGMP snooping state.
+ *
+ * \param ifname bridge interface (e.g.br0)
+ * \param igmp_snooping_state buffer to receive the returned state 1:enable 0:disabled
+ *
+ * \return 0 on success or negative value on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_igmp_snooping_state \<bridge interface\> \<igmp_snooping_state\> </c>
+ */
+extern int qcsapi_get_igmp_snooping_state(const char *ifname, uint32_t *igmp_snooping_state);
+
+/**
+ * \brief Set IGMP snoop state
+ *
+ * Set IGMP snooping state. IGMP snooping is enabled by default, but can be disabled
+ * if it is to be handled by an external process.
+ *
+ * \param ifname bridge interface (e.g. br0)
+ * \param igmp_snooping_state 1 to enable or 0 to disable
+ *
+ * \return 0 on success or negative values on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_igmp_snooping_state \<bridge interface\> { 1 | 0 } </c>
+ */
+extern int qcsapi_set_igmp_snooping_state(const char *ifname, uint32_t igmp_snooping_state);
+
 /**@}*/
 
+/**@addtogroup PowerAPIs
+ *@{*/
 
+/**
+ * \brief enable/disable L1 state for the ASPM of PCIE.
+ *
+ * when enabling the L1 state, the latency time can be set with parameter(0 ~ 6) for L1 entry.
+ * 0 - 1us
+ * 1 - 2us
+ * 2 - 4us
+ * 3 - 8us
+ * 4 - 16us
+ * 5 - 32us
+ * 6 - 64us
+ *
+ * \param enable 0/1
+ * \param latency - time for L1 entry
+ *
+ * \return 0 if success.
+ * \return A negative value if an error occurred.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_aspm_l1 \<enable\> \<latency\></c>
+ *
+ * See @ref mysection4_1_4 "QCSAPI Return Values" for error codes and messages.
+ */
+extern int	qcsapi_set_aspm_l1( int enable, int latency);
+
+/**
+ * \brief enter/exit L1 state of PCIE link.
+ *
+ * \param enter 0/1
+ *
+ * \return 0 if success.
+ * \return A negative value if an error occurred.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_l1 \<enter\></c>
+ *
+ * See @ref mysection4_1_4 "QCSAPI Return Values" for error codes and messages.
+ */
+extern int	qcsapi_set_l1( int enter );
+/**@}*/
 
 /**\addtogroup WiFiAPIs
  *@{*/
@@ -5131,7 +5943,7 @@ extern int	qcsapi_wifi_set_phy_mode( const char *ifname, const char *new_phy_mod
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
-extern int	qcsapi_wifi_reload_in_mode( const char *ifname, const qcsapi_wifi_mode new_wifi_mode );
+extern int      qcsapi_wifi_reload_in_mode( const char *ifname, const qcsapi_wifi_mode new_wifi_mode );
 
 /**
  * \brief Enable or disable Radio(RF).
@@ -5151,7 +5963,7 @@ extern int	qcsapi_wifi_reload_in_mode( const char *ifname, const qcsapi_wifi_mod
  *
  * \callqcsapi
  *
- * <c>call_qcsapi rfenable <0 | 1></c>
+ * <c>call_qcsapi rfenable \<0 | 1\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -5232,6 +6044,49 @@ extern int	qcsapi_wifi_get_bw( const char *ifname, qcsapi_unsigned_int *p_bw );
  * \sa qcsapi_wifi_set_vht
  */
 extern int	qcsapi_wifi_set_bw( const char *ifname, const qcsapi_unsigned_int bw );
+
+/**
+ * @brief Get the WiFi 2.4Ghz interface bandwidth (20MHz or 40MHz).
+ *
+ * Return the configured bandwidth, as specified in the 802.11b/g/ng standard, either 20 MHz or 40 MHz.
+ *
+ * Returned value is in MHz, either 20 or 40.  This API is only available on the primary WiFi interface.
+ *
+ * \param ifname \wifi0
+ * \param p_bw return parameter to contain the bandwidth the interface is working in (20 or 40)
+ *
+ * \return 0 on success.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_24g_bw \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the current bandwidth configuration, either 20 or 40.
+ */
+extern int qcsapi_wifi_get_24g_bw( const char *ifname, qcsapi_unsigned_int *p_bw );
+
+/**
+ * @brief Set the WiFi interface bandwidth.
+ *
+ * Use this API to set the bandwidth during system startup, before calling the Enable Interface API for the WiFi device.
+ *
+ * Bandwidth can be either 40MHz or 20MHz. This API is only available on the primary WiFi interface.
+ *
+ * If the bandwidth is set to 20MHz, any associations will have a bandwidth limited to 20 MHz.
+ * If the bandwidth is set to 40MHz, an association will default to a bandwidth of 40 MHz (if the peer supports this).
+ *
+ * \param ifname \wifi0
+ * \param bw the bandwith to set the device to.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_24g_bw \<WiFi interface\> \<40 | 20\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_24g_bw( const char *ifname, const qcsapi_unsigned_int bw );
 
 /**
  * \brief set vht
@@ -5324,6 +6179,26 @@ extern int	qcsapi_wifi_get_channel( const char *ifname, qcsapi_unsigned_int *p_c
 extern int	qcsapi_wifi_set_channel( const char *ifname, const qcsapi_unsigned_int new_channel );
 
 /**
+ * \brief Get the inactive channel list.
+ *
+ * \note \primarywifi
+ *
+ * \param ifname \wifi0 only
+ * \param buffer buffer to retrieve inactive channel list
+ *
+ * \return 0 if the channel list was retrieved.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_chan_pri_inactive \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the string of channel list with flag "auto" if it's an auto channel.
+ */
+extern int	qcsapi_wifi_get_chan_pri_inactive(const char *ifname, struct qcsapi_data_256bytes *buffer);
+
+/**
  * \brief Set the channel inactive flag of primary channel.
  *
  * Specify whether the channel can be used as primary channel or not.
@@ -5352,6 +6227,48 @@ extern int	qcsapi_wifi_set_channel( const char *ifname, const qcsapi_unsigned_in
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
 extern int	qcsapi_wifi_set_chan_pri_inactive( const char *ifname, const qcsapi_unsigned_int channel, const qcsapi_unsigned_int inactive);
+
+#define QCSAPI_CHAN_PRI_INACTIVE_AUTOCHAN  0x1
+
+/**
+ * \brief Set the channel inactive flag of primary channel.
+ *
+ * Specify whether the channel can be used as primary channel or not, and also pass control flags to kernel.
+ *
+ * \param ifname \wifi0
+ * \param channel the channel to change the inactive flag
+ * \param inactive the flag whether it can be used as primary channel or not
+ * \param option_flags the control flags .
+ *
+ * \return 0 if the channel number was returned.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * This API is only available on the primary WiFi interface.
+ *
+ * The channel must be between 1 and 255, and is further restricted by the 802.11
+ * standard.
+ *
+ * The inactive flag must be either 0 or 1.
+ *
+ * the option_flags is defined as below:
+ *        0x1 - auto channel selection only. If it is set, the primary channel inactive flag is valid
+ *              for auto channel selection only, it is invalid for manual channel configuration. If it
+ *              is not set, the inactive flag is valid for both auto and manual channel configuration.
+ *
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_chan_pri_inactive \<WiFi interface\> \<channel\> \<inactive\> \<option\></c>
+ *
+ * If inactive flag is not specified, default is 1.
+ * The option can be "autochan", and it is valid only when inactive flag is 1.
+ * The inactive flag must be present if option is present.
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_chan_pri_inactive_ext( const char *ifname,
+		const qcsapi_unsigned_int channel, const qcsapi_unsigned_int inactive, const uint32_t option_flags);
 
 /**
  * \brief Set the channel disabled/enabled.
@@ -5401,6 +6318,26 @@ extern int qcsapi_wifi_chan_control(const char *ifname, const struct qcsapi_data
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
 extern int qcsapi_wifi_get_chan_disabled(const char *ifname, struct qcsapi_data_256bytes *p_chans, uint8_t *p_cnt);
+
+/**
+ * \brief Get supported frequency bands.
+ *
+ * List the supported frequency bands for a given interface.
+ *
+ * \param ifname \wifi0
+ * \param p_chans a pointer to the buffer for storing array of channels.
+ *
+ * \return 0 if supported frequency band string would be returned.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_supported_freq_bands \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_get_supported_freq_bands(const char *ifname, string_32 p_bands);
 
 /**
  * \brief Get the beacon interval
@@ -5512,15 +6449,16 @@ extern int	qcsapi_wifi_set_dtim( const char *ifname, const qcsapi_unsigned_int n
 extern int	qcsapi_wifi_get_assoc_limit( const char *ifname, qcsapi_unsigned_int *p_assoc_limit );
 
 /**
- * \brief Get VAP association limit
+ * \brief Get VAP logical group's association limit
  *
- * This API retrieves the current VAP association limit on an interface and its priority.
- * The association limit is the minimum number of stations that can be associated to
- * this AP even if the device limit is not reached.
+ * This API retrieves the current VAP logical group association limit.
+ * The association limit is the maximum number of stations that can be associated to
+ * this VAP even if the device limit is not reached.
  *
- * \param ifname \wifiX
- * \param p_bss_lim_pri Address of variable for return result. Lowest 8 bits is the limit, next 8 bits
- * is the priority.
+ * \note \aponly
+ *
+ * \param group group number, between 1 and 31
+ * \param p_assoc_limit Address of variable for return result
  *
  * \return 0 if the command succeeded.
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
@@ -5528,21 +6466,25 @@ extern int	qcsapi_wifi_get_assoc_limit( const char *ifname, qcsapi_unsigned_int 
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_bss_assoc_limit \<WiFi interface\></c>
+ * <c>call_qcsapi get_bss_assoc_limit \<group\></c>
  *
- * The output will be the VAP association limit and priority of the interface, or 0 if
- * no limit has been configured using <c>qcsapi_wifi_set_bss_assoc_limit</c>.
+ * The output will be the VAPs logical group association limit of the interface, or an error
+ * message in case of failure.
  *
  * \sa qcsapi_wifi_get_assoc_limit
  */
-extern int	qcsapi_wifi_get_bss_assoc_limit( const char *ifname, qcsapi_unsigned_int *p_bss_lim_pri );
+extern int	qcsapi_wifi_get_bss_assoc_limit( qcsapi_unsigned_int group,
+						qcsapi_unsigned_int *p_assoc_limit );
 
 /**
  * \brief Set association limit
  *
  * This API sets the current association limit across all BSSes in the system.
  *
- * \note When the limit is changed, all devices will be disassociated and forced to reassociate.
+ * \note When the limit is changed, all the group assoc parameters configured through
+ * call_qcsapi set_bss_assoc_limit and call_qcsapi set_SSID_assoc_reserve commands will also
+ * be reset to new dev limit and 0 respectively. All devices will be disassociated
+ * and forced to reassociate.
  *
  * \note \aponly
  *
@@ -5564,16 +6506,18 @@ extern int	qcsapi_wifi_get_bss_assoc_limit( const char *ifname, qcsapi_unsigned_
 extern int	qcsapi_wifi_set_assoc_limit( const char *ifname, const qcsapi_unsigned_int new_assoc_limit );
 
 /**
- * \brief Set VAP association limit
+ * \brief Set the maximum number of associations allowed per logical group of VAPs.
  *
- * This API sets the current association limit for the interface.
+ * This API sets the maximum number of associations allowed across a logical group of interfaces.
  *
- * \note When the limit is changed, all devices will be disassociated and forced to reassociate.
+ * \note When the limit is changed, all devices associated to the group will be
+ *	disassociated and forced to reassociate.
  *
  * \note \aponly
  *
- * \param ifname \wifiX
- * \param bss_lim_pri Lowest 8-bits is the BSS limit, next 8 bits is the priority
+ * \param group is a group number, between 1 and 31
+ * \param limit is the maximum number of devices that are allowed to associate
+ *		with any WiFi interface in the logical group
  *
  * \return 0 if the command succeeded.
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
@@ -5581,13 +6525,110 @@ extern int	qcsapi_wifi_set_assoc_limit( const char *ifname, const qcsapi_unsigne
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_bss_assoc_limit \<WiFi interface\> \<limit\> \<priority\></c>
+ * <c>call_qcsapi set_bss_assoc_limit \<group\> \<limit\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
  * \sa qcsapi_wifi_set_assoc_limit
  */
-extern int	qcsapi_wifi_set_bss_assoc_limit( const char *ifname, const qcsapi_unsigned_int bss_lim_pri );
+extern int	qcsapi_wifi_set_bss_assoc_limit(const qcsapi_unsigned_int group,
+							const qcsapi_unsigned_int limit);
+
+/**
+ * \brief Assign VAP (SSID) to a logical group
+ *
+ * This API assigns an SSID to a logical group.
+ *
+ * \note \aponly
+ *
+ * \note Configuring this parameter, disassociates all associated devices
+ * and will force to reassociate.
+ *
+ * \param ifname \wifiX
+ * \param group group number, between 1 and 31
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_SSID_group_id \<WiFi interface\> \<group\>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_SSID_group_id(const char *ifname, const qcsapi_unsigned_int group);
+
+/**
+ * \brief Get VAP's (SSID) logical group id
+ *
+ * This API returns the SSID's logical group id.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifiX
+ * \param p_group Address of variable for result retrieval
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_SSID_group_id \<WiFi interface\>
+ *
+ * The output will be the VAP's logical group id, or an error message in case of failure.
+ */
+extern int qcsapi_wifi_get_SSID_group_id(const char *ifname, qcsapi_unsigned_int *p_group);
+
+/**
+ * \brief Reserve associations for a logical group
+ *
+ * This API reserves associations for a group.
+ *
+ * \note \aponly
+ *
+ * \note Configuring this parameter, disassociates all associated devices
+ * and will force to reassociate.
+ *
+ * \param group group number, between 1 and 31
+ * \param value number of reserved associations for a group
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_SSID_assoc_reserve \<group\> \<value\>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_SSID_assoc_reserve(const qcsapi_unsigned_int group,
+							const qcsapi_unsigned_int value);
+/**
+ * \brief Get number of associations reserved for a logical group
+ *
+ * This API gets the number of associations reserved for the group.
+ *
+ * \note \aponly
+ *
+ * \param group group number, between 1 and 31
+ * \param p_value address of variable for return result
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_SSID_assoc_reserve \<group\>
+ *
+ * The output will be the VAPs logical group reserved association value, or an error
+ * message in case of failure.
+ */
+extern int qcsapi_wifi_get_SSID_assoc_reserve(qcsapi_unsigned_int group,
+						qcsapi_unsigned_int *p_value);
 
 /**
  * \brief Get current BSSID
@@ -5603,7 +6644,7 @@ extern int	qcsapi_wifi_set_bss_assoc_limit( const char *ifname, const qcsapi_uns
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_BSSID <i>interface</i></c>
+ * <c>call_qcsapi get_BSSID \<WiFi interface\></c>
  *
  * The output will be a printout of the BSSID MAC address on success, or print an error message on failure.
  */
@@ -5624,7 +6665,7 @@ extern int	qcsapi_wifi_get_BSSID( const char *ifname, qcsapi_mac_addr current_BS
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_config_BSSID <i>interface</i></c>
+ * <c>call_qcsapi get_config_BSSID \<WiFi interface\></c>
  *
  * The output will be a printout of the BSSID MAC address on success, or print an error message on
  * failure.
@@ -5646,7 +6687,7 @@ extern int	qcsapi_wifi_get_config_BSSID( const char *ifname, qcsapi_mac_addr con
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_ssid_BSSID <i>interface</i> \<SSID name\></c>
+ * <c>call_qcsapi get_ssid_BSSID \<WiFi interface\> \<SSID name\></c>
 
  * The output will be a printout of the BSSID MAC address on success, or print an error message on
  * failure.
@@ -5672,7 +6713,7 @@ extern int	qcsapi_wifi_ssid_get_bssid(const char *ifname, const qcsapi_SSID ssid
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_ssid_BSSID <i>interface</i> \<SSID name\> \<BSSID MAC address\></c>
+ * <c>call_qcsapi set_ssid_BSSID \<WiFi interface\> \<SSID name\> \<BSSID MAC address\></c>
  */
 extern int	qcsapi_wifi_ssid_set_bssid(const char *ifname, const qcsapi_SSID ssid_str,
 		const qcsapi_mac_addr bssid);
@@ -5803,6 +6844,37 @@ extern int	qcsapi_wifi_get_IEEE_802_11_standard( const char *ifname, char *IEEE_
  * Unless an error occurs, the output will be the list of WiFi channels per the 802.11 standard.
  */
 extern int	qcsapi_wifi_get_list_channels( const char *ifname, string_1024 list_of_channels );
+
+/**
+ * @brief Get the list of supported channels for a STA.
+ *
+ * Get the list of supported channels with each value separated by commas.
+ *
+ * \note \primarywifi
+ * \note \aponly
+ *
+ * \warning This API does not respect regulatory requirements.
+ * Use <c>qcsapi_wifi_get_supp_chans</c> to get the list of supported channels for a STA.
+ *
+ * \param ifname \wifi0only
+ * \param mac_addr MAC address of an associated station
+ * \param list_of_channels buffer to contain the list of comma-separated channels
+ *
+ * \return 0 if the command succeeded
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_supp_chan \<WiFi interface\> \<MAC address\> </c>
+ *
+ * Unless an error occurs, the output will be the list of WiFi channels per the 802.11 standard.
+ *
+ * See @ref mysection5_1_1 "Format for a MAC address" for details of formatting MAC
+ * addresses.
+ */
+extern int qcsapi_wifi_get_supp_chans(const char *ifname, qcsapi_mac_addr mac_addr,
+		string_1024 list_of_channels);
 
 /**
  * \brief Get WiFi mode switch setting
@@ -5986,7 +7058,7 @@ extern int	qcsapi_wifi_associate(const char *ifname, const qcsapi_SSID join_ssid
  *
  * \callqcsapi
  *
- * <c>call_qcsapi start_cca <i>interface</i> <i>channel</i> <i>duration</i></c>
+ * <c>call_qcsapi start_cca \<WiFi interface\> <i>channel</i> <i>duration</i></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -6092,7 +7164,7 @@ extern int	qcsapi_get_primary_interface( char *ifname, size_t maxlen );
  *
  * For if_index = 0, this API will return the name of the primary interface.
  *
- * For if_index > 0, the API will return the corresponding secondary interface.
+ * For if_index \> 0, the API will return the corresponding secondary interface.
  *
  * If if_index exceeds the number of interfaces - 1, this API will return a range error indicating the index parameter is too large.
  *
@@ -6190,7 +7262,7 @@ extern int	qcsapi_interface_get_BSSID( const char *ifname, qcsapi_mac_addr curre
  *
  * Unless an error occurs, the output will be the set of possible rates supported by the interface.
  */
-extern int	qcsapi_wifi_get_rates( const char *ifname, qcsapi_rate_type rate_type, string_1024 supported_rates );
+extern int	qcsapi_wifi_get_rates( const char *ifname, qcsapi_rate_type rate_type, string_2048 supported_rates );
 
 /**
  * \brief Set rates from an MBPS list (unsupported)
@@ -6261,7 +7333,7 @@ extern int	qcsapi_set_max_bitrate(const char *ifname, const char *max_bitrate);
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_qos_param <i>interface</i> \<0|1|2|3\> <1|2|3|4|6> [<0|1>] </c>
+ * <c>call_qcsapi get_qos_param \<WiFi interface\> \<0|1|2|3\> \<1|2|3|4|6\> [\<0|1\>] </c>
  */
 extern int	qcsapi_wifi_qos_get_param(const char *ifname,
 					  int the_queue,
@@ -6287,7 +7359,7 @@ extern int	qcsapi_wifi_qos_get_param(const char *ifname,
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_qos_param <i>interface</i> \<0|1|2|3\> <1|2|3|4|6> <value> [<0|1>] </c>
+* <c>call_qcsapi set_qos_param \<WiFi interface\> \<0|1|2|3\> \<1|2|3|4|6\> \<value\> [\<0|1\>] </c>
  */
 extern int	qcsapi_wifi_qos_set_param(const char *ifname,
 					  int the_queue,
@@ -6311,7 +7383,7 @@ extern int	qcsapi_wifi_qos_set_param(const char *ifname,
  *
  * <b><c>call_qcsapi</c> interface:</b>
  *
- * <c>call_qcsapi get_wmm_ac_map <i>interface</i> </c>
+ * <c>call_qcsapi get_wmm_ac_map \<WiFi interface\></c>
  */
 extern int qcsapi_wifi_get_wmm_ac_map(const char *ifname, string_64 mapping_table);
 
@@ -6329,7 +7401,7 @@ extern int qcsapi_wifi_get_wmm_ac_map(const char *ifname, string_64 mapping_tabl
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_wmm_ac_map <i>interface</i> \<0|1|2|3|4|5|6|7\> <0|1|2|3> </c>
+ * <c>call_qcsapi set_wmm_ac_map \<WiFi interface\> \<0|1|2|3|4|5|6|7\> \<0|1|2|3\> </c>
  */
 extern int qcsapi_wifi_set_wmm_ac_map(const char *ifname, int user_prio, int ac_index);
 
@@ -6348,7 +7420,7 @@ extern int qcsapi_wifi_set_wmm_ac_map(const char *ifname, int user_prio, int ac_
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_dscp_8021p_map <i>interface</i> </c>
+ * <c>call_qcsapi get_dscp_8021p_map \<WiFi interface\></c>
  */
 extern int qcsapi_wifi_get_dscp_8021p_map(const char *ifname, string_64 mapping_table);
 
@@ -6365,7 +7437,7 @@ extern int qcsapi_wifi_get_dscp_8021p_map(const char *ifname, string_64 mapping_
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_dscp_ac_map <i>interface</i> </c>
+ * <c>call_qcsapi get_dscp_ac_map \<WiFi interface\></c>
  */
 extern int qcsapi_wifi_get_dscp_ac_map(const char *ifname, struct qcsapi_data_64bytes *mapping_table);
 
@@ -6384,7 +7456,7 @@ extern int qcsapi_wifi_get_dscp_ac_map(const char *ifname, struct qcsapi_data_64
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_dscp_8021p_map <i>interface</i> \<0-64\>[,1-64]... <0-7> </c>
+ * <c>call_qcsapi set_dscp_8021p_map \<WiFi interface\> \<0-64\>[,1-64]... \<0-7\> </c>
  */
 extern int qcsapi_wifi_set_dscp_8021p_map(const char *ifname, const char *ip_dscp_list, uint8_t dot1p_up);
 
@@ -6403,9 +7475,11 @@ extern int qcsapi_wifi_set_dscp_8021p_map(const char *ifname, const char *ip_dsc
  *
  * \note Any DSCP mappings not explicitly set will map to AC_BE.
  *
+ * \note This API is superseded by \link qcsapi_wifi_set_qos_map \endlink
+ *
  * \callqcsapi
  *
- * <c>call_qcsapi set_dscp_ac_map <i>interface</i> \<0-64\>[,0-64]... <0-3></c>
+ * <c>call_qcsapi set_dscp_ac_map \<WiFi interface\> \<0-64\>[,0-64]... \<0-3\></c>
  *
  * As an example, to map the following:
  *
@@ -6424,6 +7498,140 @@ extern int qcsapi_wifi_set_dscp_8021p_map(const char *ifname, const char *ip_dsc
  * @endcode
  */
 extern int qcsapi_wifi_set_dscp_ac_map(const char *ifname, const struct qcsapi_data_64bytes *dscp_list, uint8_t dscp_list_len, uint8_t ac);
+
+/**
+ * \brief Set QoS Map Set
+ *
+ * Configure QoS Map Set information element. Refer to IEEE802.11-2012, 8.4.2.97 for further
+ * description. This also configures DSCP to TID mapping to be used by AP.
+ *
+ * QoS Map Set string have the following format:
+ * \code
+ * [<DSCP Exceptions[DSCP,UP]>,] <UP 0 range[low,high]>,...<UP 7 range[low,high]>
+ * \endcode
+ *
+ * There can be up to 21 optional DSCP Exceptions which are pairs of DSCP Value
+ * (0..63 or 255) and User Priority (0..7). This is followed by eight DSCP Range
+ * descriptions with DSCP Low Value and DSCP High Value pairs (0..63 or 255) for
+ * each UP starting from 0. If both low and high value are set to 255, the
+ * corresponding UP is not used.
+ *
+ * \param ifname \wifi0only
+ * \param qos_map_str QoS Map Set string
+ *
+ * \note This API supersedes qcsapi_wifi_set_dscp_ac_map that configures the same
+ * DSCP to TID mapping. If TID cannot be used it will be replaced by the one mapped to the same AC.
+ *
+ * \note \aponly
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_qos_map \<WiFi interface\> \<qos_map_set\> </c>
+ *
+ * Example:
+ * \code
+ * call_qcsapi set_qos_map wifi0 53,2,22,6,8,15,0,7,255,255,16,31,32,39,255,255,40,47,255,255
+ * \endcode
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_qos_map(const char *ifname, const char *qos_map_str);
+
+/**
+ * \brief Remove QoS Map Set
+ *
+ * Remove QoS Map Set parameter.
+ *
+ * \param ifname \wifi0only
+ *
+ * \note \aponly
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi del_qos_map \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_del_qos_map(const char *ifname);
+
+/**
+ * \brief Get QoS Map Set
+ *
+ * Get the value of QoS Map Set. Format is described in \link qcsapi_wifi_set_qos_map \endlink.
+ *
+ * \param ifname \wifi0only
+ * \param value pointer to buffer to store returned value
+ *
+ * \note \aponly
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_qos_map \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the value of QoS Map Set</c>.
+ */
+extern int qcsapi_wifi_get_qos_map(const char *ifname, string_256 value);
+
+/**
+ * \brief Send QoS Map Configure action frame to a station
+ *
+ * Send QoS Map Configure action frame to an associated station specified by MAC address.
+ *
+ * \param ifname \wifi0
+ * \param sta_mac_addr STA MAC address
+ *
+ * \note \aponly
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi send_qos_map_conf \<WiFi interface\> \<STA MAC addr\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_send_qos_map_conf(const char *ifname, const qcsapi_mac_addr sta_mac_addr);
+
+/**
+ * \internal
+ * \brief Get DSCP to TID mapping
+ *
+ * Get the value of DSCP to TID mapping. The returned buffer will contain a 64-byte array
+ * of 8-bit unsigned integers, which are the TID values for each DSCP from 0 to 63.
+ *
+ * \param ifname \wifi0only
+ * \param dscp2tid_ptr pointer to buffer to store returned value
+ *
+ * \note \aponly
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_dscp_tid_map \<WiFi interface\></c>
+ *
+ * Unless an error occurs the output will be the header:
+ * DSCP: TID
+ * followed by corresponding \<DSCP\>: \<TID\> values on separate lines.
+ */
+extern int qcsapi_wifi_get_dscp_tid_map(const char *ifname,
+		struct qcsapi_data_64bytes *dscp2tid_ptr);
 
 /**
  * \brief Get the interface priority
@@ -6533,7 +7741,7 @@ extern int qcsapi_wifi_set_airfair(const char *ifname, uint8_t airfair);
  *
  * Unless an error occurs, the output will be the transmit power.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_get_tx_power_ext.
+ * \note This API is deprecated and replaced with qcsapi_wifi_get_tx_power_ext.
  */
 extern int	qcsapi_wifi_get_tx_power(const char *ifname,
 					const qcsapi_unsigned_int the_channel,
@@ -6558,9 +7766,9 @@ extern int	qcsapi_wifi_get_tx_power(const char *ifname,
  *
  * <c>call_qcsapi set_tx_power \<WiFi interface\> \<channel\> \<tx_power\></c>
  *
- * Unless an error occurs, the output will be the string <c>complete</c>'.
+ * Unless an error occurs, the output will be the string <c>complete</c>.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_tx_power_ext.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_tx_power_ext.
  */
 extern int qcsapi_wifi_set_tx_power(const char *ifname,
 					const qcsapi_unsigned_int the_channel,
@@ -6589,7 +7797,7 @@ extern int qcsapi_wifi_set_tx_power(const char *ifname,
  *
  * Unless an error occurs, the output will be the transmit powers.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_get_tx_power_ext.
+ * \note This API is deprecated and replaced with qcsapi_wifi_get_tx_power_ext.
  */
 extern int	qcsapi_wifi_get_bw_power(const char *ifname,
 					const qcsapi_unsigned_int the_channel,
@@ -6621,7 +7829,7 @@ extern int	qcsapi_wifi_get_bw_power(const char *ifname,
  *
  * Unless an error occurs, the output will be the string <c>complete</c>'.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_tx_power_ext.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_tx_power_ext.
  */
 extern int qcsapi_wifi_set_bw_power(const char *ifname,
 			const qcsapi_unsigned_int the_channel,
@@ -6653,7 +7861,7 @@ extern int qcsapi_wifi_set_bw_power(const char *ifname,
  *
  * Unless an error occurs, the output will be the transmit powers.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_get_tx_power_ext.
+ * \note This API is deprecated and replaced with qcsapi_wifi_get_tx_power_ext.
  */
 extern int	qcsapi_wifi_get_bf_power(const char *ifname,
 					const qcsapi_unsigned_int the_channel,
@@ -6686,7 +7894,7 @@ extern int	qcsapi_wifi_get_bf_power(const char *ifname,
  *
  * Unless an error occurs, the output will be the string <c>complete</c>'.
  *
- * \note: This API is deprecated and replaced with qcsapi_wifi_set_tx_power_ext.
+ * \note This API is deprecated and replaced with qcsapi_wifi_set_tx_power_ext.
  */
 extern int qcsapi_wifi_set_bf_power(const char *ifname,
 			const qcsapi_unsigned_int the_channel,
@@ -6968,6 +8176,29 @@ extern int	qcsapi_wifi_get_current_tx_power_level(const char *ifname,
 						 uint32_t *p_current_percentage);
 
 /**
+ * \brief Set TX Power Level (as a percentage of the maximum allowed)
+ *
+ * This API sets the transmit power on the current channel as a percentage of
+ * the maximum allowed by the regulatory authority.  A regulatory region must have
+ * been configured with the Set Regulatory Region API.
+ *
+ * \note \primarywifi
+ *
+ * \param ifname \wifi0only
+ * \param txpower_percentage percentage of tx power to set
+ *
+ * \return A negative values on error, or 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_current_tx_power \<WiFi interface\> \<txpower_percentage></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_wifi_set_current_tx_power_level(const char *ifname,
+						uint32_t txpower_percentage);
+
+/**
  * \brief Set power constraint of current channel
  *
  * This API sets the power constraint on the current channel. Power constraint will be
@@ -7092,6 +8323,7 @@ extern int	qcsapi_wifi_get_assoc_records(const char *ifname,
  * Get the current global AP isolation setting
  *
  * \note \aponly
+ * \note \primarywifi
  *
  * \param ifname \wifi0only
  * \param p_ap_isolate return parameter to contain the current global AP isolation setting
@@ -7255,6 +8487,24 @@ extern int	qcsapi_wifi_set_bss_isolate(const char *ifname, const qcsapi_unsigned
  *
  */
 extern int qcsapi_wifi_disable_dfs_channels( const char *ifname, int disable_dfs, int channel);
+
+/**
+ * \brief Get WiFi ready state
+ *
+ * This API call is used to retrieve the WiFi ready state
+ *
+ * \param p_value the WiFi state, 1 is ready, 0 is not ready
+ *
+ * \return 0 on success or negative values on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi is_wifi_ready  \<interface\></c>
+ *
+ * Unless an error occurs, the output will be 1 or 0.
+ */
+extern int qcsapi_wifi_is_ready( qcsapi_unsigned_int *p_value );
+
 /**@}*/
 
 
@@ -7559,7 +8809,7 @@ extern int	qcsapi_wds_get_mode( const char *ifname, const int index, int *mode )
  *
  * where <c>WiFi interface</c> is the primary interface, <c>parameter type</c> is one of
  * <c>role</c>, <c>mbs_best_rssi</c>, <c>rbs_best_rssi</c>, <c>mbs_wgt</c>, <c>rbs_wgt</c>,
- * <c>roaming</c>, <c>bgscan_interval</c>, <c>verbose</c>.
+ * <c>roaming</c>, <c>bgscan_interval</c>, <c>verbose</c>, <c>mbs_rssi_margin</c>.
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -7844,15 +9094,15 @@ extern int	qcsapi_wifi_get_WPA_authentication_mode( const char *ifname, string_3
  * Set the EAP Authentication mode and the EAP Server Parameters.
  *
  * Command to set EAPAuthentication:
- *     \li call_qcsapi set_WPA_authentication_modes <device> EAP Authentication
+ *     \li call_qcsapi set_WPA_authentication_modes \<device\> EAP Authentication
  *
  * Command to set Encryption:
- *     \li call_qcsapi set_WPA_encryption_modes $device  <encryption>
+ *     \li call_qcsapi set_WPA_encryption_modes $device  \<encryption\>
  *
- * Command to configure RADIUS authentication severs:
- *      \li call_qcsapi add_radius_auth_server_cfg <device> <ipaddr> <port> <sharedkey>
- *	\li call_qcsapi del_radius_auth_server_cfg <device> <ipaddr> <port>
- *	\li call_qcsapi get_radius_auth_server_cfg <device>
+ * Command to configure RADIUS authentication servers:
+ *      \li call_qcsapi add_radius_auth_server_cfg \<device\> \<ipaddr\> \<port\> \<sharedkey\>
+ *	\li call_qcsapi del_radius_auth_server_cfg \<device\> \<ipaddr\> \<port\>
+ *	\li call_qcsapi get_radius_auth_server_cfg \<device\>
  *
  * \param ifname \wifi0
  * \param authentication_mode a string containing a value per the <b>authentication type</b> table in
@@ -7887,7 +9137,9 @@ extern int	qcsapi_wifi_set_WPA_authentication_mode( const char *ifname, const st
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -7909,7 +9161,9 @@ extern int      qcsapi_wifi_get_interworking( const char *ifname, string_32 inte
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -7934,7 +9188,9 @@ extern int      qcsapi_wifi_set_interworking( const char *ifname, const string_3
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -7961,7 +9217,9 @@ extern int      qcsapi_wifi_get_80211u_params( const char *ifname,
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * Valid parameters and their corresponding values shown in the following table.
  * The exact format of the values for each parameter are described in the
@@ -8002,7 +9260,11 @@ extern int      qcsapi_wifi_set_80211u_params( const char *ifname, const string_
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note ifname must be the primary interface.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8028,7 +9290,9 @@ extern int      qcsapi_security_get_nai_realms( const char *ifname, string_4096 
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8053,7 +9317,9 @@ extern int	qcsapi_security_add_nai_realm( const char *ifname,
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8075,7 +9341,9 @@ extern int      qcsapi_security_del_nai_realm( const char *ifname, const char *n
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8097,7 +9365,9 @@ extern int      qcsapi_security_get_roaming_consortium( const char *ifname, stri
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8119,7 +9389,9 @@ extern int      qcsapi_security_add_roaming_consortium( const char *ifname, cons
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8141,7 +9413,9 @@ extern int      qcsapi_security_del_roaming_consortium( const char *ifname, cons
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8164,7 +9438,9 @@ extern int	qcsapi_security_get_venue_name( const char *ifname, string_4096 p_val
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8187,7 +9463,9 @@ extern int	qcsapi_security_add_venue_name( const char *ifname, const char *lang_
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8209,7 +9487,9 @@ extern int	qcsapi_security_del_venue_name( const char *ifname, const char *lang_
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8232,7 +9512,9 @@ extern int      qcsapi_security_get_oper_friendly_name( const char *ifname, stri
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8256,7 +9538,9 @@ extern int	qcsapi_security_add_oper_friendly_name( const char *ifname, const cha
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8279,7 +9563,9 @@ extern int	qcsapi_security_del_oper_friendly_name( const char *ifname, const cha
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8304,7 +9590,9 @@ extern int      qcsapi_security_get_hs20_conn_capab( const char *ifname, string_
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8330,7 +9618,9 @@ extern int	qcsapi_security_add_hs20_conn_capab( const char *ifname, const char *
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8352,7 +9642,9 @@ extern int      qcsapi_security_del_hs20_conn_capab( const char *ifname, const c
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8376,7 +9668,9 @@ extern int      qcsapi_wifi_get_hs20_status( const char *ifname, string_32 p_hs2
  *
  * \note If Hotspot 2.0 is enabled then WPS will be disabled.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8398,7 +9692,9 @@ extern int      qcsapi_wifi_set_hs20_status( const char *ifname, const string_32
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8420,7 +9716,9 @@ extern int      qcsapi_wifi_get_proxy_arp( const char *ifname, string_32 p_proxy
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8443,7 +9741,9 @@ extern int      qcsapi_wifi_set_proxy_arp( const char *ifname, const string_32 p
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8467,14 +9767,18 @@ extern int      qcsapi_wifi_get_l2_ext_filter( const char *ifname, const string_
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note ifname must be the primary interface.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * Valid parameters and their corresponding values shown in the following table.
  *
  * <TABLE>
- * <TR> <TD>Parameter</TD>	<TD>value</TD>
+ * <TR> <TD>Parameter</TD>	<TD>Value</TD>
  * <TR> <TD>status</TD>         <TD>0 (Disable) or 1 (Enable)</TD>
- * <TR> <TD>port</TD>           <TD>EMAC0 or EMAC1</TD>
+ * <TR> <TD>port</TD>           <TD>emac0, emac1, pcie</TD>
  * </TABLE>
  *
  * \callqcsapi
@@ -8487,21 +9791,22 @@ extern int      qcsapi_wifi_set_l2_ext_filter( const char *ifname, const string_
 						const string_32 value );
 
 /**
- * \brief Get the hs2 parameter
+ * \brief Get a Hotspot 2.0 parameter value
  *
- * Get the value for the specified hs2 parameter, as specified by
- * the qcsapi_hs20_params, with the value returned
- * in the address specified by p_buffer.
+ * Get the value for the specified Hotspot 2.0 parameter. Refer to
+ * \link qcsapi_wifi_set_hs20_params \endlink for a list of valid parameter names.
  *
  * \param ifname \wifiX
- * \param hs_param is hs2 parameter to get the value of
- * \param p_buffer return parameter to contain the value of the hs2 parameter
+ * \param hs_param Hotspot 2.0 parameter to get the value of
+ * \param p_buffer buffer pointer to contain the value of the requested parameter
  *
  * \return 0 if the command succeeded.
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8509,7 +9814,8 @@ extern int      qcsapi_wifi_set_l2_ext_filter( const char *ifname, const string_
  *
  * The output will be the hs parameter unless an error occurs.
  */
-extern int      qcsapi_wifi_get_hs20_params( const char *ifname, const string_32 hs_param, string_32 p_buffer );
+extern int      qcsapi_wifi_get_hs20_params( const char *ifname,
+			const string_32 hs_param, string_32 p_buffer );
 
 /**
  * \brief Set a Hotspot 2.0 parameter value
@@ -8524,22 +9830,86 @@ extern int      qcsapi_wifi_get_hs20_params( const char *ifname, const string_32
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * Valid parameters and their corresponding values are shown in the following table.
  * The exact format of the values for each parameter are described in the
  * hostapd.conf man page.
  *
-* <TABLE>
- * <TR><TD><small>Parameter</small></TD>               <TD><small>value1</small></TD> <TD><small>value2</small></TD> <TD><small>value3</small></TD> <TD><small>value4</small></TD> <TD><small>value5</small></TD> <TD><small>value6</small></TD> </TR>
- * <TR><TD><small>hs20_wan_metrics</small></TD>       <TD><small>WAN Info</small></TD> <TD><small>Downlink Speed</small></TD> <TD><small>Uplink Speed</small></TD> <TD><small>Downlink Load</small></TD> <TD><small>Uplink Load</small></TD> <TD><small>Load Measurement</small></TD></TR>
- * <TR><TD><small>disable_dgaf</small></TD>           <TD><small>0 or 1</small></TD> <TD><small>-</small></TD> <TD><small>-</small></TD> <TD><small>-</small></TD> <TD><small>-</small></TD> <TD><small>-</small></TD></TR>
- * <TR><TD><small>hs20_operating_class</small></TD>   <TD><small>Single Band 2.4 GHz</small></TD>        <TD><small>Single Band 5 GHz</small></TD> <TD><small>-</small></TD> <TD><small>-</small></TD> <TD><small>-</small></TD> <TD><small>-</small></TD></TR>
+ * <small>
+ * <TABLE>
+ * <TR>
+ *	<TD>Parameter</TD>
+ *	<TD>value1</TD>
+ *	<TD>value2</TD>
+ *	<TD>value3</TD>
+ *	<TD>value4</TD>
+ *	<TD>value5</TD>
+ *	<TD>value6</TD>
+ * </TR>
+ * <TR>
+ *	<TD>hs20_wan_metrics</TD>
+ *	<TD>WAN Info</TD>
+ *	<TD>Downlink Speed</TD>
+ *	<TD>Uplink Speed</TD>
+ *	<TD>Downlink Load</TD>
+ *	<TD>Uplink Load</TD>
+ *	<TD>Load Measurement</TD>
+ * </TR>
+ * <TR>
+ *	<TD>disable_dgaf</TD>
+ *	<TD>0 or 1</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ * </TR>
+ * <TR>
+ *	<TD>hs20_operating_class</TD>
+ *	<TD>Single Band 2.4 GHz</TD>
+ *	<TD>Single Band 5 GHz</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ * </TR>
+ * <TR>
+ *	<TD>osu_ssid</TD>
+ *	<TD>SSID used for all OSU connections</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ * </TR>
+ * <TR>
+ *	<TD>osen</TD>
+ *	<TD>1 (enable) or 0 (disable)</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ * </TR>
+ * <TR>
+ *	<TD>hs20_deauth_req_timeout</TD>
+ *	<TD>Deauthentication request timeout in seconds</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ *	<TD>-</TD>
+ * </TR>
  * </TABLE>
+ * </small>
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_hs20_params \<WiFi interface\> \<hs_param\> \<value1\> \<value2\> \<value3\> \<value4\> \<value5\> \<value6\> </c>
+ * <c>call_qcsapi set_hs20_params \<WiFi interface\> \<hs_param\> \<value1\> \<value2\> \<value3\>
+ * \<value4\> \<value5\> \<value6\> </c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -8561,7 +9931,9 @@ extern int      qcsapi_wifi_set_hs20_params( const char *ifname, const string_32
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8572,10 +9944,10 @@ extern int      qcsapi_wifi_set_hs20_params( const char *ifname, const string_32
 extern int      qcsapi_remove_11u_param( const char *ifname, const string_64 param );
 
 /**
- * \brief Remove the hs parameter
+ * \brief Remove a Hotspot 2.0 parameter
  *
- * Remove hs parameter from hostapd.conf , as specified by
- * the qcsapi_hs20_params parameter.
+ * Remove the specified Hotspot 2.0 parameter. Refer to \link qcsapi_wifi_set_hs20_params \endlink
+ * for a list of valid parameter names.
  *
  * \param ifname \wifiX
  * \param hs_param Hotspot 2.0 parameter to be removed
@@ -8584,7 +9956,9 @@ extern int      qcsapi_remove_11u_param( const char *ifname, const string_64 par
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
+ *
+ * \note \hotspot_api
  *
  * \callqcsapi
  *
@@ -8593,6 +9967,308 @@ extern int      qcsapi_remove_11u_param( const char *ifname, const string_64 par
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
 extern int      qcsapi_remove_hs20_param( const char *ifname, const string_64 hs_param );
+
+/**
+ * \brief Add a Hotspot 2.0 icon description
+ *
+ * Add a description for a Hotspot 2.0 icon.
+ *
+ * \param ifname \wifiX
+ * \param icon_width icon width in pixels
+ * \param icon_height icon height in pixels
+ * \param lang_code 2 or 3 character ISO-639 language code
+ * \param icon_type icon type e.g. "png"
+ * \param icon_name name for the icon
+ * \param file_path path to the image file; must be an existing file
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \note There can be multiple icon descriptions, but the names must be unique.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi add_hs20_icon \<WiFi interface\> \<icon_width\> \<icon_height\> \<lang_code\>
+ * \<icon_type\> \<icon_name\> \<file_path\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_security_add_hs20_icon(const char *ifname,
+						const qcsapi_unsigned_int icon_width,
+						const qcsapi_unsigned_int icon_height,
+						const char *lang_code,
+						const char *icon_type,
+						const char *icon_name,
+						const char *file_path);
+
+/**
+ * \brief Get all Hotspot 2.0 icon descriptions
+ *
+ * Get all configured Hotspot 2.0 icon descriptions. Each description has the following format.
+ *
+ * <c>\<Icon Width\>:\<Icon Height\>:\<Language Code\>:\<Icon Type\>:\<Icon Name\>:\<File Path\></c>
+ *
+ * \param ifname \wifiX
+ * \param value pointer to buffer to contain returned icon descriptions
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_hs20_icon \<WiFi interface\> </c>
+ *
+ * The output will be the descriptions for Hotspot 2.0 icons, unless an error occurs.
+ */
+extern int	qcsapi_security_get_hs20_icon(const char *ifname, string_1024 value);
+
+/**
+ * \brief Delete a Hotspot 2.0 icon description
+ *
+ * Delete the description for Hotspot 2.0 icon specified by name.
+ *
+ * \param ifname \wifiX
+ * \param icon_name name of the icon to be deleted
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi del_hs20_icon \<WiFi interface\> \<icon_name\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_security_del_hs20_icon(const char *ifname, const string_1024 icon_name);
+
+/**
+ * \brief Add OSU Provider server URI
+ *
+ * Add an Online Sign Up provider server URI. Each URI starts a new OSU provider description that
+ * might contain parameters added by \link qcsapi_security_add_osu_server_param \endlink.
+ *
+ * \param ifname \wifiX
+ * \param osu_server_uri OSU provider URI
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \note There can be multiple OSU provider servers, but each must have a unique URI.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi add_osu_server_uri \<WiFi interface\> \<osu_server_uri\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_security_add_osu_server_uri(const char *ifname,
+						const string_256 osu_server_uri);
+
+/**
+ * \brief Get all OSU servers URIs
+ *
+ * Get all configured Online Sign Up provider URIs.
+ * Each returned URI string is separated by a newline character.
+ *
+ * \param ifname \wifiX
+ * \param value pointer to buffer to contain the returned strings
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_osu_server_uri \<WiFi interface\></c>
+ *
+ * The output will be the URIs for all OSU providers, unless an error occurs.
+ */
+extern int	qcsapi_security_get_osu_server_uri(const char *ifname,
+						string_1024 value);
+
+/**
+ * \brief Delete OSU Provider
+ *
+ * Delete an Online Sign Up provider server identified by a specified URI.
+ * All parameters for the specified provider are also deleted.
+ *
+ * \param ifname \wifiX
+ * \param osu_server_uri OSU provider URI
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi del_osu_server_uri \<WiFi interface\> \<osu_server_uri\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_security_del_osu_server_uri(const char *ifname,
+							const string_256 osu_server_uri);
+
+/**
+ * \brief Add an OSU Provider server parameter
+ *
+ * Add a parameter for an Online Sign Up provider identified by a specified URI.
+ * Valid parameters are described in the following table.
+ *
+ * <table>
+ * <tr>
+ *	<td>Parameter</td>
+ *	<td>Description</td>
+ *	<td>Multiple Entries</td>
+ * </tr>
+ * <tr>
+ *	<td>osu_friendly_name</td>
+ *	<td>
+ *	Friendly name for OSU provider in the following format:
+ *	<c>\<Lang Code\>:\<Friendly Name\></c>
+ *	</td>
+ *	<td>Yes</td>
+ * </tr>
+ * <tr>
+ *	<td>osu_nai</td>
+ *	<td>Network Access Identifier</td>
+ *	<td>No</td>
+ * </tr>
+ * <tr>
+ *	<td>osu_method_list</td>
+ *	<td>
+ *	List of OSU methods separated by spaces. Valid values are:
+ *	0 - OMA DM, 1 - SOAP XML SPP
+ *	</td>
+ *	<td>No</td>
+ * </tr>
+ * <tr>
+ *	<td>osu_icon</td>
+ *	<td>Name of the configured Hotspot 2.0 icon</td>
+ *	<td>Yes</td>
+ * </tr>
+ * <tr>
+ *	<td>osu_service_desc</td>
+ *	<td>
+ *	OSU services description in the following format:
+ *	<c>\<Lang Code\>:\<Description\></c>
+ *	</td>
+ *	<td>Yes</td>
+ * </tr>
+ * </table>
+ *
+ * \param ifname \wifiX
+ * \param osu_server_uri OSU provider URI
+ * \param param name of the parameter to be set
+ * \param value parameter value
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi add_osu_server_param \<WiFi interface\> \<osu_server_uri\> \<param\>
+ * \<value\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_security_add_osu_server_param(const char *ifname,
+						const string_256 osu_server_uri,
+						const string_256 param,
+						const string_256 value);
+
+/**
+ * \brief Get values for OSU server parameter
+ *
+ * Get all values for the specified parameter for an Online Sign Up provider.
+ * Value strings separated by new lines are placed in the returned buffer.
+ * Parameters are the same as for \link qcsapi_security_add_osu_server_param \endlink.
+ *
+ * \param ifname \wifiX
+ * \param osu_server_uri URI of the OSU provider
+ * \param param parameter name
+ * \param value pointer to buffer to contain returned strings
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_osu_server_param \<WiFi interface\> \<param\></c>
+ *
+ * The output will be the values for OSU provider parameter, unless an error occurs.
+ */
+extern int	qcsapi_security_get_osu_server_param(const char *ifname,
+						const string_256 osu_server_uri,
+						const string_256 param,
+						string_1024 value);
+
+/**
+ * \brief Delete an OSU Provider parameter
+ *
+ * Delete an Online Sign Up provider parameter with a specific value.
+ *
+ * \param ifname \wifiX
+ * \param osu_server_uri OSU provider URI
+ * \param param parameter name
+ * \param value parameter value
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note \aponly
+ *
+ * \note \hotspot_api
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi del_osu_server_param \<WiFi interface\> \<osu_server_uri\> \<param\>
+ * \<value\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_security_del_osu_server_param(const char *ifname,
+						const string_256 osu_server_uri,
+						const string_256 param,
+						const string_256 value);
 
 /**
  * \brief see qcsapi_wifi_get_WPA_encryption_modes
@@ -8659,7 +10335,7 @@ extern int qcsapi_wifi_get_michael_errcnt( const char *ifname, uint32_t *errcoun
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
  *
  * \callqcsapi
  *
@@ -8686,7 +10362,7 @@ extern int	qcsapi_wifi_get_pre_shared_key( const char *ifname, const qcsapi_unsi
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
  *
  * \callqcsapi
  *
@@ -8703,7 +10379,7 @@ extern int	qcsapi_wifi_set_pre_shared_key( const char *ifname, const qcsapi_unsi
  *
  * Add RADIUS authentication server configuration
  *
- * \param ifname wireless interface (e.g. wifi0)
+ * \param ifname \wifi0
  * \param radius_auth_server_ipaddr - IP address of the RADIUS server
  * \param radius_auth_server_port - Port of the RADIUS server
  * \param radius_auth_server_sh_key - Shared secret key of the RADIUS server
@@ -8712,7 +10388,7 @@ extern int	qcsapi_wifi_set_pre_shared_key( const char *ifname, const qcsapi_unsi
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
  *
  * \callqcsapi
  *
@@ -8720,15 +10396,17 @@ extern int	qcsapi_wifi_set_pre_shared_key( const char *ifname, const qcsapi_unsi
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
-extern int	qcsapi_wifi_add_radius_auth_server_cfg( const char *ifname, const char *radius_auth_server_ipaddr,
-					   const char *radius_auth_server_port, const char *radius_auth_server_sh_key);
+extern int	qcsapi_wifi_add_radius_auth_server_cfg( const char *ifname,
+							const char *radius_auth_server_ipaddr,
+							const char *radius_auth_server_port,
+							const char *radius_auth_server_sh_key);
 
 /**
  * \brief Remove RADIUS authentication server
  *
  * Remove RADIUS authentication server configuration
  *
- * \param ifname wireless interface (e.g. wifi0)
+ * \param ifname \wifi0
  * \param radius_auth_server_ipaddr - IP address of RADIUS server
  * \param radius_auth_server_port - Port of the RADIUS server
  *
@@ -8736,7 +10414,7 @@ extern int	qcsapi_wifi_add_radius_auth_server_cfg( const char *ifname, const cha
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
  *
  * \callqcsapi
  *
@@ -8744,30 +10422,32 @@ extern int	qcsapi_wifi_add_radius_auth_server_cfg( const char *ifname, const cha
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
-extern int	qcsapi_wifi_del_radius_auth_server_cfg( const char *ifname, const char *radius_auth_server_ipaddr,
-					   const char *constp_radius_port);
+extern int	qcsapi_wifi_del_radius_auth_server_cfg( const char *ifname,
+							const char *radius_auth_server_ipaddr,
+							const char *constp_radius_port);
 
 /**
- * \brief Get RADIUS authentication server
+ * \brief Get RADIUS authentication servers
  *
- * Get RADIUS authentication server configuration
+ * Get RADIUS authentication servers configuration
  *
- * \param ifname wireless interface (e.g. wifi0)
+ * \param ifname \wifi0
  * \param radius_auth_server_cfg - reads the RADIUS server configuraion
  *
  * \return 0 if the command succeeded.
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
  *
  * \callqcsapi
  *
  * <c>call_qcsapi get_radius_auth_server_cfg \<WiFi interface\></c>
  *
- * Unless an error occurs, the output will be the string <c>complete</c>.
+ * Unless an error occurs, the output will be the list of the RADIUS servers.
  */
-extern int	qcsapi_wifi_get_radius_auth_server_cfg( const char *ifname, string_1024 radius_auth_server_cfg);
+extern int	qcsapi_wifi_get_radius_auth_server_cfg( const char *ifname,
+							string_1024 radius_auth_server_cfg);
 
 /**
  * \brief Set the EAP own ip address of the AP
@@ -8783,7 +10463,7 @@ extern int	qcsapi_wifi_get_radius_auth_server_cfg( const char *ifname, string_10
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
  *
- * This command is only supported on Access Points.
+ * \note \aponly
  *
  * \callqcsapi
  *
@@ -8858,14 +10538,14 @@ extern int	qcsapi_wifi_get_key_passphrase( const char *ifname, const qcsapi_unsi
 extern int	qcsapi_wifi_set_key_passphrase( const char *ifname, const qcsapi_unsigned_int key_index, const string_64 passphrase );
 
 /**
- * \brief Get the Group key interval
+ * \brief Get the group key rotation interval.
  *
  * Get the group key interval.
  *
  * \note \aponly
  *
- * \param ifname \wifi0
- * \param group_key_interval a pointer to the buffer for storing the returned value
+ * \param ifname \wifiX
+ * \param p_key_interval a pointer an integer to contain the group key rotation interval in seconds
  *
  * \return 0 if the command succeeded.
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
@@ -8878,17 +10558,40 @@ extern int	qcsapi_wifi_set_key_passphrase( const char *ifname, const qcsapi_unsi
  * The output will be the group key interval unless an error occurs.
  *
  */
-extern int      qcsapi_wifi_get_group_key_interval( const char *ifname, string_16 group_key_interval );
+extern int      qcsapi_wifi_get_group_key_interval( const char *ifname, unsigned int *p_key_interval );
 
 /**
- * \brief Set the Group key interval
+ * \brief Get the pairwise key rotation interval.
+ *
+ * Get the pairwise key rotation interval. This interval is used to timeout and cause a new PTK to
+ * be generated.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifiX
+ * \param p_key_interval a pointer an integer to contain the pairwise key rotation interval in seconds.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_pairwise_key_interval \<WiFi interface\></c>
+ *
+ * The output will be the pairwise key interval unless an error occurs.
+ *
+ */
+extern int qcsapi_wifi_get_pairwise_key_interval( const char *ifname, unsigned int *p_key_interval );
+
+/**
+ * \brief Set the group key rotation interval.
  *
  * Set the group key interval.
  *
  * \note \aponly
  *
- * \param ifname \wifi0
- * \param group_key_interval
+ * \param ifname \wifiX
+ * \param key_interval the group key rotation interval in seconds. Set to 0 for no key rotation.
  *
  * \return 0 if the command succeeded.
  * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
@@ -8901,7 +10604,29 @@ extern int      qcsapi_wifi_get_group_key_interval( const char *ifname, string_1
  * Unless an error occurs, the output will be the string <c>complete</c>.
  *
  */
-extern int      qcsapi_wifi_set_group_key_interval( const char *ifname, const string_16 group_key_interval );
+extern int      qcsapi_wifi_set_group_key_interval( const char *ifname, const unsigned int key_interval );
+
+/**
+ * \brief Set the pairwise key rotation interval.
+ *
+ * Set the pairwise key rotation interval. This interval is used to timeout and cause a new PTK to
+ * be generated.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifiX
+ * \param key_interval The pairwise key rotation interval in seconds. Set to 0 for no key rotation.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_pairwise_key_interval \<WiFi interface\> \<pairwise key interval\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int      qcsapi_wifi_set_pairwise_key_interval( const char *ifname, const unsigned int key_interval );
 
 /**
  * @brief Get the 802.11w capability for the given interface.
@@ -8982,7 +10707,7 @@ extern int	qcsapi_wifi_set_pmf( const char *ifname, int pmf_cap );
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_wpa_status \<WiFi interface\> \< Mac address\></c>
+ * <c>call_qcsapi get_wpa_status \<WiFi interface\> \<Mac address\></c>
  *
  * Unless an error occurs, the output will be the current WPA handshaking status for the AP
  */
@@ -9188,6 +10913,36 @@ extern int	qcsapi_wifi_get_mac_address_filtering(
 extern int	qcsapi_wifi_authorize_mac_address( const char *ifname, const qcsapi_mac_addr address_to_authorize );
 
 /**
+ * @brief Authorize set of MAC addresses for MAC address filtering.
+ *
+ * Authorize the referenced MAC addresses (up to 8) against the MAC address filtering function.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param num number of MAC address
+ * \param address_list_to_authorize the MAC addresses of the device to authorize.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi authorize_macaddr \<WiFi interface\> \<MAC address0\> [MAC address1] ... [MAC address7]</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * See @ref mysection5_1_1 "section here" for details on the format for entering the MAC address.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ *
+ * \note This API is deprecated and replaced with qcsapi_wifi_authorize_mac_address_list_ext.
+ */
+extern int	qcsapi_wifi_authorize_mac_address_list( const char *ifname, const int num,
+					const qcsapi_mac_addr_list address_list_to_authorize);
+
+/**
  * @brief Block MAC addresses using the MAC address filtering feature.
  *
  * Block the referenced MAC address. If the MAC address filtering was configured as disabled,
@@ -9211,6 +10966,38 @@ extern int	qcsapi_wifi_authorize_mac_address( const char *ifname, const qcsapi_m
 extern int	qcsapi_wifi_deny_mac_address( const char *ifname, const qcsapi_mac_addr address_to_deny );
 
 /**
+ * @brief Block MAC addresses using the MAC address filtering feature.
+ *
+ * Block the referenced MAC addresses (up to 8). If the MAC address filtering was configured as disabled,
+ * calling this API will change the configuration to accept unless denied.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param num number of MAC address
+ * \param address_list_to_deny the MAC addresses to deny.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi deny_macaddr \<WiFi interface\> \<MAC address\> [MAC address1] ... [MAC address7]</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * See @ref mysection5_1_1 "section here" for details on the format for entering the MAC address.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ *
+ * \note This API is deprecated and replaced with qcsapi_wifi_deny_mac_address_list_ext.
+ */
+extern int	qcsapi_wifi_deny_mac_address_list( const char *ifname, const int num,
+					const qcsapi_mac_addr_list address_list_to_deny );
+
+
+/**
  * @brief Remove MAC address from the MAC address filtering list.
  *
  * Remove the referenced MAC address.
@@ -9231,6 +11018,37 @@ extern int	qcsapi_wifi_deny_mac_address( const char *ifname, const qcsapi_mac_ad
  * See @ref mysection5_1_1 "Format for a MAC address" for details on the format for entering the MAC address.
  */
 extern int	qcsapi_wifi_remove_mac_address( const char *ifname, const qcsapi_mac_addr address_to_remove );
+
+/**
+ * @brief Remove MAC address from the MAC address filtering list.
+ *
+ * Remove the referenced MAC addresses (up to 8).
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param num number of MAC address
+ * \param address_list_to_remove the MAC address to remove.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi remove_macaddr \<WiFi interface\> \<MAC address\> [MAC address1] ... [MAC address7]</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * See @ref mysection5_1_1 "section here" for details on the format for entering the MAC address.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ *
+ * \note This API is deprecated and replaced with qcsapi_wifi_remove_mac_address_list_ext.
+ */
+extern int	qcsapi_wifi_remove_mac_address_list( const char *ifname, const int num,
+					const qcsapi_mac_addr_list address_list_to_remove );
+
 
 /**
  * @brief Check whether a MAC address is authorized.
@@ -9378,6 +11196,89 @@ extern int qcsapi_wifi_get_accept_oui_filter(const char *ifname, char *oui_list,
  */
 extern int qcsapi_wifi_clear_mac_address_filters( const char *ifname );
 
+/**
+ * @brief Authorize set of MAC addresses for MAC address filtering.
+ *
+ * Authorize the referenced MAC addresses (up to 200) against the MAC address filtering function.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param auth_mac_list the list and the count of device MAC addresses to authorize.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi authorize_macaddr \<WiFi interface\> \<MAC address0\> [MAC address1] ... [MAC address199]</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * See @ref mysection5_1_1 "section here" for details on the format for entering the MAC address.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ */
+extern int	qcsapi_wifi_authorize_mac_address_list_ext( const char *ifname,
+							struct qcsapi_mac_list *auth_mac_list );
+
+/**
+ * @brief Block MAC addresses using the MAC address filtering feature.
+ *
+ * Block the referenced MAC addresses (up to 200). If the MAC address filtering was
+ * configured as disabled, calling this API will change the configuration to
+ * accept unless denied.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param deny_mac_list the list and the count of MAC addresses to deny.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi deny_macaddr \<WiFi interface\> \<MAC address\> [MAC address1] ... [MAC address199]</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * See @ref mysection5_1_1 "section here" for details on the format for entering the MAC address.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ */
+extern int	qcsapi_wifi_deny_mac_address_list_ext( const char *ifname,
+						struct qcsapi_mac_list *deny_mac_list );
+
+/**
+ * @brief Remove MAC addresses from the MAC address filtering list.
+ *
+ * Remove the referenced MAC addresses (up to 200).
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param remove_mac_list the list and the count of MAC addresses to remove.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi remove_macaddr \<WiFi interface\> \<MAC address\> [MAC address1] ... [MAC address199]</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * See @ref mysection5_1_1 "section here" for details on the format for entering the MAC address.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ */
+extern int	qcsapi_wifi_remove_mac_address_list_ext( const char *ifname,
+						struct qcsapi_mac_list *remove_mac_list );
+
 /**@}*/
 
 
@@ -9502,6 +11403,8 @@ extern int	qcsapi_wifi_get_option( const char *ifname, qcsapi_option_type qcsapi
  * the API will return <c>-EOPNOTSUPP</c>.
  *
  * \note Two options short_gi and stbc are global and can only be configured on primary interface wifi0.
+ * \note Enabling qlink option is equivalent to setting it to auto mode (network iface autoselection).
+ * Use \link qcsapi_config_update_parameter \endlink to set qlink option to a specific network interface name.
  *
  * \param ifname \wifi0
  * \param qcsapi_option the option to set the value of.
@@ -10065,6 +11968,48 @@ extern int	qcsapi_SSID_set_key_passphrase(
 );
 
 /**
+ * @brief Manipulate a specific paramter of security deamon
+ *
+ * \note The parameter will not immediately take effect until the deamon reconfigured.
+ * \note The API directly manipulate the secruity deamon configuration file.
+ * \note Please make sure the parameters are valid.
+ *
+ * \param ifname the interface to perform the action on, for AP mode only
+ * \param mode AP or STA
+ * \param ssid an previously defined SSID to apply the param to, for STA mode only
+ * \param param_name specific the paramter name
+ * \param param_value specific the paramter value
+ * \n For parameters other than "ssid", the value of "NULL" stands to delete the parameter
+ * \n Parameter of "ssid" will be deleted if the value is not identical to param ssid
+ * \param param_type specific the paramter attribute
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi update_bss_cfg \<WiFi interface\> \<mode\> \<bss_id\> \<param_name\> \<parram_value\> [param_type] </c>
+ *
+ * Unless an error occurs, the output will be the current PMF capability.
+ *
+ * \n Example of adding or updating an access point paramter:
+ * \n <c>call_qcsapi update_bss_cfg wifi0 ap \<ifname\> \<param_name\> \<param_value\> </c>
+ * \n Example of deleting an access point paramter:
+ * \n <c>call_qcsapi update_bss_cfg wifi0 ap \<ifname\> \<param_name\> \<"NULL"\> </c>
+ *
+ * \n Example of adding or updating a station paramter:
+ * \n <c>call_qcsapi update_bss_cfg wifi0 sta \<ssid\> \<param_name\> \<param_value\> [ 0 | 1 ]</c>
+ * \n Example of deleting a station paramter:
+ * \n <c>call_qcsapi update_bss_cfg wifi0 sta \<ssid\> \<param_name\> \<"NULL"\> [ 0 | 1 ]</c>
+ *
+ */
+extern int	qcsapi_wifi_update_bss_cfg(const char *ifname,
+		const qcsapi_wifi_mode wifi_mode,
+		const char *ssid, const char *param_name,
+		const char *param_value, const char *param_type);
+
+/**
  * @brief Get the 802.11w capability for the given interface.
  *
  * Returns the current 802.11w / PMF capability.
@@ -10154,28 +12099,13 @@ extern int	qcsapi_SSID_get_wps_SSID(
  *@{*/
 
 /**
- * \brief VLAN configuration for a wireless interface.
+ * \brief VLAN configuration for a interface.
  *
- * Bind a VLAN to a (non-primary) wireless interface
- * , or unbind a VLAN from it.
+ * Set vlan configurations on a specific interface
  *
- * \param ifname \wifiX
- * \param cmd VLAN command - see below.
-  * @code
- *  e_qcsapi_vlan_bind	bind a VLAN to wireless interface
- *  e_qcsapi_vlan_unbind	unbind a VLAN from wireless interface
- * @endcode
- *
- * \param VLANID VLAN identifier.
- * \param flags command-specific flags(Not support yet) - see below:<br>
- * @code
- * Please note:
- *	By now, flags only works for command of "bind":
- * @endcode
- * @code
- *	enable tx tag if command is "bind"	1
- *	disable tx tag if command is "bind"	0
- * @endcode
+ * \param ifname \wifi_wds_eth
+ * \param cmd VLAN command \ref qcsapi_vlan_cmd
+ * \param VLANID VLAN identifier, 0 ~ 4095
  *
  * \return 0 if the call succeeded.
  * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
@@ -10183,24 +12113,45 @@ extern int	qcsapi_SSID_get_wps_SSID(
  *
  * \callqcsapi
  *
- * <c>call_qcsapi vlan_config \<WiFi interface\> {bind | unbind} \<VLANID\> [tx tag] </c>
+ * <c>call_qcsapi vlan_config \<interface\> {enable | disable | access | trunk | hybrid | dynamic | bind | unbind} \<VLANID\> [tag | untag] [default] [delete] </c>
+ *
+ * <c>call_qcsapi vlan_config \<interface\> enable</c>
+ * <c>call_qcsapi vlan_config \<interface\> disable</c>
+ * <c>call_qcsapi vlan_config \<interface\> reset</c>
+ * <c>call_qcsapi vlan_config \<interface\> bind 10</c>
+ * <c>call_qcsapi vlan_config \<interface\> unbind 10</c>
+ * <c>call_qcsapi vlan_config \<interface\> access 10</c>
+ * <c>call_qcsapi vlan_config \<interface\> access 10 delete</c>
+ * <c>call_qcsapi vlan_config \<interface\> trunk 10</c>
+ * <c>call_qcsapi vlan_config \<interface\> trunk 10 default</c>
+ * <c>call_qcsapi vlan_config \<interface\> trunk 10 delete</c>
+ * <c>call_qcsapi vlan_config \<interface\> trunk 10 default delete</c>
+ * <c>call_qcsapi vlan_config \<interface\> hybrid 10</c>
+ * <c>call_qcsapi vlan_config \<interface\> hybrid 10 default</c>
+ * <c>call_qcsapi vlan_config \<interface\> hybrid 10 tag</c>
+ * <c>call_qcsapi vlan_config \<interface\> hybrid 10 untag</c>
+ * <c>call_qcsapi vlan_config \<interface\> hybrid 10 delete</c>
+ * <c>call_qcsapi vlan_config \<interface\> hybrid 10 default delete</c>
+ * <c>call_qcsapi vlan_config \<interface\> dynamic 1</c>
+ * <c>call_qcsapi vlan_config \<interface\> dynamic 0</c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
 extern int	qcsapi_wifi_vlan_config(
 			const char *ifname,
 			qcsapi_vlan_cmd cmd,
-			uint32_t vlanid,
-			uint32_t flags);
+			uint32_t vlanid);
 
 /**
  * \brief get vlan configuration
  *
- * This API call is used to retrieve current VLAN configuration which is taking effect.
+ * This API call is used to retrieve VLAN configuration on a specific interface.
  *
- * \param vtable
+ * \param ifname \wifi_wds_eth
+ * \param vcfg the structure to retrieve the VLAN configuration
+ * \param flag to imply what kind of configuration we want
  *
- * \return >= 0 on success, < 0 on error.
+ * \return \>= 0 on success, \< 0 on error.
  *
  * \callqcsapi
  *
@@ -10208,27 +12159,7 @@ extern int	qcsapi_wifi_vlan_config(
  *
  * Unless an error occurs, the output will be a table of VLAN configuration
  */
-extern int qcsapi_wifi_show_vlan_config(const char *ifname, string_1024 vcfg);
-
-/**
- * \brief Enable and disable bridge VLAN pass through.
- *
- * Enable and disable bridge VLAN pass through.
- *
- * \param ifname \wifiX
- * \param enabled set 1 to enable VLAN pass through, otherwise set it to 0.
- *
- * \return 0 if the call succeeded.
- * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
- * for error codes and messages.
- *
- * \callqcsapi
- *
- * <c>call_qcsapi enable_vlan_pass_through \<flag\></c>
- *
- * Unless an error occurs, the output will be the string <c>complete</c>.
- */
-extern int qcsapi_enable_vlan_pass_through(const char *ifname, int enabled);
+extern int qcsapi_wifi_show_vlan_config(const char *ifname, struct qcsapi_data_2Kbytes *vcfg, const char *flag);
 
 /**
  * \brief Enable and disable VLAN promiscuous mode.
@@ -10329,7 +12260,7 @@ extern int	qcsapi_wps_registrar_report_pin( const char *ifname, const char *wps_
  *
  * \callqcsapi
  *
- * <c>call_qcsapi registrar_get_pp_devname \[blacklist\] \<WiFi interface\></c>
+ * <c>call_qcsapi registrar_get_pp_devname \<WiFi interface\> \[blacklist\] </c>
  *
  * Unless an error occurs, the output will be the string of allowed Device IDs.
  */
@@ -10512,7 +12443,7 @@ extern int	qcsapi_wps_save_ap_pin(const char *ifname);
  * \return >= 0 success, < 0 or -qcsapi_parameter_not_found on error.
  * \callqcsapi
  *
- * <c>call_qcsapi enable_wps_ap_pin \<WiFi interface\> <0 | 1></c>
+ * <c>call_qcsapi enable_wps_ap_pin \<WiFi interface\> \<0 | 1\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -10669,9 +12600,9 @@ extern int	qcsapi_wps_set_configured_state( const char *ifname, const qcsapi_uns
  * where <c>WPS parameter name</c> is one of <c>uuid</c>, <c>os_version</c>,
  * <c>device_name</c>, <c>config_methods</c> or <c>ap_setup_locked</c>
  * <c>last_config_error</c> <c>registrar_number</c> <c>registrar_established</c>
- * <c>force_broadcast_uuid</c>
+ * <c>force_broadcast_uuid</c> <c>third_party_band</c>
  *
- * \note this API can be used both on AP and STA, except for parameter name is <c>ap_setup_locked</c> and <c>force_broadcast_uuid</c>.
+ * \note this API can be used both on AP and STA, except for parameter name is <c>ap_setup_locked</c>, <c>third_party_band</c> and <c>force_broadcast_uuid</c>.
  *
  * Unless an error occurs, the output will be the value of the selected WPS parameter.
  *
@@ -10877,7 +12808,7 @@ extern int	qcsapi_wps_get_access_control(const char *ifname, uint32_t *ctrl_stat
  *
  * <c>call_qcsapi set_wps_param \<WiFi interface\> \<WPS parameter name\> \<WPS parameter value\></c>
  *
- * where <c>WPS parameter name</c> is one of <c>config_methods</c>, <c>ap_pin</c>, <c>setup_lock</c>, <c>ap_setup_locked</c>
+ * where <c>WPS parameter name</c> is one of <c>config_methods</c>, <c>ap_pin</c>, <c>setup_lock</c>, <c>ap_setup_locked</c>, <c>third_party_band</c>
  * , <c>uuid</c> or <c>force_broadcast_uuid</c>. The API is only available for AP mode, except for the parameter name <c>uuid</c> and
  * <c>config_methods</c>.
  *
@@ -11008,6 +12939,51 @@ extern	int qcsapi_registrar_set_default_pbc_bss(const char *ifname);
  */
 
 extern	int qcsapi_registrar_get_default_pbc_bss(char *default_bss, int len);
+
+/**
+ * @brief set default interface for WPS Push button
+ *
+ * This API is used to associate a wireless interface with WPS Push button if there's more than
+ * one wireless interface in the system, such as repeater mode.
+ * default interface for WPS PBC is primary interface(wifi0) after powered up
+ *
+ * \note This API can be called under AP, STA or Repeater modes
+ *
+ * \param ifname \wifiX
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi wps_set_default_pbc_bss \<WiFi interface | null\> </c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+
+extern int qcsapi_wps_set_default_pbc_bss(const char *ifname);
+
+/**
+ * @brief get the associated interface on first radio device for WPS Push button
+ *
+ * This API is used to get default interface on first radio for WPS Push button
+ * default interface for WPS PBC is primary interface on first radio device after powered up
+ *
+ * \note This API can be called under AP, STA or Repeater modes
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi wps_get_default_pbc_bss </c>
+ *
+ * Unless an error occurs, the output will be an interface name
+ */
+
+extern int qcsapi_wps_get_default_pbc_bss(char *default_bss, int len);
 
 /**@}*/
 
@@ -11289,10 +13265,10 @@ extern int	qcsapi_gpio_enable_wps_push_button(const uint8_t wps_push_button,
 extern int	qcsapi_wifi_get_count_associations( const char *ifname, qcsapi_unsigned_int *p_association_count );
 
 /**
- * @brief Get the associated STA MAC addresses.
+ * @brief Get the associated device MAC addresses.
  *
- * Gets the MAC address of a STA currently associated with the AP.  Second parameter selects the association index,
- * with a range from 0 to the association count - 1.
+ * Gets the MAC address of a device (STA or WDS peer) currently associated with the AP.
+ * Second parameter selects the association index, with a range from 0 to the association count - 1.
  * An index out of range causes the API to fail with the error set to Out of Range (-ERANGE).
  * Use qcsapi_wifi_get_count_associations to determine the current association count.
  *
@@ -11305,9 +13281,9 @@ extern int	qcsapi_wifi_get_count_associations( const char *ifname, qcsapi_unsign
  *
  * \note \aponly
  *
- * \param ifname \wifi0
- * \param device_index the index of the STA MAC address to return.
- * \param device_mac_addr the MAC address of the STA at index 'device_index'.
+ * \param ifname \wifi_wds
+ * \param device_index the index of the device MAC address to return.
+ * \param device_mac_addr the MAC address of the device at index 'device_index'.
  *
  * \return 0 if the call succeeded.
  * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
@@ -11317,7 +13293,7 @@ extern int	qcsapi_wifi_get_count_associations( const char *ifname, qcsapi_unsign
  *
  * <c>call_qcsapi get_associated_device_mac_addr \<WiFi interface\> \<association index\>	</c><br>
  *
- * The output will be the MAC address of the associated station, or an error message.
+ * The output will be the MAC address of the associated device, or an error message.
  *
  * \sa qcsapi_wifi_get_BSSID
  */
@@ -11807,10 +13783,11 @@ extern int	qcsapi_wifi_get_auth_enc_per_association(
  * \internal
  * \brief Get HT and VHT capabilities by association index.
  *
- * Returns the contents of the HT and VHT information elements for an associated station.
+ * Returns the contents of the HT and VHT information elements for an associated station
+ * or access point.
  *
  * \param ifname \wifi0
- * \param association_index the association index of an associated station
+ * \param association_index the association index of an associated station (0 for AP)
  * \param tput_caps buffer to receive the returned data
  *
  * \return 0 if the call succeeded.
@@ -11999,7 +13976,7 @@ extern int	qcsapi_wifi_get_node_param(
 			const uint32_t node_index,
 			qcsapi_per_assoc_param param_type,
 			int local_remote_flag,
-			string_128 input_param_str,
+			const string_128 input_param_str,
 			qcsapi_measure_report_result *report_result);
 /**
  * @brief Get a Counter for a Node
@@ -12176,6 +14153,46 @@ extern int qcsapi_wifi_get_mlme_stats_per_association(const char *ifname, const 
  * Unless an error occurs, the output will be the list of the mac addresses existing in mlme statistics table.
  */
 extern int qcsapi_wifi_get_mlme_stats_macs_list(qcsapi_mlme_stats_macs *macs_list);
+
+/**
+ * @brief this API is used to sample all client datas
+ *
+ * To sample all conected station records
+ *
+ * \param ifname wireless interface name
+ * \param sta_count pointer for number of clients
+ *
+ * \return >=0 on success, <0 on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi sample_all_clients \<WiFi interface\> </c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_sample_all_clients(const char *ifname, uint8_t *sta_count);
+
+/**
+ * @brief this API is used to get sampled data
+ *
+ * To get the record of conected station
+ *
+ * \param ifname wireless interface name
+ * \param ptr client records pointer
+ * \param num_entry station count
+ * \param offset station offset
+ *
+ * \return >=0 on success, <0 on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_assoc_data \<WiFi interface\> \<num entry\> \<offset\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_get_per_assoc_data(const char *ifname,
+				struct qcsapi_sample_assoc_data *ptr,
+				const int num_entry, const int offset);
 /**@}*/
 
 
@@ -12458,7 +14475,7 @@ extern int	qcsapi_wifi_get_configured_tx_power(const char *ifname,
  *	quantenna # call_qcsapi get_configured_tx_power wifi0 188 eu 20
  *	QCSAPI error 22: Invalid argument
  * @endcode
- * \note: This API is deprecated and replaced with qcsapi_regulatory_get_configured_tx_power_ext.
+ * \note This API is deprecated and replaced with qcsapi_regulatory_get_configured_tx_power_ext.
  */
 extern int qcsapi_regulatory_get_configured_tx_power(const char *ifname,
 							const qcsapi_unsigned_int the_channel,
@@ -13140,7 +15157,7 @@ extern int	qcsapi_wifi_get_count_APs_scanned( const char *ifname, qcsapi_unsigne
  *
  * Unless an error occurs, the output will be the properties of the referenced AP,
  * in the order of SSID, MAC address, WiFi channel, RSSI, flags, protocol,
- * authentication mode, encryption mode, Qhop and WPS flags.
+ * authentication mode, encryption mode, Qhop flags, WPS flags and maximum supported bandwidth.
  * The SSID is enclosed in quotes since it can have embedded blanks.
  *
  * WPS flags: bit 0 - WPS supported
@@ -13152,24 +15169,24 @@ extern int	qcsapi_wifi_get_count_APs_scanned( const char *ifname, qcsapi_unsigne
  *
  * @code
  * quantenna # call_qcsapi get_properties_AP wifi0 0
- * "FAE-Lab-10" c0:3f:0e:7d:5a:dc 40 25 0 0 0 0 0 1
+ * "FAE-Lab-10" c0:3f:0e:7d:5a:dc 40 25 0 0 0 0 0 1 40
  * @endcode
  *
  * This AP has "FAE-Lab-10" as its SSID (the SSID is enclosed in quotes since an
  * SSID can have embedded blank characters), MAC address of c0:3f:03:7d:51:dc,
  * is broadcasting on WiFi channel 40 (5.2 GHz), with an RSSI of 25.  Security is disabled for the AP.
- * Qhop is off and WPS is supported.
+ * Qhop is off and WPS is supported, maximum supported bandwidth is 40M.
  *
  * @code
  * quantenna # call_qcsapi get_properties_AP wifi0 2
- * "Quantenna1" 00:26:86:00:11:5f 60 56 1 2 1 2 0 15
+ * "Quantenna1" 00:26:86:00:11:5f 60 56 1 2 1 2 0 15 80
  * @endcode
  *
  * This AP has "Quantenna1" as its SSID, MAC address of 00:26:86:00:11:5f,
  * is broadcasting on WiFi channel 60 (5.3 GHz), with an RSSI of 56.
  * Security is enabled for this AP.  The security protocol is WPA2 (11i);
  * the authentication mode is PSK; and the encryption mode is CCMP. Qhop is off, WPS is available and
- * WPS push-button is currently active.
+ * WPS push-button is currently active, maximum supported bandwidth is 80M.
  *
  * @code
  * quantenna # call_qcsapi get_properties_AP wifi0 4
@@ -13347,7 +15364,7 @@ extern int qcsapi_wifi_get_scan_table_max_len(const char *ifname, unsigned int *
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_dwell_times <i>interface</i> <i>max_active</i> <i>min_active</i> <i>max_passive</i> <i>min_passive</i></c>
+ * <c>call_qcsapi set_dwell_times \<WiFi interface\> <i>max_active</i> <i>min_active</i> <i>max_passive</i> <i>min_passive</i></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -13376,7 +15393,7 @@ extern int	qcsapi_wifi_set_dwell_times(
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_dwell_times <i>interface</i></c>
+ * <c>call_qcsapi get_dwell_times \<WiFi interface\></c>
  *
  * call_qcsapi will print dwell times in argument order to stdout on success, or print an error message to stdout on failure.
  */
@@ -13407,7 +15424,7 @@ extern int	qcsapi_wifi_get_dwell_times(
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_bgscan_dwell_times <i>interface</i> <i>active</i> <i>passive</i></c>
+* <c>call_qcsapi set_bgscan_dwell_times \<WiFi interface\> <i>active</i> <i>passive</i></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -13432,7 +15449,7 @@ extern int	qcsapi_wifi_set_bgscan_dwell_times(
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_bgscan_dwell_times <i>interface</i></c>
+ * <c>call_qcsapi get_bgscan_dwell_times \<WiFi interface\></c>
  *
  * call_qcsapi will print dwell times in argument order to stdout on success, or print an error message to stdout on failure.
  */
@@ -13581,6 +15598,63 @@ extern int qcsapi_wifi_get_bgscan_status(const char *ifname, int *enable);
  */
 extern int	qcsapi_wifi_wait_scan_completes(const char *ifname, time_t timeout);
 
+/**
+ * \internal
+ * @brief Set the threshold of neighborhood density type.
+ *
+ * This API call is used to set the threshold of neighborhood density type.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param type density type, there are three types,
+ *	IEEE80211_NEIGHBORHOOD_TYPE_SPARSE = 0,
+ *	IEEE80211_NEIGHBORHOOD_TYPE_DENSE = 1,
+ *	IEEE80211_NEIGHBORHOOD_TYPE_VERY_DENSE = 2.
+ * \param threshold when AP count belows or equals to this value, driver evaluates the neighborhood as the type above.
+ *
+ * \return 0 if the configuration file path was updated successfully.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_threshold_of_neighborhood_type \<WiFi interface\> \<type\> \<threshold\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_threshold_of_neighborhood_type(const char *ifname, uint32_t type, uint32_t threshold);
+
+/**
+ * \internal
+ * @brief Get the type of neighborhood density.
+ *
+ * This API call is used to get the type of neighborhood density.
+ *
+ * \note \aponly
+ * \note make sure that a scan has been scheduled lately to get a updated result.
+ *
+ * \param ifname \wifi0
+ * \param type result of type, there are three types,
+ *	IEEE80211_NEIGHBORHOOD_TYPE_SPARSE = 0,
+ *	IEEE80211_NEIGHBORHOOD_TYPE_DENSE = 1,
+ *	IEEE80211_NEIGHBORHOOD_TYPE_VERY_DENSE = 2.
+ * \param count neighbor count.
+ *
+ * \return 0 if the configuration file path was updated successfully.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_neighborhood_type \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be one of <c>"Sparse ([n] neighbor APs)"</c>,
+ * <c>"Dense ([n] neighbor APs)"</c>, <c>"Very dense ([n] neighbor APs)"</c> or
+ * <c>"Unknown, may need a new scan"</c>.
+ */
+extern int qcsapi_wifi_get_neighborhood_type(const char *ifname, uint32_t *type, uint32_t *count);
+
 /**@}*/
 
 
@@ -13695,6 +15769,7 @@ extern int qcsapi_wifi_get_mcs_rate(const char *ifname,
  * 100 ~ 109, 200 ~ 209, 300 ~ 309, 400 ~ 409.
  * This API cannot be used to configure auto rate fallback;
  * use the Set Option API with qcsapi_autorate_fallback as the option to select auto rate fallback.
+ * \note \primarywifi
  *
  * \note \primarywifi
  * \note To set an 802.11n MCS on a VHT capable device, you must first set the bandwidth to 20MHz or 40MHz.
@@ -13901,6 +15976,40 @@ extern int	qcsapi_wifi_set_vendor_fix(const char *ifname, int fix_param, int val
  * Output will be the requested error message, or the relevant error message if an error occurs.
  */
 extern int	qcsapi_errno_get_message( const int qcsapi_retval, char *error_msg, unsigned int msglen );
+
+/**
+ * \brief get vco lock detect status start/stop.
+ *
+ * This API get the vco lock detect function is enabled or disabled.
+ *
+ * \param ifname \wifi0
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * Unless an error occurs, the output will be the status of lock detect function enabled .
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi get_vco_lock_detect_status \<WiFi interface\> </c>
+ */
+extern int qcsapi_wifi_get_vco_lock_detect_mode(const char * ifname, unsigned int * p_jedecid);
+/**
+ * \brief set vco lock detect start/stop.
+ *
+ * This API set the vco lock detect function start/stop.
+ *
+ * \param ifname \wifi0
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * Unless an error occurs, the output will be <c>1</c> (enabled) or <c>0</c> (disabled)
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi set_vco_lock_detect_mode \<WiFi interface\> </c>
+ */
+extern int qcsapi_wifi_set_vco_lock_detect_mode(const char * ifname, unsigned int * p_jedecid);
+
 /**@}*/
 
 /**@addtogroup StatisticsAPIs
@@ -14041,7 +16150,7 @@ extern int	qcsapi_firmware_get_version( char *firmware_version, const qcsapi_uns
  *
  * \callqcsapi
  *
- * <c>call_qcsapi flash_image_update \<path\> \<live|safety\></c>
+ * <c>call_qcsapi flash_image_update \<path\> {live|safety|uboot_live}</c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  * \note when used via RPC, timeout is 60 seconds
@@ -14088,12 +16197,36 @@ extern int qcsapi_send_file(const char *image_file_path, const int image_flags);
  * \return 0 if the command succeeded.
  * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
+ * \note The 'on' and 'auto' keywords are synonymous.
  *
  * \callqcsapi
  *
- * <c>call_qcsapi pm \<off|on|auto|suspend\></c>
+ * <c>call_qcsapi pm { off | on | auto | idle | suspend }</c>
  */
 extern int	qcsapi_pm_set_mode(int mode);
+
+/**
+ * @brief Set power save setting for Dual Ethernet
+ *
+ * Set the current power save setting for Ethernet ports, applied when two Ethernet ports are used
+ *
+ * \param mode new power save setting. Valid values are:
+ *	<ul>
+ *		<li><i>QCSAPI_PM_MODE_DISABLE</i> - Disable all power saving features</li>
+ *		<li><i>QCSAPI_PM_MODE_AUTO</i> - Automatic; power saving will adjust itself based on associated stations, traffic levels etc </li>
+ *	</ul>
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ * \note The 'on' and 'auto' keywords are synonymous.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi pm { off | on | auto } dual_emac</c>
+ * \note Dual Ethernet power saving is only activated when two Ethernet interfaces are up.
+ */
+extern int qcsapi_pm_dual_emac_set_mode(int mode);
 
 /**
  * @brief Get power save setting
@@ -14110,9 +16243,29 @@ extern int	qcsapi_pm_set_mode(int mode);
  *
  * <c>call_qcsapi pm</c>
  *
- * Unless an error occurs, the output will be the current value of power save setting from a list \<off|auto|suspend\>.
+ * Unless an error occurs, the output will be the current value of power save setting from a list \<off|auto|idle|suspend\>.
  */
 extern int	qcsapi_pm_get_mode(int *mode);
+
+/**
+ * @brief Get power save setting for Daul Ethernet
+ *
+ * Get the current power save setting. This is related to Dual Ethernet power saving.
+ *
+ * \param mode pointer to where the current power save setting value should be stored.
+ *
+ * \return 0 if the command succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi pm dual_emac</c>
+ *
+ * Unless an error occurs, the output will be the current value of power save setting from a list \<off|auto|idle|suspend\>.
+ * \note Dual Ethernet power saving is only activated when two Ethernet interfaces are up.
+ */
+extern int qcsapi_pm_dual_emac_get_mode(int *mode);
 
 /**
  * @brief Get qpm level
@@ -14145,13 +16298,13 @@ extern int      qcsapi_get_qpm_level(int *qpm_level);
  *
  * \param ifname \wifi0
  * \param host_state either '0 (exit power save) or '1' (enter power save)
- * \note This API works across all wifi interfaces.
+ * \note This API works across all WiFi interfaces.
  *
  * \return >= 0 on success, < 0 on error.
  *
  * \call_qcsapi
  *
- * <c>call_qcsapi wowlan_host_state \<wifi interface\> {0 | 1}</c>
+ * <c>call_qcsapi wowlan_host_state \<WiFi interface\> {0 | 1}</c>
  */
 extern int qcsapi_set_host_state( const char *ifname, const uint32_t host_state);
 
@@ -14185,6 +16338,8 @@ extern int	qcsapi_qtm_get_state(const char *ifname, unsigned int param, unsigned
  * \param max maximum number of unsigned ints to return, typically QVSP_STATE_READ_MAX
  *
  * \return 0 on success, negative on error.
+ *
+ * \note This API is deprecated and replaced with qcsapi_qtm_safe_get_state_all.
  */
 extern int	qcsapi_qtm_get_state_all(const char *ifname, struct qcsapi_data_128bytes *value, unsigned int max);
 
@@ -14204,10 +16359,10 @@ extern int	qcsapi_qtm_get_state_all(const char *ifname, struct qcsapi_data_128by
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> enable</c>
- * <c>call_qcsapi qtm <ifname> disable</c>
- * <c>call_qcsapi qtm <ifname> reset</c>
- * <c>call_qcsapi qtm <ifname> test fat <value></c>
+ * <c>call_qcsapi qtm \<ifname\> enable</c>
+ * <c>call_qcsapi qtm \<ifname\> disable</c>
+ * <c>call_qcsapi qtm \<ifname\> reset</c>
+ * <c>call_qcsapi qtm \<ifname\> test fat \<value\></c>
  */
 extern int	qcsapi_qtm_set_state(const char *ifname, unsigned int param, unsigned int value);
 
@@ -14225,7 +16380,7 @@ extern int	qcsapi_qtm_set_state(const char *ifname, unsigned int param, unsigned
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> get <param></c>
+ * <c>call_qcsapi qtm \<ifname\> get \<param\></c>
  *
  * This will print the parameter obtained if successful, or an error message on failure.
  */
@@ -14245,9 +16400,11 @@ extern int	qcsapi_qtm_get_config(const char *ifname, unsigned int param, unsigne
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> show config</c> will call this API, and some others.
+ * <c>call_qcsapi qtm \<ifname\> show config</c> will call this API, and some others.
  *
  * Unless an error occurs, the output will be all configuration options, all whitelist entries and all rules.
+ *
+ * \note This API is deprecated and replaced with qcsapi_qtm_safe_get_config_all.
  */
 extern int	qcsapi_qtm_get_config_all(const char *ifname, struct qcsapi_data_1Kbytes *value, unsigned int max);
 
@@ -14265,7 +16422,7 @@ extern int	qcsapi_qtm_get_config_all(const char *ifname, struct qcsapi_data_1Kby
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> set <param> <value></c>
+ * <c>call_qcsapi qtm \<ifname\> set \<param\> \<value\></c>
  *
  * Output is silent with a return code of zero if successful, and an error message on failure.
  */
@@ -14284,11 +16441,13 @@ extern int	qcsapi_qtm_set_config(const char *ifname, unsigned int param, unsigne
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> rule add <p1> <v1> [<pn> <vn>]...</c>
+ * <c>call_qcsapi qtm \<ifname\> rule add \<p1\> \<v1\> [\<pn\> \<vn\>]...</c>
  *
- * Where <p1> <v1> are rule parameter name/value pairs. Many pairs can be used in one rule.
+ * Where \<p1\> \<v1\> are rule parameter name/value pairs. Many pairs can be used in one rule.
  *
  * Output is silent with a return code of zero if successful, and an error message on failure.
+ *
+ * \note This API is deprecated and replaced with qcsapi_qtm_safe_add_rule.
  */
 extern int	qcsapi_qtm_add_rule(const char *ifname, const struct qcsapi_data_128bytes *entry);
 
@@ -14305,11 +16464,13 @@ extern int	qcsapi_qtm_add_rule(const char *ifname, const struct qcsapi_data_128b
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> rule add <p1> <v1> [<pn> <vn>]...</c>
+ * <c>call_qcsapi qtm \<ifname\> rule add \<p1\> \<v1\> [\<pn\> \<vn\>]...</c>
  *
- * Where <p1> <v1> are rule parameter name/value pairs. Many pairs can be used in one rule.
+ * Where \<p1\> \<v1\> are rule parameter name/value pairs. Many pairs can be used in one rule.
  *
  * Output is silent with a return code of zero if successful, and an error message on failure.
+ *
+ * \note This API is deprecated and replaced with qcsapi_qtm_safe_del_rule.
  */
 extern int	qcsapi_qtm_del_rule(const char *ifname, const struct qcsapi_data_128bytes *entry);
 
@@ -14326,7 +16487,7 @@ extern int	qcsapi_qtm_del_rule(const char *ifname, const struct qcsapi_data_128b
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> rule del <index>
+ * <c>call_qcsapi qtm \<ifname\> rule del \<index\>
  *
  * Output is silent with a return code of zero if successful, and an error message on failure.
  */
@@ -14346,9 +16507,11 @@ extern int	qcsapi_qtm_del_rule_index(const char *ifname, unsigned int index);
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> show config</c> will call this API, and some others.
+ * <c>call_qcsapi qtm \<ifname\> show config</c> will call this API, and some others.
  *
  * Unless an error occurs, the output will be all configuration options, all whitelist entries and all rules.
+ *
+ * \note This API is deprecated and replaced with qcsapi_qtm_safe_get_rule.
  */
 extern int	qcsapi_qtm_get_rule(const char *ifname, struct qcsapi_data_3Kbytes *entries, unsigned int max_entries);
 
@@ -14361,15 +16524,17 @@ extern int	qcsapi_qtm_get_rule(const char *ifname, struct qcsapi_data_3Kbytes *e
  * \param ifname \wifi0
  * \param entries an buffer of stream structures for result storage
  * \param max_entries the length of the array passed in 'entries'
- * \param show_all show all streams
+ * \param show_all 1 to return all streams, or 0 to return only enabled, pre-enabled and disabled streams
  *
  * \return Number of streams currently configured on success, negative on error
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> show [all]</c> will call this API, and some others.
+ * <c>call_qcsapi qtm \<ifname\> show [all]</c> will call this API, and some others.
  *
  * Unless an error occurs, the output will be status, and current high throughput streams. Usage of the argument 'all' adds low throughput streams.
+ *
+ * \note This API is deprecated and replaced with qcsapi_qtm_safe_get_strm.
  */
 extern int	qcsapi_qtm_get_strm(const char *ifname, struct qcsapi_data_4Kbytes *strms,
 					unsigned int max_entries, int show_all);
@@ -14387,9 +16552,11 @@ extern int	qcsapi_qtm_get_strm(const char *ifname, struct qcsapi_data_4Kbytes *s
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> show stats</c>
+ * <c>call_qcsapi qtm \<ifname\> show stats</c>
  *
  * The output will show various statistics on success, and an error message on failure.
+ *
+ * \note This API is deprecated and replaced with qcsapi_qtm_safe_get_stats.
  */
 extern int	qcsapi_qtm_get_stats(const char *ifname, struct qcsapi_data_512bytes *stats);
 
@@ -14406,11 +16573,148 @@ extern int	qcsapi_qtm_get_stats(const char *ifname, struct qcsapi_data_512bytes 
  *
  * \callqcsapi
  *
- * <c>call_qcsapi qtm <ifname> show</c>
+ * <c>call_qcsapi qtm \<ifname\> show</c>
  *
  * The output will show the inactive reason if QTM is inactive.
  */
 extern int qcsapi_qtm_get_inactive_flags(const char *ifname, unsigned long *flags);
+
+
+/**
+ * \brief Get all QTM status
+ *
+ * This API obtains all QTM runtime status and flags with 1 invocation
+ *
+ * \param ifname \wifi0
+ * \param value pointer to an integer array for value storage
+ * \param max maximum number of unsigned ints to return, typically QVSP_STATE_READ_MAX
+ *
+ * \return 0 on success, negative on error.
+ */
+extern int qcsapi_qtm_safe_get_state_all(const char *ifname, struct qcsapi_int_array32 *value, unsigned int max);
+
+/**
+ * \internal
+ * \brief Get all QTM config options
+ *
+ * This API stores all QTM configuration options into an array
+ *
+ * \param ifname \wifi0
+ * \param value pointer to an integer array for value storage
+ * \param max maximum number of unsigned ints to return, typically QVSP_STATE_READ_MAX
+ *
+ * \return 0 on success, negative on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi qtm \<ifname\> show config</c> will call this API, and some others.
+ *
+ * Unless an error occurs, the output will be all configuration options, all whitelist entries and all rules.
+ */
+extern int qcsapi_qtm_safe_get_config_all(const char *ifname, struct qcsapi_int_array256 *value, unsigned int max);
+
+/**
+ * \internal
+ * \brief Add QTM rule
+ *
+ * Add a QTM rule. Rules determine which streams to drop in an oversubscription event.
+ *
+ * \param ifname \wifi0
+ * \param entry rule to add
+ *
+ * \return 0 on success, negative on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi qtm \<ifname\> rule add \<p1\> \<v1\> [\<pn\> \<vn\>]...</c>
+ *
+ * Where \<p1\> \<v1\> are rule parameter name/value pairs. Many pairs can be used in one rule.
+ *
+ * Output is silent with a return code of zero if successful, and an error message on failure.
+ */
+extern int qcsapi_qtm_safe_add_rule(const char *ifname, const struct qcsapi_int_array32 *entry);
+
+/**
+ * \internal
+ * \brief Delete QTM rule
+ *
+ * Delete a QTM rule.
+ *
+ * \param ifname \wifi0
+ * \param entry rule to delete
+ *
+ * \return 0 on success, negative on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi qtm \<ifname\> rule del \<p1\> \<v1\> [\<pn\> \<vn\>]...</c>
+ *
+ * Where \<p1\> \<v1\> are rule parameter name/value pairs. Many pairs can be used in one rule.
+ *
+ * Output is silent with a return code of zero if successful, and an error message on failure.
+ */
+extern int qcsapi_qtm_safe_del_rule(const char *ifname, const struct qcsapi_int_array32 *entry);
+
+/**
+ * \internal
+ * \brief Read QTM rules
+ *
+ * Read QTM rules
+ *
+ * \param ifname \wifi0
+ * \param entries an array of rule structures for result storage
+ * \param max_entries the length of the array passed in 'entries'
+ *
+ * \return Number of rules currently configured on success, negative on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi qtm \<ifname\> show config</c> will call this API, and some others.
+ *
+ * Unless an error occurs, the output will be all configuration options, all whitelist entries and all rules.
+ */
+extern int qcsapi_qtm_safe_get_rule(const char *ifname, struct qcsapi_int_array768 *entries, unsigned int max_entries);
+
+/**
+ * \internal
+ * \brief Read QTM streams
+ *
+ * Read QTM streams
+ *
+ * \param ifname \wifi0
+ * \param strms buffer to receive stream data
+ * \param show_all 1 to return all streams, or 0 to return only enabled, pre-enabled and disabled streams
+ *
+ * \return Number of streams currently configured on success, negative on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi qtm \<ifname\> show [all]</c> will call this API, and some others.
+ *
+ * Unless an error occurs, the output will be status, and current high throughput streams. Usage of the argument 'all' adds low throughput streams.
+ *
+ * \note This API should be used with care because the return buffer consumes ~21KB of memory, which could lead to memory exhaustion.
+ */
+extern int qcsapi_qtm_safe_get_strm(const char *ifname, struct qvsp_strms *strms, int show_all);
+
+/**
+ * \internal
+ * \brief Read QTM statistics
+ *
+ * Read QTM statistics
+ *
+ * \param ifname \wifi0
+ * \param stats result memory
+ *
+ * \return 0 on success, negative on error
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi qtm \<ifname\> show stats</c>
+ *
+ * The output will show various statistics on success, and an error message on failure.
+ */
+extern int qcsapi_qtm_safe_get_stats(const char *ifname, struct qcsapi_int_array128 *stats);
 
 /**@}*/
 
@@ -14426,7 +16730,7 @@ extern int qcsapi_qtm_get_inactive_flags(const char *ifname, unsigned long *flag
  *
  * <b>set_test_mode</b><br>
  * This script is used to configure the packet type.<br>
- * <c>set_test_mode <Channel> <Antenna> \<MCS Level\> <BW> <Size> <11n signal> <BF> </c><br>
+ * <c>set_test_mode \<Channel\> \<Antenna\> \<MCS Level\> \<BW\> \<Size\> \<11n signal\> \<BF\> </c><br>
  * Channel: channel number of the center frequency<br>
  * Antenna: 127 - 4 chanis on, 113 - chain 1 on, 116 - chain3 on, 120 - chain 4 on.<br>
  * MCS level: MCS# of packet transmitted<br>
@@ -14438,7 +16742,7 @@ extern int qcsapi_qtm_get_inactive_flags(const char *ifname, unsigned long *flag
  * <b>send_test_packet</b><br>
  * Start to transmit packet. Please note that before calling this script, test mode should be set by
  * script <c>set_test_mode</c><br>
- * <c>send_test_packet <number></c><br>
+ * <c>send_test_packet \<number\></c><br>
  * number: How many(number*1000) packets will be sent.
  *
  * <b>stop_test_packet</b><br>
@@ -14449,7 +16753,7 @@ extern int qcsapi_qtm_get_inactive_flags(const char *ifname, unsigned long *flag
  *
  * <b>send_cw_signal</b><br>
  * Generate CW tone for different channels for frequency offset measurement.<br>
- * <c>send_cw_signal <channel> <chain> \<CW pattern\> <tone> <sideband></c><br>
+ * <c>send_cw_signal \<channel\> \<chain\> \<CW pattern\> \<tone\> \<sideband\></c><br>
  * channel: channel number like 36, 40, 44, ...<br>
  * chain: the value are 2 separate numbers.
  *  - 0 0 - chain1
@@ -14514,8 +16818,83 @@ extern int qcsapi_wifi_run_script(const char *scriptname, const char *param);
 extern int qcsapi_wifi_test_traffic(const char *ifname, uint32_t period);
 
 /**
+ * \brief Add a multicast entry
+ *
+ * Add a static multicast entry to the forwarding table.
+ *
+ * \param ipaddr the IP multicast address to be added to the table
+ * \param mac the MAC address of an associated station or wired interface
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \note IGMP snooping should be disabled when using this command.
+ *
+ * \note The MAC address must be present in the forwarding table.  Using the MAC address of an
+ * associated station rather than a downstream endpoint is recommended because a downstream
+ * endpoint is only added to the forwarding table when traffic is received from it.
+ *
+ * \note If a station disassociates, all multicast entries for the station are deleted.
+ *
+ * \note Entries added by using this command are not aged out of the table and must be deleted by
+ * using <c>qcsapi_wifi_del_multicast</c>.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi add_multicast \<IP address\> \<MAC address\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_add_multicast(qcsapi_unsigned_int ipaddr, qcsapi_mac_addr mac);
+
+/**
+ * \brief Remove a multicast entry
+ *
+ * Remove a multicast entry from the forwarding table.
+ *
+ * \param ipaddr the IPv4 or IPv6 multicast address to be added to the table
+ * \param mac the MAC address of a known endpoint
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi del_multicast \<IP address\> \<MAC address\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_del_multicast(qcsapi_unsigned_int ipaddr, qcsapi_mac_addr mac);
+
+/**
+ * \brief Display multicast entries
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_multicast_list</c>
+ *
+ * Unless an error occurs, the output is a list of multicast IP addresses and MAC addresses. If
+ * flood-forwarding is configured for a multicast IP address, the word 'flood' is printed in place
+ * of the MAC address list. E.g.
+ * @code
+ * 225.1.2.4 00:26:86:f0:32:d5 00:1b:21:71:78:e6 00:26:86:5c:16:7e
+ * 239.0.0.1 flood
+ * 225.1.2.3 00:26:86:5c:16:7e
+ * ...
+ * @endcode
+ */
+extern int qcsapi_wifi_get_multicast_list(char *buf, int buflen);
+
+/**
  * \brief Add a multicast IP address to the flood-forwarding table
  *
+ * Add a multicast IP address to the flood-forwarding table.
  * Packets matching these addresses will be flood-forwarded to every interface and every associated
  * station.
  *
@@ -14539,6 +16918,8 @@ extern int qcsapi_wifi_add_ipff(qcsapi_unsigned_int ipaddr);
 /**
  * \brief Remove a multicast IP address from the flood-forwarding table
  *
+ * Remove a multicast IP address from the flood-forwarding table.
+ *
  * \param ipaddr the multicast IPv4 address to be removed from the table
  *
  * \return 0 if the call succeeded.
@@ -14555,6 +16936,8 @@ extern int qcsapi_wifi_del_ipff(qcsapi_unsigned_int ipaddr);
 
 /**
  * \brief Display the contents of the flood-forwarding table
+ *
+ * Display the contents of the flood-forwarding table.
  *
  * \note SSDP (239.255.255.250) and LNCB (224.0.0.0/24) packets are always flood-forwarded, even
  * if not added to this table.
@@ -14584,7 +16967,7 @@ extern int qcsapi_wifi_get_ipff(char *buf, int buflen);
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_rts_threshold <interface></c>
+ * <c>call_qcsapi get_rts_threshold \<interface\></c>
  *
  * Unless an error occurs, outputs RTS threshold configured for interface
  */
@@ -14605,7 +16988,7 @@ extern int qcsapi_wifi_get_rts_threshold(const char *ifname, qcsapi_unsigned_int
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_rts_threshold <interface> <rts_threshold></c>
+ * <c>call_qcsapi set_rts_threshold \<interface\> \<rts_threshold\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete.</c>
  */
@@ -14618,13 +17001,13 @@ extern int qcsapi_wifi_set_rts_threshold(const char *ifname, qcsapi_unsigned_int
  *
  * \param ifname \wifi0
  * \param modulation either 'ht' (for 802.11n) or 'vht' (for 802.11ac)
- * \note This API works across all wifi interfaces.
+ * \note This API works across all WiFi interfaces.
  *
  * \return >= 0 on success, < 0 on error.
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_nss_cap \<wifi interface\> {ht | vht} \<nss\></c>
+ * <c>call_qcsapi set_nss_cap \<WiFi interface\> {ht | vht} \<nss\></c>
  */
 extern int qcsapi_wifi_set_nss_cap(const char *ifname, const qcsapi_mimo_type modulation,
 					const qcsapi_unsigned_int nss);
@@ -14636,13 +17019,13 @@ extern int qcsapi_wifi_set_nss_cap(const char *ifname, const qcsapi_mimo_type mo
  *
  * \param ifname \wifi0
  * \param modulation either 'ht' (for 802.11n) or 'vht' (for 802.11ac)
- * \note This API works across all wifi interfaces.
+ * \note This API works across all WiFi interfaces.
  *
  * \return >= 0 on success, < 0 on error.
  *
  * \call_qcsapi
  *
- * <c>call_qcsapi get_nss_cap \<wifi interface\> {ht | vht}</c>
+ * <c>call_qcsapi get_nss_cap \<WiFi interface\> {ht | vht}</c>
  */
 extern int qcsapi_wifi_get_nss_cap(const char *ifname, const qcsapi_mimo_type modulation,
 					qcsapi_unsigned_int *nss);
@@ -14657,7 +17040,7 @@ extern int qcsapi_wifi_get_nss_cap(const char *ifname, const qcsapi_mimo_type mo
  *
  * \call_qcsapi
  *
- * <c> call_qcsapi get_tx_amsdu \<wifi interface\><c>
+ * <c> call_qcsapi get_tx_amsdu \<WiFi interface\><c>
  */
 extern int qcsapi_wifi_get_tx_amsdu(const char *ifname, int *enable);
 
@@ -14671,7 +17054,7 @@ extern int qcsapi_wifi_get_tx_amsdu(const char *ifname, int *enable);
  *
  * \call_qcsapi
  *
- * <c>call_qcsapi set_tx_amsdu \<wifi interface\> { 0 | 1 }</c>
+ * <c>call_qcsapi set_tx_amsdu \<WiFi interface\> { 0 | 1 }</c>
  */
 extern int qcsapi_wifi_set_tx_amsdu(const char *ifname, int enable);
 
@@ -14686,7 +17069,7 @@ extern int qcsapi_wifi_set_tx_amsdu(const char *ifname, int enable);
  *
  * \callqcsapi
  *
- * <c>call_qcsapi disassoc_reason \<wifi interface\> </c>
+ * <c>call_qcsapi disassoc_reason \<WiFi interface\> </c>
  */
 extern int qcsapi_wifi_get_disassoc_reason( const char *ifname, qcsapi_unsigned_int *reason );
 
@@ -14709,6 +17092,26 @@ extern int qcsapi_wifi_get_disassoc_reason( const char *ifname, qcsapi_unsigned_
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
 extern int qcsapi_wifi_block_bss(const char *ifname, const qcsapi_unsigned_int flag);
+
+/**
+ * \brief Get status whether association requests for one specified BSS are blocked or not.
+ *
+ * Get blocking status for association requests for one BSS.
+ *
+ * \param ifname wifix
+ * \param pvalue blocking status. 1 - Blocked; 0 - Unblocked.
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_block_bss \<WiFi interface\>
+ *
+ * Unless an error occurs, the output will be 0 or 1. An error will give a warning message.
+ */
+extern int qcsapi_wifi_get_block_bss(const char *ifname, unsigned int *pvalue);
 
 /**
  * \brief Check if device is in repeater mode
@@ -14762,6 +17165,287 @@ extern int qcsapi_wifi_set_ap_interface_name(const char *ifname);
  */
 extern int qcsapi_wifi_get_ap_interface_name(char *ifname);
 
+/**
+ * \brief set preferred band 2.4/5G
+ *
+ * This API call is used to set preferred band between 2.4ghz or 5ghz.
+ *
+ * \param ifname \wifi0
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_pref_band \<WiFi interface\> \<2.4ghz | 5ghz\></c>
+ */
+extern int qcsapi_wifi_set_pref_band( const char *ifname, const qcsapi_unsigned_int pref_band);
+
+/**
+ * \brief get preferred band 2.4/5G
+ *
+ * This API call is used to get preferred band set between 2.4ghz or 5ghz.
+ *
+ * \param ifname \wifi0
+ *
+ * \return >= 0/1 on success, < 0 on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_pref_band \<WiFi interface\></c>
+ *
+ * Unless and error occurs, the output will be string 2.4ghz|5ghz <c>.
+ *
+ * In case of error output is "Please enter preferred band as 2.4ghz|5ghz" <c>complete</c>.
+ */
+extern int qcsapi_wifi_get_pref_band( const char *ifname, qcsapi_unsigned_int *pref_band);
+
+/**
+ * \brief Set TX BA disable configuration for an SSID.
+ *
+ * \param ifname \wifiX
+ * \param disable or enable TX BA
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi txba_disable \<WiFi interface\> \<disable\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_txba_disable(const char *ifname, const qcsapi_unsigned_int value);
+
+/**
+ * \brief Get TX BA disable state for an SSID.
+ *
+ * \param ifname \wifiX
+ * \param *enable Pointer to return buffer for storing the TX BA disable state
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_txba_disable \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the TXBA disable status for the specific SSID.
+ */
+extern int qcsapi_wifi_get_txba_disable(const char *ifname, qcsapi_unsigned_int *value);
+
+/**
+ * \brief Set RX BA decline configuration for an SSID.
+ *
+ * \param ifname \wifiX
+ * \param decline or permit RX BA
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi rxba_decline \<WiFi interface\> \<decline\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_rxba_decline(const char *ifname, const qcsapi_unsigned_int value);
+
+/**
+ * \brief Get RX BA decline state for an SSID.
+ *
+ * \param ifname \wifiX
+ * \param *enable Pointer to return buffer for storing the RX BA decline state
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_rxba_decline \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the RXBA decline status for the specific SSID.
+ */
+extern int qcsapi_wifi_get_rxba_decline(const char *ifname, qcsapi_unsigned_int *value);
+
+/**
+ * \brief Set Tx burst state for a BSS.
+ *
+ * \note This API will not currently set the TX burst for the specified BSS. It is a stub only.
+ *
+ * \param ifname \wifiX
+ * \param enable Enable or disable Tx burst
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_txburst \<WiFi interface\> \<enable\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_txburst(const char *ifname, const qcsapi_unsigned_int enable);
+
+/**
+ * \brief Get Tx burst state for a BSS.
+ *
+ * \note This API will always return 1 currently. It is a stub only.
+ *
+ * \param ifname \wifiX
+ * \param *enable Pointer to return buffer for storing the txburst state
+ *
+ * \return 0 if operation succeeds.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_txburst \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the tx burst status for the specified BSS.
+ */
+extern int qcsapi_wifi_get_txburst(const char *ifname, qcsapi_unsigned_int *enable);
+
+/**
+ * \brief get secondary channel of the assigned channel
+ *
+ * \param ifname \wifi0
+ * \param chan assigned channel
+ * \param p_sec_chan returned secondary channel
+ *
+ * \return 0 on success or a negative value on error.
+ *
+ * \call_qcsapi
+ *
+ * <c> call_qcsapi get_sec_chan \<WiFi interface\> \<chan\><c>
+ */
+extern int qcsapi_wifi_get_sec_chan(const char *ifname, int chan, int *p_sec_chan);
+
+/**
+ * \brief set secondary channel of the assigned channel
+ *
+ * \param ifname \wifi0
+ * \param chan assigned channel
+ * \param offset secondary channel offset, 0 means above and 1 means below
+ *
+ * \return 0 on success or a negative value on error.
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi set_sec_chan \<WiFi interface\> \<chan\> \<offset\></c>
+ */
+extern int qcsapi_wifi_set_sec_chan(const char *ifname, int chan, int offset);
+
+/**
+ * \brief Control per-node TX airtime accumulation start and stop
+ *
+ * This API configures per-node TX airtime accumulation start and stop
+ *
+ * \param ifname interface name
+ * \param node_index node index
+ * \param control start or stop accumulation
+
+ * \return 0 if the command succeeded
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages
+
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi get_tx_airtime \<interface name\> \<node_index | all\> [start | stop] </c>
+ */
+extern int qcsapi_wifi_node_tx_airtime_accum_control(const char *ifname,
+						     const uint32_t node_index,
+						     qcsapi_airtime_control control);
+
+/**
+ * \brief Control TX airtime accumulation start and stop
+ *
+ * This API configures TX airtime accumulation start and stop for all nodes
+ *
+ * \param ifname interface name
+ * \param control start or stop accumulation
+ *
+ * \return 0 if the command succeeded
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi get_tx_airtime \<interface name\> \<node_index | all\> [start | stop] </c>
+ */
+extern int qcsapi_wifi_tx_airtime_accum_control(const char *ifname,
+					        qcsapi_airtime_control control);
+
+/**
+ * \brief Get per-node TX airtime stats
+ *
+ * This API gets per-node TX airtime statistics
+ *
+ * \param ifname interface name
+ * \param node_index node index
+ * \param node_tx_airtime current airtime and cumulative airtime
+ *
+ * \return 0 if the command succeeded
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi get_tx_airtime \<interface name\> \<node_index | all\> [start | stop] </c>
+ */
+extern int qcsapi_wifi_node_get_tx_airtime(const char *ifname,
+		                           const uint32_t node_index,
+				           qcsapi_node_tx_airtime *node_tx_airtime);
+
+/**
+ * \brief Get TX airtime stats
+ *
+ * This API gets TX airtime statistics for all nodes associated
+ *
+ * \param ifname interface name
+ * \param buffer A pointer to the buffer for storing the returned value.
+ *               The buffer is composed of fixed 2-byte nr_assoc_nodes, 2-byte free airtime
+ *               and variable data, where variable data is nr_assoc_nodes * [2-byte node_idx,
+ *               6-byte node_mac, 4-byte airtime and 4-byte airtime_accum]
+ *
+ * \return 0 if the command succeeded
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi get_tx_airtime \<interface name\> \<node_index | all\> [start | stop] </c>
+ */
+extern int qcsapi_wifi_get_tx_airtime(const char *ifname, string_4096 buffer);
+
+/**
+ * @brief Set the limit for maximum broadcast packets allowed per second.
+ *
+ * This API call is used to limit the maximum number of broadcast packets
+ * transmitted to the BSS per second.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param max_bcast_pps Maximum broadcast packets per second. The valid range
+ *			is [0 - MAX_BCAST_PPS_LIMIT]. A value of 0 (disabled)
+ *			will allow all broadcast packets through.
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_max_bcast_pps \<WiFi interface\>  \<value\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int qcsapi_wifi_set_max_bcast_pps(const char *ifname, const qcsapi_unsigned_int max_bcast_pps);
+
 /**@}*/
 
 /**@addtogroup StatisticsAPIs
@@ -14789,11 +17473,16 @@ extern int qcsapi_wifi_get_ap_interface_name(char *ifname);
  * @endcode
  * <c>temp_exter</c> value returned by this API is guaranteed to be no more than 5 seconds old.
  *
+ * \warning The values for the RFIC external and internal temperature should not be used for
+ * any critical functionality as the values have large part-to-part variance. The values
+ * are used for engineering and test purposes only.
+ *
  * \callqcsapi<br>
  *
  * <c>call_qcsapi get_temperature</c>
  */
 extern int qcsapi_get_temperature_info(int *temp_exter, int *temp_inter, int *temp_bbic);
+
 /**@}*/
 
 
@@ -14810,7 +17499,7 @@ extern int qcsapi_get_temperature_info(int *temp_exter, int *temp_inter, int *te
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_test_mode calcmd \<value:channel\> \<value:antenna\> \<value:MCS\> \<value:BW\> \<value:Packet size\> \<value:11N\> <value:beamforming\></c>
+ * <c>call_qcsapi set_test_mode calcmd \<value:channel\> \<value:antenna\> \<value:MCS\> \<value:BW\> \<value:Packet size\> \<value:11N\> \<value:beamforming\></c>
  *
  * Output is silent with a return code of zero if successful, and an error message on failure.
  *
@@ -15126,13 +17815,13 @@ extern int qcsapi_calcmd_get_info(string_1024 output_info);
  *
  * \param ifname \wifi0
  * \param wowlan_match '1' (L2 ether type) or '2' (L3 UDP), default is 0 match either of them
- * \note This API works across all wifi interfaces.
+ * \note This API works across all WiFi interfaces.
  *
  * \return >= 0 on success, < 0 on error.
  *
  * \call_qcsapi
  *
- * <c>call_qcsapi wowlan_match_type \<wifi interface\> {0 | 1 | 2}</c>
+ * <c>call_qcsapi wowlan_match_type \<WiFi interface\> {0 | 1 | 2}</c>
  */
 extern int qcsapi_wowlan_set_match_type( const char *ifname, const uint32_t wowlan_match);
 
@@ -15143,13 +17832,13 @@ extern int qcsapi_wowlan_set_match_type( const char *ifname, const uint32_t wowl
  *
  * \param ifname \wifi0
  * \param ether_type ether type value. 0x0842 will be used by default.
- * \note This API works across all wifi interfaces.
+ * \note This API works across all WiFi interfaces.
  *
  * \return >= 0 on success, < 0 on error.
  *
  * \call_qcsapi
  *
- * <c>call_qcsapi wowlan_L2_type \<wifi interface\> <\ether type\></c>
+ * <c>call_qcsapi wowlan_L2_type \<WiFi interface\> <\ether type\></c>
  */
 extern int qcsapi_wowlan_set_L2_type( const char *ifname, const uint32_t ether_type);
 
@@ -15160,13 +17849,13 @@ extern int qcsapi_wowlan_set_L2_type( const char *ifname, const uint32_t ether_t
  *
  * \param ifname \wifi0
  * \param udp_port UDP destination port value. By default 7 or 9 will be used
- * \note This API works across all wifi interfaces.
+ * \note This API works across all WiFi interfaces.
  *
  * \return >= 0 on success, < 0 on error.
  *
  * \call_qcsapi
  *
- * <c>call_qcsapi wowlan_udp_port \<wifi interface\> <\udp dest port\></c>
+ * <c>call_qcsapi wowlan_udp_port \<WiFi interface\> <\udp dest port\></c>
  */
 extern int qcsapi_wowlan_set_udp_port( const char *ifname, const uint32_t udp_port);
 
@@ -15180,13 +17869,13 @@ extern int qcsapi_wowlan_set_udp_port( const char *ifname, const uint32_t udp_po
  * Default format is 6 bytes of all 255 (FF FF FF FF FF FF in hexadecimal),
  * followed by sixteen repetitions of BSSID or host CPU's MAC address
  * \param len length of pattern
- * \note This API works across all wifi interfaces.
+ * \note This API works across all WiFi interfaces.
  *
  * \return >= 0 on success, < 0 on error.
  *
  * \call_qcsapi
  *
- * <c>call_qcsapi wowlan_pattern \<wifi interface\> <\pattern\>\<\len\></c>
+ * <c>call_qcsapi wowlan_pattern \<WiFi interface\> \<pattern\> \<len\></c>
  */
 extern int qcsapi_wowlan_set_magic_pattern(const char *ifname, struct qcsapi_data_256bytes *pattern, uint32_t len);
 
@@ -15296,7 +17985,7 @@ extern int qcsapi_wifi_wowlan_get_magic_pattern(const char *ifname, struct qcsap
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_enable_mu \<wifi interface\> \<value\> </c>
+ * <c>call_qcsapi set_enable_mu \<WiFi interface\> \<value\> </c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -15314,7 +18003,7 @@ extern int qcsapi_wifi_set_enable_mu(const char *ifname, const unsigned int mu_e
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_enable_mu \<wifi interface\> </c>
+ * <c>call_qcsapi get_enable_mu \<WiFi interface\> </c>
  *
  * Unless an error occurs, the output will be the MU-MIMO enable flag
  */
@@ -15335,7 +18024,7 @@ extern int qcsapi_wifi_get_enable_mu(const char *ifname, unsigned int * mu_enabl
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_mu_use_precode \<wifi interface\> \<group\> \<value\> </c>
+ * <c>call_qcsapi set_mu_use_precode \<WiFi interface\> \<group\> \<value\> </c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -15358,7 +18047,7 @@ extern int qcsapi_wifi_set_mu_use_precode(const char *ifname, const unsigned int
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_mu_use_precode \<wifi interface\> \<group\> </c>
+ * <c>call_qcsapi get_mu_use_precode \<WiFi interface\> \<group\> </c>
  *
  * Unless an error occurs, the output will be the MU-MIMO enable flag
  */
@@ -15381,7 +18070,7 @@ extern int qcsapi_wifi_get_mu_use_precode(const char *ifname, const unsigned int
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_mu_use_eq \<wifi interface\> \<value\> </c>
+ * <c>call_qcsapi set_mu_use_eq \<WiFi interface\> \<value\> </c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -15401,7 +18090,7 @@ extern int qcsapi_wifi_set_mu_use_eq(const char *ifname, const unsigned int eq_e
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_mu_use_eq \<wifi interface\> </c>
+ * <c>call_qcsapi get_mu_use_eq \<WiFi interface\> </c>
  *
  * Unless an error occurs, the output will be the MU equalizer enable flag
  */
@@ -15420,7 +18109,7 @@ extern int qcsapi_wifi_get_mu_use_eq(const char *ifname, unsigned int * meq_enab
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_mu_groups \<wifi interface\> </c>
+ * <c>call_qcsapi get_mu_groups \<WiFi interface\> </c>
  *
  * Unless an error occurs, the output on AP will be MU groups information in the following form
  *GRP ID: 1 update cnt 304 Enabled
@@ -15462,7 +18151,7 @@ extern int qcsapi_wifi_get_mu_groups(const char *ifname, char * buf, const unsig
  *
  * \callqcsapi
  *
- * <c>call_qcsapi enable_tdls \<wifi interface\> <0 | 1></c>
+ * <c>call_qcsapi enable_tdls \<WiFi interface\> \<0 | 1\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -15484,7 +18173,7 @@ extern int qcsapi_wifi_enable_tdls(const char *ifname, uint32_t enable_tdls);
  *
  * \callqcsapi
  *
- * <c>call_qcsapi enable_tdls_over_qhop \<wifi interface\> <0 | 1></c>
+ * <c>call_qcsapi enable_tdls_over_qhop \<WiFi interface\> \<0 | 1\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
@@ -15504,7 +18193,7 @@ extern int qcsapi_wifi_enable_tdls_over_qhop(const char *ifname, uint32_t tdls_o
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_tdls_status \<wifi interface\> </c>
+ * <c>call_qcsapi get_tdls_status \<WiFi interface\> </c>
  *
  * Unless an error occurs, the output will be the TDLS related status.
  */
@@ -15527,7 +18216,7 @@ extern int qcsapi_wifi_get_tdls_status(const char *ifname, uint32_t *p_tdls_stat
  *
  * \callqcsapi
  *
- * <c>call_qcsapi set_tdls_params \<wifi interface\> \<parameter name\> \<value\> </c>
+ * <c>call_qcsapi set_tdls_params \<WiFi interface\> \<parameter name\> \<value\> </c>
  *
  * where <c>parameter name</c> is one of <c>link_timeout_time</c>, <c>link_weight</c>,
  * <c>disc_interval</c>, <c>training_pkt_cnt</c>, <c>path_sel_pps_thrshld</c>,
@@ -15555,7 +18244,7 @@ extern int qcsapi_wifi_set_tdls_params(const char *ifname, qcsapi_tdls_type type
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_tdls_params \<wifi interface\> </c>
+ * <c>call_qcsapi get_tdls_params \<WiFi interface\> </c>
  *
  * Unless an error occurs, the output will be the TDLS related parameter value.
  */
@@ -15580,7 +18269,7 @@ extern int qcsapi_wifi_get_tdls_params(const char *ifname, qcsapi_tdls_type type
  *
  * \callqcsapi
  *
- * <c>call_qcsapi tdls_operate \<wifi interface\> \<operation name\> \<mac address\> [cs_interval]</c>
+ * <c>call_qcsapi tdls_operate \<WiFi interface\> \<operation name\> \<mac address\> [cs_interval]</c>
  *
  * where <c>operation name</c> is one of <c>discover</c>, <c>setup</c>, <c>teardown</c>
  * or <c>switch_chan</c>
@@ -15589,80 +18278,239 @@ extern int qcsapi_wifi_get_tdls_params(const char *ifname, qcsapi_tdls_type type
  */
 extern int qcsapi_wifi_tdls_operate(const char *ifname, qcsapi_tdls_oper operate,
 			const char *mac_addr_str, int cs_interval);
+/**@}*/
+
+/**@addtogroup QWEAPIs
+ *@{*/
 
 /**
- * \brief Set TX BA disable configuration for an SSID.
+ * @brief perform QWE commands.
  *
- * \param ifname \wifiX
- * \param disable or enable TX BA 
+ * QWE is the new Quantenna Wireless Extension Platform Abstract Layer which is introduced to control 3rd party 2.4G.
+ * The purpose of QWE is to provide unified interface of 2.4G interface to upper layer such as Web GUI.
+ * QWE provides two different commands "qweconfig" and "qweaction",
+ * "qweconfig" will get/set the 2.4G configurations without take effects immediately.
+ * "qweaction" will act some operations immediately such as take effect of 2.4G configuration, WPS PBC and get all kinds of status.
  *
- * \return 0 if operation succeeds.
- * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
- * for error codes and messages.
+ * This API make QWE to be compatible with QCSAPI, by this API 3rd party 2.4G can be controlled by QCSAPI RPC remotely in case
+ * QV860 is designed as a module instead of video bridge.
+ *
+ * \param command The QWE command to perform, it can be "qweconfig" or "qweaction" or "help".
+ * \param param1 The parameter 1 for the QWE command, the meaning of this parameter depends on command.
+ * \param param2 The parameter 2 for the QWE command, the meaning of this parameter depends on command.
+ * \param param3 The parameter 3 for the QWE command, the meaning of this parameter depends on command.
+ * \param output Address of the buffer to receive the output of the command, it's recommended that
+ * the size of buffer is 1024 bytes.
+ * \param max_len Maximum number of characters that can be written to the parameter <c>output</c>
+ *
+ * \return = 0 on success, = 1 on failure with error message in output, < 0 on failure without error message.
  *
  * \callqcsapi
  *
- * <c>call_qcsapi txba_disable \<WiFi interface\> \<disable\></c>
+ * <c>call_qcsapi qwe qweconfig \<command\> [\<param\>] [\<value\>] </c>
+ * <c>call_qcsapi qwe qweaction \<device\> \<command\> [\<argument\>] </c>
+ *
+ * You can use command "call_qcsapi qwe help" to get the usage.
+ */
+extern int qcsapi_qwe_command(const char *command, const char *param1, const char *param2, const char *param3,
+			char *output, const unsigned int max_len);
+/**@}*/
+
+/**@addtogroup ANDROID_group
+ *@{*/
+
+/**
+ * @brief this API is used to get scan IEs from the scan result.
+ *
+ * Currently this API is only used for Android support, user should not call this API explicitly.
+ * And there is no call_qcsapi interface is provided for this API, only C interface is available.
+ * Android wireless driver need the scan result IE for further process.
+ * This API will save and send IE buf. And The IE buf will be zipped before sending to host for processing.
+ * Please consult with Quantenna for the usage of the API.
+ *
+ * \param ifname \wifi0
+ * \param buf buffer pointer for tranferring the IE.
+ * \param block_id the block ID in the IE buf, each block is 1K Bytes.
+ * \param ulength  the IE buffer size readed from the IE, it should be less than 1K for the last block.
+ *
+ * \return >=0 on success, <0 on error.
+ *
+ * Unless an error occurs, the buf will contains the IE buf block</c>.<br>
+ *
+ */
+extern int qcsapi_wifi_get_scan_IEs(const char *ifname, struct qcsapi_data_1Kbytes *buf,
+				uint32_t block_id, uint32_t *ulength);
+/**@}*/
+
+/**@addtogroup EngineeringAPIs
+ *@{*/
+
+/**
+ * @brief This API is used to get the size of the core dump that is stored across reboot.
+ *
+ * \param core_dump_size Size of the core dump (in bytes)
+ *
+ * \return >=0 on success, <0 on error.
+ *
+ * Unless an error occurs, the buf will contains the size of the core dump</c>.<br>
+ *
+ * \sa qcsapi_get_core_dump
+ */
+extern int qcsapi_get_core_dump_size(uint32_t *core_dump_size);
+
+/**
+ * @brief This API is used to get the core dump across reboot.
+ *
+ * \param buf Pointer to the buffer that should contain the core dump.
+ * \param bytes_to_copy Maximum number of bytes that would be copied from the internal buffer.
+ *                      'buf' should be atleast 'bytes_to_copy' bytes long.
+ * \param start_offset Offset into the internal buffer from where the API would start copying.
+ * \param bytes_copied Number of bytes actually copied from the internal buffer.
+ *                     If 'bytes_copied' < 'bytes_to_copy', there is no more data in the internal
+ *                     buffer or an error has occured.
+ *
+ * \return >=0 on success, <0 on error.
+ *
+ * Unless an error occurs, the buf will contains the requested dump.</c>.<br>
+ *
+ * \note The client should first invoke qcsapi_get_core_dump_size(...) to get the size of the core
+ * dump. The dump can then be retrived in one shot (bytes_to_copy = core_dump_size, start_offset = 0)
+ * or in multiple chunks (bytes_to_copy = "chunk size", start_offset = "offset into the core dump"
+ * by invoking qcsapi_get_core_dump(...).
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_core_dump</c>
+ *
+ * Will output the core dump or a relevant error message if an error occurs.
+ *
+ * \note Since the core dump could contain non-ASCII characters, it is better to redirect
+ * the output of this command to a file
+ *
+ * \sa qcsapi_get_core_dump_size
+ */
+
+extern int qcsapi_get_core_dump(string_4096 buf, uint32_t bytes_to_copy, uint32_t start_offset, uint32_t *bytes_copied);
+
+/**
+ * @brief This API is used to get the size of the application's core dump file.
+ *
+ * \param file Name of the core dump file
+ * \param core_dump_size Size of the core dump (in bytes)
+ *
+ * \return >=0 on success, <0 on error
+ *
+ * Unless an error occurs, the core_dump_size will hold the size of the core dump.<br>
+ */
+extern int qcsapi_get_app_core_dump_size(char *file, uint32_t *core_dump_size);
+
+/**
+ * @brief This API is used to get the application's core dump file.
+ *
+ * \param file Name of the core dump file to be retrieved
+ * \param buf Pointer to the buffer that should contain the core dump.
+ * \param bytes_to_copy Maximum number of bytes that would be copied from the internal buffer.
+ *                      'buf' should be atleast 'bytes_to_copy' bytes long.
+ * \param offset Offset into the internal buffer from where the API would start copying.
+ * \param bytes_copied Number of bytes actually copied from the internal buffer.
+ *                     If 'bytes_copied' < 'bytes_to_copy', there is no more data in the internal
+ *                     buffer or an error has occured.
+ *
+ * \return >=0 on success, <0 on error.
+ *
+ * Unless an error occurs, the buf will contain the requested dump.<br>
+ *
+ * \note The client should first invoke qcsapi_get_app_core_dump_size(...) to get the size of the core
+ * dump. The dump can then be retrived in one shot (bytes_to_copy = core_dump_size, offset = 0)
+ * or in multiple chunks (bytes_to_copy = "chunk size", offset = "offset into the core dump"
+ * by invoking qcsapi_get_app_core_dump(...).
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_app_core_dump <core dump file> <output file></c>
+ *
+ * Will output the core dump or a relevant error message if an error occurs.
+ *
+ * \sa qcsapi_get_app_core_dump_size
+ */
+extern int qcsapi_get_app_core_dump(char *file, string_4096 buf, uint32_t bytes_to_copy,
+						uint32_t offset, uint32_t *bytes_copied);
+
+/**
+ * \brief Set the log levels depends on module and level.
+ *
+ * \param ifname \wifi0
+ * \param level the new log level (see below for valid values).
+ * \param index the module index. The module can be one of the values of the qcsapi_log_module_name enumeration.
+ *
+ * \return 0 on success or negative values on error.
+ *
+ * The supported level strings are as per below:
+ *
+ * - Linux kernel: between 1 and 8
+ * - wpa_supplicant and hostapd: ERROR, WARNING, INFO, DEBUG, MSGDUMP, EXCESSIVE.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_log_level \<WiFi interface\> \<module name\> \<level\></c>
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * \sa qcsapi_get_log_level
+ * \sa qcsapi_log_module_name
  */
-extern int qcsapi_wifi_set_txba_disable(const char *ifname, const qcsapi_unsigned_int value);
+
+extern int qcsapi_set_log_level(const char *ifname, string_32 level, qcsapi_log_module_name index);
 
 /**
- * \brief Get TX BA disable state for an SSID.
+ * \brief Get the current log level for the given module.
  *
- * \param ifname \wifiX
- * \param *enable Pointer to return buffer for storing the TX BA disable state
+ * \param ifname \wifi0
+ * \param level the current log level set in the module (see below for valid values).
+ * \param index the module index. The module can be one of the values of the qcsapi_log_module_name enumeration.
  *
- * \return 0 if operation succeeds.
- * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
- * for error codes and messages.
+ * \return 0 on success or negative values on error.
+ *
+ * The supported level strings are as per below:
+ *
+ * - Linux kernel: between 1 and 8
+ * - wpa_supplicant and hostapd: ERROR, WARNING, INFO, DEBUG, MSGDUMP, EXCESSIVE.
  *
  * \callqcsapi
  *
- * <c>call_qcsapi get_txba_disable \<WiFi interface\></c>
+ * <c>call_qcsapi get_log_level \<WiFi interface\> \<module name\></c>
  *
- * Unless an error occurs, the output will be the TXBA disable status for the specific SSID.
+ * Unless an error occurs, the output will be the log level configured for the given module.
+ *
+ * \sa qcsapi_set_log_level
+ * \sa qcsapi_log_module_name
  */
-extern int qcsapi_wifi_get_txba_disable(const char *ifname, qcsapi_unsigned_int *value);
 
-/**
- * \brief Set RX BA decline configuration for an SSID.
- *
- * \param ifname \wifiX
- * \param decline or permit RX BA 
- *
- * \return 0 if operation succeeds.
- * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
- * for error codes and messages.
- *
- * \callqcsapi
- *
- * <c>call_qcsapi rxba_decline \<WiFi interface\> \<decline\></c>
- *
- * Unless an error occurs, the output will be the string <c>complete</c>.
- */
-extern int qcsapi_wifi_set_rxba_decline(const char *ifname, const qcsapi_unsigned_int value);
-
-/**
- * \brief Get RX BA decline state for an SSID.
- *
- * \param ifname \wifiX
- * \param *enable Pointer to return buffer for storing the RX BA decline state
- *
- * \return 0 if operation succeeds.
- * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
- * for error codes and messages.
- *
- * \callqcsapi
- *
- * <c>call_qcsapi get_rxba_decline \<WiFi interface\></c>
- *
- * Unless an error occurs, the output will be the RXBA decline status for the specific SSID.
- */
-extern int qcsapi_wifi_get_rxba_decline(const char *ifname, qcsapi_unsigned_int *value);
+extern int qcsapi_get_log_level(const char *ifname, string_32 level, qcsapi_log_module_name index);
 
 /**@}*/
+
+/**
+ * @brief Set the maximum boot time CAC duration in seconds.
+ *
+ * This API call is used to configure the max cac duration to be used at boot time.
+ *
+ * \note \aponly
+ *
+ * \param ifname \wifi0
+ * \param max_boot_cac_duration Maximum boot time CAC duration in seconds.
+ *				The valid range	is [(-1) - MAX_BOOT_CAC_DURATION].
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_max_boot_cac_duration \<WiFi interface\> \<value\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+int qcsapi_wifi_set_max_boot_cac_duration(const char *ifname, const int max_boot_cac_duration);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,525 @@
+'\" te
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").  
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\" Copyright (c) 2002, Sun Microsystems, Inc. All Rights Reserved.
+.TH umem_alloc 3MALLOC "26 Aug 2002" "SunOS 5.11" "Memory Allocation Library Functions"
+.SH NAME
+umem_alloc, umem_zalloc, umem_free, umem_nofail_callback \- fast, scalable memory allocation
+.SH SYNOPSIS
+.LP
+.nf
+cc [ \fIflag \&.\|.\|.\fR ] \fIfile\fR\&.\|.\|. \fB-lumem\fR [ \fIlibrary \&.\|.\|.\fR ] 
+#include <umem.h>
+
+\fBvoid *\fR\fBumem_alloc\fR(\fBsize_t\fR \fIsize\fR, \fBint\fR  \fIflags\fR);
+.fi
+.LP
+.nf
+\fBvoid *\fR\fBumem_zalloc\fR(\fBsize_t\fR \fIsize\fR, \fBint\fR  \fIflags\fR);
+.fi
+.LP
+.nf
+\fBvoid\fR \fBumem_free\fR(\fBvoid *\fR\fIbuf\fR, \fBsize_t\fR \fIsize\fR);
+.fi
+.LP
+.nf
+\fBvoid\fR \fBumem_nofail_callback\fR(\fB(int (*\fR\fIcallback\fR)(void));
+.fi
+.LP
+.nf
+\fBvoid *\fR\fBmalloc\fR(\fBsize_t\fR \fIsize\fR);
+.fi
+.LP
+.nf
+\fBvoid *\fR\fBcalloc\fR(\fBsize_t\fR \fInelem\fR, \fBsize_t\fR \fIelsize\fR);
+.fi
+.LP
+.nf
+\fBvoid\fR \fBfree\fR(\fBvoid *\fR\fIptr\fR);
+.fi
+.LP
+.nf
+\fBvoid *\fR\fBmemalign\fR(\fBsize_t\fR \fIalignment\fR, \fBsize_t\fR \fIsize\fR);
+.fi
+.LP
+.nf
+\fBvoid *\fR\fBrealloc\fR(\fBvoid *\fR\fIptr\fR, \fBsize_t\fR \fIsize\fR);
+.fi
+.LP
+.nf
+\fBvoid *\fR\fBvalloc\fR(\fBsize_t\fR \fIsize\fR);
+.fi
+
+.SH DESCRIPTION
+
+.LP
+The \fBumem_alloc()\fR function returns a pointer to a block of \fIsize\fR bytes suitably aligned for any variable type. The initial contents of memory allocated using \fBumem_alloc()\fR is undefined. The \fIflags\fR argument determines
+the behavior of \fBumem_alloc()\fR if it is unable to fulfill the request. The \fIflags\fR argument can take the following values:
+.sp
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBUMEM_DEFAULT\fR\fR
+.ad
+.RS 14n
+.rt  
+Return \fINULL\fR on failure.
+.sp
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBUMEM_NOFAIL\fR\fR
+.ad
+.RS 14n
+.rt  
+Call an optional \fIcallback\fR (set with \fBumem_nofail_callback()\fR) on failure. The \fIcallback\fR takes no arguments and can finish by:
+.sp
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+returning \fBUMEM_CALLBACK_RETRY\fR, in which case the allocation will be retried.  If the allocation fails, the callback will be invoked again.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+returning \fBUMEM_CALLBACK_EXIT\fR(\fIstatus\fR), in which case 
+\fBexit\fR(2) is invoked with \fIstatus\fR
+as its argument. The \fBexit()\fR function is called only once. If multiple threads return from the \fBUMEM_NOFAIL\fR callback with \fBUMEM_CALLBACK_EXIT\fR(\fIstatus\fR), one will call \fBexit()\fR while the other blocks until \fBexit()\fR terminates the program.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+invoking a context-changing function (
+\fBsetcontext\fR(2)) or a non-local jump (
+\fBlongjmp\fR(3C) or 
+\fBsiglongjmp\fR(3C), or ending the current thread of control (
+\fBthr_exit\fR(3C) or 
+\fBpthread_exit\fR(3C). The application is responsible for any necessary cleanup. The state of \fBlibumem\fR remains consistent.
+.sp
+
+.RE
+
+If no callback has been set or the callback has been set to \fINULL\fR, \fBumem_alloc\fR(..., \fBUMEM_NOFAIL\fR) behaves as though the callback returned \fBUMEM_CALLBACK_EXIT\fR(255).
+.sp
+
+.sp
+The \fBlibumem\fR library can call callbacks from any place that a \fBUMEM_NOFAIL\fR allocation is issued. In multithreaded applications, callbacks are expected to perform their own concurrency management.
+.sp
+
+.RE
+
+.LP
+The function call \fBumem_alloc\fR(0, \fIflag\fR) always returns \fINULL\fR. The function call \fBumem_free\fR(\fINULL\fR, 0) is allowed.
+.sp
+
+.LP
+The \fBumem_zalloc()\fR function has the same semantics as \fBumem_alloc()\fR, but the block of memory is initialized to zeros before it is returned.
+.sp
+
+.LP
+The \fBumem_free()\fR function frees blocks previously allocated using \fBumem_alloc()\fR and \fBumem_zalloc()\fR. The buffer address and size must exactly match the original allocation. Memory must not be returned piecemeal.
+.sp
+
+.LP
+The \fBumem_nofail_callback()\fR function sets the process-wide UMEM_NOFAIL callback. See the description of UMEM_NOFAIL for more information.
+.sp
+
+.LP
+The \fBmalloc()\fR, \fBcalloc()\fR, \fBfree()\fR, \fBmemalign()\fR, \fBrealloc()\fR, and \fBvalloc()\fR functions are are as described in 
+\fBmalloc\fR(3C). The \fBlibumem\fR library provides these functions for backwards-compatibility with the standard functions.
+.sp
+
+.SH ENVIRONMENT VARIABLES
+
+.LP
+See 
+\fBumem_debug\fR(3MALLOC) for environment variables that effect the debugging features of the \fBlibumem\fR library.
+.sp
+
+.sp
+.ne 2
+.mk
+.na
+\fBUMEM_OPTIONS\fR
+.ad
+.RS 14n
+.rt  
+Contains a list of comma-separated options.  Unrecognized options are ignored. The options that are supported are:
+.sp
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBbackend\fR=\fBsbrk\fR\fR
+.ad
+.br
+.na
+\fB\fBbackend\fR=\fBmmap\fR\fR
+.ad
+.RS 14n
+.rt  
+Set the underlying function used to allocate memory. This option can be set to \fBsbrk\fR (the default) for an 
+\fBsbrk\fR(2)-based source or \fBmmap\fR for an 
+\fBmmap\fR(2)-based
+source. If set to a value that is not supported, \fBsbrk\fR will be used.
+.sp
+
+.RE
+
+.RE
+
+.SH EXAMPLES
+.LP
+\fBExample 1 \fRUsing the \fBumem_alloc()\fR function.
+
+.LP
+.in +2
+.nf
+#include <stdio.h>
+#include <umem.h>
+\&...
+char *buf = umem_alloc(1024, UMEM_DEFAULT);
+
+if (buf == NULL) {
+    fprintf(stderr, "out of memory\en");
+         return (1);
+}
+/* cannot assume anything about buf's contents */
+\&...
+umem_free(buf, 1024);
+\&...
+.fi
+.in -2
+.LP
+\fBExample 2 \fRUsing the \fBumem_zalloc()\fR function
+
+.LP
+.in +2
+.nf
+#include <stdio.h>
+#include <umem.h>
+\&...
+char *buf = umem_zalloc(1024, UMEM_DEFAULT);
+
+if (buf == NULL) {
+   fprintf(stderr, "out of memory\en");
+        return (1);
+}
+/* buf contains zeros */
+\&...
+umem_free(buf, 1024);
+\&...
+.fi
+.in -2
+.LP
+\fBExample 3 \fRUsing UMEM_NOFAIL
+
+.LP
+.in +2
+.nf
+#include <stdlib.h>
+#include <stdio.h>
+#include <umem.h>
+
+/*
+* Note that the allocation code below does not have to
+* check for umem_alloc() returning NULL
+*/
+int
+my_failure_handler(void)
+{
+        (void) fprintf(stderr, "out of memory\en");
+        return (UMEM_CALLBACK_EXIT(255));
+}
+\&...
+umem_nofail_callback(my_failure_handler);
+\&...
+int i;
+char *buf[100];
+
+for (i = 0; i < 100; i++)
+        buf[i] = umem_alloc(1024 * 1024, UMEM_NOFAIL);
+\&...
+for (i = 0; i < 100; i++)
+   umem_free(buf[i], 1024 * 1024);
+\&...
+.fi
+.in -2
+.LP
+\fBExample 4 \fRUsing UMEM_NOFAIL in a multithreaded application
+
+.LP
+.in +2
+.nf
+#define _REENTRANT
+#include <thread.h>
+#include <stdio.h>
+#include <umem.h>
+
+void *
+start_func(void *the_arg)
+{
+         int *info = (int *)the_arg;
+         char *buf = umem_alloc(1024 * 1024, UMEM_NOFAIL);
+
+         /* does not need to check for buf == NULL */
+         buf[0] = 0;
+         ...
+         /*
+          * if there were other UMEM_NOFAIL allocations,
+          * we would need to arrange for buf to be
+          * umem_free()ed upon failure.
+          */
+         ...
+         umem_free(buf, 1024 * 1024);
+         return (the_arg);
+}
+\&...
+int
+my_failure_handler(void)
+{
+        /* terminate the current thread with status NULL */
+        thr_exit(NULL);
+}
+\&...
+umem_nofail_callback(my_failure_handler);
+\&...
+int my_arg;
+
+thread_t tid;
+void *status;
+
+(void) thr_create(NULL, NULL, start_func, &my_arg, 0,
+   NULL);
+\&...
+while (thr_join(0, &tid, &status) != 0)
+         ;
+
+if (status == NULL) {
+   (void) fprintf(stderr, "thread %d ran out of memory\en",
+            tid);
+}
+\&...
+.fi
+.in -2
+
+.SH ATTRIBUTES
+
+.LP
+See 
+\fBattributes\fR(5) for descriptions of the following attributes:
+.sp
+
+.LP
+
+.sp
+.TS
+tab() box;
+cw(2.75i) |cw(2.75i) 
+lw(2.75i) |lw(2.75i) 
+.
+ATTRIBUTE TYPEATTRIBUTE VALUE
+_
+Interface StabilitySee below.
+_
+MT-LevelMT-Safe
+.TE
+
+.LP
+The \fBmalloc()\fR, \fBcalloc()\fR, \fBfree()\fR, \fBrealloc()\fR, and \fBvalloc()\fR functions are Standard. The \fBmemalign()\fR function is Stable. The \fBumem_alloc()\fR, \fBumem_zalloc()\fR, \fBumem_free()\fR, and \fBumem_nofail_callback()\fR functions are Evolving.
+.sp
+
+.SH SEE ALSO
+
+.LP
+
+\fBexit\fR(2), 
+\fBmmap\fR(2), 
+\fBsbrk\fR(2), 
+\fBbsdmalloc\fR(3MALLOC), 
+\fBlibumem\fR(3LIB), 
+\fBlongjmp\fR(3C), 
+\fBmalloc\fR(3C), 
+\fBmalloc\fR(3MALLOC), 
+\fBmapmalloc\fR(3MALLOC), 
+\fBpthread_exit\fR(3C), 
+\fBthr_exit\fR(3C), 
+\fBumem_cache_create\fR(3MALLOC), 
+\fBumem_debug\fR(3MALLOC), 
+\fBwatchmalloc\fR(3MALLOC), 
+\fBattributes\fR(5), 
+\fBstandards\fR(5)
+.sp
+
+.LP
+
+.sp
+
+.SH WARNINGS
+
+.LP
+Any of the following can cause undefined results:
+.sp
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+Passing a pointer returned from \fBumem_alloc()\fR or \fBumem_zalloc()\fR to \fBfree()\fR or \fBrealloc()\fR.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+Passing a pointer returned from \fBmalloc()\fR, \fBcalloc()\fR, \fBvalloc()\fR, \fBmemalign()\fR, or \fBrealloc()\fR to \fBumem_free()\fR.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+Writing past the end of a buffer allocated using \fBumem_alloc()\fR or \fBumem_zalloc()\fR
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+Performing \fBUMEM_NOFAIL\fR allocations from an 
+\fBatexit\fR(3C) handler.
+.sp
+
+.RE
+
+.LP
+If the \fBUMEM_NOFAIL\fR callback performs \fBUMEM_NOFAIL\fR allocations, infinite recursion can occur.
+.sp
+
+.SH NOTES
+
+.LP
+The following list compares the features of the 
+\fBmalloc\fR(3C), 
+\fBbsdmalloc\fR(3MALLOC), 
+\fBmalloc\fR(3MALLOC), 
+\fBmtmalloc\fR(3MALLOC) , and the \fBlibumem\fR
+functions.
+.sp
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+The 
+\fBmalloc\fR(3C), 
+\fBbsdmalloc\fR(3MALLOC), and 
+\fBmalloc\fR(3MALLOC) functions have no support for concurrency. The \fBlibumem\fR and 
+\fBmtmalloc\fR(3MALLOC)
+functions support concurrent allocations.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+The 
+\fBbsdmalloc\fR(3MALLOC) functions afford better performance but are space-inefficient.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+The 
+\fBmalloc\fR(3MALLOC) functions are space-efficient but have slower performance.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+The standard, fully SCD-compliant 
+\fBmalloc\fR(3C) functions are a trade-off between performance and space-efficiency.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+The 
+\fBmtmalloc\fR(3MALLOC) functions provide fast, concurrent \fBmalloc()\fR implementations that are not space-efficient.
+.sp
+
+.RE
+
+.sp
+.RS +4
+.TP
+.ie t \(bu
+.el o
+The \fBlibumem\fR functions provide a fast, concurrent allocation implementation that in most cases is more space-efficient than 
+\fBmtmalloc\fR(3MALLOC).
+.sp
+
+.RE
+

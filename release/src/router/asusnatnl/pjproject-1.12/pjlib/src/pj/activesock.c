@@ -594,10 +594,23 @@ static void ioqueue_on_read_complete(pj_ioqueue_key_t *key,
 	    status = pj_ioqueue_recv(key, op_key, r->pkt + r->size, 
 				     &bytes_read, flags);
 	} else {
+		//pj_uint32_t pkt_id;
 	    r->src_addr_len = sizeof(r->src_addr);
 	    status = pj_ioqueue_recvfrom(key, op_key, r->pkt + r->size,
 				         &bytes_read, flags,
-					 &r->src_addr, &r->src_addr_len);
+						 &r->src_addr, &r->src_addr_len);
+		
+		/*if (status == PJ_SUCCESS) {
+			if(bytes_read> 1000) {
+				pkt_id = pj_ntohl(((pj_uint32_t*)(r->pkt + r->size + 6))[0]);
+				PJ_LOG(4, (THIS_FILE, "bytes_read=[%d], pkt_id=[%d], loop=[%d], status=[%d]", bytes_read, pkt_id, loop, status));
+			} else {
+				pkt_id = pj_ntohl(((pj_uint32_t*)(r->pkt + r->size + 6))[0]);
+				PJ_LOG(4, (THIS_FILE, "bytes_read=[%d], pkt_id=[%d], loop=[%d], status=[%d]", bytes_read, pkt_id, loop, status));
+			}
+		} else if (status != PJ_SUCCESS) {
+			PJ_LOG(4, (THIS_FILE, "loop=[%d], status=[%d]", loop, status));
+		}*/
 	}
 
 	if (status == PJ_SUCCESS) {

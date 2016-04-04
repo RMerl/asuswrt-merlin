@@ -76,8 +76,8 @@ body{
 	border-radius: 5px;
 	width: 380px;
 	border: 0;
-	color:#fff;
-	color:#000\9; /* IE6 IE7 IE8 */
+	color:#FFF;
+	color:#FFF\9; /* IE6 IE7 IE8 */
 	font-size:16px;
 }
 .div_table{
@@ -191,6 +191,15 @@ body{
 }
 </style>
 <script>
+/* add Array.prototype.forEach() in IE8 */
+if(typeof Array.prototype.forEach != 'function'){
+	Array.prototype.forEach = function(callback){
+		for(var i = 0; i < this.length; i++){
+			callback.apply(this, [this[i], i, this]);
+		}
+	};
+}
+
 var lock_time = '<% get_parameter("lock_time"); %>';
 var remaining_time;
 remaining_time = 60 - lock_time;

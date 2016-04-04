@@ -1051,6 +1051,10 @@ config RTCONFIG_WTFAST
 	bool "WTFast support"
 	default n
 
+config RTCONFIG_IFTTT
+	bool "IFTTT support"
+	default n
+
 config RTCONFIG_ERP_TEST
 	bool "erp test"
 	default n

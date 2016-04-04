@@ -351,7 +351,9 @@ ipt_do_table(struct sk_buff *skb,
 		const struct xt_entry_match *ematch;
 
 		IP_NF_ASSERT(e);
+#if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
 		skb->nfcache |= e->nfcache;
+#endif
 		if (!ip_packet_match(ip, indev, outdev,
 		    &e->ip, acpar.fragoff)) {
  no_match:

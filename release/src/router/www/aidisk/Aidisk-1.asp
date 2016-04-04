@@ -53,59 +53,58 @@ function initial(){
 	});
 
 	if(document.getElementById("tosLink").style.display == "")
-			update_tosLink_url();
+		update_tosLink_url();
 	if(document.getElementById("tosLink2").style.display == "")
-			update_tosLink2_url();
+		update_tosLink2_url();
 }
 var preferLang = parent.document.form.preferred_lang.value.toLowerCase();
 
 function update_tosLink_url(){														
-									if(preferLang == "cn")
-										document.getElementById("tosLink").href = "http://www.asus.com.cn";
-									else if(preferLang == "ms")
-										document.getElementById("tosLink").href = "http://www.asus.com/my";
-									else if(preferLang == "da")
-										document.getElementById("tosLink").href = "http://www.asus.com/dk";
-									else if(preferLang == "sv")
-										document.getElementById("tosLink").href = "http://www.asus.com/se";
-									else if(preferLang == "uk")
-										document.getElementById("tosLink").href = "http://www.asus.com/ua";									
-									else if(
-										preferLang == "tw" || preferLang == "cz" || preferLang == "pl" || preferLang == "ro" ||
-										preferLang == "ru" || preferLang == "de" || preferLang == "fr" || preferLang == "hu" ||
-										preferLang == "tr" || preferLang == "th" || preferLang == "no" || preferLang == "it" ||
-										preferLang == "fi" || preferLang == "br" || preferLang == "jp" || preferLang == "es"
-									){
-										document.getElementById("tosLink").href = "http://www.asus.com/" + preferLang;
-									}
-									else
-										document.getElementById("tosLink").href = "http://www.asus.com/us";
+	if(preferLang == "cn")
+		document.getElementById("tosLink").href = "http://www.asus.com.cn";
+	else if(preferLang == "ms")
+		document.getElementById("tosLink").href = "http://www.asus.com/my";
+	else if(preferLang == "da")
+		document.getElementById("tosLink").href = "http://www.asus.com/dk";
+	else if(preferLang == "sv")
+		document.getElementById("tosLink").href = "http://www.asus.com/se";
+	else if(preferLang == "uk")
+		document.getElementById("tosLink").href = "http://www.asus.com/ua";									
+	else if(preferLang == "tw" || preferLang == "cz" || preferLang == "pl" || preferLang == "ro" ||
+		preferLang == "ru" || preferLang == "de" || preferLang == "fr" || preferLang == "hu" ||
+		preferLang == "tr" || preferLang == "th" || preferLang == "no" || preferLang == "it" ||
+		preferLang == "fi" || preferLang == "br" || preferLang == "jp" || preferLang == "es"
+	){
+		document.getElementById("tosLink").href = "http://www.asus.com/" + preferLang;
+	}
+	else
+		document.getElementById("tosLink").href = "http://www.asus.com/us";
 
-									document.getElementById("tosLink").href += "/Terms_of_Use_Notice_Privacy_Policy/Official_Site";
+	document.getElementById("tosLink").href += "/Terms_of_Use_Notice_Privacy_Policy/Official-Site";
 }
 
 function update_tosLink2_url(){
-										if(preferLang == "cn")
-											document.getElementById("tosLink2").href = "http://www.asus.com.cn";
-										else if(preferLang == "ms")
-											document.getElementById("tosLink2").href = "http://www.asus.com/my";										
-										else if(preferLang == "da")
-											document.getElementById("tosLink2").href = "http://www.asus.com/dk";
-										else if(preferLang == "sv")
-											document.getElementById("tosLink2").href = "http://www.asus.com/se";
-										else if(preferLang == "uk")
-											document.getElementById("tosLink2").href = "http://www.asus.com/ua";
-										else if(
-											preferLang == "tw" || preferLang == "cz" || preferLang == "pl" || preferLang == "ro" ||
-											preferLang == "ru" || preferLang == "de" || preferLang == "fr" || preferLang == "hu" ||
-											preferLang == "tr" || preferLang == "th" || preferLang == "no" || preferLang == "it" ||
-											preferLang == "fi" || preferLang == "br" || preferLang == "jp" || preferLang == "es"
-										)
-											document.getElementById("tosLink2").href = "http://www.asus.com/" + preferLang;
-										else
-											document.getElementById("tosLink2").href = "http://www.asus.com/us";
+	if(preferLang == "cn")
+		document.getElementById("tosLink2").href = "http://www.asus.com.cn";
+	else if(preferLang == "ms")
+		document.getElementById("tosLink2").href = "http://www.asus.com/my";
+	else if(preferLang == "da")
+		document.getElementById("tosLink2").href = "http://www.asus.com/dk";
+	else if(preferLang == "sv")
+		document.getElementById("tosLink2").href = "http://www.asus.com/se";
+	else if(preferLang == "uk")
+		document.getElementById("tosLink2").href = "http://www.asus.com/ua";
+	else if(preferLang == "tw" || preferLang == "cz" || preferLang == "pl" || preferLang == "ro" ||
+		preferLang == "ru" || preferLang == "de" || preferLang == "fr" || preferLang == "hu" ||
+		preferLang == "tr" || preferLang == "th" || preferLang == "no" || preferLang == "it" ||
+		preferLang == "fi" || preferLang == "br" || preferLang == "jp" || preferLang == "es"
+	){
+		document.getElementById("tosLink2").href = "http://www.asus.com/" + preferLang;
+	}
+	else
+		document.getElementById("tosLink2").href = "http://www.asus.com/us";
 
-										document.getElementById("tosLink2").href += "/Terms_of_Use_Notice_Privacy_Policy/Official_Site";										
+	document.getElementById("tosLink2").href += "/Terms_of_Use_Notice_Privacy_Policy/Official-Site";
 }
 
 function show_share_link(){

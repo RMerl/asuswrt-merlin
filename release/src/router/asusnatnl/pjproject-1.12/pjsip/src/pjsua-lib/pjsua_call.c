@@ -172,7 +172,11 @@ pj_status_t pjsua_call_subsys_init(pjsua_inst_id inst_id, const pjsua_config *cf
 	}
 	status = pj_mutex_create_simple(pjsua_var[inst_id].pool, NULL, &pjsua_var[inst_id].calls[i].tnl_stream_lock3);
 	if (status != PJ_SUCCESS) {
-	    PJ_ASSERT_RETURN(status != PJ_SUCCESS, status);
+		PJ_ASSERT_RETURN(status != PJ_SUCCESS, status);
+	}
+	status = pj_mutex_create_simple(pjsua_var[inst_id].pool, NULL, &pjsua_var[inst_id].calls[i].tnl_stream_lock4);
+	if (status != PJ_SUCCESS) {
+		PJ_ASSERT_RETURN(status != PJ_SUCCESS, status);
 	}
     }
 
@@ -398,6 +402,7 @@ PJ_DEF(pj_status_t) pjsua_call_make_call( pjsua_inst_id inst_id,
 					  pjsua_acc_id acc_id,
 					  const pj_str_t *dest_uri,
 					  unsigned options,
+					  int use_sctp,
 					  void *user_data,
 					  const pjsua_msg_data *msg_data,
 					  pjsua_call_id *p_call_id)
@@ -475,6 +480,11 @@ PJ_DEF(pj_status_t) pjsua_call_make_call( pjsua_inst_id inst_id,
 			return status;
 		PJSUA_LOCK(inst_id);
 	}
+
+	call->use_sctp = use_sctp;
+	call->med_tp->use_sctp = use_sctp;    // sctp
+	if (call->med_orig)
+		call->med_orig->use_sctp = use_sctp;  // dtls
 
     /* Associate session with account */
     call->acc_id = acc_id;
@@ -637,6 +647,7 @@ PJ_DEF(pj_status_t) pjsua_call_make_call( pjsua_inst_id inst_id,
 
     /* Create initial INVITE: */
 
+	inv->use_sctp = use_sctp;
     status = pjsip_inv_invite(inv, &tdata);
     if (status != PJ_SUCCESS) {
 	pjsua_perror(THIS_FILE, "Unable to create initial INVITE request", 
@@ -910,32 +921,40 @@ pj_bool_t pjsua_call_on_incoming(pjsip_rx_data *rdata)
 
     } else {
 	offer = NULL;
-    }
+	}
 
-    /* Init media channel */
-    status = pjsua_media_channel_init(inst_id, call->index, PJSIP_ROLE_UAS, 
-				      call->secure_level, 
-				      rdata->tp_info.pool, offer,
-				      &sip_err_code);
-    if (status != PJ_SUCCESS) {
-	pjsua_perror(THIS_FILE, "Error initializing media channel", status);
-	pjsip_endpt_respond(pjsua_var[inst_id].endpt, NULL, rdata,
-			    sip_err_code, NULL, NULL, NULL, NULL);
-	PJSUA_UNLOCK(inst_id);
-	return PJ_TRUE;
-    }
+	// DEAN, Check if the remote agent is our SDK.
+	if (rdata->msg_info.user_agent &&
+		rdata->msg_info.user_agent->user_agent.slen > 0)
+	{
+		pj_str_t ua_name = pj_str("ASUSNATNL");
+		if (pj_stristr(&rdata->msg_info.user_agent->user_agent, &ua_name))
+			call->med_tp->remote_ua_is_sdk = 1;
+	}
 
-    /* Create answer */
-    status = pjsua_media_channel_create_sdp(inst_id, call->index, rdata->tp_info.pool, 
-					    offer, &answer, &sip_err_code);
-    if (status != PJ_SUCCESS) {
-	pjsua_perror(THIS_FILE, "Error creating SDP answer", status);
-	pjsip_endpt_respond(pjsua_var[inst_id].endpt, NULL, rdata,
-			    sip_err_code, NULL, NULL, NULL, NULL);
-	PJSUA_UNLOCK(inst_id);
-	return PJ_TRUE;
-    }
+	/* Init media channel */
+	status = pjsua_media_channel_init(inst_id, call->index, PJSIP_ROLE_UAS, 
+		call->secure_level, 
+		rdata->tp_info.pool, offer,
+		&sip_err_code);
+	if (status != PJ_SUCCESS) {
+		pjsua_perror(THIS_FILE, "Error initializing media channel", status);
+		pjsip_endpt_respond(pjsua_var[inst_id].endpt, NULL, rdata,
+			sip_err_code, NULL, NULL, NULL, NULL);
+		PJSUA_UNLOCK(inst_id);
+		return PJ_TRUE;
+	}
 
+	/* Create answer */
+	status = pjsua_media_channel_create_sdp(inst_id, call->index, rdata->tp_info.pool, 
+		offer, &answer, &sip_err_code);
+	if (status != PJ_SUCCESS) {
+		pjsua_perror(THIS_FILE, "Error creating SDP answer", status);
+		pjsip_endpt_respond(pjsua_var[inst_id].endpt, NULL, rdata,
+			sip_err_code, NULL, NULL, NULL, NULL);
+		PJSUA_UNLOCK(inst_id);
+		return PJ_TRUE;
+	}
 
     /* Verify that we can handle the request. */
     options |= PJSIP_INV_SUPPORT_100REL;
@@ -948,8 +967,9 @@ pj_bool_t pjsua_call_on_incoming(pjsip_rx_data *rdata)
 	options |= PJSIP_INV_REQUIRE_TIMER;
     else if (pjsua_var[inst_id].acc[acc_id].cfg.use_timer == PJSUA_SIP_TIMER_ALWAYS)
 	options |= PJSIP_INV_ALWAYS_USE_TIMER;
+    options |= PJSIP_INV_TNL_SUPPORT_SCTP;
 
-    status = pjsip_inv_verify_request2(rdata, &options, offer, answer, NULL,
+    status = pjsip_inv_verify_request2(rdata, &options, offer, NULL, NULL,
 				       pjsua_var[inst_id].endpt, &response);
     if (status != PJ_SUCCESS) {
 
@@ -969,10 +989,17 @@ pj_bool_t pjsua_call_on_incoming(pjsip_rx_data *rdata)
 				NULL, NULL, NULL);
 	}
 
-	pjsua_media_channel_deinit(inst_id, call->index);
 	PJSUA_UNLOCK(inst_id);
 	return PJ_TRUE;
-    } 
+	} 
+
+	/* Remote peer requires SCTP*/
+	if ((options & PJSIP_INV_TNL_REQUIRE_SCTP) > 0) {
+		call->use_sctp = 1;
+		call->med_tp->use_sctp = 1;    // sctp
+		if (call->med_orig)
+			call->med_orig->use_sctp = 1;  // dtls
+	}
 
 
     /* Get suitable Contact header */
@@ -1013,6 +1040,7 @@ pj_bool_t pjsua_call_on_incoming(pjsip_rx_data *rdata)
     /* Set preference */
     pjsip_auth_clt_set_prefs(&dlg->auth_sess, 
 			     &pjsua_var[inst_id].acc[acc_id].cfg.auth_pref);
+
 
     /* Disable Session Timers if not prefered and the incoming INVITE request
      * did not require it.
@@ -3475,7 +3503,19 @@ static void pjsua_call_on_state_changed(pjsip_inv_session *inv,
 	    		      e->body.tsx_state.tsx->status_code;
 	    pj_strncpy(&call->last_text, 
 		       &e->body.tsx_state.tsx->status_text,
-		       sizeof(call->last_text_buf_));
+			   sizeof(call->last_text_buf_));
+
+		if (inv->role == PJSIP_ROLE_UAC) {
+			// DEAN, Check if the remote agent is our SDK.
+			if (e->body.rx_msg.rdata &&
+				e->body.rx_msg.rdata->msg_info.user_agent &&
+				e->body.rx_msg.rdata->msg_info.user_agent->user_agent.slen > 0)
+			{
+				pj_str_t ua_name = pj_str("ASUSNATNL");
+				if (pj_stristr(&e->body.rx_msg.rdata->msg_info.user_agent->user_agent, &ua_name))
+					call->med_tp->remote_ua_is_sdk = 1;
+			}
+		}
 	    break;
 	case PJSIP_INV_STATE_CONFIRMED:
 	    pj_gettimeofday(&call->conn_time);
@@ -4392,7 +4432,7 @@ static void on_call_transfered( pjsip_inv_session *inv,
     /* Now make the outgoing call. */
     tmp = pj_str(uri);
     status = pjsua_call_make_call(existing_call->inst_id, existing_call->acc_id, &tmp, 0,
-				  existing_call->user_data, &msg_data, 
+				  existing_call->use_sctp, existing_call->user_data, &msg_data, 
 				  &new_call);
     if (status != PJ_SUCCESS) {
 

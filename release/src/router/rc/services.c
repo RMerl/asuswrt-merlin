@@ -1093,7 +1093,11 @@ void start_dnsmasq()
 	}
 
 #ifdef RTCONFIG_IPV6
-	if (ipv6_enabled() && is_routing_enabled()) {
+	if (ipv6_enabled()
+#ifdef RTCONFIG_6RELAYD
+		&& get_ipv6_service() != IPV6_PASSTHROUGH
+#endif
+		&& is_routing_enabled()) {
 		struct in6_addr addr;
 		int ra_lifetime, dhcp_lifetime;
 		int service, stateful, dhcp_start, dhcp_end;
@@ -1369,6 +1373,9 @@ void add_ip6_lanaddr(void)
 		if (nvram_get_int(ipv6_nvname("ipv6_dhcp_pd")))
 			break;
 		/* fall through */
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
 	case IPV6_MANUAL:
 		p = ipv6_prefix(NULL);
 		if (*p && !nvram_match(ipv6_nvname("ipv6_prefix"), (char*)p))
@@ -1509,6 +1516,16 @@ void start_ipv6(void)
 		nvram_set(ipv6_nvname("ipv6_get_dns"), "");
 		nvram_set(ipv6_nvname("ipv6_get_domain"), "");
 		break;
+#ifdef RTCONFIG_6RELAYD
+        case IPV6_PASSTHROUGH:
+		nvram_set(ipv6_nvname("ipv6_prefix"), "");
+		nvram_set(ipv6_nvname("ipv6_rtr_addr"), "::1");
+		nvram_set_int(ipv6_nvname("ipv6_prefix_length"), 64);
+		add_ip6_lanaddr();
+		nvram_set(ipv6_nvname("ipv6_get_dns"), "");
+		nvram_set(ipv6_nvname("ipv6_get_domain"), "");
+		break;
+#endif
 	case IPV6_6IN4:
 		nvram_set(ipv6_nvname("ipv6_rtr_addr"), "");
 		nvram_set(ipv6_nvname("ipv6_prefix_length"), nvram_safe_get(ipv6_nvname("ipv6_prefix_length_s")));
@@ -1533,6 +1550,9 @@ void stop_ipv6(void)
 	char *lan_ifname = nvram_safe_get("lan_ifname");
 	char *wan_ifname = (char *) get_wan6face();
 
+#ifdef RTCONFIG_6RELAYD
+	stop_6relayd();
+#endif
 	stop_dhcp6c();
 	stop_ipv6_tunnel();
 
@@ -1541,6 +1561,29 @@ void stop_ipv6(void)
 	eval("ip", "-6", "route", "flush", "scope", "global");
 	eval("ip", "-6", "neigh", "flush", "dev", lan_ifname);
 }
+
+#ifdef RTCONFIG_6RELAYD
+void stop_6relayd(void)
+{
+	killall_tk("6relayd");
+}
+
+int start_6relayd(void)
+{
+	char *wan_ifname = (char *) get_wan6face();
+	char tmp[INET6_ADDRSTRLEN + 2], tmp2[32];
+
+	if (get_ipv6_service() != IPV6_PASSTHROUGH)
+		return 0;
+
+	if (!wan_ifname || *wan_ifname == '\0')
+		return -1;
+
+	stop_6relayd();
+
+	return eval("6relayd", "-R", "relay", "-D", "server", "-N", strcat_r("-n", nvram_safe_get("ipv6_get_dns"), tmp), wan_ifname, strcat_r("~", nvram_safe_get("lan_ifname"), tmp2));
+}
+#endif
 #endif
 
 // -----------------------------------------------------------------------------
@@ -2306,14 +2349,14 @@ ddns_updated_main(int argc, char *argv[])
 {
 	FILE *fp;
 	char buf[64], *ip;
-
+	
 	if (!(fp=fopen("/tmp/ddns.cache", "r"))) return 0;
 
 	fgets(buf, sizeof(buf), fp);
 	fclose(fp);
 
 	if (!(ip=strchr(buf, ','))) return 0;
-
+	
 	nvram_set("ddns_cache", buf);
 	nvram_set("ddns_ipaddr", ip+1);
 	nvram_set("ddns_status", "1");
@@ -2333,6 +2376,7 @@ int
 start_ddns(void)
 {
 	FILE *fp;
+	FILE *time_fp;
 	char *wan_ip, *wan_ifname;
 //	char *ddns_cache;
 	char *server;
@@ -2344,6 +2388,7 @@ start_ddns(void)
 	int wild = nvram_get_int("ddns_wildcard_x");
 	int unit, asus_ddns = 0;
 	char tmp[32], prefix[] = "wanXXXXXXXXXX_";
+	time_t now;
 
 	if (!is_routing_enabled()) {
 		_dprintf("return -1\n");
@@ -2436,6 +2481,8 @@ start_ddns(void)
 	else if (strcmp(server, "WWW.ASUS.COM")==0) {
 		service = "dyndns", asus_ddns = 1;
 	}
+	else if (strcmp(server, "WWW.GOOGLE-DDNS.COM")==0)
+                service = "dyndns", asus_ddns=3;
 	else if (strcmp(server, "WWW.ORAY.COM")==0) {
 		service = "peanuthull", asus_ddns = 2;
 	} else {
@@ -2463,7 +2510,22 @@ start_ddns(void)
 	nvram_unset("ddns_status");
 	nvram_unset("ddns_updated");
 
-	if (asus_ddns == 2) { //Peanuthull DDNS
+       	_dprintf("asus_ddns : %d\n",asus_ddns);
+#if 1
+       	if(3 == asus_ddns)
+	{
+		if((time_fp=fopen("/tmp/ddns.cache","w")))
+		{				
+			fprintf(time_fp,"%ld,%s",time(&now),wan_ip);
+			fclose(time_fp);
+		}
+        	//_dprintf("run ddns-start.sh\n");
+               	eval("ddns-start.sh",user,passwd,host);
+               	//eval("ddns-start.sh",host,passwd);
+		
+       	}
+#endif
+        else if (asus_ddns == 2) { //Peanuthull DDNS	
 		if( (fp = fopen("/etc/phddns.conf", "w")) != NULL ) {
 			fprintf(fp, "[settings]\n");
 			fprintf(fp, "szHost = phddns60.oray.net\n");
@@ -2907,15 +2969,22 @@ set_hostname(void)
 }
 
 int
-start_telnetd(void)
+_start_telnetd(int force)
 {
-	if (getpid() != 1) {
-		notify_rc("start_telnetd");
-		return 0;
-	}
+	char *telnetd_argv[] = { "telnetd",
+		NULL, NULL,	/* -b address */
+		NULL };
+	int index = 1;
 
-	if (!nvram_match("telnetd_enable", "1"))
-		return 0;
+	if (!force) {
+		if (!nvram_get_int("telnetd_enable"))
+			return 0;
+
+		if (getpid() != 1) {
+			notify_rc("start_telnetd");
+			return 0;
+		}
+	}
 
 	if (pids("telnetd"))
 		killall_tk("telnetd");
@@ -2924,7 +2993,18 @@ start_telnetd(void)
 	setup_passwd();
 	//chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
 
-	return xstart("telnetd");
+	if (is_routing_enabled()) {
+		telnetd_argv[index++] = "-b";
+		telnetd_argv[index++] = nvram_safe_get("lan_ipaddr");
+	}
+
+	return _eval(telnetd_argv, NULL, 0, NULL);
+}
+
+int
+start_telnetd(void)
+{
+	return _start_telnetd(0);
 }
 
 void
@@ -2939,29 +3019,24 @@ stop_telnetd(void)
 		killall_tk("telnetd");
 }
 
-int
-run_telnetd(void)
-{
-	if (pids("telnetd"))
-		killall_tk("telnetd");
-
-	set_hostname();
-	setup_passwd();
-	//chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));
-
-	return xstart("telnetd");
-}
-
 void
 start_httpd(void)
 {
-	char *httpd_argv[] = {"httpd", NULL};
+	char *httpd_argv[] = { "httpd",
+	/*	"-p", nvram_safe_get("http_lanport"),*/
+		NULL, NULL,	/* -i ifname */
+		NULL };
+	int httpd_index = 1;
 #ifdef RTCONFIG_HTTPS
-	char *https_argv[] = {"httpds", "-s", "-p", nvram_safe_get("https_lanport"), NULL};
+	char *https_argv[] = { "httpds", "-s",
+		"-p", nvram_safe_get("https_lanport"),
+		NULL, NULL,	/* -i ifname */
+		NULL };
+	int https_index = 4;
+	int enable;
 #endif
 	char *cur_dir;
 	pid_t pid;
-	int enable;
 #ifdef DEBUG_RCTEST
 	char *httpd_dir;
 #endif
@@ -2979,17 +3054,27 @@ start_httpd(void)
 #endif
 	chdir("/www");
 
-	enable = nvram_get_int("http_enable");
-	if (enable != 1) {
-		logmessage(LOGNAME, "start httpd");
-		_eval(httpd_argv, NULL, 0, &pid);
- 	}
+	if (is_routing_enabled()) {
+		httpd_argv[httpd_index++] = "-i";
+		httpd_argv[httpd_index++] = nvram_safe_get("lan_ifname");
 #ifdef RTCONFIG_HTTPS
+		https_argv[https_index++] = "-i";
+		https_argv[https_index++] = nvram_safe_get("lan_ifname");
+#endif
+ 	}
+
+#ifdef RTCONFIG_HTTPS
+	enable = nvram_get_int("http_enable");
 	if (enable != 0) {
-		logmessage(LOGNAME, "start httpd - SSL");
+ 		logmessage(LOGNAME, "start httpd - SSL");
 		_eval(https_argv, NULL, 0, &pid);
 	}
+	if (enable != 1) 
 #endif
+	{
+		logmessage(LOGNAME, "start httpd");
+		_eval(httpd_argv, NULL, 0, &pid);
+	}
 
 	chdir(cur_dir ? : "/");
 	free(cur_dir);
@@ -3076,7 +3161,7 @@ void start_spectrum(void)
 void start_upnp(void)
 {
 	FILE *f;
-	char tmp[32], prefix[sizeof("wanXXXXXXXXXX_")];
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char et0macaddr[18];
 	char *proto, *port, *lport, *dstip, *desc;
 	char *nv, *nvp, *b;
@@ -3144,7 +3229,8 @@ void start_upnp(void)
 					"system_uptime=yes\n"
 					"friendly_name=%s\n"
 					"model_number=%s\n"
-					"serial=%s\n",
+					"serial=%s\n"
+					"lease_file=%s\n",
 					get_wan_ifname(wan_primary_ifunit()),
 					nvram_safe_get("lan_ifname"),
 					upnp_port,
@@ -3154,7 +3240,8 @@ void start_upnp(void)
 					nvram_get_int("upnp_ssdp_interval"),
 					get_productid(),
 					rt_serialno,
-					nvram_get("serial_no") ? : et0macaddr);
+					nvram_get("serial_no") ? : et0macaddr,
+					"/tmp/upnp.leases");
 
 				if (nvram_get_int("upnp_clean")) {
 					int interval = nvram_get_int("upnp_clean_interval");
@@ -3169,19 +3256,16 @@ void start_upnp(void)
 					fprintf(f,"clean_ruleset_interval=%d\n", 0);
 
 
-				if (nvram_match("upnp_mnp", "1")) {
-					int https = nvram_get_int("http_enable");
-					int https_port = nvram_get_int("https_lanport");
-					sprintf(tmpstr, ":%d", https_port);
-
-					fprintf(f, "presentation_url=http%s://%s%s\n",
-						(https > 0) ? "s" : "", lanip,
-						(https > 0) ? tmpstr : "");
-				} else {
-					// Empty parameters are not included into XML service description
-					fprintf(f, "presentation_url=\n");
+				// Empty parameters are not included into XML service description
+				fprintf(f, "presentation_url=");
+#ifdef RTCONFIG_HTTPS
+				if (nvram_get_int("http_enable") == 1) {
+					fprintf(f, "%s://%s:%d/\n", "https", lanip, nvram_get_int("https_lanport") ? : 443);
+				} else
+#endif
+				{
+					fprintf(f, "%s://%s:%d/\n", "http", lanip, /*nvram_get_int("http_lanport") ? :*/ 80);
 				}
-
 
 				char uuid[45];
 				f_read_string("/proc/sys/kernel/random/uuid", uuid, sizeof(uuid));
@@ -3213,16 +3297,19 @@ void start_upnp(void)
 					free(nv);
 				}
 
-				if (nvram_match("misc_http_x", "1"))
-				{
-					httpx_port = nvram_get_int("misc_httpport_x") ? : 8080;
-					fprintf(f, "deny %d 0.0.0.0/0 0-65535\n", httpx_port);
+				if (nvram_get_int("misc_http_x")) {
 #ifdef RTCONFIG_HTTPS
-					if (nvram_get_int("http_enable")) {
+					int enable = nvram_get_int("http_enable");
+					if (enable != 0) {
 						httpx_port = nvram_get_int("misc_httpsport_x") ? : 8443;
 						fprintf(f, "deny %d 0.0.0.0/0 0-65535\n", httpx_port);
 					}
+					if (enable != 1)
 #endif
+					{
+						httpx_port = nvram_get_int("misc_httpport_x") ? : 8080;
+						fprintf(f, "deny %d 0.0.0.0/0 0-65535\n", httpx_port);
+					}
 				}
 
 #ifdef RTCONFIG_WEBDAV
@@ -3303,8 +3390,7 @@ void start_upnp(void)
 					   (min_lifetime > 0 ? min_lifetime : 120),
 					   (max_lifetime > 0 ? max_lifetime : 86400));
 
-				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n"
-				           "lease_file=/var/lib/misc/upnp.leases\n");
+				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
 
 				fappend(f, "/etc/upnp/config.custom");
 				append_custom_config("upnp", f);
@@ -3326,6 +3412,21 @@ void stop_upnp(void)
 	}
 
 	killall_tk("miniupnpd");
+}
+
+void reload_upnp(void)
+{
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
+	int unit;
+
+	if (!is_routing_enabled())
+		return;
+
+	unit = wan_primary_ifunit();
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	if (nvram_get_int(strcat_r(prefix, "upnp_enable", tmp)))
+		killall("miniupnpd", SIGUSR1);
 }
 
 int
@@ -3404,6 +3505,10 @@ int start_lltd(void)
 				eval("lld2d.rtac1900p", "br0");
 			else if (!strcmp(odmpid, "RT-AC66U V2"))
 				eval("lld2d.rtac66u_v2", "br0");
+			else if (!strcmp(odmpid, "RT-AC68A"))
+				eval("lld2d.rtac68a", "br0");
+			else if (!strcmp(odmpid, "RT-AC68UF"))
+				eval("lld2d.rtac68ui", "br0");
 			break;
 		case MODEL_DSLAC68U:
 			if (!strcmp(odmpid, "DSL-AC68R"))
@@ -3453,7 +3558,11 @@ void stop_lltd(void)
 			else if (!strcmp(odmpid, "RT-AC1900P"))
 				killall_tk("lld2d.rtac1900p");
 			else if (!strcmp(odmpid, "RT-AC66U V2"))
-                                killall_tk("lld2d.rtac66u_v2");
+				killall_tk("lld2d.rtac66u_v2");
+			else if (!strcmp(odmpid, "RT-AC68A"))
+				killall_tk("lld2d.rtac68a");
+			else if (!strcmp(odmpid, "RT-AC68UF"))
+				killall_tk("lld2d.rtac68uf");
 			break;
 		case MODEL_DSLAC68U:
 			if (!strcmp(odmpid, "DSL-AC68R"))
@@ -3811,6 +3920,9 @@ reset_plc(void)
 	int rlen;
 	char buf[1024], plc_mac[18];
 
+	if (nvram_match("plc_ready", "0"))
+		return;
+
 #if defined(PLN12)
 	if (!get_qca8337_PHY_power(1))
 		doSystem("swconfig dev %s port 1 set power 1", MII_IFNAME);
@@ -3839,6 +3951,7 @@ reset_plc(void)
 
 	stop_plchost();
 	eval("/usr/local/bin/plctool", "-i", "br0", "-R");
+	nvram_set("plc_ready", "0");
 }
 #endif
 
@@ -4808,6 +4921,9 @@ again:
 			remove_conntrack();
 			stop_udhcpc(-1);
 #ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_6RELAYD
+			stop_6relayd();
+#endif
 			stop_dhcp6c();
 #endif
 
@@ -4870,7 +4986,7 @@ again:
 				modprobe_r("wl");
 #ifdef RTCONFIG_USB
 #if defined(RTN53)
-				stop_usb();
+				stop_usb(0);
 				stop_usbled();
 				remove_storage_main(1);
 				remove_usb_module();
@@ -4991,6 +5107,10 @@ again:
 			sleep(2); // wait for all httpd event done
 			stop_networkmap();
 			stop_httpd();
+			stop_telnetd();
+#ifdef RTCONFIG_SSH
+			stop_sshd();
+#endif
 			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
@@ -5083,6 +5203,10 @@ again:
 			start_upnp();
 
 			start_httpd();
+			start_telnetd();
+#ifdef RTCONFIG_SSH
+			start_sshd();
+#endif
 			start_networkmap(0);
 			start_wl();
 			lanaccess_wl();
@@ -5101,6 +5225,10 @@ again:
 #endif
 			stop_networkmap();
 			stop_httpd();
+			stop_telnetd();
+#ifdef RTCONFIG_SSH
+			stop_sshd();
+#endif
 			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
@@ -5186,6 +5314,10 @@ again:
 			start_upnp();
 
 			start_httpd();
+			start_telnetd();
+#ifdef RTCONFIG_SSH
+			start_sshd();
+#endif
 			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
@@ -5218,6 +5350,10 @@ again:
 #endif
 			stop_networkmap();
 			stop_httpd();
+			stop_telnetd();
+#ifdef RTCONFIG_SSH
+			stop_sshd();
+#endif
 #ifdef RTCONFIG_DHCP_OVERRIDE
 			stop_detectWAN_arp();
 #endif
@@ -5316,6 +5452,10 @@ again:
 			start_upnp();
 
 			start_httpd();
+			start_telnetd();
+#ifdef RTCONFIG_SSH
+			start_sshd();
+#endif
 			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
@@ -6136,6 +6276,18 @@ check_ddr_done:
 #endif
 		}
 	}
+	else if (strcmp(script, "telnetd") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_telnetd();
+		if(action & RC_SERVICE_START) start_telnetd();
+	}
+#ifdef RTCONFIG_SSH
+	else if (strcmp(script, "sshd") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_sshd();
+		if(action & RC_SERVICE_START) start_sshd();
+	}
+#endif
 #ifdef RTCONFIG_IPV6
 	else if (strcmp(script, "ipv6") == 0) {
 		if (action & RC_SERVICE_STOP)
@@ -6144,8 +6296,12 @@ check_ddr_done:
 			start_ipv6();
 	}
 	else if (strcmp(script, "dhcp6c") == 0) {
-		if (action & RC_SERVICE_STOP)
+		if (action & RC_SERVICE_STOP) {
+#ifdef RTCONFIG_6RELAYD
+			stop_6relayd();
+#endif
 			stop_dhcp6c();
+		}
 		if (action & RC_SERVICE_START)
 			start_dhcp6c();
 	}
@@ -6260,9 +6416,13 @@ check_ddr_done:
 		hm_traffic_limiter_save();
 		reset_traffic_limiter_counter(0);
 	}
+	else if (strcmp(script, "reset_traffic_limiter_force") == 0)
+	{
+		reset_traffic_limiter_counter(1);
+	}
 	else if (strcmp(script, "reset_tl_count") == 0)
 	{
-		eval("echo", "-n", "0", ">", "/tmp/tl_count");
+		f_write_string("/jffs/tld/tl_count", "0", 0, 0);
 	}
 #endif
 #ifdef RTCONFIG_PUSH_EMAIL
@@ -6447,6 +6607,10 @@ check_ddr_done:
 #endif
 			stop_networkmap();
 			stop_httpd();
+			stop_telnetd();
+#ifdef RTCONFIG_SSH
+			stop_sshd();
+#endif
 			stop_dnsmasq();
 			stop_lan_wlc();
 			stop_lan_port();
@@ -6456,6 +6620,10 @@ check_ddr_done:
 			start_lan_wlc();
 			start_dnsmasq();
 			start_httpd();
+			start_telnetd();
+#ifdef RTCONFIG_SSH
+			start_sshd();
+#endif
 			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();

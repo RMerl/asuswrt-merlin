@@ -81,10 +81,16 @@ typedef enum pjmedia_tp_proto
     PJMEDIA_TP_PROTO_NONE = 0,
 
     /** RTP using A/V profile */
-    PJMEDIA_TP_PROTO_RTP_AVP,
+	PJMEDIA_TP_PROTO_RTP_AVP,
 
-    /** Secure RTP */
-    PJMEDIA_TP_PROTO_RTP_SAVP,
+	/** Secure RTP */
+	PJMEDIA_TP_PROTO_RTP_SAVP,
+
+	/** WebRTC Data Channel DTLS_SCTP */
+	PJMEDIA_TP_PROTO_DTLS_SCTP,
+
+	/** RTP and SCTP */
+	PJMEDIA_TP_PROTO_RTP_SCTP,
 
     /** Unknown */
     PJMEDIA_TP_PROTO_UNKNOWN

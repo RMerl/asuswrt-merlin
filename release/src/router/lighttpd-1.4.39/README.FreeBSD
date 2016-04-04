@@ -1,0 +1,51 @@
+
+FreeBSD dependencies:
+
+- compiler:
+  pkg install gcc5
+- autotools + pkgconf (for builds from svn/git)
+  pkg install autotools pkgconf
+- pkgconf might be needed to find libs in build from tarball too:
+  pkg install pkgconf
+- building with cmake + ninja instead of autotools:
+  pkg install cmake ninja
+- libev (cross-platform event loop library) if freebsd-kqueue from lighty isn't working
+  pkg install libev
+- stack traces on asserts:
+  pkg install libunwind
+- PCRE (mod_rewrite, mod_redirect, config conditionals, ...)
+  pkg install pcre
+- TLS support (and mod_auth {SHA1} support)
+  pkg install libressl
+  or (mysql-connector-c still requires openssl)
+  pkg install openssl
+- PHP for unit tests
+  pkg install php56
+- MySQL for mod_mysql_vhost
+  pkg install mysql-connector-c
+- File and directory monitoring
+  pkg install gamin
+  or
+  pkg install fam
+- Lua 5.1 (mod_magnet and mod_cml; lighty upstream doesn't support 5.2 yet)
+  pkg install lua51
+- (deprecated) memcache library (mod_cml and mod_trigger_b4_dl feature)
+  pkg install libmemcache
+- gdbm (mod_trigger_b4_dl feature)
+  pkg install gdbm
+- LDAP (mod_auth feature)
+  pkg install openldap-client
+- SQLite3 (required for most mod_webdav features)
+  pkg install sqlite3
+- XML (mod_webdav properties and locking)
+  pkg install libxml2
+- UUID library (mod_webdav locking)
+  pkg install e2fsprogs-libuuid
+
+Configure:
+
+To help autotools find libraries and headers:
+CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure ...
+
+With ssl the compiler might warn about OPENSSL_NO_KRB5 redefinitions, just
+configure "--with-kerberos5" for now.

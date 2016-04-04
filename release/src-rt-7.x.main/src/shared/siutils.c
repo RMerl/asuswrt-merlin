@@ -2,7 +2,7 @@
  * Misc utility routines for accessing chip-specific features
  * of the SiliconBackplane-based Broadcom chips.
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -3196,16 +3196,55 @@ exit:
 }
 
 /** returns value in [Hz] units */
+static uint32
+BCMINITFN(si_ns_alp_clock)(si_t *sih)
+{
+	osl_t *osh = si_osh(sih);
+	uint32 *genpll_base;
+	uint32 val;
+	uint32 pdiv, ndiv_int, mdiv, clkrate;
+
+	/* reg map for genpll base address */
+	genpll_base = (uint32 *)REG_MAP(0x1800C140, 4096);
+
+	/* get divider integer from the cru_genpll_control5 */
+	val = R_REG(osh, (genpll_base + 0x5));
+	ndiv_int = (val >> 20) & 0x3ff;
+	if (ndiv_int == 0)
+		ndiv_int = 1 << 10;
+
+	/* get pdiv from the cru_genpll_control6 */
+	val = R_REG(osh, (genpll_base + 0x6));
+	pdiv = (val >> 24) & 0x7;
+	if (pdiv == 0)
+		pdiv = 1 << 3;
+
+	/* get mdiv from the cru_genpll_control7 */
+	val = R_REG(osh, (genpll_base + 0x7));
+	mdiv = val & 0xff;
+	if (mdiv == 0)
+		mdiv = 1 << 8;
+
+	/* caculate clock rate based on 25MHz reference clock */
+	clkrate = (25000000 / (pdiv * mdiv)) * ndiv_int;
+
+	/* round to the nearest Hz */
+	clkrate = ((clkrate + 500000) / 1000000) * 1000000;
+
+	/* reg unmap */
+	REG_UNMAP((void *)genpll_base);
+
+	return clkrate;
+}
+
+/** returns value in [Hz] units */
 uint32
 BCMINITFN(si_alp_clock)(si_t *sih)
 {
 	if (PMUCTL_ENAB(sih))
 		return si_pmu_alp_clock(sih, si_osh(sih));
 	else if (BCM4707_CHIP(CHIPID(sih->chip))) {
-		if (sih->chippkg == BCM4709_PKG_ID)
-			return NS_ALP_CLOCK;
-		else
-			return NS_SLOW_ALP_CLOCK;
+		return si_ns_alp_clock(sih);
 	}
 
 	return ALP_CLOCK;

@@ -6,9 +6,11 @@ int lib_load(void** handle, const char* lib_path);
 int lib_unload	(void* handle);
 int lib_get_func(void* handle, const char* func_name, void** func_sym);
 
+
 // function pointer
+typedef char* (*NAT_VERSION)	(void);
 #ifdef TNL_CALLBACK_ENABLE
-typedef int (*NAT_INIT)		(struct natnl_config *cfg, struct natnl_callback *natnl_cb);
+typedef int (*NAT_INIT3)	(struct natnl_config *cfg, struct natnl_callback *natnl_cb, void *app_data);
 #else
 typedef int (*NAT_INIT)		(struct natnl_config *cfg);
 #endif
@@ -22,5 +24,5 @@ typedef int (*NAT_POOL_DUMP)(int detail);
 
 typedef int (*NAT_DETECT) (char *stun_srv);
 
-int init_natnl_api(NAT_INIT* nat_int, NAT_DEINIT* nat_deinit, NAT_MAKECALL* nat_makecall, NAT_HANG_UP* nat_hangup, NAT_POOL_DUMP* nat_dump, NAT_DETECT* nat_detect );
+int init_natnl_api(NAT_INIT3* nat_int3, NAT_DEINIT* nat_deinit, NAT_MAKECALL* nat_makecall, NAT_HANG_UP* nat_hangup, NAT_POOL_DUMP* nat_dump, NAT_DETECT* nat_detect, NAT_VERSION* nat_version);
 #endif

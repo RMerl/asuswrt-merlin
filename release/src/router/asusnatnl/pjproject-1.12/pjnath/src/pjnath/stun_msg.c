@@ -2245,6 +2245,29 @@ PJ_DEF(pj_status_t) pj_stun_msg_check(const pj_uint8_t *pdu, pj_size_t pdu_len,
 }
 
 
+/*
+ * Check that the PDU is potentially a valid STUN message.
+ */
+PJ_DEF(pj_status_t) pj_dtls_record_check(const pj_uint8_t *pdu, pj_size_t pdu_len)
+{
+    PJ_ASSERT_RETURN(pdu, PJ_EINVAL);
+
+    if (pdu_len < 5)
+		return PJNATH_EINDTLSRECORD;
+
+    /* First byte of DTLS record is always 0x14, 0x15, 0x16 or 0x17. */
+    if (*pdu != 0x14 && *pdu != 0x15 && *pdu != 0x16 && *pdu != 0x17)
+		return PJNATH_EINDTLSRECORD;
+
+	/* Second and Third byte of DTLS record is always 0xfe and 0xff. */
+	if (*(pdu+1) != 0xfe && *(pdu+2) != 0xff)
+		return PJNATH_EINDTLSRECORD;
+
+    /* Could be a DTLS record */
+    return PJ_SUCCESS;
+}
+
+
 /* Create error response */
 PJ_DEF(pj_status_t) pj_stun_msg_create_response(pj_pool_t *pool,
 						const pj_stun_msg *req_msg,

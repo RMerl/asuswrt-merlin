@@ -1,13 +1,12 @@
 #Modify this to point to the PJSIP location.
 include ../version.mak
-include ../../common.mak
+RTSRCBASE=../../..
 PJBASE=../pjproject-1.12
-UPNPBASE=../miniupnpc-1.6
+UMEMBASE=../umem-1.0.1
 UDTBASE=../udt
-LIB_MINIUPNPC=miniupnpc
 LIB_UDT=udt
+SCTPBASE=../pjproject-1.12/third_party/usrsctp/usrsctplib
 NATBASE=.
-ARM_TOOLCHAIN=/home/charles0000/android-toolchain-arm
 include $(PJBASE)/build.mak
 
 CC      = $(PJ_CC)
@@ -17,17 +16,23 @@ LD	= $(PJ_LD)
 #STRIP	= $(PJ_STRIP)   
 LDFLAGS = $(PJ_LDFLAGS)
 LDLIBS  = $(PJ_LDLIBS)
-#LDLIBS += -L$(UPNPBASE) -l$(LIB_MINIUPNPC) -L$(UDTBASE) -l$(LIB_UDT) -L$(NATBASE) -L$(SYSROOT)/usr/lib #-llog#-lminiupnpc -L$(SYSROOT)/usr/lib -llog
-LDLIBS += -L$(UPNPBASE) -l$(LIB_MINIUPNPC) -L$(UDTBASE) -l$(LIB_UDT) -L$(NATBASE) #-llog#-lminiupnpc -L$(SYSROOT)/usr/lib -llog
+LDLIBS += -L$(UDTBASE) -l$(LIB_UDT) -L$(NATBASE)
 CFLAGS  = $(PJ_CFLAGS) 
-CFLAGS += -g -I$(NATBASE) -I$(NATBASE)/msvc_prjs/asusnatnl #-I$(ARM_TOOLCHAIN)/usr/include
-CFLAGS += -I$(UPNPBASE) -DTUNNEL_V=\"$(VERSION)\"
-CFLAGS += -I$(UDTBASE)
+CFLAGS += -g -I$(NATBASE) -I$(NATBASE)/msvc_prjs/asusnatnl 
+CFLAGS += -DTUNNEL_V=\"$(VERSION)\"
+CFLAGS += -I$(UDTBASE) -I$(SCTPBASE)
 #CFLAGS += -Wall
 CPPFLAGS += -fPIC
 
 ifeq ($(AR),)
 AR=ar
+endif
+
+ifeq ($(router), yes)
+CFLAGS += -DROUTER=1
+#for wl_ioctl used.
+CFLAGS += -I$(RTSHAREDBASE)
+CFLAGS += -I$(SRCBASE)/include
 endif
 
 #check if make goal is android-lib or linux-lib
@@ -39,15 +44,18 @@ ifeq ("$(MAKECMDGOALS)", $(filter "$(MAKECMDGOALS)", "android-lib"))
 ifeq ($(findstring i686, $(PJ_CC)), i686)
 ARCH=i686
 STL_DIR=x86
+LDLIBS +=~/android-toolchain-x86/i686-linux-android/lib/libstdc++.a
 endif
 ifeq ($(findstring aarch64, $(PJ_CC)), aarch64)
 ARCH=aarch64
 STL_DIR=arm64
+LDLIBS +=~/android-toolchain-arm64/aarch64-linux-android/lib/libstdc++.a
 endif
 ifeq ($(findstring arm, $(PJ_CC)), arm)
 ARCH=arm
 EABI=eabi
 STL_DIR=arm
+LDLIBS += ~/android-toolchain-arm/arm-linux-androideabi/lib/libstdc++.a
 endif
 ANDROID_CROSS=$(ARCH)-linux-android$(EABI)
 ANDROID_GCC=$(ANDROID_CROSS)-gcc
@@ -56,21 +64,19 @@ ANDROID_AR=$(ANDROID_CROSS)-ar
 ANDROID_RANLIB=$(ANDROID_CROSS)-ranlib
 JNI_OBJ=natjni.o
 CPPFLAGS= ${CFLAGS} -frtti -fexceptions -DANDROID -DPJ_ANDROID=1 
-CFLAGS += -DNATNL_LIB=1
-LDLIBS += -L$(NATBASE)/gnustl/$(STL_DIR) -lgnustl_static 
 endif
 
 
 OBJS = main.o natnl.o \
 		natnl_codec.o \
 		socket.o message.o client.o list.o tunnel.o \
-		upnpc.o \
 		im_handler.o \
+		rtsp_handler.o \
 		$(JNI_OBJ)
 		#config.o \
 
 TMP_OBJS=$(patsubst natnl.o,,$(OBJS)) 
-APP_OBJS = config.o $(TMP_OBJS)		
+APP_OBJS = $(TMP_OBJS)		
 OBJ_LIBS = main.o $(OBJS)
 
 # If your application is in a file named main.cpp or main.c
@@ -78,24 +84,18 @@ OBJ_LIBS = main.o $(OBJS)
 #all: natnl
 all: natnl
 
-#lib: main.c $(OBJS)
-#lib: $(OBJS) main.o
-#android-lib: main.c $(OBJ_LIBS)
-#	$(CXX) -shared -o libnatnl.so $(CPPFLAGS) $(LDFLAGS) $(OBJ_LIBS) $(LDLIBS) #-lminiupnpc
-#	NATLIB_NAME=libnatnl.so
-
 android-lib: main.c $(OBJS)
-	$(CXX) -shared -o libnatnl.so $(CPPFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) #-lminiupnpc
+	$(CXX) -shared -o libnatnl.so $(CPPFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS)
 #$(STRIP) libnatnl.so
 #	NATLIB_NAME=libnatnl.so
-ifeq ($(wildcard $(TOP)/asusnatnl/natnl/*.c),)
+ifeq ($(wildcard ./*.c),)
+#For prebuild on router platform. Don't remove it.
 linux-lib:
 	-cp -f $(TOP)/asusnatnl/natnl/prebuild$(BCMEX)/libasusnatnl.so libasusnatnl.so
 else
 linux-lib: main.c $(OBJS)
 	$(CXX) -shared -o libasusnatnl.so $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS)
 	NATLIB_NAME=libasusnatnl.so
-	#$(CC) -shared -o libasusnatnl.so $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS)
 endif
 #ios-static: main.c $(OBJS)
 #	$(CXX)  -Wl $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -static -all_load -o libasusnatnl.a
@@ -134,20 +134,8 @@ $(LIBRARY): main.o $(OBJS)
 static: $(LIBRARY) 
 	echo '<<<<< YYY=$(YYY), XXX=$(XXX)>>>>>'
 
-	#$(CXX) -WL $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -static -o libasusnatnl.a
-
-#ios-static-lib: main.c $(OBJ_LIBS)
-#	echo "LDFLAGS= {${LDFLAGS}} "
-#	echo "LDLIBS = {${LDLIBS}}"
-#	$(AR) rcs AAA.a main.o ${OBJ_LIBS}
-#	#libtool -static -o libasusnatnl.a  main.o $(OBJ_LIBS) $(LDFLAGS) $(LDLIBS)
-
-#	$(CC) -static -o libasusnatnl.a $(CFLAGS) $(LDFLAGS) $(OBJ_LIBS) $(LDLIBS)
-	
-#natnl: main.c $(OBJS)
-#$(CC) -o $@ $< $(CPPFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) #-lminiupnpc
 natnl: main.c $(APP_OBJS)
-	$(CXX) -o $@ $< $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(APP_OBJS) $(LDLIBS) #-lminiupnpc
+	$(CXX) -o $@ $< $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(APP_OBJS) $(LDLIBS)
 
 %.o: %.c
 	$(CXX) -c -o $@ $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(LDLIBS)  $<

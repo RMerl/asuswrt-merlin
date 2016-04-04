@@ -37,7 +37,7 @@ static long thread_suspended_tls_id[PJSUA_MAX_INSTANCES];
 static int thread_tls_id_initialized;
 #endif
 
-static pj_log_func *log_writer = &pj_log_write;
+static pj_log_func *log_writer = NULL;//&pj_log_write;
 static unsigned log_decor = PJ_LOG_HAS_TIME | PJ_LOG_HAS_MICRO_SEC |
 			    PJ_LOG_HAS_SENDER | PJ_LOG_HAS_NEWLINE |
 			    PJ_LOG_HAS_SPACE

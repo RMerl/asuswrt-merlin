@@ -238,7 +238,7 @@ int alert_mail_function_check()
 		value |= TM_WRS_MAIL;
 
 	// traffic limiter mail
-	if(nvram_get_int("tl0_alert_enable") || nvram_get_int("tl1_alert_enable"))
+	if(nvram_get_int("tl_enable") && (nvram_get_int("tl0_alert_enable") || nvram_get_int("tl1_alert_enable")))
 		value |= TRAFFIC_LIMITER_MAIL;
 
 	MyDBG("value = %d(0x%x)\n", value, value);

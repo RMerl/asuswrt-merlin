@@ -215,7 +215,22 @@ BCMINITFN(si_arm_setclock)(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 a
 		/* The password */
 		W_REG(osh, (uint32 *)IHOST_PROC_CLK_WR_ACCESS, 0xa5a501);
 
-		/* ndiv_int */
+		/* Bypass ARM clock and run on the default sysclk */
+		W_REG(osh, (uint32 *)IHOST_PROC_CLK_POLICY_FREQ, 0x82020202);
+
+		val = (1 << IHOST_PROC_CLK_POLICY_CTL__GO) |
+		      (1 << IHOST_PROC_CLK_POLICY_CTL__GO_AC);
+		W_REG(osh, (uint32 *)IHOST_PROC_CLK_POLICY_CTL, val);
+
+		do {
+			val = R_REG(osh, (uint32 *)IHOST_PROC_CLK_POLICY_CTL);
+			if ((val & (1 << IHOST_PROC_CLK_POLICY_CTL__GO)) == 0)
+				break;
+		} while (1);
+
+		/* Now it is safe to program the ARM PLL.
+		 * ndiv_int
+		 */
 		for (idx = 0; arm_pll_table[idx].clk != 0; idx++) {
 			if (armclock <= arm_pll_table[idx].clk)
 				break;

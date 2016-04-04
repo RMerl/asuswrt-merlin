@@ -223,8 +223,6 @@ for(var i = 1; i < wtfast_rulelist_row.length; i ++) {
 		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], wtfast_rulelist_col[3], wtfast_rulelist_col[4]];
 }
 
-var saved_username = decodeURIComponent('<% nvram_char_to_ascii("", "wtf_username"); %>');
-var saved_passwd = decodeURIComponent('<% nvram_char_to_ascii("", "wtf_passwd"); %>');
 var saved_game_list = decodeURIComponent('<% nvram_char_to_ascii("", "wtf_game_list"); %>');
 var saved_server_list = decodeURIComponent('<% nvram_char_to_ascii("", "wtf_server_list"); %>');
 var wtf_enable_games = "";
@@ -280,15 +278,8 @@ function initial(){
 	var GB_login_str = "<#Game_Boost_login#>";
 	GB_login_str = GB_login_str.replace(/WTFast/gi,"<span><img src=\"/images/wtfast_logo.png\" style=\"margin-bottom:-5px; margin-left:10px;\"></span>");
 	document.getElementById("Game_Boost_login_div").innerHTML = GB_login_str;
-
-	if(saved_username != "" &&  saved_passwd != ""){
-		document.getElementById("wtf_username").value = saved_username;
-		document.getElementById("wtf_passwd").value = saved_passwd;
-	}
-	else{
-		document.getElementById("wtf_username").value = "";
-		document.getElementById("wtf_passwd").value = "";
-	}
+	document.getElementById("wtf_username").value = "";
+	document.getElementById("wtf_passwd").value = "";
 	checkLoginStatus();
 
 	if( sVer!= -1 || rv == 11)
@@ -964,6 +955,12 @@ function open_link(page){
 		tourl = "https://www.wtfast.com/pages/terms/";
 	else if(page == "privacy")
 		tourl = "https://www.wtfast.com/pages/privacy/";
+	else if(page == "gpn1")
+		tourl = "https://www.asus.com/support/FAQ/1015724/";
+	else if(page == "gpn2")
+		tourl = "https://www.asus.com/support/FAQ/1015723/";
+	else if(page == "howto")
+		tourl = "https://www.asus.com/support/FAQ/1015726/";
 	else
 		tourl = "https://www.wtfast.com/pages/asus_router/";
 	
@@ -1203,6 +1200,8 @@ function clean_macerr(){
 						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note1#></div>
 						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note2#></div>
 						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note3#></div>
+						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note4#></div>
+						<div style="color:#FFCC00; margin-left: 25px; font-family:calibri; font-size:11px;"><#GB_management_note5#></div>
 						<div id="applyBtn" align="center" style="margin-top:20px; display:none;">
 							<input class="wtfast_button" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 						</div>

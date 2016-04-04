@@ -1,0 +1,491 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title></title>
+<style>
+html{
+margin:0 0;
+padding:0px;
+}
+body{
+display: block;
+overflow: hidden;
+background: #e8e8e8;
+}
+tr.odd {
+background-color: #E1FBF8;
+}
+tr.even {
+background-color: #DDD;
+}
+tr.synceven {
+background-color: #FFCF73;
+}
+tr.syncodd {
+background-color: #F9FF48;
+}
+table#ntb { 
+border: 1px; 
+font-family: arial;
+font-size:100%;
+border-collpase:collpase; 
+}
+table thead {
+color:#F3F6FB;
+background-color: #595959;
+}
+.tab_container{
+overflow:auto;
+}
+.dellink, .delcheck{
+background:transparent url("style-theme.png") no-repeat top left;
+background-position: -400px -438px;
+width:40px;
+height:28px;
+}
+.delcheck_block{
+position:absolute;
+left:0px;
+top:100px;
+width:100px;
+height:25px;
+background-color:#FF9100;
+border-color:#666;
+box-shadow:0 0 10px #959595;
+color:#fff;
+cursor:pointer;
+font-family: 'lucida grande',tahoma,verdana,arial,sans-serif;
+font-size: 14px;
+text-align:center;
+font-weight: bold;
+padding-top: 5px;
+}
+.delcheck_block:hover{
+background-color:#FFCD8A;
+color:#ff0000;
+}
+.tab_content{
+font-family: verdana, tahoma, arial, helvetica, sans-serif;
+font: normal 12px tahoma, arial, helvetica, sans-serif;
+}
+.tab_content fieldset {
+padding: 6px 10px;
+border: 1px solid #ccc;
+margin-bottom: 10px;
+display: block;
+}
+.x-panel-community{
+position:relative;
+}
+.x-panel-bwrap{
+overflow: hidden;
+zoom: 1;
+left: 0;
+top: 0;	
+}
+.user_image{
+background:transparent url("style-theme.png") no-repeat top left;
+background-position: -240px -530px;
+width:54px;
+height:54px;
+}
+#user_authorize {
+color: #3B5998;
+font-weight: bold;
+position: absolute;
+left: 60px;
+top: 40px;
+}
+.user_login_option {
+text-decoration: underline;
+cursor: pointer;
+}
+#user_deletetoken {
+color: #3B5998;
+position: absolute;
+left: 110px;
+top: 130px;
+cursor: pointer;
+}
+.tree_table {
+width: 100%;
+border-width: 0;
+border-spacing: 0;
+border-collapse: collapse;
+line-height: 25px;
+}
+.label_create_account{
+text-align:left;
+font-weight:bold;
+background-color:#989898;
+color:#ffffff;
+padding:5px;
+}
+.content_create_account{
+background-color:#E3E2E2;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
+<link href="tabs.css" rel="stylesheet" type="text/css">
+<link href="/smb/css/jquery-ui-1.11.4.min.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="/smb/js/setting.min.js"></script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">
+	<tr>
+  	<td>
+		<div class="abgne_tab">
+			<ul class="tabs">
+				<li id='rescan'><a href="#tab1">重新搜尋</a></li>
+				<li id='sharelink'><a href="#tab2">分享清單</a></li>
+				<li id='version'><a href="#tab3">版本</a></li>
+                <li id='settings'><a href="#tab4">憑證</a></li>
+                <li id='community'><a href="#tab5">社群網路</a></li>
+                <li id='account'><a href="#tab6">帳號管理</a></li>
+			</ul>
+			<div class="tab_container">
+				<div id="tab1" class="tab_content">
+					<span id="desc_rescan"></span>
+					<button id="btn_rescan">開始重新搜尋</button>
+				</div>
+				<div id="tab2" class="tab_content" style="padding:0">			    	
+				</div>
+				<div id="tab3" class="tab_content">
+					<span id="aicloud_desc_version"></span>
+					<span id="aicloud_version"></span><br><br>
+                    <span id="smartsync_desc_version">Smart Sync Version: </span>
+					<span id="smartsync_version"></span><br><br>
+                    <span id="desc_version"></span>
+                    <span id="version"></span><br>
+					<span id="update" style="color:red"></span>
+				</div>
+                <div id="tab4" class="tab_content">
+                	<fieldset id="field_import_crt" style="width: 700px;">
+                    	<legend>
+                        	<span id="label_gen_crt">建立憑證</span>
+                        </legend>
+                        <div>
+                        	<div style="width:700px;">
+                            	<div>
+                                	<div id="desc_gen_crt" style="margin-left:0px;">您可以建立自我簽署憑證。</div>
+                                </div>
+                                <div style="width:100%;">
+                                	<table cellspacing="0" style="width: auto;">
+                                    	<tbody>
+                                        	<tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        	<tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td>
+                                                	<button id="btn_gen_crt" name="btn_gen_crt">建立憑證</button>
+                                                    <span id="crt_creating" style="display:none">憑證建立中，請稍候...</span>                                    
+                                                </td>
+                                                <td><i>&nbsp;</i></td>
+                                                <td>
+                                                	<button id="btn_import_crt" name="btn_import_crt">匯入憑證</button>
+												</td>
+                                            </tr>
+                                            <tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    
+                    <fieldset style="width: 700px;">
+                    	<legend>
+                        	<span id="label_server_crt">伺服器憑證</span>
+                        </legend>
+                        <div>
+                        	<div style="width:700px;">
+                            	<div style="width:100%;">
+                                	<table cellspacing="5" style="width: auto;">
+                                    	<tbody>
+                                        	<tr>
+                                            	<td id="label_crt_type">狀態:</td>
+                                                <td></td>
+                                                <td id="label_self_crt_type">自我簽暑憑證</td>
+                                            </tr>
+                                            <tr>
+                                            	<td id="label_crt_to">核發給:</td>
+                                                <td></td>
+                                                <td id="label_https_crt_cn"></td>
+                                            </tr>
+                                            <tr>
+                                            	<td id="label_crt_from">核發單位:</td>
+                                                <td></td>
+                                                <td id="label_https_crt_issuer"></td>
+                                            </tr>
+                                            <tr>
+                                            	<td id="label_crt_end_date">有效日期:</td>
+                                                <td></td>
+                                                <td id="label_https_crt_end_date"></td>
+                                            </tr>
+                                        	<tr>
+                                            	 <td>
+                                                	<button id="btn_export_crt" name="btn_export_crt">匯出憑證</button>   
+												</td>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                            <tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    
+                </div>
+                
+                <div id="tab5" class="tab_content">
+                	<span style="padding:10px 0 10px 0">在此登入社群網路來取得更多服務</span>
+                	<fieldset style="width: 700px;">
+                    	<legend>
+                        	<span id="label_community">FaceBook</span>
+                        </legend>
+                        <div>
+                        	<div class="x-panel-bwrap">
+			            		<div class="x-panel-community" id="facebook">
+			                       	<div class="user_image"></div>
+			            			<img id="user_pic" border="0">
+			            			<img class="loading-img" src="/smb/css/load.gif" style="visibility: hidden;">
+			            			<span id="user_authorize" class="user_login_option">Login</span>
+			            			<span id="user_deletetoken" style="visibility: hidden;">Logout</span>
+			            		</div>
+			                </div>
+                        </div>
+                    </fieldset>
+                    <fieldset style="width: 700px;">
+                    	<legend>
+                        	<span id="label_community">Google</span>
+                        </legend>
+                        <div>
+                        	<div class="x-panel-bwrap">
+			            		<div class="x-panel-community" id="google">
+			                       	<div class="user_image"></div>
+			            			<img id="user_pic" border="0">
+			            			<img class="loading-img" src="/smb/css/load.gif" style="visibility: hidden;">
+			            			<span id="user_authorize" class="user_login_option">Login</span>
+			            			<span id="user_deletetoken" style="visibility: hidden;">Logout</span>
+			            		</div>
+			            	</div>
+                        </div>
+                    </fieldset>
+                </div>	
+                
+                <!-- account manager-->
+                <div id="tab6" class="tab_content" style="padding:0">
+                	
+                	<fieldset>
+                    	<legend>
+                        	<span id="label_create_account">建立帳號</span>
+                        </legend>
+                        <div>
+                        	<div style="width:100%;">
+                            	<div>
+                                	<div id="desc_create_account" style="margin-left:0px;">您可以建立AiCloud帳號，可以指定資料夾存取權限以及設定Smart Access。</div>
+                                </div>
+                                <div style="width:100%;">
+                                	<table cellspacing="0" style="width: auto;">
+                                    	<tbody>
+                                        	<tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        	<tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td>
+                                                	<button id="btn_create_account" name="btn_create_account">建立帳號</button>
+                                                </td>
+                                                <td><i>&nbsp; OR &nbsp;</i></td>
+                                                <td>
+                                                	<button id="btn_create_invite" name="btn_create_invite">產生邀請函</button>
+												</td>
+                                            </tr>
+                                            <tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    
+                    <fieldset>
+                    	<legend>
+                        	<span id="label_account_list">帳號列表</span>
+                        </legend>
+                        <div>
+                        	<table id="table_account_list" style="width:100%;table-layout:fixed">
+                        		<thead>
+	  								<td field="username" style="text-align:center">帳號</td>
+	  								<!--<td field="name" style="text-align:center">姓名</td>-->
+	  								<td field="type" style="text-align:center">類型</td>
+	  								<td field="edit" style="text-align:center;width:80px">編輯</td>
+	  								<td field="delete" style="text-align:center;width:80px">刪除</td>
+	  							</thead>
+	  							<tbody>
+	  							</tbody>
+                            </table>
+                        </div>
+                    </fieldset>
+                    
+                    <fieldset>
+                    	<legend>
+                        	<span id="label_account_invite_list">邀請函列表</span>
+                        </legend>
+                        <div>
+                        	<table id="table_account_invite_list" style="width:100%;table-layout:fixed">
+                        		<thead>
+	  								<td field="invite" style="text-align:center">invite</td>
+	  								<td field="createtime" style="text-align:center">createtime</td>
+	  								<td field="edit" style="text-align:center;width:80px">編輯</td>
+	  								<td field="delete" style="text-align:center;width:80px">刪除</td>
+	  							</thead>
+	  							<tbody>
+	  							</tbody>
+                            </table>
+                        </div>
+                    </fieldset>
+                    
+				</div>
+			</div>
+		</div>
+	</td>    
+  	</tr>
+  	<tr style='height:20px'></tr>
+  	<tr>
+  	<td>
+  		<div class="table_block_footer" style="text-align:right">
+    		<!--<button id="ok" class='btnStyle' onClick="doOK();" disabled="true">OK</button>-->        
+    		<button id="cancel" name="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+    	</div>
+    </td>
+  	</tr>
+</table>
+
+<div id="filelink" style="display:none; position:absolute; background:#FFF8A8; width:auto; height:auto; border:1px solid #000000; padding:0">
+	<div style="background: #747474;text-align:right;">	
+		<a onclick="onCloseShareLink()" style="cursor:pointer;color:#fff;padding:2px">[X]</a>
+	</div>
+	<div style="width:100%; height:100%;padding:5px">
+		<p class="desc_share_link" style=" font-size:100%">Press [Ctrl+C] to copy the share link.</p>
+		<input id="resourcefile" type="text" value="" style="width:200px">
+	</div>
+</div>
+
+<div id="import_crt" style="display:none; position:absolute; background:#FFF8A8; width:auto; height:auto; border:1px solid #000000; padding:0">
+	<div style="background: #747474;text-align:right;">	
+		<a onclick="onCloseImportCrt()" style="cursor:pointer;color:#fff;padding:2px">[X]</a>
+	</div>
+	<div style="width:100%; height:100%;padding:5px">
+		<p id="desc_import_crt" style=" font-size:100%"></p>
+		<table style="width:100%;padding:10px">
+  			<tr>
+  				<td id="label_select_private_key">私鑰:</td>
+  				<td><input type="file" id="btn_select_key"></td>
+  			</tr>
+  			<tr>
+  				<td id="label_select_certificate">憑證:</td>
+  				<td><input type="file" id="btn_select_crt"></td>
+  			</tr>
+  			<tr>
+  				<td id="label_select_intermediate_certificate">中繼憑證:</td>
+  				<td><input type="file" id="btn_select_intermediate_crt"></td>
+  			</tr>
+  			<tr>
+				<td colspan="2">
+					<div class="table_block_footer" style="text-align:right">
+				    	<button id="import" class='btnStyle' onClick="onDoImportCrt();">匯入</button>        
+				    	<button id="cancel" name="cancel" class="btnStyle" onClick="onCloseImportCrt();">Close</button>
+				    </div>
+				</td>
+		  	</tr>
+  		</table>
+	</div>
+</div>
+
+<div id="dialog_create_account" title="建立帳號" style="overflow:hidden">
+	<table style="width:100%;padding:10px;font-size:14px;overflow:hidden">
+  		<tr id="tr_username" class="option_account">
+  			<td id="label_username" class="label_create_account">帳號:</td>
+  			<td class="content_create_account">
+  				<input type="text" id="input_username" maxlength="20">
+  			</td>
+  		</tr>
+  		<tr id="tr_password" class="option_account">
+  			<td id="label_password" class="label_create_account">密碼:</td>
+  			<td class="content_create_account">
+  				<input type="text" id="input_password" maxlength="20">
+  			</td>
+  		</tr>
+  		<tr id="tr_password_confirm" class="option_account">
+  			<td id="label_password_confirm" class="label_create_account">密碼確認:</td>
+  			<td class="content_create_account">
+  				<input type="text" id="input_password_confirm" maxlength="20">
+  			</td>
+  		</tr>
+  		<!--
+  		<tr>
+  			<td id="label_size_limit" class="label_create_account">存取空間大小:</td>
+  			<td class="content_create_account">
+  				<input id="input_size_limit" class="text">
+  			</td>
+  		</tr>
+  		-->
+  		<tr id="tr_permission">
+  			<td id="label_access_permission" class="label_create_account">存取權限:</td>
+  			<td class="content_create_account">
+  				<div id="table_share_folder" style="overflow-y:auto;height:200px;border:1px solid #cccccc"></div>
+  			</td>
+  		</tr>
+  		<tr id="tr_smart_access">
+  			<td id="label_smart_access" class="label_create_account">智慧遠端連線:</td>
+  			<td class="content_create_account">
+  				<input type="checkbox" id="input_smart_access"><span id="span_smart_access">Enable</span>
+  			</td>
+  		</tr>
+  		<tr id="tr_security_code" class="option_invite">
+  			<td id="label_security_code" class="label_create_account">安全碼:</td>
+  			<td class="content_create_account">
+  				<select id="select_security_code">
+  					<option value="0">無</option>
+  					<option value="1">手動指定</option>
+  					<option value="2">自動產生</option>
+  				</select>
+  				<input type="text" id="input_security_code" maxlength="4" style="display:none;width:35px">
+  			</td>
+  		</tr>
+	</table>
+</div>
+
+<div id="dialog_account_info" title="Invitation" style="overflow:hidden">
+	<div>
+		<div id="account_info"></div>
+		<p style="position:absolute;bottom:0px;right:30px;"><a id="mail_invitation" href="#">Mail to my friend</a></p>
+	<div>
+</div>
+
+</body>
+</html>

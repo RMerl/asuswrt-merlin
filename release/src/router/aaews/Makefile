@@ -38,6 +38,7 @@ endif
 
 ifeq ("$(MAKECMDGOALS)", $(filter "$(MAKECMDGOALS)", "router" "mastiff"))
 ROUTER_CFLAGS=-DNVRAM=1 -DEMBEDDED -I$(SHARED_DIR)
+ROUTER_CFLAGS+=-DTNL_CALLBACK_ENABLE -DTNL_2.X
 ifeq ($(RTCONFIG_QTN),y)
 ROUTER_LIBS=-lnvram -lshared -lqcsapi_client
 ROUTER_LDFLAGS=-L$(NVRAM_DIR) -L$(SHARED_DIR) -L$(QCSAPI_DIR)

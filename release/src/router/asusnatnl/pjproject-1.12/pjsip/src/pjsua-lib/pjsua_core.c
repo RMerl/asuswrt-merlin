@@ -134,8 +134,9 @@ PJ_DEF(void) pjsua_logging_config_dup(pj_pool_t *pool,
 				      pjsua_logging_config *dst,
 				      const pjsua_logging_config *src)
 {
-    pj_memcpy(dst, src, sizeof(*src));
-    pj_strdup_with_null(pool, &dst->log_filename, &src->log_filename);
+	pj_memcpy(dst, src, sizeof(*src));
+	pj_strdup_with_null(pool, &dst->log_filename, &src->log_filename);
+	pj_strdup_with_null(pool, &dst->log_flag_file, &src->log_flag_file);
 }
 
 PJ_DEF(void) pjsua_config_default(pjsua_config *cfg)
@@ -424,7 +425,14 @@ static pj_bool_t options_on_rx_request(pjsip_rx_data *rdata)
     if (cap_hdr) {
 	pjsip_msg_add_hdr(tdata->msg, 
 			  (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, cap_hdr));
-    }
+	}
+
+	/* Add Tnl-Supported header */
+	cap_hdr = pjsip_endpt_get_capability(pjsua_var[inst_id].endpt, PJSIP_H_TNL_SUPPORTED, NULL);
+	if (cap_hdr) {
+		pjsip_msg_add_hdr(tdata->msg, 
+			(pjsip_hdr*) pjsip_hdr_clone(tdata->pool, cap_hdr));
+	}
 
     /* Add Allow-Events header from the evsub module */
     cap_hdr = pjsip_evsub_get_allow_events_hdr(NULL);
@@ -538,6 +546,88 @@ static pj_bool_t mod_pjsua_on_rx_response(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
+static void log_rotate(pjsua_inst_id inst_id, int num_of_rotate) {
+	pj_status_t status;
+	char rotate_to[256], rotate_from[256];
+	pj_oshandle_t rotate_to_file, rotate_from_file;
+	pj_ssize_t numRead;
+	char buf[1024];
+	unsigned flags = PJ_O_RDWR;
+	int i;
+
+	pj_file_flush(pjsua_var[inst_id].log_file);
+	pj_file_close(pjsua_var[inst_id].log_file);
+
+	for (i = num_of_rotate; i > 0; i--) {
+		// check file exists.
+		sprintf(rotate_to, "%s.%d", pjsua_var[inst_id].log_cfg.log_filename.ptr, i);
+		if ((i-1) == 0)
+			sprintf(rotate_from, "%s", pjsua_var[inst_id].log_cfg.log_filename.ptr);
+		else
+			sprintf(rotate_from, "%s.%d", pjsua_var[inst_id].log_cfg.log_filename.ptr, i-1);
+
+		status = pj_file_open(pjsua_var[inst_id].pool, 
+			rotate_from,
+			PJ_O_RDONLY, 
+			&rotate_from_file,
+			NULL);
+
+		if (status != PJ_SUCCESS)
+			continue;
+
+		status = pj_file_open(pjsua_var[inst_id].pool, 
+			rotate_to,
+			0, 
+			&rotate_to_file,
+			NULL);
+		if (status == PJ_SUCCESS)
+			pj_file_close(rotate_to_file);
+
+		status = pj_file_open(pjsua_var[inst_id].pool, 
+			rotate_to,
+			PJ_O_RDWR, 
+			&rotate_to_file,
+			NULL);
+
+		if (status != PJ_SUCCESS)
+			continue;
+
+		pj_file_setpos(rotate_from_file, 0, PJ_SEEK_SET);
+
+		while(1) {
+			numRead = sizeof(buf);
+			status = pj_file_read(rotate_from_file, buf, &numRead);
+			if (status != PJ_SUCCESS || !numRead)
+				break;
+
+			status = pj_file_write(rotate_to_file, buf, &numRead);
+			if (status != PJ_SUCCESS)
+				break;		
+		}
+
+		pj_file_flush(rotate_to_file);
+		pj_file_close(rotate_to_file);
+
+		pj_file_close(rotate_from_file);
+	}
+
+	status = pj_file_open(pjsua_var[inst_id].pool, 
+		pjsua_var[inst_id].log_cfg.log_filename.ptr,
+		0, 
+		&rotate_to_file,
+		NULL);
+	if (status == PJ_SUCCESS)
+		pj_file_close(rotate_to_file);
+
+	// Reopen the log file to write
+	flags |= pjsua_var[inst_id].log_cfg.log_file_flags;
+	pj_file_open(pjsua_var[inst_id].pool, 
+		pjsua_var[inst_id].log_cfg.log_filename.ptr,
+		flags, 
+		&pjsua_var[inst_id].log_file,
+		&pjsua_var[inst_id].log_written_size);
+}
+
 
 /*****************************************************************************
  * Logging.
@@ -549,11 +639,26 @@ static void log_writer(pjsua_inst_id inst_id, int level, const char *buffer, int
     /* Write to file, stdout or application callback. */
 
 	if (level <= (int)pjsua_var[inst_id].log_cfg.level) {
+
+		pj_thread_desc desc;
+		pj_thread_t *thread;
+		if (!pj_thread_is_registered(inst_id))
+			pj_thread_register(inst_id, "log_writer", desc, &thread);
+
+		pj_mutex_lock(pjsua_var[inst_id].log_mutex);
 		// file or syslog
 		if (pjsua_var[inst_id].log_file || 
 			(pjsua_var[inst_id].log_cfg.log_file_flags & PJ_O_SYSLOG) == PJ_O_SYSLOG) {
 			pj_ssize_t size = len;
-			pj_file_write(pjsua_var[inst_id].log_file, buffer, &size);
+			int log_file_size = pjsua_var[inst_id].log_cfg.log_file_size * 1024;
+			pj_status_t status = pj_file_write(pjsua_var[inst_id].log_file, buffer, &size);
+			if (status == PJ_SUCCESS)
+				pjsua_var[inst_id].log_written_size += size;
+
+			if (log_file_size > 0 && pjsua_var[inst_id].log_written_size > log_file_size) {
+				log_rotate(inst_id, pjsua_var[inst_id].log_cfg.log_rotate_number);
+				pjsua_var[inst_id].log_written_size = 0;
+			}
 			/* This will slow things down considerably! Don't do it!
 			 pj_file_flush(pjsua_var[inst_id].log_file);
 			*/
@@ -561,12 +666,16 @@ static void log_writer(pjsua_inst_id inst_id, int level, const char *buffer, int
 				pj_file_flush(pjsua_var[inst_id].log_file);
 		}
 
-		// callback or stdout
-		if (pjsua_var[inst_id].log_cfg.cb)
-			(*pjsua_var[inst_id].log_cfg.cb)(inst_id, level, buffer, len);
-		else
-			pj_log_write(inst_id, level, buffer, len, flush);
-    }
+		if (!pjsua_var[inst_id].log_cfg.disable_console_log) {
+			// callback or stdout
+			if (pjsua_var[inst_id].log_cfg.cb)
+				(*pjsua_var[inst_id].log_cfg.cb)(inst_id, level, buffer, len);
+			else
+				pj_log_write(inst_id, level, buffer, len, flush);
+		}
+
+		pj_mutex_unlock(pjsua_var[inst_id].log_mutex);
+	}
 }
 
 
@@ -588,7 +697,14 @@ PJ_DEF(pj_status_t) pjsua_reconfigure_logging(pjsua_inst_id inst_id, const pjsua
     pj_log_set_decor(pjsua_var[inst_id].log_cfg.decor);
 
     /* Set log level */
-    pj_log_set_level(inst_id, pjsua_var[inst_id].log_cfg.level);
+	pj_log_set_level(inst_id, pjsua_var[inst_id].log_cfg.level);
+	
+	status = pj_mutex_create_recursive(pjsua_var[inst_id].pool, "pjsua_log", 
+		&pjsua_var[inst_id].log_mutex);
+	if (status != PJ_SUCCESS) {
+		pjsua_perror(THIS_FILE, "Unable to create log_mutex", status);
+		return status;
+	}
 
     /* Close existing file, if any */
     if (pjsua_var[inst_id].log_file) {
@@ -598,7 +714,7 @@ PJ_DEF(pj_status_t) pjsua_reconfigure_logging(pjsua_inst_id inst_id, const pjsua
 
     /* If output log file is desired, create the file: */
     if (pjsua_var[inst_id].log_cfg.log_filename.slen) {
-	unsigned flags = PJ_O_WRONLY;
+	unsigned flags = PJ_O_RDWR;
 	flags |= pjsua_var[inst_id].log_cfg.log_file_flags;
 
 	if ((flags & PJ_O_SYSLOG) == PJ_O_SYSLOG)
@@ -607,7 +723,8 @@ PJ_DEF(pj_status_t) pjsua_reconfigure_logging(pjsua_inst_id inst_id, const pjsua
 	status = pj_file_open(pjsua_var[inst_id].pool, 
 			      pjsua_var[inst_id].log_cfg.log_filename.ptr,
 			      flags, 
-			      &pjsua_var[inst_id].log_file);
+				  &pjsua_var[inst_id].log_file,
+				  &pjsua_var[inst_id].log_written_size);
 
 	if (status != PJ_SUCCESS) {
 	    pjsua_perror(THIS_FILE, "Error creating log file", status);
@@ -656,7 +773,7 @@ static int worker_thread(void *arg)
 
 
 /* Init random seed */
-static void init_random_seed(void)
+PJ_DEF(void) pj_init_random_seed(void)
 {
     pj_sockaddr addr;
     const pj_str_t *hostname;
@@ -704,7 +821,7 @@ PJ_DEF(pj_status_t) pjsua_create()
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     /* Init random seed */
-    init_random_seed();
+    pj_init_random_seed();
 
     /* Init PJLIB-UTIL: */
     status = pjlib_util_init();
@@ -732,7 +849,15 @@ PJ_DEF(pj_status_t) pjsua_create()
     if (status != PJ_SUCCESS) {
 	pjsua_perror(THIS_FILE, "Unable to create mutex", status);
 	return status;
-    }
+	}
+
+	/* Create log_mutex */
+	/*status = pj_mutex_create_recursive(pjsua_var[inst_id].pool, "pjsua_log", 
+		&pjsua_var[inst_id].log_mutex);
+	if (status != PJ_SUCCESS) {
+		pjsua_perror(THIS_FILE, "Unable to create log_mutex", status);
+		return status;
+	}*/
 
     /* Must create SIP endpoint to initialize SIP parser. The parser
      * is needed for example when application needs to call pjsua_verify_url().
@@ -1414,17 +1539,30 @@ PJ_DEF(pj_status_t) pjsua_destroy2(pjsua_inst_id inst_id, unsigned flags)
     pjsua_var[inst_id].thread_quit_flag = 1;
 
     /* Wait worker threads to quit: */
-    for (i=0; i<(int)pjsua_var[inst_id].ua_cfg.thread_cnt; ++i) {
-	if (pjsua_var[inst_id].thread[i]) {
-	    pj_status_t status;
-	    status = pj_thread_join(pjsua_var[inst_id].thread[i]);
-	    if (status != PJ_SUCCESS) {
-		PJ_PERROR(4,(THIS_FILE, status, "Error joining worker thread"));
-		pj_thread_sleep(1000);
-	    }
-	    pj_thread_destroy(pjsua_var[inst_id].thread[i]);
-	    pjsua_var[inst_id].thread[i] = NULL;
-	}
+	for (i=0; i<(int)pjsua_var[inst_id].ua_cfg.thread_cnt; ++i) {
+		// Wait for worker thread terminated.
+		if (pjsua_var[inst_id].thread[i]) {
+			pj_status_t status;
+			status = pj_thread_join(pjsua_var[inst_id].thread[i]);
+			if (status != PJ_SUCCESS) {
+				PJ_PERROR(4,(THIS_FILE, status, "Error joining worker thread"));
+				pj_thread_sleep(1000);
+			}
+			pj_thread_destroy(pjsua_var[inst_id].thread[i]);
+			pjsua_var[inst_id].thread[i] = NULL;
+		}
+
+		// Wait for monitor thread terminated.
+		if (pjsua_var[inst_id].monitor_thread[i]) {
+			pj_status_t status;
+			status = pj_thread_join(pjsua_var[inst_id].monitor_thread[i]);
+			if (status != PJ_SUCCESS) {
+				PJ_PERROR(4,(THIS_FILE, status, "Error joining monitor thread"));
+				pj_thread_sleep(1000);
+			}
+			pj_thread_destroy(pjsua_var[inst_id].monitor_thread[i]);
+			pjsua_var[inst_id].monitor_thread[i] = NULL;
+		}
 	}
     
     if (pjsua_var[inst_id].endpt) {
@@ -1580,12 +1718,18 @@ PJ_DEF(pj_status_t) pjsua_destroy2(pjsua_inst_id inst_id, unsigned flags)
 		pjsua_var[inst_id].acc[i].pool = NULL;
 	    }
 	}
-    }
+	}
 
-    /* Destroy mutex */
-    if (pjsua_var[inst_id].mutex) {
-	pj_mutex_destroy(pjsua_var[inst_id].mutex);
-	pjsua_var[inst_id].mutex = NULL;
+	/* Destroy log_mutex */
+	if (pjsua_var[inst_id].log_mutex) {
+		pj_mutex_destroy(pjsua_var[inst_id].log_mutex);
+		pjsua_var[inst_id].log_mutex = NULL;
+	}
+
+	/* Destroy mutex */
+	if (pjsua_var[inst_id].mutex) {
+		pj_mutex_destroy(pjsua_var[inst_id].mutex);
+		pjsua_var[inst_id].mutex = NULL;
 	}
 
     /* Destroy pool and pool factory. */

@@ -1,0 +1,10 @@
+#! /bin/sh
+
+make clean && make \
+	CC=x86_64-asustor-linux-gnu-gcc \
+	C++=x86_64-asustor-linux-gnu-gc++ \
+	AR=x86_64-asustor-linux-gnu-ar \
+	RANLIB=x86_64-asustor-linux-gnu-ranlib \
+	os=LINUX \
+	arch=X86_64 \
+	asustor=yes

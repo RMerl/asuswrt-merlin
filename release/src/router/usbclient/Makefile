@@ -7,12 +7,12 @@
 #CC = mipsel-linux-uclibc-gcc
 
 CFLAGS = -g -D_FILE_OFFSET_BITS=64 
-CFLAGS += -DNVRAM_ -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared
-
+#CFLAGS += -DNVRAM_ -D__DEBUG__ -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared
+CFLAGS += -DNVRAM_  -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared
 CFLAGS += -Wall
 
 LDFLAGS =  -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
-LIBS = -lpthread
+LIBS = -lpthread -lgcc_s
 
 include ../common.mak
 ifeq ($(RTCONFIG_QTN),y)

@@ -44,6 +44,7 @@
 
 /* wlan timings to switch between modes */
 #define BOARD_PM_WLAN_IDLE_TIMEOUT		(120 * HZ)
+#define BOARD_PM_WLAN_STA_IDLE_TIMEOUT		(15 * HZ)
 #define BOARD_PM_WLAN_DEFAULT_TIMEOUT		(0)
 
 /* qdisc parameters to switch between modes */
@@ -93,6 +94,7 @@ enum qtn_pm_param {
 	QTN_PM_PAUSE_MGMT_PROBERESP,
 	QTN_PM_PAUSE_MGMT_ASSOCRESP,
 	QTN_PM_PAUSE_MGMT_AUTH,
+	QTN_PM_PAUSE_DATA = QTN_PM_PAUSE_MGMT_AUTH,
 
 	/* For Multiple Periods Support */
 	QTN_PM_PERIOD_CHANGE_INTERVAL,	/* How long period setting will be changed(unit: second) */

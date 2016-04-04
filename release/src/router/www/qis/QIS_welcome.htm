@@ -562,6 +562,10 @@ function disable_button(){
 			else{
 				document.getElementById("nextBtn").style.display = "none";
 			}	
+
+			$("label").click(function(){
+				if($(this).attr("for") != "") $("#" + $(this).attr("for")).click();
+			});
 		</script>
 	</fieldset>
 </div>

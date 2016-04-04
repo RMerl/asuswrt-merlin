@@ -1,0 +1,32 @@
+
+============
+Installation
+============
+
+:author: Jan Kneschke
+:Date: $Date: $
+:Revision: $Revision: $
+
+Installation
+------------
+
+Get the source from
+
+http://www.lighttpd.net/download/
+
+unpack it by ::
+
+  $ gzip -cd lighttpd-1.x.x.tar.gz | tar xf -
+
+compile and install it with ::
+
+  $ cd lighttpd-1.x.x
+  $ ./configure
+  $ make
+  $ su -
+  # make install
+  # exit
+
+take look at the configfile in ./doc/lighttpd.conf,
+make your own copy of that file and modify it for your needs.
+

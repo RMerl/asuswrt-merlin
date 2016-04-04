@@ -839,7 +839,7 @@ static pj_status_t process_m_answer( int inst_id,
 	    /* Find matching answer */
 	    pt = pj_strtoul(fmt);
 
-	    if (pt < 96) {
+	    if (pt < 96 || pt == 5000) {  // dean : 5000 is for WebRTC data channel.
 		for (j=0; j<answer->desc.fmt_count; ++j) {
 		    if (pj_strcmp(fmt, &answer->desc.fmt[j])==0)
 			break;
@@ -1111,7 +1111,7 @@ static pj_status_t match_offer(int inst_id,
 
 	    pt = pj_strtoul(&master->desc.fmt[i]);
 	    
-	    if (pt < 96) {
+	    if (pt < 96 || pt == 5000) { // dean : 5000 is for WebRTC data channel.
 		/* For static payload type, it's enough to compare just
 		 * the payload number.
 		 */

@@ -230,6 +230,7 @@
 29370,Tusmobil Internet,*99#,tusmobil,internet,internet.tusmobil.si,Tusmobil Internet
 29401,TM MK Internet,*99#,internet,t-mobile,internet,TM MK Internet
 29403,Internet,*99#,VIPOPERATOR,VIPOPERATOR,Vipoperator,Internet
+29502,Salt Liechtenstein,*99#,,,internet-ofl,Salt Liechtenstein
 29701,Promonte Internet1,*99#,gprs,gprs,gprs.promonte.com,Telenor Montenegro
 29702,T-Mobile Internet,*99#,38267,38267,tmcg-wnw,T-Mobile Internet
 302220,TELUS SP,*99#,,,sp.telus.com,TELUS SP
@@ -319,7 +320,6 @@
 310490,T-Mobile,*99***1#,,,epc.tmobile.com,SunCom
 310560,AT&T,*99***1#,,,broadband,AT&amp;T
 310570,Cellular One,*99***1#,,,cellular1wap,Chinook Wireless
-310580,T-Mobile,*99***1#,,,epc.tmobile.com,T-Mobile
 31064,Telecom Italia Mobile,*99***1#,,,proxy,Telecom Italia Mobile
 310660,T-Mobile,*99***1#,,,epc.tmobile.com,T-Mobile
 310680,AT&T,*99***1#,,,broadband,AT&amp;T

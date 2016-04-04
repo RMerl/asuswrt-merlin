@@ -3,6 +3,7 @@
 wget_timeout=`nvram get apps_wget_timeout`
 #wget_options="-nv -t 2 -T $wget_timeout --dns-timeout=120"
 wget_options="-q -t 2 -T $wget_timeout --no-check-certificate"
+wget_options_HTTP="-q -t 2 -T $wget_timeout"
 
 nvram set webs_state_update=0 # INITIALIZING
 nvram set webs_state_flag=0   # 0: Don't do upgrade  1: Do upgrade	
@@ -15,6 +16,9 @@ current_firm=`echo $current_firm | sed s/'\.'//g;`
 current_buildno=`nvram get buildno`
 current_extendno=`nvram get extendno`
 current_extendno=`echo $current_extendno | sed s/-g.*//;`
+
+#support Live Update normally
+live_update=`nvram show | grep rc_support | grep update`
 
 # get firmware information
 forsq=`nvram get apps_sq`
@@ -36,8 +40,13 @@ if [ "$forsq" == "1" ]; then
 		echo "---- update sq normal for model_30 ----" > /tmp/webs_upgrade.log
 		wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_30.zip -O /tmp/wlan_update.txt
 	else
-                echo "---- update sq normal----" > /tmp/webs_upgrade.log
-                wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt		
+		if [ "$live_update" == "" ]; then
+			echo "---- update sq normal only HTTP----" > /tmp/webs_upgrade.log
+			wget $wget_options_HTTP http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt
+		else
+	                echo "---- update sq normal----" > /tmp/webs_upgrade.log
+	                wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt
+		fi
 	fi
 else
 	if [ "$model_31" == "1" ]; then
@@ -47,8 +56,13 @@ else
 		echo "---- update real normal for model_30 ----" > /tmp/webs_upgrade.log
 		wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_30.zip -O /tmp/wlan_update.txt
 	else
-                echo "---- update real normal----" > /tmp/webs_upgrade.log
-                wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
+		if [ "$live_update" == "" ]; then
+			echo "---- update real normal only HTTP----" > /tmp/webs_upgrade.log
+                        wget $wget_options_HTTP http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
+		else
+	                echo "---- update real normal----" > /tmp/webs_upgrade.log
+        	        wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
+		fi
 	fi
 fi	
 

@@ -3576,7 +3576,7 @@ void console_app_main(const pj_str_t *uri_to_call)
 
     /* If user specifies URI to call, then call the URI */
     if (uri_to_call->slen) {
-	pjsua_call_make_call( 0, current_acc, uri_to_call, 0, NULL, NULL, NULL);
+	pjsua_call_make_call( 0, current_acc, uri_to_call, 0, 0, NULL, NULL, NULL);
     }
 
     keystroke_help();
@@ -3640,7 +3640,7 @@ void console_app_main(const pj_str_t *uri_to_call)
 	    
 	    pjsua_msg_data_init(&msg_data);
 	    TEST_MULTIPART(&msg_data);
-	    pjsua_call_make_call( 0, current_acc, &tmp, 0, NULL, &msg_data, NULL);
+	    pjsua_call_make_call( 0, current_acc, &tmp, 0, 0, NULL, &msg_data, NULL);
 	    break;
 
 	case 'M':
@@ -3672,7 +3672,7 @@ void console_app_main(const pj_str_t *uri_to_call)
 	    for (i=0; i<my_atoi(menuin); ++i) {
 		pj_status_t status;
 	    
-		status = pjsua_call_make_call(0, current_acc, &tmp, 0, NULL,
+		status = pjsua_call_make_call(0, current_acc, &tmp, 0, 0, NULL,
 					      NULL, NULL);
 		if (status != PJ_SUCCESS)
 		    break;
@@ -3749,7 +3749,7 @@ void console_app_main(const pj_str_t *uri_to_call)
 		pjsua_call_send_im(0, i, NULL, &tmp, NULL, NULL, NULL);
 	    else {
 		pj_str_t tmp_uri = pj_str(uri);
-		pjsua_im_send(0, current_acc, &tmp_uri, NULL, &tmp, NULL, NULL, NULL);
+		pjsua_im_send(0, current_acc, &tmp_uri, NULL, &tmp, NULL, NULL, NULL, NULL);
 	    }
 
 	    break;
@@ -4495,7 +4495,7 @@ void console_app_main(const pj_str_t *uri_to_call)
 		    pj_status_t status;
 
 		    status = pj_file_open(app_config.pool, buf, 
-					  PJ_O_WRONLY, &fd);
+					  PJ_O_WRONLY, &fd, NULL);
 		    if (status != PJ_SUCCESS) {
 			pjsua_perror(THIS_FILE, "Unable to open file", status);
 		    } else {

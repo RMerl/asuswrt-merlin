@@ -47,6 +47,7 @@ typedef struct wsec_info_s {
 	unsigned int auth;	/* shared key authentication optional (0) or required (1) */
 	unsigned int akm;			/* authentication mode */
 	unsigned int wsec;			/* encryption */
+	unsigned int mfp;			/* mfp */
 	unsigned int flags;			/* flags */
 	char osifname[IFNAMSIZ];	/* interface name */
 	unsigned char ea[ETHER_ADDR_LEN];			/* interface hw address */

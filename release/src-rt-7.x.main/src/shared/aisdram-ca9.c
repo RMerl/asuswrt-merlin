@@ -992,6 +992,7 @@ Program_Digital_Core_Power_Voltage(si_t *sih)
 {
 #define ROW_NUMBER 0x8
 #define MDC_DIV 0x8
+#define DIGITAL_POWER_CORE_VOLTAGE_1_POINT_05V	0x520E003C
 #define DIGITAL_POWER_CORE_VOLTAGE_1V		0x520E0020
 #define DIGITAL_POWER_CORE_VOLTAGE_POINT_975V	0x520E0018
 #define DIGITAL_POWER_CORE_VOLTAGE_POINT_9625V	0x520E0014
@@ -1018,7 +1019,7 @@ Program_Digital_Core_Power_Voltage(si_t *sih)
 	}
 
 	if (CHIPID(sih->chip) == BCM4707_CHIP_ID || CHIPID(sih->chip) == BCM47094_CHIP_ID) {
-		if (sih->chippkg != BCM4709_PKG_ID) {
+		if (sih->chippkg == BCM4708_PKG_ID) {
 			/* access internal regulator phy by setting the MDC/MDIO
 			 * bus frequency to 125/8
 			 */
@@ -1027,6 +1028,14 @@ Program_Digital_Core_Power_Voltage(si_t *sih)
 			/* this is 0.9 V */
 			W_REG(osh, &chipcb->pcu_mdio_cmd, DIGITAL_POWER_CORE_VOLTAGE_POINT_9375V);
 			printf("Digital core power voltage set to 0.9375V\n");
+			return retval;
+		} else if ((CHIPID(sih->chip) == BCM47094_CHIP_ID) &&
+			(sih->chippkg == BCM4709_PKG_ID)) {
+			W_REG(osh, &chipcb->pcu_mdio_mgt, MDC_DIV);
+			udelay(500);
+			/* this is 1.05 V */
+			W_REG(osh, &chipcb->pcu_mdio_cmd, DIGITAL_POWER_CORE_VOLTAGE_1_POINT_05V);
+			printf("Digital core power voltage set to 1.05V\n");
 			return retval;
 		}
 	}

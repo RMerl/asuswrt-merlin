@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     /* If URL is specified, make call to the URL. */
     if (argc > 1) {
 	pj_str_t uri = pj_str(argv[1]);
-	status = pjsua_call_make_call(0, acc_id, &uri, 0, NULL, NULL, NULL);
+	status = pjsua_call_make_call(0, acc_id, &uri, 0, 0, NULL, NULL, NULL);
 	if (status != PJ_SUCCESS) error_exit("Error making call", status);
     }
 

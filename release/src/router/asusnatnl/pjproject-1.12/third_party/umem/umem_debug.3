@@ -1,0 +1,275 @@
+'\" te
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").  
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\" Copyright (c) 2002, Sun Microsystems, Inc. All Rights Reserved.
+.TH umem_debug 3MALLOC "26 July 2002" "SunOS 5.11" "Memory Allocation Library Functions"
+.SH NAME
+umem_debug \- debugging features of the umem library
+.SH SYNOPSIS
+.LP
+.nf
+\fBcc\fR [ \fIflag\fR\&.\|.\|. ] \fIfile\fR\&.\|.\|. \fB-lumem\fR [ \fIlibrary\fR\&.\|.\|. ]
+#include <\fBumem.h\fR>
+.fi
+
+.SH DESCRIPTION
+
+.LP
+The \fBlibumem\fR library provides debugging features that detect memory leaks, buffer overruns, multiple frees, use of uninitialized data, use of freed data, and many other common programming errors. The activation of the run-time debugging features is controlled by environment variables.
+.sp
+
+.LP
+When the library detects an error, it writes a description of the error to an internal buffer that is readable with the \fB::umem_status\fR 
+\fBmdb\fR(1) \fIdcmd\fR and then calls 
+\fBabort\fR(3C).
+.sp
+
+.SH ENVIRONMENT VARIABLES
+
+.sp
+.ne 2
+.mk
+.na
+\fBUMEM_DEBUG\fR
+.ad
+.RS 14n
+.rt  
+This variable contains a list of comma-separated options.  Unrecognized options are ignored. Possible options include:
+.sp
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBaudit\fR[=\fIframes\fR]\fR
+.ad
+.RS 18n
+.rt  
+This option enables the recording of auditing information, including thread ID, high-resolution time stamp, and stack trace for the last action (allocation or free) on every allocation.  If transaction logging
+(see UMEM_LOGGING) is enabled, this auditing information is also logged.
+.sp
+
+.sp
+The \fIframes\fR parameter sets the number of stack frames recorded in the auditing structure. The upper bound for frames is implementation-defined. If a larger value is requested, the upper bound is used instead.
+.sp
+
+.sp
+If \fIframes\fR is not specified or is not an integer, the default value of 15 is used.
+.sp
+
+.sp
+This option also enables the \fBguards\fR option.
+.sp
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBcontents\fR[=\fIcount\fR]\fR
+.ad
+.RS 18n
+.rt  
+If auditing and contents logging (see UMEM_LOGGING) are enabled, the first \fIcount\fR bytes of each buffer are logged when they are freed.  If a buffer is shorter than \fIcount\fR bytes, it is logged in its entirety.
+.sp
+
+.sp
+If \fIcount\fR is not specified or is not an integer, the default value of 256 is used.
+.sp
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBdefault\fR\fR
+.ad
+.RS 18n
+.rt  
+This option is equivalent to \fBaudit\fR,\fBcontents\fR,\fBguards\fR.
+.sp
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBguards\fR\fR
+.ad
+.RS 18n
+.rt  
+This option enables filling allocated and freed buffers with special patterns to help detect the use of uninitialized data and previously freed buffers. It also enables an 8-byte redzone after each buffer that contains \fB0xfeedfacefeedfaceULL\fR.
+.sp
+
+.sp
+When an object is freed, it is filled with \fB0xdeadbeef\fR.  When an object is allocated, the \fB0xdeadbeef\fR pattern is verified and replaced with \fB0xbaddcafe\fR.  The redzone is checked every time a buffer is allocated or freed.
+.sp
+
+.sp
+For caches with either constructors or destructors, or both, 
+\fBumem_cache_alloc\fR(3MALLOC) and 
+\fBumem_cache_free\fR(3MALLOC) apply the cache's constructor and destructor, respectively, instead of caching constructed objects. The presence of 
+\fBassert\fR(3C)s
+in the destructor verifying that the buffer is in the constructed state can be used to detect any objects returned in an improper state.  See 
+\fBumem_cache_create\fR(3MALLOC) for
+details.
+.sp
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBverbose\fR\fR
+.ad
+.RS 18n
+.rt  
+The library writes error descriptions to standard error before aborting. These messages are not localized.
+.sp
+
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBUMEM_LOGGING\fR
+.ad
+.RS 14n
+.rt  
+To be enabled, this variable should be set to a comma-separated list of in-memory logs. The logs available are:
+.sp
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBtransaction\fR[=\fIsize\fR]\fR
+.ad
+.RS 20n
+.rt  
+If the \fBaudit\fR debugging option is set (see \fBUMEM_DEBUG\fR), the audit structures from previous transactions are entered into this log.
+.sp
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBcontents\fR[=\fIsize\fR]\fR
+.ad
+.RS 20n
+.rt  
+If the \fBaudit\fR debugging option is set, the contents of objects are recorded in this log as they are freed.
+.sp
+
+.sp
+If the "contents" debugging option was not set, 256 bytes of each freed buffer are saved.
+.sp
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBfail\fR[=\fIsize\fR]\fR
+.ad
+.RS 20n
+.rt  
+Records are entered into this log for every failed allocation.
+.sp
+
+.RE
+
+For any of these options, if \fIsize\fR is not specified, the default value of 64k is used.  The \fIsize\fR parameter must be an integer that can be qualified with K, M, G, or T to specify kilobytes, megabytes, gigabytes, or terabytes, respectively.
+.sp
+
+.sp
+Logs that are not listed or that have either a size of 0 or an invalid size are disabled.
+.sp
+
+.sp
+The log is disabled if during initialization the requested amount of storage cannot be allocated.
+.sp
+
+.RE
+
+.SH ATTRIBUTES
+
+.LP
+See 
+\fBattributes\fR(5) for descriptions of the following attributes:
+.sp
+
+.LP
+
+.sp
+.TS
+tab() box;
+cw(2.75i) |cw(2.75i) 
+lw(2.75i) |lw(2.75i) 
+.
+ATTRIBUTE TYPEATTRIBUTE VALUE
+_
+Interface StabilityUnstable
+_
+MT-LevelMT-Safe
+.TE
+
+.SH SEE ALSO
+
+.LP
+
+\fBmdb\fR(1), 
+\fBabort\fR(3C), 
+\fBsignal\fR(3C), 
+\fBumem_cache_create\fR(3MALLOC), 
+\fBattributes\fR(5)
+.sp
+
+.LP
+
+.sp
+
+.SH WARNINGS
+
+.LP
+When \fBlibumem\fR aborts the process using 
+\fBabort\fR(3C), any existing signal handler for \fBSIGABRT\fR is called. If the signal handler performs allocations, undefined
+behavior can result.
+.sp
+
+.SH NOTES
+
+.LP
+Some of the debugging features work only for allocations smaller than 16 kilobytes in size. Allocations larger than 16 kilobytes could have reduced support.
+.sp
+
+.LP
+Activating any of the library's debugging features could significantly increase the library's memory footprint and decrease its performance.
+.sp
+

@@ -177,7 +177,7 @@ xtalfreq=25000
 # For BCM4707/8/9/81: ARM clock frequency in MHz, DDR clock freq in MHz.
 # See table in source code file /src/shared/hndmips.c or /src/shared/hndarm.c for the valid clkfreq settings for a given chip.
 #
-clkfreq=1000,800
+clkfreq=1000,666
 
 # The "restore to factory defaults" button is on GPIO 17. It MUST be active low, or the software will have to be modified.
 reset_gpio=11
@@ -208,7 +208,7 @@ gpio9=usbport1
 #  4:0   CAS latency: valid range is 3-14, all others reserved
 #
 # Set 128MB (1Gbit) of DDR3 (DDR3M64X16), x16, 8 banks, CL=11
-sdram_config=0x014B
+sdram_config=0x0149
 
 # Normally the 4708/9/81 do not use the sdram_refresh parameter, however for the 4708/9/81, the sdram_refresh parameter can
 # be used to speed up the refresh interval of the DDR3. This is only needed for DDR3 and only if the junction temperature
@@ -514,11 +514,11 @@ devpath1=pci/2/1
 
 # 5GHz TX Parameters
 1:maxp5ga0=106,106,106,106
-1:pa5ga0=0xff3d,0x19ad,0xfcdf,0xff40,0x1ae9,0xfcc1,0xff42,0x1a23,0xfcd5,0xff44,0x19d0,0xfcdb
+1:pa5ga0=0xff3d,0x1a2d,0xfcd2,0xff40,0x1ae9,0xfcc1,0xff42,0x1aa3,0xfcc9,0xff44,0x1b50,0xfcb7
 1:maxp5ga1=106,106,106,106
-1:pa5ga1=0xff41,0x1993,0xfce0,0xff48,0x1ab7,0xfcca,0xff4b,0x1a7e,0xfcd3,0xff44,0x19c3,0xfce0
+1:pa5ga1=0xff41,0x1a93,0xfcc8,0xff48,0x1af7,0xfcc4,0xff4b,0x1abe,0xfccd,0xff44,0x1a83,0xfcce
 1:maxp5ga2=106,106,106,106
-1:pa5ga2=0xff4c,0x1abd,0xfcd2,0xff42,0x1abe,0xfcc8,0xff42,0x1a59,0xfcd3,0xff40,0x19a0,0xfce3
+1:pa5ga2=0xff4c,0x1bbd,0xfcbb,0xff42,0x1b3e,0xfcbc,0xff42,0x1ad9,0xfcc7,0xff40,0x1b20,0xfcbf
 1:pdoffset40ma0=0x0
 1:pdoffset40ma1=0x0
 1:pdoffset40ma2=0x0
@@ -582,7 +582,7 @@ devpath1=pci/2/1
 #1:tempoffset=0
 
 # Bootloader version
-bl_version=1.1.0.6
+bl_version=1.1.1.2
 
 # for NAND flash
 bootflags=1

@@ -174,6 +174,11 @@ typedef struct pj_activesock_cb
 typedef struct pj_activesock_cfg
 {
     /**
+     * Optional group lock to be assigned to the ioqueue key.
+     */
+    pj_grp_lock_t *grp_lock;
+
+    /**
      * Number of concurrent asynchronous operations that is to be supported
      * by the active socket. This value only affects socket receive and
      * accept operations -- the active socket will issue one or more 
@@ -289,7 +294,6 @@ PJ_DECL(pj_status_t) pj_activesock_create_udp(pj_pool_t *pool,
 					      void *user_data,
 					      pj_activesock_t **p_asock,
 					      pj_sockaddr *bound_addr);
-
 
 /**
  * Close the active socket. This will unregister the socket from the
@@ -547,6 +551,7 @@ PJ_DECL(pj_status_t) pj_activesock_start_connect(pj_activesock_t *asock,
 						 pj_pool_t *pool,
 						 const pj_sockaddr_t *remaddr,
 						 int addr_len);
+
 
 #endif	/* PJ_HAS_TCP */
 

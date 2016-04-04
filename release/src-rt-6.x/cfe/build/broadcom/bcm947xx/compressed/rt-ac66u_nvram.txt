@@ -690,9 +690,9 @@ pci/1/1/maxp2ga0=0x64
 
 # The following three parameters are the PA parameters for the TX chain 0, 2.4GHz, PA
 # These will have to be replaced with values computed from real boards.
-pci/1/1/pa2gw0a0=0xFE74
-pci/1/1/pa2gw1a0=0x1A2D
-pci/1/1/pa2gw2a0=0xF999
+pci/1/1/pa2gw0a0=0xFEA9
+pci/1/1/pa2gw1a0=0x1B95
+pci/1/1/pa2gw2a0=0xF9EC
 
 # maxp2ga1 is the TX chain 1 maximum TX output power for 2.4GHz
 # units of 0.25dB
@@ -701,9 +701,9 @@ pci/1/1/maxp2ga1=0x64
 
 # The following three parameters are the PA parameters for the TX chain 1, 2.4GHz, PA
 # These will have to be replaced with values computed from real boards.
-pci/1/1/pa2gw0a1=0xFE85
-pci/1/1/pa2gw1a1=0x1C2D
-pci/1/1/pa2gw2a1=0xF924
+pci/1/1/pa2gw0a1=0xFEA5
+pci/1/1/pa2gw1a1=0x1B34
+pci/1/1/pa2gw2a1=0xFA18
 
 
 # maxp2ga2 is the TX chain 2 maximum TX output power for 2.4GHz
@@ -713,9 +713,9 @@ pci/1/1/maxp2ga2=0x64
 
 # The following three parameters are the PA parameters for the TX chain 2, 2.4GHz, PA
 # These will have to be replaced with values computed from real boards.
-pci/1/1/pa2gw0a2=0xFE75
-pci/1/1/pa2gw1a2=0x1971
-pci/1/1/pa2gw2a2=0xF9C8
+pci/1/1/pa2gw0a2=0xFE8C
+pci/1/1/pa2gw1a2=0x1B28
+pci/1/1/pa2gw2a2=0xF9E7
 
 # cckbw202gpo is the 2.4GHz band, 20MHz BW, 11b CCK power offsets
 #          Nibble:  3   2   1   0
@@ -813,13 +813,13 @@ pci/1/1/regrev=0
 # ledbhX sets the LED behaviour of LEDs connected to the GPIO[3:0] pins of the 4321
 # See app note "80211-AN503-R.pdf" for more details.
 # GPIO 0 is wireless activity - 2 = WL_LED_ACTIVITY
-pci/1/1/ledbh0=2
+#pci/1/1/ledbh0=2
 # GPIO 1 is 2.4GHz radio status - 5 = WL_LED_BRADIO
-pci/1/1/ledbh1=5
+#pci/1/1/ledbh1=5
 # GPIO 2 is 5GHz radio status - 4 = WL_LED_ARADIO
-pci/1/1/ledbh2=4
+#pci/1/1/ledbh2=4
 # GPIO 3 is not used - 11 = WL_LED_INACTIVE
-pci/1/1/ledbh3=11
+#pci/1/1/ledbh3=11
 # Driver can actually control more LEDs.
 pci/1/1/ledbh12=7
 
@@ -910,7 +910,7 @@ secret_code=12345670
 hw_version=1.5
 
 # Bootloader version
-bl_version=1.0.1.7
+bl_version=1.0.2.0
 
 # for NAND flash
 bootflags=1

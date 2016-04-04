@@ -277,6 +277,7 @@ var manualstb_support = isSupport("manual_stb");
 var wps_multiband_support = isSupport("wps_multiband");
 var modem_support = isSupport("modem"); 
 var IPv6_support = isSupport("ipv6"); 
+var IPv6_Passthrough_support = isSupport("ipv6pt"); 
 var ParentalCtrl2_support = isSupport("PARENTAL2");
 var pptpd_support = isSupport("pptpd"); 
 var openvpnd_support = isSupport("openvpnd"); 
@@ -368,6 +369,7 @@ if(tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') ==
 else if(!tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (location.hostname.search('router.asus') == -1)){
         isFromWAN = true;
 }
+var traffic_limiter_support = isSupport("traffic_limiter");
 var force_upgrade_support = isSupport("fupgrade");
 
 var gn_array_2g = <% wl_get_guestnetwork("0"); %>;
@@ -466,6 +468,37 @@ var realip_state = "";
 var realip_ip = "";
 var external_ip = 0;
 
+function getBrowser_info(){
+	var browser = {};
+        var temp = navigator.userAgent.toUpperCase();
+
+	if(temp.match(/RV:([\d.]+)\) LIKE GECKO/)){	     // for IE 11
+		browser.ie = temp.match(/RV:([\d.]+)\) LIKE GECKO/)[1];
+	}
+	else if(temp.match(/MSIE ([\d.]+)/)){	   // for IE 10 or older
+		browser.ie = temp.match(/MSIE ([\d.]+)/)[1];
+	}
+	else if(temp.match(/CHROME\/([\d.]+)/)){
+		if(temp.match(/OPR\/([\d.]+)/)){		// for Opera 15 or newer
+			browser.opera = temp.match(/OPR\/([\d.]+)/)[1];
+		}
+		else{
+			browser.chrome = temp.match(/CHROME\/([\d.]+)/)[1];	     // for Google Chrome
+		}
+	}
+	else if(temp.match(/FIREFOX\/([\d.]+)/)){
+		browser.firefox = temp.match(/FIREFOX\/([\d.]+)/)[1];
+	}
+	else if(temp.match(/OPERA\/([\d.]+)/)){	 // for Opera 12 or older
+		browser.opera = temp.match(/OPERA\/([\d.]+)/)[1];
+	}
+	else if(temp.match(/VERSION\/([\d.]+).*SAFARI/)){	       // for Safari
+		browser.safari = temp.match(/VERSION\/([\d.]+).*SAFARI/)[1];
+	}
+
+	return browser;
+}
+
 var banner_code, menu_code="", menu1_code="", menu2_code="", tab_code="", footer_code;
 function show_banner(L3){// L3 = The third Level of Menu
 	var banner_code = "";
@@ -555,6 +588,15 @@ function show_banner(L3){// L3 = The third Level of Menu
 		banner_code +='<input type="hidden" name="qos_enable" value="0">\n';
 		banner_code +='</form>\n';
 	}	
+
+	/*IE 8/9/10 support notice*/
+	banner_code += '<div id="ie_notice" style="display:none;color:#FFF;padding:10px 50px 0px;font-size:16px;"><div style="width:950px;margin:0 auto;background:#465155;padding:20px;border:solid 1px #81E2FF;">';
+	banner_code += '<div><#IE_notice1#></div>';
+	banner_code += '<div><#IE_notice2#></div>';
+	banner_code += '<div><#IE_notice3#></div>';
+	banner_code += '<div><#IE_notice4#></div>';
+	banner_code += '</div></div>';
+	/*IE 8 support notice*/
 
 	banner_code +='<div id="banner1" class="banner1" align="center"><img src="images/New_ui/asustitle.png" width="218" height="54" align="left">\n';
 	banner_code +='<div style="margin-top:13px;margin-left:-90px;*margin-top:0px;*margin-left:0px;" align="center"><span id="modelName_top" onclick="this.focus();" class="modelName_top"><#Web_Title2#></span></div>';
@@ -712,6 +754,13 @@ function show_banner(L3){// L3 = The third Level of Menu
 
 	document.getElementById("TopBanner").innerHTML = banner_code;
 
+	var browser = getBrowser_info();
+	if(browser.ie){
+		if(browser.ie.indexOf('8') != "-1" || browser.ie.indexOf('9') != "-1" || browser.ie.indexOf('10') != "-1"){
+			document.getElementById("ie_notice").style.display = "block";			
+		}
+	}
+	
 	show_loading_obj();
 	show_top_status();
 	updateStatus();
@@ -826,10 +875,17 @@ if(bwdpi_support){
 	tabtitle[11] = new Array("", "<#Bandwidth_monitor#>", "<#menu5_3_2#>", "<#Adaptive_History#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "Spectrum");
 	tabtitle[12] = new Array("", "<#AiProtection_Home#>", "<#Parental_Control#>", "Ad Blocking", "Key Guard", "DNS Filtering");
 	tabtitle[13] = new Array("", "Time Limits", "<#AiProtection_filter#>");
-	tabtitle[14] = new Array("", "Traffic Monitor", "Statistic"/*, "Traffic Limiter"*/);
+	if(traffic_limiter_support)
+		tabtitle[14] = new Array("", "Traffic Monitor", "Statistic", "Traffic Limiter");
+	else
+		tabtitle[14] = new Array("", "Traffic Monitor", "Statistic");
+
 }
 else{
-	tabtitle[11] = new Array("", "<#menu5_3_2#>", "<#traffic_monitor#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "Spectrum"/*, "Traffic Limiter"*/);
+	if(traffic_limiter_support)
+		tabtitle[11] = new Array("", "<#menu5_3_2#>", "<#traffic_monitor#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "Spectrum", "Traffic Limiter");
+	else
+		tabtitle[11] = new Array("", "<#menu5_3_2#>", "<#traffic_monitor#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "Spectrum");
 	tabtitle[12] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>", "DNS Filtering");
 	tabtitle[13] = new Array("");
 	tabtitle[14] = new Array("");
@@ -852,9 +908,15 @@ if(bwdpi_support){
 	tablink[11] = new Array("", "AdaptiveQoS_Bandwidth_Monitor.asp", "QoS_EZQoS.asp", "AdaptiveQoS_WebHistory.asp", "AdaptiveQoS_ROG.asp", "Main_Spectrum_Content.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "AdaptiveQoS_Adaptive.asp", "Bandwidth_Limiter.asp");
 	tablink[12] = new Array("", "AiProtection_HomeProtection.asp", "AiProtection_WebProtector.asp", "AiProtection_AdBlock.asp", "AiProtection_Key_Guard.asp", "DNSFilter.asp");
 	tablink[13] = new Array("");
-	tablink[14] = new Array("", "Main_TrafficMonitor_realtime.asp", "TrafficAnalyzer_Statistic.asp", /*"AdaptiveQoS_TrafficLimiter.asp",*/ "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp");
+	if(traffic_limiter_support)
+		tablink[14] = new Array("", "Main_TrafficMonitor_realtime.asp", "TrafficAnalyzer_Statistic.asp", "AdaptiveQoS_TrafficLimiter.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp");
+	else
+	        tablink[14] = new Array("", "Main_TrafficMonitor_realtime.asp", "TrafficAnalyzer_Statistic.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp");
 }else{
-	tablink[11] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "AdaptiveQoS_ROG.asp", "Main_Spectrum_Content.asp", /*"AdaptiveQoS_TrafficLimiter.asp",*/ "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "Bandwidth_Limiter.asp");
+	if(traffic_limiter_support)
+		tablink[11] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "AdaptiveQoS_ROG.asp", "Main_Spectrum_Content.asp", "AdaptiveQoS_TrafficLimiter.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "Bandwidth_Limiter.asp");
+	else
+                tablink[11] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "AdaptiveQoS_ROG.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "Bandwidth_Limiter.asp");
 	tablink[12] = new Array("", "ParentalControl.asp", "YandexDNS.asp", "DNSFilter.asp");
 	tablink[13] = new Array("");
 	tablink[14] = new Array("");
@@ -1708,8 +1770,14 @@ function show_menu(){
 		notification.array[1] = 'noti_upgrade';
 		notification.upgrade = 1;
 		notification.desc[1] = '<#ASUSGATE_note2#>';
-		notification.action_desc[1] = '<#ASUSGATE_act_update#>';
-		notification.clickCallBack[1] = "location.href = 'Advanced_FirmwareUpgrade_Content.asp';"
+		if(!live_update_support || !HTTPS_support){
+			notification.action_desc[1] = '<a id="link_to_downlodpage" target="_blank" href="'+get_helplink()+'" style="color:#FFCC00;"><#ASUSGATE_act_update#></a>';
+			notification.clickCallBack[1] = "";
+		}
+		else{
+			notification.action_desc[1] = '<#ASUSGATE_act_update#>';
+			notification.clickCallBack[1] = "location.href = 'Advanced_FirmwareUpgrade_Content.asp';"
+		}
 	}else
 */
 		notification.upgrade = 0;
@@ -1827,6 +1895,14 @@ function show_menu(){
 		notification.run();
 	}
 	/*--notification end--*/
+}
+
+function get_helplink(){
+	var href_lang = get_supportsite_lang();
+	var model_name_supportsite = supportsite_model(based_modelid, odmpid, hw_ver);  // @ /js/support_site.js
+
+	var getlink="http://www.asus.com"+href_lang+"Networking/" +model_name_supportsite+ "/HelpDesk_Download/";       
+	return getlink;
 }
 
 function addOnlineHelp(obj, keywordArray){
@@ -3276,6 +3352,9 @@ function refreshStatus(xhr){
 	tx_bytes = parseFloat(simState[11].firstChild.nodeValue.replace("tx_bytes=", ""));
 	modem_sim_order = parseFloat(simState[12].firstChild.nodeValue.replace("modem_sim_order=", ""));	
 
+	var dhcpState = devicemapXML[0].getElementsByTagName("dhcp");
+	dnsqmode = dhcpState[0].firstChild.nodeValue.replace("dnsqmode=", "");
+
 	vpnc_proto = vpnStatus[0].firstChild.nodeValue.replace("vpnc_proto=", "");
 	if(vpnc_support){
 		vpnc_state_t1 = vpnStatus[3].firstChild.nodeValue.replace("vpn_client1_state=", "");
@@ -3412,6 +3491,14 @@ function refreshStatus(xhr){
 			
 			document.getElementById('speed_status').innerHTML = speed_info;
 		}	
+	}
+	else if(sw_mode == 3){
+		if(dhcp_override_support){
+			if(dnsqmode == "1")
+				document.getElementById('single_wan').className = "single_wan_connected";
+			else
+				document.getElementById('single_wan').className = "single_wan_disconnected";
+		}
 	}
 
 	// wifi hw sw status
@@ -4049,7 +4136,7 @@ function set_variable(_variable, _val){
 }
 
 function isPortConflict(_val){
-	if(_val == '80')
+	if(_val == /*'<% nvram_get("http_lanport"); %>'*/ '80')
 		return "<#portConflictHint#> HTTP LAN port.";
 	else if(_val == '<% nvram_get("dm_http_port"); %>')
 		return "<#portConflictHint#> Download Master.";
@@ -4158,36 +4245,6 @@ var isNewFW = function(FWVer){
 	return false;
 }
 
-function getBrowser_info(){
-	var browser = {};
-        var temp = navigator.userAgent.toUpperCase();
-
-	if(temp.match(/RV:([\d.]+)\) LIKE GECKO/)){	     // for IE 11
-		browser.ie = temp.match(/RV:([\d.]+)\) LIKE GECKO/)[1];
-	}
-	else if(temp.match(/MSIE ([\d.]+)/)){	   // for IE 10 or older
-		browser.ie = temp.match(/MSIE ([\d.]+)/)[1];
-	}
-	else if(temp.match(/CHROME\/([\d.]+)/)){
-		if(temp.match(/OPR\/([\d.]+)/)){		// for Opera 15 or newer
-			browser.opera = temp.match(/OPR\/([\d.]+)/)[1];
-		}
-		else{
-			browser.chrome = temp.match(/CHROME\/([\d.]+)/)[1];	     // for Google Chrome
-		}
-	}
-	else if(temp.match(/FIREFOX\/([\d.]+)/)){
-		browser.firefox = temp.match(/FIREFOX\/([\d.]+)/)[1];
-	}
-	else if(temp.match(/OPERA\/([\d.]+)/)){	 // for Opera 12 or older
-		browser.opera = temp.match(/OPERA\/([\d.]+)/)[1];
-	}
-	else if(temp.match(/VERSION\/([\d.]+).*SAFARI/)){	       // for Safari
-		browser.safari = temp.match(/VERSION\/([\d.]+).*SAFARI/)[1];
-	}
-
-	return browser;
-}
 function regen_band(obj_name){
 	var band_desc = new Array();
 	var band_value = new Array();

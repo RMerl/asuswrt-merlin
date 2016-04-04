@@ -508,6 +508,7 @@ struct qvsp_stats {
 	struct qvsp_stats_if	stats_if[QVSP_IF_MAX];
 };
 
+/* This structure is being deprecated and replaced with the endian-safe qvsp_strm_entry_s */
 struct qvsp_strm_info {
 	union qvsp_hash_flds	hash_flds;
 	uint16_t		node_idx;
@@ -538,6 +539,41 @@ struct qvsp_strm_info {
 	/* current state, might be different from demote_rule when recovering */
 	uint32_t                demote_state;
 	struct qvsp_strm_stats	prev_stats;
+};
+
+/* Endian-safe version of qvsp_strm_info */
+struct qvsp_strm_info_safe {
+	uint16_t		node_idx;
+	uint8_t			node_mac[6];
+	uint8_t			vap_pri;
+	uint8_t			tid;
+	uint16_t		hairpin_id;
+	uint16_t		hairpin_type;
+	uint8_t			ac_in;
+	uint8_t			ac_out;
+	uint8_t			strm_state;
+	uint8_t			disable_remote;
+	uint8_t			is_3rdpt_udp_us;
+	uint16_t		last_ref_secs;
+	uint32_t		ni_inv_phy_rate;
+	uint32_t		phy_rate_disabled;
+	uint32_t		bytes_max;
+	uint32_t		ni_cost;
+	uint16_t		cost_current;
+	uint16_t		cost_max;
+	uint8_t			hash;
+	uint8_t			dir;
+	uint32_t                throt_policy;
+	uint32_t                throt_rate;
+	uint32_t                demote_rule;
+	/* current state, might be different from demote_rule when recovering */
+	uint32_t                demote_state;
+	struct qvsp_strm_stats	prev_stats;
+};
+
+#define QVSP_STRM_MAX_ENTRIES	256
+struct qvsp_strms {
+	struct qvsp_strm_info_safe strms[QVSP_STRM_MAX_ENTRIES];
 };
 
 /** @}*/
@@ -587,7 +623,7 @@ qvsp_b2mbit(uint32_t bytes)
 static __inline__ uint32_t
 qvsp_inv2phy(uint32_t inv_phy)
 {
-	return 65536 / inv_phy;
+	return (inv_phy == 0) ? 0 : (65536 / inv_phy);
 }
 
 /*

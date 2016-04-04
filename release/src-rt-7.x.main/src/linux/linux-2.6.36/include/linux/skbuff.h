@@ -1465,7 +1465,12 @@ static inline int pskb_network_may_pull(struct sk_buff *skb, unsigned int len)
  * NET_IP_ALIGN(2) + ethernet_header(14) + IP_header(20/40) + ports(8)
  */
 #ifndef NET_SKB_PAD
+#if defined(CONFIG_PPTP) || defined(CONFIG_PPTP_MODULE) || \
+    defined(CONFIG_L2TP) || defined(CONFIG_L2TP_MODULE)
+#define NET_SKB_PAD	max(64, L1_CACHE_BYTES)
+#else
 #define NET_SKB_PAD	max(32, L1_CACHE_BYTES)
+#endif
 #endif
 
 extern int ___pskb_trim(struct sk_buff *skb, unsigned int len);
@@ -1587,14 +1592,20 @@ static inline struct sk_buff *netdev_alloc_skb(struct net_device *dev,
 	return __netdev_alloc_skb(dev, length, GFP_ATOMIC);
 }
 
-static inline struct sk_buff *netdev_alloc_skb_ip_align(struct net_device *dev,
-		unsigned int length)
+static inline struct sk_buff *__netdev_alloc_skb_ip_align(struct net_device *dev,
+		unsigned int length, gfp_t gfp)
 {
-	struct sk_buff *skb = netdev_alloc_skb(dev, length + NET_IP_ALIGN);
+	struct sk_buff *skb = __netdev_alloc_skb(dev, length + NET_IP_ALIGN, gfp);
 
 	if (NET_IP_ALIGN && skb)
 		skb_reserve(skb, NET_IP_ALIGN);
 	return skb;
+}
+
+static inline struct sk_buff *netdev_alloc_skb_ip_align(struct net_device *dev,
+		unsigned int length)
+{
+	return __netdev_alloc_skb_ip_align(dev, length, GFP_ATOMIC);
 }
 
 extern struct page *__netdev_alloc_page(struct net_device *dev, gfp_t gfp_mask);
@@ -2133,6 +2144,7 @@ static inline void nf_reset(struct sk_buff *skb)
 	skb->nfct = NULL;
 	nf_conntrack_put_reasm(skb->nfct_reasm);
 	skb->nfct_reasm = NULL;
+	/* skb->nfcache = 0; ? */
 #endif
 #ifdef CONFIG_BRIDGE_NETFILTER
 	nf_bridge_put(skb->nf_bridge);
@@ -2149,14 +2161,11 @@ static inline void __nf_copy(struct sk_buff *dst, const struct sk_buff *src)
 	dst->nfctinfo = src->nfctinfo;
 	dst->nfct_reasm = src->nfct_reasm;
 	nf_conntrack_get_reasm(src->nfct_reasm);
+	dst->nfcache = src->nfcache;
 #endif
 #ifdef CONFIG_BRIDGE_NETFILTER
 	dst->nf_bridge  = src->nf_bridge;
 	nf_bridge_get(src->nf_bridge);
-#endif
-
-#if defined(CONFIG_IP_NF_LFP)
-	dst->nfcache =  src->nfcache;
 #endif
 }
 

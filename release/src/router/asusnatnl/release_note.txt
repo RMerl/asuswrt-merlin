@@ -1,7 +1,146 @@
-﻿﻿2015-07-09: 1.7.11.16/1.8.0.16
+﻿2016-02-18: 2.1.0.104
+==> SDK : 1. Adding (ANT). Add --disable-console-log option.
+          2. Bug Fix (ANT). im_ports bug. This may causes incorrect im data.
+          3. Bug Fix (ANT). log rotation may not work when log_append is on.
+
+2016-01-20: 2.1.0.103
+==> SDK : 1. Bug fix (SDK). Correct natnl_read_tnl_status return value.
+          2. Bug fix (SDK). Correct the timing of natnl_hangup_call returned.
+          3. Adding (SDK). Add rip (remote ip) to natnl_srv_port structure.
+          4. Update (SDK). Fix TT bug 724934, 726565 and 727053. (Remove text relocations on Android x86 platform.)
+
+2015-12-25: 2.1.0.102
+==> SDK : 1. Bug Fix (SDK). natnl_read_tnl_transfer_speed doesn't work when UDT is used.
+
+2015-12-24: 2.1.0.101
+==> SDK : 1. Bug Fix (SDK). Crash when use natnl_send_instant_msg.
+          2. Bug Fix (SDK). Crash when initialize SDK on iOS ARM64 platform.
+
+2015-12-18: 2.1.0.100
+==> SDK : 1. Update (SDK). Update libusrscpt to newest version for WebRTC compaitiblity.
+          2. Update (SDK). Update iOS SDK to 9.2.
+          3. Bug Fix (SDK). Two or more tunnels with WebRTC can't work simultaneously
+          4. Bug Fix (SDK). Fix dead lock issue when tunnel type is TURN. (Sync pjproject's group lock feature.)
+          5. Bug Fix (SDK). Fix crash issue on router platform . (Use umem_alloc and umem_free of libumem to replace malloc and free on non-android and non-windows platform)
+          6. Remove (SDK). Remove natnl_add_upnp_mapping and natnl_del_upnp_mapping APIs
+          7. Remove (lib). Remove libminiupnpc.
+
+2015-12-10: 2.0.0.119
+==> SDK : 1. Update (SDK). Fix crash issues.
+
+2015-11-27: 2.0.0.18
+==> SDK : 1. Update (SDK). Update Android NDK to r10e. To fix text relocation crash on Android 6.0.
+          2. Update (SDK). Support bitcode feature of iOS 9.
+
+2015-11-24: 1.8.0.17
+==> SDK : 1. Update (SDK). Update OpenSSL to 1.0.1p.
+          2. Update (SDK). Update Android NDK version to r10e. Fix TT bug 681744 (Remove text relocations crash on Android 6.0).
+
+2015-11-11: 2.0.0.17
+==> SDK : 1. Bug Fix (SDK). im_port feature didn't handle tcp fragmentation.
+
+2015-10-28: 2.0.0.16
+==> SDK : 1. Bug Fix (SDK). im_port feature didn't handle tcp fragmentation.
+          2. Update (SDK). Update OpenSSL to 1.0.1p.
+
+2015-10-05: 2.0.0.15
+==> SDK : 1. Bug Fix (SDK). Fix crash issue.
+          2. Bug Fix (SDK). Fix always get 60000015 or 60000016 error code while make call in a particular case.
+
+2015-10-02: 2.0.0.14
+==> SDK : 1. Bug Fix (SDK). Try to fix im port add and remove deadlock.
+          2. Bug Fix (SDK). Try to fix sock_get_port crash.
+
+2015-10-02: 2.0.0.13
+==> SDK : 1. Bug Fix (SDK). Try to fix SCTP deadlock while sctp_close(hangup call).
+          2. Bug Fix (SDK). Fix IM crash.
+          3. Update (SDK). Handle SCTP compatibility with old version SDK.
+
+2015-09-23: 2.0.0.12
+==> SDK : 1. Bug Fix (SDK). Try fix hangup crash issue while use_sctp=1.
+          2. Bug Fix (SDK). Try fix hangup deadlock while use_sctp=1.
+          3. Adding (SDK). Support iOS 9.0.
+          4. Update (SDK). Don't use libumem memory pool library on Android platform. To avoid unstable issue.
+
+2015-09-17: 2.0.0.11
+==> SDK : 1. Bug Fix (SDK). Make call crash issue on Android.
+          2. Bug Fix (SDK). Fix the issue which TCP session might not be closed while receive GOODBYE command on linux-like platform.
+
+2015-09-15: 2.0.0.10
+==> SDK : 1. Update (SDK). Add use_sctp option to natnl_make_call series API.
+
+2015-09-08: 2.0.0.9
+==> SDK : 1. Update (SDK). SDK would block on initialization phase after some regular operation on Android platform. In some cases the getifaddrs function which libusrsctp used would block. Use ioctl command ""SIOCGIFCONF"" instead.
+          2. Bug Fix (SDK). Fix the issue wihich JNI function didn't perform value return.
+          3. Bug Fix (SDK). Fix RTSP parsing error for VLC SETUP pcket on iOS platform.
+
+2015-08-28: 2.0.0.6
+==> SDK : 1. Adding (SDK). Add NATNL_TNL_EVENT_DEADLOCK event to notify APP deadlock occur on SDK.
+          2. Adding (SDK). Handle log rotate. Add two options to natnl_config (natnl_config.log_cfg.log_file_size and natnl_config.log_cfg.log_rotate_number).
+          3. Adding (SDK). Add natnl_config.log-flag-file. If log_flag_file exists, enable log by setting log_level=4. Otherwise use initial log_cfg policy.
+          4. Adding (SDK). Provide no flow control tunnel port pair setting. 
+          5. Bug Fix (SDK). SIP failover doesn't work on initialization phase.
+功能說明
+1. 當 APP 接收到 NATNL_TNL_EVENT_DEADLOCK(60114) event 時代表 SDK 已經無回應，建議 Server 端 APP 自我結束並重新啟動程式，否則可能會有裝置離線的狀況發生。
+
+2. APP 可設定以下兩個參數讓 SDK 進行 log rotate 避免 log 大小無限增長。
+   2.1. natnl_config.log_cfg.log_file_size     : log 檔超過多少 size (Kbytes) 則進行 rotate。 給定 0 的代表不啟用 log rotate 機制，SDK 也會忽略 log_rotate_number 的設定。
+   2.2. natnl_config.log_cfg.log_rotate_number : 保留多少個 log rotate 備份檔。
+
+3. APP 可設定以下參數，指定一個路徑的檔案(例如 /tmp/aae.log)，當此檔案存在時 SDK 會動態開啟 log，並利用 log_level=4 將 log 寫到 natnl_config.log_cfg.log_filename 路徑(如果原先有指定寫到 syslog 也會強制將 log 寫到 log_fiename 路徑)。
+   3.1. natnl_config.log_cfg.log_flag_file
+
+4. APP 在指定 tunnel port pair 時可以多設定一個參數 disable_flow_control，讓連線到此 tunnel port pair 的所有 session 都不進行 UDT 或 SCTP 的 flow control。
+   4.1. 目前針對 RTSP 進行特殊處理，確保 RTSP 選用 UDP 來傳輸 video/audio。
+
+
+2015-08-13: 2.0.0.3
+==> SDK : 1. Bug Fix (SDK). Try to fix hangup crash.
+
+2015-08-12: 2.0.0.2
+==> SDK : 1. Update (SDK). Get callback mechanism back.
+          2. Adding (SDK). Add im_port_count and im_ports to natnl_config for setting instant message port pair.
+          3. Adding (SDK). Add natnl_instant_msg_port and natnl_instant_msg_port_with_inst_id APIs for updating instant message port pair dynamically.
+功能說明
+1. 復原部分 callback event，有需要的 APP 可以在 init 階段指定 callback function，SDK 會通知的 callback evnent 如下。
+	NATNL_TNL_EVENT_MAKECALL_OK     = 60104,	/**< since v1.1.0.11 NATNL make call successfully */
+	NATNL_TNL_EVENT_MAKECALL_FAILED	= 60105,	/**< since v1.1.0.11 NATNL make call failed */
+	NATNL_TNL_EVENT_HANGUP_OK       = 60106,	/**< since v1.1.0.11 NATNL hangup ok. */
+	NATNL_TNL_EVENT_HANGUP_FAILED   = 60107,	/**< since v1.1.0.11 NATNL hangup failed */
+	NATNL_TNL_EVENT_REG_OK          = 60109,	/**< since v1.3.2.0  NATNL register device successfully */
+	NATNL_TNL_EVENT_REG_FAILED      = 60110,	/**< since v1.3.2.0  NATNL register device failed */
+	NATNL_TNL_EVENT_UNREG_OK        = 60111,	/**< since v1.3.2.0  NATNL un-register device successfully */
+	NATNL_TNL_EVENT_UNREG_FAILED    = 60112,	/**< since v1.3.2.0  NATNL un-register device failed */
+        1.1. 另外 1.8 開始提供的 natnl_read_tnl_status (java : NatReadTnlStatus) 與 natnl_read_tnl_info (java : NatReadTnlInfo) 機制還是有保留。
+
+2. 增加了利用 lport/rport 傳送 instant message 機制。
+        2.1. APP 可在 natnl_config 中設定 im_port_count 與 im_ports  (結構如下所示) array，可讓 SDK 在 init 階段 listen im lport 。之後 APP 可連線至 127.0.0.1:lport 傳送 instant message ，並取回遠端裝置的回應訊息 (目前傳送與回應的訊息長度皆限制為 1024 bytes) 。
+typedef struct natnl_im_port {
+	// dest_device_id. The device_id of destination for sending message.
+	char dest_device_id[128];  
+
+	// Local device to listen 127.0.0.1:lport. If assign 0, it will be chosen by operating system.
+	char lport[6]; 
+
+	// Remote device to connect to 127.0.0.1:rport.
+	char rport[6]; 
+
+	// The timeout value for instant message.
+	int timeout_sec;
+};
+        2.2. init 完成之後若要增加 im_ports 也可利用 natnl_instant_msg_port (java : NatInstantMsgPort) API.
+        2.3. 另 APP 也可以指定 lport 為 0 讓系統自行選擇，等待 natnl_lib_init 或 natnl_instant_msg_port 執行完成後， APP 可從指定的 im_ports參數中取回系統選擇的 lport。
+  
+
+
+
+2015-07-30: 2.0.0.1
+==> SDK : 1. Fix compatible issue with 1.7 version.
+
+2015-07-09: 1.7.11.16/1.8.0.16
 ==> SDK : 1. Bug Fix (SDK). Fix assertion crash issue.
 
-﻿2015-07-02: 1.8.0.15
+2015-07-02: 1.8.0.15
 ==> SDK : 1. Bug Fix (SDK). Fix crash issue which APP calls natnl_hangup_call (java : NatHangupCall) multiple times.
           2. Update (SDK). Correct 60104 event timing.
           3. Update (SDK). Adjust UDT send/recv buffer size from 1460*512/1460*64 to 1460*64/1460*64.
@@ -26,7 +165,16 @@
 ==> SDK : 1. Adding (SDK). Support 443 port for SIP TLS connection.
           2. Bug Fix (SDK). Fix two assertion crash issues.
 
-﻿2015-04-24 1.8.0.12:
+2015-04-29 2.0.0.0
+==> SDK : 1. Adding (SDK). Add use_dtls_sctp option for WebRTC. To use this function, the following step must be done.
+                           1.1. On server side, SDK version must be 2.0.0.0 or later.
+                           1.2. On client side, set enable_secure_data option to 1.
+                           1.3. On client side, set use_dtls_sctp option to 1.
+                           1.4. On client side, create a private key and a certificate.
+                           1.5. On client side, set cert option to certificate file path of client side.
+                           1.6. On client side, set cert_pkey option to private key file path of client side.
+
+
 ==> SDK : 1. Adding (SDK). Add NATNL_SC_INSTANT_MSG_TOO_LONG(60000014) for natnl_send_instant_msg API.
           2. Update (SDK). Enable SIP MESSAGE method support for natnl_send_instant_msg API.
           3. Bug Fix (SDK). Try to fix udt_connect failed issue.

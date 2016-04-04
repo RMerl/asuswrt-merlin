@@ -77,7 +77,7 @@ typedef struct nat_detect_session
 	int inst_id;
 
     pj_pool_t		    *pool;
-    pj_mutex_t		    *mutex;
+    pj_grp_lock_t	    *grp_lock;
 
     pj_timer_heap_t	    *timer_heap;
     pj_timer_entry	     timer;
@@ -135,7 +135,7 @@ static pj_status_t send_test(nat_detect_session *sess,
 static void on_sess_timer(pj_timer_heap_t *th,
 			     pj_timer_entry *te);
 static void sess_destroy(nat_detect_session *sess);
-
+static void sess_on_destroy(void *member);
 
 /*
  * Get the NAT name from the specified NAT type.
@@ -237,10 +237,16 @@ PJ_DEF(pj_status_t) pj_stun_detect_nat_type(int inst_id,
     sess->cb = cb;
 	sess->inst_id = inst_id;
 
-    status = pj_mutex_create_recursive(pool, pool->obj_name, &sess->mutex);
-    if (status != PJ_SUCCESS)
-	goto on_error;
-    
+    status = pj_grp_lock_create(pool, NULL, &sess->grp_lock);
+    if (status != PJ_SUCCESS) {
+	/* Group lock not created yet, just destroy pool and return */
+	pj_pool_release(pool);
+	return status;
+    }
+
+    pj_grp_lock_add_ref(sess->grp_lock);
+    pj_grp_lock_add_handler(sess->grp_lock, pool, sess, &sess_on_destroy);
+
     pj_memcpy(&sess->server, server, sizeof(pj_sockaddr_in));
 
     /*
@@ -298,9 +304,9 @@ PJ_DEF(pj_status_t) pj_stun_detect_nat_type(int inst_id,
     pj_bzero(&ioqueue_cb, sizeof(ioqueue_cb));
     ioqueue_cb.on_read_complete = &on_read_complete;
 
-    status = pj_ioqueue_register_sock(sess->pool, stun_cfg->ioqueue, 
-				      sess->sock, sess, &ioqueue_cb,
-				      &sess->key);
+    status = pj_ioqueue_register_sock2(sess->pool, stun_cfg->ioqueue, 
+				       sess->sock, sess->grp_lock, sess,
+				       &ioqueue_cb, &sess->key);
     if (status != PJ_SUCCESS)
 	goto on_error;
 
@@ -311,7 +317,7 @@ PJ_DEF(pj_status_t) pj_stun_detect_nat_type(int inst_id,
     sess_cb.on_request_complete = &on_request_complete;
     sess_cb.on_send_msg = &on_send_msg;
     status = pj_stun_session_create(stun_cfg, pool->obj_name, &sess_cb,
-				    PJ_FALSE, &sess->stun_sess);
+				    PJ_FALSE, sess->grp_lock, &sess->stun_sess);
     if (status != PJ_SUCCESS)
 	goto on_error;
 
@@ -342,23 +348,30 @@ static void sess_destroy(nat_detect_session *sess)
 {
     if (sess->stun_sess) { 
 	pj_stun_session_destroy(sess->stun_sess);
+	sess->stun_sess = NULL;
     }
 
     if (sess->key) {
 	pj_ioqueue_unregister(sess->key);
+	sess->key = NULL;
+	sess->sock = PJ_INVALID_SOCKET;
     } else if (sess->sock && sess->sock != PJ_INVALID_SOCKET) {
 	pj_sock_close(sess->sock);
+	sess->sock = PJ_INVALID_SOCKET;
     }
 
-    if (sess->mutex) {
-	pj_mutex_destroy(sess->mutex);
+    if (sess->grp_lock) {
+	pj_grp_lock_dec_ref(sess->grp_lock);
     }
+}
 
+static void sess_on_destroy(void *member)
+{
+    nat_detect_session *sess = (nat_detect_session*)member;
     if (sess->pool) {
 	pj_pool_release(sess->pool);
     }
 }
-
 
 static void end_session(nat_detect_session *sess,
 			pj_status_t status,
@@ -421,7 +434,11 @@ static void on_read_complete(pj_ioqueue_key_t *key,
     sess = (nat_detect_session *) pj_ioqueue_get_user_data(key);
     pj_assert(sess != NULL);
 
-    pj_mutex_lock(sess->mutex);
+    pj_grp_lock_acquire(sess->grp_lock);
+
+    /* Ignore packet when STUN session has been destroyed */
+    if (!sess->stun_sess)
+	goto on_return;
 
     if (bytes_read < 0) {
 	if (-bytes_read != PJ_STATUS_FROM_OS(OSERR_EWOULDBLOCK) &&
@@ -429,7 +446,8 @@ static void on_read_complete(pj_ioqueue_key_t *key,
 	    -bytes_read != PJ_STATUS_FROM_OS(OSERR_ECONNRESET)) 
 	{
 	    /* Permanent error */
-	    end_session(sess, -bytes_read, PJ_STUN_NAT_TYPE_ERR_UNKNOWN);
+	    end_session(sess, (pj_status_t)-bytes_read, 
+			PJ_STUN_NAT_TYPE_ERR_UNKNOWN);
 	    goto on_return;
 	}
 
@@ -453,7 +471,7 @@ static void on_read_complete(pj_ioqueue_key_t *key,
     }
 
 on_return:
-    pj_mutex_unlock(sess->mutex);
+    pj_grp_lock_release(sess->grp_lock);
 }
 
 
@@ -508,7 +526,7 @@ static void on_request_complete(pj_stun_session *stun_sess,
 
     sess = (nat_detect_session*) pj_stun_session_get_user_data(stun_sess);
 
-    pj_mutex_lock(sess->mutex);
+    pj_grp_lock_acquire(sess->grp_lock);
 
     /* Find errors in the response */
     if (status == PJ_SUCCESS) {
@@ -576,7 +594,7 @@ static void on_request_complete(pj_stun_session *stun_sess,
 		  sizeof(pj_sockaddr_in));
 	pj_memcpy(&sess->result[test_id].ca, &ca->sockaddr.ipv4,
 		  sizeof(pj_sockaddr_in));
-	}
+    }
 
 	// save mapped address
 	if (sess->result[ST_TEST_1].complete && 
@@ -813,7 +831,7 @@ static void on_request_complete(pj_stun_session *stun_sess,
     }
 
 on_return:
-    pj_mutex_unlock(sess->mutex);
+    pj_grp_lock_release(sess->grp_lock);
 }
 
 
@@ -892,12 +910,12 @@ static void on_sess_timer(pj_timer_heap_t *th,
     sess = (nat_detect_session*) te->user_data;
 
     if (te->id == TIMER_DESTROY) {
-	pj_mutex_lock(sess->mutex);
+	pj_grp_lock_acquire(sess->grp_lock);
 	pj_ioqueue_unregister(sess->key);
 	sess->key = NULL;
 	sess->sock = PJ_INVALID_SOCKET;
 	te->id = 0;
-	pj_mutex_unlock(sess->mutex);
+	pj_grp_lock_release(sess->grp_lock);
 
 	sess_destroy(sess);
 
@@ -905,7 +923,7 @@ static void on_sess_timer(pj_timer_heap_t *th,
 
 	pj_bool_t next_timer;
 
-	pj_mutex_lock(sess->mutex);
+	pj_grp_lock_acquire(sess->grp_lock);
 
 	next_timer = PJ_FALSE;
 
@@ -930,7 +948,7 @@ static void on_sess_timer(pj_timer_heap_t *th,
 	    te->id = 0;
 	}
 
-	pj_mutex_unlock(sess->mutex);
+	pj_grp_lock_release(sess->grp_lock);
 
     } else {
 	pj_assert(!"Invalid timer ID");

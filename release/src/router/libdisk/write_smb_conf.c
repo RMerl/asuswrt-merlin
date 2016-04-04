@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
 
 				fprintf(fp, "[%s]\n", mount_folder);
 				fprintf(fp, "comment = %s's %s\n", follow_disk->tag, mount_folder);
-				fprintf(fp, "veto files = /.__*.txt*/asus_lighttpdpasswd/\n");
+				fprintf(fp, "veto files = /.__*.txt*/asusware*/asus_lighttpdpasswd/\n");
 				fprintf(fp, "path = %s\n", follow_partition->mount_point);
 				fprintf(fp, "writeable = yes\n");
 

@@ -42,21 +42,36 @@ var wlc_state = '0';
 var wlc_sbstate = '0';
 var wlc_scan_state = '0';
 var systime = new Date();
-Date.prototype.stdTimezoneOffset_north = function() {
+
+Date.prototype.stdTimezoneOffset_if_dst = function() {
     var jan = new Date(this.getFullYear(), 0, 1);
     var jul = new Date(this.getFullYear(), 6, 1);
-    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+    if(jan != jul)
+    	return true;	// w/ DST
+    else
+    	return false;	// w/o DST
 }
 
-Date.prototype.stdTimezoneOffset_south = function() {
+Date.prototype.stdTimezoneOffset_withoutDST = function() {
     var jan = new Date(this.getFullYear(), 0, 1);
     var jul = new Date(this.getFullYear(), 6, 1);
-    return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());	//DST w/o offset value
 }
 
 Date.prototype.dst = function() {
-		//alert(this.getTimezoneOffset()+" <= north:"+this.stdTimezoneOffset_north()+" ; "+this.getTimezoneOffset()+" => south:"+this.stdTimezoneOffset_south());
-    return (this.getTimezoneOffset() < this.stdTimezoneOffset_north() || this.getTimezoneOffset() > this.stdTimezoneOffset_south());
+	if(this.stdTimezoneOffset_if_dst()){	// w/ DST		
+		if(this.getTimezoneOffset() == this.stdTimezoneOffset_withoutDST()){
+			return 2; //is in not DST now
+		}	
+		else if(this.getTimezoneOffset() < this.stdTimezoneOffset_withoutDST()){
+			return 3; //is in DST now
+		}
+		else
+			return 2;
+	}
+	else{	// w/o DST
+		return 1;
+	}
 }
 
 var isDefault = false;
@@ -790,13 +805,19 @@ function submitForm(){
 			&& !parent.swisscom_support)
 	{
 				document.form.time_zone.disabled = false;				
-				if(systime.dst()){					
+				if(systime.dst() == 2){		// w/ DST and is not in DST now		
+					if(timezones_dst[systime.getTimezoneOffset()] != "")
+						document.form.time_zone.value = timezones_dst[systime.getTimezoneOffset()];
+					else if(document.form.time_zone.value == "")
+						document.form.time_zone.value = timezones_dst[0];
+				}
+				else if(systime.dst() == 3){		// w/ DST and is in DST now
 					if(timezones_dst[systime.getTimezoneOffset()+60] != "")
 						document.form.time_zone.value = timezones_dst[systime.getTimezoneOffset()+60];
 					else if(document.form.time_zone.value == "")
 						document.form.time_zone.value = timezones_dst[0];
 				}
-				else{
+				else{	// w/o DST
 					if(timezones[systime.getTimezoneOffset()] != "")
 						document.form.time_zone.value = timezones[systime.getTimezoneOffset()];	
 					else if(document.form.time_zone.value == "")

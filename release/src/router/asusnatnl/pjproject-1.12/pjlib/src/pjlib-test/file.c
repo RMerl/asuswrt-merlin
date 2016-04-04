@@ -52,7 +52,7 @@ static int file_test_internal(void)
     /*
      * Write data to the file.
      */
-    status = pj_file_open(NULL, FILENAME, PJ_O_WRONLY, &fd);
+    status = pj_file_open(NULL, FILENAME, PJ_O_WRONLY, &fd, NULL);
     if (status != PJ_SUCCESS) {
         app_perror("...file_open() error", status);
         return -10;
@@ -119,7 +119,7 @@ static int file_test_internal(void)
     /*
      * Re-open the file and read data.
      */
-    status = pj_file_open(NULL, FILENAME, PJ_O_RDONLY, &fd);
+    status = pj_file_open(NULL, FILENAME, PJ_O_RDONLY, &fd, NULL);
     if (status != PJ_SUCCESS) {
         app_perror("...file_open() error", status);
         return -100;

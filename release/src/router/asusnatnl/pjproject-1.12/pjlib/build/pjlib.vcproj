@@ -1596,7 +1596,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include;&quot;$(OPENSSL_INCLUDE_PATH_32)&quot;;&quot;../../../openssl/platforms/win-x86/include&quot;"
+				AdditionalIncludeDirectories="../include;&quot;../../../openssl/platforms/win-x86/include&quot;"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
@@ -1800,7 +1800,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include;&quot;$(OPENSSL_INCLUDE_PATH_32)&quot;;&quot;../../../openssl/platforms/win-x86_64/include&quot;"
+				AdditionalIncludeDirectories="../include;&quot;../../../openssl/platforms/win-x86_64/include&quot;"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 				DebugInformationFormat="3"
@@ -1861,7 +1861,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../include;&quot;$(OPENSSL_INCLUDE_PATH_32)&quot;;&quot;../../../openssl/platforms/win-x86/include&quot;"
+				AdditionalIncludeDirectories="../include;&quot;../../../openssl/platforms/win-x86/include&quot;"
 				PreprocessorDefinitions="_LIB;WIN32"
 				RuntimeLibrary="0"
 				PrecompiledHeaderFile=""
@@ -2068,7 +2068,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../include;&quot;$(OPENSSL_INCLUDE_PATH_32)&quot;;&quot;../../../openssl/platforms/win-x86_64/include&quot;"
+				AdditionalIncludeDirectories="../include;&quot;../../../openssl/platforms/win-x86_64/include&quot;"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 				DebugInformationFormat="3"

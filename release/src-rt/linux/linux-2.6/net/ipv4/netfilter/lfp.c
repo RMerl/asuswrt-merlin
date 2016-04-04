@@ -33,8 +33,6 @@
 
 unsigned int  lfp_ip=0;
 
-#define NFC_LFP_ENABLE (1<<30)
-
 typedef int (*lfpHitHook)(int pf, unsigned int hook, struct sk_buff *skb);
 lfpHitHook lfp_hit_hook = NULL;
 

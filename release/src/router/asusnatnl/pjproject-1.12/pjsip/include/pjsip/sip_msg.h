@@ -244,11 +244,12 @@ typedef enum pjsip_hdr_e
     PJSIP_H_SUPPORTED,
     PJSIP_H_TIMESTAMP_UNIMP,		/* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_TO,
-    PJSIP_H_UNSUPPORTED,
+	PJSIP_H_UNSUPPORTED,
     PJSIP_H_USER_AGENT,
     PJSIP_H_VIA,
     PJSIP_H_WARNING_UNIMP,		/* N/A, use pjsip_generic_string_hdr */
-    PJSIP_H_WWW_AUTHENTICATE,
+	PJSIP_H_WWW_AUTHENTICATE,
+	PJSIP_H_TNL_SUPPORTED,
 
     PJSIP_H_OTHER
 
@@ -1840,6 +1841,33 @@ PJ_DECL(pjsip_unsupported_hdr*) pjsip_unsupported_hdr_create(pj_pool_t *pool);
  *		    location as the mem argument.
  */
 PJ_DECL(pjsip_unsupported_hdr*) pjsip_unsupported_hdr_init( pj_pool_t *pool,
+							    void *mem );
+
+/* **************************************************************************/
+/**
+ * Tnl-Supported header.
+ */
+typedef pjsip_generic_array_hdr pjsip_tnl_supported_hdr;
+
+/**
+ * Create new Tnl-Supported header instance.
+ *
+ * @param pool	    The pool.
+ *
+ * @return	    New Tnl-Supported header instance.
+ */
+PJ_DECL(pjsip_tnl_supported_hdr*) pjsip_tnl_supported_hdr_create(pj_pool_t *pool);
+
+/**
+ * Initialize a preallocated memory with the header structure. 
+ *
+ * @param pool	    Pool for additional memory allocation if required.
+ * @param mem	    Pre-allocated memory to be initialized as the header.
+ *
+ * @return	    The header instance, which points to the same memory 
+ *		    location as the mem argument.
+ */
+PJ_DECL(pjsip_tnl_supported_hdr*) pjsip_tnl_supported_hdr_init( pj_pool_t *pool,
 							    void *mem );
 
 /* **************************************************************************/

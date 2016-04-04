@@ -14,11 +14,10 @@
 <script type="text/javascript" src="../validator.js"></script>
 <style>
 .image_field{
-	width:99%;
-	height:380px;
+	height:250px;
 	background:url('../images/New_ui/new_qis/ISP-card.png') no-repeat;
-	background-size:100%;
-	background-position: 0% 35%;
+	background-size:90%;
+	background-position: 50% 25%;
 }
 
 .iptvTable{
@@ -29,7 +28,7 @@
 .iptvTable th{
 	text-align:right;
 	width:160px;
-	color:#66CCFF;
+	color:#6CF;
 }
 
 .iptvTable td{
@@ -90,7 +89,7 @@ function QKaccount_load_body(){
 		parent.based_modelid != "RT-AC68U" &&
 		parent.based_modelid != "RT-AC66U" &&
 		parent.based_modelid != "RT-AC56U" &&
-		based_modelid != "RT-AC51U" &&
+		//based_modelid != "RT-AC51U" &&
 		parent.based_modelid != "RT-N66U" &&
 		parent.based_modelid != "RT-N18U"
         ){      
@@ -109,9 +108,6 @@ function QKaccount_load_body(){
 		document.getElementById("voip_port3").innerHTML = "VoIP (LAN port 1):";
 		document.getElementById("iptv_port4").innerHTML = "IPTV (LAN port 2):";
 	}
-
-	if(noiptv_support)
-		document.getElementById("specialISP_tr").style.display = "none";
 }
 
 function get_value_from_parent(){
@@ -293,13 +289,17 @@ function pass_checked(obj){
 }
 
 function showMAC(){
-	var tempMAC = "";
-	document.form.wan_hwaddr_x.value = login_mac_str();
-	document.form.wan_hwaddr_x.focus();
+	var macToggle = document.form.macToggle.checked;
+	if(macToggle){
+		document.form.wan_hwaddr_x.value = login_mac_str();
+		document.form.wan_hwaddr_x.focus();
+	}
+	else{
+		document.form.wan_hwaddr_x.value = "";
+	}
 }
 
 function showMAC_m(){
-	var tempMAC = "";
 	if(document.getElementById("toggleDNS").getAttribute("toggled") == "true"){	
 		document.form.wan_hwaddr_x_m.value = login_mac_str();
 		document.form.wan_hwaddr_x.value = login_mac_str();
@@ -652,7 +652,7 @@ function pass_checked_iptv(obj){
 		<tr>
 			<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_UserName_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="../images/New_ui/helpicon.png"></span></th>
 			<td class="QISformtd">
-				<input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_18_table" size="36" autocapitalize="off" autocomplete="off"/>
+				<input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_18_table" size="36" autocapitalization="off" autocomplete="off"/>
 			</td>
 		</tr>
 
@@ -684,25 +684,24 @@ function pass_checked_iptv(obj){
 		<tr>
 			<th></th>
 			<td>
-				<input type="button" class="button_gen_long" tabindex="3" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
+				<!--input type="button" class="button_gen_long" tabindex="3" onclick="showMAC();" value="<#BOP_isp_MACclone#>"-->
+				<input type="checkbox" name="macToggle" onclick="showMAC();"><#BOP_isp_MACclone#>
 			</td>
 		</tr>
-		<tr style="line-height:25px;">
-			<th>
+		<tr>
+			<th colspan="2">
 				<input id="vpn_client_check" type="checkbox" onclick="enable_vpn_client(this)">
 				<span id="vpn_client_desc" style="cursor:pointer;"><#QIS_vpn_enable#><span>
-			</th>
-			<td>		
-				<select class="input_option" name="vpn_option" style="display:none" onChange="change_vpn_type(this)" disabled>
+				<select class="input_option" name="vpn_option" style="display:none;margin-left:5px" onChange="change_vpn_type(this)" disabled>
 					<option value="pptp">PPTP</option>
 					<option value="l2tp">L2TP</option>		
 				</select>
-			</td>
+			</th>
 		</tr>
 		<tr id="specialISP_tr">
 			<th colspan="2">
 				<input type="checkbox" id="specialisp" name="specialisp" onclick="enable_ISP_special();">
-				<span class="QISGeneralFont" style="margin-left:0px;font-style:normal;color:#66CCFF;font-size:14px;font-weight:bolder;"><#PPPConnection_x_HostNameForISP_sectionname#></span>
+				<span class="QISGeneralFont" style="margin-left:0px;font-style:normal;color:#6CF;font-size:14px;font-weight:bolder;"><#PPPConnection_x_HostNameForISP_sectionname#></span>
 			</th>
 		</tr>
 
@@ -720,12 +719,12 @@ function pass_checked_iptv(obj){
 	</table>
 	</td>
 
-	<td style="width:365px;height:430px;background:#444F52;border-radius:10px;">
+	<td style="width:365px;height:400px;background:#444F52;border-radius:10px;">
 		<div id="image_field" class="image_field" ></div>
-		<div id="isp_card_desc" style="padding:0 15px 15px 15px;line-height:15px;margin-top:-60px;"><#QIS_SmartConn_ISPDesc2#></div>
+		<div id="isp_card_desc" style="padding:0 15px 15px 20px;line-height:15px;"><#QIS_SmartConn_ISPDesc2#></div>
 		<div id="isp_TW_desc" style="padding:0 15px 15px 15px;line-height:15px;display:none;"><#QIS_SmartConn_ISPDesc_TW#></div>
 		<div id="special_ISP_field" style="margin-top:-100px;display:none;">		
-			<div style="line-height:25px;height:285px;">
+			<div style="line-height:25px;height:250px;">
 				<div id="select_profile">
 					<table class="iptvTable">
 					<tr>
@@ -827,7 +826,7 @@ function pass_checked_iptv(obj){
 							<td><input type="text" name="wan10_dns2_x" maxlength="15" class="input_15_table" value="<% nvram_get("wan10_dns2_x"); %>" onKeyPress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off"></td>
 						</tr>
 		            	<tr>
-							<th style="color:#66CCFF;"><#PPPConnection_Authentication_itemname#>: </th>
+							<th style="color:#6CF;"><#PPPConnection_Authentication_itemname#>: </th>
 							<td style="text-align:left;">
 							    <select style="margin-left:2px;" class="input_option" name="wan10_auth_x" onChange="change_auth(this.value);">
 								    <option value="" <% nvram_match("wan10_auth_x", "", "selected"); %>><#wl_securitylevel_0#></option>
@@ -836,12 +835,12 @@ function pass_checked_iptv(obj){
 							</td>
 						</tr>
 		            	<tr id="tr_pppoe_username" style="display:none;">
-		             	 	<th style="color:#66CCFF;"><#PPPConnection_UserName_itemname#>: </th>
+		             	 	<th style="color:#6CF;"><#PPPConnection_UserName_itemname#>: </th>
 		              		<td style="text-align:left;"><input type="text" maxlength="64" class="input_15_table" name="wan10_pppoe_username" value="<% nvram_get("wan10_pppoe_username"); %>" onkeypress="return validator.isString(this, event)"></td>
 		            	</tr>
 		            	<tr id="tr_pppoe_password" style="display:none;">
-		              		<th style="color:#66CCFF;"><div style="margin-top:-25px;"><#PPPConnection_Password_itemname#>: </div></th>
-		              		<td style="text-align:left;"><input type="password" autocapitalize="off" maxlength="64" class="input_15_table" id="wan10_pppoe_passwd" name="wan10_pppoe_passwd" value="<% nvram_get("wan10_pppoe_passwd"); %>">
+		              		<th style="color:#6CF;"><div style="margin-top:-25px;"><#PPPConnection_Password_itemname#>: </div></th>
+		              		<td style="text-align:left;"><input type="password" autocapitalization="off" maxlength="64" class="input_15_table" id="wan10_pppoe_passwd" name="wan10_pppoe_passwd" value="<% nvram_get("wan10_pppoe_passwd"); %>">
 							<div style="margin-top:1px;"><input type="checkbox" name="show_pass_iptv" onclick="pass_checked_iptv(document.form.wan10_pppoe_passwd);"><#QIS_show_pass#></div>
 							</td>
 		            	</tr>
@@ -859,11 +858,11 @@ function pass_checked_iptv(obj){
 		<div id="DNSDiv">
 			<div class="row">
 				<label><#PPPConnection_UserName_itemname#></label>
-				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value="" autocapitalize="off" autocomplete="off"/>
+				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value="" autocapitalization="off" autocomplete="off"/>
 			</div>
 			<div class="row">
 				<label><#PPPConnection_Password_itemname#></label>
-				<input name="wan_pppoe_passwd_m" type="text" placeholder="" maxlength="64" autocapitalize="off" autocomplete="off">
+				<input name="wan_pppoe_passwd_m" type="text" placeholder="" maxlength="64" autocapitalization="off" autocomplete="off">
 			</div>
 			<div class="row">
 				<label><#BOP_isp_MACclone#></label>
@@ -876,7 +875,7 @@ function pass_checked_iptv(obj){
 
 			<div class="row_end">
 				<label><#BOP_isp_mac_item#></label>
-				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return validator.isHWAddr(this,event);" autocapitalize="off" maxlength="17">
+				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return validator.isHWAddr(this,event);" autocapitalization="off" maxlength="17">
 			</div>
 		</div>
 	</fieldset>

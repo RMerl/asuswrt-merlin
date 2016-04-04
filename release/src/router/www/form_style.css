@@ -1588,7 +1588,7 @@ padding-top:1px;
 .simnone{
 	background-image:url(images/mobile/sim_state.png);
 	background-repeat:no-repeat;	
-	background-position:4px 2px;
+	background-position:4px 3px;
 	height:30px;
 	width:30px;
 	cursor: pointer;

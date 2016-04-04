@@ -2,7 +2,7 @@ include ../common.mak
 
 #BUILD_READMEM=y
 
-CFLAGS += -Wall -O2 $(EXTRACFLAGS)
+CFLAGS += -Wall -Os $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 CFLAGS += -I$(TOP)/openssl/include
 CFLAGS += -I$(TOP)/push_log
@@ -405,7 +405,7 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
 ifeq ($(RTCONFIG_BCMARM),y)
-#	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
+	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-write2
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase2
 else

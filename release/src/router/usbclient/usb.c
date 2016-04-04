@@ -193,14 +193,14 @@ int check_config_path(int is_read_config)
 #ifdef NVRAM_
 #ifdef USE_TCAPI
         char tmp[MAXLEN_TCAPI_MSG] = {0};
-        tcapi_get(AICLOUD, "smb_tokenfile", tmp);
+        tcapi_get(AICLOUD, "usb_tokenfile", tmp);
         nv = my_malloc(strlen(tmp) + 1);
         //2014.10.20 by sherry malloc申请内存是否成功
         //if(nv==NULL)
            // return NULL;
         sprintf(nv, "%s", tmp);
 #else
-        nv = strdup(nvram_safe_get("smb_tokenfile"));
+        nv = strdup(nvram_safe_get("usb_tokenfile"));
 #endif
 #else
         FILE *fp;
@@ -326,7 +326,7 @@ int check_config_path(int is_read_config)
                                         sprintf(new_nv, "%s", nvp);
                                 }
 #ifdef NVRAM_
-                                write_to_nvram(new_nv, "smb_tokenfile");
+                                write_to_nvram(new_nv, "usb_tokenfile");
 #else
                                 write_to_smb_tokenfile(new_nv);
 #endif
@@ -476,7 +476,7 @@ char *delete_nvram_contents(char *url,char *folder)
 #ifdef NVRAM_
 #ifdef USE_TCAPI
         char tmp[MAXLEN_TCAPI_MSG] = {0};
-        tcapi_get(AICLOUD, "smb_tokenfile", tmp);
+        tcapi_get(AICLOUD, "usb_tokenfile", tmp);
         nv = my_malloc(strlen(tmp) + 1);
         //2014.10.20 by sherry malloc申请内存是否成功
         //if(nv==NULL)
@@ -484,11 +484,11 @@ char *delete_nvram_contents(char *url,char *folder)
         sprintf(nv, "%s", tmp);
         p = nv;
 #else
-        p = nv = strdup(nvram_safe_get("smb_tokenfile"));
+        p = nv = strdup(nvram_safe_get("usb_tokenfile"));
 #endif
 #else
         FILE *fp;
-        fp = fopen("/opt/etc/smb_tokenfile", "r");
+        fp = fopen("/opt/etc/usb_tokenfile", "r");
         if (fp == NULL)
         {
                 nv = my_malloc(2);
@@ -684,7 +684,7 @@ char *add_nvram_contents(char *url,char *folder)
 #ifdef NVRAM_
 #ifdef USE_TCAPI
         char tmp[MAXLEN_TCAPI_MSG] = {0};
-        tcapi_get(AICLOUD, "smb_tokenfile", tmp);
+        tcapi_get(AICLOUD, "usb_tokenfile", tmp);
         nv = my_malloc(strlen(tmp) + 1);
         //2014.10.20 by sherry malloc申请内存是否成功
        // if(nv==NULL)
@@ -692,11 +692,11 @@ char *add_nvram_contents(char *url,char *folder)
         sprintf(nv, "%s", tmp);
         //p = nv;
 #else
-        nv = strdup(nvram_safe_get("smb_tokenfile"));
+        nv = strdup(nvram_safe_get("usb_tokenfile"));
 #endif
 #else
         FILE *fp;
-        fp = fopen("/opt/etc/smb_tokenfile", "r");
+        fp = fopen("/opt/etc/usb_tokenfile", "r");
         if (fp == NULL)
         {
                 nv = my_malloc(2);
@@ -773,7 +773,7 @@ int rewrite_tokenfile_and_nv(){
                                 //printf("new_nv = %s\n", new_nv);
                                 write_to_tokenfile(smb_config.multrule[i]->mount_path);
 #ifdef NVRAM_
-                                write_to_nvram(new_nv, "smb_tokenfile");
+                                write_to_nvram(new_nv, "usb_tokenfile");
 #else
                                 write_to_smb_tokenfile(new_nv);
 #endif
@@ -802,7 +802,7 @@ int rewrite_tokenfile_and_nv(){
 
                                 write_to_tokenfile(smb_config_stop.multrule[i]->mount_path);
 #ifdef NVRAM_
-                                write_to_nvram(new_nv, "smb_tokenfile");
+                                write_to_nvram(new_nv, "usb_tokenfile");
 #else
                                 write_to_smb_tokenfile(new_nv);
 #endif

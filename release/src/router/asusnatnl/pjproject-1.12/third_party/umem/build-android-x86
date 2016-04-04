@@ -1,0 +1,10 @@
+#! /bin/sh
+
+
+make clean && make \
+	CC=i686-linux-android-gcc \
+	C++=i686-linux-android-g++ \
+        AR=i686-linux-android-ar \
+        RANLIB=i686-linux-android-ranlib \
+	os=ANDROID \
+	arch=X86

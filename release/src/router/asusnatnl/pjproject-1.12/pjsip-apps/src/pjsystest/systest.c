@@ -1302,7 +1302,7 @@ void systest_save_result(const char *filename)
     const char *text;
     pj_status_t status;
 
-    status = pj_file_open(NULL, filename, PJ_O_WRONLY | PJ_O_APPEND, &fd);
+    status = pj_file_open(NULL, filename, PJ_O_WRONLY | PJ_O_APPEND, &fd, NULL);
     if (status != PJ_SUCCESS) {
 	pj_ansi_snprintf(textbuf, sizeof(textbuf),
 			 "Error opening file %s",

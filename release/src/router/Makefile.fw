@@ -26,8 +26,6 @@ PCIEFD_EMBED_HEADER		:= $(SRCBASE_DHD)/shared/rtecdc_router.h
 #PCIEFD_TARGETS_LIST		:= 43602a1
 ifeq ($(or $(RTAC88U),$(RTAC3100),$(RTAC5300),$(RTAC5300R)), y)
 PCIEFD_TARGETS_LIST		+= 4366b1
-#else ifeq ($(or $(RTAC5300R)), y)
-else
 PCIEFD_TARGETS_LIST		+= 4366c0
 endif
 

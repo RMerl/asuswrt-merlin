@@ -660,12 +660,6 @@ extern int mssid_mac_validate(const char *macaddr);
 extern int setup_dnsmq(int mode);
 #endif
 
-// ssh.c
-#ifdef RTCONFIG_SSH
-extern void start_sshd(void);
-extern void stop_sshd(void);
-#endif
-
 // usb.c
 #ifdef RTCONFIG_USB
 FILE* fopen_or_warn(const char *path, const char *mode);
@@ -852,6 +846,10 @@ extern void start_ipv6(void);
 extern void stop_ipv6(void);
 extern void ipv6_sysconf(const char *ifname, const char *name, int value);
 extern int ipv6_getconf(const char *ifname, const char *name);
+#ifdef RTCONFIG_6RELAYD
+extern void stop_6relayd(void);
+extern int start_6relayd(void);
+#endif
 #endif
 extern int wps_band_radio_off(int wps_band);
 #ifdef CONFIG_BCMWL5
@@ -1035,11 +1033,12 @@ extern int start_watchdog(void);
 extern int get_apps_name(const char *string);
 extern int run_app_script(const char *pkg_name, const char *pkg_action);
 extern void set_hostname(void);
+extern int _start_telnetd(int force);
 extern int start_telnetd(void);
 extern void stop_telnetd(void);
-extern int run_telnetd(void);
 #ifdef RTCONFIG_SSH
-extern int run_sshd(void);
+extern int start_sshd(void);
+extern void stop_sshd(void);
 #endif
 #ifdef RTCONFIG_WTFAST
 extern void start_wtfast(void);
@@ -1072,6 +1071,7 @@ extern int stop_wps(void);
 extern int start_wps(void);
 extern void stop_upnp(void);
 extern void start_upnp(void);
+extern void reload_upnp(void);
 extern void stop_ddns(void);
 extern int start_ddns(void);
 extern void refresh_ntpc(void);

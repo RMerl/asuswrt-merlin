@@ -22,12 +22,19 @@
 #include <pj/os.h>
 #include <pj/compat/malloc.h>
 
+#if !defined(WIN32) && !defined(PJ_ANDROID)
+#include <umem.h>
+#include <umem_impl.h>
+#endif
+
 #if !PJ_HAS_POOL_ALT_API
 
 /*
  * This file contains pool default policy definition and implementation.
  */
 #include "pool_signature.h"
+
+static int umem_inited = 0;
 
 
 static void *default_block_alloc(pj_pool_factory *factory, pj_size_t size)
@@ -97,6 +104,36 @@ PJ_DEF_DATA(pj_pool_factory_policy) pj_pool_factory_default_policy =
 PJ_DEF(const pj_pool_factory_policy*) pj_pool_factory_get_default_policy(void)
 {
     return &pj_pool_factory_default_policy;
+}
+
+PJ_DEF(void *) pj_mem_alloc( pj_size_t size)
+{
+//#if defined(ROUTER)
+#if !defined(_WIN32) && !defined(PJ_ANDROID)
+	if (!umem_inited) {
+		umem_startup(NULL, 0, 0, NULL, NULL);
+		umem_inited = 1;
+	}
+	return umem_alloc(size, UMEM_DEFAULT);
+#else
+	return malloc(size);
+#endif
+}
+
+PJ_DEF(void) pj_mem_free( void *buf, pj_size_t size)
+{
+//#if defined(ROUTER)
+#if !defined(_WIN32) && !defined(PJ_ANDROID)
+	if (!umem_inited) {
+		umem_startup(NULL, 0, 0, NULL, NULL);
+		umem_inited = 1;
+	}
+	if (buf)
+		umem_free(buf, size);
+#else
+	if (buf)
+		free(buf);
+#endif
 }
 
 

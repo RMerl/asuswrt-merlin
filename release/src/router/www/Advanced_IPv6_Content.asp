@@ -41,12 +41,37 @@ if(yadns_support){
 	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
 }
 
-function initial(){
-	if(ipv6_proto_orig == "static6"){ // legacy
-		ipv6_proto_orig == "other";
-		document.form.ipv6_service.value = ipv6_proto_orig;
-	}
+var ipv6_service_opt = new Array(	new Array("<#btn_disable#>", "disabled"),
+									new Array("Native", "dhcp6"),
+									new Array("<#IPv6_static_IP#>", "other"),
+									new Array("Tunnel 6to4", "6to4"),
+									new Array("Tunnel 6in4", "6in4"),
+									new Array("Tunnel 6rd", "6rd")
+								);
+/*
+new Array("SLAAC", "slaac"),
+new Array("ICMPv6", "icmp6")
+*/
+
+function loadipv6serviceOptions(){
+	free_options(document.form.ipv6_service);
+	if(IPv6_Passthrough_support){
+		ipv6_service_opt.splice(3,0, new Array("IPv6 Passthrough", "ipv6pt"));		
+	}	
+	for(var i = 0; i < ipv6_service_opt.length; i++)
+		add_option(document.form.ipv6_service, ipv6_service_opt[i][0], ipv6_service_opt[i][1]);
+}
+
+function initial(){	
+	
 	show_menu();	
+	
+	loadipv6serviceOptions();
+	if(ipv6_proto_orig == "static6"){ // legacy
+		ipv6_proto_orig == "other";		
+	}	
+	document.form.ipv6_service.value = ipv6_proto_orig;
+	
 	showInputfield(ipv6_proto_orig);
 
 	if(yadns_support){
@@ -126,6 +151,9 @@ function showInputfield(v){
 		showInputfield2('ipv6_dhcp_pd', enable_pd);
 		var enable_dns = (document.form.ipv6_dnsenable[1].checked) ? '0' : '1';
 		showInputfield2('ipv6_dnsenable', enable_dns);
+		
+		document.getElementById("auto_config").style.display="";
+
 	}
 	else if(v == "6to4"){
 		inputCtrl(document.form.ipv6_ifdev_select, 0);
@@ -175,6 +203,9 @@ function showInputfield(v){
 		inputCtrl(document.form.ipv6_dns1, 1);
 		inputCtrl(document.form.ipv6_dns2, 1);
 		inputCtrl(document.form.ipv6_dns3, 1);
+		
+		document.getElementById("auto_config").style.display="";
+
 	}
 	else if(v == "6in4"){
 		inputCtrl(document.form.ipv6_ifdev_select, 0);
@@ -223,6 +254,8 @@ function showInputfield(v){
 		inputCtrl(document.form.ipv6_dns2, 1);
 		inputCtrl(document.form.ipv6_dns3, 1);
 		
+		document.getElementById("auto_config").style.display="";
+
 	}
 	else if(v == "6rd"){
 		inputCtrl(document.form.ipv6_ifdev_select, 0);
@@ -267,6 +300,8 @@ function showInputfield(v){
 		inputCtrl(document.form.ipv6_dns2, 1);
 		inputCtrl(document.form.ipv6_dns3, 1);
 		
+		document.getElementById("auto_config").style.display="";
+
 	}
 	else if(v == "other"){
 		if(wan_proto_orig == "l2tp" || wan_proto_orig == "pptp" || wan_proto_orig == "pppoe")
@@ -331,10 +366,12 @@ function showInputfield(v){
 		inputCtrl(document.form.ipv6_dnsenable[1], 0);
 		inputCtrl(document.form.ipv6_dns1, 1);
 		inputCtrl(document.form.ipv6_dns2, 1);
-		inputCtrl(document.form.ipv6_dns3, 1);		
+		inputCtrl(document.form.ipv6_dns3, 1);
+		
+		document.getElementById("auto_config").style.display="";
 		
 	}	
-	else{		// disabled
+	else{		// disabled & ipv6pt
 		inputCtrl(document.form.ipv6_ifdev_select, 0);
 		inputCtrl(document.form.ipv6_dhcp_pd[0], 0);
 		inputCtrl(document.form.ipv6_dhcp_pd[1], 0);	
@@ -373,6 +410,8 @@ function showInputfield(v){
 		inputCtrl(document.form.ipv6_dns1, 0);
 		inputCtrl(document.form.ipv6_dns2, 0);
 		inputCtrl(document.form.ipv6_dns3, 0);
+		
+		document.getElementById("auto_config").style.display="none";
 		
 	}		
 	
@@ -929,15 +968,7 @@ function showInfo(){
 					<tr>
 						<th><#Connectiontype#></th>
 		     		<td>
-							<select name="ipv6_service" class="input_option" onchange="showInputfield(this.value);">
-								<option class="content_input_fd" value="disabled" <% nvram_match("ipv6_service", "disabled", "selected"); %>><#btn_disable#></option>
-								<option class="content_input_fd" value="dhcp6" <% nvram_match("ipv6_service", "dhcp6", "selected"); %>>Native</option>
-								<option class="content_input_fd" value="6to4" <% nvram_match("ipv6_service", "6to4", "selected"); %>>Tunnel 6to4</option>
-								<option class="content_input_fd" value="6in4" <% nvram_match("ipv6_service", "6in4", "selected"); %>>Tunnel 6in4</option>
-								<option class="content_input_fd" value="6rd" <% nvram_match("ipv6_service", "6rd", "selected"); %>>Tunnel 6rd</option>
-								<option class="content_input_fd" value="other" <% nvram_match("ipv6_service", "other", "selected"); %>><#IPv6_static_IP#></option>
-								<!--option class="content_input_fd" value="slaac" <% nvram_match("ipv6_service", "slaac", "selected"); %>>SLAAC</option-->
-								<!--option class="content_input_fd" value="icmp6" <% nvram_match("ipv6_service", "icmp6", "selected"); %>>ICMPv6</option-->
+							<select name="ipv6_service" class="input_option" onchange="showInputfield(this.value);">								
 							</select>
 		     		</td>
 		     	</tr>		     
@@ -1184,7 +1215,7 @@ function showInfo(){
 			<!---------------------------------------IPv6 DNS setting end------------------------------->  
 			
 			<!---------------------------------------Auto Config start------------------------------->  
-			<table id="auto_config" style="margin-top:8px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+			<table id="auto_config" style="margin-top:8px;display:none;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 				  <thead>
 				  <tr>
 						<td colspan="2"><#ipv6_auto_config#></td>

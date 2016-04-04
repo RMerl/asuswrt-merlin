@@ -711,6 +711,22 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 			tunnel->peer_tunnel_id = sp3->pppol2tp.d_tunnel;
 	}
 
+#ifdef CTF_L2TP
+	{
+		struct sock *tsk = tunnel->sock;
+		struct inet_sock *inet;
+		inet = inet_sk(tsk);
+		po->proto.l2tp.inet.saddr = inet->inet_saddr;
+		po->proto.l2tp.inet.daddr = inet->inet_daddr;
+		po->proto.l2tp.inet.sport = inet->inet_sport;
+		po->proto.l2tp.inet.dport = inet->inet_dport;
+		po->proto.l2tp.inet.tos = inet->tos;
+		po->proto.l2tp.ts.optver = ver;
+		po->proto.l2tp.ts.tunnel_id = tunnel->tunnel_id;
+		po->proto.l2tp.ts.peer_tunnel_id = tunnel->peer_tunnel_id;
+	}
+#endif
+
 	/* Create session if it doesn't already exist. We handle the
 	 * case where a session was previously created by the netlink
 	 * interface by checking that the session doesn't already have
@@ -791,6 +807,12 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 	po->chan.private = sk;
 	po->chan.ops	 = &pppol2tp_chan_ops;
 	po->chan.mtu	 = session->mtu;
+
+#ifdef CTF_L2TP
+	po->proto.l2tp.ts.session_id = session->session_id;
+	po->proto.l2tp.ts.peer_session_id = session->peer_session_id;
+	po->proto.l2tp.ts.l2tph_len = session->hdr_len;
+#endif
 
 	error = ppp_register_net_channel(sock_net(sk), &po->chan);
 	if (error)

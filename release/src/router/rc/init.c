@@ -871,6 +871,9 @@ void clean_modem_state(int flag){
 	nvram_unset("usb_modem_act_startsec");
 	nvram_unset("usb_modem_act_simdetect");
 	nvram_unset("usb_modem_act_num");
+#ifdef RTCONFIG_USB_SMS_MODEM
+	nvram_unset("usb_modem_act_smsc");
+#endif
 
 	// modem state.
 	nvram_unset("g3state_pin");
@@ -1335,6 +1338,7 @@ restore_defaults(void)
 #endif
 #ifdef RTCONFIG_TCODE
 		restore_defaults_wifi(1);
+		config_tcode(1);
 #endif
 	}
 
@@ -1601,8 +1605,27 @@ static void handle_reap(int sig)
 
 
 #ifdef RTCONFIG_SWMODE_SWITCH
-init_swmode()
+/*
+ * * Check 
+ * * 1.Phy Switch status.
+ * * 2.if default, set the lan proto.
+ * * */
+void init_swmode()
 {
+#if defined(PLAC66U)
+	if (!button_pressed(BTN_SWMODE_SW_ROUTER)) {
+		nvram_set_int("sw_mode", SW_MODE_ROUTER);
+		if (nvram_match("x_Setting", "0"))
+			nvram_set("lan_proto", "dhcp");
+	}
+	else {
+		nvram_set_int("sw_mode", SW_MODE_AP);
+		if (nvram_match("x_Setting", "0"))
+			nvram_set("lan_proto", "dhcp");
+	}
+
+	nvram_set_int("swmode_switch", button_pressed(BTN_SWMODE_SW_ROUTER));
+#else
 	if (!nvram_get_int("swmode_switch")) return;
 
 	if (button_pressed(BTN_SWMODE_SW_REPEATER)) {
@@ -1624,8 +1647,9 @@ init_swmode()
 	}else{
 		dbg("%s: swmode: unknow swmode", LOGNAME);
 	}
+#endif	/* Model */
 }
-#endif
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 
 #if 0
 void conf_swmode_support(int model)
@@ -2123,11 +2147,15 @@ int init_nvram(void)
 	nvram_set_int("fan_gpio", 0xff);
 	nvram_set_int("have_fan_gpio", 0xff);
 #ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+	nvram_set_int("btn_swmode1_gpio", 0xff);
+#else
 	nvram_set_int("btn_swmode1_gpio", 0xff);
 	nvram_set_int("btn_swmode2_gpio", 0xff);
 	nvram_set_int("btn_swmode3_gpio", 0xff);
 	nvram_set_int("swmode_switch", 0);
-#endif
+#endif	/* Model */
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef RTCONFIG_WIRELESS_SWITCH
 	nvram_set_int("btn_wifi_gpio", 0xff);
 #endif
@@ -2643,6 +2671,7 @@ int init_nvram(void)
 		add_rc_support("manual_stb");
 #if defined(RTAC54U)
 		add_rc_support("11AC");
+		add_rc_support("pwrctrl");
 #endif
 		//either txpower or singlesku supports rc.
 		//add_rc_support("pwrctrl");
@@ -3070,16 +3099,20 @@ int init_nvram(void)
 #if defined(PLAC66U)
 	case MODEL_PLAC66U:
 		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
-		nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
-		nvram_set("vlan2hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
+		nvram_set("vlan1hwname", "et1");  // vlan. used to get "%smacaddr" for compare and find parent interface.
+		nvram_set("vlan2hwname", "et1");  // vlan. used to get "%smacaddr" for compare and find parent interface.
 		nvram_set("lan_ifname", "br0");
 		set_basic_ifname_vars("vlan2", "vlan1", "ath0", "ath1", "usb", "vlan1", NULL, "vlan3", 0);
 
+		nvram_set_int("btn_wps_gpio", 1|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_rst_gpio", 2|GPIO_ACTIVE_LOW);
-		//nvram_set_int("btn_wps_gpio", 1|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_lan_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_2g_gpio", 5|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_5g_gpio", 6|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_lan_gpio", 7|GPIO_ACTIVE_LOW);
+#ifdef RTCONFIG_SWMODE_SWITCH
+		nvram_set_int("btn_swmode1_gpio", 19|GPIO_ACTIVE_LOW);
+		add_rc_support("swmode_switch");
+#endif
 
 		/* enable bled */
 		config_netdev_bled("led_lan_gpio", "eth0");
@@ -4208,7 +4241,6 @@ int init_nvram(void)
 		if (strcmp(get_productid(), "RT-AC66U V2"))
 		nvram_set_int("btn_led_gpio", 5);		// active high
 #endif
-		if (strcmp(get_productid(), "RT-AC66U V2"))
 		nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
 		if (strcmp(get_productid(), "RT-AC66U V2"))
 		nvram_set_int("led_usb_gpio", 0|GPIO_ACTIVE_LOW);
@@ -5104,6 +5136,9 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_IPV6
 	add_rc_support("ipv6");
+#ifdef RTCONFIG_6RELAYD
+	add_rc_support("ipv6pt");
+#endif
 #endif
 
 #ifdef RTCONFIG_FANCTRL
@@ -5116,7 +5151,7 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_TCODE
-	config_tcode();
+	config_tcode(0);
 #endif
 #ifdef RTCONFIG_YANDEXDNS
 #ifdef RTCONFIG_TCODE
@@ -5174,6 +5209,11 @@ int init_nvram(void)
 	add_rc_support("pptpd");
 #endif
 
+#ifdef RTCONFIG_OPENVPN
+	add_rc_support("openvpnd");
+	//nvram_set("vpnc_proto", "disable");
+#endif
+
 #ifdef RTCONFIG_USB
 #ifdef RTCONFIG_USB_PRINTER
 	add_rc_support("printer");
@@ -5189,17 +5229,8 @@ int init_nvram(void)
 #endif
 #endif
 
-#ifdef RTCONFIG_OPENVPN
-	add_rc_support("openvpnd");
-	//nvram_set("vpnc_proto", "disable");
-#endif
-
 #ifdef RTCONFIG_PUSH_EMAIL
 	add_rc_support("email");
-#endif
-
-#ifdef RTCONFIG_SSH
-	add_rc_support("ssh");
 #endif
 
 #ifdef RTCONFIG_WEBDAV
@@ -5230,6 +5261,10 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_SAMBACLIENT
 	strcat(ss_support_value, "samba ");
+#endif
+
+#ifdef RTCONFIG_USBCLIENT
+	strcat(ss_support_value, "usb ");
 #endif
 
 #ifdef RTCONFIG_FLICKRCLIENT
@@ -5307,6 +5342,10 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_HTTPS
 	add_rc_support("HTTPS");
+#endif
+
+#ifdef RTCONFIG_SSH
+	add_rc_support("ssh");
 #endif
 
 #ifdef RTCONFIG_VPNC
@@ -5468,6 +5507,10 @@ int init_nvram(void)
 #ifdef RTCONFIG_NOIPTV
 	add_rc_support("noiptv");
 #endif
+#ifdef RTCONFIG_USB_SMS_MODEM
+	add_rc_support("usbsms");
+#endif
+
 	return 0;
 }
 
@@ -6087,6 +6130,7 @@ static void sysinit(void)
 	init_nvram();  // for system indepent part after getting model
 	restore_defaults(); // restore default if necessary
 	init_nvram2();
+	
 #ifdef RTCONFIG_ATEUSB3_FORCE
 	post_syspara(); // adjust nvram variable after restore_defaults
 #endif
@@ -6107,7 +6151,7 @@ static void sysinit(void)
 	init_gpio();   // for system dependent part
 #ifdef RTCONFIG_SWMODE_SWITCH
 	init_swmode(); // need to check after gpio initized
-#endif
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef RTCONFIG_BCMARM
 	init_others();
 #endif

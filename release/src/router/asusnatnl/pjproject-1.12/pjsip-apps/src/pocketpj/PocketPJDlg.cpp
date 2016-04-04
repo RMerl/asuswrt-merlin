@@ -705,7 +705,7 @@ void CPocketPJDlg::OnUriCall()
     pj_str_t dest_uri = pj_str(tmp);
     pjsua_call_id call_id;
 
-    status = pjsua_call_make_call(m_PjsuaAccId, &dest_uri, 0, NULL, NULL, &call_id);
+    status = pjsua_call_make_call(m_PjsuaAccId, &dest_uri, 0, 0, NULL, NULL, &call_id);
 
     if (status != PJ_SUCCESS)
 	Error("Unable to make call", status);

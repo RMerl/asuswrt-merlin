@@ -49,11 +49,7 @@ EH1*/
 
 #include "shared_defs_common.h"
 
-#ifdef TOPAZ_PLATFORM
 #define QTN_SWITCH_CHANNEL_TIME_AVG	3750	/* microseconds */
-#else
-#define QTN_SWITCH_CHANNEL_TIME_AVG	3500	/* microseconds */
-#endif
 
 #define IEEE80211_MAX_NAV	32767
 
@@ -89,6 +85,7 @@ enum qtn_vap_scs_cmds {
 	IEEE80211_SCS_SET_CHAN_MTRC_MRGN,
 	IEEE80211_SCS_SET_RSSI_SMTH_FCTR,
 	IEEE80211_SCS_SET_ATTEN_ADJUST,
+	IEEE80211_SCS_SET_ATTEN_SWITCH_ENABLE,
 	IEEE80211_SCS_SET_THRSHLD_ATTEN_INC,
 	IEEE80211_SCS_SET_THRSHLD_DFS_REENTRY,
 	IEEE80211_SCS_SET_THRSHLD_DFS_REENTRY_MINRATE,
@@ -116,6 +113,8 @@ enum qtn_vap_scs_cmds {
 	IEEE80211_SCS_SET_CCA_IDLE_SMTH_FCTR,
 	IEEE80211_SCS_SET_PMBL_ERR_THRSHLD,
 	IEEE80211_SCS_SET_CCA_INTF_DFS_MARGIN,
+	IEEE80211_SCS_SET_LEAVE_DFS_CHAN_MTRC_MRGN,
+	IEEE80211_SCS_SET_CCA_THRESHOLD_TYPE,
 	IEEE80211_SCS_SET_MAX
 };
 
@@ -141,11 +140,7 @@ enum qtn_vap_scs_cmds {
 #define IEEE80211_SCS_THRSHLD_SMPL_PKTNUM_DEFAULT	16	/* packet number */
 #define IEEE80211_SCS_THRSHLD_SMPL_PKTNUM_MAX	1000	/* packet number */
 #define IEEE80211_SCS_THRSHLD_SMPL_PKTNUM_MIN	1	/* packet number */
-#ifdef TOPAZ_PLATFORM
 #define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_DEFAULT	200	/* ms */
-#else
-#define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_DEFAULT	300	/* ms */
-#endif
 #define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_MAX	1000	/* ms */
 #define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_MIN	1	/* ms */
 #define IEEE80211_SCS_THRSHLD_PMBL_ERR_MAX	10000	/* count */
@@ -190,7 +185,8 @@ enum qtn_vap_scs_cmds {
 #define IEEE80211_CCA_INTF_SMTH_FCTR_MIN	0
 #define IEEE80211_CCA_INTF_SMTH_FCTR_MAX	100
 #define IEEE80211_SCS_CHAN_MTRC_MRGN_MAX	100
-#define IEEE80211_SCS_CHAN_MTRC_MRGN_DFT	5
+#define IEEE80211_SCS_CHAN_MTRC_MRGN_DFT	15
+#define IEEE80211_SCS_LEAVE_DFS_CHAN_MTRC_MRGN_DFT	25
 #define IEEE80211_SCS_RSSI_SMTH_FCTR_UP_DFT	75
 #define IEEE80211_SCS_RSSI_SMTH_FCTR_DOWN_DFT	25
 #define IEEE80211_SCS_RSSI_SMTH_FCTR_MAX	100
@@ -255,6 +251,7 @@ enum qtn_vap_scs_cmds {
 #define IEEE80211_SCS_COMMAND_S			16
 #define IEEE80211_SCS_COMMAND_M			0xffff
 
+#define IEEE80211_SCS_NA_CC			0x0
 #define IEEE80211_SCS_STA_CCA_REQ_CC		0x1
 #define IEEE80211_SCS_SELF_CCA_CC               0x2
 #define IEEE80211_SCS_ATTEN_INC_CC		0x4
@@ -310,6 +307,7 @@ enum qtn_ocac_cmds {
 	IEEE80211_OCAC_SET_BEACON_INTERVAL,
 	IEEE80211_OCAC_SET_WEATHER_DURATION,
 	IEEE80211_OCAC_SET_WEATHER_CAC_TIME,
+	IEEE80211_OCAC_SET_WEATHER_DWELL_TIME,
 	IEEE80211_OCAC_SET_MAX
 };
 
@@ -325,7 +323,8 @@ enum qtn_ocac_get_cmds {
 
 #define IEEE80211_OCAC_DWELL_TIME_MIN		5	/* milliseconds */
 #define IEEE80211_OCAC_DWELL_TIME_MAX		200	/* milliseconds */
-#define IEEE80211_OCAC_DWELL_TIME_DEFAULT	50	/* milliseconds */
+#define IEEE80211_OCAC_DWELL_TIME_DEFAULT	40	/* milliseconds */
+#define IEEE80211_OCAC_WEA_DWELL_TIME_DEFAULT	20	/* milliseconds */
 
 #define IEEE80211_OCAC_SECURE_DWELL_TIME_MIN		5	/* milliseconds */
 #define IEEE80211_OCAC_SECURE_DWELL_TIME_MAX		23	/* milliseconds */
@@ -333,25 +332,27 @@ enum qtn_ocac_get_cmds {
 
 #define IEEE80211_OCAC_DURATION_MIN		1	/* seconds */
 #define IEEE80211_OCAC_DURATION_MAX		64800	/* seconds */
-#define IEEE80211_OCAC_DURATION_DEFAULT		360	/* seconds */
+#define IEEE80211_OCAC_DURATION_DEFAULT		720	/* seconds */
 
 #define IEEE80211_OCAC_CAC_TIME_MIN		1	/* seconds */
 #define IEEE80211_OCAC_CAC_TIME_MAX		64800	/* seconds */
-#define IEEE80211_OCAC_CAC_TIME_DEFAULT		145	/* seconds */
+#define IEEE80211_OCAC_CAC_TIME_DEFAULT		240	/* seconds */
 
 #define IEEE80211_OCAC_WEA_DURATION_MIN		60	/* seconds */
 #define IEEE80211_OCAC_WEA_DURATION_MAX		86400	/* seconds */
+#define IEEE80211_OCAC_WEA_DURATION_DEFAULT	11520	/* seconds */
 
 #define IEEE80211_OCAC_WEA_CAC_TIME_MIN		1	/* seconds */
 #define IEEE80211_OCAC_WEA_CAC_TIME_MAX		86400	/* seconds */
+#define IEEE80211_OCAC_WEA_CAC_TIME_DEFAULT	1920	/* seconds */
 
 #define IEEE80211_OCAC_THRESHOLD_FAT_MIN	1	/* percent */
 #define IEEE80211_OCAC_THRESHOLD_FAT_MAX	100	/* percent */
-#define IEEE80211_OCAC_THRESHOLD_FAT_DEFAULT	65	/* percent */
+#define IEEE80211_OCAC_THRESHOLD_FAT_DEFAULT	90	/* percent */
 
 #define IEEE80211_OCAC_THRESHOLD_TRAFFIC_MIN		1	/* percent */
 #define IEEE80211_OCAC_THRESHOLD_TRAFFIC_MAX		100	/* percent */
-#define IEEE80211_OCAC_THRESHOLD_TRAFFIC_DEFAULT	35	/* percent */
+#define IEEE80211_OCAC_THRESHOLD_TRAFFIC_DEFAULT	30	/* percent */
 
 #define IEEE80211_OCAC_OFFSET_TXHALT_MIN		2	/* milliseconds */
 #define IEEE80211_OCAC_OFFSET_TXHALT_MAX		80	/* milliseconds */
@@ -383,6 +384,13 @@ enum qtn_ocac_get_cmds {
 #define IEEE80211_OCAC_TIMER_EXPIRE_INIT_MAX		65000	/* seconds */
 #define IEEE80211_OCAC_TIMER_EXPIRE_INIT_DEFAULT	2	/* seconds */
 
+#define	IEEE80211_OBSS_PASSIVE_DWELL_DEFAULT		20
+#define	IEEE80211_OBSS_ACTIVE_DWELL_DEFAULT		10
+#define	IEEE80211_OBSS_TRIGGER_INTERVAL_DEFAULT		200
+#define	IEEE80211_OBSS_PASSIVE_TOTAL_DEFAULT		200
+#define	IEEE80211_OBSS_ACTIVE_TOTAL_DEFAULT		20
+#define	IEEE80211_OBSS_CHANNEL_WIDTH_DELAY_DEFAULT	5
+#define	IEEE80211_OBSS_ACTIVITY_THRESHOLD_DEFAULT	25
 
 #define IEEE80211_OCAC_VALUE_S			0
 #define IEEE80211_OCAC_VALUE_M			0xffff
@@ -560,11 +568,7 @@ enum qtn_phy_stat_field {
  * So generally, sololy changing CONFIG_QVSP works for both ruby and topaz as indicated by *.
  * But to throughly clean QTM code in AuC and MuC, disable TOPAZ_QTM in topaz below.
  */
-#ifdef TOPAZ_PLATFORM
-	#define TOPAZ_QTM		1
-#else
-	#define TOPAZ_QTM		0
-#endif
+#define TOPAZ_QTM		1
 
 #define COMPILE_TIME_ASSERT(constant_expr)	\
 do {						\
@@ -580,6 +584,13 @@ do {						\
 /**
  * Reason for channel change
  */
+#define CSW_REASON_MASK 0xff
+#define CSW_SCS_FLAG_SHIFT 16
+#define CSW_SCS_FLAG_MASK 0xff0000
+#define CSW_SCS_FLAG_STRING_MAX 64
+
+#define	CSW_REASON_GET_SCS_FLAG(_reason) (((_reason) & CSW_SCS_FLAG_MASK) >> CSW_SCS_FLAG_SHIFT)
+#define CSW_REASON_SET_SCS_FLAG(_scs_flag, _reason)	((((_scs_flag) << CSW_SCS_FLAG_SHIFT) & CSW_SCS_FLAG_MASK) | (_reason))
 enum ieee80211_csw_reason {
 	/**
 	 * Reason is unknown
@@ -643,6 +654,7 @@ enum swfeat {
 	SWFEAT_ID_VHT,
 	SWFEAT_ID_2X2,
 	SWFEAT_ID_2X4,
+	SWFEAT_ID_3X3,
 	SWFEAT_ID_4X4,
 	SWFEAT_ID_HS20,
 	SWFEAT_ID_WPA2_ENT,
@@ -668,5 +680,11 @@ enum swfeat {
 /* Used to scale temperature measurements */
 #define QDRV_TEMPSENS_COEFF    100000
 #define QDRV_TEMPSENS_COEFF10  (10 * QDRV_TEMPSENS_COEFF)
+
+/* Aligns the supplied size to the specified power_of_two */
+#define QTN_ALIGN_TO(size_to_align, power_of_two) \
+	(((size_to_align) + (power_of_two) - 1) & ~((power_of_two) - 1))
+
+#define FIELD_ARRAY_SIZE(t, a)	(sizeof((((t*)0)->a))/sizeof(((((t*)0)->a))[0]))
 
 #endif /* _SHARED_DEFS_H_ */

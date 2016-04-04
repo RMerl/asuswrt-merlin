@@ -761,7 +761,7 @@ int main(int argc, char **argv)
 	}
 #endif
 	else if(!strcmp(base, "run_telnetd")) {
-		run_telnetd();
+		_start_telnetd(1);
 		return 0;
 	}
 #ifdef RTCONFIG_SSH

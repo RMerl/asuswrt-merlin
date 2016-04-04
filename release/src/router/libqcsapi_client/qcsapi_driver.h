@@ -1,7 +1,7 @@
 /*SH1
 *******************************************************************************
 **                                                                           **
-**         Copyright (c) 2009 - 2012 Quantenna Communications, Inc.          **
+**         Copyright (c) 2009 - 2015 Quantenna Communications, Inc.          **
 **                                                                           **
 **  File        : qcsapi_driver.h                                            **
 **  Description :                                                            **
@@ -178,8 +178,13 @@ typedef enum {
 	e_qcsapi_wifi_set_assoc_limit,
 	e_qcsapi_wifi_get_bss_assoc_limit,
 	e_qcsapi_wifi_set_bss_assoc_limit,
+	e_qcsapi_wifi_set_SSID_group_id,
+	e_qcsapi_wifi_get_SSID_group_id,
+	e_qcsapi_wifi_set_SSID_assoc_reserve,
+	e_qcsapi_wifi_get_SSID_assoc_reserve,
 	e_qcsapi_interface_set_ip4,
 	e_qcsapi_wifi_get_list_channels,
+	e_qcsapi_wifi_get_supp_chans,
 	e_qcsapi_wifi_get_mode_switch,
 	e_qcsapi_wifi_get_noise,
 	e_qcsapi_wifi_get_rssi_by_chain,
@@ -213,6 +218,7 @@ typedef enum {
 	e_qcsapi_wifi_get_regulatory_db_version,
 	e_qcsapi_wifi_set_regulatory_tx_power_cap,
 	e_qcsapi_wifi_restore_regulatory_tx_power,
+	e_qcsapi_wifi_get_chan_pri_inactive,
 	e_qcsapi_wifi_set_chan_pri_inactive,
 	e_qcsapi_wifi_set_chan_disabled,
 	e_qcsapi_wifi_get_chan_disabled,
@@ -233,6 +239,7 @@ typedef enum {
 	e_qcsapi_wifi_get_congestion_idx,
 	e_qcsapi_wifi_get_supported_tx_power_levels,
 	e_qcsapi_wifi_get_current_tx_power_level,
+	e_qcsapi_wifi_set_current_tx_power_level,
 	e_qcsapi_wifi_set_power_constraint,
 	e_qcsapi_wifi_get_power_constraint,
 	e_qcsapi_wifi_set_tpc_interval,
@@ -290,6 +297,18 @@ typedef enum {
 	e_qcsapi_security_get_hs20_conn_capab,
 	e_qcsapi_security_del_hs20_conn_capab,
 
+	e_qcsapi_security_add_hs20_icon,
+	e_qcsapi_security_get_hs20_icon,
+	e_qcsapi_security_del_hs20_icon,
+
+	e_qcsapi_security_add_osu_server_uri,
+	e_qcsapi_security_get_osu_server_uri,
+	e_qcsapi_security_del_osu_server_uri,
+
+	e_qcsapi_security_add_osu_server_param,
+	e_qcsapi_security_get_osu_server_param,
+	e_qcsapi_security_del_osu_server_param,
+
 	e_qcsapi_wifi_get_hs20_status,
 	e_qcsapi_wifi_set_hs20_status,
 	e_qcsapi_wifi_get_hs20_params,
@@ -318,7 +337,9 @@ typedef enum {
 	e_qcsapi_wifi_get_key_passphrase,
 	e_qcsapi_wifi_set_key_passphrase,
 	e_qcsapi_wifi_get_group_key_interval,
-        e_qcsapi_wifi_set_group_key_interval,
+	e_qcsapi_wifi_set_group_key_interval,
+	e_qcsapi_wifi_get_pairwise_key_interval,
+	e_qcsapi_wifi_set_pairwise_key_interval,
 	e_qcsapi_wifi_get_pmf,
 	e_qcsapi_wifi_set_pmf,
 	e_qcsapi_wifi_get_count_associations,
@@ -394,6 +415,8 @@ typedef enum {
 	e_qcsapi_wps_upnp_status,
 	e_qcsapi_wps_registrar_set_dfl_pbc_bss,
 	e_qcsapi_wps_registrar_get_dfl_pbc_bss,
+	e_qcsapi_wps_set_dfl_pbc_bss,
+	e_qcsapi_wps_get_dfl_pbc_bss,
 
 	e_qcsapi_wifi_set_dwell_times,
 	e_qcsapi_wifi_get_dwell_times,
@@ -406,6 +429,8 @@ typedef enum {
 	e_qcsapi_wifi_wait_scan_completes,
 	e_qcsapi_wifi_set_scan_chk_inv,
 	e_qcsapi_wifi_get_scan_chk_inv,
+
+	e_qcsapi_wifi_update_bss_cfg,
 
 	e_qcsapi_SSID_create_SSID,
 	e_qcsapi_SSID_remove_SSID,
@@ -429,8 +454,11 @@ typedef enum {
 	e_qcsapi_SSID_get_wps_SSID,
 	e_qcsapi_wifi_vlan_config,
 	e_qcsapi_wifi_show_vlan_config,
-	e_qcsapi_enable_vlan_pass_through,
 	e_qcsapi_br_vlan_promisc,
+
+	e_qcsapi_add_multicast,
+	e_qcsapi_del_multicast,
+	e_qcsapi_get_multicast_list,
 	e_qcsapi_add_ipff,
 	e_qcsapi_del_ipff,
 	e_qcsapi_get_ipff,
@@ -474,6 +502,11 @@ typedef enum {
 	e_qcsapi_wifi_set_dscp_8021p_map,
 	e_qcsapi_wifi_get_dscp_ac_map,
 	e_qcsapi_wifi_set_dscp_ac_map,
+	e_qcsapi_wifi_set_qos_map,
+	e_qcsapi_wifi_del_qos_map,
+	e_qcsapi_wifi_get_qos_map,
+	e_qcsapi_wifi_send_qos_map_conf,
+	e_qcsapi_wifi_get_dscp_tid_map,
 	e_qcsapi_wifi_get_priority,
 	e_qcsapi_wifi_set_priority,
 	e_qcsapi_wifi_get_airfair,
@@ -528,6 +561,7 @@ typedef enum {
 	e_qcsapi_wifi_set_dfs_s_radio_report_only,
 	e_qcsapi_wifi_set_dfs_s_radio_wea_duration,
 	e_qcsapi_wifi_set_dfs_s_radio_wea_cac_time,
+	e_qcsapi_wifi_set_dfs_s_radio_wea_dwell_time,
 
 	e_qcsapi_wifi_set_ap_isolate,
 	e_qcsapi_wifi_get_ap_isolate,
@@ -608,6 +642,10 @@ typedef enum {
 	e_qcsapi_get_spinor_jedecid,
 
 	e_qcsapi_get_custom_value,
+	e_qcsapi_set_custom_value,
+
+	e_qcsapi_get_vco_lock_detect_mode,
+	e_qcsapi_set_vco_lock_detect_mode,
 
 	e_qcsapi_wifi_get_mlme_stats_per_mac,
 	e_qcsapi_wifi_get_mlme_stats_per_association,
@@ -677,16 +715,64 @@ typedef enum {
 	e_qcsapi_wifi_get_ap_interface_name,
 
 	e_qcsapi_set_optim_stats,
+	e_qcsapi_wifi_set_pref_band,
+	e_qcsapi_wifi_get_pref_band,
+	e_qcsapi_wifi_get_24g_bw,
+	e_qcsapi_wifi_set_24g_bw,
 
 	e_qcsapi_set_sys_time,
 	e_qcsapi_get_sys_time,
-
 	e_qcsapi_get_eth_info,
 	e_qcsapi_wifi_block_bss,
+	e_qcsapi_wifi_get_block_bss,
 	e_qcsapi_wifi_set_txba_disable,
 	e_qcsapi_wifi_get_txba_disable,
 	e_qcsapi_wifi_set_rxba_decline,
 	e_qcsapi_wifi_get_rxba_decline,
+	e_qcsapi_wifi_set_txburst,
+	e_qcsapi_wifi_get_txburst,
+	e_qcsapi_wifi_get_freq_bands,
+
+	e_qcsapi_wifi_get_sec_chan,
+	e_qcsapi_wifi_set_sec_chan,
+	e_qcsapi_wifi_set_vap_default_state,
+	e_qcsapi_wifi_get_vap_default_state,
+	e_qcsapi_wifi_set_vap_state,
+	e_qcsapi_wifi_get_vap_state,
+	e_qcsapi_wifi_get_tx_airtime,
+
+	e_qcsapi_qwe_command,
+
+	e_qcsapi_get_client_mac_list,
+	e_qcsapi_get_core_dump_size,
+	e_qcsapi_get_core_dump,
+
+	e_qcsapi_wifi_sample_all_clients,
+	e_qcsapi_wifi_get_per_assoc_data,
+
+	e_qcsapi_get_wifi_ready,
+
+	e_qcsapi_get_ep_status,
+
+	e_qcsapi_get_igmp_snooping_state,
+	e_qcsapi_set_igmp_snooping_state,
+
+	e_qcsapi_set_max_bcast_pps,
+	e_qcsapi_wifi_set_scs_leavedfs_chan_mtrc_mrgn,
+	e_qcsapi_set_max_boot_cac_duration,
+
+	e_qcsapi_wifi_authorize_mac_address_ext,
+	e_qcsapi_wifi_deny_mac_address_ext,
+	e_qcsapi_wifi_remove_mac_address_ext,
+
+	e_qcsapi_get_app_core_dump_size,
+	e_qcsapi_get_app_core_dump,
+
+	e_qcsapi_set_log_level,
+	e_qcsapi_get_log_level,
+
+	e_qcsapi_wifi_set_threshold_of_neighborhood_type,
+	e_qcsapi_wifi_get_neighborhood_type,
 
 	e_qcsapi_nosuch_api = 0
 } qcsapi_entry_point;

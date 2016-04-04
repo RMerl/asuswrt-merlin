@@ -467,3 +467,7 @@ ifneq ($(RTCONFIG_TRAFFIC_LIMITER), y)
 	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_TrafficLimiter.asp
 	rm -rf $(INSTALLDIR)/www/ajax/getTrafficLimiter.asp
 endif
+
+ifneq ($(RTCONFIG_IFTTT), y)
+	rm -rf $(INSTALLDIR)/www/Advanced_IFTTT_Pincode.asp
+endif

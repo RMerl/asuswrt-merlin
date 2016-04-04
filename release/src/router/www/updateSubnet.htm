@@ -1,0 +1,429 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns:v>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+<meta charset="utf-8" />
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<link rel="icon" href="images/favicon.png">
+<title><#Web_Title#> - <#errormessage_title#></title>
+<script type="text/JavaScript" src="/js/jquery.js"></script>
+<style>
+body{
+	color:#FFF;
+	font-family: Arial;
+}
+.wrapper{
+	background:url(images/New_ui/login_bg.png) #283437 no-repeat;
+	background-size: 1280px 1076px;
+	background-position: center 0%;
+	margin: 0px; 
+}
+.title_name {
+	font-size: 2.5em;
+	color:#93D2D9;
+}
+.title_text{
+	width:520px;
+}
+.prod_madelName{
+	font-size: 26pt;
+	color:#fff;
+	margin-left:78px;
+	margin-top: 10px;
+}
+.login_img{
+	width:43px;
+	height:43px;
+	background-image: url('images/New_ui/icon_titleName.png');
+	background-repeat: no-repeat;
+}
+.p1{
+	font-size: 16pt;
+	color:#fff;
+	width:480px;
+}
+.button{
+	background-color:#279FD9;
+	/*background:rgba(255,255,255,0.1);
+	border: solid 1px #6e8385;*/
+	border-radius: 4px ;
+	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
+	height: 68px;
+	width: 300px;
+	/*width: 220px;*/
+	font-size: 20pt;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	text-align: center;
+	float:right; 
+	margin:25px 0 0 78px;
+	line-height:68px;
+}
+.form_input{
+	background-color:rgba(255,255,255,0.2);
+	border-radius: 4px;
+	padding:26px 22px;
+	width: 480px;
+	border: 0;
+	height:25px;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	font-size:28px
+}
+.nologin{
+	margin:10px 0px 0px 78px;
+	background-color:rgba(255,255,255,0.2);
+	padding:20px;
+	line-height:36px;
+	border-radius: 5px;
+	width: 480px;
+	border: 0;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	font-size:28px;
+}
+.div_table{
+	display:table;
+}
+.div_tr{
+	display:table-row;
+}
+.div_td{
+	display:table-cell;
+}
+.title_gap{
+	margin:10px 0px 0px 78px;
+}
+.img_gap{
+	padding-right:30px;
+	vertical-align:middle;
+}
+.password_gap{
+	margin:30px 0px 0px 78px;
+}
+.error_hint{
+	color: rgb(255, 204, 0);
+	margin:10px 0px -10px 78px; 
+	font-size: 18px;
+	font-weight: bolder;
+}
+.main_field_gap{
+	margin:100px auto 0;
+}
+ul{
+	margin: 0;
+}
+li{
+	margin: 10px 0;
+}
+#wanLink{
+	cursor: pointer;
+}
+.button_background{
+	background-color: transparent;
+}
+
+.connect{
+	-webkit-animation: connecting 3s infinite linear;
+	-moz-animation: connecting 3s infinite linear;
+	-o-animation: connecting 3s infinite linear;
+	animation: connecting 3s infinite linear;				
+}
+
+/*for mobile device*/
+@media screen and (max-width: 1000px){
+	.title_name {
+		font-size: 1.2em;
+		color:#93d2d9;
+		margin-left:15px;
+	}
+	.prod_madelName{
+		font-size: 1.2em;
+		margin-left: 15px;
+	}
+	.p1{
+		font-size: 12pt;
+		width:100%;
+	}
+	.login_img{
+		background-size: 75%;
+	}
+	.title_text{
+		width: 100%;
+	}
+	.form_input{	
+		padding:13px 11px;
+		width: 100%;
+		height:25px;
+		font-size:16px
+	}
+	.button{
+		height: 50px;
+		width: 100%;
+		font-size: 14pt;
+		text-align: center;
+		float:right; 
+		margin: 25px -30px 0 0;
+		line-height:50px;
+		padding: 0 10px;
+	}
+	.nologin{
+		margin-left:10px; 
+		padding:10px;
+		line-height:18px;
+		width: 100%;
+		font-size:14px;
+	}
+	.error_hint{
+		margin-left:10px; 
+	}
+	.main_field_gap{
+		width:80%;
+		margin:30px 0 0 15px;
+		/*margin:30px auto 0;*/
+	}
+	.title_gap{
+		margin-left:15px; 
+	}
+	.password_gap{
+		margin-left:15px; 
+	}
+	.img_gap{
+		padding-right:0;
+		vertical-align:middle;
+	}
+	ul{
+		margin-left:-20px;
+	}
+	li{
+		margin: 10px 0;
+	}
+	
+	.connect{
+		-webkit-animation: connecting 3s infinite linear;
+		-moz-animation: connecting 3s infinite linear;
+		-o-animation: connecting 3s infinite linear;
+		animation: connecting 3s infinite linear;				
+	}
+}
+
+@keyframes connecting {
+	0% {
+		left: 30px;
+	}
+	50% {
+		left: 220px;
+	}
+		100% {
+	left: 30px;
+}
+</style>
+<script type="text/javascript">
+var new_lan_ip = (function(){
+	var current_lanip = '<% nvram_get("lan_ipaddr"); %>';
+	var current_mask = '<% nvram_get("lan_netmask"); %>';
+	var MAX_SUBNET = 3232300800;
+	var MIN_LAN_IP = 3232235521;
+
+	var inet_aton = function(ip_str){
+		if(!ip_str)
+			return -1;
+		
+		var re = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
+		if(re.test(ip_str)){
+			var v1 = parseInt(RegExp.$1);
+			var v2 = parseInt(RegExp.$2);
+			var v3 = parseInt(RegExp.$3);
+			var v4 = parseInt(RegExp.$4);	
+			if(v1 < 256 && v2 < 256 && v3 < 256 && v4 < 256)
+				return v1*256*256*256+v2*256*256+v3*256+v4;
+		}
+		
+		return -2;
+	}
+
+	var inet_ntoa = function(ip_num){
+		var v1, v2, v3, v4;
+		var ip_str = "";
+		
+		if(!ip_num || typeof(ip_num) != "number")
+			return null;
+		
+		v1 = (ip_num&0xff000000)>>>24;
+		v2 = (ip_num&0x00ff0000)>>>16;
+		v3 = (ip_num&0x0000ff00)>>>8;
+		v4 = (ip_num&0x000000ff);
+
+		ip_str = v1+"."+v2+"."+v3+"."+v4;
+		
+		return ip_str;
+	}
+
+	var isSupport = function(_ptn){return ('<% nvram_get("rc_support"); %>'.search(_ptn) == -1) ? false : true;}
+	var tmo_support = isSupport("tmo");
+	
+	if(tmo_support){		
+		return (current_lanip.indexOf("192.168.29") == -1) ? "192.168.29.1" : "192.168.24.1";
+	}
+	else{	
+		var reverse_mask_num = ~(inet_aton(current_mask));
+		var current_lanip_num = inet_aton(current_lanip);      
+		var lan_subnet = current_lanip_num+reverse_mask_num;
+
+		if(lan_subnet >= MAX_SUBNET)
+			var new_lanip_num = MIN_LAN_IP;
+		else
+			var new_lanip_num = lan_subnet+1;
+
+		return inet_ntoa(new_lanip_num);
+	}	
+})();
+
+function initial(){
+	<% login_state_hook(); %>
+	var LoginIP = login_ip_str();
+	var nowIP = login_ip_str_now();
+	var html_code = '';
+	var url_flag = "";
+	var html_code_notlogin = "<ul><li>Please check with your network administrator.</li></ul>";	
+	var showtext = function(obj, str){if(obj)obj.innerHTML=str;}
+
+	if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
+		showtext($("#failReason1")[0], "<#web_redirect_reason6#> Please check again.");
+		html_code = html_code_notlogin;
+	}else{		
+		showtext($("#failReason1")[0], "<#web_redirect_reason6#>");
+		html_code += "<ul>";
+		html_code += "<li><#web_redirect_case6_desc1#>";
+		html_code += "<span style='font-weight:bolder'>"+ new_lan_ip +"</span></li>";
+		html_code += "<li><#web_redirect_case6_desc2#></li>";
+		html_code += "<li><#web_redirect_suggestion0_1#></li>";
+		html_code += "</ul>";
+	}			
+
+	$("#wanLink").html("<#CTL_next#>");
+	$("#wanLink").click(function(){
+		change_lan_subnet();
+	});
+	$("#suggestion").hide();
+	$("#case_content")[0].innerHTML  = html_code;
+
+	change_lan_subnet();
+
+	var windowHeight = (function(){
+		if(window.innerHeight)
+			return window.innerHeight;
+		else if(document.body && document.body.clientHeight)
+			return document.body.clientHeight;
+		else if(document.documentElement && document.documentElement.clientHeight)
+			return document.documentElement.clientHeight;
+		else
+			return 800;
+	})();
+
+	document.getElementById("loginTable").style.display = "";
+}
+
+function change_lan_subnet(){
+	send_setting();
+	$("#wanLink").hide();
+	$("#submitBtn").show();
+	$("#submitBtn").html('<span><#CTL_reconnection#>&nbsp</span><img src="/images/InternetScan.gif">')
+}
+
+function send_setting(){
+	$.ajax({
+		url: '/setting_lan.htm',
+		dataType: 'script',
+
+		error: function(xhr){
+			setTimeout(send_setting, 1000);
+			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/Main_Login.asp?page=error_page.htm?flag=6_1";
+		},
+
+		success: function(response){
+			setTimeout(detect_router, 5000);
+		}
+	});
+}
+
+function iAmAlive(json){
+	top.location.href = location.origin.replace(location.hostname, new_lan_ip) 
+		+ "/QIS_wizard.htm?flag=" 
+		+ (function(){return (('<% nvram_get("x_Setting"); %>' === '0')?"welcome":"detect")})();
+}
+
+function detect_router(){
+	$.ajax({
+		url: location.origin.replace(location.hostname, new_lan_ip) + "/httpd_check.json",
+		dataType: 'jsonp',
+		timeout: 2000,
+		error: function(xhr){
+			setTimeout(detect_router, 1000);
+			setTimeout(function(){
+				$("#case_content ul").html("<li><#error_page_lanip_changed_desc1#></li>");
+			}, 3000);
+		}
+	});
+}
+</script>
+
+</head>
+<body class="wrapper" onload="initial();">
+	<div id="loginTable" class="div_table main_field_gap" style="display:none">
+		<div class="title_name">
+			<div class="div_td img_gap">
+				<div class="login_img"></div>
+			</div>
+			<div id="page_title" class="div_td title_text"><#web_redirect_message#></div>
+		</div>		
+		<div class="prod_madelName"><#Web_Title2#></div>
+		
+		<div id="reason_title" class="p1 title_gap"><#web_redirect_fail_reason0#></div>	
+		<div id="reason_field">
+			<div class="p1 title_gap"></div>
+			<div class="nologin">
+				<div id="failReason1"></div>
+			</div>
+		</div>
+		
+		<div id="suggest_title" class="p1 title_gap"><#web_redirect_suggestion0#></div>	
+		<div>
+			<div class="p1 title_gap"></div>
+			<div class="nologin">
+				<div id="animation_field" style="display:none">
+					<div style="display:table">
+						<div style="display:table-row">
+							<div style="display:table-cell">
+								<div style="width:120px;height:100px;background:url('images/Model_product.png') no-repeat;background-size:100%;"></div>
+							</div>
+							<div style="display:table-cell;width:300px;vertical-align:middle;position:relative">
+								<div style="width:200px;height:3px;background:#279FD9;margin-left:30px;"></div>
+								<div class="connect" style="width:12px;height:12px;border-radius:100px;position:absolute;background:#FFF;top:49px;left:30px;"></div>
+							</div>						
+							<div style="display:table-cell">
+								<div style="width:110px;height:110px;background:url('images/Internet.png')"></div>
+							</div>						
+						</div>
+					</div>
+				</div>
+				<div id="case_content"></div>
+				<div id="suggestion">
+					<ul>
+						<li>
+							<span><#web_redirect_suggestion_final#></span>						
+						</li> 
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div>
+		<div id="wanLink" class='button' onclick="history.go(-1)"><#btn_go#></div>
+		<!--div id="back_btn" class='button' style="display:none">Back</div-->	
+		<div id="submitBtn" class='button button_background' style="display:none"></div>
+	</div>
+</body>
+</html>

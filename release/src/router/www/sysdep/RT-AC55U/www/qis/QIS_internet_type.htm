@@ -70,10 +70,7 @@ function QKinternettype_load_body(){
 		if(parent.get_internet_type_reducedmode() == "enable")
 			blocking("dhcppppoe_sec", false);
 	
-		if(parent.noiptv_support)
-			document.getElementById("specialISP_tr").style.display = "none";
-		else
-			ISP_Profile_Selection(original_switch_wantag);
+		ISP_Profile_Selection(original_switch_wantag);
 
 		if( parent.based_modelid != "RT-AC3200" &&
                         parent.based_modelid != "RT-AC87U" &&
@@ -95,7 +92,7 @@ function QKinternettype_load_body(){
 			parent.based_modelid != "RT-AC68U" &&
 			parent.based_modelid != "RT-AC66U" &&
 			parent.based_modelid != "RT-AC56U" &&
-			parent.based_modelid != "RT-AC51U" &&
+			//based_modelid != "RT-AC51U" &&
 			parent.based_modelid != "RT-N66U" &&
 			parent.based_modelid != "RT-N18U"
 	        ){
@@ -463,6 +460,17 @@ function switch_dialUp_type(obj){
 
 
 function detect_if_wan_plug(flag){
+	String.prototype.strlenHandler = function(maxLen, handler){
+		var len = 0;
+		for(var i=0; i<str.length; i++){
+			var c = str.charCodeAt(i); 
+			if((c >= 0x0001 && c <= 0x007e) || (0xff60<=c && c<=0xff9f)){len++;} 
+			else{len+=2;} 
+		} 
+
+		if(len > maxLen) handler();
+	}
+
 	$.ajax({
 		url: '/result_of_get_changed_status_QIS.asp',
 		dataType: 'script',		
@@ -471,10 +479,10 @@ function detect_if_wan_plug(flag){
 		},
 		success: function(response){
 			if(autodet_state == 4){ // ethernet did not plug
-				if(parent.ISMOBILE)
-					document.getElementById("wan_unplug_mobile").style.display = "";
-				else
-					document.getElementById("wan_unplug").style.display = "";
+				document.getElementById("wan_unplug").innerHTML.strlenHandler(135, function(){
+					document.getElementById("unknownIsp").style.display = "none";
+				});
+				document.getElementById("wan_unplug").style.display = "";
 			}
 			else if(autodet_state == 0)
 				detect_if_wan_plug();
@@ -503,29 +511,26 @@ function next_step(flag){
 
 	if(flag == 0){
 		stage = 1;
-		document.getElementById('dialUp_tr').style.display = "none";
-		document.getElementById('dialUp_desc').style.display = "none";
-		document.getElementById('non_dialUp_tr').style.display = "none";
-		document.getElementById('non_dialUp_desc').style.display = "none";
-		document.getElementById('previous_button').style.display = "";
-		document.getElementById('title_desc').innerHTML = "<#QKSet_type_desc#>";
 		if(document.applyForm.wan_type[0].checked){	// dial-up 
-			document.applyForm.wan_proto.value = "pppoe";
 			parent.document.QKform.wan_dhcpenable_x.value = 1;
 			parent.document.QKform.wan_dnsenable_x.value = 1;
-			document.applyForm.next_page.value = "QIS_internet_account.htm";
 			parent.document.QKform.wan_proto.value = document.applyForm.wan_proto.value;
+
+			document.applyForm.wan_proto.value = "pppoe";
+			document.applyForm.next_page.value = "QIS_internet_account.htm";
 			location.href = document.applyForm.next_page.value;
-			return true;
-		
 		}
 		else if(document.applyForm.wan_type[1].checked){
+			document.getElementById('dialUp_tr').style.display = "none";
+			document.getElementById('dialUp_desc').style.display = "none";
+			document.getElementById('non_dialUp_tr').style.display = "none";
+			document.getElementById('non_dialUp_desc').style.display = "none";
+			document.getElementById('previous_button').style.display = "";
 			document.getElementById('dhcp_tr').style.display = "";
 			document.getElementById('dhcp_desc').style.display = "";
 			document.getElementById('static_tr').style.display = "";
 			document.getElementById('static_desc').style.display = "";
-			if(!parent.noiptv_support)
-				document.getElementById('specialISP_tr').style.display = "";
+			document.getElementById('specialISP_tr').style.display = "";
 			document.applyForm.dhcp_type[0].checked = true;
 		}	
 	}
@@ -655,8 +660,7 @@ function previous_step(flag){
 		document.getElementById('dialUp_desc').style.display = "";
 		document.getElementById('non_dialUp_tr').style.display = "";
 		document.getElementById('non_dialUp_desc').style.display = "";
-		if(!parent.noiptv_support)
-			document.getElementById('specialISP_tr').style.display = "none";
+		document.getElementById('specialISP_tr').style.display = "none";
 		document.getElementById('previous_button').style.display = "none";
 		document.getElementById('title_desc').innerHTML = "<#QIS_SmartConn_title1#>";
 		if(document.getElementById("image_field").className == "static_image"){
@@ -688,30 +692,25 @@ function enable_ISP_special(){
 		document.getElementById("dhcp_scenario_2").style.display = "";
 	}
 }
-
 </script>      
 <style>
 .dialUp{
-	width:310px;
 	height:157px;
 	background:url('../images/New_ui/new_qis/PPPoE.png') no-repeat;
 	background-position:50% 0%;
 }
 .non_dialUp{
-	width:310px;
 	height:320px;
 	background:url('../images/New_ui/new_qis/WAN-connection-type.png') no-repeat;
 	background-position:50% 0%;
 }
 .static_image{
-	width:310px;
-	height:300px;
+	height:280px;
 	background:url('../images/New_ui/new_qis/staticIP.png') no-repeat;
 	background-position:50% 0%;
 
 }
 .image_field{
-	width:310px;
 	height:300px;
 	background:url('../images/New_ui/new_qis/WAN-connection-defaultPage.png') no-repeat;
 	background-position: center;
@@ -750,14 +749,14 @@ function enable_ISP_special(){
 	</div>
 	<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="../images/New_ui/export/line_export.png"></div>
 </div>	
-
+<br/>
 <div id="field_general">
 
 <div id='dhcppppoe_sec'>
   <table border="0" align="left" cellpadding="2" cellspacing="0"> 
 	<tr>
 		<td style="width:380px;">
-			<table class="QISform" style="width:380px; margin-top:-50px;">
+			<table class="QISform" style="width:98%;">
 				<tr>
 					<td colspan="2">
 						<div id="title_desc" style="font-size:14px; margin:0 0 10px 10px;"><#QIS_SmartConn_title1#></div>
@@ -827,14 +826,14 @@ function enable_ISP_special(){
 				</tr>
 			</table>
 		</td>
-		<td style="width:365px; height:430px;background:#444F52;border-radius:10px;">
+		<td style="width:365px; height:400px;background:#444F52;border-radius:10px;">
 			<div id="image_field" class="image_field"></div>
 			<div id="isp_card_desc" style="padding:15px;display:none;line-height:15px;"><#QIS_SmartConn_ISPDesc#></div>
 			<div id="static_ip_desc" style="padding:15px;display:none;line-height:15px;"><#QIS_SmartConn_StaticDesc#></div>
-			<div id="dhcp_scenario_1" style="position:absolute;margin:-335px 0 0 20px;font-size:12px; display:none;"><#QIS_SmartConn_Scen1#></div>
-			<div id="dhcp_scenario_2" style="position:absolute;margin:-165px 0 0 20px;font-size:12px; display:none;"><#QIS_SmartConn_Scen2#></div>
+			<div id="dhcp_scenario_1" style="color:#5F9EA0;font-weight:bold;position:absolute;margin:-312px 0px 0px 112px;font-size:12px; display:none;"><#QIS_SmartConn_Scen1#></div>
+			<div id="dhcp_scenario_2" style="color:#5F9EA0;font-weight:bold;position:absolute;margin:-149px 0px 0px 112px;font-size:12px; display:none;"><#QIS_SmartConn_Scen2#></div>
 			<div id="special_ISP_field" style="margin-top:-100px;display:none">
-			<div style="line-height:25px;height:285px;">
+			<div style="line-height:25px;height:250px;">
 				<div id="select_profile">
 					<table class="iptvTable">
 					<tr>
@@ -950,7 +949,7 @@ function enable_ISP_special(){
 		            	</tr>
 		            	<tr id="tr_pppoe_password" style="display:none;">
 		              		<th><div style="margin-top:-25px;"><#PPPConnection_Password_itemname#>: </div></th>
-		              		<td><input type="password" autocapitalize="off" maxlength="64" class="input_15_table" id="wan10_pppoe_passwd" name="wan10_pppoe_passwd" value="<% nvram_get("wan10_pppoe_passwd"); %>">
+		              		<td><input type="password" autocapitalization="off" maxlength="64" class="input_15_table" id="wan10_pppoe_passwd" name="wan10_pppoe_passwd" value="<% nvram_get("wan10_pppoe_passwd"); %>">
 							<div style="margin-top:1px;"><input type="checkbox" name="show_pass_iptv" onclick="pass_checked_iptv(document.applyForm.wan10_pppoe_passwd);"><#QIS_show_pass#></div>
 							</td>
 		            	</tr>
@@ -961,8 +960,9 @@ function enable_ISP_special(){
 	</tr>
 	<tr>
 		<td colspan="2">
-			<div style="color:#FC0;font-size:14px;margin-top:10px;"><#QIS_SmartConn_TypeNote#></div>
-			<div id="wan_unplug" style="color:#FC0;font-size:14px;display:none">* <#web_redirect_suggestion1#></div>
+			<div><img style="width: 100%; *width: 710px; margin-top: 15px;height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+			<div id="unknownIsp" style="color:#FC0;font-size:14px;margin-left:10px;margin-top:10px;"><#QIS_SmartConn_TypeNote#></div>
+			<div id="wan_unplug" style="color:#FC0;font-size:14px;margin-left:10px;margin-top:5px;display:none">* <#web_redirect_suggestion1#></div>
 		</td>
 	</tr>
   </table> 

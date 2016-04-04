@@ -958,20 +958,27 @@ PJ_DEF(pj_status_t) pj_sock_recvfrom(pj_sock_t sock,
 				     pj_sockaddr_t *from,
 				     int *fromlen)
 {
+	//pj_uint16_t pkt_id;
+	pj_status_t status;
     PJ_CHECK_STACK();
     PJ_ASSERT_RETURN(buf && len, PJ_EINVAL);
 
     *len = recvfrom(sock, (char*)buf, *len, flags, 
-		    (struct sockaddr*)from, (socklen_t*)fromlen);
+		(struct sockaddr*)from, (socklen_t*)fromlen);
 
     if (*len < 0)
-	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+		status = PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
     else {
         if (from) {
             PJ_SOCKADDR_RESET_LEN(from);
         }
-	return PJ_SUCCESS;
-    }
+	status = PJ_SUCCESS;
+	}
+
+	//pkt_id = pj_ntohl(((pj_uint32_t*)(((pj_uint8_t *)buf) + 6))[0]);
+	//PJ_LOG(4, (THIS_FILE, "pkt_len=[%d], pkt_id=[%d], status=[%d]", *len, pkt_id, status));
+
+	return status;
 }
 
 /*

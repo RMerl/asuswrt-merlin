@@ -154,7 +154,7 @@ void format_mount_2nd_jffs2(void)
         modprobe(JFFS_NAME);
         sprintf(s, MTD_BLKDEV(%d), part);
         if (mount(s, SECOND_JFFS2_PATH, JFFS_NAME, MS_NOATIME, "") != 0) {
-		if( (get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC3200 || get_model()==MODEL_RTAC68U || get_model()==MODEL_RPAC68U || get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U || get_model()==MODEL_RTAC88U || get_model()==MODEL_RTAC3100 || get_model()==MODEL_RTAC5300 || model==MODEL_RTAC5300R || get_model()==MODEL_RTN18U || get_model()==MODEL_RTAC1200G || get_model()==MODEL_RTAC1200GP) ^ (mtd_erase(SECOND_JFFS2_PARTITION)) ){
+		if( (get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC3200 || get_model()==MODEL_RTAC68U || get_model()==MODEL_RPAC68U || get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U || get_model()==MODEL_RTAC88U || get_model()==MODEL_RTAC3100 || get_model()==MODEL_RTAC5300 || get_model==MODEL_RTAC5300R || get_model()==MODEL_RTN18U || get_model()==MODEL_RTAC1200G || get_model()==MODEL_RTAC1200GP) ^ (mtd_erase(SECOND_JFFS2_PARTITION)) ){
                         error("formatting");
                         return;
                 }

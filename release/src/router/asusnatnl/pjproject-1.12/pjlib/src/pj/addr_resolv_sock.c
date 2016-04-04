@@ -273,11 +273,11 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
 	for (i=0; he.h_addr_list[i] && *count<max_count; ++i) {
 	    pj_ansi_strncpy(ai[*count].ai_canonname, he.h_name,
 			    sizeof(ai[*count].ai_canonname));
-	    ai[*count].ai_canonname[sizeof(ai[*count].ai_canonname)-1] = '\0';
+		ai[*count].ai_canonname[sizeof(ai[*count].ai_canonname)-1] = '\0';
 
-	    ai[*count].ai_addr.ipv4.sin_family = PJ_AF_INET;
-	    pj_memcpy(&ai[*count].ai_addr.ipv4.sin_addr,
-		      he.h_addr_list[i], he.h_length);
+		ai[*count].ai_addr.ipv4.sin_family = PJ_AF_INET;
+		pj_memcpy(&ai[*count].ai_addr.ipv4.sin_addr,
+			he.h_addr_list[i], he.h_length);
 	    PJ_SOCKADDR_RESET_LEN(&ai[*count].ai_addr);
 
 	    (*count)++;

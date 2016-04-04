@@ -42,14 +42,8 @@
 #define RUBY_SRAM_NOFLIP_NOCACHE_BEGIN		0x60000000
 #define RUBY_SRAM_BANK_SIZE			(64 * 1024)
 
-#ifdef TOPAZ_PLATFORM
-	#define RUBY_SRAM_SIZE			(8 * RUBY_SRAM_BANK_SIZE)
-	#define RUBY_SRAM_BANK_SAFE_SIZE	RUBY_SRAM_BANK_SIZE
-#else
-	#define RUBY_SRAM_END_BANK_GUARD_SIZE	32
-	#define RUBY_SRAM_SIZE			(4 * RUBY_SRAM_BANK_SIZE)
-	#define RUBY_SRAM_BANK_SAFE_SIZE	(RUBY_SRAM_BANK_SIZE - RUBY_SRAM_END_BANK_GUARD_SIZE)
-#endif
+#define RUBY_SRAM_SIZE			(8 * RUBY_SRAM_BANK_SIZE)
+#define RUBY_SRAM_BANK_SAFE_SIZE	RUBY_SRAM_BANK_SIZE
 
 /* DDR */
 #define RUBY_DRAM_UNIFIED_BEGIN			0x80000000
@@ -103,6 +97,9 @@
 
 #define RUBY_KERNEL_LOAD_DRAM_BEGIN	(RUBY_DRAM_BEGIN + 0x3000000)
 
+/* Safety offset from stack top address */
+#define RUBY_STACK_INIT_OFFSET		4
+
 /* DDR layout */
 #define CONFIG_ARC_NULL_BASE		0x00000000
 #define CONFIG_ARC_NULL_SIZE		(64 * 1024)
@@ -134,19 +131,18 @@
 
 #define CONFIG_ARC_MUC_STACK_INIT_UBOOT		(RUBY_SRAM_BEGIN + CONFIG_ARC_MUC_STACK_OFFSET_UBOOT)
 
-#ifdef TOPAZ_PLATFORM
-	/* Must be equal to RUBY_CRUMBS_OFFSET */
-	#define RUBY_CRUMBS_OFFSET_UBOOT	(0x0003FFC0)
-#else
-	#define RUBY_CRUMBS_OFFSET_UBOOT	(0x0003FFA0)
-#endif
+/* Must be equal to RUBY_CRUMBS_OFFSET */
+#define RUBY_CRUMBS_OFFSET_UBOOT	(0x0003FFC0)
 
+#define RUBY_UBOOT_PIGGY_MAX_SIZE		0x14000
 #define RUBY_CRUMBS_ADDR_UBOOT			(RUBY_SRAM_BEGIN + RUBY_CRUMBS_OFFSET_UBOOT)
 
 /*
- * Crumb structure, sits at the end of SRAM. Each core can use it to
+ * Crumb structure, sits at the end of 4th SRAM bank. Each core can use it to
  * store the last run function to detect bus hangs.
  */
+#define RUBY_CRUMBS_SIZE		64
+
 #ifndef __ASSEMBLY__
 	struct ruby_crumbs_percore {
 		unsigned long	blink;

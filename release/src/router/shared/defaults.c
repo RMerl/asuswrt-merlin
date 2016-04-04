@@ -51,6 +51,9 @@ struct nvram_tuple router_defaults[] = {
 
 	// NVRAM for switch
 	{ "switch_stb_x", "0"}, 		// oleg patch
+#if defined(RTCONFIG_QCA)
+	{ "switch_stb_sx", "0"}, 		// oleg patch
+#endif
 	{ "switch_wantag", "none"},		//for IPTV/VoIP case
 	{ "switch_wan0tagid", "" },		//Wan Port
 	{ "switch_wan0prio", "0" },
@@ -58,6 +61,12 @@ struct nvram_tuple router_defaults[] = {
 	{ "switch_wan1prio", "0" },
 	{ "switch_wan2tagid", "" },		//VoIP Port
 	{ "switch_wan2prio", "0" },
+#if defined(RTCONFIG_QCA)
+	{ "switch_wan3tagid", "" },		//IPTV Port
+	{ "switch_wan3prio", "0" },
+	{ "switch_wan4tagid", "" },		//IPTV Port
+	{ "switch_wan4prio", "0" },
+#endif
 	{ "wl_unit",		"0"	},
 	{ "wl_subunit", 	"-1"	},
 	{ "wl_vifnames", 	""	},	/* Virtual Interface Names */
@@ -942,7 +951,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "lan_dns1_x", ""},					/* x.x.x.x x.x.x.x ... */
 	{ "lan_dns2_x", ""},
 	{ "lan_dns_fwd_local", "0"},		/* Forward queries for local domain to upstream DNS server */
-	{ "lan_port", "80"},
 	{ "jumbo_frame_enable", "0"},
 
 	/* Guest TCP/IP parameters */
@@ -1192,10 +1200,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_upnp_enable", "1" },
 	{ "dslx_link_enable", "1" },
 	{ "dslx_DHCPClient", "1" },
+	{ "dslx_dhcp_clientid_type", "0"},/* 0: MAC 1: Node-specific RFC4361 */
 	{ "dslx_dhcp_clientid", "" },	//Required by some ISP using RFC 1483 MER.
-	{ "dslx_dhcp_clientid_hex", "0"},
 	{ "dslx_dhcp_vendorid", ""},	//DHCP option 60
-	{ "dslx_dhcp_opt125", "No"},	//DHCP option 125
 	{ "dslx_ipaddr", "0.0.0.0"},	/* IP address */
 	{ "dslx_netmask", "0.0.0.0"},	/* netmask */
 	{ "dslx_gateway", "0.0.0.0"},	/* gateway */
@@ -1564,7 +1571,7 @@ struct nvram_tuple router_defaults[] = {
 	// NVRAM for start_usb
 	{ "usb_enable", "1"},
 #ifdef RTCONFIG_USB_XHCI
-#if defined(RTAC87U) || defined(DSL_AC68U)
+#ifdef RTAC87U
 	{ "usb_usb3", "1"},
 #else
 	{ "usb_usb3", "0"},
@@ -1733,14 +1740,6 @@ struct nvram_tuple router_defaults[] = {
 #endif
 #endif
 
-#ifdef RTCONFIG_HTTPS
-	{ "https_lanport", "8443"},
-	{ "https_crt_file", ""},
-	{ "https_crt_save", "0"},
-	{ "https_crt_gen", "1"},
-	{ "https_crt_cn", ""},
-#endif
-
 #ifdef RTCONFIG_MEDIA_SERVER
 	{ "dms_enable", "1" 	},
 	{ "dms_rebuild", "0"	},
@@ -1798,11 +1797,18 @@ struct nvram_tuple router_defaults[] = {
 
 	{ "http_username", "admin" },
 	{ "http_passwd", "admin" },
-	{ "http_enable", "0"}, // 0: http, 1: https, 2: both
+	{ "http_autologout", "30"},
 	{ "http_client", "0"},
 	{ "http_clientlist", ""},
-	{ "http_autologout", "30"},
-	{ "custom_clientlist", ""},	// for custom client list
+	{ "http_enable", "0"},		// 0: http, 1: https, 2: both
+/*	{ "http_lanport", "80"}, */
+#ifdef RTCONFIG_HTTPS
+	{ "https_lanport", "8443"},
+	{ "https_crt_file", ""},
+	{ "https_crt_save", "0"},
+	{ "https_crt_gen", "1"},
+	{ "https_crt_cn", ""},
+#endif
 
 	{ "temp_lang", ""},
 	{ "wollist", ""},
@@ -1836,6 +1842,12 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_TURBO
 	{ "btn_turbo", "1"},
 #endif
+#if defined(RTCONFIG_SWMODE_SWITCH)
+#if defined(PLAC66U)
+	{ "switch_mode", "0"},
+#endif
+#endif
+
 	 /* APCLI/STA parameters */
 	#if 0
 	{ "sta_ssid", "", 0 },
@@ -1858,7 +1870,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "record_lanaddr", ""},
 	{ "telnetd_enable", "0"},
 #ifdef RTCONFIG_SSH
-	{ "sshd_enable", "0"},
+	{ "sshd_enable", "0"},		/* 0: disabled 1: enabled 2: enabled for LAN only */
 	{ "sshd_port", "22"},
 	{ "sshd_pass", "1"},
 	{ "sshd_authkeys", ""},
@@ -2418,7 +2430,7 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_IPV6
 	// IPv6 parameters
-	{ "ipv6_service",	"disabled"	},	// disabled/dhcp6/6in4/6to4/6rd/other
+	{ "ipv6_service",	"disabled"	},	// disabled/ipv6pt/dhcp6/6in4/6to4/6rd/other
 	{ "ipv6_ifdev",		"ppp"		},
 	{ "ipv6_prefix",	""		},	// The global-scope IPv6 prefix to route/advertise
 	{ "ipv6_prefix_length",	"64"		},	// The bit length of the prefix. Used by dhcp6c. For radvd, /64 is always assumed.
@@ -2463,6 +2475,50 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
 	{ "ipv6_ns_drop", "0" 		},	 	// Filter out neighbour solicitation flood on Comcast network
 #endif
+
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_DUALWAN)
+	// IPv6 parameters
+	{ "ipv61_service",	"disabled"	},	// disabled/dhcp6/ipv6pt/6in4/6to4/6rd/other
+	{ "ipv61_ifdev",	"ppp"		},
+	{ "ipv61_prefix",	""		},	// The global-scope IPv6 prefix to route/advertise
+	{ "ipv61_prefix_length","64"		},	// The bit length of the prefix. Used by dhcp6c. For radvd, /64 is always assumed.
+	{ "ipv61_dhcp_pd",	"1"		},	// Enable DHCP-PD (DHCP Prefix Delegation) by default
+	{ "ipv61_rtr_addr",	""		},	// defaults to $ipv6_prefix::1
+	{ "ipv61_prefix_len_wan","64"		},	// used in ipv6_service other
+	{ "ipv61_ipaddr",	""		},	// used in ipv6_service other
+	{ "ipv61_gateway",	""		},	// used in ipv6_service other
+	{ "ipv61_radvd",	"1"		},	// Enable Router Advertisement (radvd)
+	{ "ipv61_relay",	"192.88.99.1"	},	// IPv6 Anycast Address
+	{ "ipv61_tun_v4end",	"0.0.0.0"	},	// Foreign IPv4 endpoint of SIT tunnel
+	{ "ipv61_tun_addr",	""		},	// IPv6 address to assign to local tunnel endpoint
+	{ "ipv61_tun_addrlen",	"64"		},	// CIDR prefix length for tunnel's IPv6 address
+	{ "ipv61_tun_peer",	""		},	// IPv6 address of remote tunnel endpoint
+	{ "ipv61_tun_mtu",	"0"		},	// Tunnel MTU, 0 for default
+	{ "ipv61_tun_ttl",	"255"		},	// Tunnel TTL
+	{ "ipv61_6rd_dhcp",	"1"		},
+	{ "ipv61_6rd_router", 	"0.0.0.0"	},
+	{ "ipv61_6rd_ip4size", 	"0"		},
+	{ "ipv61_6rd_prefix",	""		},
+	{ "ipv61_6rd_prefixlen","32"		},
+#if 0
+	{ "ipv61_dns",		""		},	// DNS server(s) IPs
+#else
+	{ "ipv61_dns1",		""		},
+	{ "ipv61_dns2",		""		},
+	{ "ipv61_dns3",		""		},
+#endif
+	{ "ipv61_get_dns",	""		},	// DNS IP address which got by dhcp6c
+	{ "ipv61_dnsenable",	"1"		},
+	{ "ipv61_get_domain",	""		},	// domain name which got by dhcp6c
+	{ "ipv61_autoconf_type","0"		},	// IPv6 LAN auconfiguration type, 0: stateless, 1: stateful
+	{ "ipv61_dhcp_lifetime","86400"		},	// valid lifetimes of IPv6 prefix in seconds
+	{ "ipv61_dhcp_start",	""		},	// start of address pool
+	{ "ipv61_dhcp_end",	""		},	// end of address pool
+	{ "ipv61_prefix_s",	""		},	// for ipv6 6in4
+	{ "ipv61_prefix_length_s", "64"		},	// for ipv6 6in4/other
+	{ "ipv61_rtr_addr_s",	""		},	// for ipv6 other
+#endif
+
 	{ "web_redirect", 	"1"		},	// Only NOLINK is redirected in default, it is overwrited in init_nvram
 	{ "disiosdet",		"1"		},
 	{ "nat_redirect_enable",	"1"},
@@ -4892,6 +4948,14 @@ nvram_default_get(const char *name)
 			if (strcmp(router_defaults_override_type1[idx].name, fixed_name) == 0) {
 				return router_defaults_override_type1[idx].value;
 			}
+		}
+	}
+#endif
+#ifdef RTCONFIG_TCODE
+	if (strncmp(name, "lan_", 4) == 0 || strncmp(name, "dhcp_", 5) == 0) {
+		char *value = tcode_default_get(fixed_name);
+		if (value) {
+			return value;
 		}
 	}
 #endif

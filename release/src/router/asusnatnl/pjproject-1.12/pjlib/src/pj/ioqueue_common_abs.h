@@ -101,7 +101,8 @@ union operation_key
 #define DECLARE_COMMON_KEY                          \
     PJ_DECL_LIST_MEMBER(struct pj_ioqueue_key_t);   \
     pj_ioqueue_t           *ioqueue;                \
-    pj_mutex_t             *mutex;                  \
+    pj_grp_lock_t 	   *grp_lock;		    \
+    pj_lock_t              *lock;                   \
     pj_bool_t		    inside_callback;	    \
     pj_bool_t		    destroy_requested;	    \
     pj_bool_t		    allow_concurrent;	    \
@@ -112,6 +113,7 @@ union operation_key
     int                     connecting;             \
     struct read_operation   read_list;              \
     struct write_operation  write_list;             \
+    struct write_operation  write_gclist;             \
     struct accept_operation accept_list;	    \
     UNREG_FIELDS
 

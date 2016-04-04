@@ -731,7 +731,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	    dst_uri.ptr = tmp;
 	    dst_uri.slen = pj_ansi_strlen(tmp);
 	    status = pjsua_call_make_call(g_current_acc,
-						      &dst_uri, 0, NULL,
+						      &dst_uri, 0, 0, NULL,
 						      NULL, &g_current_call);
 	    if (status != PJ_SUCCESS)
 		OnError(TEXT("Unable to make call"), status);

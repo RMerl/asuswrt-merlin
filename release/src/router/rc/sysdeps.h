@@ -57,4 +57,10 @@ extern char *getWscStatus(int unit);
 
 extern char *get_lan_hwaddr(void);
 
+#if defined(RTCONFIG_DSL)
+extern void init_switch_dsl(void);
+extern void config_switch_dsl(void);
+extern void config_switch_dsl_set_lan(void);
+#endif
+
 #endif

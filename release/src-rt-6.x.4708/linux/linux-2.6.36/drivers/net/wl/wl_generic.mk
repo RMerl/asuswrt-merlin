@@ -39,8 +39,11 @@ endif
     include $(WLCFGDIR)/wl.mk
 
     ifeq ($(WLCLMAPI),1)
-        WLAN_ComponentsInUse := bcmwifi clm ppr
+        WLAN_ComponentsInUse := bcmwifi clm ppr olpc keymgmt
         include $(src)/$(SRCBASE_OFFSET)/makefiles/WLAN_Common.mk
+	else
+		WLAN_ComponentsInUse := keymgmt
+		include $(src)/$(SRCBASE_OFFSET)/makefiles/WLAN_Common.mk
     endif
     
     ifeq ($(WLFILES_SRC),)
@@ -48,7 +51,7 @@ endif
     endif
     
     ifeq ($(WLCLMAPI),1)
-    CLM_TYPE := generic
+    CLM_TYPE ?= router
     $(call WLAN_GenClmCompilerRule,$(src)/$(SRCBASE_OFFSET)/wl/clm/src,$(src)/$(SRCBASE_OFFSET))
     endif
     
@@ -65,7 +68,8 @@ endif
     EXTRA_CFLAGS    += -DWL_PL310_WAR
     endif
     EXTRA_CFLAGS += -DDMA $(WLFLAGS) -I$(src) -I$(src)/.. -I$(src)/$(SRCBASE_OFFSET)/wl/linux \
-		    -I$(src)/$(SRCBASE_OFFSET)/wl/sys $(WLAN_ComponentIncPath) -Werror
+		    -I$(src)/$(SRCBASE_OFFSET)/wl/sys -I$(src)/$(SRCBASE_OFFSET)/wl/keymgmt/src \
+			$(WLAN_ComponentIncPath) -Werror
 
     ifneq ("$(CONFIG_CC_OPTIMIZE_FOR_SIZE)","y")
          EXTRA_CFLAGS += -finline-limit=2048

@@ -1,6 +1,6 @@
 
 include ../common.mak
-#CC = gcc
+# CC = gcc
 CFLAGS += -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter -fstrict-aliasing
 CFLAGS += -D_GNU_SOURCE
 
@@ -29,6 +29,7 @@ SOCKET_RAW_PROG_OBJS = \
 	$(COMMON_PROG_OBJS)				\
 	qcsapi_rpc/client/socket_raw/qcsapi_socketraw_rpc_client.o	\
 	qcsapi_rpc_common/client/rpc_raw_clnt.o	\
+	qcsapi_rpc_common/client/qftc.o		\
 	qcsapi_rpc_common/common/rpc_raw.o
 
 LIB_OBJS = \

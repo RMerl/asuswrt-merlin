@@ -1048,34 +1048,56 @@ bcm5301x_usb_power_on(int coreid)
 static void
 bcm5301x_usb20_phy_init(void)
 {
-	uint32 dmu_base;
-	uint32 *cru_clkset_key;
-	uint32 *cru_usb2_control;
+	uint32 *genpll_base;
+	uint32 val, ndiv, pdiv, ch2_mdiv, ch2_freq;
+	uint32 usb_pll_pdiv, usb_pll_ndiv;
 
 	/* Check Chip ID */
-	if (!BCM4707_CHIP(CHIPID(sih->chip)))
-		return;
-
-	/* Check Package ID */
-	if (sih->chippkg == BCM4709_PKG_ID) {
+	if (!BCM4707_CHIP(CHIPID(sih->chip))) {
 		return;
 	}
-	else if (sih->chippkg == BCM4707_PKG_ID || sih->chippkg == BCM4708_PKG_ID) {
-		dmu_base = (uint32)REG_MAP(0x1800c000, 4096);
-		cru_clkset_key = (uint32 *)(dmu_base + 0x180);
-		cru_usb2_control = (uint32 *)(dmu_base + 0x164);
 
-		/* unlock */
-		writel(0x0000ea68, cru_clkset_key);
+	/* reg map for genpll base address */
+	genpll_base = (uint32 *)REG_MAP(0x1800C140, 4096);
 
-		/* fill value */
-		writel(0x00dd10c3, cru_usb2_control);
+	/* get divider integer from the cru_genpll_control5 */
+	val = readl(genpll_base + 0x5);
+	ndiv = (val >> 20) & 0x3ff;
+	if (ndiv == 0)
+		ndiv = 1 << 10;
 
-		/* lock */
-		writel(0x00000000, cru_clkset_key);
+	/* get pdiv and ch2_mdiv from the cru_genpll_control6 */
+	val = readl(genpll_base + 0x6);
+	pdiv = (val >> 24) & 0x7;
+	pdiv = (pdiv == 0) ? (1 << 3) : pdiv;
 
-		REG_UNMAP((void *)dmu_base);
-	}
+	ch2_mdiv = val & 0xff;
+	ch2_mdiv = (ch2_mdiv == 0) ? (1 << 8) : ch2_mdiv;
+
+	/* calculate ch2_freq based on 25MHz reference clock */
+	ch2_freq = (25000000 / (pdiv * ch2_mdiv)) * ndiv;
+
+	/* get usb_pll_pdiv from the cru_usb2_control */
+	val = readl(genpll_base + 0x9);
+	usb_pll_pdiv = (val >> 12) & 0x7;
+	usb_pll_pdiv = (usb_pll_pdiv == 0) ? (1 << 3) : usb_pll_pdiv;
+
+	/* calculate usb_pll_ndiv based on a solid 1920MHz that is for USB2 phy */
+	usb_pll_ndiv = (1920000000 * usb_pll_pdiv) / ch2_freq;
+
+	/* unlock in cru_clkset_key */
+	writel(0x0000ea68, genpll_base + 0x10);
+
+	/* set usb_pll_ndiv to cru_usb2_control */
+	val &= ~(0x3ff << 2);
+	val |= (usb_pll_ndiv << 2);
+	writel(val, genpll_base + 0x9);
+
+	/* lock in cru_clkset_key */
+	writel(0x00000000, genpll_base + 0x10);
+
+	/* reg unmap */
+	REG_UNMAP((void *)genpll_base);
 }
 
 static void
@@ -1115,90 +1137,13 @@ bcm5301x_usb30_phy_init(void)
 	writel(0x0000009a, ccb_mii_mng_ctrl_addr);
 	OSL_DELAY(2);
 
-	/* NS-Bx and NS47094
+	/* 53018, NS-Bx and NS47094
 	 * Chiprev 4 for NS-B0 and chiprev 6 for NS-B1 */
-	if ((CHIPID(sih->chip) == BCM4707_CHIP_ID &&
+	if ((CHIPID(sih->chip) == BCM53018_CHIP_ID) ||
+	    (CHIPID(sih->chip) == BCM4707_CHIP_ID &&
 	    (CHIPREV(sih->chiprev) == 4 || CHIPREV(sih->chiprev) == 6)) ||
 	    (CHIPID(sih->chip) == BCM47094_CHIP_ID)) {
 
-		/* USB3 PLL Block */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x587e8000, ccb_mii_mng_cmd_data_addr);
-
-		/* Clear ana_pllSeqStart */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x58061000, ccb_mii_mng_cmd_data_addr);
-
-		/* CMOS Divider ratio to 25 */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x582a6400, ccb_mii_mng_cmd_data_addr);
-
-		/* Asserting PLL Reset */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x582ec000, ccb_mii_mng_cmd_data_addr);
-
-		/* Deaaserting PLL Reset */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x582e8000, ccb_mii_mng_cmd_data_addr);
-
-		/* Deasserting USB3 system reset */
-		writel(0x00000000, usb3_idm_idm_reset_ctrl_addr);
-
-		/* Set ana_pllSeqStart */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x58069000, ccb_mii_mng_cmd_data_addr);
-
-		/* RXPMD block */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x587e8020, ccb_mii_mng_cmd_data_addr);
-
-		/* CDR int loop locking BW to 1 */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x58120049, ccb_mii_mng_cmd_data_addr);
-
-		/* CDR int loop acquisition BW to 1 */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x580e0049, ccb_mii_mng_cmd_data_addr);
-
-		/* CDR prop loop BW to 1 */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x580a005c, ccb_mii_mng_cmd_data_addr);
-
-		/* Waiting MII Mgt interface idle */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-	}
-	/* NS-Ax */
-	else if (CHIPID(sih->chip) == BCM4707_CHIP_ID) {
-		/* PLL30 block */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x587e8000, ccb_mii_mng_cmd_data_addr);
-
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x582a6400, ccb_mii_mng_cmd_data_addr);
-
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x587e80e0, ccb_mii_mng_cmd_data_addr);
-
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x580a009c, ccb_mii_mng_cmd_data_addr);
-
-		/* Enable SSC */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x587e8040, ccb_mii_mng_cmd_data_addr);
-
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x580a21d3, ccb_mii_mng_cmd_data_addr);
-
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-		writel(0x58061003, ccb_mii_mng_cmd_data_addr);
-
-		/* Waiting MII Mgt interface idle */
-		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
-
-		/* Deasserting USB3 system reset */
-		writel(0x00000000, usb3_idm_idm_reset_ctrl_addr);
-	}
-	else if (CHIPID(sih->chip) == BCM53018_CHIP_ID) {
 		/* USB3 PLL Block */
 		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
 		writel(0x587e8000, ccb_mii_mng_cmd_data_addr);
@@ -1252,6 +1197,37 @@ bcm5301x_usb30_phy_init(void)
 		/* Waiting MII Mgt interface idle */
 		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
 	}
+	/* NS-Ax */
+	else if (CHIPID(sih->chip) == BCM4707_CHIP_ID) {
+		/* PLL30 block */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		writel(0x587e8000, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		writel(0x582a6400, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		writel(0x587e80e0, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		writel(0x580a009c, ccb_mii_mng_cmd_data_addr);
+
+		/* Enable SSC */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		writel(0x587e8040, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		writel(0x580a21d3, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		writel(0x58061003, ccb_mii_mng_cmd_data_addr);
+
+		/* Waiting MII Mgt interface idle */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+
+		/* Deasserting USB3 system reset */
+		writel(0x00000000, usb3_idm_idm_reset_ctrl_addr);
+	}
 
 	/* Reg unmap */
 	REG_UNMAP((void *)ccb_mii_base);
@@ -1262,8 +1238,42 @@ out:
 }
 
 static void
+bcm5301x_usb_and_3rd_pcie_phy_reset(void)
+{
+	static bool phy_reset = FALSE;
+	uint32 dmu_base;
+	uint32 *cru_rst_addr;
+	uint32 val;
+
+	/* only reset once */
+	if (phy_reset)
+		return;
+
+	/* NS-Bx and NS47094
+	* Chiprev 4 for NS-B0 and chiprev 6 for NS-B1
+	*/
+	if ((CHIPID(sih->chip) == BCM4707_CHIP_ID &&
+		(CHIPREV(sih->chiprev) == 4 || CHIPREV(sih->chiprev) == 6)) ||
+		(CHIPID(sih->chip) == BCM47094_CHIP_ID)) {
+			/* reset PHY */
+			dmu_base = (uint32)REG_MAP(0x1800c000, 4096);
+			cru_rst_addr = (uint32 *)(dmu_base +  0x184);
+			val = readl(cru_rst_addr);
+			val &= ~(0x3 << 3);
+			writel(val, cru_rst_addr);
+			OSL_DELAY(100);
+			val |= (0x3 << 3);
+			writel(val, cru_rst_addr);
+			REG_UNMAP((void *)dmu_base);
+			phy_reset = TRUE;
+	}
+}
+
+static void
 bcm5301x_usb_phy_init(int coreid)
 {
+	bcm5301x_usb_and_3rd_pcie_phy_reset();
+
 	if (coreid == NS_USB20_CORE_ID) {
 		bcm5301x_usb20_phy_init();
 	}
@@ -1504,6 +1514,8 @@ bcm5301x_3rd_pcie_init(void)
 	/* PCIE mode is not selected */
 	if (cru_straps_ctrl & 0x10)
 		goto out;
+
+	bcm5301x_usb_and_3rd_pcie_phy_reset();
 
 	/* Reg map */
 	ccb_mii_base = (uint32)REG_MAP(0x18003000, 4096);

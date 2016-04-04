@@ -120,6 +120,14 @@ typedef struct pj_turn_sock_cb
 typedef struct pj_turn_sock_cfg
 {
     /**
+     * The group lock to be used by the STUN socket. If NULL, the STUN socket
+     * will create one internally.
+     *
+     * Default: NULL
+     */
+    pj_grp_lock_t *grp_lock;
+
+    /**
      * QoS traffic type to be set on this transport. When application wants
      * to apply QoS tagging to the transport, it's preferable to set this
      * field rather than \a qos_param fields since this is more portable.
@@ -296,6 +304,16 @@ PJ_DECL(pj_status_t) pj_turn_sock_set_user_data(pj_turn_sock *turn_sock,
  * @return		The user/application data.
  */
 PJ_DECL(void*) pj_turn_sock_get_user_data(pj_turn_sock *turn_sock);
+
+
+/**
+ * Get the group lock for this TURN transport.
+ *
+ * @param turn_sock	The TURN transport instance.
+ *
+ * @return	        The group lock.
+ */
+PJ_DECL(pj_grp_lock_t *) pj_turn_sock_get_grp_lock(pj_turn_sock *turn_sock);
 
 
 /**

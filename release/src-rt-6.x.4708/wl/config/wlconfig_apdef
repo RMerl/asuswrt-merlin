@@ -22,12 +22,9 @@
 
 # Allow these to be overridden via the environment.
 # Router makefile make use of these features.
-#MFP      = $(if $(findstring y,$(CONFIG_MFP)),1,0)
-#HSPOT    = $(if $(findstring y,$(CONFIG_HSPOT)),1,0)
-#WLWNM_AP = $(if $(findstring y,$(CONFIG_WNM)$(CONFIG_HSPOT)),1,0)
-MFP      = 1
-HSPOT    = 1
-WLWNM_AP = 1
+MFP      = $(if $(findstring y,$(CONFIG_MFP)),1,0)
+HSPOT    = $(if $(findstring y,$(CONFIG_HSPOT)),1,0)
+WLWNM_AP = $(if $(findstring y,$(CONFIG_WNM)$(CONFIG_HSPOT)),1,0)
 
 AP=1
 WDS=1

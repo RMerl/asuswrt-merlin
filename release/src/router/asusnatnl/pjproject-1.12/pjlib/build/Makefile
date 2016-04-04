@@ -2,6 +2,12 @@ include ../../build.mak
 include ../../version.mak
 include $(PJDIR)/build/common.mak
 
+THIRD_PARTY:=$(PJDIR)/third_party
+
+UMEM_INC=$(CC_INC)$(THIRD_PARTY)/umem
+UMEM_LIBS=-L$(THIRD_PARTY)/lib -lumem-$(TARGET_NAME)
+UMEM_CFLAGS=-DUMEM_STANDALONE
+
 RULES_MAK := $(PJDIR)/build/rules.mak
 
 
@@ -11,12 +17,16 @@ export PJLIB_LIB := ../lib/libpj-$(TARGET_NAME)$(LIBEXT)
 # Gather all flags.
 #
 export _CFLAGS 	:= $(CC_CFLAGS) $(OS_CFLAGS) $(HOST_CFLAGS) $(M_CFLAGS) \
-		   $(CFLAGS) $(CC_INC)../include
+		   $(CFLAGS) \
+       $(UMEM_CFLAGS) \
+       $(CC_INC)../include \
+		   $(UMEM_INC)
 export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 		   $(HOST_CXXFLAGS) $(CXXFLAGS)
 export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJLIB_LIB)) \
 		   $(CC_LDFLAGS) $(OS_LDFLAGS) $(M_LDFLAGS) $(HOST_LDFLAGS) \
-		   $(LDFLAGS) 
+		   $(LDFLAGS) \
+		   $(UMEM_LIBS)
 
 ###############################################################################
 # Defines for building PJLIB library

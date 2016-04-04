@@ -303,7 +303,7 @@ PJ_DEF(pj_status_t) pj_tcp_session_create( const pj_stun_config *cfg,
 		stun_cb.on_rx_indication = &on_stun_rx_indication;
 
 		status = pj_stun_session_create2(&sess->stun_cfg, sess->obj_name, &stun_cb,
-			PJ_FALSE, &sess->stun, PJ_TRUE, sess);
+			PJ_FALSE, NULL, &sess->stun, PJ_TRUE, sess);
 		if (status != PJ_SUCCESS) {
 			do_destroy(sess);
 			return status;

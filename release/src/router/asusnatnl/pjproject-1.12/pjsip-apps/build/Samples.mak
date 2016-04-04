@@ -1,13 +1,20 @@
 
 include ../../build/common.mak
 
+THIRD_PARTY:=$(PJDIR)/third_party
+
+UMEM_INC=$(CC_INC)$(THIRD_PARTY)/umem
+UMEM_LIBS=-L$(THIRD_PARTY)/lib -lumem-$(TARGET_NAME) -ldl
+
 
 ###############################################################################
 # Gather all flags.
 #
-export _CFLAGS 	:= $(PJ_CFLAGS) $(CFLAGS)
+export _CFLAGS 	:= $(PJ_CFLAGS) $(CFLAGS) \
+		   $(UMEM_INC)
 export _CXXFLAGS:= $(PJ_CXXFLAGS)
-export _LDFLAGS := $(PJ_LDFLAGS) $(PJ_LDLIBS) $(LDFLAGS)
+export _LDFLAGS := $(PJ_LDFLAGS) $(PJ_LDLIBS) $(LDFLAGS) \
+		   $(UMEM_LIBS)
 
 SRCDIR := ../src/samples
 OBJDIR := ./output/samples-$(TARGET_NAME)

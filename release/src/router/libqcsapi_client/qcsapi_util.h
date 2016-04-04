@@ -45,6 +45,17 @@ EH0*/
 #include <stdint.h>
 #include <qcsapi.h>
 
+#ifndef max
+#define max(a, b) ((a) < (b) ? (b) : (a))
+#endif
+
+#ifndef min
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#define MAC_ADDR_FMT	"%02x:%02x:%02x:%02x:%02x:%02x"
+#define MAC_ADDR_ARG(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
+
 int qcsapi_verify_numeric(const char *parameter_value);
 int qcsapi_str_to_uint32(const char *str, uint32_t *result);
 int parse_mac_addr(const char *mac_addr_as_str, qcsapi_mac_addr mac_addr);

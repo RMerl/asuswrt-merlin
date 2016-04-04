@@ -972,13 +972,17 @@ void update_wan_state(char *prefix, int state, int reason)
         }
 
 #if defined(RTCONFIG_WANRED_LED)
-	if (state == WAN_STATE_INITIALIZING || state == WAN_STATE_STOPPED || state == WAN_STATE_CONNECTING || state == WAN_STATE_STOPPING || state == WAN_STATE_CONNECTED) {
-		int unit = 0;
-
+	switch (state) {
+	case WAN_STATE_INITIALIZING:
+	case WAN_STATE_STOPPED:
+	case WAN_STATE_CONNECTING:
+	case WAN_STATE_STOPPING:
+	case WAN_STATE_CONNECTED:
 		/* update WAN LED(s) as soon as possible. */
-		if (!strncmp(prefix, "wan1_", 5))
-			unit = 1;
-		update_wan_leds(unit);
+		if (strncmp(prefix, "wan", 3) == 0) {
+			int unit = atoi(prefix + 3);
+			update_wan_leds(unit);
+		}
 	}
 #endif
 }
@@ -1208,7 +1212,8 @@ void check_wan_nvram(void)
 #endif
 
 #ifdef DSL_AC68U	//Andy Chiu, 2015/09/15
-extern cur_ewan_vid;
+#include "interface.h"
+extern int cur_ewan_vid;
 
 int check_wan_if(int unit)
 {
@@ -1227,6 +1232,22 @@ int check_wan_if(int unit)
 		
 		if(new_vid != cur_ewan_vid)
 		{
+			//update port info
+			char buf[32], wan[32];
+			const int ports[] = { 0, 1, 2, 3, 4, 5 };
+			int wan1cfg = nvram_get_int("wans_lanport") + WAN1PORT1 - 1;
+			snprintf(buf, sizeof(buf), "vlan%dports", cur_ewan_vid);
+			nvram_unset(buf);
+			switch_gen_config(wan, ports, wan1cfg, 1, "t");
+			snprintf(buf, sizeof(buf), "vlan%dports", new_vid);
+			nvram_set(buf, wan);
+
+			//update hwname info
+			snprintf(buf, sizeof(buf), "vlan%dhwname", cur_ewan_vid);
+			nvram_unset(buf);
+			snprintf(buf, sizeof(buf), "vlan%dhwname", new_vid);
+			nvram_set(buf, "et0");
+
 			//generate vlan interfaces
 			char cur_vif[16], new_vif[16];
 			sprintf(cur_vif, "vlan%d", cur_ewan_vid);
@@ -1255,38 +1276,38 @@ int check_wan_if(int unit)
 
 			//check all wan unit.
 			int unit;
-			char prefix[32];
 			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 			{
-				sprintf(prefix, "wan%d_ifname", unit);
-				if(nvram_match(prefix, cur_vif))
+				snprintf(buf, sizeof(buf), "wan%d_ifname", unit);
+				if(nvram_match(buf, cur_vif))
 				{
-					dbG("%s=%s\n", prefix, new_vif);
-					nvram_set(prefix, new_vif);
+					dbG("%s=%s\n", buf, new_vif);
+					nvram_set(buf, new_vif);
 				}
 
-				sprintf(prefix, "wan%d_gw_ifname", unit);
-				if(nvram_match(prefix, cur_vif))
+				sprintf(buf, "wan%d_gw_ifname", unit);
+				if(nvram_match(buf, cur_vif))
 				{
-					dbG("%s=%s\n", prefix, new_vif);
-					nvram_set(prefix, new_vif);
+					dbG("%s=%s\n", buf, new_vif);
+					nvram_set(buf, new_vif);
 				}
 			}
-		
+
 			//remove old vlan		
 			eval("ifconfig", cur_vif, "down");
-			eval("vcondif", "rem", cur_vif);
+			eval("vconfig", "rem", cur_vif);
 
 			//set new vlan
 			eval("vconfig", "set_name_type", "VLAN_PLUS_VID_NO_PAD");
-			eval("vconfig", "add", "eth0", nvram_safe_get("ewan_vid"));
+			snprintf(buf, sizeof(buf), "%d", new_vid);
+			eval("vconfig", "add", "eth0", buf);
 			eval("ifconfig", new_vif, "up");
-			eval("ifconfig", new_vif, "hw", "ether", nvram_safe_get("et1macaddr"));
 			cur_ewan_vid = new_vid;
 		}
 		dbG("Set switch\n");
 		config_switch_dsl_set_lan();
 	}
+	return 0;
 }
 #endif 
 
@@ -1652,17 +1673,10 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 		}
 
 #ifdef RTCONFIG_IPV6
-		if (unit == wan_primary_ifunit()) {
-			if (nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-			    (strcmp(wan_proto, "dhcp") == 0 ||
-			     strcmp(wan_proto, "static") == 0)) {
-				nvram_set(ipv6_nvname("ipv6_ifdev"), "eth");
-			}
-		}
-
-		if ((get_ipv6_service() != IPV6_DISABLED))
+		if (get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL)
 		{
-			if (nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+			if (strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
+				nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
 			{
 				disable_ipv6(wan_ifname);
 #if !defined(RTCONFIG_BCMARM) && !defined(RTCONFIG_RALINK) && !defined(RTCONFIG_QCA)
@@ -1682,7 +1696,8 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 		}
 #ifdef RTCONFIG_IPV6
 #ifdef RTCONFIG_RALINK
-		if (((get_ipv6_service() != IPV6_DISABLED) &&
+		if (((get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL) &&
+		     strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
 		     nvram_match(ipv6_nvname("ipv6_ifdev"), "eth") &&
 		     !with_ipv6_linklocal_addr(wan_ifname)) ||
 			with_ipv6_linklocal_addr(wan_ifname))
@@ -1919,6 +1934,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 			start_auth(unit, 0);
 
 #ifdef RTCONFIG_DSL
+			nvram_set(strcat_r(prefix, "clientid_type", tmp), nvram_safe_get("dslx_dhcp_clientid_type"));
 			nvram_set(strcat_r(prefix, "clientid", tmp), nvram_safe_get("dslx_dhcp_clientid"));
 			nvram_set(strcat_r(prefix, "vendorid", tmp), nvram_safe_get("dslx_dhcp_vendorid"));
 #endif
@@ -2030,9 +2046,11 @@ stop_wan_if(int unit)
 		killall_tk("ntpclient");
 
 #ifdef RTCONFIG_IPV6
-		if (nvram_match(ipv6_nvname("ipv6_ifdev"), "eth") ||
-		    get_ipv6_service() != IPV6_NATIVE_DHCP)
+		if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
+			nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
+			(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
 			stop_wan6();
+		}
 #endif
 		/* Shutdown and kill all possible tasks */
 #if 0
@@ -2266,7 +2284,11 @@ int update_resolvconf(void)
 #endif
 
 #ifdef RTCONFIG_IPV6
-	if (ipv6_enabled() & is_routing_enabled()) {
+	if (ipv6_enabled() &&
+#ifdef RTCONFIG_6RELAYD
+		(get_ipv6_service() != IPV6_PASSTHROUGH) &&
+#endif
+		is_routing_enabled()) {
 		char dnsbuf[INET6_ADDRSTRLEN*3 + 3];
 		struct in6_addr addr;
 
@@ -2346,6 +2368,9 @@ void wan6_up(const char *wan_ifname)
 
 	switch (service) {
 	case IPV6_NATIVE_DHCP:
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
 		ipv6_sysconf(wan_ifname, "accept_ra", 1);
 		ipv6_sysconf(wan_ifname, "forwarding", 0);
 		break;
@@ -2362,6 +2387,9 @@ void wan6_up(const char *wan_ifname)
 
 	switch (service) {
 	case IPV6_NATIVE_DHCP:
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
 		start_dhcp6c();
 		break;
 	case IPV6_MANUAL:
@@ -2456,6 +2484,9 @@ void wan6_down(const char *wan_ifname)
 #if 0
 	stop_ecmh();
 #endif
+#ifdef RTCONFIG_6RELAYD
+	stop_6relayd();
+#endif
 	stop_dhcp6c();
 	stop_ipv6_tunnel();
 
@@ -2467,15 +2498,14 @@ void start_wan6(void)
 	// call wan6_up directly
 	char tmp[100];
 	char prefix[] = "wanXXXXXXXXXX_";
-	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
+	char *wan_proto;
 
-	if (nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-	    (nvram_match(strcat_r(prefix, "proto", tmp), "dhcp") ||
-	     nvram_match(strcat_r(prefix, "proto", tmp), "static"))) {
-		nvram_set(ipv6_nvname("ipv6_ifdev"), "eth");
-	}
-	if (nvram_match(ipv6_nvname("ipv6_ifdev"), "eth") ||
-	    get_ipv6_service() != IPV6_NATIVE_DHCP) {
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
+	wan_proto = nvram_get(strcat_r(prefix, "proto", tmp));
+
+	if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
+		nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
+		(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
 		wan6_up(get_wan6face());
 	}
 }
@@ -2512,13 +2542,9 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #ifdef RTCONFIG_IPV6
 		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 		if (wan_unit == wan_primary_ifunit()) {
-			if (nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-			    (strcmp(wan_proto, "dhcp") == 0 ||
-			     strcmp(wan_proto, "static") == 0)) {
-				nvram_set(ipv6_nvname("ipv6_ifdev"), "eth");
-			}
-			if (nvram_match(ipv6_nvname("ipv6_ifdev"), "eth") ||
-			    get_ipv6_service() != IPV6_NATIVE_DHCP) {
+			if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
+				nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
+				(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
 				wan6_up(get_wan6face());
 			}
 		}
@@ -2612,13 +2638,9 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 
 #ifdef RTCONFIG_IPV6
 	if (wan_unit == wan_primary_ifunit()) {
-		if (nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-		    (strcmp(wan_proto, "dhcp") == 0 ||
-		     strcmp(wan_proto, "static") == 0)) {
-			nvram_set(ipv6_nvname("ipv6_ifdev"), "eth");
-		}
-		if (nvram_match(ipv6_nvname("ipv6_ifdev"), "eth") ||
-		    get_ipv6_service() != IPV6_NATIVE_DHCP) {
+		if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
+			nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
+			(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
 			wan6_up(get_wan6face());
 		}
 	}
@@ -3187,9 +3209,6 @@ start_wan(void)
 	/* Start each configured and enabled wan connection and its undelying i/f */
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 		if(dualwan_unit__nonusbif(unit)){
-			if(!is_phy_connect(unit))
-				continue;
-
 			if(unit == wan_primary_ifunit() || nvram_match("wans_mode", "lb")){
 				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);

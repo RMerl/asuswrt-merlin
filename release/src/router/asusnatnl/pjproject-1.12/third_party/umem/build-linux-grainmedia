@@ -1,0 +1,10 @@
+#! /bin/sh
+
+make clean && make \
+	CC=arm-unknown-linux-uclibcgnueabi-gcc \
+	C++=arm-unknown-linux-uclibcgnueabi-g++ \
+	AR=arm-unknown-linux-uclibcgnueabi-ar \
+	RANLIB=arm-unknown-linux-uclibcgnueabi-ranlib \
+	LD=arm-unknown-linux-uclibcgnueabi-ld \
+	os=LINUX \
+	arch=ARM

@@ -581,6 +581,14 @@ PJ_DECL(pj_status_t) pj_ice_strans_get_options(pj_ice_strans *ice_st,
 PJ_DECL(pj_status_t) pj_ice_strans_set_options(pj_ice_strans *ice_st,
 					       const pj_ice_sess_options *opt);
 
+/**
+ * Get the group lock for this ICE stream transport.
+ *
+ * @param ice_st	The ICE stream transport.
+ *
+ * @return		The group lock.
+ */
+PJ_DECL(pj_grp_lock_t *) pj_ice_strans_get_grp_lock(pj_ice_strans *ice_st);
 
 /**
  * Initialize the ICE session in the ICE stream transport.

@@ -378,6 +378,7 @@ function onSubmitApply(s){
 				<td>
                   		<select name="ddns_server_x"class="input_option" onchange="change_ddns_setting(this.value)">
                     			<option value="WWW.ASUS.COM" <% nvram_match("ddns_server_x", "WWW.ASUS.COM","selected"); %>>WWW.ASUS.COM</option>
+					<option value="WWW.GOOGLE-DDNS.COM" <% nvram_match("ddns_server_x", "WWW.GOOGLE-DDNS.COM","selected"); %>>WWW.GOOGLE-DDNS.COM</option>
                     			<option value="WWW.DYNDNS.ORG" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG","selected"); %>>WWW.DYNDNS.ORG</option>
                     			<option value="WWW.DYNDNS.ORG(CUSTOM)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(CUSTOM)","selected"); %>>WWW.DYNDNS.ORG(CUSTOM)</option>
                     			<option value="WWW.DYNDNS.ORG(STATIC)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(STATIC)","selected"); %>>WWW.DYNDNS.ORG(STATIC)</option>

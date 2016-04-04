@@ -1355,13 +1355,16 @@ int setup_dnsmq(int mode)
 	}	
 	
 	eval("iptables", "-t", "nat", "-F", "PREROUTING");
-	eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "udp", "--dport", "53", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18018", tmp));
+	eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "udp", "--dport", "53",
+		"-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18018", tmp));
 
 	if(mode) {
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 		if (!is_psta(nvram_get_int("wlc_band")) && !is_psr(nvram_get_int("wlc_band")))
 #endif
-		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":80", tmp));
+		snprintf(tmp, sizeof(tmp), "%s:%d", nvram_safe_get("lan_ipaddr"), /*nvram_get_int("http_lanport") ? :*/ 80);
+		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80",
+			"-j", "DNAT", "--to-destination", tmp);
 	
 		//sprintf(v, "%x my.%s", inet_addr("10.0.0.1"), get_productid());
 		sprintf(v, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
@@ -1372,7 +1375,8 @@ int setup_dnsmq(int mode)
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 		if (!is_psta(nvram_get_int("wlc_band")) && !is_psr(nvram_get_int("wlc_band")))
 #endif
-		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80", "-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18017", tmp));
+		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80",
+			"-j", "DNAT", "--to-destination", strcat_r(nvram_safe_get("lan_ipaddr"), ":18017", tmp));
 	
 		f_write_string("/proc/net/dnsmqctrl", "", 0, 0);
 	}

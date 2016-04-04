@@ -144,6 +144,11 @@ EH1*/
 #define  QTN_TPZ_DBS					9	/* BBIC4 + RFIC6 */
 #define  QTN_TPZ_SE5502L				10	/* BBIC4 + RFIC5 */
 #define  QTN_TPZ_SKY85710_NG				11
+#define	 QTN_TPZ_DBS_5591				13	/* BBIC4 A2 + RFIC6 */
+#define	 QTN_TPZ_DBS_NXP_BGU7224_BGU7258		14	/* BBIC4 A2 + RFIC6  DBS support*/
+#define	 QTN_TPZ_2_4GHZ_NXP_BGU7224			15	/* BBIC4 A2 + RFIC6 2.4ghz only */
+#define	 QTN_TPZ_5GHZ_NXP_BGU7258			16	/* BBIC4 A2 + RFIC6 5ghz only */
+#define	 QTN_TPZ_5GHZ_SKY85728				17	/* BBIC4 A2 + RFIC4 5ghz only and BBIC4 A2 + RFIC6 5ghz only */
 
 #endif /* _SHARED_DEFS_COMMON_H_ */
 

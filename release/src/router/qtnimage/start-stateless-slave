@@ -196,5 +196,9 @@ echo_with_logging "=== Enable telnet for ATE"
 # telnet_ate
 
 brctl stp br0 off
+brctl ssdp_flood br0 off
 qdrvcmd set br_isolate 0
-
+if [ "${wifi0_mode}" = "ap" ]; then
+	iwpriv wifi0 inact 90
+	iwpriv wifi0 rx_agg_to 200
+fi

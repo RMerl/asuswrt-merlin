@@ -555,7 +555,7 @@ void BCMFASTPATH_HOST br_fdb_update(struct net_bridge *br, struct net_bridge_por
 		/* attempt to update an entry for a local interface */
 		if (unlikely(fdb->is_local)) {
 			if (net_ratelimit())
-				br_warn(br, "received packet on %s with "
+				br_debug(br, "received packet on %s with "
 					"own address as source address\n",
 					source->dev->name);
 		} else {

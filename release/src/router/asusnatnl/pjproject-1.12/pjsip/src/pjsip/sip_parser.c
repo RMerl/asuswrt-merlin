@@ -181,6 +181,7 @@ static pjsip_hdr*   parse_hdr_route( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_require( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_retry_after( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_supported( pjsip_parse_ctx *ctx );
+static pjsip_hdr*   parse_hdr_tnl_supported( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_to( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_unsupported( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_via( pjsip_parse_ctx *ctx );
@@ -474,6 +475,10 @@ static pj_status_t init_parser(int inst_id)
 
     status = pjsip_register_hdr_parser( inst_id, "Supported", "k", 
                                         &parse_hdr_supported);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+
+    status = pjsip_register_hdr_parser( inst_id, "Tnl-Supported", NULL, 
+                                        &parse_hdr_tnl_supported);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     status = pjsip_register_hdr_parser( inst_id, "To", "t", &parse_hdr_to);
@@ -2041,6 +2046,25 @@ static pjsip_hdr* parse_hdr_supported(pjsip_parse_ctx *ctx)
 
     parse_generic_array_hdr(hdr, ctx->scanner);
     return new_hdr ? (pjsip_hdr*)hdr : NULL;
+}
+
+/* Parse Tnl-Supported: header. */
+static pjsip_hdr* parse_hdr_tnl_supported(pjsip_parse_ctx *ctx)
+{
+	pjsip_tnl_supported_hdr *hdr;
+	pj_bool_t new_hdr = (ctx->rdata==NULL || 
+		ctx->rdata->msg_info.tnl_supported == NULL);
+
+	if (ctx->rdata && ctx->rdata->msg_info.tnl_supported) {
+		hdr = ctx->rdata->msg_info.tnl_supported;
+	} else {
+		hdr = pjsip_tnl_supported_hdr_create(ctx->pool);
+		if (ctx->rdata)
+			ctx->rdata->msg_info.tnl_supported = hdr;
+	}
+
+	parse_generic_array_hdr(hdr, ctx->scanner);
+	return new_hdr ? (pjsip_hdr*)hdr : NULL;
 }
 
 /* Parse To: header. */

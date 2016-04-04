@@ -105,9 +105,10 @@ function initial() {
 		document.form.usb_idle_exclude_i.checked = true;
 
 	if ((productid == "RT-AC56U") || (productid == "RT-AC68U") || (productid == "RT-AC87U") ||
-	    (productid == "RT-AC3200") || (productid == "RT-AC88U") || (productid == "RT-AC3100") || (productid == "RT-AC5300"))
+	    (productid == "RT-AC3200") || (productid == "RT-AC88U") || (productid == "RT-AC3100") || (productid == "RT-AC5300")) {
 		document.getElementById("ct_established_default").innerHTML = "Default: 2400";
-
+		showhide("memory_mgmt_tr" ,1);
+	}
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
 }
@@ -932,8 +933,8 @@ function done_validating(action){
 							<input type="radio" name="smbd_enable_smb2" class="input" value="0" <% nvram_match_x("", "smbd_enable_smb2", "0", "checked"); %>><#checkbox_No#>
 						</td>
 	                                </tr>
-					<tr>
-						<th>Memory Management: Regularly flush caches (ARM only) (default: Yes)</th>
+					<tr id="memory_mgmt_tr" style="display:none;">
+						<th>Memory Management: Regularly flush caches (default: Yes)</th>
 						<td>
 							<input type="radio" name="drop_caches" class="input" value="1" <% nvram_match_x("", "drop_caches", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="drop_caches" class="input" value="0" <% nvram_match_x("", "drop_caches", "0", "checked"); %>><#checkbox_No#>

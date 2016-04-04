@@ -227,11 +227,17 @@ int parse_config(Config *config)
         return 0;
 }
 
+int create_server_hdd_info(){
+    int ret=0;
+    return ret;
+}
+
+
 int read_config()
 {
         create_smbclientconf(&smb_config);
         parse_config(&smb_config);
-
+        //create_server_hdd_info();
         //exit(0);
         if(smb_config.dir_num == 0)
         {
@@ -3724,7 +3730,6 @@ int wait_handle_socket(int index){
 /* used for initial, local syncfolder is NULL */
 int initMyLocalFolder(Server_TreeNode *servertreenode,int index)
 {
-
         int res = 0;
         if(servertreenode->browse != NULL)
         {
@@ -3790,7 +3795,7 @@ int initMyLocalFolder(Server_TreeNode *servertreenode,int index)
                                 }
                                 add_action_item("createfile", createpath, g_pSyncList[index]->server_action_list);
 \
-                                //res = SMB_download(filelongurl, index);
+                                //res = SMB_download(filelongurl, index);                     
                                 res = USB_download(filelongurl, index);
                                 //printf("initMyLocalFolder() - res = %d\n", res);
                                 if(res == 0)
@@ -4075,19 +4080,57 @@ int is_server_exist(char *localpath, int index)
         free(temp);
         //printf("serverpath = %s\n", serverpath);
 
-        if (access(serverpath,0) == 0)
+       // printf("~~~~~~~~~~~~~~p+1=%s ~~~~~~~~~~~~\n",p+1);
+        char *fullname;
+        size_t len;
+        len = strlen(serverpath) + strlen(p+1) + 2;
+        fullname = my_malloc(len);
+        //2014.10.20 by sherry malloc申请内存是否成功
+//                if(fullname==NULL)
+//                    return NULL;
+        sprintf(fullname, "%s/%s", serverpath, p+1);
+        /*struct dirent *dirptr;
+
+        DIR *dh;
+        if((dh = opendir(serverpath)) !=NULL){
+                while((dirptr = readdir(dh)) != NULL){
+                   //dirptr = smbc_readdir(dh)读取共享服务器上的文件夹信息
+                        if(dirptr->d_name[0] == '.')//跳过.  .. 文件夹，是linux默认的文件夹
+                                continue;
+                        if(!strcmp(dirptr->d_name, ".") || !strcmp(dirptr->d_name, ".."))
+                                continue;
+
+                        printf("dirptr->d_name = %s, dirptr->d_type = %d\n", dirptr->d_name, dirptr->d_type);
+                        if(!strcmp(dirptr->d_name, p + 1))
+                        {
+                                //printf("get it!\n");
+                                res = 1;
+                                break;
+                        }
+                }
+                closedir(dh);
+                free(serverpath);
+        }
+        return res;*/
+
+        if (access(fullname,0) == 0)
         {
-            printf("serverpath = %s is exist\n", serverpath);
-            free(serverpath);
+           if(fullname!=NULL){
+            printf("fullname = %s is exist\n", fullname);
+            free(fullname);
+            }
             res=1;
             return res;
         }
         else
         {
-            printf("serverpath = %s is not exist\n", serverpath);
-            free(serverpath);
+            if(fullname!=NULL){
+                printf("fullname = %s is not exist\n", fullname);
+                free(fullname);
+            }
             return res;
         }
+
 }
 
 /** 0:local time != server time
@@ -5115,8 +5158,7 @@ int sync_server_to_local(Server_TreeNode *treenode, int (*sync_fuc)(Browse*, Loc
 
 void handle_quit_upload()
 {
-        DEBUG("###handle_quit_upload###\n");
-        //printf("###handle_quit_upload###\n");
+        DEBUG("###handle_quit_upload###\n");    
         int i;
         for(i = 0; i < smb_config.dir_num; i++)
         {
@@ -5179,7 +5221,6 @@ void handle_quit_upload()
                         }
                 }
         }
-                //printf("###handle_quit_upload end###\n");
 }
 
 int initialization()
@@ -5222,14 +5263,13 @@ int initialization()
                                 if(test_if_dir_empty(smb_config.multrule[i]->client_root_path))
                                 {//local端 没有文件或者文件夹
                                         DEBUG("base_path is blank\n");
-
+                                        printf("base_path is blank\n");
                                         if(smb_config.multrule[i]->rule != 2)
                                         {
                                                 if(g_pSyncList[i]->ServerRootNode->Child != NULL)
                                                 {
-                                                        DEBUG("######## init sync folder,please wait......#######\n");
-
-                                                        ret = initMyLocalFolder(g_pSyncList[i]->ServerRootNode->Child, i);
+                                                        DEBUG("######## init sync folder,please wait......#######\n");                               
+                                                        ret = initMyLocalFolder(g_pSyncList[i]->ServerRootNode->Child, i);                                                          
                                                         if(ret != 0)
                                                                 continue;
                                                         g_pSyncList[i]->init_completed = 1;
@@ -5319,7 +5359,7 @@ void sig_handler (int signum)
                                 {
                                         //printf("create_webdav_conf_file fail\n");
 #ifdef NVRAM_
-                                        write_to_nvram("", "smb_tokenfile");
+                                        write_to_nvram("", "usb_tokenfile");
 #endif
                                         return;
                                 }
@@ -5336,7 +5376,7 @@ void sig_handler (int signum)
                                         remove(filename);
                                         free(filename);
 #ifdef NVRAM_
-                                        write_to_nvram("","smb_tokenfile");   //the "" maybe cause errors
+                                        write_to_nvram("","usb_tokenfile");   //the "" maybe cause errors
 #else
                                         write_to_smb_tokenfile("");
 #endif
@@ -5465,6 +5505,7 @@ void run()
 
 }
 
+
 int main(int argc, char* argv[]){
 
         no_config = 0;
@@ -5516,6 +5557,7 @@ int main(int argc, char* argv[]){
 /*#ifndef _PC
         check_link_internet();
 #endif*/  // 20150617 need add check_server_hdd
+
         if(!no_config)          
             run();
 

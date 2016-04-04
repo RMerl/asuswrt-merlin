@@ -42,6 +42,16 @@
 
 #define QRPC_CLNT_RAW_POLL_TIMEOUT	5000
 
+/*
+ * QRPC_OLD was added for backward compataiblity (acR2.x RPC version).
+ * Pkt format of 2.x RPC: <DA SA Prot Seq> Prot :0x88B5
+ * Pkt format of default RPC: <DA SA Prot Prot_id sub_type Sid Seq> Prot :0x88B7
+ */
+enum qrpc_state {
+	QRPC_DEFAULT,
+	QRPC_OLD
+};
+
 enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs,
 	caddr_t argsp, xdrproc_t xresults, caddr_t resultsp, struct timeval utimeout);
 void qrpc_clnt_raw_abort(void);
@@ -63,6 +73,7 @@ struct qrpc_clnt_raw_priv {
 	uint32_t		xdrs_outpos;
 	int			raw_sock;
 	uint8_t			sess_id;
+	struct timeval		timeout;
 };
 
 static const struct clnt_ops qrpc_clnt_raw_ops = {
@@ -157,7 +168,8 @@ CLIENT *qrpc_clnt_raw_create(u_long prog, u_long vers,
 	return client;
 }
 
-static int qrpc_clnt_raw_call_send(struct qrpc_clnt_raw_priv *const priv, const int len)
+static int qrpc_clnt_raw_call_send(struct qrpc_clnt_raw_priv *const priv,
+		const int len, const enum qrpc_state rpc_state)
 {
 	int ret;
 	static const uint16_t payload_max = ETH_FRAME_LEN - sizeof(struct qrpc_frame_hdr);
@@ -165,28 +177,41 @@ static int qrpc_clnt_raw_call_send(struct qrpc_clnt_raw_priv *const priv, const 
 	uint16_t i;
 	uint16_t payload_done = 0;
 	struct qrpc_frame_hdr *hdr;
+	struct qrpc_old_frame_hdr *old_hdr;
 
 	pkt_nr = (len + payload_max - 1) / payload_max;
 
 	for (i = 0; i < pkt_nr; i++) {
 		uint16_t payload_len = MIN((uint16_t)len - payload_done, payload_max);
+		uint16_t tot_len = 0;
 
-		/* build an EthII frame */
-		priv->out_hdr.sub_type = ((i != pkt_nr - 1) ? QRPC_FRAME_TYPE_FRAG
-			: QRPC_FRAME_TYPE_COMPLETE);
-		priv->out_hdr.sid = priv->sess_id;
+		if (rpc_state == QRPC_OLD) {
+			old_hdr = (struct qrpc_old_frame_hdr *)priv->out_pktbuf;
+			memcpy(&old_hdr->eth_hdr, &priv->out_hdr.qhdr.eth_hdr, sizeof(struct ethhdr));
+			old_hdr->eth_hdr.h_proto = htons(ETH_P_OLD_OUI_EXT);
+			memcpy(&old_hdr->seq, &priv->out_hdr.seq, sizeof(old_hdr->seq));
+			memcpy(old_hdr + 1, priv->outbuf + payload_done, payload_len);
+			tot_len = sizeof(struct qrpc_old_frame_hdr) + payload_len;
+		} else {
+			/* build an EthII frame */
+			priv->out_hdr.sub_type = ((i != pkt_nr - 1) ? QRPC_FRAME_TYPE_FRAG
+				: QRPC_FRAME_TYPE_COMPLETE);
+			priv->out_hdr.sid = priv->sess_id;
 
-		hdr = (struct qrpc_frame_hdr *)priv->out_pktbuf;
-		memcpy(hdr, &priv->out_hdr, sizeof(priv->out_hdr));
-		memcpy(hdr + 1, priv->outbuf + payload_done, payload_len);
+			hdr = (struct qrpc_frame_hdr *)priv->out_pktbuf;
+			memcpy(hdr, &priv->out_hdr, sizeof(priv->out_hdr));
+			memcpy(hdr + 1, priv->outbuf + payload_done, payload_len);
+			tot_len = sizeof(struct qrpc_frame_hdr) + payload_len;
+		}
+
 		payload_done += payload_len;
 
 		do {
-			ret = sendto(priv->raw_sock, priv->out_pktbuf, sizeof(struct qrpc_frame_hdr) + payload_len, 0,
+			ret = sendto(priv->raw_sock, priv->out_pktbuf, tot_len, 0,
 					(struct sockaddr *)&priv->dst_addr, sizeof(priv->dst_addr));
 		} while (ret < 0 && errno == EINTR);
 
-		if ((uint16_t)ret != sizeof(struct qrpc_frame_hdr) + payload_len) {
+		if ((uint16_t)ret != tot_len) {
 			priv->rpc_error.re_status = RPC_CANTSEND;
 			return -1;
 		}
@@ -203,6 +228,7 @@ static int qrpc_clnt_raw_call_recv(struct qrpc_clnt_raw_priv *const priv)
 	int ret;
 	uint16_t payload_done = sizeof(struct qrpc_frame_hdr);
 	struct qrpc_frame_hdr hdr;
+	struct qrpc_old_frame_hdr *shdr;
 
 	do {
 		fds.fd = priv->raw_sock;
@@ -227,6 +253,27 @@ static int qrpc_clnt_raw_call_recv(struct qrpc_clnt_raw_priv *const priv)
 		if (lladdr.sll_pkttype != PACKET_HOST) {
 			priv->rpc_error.re_status = RPC_TIMEDOUT;
 			return -1;
+		}
+
+		if (ret < (int)sizeof(struct ethhdr)) {
+			priv->rpc_error.re_status = RPC_CANTRECV;
+			return -1;
+		}
+
+		if (qrpc_is_old_rpc((struct ethhdr*) priv->in_pktbuf)) {
+			if ((ret < (int)sizeof(struct qrpc_old_frame_hdr)) ||
+					(ret > QRPC_BUFFER_LEN)) {
+				priv->rpc_error.re_status = RPC_CANTRECV;
+				return FALSE;
+			}
+
+			shdr = (struct qrpc_old_frame_hdr *)priv->in_pktbuf;
+			memcpy(&hdr, &(shdr->eth_hdr), sizeof(struct ethhdr));
+			memcpy(&hdr.seq, &(shdr->seq), sizeof(hdr.seq));
+			memcpy(priv->inbuf + payload_done,
+					priv->in_pktbuf + sizeof(struct qrpc_old_frame_hdr),
+					ret - sizeof(struct qrpc_old_frame_hdr));
+			break;
 		}
 
 		if ((ret < (int)sizeof(struct qrpc_frame_hdr))
@@ -260,6 +307,8 @@ enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs, cadd
 	struct timeval curr_time;
 	struct qrpc_frame_hdr *hdr;
 	uint16_t tmp;
+	enum qrpc_state rpc_state = QRPC_DEFAULT;
+	struct timeval ltimeout;
 
 	if (xargs) {
 		xdrs_out->x_op = XDR_ENCODE;
@@ -273,7 +322,7 @@ enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs, cadd
 		}
 		tmp = ntohs(priv->out_hdr.seq);
 		priv->out_hdr.seq = htons(tmp + 1);
-		if (qrpc_clnt_raw_call_send(priv, XDR_GETPOS(xdrs_out)) < 0) {
+		if (qrpc_clnt_raw_call_send(priv, XDR_GETPOS(xdrs_out), QRPC_DEFAULT) < 0) {
 			return priv->rpc_error.re_status;
 		}
 	}
@@ -282,9 +331,32 @@ enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs, cadd
 		priv->rpc_error.re_status = RPC_SYSTEMERROR;
 		return priv->rpc_error.re_status;
 	}
-	utimeout.tv_sec += curr_time.tv_sec;
+
+	/*
+	 * Default timeout is priv->timeout.
+	 * If it's values are not set from control, arguments value will be taken.
+	 */
+	if (priv->timeout.tv_sec)
+		ltimeout.tv_sec = priv->timeout.tv_sec + curr_time.tv_sec;
+	else
+		ltimeout.tv_sec = utimeout.tv_sec + curr_time.tv_sec;
+
 	/* Waiting for reply */
 	do {
+		if ((gettimeofday(&curr_time, NULL) == 0) && (curr_time.tv_sec >= ltimeout.tv_sec)) {
+			if (rpc_state == QRPC_DEFAULT) {
+				/* Increasing time for old rpc support */
+				if (priv->timeout.tv_sec)
+					ltimeout.tv_sec = priv->timeout.tv_sec + curr_time.tv_sec;
+				else
+					ltimeout.tv_sec = utimeout.tv_sec + curr_time.tv_sec;
+
+				rpc_state = QRPC_OLD;
+				if (qrpc_clnt_raw_call_send(priv, XDR_GETPOS(xdrs_out), QRPC_OLD) < 0) {
+					return priv->rpc_error.re_status;
+				}
+			}
+		}
 		if (qrpc_clnt_raw_call_recv(priv) < 0) {
 			if (priv->rpc_error.re_status == RPC_TIMEDOUT)
 				continue;
@@ -319,7 +391,8 @@ enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs, cadd
 		} else {
 			priv->rpc_error.re_status = RPC_CANTDECODERES;
 		}
-	} while ((gettimeofday(&curr_time, NULL) == 0) && (curr_time.tv_sec < utimeout.tv_sec));
+	} while (((gettimeofday(&curr_time, NULL) == 0) &&
+			(curr_time.tv_sec < ltimeout.tv_sec)) || (rpc_state != QRPC_OLD));
 
 	return priv->rpc_error.re_status;
 }
@@ -352,7 +425,29 @@ void qrpc_clnt_raw_destroy(CLIENT *cl)
 	free(cl);
 }
 
+/*
+ * Setting default timeout value
+ */
+bool_t qrpc_ctrl_clset_timeout(CLIENT *cl, struct timeval *tl)
+{
+	struct qrpc_clnt_raw_priv *priv = (struct qrpc_clnt_raw_priv *)cl->cl_private;
+
+	if (tl == NULL) {
+		return FALSE;
+	}
+
+	priv->timeout.tv_sec = tl->tv_sec;
+	priv->timeout.tv_usec = tl->tv_usec;
+
+	return TRUE;
+}
+
 bool_t qrpc_clnt_raw_control(CLIENT *cl, int request, char *info)
 {
+	switch (request) {
+		case CLSET_TIMEOUT:
+			return qrpc_ctrl_clset_timeout(cl, (struct timeval *)info);
+	}
+
 	return FALSE;
 }

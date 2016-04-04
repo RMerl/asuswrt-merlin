@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libusrsctp", "libusrsctp.vcproj", "{A1C3B8A3-9511-4305-BC86-564A30451DF6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libusrsctp_test", "libusrsctp_test.vcproj", "{FDC558FA-7503-45B2-9B51-CF14B4A990F2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A1C3B8A3-9511-4305-BC86-564A30451DF6} = {A1C3B8A3-9511-4305-BC86-564A30451DF6}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1C3B8A3-9511-4305-BC86-564A30451DF6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A1C3B8A3-9511-4305-BC86-564A30451DF6}.Debug|Win32.Build.0 = Debug|Win32
+		{A1C3B8A3-9511-4305-BC86-564A30451DF6}.Release|Win32.ActiveCfg = Release|Win32
+		{A1C3B8A3-9511-4305-BC86-564A30451DF6}.Release|Win32.Build.0 = Release|Win32
+		{FDC558FA-7503-45B2-9B51-CF14B4A990F2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FDC558FA-7503-45B2-9B51-CF14B4A990F2}.Debug|Win32.Build.0 = Debug|Win32
+		{FDC558FA-7503-45B2-9B51-CF14B4A990F2}.Release|Win32.ActiveCfg = Release|Win32
+		{FDC558FA-7503-45B2-9B51-CF14B4A990F2}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -42,6 +42,7 @@
 #include "net80211/ieee80211_qos.h"
 #include "net80211/ieee80211_crypto.h"
 
+#pragma pack(4)
 /*
  * Per-channel flags to differentiate chan_pri_inactive configuration
  * between regulatory db and user configuration.
@@ -51,7 +52,8 @@
  */
 enum {
 	CHAN_PRI_INACTIVE_CFG_DATABASE = 0x1,
-	CHAN_PRI_INACTIVE_CFG_USER_OVERRIDE = 0x2
+	CHAN_PRI_INACTIVE_CFG_USER_OVERRIDE = 0x2,
+	CHAN_PRI_INACTIVE_CFG_AUTOCHAN_ONLY = 0x4,
 };
 
 /*
@@ -119,6 +121,11 @@ struct ieee80211_nodestats {
 	uint32_t ns_tx_errors;
 	uint32_t ns_rx_dropped;
 	uint32_t ns_tx_dropped;
+	/*
+	 * The number of dropped data packets failed to transmit through
+	 * wireless media for each traffic category(TC).
+	 */
+	uint32_t ns_tx_wifi_drop[WME_AC_NUM];
 
 	uint32_t ns_ap_isolation_dropped;
 	uint32_t ns_rx_fragment_pkts;
@@ -300,6 +307,10 @@ struct ieee80211req_brcm {
 	int32_t ib_pkt_len;
 };
 
+#define QTN_CHAN_AVAIL_STATUS_TO_STR	{"", "Non-Available", "Available",\
+					"", "Not-Available-Radar-Detected", "",\
+					"", "", "Not-Available-CAC-Required"}
+
 #define IEEE80211REQ_SCS_REPORT_CHAN_NUM    32
 struct ieee80211req_scs_currchan_rpt {
 	uint8_t iscr_curchan;
@@ -329,6 +340,7 @@ struct ieee80211req_scs_ranking_rpt_chan {
 	/* channel usage */
 	uint32_t isrc_duration;
 	uint32_t isrc_times;
+	uint8_t isrc_chan_avail_status;
 };
 struct ieee80211req_scs_ranking_rpt {
 	uint8_t isr_num;
@@ -380,6 +392,7 @@ enum qscs_cfg_param_e {
 	SCS_RSSI_SMTH_DOWN,
 	SCS_CHAN_MTRC_MRGN,
 	SCS_ATTEN_ADJUST,
+	SCS_ATTEN_SW_ENABLE,
 	SCS_PMBL_ERR_SMTH_FCTR,
 	SCS_PMBL_ERR_RANGE,
 	SCS_PMBL_ERR_MAPPED_INTF_RANGE,
@@ -400,6 +413,8 @@ enum qscs_cfg_param_e {
 	SCS_RX_TIME_COMPENSTATION_END = SCS_RX_TIME_COMPENSTATION_START+SCS_MAX_RXTIME_COMP_INDEX-1,
 	SCS_TDLS_TIME_COMPENSTATION_START,
 	SCS_TDLS_TIME_COMPENSTATION_END = SCS_TDLS_TIME_COMPENSTATION_START+SCS_MAX_TDLSTIME_COMP_INDEX-1,
+	SCS_LEAVE_DFS_CHAN_MTRC_MRGN,
+	SCS_CCA_THRESHOD_TYPE,
 	SCS_PARAM_MAX,
 };
 
@@ -436,7 +451,6 @@ struct ieee80211_chan_power_table {
 };
 
 struct ieeee80211_dscp2ac {
-#define IP_DSCP_NUM				64
 	uint8_t dscp[IP_DSCP_NUM];
 	uint8_t list_len;
 	uint8_t ac;
@@ -463,11 +477,20 @@ struct ieee80211req_chanlist {
 };
 
 /*
+ * Basic IEEE Channel info for wireless tools
+ */
+struct ieee80211_chan {
+	uint16_t ic_freq;	/* Freq setting in Mhz */
+	uint32_t ic_flags;	/* Channel flags */
+	uint8_t ic_ieee;	/* IEEE channel number */
+} __packed;
+
+/*
  * Get the active channel list info.
  */
 struct ieee80211req_chaninfo {
 	uint32_t ic_nchans;
-	struct ieee80211_channel ic_chans[IEEE80211_CHAN_MAX];
+	struct ieee80211_chan ic_chans[IEEE80211_CHAN_MAX];
 };
 
 /*
@@ -476,6 +499,13 @@ struct ieee80211req_chaninfo {
 struct ieee80211_active_chanlist {
 	u_int8_t bw;
 	u_int8_t channels[IEEE80211_CHAN_BYTES];
+};
+
+/*
+ * Set or Get the inactive channel list
+ */
+struct ieee80211_inactive_chanlist {
+	u_int8_t channels[IEEE80211_CHAN_MAX];
 };
 
 /*
@@ -500,6 +530,7 @@ struct ieee80211req_wpaie {
 	uint8_t	wpa_macaddr[IEEE80211_ADDR_LEN];
 	uint8_t	wpa_ie[IEEE80211_MAX_OPT_IE];
 	uint8_t	rsn_ie[IEEE80211_MAX_OPT_IE];
+	uint8_t	osen_ie[IEEE80211_MAX_OPT_IE];
 	uint8_t	wps_ie[IEEE80211_MAX_OPT_IE];
 	uint8_t	qtn_pairing_ie[IEEE80211_MAX_OPT_IE];
 #define QTN_PAIRING_IE_EXIST 1
@@ -817,6 +848,7 @@ struct ieee80211req_csw_record {
 	uint32_t channel[CSW_MAX_RECORDS_MAX];
 	uint32_t timestamp[CSW_MAX_RECORDS_MAX];
 	uint32_t reason[CSW_MAX_RECORDS_MAX];
+	uint8_t csw_record_mac[CSW_MAX_RECORDS_MAX][IEEE80211_ADDR_LEN];
 };
 
 struct ieee80211req_radar_status {
@@ -845,13 +877,37 @@ struct ieee80211_per_ap_scan_result {
 	int8_t		ap_addr_mac[IEEE80211_ADDR_LEN];
 	int8_t		ap_name_ssid[32 + 1];
 	int32_t		ap_channel_ieee;
+	int32_t		ap_max_bw;
 	int32_t		ap_rssi;
 	int32_t		ap_flags;
 	int32_t		ap_htcap;
 	int32_t		ap_vhtcap;
 	int8_t		ap_qhop_role;
+	uint32_t	ap_bestrate;
 	int32_t		ap_num_genies;
+	uint16_t	ap_beacon_intval;
+	uint8_t		ap_dtim_intval;
+	uint8_t		ap_is_ess;
 	int8_t		ap_ie_buf[0];	/* just to remind there might be WPA/RSN/WSC IEs right behind*/
+};
+
+#define MAX_MACS_SIZE	1200 /* 200 macs */
+/* Report results of get mac address of clients behind associated node */
+struct ieee80211_mac_list {
+	/**
+	 * flags indicating
+	 * bit 0 set means addresses are behind 4 addr node
+	 * bit 1 set means results are truncated to fit to buffer
+	 */
+	uint32_t flags;
+	/**
+	 * num entries in the macaddr list below
+	 */
+	uint32_t num_entries;
+	/**
+	 * buffer to store mac addresses
+	 */
+	uint8_t macaddr[MAX_MACS_SIZE];
 };
 
 #ifdef __FreeBSD__
@@ -1167,7 +1223,7 @@ enum {
 	IEEE80211_PARAM_RADAR_NONOCCUPY_ACT_SCAN = 152,	/* non-occupancy expire scan/no-action */
 	IEEE80211_PARAM_MC_LEGACY_RATE = 153, /* Legacy multicast rate table */
 	IEEE80211_PARAM_LDPC_ALLOW_NON_QTN = 154, /* Allow non QTN nodes to use LDPC */
-	IEEE80211_PARAM_IGMP_HYBRID = 155, /* Do the IGMP hybrid mode as suggested by Swisscom */
+	IEEE80211_PARAM_FWD_UNKNOWN_MC = 155,	/* forward unknown IP multicast */
 	IEEE80211_PARAM_BCST_4 = 156, /* Reliable (4 addr encapsulated) broadcast to all clients */
 	IEEE80211_PARAM_AP_FWD_LNCB = 157, /* AP forward LNCB packets from the STA to other STAs */
 	IEEE80211_PARAM_PPPC_SELECT = 158, /* Per packet power control */
@@ -1201,7 +1257,6 @@ enum {
 	IEEE80211_PARAM_SWRETRY_AGG_MAX = 186,	/* max sw retries for ampdus */
 	IEEE80211_PARAM_SWRETRY_NOAGG_MAX = 187,/* max sw retries for non-agg mpdus */
 	IEEE80211_PARAM_BSS_ASSOC_LIMIT = 188, /* STA assoc limit for a VAP */
-
 	IEEE80211_PARAM_VSP_NOD_DEBUG = 190,	/* turn on/off NOD debugs for VSP */
 	IEEE80211_PARAM_CCA_PRI = 191,		/* Primary CCA threshold */
 	IEEE80211_PARAM_CCA_SEC = 192,		/* Secondary CCA threshold */
@@ -1239,10 +1294,8 @@ enum {
 	IEEE80211_PARAM_BEACON_ALLOW = 224,	/* To en/disable beacon rx when associated as STA*/
 	IEEE80211_PARAM_1BIT_PKT_DETECT = 225,  /* enable/disable 1bit pkt detection */
 	IEEE80211_PARAM_WME_THROT = 226,	/* Manual WME throttling */
-#ifdef TOPAZ_PLATFORM
 	IEEE80211_PARAM_ENABLE_11AC = 227,	/* Enable-disable 11AC feature in Topaz */
 	IEEE80211_PARAM_FIXED_11AC_TX_RATE = 228,	/* Set 11AC mcs */
-#endif
 	IEEE80211_PARAM_GENPCAP = 229,		/* WMAC tx/rx pcap ring buffer */
 	IEEE80211_PARAM_CCA_DEBUG = 230,	/* Debug of CCA */
 	IEEE80211_PARAM_STA_DFS	= 231,		/* Enable or disable station DFS */
@@ -1261,9 +1314,9 @@ enum {
 	IEEE80211_PARAM_RX_ACCELERATE = 244,	/* Enable/Disable Topaz MuC rx accelerate */
 	IEEE80211_PARAM_RX_ACCEL_LOOKUP_SA = 245,	/* Enable/Disable lookup SA in FWT for rx accelerate */
 	IEEE80211_PARAM_TX_MAXMPDU = 246,		/* Set Max MPDU size to be supported */
-	/* FIXME 247 is available for reuse */
+	/* FIXME 247 is obsolete and do not reuse */
 	IEEE80211_PARAM_SPECIFIC_SCAN = 249,	/* Just perform specific SSID scan */
-	IEEE80211_PARAM_VLAN_CONFIG = 250,		/* Configure VAP into MBSS or Passthrough mode */
+	/* FIXME 250 is obsolete and do not reuse */
 	IEEE80211_PARAM_TRAINING_START = 251,	/* restart rate training to a particular node */
 	IEEE80211_PARAM_AUC_TX_DBG = 252,	/* AuC tx debug command */
 	IEEE80211_PARAM_AC_INHERITANCE = 253,	/* promote AC_BE to use aggresive medium contention */
@@ -1288,7 +1341,6 @@ enum {
 	IEEE80211_PARAM_TUNEPD = 272,       /* Specify number of tunning packets to send for power detector tuning */
 	IEEE80211_PARAM_TUNEPD_DONE = 273,              /* Specify number of tunning packets to send for power detector tuning */
 	IEEE80211_PARAM_CONFIG_PMF = 274,       /* Enable/Disable 802.11w / PMF */
-
 	IEEE80211_PARAM_AUTO_CCA_ENABLE = 275,	/* Enable/disable auto-cca-threshold feature */
 	IEEE80211_PARAM_AUTO_CCA_PARAMS = 276,	/* Configure the threshold parameter  */
 	IEEE80211_PARAM_AUTO_CCA_DEBUG = 277,	/* Configure the auto-cca debug flag */
@@ -1303,7 +1355,7 @@ enum {
 	IEEE80211_PARAM_EXTENDER_MBS_WGT = 286, /* MBS RSSI weight */
 	IEEE80211_PARAM_EXTENDER_RBS_WGT = 287, /* RBS RSSI weight */
 	IEEE80211_PARAM_AIRFAIR = 288,              /* Set airtime fairness configuration */
-	IEEE80211_PARAM_SET_STA_VLAN = 289,	/* Place a STA into a VLAN */
+	/* FIXME 289 is obsolete and do not reuse */
 	IEEE80211_PARAM_RX_AMSDU_ENABLE = 290,      /* RX AMSDU: 0 - disable, 1 - enable, 2 - enable dynamically */
 	IEEE80211_PARAM_DISASSOC_REASON = 291,	/* Get Disassoc reason */
 	IEEE80211_PARAM_TX_QOS_SCHED = 292,	/* TX QoS hold-time table */
@@ -1317,9 +1369,9 @@ enum {
 	IEEE80211_PARAM_AGGRESSIVE_AGG = 300,	/* Compound aggressive agg params */
 	IEEE80211_PARAM_BB_PARAM = 301,	/* Baseband param */
 	IEEE80211_PARAM_VAP_TX_AMSDU = 302,     /* Enable/disable A-MSDU for VAP */
-        IEEE80211_PARAM_PC_OVERRIDE = 303,              /* RSSI based Power-contraint override */
+	IEEE80211_PARAM_PC_OVERRIDE = 303,              /* RSSI based Power-contraint override */
 	IEEE80211_PARAM_NDPA_DUR = 304,         /* set vht NDPA duration field */
-	IEEE80211_PARAM_TXBF_PKT_CNT = 305,     /* set the pkt cnt per txbf interval to fire sounding to a node */
+	IEEE80211_PARAM_SU_TXBF_PKT_CNT = 305,  /* set the pkt cnt per txbf interval to fire SU sounding to a node */
 	IEEE80211_PARAM_MAX_AGG_SIZE = 306,	/* Maximum AMPDU size in bytes */
 	IEEE80211_PARAM_TQEW_DESCR_LIMIT = 307,     /* Set/Get tqew descriptors limit */
 	IEEE80211_PARAM_SCAN_TBL_LEN_MAX = 308,
@@ -1343,7 +1395,7 @@ enum {
 	IEEE80211_PARAM_TDLS_NODE_LIFE_CYCLE = 326, /* TDLS node life cycle */
 	IEEE80211_PARAM_NODEREF_DBG = 327,	/* show history of node reference debug info */
 	IEEE80211_PARAM_SWFEAT_DISABLE = 329,	/* disable an optional software feature */
-        IEEE80211_PARAM_11N_AMSDU_CTRL = 330,   /* ctrl TX AMSDU of IP ctrl packets for 11N STAs */
+	IEEE80211_PARAM_11N_AMSDU_CTRL = 330,   /* ctrl TX AMSDU of IP ctrl packets for 11N STAs */
 	IEEE80211_PARAM_CCA_FIXED = 331,
 	IEEE80211_PARAM_CCA_SEC40 = 332,
 	IEEE80211_PARAM_CS_THRESHOLD_DBM = 333,
@@ -1359,7 +1411,6 @@ enum {
 	IEEE80211_PARAM_RATE_TRAIN_DBG = 343,			/* Rate training */
 	IEEE80211_PARAM_NDPA_LEGACY_FORMAT = 344,	/* Configure PHY format for NDPA frame */
 	IEEE80211_PARAM_QTN_HAL_PM_CORRUPT_DEBUG = 345,	/* flag to enable debug qtn packet memory corruption */
-
 	IEEE80211_PARAM_UPDATE_MU_GRP = 346,	/* Update MU group/position */
 	IEEE80211_PARAM_FIXED_11AC_MU_TX_RATE = 347,	/* Set 11AC MU fixed mcs */
 	IEEE80211_PARAM_MU_DEBUG_LEVEL = 348,	/* Set 11AC MU debug level */
@@ -1390,11 +1441,18 @@ enum {
 	IEEE80211_PARAM_MU_AIRTIME_PADDING = 373,	/* Airtime padding for MU/SU Tx decision */
 	IEEE80211_PARAM_MU_AMSDU_SIZE = 374,        /* Set Fixed MU AMSDU size */
 	IEEE80211_PARAM_SDFS = 375,		/* Seamless DFS, same as PARAM_OCAC */
-	IEEE80211_PARAM_SET_VERIWAVE_POWER = 376,        /* Set Fixed tx power against veriwave clients */
-	IEEE80211_PARAM_ENABLE_RX_OPTIM_STATS = 377,        /* Enable RX optim stats */
-	IEEE80211_PARAM_DSP_MU_RANK_CRITERIA = 378, /* select mu ranking criteria */
+	IEEE80211_PARAM_DSP_MU_RANK_CRITERIA = 376, /* select mu ranking criteria */
+	IEEE80211_PARAM_ENABLE_RX_OPTIM_STATS = 378,        /* Enable RX optim stats */
 	IEEE80211_PARAM_SET_UNICAST_QUEUE_NUM = 379,     /* Set Max congest queue num for unicast */
 	IEEE80211_PARAM_MRC_ENABLE = 380,        /* Set Management Frame Rate Control feature */
+	IEEE80211_PARAM_VCO_LOCK_DETECT_MODE = 381,	/* Get/Set lock detect functionality enabled/disabled */
+	IEEE80211_PARAM_OBSS_EXEMPT_REQ = 382,  /* OBSS scan exemption request*/
+	IEEE80211_PARAM_OBSS_TRIGG_SCAN_INT = 383,  /* OBSS scan exemption request*/
+	IEEE80211_PARAM_PREF_BAND = 384,	/* Preferred band on dual band mode */
+	IEEE80211_PARAM_BW_2_4GHZ = 385,	/* Bandwidth in 2.4ghz band */
+	IEEE80211_PARAM_ALLOW_VHT_TKIP = 386,	/* allow VHT even only TKIP is set as cipher, for WFA testbed */
+	IEEE80211_PARAM_AUTO_CS_ENABLE = 387,	/* Enable/disable auto-cs-threshold feature */
+	IEEE80211_PARAM_AUTO_CS_PARAMS = 388,	/* Configure the threshold parameter  */
 	IEEE80211_PARAM_QTN_BGSCAN_DURATION_ACTIVE = 389,  /* Quantenna bgscan duration for an active channel */
 	IEEE80211_PARAM_QTN_BGSCAN_DURATION_PASSIVE_FAST = 390, /* Quantenna bgscan duration for a passive channel */
 	IEEE80211_PARAM_QTN_BGSCAN_DURATION_PASSIVE_NORMAL = 391, /* Quantenna bgscan duration for a passive channel */
@@ -1402,12 +1460,65 @@ enum {
 	IEEE80211_PARAM_QTN_BGSCAN_THRSHLD_PASSIVE_FAST = 393, /* Quantenna bgscan fat threshold for passive fast mode */
 	IEEE80211_PARAM_QTN_BGSCAN_THRSHLD_PASSIVE_NORMAL = 394, /* Quantenna bgscan fat threshold for passive normal mode */
 	IEEE80211_PARAM_QTN_BLOCK_BSS = 395, /* Block any association request for specified BSS */
+	IEEE80211_PARAM_VHT_2_4GHZ = 396,	/* Quantenna 2.4G band feature -- VHT support */
+	IEEE80211_PARAM_PHY_MODE = 397,		/* Hardware phy mode */
 	IEEE80211_PARAM_BEACONING_SCHEME = 398,	/* the mapping between 8 VAPs and 4 HW event queues for beacon */
+	IEEE80211_PARAM_STA_BMPS = 399,	/* enable/disable STA BMPS */
+	IEEE80211_PARAM_40MHZ_INTOLERANT = 400,	/* 20/40 coexistence - 40 MHz intolerant */
 	IEEE80211_PARAM_ANTENNA_USAGE = 401,	/* how many antennas should be used */
 	IEEE80211_PARAM_DISABLE_TX_BA = 402,	/* enable/disable TX Block Ack establishment */
 	IEEE80211_PARAM_DECLINE_RX_BA = 403,	/* permit/decline RX Block Ack establishment */
-	IEEE80211_PARAM_SET_MU_RANK_TOLERANCE = 404, /* MU rank tolerance */
+	IEEE80211_PARAM_VAP_STATE = 404,	/* Enable or disable a VAP */
+	IEEE80211_PARAM_TX_AIRTIME_CONTROL = 405, /* start or stop tx airtime accumulaton */
+	IEEE80211_PARAM_OSEN = 406,
+	IEEE80211_PARAM_OBSS_SCAN = 407,	/* Enable or disable OBSS scan */
+	IEEE80211_PARAM_SHORT_SLOT = 408,	/* short slot */
+	IEEE80211_PARAM_SET_RTS_BW_DYN = 409,   /* set RTS bw signal bw and dynamic flag */
+	IEEE80211_PARAM_SET_CTS_BW = 410,   /* force the CTS BW by setting secondary 20/40 channel CCA busy */
+	IEEE80211_PARAM_VHT_MCS_CAP = 411,	/* Set MCS capability for VHT mode, for WFA testbed */
+	IEEE80211_PARAM_VHT_OPMODE_NOTIF = 412,	/* Override OpMode Notification IE, for WFA testbed */
+	IEEE80211_PARAM_FIRST_STA_IN_MU_SOUNDING = 413, /* select STA which will be first in mu sounding */
+	IEEE80211_PARAM_USE_NON_HT_DUPLICATE_MU = 414, /* Allows usage Non-HT duplicate for MU NDPA and Report_Poll using BW signal TA */
+	IEEE80211_PARAM_BG_PROTECT = 415,	/* 802.11g protection */
+	IEEE80211_PARAM_SET_MUC_BW = 416,	/* Set muc bandwidth */
+	IEEE80211_PARAM_11N_PROTECT = 417,	/* 802.11n protection */
+	IEEE80211_PARAM_SET_MU_RANK_TOLERANCE = 418, /* MU rank tolerance */
+	IEEE80211_PARAM_MU_NDPA_BW_SIGNALING_SUPPORT = 420, /* support of receiving NDPA with bandwidth signalling TA */
+	IEEE80211_PARAM_RESTRICT_WLAN_IP = 421,	/* Block all IP packets from wifi to bridge interfaces */
+	IEEE80211_PARAM_MC_TO_UC = 422,		/* Convert L2 multicast to unicast */
+	IEEE80211_PARAM_HOSTAP_STARTED = 424,   /* hostapd state */
+	IEEE80211_PARAM_WPA_STARTED = 425,	/* wpa_supplicant state */
+	IEEE80211_PARAM_MUC_SYS_DEBUG = 427, /* system debug */
+	IEEE80211_PARAM_EP_STATUS = 428,	/* get the EP STATUS */
+	IEEE80211_PARAM_EXTENDER_MBS_RSSI_MARGIN = 429,	/* MBS RSSI margin */
+	IEEE80211_PARAM_MAX_BCAST_PPS = 430,	/* Restrict the number of broadcast pkts allowed to be processed per second */
+	IEEE80211_PARAM_OFF_CHAN_SUSPEND = 431,	/* suspend/resume all off-channel mechanisms globally */
+	IEEE80211_PARAM_BSS_GROUP_ID = 432,	/* Assigns VAP (SSID) a logical group id */
+	IEEE80211_PARAM_BSS_ASSOC_RESERVE = 433,	/* Reserve associations for specified group */
+	IEEE80211_PARAM_MAX_BOOT_CAC_DURATION = 434,	/* Max boot CAC duration in seconds */
+	IEEE80211_PARAM_RX_BAR_SYNC = 435,	/* sync rx reorder window on receiving BAR */
+	IEEE80211_PARAM_GET_REG_DOMAIN_IS_EU = 436,	/* Check if regulatory region falls under EU domain*/
+	IEEE80211_PARAM_AUC_TX_AGG_DURATION = 437,
+	IEEE80211_PARAM_GET_CHAN_AVAILABILITY_STATUS = 438, /* Channel availability status */
+	IEEE80211_PARAM_STOP_ICAC = 439,
+	IEEE80211_PARAM_STA_DFS_STRICT_MODE = 440,	/* STA DFS - strict mode operation */
+	IEEE80211_PARAM_STA_DFS_STRICT_MEASUREMENT_IN_CAC = 441, /* STA DFS - Send Measurement report if radar found during CAC */
+	IEEE80211_PARAM_STA_DFS_STRICT_TX_CHAN_CLOSE_TIME = 442, /*  STA DFS - Configure channel tx close time when radar detected */
+	IEEE80211_PARAM_NEIGHBORHOOD_THRSHD = 443, /* Set the threshold for neighborhood density type */
+	IEEE80211_PARAM_NEIGHBORHOOD_TYPE = 444, /* Get the neighborhood density type */
+	IEEE80211_PARAM_NEIGHBORHOOD_COUNT = 445,/* Get the neighbor count */
+	IEEE80211_PARAM_MU_TXBF_PKT_CNT = 446, /* set the pkt cnt per txbf interval to fire mu sounding to a node */
+	IEEE80211_PARAM_DFS_CSA_CNT = 447,	/* set CSA count for reason of IEEE80211_CSW_REASON_DFS */
 };
+
+#define IEEE80211_OFFCHAN_SUSPEND_MASK		0x80000000
+#define IEEE80211_OFFCHAN_SUSPEND_MASK_S	31
+#define IEEE80211_OFFCHAN_TIMEOUT_MASK		0x7FFFFFFF
+#define IEEE80211_OFFCHAN_TIMEOUT_DEFAULT	1 /* second*/
+#define IEEE80211_OFFCHAN_TIMEOUT_MAX		60 /* second*/
+#define IEEE80211_OFFCHAN_TIMEOUT_MIN		1 /* second*/
+#define IEEE80211_OFFCHAN_TIMEOUT_AUTH		5 /* second*/
+#define IEEE80211_OFFCHAN_TIMEOUT_EAPOL		8 /* second*/
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)
 /* NB: require in+out parameters so cannot use wireless extensions, yech */
@@ -1460,11 +1571,29 @@ enum {
 #define SIOCDEV_SUBIO_SET_WEATHER_CHAN	(SIOCDEV_SUBIO_BASE + 28)
 #define SIOCDEV_SUBIO_GET_CHANNEL_POWER_TABLE	(SIOCDEV_SUBIO_BASE + 29)
 #define SIOCDEV_SUBIO_SETGET_CHAN_DISABLED	(SIOCDEV_SUBIO_BASE + 30)
+#define SIOCDEV_SUBIO_SET_SEC_CHAN		(SIOCDEV_SUBIO_BASE + 31)
+#define SIOCDEV_SUBIO_GET_SEC_CHAN		(SIOCDEV_SUBIO_BASE + 32)
+#define SIOCDEV_SUBIO_SET_DSCP2TID_MAP		(SIOCDEV_SUBIO_BASE + 33)
+#define SIOCDEV_SUBIO_GET_DSCP2TID_MAP		(SIOCDEV_SUBIO_BASE + 34)
+#define SIOCDEV_SUBIO_GET_TX_AIRTIME		(SIOCDEV_SUBIO_BASE + 35)
+#define SIOCDEV_SUBIO_GET_CHAN_PRI_INACT	(SIOCDEV_SUBIO_BASE + 36)
+#define SIOCDEV_SUBIO_GET_SUPP_CHAN		(SIOCDEV_SUBIO_BASE + 37)
+#define SIOCDEV_SUBIO_GET_CLIENT_MACS		(SIOCDEV_SUBIO_BASE + 38)
+#define SIOCDEV_SUBIO_SAMPLE_ALL_DATA		(SIOCDEV_SUBIO_BASE + 39)
+#define SIOCDEV_SUBIO_GET_ASSOC_DATA		(SIOCDEV_SUBIO_BASE + 40)
+#define SIOCDEV_SUBIO_GET_INTERFACE_WMMAC_STATS	(SIOCDEV_SUBIO_BASE + 41)
 
 enum L2_EXT_FILTER_PORT {
 	L2_EXT_FILTER_EMAC_0_PORT = 0,
-	L2_EXT_FILTER_EMAC_1_PORT = 1
+	L2_EXT_FILTER_EMAC_1_PORT = 1,
+	L2_EXT_FILTER_PCIE_PORT = 2
 };
+
+#ifdef CONFIG_TOPAZ_PCIE_TARGET
+	#define L2_EXT_FILTER_DEF_PORT L2_EXT_FILTER_PCIE_PORT
+#else
+	#define L2_EXT_FILTER_DEF_PORT L2_EXT_FILTER_EMAC_0_PORT
+#endif
 
 struct ieee80211_clone_params {
 	char icp_name[IFNAMSIZ];		/* device name */
@@ -1579,7 +1708,7 @@ struct action_frame_payload {
 	u_int8_t	data[0];                /* action frame payload data */
 }__packed;
 
-/* Structre used to send action frame from hostapd */
+/* Structure used to send action frame from hostapd */
 struct app_action_frame_buf {
 	u_int8_t	cat;			/* action frame category */
 	u_int8_t	action;			/* action frame action */
@@ -1649,8 +1778,8 @@ enum vendor_fix_idx {
 #define IEEE80211_TDLS_TIMEOUT_TIME_MAX	3600
 #define IEEE80211_TDLS_LINK_WEIGHT_MIN	0
 #define IEEE80211_TDLS_LINK_WEIGHT_MAX	10
-#define IEEE80211_TDLS_TRAINING_PKT_CNT_MIN	10
-#define IEEE80211_TDLS_TRAINING_PKT_CNT_MAX	1000
+#define IEEE80211_TDLS_TRAINING_PKT_CNT_MIN	16
+#define IEEE80211_TDLS_TRAINING_PKT_CNT_MAX	8192
 #define IEEE80211_TDLS_DISC_INTERVAL_MIN	60
 #define IEEE80211_TDLS_DISC_INTERVAL_MAX	3600
 #define IEEE80211_TDLS_PATH_SEL_PPS_THRSHLD_MIN	8
@@ -1733,6 +1862,8 @@ enum ieee80211_extender_role {
 #define IEEE80211_EXTENDER_MAX_INTERVAL	300
 #define IEEE80211_EXTENDER_MIN_ROAMING	0
 #define IEEE80211_EXTENDER_MAX_ROAMING	1
+#define IEEE80211_EXTENDER_MIN_MARGIN	0
+#define IEEE80211_EXTENDER_MAX_MARGIN	12
 
 /**
  * Structure contains data of wds extender event.
@@ -1755,6 +1886,22 @@ struct qtn_wds_ext_event_data {
 	uint8_t wds_extender_ie[0];
 }__packed;
 
+struct ieee80211req_interface_wmmac_stats {
+#define WMM_AC_NUM 4
+	/**
+	 * Number of dropped data packets failed to transmit through
+	 * wireless media for each traffic category(TC).
+	 */
+	uint32_t tx_wifi_drop[WMM_AC_NUM];
+	/**
+	 * Number of sent data packets that transmit through
+	 * wireless media for each traffic category(TC).
+	 */
+	uint32_t tx_wifi_sent[WMM_AC_NUM];
+};
+
 #endif /* __linux__ */
+
+#pragma pack()
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */

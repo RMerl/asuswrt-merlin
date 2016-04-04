@@ -85,6 +85,17 @@ enum ieee80211_phymode {
 #define IEEE80211_BM_11NA_MINUS	(1 << IEEE80211_MODE_11B)
 */
 
+#define IEEE80211_IS_11A(_c) \
+	((_c)->ic_phymode == IEEE80211_MODE_11A)
+
+#define IEEE80211_IS_11NA_20(_c) \
+	((_c)->ic_phymode == IEEE80211_MODE_11NA)
+
+#define IEEE80211_IS_11NA_40(_c) \
+	((_c)->ic_phymode == IEEE80211_MODE_11NA_HT40PM)
+
+#define IS_IEEE80211_11NA(_c) \
+	(IEEE80211_IS_11NA_20(_c) || IEEE80211_IS_11NA_40(_c))
 
 #define IEEE80211_IS_VHT_20(_c) \
 	((_c)->ic_phymode == IEEE80211_MODE_11AC_VHT20PM)
@@ -102,6 +113,48 @@ enum ieee80211_phymode {
 	(IEEE80211_IS_VHT_160(_c) || IEEE80211_IS_VHT_80(_c)\
 	|| IEEE80211_IS_VHT_40(_c) || IEEE80211_IS_VHT_20(_c))
 
+#define IS_IEEE80211_5G_BAND(_c) \
+	(IEEE80211_IS_11A(_c) || IS_IEEE80211_11NA(_c) || IS_IEEE80211_VHT_ENABLED(_c))
+
+#define IEEE80211_IS_11B(_c) \
+	((_c)->ic_phymode == IEEE80211_MODE_11B)
+
+#define IEEE80211_IS_11G(_c) \
+	((_c)->ic_phymode == IEEE80211_MODE_11G)
+
+#define IEEE80211_IS_11NG_20(_c) \
+	((_c)->ic_phymode == IEEE80211_MODE_11NG)
+
+#define IEEE80211_IS_11NG_40(_c) \
+	((_c)->ic_phymode == IEEE80211_MODE_11NG_HT40PM)
+
+#define IS_IEEE80211_11NG(_c) \
+	(IEEE80211_IS_11NG_20(_c) || IEEE80211_IS_11NG_40(_c))
+
+#define IS_IEEE80211_24G_BAND(_c) \
+	(IEEE80211_IS_11B(_c) || IEEE80211_IS_11G(_c) || IS_IEEE80211_11NG(_c))
+
+#define IEEE80211_MODE_IS_11B(m) \
+	((m) == IEEE80211_MODE_11B)
+
+#define IEEE80211_MODE_IS_11G(m) \
+	((m) == IEEE80211_MODE_11G)
+
+#define IEEE80211_MODE_IS_11NG_20(m) \
+	((m) == IEEE80211_MODE_11NG)
+
+#define IEEE80211_MODE_IS_11NG_40(m) \
+	((m) == IEEE80211_MODE_11NG_HT40PM)
+
+#define IS_IEEE80211_MODE_24G_BAND(m) \
+	(IEEE80211_MODE_IS_11B(m) || IEEE80211_MODE_IS_11G(m) || IEEE80211_MODE_IS_11NG_20(m) || IEEE80211_MODE_IS_11NG_40(m))
+
+#define IS_IEEE80211_11NG_VHT_ENABLED(_c) \
+	(IS_IEEE80211_11NG(_c) && ((_c)->ic_flags_ext & IEEE80211_FEXT_24GVHT))
+
+#define IS_IEEE80211_DUALBAND_VHT_ENABLED(_c) \
+	(IS_IEEE80211_VHT_ENABLED(_c) || IS_IEEE80211_11NG_VHT_ENABLED(_c))
+
 enum ieee80211_opmode {
 	IEEE80211_M_STA		= 1,	/* infrastructure station */
 	IEEE80211_M_IBSS	= 0,	/* IBSS (adhoc) station */
@@ -111,18 +164,10 @@ enum ieee80211_opmode {
 	IEEE80211_M_WDS		= 2	/* WDS link */
 };
 
-/*
- * True if this mode must behave like a DFS master, ie do Channel
- * Check Availability and In Service Monitoring. We need to make sure
- * that all modes cannot send data without being authorized. Such
- * enforcement is not done in monitor mode however.
- */
-
-#define IEEE80211_IS_MODE_DFS_MASTER(_opmode) \
-	((_opmode == IEEE80211_M_IBSS) || \
-	(_opmode == IEEE80211_M_AHDEMO) || \
-	(_opmode == IEEE80211_M_HOSTAP) || \
-	(_opmode == IEEE80211_M_WDS))
+enum ieee80211_pref_band {
+	IEEE80211_2_4Ghz	= 0,
+	IEEE80211_5Ghz		= 1
+};
 
 /*
  * 802.11n
@@ -266,6 +311,38 @@ enum ieee80211_ba_type {
 #define	IEEE80211_OPER_CLASS_BYTES	32
 #define	IEEE80211_OPER_CLASS_BYTES_24G	8
 
+#define IEEE80211_OC_BEHAV_DFS_50_100		0x0001
+#define IEEE80211_OC_BEHAV_NOMADIC		0x0002
+#define IEEE80211_OC_BEHAV_LICEN_EXEP		0x0004
+#define IEEE80211_OC_BEHAV_CCA_ED		0x0008
+#define IEEE80211_OC_BEHAV_ITS_NONMOB		0x0010
+#define IEEE80211_OC_BEHAV_ITS_MOBILE		0x0020
+#define IEEE80211_OC_BEHAV_CHAN_LOWWER		0x0040
+#define IEEE80211_OC_BEHAV_CHAN_UPPER		0x0080
+#define IEEE80211_OC_BEHAV_80PLUS		0x0100
+#define IEEE80211_OC_BEHAV_EIRP_TXPOWENV	0x0200
+
+#define IEEE80211_OBSS_CHAN_PRI20		0x01
+#define IEEE80211_OBSS_CHAN_SEC20		0x02
+#define IEEE80211_OBSS_CHAN_PRI40		0x04
+#define IEEE80211_OBSS_CHAN_SEC40		0x08
+
+#define IEEE80211_OBSS_CHAN_MASK		0x0F
+
+#define IEEE80211_IS_OBSS_CHAN_SECONDARY(_c) \
+	(((_c) & IEEE80211_OBSS_CHAN_SEC20) == IEEE80211_OBSS_CHAN_SEC20)
+
+enum ieee80211_neighborhood_type {
+	IEEE80211_NEIGHBORHOOD_TYPE_SPARSE = 0,
+	IEEE80211_NEIGHBORHOOD_TYPE_DENSE = 1,
+	IEEE80211_NEIGHBORHOOD_TYPE_VERY_DENSE = 2,
+	IEEE80211_NEIGHBORHOOD_TYPE_MAX	= IEEE80211_NEIGHBORHOOD_TYPE_VERY_DENSE,
+	IEEE80211_NEIGHBORHOOD_TYPE_UNKNOWN = IEEE80211_NEIGHBORHOOD_TYPE_MAX + 1
+};
+
+#define IEEE80211_NEIGHBORHOOD_TYPE_SPARSE_DFT_THRSHLD	3
+#define IEEE80211_NEIGHBORHOOD_TYPE_DENSE_DFT_THRSHLD	15
+
 /* power index definition */
 enum ieee80211_power_index_beamforming {
 	PWR_IDX_BF_OFF = 0,
@@ -286,6 +363,13 @@ enum ieee80211_power_index_bandwidth {
 	PWR_IDX_40M = 1,
 	PWR_IDX_80M = 2,
 	PWR_IDX_BW_MAX = 3
+};
+
+/* MFP capabilities (ieee80211w) */
+enum ieee80211_mfp_capabilities {
+	IEEE80211_MFP_NO_PROTECT = 0,
+	IEEE80211_MFP_PROTECT_CAPABLE = 2,
+	IEEE80211_MFP_PROTECT_REQUIRE = 3
 };
 
 /*
@@ -313,6 +397,10 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_ANY	0xffff	/* token for ``any channel'' */
 #define	IEEE80211_CHAN_ANYC 	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
 
+#define IEEE80211_MIN_DUAL_EXT_CHAN_24G		5
+#define IEEE80211_MAX_DUAL_EXT_CHAN_24G		9
+#define IEEE80211_MAX_DUAL_EXT_CHAN_24G_US	7
+
 #define	IEEE80211_RADAR_11HCOUNT		1
 #define IEEE80211_DEFAULT_CHANCHANGE_TBTT_COUNT	10
 #define	IEEE80211_RADAR_TEST_MUTE_CHAN	36	/* Move to channel 36 for mute test */
@@ -337,12 +425,14 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_HT40	0x00080000	/* HT 40 with ext channel above/below */
 #define IEEE80211_CHAN_DFS	0x00100000	/* Configuration: DFS-required channel */
 #define IEEE80211_CHAN_DFS_CAC_DONE	0x00200000     /* Status: CAC completed */
-#define IEEE80211_CHAN_VHT80	0x00400000	/* VHT 80 */
+#define IEEE80211_CHAN_VHT80		0x00400000	/* VHT 80 */
 #define IEEE80211_CHAN_DFS_OCAC_DONE	0x00800000	/* Status: Off-channel CAC completed */
 #define IEEE80211_CHAN_DFS_CAC_IN_PROGRESS	0x01000000	/* Status: Valid CAC is in progress */
-#define IEEE80211_CHAN_WEATHER	0x02000000	/* Configuration: weather channel */
+#define IEEE80211_CHAN_WEATHER		0x02000000	/* Configuration: weather channel for 20MHz */
+#define IEEE80211_CHAN_WEATHER_40M	0x04000000	/* Configuration: weather channel for 40MHz */
+#define IEEE80211_CHAN_WEATHER_80M	0x08000000	/* Configuration: weather channel for 80MHz */
 
-#define IEEE80211_DEFAULT_2_4_GHZ_CHANNEL	1
+#define IEEE80211_DEFAULT_2_4_GHZ_CHANNEL	6
 #define IEEE80211_DEFAULT_5_GHZ_CHANNEL		36
 
 #define IEEE80211_MAX_2_4_GHZ_CHANNELS	13
@@ -432,6 +522,9 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_ANYN \
 	(IEEE80211_CHAN_HT20 | IEEE80211_CHAN_HT40U | IEEE80211_CHAN_HT40D | \
 		IEEE80211_CHAN_HT40 )
+
+#define	IEEE80211_CHAN_HT40_DUAL_EXT \
+	(IEEE80211_CHAN_HT40U | IEEE80211_CHAN_HT40D)
 
 #define	IEEE80211_IS_CHAN_CACDONE(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_DFS_CAC_DONE) != 0)
@@ -841,7 +934,8 @@ enum ieee80211_vht_rxsts {
 	IEEE80211_VHTCAP_RX_STS_5,
 	IEEE80211_VHTCAP_RX_STS_6,
 	IEEE80211_VHTCAP_RX_STS_7,
-	IEEE80211_VHTCAP_RX_STS_8
+	IEEE80211_VHTCAP_RX_STS_8,
+	IEEE80211_VHTCAP_RX_STS_INVALID = 0xff
 };
 
 /* SOUNDING DIM B16-18 */
@@ -985,11 +1079,21 @@ struct ieee80211_vhtop {
 	u_int16_t			basicvhtmcsnssset;
 } __packed;
 
+/* VHT Operating Mode Notification element */
+#define IEEE80211_VHT_OPMODE_NOTIF_DEFAULT	0xFFFF
+
 /* Max number of MU groups */
 #define IEEE80211_MU_GRP_NUM_MAX	64
 
 /* Max number of nodes in a MU group */
 #define IEEE80211_MU_GRP_NODES_MAX	4
+
+/* GROUP IDs which are used for SU PPDU as per IEEE P802.11ac/D5.0,
+ * chapter 9.17a Group ID and partial AID in VHT PPDUs  */
+#define IEEE80211_SU_GROUP_ID_0		0u
+#define IEEE80211_SU_GROUP_ID_63	63u
+
+#define IEEE80211_MAC_ADDRESS_GROUP_BIT 0x01
 
 /* VHT MU membership & user position arrays */
 struct ieee80211_vht_mu_grp {
@@ -1000,6 +1104,14 @@ struct ieee80211_vht_mu_grp {
 							IEEE80211_MU_GRP_NUM_MAX/(sizeof(u_int8_t)*8))
 	u_int8_t member[IEEE80211_VHT_GRP_MEMBERSHIP_ARRAY_SIZE];
 	u_int8_t pos[IEEE80211_VHT_USR_POS_ARRAY_SIZE];
+} __packed;
+
+#define QTN_MU_NODES_PER_GROUP 2 /* Max number of nodes currently supported */
+#define QTN_MU_QMAT_MAX_SLOTS 3
+
+struct ieee80211_mu_groups_update {
+	u_int8_t ncidx[QTN_MU_NODES_PER_GROUP * QTN_MU_QMAT_MAX_SLOTS];
+	struct ieee80211_vht_mu_grp grps[QTN_MU_NODES_PER_GROUP * QTN_MU_QMAT_MAX_SLOTS];
 } __packed;
 
 struct ieee80211_action_data {

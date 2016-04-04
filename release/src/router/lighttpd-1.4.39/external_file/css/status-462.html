@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link rel="apple-touch-icon" href="/smb/css/appicon.png">
+<link rel="apple-touch-startup-image" href="/smb/css/startup.png">
+<title>AiCloud</title>
+<link rel="stylesheet" href="/smb/css/style-status.css" />
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type='text/javascript' src='/smb/js/davclient_tools.js'></script>
+<script type="text/javascript">
+var this_url;
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	var logo_left = ($(document).width() - $("div#login_logo").width())/2;
+	$("div#login_logo").css("left", logo_left);
+	
+	$('#lb_msg_1').text(m.getString('msg_token_invalid'));
+	$('#lb_msg_2').text(m.getString('title_invite_tutorial_3'));
+	
+	$("#table_main").show();
+});
+
+function doLogin(){
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var window_location = window.location.href.slice(0,b);
+	window.location = window_location;
+}
+
+</script>
+</head>
+<body style='padding-top:20px;margin:0;background-color:#313131'>
+
+<table id="logo" width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody>
+    	<tr height="128px"></tr>
+		<tr><td valign="middle" align="center"><div id="login_logo"></div></td></tr>		
+	</tbody>
+</table>
+
+<table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody>
+		<tr>
+		<td valign="middle" align="center">
+			<div style="width:300px;height:88px;background-color:#595F62;padding-top:10px">
+				<div id="title1">Welcome.</div>
+				<div id="title2">Register Your Account.</div>
+			</div>
+		</td>
+		</tr>
+		<tr height="7px"></tr>
+	</tbody>
+</table>
+
+<table width="100%" height="100%">
+	<tbody><tr>
+		<td valign="top" align="center">
+		
+			<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
+				<tbody><tr>
+					<td align="left" background="" height="106" alt="">		
+						<div id="main" style="width:300px;height:auto;background-color:#595F62;padding: 0 0 10px 0;">
+					    	<table id="table_main" class="table_x" border="0" cellpadding="0" cellspacing="3">
+								<tbody>
+									<tr>
+										<td>
+											<p class="table_label_x" id="lb_msg_1"></p>
+											<p class="table_label_x_small" id="lb_msg_2"></p>
+										</td>
+									</tr>
+									<tr> 
+					          			<td colspan="2" align="center"><div id="ok" onClick="doLogin();"></div></td>
+					        		</tr>
+								</tbody>
+							</table>
+				    	</div>
+					</td>
+				</tr></tbody>
+			</table>
+		
+		</td>
+	</tr></tbody>
+</table>
+
+</body>
+</html>

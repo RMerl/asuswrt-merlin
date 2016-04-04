@@ -254,7 +254,6 @@ Get_USB_Port_Folder(const char *port_x)
 	return 1;
 }
 
-#if defined (RTCONFIG_USB_XHCI)
 int
 Get_USB_Port_DataRate(const char *port_x)
 {
@@ -269,7 +268,6 @@ Get_USB_Port_DataRate(const char *port_x)
 		puts("N/A");
 	return 1;
 }
-#endif	/* RTCONFIG_USB_XHCI */
 
 int
 Get_SD_Card_Info(void)
@@ -367,8 +365,19 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_logger();
 			stop_wanduck();
 			stop_dnsmasq();
+#ifdef RTCONFIG_MDNS
+			stop_mdns();
+#endif
 			stop_ots();
 			stop_networkmap();
+#ifdef RTCONFIG_DISK_MONITOR
+			stop_diskmon();
+#endif
+#ifdef RTCONFIG_BWDPI
+			stop_bwdpi_check();
+#endif
+			stop_ntpc();
+			stop_udhcpc(-1);
 #ifdef RTCONFIG_USB
 			stop_usbled();
 #ifdef RTCONFIG_USB_PRINTER
@@ -421,7 +430,20 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		if (!chk_envrams_proc())
 			return EINVAL;
 #endif
-		if( !setMAC_2G(value) )
+		//Andy Chiu, 2016/02/04.
+		char *p = value;
+		char UpperMac[20] = {0};
+		int i;
+		for(i = 0; p[i]; ++i)
+		{
+			UpperMac[i] = toupper(p[i]);
+		}
+
+		char tmp[256];
+		snprintf(tmp, sizeof(tmp), "<%s;%s>", value, UpperMac);
+		puts(tmp);
+		
+		if( !setMAC_2G(UpperMac) )
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
@@ -434,11 +456,19 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		if (!chk_envrams_proc())
 			return EINVAL;
 #endif
+		//Andy Chiu, 2016/02/04.
+		char *p = value;
+		char UpperMac[20] = {0};
+		int i;
+		for(i = 0; p[i]; ++i)
+		{
+			UpperMac[i] = toupper(p[i]);
+		}
 
 #ifdef RTCONFIG_QTN
-		if( !setMAC_5G_qtn(value))
+		if( !setMAC_5G_qtn(UpperMac))
 #else
-		if( !setMAC_5G(value))
+		if( !setMAC_5G(UpperMac))
 #endif
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
@@ -446,15 +476,23 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
-#if defined(RTAC3200) || defined(RTAC5300)
+#if defined(RTAC3200) || defined(RTAC5300)|| defined(RTAC5300R)
 	else if (!strcmp(command, "Set_MacAddr_5G_2")) {
 #if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
 		if (!chk_envrams_proc())
 			return EINVAL;
 
 #endif
+		//Andy Chiu, 2016/02/04.
+		char *p = value;
+		char UpperMac[20] = {0};
+		int i;
+		for(i = 0; p[i]; ++i)
+		{
+			UpperMac[i] = toupper(p[i]);
+		}
 
-		if( !setMAC_5G_2(value))
+		if( !setMAC_5G_2(UpperMac))
                 {
                         puts("ATE_ERROR_INCORRECT_PARAMETER");
                         return EINVAL;
@@ -828,6 +866,14 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+#ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+	else if (!strcmp(command, "Get_SwitchStatus")) {
+		puts(nvram_safe_get("switch_mode"));
+		return 0;
+	}
+#endif  /* Model */
+#endif  /* RTCONFIG_SWMODE_SWITCH */
 	else if (!strcmp(command, "Get_SWMode")) {
 		puts(nvram_safe_get("sw_mode"));
 		return 0;
@@ -845,18 +891,18 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #endif
 		return 0;
 	}
-#if defined(RTAC3200) || defined(RTAC5300)
+#if defined(RTAC3200) || defined(RTAC5300)|| defined(RTAC5300R)
 	else if (!strcmp(command, "Get_MacAddr_5G_2")) {
 		getMAC_5G_2();
 		return 0;
 	}
 #endif
 #endif	/* RTCONFIG_HAS_5G */
-	else if (!strcmp(command, "Get_Usb2p0_Port1_Infor")) {
+	else if (!strcmp(command, "Get_Usb2p0_Port1_Infor") || !strcmp(command, "Get_Usb_Port1_Infor")) {
 		Get_USB_Port_Info("1");
 		return 0;
 	}
-	else if (!strcmp(command, "Get_Usb2p0_Port1_Folder")) {
+	else if (!strcmp(command, "Get_Usb2p0_Port1_Folder") || !strcmp(command, "Get_Usb_Port1_Folder")) {
 		Get_USB_Port_Folder("1");
 		return 0;
 	}
@@ -868,6 +914,29 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		Get_USB_Port_Folder("2");
 		return 0;
 	}
+	else if (!strcmp(command, "Get_Usb_Port1_DataRate")) {
+		if (!Get_USB_Port_DataRate("1"))
+			puts("ATE_ERROR");
+		return 0;
+	}
+#if defined(RTCONFIG_M2_SSD)
+	/* Because M.2 SSD is assigned to port 3 and BRT-AC828M2 doesn't have SD card.
+	 * It's safe to call functions for SD card here.
+	 */
+	else if (!strcmp(command, "Get_M2Ssd_Infor")) {
+		Get_SD_Card_Info();
+		return 0;
+	}
+	else if (!strcmp(command, "Get_M2Ssd_Folder")) {
+		Get_SD_Card_Folder();
+		return 0;
+	}
+	else if (!strcmp(command, "Get_M2Ssd_DataRate")) {
+		if (!Get_USB_Port_DataRate("3"))
+			puts("ATE_ERROR");
+		return 0;
+	}
+#endif
 	else if (!strcmp(command, "Get_SD_Infor")) {
 		Get_SD_Card_Info();
 		return 0;
@@ -936,11 +1005,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Get_WanLanStatus")) {
-#ifndef RTCONFIG_EXT_RTL8365MB
+#if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
+		GetPhyStatus(1);
+#else
 		if( !GetPhyStatus(1))
 			puts("ATE_ERROR");
-#else
-		GetPhyStatus(1);
 #endif
 
 		return 0;
@@ -980,7 +1049,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("ATE_ERROR");
 		return 0;
 	}
-#if defined(RTAC3200) || defined(RTAC5300)
+#if defined(RTAC3200) || defined(RTAC5300)|| defined(RTAC5300R)
 	else if (!strcmp(command, "Get_ChannelList_5G_2")) {
 		if (!Get_ChannelList_5G_2())
 			puts("ATE_ERROR");

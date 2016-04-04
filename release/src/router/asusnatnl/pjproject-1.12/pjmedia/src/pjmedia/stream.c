@@ -1504,12 +1504,12 @@ static pj_status_t put_frame( pjmedia_port *port,
 }
 
 
-#if 0
+#if 1
 static void dump_bin(const char *buf, unsigned len)
 {
 	unsigned i;
-	if (len > 64)
-		len = 64;
+	if (len != 40)
+		return;
 	PJ_LOG(3,(THIS_FILE, "begin dump"));
 	for (i=0; i<len; ++i) {
 		int j;
@@ -1540,6 +1540,7 @@ static void on_rx_rtp(void *data,
     pjsua_call *call = (pjsua_call *)pjmedia_session_get_user_data(session);
 	pj_bool_t is_tnl_data = PJ_FALSE;
 	pj_uint8_t *pkt = (pj_uint8_t *)buf;
+	pj_bool_t disable_flow_ctl = PJ_FALSE;
 
 	// Speed limit. Drop packet if it is over bandwidth.
 	if(call->tnl_stream->rx_band->isLimited && 
@@ -1548,6 +1549,12 @@ static void on_rx_rtp(void *data,
 
     pj_mutex_lock(call->tnl_stream_lock);
 #if 1
+	// Check if tunnel is destroyed.
+	if (!call->tnl_stream) {
+		pj_mutex_unlock(call->tnl_stream_lock);
+		return;
+	}
+
     /* put the receive packet to received buffer */
     pj_mutex_lock(call->tnl_stream->gcbuff_mutex);
     if (!pj_list_empty(&call->tnl_stream->gcbuff)) {
@@ -1560,43 +1567,78 @@ static void on_rx_rtp(void *data,
 
     if (rb == NULL) {
 #if 1
-        rb = PJ_POOL_ZALLOC_T(call->tnl_stream->own_pool, struct recv_buff);
+        rb = PJ_POOL_ZALLOC_T(call->tnl_stream->own_pool, recv_buff);
 #else
-		rb = malloc(sizeof(struct recv_buff));
+		rb = malloc(sizeof(recv_buff));
 #endif
     }
     pj_memcpy(rb->buff, buf, data_len);
     rb->len = data_len; 
 
-    pj_mutex_lock(call->tnl_stream->rbuff_mutex);
-    pj_list_push_back(&call->tnl_stream->rbuff, rb);
-	pj_get_timestamp(&call->tnl_stream->last_data_or_ka);  // DEAN save current time
-
 	//dump_bin(pkt, data_len);
+	//if (data_len != 40)
+	//	printf("");
 
-	// DEAN, check if this is tunnel data. If true, update last_data time.
-	is_tnl_data = (data_len >= TCP_OR_UDP_TOTAL_HEADER_SIZE &&  // TUNNEL_HEADER + UDT_HEADER
-		(pkt[TCP_SESS_MSG_TYPE_INDEX] == 5 || pkt[TCP_SESS_MSG_TYPE_INDEX] == 6));
+	disable_flow_ctl = pjmedia_natnl_disabled_flow_control(pkt, data_len);
+	if (disable_flow_ctl) {
+		pj_mutex_lock(call->tnl_stream->no_ctl_rbuff_mutex);
+		pj_list_push_back(&call->tnl_stream->no_ctl_rbuff, rb);
+		pj_get_timestamp(&call->tnl_stream->last_data_or_ka);  // DEAN save current time
 
-	if (is_tnl_data) {
-		pj_get_timestamp(&call->tnl_stream->last_data);  // DEAN save current time
+		//dump_bin(pkt, data_len);
 
-		// for rx speed calculation
-		if (call->tnl_stream->rx_band)
-			pj_bandwidthUsed(call->tnl_stream->rx_band, data_len);
+		// DEAN, check if this is tunnel data. If true, update last_data time.
+		is_tnl_data = pjmedia_natnl_no_flow_ctl_packet_is_tnl_data(pkt, data_len);
+
+		if (is_tnl_data) {
+			pj_get_timestamp(&call->tnl_stream->last_data);  // DEAN save current time
+
+			// for rx speed calculation
+			if (call->tnl_stream->rx_band)
+				pj_bandwidthUsed(call->tnl_stream->rx_band, data_len);
+		}
+
+		call->tnl_stream->no_ctl_rbuff_cnt++;
+		PJ_LOG(5, (THIS_FILE, "no_ctl_rbuff_cnt=%d", call->tnl_stream->no_ctl_rbuff_cnt));
+		PJ_LOG(5, (THIS_FILE, "RX %d bytes no flow control RTP packet.", (int)data_len));
+
+		pj_mutex_unlock(call->tnl_stream->no_ctl_rbuff_mutex);
+	} else {
+		pj_mutex_lock(call->tnl_stream->rbuff_mutex);
+		pj_list_push_back(&call->tnl_stream->rbuff, rb);
+		pj_get_timestamp(&call->tnl_stream->last_data_or_ka);  // DEAN save current time
+
+		//dump_bin(pkt, data_len);
+
+		// DEAN, check if this is tunnel data. If true, update last_data time.
+		if (call->use_sctp) // SCTP flow control
+			is_tnl_data = pjmedia_natnl_sess_mgr_packet_is_tnl_data(pkt, data_len);
+		else // UDT flow control
+			is_tnl_data = pjmedia_natnl_udt_packet_is_tnl_data(pkt, data_len);
+
+		if (is_tnl_data) {
+			pj_get_timestamp(&call->tnl_stream->last_data);  // DEAN save current time
+
+			// for rx speed calculation
+			if (call->tnl_stream->rx_band)
+				pj_bandwidthUsed(call->tnl_stream->rx_band, data_len);
+		}
+
+		call->tnl_stream->rbuff_cnt++;
+		PJ_LOG(5, (THIS_FILE, "rbuff_cnt=%d", call->tnl_stream->rbuff_cnt));
+		PJ_LOG(5, (THIS_FILE, "RX %d bytes audio RTP packet.", (int)data_len));
+
+		pj_mutex_unlock(call->tnl_stream->rbuff_mutex);
 	}
 
-	call->tnl_stream->rbuff_cnt++;
-	//PJ_LOG(4, ("stream.c", "rbuff_cnt=%d", call->tnl_stream->rbuff_cnt));
-
-    pj_mutex_unlock(call->tnl_stream->rbuff_mutex);
-
     /* TODO: Do something with the packet */
-    PJ_LOG(5,(THIS_FILE, "RX %d bytes audio RTP packet.", (int)data_len));
 
     pj_mutex_unlock(call->tnl_stream_lock);
 
-    pj_sem_post(call->tnl_stream->rbuff_sem);
+	if (disable_flow_ctl)
+		pj_sem_post(call->tnl_stream->no_ctl_rbuff_sem);
+	else
+		pj_sem_post(call->tnl_stream->rbuff_sem);
 
 }
 

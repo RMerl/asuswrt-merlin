@@ -279,12 +279,12 @@ PJ_DEF(pj_status_t) pjmedia_codec_mgr_get_codec_info( pjmedia_codec_mgr *mgr,
 {
     unsigned i;
 
-    PJ_ASSERT_RETURN(mgr && p_info && pt>=0 && pt < 96, PJ_EINVAL);
+    PJ_ASSERT_RETURN(mgr && p_info && pt>=0 && (pt < 96 || pt == 5000), PJ_EINVAL);  // dean : 5000 is for WebRTC data channel.
 
     pj_mutex_lock(mgr->mutex);
 
     for (i=0; i<mgr->codec_cnt; ++i) {
-	if (mgr->codec_desc[i].info.pt == pt) {
+	if (mgr->codec_desc[i].info.pt == pt || pt == 5000) { // dean : 5000 is for WebRTC data channel.
 	    *p_info = &mgr->codec_desc[i].info;
 
 	    pj_mutex_unlock(mgr->mutex);

@@ -1643,9 +1643,6 @@ void CUDTUnited::updateMux(CUDTSocket* s, const CUDTSocket* ls)
 
    CGuard gcguard(self->m_GCStopLock);
 
-#ifdef WIN32
-   printf("CUDTUnited::garbageCollect ThreadId=[%08X]\n", GetCurrentThreadId());
-#endif
    while (!self->m_bClosing)
    {
       self->checkBrokenSockets();

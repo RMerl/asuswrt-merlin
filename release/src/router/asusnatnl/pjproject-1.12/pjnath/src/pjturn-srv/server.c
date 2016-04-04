@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "turn.h"
 #include "auth.h"
@@ -76,7 +76,7 @@ PJ_DEF(const char*) pj_turn_tp_type_name(int tp_type)
 /*
  * Create server.
  */
-PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf, 
+PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
 				       pj_turn_srv **p_srv)
 {
     pj_pool_t *pool;
@@ -94,14 +94,14 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
     srv->core.pf = pf;
     srv->core.pool = pool;
     srv->core.tls_key = srv->core.tls_data = -1;
-    
+
     /* Create ioqueue */
     status = pj_ioqueue_create(pool, MAX_HANDLES, &srv->core.ioqueue);
     if (status != PJ_SUCCESS)
 	goto on_error;
 
     /* Server mutex */
-    status = pj_lock_create_recursive_mutex(pool, srv->obj_name, 
+    status = pj_lock_create_recursive_mutex(pool, srv->obj_name,
 					    &srv->core.lock);
     if (status != PJ_SUCCESS)
 	goto on_error;
@@ -114,7 +114,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
     status = pj_thread_local_alloc(&srv->core.tls_data);
     if (status != PJ_SUCCESS)
 	goto on_error;
-    
+
     /* Create timer heap */
     status = pj_timer_heap_create(pool, MAX_TIMER, &srv->core.timer_heap);
     if (status != PJ_SUCCESS)
@@ -125,7 +125,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
 
     /* Array of listeners */
     srv->core.listener = (pj_turn_listener**)
-			 pj_pool_calloc(pool, MAX_LISTENERS, 
+			 pj_pool_calloc(pool, MAX_LISTENERS,
 					sizeof(srv->core.listener[0]));
 
     /* Create hash tables */
@@ -155,7 +155,8 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
     sess_cb.on_send_msg = &on_tx_stun_msg;
 
     status = pj_stun_session_create(&srv->core.stun_cfg, srv->obj_name,
-				    &sess_cb, PJ_FALSE, &srv->core.stun_sess);
+				    &sess_cb, PJ_FALSE, NULL,
+				    &srv->core.stun_sess);
     if (status != PJ_SUCCESS) {
 	goto on_error;
     }
@@ -168,19 +169,19 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
     /* Array of worker threads */
     srv->core.thread_cnt = MAX_THREADS;
     srv->core.thread = (pj_thread_t**)
-		       pj_pool_calloc(pool, srv->core.thread_cnt, 
+		       pj_pool_calloc(pool, srv->core.thread_cnt,
 				      sizeof(pj_thread_t*));
 
     /* Start the worker threads */
     for (i=0; i<srv->core.thread_cnt; ++i) {
-	status = pj_thread_create(pool, srv->obj_name, &server_thread_proc, 
+	status = pj_thread_create(pool, srv->obj_name, &server_thread_proc,
 				  srv, 0, 0, &srv->core.thread[i]);
 	if (status != PJ_SUCCESS)
 	    goto on_error;
     }
 
     /* We're done. Application should add listeners now */
-    PJ_LOG(4,(srv->obj_name, "TURN server v%s is running", 
+    PJ_LOG(4,(srv->obj_name, "TURN server v%s is running",
 	      pj_get_version()));
 
     *p_srv = srv;
@@ -192,8 +193,8 @@ on_error:
 }
 
 
-/* 
- * Handle timer and network events 
+/*
+ * Handle timer and network events
  */
 static void srv_handle_events(pj_turn_srv *srv, const pj_time_val *max_timeout)
 {
@@ -202,8 +203,8 @@ static void srv_handle_events(pj_turn_srv *srv, const pj_time_val *max_timeout)
     unsigned net_event_count = 0;
     int c;
 
-    /* Poll the timer. The timer heap has its own mutex for better 
-     * granularity, so we don't need to lock the server. 
+    /* Poll the timer. The timer heap has its own mutex for better
+     * granularity, so we don't need to lock the server.
      */
     timeout.sec = timeout.msec = 0;
     c = pj_timer_heap_poll( srv->core.timer_heap, &timeout );
@@ -221,7 +222,7 @@ static void srv_handle_events(pj_turn_srv *srv, const pj_time_val *max_timeout)
 	timeout = *max_timeout;
     }
 
-    /* Poll ioqueue. 
+    /* Poll ioqueue.
      * Repeat polling the ioqueue while we have immediate events, because
      * timer heap may process more than one events, so if we only process
      * one network events at a time (such as when IOCP backend is used),
@@ -291,7 +292,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_destroy(pj_turn_srv *srv)
 	    it = next;
 	}
     }
-    
+
     /* Destroy all listeners. */
     for (i=0; i<srv->core.lis_cnt; ++i) {
 	if (srv->core.listener[i]) {
@@ -311,7 +312,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_destroy(pj_turn_srv *srv)
 	srv->tables.alloc = NULL;
 	srv->tables.res = NULL;
     }
-    
+
     /* Destroy timer heap */
     if (srv->core.timer_heap) {
 	pj_timer_heap_destroy(srv->core.timer_heap);
@@ -459,7 +460,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_unregister_allocation(pj_turn_srv *srv,
 }
 
 
-/* Callback from our own STUN session whenever it needs to send 
+/* Callback from our own STUN session whenever it needs to send
  * outgoing STUN packet.
  */
 static pj_status_t on_tx_stun_msg( pj_stun_session *sess,
@@ -470,24 +471,24 @@ static pj_status_t on_tx_stun_msg( pj_stun_session *sess,
 				   unsigned addr_len)
 {
     pj_turn_transport *transport = (pj_turn_transport*) token;
-    
+
     PJ_ASSERT_RETURN(transport!=NULL, PJ_EINVALIDOP);
 
     PJ_UNUSED_ARG(sess);
 
-    return transport->sendto(transport, pdu, pdu_size, 0, 
+    return transport->sendto(transport, pdu, pdu_size, 0,
 			     dst_addr, addr_len);
 }
 
 
 /* Respond to STUN request */
-static pj_status_t stun_respond(pj_stun_session *sess, 
+static pj_status_t stun_respond(pj_stun_session *sess,
 				pj_turn_transport *transport,
 				const pj_stun_rx_data *rdata,
-				unsigned code, 
+				unsigned code,
 				const char *errmsg,
-				pj_bool_t cache, 
-				const pj_sockaddr_t *dst_addr, 
+				pj_bool_t cache,
+				const pj_sockaddr_t *dst_addr,
 				unsigned addr_len)
 {
     pj_status_t status;
@@ -495,14 +496,14 @@ static pj_status_t stun_respond(pj_stun_session *sess,
     pj_stun_tx_data *tdata;
 
     /* Create response */
-    status = pj_stun_session_create_res(sess, rdata, code, 
+    status = pj_stun_session_create_res(sess, rdata, code,
 					(errmsg?pj_cstr(&reason,errmsg):NULL),
 					&tdata);
     if (status != PJ_SUCCESS)
 	return status;
 
     /* Send the response */
-    return pj_stun_session_send_msg(sess, transport, cache, PJ_FALSE, 
+    return pj_stun_session_send_msg(sess, transport, cache, PJ_FALSE,
 				    dst_addr,  addr_len, tdata);
 }
 
@@ -521,7 +522,6 @@ static pj_status_t on_rx_stun_request(pj_stun_session *sess,
 {
     pj_turn_transport *transport;
     const pj_stun_msg *msg = rdata->msg;
-    pj_turn_srv *srv;
     pj_turn_allocation *alloc;
     pj_status_t status;
 
@@ -529,7 +529,6 @@ static pj_status_t on_rx_stun_request(pj_stun_session *sess,
     PJ_UNUSED_ARG(pdu_len);
 
     transport = (pj_turn_transport*) token;
-    srv = transport->listener->server;
 
     /* Respond any requests other than ALLOCATE with 437 response */
     if (msg->hdr.type != PJ_STUN_ALLOCATE_REQUEST) {
@@ -568,13 +567,13 @@ static void handle_binding_request(pj_turn_pkt *pkt,
 	return;
 
     /* Create response */
-    status = pj_stun_msg_create_response(pkt->pool, request, 0, NULL, 
+    status = pj_stun_msg_create_response(pkt->pool, request, 0, NULL,
 					 &response);
     if (status != PJ_SUCCESS)
 	return;
 
     /* Add XOR-MAPPED-ADDRESS */
-    pj_stun_msg_add_sockaddr_attr(pkt->pool, response, 
+    pj_stun_msg_add_sockaddr_attr(pkt->pool, response,
 				  PJ_STUN_ATTR_XOR_MAPPED_ADDR,
 				  PJ_TRUE,
 				  &pkt->src.clt_addr,
@@ -586,7 +585,7 @@ static void handle_binding_request(pj_turn_pkt *pkt,
 	return;
 
     /* Send response */
-    pkt->transport->sendto(pkt->transport, pdu, len, 0, 
+    pkt->transport->sendto(pkt->transport, pdu, len, 0,
 			   &pkt->src.clt_addr, pkt->src_addr_len);
 }
 
@@ -597,7 +596,7 @@ static void handle_binding_request(pj_turn_pkt *pkt,
  * is found for the client address, or handed over to owned STUN session
  * if an allocation is not found.
  */
-PJ_DEF(void) pj_turn_srv_on_rx_pkt(pj_turn_srv *srv, 
+PJ_DEF(void) pj_turn_srv_on_rx_pkt(pj_turn_srv *srv,
 				   pj_turn_pkt *pkt)
 {
     pj_turn_allocation *alloc;
@@ -637,7 +636,7 @@ PJ_DEF(void) pj_turn_srv_on_rx_pkt(pj_turn_srv *srv,
 	     */
 	    if ((*pkt->pkt != 0x00 && *pkt->pkt != 0x01) ||
 		pkt->len > 1600 ||
-		(options & PJ_STUN_IS_DATAGRAM)) 
+		(options & PJ_STUN_IS_DATAGRAM))
 	    {
 		char errmsg[PJ_ERR_MSG_SIZE];
 		char ip[PJ_INET6_ADDRSTRLEN+10];
@@ -645,7 +644,7 @@ PJ_DEF(void) pj_turn_srv_on_rx_pkt(pj_turn_srv *srv,
 		pkt->len = 0;
 
 		pj_strerror(status, errmsg, sizeof(errmsg));
-		PJ_LOG(5,(srv->obj_name, 
+		PJ_LOG(5,(srv->obj_name,
 			  "Non-STUN packet from %s is dropped: %s",
 			  pj_sockaddr_print(&pkt->src.clt_addr, ip, sizeof(ip), 3),
 			  errmsg));
@@ -653,7 +652,7 @@ PJ_DEF(void) pj_turn_srv_on_rx_pkt(pj_turn_srv *srv,
 	    return;
 	}
 
-	/* Special handling for Binding Request. We won't give it to the 
+	/* Special handling for Binding Request. We won't give it to the
 	 * STUN session since this request is not authenticated.
 	 */
 	if (pkt->pkt[1] == 1) {
@@ -667,16 +666,16 @@ PJ_DEF(void) pj_turn_srv_on_rx_pkt(pj_turn_srv *srv,
 	 */
 	options &= ~PJ_STUN_CHECK_PACKET;
 	parsed_len = 0;
-	status = pj_stun_session_on_rx_pkt(srv->core.stun_sess, pkt->pkt, 
+	status = pj_stun_session_on_rx_pkt(srv->core.stun_sess, pkt->pkt,
 					   pkt->len, options, pkt->transport,
-					   &parsed_len, &pkt->src.clt_addr, 
+					   &parsed_len, &pkt->src.clt_addr,
 					   pkt->src_addr_len);
 	if (status != PJ_SUCCESS) {
 	    char errmsg[PJ_ERR_MSG_SIZE];
 	    char ip[PJ_INET6_ADDRSTRLEN+10];
 
 	    pj_strerror(status, errmsg, sizeof(errmsg));
-	    PJ_LOG(5,(srv->obj_name, 
+	    PJ_LOG(5,(srv->obj_name,
 		      "Error processing STUN packet from %s: %s",
 		      pj_sockaddr_print(&pkt->src.clt_addr, ip, sizeof(ip), 3),
 		      errmsg));

@@ -16,16 +16,14 @@
 		parent.document.getElementById("hiddenMask").style.visibility = "hidden";
 		// parent.document.getElementById('loading_block1').style.display = "none";
 		parent.document.getElementById('loading_block2').innerHTML = "<#FIRM_fail_desc#>";
-		parent.document.getElementById('loading_block3').innerHTML = "<#Main_alert_proceeding_desc5#>";
-		// parent.document.getElementById('loading_block3').style.display = "none";
-		// reboottime += 40;
+		// parent.document.getElementById('loading_block3').innerHTML = "<#Main_alert_proceeding_desc5#>"; wrong status
+		parent.document.getElementById('loading_block3').style.display = "none";
 		parent.showLoadingBar(reboottime);
-		// reboottime += 2;
 		setTimeout("parent.detect_httpd();", reboottime*1000);	
 	}
 	else{
 		aler("<#FIRM_fail_desc#>");
-	  parent.location.href=parent.location.href;
+		parent.location.href=parent.location.href;
 	}	
 </script>
 </body>

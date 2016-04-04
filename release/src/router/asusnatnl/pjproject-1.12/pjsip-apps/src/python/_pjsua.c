@@ -2183,7 +2183,7 @@ static PyObject *py_pjsua_im_send(PyObject *pSelf, PyObject *pArgs)
     }
 
     status = pjsua_im_send(acc_id, &to, mime_type, &content, 
-			   &msg_data, (void*)(long)user_data);
+			   &msg_data, NULL, NULL, (void*)(long)user_data);
     if (pool)
 	pj_pool_release(pool);
     
@@ -3135,7 +3135,7 @@ static PyObject *py_pjsua_call_make_call(PyObject *pSelf, PyObject *pArgs)
     Py_XINCREF(pUserData);
 
     status = pjsua_call_make_call(acc_id, &dst_uri, 
-				  options, (void*)pUserData, 
+				  options, 0, (void*)pUserData, 
 				  &msg_data, &call_id);	
     if (pool != NULL)
 	pj_pool_release(pool);

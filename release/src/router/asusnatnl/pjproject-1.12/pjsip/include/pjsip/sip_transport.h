@@ -395,6 +395,11 @@ struct pjsip_rx_data
 	 */
 	pjsip_supported_hdr	*supported;
 
+	/** "Supported" header containing aggregates of all Supported
+	 *  headers found in the message, or NULL. 
+	 */
+	pjsip_tnl_supported_hdr	*tnl_supported;
+
 	/** "User-Agent" header containing aggregates of all Supported
 	 *  headers found in the message, or NULL. 
 	 */

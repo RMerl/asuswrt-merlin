@@ -3,7 +3,7 @@ include build/host-$(HOST_NAME).mak
 -include user.mak
 include version.mak
 
-DIRS = pjlib/build pjlib-util/build pjnath/build third_party/build pjmedia/build pjsip/build pjsip-apps/build $(EXTRA_DIRS)
+DIRS = third_party/build pjlib/build pjlib-util/build pjnath/build pjmedia/build pjsip/build pjsip-apps/build $(EXTRA_DIRS)
 
 ifdef MINSIZE
 MAKE_FLAGS := MINSIZE=1

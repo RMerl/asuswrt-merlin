@@ -90,11 +90,16 @@ typedef unsigned int __u32;   // 1225 ham
 typedef union {
     struct sockaddr sa;
     struct sockaddr_in sa_in;
-    } usockaddr;
+} usockaddr;
 
 #include "queue.h"
 #define MAX_CONN_ACCEPT 64
 #define MAX_CONN_TIMEOUT 60
+
+#ifdef RTCONFIG_IFTTT
+#define IFTTTUSERAGENT	"asusrouter-Windows-IFTTT-1.0"
+#define GETIFTTTCGI	"get_IFTTTPincode.cgi"
+#endif
 
 typedef struct conn_item {
 	TAILQ_ENTRY(conn_item) entry;
@@ -162,6 +167,11 @@ struct language_table language_tables[] = {
 	{"fi-FI", "FI"},
 	{"fr", "FR"},
 	{"fr-fr", "FR"},
+	{"fr-BE", "FR"},
+	{"fr-CA", "FR"},
+	{"fr-CH", "FR"},
+	{"fr-MC", "FR"},
+	{"fr-LU", "FR"},
 	{"hu-hu", "HU"},
 	{"hu", "HU"},
 	{"it", "IT"},
@@ -204,7 +214,7 @@ struct language_table language_tables[] = {
 #endif //TRANSLATE_ON_FLY
 
 /* Forwards. */
-static int initialize_listen_socket( usockaddr* usaP );
+static int initialize_listen_socket(usockaddr* usa, const char *ifname);
 static int auth_check( char* dirname, char* authorization, char* url, char* cookies, int fromapp_flag);
 static int referer_check(char* referer, int fromapp_flag);
 char *generate_token(void);
@@ -220,6 +230,9 @@ static void handle_request(void);
 void send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
 void __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
 int check_user_agent(char* user_agent);
+#ifdef RTCONFIG_IFTTT
+void add_ifttt_flag(void);
+#endif
 
 /* added by Joey */
 //2008.08 magic{
@@ -230,7 +243,8 @@ int reget_passwd = 0;
 int x_Setting = 0;
 int skip_auth = 0;
 char url[128];
-int http_port=SERVER_PORT;
+int http_port = SERVER_PORT;
+char *http_ifname = NULL;
 
 /* Added by Joey for handle one people at the same time */
 unsigned int login_ip=0; // the logined ip
@@ -299,42 +313,52 @@ long uptime(void)
 }
 
 static int
-initialize_listen_socket( usockaddr* usaP )
-    {
-    int listen_fd;
+initialize_listen_socket(usockaddr* usa, const char *ifname)
+{
+	struct ifreq ifr;
+	int fd;
 
-    memset( usaP, 0, sizeof(usockaddr) );
-    usaP->sa.sa_family = AF_INET;
-    usaP->sa_in.sin_addr.s_addr = htonl( INADDR_ANY );
-    usaP->sa_in.sin_port = htons( http_port );
+	memset(usa, 0, sizeof(usockaddr));
+	usa->sa.sa_family = AF_INET;
+	usa->sa_in.sin_addr.s_addr = htonl(INADDR_ANY);
+	usa->sa_in.sin_port = htons(http_port);
 
-    listen_fd = socket( usaP->sa.sa_family, SOCK_STREAM, 0 );
-    if ( listen_fd < 0 )
-	{
-	perror( "socket" );
-	return -1;
+	fd = socket(usa->sa.sa_family, SOCK_STREAM, 0);
+	if (fd < 0) {
+		perror("socket");
+		return -1;
 	}
-    (void) fcntl( listen_fd, F_SETFD, FD_CLOEXEC );
-    if ( setsockopt( listen_fd, SOL_SOCKET, SO_REUSEADDR, &int_1, sizeof(int_1) ) < 0 )
-	{
-	close(listen_fd);	// 1104 chk
-	perror( "setsockopt" );
-	return -1;
+
+	if (ifname) {
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+		if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
+			perror("ioctl");
+			goto error;
+		}
+		usa->sa_in.sin_addr.s_addr = ((struct sockaddr_in *) &ifr.ifr_addr)->sin_addr.s_addr;
 	}
-    if ( bind( listen_fd, &usaP->sa, sizeof(struct sockaddr_in) ) < 0 )
-	{
-	close(listen_fd);	// 1104 chk
-	perror( "bind" );
-	return -1;
+
+	fcntl(fd, F_SETFD, FD_CLOEXEC);
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &int_1, sizeof(int_1)) < 0) {
+		perror("setsockopt");
+		goto error;
 	}
-    if ( listen( listen_fd, 1024 ) < 0 )
-	{
-	close(listen_fd);	// 1104 chk
-	perror( "listen" );
-	return -1;
+	if (bind(fd, &usa->sa, sizeof(struct sockaddr_in)) < 0) {
+		perror("bind");
+		goto error;
 	}
-    return listen_fd;
-    }
+	if (listen(fd, 1024) < 0) {
+		perror( "listen" );
+		goto error;
+	}
+
+	return fd;
+
+error:
+	close(fd);
+	return -1;
+}
 
 void 
 send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
@@ -469,6 +493,9 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, int fr
 
 	if(search_token_in_list(asustoken, NULL) != NULL){
 		//_dprintf("asus token auth_check: the right user and password\n");
+#ifdef RTCONFIG_IFTTT
+		if(strncmp(url, GETIFTTTCGI, strlen(GETIFTTTCGI))==0) add_ifttt_flag();
+#endif
 		login_try = 0;
 		last_login_timestamp = 0;
 		lock_flag = 0;
@@ -685,10 +712,22 @@ int check_user_agent(char* user_agent){
 				fromapp=FROM_DUTUtil;
 			else if(strcmp( app_framework, "ASSIA") == 0)
 				fromapp=FROM_ASSIA;
+			else if(strcmp( app_framework, "IFTTT") == 0)
+				fromapp=FROM_IFTTT;
 		}
+		if(cp1) free(cp1);
 	}
 	return fromapp;
 }
+
+#ifdef RTCONFIG_IFTTT
+void add_ifttt_flag(void){
+
+	memset(user_agent, 0, sizeof(user_agent));
+	sprintf(user_agent, "%s",IFTTTUSERAGENT);
+	return;
+}
+#endif
 
 #if 0
 void
@@ -1360,6 +1399,7 @@ void http_login(unsigned int ip, char *url) {
 	char login_ipstr[32], login_timestampstr[32];
 
 	if ((http_port != SERVER_PORT
+/*	  && http_port != nvram_get_int("http_lanport")*/
 #ifdef RTCONFIG_HTTPS
 	  && http_port != SERVER_PORT_SSL
 	  && http_port != nvram_get_int("https_lanport")
@@ -1407,6 +1447,7 @@ int http_client_ip_check(void)
 int http_login_check(void)
 {
 	if ((http_port != SERVER_PORT
+/*	  && http_port != nvram_get_int("http_lanport")*/
 #ifdef RTCONFIG_HTTPS
 	  && http_port != SERVER_PORT_SSL
 	  && http_port != nvram_get_int("https_lanport")
@@ -1467,6 +1508,7 @@ void http_logout(unsigned int ip, char *cookies, int fromapp_flag)
 int is_auth(void)
 {
 	if (http_port==SERVER_PORT ||
+/*	    http_port==nvram_get_int("http_lanport") ||*/
 #ifdef RTCONFIG_HTTPS
 	    http_port==SERVER_PORT_SSL ||
 	    http_port==nvram_get_int("https_lanport") ||
@@ -1938,29 +1980,45 @@ int ssl_stream_fd; 	// use Global for HTTPS stream fd in web.c
 int main(int argc, char **argv)
 {
 	usockaddr usa;
-	int listen_fd;
-	socklen_t sz = sizeof(usa);
+	int listen_fd[2];
+	socklen_t sz;
 	char pidfile[32];
 	fd_set active_rfds;
 	conn_list_t pool;
-	int c;
+	int i, c;
 	//int do_ssl = 0;
 
 	do_ssl = 0; // default
+
 	// usage : httpd -s -p [port]
-	if(argc) {
-		while ((c = getopt(argc, argv, "sp:")) != -1) {
-			switch (c) {
-			case 's':
-				do_ssl = 1;
-				break;
-			case 'p':
-				http_port = atoi(optarg);
-				break;
-			default:
-				fprintf(stderr, "ERROR: unknown option %c\n", c);
-				break;
-			}
+	while ((c = getopt(argc, argv, "sp:i:")) != -1) {
+		switch (c) {
+		case 's':
+#ifdef RTCONFIG_HTTPS
+			do_ssl = 1;
+#endif
+			break;
+		case 'p':
+			http_port = atoi(optarg);
+			break;
+		case 'i':
+			http_ifname = optarg;
+			break;
+		default:
+			fprintf(stderr, "ERROR: unknown option %c\n", c);
+			break;
+		}
+	}
+
+	/* -p might be specified before -s */
+	if (http_port == 0) {
+#ifdef RTCONFIG_HTTPS
+		if (do_ssl) {
+			http_port = SERVER_PORT_SSL;
+		} else
+#endif
+		{
+			http_port = SERVER_PORT;
 		}
 	}
 
@@ -1989,9 +2047,17 @@ int main(int argc, char **argv)
 #endif
 
 	/* Initialize listen socket */
-	if ((listen_fd = initialize_listen_socket(&usa)) < 2) {
-		fprintf(stderr, "can't bind to any address\n" );
+	for (i = 0; i < ARRAY_SIZE(listen_fd); i++)
+		listen_fd[i] = -1;
+	if ((listen_fd[0] = initialize_listen_socket(&usa, http_ifname)) < 2) {
+		fprintf(stderr, "can't bind to %s address\n", http_ifname ? : "any");
 		exit(errno);
+	}
+	if ((http_ifname && strcmp(http_ifname, "lo") != 0) &&
+	    (listen_fd[1] = initialize_listen_socket(&usa, "lo")) < 2) {
+		fprintf(stderr, "can't bind to %s address\n", "loopback");
+		/* allow fail if previous bind to interface was ok */
+		/* exit(errno); */
 	}
 
 	FILE *pid_fp;
@@ -2019,12 +2085,17 @@ int main(int argc, char **argv)
 		conn_item_t *item, *next;
 
 		memcpy(&rfds, &active_rfds, sizeof(rfds));
+		max_fd = -1;
 		if (pool.count < MAX_CONN_ACCEPT) {
-			FD_SET(listen_fd, &rfds);
-			max_fd = listen_fd;
-		} else  max_fd = -1;
+			for (i = 0; i < ARRAY_SIZE(listen_fd); i++) {
+				if (listen_fd[i] < 0)
+					continue;
+				FD_SET(listen_fd[i], &rfds);
+				max_fd = max(listen_fd[i], max_fd);
+			}
+		}
 		TAILQ_FOREACH(item, &pool.head, entry)
-			max_fd = (item->fd > max_fd) ? item->fd : max_fd;
+			max_fd = max(item->fd, max_fd);
 
 		/* Wait for new connection or incoming request */
 		tv.tv_sec = MAX_CONN_TIMEOUT;
@@ -2037,13 +2108,18 @@ int main(int argc, char **argv)
 		}
 
 		/* Check and accept new connection */
-		if (count && FD_ISSET(listen_fd, &rfds)) {
+		item = NULL;
+		for (i = 0; count && i < ARRAY_SIZE(listen_fd); i++) {
+			if (listen_fd[i] < 0 || !FD_ISSET(listen_fd[i], &rfds))
+				continue;
+
 			item = malloc(sizeof(*item));
 			if (item == NULL) {
 				perror("malloc");
 				return errno;
 			}
-			while ((item->fd = accept(listen_fd, &item->usa.sa, &sz)) < 0 && errno == EINTR)
+			sz = sizeof(item->usa);
+			while ((item->fd = accept(listen_fd[i], &item->usa.sa, &sz)) < 0 && errno == EINTR)
 				continue;
 			if (item->fd < 0) {
 				perror("accept");
@@ -2058,10 +2134,10 @@ int main(int argc, char **argv)
 			FD_SET(item->fd, &active_rfds);
 			TAILQ_INSERT_TAIL(&pool.head, item, entry);
 			pool.count++;
-
-			/* Continue waiting over again */
-			continue;
 		}
+		/* Continue waiting over again */
+		if (count && item)
+			continue;
 
 		/* Check and process pending or expired requests */
 		TAILQ_FOREACH_SAFE(item, &pool.head, entry, next) {
@@ -2116,8 +2192,12 @@ int main(int argc, char **argv)
 		}
 	}
 
-	shutdown(listen_fd, 2);
-	close(listen_fd);
+	for (i = 0; i < ARRAY_SIZE(listen_fd); i++) {
+		if (listen_fd[i] < 0)
+			continue;
+		shutdown(listen_fd[i], 2);
+		close(listen_fd[i]);
+	}
 
 	return 0;
 }

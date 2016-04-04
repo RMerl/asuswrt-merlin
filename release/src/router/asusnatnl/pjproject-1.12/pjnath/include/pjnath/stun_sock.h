@@ -27,6 +27,7 @@
 #include <pjnath/stun_config.h>
 #include <pjlib-util/resolver.h>
 #include <pj/ioqueue.h>
+#include <pj/lock.h>
 #include <pj/sock.h>
 #include <pj/sock_qos.h>
 
@@ -223,7 +224,17 @@ typedef struct pj_stun_sock_info
 typedef struct pj_stun_sock_cfg
 {
     /**
-     * Packet buffer size. Default value is PJ_STUN_SOCK_PKT_LEN.
+     * The group lock to be used by the STUN socket. If NULL, the STUN socket
+     * will create one internally.
+     *
+     * Default: NULL
+     */
+    pj_grp_lock_t *grp_lock;
+
+    /**
+     * Packet buffer size.
+     *
+     * Default value is PJ_STUN_SOCK_PKT_LEN.
      */
     unsigned max_pkt_size;
 
@@ -407,6 +418,16 @@ PJ_DECL(pj_status_t) pj_stun_sock_set_user_data(pj_stun_sock *stun_sock,
  * @return		The user/application data.
  */
 PJ_DECL(void*) pj_stun_sock_get_user_data(pj_stun_sock *stun_sock);
+
+
+/**
+ * Get the group lock for this STUN transport.
+ *
+ * @param stun_sock	The STUN transport instance.
+ *
+ * @return	        The group lock.
+ */
+PJ_DECL(pj_grp_lock_t *) pj_stun_sock_get_grp_lock(pj_stun_sock *stun_sock);
 
 
 /**

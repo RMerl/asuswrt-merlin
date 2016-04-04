@@ -428,7 +428,7 @@ function render_bar(flag){
 
 function alert_control(flag){
 	if(flag && flag != 0){
-		if((parseInt(document.form.tl_alert_max.value) > parseInt(document.form.tl_limit_max.value)) && document.form.tl_limit_enable.checked){			
+		if((parseFloat(document.form.tl_alert_max.value) > parseFloat(document.form.tl_limit_max.value)) && document.form.tl_limit_enable.checked){			
 			document.form.tl_alert_max.value = (document.form.tl_limit_max.value*0.9).toFixed(2);
 		}
 		
@@ -451,7 +451,7 @@ function alert_control(flag){
 }
 function limit_control(flag){
 	if(flag && flag != 0){
-		if((parseInt(document.form.tl_alert_max.value) > parseInt(document.form.tl_limit_max.value)) && document.form.tl_limit_enable.checked){
+		if((parseFloat(document.form.tl_alert_max.value) > parseFloat(document.form.tl_limit_max.value)) && document.form.tl_limit_enable.checked){
 			document.form.tl_alert_max.value = (document.form.tl_limit_max.value*0.9).toFixed(2);
 		}
 		
@@ -752,9 +752,9 @@ function apply(){
 			return false;			
 		}
 	}
-	
+
 	if(document.form.tl_limit_enable.checked && document.form.tl_alert_enable.checked){
-		if(parseInt(document.form.tl_limit_max.value,10) < parseInt(document.form.tl_alert_max.value,10)){
+		if(parseFloat(document.form.tl_limit_max.value) < parseFloat(document.form.tl_alert_max.value)){
 			alert("The Limit value can't less than Alert value!");
 			document.form.tl_limit_max.focus();
 			return false;	
@@ -881,7 +881,7 @@ function corrected_timezone(){
 
 function handle_value(){
 	if(document.form.tl_limit_enable.checked && document.form.tl_alert_enable.checked){
-		if(parseInt(document.form.tl_alert_max.value) > parseInt(document.form.tl_limit_max.value)){
+		if(parseFloat(document.form.tl_alert_max.value) > parseFloat(document.form.tl_limit_max.value)){
 			alert("The Limit value can't be less than the Alert value");
 				return false;	
 		}

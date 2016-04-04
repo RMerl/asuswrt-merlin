@@ -18,6 +18,8 @@ int qrpc_set_prot_filter(const int sock, const short prot)
 	struct sock_filter filter[] = {
 		BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETH_ALEN * 2),	/* read packet type id */
 		BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K,
+			ETH_P_OLD_OUI_EXT, 5, 0),			/* If OLD OUI Ethertype */
+		BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K,
 			ETH_P_OUI_EXT, 0, 5),				/* if OUI Extended Ethertype */
 
 		BPF_STMT(BPF_LD + BPF_W + BPF_ABS, ETH_HLEN),		/* read OUI */
@@ -143,5 +145,10 @@ int str_to_mac(const char *txt_mac, uint8_t *mac)
 	}
 
 	return 0;
+}
+
+int qrpc_is_old_rpc(struct ethhdr *const eh)
+{
+	return (ntohs(eh->h_proto) == ETH_P_OLD_OUI_EXT);
 }
 

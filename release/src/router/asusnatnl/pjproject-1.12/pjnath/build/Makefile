@@ -6,6 +6,11 @@ include ../../build.mak
 include ../../version.mak
 include $(PJDIR)/build/common.mak
 
+THIRD_PARTY:=$(PJDIR)/third_party
+
+UMEM_INC=$(CC_INC)$(THIRD_PARTY)/umem
+UMEM_LIBS=-L$(THIRD_PARTY)/lib -lumem-$(TARGET_NAME) -ldl
+
 RULES_MAK := $(PJDIR)/build/rules.mak
 
 PJLIB_LIB:=../../pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
@@ -17,14 +22,16 @@ export PJNATH_LIB:=../lib/libpjnath-$(TARGET_NAME)$(LIBEXT)
 #
 export _CFLAGS 	:= $(CC_CFLAGS) $(OS_CFLAGS) $(HOST_CFLAGS) $(M_CFLAGS) \
 		   $(CFLAGS) $(CC_INC)../include $(CC_INC)../../pjlib/include \
-		   $(CC_INC)../../pjlib-util/include
+		   $(CC_INC)../../pjlib-util/include \
+		   $(UMEM_INC)
 export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 		   $(HOST_CXXFLAGS) $(CXXFLAGS)
 export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJNATH_LIB)) \
 		   $(subst /,$(HOST_PSEP),$(PJLIB_UTIL_LIB)) \
 		   $(subst /,$(HOST_PSEP),$(PJLIB_LIB)) \
 		   $(CC_LDFLAGS) $(OS_LDFLAGS) $(M_LDFLAGS) $(HOST_LDFLAGS) \
-		   $(LDFLAGS) 
+		   $(LDFLAGS) \
+		   $(UMEM_LIBS)
 
 ###############################################################################
 # Defines for building PJNATH library

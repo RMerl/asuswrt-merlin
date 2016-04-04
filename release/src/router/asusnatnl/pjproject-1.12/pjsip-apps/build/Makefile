@@ -1,6 +1,10 @@
 include ../../build.mak
 include $(PJDIR)/build/common.mak
 
+THIRD_PARTY:=$(PJDIR)/third_party
+
+UMEM_INC=$(CC_INC)$(THIRD_PARTY)/umem
+UMEM_LIBS=-L$(THIRD_PARTY)/lib -lumem-$(TARGET_NAME) -ldl
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
@@ -24,7 +28,8 @@ export _CFLAGS 	:= $(CC_CFLAGS) $(OS_CFLAGS) $(HOST_CFLAGS) $(M_CFLAGS) \
 		   $(CC_INC)../../pjlib/include \
 		   $(CC_INC)../../pjlib-util/include \
 		   $(CC_INC)../../pjnath/include \
-		   $(CC_INC)../../pjmedia/include
+		   $(CC_INC)../../pjmedia/include \
+		   $(UMEM_INC)
 export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 		   $(HOST_CXXFLAGS) $(CXXFLAGS)
 
@@ -35,7 +40,8 @@ export PJSUA_SRCDIR = ../src/pjsua
 export PJSUA_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			main.o pjsua_app.o
 export PJSUA_CFLAGS += $(_CFLAGS)
-export PJSUA_LDFLAGS += $(APP_LDFLAGS) $(APP_LDLIBS) $(LDFLAGS)
+export PJSUA_LDFLAGS += $(APP_LDFLAGS) $(APP_LDLIBS) $(LDFLAGS) \
+		   $(UMEM_LIBS)
 export PJSUA_EXE:=../bin/pjsua-$(TARGET_NAME)$(HOST_EXE)
 
 
@@ -46,7 +52,8 @@ export PJSYSTEST_SRCDIR = ../src/pjsystest
 export PJSYSTEST_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			systest.o main_console.o
 export PJSYSTEST_CFLAGS += $(_CFLAGS)
-export PJSYSTEST_LDFLAGS += $(APP_LDFLAGS) $(APP_LDLIBS) $(LDFLAGS)
+export PJSYSTEST_LDFLAGS += $(APP_LDFLAGS) $(APP_LDLIBS) $(LDFLAGS) \
+		   $(UMEM_LIBS)
 export PJSYSTEST_EXE:=../bin/pjsystest-$(TARGET_NAME)$(HOST_EXE)
 
 

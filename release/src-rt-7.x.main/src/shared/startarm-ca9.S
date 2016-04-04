@@ -4334,7 +4334,82 @@ enable_cache:
 	mrc	p15,0,r1,c1,c0,0
 	orr	r1,r1,#0x1800			/* Enable I$ and branch prediction */
 	mcr	p15,0,r1,c1,c0,0
-	
+
+#if defined(_CFEZ_)
+genpll_mdiv:
+	/* Correct the GENPLL setting for OTPed 4709C0 */
+	ldr	r0, =0x18000000			/* SI_ENUM_BASE */
+	ldr	r1, =0				/* CC_CHIPID */
+	ldr	r1, [r0, r1]
+	ldr	r0, =0x0000ffff			/* CID_ID_MASK */
+	and	r2, r1, r0
+	ldr	r0, =53030			/* BCM4709C0_CHIP_ID */
+	cmp	r2, r0				/* r2 to store chip id */
+	bne	genpll_mdiv_done
+	ldr	r0, =0x00300000			/* CID_PACKAGE_OPTION_MASK */
+	and	r2, r1, r0
+	cmp	r2, #0				/* BCM4709C0 package is 0 */
+	bne	genpll_mdiv_done
+
+	/* To set correct CH0-5 mdiv */
+	ldr	r0,=0x1800c154
+	ldr	r0,[r0]
+	ldr	r1,=0x3ff00000			/* Get CRU_GENPLL_CONTROL5 bit[29:20] */
+	and	r0,r0,r1
+	ldr	r1,=0x05000000			/* Check GENPLL NDIV = 0x50? */
+	cmp	r0,r1
+	bne	genpll_mdiv_done		/* Not equal. Skip this */
+	/* If we have done it, skip it */
+	ldr	r0,=0x1800c15c			/* CRU_GENPLL_CONTROL7 */
+	ldr	r0,[r0]
+	ldr	r1,=0x00ff0000
+	and	r0,r0,r1			/* Get CH3_MDIV */
+	ldr	r1,=0x00040000			/* If CH3_MDIV = 4, done */
+	cmp	r0,r1
+	beq	genpll_mdiv_done
+	/* Configure mdiv for GENPLL channel 0~3 */
+	/* Set CRU_CLKSET_KEY to unlock */
+	ldr	r0,=0x1800c180
+	ldr	r1,=0x0000ea68
+	str	r1,[r0]
+	/* Configure CRU_GENPLL_CONTROL6 */
+	ldr	r0,=0x1800c158
+	ldr	r1,[r0]
+	ldr	r2,=0xff000000
+	and	r1,r1,r2
+	ldr	r2,=0x00080c32			/* CH0_MDIV = 8, CH1_MDIV = 12, CH2_MDIV = 50 */
+	orr	r1,r1,r2
+	str	r1,[r0]
+	/* Configure CRU_GENPLL_CONTROL7 */
+	ldr	r0,=0x1800c15c
+	ldr	r1,[r0]
+	ldr	r2,=0xff000000
+	and	r1,r1,r2
+	ldr	r2,=0x00040810			/* CH3_MDIV = 4, CH4_MDIV = 8, CH5_MDIV = 16 */
+	orr	r1,r1,r2
+	str	r1,[r0]
+	/* Configure CRU_GENPLL_CONTROL5 */
+	ldr	r0,=0x1800c154
+	ldr	r1,[r0]
+	ldr	r2,=0x80000000
+	orr	r1,r1,r2			/* Enable SEL_SW_SETTING */
+	str	r1,[r0]
+	/* Configure CRU_GENPLL_CONTROL1 */
+	ldr	r0,=0x1800c144
+	ldr	r1,[r0]
+	bic	r1,r1,#0xf			/* Reload mdiv for CH0~3 */
+	str	r1,[r0]
+	orr	r1,r1,#0xf
+	str	r1,[r0]
+	bic	r1,r1,#0xf
+	str	r1,[r0]
+	/* Set CRU_CLKSET_KEY to unlock */
+	ldr	r0,=0x1800c180
+	ldr	r1,=0x0
+	str	r1,[r0]
+genpll_mdiv_done:
+#endif /* _CFEZ_ */
+
 #ifdef CFG_SHMOO
 	/* Invalidate data cache */
 	bl	cpu_inv_dcache_all

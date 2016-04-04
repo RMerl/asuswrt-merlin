@@ -1,0 +1,10 @@
+#! /bin/sh
+
+
+make clean && make \
+	CC=arm-linux-androideabi-gcc \
+	C++=arm-linux-androideabi-g++ \
+        AR=arm-linux-androideabi-ar \
+        RANLIB=arm-linux-androideabi-ranlib \
+	os=ANDROID \
+	arch=ARM

@@ -1,0 +1,11 @@
+OPENSSL_DIR=`pwd`
+ARCH="-arch armv7 -fembed-bitcode"
+DEVELOPER=`xcode-select -print-path`
+SIMULATOR_SDK_VER="iPhoneOS.sdk"
+SDK_PATH="${DEVELOPER}/Platforms/iPhoneOS.platform/Developer/SDKs/${SIMULATOR_SDK_VER}"
+export CC="${DEVELOPER}/usr/bin/gcc ${ARCH}"
+
+export CFLAGS="-isysroot ${SDK_PATH} -miphoneos-version-min=7.0"
+
+make clean && make os=IOS arch=ARMv7
+ 

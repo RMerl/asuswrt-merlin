@@ -122,7 +122,7 @@ PJ_DEF(pj_status_t) pj_pcap_open(pj_pool_t *pool,
 
     pj_ansi_strcpy(file->obj_name, "pcap");
 
-    status = pj_file_open(pool, path, PJ_O_RDONLY, &file->fd);
+    status = pj_file_open(pool, path, PJ_O_RDONLY, &file->fd, NULL);
     if (status != PJ_SUCCESS)
 	return status;
 

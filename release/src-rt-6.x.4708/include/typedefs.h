@@ -17,7 +17,6 @@
 
 #ifndef _TYPEDEFS_H_
 #define _TYPEDEFS_H_
-#define MAX_EVENT 16	/* Maximum number of event bit 128 */
 
 #ifdef SITE_TYPEDEFS
 

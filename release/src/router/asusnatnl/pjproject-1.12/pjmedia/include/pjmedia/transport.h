@@ -440,7 +440,10 @@ typedef enum pjmedia_transport_type
 	PJMEDIA_TRANSPORT_TYPE_TCP,
 
 	/** Media transport using standard DTLS */
-	PJMEDIA_TRANSPORT_TYPE_DTLS
+	PJMEDIA_TRANSPORT_TYPE_DTLS,
+
+	/** Media transport using standard DTLS_SCTP */
+	PJMEDIA_TRANSPORT_TYPE_DTLS_SCTP
 
 } pjmedia_transport_type;
 
@@ -510,6 +513,9 @@ struct pjmedia_transport
 
 	char local_nat_type[64];
 	pj_time_val inv_recv_time;
+
+	pj_bool_t		 use_sctp; // If true, is use sctp for packet control.
+	pj_bool_t		 remote_ua_is_sdk; // If true, the remote user agent is our SDK.
 	
 	pj_sockaddr turn_mapped_addr;
 };
@@ -928,7 +934,7 @@ PJ_INLINE(void) pjmedia_transport_get_local_userid(void *user_data, char *user_i
 PJ_INLINE(void) pjmedia_transport_set_local_userid(void *user_data, char *user_id, int user_id_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->local_userid) {
+	if(user_id && user_id_len) {
 		memset(tp->local_userid, 0, sizeof(tp->local_userid));
 		strncpy(tp->local_userid, user_id, user_id_len);
 	}
@@ -947,7 +953,7 @@ PJ_INLINE(void) pjmedia_transport_get_remote_userid(void *user_data, char *user_
 PJ_INLINE(void) pjmedia_transport_set_remote_userid(void *user_data, char *user_id, int user_id_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->remote_userid) {
+	if(user_id && user_id_len) {
 		memset(tp->remote_userid, 0, sizeof(tp->remote_userid));
 		strncpy(tp->remote_userid, user_id, user_id_len);
 	}
@@ -968,7 +974,7 @@ PJ_INLINE(void) pjmedia_transport_get_local_deviceid(void *user_data, char *devi
 PJ_INLINE(void) pjmedia_transport_set_local_deviceid(void *user_data, char *device_id, int device_id_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->local_deviceid) {
+	if(device_id && device_id_len) {
 		memset(tp->local_deviceid, 0, sizeof(tp->local_deviceid));
 		strncpy(tp->local_deviceid, device_id, device_id_len);
 	}
@@ -984,12 +990,12 @@ PJ_INLINE(void) pjmedia_transport_get_remote_deviceid(void *user_data, char *dev
 }
 
 /* Dean Added */
-PJ_INLINE(void) pjmedia_transport_set_remote_deviceid(void *user_data, char *device_id, int user_id_len)
+PJ_INLINE(void) pjmedia_transport_set_remote_deviceid(void *user_data, char *device_id, int device_id_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->remote_deviceid) {
+	if(device_id && device_id_len) {
 		memset(tp->remote_deviceid, 0, sizeof(tp->remote_deviceid));
-		strncpy(tp->remote_deviceid, device_id, user_id_len);
+		strncpy(tp->remote_deviceid, device_id, device_id_len);
 	}
 }
 
@@ -1008,7 +1014,7 @@ PJ_INLINE(void) pjmedia_transport_get_local_turnsrv(void *user_data, char *turn_
 PJ_INLINE(void) pjmedia_transport_set_local_turnsrv(void *user_data, char *turn_server, int turn_server_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->local_turnsvr) {
+	if(turn_server && turn_server_len) {
 		memset(tp->local_turnsvr, 0, sizeof(tp->local_turnsvr));
 		strncpy(tp->local_turnsvr, turn_server, turn_server_len);
 	}
@@ -1027,7 +1033,7 @@ PJ_INLINE(void) pjmedia_transport_get_remote_turnsvr(void *user_data, char *turn
 PJ_INLINE(void) pjmedia_transport_set_remote_turnsvr(void *user_data, char *turn_server, int turn_server_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->remote_turnsvr) {
+	if(turn_server && turn_server_len) {
 		memset(tp->remote_turnsvr, 0, sizeof(tp->remote_turnsvr));
 		strncpy(tp->remote_turnsvr, turn_server, turn_server_len);
 	}
@@ -1048,7 +1054,7 @@ PJ_INLINE(void) pjmedia_transport_get_local_turnpwd(void *user_data, char *turn_
 PJ_INLINE(void) pjmedia_transport_set_local_turnpwd(void *user_data, char *turn_pwd, int turn_pwd_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->local_turnpwd) {
+	if(turn_pwd && turn_pwd_len) {
 		memset(tp->local_turnpwd, 0, sizeof(tp->local_turnpwd));
 		strncpy(tp->local_turnpwd, turn_pwd, turn_pwd_len);
 	}
@@ -1067,7 +1073,7 @@ PJ_INLINE(void) pjmedia_transport_get_remote_turnpwd(void *user_data, char *turn
 PJ_INLINE(void) pjmedia_transport_set_remote_turnpwd(void *user_data, char *turn_pwd, int turn_pwd_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->remote_turnpwd) {
+	if(turn_pwd && turn_pwd_len) {
 		memset(tp->remote_turnpwd, 0, sizeof(tp->remote_turnpwd));
 		strncpy(tp->remote_turnpwd, turn_pwd, turn_pwd_len);
 	}
@@ -1085,7 +1091,7 @@ PJ_INLINE(void) pjmedia_transport_get_local_nattype(void *user_data, char *nat_t
 PJ_INLINE(void) pjmedia_transport_set_local_nattype(void *user_data, char *nat_type, int nat_type_len)
 {
 	struct pjmedia_transport *tp = (struct pjmedia_transport *)user_data;
-	if(tp->local_nat_type) {
+	if(nat_type && nat_type_len) {
 		memset(tp->local_nat_type, 0, sizeof(tp->local_nat_type));
 		strncpy(tp->local_nat_type, nat_type, nat_type_len);
 	}

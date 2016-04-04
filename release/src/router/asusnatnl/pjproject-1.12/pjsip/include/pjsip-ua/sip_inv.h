@@ -319,7 +319,17 @@ enum pjsip_inv_option
      * Session timer extension will always be used even when peer doesn't
      * support/want session timer.
      */
-    PJSIP_INV_ALWAYS_USE_TIMER	= 128
+    PJSIP_INV_ALWAYS_USE_TIMER	= 128,
+
+    /**  
+     * Support SCTP.
+     */
+    PJSIP_INV_TNL_SUPPORT_SCTP	= 256,
+
+    /**  
+     * Require SCTP.
+     */
+    PJSIP_INV_TNL_REQUIRE_SCTP	= 512
 
 };
 
@@ -379,6 +389,7 @@ struct pjsip_inv_session
     pj_int32_t		 last_ack_cseq;		    /**< CSeq of last ACK   */
     void		*mod_data[PJSIP_MAX_MODULE];/**< Modules data.	    */
     struct pjsip_timer	*timer;			    /**< Session Timers.    */
+	int use_sctp;
 };
 
 

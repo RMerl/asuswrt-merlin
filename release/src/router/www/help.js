@@ -458,23 +458,27 @@ function overHint(itemNum){
 				var show_str = gn_array_2g[i][1];
 				show_str = decodeURIComponent(show_str);
 				show_str = handle_show_str(show_str);
-				statusmenu += "<span>" + show_str + " (";
+				statusmenu += "<span><b>" + show_str + "</b><br> (";
 
 				if(gn_array_2g[i][11] == 0)
 					statusmenu += "<#Limitless#>)</span><br>";
 				else{
-					var expire_hr = Math.floor(gn_array_2g[i][13]/3600);
+					var expire_day = Math.floor(gn_array_2g[i][13]/86400);
+					var expire_hr = Math.floor((gn_array_2g[i][13]%86400)/3600);
 					var expire_min = Math.floor((gn_array_2g[i][13]%3600)/60);
-					if(expire_hr > 0){
-						statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
-					}
+					
+					statusmenu += '<#mssid_time_remaining#>: ';
+					if(expire_day > 0)
+						statusmenu += '<b id="expire_day_'+i+'">'+ expire_day + '</b> <#Day#> <b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
+					else if(expire_hr > 0)
+						statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
 					else{
 						if(expire_min > 0)
-								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
 						else	
-								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min(s)';
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> <#Minute#>';
 					}
-					statusmenu += " left)</span><br>";
+					statusmenu += ")</span><br>";
 				}
 			}
 		}
@@ -492,23 +496,27 @@ function overHint(itemNum){
 					var show_str = gn_array_5g[i][1];
 					show_str = decodeURIComponent(show_str);
 					show_str = handle_show_str(show_str);
-					statusmenu += "<span>" + show_str + " (";
-
+					statusmenu += "<span><b>" + show_str + "</b><br> (";
+					
 					if(gn_array_5g[i][11] == 0)
 						statusmenu += '<#Limitless#>)</span><br>';
 					else{
-						var expire_hr = Math.floor(gn_array_5g[i][13]/3600);
+						var expire_day = Math.floor(gn_array_5g[i][13]/86400);
+						var expire_hr = Math.floor((gn_array_5g[i][13]%86400)/3600);
 						var expire_min = Math.floor((gn_array_5g[i][13]%3600)/60);
-						if(expire_hr > 0){
-							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
-						}
+						
+						statusmenu += '<#mssid_time_remaining#>: ';						
+						if(expire_day > 0)
+							statusmenu += '<b id="expire_day_'+i+'">'+ expire_day + '</b> <#Day#> <b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
+						else if(expire_hr > 0)
+							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
 						else{
 							if(expire_min > 0)
-								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
 							else	
-								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min(s)';
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> <#Minute#>';
 						}
-						statusmenu += " left)</span><br>";
+						statusmenu += ")</span><br>";
 					}
 				}
 			}
@@ -524,23 +532,27 @@ function overHint(itemNum){
 					var show_str = gn_array_5g_2[i][1];
 					show_str = decodeURIComponent(show_str);
 					show_str = handle_show_str(show_str);
-					statusmenu += "<span>" + show_str + " (";
+					statusmenu += "<span><b>" + show_str + "</b><br> (";
 
 					if(gn_array_5g_2[i][11] == 0)
 						statusmenu += '<#Limitless#>)</span><br>';
 					else{
-						var expire_hr = Math.floor(gn_array_5g_2[i][13]/3600);
+						var expire_day = Math.floor(gn_array_5g_2[i][13]/86400);
+						var expire_hr = Math.floor((gn_array_5g_2[i][13]%86400)/3600);
 						var expire_min = Math.floor((gn_array_5g_2[i][13]%3600)/60);
-						if(expire_hr > 0){
-							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
-						}
+						
+						statusmenu += '<#mssid_time_remaining#>: ';
+						if(expire_day > 0)
+							statusmenu += '<b id="expire_day_'+i+'">'+ expire_day + '</b> <#Day#> <b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
+						else if(expire_hr > 0)
+							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
 						else{
 							if(expire_min > 0)
-								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#>';
 							else	
-								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min(s)';
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> <#Minute#>';
 						}
-						statusmenu += " left)</span><br>";
+						statusmenu += ")</span><br>";
 					}
 				}
 			}

@@ -1,0 +1,8 @@
+#! /bin/sh
+
+make clean && make \
+	CC=gcc \
+	C++=g++ \
+	AR=ar \
+	os=LINUX \
+	arch=X86_64

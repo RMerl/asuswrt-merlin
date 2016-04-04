@@ -53,10 +53,14 @@ int btn_led_gpio = 0xff;
 int btn_lte_gpio = 0xff;
 #endif
 #ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+int btn_swmode_sw_router = 0xff;
+#else
 int btn_swmode_sw_router = 0xff;
 int btn_swmode_sw_repeater = 0xff;
 int btn_swmode_sw_ap = 0xff;
-#endif
+#endif	/* Model */
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef RTCONFIG_QTN
 int reset_qtn_gpio = 0xff;
 #endif
@@ -81,8 +85,12 @@ int init_gpio(void)
 		, "btn_wltog_gpio"
 #endif
 #ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+		, "btn_swmode1_gpio"
+#else
 		, "btn_swmode1_gpio", "btn_swmode2_gpio", "btn_swmode3_gpio"
-#endif
+#endif	/* Mode */
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef RTCONFIG_TURBO
 		, "btn_turbo_gpio"
 #endif
@@ -232,9 +240,6 @@ int set_pwr_usb(int boolOn){
 
 	switch(get_model()) {
 		case MODEL_RTAC68U:
-			if (!strcmp(get_productid(), "RT-AC67U"))
-				return 0;
-
 			if ((nvram_get_int("HW_ver") != 170) &&
 			    (nvram_get_double("HW_ver") != 1.10) &&
 			    (nvram_get_double("HW_ver") != 1.85) &&
@@ -347,10 +352,14 @@ void get_gpio_values_once(int force)
 #endif
 
 #ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+	btn_swmode_sw_router = __get_gpio("btn_swmode1_gpio");
+#else	
 	btn_swmode_sw_router = __get_gpio("btn_swmode1_gpio");
 	btn_swmode_sw_repeater = __get_gpio("btn_swmode2_gpio");
 	btn_swmode_sw_ap = __get_gpio("btn_swmode3_gpio");
-#endif
+#endif	/* Model */
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 
 #ifdef RTCONFIG_WIRELESS_SWITCH
 	btn_wifi_sw = __get_gpio("btn_wifi_gpio");
@@ -392,6 +401,11 @@ int button_pressed(int which)
 			use_gpio = have_fan_gpio;
 			break;
 #ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+		case BTN_SWMODE_SW_ROUTER:
+			use_gpio = btn_swmode_sw_router;
+			break;
+#else
 		case BTN_SWMODE_SW_ROUTER:
 			use_gpio = btn_swmode_sw_router;
 			break;
@@ -401,7 +415,8 @@ int button_pressed(int which)
 		case BTN_SWMODE_SW_AP:
 			use_gpio = btn_swmode_sw_ap;
 			break;
-#endif
+#endif	/* Model */
+#endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef RTCONFIG_WIRELESS_SWITCH
 		case BTN_WIFI_SW:
 			use_gpio = btn_wifi_sw;

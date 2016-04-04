@@ -100,19 +100,39 @@ function initial(){
 }
 
 function change_wl_expire_radio(){
+	load_expire_selection(document.form.wl_expire_day, option_expire_day, optval_expire_day);	
+	
 	if(document.form.wl_expire.value > 0){
-		document.form.wl_expire_hr.value = Math.floor(document.form.wl_expire.value/3600);
+		document.form.wl_expire_day.value = Math.floor(document.form.wl_expire.value/86400);
+		document.form.wl_expire_hr.value = Math.floor((document.form.wl_expire.value%86400)/3600);
 		document.form.wl_expire_min.value  = Math.floor((document.form.wl_expire.value%3600)/60);
 		document.form.wl_expire_radio[0].checked = 1;
 		document.form.wl_expire_radio[1].checked = 0;
 	}
-	else{
+	else{	
 		document.form.wl_expire_hr.value = "";
-		document.form.wl_expire_min.value = "";
+		document.form.wl_expire_min.value = "";	
 		document.form.wl_expire_radio[0].checked = 0;
 		document.form.wl_expire_radio[1].checked = 1;
 	}
 }
+
+option_expire_day = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", 
+			"11", "12", "13", "14", "15", "16", "17", "18", "19", "20", 
+			"21", "22", "23", "24", "25", "26", "27", "28", "29", "30");
+optval_expire_day = new Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
+			11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
+			21, 22, 23, 24, 25, 26, 27, 28, 29, 30);
+
+
+function load_expire_selection(obj, opt, val){
+	free_options(obj);
+	for(i=0; i<opt.length; i++){
+		if(opt[i].length > 0){
+			obj.options[i] = new Option(opt[i], val[i]);
+		}
+	}
+}	
 
 function translate_auth(flag){
 	if(flag == "open")
@@ -199,9 +219,12 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 					if(gn_array[i][11] == 0)
 							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><#Limitless#></td></tr>';
 					else{
-							var expire_hr = Math.floor(gn_array[i][13]/3600);
+							var expire_day = Math.floor(gn_array[i][13]/86400);
+							var expire_hr = Math.floor((gn_array[i][13]%86400)/3600);
 							var expire_min = Math.floor((gn_array[i][13]%3600)/60);
-							if(expire_hr > 0)
+							if(expire_day > 0)
+									htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_day_'+i+'">'+ expire_day + '</b> <#Day#> <b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#></td></tr>';
+							else if(expire_hr > 0)
 									htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#></td></tr>';
 							else{
 									if(expire_min > 0)
@@ -336,12 +359,14 @@ function applyRule(){
 		inputCtrl(document.form.wl_key4, 1);
 		inputCtrl(document.form.wl_phrase_x, 1);
 		if(document.form.wl_expire_radio[0].checked)
-			document.form.wl_expire.value = document.form.wl_expire_hr.value*3600 + document.form.wl_expire_min.value*60;
+			document.form.wl_expire.value = document.form.wl_expire_day.value*86400 + document.form.wl_expire_hr.value*3600 + document.form.wl_expire_min.value*60;
 		else
 			document.form.wl_expire.value = 0;
 
 		if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius") {
-			document.form.next_page.value = "/Advanced_WSecurity_Content.asp?gwlu=" + document.form.wl_unit.value;
+			document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
+			document.form.gwlu.value =  document.form.wl_unit.value;
+			document.form.gwlu.disabled = false;
 		}
 
 		if(based_modelid == "RT-AC87U") //MODELDEP: RT-AC87U need to extend waiting time to get new wl value
@@ -385,6 +410,16 @@ function validForm(){
 		if(auth_mode != "radius" && !validator.wlKey(cur_wep_key))
 			return false;
 	}	
+	
+	//confirm expire time not allow zero
+	if(document.form.wl_expire_radio[0].checked){		
+		if(document.form.wl_expire_day.value==0 && (document.form.wl_expire_hr.value=="" || document.form.wl_expire_hr.value==0) & (document.form.wl_expire_min.value=="" || document.form.wl_expire_min.value==0)){
+			alert("<#JS_fieldblank#>");
+			document.form.wl_expire_min.focus();
+			return false;
+		}	
+	}		
+	
 	return true;
 }
 
@@ -811,6 +846,7 @@ function setClientmac(macaddr){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Guest_network.asp">
 <input type="hidden" name="next_page" value="Guest_network.asp">
+<input type="hidden" name="gwlu" value="" disabled>
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_script" value="restart_wireless">
@@ -1037,8 +1073,10 @@ function setClientmac(macaddr){
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 25);"><#Access_Time#></a></th>
 								<td>
 									<input type="radio" value="1" name="wl_expire_radio" class="content_input_fd" onClick="">
+									<select name="wl_expire_day" class="input_option"></select> <#Day#>
 									<input type="text" maxlength="2" name="wl_expire_hr" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 0);" autocorrect="off" autocapitalize="off"> <#Hour#>
 									<input type="text" maxlength="2" name="wl_expire_min" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 1);" autocorrect="off" autocapitalize="off"> <#Minute#>
+									<br>	
 									<input type="radio" value="0" name="wl_expire_radio" class="content_input_fd" onClick=""><#Limitless#>
 								</td>
 							</tr>

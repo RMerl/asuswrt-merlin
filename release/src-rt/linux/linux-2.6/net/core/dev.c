@@ -92,6 +92,7 @@
 #include <linux/etherdevice.h>
 #include <linux/notifier.h>
 #include <linux/skbuff.h>
+#include <linux/netfilter_ipv4.h>
 #include <net/sock.h>
 #include <linux/rtnetlink.h>
 #if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
@@ -1557,7 +1558,7 @@ gso:
 #endif
 
 #ifdef CONFIG_IP_NF_LFP
-	if (q->enqueue && !(skb->nfcache&(1<<30))) {
+	if (q->enqueue && !(skb->nfcache & NFC_LFP_ENABLE)) {
 #else
 	if (q->enqueue) {
 #endif

@@ -48,7 +48,14 @@
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 
+//#define BYPASS 1
+//#define DUMP_PACKET 1
+
 #define THIS_FILE   "transport_dtls.c"
+
+#define USE_GLOBAL_LOCK
+//#define USE_GLOBAL_CTX
+//#define USE_LOCAL_LOCK
 
 /* Workaround for ticket #985 */
 #define DELAYED_CLOSE_TIMEOUT	200
@@ -60,6 +67,157 @@
 #define COOKIE_SECRET_LENGTH 16
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized=0;
+
+//#define ENABLE_DELAYED_SEND 0
+
+// Copied from Network Security with OpenSSL
+
+#if defined(WIN32)
+#define MUTEX_TYPE HANDLE
+#define MUTEX_SETUP(x) (x) = CreateMutex(NULL, FALSE, NULL)
+#define MUTEX_CLEANUP(x) CloseHandle(x)
+#define MUTEX_LOCK(x) WaitForSingleObject((x), INFINITE)
+#define MUTEX_UNLOCK(x) ReleaseMutex(x)
+#define THREAD_ID GetCurrentThreadId( )
+#elif defined(PJ_LINUX) || defined(PJ_ANDROID) || defined(PJ_DARWINOS)
+#include <pthread.h>
+#define MUTEX_TYPE pthread_mutex_t
+#define MUTEX_SETUP(x) pthread_mutex_init(&(x), NULL)
+#define MUTEX_CLEANUP(x) pthread_mutex_destroy(&(x))
+#define MUTEX_LOCK(x) pthread_mutex_lock(&(x))
+#define MUTEX_UNLOCK(x) pthread_mutex_unlock(&(x))
+#define THREAD_ID pthread_self( )
+#else
+#error You must define mutex operations appropriate for your platform!
+#endif
+
+static MUTEX_TYPE *mutex_buf = NULL;
+#ifdef USE_GLOBAL_CTX
+static SSL_CTX *g_ctx = NULL;
+#endif
+
+static void static_locking_function(int mode, int n, const char *file, int line)
+{
+	if (mode & CRYPTO_LOCK)
+		MUTEX_LOCK(mutex_buf[n]);
+	else
+		MUTEX_UNLOCK(mutex_buf[n]);
+}
+
+static void id_function(CRYPTO_THREADID * c_thrd_id)
+{
+	CRYPTO_THREADID_set_numeric(c_thrd_id, (unsigned long)THREAD_ID);
+}
+
+struct CRYPTO_dynlock_value
+{
+	MUTEX_TYPE mutex;
+};
+
+static void static_thread_setup(void)
+{
+	int i;
+
+	mutex_buf=OPENSSL_malloc(CRYPTO_num_locks() * sizeof(MUTEX_TYPE));
+	for (i=0; i<CRYPTO_num_locks(); i++)
+	{
+		MUTEX_SETUP(mutex_buf[i]);
+	}
+
+	CRYPTO_THREADID_set_callback(id_function);
+	CRYPTO_set_locking_callback((void (*)(int,int,char *,int))static_locking_function);
+	/* id callback defined */
+}
+
+static void static_thread_cleanup(void)
+{
+	int i;
+
+	CRYPTO_THREADID_set_callback(NULL);
+	CRYPTO_set_locking_callback(NULL);
+	for (i=0; i<CRYPTO_num_locks(); i++)
+		MUTEX_CLEANUP(mutex_buf[i]);
+	OPENSSL_free(mutex_buf);
+}
+
+static struct CRYPTO_dynlock_value* _dyn_create_func(const char *file, int line) {
+	struct CRYPTO_dynlock_value *value;
+	value = (struct CRYPTO_dynlock_value *) malloc(sizeof(struct CRYPTO_dynlock_value));
+	MUTEX_SETUP(value->mutex);
+	return value;
+}
+
+static void dynamic_destroy_func(struct CRYPTO_dynlock_value *l, 
+								 const char *file, int line) {
+									 MUTEX_CLEANUP(l->mutex);
+									 free(l);
+									 return;
+}
+
+static void dynamic_lock_func(int mode, struct CRYPTO_dynlock_value *l,
+							  const char *file, int line) {
+								  if(mode & CRYPTO_LOCK) {
+									  MUTEX_LOCK(l->mutex);
+								  } else {
+									  MUTEX_UNLOCK(l->mutex);
+							   }
+}
+
+static int dynamic_thread_setup() {
+	CRYPTO_set_dynlock_create_callback(_dyn_create_func);
+	CRYPTO_set_dynlock_lock_callback(dynamic_lock_func);
+	CRYPTO_set_dynlock_destroy_callback(dynamic_destroy_func);
+	return 0;
+}
+
+static int dynamic_thread_cleanup() {
+	CRYPTO_set_dynlock_create_callback(NULL);
+	CRYPTO_set_dynlock_lock_callback(NULL);
+	CRYPTO_set_dynlock_destroy_callback(NULL);
+	return 0;
+}
+
+static void thread_setup() {
+	static_thread_setup();
+	dynamic_thread_setup();
+}
+
+static void thread_cleanup() {
+	static_thread_cleanup();
+	dynamic_thread_cleanup();
+}
+
+#if 0//!defined(WIN32) && !defined(PJ_ANDROID)
+
+typedef struct ssl_buff
+{
+	PJ_DECL_LIST_MEMBER(struct ssl_buff);
+	void   *buff;
+	pj_ssize_t len;
+} ssl_buff;
+/*
+ * Memory pool allocate and free functions for OpenSSL.
+ */
+
+static void *ssl_alloc(size_t size) {
+	//ssl_buff *buf = pj_mem_alloc(sizeof(ssl_buff));
+	//pj_list_push_back(&call->tnl_stream->no_ctl_rbuff, buf);
+	void *buff = malloc(size);
+	PJ_LOG(4, (THIS_FILE, "ssl_alloc		buff=[%p],	size=[%d]", buff, size));
+	return buff;
+}
+
+static void *ssl_realloc(void *buf, size_t size) {
+	void *buff = realloc(buf, size);
+	PJ_LOG(4, (THIS_FILE, "ssl_realloc	buf=[%p],	buff=[%p],	size=[%d]", buf, buff, size));
+	return buff;
+}
+
+static void ssl_free(void *buf) {
+	PJ_LOG(4, (THIS_FILE, "ssl_free	buf=[%p]", buf));
+	free(buf);
+}
+#endif
 
 /*
  * SSL/TLS state enumeration.
@@ -133,11 +291,11 @@ typedef struct transport_dtls
 {
     pjmedia_transport	 base;		    /**< Base transport interface.  */
 	pj_pool_t		*pool;		    /**< Pool for transport DTLS.   */
-	pj_lock_t		*mutex;		    /**< Mutex for libdtls contexts.*/
+	MUTEX_TYPE		mutex;		    /**< Mutex for libdtls contexts.*/
 	//pj_lock_t		*write_mutex;		    /**< Mutex for libdtls contexts.*/
 	pj_sem_t		*handshake_sem;
 	char			dtls_snd_buffer[NATNL_DTLS_MAX_SEND_LEN]; // Encrypted data.
-	char			dtls_rcv_buffer[TCP_OR_UDP_TOTAL_HEADER_SIZE+NATNL_PKT_MAX_LEN];  // Decrypted data.
+	char			dtls_rcv_buffer[NATNL_DTLS_MAX_RECV_LEN];  // Decrypted data.
     pjmedia_dtls_setting setting;
     unsigned		media_option;
 	pj_sockaddr		rem_addr;
@@ -192,6 +350,9 @@ typedef struct transport_dtls
 
 	pj_timer_heap_t *timer_heap;
 
+	pj_bool_t         media_type_app; // If true, the media type is application for WebRTC.
+
+	pj_str_t		  cert_fingerprint;
 
 	int				  delayed_send_size;
 	int				  handshake_retrans_cnt;
@@ -219,6 +380,12 @@ static pj_status_t flush_delayed_send(transport_dtls *dtls);
 
 static const pj_str_t ID_TNL_PLAIN  = { "RTP/AVP", 7 };
 static const pj_str_t ID_TNL_DTLS = { "RTP/SAVP", 8 };
+static const pj_str_t ID_TNL_DTLS_SCTP = { "DTLS/SCTP", 9 };
+static const pj_str_t ID_TNL_PLAIN_SCTP = { "RTP/SCTP", 8 }; // dean : RTP/SCTP is for UDT replacement
+
+#ifdef USE_GLOBAL_LOCK
+static MUTEX_TYPE global_mutex;
+#endif
 
 /*
  * These are media transport operations.
@@ -305,8 +472,6 @@ static pjmedia_transport_op transport_dtls_op =
 /* Expected maximum value of reason component in OpenSSL error code */
 #define MAX_OSSL_ERR_REASON		1200
 
-
-
 static pj_status_t STATUS_FROM_SSL_ERR(transport_dtls *dtls,
 				       unsigned long err)
 {
@@ -390,12 +555,15 @@ static int sslsock_idx;
 
 
 /* Initialize OpenSSL */
-static pj_status_t init_openssl(void)
+static pj_status_t init_openssl(pj_pool_t *pool)
 {
 	pj_status_t status;
 
 	if (openssl_init_count)
 		return PJ_SUCCESS;
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_SETUP(global_mutex);
+#endif
 
 	openssl_init_count = 1;
 
@@ -405,7 +573,16 @@ static pj_status_t init_openssl(void)
 		&ssl_strerror);
 	pj_assert(status == PJ_SUCCESS);
 
+#if 0//!defined(WIN32) && !defined(PJ_ANDROID)
+	// init memory pool
+	PJ_LOG(1, (THIS_FILE, "init openssl 1"));
+	CRYPTO_set_mem_functions(ssl_alloc, ssl_realloc, ssl_free);
+	PJ_LOG(1, (THIS_FILE, "init openssl 2"));
+#endif
+
 	/* Init OpenSSL lib */
+
+	thread_setup();
 	SSL_library_init();
 	SSL_load_error_strings();
 	ERR_load_BIO_strings();
@@ -418,17 +595,8 @@ static pj_status_t init_openssl(void)
 		SSL *ssl;
 		STACK_OF(SSL_CIPHER) *sk_cipher;
 		unsigned i, n;
-
-		meth = (SSL_METHOD*)SSLv23_server_method();
-		if (!meth)
-			meth = (SSL_METHOD*)TLSv1_server_method();
-		if (!meth)
-			meth = (SSL_METHOD*)SSLv3_server_method();
-#ifndef OPENSSL_NO_SSL2
-		if (!meth)
-			meth = (SSL_METHOD*)SSLv2_server_method();
-#endif
 		meth = (SSL_METHOD*)DTLSv1_server_method();
+
 		if (!meth)
 		pj_assert(meth);
 
@@ -465,7 +633,26 @@ static pj_status_t init_openssl(void)
 /* Shutdown OpenSSL */
 static void shutdown_openssl(void)
 {
-	PJ_UNUSED_ARG(openssl_init_count);
+	// DEAN don't shutdown openssl for multiple instances.
+	return;
+
+	if (!openssl_init_count) // Execute only one time.
+		return;
+
+#ifdef USE_GLOBAL_CTX
+	if (g_ctx) {
+		SSL_CTX_free(g_ctx);
+		g_ctx = NULL;
+	}
+#endif
+
+	thread_cleanup();
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_CLEANUP(global_mutex);
+#endif
+
+	openssl_init_count = 0;
 }
 
 /* SSL password callback. */
@@ -738,11 +925,13 @@ static int verify_cookie(SSL *ssl, unsigned char *cookie, unsigned int cookie_le
 /* Create and initialize new SSL context and instance */
 static pj_status_t create_ssl(transport_dtls *dtls)
 {
-    SSL_METHOD *ssl_method;
+	SSL_METHOD *ssl_method;
+#ifndef USE_GLOBAL_CTX
     SSL_CTX *ctx;
+#endif
     pjmedia_dtls_cert *cert;
     int mode, rc;
-	pj_status_t status;
+    pj_status_t status;
 	char *openssl_ver;
         
     pj_assert(dtls);
@@ -750,102 +939,128 @@ static pj_status_t create_ssl(transport_dtls *dtls)
     cert = dtls->cert;
 
     /* Make sure OpenSSL library has been initialized */
-	init_openssl();
+    init_openssl(dtls->pool);
 
 	openssl_ver = SSLeay_version(SSLEAY_VERSION);
 	PJ_LOG(4, (THIS_FILE, "create_ssl() OpenSSL version=[%s]", openssl_ver));
 
-    /* Determine SSL method to use */
-    switch (PJ_SSL_SOCK_PROTO_DTLS1) {
-    case PJ_SSL_SOCK_PROTO_DEFAULT:
-    case PJ_SSL_SOCK_PROTO_TLS1:
-	ssl_method = (SSL_METHOD*)TLSv1_method();
-	break;
-#ifndef OPENSSL_NO_SSL2
-    case PJ_SSL_SOCK_PROTO_SSL2:
-	ssl_method = (SSL_METHOD*)SSLv2_method();
-	break;
-#endif
-    case PJ_SSL_SOCK_PROTO_SSL3:
-	ssl_method = (SSL_METHOD*)SSLv3_method();
-	break;
-    case PJ_SSL_SOCK_PROTO_SSL23:
-	ssl_method = (SSL_METHOD*)SSLv23_method();
-	break;
-    case PJ_SSL_SOCK_PROTO_DTLS1:
 	ssl_method = (SSL_METHOD*)DTLSv1_method();
-	break;
-    default:
-	return PJ_EINVAL;
-    }
+	if (!ssl_method)
+		pj_assert(ssl_method);	
+#ifdef USE_GLOBAL_CTX
+	if (!g_ctx) 
+#endif
+	{
+#ifdef USE_GLOBAL_CTX
+		/* Create SSL context */
+		g_ctx = SSL_CTX_new(ssl_method);
+		if (g_ctx == NULL) {
+		return GET_SSL_STATUS(dtls);
+		}
+#else
+		/* Create SSL context */
+		ctx = SSL_CTX_new(ssl_method);
+		if (ctx == NULL) {
+			return GET_SSL_STATUS(dtls);
+		}
+#endif
 
-    /* Create SSL context */
-    ctx = SSL_CTX_new(ssl_method);
-    if (ctx == NULL) {
-	return GET_SSL_STATUS(dtls);
-    }
+		/* Apply credentials */
+		if (cert) {
+			if (dtls->setting.verify_server && !cert->CA_file.slen && cert->cert_file.slen) {
+				pj_strcpy(&cert->CA_file, &cert->cert_file);
+			}
 
-    /* Apply credentials */
-    if (cert) {
-		if (dtls->setting.verify_server && !cert->CA_file.slen && cert->cert_file.slen) {
-			pj_strcpy(&cert->CA_file, &cert->cert_file);
+		/* Load CA list if one is specified. */
+		if (cert->CA_file.slen) {
+#ifdef USE_GLOBAL_CTX
+			rc = SSL_CTX_load_verify_locations(g_ctx, cert->CA_file.ptr, NULL);
+#else
+			rc = SSL_CTX_load_verify_locations(ctx, cert->CA_file.ptr, NULL);
+#endif
+
+			if (rc != 1) {
+			status = GET_SSL_STATUS(dtls);
+			PJ_LOG(1,(dtls->pool->obj_name, "Error loading CA list file "
+				"'%s'", cert->CA_file.ptr));
+#ifdef USE_GLOBAL_CTX
+			SSL_CTX_free(g_ctx);
+#else
+			SSL_CTX_free(ctx);
+#endif
+			return status;
+			}
+		}
+	    
+		/* Set password callback */
+		if (cert->privkey_pass.slen) {
+#ifdef USE_GLOBAL_CTX
+			SSL_CTX_set_default_passwd_cb(g_ctx, password_cb);
+			SSL_CTX_set_default_passwd_cb_userdata(g_ctx, cert);
+#else
+			SSL_CTX_set_default_passwd_cb(ctx, password_cb);
+			SSL_CTX_set_default_passwd_cb_userdata(ctx, cert);
+#endif
 		}
 
-	/* Load CA list if one is specified. */
-	if (cert->CA_file.slen) {
 
-	    rc = SSL_CTX_load_verify_locations(ctx, cert->CA_file.ptr, NULL);
+		/* Load certificate if one is specified */
+		if (cert->cert_file.slen) {
 
-	    if (rc != 1) {
-		status = GET_SSL_STATUS(dtls);
-		PJ_LOG(1,(dtls->pool->obj_name, "Error loading CA list file "
-			  "'%s'", cert->CA_file.ptr));
-		SSL_CTX_free(ctx);
-		return status;
-	    }
+#ifdef USE_GLOBAL_CTX
+			/* Load certificate chain from file into ctx */
+			rc = SSL_CTX_use_certificate_chain_file(g_ctx, cert->cert_file.ptr);
+#else
+			/* Load certificate chain from file into ctx */
+			rc = SSL_CTX_use_certificate_chain_file(ctx, cert->cert_file.ptr);
+#endif
+			if(rc != 1) {
+			status = GET_SSL_STATUS(dtls);
+			PJ_LOG(1,(dtls->pool->obj_name, "Error loading certificate "
+				"chain file '%s'", cert->cert_file.ptr));
+#ifdef USE_GLOBAL_CTX
+			SSL_CTX_free(g_ctx);
+#else
+			SSL_CTX_free(ctx);
+#endif
+			return status;
+			}
+		}
+
+
+		/* Load private key if one is specified */
+		if (cert->privkey_file.slen) {
+#ifdef USE_GLOBAL_CTX
+			/* Adds the first private key found in file to ctx */
+			rc = SSL_CTX_use_PrivateKey_file(g_ctx, cert->privkey_file.ptr, 
+				SSL_FILETYPE_PEM);
+#else
+			/* Adds the first private key found in file to ctx */
+			rc = SSL_CTX_use_PrivateKey_file(ctx, cert->privkey_file.ptr, 
+				SSL_FILETYPE_PEM);
+#endif
+			if(rc != 1) {
+			status = GET_SSL_STATUS(dtls);
+			PJ_LOG(1,(dtls->pool->obj_name, "Error adding private key "
+				"from '%s'", cert->privkey_file.ptr));
+#ifdef USE_GLOBAL_CTX
+			SSL_CTX_free(g_ctx);
+#else
+			SSL_CTX_free(ctx);
+#endif
+			return status;
+			}
+		}
+		}
 	}
-    
-	/* Set password callback */
-	if (cert->privkey_pass.slen) {
-	    SSL_CTX_set_default_passwd_cb(ctx, password_cb);
-	    SSL_CTX_set_default_passwd_cb_userdata(ctx, cert);
-	}
 
+#ifdef USE_GLOBAL_CTX
+	dtls->ossl_ctx = g_ctx;
+#else
+	dtls->ossl_ctx = ctx;
+#endif
 
-	/* Load certificate if one is specified */
-	if (cert->cert_file.slen) {
-
-	    /* Load certificate chain from file into ctx */
-	    rc = SSL_CTX_use_certificate_chain_file(ctx, cert->cert_file.ptr);
-
-	    if(rc != 1) {
-		status = GET_SSL_STATUS(dtls);
-		PJ_LOG(1,(dtls->pool->obj_name, "Error loading certificate "
-			  "chain file '%s'", cert->cert_file.ptr));
-		SSL_CTX_free(ctx);
-		return status;
-	    }
-	}
-
-
-	/* Load private key if one is specified */
-	if (cert->privkey_file.slen) {
-	    /* Adds the first private key found in file to ctx */
-	    rc = SSL_CTX_use_PrivateKey_file(ctx, cert->privkey_file.ptr, 
-					     SSL_FILETYPE_PEM);
-
-	    if(rc != 1) {
-		status = GET_SSL_STATUS(dtls);
-		PJ_LOG(1,(dtls->pool->obj_name, "Error adding private key "
-			  "from '%s'", cert->privkey_file.ptr));
-		SSL_CTX_free(ctx);
-		return status;
-	    }
-	}
-    }
-
-    dtls->ossl_ctx = ctx;
-
+	SSL_CTX_set_verify_depth(dtls->ossl_ctx, 2);
 	// dean : For DTLS, if OpenSSL 1.0.1k or later version is used, read_ahead must be set to "ON". Otherwise, handshake always fails.
 	// please check http://rt.openssl.org/Ticket/Display.html?id=3657&user=guest&pass=guest
 	SSL_CTX_set_read_ahead(dtls->ossl_ctx, 1);
@@ -868,6 +1083,8 @@ static pj_status_t create_ssl(transport_dtls *dtls)
 	SSL_CTX_set_cookie_generate_cb(dtls->ossl_ctx, generate_cookie);
 	SSL_CTX_set_cookie_verify_cb(dtls->ossl_ctx, verify_cookie);
 	SSL_set_options(dtls->ossl_ssl, SSL_OP_COOKIE_EXCHANGE);
+	//SSL_CTX_set_mode(dtls->ossl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_RELEASE_BUFFERS);
+	//SSL_CTX_set_mode(dtls->ossl_ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_RELEASE_BUFFERS);
 
     /* Set cipher list */
     status = set_cipher_list(dtls);
@@ -879,9 +1096,15 @@ static pj_status_t create_ssl(transport_dtls *dtls)
 	//BIO_set_mem_eof_return(dtls->ossl_rbio, -1);
 	dtls->ossl_wbio = BIO_new(BIO_s_mem());
 	//BIO_set_mem_eof_return(dtls->ossl_wbio, -1);
+	//BIO_set_nbio(dtls->ossl_rbio, 1);
+	//BIO_set_nbio(dtls->ossl_wbio, 1);
+	//BIO_set_flags(dtls->ossl_rbio, BIO_FLAGS_MEM_RDONLY);
+	//BIO_set_flags(dtls->ossl_wbio, BIO_FLAGS_MEM_RDONLY);
     BIO_set_close(dtls->ossl_rbio, BIO_CLOSE);
     BIO_set_close(dtls->ossl_wbio, BIO_CLOSE);
 	SSL_set_bio(dtls->ossl_ssl, dtls->ossl_rbio, dtls->ossl_wbio);
+
+	PJ_LOG(1, (THIS_FILE, "dtls=[%p], ctx=[%p], ssl=[%p]", dtls, dtls->ossl_ctx, dtls->ossl_ssl));
 
     return PJ_SUCCESS;
 }
@@ -903,10 +1126,12 @@ static void destroy_ssl(transport_dtls *dtls)
 	dtls->ossl_ctx = NULL;
     }
 
+	dtls->ssl_state = SSL_STATE_NULL;
+
     /* Potentially shutdown OpenSSL library if this is the last
      * context exists.
      */
-    shutdown_openssl();
+    //shutdown_openssl();
 }
 /*
  *******************************************************************
@@ -970,8 +1195,8 @@ PJ_DEF(pj_status_t) pjmedia_dtls_cipher_get_availables(pj_ssl_cipher ciphers[],
     PJ_ASSERT_RETURN(ciphers && cipher_num, PJ_EINVAL);
 
     if (openssl_cipher_num == 0) {
-	init_openssl();
-	shutdown_openssl();
+	//init_openssl();
+	//shutdown_openssl();
     }
 
     if (openssl_cipher_num == 0) {
@@ -995,8 +1220,8 @@ PJ_DEF(const char*) pjmedia_dtls_cipher_name(pj_ssl_cipher cipher)
     unsigned i;
 
     if (openssl_cipher_num == 0) {
-	init_openssl();
-	shutdown_openssl();
+	//init_openssl();
+	//shutdown_openssl();
     }
 
     for (i = 0; i < openssl_cipher_num; ++i) {
@@ -1013,8 +1238,8 @@ PJ_DEF(pj_bool_t) pjmedia_dtls_cipher_is_supported(pj_ssl_cipher cipher)
     unsigned i;
 
     if (openssl_cipher_num == 0) {
-	init_openssl();
-	shutdown_openssl();
+	//init_openssl();
+	//shutdown_openssl();
     }
 
     for (i = 0; i < openssl_cipher_num; ++i) {
@@ -1282,6 +1507,34 @@ static void get_cert_info(pj_pool_t *pool, pj_ssl_cert_info *ci, X509 *x)
     }
 }
 
+static void calculate_certs_fingerprint(transport_dtls *dtls)
+{
+	X509 *x;
+	const EVP_MD *digest = EVP_sha256();
+	unsigned char         md[EVP_MAX_MD_SIZE];
+	unsigned int          n;
+	int i;
+	unsigned char         tmp[10];
+
+	/* Active local certificate */
+	x = SSL_get_certificate(dtls->ossl_ssl);
+	if (x) {
+		if (!X509_digest(x, digest, md, &n))
+			PJ_LOG(3,(THIS_FILE, "culculate_certs_fingerprint() Certificate "));
+		else {
+			pj_strdup2(dtls->pool, &dtls->cert_fingerprint, "sha-256 "); // allocate pj_str_t
+			for(i = 0; i < n; i++) {
+				pj_memset(tmp, 0, sizeof(tmp));
+				if (i == n-1)
+					sprintf(tmp, "%02X", md[i]);
+				else
+					sprintf(tmp, "%02X:", md[i]);
+				pj_strcat2(&dtls->cert_fingerprint, tmp);
+			}
+		}
+	}
+}
+
 
 /* Update local & remote certificates info. This function should be
  * called after handshake or renegotiation successfully completed.
@@ -1312,11 +1565,20 @@ static void update_certs_info(transport_dtls *dtls)
     }
 }
 
-static void dump_bin(const char *buf, unsigned len)
+static void dump_bin(const char *buf, unsigned len, pj_bool_t send)
 {
 	unsigned i;
-	if (len > 64)
-		len = 64;
+#ifndef DUMP_PACKET
+	return;
+#endif
+	//if (len < 1400)
+	//	return;
+
+	if (send)
+		PJ_LOG(3,(THIS_FILE, "send packet!!!"));
+	else
+		PJ_LOG(3,(THIS_FILE, "recv packet!!!"));
+
 	PJ_LOG(3,(THIS_FILE, "begin dump"));
 	for (i=0; i<len; ++i) {
 		int j;
@@ -1349,22 +1611,21 @@ static pj_status_t flush_write_bio(transport_dtls *dtls,
 {
 	pj_status_t status = PJ_SUCCESS;
 
-	pj_lock_acquire(dtls->mutex);
+	//MUTEX_LOCK(dtls->mutex);
 
 	//PJ_LOG(1, (THIS_FILE, "flush_write_bio() orig_len=%d", orig_len));
 
     /* Check if there is data in write BIO, flush it if any */
     if (!BIO_pending(dtls->ossl_wbio)) {
-	pj_lock_release(dtls->mutex);
+	//MUTEX_UNLOCK(dtls->mutex);
 	return PJ_SUCCESS;
     }
 
-	do {
     /* Get data and its length */
     //len = BIO_get_mem_data(dtls->ossl_wbio, &data);
 	dtls->delayed_send_size = BIO_read(dtls->ossl_wbio, dtls->dtls_snd_buffer, sizeof(dtls->dtls_snd_buffer));
-    if (dtls->delayed_send_size == 0) {
-	pj_lock_release(dtls->mutex);
+    if (dtls->delayed_send_size <= 0) {
+	//MUTEX_UNLOCK(dtls->mutex);
 	return PJ_SUCCESS;
 	}
 
@@ -1386,29 +1647,31 @@ static pj_status_t flush_write_bio(transport_dtls *dtls,
 		else
 			PJ_LOG(3, (THIS_FILE, "flush_write_bio() TIMER_HANDSHAKE_RETRANSMISSION scheduled."));
 	}
-	
-	//dump_bin(data, len);
 
-    /* Ticket #1573: Don't hold mutex while calling PJLIB socket send(). */
-    pj_lock_release(dtls->mutex);
+	BIO_reset(dtls->ossl_wbio);
 
 	((pj_uint8_t *)dtls->dtls_snd_buffer)[dtls->delayed_send_size] = flags;
 
+	/* Ticket #1573: Don't hold mutex while calling PJLIB socket send(). */
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);   // To avoid deadlock.
+#endif
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
+
 	status = pjmedia_transport_send_rtp(dtls->member_tp, dtls->dtls_snd_buffer, dtls->delayed_send_size);
 
-	//PJ_LOG(1, (THIS_FILE, "flush_write_bio() Send encrtyped data=%d, status=%d", dtls->delayed_send_size, status));
-
-	pj_lock_acquire(dtls->mutex);
-#if 0
-	if (status == PJNATH_EICEINPROGRESS) {
-		dtls->delayed_send_active = PJ_TRUE;
-		pj_lock_release(dtls->mutex);
-		return PJ_EPENDING;
-	}
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_LOCK(global_mutex);
 #endif
-	} while (BIO_pending(dtls->ossl_wbio));
 
-	pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+	MUTEX_LOCK(dtls->mutex);
+#endif
+
+	//PJ_LOG(1, (THIS_FILE, "flush_write_bio() Send encrtyped data=%d, status=%d", dtls->delayed_send_size, status));
 
 	return status;
 }
@@ -1426,14 +1689,31 @@ static pj_status_t ssl_write(transport_dtls *dtls,
 	// DEAN, check if this is tunnel data. If true, update last_data time.
 	unsigned tnl_data = ((pj_uint8_t *)data)[size];
 
+	dump_bin(data, size, 1);
+
     /* Write the plain data to SSL, after SSL encrypts it, write BIO will
      * contain the secured data to be sent via socket. Note that re-
      * negotitation may be on progress, so sending data should be delayed
      * until re-negotiation is completed.
-     */
-    pj_lock_acquire(dtls->mutex);
-    nwritten = SSL_write(dtls->ossl_ssl, data, size);
-    pj_lock_release(dtls->mutex);
+	 */
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_LOCK(global_mutex);
+#endif
+
+#ifdef USE_LOCAL_LOCK
+    MUTEX_LOCK(dtls->mutex);
+#endif
+
+	PJ_LOG(6, (THIS_FILE, "ssl_write() wbp=[%d], size=[%d], dtls=[%p], ctx=[%p], ssl=[%p]",  
+		BIO_pending(dtls->ossl_wbio), size, dtls, dtls->ossl_ctx, dtls->ossl_ssl));
+
+	//if (dtls->ossl_ssl)
+	//	return PJ_EBUSY;
+
+	nwritten = SSL_write(dtls->ossl_ssl, data, size);
+
+	PJ_LOG(6, (THIS_FILE, "ssl_write()2 wbp=[%d], size=[%d], dtls=[%p], ctx=[%p], ssl=[%p]",  
+		BIO_pending(dtls->ossl_wbio), size, dtls, dtls->ossl_ctx, dtls->ossl_ssl));
     
     if (nwritten == size) {
 	/* All data written, flush write BIO to network socket */
@@ -1459,8 +1739,14 @@ static pj_status_t ssl_write(transport_dtls *dtls,
 	 * the whole secured data, perhaps because of insufficient memory.
 	 */
 	status = PJ_ENOMEM;
-    }
+	}
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
 
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
     return status;
 }
 
@@ -1555,200 +1841,6 @@ static pj_bool_t on_handshake_complete(transport_dtls *dtls,
     return PJ_TRUE;
 }
 
-#if ENABLE_DELAYED_SEND
-static write_data_t* alloc_send_data(transport_dtls *dtls, pj_size_t len)
-{
-    send_buf_t *send_buf = &dtls->send_buf;
-    pj_size_t avail_len, skipped_len = 0;
-    char *reg1, *reg2;
-    pj_size_t reg1_len, reg2_len;
-    write_data_t *p;
-
-    /* Check buffer availability */
-    avail_len = send_buf->max_len - send_buf->len;
-    if (avail_len < len)
-	return NULL;
-
-    /* If buffer empty, reset start pointer and return it */
-    if (send_buf->len == 0) {
-	send_buf->start = send_buf->buf;
-	send_buf->len   = len;
-	p = (write_data_t*)send_buf->start;
-	goto init_send_data;
-    }
-
-    /* Free space may be wrapped/splitted into two regions, so let's
-     * analyze them if any region can hold the write data.
-     */
-    reg1 = send_buf->start + send_buf->len;
-    if (reg1 >= send_buf->buf + send_buf->max_len)
-	reg1 -= send_buf->max_len;
-    reg1_len = send_buf->max_len - send_buf->len;
-    if (reg1 + reg1_len > send_buf->buf + send_buf->max_len) {
-	reg1_len = send_buf->buf + send_buf->max_len - reg1;
-	reg2 = send_buf->buf;
-	reg2_len = send_buf->start - send_buf->buf;
-    } else {
-	reg2 = NULL;
-	reg2_len = 0;
-    }
-
-    /* More buffer availability check, note that the write data must be in
-     * a contigue buffer.
-     */
-    avail_len = PJ_MAX(reg1_len, reg2_len);
-    if (avail_len < len)
-	return NULL;
-
-    /* Get the data slot */
-    if (reg1_len >= len) {
-	p = (write_data_t*)reg1;
-    } else {
-	p = (write_data_t*)reg2;
-	skipped_len = reg1_len;
-    }
-
-    /* Update buffer length */
-    send_buf->len += len + skipped_len;
-
-init_send_data:
-    /* Init the new send data */
-    pj_bzero(p, sizeof(*p));
-    pj_list_init(p);
-    pj_list_push_back(&dtls->send_pending, p);
-
-    return p;
-}
-
-static void free_send_data(transport_dtls *dtls, write_data_t *wdata)
-{
-    send_buf_t *buf = &dtls->send_buf;
-    write_data_t *spl = &dtls->send_pending;
-
-    pj_assert(!pj_list_empty(&dtls->send_pending));
-    
-    /* Free slot from the buffer */
-    if (spl->next == wdata && spl->prev == wdata) {
-	/* This is the only data, reset the buffer */
-	buf->start = buf->buf;
-	buf->len = 0;
-    } else if (spl->next == wdata) {
-	/* This is the first data, shift start pointer of the buffer and
-	 * adjust the buffer length.
-	 */
-	buf->start = (char*)wdata->next;
-	if (wdata->next > wdata) {
-	    buf->len -= ((char*)wdata->next - buf->start);
-	} else {
-	    /* Overlapped */
-	    unsigned right_len, left_len;
-	    right_len = buf->buf + buf->max_len - (char*)wdata;
-	    left_len  = (char*)wdata->next - buf->buf;
-	    buf->len -= (right_len + left_len);
-	}
-    } else if (spl->prev == wdata) {
-	/* This is the last data, just adjust the buffer length */
-	if (wdata->prev < wdata) {
-	    unsigned jump_len;
-	    jump_len = (char*)wdata -
-		       ((char*)wdata->prev + wdata->prev->record_len);
-	    buf->len -= (wdata->record_len + jump_len);
-	} else {
-	    /* Overlapped */
-	    unsigned right_len, left_len;
-	    right_len = buf->buf + buf->max_len -
-			((char*)wdata->prev + wdata->prev->record_len);
-	    left_len  = (char*)wdata + wdata->record_len - buf->buf;
-	    buf->len -= (right_len + left_len);
-	}
-    }
-    /* For data in the middle buffer, just do nothing on the buffer. The slot
-     * will be freed later when freeing the first/last data.
-     */
-    
-    /* Remove the data from send pending list */
-    pj_list_erase(wdata);
-}
-
-/* Flush delayed data sending in the write pending list. */
-static pj_status_t flush_delayed_send(transport_dtls *dtls)
-{
-	/* Check for another ongoing flush */
-	if (dtls->flushing_write_pend)
-		return PJ_EBUSY;
-
-	pj_lock_acquire(dtls->mutex);
-
-	/* Again, check for another ongoing flush */
-	if (dtls->flushing_write_pend) {
-		pj_lock_release(dtls->mutex);
-		return PJ_EBUSY;
-	}
-
-	/* Set ongoing flush flag */
-	dtls->flushing_write_pend = PJ_TRUE;
-
-	while (!pj_list_empty(&dtls->write_pending)) {
-		write_data_t *wp;
-		pj_status_t status;
-
-		wp = dtls->write_pending.next;
-
-		/* Ticket #1573: Don't hold mutex while calling socket send. */
-		pj_lock_release(dtls->mutex);
-
-		status = ssl_write(dtls, wp->data.ptr, 
-			wp->plain_data_len, wp->flags);
-		if (status != PJ_SUCCESS) {
-			/* Reset ongoing flush flag first. */
-			dtls->flushing_write_pend = PJ_FALSE;
-			return status;
-		}
-
-		pj_lock_acquire(dtls->mutex);
-		pj_list_erase(wp);
-		pj_list_push_back(&dtls->write_pending_empty, wp);
-	}
-
-	/* Reset ongoing flush flag */
-	dtls->flushing_write_pend = PJ_FALSE;
-
-	pj_lock_release(dtls->mutex);
-
-	return PJ_SUCCESS;
-}
-
-/* Sending is delayed, push back the sending data into pending list. */
-static pj_status_t delay_send (transport_dtls *dtls,
-							   const void *data,
-							   pj_ssize_t size,
-							   unsigned flags)
-{
-	write_data_t *wp;
-
-	pj_lock_acquire(dtls->mutex);
-
-	/* Init write pending instance */
-	if (!pj_list_empty(&dtls->write_pending_empty)) {
-		wp = dtls->write_pending_empty.next;
-		pj_list_erase(wp);
-	} else {
-		wp = PJ_POOL_ZALLOC_T(dtls->pool, write_data_t);
-	}
-
-	wp->plain_data_len = size;
-	wp->data.ptr = data;
-	wp->flags = flags;
-
-	pj_list_push_back(&dtls->write_pending, wp);
-
-	pj_lock_release(dtls->mutex);
-
-	/* Must return PJ_EPENDING */
-	return PJ_EPENDING;
-}
-#endif
-
 static void on_timer(pj_timer_heap_t *th, struct pj_timer_entry *te)
 {
 	transport_dtls *dtls = (transport_dtls*)te->user_data;
@@ -1815,16 +1907,21 @@ static pj_status_t do_handshake(transport_dtls *dtls)
     pj_status_t status;
     int err;
 
+#ifdef USE_LOCAL_LOCK
     /* Perform SSL handshake */
-    pj_lock_acquire(dtls->mutex);
+    MUTEX_LOCK(dtls->mutex);
+#endif
+
     err = SSL_do_handshake(dtls->ossl_ssl);
-	pj_lock_release(dtls->mutex);
 
     /* SSL_do_handshake() may put some pending data into SSL write BIO, 
      * flush it if any.
      */
     status = flush_write_bio(dtls, 0, 0);
-    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+	if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+#ifdef USE_LOCAL_LOCK
+		MUTEX_UNLOCK(dtls->mutex);
+#endif
 	return status;
     }
 
@@ -1837,15 +1934,24 @@ static pj_status_t do_handshake(transport_dtls *dtls)
 	    /* Handshake fails */
 	    status = STATUS_FROM_SSL_ERR(dtls, err);
 		err_str = ssl_strerror(status, buf, sizeof(buf));
+#ifdef USE_LOCAL_LOCK
+		MUTEX_UNLOCK(dtls->mutex);
+#endif
 	    return status;
 	}
     }
 
     /* Check if handshake has been completed */
     if (SSL_is_init_finished(dtls->ossl_ssl)) {
-	dtls->ssl_state = SSL_STATE_ESTABLISHED;
+		dtls->ssl_state = SSL_STATE_ESTABLISHED;
+#ifdef USE_LOCAL_LOCK
+		MUTEX_UNLOCK(dtls->mutex);
+#endif
 	return PJ_SUCCESS;
-    }
+	}
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
 
     return PJ_EPENDING;
 }
@@ -1867,13 +1973,29 @@ PJ_DEF(pj_status_t) pjmedia_dtls_do_handshake(pjmedia_transport *tp,
 				status, dtls->turn_mapped_addr);
 		}
 	} else {
+#ifdef USE_GLOBAL_LOCK
+		MUTEX_LOCK(global_mutex);
+#endif
+		/* If Media type is application (This means WebRTC is used),
+		   the offerer must be server side ofDTLS handshake . Otherwise,
+		   the offerer side launches the DTLS handshake.*/
+#if 1
 		// As server side
-		if (!dtls->offerer_side) {
+		if (/*(dtls->media_type_app && dtls->offerer_side) ||*/ // DEAN. Offerer side always play tls client side.
+			(!dtls->media_type_app && !dtls->offerer_side) ||
+			(dtls->base.remote_ua_is_sdk && !dtls->offerer_side)) {
+#else
+		if ((dtls->media_type_app && dtls->offerer_side) ||
+			(!dtls->media_type_app && !dtls->offerer_side)) {
+#endif
 				if (dtls->ssl_state == SSL_STATE_NULL) {
 					SSL_set_accept_state(dtls->ossl_ssl);  // tls server side.
 					PJ_LOG(4, (THIS_FILE, "pjmedia_dtls_do_handshake SSL_set_accept_state."));
 					dtls->ssl_state = SSL_STATE_HANDSHAKING;
 				}
+#ifdef USE_GLOBAL_LOCK
+				MUTEX_UNLOCK(global_mutex);
+#endif
 			return PJ_SUCCESS;
 		}
 
@@ -1890,6 +2012,9 @@ PJ_DEF(pj_status_t) pjmedia_dtls_do_handshake(pjmedia_transport *tp,
 		if (status != PJ_EPENDING)
 			ret = on_handshake_complete(dtls, status);
 	}
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
 
 	return status;
 }
@@ -1902,7 +2027,7 @@ PJ_DEF(pj_status_t) pjmedia_dtls_init_lib(pjmedia_endpt *endpt)
     if (libdtls_initialized == PJ_FALSE) {
 	pj_status_t status;
 
-	status = init_openssl();
+	status = init_openssl(pjmedia_get_pool(endpt));
 	if (status != PJ_SUCCESS) { 
 	    PJ_LOG(4, (THIS_FILE, "Failed to initialize libdtls: %d", 
 		       status));
@@ -1950,7 +2075,7 @@ PJ_DEF(void) pjmedia_dtls_setting_default(pjmedia_dtls_setting *opt)
 	opt->close_member_tp = PJ_TRUE;
 	opt->use = PJMEDIA_DTLS_DISABLED;
 
-	opt->read_buffer_size = TCP_OR_UDP_TOTAL_HEADER_SIZE+NATNL_PKT_MAX_LEN;
+	opt->read_buffer_size = NATNL_DTLS_MAX_RECV_LEN;
 	opt->send_buffer_size = NATNL_DTLS_MAX_SEND_LEN;
 	opt->verify_server = PJ_FALSE;
 	opt->verify_client = PJ_FALSE;
@@ -1985,8 +2110,13 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_create(
     dtls = PJ_POOL_ZALLOC_T(pool, transport_dtls);
 
     dtls->pool = pool;
-    dtls->session_inited = PJ_FALSE;
-    dtls->bypass_dtls = PJ_FALSE;
+	dtls->session_inited = PJ_FALSE;
+#ifdef BYPASS
+	dtls->bypass_dtls = PJ_TRUE;
+#else
+	dtls->bypass_dtls = PJ_FALSE;
+#endif
+	dtls->media_type_app = PJ_FALSE;
 
 	if (opt) {
 		dtls->setting = *opt;
@@ -1994,11 +2124,9 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_create(
 		pjmedia_dtls_setting_default(&dtls->setting);
 	}
 
-	status = pj_lock_create_recursive_mutex(pool, pool->obj_name, &dtls->mutex);
-	if (status != PJ_SUCCESS) {
-		pj_pool_release(pool);
-		return status;
-	}
+#ifdef USE_LOCAL_LOCK
+	MUTEX_SETUP(dtls->mutex);
+#endif
 
 	/* Create semaphore */
 	status = pj_sem_create(pool, "dtls_sem", 0, 65535, &dtls->handshake_sem);
@@ -2009,11 +2137,14 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_create(
 
     /* Initialize base pjmedia_transport */
     pj_memcpy(dtls->base.name, pool->obj_name, PJ_MAX_OBJ_NAME);
-    if (tp)
-	dtls->base.type = tp->type;
+	if (tp) {
+		dtls->base.type = tp->type;
+		dtls->base.remote_ua_is_sdk = tp->remote_ua_is_sdk;
+	}
     else
-	dtls->base.type = PJMEDIA_TRANSPORT_TYPE_UDP;
+		dtls->base.type = PJMEDIA_TRANSPORT_TYPE_UDP;
 	dtls->base.op = &transport_dtls_op;
+	//pj_strdup2(, dtls->cert_fingerprint, "");
 
 	pj_list_init(&dtls->write_pending);
 	pj_list_init(&dtls->write_pending_empty);
@@ -2045,17 +2176,7 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_create(
 	dtls->send_buf.len = 0;
 	dtls->read_size = dtls->setting.send_buffer_size;
 	dtls->handshake_retrans_cnt = 0;
-
-	if (!opt->timer_heap) {
-		// Timer heap
-		status = pj_timer_heap_create(pool, 4, &timer);
-		if (status != PJ_SUCCESS) {
-			return status;
-		}
-	} else
-		timer = opt->timer_heap;
-
-	dtls->timer_heap = timer;
+	dtls->timer_heap = dtls->setting.timer_heap;
 
 	/* Create SSL context */
 	status = create_ssl(dtls);
@@ -2084,16 +2205,29 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_start(
     transport_dtls  *dtls = (transport_dtls*) tp;
     pj_status_t	     status = PJ_SUCCESS;
 
-    PJ_ASSERT_RETURN(tp, PJ_EINVAL);
+	PJ_ASSERT_RETURN(tp, PJ_EINVAL);
 
-    pj_lock_acquire(dtls->mutex);
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_LOCK(global_mutex);
+#endif
+
+#ifdef USE_LOCAL_LOCK
+    MUTEX_LOCK(dtls->mutex);
+#endif
 
     if (dtls->session_inited) {
 	pjmedia_transport_dtls_stop(tp);
 	}
 
 	if (!dtls->bypass_dtls) {
-		if (!dtls->offerer_side) {
+#if 1
+		if (/*(dtls->media_type_app && dtls->offerer_side) ||*/ // DEAN. Offerer side always play tls client side.
+			(!dtls->media_type_app && !dtls->offerer_side) || 
+			(dtls->base.remote_ua_is_sdk && !dtls->offerer_side)) {
+#else
+		if ((dtls->media_type_app && dtls->offerer_side) ||
+			(!dtls->media_type_app && !dtls->offerer_side)) {
+#endif
 				if (dtls->ssl_state == SSL_STATE_NULL) {
 					SSL_set_accept_state(dtls->ossl_ssl);   // tls server side.
 
@@ -2116,7 +2250,13 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_start(
 	/* Declare DTLS session initialized */
 	dtls->session_inited = PJ_TRUE;
 
-    pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
     return status;
 }
 
@@ -2128,20 +2268,38 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_stop(pjmedia_transport *dtls)
     transport_dtls *p_dtls = (transport_dtls*) dtls;
     //pj_status_t status;
 
-    PJ_ASSERT_RETURN(dtls, PJ_EINVAL);
+	PJ_ASSERT_RETURN(dtls, PJ_EINVAL);
 
-	pj_lock_acquire(p_dtls->mutex);
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_LOCK(global_mutex);
+#endif
 
-    if (!p_dtls->session_inited) {
-	pj_lock_release(p_dtls->mutex);
-	return PJ_SUCCESS;
+#ifdef USE_LOCAL_LOCK
+	MUTEX_LOCK(p_dtls->mutex);
+#endif
+
+	if (!p_dtls->session_inited) {
+#ifdef USE_LOCAL_LOCK
+		MUTEX_UNLOCK(p_dtls->mutex);
+#endif
+
+#ifdef USE_GLOBAL_LOCK
+		MUTEX_UNLOCK(global_mutex);
+#endif
+		return PJ_SUCCESS;
     }
 
 	destroy_ssl(p_dtls);
 
     p_dtls->session_inited = PJ_FALSE;
 
-    pj_lock_release(p_dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(p_dtls->mutex);
+#endif
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
 
     return PJ_SUCCESS;
 }
@@ -2176,7 +2334,10 @@ static pj_status_t transport_get_info(pjmedia_transport *tp,
     dtls_info.peer_use = dtls->peer_use;
 
     spc_info_idx = info->specific_info_cnt++;
-    info->spc_info[spc_info_idx].type = PJMEDIA_TRANSPORT_TYPE_DTLS;
+	if (dtls->media_type_app)
+		info->spc_info[spc_info_idx].type = PJMEDIA_TRANSPORT_TYPE_DTLS_SCTP;
+	else
+		info->spc_info[spc_info_idx].type = PJMEDIA_TRANSPORT_TYPE_DTLS;
     info->spc_info[spc_info_idx].cbsize = sizeof(dtls_info);
     pj_memcpy(&info->spc_info[spc_info_idx].buffer, &dtls_info, 
 	      sizeof(dtls_info));
@@ -2200,8 +2361,13 @@ static pj_status_t transport_attach(pjmedia_transport *tp,
 
     PJ_ASSERT_RETURN(tp && rem_addr && addr_len, PJ_EINVAL);
 
-    /* Save the callbacks */
-    pj_lock_acquire(dtls->mutex);
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_LOCK(global_mutex);
+#endif
+	/* Save the callbacks */
+#ifdef USE_LOCAL_LOCK
+	MUTEX_LOCK(dtls->mutex);
+#endif
     dtls->rtp_cb = rtp_cb;
     dtls->rtcp_cb = rtcp_cb;
 	dtls->user_data = user_data;
@@ -2211,20 +2377,32 @@ static pj_status_t transport_attach(pjmedia_transport *tp,
 	PJ_LOG(3, (THIS_FILE, "transport_attach rem_addr=[%s]", 
 		pj_sockaddr_print((pj_sockaddr_t *)&dtls->rem_addr, buf, sizeof(buf), 3)));
 
-    pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
 
     /* Attach itself to transport */
     status = pjmedia_transport_attach(dtls->member_tp, dtls, rem_addr, 
 				      rem_rtcp, addr_len, &dtls_rtp_cb,
 				      &dtls_rtcp_cb);
-    if (status != PJ_SUCCESS) {
-	pj_lock_acquire(dtls->mutex);
+	if (status != PJ_SUCCESS) {
+#ifdef USE_LOCAL_LOCK
+		MUTEX_LOCK(dtls->mutex);
+#endif
 	dtls->rtp_cb = NULL;
 	dtls->rtcp_cb = NULL;
 	dtls->user_data = NULL;
-	pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
 	return status;
-    }
+	}
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
 
     return PJ_SUCCESS;
 }
@@ -2234,18 +2412,30 @@ static void transport_detach(pjmedia_transport *tp, void *strm)
     transport_dtls *dtls = (transport_dtls*) tp;
 
     PJ_UNUSED_ARG(strm);
-    PJ_ASSERT_ON_FAIL(tp, return);
+	PJ_ASSERT_ON_FAIL(tp, return);
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_LOCK(global_mutex);
+#endif
 
     if (dtls->member_tp) {
 	pjmedia_transport_detach(dtls->member_tp, dtls);
     }
 
-    /* Clear up application infos from transport */
-    pj_lock_acquire(dtls->mutex);
+	/* Clear up application infos from transport */
+#ifdef USE_LOCAL_LOCK
+	MUTEX_LOCK(dtls->mutex);
+#endif
     dtls->rtp_cb = NULL;
     dtls->rtcp_cb = NULL;
-    dtls->user_data = NULL;
-    pj_lock_release(dtls->mutex);
+	dtls->user_data = NULL;
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
 }
 
 static pj_status_t transport_send_rtp( pjmedia_transport *tp,
@@ -2258,8 +2448,10 @@ static pj_status_t transport_send_rtp( pjmedia_transport *tp,
     //int err = PJ_SUCCESS;
     char *data = (char *)pkt;
 
-    if (dtls->bypass_dtls)
+	if (dtls->bypass_dtls) {
+		dump_bin(pkt, size, 1);
 		return pjmedia_transport_send_rtp(dtls->member_tp, pkt, size);
+	}
 
 	if (dtls->ssl_state == SSL_STATE_ESTABLISHED)
 	{
@@ -2290,18 +2482,14 @@ static pj_status_t transport_send_rtp( pjmedia_transport *tp,
 #endif
 			goto on_return;
 		}
-
-		if (size == sizeof(dtls->dtls_rcv_buffer))
-			PJ_LOG(5, (THIS_FILE, "ssl_write. status=[%d], size_=[%d], [%x], msg_type=[%d], pkt_id=[%d]", 
-			status, size, ((pj_uint16_t *)data)[0], ((pj_uint8_t*)data)[TCP_SESS_MSG_TYPE_INDEX], pj_ntohl(((pj_uint32_t*)&((pj_uint8_t*)data)[22])[0])));
-		else
-			PJ_LOG(5, (THIS_FILE, "ssl_write. status=[%d], size_=[%d], [%x]", status, size, ((pj_uint16_t *)data)[0]));
+		dump_bin(data, size, 1);
 	} else {
 		PJ_LOG(5, (THIS_FILE, "transport_send_rtp() SSL not ready dtls->ssl_state=[%d].", dtls->ssl_state));
 #if ENABLE_DELAYED_SEND // We no need do do delay send. Because UDT will handle it.
 		//status = delay_send(dtls, data, size, 0); 
 #endif
 		status = PJ_EBUSY;
+		//dump_bin(data, size, 1);
 	}
 on_return:
     return status;
@@ -2335,13 +2523,19 @@ static pj_status_t transport_send_rtcp2(pjmedia_transport *tp,
 
     //pj_memcpy(dtls->dtls_tx_buffer, pkt, size);
 
-    pj_lock_acquire(dtls->mutex);
-    if (!dtls->session_inited) {
-	pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+    MUTEX_LOCK(dtls->mutex);
+#endif
+	if (!dtls->session_inited) {
+#ifdef USE_LOCAL_LOCK
+		MUTEX_UNLOCK(dtls->mutex);
+#endif
 	return PJ_EINVALIDOP;
     }
-    //err = srtp_protect_rtcp(dtls->srtp_tx_ctx, dtls->rtcp_tx_buffer, &len);
-    pj_lock_release(dtls->mutex);
+	//err = srtp_protect_rtcp(dtls->srtp_tx_ctx, dtls->rtcp_tx_buffer, &len);
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
 
     if (err == PJ_SUCCESS) {
 	//status = pjmedia_transport_send_rtcp2(dtls->member_tp, addr, addr_len,
@@ -2378,7 +2572,6 @@ static pj_status_t transport_destroy  (pjmedia_transport *tp)
 			dtls->timer.id = TIMER_NONE;
 		}
 
-		pj_timer_heap_destroy(dtls->timer_heap);
 		dtls->timer_heap = NULL;
 	}
 
@@ -2390,10 +2583,12 @@ static pj_status_t transport_destroy  (pjmedia_transport *tp)
 
 	/* In case mutex is being acquired by other thread */
 
-	pj_lock_acquire(dtls->mutex);
-	pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+	MUTEX_LOCK(dtls->mutex);
+	MUTEX_UNLOCK(dtls->mutex);
 
-	pj_lock_destroy(dtls->mutex);
+	MUTEX_CLEANUP(dtls->mutex);
+#endif
     pj_pool_release(dtls->pool);
 
     return status;
@@ -2413,14 +2608,25 @@ static void dtls_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	pj_status_t status;
 	void *data = pkt;
 
-    if (dtls->bypass_dtls) {
+	if (dtls->bypass_dtls) {
+		dump_bin(pkt, size, 0);
 	dtls->rtp_cb(dtls->user_data, pkt, size);
 	return;
-    }
+	}
 
-    if (size < 0) {
+    if (!pkt || size <= 0) {
 	return;
-    }
+	}
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_LOCK(global_mutex);
+#endif
+
+#ifdef USE_LOCAL_LOCK
+	MUTEX_LOCK(dtls->mutex);
+#endif
+
+	PJ_LOG(6, (THIS_FILE, "dtls_rtp_cb() rbp=[%d], size=[%d], dtls=[%p], ctx=[%p], ssl=[%p]",  
+		BIO_pending(dtls->ossl_rbio), size, dtls, dtls->ossl_ctx, dtls->ossl_ssl));
 
 	if (dtls->ssl_state == SSL_STATE_HANDSHAKING) {
 		/* Cancel handshake timer */
@@ -2434,10 +2640,19 @@ static void dtls_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 
 	/* Socket error or closed */
 	if (data && size > 0) {
+
 		/* Consume the whole data */
 		nwritten = BIO_write(dtls->ossl_rbio, data, size);
 		if (nwritten < size) {
 			status = GET_SSL_STATUS(dtls);
+#ifdef USE_LOCAL_LOCK
+			MUTEX_UNLOCK(dtls->mutex);
+#endif
+
+			PJ_LOG(1, (THIS_FILE, "dtls_rtp_cb() BIO_write error status=[%d]", status));
+#ifdef USE_GLOBAL_LOCK
+			MUTEX_UNLOCK(global_mutex);
+#endif
 			return;
 		}
 	}
@@ -2446,27 +2661,40 @@ static void dtls_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	if (dtls->ssl_state == SSL_STATE_HANDSHAKING) {
 		pj_bool_t ret = PJ_TRUE;
 
+#ifdef USE_LOCAL_LOCK
+		MUTEX_UNLOCK(dtls->mutex);
+#endif
 		status = do_handshake(dtls);
 		PJ_LOG(4, (THIS_FILE, "@#@#@#@#@# do_handshake. status=%d", status));
 		/* Not pending is either success or failed */
 		if (status != PJ_EPENDING)
 			ret = on_handshake_complete(dtls, status);
-
+#ifdef USE_GLOBAL_LOCK
+		MUTEX_UNLOCK(global_mutex);
+#endif
 		return;
 	}
 
 	// Read decrypted data from BIO and send it to underlying media transport.
-	do {
+	do 
+	{
 		int size_ = sizeof(dtls->dtls_rcv_buffer);
+
+		if (!BIO_pending(dtls->ossl_rbio))
+			break;
+
+		PJ_LOG(6, (THIS_FILE, "dtls_rtp_cb()2 rbp=[%d], size=[%d], dtls=[%p], ctx=[%p], ssl=[%p]",  
+			BIO_pending(dtls->ossl_rbio), size, dtls, dtls->ossl_ctx, dtls->ossl_ssl));
 
 	    /* SSL_read() may write some data to BIO write when re-negotiation
 	     * is on progress, so let's protect it with write mutex.
 	     */
-		pj_lock_acquire(dtls->mutex);
+		//MUTEX_LOCK(dtls->mutex);
 		size_ = SSL_read(dtls->ossl_ssl, (void *)dtls->dtls_rcv_buffer, size_);
-		pj_lock_release(dtls->mutex);
+		//MUTEX_UNLOCK(dtls->mutex);
 
 		if (size_ > 0) {
+			dump_bin(dtls->dtls_rcv_buffer, size_, 0);
 			if (size_ == sizeof(dtls->dtls_rcv_buffer))
 				PJ_LOG(5, (THIS_FILE, "SSL_read ok. size_=[%d], [%x], msg_type=[%d], pkt_id=[%d]", 
 					size_, ((pj_uint16_t *)dtls->dtls_rcv_buffer)[0], 
@@ -2476,60 +2704,82 @@ static void dtls_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 				PJ_LOG(5, (THIS_FILE, "SSL_read ok. size_=[%d], [%x]", size_, ((pj_uint16_t *)dtls->dtls_rcv_buffer)[0]));
 			cb = dtls->rtp_cb;
 			cb_data = dtls->user_data;
-			//pj_lock_release(dtls->mutex);
+			//MUTEX_UNLOCK(dtls->mutex);
 
 			if (cb) {
 				(*cb)(cb_data, dtls->dtls_rcv_buffer, size_);
 			}
 
-		} else {
+		} else if (size_ == 0) {
+			break;
+		} else if (size_ < 0) {
 			int err;
 
 			err = SSL_get_error(dtls->ossl_ssl, size_);
-			PJ_LOG(5, (THIS_FILE, "SSL_read failed. size_=[%d], err=[%d]", err, size_));
 
 			/* SSL might just return SSL_ERROR_WANT_READ in 
 			 * re-negotiation.
 			 */
 			if (err != SSL_ERROR_NONE && err != SSL_ERROR_WANT_READ)
 			{
-				PJ_LOG(5, (THIS_FILE, "SSL_read failed. size_=[%d], err=[%d], lerr=[%d], wsalerr=[%d]", size_, err, pj_get_os_error(), pj_get_netos_error()));
+				PJ_LOG(4, (THIS_FILE, "SSL_read failed. err=[%d], lerr=[%d], wsalerr=[%d]", err, pj_get_os_error(), pj_get_netos_error()));
 				/* Reset SSL socket state, then return PJ_FALSE */
 				status = STATUS_FROM_SSL_ERR(dtls, err);
+				ERR_clear_error();
 				goto on_error;
 			}
+#if 1
+			if (err == SSL_ERROR_WANT_READ) { 
+				PJ_LOG(5, (THIS_FILE, "SSL_read failed. err=[%d], dtls=[%p], ctx=[%p], ssl=[%p]", 
+					err, dtls, dtls->ossl_ctx, dtls->ossl_ssl));
+				// nothing more to decrypt -> stop here until we receive more data 
+				ERR_clear_error(); 
+				break; 
+			} 
 
-			status = do_handshake(dtls);
-			if (status == PJ_SUCCESS) {
-				/* Renegotiation completed */
+			if (err == SSL_ERROR_WANT_WRITE) {
+				PJ_LOG(4, (THIS_FILE, "SSL_read failed. err=[%d]", err));
+				status = do_handshake(dtls);
+				if (status == PJ_SUCCESS) {
+					/* Renegotiation completed */
 
-				/* Update certificates */
-				update_certs_info(dtls);
+					/* Update certificates */
+					update_certs_info(dtls);
 #ifdef ENABLE_DELAYED_SEND
-				// Ticket #1573: Don't hold mutex while calling
-				//               PJLIB socket send(). 
-				//pj_lock_acquire(ssock->write_mutex);
-				status = flush_delayed_send(dtls);
-				//pj_lock_release(ssock->write_mutex);
+					// Ticket #1573: Don't hold mutex while calling
+					//               PJLIB socket send(). 
+					//MUTEX_LOCK(ssock->write_mutex);
+					status = flush_delayed_send(dtls);
+					//MUTEX_UNLOCK(ssock->write_mutex);
 #endif
-				/* If flushing is ongoing, treat it as success */
-				if (status == PJ_EBUSY)
-					status = PJ_SUCCESS;
+					/* If flushing is ongoing, treat it as success */
+					if (status == PJ_EBUSY)
+						status = PJ_SUCCESS;
 
-				if (status != PJ_SUCCESS && status != PJ_EPENDING) {
-				PJ_PERROR(1,(dtls->pool->obj_name, status, 
-						 "Failed to flush delayed send"));
-				goto on_error;
+					if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+					PJ_PERROR(1,(dtls->pool->obj_name, status, 
+						"Failed to flush delayed send"));
+					goto on_error;
+					}
+				} else if (status != PJ_EPENDING) {
+						PJ_PERROR(1,(dtls->pool->obj_name, status, 
+						"Renegotiation failed"));
+					goto on_error;
 				}
-			} else if (status != PJ_EPENDING) {
-				PJ_PERROR(1,(dtls->pool->obj_name, status, 
-						 "Renegotiation failed"));
-				goto on_error;
+				ERR_clear_error(); 
 			}
-
-			break;
+#endif
 		}
-	} while(1);
+	} 
+	while(1);
+
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
 
 	return;
 
@@ -2537,10 +2787,17 @@ on_error:
 	if (dtls->ssl_state == SSL_STATE_HANDSHAKING)
 	{
 		on_handshake_complete(dtls, status);
-		//pj_lock_release(dtls->mutex);
 		return;
 	}
 	dtls->ssl_state = SSL_STATE_NULL;
+
+#ifdef USE_LOCAL_LOCK
+	MUTEX_UNLOCK(dtls->mutex);
+#endif
+
+#ifdef USE_GLOBAL_LOCK
+	MUTEX_UNLOCK(global_mutex);
+#endif
 
 	return;
 }
@@ -2565,10 +2822,14 @@ static void dtls_rtcp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	return;
     }
 
-    pj_lock_acquire(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+    MUTEX_LOCK(dtls->mutex);
+#endif
 
-    if (!dtls->session_inited) {
-	pj_lock_release(dtls->mutex);
+	if (!dtls->session_inited) {
+#ifdef USE_GLOBAL_LOCK
+		MUTEX_UNLOCK(dtls->mutex);
+#endif
 	return;
     }
 	// TODO DTLS decrypt data
@@ -2582,174 +2843,14 @@ static void dtls_rtcp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	cb_data = dtls->user_data;
     }
 
-    pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+    MUTEX_UNLOCK(dtls->mutex);
+#endif
 
     if (cb) {
 	(*cb)(cb_data, pkt, len);
     }
 }
-
-#if 0
-/* Generate crypto attribute, including crypto key.
- * If crypto-suite chosen is crypto NULL, just return PJ_SUCCESS,
- * and set buffer_len = 0.
- */
-static pj_status_t generate_crypto_attr_value(pj_pool_t *pool,
-					      char *buffer, int *buffer_len, 
-					      pjmedia_srtp_crypto *crypto,
-					      int tag)
-{
-    pj_status_t status;
-    int cs_idx = get_crypto_idx(&crypto->name);
-    char b64_key[PJ_BASE256_TO_BASE64_LEN(MAX_KEY_LEN)+1];
-    int b64_key_len = sizeof(b64_key);
-
-    if (cs_idx == -1)
-	return PJMEDIA_SRTP_ENOTSUPCRYPTO;
-
-    /* Crypto-suite NULL. */
-    if (cs_idx == 0) {
-	*buffer_len = 0;
-	return PJ_SUCCESS;
-    }
-
-    /* Generate key if not specified. */
-    if (crypto->key.slen == 0) {
-	pj_bool_t key_ok;
-	char key[MAX_KEY_LEN];
-	pj_status_t err;
-	unsigned i;
-
-	PJ_ASSERT_RETURN(MAX_KEY_LEN >= crypto_suites[cs_idx].cipher_key_len,
-			 PJ_ETOOSMALL);
-
-	do {
-	    key_ok = PJ_TRUE;
-
-	    err = crypto_get_random((unsigned char*)key, 
-				     crypto_suites[cs_idx].cipher_key_len);
-	    if (err != err_status_ok) {
-		PJ_LOG(5,(THIS_FILE, "Failed generating random key: %s",
-			  ssl_strerror(err)));
-		//return PJMEDIA_ERRNO_FROM_LIBSRTP(err);
-	    }
-	    for (i=0; i<crypto_suites[cs_idx].cipher_key_len && key_ok; ++i)
-		if (key[i] == 0) key_ok = PJ_FALSE;
-
-	} while (!key_ok);
-	crypto->key.ptr = (char*)
-			  pj_pool_zalloc(pool, 
-					 crypto_suites[cs_idx].cipher_key_len);
-	pj_memcpy(crypto->key.ptr, key, crypto_suites[cs_idx].cipher_key_len);
-	crypto->key.slen = crypto_suites[cs_idx].cipher_key_len;
-    }
-
-    if (crypto->key.slen != (pj_ssize_t)crypto_suites[cs_idx].cipher_key_len)
-	return PJMEDIA_SRTP_EINKEYLEN;
-
-    /* Key transmitted via SDP should be base64 encoded. */
-    status = pj_base64_encode((pj_uint8_t*)crypto->key.ptr, crypto->key.slen,
-			      b64_key, &b64_key_len);
-    if (status != PJ_SUCCESS) {
-	PJ_LOG(5,(THIS_FILE, "Failed encoding plain key to base64"));
-	return status;
-    }
-
-    b64_key[b64_key_len] = '\0';
-    
-    PJ_ASSERT_RETURN(*buffer_len >= (crypto->name.slen + \
-		     b64_key_len + 16), PJ_ETOOSMALL);
-
-    /* Print the crypto attribute value. */
-    *buffer_len = pj_ansi_snprintf(buffer, *buffer_len, "%d %s inline:%s",
-				   tag, 
-				   crypto_suites[cs_idx].name,
-				   b64_key);
-    return PJ_SUCCESS;
-}
-
-/* Parse crypto attribute line */
-static pj_status_t parse_attr_crypto(pj_pool_t *pool,
-				     const pjmedia_sdp_attr *attr,
-				     pjmedia_srtp_crypto *crypto,
-				     int *tag)
-{
-    pj_str_t input;
-    char *token;
-    int token_len;
-    pj_str_t tmp;
-    pj_status_t status;
-    int itmp;
-
-    pj_bzero(crypto, sizeof(*crypto));
-    pj_strdup_with_null(pool, &input, &attr->value);
-
-    /* Tag */
-    token = strtok(input.ptr, " ");
-    if (!token) {
-	PJ_LOG(4,(THIS_FILE, "Attribute crypto expecting tag"));
-	return PJMEDIA_SDP_EINATTR;
-    }
-    token_len = pj_ansi_strlen(token);
-
-    /* Tag must not use leading zeroes. */
-    if (token_len > 1 && *token == '0')
-	return PJMEDIA_SDP_EINATTR;
-
-    /* Tag must be decimal, i.e: contains only digit '0'-'9'. */
-    for (itmp = 0; itmp < token_len; ++itmp)
-	if (!pj_isdigit(token[itmp]))
-	    return PJMEDIA_SDP_EINATTR;
-
-    /* Get tag value. */
-    *tag = atoi(token);
-
-    /* Crypto-suite */
-    token = strtok(NULL, " ");
-    if (!token) {
-	PJ_LOG(4,(THIS_FILE, "Attribute crypto expecting crypto suite"));
-	return PJMEDIA_SDP_EINATTR;
-    }
-    crypto->name = pj_str(token);
-
-    /* Key method */
-    token = strtok(NULL, ":");
-    if (!token) {
-	PJ_LOG(4,(THIS_FILE, "Attribute crypto expecting key method"));
-	return PJMEDIA_SDP_EINATTR;
-    }
-    if (pj_ansi_stricmp(token, "inline")) {
-	PJ_LOG(4,(THIS_FILE, "Attribute crypto key method '%s' not supported!",
-	          token));
-	return PJMEDIA_SDP_EINATTR;
-    }
-
-    /* Key */
-    token = strtok(NULL, "| ");
-    if (!token) {
-	PJ_LOG(4,(THIS_FILE, "Attribute crypto expecting key"));
-	return PJMEDIA_SDP_EINATTR;
-    }
-    tmp = pj_str(token);
-    if (PJ_BASE64_TO_BASE256_LEN(tmp.slen) > MAX_KEY_LEN) {
-	PJ_LOG(4,(THIS_FILE, "Key too long"));
-	return PJMEDIA_SRTP_EINKEYLEN;
-    }
-
-    /* Decode key */
-    crypto->key.ptr = (char*) pj_pool_zalloc(pool, MAX_KEY_LEN);
-    itmp = MAX_KEY_LEN;
-    status = pj_base64_decode(&tmp, (pj_uint8_t*)crypto->key.ptr, 
-			      &itmp);
-    if (status != PJ_SUCCESS) {
-	PJ_LOG(4,(THIS_FILE, "Failed decoding crypto key from base64"));
-	return status;
-    }
-    crypto->key.slen = itmp;
-
-    return PJ_SUCCESS;
-}
-#endif
 
 static pj_status_t transport_media_create(pjmedia_transport *tp,
 				          pj_pool_t *sdp_pool,
@@ -2823,6 +2924,7 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
     pjmedia_sdp_attr *attr;
     pj_str_t attr_value;
     unsigned i, j;
+	pjmedia_sdp_attr *finprt_attr, *sctpmap_attr;
 
     PJ_ASSERT_RETURN(tp && sdp_pool && sdp_local, PJ_EINVAL);
     
@@ -2830,6 +2932,20 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
 
     m_rem = sdp_remote ? sdp_remote->media[media_index] : NULL;
     m_loc = sdp_local->media[media_index];
+
+	// encode certificate fingerprint into SDP.
+	calculate_certs_fingerprint(dtls);
+	if (dtls->cert_fingerprint.slen) {
+		finprt_attr = PJ_POOL_ALLOC_T(sdp_pool, pjmedia_sdp_attr);
+		pj_strdup2(sdp_pool, &finprt_attr->name, "fingerprint");
+		pj_strdup(sdp_pool, &finprt_attr->value, &dtls->cert_fingerprint);
+		if (finprt_attr) {
+			pjmedia_sdp_attr_add(&sdp_local->media[media_index]->attr_count,
+				sdp_local->media[media_index]->attr,
+				finprt_attr);
+		}
+		
+	}
 
     /* If the media is inactive, do nothing. */
     /* No, we still need to process SRTP offer/answer even if the media is
@@ -2851,24 +2967,72 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
 		/* Generate transport */
 		switch (dtls->setting.use) {
 			case PJMEDIA_DTLS_DISABLED:
-				m_loc->desc.transport = ID_TNL_PLAIN;
+				/*if (dtls->base.use_sctp) { 
+					m_loc->desc.transport = ID_TNL_PLAIN_SCTP;
+				} else {*/
+					m_loc->desc.transport = ID_TNL_PLAIN;
+				//}
 				goto BYPASS_DTLS;
 			case PJMEDIA_DTLS_MANDATORY:
-				m_loc->desc.transport = ID_TNL_DTLS;
+				/*if (dtls->base.use_sctp) { 
+					m_loc->desc.transport = ID_TNL_DTLS_SCTP;
+					dtls->media_type_app = PJ_TRUE;
+				} else {*/
+					m_loc->desc.transport = ID_TNL_DTLS;
+				//}
 				break;
-	}
+		}
     } else {
 		/* Answerer side */
 
 		pj_assert(sdp_remote && m_rem);
-
-		/* Generate transport */
-		if (pj_stricmp(&m_rem->desc.transport, &ID_TNL_PLAIN) == 0) {
-			m_loc->desc.transport = ID_TNL_PLAIN;
-			goto BYPASS_DTLS;
-		} else {
-			m_loc->desc.transport = ID_TNL_DTLS;
+		if (pjmedia_get_meida_type(sdp_remote, media_index) == PJMEDIA_TYPE_APPLICATION) { // dean : for WebRTC data channel.
+			m_loc->desc.transport = ID_TNL_DTLS_SCTP;
+#ifdef BYPASS
+			dtls->bypass_dtls = PJ_TRUE;
+#else
 			dtls->bypass_dtls = PJ_FALSE;
+#endif
+			dtls->media_type_app = PJ_TRUE;
+			tp->use_sctp = PJ_TRUE;
+
+			// Add sctpmap attribute for FireFox compatibility.
+			sctpmap_attr = PJ_POOL_ALLOC_T(sdp_pool, pjmedia_sdp_attr);
+			pj_strdup2(sdp_pool, &sctpmap_attr->name, "sctpmap");
+			pj_strdup2(sdp_pool, &sctpmap_attr->value, "5000 webrtc-datachannel 256");
+			if (sctpmap_attr) {
+				pjmedia_sdp_attr_add(&sdp_local->media[media_index]->attr_count,
+					sdp_local->media[media_index]->attr,
+					sctpmap_attr);
+			}
+		} else {
+			tp->use_sctp = PJ_FALSE;
+			/* Generate transport */
+			if (pj_stricmp(&m_rem->desc.transport, &ID_TNL_PLAIN) == 0) {
+				m_loc->desc.transport = ID_TNL_PLAIN;
+				goto BYPASS_DTLS;
+			} else if (pj_stricmp(&m_rem->desc.transport, &ID_TNL_PLAIN_SCTP) == 0) {
+				m_loc->desc.transport = ID_TNL_PLAIN_SCTP;
+				dtls->base.use_sctp = PJ_TRUE;
+				goto BYPASS_DTLS;
+			} else if (pj_stricmp(&m_rem->desc.transport, &ID_TNL_DTLS) == 0) {
+				m_loc->desc.transport = ID_TNL_DTLS;
+#ifdef BYPASS
+				dtls->bypass_dtls = PJ_TRUE;
+#else
+				dtls->bypass_dtls = PJ_FALSE;
+#endif
+				tp->type = PJMEDIA_TRANSPORT_TYPE_DTLS;
+			} else if (pj_stricmp(&m_rem->desc.transport, &ID_TNL_DTLS_SCTP) == 0) {
+				m_loc->desc.transport = ID_TNL_DTLS_SCTP;
+#ifdef BYPASS
+				dtls->bypass_dtls = PJ_TRUE;
+#else
+				dtls->bypass_dtls = PJ_FALSE;
+#endif
+				dtls->base.use_sctp = PJ_TRUE;
+				tp->type = PJMEDIA_TRANSPORT_TYPE_DTLS_SCTP;
+			}
 		}
 
     }
@@ -2941,10 +3105,14 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_decrypt_pkt(pjmedia_transport *tp,
     /* Make sure buffer is 32bit aligned */
     PJ_ASSERT_ON_FAIL( (((long)pkt) & 0x03)==0, return PJ_EINVAL);
 
-    pj_lock_acquire(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+    MUTEX_LOCK(dtls->mutex);
+#endif
 
-    if (!dtls->session_inited) {
-	pj_lock_release(dtls->mutex);
+	if (!dtls->session_inited) {
+#ifdef USE_LOCAL_LOCK
+		MUTEX_UNLOCK(dtls->mutex);
+#endif
 	return PJ_EINVALIDOP;
     }
 
@@ -2956,7 +3124,9 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_decrypt_pkt(pjmedia_transport *tp,
 		  *pkt_len, GET_SSL_STATUS(dtls)));
     }
 
-    pj_lock_release(dtls->mutex);
+#ifdef USE_LOCAL_LOCK
+    MUTEX_UNLOCK(dtls->mutex);
+#endif
 
     return (err==PJ_SUCCESS) ? PJ_SUCCESS : err;
 }
