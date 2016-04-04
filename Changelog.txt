@@ -2,7 +2,7 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.59 (xx-xxx-2016)
-    - NEW: Merged with 380_2345 GPL
+    - NEW: Merged with 380_2697 GPL
     - NEW: Option on OpenVPN client/server page to reset them back to the factory
            default settings.  Key/certs are renamed with the .old extension in case
            you need to recover them.
