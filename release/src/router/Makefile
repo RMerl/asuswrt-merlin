@@ -3540,12 +3540,12 @@ lighttpd-1.4.39: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqli
 
 ifeq ($(RTCONFIG_BCMARM),y)
 #ifeq ($(RTCONFIG_QTN),y)
-#	$(MAKE) -C lighttpd-1.4.39 copy-prebuild-arm-qtn
+#	$(MAKE) -C lighttpd-1.4.39/src copy-prebuild-arm-qtn
 #else
-	$(MAKE) -C lighttpd-1.4.39 copy-prebuild-arm
+	$(MAKE) -C lighttpd-1.4.39/src copy-prebuild-arm
 #endif
 else
-	$(MAKE) -C lighttpd-1.4.39 copy-prebuild
+	$(MAKE) -C lighttpd-1.4.39/src copy-prebuild
 endif
 
 lighttpd-1.4.39-install: lighttpd-1.4.39
