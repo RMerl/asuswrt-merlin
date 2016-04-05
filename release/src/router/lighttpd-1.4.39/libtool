@@ -2,7 +2,7 @@
 
 # libtool - Provide generalized library-building support services.
 # Generated automatically by config.status (lighttpd) 1.4.39
-# Libtool was configured on host ubuntu:
+# Libtool was configured on host mint-dev:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
@@ -86,7 +86,7 @@ host_os=linux-gnu
 
 # The build system.
 build_alias=
-build=i686-pc-linux-uclibc
+build=x86_64-pc-linux-uclibc
 build_os=linux-uclibc
 
 # A BSD- or MS-compatible name lister.
@@ -96,7 +96,7 @@ NM="arm-brcm-linux-uclibcgnueabi-nm"
 LN_S="ln -s"
 
 # What is the maximum length of a command?
-max_cmd_len=805306365
+max_cmd_len=3458764513820540925
 
 # Object file suffix (normally "o").
 objext=o
@@ -164,7 +164,7 @@ lock_old_archive_extraction=no
 LTCC="arm-brcm-linux-uclibcgnueabi-gcc"
 
 # LTCC compiler flags.
-LTCFLAGS="-I/home/charles0000/asuswrt/release/src/router/lighttpd-1.4.39/../pcre-8.31 -I/home/charles0000/asuswrt/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/include -I/home/charles0000/asuswrt/release/src/router/lighttpd-1.4.39/../sqlite -I/home/charles0000/asuswrt/release/src/router/lighttpd-1.4.39/../curl-7.21.7/include -I/home/charles0000/asuswrt/release/src/router/lighttpd-1.4.39/../../include -I/home/charles0000/asuswrt/release/src/router/lighttpd-1.4.39/../nvram_arm -I/home/charles0000/asuswrt/release/src/router/lighttpd-1.4.39/../shared -I/home/charles0000/asuswrt/release/src/router/lighttpd-1.4.39/../libdisk -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1 -Wall -W -Wshadow -pedantic -std=gnu99"
+LTCFLAGS="-I/home/merlin/asuswrt.ac5300/release/src/router/lighttpd-1.4.39/../pcre-8.31 -I/home/merlin/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/include -I/home/merlin/asuswrt.ac5300/release/src/router/lighttpd-1.4.39/../sqlite -I/home/merlin/asuswrt.ac5300/release/src/router/lighttpd-1.4.39/../curl-7.21.7/include -I/home/merlin/asuswrt.ac5300/release/src/router/lighttpd-1.4.39/../../include -I/home/merlin/asuswrt.ac5300/release/src/router/lighttpd-1.4.39/../nvram_arm -I/home/merlin/asuswrt.ac5300/release/src/router/lighttpd-1.4.39/../shared -I/home/merlin/asuswrt.ac5300/release/src/router/lighttpd-1.4.39/../libdisk -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1 -Wall -W -Wshadow -pedantic -std=gnu99"
 
 # Take the output of nm and produce a listing of raw symbols and C names.
 global_symbol_pipe="sed -n -e 's/^.*[	 ]\\([ABCDGIRSTW][ABCDGIRSTW]*\\)[	 ][	 ]*\\([_A-Za-z][_A-Za-z0-9]*\\)\$/\\1 \\2 \\2/p' | sed '/ __gnu_lto/d'"
@@ -272,10 +272,10 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/home/charles0000/asuswrt/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib/gcc/arm-brcm-linux-uclibcgnueabi/4.5.3 /home/charles0000/asuswrt/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib/gcc /home/charles0000/asuswrt/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/arm-brcm-linux-uclibcgnueabi/lib /home/charles0000/asuswrt/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/arm-brcm-linux-uclibcgnueabi/sysroot/lib /home/charles0000/asuswrt/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/arm-brcm-linux-uclibcgnueabi/sysroot/usr/lib "
+sys_lib_search_path_spec="/home/merlin/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib/gcc/arm-brcm-linux-uclibcgnueabi/4.5.3 /home/merlin/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib/gcc /home/merlin/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/arm-brcm-linux-uclibcgnueabi/lib /home/merlin/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/arm-brcm-linux-uclibcgnueabi/sysroot/lib /home/merlin/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/arm-brcm-linux-uclibcgnueabi/sysroot/usr/lib "
 
 # Run-time system search path for libraries.
-sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/mesa /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/lib/alsa-lib /usr/local/lib /usr/lib/vmware-tools/lib32/libvmGuestLib.so /usr/lib/vmware-tools/lib64/libvmGuestLib.so /usr/lib/vmware-tools/lib32/libvmGuestLibJava.so /usr/lib/vmware-tools/lib64/libvmGuestLibJava.so /usr/lib/vmware-tools/lib32/libDeployPkg.so /usr/lib/vmware-tools/lib64/libDeployPkg.so "
+sys_lib_dlsearch_path_spec="/lib /usr/lib /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib /usr/lib/vmware-tools/lib32/libvmGuestLib.so /usr/lib/vmware-tools/lib64/libvmGuestLib.so /usr/lib/vmware-tools/lib32/libvmGuestLibJava.so /usr/lib/vmware-tools/lib64/libvmGuestLibJava.so /usr/lib/vmware-tools/lib32/libDeployPkg.so /usr/lib/vmware-tools/lib64/libDeployPkg.so /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/mesa /lib32 /usr/lib32 "
 
 # Whether dlopen is supported.
 dlopen_support=yes
