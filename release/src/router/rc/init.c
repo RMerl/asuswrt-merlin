@@ -5511,6 +5511,24 @@ int init_nvram(void)
 	add_rc_support("usbsms");
 #endif
 
+/*** Update nvram ***/
+
+#if 0
+/* migrate dhcpc_options to wanxxx_clientid */
+	if (!nvram_match("wan_dhcpc_options", "")) {
+		nvram_set("wan0_clientid", nvram_get("wan_dhcpc_options"));
+		nvram_unset("wan_dhcpc_options");
+	}
+#endif
+
+/* Migrate to Asus's new tri-state sshd_enable to our dual nvram setup */
+	if (nvram_match("sshd_enable", "1")) {
+		if (nvram_match("sshd_wan", "0"))
+			nvram_set("sshd_enable", "2");	// LAN-only
+		// else stay WAN+LAN
+		nvram_unset("sshd_wan");
+	}
+
 	return 0;
 }
 

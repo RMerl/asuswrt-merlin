@@ -75,7 +75,7 @@ int start_sshd(void)
 		nvram_commit_x();
 
 	port = buf;
-	if (is_routing_enabled() && nvram_get_int("sshd_wan") != 1)
+	if (is_routing_enabled() && nvram_get_int("sshd_enable") != 1)
 		port += snprintf(buf, sizeof(buf), "%s:", nvram_safe_get("lan_ipaddr"));
 	snprintf(port, sizeof(buf) - (port - buf), "%d", nvram_get_int("sshd_port") ? : 22);
 

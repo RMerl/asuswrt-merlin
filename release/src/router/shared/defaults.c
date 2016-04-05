@@ -1874,7 +1874,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "sshd_port", "22"},
 	{ "sshd_pass", "1"},
 	{ "sshd_authkeys", ""},
-	{ "sshd_wan","0"},
 	{ "sshd_bfp","0"},
 	{ "sshd_forwarding","0"},
 #endif
