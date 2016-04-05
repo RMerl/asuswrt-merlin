@@ -66,3 +66,7 @@ crypto/*/*.s
 certs/demo/.0
 include/openssl/rc5.h
 rehash.time
+crypto/opensslconf.h
+crypto/objects/obj_xref.h
+libcrypto-1.0.0q.so.1.0.0
+libssl-1.0.0q.so.1.0.0
