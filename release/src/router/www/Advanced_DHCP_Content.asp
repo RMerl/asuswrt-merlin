@@ -12,12 +12,14 @@
 <title><#Web_Title#> - <#menu5_2_2#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <style>
 #ClientList_Block_PC{
 	border:1px outset #999;
@@ -112,8 +114,8 @@ function initial(){
 			}
 	}
 	//}Viz 2011.10
-	showdhcp_staticlist();
-	setTimeout("showLANIPList();", 1000);
+	setTimeout("showdhcp_staticlist();", 100);
+	setTimeout("showDropdownClientList('setClientIP', 'mac>ip>name', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');", 1000);
 
 	if(pptpd_support){
 		var chk_vpn = check_vpn();
@@ -179,6 +181,11 @@ function addRow_Group(upper){
 		document.form.dhcp_staticip_x_0.focus();
 		document.form.dhcp_staticip_x_0.select();
 		return false;
+	}else if ((document.form.dhcp_staticname_x_0.value != "") && (validator.hostName(document.form.dhcp_staticname_x_0) != "")){
+		alert("Hostname must only contain alphanumeric characters, underline and dash symbol. The first character cannot be dash \"-\" or underline \"_\".");
+		document.form.dhcp_staticname_x_0.focus();
+		document.form.dhcp_staticname_x_0.select();
+		return false;
 	}else if(check_macaddr(document.form.dhcp_staticmac_x_0, check_hwaddr_flag(document.form.dhcp_staticmac_x_0)) == true &&
 		 validator.validIPForm(document.form.dhcp_staticip_x_0,0) == true &&
 		 validate_dhcp_range(document.form.dhcp_staticip_x_0) == true){
@@ -224,13 +231,10 @@ function del_Row(r){
 
   var dhcp_staticlist_value = "";
 	for(k=0; k<document.getElementById('dhcp_staticlist_table').rows.length; k++){
-		for(j=0; j<document.getElementById('dhcp_staticlist_table').rows[k].cells.length-1; j++){
-			if(j == 0)
-				dhcp_staticlist_value += "&#60";
-			else
-				dhcp_staticlist_value += "&#62";
-			dhcp_staticlist_value += document.getElementById('dhcp_staticlist_table').rows[k].cells[j].innerHTML;
-		}
+		dhcp_staticlist_value += "&#60";
+		dhcp_staticlist_value += document.getElementById('dhcp_staticlist_table').rows[k].cells[0].title + "&#62";
+		dhcp_staticlist_value += document.getElementById('dhcp_staticlist_table').rows[k].cells[1].innerHTML + "&#62";
+		dhcp_staticlist_value += document.getElementById('dhcp_staticlist_table').rows[k].cells[2].innerHTML;
 	}
 
 	dhcp_staticlist_array = dhcp_staticlist_value;
@@ -242,7 +246,7 @@ function edit_Row(r){
 	cancel_Edit();
 
 	var i=r.parentNode.parentNode.rowIndex;
-	document.form.dhcp_staticmac_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[0].innerHTML;
+	document.form.dhcp_staticmac_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[0].title;
 	document.form.dhcp_staticip_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[1].innerHTML;
 	document.form.dhcp_staticname_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
 	backup_mac = document.form.dhcp_staticmac_x_0.value;
@@ -272,12 +276,61 @@ function showdhcp_staticlist(){
 		for(var i = 1; i < dhcp_staticlist_row.length; i++){
 			code +='<tr id="row'+i+'">';
 			var dhcp_staticlist_col = dhcp_staticlist_row[i].split('&#62');
-				for(var j = 0; j < dhcp_staticlist_col.length; j++){
-					code +='<td width="28%">'+ dhcp_staticlist_col[j] +'</td>';		//IP  width="98"
+
+
+			//user icon
+			var userIconBase64 = "NoIcon";
+			var clientName, deviceType, deviceVender;
+
+			var clientMac = dhcp_staticlist_col[0];
+			var clientIP = dhcp_staticlist_col[1];
+			if(clientList[clientMac]) {
+				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
+				deviceType = clientList[clientMac].type;
+				deviceVender = clientList[clientMac].vendor;
+			}
+			else {
+				clientName = "New device";
+				deviceType = 0;
+				deviceVender = "";
+			}
+			code += '<td width="32%" align="center" title="' + clientMac +'">';
+			code += '<table style="width:100%;"><tr><td style="width:20%;height:56px;border:0px;">';
+			if(clientList[clientMac] == undefined) {
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+			}
+			else {
+				if(usericon_support) {
+					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
-				if (j !=3) code +='<td width="28%"></td>';
-				code +='<td width="16%"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
-				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
+				if(userIconBase64 != "NoIcon") {
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+				}
+				else if(deviceType != "0" || deviceVender == "") {
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+				}
+				else if(deviceVender != "" ) {
+					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
+					if(venderIconClassName != "" && !downsize_4m_support) {
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+					}
+					else {
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+					}
+				}
+			}
+			code += '</td><td style="width:80%;border:0px;">';
+			code += '<div>' + clientName + '</div>';
+			code += '<div>' + clientMac + '</div>';
+			code += '</td></tr></table>';
+			code += '</td>';
+
+			code +='<td width="24%">'+ clientIP +'</td>';
+			code +='<td width="24%">'+ dhcp_staticlist_col[2] +'</td>';
+
+//				if (j !=3) code +='<td width="28%"></td>';
+			code +='<td width="16%"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
+			code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
 	code +='</table>';
@@ -294,11 +347,9 @@ function applyRule(){
 
 		for(i=0; i<rule_num; i++){
 			tmp_value += "<";
-			for(j=0; j<item_num-1; j++){
-				tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[j].innerHTML;
-				if(j != item_num-2)
-					tmp_value += ">";
-			}
+			tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[0].title + ">";
+			tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[1].innerHTML + ">";
+			tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
 		}
 		if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
 			tmp_value = "";
@@ -485,22 +536,18 @@ function setClientIP(macaddr, ipaddr,name){
 }
 
 
-var over_var = 0;
-var isMenuopen = 0;
-
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
-	isMenuopen = 0;
 }
 
 function pullLANIPList(obj){
-
-	if(isMenuopen == 0){
+	var element = document.getElementById('ClientList_Block_PC');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
+	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		document.getElementById("ClientList_Block_PC").style.display = 'block';
-		document.form.dhcp_staticmac_x_0.focus();
-		isMenuopen = 1;
+		element.style.display = 'block';		
+		document.form.dhcp_staticmac_x_0.focus();		
 	}
 	else
 		hideClients_Block();
@@ -520,6 +567,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		obj.select();
 		return false;
 	}else if(flag == 2){
+
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
@@ -564,13 +612,6 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 	return false;
 }
 
-
-function validate_hostname(o){
-	if ((o.value != "") && (validator.hostName(o) != "")) {
-	        alert("Hostname must only contain alphanumeric characters, underline and dash symbol. The first character cannot be dash \"-\" or underline \"_\".");
-	        o.select();
-	}
-}
 </script>
 </head>
 
@@ -773,16 +814,16 @@ function validate_hostname(o){
 			  	</tr>
 			  	<tr>
 				<!-- client info -->
-            			<td width="28%">
-					<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
-					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
-					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
+            			<td width="32%">
+					<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off" placeholder="ex: <% nvram_get("lan_hwaddr"); %>">
+					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_MAC#>">
+					<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:85px;"></div>	
 				</td>
-            			<td width="28%">
+            			<td width="24%">
             				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off">
             			</td>
-            			<td width="28%">
-					<input type="text" class="input_15_table" maxlenght="30" onkeypress="return is_alphanum(this, event);" onblur="validate_hostname(this);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
+            			<td width="24%">
+					<input type="text" class="input_15_table" maxlenght="30" onkeypress="return is_alphanum(this, event);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
 				</td>
 				<td width="16%">
 					<div>
