@@ -288,7 +288,7 @@ void start_pptpd(void)
                 while ((b = strsep(&nvp, "<")) != NULL) {
                         if((vstrsep(b, ">", &pptpd_client, &vpn_network, &vpn_netmask)!=3)) continue;
                         if(strlen(pptpd_client)==0||strlen(vpn_network)==0||strlen(vpn_netmask)==0) continue;
-                        fprintf(fp, "if [ \"$PEERNAME\" == \"%s\" ] then;\n", pptpd_client);
+                        fprintf(fp, "if [ \"$PEERNAME\" == \"%s\" ]; then\n", pptpd_client);
                         fprintf(fp, "route del -net %s netmask %s\n", vpn_network, vpn_netmask);
                         fprintf(fp, "route add -net %s netmask %s dev $1\n", vpn_network, vpn_netmask);
                         fprintf(fp, "fi\n");
