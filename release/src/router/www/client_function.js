@@ -3224,7 +3224,7 @@ function oui_query_web(mac){
 					if(response.search(queryStr) != -1) {
 						var retData = response.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("</");
 						overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
-						overlibStrTmp += retData[0];
+						overlibStrTmp += retData[0].slice(0,retData[0].indexOf("\n"))
 					}
 				}
                                 return overlib(overlibStrTmp);
