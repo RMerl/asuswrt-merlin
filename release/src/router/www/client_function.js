@@ -3194,7 +3194,8 @@ function ajaxCallJsonp(target){
 }
 
 function oui_query_full_vendor(mac){
-	if ((typeof clientList[mac] != "undefined") && (clientList[mac].vendor != "")) {
+//	if ((typeof clientList[mac] != "undefined") && (clientList[mac].vendor != "")) {
+	if (0) {
 		setTimeout(function(){
 			var overlibStrTmp = retOverLibStr(clientList[mac]);
 			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
