@@ -735,6 +735,7 @@ static int start_tqos(void)
 #ifdef CONFIG_BCMWL5
 	char *protocol="802.1q";
 #endif
+	char *qsched;
 
 	// judge interface by get_wan_ifname
 	// add Qos iptable rules in mangle table,
@@ -764,6 +765,18 @@ static int start_tqos(void)
 
 	mtu = strtoul(nvram_safe_get("wan_mtu"), NULL, 10);
 	bw = obw;
+
+	switch(nvram_get_int("qos_sched")){
+		case 1:
+			qsched = "codel";
+			break;
+		case 2:
+			qsched = "fq_codel";
+			break;
+		default:
+			qsched = "sfq perturb 10";
+			break;
+	}
 
 	/* WAN */
 	fprintf(f,
@@ -834,11 +847,11 @@ static int start_tqos(void)
 		fprintf(f,
 			"# egress %d: %u-%u%%\n"
 			"\t$TCA parent 1:1 classid 1:%d htb rate %ukbit %s %s prio %d quantum %u\n"
-			"\t$TQA parent 1:%d handle %d: $SFQ\n"
+			"\t$TQA parent 1:%d handle %d: %s\n"
 			"\t$TFA parent 1: prio %d protocol ip handle %d fw flowid 1:%d\n",
 				i, rate, ceil,
 				x, calc(bw, rate), s, burst_leaf, (i >= 6) ? 7 : (i + 1), mtu,
-				x, x,
+				x, x, qsched,
 				x, i + 1, x);
 	}
 	free(buf);
@@ -1168,6 +1181,7 @@ static int start_bandwidth_limiter(void)
 	int s[6]; // strip mac address
 	int addr_type;
 	char addr_new[30];
+	char *qsched;
 
 	// init guest 3: ~ 12: (9 guestnetwork), start number = 3
 	guest = 3;
@@ -1181,6 +1195,18 @@ static int start_bandwidth_limiter(void)
 		"start)\n"
 		, get_wan_ifname(wan_primary_ifunit())
 	);
+
+	switch(nvram_get_int("qos_sched")){
+		case 1:
+			qsched = "codel";
+			break;
+		case 2:
+			qsched = "fq_codel";
+			break;
+		default:
+			qsched = "sfq perturb 10";
+			break;
+	}
 
 	/* ASUSWRT
 	qos_bw_rulelist :
@@ -1222,12 +1248,13 @@ static int start_bandwidth_limiter(void)
 		fprintf(f,
 		"\n"
 		"$TCA parent 1:1 classid 1:9 htb rate 10240000kbit ceil 10240000kbit prio 1\n"
-		"$TQA parent 1:9 handle 9: $SFQ\n"
+		"$TQA parent 1:9 handle 9: %s\n"
 		"$TFA parent 1: prio 1 protocol ip handle 9 fw flowid 1:9\n"
 		"\n"
 		"$TCAU parent 2:1 classid 2:9 htb rate 10240000kbit ceil 10240000kbit prio 1\n"
 		"$TQAU parent 2:9 handle 9: $SFQ\n"
-		"$TFAU parent 2: prio 1 protocol ip handle 9 fw flowid 2:9\n"
+		"$TFAU parent 2: prio 1 protocol ip handle 9 fw flowid 2:9\n",
+		qsched
 		);
 	}
 
@@ -1244,14 +1271,14 @@ static int start_bandwidth_limiter(void)
 			fprintf(f,
 				"\n"
 				"$TCA parent 1:1 classid 1:%d htb rate %skbit ceil %skbit prio %d\n"
-				"$TQA parent 1:%d handle %d: $SFQ\n"
+				"$TQA parent 1:%d handle %d: %s\n"
 				"$TFA parent 1: protocol ip prio %d u32 match u16 0x0800 0xFFFF at -2 match u32 0x%02X%02X%02X%02X 0xFFFFFFFF at -12 match u16 0x%02X%02X 0xFFFF at -14 flowid 1:%d"
 				"\n"
 				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
 				"$TQAU parent 2:%d handle %d: $SFQ\n"
 				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
 				, class, dlc, dlc, class
-				, class, class
+				, class, class, qsched
 				, class, s[2], s[3], s[4], s[5], s[0], s[1], class
 				, class, upc, upc, class
 				, class, class
@@ -1263,14 +1290,14 @@ static int start_bandwidth_limiter(void)
 			fprintf(f,
 				"\n"
 				"$TCA parent 1:1 classid 1:%d htb rate %skbit ceil %skbit prio %d\n"
-				"$TQA parent 1:%d handle %d: $SFQ\n"
+				"$TQA parent 1:%d handle %d: %s\n"
 				"$TFA parent 1: prio %d protocol ip handle %d fw flowid 1:%d\n"
 				"\n"
 				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
 				"$TQAU parent 2:%d handle %d: $SFQ\n"
 				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
 				, class, dlc, dlc, class
-				, class, class
+				, class, class, qsched
 				, class, class, class
 				, class, upc, upc, class
 				, class, class
@@ -1314,7 +1341,7 @@ static int start_bandwidth_limiter(void)
 				"$TCA%d%d parent %d: classid %d:1 htb rate %skbit\n" // 7
 				"\n"
 				"$TCA%d%d parent %d:1 classid %d:%d htb rate 1kbit ceil %skbit prio %d\n"
-				"$TQA%d%d parent %d:%d handle %d: $SFQ\n"
+				"$TQA%d%d parent %d:%d handle %d: %s\n"
 				"$TFA%d%d parent %d: prio %d protocol ip handle %d fw flowid %d:%d\n" // 10
 				"\n"
 				"$TCAU parent 2:1 classid 2:%d htb rate 1kbit ceil %skbit prio %d\n"
@@ -1328,7 +1355,7 @@ static int start_bandwidth_limiter(void)
 				, i, j, guest
 				, i, j, guest, guest, dlc //7
 				, i, j, guest, guest, class, dlc, class
-				, i, j, guest, class, class
+				, i, j, guest, class, class, qsched
 				, i, j, guest, class, class, guest, class // 10
 				, class, upc, class
 				, class, class
