@@ -1106,7 +1106,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "wan_desc", ""},		/* WAN connection description */
 	{ "wan_upnp_enable", "1"}, 	// upnp igd
 	{ "wan_pppoe_relay", "0" },
-	{ "wan_dhcpc_options",""},  // Optional arguments for udhcpc
 	{ "wan_mtu", "1500"},		// WAN MTU (non-PPP based)
 
 	// VPN+DHCP, a sperated nvram to control this function
