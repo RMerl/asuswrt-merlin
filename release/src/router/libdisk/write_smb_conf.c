@@ -307,8 +307,8 @@ int main(int argc, char *argv[])
 #endif
 	}
 	fprintf(fp, "obey pam restrictions = no\n");
-	fprintf(fp, "use spnego = no\n");		// ASUS add
-	fprintf(fp, "client use spnego = no\n");	// ASUS add
+//	fprintf(fp, "use spnego = no\n");		// ASUS add
+//	fprintf(fp, "client use spnego = no\n");	// ASUS add
 //	fprintf(fp, "client use spnego = yes\n");  // ASUS add
 	fprintf(fp, "disable spoolss = yes\n");		// ASUS add
 	fprintf(fp, "host msdfs = no\n");		// ASUS add
