@@ -1302,18 +1302,12 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	{
 		/* call UPNP chain */
 		fprintf(fp, "-A VSERVER -j VUPNP\n");
+//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
 	}
 
 	/* Trigger port setting */
 	if (is_nat_enabled() && nvram_match("autofw_enable_x", "1"))
 		write_porttrigger(fp, wan_if, 1);
-
-        if (is_nat_enabled() && nvram_match("upnp_enable", "1"))
-        {
-		/* call UPNP chain */
-		fprintf(fp, "-A VSERVER -j VUPNP\n");
-//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
-	}
 
 #if 0
 	if (is_nat_enabled() && !nvram_match("sp_battle_ips", "0") && inet_addr_(wan_ip))	// oleg patch
@@ -1594,6 +1588,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	{
 		/* call UPNP chain */
 		fprintf(fp, "-A VSERVER -j VUPNP\n");
+//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
 	}
 
 	/* Trigger port setting */
@@ -1607,12 +1602,6 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		write_porttrigger(fp, wan_if, 1);
 	}
 
-        if (is_nat_enabled() && nvram_match("upnp_enable", "1"))
-        {
-                /* call UPNP chain */
-                fprintf(fp, "-A VSERVER -j VUPNP\n");
-//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
-	}
 #if 0
 	if (is_nat_enabled() && !nvram_match("sp_battle_ips", "0") && inet_addr_(wan_ip))	// oleg patch
 	{
