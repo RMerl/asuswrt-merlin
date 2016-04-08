@@ -202,12 +202,20 @@ struct qdisc_skb_cb {
 	char			data[];
 };
 
+static inline void qdisc_cb_private_validate(const struct sk_buff *skb, int sz)
+{
+/*	struct qdisc_skb_cb *qcb;
+	BUILD_BUG_ON(sizeof(skb->cb) < sizeof(u32) + sz);
+	BUILD_BUG_ON(sizeof(qcb->data) < sz);
+*/
+}
+
 static inline int qdisc_qlen(struct Qdisc *q)
 {
 	return q->q.qlen;
 }
 
-static inline struct qdisc_skb_cb *qdisc_skb_cb(struct sk_buff *skb)
+static inline struct qdisc_skb_cb *qdisc_skb_cb(const struct sk_buff *skb)
 {
 	return (struct qdisc_skb_cb *)skb->cb;
 }
@@ -394,7 +402,7 @@ static inline bool qdisc_tx_is_noop(const struct net_device *dev)
 	return true;
 }
 
-static inline unsigned int qdisc_pkt_len(struct sk_buff *skb)
+static inline unsigned int qdisc_pkt_len(const struct sk_buff *skb)
 {
 	return qdisc_skb_cb(skb)->pkt_len;
 }
@@ -424,6 +432,41 @@ static inline int qdisc_enqueue_root(struct sk_buff *skb, struct Qdisc *sch)
 {
 	qdisc_skb_cb(skb)->pkt_len = skb->len;
 	return qdisc_enqueue(skb, sch) & NET_XMIT_MASK;
+}
+
+static inline void bstats_update(struct gnet_stats_basic_packed *bstats,
+				 const struct sk_buff *skb)
+{
+	bstats->bytes += qdisc_pkt_len(skb);
+	bstats->packets += skb_is_gso(skb) ? skb_shinfo(skb)->gso_segs : 1;
+}
+
+static inline void qdisc_bstats_update(struct Qdisc *sch,
+				       const struct sk_buff *skb)
+{
+	bstats_update(&sch->bstats, skb);
+}
+
+static inline void qdisc_qstats_backlog_dec(struct Qdisc *sch,
+					    const struct sk_buff *skb)
+{
+	sch->qstats.backlog -= qdisc_pkt_len(skb);
+}
+
+static inline void qdisc_qstats_backlog_inc(struct Qdisc *sch,
+					    const struct sk_buff *skb)
+{
+	sch->qstats.backlog += qdisc_pkt_len(skb);
+}
+
+static inline void __qdisc_qstats_drop(struct Qdisc *sch, int count)
+{
+	sch->qstats.drops += count;
+}
+
+static inline void qdisc_qstats_drop(struct Qdisc *sch)
+{
+	sch->qstats.drops++;
 }
 
 static inline void __qdisc_update_bstats(struct Qdisc *sch, unsigned int len)
