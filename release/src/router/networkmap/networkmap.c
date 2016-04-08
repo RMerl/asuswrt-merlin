@@ -125,6 +125,7 @@ struct apple_model_handler apple_model_handlers[] = {
 	{ "j98ap",      "iPad Pro",     "21" },
 	{ "j99ap",      "iPad Pro",     "21" },
 	{ "j127ap",     "iPad Pro",     "21" },
+	{ "j128ap",	"iPad Pro",	"21" },
         { "p105ap",     "iPad mini 1G",	"21" },
         { "p106ap",     "iPad mini 1G",	"21" },
         { "p107ap",     "iPad mini 1G",	"21" },
