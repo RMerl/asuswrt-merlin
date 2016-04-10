@@ -1,7 +1,7 @@
 /** HND GMAC Forwarder Implementation: LAN(GMAC) <--FWD--> WLAN
  * Include WOFA dictionary with 3 stage lookup.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -445,7 +445,8 @@ wofa_lkup(struct wofa * wofa, uint16 * symbol, const int port)
 	/* Lkup the cached hit entry first */
 	if (hash16 == dict->cached[port].hash16) {
 		sym = dict->cached[port].sym;
-		if ((sym->data != WOFA_DATA_INVALID) && (__wofa_sym48_cmp16(symbol, sym->key.u16) == 0)) {
+		if (__wofa_sym48_cmp16(symbol, sym->key.u16) == 0) {
+			if (sym->data != WOFA_DATA_INVALID)
 				goto found_symbol;
 		}
 	}

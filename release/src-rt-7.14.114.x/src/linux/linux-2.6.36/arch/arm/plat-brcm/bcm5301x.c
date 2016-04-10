@@ -111,6 +111,9 @@ static struct clk * _soc_refclk = NULL;
 extern si_t *bcm947xx_sih;
 #define sih bcm947xx_sih
 
+#ifdef BCM_BMOCA
+#include <linux/bmoca.h>
+#endif /* BCM_BMOCA */
 extern int _chipid;
 
 static struct plat_serial8250_port uart_ports[] = {
@@ -165,6 +168,48 @@ static struct platform_device platform_spi_master_device = {
 	},
 };
 
+#ifdef BCM_BMOCA
+static void bogus_release(struct device *dev)
+{
+}
+
+static struct moca_platform_data moca_wan_data = {
+	.macaddr_hi       = 0x00000102,
+	.macaddr_lo       = 0x03040000,
+	.bcm3450_i2c_base =  0, /* Not used in SPI mode */
+	.bcm3450_i2c_addr =  0, /* Not used in SPI mode */
+	.hw_rev		  = HWREV_MOCA_20_GEN22,
+	.chip_id	  = 0x680200C0,
+	.rf_band	  = MOCA_BAND_EXT_D,
+	.use_dma          = 0,
+	.use_spi          = 1,
+	.devId            = MOCA_DEVICE_ID_UNREGISTERED,
+};
+
+static struct resource moca_wan_resources[] = {
+	[0] = { /* Not used for 6802 in SPI mode */
+		.start = 0,
+		.end =   0,
+		.flags = IORESOURCE_MEM,
+	},
+	[1] = { /* Not used for 6802, define for bmoca */
+		.start = 32,
+		.end = 0,
+		.flags = IORESOURCE_IRQ,
+	}
+};
+
+static struct platform_device moca_wan_plat_dev = {
+	.name          = "bmoca",
+	.id            = 1,
+	.num_resources = ARRAY_SIZE(moca_wan_resources),
+	.resource      = moca_wan_resources,
+	.dev           = {
+		.platform_data = &moca_wan_data,
+		.release       = bogus_release,
+	},
+};
+#endif /* BCM_BMOCA */
 /*
  * Map fix-mapped I/O that is needed before full MMU operation
  */
@@ -642,6 +687,12 @@ void __init soc_add_devices(void)
 		printk(KERN_WARNING "Fail to register SPI master device\n");
 	}
 
+#ifdef BCM_BMOCA
+	/* Install SoC devices in the system: BMOCA */
+	if (platform_device_register(&moca_wan_plat_dev) != 0) {
+		printk(KERN_WARNING "Fail to register BMOCA device\n");
+	}
+#endif /* BCM_BMOCA */
 	/* Enable UART interrupt in ChipcommonA */
 	i = readl(SOC_CHIPCOMON_A_BASE_VA + 0x24);
 	i |= SOC_CHIPCOMON_A_INTMASK_UART;

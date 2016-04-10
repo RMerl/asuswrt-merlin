@@ -1,15 +1,15 @@
 /*
  *   bcmwpa.c - shared WPA-related functions
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
- * $Id: bcmwpa.c 508617 2014-10-16 09:30:52Z $
+ * $Id: bcmwpa.c 615250 2016-01-27 02:06:42Z $
  */
 
 #include <bcm_cfg.h>
@@ -674,6 +674,13 @@ BCMROMFN(wpa_find_gtk_encap)(uint8 *parse, uint len)
 {
 	return wpa_find_kde(parse, len, WPA2_KEY_DATA_SUBTYPE_GTK);
 }
+
+eapol_wpa2_encap_data_t *
+BCMROMFN(wpa_find_igtk_encap)(uint8 *parse, uint len)
+{
+	return wpa_find_kde(parse, len, WPA2_KEY_DATA_SUBTYPE_IGTK);
+}
+
 #endif /* defined(BCMSUP_PSK) || defined(BCMSUPPL) */
 
 uint8 *

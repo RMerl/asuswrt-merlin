@@ -44,10 +44,9 @@ export LC_COLLATE LC_NUMERIC
 ifeq ("$(origin V)", "command line")
   KBUILD_VERBOSE = $(V)
 endif
-#ifndef KBUILD_VERBOSE
-  KBUILD_VERBOSE = 1
-#endif
-#KBUILD_VERBOSE = 1
+ifndef KBUILD_VERBOSE
+  KBUILD_VERBOSE = 0
+endif
 
 # Call a source code checker (by default, "sparse") as part of the
 # C compilation.
@@ -661,6 +660,10 @@ endif
 # We trigger additional mismatches with less inlining
 ifdef CONFIG_DEBUG_SECTION_MISMATCH
 KBUILD_CFLAGS += $(call cc-option, -fno-inline-functions-called-once)
+endif
+
+ifneq ($(CONFIG_BMOCA),)
+KBUILD_CFLAGS += -DBCM_BMOCA
 endif
 
 # arch Makefile may override CC so keep this after arch Makefile is included

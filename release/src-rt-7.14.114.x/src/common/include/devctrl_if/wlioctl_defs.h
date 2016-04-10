@@ -4,7 +4,7 @@
  *
  * Definitions subject to change without notice.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1171,7 +1171,7 @@
 #define WL_TXBF_VAL		0x00100000
 #define WL_P2PO_VAL		0x00200000
 #define WL_TBTT_VAL		0x00400000
-#define WL_RRM_VAL             	0x00800000
+#define WL_RRM_VAL		0x00800000
 #define WL_MQ_VAL		0x01000000
 
 /* This level is currently used in Phoenix2 only */

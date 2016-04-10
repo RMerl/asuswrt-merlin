@@ -1,7 +1,7 @@
 /*
  * BT-AMP (BlueTooth Alternate Mac and Phy) HCI (Host/Controller Interface)
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom
  * All Rights Reserved.
  *
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  * Fundamental constants, macros and structures relating to L2TP Protocol
  *

@@ -1262,6 +1262,20 @@ bcm5301x_usb_power_on(int coreid)
 			si_gpioout(sih, enable_usb_mask, enable_usb_mask, GPIO_DRV_PRIORITY);
 			si_gpioouten(sih, enable_usb_mask, enable_usb_mask, GPIO_DRV_PRIORITY);
 		}
+
+		enable_usb = getgpiopin(NULL, "usbhub_reset", GPIO_PIN_NOTDEFINED);
+		if (enable_usb != GPIO_PIN_NOTDEFINED) {
+			int enable_hub_mask = 1 << enable_usb;
+
+			/* Keep RESET low for 2 us */
+			si_gpioout(sih, enable_hub_mask, 0, GPIO_DRV_PRIORITY);
+			si_gpioouten(sih, enable_hub_mask, enable_hub_mask, GPIO_DRV_PRIORITY);
+			OSL_DELAY(2);
+
+			/* Keep RESET high for at least 2 us */
+			si_gpioout(sih, enable_hub_mask, enable_hub_mask, GPIO_DRV_PRIORITY);
+			OSL_DELAY(2);
+		}
 	}
 	else if (coreid == NS_USB30_CORE_ID) {
 		enable_usb = getgpiopin(NULL, "usbport2", GPIO_PIN_NOTDEFINED);

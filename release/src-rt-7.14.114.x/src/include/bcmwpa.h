@@ -1,15 +1,15 @@
 /*
  * bcmwpa.h - interface definitions of shared WPA-related functions
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
- * $Id: bcmwpa.h 508617 2014-10-16 09:30:52Z $
+ * $Id: bcmwpa.h 615250 2016-01-27 02:06:42Z $
  */
 
 #ifndef _BCMWPA_H_
@@ -171,6 +171,7 @@ extern bool BCMROMFN(wpa2_cipher)(wpa_suite_t *suite, ushort *cipher, bool wep_o
 #if defined(BCMSUP_PSK) || defined(BCMSUPPL) || defined(BCM_OL_DEV)
 /* Look for an encapsulated GTK; return it's address if found, NULL otherwise */
 extern eapol_wpa2_encap_data_t *BCMROMFN(wpa_find_gtk_encap)(uint8 *parse, uint len);
+extern eapol_wpa2_encap_data_t *BCMROMFN(wpa_find_igtk_encap)(uint8 *parse, uint len);
 
 /* Check whether pointed-to IE looks like an encapsulated GTK. */
 extern bool BCMROMFN(wpa_is_gtk_encap)(uint8 *ie, uint8 **tlvs, uint *tlvs_len);

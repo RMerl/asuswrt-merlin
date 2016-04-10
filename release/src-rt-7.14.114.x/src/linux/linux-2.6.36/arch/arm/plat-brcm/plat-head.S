@@ -228,6 +228,14 @@ chip_id_rev:
 	add	r7,r8,r7
 	str	r0,[r7]				/* _chipid */
 
+	ldr	r5,=(1 << 30)			/* set default ddr map size 1G */
+	ldr	r4,=53573
+	cmp	r0,r4
+	ldreq	r5,=(1 << 29)			/* set ddr map to 512M if 53573 */
+	ldr	r4,=47452
+	cmp	r0,r4
+	ldreq	r5,=(1 << 29)			/* set ddr map to 512M if 47452 */
+
 	ldr	r1, =0xf
 	mov	r0, r2, lsr#16
 	and	r0, r0, r1
@@ -245,7 +253,6 @@ szmem:
 	ldr	r6,[r3,#0x3c]			/* Save the value in r6 */
 	str	r1,[r3,#0x3c]
 	ldr	r0,=(1 << 20)
-	ldr	r5,=(1 << 30)
 1:
 	ldr	r4,=0x80000000
 	add	r4,r4,r0

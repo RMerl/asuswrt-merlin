@@ -1,7 +1,7 @@
 /*
  * LACP protocol definitions
  *
- * $Copyright Open Broadcom Corporation$
+ * $Copyright Open Broadcom$
  *
  * $Id:
  */
