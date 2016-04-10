@@ -1,6 +1,6 @@
 include ../common.mak
 
-CFLAGS += -O3 -Wall $(EXTRACFLAGS)
+CFLAGS += -Os -Wall $(EXTRACFLAGS)
 CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(TOP)/zlib
 CFLAGS += -I$(TOP)/push_log
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
