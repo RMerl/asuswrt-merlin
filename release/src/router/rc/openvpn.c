@@ -1883,6 +1883,7 @@ void reset_vpn_settings(int type, int unit){
 		}
 	}
 
+#if 0	// Rename
 	logmessage("openvpn", "Preserving backup of key/certs as .old files");
 	if (type == 1)	// server-only files
 	{
@@ -1906,5 +1907,31 @@ void reset_vpn_settings(int type, int unit){
 	system(tmp);
 	sprintf(tmp, "mv /jffs/openvpn/vpn_crt_%s%d_static /jffs/openvpn/vpn_crt_%s%d_static.old", service, unit, service, unit);
 	system(tmp);
+
+#else	// Delete
+	if (type == 1)  // server-only files
+	{
+		sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_ca_key", service, unit);
+		unlink(tmp);
+		sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_client_crt", service, unit);
+		unlink(tmp);
+		sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_client_key", service, unit);
+		unlink(tmp);
+		sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_dh", service, unit);
+		unlink(tmp);
+	}
+
+	sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_ca", service, unit);
+	unlink(tmp);
+	sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_crt", service, unit);
+	unlink(tmp);
+	sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_key", service, unit);
+	unlink(tmp);
+	sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_crl", service, unit);
+	unlink(tmp);
+	sprintf(tmp, "/jffs/openvpn/vpn_crt_%s%d_static", service, unit);
+	unlink(tmp);
+#endif
+
 }
 

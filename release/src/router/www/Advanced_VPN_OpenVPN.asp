@@ -1025,7 +1025,7 @@ function update_vpn_client_state() {
 }
 
 function defaultSettings() {
-	if (confirm("WARNING: This will reset this OpenVPN server to factory default settings!\n\nProceed?")) {
+	if (confirm("WARNING: This will reset this OpenVPN server to factory default settings!\n\nKeys and certificates associated to this instance will also be DELETED!Proceed?")) {
 		document.form.action_script.value = "stop_vpnserver" + openvpn_unit + ";clearvpnserver" + openvpn_unit;
 		enable_openvpn(0);
 		document.form.VPNServer_enable.value = "0";
