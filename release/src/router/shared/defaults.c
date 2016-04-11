@@ -1740,7 +1740,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 #ifdef RTCONFIG_MEDIA_SERVER
-	{ "dms_enable", "1" 	},
+	{ "dms_enable", "0" 	},
 	{ "dms_rebuild", "0"	},
 	{ "dms_port", "8200" 	},
 	{ "dms_dbdir", "/var/cache/minidlna"},
