@@ -1,0 +1,36 @@
+.TH IP\-NETCONF 8 "13 Dec 2012" "iproute2" "Linux"
+.SH "NAME"
+ip-netconf \- network configuration monitoring
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.BR "ip " " [ ip-OPTIONS ] " "netconf show" " [ "
+.B dev
+.IR NAME " ]"
+
+.SH DESCRIPTION
+The
+.B ip netconf
+utility can monitor IPv4 and IPv6 parameters (see
+.BR "/proc/sys/net/ipv[4|6]/conf/[all|DEV]/" ")"
+like forwarding, rp_filter
+or mc_forwarding status.
+
+If no interface is specified, the entry
+.B all
+is displayed.
+
+.SS ip netconf show - display network parameters
+
+.TP
+.BI dev " NAME"
+the name of the device to display network parameters for.
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Nicolas Dichtel <nicolas.dichtel@6wind.com>

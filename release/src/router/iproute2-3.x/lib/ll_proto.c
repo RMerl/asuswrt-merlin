@@ -78,6 +78,8 @@ __PF(IRDA,irda)
 __PF(ECONET,econet)
 __PF(TIPC,tipc)
 __PF(AOE,aoe)
+__PF(8021Q,802.1Q)
+__PF(8021AD,802.1ad)
 
 { 0x8100, "802.1Q" },
 { 0x88cc, "LLDP" },
@@ -100,10 +102,10 @@ const char * ll_proto_n2a(unsigned short id, char *buf, int len)
         return buf;
 }
 
-int ll_proto_a2n(unsigned short *id, char *buf)
+int ll_proto_a2n(unsigned short *id, const char *buf)
 {
         int i;
-        for (i=0; i<sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
+        for (i=0; i < sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
                  if (strcasecmp(llproto_names[i].name, buf) == 0) {
 			 *id = htons(llproto_names[i].id);
 			 return 0;

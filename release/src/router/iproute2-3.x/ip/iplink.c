@@ -27,14 +27,16 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <linux/sockios.h>
+#include <stdbool.h>
 
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "namespace.h"
 
 #define IPLINK_IOCTL_COMPAT	1
 #ifndef LIBDIR
-#define LIBDIR "/usr/lib/"
+#define LIBDIR "/usr/lib"
 #endif
 
 static void usage(void) __attribute__((noreturn));
@@ -47,7 +49,9 @@ void iplink_usage(void)
 		fprintf(stderr, "                   [ txqueuelen PACKETS ]\n");
 		fprintf(stderr, "                   [ address LLADDR ]\n");
 		fprintf(stderr, "                   [ broadcast LLADDR ]\n");
-		fprintf(stderr, "                   [ mtu MTU ]\n");
+		fprintf(stderr, "                   [ mtu MTU ] [index IDX ]\n");
+		fprintf(stderr, "                   [ numtxqueues QUEUE_COUNT ]\n");
+		fprintf(stderr, "                   [ numrxqueues QUEUE_COUNT ]\n");
 		fprintf(stderr, "                   type TYPE [ ARGS ]\n");
 		fprintf(stderr, "       ip link delete DEV type TYPE [ ARGS ]\n");
 		fprintf(stderr, "\n");
@@ -67,17 +71,27 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ broadcast LLADDR ]\n");
 	fprintf(stderr, "	                  [ mtu MTU ]\n");
 	fprintf(stderr, "	                  [ netns PID ]\n");
+	fprintf(stderr, "	                  [ netns NAME ]\n");
 	fprintf(stderr, "			  [ alias NAME ]\n");
 	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
 	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
+
 	fprintf(stderr, "				   [ rate TXRATE ] ] \n");
+
+	fprintf(stderr, "				   [ spoofchk { on | off} ] ] \n");
+	fprintf(stderr, "				   [ state { auto | enable | disable} ] ]\n");
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
-	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ]\n");
+	fprintf(stderr, "			  [ addrgenmode { eui64 | none } ]\n");
+	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [type TYPE]\n");
 
 	if (iplink_have_newlink()) {
+		fprintf(stderr, "       ip link help [ TYPE ]\n");
 		fprintf(stderr, "\n");
-		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can | bridge }\n");
+		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
+		fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n");
+		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n");
+		fprintf(stderr, "          bond_slave | ipvlan }\n");
 	}
 	exit(-1);
 }
@@ -87,23 +101,24 @@ static void usage(void)
 	iplink_usage();
 }
 
-static int on_off(char *msg)
+static int on_off(const char *msg, const char *realval)
 {
-	fprintf(stderr, "Error: argument of \"%s\" must be \"on\" or \"off\"\n", msg);
+	fprintf(stderr, "Error: argument of \"%s\" must be \"on\" or \"off\", not \"%s\"\n", msg, realval);
 	return -1;
 }
 
 static void *BODY;		/* cached dlopen(NULL) handle */
 static struct link_util *linkutil_list;
 
-struct link_util *get_link_kind(const char *id)
+static struct link_util *__get_link_kind(const char *id, bool slave)
 {
 	void *dlh;
 	char buf[256];
 	struct link_util *l;
 
 	for (l = linkutil_list; l; l = l->next)
-		if (strcmp(l->id, id) == 0)
+		if (strcmp(l->id, id) == 0 &&
+		    l->slave == slave)
 			return l;
 
 	snprintf(buf, sizeof(buf), LIBDIR "/ip/link_%s.so", id);
@@ -118,7 +133,10 @@ struct link_util *get_link_kind(const char *id)
 		}
 	}
 
-	snprintf(buf, sizeof(buf), "%s_link_util", id);
+	if (slave)
+		snprintf(buf, sizeof(buf), "%s_slave_link_util", id);
+	else
+		snprintf(buf, sizeof(buf), "%s_link_util", id);
 	l = dlsym(dlh, buf);
 	if (l == NULL)
 		return NULL;
@@ -126,6 +144,34 @@ struct link_util *get_link_kind(const char *id)
 	l->next = linkutil_list;
 	linkutil_list = l;
 	return l;
+}
+
+struct link_util *get_link_kind(const char *id)
+{
+	return __get_link_kind(id, false);
+}
+
+struct link_util *get_link_slave_kind(const char *id)
+{
+	return __get_link_kind(id, true);
+}
+
+static int get_link_mode(const char *mode)
+{
+	if (strcasecmp(mode, "default") == 0)
+		return IF_LINK_MODE_DEFAULT;
+	if (strcasecmp(mode, "dormant") == 0)
+		return IF_LINK_MODE_DORMANT;
+	return -1;
+}
+
+static int get_addr_gen_mode(const char *mode)
+{
+	if (strcasecmp(mode, "eui64") == 0)
+		return IN6_ADDR_GEN_MODE_EUI64;
+	if (strcasecmp(mode, "none") == 0)
+		return IN6_ADDR_GEN_MODE_NONE;
+	return -1;
 }
 
 #if IPLINK_IOCTL_COMPAT
@@ -160,7 +206,10 @@ static int iplink_have_newlink(void)
 		req.n.nlmsg_type = RTM_NEWLINK;
 		req.i.ifi_family = AF_UNSPEC;
 
-		rtnl_send(&rth, (char *)&req.n, req.n.nlmsg_len);
+		if (rtnl_send(&rth, &req.n, req.n.nlmsg_len) < 0) {
+			perror("request send failed");
+			exit(1);
+		}
 		rtnl_listen(&rth, accept_msg, NULL);
 	}
 	return have_rtnl_newlink;
@@ -178,14 +227,38 @@ struct iplink_req {
 	char			buf[1024];
 };
 
-int iplink_parse_vf(int vf, int *argcp, char ***argvp,
-			   struct iplink_req *req)
+static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
+			   struct iplink_req *req, int dev_index)
 {
+	char new_rate_api = 0, count = 0, override_legacy_rate = 0;
+	struct ifla_vf_rate tivt;
 	int len, argc = *argcp;
 	char **argv = *argvp;
 	struct rtattr *vfinfo;
 
+	tivt.min_tx_rate = -1;
+	tivt.max_tx_rate = -1;
+
 	vfinfo = addattr_nest(&req->n, sizeof(*req), IFLA_VF_INFO);
+
+	while (NEXT_ARG_OK()) {
+		NEXT_ARG();
+		count++;
+		if (!matches(*argv, "max_tx_rate")) {
+			/* new API in use */
+			new_rate_api = 1;
+			/* override legacy rate */
+			override_legacy_rate = 1;
+		} else if (!matches(*argv, "min_tx_rate")) {
+			/* new API in use */
+			new_rate_api = 1;
+		}
+	}
+
+	while (count--) {
+		/* rewind arg */
+		PREV_ARG();
+	}
 
 	while (NEXT_ARG_OK()) {
 		NEXT_ARG();
@@ -225,13 +298,70 @@ int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 				invarg("Invalid \"rate\" value\n", *argv);
 			}
 			ivt.vf = vf;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
-		
+			if (!new_rate_api)
+				addattr_l(&req->n, sizeof(*req),
+					  IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
+			else if (!override_legacy_rate)
+				tivt.max_tx_rate = ivt.rate;
+
+		} else if (matches(*argv, "max_tx_rate") == 0) {
+			NEXT_ARG();
+			if (get_unsigned(&tivt.max_tx_rate, *argv, 0))
+				invarg("Invalid \"max tx rate\" value\n",
+				       *argv);
+			tivt.vf = vf;
+
+		} else if (matches(*argv, "min_tx_rate") == 0) {
+			NEXT_ARG();
+			if (get_unsigned(&tivt.min_tx_rate, *argv, 0))
+				invarg("Invalid \"min tx rate\" value\n",
+				       *argv);
+			tivt.vf = vf;
+
+		} else if (matches(*argv, "spoofchk") == 0) {
+			struct ifla_vf_spoofchk ivs;
+			NEXT_ARG();
+			if (matches(*argv, "on") == 0)
+				ivs.setting = 1;
+			else if (matches(*argv, "off") == 0)
+				ivs.setting = 0;
+			else
+				invarg("Invalid \"spoofchk\" value\n", *argv);
+			ivs.vf = vf;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_SPOOFCHK, &ivs, sizeof(ivs));
+
+		} else if (matches(*argv, "state") == 0) {
+			struct ifla_vf_link_state ivl;
+			NEXT_ARG();
+			if (matches(*argv, "auto") == 0)
+				ivl.link_state = IFLA_VF_LINK_STATE_AUTO;
+			else if (matches(*argv, "enable") == 0)
+				ivl.link_state = IFLA_VF_LINK_STATE_ENABLE;
+			else if (matches(*argv, "disable") == 0)
+				ivl.link_state = IFLA_VF_LINK_STATE_DISABLE;
+			else
+				invarg("Invalid \"state\" value\n", *argv);
+			ivl.vf = vf;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_LINK_STATE, &ivl, sizeof(ivl));
 		} else {
 			/* rewind arg */
 			PREV_ARG();
 			break;
 		}
+	}
+
+	if (new_rate_api) {
+		int tmin, tmax;
+
+		if (tivt.min_tx_rate == -1 || tivt.max_tx_rate == -1) {
+			ipaddr_get_vf_rate(tivt.vf, &tmin, &tmax, dev_index);
+			if (tivt.min_tx_rate == -1)
+				tivt.min_tx_rate = tmin;
+			if (tivt.max_tx_rate == -1)
+				tivt.max_tx_rate = tmax;
+		}
+		addattr_l(&req->n, sizeof(*req), IFLA_VF_RATE, &tivt,
+			  sizeof(tivt));
 	}
 
 	if (argc == *argcp)
@@ -244,9 +374,8 @@ int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	return 0;
 }
 
-
 int iplink_parse(int argc, char **argv, struct iplink_req *req,
-		char **name, char **type, char **link, char **dev, int *group)
+		char **name, char **type, char **link, char **dev, int *group, int *index)
 {
 	int ret, len;
 	char abuf[32];
@@ -254,6 +383,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	int mtu = -1;
 	int netns = -1;
 	int vf = -1;
+	int numtxqueues = -1;
+	int numrxqueues = -1;
+	int dev_index = 0;
 
 	*group = -1;
 	ret = argc;
@@ -268,6 +400,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		} else if (strcmp(*argv, "name") == 0) {
 			NEXT_ARG();
 			*name = *argv;
+		} else if (strcmp(*argv, "index") == 0) {
+			NEXT_ARG();
+			*index = atoi(*argv);
+			if (*index < 0)
+				invarg("Invalid \"index\" value", *argv);
 		} else if (matches(*argv, "link") == 0) {
 			NEXT_ARG();
 			*link = *argv;
@@ -300,13 +437,16 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (get_integer(&mtu, *argv, 0))
 				invarg("Invalid \"mtu\" value\n", *argv);
 			addattr_l(&req->n, sizeof(*req), IFLA_MTU, &mtu, 4);
-                } else if (strcmp(*argv, "netns") == 0) {
-                        NEXT_ARG();
-                        if (netns != -1)
-                                duparg("netns", *argv);
-                        if (get_integer(&netns, *argv, 0))
-                                invarg("Invalid \"netns\" value\n", *argv);
-                        addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_PID, &netns, 4);
+		} else if (strcmp(*argv, "netns") == 0) {
+			NEXT_ARG();
+			if (netns != -1)
+				duparg("netns", *argv);
+			if ((netns = netns_get_fd(*argv)) >= 0)
+				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_FD, &netns, 4);
+			else if (get_integer(&netns, *argv, 0) == 0)
+				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_PID, &netns, 4);
+			else
+				invarg("Invalid \"netns\" value\n", *argv);
 		} else if (strcmp(*argv, "multicast") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_MULTICAST;
@@ -315,7 +455,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			} else if (strcmp(*argv, "off") == 0) {
 				req->i.ifi_flags &= ~IFF_MULTICAST;
 			} else
-				return on_off("multicast");
+				return on_off("multicast", *argv);
 		} else if (strcmp(*argv, "allmulticast") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_ALLMULTI;
@@ -324,7 +464,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			} else if (strcmp(*argv, "off") == 0) {
 				req->i.ifi_flags &= ~IFF_ALLMULTI;
 			} else
-				return on_off("allmulticast");
+				return on_off("allmulticast", *argv);
 		} else if (strcmp(*argv, "promisc") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_PROMISC;
@@ -333,7 +473,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			} else if (strcmp(*argv, "off") == 0) {
 				req->i.ifi_flags &= ~IFF_PROMISC;
 			} else
-				return on_off("promisc");
+				return on_off("promisc", *argv);
 		} else if (strcmp(*argv, "trailers") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_NOTRAILERS;
@@ -342,7 +482,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			} else if (strcmp(*argv, "on") == 0) {
 				req->i.ifi_flags &= ~IFF_NOTRAILERS;
 			} else
-				return on_off("trailers");
+				return on_off("trailers", *argv);
 		} else if (strcmp(*argv, "arp") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_NOARP;
@@ -351,7 +491,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			} else if (strcmp(*argv, "off") == 0) {
 				req->i.ifi_flags |= IFF_NOARP;
 			} else
-				return on_off("noarp");
+				return on_off("noarp", *argv);
 		} else if (strcmp(*argv, "vf") == 0) {
 			struct rtattr *vflist;
 			NEXT_ARG();
@@ -360,7 +500,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			}
 			vflist = addattr_nest(&req->n, sizeof(*req),
 					      IFLA_VFINFO_LIST);
-			len = iplink_parse_vf(vf, &argc, &argv, req);
+			if (dev_index == 0)
+				missarg("dev");
+
+			len = iplink_parse_vf(vf, &argc, &argv, req, dev_index);
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
@@ -384,7 +527,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			} else if (strcmp(*argv, "off") == 0) {
 				req->i.ifi_flags &= ~IFF_DYNAMIC;
 			} else
-				return on_off("dynamic");
+				return on_off("dynamic", *argv);
 		} else if (matches(*argv, "type") == 0) {
 			NEXT_ARG();
 			*type = *argv;
@@ -402,6 +545,49 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				duparg("group", *argv);
 			if (rtnl_group_a2n(group, *argv))
 				invarg("Invalid \"group\" value\n", *argv);
+		} else if (strcmp(*argv, "mode") == 0) {
+			int mode;
+			NEXT_ARG();
+			mode = get_link_mode(*argv);
+			if (mode < 0)
+				invarg("Invalid link mode\n", *argv);
+			addattr8(&req->n, sizeof(*req), IFLA_LINKMODE, mode);
+		} else if (strcmp(*argv, "state") == 0) {
+			int state;
+			NEXT_ARG();
+			state = get_operstate(*argv);
+			if (state < 0)
+				invarg("Invalid operstate\n", *argv);
+
+			addattr8(&req->n, sizeof(*req), IFLA_OPERSTATE, state);
+		} else if (matches(*argv, "numtxqueues") == 0) {
+			NEXT_ARG();
+			if (numtxqueues != -1)
+				duparg("numtxqueues", *argv);
+			if (get_integer(&numtxqueues, *argv, 0))
+				invarg("Invalid \"numtxqueues\" value\n", *argv);
+			addattr_l(&req->n, sizeof(*req), IFLA_NUM_TX_QUEUES,
+				  &numtxqueues, 4);
+		} else if (matches(*argv, "numrxqueues") == 0) {
+			NEXT_ARG();
+			if (numrxqueues != -1)
+				duparg("numrxqueues", *argv);
+			if (get_integer(&numrxqueues, *argv, 0))
+				invarg("Invalid \"numrxqueues\" value\n", *argv);
+			addattr_l(&req->n, sizeof(*req), IFLA_NUM_RX_QUEUES,
+				  &numrxqueues, 4);
+		} else if (matches(*argv, "addrgenmode") == 0) {
+			struct rtattr *afs, *afs6;
+			int mode;
+			NEXT_ARG();
+			mode = get_addr_gen_mode(*argv);
+			if (mode < 0)
+				invarg("Invalid address generation mode\n", *argv);
+			afs = addattr_nest(&req->n, sizeof(*req), IFLA_AF_SPEC);
+			afs6 = addattr_nest(&req->n, sizeof(*req), AF_INET6);
+			addattr8(&req->n, sizeof(*req), IFLA_INET6_ADDR_GEN_MODE, mode);
+			addattr_nest_end(&req->n, afs6);
+			addattr_nest_end(&req->n, afs);
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
@@ -411,6 +597,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (*dev)
 				duparg2("dev", *argv);
 			*dev = *argv;
+			dev_index = ll_name_to_index(*dev);
 		}
 		argc--; argv++;
 	}
@@ -425,6 +612,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	char *name = NULL;
 	char *link = NULL;
 	char *type = NULL;
+	int index = -1;
 	int group;
 	struct link_util *lu = NULL;
 	struct iplink_req req;
@@ -437,7 +625,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	req.n.nlmsg_type = cmd;
 	req.i.ifi_family = preferred_family;
 
-	ret = iplink_parse(argc, argv, &req, &name, &type, &link, &dev, &group);
+	ret = iplink_parse(argc, argv, &req, &name, &type, &link, &dev, &group, &index);
 	if (ret < 0)
 		return ret;
 
@@ -463,48 +651,21 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
-			if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+			if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 				exit(2);
 			return 0;
 		}
-	}
-
-	ll_init_map(&rth);
-
-	if (type) {
-		struct rtattr *linkinfo = NLMSG_TAIL(&req.n);
-		addattr_l(&req.n, sizeof(req), IFLA_LINKINFO, NULL, 0);
-		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, type,
-			 strlen(type));
-
-		lu = get_link_kind(type);
-		if (lu && argc) {
-			struct rtattr * data = NLMSG_TAIL(&req.n);
-			addattr_l(&req.n, sizeof(req), IFLA_INFO_DATA, NULL, 0);
-
-			if (lu->parse_opt &&
-			    lu->parse_opt(lu, argc, argv, &req.n))
-				return -1;
-
-			data->rta_len = (void *)NLMSG_TAIL(&req.n) - (void *)data;
-		} else if (argc) {
-			if (matches(*argv, "help") == 0)
-				usage();
-			fprintf(stderr, "Garbage instead of arguments \"%s ...\". "
-					"Try \"ip link help\".\n", *argv);
-			return -1;
-		}
-		linkinfo->rta_len = (void *)NLMSG_TAIL(&req.n) - (void *)linkinfo;
-	} else if (flags & NLM_F_CREATE) {
-		fprintf(stderr, "Not enough information: \"type\" argument "
-				"is required\n");
-		return -1;
 	}
 
 	if (!(flags & NLM_F_CREATE)) {
 		if (!dev) {
 			fprintf(stderr, "Not enough information: \"dev\" "
 					"argument is required.\n");
+			exit(-1);
+		}
+		if (cmd == RTM_NEWLINK && index != -1) {
+			fprintf(stderr, "index can be used only when "
+					"creating devices.\n");
 			exit(-1);
 		}
 
@@ -529,6 +690,11 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			}
 			addattr_l(&req.n, sizeof(req), IFLA_LINK, &ifindex, 4);
 		}
+
+		if (index == -1)
+			req.i.ifi_index = 0;
+		else
+			req.i.ifi_index = index;
 	}
 
 	if (name) {
@@ -540,8 +706,84 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, len);
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (type) {
+		struct rtattr *linkinfo;
+		char slavebuf[128], *ulinep = strchr(type, '_');
+		int iflatype;
+
+		linkinfo = addattr_nest(&req.n, sizeof(req), IFLA_LINKINFO);
+		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, type,
+			 strlen(type));
+
+		if (ulinep && !strcmp(ulinep, "_slave")) {
+			strncpy(slavebuf, type, sizeof(slavebuf));
+			slavebuf[sizeof(slavebuf) - 1] = '\0';
+			ulinep = strchr(slavebuf, '_');
+			/* check in case it was after sizeof(slavebuf) - 1*/
+			if (ulinep)
+				*ulinep = '\0';
+			lu = get_link_slave_kind(slavebuf);
+			iflatype = IFLA_INFO_SLAVE_DATA;
+		} else {
+			lu = get_link_kind(type);
+			iflatype = IFLA_INFO_DATA;
+		}
+		if (lu && argc) {
+			struct rtattr *data = addattr_nest(&req.n, sizeof(req), iflatype);
+
+			if (lu->parse_opt &&
+			    lu->parse_opt(lu, argc, argv, &req.n))
+				return -1;
+
+			addattr_nest_end(&req.n, data);
+		} else if (argc) {
+			if (matches(*argv, "help") == 0)
+				usage();
+			fprintf(stderr, "Garbage instead of arguments \"%s ...\". "
+					"Try \"ip link help\".\n", *argv);
+			return -1;
+		}
+		addattr_nest_end(&req.n, linkinfo);
+	} else if (flags & NLM_F_CREATE) {
+		fprintf(stderr, "Not enough information: \"type\" argument "
+				"is required\n");
+		return -1;
+	}
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
+
+	return 0;
+}
+
+int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
+{
+	int len;
+	struct iplink_req req;
+	char answer[16384];
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
+	req.n.nlmsg_type = RTM_GETLINK;
+	req.i.ifi_family = preferred_family;
+
+	if (name) {
+		len = strlen(name) + 1;
+		if (len == 1)
+			invarg("\"\" is not a valid device identifier\n",
+				   "name");
+		if (len > IFNAMSIZ)
+			invarg("\"name\" too long\n", name);
+		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, len);
+	}
+	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, (struct nlmsghdr *)answer) < 0)
+		return -2;
+
+	print_linkinfo(NULL, (struct nlmsghdr *)answer, stdout);
 
 	return 0;
 }
@@ -735,7 +977,6 @@ static int set_address(struct ifreq *ifr, int brd)
 	return 0;
 }
 
-
 static int do_set(int argc, char **argv)
 {
 	char *dev = NULL;
@@ -788,7 +1029,7 @@ static int do_set(int argc, char **argv)
 			} else if (strcmp(*argv, "off") == 0) {
 				flags &= ~IFF_MULTICAST;
 			} else
-				return on_off("multicast");
+				return on_off("multicast", *argv);
 		} else if (strcmp(*argv, "allmulticast") == 0) {
 			NEXT_ARG();
 			mask |= IFF_ALLMULTI;
@@ -797,7 +1038,7 @@ static int do_set(int argc, char **argv)
 			} else if (strcmp(*argv, "off") == 0) {
 				flags &= ~IFF_ALLMULTI;
 			} else
-				return on_off("allmulticast");
+				return on_off("allmulticast", *argv);
 		} else if (strcmp(*argv, "promisc") == 0) {
 			NEXT_ARG();
 			mask |= IFF_PROMISC;
@@ -806,7 +1047,7 @@ static int do_set(int argc, char **argv)
 			} else if (strcmp(*argv, "off") == 0) {
 				flags &= ~IFF_PROMISC;
 			} else
-				return on_off("promisc");
+				return on_off("promisc", *argv);
 		} else if (strcmp(*argv, "trailers") == 0) {
 			NEXT_ARG();
 			mask |= IFF_NOTRAILERS;
@@ -815,7 +1056,7 @@ static int do_set(int argc, char **argv)
 			} else if (strcmp(*argv, "on") == 0) {
 				flags &= ~IFF_NOTRAILERS;
 			} else
-				return on_off("trailers");
+				return on_off("trailers", *argv);
 		} else if (strcmp(*argv, "arp") == 0) {
 			NEXT_ARG();
 			mask |= IFF_NOARP;
@@ -824,7 +1065,7 @@ static int do_set(int argc, char **argv)
 			} else if (strcmp(*argv, "off") == 0) {
 				flags |= IFF_NOARP;
 			} else
-				return on_off("noarp");
+				return on_off("noarp", *argv);
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();
 			mask |= IFF_DYNAMIC;
@@ -833,9 +1074,9 @@ static int do_set(int argc, char **argv)
 			} else if (strcmp(*argv, "off") == 0) {
 				flags &= ~IFF_DYNAMIC;
 			} else
-				return on_off("dynamic");
+				return on_off("dynamic", *argv);
 		} else {
-                        if (strcmp(*argv, "dev") == 0) {
+			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
 			}
 			if (matches(*argv, "help") == 0)
@@ -897,6 +1138,23 @@ static int do_set(int argc, char **argv)
 }
 #endif /* IPLINK_IOCTL_COMPAT */
 
+static void do_help(int argc, char **argv)
+{
+	struct link_util *lu = NULL;
+
+	if (argc <= 0) {
+		usage();
+		return ;
+	}
+
+	lu = get_link_kind(*argv);
+
+	if (lu && lu->print_help)
+		lu->print_help(lu, argc-1, argv+1, stdout);
+	else
+		usage();
+}
+
 int do_iplink(int argc, char **argv)
 {
 	if (argc > 0) {
@@ -926,8 +1184,10 @@ int do_iplink(int argc, char **argv)
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
 			return ipaddr_list_link(argc-1, argv+1);
-		if (matches(*argv, "help") == 0)
-			usage();
+		if (matches(*argv, "help") == 0) {
+			do_help(argc-1, argv+1);
+			return 0;
+		}
 	} else
 		return ipaddr_list_link(0, NULL);
 

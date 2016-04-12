@@ -38,7 +38,7 @@ static int fifo_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 		if (strcmp(*argv, "limit") == 0) {
 			NEXT_ARG();
 			if (get_size(&opt.limit, *argv)) {
-				fprintf(stderr, "Illegal \"limit\"\n");
+				fprintf(stderr, "%s: Illegal value for \"limit\": \"%s\"\n", qu->id, *argv);
 				return -1;
 			}
 			ok++;
@@ -46,7 +46,7 @@ static int fifo_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "What is \"%s\"?\n", *argv);
+			fprintf(stderr, "%s: unknown parameter \"%s\"\n", qu->id, *argv);
 			explain();
 			return -1;
 		}

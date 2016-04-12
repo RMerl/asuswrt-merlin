@@ -1,0 +1,550 @@
+.TH BRIDGE 8 "1 August 2012" "iproute2" "Linux"
+.SH NAME
+bridge \- show / manipulate bridge addresses and devices
+.SH SYNOPSIS
+
+.ad l
+.in +8
+.ti -8
+.B bridge
+.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OBJECT " := { "
+.BR link " | " fdb " | " mdb " | " vlan " | " monitor " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-s\fR[\fItatistics\fR] |
+\fB\-n\fR[\fIetns\fR] name }
+
+.ti -8
+.BR "bridge link set"
+.B  dev
+.IR DEV
+.IR " [ "
+.B  cost
+.IR COST " ] [ "
+.B  priority
+.IR PRIO " ]  [ "
+.B  state
+.IR STATE "] ["
+.BR guard " { " on " | " off " } ] [ "
+.BR hairpin " { " on " | " off " } ] [ "
+.BR fastleave " { " on " | " off " } ] [ "
+.BR root_block " { " on " | " off " } ] [ "
+.BR learning " { " on " | " off " } ] [ "
+.BR learning_sync " { " on " | " off " } ] [ "
+.BR flood " { " on " | " off " } ] [ "
+.BR hwmode " { " vepa " | " veb " } ] "
+
+.ti -8
+.BR "bridge link" " [ " show " ] [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "bridge fdb" " { " add " | " append " | " del " } "
+.I LLADDR
+.B  dev
+.IR DEV " { "
+.BR local " | " temp " } { "
+.BR self " } { " embedded " } { " router " } [ "
+.B  dst
+.IR IPADDR " ] [ "
+.B vni
+.IR VNI " ] ["
+.B port
+.IR PORT " ] ["
+.B via
+.IR DEVICE " ]"
+
+.ti -8
+.BR "bridge fdb" " [ " show " ] [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "bridge mdb" " { " add " | " del " } "
+.B  dev
+.IR DEV
+.B port
+.IR PORT
+.B grp
+.IR GROUP " [ "
+.BR permanent " | " temp " ]"
+
+.ti -8
+.BR "bridge mdb show " [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "bridge vlan" " { " add " | " del " } "
+.B  dev
+.IR DEV
+.B  vid 
+.IR VID " [ "
+.BR  pvid " ] [ " untagged " ]  [ "
+.BR  self " ]  [ " master " ] "
+
+.ti -8
+.BR "bridge vlan" " [ " show " ] [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " ]"
+
+.SH OPTIONS
+
+.TP
+.BR "\-V" , " -Version"
+print the version of the
+.B bridge
+utility and exit.
+
+.TP
+.BR "\-s" , " \-stats", " \-statistics"
+output more information.  If this option
+is given multiple times, the amount of information increases.
+As a rule, the information is statistics or some time values.
+
+.TP
+.BR "\-n" , " \-net" , " \-netns " <NETNS>
+switches
+.B bridge
+to the specified network namespace
+.IR NETNS .
+Actually it just simplifies executing of:
+
+.B ip netns exec
+.IR NETNS
+.B bridge
+.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+
+to
+
+.B bridge
+.RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+
+
+.SH BRIDGE - COMMAND SYNTAX
+
+.SS
+.I OBJECT
+
+.TP
+.B link
+- Bridge port.
+
+.TP
+.B fdb 
+- Forwarding Database entry.
+
+.TP
+.B mdb
+- Multicast group database entry.
+
+.TP
+.B vlan
+- VLAN filter list.
+
+.SS
+.I COMMAND
+
+Specifies the action to perform on the object.
+The set of possible actions depends on the object type.
+As a rule, it is possible to
+.BR "add" , " delete"
+and
+.B show
+(or
+.B list
+) objects, but some objects do not allow all of these operations
+or have some additional commands.  The
+.B help
+command is available for all objects.  It prints
+out a list of available commands and argument syntax conventions.
+.sp
+If no command is given, some default command is assumed.
+Usually it is
+.B list
+or, if the objects of this class cannot be listed,
+.BR "help" .
+
+.SH bridge link - bridge port
+
+.B link
+objects correspond to the port devices of the bridge.
+
+.P
+The corresponding commands set and display port status and bridge specific
+attributes.
+
+.SS bridge link set - set bridge specific attributes on a port
+
+.TP
+.BI dev " NAME "
+interface name of the bridge port
+
+.TP
+.BI cost " COST "
+the STP path cost of the specified port.
+
+.TP
+.BI priority " PRIO "
+the STP port priority.  The priority value is an unsigned 8-bit quantity
+(number between 0 and 255).  This metric is used in the designated port an
+droot port selectio algorithms.
+
+.TP
+.BI state " STATE "
+the operation state of the port.  This is primarily used by user space STP/RSTP
+implementation.  The following is a list of valid values:
+
+.B 0
+- port is DISABLED.  Make this port completely inactive.
+.sp
+
+.B 1
+- STP LISTENING state.  Only valid if STP is enabled on the brige.  In this
+state the port for list for STP BPDUs and drop all other traffic.
+.sp
+
+.B 2
+- STP LEARNING state.  Only valid if STP is enabled on the bridge.  In this
+state the port will accept traffic only for the purpose of updating MAC
+adress tables.
+.sp
+
+.B 3
+- STP FORWARDING state.  Port is fully active.
+.sp
+
+.B 4
+- STP BLOCKING state.  Only valid if STP is enabled on the bridge.  This state
+is used during the STP election process.  In this state, port will only process
+STP BPDUs.
+.sp
+
+.TP
+.BR "guard on " or " guard off "
+Controls whether STP BPUDs will be processed by the bridge port.  By default,
+the flag is turned off allowed BPDU processing.  Turning this flag on will
+cause the port to stop processing STP BPDUs.
+
+.TP
+.BR "hairpin on " or " hairpin off "
+Controls whether traffic may be send back out of the port on which it was
+received.  By default, this flag is turned off and the bridge will not forward
+traffic back out of the receiving port.
+
+.TP
+.BR "fastleave on " or " fastleave off "
+This flag allows the bridge to immediately stop multicast traffic on a port
+that receives IGMP Leave message.  It is only used with IGMP snooping is
+enabled on the bridge.  By default the flag is off.
+
+.TP
+.BR "root_block on " or " root_block off "
+Controls whether a given port is allowed to become root port or not.  Only used
+when STP is enabled on the bridge.  By default the flag is off.
+
+.TP
+.BR "learning on " or " learning off "
+Controls whether a given port will learn MAC addresses from received traffic or
+not.  If learning if off, the bridge will end up flooding any traffic for which
+it has no FDB entry.  By default this flag is on.
+
+.TP
+.BR "learning_sync on " or " learning_sync off "
+Controls whether a given port will sync MAC addresses learned on device port to
+bridge FDB.
+
+.TP
+.BR "flooding on " or " flooding off "
+Controls whether a given port will flood unicast traffic for which there is no FDB entry.  By default this flag is on.
+
+.TP
+.BI hwmode
+Some network interface cards support HW bridge functionality and they may be
+configured in different modes.  Currently support modes are:
+
+.B vepa
+- Data sent between HW ports is sent on the wire to the external
+switch.
+
+.B veb
+- bridging happens in hardware.
+
+.SS bridge link show - list bridge port configuration.
+
+This command displays the current bridge port configuration and flags.
+
+.SH bridge fdb - forwarding database management
+
+.B fdb
+objects contain known Ethernet addresses on a  link.
+
+.P
+The corresponding commands display fdb entries, add new entries,
+append entries,
+and delete old ones.
+
+.SS bridge fdb add - add a new fdb entry
+
+This command creates a new fdb entry.
+
+.TP
+.BI "LLADDR"
+the Ethernet MAC address.
+
+.TP
+.BI dev " DEV"
+the interface to which this address is associated.
+
+.B self
+- the address is associated with a software fdb (default)
+.sp
+
+.B embedded
+- the address is associated with an offloaded fdb
+.sp
+
+.B router
+- the destination address is associated with a router.
+Valid if the referenced device is a VXLAN type device and has
+route shortcircuit enabled.
+.sp
+
+.in -8
+The next command line parameters apply only
+when the specified device
+.I DEV
+is of type VXLAN.
+.TP
+.BI dst " IPADDR"
+the IP address of the destination
+VXLAN tunnel endpoint where the Ethernet MAC ADDRESS resides.
+
+.TP
+.BI vni " VNI"
+the VXLAN VNI Network Identifier (or VXLAN Segment ID)
+to use to connect to the remote VXLAN tunnel endpoint.
+If omitted the value specified at vxlan device creation
+will be used.
+
+.TP
+.BI port " PORT"
+the UDP destination PORT number to use to connect to the
+remote VXLAN tunnel endpoint.
+If omitted the default value is used.
+
+.TP
+.BI via " DEVICE"
+device name of the outgoing interface for the
+VXLAN device driver to reach the
+remote VXLAN tunnel endpoint. 
+
+.SS bridge fdb append - append a forwarding database entry
+This command adds a new fdb entry with an already known
+.IR LLADDR .
+Valid only for multicast link layer addresses.
+The command adds support for broadcast and multicast
+Ethernet MAC addresses.
+The Ethernet MAC address is added multiple times into
+the forwarding database and the vxlan device driver
+sends a copy of the data packet to each entry found.
+
+.PP
+The arguments are the same as with
+.BR "bridge fdb add" ,
+
+.SS bridge fdb delete - delete a forwarding database entry
+This command removes an existing fdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge fdb add" ,
+
+.SS bridge fdb show - list forwarding entries.
+
+This command displays the current forwarding table.
+
+.PP
+With the
+.B -statistics
+option, the command becomes verbose.  It prints out the last updated
+and last used time for each entry.
+
+.SH bridge mdb - multicast group database management
+
+.B mdb
+objects contain known IP multicast group addresses on a link.
+
+.P
+The corresponding commands display mdb entries, add new entries,
+and delete old ones.
+
+.SS bridge mdb add - add a new multicast group database entry
+
+This command creates a new mdb entry.
+
+.TP
+.BI dev " DEV"
+the interface where this group address is associated.
+
+.TP
+.BI port " PORT"
+the port whose link is known to have members of this multicast group.
+
+.TP
+.BI grp " GROUP"
+the IP multicast group address whose members reside on the link connected to
+the port.
+
+.B permanent
+- the mdb entry is permanent
+.sp
+
+.B temp
+- the mdb entry is temporary (default)
+.sp
+
+.in -8
+.SS bridge mdb delete - delete a multicast group database entry
+This command removes an existing mdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge mdb add" .
+
+.SS bridge mdb show - list multicast group database entries
+
+This command displays the current multicast group membership table. The table
+is populated by IGMP and MLD snooping in the bridge driver automatically. It
+can be altered by
+.B bridge mdb add
+and
+.B bridge mdb del
+commands manually too.
+
+.TP
+.BI dev " DEV"
+the interface only whose entries should be listed. Default is to list all
+bridge interfaces.
+
+.PP
+With the
+.B -details
+option, the command becomes verbose.  It prints out the ports known to have
+a connected router.
+
+.SH bridge vlan - VLAN filter list
+
+.B vlan
+objects contain known VLAN IDs for a link.
+
+.P
+The corresponding commands display vlan filter entries, add new entries,
+and delete old ones.
+
+.SS bridge vlan add - add a new vlan filter entry
+
+This command creates a new vlan filter entry.
+
+.TP
+.BI dev " NAME"
+the interface with which this vlan is associated.
+
+.TP
+.BI vid " VID"
+the VLAN ID that identifies the vlan.
+
+.TP
+.BI pvid
+the vlan specified is to be considered a PVID at ingress.
+Any untagged frames will be assigned to this VLAN.
+
+.TP
+.BI untagged
+the vlan specified is to be treated as untagged on egress.
+
+.TP
+.BI self
+the vlan is configured on the specified physical device.  Required if the
+device is the bridge device.
+
+.TP
+.BI master
+the vlan is configured on the software bridge (default).
+
+.SS bridge vlan delete - delete a forwarding database entry
+This command removes an existing fdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge vlan add".
+The
+.BR "pvid " and " untagged"
+flags are ignored.
+
+.SS bridge vlan show - list vlan configuration.
+
+This command displays the current VLAN filter table.
+
+.SH bridge monitor - state monitoring
+
+The
+.B bridge
+utility can monitor the state of devices and  addresses
+continuously.  This option has a slightly different format.
+Namely, the
+.B monitor
+command is the first in the command line and then the object list follows:
+
+.BR "bridge monitor" " [ " all " |"
+.IR OBJECT-LIST " ]"
+
+.I OBJECT-LIST
+is the list of object types that we want to monitor.
+It may contain
+.BR link ",  " fdb ", and " mdb "."
+If no
+.B file
+argument is given,
+.B bridge
+opens RTNETLINK, listens on it and dumps state changes in the format
+described in previous sections.
+
+.P
+If a file name is given, it does not listen on RTNETLINK,
+but opens the file containing RTNETLINK messages saved in binary format
+and dumps them.  Such a history file can be generated with the
+
+
+.SH NOTES
+This command uses facilities added in Linux 3.0.
+
+Although the forwarding table is maintained on a per-bridge device basis
+the bridge device is not part of the syntax. This is a limitation of the
+underlying netlink neighbour message protocol. When displaying the
+forwarding table, entries for all bridges are displayed.
+Add/delete/modify commands determine the underlying bridge device
+based on the bridge to which the corresponding ethernet device is attached.
+
+
+.SH SEE ALSO
+.BR ip (8)
+.SH BUGS
+.RB "Please direct bugreports and patches to: " <netdev@vger.kernel.org>
+
+.SH AUTHOR
+Original Manpage by Stephen Hemminger

@@ -34,6 +34,7 @@ enum vlan_flags {
 	VLAN_FLAG_REORDER_HDR	= 0x1,
 	VLAN_FLAG_GVRP		= 0x2,
 	VLAN_FLAG_LOOSE_BINDING	= 0x4,
+	VLAN_FLAG_MVRP		= 0x8,
 };
 
 enum vlan_name_types {
@@ -54,10 +55,10 @@ struct vlan_ioctl_args {
 		unsigned int skb_priority;
 		unsigned int name_type;
 		unsigned int bind_type;
-		unsigned int flag; /* Matches vlan_dev_info flags */
+		unsigned int flag; /* Matches vlan_dev_priv flags */
         } u;
 
 	short vlan_qos;   
 };
 
-#endif /* !(_LINUX_IF_VLAN_H_) */
+#endif /* _LINUX_IF_VLAN_H_ */

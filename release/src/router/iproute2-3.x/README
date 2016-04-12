@@ -4,7 +4,7 @@ Information:
     http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2
 
 Download:
-    http://devresources.linuxfoundation.org/dev/iproute2/download
+    http://www.kernel.org/pub/linux/utils/net/iproute2/
 
 Repository:
     git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
@@ -13,10 +13,10 @@ How to compile this.
 --------------------
 1. libdbm
 
-arpd needs to have the db4 development libraries. For debian
+arpd needs to have the db4 development libraries. For Debian
 users this is the package with a name like libdb4.x-dev.
 DBM_INCLUDE points to the directory with db_185.h which
-is the include file used by arpd to get to the old format Berkely
+is the include file used by arpd to get to the old format Berkeley
 database routines.  Often this is in the db-devel package.
 
 2. make
@@ -37,7 +37,7 @@ contains whether or not ATM is available, etc.
    kernel include files.
 
 Stephen Hemminger
-shemminger@linux-foundation.org
+stephen@networkplumber.org
 
 Alexey Kuznetsov
 kuznet@ms2.inr.ac.ru

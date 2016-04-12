@@ -32,10 +32,9 @@ static struct action_util * action_list;
 #ifdef CONFIG_GACT
 int gact_ld = 0 ; //fuckin backward compatibility
 #endif
-int batch_c = 0;
 int tab_flush = 0;
 
-void act_usage(void)
+static void act_usage(void)
 {
 	/*XXX: In the near future add a action->print_help to improve
 	 * usability
@@ -83,7 +82,7 @@ static int parse_noaopt(struct action_util *au, int *argc_p, char ***argv_p, int
 	return -1;
 }
 
-struct action_util *get_action_kind(char *str)
+static struct action_util *get_action_kind(char *str)
 {
 	static void *aBODY;
 	void *dlh;
@@ -138,12 +137,13 @@ noexist:
 	return a;
 }
 
-int
+static int
 new_cmd(char **argv)
 {
 	if ((matches(*argv, "change") == 0) ||
 		(matches(*argv, "replace") == 0)||
 		(matches(*argv, "delete") == 0)||
+		(matches(*argv, "get") == 0)||
 		(matches(*argv, "add") == 0))
 			return 1;
 
@@ -185,6 +185,10 @@ parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 			}
 #endif
 			continue;
+		} else if (strcmp(*argv, "flowid") == 0) {
+			break;
+		} else if (strcmp(*argv, "classid") == 0) {
+			break;
 		} else if (strcmp(*argv, "help") == 0) {
 			return -1;
 		} else if (new_cmd(argv)) {
@@ -241,7 +245,7 @@ bad_val:
 	return -1;
 }
 
-int
+static int
 tc_print_one_action(FILE * f, struct rtattr *arg)
 {
 
@@ -253,6 +257,7 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 		return -1;
 
 	parse_rtattr_nested(tb, TCA_ACT_MAX, arg);
+
 	if (tb[TCA_ACT_KIND] == NULL) {
 		fprintf(stderr, "NULL Action!\n");
 		return -1;
@@ -263,14 +268,7 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 	if (NULL == a)
 		return err;
 
-	if (tab_flush) {
-		fprintf(f," %s \n", a->id);
-		tab_flush = 0;
-		return 0;
-	}
-
-	err = a->print_aopt(a,f,tb[TCA_ACT_OPTIONS]);
-
+	err = a->print_aopt(a, f, tb[TCA_ACT_OPTIONS]);
 
 	if (0 > err)
 		return err;
@@ -284,8 +282,34 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 	return 0;
 }
 
+static int
+tc_print_action_flush(FILE *f, const struct rtattr *arg)
+{
+
+	struct rtattr *tb[TCA_MAX + 1];
+	int err = 0;
+	struct action_util *a = NULL;
+	__u32 *delete_count = 0;
+
+	parse_rtattr_nested(tb, TCA_MAX, arg);
+
+	if (tb[TCA_KIND] == NULL) {
+		fprintf(stderr, "NULL Action!\n");
+		return -1;
+	}
+
+	a = get_action_kind(RTA_DATA(tb[TCA_KIND]));
+	if (NULL == a)
+		return err;
+
+	delete_count = RTA_DATA(tb[TCA_FCNT]);
+	fprintf(f," %s (%d entries)\n", a->id, *delete_count);
+	tab_flush = 0;
+	return 0;
+}
+
 int
-tc_print_action(FILE * f, const struct rtattr *arg)
+tc_print_action(FILE *f, const struct rtattr *arg)
 {
 
 	int i;
@@ -296,14 +320,12 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 
 	parse_rtattr_nested(tb, TCA_ACT_MAX_PRIO, arg);
 
-	if (tab_flush && NULL != tb[0]  && NULL == tb[1]) {
-		int ret = tc_print_one_action(f, tb[0]);
-		return ret;
-	}
+	if (tab_flush && NULL != tb[0]  && NULL == tb[1])
+		return tc_print_action_flush(f, tb[0]);
 
 	for (i = 0; i < TCA_ACT_MAX_PRIO; i++) {
 		if (tb[i]) {
-			fprintf(f, "\n\taction order %d: ", i + batch_c);
+			fprintf(f, "\n\taction order %d: ", i);
 			if (0 > tc_print_one_action(f, tb[i])) {
 				fprintf(f, "Error printing action\n");
 			}
@@ -311,7 +333,6 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 
 	}
 
-	batch_c+=TCA_ACT_MAX_PRIO ;
 	return 0;
 }
 
@@ -355,7 +376,7 @@ int print_action(const struct sockaddr_nl *who,
 	return 0;
 }
 
-int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
+static int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 {
 	char k[16];
 	struct action_util *a = NULL;
@@ -451,7 +472,7 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	if (cmd == RTM_GETACTION)
 		ans = &req.n;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, ans, NULL, NULL) < 0) {
+	if (rtnl_talk(&rth, &req.n, 0, 0, ans) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 1;
 	}
@@ -467,7 +488,7 @@ bad_val:
 	return ret;
 }
 
-int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
+static int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -496,7 +517,7 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	}
 	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		ret = -1;
 	}
@@ -507,7 +528,7 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	return ret;
 }
 
-int tc_act_list_or_flush(int argc, char **argv, int event)
+static int tc_act_list_or_flush(int argc, char **argv, int event)
 {
 	int ret = 0, prio = 0, msg_size = 0;
 	char k[16];
@@ -558,7 +579,7 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 			perror("Cannot send dump request");
 			return 1;
 		}
-		ret = rtnl_dump_filter(&rth, print_action, stdout, NULL, NULL);
+		ret = rtnl_dump_filter(&rth, print_action, stdout);
 	}
 
 	if (event == RTM_DELACTION) {
@@ -566,7 +587,7 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 		req.n.nlmsg_type = RTM_DELACTION;
 		req.n.nlmsg_flags |= NLM_F_ROOT;
 		req.n.nlmsg_flags |= NLM_F_REQUEST;
-		if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+		if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0) {
 			fprintf(stderr, "We have an error flushing\n");
 			return 1;
 		}

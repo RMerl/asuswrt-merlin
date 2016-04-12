@@ -1,0 +1,101 @@
+.TH IP\-NTABLE 8 "20 Dec 2011" "iproute2" "Linux"
+.SH "NAME"
+ip-ntable - neighbour table configuration
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B address
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "ip ntable change name"
+.IR NAME " [ "
+.B dev
+.IR DEV " ] " PARMS
+
+.ti -8
+.IR PARMS " := { "
+.B thresh1
+.IR VAL " | "
+.B thresh2
+.IR VAL " | "
+.B thresh3
+.IR VAL " | "
+.B gc_int
+.IR MSEC " | "
+.B base_reachable
+.IR MSEC " | "
+.B retrans
+.IR MSEC " | " "gc_stale MSEC " " | "
+.B delay_probe
+.IR MSEC " | " "queue LEN " " | "
+.B app_probs
+.IR VAL " | "
+.B ucast_probes
+.IR VAL " | " "mcast_probes VAL " " | "
+.B anycast_delay
+.IR MSEC " | "
+.B proxy_delay
+.IR MSEC " | " "proxy_queue LEN " " | "
+.B locktime
+.IR MSEC " }"
+
+.ti -8
+.BR "ip ntable show" " [ "
+.B dev
+.IR DEV " ] [ "
+.B name
+.IR NAME " ]"
+
+.SH DESCRIPTION
+.I ip ntable
+controls the parameters for the neighbour tables. 
+
+.SS ip ntable show - list the ip neighbour tables
+
+This commands displays neighbour table parameters and statistics.
+
+.TP
+.BI dev " DEV"
+only list the table attached to this device.
+
+.TP
+.BI name " NAME"
+only lists the table with the given name.
+
+.SS ip ntable change - modify table parameter
+
+This command allows modifying table parameters such as timers and queue lengths.
+.TP
+.BI name " NAME"
+the name of the table to modify.
+
+.TP
+.BI dev " DEV"
+the name of the device to modify the table values.
+
+.SH EXAMPLES
+.PP
+ip ntable show dev eth0
+.RS 4
+Shows the neighbour table (IPv4 ARP and IPv6 ndisc) parameters on device eth0.
+.RE
+.PP
+ip ntable change name arp_cache queue 8 dev eth0
+.RS 4
+Changes the number of packets queued while address is being resolved from the
+default value (3) to 8 packets.
+.RE
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Manpage by Stephen Hemminger 

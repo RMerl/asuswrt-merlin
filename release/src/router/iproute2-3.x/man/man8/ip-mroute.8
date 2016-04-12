@@ -1,0 +1,58 @@
+.TH IP\-MROUTE 8 "13 Dec 2012" "iproute2" "Linux"
+.SH "NAME"
+ip-mroute \- multicast routing cache management
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.BR "ip " " [ ip-OPTIONS ] " "mroute show" " [ [ "
+.BR " to " " ] "
+.IR PREFIX " ] [ "
+.B  from
+.IR PREFIX " ] [ "
+.B  iif
+.IR DEVICE " ] [ "
+.B table
+.IR TABLE_ID " ] "
+
+.SH DESCRIPTION
+.B mroute
+objects are multicast routing cache entries created by a user-level
+mrouting daemon (f.e.
+.B pimd
+or
+.B mrouted
+).
+
+Due to the limitations of the current interface to the multicast routing
+engine, it is impossible to change
+.B mroute
+objects administratively, so we can only display them.  This limitation
+will be removed in the future.
+
+.SS ip mroute show - list mroute cache entries
+
+.TP
+.BI to " PREFIX " (default)
+the prefix selecting the destination multicast addresses to list.
+
+.TP
+.BI iif " NAME"
+the interface on which multicast packets are received.
+
+.TP
+.BI from " PREFIX"
+the prefix selecting the IP source addresses of the multicast route.
+
+.TP
+.BI table " TABLE_ID"
+the table id selecting the multicast table. It can be
+.BR local ", " main ", " default ", " all " or a number."
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

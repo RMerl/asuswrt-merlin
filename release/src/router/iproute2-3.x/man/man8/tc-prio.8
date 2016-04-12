@@ -11,7 +11,7 @@ major:
 .B ] prio [ bands 
 bands
 .B ] [ priomap
-band,band,band... 
+band band band...
 .B ] [ estimator 
 interval timeconstant
 .B ]
@@ -106,7 +106,7 @@ see in the first column of this table:
 TOS     Bits  Means                    Linux Priority    Band
 ------------------------------------------------------------
 0x0     0     Normal Service           0 Best Effort     1
-0x2     1     Minimize Monetary Cost   1 Filler          2
+0x2     1     Minimize Monetary Cost   0 Best Effort     1
 0x4     2     Maximize Reliability     0 Best Effort     1
 0x6     3     mmc+mr                   0 Best Effort     1
 0x8     4     Maximize Throughput      2 Bulk            2
@@ -134,7 +134,7 @@ showing to which Priority they are mapped.
 The last column shows the result of the default priomap. On the command line,
 the default priomap looks like this:
 
-    1, 2, 2, 2, 1, 2, 0, 0 , 1, 1, 1, 1, 1, 1, 1, 1
+    1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
 
 This means that priority 4, for example, gets mapped to band number 1.
 The priomap also allows you to list higher priorities (> 7) which do not

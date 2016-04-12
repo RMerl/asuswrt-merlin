@@ -20,9 +20,10 @@
 #include <netdb.h>
 #include <string.h>
 
+#include "rt_names.h"
 #include "utils.h"
 
-char *inet_proto_n2a(int proto, char *buf, int len)
+const char *inet_proto_n2a(int proto, char *buf, int len)
 {
 	static char ncache[16];
 	static int icache = -1;
@@ -42,7 +43,7 @@ char *inet_proto_n2a(int proto, char *buf, int len)
 	return buf;
 }
 
-int inet_proto_a2n(char *buf)
+int inet_proto_a2n(const char *buf)
 {
 	static char ncache[16];
 	static int icache = -1;

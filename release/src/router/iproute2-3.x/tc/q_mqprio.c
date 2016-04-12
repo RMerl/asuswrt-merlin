@@ -104,7 +104,7 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 	return 0;
 }
 
-int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	int i;
 	struct tc_mqprio_qopt *qopt;
@@ -116,10 +116,10 @@ int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	fprintf(f, " tc %u map ", qopt->num_tc);
 	for (i = 0; i <= TC_PRIO_MAX; i++)
-		fprintf(f, "%d ", qopt->prio_tc_map[i]);
+		fprintf(f, "%u ", qopt->prio_tc_map[i]);
 	fprintf(f, "\n             queues:");
 	for (i = 0; i < qopt->num_tc; i++)
-		fprintf(f, "(%i:%i) ", qopt->offset[i],
+		fprintf(f, "(%u:%u) ", qopt->offset[i],
 			qopt->offset[i] + qopt->count[i] - 1);
 	return 0;
 }

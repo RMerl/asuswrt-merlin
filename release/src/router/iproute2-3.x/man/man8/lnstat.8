@@ -13,8 +13,6 @@ command.
 In addition to routing cache statistics, it supports any kind of statistics the linux kernel
 exports via a file in /proc/net/stat/.
 .SH OPTIONS
-These programs follow the usual GNU command line syntax, with long
-options starting with two dashes (`-').
 lnstat supports the following options.
 .TP
 .B \-h, \-\-help
@@ -34,6 +32,9 @@ Statistics file to use.
 .TP
 .B \-i, \-\-interval <intv>
 Set interval to 'intv' seconds.
+.TP
+.B \-j, \-\-json
+Display results in JSON format
 .TP
 .B \-k, \-\-keys k,k,k,...
 Display only keys specified.

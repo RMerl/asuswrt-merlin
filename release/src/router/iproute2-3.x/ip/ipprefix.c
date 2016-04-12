@@ -12,8 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with this program; if not, see <http://www.gnu.org/licenses>.
  */
 /*
  * based on ip.c, iproute.c
@@ -26,8 +25,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <netinet/icmp6.h>
+
 #include "utils.h"
+#include "ip_common.h"
 
 /* prefix flags; see kernel's net/ipv6/addrconf.c and include/net/if_inet6.h */
 #define IF_PREFIX_ONLINK	0x01
@@ -59,7 +61,7 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 
 	if (prefix->prefix_family != AF_INET6) {
-		fprintf(stderr, "wrong family %d\n", prefix->prefix_family);
+		fprintf(stderr, "incorrect protocol family: %d\n", prefix->prefix_family);
 		return 0;
 	}
 	if (prefix->prefix_type != ND_OPT_PREFIX_INFORMATION) {
@@ -78,7 +80,7 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		pfx = (struct in6_addr *)RTA_DATA(tb[PREFIX_ADDRESS]);
 
 		memset(abuf, '\0', sizeof(abuf));
-		fprintf(fp, "%s", rt_addr_n2a(family, sizeof(*pfx), pfx,
+		fprintf(fp, "%s", rt_addr_n2a(family, pfx,
 					      abuf, sizeof(abuf)));
 	}
 	fprintf(fp, "/%u ", prefix->prefix_len);

@@ -1,11 +1,43 @@
 #! /bin/bash
-# This is not an autconf generated configure
+# This is not an autoconf generated configure
 #
 INCLUDE=${1:-"$PWD/include"}
 
+# Make a temp directory in build tree.
+TMPDIR=$(mktemp -d config.XXXXXX)
+trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
+
+check_prog()
+{
+    echo -n "$2"
+    command -v $1 >/dev/null 2>&1 && (echo "$3:=y" >> Config; echo "yes") || (echo "no"; return 1)
+}
+
+check_docs()
+{
+    if check_prog latex " latex: " HAVE_LATEX; then
+        check_prog pdflatex " pdflatex: " HAVE_PDFLATEX || echo " WARNING: no PDF docs can be built from LaTeX files"
+        check_prog sgml2latex " sgml2latex: " HAVE_SGML2LATEX || echo " WARNING: no LaTeX files can be build from SGML files"
+    else
+        echo " WARNING: no docs can be built from LaTeX files"
+    fi
+
+    check_prog sgml2html " sgml2html: " HAVE_SGML2HTML || echo " WARNING: no HTML docs can be built from SGML"
+}
+
+check_toolchain()
+{
+    : ${PKG_CONFIG:=pkg-config}
+    : ${AR=ar}
+    : ${CC=gcc}
+    echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
+    echo "AR:=${AR}" >>Config
+    echo "CC:=${CC}" >>Config
+}
+
 check_atm()
 {
-cat >/tmp/atmtest.c <<EOF
+    cat >$TMPDIR/atmtest.c <<EOF
 #include <atm.h>
 int main(int argc, char **argv) {
 	struct atm_qos qos;
@@ -13,21 +45,22 @@ int main(int argc, char **argv) {
 	return 0;
 }
 EOF
-${CROSS_COMPILE}gcc -I$INCLUDE -o /tmp/atmtest /tmp/atmtest.c -latm >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-    echo "TC_CONFIG_ATM:=y" >>Config
-    echo yes
-else
-    echo no
-fi
-rm -f /tmp/atmtest.c /tmp/atmtest
+
+    $CC -I$INCLUDE -o $TMPDIR/atmtest $TMPDIR/atmtest.c -latm >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+	echo "TC_CONFIG_ATM:=y" >>Config
+	echo yes
+    else
+	echo no
+    fi
+    rm -f $TMPDIR/atmtest.c $TMPDIR/atmtest
 }
 
 check_xt()
 {
-#check if we have xtables from iptables >= 1.4.5.
-cat >/tmp/ipttest.c <<EOF
+    #check if we have xtables from iptables >= 1.4.5.
+    cat >$TMPDIR/ipttest.c <<EOF
 #include <xtables.h>
 #include <linux/netfilter.h>
 static struct xtables_globals test_globals = {
@@ -44,27 +77,27 @@ int main(int argc, char **argv)
 	xtables_init_all(&test_globals, NFPROTO_IPV4);
 	return 0;
 }
-
 EOF
 
-if ${CROSS_COMPILE}gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl -lxtables >/dev/null 2>&1
-then
+    if $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL \
+	$(${PKG_CONFIG} xtables --cflags --libs) -ldl >/dev/null 2>&1
+    then
 	echo "TC_CONFIG_XT:=y" >>Config
 	echo "using xtables"
-fi
-rm -f /tmp/ipttest.c /tmp/ipttest
+    fi
+    rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
 }
 
 check_xt_old()
 {
-# bail if previous XT checks has already succeded.
-if grep TC_CONFIG_XT Config > /dev/null
-then
+    # bail if previous XT checks has already succeded.
+    if grep -q TC_CONFIG_XT Config
+    then
 	return
-fi
+    fi
 
-#check if we dont need our internal header ..
-cat >/tmp/ipttest.c <<EOF
+    #check if we dont need our internal header ..
+    cat >$TMPDIR/ipttest.c <<EOF
 #include <xtables.h>
 char *lib_dir;
 unsigned int global_option_offset = 0;
@@ -84,26 +117,26 @@ int main(int argc, char **argv) {
 }
 
 EOF
-${CROSS_COMPILE}gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
 
-if [ $? -eq 0 ]
-then
+    $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
 	echo "TC_CONFIG_XT_OLD:=y" >>Config
 	echo "using old xtables (no need for xt-internal.h)"
-fi
-rm -f /tmp/ipttest.c /tmp/ipttest
+    fi
+    rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
 }
 
 check_xt_old_internal_h()
 {
-# bail if previous XT checks has already succeded.
-if grep TC_CONFIG_XT Config > /dev/null
-then
+    # bail if previous XT checks has already succeded.
+    if grep -q TC_CONFIG_XT Config
+    then
 	return
-fi
+    fi
 
-#check if we need our own internal.h
-cat >/tmp/ipttest.c <<EOF
+    #check if we need our own internal.h
+    cat >$TMPDIR/ipttest.c <<EOF
 #include <xtables.h>
 #include "xt-internal.h"
 char *lib_dir;
@@ -124,14 +157,14 @@ int main(int argc, char **argv) {
 }
 
 EOF
-${CROSS_COMPILE}gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
+	$CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
 
-if [ $? -eq 0 ]
-then
-	echo "using old xtables with xt-internal.h"
-	echo "TC_CONFIG_XT_OLD_H:=y" >>Config
-fi
-rm -f /tmp/ipttest.c /tmp/ipttest
+	if [ $? -eq 0 ]
+	then
+	    echo "using old xtables with xt-internal.h"
+	    echo "TC_CONFIG_XT_OLD_H:=y" >>Config
+	fi
+	rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
 }
 
 check_ipt()
@@ -144,10 +177,92 @@ check_ipt()
 
 check_ipt_lib_dir()
 {
-	echo "IPT_LIB_DIR:=/usr/lib/xtables" >> Config
+	IPT_LIB_DIR=$(${PKG_CONFIG} --variable=xtlibdir xtables)
+	if [ -n "$IPT_LIB_DIR" ]; then
+		echo $IPT_LIB_DIR
+		echo "IPT_LIB_DIR:=$IPT_LIB_DIR" >> Config
+		return
+	fi
+
+	for dir in /lib /usr/lib /usr/local/lib
+	do
+		for file in $dir/{xtables,iptables}/lib*t_*so ; do
+			if [ -f $file ]; then
+				echo ${file%/*}
+				echo "IPT_LIB_DIR:=${file%/*}" >> Config
+				return
+			fi
+		done
+	done
+	echo "not found!"
+}
+
+check_setns()
+{
+    cat >$TMPDIR/setnstest.c <<EOF
+#include <sched.h>
+int main(int argc, char **argv) 
+{
+	(void)setns(0,0);
+	return 0;
+}
+EOF
+    $CC -I$INCLUDE -o $TMPDIR/setnstest $TMPDIR/setnstest.c >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+	echo "IP_CONFIG_SETNS:=y" >>Config
+	echo "yes"
+    else
+	echo "no"
+    fi
+    rm -f $TMPDIR/setnstest.c $TMPDIR/setnstest
+}
+
+check_ipset()
+{
+    cat >$TMPDIR/ipsettest.c <<EOF
+#include <linux/netfilter/ipset/ip_set.h>
+#ifndef IP_SET_INVALID
+#define IPSET_DIM_MAX 3
+typedef unsigned short ip_set_id_t;
+#endif
+#include <linux/netfilter/xt_set.h>
+
+struct xt_set_info info;
+#if IPSET_PROTOCOL == 6
+int main(void)
+{
+	return IPSET_MAXNAMELEN;
+}
+#else
+#error unknown ipset version
+#endif
+EOF
+
+    if $CC -I$INCLUDE -o $TMPDIR/ipsettest $TMPDIR/ipsettest.c >/dev/null 2>&1
+    then
+	echo "TC_CONFIG_IPSET:=y" >>Config
+	echo "yes"
+    else
+	echo "no"
+    fi
+    rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
+}
+
+check_selinux()
+# SELinux is a compile time option in the ss utility
+{
+	if ${PKG_CONFIG} libselinux --exists
+	then
+		echo "HAVE_SELINUX:=y" >>Config
+		echo "yes"
+	else
+		echo "no"
+	fi
 }
 
 echo "# Generated config based on" $INCLUDE >Config
+check_toolchain
 
 echo "TC schedulers"
 
@@ -160,5 +275,17 @@ check_xt_old
 check_xt_old_internal_h
 check_ipt
 
-echo -n "iptables modules directory: "
+echo -n " IPSET  "
+check_ipset
+
+echo -n -e "\niptables modules directory: "
 check_ipt_lib_dir
+
+echo -n "libc has setns: "
+check_setns
+
+echo -n "SELinux support: "
+check_selinux
+
+echo -e "\nDocs"
+check_docs

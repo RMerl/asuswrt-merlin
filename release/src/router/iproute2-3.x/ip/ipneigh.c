@@ -48,11 +48,11 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip neigh { add | del | change | replace } { ADDR [ lladdr LLADDR ]\n"
 		        "          [ nud { permanent | noarp | stale | reachable } ]\n"
 		        "          | proxy ADDR } [ dev DEV ]\n");
-	fprintf(stderr, "       ip neigh {show|flush} [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n");
+	fprintf(stderr, "       ip neigh {show|flush} [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n");
 	exit(-1);
 }
 
-int nud_state_a2n(unsigned *state, char *arg)
+static int nud_state_a2n(unsigned *state, const char *arg)
 {
 	if (matches(arg, "permanent") == 0)
 		*state = NUD_PERMANENT;
@@ -95,9 +95,9 @@ static int flush_update(void)
 static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct ndmsg 		ndm;
-		char   			buf[256];
+		struct nlmsghdr	n;
+		struct ndmsg		ndm;
+		char  			buf[256];
 	} req;
 	char  *d = NULL;
 	int dst_ok = 0;
@@ -157,14 +157,19 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		exit(-1);
 	}
 	req.ndm.ndm_family = dst.family;
-	addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen);
+	if (addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen) < 0)
+		return -1;
 
 	if (lla && strcmp(lla, "null")) {
 		char llabuf[20];
 		int l;
 
 		l = ll_addr_a2n(llabuf, sizeof(llabuf), lla);
-		addattr_l(&req.n, sizeof(req), NDA_LLADDR, llabuf, l);
+		if (l < 0)
+			return -1;
+
+		if (addattr_l(&req.n, sizeof(req), NDA_LLADDR, llabuf, l) < 0)
+			return -1;
 	}
 
 	ll_init_map(&rth);
@@ -174,7 +179,7 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
 
 	return 0;
@@ -189,7 +194,8 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct rtattr * tb[NDA_MAX+1];
 	char abuf[256];
 
-	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH) {
+	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH &&
+	    n->nlmsg_type != RTM_GETNEIGH) {
 		fprintf(stderr, "Not RTM_NEWNEIGH: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 
@@ -250,7 +256,9 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (n->nlmsg_type == RTM_DELNEIGH)
-		fprintf(fp, "Deleted ");
+		fprintf(fp, "delete ");
+	else if (n->nlmsg_type == RTM_GETNEIGH)
+		fprintf(fp, "miss ");
 	if (tb[NDA_DST]) {
 		fprintf(fp, "%s ",
 			format_host(r->ndm_family,
@@ -284,7 +292,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[NDA_PROBES] && show_stats) {
-		__u32 p = *(__u32 *) RTA_DATA(tb[NDA_PROBES]);
+		__u32 p = rta_getattr_u32(tb[NDA_PROBES]);
 		fprintf(fp, " probes %u", p);
 	}
 
@@ -310,19 +318,20 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-void ipneigh_reset_filter()
+void ipneigh_reset_filter(int ifindex)
 {
 	memset(&filter, 0, sizeof(filter));
 	filter.state = ~0;
+	filter.index = ifindex;
 }
 
-int do_show_or_flush(int argc, char **argv, int flush)
+static int do_show_or_flush(int argc, char **argv, int flush)
 {
 	char *filter_dev = NULL;
 	int state_given = 0;
 	struct ndmsg ndm = { 0 };
 
-	ipneigh_reset_filter();
+	ipneigh_reset_filter(0);
 
 	if (!filter.family)
 		filter.family = preferred_family;
@@ -395,14 +404,12 @@ int do_show_or_flush(int argc, char **argv, int flush)
 		filter.state &= ~NUD_FAILED;
 
 		while (round < MAX_ROUNDS) {
-			ndm.ndm_family = filter.family;
-
-			if (rtnl_dump_request(&rth, RTM_GETNEIGH, &ndm, sizeof(struct ndmsg)) < 0) {
+			if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNEIGH) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
 			}
 			filter.flushed = 0;
-			if (rtnl_dump_filter(&rth, print_neigh, stdout, NULL, NULL) < 0) {
+			if (rtnl_dump_filter(&rth, print_neigh, stdout) < 0) {
 				fprintf(stderr, "Flush terminated\n");
 				exit(1);
 			}
@@ -436,7 +443,7 @@ int do_show_or_flush(int argc, char **argv, int flush)
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(&rth, print_neigh, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, print_neigh, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}

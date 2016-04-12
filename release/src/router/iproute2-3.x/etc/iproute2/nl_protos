@@ -1,0 +1,23 @@
+# Netlink protocol names mapping
+
+0   rtnl
+1   unused
+2   usersock
+3   fw
+4   tcpdiag
+5   nflog
+6   xfrm
+7   selinux
+8   iscsi
+9   audit
+10  fiblookup
+11  connector
+12  nft 
+13  ip6fw
+14  dec-rt
+15  uevent
+16  genl
+18  scsi-trans
+19  ecryptfs
+20  rdma
+21  crypto 

@@ -1,0 +1,273 @@
+.TH IP\-RULE 8 "20 Dec 2011" "iproute2" "Linux"
+.SH "NAME"
+ip-rule \- routing policy database management
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B rule
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.B  ip rule
+.RB " [ " list " | " add " | " del " | " flush " ]"
+.I  SELECTOR ACTION
+
+.ti -8
+.IR SELECTOR " := [ "
+.B  from
+.IR PREFIX " ] [ "
+.B  to
+.IR PREFIX " ] [ "
+.B  tos
+.IR TOS " ] [ "
+.B  fwmark
+.IR FWMARK[/MASK] " ] [ "
+.B  iif
+.IR STRING " ] [ "
+.B  oif
+.IR STRING " ] [ "
+.B  pref
+.IR NUMBER " ]"
+
+.ti -8
+.IR ACTION " := [ "
+.B  table
+.IR TABLE_ID " ] [ "
+.B  nat
+.IR ADDRESS " ] [ "
+.BR prohibit " | " reject " | " unreachable " ] [ " realms
+.RI "[" SRCREALM "/]" DSTREALM " ]"
+.I  SUPPRESSOR
+
+.ti -8
+.IR SUPPRESSOR " := [ "
+.B  suppress_prefixlength
+.IR NUMBER " ] [ "
+.B  suppress_ifgroup
+.IR GROUP " ]"
+
+.ti -8
+.IR TABLE_ID " := [ "
+.BR local " | " main " | " default " |"
+.IR NUMBER " ]"
+
+.SH DESCRIPTION
+.I ip rule
+manipulates rules 
+in the routing policy database control the route selection algorithm.
+
+.P
+Classic routing algorithms used in the Internet make routing decisions
+based only on the destination address of packets (and in theory,
+but not in practice, on the TOS field).
+
+.P
+In some circumstances we want to route packets differently depending not only
+on destination addresses, but also on other packet fields: source address,
+IP protocol, transport protocol ports or even packet payload.
+This task is called 'policy routing'.
+
+.P
+To solve this task, the conventional destination based routing table, ordered
+according to the longest match rule, is replaced with a 'routing policy
+database' (or RPDB), which selects routes by executing some set of rules.
+
+.P
+Each policy routing rule consists of a
+.B selector
+and an
+.B action predicate.
+The RPDB is scanned in order of decreasing priority. The selector
+of each rule is applied to {source address, destination address, incoming
+interface, tos, fwmark} and, if the selector matches the packet,
+the action is performed.  The action predicate may return with success.
+In this case, it will either give a route or failure indication
+and the RPDB lookup is terminated. Otherwise, the RPDB program
+continues with the next rule.
+
+.P
+Semantically, the natural action is to select the nexthop and the output device.
+
+.P
+At startup time the kernel configures the default RPDB consisting of three
+rules:
+
+.TP
+1.
+Priority: 0, Selector: match anything, Action: lookup routing
+table
+.B local
+(ID 255).
+The
+.B local
+table is a special routing table containing
+high priority control routes for local and broadcast addresses.
+.sp
+Rule 0 is special. It cannot be deleted or overridden.
+
+.TP
+2.
+Priority: 32766, Selector: match anything, Action: lookup routing
+table
+.B main
+(ID 254).
+The
+.B main
+table is the normal routing table containing all non-policy
+routes. This rule may be deleted and/or overridden with other
+ones by the administrator.
+
+.TP
+3.
+Priority: 32767, Selector: match anything, Action: lookup routing
+table
+.B default
+(ID 253).
+The
+.B default
+table is empty.  It is reserved for some post-processing if no previous
+default rules selected the packet.
+This rule may also be deleted.
+
+.P
+Each RPDB entry has additional
+attributes.  F.e. each rule has a pointer to some routing
+table.  NAT and masquerading rules have an attribute to select new IP
+address to translate/masquerade.  Besides that, rules have some
+optional attributes, which routes have, namely
+.BR "realms" .
+These values do not override those contained in the routing tables.  They
+are only used if the route did not select any attributes.
+
+.sp
+The RPDB may contain rules of the following types:
+
+.RS
+.B unicast
+- the rule prescribes to return the route found
+in the routing table referenced by the rule.
+
+.B blackhole
+- the rule prescribes to silently drop the packet.
+
+.B unreachable
+- the rule prescribes to generate a 'Network is unreachable' error.
+
+.B prohibit
+- the rule prescribes to generate 'Communication is administratively
+prohibited' error.
+
+.B nat
+- the rule prescribes to translate the source address
+of the IP packet into some other value.
+.RE
+
+.TP
+.B ip rule add - insert a new rule
+.TP
+.B ip rule delete - delete a rule
+.RS
+.TP
+.BI type " TYPE " (default)
+the type of this rule.  The list of valid types was given in the previous
+subsection.
+
+.TP
+.BI from " PREFIX"
+select the source prefix to match.
+
+.TP
+.BI to " PREFIX"
+select the destination prefix to match.
+
+.TP
+.BI iif " NAME"
+select the incoming device to match.  If the interface is loopback,
+the rule only matches packets originating from this host.  This means
+that you may create separate routing tables for forwarded and local
+packets and, hence, completely segregate them.
+
+.TP
+.BI oif " NAME"
+select the outgoing device to match.  The outgoing interface is only
+available for packets originating from local sockets that are bound to
+a device.
+
+.TP
+.BI tos " TOS"
+.TP
+.BI dsfield " TOS"
+select the TOS value to match.
+
+.TP
+.BI fwmark " MARK"
+select the
+.B fwmark
+value to match.
+
+.TP
+.BI priority " PREFERENCE"
+the priority of this rule.  Each rule should have an explicitly
+set
+.I unique
+priority value.
+The options preference and order are synonyms with priority.
+
+.TP
+.BI table " TABLEID"
+the routing table identifier to lookup if the rule selector matches.
+It is also possible to use lookup instead of table.
+
+.TP
+.BI suppress_prefixlength " NUMBER"
+reject routing decisions that have a prefix length of NUMBER or less.
+
+.TP
+.BI suppress_ifgroup " GROUP"
+reject routing decisions that use a device belonging to the interface
+group GROUP.
+
+.TP
+.BI realms " FROM/TO"
+Realms to select if the rule matched and the routing table lookup
+succeeded.  Realm
+.I TO
+is only used if the route did not select any realm.
+
+.TP
+.BI nat " ADDRESS"
+The base of the IP address block to translate (for source addresses).
+The
+.I ADDRESS
+may be either the start of the block of NAT addresses (selected by NAT
+routes) or a local host address (or even zero).
+In the last case the router does not translate the packets, but
+masquerades them to this address.
+Using map-to instead of nat means the same thing.
+
+.B Warning:
+Changes to the RPDB made with these commands do not become active
+immediately.  It is assumed that after a script finishes a batch of
+updates, it flushes the routing cache with
+.BR "ip route flush cache" .
+.RE
+.TP
+.B ip rule flush - also dumps all the deleted rules.
+This command has no arguments.
+.TP
+.B ip rule show - list rules
+This command has no arguments.
+The options list or lst are synonyms with show.
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

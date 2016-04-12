@@ -210,11 +210,11 @@ static int atm_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	}
 	if (tb[TCA_ATM_HDR]) {
 		int i;
+		const __u8 *hdr = RTA_DATA(tb[TCA_ATM_HDR]);
 
 		fprintf(f,"hdr");
 		for (i = 0; i < RTA_PAYLOAD(tb[TCA_ATM_HDR]); i++)
-			fprintf(f,"%c%02x",i ? '.' : ' ',
-			    ((unsigned char *) RTA_DATA(tb[TCA_ATM_HDR]))[i]);
+			fprintf(f,"%c%02x", i ? '.' : ' ', hdr[i]);
 		if (!i) fprintf(f," .");
 		fprintf(f," ");
 	}
@@ -224,7 +224,7 @@ static int atm_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (RTA_PAYLOAD(tb[TCA_ATM_EXCESS]) < sizeof(excess))
 			fprintf(stderr,"ATM: excess class ID too short\n");
 		else {
-			excess = *(__u32 *) RTA_DATA(tb[TCA_ATM_EXCESS]);
+			excess = rta_getattr_u32(tb[TCA_ATM_EXCESS]);
 			if (!excess) fprintf(f,"excess clp ");
 			else {
 				char buf[64];

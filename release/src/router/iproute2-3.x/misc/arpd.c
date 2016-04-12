@@ -36,6 +36,7 @@
 
 #include "libnetlink.h"
 #include "utils.h"
+#include "rt_names.h"
 
 int resolve_hosts;
 
@@ -90,15 +91,17 @@ int negative_timeout = 60;
 int no_kernel_broadcasts;
 int broadcast_rate = 1000;
 int broadcast_burst = 3000;
+int poll_timeout = 30000;
 
-void usage(void)
+static void usage(void)
 {
 	fprintf(stderr,
-"Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ] [ -f file ] [ -n time ] [ -R rate ] [ interfaces ]\n");
+		"Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ]"
+		" [ -f file ] [ -n time ] [-p interval ] [ -R rate ] [ interfaces ]\n");
 	exit(1);
 }
 
-int handle_if(int ifindex)
+static int handle_if(int ifindex)
 {
 	int i;
 
@@ -113,7 +116,7 @@ int handle_if(int ifindex)
 
 int sysctl_adjusted;
 
-void do_sysctl_adjustments(void)
+static void do_sysctl_adjustments(void)
 {
 	int i;
 
@@ -146,7 +149,7 @@ void do_sysctl_adjustments(void)
 	sysctl_adjusted = 1;
 }
 
-void undo_sysctl_adjustments(void)
+static void undo_sysctl_adjustments(void)
 {
 	int i;
 
@@ -176,7 +179,7 @@ void undo_sysctl_adjustments(void)
 }
 
 
-int send_probe(int ifindex, __u32 addr)
+static int send_probe(int ifindex, __u32 addr)
 {
 	struct ifreq ifr;
 	struct sockaddr_in dst;
@@ -236,7 +239,7 @@ int send_probe(int ifindex, __u32 addr)
 
 /* Be very tough on sending probes: 1 per second with burst of 3. */
 
-int queue_active_probe(int ifindex, __u32 addr)
+static int queue_active_probe(int ifindex, __u32 addr)
 {
 	static struct timeval prev;
 	static int buckets;
@@ -260,7 +263,7 @@ int queue_active_probe(int ifindex, __u32 addr)
 	return -1;
 }
 
-int respond_to_kernel(int ifindex, __u32 addr, char *lla, int llalen)
+static int respond_to_kernel(int ifindex, __u32 addr, char *lla, int llalen)
 {
 	struct {
 		struct nlmsghdr 	n;
@@ -281,10 +284,10 @@ int respond_to_kernel(int ifindex, __u32 addr, char *lla, int llalen)
 
 	addattr_l(&req.n, sizeof(req), NDA_DST, &addr, 4);
 	addattr_l(&req.n, sizeof(req), NDA_LLADDR, lla, llalen);
-	return rtnl_send(&rth, (char*)&req, req.n.nlmsg_len) <= 0;
+	return rtnl_send(&rth, &req, req.n.nlmsg_len) <= 0;
 }
 
-void prepare_neg_entry(__u8 *ndata, __u32 stamp)
+static void prepare_neg_entry(__u8 *ndata, __u32 stamp)
 {
 	ndata[0] = 0xFF;
 	ndata[1] = 0;
@@ -295,7 +298,7 @@ void prepare_neg_entry(__u8 *ndata, __u32 stamp)
 }
 
 
-int do_one_request(struct nlmsghdr *n)
+static int do_one_request(struct nlmsghdr *n)
 {
 	struct ndmsg *ndm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
@@ -424,12 +427,16 @@ int do_one_request(struct nlmsghdr *n)
 	return 0;
 }
 
-void load_initial_table(void)
+static void load_initial_table(void)
 {
-	rtnl_wilddump_request(&rth, AF_INET, RTM_GETNEIGH);
+	if (rtnl_wilddump_request(&rth, AF_INET, RTM_GETNEIGH) < 0) {
+		perror("dump request failed");
+		exit(1);
+	}
+
 }
 
-void get_kern_msg(void)
+static void get_kern_msg(void)
 {
 	int status;
 	struct nlmsghdr *h;
@@ -475,7 +482,7 @@ void get_kern_msg(void)
 }
 
 /* Receive gratuitous ARP messages and store them, that's all. */
-void get_arp_pkt(void)
+static void get_arp_pkt(void)
 {
 	unsigned char buf[1024];
 	struct sockaddr_ll sll;
@@ -530,7 +537,7 @@ void get_arp_pkt(void)
 	dbase->put(dbase, &dbkey, &dbdat, 0);
 }
 
-void catch_signal(int sig, void (*handler)(int))
+static void catch_signal(int sig, void (*handler)(int))
 {
 	struct sigaction sa;
 
@@ -546,21 +553,21 @@ void catch_signal(int sig, void (*handler)(int))
 sigjmp_buf env;
 volatile int in_poll;
 
-void sig_exit(int signo)
+static void sig_exit(int signo)
 {
 	do_exit = 1;
 	if (in_poll)
 		siglongjmp(env, 1);
 }
 
-void sig_sync(int signo)
+static void sig_sync(int signo)
 {
 	do_sync = 1;
 	if (in_poll)
 		siglongjmp(env, 1);
 }
 
-void sig_stats(int signo)
+static void sig_stats(int signo)
 {
 	do_sync = 1;
 	do_stats = 1;
@@ -568,7 +575,7 @@ void sig_stats(int signo)
 		siglongjmp(env, 1);
 }
 
-void send_stats(void)
+static void send_stats(void)
 {
 	syslog(LOG_INFO, "arp_rcv: n%lu c%lu app_rcv: tot %lu hits %lu bad %lu neg %lu sup %lu",
 	       stats.arp_new, stats.arp_change,
@@ -591,7 +598,7 @@ int main(int argc, char **argv)
 	int do_list = 0;
 	char *do_load = NULL;
 
-	while ((opt = getopt(argc, argv, "h?b:lf:a:n:kR:B:")) != EOF) {
+	while ((opt = getopt(argc, argv, "h?b:lf:a:n:p:kR:B:")) != EOF) {
 		switch (opt) {
 	        case 'b':
 			dbname = optarg;
@@ -614,6 +621,12 @@ int main(int argc, char **argv)
 			break;
 		case 'k':
 			no_kernel_broadcasts = 1;
+			break;
+		case 'p':
+			if ((poll_timeout = 1000 * strtod(optarg, NULL)) < 100) {
+				fprintf(stderr,"Invalid poll timeout\n");
+				exit(-1);
+			}
 			break;
 		case 'R':
 			if ((broadcast_rate = atoi(optarg)) <= 0 ||
@@ -709,8 +722,7 @@ int main(int argc, char **argv)
 				goto do_abort;
 			}
 
-			dbdat.data = hexstring_a2n(macbuf, b1, 6);
-			if (dbdat.data == NULL)
+			if (ll_addr_a2n((char *) b1, 6, macbuf) != 6)
 				goto do_abort;
 			dbdat.size = 6;
 
@@ -735,7 +747,7 @@ int main(int argc, char **argv)
 					printf("%-8d %-15s %s\n",
 					       key->iface,
 					       inet_ntoa(*(struct in_addr*)&key->addr),
-					       hexstring_n2a(dbdat.data, 6, b1, 18));
+					       ll_addr_n2a(dbdat.data, 6, ARPHRD_ETHER, b1, 18));
 				} else {
 					printf("%-8d %-15s FAILED: %dsec ago\n",
 					       key->iface,
@@ -807,7 +819,7 @@ int main(int argc, char **argv)
 		}
 		if (do_stats)
 			send_stats();
-		if (poll(pset, 2, 30000) > 0) {
+		if (poll(pset, 2, poll_timeout) > 0) {
 			in_poll = 0;
 			if (pset[0].revents&EVENTS)
 				get_arp_pkt();

@@ -1,0 +1,76 @@
+.TH IP\-FOU 8 "2 Nov 2014" "iproute2" "Linux"
+.SH "NAME"
+ip-fou \- Foo-over-UDP receive port configuration
+.P
+ip-gue \- Generic UDP Encapsulation receive port configuration
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B fou
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+.ti -8
+.BR "ip fou add"
+.B port
+.IR PORT
+.RB "{ "
+.B gue
+.RI "|"
+.B ipproto
+.IR PROTO
+.RB " }"
+.br
+.ti -8
+.BR "ip fou del"
+.B port
+.IR PORT
+.SH DESCRIPTION
+The
+.B ip fou
+commands are used to create and delete receive ports for Foo-over-UDP
+(FOU) as well as Generic UDP Encapsulation (GUE).
+.PP
+Foo-over-UDP allows encapsulating packets of an IP protocol directly
+over UDP. The receiver infers the protocol of a packet received on
+a FOU UDP port to be the protocol configured for the port.
+.PP
+Generic UDP Encapsulation (GUE) encapsulates packets of an IP protocol
+within UDP and an encapsulation header. The encapsulation header contains the
+IP protocol number for the encapsulated packet.
+.PP
+When creating a FOU or GUE receive port, the port number is specified in
+.I PORT
+argument. If FOU is used, the IP protocol number associated with the port is specified in
+.I PROTO
+argument.
+.PP
+A FOU or GUE receive port is deleted by specifying
+.I PORT
+in the delete command.
+.SH EXAMPLES
+.PP
+.SS Configure a FOU receive port for GRE bound to 7777
+.nf
+# ip fou add port 8888 ipproto 47
+.PP
+.SS Configure a FOU receive port for IPIP bound to 8888
+.nf
+# ip fou add port 8888 ipproto 4
+.PP
+.SS Configure a GUE receive port bound to 9999
+.nf
+# ip fou add port 9999 gue
+.PP
+.SS Delete the GUE receive port bound to 9999
+.nf
+# ip fou del port 9999
+.SH SEE ALSO
+.br
+.BR ip (8)
+.SH AUTHOR
+Tom Herbert <therbert@google.com>

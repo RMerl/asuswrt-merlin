@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>

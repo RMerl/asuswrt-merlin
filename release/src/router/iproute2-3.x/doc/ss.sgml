@@ -3,7 +3,7 @@
 <article>
 
 <title>SS Utility: Quick Intro
-<author>Alexey Kuznetosv, <tt/kuznet@ms2.inr.ac.ru/
+<author>Alexey Kuznetsov, <tt/kuznet@ms2.inr.ac.ru/
 <date>some_negative_number, 20 Sep 2001
 <abstract>
 <tt/ss/ is one another utility to investigate sockets.

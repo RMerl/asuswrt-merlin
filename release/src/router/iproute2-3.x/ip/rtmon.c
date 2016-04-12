@@ -34,7 +34,7 @@ static void write_stamp(FILE *fp)
 	struct nlmsghdr *n1 = (void*)buf;
 	struct timeval tv;
 
-	n1->nlmsg_type = 15;
+	n1->nlmsg_type = NLMSG_TSTAMP;
 	n1->nlmsg_flags = 0;
 	n1->nlmsg_seq = 0;
 	n1->nlmsg_pid = 0;
@@ -56,7 +56,7 @@ static int dump_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return 0;
 }
 
-void usage(void)
+static void usage(void)
 {
 	fprintf(stderr, "Usage: rtmon file FILE [ all | LISTofOBJECTS]\n");
 	fprintf(stderr, "LISTofOBJECTS := [ link ] [ address ] [ route ]\n");
@@ -163,7 +163,7 @@ main(int argc, char **argv)
 
 	write_stamp(fp);
 
-	if (rtnl_dump_filter(&rth, dump_msg, fp, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, dump_msg, fp) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

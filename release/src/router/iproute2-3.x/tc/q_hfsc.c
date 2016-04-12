@@ -43,7 +43,7 @@ explain_class(void)
 	fprintf(stderr,
 		"Usage: ... hfsc [ [ rt SC ] [ ls SC ] | [ sc SC ] ] [ ul SC ]\n"
 		"\n"
-		"SC := [ [ m1 BPS ] [ d SEC ] m2 BPS\n"
+		"SC := [ [ m1 BPS ] d SEC ] m2 BPS\n"
 		"\n"
 		" m1 : slope of first segment\n"
 		" d  : x-coordinate of intersection\n"
@@ -56,6 +56,10 @@ explain_class(void)
 		" umax : maximum unit of work\n"
 		" dmax : maximum delay\n"
 		" rate : rate\n"
+		"\n"
+		"Remarks:\n"
+		" - at least one of 'rt', 'ls' or 'sc' must be specified\n"
+		" - 'ul' can only be specified with 'ls' or 'sc'\n"
 		"\n"
 	);
 }

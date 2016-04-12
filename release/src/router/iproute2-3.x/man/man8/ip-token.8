@@ -1,0 +1,66 @@
+.TH IP\-TOKEN 8 "28 Mar 2013" "iproute2" "Linux"
+.SH "NAME"
+ip-token \- tokenized interface identifier support
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip token
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "ip token" " { " set " } "
+.IR TOKEN
+.B dev
+.IR DEV
+
+.ti -8
+.BR "ip token" " { " get " } "
+.B dev
+.IR DEV
+
+.ti -8
+.BR "ip token" " { " list " }"
+
+.SH "DESCRIPTION"
+IPv6 tokenized interface identifier support is used for assigning well-known
+host-part addresses to nodes whilst still obtaining a global network prefix
+from Router advertisements. The primary target for tokenized identifiers are
+server platforms where addresses are usually manually configured, rather than
+using DHCPv6 or SLAAC. By using tokenized identifiers, hosts can still
+determine their network prefix by use of SLAAC, but more readily be
+automatically renumbered should their network prefix change [1]. Tokenized
+IPv6 Identifiers are described in the draft
+[1]: <draft-chown-6man-tokenised-ipv6-identifiers-02>.
+
+.SS ip token set - set an interface token
+set the interface token to the kernel. Once a token is set, it cannot be
+removed from the interface, only overwritten.
+.TP
+.I TOKEN
+the interface identifier token address.
+.TP
+.BI dev " DEV"
+the networking interface.
+
+.SS ip token get - get the interface token from the kernel
+show a tokenized interface identifier of a particular networking device.
+.B Arguments:
+coincide with the arguments of
+.B ip token set
+but the
+.I TOKEN
+must be left out.
+.SS ip token list - list all interface tokens
+list all tokenized interface identifiers for the networking interfaces from
+the kernel.
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Manpage by Daniel Borkmann

@@ -56,12 +56,12 @@ unsigned tc_core_ktime2time(unsigned ktime)
 	return ktime / clock_factor;
 }
 
-unsigned tc_calc_xmittime(unsigned rate, unsigned size)
+unsigned tc_calc_xmittime(__u64 rate, unsigned size)
 {
-	return tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/rate));
+	return tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/(double)rate));
 }
 
-unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
+unsigned tc_calc_xmitsize(__u64 rate, unsigned ticks)
 {
 	return ((double)rate*tc_core_tick2time(ticks))/TIME_UNITS_PER_SEC;
 }
@@ -76,7 +76,7 @@ unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
  * (as the table will always be aligned for 48 bytes).
  *  --Hawk, d.7/11-2004. <hawk@diku.dk>
  */
-unsigned tc_align_to_atm(unsigned size)
+static unsigned tc_align_to_atm(unsigned size)
 {
 	int linksize, cells;
 	cells = size / ATM_CELL_PAYLOAD;
@@ -87,7 +87,7 @@ unsigned tc_align_to_atm(unsigned size)
 	return linksize;
 }
 
-unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linklayer)
+static unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linklayer)
 {
 	if (sz < mpu)
 		sz = mpu;
@@ -101,6 +101,21 @@ unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linklayer)
 		return sz;
 	}
 }
+
+/* Notice, the rate table calculated here, have gotten replaced in the
+ * kernel and is no-longer used for lookups.
+ *
+ * This happened in kernel release v3.8 caused by kernel
+ *  - commit 56b765b79 ("htb: improved accuracy at high rates").
+ * This change unfortunately caused breakage of tc overhead and
+ * linklayer parameters.
+ *
+ * Kernel overhead handling got fixed in kernel v3.10 by
+ * - commit 01cb71d2d47 (net_sched: restore "overhead xxx" handling)
+ *
+ * Kernel linklayer handling got fixed in kernel v3.11 by
+ * - commit 8a8e3d84b17 (net_sched: restore "linklayer atm" handling)
+ */
 
 /*
    rtab[pkt_len>>cell_log] = pkt_xmit_time
@@ -131,6 +146,7 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 
 	r->cell_align=-1; // Due to the sz calc
 	r->cell_log=cell_log;
+	r->linklayer = (linklayer & TC_LINKLAYER_MASK);
 	return cell_log;
 }
 
@@ -181,7 +197,7 @@ again:
 	return 0;
 }
 
-int tc_core_init()
+int tc_core_init(void)
 {
 	FILE *fp;
 	__u32 clock_res;

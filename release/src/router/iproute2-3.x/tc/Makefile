@@ -3,13 +3,17 @@ TCOBJ= tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o \
        m_ematch.o emp_ematch.yacc.o emp_ematch.lex.o
 
 include ../Config
+
+ifeq ($(IP_CONFIG_SETNS),y)
+	CFLAGS += -DHAVE_SETNS
+endif
+
 SHARED_LIBS ?= y
 
 TCMODULES :=
 TCMODULES += q_fifo.o
 TCMODULES += q_sfq.o
-TCMODULES += q_esfq.o
-#TCMODULES += q_red.o
+TCMODULES += q_red.o
 TCMODULES += q_prio.o
 TCMODULES += q_tbf.o
 TCMODULES += q_cbq.o
@@ -18,16 +22,17 @@ TCMODULES += q_multiq.o
 TCMODULES += q_netem.o
 TCMODULES += q_choke.o
 TCMODULES += q_sfb.o
-#TCMODULES += f_rsvp.o
+TCMODULES += f_rsvp.o
 TCMODULES += f_u32.o
 TCMODULES += f_route.o
 TCMODULES += f_fw.o
 TCMODULES += f_basic.o
+TCMODULES += f_bpf.o
 TCMODULES += f_flow.o
 TCMODULES += f_cgroup.o
-#TCMODULES += q_dsmark.o
-#TCMODULES += q_gred.o
-#TCMODULES += f_tcindex.o
+TCMODULES += q_dsmark.o
+TCMODULES += q_gred.o
+TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
 TCMODULES += q_hfsc.o
 TCMODULES += q_htb.o
@@ -39,6 +44,8 @@ TCMODULES += m_nat.o
 TCMODULES += m_pedit.o
 TCMODULES += m_skbedit.o
 TCMODULES += m_csum.o
+TCMODULES += m_simple.o
+TCMODULES += m_vlan.o
 TCMODULES += p_ip.o
 TCMODULES += p_icmp.o
 TCMODULES += p_tcp.o
@@ -46,8 +53,20 @@ TCMODULES += p_udp.o
 TCMODULES += em_nbyte.o
 TCMODULES += em_cmp.o
 TCMODULES += em_u32.o
+TCMODULES += em_canid.o
 TCMODULES += em_meta.o
 TCMODULES += q_mqprio.o
+TCMODULES += q_codel.o
+TCMODULES += q_fq_codel.o
+TCMODULES += q_fq.o
+TCMODULES += q_pie.o
+TCMODULES += q_hhf.o
+
+ifeq ($(TC_CONFIG_IPSET), y)
+  ifeq ($(TC_CONFIG_XT), y)
+    TCMODULES += em_ipset.o
+  endif
+endif
 
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
@@ -85,13 +104,14 @@ TCLIB += tc_stab.o
 
 CFLAGS += -DCONFIG_GACT -DCONFIG_GACT_PROB
 ifneq ($(IPT_LIB_DIR),)
-	CFLAGS += -DIPT_LIB_DIR=\"$(IPT_LIB_DIR)\" -DXT_LIB_DIR=\"$(IPT_LIB_DIR)\"
+	CFLAGS += -DIPT_LIB_DIR=\"$(IPT_LIB_DIR)\"
 endif
 
 YACC := bison
 LEX := flex
+CFLAGS += -DYY_NO_INPUT
 
-MODDESTDIR := $(DESTDIR)$(patsubst /usr%,%,$(LIBDIR))/tc
+MODDESTDIR := $(DESTDIR)$(LIBDIR)/tc
 
 %.so: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic $< -o $@
@@ -99,7 +119,7 @@ MODDESTDIR := $(DESTDIR)$(patsubst /usr%,%,$(LIBDIR))/tc
 
 all: libtc.a tc $(TCSO)
 
-tc: $(TCOBJ) $(LIBNETLINK) $(LIBUTIL) $(TCLIB)
+tc: $(TCOBJ) $(TCLIB)
 
 libtc.a: $(TCLIB)
 	$(AR) rcs $@ $(TCLIB)
@@ -120,22 +140,29 @@ install: all
 
 clean:
 	rm -f $(TCOBJ) $(TCLIB) libtc.a tc *.so emp_ematch.yacc.h; \
-	rm -f emp_ematch.yacc.output
+	rm -f emp_ematch.yacc.*
 
 q_atm.so: q_atm.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
 
 m_xt.so: m_xt.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(IPTL) -shared -fpic -o m_xt.so m_xt.c -lxtables
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt.so m_xt.c $$($(PKG_CONFIG) xtables --cflags --libs)
 
 m_xt_old.so: m_xt_old.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(IPTL) -shared -fpic -o m_xt_old.so m_xt_old.c -lxtables
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt_old.so m_xt_old.c $$($(PKG_CONFIG) xtables --cflags --libs)
+
+em_ipset.o: CFLAGS += $$($(PKG_CONFIG) xtables --cflags)
 
 %.yacc.c: %.y
 	$(YACC) $(YACCFLAGS) -o $@ $<
 
 %.lex.c: %.l
 	$(LEX) $(LEXFLAGS) -o$@ $<
+
+# our lexer includes the header from yacc, so make sure
+# we don't attempt to compile it before the header has
+# been generated as part of the yacc step.
+emp_ematch.lex.o: emp_ematch.yacc.c
 
 ifneq ($(SHARED_LIBS),y)
 

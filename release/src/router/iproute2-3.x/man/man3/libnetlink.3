@@ -100,7 +100,7 @@ in case of error. NULL for
 means to not use a filter.
 .B junk
 is used to filter messages not destined to the local socket.
-Only one message bundle is received. Unless there is no message 
+Only one message bundle is received. If there is a message
 pending, this function does not block.
 
 .TP
@@ -112,7 +112,7 @@ is a callback that gets the message source address, the message itself,
 and the
 .B jarg
 cookie as arguments. It will get called for all received messages.
-Only one message bundle is received. Unless there is no message 
+Only one message bundle is received. If there is a message
 pending this function does not block.
 
 .TP
@@ -123,7 +123,7 @@ but reads a netlink message bundle from the file
 .B file
 and passes the messages to
 .B handler
-for parsing. The file contains raw data as received from a rtnetlink socket.
+for parsing. The file should contain raw data as received from a rtnetlink socket.
 .PP
 The following functions are useful to construct custom rtnetlink messages. For
 simple database dumping with filtering it is better to use the higher level
@@ -183,6 +183,8 @@ Initialize the rtnetlink attribute
 with a variable length data value.
 
 .SH BUGS
+This library is meant for internal use, use libmnl for new programs.
+
 The functions sometimes use fprintf and exit when a fatal error occurs.
 This library should be named librtnetlink.
 

@@ -19,3 +19,5 @@ extern int parse_estimator(int *p_argc, char ***p_argv, struct tc_estimator *est
 struct tc_sizespec;
 extern int parse_size_table(int *p_argc, char ***p_argv, struct tc_sizespec *s);
 extern int check_size_table_opts(struct tc_sizespec *s);
+
+extern int show_graph;

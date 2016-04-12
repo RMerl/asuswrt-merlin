@@ -32,7 +32,7 @@ static void meta_print_usage(FILE *fd)
 	    "where: OBJECT  := { META_ID | VALUE }\n" \
 	    "       META_ID := id [ shift SHIFT ] [ mask MASK ]\n" \
 	    "\n" \
-	    "Example: meta(nfmark gt 24)\n" \
+	    "Example: meta(nf_mark gt 24)\n" \
 	    "         meta(indev shift 1 eq \"ppp\")\n" \
 	    "         meta(tcindex mask 0xf0 eq 0xf0)\n" \
 	    "\n" \
@@ -448,7 +448,7 @@ static inline int print_value(FILE *fd, int type, struct rtattr *rta)
 				    "size mismatch.\n");
 				return -1;
 			}
-			fprintf(fd, "%d", *(__u32 *) RTA_DATA(rta));
+			fprintf(fd, "%d", rta_getattr_u32(rta));
 			break;
 
 		case TCF_META_TYPE_VAR:
@@ -485,7 +485,7 @@ static int print_object(FILE *fd, struct tcf_meta_val *obj, struct rtattr *rta)
 					goto size_mismatch;
 
 				fprintf(fd, " mask 0x%08x",
-				    *(__u32*) RTA_DATA(rta));
+				    rta_getattr_u32(rta));
 			}
 			break;
 	}

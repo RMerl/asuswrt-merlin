@@ -388,6 +388,20 @@ enum {
 
 #define TCA_CGROUP_MAX (__TCA_CGROUP_MAX - 1)
 
+/* BPF classifier */
+
+enum {
+	TCA_BPF_UNSPEC,
+	TCA_BPF_ACT,
+	TCA_BPF_POLICE,
+	TCA_BPF_CLASSID,
+	TCA_BPF_OPS_LEN,
+	TCA_BPF_OPS,
+	__TCA_BPF_MAX,
+};
+
+#define TCA_BPF_MAX (__TCA_BPF_MAX - 1)
+
 /* Extended Matches */
 
 struct tcf_ematch_tree_hdr {
@@ -451,8 +465,10 @@ enum {
 #define	TCF_EM_U32		3
 #define	TCF_EM_META		4
 #define	TCF_EM_TEXT		5
-#define        TCF_EM_VLAN		6
-#define	TCF_EM_MAX		6
+#define	TCF_EM_VLAN		6
+#define	TCF_EM_CANID		7
+#define	TCF_EM_IPSET		8
+#define	TCF_EM_MAX		8
 
 enum {
 	TCF_EM_PROG_TC

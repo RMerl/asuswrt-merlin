@@ -1,0 +1,143 @@
+.TH "IP\-TCP_METRICS" 8 "23 Aug 2012" "iproute2" "Linux"
+.SH "NAME"
+ip-tcp_metrics \- management for TCP Metrics
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B tcp_metrics
+.RI "{ " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "ip tcp_metrics" " { " show " | " flush " }
+.IR SELECTOR
+
+.ti -8
+.BR "ip tcp_metrics delete " [ " address " ]
+.IR ADDRESS
+
+.ti -8
+.IR SELECTOR " := "
+.RB "[ [ " address " ] "
+.IR PREFIX " ]"
+
+.SH "DESCRIPTION"
+.B ip tcp_metrics
+is used to manipulate entries in the kernel that keep TCP information
+for IPv4 and IPv6 destinations. The entries are created when
+TCP sockets want to share information for destinations and are
+stored in a cache keyed by the destination address. The saved
+information may include values for metrics (initially obtained from
+routes), recent TSVAL for TIME-WAIT recycling purposes, state for the
+Fast Open feature, etc.
+For performance reasons the cache can not grow above configured limit
+and the older entries are replaced with fresh information, sometimes
+reclaimed and used for new destinations. The kernel never removes
+entries, they can be flushed only with this tool.
+
+.SS ip tcp_metrics show - show cached entries
+
+.TP
+.BI address " PREFIX " (default)
+IPv4/IPv6 prefix or address. If no prefix is provided all entries are shown.
+
+.LP
+The output may contain the following information:
+
+.BI age " <S.MMM>" sec
+- time after the entry was created, reset or updated with metrics
+from sockets. The entry is reset and refreshed on use with metrics from
+route if the metrics are not updated in last hour. Not all cached values
+reset the age on update.
+
+.BI cwnd " <N>"
+- CWND metric value
+
+.BI fo_cookie " <HEX-STRING>"
+- Cookie value received in SYN-ACK to be used by Fast Open for next SYNs
+
+.BI fo_mss " <N>"
+- MSS value received in SYN-ACK to be used by Fast Open for next SYNs
+
+.BI fo_syn_drops " <N>/<S.MMM>" "sec ago"
+- Number of drops of initial outgoing Fast Open SYNs with data
+detected by monitoring the received SYN-ACK after SYN retransmission.
+The seconds show the time after last SYN drop and together with
+the drop count can be used to disable Fast Open for some time.
+
+.BI reordering " <N>"
+- Reordering metric value
+
+.BI rtt " <N>" us
+- RTT metric value
+
+.BI rttvar " <N>" us
+- RTTVAR metric value
+
+.BI ssthresh " <SSTHRESH>"
+- SSTHRESH metric value
+
+.BI tw_ts " <TSVAL>/<SEC>" "sec ago"
+- recent TSVAL and the seconds after saving it into TIME-WAIT socket
+
+.SS ip tcp_metrics delete - delete single entry
+
+.TP
+.BI address " ADDRESS " (default)
+IPv4/IPv6 address. The address is a required argument.
+
+.SS ip tcp_metrics flush - flush entries
+This command flushes the entries selected by some criteria.
+
+.PP
+This command has the same arguments as
+.B show.
+
+.SH "EXAMPLES"
+.PP
+ip tcp_metrics show address 192.168.0.0/24
+.RS 4
+Shows the entries for destinations from subnet
+.RE
+.PP
+ip tcp_metrics show 192.168.0.0/24
+.RS 4
+The same but address keyword is optional
+.RE
+.PP
+ip tcp_metrics
+.RS 4
+Show all is the default action
+.RE
+.PP
+ip tcp_metrics delete 192.168.0.1
+.RS 4
+Removes the entry for 192.168.0.1 from cache.
+.RE
+.PP
+ip tcp_metrics flush 192.168.0.0/24
+.RS 4
+Removes entries for destinations from subnet
+.RE
+.PP
+ip tcp_metrics flush all
+.RS 4
+Removes all entries from cache
+.RE
+.PP
+ip -6 tcp_metrics flush all
+.RS 4
+Removes all IPv6 entries from cache keeping the IPv4 entries.
+.RE
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Julian Anastasov <ja@ssi.bg>

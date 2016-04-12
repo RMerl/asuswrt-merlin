@@ -18,8 +18,8 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... cgroup [ match EMATCH_TREE ] [ police POLICE_SPEC ]\n");
-	fprintf(stderr, "                 [ action ACTION_SPEC ]\n");
+	fprintf(stderr, "Usage: ... cgroup [ match EMATCH_TREE ]\n");
+	fprintf(stderr, "                  [ action ACTION_SPEC ]\n");
 }
 
 static int cgroup_parse_opt(struct filter_util *qu, char *handle,

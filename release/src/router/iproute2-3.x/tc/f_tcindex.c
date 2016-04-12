@@ -21,7 +21,7 @@ static void explain(void)
 	    " [ shift SHIFT ]\n");
 	fprintf(stderr,"                    [ pass_on | fall_through ]\n");
 	fprintf(stderr,"                    [ classid CLASSID ] "
-	    "[ police POLICE_SPEC ]\n");
+	    "[ action ACTION_SPEC ]\n");
 }
 
 static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
@@ -106,6 +106,14 @@ static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
 			}
 			continue;
 		}
+		else if (!strcmp(*argv,"action")) {
+			NEXT_ARG();
+			if (parse_police(&argc, &argv, TCA_TCINDEX_ACT, n)) {
+				fprintf(stderr, "Illegal \"action\"\n");
+				return -1;
+			}
+			continue;
+		}
 		else {
 			explain();
 			return -1;
@@ -134,7 +142,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_HASH]) < sizeof(hash))
 			return -1;
-		hash = *(__u16 *) RTA_DATA(tb[TCA_TCINDEX_HASH]);
+		hash = rta_getattr_u16(tb[TCA_TCINDEX_HASH]);
 		fprintf(f,"hash %d ",hash);
 	}
 	if (tb[TCA_TCINDEX_MASK]) {
@@ -142,7 +150,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_MASK]) < sizeof(mask))
 			return -1;
-		mask = *(__u16 *) RTA_DATA(tb[TCA_TCINDEX_MASK]);
+		mask = rta_getattr_u16(tb[TCA_TCINDEX_MASK]);
 		fprintf(f,"mask 0x%04x ",mask);
 	}
 	if (tb[TCA_TCINDEX_SHIFT]) {
@@ -170,6 +178,10 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 	if (tb[TCA_TCINDEX_POLICE]) {
 		fprintf(f, "\n");
 		tc_print_police(f, tb[TCA_TCINDEX_POLICE]);
+	}
+	if (tb[TCA_TCINDEX_ACT]) {
+		fprintf(f, "\n");
+		tc_print_police(f, tb[TCA_TCINDEX_ACT]);
 	}
 	return 0;
 }

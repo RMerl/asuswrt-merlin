@@ -22,6 +22,7 @@
 
 #include "utils.h"
 #include "tc_util.h"
+#include "tc_common.h"
 
 static void est_help(void);
 
@@ -31,7 +32,6 @@ static void est_help(void)
 	fprintf(stderr, "  INTERVAL is interval between measurements\n");
 	fprintf(stderr, "  TIME-CONST is averaging time constant\n");
 	fprintf(stderr, "Example: ... est 1sec 8sec\n");
-	return;
 }
 
 int parse_estimator(int *p_argc, char ***p_argv, struct tc_estimator *est)

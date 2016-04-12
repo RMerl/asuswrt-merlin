@@ -1,0 +1,838 @@
+.TH IP\-LINK 8 "13 Dec 2012" "iproute2" "Linux"
+.SH "NAME"
+ip-link \- network device configuration
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B link
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-h\fR[\fIuman-readable\fR] |
+\fB\-s\fR[\fItatistics\fR] |
+\fB\-r\fR[\fIesolve\fR] |
+\fB\-f\fR[\fIamily\fR] {
+.BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
+\fB\-o\fR[\fIneline\fR] }
+
+.ti -8
+.BI "ip link add"
+.RB "[ " link
+.IR DEVICE " ]"
+.RB "[ " name " ]"
+.I NAME
+.br
+.RB "[ " txqueuelen
+.IR PACKETS " ]"
+.br
+.RB "[ " address
+.IR LLADDR " ]"
+.RB "[ " broadcast
+.IR LLADDR " ]"
+.br
+.RB "[ " mtu
+.IR MTU " ]"
+.RB "[ " index
+.IR IDX " ]"
+.br
+.RB "[ " numtxqueues
+.IR QUEUE_COUNT " ]"
+.RB "[ " numrxqueues
+.IR QUEUE_COUNT " ]"
+.br
+.BR type " TYPE"
+.RI "[ " ARGS " ]"
+
+.ti -8
+.IR TYPE " := [ "
+.BR bridge " | "
+.BR bond " | "
+.BR can " | "
+.BR dummy " | "
+.BR hsr " | "
+.BR ifb " | "
+.BR ipoib " |"
+.BR macvlan  " | "
+.BR macvtap  " | "
+.BR vcan " | "
+.BR veth " | "
+.BR vlan " | "
+.BR vxlan " |"
+.BR ip6tnl " |"
+.BR ipip " |"
+.BR sit " |"
+.BR gre " |"
+.BR gretap " |"
+.BR ip6gre " |"
+.BR ip6gretap " ]"
+
+.ti -8
+.BI "ip link delete " DEVICE
+.BI type " TYPE"
+.RI "[ " ARGS " ]"
+
+.ti -8
+.BR "ip link set " {
+.IR DEVICE " | "
+.BI "group " GROUP
+.RB "} { " up " | " down " | " arp " { " on " | " off " } |"
+.br
+.BR promisc " { " on " | " off " } |"
+.br
+.BR allmulticast " { " on " | " off " } |"
+.br
+.BR dynamic " { " on " | " off " } |"
+.br
+.BR multicast " { " on " | " off " } |"
+.br
+.B  txqueuelen
+.IR PACKETS " |"
+.br
+.B  name
+.IR NEWNAME " |"
+.br
+.B  address
+.IR LLADDR " |"
+.B  broadcast
+.IR LLADDR " |"
+.br
+.B  mtu
+.IR MTU " |"
+.br
+.B  netns
+.IR PID " |"
+.br
+.B  netns
+.IR NETNSNAME " |"
+.br
+.B alias
+.IR NAME  " |"
+.br
+.B vf
+.IR NUM " ["
+.B  mac
+.IR LLADDR " ] ["
+.B vlan
+.IR VLANID " [ "
+.B qos
+.IR VLAN-QOS " ] ] ["
+.B rate
+.IR TXRATE " ] ["
+.B max_tx_rate
+.IR TXRATE " ] ["
+.B min_tx_rate
+.IR TXRATE " ] ["
+.B spoofchk { on | off } ] [
+.B state { auto | enable | disable}
+] |
+.br
+.B master
+.IR DEVICE
+.br
+.B nomaster
+.BR " }"
+
+
+.ti -8
+.B ip link show
+.RI "[ " DEVICE " | "
+.B group
+.IR GROUP " | "
+.BR up " | "
+.B master
+.IR DEVICE " | "
+.B type
+.IR TYPE " ]"
+
+.ti -8
+.B ip link help
+.RI "[ " TYPE " ]"
+
+.SH "DESCRIPTION"
+.SS ip link add - add virtual link
+
+.TP
+.BI link " DEVICE "
+specifies the physical device to act operate on.
+
+.I NAME
+specifies the name of the new virtual device.
+
+.I TYPE
+specifies the type of the new device.
+.sp
+Link types:
+
+.in +8
+.B bridge
+- Ethernet Bridge device
+.sp
+.B bond
+- Bonding device
+.sp
+.B dummy
+- Dummy network interface
+.sp
+.B hsr
+- High-availability Seamless Redundancy device
+.sp
+.B ifb
+- Intermediate Functional Block device
+.sp
+.B ipoib
+- IP over Infiniband device
+.sp
+.B macvlan
+- Virtual interface base on link layer address (MAC)
+.sp
+.B macvtap
+- Virtual interface based on link layer address (MAC) and TAP.
+.sp
+.B vcan
+- Virtual Controller Area Network interface
+.sp
+.B veth
+- Virtual ethernet interface
+.sp
+.BR vlan
+- 802.1q tagged virtual LAN interface
+.sp
+.BR vxlan
+- Virtual eXtended LAN
+.sp
+.BR ip6tnl
+- Virtual tunnel interface IPv4|IPv6 over IPv6
+.sp
+.BR ipip
+- Virtual tunnel interface IPv4 over IPv4
+.sp
+.BR sit
+- Virtual tunnel interface IPv6 over IPv4
+.sp
+.BR gre
+- Virtual tunnel interface GRE over IPv4
+.sp
+.BR gretap
+- Virtual L2 tunnel interface GRE over IPv4
+.sp
+.BR ip6gre
+- Virtual tunnel interface GRE over IPv6
+.sp
+.BR ip6gretap
+- Virtual L2 tunnel interface GRE over IPv6
+.in -8
+
+.TP
+.BI numtxqueues " QUEUE_COUNT "
+specifies the number of transmit queues for new device.
+
+.TP
+.BI numrxqueues " QUEUE_COUNT "
+specifies the number of receive queues for new device.
+
+.TP
+.BI index " IDX "
+specifies the desired index of the new virtual device. The link creation fails, if the index is busy.
+
+.TP
+VXLAN Type Support
+For a link of type
+.I VXLAN
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BI type " vxlan " id " ID"
+.R " [ "
+.BI dev " PHYS_DEV "
+.RB " ] [ { " group " | " remote " } "
+.I IPADDR
+.R " ] [ "
+.BI local " IPADDR "
+.R " ] [ "
+.BI ttl " TTL "
+.R " ] [ "
+.BI tos " TOS "
+.R " ] [ "
+.BI port " MIN MAX "
+.R " ] [ "
+.I "[no]learning "
+.R " ] [ "
+.I "[no]proxy "
+.R " ] [ "
+.I "[no]rsc "
+.R " ] [ "
+.I "[no]l2miss "
+.R " ] [ "
+.I "[no]l3miss "
+.R " ] [ "
+.BI ageing " SECONDS "
+.R " ] [ "
+.BI maxaddress " NUMBER "
+.R " ]"
+
+.in +8
+.sp
+.BI  id " VNI "
+- specifies the VXLAN Network Identifer (or VXLAN Segment
+Identifier) to use.
+
+.BI dev " PHYS_DEV"
+- specifies the physical device to use for tunnel endpoint communication.
+
+.sp
+.BI group " IPADDR"
+- specifies the multicast IP address to join.
+This parameter cannot be specified with the
+.B remote
+parameter.
+
+.sp
+.BI remote " IPADDR"
+- specifies the unicast destination IP address to use in outgoing packets
+when the destination link layer address is not known in the VXLAN device
+forwarding database.  This parameter cannot be specified with the
+.B group
+parameter.
+
+.sp
+.BI local " IPADDR"
+- specifies the source IP address to use in outgoing packets.
+
+.sp
+.BI ttl " TTL"
+- specifies the TTL value to use in outgoing packets.
+
+.sp
+.BI tos " TOS"
+- specifies the TOS value to use in outgoing packets.
+
+.sp
+.BI port " MIN MAX"
+- specifies the range of port numbers to use as UDP
+source ports to communicate to the remote VXLAN tunnel endpoint.
+
+.sp
+.I [no]learning
+- specifies if unknown source link layer addresses and IP addresses
+are entered into the VXLAN device forwarding database.
+
+.sp
+.I [no]rsc
+- specifies if route short circuit is turned on.
+
+.sp
+.I [no]proxy
+- specifies ARP proxy is turned on.
+
+.sp
+.I [no]l2miss
+- specifies if netlink LLADDR miss notifications are generated.
+
+.sp
+.I [no]l3miss
+- specifies if netlink IP ADDR miss notifications are generated.
+
+.sp
+.BI ageing " SECONDS"
+- specifies the lifetime in seconds of FDB entries learnt by the kernel.
+
+.sp
+.BI maxaddress " NUMBER"
+- specifies the maximum number of FDB entries.
+
+.in -8
+
+.TP
+GRE, IPIP, SIT Type Support
+For a link of types
+.I GRE/IPIP/SIT
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BR type " { gre | ipip | sit } "
+.BI " remote " ADDR " local " ADDR
+.R " [ "
+.BR encap " { fou | gue | none } "
+.R " ] [ "
+.BI "encap-sport { " PORT " | auto } "
+.R " ] [ "
+.BI "encap-dport " PORT
+.R " ] [ "
+.I " [no]encap-csum "
+.R " ] [ "
+.I " [no]encap-remcsum "
+.R " ]"
+
+.in +8
+.sp
+.BI  remote " ADDR "
+- specifies the remote address of the tunnel.
+
+.sp
+.BI  local " ADDR "
+- specifies the fixed local address for tunneled packets.
+It must be an address on another interface on this host.
+
+.sp
+.BR encap " { fou | gue | none } "
+- specifies type of secondary UDP encapsulation. "fou" indicates
+Foo-Over-UDP, "gue" indicates Generic UDP Encapsulation.
+
+.sp
+.BI "encap-sport { " PORT " | auto } "
+- specifies the source port in UDP encapsulation.
+.IR PORT
+indicates the port by number, "auto"
+indicates that the port number should be chosen automatically
+(the kernel picks a flow based on the flow hash of the
+encapsulated packet).
+
+.sp
+.I [no]encap-csum
+- specifies if UDP checksums are enabled in the secondary
+encapsulation.
+
+.sp
+.I [no]encap-remcsum
+- specifies if Remote Checksum Offload is enabled. This is only
+applicable for Generic UDP Encapsulation.
+
+.in -8
+
+.TP
+IP6GRE/IP6GRETAP Type Support
+For a link of type
+.I IP6GRE/IP6GRETAP
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BI type " { ip6gre | ip6gretap }  " remote " ADDR " local " ADDR
+.R " [ "
+.I "[i|o]seq]"
+.R " ] [ "
+.I "[i|o]key" KEY
+.R " ] [ "
+.I " [i|o]csum "
+.R " ] [ "
+.BI hoplimit " TTL "
+.R " ] [ "
+.BI encaplimit " ELIM "
+.R " ] [ "
+.BI tclass " TCLASS "
+.R " ] [ "
+.BI flowlabel " FLOWLABEL "
+.R " ] [ "
+.BI "dscp inherit"
+.R " ] [ "
+.BI dev " PHYS_DEV "
+.R " ]"
+
+.in +8
+.sp
+.BI  remote " ADDR "
+- specifies the remote IPv6 address of the tunnel.
+
+.sp
+.BI  local " ADDR "
+- specifies the fixed local IPv6 address for tunneled packets.
+It must be an address on another interface on this host.
+
+.sp
+.BI  [i|o]seq
+- serialize packets.
+The
+.B oseq
+flag enables sequencing of outgoing packets.
+The
+.B iseq
+flag requires that all input packets are serialized.
+
+.sp
+.BI  [i|o]key " KEY"
+- use keyed GRE with key
+.IR KEY ". "KEY
+is either a number or an IPv4 address-like dotted quad.
+The
+.B key
+parameter specifies the same key to use in both directions.
+The
+.BR ikey " and " okey
+parameters specify different keys for input and output.
+
+.sp
+.BI  [i|o]csum
+- generate/require checksums for tunneled packets.
+The
+.B ocsum
+flag calculates checksums for outgoing packets.
+The
+.B icsum
+flag requires that all input packets have the correct
+checksum.  The
+.B csum
+flag is equivalent to the combination
+.BR "icsum ocsum" .
+
+.sp
+.BI  hoplimit " TTL"
+- specifies Hop Limit value to use in outgoing packets.
+
+.sp
+.BI  encaplimit " ELIM"
+- specifies a fixed encapsulation limit.  Default is 4.
+
+.sp
+.BI  flowlabel " FLOWLABEL"
+- specifies a fixed flowlabel.
+
+.sp
+.BI  tclass " TCLASS"
+- specifies the traffic class field on
+tunneled packets, which can be specified as either a two-digit
+hex value (e.g. c0) or a predefined string (e.g. internet).
+The value
+.B inherit
+causes the field to be copied from the original IP header. The
+values
+.BI "inherit/" STRING
+or
+.BI "inherit/" 00 ".." ff
+will set the field to
+.I STRING
+or
+.IR 00 ".." ff
+when tunneling non-IP packets. The default value is 00.
+
+.in -8
+
+.TP
+IPoIB Type Support
+For a link of type
+.I IPoIB
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE " name " NAME
+.BI type " ipoib [ " pkey " PKEY ] [" mode " MODE " ]
+
+.in +8
+.sp
+.BI  pkey " PKEY "
+- specifies the IB P-Key to use.
+
+.BI  mode " MODE "
+- specifies the mode (datagram or connected) to use.
+
+.SS ip link delete - delete virtual link
+.I DEVICE
+specifies the virtual  device to act operate on.
+.I TYPE
+specifies the type of the device.
+
+
+.TP
+.BI dev " DEVICE "
+specifies the physical device to act operate on.
+
+.SS ip link set - change device attributes
+
+.TP
+.BI dev " DEVICE "
+.I DEVICE
+specifies network device to operate on. When configuring SR-IOV Virtual Function
+(VF) devices, this keyword should specify the associated Physical Function (PF)
+device.
+
+.TP
+.BI group " GROUP "
+.I GROUP
+has a dual role: If both group and dev are present, then move the device to the
+specified group.  If only a group is specified, then the command operates on
+all devices in that group.
+
+.TP
+.BR up " and " down
+change the state of the device to
+.B UP
+or
+.BR "DOWN" .
+
+.TP
+.BR "arp on " or " arp off"
+change the
+.B NOARP
+flag on the device.
+
+.TP
+.BR "multicast on " or " multicast off"
+change the
+.B MULTICAST
+flag on the device.
+
+.TP
+.BR "dynamic on " or " dynamic off"
+change the
+.B DYNAMIC
+flag on the device.
+
+.TP
+.BI name " NAME"
+change the name of the device.  This operation is not
+recommended if the device is running or has some addresses
+already configured.
+
+.TP
+.BI txqueuelen " NUMBER"
+.TP
+.BI txqlen " NUMBER"
+change the transmit queue length of the device.
+
+.TP
+.BI mtu " NUMBER"
+change the
+.I MTU
+of the device.
+
+.TP
+.BI address " LLADDRESS"
+change the station address of the interface.
+
+.TP
+.BI broadcast " LLADDRESS"
+.TP
+.BI brd " LLADDRESS"
+.TP
+.BI peer " LLADDRESS"
+change the link layer broadcast address or the peer address when
+the interface is
+.IR "POINTOPOINT" .
+
+.TP
+.BI netns " PID"
+move the device to the network namespace associated with the process
+.IR "PID".
+
+.TP
+.BI netns " NETNSNAME"
+move the device to the network namespace associated with name
+.IR "NETNSNAME".
+
+.TP
+.BI alias " NAME"
+give the device a symbolic name for easy reference.
+
+.TP
+.BI group " GROUP"
+specify the group the device belongs to.
+The available groups are listed in file
+.BR "@SYSCONFDIR@/group" .
+
+.TP
+.BI vf " NUM"
+specify a Virtual Function device to be configured. The associated PF device
+must be specified using the
+.B dev
+parameter.
+
+.in +8
+.BI mac " LLADDRESS"
+- change the station address for the specified VF. The
+.B vf
+parameter must be specified.
+
+.sp
+.BI vlan " VLANID"
+- change the assigned VLAN for the specified VF. When specified, all traffic
+sent from the VF will be tagged with the specified VLAN ID. Incoming traffic
+will be filtered for the specified VLAN ID, and will have all VLAN tags
+stripped before being passed to the VF. Setting this parameter to 0 disables
+VLAN tagging and filtering. The
+.B vf
+parameter must be specified.
+
+.sp
+.BI qos " VLAN-QOS"
+- assign VLAN QOS (priority) bits for the VLAN tag. When specified, all VLAN
+tags transmitted by the VF will include the specified priority bits in the
+VLAN tag. If not specified, the value is assumed to be 0. Both the
+.B vf
+and
+.B vlan
+parameters must be specified. Setting both
+.B vlan
+and
+.B qos
+as 0 disables VLAN tagging and filtering for the VF.
+
+.sp
+.BI rate " TXRATE"
+-- change the allowed transmit bandwidth, in Mbps, for the specified VF.
+Setting this parameter to 0 disables rate limiting.
+.B vf
+parameter must be specified.
+Please use new API
+.B "max_tx_rate"
+option instead.
+
+.sp
+.BI max_tx_rate " TXRATE"
+- change the allowed maximum transmit bandwidth, in Mbps, for the specified VF.
+.B vf
+parameter must be specified.
+
+.sp
+.BI min_tx_rate " TXRATE"
+- change the allowed minimum transmit bandwidth, in Mbps, for the specified VF.
+Minimum TXRATE should be always <= Maximum TXRATE.
+.B vf
+parameter must be specified.
+
+.sp
+.BI spoofchk " on|off"
+- turn packet spoof checking on or off for the specified VF.
+.sp
+.BI state " auto|enable|disable"
+- set the virtual link state as seen by the specified VF. Setting to auto means a
+reflection of the PF link state, enable lets the VF to communicate with other VFs on
+this host even if the PF link state is down, disable causes the HW to drop any packets
+sent by the VF.
+.in -8
+
+.TP
+.BI master " DEVICE"
+set master device of the device (enslave device).
+
+.TP
+.BI nomaster
+unset master device of the device (release device).
+
+.PP
+.B Warning:
+If multiple parameter changes are requested,
+.B ip
+aborts immediately after any of the changes have failed.
+This is the only case when
+.B ip
+can move the system to an unpredictable state.  The solution
+is to avoid changing several parameters with one
+.B ip link set
+call.
+
+.SS  ip link show - display device attributes
+
+.TP
+.BI dev " NAME " (default)
+.I NAME
+specifies the network device to show.
+If this argument is omitted all devices in the default group are listed.
+
+.TP
+.BI group " GROUP "
+.I GROUP
+specifies what group of devices to show.
+
+.TP
+.B up
+only display running interfaces.
+
+.TP
+.BI master " DEVICE "
+.I DEVICE
+specifies the master device which enslaves devices to show.
+
+.TP
+.BI type " TYPE "
+.I TYPE
+specifies the type of devices to show.
+
+.TP
+The show command has additional formatting options:
+
+.RS
+.TP
+.BR "\-s" , " \-stats", " \-statistics"
+output more statistics about packet usage.
+
+.TP
+.BR "\-d", " \-details"
+output more detailed information.
+
+.TP
+.BR "\-h", " \-human", " \-human-readble"
+output statistics with human readable values number followed by suffix
+
+.TP
+.BR "\-iec"
+print human readable rates in IEC units (ie. 1K = 1024).
+.RE
+
+.SS  ip link help - display help
+
+.PP
+.I "TYPE"
+specifies which help of link type to dislpay.
+
+.SH "EXAMPLES"
+.PP
+ip link show
+.RS 4
+Shows the state of all network interfaces on the system.
+.RE
+.PP
+ip link show type bridge
+.RS 4
+Shows the bridge devices.
+.RE
+.PP
+ip link show type vlan
+.RS 4
+Shows the vlan devices.
+.RE
+.PP
+ip link show master br0
+.RS 4
+Shows devices enslaved by br0
+.RE
+.PP
+ip link set dev ppp0 mtu 1400
+.RS 4
+Change the MTU the ppp0 device.
+.RE
+.PP
+ip link add link eth0 name eth0.10 type vlan id 10
+.RS 4
+Creates a new vlan device eth0.10 on device eth0.
+.RE
+.PP
+ip link delete dev eth0.10
+.RS 4
+Removes vlan device.
+.RE
+
+ip link help gre
+.RS 4
+Display help for the gre link type.
+.RE
+.PP
+ip link add name tun1 type ipip remote 192.168.1.1
+local 192.168.1.2 ttl 225 encap gue encap-sport auto
+encap-dport 5555 encap-csum encap-remcsum
+.RS 4
+Creates an IPIP that is encapsulated with Generic UDP Encapsulation,
+and the outer UDP checksum and remote checksum offload are enabled.
+
+.RE
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

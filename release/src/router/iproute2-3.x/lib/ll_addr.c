@@ -57,7 +57,7 @@ const char *ll_addr_n2a(unsigned char *addr, int alen, int type, char *buf, int 
 }
 
 /*NB: lladdr is char * (rather than u8 *) because sa_data is char * (1003.1g) */
-int ll_addr_a2n(char *lladdr, int len, char *arg)
+int ll_addr_a2n(char *lladdr, int len, const char *arg)
 {
 	if (strchr(arg, '.')) {
 		inet_prefix pfx;

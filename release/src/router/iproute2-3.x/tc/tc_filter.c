@@ -45,7 +45,7 @@ static void usage(void)
 }
 
 
-int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
+static int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr 	n;
@@ -93,7 +93,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (req.t.tcm_parent)
 				duparg("parent", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "Invalid parent ID");
+				invarg("Invalid parent ID", *argv);
 			req.t.tcm_parent = handle;
 		} else if (strcmp(*argv, "handle") == 0) {
 			NEXT_ARG();
@@ -105,15 +105,15 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 			NEXT_ARG();
 			if (prio)
 				duparg("priority", *argv);
-			if (get_u32(&prio, *argv, 0))
-				invarg(*argv, "invalid priority value");
+			if (get_u32(&prio, *argv, 0) || prio > 0xFFFF)
+				invarg("invalid priority value", *argv);
 		} else if (matches(*argv, "protocol") == 0) {
 			__u16 id;
 			NEXT_ARG();
 			if (protocol_set)
 				duparg("protocol", *argv);
 			if (ll_proto_a2n(&id, *argv))
-				invarg(*argv, "invalid protocol");
+				invarg("invalid protocol", *argv);
 			protocol = id;
 			protocol_set = 1;
 		} else if (matches(*argv, "estimator") == 0) {
@@ -159,7 +159,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 
 
 	if (d[0])  {
- 		ll_init_map(&rth);
+		ll_init_map(&rth);
 
 		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
@@ -167,7 +167,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
- 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 2;
 	}
@@ -240,7 +240,7 @@ int print_filter(const struct sockaddr_nl *who,
 				fprintf(fp, "pref %u ", prio);
 		}
 	}
-	fprintf(fp, "%s ", (char*)RTA_DATA(tb[TCA_KIND]));
+	fprintf(fp, "%s ", rta_getattr_str(tb[TCA_KIND]));
 	q = get_filter_kind(RTA_DATA(tb[TCA_KIND]));
 	if (tb[TCA_OPTIONS]) {
 		if (q)
@@ -260,7 +260,7 @@ int print_filter(const struct sockaddr_nl *who,
 }
 
 
-int tc_filter_list(int argc, char **argv)
+static int tc_filter_list(int argc, char **argv)
 {
 	struct tcmsg t;
 	char d[16];
@@ -290,7 +290,7 @@ int tc_filter_list(int argc, char **argv)
 			if (t.tcm_parent)
 				duparg("parent", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid parent ID");
+				invarg("invalid parent ID", *argv);
 			filter_parent = t.tcm_parent = handle;
 		} else if (strcmp(*argv, "handle") == 0) {
 			NEXT_ARG();
@@ -303,7 +303,7 @@ int tc_filter_list(int argc, char **argv)
 			if (prio)
 				duparg("priority", *argv);
 			if (get_u32(&prio, *argv, 0))
-				invarg(*argv, "invalid preference");
+				invarg("invalid preference", *argv);
 			filter_prio = prio;
 		} else if (matches(*argv, "protocol") == 0) {
 			__u16 res;
@@ -311,7 +311,7 @@ int tc_filter_list(int argc, char **argv)
 			if (protocol)
 				duparg("protocol", *argv);
 			if (ll_proto_a2n(&res, *argv))
-				invarg(*argv, "invalid protocol");
+				invarg("invalid protocol", *argv);
 			protocol = res;
 			filter_protocol = protocol;
 		} else if (matches(*argv, "help") == 0) {
@@ -326,7 +326,7 @@ int tc_filter_list(int argc, char **argv)
 
 	t.tcm_info = TC_H_MAKE(prio<<16, protocol);
 
- 	ll_init_map(&rth);
+	ll_init_map(&rth);
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
@@ -336,12 +336,12 @@ int tc_filter_list(int argc, char **argv)
 		filter_ifindex = t.tcm_ifindex;
 	}
 
- 	if (rtnl_dump_request(&rth, RTM_GETTFILTER, &t, sizeof(t)) < 0) {
+	if (rtnl_dump_request(&rth, RTM_GETTFILTER, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&rth, print_filter, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, print_filter, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

@@ -1,0 +1,262 @@
+.TH IP\-TUNNEL 8 "20 Dec 2011" "iproute2" "Linux"
+.SH "NAME"
+ip-tunnel - tunnel configuration
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B tunnel
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+.ti -8
+.BR "ip tunnel" " { " add " | " change " | " del " | " show " | " prl " }"
+.RI "[ " NAME " ]"
+.br
+.RB "[ " mode
+.IR MODE " ] [ "
+.B remote
+.IR ADDR " ] [ "
+.B  local
+.IR ADDR " ]"
+.br
+.RB "[ [" i "|" o "]" seq " ] [ [" i "|" o "]" key
+.IR KEY " ] [ "
+.RB "[" i "|" o "]" csum " ] ]"
+.br
+.RB "[ " encaplimit
+.IR ELIM " ]"
+.RB "[ " ttl
+.IR TTL " ]"
+.br
+.RB "[ " tos
+.IR TOS " ] [ "
+.B flowlabel
+.IR FLOWLABEL " ]"
+.br
+.RB "[ " prl-default
+.IR ADDR " ] [ "
+.B prl-nodefault
+.IR ADDR " ] [ "
+.B prl-delete
+.IR ADDR " ]"
+.br
+.RB "[ [" no "]" pmtudisc " ]"
+.RB "[ " dev
+.IR PHYS_DEV " ]"
+
+.ti -8
+.IR MODE " := "
+.RB " { " ipip " | " gre " | " sit " | " isatap " | " ip6ip6 " | " ipip6 " | " ip6gre " | " any " }"
+
+.ti -8
+.IR ADDR " := { " IP_ADDRESS " |"
+.BR any " }"
+
+.ti -8
+.IR TOS " := { " STRING " | " 00 ".." ff " |"
+.BR inherit " |"
+.BI "inherit/" STRING
+.RB "|"
+.BI "inherit/" 00 ".." ff
+.RB "}"
+
+.ti -8
+.IR ELIM " := {"
+.BR none " | "
+.IR 0 ".." 255 " }"
+
+.ti -8
+.ti -8
+.IR TTL " := { " 1 ".." 255 " | "
+.BR inherit " }"
+
+.ti -8
+.IR KEY " := { " DOTTED_QUAD " | " NUMBER " }"
+
+.ti -8
+.IR TIME " := " NUMBER "[s|ms]"
+
+.SH DESCRIPTION
+.B tunnel
+objects are tunnels, encapsulating packets in IP packets and then
+sending them over the IP infrastructure.
+The encapsulating (or outer) address family is specified by the
+.B -f
+option.  The default is IPv4.
+
+.TP
+.B ip tunnel add
+add a new tunnel
+.TP
+.B ip tunnel change
+change an existing tunnel
+.TP
+.B ip tunnel delete
+destroy a tunnel
+.RS
+.TP
+.BI name " NAME " (default)
+select the tunnel device name.
+
+.TP
+.BI mode " MODE"
+set the tunnel mode. Available modes depend on the encapsulating address family.
+.br
+Modes for IPv4 encapsulation available:
+.BR ipip ", " sit ", " isatap " and " gre "."
+.br
+Modes for IPv6 encapsulation available:
+.BR ip6ip6 ", " ipip6 ", " ip6gre ", and " any "."
+
+.TP
+.BI remote " ADDRESS"
+set the remote endpoint of the tunnel.
+
+.TP
+.BI local " ADDRESS"
+set the fixed local address for tunneled packets.
+It must be an address on another interface of this host.
+
+.TP
+.BI ttl " N"
+set a fixed TTL
+.I N
+on tunneled packets.
+.I N
+is a number in the range 1--255. 0 is a special value
+meaning that packets inherit the TTL value.
+The default value for IPv4 tunnels is:
+.BR "inherit" .
+The default value for IPv6 tunnels is:
+.BR "64" .
+
+
+.TP
+.BI tos " T"
+.TP
+.BI dsfield " T"
+.TP
+.BI tclass " T"
+set the type of service (IPv4) or traffic class (IPv6) field on
+tunneled packets, which can be specified as either a two-digit
+hex value (e.g. c0) or a predefined string (e.g. internet).
+The value
+.B inherit
+causes the field to be copied from the original IP header. The
+values
+.BI "inherit/" STRING
+or
+.BI "inherit/" 00 ".." ff
+will set the field to
+.I STRING
+or
+.IR 00 ".." ff
+when tunneling non-IP packets. The default value is 00.
+
+.TP
+.BI dev " NAME"
+bind the tunnel to the device
+.I NAME
+so that tunneled packets will only be routed via this device and will
+not be able to escape to another device when the route to endpoint
+changes.
+
+.TP
+.B nopmtudisc
+disable Path MTU Discovery on this tunnel.
+It is enabled by default.  Note that a fixed ttl is incompatible
+with this option: tunneling with a fixed ttl always makes pmtu
+discovery.
+
+.TP
+.BI key " K"
+.TP
+.BI ikey " K"
+.TP
+.BI okey " K"
+.RB ( " only GRE tunnels " )
+use keyed GRE with key
+.IR K ". " K
+is either a number or an IP address-like dotted quad.
+The
+.B key
+parameter sets the key to use in both directions.
+The
+.BR ikey " and " okey
+parameters set different keys for input and output.
+
+.TP
+.BR csum ", " icsum ", " ocsum
+.RB ( " only GRE tunnels " )
+generate/require checksums for tunneled packets.
+The
+.B ocsum
+flag calculates checksums for outgoing packets.
+The
+.B icsum
+flag requires that all input packets have the correct
+checksum.  The
+.B csum
+flag is equivalent to the combination
+.BR "icsum ocsum" .
+
+.TP
+.BR seq ", " iseq ", " oseq
+.RB ( " only GRE tunnels " )
+serialize packets.
+The
+.B oseq
+flag enables sequencing of outgoing packets.
+The
+.B iseq
+flag requires that all input packets are serialized.
+The
+.B  seq
+flag is equivalent to the combination
+.BR "iseq oseq" .
+.B It isn't work. Don't use it.
+
+.TP
+.BI encaplim " ELIM"
+.RB ( " only IPv6 tunnels " )
+set a fixed encapsulation limit.  Default is 4.
+
+.TP
+.BI flowlabel " FLOWLABEL"
+.RB ( " only IPv6 tunnels " )
+set a fixed flowlabel.
+.RE
+
+.TP
+.B ip tunnel prl
+potential router list (ISATAP only)
+.RS
+.TP
+.BI dev " NAME"
+mandatory device name.
+
+.TP
+.BI prl-default " ADDR"
+.TP
+.BI prl-nodefault " ADDR"
+.TP
+.BI prl-delete " ADDR"
+.RB "Add or delete " ADDR
+as a potential router or default router.
+.RE
+
+.TP
+.B ip tunnel show
+list tunnels
+This command has no arguments.
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

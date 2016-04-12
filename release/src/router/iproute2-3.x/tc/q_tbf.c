@@ -30,9 +30,9 @@ static void explain(void)
 	fprintf(stderr, "[ overhead BYTES ] [ linklayer TYPE ]\n");
 }
 
-static void explain1(char *arg)
+static void explain1(const char *arg, const char *val)
 {
-	fprintf(stderr, "Illegal \"%s\"\n", arg);
+	fprintf(stderr, "tbf: illegal value for \"%s\": \"%s\"\n", arg, val);
 }
 
 
@@ -47,140 +47,164 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	unsigned short overhead=0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
+	__u64 rate64 = 0, prate64 = 0;
 
 	memset(&opt, 0, sizeof(opt));
 
 	while (argc > 0) {
 		if (matches(*argv, "limit") == 0) {
 			NEXT_ARG();
-			if (opt.limit || latency) {
-				fprintf(stderr, "Double \"limit/latency\" spec\n");
+			if (opt.limit) {
+				fprintf(stderr, "tbf: duplicate \"limit\" specification\n");
+				return -1;
+			}
+			if (latency) {
+				fprintf(stderr, "tbf: specifying both \"latency\" and \"limit\" is not allowed\n");
 				return -1;
 			}
 			if (get_size(&opt.limit, *argv)) {
-				explain1("limit");
+				explain1("limit", *argv);
 				return -1;
 			}
 			ok++;
 		} else if (matches(*argv, "latency") == 0) {
 			NEXT_ARG();
-			if (opt.limit || latency) {
-				fprintf(stderr, "Double \"limit/latency\" spec\n");
+			if (latency) {
+				fprintf(stderr, "tbf: duplicate \"latency\" specification\n");
+				return -1;
+			}
+			if (opt.limit) {
+				fprintf(stderr, "tbf: specifying both \"limit\" and \"/latency\" is not allowed\n");
 				return -1;
 			}
 			if (get_time(&latency, *argv)) {
-				explain1("latency");
+				explain1("latency", *argv);
 				return -1;
 			}
 			ok++;
 		} else if (matches(*argv, "burst") == 0 ||
 			strcmp(*argv, "buffer") == 0 ||
 			strcmp(*argv, "maxburst") == 0) {
+			const char *parm_name = *argv;
 			NEXT_ARG();
 			if (buffer) {
-				fprintf(stderr, "Double \"buffer/burst\" spec\n");
+				fprintf(stderr, "tbf: duplicate \"buffer/burst/maxburst\" specification\n");
 				return -1;
 			}
 			if (get_size_and_cell(&buffer, &Rcell_log, *argv) < 0) {
-				explain1("buffer");
+				explain1(parm_name, *argv);
 				return -1;
 			}
 			ok++;
 		} else if (strcmp(*argv, "mtu") == 0 ||
 			   strcmp(*argv, "minburst") == 0) {
+			const char *parm_name = *argv;
 			NEXT_ARG();
 			if (mtu) {
-				fprintf(stderr, "Double \"mtu/minburst\" spec\n");
+				fprintf(stderr, "tbf: duplicate \"mtu/minburst\" specification\n");
 				return -1;
 			}
 			if (get_size_and_cell(&mtu, &Pcell_log, *argv) < 0) {
-				explain1("mtu");
+				explain1(parm_name, *argv);
 				return -1;
 			}
 			ok++;
 		} else if (strcmp(*argv, "mpu") == 0) {
 			NEXT_ARG();
 			if (mpu) {
-				fprintf(stderr, "Double \"mpu\" spec\n");
+				fprintf(stderr, "tbf: duplicate \"mpu\" specification\n");
 				return -1;
 			}
 			if (get_size(&mpu, *argv)) {
-				explain1("mpu");
+				explain1("mpu", *argv);
 				return -1;
 			}
 			ok++;
 		} else if (strcmp(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (opt.rate.rate) {
-				fprintf(stderr, "Double \"rate\" spec\n");
+			if (rate64) {
+				fprintf(stderr, "tbf: duplicate \"rate\" specification\n");
 				return -1;
 			}
-			if (get_rate(&opt.rate.rate, *argv)) {
-				explain1("rate");
+			if (get_rate64(&rate64, *argv)) {
+				explain1("rate", *argv);
 				return -1;
 			}
 			ok++;
 		} else if (matches(*argv, "peakrate") == 0) {
 			NEXT_ARG();
-			if (opt.peakrate.rate) {
-				fprintf(stderr, "Double \"peakrate\" spec\n");
+			if (prate64) {
+				fprintf(stderr, "tbf: duplicate \"peakrate\" specification\n");
 				return -1;
 			}
-			if (get_rate(&opt.peakrate.rate, *argv)) {
-				explain1("peakrate");
+			if (get_rate64(&prate64, *argv)) {
+				explain1("peakrate", *argv);
 				return -1;
 			}
 			ok++;
 		} else if (matches(*argv, "overhead") == 0) {
 			NEXT_ARG();
 			if (overhead) {
-				fprintf(stderr, "Double \"overhead\" spec\n");
+				fprintf(stderr, "tbf: duplicate \"overhead\" specification\n");
 				return -1;
 			}
 			if (get_u16(&overhead, *argv, 10)) {
-				explain1("overhead"); return -1;
+				explain1("overhead", *argv); return -1;
 			}
 		} else if (matches(*argv, "linklayer") == 0) {
 			NEXT_ARG();
 			if (get_linklayer(&linklayer, *argv)) {
-				explain1("linklayer"); return -1;
+				explain1("linklayer", *argv); return -1;
 			}
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "What is \"%s\"?\n", *argv);
+			fprintf(stderr, "tbf: unknown parameter \"%s\"\n", *argv);
 			explain();
 			return -1;
 		}
 		argc--; argv++;
 	}
 
-	if (!ok) {
-		explain();
-		return -1;
-	}
+        int verdict = 0;
 
-	if (opt.rate.rate == 0 || !buffer) {
-		fprintf(stderr, "Both \"rate\" and \"burst\" are required.\n");
-		return -1;
+        /* Be nice to the user: try to emit all error messages in
+         * one go rather than reveal one more problem when a
+         * previous one has been fixed.
+         */
+	if (rate64 == 0) {
+		fprintf(stderr, "tbf: the \"rate\" parameter is mandatory.\n");
+		verdict = -1;
 	}
-	if (opt.peakrate.rate) {
+	if (!buffer) {
+		fprintf(stderr, "tbf: the \"burst\" parameter is mandatory.\n");
+		verdict = -1;
+	}
+	if (prate64) {
 		if (!mtu) {
-			fprintf(stderr, "\"mtu\" is required, if \"peakrate\" is requested.\n");
-			return -1;
+			fprintf(stderr, "tbf: when \"peakrate\" is specified, \"mtu\" must also be specified.\n");
+			verdict = -1;
 		}
 	}
 
 	if (opt.limit == 0 && latency == 0) {
-		fprintf(stderr, "Either \"limit\" or \"latency\" are required.\n");
-		return -1;
+		fprintf(stderr, "tbf: either \"limit\" or \"latency\" is required.\n");
+		verdict = -1;
 	}
 
+        if (verdict != 0) {
+                explain();
+                return verdict;
+        }
+
+	opt.rate.rate = (rate64 >= (1ULL << 32)) ? ~0U : rate64;
+	opt.peakrate.rate = (prate64 >= (1ULL << 32)) ? ~0U : prate64;
+
 	if (opt.limit == 0) {
-		double lim = opt.rate.rate*(double)latency/TIME_UNITS_PER_SEC + buffer;
-		if (opt.peakrate.rate) {
-			double lim2 = opt.peakrate.rate*(double)latency/TIME_UNITS_PER_SEC + mtu;
+		double lim = rate64*(double)latency/TIME_UNITS_PER_SEC + buffer;
+		if (prate64) {
+			double lim2 = prate64*(double)latency/TIME_UNITS_PER_SEC + mtu;
 			if (lim2 < lim)
 				lim = lim2;
 		}
@@ -190,7 +214,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	opt.rate.mpu      = mpu;
 	opt.rate.overhead = overhead;
 	if (tc_calc_rtable(&opt.rate, rtab, Rcell_log, mtu, linklayer) < 0) {
-		fprintf(stderr, "TBF: failed to calculate rate table.\n");
+		fprintf(stderr, "tbf: failed to calculate rate table.\n");
 		return -1;
 	}
 	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer);
@@ -199,7 +223,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		opt.peakrate.mpu      = mpu;
 		opt.peakrate.overhead = overhead;
 		if (tc_calc_rtable(&opt.peakrate, ptab, Pcell_log, mtu, linklayer) < 0) {
-			fprintf(stderr, "TBF: failed to calculate peak rate table.\n");
+			fprintf(stderr, "tbf: failed to calculate peak rate table.\n");
 			return -1;
 		}
 		opt.mtu = tc_calc_xmittime(opt.peakrate.rate, mtu);
@@ -208,26 +232,36 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 2024, TCA_TBF_PARMS, &opt, sizeof(opt));
+	addattr_l(n, 2124, TCA_TBF_BURST, &buffer, sizeof(buffer));
+	if (rate64 >= (1ULL << 32))
+		addattr_l(n, 2124, TCA_TBF_RATE64, &rate64, sizeof(rate64));
 	addattr_l(n, 3024, TCA_TBF_RTAB, rtab, 1024);
-	if (opt.peakrate.rate)
+	if (opt.peakrate.rate) {
+		if (prate64 >= (1ULL << 32))
+			addattr_l(n, 3124, TCA_TBF_PRATE64, &prate64, sizeof(prate64));
+		addattr_l(n, 3224, TCA_TBF_PBURST, &mtu, sizeof(mtu));
 		addattr_l(n, 4096, TCA_TBF_PTAB, ptab, 1024);
+	}
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
 
 static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
-	struct rtattr *tb[TCA_TBF_PTAB+1];
+	struct rtattr *tb[TCA_TBF_MAX+1];
 	struct tc_tbf_qopt *qopt;
+	unsigned int linklayer;
 	double buffer, mtu;
 	double latency;
+	__u64 rate64 = 0, prate64 = 0;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
+	SPRINT_BUF(b3);
 
 	if (opt == NULL)
 		return 0;
 
-	parse_rtattr_nested(tb, TCA_TBF_PTAB, opt);
+	parse_rtattr_nested(tb, TCA_TBF_MAX, opt);
 
 	if (tb[TCA_TBF_PARMS] == NULL)
 		return -1;
@@ -235,8 +269,12 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	qopt = RTA_DATA(tb[TCA_TBF_PARMS]);
 	if (RTA_PAYLOAD(tb[TCA_TBF_PARMS])  < sizeof(*qopt))
 		return -1;
-	fprintf(f, "rate %s ", sprint_rate(qopt->rate.rate, b1));
-	buffer = tc_calc_xmitsize(qopt->rate.rate, qopt->buffer);
+	rate64 = qopt->rate.rate;
+	if (tb[TCA_TBF_RATE64] &&
+	    RTA_PAYLOAD(tb[TCA_TBF_RATE64]) >= sizeof(rate64))
+		rate64 = rta_getattr_u64(tb[TCA_TBF_RATE64]);
+	fprintf(f, "rate %s ", sprint_rate(rate64, b1));
+	buffer = tc_calc_xmitsize(rate64, qopt->buffer);
 	if (show_details) {
 		fprintf(f, "burst %s/%u mpu %s ", sprint_size(buffer, b1),
 			1<<qopt->rate.cell_log, sprint_size(qopt->rate.mpu, b2));
@@ -245,10 +283,14 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	}
 	if (show_raw)
 		fprintf(f, "[%08x] ", qopt->buffer);
-	if (qopt->peakrate.rate) {
-		fprintf(f, "peakrate %s ", sprint_rate(qopt->peakrate.rate, b1));
+	prate64 = qopt->peakrate.rate;
+	if (tb[TCA_TBF_PRATE64] &&
+	    RTA_PAYLOAD(tb[TCA_TBF_PRATE64]) >= sizeof(prate64))
+		prate64 = rta_getattr_u64(tb[TCA_TBF_PRATE64]);
+	if (prate64) {
+		fprintf(f, "peakrate %s ", sprint_rate(prate64, b1));
 		if (qopt->mtu || qopt->peakrate.mpu) {
-			mtu = tc_calc_xmitsize(qopt->peakrate.rate, qopt->mtu);
+			mtu = tc_calc_xmitsize(prate64, qopt->mtu);
 			if (show_details) {
 				fprintf(f, "mtu %s/%u mpu %s ", sprint_size(mtu, b1),
 					1<<qopt->peakrate.cell_log, sprint_size(qopt->peakrate.mpu, b2));
@@ -260,20 +302,23 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		}
 	}
 
-	if (show_raw)
-		fprintf(f, "limit %s ", sprint_size(qopt->limit, b1));
-
-	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->rate.rate) - tc_core_tick2time(qopt->buffer);
-	if (qopt->peakrate.rate) {
-		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->peakrate.rate) - tc_core_tick2time(qopt->mtu);
+	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)rate64) - tc_core_tick2time(qopt->buffer);
+	if (prate64) {
+		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)prate64) - tc_core_tick2time(qopt->mtu);
 		if (lat2 > latency)
 			latency = lat2;
 	}
-	fprintf(f, "lat %s ", sprint_time(latency, b1));
+	if (latency >= 0.0)
+		fprintf(f, "lat %s ", sprint_time(latency, b1));
+	if (show_raw || latency < 0.0)
+		fprintf(f, "limit %s ", sprint_size(qopt->limit, b1));
 
 	if (qopt->rate.overhead) {
 		fprintf(f, "overhead %d", qopt->rate.overhead);
 	}
+	linklayer = (qopt->rate.linklayer & TC_LINKLAYER_MASK);
+	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
+		fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b3));
 
 	return 0;
 }

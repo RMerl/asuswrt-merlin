@@ -1,0 +1,59 @@
+.TH IP\-MADDRESS 8 "20 Dec 2011" "iproute2" "Linux"
+.SH "NAME"
+ip-maddress \- multicast addresses management
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B  maddress
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+.ti -8
+
+.BR "ip maddress" " [ " add " | " del " ]"
+.IB MULTIADDR " dev " NAME
+
+.ti -8
+.BR "ip maddress show" " [ " dev
+.IR NAME " ]"
+
+.SH DESCRIPTION
+.B maddress
+objects are multicast addresses.
+
+.SS ip maddress show - list multicast addresses
+
+.TP
+.BI dev " NAME " (default)
+the device name.
+
+.TP
+.B ip maddress add - add a multicast address
+.TP
+.B ip maddress delete - delete a multicast address
+.sp
+These commands attach/detach a static link-layer multicast address
+to listen on the interface.
+Note that it is impossible to join protocol multicast groups
+statically.  This command only manages link-layer addresses.
+
+.RS
+.TP
+.BI address " LLADDRESS " (default)
+the link-layer multicast address.
+
+.TP
+.BI dev " NAME"
+the device to join/leave this multicast address.
+.RE
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

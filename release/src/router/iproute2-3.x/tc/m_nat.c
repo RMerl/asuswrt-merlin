@@ -146,7 +146,7 @@ parse_nat(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (get_u32(&sel.index, *argv, 10)) {
-				fprintf(stderr, "Pedit: Illegal \"index\"\n");
+				fprintf(stderr, "Nat: Illegal \"index\"\n");
 				return -1;
 			}
 			argc--;
