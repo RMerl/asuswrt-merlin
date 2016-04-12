@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -92,7 +92,8 @@ int
 fast_client_handshake(const fast_handshake_state_t *handshake_state,
                       const uint8_t *handshake_reply_out,/*DIGEST_LEN*2 bytes*/
                       uint8_t *key_out,
-                      size_t key_out_len)
+                      size_t key_out_len,
+                      const char **msg_out)
 {
   uint8_t tmp[DIGEST_LEN+DIGEST_LEN];
   uint8_t *out;
@@ -104,13 +105,14 @@ fast_client_handshake(const fast_handshake_state_t *handshake_state,
   out_len = key_out_len+DIGEST_LEN;
   out = tor_malloc(out_len);
   if (crypto_expand_key_material_TAP(tmp, sizeof(tmp), out, out_len)) {
-    log_warn(LD_CIRC, "Failed to expand key material");
+    if (msg_out)
+      *msg_out = "Failed to expand key material";
     goto done;
   }
   if (tor_memneq(out, handshake_reply_out+DIGEST_LEN, DIGEST_LEN)) {
     /* H(K) does *not* match. Something fishy. */
-    log_warn(LD_PROTOCOL,"Digest DOES NOT MATCH on fast handshake. "
-             "Bug or attack.");
+    if (msg_out)
+      *msg_out = "Digest DOES NOT MATCH on fast handshake. Bug or attack.";
     goto done;
   }
   memcpy(key_out, out+DIGEST_LEN, key_out_len);

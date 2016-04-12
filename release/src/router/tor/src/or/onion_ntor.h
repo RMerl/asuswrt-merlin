@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Tor Project, Inc. */
+/* Copyright (c) 2012-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_ONION_NTOR_H
@@ -17,7 +17,6 @@ typedef struct ntor_handshake_state_t ntor_handshake_state_t;
 /** Length of an ntor reply, as sent from server to client. */
 #define NTOR_REPLY_LEN 64
 
-#ifdef CURVE25519_ENABLED
 void ntor_handshake_state_free(ntor_handshake_state_t *state);
 
 int onion_skin_ntor_create(const uint8_t *router_id,
@@ -37,7 +36,8 @@ int onion_skin_ntor_client_handshake(
                              const ntor_handshake_state_t *handshake_state,
                              const uint8_t *handshake_reply,
                              uint8_t *key_out,
-                             size_t key_out_len);
+                             size_t key_out_len,
+                             const char **msg_out);
 
 #ifdef ONION_NTOR_PRIVATE
 
@@ -55,8 +55,6 @@ struct ntor_handshake_state_t {
   curve25519_public_key_t pubkey_X;
   /** @} */
 };
-#endif
-
 #endif
 
 #endif

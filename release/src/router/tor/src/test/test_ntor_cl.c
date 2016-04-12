@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Tor Project, Inc. */
+/* Copyright (c) 2012-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -12,10 +12,6 @@
 #include "crypto.h"
 #include "crypto_curve25519.h"
 #include "onion_ntor.h"
-
-#ifndef CURVE25519_ENABLED
-#error "This isn't going to work without curve25519."
-#endif
 
 #define N_ARGS(n) STMT_BEGIN {                                  \
     if (argc < (n)) {                                           \
@@ -130,7 +126,7 @@ client2(int argc, char **argv)
 
   keys = tor_malloc(keybytes);
   hexkeys = tor_malloc(keybytes*2+1);
-  if (onion_skin_ntor_client_handshake(&state, msg, keys, keybytes)<0) {
+  if (onion_skin_ntor_client_handshake(&state, msg, keys, keybytes, NULL)<0) {
     fprintf(stderr, "handshake failed");
     result = 2;
     goto done;

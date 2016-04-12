@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -20,11 +20,8 @@ size_t buf_get_default_chunk_size(const buf_t *buf);
 void buf_free(buf_t *buf);
 void buf_clear(buf_t *buf);
 buf_t *buf_copy(const buf_t *buf);
-void buf_shrink(buf_t *buf);
-size_t buf_shrink_freelists(int free_all);
-void buf_dump_freelist_sizes(int severity);
 
-size_t buf_datalen(const buf_t *buf);
+MOCK_DECL(size_t, buf_datalen, (const buf_t *buf));
 size_t buf_allocation(const buf_t *buf);
 size_t buf_slack(const buf_t *buf);
 
@@ -104,13 +101,13 @@ void assert_buf_ok(buf_t *buf);
 
 #ifdef BUFFERS_PRIVATE
 STATIC int buf_find_string_offset(const buf_t *buf, const char *s, size_t n);
-STATIC void buf_pullup(buf_t *buf, size_t bytes, int nulterminate);
+STATIC void buf_pullup(buf_t *buf, size_t bytes);
 void buf_get_first_chunk_data(const buf_t *buf, const char **cp, size_t *sz);
 
 #define DEBUG_CHUNK_ALLOC
-/** A single chunk on a buffer or in a freelist. */
+/** A single chunk on a buffer. */
 typedef struct chunk_t {
-  struct chunk_t *next; /**< The next chunk on the buffer or freelist. */
+  struct chunk_t *next; /**< The next chunk on the buffer. */
   size_t datalen; /**< The number of bytes stored in this chunk */
   size_t memlen; /**< The number of usable bytes of storage in <b>mem</b>. */
 #ifdef DEBUG_CHUNK_ALLOC

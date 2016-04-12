@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define DIRSERV_PRIVATE
@@ -18,6 +18,7 @@
 #include "dirserv.h"
 #include "dirvote.h"
 #include "hibernate.h"
+#include "keypin.h"
 #include "microdesc.h"
 #include "networkstatus.h"
 #include "nodelist.h"
@@ -27,6 +28,7 @@
 #include "routerlist.h"
 #include "routerparse.h"
 #include "routerset.h"
+#include "torcert.h"
 
 /**
  * \file dirserv.c
@@ -56,13 +58,11 @@ static int routers_with_measured_bw = 0;
 static void directory_remove_invalid(void);
 static char *format_versions_list(config_line_t *ln);
 struct authdir_config_t;
-static int add_fingerprint_to_dir(const char *nickname, const char *fp,
-                                  struct authdir_config_t *list);
 static uint32_t
 dirserv_get_status_impl(const char *fp, const char *nickname,
                         uint32_t addr, uint16_t or_port,
-                        const char *platform, const char *contact,
-                        const char **msg, int should_log);
+                        const char *platform, const char **msg,
+                        int severity);
 static void clear_cached_dir(cached_dir_t *d);
 static const signed_descriptor_t *get_signed_descriptor_by_fp(
                                                         const char *fp,
@@ -75,19 +75,19 @@ static uint32_t dirserv_get_credible_bandwidth_kb(const routerinfo_t *ri);
 
 /************** Fingerprint handling code ************/
 
-#define FP_NAMED   1  /**< Listed in fingerprint file. */
+/*                 1  Historically used to indicate Named */
 #define FP_INVALID 2  /**< Believed invalid. */
 #define FP_REJECT  4  /**< We will not publish this router. */
-#define FP_BADDIR  8  /**< We'll tell clients to avoid using this as a dir. */
+/*                 8  Historically used to avoid using this as a dir. */
 #define FP_BADEXIT 16 /**< We'll tell clients not to use this as an exit. */
-#define FP_UNNAMED 32 /**< Another router has this name in fingerprint file. */
+/*                 32 Historically used to indicade Unnamed */
 
-/** Encapsulate a nickname and an FP_* status; target of status_by_digest
- * map. */
-typedef struct router_status_t {
-  char nickname[MAX_NICKNAME_LEN+1];
-  uint32_t status;
-} router_status_t;
+/** Target of status_by_digest map. */
+typedef uint32_t router_status_t;
+
+static void add_fingerprint_to_dir(const char *fp,
+                                   struct authdir_config_t *list,
+                                   router_status_t add_status);
 
 /** List of nickname-\>identity fingerprint mappings for all the routers
  * that we name.  Used to prevent router impersonation. */
@@ -109,18 +109,17 @@ authdir_config_new(void)
   return list;
 }
 
-/** Add the fingerprint <b>fp</b> for <b>nickname</b> to
- * the smartlist of fingerprint_entry_t's <b>list</b>. Return 0 if it's
- * new, or 1 if we replaced the old value.
+/** Add the fingerprint <b>fp</b> to the smartlist of fingerprint_entry_t's
+ * <b>list</b>, or-ing the currently set status flags with
+ * <b>add_status</b>.
  */
-/* static */ int
-add_fingerprint_to_dir(const char *nickname, const char *fp,
-                       authdir_config_t *list)
+/* static */ void
+add_fingerprint_to_dir(const char *fp, authdir_config_t *list,
+                       router_status_t add_status)
 {
   char *fingerprint;
   char d[DIGEST_LEN];
   router_status_t *status;
-  tor_assert(nickname);
   tor_assert(fp);
   tor_assert(list);
 
@@ -130,14 +129,7 @@ add_fingerprint_to_dir(const char *nickname, const char *fp,
     log_warn(LD_DIRSERV, "Couldn't decode fingerprint \"%s\"",
              escaped(fp));
     tor_free(fingerprint);
-    return 0;
-  }
-
-  if (!strcasecmp(nickname, UNNAMED_ROUTER_NICKNAME)) {
-    log_warn(LD_DIRSERV, "Tried to add a mapping for reserved nickname %s",
-             UNNAMED_ROUTER_NICKNAME);
-    tor_free(fingerprint);
-    return 0;
+    return;
   }
 
   status = digestmap_get(list->status_by_digest, d);
@@ -146,35 +138,15 @@ add_fingerprint_to_dir(const char *nickname, const char *fp,
     digestmap_set(list->status_by_digest, d, status);
   }
 
-  if (nickname[0] != '!') {
-    char *old_fp = strmap_get_lc(list->fp_by_name, nickname);
-    if (old_fp && !strcasecmp(fingerprint, old_fp)) {
-      tor_free(fingerprint);
-    } else {
-      tor_free(old_fp);
-      strmap_set_lc(list->fp_by_name, nickname, fingerprint);
-    }
-    status->status |= FP_NAMED;
-    strlcpy(status->nickname, nickname, sizeof(status->nickname));
-  } else {
-    tor_free(fingerprint);
-    if (!strcasecmp(nickname, "!reject")) {
-      status->status |= FP_REJECT;
-    } else if (!strcasecmp(nickname, "!invalid")) {
-      status->status |= FP_INVALID;
-    } else if (!strcasecmp(nickname, "!baddir")) {
-      status->status |= FP_BADDIR;
-    } else if (!strcasecmp(nickname, "!badexit")) {
-      status->status |= FP_BADEXIT;
-    }
-  }
-  return 0;
+  tor_free(fingerprint);
+  *status |= add_status;
+  return;
 }
 
-/** Add the nickname and fingerprint for this OR to the
- * global list of recognized identity key fingerprints. */
+/** Add the fingerprint for this OR to the global list of recognized
+ * identity key fingerprints. */
 int
-dirserv_add_own_fingerprint(const char *nickname, crypto_pk_t *pk)
+dirserv_add_own_fingerprint(crypto_pk_t *pk)
 {
   char fp[FINGERPRINT_LEN+1];
   if (crypto_pk_get_fingerprint(pk, fp, 0)<0) {
@@ -183,7 +155,7 @@ dirserv_add_own_fingerprint(const char *nickname, crypto_pk_t *pk)
   }
   if (!fingerprint_list)
     fingerprint_list = authdir_config_new();
-  add_fingerprint_to_dir(nickname, fp, fingerprint_list);
+  add_fingerprint_to_dir(fp, fingerprint_list, 0);
   return 0;
 }
 
@@ -201,7 +173,6 @@ dirserv_load_fingerprint_file(void)
   authdir_config_t *fingerprint_list_new;
   int result;
   config_line_t *front=NULL, *list;
-  const or_options_t *options = get_options();
 
   fname = get_datadir_fname("approved-routers");
   log_info(LD_GENERAL,
@@ -209,15 +180,9 @@ dirserv_load_fingerprint_file(void)
 
   cf = read_file_to_str(fname, RFTS_IGNORE_MISSING, NULL);
   if (!cf) {
-    if (options->NamingAuthoritativeDir) {
-      log_warn(LD_FS, "Cannot open fingerprint file '%s'. Failing.", fname);
-      tor_free(fname);
-      return -1;
-    } else {
-      log_info(LD_FS, "Cannot open fingerprint file '%s'. That's ok.", fname);
-      tor_free(fname);
-      return 0;
-    }
+    log_warn(LD_FS, "Cannot open fingerprint file '%s'. That's ok.", fname);
+    tor_free(fname);
+    return 0;
   }
   tor_free(fname);
 
@@ -232,22 +197,8 @@ dirserv_load_fingerprint_file(void)
 
   for (list=front; list; list=list->next) {
     char digest_tmp[DIGEST_LEN];
+    router_status_t add_status = 0;
     nickname = list->key; fingerprint = list->value;
-    if (strlen(nickname) > MAX_NICKNAME_LEN) {
-      log_notice(LD_CONFIG,
-                 "Nickname '%s' too long in fingerprint file. Skipping.",
-                 nickname);
-      continue;
-    }
-    if (!is_legal_nickname(nickname) &&
-        strcasecmp(nickname, "!reject") &&
-        strcasecmp(nickname, "!invalid") &&
-        strcasecmp(nickname, "!badexit")) {
-      log_notice(LD_CONFIG,
-                 "Invalid nickname '%s' in fingerprint file. Skipping.",
-                 nickname);
-      continue;
-    }
     tor_strstrip(fingerprint, " "); /* remove spaces */
     if (strlen(fingerprint) != HEX_DIGEST_LEN ||
         base16_decode(digest_tmp, sizeof(digest_tmp),
@@ -258,26 +209,14 @@ dirserv_load_fingerprint_file(void)
                  nickname, fingerprint);
       continue;
     }
-    if (0==strcasecmp(nickname, DEFAULT_CLIENT_NICKNAME)) {
-      /* If you approved an OR called "client", then clients who use
-       * the default nickname could all be rejected.  That's no good. */
-      log_notice(LD_CONFIG,
-                 "Authorizing nickname '%s' would break "
-                 "many clients; skipping.",
-                 DEFAULT_CLIENT_NICKNAME);
-      continue;
+    if (!strcasecmp(nickname, "!reject")) {
+        add_status = FP_REJECT;
+    } else if (!strcasecmp(nickname, "!badexit")) {
+        add_status = FP_BADEXIT;
+    } else if (!strcasecmp(nickname, "!invalid")) {
+        add_status = FP_INVALID;
     }
-    if (0==strcasecmp(nickname, UNNAMED_ROUTER_NICKNAME)) {
-      /* If you approved an OR called "unnamed", then clients will be
-       * confused. */
-      log_notice(LD_CONFIG,
-                 "Authorizing nickname '%s' is not allowed; skipping.",
-                 UNNAMED_ROUTER_NICKNAME);
-      continue;
-    }
-    if (add_fingerprint_to_dir(nickname, fingerprint, fingerprint_list_new)
-        != 0)
-      log_notice(LD_CONFIG, "Duplicate nickname '%s'.", nickname);
+    add_fingerprint_to_dir(fingerprint, fingerprint_list_new, add_status);
   }
 
   config_free_lines(front);
@@ -288,6 +227,16 @@ dirserv_load_fingerprint_file(void)
   return 0;
 }
 
+/* If this is set, then we don't allow routers that have advertised an Ed25519
+ * identity to stop doing so.  This is going to be essential for good identity
+ * security: otherwise anybody who can attack RSA-1024 but not Ed25519 could
+ * just sign fake descriptors missing the Ed25519 key.  But we won't actually
+ * be able to prevent that kind of thing until we're confident that there
+ * isn't actually a legit reason to downgrade to 0.2.5.  So for now, we have
+ * to leave this #undef.
+ */
+#undef DISABLE_DISABLING_ED25519
+
 /** Check whether <b>router</b> has a nickname/identity key combination that
  * we recognize from the fingerprint list, or an IP we automatically act on
  * according to our configuration.  Return the appropriate router status.
@@ -295,9 +244,11 @@ dirserv_load_fingerprint_file(void)
  * If the status is 'FP_REJECT' and <b>msg</b> is provided, set
  * *<b>msg</b> to an explanation of why. */
 uint32_t
-dirserv_router_get_status(const routerinfo_t *router, const char **msg)
+dirserv_router_get_status(const routerinfo_t *router, const char **msg,
+                          int severity)
 {
   char d[DIGEST_LEN];
+  const int key_pinning = get_options()->AuthDirPinKeys;
 
   if (crypto_pk_get_digest(router->identity_pkey, d)) {
     log_warn(LD_BUG,"Error computing fingerprint");
@@ -306,10 +257,45 @@ dirserv_router_get_status(const routerinfo_t *router, const char **msg)
     return FP_REJECT;
   }
 
+  if (router->signing_key_cert) {
+    /* This has an ed25519 identity key. */
+    if (KEYPIN_MISMATCH ==
+        keypin_check((const uint8_t*)router->cache_info.identity_digest,
+                     router->signing_key_cert->signing_key.pubkey)) {
+      log_fn(severity, LD_DIR,
+             "Descriptor from router %s has an Ed25519 key, "
+               "but the <rsa,ed25519> keys don't match what they were before.",
+               router_describe(router));
+      if (key_pinning) {
+        if (msg) {
+          *msg = "Ed25519 identity key or RSA identity key has changed.";
+        }
+        return FP_REJECT;
+      }
+    }
+  } else {
+    /* No ed25519 key */
+    if (KEYPIN_MISMATCH == keypin_check_lone_rsa(
+                        (const uint8_t*)router->cache_info.identity_digest)) {
+      log_fn(severity, LD_DIR,
+               "Descriptor from router %s has no Ed25519 key, "
+               "when we previously knew an Ed25519 for it. Ignoring for now, "
+               "since Ed25519 keys are fairly new.",
+               router_describe(router));
+#ifdef DISABLE_DISABLING_ED25519
+      if (key_pinning) {
+        if (msg) {
+          *msg = "Ed25519 identity key has disappeared.";
+        }
+        return FP_REJECT;
+      }
+#endif
+    }
+  }
+
   return dirserv_get_status_impl(d, router->nickname,
                                  router->addr, router->or_port,
-                                 router->platform, router->contact_info,
-                                 msg, 1);
+                                 router->platform, msg, severity);
 }
 
 /** Return true if there is no point in downloading the router described by
@@ -321,103 +307,45 @@ dirserv_would_reject_router(const routerstatus_t *rs)
 
   res = dirserv_get_status_impl(rs->identity_digest, rs->nickname,
                                 rs->addr, rs->or_port,
-                                NULL, NULL,
-                                NULL, 0);
+                                NULL, NULL, LOG_DEBUG);
 
   return (res & FP_REJECT) != 0;
 }
 
-/** Helper: Based only on the ID/Nickname combination,
- * return FP_UNNAMED (unnamed), FP_NAMED (named), or 0 (neither).
- */
-static uint32_t
-dirserv_get_name_status(const char *id_digest, const char *nickname)
-{
-  char fp[HEX_DIGEST_LEN+1];
-  char *fp_by_name;
-
-  base16_encode(fp, sizeof(fp), id_digest, DIGEST_LEN);
-
-  if ((fp_by_name =
-       strmap_get_lc(fingerprint_list->fp_by_name, nickname))) {
-    if (!strcasecmp(fp, fp_by_name)) {
-      return FP_NAMED;
-    } else {
-      return FP_UNNAMED; /* Wrong fingerprint. */
-    }
-  }
-  return 0;
-}
-
 /** Helper: As dirserv_router_get_status, but takes the router fingerprint
  * (hex, no spaces), nickname, address (used for logging only), IP address, OR
- * port, platform (logging only) and contact info (logging only) as arguments.
+ * port and platform (logging only) as arguments.
  *
- * If should_log is false, do not log messages.  (There's not much point in
+ * Log messages at 'severity'. (There's not much point in
  * logging that we're rejecting servers we'll not download.)
  */
 static uint32_t
 dirserv_get_status_impl(const char *id_digest, const char *nickname,
                         uint32_t addr, uint16_t or_port,
-                        const char *platform, const char *contact,
-                        const char **msg, int should_log)
+                        const char *platform, const char **msg, int severity)
 {
-  int reject_unlisted = get_options()->AuthDirRejectUnlisted;
-  uint32_t result;
+  uint32_t result = 0;
   router_status_t *status_by_digest;
 
   if (!fingerprint_list)
     fingerprint_list = authdir_config_new();
 
-  if (should_log)
-    log_debug(LD_DIRSERV, "%d fingerprints, %d digests known.",
-              strmap_size(fingerprint_list->fp_by_name),
-              digestmap_size(fingerprint_list->status_by_digest));
+  log_debug(LD_DIRSERV, "%d fingerprints, %d digests known.",
+            strmap_size(fingerprint_list->fp_by_name),
+            digestmap_size(fingerprint_list->status_by_digest));
 
-  /* Versions before Tor 0.2.3.16-alpha are too old to support, and are
+  /* Versions before Tor 0.2.4.18-rc are too old to support, and are
    * missing some important security fixes too. Disable them. */
-  if (platform && !tor_version_as_new_as(platform,"0.2.3.16-alpha")) {
+  if (platform && !tor_version_as_new_as(platform,"0.2.4.18-rc")) {
     if (msg)
       *msg = "Tor version is insecure or unsupported. Please upgrade!";
     return FP_REJECT;
-  }
-#if 0
-  else if (platform && tor_version_as_new_as(platform,"0.2.3.0-alpha")) {
-    /* Versions from 0.2.3-alpha...0.2.3.9-alpha have known security
-     * issues that make them unusable for the current network */
-    if (!tor_version_as_new_as(platform, "0.2.3.10-alpha")) {
-      if (msg)
-        *msg = "Tor version is insecure or unsupported. Please upgrade!";
-      return FP_REJECT;
-    }
-  }
-#endif
-
-  result = dirserv_get_name_status(id_digest, nickname);
-  if (result & FP_NAMED) {
-    if (should_log)
-      log_debug(LD_DIRSERV,"Good fingerprint for '%s'",nickname);
-  }
-  if (result & FP_UNNAMED) {
-    if (should_log) {
-      char *esc_contact = esc_for_log(contact);
-      log_info(LD_DIRSERV,
-               "Mismatched fingerprint for '%s'. "
-               "ContactInfo '%s', platform '%s'.)",
-               nickname,
-               esc_contact,
-               platform ? escaped(platform) : "");
-      tor_free(esc_contact);
-    }
-    if (msg)
-      *msg = "Rejected: There is already a named server with this nickname "
-        "and a different fingerprint.";
   }
 
   status_by_digest = digestmap_get(fingerprint_list->status_by_digest,
                                    id_digest);
   if (status_by_digest)
-    result |= (status_by_digest->status & ~FP_NAMED);
+    result |= *status_by_digest;
 
   if (result & FP_REJECT) {
     if (msg)
@@ -428,59 +356,28 @@ dirserv_get_status_impl(const char *id_digest, const char *nickname,
       *msg = "Fingerprint is marked invalid";
   }
 
-  if (authdir_policy_baddir_address(addr, or_port)) {
-    if (should_log)
-      log_info(LD_DIRSERV,
-               "Marking '%s' as bad directory because of address '%s'",
-               nickname, fmt_addr32(addr));
-    result |= FP_BADDIR;
-  }
-
   if (authdir_policy_badexit_address(addr, or_port)) {
-    if (should_log)
-      log_info(LD_DIRSERV, "Marking '%s' as bad exit because of address '%s'",
+    log_fn(severity, LD_DIRSERV,
+           "Marking '%s' as bad exit because of address '%s'",
                nickname, fmt_addr32(addr));
     result |= FP_BADEXIT;
   }
 
-  if (!(result & FP_NAMED)) {
-    if (!authdir_policy_permits_address(addr, or_port)) {
-      if (should_log)
-        log_info(LD_DIRSERV, "Rejecting '%s' because of address '%s'",
-                 nickname, fmt_addr32(addr));
-      if (msg)
-        *msg = "Authdir is rejecting routers in this range.";
-      return FP_REJECT;
-    }
-    if (!authdir_policy_valid_address(addr, or_port)) {
-      if (should_log)
-        log_info(LD_DIRSERV, "Not marking '%s' valid because of address '%s'",
-                 nickname, fmt_addr32(addr));
-      result |= FP_INVALID;
-    }
-    if (reject_unlisted) {
-      if (msg)
-        *msg = "Authdir rejects unknown routers.";
-      return FP_REJECT;
-    }
+  if (!authdir_policy_permits_address(addr, or_port)) {
+    log_fn(severity, LD_DIRSERV, "Rejecting '%s' because of address '%s'",
+               nickname, fmt_addr32(addr));
+    if (msg)
+      *msg = "Authdir is rejecting routers in this range.";
+    return FP_REJECT;
+  }
+  if (!authdir_policy_valid_address(addr, or_port)) {
+    log_fn(severity, LD_DIRSERV,
+           "Not marking '%s' valid because of address '%s'",
+               nickname, fmt_addr32(addr));
+    result |= FP_INVALID;
   }
 
   return result;
-}
-
-/** If we are an authoritative dirserver, and the list of approved
- * servers contains one whose identity key digest is <b>digest</b>,
- * return that router's nickname.  Otherwise return NULL. */
-const char *
-dirserv_get_nickname_by_digest(const char *digest)
-{
-  router_status_t *status;
-  if (!fingerprint_list)
-    return NULL;
-  tor_assert(digest);
-
-  status = digestmap_get(fingerprint_list->status_by_digest, digest);
-  return status ? status->nickname : NULL;
 }
 
 /** Clear the current fingerprint list. */
@@ -519,7 +416,7 @@ dirserv_router_has_valid_address(routerinfo_t *ri)
 }
 
 /** Check whether we, as a directory server, want to accept <b>ri</b>.  If so,
- * set its is_valid,named,running fields and return 0.  Otherwise, return -1.
+ * set its is_valid,running fields and return 0.  Otherwise, return -1.
  *
  * If the router is rejected, set *<b>msg</b> to an explanation of why.
  *
@@ -531,9 +428,9 @@ authdir_wants_to_reject_router(routerinfo_t *ri, const char **msg,
                                int complain, int *valid_out)
 {
   /* Okay.  Now check whether the fingerprint is recognized. */
-  uint32_t status = dirserv_router_get_status(ri, msg);
   time_t now;
   int severity = (complain && ri->contact_info) ? LOG_NOTICE : LOG_INFO;
+  uint32_t status = dirserv_router_get_status(ri, msg, severity);
   tor_assert(msg);
   if (status & FP_REJECT)
     return -1; /* msg is already set. */
@@ -584,7 +481,6 @@ dirserv_set_node_flags_from_authoritative_status(node_t *node,
                                                  uint32_t authstatus)
 {
   node->is_valid = (authstatus & FP_INVALID) ? 0 : 1;
-  node->is_bad_directory = (authstatus & FP_BADDIR) ? 1 : 0;
   node->is_bad_exit = (authstatus & FP_BADEXIT) ? 1 : 0;
 }
 
@@ -630,7 +526,7 @@ dirserv_add_multiple_descriptors(const char *desc, uint8_t purpose,
   s = desc;
   list = smartlist_new();
   if (!router_parse_list_from_string(&s, NULL, list, SAVED_NOWHERE, 0, 0,
-                                     annotation_buf)) {
+                                     annotation_buf, NULL)) {
     SMARTLIST_FOREACH(list, routerinfo_t *, ri, {
         msg_out = NULL;
         tor_assert(ri->purpose == purpose);
@@ -646,7 +542,7 @@ dirserv_add_multiple_descriptors(const char *desc, uint8_t purpose,
 
   s = desc;
   if (!router_parse_list_from_string(&s, NULL, list, SAVED_NOWHERE, 1, 0,
-                                     NULL)) {
+                                     NULL, NULL)) {
     SMARTLIST_FOREACH(list, extrainfo_t *, ei, {
         msg_out = NULL;
 
@@ -664,7 +560,7 @@ dirserv_add_multiple_descriptors(const char *desc, uint8_t purpose,
     if (!n_parsed) {
       *msg = "No descriptors found in your POST.";
       if (WRA_WAS_ADDED(r))
-        r = ROUTER_WAS_NOT_NEW;
+        r = ROUTER_IS_ALREADY_KNOWN;
     } else {
       *msg = "(no message)";
     }
@@ -689,7 +585,9 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
   was_router_added_t r;
   routerinfo_t *ri_old;
   char *desc, *nickname;
-  size_t desclen = 0;
+  const size_t desclen = ri->cache_info.signed_descriptor_len +
+      ri->cache_info.annotations_len;
+  const int key_pinning = get_options()->AuthDirPinKeys;
   *msg = NULL;
 
   /* If it's too big, refuse it now. Otherwise we'll cache it all over the
@@ -703,7 +601,7 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
     *msg = "Router descriptor was too large.";
     control_event_or_authdir_new_descriptor("REJECTED",
                ri->cache_info.signed_descriptor_body,
-               ri->cache_info.signed_descriptor_len, *msg);
+                                            desclen, *msg);
     routerinfo_free(ri);
     return ROUTER_AUTHDIR_REJECTS;
   }
@@ -724,14 +622,36 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
       "the last one with this identity.";
     control_event_or_authdir_new_descriptor("DROPPED",
                          ri->cache_info.signed_descriptor_body,
-                         ri->cache_info.signed_descriptor_len, *msg);
+                                            desclen, *msg);
     routerinfo_free(ri);
-    return ROUTER_WAS_NOT_NEW;
+    return ROUTER_IS_ALREADY_KNOWN;
+  }
+
+  /* Do keypinning again ... this time, to add the pin if appropriate */
+  int keypin_status;
+  if (ri->signing_key_cert) {
+    keypin_status = keypin_check_and_add(
+      (const uint8_t*)ri->cache_info.identity_digest,
+      ri->signing_key_cert->signing_key.pubkey,
+      ! key_pinning);
+  } else {
+    keypin_status = keypin_check_lone_rsa(
+      (const uint8_t*)ri->cache_info.identity_digest);
+#ifndef DISABLE_DISABLING_ED25519
+    if (keypin_status == KEYPIN_MISMATCH)
+      keypin_status = KEYPIN_NOT_FOUND;
+#endif
+  }
+  if (keypin_status == KEYPIN_MISMATCH && key_pinning) {
+    log_info(LD_DIRSERV, "Dropping descriptor from %s (source: %s) because "
+             "its key did not match an older RSA/Ed25519 keypair",
+             router_describe(ri), source);
+    *msg = "Looks like your keypair does not match its older value.";
+    return ROUTER_AUTHDIR_REJECTS;
   }
 
   /* Make a copy of desc, since router_add_to_routerlist might free
    * ri and its associated signed_descriptor_t. */
-  desclen = ri->cache_info.signed_descriptor_len;
   desc = tor_strndup(ri->cache_info.signed_descriptor_body, desclen);
   nickname = tor_strdup(ri->nickname);
 
@@ -798,7 +718,7 @@ dirserv_add_extrainfo(extrainfo_t *ei, const char **msg)
 
   if ((r = routerinfo_incompatible_with_extrainfo(ri, ei, NULL, msg))) {
     extrainfo_free(ei);
-    return r < 0 ? ROUTER_WAS_NOT_NEW : ROUTER_BAD_EI;
+    return r < 0 ? ROUTER_IS_ALREADY_KNOWN : ROUTER_BAD_EI;
   }
   router_add_extrainfo_to_routerlist(ei, msg, 0, 0);
   return ROUTER_ADDED_SUCCESSFULLY;
@@ -816,13 +736,13 @@ directory_remove_invalid(void)
   smartlist_add_all(nodes, nodelist_get_list());
 
   SMARTLIST_FOREACH_BEGIN(nodes, node_t *, node) {
-    const char *msg;
+    const char *msg = NULL;
     routerinfo_t *ent = node->ri;
     char description[NODE_DESC_BUF_LEN];
     uint32_t r;
     if (!ent)
       continue;
-    r = dirserv_router_get_status(ent, &msg);
+    r = dirserv_router_get_status(ent, &msg, LOG_INFO);
     router_get_description(description, ent);
     if (r & FP_REJECT) {
       log_info(LD_DIRSERV, "Router %s is now rejected: %s",
@@ -830,29 +750,10 @@ directory_remove_invalid(void)
       routerlist_remove(rl, ent, 0, time(NULL));
       continue;
     }
-#if 0
-    if (bool_neq((r & FP_NAMED), ent->auth_says_is_named)) {
-      log_info(LD_DIRSERV,
-               "Router %s is now %snamed.", description,
-               (r&FP_NAMED)?"":"un");
-      ent->is_named = (r&FP_NAMED)?1:0;
-    }
-    if (bool_neq((r & FP_UNNAMED), ent->auth_says_is_unnamed)) {
-      log_info(LD_DIRSERV,
-               "Router '%s' is now %snamed. (FP_UNNAMED)", description,
-               (r&FP_NAMED)?"":"un");
-      ent->is_named = (r&FP_NUNAMED)?0:1;
-    }
-#endif
     if (bool_neq((r & FP_INVALID), !node->is_valid)) {
       log_info(LD_DIRSERV, "Router '%s' is now %svalid.", description,
                (r&FP_INVALID) ? "in" : "");
       node->is_valid = (r&FP_INVALID)?0:1;
-    }
-    if (bool_neq((r & FP_BADDIR), node->is_bad_directory)) {
-      log_info(LD_DIRSERV, "Router '%s' is now a %s directory", description,
-               (r & FP_BADDIR) ? "bad" : "good");
-      node->is_bad_directory = (r&FP_BADDIR) ? 1: 0;
     }
     if (bool_neq((r & FP_BADEXIT), node->is_bad_exit)) {
       log_info(LD_DIRSERV, "Router '%s' is now a %s exit", description,
@@ -904,7 +805,7 @@ running_long_enough_to_decide_unreachable(void)
 }
 
 /** Each server needs to have passed a reachability test no more
- * than this number of seconds ago, or he is listed as down in
+ * than this number of seconds ago, or it is listed as down in
  * the directory. */
 #define REACHABLE_TIMEOUT (45*60)
 
@@ -1051,16 +952,33 @@ format_versions_list(config_line_t *ln)
 }
 
 /** Return 1 if <b>ri</b>'s descriptor is "active" -- running, valid,
- * not hibernating, and not too old. Else return 0.
+ * not hibernating, having observed bw greater 0, and not too old. Else
+ * return 0.
  */
 static int
 router_is_active(const routerinfo_t *ri, const node_t *node, time_t now)
 {
   time_t cutoff = now - ROUTER_MAX_AGE_TO_PUBLISH;
-  if (ri->cache_info.published_on < cutoff)
+  if (ri->cache_info.published_on < cutoff) {
     return 0;
-  if (!node->is_running || !node->is_valid || ri->is_hibernating)
+  }
+  if (!node->is_running || !node->is_valid || ri->is_hibernating) {
     return 0;
+  }
+  /* Only require bandwith capacity in non-test networks, or
+   * if TestingTorNetwork, and TestingMinExitFlagThreshold is non-zero */
+  if (!ri->bandwidthcapacity) {
+    if (get_options()->TestingTorNetwork) {
+      if (get_options()->TestingMinExitFlagThreshold > 0) {
+        /* If we're in a TestingTorNetwork, and TestingMinExitFlagThreshold is,
+         * then require bandwidthcapacity */
+        return 0;
+      }
+    } else {
+      /* If we're not in a TestingTorNetwork, then require bandwidthcapacity */
+      return 0;
+    }
+  }
   return 1;
 }
 
@@ -1205,7 +1123,7 @@ directory_fetches_dir_info_later(const or_options_t *options)
 }
 
 /** Return true iff we want to fetch and keep certificates for authorities
- * that we don't acknowledge as aurthorities ourself.
+ * that we don't acknowledge as authorities ourself.
  */
 int
 directory_caches_unknown_auth_certs(const or_options_t *options)
@@ -1432,8 +1350,9 @@ dirserv_thinks_router_is_unreliable(time_t now,
 }
 
 /** Return true iff <b>router</b> should be assigned the "HSDir" flag.
- * Right now this means it advertises support for it, it has a high
- * uptime, it has a DirPort open, and it's currently considered Running.
+ * Right now this means it advertises support for it, it has a high uptime,
+ * it has a DirPort open, it has the Stable and Fast flag and it's currently
+ * considered Running.
  *
  * This function needs to be called after router-\>is_running has
  * been set.
@@ -1459,16 +1378,10 @@ dirserv_thinks_router_is_hs_dir(const routerinfo_t *router,
   else
     uptime = real_uptime(router, now);
 
-  /* XXX We shouldn't need to check dir_port, but we do because of
-   * bug 1693. In the future, once relays set wants_to_be_hs_dir
-   * correctly, we can revert to only checking dir_port if router's
-   * version is too old. */
-  /* XXX Unfortunately, we need to keep checking dir_port until all
-   * *clients* suffering from bug 2722 are obsolete.  The first version
-   * to fix the bug was 0.2.2.25-alpha. */
   return (router->wants_to_be_hs_dir && router->dir_port &&
+          node->is_stable && node->is_fast &&
           uptime >= get_options()->MinUptimeHidServDirectoryV2 &&
-          node->is_running);
+          router_is_active(router, node, now));
 }
 
 /** Don't consider routers with less bandwidth than this when computing
@@ -1537,18 +1450,18 @@ dirserv_compute_performance_thresholds(routerlist_t *rl,
    * sort them and use that to compute thresholds. */
   n_active = n_active_nonexit = 0;
   /* Uptime for every active router. */
-  uptimes = tor_malloc(sizeof(uint32_t)*smartlist_len(rl->routers));
+  uptimes = tor_calloc(smartlist_len(rl->routers), sizeof(uint32_t));
   /* Bandwidth for every active router. */
-  bandwidths_kb = tor_malloc(sizeof(uint32_t)*smartlist_len(rl->routers));
+  bandwidths_kb = tor_calloc(smartlist_len(rl->routers), sizeof(uint32_t));
   /* Bandwidth for every active non-exit router. */
   bandwidths_excluding_exits_kb =
-    tor_malloc(sizeof(uint32_t)*smartlist_len(rl->routers));
+    tor_calloc(smartlist_len(rl->routers), sizeof(uint32_t));
   /* Weighted mean time between failure for each active router. */
-  mtbfs = tor_malloc(sizeof(double)*smartlist_len(rl->routers));
+  mtbfs = tor_calloc(smartlist_len(rl->routers), sizeof(double));
   /* Time-known for each active router. */
-  tks = tor_malloc(sizeof(long)*smartlist_len(rl->routers));
+  tks = tor_calloc(smartlist_len(rl->routers), sizeof(long));
   /* Weighted fractional uptime for each active router. */
-  wfus = tor_malloc(sizeof(double)*smartlist_len(rl->routers));
+  wfus = tor_calloc(smartlist_len(rl->routers), sizeof(double));
 
   nodelist_assert_ok();
 
@@ -1563,6 +1476,8 @@ dirserv_compute_performance_thresholds(routerlist_t *rl,
       routerinfo_t *ri = node->ri;
       const char *id = node->identity;
       uint32_t bw_kb;
+      /* resolve spurious clang shallow analysis null pointer errors */
+      tor_assert(ri);
       node->is_exit = (!router_exit_policy_rejects_all(ri) &&
                        exit_policy_is_general_exit(ri->exit_policy));
       uptimes[n_active] = (uint32_t)real_uptime(ri, now);
@@ -1586,9 +1501,10 @@ dirserv_compute_performance_thresholds(routerlist_t *rl,
     /* The 12.5th percentile bandwidth is fast. */
     fast_bandwidth_kb = find_nth_uint32(bandwidths_kb, n_active, n_active/8);
     /* (Now bandwidths is sorted.) */
-    if (fast_bandwidth_kb < ROUTER_REQUIRED_MIN_BANDWIDTH/(2 * 1000))
+    if (fast_bandwidth_kb < RELAY_REQUIRED_MIN_BANDWIDTH/(2 * 1000))
       fast_bandwidth_kb = bandwidths_kb[n_active/4];
-    guard_bandwidth_including_exits_kb = bandwidths_kb[n_active*3/4];
+    guard_bandwidth_including_exits_kb =
+      third_quartile_uint32(bandwidths_kb, n_active);
     guard_tk = find_nth_long(tks, n_active, n_active/8);
   }
 
@@ -1663,7 +1579,7 @@ dirserv_compute_performance_thresholds(routerlist_t *rl,
       (unsigned long)guard_tk,
       (unsigned long)guard_bandwidth_including_exits_kb,
       (unsigned long)guard_bandwidth_excluding_exits_kb,
-      enough_mtbf_info ? "" : " don't ");
+      enough_mtbf_info ? "" : " don't");
 
   tor_free(uptimes);
   tor_free(mtbfs);
@@ -1959,13 +1875,12 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
   char published[ISO_TIME_LEN+1];
   char identity64[BASE64_DIGEST_LEN+1];
   char digest64[BASE64_DIGEST_LEN+1];
-  smartlist_t *chunks = NULL;
+  smartlist_t *chunks = smartlist_new();
 
   format_iso_time(published, rs->published_on);
   digest_to_base64(identity64, rs->identity_digest);
   digest_to_base64(digest64, rs->descriptor_digest);
 
-  chunks = smartlist_new();
   smartlist_add_asprintf(chunks,
                    "r %s %s %s%s%s %s %d %d\n",
                    rs->nickname,
@@ -1996,19 +1911,16 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
     goto done;
 
   smartlist_add_asprintf(chunks,
-                   "s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+                   "s%s%s%s%s%s%s%s%s%s%s\n",
                   /* These must stay in alphabetical order. */
                    rs->is_authority?" Authority":"",
-                   rs->is_bad_directory?" BadDirectory":"",
                    rs->is_bad_exit?" BadExit":"",
                    rs->is_exit?" Exit":"",
                    rs->is_fast?" Fast":"",
                    rs->is_possible_guard?" Guard":"",
                    rs->is_hs_dir?" HSDir":"",
-                   rs->is_named?" Named":"",
                    rs->is_flagged_running?" Running":"",
                    rs->is_stable?" Stable":"",
-                   rs->is_unnamed?" Unnamed":"",
                    (rs->dir_port!=0)?" V2Dir":"",
                    rs->is_valid?" Valid":"");
 
@@ -2077,6 +1989,13 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
       smartlist_add_asprintf(chunks,
                        " Measured=%d", vrs->measured_bw_kb);
     }
+    /* Write down guardfraction information if we have it. */
+    if (format == NS_V3_VOTE && vrs && vrs->status.has_guardfraction) {
+      smartlist_add_asprintf(chunks,
+                             " GuardFraction=%d",
+                             vrs->status.guardfraction_percentage);
+    }
+
     smartlist_add(chunks, tor_strdup("\n"));
 
     if (desc) {
@@ -2084,16 +2003,24 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
       smartlist_add_asprintf(chunks, "p %s\n", summary);
       tor_free(summary);
     }
+
+    if (format == NS_V3_VOTE && vrs) {
+      if (tor_mem_is_zero((char*)vrs->ed25519_id, ED25519_PUBKEY_LEN)) {
+        smartlist_add(chunks, tor_strdup("id ed25519 none\n"));
+      } else {
+        char ed_b64[BASE64_DIGEST256_LEN+1];
+        digest256_to_base64(ed_b64, (const char*)vrs->ed25519_id);
+        smartlist_add_asprintf(chunks, "id ed25519 %s\n", ed_b64);
+      }
+    }
   }
 
  done:
   result = smartlist_join_strings(chunks, "", 0, NULL);
 
  err:
-  if (chunks) {
-    SMARTLIST_FOREACH(chunks, char *, cp, tor_free(cp));
-    smartlist_free(chunks);
-  }
+  SMARTLIST_FOREACH(chunks, char *, cp, tor_free(cp));
+  smartlist_free(chunks);
 
   return result;
 }
@@ -2199,78 +2126,8 @@ get_possible_sybil_list(const smartlist_t *routers)
   return omit_as_sybil;
 }
 
-/** Return non-zero iff a relay running the Tor version specified in
- * <b>platform</b> is suitable for use as a potential entry guard. */
-static int
-is_router_version_good_for_possible_guard(const char *platform)
-{
-  static int parsed_versions_initialized = 0;
-  static tor_version_t first_good_0_2_1_guard_version;
-  static tor_version_t first_good_0_2_2_guard_version;
-  static tor_version_t first_good_later_guard_version;
-
-  tor_version_t router_version;
-
-  /* XXX024 This block should be extracted into its own function. */
-  /* XXXX Begin code copied from tor_version_as_new_as (in routerparse.c) */
-  {
-    char *s, *s2, *start;
-    char tmp[128];
-
-    tor_assert(platform);
-
-    /* nonstandard Tor; be safe and say yes */
-    if (strcmpstart(platform,"Tor "))
-      return 1;
-
-    start = (char *)eat_whitespace(platform+3);
-    if (!*start) return 0;
-    s = (char *)find_whitespace(start); /* also finds '\0', which is fine */
-    s2 = (char*)eat_whitespace(s);
-    if (!strcmpstart(s2, "(r") || !strcmpstart(s2, "(git-"))
-      s = (char*)find_whitespace(s2);
-
-    if ((size_t)(s-start+1) >= sizeof(tmp)) /* too big, no */
-      return 0;
-    strlcpy(tmp, start, s-start+1);
-
-    if (tor_version_parse(tmp, &router_version)<0) {
-      log_info(LD_DIR,"Router version '%s' unparseable.",tmp);
-      return 1; /* be safe and say yes */
-    }
-  }
-  /* XXXX End code copied from tor_version_as_new_as (in routerparse.c) */
-
-  if (!parsed_versions_initialized) {
-    /* CVE-2011-2769 was fixed on the relay side in Tor versions
-     * 0.2.1.31, 0.2.2.34, and 0.2.3.6-alpha. */
-    tor_assert(tor_version_parse("0.2.1.31",
-                                 &first_good_0_2_1_guard_version)>=0);
-    tor_assert(tor_version_parse("0.2.2.34",
-                                 &first_good_0_2_2_guard_version)>=0);
-    tor_assert(tor_version_parse("0.2.3.6-alpha",
-                                 &first_good_later_guard_version)>=0);
-
-    /* Don't parse these constant version strings once for every relay
-     * for every vote. */
-    parsed_versions_initialized = 1;
-  }
-
-  return ((tor_version_same_series(&first_good_0_2_1_guard_version,
-                                   &router_version) &&
-           tor_version_compare(&first_good_0_2_1_guard_version,
-                               &router_version) <= 0) ||
-          (tor_version_same_series(&first_good_0_2_2_guard_version,
-                                   &router_version) &&
-           tor_version_compare(&first_good_0_2_2_guard_version,
-                               &router_version) <= 0) ||
-          (tor_version_compare(&first_good_later_guard_version,
-                               &router_version) <= 0));
-}
-
 /** Extract status information from <b>ri</b> and from other authority
- * functions and store it in <b>rs</b>>.  If <b>naming</b>, consider setting
- * the named flag in <b>rs</b>.
+ * functions and store it in <b>rs</b>>.
  *
  * We assume that ri-\>is_running has already been set, e.g. by
  *   dirserv_set_router_is_running(ri, now);
@@ -2280,8 +2137,7 @@ set_routerstatus_from_routerinfo(routerstatus_t *rs,
                                  node_t *node,
                                  routerinfo_t *ri,
                                  time_t now,
-                                 int naming, int listbadexits,
-                                 int listbaddirs, int vote_on_hsdirs)
+                                 int listbadexits)
 {
   const or_options_t *options = get_options();
   uint32_t routerbw_kb = dirserv_get_credible_bandwidth_kb(ri);
@@ -2294,27 +2150,18 @@ set_routerstatus_from_routerinfo(routerstatus_t *rs,
   /* Already set by compute_performance_thresholds. */
   rs->is_exit = node->is_exit;
   rs->is_stable = node->is_stable =
-    router_is_active(ri, node, now) &&
     !dirserv_thinks_router_is_unreliable(now, ri, 1, 0);
   rs->is_fast = node->is_fast =
-    router_is_active(ri, node, now) &&
     !dirserv_thinks_router_is_unreliable(now, ri, 0, 1);
   rs->is_flagged_running = node->is_running; /* computed above */
 
-  if (naming) {
-    uint32_t name_status = dirserv_get_name_status(
-                                              node->identity, ri->nickname);
-    rs->is_named = (naming && (name_status & FP_NAMED)) ? 1 : 0;
-    rs->is_unnamed = (naming && (name_status & FP_UNNAMED)) ? 1 : 0;
-  }
   rs->is_valid = node->is_valid;
 
   if (node->is_fast &&
       ((options->AuthDirGuardBWGuarantee &&
         routerbw_kb >= options->AuthDirGuardBWGuarantee/1000) ||
        routerbw_kb >= MIN(guard_bandwidth_including_exits_kb,
-                       guard_bandwidth_excluding_exits_kb)) &&
-      is_router_version_good_for_possible_guard(ri->platform)) {
+                          guard_bandwidth_excluding_exits_kb))) {
     long tk = rep_hist_get_weighted_time_known(
                                       node->identity, now);
     double wfu = rep_hist_get_weighted_fractional_uptime(
@@ -2323,19 +2170,12 @@ set_routerstatus_from_routerinfo(routerstatus_t *rs,
   } else {
     rs->is_possible_guard = 0;
   }
-  if (options->TestingTorNetwork &&
-      routerset_contains_routerstatus(options->TestingDirAuthVoteGuard,
-                                      rs, 0)) {
-    rs->is_possible_guard = 1;
-  }
 
-  rs->is_bad_directory = listbaddirs && node->is_bad_directory;
   rs->is_bad_exit = listbadexits && node->is_bad_exit;
-  node->is_hs_dir = dirserv_thinks_router_is_hs_dir(ri, node, now);
-  rs->is_hs_dir = vote_on_hsdirs && node->is_hs_dir;
+  rs->is_hs_dir = node->is_hs_dir =
+    dirserv_thinks_router_is_hs_dir(ri, node, now);
 
-  if (!strcasecmp(ri->nickname, UNNAMED_ROUTER_NICKNAME))
-    rs->is_named = rs->is_unnamed = 0;
+  rs->is_named = rs->is_unnamed = 0;
 
   rs->published_on = ri->cache_info.published_on;
   memcpy(rs->identity_digest, node->identity, DIGEST_LEN);
@@ -2353,6 +2193,43 @@ set_routerstatus_from_routerinfo(routerstatus_t *rs,
     tor_addr_copy(&rs->ipv6_addr, &ri->ipv6_addr);
     rs->ipv6_orport = ri->ipv6_orport;
   }
+
+  if (options->TestingTorNetwork) {
+    dirserv_set_routerstatus_testing(rs);
+  }
+}
+
+/** Use TestingDirAuthVoteExit, TestingDirAuthVoteGuard, and
+ * TestingDirAuthVoteHSDir to give out the Exit, Guard, and HSDir flags,
+ * respectively. But don't set the corresponding node flags.
+ * Should only be called if TestingTorNetwork is set. */
+STATIC void
+dirserv_set_routerstatus_testing(routerstatus_t *rs)
+{
+  const or_options_t *options = get_options();
+
+  tor_assert(options->TestingTorNetwork);
+
+  if (routerset_contains_routerstatus(options->TestingDirAuthVoteExit,
+                                      rs, 0)) {
+    rs->is_exit = 1;
+  } else if (options->TestingDirAuthVoteExitIsStrict) {
+    rs->is_exit = 0;
+  }
+
+  if (routerset_contains_routerstatus(options->TestingDirAuthVoteGuard,
+                                      rs, 0)) {
+    rs->is_possible_guard = 1;
+  } else if (options->TestingDirAuthVoteGuardIsStrict) {
+    rs->is_possible_guard = 0;
+  }
+
+  if (routerset_contains_routerstatus(options->TestingDirAuthVoteHSDir,
+                                      rs, 0)) {
+    rs->is_hs_dir = 1;
+  } else if (options->TestingDirAuthVoteHSDirIsStrict) {
+    rs->is_hs_dir = 0;
+  }
 }
 
 /** Routerstatus <b>rs</b> is part of a group of routers that are on
@@ -2364,11 +2241,323 @@ clear_status_flags_on_sybil(routerstatus_t *rs)
 {
   rs->is_authority = rs->is_exit = rs->is_stable = rs->is_fast =
     rs->is_flagged_running = rs->is_named = rs->is_valid =
-    rs->is_hs_dir = rs->is_possible_guard = rs->is_bad_exit =
-    rs->is_bad_directory = 0;
+    rs->is_hs_dir = rs->is_possible_guard = rs->is_bad_exit = 0;
   /* FFFF we might want some mechanism to check later on if we
    * missed zeroing any flags: it's easy to add a new flag but
    * forget to add it to this clause. */
+}
+
+/** The guardfraction of the guard with identity fingerprint <b>guard_id</b>
+ *  is <b>guardfraction_percentage</b>. See if we have a vote routerstatus for
+ *  this guard in <b>vote_routerstatuses</b>, and if we do, register the
+ *  information to it.
+ *
+ *  Return 1 if we applied the information and 0 if we couldn't find a
+ *  matching guard.
+ *
+ * Requires that <b>vote_routerstatuses</b> be sorted.
+ */
+static int
+guardfraction_line_apply(const char *guard_id,
+                      uint32_t guardfraction_percentage,
+                      smartlist_t *vote_routerstatuses)
+{
+  vote_routerstatus_t *vrs = NULL;
+
+  tor_assert(vote_routerstatuses);
+
+  vrs = smartlist_bsearch(vote_routerstatuses, guard_id,
+                         compare_digest_to_vote_routerstatus_entry);
+
+  if (!vrs) {
+    return 0;
+  }
+
+  vrs->status.has_guardfraction = 1;
+  vrs->status.guardfraction_percentage = guardfraction_percentage;
+
+  return 1;
+}
+
+/* Given a guard line from a guardfraction file, parse it and register
+ * its information to <b>vote_routerstatuses</b>.
+ *
+ * Return:
+ * * 1 if the line was proper and its information got registered.
+ * * 0 if the line was proper but no currently active guard was found
+ *     to register the guardfraction information to.
+ * * -1 if the line could not be parsed and set <b>err_msg</b> to a
+      newly allocated string containing the error message.
+ */
+static int
+guardfraction_file_parse_guard_line(const char *guard_line,
+                                    smartlist_t *vote_routerstatuses,
+                                    char **err_msg)
+{
+  char guard_id[DIGEST_LEN];
+  uint32_t guardfraction;
+  char *inputs_tmp = NULL;
+  int num_ok = 1;
+
+  smartlist_t *sl = smartlist_new();
+  int retval = -1;
+
+  tor_assert(err_msg);
+
+  /* guard_line should contain something like this:
+     <hex digest> <guardfraction> <appearances> */
+  smartlist_split_string(sl, guard_line, " ",
+                         SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 3);
+  if (smartlist_len(sl) < 3) {
+    tor_asprintf(err_msg, "bad line '%s'", guard_line);
+    goto done;
+  }
+
+  inputs_tmp = smartlist_get(sl, 0);
+  if (strlen(inputs_tmp) != HEX_DIGEST_LEN ||
+      base16_decode(guard_id, DIGEST_LEN, inputs_tmp, HEX_DIGEST_LEN)) {
+    tor_asprintf(err_msg, "bad digest '%s'", inputs_tmp);
+    goto done;
+  }
+
+  inputs_tmp = smartlist_get(sl, 1);
+  /* Guardfraction is an integer in [0, 100]. */
+  guardfraction =
+    (uint32_t) tor_parse_long(inputs_tmp, 10, 0, 100, &num_ok, NULL);
+  if (!num_ok) {
+    tor_asprintf(err_msg, "wrong percentage '%s'", inputs_tmp);
+    goto done;
+  }
+
+  /* If routerstatuses were provided, apply this info to actual routers. */
+  if (vote_routerstatuses) {
+    retval = guardfraction_line_apply(guard_id, guardfraction,
+                                      vote_routerstatuses);
+  } else {
+    retval = 0; /* If we got this far, line was correctly formatted. */
+  }
+
+ done:
+
+  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  smartlist_free(sl);
+
+  return retval;
+}
+
+/** Given an inputs line from a guardfraction file, parse it and
+ *  register its information to <b>total_consensuses</b> and
+ *  <b>total_days</b>.
+ *
+ *  Return 0 if it parsed well. Return -1 if there was an error, and
+ *  set <b>err_msg</b> to a newly allocated string containing the
+ *  error message.
+ */
+static int
+guardfraction_file_parse_inputs_line(const char *inputs_line,
+                                     int *total_consensuses,
+                                     int *total_days,
+                                     char **err_msg)
+{
+  int retval = -1;
+  char *inputs_tmp = NULL;
+  int num_ok = 1;
+  smartlist_t *sl = smartlist_new();
+
+  tor_assert(err_msg);
+
+  /* Second line is inputs information:
+   *   n-inputs <total_consensuses> <total_days>. */
+  smartlist_split_string(sl, inputs_line, " ",
+                         SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 3);
+  if (smartlist_len(sl) < 2) {
+    tor_asprintf(err_msg, "incomplete line '%s'", inputs_line);
+    goto done;
+  }
+
+  inputs_tmp = smartlist_get(sl, 0);
+  *total_consensuses =
+    (int) tor_parse_long(inputs_tmp, 10, 0, INT_MAX, &num_ok, NULL);
+  if (!num_ok) {
+    tor_asprintf(err_msg, "unparseable consensus '%s'", inputs_tmp);
+    goto done;
+  }
+
+  inputs_tmp = smartlist_get(sl, 1);
+  *total_days =
+    (int) tor_parse_long(inputs_tmp, 10, 0, INT_MAX, &num_ok, NULL);
+  if (!num_ok) {
+    tor_asprintf(err_msg, "unparseable days '%s'", inputs_tmp);
+    goto done;
+  }
+
+  retval = 0;
+
+ done:
+  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  smartlist_free(sl);
+
+  return retval;
+}
+
+/* Maximum age of a guardfraction file that we are willing to accept. */
+#define MAX_GUARDFRACTION_FILE_AGE (7*24*60*60) /* approx a week */
+
+/** Static strings of guardfraction files. */
+#define GUARDFRACTION_DATE_STR "written-at"
+#define GUARDFRACTION_INPUTS "n-inputs"
+#define GUARDFRACTION_GUARD "guard-seen"
+#define GUARDFRACTION_VERSION "guardfraction-file-version"
+
+/** Given a guardfraction file in a string, parse it and register the
+ *  guardfraction information to the provided vote routerstatuses.
+ *
+ *  This is the rough format of the guardfraction file:
+ *
+ *      guardfraction-file-version 1
+ *      written-at <date and time>
+ *      n-inputs <number of consesuses parsed> <number of days considered>
+ *
+ *      guard-seen <fpr 1> <guardfraction percentage> <consensus appearances>
+ *      guard-seen <fpr 2> <guardfraction percentage> <consensus appearances>
+ *      guard-seen <fpr 3> <guardfraction percentage> <consensus appearances>
+ *      guard-seen <fpr 4> <guardfraction percentage> <consensus appearances>
+ *      guard-seen <fpr 5> <guardfraction percentage> <consensus appearances>
+ *      ...
+ *
+ *  Return -1 if the parsing failed and 0 if it went smoothly. Parsing
+ *  should tolerate errors in all lines but the written-at header.
+ */
+STATIC int
+dirserv_read_guardfraction_file_from_str(const char *guardfraction_file_str,
+                                      smartlist_t *vote_routerstatuses)
+{
+  config_line_t *front=NULL, *line;
+  int ret_tmp;
+  int retval = -1;
+  int current_line_n = 0; /* line counter for better log messages */
+
+  /* Guardfraction info to be parsed */
+  int total_consensuses = 0;
+  int total_days = 0;
+
+  /* Stats */
+  int guards_read_n = 0;
+  int guards_applied_n = 0;
+
+  /* Parse file and split it in lines */
+  ret_tmp = config_get_lines(guardfraction_file_str, &front, 0);
+  if (ret_tmp < 0) {
+    log_warn(LD_CONFIG, "Error reading from guardfraction file");
+    goto done;
+  }
+
+  /* Sort routerstatuses (needed later when applying guardfraction info) */
+  if (vote_routerstatuses)
+    smartlist_sort(vote_routerstatuses, compare_vote_routerstatus_entries);
+
+  for (line = front; line; line=line->next) {
+    current_line_n++;
+
+    if (!strcmp(line->key, GUARDFRACTION_VERSION)) {
+      int num_ok = 1;
+      unsigned int version;
+
+      version =
+        (unsigned int) tor_parse_long(line->value,
+                                      10, 0, INT_MAX, &num_ok, NULL);
+
+      if (!num_ok || version != 1) {
+        log_warn(LD_GENERAL, "Got unknown guardfraction version %d.", version);
+        goto done;
+      }
+    } else if (!strcmp(line->key, GUARDFRACTION_DATE_STR)) {
+      time_t file_written_at;
+      time_t now = time(NULL);
+
+      /* First line is 'written-at <date>' */
+      if (parse_iso_time(line->value, &file_written_at) < 0) {
+        log_warn(LD_CONFIG, "Guardfraction:%d: Bad date '%s'. Ignoring",
+                 current_line_n, line->value);
+        goto done; /* don't tolerate failure here. */
+      }
+      if (file_written_at < now - MAX_GUARDFRACTION_FILE_AGE) {
+        log_warn(LD_CONFIG, "Guardfraction:%d: was written very long ago '%s'",
+                 current_line_n, line->value);
+        goto done; /* don't tolerate failure here. */
+      }
+    } else if (!strcmp(line->key, GUARDFRACTION_INPUTS)) {
+      char *err_msg = NULL;
+
+      if (guardfraction_file_parse_inputs_line(line->value,
+                                               &total_consensuses,
+                                               &total_days,
+                                               &err_msg) < 0) {
+        log_warn(LD_CONFIG, "Guardfraction:%d: %s",
+                 current_line_n, err_msg);
+        tor_free(err_msg);
+        continue;
+      }
+
+    } else if (!strcmp(line->key, GUARDFRACTION_GUARD)) {
+      char *err_msg = NULL;
+
+      ret_tmp = guardfraction_file_parse_guard_line(line->value,
+                                                    vote_routerstatuses,
+                                                    &err_msg);
+      if (ret_tmp < 0) { /* failed while parsing the guard line */
+        log_warn(LD_CONFIG, "Guardfraction:%d: %s",
+                 current_line_n, err_msg);
+        tor_free(err_msg);
+        continue;
+      }
+
+      /* Successfully parsed guard line. Check if it was applied properly. */
+      guards_read_n++;
+      if (ret_tmp > 0) {
+        guards_applied_n++;
+      }
+    } else {
+      log_warn(LD_CONFIG, "Unknown guardfraction line %d (%s %s)",
+               current_line_n, line->key, line->value);
+    }
+  }
+
+  retval = 0;
+
+  log_info(LD_CONFIG,
+           "Successfully parsed guardfraction file with %d consensuses over "
+           "%d days. Parsed %d nodes and applied %d of them%s.",
+           total_consensuses, total_days, guards_read_n, guards_applied_n,
+           vote_routerstatuses ? "" : " (no routerstatus provided)" );
+
+ done:
+  config_free_lines(front);
+
+  if (retval < 0) {
+    return retval;
+  } else {
+    return guards_read_n;
+  }
+}
+
+/** Read a guardfraction file at <b>fname</b> and load all its
+ *  information to <b>vote_routerstatuses</b>. */
+int
+dirserv_read_guardfraction_file(const char *fname,
+                             smartlist_t *vote_routerstatuses)
+{
+  char *guardfraction_file_str;
+
+  /* Read file to a string */
+  guardfraction_file_str = read_file_to_str(fname, RFTS_IGNORE_MISSING, NULL);
+  if (!guardfraction_file_str) {
+      log_warn(LD_FS, "Cannot open guardfraction file '%s'. Failing.", fname);
+      return -1;
+  }
+
+  return dirserv_read_guardfraction_file_from_str(guardfraction_file_str,
+                                               vote_routerstatuses);
 }
 
 /**
@@ -2563,10 +2752,7 @@ dirserv_generate_networkstatus_vote_obj(crypto_pk_t *private_key,
   smartlist_t *routers, *routerstatuses;
   char identity_digest[DIGEST_LEN];
   char signing_key_digest[DIGEST_LEN];
-  int naming = options->NamingAuthoritativeDir;
   int listbadexits = options->AuthDirListBadExits;
-  int listbaddirs = options->AuthDirListBadDirs;
-  int vote_on_hsdirs = options->VoteOnHidServDirectoriesV2;
   routerlist_t *rl = router_get_routerlist();
   time_t now = time(NULL);
   time_t cutoff = now - ROUTER_MAX_AGE_TO_PUBLISH;
@@ -2657,8 +2843,12 @@ dirserv_generate_networkstatus_vote_obj(crypto_pk_t *private_key,
       vrs = tor_malloc_zero(sizeof(vote_routerstatus_t));
       rs = &vrs->status;
       set_routerstatus_from_routerinfo(rs, node, ri, now,
-                                       naming, listbadexits, listbaddirs,
-                                       vote_on_hsdirs);
+                                       listbadexits);
+
+      if (ri->signing_key_cert) {
+        memcpy(vrs->ed25519_id, ri->signing_key_cert->signing_key.pubkey,
+               ED25519_PUBKEY_LEN);
+      }
 
       if (digestmap_get(omit_as_sybil, ri->cache_info.identity_digest))
         clear_status_flags_on_sybil(rs);
@@ -2684,6 +2874,12 @@ dirserv_generate_networkstatus_vote_obj(crypto_pk_t *private_key,
 
   smartlist_free(routers);
   digestmap_free(omit_as_sybil, NULL);
+
+  /* Apply guardfraction information to routerstatuses. */
+  if (options->GuardfractionFile) {
+    dirserv_read_guardfraction_file(options->GuardfractionFile,
+                                    routerstatuses);
+  }
 
   /* This pass through applies the measured bw lines to the routerstatuses */
   if (options->V3BandwidthsFile) {
@@ -2733,22 +2929,23 @@ dirserv_generate_networkstatus_vote_obj(crypto_pk_t *private_key,
 
   v3_out->client_versions = client_versions;
   v3_out->server_versions = server_versions;
+  v3_out->package_lines = smartlist_new();
+  {
+    config_line_t *cl;
+    for (cl = get_options()->RecommendedPackages; cl; cl = cl->next) {
+      if (validate_recommended_package_line(cl->value))
+        smartlist_add(v3_out->package_lines, tor_strdup(cl->value));
+    }
+  }
+
   v3_out->known_flags = smartlist_new();
   smartlist_split_string(v3_out->known_flags,
-                "Authority Exit Fast Guard Stable V2Dir Valid",
+                "Authority Exit Fast Guard Stable V2Dir Valid HSDir",
                 0, SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 0);
   if (vote_on_reachability)
     smartlist_add(v3_out->known_flags, tor_strdup("Running"));
-  if (listbaddirs)
-    smartlist_add(v3_out->known_flags, tor_strdup("BadDirectory"));
   if (listbadexits)
     smartlist_add(v3_out->known_flags, tor_strdup("BadExit"));
-  if (naming) {
-    smartlist_add(v3_out->known_flags, tor_strdup("Named"));
-    smartlist_add(v3_out->known_flags, tor_strdup("Unnamed"));
-  }
-  if (vote_on_hsdirs)
-    smartlist_add(v3_out->known_flags, tor_strdup("HSDir"));
   smartlist_sort_strings(v3_out->known_flags);
 
   if (options->ConsensusParams) {
@@ -3431,7 +3628,7 @@ connection_dirserv_add_networkstatus_bytes_to_outbuf(dir_connection_t *conn)
         if (uncompressing && ! conn->zlib_state &&
             conn->fingerprint_stack &&
             smartlist_len(conn->fingerprint_stack)) {
-          conn->zlib_state = tor_zlib_new(0, ZLIB_METHOD);
+          conn->zlib_state = tor_zlib_new(0, ZLIB_METHOD, HIGH_COMPRESSION);
         }
       }
       if (r) return r;
@@ -3482,6 +3679,82 @@ connection_dirserv_flushed_some(dir_connection_t *conn)
     default:
       return 0;
   }
+}
+
+/** Return true iff <b>line</b> is a valid RecommendedPackages line.
+ */
+/*
+  The grammar is:
+
+    "package" SP PACKAGENAME SP VERSION SP URL SP DIGESTS NL
+
+      PACKAGENAME = NONSPACE
+      VERSION = NONSPACE
+      URL = NONSPACE
+      DIGESTS = DIGEST | DIGESTS SP DIGEST
+      DIGEST = DIGESTTYPE "=" DIGESTVAL
+
+      NONSPACE = one or more non-space printing characters
+
+      DIGESTVAL = DIGESTTYPE = one or more non-=, non-" " characters.
+
+      SP = " "
+      NL = a newline
+
+ */
+int
+validate_recommended_package_line(const char *line)
+{
+  const char *cp = line;
+
+#define WORD()                                  \
+  do {                                          \
+    if (*cp == ' ')                             \
+      return 0;                                 \
+    cp = strchr(cp, ' ');                       \
+    if (!cp)                                    \
+      return 0;                                 \
+  } while (0)
+
+  WORD(); /* skip packagename */
+  ++cp;
+  WORD(); /* skip version */
+  ++cp;
+  WORD(); /* Skip URL */
+  ++cp;
+
+  /* Skip digesttype=digestval + */
+  int n_entries = 0;
+  while (1) {
+    const char *start_of_word = cp;
+    const char *end_of_word = strchr(cp, ' ');
+    if (! end_of_word)
+      end_of_word = cp + strlen(cp);
+
+    if (start_of_word == end_of_word)
+      return 0;
+
+    const char *eq = memchr(start_of_word, '=', end_of_word - start_of_word);
+
+    if (!eq)
+      return 0;
+    if (eq == start_of_word)
+      return 0;
+    if (eq == end_of_word - 1)
+      return 0;
+    if (memchr(eq+1, '=', end_of_word - (eq+1)))
+      return 0;
+
+    ++n_entries;
+    if (0 == *end_of_word)
+      break;
+
+    cp = end_of_word + 1;
+  }
+
+  /* If we reach this point, we have at least 1 entry. */
+  tor_assert(n_entries > 0);
+  return 1;
 }
 
 /** Release all storage used by the directory server. */

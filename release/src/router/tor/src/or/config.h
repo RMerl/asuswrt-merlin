@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -29,10 +29,11 @@ setopt_err_t options_trial_assign(config_line_t *list, int use_defaults,
                                   int clear_first, char **msg);
 
 uint32_t get_last_resolved_addr(void);
+void reset_last_resolved_addr(void);
 int resolve_my_address(int warn_severity, const or_options_t *options,
                        uint32_t *addr_out,
                        const char **method_out, char **hostname_out);
-int is_local_addr(const tor_addr_t *addr);
+MOCK_DECL(int, is_local_addr, (const tor_addr_t *addr));
 void options_init(or_options_t *options);
 
 #define OPTIONS_DUMP_MINIMAL 1
@@ -60,6 +61,10 @@ char *options_get_datadir_fname2_suffix(const or_options_t *options,
  * get_datadir_fname2_suffix.  */
 #define get_datadir_fname2(sub1,sub2) \
   get_datadir_fname2_suffix((sub1), (sub2), NULL)
+/** Return a newly allocated string containing datadir/sub1/sub2 relative to
+ * opts.  See get_datadir_fname2_suffix.  */
+#define options_get_datadir_fname2(opts,sub1,sub2)                      \
+  options_get_datadir_fname2_suffix((opts),(sub1), (sub2), NULL)
 /** Return a newly allocated string containing datadir/sub1suffix.  See
  * get_datadir_fname2_suffix. */
 #define get_datadir_fname_suffix(sub1, suffix) \
@@ -90,7 +95,6 @@ int getinfo_helper_config(control_connection_t *conn,
                           const char *question, char **answer,
                           const char **errmsg);
 
-const char *tor_get_digests(void);
 uint32_t get_effective_bwrate(const or_options_t *options);
 uint32_t get_effective_bwburst(const or_options_t *options);
 
@@ -112,6 +116,7 @@ int addressmap_register_auto(const char *from, const char *to,
                              time_t expires,
                              addressmap_entry_source_t addrmap_source,
                              const char **msg);
+int config_parse_unix_port(const char *addrport, char **path_out);
 
 /** Represents the information stored in a torrc Bridge line. */
 typedef struct bridge_line_t {
@@ -140,6 +145,15 @@ STATIC int options_validate(or_options_t *old_options,
                             or_options_t *options,
                             or_options_t *default_options,
                             int from_setconf, char **msg);
+STATIC int parse_transport_line(const or_options_t *options,
+                                const char *line, int validate_only,
+                                int server);
+STATIC int consider_adding_dir_servers(const or_options_t *options,
+                                       const or_options_t *old_options);
+MOCK_DECL(STATIC void, add_default_fallback_dir_servers, (void));
+STATIC int
+parse_dir_fallback_line(const char *line,
+                        int validate_only);
 #endif
 
 #endif

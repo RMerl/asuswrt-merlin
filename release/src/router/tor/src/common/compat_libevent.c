@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2013, The Tor Project, Inc. */
+/* Copyright (c) 2009-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -56,11 +56,6 @@ typedef uint32_t le_version_t;
  * it is. */
 #define LE_OTHER V(0,0,99)
 
-#if 0
-static le_version_t tor_get_libevent_version(const char **v_out);
-#endif
-
-#if defined(HAVE_EVENT_SET_LOG_CALLBACK) || defined(RUNNING_DOXYGEN)
 /** A string which, if it appears in a libevent log, should be ignored. */
 static const char *suppress_msg = NULL;
 /** Callback function passed to event_set_log() so we can intercept
@@ -107,17 +102,6 @@ suppress_libevent_log_msg(const char *msg)
 {
   suppress_msg = msg;
 }
-#else
-void
-configure_libevent_logging(void)
-{
-}
-void
-suppress_libevent_log_msg(const char *msg)
-{
-  (void)msg;
-}
-#endif
 
 #ifndef HAVE_EVENT2_EVENT_H
 /** Work-alike replacement for event_new() on pre-Libevent-2.0 systems. */
@@ -146,12 +130,24 @@ tor_evsignal_new(struct event_base * base, int sig,
 {
   return tor_event_new(base, sig, EV_SIGNAL|EV_PERSIST, cb, arg);
 }
-/** Work-alike replacement for event_free() on pre-Libevent-2.0 systems. */
+/** Work-alike replacement for event_free() on pre-Libevent-2.0 systems,
+ * except tolerate tor_event_free(NULL). */
 void
 tor_event_free(struct event *ev)
 {
+  if (ev == NULL)
+    return;
   event_del(ev);
   tor_free(ev);
+}
+#else
+/* Wrapper for event_free() that tolerates tor_event_free(NULL) */
+void
+tor_event_free(struct event *ev)
+{
+  if (ev == NULL)
+    return;
+  event_free(ev);
 }
 #endif
 
@@ -210,6 +206,9 @@ tor_libevent_initialize(tor_libevent_cfg *torcfg)
     } else {
       using_iocp_bufferevents = 0;
     }
+#elif defined(__COVERITY__)
+    /* Avoid a 'dead code' warning below. */
+    using_threads = ! torcfg->disable_iocp;
 #endif
 
     if (!using_threads) {
@@ -260,19 +259,11 @@ tor_libevent_initialize(tor_libevent_cfg *torcfg)
     exit(1);
   }
 
-#if defined(HAVE_EVENT_GET_VERSION) && defined(HAVE_EVENT_GET_METHOD)
   /* Making this a NOTICE for now so we can link bugs to a libevent versions
    * or methods better. */
   log_info(LD_GENERAL,
       "Initialized libevent version %s using method %s. Good.",
       event_get_version(), tor_libevent_get_method());
-#else
-  log_notice(LD_GENERAL,
-      "Initialized old libevent (version 1.0b or earlier).");
-  log_warn(LD_GENERAL,
-      "You have a *VERY* old version of libevent.  It is likely to be buggy; "
-      "please build Tor with a more recent version.");
-#endif
 
 #ifdef USE_BUFFEREVENTS
   tor_libevent_set_tick_timeout(torcfg->msec_per_tick);
@@ -280,22 +271,11 @@ tor_libevent_initialize(tor_libevent_cfg *torcfg)
 }
 
 /** Return the current Libevent event base that we're set up to use. */
-struct event_base *
-tor_libevent_get_base(void)
+MOCK_IMPL(struct event_base *,
+tor_libevent_get_base, (void))
 {
   return the_event_base;
 }
-
-#ifndef HAVE_EVENT_BASE_LOOPEXIT
-/** Replacement for event_base_loopexit on some very old versions of Libevent
- * that we are not yet brave enough to deprecate. */
-int
-tor_event_base_loopexit(struct event_base *base, struct timeval *tv)
-{
-  tor_assert(base == the_event_base);
-  return event_loopexit(tv);
-}
-#endif
 
 /** Return the name of the Libevent backend we're using. */
 const char *
@@ -303,10 +283,8 @@ tor_libevent_get_method(void)
 {
 #ifdef HAVE_EVENT2_EVENT_H
   return event_base_get_method(the_event_base);
-#elif defined(HAVE_EVENT_GET_METHOD)
-  return event_get_method();
 #else
-  return "<unknown>";
+  return event_get_method();
 #endif
 }
 
@@ -361,54 +339,12 @@ le_versions_compatibility(le_version_t v)
     return 5;
 }
 
-#if 0
-/** Return the version number of the currently running version of Libevent.
- * See le_version_t for info on the format.
- */
-static le_version_t
-tor_get_libevent_version(const char **v_out)
-{
-  const char *v;
-  le_version_t r;
-#if defined(HAVE_EVENT_GET_VERSION_NUMBER)
-  v = event_get_version();
-  r = event_get_version_number();
-#elif defined (HAVE_EVENT_GET_VERSION)
-  v = event_get_version();
-  r = tor_decode_libevent_version(v);
-#else
-  v = "pre-1.0c";
-  r = LE_OLD;
-#endif
-  if (v_out)
-    *v_out = v;
-  return r;
-}
-#endif
-
 /** Return a string representation of the version of the currently running
  * version of Libevent. */
 const char *
 tor_libevent_get_version_str(void)
 {
-#ifdef HAVE_EVENT_GET_VERSION
   return event_get_version();
-#else
-  return "pre-1.0c";
-#endif
-}
-
-/**
- * Compare the current Libevent method and version to a list of versions
- * which are known not to work.  Warn the user as appropriate.
- */
-void
-tor_check_libevent_version(const char *m, int server,
-                           const char **badness_out)
-{
-  (void) m;
-  (void) server;
-  *badness_out = NULL;
 }
 
 #if defined(LIBEVENT_VERSION)
@@ -437,7 +373,7 @@ tor_check_libevent_header_compatibility(void)
   /* In libevent versions before 2.0, it's hard to keep binary compatibility
    * between upgrades, and unpleasant to detect when the version we compiled
    * against is unlike the version we have linked against. Here's how. */
-#if defined(HEADER_VERSION) && defined(HAVE_EVENT_GET_VERSION)
+#if defined(HEADER_VERSION)
   /* We have a header-file version and a function-call version. Easy. */
   if (strcmp(HEADER_VERSION, event_get_version())) {
     le_version_t v1, v2;
@@ -459,7 +395,7 @@ tor_check_libevent_header_compatibility(void)
     else
       log_info(LD_GENERAL, "I think these versions are binary-compatible.");
   }
-#elif defined(HAVE_EVENT_GET_VERSION)
+#else
   /* event_get_version but no _EVENT_VERSION.  We might be in 1.4.0-beta or
      earlier, where that's normal.  To see whether we were compiled with an
      earlier version, let's see whether the struct event defines MIN_HEAP_IDX.
@@ -489,9 +425,6 @@ tor_check_libevent_header_compatibility(void)
   }
 #endif
 
-#elif defined(HEADER_VERSION)
-#warn "_EVENT_VERSION is defined but not get_event_version(): Libevent is odd."
-#else
   /* Your libevent is ancient. */
 #endif
 }
@@ -714,7 +647,7 @@ tor_gettimeofday_cached_monotonic(struct timeval *tv)
   struct timeval last_tv = { 0, 0 };
 
   tor_gettimeofday_cached(tv);
-  if (timercmp(tv, &last_tv, <)) {
+  if (timercmp(tv, &last_tv, OP_LT)) {
     memcpy(tv, &last_tv, sizeof(struct timeval));
   } else {
     memcpy(&last_tv, tv, sizeof(struct timeval));

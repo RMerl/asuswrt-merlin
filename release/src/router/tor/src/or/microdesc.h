@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -37,7 +37,7 @@ size_t microdesc_average_size(microdesc_cache_t *cache);
 smartlist_t *microdesc_list_missing_digest256(networkstatus_t *ns,
                                               microdesc_cache_t *cache,
                                               int downloadable_only,
-                                              digestmap_t *skip);
+                                              digest256map_t *skip);
 
 void microdesc_free_(microdesc_t *md, const char *fname, int line);
 #define microdesc_free(md) \

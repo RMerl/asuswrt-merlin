@@ -2,12 +2,12 @@
 .\"     Title: tor-resolve
 .\"    Author: Peter Palfrader
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/12/2015
+.\"      Date: 11/13/2015
 .\"    Manual: Tor Manual
 .\"    Source: Tor
 .\"  Language: English
 .\"
-.TH "TOR\-RESOLVE" "1" "03/12/2015" "Tor" "Tor Manual"
+.TH "TOR\-RESOLVE" "1" "11/13/2015" "Tor" "Tor Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 tor-resolve \- resolve a hostname to an IP address via tor
 .SH "SYNOPSIS"
 .sp
-\fBtor\-resolve\fR [\-4|\-5] [\-v] [\-x] \fIhostname\fR [\fIsockshost\fR[:\fIsocksport\fR]]
+\fBtor\-resolve\fR [\-4|\-5] [\-v] [\-x] [\-p \fIsocksport\fR] \fIhostname\fR [\fIsockshost\fR[:\fIsocksport\fR]]
 .SH "DESCRIPTION"
 .sp
 \fBtor\-resolve\fR is a simple script to connect to a SOCKS proxy that knows about the SOCKS RESOLVE command, hand it a hostname, and return an IP address\&.
@@ -57,6 +57,11 @@ Use the SOCKS5 protocol\&. (Default)
 \fB\-4\fR
 .RS 4
 Use the SOCKS4a protocol rather than the default SOCKS5 protocol\&. Doesn\(cqt support reverse DNS\&.
+.RE
+.PP
+\fB\-p\fR \fIsocksport\fR
+.RS 4
+Override the default SOCKS port without setting the hostname\&.
 .RE
 .SH "SEE ALSO"
 .sp

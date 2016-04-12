@@ -1,0 +1,38 @@
+
+noinst_LIBRARIES += \
+	src/trunnel/libor-trunnel.a
+
+if UNITTESTS_ENABLED
+noinst_LIBRARIES += \
+	src/trunnel/libor-trunnel-testing.a
+endif
+
+AM_CPPFLAGS += -I$(srcdir)/src/ext/trunnel -I$(srcdir)/src/trunnel
+
+TRUNNELINPUTS = \
+	src/trunnel/ed25519_cert.trunnel \
+	src/trunnel/link_handshake.trunnel \
+	src/trunnel/pwbox.trunnel
+
+TRUNNELSOURCES = \
+	src/ext/trunnel/trunnel.c \
+	src/trunnel/ed25519_cert.c \
+	src/trunnel/link_handshake.c \
+	src/trunnel/pwbox.c
+
+TRUNNELHEADERS = \
+	src/ext/trunnel/trunnel.h		\
+	src/ext/trunnel/trunnel-impl.h		\
+	src/trunnel/trunnel-local.h 		\
+	src/trunnel/ed25519_cert.h		\
+	src/trunnel/link_handshake.h	 	\
+	src/trunnel/pwbox.h
+
+src_trunnel_libor_trunnel_a_SOURCES = $(TRUNNELSOURCES)
+src_trunnel_libor_trunnel_a_CPPFLAGS = -DTRUNNEL_LOCAL_H $(AM_CPPFLAGS)
+
+src_trunnel_libor_trunnel_testing_a_SOURCES = $(TRUNNELSOURCES)
+src_trunnel_libor_trunnel_testing_a_CPPFLAGS = -DTRUNNEL_LOCAL_H $(AM_CPPFLAGS) $(TEST_CPPFLAGS)
+src_trunnel_libor_trunnel_testing_a_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
+
+noinst_HEADERS+= $(TRUNNELHEADERS)

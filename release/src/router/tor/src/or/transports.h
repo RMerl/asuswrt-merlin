@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -32,14 +32,16 @@ typedef struct transport_t {
 
 void mark_transport_list(void);
 void sweep_transport_list(void);
-int transport_add_from_config(const tor_addr_t *addr, uint16_t port,
-                               const char *name, int socks_ver);
+MOCK_DECL(int, transport_add_from_config,
+          (const tor_addr_t *addr, uint16_t port,
+           const char *name, int socks_ver));
 void transport_free(transport_t *transport);
 
 transport_t *transport_get_by_name(const char *name);
 
-void pt_kickstart_proxy(const smartlist_t *transport_list, char **proxy_argv,
-                        int is_server);
+MOCK_DECL(void, pt_kickstart_proxy,
+          (const smartlist_t *transport_list, char **proxy_argv,
+           int is_server));
 
 #define pt_kickstart_client_proxy(tl, pa)  \
   pt_kickstart_proxy(tl, pa, 0)
@@ -81,6 +83,9 @@ typedef struct {
   char **argv; /* the cli arguments of this proxy */
   int conf_protocol; /* the configuration protocol version used */
 
+  char *proxy_uri;  /* the outgoing proxy in TOR_PT_PROXY URI format */
+  unsigned int proxy_supported : 1; /* the proxy honors TOR_PT_PROXY */
+
   int is_server; /* is it a server proxy? */
 
   /* A pointer to the process handle of this managed proxy. */
@@ -112,6 +117,7 @@ STATIC int parse_smethod_line(const char *line, managed_proxy_t *mp);
 
 STATIC int parse_version(const char *line, managed_proxy_t *mp);
 STATIC void parse_env_error(const char *line);
+STATIC void parse_proxy_error(const char *line);
 STATIC void handle_proxy_line(const char *line, managed_proxy_t *mp);
 STATIC char *get_transport_options_for_server_proxy(const managed_proxy_t *mp);
 
@@ -122,6 +128,10 @@ STATIC managed_proxy_t *managed_proxy_create(const smartlist_t *transport_list,
                                              char **proxy_argv, int is_server);
 
 STATIC int configure_proxy(managed_proxy_t *mp);
+
+STATIC char* get_pt_proxy_uri(void);
+
+STATIC void free_execve_args(char **arg);
 
 #endif
 

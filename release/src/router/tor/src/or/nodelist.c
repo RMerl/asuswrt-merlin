@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "or.h"
@@ -24,6 +24,23 @@
 
 static void nodelist_drop_node(node_t *node, int remove_from_ht);
 static void node_free(node_t *node);
+
+/** count_usable_descriptors counts descriptors with these flag(s)
+ */
+typedef enum {
+  /* All descriptors regardless of flags */
+  USABLE_DESCRIPTOR_ALL = 0,
+  /* Only descriptors with the Exit flag */
+  USABLE_DESCRIPTOR_EXIT_ONLY = 1
+} usable_descriptor_t;
+static void count_usable_descriptors(int *num_present,
+                                     int *num_usable,
+                                     smartlist_t *descs_out,
+                                     const networkstatus_t *consensus,
+                                     const or_options_t *options,
+                                     time_t now,
+                                     routerset_t *in_set,
+                                     usable_descriptor_t exit_only);
 static void update_router_have_minimum_dir_info(void);
 static double get_frac_paths_needed_for_circs(const or_options_t *options,
                                               const networkstatus_t *ns);
@@ -53,8 +70,8 @@ node_id_eq(const node_t *node1, const node_t *node2)
 }
 
 HT_PROTOTYPE(nodelist_map, node_t, ht_ent, node_id_hash, node_id_eq);
-HT_GENERATE(nodelist_map, node_t, ht_ent, node_id_hash, node_id_eq,
-            0.6, malloc, realloc, free);
+HT_GENERATE2(nodelist_map, node_t, ht_ent, node_id_hash, node_id_eq,
+             0.6, tor_reallocarray_, tor_free_)
 
 /** The global nodelist. */
 static nodelist_t *the_nodelist=NULL;
@@ -159,7 +176,7 @@ nodelist_set_routerinfo(routerinfo_t *ri, routerinfo_t **ri_old_out)
 
   if (authdir_mode(get_options()) && !had_router) {
     const char *discard=NULL;
-    uint32_t status = dirserv_router_get_status(ri, &discard);
+    uint32_t status = dirserv_router_get_status(ri, &discard, LOG_INFO);
     dirserv_set_node_flags_from_authoritative_status(node, status);
   }
 
@@ -241,7 +258,6 @@ nodelist_set_consensus(networkstatus_t *ns)
       node->is_stable = rs->is_stable;
       node->is_possible_guard = rs->is_possible_guard;
       node->is_exit = rs->is_exit;
-      node->is_bad_directory = rs->is_bad_directory;
       node->is_bad_exit = rs->is_bad_exit;
       node->is_hs_dir = rs->is_hs_dir;
       node->ipv6_preferred = 0;
@@ -267,8 +283,7 @@ nodelist_set_consensus(networkstatus_t *ns)
           node->is_valid = node->is_running = node->is_hs_dir =
             node->is_fast = node->is_stable =
             node->is_possible_guard = node->is_exit =
-            node->is_bad_exit = node->is_bad_directory =
-            node->ipv6_preferred = 0;
+            node->is_bad_exit = node->ipv6_preferred = 0;
         }
       }
     } SMARTLIST_FOREACH_END(node);
@@ -474,8 +489,8 @@ nodelist_assert_ok(void)
 /** Return a list of a node_t * for every node we know about.  The caller
  * MUST NOT modify the list. (You can set and clear flags in the nodes if
  * you must, but you must not add or remove nodes.) */
-smartlist_t *
-nodelist_get_list(void)
+MOCK_IMPL(smartlist_t *,
+nodelist_get_list,(void))
 {
   init_nodelist();
   return the_nodelist->nodes;
@@ -517,8 +532,8 @@ node_get_by_hex_id(const char *hex_id)
  * the corresponding node_t, or NULL if none exists.  Warn the user if
  * <b>warn_if_unnamed</b> is set, and they have specified a router by
  * nickname, but the Named flag isn't set for that router. */
-const node_t *
-node_get_by_nickname(const char *nickname, int warn_if_unnamed)
+MOCK_IMPL(const node_t *,
+node_get_by_nickname,(const char *nickname, int warn_if_unnamed))
 {
   const node_t *node;
   if (!the_nodelist)
@@ -1258,20 +1273,28 @@ router_set_status(const char *digest, int up)
 }
 
 /** True iff, the last time we checked whether we had enough directory info
- * to build circuits, the answer was "yes". */
+ * to build circuits, the answer was "yes". If there are no exits in the
+ * consensus, we act as if we have 100% of the exit directory info. */
 static int have_min_dir_info = 0;
+
+/** Does the consensus contain nodes that can exit? */
+static consensus_path_type_t have_consensus_path = CONSENSUS_PATH_UNKNOWN;
+
 /** True iff enough has changed since the last time we checked whether we had
  * enough directory info to build circuits that our old answer can no longer
  * be trusted. */
 static int need_to_update_have_min_dir_info = 1;
 /** String describing what we're missing before we have enough directory
  * info. */
-static char dir_info_status[256] = "";
+static char dir_info_status[512] = "";
 
-/** Return true iff we have enough networkstatus and router information to
- * start building circuits.  Right now, this means "more than half the
- * networkstatus documents, and at least 1/4 of expected routers." */
-//XXX should consider whether we have enough exiting nodes here.
+/** Return true iff we have enough consensus information to
+ * start building circuits.  Right now, this means "a consensus that's
+ * less than a day old, and at least 60% of router descriptors (configurable),
+ * weighted by bandwidth. Treat the exit fraction as 100% if there are
+ * no exits in the consensus."
+ * To obtain the final weighted bandwidth, we multiply the
+ * weighted bandwidth fraction for each position (guard, middle, exit). */
 int
 router_have_minimum_dir_info(void)
 {
@@ -1291,6 +1314,24 @@ router_have_minimum_dir_info(void)
   }
 
   return have_min_dir_info;
+}
+
+/** Set to CONSENSUS_PATH_EXIT if there is at least one exit node
+ * in the consensus. We update this flag in compute_frac_paths_available if
+ * there is at least one relay that has an Exit flag in the consensus.
+ * Used to avoid building exit circuits when they will almost certainly fail.
+ * Set to CONSENSUS_PATH_INTERNAL if there are no exits in the consensus.
+ * (This situation typically occurs during bootstrap of a test network.)
+ * Set to CONSENSUS_PATH_UNKNOWN if we have never checked, or have
+ * reason to believe our last known value was invalid or has expired.
+ * If we're in a network with TestingDirAuthVoteExit set,
+ * this can cause router_have_consensus_path() to be set to
+ * CONSENSUS_PATH_EXIT, even if there are no nodes with accept exit policies.
+ */
+consensus_path_type_t
+router_have_consensus_path(void)
+{
+  return have_consensus_path;
 }
 
 /** Called when our internal view of the directory has changed.  This can be
@@ -1313,22 +1354,26 @@ get_dir_info_status_string(void)
 }
 
 /** Iterate over the servers listed in <b>consensus</b>, and count how many of
- * them seem like ones we'd use, and how many of <em>those</em> we have
- * descriptors for.  Store the former in *<b>num_usable</b> and the latter in
- * *<b>num_present</b>.  If <b>in_set</b> is non-NULL, only consider those
- * routers in <b>in_set</b>.  If <b>exit_only</b> is true, only consider nodes
- * with the Exit flag.  If *descs_out is present, add a node_t for each
- * usable descriptor to it.
+ * them seem like ones we'd use (store this in *<b>num_usable</b>), and how
+ * many of <em>those</em> we have descriptors for (store this in
+ * *<b>num_present</b>).
+ *
+ * If <b>in_set</b> is non-NULL, only consider those routers in <b>in_set</b>.
+ * If <b>exit_only</b> is USABLE_DESCRIPTOR_EXIT_ONLY, only consider nodes
+ * with the Exit flag.
+ * If *<b>descs_out</b> is present, add a node_t for each usable descriptor
+ * to it.
  */
 static void
 count_usable_descriptors(int *num_present, int *num_usable,
                          smartlist_t *descs_out,
                          const networkstatus_t *consensus,
                          const or_options_t *options, time_t now,
-                         routerset_t *in_set, int exit_only)
+                         routerset_t *in_set,
+                         usable_descriptor_t exit_only)
 {
   const int md = (consensus->flavor == FLAV_MICRODESC);
-  *num_present = 0, *num_usable=0;
+  *num_present = 0, *num_usable = 0;
 
   SMARTLIST_FOREACH_BEGIN(consensus->routerstatus_list, routerstatus_t *, rs)
     {
@@ -1336,7 +1381,7 @@ count_usable_descriptors(int *num_present, int *num_usable,
        if (!node)
          continue; /* This would be a bug: every entry in the consensus is
                     * supposed to have a node. */
-       if (exit_only && ! rs->is_exit)
+       if (exit_only == USABLE_DESCRIPTOR_EXIT_ONLY && ! rs->is_exit)
          continue;
        if (in_set && ! routerset_contains_routerstatus(in_set, rs, -1))
          continue;
@@ -1360,11 +1405,22 @@ count_usable_descriptors(int *num_present, int *num_usable,
 
   log_debug(LD_DIR, "%d usable, %d present (%s%s).",
             *num_usable, *num_present,
-            md ? "microdesc" : "desc", exit_only ? " exits" : "s");
+            md ? "microdesc" : "desc",
+            exit_only == USABLE_DESCRIPTOR_EXIT_ONLY ? " exits" : "s");
 }
 
 /** Return an estimate of which fraction of usable paths through the Tor
- * network we have available for use. */
+ * network we have available for use.  Count how many routers seem like ones
+ * we'd use (store this in *<b>num_usable_out</b>), and how many of
+ * <em>those</em> we have descriptors for (store this in
+ * *<b>num_present_out</b>.)
+ *
+ * If **<b>status_out</b> is present, allocate a new string and print the
+ * available percentages of guard, middle, and exit nodes to it, noting
+ * whether there are exits in the consensus.
+ * If there are no guards in the consensus,
+ * we treat the exit fraction as 100%.
+ */
 static double
 compute_frac_paths_available(const networkstatus_t *consensus,
                              const or_options_t *options, time_t now,
@@ -1374,17 +1430,20 @@ compute_frac_paths_available(const networkstatus_t *consensus,
   smartlist_t *guards = smartlist_new();
   smartlist_t *mid    = smartlist_new();
   smartlist_t *exits  = smartlist_new();
-  smartlist_t *myexits= smartlist_new();
-  smartlist_t *myexits_unflagged = smartlist_new();
-  double f_guard, f_mid, f_exit, f_myexit, f_myexit_unflagged;
-  int np, nu; /* Ignored */
+  double f_guard, f_mid, f_exit;
+  double f_path = 0.0;
+  /* Used to determine whether there are any exits in the consensus */
+  int np = 0;
+  /* Used to determine whether there are any exits with descriptors */
+  int nu = 0;
   const int authdir = authdir_mode_v3(options);
 
   count_usable_descriptors(num_present_out, num_usable_out,
-                           mid, consensus, options, now, NULL, 0);
+                           mid, consensus, options, now, NULL,
+                           USABLE_DESCRIPTOR_ALL);
   if (options->EntryNodes) {
     count_usable_descriptors(&np, &nu, guards, consensus, options, now,
-                             options->EntryNodes, 0);
+                             options->EntryNodes, USABLE_DESCRIPTOR_ALL);
   } else {
     SMARTLIST_FOREACH(mid, const node_t *, node, {
       if (authdir) {
@@ -1397,60 +1456,148 @@ compute_frac_paths_available(const networkstatus_t *consensus,
     });
   }
 
-  /* All nodes with exit flag */
+  /* All nodes with exit flag
+   * If we're in a network with TestingDirAuthVoteExit set,
+   * this can cause false positives on have_consensus_path,
+   * incorrectly setting it to CONSENSUS_PATH_EXIT. This is
+   * an unavoidable feature of forcing authorities to declare
+   * certain nodes as exits.
+   */
   count_usable_descriptors(&np, &nu, exits, consensus, options, now,
-                           NULL, 1);
-  /* All nodes with exit flag in ExitNodes option */
-  count_usable_descriptors(&np, &nu, myexits, consensus, options, now,
-                           options->ExitNodes, 1);
-  /* Now compute the nodes in the ExitNodes option where which we don't know
-   * what their exit policy is, or we know it permits something. */
-  count_usable_descriptors(&np, &nu, myexits_unflagged,
-                           consensus, options, now,
-                           options->ExitNodes, 0);
-  SMARTLIST_FOREACH_BEGIN(myexits_unflagged, const node_t *, node) {
-    if (node_has_descriptor(node) && node_exit_policy_rejects_all(node))
-      SMARTLIST_DEL_CURRENT(myexits_unflagged, node);
-  } SMARTLIST_FOREACH_END(node);
+                           NULL, USABLE_DESCRIPTOR_EXIT_ONLY);
+  log_debug(LD_NET,
+            "%s: %d present, %d usable",
+            "exits",
+            np,
+            nu);
+
+  /* We need at least 1 exit present in the consensus to consider
+   * building exit paths */
+  /* Update our understanding of whether the consensus has exits */
+  consensus_path_type_t old_have_consensus_path = have_consensus_path;
+  have_consensus_path = ((nu > 0) ?
+                         CONSENSUS_PATH_EXIT :
+                         CONSENSUS_PATH_INTERNAL);
+
+  if (have_consensus_path == CONSENSUS_PATH_INTERNAL
+      && old_have_consensus_path != have_consensus_path) {
+    log_notice(LD_NET,
+               "The current consensus has no exit nodes. "
+               "Tor can only build internal paths, "
+               "such as paths to hidden services.");
+
+    /* However, exit nodes can reachability self-test using this consensus,
+     * join the network, and appear in a later consensus. This will allow
+     * the network to build exit paths, such as paths for world wide web
+     * browsing (as distinct from hidden service web browsing). */
+  }
 
   f_guard = frac_nodes_with_descriptors(guards, WEIGHT_FOR_GUARD);
   f_mid   = frac_nodes_with_descriptors(mid,    WEIGHT_FOR_MID);
   f_exit  = frac_nodes_with_descriptors(exits,  WEIGHT_FOR_EXIT);
-  f_myexit= frac_nodes_with_descriptors(myexits,WEIGHT_FOR_EXIT);
-  f_myexit_unflagged=
-            frac_nodes_with_descriptors(myexits_unflagged,WEIGHT_FOR_EXIT);
 
-  /* If our ExitNodes list has eliminated every possible Exit node, and there
-   * were some possible Exit nodes, then instead consider nodes that permit
-   * exiting to some ports. */
-  if (smartlist_len(myexits) == 0 &&
-      smartlist_len(myexits_unflagged)) {
-    f_myexit = f_myexit_unflagged;
-  }
+  log_debug(LD_NET,
+            "f_guard: %.2f, f_mid: %.2f, f_exit: %.2f",
+             f_guard,
+             f_mid,
+             f_exit);
 
   smartlist_free(guards);
   smartlist_free(mid);
   smartlist_free(exits);
-  smartlist_free(myexits);
-  smartlist_free(myexits_unflagged);
 
-  /* This is a tricky point here: we don't want to make it easy for a
-   * directory to trickle exits to us until it learns which exits we have
-   * configured, so require that we have a threshold both of total exits
-   * and usable exits. */
-  if (f_myexit < f_exit)
-    f_exit = f_myexit;
+  if (options->ExitNodes) {
+    double f_myexit, f_myexit_unflagged;
+    smartlist_t *myexits= smartlist_new();
+    smartlist_t *myexits_unflagged = smartlist_new();
+
+    /* All nodes with exit flag in ExitNodes option */
+    count_usable_descriptors(&np, &nu, myexits, consensus, options, now,
+                             options->ExitNodes, USABLE_DESCRIPTOR_EXIT_ONLY);
+    log_debug(LD_NET,
+              "%s: %d present, %d usable",
+              "myexits",
+              np,
+              nu);
+
+    /* Now compute the nodes in the ExitNodes option where which we don't know
+     * what their exit policy is, or we know it permits something. */
+    count_usable_descriptors(&np, &nu, myexits_unflagged,
+                             consensus, options, now,
+                             options->ExitNodes, USABLE_DESCRIPTOR_ALL);
+    log_debug(LD_NET,
+              "%s: %d present, %d usable",
+              "myexits_unflagged (initial)",
+              np,
+              nu);
+
+    SMARTLIST_FOREACH_BEGIN(myexits_unflagged, const node_t *, node) {
+      if (node_has_descriptor(node) && node_exit_policy_rejects_all(node)) {
+        SMARTLIST_DEL_CURRENT(myexits_unflagged, node);
+        /* this node is not actually an exit */
+        np--;
+        /* this node is unusable as an exit */
+        nu--;
+      }
+    } SMARTLIST_FOREACH_END(node);
+
+    log_debug(LD_NET,
+              "%s: %d present, %d usable",
+              "myexits_unflagged (final)",
+              np,
+              nu);
+
+    f_myexit= frac_nodes_with_descriptors(myexits,WEIGHT_FOR_EXIT);
+    f_myexit_unflagged=
+              frac_nodes_with_descriptors(myexits_unflagged,WEIGHT_FOR_EXIT);
+
+    log_debug(LD_NET,
+              "f_exit: %.2f, f_myexit: %.2f, f_myexit_unflagged: %.2f",
+              f_exit,
+              f_myexit,
+              f_myexit_unflagged);
+
+    /* If our ExitNodes list has eliminated every possible Exit node, and there
+     * were some possible Exit nodes, then instead consider nodes that permit
+     * exiting to some ports. */
+    if (smartlist_len(myexits) == 0 &&
+        smartlist_len(myexits_unflagged)) {
+      f_myexit = f_myexit_unflagged;
+    }
+
+    smartlist_free(myexits);
+    smartlist_free(myexits_unflagged);
+
+    /* This is a tricky point here: we don't want to make it easy for a
+     * directory to trickle exits to us until it learns which exits we have
+     * configured, so require that we have a threshold both of total exits
+     * and usable exits. */
+    if (f_myexit < f_exit)
+      f_exit = f_myexit;
+  }
+
+  /* if the consensus has no exits, treat the exit fraction as 100% */
+  if (router_have_consensus_path() != CONSENSUS_PATH_EXIT) {
+    f_exit = 1.0;
+  }
+
+  f_path = f_guard * f_mid * f_exit;
 
   if (status_out)
     tor_asprintf(status_out,
                  "%d%% of guards bw, "
                  "%d%% of midpoint bw, and "
-                 "%d%% of exit bw",
+                 "%d%% of exit bw%s = "
+                 "%d%% of path bw",
                  (int)(f_guard*100),
                  (int)(f_mid*100),
-                 (int)(f_exit*100));
+                 (int)(f_exit*100),
+                 (router_have_consensus_path() == CONSENSUS_PATH_EXIT ?
+                  "" :
+                  " (no exits in consensus)"),
+                 (int)(f_path*100));
 
-  return f_guard * f_mid * f_exit;
+  return f_path;
 }
 
 /** We just fetched a new set of descriptors. Compute how far through
@@ -1523,6 +1670,7 @@ update_router_have_minimum_dir_info(void)
 
   using_md = consensus->flavor == FLAV_MICRODESC;
 
+  /* Check fraction of available paths */
   {
     char *status = NULL;
     int num_present=0, num_usable=0;
@@ -1536,7 +1684,6 @@ update_router_have_minimum_dir_info(void)
                    "can only build %d%% of likely paths. (We have %s.)",
                    using_md?"micro":"", num_present, num_usable,
                    (int)(paths*100), status);
-      /* log_notice(LD_NET, "%s", dir_info_status); */
       tor_free(status);
       res = 0;
       control_event_bootstrap(BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS, 0);
@@ -1548,12 +1695,17 @@ update_router_have_minimum_dir_info(void)
   }
 
  done:
+
+  /* If paths have just become available in this update. */
   if (res && !have_min_dir_info) {
-    log_notice(LD_DIR,
-        "We now have enough directory information to build circuits.");
     control_event_client_status(LOG_NOTICE, "ENOUGH_DIR_INFO");
-    control_event_bootstrap(BOOTSTRAP_STATUS_CONN_OR, 0);
+    if (control_event_bootstrap(BOOTSTRAP_STATUS_CONN_OR, 0) == 0) {
+      log_notice(LD_DIR,
+              "We now have enough directory information to build circuits.");
+    }
   }
+
+  /* If paths have just become unavailable in this update. */
   if (!res && have_min_dir_info) {
     int quiet = directory_too_idle_to_fetch_descriptors(options, now);
     tor_log(quiet ? LOG_INFO : LOG_NOTICE, LD_DIR,
@@ -1564,8 +1716,8 @@ update_router_have_minimum_dir_info(void)
      * is back up and usable, and b) disable some activities that Tor
      * should only do while circuits are working, like reachability tests
      * and fetching bridge descriptors only over circuits. */
-    can_complete_circuit = 0;
-
+    note_that_we_maybe_cant_complete_circuits();
+    have_consensus_path = CONSENSUS_PATH_UNKNOWN;
     control_event_client_status(LOG_NOTICE, "NOT_ENOUGH_DIR_INFO");
   }
   have_min_dir_info = res;

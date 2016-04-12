@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define CONFIG_PRIVATE
@@ -87,10 +87,10 @@ test_options_validate_impl(const char *configuration,
   clear_log_messages();
 
   r = config_get_lines(configuration, &cl, 1);
-  tt_int_op(r, ==, 0);
+  tt_int_op(r, OP_EQ, 0);
 
   r = config_assign(&options_format, opt, cl, 0, 0, &msg);
-  tt_int_op(r, ==, 0);
+  tt_int_op(r, OP_EQ, 0);
 
   r = options_validate(NULL, opt, dflt, 0, &msg);
   if (expect_errmsg && !msg) {
@@ -103,7 +103,7 @@ test_options_validate_impl(const char *configuration,
     TT_DIE(("Expected no error message from <%s> but got <%s>.",
             configuration, msg));
   }
-  tt_int_op((r == 0), ==, (msg == NULL));
+  tt_int_op((r == 0), OP_EQ, (msg == NULL));
 
   if (expect_log) {
     int found = 0;

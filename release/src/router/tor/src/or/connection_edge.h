@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -143,6 +143,30 @@ STATIC int begin_cell_parse(const cell_t *cell, begin_cell_t *bcell,
 STATIC int connected_cell_format_payload(uint8_t *payload_out,
                                   const tor_addr_t *addr,
                                   uint32_t ttl);
+
+typedef struct {
+  /** Original address, after we lowercased it but before we started
+   * mapping it.
+   */
+  char orig_address[MAX_SOCKS_ADDR_LEN];
+  /** True iff the address has been automatically remapped to a local
+   * address in VirtualAddrNetwork.  (Only set true when we do a resolve
+   * and get a virtual address; not when we connect to the address.) */
+  int automap;
+  /** If this connection has a .exit address, who put it there? */
+  addressmap_entry_source_t exit_source;
+  /** If we've rewritten the address, when does this map expire? */
+  time_t map_expires;
+  /** If we should close the connection, this is the end_reason to pass
+   * to connection_mark_unattached_ap */
+  int end_reason;
+  /** True iff we should close the connection, either because of error or
+   * because of successful early RESOLVED reply. */
+  int should_close;
+} rewrite_result_t;
+
+STATIC void connection_ap_handshake_rewrite(entry_connection_t *conn,
+                                            rewrite_result_t *out);
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Tor Project, Inc. */
+/* Copyright (c) 2012-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -290,48 +290,48 @@ do_parse_test(uint8_t *plaintext, size_t plaintext_len, int phase)
 
   /* Get a key */
   k = crypto_pk_new();
-  test_assert(k);
+  tt_assert(k);
   r = crypto_pk_read_private_key_from_string(k, AUTHORITY_SIGNKEY_1, -1);
-  test_assert(!r);
+  tt_assert(!r);
 
   /* Get digest for future comparison */
   r = crypto_pk_get_digest(k, digest);
-  test_assert(r >= 0);
+  tt_assert(r >= 0);
 
   /* Make a cell out of it */
   r = make_intro_from_plaintext(
       plaintext, plaintext_len,
       k, (void **)(&cell));
-  test_assert(r > 0);
-  test_assert(cell);
+  tt_assert(r > 0);
+  tt_assert(cell);
   cell_len = r;
 
   /* Do early parsing */
   parsed_req = rend_service_begin_parse_intro(cell, cell_len, 2, &err_msg);
-  test_assert(parsed_req);
-  test_assert(!err_msg);
-  test_memeq(parsed_req->pk, digest, DIGEST_LEN);
-  test_assert(parsed_req->ciphertext);
-  test_assert(parsed_req->ciphertext_len > 0);
+  tt_assert(parsed_req);
+  tt_assert(!err_msg);
+  tt_mem_op(parsed_req->pk,OP_EQ, digest, DIGEST_LEN);
+  tt_assert(parsed_req->ciphertext);
+  tt_assert(parsed_req->ciphertext_len > 0);
 
   if (phase == EARLY_PARSE_ONLY)
     goto done;
 
   /* Do decryption */
   r = rend_service_decrypt_intro(parsed_req, k, &err_msg);
-  test_assert(!r);
-  test_assert(!err_msg);
-  test_assert(parsed_req->plaintext);
-  test_assert(parsed_req->plaintext_len > 0);
+  tt_assert(!r);
+  tt_assert(!err_msg);
+  tt_assert(parsed_req->plaintext);
+  tt_assert(parsed_req->plaintext_len > 0);
 
   if (phase == DECRYPT_ONLY)
     goto done;
 
   /* Do late parsing */
   r = rend_service_parse_intro_plaintext(parsed_req, &err_msg);
-  test_assert(!r);
-  test_assert(!err_msg);
-  test_assert(parsed_req->parsed);
+  tt_assert(!r);
+  tt_assert(!err_msg);
+  tt_assert(parsed_req->parsed);
 
  done:
   tor_free(cell);
@@ -371,14 +371,14 @@ make_intro_from_plaintext(
 
   /* Compute key digest (will be first DIGEST_LEN octets of cell) */
   r = crypto_pk_get_digest(key, cell);
-  test_assert(r >= 0);
+  tt_assert(r >= 0);
 
   /* Do encryption */
   r = crypto_pk_public_hybrid_encrypt(
       key, cell + DIGEST_LEN, ciphertext_size,
       buf, len,
       PK_PKCS1_OAEP_PADDING, 0);
-  test_assert(r >= 0);
+  tt_assert(r >= 0);
 
   /* Figure out cell length */
   cell_len = DIGEST_LEN + r;
@@ -394,8 +394,9 @@ make_intro_from_plaintext(
  */
 
 static void
-test_introduce_decrypt_v0(void)
+test_introduce_decrypt_v0(void *arg)
 {
+  (void)arg;
   do_decrypt_test(v0_test_plaintext, sizeof(v0_test_plaintext));
 }
 
@@ -403,8 +404,9 @@ test_introduce_decrypt_v0(void)
  */
 
 static void
-test_introduce_decrypt_v1(void)
+test_introduce_decrypt_v1(void *arg)
 {
+  (void)arg;
   do_decrypt_test(v1_test_plaintext, sizeof(v1_test_plaintext));
 }
 
@@ -412,8 +414,9 @@ test_introduce_decrypt_v1(void)
  */
 
 static void
-test_introduce_decrypt_v2(void)
+test_introduce_decrypt_v2(void *arg)
 {
+  (void)arg;
   do_decrypt_test(v2_test_plaintext, sizeof(v2_test_plaintext));
 }
 
@@ -421,8 +424,9 @@ test_introduce_decrypt_v2(void)
  */
 
 static void
-test_introduce_decrypt_v3(void)
+test_introduce_decrypt_v3(void *arg)
 {
+  (void)arg;
   do_decrypt_test(
       v3_no_auth_test_plaintext, sizeof(v3_no_auth_test_plaintext));
   do_decrypt_test(
@@ -433,8 +437,9 @@ test_introduce_decrypt_v3(void)
  */
 
 static void
-test_introduce_early_parse_v0(void)
+test_introduce_early_parse_v0(void *arg)
 {
+  (void)arg;
   do_early_parse_test(v0_test_plaintext, sizeof(v0_test_plaintext));
 }
 
@@ -442,8 +447,9 @@ test_introduce_early_parse_v0(void)
  */
 
 static void
-test_introduce_early_parse_v1(void)
+test_introduce_early_parse_v1(void *arg)
 {
+  (void)arg;
   do_early_parse_test(v1_test_plaintext, sizeof(v1_test_plaintext));
 }
 
@@ -451,8 +457,9 @@ test_introduce_early_parse_v1(void)
  */
 
 static void
-test_introduce_early_parse_v2(void)
+test_introduce_early_parse_v2(void *arg)
 {
+  (void)arg;
   do_early_parse_test(v2_test_plaintext, sizeof(v2_test_plaintext));
 }
 
@@ -460,8 +467,9 @@ test_introduce_early_parse_v2(void)
  */
 
 static void
-test_introduce_early_parse_v3(void)
+test_introduce_early_parse_v3(void *arg)
 {
+  (void)arg;
   do_early_parse_test(
       v3_no_auth_test_plaintext, sizeof(v3_no_auth_test_plaintext));
   do_early_parse_test(
@@ -472,8 +480,9 @@ test_introduce_early_parse_v3(void)
  */
 
 static void
-test_introduce_late_parse_v0(void)
+test_introduce_late_parse_v0(void *arg)
 {
+  (void)arg;
   do_late_parse_test(v0_test_plaintext, sizeof(v0_test_plaintext));
 }
 
@@ -481,8 +490,9 @@ test_introduce_late_parse_v0(void)
  */
 
 static void
-test_introduce_late_parse_v1(void)
+test_introduce_late_parse_v1(void *arg)
 {
+  (void)arg;
   do_late_parse_test(v1_test_plaintext, sizeof(v1_test_plaintext));
 }
 
@@ -490,8 +500,9 @@ test_introduce_late_parse_v1(void)
  */
 
 static void
-test_introduce_late_parse_v2(void)
+test_introduce_late_parse_v2(void *arg)
 {
+  (void)arg;
   do_late_parse_test(v2_test_plaintext, sizeof(v2_test_plaintext));
 }
 
@@ -499,8 +510,9 @@ test_introduce_late_parse_v2(void)
  */
 
 static void
-test_introduce_late_parse_v3(void)
+test_introduce_late_parse_v3(void *arg)
 {
+  (void)arg;
   do_late_parse_test(
       v3_no_auth_test_plaintext, sizeof(v3_no_auth_test_plaintext));
   do_late_parse_test(
@@ -508,7 +520,7 @@ test_introduce_late_parse_v3(void)
 }
 
 #define INTRODUCE_LEGACY(name) \
-  { #name, legacy_test_helper, 0, &legacy_setup, test_introduce_ ## name }
+  { #name, test_introduce_ ## name , 0, NULL, NULL }
 
 struct testcase_t introduce_tests[] = {
   INTRODUCE_LEGACY(early_parse_v0),

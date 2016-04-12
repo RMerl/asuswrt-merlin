@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -20,6 +20,7 @@
 #include "circuitstats.h"
 #include "circuituse.h"
 #include "command.h"
+#include "compat_libevent.h"
 #include "config.h"
 #include "confparse.h"
 #include "connection.h"
@@ -37,6 +38,9 @@
 #include "nodelist.h"
 #include "policies.h"
 #include "reasons.h"
+#include "rendclient.h"
+#include "rendcommon.h"
+#include "rendservice.h"
 #include "rephist.h"
 #include "router.h"
 #include "routerlist.h"
@@ -47,6 +51,13 @@
 #include <sys/resource.h>
 #endif
 
+#ifdef HAVE_EVENT2_EVENT_H
+#include <event2/event.h>
+#else
+#include <event.h>
+#endif
+
+#include "crypto_s2k.h"
 #include "procmon.h"
 
 /** Yield true iff <b>s</b> is the state of a control_connection_t that has
@@ -71,7 +82,7 @@ static int disable_log_messages = 0;
 /** Macro: true if any control connection is interested in events of type
  * <b>e</b>. */
 #define EVENT_IS_INTERESTING(e) \
-  (!! (global_event_mask & (((uint64_t)1)<<(e))))
+  (!! (global_event_mask & EVENT_MASK_(e)))
 
 /** If we're using cookie-type authentication, how long should our cookies be?
  */
@@ -91,6 +102,11 @@ static uint8_t *authentication_cookie = NULL;
   "Tor safe cookie authentication controller-to-server hash"
 #define SAFECOOKIE_SERVER_NONCE_LEN DIGEST256_LEN
 
+/** The list of onion services that have been added via ADD_ONION that do not
+ * belong to any particular control connection.
+ */
+static smartlist_t *detached_onion_services = NULL;
+
 /** A sufficiently large size to record the last bootstrap phase string. */
 #define BOOTSTRAP_MSG_LEN 1024
 
@@ -101,17 +117,17 @@ static char last_sent_bootstrap_message[BOOTSTRAP_MSG_LEN];
 static void connection_printf_to_buf(control_connection_t *conn,
                                      const char *format, ...)
   CHECK_PRINTF(2,3);
-static void send_control_event_impl(uint16_t event, event_format_t which,
+static void send_control_event_impl(uint16_t event,
                                     const char *format, va_list ap)
-  CHECK_PRINTF(3,0);
+  CHECK_PRINTF(2,0);
 static int control_event_status(int type, int severity, const char *format,
                                 va_list args)
   CHECK_PRINTF(3,0);
 
 static void send_control_done(control_connection_t *conn);
-static void send_control_event(uint16_t event, event_format_t which,
+static void send_control_event(uint16_t event,
                                const char *format, ...)
-  CHECK_PRINTF(3,4);
+  CHECK_PRINTF(2,3);
 static int handle_control_setconf(control_connection_t *conn, uint32_t len,
                                   char *body);
 static int handle_control_resetconf(control_connection_t *conn, uint32_t len,
@@ -156,10 +172,23 @@ static int handle_control_resolve(control_connection_t *conn, uint32_t len,
 static int handle_control_usefeature(control_connection_t *conn,
                                      uint32_t len,
                                      const char *body);
+static int handle_control_hsfetch(control_connection_t *conn, uint32_t len,
+                                  const char *body);
+static int handle_control_hspost(control_connection_t *conn, uint32_t len,
+                                 const char *body);
+static int handle_control_add_onion(control_connection_t *conn, uint32_t len,
+                                    const char *body);
+static int handle_control_del_onion(control_connection_t *conn, uint32_t len,
+                                    const char *body);
 static int write_stream_target_to_buf(entry_connection_t *conn, char *buf,
                                       size_t len);
 static void orconn_target_get_name(char *buf, size_t len,
                                    or_connection_t *conn);
+
+static int get_cached_network_liveness(void);
+static void set_cached_network_liveness(int liveness);
+
+static void flush_queued_events_cb(evutil_socket_t fd, short what, void *arg);
 
 /** Given a control event code for a message event, return the corresponding
  * log severity. */
@@ -194,14 +223,14 @@ log_severity_to_event(int severity)
 static void
 clear_circ_bw_fields(void)
 {
-  circuit_t *circ;
   origin_circuit_t *ocirc;
-  TOR_LIST_FOREACH(circ, circuit_get_global_list(), head) {
+  SMARTLIST_FOREACH_BEGIN(circuit_get_global_list(), circuit_t *, circ) {
     if (!CIRCUIT_IS_ORIGIN(circ))
       continue;
     ocirc = TO_ORIGIN_CIRCUIT(circ);
     ocirc->n_written_circ_bw = ocirc->n_read_circ_bw = 0;
   }
+  SMARTLIST_FOREACH_END(circ);
 }
 
 /** Set <b>global_event_mask*</b> to the bitwise OR of each live control
@@ -558,46 +587,217 @@ send_control_done(control_connection_t *conn)
   connection_write_str_to_buf("250 OK\r\n", conn);
 }
 
-/** Send an event to all v1 controllers that are listening for code
- * <b>event</b>.  The event's body is given by <b>msg</b>.
- *
- * If <b>which</b> & SHORT_NAMES, the event contains short-format names: send
- * it to controllers that haven't enabled the VERBOSE_NAMES feature.  If
- * <b>which</b> & LONG_NAMES, the event contains long-format names: send it
- * to controllers that <em>have</em> enabled VERBOSE_NAMES.
- *
- * The EXTENDED_FORMAT and NONEXTENDED_FORMAT flags behave similarly with
- * respect to the EXTENDED_EVENTS feature. */
-MOCK_IMPL(STATIC void,
-send_control_event_string,(uint16_t event, event_format_t which,
-                           const char *msg))
-{
-  smartlist_t *conns = get_connection_array();
-  (void)which;
-  tor_assert(event >= EVENT_MIN_ && event <= EVENT_MAX_);
+/** Represents an event that's queued to be sent to one or more
+ * controllers. */
+typedef struct queued_event_s {
+  uint16_t event;
+  char *msg;
+} queued_event_t;
 
-  SMARTLIST_FOREACH_BEGIN(conns, connection_t *, conn) {
+/** Pointer to int. If this is greater than 0, we don't allow new events to be
+ * queued. */
+static tor_threadlocal_t block_event_queue;
+
+/** Holds a smartlist of queued_event_t objects that may need to be sent
+ * to one or more controllers */
+static smartlist_t *queued_control_events = NULL;
+
+/** True if the flush_queued_events_event is pending. */
+static int flush_queued_event_pending = 0;
+
+/** Lock to protect the above fields. */
+static tor_mutex_t *queued_control_events_lock = NULL;
+
+/** An event that should fire in order to flush the contents of
+ * queued_control_events. */
+static struct event *flush_queued_events_event = NULL;
+
+void
+control_initialize_event_queue(void)
+{
+  if (queued_control_events == NULL) {
+    queued_control_events = smartlist_new();
+  }
+
+  if (flush_queued_events_event == NULL) {
+    struct event_base *b = tor_libevent_get_base();
+    if (b) {
+      flush_queued_events_event = tor_event_new(b,
+                                              -1, 0, flush_queued_events_cb,
+                                              NULL);
+      tor_assert(flush_queued_events_event);
+    }
+  }
+
+  if (queued_control_events_lock == NULL) {
+    queued_control_events_lock = tor_mutex_new();
+    tor_threadlocal_init(&block_event_queue);
+  }
+}
+
+static int *
+get_block_event_queue(void)
+{
+  int *val = tor_threadlocal_get(&block_event_queue);
+  if (PREDICT_UNLIKELY(val == NULL)) {
+    val = tor_malloc_zero(sizeof(int));
+    tor_threadlocal_set(&block_event_queue, val);
+  }
+  return val;
+}
+
+/** Helper: inserts an event on the list of events queued to be sent to
+ * one or more controllers, and schedules the events to be flushed if needed.
+ *
+ * This function takes ownership of <b>msg</b>, and may free it.
+ *
+ * We queue these events rather than send them immediately in order to break
+ * the dependency in our callgraph from code that generates events for the
+ * controller, and the network layer at large.  Otherwise, nearly every
+ * interesting part of Tor would potentially call every other interesting part
+ * of Tor.
+ */
+MOCK_IMPL(STATIC void,
+queue_control_event_string,(uint16_t event, char *msg))
+{
+  /* This is redundant with checks done elsewhere, but it's a last-ditch
+   * attempt to avoid queueing something we shouldn't have to queue. */
+  if (PREDICT_UNLIKELY( ! EVENT_IS_INTERESTING(event) )) {
+    tor_free(msg);
+    return;
+  }
+
+  int *block_event_queue = get_block_event_queue();
+  if (*block_event_queue) {
+    tor_free(msg);
+    return;
+  }
+
+  queued_event_t *ev = tor_malloc(sizeof(*ev));
+  ev->event = event;
+  ev->msg = msg;
+
+  /* No queueing an event while queueing an event */
+  ++*block_event_queue;
+
+  tor_mutex_acquire(queued_control_events_lock);
+  tor_assert(queued_control_events);
+  smartlist_add(queued_control_events, ev);
+
+  int activate_event = 0;
+  if (! flush_queued_event_pending && in_main_thread()) {
+    activate_event = 1;
+    flush_queued_event_pending = 1;
+  }
+
+  tor_mutex_release(queued_control_events_lock);
+
+  --*block_event_queue;
+
+  /* We just put an event on the queue; mark the queue to be
+   * flushed.  We only do this from the main thread for now; otherwise,
+   * we'd need to incur locking overhead in Libevent or use a socket.
+   */
+  if (activate_event) {
+    tor_assert(flush_queued_events_event);
+    event_active(flush_queued_events_event, EV_READ, 1);
+  }
+}
+
+/** Release all storage held by <b>ev</b>. */
+static void
+queued_event_free(queued_event_t *ev)
+{
+  if (ev == NULL)
+    return;
+
+  tor_free(ev->msg);
+  tor_free(ev);
+}
+
+/** Send every queued event to every controller that's interested in it,
+ * and remove the events from the queue.  If <b>force</b> is true,
+ * then make all controllers send their data out immediately, since we
+ * may be about to shut down. */
+static void
+queued_events_flush_all(int force)
+{
+  if (PREDICT_UNLIKELY(queued_control_events == NULL)) {
+    return;
+  }
+  smartlist_t *all_conns = get_connection_array();
+  smartlist_t *controllers = smartlist_new();
+  smartlist_t *queued_events;
+
+  int *block_event_queue = get_block_event_queue();
+  ++*block_event_queue;
+
+  tor_mutex_acquire(queued_control_events_lock);
+  /* No queueing an event while flushing events. */
+  flush_queued_event_pending = 0;
+  queued_events = queued_control_events;
+  queued_control_events = smartlist_new();
+  tor_mutex_release(queued_control_events_lock);
+
+  /* Gather all the controllers that will care... */
+  SMARTLIST_FOREACH_BEGIN(all_conns, connection_t *, conn) {
     if (conn->type == CONN_TYPE_CONTROL &&
         !conn->marked_for_close &&
         conn->state == CONTROL_CONN_STATE_OPEN) {
       control_connection_t *control_conn = TO_CONTROL_CONN(conn);
 
-      if (control_conn->event_mask & (((event_mask_t)1)<<event)) {
-        int is_err = 0;
-        connection_write_to_buf(msg, strlen(msg), TO_CONN(control_conn));
-        if (event == EVENT_ERR_MSG)
-          is_err = 1;
-        else if (event == EVENT_STATUS_GENERAL)
-          is_err = !strcmpstart(msg, "STATUS_GENERAL ERR ");
-        else if (event == EVENT_STATUS_CLIENT)
-          is_err = !strcmpstart(msg, "STATUS_CLIENT ERR ");
-        else if (event == EVENT_STATUS_SERVER)
-          is_err = !strcmpstart(msg, "STATUS_SERVER ERR ");
-        if (is_err)
-          connection_flush(TO_CONN(control_conn));
-      }
+      smartlist_add(controllers, control_conn);
     }
   } SMARTLIST_FOREACH_END(conn);
+
+  SMARTLIST_FOREACH_BEGIN(queued_events, queued_event_t *, ev) {
+    const event_mask_t bit = ((event_mask_t)1) << ev->event;
+    const size_t msg_len = strlen(ev->msg);
+    SMARTLIST_FOREACH_BEGIN(controllers, control_connection_t *,
+                            control_conn) {
+      if (control_conn->event_mask & bit) {
+        connection_write_to_buf(ev->msg, msg_len, TO_CONN(control_conn));
+      }
+    } SMARTLIST_FOREACH_END(control_conn);
+
+    queued_event_free(ev);
+  } SMARTLIST_FOREACH_END(ev);
+
+  if (force) {
+    SMARTLIST_FOREACH_BEGIN(controllers, control_connection_t *,
+                            control_conn) {
+      connection_flush(TO_CONN(control_conn));
+    } SMARTLIST_FOREACH_END(control_conn);
+  }
+
+  smartlist_free(queued_events);
+  smartlist_free(controllers);
+
+  --*block_event_queue;
+}
+
+/** Libevent callback: Flushes pending events to controllers that are
+ * interested in them */
+static void
+flush_queued_events_cb(evutil_socket_t fd, short what, void *arg)
+{
+  (void) fd;
+  (void) what;
+  (void) arg;
+  queued_events_flush_all(0);
+}
+
+/** Send an event to all v1 controllers that are listening for code
+ * <b>event</b>.  The event's body is given by <b>msg</b>.
+ *
+ * The EXTENDED_FORMAT and NONEXTENDED_FORMAT flags behave similarly with
+ * respect to the EXTENDED_EVENTS feature. */
+MOCK_IMPL(STATIC void,
+send_control_event_string,(uint16_t event,
+                           const char *msg))
+{
+  tor_assert(event >= EVENT_MIN_ && event <= EVENT_MAX_);
+  queue_control_event_string(event, tor_strdup(msg));
 }
 
 /** Helper for send_control_event and control_event_status:
@@ -605,8 +805,8 @@ send_control_event_string,(uint16_t event, event_format_t which,
  * <b>event</b>.  The event's body is created by the printf-style format in
  * <b>format</b>, and other arguments as provided. */
 static void
-send_control_event_impl(uint16_t event, event_format_t which,
-                         const char *format, va_list ap)
+send_control_event_impl(uint16_t event,
+                        const char *format, va_list ap)
 {
   char *buf = NULL;
   int len;
@@ -617,21 +817,19 @@ send_control_event_impl(uint16_t event, event_format_t which,
     return;
   }
 
-  send_control_event_string(event, which|ALL_FORMATS, buf);
-
-  tor_free(buf);
+  queue_control_event_string(event, buf);
 }
 
 /** Send an event to all v1 controllers that are listening for code
  * <b>event</b>.  The event's body is created by the printf-style format in
  * <b>format</b>, and other arguments as provided. */
 static void
-send_control_event(uint16_t event, event_format_t which,
+send_control_event(uint16_t event,
                    const char *format, ...)
 {
   va_list ap;
   va_start(ap, format);
-  send_control_event_impl(event, which, format, ap);
+  send_control_event_impl(event, format, ap);
   va_end(ap);
 }
 
@@ -932,7 +1130,7 @@ static const struct control_event_t control_event_table[] = {
   { EVENT_CLIENTS_SEEN, "CLIENTS_SEEN" },
   { EVENT_NEWCONSENSUS, "NEWCONSENSUS" },
   { EVENT_BUILDTIMEOUT_SET, "BUILDTIMEOUT_SET" },
-  { EVENT_SIGNAL, "SIGNAL" },
+  { EVENT_GOT_SIGNAL, "SIGNAL" },
   { EVENT_CONF_CHANGED, "CONF_CHANGED"},
   { EVENT_CONN_BW, "CONN_BW" },
   { EVENT_CELL_STATS, "CELL_STATS" },
@@ -940,6 +1138,8 @@ static const struct control_event_t control_event_table[] = {
   { EVENT_CIRC_BANDWIDTH_USED, "CIRC_BW" },
   { EVENT_TRANSPORT_LAUNCHED, "TRANSPORT_LAUNCHED" },
   { EVENT_HS_DESC, "HS_DESC" },
+  { EVENT_HS_DESC_CONTENT, "HS_DESC_CONTENT" },
+  { EVENT_NETWORK_LIVENESS, "NETWORK_LIVENESS" },
   { 0, NULL },
 };
 
@@ -949,7 +1149,7 @@ static int
 handle_control_setevents(control_connection_t *conn, uint32_t len,
                          const char *body)
 {
-  int event_code = -1;
+  int event_code;
   event_mask_t event_mask = 0;
   smartlist_t *events = smartlist_new();
 
@@ -963,6 +1163,8 @@ handle_control_setevents(control_connection_t *conn, uint32_t len,
         continue;
       } else {
         int i;
+        event_code = -1;
+
         for (i = 0; control_event_table[i].event_name != NULL; ++i) {
           if (!strcasecmp(ev, control_event_table[i].event_name)) {
             event_code = control_event_table[i].event_code;
@@ -993,7 +1195,8 @@ handle_control_setevents(control_connection_t *conn, uint32_t len,
 
 /** Decode the hashed, base64'd passwords stored in <b>passwords</b>.
  * Return a smartlist of acceptable passwords (unterminated strings of
- * length S2K_SPECIFIER_LEN+DIGEST_LEN) on success, or NULL on failure.
+ * length S2K_RFC2440_SPECIFIER_LEN+DIGEST_LEN) on success, or NULL on
+ * failure.
  */
 smartlist_t *
 decode_hashed_passwords(config_line_t *passwords)
@@ -1009,16 +1212,17 @@ decode_hashed_passwords(config_line_t *passwords)
 
     if (!strcmpstart(hashed, "16:")) {
       if (base16_decode(decoded, sizeof(decoded), hashed+3, strlen(hashed+3))<0
-          || strlen(hashed+3) != (S2K_SPECIFIER_LEN+DIGEST_LEN)*2) {
+          || strlen(hashed+3) != (S2K_RFC2440_SPECIFIER_LEN+DIGEST_LEN)*2) {
         goto err;
       }
     } else {
         if (base64_decode(decoded, sizeof(decoded), hashed, strlen(hashed))
-            != S2K_SPECIFIER_LEN+DIGEST_LEN) {
+            != S2K_RFC2440_SPECIFIER_LEN+DIGEST_LEN) {
           goto err;
         }
     }
-    smartlist_add(sl, tor_memdup(decoded, S2K_SPECIFIER_LEN+DIGEST_LEN));
+    smartlist_add(sl,
+                  tor_memdup(decoded, S2K_RFC2440_SPECIFIER_LEN+DIGEST_LEN));
   }
 
   return sl;
@@ -1039,7 +1243,7 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
 {
   int used_quoted_string = 0;
   const or_options_t *options = get_options();
-  const char *errstr = NULL;
+  const char *errstr = "Unknown error";
   char *password;
   size_t password_len;
   const char *cp;
@@ -1160,22 +1364,27 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
     }
     if (bad) {
       if (!also_cookie) {
-        log_warn(LD_CONTROL,
+        log_warn(LD_BUG,
                  "Couldn't decode HashedControlPassword: invalid base16");
         errstr="Couldn't decode HashedControlPassword value in configuration.";
+        goto err;
       }
       bad_password = 1;
       SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
       smartlist_free(sl);
+      sl = NULL;
     } else {
       SMARTLIST_FOREACH(sl, char *, expected,
       {
-        secret_to_key(received,DIGEST_LEN,password,password_len,expected);
-        if (tor_memeq(expected+S2K_SPECIFIER_LEN, received, DIGEST_LEN))
+        secret_to_key_rfc2440(received,DIGEST_LEN,
+                              password,password_len,expected);
+        if (tor_memeq(expected + S2K_RFC2440_SPECIFIER_LEN,
+                      received, DIGEST_LEN))
           goto ok;
       });
       SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
       smartlist_free(sl);
+      sl = NULL;
 
       if (used_quoted_string)
         errstr = "Password did not match HashedControlPassword value from "
@@ -1198,9 +1407,12 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
 
  err:
   tor_free(password);
-  connection_printf_to_buf(conn, "515 Authentication failed: %s\r\n",
-                           errstr ? errstr : "Unknown reason.");
+  connection_printf_to_buf(conn, "515 Authentication failed: %s\r\n", errstr);
   connection_mark_for_close(TO_CONN(conn));
+  if (sl) { /* clean up */
+    SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+    smartlist_free(sl);
+  }
   return 0;
  ok:
   log_info(LD_CONTROL, "Authenticated control connection ("TOR_SOCKET_T_FORMAT
@@ -1250,6 +1462,7 @@ static const struct signal_t signal_table[] = {
   { SIGTERM, "INT" },
   { SIGNEWNYM, "NEWNYM" },
   { SIGCLEARDNSCACHE, "CLEARDNSCACHE"},
+  { SIGHEARTBEAT, "HEARTBEAT"},
   { 0, NULL },
 };
 
@@ -1290,7 +1503,7 @@ handle_control_signal(control_connection_t *conn, uint32_t len,
   if (sig == SIGTERM || sig == SIGINT)
     connection_flush(TO_CONN(conn));
 
-  process_signal(sig);
+  activate_signal(sig);
 
   return 0;
 }
@@ -1427,9 +1640,13 @@ getinfo_helper_misc(control_connection_t *conn, const char *question,
   } else if (!strcmp(question, "bw-event-cache")) {
     *answer = get_bw_samples();
   } else if (!strcmp(question, "config-file")) {
-    *answer = tor_strdup(get_torrc_fname(0));
+    const char *a = get_torrc_fname(0);
+    if (a)
+      *answer = tor_strdup(a);
   } else if (!strcmp(question, "config-defaults-file")) {
-    *answer = tor_strdup(get_torrc_fname(1));
+    const char *a = get_torrc_fname(1);
+    if (a)
+      *answer = tor_strdup(a);
   } else if (!strcmp(question, "config-text")) {
     *answer = options_dump(get_options(), OPTIONS_DUMP_MINIMAL);
   } else if (!strcmp(question, "info/names")) {
@@ -1502,8 +1719,7 @@ getinfo_helper_misc(control_connection_t *conn, const char *question,
       }
     #endif
   } else if (!strcmp(question, "process/descriptor-limit")) {
-    int max_fds=-1;
-    set_max_file_descriptors(0, &max_fds);
+    int max_fds = get_max_sockets();
     tor_asprintf(answer, "%d", max_fds);
   } else if (!strcmp(question, "limits/max-mem-in-queues")) {
     tor_asprintf(answer, U64_FORMAT,
@@ -1695,6 +1911,22 @@ getinfo_helper_dir(control_connection_t *control_conn,
     *answer = smartlist_join_strings(sl, "", 0, NULL);
     SMARTLIST_FOREACH(sl, char *, c, tor_free(c));
     smartlist_free(sl);
+  } else if (!strcmpstart(question, "hs/client/desc/id/")) {
+    rend_cache_entry_t *e = NULL;
+
+    question += strlen("hs/client/desc/id/");
+    if (strlen(question) != REND_SERVICE_ID_LEN_BASE32) {
+      *errmsg = "Invalid address";
+      return -1;
+    }
+
+    if (!rend_cache_lookup_entry(question, -1, &e)) {
+      /* Descriptor found in cache */
+      *answer = tor_strdup(e->desc);
+    } else {
+      *errmsg = "Not found in cache";
+      return -1;
+    }
   } else if (!strcmpstart(question, "md/id/")) {
     const node_t *node = node_get_by_hex_id(question+strlen("md/id/"));
     const microdesc_t *md = NULL;
@@ -1864,6 +2096,22 @@ circuit_describe_status_for_controller(origin_circuit_t *circ)
     smartlist_add_asprintf(descparts, "TIME_CREATED=%s", tbuf);
   }
 
+  // Show username and/or password if available.
+  if (circ->socks_username_len > 0) {
+    char* socks_username_escaped = esc_for_log_len(circ->socks_username,
+                                     (size_t) circ->socks_username_len);
+    smartlist_add_asprintf(descparts, "SOCKS_USERNAME=%s",
+                           socks_username_escaped);
+    tor_free(socks_username_escaped);
+  }
+  if (circ->socks_password_len > 0) {
+    char* socks_password_escaped = esc_for_log_len(circ->socks_password,
+                                     (size_t) circ->socks_password_len);
+    smartlist_add_asprintf(descparts, "SOCKS_PASSWORD=%s",
+                           socks_password_escaped);
+    tor_free(socks_password_escaped);
+  }
+
   rv = smartlist_join_strings(descparts, " ", 0, NULL);
 
   SMARTLIST_FOREACH(descparts, char *, cp, tor_free(cp));
@@ -1881,9 +2129,8 @@ getinfo_helper_events(control_connection_t *control_conn,
 {
   (void) control_conn;
   if (!strcmp(question, "circuit-status")) {
-    circuit_t *circ_;
     smartlist_t *status = smartlist_new();
-    TOR_LIST_FOREACH(circ_, circuit_get_global_list(), head) {
+    SMARTLIST_FOREACH_BEGIN(circuit_get_global_list(), circuit_t *, circ_) {
       origin_circuit_t *circ;
       char *circdesc;
       const char *state;
@@ -1905,6 +2152,7 @@ getinfo_helper_events(control_connection_t *control_conn,
                    state, *circdesc ? " " : "", circdesc);
       tor_free(circdesc);
     }
+    SMARTLIST_FOREACH_END(circ_);
     *answer = smartlist_join_strings(status, "\r\n", 0, NULL);
     SMARTLIST_FOREACH(status, char *, cp, tor_free(cp));
     smartlist_free(status);
@@ -2004,7 +2252,7 @@ getinfo_helper_events(control_connection_t *control_conn,
     /* Note that status/ is not a catch-all for events; there's only supposed
      * to be a status GETINFO if there's a corresponding STATUS event. */
     if (!strcmp(question, "status/circuit-established")) {
-      *answer = tor_strdup(can_complete_circuit ? "1" : "0");
+      *answer = tor_strdup(have_completed_a_circuit() ? "1" : "0");
     } else if (!strcmp(question, "status/enough-dir-info")) {
       *answer = tor_strdup(router_have_minimum_dir_info() ? "1" : "0");
     } else if (!strcmp(question, "status/good-server-descriptor") ||
@@ -2066,10 +2314,99 @@ getinfo_helper_events(control_connection_t *control_conn,
         return -1;
       }
       *answer = bridge_stats;
+    } else if (!strcmp(question, "status/fresh-relay-descs")) {
+      if (!server_mode(get_options())) {
+        *errmsg = "Only relays have descriptors";
+        return -1;
+      }
+      routerinfo_t *r;
+      extrainfo_t *e;
+      if (router_build_fresh_descriptor(&r, &e) < 0) {
+        *errmsg = "Error generating descriptor";
+        return -1;
+      }
+      size_t size = r->cache_info.signed_descriptor_len + 1;
+      if (e) {
+        size += e->cache_info.signed_descriptor_len + 1;
+      }
+      tor_assert(r->cache_info.signed_descriptor_len);
+      char *descs = tor_malloc(size);
+      char *cp = descs;
+      memcpy(cp, signed_descriptor_get_body(&r->cache_info),
+             r->cache_info.signed_descriptor_len);
+      cp += r->cache_info.signed_descriptor_len - 1;
+      if (e) {
+        if (cp[0] == '\0') {
+          cp[0] = '\n';
+        } else if (cp[0] != '\n') {
+          cp[1] = '\n';
+          cp++;
+        }
+        memcpy(cp, signed_descriptor_get_body(&e->cache_info),
+               e->cache_info.signed_descriptor_len);
+        cp += e->cache_info.signed_descriptor_len - 1;
+      }
+      if (cp[0] == '\n') {
+        cp[0] = '\0';
+      } else if (cp[0] != '\0') {
+        cp[1] = '\0';
+      }
+      *answer = descs;
+      routerinfo_free(r);
+      extrainfo_free(e);
     } else {
       return 0;
     }
   }
+  return 0;
+}
+
+/** Implementation helper for GETINFO: knows how to enumerate hidden services
+ * created via the control port. */
+static int
+getinfo_helper_onions(control_connection_t *control_conn,
+                      const char *question, char **answer,
+                      const char **errmsg)
+{
+  smartlist_t *onion_list = NULL;
+
+  if (control_conn && !strcmp(question, "onions/current")) {
+    onion_list = control_conn->ephemeral_onion_services;
+  } else if (!strcmp(question, "onions/detached")) {
+    onion_list = detached_onion_services;
+  } else {
+    return 0;
+  }
+  if (!onion_list || smartlist_len(onion_list) == 0) {
+    if (errmsg) {
+        *errmsg = "No onion services of the specified type.";
+    }
+    return -1;
+  }
+  if (answer) {
+      *answer = smartlist_join_strings(onion_list, "\r\n", 0, NULL);
+  }
+
+  return 0;
+}
+
+/** Implementation helper for GETINFO: answers queries about network
+ * liveness. */
+static int
+getinfo_helper_liveness(control_connection_t *control_conn,
+                      const char *question, char **answer,
+                      const char **errmsg)
+{
+  (void)control_conn;
+  (void)errmsg;
+  if (strcmp(question, "network-liveness") == 0) {
+    if (get_cached_network_liveness()) {
+      *answer = tor_strdup("up");
+    } else {
+      *answer = tor_strdup("down");
+    }
+  }
+
   return 0;
 }
 
@@ -2142,6 +2479,8 @@ static const getinfo_item_t getinfo_items[] = {
   PREFIX("md/id/", dir, "Microdescriptors by ID"),
   PREFIX("md/name/", dir, "Microdescriptors by name"),
   PREFIX("extra-info/digest/", dir, "Extra-info documents by digest."),
+  PREFIX("hs/client/desc/id", dir,
+         "Hidden Service descriptor in client's cache by onion."),
   PREFIX("net/listeners/", listeners, "Bound addresses by type"),
   ITEM("ns/all", networkstatus,
        "Brief summary of router status (v2 directory format)"),
@@ -2151,8 +2490,12 @@ static const getinfo_item_t getinfo_items[] = {
          "Brief summary of router status by nickname (v2 directory format)."),
   PREFIX("ns/purpose/", networkstatus,
          "Brief summary of router status by purpose (v2 directory format)."),
+  PREFIX("consensus/", networkstatus,
+         "Information about and from the ns consensus."),
   ITEM("network-status", dir,
        "Brief summary of router status (v1 directory format)"),
+  ITEM("network-liveness", liveness,
+       "Current opinion on whether the network is live"),
   ITEM("circuit-status", events, "List of current circuits originating here."),
   ITEM("stream-status", events,"List of current streams."),
   ITEM("orconn-status", events, "A list of current OR connections."),
@@ -2174,6 +2517,8 @@ static const getinfo_item_t getinfo_items[] = {
       "The last bootstrap phase status event that Tor sent."),
   DOC("status/clients-seen",
       "Breakdown of client countries seen by a bridge."),
+  DOC("status/fresh-relay-descs",
+      "A fresh relay/ei descriptor pair for Tor's current state. Not stored."),
   DOC("status/version/recommended", "List of currently recommended versions."),
   DOC("status/version/current", "Status of the current version."),
   DOC("status/version/num-versioning", "Number of versioning authorities."),
@@ -2203,6 +2548,10 @@ static const getinfo_item_t getinfo_items[] = {
   ITEM("exit-policy/ipv4", policies, "IPv4 parts of exit policy"),
   ITEM("exit-policy/ipv6", policies, "IPv6 parts of exit policy"),
   PREFIX("ip-to-country/", geoip, "Perform a GEOIP lookup"),
+  ITEM("onions/current", onions,
+       "Onion services owned by the current control connection."),
+  ITEM("onions/detached", onions,
+       "Onion services detached from the control connection."),
   { NULL, NULL, NULL, 0 }
 };
 
@@ -2454,6 +2803,14 @@ handle_control_extendcircuit(control_connection_t *conn, uint32_t len,
     goto done;
   }
 
+  if (smartlist_len(args) < 2) {
+    connection_printf_to_buf(conn,
+                             "512 syntax error: not enough arguments.\r\n");
+    SMARTLIST_FOREACH(args, char *, cp, tor_free(cp));
+    smartlist_free(args);
+    goto done;
+  }
+
   smartlist_split_string(router_nicknames, smartlist_get(args,1), ",", 0, 0);
 
   SMARTLIST_FOREACH(args, char *, cp, tor_free(cp));
@@ -2689,12 +3046,14 @@ handle_control_postdescriptor(control_connection_t *conn, uint32_t len,
   uint8_t purpose = ROUTER_PURPOSE_GENERAL;
   int cache = 0; /* eventually, we may switch this to 1 */
 
-  char *cp = memchr(body, '\n', len);
+  const char *cp = memchr(body, '\n', len);
   smartlist_t *args = smartlist_new();
   tor_assert(cp);
-  *cp++ = '\0';
+  ++cp;
 
-  smartlist_split_string(args, body, " ",
+  char *cmdline = tor_memdup_nulterm(body, cp-body);
+
+  smartlist_split_string(args, cmdline, " ",
                          SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 0);
   SMARTLIST_FOREACH_BEGIN(args, char *, option) {
     if (!strcasecmpstart(option, "purpose=")) {
@@ -2743,6 +3102,7 @@ handle_control_postdescriptor(control_connection_t *conn, uint32_t len,
  done:
   SMARTLIST_FOREACH(args, char *, arg, tor_free(arg));
   smartlist_free(args);
+  tor_free(cmdline);
   return 0;
 }
 
@@ -3058,8 +3418,8 @@ handle_control_authchallenge(control_connection_t *conn, uint32_t len,
     tor_free(client_nonce);
     return -1;
   }
-
-  tor_assert(!crypto_rand(server_nonce, SAFECOOKIE_SERVER_NONCE_LEN));
+  const int fail = crypto_rand(server_nonce, SAFECOOKIE_SERVER_NONCE_LEN);
+  tor_assert(!fail);
 
   /* Now compute and send the server-to-controller response, and the
    * server's nonce. */
@@ -3167,6 +3527,570 @@ handle_control_dropguards(control_connection_t *conn,
   return 0;
 }
 
+/** Implementation for the HSFETCH command. */
+static int
+handle_control_hsfetch(control_connection_t *conn, uint32_t len,
+                       const char *body)
+{
+  int i;
+  char digest[DIGEST_LEN], *hsaddress = NULL, *arg1 = NULL, *desc_id = NULL;
+  smartlist_t *args = NULL, *hsdirs = NULL;
+  (void) len; /* body is nul-terminated; it's safe to ignore the length */
+  static const char *hsfetch_command = "HSFETCH";
+  static const char *v2_str = "v2-";
+  const size_t v2_str_len = strlen(v2_str);
+  rend_data_t *rend_query = NULL;
+
+  /* Make sure we have at least one argument, the HSAddress. */
+  args = getargs_helper(hsfetch_command, conn, body, 1, -1);
+  if (!args) {
+    goto exit;
+  }
+
+  /* Extract the first argument (either HSAddress or DescID). */
+  arg1 = smartlist_get(args, 0);
+  /* Test if it's an HS address without the .onion part. */
+  if (rend_valid_service_id(arg1)) {
+    hsaddress = arg1;
+  } else if (strcmpstart(arg1, v2_str) == 0 &&
+             rend_valid_descriptor_id(arg1 + v2_str_len) &&
+             base32_decode(digest, sizeof(digest), arg1 + v2_str_len,
+                           REND_DESC_ID_V2_LEN_BASE32) == 0) {
+    /* We have a well formed version 2 descriptor ID. Keep the decoded value
+     * of the id. */
+    desc_id = digest;
+  } else {
+    connection_printf_to_buf(conn, "513 Unrecognized \"%s\"\r\n",
+                             arg1);
+    goto done;
+  }
+
+  static const char *opt_server = "SERVER=";
+
+  /* Skip first argument because it's the HSAddress or DescID. */
+  for (i = 1; i < smartlist_len(args); ++i) {
+    const char *arg = smartlist_get(args, i);
+    const node_t *node;
+
+    if (!strcasecmpstart(arg, opt_server)) {
+      const char *server;
+
+      server = arg + strlen(opt_server);
+      node = node_get_by_hex_id(server);
+      if (!node) {
+        connection_printf_to_buf(conn, "552 Server \"%s\" not found\r\n",
+                                 server);
+        goto done;
+      }
+      if (!hsdirs) {
+        /* Stores routerstatus_t object for each specified server. */
+        hsdirs = smartlist_new();
+      }
+      /* Valid server, add it to our local list. */
+      smartlist_add(hsdirs, node->rs);
+    } else {
+      connection_printf_to_buf(conn, "513 Unexpected argument \"%s\"\r\n",
+                               arg);
+      goto done;
+    }
+  }
+
+  rend_query = rend_data_client_create(hsaddress, desc_id, NULL,
+                                       REND_NO_AUTH);
+  if (rend_query == NULL) {
+    connection_printf_to_buf(conn, "551 Error creating the HS query\r\n");
+    goto done;
+  }
+
+  /* Using a descriptor ID, we force the user to provide at least one
+   * hsdir server using the SERVER= option. */
+  if (desc_id && (!hsdirs || !smartlist_len(hsdirs))) {
+      connection_printf_to_buf(conn, "512 %s option is required\r\n",
+                               opt_server);
+      goto done;
+  }
+
+  /* We are about to trigger HSDir fetch so send the OK now because after
+   * that 650 event(s) are possible so better to have the 250 OK before them
+   * to avoid out of order replies. */
+  send_control_done(conn);
+
+  /* Trigger the fetch using the built rend query and possibly a list of HS
+   * directory to use. This function ignores the client cache thus this will
+   * always send a fetch command. */
+  rend_client_fetch_v2_desc(rend_query, hsdirs);
+
+ done:
+  SMARTLIST_FOREACH(args, char *, cp, tor_free(cp));
+  smartlist_free(args);
+  /* Contains data pointer that we don't own thus no cleanup. */
+  smartlist_free(hsdirs);
+  rend_data_free(rend_query);
+ exit:
+  return 0;
+}
+
+/** Implementation for the HSPOST command. */
+static int
+handle_control_hspost(control_connection_t *conn,
+                      uint32_t len,
+                      const char *body)
+{
+  static const char *opt_server = "SERVER=";
+  smartlist_t *args = smartlist_new();
+  smartlist_t *hs_dirs = NULL;
+  const char *encoded_desc = body;
+  size_t encoded_desc_len = len;
+
+  char *cp = memchr(body, '\n', len);
+  char *argline = tor_strndup(body, cp-body);
+
+  /* If any SERVER= options were specified, try parse the options line */
+  if (!strcasecmpstart(argline, opt_server)) {
+    /* encoded_desc begins after a newline character */
+    cp = cp + 1;
+    encoded_desc = cp;
+    encoded_desc_len = len-(cp-body);
+
+    smartlist_split_string(args, argline, " ",
+                           SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 0);
+    SMARTLIST_FOREACH_BEGIN(args, const char *, arg) {
+      if (!strcasecmpstart(arg, opt_server)) {
+        const char *server = arg + strlen(opt_server);
+        const node_t *node = node_get_by_hex_id(server);
+
+        if (!node || !node->rs) {
+          connection_printf_to_buf(conn, "552 Server \"%s\" not found\r\n",
+                                   server);
+          goto done;
+        }
+        if (!node->rs->is_hs_dir) {
+          connection_printf_to_buf(conn, "552 Server \"%s\" is not a HSDir"
+                                         "\r\n", server);
+          goto done;
+        }
+        /* Valid server, add it to our local list. */
+        if (!hs_dirs)
+          hs_dirs = smartlist_new();
+        smartlist_add(hs_dirs, node->rs);
+      } else {
+        connection_printf_to_buf(conn, "512 Unexpected argument \"%s\"\r\n",
+                                 arg);
+        goto done;
+      }
+    } SMARTLIST_FOREACH_END(arg);
+  }
+
+  /* Read the dot encoded descriptor, and parse it. */
+  rend_encoded_v2_service_descriptor_t *desc =
+      tor_malloc_zero(sizeof(rend_encoded_v2_service_descriptor_t));
+  read_escaped_data(encoded_desc, encoded_desc_len, &desc->desc_str);
+
+  rend_service_descriptor_t *parsed = NULL;
+  char *intro_content = NULL;
+  size_t intro_size;
+  size_t encoded_size;
+  const char *next_desc;
+  if (!rend_parse_v2_service_descriptor(&parsed, desc->desc_id, &intro_content,
+                                        &intro_size, &encoded_size,
+                                        &next_desc, desc->desc_str, 1)) {
+    /* Post the descriptor. */
+    char serviceid[REND_SERVICE_ID_LEN_BASE32+1];
+    if (!rend_get_service_id(parsed->pk, serviceid)) {
+      smartlist_t *descs = smartlist_new();
+      smartlist_add(descs, desc);
+
+      /* We are about to trigger HS descriptor upload so send the OK now
+       * because after that 650 event(s) are possible so better to have the
+       * 250 OK before them to avoid out of order replies. */
+      send_control_done(conn);
+
+      /* Trigger the descriptor upload */
+      directory_post_to_hs_dir(parsed, descs, hs_dirs, serviceid, 0);
+      smartlist_free(descs);
+    }
+
+    rend_service_descriptor_free(parsed);
+  } else {
+    connection_printf_to_buf(conn, "554 Invalid descriptor\r\n");
+  }
+
+  tor_free(intro_content);
+  rend_encoded_v2_service_descriptor_free(desc);
+ done:
+  tor_free(argline);
+  smartlist_free(hs_dirs); /* Contents belong to the rend service code. */
+  SMARTLIST_FOREACH(args, char *, arg, tor_free(arg));
+  smartlist_free(args);
+  return 0;
+}
+
+/** Called when we get a ADD_ONION command; parse the body, and set up
+ * the new ephemeral Onion Service. */
+static int
+handle_control_add_onion(control_connection_t *conn,
+                         uint32_t len,
+                         const char *body)
+{
+  smartlist_t *args;
+  size_t arg_len;
+  (void) len; /* body is nul-terminated; it's safe to ignore the length */
+  args = getargs_helper("ADD_ONION", conn, body, 2, -1);
+  if (!args)
+    return 0;
+  arg_len = smartlist_len(args);
+
+  /* Parse all of the arguments that do not involve handling cryptographic
+   * material first, since there's no reason to touch that at all if any of
+   * the other arguments are malformed.
+   */
+  smartlist_t *port_cfgs = smartlist_new();
+  int discard_pk = 0;
+  int detach = 0;
+  int max_streams = 0;
+  int max_streams_close_circuit = 0;
+  for (size_t i = 1; i < arg_len; i++) {
+    static const char *port_prefix = "Port=";
+    static const char *flags_prefix = "Flags=";
+    static const char *max_s_prefix = "MaxStreams=";
+
+    const char *arg = smartlist_get(args, i);
+    if (!strcasecmpstart(arg, port_prefix)) {
+      /* "Port=VIRTPORT[,TARGET]". */
+      const char *port_str = arg + strlen(port_prefix);
+
+      rend_service_port_config_t *cfg =
+          rend_service_parse_port_config(port_str, ",", NULL);
+      if (!cfg) {
+        connection_printf_to_buf(conn, "512 Invalid VIRTPORT/TARGET\r\n");
+        goto out;
+      }
+      smartlist_add(port_cfgs, cfg);
+    } else if (!strcasecmpstart(arg, max_s_prefix)) {
+      /* "MaxStreams=[0..65535]". */
+      const char *max_s_str = arg + strlen(max_s_prefix);
+      int ok = 0;
+      max_streams = (int)tor_parse_long(max_s_str, 10, 0, 65535, &ok, NULL);
+      if (!ok) {
+        connection_printf_to_buf(conn, "512 Invalid MaxStreams\r\n");
+        goto out;
+      }
+    } else if (!strcasecmpstart(arg, flags_prefix)) {
+      /* "Flags=Flag[,Flag]", where Flag can be:
+       *   * 'DiscardPK' - If tor generates the keypair, do not include it in
+       *                   the response.
+       *   * 'Detach' - Do not tie this onion service to any particular control
+       *                connection.
+       *   * 'MaxStreamsCloseCircuit' - Close the circuit if MaxStreams is
+       *                                exceeded.
+       */
+      static const char *discard_flag = "DiscardPK";
+      static const char *detach_flag = "Detach";
+      static const char *max_s_close_flag = "MaxStreamsCloseCircuit";
+
+      smartlist_t *flags = smartlist_new();
+      int bad = 0;
+
+      smartlist_split_string(flags, arg + strlen(flags_prefix), ",",
+                             SPLIT_IGNORE_BLANK, 0);
+      if (smartlist_len(flags) < 1) {
+        connection_printf_to_buf(conn, "512 Invalid 'Flags' argument\r\n");
+        bad = 1;
+      }
+      SMARTLIST_FOREACH_BEGIN(flags, const char *, flag)
+      {
+        if (!strcasecmp(flag, discard_flag)) {
+          discard_pk = 1;
+        } else if (!strcasecmp(flag, detach_flag)) {
+          detach = 1;
+        } else if (!strcasecmp(flag, max_s_close_flag)) {
+          max_streams_close_circuit = 1;
+        } else {
+          connection_printf_to_buf(conn,
+                                   "512 Invalid 'Flags' argument: %s\r\n",
+                                   escaped(flag));
+          bad = 1;
+          break;
+        }
+      } SMARTLIST_FOREACH_END(flag);
+      SMARTLIST_FOREACH(flags, char *, cp, tor_free(cp));
+      smartlist_free(flags);
+      if (bad)
+        goto out;
+    } else {
+      connection_printf_to_buf(conn, "513 Invalid argument\r\n");
+      goto out;
+    }
+  }
+  if (smartlist_len(port_cfgs) == 0) {
+    connection_printf_to_buf(conn, "512 Missing 'Port' argument\r\n");
+    goto out;
+  }
+
+  /* Parse the "keytype:keyblob" argument. */
+  crypto_pk_t *pk = NULL;
+  const char *key_new_alg = NULL;
+  char *key_new_blob = NULL;
+  char *err_msg = NULL;
+
+  pk = add_onion_helper_keyarg(smartlist_get(args, 0), discard_pk,
+                               &key_new_alg, &key_new_blob,
+                               &err_msg);
+  if (!pk) {
+    if (err_msg) {
+      connection_write_str_to_buf(err_msg, conn);
+      tor_free(err_msg);
+    }
+    goto out;
+  }
+  tor_assert(!err_msg);
+
+  /* Create the HS, using private key pk, and port config port_cfg.
+   * rend_service_add_ephemeral() will take ownership of pk and port_cfg,
+   * regardless of success/failure.
+   */
+  char *service_id = NULL;
+  int ret = rend_service_add_ephemeral(pk, port_cfgs, max_streams,
+                                       max_streams_close_circuit,
+                                       &service_id);
+  port_cfgs = NULL; /* port_cfgs is now owned by the rendservice code. */
+  switch (ret) {
+  case RSAE_OKAY:
+  {
+    char *buf = NULL;
+    tor_assert(service_id);
+    if (key_new_alg) {
+      tor_assert(key_new_blob);
+      tor_asprintf(&buf,
+                   "250-ServiceID=%s\r\n"
+                   "250-PrivateKey=%s:%s\r\n"
+                   "250 OK\r\n",
+                   service_id,
+                   key_new_alg,
+                   key_new_blob);
+    } else {
+      tor_asprintf(&buf,
+                   "250-ServiceID=%s\r\n"
+                   "250 OK\r\n",
+                   service_id);
+    }
+    if (detach) {
+      if (!detached_onion_services)
+        detached_onion_services = smartlist_new();
+      smartlist_add(detached_onion_services, service_id);
+    } else {
+      if (!conn->ephemeral_onion_services)
+        conn->ephemeral_onion_services = smartlist_new();
+      smartlist_add(conn->ephemeral_onion_services, service_id);
+    }
+
+    connection_write_str_to_buf(buf, conn);
+    memwipe(buf, 0, strlen(buf));
+    tor_free(buf);
+    break;
+  }
+  case RSAE_BADPRIVKEY:
+    connection_printf_to_buf(conn, "551 Failed to generate onion address\r\n");
+    break;
+  case RSAE_ADDREXISTS:
+    connection_printf_to_buf(conn, "550 Onion address collision\r\n");
+    break;
+  case RSAE_BADVIRTPORT:
+    connection_printf_to_buf(conn, "512 Invalid VIRTPORT/TARGET\r\n");
+    break;
+  case RSAE_INTERNAL: /* FALLSTHROUGH */
+  default:
+    connection_printf_to_buf(conn, "551 Failed to add Onion Service\r\n");
+  }
+  if (key_new_blob) {
+    memwipe(key_new_blob, 0, strlen(key_new_blob));
+    tor_free(key_new_blob);
+  }
+
+ out:
+  if (port_cfgs) {
+    SMARTLIST_FOREACH(port_cfgs, rend_service_port_config_t*, p,
+                      rend_service_port_config_free(p));
+    smartlist_free(port_cfgs);
+  }
+
+  SMARTLIST_FOREACH(args, char *, cp, {
+    memwipe(cp, 0, strlen(cp));
+    tor_free(cp);
+  });
+  smartlist_free(args);
+  return 0;
+}
+
+/** Helper function to handle parsing the KeyType:KeyBlob argument to the
+ * ADD_ONION command. Return a new crypto_pk_t and if a new key was generated
+ * and the private key not discarded, the algorithm and serialized private key,
+ * or NULL and an optional control protocol error message on failure.  The
+ * caller is responsible for freeing the returned key_new_blob and err_msg.
+ *
+ * Note: The error messages returned are deliberately vague to avoid echoing
+ * key material.
+ */
+STATIC crypto_pk_t *
+add_onion_helper_keyarg(const char *arg, int discard_pk,
+                        const char **key_new_alg_out, char **key_new_blob_out,
+                        char **err_msg_out)
+{
+  smartlist_t *key_args = smartlist_new();
+  crypto_pk_t *pk = NULL;
+  const char *key_new_alg = NULL;
+  char *key_new_blob = NULL;
+  char *err_msg = NULL;
+  int ok = 0;
+
+  smartlist_split_string(key_args, arg, ":", SPLIT_IGNORE_BLANK, 0);
+  if (smartlist_len(key_args) != 2) {
+    err_msg = tor_strdup("512 Invalid key type/blob\r\n");
+    goto err;
+  }
+
+  /* The format is "KeyType:KeyBlob". */
+  static const char *key_type_new = "NEW";
+  static const char *key_type_best = "BEST";
+  static const char *key_type_rsa1024 = "RSA1024";
+
+  const char *key_type = smartlist_get(key_args, 0);
+  const char *key_blob = smartlist_get(key_args, 1);
+
+  if (!strcasecmp(key_type_rsa1024, key_type)) {
+    /* "RSA:<Base64 Blob>" - Loading a pre-existing RSA1024 key. */
+    pk = crypto_pk_base64_decode(key_blob, strlen(key_blob));
+    if (!pk) {
+      err_msg = tor_strdup("512 Failed to decode RSA key\r\n");
+      goto err;
+    }
+    if (crypto_pk_num_bits(pk) != PK_BYTES*8) {
+      err_msg = tor_strdup("512 Invalid RSA key size\r\n");
+      goto err;
+    }
+  } else if (!strcasecmp(key_type_new, key_type)) {
+    /* "NEW:<Algorithm>" - Generating a new key, blob as algorithm. */
+    if (!strcasecmp(key_type_rsa1024, key_blob) ||
+        !strcasecmp(key_type_best, key_blob)) {
+      /* "RSA1024", RSA 1024 bit, also currently "BEST" by default. */
+      pk = crypto_pk_new();
+      if (crypto_pk_generate_key(pk)) {
+        tor_asprintf(&err_msg, "551 Failed to generate %s key\r\n",
+                     key_type_rsa1024);
+        goto err;
+      }
+      if (!discard_pk) {
+        if (crypto_pk_base64_encode(pk, &key_new_blob)) {
+          tor_asprintf(&err_msg, "551 Failed to encode %s key\r\n",
+                       key_type_rsa1024);
+          goto err;
+        }
+        key_new_alg = key_type_rsa1024;
+      }
+    } else {
+      err_msg = tor_strdup("513 Invalid key type\r\n");
+      goto err;
+    }
+  } else {
+    err_msg = tor_strdup("513 Invalid key type\r\n");
+    goto err;
+  }
+
+  /* Succeded in loading or generating a private key. */
+  tor_assert(pk);
+  ok = 1;
+
+ err:
+  SMARTLIST_FOREACH(key_args, char *, cp, {
+    memwipe(cp, 0, strlen(cp));
+    tor_free(cp);
+  });
+  smartlist_free(key_args);
+
+  if (!ok) {
+    crypto_pk_free(pk);
+    pk = NULL;
+  }
+  if (err_msg_out) {
+    *err_msg_out = err_msg;
+  } else {
+    tor_free(err_msg);
+  }
+  *key_new_alg_out = key_new_alg;
+  *key_new_blob_out = key_new_blob;
+
+  return pk;
+}
+
+/** Called when we get a DEL_ONION command; parse the body, and remove
+ * the existing ephemeral Onion Service. */
+static int
+handle_control_del_onion(control_connection_t *conn,
+                          uint32_t len,
+                          const char *body)
+{
+  smartlist_t *args;
+  (void) len; /* body is nul-terminated; it's safe to ignore the length */
+  args = getargs_helper("DEL_ONION", conn, body, 1, 1);
+  if (!args)
+    return 0;
+
+  const char *service_id = smartlist_get(args, 0);
+  if (!rend_valid_service_id(service_id)) {
+    connection_printf_to_buf(conn, "512 Malformed Onion Service id\r\n");
+    goto out;
+  }
+
+  /* Determine if the onion service belongs to this particular control
+   * connection, or if it is in the global list of detached services.  If it
+   * is in neither, either the service ID is invalid in some way, or it
+   * explicitly belongs to a different control connection, and an error
+   * should be returned.
+   */
+  smartlist_t *services[2] = {
+    conn->ephemeral_onion_services,
+    detached_onion_services
+  };
+  smartlist_t *onion_services = NULL;
+  int idx = -1;
+  for (size_t i = 0; i < ARRAY_LENGTH(services); i++) {
+    idx = smartlist_string_pos(services[i], service_id);
+    if (idx != -1) {
+      onion_services = services[i];
+      break;
+    }
+  }
+  if (onion_services == NULL) {
+    connection_printf_to_buf(conn, "552 Unknown Onion Service id\r\n");
+  } else {
+    int ret = rend_service_del_ephemeral(service_id);
+    if (ret) {
+      /* This should *NEVER* fail, since the service is on either the
+       * per-control connection list, or the global one.
+       */
+      log_warn(LD_BUG, "Failed to remove Onion Service %s.",
+               escaped(service_id));
+      tor_fragile_assert();
+    }
+
+    /* Remove/scrub the service_id from the appropriate list. */
+    char *cp = smartlist_get(onion_services, idx);
+    smartlist_del(onion_services, idx);
+    memwipe(cp, 0, strlen(cp));
+    tor_free(cp);
+
+    send_control_done(conn);
+  }
+
+ out:
+  SMARTLIST_FOREACH(args, char *, cp, {
+    memwipe(cp, 0, strlen(cp));
+    tor_free(cp);
+  });
+  smartlist_free(args);
+  return 0;
+}
+
 /** Called when <b>conn</b> has no more bytes left on its outbuf. */
 int
 connection_control_finished_flushing(control_connection_t *conn)
@@ -3186,10 +4110,6 @@ connection_control_reached_eof(control_connection_t *conn)
   return 0;
 }
 
-static void lost_owning_controller(const char *owner_type,
-                                   const char *loss_manner)
-  ATTR_NORETURN;
-
 /** Shut down this Tor instance in the same way that SIGINT would, but
  * with a log message appropriate for the loss of an owning controller. */
 static void
@@ -3198,10 +4118,7 @@ lost_owning_controller(const char *owner_type, const char *loss_manner)
   log_notice(LD_CONTROL, "Owning controller %s has %s -- exiting now.",
              owner_type, loss_manner);
 
-  /* XXXX Perhaps this chunk of code should be a separate function,
-   * called here and by process_signal(SIGINT). */
-  tor_cleanup();
-  exit(0);
+  activate_signal(SIGTERM);
 }
 
 /** Called when <b>conn</b> is being freed. */
@@ -3212,6 +4129,15 @@ connection_control_closed(control_connection_t *conn)
 
   conn->event_mask = 0;
   control_update_global_event_mask();
+
+  /* Close all ephemeral Onion Services if any.
+   * The list and it's contents are scrubbed/freed in connection_free_.
+   */
+  if (conn->ephemeral_onion_services) {
+    SMARTLIST_FOREACH(conn->ephemeral_onion_services, char *, cp, {
+      rend_service_del_ephemeral(cp);
+    });
+  }
 
   if (conn->is_owning_control_connection) {
     lost_owning_controller("connection", "closed");
@@ -3464,6 +4390,22 @@ connection_control_process_inbuf(control_connection_t *conn)
   } else if (!strcasecmp(conn->incoming_cmd, "DROPGUARDS")) {
     if (handle_control_dropguards(conn, cmd_data_len, args))
       return -1;
+  } else if (!strcasecmp(conn->incoming_cmd, "HSFETCH")) {
+    if (handle_control_hsfetch(conn, cmd_data_len, args))
+      return -1;
+  } else if (!strcasecmp(conn->incoming_cmd, "+HSPOST")) {
+    if (handle_control_hspost(conn, cmd_data_len, args))
+      return -1;
+  } else if (!strcasecmp(conn->incoming_cmd, "ADD_ONION")) {
+    int ret = handle_control_add_onion(conn, cmd_data_len, args);
+    memwipe(args, 0, cmd_data_len); /* Scrub the private key. */
+    if (ret)
+      return -1;
+  } else if (!strcasecmp(conn->incoming_cmd, "DEL_ONION")) {
+    int ret = handle_control_del_onion(conn, cmd_data_len, args);
+    memwipe(args, 0, cmd_data_len); /* Scrub the service id/pk. */
+    if (ret)
+      return -1;
   } else {
     connection_printf_to_buf(conn, "510 Unrecognized command \"%s\"\r\n",
                              conn->incoming_cmd);
@@ -3517,7 +4459,7 @@ control_event_circuit_status(origin_circuit_t *circ, circuit_status_event_t tp,
   {
     char *circdesc = circuit_describe_status_for_controller(circ);
     const char *sp = strlen(circdesc) ? " " : "";
-    send_control_event(EVENT_CIRCUIT_STATUS, ALL_FORMATS,
+    send_control_event(EVENT_CIRCUIT_STATUS,
                                 "650 CIRC %lu %s%s%s%s\r\n",
                                 (unsigned long)circ->global_identifier,
                                 status, sp,
@@ -3588,7 +4530,7 @@ control_event_circuit_status_minor(origin_circuit_t *circ,
   {
     char *circdesc = circuit_describe_status_for_controller(circ);
     const char *sp = strlen(circdesc) ? " " : "";
-    send_control_event(EVENT_CIRCUIT_STATUS_MINOR, ALL_FORMATS,
+    send_control_event(EVENT_CIRCUIT_STATUS_MINOR,
                        "650 CIRC_MINOR %lu %s%s%s%s\r\n",
                        (unsigned long)circ->global_identifier,
                        event_desc, sp,
@@ -3763,7 +4705,7 @@ control_event_stream_status(entry_connection_t *conn, stream_status_event_t tp,
   circ = circuit_get_by_edge_conn(ENTRY_TO_EDGE_CONN(conn));
   if (circ && CIRCUIT_IS_ORIGIN(circ))
     origin_circ = TO_ORIGIN_CIRCUIT(circ);
-  send_control_event(EVENT_STREAM_STATUS, ALL_FORMATS,
+  send_control_event(EVENT_STREAM_STATUS,
                         "650 STREAM "U64_FORMAT" %s %lu %s%s%s%s\r\n",
                      U64_PRINTF_ARG(ENTRY_TO_CONN(conn)->global_identifier),
                      status,
@@ -3835,7 +4777,7 @@ control_event_or_conn_status(or_connection_t *conn, or_conn_status_event_t tp,
   }
 
   orconn_target_get_name(name, sizeof(name), conn);
-  send_control_event(EVENT_OR_CONN_STATUS, ALL_FORMATS,
+  send_control_event(EVENT_OR_CONN_STATUS,
                               "650 ORCONN %s %s%s%s%s ID="U64_FORMAT"\r\n",
                               name, status,
                               reason ? " REASON=" : "",
@@ -3858,7 +4800,7 @@ control_event_stream_bandwidth(edge_connection_t *edge_conn)
     if (!edge_conn->n_read && !edge_conn->n_written)
       return 0;
 
-    send_control_event(EVENT_STREAM_BANDWIDTH_USED, ALL_FORMATS,
+    send_control_event(EVENT_STREAM_BANDWIDTH_USED,
                        "650 STREAM_BW "U64_FORMAT" %lu %lu\r\n",
                        U64_PRINTF_ARG(edge_conn->base_.global_identifier),
                        (unsigned long)edge_conn->n_read,
@@ -3893,7 +4835,7 @@ control_event_stream_bandwidth_used(void)
         if (!edge_conn->n_read && !edge_conn->n_written)
           continue;
 
-        send_control_event(EVENT_STREAM_BANDWIDTH_USED, ALL_FORMATS,
+        send_control_event(EVENT_STREAM_BANDWIDTH_USED,
                            "650 STREAM_BW "U64_FORMAT" %lu %lu\r\n",
                            U64_PRINTF_ARG(edge_conn->base_.global_identifier),
                            (unsigned long)edge_conn->n_read,
@@ -3912,24 +4854,24 @@ control_event_stream_bandwidth_used(void)
 int
 control_event_circ_bandwidth_used(void)
 {
-  circuit_t *circ;
   origin_circuit_t *ocirc;
   if (!EVENT_IS_INTERESTING(EVENT_CIRC_BANDWIDTH_USED))
     return 0;
 
-  TOR_LIST_FOREACH(circ, circuit_get_global_list(), head) {
+  SMARTLIST_FOREACH_BEGIN(circuit_get_global_list(), circuit_t *, circ) {
     if (!CIRCUIT_IS_ORIGIN(circ))
       continue;
     ocirc = TO_ORIGIN_CIRCUIT(circ);
     if (!ocirc->n_read_circ_bw && !ocirc->n_written_circ_bw)
       continue;
-    send_control_event(EVENT_CIRC_BANDWIDTH_USED, ALL_FORMATS,
+    send_control_event(EVENT_CIRC_BANDWIDTH_USED,
                        "650 CIRC_BW ID=%d READ=%lu WRITTEN=%lu\r\n",
                        ocirc->global_identifier,
                        (unsigned long)ocirc->n_read_circ_bw,
                        (unsigned long)ocirc->n_written_circ_bw);
     ocirc->n_written_circ_bw = ocirc->n_read_circ_bw = 0;
   }
+  SMARTLIST_FOREACH_END(circ);
 
   return 0;
 }
@@ -3958,7 +4900,7 @@ control_event_conn_bandwidth(connection_t *conn)
     default:
       return 0;
   }
-  send_control_event(EVENT_CONN_BW, ALL_FORMATS,
+  send_control_event(EVENT_CONN_BW,
                      "650 CONN_BW ID="U64_FORMAT" TYPE=%s "
                      "READ=%lu WRITTEN=%lu\r\n",
                      U64_PRINTF_ARG(conn->global_identifier),
@@ -4094,22 +5036,22 @@ format_cell_stats(char **event_string, circuit_t *circ,
 int
 control_event_circuit_cell_stats(void)
 {
-  circuit_t *circ;
   cell_stats_t *cell_stats;
   char *event_string;
   if (!get_options()->TestingEnableCellStatsEvent ||
       !EVENT_IS_INTERESTING(EVENT_CELL_STATS))
     return 0;
   cell_stats = tor_malloc(sizeof(cell_stats_t));;
-  TOR_LIST_FOREACH(circ, circuit_get_global_list(), head) {
+  SMARTLIST_FOREACH_BEGIN(circuit_get_global_list(), circuit_t *, circ) {
     if (!circ->testing_cell_stats)
       continue;
     sum_up_cell_stats_by_command(circ, cell_stats);
     format_cell_stats(&event_string, circ, cell_stats);
-    send_control_event(EVENT_CELL_STATS, ALL_FORMATS,
+    send_control_event(EVENT_CELL_STATS,
                        "650 CELL_STATS %s\r\n", event_string);
     tor_free(event_string);
   }
+  SMARTLIST_FOREACH_END(circ);
   tor_free(cell_stats);
   return 0;
 }
@@ -4127,7 +5069,7 @@ control_event_tb_empty(const char *bucket, uint32_t read_empty_time,
   if (get_options()->TestingEnableTbEmptyEvent &&
       EVENT_IS_INTERESTING(EVENT_TB_EMPTY) &&
       (read_empty_time > 0 || write_empty_time > 0)) {
-    send_control_event(EVENT_TB_EMPTY, ALL_FORMATS,
+    send_control_event(EVENT_TB_EMPTY,
                        "650 TB_EMPTY %s READ=%d WRITTEN=%d "
                        "LAST=%d\r\n",
                        bucket, read_empty_time, write_empty_time,
@@ -4160,7 +5102,7 @@ control_event_bandwidth_used(uint32_t n_read, uint32_t n_written)
     ++n_measurements;
 
   if (EVENT_IS_INTERESTING(EVENT_BANDWIDTH_USED)) {
-    send_control_event(EVENT_BANDWIDTH_USED, ALL_FORMATS,
+    send_control_event(EVENT_BANDWIDTH_USED,
                        "650 BW %lu %lu\r\n",
                        (unsigned long)n_read,
                        (unsigned long)n_written);
@@ -4175,12 +5117,12 @@ get_bw_samples(void)
   int i;
   int idx = (next_measurement_idx + N_BW_EVENTS_TO_CACHE - n_measurements)
     % N_BW_EVENTS_TO_CACHE;
-  smartlist_t *elements = smartlist_new();
   tor_assert(0 <= idx && idx < N_BW_EVENTS_TO_CACHE);
+
+  smartlist_t *elements = smartlist_new();
 
   for (i = 0; i < n_measurements; ++i) {
     tor_assert(0 <= idx && idx < N_BW_EVENTS_TO_CACHE);
-    {
     const struct cached_bw_event_s *bwe = &cached_bw_events[idx];
 
     smartlist_add_asprintf(elements, "%u,%u",
@@ -4188,17 +5130,14 @@ get_bw_samples(void)
                            (unsigned)bwe->n_written);
 
     idx = (idx + 1) % N_BW_EVENTS_TO_CACHE;
-    }
   }
 
-  {
   char *result = smartlist_join_strings(elements, " ", 0, NULL);
 
   SMARTLIST_FOREACH(elements, char *, cp, tor_free(cp));
   smartlist_free(elements);
 
   return result;
-  }
 }
 
 /** Called when we are sending a log message to the controllers: suspend
@@ -4262,7 +5201,11 @@ control_event_logmsg(int severity, uint32_t domain, const char *msg)
       default: s = "UnknownLogSeverity"; break;
     }
     ++disable_log_messages;
-    send_control_event(event, ALL_FORMATS, "650 %s %s\r\n", s, b?b:msg);
+    send_control_event(event,  "650 %s %s\r\n", s, b?b:msg);
+    if (severity == LOG_ERR) {
+      /* Force a flush, since we may be about to die horribly */
+      queued_events_flush_all(1);
+    }
     --disable_log_messages;
     tor_free(b);
   }
@@ -4290,7 +5233,7 @@ control_event_descriptors_changed(smartlist_t *routers)
       });
     ids = smartlist_join_strings(names, " ", 0, NULL);
     tor_asprintf(&msg, "650 NEWDESC %s\r\n", ids);
-    send_control_event_string(EVENT_NEW_DESC, ALL_FORMATS, msg);
+    send_control_event_string(EVENT_NEW_DESC,  msg);
     tor_free(ids);
     tor_free(msg);
     SMARTLIST_FOREACH(names, char *, cp, tor_free(cp));
@@ -4312,7 +5255,7 @@ control_event_address_mapped(const char *from, const char *to, time_t expires,
     return 0;
 
   if (expires < 3 || expires == TIME_MAX)
-    send_control_event(EVENT_ADDRMAP, ALL_FORMATS,
+    send_control_event(EVENT_ADDRMAP,
                                 "650 ADDRMAP %s %s NEVER %s%s"
                                 "CACHED=\"%s\"\r\n",
                                   from, to, error?error:"", error?" ":"",
@@ -4322,7 +5265,7 @@ control_event_address_mapped(const char *from, const char *to, time_t expires,
     char buf2[ISO_TIME_LEN+1];
     format_local_iso_time(buf,expires);
     format_iso_time(buf2,expires);
-    send_control_event(EVENT_ADDRMAP, ALL_FORMATS,
+    send_control_event(EVENT_ADDRMAP,
                                 "650 ADDRMAP %s %s \"%s\""
                                 " %s%sEXPIRES=\"%s\" CACHED=\"%s\"\r\n",
                                 from, to, buf,
@@ -4364,12 +5307,58 @@ control_event_or_authdir_new_descriptor(const char *action,
   buf = tor_malloc(totallen);
   strlcpy(buf, firstline, totallen);
   strlcpy(buf+strlen(firstline), esc, totallen);
-  send_control_event_string(EVENT_AUTHDIR_NEWDESCS, ALL_FORMATS,
+  send_control_event_string(EVENT_AUTHDIR_NEWDESCS,
                             buf);
-  send_control_event_string(EVENT_AUTHDIR_NEWDESCS, ALL_FORMATS,
+  send_control_event_string(EVENT_AUTHDIR_NEWDESCS,
                             "650 OK\r\n");
   tor_free(esc);
   tor_free(buf);
+
+  return 0;
+}
+
+/** Cached liveness for network liveness events and GETINFO
+ */
+
+static int network_is_live = 0;
+
+static int
+get_cached_network_liveness(void)
+{
+  return network_is_live;
+}
+
+static void
+set_cached_network_liveness(int liveness)
+{
+  network_is_live = liveness;
+}
+
+/** The network liveness has changed; this is called from circuitstats.c
+ * whenever we receive a cell, or when timeout expires and we assume the
+ * network is down. */
+int
+control_event_network_liveness_update(int liveness)
+{
+  if (liveness > 0) {
+    if (get_cached_network_liveness() <= 0) {
+      /* Update cached liveness */
+      set_cached_network_liveness(1);
+      log_debug(LD_CONTROL, "Sending NETWORK_LIVENESS UP");
+      send_control_event_string(EVENT_NETWORK_LIVENESS,
+                                "650 NETWORK_LIVENESS UP\r\n");
+    }
+    /* else was already live, no-op */
+  } else {
+    if (get_cached_network_liveness() > 0) {
+      /* Update cached liveness */
+      set_cached_network_liveness(0);
+      log_debug(LD_CONTROL, "Sending NETWORK_LIVENESS DOWN");
+      send_control_event_string(EVENT_NETWORK_LIVENESS,
+                                "650 NETWORK_LIVENESS DOWN\r\n");
+    }
+    /* else was already dead, no-op */
+  }
 
   return 0;
 }
@@ -4404,8 +5393,8 @@ control_event_networkstatus_changed_helper(smartlist_t *statuses,
   SMARTLIST_FOREACH(strs, char *, cp, tor_free(cp));
   smartlist_free(strs);
   tor_free(s);
-  send_control_event_string(event, ALL_FORMATS, esc);
-  send_control_event_string(event, ALL_FORMATS,
+  send_control_event_string(event,  esc);
+  send_control_event_string(event,
                             "650 OK\r\n");
 
   tor_free(esc);
@@ -4462,7 +5451,7 @@ control_event_buildtimeout_set(buildtimeout_set_event_t type,
       break;
   }
 
-  send_control_event(EVENT_BUILDTIMEOUT_SET, ALL_FORMATS,
+  send_control_event(EVENT_BUILDTIMEOUT_SET,
                      "650 BUILDTIMEOUT_SET %s %s\r\n",
                      type_string, args);
 
@@ -4475,7 +5464,7 @@ control_event_signal(uintptr_t signal)
 {
   const char *signal_string = NULL;
 
-  if (!control_event_is_interesting(EVENT_SIGNAL))
+  if (!control_event_is_interesting(EVENT_GOT_SIGNAL))
     return 0;
 
   switch (signal) {
@@ -4494,13 +5483,16 @@ control_event_signal(uintptr_t signal)
     case SIGCLEARDNSCACHE:
       signal_string = "CLEARDNSCACHE";
       break;
+    case SIGHEARTBEAT:
+      signal_string = "HEARTBEAT";
+      break;
     default:
       log_warn(LD_BUG, "Unrecognized signal %lu in control_event_signal",
                (unsigned long)signal);
       return -1;
   }
 
-  send_control_event(EVENT_SIGNAL, ALL_FORMATS, "650 SIGNAL %s\r\n",
+  send_control_event(EVENT_GOT_SIGNAL,  "650 SIGNAL %s\r\n",
                      signal_string);
   return 0;
 }
@@ -4528,7 +5520,7 @@ control_event_networkstatus_changed_single(const routerstatus_t *rs)
 int
 control_event_my_descriptor_changed(void)
 {
-  send_control_event(EVENT_DESCCHANGED, ALL_FORMATS, "650 DESCCHANGED\r\n");
+  send_control_event(EVENT_DESCCHANGED,  "650 DESCCHANGED\r\n");
   return 0;
 }
 
@@ -4578,24 +5570,40 @@ control_event_status(int type, int severity, const char *format, va_list args)
   }
   tor_vasprintf(&user_buf, format, args);
 
-  send_control_event(type, ALL_FORMATS, "%s %s\r\n", format_buf, user_buf);
+  send_control_event(type,  "%s %s\r\n", format_buf, user_buf);
   tor_free(user_buf);
   return 0;
 }
+
+#define CONTROL_EVENT_STATUS_BODY(event, sev)                   \
+  int r;                                                        \
+  do {                                                          \
+    va_list ap;                                                 \
+    if (!EVENT_IS_INTERESTING(event))                           \
+      return 0;                                                 \
+                                                                \
+    va_start(ap, format);                                       \
+    r = control_event_status((event), (sev), format, ap);       \
+    va_end(ap);                                                 \
+  } while (0)
 
 /** Format and send an EVENT_STATUS_GENERAL event whose main text is obtained
  * by formatting the arguments using the printf-style <b>format</b>. */
 int
 control_event_general_status(int severity, const char *format, ...)
 {
-  va_list ap;
-  int r;
-  if (!EVENT_IS_INTERESTING(EVENT_STATUS_GENERAL))
-    return 0;
+  CONTROL_EVENT_STATUS_BODY(EVENT_STATUS_GENERAL, severity);
+  return r;
+}
 
-  va_start(ap, format);
-  r = control_event_status(EVENT_STATUS_GENERAL, severity, format, ap);
-  va_end(ap);
+/** Format and send an EVENT_STATUS_GENERAL LOG_ERR event, and flush it to the
+ * controller(s) immediately. */
+int
+control_event_general_error(const char *format, ...)
+{
+  CONTROL_EVENT_STATUS_BODY(EVENT_STATUS_GENERAL, LOG_ERR);
+  /* Force a flush, since we may be about to die horribly */
+  queued_events_flush_all(1);
   return r;
 }
 
@@ -4604,14 +5612,18 @@ control_event_general_status(int severity, const char *format, ...)
 int
 control_event_client_status(int severity, const char *format, ...)
 {
-  va_list ap;
-  int r;
-  if (!EVENT_IS_INTERESTING(EVENT_STATUS_CLIENT))
-    return 0;
+  CONTROL_EVENT_STATUS_BODY(EVENT_STATUS_CLIENT, severity);
+  return r;
+}
 
-  va_start(ap, format);
-  r = control_event_status(EVENT_STATUS_CLIENT, severity, format, ap);
-  va_end(ap);
+/** Format and send an EVENT_STATUS_CLIENT LOG_ERR event, and flush it to the
+ * controller(s) immediately. */
+int
+control_event_client_error(const char *format, ...)
+{
+  CONTROL_EVENT_STATUS_BODY(EVENT_STATUS_CLIENT, LOG_ERR);
+  /* Force a flush, since we may be about to die horribly */
+  queued_events_flush_all(1);
   return r;
 }
 
@@ -4620,14 +5632,18 @@ control_event_client_status(int severity, const char *format, ...)
 int
 control_event_server_status(int severity, const char *format, ...)
 {
-  va_list ap;
-  int r;
-  if (!EVENT_IS_INTERESTING(EVENT_STATUS_SERVER))
-    return 0;
+  CONTROL_EVENT_STATUS_BODY(EVENT_STATUS_SERVER, severity);
+  return r;
+}
 
-  va_start(ap, format);
-  r = control_event_status(EVENT_STATUS_SERVER, severity, format, ap);
-  va_end(ap);
+/** Format and send an EVENT_STATUS_SERVER LOG_ERR event, and flush it to the
+ * controller(s) immediately. */
+int
+control_event_server_error(const char *format, ...)
+{
+  CONTROL_EVENT_STATUS_BODY(EVENT_STATUS_SERVER, LOG_ERR);
+  /* Force a flush, since we may be about to die horribly */
+  queued_events_flush_all(1);
   return r;
 }
 
@@ -4651,7 +5667,7 @@ control_event_guard(const char *nickname, const char *digest,
     } else {
       tor_snprintf(buf, sizeof(buf), "$%s~%s", hbuf, nickname);
     }
-    send_control_event(EVENT_GUARD, ALL_FORMATS,
+    send_control_event(EVENT_GUARD,
                        "650 GUARD ENTRY %s %s\r\n", buf, status);
   }
   return 0;
@@ -4682,7 +5698,7 @@ control_event_conf_changed(const smartlist_t *elements)
     }
   }
   result = smartlist_join_strings(lines, "\r\n", 0, NULL);
-  send_control_event(EVENT_CONF_CHANGED, 0,
+  send_control_event(EVENT_CONF_CHANGED,
     "650-CONF_CHANGED\r\n%s\r\n650 OK\r\n", result);
   tor_free(result);
   SMARTLIST_FOREACH(lines, char *, cp, tor_free(cp));
@@ -4734,8 +5750,6 @@ static char *owning_controller_process_spec = NULL;
 /** A process-termination monitor for Tor's owning controller, or NULL
  * if this Tor instance is not currently owned by a process. */
 static tor_process_monitor_t *owning_controller_process_monitor = NULL;
-
-static void owning_controller_procmon_cb(void *unused) ATTR_NORETURN;
 
 /** Process-termination monitor callback for Tor's owning controller
  * process. */
@@ -4843,23 +5857,43 @@ bootstrap_status_to_string(bootstrap_status_t s, const char **tag,
       break;
     case BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS:
       *tag = "requesting_descriptors";
-      *summary = "Asking for relay descriptors";
+      /* XXXX this appears to incorrectly report internal on most loads */
+      *summary = router_have_consensus_path() == CONSENSUS_PATH_INTERNAL ?
+        "Asking for relay descriptors for internal paths" :
+        "Asking for relay descriptors";
       break;
+    /* If we're sure there are no exits in the consensus,
+     * inform the controller by adding "internal"
+     * to the status summaries.
+     * (We only check this while loading descriptors,
+     * so we may not know in the earlier stages.)
+     * But if there are exits, we can't be sure whether
+     * we're creating internal or exit paths/circuits.
+     * XXXX Or should be use different tags or statuses
+     * for internal and exit/all? */
     case BOOTSTRAP_STATUS_LOADING_DESCRIPTORS:
       *tag = "loading_descriptors";
-      *summary = "Loading relay descriptors";
+      *summary = router_have_consensus_path() == CONSENSUS_PATH_INTERNAL ?
+        "Loading relay descriptors for internal paths" :
+        "Loading relay descriptors";
       break;
     case BOOTSTRAP_STATUS_CONN_OR:
       *tag = "conn_or";
-      *summary = "Connecting to the Tor network";
+      *summary = router_have_consensus_path() == CONSENSUS_PATH_INTERNAL ?
+        "Connecting to the Tor network internally" :
+        "Connecting to the Tor network";
       break;
     case BOOTSTRAP_STATUS_HANDSHAKE_OR:
       *tag = "handshake_or";
-      *summary = "Finishing handshake with first hop";
+      *summary = router_have_consensus_path() == CONSENSUS_PATH_INTERNAL ?
+        "Finishing handshake with first hop of internal circuit" :
+        "Finishing handshake with first hop";
       break;
     case BOOTSTRAP_STATUS_CIRCUIT_CREATE:
       *tag = "circuit_create";
-      *summary = "Establishing a Tor circuit";
+      *summary = router_have_consensus_path() == CONSENSUS_PATH_INTERNAL ?
+        "Establishing an internal Tor circuit" :
+        "Establishing a Tor circuit";
       break;
     case BOOTSTRAP_STATUS_DONE:
       *tag = "done";
@@ -4907,15 +5941,18 @@ static int bootstrap_problems = 0;
  *
  * <b>status</b> is the new status, that is, what task we will be doing
  * next. <b>progress</b> is zero if we just started this task, else it
- * represents progress on the task. */
-void
+ * represents progress on the task.
+ *
+ * Return true if we logged a message at level NOTICE, and false otherwise.
+ */
+int
 control_event_bootstrap(bootstrap_status_t status, int progress)
 {
   const char *tag, *summary;
   char buf[BOOTSTRAP_MSG_LEN];
 
   if (bootstrap_percent == BOOTSTRAP_STATUS_DONE)
-    return; /* already bootstrapped; nothing to be done here. */
+    return 0; /* already bootstrapped; nothing to be done here. */
 
   /* special case for handshaking status, since our TLS handshaking code
    * can't distinguish what the connection is going to be for. */
@@ -4962,7 +5999,10 @@ control_event_bootstrap(bootstrap_status_t status, int progress)
       /* Remember that we gave a notice at this level. */
       notice_bootstrap_percent = bootstrap_percent;
     }
+    return loglevel == LOG_NOTICE;
   }
+
+  return 0;
 }
 
 /** Called when Tor has failed to make bootstrapping progress in a way
@@ -5016,19 +6056,26 @@ MOCK_IMPL(void,
 
   log_fn(severity,
          LD_CONTROL, "Problem bootstrapping. Stuck at %d%%: %s. (%s; %s; "
-         "count %d; recommendation %s)",
+         "count %d; recommendation %s; host %s at %s:%d)",
          status, summary, warn,
          orconn_end_reason_to_control_string(reason),
-         bootstrap_problems, recommendation);
+         bootstrap_problems, recommendation,
+         hex_str(or_conn->identity_digest, DIGEST_LEN),
+         or_conn->base_.address,
+         or_conn->base_.port);
 
   connection_or_report_broken_states(severity, LD_HANDSHAKE);
 
   tor_snprintf(buf, sizeof(buf),
       "BOOTSTRAP PROGRESS=%d TAG=%s SUMMARY=\"%s\" WARNING=\"%s\" REASON=%s "
-      "COUNT=%d RECOMMENDATION=%s",
+      "COUNT=%d RECOMMENDATION=%s HOSTID=\"%s\" HOSTADDR=\"%s:%d\"",
       bootstrap_percent, tag, summary, warn,
       orconn_end_reason_to_control_string(reason), bootstrap_problems,
-      recommendation);
+      recommendation,
+      hex_str(or_conn->identity_digest, DIGEST_LEN),
+      or_conn->base_.address,
+      (int)or_conn->base_.port);
+
   tor_snprintf(last_sent_bootstrap_message,
                sizeof(last_sent_bootstrap_message),
                "WARN %s", buf);
@@ -5041,7 +6088,7 @@ MOCK_IMPL(void,
 void
 control_event_clients_seen(const char *controller_str)
 {
-  send_control_event(EVENT_CLIENTS_SEEN, 0,
+  send_control_event(EVENT_CLIENTS_SEEN,
     "650 CLIENTS_SEEN %s\r\n", controller_str);
 }
 
@@ -5055,7 +6102,7 @@ void
 control_event_transport_launched(const char *mode, const char *transport_name,
                                  tor_addr_t *addr, uint16_t port)
 {
-  send_control_event(EVENT_TRANSPORT_LAUNCHED, ALL_FORMATS,
+  send_control_event(EVENT_TRANSPORT_LAUNCHED,
                      "650 TRANSPORT_LAUNCHED %s %s %s %u\r\n",
                      mode, transport_name, fmt_addr(addr), port);
 }
@@ -5099,6 +6146,29 @@ node_describe_longname_by_id,(const char *id_digest))
   return longname;
 }
 
+/** Return either the onion address if the given pointer is a non empty
+ * string else the unknown string. */
+static const char *
+rend_hsaddress_str_or_unknown(const char *onion_address)
+{
+  static const char *str_unknown = "UNKNOWN";
+  const char *str_ret = str_unknown;
+
+  /* No valid pointer, unknown it is. */
+  if (!onion_address) {
+    goto end;
+  }
+  /* Empty onion address thus we don't know, unknown it is. */
+  if (onion_address[0] == '\0') {
+    goto end;
+  }
+  /* All checks are good so return the given onion address. */
+  str_ret = onion_address;
+
+ end:
+  return str_ret;
+}
+
 /** send HS_DESC requested event.
  *
  * <b>rend_query</b> is used to fetch requested onion address and auth type.
@@ -5117,10 +6187,73 @@ control_event_hs_descriptor_requested(const rend_data_t *rend_query,
     return;
   }
 
-  send_control_event(EVENT_HS_DESC, ALL_FORMATS,
+  send_control_event(EVENT_HS_DESC,
                      "650 HS_DESC REQUESTED %s %s %s %s\r\n",
-                     rend_query->onion_address,
+                     rend_hsaddress_str_or_unknown(rend_query->onion_address),
                      rend_auth_type_to_string(rend_query->auth_type),
+                     node_describe_longname_by_id(id_digest),
+                     desc_id_base32);
+}
+
+/** For an HS descriptor query <b>rend_data</b>, using the
+ * <b>onion_address</b> and HSDir fingerprint <b>hsdir_fp</b>, find out
+ * which descriptor ID in the query is the right one.
+ *
+ * Return a pointer of the binary descriptor ID found in the query's object
+ * or NULL if not found. */
+static const char *
+get_desc_id_from_query(const rend_data_t *rend_data, const char *hsdir_fp)
+{
+  int replica;
+  const char *desc_id = NULL;
+
+  /* Possible if the fetch was done using a descriptor ID. This means that
+   * the HSFETCH command was used. */
+  if (!tor_digest_is_zero(rend_data->desc_id_fetch)) {
+    desc_id = rend_data->desc_id_fetch;
+    goto end;
+  }
+
+  /* OK, we have an onion address so now let's find which descriptor ID
+   * is the one associated with the HSDir fingerprint. */
+  for (replica = 0; replica < REND_NUMBER_OF_NON_CONSECUTIVE_REPLICAS;
+       replica++) {
+    const char *digest = rend_data->descriptor_id[replica];
+
+    SMARTLIST_FOREACH_BEGIN(rend_data->hsdirs_fp, char *, fingerprint) {
+      if (tor_memcmp(fingerprint, hsdir_fp, DIGEST_LEN) == 0) {
+        /* Found it! This descriptor ID is the right one. */
+        desc_id = digest;
+        goto end;
+      }
+    } SMARTLIST_FOREACH_END(fingerprint);
+  }
+
+ end:
+  return desc_id;
+}
+
+/** send HS_DESC upload event.
+ *
+ * <b>service_id</b> is the descriptor onion address.
+ * <b>hs_dir</b> is the description of contacting hs directory.
+ * <b>desc_id_base32</b> is the ID of requested hs descriptor.
+ */
+void
+control_event_hs_descriptor_upload(const char *service_id,
+                                   const char *id_digest,
+                                   const char *desc_id_base32)
+{
+  if (!service_id || !id_digest || !desc_id_base32) {
+    log_warn(LD_BUG, "Called with service_digest==%p, "
+             "desc_id_base32==%p, id_digest==%p", service_id,
+             desc_id_base32, id_digest);
+    return;
+  }
+
+  send_control_event(EVENT_HS_DESC,
+                     "650 HS_DESC UPLOAD %s UNKNOWN %s %s\r\n",
+                     service_id,
                      node_describe_longname_by_id(id_digest),
                      desc_id_base32);
 }
@@ -5135,53 +6268,184 @@ control_event_hs_descriptor_requested(const rend_data_t *rend_query,
  */
 void
 control_event_hs_descriptor_receive_end(const char *action,
-                                        const rend_data_t *rend_query,
-                                        const char *id_digest)
+                                        const char *onion_address,
+                                        const rend_data_t *rend_data,
+                                        const char *id_digest,
+                                        const char *reason)
 {
-  if (!action || !rend_query || !id_digest) {
-    log_warn(LD_BUG, "Called with action==%p, rend_query==%p, "
-             "id_digest==%p", action, rend_query, id_digest);
+  char *desc_id_field = NULL;
+  char *reason_field = NULL;
+  char desc_id_base32[REND_DESC_ID_V2_LEN_BASE32 + 1];
+  const char *desc_id = NULL;
+
+  if (!action || !id_digest || !rend_data || !onion_address) {
+    log_warn(LD_BUG, "Called with action==%p, id_digest==%p, "
+             "rend_data==%p, onion_address==%p", action, id_digest,
+             rend_data, onion_address);
     return;
   }
 
-  send_control_event(EVENT_HS_DESC, ALL_FORMATS,
-                     "650 HS_DESC %s %s %s %s\r\n",
+  desc_id = get_desc_id_from_query(rend_data, id_digest);
+  if (desc_id != NULL) {
+    /* Set the descriptor ID digest to base32 so we can send it. */
+    base32_encode(desc_id_base32, sizeof(desc_id_base32), desc_id,
+                  DIGEST_LEN);
+    /* Extra whitespace is needed before the value. */
+    tor_asprintf(&desc_id_field, " %s", desc_id_base32);
+  }
+
+  if (reason) {
+    tor_asprintf(&reason_field, " REASON=%s", reason);
+  }
+
+  send_control_event(EVENT_HS_DESC,
+                     "650 HS_DESC %s %s %s %s%s%s\r\n",
                      action,
-                     rend_query->onion_address,
-                     rend_auth_type_to_string(rend_query->auth_type),
-                     node_describe_longname_by_id(id_digest));
+                     rend_hsaddress_str_or_unknown(onion_address),
+                     rend_auth_type_to_string(rend_data->auth_type),
+                     node_describe_longname_by_id(id_digest),
+                     desc_id_field ? desc_id_field : "",
+                     reason_field ? reason_field : "");
+
+  tor_free(desc_id_field);
+  tor_free(reason_field);
+}
+
+/** send HS_DESC event after got response from hs directory.
+ *
+ * NOTE: this is an internal function used by following functions:
+ * control_event_hs_descriptor_uploaded
+ * control_event_hs_descriptor_upload_failed
+ *
+ * So do not call this function directly.
+ */
+void
+control_event_hs_descriptor_upload_end(const char *action,
+                                       const char *id_digest,
+                                       const char *reason)
+{
+  char *reason_field = NULL;
+
+  if (!action || !id_digest) {
+    log_warn(LD_BUG, "Called with action==%p, id_digest==%p", action,
+             id_digest);
+    return;
+  }
+
+  if (reason) {
+    tor_asprintf(&reason_field, " REASON=%s", reason);
+  }
+
+  send_control_event(EVENT_HS_DESC,
+                     "650 HS_DESC %s UNKNOWN UNKNOWN %s%s\r\n",
+                     action,
+                     node_describe_longname_by_id(id_digest),
+                     reason_field ? reason_field : "");
+
+  tor_free(reason_field);
 }
 
 /** send HS_DESC RECEIVED event
  *
- * called when a we successfully received a hidden service descriptor.
+ * called when we successfully received a hidden service descriptor.
  */
 void
-control_event_hs_descriptor_received(const rend_data_t *rend_query,
+control_event_hs_descriptor_received(const char *onion_address,
+                                     const rend_data_t *rend_data,
                                      const char *id_digest)
 {
-  if (!rend_query || !id_digest) {
-    log_warn(LD_BUG, "Called with rend_query==%p, id_digest==%p",
-             rend_query, id_digest);
+  if (!rend_data || !id_digest || !onion_address) {
+    log_warn(LD_BUG, "Called with rend_data==%p, id_digest==%p, "
+             "onion_address==%p", rend_data, id_digest, onion_address);
     return;
   }
-  control_event_hs_descriptor_receive_end("RECEIVED", rend_query, id_digest);
+  control_event_hs_descriptor_receive_end("RECEIVED", onion_address,
+                                          rend_data, id_digest, NULL);
 }
 
-/** send HS_DESC FAILED event
+/** send HS_DESC UPLOADED event
  *
- * called when request for hidden service descriptor returned failure.
+ * called when we successfully uploaded a hidden service descriptor.
  */
 void
-control_event_hs_descriptor_failed(const rend_data_t *rend_query,
-                                   const char *id_digest)
+control_event_hs_descriptor_uploaded(const char *id_digest)
 {
-  if (!rend_query || !id_digest) {
-    log_warn(LD_BUG, "Called with rend_query==%p, id_digest==%p",
-             rend_query, id_digest);
+  if (!id_digest) {
+    log_warn(LD_BUG, "Called with id_digest==%p",
+             id_digest);
     return;
   }
-  control_event_hs_descriptor_receive_end("FAILED", rend_query, id_digest);
+  control_event_hs_descriptor_upload_end("UPLOADED", id_digest, NULL);
+}
+
+/** Send HS_DESC event to inform controller that query <b>rend_query</b>
+ * failed to retrieve hidden service descriptor identified by
+ * <b>id_digest</b>. If <b>reason</b> is not NULL, add it to REASON=
+ * field.
+ */
+void
+control_event_hs_descriptor_failed(const rend_data_t *rend_data,
+                                   const char *id_digest,
+                                   const char *reason)
+{
+  if (!rend_data || !id_digest) {
+    log_warn(LD_BUG, "Called with rend_data==%p, id_digest==%p",
+             rend_data, id_digest);
+    return;
+  }
+  control_event_hs_descriptor_receive_end("FAILED",
+                                          rend_data->onion_address,
+                                          rend_data, id_digest, reason);
+}
+
+/** send HS_DESC_CONTENT event after completion of a successful fetch from
+ * hs directory. */
+void
+control_event_hs_descriptor_content(const char *onion_address,
+                                    const char *desc_id,
+                                    const char *hsdir_id_digest,
+                                    const char *content)
+{
+  static const char *event_name = "HS_DESC_CONTENT";
+  char *esc_content = NULL;
+
+  if (!onion_address || !desc_id || !hsdir_id_digest) {
+    log_warn(LD_BUG, "Called with onion_address==%p, desc_id==%p, "
+             "hsdir_id_digest==%p", onion_address, desc_id, hsdir_id_digest);
+    return;
+  }
+
+  if (content == NULL) {
+    /* Point it to empty content so it can still be escaped. */
+    content = "";
+  }
+  write_escaped_data(content, strlen(content), &esc_content);
+
+  send_control_event(EVENT_HS_DESC_CONTENT,
+                     "650+%s %s %s %s\r\n%s650 OK\r\n",
+                     event_name,
+                     rend_hsaddress_str_or_unknown(onion_address),
+                     desc_id,
+                     node_describe_longname_by_id(hsdir_id_digest),
+                     esc_content);
+  tor_free(esc_content);
+}
+
+/** Send HS_DESC event to inform controller upload of hidden service
+ * descriptor identified by <b>id_digest</b> failed. If <b>reason</b>
+ * is not NULL, add it to REASON= field.
+ */
+void
+control_event_hs_descriptor_upload_failed(const char *id_digest,
+                                          const char *reason)
+{
+  if (!id_digest) {
+    log_warn(LD_BUG, "Called with id_digest==%p",
+             id_digest);
+    return;
+  }
+  control_event_hs_descriptor_upload_end("UPLOAD_FAILED",
+                                         id_digest, reason);
 }
 
 /** Free any leftover allocated memory of the control.c subsystem. */
@@ -5190,6 +6454,20 @@ control_free_all(void)
 {
   if (authentication_cookie) /* Free the auth cookie */
     tor_free(authentication_cookie);
+  if (detached_onion_services) { /* Free the detached onion services */
+    SMARTLIST_FOREACH(detached_onion_services, char *, cp, tor_free(cp));
+    smartlist_free(detached_onion_services);
+  }
+  if (queued_control_events) {
+    SMARTLIST_FOREACH(queued_control_events, queued_event_t *, ev,
+                      queued_event_free(ev));
+    smartlist_free(queued_control_events);
+    queued_control_events = NULL;
+  }
+  if (flush_queued_events_event) {
+    tor_event_free(flush_queued_events_event);
+    flush_queued_events_event = NULL;
+  }
 }
 
 #ifdef TOR_UNIT_TESTS

@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -10,6 +10,8 @@
  * (We can't just use gethostbyname() and friends because we really need to
  * be nonblocking.)
  **/
+
+#define DNS_PRIVATE
 
 #include "or.h"
 #include "circuitlist.h"
@@ -24,7 +26,7 @@
 #include "relay.h"
 #include "router.h"
 #include "ht.h"
-#include "../common/sandbox.h"
+#include "sandbox.h"
 #ifdef HAVE_EVENT2_DNS_H
 #include <event2/event.h>
 #include <event2/dns.h>
@@ -81,9 +83,6 @@ struct evdns_request;
 
 #endif
 
-/** Longest hostname we're willing to resolve. */
-#define MAX_ADDRESSLEN 256
-
 /** How long will we wait for an answer from the resolver before we decide
  * that the resolver is wedged? */
 #define RESOLVE_MAX_TIMEOUT 300
@@ -102,104 +101,16 @@ static char *resolv_conf_fname = NULL;
  * the nameservers?  Used to check whether we need to reconfigure. */
 static time_t resolv_conf_mtime = 0;
 
-/** Linked list of connections waiting for a DNS answer. */
-typedef struct pending_connection_t {
-  edge_connection_t *conn;
-  struct pending_connection_t *next;
-} pending_connection_t;
-
-/** Value of 'magic' field for cached_resolve_t.  Used to try to catch bad
- * pointers and memory stomping. */
-#define CACHED_RESOLVE_MAGIC 0x1234F00D
-
-/* Possible states for a cached resolve_t */
-/** We are waiting for the resolver system to tell us an answer here.
- * When we get one, or when we time out, the state of this cached_resolve_t
- * will become "DONE" and we'll possibly add a CACHED
- * entry. This cached_resolve_t will be in the hash table so that we will
- * know not to launch more requests for this addr, but rather to add more
- * connections to the pending list for the addr. */
-#define CACHE_STATE_PENDING 0
-/** This used to be a pending cached_resolve_t, and we got an answer for it.
- * Now we're waiting for this cached_resolve_t to expire.  This should
- * have no pending connections, and should not appear in the hash table. */
-#define CACHE_STATE_DONE 1
-/** We are caching an answer for this address. This should have no pending
- * connections, and should appear in the hash table. */
-#define CACHE_STATE_CACHED 2
-
-/** @name status values for a single DNS request.
- *
- * @{ */
-/** The DNS request is in progress. */
-#define RES_STATUS_INFLIGHT 1
-/** The DNS request finished and gave an answer */
-#define RES_STATUS_DONE_OK 2
-/** The DNS request finished and gave an error */
-#define RES_STATUS_DONE_ERR 3
-/**@}*/
-
-/** A DNS request: possibly completed, possibly pending; cached_resolve
- * structs are stored at the OR side in a hash table, and as a linked
- * list from oldest to newest.
- */
-typedef struct cached_resolve_t {
-  HT_ENTRY(cached_resolve_t) node;
-  uint32_t magic;  /**< Must be CACHED_RESOLVE_MAGIC */
-  char address[MAX_ADDRESSLEN]; /**< The hostname to be resolved. */
-
-  union {
-    uint32_t addr_ipv4; /**< IPv4 addr for <b>address</b>, if successful.
-                         * (In host order.) */
-    int err_ipv4; /**< One of DNS_ERR_*, if IPv4 lookup failed. */
-  } result_ipv4; /**< Outcome of IPv4 lookup */
-  union {
-    struct in6_addr addr_ipv6; /**< IPv6 addr for <b>address</b>, if
-                                * successful */
-    int err_ipv6; /**< One of DNS_ERR_*, if IPv6 lookup failed. */
-  } result_ipv6; /**< Outcome of IPv6 lookup, if any */
-  union {
-    char *hostname; /** A hostname, if PTR lookup happened successfully*/
-    int err_hostname; /** One of DNS_ERR_*, if PTR lookup failed. */
-  } result_ptr;
-  /** @name Status fields
-   *
-   * These take one of the RES_STATUS_* values, depending on the state
-   * of the corresponding lookup.
-   *
-   * @{ */
-  unsigned int res_status_ipv4 : 2;
-  unsigned int res_status_ipv6 : 2;
-  unsigned int res_status_hostname : 2;
-  /**@}*/
-  uint8_t state; /**< Is this cached entry pending/done/informative? */
-
-  time_t expire; /**< Remove items from cache after this time. */
-  uint32_t ttl_ipv4; /**< What TTL did the nameserver tell us? */
-  uint32_t ttl_ipv6; /**< What TTL did the nameserver tell us? */
-  uint32_t ttl_hostname; /**< What TTL did the nameserver tell us? */
-  /** Connections that want to know when we get an answer for this resolve. */
-  pending_connection_t *pending_connections;
-  /** Position of this element in the heap*/
-  int minheap_idx;
-} cached_resolve_t;
-
 static void purge_expired_resolves(time_t now);
 static void dns_found_answer(const char *address, uint8_t query_type,
                              int dns_answer,
                              const tor_addr_t *addr,
                              const char *hostname,
                              uint32_t ttl);
-static void send_resolved_cell(edge_connection_t *conn, uint8_t answer_type,
-                               const cached_resolve_t *resolve);
 static int launch_resolve(cached_resolve_t *resolve);
 static void add_wildcarded_test_address(const char *address);
 static int configure_nameservers(int force);
 static int answer_is_wildcarded(const char *ip);
-static int dns_resolve_impl(edge_connection_t *exitconn, int is_resolve,
-                            or_circuit_t *oncirc, char **resolved_to_hostname,
-                            int *made_connection_pending_out,
-                            cached_resolve_t **resolve_out);
 static int set_exitconn_info_from_resolve(edge_connection_t *exitconn,
                                           const cached_resolve_t *resolve,
                                           char **hostname_out);
@@ -244,8 +155,8 @@ cached_resolve_hash(cached_resolve_t *a)
 
 HT_PROTOTYPE(cache_map, cached_resolve_t, node, cached_resolve_hash,
              cached_resolves_eq)
-HT_GENERATE(cache_map, cached_resolve_t, node, cached_resolve_hash,
-            cached_resolves_eq, 0.6, malloc, realloc, free)
+HT_GENERATE2(cache_map, cached_resolve_t, node, cached_resolve_hash,
+             cached_resolves_eq, 0.6, tor_reallocarray_, tor_free_)
 
 /** Initialize the DNS cache. */
 static void
@@ -367,7 +278,7 @@ dns_clip_ttl(uint32_t ttl)
 
 /** Helper: Given a TTL from a DNS response, determine how long to hold it in
  * our cache. */
-static uint32_t
+STATIC uint32_t
 dns_get_expiry_ttl(uint32_t ttl)
 {
   if (ttl < MIN_DNS_TTL)
@@ -605,9 +516,9 @@ purge_expired_resolves(time_t now)
  * answer back along circ; otherwise, send the answer back along
  * <b>conn</b>'s attached circuit.
  */
-static void
-send_resolved_cell(edge_connection_t *conn, uint8_t answer_type,
-                   const cached_resolve_t *resolved)
+MOCK_IMPL(STATIC void,
+send_resolved_cell,(edge_connection_t *conn, uint8_t answer_type,
+                    const cached_resolve_t *resolved))
 {
   char buf[RELAY_PAYLOAD_SIZE], *cp = buf;
   size_t buflen = 0;
@@ -671,8 +582,9 @@ send_resolved_cell(edge_connection_t *conn, uint8_t answer_type,
  * answer back along circ; otherwise, send the answer back along
  * <b>conn</b>'s attached circuit.
  */
-static void
-send_resolved_hostname_cell(edge_connection_t *conn, const char *hostname)
+MOCK_IMPL(STATIC void,
+send_resolved_hostname_cell,(edge_connection_t *conn,
+                             const char *hostname))
 {
   char buf[RELAY_PAYLOAD_SIZE];
   size_t buflen;
@@ -800,11 +712,11 @@ dns_resolve(edge_connection_t *exitconn)
  *
  * Set *<b>resolve_out</b> to a cached resolve, if we found one.
  */
-static int
-dns_resolve_impl(edge_connection_t *exitconn, int is_resolve,
+MOCK_IMPL(STATIC int,
+dns_resolve_impl,(edge_connection_t *exitconn, int is_resolve,
                  or_circuit_t *oncirc, char **hostname_out,
                  int *made_connection_pending_out,
-                 cached_resolve_t **resolve_out)
+                 cached_resolve_t **resolve_out))
 {
   cached_resolve_t *resolve;
   cached_resolve_t search;
@@ -1145,8 +1057,8 @@ connection_dns_remove(edge_connection_t *conn)
  * the resolve for <b>address</b> itself, and remove any cached results for
  * <b>address</b> from the cache.
  */
-void
-dns_cancel_pending_resolve(const char *address)
+MOCK_IMPL(void,
+dns_cancel_pending_resolve,(const char *address))
 {
   pending_connection_t *pend;
   cached_resolve_t search;

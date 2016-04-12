@@ -1,0 +1,205 @@
+
+This document specifies the current format and semantics of the torrc
+file, as of July 2015.  Note that we make no guarantee about the
+stability of this format.  If you write something designed for strict
+compatibility with this document, please expect us to break it sooner or
+later.
+
+Yes, some of this is quite stupid.  My goal here is to explain what it
+does, not what it should do.
+
+  - Nick
+
+
+
+1. File Syntax
+
+   ; The syntax here is defined an Augmented Backus-Naur form, as
+   ; specified in RFC5234.
+
+   ; A file is interpreted as every Entry in the file, in order.
+   TorrcFile = *Line
+
+   Line = BlankLine / Entry
+
+   BlankLine =  *WSP OptComment LF
+   BlankLine =/ *WSP LF
+
+   OptComment = [ Comment ]
+
+   Comment = "#" *NonLF
+
+   ; Each Entry is interpreted as an optional "Magic" flag, a key, and a
+   ; value.
+   Entry =  *WSP [ Magic ] Key 1*(1*WSP / "\" NL *WSP) Val LF
+   Entry =/ *WSP [ Magic ] Key  *( *WSP / "\" NL *WSP) LF
+
+   Magic = "+" / "/"
+
+   ; Keys are always specified verbatim.  They are case insensitive.  It
+   ; is an error to specify a key that Tor does not recognize.
+   Key = 1*KC
+
+   ; Sadly, every kind of value is decoded differently...
+   Val = QuotedVal / ContinuedVal / PlainVal
+
+   ; The text of a PlainVal is the text of its PVBody portion,
+   ; plus the optional trailing backslash.
+   PlainVal = PVBody [ "\" ] *WSP OptComment
+
+   ; Note that a PVBody is copied verbatim.  Slashes are included
+   ; verbatim.  No changes are made.  Note that a body may be empty.
+   PVBody = * (VC / "\" NonLF )
+
+   ; The text of a ContinuedVal is the text of each of its PVBody
+   ; sub-elements, in order, concatenated.
+   ContinuedVal = CVal1 *CVal2 CVal3
+
+   CVal1 = PVBody "\" LF
+   CVal2 = PVBody ( "\" LF / Comment LF )
+   CVal3 = PVBody
+
+   ; The text of a QuotedVal is decoded as if it were a C string.
+   QuotedVal = DQ QVBody DQ *WSP Comment
+
+   QVBody =  QC
+   QVBody =/ "\" ( "n" / "r" / "t" / "\" / "'" / DQUOTE )
+   QVBOdy =/ "\" ( "x" 2HEXDIG / 1*3OCTDIG )
+
+   ; Anything besides NUL and LF
+   NonLF = %x01-%x09 / %x0b - %xff
+
+   OCTDIG = '0' - '7'
+
+   KC = Any character except an isspace() character or '#' or NUL
+   VC = Any character except '\\', '\n', '#', or NUL
+   QC = Any character except '\n', '\\', '\"', or NUL
+
+2. Mid-level Semantics
+
+
+   There are four configuration "domains", from lowest to highest priority:
+
+      * Built-in defaults
+      * The "torrc_defaults" file, if any
+      * The "torrc" file, if any
+      * Arguments provided on the command line, if any.
+
+   Normally, values from high-priority domains override low-priority
+   domains, but see 'magic' below.
+
+   Configuration keys fall into three categories: singletons, lists, and
+   groups.
+
+   A singleton key may appear at most once in any domain.  Its
+   corresponding value is equal to its value in the highest-priority
+   domain in which it occurs.
+
+   A list key may appear any number of times in a domain.  By default,
+   its corresponding value is equal to all of the values specified for
+   it in the highest-priority domain in which it appears. (See 'magic'
+   below).
+
+   A group key may appear any number of times in a domain.  It is
+   associated with a number of other keys in the same group.  The
+   relative positions of entries with the keys in a single group
+   matters, but entries with keys not in the group may be freely
+   interspersed.  By default, the group has a value equal to all keys
+   and values it contains, from the highest-priority domain in which any
+   of its keys occurs.
+
+   Magic:
+
+      If the '/' flag is specified for an entry, it sets the value for
+      that entry to an empty list.  (This will cause a higher-priority
+      domain to clear a list from a lower-priority domain, without
+      actually adding any entries.)
+
+      If the '+' flag is specified for the first entry in a list or a
+      group that appears in a given domain, that list or group is
+      appended to the list or group from the next-lowest-priority
+      domain, rather than replacing it.
+
+3. High-level semantics
+
+   There are further constraints on the values that each entry can take.
+   These constraints are out-of-scope for this document.
+
+4. Examples
+
+   (Indentation is removed in this section, to avoid confusion.)
+
+4.1. Syntax examples
+
+# Here is a simple configuration entry.  The key is "Foo"; the value is
+# "Bar"
+
+Foo Bar
+
+# A configuration entry can have spaces in its value, as below. Here the
+# key is "Foo" and the value is "Bar    Baz"
+Foo    Bar    Baz
+
+# This configuration entry has space at the end of the line, but those
+# spaces don't count, so the key and value are still "Foo" and "Bar    Baz"
+Foo    Bar    Baz    
+
+# There can be an escaped newline between the value and the key.  This
+# is another way to say  key="Hello", value="World"
+Hello\
+World
+
+# In regular entries of this kind, you can have a comment at the end of
+# the line, either with a space before it or not.  Each of these is a
+# different spelling of key="Hello", value="World"
+
+Hello World   #today
+Hello World#tomorrow
+
+# One way to encode a complex entry is as a C string.  This is the same
+# as key="Hello", value="World!"
+Hello "World!"
+
+# The string can contain the usual set of C escapes.  This entry has
+# key="Hello", and value="\"World\"\nand\nuniverse"
+Hello "\"World\"\nand\nuniverse"
+
+# And now we get to the more-or-less awful part.
+#
+# Multi-line entries ending with a backslash on each line aren't so
+# bad.  The backslash is removed, and everything else is included
+# verbatim. So this entry has key="Hello" and value="Worldandfriends"
+Hello\
+World\
+and\
+friends
+
+# Backslashes in the middle of a line are included as-is.  The key of
+# this one is "Too" and the value is "Many\\Backsl\ashes here" (with
+# backslashes in that last string as-is)
+Too \
+Many\\\
+Backsl\ashes \\
+here
+
+# And here's the really yucky part. If a comment appears in a multi-line
+# entry, the entry is still able to continue on the next line, as in the
+# following, where the key is "This" and the value is
+# "entry   and some        are  silly"
+This entry      \
+ # has comments \
+ and some       \
+ are # generally \
+ silly
+
+# But you can also write that without the backslashes at the end of the
+# comment lines.  That is to say, this entry is exactly the same as the
+# one above!
+This entry      \
+ # has comments
+ and some       \
+ are # generally
+ silly
+
+
+

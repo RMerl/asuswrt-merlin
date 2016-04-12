@@ -1,5 +1,5 @@
 /* <MIT License>
- Copyright (c) 2013  Marek Majkowski <marek@popcount.org>
+ Copyright (c) 2013-2014  Marek Majkowski <marek@popcount.org>
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -100,10 +100,18 @@ uint64_t siphash24(const void *src, unsigned long src_sz, const struct sipkey *k
 	uint64_t k0 = key->k0;
 	uint64_t k1 = key->k1;
 	uint64_t b = (uint64_t)src_sz << 56;
+#ifdef UNALIGNED_OK
 	const uint64_t *in = (uint64_t*)src;
+#else
+	/* On platforms where alignment matters, if 'in' is a pointer to a
+	 * datatype that must be aligned, the compiler is allowed to
+	 * generate code that assumes that it is aligned as such.
+	 */
+	const uint8_t *in = (uint8_t *)src;
+#endif
 
-        uint64_t t;
-        uint8_t *pt, *m;
+	uint64_t t;
+	uint8_t *pt, *m;
 
 	uint64_t v0 = k0 ^ 0x736f6d6570736575ULL;
 	uint64_t v1 = k1 ^ 0x646f72616e646f6dULL;
@@ -113,12 +121,14 @@ uint64_t siphash24(const void *src, unsigned long src_sz, const struct sipkey *k
 	while (src_sz >= 8) {
 #ifdef UNALIGNED_OK
 		uint64_t mi = _le64toh(*in);
+		in += 1;
 #else
 		uint64_t mi;
 		memcpy(&mi, in, 8);
 		mi = _le64toh(mi);
+		in += 8;
 #endif
-		in += 1; src_sz -= 8;
+		src_sz -= 8;
 		v3 ^= mi;
 		DOUBLE_ROUND(v0,v1,v2,v3);
 		v0 ^= mi;

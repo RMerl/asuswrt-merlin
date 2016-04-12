@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -42,6 +42,9 @@ typedef struct sandbox_cfg_elem sandbox_cfg_t;
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 #include <sys/ucontext.h>
 #include <seccomp.h>
 #include <netdb.h>
@@ -66,9 +69,9 @@ typedef struct smp_param {
   int syscall;
 
   /** parameter value. */
-  intptr_t value;
+  char *value;
   /** parameter value, second argument. */
-  intptr_t value2;
+  char *value2;
 
   /**  parameter flag (0 = not protected, 1 = protected). */
   int prot;
@@ -115,7 +118,7 @@ struct addrinfo;
 int sandbox_getaddrinfo(const char *name, const char *servname,
                         const struct addrinfo *hints,
                         struct addrinfo **res);
-#define sandbox_freeaddrinfo(addrinfo) ((void)0)
+void sandbox_freeaddrinfo(struct addrinfo *addrinfo);
 void sandbox_free_getaddrinfo_cache(void);
 #else
 #define sandbox_getaddrinfo(name, servname, hints, res)  \
@@ -149,14 +152,6 @@ int sandbox_cfg_allow_open_filename(sandbox_cfg_t **cfg, char *file);
 /**DOCDOC*/
 int sandbox_cfg_allow_rename(sandbox_cfg_t **cfg, char *file1, char *file2);
 
-/** Function used to add a series of open allowed filenames to a supplied
- * configuration.
- *  @param cfg  sandbox configuration.
- *  @param ... a list of stealable pointers to permitted files.  The last
- *  one must be NULL.
-*/
-int sandbox_cfg_allow_open_filename_array(sandbox_cfg_t **cfg, ...);
-
 /**
  * Function used to add a openat allowed filename to a supplied configuration.
  * The (char*) specifies the path to the allowed file; we steal the pointer to
@@ -164,28 +159,12 @@ int sandbox_cfg_allow_open_filename_array(sandbox_cfg_t **cfg, ...);
  */
 int sandbox_cfg_allow_openat_filename(sandbox_cfg_t **cfg, char *file);
 
-/** Function used to add a series of openat allowed filenames to a supplied
- * configuration.
- *  @param cfg  sandbox configuration.
- *  @param ... a list of stealable pointers to permitted files.  The last
- *  one must be NULL.
- */
-int sandbox_cfg_allow_openat_filename_array(sandbox_cfg_t **cfg, ...);
-
 #if 0
 /**
  * Function used to add a execve allowed filename to a supplied configuration.
  * The (char*) specifies the path to the allowed file; that pointer is stolen.
  */
 int sandbox_cfg_allow_execve(sandbox_cfg_t **cfg, const char *com);
-
-/** Function used to add a series of execve allowed filenames to a supplied
- * configuration.
- *  @param cfg  sandbox configuration.
- *  @param ... an array of stealable pointers to permitted files.  The last
- *  one must be NULL.
- */
-int sandbox_cfg_allow_execve_array(sandbox_cfg_t **cfg, ...);
 #endif
 
 /**
@@ -193,14 +172,6 @@ int sandbox_cfg_allow_execve_array(sandbox_cfg_t **cfg, ...);
  * The (char*) specifies the path to the allowed file; that pointer is stolen.
  */
 int sandbox_cfg_allow_stat_filename(sandbox_cfg_t **cfg, char *file);
-
-/** Function used to add a series of stat64 allowed filenames to a supplied
- * configuration.
- *  @param cfg  sandbox configuration.
- *  @param ... an array of stealable pointers to permitted files.  The last
- *  one must be NULL.
- */
-int sandbox_cfg_allow_stat_filename_array(sandbox_cfg_t **cfg, ...);
 
 /** Function used to initialise a sandbox configuration.*/
 int sandbox_init(sandbox_cfg_t* cfg);

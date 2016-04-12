@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -14,34 +14,48 @@
 
 #include "testsupport.h"
 
+/*
+ * Ideally, assuming synced clocks, we should only need 1 second for each of:
+ *  - Vote
+ *  - Distribute
+ *  - Consensus Publication
+ * As we can gather descriptors continuously.
+ * (Could we even go as far as publishing the previous consensus,
+ *  in the same second that we vote for the next one?)
+ * But we're not there yet: these are the lowest working values at this time.
+ */
+
 /** Lowest allowable value for VoteSeconds. */
 #define MIN_VOTE_SECONDS 2
+/** Lowest allowable value for VoteSeconds when TestingTorNetwork is 1 */
+#define MIN_VOTE_SECONDS_TESTING 2
+
 /** Lowest allowable value for DistSeconds. */
 #define MIN_DIST_SECONDS 2
-/** Smallest allowable voting interval. */
+/** Lowest allowable value for DistSeconds when TestingTorNetwork is 1 */
+#define MIN_DIST_SECONDS_TESTING 2
+
+/** Lowest allowable voting interval. */
 #define MIN_VOTE_INTERVAL 300
+/** Lowest allowable voting interval when TestingTorNetwork is 1:
+ * Voting Interval can be:
+ *   10, 12, 15, 18, 20, 24, 25, 30, 36, 40, 45, 50, 60, ...
+ * Testing Initial Voting Interval can be:
+ *    5,  6,  8,  9, or any of the possible values for Voting Interval,
+ * as they both need to evenly divide 30 minutes.
+ * If clock desynchronisation is an issue, use an interval of at least:
+ *   18 * drift in seconds, to allow for a clock slop factor */
+#define MIN_VOTE_INTERVAL_TESTING \
+                (((MIN_VOTE_SECONDS_TESTING)+(MIN_DIST_SECONDS_TESTING)+1)*2)
+
+#define MIN_VOTE_INTERVAL_TESTING_INITIAL \
+                ((MIN_VOTE_SECONDS_TESTING)+(MIN_DIST_SECONDS_TESTING)+1)
+
+/** The lowest consensus method that we currently support. */
+#define MIN_SUPPORTED_CONSENSUS_METHOD 13
 
 /** The highest consensus method that we currently support. */
-#define MAX_SUPPORTED_CONSENSUS_METHOD 18
-
-/** Lowest consensus method that contains a 'directory-footer' marker */
-#define MIN_METHOD_FOR_FOOTER 9
-
-/** Lowest consensus method that contains bandwidth weights */
-#define MIN_METHOD_FOR_BW_WEIGHTS 9
-
-/** Lowest consensus method that contains consensus params */
-#define MIN_METHOD_FOR_PARAMS 7
-
-/** Lowest consensus method that generates microdescriptors */
-#define MIN_METHOD_FOR_MICRODESC 8
-
-/** Lowest consensus method that doesn't count bad exits as exits for weight */
-#define MIN_METHOD_TO_CUT_BADEXIT_WEIGHT 11
-
-/** Lowest consensus method that ensures a majority of authorities voted
-  * for a param. */
-#define MIN_METHOD_FOR_MAJORITY_PARAMS 12
+#define MAX_SUPPORTED_CONSENSUS_METHOD 21
 
 /** Lowest consensus method where microdesc consensuses omit any entry
  * with no microdesc. */
@@ -65,8 +79,23 @@
  * microdescriptors. */
 #define MIN_METHOD_FOR_ID_HASH_IN_MD 18
 
+/** Lowest consensus method where we include "package" lines*/
+#define MIN_METHOD_FOR_PACKAGE_LINES 19
+
+/** Lowest consensus method where authorities may include
+ * GuardFraction information in microdescriptors. */
+#define MIN_METHOD_FOR_GUARDFRACTION 20
+
+/** Lowest consensus method where authorities may include an "id" line for
+ * ed25519 identities in microdescriptors. */
+#define MIN_METHOD_FOR_ED25519_ID_IN_MD 21
+/** Lowest consensus method where authorities vote on ed25519 ids and ensure
+ * ed25519 id consistency. */
+#define MIN_METHOD_FOR_ED25519_ID_VOTING MIN_METHOD_FOR_ED25519_ID_IN_MD
+
 /** Default bandwidth to clip unmeasured bandwidths to using method >=
- * MIN_METHOD_TO_CLIP_UNMEASURED_BW */
+ * MIN_METHOD_TO_CLIP_UNMEASURED_BW.  (This is not a consensus method; do not
+ * get confused with the above macros.) */
 #define DEFAULT_MAX_UNMEASURED_BW_KB 20
 
 void dirvote_free_all(void);
@@ -116,8 +145,7 @@ const cached_dir_t *dirvote_get_vote(const char *fp, int flags);
 void set_routerstatus_from_routerinfo(routerstatus_t *rs,
                                       node_t *node,
                                       routerinfo_t *ri, time_t now,
-                                      int naming, int listbadexits,
-                                      int listbaddirs, int vote_on_hsdirs);
+                                      int listbadexits);
 networkstatus_t *
 dirserv_generate_networkstatus_vote_obj(crypto_pk_t *private_key,
                                         authority_cert_t *cert);
@@ -146,6 +174,7 @@ STATIC char *format_networkstatus_vote(crypto_pk_t *private_key,
                                  networkstatus_t *v3_ns);
 STATIC char *dirvote_compute_params(smartlist_t *votes, int method,
                              int total_authorities);
+STATIC char *compute_consensus_package_lines(smartlist_t *votes);
 #endif
 
 #endif

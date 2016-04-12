@@ -14,7 +14,7 @@ tor-resolve - resolve a hostname to an IP address via tor
 
 SYNOPSIS
 --------
-**tor-resolve** [-4|-5] [-v] [-x] __hostname__ [__sockshost__[:__socksport__]]
+**tor-resolve** [-4|-5] [-v] [-x] [-p __socksport__] __hostname__ [__sockshost__[:__socksport__]]
 
 DESCRIPTION
 -----------
@@ -39,6 +39,9 @@ OPTIONS
 **-4**::
     Use the SOCKS4a protocol rather than the default SOCKS5 protocol. Doesn't
     support reverse DNS.
+
+**-p** __socksport__::
+    Override the default SOCKS port without setting the hostname.
 
 SEE ALSO
 --------

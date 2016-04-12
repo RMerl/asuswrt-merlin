@@ -61,9 +61,10 @@ it's a bugfix, mention what bug it fixes and when the bug was
 introduced.  To find out which Git tag the change was introduced in,
 you can use "git describe --contains <sha1 of commit>".
 
-If at all possible, try to create this file in the same commit where
-you are making the change.  Please give it a distinctive name that no
-other branch will use for the lifetime of your change.
+If at all possible, try to create this file in the same commit where you are
+making the change.  Please give it a distinctive name that no other branch will
+use for the lifetime of your change. To verify the format of the changes file,
+you can use "make check-changes".
 
 When we go to make a release, we will concatenate all the entries
 in changes to make a draft changelog, and clear the directory. We'll
@@ -114,6 +115,84 @@ valgrind --leak-check=yes --error-limit=no --show-reachable=yes src/or/tor
 pass --undef-value-errors=no to valgrind, or rebuild your openssl
 with -DPURIFY.)
 
+Coverity
+~~~~~~~~
+
+Nick regularly runs the coverity static analyzer on the Tor codebase.
+
+The preprocessor define __COVERITY__ is used to work around instances
+where coverity picks up behavior that we wish to permit.
+
+clang Static Analyzer
+~~~~~~~~~~~~~~~~~~~~~
+
+The clang static analyzer can be run on the Tor codebase using Xcode (WIP)
+or a command-line build.
+
+The preprocessor define __clang_analyzer__ is used to work around instances
+where clang picks up behavior that we wish to permit.
+
+clang Runtime Sanitizers
+~~~~~~~~~~~~~~~~
+
+To build the Tor codebase with the clang Address and Undefined Behavior
+sanitizers, see the file contrib/clang/sanitize_blacklist.txt.
+
+Preprocessor workarounds for instances where clang picks up behavior that
+we wish to permit are also documented in the blacklist file.
+
+Running lcov for unit test coverage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lcov is a utility that generates pretty HTML reports of test code coverage.
+To generate such a report:
+
+-----
+   ./configure --enable-coverage
+   make
+   make coverage-html
+   $BROWSER ./coverage_html/index.html
+-----
+
+This will run the tor unit test suite `./src/test/test` and generate the HTML
+coverage code report under the directory ./coverage_html/. To change the
+output directory, use `make coverage-html HTML_COVER_DIR=./funky_new_cov_dir`.
+
+Coverage diffs using lcov are not currently implemented, but are being
+investigated (as of July 2014).
+
+Running the unit tests
+~~~~~~~~~~~~~~~~~~~~~~
+
+To quickly run all the tests distributed with Tor:
+-----
+   make check
+-----
+
+To run the fast unit tests only:
+-----
+   make test
+-----
+
+To selectively run just some tests (the following can be combined
+arbitrarily):
+-----
+   ./src/test/test <name_of_test> [<name of test 2>] ...
+   ./src/test/test <prefix_of_name_of_test>.. [<prefix_of_name_of_test2>..] ...
+   ./src/test/test :<name_of_excluded_test> [:<name_of_excluded_test2]...
+-----
+
+To run all tests, including those based on Stem or Chutney:
+-----
+   make test-full
+-----
+
+To run all tests, including those basedd on Stem or Chutney that require a
+working connection to the internet:
+-----
+   make test-full-online
+-----
+
 Running gcov for unit test coverage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,6 +200,7 @@ Running gcov for unit test coverage
    ./configure --enable-coverage
    make
    make check
+   # or--- make test-full ? make test-full-online?
    mkdir coverage-output
    ./scripts/test/coverage coverage-output
 -----
@@ -156,6 +236,9 @@ We have the beginnings of a set of scripts to run integration tests using
 Chutney. To try them, set CHUTNEY_PATH to your chutney source directory, and
 run "make test-network".
 
+We also have scripts to run integration tests using Stem.  To try them, set
+STEM_SOURCE_DIR to your Stem source directory, and run "test-stem".
+
 Profiling Tor with oprofile
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -182,6 +265,23 @@ Here are some basic instructions
    * "opreport -l that_dir/*"
  - Profit
 
+Generating and analyzing a callgraph
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Run ./scripts/maint/generate_callgraph.sh .  This will generate a
+   bunch of files in a new ./callgraph directory.
+
+2. Run ./scripts/maint/analyze_callgraph.py callgraph/src/*/* .  This
+   will do a lot of graph operations and then dump out a new
+   "callgraph.pkl" file, containing data in Python's "pickle" format.
+
+3. Run ./scripts/maint/display_callgraph.py .  It will display:
+    - the number of functions reachable from each function.
+    - all strongly-connnected components in the Tor callgraph
+    - the largest bottlenecks in the largest SCC in the Tor callgraph.
+
+Note that currently the callgraph generator can't detect calls that pass
+through function pointers.
 
 Coding conventions
 ------------------
@@ -332,7 +432,7 @@ do your own profiling to determine otherwise.
 Log conventions
 ~~~~~~~~~~~~~~~
 
-https://trac.torproject.org/projects/tor/wiki/doc/TorFAQ#loglevel
+https://www.torproject.org/docs/faq#LogLevel
 
 No error or warning messages should be expected during normal OR or OP
 operation.
@@ -460,7 +560,7 @@ interesting and understandable.
    Standard idioms:
      "Fixes bug 9999; bugfix on 0.3.3.3-alpha."
 
-   One period after a space.
+   One space after a period.
 
    Make stuff very terse
 
@@ -492,7 +592,7 @@ interesting and understandable.
 
    2.6) Clean everything one last time.
 
-   2.7) Run it through fmt to make it pretty.
+   2.7) Run ./scripts/maint/format_changelog.py to make it prettier.
 
 3) Compose a short release blurb to highlight the user-facing
 changes. Insert said release blurb into the ChangeLog stanza. If it's
@@ -500,7 +600,13 @@ a stable release, add it to the ReleaseNotes file too. If we're adding
 to a release-0.2.x branch, manually commit the changelogs to the later
 git branches too.
 
-4) Bump the version number in configure.ac and rebuild.
+4) In maint-0.2.x, bump the version number in configure.ac and run
+   scripts/maint/updateVersions.pl to update version numbers in other
+   places, and commit.  Then merge maint-0.2.x into release-0.2.x.
+
+   (NOTE: TO bump the version number, edit configure.ac, and then run
+   either make, or 'perl scripts/maint/updateVersions.pl', depending on
+   your version.)
 
 5) Make dist, put the tarball up somewhere, and tell #tor about it. Wait
 a while to see if anybody has problems building it. Try to get Sebastian
@@ -514,12 +620,20 @@ in their approved versions list.
   git tag -u <keyid> tor-0.2.x.y-status
   git push origin tag tor-0.2.x.y-status
 
-8) scp the tarball and its sig to the website in the dist/ directory
-(i.e. /srv/www-master.torproject.org/htdocs/dist/ on vescum). Edit
-"include/versions.wmi" and "Makefile" to note the new version. From your
-website checkout, run ./publish to build and publish the website.
+8a) scp the tarball and its sig to the dist website, i.e.
+/srv/dist-master.torproject.org/htdocs/ on dist-master. When you want
+it to go live, you run "static-update-component dist.torproject.org"
+on dist-master.
+
+8b) Edit "include/versions.wmi" and "Makefile" to note the new version.
 
 9) Email the packagers (cc'ing tor-assistants) that a new tarball is up.
+   The current list of packagers is:
+       {weasel,gk,mikeperry} at torproject dot org
+       {blueness} at gentoo dot org
+       {paul} at invizbox dot io
+       {ondrej.mikle} at gmail dot com
+       {lfleischer} at archlinux dot org
 
 10) Add the version number to Trac.  To do this, go to Trac, log in,
 select "Admin" near the top of the screen, then select "Versions" from

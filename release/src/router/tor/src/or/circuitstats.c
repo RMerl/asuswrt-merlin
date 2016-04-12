@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define CIRCUITSTATS_PRIVATE
@@ -404,7 +404,7 @@ circuit_build_times_new_consensus_params(circuit_build_times_t *cbt,
          * distress anyway, so memory correctness here is paramount over
          * doing acrobatics to preserve the array.
          */
-        recent_circs = tor_malloc_zero(sizeof(int8_t)*num);
+        recent_circs = tor_calloc(num, sizeof(int8_t));
         if (cbt->liveness.timeouts_after_firsthop &&
             cbt->liveness.num_recent_circs > 0) {
           memcpy(recent_circs, cbt->liveness.timeouts_after_firsthop,
@@ -508,7 +508,7 @@ circuit_build_times_init(circuit_build_times_t *cbt)
     cbt->liveness.num_recent_circs =
       circuit_build_times_recent_circuit_count(NULL);
     cbt->liveness.timeouts_after_firsthop =
-      tor_malloc_zero(sizeof(int8_t)*cbt->liveness.num_recent_circs);
+      tor_calloc(cbt->liveness.num_recent_circs, sizeof(int8_t));
   } else {
     cbt->liveness.num_recent_circs = 0;
     cbt->liveness.timeouts_after_firsthop = NULL;
@@ -649,7 +649,7 @@ circuit_build_times_create_histogram(const circuit_build_times_t *cbt,
   int i, c;
 
   *nbins = 1 + (max_build_time / CBT_BIN_WIDTH);
-  histogram = tor_malloc_zero(*nbins * sizeof(build_time_t));
+  histogram = tor_calloc(*nbins, sizeof(build_time_t));
 
   // calculate histogram
   for (i = 0; i < CBT_NCIRCUITS_TO_OBSERVE; i++) {
@@ -691,7 +691,7 @@ circuit_build_times_get_xm(circuit_build_times_t *cbt)
   if (cbt->total_build_times < CBT_NCIRCUITS_TO_OBSERVE)
     num_modes = 1;
 
-  nth_max_bin = (build_time_t*)tor_malloc_zero(num_modes*sizeof(build_time_t));
+  nth_max_bin = tor_calloc(num_modes, sizeof(build_time_t));
 
   /* Determine the N most common build times */
   for (i = 0; i < nbins; i++) {
@@ -873,7 +873,7 @@ circuit_build_times_parse_state(circuit_build_times_t *cbt,
   }
 
   /* build_time_t 0 means uninitialized */
-  loaded_times = tor_malloc_zero(sizeof(build_time_t)*state->TotalBuildTimes);
+  loaded_times = tor_calloc(state->TotalBuildTimes, sizeof(build_time_t));
 
   for (line = state->BuildtimeHistogram; line; line = line->next) {
     smartlist_t *args = smartlist_new();
@@ -1074,7 +1074,7 @@ circuit_build_times_update_alpha(circuit_build_times_t *cbt)
  *     random_sample_from_Pareto_distribution
  * That's right. I'll cite wikipedia all day long.
  *
- * Return value is in milliseconds.
+ * Return value is in milliseconds, clamped to INT32_MAX.
  */
 STATIC double
 circuit_build_times_calculate_timeout(circuit_build_times_t *cbt,
@@ -1085,7 +1085,21 @@ circuit_build_times_calculate_timeout(circuit_build_times_t *cbt,
   tor_assert(1.0-quantile > 0);
   tor_assert(cbt->Xm > 0);
 
-  ret = cbt->Xm/pow(1.0-quantile,1.0/cbt->alpha);
+  /* If either alpha or p are 0, we would divide by zero, yielding an
+   * infinite (double) result; which would be clamped to INT32_MAX.
+   * Instead, initialise ret to INT32_MAX, and skip over these
+   * potentially illegal/trapping divides by zero.
+   */
+  ret = INT32_MAX;
+
+  if (cbt->alpha > 0) {
+    double p;
+    p = pow(1.0-quantile,1.0/cbt->alpha);
+    if (p > 0) {
+      ret = cbt->Xm/p;
+    }
+  }
+
   if (ret > INT32_MAX) {
     ret = INT32_MAX;
   }
@@ -1218,6 +1232,9 @@ circuit_build_times_network_is_live(circuit_build_times_t *cbt)
   }
   cbt->liveness.network_last_live = now;
   cbt->liveness.nonlive_timeouts = 0;
+
+  /* Tell control.c */
+  control_event_network_liveness_update(1);
 }
 
 /**
@@ -1302,6 +1319,9 @@ circuit_build_times_network_close(circuit_build_times_t *cbt,
                  "Tor has not observed any network activity for the past %d "
                  "seconds. Disabling circuit build timeout recording.",
                  (int)(now - cbt->liveness.network_last_live));
+
+      /* Tell control.c */
+      control_event_network_liveness_update(0);
     } else {
       log_info(LD_CIRC,
              "Got non-live timeout. Current count is: %d",
@@ -1371,10 +1391,11 @@ circuit_build_times_network_check_changed(circuit_build_times_t *cbt)
   }
   cbt->liveness.after_firsthop_idx = 0;
 
+#define MAX_TIMEOUT ((int32_t) (INT32_MAX/2))
   /* Check to see if this has happened before. If so, double the timeout
    * to give people on abysmally bad network connections a shot at access */
   if (cbt->timeout_ms >= circuit_build_times_get_initial_timeout()) {
-    if (cbt->timeout_ms > INT32_MAX/2 || cbt->close_ms > INT32_MAX/2) {
+    if (cbt->timeout_ms > MAX_TIMEOUT || cbt->close_ms > MAX_TIMEOUT) {
       log_warn(LD_CIRC, "Insanely large circuit build timeout value. "
               "(timeout = %fmsec, close = %fmsec)",
                cbt->timeout_ms, cbt->close_ms);
@@ -1386,6 +1407,7 @@ circuit_build_times_network_check_changed(circuit_build_times_t *cbt)
     cbt->close_ms = cbt->timeout_ms
                   = circuit_build_times_get_initial_timeout();
   }
+#undef MAX_TIMEOUT
 
   cbt_control_event_buildtimeout_set(cbt, BUILDTIMEOUT_SET_EVENT_RESET);
 

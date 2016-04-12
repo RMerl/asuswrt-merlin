@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -62,8 +62,8 @@ static HT_HEAD(process_map, waitpid_callback_t) process_map = HT_INITIALIZER();
 
 HT_PROTOTYPE(process_map, waitpid_callback_t, node, process_map_entry_hash_,
              process_map_entries_eq_);
-HT_GENERATE(process_map, waitpid_callback_t, node, process_map_entry_hash_,
-            process_map_entries_eq_, 0.6, malloc, realloc, free);
+HT_GENERATE2(process_map, waitpid_callback_t, node, process_map_entry_hash_,
+             process_map_entries_eq_, 0.6, tor_reallocarray_, tor_free_);
 
 /**
  * Begin monitoring the child pid <b>pid</b> to see if we get a SIGCHLD for

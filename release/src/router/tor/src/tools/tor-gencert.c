@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2013, The Tor Project, Inc. */
+/* Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -28,10 +28,11 @@
 #endif
 
 #include "compat.h"
-#include "../common/util.h"
-#include "../common/torlog.h"
+#include "util.h"
+#include "torlog.h"
 #include "crypto.h"
 #include "address.h"
+#include "util_format.h"
 
 #define IDENTITY_KEY_BITS 3072
 #define SIGNING_KEY_BITS 2048
@@ -134,17 +135,29 @@ parse_commandline(int argc, char **argv)
         fprintf(stderr, "No argument to -i\n");
         return 1;
       }
+      if (identity_key_file) {
+        fprintf(stderr, "Duplicate values for -i\n");
+        return -1;
+      }
       identity_key_file = tor_strdup(argv[++i]);
     } else if (!strcmp(argv[i], "-s")) {
       if (i+1>=argc) {
         fprintf(stderr, "No argument to -s\n");
         return 1;
       }
+      if (signing_key_file) {
+        fprintf(stderr, "Duplicate values for -s\n");
+        return -1;
+      }
       signing_key_file = tor_strdup(argv[++i]);
     } else if (!strcmp(argv[i], "-c")) {
       if (i+1>=argc) {
         fprintf(stderr, "No argument to -c\n");
         return 1;
+      }
+      if (certificate_file) {
+        fprintf(stderr, "Duplicate values for -c\n");
+        return -1;
       }
       certificate_file = tor_strdup(argv[++i]);
     } else if (!strcmp(argv[i], "-m")) {
@@ -174,8 +187,7 @@ parse_commandline(int argc, char **argv)
         return 1;
       in.s_addr = htonl(addr);
       tor_inet_ntoa(&in, b, sizeof(b));
-      address = tor_malloc(INET_NTOA_BUF_LEN+32);
-      tor_snprintf(address, INET_NTOA_BUF_LEN+32, "%s:%d", b, (int)port);
+      tor_asprintf(&address, "%s:%d", b, (int)port);
     } else if (!strcmp(argv[i], "--create-identity-key")) {
       make_new_id = 1;
     } else if (!strcmp(argv[i], "--passphrase-fd")) {
@@ -474,7 +486,8 @@ generate_certificate(void)
                           EVP_PKEY_get1_RSA(signing_key),
                           RSA_PKCS1_PADDING);
   signed_len = strlen(buf);
-  base64_encode(buf+signed_len, sizeof(buf)-signed_len, signature, r);
+  base64_encode(buf+signed_len, sizeof(buf)-signed_len, signature, r,
+                BASE64_ENCODE_MULTILINE);
 
   strlcat(buf,
           "-----END ID SIGNATURE-----\n"
@@ -489,7 +502,8 @@ generate_certificate(void)
                           RSA_PKCS1_PADDING);
   strlcat(buf, "-----BEGIN SIGNATURE-----\n", sizeof(buf));
   signed_len = strlen(buf);
-  base64_encode(buf+signed_len, sizeof(buf)-signed_len, signature, r);
+  base64_encode(buf+signed_len, sizeof(buf)-signed_len, signature, r,
+                BASE64_ENCODE_MULTILINE);
   strlcat(buf, "-----END SIGNATURE-----\n", sizeof(buf));
 
   if (!(f = fopen(certificate_file, "w"))) {
@@ -513,14 +527,14 @@ int
 main(int argc, char **argv)
 {
   int r = 1;
-  init_logging();
+  init_logging(1);
 
   /* Don't bother using acceleration. */
   if (crypto_global_init(0, NULL, NULL)) {
     fprintf(stderr, "Couldn't initialize crypto library.\n");
     return 1;
   }
-  if (crypto_seed_rng(1)) {
+  if (crypto_seed_rng()) {
     fprintf(stderr, "Couldn't seed RNG.\n");
     goto done;
   }
@@ -552,6 +566,7 @@ main(int argc, char **argv)
   tor_free(identity_key_file);
   tor_free(signing_key_file);
   tor_free(certificate_file);
+  tor_free(address);
 
   crypto_global_cleanup();
   return r;

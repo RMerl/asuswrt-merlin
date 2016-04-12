@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -22,7 +22,8 @@ origin_circuit_t *circuit_establish_circuit(uint8_t purpose,
                                             extend_info_t *exit,
                                             int flags);
 int circuit_handle_first_hop(origin_circuit_t *circ);
-void circuit_n_chan_done(channel_t *chan, int status);
+void circuit_n_chan_done(channel_t *chan, int status,
+                         int close_origin_circuits);
 int inform_testing_reachability(void);
 int circuit_timeout_want_to_count_circ(origin_circuit_t *circ);
 int circuit_send_next_onion_skin(origin_circuit_t *circ);
@@ -60,6 +61,11 @@ const node_t *choose_good_entry_server(uint8_t purpose,
 
 #ifdef CIRCUITBUILD_PRIVATE
 STATIC circid_t get_unique_circ_id_by_chan(channel_t *chan);
+#if defined(ENABLE_TOR2WEB_MODE) || defined(TOR_UNIT_TESTS)
+STATIC const node_t *pick_tor2web_rendezvous_node(router_crn_flags_t flags,
+                                                  const or_options_t *options);
+#endif
+
 #endif
 
 #endif

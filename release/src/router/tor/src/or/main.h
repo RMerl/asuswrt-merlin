@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -12,7 +12,9 @@
 #ifndef TOR_MAIN_H
 #define TOR_MAIN_H
 
-extern int can_complete_circuit;
+int have_completed_a_circuit(void);
+void note_that_we_completed_a_circuit(void);
+void note_that_we_maybe_cant_complete_circuits(void);
 
 int connection_add_impl(connection_t *conn, int is_connecting);
 #define connection_add(conn) connection_add_impl((conn), 0)
@@ -50,14 +52,16 @@ void directory_info_has_arrived(time_t now, int from_cache);
 
 void ip_address_changed(int at_interface);
 void dns_servers_relaunch_checks(void);
+void reset_all_main_loop_timers(void);
 void reschedule_descriptor_update_check(void);
+void reschedule_directory_downloads(void);
 
 MOCK_DECL(long,get_uptime,(void));
 
 unsigned get_signewnym_epoch(void);
 
 void handle_signals(int is_parent);
-void process_signal(uintptr_t sig);
+void activate_signal(int signal_num);
 
 int try_locking(const or_options_t *options, int err_if_locked);
 int have_lockfile(void);

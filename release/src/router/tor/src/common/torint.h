@@ -1,6 +1,6 @@
 /* Copyright (c) 2003, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -191,6 +191,10 @@ typedef unsigned __int64 uint64_t;
 #endif
 #endif
 
+#ifndef INT64_MIN
+#define INT64_MIN ((- INT64_MAX) - 1)
+#endif
+
 #ifndef SIZE_MAX
 #if SIZEOF_SIZE_T == 8
 #define SIZE_MAX UINT64_MAX
@@ -332,30 +336,30 @@ typedef uint32_t uintptr_t;
 #endif /* time_t_is_signed */
 #endif /* ifndef(TIME_MAX) */
 
-#ifndef SIZE_T_MAX
+#ifndef SIZE_MAX
 #if (SIZEOF_SIZE_T == 4)
-#define SIZE_T_MAX UINT32_MAX
+#define SIZE_MAX UINT32_MAX
 #elif (SIZEOF_SIZE_T == 8)
-#define SIZE_T_MAX UINT64_MAX
+#define SIZE_MAX UINT64_MAX
 #else
-#error "Can't define SIZE_T_MAX"
+#error "Can't define SIZE_MAX"
 #endif
 #endif
 
-#ifndef SSIZE_T_MAX
+#ifndef SSIZE_MAX
 #if (SIZEOF_SIZE_T == 4)
-#define SSIZE_T_MAX INT32_MAX
+#define SSIZE_MAX INT32_MAX
 #elif (SIZEOF_SIZE_T == 8)
-#define SSIZE_T_MAX INT64_MAX
+#define SSIZE_MAX INT64_MAX
 #else
-#error "Can't define SSIZE_T_MAX"
+#error "Can't define SSIZE_MAX"
 #endif
 #endif
 
 /** Any ssize_t larger than this amount is likely to be an underflow. */
-#define SSIZE_T_CEILING ((ssize_t)(SSIZE_T_MAX-16))
+#define SSIZE_T_CEILING ((ssize_t)(SSIZE_MAX-16))
 /** Any size_t larger than this amount is likely to be an underflow. */
-#define SIZE_T_CEILING  ((size_t)(SSIZE_T_MAX-16))
+#define SIZE_T_CEILING  ((size_t)(SSIZE_MAX-16))
 
 #endif /* __TORINT_H */
 

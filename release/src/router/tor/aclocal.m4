@@ -1063,4 +1063,5 @@ AC_SUBST([am__untar])
 
 m4_include([m4/ax_check_sign.m4])
 m4_include([m4/pc_from_ucontext.m4])
+m4_include([m4/pkg.m4])
 m4_include([acinclude.m4])

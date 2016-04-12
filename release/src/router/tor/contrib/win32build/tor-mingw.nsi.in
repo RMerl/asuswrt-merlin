@@ -8,7 +8,7 @@
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
 !insertmacro GetParameters
-!define VERSION "0.2.5.12"
+!define VERSION "0.2.7.6"
 !define INSTALLER "tor-${VERSION}-win32.exe"
 !define WEBSITE "https://www.torproject.org/"
 !define LICENSE "LICENSE"

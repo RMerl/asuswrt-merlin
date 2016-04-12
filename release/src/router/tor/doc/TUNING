@@ -1,0 +1,86 @@
+Most operating systems limit an amount of TCP sockets that can be used 
+simultaneously. It is possible for a busy Tor relay to run into these
+limits, thus being unable to fully utilize the bandwidth resources it 
+has at its disposal. Following system-specific tips might be helpful
+to alleviate the aforementioned problem.
+
+Linux
+-----
+
+Use 'ulimit -n' to raise an allowed number of file descriptors to be 
+opened on your host at the same time.
+
+FreeBSD
+-------
+
+Tune the followind sysctl(8) variables:
+ * kern.maxfiles - maximum allowed file descriptors (for entire system)
+ * kern.maxfilesperproc - maximum file descriptors one process is allowed
+   to use
+ * kern.ipc.maxsockets - overall maximum numbers of sockets for entire 
+   system
+ * kern.ipc.somaxconn - size of listen queue for incoming TCP connections
+   for entire system
+
+See also:
+ * https://www.freebsd.org/doc/handbook/configtuning-kernel-limits.html
+ * https://wiki.freebsd.org/NetworkPerformanceTuning
+
+Mac OS X
+--------
+
+Since Mac OS X is BSD-based system, most of the above hold for OS X as well.
+However, launchd(8) is known to modify kern.maxfiles and kern.maxfilesperproc
+when it launches tor service (see launchd.plist(5) manpage). Also, 
+kern.ipc.maxsockets is determined dynamically by the system and thus is 
+read-only on OS X.
+
+OpenBSD
+-------
+
+Because OpenBSD is primarily focused on security and stability, it uses default
+resource limits stricter than those of more popular Unix-like operating systems.
+
+OpenBSD stores a kernel-level file descriptor limit in the sysctl variable
+kern.maxfiles. It defaults to 7,030. To change it to, for example, 16,000 while
+the system is running, use the command 'sudo sysctl kern.maxfiles=16000'.
+kern.maxfiles will reset to the default value upon system reboot unless you also
+add 'kern.maxfiles=16000' to the file /etc/sysctl.conf.
+
+There are stricter resource limits set on user classes, which are stored in
+/etc/login.conf. This config file also allows limit sets for daemons started
+with scripts in the /etc/rc.d directory, which presumably includes Tor.
+
+To increase the file descriptor limit from its default of 1,024, add the
+following to /etc/login.conf:
+
+tor:\
+	:openfiles-max=13500:\
+	:tc=daemon:
+
+Upon restarting Tor, it will be able to open up to 13,500 file descriptors.
+
+This will work *only* if you are starting Tor with the script /etc/rc.d/tor. If
+you're using a custom build instead of the package, you can easily copy the rc.d
+script from the Tor port directory. Alternatively, you can ensure that the Tor's
+daemon user has its own user class and make a /etc/login.conf entry for it.
+
+High-bandwidth relays sometimes give the syslog warning:
+
+/bsd: WARNING: mclpools limit reached; increase kern.maxclusters
+
+In this case, increase kern.maxclusters with the sysctl command and in the file
+/etc/sysctl.conf, as described with kern.maxfiles above. Use 'sysctl
+kern.maxclusters' to query the current value. Increasing by about 15% per day
+until the error no longer appears is a good guideline.
+
+Disclaimer
+----------
+
+Do note that this document is a draft and above information may be
+technically incorrect and/or incomplete. If so, please open a ticket
+on https://trac.torproject.org or post to tor-relays mailing list.
+
+Are you running a busy Tor relay? Let us know how you are solving
+the out-of-sockets problem on your system.
+

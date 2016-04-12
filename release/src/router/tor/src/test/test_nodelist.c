@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2013, The Tor Project, Inc. */
+/* Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -10,7 +10,7 @@
 #include "nodelist.h"
 #include "test.h"
 
-/** Tese the case when node_get_by_id() returns NULL,
+/** Test the case when node_get_by_id() returns NULL,
  * node_get_verbose_nickname_by_id should return the base 16 encoding
  * of the id.
  */
@@ -23,9 +23,9 @@ test_nodelist_node_get_verbose_nickname_by_id_null_node(void *arg)
   (void) arg;
 
   /* make sure node_get_by_id returns NULL */
-  test_assert(!node_get_by_id(ID));
+  tt_assert(!node_get_by_id(ID));
   node_get_verbose_nickname_by_id(ID, vname);
-  test_streq(vname, "$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+  tt_str_op(vname,OP_EQ, "$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
  done:
   return;
 }
@@ -54,7 +54,7 @@ test_nodelist_node_get_verbose_nickname_not_named(void *arg)
           "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA",
           DIGEST_LEN);
   node_get_verbose_nickname(&mock_node, vname);
-  test_streq(vname, "$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA~TestOR");
+  tt_str_op(vname,OP_EQ, "$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA~TestOR");
 
  done:
   return;

@@ -13,7 +13,7 @@
 # just use the .1 and .html files.
 
 base_mans = doc/tor doc/tor-gencert doc/tor-resolve doc/torify
-all_mans = $(base_mans) doc/tor-fw-helper
+all_mans = $(base_mans)
 if USE_FW_HELPER
 install_mans = $(all_mans)
 else
@@ -36,7 +36,10 @@ endif
 
 EXTRA_DIST+= doc/HACKING doc/asciidoc-helper.sh			\
              $(html_in) $(man_in) $(txt_in)			\
-             doc/state-contents.txt
+             doc/state-contents.txt				\
+             doc/torrc_format.txt 				\
+	     doc/TUNING						\
+	     doc/WritingTests.txt
 
 docdir = @docdir@
 
@@ -56,34 +59,30 @@ doc/tor.1.in: doc/tor.1.txt
 doc/torify.1.in: doc/torify.1.txt
 doc/tor-gencert.1.in: doc/tor-gencert.1.txt
 doc/tor-resolve.1.in: doc/tor-resolve.1.txt
-doc/tor-fw-helper.1.in: doc/tor-fw-helper.1.txt
 
 doc/tor.html.in: doc/tor.1.txt
 doc/torify.html.in: doc/torify.1.txt
 doc/tor-gencert.html.in: doc/tor-gencert.1.txt
 doc/tor-resolve.html.in: doc/tor-resolve.1.txt
-doc/tor-fw-helper.html.in: doc/tor-fw-helper.1.txt
 
-# use ../config.status to swap all machine-specific magic strings
+# use config.status to swap all machine-specific magic strings
 # in the asciidoc with their replacements.
 $(asciidoc_product) :
 	$(AM_V_GEN)$(MKDIR_P) $(@D)
 	$(AM_V_at)if test -e $(top_srcdir)/$@.in && ! test -e $@.in ; then \
 		cp $(top_srcdir)/$@.in $@; \
 	fi
-	$(AM_V_at)./config.status -q --file=$@;
+	$(AM_V_at)$(top_builddir)/config.status -q --file=$@;
 
 doc/tor.html: doc/tor.html.in
 doc/tor-gencert.html: doc/tor-gencert.html.in
 doc/tor-resolve.html: doc/tor-resolve.html.in
 doc/torify.html: doc/torify.html.in
-doc/tor-fw-helper.html: doc/tor-fw-helper.html.in
 
 doc/tor.1: doc/tor.1.in
 doc/tor-gencert.1: doc/tor-gencert.1.in
 doc/tor-resolve.1: doc/tor-resolve.1.in
 doc/torify.1: doc/torify.1.in
-doc/tor-fw-helper.1: doc/tor-fw-helper.1.in
 
 CLEANFILES+= $(asciidoc_product) config.log
 DISTCLEANFILES+= $(html_in) $(man_in)

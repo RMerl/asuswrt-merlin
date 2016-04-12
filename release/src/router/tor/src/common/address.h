@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -11,9 +11,40 @@
 #ifndef TOR_ADDRESS_H
 #define TOR_ADDRESS_H
 
+//#include <sys/sockio.h>
 #include "orconfig.h"
 #include "torint.h"
 #include "compat.h"
+#include "container.h"
+
+#ifdef ADDRESS_PRIVATE
+
+#if defined(HAVE_SYS_IOCTL_H)
+#include <sys/ioctl.h>
+#endif
+
+#ifdef HAVE_GETIFADDRS
+#define HAVE_IFADDRS_TO_SMARTLIST
+#endif
+
+#ifdef _WIN32
+#define HAVE_IP_ADAPTER_TO_SMARTLIST
+#endif
+
+#if defined(SIOCGIFCONF) && defined(HAVE_IOCTL)
+#define HAVE_IFCONF_TO_SMARTLIST
+#endif
+
+#if defined(HAVE_NET_IF_H)
+#include <net/if.h> // for struct ifconf
+#endif
+
+#if defined(HAVE_IFADDRS_TO_SMARTLIST)
+#include <ifaddrs.h>
+#endif
+
+// TODO win32 specific includes
+#endif // ADDRESS_PRIVATE
 
 /** The number of bits from an address to consider while doing a masked
  * comparison. */
@@ -103,7 +134,18 @@ tor_addr_to_ipv4h(const tor_addr_t *a)
 static INLINE uint32_t
 tor_addr_to_mapped_ipv4h(const tor_addr_t *a)
 {
-  return a->family == AF_INET6 ? ntohl(tor_addr_to_in6_addr32(a)[3]) : 0;
+  if (a->family == AF_INET6) {
+    uint32_t *addr32 = NULL;
+    // Work around an incorrect NULL pointer dereference warning in
+    // "clang --analyze" due to limited analysis depth
+    addr32 = tor_addr_to_in6_addr32(a);
+    // To improve performance, wrap this assertion in:
+    // #if !defined(__clang_analyzer__) || PARANOIA
+    tor_assert(addr32);
+    return ntohl(addr32[3]);
+  } else {
+    return 0;
+  }
 }
 /** Return the address family of <b>a</b>.  Possible values are:
  * AF_INET6, AF_INET, AF_UNSPEC. */
@@ -148,7 +190,13 @@ char *tor_dup_addr(const tor_addr_t *addr) ATTR_MALLOC;
 const char *fmt_addr_impl(const tor_addr_t *addr, int decorate);
 const char *fmt_addrport(const tor_addr_t *addr, uint16_t port);
 const char * fmt_addr32(uint32_t addr);
-int get_interface_address6(int severity, sa_family_t family, tor_addr_t *addr);
+
+MOCK_DECL(int,get_interface_address6,(int severity, sa_family_t family,
+tor_addr_t *addr));
+void free_interface_address6_list(smartlist_t * addrs);
+MOCK_DECL(smartlist_t *,get_interface_address6_list,(int severity,
+                                                     sa_family_t family,
+                                                     int include_internal));
 
 /** Flag to specify how to do a comparison between addresses.  In an "exact"
  * comparison, addresses are equivalent only if they are in the same family
@@ -184,7 +232,19 @@ int tor_addr_parse_PTR_name(tor_addr_t *result, const char *address,
 
 int tor_addr_port_lookup(const char *s, tor_addr_t *addr_out,
                         uint16_t *port_out);
+
+/* Does the address * yield an AF_UNSPEC wildcard address (1),
+ * which expands to corresponding wildcard IPv4 and IPv6 rules, and do we
+ * allow *4 and *6 for IPv4 and IPv6 wildcards, respectively;
+ * or does the address * yield IPv4 wildcard address (0).  */
 #define TAPMP_EXTENDED_STAR 1
+/* Does the address * yield an IPv4 wildcard address rule (1);
+ * or does it yield wildcard IPv4 and IPv6 rules (0) */
+#define TAPMP_STAR_IPV4_ONLY     (1 << 1)
+/* Does the address * yield an IPv6 wildcard address rule (1);
+ * or does it yield wildcard IPv4 and IPv6 rules (0) */
+#define TAPMP_STAR_IPV6_ONLY     (1 << 2)
+/* TAPMP_STAR_IPV4_ONLY and TAPMP_STAR_IPV6_ONLY are mutually exclusive. */
 int tor_addr_parse_mask_ports(const char *s, unsigned flags,
                               tor_addr_t *addr_out, maskbits_t *mask_out,
                               uint16_t *port_min_out, uint16_t *port_max_out);
@@ -225,9 +285,55 @@ int addr_mask_get_bits(uint32_t mask);
 #define INET_NTOA_BUF_LEN 16
 int tor_inet_ntoa(const struct in_addr *in, char *buf, size_t buf_len);
 char *tor_dup_ip(uint32_t addr) ATTR_MALLOC;
-int get_interface_address(int severity, uint32_t *addr);
+MOCK_DECL(int,get_interface_address,(int severity, uint32_t *addr));
+/** Free a smartlist of IP addresses returned by get_interface_address_list.
+ */
+static INLINE void
+free_interface_address_list(smartlist_t *addrs)
+{
+  free_interface_address6_list(addrs);
+}
+/** Return a smartlist of the IPv4 addresses of all interfaces on the server.
+ * Excludes loopback and multicast addresses. Only includes internal addresses
+ * if include_internal is true. (Note that a relay behind NAT may use an
+ * internal address to connect to the Internet.)
+ * An empty smartlist means that there are no IPv4 addresses.
+ * Returns NULL on failure.
+ * Use free_interface_address_list to free the returned list.
+ */
+static INLINE smartlist_t *
+get_interface_address_list(int severity, int include_internal)
+{
+  return get_interface_address6_list(severity, AF_INET, include_internal);
+}
 
 tor_addr_port_t *tor_addr_port_new(const tor_addr_t *addr, uint16_t port);
+
+#ifdef ADDRESS_PRIVATE
+MOCK_DECL(smartlist_t *,get_interface_addresses_raw,(int severity));
+STATIC int tor_addr_is_multicast(const tor_addr_t *a);
+MOCK_DECL(int,get_interface_address6_via_udp_socket_hack,(int severity,
+                                                          sa_family_t family,
+                                                          tor_addr_t *addr));
+
+#ifdef HAVE_IFADDRS_TO_SMARTLIST
+STATIC smartlist_t *ifaddrs_to_smartlist(const struct ifaddrs *ifa);
+STATIC smartlist_t *get_interface_addresses_ifaddrs(int severity);
+#endif
+
+#ifdef HAVE_IP_ADAPTER_TO_SMARTLIST
+STATIC smartlist_t *ip_adapter_addresses_to_smartlist(
+                                        const IP_ADAPTER_ADDRESSES *addresses);
+STATIC smartlist_t *get_interface_addresses_win32(int severity);
+#endif
+
+#ifdef HAVE_IFCONF_TO_SMARTLIST
+STATIC smartlist_t *ifreq_to_smartlist(char *ifr,
+                                       size_t buflen);
+STATIC smartlist_t *get_interface_addresses_ioctl(int severity);
+#endif
+
+#endif // ADDRESS_PRIVATE
 
 #endif
 

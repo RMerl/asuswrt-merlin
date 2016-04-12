@@ -1,24 +1,35 @@
+# tor.service -- this systemd configuration file for Tor sets up a
+# relatively conservative, hardened Tor service.  You may need to
+# edit it if you are making changes to your Tor configuration that it
+# does not allow.  Package maintainers: this should be a starting point
+# for your tor.service; it is not the last point.
+
 [Unit]
-Description = Anonymizing overlay network for TCP
-After = syslog.target network.target nss-lookup.target
+Description=Anonymizing overlay network for TCP
+After=syslog.target network.target nss-lookup.target
 
 [Service]
-Type = simple
-ExecStartPre = @BINDIR@/tor -f @CONFDIR@/torrc --verify-config
-# A torrc that has "RunAsDaemon 1" won't work with the "simple" service type;
-# let's explicitly override it.
-ExecStart = @BINDIR@/tor -f @CONFDIR@/torrc --RunAsDaemon 0
-ExecReload = /bin/kill -HUP ${MAINPID}
-KillSignal = SIGINT
-TimeoutSec = 30
-Restart = on-failure
-LimitNOFILE = 32768
+Type=notify
+NotifyAccess=all
+ExecStartPre=@BINDIR@/tor -f @CONFDIR@/torrc --verify-config
+ExecStart=@BINDIR@/tor -f @CONFDIR@/torrc
+ExecReload=/bin/kill -HUP ${MAINPID}
+KillSignal=SIGINT
+TimeoutSec=30
+Restart=on-failure
+WatchdogSec=1m
+LimitNOFILE=32768
 
 # Hardening
-PrivateTmp = yes
-DeviceAllow = /dev/null rw
-DeviceAllow = /dev/urandom r
-InaccessibleDirectories = /home
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectHome=yes
+ProtectSystem=full
+ReadOnlyDirectories=/
+ReadWriteDirectories=-@LOCALSTATEDIR@/lib/tor
+ReadWriteDirectories=-@LOCALSTATEDIR@/log/tor
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_NET_BIND_SERVICE
 
 [Install]
-WantedBy = multi-user.target
+WantedBy=multi-user.target

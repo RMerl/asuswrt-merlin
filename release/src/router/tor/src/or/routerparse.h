@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -19,7 +19,7 @@ int router_get_extrainfo_hash(const char *s, size_t s_len, char *digest);
 #define DIROBJ_MAX_SIG_LEN 256
 char *router_get_dirobj_signature(const char *digest,
                                   size_t digest_len,
-                                  crypto_pk_t *private_key);
+                                  const crypto_pk_t *private_key);
 int router_append_dirobj_signature(char *buf, size_t buf_len,
                                    const char *digest,
                                    size_t digest_len,
@@ -29,19 +29,21 @@ int router_parse_list_from_string(const char **s, const char *eos,
                                   saved_location_t saved_location,
                                   int is_extrainfo,
                                   int allow_annotations,
-                                  const char *prepend_annotations);
+                                  const char *prepend_annotations,
+                                  smartlist_t *invalid_digests_out);
 
 routerinfo_t *router_parse_entry_from_string(const char *s, const char *end,
                                              int cache_copy,
                                              int allow_annotations,
-                                             const char *prepend_annotations);
+                                             const char *prepend_annotations,
+                                             int *can_dl_again_out);
 extrainfo_t *extrainfo_parse_entry_from_string(const char *s, const char *end,
-                         int cache_copy, struct digest_ri_map_t *routermap);
-addr_policy_t *router_parse_addr_policy_item_from_string(const char *s,
-                                                  int assume_action);
+                             int cache_copy, struct digest_ri_map_t *routermap,
+                             int *can_dl_again_out);
+MOCK_DECL(addr_policy_t *, router_parse_addr_policy_item_from_string,
+         (const char *s, int assume_action, int *malformed_list));
 version_status_t tor_version_is_obsolete(const char *myversion,
                                          const char *versionlist);
-int tor_version_supports_microdescriptors(const char *platform);
 int tor_version_as_new_as(const char *platform, const char *cutoff);
 int tor_version_parse(const char *s, tor_version_t *out);
 int tor_version_compare(tor_version_t *a, tor_version_t *b);
@@ -60,7 +62,8 @@ ns_detached_signatures_t *networkstatus_parse_detached_signatures(
 
 smartlist_t *microdescs_parse_from_string(const char *s, const char *eos,
                                           int allow_annotations,
-                                          saved_location_t where);
+                                          saved_location_t where,
+                                          smartlist_t *invalid_digests_out);
 
 authority_cert_t *authority_cert_parse_from_string(const char *s,
                                                    const char **end_of_string);
@@ -69,7 +72,8 @@ int rend_parse_v2_service_descriptor(rend_service_descriptor_t **parsed_out,
                                      char **intro_points_encrypted_out,
                                      size_t *intro_points_encrypted_size_out,
                                      size_t *encoded_size_out,
-                                     const char **next_out, const char *desc);
+                                     const char **next_out, const char *desc,
+                                     int as_hsdir);
 int rend_decrypt_introduction_points(char **ipos_decrypted,
                                      size_t *ipos_decrypted_size,
                                      const char *descriptor_cookie,
@@ -79,6 +83,15 @@ int rend_parse_introduction_points(rend_service_descriptor_t *parsed,
                                    const char *intro_points_encoded,
                                    size_t intro_points_encoded_size);
 int rend_parse_client_keys(strmap_t *parsed_clients, const char *str);
+
+#ifdef ROUTERPARSE_PRIVATE
+STATIC int routerstatus_parse_guardfraction(const char *guardfraction_str,
+                                            networkstatus_t *vote,
+                                            vote_routerstatus_t *vote_rs,
+                                            routerstatus_t *rs);
+#endif
+
+#define ED_DESC_SIGNATURE_PREFIX "Tor router descriptor signature v1"
 
 #endif
 

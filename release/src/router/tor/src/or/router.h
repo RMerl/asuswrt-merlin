@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -29,16 +29,15 @@ crypto_pk_t *get_my_v3_legacy_signing_key(void);
 void dup_onion_keys(crypto_pk_t **key, crypto_pk_t **last);
 void rotate_onion_key(void);
 crypto_pk_t *init_key_from_file(const char *fname, int generate,
-                                    int severity);
+                                    int severity, int log_greeting);
 void v3_authority_check_key_expiry(void);
 
-#ifdef CURVE25519_ENABLED
 di_digest256_map_t *construct_ntor_key_map(void);
 void ntor_key_map_free(di_digest256_map_t *map);
-#endif
 
 int router_initialize_tls_context(void);
 int init_keys(void);
+int init_keys_client(void);
 
 int check_whether_orport_reachable(void);
 int check_whether_dirport_reachable(void);
@@ -91,9 +90,13 @@ const uint8_t *router_get_my_id_digest(void);
 int router_extrainfo_digest_is_me(const char *digest);
 int router_is_me(const routerinfo_t *router);
 int router_pick_published_address(const or_options_t *options, uint32_t *addr);
+int router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e);
 int router_rebuild_descriptor(int force);
 char *router_dump_router_to_string(routerinfo_t *router,
-                                   crypto_pk_t *ident_key);
+                                   const crypto_pk_t *ident_key,
+                                   const crypto_pk_t *tap_key,
+                                   const curve25519_keypair_t *ntor_keypair,
+                                   const ed25519_keypair_t *signing_keypair);
 char *router_dump_exit_policy_to_string(const routerinfo_t *router,
                                          int include_ipv4,
                                          int include_ipv6);
@@ -108,7 +111,8 @@ int router_has_addr(const routerinfo_t *router, const tor_addr_t *addr);
 int router_has_orport(const routerinfo_t *router,
                       const tor_addr_port_t *orport);
 int extrainfo_dump_to_string(char **s, extrainfo_t *extrainfo,
-                             crypto_pk_t *ident_key);
+                             crypto_pk_t *ident_key,
+                             const ed25519_keypair_t *signing_keypair);
 int is_legal_nickname(const char *s);
 int is_legal_nickname_or_hexdigest(const char *s);
 int is_legal_hexdigest(const char *s);

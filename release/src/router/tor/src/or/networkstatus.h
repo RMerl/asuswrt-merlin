@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -11,6 +11,8 @@
 
 #ifndef TOR_NETWORKSTATUS_H
 #define TOR_NETWORKSTATUS_H
+
+#include "testsupport.h"
 
 void networkstatus_reset_warnings(void);
 void networkstatus_reset_download_failures(void);
@@ -35,16 +37,19 @@ routerstatus_t *networkstatus_vote_find_mutable_entry(networkstatus_t *ns,
                                               const char *digest);
 int networkstatus_vote_find_entry_idx(networkstatus_t *ns,
                                       const char *digest, int *found_out);
-download_status_t *router_get_dl_status_by_descriptor_digest(const char *d);
+
+MOCK_DECL(download_status_t *,router_get_dl_status_by_descriptor_digest,
+          (const char *d));
+
 const routerstatus_t *router_get_consensus_status_by_id(const char *digest);
 routerstatus_t *router_get_mutable_consensus_status_by_id(
                                    const char *digest);
 const routerstatus_t *router_get_consensus_status_by_descriptor_digest(
                                    networkstatus_t *consensus,
                                    const char *digest);
-routerstatus_t *router_get_mutable_consensus_status_by_descriptor_digest(
-                                   networkstatus_t *consensus,
-                                   const char *digest);
+MOCK_DECL(routerstatus_t *,
+          router_get_mutable_consensus_status_by_descriptor_digest,
+          (networkstatus_t *consensus, const char *digest));
 const routerstatus_t *router_get_consensus_status_by_nickname(
                                    const char *nickname,
                                    int warn_if_unnamed);
@@ -60,8 +65,8 @@ int consensus_is_waiting_for_certs(void);
 int client_would_use_router(const routerstatus_t *rs, time_t now,
                             const or_options_t *options);
 networkstatus_t *networkstatus_get_latest_consensus(void);
-networkstatus_t *networkstatus_get_latest_consensus_by_flavor(
-                                                  consensus_flavor_t f);
+MOCK_DECL(networkstatus_t *,networkstatus_get_latest_consensus_by_flavor,
+          (consensus_flavor_t f));
 networkstatus_t *networkstatus_get_live_consensus(time_t now);
 networkstatus_t *networkstatus_get_reasonably_live_consensus(time_t now,
                                                              int flavor);

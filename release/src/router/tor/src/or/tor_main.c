@@ -1,6 +1,6 @@
 /* Copyright 2001-2004 Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /** String describing which Tor Git repository version the source was
@@ -27,6 +27,10 @@ int tor_main(int argc, char *argv[]);
 int
 main(int argc, char *argv[])
 {
-  return tor_main(argc, argv);
+  int r = tor_main(argc, argv);
+  if (r < 0 || r > 255)
+    return 1;
+  else
+    return r;
 }
 

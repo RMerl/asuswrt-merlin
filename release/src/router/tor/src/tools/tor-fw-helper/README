@@ -1,0 +1,10 @@
+
+We no longer recommend the use of this tool.  Instead, please use the
+pure-Go version of tor-fw-helper available at
+     https://gitweb.torproject.org/tor-fw-helper.git
+
+Why?
+
+The C code here was fine, but frankly: we don't trust the underlying
+libraries. They don't seem to have been written with network security
+in mind, and we have very little faith in their safety.

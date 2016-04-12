@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "or.h"
@@ -20,8 +20,10 @@
 #include "networkstatus.h"
 #include "nodelist.h"
 #include "policies.h"
+#include "relay.h"
 #include "rendclient.h"
 #include "rendcommon.h"
+#include "rendservice.h"
 #include "rephist.h"
 #include "router.h"
 #include "routerlist.h"
@@ -63,8 +65,6 @@ static void directory_send_command(dir_connection_t *conn,
                              time_t if_modified_since);
 static int directory_handle_command(dir_connection_t *conn);
 static int body_is_plausible(const char *body, size_t body_len, int purpose);
-static int purpose_needs_anonymity(uint8_t dir_purpose,
-                                   uint8_t router_purpose);
 static char *http_get_header(const char *headers, const char *which);
 static void http_set_address_origin(const char *headers, connection_t *conn);
 static void connection_dir_download_routerdesc_failed(dir_connection_t *conn);
@@ -119,7 +119,7 @@ static void directory_initiate_command_rend(const tor_addr_t *addr,
 /** Return true iff the directory purpose <b>dir_purpose</b> (and if it's
  * fetching descriptors, it's fetching them for <b>router_purpose</b>)
  * must use an anonymous connection to a directory. */
-static int
+STATIC int
 purpose_needs_anonymity(uint8_t dir_purpose, uint8_t router_purpose)
 {
   if (get_options()->AllDirActionsPrivate)
@@ -197,9 +197,49 @@ dir_conn_purpose_to_string(int purpose)
   return "(unknown)";
 }
 
-/** Return true iff <b>identity_digest</b> is the digest of a router we
- * believe to support extrainfo downloads.  (If <b>is_authority</b> we do
- * additional checking that's only valid for authorities.) */
+/** Return the requisite directory information types. */
+STATIC dirinfo_type_t
+dir_fetch_type(int dir_purpose, int router_purpose, const char *resource)
+{
+  dirinfo_type_t type;
+  switch (dir_purpose) {
+    case DIR_PURPOSE_FETCH_EXTRAINFO:
+      type = EXTRAINFO_DIRINFO;
+      if (router_purpose == ROUTER_PURPOSE_BRIDGE)
+        type |= BRIDGE_DIRINFO;
+      else
+        type |= V3_DIRINFO;
+      break;
+    case DIR_PURPOSE_FETCH_SERVERDESC:
+      if (router_purpose == ROUTER_PURPOSE_BRIDGE)
+        type = BRIDGE_DIRINFO;
+      else
+        type = V3_DIRINFO;
+      break;
+    case DIR_PURPOSE_FETCH_STATUS_VOTE:
+    case DIR_PURPOSE_FETCH_DETACHED_SIGNATURES:
+    case DIR_PURPOSE_FETCH_CERTIFICATE:
+      type = V3_DIRINFO;
+      break;
+    case DIR_PURPOSE_FETCH_CONSENSUS:
+      type = V3_DIRINFO;
+      if (resource && !strcmp(resource, "microdesc"))
+        type |= MICRODESC_DIRINFO;
+      break;
+    case DIR_PURPOSE_FETCH_MICRODESC:
+      type = MICRODESC_DIRINFO;
+      break;
+    default:
+      log_warn(LD_BUG, "Unexpected purpose %d", (int)dir_purpose);
+      type = NO_DIRINFO;
+      break;
+  }
+  return type;
+}
+
+/** Return true iff <b>identity_digest</b> is the digest of a router which
+ * says that it caches extrainfos.  (If <b>is_authority</b> we always
+ * believe that to be true.) */
 int
 router_supports_extrainfo(const char *identity_digest, int is_authority)
 {
@@ -385,47 +425,21 @@ directory_pick_generic_dirserver(dirinfo_type_t type, int pds_flags,
  * Use <b>pds_flags</b> as arguments to router_pick_directory_server()
  * or router_pick_trusteddirserver().
  */
-void
-directory_get_from_dirserver(uint8_t dir_purpose, uint8_t router_purpose,
-                             const char *resource, int pds_flags)
+MOCK_IMPL(void, directory_get_from_dirserver, (uint8_t dir_purpose,
+                                               uint8_t router_purpose,
+                                               const char *resource,
+                                               int pds_flags))
 {
   const routerstatus_t *rs = NULL;
   const or_options_t *options = get_options();
   int prefer_authority = directory_fetches_from_authorities(options);
   int require_authority = 0;
   int get_via_tor = purpose_needs_anonymity(dir_purpose, router_purpose);
-  dirinfo_type_t type;
+  dirinfo_type_t type = dir_fetch_type(dir_purpose, router_purpose, resource);
   time_t if_modified_since = 0;
 
-  /* FFFF we could break this switch into its own function, and call
-   * it elsewhere in directory.c. -RD */
-  switch (dir_purpose) {
-    case DIR_PURPOSE_FETCH_EXTRAINFO:
-      type = EXTRAINFO_DIRINFO |
-             (router_purpose == ROUTER_PURPOSE_BRIDGE ? BRIDGE_DIRINFO :
-                                                        V3_DIRINFO);
-      break;
-    case DIR_PURPOSE_FETCH_SERVERDESC:
-      type = (router_purpose == ROUTER_PURPOSE_BRIDGE ? BRIDGE_DIRINFO :
-                                                        V3_DIRINFO);
-      break;
-    case DIR_PURPOSE_FETCH_STATUS_VOTE:
-    case DIR_PURPOSE_FETCH_DETACHED_SIGNATURES:
-    case DIR_PURPOSE_FETCH_CERTIFICATE:
-      type = V3_DIRINFO;
-      break;
-    case DIR_PURPOSE_FETCH_CONSENSUS:
-      type = V3_DIRINFO;
-      if (resource && !strcmp(resource,"microdesc"))
-        type |= MICRODESC_DIRINFO;
-      break;
-    case DIR_PURPOSE_FETCH_MICRODESC:
-      type = MICRODESC_DIRINFO;
-      break;
-    default:
-      log_warn(LD_BUG, "Unexpected purpose %d", (int)dir_purpose);
-      return;
-  }
+  if (type == NO_DIRINFO)
+    return;
 
   if (dir_purpose == DIR_PURPOSE_FETCH_CONSENSUS) {
     int flav = FLAV_NS;
@@ -433,18 +447,33 @@ directory_get_from_dirserver(uint8_t dir_purpose, uint8_t router_purpose,
     if (resource)
       flav = networkstatus_parse_flavor_name(resource);
 
+    /* DEFAULT_IF_MODIFIED_SINCE_DELAY is 1/20 of the default consensus
+     * period of 1 hour.
+     */
+#define DEFAULT_IF_MODIFIED_SINCE_DELAY (180)
     if (flav != -1) {
       /* IF we have a parsed consensus of this type, we can do an
        * if-modified-time based on it. */
       v = networkstatus_get_latest_consensus_by_flavor(flav);
-      if (v)
-        if_modified_since = v->valid_after + 180;
+      if (v) {
+        /* In networks with particularly short V3AuthVotingIntervals,
+         * ask for the consensus if it's been modified since half the
+         * V3AuthVotingInterval of the most recent consensus. */
+        time_t ims_delay = DEFAULT_IF_MODIFIED_SINCE_DELAY;
+        if (v->fresh_until > v->valid_after
+            && ims_delay > (v->fresh_until - v->valid_after)/2) {
+          ims_delay = (v->fresh_until - v->valid_after)/2;
+        }
+        if_modified_since = v->valid_after + ims_delay;
+      }
     } else {
       /* Otherwise it might be a consensus we don't parse, but which we
        * do cache.  Look at the cached copy, perhaps. */
       cached_dir_t *cd = dirserv_get_consensus(resource);
+      /* We have no method of determining the voting interval from an
+       * unparsed consensus, so we use the default. */
       if (cd)
-        if_modified_since = cd->published + 180;
+        if_modified_since = cd->published + DEFAULT_IF_MODIFIED_SINCE_DELAY;
     }
   }
 
@@ -452,7 +481,7 @@ directory_get_from_dirserver(uint8_t dir_purpose, uint8_t router_purpose,
     return;
 
   if (!get_via_tor) {
-    if (options->UseBridges && type != BRIDGE_DIRINFO) {
+    if (options->UseBridges && !(type & BRIDGE_DIRINFO)) {
       /* We want to ask a running bridge for which we have a descriptor.
        *
        * When we ask choose_random_entry() for a bridge, we specify what
@@ -479,7 +508,7 @@ directory_get_from_dirserver(uint8_t dir_purpose, uint8_t router_purpose,
                            "nodes are available yet.");
       return;
     } else {
-      if (prefer_authority || type == BRIDGE_DIRINFO) {
+      if (prefer_authority || (type & BRIDGE_DIRINFO)) {
         /* only ask authdirservers, and don't ask myself */
         rs = router_pick_trusteddirserver(type, pds_flags);
         if (rs == NULL && (pds_flags & (PDS_NO_EXISTING_SERVERDESC_FETCH|
@@ -506,29 +535,25 @@ directory_get_from_dirserver(uint8_t dir_purpose, uint8_t router_purpose,
           return;
         }
       }
-      if (!rs && type != BRIDGE_DIRINFO) {
+      if (!rs && !(type & BRIDGE_DIRINFO)) {
         /* */
         rs = directory_pick_generic_dirserver(type, pds_flags,
                                               dir_purpose);
-        if (!rs) {
-          /*XXXX024 I'm pretty sure this can never do any good, since
-           * rs isn't set. */
+        if (!rs)
           get_via_tor = 1; /* last resort: try routing it via Tor */
-        }
       }
-    }
-  } else { /* get_via_tor */
-    /* Never use fascistfirewall; we're going via Tor. */
-    if (1) {
-      /* anybody with a non-zero dirport will do. Disregard firewalls. */
-      pds_flags |= PDS_IGNORE_FASCISTFIREWALL;
-      rs = router_pick_directory_server(type, pds_flags);
-      /* If we have any hope of building an indirect conn, we know some router
-       * descriptors.  If (rs==NULL), we can't build circuits anyway, so
-       * there's no point in falling back to the authorities in this case. */
     }
   }
 
+  if (get_via_tor) {
+    /* Never use fascistfirewall; we're going via Tor. */
+    pds_flags |= PDS_IGNORE_FASCISTFIREWALL;
+    rs = router_pick_directory_server(type, pds_flags);
+  }
+
+  /* If we have any hope of building an indirect conn, we know some router
+   * descriptors.  If (rs==NULL), we can't build circuits anyway, so
+   * there's no point in falling back to the authorities in this case. */
   if (rs) {
     const dir_indirection_t indirection =
       get_via_tor ? DIRIND_ANONYMOUS : DIRIND_ONEHOP;
@@ -1255,7 +1280,8 @@ directory_send_command(dir_connection_t *conn,
       return;
   }
 
-  if (strlen(proxystring) + strlen(url) >= 4096) {
+  /* warn in the non-tunneled case */
+  if (direct && (strlen(proxystring) + strlen(url) >= 4096)) {
     log_warn(LD_BUG,
              "Squid does not like URLs longer than 4095 bytes, and this "
              "one is %d bytes long: %s%s",
@@ -2073,49 +2099,77 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
   }
 
   if (conn->base_.purpose == DIR_PURPOSE_FETCH_RENDDESC_V2) {
-    #define SEND_HS_DESC_FAILED_EVENT() ( \
+    #define SEND_HS_DESC_FAILED_EVENT(reason) ( \
       control_event_hs_descriptor_failed(conn->rend_data, \
-                                         conn->identity_digest) )
+                                         conn->identity_digest, \
+                                         reason) )
+    #define SEND_HS_DESC_FAILED_CONTENT() ( \
+      control_event_hs_descriptor_content(conn->rend_data->onion_address, \
+                                          conn->requested_resource, \
+                                          conn->identity_digest, \
+                                          NULL) )
     tor_assert(conn->rend_data);
     log_info(LD_REND,"Received rendezvous descriptor (size %d, status %d "
              "(%s))",
              (int)body_len, status_code, escaped(reason));
     switch (status_code) {
       case 200:
-        switch (rend_cache_store_v2_desc_as_client(body, conn->rend_data)) {
+      {
+        rend_cache_entry_t *entry = NULL;
+
+        switch (rend_cache_store_v2_desc_as_client(body,
+                                  conn->requested_resource, conn->rend_data,
+                                  &entry)) {
           case RCS_BADDESC:
           case RCS_NOTDIR: /* Impossible */
             log_warn(LD_REND,"Fetching v2 rendezvous descriptor failed. "
                      "Retrying at another directory.");
             /* We'll retry when connection_about_to_close_connection()
              * cleans this dir conn up. */
-            SEND_HS_DESC_FAILED_EVENT();
+            SEND_HS_DESC_FAILED_EVENT("BAD_DESC");
+            SEND_HS_DESC_FAILED_CONTENT();
             break;
           case RCS_OKAY:
           default:
+          {
+            char service_id[REND_SERVICE_ID_LEN_BASE32 + 1];
+            /* Should never be NULL here for an OKAY returned code. */
+            tor_assert(entry);
+            rend_get_service_id(entry->parsed->pk, service_id);
+
             /* success. notify pending connections about this. */
             log_info(LD_REND, "Successfully fetched v2 rendezvous "
                      "descriptor.");
-            control_event_hs_descriptor_received(conn->rend_data,
+            control_event_hs_descriptor_received(service_id,
+                                                 conn->rend_data,
                                                  conn->identity_digest);
+            control_event_hs_descriptor_content(service_id,
+                                                conn->requested_resource,
+                                                conn->identity_digest,
+                                                body);
             conn->base_.purpose = DIR_PURPOSE_HAS_FETCHED_RENDDESC_V2;
-            rend_client_desc_trynow(conn->rend_data->onion_address);
+            rend_client_desc_trynow(service_id);
+            memwipe(service_id, 0, sizeof(service_id));
             break;
+          }
         }
         break;
+      }
       case 404:
         /* Not there. We'll retry when
          * connection_about_to_close_connection() cleans this conn up. */
         log_info(LD_REND,"Fetching v2 rendezvous descriptor failed: "
                          "Retrying at another directory.");
-        SEND_HS_DESC_FAILED_EVENT();
+        SEND_HS_DESC_FAILED_EVENT("NOT_FOUND");
+        SEND_HS_DESC_FAILED_CONTENT();
         break;
       case 400:
         log_warn(LD_REND, "Fetching v2 rendezvous descriptor failed: "
                  "http status 400 (%s). Dirserver didn't like our "
                  "v2 rendezvous query? Retrying at another directory.",
                  escaped(reason));
-        SEND_HS_DESC_FAILED_EVENT();
+        SEND_HS_DESC_FAILED_EVENT("QUERY_REJECTED");
+        SEND_HS_DESC_FAILED_CONTENT();
         break;
       default:
         log_warn(LD_REND, "Fetching v2 rendezvous descriptor failed: "
@@ -2124,12 +2178,16 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
                  "Retrying at another directory.",
                  status_code, escaped(reason), conn->base_.address,
                  conn->base_.port);
-        SEND_HS_DESC_FAILED_EVENT();
+        SEND_HS_DESC_FAILED_EVENT("UNEXPECTED");
+        SEND_HS_DESC_FAILED_CONTENT();
         break;
     }
   }
 
   if (conn->base_.purpose == DIR_PURPOSE_UPLOAD_RENDDESC_V2) {
+    #define SEND_HS_DESC_UPLOAD_FAILED_EVENT(reason) ( \
+      control_event_hs_descriptor_upload_failed(conn->identity_digest, \
+                                                reason) )
     log_info(LD_REND,"Uploaded rendezvous descriptor (status %d "
              "(%s))",
              status_code, escaped(reason));
@@ -2138,17 +2196,21 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
         log_info(LD_REND,
                  "Uploading rendezvous descriptor: finished with status "
                  "200 (%s)", escaped(reason));
+        control_event_hs_descriptor_uploaded(conn->identity_digest);
+        rend_service_desc_has_uploaded(conn->rend_data);
         break;
       case 400:
         log_warn(LD_REND,"http status 400 (%s) response from dirserver "
                  "'%s:%d'. Malformed rendezvous descriptor?",
                  escaped(reason), conn->base_.address, conn->base_.port);
+        SEND_HS_DESC_UPLOAD_FAILED_EVENT("UPLOAD_REJECTED");
         break;
       default:
         log_warn(LD_REND,"http status %d (%s) response unexpected (server "
                  "'%s:%d').",
                  status_code, escaped(reason), conn->base_.address,
                  conn->base_.port);
+        SEND_HS_DESC_UPLOAD_FAILED_EVENT("UNEXPECTED");
         break;
     }
   }
@@ -2215,8 +2277,10 @@ connection_dir_process_inbuf(dir_connection_t *conn)
     MAX_VOTE_DL_SIZE : MAX_DIRECTORY_OBJECT_SIZE;
 
   if (connection_get_inbuf_len(TO_CONN(conn)) > max_size) {
-    log_warn(LD_HTTP, "Too much data received from directory connection: "
-             "denial of service attempt, or you need to upgrade?");
+    log_warn(LD_HTTP,
+             "Too much data received from directory connection (%s): "
+             "denial of service attempt, or you need to upgrade?",
+             conn->base_.address);
     connection_mark_for_close(TO_CONN(conn));
     return -1;
   }
@@ -2261,6 +2325,7 @@ write_http_status_line(dir_connection_t *conn, int status,
     log_warn(LD_BUG,"status line too long.");
     return;
   }
+  log_debug(LD_DIRSERV,"Wrote status 'HTTP/1.0 %d %s'", status, reason_phrase);
   connection_write_to_buf(buf, strlen(buf), TO_CONN(conn));
 }
 
@@ -2526,6 +2591,24 @@ client_likes_consensus(networkstatus_t *v, const char *want_url)
   return (have >= need_at_least);
 }
 
+/** Return the compression level we should use for sending a compressed
+ * response of size <b>n_bytes</b>. */
+static zlib_compression_level_t
+choose_compression_level(ssize_t n_bytes)
+{
+  if (! have_been_under_memory_pressure()) {
+    return HIGH_COMPRESSION; /* we have plenty of RAM. */
+  } else if (n_bytes < 0) {
+    return HIGH_COMPRESSION; /* unknown; might be big. */
+  } else if (n_bytes < 1024) {
+    return LOW_COMPRESSION;
+  } else if (n_bytes < 2048) {
+    return MEDIUM_COMPRESSION;
+  } else {
+    return HIGH_COMPRESSION;
+  }
+}
+
 /** Helper function: called when a dirserver gets a complete HTTP GET
  * request.  Look for a request for a directory or for a rendezvous
  * service descriptor.  On finding one, write a response into
@@ -2557,8 +2640,11 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
   if ((header = http_get_header(headers, "If-Modified-Since: "))) {
     struct tm tm;
     if (parse_http_time(header, &tm) == 0) {
-      if (tor_timegm(&tm, &if_modified_since)<0)
+      if (tor_timegm(&tm, &if_modified_since)<0) {
         if_modified_since = 0;
+      } else {
+        log_debug(LD_DIRSERV, "If-Modified-Since is '%s'.", escaped(header));
+      }
     }
     /* The correct behavior on a malformed If-Modified-Since header is to
      * act as if no If-Modified-Since header had been given. */
@@ -2708,7 +2794,7 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
                                smartlist_len(dir_fps) == 1 ? lifetime : 0);
     conn->fingerprint_stack = dir_fps;
     if (! compressed)
-      conn->zlib_state = tor_zlib_new(0, ZLIB_METHOD);
+      conn->zlib_state = tor_zlib_new(0, ZLIB_METHOD, HIGH_COMPRESSION);
 
     /* Prime the connection with some data. */
     conn->dir_spool_src = DIR_SPOOL_NETWORKSTATUS;
@@ -2796,7 +2882,8 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
 
     if (smartlist_len(items)) {
       if (compressed) {
-        conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD);
+        conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD,
+                                    choose_compression_level(estimated_len));
         SMARTLIST_FOREACH(items, const char *, c,
                  connection_write_to_buf_zlib(c, strlen(c), conn, 0));
         connection_write_to_buf_zlib("", 0, conn, 1);
@@ -2845,7 +2932,8 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     conn->fingerprint_stack = fps;
 
     if (compressed)
-      conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD);
+      conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD,
+                                      choose_compression_level(dlen));
 
     connection_dirserv_flushed_some(conn);
     goto done;
@@ -2913,7 +3001,8 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
       }
       write_http_response_header(conn, -1, compressed, cache_lifetime);
       if (compressed)
-        conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD);
+        conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD,
+                                        choose_compression_level(dlen));
       /* Prime the connection with some data. */
       connection_dirserv_flushed_some(conn);
     }
@@ -2988,7 +3077,8 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
 
     write_http_response_header(conn, compressed?-1:len, compressed, 60*60);
     if (compressed) {
-      conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD);
+      conn->zlib_state = tor_zlib_new(1, ZLIB_METHOD,
+                                      choose_compression_level(len));
       SMARTLIST_FOREACH(certs, authority_cert_t *, c,
             connection_write_to_buf_zlib(c->cache_info.signed_descriptor_body,
                                          c->cache_info.signed_descriptor_len,
@@ -3005,13 +3095,12 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     goto done;
   }
 
-  if (options->HidServDirectoryV2 &&
-      connection_dir_is_encrypted(conn) &&
+  if (connection_dir_is_encrypted(conn) &&
        !strcmpstart(url,"/tor/rendezvous2/")) {
     /* Handle v2 rendezvous descriptor fetch request. */
     const char *descp;
     const char *query = url + strlen("/tor/rendezvous2/");
-    if (strlen(query) == REND_DESC_ID_V2_LEN_BASE32) {
+    if (rend_valid_descriptor_id(query)) {
       log_info(LD_REND, "Got a v2 rendezvous descriptor request for ID '%s'",
                safe_str(escaped(query)));
       switch (rend_cache_lookup_v2_desc_as_dir(query, &descp)) {
@@ -3150,8 +3239,7 @@ directory_handle_command_post(dir_connection_t *conn, const char *headers,
   log_debug(LD_DIRSERV,"rewritten url as '%s'.", escaped(url));
 
   /* Handle v2 rendezvous service publish request. */
-  if (options->HidServDirectoryV2 &&
-      connection_dir_is_encrypted(conn) &&
+  if (connection_dir_is_encrypted(conn) &&
       !strcmpstart(url,"/tor/rendezvous2/publish")) {
     switch (rend_cache_store_v2_desc_as_dir(body)) {
       case RCS_NOTDIR:
@@ -3391,6 +3479,9 @@ find_dl_schedule_and_len(download_status_t *dls, int server)
     default:
       tor_assert(0);
   }
+
+  /* Impossible, but gcc will fail with -Werror without a `return`. */
+  return NULL;
 }
 
 /** Called when an attempt to download <b>dls</b> has failed with HTTP status
@@ -3449,6 +3540,9 @@ download_status_increment_failure(download_status_t *dls, int status_code,
 void
 download_status_reset(download_status_t *dls)
 {
+  if (dls->n_download_failures == IMPOSSIBLE_TO_DOWNLOAD)
+    return; /* Don't reset this. */
+
   const smartlist_t *schedule = find_dl_schedule_and_len(
                           dls, get_options()->DirPort_set);
 

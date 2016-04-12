@@ -15,18 +15,12 @@ else
 tor_platform_source=
 endif
 
-EXTRA_DIST+= src/or/ntmain.c src/or/or_sha1.i src/or/Makefile.nmake
+EXTRA_DIST+= src/or/ntmain.c src/or/Makefile.nmake
 
 if USE_EXTERNAL_EVDNS
 evdns_source=
 else
 evdns_source=src/ext/eventdns.c
-endif
-
-if CURVE25519_ENABLED
-onion_ntor_source=src/or/onion_ntor.c
-else
-onion_ntor_source=
 endif
 
 LIBTOR_A_SOURCES = \
@@ -49,16 +43,18 @@ LIBTOR_A_SOURCES = \
 	src/or/connection_or.c				\
 	src/or/control.c				\
 	src/or/cpuworker.c				\
+	src/or/dircollate.c				\
 	src/or/directory.c				\
 	src/or/dirserv.c				\
 	src/or/dirvote.c				\
 	src/or/dns.c					\
 	src/or/dnsserv.c				\
-        src/or/fp_pair.c				\
+	src/or/fp_pair.c				\
 	src/or/geoip.c					\
 	src/or/entrynodes.c				\
 	src/or/ext_orport.c				\
 	src/or/hibernate.c				\
+	src/or/keypin.c					\
 	src/or/main.c					\
 	src/or/microdesc.c				\
 	src/or/networkstatus.c				\
@@ -70,6 +66,7 @@ LIBTOR_A_SOURCES = \
 	src/or/policies.c				\
 	src/or/reasons.c				\
 	src/or/relay.c					\
+	src/or/rendcache.c				\
 	src/or/rendclient.c				\
 	src/or/rendcommon.c				\
 	src/or/rendmid.c				\
@@ -77,33 +74,31 @@ LIBTOR_A_SOURCES = \
 	src/or/rephist.c				\
 	src/or/replaycache.c				\
 	src/or/router.c					\
+	src/or/routerkeys.c				\
 	src/or/routerlist.c				\
 	src/or/routerparse.c				\
 	src/or/routerset.c				\
+	src/or/scheduler.c				\
 	src/or/statefile.c				\
 	src/or/status.c					\
+	src/or/torcert.c				\
+	src/or/onion_ntor.c				\
 	$(evdns_source)					\
-	$(tor_platform_source)				\
-	$(onion_ntor_source)				\
-	src/or/config_codedigest.c
+	$(tor_platform_source)
 
 src_or_libtor_a_SOURCES = $(LIBTOR_A_SOURCES)
 src_or_libtor_testing_a_SOURCES = $(LIBTOR_A_SOURCES)
-
-#libtor_a_LIBADD = ../common/libor.a ../common/libor-crypto.a \
-#	../common/libor-event.a
-
 
 src_or_tor_SOURCES = src/or/tor_main.c
 AM_CPPFLAGS += -I$(srcdir)/src/or -Isrc/or
 
 src/or/tor_main.o: micro-revision.i
 
-AM_CPPFLAGS += -DSHARE_DATADIR="\"$(datadir)\"" \
-        -DLOCALSTATEDIR="\"$(localstatedir)\"" \
-        -DBINDIR="\"$(bindir)\""
+AM_CPPFLAGS += -DSHARE_DATADIR="\"$(datadir)\""		\
+		-DLOCALSTATEDIR="\"$(localstatedir)\""	\
+		-DBINDIR="\"$(bindir)\""
 
-src_or_libtor_testing_a_CPPFLAGS = -DTOR_UNIT_TESTS $(AM_CPPFLAGS)
+src_or_libtor_testing_a_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_CPPFLAGS)
 src_or_libtor_testing_a_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 
 # -L flags need to go in LDFLAGS. -l flags need to go in LDADD.
@@ -114,20 +109,23 @@ src_or_libtor_testing_a_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 src_or_tor_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
 src_or_tor_LDADD = src/or/libtor.a src/common/libor.a \
 	src/common/libor-crypto.a $(LIBDONNA) \
-	src/common/libor-event.a \
+	src/common/libor-event.a src/trunnel/libor-trunnel.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
-	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
+	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
 
 if COVERAGE_ENABLED
 src_or_tor_cov_SOURCES = src/or/tor_main.c
-src_or_tor_cov_CPPFLAGS = -DTOR_UNIT_TESTS $(AM_CPPFLAGS)
+src_or_tor_cov_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_CPPFLAGS)
 src_or_tor_cov_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 src_or_tor_cov_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
 src_or_tor_cov_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
 	src/common/libor-crypto-testing.a $(LIBDONNA) \
-	src/common/libor-event-testing.a \
+	src/common/libor-event-testing.a src/trunnel/libor-trunnel-testing.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
-	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
+	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
+export TESTING_TOR_BINARY=$(top_builddir)/src/or/tor-cov
+else
+export TESTING_TOR_BINARY=$(top_builddir)/src/or/tor
 endif
 
 ORHEADERS = \
@@ -150,10 +148,12 @@ ORHEADERS = \
 	src/or/connection_or.h				\
 	src/or/control.h				\
 	src/or/cpuworker.h				\
+	src/or/dircollate.h				\
 	src/or/directory.h				\
 	src/or/dirserv.h				\
 	src/or/dirvote.h				\
 	src/or/dns.h					\
+	src/or/dns_structs.h				\
 	src/or/dnsserv.h				\
 	src/or/eventdns_tor.h				\
 	src/or/ext_orport.h				\
@@ -161,6 +161,7 @@ ORHEADERS = \
 	src/or/geoip.h					\
 	src/or/entrynodes.h				\
 	src/or/hibernate.h				\
+	src/or/keypin.h					\
 	src/or/main.h					\
 	src/or/microdesc.h				\
 	src/or/networkstatus.h				\
@@ -175,6 +176,7 @@ ORHEADERS = \
 	src/or/policies.h				\
 	src/or/reasons.h				\
 	src/or/relay.h					\
+	src/or/rendcache.h				\
 	src/or/rendclient.h				\
 	src/or/rendcommon.h				\
 	src/or/rendmid.h				\
@@ -182,44 +184,36 @@ ORHEADERS = \
 	src/or/rephist.h				\
 	src/or/replaycache.h				\
 	src/or/router.h					\
+	src/or/routerkeys.h				\
 	src/or/routerlist.h				\
+	src/or/routerkeys.h				\
 	src/or/routerset.h				\
 	src/or/routerparse.h				\
+	src/or/scheduler.h				\
 	src/or/statefile.h				\
-	src/or/status.h
+	src/or/status.h					\
+	src/or/torcert.h
 
 noinst_HEADERS+= $(ORHEADERS) micro-revision.i
 
-src/or/config_codedigest.o: src/or/or_sha1.i
-
 micro-revision.i: FORCE
-	@rm -f micro-revision.tmp;				\
-	if test -d "$(top_srcdir)/.git" &&				\
-	  test -x "`which git 2>&1;true`"; then				\
-	  HASH="`cd "$(top_srcdir)" && git rev-parse --short=16 HEAD`";	\
-	  echo \"$$HASH\" > micro-revision.tmp; 			\
-        fi;								\
-	if test ! -f micro-revision.tmp ; then			\
-	  if test ! -f micro-revision.i ; then			\
-	    echo '""' > micro-revision.i;			\
-	  fi;								\
-	elif test ! -f micro-revision.i ||			\
-	  test x"`cat micro-revision.tmp`" != x"`cat micro-revision.i`"; then \
-	  mv micro-revision.tmp micro-revision.i;		\
-	fi; true
+	$(AM_V_at)rm -f micro-revision.tmp; \
+	if test -d "$(top_srcdir)/.git" && \
+			test -x "`which git 2>&1;true`"; then \
+		HASH="`cd "$(top_srcdir)" && git rev-parse --short=16 HEAD`"; \
+		echo \"$$HASH\" > micro-revision.tmp; \
+	fi; \
+	if test ! -f micro-revision.tmp; then \
+		if test ! -f micro-revision.i; then \
+			echo '""' > micro-revision.i; \
+		fi; \
+	elif test ! -f micro-revision.i || \
+			test x"`cat micro-revision.tmp`" != x"`cat micro-revision.i`"; then \
+		mv micro-revision.tmp micro-revision.i; \
+	fi; \
+	rm -f micro-revision.tmp; \
+	true
 
-src/or/or_sha1.i: $(src_or_tor_SOURCES) $(src_or_libtor_a_SOURCES) $(ORHEADERS)
-	$(AM_V_GEN)if test "@SHA1SUM@" != none; then \
-	  (cd "$(srcdir)" && "@SHA1SUM@" $(src_or_tor_SOURCES) $(src_or_libtor_a_SOURCES) $(ORHEADERS) ) | \
-	  "@SED@" -n 's/^\(.*\)$$/"\1\\n"/p' > src/or/or_sha1.i; \
-	elif test "@OPENSSL@" != none; then \
-	  (cd "$(srcdir)" && "@OPENSSL@" sha1 $(src_or_tor_SOURCES) $(src_or_libtor_a_SOURCES) $(ORHEADERS)) | \
-	  "@SED@" -n 's/SHA1(\(.*\))= \(.*\)/"\2  \1\\n"/p' > src/or/or_sha1.i; \
-	else \
-	  rm src/or/or_sha1.i; \
-	  touch src/or/or_sha1.i; \
-	fi
-
-CLEANFILES+= micro-revision.i src/or/micro-revision.i
+CLEANFILES+= micro-revision.i src/or/micro-revision.i micro-revision.tmp
 
 FORCE:

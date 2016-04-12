@@ -1,0 +1,86 @@
+From 2fdafa8d069baec3d922ad5118588612f4d8309a Mon Sep 17 00:00:00 2001
+From: Shibby <shibby@openlinksys.info>
+Date: Fri, 19 Feb 2016 12:05:27 +0100
+Subject: [PATCH] TOR: check NPTL support
+
+Only NPTL version of uClibc's libpthread provides 'pthread_condattr_setclock'. Check for it in configure to avoid linking errors.
+---
+ release/src-rt-6.x.4708/router/tor/configure                  | 11 +++++++++++
+ release/src-rt-6.x.4708/router/tor/configure.ac               |  1 +
+ release/src-rt-6.x.4708/router/tor/orconfig.h.in              |  3 +++
+ .../src-rt-6.x.4708/router/tor/src/common/compat_pthreads.c   |  4 ++--
+ 4 files changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/release/src-rt-6.x.4708/router/tor/configure b/release/src-rt-6.x.4708/router/tor/configure
+index 2b44c8d..1faab89 100755
+--- a/release/src-rt-6.x.4708/router/tor/configure
++++ b/release/src-rt-6.x.4708/router/tor/configure
+@@ -11836,6 +11836,17 @@ _ACEOF
+ fi
+ done
+ 
++  for ac_func in pthread_condattr_setclock
++do :
++  ac_fn_c_check_func "$LINENO" "pthread_condattr_setclock" "ac_cv_func_pthread_condattr_setclock"
++if test "x$ac_cv_func_pthread_condattr_setclock" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_PTHREAD_CONDATTR_SETCLOCK 1
++_ACEOF
++
++fi
++done
++
+ fi
+ 
+ 
+diff --git a/release/src-rt-6.x.4708/router/tor/configure.ac b/release/src-rt-6.x.4708/router/tor/configure.ac
+index 6c72971..73f7e54 100644
+--- a/release/src-rt-6.x.4708/router/tor/configure.ac
++++ b/release/src-rt-6.x.4708/router/tor/configure.ac
+@@ -425,6 +425,7 @@ AC_CHECK_FUNCS(
+ if test "$bwin32" != true; then
+   AC_CHECK_HEADERS(pthread.h)
+   AC_CHECK_FUNCS(pthread_create)
++  AC_CHECK_FUNCS(pthread_condattr_setclock)
+ fi
+ 
+ if test "$bwin32" = true; then
+diff --git a/release/src-rt-6.x.4708/router/tor/orconfig.h.in b/release/src-rt-6.x.4708/router/tor/orconfig.h.in
+index 5b3b9c9..ba3ac54 100644
+--- a/release/src-rt-6.x.4708/router/tor/orconfig.h.in
++++ b/release/src-rt-6.x.4708/router/tor/orconfig.h.in
+@@ -268,6 +268,9 @@
+ /* Define to 1 if you have the `pthread_create' function. */
+ #undef HAVE_PTHREAD_CREATE
+ 
++/* Define to 1 if you have the `pthread_condattr_setclock' function. */
++#undef HAVE_PTHREAD_CONDATTR_SETCLOCK
++
+ /* Define to 1 if you have the <pthread.h> header file. */
+ #undef HAVE_PTHREAD_H
+ 
+diff --git a/release/src-rt-6.x.4708/router/tor/src/common/compat_pthreads.c b/release/src-rt-6.x.4708/router/tor/src/common/compat_pthreads.c
+index 4b32fc9..736373b 100644
+--- a/release/src-rt-6.x.4708/router/tor/src/common/compat_pthreads.c
++++ b/release/src-rt-6.x.4708/router/tor/src/common/compat_pthreads.c
+@@ -185,7 +185,7 @@ tor_cond_init(tor_cond_t *cond)
+     return -1;
+   }
+ 
+-#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
++#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC) && defined(HAVE_PTHREAD_CONDATTR_SETCLOCK)
+   /* Use monotonic time so when we timedwait() on it, any clock adjustment
+    * won't affect the timeout value. */
+   if (pthread_condattr_setclock(&condattr, CLOCK_MONOTONIC)) {
+@@ -234,7 +234,7 @@ tor_cond_wait(tor_cond_t *cond, tor_mutex_t *mutex, const struct timeval *tv)
+     struct timeval tvnow, tvsum;
+     struct timespec ts;
+     while (1) {
+-#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
++#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC) && defined(HAVE_PTHREAD_CONDATTR_SETCLOCK)
+       if (clock_gettime(CLOCK_MONOTONIC, &ts) < 0) {
+         return -1;
+       }
+-- 
+2.7.4.1.g5468f9e
+

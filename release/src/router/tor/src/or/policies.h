@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -18,6 +18,12 @@
  */
 #define POLICY_BUF_LEN 72
 
+#define EXIT_POLICY_IPV6_ENABLED   (1 << 0)
+#define EXIT_POLICY_REJECT_PRIVATE (1 << 1)
+#define EXIT_POLICY_ADD_DEFAULT    (1 << 2)
+
+typedef int exit_policy_parser_cfg_t;
+
 int firewall_is_fascist_or(void);
 int fascist_firewall_allows_address_or(const tor_addr_t *addr, uint16_t port);
 int fascist_firewall_allows_or(const routerinfo_t *ri);
@@ -27,7 +33,6 @@ int dir_policy_permits_address(const tor_addr_t *addr);
 int socks_policy_permits_address(const tor_addr_t *addr);
 int authdir_policy_permits_address(uint32_t addr, uint16_t port);
 int authdir_policy_valid_address(uint32_t addr, uint16_t port);
-int authdir_policy_baddir_address(uint32_t addr, uint16_t port);
 int authdir_policy_badexit_address(uint32_t addr, uint16_t port);
 
 int validate_addr_policies(const or_options_t *options, char **msg);
@@ -37,16 +42,22 @@ int policies_parse_from_options(const or_options_t *options);
 
 addr_policy_t *addr_policy_get_canonical_entry(addr_policy_t *ent);
 int cmp_addr_policies(smartlist_t *a, smartlist_t *b);
-addr_policy_result_t compare_tor_addr_to_addr_policy(const tor_addr_t *addr,
-                              uint16_t port, const smartlist_t *policy);
+MOCK_DECL(addr_policy_result_t, compare_tor_addr_to_addr_policy,
+    (const tor_addr_t *addr, uint16_t port, const smartlist_t *policy));
 
 addr_policy_result_t compare_tor_addr_to_node_policy(const tor_addr_t *addr,
                               uint16_t port, const node_t *node);
 
+int policies_parse_exit_policy_from_options(const or_options_t *or_options,
+                                            uint32_t local_address,
+                                            tor_addr_t *ipv6_local_address,
+                                            int reject_interface_addresses,
+                                            smartlist_t **result);
 int policies_parse_exit_policy(config_line_t *cfg, smartlist_t **dest,
-                               int ipv6exit,
-                               int rejectprivate, uint32_t local_address,
-                               int add_default_policy);
+                               exit_policy_parser_cfg_t options,
+                               uint32_t local_address,
+                               tor_addr_t *ipv6_local_address,
+                               int reject_interface_addresses);
 void policies_exit_policy_append_reject_star(smartlist_t **dest);
 void addr_policy_append_reject_addr(smartlist_t **dest,
                                     const tor_addr_t *addr);

@@ -1,4 +1,4 @@
-# Copyright 2013, The Tor Project, Inc
+# Copyright 2013-2015, The Tor Project, Inc
 # See LICENSE for licensing information
 
 """
@@ -36,7 +36,7 @@ LINES = sys.stdin.readlines()
 for I in range(len(LINES)):
     if matches(LINES[I:], FUNCNAMES):
         print("OK")
-        break
+        sys.exit(0)
 else:
     print("BAD")
-
+    sys.exit(1)

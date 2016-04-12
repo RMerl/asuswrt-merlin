@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -34,10 +34,9 @@
 
 int connection_dirserv_flushed_some(dir_connection_t *conn);
 
-int dirserv_add_own_fingerprint(const char *nickname, crypto_pk_t *pk);
+int dirserv_add_own_fingerprint(crypto_pk_t *pk);
 int dirserv_load_fingerprint_file(void);
 void dirserv_free_fingerprint_list(void);
-const char *dirserv_get_nickname_by_digest(const char *digest);
 enum was_router_added_t dirserv_add_multiple_descriptors(
                                      const char *desc, uint8_t purpose,
                                      const char *source,
@@ -85,7 +84,8 @@ int authdir_wants_to_reject_router(routerinfo_t *ri, const char **msg,
                                    int complain,
                                    int *valid_out);
 uint32_t dirserv_router_get_status(const routerinfo_t *router,
-                                   const char **msg);
+                                   const char **msg,
+                                   int severity);
 void dirserv_set_node_flags_from_authoritative_status(node_t *node,
                                                       uint32_t authstatus);
 
@@ -105,7 +105,11 @@ void dirserv_free_all(void);
 void cached_dir_decref(cached_dir_t *d);
 cached_dir_t *new_cached_dir(char *s, time_t published);
 
+int validate_recommended_package_line(const char *line);
+
 #ifdef DIRSERV_PRIVATE
+
+STATIC void dirserv_set_routerstatus_testing(routerstatus_t *rs);
 
 /* Put the MAX_MEASUREMENT_AGE #define here so unit tests can see it */
 #define MAX_MEASUREMENT_AGE (3*24*60*60) /* 3 days */
@@ -124,10 +128,17 @@ STATIC int dirserv_query_measured_bw_cache_kb(const char *node_id,
                                               long *bw_out,
                                               time_t *as_of_out);
 STATIC int dirserv_has_measured_bw(const char *node_id);
+
+STATIC int
+dirserv_read_guardfraction_file_from_str(const char *guardfraction_file_str,
+                                      smartlist_t *vote_routerstatuses);
 #endif
 
 int dirserv_read_measured_bandwidths(const char *from_file,
                                      smartlist_t *routerstatuses);
+
+int dirserv_read_guardfraction_file(const char *fname,
+                                 smartlist_t *vote_routerstatuses);
 
 #endif
 

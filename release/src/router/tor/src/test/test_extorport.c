@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Tor Project, Inc. */
+/* Copyright (c) 2013-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define CONNECTION_PRIVATE
@@ -24,35 +24,37 @@ test_ext_or_id_map(void *arg)
   (void)arg;
 
   /* pre-initialization */
-  tt_ptr_op(NULL, ==, connection_or_get_by_ext_or_id("xxxxxxxxxxxxxxxxxxxx"));
+  tt_ptr_op(NULL, OP_EQ,
+            connection_or_get_by_ext_or_id("xxxxxxxxxxxxxxxxxxxx"));
 
   c1 = or_connection_new(CONN_TYPE_EXT_OR, AF_INET);
   c2 = or_connection_new(CONN_TYPE_EXT_OR, AF_INET);
   c3 = or_connection_new(CONN_TYPE_OR, AF_INET);
 
-  tt_ptr_op(c1->ext_or_conn_id, !=, NULL);
-  tt_ptr_op(c2->ext_or_conn_id, !=, NULL);
-  tt_ptr_op(c3->ext_or_conn_id, ==, NULL);
+  tt_ptr_op(c1->ext_or_conn_id, OP_NE, NULL);
+  tt_ptr_op(c2->ext_or_conn_id, OP_NE, NULL);
+  tt_ptr_op(c3->ext_or_conn_id, OP_EQ, NULL);
 
-  tt_ptr_op(c1, ==, connection_or_get_by_ext_or_id(c1->ext_or_conn_id));
-  tt_ptr_op(c2, ==, connection_or_get_by_ext_or_id(c2->ext_or_conn_id));
-  tt_ptr_op(NULL, ==, connection_or_get_by_ext_or_id("xxxxxxxxxxxxxxxxxxxx"));
+  tt_ptr_op(c1, OP_EQ, connection_or_get_by_ext_or_id(c1->ext_or_conn_id));
+  tt_ptr_op(c2, OP_EQ, connection_or_get_by_ext_or_id(c2->ext_or_conn_id));
+  tt_ptr_op(NULL, OP_EQ,
+            connection_or_get_by_ext_or_id("xxxxxxxxxxxxxxxxxxxx"));
 
   idp = tor_memdup(c2->ext_or_conn_id, EXT_OR_CONN_ID_LEN);
 
   /* Give c2 a new ID. */
   connection_or_set_ext_or_identifier(c2);
-  test_mem_op(idp, !=, c2->ext_or_conn_id, EXT_OR_CONN_ID_LEN);
+  tt_mem_op(idp, OP_NE, c2->ext_or_conn_id, EXT_OR_CONN_ID_LEN);
   idp2 = tor_memdup(c2->ext_or_conn_id, EXT_OR_CONN_ID_LEN);
   tt_assert(!tor_digest_is_zero(idp2));
 
-  tt_ptr_op(NULL, ==, connection_or_get_by_ext_or_id(idp));
-  tt_ptr_op(c2, ==, connection_or_get_by_ext_or_id(idp2));
+  tt_ptr_op(NULL, OP_EQ, connection_or_get_by_ext_or_id(idp));
+  tt_ptr_op(c2, OP_EQ, connection_or_get_by_ext_or_id(idp2));
 
   /* Now remove it. */
   connection_or_remove_from_ext_or_id_map(c2);
-  tt_ptr_op(NULL, ==, connection_or_get_by_ext_or_id(idp));
-  tt_ptr_op(NULL, ==, connection_or_get_by_ext_or_id(idp2));
+  tt_ptr_op(NULL, OP_EQ, connection_or_get_by_ext_or_id(idp));
+  tt_ptr_op(NULL, OP_EQ, connection_or_get_by_ext_or_id(idp2));
 
  done:
   if (c1)
@@ -112,33 +114,33 @@ test_ext_or_write_command(void *arg)
 
   /* Length too long */
   tt_int_op(connection_write_ext_or_command(TO_CONN(c1), 100, "X", 100000),
-            <, 0);
+            OP_LT, 0);
 
   /* Empty command */
   tt_int_op(connection_write_ext_or_command(TO_CONN(c1), 0x99, NULL, 0),
-            ==, 0);
+            OP_EQ, 0);
   cp = buf_get_contents(TO_CONN(c1)->outbuf, &sz);
-  tt_int_op(sz, ==, 4);
-  test_mem_op(cp, ==, "\x00\x99\x00\x00", 4);
+  tt_int_op(sz, OP_EQ, 4);
+  tt_mem_op(cp, OP_EQ, "\x00\x99\x00\x00", 4);
   tor_free(cp);
 
   /* Medium command. */
   tt_int_op(connection_write_ext_or_command(TO_CONN(c1), 0x99,
-                                            "Wai\0Hello", 9), ==, 0);
+                                            "Wai\0Hello", 9), OP_EQ, 0);
   cp = buf_get_contents(TO_CONN(c1)->outbuf, &sz);
-  tt_int_op(sz, ==, 13);
-  test_mem_op(cp, ==, "\x00\x99\x00\x09Wai\x00Hello", 13);
+  tt_int_op(sz, OP_EQ, 13);
+  tt_mem_op(cp, OP_EQ, "\x00\x99\x00\x09Wai\x00Hello", 13);
   tor_free(cp);
 
   /* Long command */
   buf = tor_malloc(65535);
   memset(buf, 'x', 65535);
   tt_int_op(connection_write_ext_or_command(TO_CONN(c1), 0xf00d,
-                                            buf, 65535), ==, 0);
+                                            buf, 65535), OP_EQ, 0);
   cp = buf_get_contents(TO_CONN(c1)->outbuf, &sz);
-  tt_int_op(sz, ==, 65539);
-  test_mem_op(cp, ==, "\xf0\x0d\xff\xff", 4);
-  test_mem_op(cp+4, ==, buf, 65535);
+  tt_int_op(sz, OP_EQ, 65539);
+  tt_mem_op(cp, OP_EQ, "\xf0\x0d\xff\xff", 4);
+  tt_mem_op(cp+4, OP_EQ, buf, 65535);
   tor_free(cp);
 
  done:
@@ -175,42 +177,42 @@ test_ext_or_init_auth(void *arg)
   tor_free(options->DataDirectory);
   options->DataDirectory = tor_strdup("foo");
   cp = get_ext_or_auth_cookie_file_name();
-  tt_str_op(cp, ==, "foo"PATH_SEPARATOR"extended_orport_auth_cookie");
+  tt_str_op(cp, OP_EQ, "foo"PATH_SEPARATOR"extended_orport_auth_cookie");
   tor_free(cp);
 
   /* Shouldn't be initialized already, or our tests will be a bit
    * meaningless */
   ext_or_auth_cookie = tor_malloc_zero(32);
-  test_assert(tor_mem_is_zero((char*)ext_or_auth_cookie, 32));
+  tt_assert(tor_mem_is_zero((char*)ext_or_auth_cookie, 32));
 
   /* Now make sure we use a temporary file */
   fn = get_fname("ext_cookie_file");
   options->ExtORPortCookieAuthFile = tor_strdup(fn);
   cp = get_ext_or_auth_cookie_file_name();
-  tt_str_op(cp, ==, fn);
+  tt_str_op(cp, OP_EQ, fn);
   tor_free(cp);
 
   /* Test the initialization function with a broken
      write_bytes_to_file(). See if the problem is handled properly. */
   MOCK(write_bytes_to_file, write_bytes_to_file_fail);
-  tt_int_op(-1, ==, init_ext_or_cookie_authentication(1));
-  tt_int_op(ext_or_auth_cookie_is_set, ==, 0);
+  tt_int_op(-1, OP_EQ, init_ext_or_cookie_authentication(1));
+  tt_int_op(ext_or_auth_cookie_is_set, OP_EQ, 0);
   UNMOCK(write_bytes_to_file);
 
   /* Now do the actual initialization. */
-  tt_int_op(0, ==, init_ext_or_cookie_authentication(1));
-  tt_int_op(ext_or_auth_cookie_is_set, ==, 1);
+  tt_int_op(0, OP_EQ, init_ext_or_cookie_authentication(1));
+  tt_int_op(ext_or_auth_cookie_is_set, OP_EQ, 1);
   cp = read_file_to_str(fn, RFTS_BIN, &st);
-  tt_ptr_op(cp, !=, NULL);
-  tt_u64_op((uint64_t)st.st_size, ==, 64);
-  test_memeq(cp, "! Extended ORPort Auth Cookie !\x0a", 32);
-  test_memeq(cp+32, ext_or_auth_cookie, 32);
+  tt_ptr_op(cp, OP_NE, NULL);
+  tt_u64_op((uint64_t)st.st_size, OP_EQ, 64);
+  tt_mem_op(cp,OP_EQ, "! Extended ORPort Auth Cookie !\x0a", 32);
+  tt_mem_op(cp+32,OP_EQ, ext_or_auth_cookie, 32);
   memcpy(cookie0, ext_or_auth_cookie, 32);
-  test_assert(!tor_mem_is_zero((char*)ext_or_auth_cookie, 32));
+  tt_assert(!tor_mem_is_zero((char*)ext_or_auth_cookie, 32));
 
   /* Operation should be idempotent. */
-  tt_int_op(0, ==, init_ext_or_cookie_authentication(1));
-  test_memeq(cookie0, ext_or_auth_cookie, 32);
+  tt_int_op(0, OP_EQ, init_ext_or_cookie_authentication(1));
+  tt_mem_op(cookie0,OP_EQ, ext_or_auth_cookie, 32);
 
  done:
   tor_free(cp);
@@ -237,8 +239,8 @@ test_ext_or_cookie_auth(void *arg)
 
   (void)arg;
 
-  tt_int_op(strlen(client_hash_input), ==, 46+32+32);
-  tt_int_op(strlen(server_hash_input), ==, 46+32+32);
+  tt_int_op(strlen(client_hash_input), OP_EQ, 46+32+32);
+  tt_int_op(strlen(server_hash_input), OP_EQ, 46+32+32);
 
   ext_or_auth_cookie = tor_malloc_zero(32);
   memcpy(ext_or_auth_cookie, "s beside you? When I count, ther", 32);
@@ -258,20 +260,20 @@ test_ext_or_cookie_auth(void *arg)
    */
 
   /* Wrong length */
-  tt_int_op(-1, ==,
+  tt_int_op(-1, OP_EQ,
             handle_client_auth_nonce(client_nonce, 33, &client_hash, &reply,
                                      &reply_len));
-  tt_int_op(-1, ==,
+  tt_int_op(-1, OP_EQ,
             handle_client_auth_nonce(client_nonce, 31, &client_hash, &reply,
                                      &reply_len));
 
   /* Now let's try this for real! */
-  tt_int_op(0, ==,
+  tt_int_op(0, OP_EQ,
             handle_client_auth_nonce(client_nonce, 32, &client_hash, &reply,
                                      &reply_len));
-  tt_int_op(reply_len, ==, 64);
-  tt_ptr_op(reply, !=, NULL);
-  tt_ptr_op(client_hash, !=, NULL);
+  tt_int_op(reply_len, OP_EQ, 64);
+  tt_ptr_op(reply, OP_NE, NULL);
+  tt_ptr_op(client_hash, OP_NE, NULL);
   /* Fill in the server nonce into the hash inputs... */
   memcpy(server_hash_input+46+32, reply+32, 32);
   memcpy(client_hash_input+46+32, reply+32, 32);
@@ -280,15 +282,15 @@ test_ext_or_cookie_auth(void *arg)
                      46+32+32);
   crypto_hmac_sha256(hmac2, (char*)ext_or_auth_cookie, 32, client_hash_input,
                      46+32+32);
-  test_memeq(hmac1, reply, 32);
-  test_memeq(hmac2, client_hash, 32);
+  tt_mem_op(hmac1,OP_EQ, reply, 32);
+  tt_mem_op(hmac2,OP_EQ, client_hash, 32);
 
   /* Now do it again and make sure that the results are *different* */
-  tt_int_op(0, ==,
+  tt_int_op(0, OP_EQ,
             handle_client_auth_nonce(client_nonce, 32, &client_hash2, &reply2,
                                      &reply_len));
-  test_memneq(reply2, reply, reply_len);
-  test_memneq(client_hash2, client_hash, 32);
+  tt_mem_op(reply2,OP_NE, reply, reply_len);
+  tt_mem_op(client_hash2,OP_NE, client_hash, 32);
   /* But that this one checks out too. */
   memcpy(server_hash_input+46+32, reply2+32, 32);
   memcpy(client_hash_input+46+32, reply2+32, 32);
@@ -297,8 +299,8 @@ test_ext_or_cookie_auth(void *arg)
                      46+32+32);
   crypto_hmac_sha256(hmac2, (char*)ext_or_auth_cookie, 32, client_hash_input,
                      46+32+32);
-  test_memeq(hmac1, reply2, 32);
-  test_memeq(hmac2, client_hash2, 32);
+  tt_mem_op(hmac1,OP_EQ, reply2, 32);
+  tt_mem_op(hmac2,OP_EQ, client_hash2, 32);
 
  done:
   tor_free(reply);
@@ -334,12 +336,12 @@ test_ext_or_cookie_auth_testvec(void *arg)
 
   MOCK(crypto_rand, crypto_rand_return_tse_str);
 
-  tt_int_op(0, ==,
+  tt_int_op(0, OP_EQ,
             handle_client_auth_nonce(client_nonce, 32, &client_hash, &reply,
                                      &reply_len));
-  tt_ptr_op(reply, !=, NULL );
-  tt_uint_op(reply_len, ==, 64);
-  test_memeq(reply+32, "te road There is always another ", 32);
+  tt_ptr_op(reply, OP_NE, NULL );
+  tt_uint_op(reply_len, OP_EQ, 64);
+  tt_mem_op(reply+32,OP_EQ, "te road There is always another ", 32);
   /* HMACSHA256("Gliding wrapt in a brown mantle,"
    *     "ExtORPort authentication server-to-client hash"
    *     "But when I look ahead up the write road There is always another ");
@@ -402,11 +404,11 @@ handshake_start(or_connection_t *conn, int receiving)
   } while (0)
 #define CONTAINS(s,n)                                           \
   do {                                                          \
-    tt_int_op((n), <=, sizeof(b));                              \
-    tt_int_op(buf_datalen(TO_CONN(conn)->outbuf), ==, (n));     \
+    tt_int_op((n), OP_LE, sizeof(b));                              \
+    tt_int_op(buf_datalen(TO_CONN(conn)->outbuf), OP_EQ, (n));     \
     if ((n)) {                                                  \
       fetch_from_buf(b, (n), TO_CONN(conn)->outbuf);            \
-      test_memeq(b, (s), (n));                                  \
+      tt_mem_op(b, OP_EQ, (s), (n));                               \
     }                                                           \
   } while (0)
 
@@ -416,14 +418,15 @@ do_ext_or_handshake(or_connection_t *conn)
 {
   char b[256];
 
-  tt_int_op(0, ==, connection_ext_or_start_auth(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_start_auth(conn));
   CONTAINS("\x01\x00", 2);
   WRITE("\x01", 1);
   WRITE("But when I look ahead up the whi", 32);
   MOCK(crypto_rand, crypto_rand_return_tse_str);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
   UNMOCK(crypto_rand);
-  tt_int_op(TO_CONN(conn)->state, ==, EXT_OR_CONN_STATE_AUTH_WAIT_CLIENT_HASH);
+  tt_int_op(TO_CONN(conn)->state, OP_EQ,
+            EXT_OR_CONN_STATE_AUTH_WAIT_CLIENT_HASH);
   CONTAINS("\xec\x80\xed\x6e\x54\x6d\x3b\x36\xfd\xfc\x22\xfe\x13\x15\x41\x6b"
            "\x02\x9f\x1a\xde\x76\x10\xd9\x10\x87\x8b\x62\xee\xb7\x40\x38\x21"
            "te road There is always another ", 64);
@@ -431,10 +434,10 @@ do_ext_or_handshake(or_connection_t *conn)
   WRITE("\xab\x39\x17\x32\xdd\x2e\xd9\x68\xcd\x40\xc0\x87\xd1\xb1\xf2\x5b"
         "\x33\xb3\xcd\x77\xff\x79\xbd\x80\xc2\x07\x4b\xbf\x43\x81\x19\xa2",
         32);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("\x01", 1);
   tt_assert(! TO_CONN(conn)->marked_for_close);
-  tt_int_op(TO_CONN(conn)->state, ==, EXT_OR_CONN_STATE_OPEN);
+  tt_int_op(TO_CONN(conn)->state, OP_EQ, EXT_OR_CONN_STATE_OPEN);
 
  done: ;
 }
@@ -456,14 +459,14 @@ test_ext_or_handshake(void *arg)
   init_connection_lists();
 
   conn = or_connection_new(CONN_TYPE_EXT_OR, AF_INET);
-  tt_int_op(0, ==, connection_ext_or_start_auth(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_start_auth(conn));
   /* The server starts by telling us about the one supported authtype. */
   CONTAINS("\x01\x00", 2);
   /* Say the client hasn't responded yet. */
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
   /* Let's say the client replies badly. */
   WRITE("\x99", 1);
-  tt_int_op(-1, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(-1, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("", 0);
   tt_assert(TO_CONN(conn)->marked_for_close);
   close_closeable_connections();
@@ -471,23 +474,23 @@ test_ext_or_handshake(void *arg)
 
   /* Okay, try again. */
   conn = or_connection_new(CONN_TYPE_EXT_OR, AF_INET);
-  tt_int_op(0, ==, connection_ext_or_start_auth(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_start_auth(conn));
   CONTAINS("\x01\x00", 2);
   /* Let's say the client replies sensibly this time. "Yes, AUTHTYPE_COOKIE
    * sounds delicious. Let's have some of that!" */
   WRITE("\x01", 1);
   /* Let's say that the client also sends part of a nonce. */
   WRITE("But when I look ", 16);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("", 0);
-  tt_int_op(TO_CONN(conn)->state, ==,
+  tt_int_op(TO_CONN(conn)->state, OP_EQ,
             EXT_OR_CONN_STATE_AUTH_WAIT_CLIENT_NONCE);
   /* Pump it again. Nothing should happen. */
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
   /* send the rest of the nonce. */
   WRITE("ahead up the whi", 16);
   MOCK(crypto_rand, crypto_rand_return_tse_str);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
   UNMOCK(crypto_rand);
   /* We should get the right reply from the server. */
   CONTAINS("\xec\x80\xed\x6e\x54\x6d\x3b\x36\xfd\xfc\x22\xfe\x13\x15\x41\x6b"
@@ -496,7 +499,7 @@ test_ext_or_handshake(void *arg)
   /* Send the wrong response. */
   WRITE("not with a bang but a whimper...", 32);
   MOCK(control_event_bootstrap_problem, ignore_bootstrap_problem);
-  tt_int_op(-1, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(-1, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("\x00", 1);
   tt_assert(TO_CONN(conn)->marked_for_close);
   /* XXXX Hold-open-until-flushed. */
@@ -515,32 +518,32 @@ test_ext_or_handshake(void *arg)
   /* Now let's run through some messages. */
   /* First let's send some junk and make sure it's ignored. */
   WRITE("\xff\xf0\x00\x03""ABC", 7);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("", 0);
   /* Now let's send a USERADDR command. */
   WRITE("\x00\x01\x00\x0c""1.2.3.4:5678", 16);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
-  tt_int_op(TO_CONN(conn)->port, ==, 5678);
-  tt_int_op(tor_addr_to_ipv4h(&TO_CONN(conn)->addr), ==, 0x01020304);
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
+  tt_int_op(TO_CONN(conn)->port, OP_EQ, 5678);
+  tt_int_op(tor_addr_to_ipv4h(&TO_CONN(conn)->addr), OP_EQ, 0x01020304);
   /* Now let's send a TRANSPORT command. */
   WRITE("\x00\x02\x00\x07""rfc1149", 11);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
-  tt_ptr_op(NULL, !=, conn->ext_or_transport);
-  tt_str_op("rfc1149", ==, conn->ext_or_transport);
-  tt_int_op(is_reading,==,1);
-  tt_int_op(TO_CONN(conn)->state, ==, EXT_OR_CONN_STATE_OPEN);
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
+  tt_ptr_op(NULL, OP_NE, conn->ext_or_transport);
+  tt_str_op("rfc1149", OP_EQ, conn->ext_or_transport);
+  tt_int_op(is_reading,OP_EQ,1);
+  tt_int_op(TO_CONN(conn)->state, OP_EQ, EXT_OR_CONN_STATE_OPEN);
   /* DONE */
   WRITE("\x00\x00\x00\x00", 4);
-  tt_int_op(0, ==, connection_ext_or_process_inbuf(conn));
-  tt_int_op(TO_CONN(conn)->state, ==, EXT_OR_CONN_STATE_FLUSHING);
-  tt_int_op(is_reading,==,0);
+  tt_int_op(0, OP_EQ, connection_ext_or_process_inbuf(conn));
+  tt_int_op(TO_CONN(conn)->state, OP_EQ, EXT_OR_CONN_STATE_FLUSHING);
+  tt_int_op(is_reading,OP_EQ,0);
   CONTAINS("\x10\x00\x00\x00", 4);
-  tt_int_op(handshake_start_called,==,0);
-  tt_int_op(0, ==, connection_ext_or_finished_flushing(conn));
-  tt_int_op(is_reading,==,1);
-  tt_int_op(handshake_start_called,==,1);
-  tt_int_op(TO_CONN(conn)->type, ==, CONN_TYPE_OR);
-  tt_int_op(TO_CONN(conn)->state, ==, 0);
+  tt_int_op(handshake_start_called,OP_EQ,0);
+  tt_int_op(0, OP_EQ, connection_ext_or_finished_flushing(conn));
+  tt_int_op(is_reading,OP_EQ,1);
+  tt_int_op(handshake_start_called,OP_EQ,1);
+  tt_int_op(TO_CONN(conn)->type, OP_EQ, CONN_TYPE_OR);
+  tt_int_op(TO_CONN(conn)->state, OP_EQ, 0);
   close_closeable_connections();
   conn = NULL;
 
@@ -551,7 +554,7 @@ test_ext_or_handshake(void *arg)
   /* USERADDR command with an extra NUL byte */
   WRITE("\x00\x01\x00\x0d""1.2.3.4:5678\x00", 17);
   MOCK(control_event_bootstrap_problem, ignore_bootstrap_problem);
-  tt_int_op(-1, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(-1, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("", 0);
   tt_assert(TO_CONN(conn)->marked_for_close);
   close_closeable_connections();
@@ -564,7 +567,7 @@ test_ext_or_handshake(void *arg)
   /* TRANSPORT command with an extra NUL byte */
   WRITE("\x00\x02\x00\x08""rfc1149\x00", 12);
   MOCK(control_event_bootstrap_problem, ignore_bootstrap_problem);
-  tt_int_op(-1, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(-1, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("", 0);
   tt_assert(TO_CONN(conn)->marked_for_close);
   close_closeable_connections();
@@ -578,7 +581,7 @@ test_ext_or_handshake(void *arg)
      C-identifier) */
   WRITE("\x00\x02\x00\x07""rf*1149", 11);
   MOCK(control_event_bootstrap_problem, ignore_bootstrap_problem);
-  tt_int_op(-1, ==, connection_ext_or_process_inbuf(conn));
+  tt_int_op(-1, OP_EQ, connection_ext_or_process_inbuf(conn));
   CONTAINS("", 0);
   tt_assert(TO_CONN(conn)->marked_for_close);
   close_closeable_connections();

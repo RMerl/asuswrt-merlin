@@ -109,7 +109,8 @@ struct {								\
  */
 #define	TOR_SLIST_FIRST(head)	((head)->slh_first)
 #define	TOR_SLIST_END(head)		NULL
-#define	TOR_SLIST_EMPTY(head)	(SLIST_FIRST(head) == TOR_SLIST_END(head))
+/* || 0 is for -Wparentheses-equality (-Wall?) appeasement under clang */
+#define	TOR_SLIST_EMPTY(head)	((SLIST_FIRST(head) == TOR_SLIST_END(head)) || 0)
 #define	TOR_SLIST_NEXT(elm, field)	((elm)->field.sle_next)
 
 #define	TOR_SLIST_FOREACH(var, head, field)					\
@@ -181,9 +182,11 @@ struct {								\
 /*
  * List access methods
  */
-#define	TOR_LIST_FIRST(head)		((head)->lh_first)
-#define	TOR_LIST_END(head)			NULL
-#define	TOR_LIST_EMPTY(head)		(TOR_LIST_FIRST(head) == TOR_LIST_END(head))
+#define	TOR_LIST_FIRST(head)    ((head)->lh_first)
+#define	TOR_LIST_END(head)		  NULL
+/* || 0 is for -Wparentheses-equality (-Wall?) appeasement under clang */
+#define	TOR_LIST_EMPTY(head)	  \
+          ((TOR_LIST_FIRST(head) == TOR_LIST_END(head)) || 0)
 #define	TOR_LIST_NEXT(elm, field)		((elm)->field.le_next)
 
 #define TOR_LIST_FOREACH(var, head, field)					\
@@ -265,8 +268,10 @@ struct {								\
  * Simple queue access methods.
  */
 #define	TOR_SIMPLEQ_FIRST(head)	    ((head)->sqh_first)
-#define	TOR_SIMPLEQ_END(head)	    NULL
-#define	TOR_SIMPLEQ_EMPTY(head)	    (TOR_SIMPLEQ_FIRST(head) == TOR_SIMPLEQ_END(head))
+#define	TOR_SIMPLEQ_END(head)	      NULL
+/* || 0 is for -Wparentheses-equality (-Wall?) appeasement under clang */
+#define	TOR_SIMPLEQ_EMPTY(head)	    \
+          ((TOR_SIMPLEQ_FIRST(head) == TOR_SIMPLEQ_END(head)) || 0)
 #define	TOR_SIMPLEQ_NEXT(elm, field)    ((elm)->field.sqe_next)
 
 #define TOR_SIMPLEQ_FOREACH(var, head, field)				\
@@ -345,8 +350,9 @@ struct {								\
 /* XXX */
 #define TOR_TAILQ_PREV(elm, headname, field)				\
 	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
+/* || 0 is for -Wparentheses-equality (-Wall?) appeasement under clang */
 #define	TOR_TAILQ_EMPTY(head)						\
-	(TOR_TAILQ_FIRST(head) == TOR_TAILQ_END(head))
+	((TOR_TAILQ_FIRST(head) == TOR_TAILQ_END(head)) || 0)
 
 #define TOR_TAILQ_FOREACH(var, head, field)					\
 	for((var) = TOR_TAILQ_FIRST(head);					\
@@ -462,8 +468,9 @@ struct {								\
 #define	TOR_CIRCLEQ_END(head)		((void *)(head))
 #define	TOR_CIRCLEQ_NEXT(elm, field)	((elm)->field.cqe_next)
 #define	TOR_CIRCLEQ_PREV(elm, field)	((elm)->field.cqe_prev)
+/* || 0 is for -Wparentheses-equality (-Wall?) appeasement under clang */
 #define	TOR_CIRCLEQ_EMPTY(head)						\
-	(TOR_CIRCLEQ_FIRST(head) == TOR_CIRCLEQ_END(head))
+	((TOR_CIRCLEQ_FIRST(head) == TOR_CIRCLEQ_END(head)) || 0)
 
 #define TOR_CIRCLEQ_FOREACH(var, head, field)				\
 	for((var) = TOR_CIRCLEQ_FIRST(head);				\

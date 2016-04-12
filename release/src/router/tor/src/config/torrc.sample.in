@@ -1,5 +1,5 @@
 ## Configuration file for a typical Tor user
-## Last updated 9 October 2013 for Tor 0.2.5.2-alpha.
+## Last updated 22 September 2015 for Tor 0.2.7.3-alpha.
 ## (may or may not work for much older or much newer versions of Tor.)
 ##
 ## Lines that begin with "## " try to explain what's going on. Lines
@@ -12,19 +12,20 @@
 ## Tor will look for this file in various places based on your platform:
 ## https://www.torproject.org/docs/faq#torrc
 
-## Tor opens a socks proxy on port 9050 by default -- even if you don't
-## configure one below. Set "SocksPort 0" if you plan to run Tor only
+## Tor opens a SOCKS proxy on port 9050 by default -- even if you don't
+## configure one below. Set "SOCKSPort 0" if you plan to run Tor only
 ## as a relay, and not make any local application connections yourself.
-#SocksPort 9050 # Default: Bind to localhost:9050 for local connections.
-#SocksPort 192.168.0.1:9100 # Bind to this address:port too.
+#SOCKSPort 9050 # Default: Bind to localhost:9050 for local connections.
+#SOCKSPort 192.168.0.1:9100 # Bind to this address:port too.
 
 ## Entry policies to allow/deny SOCKS requests based on IP address.
-## First entry that matches wins. If no SocksPolicy is set, we accept
-## all (and only) requests that reach a SocksPort. Untrusted users who
-## can access your SocksPort may be able to learn about the connections
+## First entry that matches wins. If no SOCKSPolicy is set, we accept
+## all (and only) requests that reach a SOCKSPort. Untrusted users who
+## can access your SOCKSPort may be able to learn about the connections
 ## you make.
-#SocksPolicy accept 192.168.0.0/16
-#SocksPolicy reject *
+#SOCKSPolicy accept 192.168.0.0/16
+#SOCKSPolicy accept6 FC00::/7
+#SOCKSPolicy reject *
 
 ## Logs go to stdout at level "notice" unless redirected by something
 ## else, like one of the below lines. You can have as many Log lines as
@@ -101,19 +102,20 @@
 
 ## Define these to limit how much relayed traffic you will allow. Your
 ## own traffic is still unthrottled. Note that RelayBandwidthRate must
-## be at least 20 KB.
-## Note that units for these config options are bytes per second, not bits
-## per second, and that prefixes are binary prefixes, i.e. 2^10, 2^20, etc.
-#RelayBandwidthRate 100 KB  # Throttle traffic to 100KB/s (800Kbps)
-#RelayBandwidthBurst 200 KB # But allow bursts up to 200KB/s (1600Kbps)
+## be at least 20 kilobytes per second.
+## Note that units for these config options are bytes (per second), not
+## bits (per second), and that prefixes are binary prefixes, i.e. 2^10,
+## 2^20, etc.
+#RelayBandwidthRate 100 KBytes  # Throttle traffic to 100KB/s (800Kbps)
+#RelayBandwidthBurst 200 KBytes # But allow bursts up to 200KB (1600Kb)
 
 ## Use these to restrict the maximum traffic per day, week, or month.
 ## Note that this threshold applies separately to sent and received bytes,
-## not to their sum: setting "4 GB" may allow up to 8 GB total before
+## not to their sum: setting "40 GB" may allow up to 80 GB total before
 ## hibernating.
 ##
-## Set a maximum of 4 gigabytes each way per period.
-#AccountingMax 4 GB
+## Set a maximum of 40 gigabytes each way per period.
+#AccountingMax 40 GBytes
 ## Each period starts daily at midnight (AccountingMax is per day)
 #AccountingStart day 00:00
 ## Each period starts on the 3rd of the month at 15:00 (AccountingMax
@@ -151,14 +153,20 @@
 ## using more than one of your relays in a single circuit. See
 ## https://www.torproject.org/docs/faq#MultipleRelays
 ## However, you should never include a bridge's fingerprint here, as it would
-## break its concealability and potentionally reveal its IP/TCP address.
+## break its concealability and potentially reveal its IP/TCP address.
 #MyFamily $keyid,$keyid,...
 
 ## A comma-separated list of exit policies. They're considered first
-## to last, and the first match wins. If you want to _replace_
-## the default exit policy, end this with either a reject *:* or an
-## accept *:*. Otherwise, you're _augmenting_ (prepending to) the
-## default exit policy. Leave commented to just use the default, which is
+## to last, and the first match wins.
+##
+## If you want to allow the same ports on IPv4 and IPv6, write your rules
+## using accept/reject *. If you want to allow different ports on IPv4 and
+## IPv6, write your IPv6 rules using accept6/reject6 *6, and your IPv4 rules
+## using accept/reject *4.
+##
+## If you want to _replace_ the default exit policy, end this with either a
+## reject *:* or an accept *:*. Otherwise, you're _augmenting_ (prepending to)
+## the default exit policy. Leave commented to just use the default, which is
 ## described in the man page or at
 ## https://www.torproject.org/documentation.html
 ##
@@ -170,11 +178,15 @@
 ## users will be told that those destinations are down.
 ##
 ## For security, by default Tor rejects connections to private (local)
-## networks, including to your public IP address. See the man page entry
-## for ExitPolicyRejectPrivate if you want to allow "exit enclaving".
+## networks, including to the configured primary public IPv4 and IPv6 addresses,
+## and any public IPv4 and IPv6 addresses on any interface on the relay.
+## See the man page entry for ExitPolicyRejectPrivate if you want to allow
+## "exit enclaving".
 ##
-#ExitPolicy accept *:6660-6667,reject *:* # allow irc ports but no more
-#ExitPolicy accept *:119 # accept nntp as well as default exit policy
+#ExitPolicy accept *:6660-6667,reject *:* # allow irc ports on IPv4 and IPv6 but no more
+#ExitPolicy accept *:119 # accept nntp ports on IPv4 and IPv6 as well as default exit policy
+#ExitPolicy accept *4:119 # accept nntp ports on IPv4 only as well as default exit policy
+#ExitPolicy accept6 *6:119 # accept nntp ports on IPv6 only as well as default exit policy
 #ExitPolicy reject *:* # no exits allowed
 
 ## Bridge relays (or "bridges") are Tor relays that aren't listed in the

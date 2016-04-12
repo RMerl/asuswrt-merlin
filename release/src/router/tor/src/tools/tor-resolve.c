@@ -1,13 +1,13 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson
- * Copyright (c) 2007-2013, The Tor Project, Inc.
+ * Copyright (c) 2007-2015, The Tor Project, Inc.
  */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
 #include "compat.h"
-#include "../common/util.h"
+#include "util.h"
 #include "address.h"
-#include "../common/torlog.h"
+#include "torlog.h"
 #include "sandbox.h"
 
 #include <stdio.h>
@@ -33,12 +33,8 @@
 #endif
 
 #ifdef _WIN32
-#if defined(_MSC_VER) && (_MSC_VER <= 1300)
-#include <winsock.h>
-#else
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#endif
 #endif
 
 #define RESPONSE_LEN_4 8
@@ -108,6 +104,18 @@ build_socks_resolve_request(char **out,
   return len;
 }
 
+static void
+onion_warning(const char *hostname)
+{
+  log_warn(LD_NET,
+        "%s is a hidden service; those don't have IP addresses. "
+        "You can use the AutomapHostsOnResolve option to have Tor return a "
+        "fake address for hidden services.  Or you can have your "
+        "application send the address to Tor directly; we recommend an "
+        "application that uses SOCKS 5 with hostnames.",
+           hostname);
+}
+
 /** Given a <b>len</b>-byte SOCKS4a response in <b>response</b>, set
  * *<b>addr_out</b> to the address it contains (in host order).
  * Return 0 on success, -1 on error.
@@ -137,10 +145,7 @@ parse_socks4a_resolve_response(const char *hostname,
   if (status != 90) {
     log_warn(LD_NET,"Got status response '%d': socks request failed.", status);
     if (!strcasecmpend(hostname, ".onion")) {
-      log_warn(LD_NET,
-        "%s is a hidden service; those don't have IP addresses. "
-        "To connect to a hidden service, you need to send the hostname "
-        "to Tor; we suggest an application that uses SOCKS 4a.",hostname);
+      onion_warning(hostname);
       return -1;
     }
     return -1;
@@ -276,11 +281,7 @@ do_resolve(const char *hostname, uint32_t sockshost, uint16_t socksport,
                (unsigned)reply_buf[1],
                socks5_reason_to_string(reply_buf[1]));
       if (reply_buf[1] == 4 && !strcasecmpend(hostname, ".onion")) {
-        log_warn(LD_NET,
-            "%s is a hidden service; those don't have IP addresses. "
-            "To connect to a hidden service, you need to send the hostname "
-            "to Tor; we suggest an application that uses SOCKS 4a.",
-            hostname);
+        onion_warning(hostname);
       }
       goto err;
     }
@@ -326,8 +327,8 @@ do_resolve(const char *hostname, uint32_t sockshost, uint16_t socksport,
 static void
 usage(void)
 {
-  puts("Syntax: tor-resolve [-4] [-v] [-x] [-F] [-p port] "
-       "hostname [sockshost:socksport]");
+  puts("Syntax: tor-resolve [-4] [-5] [-v] [-x] [-p port] "
+       "hostname [sockshost[:socksport]]");
   exit(1);
 }
 
@@ -344,7 +345,7 @@ main(int argc, char **argv)
   char *result_hostname = NULL;
   log_severity_list_t *s = tor_malloc_zero(sizeof(log_severity_list_t));
 
-  init_logging();
+  init_logging(1);
   sandbox_disable_getaddrinfo_cache();
 
   arg = &argv[1];

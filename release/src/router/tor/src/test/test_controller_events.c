@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Tor Project, Inc. */
+/* Copyright (c) 2013-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define CONNECTION_PRIVATE
@@ -22,7 +22,7 @@ help_test_bucket_note_empty(uint32_t expected_msec_since_midnight,
   tvnow.tv_usec = (msec_since_epoch % 1000) * 1000;
   connection_buckets_note_empty_ts(&timestamp_var, tokens_before,
                                    tokens_removed, &tvnow);
-  tt_int_op(expected_msec_since_midnight, ==, timestamp_var);
+  tt_int_op(expected_msec_since_midnight, OP_EQ, timestamp_var);
 
  done:
   ;
@@ -57,20 +57,20 @@ test_cntev_bucket_millis_empty(void *arg)
   tvnow.tv_usec = 200000;
 
   /* Bucket has not been refilled. */
-  tt_int_op(0, ==, bucket_millis_empty(0, 42120, 0, 100, &tvnow));
-  tt_int_op(0, ==, bucket_millis_empty(-10, 42120, -10, 100, &tvnow));
+  tt_int_op(0, OP_EQ, bucket_millis_empty(0, 42120, 0, 100, &tvnow));
+  tt_int_op(0, OP_EQ, bucket_millis_empty(-10, 42120, -10, 100, &tvnow));
 
   /* Bucket was not empty. */
-  tt_int_op(0, ==, bucket_millis_empty(10, 42120, 20, 100, &tvnow));
+  tt_int_op(0, OP_EQ, bucket_millis_empty(10, 42120, 20, 100, &tvnow));
 
   /* Bucket has been emptied 80 msec ago and has just been refilled. */
-  tt_int_op(80, ==, bucket_millis_empty(-20, 42120, -10, 100, &tvnow));
-  tt_int_op(80, ==, bucket_millis_empty(-10, 42120, 0, 100, &tvnow));
-  tt_int_op(80, ==, bucket_millis_empty(0, 42120, 10, 100, &tvnow));
+  tt_int_op(80, OP_EQ, bucket_millis_empty(-20, 42120, -10, 100, &tvnow));
+  tt_int_op(80, OP_EQ, bucket_millis_empty(-10, 42120, 0, 100, &tvnow));
+  tt_int_op(80, OP_EQ, bucket_millis_empty(0, 42120, 10, 100, &tvnow));
 
   /* Bucket has been emptied 180 msec ago, last refill was 100 msec ago
    * which was insufficient to make it positive, so cap msec at 100. */
-  tt_int_op(100, ==, bucket_millis_empty(0, 42020, 1, 100, &tvnow));
+  tt_int_op(100, OP_EQ, bucket_millis_empty(0, 42020, 1, 100, &tvnow));
 
   /* 1970-01-02 00:00:00:050000 */
   tvnow.tv_sec = 86400;
@@ -78,7 +78,7 @@ test_cntev_bucket_millis_empty(void *arg)
 
   /* Last emptied 30 msec before midnight, tvnow is 50 msec after
    * midnight, that's 80 msec in total. */
-  tt_int_op(80, ==, bucket_millis_empty(0, 86400000 - 30, 1, 100, &tvnow));
+  tt_int_op(80, OP_EQ, bucket_millis_empty(0, 86400000 - 30, 1, 100, &tvnow));
 
  done:
   ;
@@ -118,26 +118,26 @@ test_cntev_sum_up_cell_stats(void *arg)
   cell_stats = tor_malloc_zero(sizeof(cell_stats_t));
   add_testing_cell_stats_entry(circ, CELL_RELAY, 0, 0, 0);
   sum_up_cell_stats_by_command(circ, cell_stats);
-  tt_u64_op(1, ==, cell_stats->added_cells_appward[CELL_RELAY]);
+  tt_u64_op(1, OP_EQ, cell_stats->added_cells_appward[CELL_RELAY]);
 
   /* A single RELAY cell was added to the exitward queue. */
   add_testing_cell_stats_entry(circ, CELL_RELAY, 0, 0, 1);
   sum_up_cell_stats_by_command(circ, cell_stats);
-  tt_u64_op(1, ==, cell_stats->added_cells_exitward[CELL_RELAY]);
+  tt_u64_op(1, OP_EQ, cell_stats->added_cells_exitward[CELL_RELAY]);
 
   /* A single RELAY cell was removed from the appward queue where it spent
    * 20 msec. */
   add_testing_cell_stats_entry(circ, CELL_RELAY, 2, 1, 0);
   sum_up_cell_stats_by_command(circ, cell_stats);
-  tt_u64_op(20, ==, cell_stats->total_time_appward[CELL_RELAY]);
-  tt_u64_op(1, ==, cell_stats->removed_cells_appward[CELL_RELAY]);
+  tt_u64_op(20, OP_EQ, cell_stats->total_time_appward[CELL_RELAY]);
+  tt_u64_op(1, OP_EQ, cell_stats->removed_cells_appward[CELL_RELAY]);
 
   /* A single RELAY cell was removed from the exitward queue where it
    * spent 30 msec. */
   add_testing_cell_stats_entry(circ, CELL_RELAY, 3, 1, 1);
   sum_up_cell_stats_by_command(circ, cell_stats);
-  tt_u64_op(30, ==, cell_stats->total_time_exitward[CELL_RELAY]);
-  tt_u64_op(1, ==, cell_stats->removed_cells_exitward[CELL_RELAY]);
+  tt_u64_op(30, OP_EQ, cell_stats->total_time_exitward[CELL_RELAY]);
+  tt_u64_op(1, OP_EQ, cell_stats->removed_cells_exitward[CELL_RELAY]);
 
  done:
   tor_free(cell_stats);
@@ -164,7 +164,7 @@ test_cntev_append_cell_stats(void *arg)
   append_cell_stats_by_command(event_parts, key,
                                include_if_non_zero,
                                number_to_include);
-  tt_int_op(0, ==, smartlist_len(event_parts));
+  tt_int_op(0, OP_EQ, smartlist_len(event_parts));
 
   /* There's a RELAY cell to include, but the corresponding field in
    * include_if_non_zero is still zero. */
@@ -172,7 +172,7 @@ test_cntev_append_cell_stats(void *arg)
   append_cell_stats_by_command(event_parts, key,
                                include_if_non_zero,
                                number_to_include);
-  tt_int_op(0, ==, smartlist_len(event_parts));
+  tt_int_op(0, OP_EQ, smartlist_len(event_parts));
 
   /* Now include single RELAY cell. */
   include_if_non_zero[CELL_RELAY] = 2;
@@ -180,7 +180,7 @@ test_cntev_append_cell_stats(void *arg)
                                include_if_non_zero,
                                number_to_include);
   cp = smartlist_pop_last(event_parts);
-  tt_str_op("Z=relay:1", ==, cp);
+  tt_str_op("Z=relay:1", OP_EQ, cp);
   tor_free(cp);
 
   /* Add four CREATE cells. */
@@ -190,7 +190,7 @@ test_cntev_append_cell_stats(void *arg)
                                include_if_non_zero,
                                number_to_include);
   cp = smartlist_pop_last(event_parts);
-  tt_str_op("Z=create:4,relay:1", ==, cp);
+  tt_str_op("Z=create:4,relay:1", OP_EQ, cp);
 
  done:
   tor_free(cp);
@@ -220,14 +220,14 @@ test_cntev_format_cell_stats(void *arg)
   /* Origin circuit was completely idle. */
   cell_stats = tor_malloc_zero(sizeof(cell_stats_t));
   format_cell_stats(&event_string, TO_CIRCUIT(ocirc), cell_stats);
-  tt_str_op("ID=2 OutboundQueue=3 OutboundConn=1", ==, event_string);
+  tt_str_op("ID=2 OutboundQueue=3 OutboundConn=1", OP_EQ, event_string);
   tor_free(event_string);
 
   /* Origin circuit had 4 RELAY cells added to its exitward queue. */
   cell_stats->added_cells_exitward[CELL_RELAY] = 4;
   format_cell_stats(&event_string, TO_CIRCUIT(ocirc), cell_stats);
   tt_str_op("ID=2 OutboundQueue=3 OutboundConn=1 OutboundAdded=relay:4",
-            ==, event_string);
+            OP_EQ, event_string);
   tor_free(event_string);
 
   /* Origin circuit also had 5 CREATE2 cells added to its exitward
@@ -235,7 +235,7 @@ test_cntev_format_cell_stats(void *arg)
   cell_stats->added_cells_exitward[CELL_CREATE2] = 5;
   format_cell_stats(&event_string, TO_CIRCUIT(ocirc), cell_stats);
   tt_str_op("ID=2 OutboundQueue=3 OutboundConn=1 OutboundAdded=relay:4,"
-            "create2:5", ==, event_string);
+            "create2:5", OP_EQ, event_string);
   tor_free(event_string);
 
   /* Origin circuit also had 7 RELAY cells removed from its exitward queue
@@ -245,7 +245,7 @@ test_cntev_format_cell_stats(void *arg)
   format_cell_stats(&event_string, TO_CIRCUIT(ocirc), cell_stats);
   tt_str_op("ID=2 OutboundQueue=3 OutboundConn=1 OutboundAdded=relay:4,"
             "create2:5 OutboundRemoved=relay:7 OutboundTime=relay:6",
-            ==, event_string);
+            OP_EQ, event_string);
   tor_free(event_string);
 
   p_chan = tor_malloc_zero(sizeof(channel_tls_t));
@@ -265,14 +265,14 @@ test_cntev_format_cell_stats(void *arg)
   cell_stats = tor_malloc_zero(sizeof(cell_stats_t));
   format_cell_stats(&event_string, TO_CIRCUIT(or_circ), cell_stats);
   tt_str_op("InboundQueue=8 InboundConn=2 OutboundQueue=9 OutboundConn=1",
-            ==, event_string);
+            OP_EQ, event_string);
   tor_free(event_string);
 
   /* OR circuit had 3 RELAY cells added to its appward queue. */
   cell_stats->added_cells_appward[CELL_RELAY] = 3;
   format_cell_stats(&event_string, TO_CIRCUIT(or_circ), cell_stats);
   tt_str_op("InboundQueue=8 InboundConn=2 InboundAdded=relay:3 "
-            "OutboundQueue=9 OutboundConn=1", ==, event_string);
+            "OutboundQueue=9 OutboundConn=1", OP_EQ, event_string);
   tor_free(event_string);
 
   /* OR circuit had 7 RELAY cells removed from its appward queue which
@@ -282,7 +282,7 @@ test_cntev_format_cell_stats(void *arg)
   format_cell_stats(&event_string, TO_CIRCUIT(or_circ), cell_stats);
   tt_str_op("InboundQueue=8 InboundConn=2 InboundAdded=relay:3 "
             "InboundRemoved=relay:7 InboundTime=relay:6 "
-            "OutboundQueue=9 OutboundConn=1", ==, event_string);
+            "OutboundQueue=9 OutboundConn=1", OP_EQ, event_string);
 
  done:
   tor_free(cell_stats);
@@ -293,15 +293,114 @@ test_cntev_format_cell_stats(void *arg)
   tor_free(n_chan);
 }
 
+static void
+test_cntev_event_mask(void *arg)
+{
+  unsigned int test_event, selected_event;
+  (void)arg;
+
+  /* Check that nothing is interesting when no events are set */
+  control_testing_set_global_event_mask(EVENT_MASK_NONE_);
+
+  /* Check that nothing is interesting between EVENT_MIN_ and EVENT_MAX_ */
+  for (test_event = EVENT_MIN_; test_event <= EVENT_MAX_; test_event++)
+    tt_assert(!control_event_is_interesting(test_event));
+
+  /* Check that nothing is interesting outside EVENT_MIN_ to EVENT_MAX_
+   * This will break if control_event_is_interesting() checks its arguments */
+  for (test_event = 0; test_event < EVENT_MIN_; test_event++)
+    tt_assert(!control_event_is_interesting(test_event));
+  for (test_event = EVENT_MAX_ + 1;
+       test_event < EVENT_CAPACITY_;
+       test_event++)
+    tt_assert(!control_event_is_interesting(test_event));
+
+  /* Check that all valid events are interesting when all events are set */
+  control_testing_set_global_event_mask(EVENT_MASK_ALL_);
+
+  /* Check that everything is interesting between EVENT_MIN_ and EVENT_MAX_ */
+  for (test_event = EVENT_MIN_; test_event <= EVENT_MAX_; test_event++)
+    tt_assert(control_event_is_interesting(test_event));
+
+  /* Check that nothing is interesting outside EVENT_MIN_ to EVENT_MAX_
+   * This will break if control_event_is_interesting() checks its arguments */
+  for (test_event = 0; test_event < EVENT_MIN_; test_event++)
+    tt_assert(!control_event_is_interesting(test_event));
+  for (test_event = EVENT_MAX_ + 1;
+       test_event < EVENT_CAPACITY_;
+       test_event++)
+    tt_assert(!control_event_is_interesting(test_event));
+
+  /* Check that only that event is interesting when a single event is set */
+  for (selected_event = EVENT_MIN_;
+       selected_event <= EVENT_MAX_;
+       selected_event++) {
+    control_testing_set_global_event_mask(EVENT_MASK_(selected_event));
+
+    /* Check that only this event is interesting
+     * between EVENT_MIN_ and EVENT_MAX_ */
+    for (test_event = EVENT_MIN_; test_event <= EVENT_MAX_; test_event++) {
+      if (test_event == selected_event) {
+        tt_assert(control_event_is_interesting(test_event));
+      } else {
+        tt_assert(!control_event_is_interesting(test_event));
+      }
+    }
+
+    /* Check that nothing is interesting outside EVENT_MIN_ to EVENT_MAX_
+     * This will break if control_event_is_interesting checks its arguments */
+    for (test_event = 0; test_event < EVENT_MIN_; test_event++)
+      tt_assert(!control_event_is_interesting(test_event));
+    for (test_event = EVENT_MAX_ + 1;
+         test_event < EVENT_CAPACITY_;
+         test_event++)
+      tt_assert(!control_event_is_interesting(test_event));
+  }
+
+  /* Check that only that event is not-interesting
+   * when a single event is un-set */
+  for (selected_event = EVENT_MIN_;
+       selected_event <= EVENT_MAX_;
+       selected_event++) {
+    control_testing_set_global_event_mask(
+                                          EVENT_MASK_ALL_
+                                          & ~(EVENT_MASK_(selected_event))
+                                          );
+
+    /* Check that only this event is not-interesting
+     * between EVENT_MIN_ and EVENT_MAX_ */
+    for (test_event = EVENT_MIN_; test_event <= EVENT_MAX_; test_event++) {
+      if (test_event == selected_event) {
+        tt_assert(!control_event_is_interesting(test_event));
+      } else {
+        tt_assert(control_event_is_interesting(test_event));
+      }
+    }
+
+    /* Check that nothing is interesting outside EVENT_MIN_ to EVENT_MAX_
+     * This will break if control_event_is_interesting checks its arguments */
+    for (test_event = 0; test_event < EVENT_MIN_; test_event++)
+      tt_assert(!control_event_is_interesting(test_event));
+    for (test_event = EVENT_MAX_ + 1;
+         test_event < EVENT_CAPACITY_;
+         test_event++)
+      tt_assert(!control_event_is_interesting(test_event));
+  }
+
+ done:
+  ;
+}
+
 #define TEST(name, flags)                                               \
   { #name, test_cntev_ ## name, flags, 0, NULL }
 
 struct testcase_t controller_event_tests[] = {
-  TEST(bucket_note_empty, 0),
-  TEST(bucket_millis_empty, 0),
-  TEST(sum_up_cell_stats, 0),
-  TEST(append_cell_stats, 0),
-  TEST(format_cell_stats, 0),
+  TEST(bucket_note_empty, TT_FORK),
+  TEST(bucket_millis_empty, TT_FORK),
+  TEST(sum_up_cell_stats, TT_FORK),
+  TEST(append_cell_stats, TT_FORK),
+  TEST(format_cell_stats, TT_FORK),
+  TEST(event_mask, TT_FORK),
   END_OF_TESTCASES
 };
 

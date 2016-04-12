@@ -2,7 +2,7 @@ dnl Helper macros for Tor configure.ac
 dnl Copyright (c) 2001-2004, Roger Dingledine
 dnl Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson
 dnl Copyright (c) 2007-2008, Roger Dingledine, Nick Mathewson
-dnl Copyright (c) 2007-2013, The Tor Project, Inc.
+dnl Copyright (c) 2007-2015, The Tor Project, Inc.
 dnl See LICENSE for licensing information
 
 AC_DEFUN([TOR_EXTEND_CODEPATH],
@@ -137,7 +137,7 @@ dnl
 AC_DEFUN([TOR_SEARCH_LIBRARY], [
 try$1dir=""
 AC_ARG_WITH($1-dir,
-  [  --with-$1-dir=PATH    Specify path to $1 installation ],
+  AS_HELP_STRING(--with-$1-dir=PATH, [specify path to $1 installation]),
   [
      if test x$withval != xno ; then
         try$1dir="$withval"

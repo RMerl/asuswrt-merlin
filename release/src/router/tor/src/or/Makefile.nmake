@@ -63,6 +63,7 @@ LIBTOR_OBJECTS = \
   routerlist.obj \
   routerparse.obj \
   routerset.obj \
+  scheduler.obj \
   statefile.obj \
   status.obj \
   transports.obj

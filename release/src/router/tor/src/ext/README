@@ -49,3 +49,23 @@ siphash.h
     Marek Majkowski's implementation of siphash 2-4, a secure keyed
     hash algorithm to avoid collision-based DoS attacks against hash
     tables.
+
+trunnel/*.[ch]
+
+    Headers and runtime code for Trunnel, a system for generating
+    code to encode and decode binary formats.
+
+ed25519/ref10/*
+
+    Daniel Bernsten's portable ref10 implementation of ed25519.
+    Public domain.
+
+ed25519/donna/*
+
+    Andrew Moon's semi-portable ed25519-donna implementation of
+    ed25519. Public domain.
+
+readpassphrase.[ch]
+
+    Portable readpassphrase implementation from OpenSSH portable, version
+    6.8p1.

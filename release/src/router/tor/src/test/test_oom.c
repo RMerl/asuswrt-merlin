@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, The Tor Project, Inc. */
+/* Copyright (c) 2014-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /* Unit tests for OOM handling logic */
@@ -13,9 +13,6 @@
 #include "compat_libevent.h"
 #include "connection.h"
 #include "config.h"
-#ifdef ENABLE_MEMPOOLS
-#include "mempool.h"
-#endif
 #include "relay.h"
 #include "test.h"
 
@@ -143,17 +140,13 @@ test_oom_circbuf(void *arg)
 
   MOCK(circuit_mark_for_close_, circuit_mark_for_close_dummy_);
 
-#ifdef ENABLE_MEMPOOLS
-  init_cell_pool();
-#endif /* ENABLE_MEMPOOLS */
-
   /* Far too low for real life. */
   options->MaxMemInQueues = 256*packed_cell_mem_cost();
   options->CellStatistics = 0;
 
-  tt_int_op(cell_queues_check_size(), ==, 0); /* We don't start out OOM. */
-  tt_int_op(cell_queues_get_total_allocation(), ==, 0);
-  tt_int_op(buf_get_total_allocation(), ==, 0);
+  tt_int_op(cell_queues_check_size(), OP_EQ, 0); /* We don't start out OOM. */
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ, 0);
+  tt_int_op(buf_get_total_allocation(), OP_EQ, 0);
 
   /* Now we're going to fake up some circuits and get them added to the global
      circuit list. */
@@ -164,22 +157,17 @@ test_oom_circbuf(void *arg)
   tor_gettimeofday_cache_set(&tv);
   c2 = dummy_or_circuit_new(20, 20);
 
-#ifdef ENABLE_MEMPOOLS
-  tt_int_op(packed_cell_mem_cost(), ==,
-            sizeof(packed_cell_t) + MP_POOL_ITEM_OVERHEAD);
-#else
-  tt_int_op(packed_cell_mem_cost(), ==,
+  tt_int_op(packed_cell_mem_cost(), OP_EQ,
             sizeof(packed_cell_t));
-#endif /* ENABLE_MEMPOOLS */
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 70);
-  tt_int_op(cell_queues_check_size(), ==, 0); /* We are still not OOM */
+  tt_int_op(cell_queues_check_size(), OP_EQ, 0); /* We are still not OOM */
 
   tv.tv_usec = 20*1000;
   tor_gettimeofday_cache_set(&tv);
   c3 = dummy_or_circuit_new(100, 85);
-  tt_int_op(cell_queues_check_size(), ==, 0); /* We are still not OOM */
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_check_size(), OP_EQ, 0); /* We are still not OOM */
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 255);
 
   tv.tv_usec = 30*1000;
@@ -187,17 +175,17 @@ test_oom_circbuf(void *arg)
   /* Adding this cell will trigger our OOM handler. */
   c4 = dummy_or_circuit_new(2, 0);
 
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 257);
 
-  tt_int_op(cell_queues_check_size(), ==, 1); /* We are now OOM */
+  tt_int_op(cell_queues_check_size(), OP_EQ, 1); /* We are now OOM */
 
   tt_assert(c1->marked_for_close);
   tt_assert(! c2->marked_for_close);
   tt_assert(! c3->marked_for_close);
   tt_assert(! c4->marked_for_close);
 
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * (257 - 30));
 
   circuit_free(c1);
@@ -208,14 +196,14 @@ test_oom_circbuf(void *arg)
   tv.tv_usec = 40*1000; /* go back to the future */
   tor_gettimeofday_cache_set(&tv);
 
-  tt_int_op(cell_queues_check_size(), ==, 1); /* We are now OOM */
+  tt_int_op(cell_queues_check_size(), OP_EQ, 1); /* We are now OOM */
 
   tt_assert(c1->marked_for_close);
   tt_assert(! c2->marked_for_close);
   tt_assert(! c3->marked_for_close);
   tt_assert(! c4->marked_for_close);
 
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * (257 - 30));
 
  done:
@@ -242,17 +230,13 @@ test_oom_streambuf(void *arg)
 
   MOCK(circuit_mark_for_close_, circuit_mark_for_close_dummy_);
 
-#ifdef ENABLE_MEMPOOLS
-  init_cell_pool();
-#endif /* ENABLE_MEMPOOLS */
-
   /* Far too low for real life. */
   options->MaxMemInQueues = 81*packed_cell_mem_cost() + 4096 * 34;
   options->CellStatistics = 0;
 
-  tt_int_op(cell_queues_check_size(), ==, 0); /* We don't start out OOM. */
-  tt_int_op(cell_queues_get_total_allocation(), ==, 0);
-  tt_int_op(buf_get_total_allocation(), ==, 0);
+  tt_int_op(cell_queues_check_size(), OP_EQ, 0); /* We don't start out OOM. */
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ, 0);
+  tt_int_op(buf_get_total_allocation(), OP_EQ, 0);
 
   /* Start all circuits with a bit of data queued in cells */
   tv.tv_usec = 500*1000; /* go halfway into the second. */
@@ -267,7 +251,7 @@ test_oom_streambuf(void *arg)
   tv.tv_usec = 530*1000;
   tor_gettimeofday_cache_set(&tv);
   c4 = dummy_or_circuit_new(0,0);
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 80);
 
   tv.tv_usec = 600*1000;
@@ -303,24 +287,24 @@ test_oom_streambuf(void *arg)
   tv.tv_usec = 0;
   tvms = (uint32_t) tv_to_msec(&tv);
 
-  tt_int_op(circuit_max_queued_cell_age(c1, tvms), ==, 500);
-  tt_int_op(circuit_max_queued_cell_age(c2, tvms), ==, 490);
-  tt_int_op(circuit_max_queued_cell_age(c3, tvms), ==, 480);
-  tt_int_op(circuit_max_queued_cell_age(c4, tvms), ==, 0);
+  tt_int_op(circuit_max_queued_cell_age(c1, tvms), OP_EQ, 500);
+  tt_int_op(circuit_max_queued_cell_age(c2, tvms), OP_EQ, 490);
+  tt_int_op(circuit_max_queued_cell_age(c3, tvms), OP_EQ, 480);
+  tt_int_op(circuit_max_queued_cell_age(c4, tvms), OP_EQ, 0);
 
-  tt_int_op(circuit_max_queued_data_age(c1, tvms), ==, 390);
-  tt_int_op(circuit_max_queued_data_age(c2, tvms), ==, 380);
-  tt_int_op(circuit_max_queued_data_age(c3, tvms), ==, 0);
-  tt_int_op(circuit_max_queued_data_age(c4, tvms), ==, 370);
+  tt_int_op(circuit_max_queued_data_age(c1, tvms), OP_EQ, 390);
+  tt_int_op(circuit_max_queued_data_age(c2, tvms), OP_EQ, 380);
+  tt_int_op(circuit_max_queued_data_age(c3, tvms), OP_EQ, 0);
+  tt_int_op(circuit_max_queued_data_age(c4, tvms), OP_EQ, 370);
 
-  tt_int_op(circuit_max_queued_item_age(c1, tvms), ==, 500);
-  tt_int_op(circuit_max_queued_item_age(c2, tvms), ==, 490);
-  tt_int_op(circuit_max_queued_item_age(c3, tvms), ==, 480);
-  tt_int_op(circuit_max_queued_item_age(c4, tvms), ==, 370);
+  tt_int_op(circuit_max_queued_item_age(c1, tvms), OP_EQ, 500);
+  tt_int_op(circuit_max_queued_item_age(c2, tvms), OP_EQ, 490);
+  tt_int_op(circuit_max_queued_item_age(c3, tvms), OP_EQ, 480);
+  tt_int_op(circuit_max_queued_item_age(c4, tvms), OP_EQ, 370);
 
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 80);
-  tt_int_op(buf_get_total_allocation(), ==, 4096*16*2);
+  tt_int_op(buf_get_total_allocation(), OP_EQ, 4096*16*2);
 
   /* Now give c4 a very old buffer of modest size */
   {
@@ -332,21 +316,21 @@ test_oom_streambuf(void *arg)
     tt_assert(ec);
     smartlist_add(edgeconns, ec);
   }
-  tt_int_op(buf_get_total_allocation(), ==, 4096*17*2);
-  tt_int_op(circuit_max_queued_item_age(c4, tvms), ==, 1000);
+  tt_int_op(buf_get_total_allocation(), OP_EQ, 4096*17*2);
+  tt_int_op(circuit_max_queued_item_age(c4, tvms), OP_EQ, 1000);
 
-  tt_int_op(cell_queues_check_size(), ==, 0);
+  tt_int_op(cell_queues_check_size(), OP_EQ, 0);
 
   /* And run over the limit. */
   tv.tv_usec = 800*1000;
   tor_gettimeofday_cache_set(&tv);
   c5 = dummy_or_circuit_new(0,5);
 
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 85);
-  tt_int_op(buf_get_total_allocation(), ==, 4096*17*2);
+  tt_int_op(buf_get_total_allocation(), OP_EQ, 4096*17*2);
 
-  tt_int_op(cell_queues_check_size(), ==, 1); /* We are now OOM */
+  tt_int_op(cell_queues_check_size(), OP_EQ, 1); /* We are now OOM */
 
   /* C4 should have died. */
   tt_assert(! c1->marked_for_close);
@@ -355,9 +339,9 @@ test_oom_streambuf(void *arg)
   tt_assert(c4->marked_for_close);
   tt_assert(! c5->marked_for_close);
 
-  tt_int_op(cell_queues_get_total_allocation(), ==,
+  tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 85);
-  tt_int_op(buf_get_total_allocation(), ==, 4096*8*2);
+  tt_int_op(buf_get_total_allocation(), OP_EQ, 4096*8*2);
 
  done:
   circuit_free(c1);

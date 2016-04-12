@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Tor Project, Inc. */
+/* Copyright (c) 2012-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_CRYPTO_CURVE25519_H
@@ -30,7 +30,6 @@ typedef struct curve25519_keypair_t {
   curve25519_secret_key_t seckey;
 } curve25519_keypair_t;
 
-#ifdef CURVE25519_ENABLED
 /* These functions require that we actually know how to use curve25519 keys.
  * The other data structures and functions in this header let us parse them,
  * store them, and move them around.
@@ -57,10 +56,13 @@ int curve25519_keypair_read_from_file(curve25519_keypair_t *keypair_out,
                                       char **tag_out,
                                       const char *fname);
 
+int curve25519_rand_seckey_bytes(uint8_t *out, int extra_strong);
+
 #ifdef CRYPTO_CURVE25519_PRIVATE
 STATIC int curve25519_impl(uint8_t *output, const uint8_t *secret,
                            const uint8_t *basepoint);
-#endif
+
+STATIC int curve25519_basepoint_impl(uint8_t *output, const uint8_t *secret);
 #endif
 
 #define CURVE25519_BASE64_PADDED_LEN 44
@@ -69,6 +71,9 @@ int curve25519_public_from_base64(curve25519_public_key_t *pkey,
                                   const char *input);
 int curve25519_public_to_base64(char *output,
                                 const curve25519_public_key_t *pkey);
+
+void curve25519_set_impl_params(int use_ed);
+void curve25519_init(void);
 
 #endif
 

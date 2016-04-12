@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Tor Project, Inc. */
+/* Copyright (c) 2013-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "or.h"
@@ -42,9 +42,9 @@ fp_pair_map_entry_hash(const fp_pair_map_entry_t *a)
 
 HT_PROTOTYPE(fp_pair_map_impl, fp_pair_map_entry_s, node,
              fp_pair_map_entry_hash, fp_pair_map_entries_eq)
-HT_GENERATE(fp_pair_map_impl, fp_pair_map_entry_s, node,
-            fp_pair_map_entry_hash, fp_pair_map_entries_eq,
-            0.6, tor_malloc, tor_realloc, tor_free)
+HT_GENERATE2(fp_pair_map_impl, fp_pair_map_entry_s, node,
+             fp_pair_map_entry_hash, fp_pair_map_entries_eq,
+             0.6, tor_reallocarray_, tor_free_)
 
 /** Constructor to create a new empty map from fp_pair_t to void *
  */

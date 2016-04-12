@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2013, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -363,9 +363,9 @@ HT_HEAD(chanid_circid_muxinfo_map, chanid_circid_muxinfo_t);
 /* Emit a bunch of hash table stuff */
 HT_PROTOTYPE(chanid_circid_muxinfo_map, chanid_circid_muxinfo_t, node,
              chanid_circid_entry_hash, chanid_circid_entries_eq);
-HT_GENERATE(chanid_circid_muxinfo_map, chanid_circid_muxinfo_t, node,
-            chanid_circid_entry_hash, chanid_circid_entries_eq, 0.6,
-            malloc, realloc, free);
+HT_GENERATE2(chanid_circid_muxinfo_map, chanid_circid_muxinfo_t, node,
+             chanid_circid_entry_hash, chanid_circid_entries_eq, 0.6,
+             tor_reallocarray_, tor_free_)
 
 /*
  * Circuitmux alloc/free functions
@@ -621,8 +621,8 @@ circuitmux_clear_policy(circuitmux_t *cmux)
  * Return the policy currently installed on a circuitmux_t
  */
 
-const circuitmux_policy_t *
-circuitmux_get_policy(circuitmux_t *cmux)
+MOCK_IMPL(const circuitmux_policy_t *,
+circuitmux_get_policy, (circuitmux_t *cmux))
 {
   tor_assert(cmux);
 
@@ -896,8 +896,8 @@ circuitmux_num_cells_for_circuit(circuitmux_t *cmux, circuit_t *circ)
  * Query total number of available cells on a circuitmux
  */
 
-unsigned int
-circuitmux_num_cells(circuitmux_t *cmux)
+MOCK_IMPL(unsigned int,
+circuitmux_num_cells, (circuitmux_t *cmux))
 {
   tor_assert(cmux);
 
@@ -1949,5 +1949,53 @@ circuitmux_count_queued_destroy_cells(const channel_t *chan,
   }
 
   return n_destroy_cells;
+}
+
+/**
+ * Compare cmuxes to see which is more preferred; return < 0 if
+ * cmux_1 has higher priority (i.e., cmux_1 < cmux_2 in the scheduler's
+ * sort order), > 0 if cmux_2 has higher priority, or 0 if they are
+ * equally preferred.
+ *
+ * If the cmuxes have different cmux policies or the policy does not
+ * support the cmp_cmux method, return 0.
+ */
+
+MOCK_IMPL(int,
+circuitmux_compare_muxes, (circuitmux_t *cmux_1, circuitmux_t *cmux_2))
+{
+  const circuitmux_policy_t *policy;
+
+  tor_assert(cmux_1);
+  tor_assert(cmux_2);
+
+  if (cmux_1 == cmux_2) {
+    /* Equivalent because they're the same cmux */
+    return 0;
+  }
+
+  if (cmux_1->policy && cmux_2->policy) {
+    if (cmux_1->policy == cmux_2->policy) {
+      policy = cmux_1->policy;
+
+      if (policy->cmp_cmux) {
+        /* Okay, we can compare! */
+        return policy->cmp_cmux(cmux_1, cmux_1->policy_data,
+                                cmux_2, cmux_2->policy_data);
+      } else {
+        /*
+         * Equivalent because the policy doesn't know how to compare between
+         * muxes.
+         */
+        return 0;
+      }
+    } else {
+      /* Equivalent because they have different policies */
+      return 0;
+    }
+  } else {
+    /* Equivalent because one or both are missing a policy */
+    return 0;
+  }
 }
 

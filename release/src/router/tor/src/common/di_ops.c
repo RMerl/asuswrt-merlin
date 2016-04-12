@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Tor Project, Inc. */
+/* Copyright (c) 2011-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -130,6 +130,7 @@ tor_memeq(const void *a, const void *b, size_t sz)
    *            1 & ((any_difference - 1) >> 8) == 0
    */
 
+  /*coverity[overflow]*/
   return 1 & ((any_difference - 1) >> 8);
 }
 
@@ -217,6 +218,7 @@ safe_mem_is_zero(const void *mem, size_t sz)
     total |= *ptr++;
   }
 
+  /*coverity[overflow]*/
   return 1 & ((total - 1) >> 8);
 }
 

@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2013, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -57,6 +57,9 @@ struct circuitmux_policy_s {
   /* Choose a circuit */
   circuit_t * (*pick_active_circuit)(circuitmux_t *cmux,
                                      circuitmux_policy_data_t *pol_data);
+  /* Optional: channel comparator for use by the scheduler */
+  int (*cmp_cmux)(circuitmux_t *cmux_1, circuitmux_policy_data_t *pol_data_1,
+                  circuitmux_t *cmux_2, circuitmux_policy_data_t *pol_data_2);
 };
 
 /*
@@ -105,7 +108,8 @@ void circuitmux_free(circuitmux_t *cmux);
 
 /* Policy control */
 void circuitmux_clear_policy(circuitmux_t *cmux);
-const circuitmux_policy_t * circuitmux_get_policy(circuitmux_t *cmux);
+MOCK_DECL(const circuitmux_policy_t *,
+          circuitmux_get_policy, (circuitmux_t *cmux));
 void circuitmux_set_policy(circuitmux_t *cmux,
                            const circuitmux_policy_t *pol);
 
@@ -117,7 +121,7 @@ int circuitmux_is_circuit_attached(circuitmux_t *cmux, circuit_t *circ);
 int circuitmux_is_circuit_active(circuitmux_t *cmux, circuit_t *circ);
 unsigned int circuitmux_num_cells_for_circuit(circuitmux_t *cmux,
                                               circuit_t *circ);
-unsigned int circuitmux_num_cells(circuitmux_t *cmux);
+MOCK_DECL(unsigned int, circuitmux_num_cells, (circuitmux_t *cmux));
 unsigned int circuitmux_num_circuits(circuitmux_t *cmux);
 unsigned int circuitmux_num_active_circuits(circuitmux_t *cmux);
 
@@ -147,6 +151,10 @@ void circuitmux_append_destroy_cell(channel_t *chan,
                                     uint8_t reason);
 void circuitmux_mark_destroyed_circids_usable(circuitmux_t *cmux,
                                               channel_t *chan);
+
+/* Optional interchannel comparisons for scheduling */
+MOCK_DECL(int, circuitmux_compare_muxes,
+          (circuitmux_t *cmux_1, circuitmux_t *cmux_2));
 
 #endif /* TOR_CIRCUITMUX_H */
 

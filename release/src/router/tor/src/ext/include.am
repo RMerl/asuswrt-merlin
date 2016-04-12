@@ -7,6 +7,7 @@ EXTHEADERS = \
   src/ext/ht.h		\
   src/ext/eventdns.h	\
   src/ext/tinytest.h	\
+  src/ext/tor_readpassphrase.h \
   src/ext/strlcat.c	\
   src/ext/strlcpy.c	\
   src/ext/tinytest_macros.h \
@@ -15,4 +16,122 @@ EXTHEADERS = \
 
 noinst_HEADERS+= $(EXTHEADERS)
 
+src_ext_ed25519_ref10_libed25519_ref10_a_CFLAGS=
+
+src_ext_ed25519_ref10_libed25519_ref10_a_SOURCES= \
+	src/ext/ed25519/ref10/fe_0.c \
+	src/ext/ed25519/ref10/fe_1.c \
+	src/ext/ed25519/ref10/fe_add.c \
+	src/ext/ed25519/ref10/fe_cmov.c \
+	src/ext/ed25519/ref10/fe_copy.c \
+	src/ext/ed25519/ref10/fe_frombytes.c \
+	src/ext/ed25519/ref10/fe_invert.c \
+	src/ext/ed25519/ref10/fe_isnegative.c \
+	src/ext/ed25519/ref10/fe_isnonzero.c \
+	src/ext/ed25519/ref10/fe_mul.c \
+	src/ext/ed25519/ref10/fe_neg.c \
+	src/ext/ed25519/ref10/fe_pow22523.c \
+	src/ext/ed25519/ref10/fe_sq.c \
+	src/ext/ed25519/ref10/fe_sq2.c \
+	src/ext/ed25519/ref10/fe_sub.c \
+	src/ext/ed25519/ref10/fe_tobytes.c \
+	src/ext/ed25519/ref10/ge_add.c \
+	src/ext/ed25519/ref10/ge_double_scalarmult.c \
+	src/ext/ed25519/ref10/ge_frombytes.c \
+	src/ext/ed25519/ref10/ge_madd.c \
+	src/ext/ed25519/ref10/ge_msub.c \
+	src/ext/ed25519/ref10/ge_p1p1_to_p2.c \
+	src/ext/ed25519/ref10/ge_p1p1_to_p3.c \
+	src/ext/ed25519/ref10/ge_p2_0.c \
+	src/ext/ed25519/ref10/ge_p2_dbl.c \
+	src/ext/ed25519/ref10/ge_p3_0.c \
+	src/ext/ed25519/ref10/ge_p3_dbl.c \
+	src/ext/ed25519/ref10/ge_p3_to_cached.c \
+	src/ext/ed25519/ref10/ge_p3_to_p2.c \
+	src/ext/ed25519/ref10/ge_p3_tobytes.c \
+	src/ext/ed25519/ref10/ge_precomp_0.c \
+	src/ext/ed25519/ref10/ge_scalarmult_base.c \
+	src/ext/ed25519/ref10/ge_sub.c \
+	src/ext/ed25519/ref10/ge_tobytes.c \
+	src/ext/ed25519/ref10/keypair.c \
+	src/ext/ed25519/ref10/open.c \
+	src/ext/ed25519/ref10/sc_muladd.c \
+	src/ext/ed25519/ref10/sc_reduce.c \
+	src/ext/ed25519/ref10/sign.c \
+	src/ext/ed25519/ref10/keyconv.c \
+	src/ext/ed25519/ref10/blinding.c
+
+ED25519_REF10_HDRS = \
+	src/ext/ed25519/ref10/api.h \
+	src/ext/ed25519/ref10/base.h \
+	src/ext/ed25519/ref10/base2.h \
+	src/ext/ed25519/ref10/crypto_hash_sha512.h \
+	src/ext/ed25519/ref10/crypto_int32.h \
+	src/ext/ed25519/ref10/crypto_int64.h \
+	src/ext/ed25519/ref10/crypto_sign.h \
+	src/ext/ed25519/ref10/crypto_uint32.h \
+	src/ext/ed25519/ref10/crypto_uint64.h \
+	src/ext/ed25519/ref10/crypto_verify_32.h \
+	src/ext/ed25519/ref10/d.h \
+	src/ext/ed25519/ref10/d2.h \
+	src/ext/ed25519/ref10/ed25519_ref10.h \
+	src/ext/ed25519/ref10/fe.h \
+	src/ext/ed25519/ref10/ge.h \
+	src/ext/ed25519/ref10/ge_add.h \
+	src/ext/ed25519/ref10/ge_madd.h \
+	src/ext/ed25519/ref10/ge_msub.h \
+	src/ext/ed25519/ref10/ge_p2_dbl.h \
+	src/ext/ed25519/ref10/ge_sub.h \
+	src/ext/ed25519/ref10/pow22523.h \
+	src/ext/ed25519/ref10/pow225521.h \
+	src/ext/ed25519/ref10/randombytes.h \
+	src/ext/ed25519/ref10/sc.h \
+	src/ext/ed25519/ref10/sqrtm1.h
+
+noinst_HEADERS += $(ED25519_REF10_HDRS)
+
+LIBED25519_REF10=src/ext/ed25519/ref10/libed25519_ref10.a
+noinst_LIBRARIES += $(LIBED25519_REF10)
+
+src_ext_ed25519_donna_libed25519_donna_a_CFLAGS= \
+  -DED25519_CUSTOMRANDOM \
+  -DED25519_SUFFIX=_donna
+
+src_ext_ed25519_donna_libed25519_donna_a_SOURCES= \
+	src/ext/ed25519/donna/ed25519_tor.c
+
+ED25519_DONNA_HDRS = \
+	src/ext/ed25519/donna/curve25519-donna-32bit.h \
+	src/ext/ed25519/donna/curve25519-donna-64bit.h \
+	src/ext/ed25519/donna/curve25519-donna-helpers.h \
+	src/ext/ed25519/donna/curve25519-donna-sse2.h \
+	src/ext/ed25519/donna/ed25519-donna-32bit-sse2.h \
+	src/ext/ed25519/donna/ed25519-donna-32bit-tables.h \
+	src/ext/ed25519/donna/ed25519-donna-64bit-sse2.h \
+	src/ext/ed25519/donna/ed25519-donna-64bit-tables.h \
+	src/ext/ed25519/donna/ed25519-donna-64bit-x86-32bit.h \
+	src/ext/ed25519/donna/ed25519-donna-64bit-x86.h \
+	src/ext/ed25519/donna/ed25519-donna-basepoint-table.h \
+	src/ext/ed25519/donna/ed25519-donna-batchverify.h \
+	src/ext/ed25519/donna/ed25519-donna.h \
+	src/ext/ed25519/donna/ed25519-donna-impl-base.h \
+	src/ext/ed25519/donna/ed25519-donna-impl-sse2.h \
+	src/ext/ed25519/donna/ed25519-donna-portable.h \
+	src/ext/ed25519/donna/ed25519-donna-portable-identify.h \
+	src/ext/ed25519/donna/ed25519_donna_tor.h \
+	src/ext/ed25519/donna/ed25519.h \
+	src/ext/ed25519/donna/ed25519-hash-custom.h \
+	src/ext/ed25519/donna/ed25519-hash.h \
+	src/ext/ed25519/donna/ed25519-randombytes-custom.h \
+	src/ext/ed25519/donna/ed25519-randombytes.h \
+	src/ext/ed25519/donna/modm-donna-32bit.h \
+	src/ext/ed25519/donna/modm-donna-64bit.h \
+	src/ext/ed25519/donna/regression.h \
+	src/ext/ed25519/donna/test-ticks.h \
+	src/ext/ed25519/donna/test-internals.c
+
+noinst_HEADERS += $(ED25519_DONNA_HDRS)
+
+LIBED25519_DONNA=src/ext/ed25519/donna/libed25519_donna.a
+noinst_LIBRARIES += $(LIBED25519_DONNA)
 

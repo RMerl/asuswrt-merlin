@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2013, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -187,6 +187,9 @@ ewma_notify_xmit_cells(circuitmux_t *cmux,
 static circuit_t *
 ewma_pick_active_circuit(circuitmux_t *cmux,
                          circuitmux_policy_data_t *pol_data);
+static int
+ewma_cmp_cmux(circuitmux_t *cmux_1, circuitmux_policy_data_t *pol_data_1,
+              circuitmux_t *cmux_2, circuitmux_policy_data_t *pol_data_2);
 
 /*** EWMA global variables ***/
 
@@ -209,7 +212,8 @@ circuitmux_policy_t ewma_policy = {
   /*.notify_circ_inactive =*/ ewma_notify_circ_inactive,
   /*.notify_set_n_cells =*/ NULL, /* EWMA doesn't need this */
   /*.notify_xmit_cells =*/ ewma_notify_xmit_cells,
-  /*.pick_active_circuit =*/ ewma_pick_active_circuit
+  /*.pick_active_circuit =*/ ewma_pick_active_circuit,
+  /*.cmp_cmux =*/ ewma_cmp_cmux
 };
 
 /*** EWMA method implementations using the below EWMA helper functions ***/
@@ -273,8 +277,8 @@ ewma_alloc_circ_data(circuitmux_t *cmux,
   tor_assert(circ);
   tor_assert(direction == CELL_DIRECTION_OUT ||
              direction == CELL_DIRECTION_IN);
-  /* Shut the compiler up */
-  tor_assert(cell_count == cell_count);
+  /* Shut the compiler up without triggering -Wtautological-compare */
+  (void)cell_count;
 
   cdata = tor_malloc_zero(sizeof(*cdata));
   cdata->base_.magic = EWMA_POL_CIRC_DATA_MAGIC;
@@ -451,6 +455,58 @@ ewma_pick_active_circuit(circuitmux_t *cmux,
   }
 
   return circ;
+}
+
+/**
+ * Compare two EWMA cmuxes, and return -1, 0 or 1 to indicate which should
+ * be more preferred - see circuitmux_compare_muxes() of circuitmux.c.
+ */
+
+static int
+ewma_cmp_cmux(circuitmux_t *cmux_1, circuitmux_policy_data_t *pol_data_1,
+              circuitmux_t *cmux_2, circuitmux_policy_data_t *pol_data_2)
+{
+  ewma_policy_data_t *p1 = NULL, *p2 = NULL;
+  cell_ewma_t *ce1 = NULL, *ce2 = NULL;
+
+  tor_assert(cmux_1);
+  tor_assert(pol_data_1);
+  tor_assert(cmux_2);
+  tor_assert(pol_data_2);
+
+  p1 = TO_EWMA_POL_DATA(pol_data_1);
+  p2 = TO_EWMA_POL_DATA(pol_data_1);
+
+  if (p1 != p2) {
+    /* Get the head cell_ewma_t from each queue */
+    if (smartlist_len(p1->active_circuit_pqueue) > 0) {
+      ce1 = smartlist_get(p1->active_circuit_pqueue, 0);
+    }
+
+    if (smartlist_len(p2->active_circuit_pqueue) > 0) {
+      ce2 = smartlist_get(p2->active_circuit_pqueue, 0);
+    }
+
+    /* Got both of them? */
+    if (ce1 != NULL && ce2 != NULL) {
+      /* Pick whichever one has the better best circuit */
+      return compare_cell_ewma_counts(ce1, ce2);
+    } else {
+      if (ce1 != NULL ) {
+        /* We only have a circuit on cmux_1, so prefer it */
+        return -1;
+      } else if (ce2 != NULL) {
+        /* We only have a circuit on cmux_2, so prefer it */
+        return 1;
+      } else {
+        /* No circuits at all; no preference */
+        return 0;
+      }
+    }
+  } else {
+    /* We got identical params */
+    return 0;
+  }
 }
 
 /** Helper for sorting cell_ewma_t values in their priority queue. */

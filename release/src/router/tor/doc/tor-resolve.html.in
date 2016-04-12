@@ -745,7 +745,7 @@ tor-resolve(1) Manual Page
 <div class="sect1">
 <h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
-<div class="paragraph"><p><strong>tor-resolve</strong> [-4|-5] [-v] [-x] <em>hostname</em> [<em>sockshost</em>[:<em>socksport</em>]]</p></div>
+<div class="paragraph"><p><strong>tor-resolve</strong> [-4|-5] [-v] [-x] [-p <em>socksport</em>] <em>hostname</em> [<em>sockshost</em>[:<em>socksport</em>]]</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -795,6 +795,14 @@ port 9050.  If this isn&#8217;t what you want, you should specify an explicit
     support reverse DNS.
 </p>
 </dd>
+<dt class="hdlist1">
+<strong>-p</strong> <em>socksport</em>
+</dt>
+<dd>
+<p>
+    Override the default SOCKS port without setting the hostname.
+</p>
+</dd>
 </dl></div>
 </div>
 </div>
@@ -815,7 +823,7 @@ port 9050.  If this isn&#8217;t what you want, you should specify an explicit
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-03-12 12:49:50 EDT
+Last updated 2015-11-13 08:33:25 EST
 </div>
 </div>
 </body>

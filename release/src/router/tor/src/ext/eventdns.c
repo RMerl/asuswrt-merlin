@@ -37,7 +37,7 @@
  */
 
 #include "eventdns_tor.h"
-#include "../common/util.h"
+#include "util.h"
 #include <sys/types.h>
 /* #define NDEBUG */
 

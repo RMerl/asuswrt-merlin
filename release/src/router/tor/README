@@ -6,6 +6,9 @@ configure it properly.
 To build Tor from source:
         ./configure && make && make install
 
+To build Tor from a just-cloned git repository:
+        sh autogen.sh && ./configure && make && make install
+
 Home page:
         https://www.torproject.org/
 

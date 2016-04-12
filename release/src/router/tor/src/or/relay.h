@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -42,13 +42,10 @@ extern uint64_t stats_n_data_bytes_packaged;
 extern uint64_t stats_n_data_cells_received;
 extern uint64_t stats_n_data_bytes_received;
 
-#ifdef ENABLE_MEMPOOLS
-void init_cell_pool(void);
-void free_cell_pool(void);
-void clean_cell_pool(void);
-#endif /* ENABLE_MEMPOOLS */
 void dump_cell_pool_usage(int severity);
 size_t packed_cell_mem_cost(void);
+
+int have_been_under_memory_pressure(void);
 
 /* For channeltls.c */
 void packed_cell_free(packed_cell_t *cell);
@@ -64,7 +61,8 @@ void append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
                                   cell_t *cell, cell_direction_t direction,
                                   streamid_t fromstream);
 void channel_unlink_all_circuits(channel_t *chan, smartlist_t *detached_out);
-int channel_flush_from_first_active_circuit(channel_t *chan, int max);
+MOCK_DECL(int, channel_flush_from_first_active_circuit,
+          (channel_t *chan, int max));
 void assert_circuit_mux_okay(channel_t *chan);
 void update_circuit_on_cmux_(circuit_t *circ, cell_direction_t direction,
                              const char *file, int lineno);

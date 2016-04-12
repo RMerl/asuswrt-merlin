@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -17,6 +17,7 @@
 
 const char *conn_type_to_string(int type);
 const char *conn_state_to_string(int type, int state);
+int conn_listener_type_supports_af_unix(int type);
 
 dir_connection_t *dir_connection_new(int socket_family);
 or_connection_t *or_connection_new(int type, int socket_family);
@@ -27,7 +28,7 @@ listener_connection_t *listener_connection_new(int type, int socket_family);
 connection_t *connection_new(int type, int socket_family);
 
 void connection_link_connections(connection_t *conn_a, connection_t *conn_b);
-void connection_free(connection_t *conn);
+MOCK_DECL(void,connection_free,(connection_t *conn));
 void connection_free_all(void);
 void connection_about_to_close_connection(connection_t *conn);
 void connection_close_immediate(connection_t *conn);
@@ -88,6 +89,13 @@ void connection_expire_held_open(void);
 int connection_connect(connection_t *conn, const char *address,
                        const tor_addr_t *addr,
                        uint16_t port, int *socket_error);
+
+#ifdef HAVE_SYS_UN_H
+
+int connection_connect_unix(connection_t *conn, const char *socket_path,
+                            int *socket_error);
+
+#endif /* defined(HAVE_SYS_UN_H) */
 
 /** Maximum size of information that we can fit into SOCKS5 username
     or password fields. */
@@ -189,7 +197,8 @@ dir_connection_t *connection_dir_get_by_purpose_and_resource(
 
 int any_other_active_or_conns(const or_connection_t *this_conn);
 
-#define connection_speaks_cells(conn) ((conn)->type == CONN_TYPE_OR)
+/* || 0 is for -Wparentheses-equality (-Wall?) appeasement under clang */
+#define connection_speaks_cells(conn) (((conn)->type == CONN_TYPE_OR) || 0)
 int connection_is_listener(connection_t *conn);
 int connection_state_is_open(connection_t *conn);
 int connection_state_is_connecting(connection_t *conn);

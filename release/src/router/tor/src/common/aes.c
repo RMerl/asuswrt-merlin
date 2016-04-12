@@ -1,7 +1,7 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -12,31 +12,24 @@
 #include "orconfig.h"
 
 #ifdef _WIN32 /*wrkard for dtls1.h >= 0.9.8m of "#include <winsock.h>"*/
- #ifndef _WIN32_WINNT
- #define _WIN32_WINNT 0x0501
- #endif
- #define WIN32_LEAN_AND_MEAN
- #if defined(_MSC_VER) && (_MSC_VER < 1300)
-    #include <winsock.h>
- #else
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
- #endif
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
 #endif
 
 #include <openssl/opensslv.h>
+#include "crypto.h"
+
+#if OPENSSL_VERSION_NUMBER < OPENSSL_V_SERIES(1,0,0)
+#error "We require OpenSSL >= 1.0.0"
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/engine.h>
-#include "crypto.h"
-#if OPENSSL_VERSION_NUMBER >= OPENSSL_V_SERIES(1,0,0)
-/* See comments about which counter mode implementation to use below. */
 #include <openssl/modes.h>
-#define CAN_USE_OPENSSL_CTR
-#endif
 #include "compat.h"
 #include "aes.h"
 #include "util.h"
@@ -189,11 +182,9 @@ struct aes_cnt_cipher {
  * we're testing it or because we have hardware acceleration configured */
 static int should_use_EVP = 0;
 
-#ifdef CAN_USE_OPENSSL_CTR
 /** True iff we have tested the counter-mode implementation and found that it
  * doesn't have the counter-mode bug from OpenSSL 1.0.0. */
 static int should_use_openssl_CTR = 0;
-#endif
 
 /** Check whether we should use the EVP interface for AES. If <b>force_val</b>
  * is nonnegative, we use use EVP iff it is true.  Otherwise, we use EVP
@@ -235,7 +226,6 @@ evaluate_evp_for_aes(int force_val)
 int
 evaluate_ctr_for_aes(void)
 {
-#ifdef CAN_USE_OPENSSL_CTR
   /* Result of encrypting an all-zero block with an all-zero 128-bit AES key.
    * This should be the same as encrypting an all-zero block with an all-zero
    * 128-bit AES key in counter mode, starting at position 0 of the stream.
@@ -268,10 +258,6 @@ evaluate_ctr_for_aes(void)
                "mode; using it.");
     should_use_openssl_CTR = 1;
   }
-#else
-  log_info(LD_CRYPTO, "This version of OpenSSL has a slow implementation of "
-             "counter mode; not using it.");
-#endif
   return 0;
 }
 
@@ -331,7 +317,7 @@ static void
 aes_set_key(aes_cnt_cipher_t *cipher, const char *key, int key_bits)
 {
   if (should_use_EVP) {
-    const EVP_CIPHER *c;
+    const EVP_CIPHER *c = 0;
     switch (key_bits) {
       case 128: c = EVP_aes_128_ecb(); break;
       case 192: c = EVP_aes_192_ecb(); break;
@@ -356,11 +342,9 @@ aes_set_key(aes_cnt_cipher_t *cipher, const char *key, int key_bits)
 
   cipher->pos = 0;
 
-#ifdef CAN_USE_OPENSSL_CTR
   if (should_use_openssl_CTR)
     memset(cipher->buf, 0, sizeof(cipher->buf));
   else
-#endif
     aes_fill_buf_(cipher);
 }
 
@@ -386,7 +370,6 @@ aes_cipher_free(aes_cnt_cipher_t *cipher)
 #define UPDATE_CTR_BUF(c, n)
 #endif
 
-#ifdef CAN_USE_OPENSSL_CTR
 /* Helper function to use EVP with openssl's counter-mode wrapper. */
 static void
 evp_block128_fn(const uint8_t in[16],
@@ -397,7 +380,6 @@ evp_block128_fn(const uint8_t in[16],
   int inl=16, outl=16;
   EVP_EncryptUpdate(ctx, out, &outl, in, inl);
 }
-#endif
 
 /** Encrypt <b>len</b> bytes from <b>input</b>, storing the result in
  * <b>output</b>.  Uses the key in <b>cipher</b>, and advances the counter
@@ -407,7 +389,6 @@ void
 aes_crypt(aes_cnt_cipher_t *cipher, const char *input, size_t len,
           char *output)
 {
-#ifdef CAN_USE_OPENSSL_CTR
   if (should_use_openssl_CTR) {
     if (cipher->using_evp) {
       /* In openssl 1.0.0, there's an if'd out EVP_aes_128_ctr in evp.h.  If
@@ -431,9 +412,7 @@ aes_crypt(aes_cnt_cipher_t *cipher, const char *input, size_t len,
                          &cipher->pos);
     }
     return;
-  } else
-#endif
-  {
+  } else {
     int c = cipher->pos;
     if (PREDICT_UNLIKELY(!len)) return;
 
@@ -466,13 +445,10 @@ aes_crypt(aes_cnt_cipher_t *cipher, const char *input, size_t len,
 void
 aes_crypt_inplace(aes_cnt_cipher_t *cipher, char *data, size_t len)
 {
-#ifdef CAN_USE_OPENSSL_CTR
   if (should_use_openssl_CTR) {
     aes_crypt(cipher, data, len, data);
     return;
-  } else
-#endif
-  {
+  } else {
     int c = cipher->pos;
     if (PREDICT_UNLIKELY(!len)) return;
 
@@ -512,9 +488,7 @@ aes_set_iv(aes_cnt_cipher_t *cipher, const char *iv)
   cipher->pos = 0;
   memcpy(cipher->ctr_buf.buf, iv, 16);
 
-#ifdef CAN_USE_OPENSSL_CTR
   if (!should_use_openssl_CTR)
-#endif
     aes_fill_buf_(cipher);
 }
 

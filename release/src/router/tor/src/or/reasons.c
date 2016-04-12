@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -350,6 +350,8 @@ circuit_end_reason_to_control_string(int reason)
       return "NOSUCHSERVICE";
     case END_CIRC_REASON_MEASUREMENT_EXPIRED:
       return "MEASUREMENT_EXPIRED";
+    case END_CIRC_REASON_IP_NOW_REDUNDANT:
+      return "IP_NOW_REDUNDANT";
     default:
       if (is_remote) {
         /*
@@ -367,7 +369,7 @@ circuit_end_reason_to_control_string(int reason)
   }
 }
 
-/** Return a string corresponding to a SOCKS4 reponse code. */
+/** Return a string corresponding to a SOCKS4 response code. */
 const char *
 socks4_response_code_to_string(uint8_t code)
 {
@@ -385,7 +387,7 @@ socks4_response_code_to_string(uint8_t code)
   }
 }
 
-/** Return a string corresponding to a SOCKS5 reponse code. */
+/** Return a string corresponding to a SOCKS5 response code. */
 const char *
 socks5_response_code_to_string(uint8_t code)
 {

@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -45,6 +45,13 @@
 #error "Sorry; we don't support building with NDEBUG."
 #endif
 
+/* Don't use assertions during coverage. It leads to tons of unreached
+ * branches which in reality are only assertions we didn't hit. */
+#ifdef TOR_COVERAGE
+#define tor_assert(a) STMT_BEGIN                                        \
+  (void)(a);                                                            \
+  STMT_END
+#else
 /** Like assert(3), but send assertion failures to the log as well as to
  * stderr. */
 #define tor_assert(expr) STMT_BEGIN                                     \
@@ -52,6 +59,7 @@
     tor_assertion_failed_(SHORT_FILE__, __LINE__, __func__, #expr);     \
     abort();                                                            \
   } STMT_END
+#endif
 
 void tor_assertion_failed_(const char *fname, unsigned int line,
                            const char *func, const char *expr);
@@ -79,6 +87,7 @@ void *tor_malloc_(size_t size DMALLOC_PARAMS) ATTR_MALLOC;
 void *tor_malloc_zero_(size_t size DMALLOC_PARAMS) ATTR_MALLOC;
 void *tor_calloc_(size_t nmemb, size_t size DMALLOC_PARAMS) ATTR_MALLOC;
 void *tor_realloc_(void *ptr, size_t size DMALLOC_PARAMS);
+void *tor_reallocarray_(void *ptr, size_t size1, size_t size2 DMALLOC_PARAMS);
 char *tor_strdup_(const char *s DMALLOC_PARAMS) ATTR_MALLOC ATTR_NONNULL((1));
 char *tor_strndup_(const char *s, size_t n DMALLOC_PARAMS)
   ATTR_MALLOC ATTR_NONNULL((1));
@@ -116,6 +125,8 @@ extern int dmalloc_free(const char *file, const int line, void *pnt,
 #define tor_malloc_zero(size)  tor_malloc_zero_(size DMALLOC_ARGS)
 #define tor_calloc(nmemb,size) tor_calloc_(nmemb, size DMALLOC_ARGS)
 #define tor_realloc(ptr, size) tor_realloc_(ptr, size DMALLOC_ARGS)
+#define tor_reallocarray(ptr, sz1, sz2) \
+  tor_reallocarray_((ptr), (sz1), (sz2) DMALLOC_ARGS)
 #define tor_strdup(s)          tor_strdup_(s DMALLOC_ARGS)
 #define tor_strndup(s, n)      tor_strndup_(s, n DMALLOC_ARGS)
 #define tor_memdup(s, n)       tor_memdup_(s, n DMALLOC_ARGS)
@@ -169,6 +180,10 @@ uint64_t round_to_power_of_2(uint64_t u64);
 unsigned round_to_next_multiple_of(unsigned number, unsigned divisor);
 uint32_t round_uint32_to_next_multiple_of(uint32_t number, uint32_t divisor);
 uint64_t round_uint64_to_next_multiple_of(uint64_t number, uint64_t divisor);
+int64_t round_int64_to_next_multiple_of(int64_t number, int64_t divisor);
+int64_t sample_laplace_distribution(double mu, double b, double p);
+int64_t add_laplace_noise(int64_t signal, double random, double delta_f,
+                          double epsilon);
 int n_bits_set_u8(uint8_t v);
 
 /* Compute the CEIL of <b>a</b> divided by <b>b</b>, for nonnegative <b>a</b>
@@ -202,7 +217,6 @@ int strcasecmpstart(const char *s1, const char *s2) ATTR_NONNULL((1,2));
 int strcmpend(const char *s1, const char *s2) ATTR_NONNULL((1,2));
 int strcasecmpend(const char *s1, const char *s2) ATTR_NONNULL((1,2));
 int fast_memcmpstart(const void *mem, size_t memlen, const char *prefix);
-void tor_strclear(char *s);
 
 void tor_strstrip(char *s, const char *strip) ATTR_NONNULL((1,2));
 long tor_parse_long(const char *s, int base, long min,
@@ -224,11 +238,15 @@ const char *find_str_at_start_of_line(const char *haystack,
                                       const char *needle);
 int string_is_C_identifier(const char *string);
 int string_is_key_value(int severity, const char *string);
+int string_is_valid_hostname(const char *string);
+int string_is_valid_ipv4_address(const char *string);
+int string_is_valid_ipv6_address(const char *string);
 
 int tor_mem_is_zero(const char *mem, size_t len);
 int tor_digest_is_zero(const char *digest);
 int tor_digest256_is_zero(const char *digest);
 char *esc_for_log(const char *string) ATTR_MALLOC;
+char *esc_for_log_len(const char *chars, size_t n) ATTR_MALLOC;
 const char *escaped(const char *string);
 
 char *tor_escape_str_for_pt_args(const char *string,
@@ -246,10 +264,6 @@ void smartlist_add_vasprintf(struct smartlist_t *sl, const char *pattern,
                              va_list args)
   CHECK_PRINTF(2, 0);
 
-int hex_decode_digit(char c);
-void base16_encode(char *dest, size_t destlen, const char *src, size_t srclen);
-int base16_decode(char *dest, size_t destlen, const char *src, size_t srclen);
-
 /* Time helpers */
 long tv_udiff(const struct timeval *start, const struct timeval *end);
 long tv_mdiff(const struct timeval *start, const struct timeval *end);
@@ -264,6 +278,7 @@ void format_local_iso_time(char *buf, time_t t);
 void format_iso_time(char *buf, time_t t);
 void format_iso_time_nospace(char *buf, time_t t);
 void format_iso_time_nospace_usec(char *buf, const struct timeval *tv);
+int parse_iso_time_(const char *cp, time_t *t, int strict);
 int parse_iso_time(const char *buf, time_t *t);
 int parse_http_time(const char *buf, struct tm *tm);
 int format_time_interval(char *out, size_t out_len, long interval);
@@ -331,7 +346,7 @@ enum stream_status get_string_from_pipe(FILE *stream, char *buf, size_t count);
 
 /** Return values from file_status(); see that function's documentation
  * for details. */
-typedef enum { FN_ERROR, FN_NOENT, FN_FILE, FN_DIR } file_status_t;
+typedef enum { FN_ERROR, FN_NOENT, FN_FILE, FN_DIR, FN_EMPTY } file_status_t;
 file_status_t file_status(const char *filename);
 
 /** Possible behaviors for check_private_dir() on encountering a nonexistent
@@ -341,9 +356,11 @@ typedef unsigned int cpd_check_t;
 #define CPD_CREATE 1
 #define CPD_CHECK 2
 #define CPD_GROUP_OK 4
-#define CPD_CHECK_MODE_ONLY 8
+#define CPD_GROUP_READ 8
+#define CPD_CHECK_MODE_ONLY 16
 int check_private_dir(const char *dirname, cpd_check_t check,
                       const char *effective_user);
+
 #define OPEN_FLAGS_REPLACE (O_WRONLY|O_CREAT|O_TRUNC)
 #define OPEN_FLAGS_APPEND (O_WRONLY|O_CREAT|O_APPEND)
 #define OPEN_FLAGS_DONT_REPLACE (O_CREAT|O_EXCL|O_APPEND|O_WRONLY)
@@ -397,7 +414,7 @@ int path_is_relative(const char *filename);
 /* Process helpers */
 void start_daemon(void);
 void finish_daemon(const char *desired_cwd);
-void write_pidfile(char *filename);
+void write_pidfile(const char *filename);
 
 /* Port forwarding */
 void tor_check_port_forwarding(const char *filename,
@@ -453,12 +470,15 @@ struct process_handle_t {
   /** One of the PROCESS_STATUS_* values */
   int status;
 #ifdef _WIN32
+  HANDLE stdin_pipe;
   HANDLE stdout_pipe;
   HANDLE stderr_pipe;
   PROCESS_INFORMATION pid;
 #else
+  int stdin_pipe;
   int stdout_pipe;
   int stderr_pipe;
+  FILE *stdin_handle;
   FILE *stdout_handle;
   FILE *stderr_handle;
   pid_t pid;
@@ -549,9 +569,7 @@ STATIC int format_helper_exit_status(unsigned char child_state,
 
 #endif
 
-const char *libor_get_digests(void);
-
-#define ARRAY_LENGTH(x) (sizeof(x)) / sizeof(x[0])
+#define ARRAY_LENGTH(x) ((sizeof(x)) / sizeof(x[0]))
 
 #endif
 

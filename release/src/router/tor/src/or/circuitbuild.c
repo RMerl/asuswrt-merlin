@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2013, The Tor Project, Inc. */
+ * Copyright (c) 2007-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -14,6 +14,7 @@
 #include "or.h"
 #include "channel.h"
 #include "circpathbias.h"
+#define CIRCUITBUILD_PRIVATE
 #include "circuitbuild.h"
 #include "circuitlist.h"
 #include "circuitstats.h"
@@ -59,9 +60,7 @@ static crypt_path_t *onion_next_hop_in_cpath(crypt_path_t *cpath);
 static int onion_extend_cpath(origin_circuit_t *circ);
 static int count_acceptable_nodes(smartlist_t *routers);
 static int onion_append_hop(crypt_path_t **head_ptr, extend_info_t *choice);
-#ifdef CURVE25519_ENABLED
 static int circuits_can_use_ntor(void);
-#endif
 
 /** This function tries to get a channel to the specified endpoint,
  * and then calls command_setup_channel() to give it the right
@@ -368,7 +367,6 @@ circuit_rep_hist_note_result(origin_circuit_t *circ)
   } while (hop!=circ->cpath);
 }
 
-#ifdef CURVE25519_ENABLED
 /** Return 1 iff at least one node in circ's cpath supports ntor. */
 static int
 circuit_cpath_supports_ntor(const origin_circuit_t *circ)
@@ -388,9 +386,6 @@ circuit_cpath_supports_ntor(const origin_circuit_t *circ)
 
   return 0;
 }
-#else
-#define circuit_cpath_supports_ntor(circ) 0
-#endif
 
 /** Pick all the entries in our cpath. Stop and return 0 when we're
  * happy, or return -1 if an error occurs. */
@@ -398,11 +393,7 @@ static int
 onion_populate_cpath(origin_circuit_t *circ)
 {
   int n_tries = 0;
-#ifdef CURVE25519_ENABLED
   const int using_ntor = circuits_can_use_ntor();
-#else
-  const int using_ntor = 0;
-#endif
 
 #define MAX_POPULATE_ATTEMPTS 32
 
@@ -560,9 +551,13 @@ circuit_handle_first_hop(origin_circuit_t *circ)
  * open and get them to send their create cells forward.
  *
  * Status is 1 if connect succeeded, or 0 if connect failed.
+ *
+ * Close_origin_circuits is 1 if we should close all the origin circuits
+ * through this channel, or 0 otherwise.  (This happens when we want to retry
+ * an older guard.)
  */
 void
-circuit_n_chan_done(channel_t *chan, int status)
+circuit_n_chan_done(channel_t *chan, int status, int close_origin_circuits)
 {
   smartlist_t *pending_circs;
   int err_reason = 0;
@@ -597,6 +592,11 @@ circuit_n_chan_done(channel_t *chan, int status)
       }
       if (!status) { /* chan failed; close circ */
         log_info(LD_CIRC,"Channel failed; closing circ.");
+        circuit_mark_for_close(circ, END_CIRC_REASON_CHANNEL_CLOSED);
+        continue;
+      }
+      if (close_origin_circuits && CIRCUIT_IS_ORIGIN(circ)) {
+        log_info(LD_CIRC,"Channel deprecated for origin circs; closing circ.");
         circuit_mark_for_close(circ, END_CIRC_REASON_CHANNEL_CLOSED);
         continue;
       }
@@ -681,7 +681,7 @@ circuit_deliver_create_cell(circuit_t *circ, const create_cell_t *create_cell,
   if (CIRCUIT_IS_ORIGIN(circ)) {
     /* Update began timestamp for circuits starting their first hop */
     if (TO_ORIGIN_CIRCUIT(circ)->cpath->state == CPATH_STATE_CLOSED) {
-      if (circ->n_chan->state != CHANNEL_STATE_OPEN) {
+      if (!CHANNEL_IS_OPEN(circ->n_chan)) {
         log_warn(LD_CIRC,
                  "Got first hop for a circuit without an opened channel. "
                  "State: %s.", channel_state_to_string(circ->n_chan->state));
@@ -772,7 +772,6 @@ circuit_timeout_want_to_count_circ(origin_circuit_t *circ)
           && circ->build_state->desired_path_len == DEFAULT_ROUTE_LEN;
 }
 
-#ifdef CURVE25519_ENABLED
 /** Return true if the ntor handshake is enabled in the configuration, or if
  * it's been set to "auto" in the configuration and it's enabled in the
  * consensus. */
@@ -784,7 +783,6 @@ circuits_can_use_ntor(void)
     return options->UseNTorHandshake;
   return networkstatus_get_param(NULL, "UseNTorHandshake", 0, 0, 1);
 }
-#endif
 
 /** Decide whether to use a TAP or ntor handshake for connecting to <b>ei</b>
  * directly, and set *<b>cell_type_out</b> and *<b>handshake_type_out</b>
@@ -794,7 +792,6 @@ circuit_pick_create_handshake(uint8_t *cell_type_out,
                               uint16_t *handshake_type_out,
                               const extend_info_t *ei)
 {
-#ifdef CURVE25519_ENABLED
   if (!tor_mem_is_zero((const char*)ei->curve25519_onion_key.public_key,
                        CURVE25519_PUBKEY_LEN) &&
       circuits_can_use_ntor()) {
@@ -802,9 +799,6 @@ circuit_pick_create_handshake(uint8_t *cell_type_out,
     *handshake_type_out = ONION_HANDSHAKE_TYPE_NTOR;
     return;
   }
-#else
-  (void) ei;
-#endif
 
   *cell_type_out = CELL_CREATE;
   *handshake_type_out = ONION_HANDSHAKE_TYPE_TAP;
@@ -959,14 +953,18 @@ circuit_send_next_onion_skin(origin_circuit_t *circ)
       circuit_rep_hist_note_result(circ);
       circuit_has_opened(circ); /* do other actions as necessary */
 
-      if (!can_complete_circuit && !circ->build_state->onehop_tunnel) {
+      if (!have_completed_a_circuit() && !circ->build_state->onehop_tunnel) {
         const or_options_t *options = get_options();
-        can_complete_circuit=1;
+        note_that_we_completed_a_circuit();
         /* FFFF Log a count of known routers here */
         log_notice(LD_GENERAL,
             "Tor has successfully opened a circuit. "
             "Looks like client functionality is working.");
-        control_event_bootstrap(BOOTSTRAP_STATUS_DONE, 0);
+        if (control_event_bootstrap(BOOTSTRAP_STATUS_DONE, 0) == 0) {
+          log_notice(LD_GENERAL,
+                     "Tor has successfully opened a circuit. "
+                     "Looks like client functionality is working.");
+        }
         control_event_client_status(LOG_NOTICE, "CIRCUIT_ESTABLISHED");
         clear_broken_connection_map(1);
         if (server_mode(options) && !check_whether_orport_reachable()) {
@@ -1049,11 +1047,16 @@ circuit_note_clock_jumped(int seconds_elapsed)
       seconds_elapsed >=0 ? "forward" : "backward");
   control_event_general_status(LOG_WARN, "CLOCK_JUMPED TIME=%d",
                                seconds_elapsed);
-  can_complete_circuit=0; /* so it'll log when it works again */
+  /* so we log when it works again */
+  note_that_we_maybe_cant_complete_circuits();
   control_event_client_status(severity, "CIRCUIT_NOT_ESTABLISHED REASON=%s",
                               "CLOCK_JUMPED");
   circuit_mark_all_unused_circs();
   circuit_mark_all_dirty_circs_as_unusable();
+  if (seconds_elapsed < 0) {
+    /* Restart all the timers in case we jumped a long way into the past. */
+    reset_all_main_loop_timers();
+  }
 }
 
 /** Take the 'extend' <b>cell</b>, pull out addr/port plus the onion
@@ -1256,8 +1259,10 @@ circuit_finish_handshake(origin_circuit_t *circ,
   crypt_path_t *hop;
   int rv;
 
-  if ((rv = pathbias_count_build_attempt(circ)) < 0)
+  if ((rv = pathbias_count_build_attempt(circ)) < 0) {
+    log_warn(LD_CIRC, "pathbias_count_build_attempt failed: %d", rv);
     return rv;
+  }
 
   if (circ->cpath->state == CPATH_STATE_AWAITING_KEYS) {
     hop = circ->cpath;
@@ -1271,12 +1276,15 @@ circuit_finish_handshake(origin_circuit_t *circ,
   tor_assert(hop->state == CPATH_STATE_AWAITING_KEYS);
 
   {
+    const char *msg = NULL;
     if (onion_skin_client_handshake(hop->handshake_state.tag,
                                     &hop->handshake_state,
                                     reply->reply, reply->handshake_len,
                                     (uint8_t*)keys, sizeof(keys),
-                                    (uint8_t*)hop->rend_circ_nonce) < 0) {
-      log_warn(LD_CIRC,"onion_skin_client_handshake failed.");
+                                    (uint8_t*)hop->rend_circ_nonce,
+                                    &msg) < 0) {
+      if (msg)
+        log_warn(LD_CIRC,"onion_skin_client_handshake failed: %s", msg);
       return -END_CIRC_REASON_TORPROTOCOL;
     }
   }
@@ -1392,8 +1400,13 @@ onionskin_answer(or_circuit_t *circ,
   log_debug(LD_CIRC,"Finished sending '%s' cell.",
             circ->is_first_hop ? "created_fast" : "created");
 
-  if (!channel_is_local(circ->p_chan) &&
-      !channel_is_outgoing(circ->p_chan)) {
+  /* Ignore the local bit when ExtendAllowPrivateAddresses is set:
+   * it violates the assumption that private addresses are local.
+   * Also, many test networks run on local addresses, and
+   * TestingTorNetwork sets ExtendAllowPrivateAddresses. */
+  if ((!channel_is_local(circ->p_chan)
+       || get_options()->ExtendAllowPrivateAddresses)
+      && !channel_is_outgoing(circ->p_chan)) {
     /* record that we could process create cells from a non-local conn
      * that we didn't initiate; presumably this means that create cells
      * can reach us too. */
@@ -1564,7 +1577,7 @@ choose_good_exit_server_general(int need_uptime, int need_capacity)
    * -1 means "Don't use this router at all."
    */
   the_nodes = nodelist_get_list();
-  n_supported = tor_malloc(sizeof(int)*smartlist_len(the_nodes));
+  n_supported = tor_calloc(smartlist_len(the_nodes), sizeof(int));
   SMARTLIST_FOREACH_BEGIN(the_nodes, const node_t *, node) {
     const int i = node_sl_idx;
     if (router_digest_is_me(node->identity)) {
@@ -1735,6 +1748,83 @@ choose_good_exit_server_general(int need_uptime, int need_capacity)
   return NULL;
 }
 
+#if defined(ENABLE_TOR2WEB_MODE) || defined(TOR_UNIT_TESTS)
+/* The config option Tor2webRendezvousPoints has been set and we need
+ * to pick an RP out of that set. Make sure that the RP we choose is
+ * alive, and return it. Return NULL if no usable RP could be found in
+ * Tor2webRendezvousPoints. */
+STATIC const node_t *
+pick_tor2web_rendezvous_node(router_crn_flags_t flags,
+                             const or_options_t *options)
+{
+  const node_t *rp_node = NULL;
+  const int allow_invalid = (flags & CRN_ALLOW_INVALID) != 0;
+  const int need_desc = (flags & CRN_NEED_DESC) != 0;
+
+  smartlist_t *whitelisted_live_rps = smartlist_new();
+  smartlist_t *all_live_nodes = smartlist_new();
+
+  tor_assert(options->Tor2webRendezvousPoints);
+
+  /* Add all running nodes to all_live_nodes */
+  router_add_running_nodes_to_smartlist(all_live_nodes,
+                                        allow_invalid,
+                                        0, 0, 0,
+                                        need_desc);
+
+  /* Filter all_live_nodes to only add live *and* whitelisted RPs to
+   * the list whitelisted_live_rps. */
+  SMARTLIST_FOREACH_BEGIN(all_live_nodes, node_t *, live_node) {
+    if (routerset_contains_node(options->Tor2webRendezvousPoints, live_node)) {
+      smartlist_add(whitelisted_live_rps, live_node);
+    }
+  } SMARTLIST_FOREACH_END(live_node);
+
+  /* Honor ExcludeNodes */
+  if (options->ExcludeNodes) {
+    routerset_subtract_nodes(whitelisted_live_rps, options->ExcludeNodes);
+  }
+
+  /* Now pick randomly amongst the whitelisted RPs. No need to waste time
+     doing bandwidth load balancing, for most use cases
+     'whitelisted_live_rps' contains a single OR anyway. */
+  rp_node = smartlist_choose(whitelisted_live_rps);
+
+  if (!rp_node) {
+    log_warn(LD_REND, "Could not find a Rendezvous Point that suits "
+             "the purposes of Tor2webRendezvousPoints. Choosing random one.");
+  }
+
+  smartlist_free(whitelisted_live_rps);
+  smartlist_free(all_live_nodes);
+
+  return rp_node;
+}
+#endif
+
+/* Pick a Rendezvous Point for our HS circuits according to <b>flags</b>. */
+static const node_t *
+pick_rendezvous_node(router_crn_flags_t flags)
+{
+  const or_options_t *options = get_options();
+
+  if (options->AllowInvalid_ & ALLOW_INVALID_RENDEZVOUS)
+    flags |= CRN_ALLOW_INVALID;
+
+#ifdef ENABLE_TOR2WEB_MODE
+  /* The user wants us to pick specific RPs. */
+  if (options->Tor2webRendezvousPoints) {
+    const node_t *tor2web_rp = pick_tor2web_rendezvous_node(flags, options);
+    if (tor2web_rp) {
+      return tor2web_rp;
+    }
+    /* Else, if no tor2web RP was found, fall back to choosing a random node */
+  }
+#endif
+
+  return router_choose_random_node(NULL, options->ExcludeNodes, flags);
+}
+
 /** Return a pointer to a suitable router to be the exit node for the
  * circuit of purpose <b>purpose</b> that we're about to build (or NULL
  * if no router is suitable).
@@ -1765,9 +1855,13 @@ choose_good_exit_server(uint8_t purpose,
       else
         return choose_good_exit_server_general(need_uptime,need_capacity);
     case CIRCUIT_PURPOSE_C_ESTABLISH_REND:
-      if (options->AllowInvalid_ & ALLOW_INVALID_RENDEZVOUS)
-        flags |= CRN_ALLOW_INVALID;
-      return router_choose_random_node(NULL, options->ExcludeNodes, flags);
+      {
+        /* Pick a new RP */
+        const node_t *rendezvous_node = pick_rendezvous_node(flags);
+        log_info(LD_REND, "Picked new RP: %s",
+                 safe_str_client(node_describe(rendezvous_node)));
+        return rendezvous_node;
+      }
   }
   log_warn(LD_BUG,"Unhandled purpose %d", purpose);
   tor_fragile_assert();
@@ -1877,7 +1971,7 @@ onion_pick_cpath_exit(origin_circuit_t *circ, extend_info_t *exit)
       choose_good_exit_server(circ->base_.purpose, state->need_uptime,
                               state->need_capacity, state->is_internal);
     if (!node) {
-      log_warn(LD_CIRC,"failed to choose an exit server");
+      log_warn(LD_CIRC,"Failed to choose an exit server");
       return -1;
     }
     exit = extend_info_from_node(node, 0);
@@ -2004,7 +2098,8 @@ choose_good_middle_server(uint8_t purpose,
   tor_assert(CIRCUIT_PURPOSE_MIN_ <= purpose &&
              purpose <= CIRCUIT_PURPOSE_MAX_);
 
-  log_debug(LD_CIRC, "Contemplating intermediate hop: random choice.");
+  log_debug(LD_CIRC, "Contemplating intermediate hop %d: random choice.",
+            cur_len);
   excluded = smartlist_new();
   if ((r = build_state_get_exit_node(state))) {
     nodelist_add_node_and_family(excluded, r);
@@ -2066,9 +2161,18 @@ choose_good_entry_server(uint8_t purpose, cpath_build_state_t *state)
         smartlist_add(excluded, (void*)node);
     });
   }
-  /* and exclude current entry guards and their families, if applicable */
+  /* and exclude current entry guards and their families,
+   * unless we're in a test network, and excluding guards
+   * would exclude all nodes (i.e. we're in an incredibly small tor network,
+   * or we're using TestingAuthVoteGuard *).
+   * This is an incomplete fix, but is no worse than the previous behaviour,
+   * and only applies to minimal, testing tor networks
+   * (so it's no less secure) */
   /*XXXX025 use the using_as_guard flag to accomplish this.*/
-  if (options->UseEntryGuards) {
+  if (options->UseEntryGuards
+      && (!options->TestingTorNetwork ||
+         smartlist_len(nodelist_get_list()) > smartlist_len(get_entry_guards())
+     )) {
     SMARTLIST_FOREACH(get_entry_guards(), const entry_guard_t *, entry,
       {
         if ((node = node_get_by_id(entry->identity))) {
@@ -2198,13 +2302,9 @@ extend_info_new(const char *nickname, const char *digest,
     strlcpy(info->nickname, nickname, sizeof(info->nickname));
   if (onion_key)
     info->onion_key = crypto_pk_dup_key(onion_key);
-#ifdef CURVE25519_ENABLED
   if (curve25519_key)
     memcpy(&info->curve25519_onion_key, curve25519_key,
            sizeof(curve25519_public_key_t));
-#else
-  (void)curve25519_key;
-#endif
   tor_addr_copy(&info->addr, addr);
   info->port = port;
   return info;

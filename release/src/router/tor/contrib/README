@@ -11,6 +11,13 @@ add-tor is an old script to manipulate the approved-routers file.
 nagios-check-tor-authority-cert is a nagios script to check when Tor
 authority certificates are expired or nearly expired.
 
+clang/ -- Files for use with the clang compiler
+-----------------------------------------------
+
+sanitize_blacklist.txt is used to build Tor with clang's dynamic
+AddressSanitizer and UndefinedBehaviorSanitizer. It contains detailed
+instructions on configuration, build, and testing with clang's sanitizers.
+
 client-tools/ -- Tools for use with Tor clients
 -----------------------------------------------
 

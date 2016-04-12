@@ -1,0 +1,35 @@
+This directory has configuration files that ship with Tor.  They include:
+
+geoip
+geoip6
+
+    Geoip files for IPv4 and IPv6
+
+torrc.minimal, torrc.sample:
+
+    generated from torrc.minimal.in and torrc.sample.in by autoconf.
+
+torrc.minimal.in:
+
+    A very small torrc, suitable for installation by default in
+    /etc/tor/torrc.
+
+    We try to change torrc.minimal.in as infrequently as possible,
+    since doing so makes the users of many packages have to re-build
+    their torrc files.
+
+
+torrc.minimal.in-staging
+
+    This is where we stage changes to torrc.minimal.in over time so
+    that when we have a change large enough to warrant a new
+    torrc.minimal.in, we can copy all the other changes over
+    wholesale.
+
+torrc.sample.in:
+
+    A verbose, discursive, batteries-included torrc.  Suitable for
+    letting people know how to set up various options, including those
+    most people shouldn't mess with.
+
+
