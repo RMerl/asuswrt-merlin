@@ -219,6 +219,11 @@ function detect_httpd(){
 										<div class="formfontdesc"><#Setting_save_upload_desc#></div>
 
 										<table width="100%" border="1" align="center" cellpadding="6" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+										<tr>
+											<td colspan=2>Router settings</td>
+										</tr>
+										</thead>
 	          								<tr>
 	            								<th width="25%" align="right">
 	            									<a class="hintstyle"  href="javascript:void(0);" onclick="openHint(19,1)"><#Setting_factorydefault_itemname#></a>
@@ -256,6 +261,13 @@ function detect_httpd(){
 													</div>
 												</td>
 											</tr>
+											</table>
+											<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
+											<thead>
+											<tr>
+												<td colspan="2">JFFS Partition</td>
+											</tr>
+											</thead>
 											<tr id="jffsbackup">
 												<th align="right">
 													Backup JFFS partition
