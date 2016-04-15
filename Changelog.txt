@@ -13,6 +13,7 @@ Asuswrt-Merlin Changelog
                was updated accordingly
     - CHANGED: Enable SPNEGO support in Samba
     - CHANGED: Integrated Asus's networkmap into the DHCP reservations page
+    - CHANGED: Updated Tor to 0.2.7.6
     - FIXED: Daily/Monthly traffic monitoring shows invalid values on the RT-AC88U/3100/5300,
              even with CTF disabled.
     - FIXED: WPS wasn't working on the RT-AC3200
