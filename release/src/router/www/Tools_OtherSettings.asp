@@ -920,7 +920,7 @@ function done_validating(action){
 						</tr>
 					</thead>
 					<tr>
-						<th>Networkmap: hourly full network rescans (default: Yes)</th>
+						<th>Networkmap: Hourly full network rescans (default: Yes)</th>
 						<td>
 							<input type="radio" name="nmap_hm_scan" class="input" value="1" <% nvram_match_x("", "nmap_hm_scan", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="nmap_hm_scan" class="input" value="0" <% nvram_match_x("", "nmap_hm_scan", "0", "checked"); %>><#checkbox_No#>
@@ -955,7 +955,7 @@ function done_validating(action){
 						</td>
 					</tr>
 					<tr>
-						<th>firewall: Drop IPv6 neighbour solicitation broadcasts (Comcast fix) (default: No)</th>
+						<th>Firewall: Drop IPv6 neighbour solicitation broadcasts (Comcast fix) (default: No)</th>
 						<td>
 							<input type="radio" name="ipv6_ns_drop" class="input" value="1" <% nvram_match_x("", "ipv6_ns_drop", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="ipv6_ns_drop" class="input" value="0" <% nvram_match_x("", "ipv6_ns_drop", "0", "checked"); %>><#checkbox_No#>
