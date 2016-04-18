@@ -702,12 +702,12 @@ https://github.com/RMerl/asuswrt-merlin
 Contact information
 -------------------
 SmallNetBuilder forums (preferred method: http://www.snbforums.com/forums/asuswrt-merlin.42/ as RMerlin)
-Website: http://asuswrt.lostrealm.ca/
+Website: https://asuswrt.lostrealm.ca/
 Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
 IRC: #asuswrt on DALnet
-Download: http://asuswrt.lostrealm.ca/download
+Download: https://asuswrt.lostrealm.ca/download
 
 Development news will be posted on Twitter.  You can also keep a closer 
 eye on development as it happens through the Github site.
