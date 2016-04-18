@@ -162,6 +162,36 @@ NTSTATUS ntlmssp_set_domain(struct ntlmssp_state *ntlmssp_state, const char *dom
 	return NT_STATUS_OK;
 }
 
+bool ntlmssp_have_feature(struct ntlmssp_state *ntlmssp_state,
+			  uint32_t feature)
+{
+	if (feature & NTLMSSP_FEATURE_SIGN) {
+		if (ntlmssp_state->session_key.length == 0) {
+			return false;
+		}
+		if (ntlmssp_state->neg_flags & NTLMSSP_NEGOTIATE_SIGN) {
+			return true;
+		}
+	}
+
+	if (feature & NTLMSSP_FEATURE_SEAL) {
+		if (ntlmssp_state->session_key.length == 0) {
+			return false;
+		}
+		if (ntlmssp_state->neg_flags & NTLMSSP_NEGOTIATE_SEAL) {
+			return true;
+		}
+	}
+
+	if (feature & NTLMSSP_FEATURE_SESSION_KEY) {
+		if (ntlmssp_state->session_key.length > 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 /**
  * Request features for the NTLMSSP negotiation
  *
@@ -176,17 +206,19 @@ void ntlmssp_want_feature_list(struct ntlmssp_state *ntlmssp_state, char *featur
 	 * also add  NTLMSSP_NEGOTIATE_SEAL here. JRA.
 	 */
 	if (in_list("NTLMSSP_FEATURE_SESSION_KEY", feature_list, True)) {
-		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_SIGN;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_SIGN;
 	}
 	if (in_list("NTLMSSP_FEATURE_SIGN", feature_list, True)) {
-		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_SIGN;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_SIGN;
 	}
 	if(in_list("NTLMSSP_FEATURE_SEAL", feature_list, True)) {
-		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_SEAL;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_SEAL;
 	}
 	if (in_list("NTLMSSP_FEATURE_CCACHE", feature_list, true)) {
 		ntlmssp_state->use_ccache = true;
 	}
+
+	ntlmssp_state->neg_flags |= ntlmssp_state->required_flags;
 }
 
 /**
@@ -199,17 +231,20 @@ void ntlmssp_want_feature(struct ntlmssp_state *ntlmssp_state, uint32_t feature)
 {
 	/* As per JRA's comment above */
 	if (feature & NTLMSSP_FEATURE_SESSION_KEY) {
-		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_SIGN;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_SIGN;
 	}
 	if (feature & NTLMSSP_FEATURE_SIGN) {
-		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_SIGN;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_SIGN;
 	}
 	if (feature & NTLMSSP_FEATURE_SEAL) {
-		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_SEAL;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_SIGN;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_SEAL;
 	}
 	if (feature & NTLMSSP_FEATURE_CCACHE) {
 		ntlmssp_state->use_ccache = true;
 	}
+
+	ntlmssp_state->neg_flags |= ntlmssp_state->required_flags;
 }
 
 /**
@@ -387,7 +422,12 @@ static NTSTATUS ntlmssp_client_initial(struct ntlmssp_state *ntlmssp_state,
 	}
 
 	if (ntlmssp_state->use_ntlmv2) {
-		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_NTLM2;
+		ntlmssp_state->required_flags |= NTLMSSP_NEGOTIATE_NTLM2;
+		ntlmssp_state->allow_lm_key = false;
+	}
+
+	if (ntlmssp_state->allow_lm_key) {
+		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_LM_KEY;
 	}
 
 	/* generate the ntlmssp negotiate packet */
@@ -422,6 +462,86 @@ static NTSTATUS ntlmssp_client_initial(struct ntlmssp_state *ntlmssp_state,
 	return NT_STATUS_MORE_PROCESSING_REQUIRED;
 }
 
+static NTSTATUS ntlmssp3_handle_neg_flags(struct ntlmssp_state *ntlmssp_state,
+					  uint32_t flags)
+{
+	uint32_t missing_flags = ntlmssp_state->required_flags;
+
+	if (flags & NTLMSSP_NEGOTIATE_UNICODE) {
+		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_UNICODE;
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_OEM;
+		ntlmssp_state->unicode = true;
+	} else {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_UNICODE;
+		ntlmssp_state->neg_flags |= NTLMSSP_NEGOTIATE_OEM;
+		ntlmssp_state->unicode = false;
+	}
+
+	/*
+	 * NTLMSSP_NEGOTIATE_NTLM2 (NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY)
+	 * has priority over NTLMSSP_NEGOTIATE_LM_KEY
+	 */
+	if (!(flags & NTLMSSP_NEGOTIATE_NTLM2)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_NTLM2;
+	}
+
+	if (ntlmssp_state->neg_flags & NTLMSSP_NEGOTIATE_NTLM2) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_LM_KEY;
+	}
+
+	if (!(flags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_LM_KEY;
+	}
+
+	if (!(flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+	}
+
+	if (!(flags & NTLMSSP_NEGOTIATE_128)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_128;
+	}
+
+	if (!(flags & NTLMSSP_NEGOTIATE_56)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_56;
+	}
+
+	if (!(flags & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_KEY_EXCH;
+	}
+
+	if (!(flags & NTLMSSP_NEGOTIATE_SIGN)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_SIGN;
+	}
+
+	if (!(flags & NTLMSSP_NEGOTIATE_SEAL)) {
+		ntlmssp_state->neg_flags &= ~NTLMSSP_NEGOTIATE_SEAL;
+	}
+
+	if ((flags & NTLMSSP_REQUEST_TARGET)) {
+		ntlmssp_state->neg_flags |= NTLMSSP_REQUEST_TARGET;
+	}
+
+	missing_flags &= ~ntlmssp_state->neg_flags;
+	if (missing_flags != 0) {
+		NTSTATUS status = NT_STATUS_RPC_SEC_PKG_ERROR;
+		DEBUG(1, ("%s: Got challenge flags[0x%08x] "
+			  "- possible downgrade detected! "
+			  "missing_flags[0x%08x] - %s\n",
+			  __func__,
+			  (unsigned)flags,
+			  (unsigned)missing_flags,
+			  nt_errstr(status)));
+		debug_ntlmssp_flags(missing_flags);
+		DEBUGADD(4, ("neg_flags[0x%08x]\n",
+			     (unsigned)ntlmssp_state->neg_flags));
+		debug_ntlmssp_flags(ntlmssp_state->neg_flags);
+
+		return status;
+	}
+
+	return NT_STATUS_OK;
+}
+
 /**
  * Next state function for the Challenge Packet.  Generate an auth packet.
  *
@@ -447,6 +567,26 @@ static NTSTATUS ntlmssp_client_challenge(struct ntlmssp_state *ntlmssp_state,
 	DATA_BLOB session_key = data_blob_null;
 	DATA_BLOB encrypted_session_key = data_blob_null;
 	NTSTATUS nt_status = NT_STATUS_OK;
+
+	if (!msrpc_parse(ntlmssp_state, &reply, "CdBd",
+			 "NTLMSSP",
+			 &ntlmssp_command,
+			 &server_domain_blob,
+			 &chal_flags)) {
+		DEBUG(1, ("Failed to parse the NTLMSSP Challenge: (#1)\n"));
+		dump_data(2, reply.data, reply.length);
+
+		return NT_STATUS_INVALID_PARAMETER;
+	}
+	data_blob_free(&server_domain_blob);
+
+	DEBUG(3, ("Got challenge flags:\n"));
+	debug_ntlmssp_flags(chal_flags);
+
+	nt_status = ntlmssp3_handle_neg_flags(ntlmssp_state, chal_flags);
+	if (!NT_STATUS_IS_OK(nt_status)) {
+		return nt_status;
+	}
 
 	if (ntlmssp_state->use_ccache) {
 		struct wbcCredentialCacheParams params;
@@ -498,17 +638,6 @@ static NTSTATUS ntlmssp_client_challenge(struct ntlmssp_state *ntlmssp_state,
 
 noccache:
 
-	if (!msrpc_parse(ntlmssp_state, &reply, "CdBd",
-			 "NTLMSSP",
-			 &ntlmssp_command,
-			 &server_domain_blob,
-			 &chal_flags)) {
-		DEBUG(1, ("Failed to parse the NTLMSSP Challenge: (#1)\n"));
-		dump_data(2, reply.data, reply.length);
-
-		return NT_STATUS_INVALID_PARAMETER;
-	}
-
 	if (DEBUGLEVEL >= 10) {
 		struct CHALLENGE_MESSAGE *challenge = talloc(
 			talloc_tos(), struct CHALLENGE_MESSAGE);
@@ -524,13 +653,6 @@ noccache:
 			TALLOC_FREE(challenge);
 		}
 	}
-
-	data_blob_free(&server_domain_blob);
-
-	DEBUG(3, ("Got challenge flags:\n"));
-	debug_ntlmssp_flags(chal_flags);
-
-	ntlmssp_handle_neg_flags(ntlmssp_state, chal_flags, lp_client_lanman_auth());
 
 	if (ntlmssp_state->unicode) {
 		if (chal_flags & NTLMSSP_NEGOTIATE_TARGET_INFO) {
@@ -769,6 +891,7 @@ NTSTATUS ntlmssp_client_start(TALLOC_CTX *mem_ctx,
 	ntlmssp_state->unicode = True;
 
 	ntlmssp_state->use_ntlmv2 = use_ntlmv2;
+	ntlmssp_state->allow_lm_key = lp_client_lanman_auth();
 
 	ntlmssp_state->expected_state = NTLMSSP_INITIAL;
 
@@ -779,6 +902,10 @@ NTSTATUS ntlmssp_client_start(TALLOC_CTX *mem_ctx,
 		NTLMSSP_NEGOTIATE_NTLM2 |
 		NTLMSSP_NEGOTIATE_KEY_EXCH |
 		NTLMSSP_REQUEST_TARGET;
+
+	if (ntlmssp_state->use_ntlmv2) {
+		ntlmssp_state->allow_lm_key = false;
+	}
 
 	ntlmssp_state->client.netbios_name = talloc_strdup(ntlmssp_state, netbios_name);
 	if (!ntlmssp_state->client.netbios_name) {

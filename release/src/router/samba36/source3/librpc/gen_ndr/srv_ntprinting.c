@@ -44,7 +44,7 @@ static bool api_decode_ntprinting_form(struct pipes_struct *p)
 
 	_decode_ntprinting_form(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_decode_ntprinting_driver(struct pipes_struct *p)
 
 	_decode_ntprinting_driver(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_decode_ntprinting_printer(struct pipes_struct *p)
 
 	_decode_ntprinting_printer(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -51,7 +51,7 @@ static bool api_rap_NetShareEnum(struct pipes_struct *p)
 
 	_rap_NetShareEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -125,7 +125,7 @@ static bool api_rap_NetShareAdd(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetShareAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -205,7 +205,7 @@ static bool api_rap_NetServerEnum2(struct pipes_struct *p)
 
 	_rap_NetServerEnum2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -279,7 +279,7 @@ static bool api_rap_WserverGetInfo(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_WserverGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -359,7 +359,7 @@ static bool api_rap_NetPrintQEnum(struct pipes_struct *p)
 
 	_rap_NetPrintQEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -433,7 +433,7 @@ static bool api_rap_NetPrintQGetInfo(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintQGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -507,7 +507,7 @@ static bool api_rap_NetPrintJobPause(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintJobPause(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -581,7 +581,7 @@ static bool api_rap_NetPrintJobContinue(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintJobContinue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -655,7 +655,7 @@ static bool api_rap_NetPrintJobDelete(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintJobDelete(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -729,7 +729,7 @@ static bool api_rap_NetPrintQueuePause(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintQueuePause(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -803,7 +803,7 @@ static bool api_rap_NetPrintQueueResume(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintQueueResume(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -877,7 +877,7 @@ static bool api_rap_NetPrintQueuePurge(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintQueuePurge(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -957,7 +957,7 @@ static bool api_rap_NetPrintJobEnum(struct pipes_struct *p)
 
 	_rap_NetPrintJobEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1031,7 +1031,7 @@ static bool api_rap_NetPrintJobGetInfo(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintJobGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1105,7 +1105,7 @@ static bool api_rap_NetPrintJobSetInfo(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintJobSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1185,7 +1185,7 @@ static bool api_rap_NetPrintDestEnum(struct pipes_struct *p)
 
 	_rap_NetPrintDestEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1259,7 +1259,7 @@ static bool api_rap_NetPrintDestGetInfo(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetPrintDestGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1333,7 +1333,7 @@ static bool api_rap_NetUserPasswordSet2(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetUserPasswordSet2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1407,7 +1407,7 @@ static bool api_rap_NetOEMChangePassword(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetOEMChangePassword(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1481,7 +1481,7 @@ static bool api_rap_NetUserGetInfo(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetUserGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1561,7 +1561,7 @@ static bool api_rap_NetSessionEnum(struct pipes_struct *p)
 
 	_rap_NetSessionEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1635,7 +1635,7 @@ static bool api_rap_NetSessionGetInfo(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetSessionGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1709,7 +1709,7 @@ static bool api_rap_NetUserAdd(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetUserAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1783,7 +1783,7 @@ static bool api_rap_NetUserDelete(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetUserDelete(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1857,7 +1857,7 @@ static bool api_rap_NetRemoteTOD(struct pipes_struct *p)
 	ZERO_STRUCT(r->out);
 	_rap_NetRemoteTOD(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

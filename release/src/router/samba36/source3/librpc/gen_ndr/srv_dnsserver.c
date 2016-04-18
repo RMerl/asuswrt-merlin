@@ -44,7 +44,7 @@ static bool api_dnsserver_foo(struct pipes_struct *p)
 
 	_dnsserver_foo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

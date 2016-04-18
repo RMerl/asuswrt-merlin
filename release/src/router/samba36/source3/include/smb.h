@@ -712,7 +712,6 @@ struct connections_data {
 	uint32 unused_compatitibility_field;
 };
 
-
 /* the following are used by loadparm for option lists */
 typedef enum {
 	P_BOOL,P_BOOLREV,P_CHAR,P_INTEGER,P_OCTAL,P_LIST,
@@ -758,11 +757,6 @@ struct parm_struct {
 #define FLAG_DOS_STRING 0x4000 /* convert from UNIX to DOS codepage when reading this string. */
 #define FLAG_META	0x8000 /* A meta directive - not a real parameter */
 #define FLAG_CMDLINE	0x10000 /* option has been overridden */
-
-struct bitmap {
-	uint32 *b;
-	unsigned int n;
-};
 
 /* offsets into message for common items */
 #define smb_com 8

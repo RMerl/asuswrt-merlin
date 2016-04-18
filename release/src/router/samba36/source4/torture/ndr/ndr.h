@@ -24,12 +24,15 @@
 #include "librpc/ndr/libndr.h"
 #include "libcli/security/security.h"
 
-_PUBLIC_ struct torture_test *_torture_suite_add_ndr_pull_test(
+_PUBLIC_ struct torture_test *_torture_suite_add_ndr_pullpush_test(
 					struct torture_suite *suite,
-					const char *name, ndr_pull_flags_fn_t fn,
+					const char *name,
+					ndr_pull_flags_fn_t pull_fn,
+					ndr_push_flags_fn_t push_fn,
 					DATA_BLOB db,
 					size_t struct_size,
 					int ndr_flags,
+					int flags,
 					bool (*check_fn) (struct torture_context *, void *data));
 
 _PUBLIC_ struct torture_test *_torture_suite_add_ndr_pull_inout_test(
@@ -41,20 +44,32 @@ _PUBLIC_ struct torture_test *_torture_suite_add_ndr_pull_inout_test(
 					bool (*check_fn) (struct torture_context *ctx, void *data));
 
 #define torture_suite_add_ndr_pull_test(suite,name,data,check_fn) \
-		_torture_suite_add_ndr_pull_test(suite, #name, \
-			 (ndr_pull_flags_fn_t)ndr_pull_ ## name, data_blob_talloc(suite, data, sizeof(data)), \
-			 sizeof(struct name), NDR_SCALARS|NDR_BUFFERS, (bool (*) (struct torture_context *, void *)) check_fn);
+		_torture_suite_add_ndr_pullpush_test(suite, #name, \
+			 (ndr_pull_flags_fn_t)ndr_pull_ ## name, NULL, data_blob_const(data, sizeof(data)), \
+			 sizeof(struct name), NDR_SCALARS|NDR_BUFFERS, 0, (bool (*) (struct torture_context *, void *)) check_fn);
 
 #define torture_suite_add_ndr_pull_fn_test(suite,name,data,flags,check_fn) \
-		_torture_suite_add_ndr_pull_test(suite, #name "_" #flags, \
-			 (ndr_pull_flags_fn_t)ndr_pull_ ## name, data_blob_talloc(suite, data, sizeof(data)), \
-			 sizeof(struct name), flags, (bool (*) (struct torture_context *, void *)) check_fn);
+		_torture_suite_add_ndr_pullpush_test(suite, #name "_" #flags, \
+			 (ndr_pull_flags_fn_t)ndr_pull_ ## name, NULL, data_blob_const(data, sizeof(data)), \
+			 sizeof(struct name), flags, 0, (bool (*) (struct torture_context *, void *)) check_fn);
+
+#define torture_suite_add_ndr_pull_fn_test_flags(suite,name,data,flags,flags2,check_fn) \
+		_torture_suite_add_ndr_pullpush_test(suite, #name "_" #flags "_" #flags2, \
+			 (ndr_pull_flags_fn_t)ndr_pull_ ## name, NULL, data_blob_const(data, sizeof(data)), \
+			 sizeof(struct name), flags, flags2, (bool (*) (struct torture_context *, void *)) check_fn);
+
+#define torture_suite_add_ndr_pullpush_test(suite,name,data_blob,check_fn) \
+		_torture_suite_add_ndr_pullpush_test(suite, #name, \
+			 (ndr_pull_flags_fn_t)ndr_pull_ ## name, \
+			 (ndr_push_flags_fn_t)ndr_push_ ## name, \
+			 data_blob, \
+			 sizeof(struct name), NDR_SCALARS|NDR_BUFFERS, 0, (bool (*) (struct torture_context *, void *)) check_fn);
 
 #define torture_suite_add_ndr_pull_io_test(suite,name,data_in,data_out,check_fn_out) \
 		_torture_suite_add_ndr_pull_inout_test(suite, #name "_INOUT", \
 			 (ndr_pull_flags_fn_t)ndr_pull_ ## name, \
-			 data_blob_talloc(suite, data_in, sizeof(data_in)), \
-			 data_blob_talloc(suite, data_out, sizeof(data_out)), \
+			 data_blob_const(data_in, sizeof(data_in)), \
+			 data_blob_const(data_out, sizeof(data_out)), \
 			 sizeof(struct name), \
 			 (bool (*) (struct torture_context *, void *)) check_fn_out);
 

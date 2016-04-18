@@ -51,7 +51,7 @@ static bool api_rot_add(struct pipes_struct *p)
 
 	r->out.result = _rot_add(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -124,7 +124,7 @@ static bool api_rot_remove(struct pipes_struct *p)
 
 	r->out.result = _rot_remove(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -197,7 +197,7 @@ static bool api_rot_is_listed(struct pipes_struct *p)
 
 	r->out.result = _rot_is_listed(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -277,7 +277,7 @@ static bool api_rot_get_interface_pointer(struct pipes_struct *p)
 
 	r->out.result = _rot_get_interface_pointer(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -350,7 +350,7 @@ static bool api_rot_set_modification_time(struct pipes_struct *p)
 
 	r->out.result = _rot_set_modification_time(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -430,7 +430,7 @@ static bool api_rot_get_modification_time(struct pipes_struct *p)
 
 	r->out.result = _rot_get_modification_time(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -510,7 +510,7 @@ static bool api_rot_enum(struct pipes_struct *p)
 
 	r->out.result = _rot_enum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

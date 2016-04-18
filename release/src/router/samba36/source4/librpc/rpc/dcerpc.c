@@ -701,6 +701,14 @@ static NTSTATUS ncacn_pull_request_auth(struct dcecli_connection *c, TALLOC_CTX 
 		return NT_STATUS_INVALID_LEVEL;
 	}
 
+	if (pkt->auth_length == 0) {
+		return NT_STATUS_INVALID_NETWORK_RESPONSE;
+	}
+
+	if (c->security_state.generic_state == NULL) {
+		return NT_STATUS_INTERNAL_ERROR;
+	}
+
 	status = dcerpc_pull_auth_trailer(pkt, mem_ctx,
 					  &pkt->u.response.stub_and_verifier,
 					  &auth, &auth_length, false);
@@ -1074,7 +1082,7 @@ static void dcerpc_bind_recv_handler(struct rpc_request *req,
 	}
 
 	/* the bind_ack might contain a reply set of credentials */
-	if (conn->security_state.auth_info && pkt->u.bind_ack.auth_info.length) {
+	if (conn->security_state.auth_info && pkt->auth_length) {
 		NTSTATUS status;
 		uint32_t auth_length;
 		status = dcerpc_pull_auth_trailer(pkt, conn, &pkt->u.bind_ack.auth_info,
@@ -1847,8 +1855,7 @@ static void dcerpc_alter_recv_handler(struct rpc_request *req,
 	}
 
 	/* the alter_resp might contain a reply set of credentials */
-	if (recv_pipe->conn->security_state.auth_info &&
-	    pkt->u.alter_resp.auth_info.length) {
+	if (recv_pipe->conn->security_state.auth_info && pkt->auth_length) {
 		struct dcecli_connection *conn = recv_pipe->conn;
 		NTSTATUS status;
 		uint32_t auth_length;

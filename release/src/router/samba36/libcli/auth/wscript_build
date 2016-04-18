@@ -19,7 +19,7 @@ bld.SAMBA_SUBSYSTEM('MSRPC_PARSE',
 
 bld.SAMBA_SUBSYSTEM('LIBCLI_AUTH',
 	source='credentials.c session.c smbencrypt.c smbdes.c',
-	public_deps='MSRPC_PARSE',
+	public_deps='MSRPC_PARSE NDR_NTLMSSP',
 	public_headers='credentials.h:domain_credentials.h'
 	)
 

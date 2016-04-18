@@ -53,7 +53,7 @@ static bool api_srvsvc_NetCharDevEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetCharDevEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -133,7 +133,7 @@ static bool api_srvsvc_NetCharDevGetInfo(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetCharDevGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -206,7 +206,7 @@ static bool api_srvsvc_NetCharDevControl(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetCharDevControl(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -288,7 +288,7 @@ static bool api_srvsvc_NetCharDevQEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetCharDevQEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -368,7 +368,7 @@ static bool api_srvsvc_NetCharDevQGetInfo(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetCharDevQGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -443,7 +443,7 @@ static bool api_srvsvc_NetCharDevQSetInfo(struct pipes_struct *p)
 	r->out.parm_error = r->in.parm_error;
 	r->out.result = _srvsvc_NetCharDevQSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -516,7 +516,7 @@ static bool api_srvsvc_NetCharDevQPurge(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetCharDevQPurge(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -589,7 +589,7 @@ static bool api_srvsvc_NetCharDevQPurgeSelf(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetCharDevQPurgeSelf(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -671,7 +671,7 @@ static bool api_srvsvc_NetConnEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetConnEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -753,7 +753,7 @@ static bool api_srvsvc_NetFileEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetFileEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -833,7 +833,7 @@ static bool api_srvsvc_NetFileGetInfo(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetFileGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -906,7 +906,7 @@ static bool api_srvsvc_NetFileClose(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetFileClose(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -988,7 +988,7 @@ static bool api_srvsvc_NetSessEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetSessEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1061,7 +1061,7 @@ static bool api_srvsvc_NetSessDel(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetSessDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1136,7 +1136,7 @@ static bool api_srvsvc_NetShareAdd(struct pipes_struct *p)
 	r->out.parm_error = r->in.parm_error;
 	r->out.result = _srvsvc_NetShareAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1218,7 +1218,7 @@ static bool api_srvsvc_NetShareEnumAll(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetShareEnumAll(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1298,7 +1298,7 @@ static bool api_srvsvc_NetShareGetInfo(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetShareGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1373,7 +1373,7 @@ static bool api_srvsvc_NetShareSetInfo(struct pipes_struct *p)
 	r->out.parm_error = r->in.parm_error;
 	r->out.result = _srvsvc_NetShareSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1446,7 +1446,7 @@ static bool api_srvsvc_NetShareDel(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetShareDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1519,7 +1519,7 @@ static bool api_srvsvc_NetShareDelSticky(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetShareDelSticky(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1599,7 +1599,7 @@ static bool api_srvsvc_NetShareCheck(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetShareCheck(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1679,7 +1679,7 @@ static bool api_srvsvc_NetSrvGetInfo(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetSrvGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1754,7 +1754,7 @@ static bool api_srvsvc_NetSrvSetInfo(struct pipes_struct *p)
 	r->out.parm_error = r->in.parm_error;
 	r->out.result = _srvsvc_NetSrvSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1836,7 +1836,7 @@ static bool api_srvsvc_NetDiskEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetDiskEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1916,7 +1916,7 @@ static bool api_srvsvc_NetServerStatisticsGet(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetServerStatisticsGet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1989,7 +1989,7 @@ static bool api_srvsvc_NetTransportAdd(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetTransportAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2071,7 +2071,7 @@ static bool api_srvsvc_NetTransportEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetTransportEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2144,7 +2144,7 @@ static bool api_srvsvc_NetTransportDel(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetTransportDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2224,7 +2224,7 @@ static bool api_srvsvc_NetRemoteTOD(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetRemoteTOD(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2297,7 +2297,7 @@ static bool api_srvsvc_NetSetServiceBits(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetSetServiceBits(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2377,7 +2377,7 @@ static bool api_srvsvc_NetPathType(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetPathType(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2458,7 +2458,7 @@ static bool api_srvsvc_NetPathCanonicalize(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetPathCanonicalize(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2531,7 +2531,7 @@ static bool api_srvsvc_NetPathCompare(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetPathCompare(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2604,7 +2604,7 @@ static bool api_srvsvc_NetNameValidate(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetNameValidate(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2677,7 +2677,7 @@ static bool api_srvsvc_NETRPRNAMECANONICALIZE(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRPRNAMECANONICALIZE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2750,7 +2750,7 @@ static bool api_srvsvc_NetPRNameCompare(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetPRNameCompare(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2832,7 +2832,7 @@ static bool api_srvsvc_NetShareEnum(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetShareEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2912,7 +2912,7 @@ static bool api_srvsvc_NetShareDelStart(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetShareDelStart(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2987,7 +2987,7 @@ static bool api_srvsvc_NetShareDelCommit(struct pipes_struct *p)
 	r->out.hnd = r->in.hnd;
 	r->out.result = _srvsvc_NetShareDelCommit(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3067,7 +3067,7 @@ static bool api_srvsvc_NetGetFileSecurity(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetGetFileSecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3140,7 +3140,7 @@ static bool api_srvsvc_NetSetFileSecurity(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetSetFileSecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3213,7 +3213,7 @@ static bool api_srvsvc_NetServerTransportAddEx(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetServerTransportAddEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3286,7 +3286,7 @@ static bool api_srvsvc_NetServerSetServiceBitsEx(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NetServerSetServiceBitsEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3359,7 +3359,7 @@ static bool api_srvsvc_NETRDFSGETVERSION(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSGETVERSION(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3432,7 +3432,7 @@ static bool api_srvsvc_NETRDFSCREATELOCALPARTITION(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSCREATELOCALPARTITION(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3505,7 +3505,7 @@ static bool api_srvsvc_NETRDFSDELETELOCALPARTITION(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSDELETELOCALPARTITION(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3578,7 +3578,7 @@ static bool api_srvsvc_NETRDFSSETLOCALVOLUMESTATE(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSSETLOCALVOLUMESTATE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3651,7 +3651,7 @@ static bool api_srvsvc_NETRDFSSETSERVERINFO(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSSETSERVERINFO(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3724,7 +3724,7 @@ static bool api_srvsvc_NETRDFSCREATEEXITPOINT(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSCREATEEXITPOINT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3797,7 +3797,7 @@ static bool api_srvsvc_NETRDFSDELETEEXITPOINT(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSDELETEEXITPOINT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3870,7 +3870,7 @@ static bool api_srvsvc_NETRDFSMODIFYPREFIX(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSMODIFYPREFIX(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3943,7 +3943,7 @@ static bool api_srvsvc_NETRDFSFIXLOCALVOLUME(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSFIXLOCALVOLUME(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4016,7 +4016,7 @@ static bool api_srvsvc_NETRDFSMANAGERREPORTSITEINFO(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRDFSMANAGERREPORTSITEINFO(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4089,7 +4089,7 @@ static bool api_srvsvc_NETRSERVERTRANSPORTDELEX(struct pipes_struct *p)
 
 	r->out.result = _srvsvc_NETRSERVERTRANSPORTDELEX(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

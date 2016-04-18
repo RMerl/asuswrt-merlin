@@ -51,7 +51,7 @@ static bool api_dssetup_DsRoleGetPrimaryDomainInformation(struct pipes_struct *p
 
 	r->out.result = _dssetup_DsRoleGetPrimaryDomainInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -124,7 +124,7 @@ static bool api_dssetup_DsRoleDnsNameToFlatName(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleDnsNameToFlatName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -197,7 +197,7 @@ static bool api_dssetup_DsRoleDcAsDc(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleDcAsDc(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -270,7 +270,7 @@ static bool api_dssetup_DsRoleDcAsReplica(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleDcAsReplica(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -343,7 +343,7 @@ static bool api_dssetup_DsRoleDemoteDc(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleDemoteDc(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -416,7 +416,7 @@ static bool api_dssetup_DsRoleGetDcOperationProgress(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleGetDcOperationProgress(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -489,7 +489,7 @@ static bool api_dssetup_DsRoleGetDcOperationResults(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleGetDcOperationResults(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -562,7 +562,7 @@ static bool api_dssetup_DsRoleCancel(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleCancel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -635,7 +635,7 @@ static bool api_dssetup_DsRoleServerSaveStateForUpgrade(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleServerSaveStateForUpgrade(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -708,7 +708,7 @@ static bool api_dssetup_DsRoleUpgradeDownlevelServer(struct pipes_struct *p)
 
 	r->out.result = _dssetup_DsRoleUpgradeDownlevelServer(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -781,7 +781,7 @@ static bool api_dssetup_DsRoleAbortDownlevelServerUpgrade(struct pipes_struct *p
 
 	r->out.result = _dssetup_DsRoleAbortDownlevelServerUpgrade(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

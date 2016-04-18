@@ -25,6 +25,7 @@
 #include "passdb.h"
 #include "../libcli/auth/libcli_auth.h"
 #include "../libcli/security/security.h"
+#include "../lib/util/bitmap.h"
 
 #undef DBGC_CLASS
 #define DBGC_CLASS DBGC_PASSDB

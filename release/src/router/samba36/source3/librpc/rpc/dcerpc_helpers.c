@@ -210,47 +210,6 @@ NTSTATUS dcerpc_push_dcerpc_auth(TALLOC_CTX *mem_ctx,
 }
 
 /**
-* @brief Decodes a dcerpc_auth blob
-*
-* @param mem_ctx	The memory context on which to allocate the packet
-*			elements
-* @param blob		The blob of data to decode
-* @param r		An empty dcerpc_auth structure, must not be NULL
-*
-* @return a NTSTATUS error code
-*/
-NTSTATUS dcerpc_pull_dcerpc_auth(TALLOC_CTX *mem_ctx,
-				 const DATA_BLOB *blob,
-				 struct dcerpc_auth *r,
-				 bool bigendian)
-{
-	enum ndr_err_code ndr_err;
-	struct ndr_pull *ndr;
-
-	ndr = ndr_pull_init_blob(blob, mem_ctx);
-	if (!ndr) {
-		return NT_STATUS_NO_MEMORY;
-	}
-	if (bigendian) {
-		ndr->flags |= LIBNDR_FLAG_BIGENDIAN;
-	}
-
-	ndr_err = ndr_pull_dcerpc_auth(ndr, NDR_SCALARS|NDR_BUFFERS, r);
-
-	if (!NDR_ERR_CODE_IS_SUCCESS(ndr_err)) {
-		talloc_free(ndr);
-		return ndr_map_error2ntstatus(ndr_err);
-	}
-	talloc_free(ndr);
-
-	if (DEBUGLEVEL >= 10) {
-		NDR_PRINT_DEBUG(dcerpc_auth, r);
-	}
-
-	return NT_STATUS_OK;
-}
-
-/**
 * @brief Calculate how much data we can in a packet, including calculating
 *	 auth token and pad lengths.
 *
@@ -782,7 +741,7 @@ NTSTATUS dcerpc_add_auth_footer(struct pipe_auth_data *auth,
 					 auth->auth_type,
 					 auth->auth_level,
 					 pad_len,
-					 1 /* context id. */,
+					 auth->auth_context_id,
 					 &auth_blob,
 					 &auth_info);
 	if (!NT_STATUS_IS_OK(status)) {
@@ -844,19 +803,18 @@ NTSTATUS dcerpc_add_auth_footer(struct pipe_auth_data *auth,
 *
 * @param auth		The auth data for the connection
 * @param pkt		The actual ncacn_packet
-* @param pkt_trailer	The stub_and_verifier part of the packet
+* @param pkt_trailer [in][out]	The stub_and_verifier part of the packet,
+* 			the auth_trailer and padding will be removed.
 * @param header_size	The header size
 * @param raw_pkt	The whole raw packet data blob
-* @param pad_len	[out] The padding length used in the packet
 *
 * @return A NTSTATUS error code
 */
 NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 			   struct ncacn_packet *pkt,
 			   DATA_BLOB *pkt_trailer,
-			   size_t header_size,
-			   DATA_BLOB *raw_pkt,
-			   size_t *pad_len)
+			   uint8_t header_size,
+			   DATA_BLOB *raw_pkt)
 {
 	struct schannel_state *schannel_auth;
 	struct auth_ntlmssp_state *ntlmssp_ctx;
@@ -867,6 +825,14 @@ NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 	uint32_t auth_length;
 	DATA_BLOB full_pkt;
 	DATA_BLOB data;
+
+	/*
+	 * These check should be done in the caller.
+	 */
+	SMB_ASSERT(raw_pkt->length == pkt->frag_length);
+	SMB_ASSERT(header_size <= pkt->frag_length);
+	SMB_ASSERT(pkt_trailer->length < pkt->frag_length);
+	SMB_ASSERT((pkt_trailer->length + header_size) <= pkt->frag_length);
 
 	switch (auth->auth_level) {
 	case DCERPC_AUTH_LEVEL_PRIVACY:
@@ -881,7 +847,6 @@ NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 		if (pkt->auth_length != 0) {
 			break;
 		}
-		*pad_len = 0;
 		return NT_STATUS_OK;
 
 	case DCERPC_AUTH_LEVEL_NONE:
@@ -890,7 +855,6 @@ NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 				  "authenticated connection!\n"));
 			return NT_STATUS_INVALID_PARAMETER;
 		}
-		*pad_len = 0;
 		return NT_STATUS_OK;
 
 	default:
@@ -899,16 +863,8 @@ NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 		return NT_STATUS_INVALID_PARAMETER;
 	}
 
-	/* Paranioa checks for auth_length. */
-	if (pkt->auth_length > pkt->frag_length) {
-		return NT_STATUS_INFO_LENGTH_MISMATCH;
-	}
-	if (((unsigned int)pkt->auth_length
-	     + DCERPC_AUTH_TRAILER_LENGTH < (unsigned int)pkt->auth_length) ||
-	    ((unsigned int)pkt->auth_length
-	     + DCERPC_AUTH_TRAILER_LENGTH < DCERPC_AUTH_TRAILER_LENGTH)) {
-		/* Integer wrap attempt. */
-		return NT_STATUS_INFO_LENGTH_MISMATCH;
+	if (pkt->auth_length == 0) {
+		return NT_STATUS_INVALID_PARAMETER;
 	}
 
 	status = dcerpc_pull_auth_trailer(pkt, pkt, pkt_trailer,
@@ -917,10 +873,23 @@ NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 		return status;
 	}
 
+	if (auth_info.auth_type != auth->auth_type) {
+		return NT_STATUS_INVALID_PARAMETER;
+	}
+
+	if (auth_info.auth_level != auth->auth_level) {
+		return NT_STATUS_INVALID_PARAMETER;
+	}
+
+	if (auth_info.auth_context_id != auth->auth_context_id) {
+		return NT_STATUS_INVALID_PARAMETER;
+	}
+
+	pkt_trailer->length -= auth_length;
 	data = data_blob_const(raw_pkt->data + header_size,
-				pkt_trailer->length - auth_length);
-	full_pkt = data_blob_const(raw_pkt->data,
-				raw_pkt->length - auth_info.credentials.length);
+			       pkt_trailer->length);
+	full_pkt = data_blob_const(raw_pkt->data, raw_pkt->length);
+	full_pkt.length -= auth_info.credentials.length;
 
 	switch (auth->auth_type) {
 	case DCERPC_AUTH_TYPE_NONE:
@@ -996,10 +965,13 @@ NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 	 * pkt_trailer actually has a copy of the raw data, and they
 	 * are still both used in later calls */
 	if (auth->auth_level == DCERPC_AUTH_LEVEL_PRIVACY) {
+		if (pkt_trailer->length != data.length) {
+			return NT_STATUS_INVALID_PARAMETER;
+		}
 		memcpy(pkt_trailer->data, data.data, data.length);
 	}
 
-	*pad_len = auth_info.auth_pad_length;
+	pkt_trailer->length -= auth_info.auth_pad_length;
 	data_blob_free(&auth_info.credentials);
 	return NT_STATUS_OK;
 }

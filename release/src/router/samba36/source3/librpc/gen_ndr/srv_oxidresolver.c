@@ -63,7 +63,7 @@ static bool api_ResolveOxid(struct pipes_struct *p)
 
 	r->out.result = _ResolveOxid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -136,7 +136,7 @@ static bool api_SimplePing(struct pipes_struct *p)
 
 	r->out.result = _SimplePing(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -217,7 +217,7 @@ static bool api_ComplexPing(struct pipes_struct *p)
 
 	r->out.result = _ComplexPing(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -290,7 +290,7 @@ static bool api_ServerAlive(struct pipes_struct *p)
 
 	r->out.result = _ServerAlive(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -388,7 +388,7 @@ static bool api_ResolveOxid2(struct pipes_struct *p)
 
 	r->out.result = _ResolveOxid2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -492,7 +492,7 @@ static bool api_ServerAlive2(struct pipes_struct *p)
 
 	r->out.result = _ServerAlive2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -102,6 +102,7 @@ static int make_server_pipes_struct(TALLOC_CTX *mem_ctx,
 	p->syntax = id;
 	p->transport = transport;
 	p->ncalrpc_as_system = ncalrpc_as_system;
+	p->allow_bind = true;
 
 	p->mem_ctx = talloc_named(p, 0, "pipe %s %p", pipe_name, p);
 	if (!p->mem_ctx) {
@@ -660,6 +661,12 @@ static void named_pipe_packet_done(struct tevent_req *subreq)
 	TALLOC_FREE(subreq);
 	if (ret == -1) {
 		DEBUG(2, ("Writev failed!\n"));
+		goto fail;
+	}
+
+	if (npc->p->fault_state != 0) {
+		DEBUG(2, ("Disconnect after fault\n"));
+		sys_errno = EINVAL;
 		goto fail;
 	}
 
@@ -1388,6 +1395,12 @@ static void dcerpc_ncacn_packet_done(struct tevent_req *subreq)
 	if (rc < 0) {
 		DEBUG(2, ("Writev failed!\n"));
 		status = map_nt_error_from_unix(sys_errno);
+		goto fail;
+	}
+
+	if (ncacn_conn->p->fault_state != 0) {
+		DEBUG(2, ("Disconnect after fault\n"));
+		sys_errno = EINVAL;
 		goto fail;
 	}
 

@@ -51,7 +51,7 @@ static bool api_atsvc_JobAdd(struct pipes_struct *p)
 
 	r->out.result = _atsvc_JobAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -124,7 +124,7 @@ static bool api_atsvc_JobDel(struct pipes_struct *p)
 
 	r->out.result = _atsvc_JobDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -206,7 +206,7 @@ static bool api_atsvc_JobEnum(struct pipes_struct *p)
 
 	r->out.result = _atsvc_JobEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -286,7 +286,7 @@ static bool api_atsvc_JobGetInfo(struct pipes_struct *p)
 
 	r->out.result = _atsvc_JobGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -44,7 +44,7 @@ static bool api_frsrpc_FrsSendCommPkt(struct pipes_struct *p)
 
 	r->out.result = _frsrpc_FrsSendCommPkt(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_frsrpc_FrsVerifyPromotionParent(struct pipes_struct *p)
 
 	r->out.result = _frsrpc_FrsVerifyPromotionParent(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -192,7 +192,7 @@ static bool api_frsrpc_FrsStartPromotionParent(struct pipes_struct *p)
 	r->out.parent_guid = r->in.parent_guid;
 	r->out.result = _frsrpc_FrsStartPromotionParent(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -265,7 +265,7 @@ static bool api_frsrpc_FrsNOP(struct pipes_struct *p)
 
 	r->out.result = _frsrpc_FrsNOP(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -338,7 +338,7 @@ static bool api_FRSRPC_BACKUP_COMPLETE(struct pipes_struct *p)
 
 	_FRSRPC_BACKUP_COMPLETE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -411,7 +411,7 @@ static bool api_FRSRPC_BACKUP_COMPLETE_5(struct pipes_struct *p)
 
 	_FRSRPC_BACKUP_COMPLETE_5(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -484,7 +484,7 @@ static bool api_FRSRPC_BACKUP_COMPLETE_6(struct pipes_struct *p)
 
 	_FRSRPC_BACKUP_COMPLETE_6(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -557,7 +557,7 @@ static bool api_FRSRPC_BACKUP_COMPLETE_7(struct pipes_struct *p)
 
 	_FRSRPC_BACKUP_COMPLETE_7(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -630,7 +630,7 @@ static bool api_FRSRPC_BACKUP_COMPLETE_8(struct pipes_struct *p)
 
 	_FRSRPC_BACKUP_COMPLETE_8(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -703,7 +703,7 @@ static bool api_FRSRPC_BACKUP_COMPLETE_9(struct pipes_struct *p)
 
 	_FRSRPC_BACKUP_COMPLETE_9(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -776,7 +776,7 @@ static bool api_FRSRPC_VERIFY_PROMOTION_PARENT_EX(struct pipes_struct *p)
 
 	_FRSRPC_VERIFY_PROMOTION_PARENT_EX(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

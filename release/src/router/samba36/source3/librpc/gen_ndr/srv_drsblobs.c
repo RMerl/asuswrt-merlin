@@ -44,7 +44,7 @@ static bool api_decode_replPropertyMetaData(struct pipes_struct *p)
 
 	_decode_replPropertyMetaData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_decode_replUpToDateVector(struct pipes_struct *p)
 
 	_decode_replUpToDateVector(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_decode_repsFromTo(struct pipes_struct *p)
 
 	_decode_repsFromTo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_decode_partialAttributeSet(struct pipes_struct *p)
 
 	_decode_partialAttributeSet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -336,7 +336,7 @@ static bool api_decode_prefixMap(struct pipes_struct *p)
 
 	_decode_prefixMap(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -409,7 +409,7 @@ static bool api_decode_ldapControlDirSync(struct pipes_struct *p)
 
 	_decode_ldapControlDirSync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -482,7 +482,7 @@ static bool api_decode_supplementalCredentials(struct pipes_struct *p)
 
 	_decode_supplementalCredentials(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -555,7 +555,7 @@ static bool api_decode_Packages(struct pipes_struct *p)
 
 	_decode_Packages(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -628,7 +628,7 @@ static bool api_decode_PrimaryKerberos(struct pipes_struct *p)
 
 	_decode_PrimaryKerberos(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -701,7 +701,7 @@ static bool api_decode_PrimaryCLEARTEXT(struct pipes_struct *p)
 
 	_decode_PrimaryCLEARTEXT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -774,7 +774,7 @@ static bool api_decode_PrimaryWDigest(struct pipes_struct *p)
 
 	_decode_PrimaryWDigest(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -847,7 +847,7 @@ static bool api_decode_trustAuthInOut(struct pipes_struct *p)
 
 	_decode_trustAuthInOut(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -920,7 +920,7 @@ static bool api_decode_trustDomainPasswords(struct pipes_struct *p)
 
 	_decode_trustDomainPasswords(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -993,7 +993,7 @@ static bool api_decode_ExtendedErrorInfo(struct pipes_struct *p)
 
 	_decode_ExtendedErrorInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1066,7 +1066,7 @@ static bool api_decode_ForestTrustInfo(struct pipes_struct *p)
 
 	_decode_ForestTrustInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

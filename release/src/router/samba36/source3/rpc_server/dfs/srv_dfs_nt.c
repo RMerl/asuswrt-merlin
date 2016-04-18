@@ -411,125 +411,125 @@ WERROR _dfs_GetInfo(struct pipes_struct *p, struct dfs_GetInfo *r)
 WERROR _dfs_SetInfo(struct pipes_struct *p, struct dfs_SetInfo *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_Rename(struct pipes_struct *p, struct dfs_Rename *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_Move(struct pipes_struct *p, struct dfs_Move *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_ManagerGetConfigInfo(struct pipes_struct *p, struct dfs_ManagerGetConfigInfo *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_ManagerSendSiteInfo(struct pipes_struct *p, struct dfs_ManagerSendSiteInfo *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_AddFtRoot(struct pipes_struct *p, struct dfs_AddFtRoot *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_RemoveFtRoot(struct pipes_struct *p, struct dfs_RemoveFtRoot *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_AddStdRoot(struct pipes_struct *p, struct dfs_AddStdRoot *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_RemoveStdRoot(struct pipes_struct *p, struct dfs_RemoveStdRoot *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_ManagerInitialize(struct pipes_struct *p, struct dfs_ManagerInitialize *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_AddStdRootForced(struct pipes_struct *p, struct dfs_AddStdRootForced *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_GetDcAddress(struct pipes_struct *p, struct dfs_GetDcAddress *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_SetDcAddress(struct pipes_struct *p, struct dfs_SetDcAddress *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_FlushFtTable(struct pipes_struct *p, struct dfs_FlushFtTable *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_Add2(struct pipes_struct *p, struct dfs_Add2 *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_Remove2(struct pipes_struct *p, struct dfs_Remove2 *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_EnumEx(struct pipes_struct *p, struct dfs_EnumEx *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
 WERROR _dfs_SetInfo2(struct pipes_struct *p, struct dfs_SetInfo2 *r)
 {
 	/* FIXME: Implement your code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }

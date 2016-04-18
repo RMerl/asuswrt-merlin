@@ -115,6 +115,34 @@ static const uint8_t trust_domain_passwords_in[] = {
 	0x38, 0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00
 };
 
+/* these are taken from the trust objects of a w2k8r2 forest, with a
+ * trust relationship between the forest parent and a child domain
+ */
+static const char *trustAuthIncoming =
+"AQAAAAwAAAAcAQAASuQ+RXJdzAECAAAAAAEAAMOWL6UVfVKiJOUsGcT03H"
+"jHxr2ACsMMOV5ynM617Tp7idNC+c4egdqk4S9YEpvR2YvHmdZdymL6F7QKm8OkXazYZF2r/gZ/bI+"
+"jkWbsn4O8qyAc3OUKQRZwBbf+lxBW+vM4O3ZpUjz5BSKCcFQgM+MY91yVU8Nji3HNnvGnDquobFAZ"
+"hxjL+S1l5+QZgkfyfv5mQScGRbU1Lar1xg9G3JznUb7S6pvrBO2nwK8g+KZBfJy5UeULigDH4IWo/"
+"JmtaEGkKE2uiKIjdsEQd/uwnkouW26XzRc0ulfJnPFftGnT9KIcShPf7DLj/tstmQAAceRMFHJTY3"
+"PmxoowoK8HUyBK5D5Fcl3MAQIAAAAAAQAAw5YvpRV9UqIk5SwZxPTceMfGvYAKwww5XnKczrXtOnu"
+"J00L5zh6B2qThL1gSm9HZi8eZ1l3KYvoXtAqbw6RdrNhkXav+Bn9sj6ORZuyfg7yrIBzc5QpBFnAF"
+"t/6XEFb68zg7dmlSPPkFIoJwVCAz4xj3XJVTw2OLcc2e8acOq6hsUBmHGMv5LWXn5BmCR/J+/mZBJ"
+"wZFtTUtqvXGD0bcnOdRvtLqm+sE7afAryD4pkF8nLlR5QuKAMfghaj8ma1oQaQoTa6IoiN2wRB3+7"
+"CeSi5bbpfNFzS6V8mc8V+0adP0ohxKE9/sMuP+2y2ZAABx5EwUclNjc+bGijCgrwdTIA==";
+
+static const char *trustAuthOutgoing =
+"AQAAAAwAAAAcAQAASuQ+RXJdzAECAAAAAAEAAMOWL6UVfVKiJOUsGcT03H"
+"jHxr2ACsMMOV5ynM617Tp7idNC+c4egdqk4S9YEpvR2YvHmdZdymL6F7QKm8OkXazYZF2r/gZ/bI+"
+"jkWbsn4O8qyAc3OUKQRZwBbf+lxBW+vM4O3ZpUjz5BSKCcFQgM+MY91yVU8Nji3HNnvGnDquobFAZ"
+"hxjL+S1l5+QZgkfyfv5mQScGRbU1Lar1xg9G3JznUb7S6pvrBO2nwK8g+KZBfJy5UeULigDH4IWo/"
+"JmtaEGkKE2uiKIjdsEQd/uwnkouW26XzRc0ulfJnPFftGnT9KIcShPf7DLj/tstmQAAceRMFHJTY3"
+"PmxoowoK8HUyBK5D5Fcl3MAQIAAAAAAQAAw5YvpRV9UqIk5SwZxPTceMfGvYAKwww5XnKczrXtOnu"
+"J00L5zh6B2qThL1gSm9HZi8eZ1l3KYvoXtAqbw6RdrNhkXav+Bn9sj6ORZuyfg7yrIBzc5QpBFnAF"
+"t/6XEFb68zg7dmlSPPkFIoJwVCAz4xj3XJVTw2OLcc2e8acOq6hsUBmHGMv5LWXn5BmCR/J+/mZBJ"
+"wZFtTUtqvXGD0bcnOdRvtLqm+sE7afAryD4pkF8nLlR5QuKAMfghaj8ma1oQaQoTa6IoiN2wRB3+7"
+"CeSi5bbpfNFzS6V8mc8V+0adP0ohxKE9/sMuP+2y2ZAABx5EwUclNjc+bGijCgrwdTIA==";
+
+
 static bool trust_domain_passwords_check_in(struct torture_context *tctx,
 					    struct trustDomainPasswords *r)
 {
@@ -154,8 +182,20 @@ struct torture_suite *ndr_drsblobs_suite(TALLOC_CTX *ctx)
 {
 	struct torture_suite *suite = torture_suite_create(ctx, "drsblobs");
 
-	torture_suite_add_ndr_pull_fn_test(suite, ForestTrustInfo, forest_trust_info_data_out, NDR_IN, forest_trust_info_check_out);
-	torture_suite_add_ndr_pull_fn_test(suite, trustDomainPasswords, trust_domain_passwords_in, NDR_IN, trust_domain_passwords_check_in);
+	torture_suite_add_ndr_pull_test(suite, ForestTrustInfo, forest_trust_info_data_out, forest_trust_info_check_out);
+	torture_suite_add_ndr_pull_test(suite, trustDomainPasswords, trust_domain_passwords_in, trust_domain_passwords_check_in);
+
+#if 0
+	torture_suite_add_ndr_pullpush_test(suite,
+					    trustAuthInOutBlob,
+					    base64_decode_data_blob_talloc(suite, trustAuthIncoming),
+					    NULL);
+
+	torture_suite_add_ndr_pullpush_test(suite,
+					    trustAuthInOutBlob,
+					    base64_decode_data_blob_talloc(suite, trustAuthOutgoing),
+					    NULL);
+#endif
 
 	return suite;
 }

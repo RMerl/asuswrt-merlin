@@ -405,7 +405,7 @@ WERROR _wkssvc_NetWkstaSetInfo(struct pipes_struct *p,
 			       struct wkssvc_NetWkstaSetInfo *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -608,7 +608,7 @@ WERROR _wkssvc_NetrWkstaUserGetInfo(struct pipes_struct *p,
 				    struct wkssvc_NetrWkstaUserGetInfo *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -619,7 +619,7 @@ WERROR _wkssvc_NetrWkstaUserSetInfo(struct pipes_struct *p,
 				    struct wkssvc_NetrWkstaUserSetInfo *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -630,7 +630,7 @@ WERROR _wkssvc_NetWkstaTransportEnum(struct pipes_struct *p,
 				     struct wkssvc_NetWkstaTransportEnum *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -641,7 +641,7 @@ WERROR _wkssvc_NetrWkstaTransportAdd(struct pipes_struct *p,
 				     struct wkssvc_NetrWkstaTransportAdd *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -652,7 +652,7 @@ WERROR _wkssvc_NetrWkstaTransportDel(struct pipes_struct *p,
 				     struct wkssvc_NetrWkstaTransportDel *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -663,7 +663,7 @@ WERROR _wkssvc_NetrUseAdd(struct pipes_struct *p,
 			  struct wkssvc_NetrUseAdd *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -674,7 +674,7 @@ WERROR _wkssvc_NetrUseGetInfo(struct pipes_struct *p,
 			      struct wkssvc_NetrUseGetInfo *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -685,7 +685,7 @@ WERROR _wkssvc_NetrUseDel(struct pipes_struct *p,
 			  struct wkssvc_NetrUseDel *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -696,7 +696,7 @@ WERROR _wkssvc_NetrUseEnum(struct pipes_struct *p,
 			   struct wkssvc_NetrUseEnum *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -707,7 +707,7 @@ WERROR _wkssvc_NetrMessageBufferSend(struct pipes_struct *p,
 				     struct wkssvc_NetrMessageBufferSend *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -718,7 +718,7 @@ WERROR _wkssvc_NetrWorkstationStatisticsGet(struct pipes_struct *p,
 					    struct wkssvc_NetrWorkstationStatisticsGet *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -729,7 +729,7 @@ WERROR _wkssvc_NetrLogonDomainNameAdd(struct pipes_struct *p,
 				      struct wkssvc_NetrLogonDomainNameAdd *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -740,7 +740,7 @@ WERROR _wkssvc_NetrLogonDomainNameDel(struct pipes_struct *p,
 				      struct wkssvc_NetrLogonDomainNameDel *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -751,7 +751,7 @@ WERROR _wkssvc_NetrJoinDomain(struct pipes_struct *p,
 			      struct wkssvc_NetrJoinDomain *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -762,7 +762,7 @@ WERROR _wkssvc_NetrUnjoinDomain(struct pipes_struct *p,
 				struct wkssvc_NetrUnjoinDomain *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -773,7 +773,7 @@ WERROR _wkssvc_NetrRenameMachineInDomain(struct pipes_struct *p,
 					 struct wkssvc_NetrRenameMachineInDomain *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -784,7 +784,7 @@ WERROR _wkssvc_NetrValidateName(struct pipes_struct *p,
 				struct wkssvc_NetrValidateName *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -795,7 +795,7 @@ WERROR _wkssvc_NetrGetJoinInformation(struct pipes_struct *p,
 				      struct wkssvc_NetrGetJoinInformation *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -806,7 +806,7 @@ WERROR _wkssvc_NetrGetJoinableOus(struct pipes_struct *p,
 				  struct wkssvc_NetrGetJoinableOus *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -970,6 +970,7 @@ WERROR _wkssvc_NetrRenameMachineInDomain2(struct pipes_struct *p,
 					  struct wkssvc_NetrRenameMachineInDomain2 *r)
 {
 	/* for now just return not supported */
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -980,7 +981,7 @@ WERROR _wkssvc_NetrValidateName2(struct pipes_struct *p,
 				 struct wkssvc_NetrValidateName2 *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -991,7 +992,7 @@ WERROR _wkssvc_NetrGetJoinableOus2(struct pipes_struct *p,
 				   struct wkssvc_NetrGetJoinableOus2 *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -1002,7 +1003,7 @@ WERROR _wkssvc_NetrAddAlternateComputerName(struct pipes_struct *p,
 					    struct wkssvc_NetrAddAlternateComputerName *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -1013,7 +1014,7 @@ WERROR _wkssvc_NetrRemoveAlternateComputerName(struct pipes_struct *p,
 					       struct wkssvc_NetrRemoveAlternateComputerName *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -1024,7 +1025,7 @@ WERROR _wkssvc_NetrSetPrimaryComputername(struct pipes_struct *p,
 					  struct wkssvc_NetrSetPrimaryComputername *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -1035,6 +1036,6 @@ WERROR _wkssvc_NetrEnumerateComputerNames(struct pipes_struct *p,
 					  struct wkssvc_NetrEnumerateComputerNames *r)
 {
 	/* FIXME: Add implementation code here */
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }

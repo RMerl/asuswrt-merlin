@@ -87,7 +87,12 @@ typedef struct pipe_rpc_fns {
 	const struct api_struct *cmds;
 	int n_cmds;
 	uint32 context_id;
+	struct ndr_syntax_id syntax;
 
+	/*
+	 * shall we allow "connect" auth level for this interface ?
+	 */
+	bool allow_connect;
 } PIPE_RPC_FNS;
 
 /*
@@ -134,22 +139,17 @@ struct pipes_struct {
 	bool pipe_bound;
 
 	/*
-	 * Set to true when we should return fault PDU's for everything.
+	 * States we can be in.
 	 */
-
-	bool fault_state;
+	bool allow_alter;
+	bool allow_bind;
+	bool allow_auth3;
 
 	/*
-	 * Set to true when we should return fault PDU's for a bad handle.
+	 * Set the DCERPC_FAULT to return.
 	 */
 
-	bool bad_handle_fault_state;
-
-	/*
-	 * Set to true when the backend does not support a call.
-	 */
-
-	bool rng_fault_state;
+	int fault_state;
 
 	/*
 	 * Set to RPC_BIG_ENDIAN when dealing with big-endian PDU's

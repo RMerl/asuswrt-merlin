@@ -75,7 +75,7 @@ static bool api_eventlog6_EvtRpcRegisterRemoteSubscription(struct pipes_struct *
 
 	r->out.result = _eventlog6_EvtRpcRegisterRemoteSubscription(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -179,7 +179,7 @@ static bool api_eventlog6_EvtRpcRemoteSubscriptionNextAsync(struct pipes_struct 
 
 	r->out.result = _eventlog6_EvtRpcRemoteSubscriptionNextAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -283,7 +283,7 @@ static bool api_eventlog6_EvtRpcRemoteSubscriptionNext(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcRemoteSubscriptionNext(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -356,7 +356,7 @@ static bool api_eventlog6_EvtRpcRemoteSubscriptionWaitAsync(struct pipes_struct 
 
 	r->out.result = _eventlog6_EvtRpcRemoteSubscriptionWaitAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -436,7 +436,7 @@ static bool api_eventlog6_EvtRpcRegisterControllableOperation(struct pipes_struc
 
 	r->out.result = _eventlog6_EvtRpcRegisterControllableOperation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -540,7 +540,7 @@ static bool api_eventlog6_EvtRpcRegisterLogQuery(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcRegisterLogQuery(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -620,7 +620,7 @@ static bool api_eventlog6_EvtRpcClearLog(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcClearLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -700,7 +700,7 @@ static bool api_eventlog6_EvtRpcExportLog(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcExportLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -780,7 +780,7 @@ static bool api_eventlog6_EvtRpcLocalizeExportLog(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcLocalizeExportLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -878,7 +878,7 @@ static bool api_eventlog6_EvtRpcMessageRender(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcMessageRender(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -976,7 +976,7 @@ static bool api_eventlog6_EvtRpcMessageRenderDefault(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcMessageRenderDefault(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1080,7 +1080,7 @@ static bool api_eventlog6_EvtRpcQueryNext(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcQueryNext(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1160,7 +1160,7 @@ static bool api_eventlog6_EvtRpcQuerySeek(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcQuerySeek(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1235,7 +1235,7 @@ static bool api_eventlog6_EvtRpcClose(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _eventlog6_EvtRpcClose(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1308,7 +1308,7 @@ static bool api_eventlog6_EvtRpcCancel(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcCancel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1381,7 +1381,7 @@ static bool api_eventlog6_EvtRpcAssertConfig(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcAssertConfig(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1454,7 +1454,7 @@ static bool api_eventlog6_EvtRpcRetractConfig(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcRetractConfig(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1540,7 +1540,7 @@ static bool api_eventlog6_EvtRpcOpenLogHandle(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcOpenLogHandle(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1626,7 +1626,7 @@ static bool api_eventlog6_EvtRpcGetLogFileInfo(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetLogFileInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1712,7 +1712,7 @@ static bool api_eventlog6_EvtRpcGetChannelList(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetChannelList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1792,7 +1792,7 @@ static bool api_eventlog6_EvtRpcGetChannelConfig(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetChannelConfig(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1872,7 +1872,7 @@ static bool api_eventlog6_EvtRpcPutChannelConfig(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcPutChannelConfig(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1958,7 +1958,7 @@ static bool api_eventlog6_EvtRpcGetPublisherList(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetPublisherList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2044,7 +2044,7 @@ static bool api_eventlog6_EvtRpcGetPublisherListForChannel(struct pipes_struct *
 
 	r->out.result = _eventlog6_EvtRpcGetPublisherListForChannel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2130,7 +2130,7 @@ static bool api_eventlog6_EvtRpcGetPublisherMetadata(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetPublisherMetadata(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2210,7 +2210,7 @@ static bool api_eventlog6_EvtRpcGetPublisherResourceMetadata(struct pipes_struct
 
 	r->out.result = _eventlog6_EvtRpcGetPublisherResourceMetadata(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2290,7 +2290,7 @@ static bool api_eventlog6_EvtRpcGetEventMetadataEnum(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetEventMetadataEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2376,7 +2376,7 @@ static bool api_eventlog6_EvtRpcGetNextEventMetadata(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetNextEventMetadata(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2456,7 +2456,7 @@ static bool api_eventlog6_EvtRpcGetClassicLogDisplayName(struct pipes_struct *p)
 
 	r->out.result = _eventlog6_EvtRpcGetClassicLogDisplayName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

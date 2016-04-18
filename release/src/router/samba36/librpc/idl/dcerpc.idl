@@ -10,6 +10,8 @@
 */
 import "misc.idl";
 
+cpp_quote("extern const uint8_t DCERPC_SEC_VT_MAGIC[8];")
+
 interface dcerpc
 {
 	typedef struct {
@@ -453,21 +455,31 @@ interface dcerpc
 	} dcerpc_payload;
 
 	/* pfc_flags values */
-	const uint8 DCERPC_PFC_FLAG_FIRST		= 0x01; /* First fragment */
-	const uint8 DCERPC_PFC_FLAG_LAST		= 0x02; /* Last fragment */
-	const uint8 DCERPC_PFC_FLAG_PENDING_CANCEL	= 0x04; /* Cancel was pending at sender */
-	const uint8 DCERPC_PFC_FLAG_SUPPORT_HEADER_SIGN	= DCERPC_PFC_FLAG_PENDING_CANCEL; /* depends on the pdu type */
-	const uint8 DCERPC_PFC_FLAG_CONC_MPX		= 0x10; /* supports concurrent multiplexing of a single connection. */
-	const uint8 DCERPC_PFC_FLAG_DID_NOT_EXECUTE	= 0x20; /* on a fault it means the server hasn't done anything */
-	const uint8 DCERPC_PFC_FLAG_MAYBE		= 0x40; /* `maybe' call semantics requested */
-	const uint8 DCERPC_PFC_FLAG_OBJECT_UUID		= 0x80; /* on valid guid is in the optional object field */
+	typedef [bitmap8bit] bitmap {
+		DCERPC_PFC_FLAG_FIRST		= 0x01, /* First fragment */
+		DCERPC_PFC_FLAG_LAST		= 0x02, /* Last fragment */
+		DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING = 0x04, /* depends on the pdu type */
+		DCERPC_PFC_FLAG_CONC_MPX	= 0x10, /* supports concurrent multiplexing of a single connection. */
+		DCERPC_PFC_FLAG_DID_NOT_EXECUTE	= 0x20, /* on a fault it means the server hasn't done anything */
+		DCERPC_PFC_FLAG_MAYBE		= 0x40, /* `maybe' call semantics requested */
+		DCERPC_PFC_FLAG_OBJECT_UUID	= 0x80 /* on valid guid is in the optional object field */
+	} dcerpc_pfc_flags;
+
+	/* Cancel was pending at sender */
+	const int DCERPC_PFC_FLAG_PENDING_CANCEL =
+		DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING;
+	const ist DCERPC_PFC_FLAG_SUPPORT_HEADER_SIGN =
+		DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING;
 
 	/* these offsets are needed by the signing code */
 	const uint8 DCERPC_PFC_OFFSET      =  3;
 	const uint8 DCERPC_DREP_OFFSET     =  4;
 	const uint8 DCERPC_FRAG_LEN_OFFSET =  8;
+	const uint32 DCERPC_FRAG_MAX_SIZE  = 5840;
 	const uint8 DCERPC_AUTH_LEN_OFFSET = 10;
 	const uint8 DCERPC_CALL_ID_OFFSET  = 12;
+	const uint8 DCERPC_NCACN_PAYLOAD_OFFSET = 16;
+	const uint32 DCERPC_NCACN_PAYLOAD_MAX_SIZE = 0x400000; /* 4 MByte */
 
 	/* little-endian flag */
 	const uint8 DCERPC_DREP_LE  = 0x10;
@@ -476,7 +488,7 @@ interface dcerpc
 		uint8 rpc_vers;	        /* RPC version */
 		uint8 rpc_vers_minor;   /* Minor version */
 		dcerpc_pkt_type ptype;  /* Packet type */
-		uint8 pfc_flags;        /* Fragmentation flags */
+		dcerpc_pfc_flags pfc_flags; /* Fragmentation flags */
 		uint8 drep[4];	        /* NDR data representation */
 		uint16 frag_length;     /* Total length of fragment */
 		uint16 auth_length;     /* authenticator length */
@@ -506,4 +518,69 @@ interface dcerpc
 		uint8 serial_low;
 		[switch_is(ptype)] dcerpc_payload u;
 	} ncadg_packet;
+
+	typedef [bitmap16bit] bitmap {
+		DCERPC_SEC_VT_COMMAND_ENUM  = 0x3FFF,
+		DCERPC_SEC_VT_COMMAND_END   = 0x4000,
+		DCERPC_SEC_VT_MUST_PROCESS  = 0x8000
+	} dcerpc_sec_vt_command;
+
+	typedef [enum16bit] enum {
+		DCERPC_SEC_VT_COMMAND_BITMASK1  = 0x0001,
+		DCERPC_SEC_VT_COMMAND_PCONTEXT  = 0x0002,
+		DCERPC_SEC_VT_COMMAND_HEADER2   = 0x0003
+	} dcerpc_sec_vt_command_enum;
+
+	typedef [bitmap32bit] bitmap {
+		DCERPC_SEC_VT_CLIENT_SUPPORTS_HEADER_SIGNING = 0x00000001
+	} dcerpc_sec_vt_bitmask1;
+
+	typedef struct {
+		ndr_syntax_id abstract_syntax;
+		ndr_syntax_id transfer_syntax;
+	} dcerpc_sec_vt_pcontext;
+
+	typedef struct {
+		dcerpc_pkt_type ptype;  /* Packet type */
+		[value(0)] uint8 reserved1;
+		[value(0)] uint16 reserved2;
+		uint8 drep[4];          /* NDR data representation */
+		uint32 call_id;         /* Call identifier */
+		uint16 context_id;
+		uint16 opnum;
+	} dcerpc_sec_vt_header2;
+
+	typedef [switch_type(dcerpc_sec_vt_command_enum),nodiscriminant] union {
+	[case(DCERPC_SEC_VT_COMMAND_BITMASK1)] dcerpc_sec_vt_bitmask1 bitmask1;
+	[case(DCERPC_SEC_VT_COMMAND_PCONTEXT)] dcerpc_sec_vt_pcontext pcontext;
+	[case(DCERPC_SEC_VT_COMMAND_HEADER2)] dcerpc_sec_vt_header2 header2;
+	[default,flag(NDR_REMAINING)] DATA_BLOB _unknown;
+	} dcerpc_sec_vt_union;
+
+	typedef struct {
+		dcerpc_sec_vt_command command;
+		[switch_is(command & DCERPC_SEC_VT_COMMAND_ENUM)]
+			[subcontext(2),flag(NDR_SUBCONTEXT_NO_UNREAD_BYTES)]
+			dcerpc_sec_vt_union u;
+	} dcerpc_sec_vt;
+
+	typedef [public,nopush,nopull] struct {
+		uint16 count;
+	} dcerpc_sec_vt_count;
+
+	/*
+	 * We assume that the whole verification trailer fits into
+	 * the last 1024 bytes after the stub data.
+	 *
+	 * There're currently only 3 commands defined and each should
+	 * only be used once.
+	 */
+	const uint16 DCERPC_SEC_VT_MAX_SIZE = 1024;
+
+	typedef [public,flag(NDR_PAHEX)] struct {
+		[flag(NDR_ALIGN4)] DATA_BLOB _pad;
+		[value(DCERPC_SEC_VT_MAGIC)] uint8 magic[8];
+		dcerpc_sec_vt_count count;
+		dcerpc_sec_vt commands[count.count];
+	} dcerpc_sec_verification_trailer;
 }

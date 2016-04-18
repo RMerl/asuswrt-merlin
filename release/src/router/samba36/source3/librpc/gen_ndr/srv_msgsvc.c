@@ -44,7 +44,7 @@ static bool api_NetrMessageNameAdd(struct pipes_struct *p)
 
 	_NetrMessageNameAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_NetrMessageNameEnum(struct pipes_struct *p)
 
 	_NetrMessageNameEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_NetrMessageNameGetInfo(struct pipes_struct *p)
 
 	_NetrMessageNameGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_NetrMessageNameDel(struct pipes_struct *p)
 
 	_NetrMessageNameDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -361,7 +361,7 @@ static bool api_NetrSendMessage(struct pipes_struct *p)
 
 	_NetrSendMessage(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -1122,8 +1122,8 @@ static bool schan(struct torture_context *tctx,
 		generate_random_buffer(chal.data, chal.length);
 		names_blob = NTLMv2_generate_names_blob(
 			mem_ctx,
-			cli_credentials_get_workstation(user_creds),
-			cli_credentials_get_domain(user_creds));
+			cli_credentials_get_workstation(wks_creds),
+			cli_credentials_get_domain(wks_creds));
 		status = cli_credentials_get_ntlm_response(
 			user_creds, mem_ctx, &flags, chal, names_blob,
 			&lm_resp, &nt_resp, NULL, NULL);

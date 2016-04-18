@@ -34,11 +34,9 @@
 	</para>
 
 	<para>
-	The default value is <emphasis>plain</emphasis> which is not irritable 
-	to KRB5 clock skew errors. That implies synchronizing the time
-	with the KDC in the case of using <emphasis>sign</emphasis> or 
-	<emphasis>seal</emphasis>.
+	The default value is <emphasis>sign</emphasis>. That implies synchronizing the time
+	with the KDC in the case of using <emphasis>Kerberos</emphasis>.
 	</para>
 </description>
-<value type="default">plain</value>
+<value type="default">sign</value>
 </samba:parameter>

@@ -62,9 +62,9 @@ struct torture_suite *ndr_nbt_suite(TALLOC_CTX *ctx)
 {
 	struct torture_suite *suite = torture_suite_create(ctx, "nbt");
 
-	torture_suite_add_ndr_pull_fn_test(suite, nbt_netlogon_packet, netlogon_logon_request_req_data, NDR_IN, netlogon_logon_request_req_check);
+	torture_suite_add_ndr_pull_test(suite, nbt_netlogon_packet, netlogon_logon_request_req_data, netlogon_logon_request_req_check);
 
-	torture_suite_add_ndr_pull_fn_test(suite, nbt_netlogon_response2, netlogon_logon_request_resp_data, NDR_IN, netlogon_logon_request_resp_check);
+	torture_suite_add_ndr_pull_test(suite, nbt_netlogon_response2, netlogon_logon_request_resp_data, netlogon_logon_request_resp_check);
 
 	return suite;
 }

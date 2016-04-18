@@ -1,0 +1,15 @@
+<samba:parameter name="winbind sealed pipes"
+                 context="G"
+                 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This option controls whether any requests from winbindd to domain controllers
+		pipe will be sealed. Disabling sealing can be useful for debugging
+		purposes.</para>
+
+	<para>The behavior can be controlled per netbios domain
+	by using 'winbind sealed pipes:NETBIOSDOMAIN = no' as option.</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

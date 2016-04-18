@@ -22,3 +22,8 @@ samba3.*raw.ioctl
 samba3.*raw.qfileinfo
 samba3.*raw.qfsinfo
 samba3.*raw.sfileinfo.base
+# skip, don't work for badlock backports
+samba3.posix_s3.raw.eas
+samba3.posix_s3.raw.rename
+samba3.posix_s3.raw.search
+samba3.posix_s3.raw.streams

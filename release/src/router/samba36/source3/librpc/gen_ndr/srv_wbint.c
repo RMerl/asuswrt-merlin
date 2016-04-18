@@ -51,7 +51,7 @@ static bool api_wbint_Ping(struct pipes_struct *p)
 
 	_wbint_Ping(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -143,7 +143,7 @@ static bool api_wbint_LookupSid(struct pipes_struct *p)
 
 	r->out.result = _wbint_LookupSid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -229,7 +229,7 @@ static bool api_wbint_LookupSids(struct pipes_struct *p)
 
 	r->out.result = _wbint_LookupSids(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -315,7 +315,7 @@ static bool api_wbint_LookupName(struct pipes_struct *p)
 
 	r->out.result = _wbint_LookupName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -395,7 +395,7 @@ static bool api_wbint_Sid2Uid(struct pipes_struct *p)
 
 	r->out.result = _wbint_Sid2Uid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -475,7 +475,7 @@ static bool api_wbint_Sid2Gid(struct pipes_struct *p)
 
 	r->out.result = _wbint_Sid2Gid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -550,7 +550,7 @@ static bool api_wbint_Sids2UnixIDs(struct pipes_struct *p)
 	r->out.ids = r->in.ids;
 	r->out.result = _wbint_Sids2UnixIDs(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -630,7 +630,7 @@ static bool api_wbint_Uid2Sid(struct pipes_struct *p)
 
 	r->out.result = _wbint_Uid2Sid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -710,7 +710,7 @@ static bool api_wbint_Gid2Sid(struct pipes_struct *p)
 
 	r->out.result = _wbint_Gid2Sid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -790,7 +790,7 @@ static bool api_wbint_AllocateUid(struct pipes_struct *p)
 
 	r->out.result = _wbint_AllocateUid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -870,7 +870,7 @@ static bool api_wbint_AllocateGid(struct pipes_struct *p)
 
 	r->out.result = _wbint_AllocateGid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -950,7 +950,7 @@ static bool api_wbint_QueryUser(struct pipes_struct *p)
 
 	r->out.result = _wbint_QueryUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1030,7 +1030,7 @@ static bool api_wbint_LookupUserAliases(struct pipes_struct *p)
 
 	r->out.result = _wbint_LookupUserAliases(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1110,7 +1110,7 @@ static bool api_wbint_LookupUserGroups(struct pipes_struct *p)
 
 	r->out.result = _wbint_LookupUserGroups(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1190,7 +1190,7 @@ static bool api_wbint_QuerySequenceNumber(struct pipes_struct *p)
 
 	r->out.result = _wbint_QuerySequenceNumber(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1270,7 +1270,7 @@ static bool api_wbint_LookupGroupMembers(struct pipes_struct *p)
 
 	r->out.result = _wbint_LookupGroupMembers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1350,7 +1350,7 @@ static bool api_wbint_QueryUserList(struct pipes_struct *p)
 
 	r->out.result = _wbint_QueryUserList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1430,7 +1430,7 @@ static bool api_wbint_QueryGroupList(struct pipes_struct *p)
 
 	r->out.result = _wbint_QueryGroupList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1510,7 +1510,7 @@ static bool api_wbint_DsGetDcName(struct pipes_struct *p)
 
 	r->out.result = _wbint_DsGetDcName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1596,7 +1596,7 @@ static bool api_wbint_LookupRids(struct pipes_struct *p)
 
 	r->out.result = _wbint_LookupRids(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1669,7 +1669,7 @@ static bool api_wbint_CheckMachineAccount(struct pipes_struct *p)
 
 	r->out.result = _wbint_CheckMachineAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1742,7 +1742,7 @@ static bool api_wbint_ChangeMachineAccount(struct pipes_struct *p)
 
 	r->out.result = _wbint_ChangeMachineAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1815,7 +1815,7 @@ static bool api_wbint_PingDc(struct pipes_struct *p)
 
 	r->out.result = _wbint_PingDc(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

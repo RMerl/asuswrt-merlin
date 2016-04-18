@@ -51,7 +51,7 @@ static bool api_wkssvc_NetWkstaGetInfo(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetWkstaGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -126,7 +126,7 @@ static bool api_wkssvc_NetWkstaSetInfo(struct pipes_struct *p)
 	r->out.parm_error = r->in.parm_error;
 	r->out.result = _wkssvc_NetWkstaSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -208,7 +208,7 @@ static bool api_wkssvc_NetWkstaEnumUsers(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetWkstaEnumUsers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -288,7 +288,7 @@ static bool api_wkssvc_NetrWkstaUserGetInfo(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrWkstaUserGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -363,7 +363,7 @@ static bool api_wkssvc_NetrWkstaUserSetInfo(struct pipes_struct *p)
 	r->out.parm_err = r->in.parm_err;
 	r->out.result = _wkssvc_NetrWkstaUserSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -445,7 +445,7 @@ static bool api_wkssvc_NetWkstaTransportEnum(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetWkstaTransportEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -520,7 +520,7 @@ static bool api_wkssvc_NetrWkstaTransportAdd(struct pipes_struct *p)
 	r->out.parm_err = r->in.parm_err;
 	r->out.result = _wkssvc_NetrWkstaTransportAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -593,7 +593,7 @@ static bool api_wkssvc_NetrWkstaTransportDel(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrWkstaTransportDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -668,7 +668,7 @@ static bool api_wkssvc_NetrUseAdd(struct pipes_struct *p)
 	r->out.parm_err = r->in.parm_err;
 	r->out.result = _wkssvc_NetrUseAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -748,7 +748,7 @@ static bool api_wkssvc_NetrUseGetInfo(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrUseGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -821,7 +821,7 @@ static bool api_wkssvc_NetrUseDel(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrUseDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -903,7 +903,7 @@ static bool api_wkssvc_NetrUseEnum(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrUseEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -976,7 +976,7 @@ static bool api_wkssvc_NetrMessageBufferSend(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrMessageBufferSend(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1056,7 +1056,7 @@ static bool api_wkssvc_NetrWorkstationStatisticsGet(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrWorkstationStatisticsGet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1129,7 +1129,7 @@ static bool api_wkssvc_NetrLogonDomainNameAdd(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrLogonDomainNameAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1202,7 +1202,7 @@ static bool api_wkssvc_NetrLogonDomainNameDel(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrLogonDomainNameDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1275,7 +1275,7 @@ static bool api_wkssvc_NetrJoinDomain(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrJoinDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1348,7 +1348,7 @@ static bool api_wkssvc_NetrUnjoinDomain(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrUnjoinDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1421,7 +1421,7 @@ static bool api_wkssvc_NetrRenameMachineInDomain(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrRenameMachineInDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1494,7 +1494,7 @@ static bool api_wkssvc_NetrValidateName(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrValidateName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1575,7 +1575,7 @@ static bool api_wkssvc_NetrGetJoinInformation(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrGetJoinInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1656,7 +1656,7 @@ static bool api_wkssvc_NetrGetJoinableOus(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrGetJoinableOus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1729,7 +1729,7 @@ static bool api_wkssvc_NetrJoinDomain2(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrJoinDomain2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1802,7 +1802,7 @@ static bool api_wkssvc_NetrUnjoinDomain2(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrUnjoinDomain2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1875,7 +1875,7 @@ static bool api_wkssvc_NetrRenameMachineInDomain2(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrRenameMachineInDomain2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1948,7 +1948,7 @@ static bool api_wkssvc_NetrValidateName2(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrValidateName2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2029,7 +2029,7 @@ static bool api_wkssvc_NetrGetJoinableOus2(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrGetJoinableOus2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2102,7 +2102,7 @@ static bool api_wkssvc_NetrAddAlternateComputerName(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrAddAlternateComputerName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2175,7 +2175,7 @@ static bool api_wkssvc_NetrRemoveAlternateComputerName(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrRemoveAlternateComputerName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2248,7 +2248,7 @@ static bool api_wkssvc_NetrSetPrimaryComputername(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrSetPrimaryComputername(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2328,7 +2328,7 @@ static bool api_wkssvc_NetrEnumerateComputerNames(struct pipes_struct *p)
 
 	r->out.result = _wkssvc_NetrEnumerateComputerNames(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

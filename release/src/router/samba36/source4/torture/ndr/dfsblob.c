@@ -74,11 +74,11 @@ struct torture_suite *ndr_dfsblob_suite(TALLOC_CTX *ctx)
 {
 	struct torture_suite *suite = torture_suite_create(ctx, "dfsblob");
 
-	torture_suite_add_ndr_pull_fn_test(suite, dfs_GetDFSReferral_in, dfs_get_ref_in, NDR_IN, NULL);
+	torture_suite_add_ndr_pull_test(suite, dfs_GetDFSReferral_in, dfs_get_ref_in, NULL);
 
-	torture_suite_add_ndr_pull_fn_test(suite, dfs_referral_resp, dfs_get_ref_out2, NDR_BUFFERS|NDR_SCALARS, NULL);
+	torture_suite_add_ndr_pull_test(suite, dfs_referral_resp, dfs_get_ref_out2, NULL);
 
-	torture_suite_add_ndr_pull_fn_test(suite, dfs_referral_resp, dfs_get_ref_out, NDR_BUFFERS|NDR_SCALARS,dfs_referral_out_check);
+	torture_suite_add_ndr_pull_test(suite, dfs_referral_resp, dfs_get_ref_out,dfs_referral_out_check);
 
 	return suite;
 }

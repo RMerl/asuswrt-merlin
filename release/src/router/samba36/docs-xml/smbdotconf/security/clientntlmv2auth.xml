@@ -28,6 +28,11 @@
     NTLMv2 by default, and some sites (particularly those following
     'best practice' security polices) only allow NTLMv2 responses, and
     not the weaker LM or NTLM.</para>
+
+    <para>When <smbconfoption name="client use spnego"/> is also set to
+    <constant>yes</constant> extended security (SPNEGO) is required
+    in order to use NTLMv2 only within NTLMSSP. This behavior was
+    introduced with the patches for CVE-2016-2111.</para>
 </description>
 <value type="default">yes</value>
 </samba:parameter>

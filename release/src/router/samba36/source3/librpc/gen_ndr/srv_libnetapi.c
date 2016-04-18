@@ -44,7 +44,7 @@ static bool api_NetJoinDomain(struct pipes_struct *p)
 
 	r->out.result = _NetJoinDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_NetUnjoinDomain(struct pipes_struct *p)
 
 	r->out.result = _NetUnjoinDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -203,7 +203,7 @@ static bool api_NetGetJoinInformation(struct pipes_struct *p)
 
 	r->out.result = _NetGetJoinInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -289,7 +289,7 @@ static bool api_NetGetJoinableOUs(struct pipes_struct *p)
 
 	r->out.result = _NetGetJoinableOUs(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -362,7 +362,7 @@ static bool api_NetRenameMachineInDomain(struct pipes_struct *p)
 
 	r->out.result = _NetRenameMachineInDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -442,7 +442,7 @@ static bool api_NetServerGetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetServerGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -522,7 +522,7 @@ static bool api_NetServerSetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetServerSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -602,7 +602,7 @@ static bool api_NetGetDCName(struct pipes_struct *p)
 
 	r->out.result = _NetGetDCName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -682,7 +682,7 @@ static bool api_NetGetAnyDCName(struct pipes_struct *p)
 
 	r->out.result = _NetGetAnyDCName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -762,7 +762,7 @@ static bool api_DsGetDcName(struct pipes_struct *p)
 
 	r->out.result = _DsGetDcName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -842,7 +842,7 @@ static bool api_NetUserAdd(struct pipes_struct *p)
 
 	r->out.result = _NetUserAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -915,7 +915,7 @@ static bool api_NetUserDel(struct pipes_struct *p)
 
 	r->out.result = _NetUserDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1008,7 +1008,7 @@ static bool api_NetUserEnum(struct pipes_struct *p)
 
 	r->out.result = _NetUserEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1081,7 +1081,7 @@ static bool api_NetUserChangePassword(struct pipes_struct *p)
 
 	r->out.result = _NetUserChangePassword(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1161,7 +1161,7 @@ static bool api_NetUserGetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetUserGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1241,7 +1241,7 @@ static bool api_NetUserSetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetUserSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1333,7 +1333,7 @@ static bool api_NetUserGetGroups(struct pipes_struct *p)
 
 	r->out.result = _NetUserGetGroups(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1406,7 +1406,7 @@ static bool api_NetUserSetGroups(struct pipes_struct *p)
 
 	r->out.result = _NetUserSetGroups(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1498,7 +1498,7 @@ static bool api_NetUserGetLocalGroups(struct pipes_struct *p)
 
 	r->out.result = _NetUserGetLocalGroups(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1578,7 +1578,7 @@ static bool api_NetUserModalsGet(struct pipes_struct *p)
 
 	r->out.result = _NetUserModalsGet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1658,7 +1658,7 @@ static bool api_NetUserModalsSet(struct pipes_struct *p)
 
 	r->out.result = _NetUserModalsSet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1744,7 +1744,7 @@ static bool api_NetQueryDisplayInformation(struct pipes_struct *p)
 
 	r->out.result = _NetQueryDisplayInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1824,7 +1824,7 @@ static bool api_NetGroupAdd(struct pipes_struct *p)
 
 	r->out.result = _NetGroupAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1897,7 +1897,7 @@ static bool api_NetGroupDel(struct pipes_struct *p)
 
 	r->out.result = _NetGroupDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1990,7 +1990,7 @@ static bool api_NetGroupEnum(struct pipes_struct *p)
 
 	r->out.result = _NetGroupEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2070,7 +2070,7 @@ static bool api_NetGroupSetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetGroupSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2150,7 +2150,7 @@ static bool api_NetGroupGetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetGroupGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2223,7 +2223,7 @@ static bool api_NetGroupAddUser(struct pipes_struct *p)
 
 	r->out.result = _NetGroupAddUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2296,7 +2296,7 @@ static bool api_NetGroupDelUser(struct pipes_struct *p)
 
 	r->out.result = _NetGroupDelUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2389,7 +2389,7 @@ static bool api_NetGroupGetUsers(struct pipes_struct *p)
 
 	r->out.result = _NetGroupGetUsers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2462,7 +2462,7 @@ static bool api_NetGroupSetUsers(struct pipes_struct *p)
 
 	r->out.result = _NetGroupSetUsers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2542,7 +2542,7 @@ static bool api_NetLocalGroupAdd(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2615,7 +2615,7 @@ static bool api_NetLocalGroupDel(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2695,7 +2695,7 @@ static bool api_NetLocalGroupGetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2775,7 +2775,7 @@ static bool api_NetLocalGroupSetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2868,7 +2868,7 @@ static bool api_NetLocalGroupEnum(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2941,7 +2941,7 @@ static bool api_NetLocalGroupAddMembers(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupAddMembers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3014,7 +3014,7 @@ static bool api_NetLocalGroupDelMembers(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupDelMembers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3107,7 +3107,7 @@ static bool api_NetLocalGroupGetMembers(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupGetMembers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3180,7 +3180,7 @@ static bool api_NetLocalGroupSetMembers(struct pipes_struct *p)
 
 	r->out.result = _NetLocalGroupSetMembers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3260,7 +3260,7 @@ static bool api_NetRemoteTOD(struct pipes_struct *p)
 
 	r->out.result = _NetRemoteTOD(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3340,7 +3340,7 @@ static bool api_NetShareAdd(struct pipes_struct *p)
 
 	r->out.result = _NetShareAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3413,7 +3413,7 @@ static bool api_NetShareDel(struct pipes_struct *p)
 
 	r->out.result = _NetShareDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3506,7 +3506,7 @@ static bool api_NetShareEnum(struct pipes_struct *p)
 
 	r->out.result = _NetShareEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3586,7 +3586,7 @@ static bool api_NetShareGetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetShareGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3666,7 +3666,7 @@ static bool api_NetShareSetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetShareSetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3739,7 +3739,7 @@ static bool api_NetFileClose(struct pipes_struct *p)
 
 	r->out.result = _NetFileClose(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3819,7 +3819,7 @@ static bool api_NetFileGetInfo(struct pipes_struct *p)
 
 	r->out.result = _NetFileGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3912,7 +3912,7 @@ static bool api_NetFileEnum(struct pipes_struct *p)
 
 	r->out.result = _NetFileEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3985,7 +3985,7 @@ static bool api_NetShutdownInit(struct pipes_struct *p)
 
 	r->out.result = _NetShutdownInit(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4058,7 +4058,7 @@ static bool api_NetShutdownAbort(struct pipes_struct *p)
 
 	r->out.result = _NetShutdownAbort(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4138,7 +4138,7 @@ static bool api_I_NetLogonControl(struct pipes_struct *p)
 
 	r->out.result = _I_NetLogonControl(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4218,7 +4218,7 @@ static bool api_I_NetLogonControl2(struct pipes_struct *p)
 
 	r->out.result = _I_NetLogonControl2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

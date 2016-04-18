@@ -44,7 +44,7 @@ static bool api_frstrans_CheckConnectivity(struct pipes_struct *p)
 
 	r->out.result = _frstrans_CheckConnectivity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -130,7 +130,7 @@ static bool api_frstrans_EstablishConnection(struct pipes_struct *p)
 
 	r->out.result = _frstrans_EstablishConnection(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -203,7 +203,7 @@ static bool api_frstrans_EstablishSession(struct pipes_struct *p)
 
 	r->out.result = _frstrans_EstablishSession(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -307,7 +307,7 @@ static bool api_frstrans_RequestUpdates(struct pipes_struct *p)
 
 	r->out.result = _frstrans_RequestUpdates(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -380,7 +380,7 @@ static bool api_frstrans_RequestVersionVector(struct pipes_struct *p)
 
 	r->out.result = _frstrans_RequestVersionVector(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -460,7 +460,7 @@ static bool api_frstrans_AsyncPoll(struct pipes_struct *p)
 
 	r->out.result = _frstrans_AsyncPoll(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -533,7 +533,7 @@ static bool api_FRSTRANS_REQUEST_RECORDS(struct pipes_struct *p)
 
 	_FRSTRANS_REQUEST_RECORDS(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -606,7 +606,7 @@ static bool api_FRSTRANS_UPDATE_CANCEL(struct pipes_struct *p)
 
 	_FRSTRANS_UPDATE_CANCEL(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -679,7 +679,7 @@ static bool api_FRSTRANS_RAW_GET_FILE_DATA(struct pipes_struct *p)
 
 	_FRSTRANS_RAW_GET_FILE_DATA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -752,7 +752,7 @@ static bool api_FRSTRANS_RDC_GET_SIGNATURES(struct pipes_struct *p)
 
 	_FRSTRANS_RDC_GET_SIGNATURES(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -825,7 +825,7 @@ static bool api_FRSTRANS_RDC_PUSH_SOURCE_NEEDS(struct pipes_struct *p)
 
 	_FRSTRANS_RDC_PUSH_SOURCE_NEEDS(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -898,7 +898,7 @@ static bool api_FRSTRANS_RDC_GET_FILE_DATA(struct pipes_struct *p)
 
 	_FRSTRANS_RDC_GET_FILE_DATA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -971,7 +971,7 @@ static bool api_FRSTRANS_RDC_CLOSE(struct pipes_struct *p)
 
 	_FRSTRANS_RDC_CLOSE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1077,7 +1077,7 @@ static bool api_frstrans_InitializeFileTransferAsync(struct pipes_struct *p)
 
 	r->out.result = _frstrans_InitializeFileTransferAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1150,7 +1150,7 @@ static bool api_FRSTRANS_OPNUM_0E_NOT_USED_ON_THE_WIRE(struct pipes_struct *p)
 
 	_FRSTRANS_OPNUM_0E_NOT_USED_ON_THE_WIRE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1230,7 +1230,7 @@ static bool api_frstrans_RawGetFileDataAsync(struct pipes_struct *p)
 
 	r->out.result = _frstrans_RawGetFileDataAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1310,7 +1310,7 @@ static bool api_frstrans_RdcGetFileDataAsync(struct pipes_struct *p)
 
 	r->out.result = _frstrans_RdcGetFileDataAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

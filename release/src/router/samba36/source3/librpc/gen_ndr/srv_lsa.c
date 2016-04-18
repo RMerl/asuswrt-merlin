@@ -46,7 +46,7 @@ static bool api_lsa_Close(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _lsa_Close(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -119,7 +119,7 @@ static bool api_lsa_Delete(struct pipes_struct *p)
 
 	r->out.result = _lsa_Delete(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -200,7 +200,7 @@ static bool api_lsa_EnumPrivs(struct pipes_struct *p)
 
 	r->out.result = _lsa_EnumPrivs(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -280,7 +280,7 @@ static bool api_lsa_QuerySecurity(struct pipes_struct *p)
 
 	r->out.result = _lsa_QuerySecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -353,7 +353,7 @@ static bool api_lsa_SetSecObj(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetSecObj(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -426,7 +426,7 @@ static bool api_lsa_ChangePassword(struct pipes_struct *p)
 
 	r->out.result = _lsa_ChangePassword(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -506,7 +506,7 @@ static bool api_lsa_OpenPolicy(struct pipes_struct *p)
 
 	r->out.result = _lsa_OpenPolicy(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -586,7 +586,7 @@ static bool api_lsa_QueryInfoPolicy(struct pipes_struct *p)
 
 	r->out.result = _lsa_QueryInfoPolicy(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -659,7 +659,7 @@ static bool api_lsa_SetInfoPolicy(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetInfoPolicy(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -732,7 +732,7 @@ static bool api_lsa_ClearAuditLog(struct pipes_struct *p)
 
 	r->out.result = _lsa_ClearAuditLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -812,7 +812,7 @@ static bool api_lsa_CreateAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_CreateAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -893,7 +893,7 @@ static bool api_lsa_EnumAccounts(struct pipes_struct *p)
 
 	r->out.result = _lsa_EnumAccounts(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -973,7 +973,7 @@ static bool api_lsa_CreateTrustedDomain(struct pipes_struct *p)
 
 	r->out.result = _lsa_CreateTrustedDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1054,7 +1054,7 @@ static bool api_lsa_EnumTrustDom(struct pipes_struct *p)
 
 	r->out.result = _lsa_EnumTrustDom(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1136,7 +1136,7 @@ static bool api_lsa_LookupNames(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupNames(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1218,7 +1218,7 @@ static bool api_lsa_LookupSids(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupSids(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1298,7 +1298,7 @@ static bool api_lsa_CreateSecret(struct pipes_struct *p)
 
 	r->out.result = _lsa_CreateSecret(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1378,7 +1378,7 @@ static bool api_lsa_OpenAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_OpenAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1458,7 +1458,7 @@ static bool api_lsa_EnumPrivsAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_EnumPrivsAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1531,7 +1531,7 @@ static bool api_lsa_AddPrivilegesToAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_AddPrivilegesToAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1604,7 +1604,7 @@ static bool api_lsa_RemovePrivilegesFromAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_RemovePrivilegesFromAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1677,7 +1677,7 @@ static bool api_lsa_GetQuotasForAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_GetQuotasForAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1750,7 +1750,7 @@ static bool api_lsa_SetQuotasForAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetQuotasForAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1830,7 +1830,7 @@ static bool api_lsa_GetSystemAccessAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_GetSystemAccessAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1903,7 +1903,7 @@ static bool api_lsa_SetSystemAccessAccount(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetSystemAccessAccount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1983,7 +1983,7 @@ static bool api_lsa_OpenTrustedDomain(struct pipes_struct *p)
 
 	r->out.result = _lsa_OpenTrustedDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2063,7 +2063,7 @@ static bool api_lsa_QueryTrustedDomainInfo(struct pipes_struct *p)
 
 	r->out.result = _lsa_QueryTrustedDomainInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2136,7 +2136,7 @@ static bool api_lsa_SetInformationTrustedDomain(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetInformationTrustedDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2216,7 +2216,7 @@ static bool api_lsa_OpenSecret(struct pipes_struct *p)
 
 	r->out.result = _lsa_OpenSecret(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2289,7 +2289,7 @@ static bool api_lsa_SetSecret(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetSecret(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2367,7 +2367,7 @@ static bool api_lsa_QuerySecret(struct pipes_struct *p)
 	r->out.old_mtime = r->in.old_mtime;
 	r->out.result = _lsa_QuerySecret(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2447,7 +2447,7 @@ static bool api_lsa_LookupPrivValue(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupPrivValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2527,7 +2527,7 @@ static bool api_lsa_LookupPrivName(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupPrivName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2613,7 +2613,7 @@ static bool api_lsa_LookupPrivDisplayName(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupPrivDisplayName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2688,7 +2688,7 @@ static bool api_lsa_DeleteObject(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _lsa_DeleteObject(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2768,7 +2768,7 @@ static bool api_lsa_EnumAccountsWithUserRight(struct pipes_struct *p)
 
 	r->out.result = _lsa_EnumAccountsWithUserRight(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2848,7 +2848,7 @@ static bool api_lsa_EnumAccountRights(struct pipes_struct *p)
 
 	r->out.result = _lsa_EnumAccountRights(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2921,7 +2921,7 @@ static bool api_lsa_AddAccountRights(struct pipes_struct *p)
 
 	r->out.result = _lsa_AddAccountRights(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2994,7 +2994,7 @@ static bool api_lsa_RemoveAccountRights(struct pipes_struct *p)
 
 	r->out.result = _lsa_RemoveAccountRights(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3074,7 +3074,7 @@ static bool api_lsa_QueryTrustedDomainInfoBySid(struct pipes_struct *p)
 
 	r->out.result = _lsa_QueryTrustedDomainInfoBySid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3147,7 +3147,7 @@ static bool api_lsa_SetTrustedDomainInfo(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetTrustedDomainInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3220,7 +3220,7 @@ static bool api_lsa_DeleteTrustedDomain(struct pipes_struct *p)
 
 	r->out.result = _lsa_DeleteTrustedDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3293,7 +3293,7 @@ static bool api_lsa_StorePrivateData(struct pipes_struct *p)
 
 	r->out.result = _lsa_StorePrivateData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3368,7 +3368,7 @@ static bool api_lsa_RetrievePrivateData(struct pipes_struct *p)
 	r->out.val = r->in.val;
 	r->out.result = _lsa_RetrievePrivateData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3448,7 +3448,7 @@ static bool api_lsa_OpenPolicy2(struct pipes_struct *p)
 
 	r->out.result = _lsa_OpenPolicy2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3524,7 +3524,7 @@ static bool api_lsa_GetUserName(struct pipes_struct *p)
 	r->out.authority_name = r->in.authority_name;
 	r->out.result = _lsa_GetUserName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3604,7 +3604,7 @@ static bool api_lsa_QueryInfoPolicy2(struct pipes_struct *p)
 
 	r->out.result = _lsa_QueryInfoPolicy2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3677,7 +3677,7 @@ static bool api_lsa_SetInfoPolicy2(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetInfoPolicy2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3757,7 +3757,7 @@ static bool api_lsa_QueryTrustedDomainInfoByName(struct pipes_struct *p)
 
 	r->out.result = _lsa_QueryTrustedDomainInfoByName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3830,7 +3830,7 @@ static bool api_lsa_SetTrustedDomainInfoByName(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetTrustedDomainInfoByName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3911,7 +3911,7 @@ static bool api_lsa_EnumTrustedDomainsEx(struct pipes_struct *p)
 
 	r->out.result = _lsa_EnumTrustedDomainsEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3991,7 +3991,7 @@ static bool api_lsa_CreateTrustedDomainEx(struct pipes_struct *p)
 
 	r->out.result = _lsa_CreateTrustedDomainEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4066,7 +4066,7 @@ static bool api_lsa_CloseTrustedDomainEx(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _lsa_CloseTrustedDomainEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4146,7 +4146,7 @@ static bool api_lsa_QueryDomainInformationPolicy(struct pipes_struct *p)
 
 	r->out.result = _lsa_QueryDomainInformationPolicy(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4219,7 +4219,7 @@ static bool api_lsa_SetDomainInformationPolicy(struct pipes_struct *p)
 
 	r->out.result = _lsa_SetDomainInformationPolicy(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4299,7 +4299,7 @@ static bool api_lsa_OpenTrustedDomainByName(struct pipes_struct *p)
 
 	r->out.result = _lsa_OpenTrustedDomainByName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4372,7 +4372,7 @@ static bool api_lsa_TestCall(struct pipes_struct *p)
 
 	r->out.result = _lsa_TestCall(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4454,7 +4454,7 @@ static bool api_lsa_LookupSids2(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupSids2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4536,7 +4536,7 @@ static bool api_lsa_LookupNames2(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupNames2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4616,7 +4616,7 @@ static bool api_lsa_CreateTrustedDomainEx2(struct pipes_struct *p)
 
 	r->out.result = _lsa_CreateTrustedDomainEx2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4689,7 +4689,7 @@ static bool api_lsa_CREDRWRITE(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRWRITE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4762,7 +4762,7 @@ static bool api_lsa_CREDRREAD(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRREAD(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4835,7 +4835,7 @@ static bool api_lsa_CREDRENUMERATE(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRENUMERATE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4908,7 +4908,7 @@ static bool api_lsa_CREDRWRITEDOMAINCREDENTIALS(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRWRITEDOMAINCREDENTIALS(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4981,7 +4981,7 @@ static bool api_lsa_CREDRREADDOMAINCREDENTIALS(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRREADDOMAINCREDENTIALS(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5054,7 +5054,7 @@ static bool api_lsa_CREDRDELETE(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRDELETE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5127,7 +5127,7 @@ static bool api_lsa_CREDRGETTARGETINFO(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRGETTARGETINFO(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5200,7 +5200,7 @@ static bool api_lsa_CREDRPROFILELOADED(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRPROFILELOADED(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5282,7 +5282,7 @@ static bool api_lsa_LookupNames3(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupNames3(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5355,7 +5355,7 @@ static bool api_lsa_CREDRGETSESSIONTYPES(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRGETSESSIONTYPES(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5428,7 +5428,7 @@ static bool api_lsa_LSARREGISTERAUDITEVENT(struct pipes_struct *p)
 
 	r->out.result = _lsa_LSARREGISTERAUDITEVENT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5501,7 +5501,7 @@ static bool api_lsa_LSARGENAUDITEVENT(struct pipes_struct *p)
 
 	r->out.result = _lsa_LSARGENAUDITEVENT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5574,7 +5574,7 @@ static bool api_lsa_LSARUNREGISTERAUDITEVENT(struct pipes_struct *p)
 
 	r->out.result = _lsa_LSARUNREGISTERAUDITEVENT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5654,7 +5654,7 @@ static bool api_lsa_lsaRQueryForestTrustInformation(struct pipes_struct *p)
 
 	r->out.result = _lsa_lsaRQueryForestTrustInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5734,7 +5734,7 @@ static bool api_lsa_lsaRSetForestTrustInformation(struct pipes_struct *p)
 
 	r->out.result = _lsa_lsaRSetForestTrustInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5807,7 +5807,7 @@ static bool api_lsa_CREDRRENAME(struct pipes_struct *p)
 
 	r->out.result = _lsa_CREDRRENAME(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5889,7 +5889,7 @@ static bool api_lsa_LookupSids3(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupSids3(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5971,7 +5971,7 @@ static bool api_lsa_LookupNames4(struct pipes_struct *p)
 
 	r->out.result = _lsa_LookupNames4(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6044,7 +6044,7 @@ static bool api_lsa_LSAROPENPOLICYSCE(struct pipes_struct *p)
 
 	r->out.result = _lsa_LSAROPENPOLICYSCE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6117,7 +6117,7 @@ static bool api_lsa_LSARADTREGISTERSECURITYEVENTSOURCE(struct pipes_struct *p)
 
 	r->out.result = _lsa_LSARADTREGISTERSECURITYEVENTSOURCE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6190,7 +6190,7 @@ static bool api_lsa_LSARADTUNREGISTERSECURITYEVENTSOURCE(struct pipes_struct *p)
 
 	r->out.result = _lsa_LSARADTUNREGISTERSECURITYEVENTSOURCE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6263,7 +6263,7 @@ static bool api_lsa_LSARADTREPORTSECURITYEVENT(struct pipes_struct *p)
 
 	r->out.result = _lsa_LSARADTREPORTSECURITYEVENT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

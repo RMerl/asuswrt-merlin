@@ -51,7 +51,7 @@ static bool api_mgmt_inq_if_ids(struct pipes_struct *p)
 
 	r->out.result = _mgmt_inq_if_ids(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -131,7 +131,7 @@ static bool api_mgmt_inq_stats(struct pipes_struct *p)
 
 	r->out.result = _mgmt_inq_stats(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -211,7 +211,7 @@ static bool api_mgmt_is_server_listening(struct pipes_struct *p)
 
 	r->out.result = _mgmt_is_server_listening(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -284,7 +284,7 @@ static bool api_mgmt_stop_server_listening(struct pipes_struct *p)
 
 	r->out.result = _mgmt_stop_server_listening(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -364,7 +364,7 @@ static bool api_mgmt_inq_princ_name(struct pipes_struct *p)
 
 	r->out.result = _mgmt_inq_princ_name(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

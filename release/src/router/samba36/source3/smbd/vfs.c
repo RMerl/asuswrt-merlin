@@ -982,6 +982,7 @@ NTSTATUS check_reduced_name(connection_struct *conn, const char *fname)
 	if (!allow_widelinks || !allow_symlinks) {
 		const char *conn_rootdir;
 		size_t rootdir_len;
+		bool matched;
 
 		conn_rootdir = SMB_VFS_CONNECTPATH(conn, fname);
 		if (conn_rootdir == NULL) {
@@ -992,8 +993,10 @@ NTSTATUS check_reduced_name(connection_struct *conn, const char *fname)
 		}
 
 		rootdir_len = strlen(conn_rootdir);
-		if (strncmp(conn_rootdir, resolved_name,
-				rootdir_len) != 0) {
+		matched = (strncmp(conn_rootdir, resolved_name,
+				rootdir_len) == 0);
+		if (!matched || (resolved_name[rootdir_len] != '/' &&
+				 resolved_name[rootdir_len] != '\0')) {
 			DEBUG(2, ("check_reduced_name: Bad access "
 				"attempt: %s is a symlink outside the "
 				"share path\n", fname));

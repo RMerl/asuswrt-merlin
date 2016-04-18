@@ -51,7 +51,7 @@ static bool api_netr_LogonUasLogon(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonUasLogon(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -131,7 +131,7 @@ static bool api_netr_LogonUasLogoff(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonUasLogoff(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -218,7 +218,7 @@ static bool api_netr_LogonSamLogon(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonSamLogon(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -293,7 +293,7 @@ static bool api_netr_LogonSamLogoff(struct pipes_struct *p)
 	r->out.return_authenticator = r->in.return_authenticator;
 	r->out.result = _netr_LogonSamLogoff(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -373,7 +373,7 @@ static bool api_netr_ServerReqChallenge(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerReqChallenge(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -453,7 +453,7 @@ static bool api_netr_ServerAuthenticate(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerAuthenticate(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -533,7 +533,7 @@ static bool api_netr_ServerPasswordSet(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerPasswordSet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -615,7 +615,7 @@ static bool api_netr_DatabaseDeltas(struct pipes_struct *p)
 
 	r->out.result = _netr_DatabaseDeltas(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -697,7 +697,7 @@ static bool api_netr_DatabaseSync(struct pipes_struct *p)
 
 	r->out.result = _netr_DatabaseSync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -796,7 +796,7 @@ static bool api_netr_AccountDeltas(struct pipes_struct *p)
 
 	r->out.result = _netr_AccountDeltas(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -896,7 +896,7 @@ static bool api_netr_AccountSync(struct pipes_struct *p)
 
 	r->out.result = _netr_AccountSync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -976,7 +976,7 @@ static bool api_netr_GetDcName(struct pipes_struct *p)
 
 	r->out.result = _netr_GetDcName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1056,7 +1056,7 @@ static bool api_netr_LogonControl(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonControl(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1136,7 +1136,7 @@ static bool api_netr_GetAnyDCName(struct pipes_struct *p)
 
 	r->out.result = _netr_GetAnyDCName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1216,7 +1216,7 @@ static bool api_netr_LogonControl2(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonControl2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1297,7 +1297,7 @@ static bool api_netr_ServerAuthenticate2(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerAuthenticate2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1379,7 +1379,7 @@ static bool api_netr_DatabaseSync2(struct pipes_struct *p)
 
 	r->out.result = _netr_DatabaseSync2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1460,7 +1460,7 @@ static bool api_netr_DatabaseRedo(struct pipes_struct *p)
 
 	r->out.result = _netr_DatabaseRedo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1540,7 +1540,7 @@ static bool api_netr_LogonControl2Ex(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonControl2Ex(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1620,7 +1620,7 @@ static bool api_netr_NetrEnumerateTrustedDomains(struct pipes_struct *p)
 
 	r->out.result = _netr_NetrEnumerateTrustedDomains(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1700,7 +1700,7 @@ static bool api_netr_DsRGetDCName(struct pipes_struct *p)
 
 	r->out.result = _netr_DsRGetDCName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1781,7 +1781,7 @@ static bool api_netr_LogonGetCapabilities(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonGetCapabilities(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1854,7 +1854,7 @@ static bool api_netr_NETRLOGONSETSERVICEBITS(struct pipes_struct *p)
 
 	r->out.result = _netr_NETRLOGONSETSERVICEBITS(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1934,7 +1934,7 @@ static bool api_netr_LogonGetTrustRid(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonGetTrustRid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2007,7 +2007,7 @@ static bool api_netr_NETRLOGONCOMPUTESERVERDIGEST(struct pipes_struct *p)
 
 	r->out.result = _netr_NETRLOGONCOMPUTESERVERDIGEST(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2080,7 +2080,7 @@ static bool api_netr_NETRLOGONCOMPUTECLIENTDIGEST(struct pipes_struct *p)
 
 	r->out.result = _netr_NETRLOGONCOMPUTECLIENTDIGEST(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2167,7 +2167,7 @@ static bool api_netr_ServerAuthenticate3(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerAuthenticate3(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2247,7 +2247,7 @@ static bool api_netr_DsRGetDCNameEx(struct pipes_struct *p)
 
 	r->out.result = _netr_DsRGetDCNameEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2327,7 +2327,7 @@ static bool api_netr_DsRGetSiteName(struct pipes_struct *p)
 
 	r->out.result = _netr_DsRGetSiteName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2408,7 +2408,7 @@ static bool api_netr_LogonGetDomainInfo(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonGetDomainInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2488,7 +2488,7 @@ static bool api_netr_ServerPasswordSet2(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerPasswordSet2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2574,7 +2574,7 @@ static bool api_netr_ServerPasswordGet(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerPasswordGet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2647,7 +2647,7 @@ static bool api_netr_NETRLOGONSENDTOSAM(struct pipes_struct *p)
 
 	r->out.result = _netr_NETRLOGONSENDTOSAM(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2727,7 +2727,7 @@ static bool api_netr_DsRAddressToSitenamesW(struct pipes_struct *p)
 
 	r->out.result = _netr_DsRAddressToSitenamesW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2807,7 +2807,7 @@ static bool api_netr_DsRGetDCNameEx2(struct pipes_struct *p)
 
 	r->out.result = _netr_DsRGetDCNameEx2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2880,7 +2880,7 @@ static bool api_netr_NETRLOGONGETTIMESERVICEPARENTDOMAIN(struct pipes_struct *p)
 
 	r->out.result = _netr_NETRLOGONGETTIMESERVICEPARENTDOMAIN(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2960,7 +2960,7 @@ static bool api_netr_NetrEnumerateTrustedDomainsEx(struct pipes_struct *p)
 
 	r->out.result = _netr_NetrEnumerateTrustedDomainsEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3040,7 +3040,7 @@ static bool api_netr_DsRAddressToSitenamesExW(struct pipes_struct *p)
 
 	r->out.result = _netr_DsRAddressToSitenamesExW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3120,7 +3120,7 @@ static bool api_netr_DsrGetDcSiteCoverageW(struct pipes_struct *p)
 
 	r->out.result = _netr_DsrGetDcSiteCoverageW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3207,7 +3207,7 @@ static bool api_netr_LogonSamLogonEx(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonSamLogonEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3287,7 +3287,7 @@ static bool api_netr_DsrEnumerateDomainTrusts(struct pipes_struct *p)
 
 	r->out.result = _netr_DsrEnumerateDomainTrusts(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3360,7 +3360,7 @@ static bool api_netr_DsrDeregisterDNSHostRecords(struct pipes_struct *p)
 
 	r->out.result = _netr_DsrDeregisterDNSHostRecords(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3452,7 +3452,7 @@ static bool api_netr_ServerTrustPasswordsGet(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerTrustPasswordsGet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3532,7 +3532,7 @@ static bool api_netr_DsRGetForestTrustInformation(struct pipes_struct *p)
 
 	r->out.result = _netr_DsRGetForestTrustInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3618,7 +3618,7 @@ static bool api_netr_GetForestTrustInformation(struct pipes_struct *p)
 
 	r->out.result = _netr_GetForestTrustInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3706,7 +3706,7 @@ static bool api_netr_LogonSamLogonWithFlags(struct pipes_struct *p)
 
 	r->out.result = _netr_LogonSamLogonWithFlags(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3804,7 +3804,7 @@ static bool api_netr_ServerGetTrustInfo(struct pipes_struct *p)
 
 	r->out.result = _netr_ServerGetTrustInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3877,7 +3877,7 @@ static bool api_netr_Unused47(struct pipes_struct *p)
 
 	r->out.result = _netr_Unused47(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3958,7 +3958,7 @@ static bool api_netr_DsrUpdateReadOnlyServerDnsRecords(struct pipes_struct *p)
 
 	r->out.result = _netr_DsrUpdateReadOnlyServerDnsRecords(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

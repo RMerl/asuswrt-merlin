@@ -51,7 +51,7 @@ static bool api_dfs_GetManagerVersion(struct pipes_struct *p)
 
 	_dfs_GetManagerVersion(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -124,7 +124,7 @@ static bool api_dfs_Add(struct pipes_struct *p)
 
 	r->out.result = _dfs_Add(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -197,7 +197,7 @@ static bool api_dfs_Remove(struct pipes_struct *p)
 
 	r->out.result = _dfs_Remove(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -270,7 +270,7 @@ static bool api_dfs_SetInfo(struct pipes_struct *p)
 
 	r->out.result = _dfs_SetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -350,7 +350,7 @@ static bool api_dfs_GetInfo(struct pipes_struct *p)
 
 	r->out.result = _dfs_GetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -426,7 +426,7 @@ static bool api_dfs_Enum(struct pipes_struct *p)
 	r->out.total = r->in.total;
 	r->out.result = _dfs_Enum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -499,7 +499,7 @@ static bool api_dfs_Rename(struct pipes_struct *p)
 
 	r->out.result = _dfs_Rename(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -572,7 +572,7 @@ static bool api_dfs_Move(struct pipes_struct *p)
 
 	r->out.result = _dfs_Move(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -645,7 +645,7 @@ static bool api_dfs_ManagerGetConfigInfo(struct pipes_struct *p)
 
 	r->out.result = _dfs_ManagerGetConfigInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -718,7 +718,7 @@ static bool api_dfs_ManagerSendSiteInfo(struct pipes_struct *p)
 
 	r->out.result = _dfs_ManagerSendSiteInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -793,7 +793,7 @@ static bool api_dfs_AddFtRoot(struct pipes_struct *p)
 	r->out.unknown2 = r->in.unknown2;
 	r->out.result = _dfs_AddFtRoot(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -868,7 +868,7 @@ static bool api_dfs_RemoveFtRoot(struct pipes_struct *p)
 	r->out.unknown = r->in.unknown;
 	r->out.result = _dfs_RemoveFtRoot(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -941,7 +941,7 @@ static bool api_dfs_AddStdRoot(struct pipes_struct *p)
 
 	r->out.result = _dfs_AddStdRoot(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1014,7 +1014,7 @@ static bool api_dfs_RemoveStdRoot(struct pipes_struct *p)
 
 	r->out.result = _dfs_RemoveStdRoot(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1087,7 +1087,7 @@ static bool api_dfs_ManagerInitialize(struct pipes_struct *p)
 
 	r->out.result = _dfs_ManagerInitialize(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1160,7 +1160,7 @@ static bool api_dfs_AddStdRootForced(struct pipes_struct *p)
 
 	r->out.result = _dfs_AddStdRootForced(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1237,7 +1237,7 @@ static bool api_dfs_GetDcAddress(struct pipes_struct *p)
 	r->out.ttl = r->in.ttl;
 	r->out.result = _dfs_GetDcAddress(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1310,7 +1310,7 @@ static bool api_dfs_SetDcAddress(struct pipes_struct *p)
 
 	r->out.result = _dfs_SetDcAddress(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1383,7 +1383,7 @@ static bool api_dfs_FlushFtTable(struct pipes_struct *p)
 
 	r->out.result = _dfs_FlushFtTable(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1456,7 +1456,7 @@ static bool api_dfs_Add2(struct pipes_struct *p)
 
 	r->out.result = _dfs_Add2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1529,7 +1529,7 @@ static bool api_dfs_Remove2(struct pipes_struct *p)
 
 	r->out.result = _dfs_Remove2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1605,7 +1605,7 @@ static bool api_dfs_EnumEx(struct pipes_struct *p)
 	r->out.total = r->in.total;
 	r->out.result = _dfs_EnumEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1678,7 +1678,7 @@ static bool api_dfs_SetInfo2(struct pipes_struct *p)
 
 	r->out.result = _dfs_SetInfo2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

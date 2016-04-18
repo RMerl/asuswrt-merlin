@@ -44,7 +44,7 @@ static bool api_decode_pac(struct pipes_struct *p)
 
 	_decode_pac(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_decode_pac_raw(struct pipes_struct *p)
 
 	_decode_pac_raw(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_decode_login_info(struct pipes_struct *p)
 
 	_decode_login_info(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_decode_login_info_ctr(struct pipes_struct *p)
 
 	_decode_login_info_ctr(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -336,7 +336,7 @@ static bool api_decode_pac_validate(struct pipes_struct *p)
 
 	_decode_pac_validate(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

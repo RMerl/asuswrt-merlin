@@ -51,7 +51,7 @@ static bool api_samr_Connect(struct pipes_struct *p)
 
 	r->out.result = _samr_Connect(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -126,7 +126,7 @@ static bool api_samr_Close(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _samr_Close(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -199,7 +199,7 @@ static bool api_samr_SetSecurity(struct pipes_struct *p)
 
 	r->out.result = _samr_SetSecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -279,7 +279,7 @@ static bool api_samr_QuerySecurity(struct pipes_struct *p)
 
 	r->out.result = _samr_QuerySecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -352,7 +352,7 @@ static bool api_samr_Shutdown(struct pipes_struct *p)
 
 	r->out.result = _samr_Shutdown(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -432,7 +432,7 @@ static bool api_samr_LookupDomain(struct pipes_struct *p)
 
 	r->out.result = _samr_LookupDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -519,7 +519,7 @@ static bool api_samr_EnumDomains(struct pipes_struct *p)
 
 	r->out.result = _samr_EnumDomains(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -599,7 +599,7 @@ static bool api_samr_OpenDomain(struct pipes_struct *p)
 
 	r->out.result = _samr_OpenDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -679,7 +679,7 @@ static bool api_samr_QueryDomainInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryDomainInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -752,7 +752,7 @@ static bool api_samr_SetDomainInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_SetDomainInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -838,7 +838,7 @@ static bool api_samr_CreateDomainGroup(struct pipes_struct *p)
 
 	r->out.result = _samr_CreateDomainGroup(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -925,7 +925,7 @@ static bool api_samr_EnumDomainGroups(struct pipes_struct *p)
 
 	r->out.result = _samr_EnumDomainGroups(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1011,7 +1011,7 @@ static bool api_samr_CreateUser(struct pipes_struct *p)
 
 	r->out.result = _samr_CreateUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1098,7 +1098,7 @@ static bool api_samr_EnumDomainUsers(struct pipes_struct *p)
 
 	r->out.result = _samr_EnumDomainUsers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1184,7 +1184,7 @@ static bool api_samr_CreateDomAlias(struct pipes_struct *p)
 
 	r->out.result = _samr_CreateDomAlias(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1271,7 +1271,7 @@ static bool api_samr_EnumDomainAliases(struct pipes_struct *p)
 
 	r->out.result = _samr_EnumDomainAliases(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1351,7 +1351,7 @@ static bool api_samr_GetAliasMembership(struct pipes_struct *p)
 
 	r->out.result = _samr_GetAliasMembership(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1437,7 +1437,7 @@ static bool api_samr_LookupNames(struct pipes_struct *p)
 
 	r->out.result = _samr_LookupNames(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1523,7 +1523,7 @@ static bool api_samr_LookupRids(struct pipes_struct *p)
 
 	r->out.result = _samr_LookupRids(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1603,7 +1603,7 @@ static bool api_samr_OpenGroup(struct pipes_struct *p)
 
 	r->out.result = _samr_OpenGroup(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1683,7 +1683,7 @@ static bool api_samr_QueryGroupInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryGroupInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1756,7 +1756,7 @@ static bool api_samr_SetGroupInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_SetGroupInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1829,7 +1829,7 @@ static bool api_samr_AddGroupMember(struct pipes_struct *p)
 
 	r->out.result = _samr_AddGroupMember(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1904,7 +1904,7 @@ static bool api_samr_DeleteDomainGroup(struct pipes_struct *p)
 	r->out.group_handle = r->in.group_handle;
 	r->out.result = _samr_DeleteDomainGroup(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1977,7 +1977,7 @@ static bool api_samr_DeleteGroupMember(struct pipes_struct *p)
 
 	r->out.result = _samr_DeleteGroupMember(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2057,7 +2057,7 @@ static bool api_samr_QueryGroupMember(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryGroupMember(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2130,7 +2130,7 @@ static bool api_samr_SetMemberAttributesOfGroup(struct pipes_struct *p)
 
 	r->out.result = _samr_SetMemberAttributesOfGroup(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2210,7 +2210,7 @@ static bool api_samr_OpenAlias(struct pipes_struct *p)
 
 	r->out.result = _samr_OpenAlias(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2290,7 +2290,7 @@ static bool api_samr_QueryAliasInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryAliasInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2363,7 +2363,7 @@ static bool api_samr_SetAliasInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_SetAliasInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2438,7 +2438,7 @@ static bool api_samr_DeleteDomAlias(struct pipes_struct *p)
 	r->out.alias_handle = r->in.alias_handle;
 	r->out.result = _samr_DeleteDomAlias(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2511,7 +2511,7 @@ static bool api_samr_AddAliasMember(struct pipes_struct *p)
 
 	r->out.result = _samr_AddAliasMember(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2584,7 +2584,7 @@ static bool api_samr_DeleteAliasMember(struct pipes_struct *p)
 
 	r->out.result = _samr_DeleteAliasMember(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2664,7 +2664,7 @@ static bool api_samr_GetMembersInAlias(struct pipes_struct *p)
 
 	r->out.result = _samr_GetMembersInAlias(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2744,7 +2744,7 @@ static bool api_samr_OpenUser(struct pipes_struct *p)
 
 	r->out.result = _samr_OpenUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2819,7 +2819,7 @@ static bool api_samr_DeleteUser(struct pipes_struct *p)
 	r->out.user_handle = r->in.user_handle;
 	r->out.result = _samr_DeleteUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2899,7 +2899,7 @@ static bool api_samr_QueryUserInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryUserInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2972,7 +2972,7 @@ static bool api_samr_SetUserInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_SetUserInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3045,7 +3045,7 @@ static bool api_samr_ChangePasswordUser(struct pipes_struct *p)
 
 	r->out.result = _samr_ChangePasswordUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3125,7 +3125,7 @@ static bool api_samr_GetGroupsForUser(struct pipes_struct *p)
 
 	r->out.result = _samr_GetGroupsForUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3217,7 +3217,7 @@ static bool api_samr_QueryDisplayInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryDisplayInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3297,7 +3297,7 @@ static bool api_samr_GetDisplayEnumerationIndex(struct pipes_struct *p)
 
 	r->out.result = _samr_GetDisplayEnumerationIndex(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3370,7 +3370,7 @@ static bool api_samr_TestPrivateFunctionsDomain(struct pipes_struct *p)
 
 	r->out.result = _samr_TestPrivateFunctionsDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3443,7 +3443,7 @@ static bool api_samr_TestPrivateFunctionsUser(struct pipes_struct *p)
 
 	r->out.result = _samr_TestPrivateFunctionsUser(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3523,7 +3523,7 @@ static bool api_samr_GetUserPwInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_GetUserPwInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3596,7 +3596,7 @@ static bool api_samr_RemoveMemberFromForeignDomain(struct pipes_struct *p)
 
 	r->out.result = _samr_RemoveMemberFromForeignDomain(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3676,7 +3676,7 @@ static bool api_samr_QueryDomainInfo2(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryDomainInfo2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3756,7 +3756,7 @@ static bool api_samr_QueryUserInfo2(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryUserInfo2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3848,7 +3848,7 @@ static bool api_samr_QueryDisplayInfo2(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryDisplayInfo2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3928,7 +3928,7 @@ static bool api_samr_GetDisplayEnumerationIndex2(struct pipes_struct *p)
 
 	r->out.result = _samr_GetDisplayEnumerationIndex2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4020,7 +4020,7 @@ static bool api_samr_CreateUser2(struct pipes_struct *p)
 
 	r->out.result = _samr_CreateUser2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4112,7 +4112,7 @@ static bool api_samr_QueryDisplayInfo3(struct pipes_struct *p)
 
 	r->out.result = _samr_QueryDisplayInfo3(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4185,7 +4185,7 @@ static bool api_samr_AddMultipleMembersToAlias(struct pipes_struct *p)
 
 	r->out.result = _samr_AddMultipleMembersToAlias(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4258,7 +4258,7 @@ static bool api_samr_RemoveMultipleMembersFromAlias(struct pipes_struct *p)
 
 	r->out.result = _samr_RemoveMultipleMembersFromAlias(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4331,7 +4331,7 @@ static bool api_samr_OemChangePasswordUser2(struct pipes_struct *p)
 
 	r->out.result = _samr_OemChangePasswordUser2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4404,7 +4404,7 @@ static bool api_samr_ChangePasswordUser2(struct pipes_struct *p)
 
 	r->out.result = _samr_ChangePasswordUser2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4484,7 +4484,7 @@ static bool api_samr_GetDomPwInfo(struct pipes_struct *p)
 
 	r->out.result = _samr_GetDomPwInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4564,7 +4564,7 @@ static bool api_samr_Connect2(struct pipes_struct *p)
 
 	r->out.result = _samr_Connect2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4637,7 +4637,7 @@ static bool api_samr_SetUserInfo2(struct pipes_struct *p)
 
 	r->out.result = _samr_SetUserInfo2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4710,7 +4710,7 @@ static bool api_samr_SetBootKeyInformation(struct pipes_struct *p)
 
 	r->out.result = _samr_SetBootKeyInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4790,7 +4790,7 @@ static bool api_samr_GetBootKeyInformation(struct pipes_struct *p)
 
 	r->out.result = _samr_GetBootKeyInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4870,7 +4870,7 @@ static bool api_samr_Connect3(struct pipes_struct *p)
 
 	r->out.result = _samr_Connect3(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4950,7 +4950,7 @@ static bool api_samr_Connect4(struct pipes_struct *p)
 
 	r->out.result = _samr_Connect4(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5036,7 +5036,7 @@ static bool api_samr_ChangePasswordUser3(struct pipes_struct *p)
 
 	r->out.result = _samr_ChangePasswordUser3(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5128,7 +5128,7 @@ static bool api_samr_Connect5(struct pipes_struct *p)
 
 	r->out.result = _samr_Connect5(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5208,7 +5208,7 @@ static bool api_samr_RidToSid(struct pipes_struct *p)
 
 	r->out.result = _samr_RidToSid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5281,7 +5281,7 @@ static bool api_samr_SetDsrmPassword(struct pipes_struct *p)
 
 	r->out.result = _samr_SetDsrmPassword(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5361,7 +5361,7 @@ static bool api_samr_ValidatePassword(struct pipes_struct *p)
 
 	r->out.result = _samr_ValidatePassword(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

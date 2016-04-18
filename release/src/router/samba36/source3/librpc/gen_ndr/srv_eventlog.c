@@ -44,7 +44,7 @@ static bool api_eventlog_ClearEventLogW(struct pipes_struct *p)
 
 	r->out.result = _eventlog_ClearEventLogW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_eventlog_BackupEventLogW(struct pipes_struct *p)
 
 	r->out.result = _eventlog_BackupEventLogW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -192,7 +192,7 @@ static bool api_eventlog_CloseEventLog(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _eventlog_CloseEventLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -267,7 +267,7 @@ static bool api_eventlog_DeregisterEventSource(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _eventlog_DeregisterEventSource(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -347,7 +347,7 @@ static bool api_eventlog_GetNumRecords(struct pipes_struct *p)
 
 	r->out.result = _eventlog_GetNumRecords(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -427,7 +427,7 @@ static bool api_eventlog_GetOldestRecord(struct pipes_struct *p)
 
 	r->out.result = _eventlog_GetOldestRecord(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -500,7 +500,7 @@ static bool api_eventlog_ChangeNotify(struct pipes_struct *p)
 
 	r->out.result = _eventlog_ChangeNotify(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -580,7 +580,7 @@ static bool api_eventlog_OpenEventLogW(struct pipes_struct *p)
 
 	r->out.result = _eventlog_OpenEventLogW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -660,7 +660,7 @@ static bool api_eventlog_RegisterEventSourceW(struct pipes_struct *p)
 
 	r->out.result = _eventlog_RegisterEventSourceW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -740,7 +740,7 @@ static bool api_eventlog_OpenBackupEventLogW(struct pipes_struct *p)
 
 	r->out.result = _eventlog_OpenBackupEventLogW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -832,7 +832,7 @@ static bool api_eventlog_ReadEventLogW(struct pipes_struct *p)
 
 	r->out.result = _eventlog_ReadEventLogW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -908,7 +908,7 @@ static bool api_eventlog_ReportEventW(struct pipes_struct *p)
 	r->out.time_written = r->in.time_written;
 	r->out.result = _eventlog_ReportEventW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -981,7 +981,7 @@ static bool api_eventlog_ClearEventLogA(struct pipes_struct *p)
 
 	r->out.result = _eventlog_ClearEventLogA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1054,7 +1054,7 @@ static bool api_eventlog_BackupEventLogA(struct pipes_struct *p)
 
 	r->out.result = _eventlog_BackupEventLogA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1127,7 +1127,7 @@ static bool api_eventlog_OpenEventLogA(struct pipes_struct *p)
 
 	r->out.result = _eventlog_OpenEventLogA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1200,7 +1200,7 @@ static bool api_eventlog_RegisterEventSourceA(struct pipes_struct *p)
 
 	r->out.result = _eventlog_RegisterEventSourceA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1273,7 +1273,7 @@ static bool api_eventlog_OpenBackupEventLogA(struct pipes_struct *p)
 
 	r->out.result = _eventlog_OpenBackupEventLogA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1346,7 +1346,7 @@ static bool api_eventlog_ReadEventLogA(struct pipes_struct *p)
 
 	r->out.result = _eventlog_ReadEventLogA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1419,7 +1419,7 @@ static bool api_eventlog_ReportEventA(struct pipes_struct *p)
 
 	r->out.result = _eventlog_ReportEventA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1492,7 +1492,7 @@ static bool api_eventlog_RegisterClusterSvc(struct pipes_struct *p)
 
 	r->out.result = _eventlog_RegisterClusterSvc(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1565,7 +1565,7 @@ static bool api_eventlog_DeregisterClusterSvc(struct pipes_struct *p)
 
 	r->out.result = _eventlog_DeregisterClusterSvc(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1638,7 +1638,7 @@ static bool api_eventlog_WriteClusterEvents(struct pipes_struct *p)
 
 	r->out.result = _eventlog_WriteClusterEvents(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1724,7 +1724,7 @@ static bool api_eventlog_GetLogInformation(struct pipes_struct *p)
 
 	r->out.result = _eventlog_GetLogInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1797,7 +1797,7 @@ static bool api_eventlog_FlushEventLog(struct pipes_struct *p)
 
 	r->out.result = _eventlog_FlushEventLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1873,7 +1873,7 @@ static bool api_eventlog_ReportEventAndSourceW(struct pipes_struct *p)
 	r->out.time_written = r->in.time_written;
 	r->out.result = _eventlog_ReportEventAndSourceW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

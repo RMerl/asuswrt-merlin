@@ -44,7 +44,7 @@ static bool api_FRSAPI_VERIFY_PROMOTION(struct pipes_struct *p)
 
 	_FRSAPI_VERIFY_PROMOTION(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_FRSAPI_PROMOTION_STATUS(struct pipes_struct *p)
 
 	_FRSAPI_PROMOTION_STATUS(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_FRSAPI_START_DEMOTION(struct pipes_struct *p)
 
 	_FRSAPI_START_DEMOTION(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_FRSAPI_COMMIT_DEMOTION(struct pipes_struct *p)
 
 	_FRSAPI_COMMIT_DEMOTION(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -336,7 +336,7 @@ static bool api_frsapi_SetDsPollingIntervalW(struct pipes_struct *p)
 
 	r->out.result = _frsapi_SetDsPollingIntervalW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -428,7 +428,7 @@ static bool api_frsapi_GetDsPollingIntervalW(struct pipes_struct *p)
 
 	r->out.result = _frsapi_GetDsPollingIntervalW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -501,7 +501,7 @@ static bool api_FRSAPI_VERIFY_PROMOTION_W(struct pipes_struct *p)
 
 	_FRSAPI_VERIFY_PROMOTION_W(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -576,7 +576,7 @@ static bool api_frsapi_InfoW(struct pipes_struct *p)
 	r->out.info = r->in.info;
 	r->out.result = _frsapi_InfoW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -674,7 +674,7 @@ static bool api_frsapi_IsPathReplicated(struct pipes_struct *p)
 
 	r->out.result = _frsapi_IsPathReplicated(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -747,7 +747,7 @@ static bool api_frsapi_WriterCommand(struct pipes_struct *p)
 
 	r->out.result = _frsapi_WriterCommand(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -820,7 +820,7 @@ static bool api_frsapi_ForceReplication(struct pipes_struct *p)
 
 	r->out.result = _frsapi_ForceReplication(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -26,7 +26,7 @@
 #include "../libcli/auth/msrpc_parse.h"
 #include "../lib/crypto/crypto.h"
 #include "../libcli/auth/libcli_auth.h"
-#include "../librpc/gen_ndr/ntlmssp.h"
+#include "../librpc/gen_ndr/ndr_ntlmssp.h"
 
 void SMBencrypt_hash(const uint8_t lm_hash[16], const uint8_t *c8, uint8_t p24[24])
 {
@@ -355,11 +355,18 @@ DATA_BLOB NTLMv2_generate_names_blob(TALLOC_CTX *mem_ctx,
 	DATA_BLOB names_blob = data_blob_talloc(mem_ctx, NULL, 0);
 
 	/* Deliberately ignore return here.. */
-	(void)msrpc_gen(mem_ctx, &names_blob,
-		  "aaa",
-		  MsvAvNbDomainName, domain,
-		  MsvAvNbComputerName, hostname,
-		  MsvAvEOL, "");
+	if (hostname != NULL) {
+		(void)msrpc_gen(mem_ctx, &names_blob,
+			  "aaa",
+			  MsvAvNbDomainName, domain,
+			  MsvAvNbComputerName, hostname,
+			  MsvAvEOL, "");
+	} else {
+		(void)msrpc_gen(mem_ctx, &names_blob,
+			  "aa",
+			  MsvAvNbDomainName, domain,
+			  MsvAvEOL, "");
+	}
 	return names_blob;
 }
 
@@ -513,6 +520,146 @@ bool SMBNTLMv2encrypt(TALLOC_CTX *mem_ctx,
 	return SMBNTLMv2encrypt_hash(mem_ctx,
 				     user, domain, nt_hash, server_chal, names_blob,
 				     lm_response, nt_response, lm_session_key, user_session_key);
+}
+
+NTSTATUS NTLMv2_RESPONSE_verify_netlogon_creds(const char *account_name,
+			const char *account_domain,
+			const DATA_BLOB response,
+			const struct netlogon_creds_CredentialState *creds,
+			const char *workgroup)
+{
+	TALLOC_CTX *frame = NULL;
+	/* RespType + HiRespType */
+	static const char *magic = "\x01\x01";
+	int cmp;
+	struct NTLMv2_RESPONSE v2_resp;
+	enum ndr_err_code err;
+	const struct AV_PAIR *av_nb_cn = NULL;
+	const struct AV_PAIR *av_nb_dn = NULL;
+
+	if (response.length < 48) {
+		/*
+		 * NTLMv2_RESPONSE has at least 48 bytes.
+		 */
+		return NT_STATUS_OK;
+	}
+
+	cmp = memcmp(response.data + 16, magic, 2);
+	if (cmp != 0) {
+		/*
+		 * It doesn't look like a valid NTLMv2_RESPONSE
+		 */
+		return NT_STATUS_OK;
+	}
+
+	frame = talloc_stackframe();
+
+	err = ndr_pull_struct_blob(&response, frame, &v2_resp,
+		(ndr_pull_flags_fn_t)ndr_pull_NTLMv2_RESPONSE);
+	if (!NDR_ERR_CODE_IS_SUCCESS(err)) {
+		NTSTATUS status;
+		status = ndr_map_error2ntstatus(err);
+		DEBUG(2,("Failed to parse NTLMv2_RESPONSE "
+			 "length %u - %s - %s\n",
+			 (unsigned)response.length,
+			 ndr_map_error2string(err),
+			 nt_errstr(status)));
+		dump_data(2, response.data, response.length);
+		TALLOC_FREE(frame);
+		return status;
+	}
+
+	if (DEBUGLVL(10)) {
+		NDR_PRINT_DEBUG(NTLMv2_RESPONSE, &v2_resp);
+	}
+
+	/*
+	 * Make sure the netbios computer name in the
+	 * NTLMv2_RESPONSE matches the computer name
+	 * in the secure channel credentials for workstation
+	 * trusts.
+	 *
+	 * And the netbios domain name matches our
+	 * workgroup.
+	 *
+	 * This prevents workstations from requesting
+	 * the session key of NTLMSSP sessions of clients
+	 * to other hosts.
+	 */
+	if (creds->secure_channel_type == SEC_CHAN_WKSTA) {
+		av_nb_cn = ndr_ntlmssp_find_av(&v2_resp.Challenge.AvPairs,
+					       MsvAvNbComputerName);
+		av_nb_dn = ndr_ntlmssp_find_av(&v2_resp.Challenge.AvPairs,
+					       MsvAvNbDomainName);
+	}
+
+	if (av_nb_cn != NULL) {
+		const char *v = NULL;
+		char *a = NULL;
+		size_t len;
+
+		v = av_nb_cn->Value.AvNbComputerName;
+
+		a = talloc_strdup(frame, creds->account_name);
+		if (a == NULL) {
+			TALLOC_FREE(frame);
+			return NT_STATUS_NO_MEMORY;
+		}
+		len = strlen(a);
+		if (len > 0 && a[len - 1] == '$') {
+			a[len - 1] = '\0';
+		}
+
+#ifdef SAMBA4_INTERNAL_HEIMDAL /* smbtorture4 for make test */
+		cmp = strcasecmp_m(a, v);
+#else /* smbd */
+		cmp = StrCaseCmp(a, v);
+#endif
+		if (cmp != 0) {
+			DEBUG(2,("%s: NTLMv2_RESPONSE with "
+				 "NbComputerName[%s] rejected "
+				 "for user[%s\\%s] "
+				 "against SEC_CHAN_WKSTA[%s/%s] "
+				 "in workgroup[%s]\n",
+				 __func__, v,
+				 account_domain,
+				 account_name,
+				 creds->computer_name,
+				 creds->account_name,
+				 workgroup));
+			TALLOC_FREE(frame);
+			return NT_STATUS_LOGON_FAILURE;
+		}
+	}
+	if (av_nb_dn != NULL) {
+		const char *v = NULL;
+
+		v = av_nb_dn->Value.AvNbDomainName;
+
+#ifdef SAMBA4_INTERNAL_HEIMDAL /* smbtorture4 for make test */
+		cmp = strcasecmp_m(workgroup, v);
+#else /* smbd */
+		cmp = StrCaseCmp(workgroup, v);
+#endif
+		if (cmp != 0) {
+			DEBUG(2,("%s: NTLMv2_RESPONSE with "
+				 "NbDomainName[%s] rejected "
+				 "for user[%s\\%s] "
+				 "against SEC_CHAN_WKSTA[%s/%s] "
+				 "in workgroup[%s]\n",
+				 __func__, v,
+				 account_domain,
+				 account_name,
+				 creds->computer_name,
+				 creds->account_name,
+				 workgroup));
+			TALLOC_FREE(frame);
+			return NT_STATUS_LOGON_FAILURE;
+		}
+	}
+
+	TALLOC_FREE(frame);
+	return NT_STATUS_OK;
 }
 
 /***********************************************************

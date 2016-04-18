@@ -2077,6 +2077,17 @@ NTSTATUS cli_session_setup(struct cli_state *cli,
 		NTSTATUS status;
 
 		/* otherwise do a NT1 style session setup */
+		if (lp_client_ntlmv2_auth() && lp_client_use_spnego()) {
+			/*
+			 * Don't send an NTLMv2 response without NTLMSSP
+			 * if we want to use spnego support
+			 */
+			DEBUG(1, ("Server does not support EXTENDED_SECURITY "
+				  " but 'client use spnego = yes"
+				  " and 'client ntlmv2 auth = yes'\n"));
+			return NT_STATUS_ACCESS_DENIED;
+		}
+
 		status = cli_session_setup_nt1(cli, user, pass, passlen,
 					       ntpass, ntpasslen, workgroup);
 		if (!NT_STATUS_IS_OK(status)) {

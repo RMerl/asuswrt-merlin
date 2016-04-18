@@ -44,7 +44,7 @@ static bool api_UseProtSeq(struct pipes_struct *p)
 
 	_UseProtSeq(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_GetCustomProtseqInfo(struct pipes_struct *p)
 
 	_GetCustomProtseqInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_UpdateResolverBindings(struct pipes_struct *p)
 
 	_UpdateResolverBindings(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -300,7 +300,7 @@ static bool api_QueryInterface(struct pipes_struct *p)
 
 	r->out.result = _QueryInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -380,7 +380,7 @@ static bool api_AddRef(struct pipes_struct *p)
 
 	r->out.result = _AddRef(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -460,7 +460,7 @@ static bool api_Release(struct pipes_struct *p)
 
 	r->out.result = _Release(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -570,7 +570,7 @@ static bool api_CreateInstance(struct pipes_struct *p)
 
 	r->out.result = _CreateInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -650,7 +650,7 @@ static bool api_RemoteCreateInstance(struct pipes_struct *p)
 
 	r->out.result = _RemoteCreateInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -730,7 +730,7 @@ static bool api_LockServer(struct pipes_struct *p)
 
 	r->out.result = _LockServer(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -810,7 +810,7 @@ static bool api_RemoteLockServer(struct pipes_struct *p)
 
 	r->out.result = _RemoteLockServer(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -921,7 +921,7 @@ static bool api_RemQueryInterface(struct pipes_struct *p)
 
 	r->out.result = _RemQueryInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1007,7 +1007,7 @@ static bool api_RemAddRef(struct pipes_struct *p)
 
 	r->out.result = _RemAddRef(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1087,7 +1087,7 @@ static bool api_RemRelease(struct pipes_struct *p)
 
 	r->out.result = _RemRelease(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1197,7 +1197,7 @@ static bool api_GetClassObject(struct pipes_struct *p)
 
 	_GetClassObject(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1299,7 +1299,7 @@ static bool api_ISCMLocalActivator_CreateInstance(struct pipes_struct *p)
 
 	r->out.result = _ISCMLocalActivator_CreateInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1394,7 +1394,7 @@ static bool api_IMachineLocalActivator_foo(struct pipes_struct *p)
 
 	r->out.result = _IMachineLocalActivator_foo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1489,7 +1489,7 @@ static bool api_ILocalObjectExporter_Foo(struct pipes_struct *p)
 
 	r->out.result = _ILocalObjectExporter_Foo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1603,7 +1603,7 @@ static bool api_ISystemActivatorRemoteCreateInstance(struct pipes_struct *p)
 
 	r->out.result = _ISystemActivatorRemoteCreateInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1717,7 +1717,7 @@ static bool api_RemQueryInterface2(struct pipes_struct *p)
 
 	r->out.result = _RemQueryInterface2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1825,7 +1825,7 @@ static bool api_GetTypeInfoCount(struct pipes_struct *p)
 
 	r->out.result = _GetTypeInfoCount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1911,7 +1911,7 @@ static bool api_GetTypeInfo(struct pipes_struct *p)
 
 	r->out.result = _GetTypeInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1997,7 +1997,7 @@ static bool api_GetIDsOfNames(struct pipes_struct *p)
 
 	r->out.result = _GetIDsOfNames(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2096,7 +2096,7 @@ static bool api_Invoke(struct pipes_struct *p)
 
 	r->out.result = _Invoke(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2201,7 +2201,7 @@ static bool api_MarshalInterface(struct pipes_struct *p)
 
 	r->out.result = _MarshalInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2281,7 +2281,7 @@ static bool api_UnMarshalInterface(struct pipes_struct *p)
 
 	r->out.result = _UnMarshalInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2384,7 +2384,7 @@ static bool api_MakeCoffee(struct pipes_struct *p)
 
 	r->out.result = _MakeCoffee(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2498,7 +2498,7 @@ static bool api_Read(struct pipes_struct *p)
 
 	r->out.result = _Read(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2584,7 +2584,7 @@ static bool api_Write(struct pipes_struct *p)
 
 	r->out.result = _Write(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

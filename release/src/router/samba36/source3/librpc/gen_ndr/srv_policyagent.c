@@ -44,7 +44,7 @@ static bool api_policyagent_Dummy(struct pipes_struct *p)
 
 	r->out.result = _policyagent_Dummy(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

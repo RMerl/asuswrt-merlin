@@ -44,7 +44,7 @@ static bool api_epm_Insert(struct pipes_struct *p)
 
 	r->out.result = _epm_Insert(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_epm_Delete(struct pipes_struct *p)
 
 	r->out.result = _epm_Delete(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -204,7 +204,7 @@ static bool api_epm_Lookup(struct pipes_struct *p)
 
 	r->out.result = _epm_Lookup(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -291,7 +291,7 @@ static bool api_epm_Map(struct pipes_struct *p)
 
 	r->out.result = _epm_Map(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -366,7 +366,7 @@ static bool api_epm_LookupHandleFree(struct pipes_struct *p)
 	r->out.entry_handle = r->in.entry_handle;
 	r->out.result = _epm_LookupHandleFree(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -439,7 +439,7 @@ static bool api_epm_InqObject(struct pipes_struct *p)
 
 	r->out.result = _epm_InqObject(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -512,7 +512,7 @@ static bool api_epm_MgmtDelete(struct pipes_struct *p)
 
 	r->out.result = _epm_MgmtDelete(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -585,7 +585,7 @@ static bool api_epm_MapAuth(struct pipes_struct *p)
 
 	r->out.result = _epm_MapAuth(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

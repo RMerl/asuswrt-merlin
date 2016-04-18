@@ -51,7 +51,7 @@ static bool api_dfs_GetDFSReferral(struct pipes_struct *p)
 
 	_dfs_GetDFSReferral(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

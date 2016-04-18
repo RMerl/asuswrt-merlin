@@ -63,7 +63,7 @@ static bool api_spoolss_EnumPrinters(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPrinters(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -143,7 +143,7 @@ static bool api_spoolss_OpenPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_OpenPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -216,7 +216,7 @@ static bool api_spoolss_SetJob(struct pipes_struct *p)
 
 	r->out.result = _spoolss_SetJob(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -302,7 +302,7 @@ static bool api_spoolss_GetJob(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetJob(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -394,7 +394,7 @@ static bool api_spoolss_EnumJobs(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumJobs(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -474,7 +474,7 @@ static bool api_spoolss_AddPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -547,7 +547,7 @@ static bool api_spoolss_DeletePrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -620,7 +620,7 @@ static bool api_spoolss_SetPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_SetPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -706,7 +706,7 @@ static bool api_spoolss_GetPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -779,7 +779,7 @@ static bool api_spoolss_AddPrinterDriver(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPrinterDriver(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -871,7 +871,7 @@ static bool api_spoolss_EnumPrinterDrivers(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPrinterDrivers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -957,7 +957,7 @@ static bool api_spoolss_GetPrinterDriver(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrinterDriver(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1043,7 +1043,7 @@ static bool api_spoolss_GetPrinterDriverDirectory(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrinterDriverDirectory(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1116,7 +1116,7 @@ static bool api_spoolss_DeletePrinterDriver(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrinterDriver(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1189,7 +1189,7 @@ static bool api_spoolss_AddPrintProcessor(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPrintProcessor(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1281,7 +1281,7 @@ static bool api_spoolss_EnumPrintProcessors(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPrintProcessors(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1367,7 +1367,7 @@ static bool api_spoolss_GetPrintProcessorDirectory(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrintProcessorDirectory(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1447,7 +1447,7 @@ static bool api_spoolss_StartDocPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_StartDocPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1520,7 +1520,7 @@ static bool api_spoolss_StartPagePrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_StartPagePrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1600,7 +1600,7 @@ static bool api_spoolss_WritePrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_WritePrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1673,7 +1673,7 @@ static bool api_spoolss_EndPagePrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EndPagePrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1746,7 +1746,7 @@ static bool api_spoolss_AbortPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AbortPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1832,7 +1832,7 @@ static bool api_spoolss_ReadPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_ReadPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1905,7 +1905,7 @@ static bool api_spoolss_EndDocPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EndDocPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1986,7 +1986,7 @@ static bool api_spoolss_AddJob(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddJob(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2059,7 +2059,7 @@ static bool api_spoolss_ScheduleJob(struct pipes_struct *p)
 
 	r->out.result = _spoolss_ScheduleJob(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2151,7 +2151,7 @@ static bool api_spoolss_GetPrinterData(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrinterData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2224,7 +2224,7 @@ static bool api_spoolss_SetPrinterData(struct pipes_struct *p)
 
 	r->out.result = _spoolss_SetPrinterData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2297,7 +2297,7 @@ static bool api_spoolss_WaitForPrinterChange(struct pipes_struct *p)
 
 	r->out.result = _spoolss_WaitForPrinterChange(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2372,7 +2372,7 @@ static bool api_spoolss_ClosePrinter(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _spoolss_ClosePrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2445,7 +2445,7 @@ static bool api_spoolss_AddForm(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddForm(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2518,7 +2518,7 @@ static bool api_spoolss_DeleteForm(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeleteForm(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2604,7 +2604,7 @@ static bool api_spoolss_GetForm(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetForm(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2677,7 +2677,7 @@ static bool api_spoolss_SetForm(struct pipes_struct *p)
 
 	r->out.result = _spoolss_SetForm(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2769,7 +2769,7 @@ static bool api_spoolss_EnumForms(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumForms(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2861,7 +2861,7 @@ static bool api_spoolss_EnumPorts(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPorts(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2953,7 +2953,7 @@ static bool api_spoolss_EnumMonitors(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumMonitors(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3026,7 +3026,7 @@ static bool api_spoolss_AddPort(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPort(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3099,7 +3099,7 @@ static bool api_spoolss_ConfigurePort(struct pipes_struct *p)
 
 	r->out.result = _spoolss_ConfigurePort(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3172,7 +3172,7 @@ static bool api_spoolss_DeletePort(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePort(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3252,7 +3252,7 @@ static bool api_spoolss_CreatePrinterIC(struct pipes_struct *p)
 
 	r->out.result = _spoolss_CreatePrinterIC(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3325,7 +3325,7 @@ static bool api_spoolss_PlayGDIScriptOnPrinterIC(struct pipes_struct *p)
 
 	r->out.result = _spoolss_PlayGDIScriptOnPrinterIC(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3400,7 +3400,7 @@ static bool api_spoolss_DeletePrinterIC(struct pipes_struct *p)
 	r->out.gdi_handle = r->in.gdi_handle;
 	r->out.result = _spoolss_DeletePrinterIC(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3473,7 +3473,7 @@ static bool api_spoolss_AddPrinterConnection(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPrinterConnection(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3546,7 +3546,7 @@ static bool api_spoolss_DeletePrinterConnection(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrinterConnection(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3619,7 +3619,7 @@ static bool api_spoolss_PrinterMessageBox(struct pipes_struct *p)
 
 	r->out.result = _spoolss_PrinterMessageBox(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3692,7 +3692,7 @@ static bool api_spoolss_AddMonitor(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddMonitor(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3765,7 +3765,7 @@ static bool api_spoolss_DeleteMonitor(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeleteMonitor(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3838,7 +3838,7 @@ static bool api_spoolss_DeletePrintProcessor(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrintProcessor(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3911,7 +3911,7 @@ static bool api_spoolss_AddPrintProvidor(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPrintProvidor(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3984,7 +3984,7 @@ static bool api_spoolss_DeletePrintProvidor(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrintProvidor(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4076,7 +4076,7 @@ static bool api_spoolss_EnumPrintProcDataTypes(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPrintProcDataTypes(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4149,7 +4149,7 @@ static bool api_spoolss_ResetPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_ResetPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4247,7 +4247,7 @@ static bool api_spoolss_GetPrinterDriver2(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrinterDriver2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4320,7 +4320,7 @@ static bool api_spoolss_FindFirstPrinterChangeNotification(struct pipes_struct *
 
 	r->out.result = _spoolss_FindFirstPrinterChangeNotification(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4393,7 +4393,7 @@ static bool api_spoolss_FindNextPrinterChangeNotification(struct pipes_struct *p
 
 	r->out.result = _spoolss_FindNextPrinterChangeNotification(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4466,7 +4466,7 @@ static bool api_spoolss_FindClosePrinterNotify(struct pipes_struct *p)
 
 	r->out.result = _spoolss_FindClosePrinterNotify(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4539,7 +4539,7 @@ static bool api_spoolss_RouterFindFirstPrinterChangeNotificationOld(struct pipes
 
 	r->out.result = _spoolss_RouterFindFirstPrinterChangeNotificationOld(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4619,7 +4619,7 @@ static bool api_spoolss_ReplyOpenPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_ReplyOpenPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4692,7 +4692,7 @@ static bool api_spoolss_RouterReplyPrinter(struct pipes_struct *p)
 
 	r->out.result = _spoolss_RouterReplyPrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4767,7 +4767,7 @@ static bool api_spoolss_ReplyClosePrinter(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _spoolss_ReplyClosePrinter(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4840,7 +4840,7 @@ static bool api_spoolss_AddPortEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPortEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4913,7 +4913,7 @@ static bool api_spoolss_RouterFindFirstPrinterChangeNotification(struct pipes_st
 
 	r->out.result = _spoolss_RouterFindFirstPrinterChangeNotification(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4986,7 +4986,7 @@ static bool api_spoolss_SpoolerInit(struct pipes_struct *p)
 
 	r->out.result = _spoolss_SpoolerInit(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5059,7 +5059,7 @@ static bool api_spoolss_ResetPrinterEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_ResetPrinterEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5132,7 +5132,7 @@ static bool api_spoolss_RemoteFindFirstPrinterChangeNotifyEx(struct pipes_struct
 
 	r->out.result = _spoolss_RemoteFindFirstPrinterChangeNotifyEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5212,7 +5212,7 @@ static bool api_spoolss_RouterReplyPrinterEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_RouterReplyPrinterEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5292,7 +5292,7 @@ static bool api_spoolss_RouterRefreshPrinterChangeNotify(struct pipes_struct *p)
 
 	r->out.result = _spoolss_RouterRefreshPrinterChangeNotify(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5365,7 +5365,7 @@ static bool api_spoolss_44(struct pipes_struct *p)
 
 	r->out.result = _spoolss_44(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5445,7 +5445,7 @@ static bool api_spoolss_OpenPrinterEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_OpenPrinterEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5525,7 +5525,7 @@ static bool api_spoolss_AddPrinterEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPrinterEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5598,7 +5598,7 @@ static bool api_spoolss_SetPort(struct pipes_struct *p)
 
 	r->out.result = _spoolss_SetPort(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5702,7 +5702,7 @@ static bool api_spoolss_EnumPrinterData(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPrinterData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5775,7 +5775,7 @@ static bool api_spoolss_DeletePrinterData(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrinterData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5848,7 +5848,7 @@ static bool api_spoolss_4a(struct pipes_struct *p)
 
 	r->out.result = _spoolss_4a(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5921,7 +5921,7 @@ static bool api_spoolss_4b(struct pipes_struct *p)
 
 	r->out.result = _spoolss_4b(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -5994,7 +5994,7 @@ static bool api_spoolss_4c(struct pipes_struct *p)
 
 	r->out.result = _spoolss_4c(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6067,7 +6067,7 @@ static bool api_spoolss_SetPrinterDataEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_SetPrinterDataEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6159,7 +6159,7 @@ static bool api_spoolss_GetPrinterDataEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrinterDataEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6251,7 +6251,7 @@ static bool api_spoolss_EnumPrinterDataEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPrinterDataEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6343,7 +6343,7 @@ static bool api_spoolss_EnumPrinterKey(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPrinterKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6416,7 +6416,7 @@ static bool api_spoolss_DeletePrinterDataEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrinterDataEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6489,7 +6489,7 @@ static bool api_spoolss_DeletePrinterKey(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrinterKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6562,7 +6562,7 @@ static bool api_spoolss_53(struct pipes_struct *p)
 
 	r->out.result = _spoolss_53(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6635,7 +6635,7 @@ static bool api_spoolss_DeletePrinterDriverEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePrinterDriverEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6708,7 +6708,7 @@ static bool api_spoolss_AddPerMachineConnection(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPerMachineConnection(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6781,7 +6781,7 @@ static bool api_spoolss_DeletePerMachineConnection(struct pipes_struct *p)
 
 	r->out.result = _spoolss_DeletePerMachineConnection(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6854,7 +6854,7 @@ static bool api_spoolss_EnumPerMachineConnections(struct pipes_struct *p)
 
 	r->out.result = _spoolss_EnumPerMachineConnections(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -6941,7 +6941,7 @@ static bool api_spoolss_XcvData(struct pipes_struct *p)
 
 	r->out.result = _spoolss_XcvData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7014,7 +7014,7 @@ static bool api_spoolss_AddPrinterDriverEx(struct pipes_struct *p)
 
 	r->out.result = _spoolss_AddPrinterDriverEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7087,7 +7087,7 @@ static bool api_spoolss_5a(struct pipes_struct *p)
 
 	r->out.result = _spoolss_5a(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7160,7 +7160,7 @@ static bool api_spoolss_5b(struct pipes_struct *p)
 
 	r->out.result = _spoolss_5b(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7233,7 +7233,7 @@ static bool api_spoolss_5c(struct pipes_struct *p)
 
 	r->out.result = _spoolss_5c(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7306,7 +7306,7 @@ static bool api_spoolss_5d(struct pipes_struct *p)
 
 	r->out.result = _spoolss_5d(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7379,7 +7379,7 @@ static bool api_spoolss_5e(struct pipes_struct *p)
 
 	r->out.result = _spoolss_5e(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7452,7 +7452,7 @@ static bool api_spoolss_5f(struct pipes_struct *p)
 
 	r->out.result = _spoolss_5f(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7525,7 +7525,7 @@ static bool api_spoolss_60(struct pipes_struct *p)
 
 	r->out.result = _spoolss_60(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7598,7 +7598,7 @@ static bool api_spoolss_61(struct pipes_struct *p)
 
 	r->out.result = _spoolss_61(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7671,7 +7671,7 @@ static bool api_spoolss_62(struct pipes_struct *p)
 
 	r->out.result = _spoolss_62(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7744,7 +7744,7 @@ static bool api_spoolss_63(struct pipes_struct *p)
 
 	r->out.result = _spoolss_63(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7817,7 +7817,7 @@ static bool api_spoolss_64(struct pipes_struct *p)
 
 	r->out.result = _spoolss_64(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7890,7 +7890,7 @@ static bool api_spoolss_65(struct pipes_struct *p)
 
 	r->out.result = _spoolss_65(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -7970,7 +7970,7 @@ static bool api_spoolss_GetCorePrinterDrivers(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetCorePrinterDrivers(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -8043,7 +8043,7 @@ static bool api_spoolss_67(struct pipes_struct *p)
 
 	r->out.result = _spoolss_67(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -8124,7 +8124,7 @@ static bool api_spoolss_GetPrinterDriverPackagePath(struct pipes_struct *p)
 
 	r->out.result = _spoolss_GetPrinterDriverPackagePath(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -8197,7 +8197,7 @@ static bool api_spoolss_69(struct pipes_struct *p)
 
 	r->out.result = _spoolss_69(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -8270,7 +8270,7 @@ static bool api_spoolss_6a(struct pipes_struct *p)
 
 	r->out.result = _spoolss_6a(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -8343,7 +8343,7 @@ static bool api_spoolss_6b(struct pipes_struct *p)
 
 	r->out.result = _spoolss_6b(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -8416,7 +8416,7 @@ static bool api_spoolss_6c(struct pipes_struct *p)
 
 	r->out.result = _spoolss_6c(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -8489,7 +8489,7 @@ static bool api_spoolss_6d(struct pipes_struct *p)
 
 	r->out.result = _spoolss_6d(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

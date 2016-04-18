@@ -171,6 +171,7 @@ struct pipes_struct *make_internal_rpc_pipe_p(TALLOC_CTX *mem_ctx,
 
 	p->syntax = *syntax;
 	p->transport = NCALRPC;
+	p->allow_bind = true;
 
 	DEBUG(4,("Created internal pipe %s (pipes_open=%d)\n",
 		 get_pipe_name_from_syntax(talloc_tos(), syntax), pipes_open));
@@ -216,24 +217,13 @@ static NTSTATUS rpcint_dispatch(struct pipes_struct *p,
 	}
 
 	if (p->fault_state) {
-		p->fault_state = false;
-		data_blob_free(&p->out_data.rdata);
-		talloc_free_children(p->mem_ctx);
-		return NT_STATUS_RPC_CALL_FAILED;
-	}
+		NTSTATUS status;
 
-	if (p->bad_handle_fault_state) {
-		p->bad_handle_fault_state = false;
+		status = NT_STATUS(p->fault_state);
+		p->fault_state = 0;
 		data_blob_free(&p->out_data.rdata);
 		talloc_free_children(p->mem_ctx);
-		return NT_STATUS_RPC_SS_CONTEXT_MISMATCH;
-	}
-
-	if (p->rng_fault_state) {
-		p->rng_fault_state = false;
-		data_blob_free(&p->out_data.rdata);
-		talloc_free_children(p->mem_ctx);
-		return NT_STATUS_RPC_PROCNUM_OUT_OF_RANGE;
+		return status;
 	}
 
 	*out_data = p->out_data.rdata;
@@ -791,6 +781,7 @@ static NTSTATUS rpc_pipe_open_external(TALLOC_CTX *mem_ctx,
 	}
 	result->auth->auth_type = DCERPC_AUTH_TYPE_NONE;
 	result->auth->auth_level = DCERPC_AUTH_LEVEL_NONE;
+	result->auth->auth_context_id = 0;
 
 	status = rpccli_anon_bind_data(result, &auth);
 	if (!NT_STATUS_IS_OK(status)) {

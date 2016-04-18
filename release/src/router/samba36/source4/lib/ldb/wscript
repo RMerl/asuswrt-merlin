@@ -135,9 +135,7 @@ def build(bld):
                           pc_files=ldb_pc_files,
                           vnum=VERSION,
                           private_library=private_library,
-                          manpages='man/ldb.3',
-                          abi_directory = 'ABI',
-                          abi_match = abi_match)
+                          manpages='man/ldb.3')
 
         # generate a include/ldb_version.h
         t = bld.SAMBA_GENERATOR('ldb_version.h',

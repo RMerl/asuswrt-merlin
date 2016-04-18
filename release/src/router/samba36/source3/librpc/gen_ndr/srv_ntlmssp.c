@@ -44,7 +44,7 @@ static bool api_decode_NEGOTIATE_MESSAGE(struct pipes_struct *p)
 
 	_decode_NEGOTIATE_MESSAGE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_decode_CHALLENGE_MESSAGE(struct pipes_struct *p)
 
 	_decode_CHALLENGE_MESSAGE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_decode_AUTHENTICATE_MESSAGE(struct pipes_struct *p)
 
 	_decode_AUTHENTICATE_MESSAGE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_decode_NTLMv2_CLIENT_CHALLENGE(struct pipes_struct *p)
 
 	_decode_NTLMv2_CLIENT_CHALLENGE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -336,7 +336,7 @@ static bool api_decode_NTLMv2_RESPONSE(struct pipes_struct *p)
 
 	_decode_NTLMv2_RESPONSE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

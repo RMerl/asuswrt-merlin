@@ -46,7 +46,7 @@ static bool api_svcctl_CloseServiceHandle(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _svcctl_CloseServiceHandle(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -126,7 +126,7 @@ static bool api_svcctl_ControlService(struct pipes_struct *p)
 
 	r->out.result = _svcctl_ControlService(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -199,7 +199,7 @@ static bool api_svcctl_DeleteService(struct pipes_struct *p)
 
 	r->out.result = _svcctl_DeleteService(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -279,7 +279,7 @@ static bool api_svcctl_LockServiceDatabase(struct pipes_struct *p)
 
 	r->out.result = _svcctl_LockServiceDatabase(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -365,7 +365,7 @@ static bool api_svcctl_QueryServiceObjectSecurity(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceObjectSecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -438,7 +438,7 @@ static bool api_svcctl_SetServiceObjectSecurity(struct pipes_struct *p)
 
 	r->out.result = _svcctl_SetServiceObjectSecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -518,7 +518,7 @@ static bool api_svcctl_QueryServiceStatus(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceStatus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -591,7 +591,7 @@ static bool api_svcctl_SetServiceStatus(struct pipes_struct *p)
 
 	r->out.result = _svcctl_SetServiceStatus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -666,7 +666,7 @@ static bool api_svcctl_UnlockServiceDatabase(struct pipes_struct *p)
 	r->out.lock = r->in.lock;
 	r->out.result = _svcctl_UnlockServiceDatabase(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -739,7 +739,7 @@ static bool api_svcctl_NotifyBootConfigStatus(struct pipes_struct *p)
 
 	r->out.result = _svcctl_NotifyBootConfigStatus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -812,7 +812,7 @@ static bool api_svcctl_SCSetServiceBitsW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_SCSetServiceBitsW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -892,7 +892,7 @@ static bool api_svcctl_ChangeServiceConfigW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_ChangeServiceConfigW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -973,7 +973,7 @@ static bool api_svcctl_CreateServiceW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_CreateServiceW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1065,7 +1065,7 @@ static bool api_svcctl_EnumDependentServicesW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_EnumDependentServicesW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1158,7 +1158,7 @@ static bool api_svcctl_EnumServicesStatusW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_EnumServicesStatusW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1238,7 +1238,7 @@ static bool api_svcctl_OpenSCManagerW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_OpenSCManagerW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1318,7 +1318,7 @@ static bool api_svcctl_OpenServiceW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_OpenServiceW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1404,7 +1404,7 @@ static bool api_svcctl_QueryServiceConfigW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceConfigW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1490,7 +1490,7 @@ static bool api_svcctl_QueryServiceLockStatusW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceLockStatusW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1563,7 +1563,7 @@ static bool api_svcctl_StartServiceW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_StartServiceW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1644,7 +1644,7 @@ static bool api_svcctl_GetServiceDisplayNameW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_GetServiceDisplayNameW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1725,7 +1725,7 @@ static bool api_svcctl_GetServiceKeyNameW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_GetServiceKeyNameW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1798,7 +1798,7 @@ static bool api_svcctl_SCSetServiceBitsA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_SCSetServiceBitsA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1878,7 +1878,7 @@ static bool api_svcctl_ChangeServiceConfigA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_ChangeServiceConfigA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1958,7 +1958,7 @@ static bool api_svcctl_CreateServiceA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_CreateServiceA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2050,7 +2050,7 @@ static bool api_svcctl_EnumDependentServicesA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_EnumDependentServicesA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2143,7 +2143,7 @@ static bool api_svcctl_EnumServicesStatusA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_EnumServicesStatusA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2223,7 +2223,7 @@ static bool api_svcctl_OpenSCManagerA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_OpenSCManagerA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2296,7 +2296,7 @@ static bool api_svcctl_OpenServiceA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_OpenServiceA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2382,7 +2382,7 @@ static bool api_svcctl_QueryServiceConfigA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceConfigA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2468,7 +2468,7 @@ static bool api_svcctl_QueryServiceLockStatusA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceLockStatusA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2541,7 +2541,7 @@ static bool api_svcctl_StartServiceA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_StartServiceA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2622,7 +2622,7 @@ static bool api_svcctl_GetServiceDisplayNameA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_GetServiceDisplayNameA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2703,7 +2703,7 @@ static bool api_svcctl_GetServiceKeyNameA(struct pipes_struct *p)
 
 	r->out.result = _svcctl_GetServiceKeyNameA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2776,7 +2776,7 @@ static bool api_svcctl_GetCurrentGroupeStateW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_GetCurrentGroupeStateW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2849,7 +2849,7 @@ static bool api_svcctl_EnumServiceGroupW(struct pipes_struct *p)
 
 	r->out.result = _svcctl_EnumServiceGroupW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2922,7 +2922,7 @@ static bool api_svcctl_ChangeServiceConfig2A(struct pipes_struct *p)
 
 	r->out.result = _svcctl_ChangeServiceConfig2A(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2995,7 +2995,7 @@ static bool api_svcctl_ChangeServiceConfig2W(struct pipes_struct *p)
 
 	r->out.result = _svcctl_ChangeServiceConfig2W(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3081,7 +3081,7 @@ static bool api_svcctl_QueryServiceConfig2A(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceConfig2A(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3167,7 +3167,7 @@ static bool api_svcctl_QueryServiceConfig2W(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceConfig2W(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3253,7 +3253,7 @@ static bool api_svcctl_QueryServiceStatusEx(struct pipes_struct *p)
 
 	r->out.result = _svcctl_QueryServiceStatusEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3352,7 +3352,7 @@ static bool api_EnumServicesStatusExA(struct pipes_struct *p)
 
 	r->out.result = _EnumServicesStatusExA(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3445,7 +3445,7 @@ static bool api_EnumServicesStatusExW(struct pipes_struct *p)
 
 	r->out.result = _EnumServicesStatusExW(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3518,7 +3518,7 @@ static bool api_svcctl_SCSendTSMessage(struct pipes_struct *p)
 
 	r->out.result = _svcctl_SCSendTSMessage(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

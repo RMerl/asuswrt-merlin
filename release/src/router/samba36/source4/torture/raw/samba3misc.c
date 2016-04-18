@@ -340,6 +340,7 @@ bool torture_samba3_badpath(struct torture_context *torture)
 	bool ret = true;
 	TALLOC_CTX *mem_ctx;
 	bool nt_status_support;
+	bool client_ntlmv2_auth;
 
 	if (!(mem_ctx = talloc_init("torture_samba3_badpath"))) {
 		d_printf("talloc_init failed\n");
@@ -347,20 +348,17 @@ bool torture_samba3_badpath(struct torture_context *torture)
 	}
 
 	nt_status_support = lpcfg_nt_status_support(torture->lp_ctx);
+	client_ntlmv2_auth = lpcfg_client_ntlmv2_auth(torture->lp_ctx);
 
-	if (!lpcfg_set_cmdline(torture->lp_ctx, "nt status support", "yes")) {
-		printf("Could not set 'nt status support = yes'\n");
-		goto fail;
-	}
+	torture_assert_goto(torture, lpcfg_set_cmdline(torture->lp_ctx, "nt status support", "yes"), ret, fail, "Could not set 'nt status support = yes'\n");
+	torture_assert_goto(torture, lpcfg_set_cmdline(torture->lp_ctx, "client ntlmv2 auth", "yes"), ret, fail, "Could not set 'client ntlmv2 auth = yes'\n");
 
 	if (!torture_open_connection(&cli_nt, torture, 0)) {
 		goto fail;
 	}
 
-	if (!lpcfg_set_cmdline(torture->lp_ctx, "nt status support", "no")) {
-		printf("Could not set 'nt status support = yes'\n");
-		goto fail;
-	}
+	torture_assert_goto(torture, lpcfg_set_cmdline(torture->lp_ctx, "nt status support", "no"), ret, fail, "Could not set 'nt status support = no'\n");
+	torture_assert_goto(torture, lpcfg_set_cmdline(torture->lp_ctx, "client ntlmv2 auth", "no"), ret, fail, "Could not set 'client ntlmv2 auth = no'\n");
 
 	if (!torture_open_connection(&cli_dos, torture, 1)) {
 		goto fail;
@@ -373,6 +371,12 @@ bool torture_samba3_badpath(struct torture_context *torture)
 	}
 
 	smbcli_deltree(cli_nt->tree, dirname);
+	torture_assert_goto(torture, lpcfg_set_cmdline(torture->lp_ctx, "nt status support",
+						       nt_status_support ? "yes":"no"),
+			    ret, fail, "Could not set 'nt status support' back to where it was\n");
+	torture_assert_goto(torture, lpcfg_set_cmdline(torture->lp_ctx, "client ntlmv2 auth",
+						       client_ntlmv2_auth ? "yes":"no"),
+			    ret, fail, "Could not set 'client ntlmv2 auth' back to where it was\n");
 
 	status = smbcli_mkdir(cli_nt->tree, dirname);
 	if (!NT_STATUS_IS_OK(status)) {

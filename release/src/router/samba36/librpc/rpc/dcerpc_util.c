@@ -27,6 +27,7 @@
 #include "librpc/rpc/dcerpc.h"
 #include "librpc/gen_ndr/ndr_dcerpc.h"
 #include "rpc_common.h"
+#include "lib/util/bitmap.h"
 
 /* we need to be able to get/set the fragment length without doing a full
    decode */
@@ -91,31 +92,49 @@ uint8_t dcerpc_get_endian_flag(DATA_BLOB *blob)
 *
 * @return		- A NTSTATUS error code.
 */
-NTSTATUS dcerpc_pull_auth_trailer(struct ncacn_packet *pkt,
+NTSTATUS dcerpc_pull_auth_trailer(const struct ncacn_packet *pkt,
 				  TALLOC_CTX *mem_ctx,
-				  DATA_BLOB *pkt_trailer,
+				  const DATA_BLOB *pkt_trailer,
 				  struct dcerpc_auth *auth,
-				  uint32_t *auth_length,
+				  uint32_t *_auth_length,
 				  bool auth_data_only)
 {
 	struct ndr_pull *ndr;
 	enum ndr_err_code ndr_err;
-	uint32_t data_and_pad;
+	uint16_t data_and_pad;
+	uint16_t auth_length;
+	uint32_t tmp_length;
 
-	data_and_pad = pkt_trailer->length
-			- (DCERPC_AUTH_TRAILER_LENGTH + pkt->auth_length);
-
-	/* paranoia check for pad size. This would be caught anyway by
-	   the ndr_pull_advance() a few lines down, but it scared
-	   Jeremy enough for him to call me, so we might as well check
-	   it now, just to prevent someone posting a bogus YouTube
-	   video in the future.
-	*/
-	if (data_and_pad > pkt_trailer->length) {
-		return NT_STATUS_INFO_LENGTH_MISMATCH;
+	ZERO_STRUCTP(auth);
+	if (_auth_length != NULL) {
+		*_auth_length = 0;
 	}
 
-	*auth_length = pkt_trailer->length - data_and_pad;
+	/* Paranoia checks for auth_length. The caller should check this... */
+	if (pkt->auth_length == 0) {
+		return NT_STATUS_INTERNAL_ERROR;
+	}
+
+	/* Paranoia checks for auth_length. The caller should check this... */
+	if (pkt->auth_length > pkt->frag_length) {
+		return NT_STATUS_INTERNAL_ERROR;
+	}
+	tmp_length = DCERPC_NCACN_PAYLOAD_OFFSET;
+	tmp_length += DCERPC_AUTH_TRAILER_LENGTH;
+	tmp_length += pkt->auth_length;
+	if (tmp_length > pkt->frag_length) {
+		return NT_STATUS_INTERNAL_ERROR;
+	}
+	if (pkt_trailer->length > UINT16_MAX) {
+		return NT_STATUS_INTERNAL_ERROR;
+	}
+
+	auth_length = DCERPC_AUTH_TRAILER_LENGTH + pkt->auth_length;
+	if (pkt_trailer->length < auth_length) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+
+	data_and_pad = pkt_trailer->length - auth_length;
 
 	ndr = ndr_pull_init_blob(pkt_trailer, mem_ctx);
 	if (!ndr) {
@@ -135,14 +154,28 @@ NTSTATUS dcerpc_pull_auth_trailer(struct ncacn_packet *pkt,
 	ndr_err = ndr_pull_dcerpc_auth(ndr, NDR_SCALARS|NDR_BUFFERS, auth);
 	if (!NDR_ERR_CODE_IS_SUCCESS(ndr_err)) {
 		talloc_free(ndr);
+		ZERO_STRUCTP(auth);
 		return ndr_map_error2ntstatus(ndr_err);
 	}
 
-	if (auth_data_only && data_and_pad != auth->auth_pad_length) {
-		DEBUG(1, (__location__ ": WARNING: pad length mismatch. "
+	if (data_and_pad < auth->auth_pad_length) {
+		DEBUG(1, (__location__ ": ERROR: pad length mismatch. "
 			  "Calculated %u  got %u\n",
 			  (unsigned)data_and_pad,
 			  (unsigned)auth->auth_pad_length));
+		talloc_free(ndr);
+		ZERO_STRUCTP(auth);
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+
+	if (auth_data_only && data_and_pad != auth->auth_pad_length) {
+		DEBUG(1, (__location__ ": ERROR: pad length mismatch. "
+			  "Calculated %u  got %u\n",
+			  (unsigned)data_and_pad,
+			  (unsigned)auth->auth_pad_length));
+		talloc_free(ndr);
+		ZERO_STRUCTP(auth);
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
 	}
 
 	DEBUG(6,(__location__ ": auth_pad_length %u\n",
@@ -150,6 +183,83 @@ NTSTATUS dcerpc_pull_auth_trailer(struct ncacn_packet *pkt,
 
 	talloc_steal(mem_ctx, auth->credentials.data);
 	talloc_free(ndr);
+
+	if (_auth_length != NULL) {
+		*_auth_length = auth_length;
+	}
+
+	return NT_STATUS_OK;
+}
+
+/**
+* @brief	Verify the fields in ncacn_packet header.
+*
+* @param pkt		- The ncacn_packet strcuture
+* @param ptype		- The expected PDU type
+* @param max_auth_info	- The maximum size of a possible auth trailer
+* @param required_flags	- The required flags for the pdu.
+* @param optional_flags	- The possible optional flags for the pdu.
+*
+* @return		- A NTSTATUS error code.
+*/
+NTSTATUS dcerpc_verify_ncacn_packet_header(const struct ncacn_packet *pkt,
+					   enum dcerpc_pkt_type ptype,
+					   size_t max_auth_info,
+					   uint8_t required_flags,
+					   uint8_t optional_flags)
+{
+	if (pkt->rpc_vers != 5) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+
+	if (pkt->rpc_vers_minor != 0) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+
+	if (pkt->auth_length > pkt->frag_length) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+
+	if (pkt->ptype != ptype) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+
+	if (max_auth_info > UINT16_MAX) {
+		return NT_STATUS_INTERNAL_ERROR;
+	}
+
+	if (pkt->auth_length > 0) {
+		size_t max_auth_length;
+
+		if (max_auth_info <= DCERPC_AUTH_TRAILER_LENGTH) {
+			return NT_STATUS_RPC_PROTOCOL_ERROR;
+		}
+		max_auth_length = max_auth_info - DCERPC_AUTH_TRAILER_LENGTH;
+
+		if (pkt->auth_length > max_auth_length) {
+			return NT_STATUS_RPC_PROTOCOL_ERROR;
+		}
+	}
+
+	if ((pkt->pfc_flags & required_flags) != required_flags) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+	if (pkt->pfc_flags & ~(optional_flags|required_flags)) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+
+	if (pkt->drep[0] & ~DCERPC_DREP_LE) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+	if (pkt->drep[1] != 0) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+	if (pkt->drep[2] != 0) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
+	if (pkt->drep[3] != 0) {
+		return NT_STATUS_RPC_PROTOCOL_ERROR;
+	}
 
 	return NT_STATUS_OK;
 }
@@ -340,4 +450,195 @@ NTSTATUS dcerpc_read_ncacn_packet_recv(struct tevent_req *req,
 
 	tevent_req_received(req);
 	return NT_STATUS_OK;
+}
+
+struct dcerpc_sec_vt_header2 dcerpc_sec_vt_header2_from_ncacn_packet(const struct ncacn_packet *pkt)
+{
+	struct dcerpc_sec_vt_header2 ret;
+
+	ZERO_STRUCT(ret);
+	ret.ptype = pkt->ptype;
+	memcpy(&ret.drep, pkt->drep, sizeof(ret.drep));
+	ret.call_id = pkt->call_id;
+
+	switch (pkt->ptype) {
+	case DCERPC_PKT_REQUEST:
+		ret.context_id = pkt->u.request.context_id;
+		ret.opnum      = pkt->u.request.opnum;
+		break;
+
+	case DCERPC_PKT_RESPONSE:
+		ret.context_id = pkt->u.response.context_id;
+		break;
+
+	case DCERPC_PKT_FAULT:
+		ret.context_id = pkt->u.fault.context_id;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+bool dcerpc_sec_vt_header2_equal(const struct dcerpc_sec_vt_header2 *v1,
+				 const struct dcerpc_sec_vt_header2 *v2)
+{
+	if (v1->ptype != v2->ptype) {
+		return false;
+	}
+
+	if (memcmp(v1->drep, v2->drep, sizeof(v1->drep)) != 0) {
+		return false;
+	}
+
+	if (v1->call_id != v2->call_id) {
+		return false;
+	}
+
+	if (v1->context_id != v2->context_id) {
+		return false;
+	}
+
+	if (v1->opnum != v2->opnum) {
+		return false;
+	}
+
+	return true;
+}
+
+static bool dcerpc_sec_vt_is_valid(const struct dcerpc_sec_verification_trailer *r)
+{
+	bool ret = false;
+	TALLOC_CTX *frame = talloc_stackframe();
+	struct bitmap *commands_seen;
+	int i;
+
+	if (r->count.count == 0) {
+		ret = true;
+		goto done;
+	}
+
+	if (memcmp(r->magic, DCERPC_SEC_VT_MAGIC, sizeof(r->magic)) != 0) {
+		goto done;
+	}
+
+	commands_seen = bitmap_talloc(frame, DCERPC_SEC_VT_COMMAND_ENUM + 1);
+	if (commands_seen == NULL) {
+		goto done;
+	}
+
+	for (i=0; i < r->count.count; i++) {
+		enum dcerpc_sec_vt_command_enum cmd =
+			r->commands[i].command & DCERPC_SEC_VT_COMMAND_ENUM;
+
+		if (bitmap_query(commands_seen, cmd)) {
+			/* Each command must appear at most once. */
+			goto done;
+		}
+		bitmap_set(commands_seen, cmd);
+
+		switch (cmd) {
+		case DCERPC_SEC_VT_COMMAND_BITMASK1:
+		case DCERPC_SEC_VT_COMMAND_PCONTEXT:
+		case DCERPC_SEC_VT_COMMAND_HEADER2:
+			break;
+		default:
+			if ((r->commands[i].u._unknown.length % 4) != 0) {
+				goto done;
+			}
+			break;
+		}
+	}
+	ret = true;
+done:
+	TALLOC_FREE(frame);
+	return ret;
+}
+
+#define CHECK(msg, ok)						\
+do {								\
+	if (!ok) {						\
+		DEBUG(10, ("SEC_VT check %s failed\n", msg));	\
+		return false;					\
+	}							\
+} while(0)
+
+#define CHECK_SYNTAX(msg, s1, s2)					\
+do {								\
+	if (!ndr_syntax_id_equal(&s1, &s2)) {				\
+		TALLOC_CTX *frame = talloc_stackframe();		\
+		DEBUG(10, ("SEC_VT check %s failed: %s vs. %s\n", msg,	\
+			   ndr_syntax_id_to_string(frame, &s1),		\
+			   ndr_syntax_id_to_string(frame, &s1)));	\
+		TALLOC_FREE(frame);					\
+		return false;						\
+	}								\
+} while(0)
+
+
+bool dcerpc_sec_verification_trailer_check(
+		const struct dcerpc_sec_verification_trailer *vt,
+		const uint32_t *bitmask1,
+		const struct dcerpc_sec_vt_pcontext *pcontext,
+		const struct dcerpc_sec_vt_header2 *header2)
+{
+	size_t i;
+
+	if (!dcerpc_sec_vt_is_valid(vt)) {
+		return false;
+	}
+
+	for (i=0; i < vt->count.count; i++) {
+		struct dcerpc_sec_vt *c = &vt->commands[i];
+
+		switch (c->command & DCERPC_SEC_VT_COMMAND_ENUM) {
+		case DCERPC_SEC_VT_COMMAND_BITMASK1:
+			if (bitmask1 == NULL) {
+				CHECK("Bitmask1 must_process_command",
+				      !(c->command & DCERPC_SEC_VT_MUST_PROCESS));
+				break;
+			}
+
+			if (c->u.bitmask1 & DCERPC_SEC_VT_CLIENT_SUPPORTS_HEADER_SIGNING) {
+				CHECK("Bitmask1 client_header_signing",
+				      *bitmask1 & DCERPC_SEC_VT_CLIENT_SUPPORTS_HEADER_SIGNING);
+			}
+			break;
+
+		case DCERPC_SEC_VT_COMMAND_PCONTEXT:
+			if (pcontext == NULL) {
+				CHECK("Pcontext must_process_command",
+				      !(c->command & DCERPC_SEC_VT_MUST_PROCESS));
+				break;
+			}
+
+			CHECK_SYNTAX("Pcontect abstract_syntax",
+				     pcontext->abstract_syntax,
+				     c->u.pcontext.abstract_syntax);
+			CHECK_SYNTAX("Pcontext transfer_syntax",
+				     pcontext->transfer_syntax,
+				     c->u.pcontext.transfer_syntax);
+			break;
+
+		case DCERPC_SEC_VT_COMMAND_HEADER2: {
+			if (header2 == NULL) {
+				CHECK("Header2 must_process_command",
+				      !(c->command & DCERPC_SEC_VT_MUST_PROCESS));
+				break;
+			}
+
+			CHECK("Header2", dcerpc_sec_vt_header2_equal(header2, &c->u.header2));
+			break;
+		}
+
+		default:
+			CHECK("Unknown must_process_command",
+			      !(c->command & DCERPC_SEC_VT_MUST_PROCESS));
+			break;
+		}
+	}
+
+	return true;
 }

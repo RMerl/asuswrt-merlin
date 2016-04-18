@@ -248,7 +248,7 @@ static struct dcesrv_handle *find_policy_by_hnd_internal(struct pipes_struct *p,
 	DEBUG(4,("Policy not found: "));
 	dump_data(4, (uint8_t *)hnd, sizeof(*hnd));
 
-	p->bad_handle_fault_state = true;
+	p->fault_state = DCERPC_FAULT_CONTEXT_MISMATCH;
 
 	return NULL;
 }

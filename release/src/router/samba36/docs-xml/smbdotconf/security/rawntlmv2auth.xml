@@ -1,0 +1,19 @@
+<samba:parameter name="raw NTLMv2 auth"
+                 context="G"
+                 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter determines whether or not <citerefentry><refentrytitle>smbd</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry> will allow SMB1 clients without
+    extended security (without SPNEGO) to use NTLMv2 authentication.</para>
+
+    <para>If this option, <command moreinfo="none">lanman auth</command>
+    and <command moreinfo="none">ntlm auth</command> are all disabled,
+    then only clients with SPNEGO support will be permitted.
+    That means NTLMv2 is only supported within NTLMSSP.</para>
+</description>
+
+<related>lanman auth</related>
+<related>ntlm auth</related>
+<value type="default">no</value>
+</samba:parameter>

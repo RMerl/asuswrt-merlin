@@ -51,7 +51,7 @@ static bool api_winreg_OpenHKCR(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKCR(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -131,7 +131,7 @@ static bool api_winreg_OpenHKCU(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKCU(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -211,7 +211,7 @@ static bool api_winreg_OpenHKLM(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKLM(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -291,7 +291,7 @@ static bool api_winreg_OpenHKPD(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKPD(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -371,7 +371,7 @@ static bool api_winreg_OpenHKU(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKU(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -446,7 +446,7 @@ static bool api_winreg_CloseKey(struct pipes_struct *p)
 	r->out.handle = r->in.handle;
 	r->out.result = _winreg_CloseKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -527,7 +527,7 @@ static bool api_winreg_CreateKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_CreateKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -600,7 +600,7 @@ static bool api_winreg_DeleteKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_DeleteKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -673,7 +673,7 @@ static bool api_winreg_DeleteValue(struct pipes_struct *p)
 
 	r->out.result = _winreg_DeleteValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -750,7 +750,7 @@ static bool api_winreg_EnumKey(struct pipes_struct *p)
 	r->out.last_changed_time = r->in.last_changed_time;
 	r->out.result = _winreg_EnumKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -829,7 +829,7 @@ static bool api_winreg_EnumValue(struct pipes_struct *p)
 	r->out.length = r->in.length;
 	r->out.result = _winreg_EnumValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -902,7 +902,7 @@ static bool api_winreg_FlushKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_FlushKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -977,7 +977,7 @@ static bool api_winreg_GetKeySecurity(struct pipes_struct *p)
 	r->out.sd = r->in.sd;
 	r->out.result = _winreg_GetKeySecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1050,7 +1050,7 @@ static bool api_winreg_LoadKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_LoadKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1123,7 +1123,7 @@ static bool api_winreg_NotifyChangeKeyValue(struct pipes_struct *p)
 
 	r->out.result = _winreg_NotifyChangeKeyValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1203,7 +1203,7 @@ static bool api_winreg_OpenKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1326,7 +1326,7 @@ static bool api_winreg_QueryInfoKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_QueryInfoKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1404,7 +1404,7 @@ static bool api_winreg_QueryValue(struct pipes_struct *p)
 	r->out.data_length = r->in.data_length;
 	r->out.result = _winreg_QueryValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1477,7 +1477,7 @@ static bool api_winreg_ReplaceKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_ReplaceKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1550,7 +1550,7 @@ static bool api_winreg_RestoreKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_RestoreKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1623,7 +1623,7 @@ static bool api_winreg_SaveKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_SaveKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1696,7 +1696,7 @@ static bool api_winreg_SetKeySecurity(struct pipes_struct *p)
 
 	r->out.result = _winreg_SetKeySecurity(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1769,7 +1769,7 @@ static bool api_winreg_SetValue(struct pipes_struct *p)
 
 	r->out.result = _winreg_SetValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1842,7 +1842,7 @@ static bool api_winreg_UnLoadKey(struct pipes_struct *p)
 
 	r->out.result = _winreg_UnLoadKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1915,7 +1915,7 @@ static bool api_winreg_InitiateSystemShutdown(struct pipes_struct *p)
 
 	r->out.result = _winreg_InitiateSystemShutdown(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1988,7 +1988,7 @@ static bool api_winreg_AbortSystemShutdown(struct pipes_struct *p)
 
 	r->out.result = _winreg_AbortSystemShutdown(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2068,7 +2068,7 @@ static bool api_winreg_GetVersion(struct pipes_struct *p)
 
 	r->out.result = _winreg_GetVersion(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2148,7 +2148,7 @@ static bool api_winreg_OpenHKCC(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKCC(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2228,7 +2228,7 @@ static bool api_winreg_OpenHKDD(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKDD(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2310,7 +2310,7 @@ static bool api_winreg_QueryMultipleValues(struct pipes_struct *p)
 
 	r->out.result = _winreg_QueryMultipleValues(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2383,7 +2383,7 @@ static bool api_winreg_InitiateSystemShutdownEx(struct pipes_struct *p)
 
 	r->out.result = _winreg_InitiateSystemShutdownEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2456,7 +2456,7 @@ static bool api_winreg_SaveKeyEx(struct pipes_struct *p)
 
 	r->out.result = _winreg_SaveKeyEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2536,7 +2536,7 @@ static bool api_winreg_OpenHKPT(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKPT(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2616,7 +2616,7 @@ static bool api_winreg_OpenHKPN(struct pipes_struct *p)
 
 	r->out.result = _winreg_OpenHKPN(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2703,7 +2703,7 @@ static bool api_winreg_QueryMultipleValues2(struct pipes_struct *p)
 
 	r->out.result = _winreg_QueryMultipleValues2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2776,7 +2776,7 @@ static bool api_winreg_DeleteKeyEx(struct pipes_struct *p)
 
 	r->out.result = _winreg_DeleteKeyEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

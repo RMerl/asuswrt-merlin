@@ -51,7 +51,7 @@ static bool api_unixinfo_SidToUid(struct pipes_struct *p)
 
 	r->out.result = _unixinfo_SidToUid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -131,7 +131,7 @@ static bool api_unixinfo_UidToSid(struct pipes_struct *p)
 
 	r->out.result = _unixinfo_UidToSid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -211,7 +211,7 @@ static bool api_unixinfo_SidToGid(struct pipes_struct *p)
 
 	r->out.result = _unixinfo_SidToGid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -291,7 +291,7 @@ static bool api_unixinfo_GidToSid(struct pipes_struct *p)
 
 	r->out.result = _unixinfo_GidToSid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -372,7 +372,7 @@ static bool api_unixinfo_GetPWUid(struct pipes_struct *p)
 
 	r->out.result = _unixinfo_GetPWUid(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

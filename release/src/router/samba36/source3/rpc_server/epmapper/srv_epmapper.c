@@ -297,6 +297,7 @@ error_status_t _epm_Insert(struct pipes_struct *p,
 	/* If this is not a priviledged users, return */
 	if (p->transport != NCALRPC ||
 	    !is_priviledged_pipe(p->session_info)) {
+		p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 		return EPMAPPER_STATUS_CANT_PERFORM_OP;
 	}
 
@@ -433,6 +434,7 @@ error_status_t _epm_Delete(struct pipes_struct *p,
 	/* If this is not a priviledged users, return */
 	if (p->transport != NCALRPC ||
 	    !is_priviledged_pipe(p->session_info)) {
+		p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 		return EPMAPPER_STATUS_CANT_PERFORM_OP;
 	}
 
@@ -1096,7 +1098,7 @@ error_status_t _epm_LookupHandleFree(struct pipes_struct *p,
 error_status_t _epm_InqObject(struct pipes_struct *p,
 		      struct epm_InqObject *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return EPMAPPER_STATUS_CANT_PERFORM_OP;
 }
 
@@ -1110,7 +1112,7 @@ error_status_t _epm_InqObject(struct pipes_struct *p,
 error_status_t _epm_MgmtDelete(struct pipes_struct *p,
 		       struct epm_MgmtDelete *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return EPMAPPER_STATUS_CANT_PERFORM_OP;
 }
 
@@ -1121,7 +1123,7 @@ error_status_t _epm_MgmtDelete(struct pipes_struct *p,
 error_status_t _epm_MapAuth(struct pipes_struct *p,
 		    struct epm_MapAuth *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return EPMAPPER_STATUS_CANT_PERFORM_OP;
 }
 

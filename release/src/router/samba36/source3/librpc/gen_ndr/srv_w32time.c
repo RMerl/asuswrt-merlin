@@ -44,7 +44,7 @@ static bool api_w32time_SyncTime(struct pipes_struct *p)
 
 	r->out.result = _w32time_SyncTime(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_w32time_GetNetLogonServiceBits(struct pipes_struct *p)
 
 	r->out.result = _w32time_GetNetLogonServiceBits(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_w32time_QueryProviderStatus(struct pipes_struct *p)
 
 	r->out.result = _w32time_QueryProviderStatus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -51,7 +51,7 @@ static bool api_Delete(struct pipes_struct *p)
 
 	r->out.result = _Delete(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -155,7 +155,7 @@ static bool api_OpenNamespace(struct pipes_struct *p)
 
 	r->out.result = _OpenNamespace(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -235,7 +235,7 @@ static bool api_CancelAsyncCall(struct pipes_struct *p)
 
 	r->out.result = _CancelAsyncCall(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -321,7 +321,7 @@ static bool api_QueryObjectSink(struct pipes_struct *p)
 
 	r->out.result = _QueryObjectSink(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -403,7 +403,7 @@ static bool api_GetObject(struct pipes_struct *p)
 
 	r->out.result = _GetObject(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -483,7 +483,7 @@ static bool api_GetObjectAsync(struct pipes_struct *p)
 
 	r->out.result = _GetObjectAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -564,7 +564,7 @@ static bool api_PutClass(struct pipes_struct *p)
 
 	r->out.result = _PutClass(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -644,7 +644,7 @@ static bool api_PutClassAsync(struct pipes_struct *p)
 
 	r->out.result = _PutClassAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -725,7 +725,7 @@ static bool api_DeleteClass(struct pipes_struct *p)
 
 	r->out.result = _DeleteClass(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -805,7 +805,7 @@ static bool api_DeleteClassAsync(struct pipes_struct *p)
 
 	r->out.result = _DeleteClassAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -891,7 +891,7 @@ static bool api_CreateClassEnum(struct pipes_struct *p)
 
 	r->out.result = _CreateClassEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -971,7 +971,7 @@ static bool api_CreateClassEnumAsync(struct pipes_struct *p)
 
 	r->out.result = _CreateClassEnumAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1052,7 +1052,7 @@ static bool api_PutInstance(struct pipes_struct *p)
 
 	r->out.result = _PutInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1132,7 +1132,7 @@ static bool api_PutInstanceAsync(struct pipes_struct *p)
 
 	r->out.result = _PutInstanceAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1213,7 +1213,7 @@ static bool api_DeleteInstance(struct pipes_struct *p)
 
 	r->out.result = _DeleteInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1293,7 +1293,7 @@ static bool api_DeleteInstanceAsync(struct pipes_struct *p)
 
 	r->out.result = _DeleteInstanceAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1379,7 +1379,7 @@ static bool api_CreateInstanceEnum(struct pipes_struct *p)
 
 	r->out.result = _CreateInstanceEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1459,7 +1459,7 @@ static bool api_CreateInstanceEnumAsync(struct pipes_struct *p)
 
 	r->out.result = _CreateInstanceEnumAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1545,7 +1545,7 @@ static bool api_ExecQuery(struct pipes_struct *p)
 
 	r->out.result = _ExecQuery(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1625,7 +1625,7 @@ static bool api_ExecQueryAsync(struct pipes_struct *p)
 
 	r->out.result = _ExecQueryAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1711,7 +1711,7 @@ static bool api_ExecNotificationQuery(struct pipes_struct *p)
 
 	r->out.result = _ExecNotificationQuery(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1791,7 +1791,7 @@ static bool api_ExecNotificationQueryAsync(struct pipes_struct *p)
 
 	r->out.result = _ExecNotificationQueryAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1873,7 +1873,7 @@ static bool api_ExecMethod(struct pipes_struct *p)
 
 	r->out.result = _ExecMethod(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1953,7 +1953,7 @@ static bool api_ExecMethodAsync(struct pipes_struct *p)
 
 	r->out.result = _ExecMethodAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2077,7 +2077,7 @@ static bool api_Reset(struct pipes_struct *p)
 
 	r->out.result = _Reset(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2169,7 +2169,7 @@ static bool api_IEnumWbemClassObject_Next(struct pipes_struct *p)
 
 	r->out.result = _IEnumWbemClassObject_Next(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2249,7 +2249,7 @@ static bool api_NextAsync(struct pipes_struct *p)
 
 	r->out.result = _NextAsync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2335,7 +2335,7 @@ static bool api_IEnumWbemClassObject_Clone(struct pipes_struct *p)
 
 	r->out.result = _IEnumWbemClassObject_Clone(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2415,7 +2415,7 @@ static bool api_Skip(struct pipes_struct *p)
 
 	r->out.result = _Skip(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2527,7 +2527,7 @@ static bool api_Clone(struct pipes_struct *p)
 
 	r->out.result = _Clone(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2607,7 +2607,7 @@ static bool api_GetNames(struct pipes_struct *p)
 
 	r->out.result = _GetNames(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2687,7 +2687,7 @@ static bool api_BeginEnumeration(struct pipes_struct *p)
 
 	r->out.result = _BeginEnumeration(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2767,7 +2767,7 @@ static bool api_Next(struct pipes_struct *p)
 
 	r->out.result = _Next(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2847,7 +2847,7 @@ static bool api_EndEnumeration(struct pipes_struct *p)
 
 	r->out.result = _EndEnumeration(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2927,7 +2927,7 @@ static bool api_SetValue(struct pipes_struct *p)
 
 	r->out.result = _SetValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3007,7 +3007,7 @@ static bool api_GetValue(struct pipes_struct *p)
 
 	r->out.result = _GetValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3087,7 +3087,7 @@ static bool api_DeleteValue(struct pipes_struct *p)
 
 	r->out.result = _DeleteValue(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3167,7 +3167,7 @@ static bool api_DeleteAll(struct pipes_struct *p)
 
 	r->out.result = _DeleteAll(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3283,7 +3283,7 @@ static bool api_EstablishPosition(struct pipes_struct *p)
 
 	r->out.result = _EstablishPosition(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3369,7 +3369,7 @@ static bool api_RequestChallenge(struct pipes_struct *p)
 
 	r->out.result = _RequestChallenge(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3455,7 +3455,7 @@ static bool api_WBEMLogin(struct pipes_struct *p)
 
 	r->out.result = _WBEMLogin(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3541,7 +3541,7 @@ static bool api_NTLMLogin(struct pipes_struct *p)
 
 	r->out.result = _NTLMLogin(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3664,7 +3664,7 @@ static bool api_IWbemWCOSmartEnum_Next(struct pipes_struct *p)
 
 	r->out.result = _IWbemWCOSmartEnum_Next(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3772,7 +3772,7 @@ static bool api_Fetch(struct pipes_struct *p)
 
 	r->out.result = _Fetch(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3858,7 +3858,7 @@ static bool api_Test(struct pipes_struct *p)
 
 	r->out.result = _Test(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3967,7 +3967,7 @@ static bool api_GetResultObject(struct pipes_struct *p)
 
 	r->out.result = _GetResultObject(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4053,7 +4053,7 @@ static bool api_GetResultString(struct pipes_struct *p)
 
 	r->out.result = _GetResultString(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4139,7 +4139,7 @@ static bool api_GetResultServices(struct pipes_struct *p)
 
 	r->out.result = _GetResultServices(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4225,7 +4225,7 @@ static bool api_GetCallStatus(struct pipes_struct *p)
 
 	r->out.result = _GetCallStatus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4330,7 +4330,7 @@ static bool api_SetStatus(struct pipes_struct *p)
 
 	r->out.result = _SetStatus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4410,7 +4410,7 @@ static bool api_Indicate(struct pipes_struct *p)
 
 	r->out.result = _Indicate(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

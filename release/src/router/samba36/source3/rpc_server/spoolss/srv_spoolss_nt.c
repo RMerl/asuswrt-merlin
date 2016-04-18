@@ -2480,7 +2480,7 @@ static bool spoolss_connect_to_client(struct rpc_pipe_client **pp_pipe,
 		"", /* username */
 		"", /* domain */
 		"", /* password */
-		0, lp_client_signing());
+		0, False);
 
 	if ( !NT_STATUS_IS_OK( ret ) ) {
 		DEBUG(2,("spoolss_connect_to_client: connection to [%s] failed!\n",
@@ -10156,7 +10156,7 @@ WERROR _spoolss_AddPort(struct pipes_struct *p,
 WERROR _spoolss_GetPrinterDriver(struct pipes_struct *p,
 				 struct spoolss_GetPrinterDriver *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10167,7 +10167,7 @@ WERROR _spoolss_GetPrinterDriver(struct pipes_struct *p,
 WERROR _spoolss_ReadPrinter(struct pipes_struct *p,
 			    struct spoolss_ReadPrinter *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10178,7 +10178,7 @@ WERROR _spoolss_ReadPrinter(struct pipes_struct *p,
 WERROR _spoolss_WaitForPrinterChange(struct pipes_struct *p,
 				     struct spoolss_WaitForPrinterChange *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10189,7 +10189,7 @@ WERROR _spoolss_WaitForPrinterChange(struct pipes_struct *p,
 WERROR _spoolss_ConfigurePort(struct pipes_struct *p,
 			      struct spoolss_ConfigurePort *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10200,7 +10200,7 @@ WERROR _spoolss_ConfigurePort(struct pipes_struct *p,
 WERROR _spoolss_DeletePort(struct pipes_struct *p,
 			   struct spoolss_DeletePort *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10211,7 +10211,7 @@ WERROR _spoolss_DeletePort(struct pipes_struct *p,
 WERROR _spoolss_CreatePrinterIC(struct pipes_struct *p,
 				struct spoolss_CreatePrinterIC *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10222,7 +10222,7 @@ WERROR _spoolss_CreatePrinterIC(struct pipes_struct *p,
 WERROR _spoolss_PlayGDIScriptOnPrinterIC(struct pipes_struct *p,
 					 struct spoolss_PlayGDIScriptOnPrinterIC *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10233,7 +10233,7 @@ WERROR _spoolss_PlayGDIScriptOnPrinterIC(struct pipes_struct *p,
 WERROR _spoolss_DeletePrinterIC(struct pipes_struct *p,
 				struct spoolss_DeletePrinterIC *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10244,7 +10244,7 @@ WERROR _spoolss_DeletePrinterIC(struct pipes_struct *p,
 WERROR _spoolss_AddPrinterConnection(struct pipes_struct *p,
 				     struct spoolss_AddPrinterConnection *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10255,7 +10255,7 @@ WERROR _spoolss_AddPrinterConnection(struct pipes_struct *p,
 WERROR _spoolss_DeletePrinterConnection(struct pipes_struct *p,
 					struct spoolss_DeletePrinterConnection *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10266,7 +10266,7 @@ WERROR _spoolss_DeletePrinterConnection(struct pipes_struct *p,
 WERROR _spoolss_PrinterMessageBox(struct pipes_struct *p,
 				  struct spoolss_PrinterMessageBox *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10277,7 +10277,7 @@ WERROR _spoolss_PrinterMessageBox(struct pipes_struct *p,
 WERROR _spoolss_AddMonitor(struct pipes_struct *p,
 			   struct spoolss_AddMonitor *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10288,7 +10288,7 @@ WERROR _spoolss_AddMonitor(struct pipes_struct *p,
 WERROR _spoolss_DeleteMonitor(struct pipes_struct *p,
 			      struct spoolss_DeleteMonitor *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10299,7 +10299,7 @@ WERROR _spoolss_DeleteMonitor(struct pipes_struct *p,
 WERROR _spoolss_DeletePrintProcessor(struct pipes_struct *p,
 				     struct spoolss_DeletePrintProcessor *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10310,7 +10310,7 @@ WERROR _spoolss_DeletePrintProcessor(struct pipes_struct *p,
 WERROR _spoolss_AddPrintProvidor(struct pipes_struct *p,
 				 struct spoolss_AddPrintProvidor *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10321,7 +10321,7 @@ WERROR _spoolss_AddPrintProvidor(struct pipes_struct *p,
 WERROR _spoolss_DeletePrintProvidor(struct pipes_struct *p,
 				    struct spoolss_DeletePrintProvidor *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10332,7 +10332,7 @@ WERROR _spoolss_DeletePrintProvidor(struct pipes_struct *p,
 WERROR _spoolss_FindFirstPrinterChangeNotification(struct pipes_struct *p,
 						   struct spoolss_FindFirstPrinterChangeNotification *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10343,7 +10343,7 @@ WERROR _spoolss_FindFirstPrinterChangeNotification(struct pipes_struct *p,
 WERROR _spoolss_FindNextPrinterChangeNotification(struct pipes_struct *p,
 						  struct spoolss_FindNextPrinterChangeNotification *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10354,7 +10354,7 @@ WERROR _spoolss_FindNextPrinterChangeNotification(struct pipes_struct *p,
 WERROR _spoolss_RouterFindFirstPrinterChangeNotificationOld(struct pipes_struct *p,
 							    struct spoolss_RouterFindFirstPrinterChangeNotificationOld *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10365,7 +10365,7 @@ WERROR _spoolss_RouterFindFirstPrinterChangeNotificationOld(struct pipes_struct 
 WERROR _spoolss_ReplyOpenPrinter(struct pipes_struct *p,
 				 struct spoolss_ReplyOpenPrinter *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10376,7 +10376,7 @@ WERROR _spoolss_ReplyOpenPrinter(struct pipes_struct *p,
 WERROR _spoolss_RouterReplyPrinter(struct pipes_struct *p,
 				   struct spoolss_RouterReplyPrinter *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10387,7 +10387,7 @@ WERROR _spoolss_RouterReplyPrinter(struct pipes_struct *p,
 WERROR _spoolss_ReplyClosePrinter(struct pipes_struct *p,
 				  struct spoolss_ReplyClosePrinter *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10398,7 +10398,7 @@ WERROR _spoolss_ReplyClosePrinter(struct pipes_struct *p,
 WERROR _spoolss_AddPortEx(struct pipes_struct *p,
 			  struct spoolss_AddPortEx *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10409,7 +10409,7 @@ WERROR _spoolss_AddPortEx(struct pipes_struct *p,
 WERROR _spoolss_RouterFindFirstPrinterChangeNotification(struct pipes_struct *p,
 							 struct spoolss_RouterFindFirstPrinterChangeNotification *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10420,7 +10420,7 @@ WERROR _spoolss_RouterFindFirstPrinterChangeNotification(struct pipes_struct *p,
 WERROR _spoolss_SpoolerInit(struct pipes_struct *p,
 			    struct spoolss_SpoolerInit *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10431,7 +10431,7 @@ WERROR _spoolss_SpoolerInit(struct pipes_struct *p,
 WERROR _spoolss_ResetPrinterEx(struct pipes_struct *p,
 			       struct spoolss_ResetPrinterEx *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10442,7 +10442,7 @@ WERROR _spoolss_ResetPrinterEx(struct pipes_struct *p,
 WERROR _spoolss_RouterReplyPrinterEx(struct pipes_struct *p,
 				     struct spoolss_RouterReplyPrinterEx *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10453,7 +10453,7 @@ WERROR _spoolss_RouterReplyPrinterEx(struct pipes_struct *p,
 WERROR _spoolss_44(struct pipes_struct *p,
 		   struct spoolss_44 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10464,7 +10464,7 @@ WERROR _spoolss_44(struct pipes_struct *p,
 WERROR _spoolss_SetPort(struct pipes_struct *p,
 			struct spoolss_SetPort *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10475,7 +10475,7 @@ WERROR _spoolss_SetPort(struct pipes_struct *p,
 WERROR _spoolss_4a(struct pipes_struct *p,
 		   struct spoolss_4a *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10486,7 +10486,7 @@ WERROR _spoolss_4a(struct pipes_struct *p,
 WERROR _spoolss_4b(struct pipes_struct *p,
 		   struct spoolss_4b *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10497,7 +10497,7 @@ WERROR _spoolss_4b(struct pipes_struct *p,
 WERROR _spoolss_4c(struct pipes_struct *p,
 		   struct spoolss_4c *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10508,7 +10508,7 @@ WERROR _spoolss_4c(struct pipes_struct *p,
 WERROR _spoolss_53(struct pipes_struct *p,
 		   struct spoolss_53 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10519,7 +10519,7 @@ WERROR _spoolss_53(struct pipes_struct *p,
 WERROR _spoolss_AddPerMachineConnection(struct pipes_struct *p,
 					struct spoolss_AddPerMachineConnection *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10530,7 +10530,7 @@ WERROR _spoolss_AddPerMachineConnection(struct pipes_struct *p,
 WERROR _spoolss_DeletePerMachineConnection(struct pipes_struct *p,
 					   struct spoolss_DeletePerMachineConnection *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10541,7 +10541,7 @@ WERROR _spoolss_DeletePerMachineConnection(struct pipes_struct *p,
 WERROR _spoolss_EnumPerMachineConnections(struct pipes_struct *p,
 					  struct spoolss_EnumPerMachineConnections *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10552,7 +10552,7 @@ WERROR _spoolss_EnumPerMachineConnections(struct pipes_struct *p,
 WERROR _spoolss_5a(struct pipes_struct *p,
 		   struct spoolss_5a *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10563,7 +10563,7 @@ WERROR _spoolss_5a(struct pipes_struct *p,
 WERROR _spoolss_5b(struct pipes_struct *p,
 		   struct spoolss_5b *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10574,7 +10574,7 @@ WERROR _spoolss_5b(struct pipes_struct *p,
 WERROR _spoolss_5c(struct pipes_struct *p,
 		   struct spoolss_5c *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10585,7 +10585,7 @@ WERROR _spoolss_5c(struct pipes_struct *p,
 WERROR _spoolss_5d(struct pipes_struct *p,
 		   struct spoolss_5d *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10596,7 +10596,7 @@ WERROR _spoolss_5d(struct pipes_struct *p,
 WERROR _spoolss_5e(struct pipes_struct *p,
 		   struct spoolss_5e *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10607,7 +10607,7 @@ WERROR _spoolss_5e(struct pipes_struct *p,
 WERROR _spoolss_5f(struct pipes_struct *p,
 		   struct spoolss_5f *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10618,7 +10618,7 @@ WERROR _spoolss_5f(struct pipes_struct *p,
 WERROR _spoolss_60(struct pipes_struct *p,
 		   struct spoolss_60 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10629,7 +10629,7 @@ WERROR _spoolss_60(struct pipes_struct *p,
 WERROR _spoolss_61(struct pipes_struct *p,
 		   struct spoolss_61 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10640,7 +10640,7 @@ WERROR _spoolss_61(struct pipes_struct *p,
 WERROR _spoolss_62(struct pipes_struct *p,
 		   struct spoolss_62 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10651,7 +10651,7 @@ WERROR _spoolss_62(struct pipes_struct *p,
 WERROR _spoolss_63(struct pipes_struct *p,
 		   struct spoolss_63 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10662,7 +10662,7 @@ WERROR _spoolss_63(struct pipes_struct *p,
 WERROR _spoolss_64(struct pipes_struct *p,
 		   struct spoolss_64 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10673,7 +10673,7 @@ WERROR _spoolss_64(struct pipes_struct *p,
 WERROR _spoolss_65(struct pipes_struct *p,
 		   struct spoolss_65 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10684,7 +10684,7 @@ WERROR _spoolss_65(struct pipes_struct *p,
 WERROR _spoolss_GetCorePrinterDrivers(struct pipes_struct *p,
 				      struct spoolss_GetCorePrinterDrivers *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10695,7 +10695,7 @@ WERROR _spoolss_GetCorePrinterDrivers(struct pipes_struct *p,
 WERROR _spoolss_67(struct pipes_struct *p,
 		   struct spoolss_67 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10706,7 +10706,7 @@ WERROR _spoolss_67(struct pipes_struct *p,
 WERROR _spoolss_GetPrinterDriverPackagePath(struct pipes_struct *p,
 					    struct spoolss_GetPrinterDriverPackagePath *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10717,7 +10717,7 @@ WERROR _spoolss_GetPrinterDriverPackagePath(struct pipes_struct *p,
 WERROR _spoolss_69(struct pipes_struct *p,
 		   struct spoolss_69 *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10728,7 +10728,7 @@ WERROR _spoolss_69(struct pipes_struct *p,
 WERROR _spoolss_6a(struct pipes_struct *p,
 		   struct spoolss_6a *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10739,7 +10739,7 @@ WERROR _spoolss_6a(struct pipes_struct *p,
 WERROR _spoolss_6b(struct pipes_struct *p,
 		   struct spoolss_6b *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10750,7 +10750,7 @@ WERROR _spoolss_6b(struct pipes_struct *p,
 WERROR _spoolss_6c(struct pipes_struct *p,
 		   struct spoolss_6c *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }
 
@@ -10761,6 +10761,6 @@ WERROR _spoolss_6c(struct pipes_struct *p,
 WERROR _spoolss_6d(struct pipes_struct *p,
 		   struct spoolss_6d *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return WERR_NOT_SUPPORTED;
 }

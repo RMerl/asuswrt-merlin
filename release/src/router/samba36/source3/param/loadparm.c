@@ -64,6 +64,7 @@
 #include "smb_signing.h"
 #include "dbwrap.h"
 #include "smbldap.h"
+#include "../lib/util/bitmap.h"
 
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
@@ -214,6 +215,7 @@ struct global {
 	int  winbind_expand_groups;
 	bool bWinbindRefreshTickets;
 	bool bWinbindOfflineLogon;
+	bool bWinbindSealedPipes;
 	bool bWinbindNormalizeNames;
 	bool bWinbindRpcOnly;
 	bool bCreateKrb5Conf;
@@ -335,6 +337,7 @@ struct global {
 	bool bAllowTrustedDomains;
 	bool bLanmanAuth;
 	bool bNTLMAuth;
+	bool bRawNTLMv2Auth;
 	bool bUseSpnego;
 	bool bClientLanManAuth;
 	bool bClientNTLMv2Auth;
@@ -352,6 +355,7 @@ struct global {
 	bool bUseMmap;
 	bool bHostnameLookups;
 	bool bUnixExtensions;
+	bool bAllowDcerpcAuthLevelConnect;
 	bool bDisableNetbios;
 	char * szDedicatedKeytabFile;
 	int  iKerberosMethod;
@@ -364,6 +368,7 @@ struct global {
 	int restrict_anonymous;
 	int name_cache_timeout;
 	int client_signing;
+	int client_ipc_signing;
 	int server_signing;
 	int client_ldap_sasl_wrapping;
 	int iUsershareMaxShares;
@@ -1382,6 +1387,15 @@ static struct parm_struct parm_table[] = {
 		.flags		= FLAG_ADVANCED,
 	},
 	{
+		.label		= "raw NTLMv2 auth",
+		.type		= P_BOOL,
+		.p_class	= P_GLOBAL,
+		.ptr		= &Globals.bRawNTLMv2Auth,
+		.special	= NULL,
+		.enum_list	= NULL,
+		.flags		= FLAG_ADVANCED,
+	},
+	{
 		.label		= "client NTLMv2 auth",
 		.type		= P_BOOL,
 		.p_class	= P_GLOBAL,
@@ -2290,6 +2304,15 @@ static struct parm_struct parm_table[] = {
 		.flags		= FLAG_ADVANCED,
 	},
 	{
+		.label		= "allow dcerpc auth level connect",
+		.type		= P_BOOL,
+		.p_class	= P_GLOBAL,
+		.ptr		= &Globals.bAllowDcerpcAuthLevelConnect,
+		.special	= NULL,
+		.enum_list	= NULL,
+		.flags		= FLAG_ADVANCED,
+	},
+	{
 		.label		= "use spnego",
 		.type		= P_BOOL,
 		.p_class	= P_GLOBAL,
@@ -2303,6 +2326,15 @@ static struct parm_struct parm_table[] = {
 		.type		= P_ENUM,
 		.p_class	= P_GLOBAL,
 		.ptr		= &Globals.client_signing,
+		.special	= NULL,
+		.enum_list	= enum_smb_signing_vals,
+		.flags		= FLAG_ADVANCED,
+	},
+	{
+		.label		= "client ipc signing",
+		.type		= P_ENUM,
+		.p_class	= P_GLOBAL,
+		.ptr		= &Globals.client_ipc_signing,
 		.special	= NULL,
 		.enum_list	= enum_smb_signing_vals,
 		.flags		= FLAG_ADVANCED,
@@ -4754,6 +4786,15 @@ static struct parm_struct parm_table[] = {
 		.flags		= FLAG_ADVANCED,
 	},
 	{
+		.label		= "winbind sealed pipes",
+		.type		= P_BOOL,
+		.p_class	= P_GLOBAL,
+		.ptr		= &Globals.bWinbindSealedPipes,
+		.special	= NULL,
+		.enum_list	= NULL,
+		.flags		= FLAG_ADVANCED,
+	},
+	{
 		.label		= "winbind normalize names",
 		.type		= P_BOOL,
 		.p_class	= P_GLOBAL,
@@ -5336,8 +5377,11 @@ static void init_globals(bool reinit_globals)
 	Globals.bClientPlaintextAuth = False;	/* Do NOT use a plaintext password even if is requested by the server */
 	Globals.bLanmanAuth = False;	/* Do NOT use the LanMan hash, even if it is supplied */
 	Globals.bNTLMAuth = True;	/* Do use NTLMv1 if it is supplied by the client (otherwise NTLMv2) */
+	Globals.bRawNTLMv2Auth = false;	/* Allow NTLMv2 without NTLMSSP */
 	Globals.bClientNTLMv2Auth = True; /* Client should always use use NTLMv2, as we can't tell that the server supports it, but most modern servers do */
 	/* Note, that we will also use NTLM2 session security (which is different), if it is available */
+
+	Globals.bAllowDcerpcAuthLevelConnect = false; /* we don't allow this by default */
 
 	Globals.map_to_guest = 0;	/* By Default, "Never" */
 	Globals.oplock_break_wait_time = 0;	/* By Default, 0 msecs. */
@@ -5379,6 +5423,8 @@ static void init_globals(bool reinit_globals)
 
 	Globals.ldap_debug_level = 0;
 	Globals.ldap_debug_threshold = 10;
+
+	Globals.client_ldap_sasl_wrapping = ADS_AUTH_SASL_SIGN;
 
 	/* This is what we tell the afs client. in reality we set the token 
 	 * to never expire, though, when this runs out the afs client will 
@@ -5444,6 +5490,7 @@ static void init_globals(bool reinit_globals)
 	Globals.szWinbindNssInfo = str_list_make_v3(NULL, "template", NULL);
 	Globals.bWinbindRefreshTickets = False;
 	Globals.bWinbindOfflineLogon = False;
+	Globals.bWinbindSealedPipes = True;
 
 	Globals.iIdmapCacheTime = 86400 * 7; /* a week by default */
 	Globals.iIdmapNegativeCacheTime = 120; /* 2 minutes by default */
@@ -5456,6 +5503,7 @@ static void init_globals(bool reinit_globals)
 	Globals.bClientUseSpnego = True;
 
 	Globals.client_signing = Auto;
+	Globals.client_ipc_signing = Required;
 	Globals.server_signing = False;
 
 	Globals.bDeferSharingViolations = True;
@@ -5709,6 +5757,7 @@ FN_GLOBAL_INTEGER(lp_username_map_cache_time, &Globals.iUsernameMapCacheTime)
 
 FN_GLOBAL_STRING(lp_check_password_script, &Globals.szCheckPasswordScript)
 
+FN_GLOBAL_BOOL(lp_allow_dcerpc_auth_level_connect, &Globals.bAllowDcerpcAuthLevelConnect)
 FN_GLOBAL_STRING(lp_wins_hook, &Globals.szWINSHook)
 FN_GLOBAL_CONST_STRING(lp_template_homedir, &Globals.szTemplateHomedir)
 FN_GLOBAL_CONST_STRING(lp_template_shell, &Globals.szTemplateShell)
@@ -5722,6 +5771,7 @@ FN_GLOBAL_BOOL(lp_winbind_nested_groups, &Globals.bWinbindNestedGroups)
 FN_GLOBAL_INTEGER(lp_winbind_expand_groups, &Globals.winbind_expand_groups)
 FN_GLOBAL_BOOL(lp_winbind_refresh_tickets, &Globals.bWinbindRefreshTickets)
 FN_GLOBAL_BOOL(lp_winbind_offline_logon, &Globals.bWinbindOfflineLogon)
+FN_GLOBAL_BOOL(lp_winbind_sealed_pipes, &Globals.bWinbindSealedPipes)
 FN_GLOBAL_BOOL(lp_winbind_normalize_names, &Globals.bWinbindNormalizeNames)
 FN_GLOBAL_BOOL(lp_winbind_rpc_only, &Globals.bWinbindRpcOnly)
 FN_GLOBAL_BOOL(lp_create_krb5_conf, &Globals.bCreateKrb5Conf)
@@ -5818,6 +5868,7 @@ FN_GLOBAL_BOOL(lp_map_untrusted_to_domain, &Globals.bMapUntrustedToDomain)
 FN_GLOBAL_INTEGER(lp_restrict_anonymous, &Globals.restrict_anonymous)
 FN_GLOBAL_BOOL(lp_lanman_auth, &Globals.bLanmanAuth)
 FN_GLOBAL_BOOL(lp_ntlm_auth, &Globals.bNTLMAuth)
+FN_GLOBAL_BOOL(lp_raw_ntlmv2_auth, &Globals.bRawNTLMv2Auth)
 FN_GLOBAL_BOOL(lp_client_plaintext_auth, &Globals.bClientPlaintextAuth)
 FN_GLOBAL_BOOL(lp_client_lanman_auth, &Globals.bClientLanManAuth)
 FN_GLOBAL_BOOL(lp_client_ntlmv2_auth, &Globals.bClientNTLMv2Auth)
@@ -6056,6 +6107,7 @@ FN_GLOBAL_LIST(lp_winbind_nss_info, &Globals.szWinbindNssInfo)
 FN_GLOBAL_INTEGER(lp_algorithmic_rid_base, &Globals.AlgorithmicRidBase)
 FN_GLOBAL_INTEGER(lp_name_cache_timeout, &Globals.name_cache_timeout)
 FN_GLOBAL_INTEGER(lp_client_signing, &Globals.client_signing)
+FN_GLOBAL_INTEGER(lp_client_ipc_signing, &Globals.client_ipc_signing)
 FN_GLOBAL_INTEGER(lp_server_signing, &Globals.server_signing)
 FN_GLOBAL_INTEGER(lp_client_ldap_sasl_wrapping, &Globals.client_ldap_sasl_wrapping)
 
@@ -9683,6 +9735,20 @@ static bool lp_load_ex(const char *pszFname,
 	/* if bWINSsupport is true and we are in the client            */
 	if (lp_is_in_client() && Globals.bWINSsupport) {
 		lp_do_parameter(GLOBAL_SECTION_SNUM, "wins server", "127.0.0.1");
+	}
+
+	if (!lp_is_in_client()) {
+		switch (lp_client_ipc_signing()) {
+		case Required:
+			lp_set_cmdline("client signing", "mandatory");
+			break;
+		case Auto:
+			lp_set_cmdline("client signing", "auto");
+			break;
+		case False:
+			lp_set_cmdline("client signing", "disabled");
+			break;
+		}
 	}
 
 	init_iconv();

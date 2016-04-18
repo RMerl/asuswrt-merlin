@@ -52,7 +52,7 @@ static bool api_drsuapi_DsBind(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsBind(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -127,7 +127,7 @@ static bool api_drsuapi_DsUnbind(struct pipes_struct *p)
 	r->out.bind_handle = r->in.bind_handle;
 	r->out.result = _drsuapi_DsUnbind(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -200,7 +200,7 @@ static bool api_drsuapi_DsReplicaSync(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsReplicaSync(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -286,7 +286,7 @@ static bool api_drsuapi_DsGetNCChanges(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsGetNCChanges(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -359,7 +359,7 @@ static bool api_drsuapi_DsReplicaUpdateRefs(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsReplicaUpdateRefs(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -432,7 +432,7 @@ static bool api_drsuapi_DsReplicaAdd(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsReplicaAdd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -505,7 +505,7 @@ static bool api_drsuapi_DsReplicaDel(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsReplicaDel(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -578,7 +578,7 @@ static bool api_drsuapi_DsReplicaMod(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsReplicaMod(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -651,7 +651,7 @@ static bool api_DRSUAPI_VERIFY_NAMES(struct pipes_struct *p)
 
 	r->out.result = _DRSUAPI_VERIFY_NAMES(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -737,7 +737,7 @@ static bool api_drsuapi_DsGetMemberships(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsGetMemberships(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -810,7 +810,7 @@ static bool api_DRSUAPI_INTER_DOMAIN_MOVE(struct pipes_struct *p)
 
 	r->out.result = _DRSUAPI_INTER_DOMAIN_MOVE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -896,7 +896,7 @@ static bool api_drsuapi_DsGetNT4ChangeLog(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsGetNT4ChangeLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -982,7 +982,7 @@ static bool api_drsuapi_DsCrackNames(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsCrackNames(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1068,7 +1068,7 @@ static bool api_drsuapi_DsWriteAccountSpn(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsWriteAccountSpn(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1154,7 +1154,7 @@ static bool api_drsuapi_DsRemoveDSServer(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsRemoveDSServer(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1227,7 +1227,7 @@ static bool api_DRSUAPI_REMOVE_DS_DOMAIN(struct pipes_struct *p)
 
 	r->out.result = _DRSUAPI_REMOVE_DS_DOMAIN(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1313,7 +1313,7 @@ static bool api_drsuapi_DsGetDomainControllerInfo(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsGetDomainControllerInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1399,7 +1399,7 @@ static bool api_drsuapi_DsAddEntry(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsAddEntry(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1472,7 +1472,7 @@ static bool api_drsuapi_DsExecuteKCC(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsExecuteKCC(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1558,7 +1558,7 @@ static bool api_drsuapi_DsReplicaGetInfo(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsReplicaGetInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1631,7 +1631,7 @@ static bool api_DRSUAPI_ADD_SID_HISTORY(struct pipes_struct *p)
 
 	r->out.result = _DRSUAPI_ADD_SID_HISTORY(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1717,7 +1717,7 @@ static bool api_drsuapi_DsGetMemberships2(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_DsGetMemberships2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1790,7 +1790,7 @@ static bool api_DRSUAPI_REPLICA_VERIFY_OBJECTS(struct pipes_struct *p)
 
 	r->out.result = _DRSUAPI_REPLICA_VERIFY_OBJECTS(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1863,7 +1863,7 @@ static bool api_DRSUAPI_GET_OBJECT_EXISTENCE(struct pipes_struct *p)
 
 	r->out.result = _DRSUAPI_GET_OBJECT_EXISTENCE(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1949,7 +1949,7 @@ static bool api_drsuapi_QuerySitesByCost(struct pipes_struct *p)
 
 	r->out.result = _drsuapi_QuerySitesByCost(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

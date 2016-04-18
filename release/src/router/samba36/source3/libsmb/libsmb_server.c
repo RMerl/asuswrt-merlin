@@ -258,6 +258,7 @@ SMBC_server_internal(TALLOC_CTX *ctx,
         const char *username_used;
  	NTSTATUS status;
 	char *newserver, *newshare;
+	int signing_state = Undefined;
 
 	zero_sockaddr(&ss);
 	ZERO_STRUCT(c);
@@ -404,8 +405,12 @@ again:
 
 	zero_sockaddr(&ss);
 
+	if (context->internal->smb_encryption_level != SMBC_ENCRYPTLEVEL_NONE) {
+		signing_state = Required;
+	}
+
 	/* have to open a new connection */
-	if ((c = cli_initialise()) == NULL) {
+	if ((c = cli_initialise_ex(signing_state)) == NULL) {
 		errno = ENOMEM;
 		return NULL;
 	}
@@ -750,6 +755,7 @@ SMBC_attr_server(TALLOC_CTX *ctx,
         ipc_srv = SMBC_find_server(ctx, context, server, "*IPC$",
                                    pp_workgroup, pp_username, pp_password);
         if (!ipc_srv) {
+		int signing_state = Undefined;
 
                 /* We didn't find a cached connection.  Get the password */
 		if (!*pp_password || (*pp_password)[0] == '\0') {
@@ -771,6 +777,9 @@ SMBC_attr_server(TALLOC_CTX *ctx,
                 if (smbc_getOptionUseCCache(context)) {
                         flags |= CLI_FULL_CONNECTION_USE_CCACHE;
                 }
+		if (context->internal->smb_encryption_level != SMBC_ENCRYPTLEVEL_NONE) {
+			signing_state = Required;
+		}
 
                 zero_sockaddr(&ss);
                 nt_status = cli_full_connection(&ipc_cli,
@@ -780,7 +789,7 @@ SMBC_attr_server(TALLOC_CTX *ctx,
 						*pp_workgroup,
 						*pp_password,
 						flags,
-						Undefined);
+						signing_state);
                 if (! NT_STATUS_IS_OK(nt_status)) {
                         DEBUG(1,("cli_full_connection failed! (%s)\n",
                                  nt_errstr(nt_status)));

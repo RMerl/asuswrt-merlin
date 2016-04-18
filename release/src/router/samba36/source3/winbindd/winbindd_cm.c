@@ -2384,6 +2384,15 @@ NTSTATUS cm_connect_sam(struct winbindd_domain *domain, TALLOC_CTX *mem_ctx,
 	TALLOC_FREE(conn->samr_pipe);
 
  anonymous:
+	if (lp_winbind_sealed_pipes() && (IS_DC || domain->primary)) {
+		status = NT_STATUS_DOWNGRADE_DETECTED;
+		DEBUG(1, ("Unwilling to make SAMR connection to domain %s "
+			  "without connection level security, "
+			  "must set 'winbind sealed pipes = false' "
+			  "to proceed: %s\n",
+			  domain->name, nt_errstr(status)));
+		goto done;
+	}
 
 	/* Finally fall back to anonymous. */
 	status = cli_rpc_pipe_open_noauth(conn->cli, &ndr_table_samr.syntax_id,
@@ -2610,6 +2619,16 @@ NTSTATUS cm_connect_lsa(struct winbindd_domain *domain, TALLOC_CTX *mem_ctx,
 
  anonymous:
 
+	if (lp_winbind_sealed_pipes() && (IS_DC || domain->primary)) {
+		result = NT_STATUS_DOWNGRADE_DETECTED;
+		DEBUG(1, ("Unwilling to make LSA connection to domain %s "
+			  "without connection level security, "
+			  "must set 'winbind sealed pipes = false' "
+			  "to proceed: %s\n",
+			  domain->name, nt_errstr(result)));
+		goto done;
+	}
+
 	result = cli_rpc_pipe_open_noauth(conn->cli,
 					  &ndr_table_lsarpc.syntax_id,
 					  &conn->lsa_pipe);
@@ -2749,7 +2768,18 @@ NTSTATUS cm_connect_netlogon(struct winbindd_domain *domain,
 
  no_schannel:
 	if ((lp_client_schannel() == False) ||
-			((neg_flags & NETLOGON_NEG_SCHANNEL) == 0)) {
+		((neg_flags & NETLOGON_NEG_SCHANNEL) == 0)) {
+		if (lp_winbind_sealed_pipes() && (IS_DC || domain->primary)) {
+			result = NT_STATUS_DOWNGRADE_DETECTED;
+			DEBUG(1, ("Unwilling to make connection to domain %s "
+				  "without connection level security, "
+				  "must set 'winbind sealed pipes = false' "
+				  "to proceed: %s\n",
+				  domain->name, nt_errstr(result)));
+			TALLOC_FREE(netlogon_pipe);
+			invalidate_cm_connection(conn);
+			return result;
+		}
 		/*
 		 * NetSamLogonEx only works for schannel
 		 */

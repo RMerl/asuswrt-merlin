@@ -39,8 +39,10 @@ struct NL_AUTH_MESSAGE;
 struct pipe_auth_data {
 	enum dcerpc_AuthType auth_type;
 	enum dcerpc_AuthLevel auth_level;
+	bool verified_bitmask1;
 
 	void *auth_ctx;
+	uint32_t auth_context_id;
 
 	/* Only the client code uses these 3 for now */
 	char *domain;
@@ -70,10 +72,6 @@ NTSTATUS dcerpc_push_dcerpc_auth(TALLOC_CTX *mem_ctx,
 				 uint32_t auth_context_id,
 				 const DATA_BLOB *credentials,
 				 DATA_BLOB *blob);
-NTSTATUS dcerpc_pull_dcerpc_auth(TALLOC_CTX *mem_ctx,
-				 const DATA_BLOB *blob,
-				 struct dcerpc_auth *r,
-				 bool bigendian);
 NTSTATUS dcerpc_guess_sizes(struct pipe_auth_data *auth,
 			    size_t header_len, size_t data_left,
 			    size_t max_xmit_frag, size_t pad_alignment,
@@ -84,9 +82,8 @@ NTSTATUS dcerpc_add_auth_footer(struct pipe_auth_data *auth,
 NTSTATUS dcerpc_check_auth(struct pipe_auth_data *auth,
 			   struct ncacn_packet *pkt,
 			   DATA_BLOB *pkt_trailer,
-			   size_t header_size,
-			   DATA_BLOB *raw_pkt,
-			   size_t *pad_len);
+			   uint8_t header_size,
+			   DATA_BLOB *raw_pkt);
 
 /* The following definitions come from librpc/rpc/rpc_common.c  */
 

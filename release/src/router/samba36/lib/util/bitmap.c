@@ -18,6 +18,7 @@
 */
 
 #include "includes.h"
+#include "lib/util/bitmap.h"
 
 /* these functions provide a simple way to allocate integers from a
    pool without repetition */
@@ -29,12 +30,12 @@ struct bitmap *bitmap_talloc(TALLOC_CTX *mem_ctx, int n)
 {
 	struct bitmap *bm;
 
-	bm = TALLOC_P(mem_ctx, struct bitmap);
+	bm = talloc_zero(mem_ctx, struct bitmap);
 
 	if (!bm) return NULL;
 
 	bm->n = n;
-	bm->b = TALLOC_ZERO_ARRAY(bm, uint32, (n+31)/32);
+	bm->b = talloc_zero_array(bm, uint32_t, (n+31)/32);
 	if (!bm->b) {
 		TALLOC_FREE(bm);
 		return NULL;
@@ -51,7 +52,7 @@ int bitmap_copy(struct bitmap * const dst, const struct bitmap * const src)
         int count = MIN(dst->n, src->n);
 
         SMB_ASSERT(dst->b != src->b);
-	memcpy(dst->b, src->b, sizeof(uint32)*((count+31)/32));
+	memcpy(dst->b, src->b, sizeof(uint32_t)*((count+31)/32));
 
         return count;
 }
@@ -64,10 +65,10 @@ bool bitmap_set(struct bitmap *bm, unsigned i)
 	if (i >= bm->n) {
 		DEBUG(0,("Setting invalid bitmap entry %d (of %d)\n",
 		      i, bm->n));
-		return False;
+		return false;
 	}
 	bm->b[i/32] |= (1<<(i%32));
-	return True;
+	return true;
 }
 
 /****************************************************************************
@@ -78,10 +79,10 @@ bool bitmap_clear(struct bitmap *bm, unsigned i)
 	if (i >= bm->n) {
 		DEBUG(0,("clearing invalid bitmap entry %d (of %d)\n",
 		      i, bm->n));
-		return False;
+		return false;
 	}
 	bm->b[i/32] &= ~(1<<(i%32));
-	return True;
+	return true;
 }
 
 /****************************************************************************
@@ -89,11 +90,11 @@ query a bit in a bitmap
 ****************************************************************************/
 bool bitmap_query(struct bitmap *bm, unsigned i)
 {
-	if (i >= bm->n) return False;
+	if (i >= bm->n) return false;
 	if (bm->b[i/32] & (1<<(i%32))) {
-		return True;
+		return true;
 	}
-	return False;
+	return false;
 }
 
 /****************************************************************************

@@ -6628,6 +6628,11 @@ NTSTATUS _samr_ValidatePassword(struct pipes_struct *p,
 	struct samr_GetDomPwInfo pw;
 	struct samr_PwInfo dom_pw_info;
 
+	if (p->auth.auth_level != DCERPC_AUTH_LEVEL_PRIVACY) {
+		p->fault_state = DCERPC_FAULT_ACCESS_DENIED;
+		return NT_STATUS_ACCESS_DENIED;
+	}
+
 	if (r->in.level < 1 || r->in.level > 3) {
 		return NT_STATUS_INVALID_INFO_CLASS;
 	}
@@ -6682,7 +6687,7 @@ NTSTATUS _samr_ValidatePassword(struct pipes_struct *p,
 NTSTATUS _samr_Shutdown(struct pipes_struct *p,
 			struct samr_Shutdown *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6692,7 +6697,7 @@ NTSTATUS _samr_Shutdown(struct pipes_struct *p,
 NTSTATUS _samr_SetMemberAttributesOfGroup(struct pipes_struct *p,
 					  struct samr_SetMemberAttributesOfGroup *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6702,6 +6707,7 @@ NTSTATUS _samr_SetMemberAttributesOfGroup(struct pipes_struct *p,
 NTSTATUS _samr_TestPrivateFunctionsDomain(struct pipes_struct *p,
 					  struct samr_TestPrivateFunctionsDomain *r)
 {
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6711,6 +6717,7 @@ NTSTATUS _samr_TestPrivateFunctionsDomain(struct pipes_struct *p,
 NTSTATUS _samr_TestPrivateFunctionsUser(struct pipes_struct *p,
 					struct samr_TestPrivateFunctionsUser *r)
 {
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6720,7 +6727,7 @@ NTSTATUS _samr_TestPrivateFunctionsUser(struct pipes_struct *p,
 NTSTATUS _samr_AddMultipleMembersToAlias(struct pipes_struct *p,
 					 struct samr_AddMultipleMembersToAlias *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6730,7 +6737,7 @@ NTSTATUS _samr_AddMultipleMembersToAlias(struct pipes_struct *p,
 NTSTATUS _samr_RemoveMultipleMembersFromAlias(struct pipes_struct *p,
 					      struct samr_RemoveMultipleMembersFromAlias *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6740,7 +6747,7 @@ NTSTATUS _samr_RemoveMultipleMembersFromAlias(struct pipes_struct *p,
 NTSTATUS _samr_SetBootKeyInformation(struct pipes_struct *p,
 				     struct samr_SetBootKeyInformation *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6750,7 +6757,7 @@ NTSTATUS _samr_SetBootKeyInformation(struct pipes_struct *p,
 NTSTATUS _samr_GetBootKeyInformation(struct pipes_struct *p,
 				     struct samr_GetBootKeyInformation *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -6760,6 +6767,6 @@ NTSTATUS _samr_GetBootKeyInformation(struct pipes_struct *p,
 NTSTATUS _samr_SetDsrmPassword(struct pipes_struct *p,
 			       struct samr_SetDsrmPassword *r)
 {
-	p->rng_fault_state = true;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_NOT_IMPLEMENTED;
 }

@@ -44,7 +44,7 @@ static bool api_PNP_Disconnect(struct pipes_struct *p)
 
 	r->out.result = _PNP_Disconnect(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_PNP_Connect(struct pipes_struct *p)
 
 	r->out.result = _PNP_Connect(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -197,7 +197,7 @@ static bool api_PNP_GetVersion(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetVersion(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -270,7 +270,7 @@ static bool api_PNP_GetGlobalState(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetGlobalState(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -343,7 +343,7 @@ static bool api_PNP_InitDetection(struct pipes_struct *p)
 
 	r->out.result = _PNP_InitDetection(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -416,7 +416,7 @@ static bool api_PNP_ReportLogOn(struct pipes_struct *p)
 
 	r->out.result = _PNP_ReportLogOn(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -489,7 +489,7 @@ static bool api_PNP_ValidateDeviceInstance(struct pipes_struct *p)
 
 	r->out.result = _PNP_ValidateDeviceInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -562,7 +562,7 @@ static bool api_PNP_GetRootDeviceInstance(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetRootDeviceInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -635,7 +635,7 @@ static bool api_PNP_GetRelatedDeviceInstance(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetRelatedDeviceInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -708,7 +708,7 @@ static bool api_PNP_EnumerateSubKeys(struct pipes_struct *p)
 
 	r->out.result = _PNP_EnumerateSubKeys(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -789,7 +789,7 @@ static bool api_PNP_GetDeviceList(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetDeviceList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -869,7 +869,7 @@ static bool api_PNP_GetDeviceListSize(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetDeviceListSize(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -942,7 +942,7 @@ static bool api_PNP_GetDepth(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetDepth(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1025,7 +1025,7 @@ static bool api_PNP_GetDeviceRegProp(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetDeviceRegProp(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1098,7 +1098,7 @@ static bool api_PNP_SetDeviceRegProp(struct pipes_struct *p)
 
 	r->out.result = _PNP_SetDeviceRegProp(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1171,7 +1171,7 @@ static bool api_PNP_GetClassInstance(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetClassInstance(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1244,7 +1244,7 @@ static bool api_PNP_CreateKey(struct pipes_struct *p)
 
 	r->out.result = _PNP_CreateKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1317,7 +1317,7 @@ static bool api_PNP_DeleteRegistryKey(struct pipes_struct *p)
 
 	r->out.result = _PNP_DeleteRegistryKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1390,7 +1390,7 @@ static bool api_PNP_GetClassCount(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetClassCount(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1463,7 +1463,7 @@ static bool api_PNP_GetClassName(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetClassName(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1536,7 +1536,7 @@ static bool api_PNP_DeleteClassKey(struct pipes_struct *p)
 
 	r->out.result = _PNP_DeleteClassKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1609,7 +1609,7 @@ static bool api_PNP_GetInterfaceDeviceAlias(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetInterfaceDeviceAlias(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1682,7 +1682,7 @@ static bool api_PNP_GetInterfaceDeviceList(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetInterfaceDeviceList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1755,7 +1755,7 @@ static bool api_PNP_GetInterfaceDeviceListSize(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetInterfaceDeviceListSize(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1828,7 +1828,7 @@ static bool api_PNP_RegisterDeviceClassAssociation(struct pipes_struct *p)
 
 	r->out.result = _PNP_RegisterDeviceClassAssociation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1901,7 +1901,7 @@ static bool api_PNP_UnregisterDeviceClassAssociation(struct pipes_struct *p)
 
 	r->out.result = _PNP_UnregisterDeviceClassAssociation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1974,7 +1974,7 @@ static bool api_PNP_GetClassRegProp(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetClassRegProp(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2047,7 +2047,7 @@ static bool api_PNP_SetClassRegProp(struct pipes_struct *p)
 
 	r->out.result = _PNP_SetClassRegProp(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2120,7 +2120,7 @@ static bool api_PNP_CreateDevInst(struct pipes_struct *p)
 
 	r->out.result = _PNP_CreateDevInst(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2193,7 +2193,7 @@ static bool api_PNP_DeviceInstanceAction(struct pipes_struct *p)
 
 	r->out.result = _PNP_DeviceInstanceAction(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2266,7 +2266,7 @@ static bool api_PNP_GetDeviceStatus(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetDeviceStatus(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2339,7 +2339,7 @@ static bool api_PNP_SetDeviceProblem(struct pipes_struct *p)
 
 	r->out.result = _PNP_SetDeviceProblem(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2412,7 +2412,7 @@ static bool api_PNP_DisableDevInst(struct pipes_struct *p)
 
 	r->out.result = _PNP_DisableDevInst(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2485,7 +2485,7 @@ static bool api_PNP_UninstallDevInst(struct pipes_struct *p)
 
 	r->out.result = _PNP_UninstallDevInst(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2558,7 +2558,7 @@ static bool api_PNP_AddID(struct pipes_struct *p)
 
 	r->out.result = _PNP_AddID(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2631,7 +2631,7 @@ static bool api_PNP_RegisterDriver(struct pipes_struct *p)
 
 	r->out.result = _PNP_RegisterDriver(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2704,7 +2704,7 @@ static bool api_PNP_QueryRemove(struct pipes_struct *p)
 
 	r->out.result = _PNP_QueryRemove(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2777,7 +2777,7 @@ static bool api_PNP_RequestDeviceEject(struct pipes_struct *p)
 
 	r->out.result = _PNP_RequestDeviceEject(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2850,7 +2850,7 @@ static bool api_PNP_IsDockStationPresent(struct pipes_struct *p)
 
 	r->out.result = _PNP_IsDockStationPresent(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -2923,7 +2923,7 @@ static bool api_PNP_RequestEjectPC(struct pipes_struct *p)
 
 	r->out.result = _PNP_RequestEjectPC(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3005,7 +3005,7 @@ static bool api_PNP_HwProfFlags(struct pipes_struct *p)
 
 	r->out.result = _PNP_HwProfFlags(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3080,7 +3080,7 @@ static bool api_PNP_GetHwProfInfo(struct pipes_struct *p)
 	r->out.info = r->in.info;
 	r->out.result = _PNP_GetHwProfInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3153,7 +3153,7 @@ static bool api_PNP_AddEmptyLogConf(struct pipes_struct *p)
 
 	r->out.result = _PNP_AddEmptyLogConf(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3226,7 +3226,7 @@ static bool api_PNP_FreeLogConf(struct pipes_struct *p)
 
 	r->out.result = _PNP_FreeLogConf(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3299,7 +3299,7 @@ static bool api_PNP_GetFirstLogConf(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetFirstLogConf(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3372,7 +3372,7 @@ static bool api_PNP_GetNextLogConf(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetNextLogConf(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3445,7 +3445,7 @@ static bool api_PNP_GetLogConfPriority(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetLogConfPriority(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3518,7 +3518,7 @@ static bool api_PNP_AddResDes(struct pipes_struct *p)
 
 	r->out.result = _PNP_AddResDes(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3591,7 +3591,7 @@ static bool api_PNP_FreeResDes(struct pipes_struct *p)
 
 	r->out.result = _PNP_FreeResDes(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3664,7 +3664,7 @@ static bool api_PNP_GetNextResDes(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetNextResDes(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3737,7 +3737,7 @@ static bool api_PNP_GetResDesData(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetResDesData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3810,7 +3810,7 @@ static bool api_PNP_GetResDesDataSize(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetResDesDataSize(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3883,7 +3883,7 @@ static bool api_PNP_ModifyResDes(struct pipes_struct *p)
 
 	r->out.result = _PNP_ModifyResDes(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -3956,7 +3956,7 @@ static bool api_PNP_DetectResourceLimit(struct pipes_struct *p)
 
 	r->out.result = _PNP_DetectResourceLimit(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4029,7 +4029,7 @@ static bool api_PNP_QueryResConfList(struct pipes_struct *p)
 
 	r->out.result = _PNP_QueryResConfList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4102,7 +4102,7 @@ static bool api_PNP_SetHwProf(struct pipes_struct *p)
 
 	r->out.result = _PNP_SetHwProf(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4175,7 +4175,7 @@ static bool api_PNP_QueryArbitratorFreeData(struct pipes_struct *p)
 
 	r->out.result = _PNP_QueryArbitratorFreeData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4248,7 +4248,7 @@ static bool api_PNP_QueryArbitratorFreeSize(struct pipes_struct *p)
 
 	r->out.result = _PNP_QueryArbitratorFreeSize(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4321,7 +4321,7 @@ static bool api_PNP_RunDetection(struct pipes_struct *p)
 
 	r->out.result = _PNP_RunDetection(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4394,7 +4394,7 @@ static bool api_PNP_RegisterNotification(struct pipes_struct *p)
 
 	r->out.result = _PNP_RegisterNotification(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4467,7 +4467,7 @@ static bool api_PNP_UnregisterNotification(struct pipes_struct *p)
 
 	r->out.result = _PNP_UnregisterNotification(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4540,7 +4540,7 @@ static bool api_PNP_GetCustomDevProp(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetCustomDevProp(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4613,7 +4613,7 @@ static bool api_PNP_GetVersionInternal(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetVersionInternal(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4686,7 +4686,7 @@ static bool api_PNP_GetBlockedDriverInfo(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetBlockedDriverInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -4759,7 +4759,7 @@ static bool api_PNP_GetServerSideDeviceInstallFlags(struct pipes_struct *p)
 
 	r->out.result = _PNP_GetServerSideDeviceInstallFlags(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

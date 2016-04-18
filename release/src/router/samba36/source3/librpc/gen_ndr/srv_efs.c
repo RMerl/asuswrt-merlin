@@ -51,7 +51,7 @@ static bool api_EfsRpcOpenFileRaw(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcOpenFileRaw(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -124,7 +124,7 @@ static bool api_EfsRpcReadFileRaw(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcReadFileRaw(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -197,7 +197,7 @@ static bool api_EfsRpcWriteFileRaw(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcWriteFileRaw(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -272,7 +272,7 @@ static bool api_EfsRpcCloseRaw(struct pipes_struct *p)
 	r->out.pvContext = r->in.pvContext;
 	_EfsRpcCloseRaw(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -345,7 +345,7 @@ static bool api_EfsRpcEncryptFileSrv(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcEncryptFileSrv(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -418,7 +418,7 @@ static bool api_EfsRpcDecryptFileSrv(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcDecryptFileSrv(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -498,7 +498,7 @@ static bool api_EfsRpcQueryUsersOnFile(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcQueryUsersOnFile(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -578,7 +578,7 @@ static bool api_EfsRpcQueryRecoveryAgents(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcQueryRecoveryAgents(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -651,7 +651,7 @@ static bool api_EfsRpcRemoveUsersFromFile(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcRemoveUsersFromFile(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -724,7 +724,7 @@ static bool api_EfsRpcAddUsersToFile(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcAddUsersToFile(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -797,7 +797,7 @@ static bool api_EfsRpcSetFileEncryptionKey(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcSetFileEncryptionKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -870,7 +870,7 @@ static bool api_EfsRpcNotSupported(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcNotSupported(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -943,7 +943,7 @@ static bool api_EfsRpcFileKeyInfo(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcFileKeyInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1016,7 +1016,7 @@ static bool api_EfsRpcDuplicateEncryptionInfoFile(struct pipes_struct *p)
 
 	r->out.result = _EfsRpcDuplicateEncryptionInfoFile(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -23,6 +23,7 @@
 #include "smbd/smbd.h"
 #include "smbd/globals.h"
 #include "libcli/security/security.h"
+#include "lib/util/bitmap.h"
 
 /*
    This module implements directory related functions for Samba.

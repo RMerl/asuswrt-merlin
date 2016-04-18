@@ -18,3 +18,5 @@ samba3.posix_s3.nbt.dgram.*netlogon2
 samba3.*rap.sam.*.useradd # Not provided by Samba 3
 samba3.*rap.sam.*.userdelete # Not provided by Samba 3
 samba3.*rap.basic.*.netsessiongetinfo # Not provided by Samba 3
+samba3.blackbox.rpcclient.over.ncacn_np.with.*connect.* # we don't allow auth_level_connect anymore
+samba3.posix_s3.rpc.lsa.lookupsids.*ncacn_ip_tcp.*connect.* # we don't allow auth_level_connect anymore

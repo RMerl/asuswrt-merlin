@@ -61,15 +61,6 @@ const char *audit_description_str(uint32 category);
 bool get_audit_category_from_param(const char *param, uint32 *audit_category);
 const char *audit_policy_str(TALLOC_CTX *mem_ctx, uint32 policy);
 
-/* The following definitions come from lib/bitmap.c  */
-
-struct bitmap *bitmap_talloc(TALLOC_CTX *mem_ctx, int n);
-int bitmap_copy(struct bitmap * const dst, const struct bitmap * const src);
-bool bitmap_set(struct bitmap *bm, unsigned i);
-bool bitmap_clear(struct bitmap *bm, unsigned i);
-bool bitmap_query(struct bitmap *bm, unsigned i);
-int bitmap_find(struct bitmap *bm, unsigned ofs);
-
 /* The following definitions come from lib/charcnv.c  */
 
 char lp_failed_convert_char(void);
@@ -1269,6 +1260,7 @@ NTSTATUS ntlmssp_set_password(struct ntlmssp_state *ntlmssp_state, const char *p
 NTSTATUS ntlmssp_set_domain(struct ntlmssp_state *ntlmssp_state, const char *domain) ;
 void ntlmssp_want_feature_list(struct ntlmssp_state *ntlmssp_state, char *feature_list);
 void ntlmssp_want_feature(struct ntlmssp_state *ntlmssp_state, uint32_t feature);
+bool ntlmssp_have_feature(struct ntlmssp_state *ntlmssp_state, uint32_t feature);
 NTSTATUS ntlmssp_update(struct ntlmssp_state *ntlmssp_state,
 			const DATA_BLOB in, DATA_BLOB *out) ;
 NTSTATUS ntlmssp_server_start(TALLOC_CTX *mem_ctx,
@@ -1498,6 +1490,7 @@ bool lp_map_untrusted_to_domain(void);
 int lp_restrict_anonymous(void);
 bool lp_lanman_auth(void);
 bool lp_ntlm_auth(void);
+bool lp_raw_ntlmv2_auth(void);
 bool lp_client_plaintext_auth(void);
 bool lp_client_lanman_auth(void);
 bool lp_client_ntlmv2_auth(void);
@@ -1697,9 +1690,11 @@ int lp_winbind_cache_time(void);
 int lp_winbind_reconnect_delay(void);
 int lp_winbind_max_clients(void);
 const char **lp_winbind_nss_info(void);
+bool lp_winbind_sealed_pipes(void);
 int lp_algorithmic_rid_base(void);
 int lp_name_cache_timeout(void);
 int lp_client_signing(void);
+int lp_client_ipc_signing(void);
 int lp_server_signing(void);
 int lp_client_ldap_sasl_wrapping(void);
 char *lp_parm_talloc_string(int snum, const char *type, const char *option, const char *def);
@@ -1826,6 +1821,7 @@ char* lp_perfcount_module(void);
 void lp_set_passdb_backend(const char *backend);
 void widelinks_warning(int snum);
 char *lp_ncalrpc_dir(void);
+bool lp_allow_dcerpc_auth_level_connect(void);
 
 /* The following definitions come from param/loadparm_server_role.c  */
 

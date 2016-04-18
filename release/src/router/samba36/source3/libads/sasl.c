@@ -261,6 +261,37 @@ static ADS_STATUS ads_sasl_spnego_ntlmssp_bind(ADS_STRUCT *ads)
 	/* we have a reference conter on ntlmssp_state, if we are signing
 	   then the state will be kept by the signing engine */
 
+	if (ads->ldap.wrap_type >= ADS_SASLWRAP_TYPE_SEAL) {
+		bool ok;
+
+		ok = ntlmssp_have_feature(ntlmssp_state,
+					  NTLMSSP_FEATURE_SEAL);
+		if (!ok) {
+			DEBUG(0,("The ntlmssp feature sealing request, but unavailable\n"));
+			TALLOC_FREE(ntlmssp_state);
+			return ADS_ERROR_NT(NT_STATUS_INVALID_NETWORK_RESPONSE);
+		}
+
+		ok = ntlmssp_have_feature(ntlmssp_state,
+					  NTLMSSP_FEATURE_SIGN);
+		if (!ok) {
+			DEBUG(0,("The ntlmssp feature signing request, but unavailable\n"));
+			TALLOC_FREE(ntlmssp_state);
+			return ADS_ERROR_NT(NT_STATUS_INVALID_NETWORK_RESPONSE);
+		}
+
+	} else if (ads->ldap.wrap_type >= ADS_SASLWRAP_TYPE_SIGN) {
+		bool ok;
+
+		ok = ntlmssp_have_feature(ntlmssp_state,
+					  NTLMSSP_FEATURE_SIGN);
+		if (!ok) {
+			DEBUG(0,("The gensec feature signing request, but unavailable\n"));
+			TALLOC_FREE(ntlmssp_state);
+			return ADS_ERROR_NT(NT_STATUS_INVALID_NETWORK_RESPONSE);
+		}
+	}
+
 	if (ads->ldap.wrap_type > ADS_SASLWRAP_TYPE_PLAIN) {
 		ads->ldap.out.max_unwrapped = ADS_SASL_WRAPPING_OUT_MAX_WRAPPED - NTLMSSP_SIG_SIZE;
 		ads->ldap.out.sig_size = NTLMSSP_SIG_SIZE;

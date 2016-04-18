@@ -1045,6 +1045,10 @@ out_free:
 		binding->transport = NCACN_NP;
 	}
 
+	if (binding->flags & DCERPC_CONNECT) {
+		pipe_default_auth_level = DCERPC_AUTH_LEVEL_CONNECT;
+		pipe_default_auth_type = DCERPC_AUTH_TYPE_NTLMSSP;
+	}
 	if (binding->flags & DCERPC_SIGN) {
 		pipe_default_auth_level = DCERPC_AUTH_LEVEL_INTEGRITY;
 		pipe_default_auth_type = DCERPC_AUTH_TYPE_NTLMSSP;
@@ -1058,12 +1062,6 @@ out_free:
 		pipe_default_auth_spnego_type = PIPE_AUTH_TYPE_SPNEGO_NTLMSSP;
 	}
 	if (binding->flags & DCERPC_AUTH_NTLM) {
-		/* If neither Integrity or Privacy are requested then
-		 * Use just Connect level */
-		if (pipe_default_auth_level == DCERPC_AUTH_LEVEL_NONE) {
-			pipe_default_auth_level = DCERPC_AUTH_LEVEL_CONNECT;
-		}
-
 		if (pipe_default_auth_type == DCERPC_AUTH_TYPE_SPNEGO) {
 			pipe_default_auth_spnego_type = PIPE_AUTH_TYPE_SPNEGO_NTLMSSP;
 		} else {
@@ -1071,16 +1069,16 @@ out_free:
 		}
 	}
 	if (binding->flags & DCERPC_AUTH_KRB5) {
-		/* If neither Integrity or Privacy are requested then
-		 * Use just Connect level */
-		if (pipe_default_auth_level == DCERPC_AUTH_LEVEL_NONE) {
-			pipe_default_auth_level = DCERPC_AUTH_LEVEL_CONNECT;
-		}
-
 		if (pipe_default_auth_type == DCERPC_AUTH_TYPE_SPNEGO) {
 			pipe_default_auth_spnego_type = PIPE_AUTH_TYPE_SPNEGO_KRB5;
 		} else {
 			pipe_default_auth_type = DCERPC_AUTH_TYPE_KRB5;
+		}
+	}
+	if (pipe_default_auth_type != DCERPC_AUTH_TYPE_NONE) {
+		/* If nothing is requested then default to integrity */
+		if (pipe_default_auth_level == DCERPC_AUTH_LEVEL_NONE) {
+			pipe_default_auth_level = DCERPC_AUTH_LEVEL_INTEGRITY;
 		}
 	}
 

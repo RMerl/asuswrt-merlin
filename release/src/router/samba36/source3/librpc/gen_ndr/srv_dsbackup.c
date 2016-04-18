@@ -44,7 +44,7 @@ static bool api_HrRBackupPrepare(struct pipes_struct *p)
 
 	_HrRBackupPrepare(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_HrRBackupEnd(struct pipes_struct *p)
 
 	_HrRBackupEnd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_HrRBackupGetAttachmentInformation(struct pipes_struct *p)
 
 	_HrRBackupGetAttachmentInformation(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_HrRBackupOpenFile(struct pipes_struct *p)
 
 	_HrRBackupOpenFile(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -336,7 +336,7 @@ static bool api_HrRBackupRead(struct pipes_struct *p)
 
 	_HrRBackupRead(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -409,7 +409,7 @@ static bool api_HrRBackupClose(struct pipes_struct *p)
 
 	_HrRBackupClose(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -482,7 +482,7 @@ static bool api_HrRBackupGetBackupLogs(struct pipes_struct *p)
 
 	_HrRBackupGetBackupLogs(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -555,7 +555,7 @@ static bool api_HrRBackupTruncateLogs(struct pipes_struct *p)
 
 	_HrRBackupTruncateLogs(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -628,7 +628,7 @@ static bool api_HrRBackupPing(struct pipes_struct *p)
 
 	_HrRBackupPing(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -731,7 +731,7 @@ static bool api_HrRIsNTDSOnline(struct pipes_struct *p)
 
 	_HrRIsNTDSOnline(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -804,7 +804,7 @@ static bool api_HrRRestorePrepare(struct pipes_struct *p)
 
 	_HrRRestorePrepare(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -877,7 +877,7 @@ static bool api_HrRRestoreRegister(struct pipes_struct *p)
 
 	_HrRRestoreRegister(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -950,7 +950,7 @@ static bool api_HrRRestoreRegisterComplete(struct pipes_struct *p)
 
 	_HrRRestoreRegisterComplete(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1023,7 +1023,7 @@ static bool api_HrRRestoreGetDatabaseLocations(struct pipes_struct *p)
 
 	_HrRRestoreGetDatabaseLocations(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1096,7 +1096,7 @@ static bool api_HrRRestoreEnd(struct pipes_struct *p)
 
 	_HrRRestoreEnd(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1169,7 +1169,7 @@ static bool api_HrRRestoreSetCurrentLogNumber(struct pipes_struct *p)
 
 	_HrRRestoreSetCurrentLogNumber(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1242,7 +1242,7 @@ static bool api_HrRRestoreCheckLogsForBackup(struct pipes_struct *p)
 
 	_HrRRestoreCheckLogsForBackup(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

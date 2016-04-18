@@ -39,6 +39,7 @@ struct rpc_pipe_client {
 
 	struct ndr_syntax_id abstract_syntax;
 	struct ndr_syntax_id transfer_syntax;
+	bool verified_pcontext;
 
 	char *desthost;
 	char *srv_name_slash;

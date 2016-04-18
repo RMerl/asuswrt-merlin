@@ -87,13 +87,13 @@ void _echo_SourceData(struct pipes_struct *p, struct echo_SourceData *r)
 
 void _echo_TestCall(struct pipes_struct *p, struct echo_TestCall *r)
 {
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return;
 }
 
 NTSTATUS _echo_TestCall2(struct pipes_struct *p, struct echo_TestCall2 *r)
 {
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return NT_STATUS_OK;
 }
 
@@ -105,18 +105,18 @@ uint32 _echo_TestSleep(struct pipes_struct *p, struct echo_TestSleep *r)
 
 void _echo_TestEnum(struct pipes_struct *p, struct echo_TestEnum *r)
 {
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return;
 }
 
 void _echo_TestSurrounding(struct pipes_struct *p, struct echo_TestSurrounding *r)
 {
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return;
 }
 
 uint16 _echo_TestDoublePointer(struct pipes_struct *p, struct echo_TestDoublePointer *r)
 {
-	p->rng_fault_state = True;
+	p->fault_state = DCERPC_FAULT_OP_RNG_ERROR;
 	return 0;
 }

@@ -83,6 +83,7 @@ struct ntlmssp_state
 	DATA_BLOB nt_resp;
 	DATA_BLOB session_key;
 
+	uint32_t required_flags;
 	uint32_t neg_flags; /* the current state of negotiation with the NTLMSSP partner */
 
 	/**

@@ -6,7 +6,7 @@ SAMBA4_BINARIES="smbtorture,ndrdump"
 samba4-configure:
 	@(cd .. && \
 		CFLAGS='' $(WAF) reconfigure || \
-		CFLAGS='' $(WAF) configure --enable-socket-wrapper --enable-nss-wrapper --enable-uid-wrapper --nonshared-binary=$(SAMBA4_BINARIES) --enable-auto-reconfigure )
+		CFLAGS='' $(WAF) configure --enable-socket-wrapper --enable-nss-wrapper --enable-uid-wrapper --nonshared-binary=$(SAMBA4_BINARIES) --enable-auto-reconfigure --bundled-libraries=ALL --disable-gnutls )
 
 .PHONY: samba4-configure
 

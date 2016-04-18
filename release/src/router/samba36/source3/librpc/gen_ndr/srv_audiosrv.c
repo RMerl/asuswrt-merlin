@@ -44,7 +44,7 @@ static bool api_audiosrv_CreatezoneFactoriesList(struct pipes_struct *p)
 
 	_audiosrv_CreatezoneFactoriesList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_audiosrv_CreateGfxFactoriesList(struct pipes_struct *p)
 
 	_audiosrv_CreateGfxFactoriesList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_audiosrv_CreateGfxList(struct pipes_struct *p)
 
 	_audiosrv_CreateGfxList(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_audiosrv_RemoveGfx(struct pipes_struct *p)
 
 	_audiosrv_RemoveGfx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -336,7 +336,7 @@ static bool api_audiosrv_AddGfx(struct pipes_struct *p)
 
 	_audiosrv_AddGfx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -409,7 +409,7 @@ static bool api_audiosrv_ModifyGfx(struct pipes_struct *p)
 
 	_audiosrv_ModifyGfx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -482,7 +482,7 @@ static bool api_audiosrv_OpenGfx(struct pipes_struct *p)
 
 	_audiosrv_OpenGfx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -555,7 +555,7 @@ static bool api_audiosrv_Logon(struct pipes_struct *p)
 
 	_audiosrv_Logon(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -628,7 +628,7 @@ static bool api_audiosrv_Logoff(struct pipes_struct *p)
 
 	_audiosrv_Logoff(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -701,7 +701,7 @@ static bool api_audiosrv_RegisterSessionNotificationEvent(struct pipes_struct *p
 
 	_audiosrv_RegisterSessionNotificationEvent(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -774,7 +774,7 @@ static bool api_audiosrv_UnregisterSessionNotificationEvent(struct pipes_struct 
 
 	_audiosrv_UnregisterSessionNotificationEvent(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -847,7 +847,7 @@ static bool api_audiosrv_SessionConnectState(struct pipes_struct *p)
 
 	_audiosrv_SessionConnectState(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -920,7 +920,7 @@ static bool api_audiosrv_DriverOpenDrvRegKey(struct pipes_struct *p)
 
 	_audiosrv_DriverOpenDrvRegKey(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -993,7 +993,7 @@ static bool api_audiosrv_AdvisePreferredDeviceChange(struct pipes_struct *p)
 
 	_audiosrv_AdvisePreferredDeviceChange(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1066,7 +1066,7 @@ static bool api_audiosrv_GetPnpInfo(struct pipes_struct *p)
 
 	_audiosrv_GetPnpInfo(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -7938,8 +7938,8 @@ static bool test_Connect(struct dcerpc_binding_handle *b,
 }
 
 
-static bool test_samr_ValidatePassword(struct dcerpc_pipe *p,
-				       struct torture_context *tctx)
+static bool test_samr_ValidatePassword(struct torture_context *tctx,
+				       struct dcerpc_pipe *p)
 {
 	struct samr_ValidatePassword r;
 	union samr_ValidatePasswordReq req;
@@ -7950,6 +7950,10 @@ static bool test_samr_ValidatePassword(struct dcerpc_pipe *p,
 	struct dcerpc_binding_handle *b = p->binding_handle;
 
 	torture_comment(tctx, "Testing samr_ValidatePassword\n");
+
+	if (p->conn->transport.transport != NCACN_IP_TCP) {
+		torture_comment(tctx, "samr_ValidatePassword only should succeed over NCACN_IP_TCP!\n");
+	}
 
 	ZERO_STRUCT(r);
 	r.in.level = NetValidatePasswordReset;
@@ -8073,8 +8077,6 @@ bool torture_rpc_samr_passwords(struct torture_context *torture)
 	ret &= test_EnumDomains(p, torture, ctx);
 
 	ret &= test_samr_handle_Close(b, torture, &ctx->handle);
-
-	ret &= test_samr_ValidatePassword(p, torture);
 
 	return ret;
 }
@@ -8370,4 +8372,15 @@ struct torture_suite *torture_rpc_samr_passwords_lockout(TALLOC_CTX *mem_ctx)
 	return suite;
 }
 
+struct torture_suite *torture_rpc_samr_passwords_validate(TALLOC_CTX *mem_ctx)
+{
+	struct torture_suite *suite = torture_suite_create(mem_ctx, "samr.passwords.validate");
+	struct torture_rpc_tcase *tcase;
 
+	tcase = torture_suite_add_rpc_iface_tcase(suite, "samr",
+						  &ndr_table_samr);
+	torture_rpc_tcase_add_test(tcase, "validate",
+				   test_samr_ValidatePassword);
+
+	return suite;
+}

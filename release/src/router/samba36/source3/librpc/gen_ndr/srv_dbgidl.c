@@ -44,7 +44,7 @@ static bool api_dummy_dbgidl(struct pipes_struct *p)
 
 	_dummy_dbgidl(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

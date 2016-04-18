@@ -51,7 +51,7 @@ static bool api_echo_AddOne(struct pipes_struct *p)
 
 	_echo_AddOne(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -131,7 +131,7 @@ static bool api_echo_EchoData(struct pipes_struct *p)
 
 	_echo_EchoData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -204,7 +204,7 @@ static bool api_echo_SinkData(struct pipes_struct *p)
 
 	_echo_SinkData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -284,7 +284,7 @@ static bool api_echo_SourceData(struct pipes_struct *p)
 
 	_echo_SourceData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -364,7 +364,7 @@ static bool api_echo_TestCall(struct pipes_struct *p)
 
 	_echo_TestCall(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -444,7 +444,7 @@ static bool api_echo_TestCall2(struct pipes_struct *p)
 
 	r->out.result = _echo_TestCall2(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -517,7 +517,7 @@ static bool api_echo_TestSleep(struct pipes_struct *p)
 
 	r->out.result = _echo_TestSleep(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -594,7 +594,7 @@ static bool api_echo_TestEnum(struct pipes_struct *p)
 	r->out.foo3 = r->in.foo3;
 	_echo_TestEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -669,7 +669,7 @@ static bool api_echo_TestSurrounding(struct pipes_struct *p)
 	r->out.data = r->in.data;
 	_echo_TestSurrounding(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -742,7 +742,7 @@ static bool api_echo_TestDoublePointer(struct pipes_struct *p)
 
 	r->out.result = _echo_TestDoublePointer(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -21,6 +21,8 @@
 
 #include "includes.h"
 #include "smbd/smbd.h"
+#include "smbd/globals.h"
+#include "../libcli/security/security.h"
 #include "system/filesys.h"
 #include "ntioctl.h"
 
@@ -764,6 +766,43 @@ static int shadow_copy2_mkdir(vfs_handle_struct *handle,  const char *fname, mod
         SHADOW2_NEXT(MKDIR, (handle, name, mode), int, -1);
 }
 
+static bool check_access_snapdir(struct vfs_handle_struct *handle,
+				const char *path)
+{
+	struct smb_filename smb_fname;
+	int ret;
+	NTSTATUS status;
+	uint32_t access_granted = 0;
+
+	ZERO_STRUCT(smb_fname);
+	smb_fname.base_name = talloc_asprintf(talloc_tos(),
+						"%s",
+						path);
+	if (smb_fname.base_name == NULL) {
+		return false;
+	}
+
+	ret = SMB_VFS_NEXT_STAT(handle, &smb_fname);
+	if (ret != 0 || !S_ISDIR(smb_fname.st.st_ex_mode)) {
+		TALLOC_FREE(smb_fname.base_name);
+		return false;
+	}
+
+	status = smbd_check_open_rights(handle->conn,
+					&smb_fname,
+					SEC_DIR_LIST,
+					&access_granted);
+	if (!NT_STATUS_IS_OK(status)) {
+		DEBUG(0,("user does not have list permission "
+			"on snapdir %s\n",
+			smb_fname.base_name));
+		TALLOC_FREE(smb_fname.base_name);
+		return false;
+	}
+	TALLOC_FREE(smb_fname.base_name);
+	return true;
+}
+
 static int shadow_copy2_rmdir(vfs_handle_struct *handle,  const char *fname)
 {
         SHADOW2_NEXT(RMDIR, (handle, name), int, -1);
@@ -877,12 +916,20 @@ static int shadow_copy2_get_shadow_copy2_data(vfs_handle_struct *handle,
 	SMB_STRUCT_DIRENT *d;
 	TALLOC_CTX *tmp_ctx = talloc_new(handle->data);
 	char *snapshot;
+	bool ret;
 
 	snapdir = shadow_copy2_find_snapdir(tmp_ctx, handle);
 	if (snapdir == NULL) {
 		DEBUG(0,("shadow:snapdir not found for %s in get_shadow_copy_data\n",
 			 handle->conn->connectpath));
 		errno = EINVAL;
+		talloc_free(tmp_ctx);
+		return -1;
+	}
+	ret = check_access_snapdir(handle, snapdir);
+	if (!ret) {
+		DEBUG(0,("access denied on listing snapdir %s\n", snapdir));
+		errno = EACCES;
 		talloc_free(tmp_ctx);
 		return -1;
 	}

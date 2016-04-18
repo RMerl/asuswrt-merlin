@@ -44,7 +44,7 @@ static bool api_BrowserrServerEnum(struct pipes_struct *p)
 
 	_BrowserrServerEnum(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_BrowserrDebugCall(struct pipes_struct *p)
 
 	_BrowserrDebugCall(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -198,7 +198,7 @@ static bool api_BrowserrQueryOtherDomains(struct pipes_struct *p)
 
 	r->out.result = _BrowserrQueryOtherDomains(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -271,7 +271,7 @@ static bool api_BrowserrResetNetlogonState(struct pipes_struct *p)
 
 	_BrowserrResetNetlogonState(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -344,7 +344,7 @@ static bool api_BrowserrDebugTrace(struct pipes_struct *p)
 
 	_BrowserrDebugTrace(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -417,7 +417,7 @@ static bool api_BrowserrQueryStatistics(struct pipes_struct *p)
 
 	_BrowserrQueryStatistics(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -490,7 +490,7 @@ static bool api_BrowserResetStatistics(struct pipes_struct *p)
 
 	_BrowserResetStatistics(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -563,7 +563,7 @@ static bool api_NetrBrowserStatisticsClear(struct pipes_struct *p)
 
 	_NetrBrowserStatisticsClear(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -636,7 +636,7 @@ static bool api_NetrBrowserStatisticsGet(struct pipes_struct *p)
 
 	_NetrBrowserStatisticsGet(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -709,7 +709,7 @@ static bool api_BrowserrSetNetlogonState(struct pipes_struct *p)
 
 	_BrowserrSetNetlogonState(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -782,7 +782,7 @@ static bool api_BrowserrQueryEmulatedDomains(struct pipes_struct *p)
 
 	_BrowserrQueryEmulatedDomains(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -855,7 +855,7 @@ static bool api_BrowserrServerEnumEx(struct pipes_struct *p)
 
 	_BrowserrServerEnumEx(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

@@ -44,7 +44,7 @@ static bool api_wzcsvc_EnumInterfaces(struct pipes_struct *p)
 
 	_wzcsvc_EnumInterfaces(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -117,7 +117,7 @@ static bool api_wzcsvc_QueryInterface(struct pipes_struct *p)
 
 	_wzcsvc_QueryInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -190,7 +190,7 @@ static bool api_wzcsvc_SetInterface(struct pipes_struct *p)
 
 	_wzcsvc_SetInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -263,7 +263,7 @@ static bool api_wzcsvc_RefreshInterface(struct pipes_struct *p)
 
 	_wzcsvc_RefreshInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -336,7 +336,7 @@ static bool api_wzcsvc_QueryContext(struct pipes_struct *p)
 
 	_wzcsvc_QueryContext(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -409,7 +409,7 @@ static bool api_wzcsvc_SetContext(struct pipes_struct *p)
 
 	_wzcsvc_SetContext(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -482,7 +482,7 @@ static bool api_wzcsvc_EapolUIResponse(struct pipes_struct *p)
 
 	_wzcsvc_EapolUIResponse(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -555,7 +555,7 @@ static bool api_wzcsvc_EapolGetCustomAuthData(struct pipes_struct *p)
 
 	_wzcsvc_EapolGetCustomAuthData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -628,7 +628,7 @@ static bool api_wzcsvc_EapolSetCustomAuthData(struct pipes_struct *p)
 
 	_wzcsvc_EapolSetCustomAuthData(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -701,7 +701,7 @@ static bool api_wzcsvc_EapolGetInterfaceParams(struct pipes_struct *p)
 
 	_wzcsvc_EapolGetInterfaceParams(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -774,7 +774,7 @@ static bool api_wzcsvc_EapolSetInterfaceParams(struct pipes_struct *p)
 
 	_wzcsvc_EapolSetInterfaceParams(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -847,7 +847,7 @@ static bool api_wzcsvc_EapolReAuthenticateInterface(struct pipes_struct *p)
 
 	_wzcsvc_EapolReAuthenticateInterface(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -920,7 +920,7 @@ static bool api_wzcsvc_EapolQueryInterfaceState(struct pipes_struct *p)
 
 	_wzcsvc_EapolQueryInterfaceState(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -993,7 +993,7 @@ static bool api_wzcsvc_OpenWZCDbLogSession(struct pipes_struct *p)
 
 	_wzcsvc_OpenWZCDbLogSession(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1066,7 +1066,7 @@ static bool api_wzcsvc_CloseWZCDbLogSession(struct pipes_struct *p)
 
 	_wzcsvc_CloseWZCDbLogSession(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1139,7 +1139,7 @@ static bool api_wzcsvc_EnumWZCDbLogRecords(struct pipes_struct *p)
 
 	_wzcsvc_EnumWZCDbLogRecords(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1212,7 +1212,7 @@ static bool api_wzcsvc_FlushWZCdbLog(struct pipes_struct *p)
 
 	_wzcsvc_FlushWZCdbLog(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;
@@ -1285,7 +1285,7 @@ static bool api_wzcsvc_GetWZCDbLogRecord(struct pipes_struct *p)
 
 	_wzcsvc_GetWZCDbLogRecord(p, r);
 
-	if (p->rng_fault_state) {
+	if (p->fault_state) {
 		talloc_free(r);
 		/* Return true here, srv_pipe_hnd.c will take care */
 		return true;

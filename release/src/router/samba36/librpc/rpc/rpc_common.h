@@ -158,12 +158,17 @@ uint8_t dcerpc_get_endian_flag(DATA_BLOB *blob);
 *
 * @return		- A NTSTATUS error code.
 */
-NTSTATUS dcerpc_pull_auth_trailer(struct ncacn_packet *pkt,
+NTSTATUS dcerpc_pull_auth_trailer(const struct ncacn_packet *pkt,
 				  TALLOC_CTX *mem_ctx,
-				  DATA_BLOB *pkt_trailer,
+				  const DATA_BLOB *pkt_trailer,
 				  struct dcerpc_auth *auth,
 				  uint32_t *auth_length,
 				  bool auth_data_only);
+NTSTATUS dcerpc_verify_ncacn_packet_header(const struct ncacn_packet *pkt,
+					   enum dcerpc_pkt_type ptype,
+					   size_t max_auth_info,
+					   uint8_t required_flags,
+					   uint8_t optional_flags);
 struct tevent_req *dcerpc_read_ncacn_packet_send(TALLOC_CTX *mem_ctx,
 						 struct tevent_context *ev,
 						 struct tstream_context *stream);
@@ -295,5 +300,46 @@ NTSTATUS dcerpc_binding_handle_call(struct dcerpc_binding_handle *h,
 				    uint32_t opnum,
 				    TALLOC_CTX *r_mem,
 				    void *r_ptr);
+
+/**
+ * Extract header information from a ncacn_packet
+ * as a dcerpc_sec_vt_header2 as used by the security verification trailer.
+ *
+ * @param[in] pkt a packet
+ *
+ * @return a dcerpc_sec_vt_header2
+ */
+struct dcerpc_sec_vt_header2 dcerpc_sec_vt_header2_from_ncacn_packet(const struct ncacn_packet *pkt);
+
+
+/**
+ * Test if two dcerpc_sec_vt_header2 structures are equal
+ * without consideration of reserved fields.
+ *
+ * @param v1 a pointer to a dcerpc_sec_vt_header2 structure
+ * @param v2 a pointer to a dcerpc_sec_vt_header2 structure
+ *
+ * @retval true if *v1 equals *v2
+ */
+bool dcerpc_sec_vt_header2_equal(const struct dcerpc_sec_vt_header2 *v1,
+				 const struct dcerpc_sec_vt_header2 *v2);
+
+/**
+ * Check for consistency of the security verification trailer with the PDU header.
+ * See <a href="http://msdn.microsoft.com/en-us/library/cc243559.aspx">MS-RPCE 2.2.2.13</a>.
+ * A check with an empty trailer succeeds.
+ *
+ * @param[in] vt a pointer to the security verification trailer.
+ * @param[in] bitmask1 which flags were negotiated on the connection.
+ * @param[in] pcontext the syntaxes negotiatied for the presentation context.
+ * @param[in] header2 some fields from the PDU header.
+ *
+ * @retval true on success.
+ */
+bool dcerpc_sec_verification_trailer_check(
+		const struct dcerpc_sec_verification_trailer *vt,
+		const uint32_t *bitmask1,
+		const struct dcerpc_sec_vt_pcontext *pcontext,
+		const struct dcerpc_sec_vt_header2 *header2);
 
 #endif /* __DEFAULT_LIBRPC_RPCCOMMON_H__ */
