@@ -365,7 +365,7 @@ NMP_DEBUG("check_nmp_db:\n");
 
 //NMP_DEBUG("search_list= %s\n", search_list);
         if(strstr(search_list, new_mac)==NULL)
-		return;
+		return ret;
 
         nvp = nv = search_list;
 
@@ -748,6 +748,7 @@ static int QuerymUPnPCInfo(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab, 
 		}
 		fclose(fp);
 	}
+	return 0;
 }
 #endif
 
@@ -1084,7 +1085,7 @@ int main(int argc, char *argv[])
 			while( ii < p_client_detail_info_tab->ip_mac_num)
 			{
 #ifdef RTCONFIG_BWDPI
-				printf(" %d.%d.%d.%d /%02X:%02X:%02X:%02X:%02X:%02X/%s/%s/%d/%d/%d/%s/%s/%s/%s\n",
+				printf(" %d.%d.%d.%d /%02X:%02X:%02X:%02X:%02X:%02X/%s/%s/%d/%d/%d/%d/%s/%s/%s/%s\n",
                                 p_client_detail_info_tab->ip_addr[ii][0],p_client_detail_info_tab->ip_addr[ii][1],
                                 p_client_detail_info_tab->ip_addr[ii][2],p_client_detail_info_tab->ip_addr[ii][3],
                                 p_client_detail_info_tab->mac_addr[ii][0],p_client_detail_info_tab->mac_addr[ii][1],
