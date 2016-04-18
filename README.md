@@ -34,4 +34,4 @@ No longer officially supported:
 
 Firmware builds can be downloaded from the official download site:
 
-http://asuswrt.lostrealm.ca/download
+https://asuswrt.lostrealm.ca/download
