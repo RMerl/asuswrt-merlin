@@ -409,6 +409,7 @@ static bool check_bind_req(struct pipes_struct *p,
 	context_fns->syntax = *abstract;
 
 	context_fns->allow_connect = lp_allow_dcerpc_auth_level_connect();
+#ifdef SAMR_SUPPORT
 	/*
 	 * for the samr and the lsarpc interfaces we don't allow "connect"
 	 * auth_level by default.
@@ -417,14 +418,19 @@ static bool check_bind_req(struct pipes_struct *p,
 	if (ok) {
 		context_fns->allow_connect = false;
 	}
+#endif
+#ifdef LSA_SUPPORT
 	ok = ndr_syntax_id_equal(abstract, &ndr_table_lsarpc.syntax_id);
 	if (ok) {
 		context_fns->allow_connect = false;
 	}
+#endif
+#ifdef NETLOGON_SUPPORT
 	ok = ndr_syntax_id_equal(abstract, &ndr_table_netlogon.syntax_id);
 	if (ok) {
 		context_fns->allow_connect = false;
 	}
+#endif
 	/*
 	 * for the epmapper and echo interfaces we allow "connect"
 	 * auth_level by default.
@@ -433,10 +439,12 @@ static bool check_bind_req(struct pipes_struct *p,
 	if (ok) {
 		context_fns->allow_connect = true;
 	}
+#ifdef DEVELOPER
 	ok = ndr_syntax_id_equal(abstract, &ndr_table_rpcecho.syntax_id);
 	if (ok) {
 		context_fns->allow_connect = true;
 	}
+#endif
 	/*
 	 * every interface can be modified to allow "connect" auth_level by
 	 * using a parametric option like:
@@ -983,7 +991,6 @@ static bool api_pipe_bind_req(struct pipes_struct *p,
 	if (!NT_STATUS_IS_OK(status)) {
 		DEBUG(1, ("api_pipe_bind_req: invalid pdu: %s\n",
 			  nt_errstr(status)));
-		NDR_PRINT_DEBUG(ncacn_packet, pkt);
 		goto err_exit;
 	}
 
@@ -1317,7 +1324,6 @@ bool api_pipe_bind_auth3(struct pipes_struct *p, struct ncacn_packet *pkt)
 	if (!NT_STATUS_IS_OK(status)) {
 		DEBUG(1, ("api_pipe_bind_auth3: invalid pdu: %s\n",
 			  nt_errstr(status)));
-		NDR_PRINT_DEBUG(ncacn_packet, pkt);
 		goto err;
 	}
 
@@ -1475,7 +1481,6 @@ static bool api_pipe_alter_context(struct pipes_struct *p,
 	if (!NT_STATUS_IS_OK(status)) {
 		DEBUG(1, ("api_pipe_alter_context: invalid pdu: %s\n",
 			  nt_errstr(status)));
-		NDR_PRINT_DEBUG(ncacn_packet, pkt);
 		goto err_exit;
 	}
 
@@ -2049,7 +2054,6 @@ static bool process_request_pdu(struct pipes_struct *p, struct ncacn_packet *pkt
 	if (!NT_STATUS_IS_OK(status)) {
 		DEBUG(1, ("process_request_pdu: invalid pdu: %s\n",
 			  nt_errstr(status)));
-		NDR_PRINT_DEBUG(ncacn_packet, pkt);
 		set_incoming_fault(p);
 		return false;
 	}
