@@ -17,6 +17,10 @@ Asuswrt-Merlin Changelog
     - FIXED: Daily/Monthly traffic monitoring shows invalid values on the RT-AC88U/3100/5300,
              even with CTF disabled.
     - FIXED: WPS wasn't working on the RT-AC3200
+    - FIXED: Backported security fixes from OpenWRT to Samba 3.6.25, addressing the following: 
+             CVE-2015-5252, CVE-2015-5370, CVE-2015-5296, CVE-2015-5299, CVE-2015-7560,
+             CVE-2016-2110, CVE-2016-2111, CVE-2016-2112, CVE-2016-2115, CVE-2016-2118.
+
 
 
 380.58 (20-Mar-2016)
