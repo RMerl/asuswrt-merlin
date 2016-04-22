@@ -762,7 +762,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
                                 </td>
                           </tr>
 			  <tr>
-				<th>Forward local domain queries to upstream DNS</a></th>
+				<th>Forward local domain queries to upstream DNS</th>
 				<td colspan="2" style="text-align:left;">
 					<input type="radio" value="1" name="lan_dns_fwd_local"  onclick="return change_common_radio(this, 'LANHostConfig', 'lan_dns_fwd_local', '1')" <% nvram_match("lan_dns_fwd_local", "1", "checked"); %> /><#checkbox_Yes#>
 					<input type="radio" value="0" name="lan_dns_fwd_local"  onclick="return change_common_radio(this, 'LANHostConfig', 'lan_dns_fwd_local', '0')" <% nvram_match("lan_dns_fwd_local", "0", "checked"); %> /><#checkbox_No#>
