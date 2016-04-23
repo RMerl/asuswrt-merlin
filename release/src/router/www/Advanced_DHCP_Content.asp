@@ -345,15 +345,14 @@ function applyRule(){
 		var item_num = document.getElementById('dhcp_staticlist_table').rows[0].cells.length;
 		var tmp_value = "";
 
-		for(i=0; i<rule_num; i++){
-			tmp_value += "<";
-			tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[0].title + ">";
-			tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[1].innerHTML + ">";
-			tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
+		if (document.getElementById('dhcp_staticlist_table').rows[0].cells[0].innerHTML != "<#IPConnection_VSList_Norule#>") {
+			for(i=0; i<rule_num; i++){
+				tmp_value += "<";
+				tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[0].title + ">";
+				tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[1].innerHTML + ">";
+				tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
+			}
 		}
-		if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
-			tmp_value = "";
-
 		document.form.dhcp_staticlist.value = tmp_value;
 
 		// Only restart the whole network if needed
