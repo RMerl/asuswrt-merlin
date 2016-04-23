@@ -52,10 +52,15 @@ staticforward PyTypeObject dcerpc_rts_cmd_Type;
 staticforward PyTypeObject dcerpc_rts_Type;
 staticforward PyTypeObject ncacn_packet_Type;
 staticforward PyTypeObject ncadg_packet_Type;
+staticforward PyTypeObject dcerpc_sec_vt_pcontext_Type;
+staticforward PyTypeObject dcerpc_sec_vt_header2_Type;
+staticforward PyTypeObject dcerpc_sec_vt_Type;
+staticforward PyTypeObject dcerpc_sec_vt_count_Type;
+staticforward PyTypeObject dcerpc_sec_verification_trailer_Type;
 
-void initdcerpc(void);static PyTypeObject *Object_Type;
+void initdcerpc(void);static PyTypeObject *ndr_syntax_id_Type;
+static PyTypeObject *Object_Type;
 static PyTypeObject *GUID_Type;
-static PyTypeObject *ndr_syntax_id_Type;
 
 static PyObject *py_dcerpc_ctx_list_get_context_id(PyObject *obj, void *closure)
 {
@@ -5068,8 +5073,15 @@ static PyObject *py_ncacn_packet_get_pfc_flags(PyObject *obj, void *closure)
 static int py_ncacn_packet_set_pfc_flags(PyObject *py_obj, PyObject *value, void *closure)
 {
 	struct ncacn_packet *object = (struct ncacn_packet *)py_talloc_get_ptr(py_obj);
-	PY_CHECK_TYPE(&PyInt_Type, value, return -1;);
-	object->pfc_flags = PyInt_AsLong(value);
+	if (PyLong_Check(value)) {
+		object->pfc_flags = PyLong_AsLongLong(value);
+	} else if (PyInt_Check(value)) {
+		object->pfc_flags = PyInt_AsLong(value);
+	} else {
+		PyErr_Format(PyExc_TypeError, "Expected type %s or %s",\
+		  PyInt_Type.tp_name, PyLong_Type.tp_name);
+		return -1;
+	}
 	return 0;
 }
 
@@ -5709,6 +5721,646 @@ static PyTypeObject ncadg_packet_Type = {
 	.tp_new = py_ncadg_packet_new,
 };
 
+
+static PyObject *py_dcerpc_sec_vt_pcontext_get_abstract_syntax(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_pcontext *object = (struct dcerpc_sec_vt_pcontext *)py_talloc_get_ptr(obj);
+	PyObject *py_abstract_syntax;
+	py_abstract_syntax = py_talloc_reference_ex(ndr_syntax_id_Type, py_talloc_get_mem_ctx(obj), &object->abstract_syntax);
+	return py_abstract_syntax;
+}
+
+static int py_dcerpc_sec_vt_pcontext_set_abstract_syntax(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_pcontext *object = (struct dcerpc_sec_vt_pcontext *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(ndr_syntax_id_Type, value, return -1;);
+	if (talloc_reference(py_talloc_get_mem_ctx(py_obj), py_talloc_get_mem_ctx(value)) == NULL) {
+		PyErr_NoMemory();
+		return -1;
+	}
+	object->abstract_syntax = *(struct ndr_syntax_id *)py_talloc_get_ptr(value);
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_pcontext_get_transfer_syntax(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_pcontext *object = (struct dcerpc_sec_vt_pcontext *)py_talloc_get_ptr(obj);
+	PyObject *py_transfer_syntax;
+	py_transfer_syntax = py_talloc_reference_ex(ndr_syntax_id_Type, py_talloc_get_mem_ctx(obj), &object->transfer_syntax);
+	return py_transfer_syntax;
+}
+
+static int py_dcerpc_sec_vt_pcontext_set_transfer_syntax(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_pcontext *object = (struct dcerpc_sec_vt_pcontext *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(ndr_syntax_id_Type, value, return -1;);
+	if (talloc_reference(py_talloc_get_mem_ctx(py_obj), py_talloc_get_mem_ctx(value)) == NULL) {
+		PyErr_NoMemory();
+		return -1;
+	}
+	object->transfer_syntax = *(struct ndr_syntax_id *)py_talloc_get_ptr(value);
+	return 0;
+}
+
+static PyGetSetDef py_dcerpc_sec_vt_pcontext_getsetters[] = {
+	{ discard_const_p(char, "abstract_syntax"), py_dcerpc_sec_vt_pcontext_get_abstract_syntax, py_dcerpc_sec_vt_pcontext_set_abstract_syntax },
+	{ discard_const_p(char, "transfer_syntax"), py_dcerpc_sec_vt_pcontext_get_transfer_syntax, py_dcerpc_sec_vt_pcontext_set_transfer_syntax },
+	{ NULL }
+};
+
+static PyObject *py_dcerpc_sec_vt_pcontext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	return py_talloc_new(struct dcerpc_sec_vt_pcontext, type);
+}
+
+
+static PyTypeObject dcerpc_sec_vt_pcontext_Type = {
+	PyObject_HEAD_INIT(NULL) 0,
+	.tp_name = "dcerpc.sec_vt_pcontext",
+	.tp_getset = py_dcerpc_sec_vt_pcontext_getsetters,
+	.tp_methods = NULL,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_basicsize = sizeof(py_talloc_Object),
+	.tp_new = py_dcerpc_sec_vt_pcontext_new,
+};
+
+
+static PyObject *py_dcerpc_sec_vt_header2_get_ptype(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(obj);
+	PyObject *py_ptype;
+	py_ptype = PyInt_FromLong(object->ptype);
+	return py_ptype;
+}
+
+static int py_dcerpc_sec_vt_header2_set_ptype(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(py_obj);
+	if (PyLong_Check(value)) {
+		object->ptype = PyLong_AsLongLong(value);
+	} else if (PyInt_Check(value)) {
+		object->ptype = PyInt_AsLong(value);
+	} else {
+		PyErr_Format(PyExc_TypeError, "Expected type %s or %s",\
+		  PyInt_Type.tp_name, PyLong_Type.tp_name);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_header2_get_reserved1(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(obj);
+	PyObject *py_reserved1;
+	py_reserved1 = PyInt_FromLong(object->reserved1);
+	return py_reserved1;
+}
+
+static int py_dcerpc_sec_vt_header2_set_reserved1(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyInt_Type, value, return -1;);
+	object->reserved1 = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_header2_get_reserved2(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(obj);
+	PyObject *py_reserved2;
+	py_reserved2 = PyInt_FromLong(object->reserved2);
+	return py_reserved2;
+}
+
+static int py_dcerpc_sec_vt_header2_set_reserved2(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyInt_Type, value, return -1;);
+	object->reserved2 = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_header2_get_drep(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(obj);
+	PyObject *py_drep;
+	py_drep = PyList_New(4);
+	if (py_drep == NULL) {
+		return NULL;
+	}
+	{
+		int drep_cntr_0;
+		for (drep_cntr_0 = 0; drep_cntr_0 < 4; drep_cntr_0++) {
+			PyObject *py_drep_0;
+			py_drep_0 = PyInt_FromLong(object->drep[drep_cntr_0]);
+			PyList_SetItem(py_drep, drep_cntr_0, py_drep_0);
+		}
+	}
+	return py_drep;
+}
+
+static int py_dcerpc_sec_vt_header2_set_drep(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyList_Type, value, return -1;);
+	{
+		int drep_cntr_0;
+		for (drep_cntr_0 = 0; drep_cntr_0 < PyList_GET_SIZE(value); drep_cntr_0++) {
+			PY_CHECK_TYPE(&PyInt_Type, PyList_GET_ITEM(value, drep_cntr_0), return -1;);
+			object->drep[drep_cntr_0] = PyInt_AsLong(PyList_GET_ITEM(value, drep_cntr_0));
+		}
+	}
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_header2_get_call_id(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(obj);
+	PyObject *py_call_id;
+	py_call_id = PyInt_FromLong(object->call_id);
+	return py_call_id;
+}
+
+static int py_dcerpc_sec_vt_header2_set_call_id(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyInt_Type, value, return -1;);
+	object->call_id = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_header2_get_context_id(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(obj);
+	PyObject *py_context_id;
+	py_context_id = PyInt_FromLong(object->context_id);
+	return py_context_id;
+}
+
+static int py_dcerpc_sec_vt_header2_set_context_id(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyInt_Type, value, return -1;);
+	object->context_id = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_header2_get_opnum(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(obj);
+	PyObject *py_opnum;
+	py_opnum = PyInt_FromLong(object->opnum);
+	return py_opnum;
+}
+
+static int py_dcerpc_sec_vt_header2_set_opnum(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_header2 *object = (struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyInt_Type, value, return -1;);
+	object->opnum = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyGetSetDef py_dcerpc_sec_vt_header2_getsetters[] = {
+	{ discard_const_p(char, "ptype"), py_dcerpc_sec_vt_header2_get_ptype, py_dcerpc_sec_vt_header2_set_ptype },
+	{ discard_const_p(char, "reserved1"), py_dcerpc_sec_vt_header2_get_reserved1, py_dcerpc_sec_vt_header2_set_reserved1 },
+	{ discard_const_p(char, "reserved2"), py_dcerpc_sec_vt_header2_get_reserved2, py_dcerpc_sec_vt_header2_set_reserved2 },
+	{ discard_const_p(char, "drep"), py_dcerpc_sec_vt_header2_get_drep, py_dcerpc_sec_vt_header2_set_drep },
+	{ discard_const_p(char, "call_id"), py_dcerpc_sec_vt_header2_get_call_id, py_dcerpc_sec_vt_header2_set_call_id },
+	{ discard_const_p(char, "context_id"), py_dcerpc_sec_vt_header2_get_context_id, py_dcerpc_sec_vt_header2_set_context_id },
+	{ discard_const_p(char, "opnum"), py_dcerpc_sec_vt_header2_get_opnum, py_dcerpc_sec_vt_header2_set_opnum },
+	{ NULL }
+};
+
+static PyObject *py_dcerpc_sec_vt_header2_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	return py_talloc_new(struct dcerpc_sec_vt_header2, type);
+}
+
+
+static PyTypeObject dcerpc_sec_vt_header2_Type = {
+	PyObject_HEAD_INIT(NULL) 0,
+	.tp_name = "dcerpc.sec_vt_header2",
+	.tp_getset = py_dcerpc_sec_vt_header2_getsetters,
+	.tp_methods = NULL,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_basicsize = sizeof(py_talloc_Object),
+	.tp_new = py_dcerpc_sec_vt_header2_new,
+};
+
+PyObject *py_import_dcerpc_sec_vt_union(TALLOC_CTX *mem_ctx, int level, union dcerpc_sec_vt_union *in)
+{
+	PyObject *ret;
+
+	switch (level) {
+		case DCERPC_SEC_VT_COMMAND_BITMASK1:
+			ret = PyInt_FromLong(in->bitmask1);
+			return ret;
+
+		case DCERPC_SEC_VT_COMMAND_PCONTEXT:
+			ret = py_talloc_reference_ex(&dcerpc_sec_vt_pcontext_Type, mem_ctx, &in->pcontext);
+			return ret;
+
+		case DCERPC_SEC_VT_COMMAND_HEADER2:
+			ret = py_talloc_reference_ex(&dcerpc_sec_vt_header2_Type, mem_ctx, &in->header2);
+			return ret;
+
+		default:
+			ret = PyString_FromStringAndSize((char *)(in->_unknown).data, (in->_unknown).length);
+			return ret;
+
+	}
+	PyErr_SetString(PyExc_TypeError, "unknown union level");
+	return NULL;
+}
+
+union dcerpc_sec_vt_union *py_export_dcerpc_sec_vt_union(TALLOC_CTX *mem_ctx, int level, PyObject *in)
+{
+	union dcerpc_sec_vt_union *ret = talloc_zero(mem_ctx, union dcerpc_sec_vt_union);
+	switch (level) {
+		case DCERPC_SEC_VT_COMMAND_BITMASK1:
+			if (PyLong_Check(in)) {
+				ret->bitmask1 = PyLong_AsLongLong(in);
+			} else if (PyInt_Check(in)) {
+				ret->bitmask1 = PyInt_AsLong(in);
+			} else {
+				PyErr_Format(PyExc_TypeError, "Expected type %s or %s",\
+				  PyInt_Type.tp_name, PyLong_Type.tp_name);
+				talloc_free(ret); return NULL;
+			}
+			break;
+
+		case DCERPC_SEC_VT_COMMAND_PCONTEXT:
+			PY_CHECK_TYPE(&dcerpc_sec_vt_pcontext_Type, in, talloc_free(ret); return NULL;);
+			if (talloc_reference(mem_ctx, py_talloc_get_mem_ctx(in)) == NULL) {
+				PyErr_NoMemory();
+				talloc_free(ret); return NULL;
+			}
+			ret->pcontext = *(struct dcerpc_sec_vt_pcontext *)py_talloc_get_ptr(in);
+			break;
+
+		case DCERPC_SEC_VT_COMMAND_HEADER2:
+			PY_CHECK_TYPE(&dcerpc_sec_vt_header2_Type, in, talloc_free(ret); return NULL;);
+			if (talloc_reference(mem_ctx, py_talloc_get_mem_ctx(in)) == NULL) {
+				PyErr_NoMemory();
+				talloc_free(ret); return NULL;
+			}
+			ret->header2 = *(struct dcerpc_sec_vt_header2 *)py_talloc_get_ptr(in);
+			break;
+
+		default:
+			ret->_unknown = data_blob_talloc(mem_ctx, PyString_AS_STRING(in), PyString_GET_SIZE(in));
+			break;
+
+	}
+
+	return ret;
+}
+
+
+static PyObject *py_dcerpc_sec_vt_get_command(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt *object = (struct dcerpc_sec_vt *)py_talloc_get_ptr(obj);
+	PyObject *py_command;
+	py_command = PyInt_FromLong(object->command);
+	return py_command;
+}
+
+static int py_dcerpc_sec_vt_set_command(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt *object = (struct dcerpc_sec_vt *)py_talloc_get_ptr(py_obj);
+	if (PyLong_Check(value)) {
+		object->command = PyLong_AsLongLong(value);
+	} else if (PyInt_Check(value)) {
+		object->command = PyInt_AsLong(value);
+	} else {
+		PyErr_Format(PyExc_TypeError, "Expected type %s or %s",\
+		  PyInt_Type.tp_name, PyLong_Type.tp_name);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_vt_get_u(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt *object = (struct dcerpc_sec_vt *)py_talloc_get_ptr(obj);
+	PyObject *py_u;
+	py_u = py_import_dcerpc_sec_vt_union(py_talloc_get_mem_ctx(obj), object->command & DCERPC_SEC_VT_COMMAND_ENUM, &object->u);
+	if (py_u == NULL) {
+		return NULL;
+	}
+	return py_u;
+}
+
+static int py_dcerpc_sec_vt_set_u(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt *object = (struct dcerpc_sec_vt *)py_talloc_get_ptr(py_obj);
+	{
+		union dcerpc_sec_vt_union *u_switch_1;
+		u_switch_1 = py_export_dcerpc_sec_vt_union(py_talloc_get_mem_ctx(py_obj), object->command & DCERPC_SEC_VT_COMMAND_ENUM, value);
+		if (u_switch_1 == NULL) {
+			return -1;
+		}
+		object->u = *u_switch_1;
+	}
+	return 0;
+}
+
+static PyGetSetDef py_dcerpc_sec_vt_getsetters[] = {
+	{ discard_const_p(char, "command"), py_dcerpc_sec_vt_get_command, py_dcerpc_sec_vt_set_command },
+	{ discard_const_p(char, "u"), py_dcerpc_sec_vt_get_u, py_dcerpc_sec_vt_set_u },
+	{ NULL }
+};
+
+static PyObject *py_dcerpc_sec_vt_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	return py_talloc_new(struct dcerpc_sec_vt, type);
+}
+
+
+static PyTypeObject dcerpc_sec_vt_Type = {
+	PyObject_HEAD_INIT(NULL) 0,
+	.tp_name = "dcerpc.sec_vt",
+	.tp_getset = py_dcerpc_sec_vt_getsetters,
+	.tp_methods = NULL,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_basicsize = sizeof(py_talloc_Object),
+	.tp_new = py_dcerpc_sec_vt_new,
+};
+
+
+static PyObject *py_dcerpc_sec_vt_count_get_count(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_vt_count *object = (struct dcerpc_sec_vt_count *)py_talloc_get_ptr(obj);
+	PyObject *py_count;
+	py_count = PyInt_FromLong(object->count);
+	return py_count;
+}
+
+static int py_dcerpc_sec_vt_count_set_count(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_vt_count *object = (struct dcerpc_sec_vt_count *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyInt_Type, value, return -1;);
+	object->count = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyGetSetDef py_dcerpc_sec_vt_count_getsetters[] = {
+	{ discard_const_p(char, "count"), py_dcerpc_sec_vt_count_get_count, py_dcerpc_sec_vt_count_set_count },
+	{ NULL }
+};
+
+static PyObject *py_dcerpc_sec_vt_count_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	return py_talloc_new(struct dcerpc_sec_vt_count, type);
+}
+
+static PyObject *py_dcerpc_sec_vt_count_ndr_pack(PyObject *py_obj)
+{
+	struct dcerpc_sec_vt_count *object = (struct dcerpc_sec_vt_count *)py_talloc_get_ptr(py_obj);
+	DATA_BLOB blob;
+	enum ndr_err_code err;
+	err = ndr_push_struct_blob(&blob, py_talloc_get_mem_ctx(py_obj), object, (ndr_push_flags_fn_t)ndr_push_dcerpc_sec_vt_count);
+	if (err != NDR_ERR_SUCCESS) {
+		PyErr_SetNdrError(err);
+		return NULL;
+	}
+
+	return PyString_FromStringAndSize((char *)blob.data, blob.length);
+}
+
+static PyObject *py_dcerpc_sec_vt_count_ndr_unpack(PyObject *py_obj, PyObject *args)
+{
+	struct dcerpc_sec_vt_count *object = (struct dcerpc_sec_vt_count *)py_talloc_get_ptr(py_obj);
+	DATA_BLOB blob;
+	enum ndr_err_code err;
+	if (!PyArg_ParseTuple(args, "s#:__ndr_unpack__", &blob.data, &blob.length))
+		return NULL;
+
+	err = ndr_pull_struct_blob_all(&blob, py_talloc_get_mem_ctx(py_obj), object, (ndr_pull_flags_fn_t)ndr_pull_dcerpc_sec_vt_count);
+	if (err != NDR_ERR_SUCCESS) {
+		PyErr_SetNdrError(err);
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject *py_dcerpc_sec_vt_count_ndr_print(PyObject *py_obj)
+{
+	struct dcerpc_sec_vt_count *object = (struct dcerpc_sec_vt_count *)py_talloc_get_ptr(py_obj);
+	PyObject *ret;
+	char *retstr;
+
+	retstr = ndr_print_struct_string(py_talloc_get_mem_ctx(py_obj), (ndr_print_fn_t)ndr_print_dcerpc_sec_vt_count, "dcerpc_sec_vt_count", object);
+	ret = PyString_FromString(retstr);
+	talloc_free(retstr);
+
+	return ret;
+}
+
+static PyMethodDef py_dcerpc_sec_vt_count_methods[] = {
+	{ "__ndr_pack__", (PyCFunction)py_dcerpc_sec_vt_count_ndr_pack, METH_NOARGS, "S.ndr_pack(object) -> blob\nNDR pack" },
+	{ "__ndr_unpack__", (PyCFunction)py_dcerpc_sec_vt_count_ndr_unpack, METH_VARARGS, "S.ndr_unpack(class, blob) -> None\nNDR unpack" },
+	{ "__ndr_print__", (PyCFunction)py_dcerpc_sec_vt_count_ndr_print, METH_VARARGS, "S.ndr_print(object) -> None\nNDR print" },
+	{ NULL, NULL, 0, NULL }
+};
+
+
+static PyTypeObject dcerpc_sec_vt_count_Type = {
+	PyObject_HEAD_INIT(NULL) 0,
+	.tp_name = "dcerpc.sec_vt_count",
+	.tp_getset = py_dcerpc_sec_vt_count_getsetters,
+	.tp_methods = py_dcerpc_sec_vt_count_methods,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_basicsize = sizeof(py_talloc_Object),
+	.tp_new = py_dcerpc_sec_vt_count_new,
+};
+
+
+static PyObject *py_dcerpc_sec_verification_trailer_get__pad(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(obj);
+	PyObject *py__pad;
+	py__pad = PyString_FromStringAndSize((char *)(object->_pad).data, (object->_pad).length);
+	return py__pad;
+}
+
+static int py_dcerpc_sec_verification_trailer_set__pad(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(py_obj);
+	object->_pad = data_blob_talloc(py_talloc_get_mem_ctx(py_obj), PyString_AS_STRING(value), PyString_GET_SIZE(value));
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_verification_trailer_get_magic(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(obj);
+	PyObject *py_magic;
+	py_magic = PyList_New(8);
+	if (py_magic == NULL) {
+		return NULL;
+	}
+	{
+		int magic_cntr_0;
+		for (magic_cntr_0 = 0; magic_cntr_0 < 8; magic_cntr_0++) {
+			PyObject *py_magic_0;
+			py_magic_0 = PyInt_FromLong(object->magic[magic_cntr_0]);
+			PyList_SetItem(py_magic, magic_cntr_0, py_magic_0);
+		}
+	}
+	return py_magic;
+}
+
+static int py_dcerpc_sec_verification_trailer_set_magic(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyList_Type, value, return -1;);
+	{
+		int magic_cntr_0;
+		for (magic_cntr_0 = 0; magic_cntr_0 < PyList_GET_SIZE(value); magic_cntr_0++) {
+			PY_CHECK_TYPE(&PyInt_Type, PyList_GET_ITEM(value, magic_cntr_0), return -1;);
+			object->magic[magic_cntr_0] = PyInt_AsLong(PyList_GET_ITEM(value, magic_cntr_0));
+		}
+	}
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_verification_trailer_get_count(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(obj);
+	PyObject *py_count;
+	py_count = py_talloc_reference_ex(&dcerpc_sec_vt_count_Type, py_talloc_get_mem_ctx(obj), &object->count);
+	return py_count;
+}
+
+static int py_dcerpc_sec_verification_trailer_set_count(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&dcerpc_sec_vt_count_Type, value, return -1;);
+	if (talloc_reference(py_talloc_get_mem_ctx(py_obj), py_talloc_get_mem_ctx(value)) == NULL) {
+		PyErr_NoMemory();
+		return -1;
+	}
+	object->count = *(struct dcerpc_sec_vt_count *)py_talloc_get_ptr(value);
+	return 0;
+}
+
+static PyObject *py_dcerpc_sec_verification_trailer_get_commands(PyObject *obj, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(obj);
+	PyObject *py_commands;
+	py_commands = PyList_New(object->count.count);
+	if (py_commands == NULL) {
+		return NULL;
+	}
+	{
+		int commands_cntr_0;
+		for (commands_cntr_0 = 0; commands_cntr_0 < object->count.count; commands_cntr_0++) {
+			PyObject *py_commands_0;
+			py_commands_0 = py_talloc_reference_ex(&dcerpc_sec_vt_Type, object->commands, &object->commands[commands_cntr_0]);
+			PyList_SetItem(py_commands, commands_cntr_0, py_commands_0);
+		}
+	}
+	return py_commands;
+}
+
+static int py_dcerpc_sec_verification_trailer_set_commands(PyObject *py_obj, PyObject *value, void *closure)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(py_obj);
+	PY_CHECK_TYPE(&PyList_Type, value, return -1;);
+	{
+		int commands_cntr_0;
+		object->commands = talloc_array_ptrtype(py_talloc_get_mem_ctx(py_obj), object->commands, PyList_GET_SIZE(value));
+		if (!object->commands) { return -1;; }
+		talloc_set_name_const(object->commands, "ARRAY: object->commands");
+		for (commands_cntr_0 = 0; commands_cntr_0 < PyList_GET_SIZE(value); commands_cntr_0++) {
+			PY_CHECK_TYPE(&dcerpc_sec_vt_Type, PyList_GET_ITEM(value, commands_cntr_0), return -1;);
+			if (talloc_reference(object->commands, py_talloc_get_mem_ctx(PyList_GET_ITEM(value, commands_cntr_0))) == NULL) {
+				PyErr_NoMemory();
+				return -1;
+			}
+			object->commands[commands_cntr_0] = *(struct dcerpc_sec_vt *)py_talloc_get_ptr(PyList_GET_ITEM(value, commands_cntr_0));
+		}
+	}
+	return 0;
+}
+
+static PyGetSetDef py_dcerpc_sec_verification_trailer_getsetters[] = {
+	{ discard_const_p(char, "_pad"), py_dcerpc_sec_verification_trailer_get__pad, py_dcerpc_sec_verification_trailer_set__pad },
+	{ discard_const_p(char, "magic"), py_dcerpc_sec_verification_trailer_get_magic, py_dcerpc_sec_verification_trailer_set_magic },
+	{ discard_const_p(char, "count"), py_dcerpc_sec_verification_trailer_get_count, py_dcerpc_sec_verification_trailer_set_count },
+	{ discard_const_p(char, "commands"), py_dcerpc_sec_verification_trailer_get_commands, py_dcerpc_sec_verification_trailer_set_commands },
+	{ NULL }
+};
+
+static PyObject *py_dcerpc_sec_verification_trailer_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	return py_talloc_new(struct dcerpc_sec_verification_trailer, type);
+}
+
+static PyObject *py_dcerpc_sec_verification_trailer_ndr_pack(PyObject *py_obj)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(py_obj);
+	DATA_BLOB blob;
+	enum ndr_err_code err;
+	err = ndr_push_struct_blob(&blob, py_talloc_get_mem_ctx(py_obj), object, (ndr_push_flags_fn_t)ndr_push_dcerpc_sec_verification_trailer);
+	if (err != NDR_ERR_SUCCESS) {
+		PyErr_SetNdrError(err);
+		return NULL;
+	}
+
+	return PyString_FromStringAndSize((char *)blob.data, blob.length);
+}
+
+static PyObject *py_dcerpc_sec_verification_trailer_ndr_unpack(PyObject *py_obj, PyObject *args)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(py_obj);
+	DATA_BLOB blob;
+	enum ndr_err_code err;
+	if (!PyArg_ParseTuple(args, "s#:__ndr_unpack__", &blob.data, &blob.length))
+		return NULL;
+
+	err = ndr_pull_struct_blob_all(&blob, py_talloc_get_mem_ctx(py_obj), object, (ndr_pull_flags_fn_t)ndr_pull_dcerpc_sec_verification_trailer);
+	if (err != NDR_ERR_SUCCESS) {
+		PyErr_SetNdrError(err);
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject *py_dcerpc_sec_verification_trailer_ndr_print(PyObject *py_obj)
+{
+	struct dcerpc_sec_verification_trailer *object = (struct dcerpc_sec_verification_trailer *)py_talloc_get_ptr(py_obj);
+	PyObject *ret;
+	char *retstr;
+
+	retstr = ndr_print_struct_string(py_talloc_get_mem_ctx(py_obj), (ndr_print_fn_t)ndr_print_dcerpc_sec_verification_trailer, "dcerpc_sec_verification_trailer", object);
+	ret = PyString_FromString(retstr);
+	talloc_free(retstr);
+
+	return ret;
+}
+
+static PyMethodDef py_dcerpc_sec_verification_trailer_methods[] = {
+	{ "__ndr_pack__", (PyCFunction)py_dcerpc_sec_verification_trailer_ndr_pack, METH_NOARGS, "S.ndr_pack(object) -> blob\nNDR pack" },
+	{ "__ndr_unpack__", (PyCFunction)py_dcerpc_sec_verification_trailer_ndr_unpack, METH_VARARGS, "S.ndr_unpack(class, blob) -> None\nNDR unpack" },
+	{ "__ndr_print__", (PyCFunction)py_dcerpc_sec_verification_trailer_ndr_print, METH_VARARGS, "S.ndr_print(object) -> None\nNDR print" },
+	{ NULL, NULL, 0, NULL }
+};
+
+
+static PyTypeObject dcerpc_sec_verification_trailer_Type = {
+	PyObject_HEAD_INIT(NULL) 0,
+	.tp_name = "dcerpc.sec_verification_trailer",
+	.tp_getset = py_dcerpc_sec_verification_trailer_getsetters,
+	.tp_methods = py_dcerpc_sec_verification_trailer_methods,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_basicsize = sizeof(py_talloc_Object),
+	.tp_new = py_dcerpc_sec_verification_trailer_new,
+};
+
 static PyMethodDef dcerpc_methods[] = {
 	{ NULL, NULL, 0, NULL }
 };
@@ -5716,15 +6368,19 @@ static PyMethodDef dcerpc_methods[] = {
 void initdcerpc(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_misc;
 	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_misc;
+
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
+		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
+	ndr_syntax_id_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "ndr_syntax_id");
+	if (ndr_syntax_id_Type == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
@@ -5733,10 +6389,6 @@ void initdcerpc(void)
 
 	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
 	if (GUID_Type == NULL)
-		return;
-
-	ndr_syntax_id_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "ndr_syntax_id");
-	if (ndr_syntax_id_Type == NULL)
 		return;
 
 	dcerpc_ctx_list_Type.tp_base = Object_Type;
@@ -5825,6 +6477,16 @@ void initdcerpc(void)
 
 	ncadg_packet_Type.tp_base = Object_Type;
 
+	dcerpc_sec_vt_pcontext_Type.tp_base = Object_Type;
+
+	dcerpc_sec_vt_header2_Type.tp_base = Object_Type;
+
+	dcerpc_sec_vt_Type.tp_base = Object_Type;
+
+	dcerpc_sec_vt_count_Type.tp_base = Object_Type;
+
+	dcerpc_sec_verification_trailer_Type.tp_base = Object_Type;
+
 	if (PyType_Ready(&dcerpc_ctx_list_Type) < 0)
 		return;
 	if (PyType_Ready(&dcerpc_bind_Type) < 0)
@@ -5910,6 +6572,16 @@ void initdcerpc(void)
 	if (PyType_Ready(&ncacn_packet_Type) < 0)
 		return;
 	if (PyType_Ready(&ncadg_packet_Type) < 0)
+		return;
+	if (PyType_Ready(&dcerpc_sec_vt_pcontext_Type) < 0)
+		return;
+	if (PyType_Ready(&dcerpc_sec_vt_header2_Type) < 0)
+		return;
+	if (PyType_Ready(&dcerpc_sec_vt_Type) < 0)
+		return;
+	if (PyType_Ready(&dcerpc_sec_vt_count_Type) < 0)
+		return;
+	if (PyType_Ready(&dcerpc_sec_verification_trailer_Type) < 0)
 		return;
 #ifdef PY_CTX_LIST_PATCH
 	PY_CTX_LIST_PATCH(&dcerpc_ctx_list_Type);
@@ -6040,142 +6712,169 @@ void initdcerpc(void)
 #ifdef PY_NCADG_PACKET_PATCH
 	PY_NCADG_PACKET_PATCH(&ncadg_packet_Type);
 #endif
+#ifdef PY_SEC_VT_PCONTEXT_PATCH
+	PY_SEC_VT_PCONTEXT_PATCH(&dcerpc_sec_vt_pcontext_Type);
+#endif
+#ifdef PY_SEC_VT_HEADER2_PATCH
+	PY_SEC_VT_HEADER2_PATCH(&dcerpc_sec_vt_header2_Type);
+#endif
+#ifdef PY_SEC_VT_PATCH
+	PY_SEC_VT_PATCH(&dcerpc_sec_vt_Type);
+#endif
+#ifdef PY_SEC_VT_COUNT_PATCH
+	PY_SEC_VT_COUNT_PATCH(&dcerpc_sec_vt_count_Type);
+#endif
+#ifdef PY_SEC_VERIFICATION_TRAILER_PATCH
+	PY_SEC_VERIFICATION_TRAILER_PATCH(&dcerpc_sec_verification_trailer_Type);
+#endif
 
 	m = Py_InitModule3("dcerpc", dcerpc_methods, "dcerpc DCE/RPC");
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "DCERPC_PKT_CL_CANCEL", PyInt_FromLong(DCERPC_PKT_CL_CANCEL));
-	PyModule_AddObject(m, "DCERPC_FAULT_OP_RNG_ERROR", PyInt_FromLong(0x1c010002));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_MAYBE", PyInt_FromLong(0x40));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_SCHANNEL", PyInt_FromLong(DCERPC_AUTH_TYPE_SCHANNEL));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INT_OVERFLOW", PyInt_FromLong(DCERPC_NCA_S_FAULT_INT_OVERFLOW));
+	PyModule_AddObject(m, "DCERPC_PKT_ORPHANED", PyInt_FromLong(DCERPC_PKT_ORPHANED));
+	PyModule_AddObject(m, "RTS_FLAG_ECHO", PyInt_FromLong(RTS_FLAG_ECHO));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING", PyInt_FromLong(DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_COMMAND_END", PyInt_FromLong(DCERPC_SEC_VT_COMMAND_END));
+	PyModule_AddObject(m, "DCERPC_PKT_WORKING", PyInt_FromLong(DCERPC_PKT_WORKING));
+	PyModule_AddObject(m, "DCERPC_FAULT_TODO", PyInt_FromLong(0x00000042));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_ADDR_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_ADDR_ERROR));
+	PyModule_AddObject(m, "DCERPC_FAULT_ACCESS_DENIED", PyInt_FromLong(0x00000005));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_KRB5", PyInt_FromLong(DCERPC_AUTH_TYPE_KRB5));
+	PyModule_AddObject(m, "DCERPC_NCA_S_INVALID_CRC", PyInt_FromLong(DCERPC_NCA_S_INVALID_CRC));
+	PyModule_AddObject(m, "DCERPC_BIND_PROVIDER_REJECT", PyInt_FromLong(2));
+	PyModule_AddObject(m, "DCERPC_AUTH_LEN_OFFSET", PyInt_FromLong(10));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_RPC_VERSION_MISMATCH", PyInt_FromLong(DCERPC_NCA_S_FAULT_RPC_VERSION_MISMATCH));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INVALID_TAG", PyInt_FromLong(DCERPC_NCA_S_FAULT_INVALID_TAG));
+	PyModule_AddObject(m, "DCERPC_FAULT_CANT_PERFORM", PyInt_FromLong(0x000006d8));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_DIGEST", PyInt_FromLong(DCERPC_AUTH_TYPE_DIGEST));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_SUPPORT_HEADER_SIGN", NULL);
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_COMM_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_COMM_ERROR));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_NONE", PyInt_FromLong(DCERPC_AUTH_TYPE_NONE));
 	PyModule_AddObject(m, "DCERPC_NCA_S_OP_RNG_ERROR", PyInt_FromLong(DCERPC_NCA_S_OP_RNG_ERROR));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_ORDER", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_ORDER));
-	PyModule_AddObject(m, "RTS_FLAG_NONE", PyInt_FromLong(RTS_FLAG_NONE));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_DPA", PyInt_FromLong(DCERPC_AUTH_TYPE_DPA));
+	PyModule_AddObject(m, "FDInProxy", PyInt_FromLong(FDInProxy));
+	PyModule_AddObject(m, "RTS_FLAG_OUT_CHANNEL", PyInt_FromLong(RTS_FLAG_OUT_CHANNEL));
+	PyModule_AddObject(m, "DCERPC_NCA_S_INVALID_CHECKSUM", PyInt_FromLong(DCERPC_NCA_S_INVALID_CHECKSUM));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_DID_NOT_EXECUTE", PyInt_FromLong(DCERPC_PFC_FLAG_DID_NOT_EXECUTE));
+	PyModule_AddObject(m, "RTS_FLAG_EOF", PyInt_FromLong(RTS_FLAG_EOF));
+	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_DEFAULT", PyInt_FromLong(DCERPC_AUTH_LEVEL_CONNECT));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_TX_OPEN_FAILED", PyInt_FromLong(DCERPC_NCA_S_FAULT_TX_OPEN_FAILED));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_EMPTY", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_EMPTY));
+	PyModule_AddObject(m, "DCERPC_NCA_S_WRONG_BOOT_TIME", PyInt_FromLong(DCERPC_NCA_S_WRONG_BOOT_TIME));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_NO_CLIENT_STUB", PyInt_FromLong(DCERPC_NCA_S_FAULT_NO_CLIENT_STUB));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_DISCIPLINE", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_DISCIPLINE));
+	PyModule_AddObject(m, "DCERPC_PKT_RTS", PyInt_FromLong(DCERPC_PKT_RTS));
+	PyModule_AddObject(m, "DCERPC_BIND_REASON_ASYNTAX", PyInt_FromLong(1));
 	PyModule_AddObject(m, "DCERPC_PKT_SHUTDOWN", PyInt_FromLong(DCERPC_PKT_SHUTDOWN));
 	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_CALL", PyInt_FromLong(DCERPC_AUTH_LEVEL_CALL));
-	PyModule_AddObject(m, "DCERPC_PKT_RTS", PyInt_FromLong(DCERPC_PKT_RTS));
-	PyModule_AddObject(m, "DCERPC_NCA_S_UNSUPPORTED_TYPE", PyInt_FromLong(DCERPC_NCA_S_UNSUPPORTED_TYPE));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_UNDERFLOW", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_UNDERFLOW));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_SUPPORT_HEADER_SIGN", PyInt_FromLong(DCERPC_PFC_FLAG_PENDING_CANCEL));
-	PyModule_AddObject(m, "RTS_FLAG_PING", PyInt_FromLong(RTS_FLAG_PING));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_ILL_INST", PyInt_FromLong(DCERPC_NCA_S_FAULT_ILL_INST));
-	PyModule_AddObject(m, "DCERPC_FAULT_INVALID_TAG", PyInt_FromLong(0x1c000006));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_ERROR));
-	PyModule_AddObject(m, "DCERPC_PKT_ORPHANED", PyInt_FromLong(DCERPC_PKT_ORPHANED));
-	PyModule_AddObject(m, "DCERPC_BIND_REASON_INVALID_AUTH_TYPE", PyInt_FromLong(8));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_DPA", PyInt_FromLong(DCERPC_AUTH_TYPE_DPA));
-	PyModule_AddObject(m, "DCERPC_DREP_OFFSET", PyInt_FromLong(4));
-	PyModule_AddObject(m, "FDOutProxy", PyInt_FromLong(FDOutProxy));
-	PyModule_AddObject(m, "RTS_FLAG_RECYCLE_CHANNEL", PyInt_FromLong(RTS_FLAG_RECYCLE_CHANNEL));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_UNSPEC", PyInt_FromLong(DCERPC_NCA_S_FAULT_UNSPEC));
-	PyModule_AddObject(m, "DCERPC_PKT_AUTH3", PyInt_FromLong(DCERPC_PKT_AUTH3));
-	PyModule_AddObject(m, "DCERPC_NCA_S_UNKNOWN_IF", PyInt_FromLong(DCERPC_NCA_S_UNKNOWN_IF));
-	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_DEFAULT", PyInt_FromLong(DCERPC_AUTH_LEVEL_CONNECT));
-	PyModule_AddObject(m, "DCERPC_BIND_PROVIDER_REJECT", PyInt_FromLong(2));
-	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_PRIVACY", PyInt_FromLong(DCERPC_AUTH_LEVEL_PRIVACY));
-	PyModule_AddObject(m, "DCERPC_CALL_ID_OFFSET", PyInt_FromLong(12));
-	PyModule_AddObject(m, "DECRPC_BIND_PROTOCOL_VERSION_NOT_SUPPORTED", PyInt_FromLong(4));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_LAST", PyInt_FromLong(0x02));
-	PyModule_AddObject(m, "DCERPC_PKT_WORKING", PyInt_FromLong(DCERPC_PKT_WORKING));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_SCHANNEL", PyInt_FromLong(DCERPC_AUTH_TYPE_SCHANNEL));
-	PyModule_AddObject(m, "DCERPC_FRAG_LEN_OFFSET", PyInt_FromLong(8));
-	PyModule_AddObject(m, "DCERPC_PKT_CANCEL_ACK", PyInt_FromLong(DCERPC_PKT_CANCEL_ACK));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_DIGEST", PyInt_FromLong(DCERPC_AUTH_TYPE_DIGEST));
-	PyModule_AddObject(m, "RTS_FLAG_OUT_CHANNEL", PyInt_FromLong(RTS_FLAG_OUT_CHANNEL));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_COMM_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_COMM_ERROR));
-	PyModule_AddObject(m, "DCERPC_FAULT_SEC_PKG_ERROR", PyInt_FromLong(0x00000721));
-	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_PACKET", PyInt_FromLong(DCERPC_AUTH_LEVEL_PACKET));
-	PyModule_AddObject(m, "DCERPC_PKT_REJECT", PyInt_FromLong(DCERPC_PKT_REJECT));
-	PyModule_AddObject(m, "DCERPC_NCA_S_COMM_FAILURE", PyInt_FromLong(DCERPC_NCA_S_COMM_FAILURE));
-	PyModule_AddObject(m, "DCERPC_FAULT_CONTEXT_MISMATCH", PyInt_FromLong(0x1c00001a));
-	PyModule_AddObject(m, "DCERPC_FAULT_NDR", PyInt_FromLong(0x000006f7));
-	PyModule_AddObject(m, "DCERPC_PKT_BIND", PyInt_FromLong(DCERPC_PKT_BIND));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_FIRST", PyInt_FromLong(0x01));
-	PyModule_AddObject(m, "RTS_FLAG_IN_CHANNEL", PyInt_FromLong(RTS_FLAG_IN_CHANNEL));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INVALID_BOUND", PyInt_FromLong(DCERPC_NCA_S_FAULT_INVALID_BOUND));
-	PyModule_AddObject(m, "DCERPC_NCA_S_WRONG_BOOT_TIME", PyInt_FromLong(DCERPC_NCA_S_WRONG_BOOT_TIME));
-	PyModule_AddObject(m, "RTS_FLAG_OTHER_CMD", PyInt_FromLong(RTS_FLAG_OTHER_CMD));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_WHO_ARE_YOU_FAILED", PyInt_FromLong(DCERPC_NCA_S_FAULT_WHO_ARE_YOU_FAILED));
-	PyModule_AddObject(m, "DCERPC_PKT_FACK", PyInt_FromLong(DCERPC_PKT_FACK));
-	PyModule_AddObject(m, "DCERPC_RESPONSE_LENGTH", PyInt_FromLong(24));
-	PyModule_AddObject(m, "DCERPC_NCA_S_UNUSED_1C00001E", PyInt_FromLong(DCERPC_NCA_S_UNUSED_1C00001E));
-	PyModule_AddObject(m, "DCERPC_NCA_S_YOU_CRASHED", PyInt_FromLong(DCERPC_NCA_S_YOU_CRASHED));
-	PyModule_AddObject(m, "DCERPC_PKT_BIND_NAK", PyInt_FromLong(DCERPC_PKT_BIND_NAK));
-	PyModule_AddObject(m, "DCERPC_NCA_S_INVALID_CHECKSUM", PyInt_FromLong(DCERPC_NCA_S_INVALID_CHECKSUM));
-	PyModule_AddObject(m, "RTS_IPV6", PyInt_FromLong(RTS_IPV6));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_NO_CLIENT_STUB", PyInt_FromLong(DCERPC_NCA_S_FAULT_NO_CLIENT_STUB));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INT_DIV_BY_ZERO", PyInt_FromLong(DCERPC_NCA_S_FAULT_INT_DIV_BY_ZERO));
-	PyModule_AddObject(m, "DCERPC_FAULT_OTHER", PyInt_FromLong(0x00000001));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_MANAGER_NOT_ENTERED", PyInt_FromLong(DCERPC_NCA_S_FAULT_MANAGER_NOT_ENTERED));
-	PyModule_AddObject(m, "DCERPC_PFC_OFFSET", PyInt_FromLong(3));
-	PyModule_AddObject(m, "DCERPC_PKT_PING", PyInt_FromLong(DCERPC_PKT_PING));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_EMPTY", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_EMPTY));
-	PyModule_AddObject(m, "DCERPC_NCA_S_PROTO_ERROR", PyInt_FromLong(DCERPC_NCA_S_PROTO_ERROR));
-	PyModule_AddObject(m, "DCERPC_NCA_S_INVALID_CRC", PyInt_FromLong(DCERPC_NCA_S_INVALID_CRC));
-	PyModule_AddObject(m, "DCERPC_PKT_RESPONSE", PyInt_FromLong(DCERPC_PKT_RESPONSE));
-	PyModule_AddObject(m, "DCERPC_AUTH_LEN_OFFSET", PyInt_FromLong(10));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_UNSPEC_REJECT", PyInt_FromLong(DCERPC_NCA_S_FAULT_UNSPEC_REJECT));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_OBJECT_NOT_FOUND", PyInt_FromLong(DCERPC_NCA_S_FAULT_OBJECT_NOT_FOUND));
-	PyModule_AddObject(m, "FDClient", PyInt_FromLong(FDClient));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_CODESET_CONV_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_CODESET_CONV_ERROR));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_MSMQ", PyInt_FromLong(DCERPC_AUTH_TYPE_MSMQ));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_USER_DEFINED", PyInt_FromLong(DCERPC_NCA_S_FAULT_USER_DEFINED));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_OBJECT_UUID", PyInt_FromLong(0x80));
-	PyModule_AddObject(m, "DCERPC_PKT_ACK", PyInt_FromLong(DCERPC_PKT_ACK));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_KRB5", PyInt_FromLong(DCERPC_AUTH_TYPE_KRB5));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_STRING_TOO_LARGE", PyInt_FromLong(DCERPC_NCA_S_FAULT_STRING_TOO_LARGE));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INT_OVERFLOW", PyInt_FromLong(DCERPC_NCA_S_FAULT_INT_OVERFLOW));
-	PyModule_AddObject(m, "DCERPC_REQUEST_LENGTH", PyInt_FromLong(24));
-	PyModule_AddObject(m, "FDInProxy", PyInt_FromLong(FDInProxy));
-	PyModule_AddObject(m, "DCERPC_PKT_ALTER", PyInt_FromLong(DCERPC_PKT_ALTER));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_REMOTE_NO_MEMORY", PyInt_FromLong(DCERPC_NCA_S_FAULT_REMOTE_NO_MEMORY));
-	PyModule_AddObject(m, "RTS_FLAG_ECHO", PyInt_FromLong(RTS_FLAG_ECHO));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_REMOTE_COMM_FAILURE", PyInt_FromLong(DCERPC_NCA_S_FAULT_REMOTE_COMM_FAILURE));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_TX_OPEN_FAILED", PyInt_FromLong(DCERPC_NCA_S_FAULT_TX_OPEN_FAILED));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_MSN", PyInt_FromLong(DCERPC_AUTH_TYPE_MSN));
-	PyModule_AddObject(m, "DCERPC_PKT_NOCALL", PyInt_FromLong(DCERPC_PKT_NOCALL));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_CANCEL", PyInt_FromLong(DCERPC_NCA_S_FAULT_CANCEL));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_DIV_BY_ZERO", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_DIV_BY_ZERO));
-	PyModule_AddObject(m, "DCERPC_FAULT_ACCESS_DENIED", PyInt_FromLong(0x00000005));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_NONE", PyInt_FromLong(DCERPC_AUTH_TYPE_NONE));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_NTLMSSP", PyInt_FromLong(DCERPC_AUTH_TYPE_NTLMSSP));
-	PyModule_AddObject(m, "DCERPC_FAULT_CANT_PERFORM", PyInt_FromLong(0x000006d8));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_ADDR_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_ADDR_ERROR));
-	PyModule_AddObject(m, "DCERPC_NCA_S_OUT_ARGS_TOO_BIG", PyInt_FromLong(DCERPC_NCA_S_OUT_ARGS_TOO_BIG));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_DISCIPLINE", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_DISCIPLINE));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_RPC_VERSION_MISMATCH", PyInt_FromLong(DCERPC_NCA_S_FAULT_RPC_VERSION_MISMATCH));
-	PyModule_AddObject(m, "DCERPC_NCA_S_SERVER_TOO_BUSY", PyInt_FromLong(DCERPC_NCA_S_SERVER_TOO_BUSY));
-	PyModule_AddObject(m, "DCERPC_FAULT_UNK_IF", PyInt_FromLong(0x1c010003));
-	PyModule_AddObject(m, "DCERPC_NCA_S_INVALID_PRES_CONTEXT_ID", PyInt_FromLong(DCERPC_NCA_S_INVALID_PRES_CONTEXT_ID));
 	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_NONE", PyInt_FromLong(DCERPC_AUTH_LEVEL_NONE));
-	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_CONNECT", PyInt_FromLong(DCERPC_AUTH_LEVEL_CONNECT));
-	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_INTEGRITY", PyInt_FromLong(DCERPC_AUTH_LEVEL_INTEGRITY));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_CONTEXT_MISMATCH", PyInt_FromLong(DCERPC_NCA_S_FAULT_CONTEXT_MISMATCH));
-	PyModule_AddObject(m, "DCERPC_BIND_REASON_ASYNTAX", PyInt_FromLong(1));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_OVERRFLOW", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_OVERRFLOW));
-	PyModule_AddObject(m, "DCERPC_AUTH_TRAILER_LENGTH", PyInt_FromLong(8));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_MEMORY", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_MEMORY));
-	PyModule_AddObject(m, "DCERPC_PKT_REQUEST", PyInt_FromLong(DCERPC_PKT_REQUEST));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_PENDING_CANCEL", PyInt_FromLong(0x04));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_NCALRPC_AS_SYSTEM", PyInt_FromLong(DCERPC_AUTH_TYPE_NCALRPC_AS_SYSTEM));
-	PyModule_AddObject(m, "DCERPC_FAULT_TODO", PyInt_FromLong(0x00000042));
-	PyModule_AddObject(m, "FDServer", PyInt_FromLong(FDServer));
-	PyModule_AddObject(m, "RTS_IPV4", PyInt_FromLong(RTS_IPV4));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_CLOSED", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_CLOSED));
-	PyModule_AddObject(m, "DCERPC_PKT_ALTER_RESP", PyInt_FromLong(DCERPC_PKT_ALTER_RESP));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_DIV_BY_ZERO", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_DIV_BY_ZERO));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_MANAGER_NOT_ENTERED", PyInt_FromLong(DCERPC_NCA_S_FAULT_MANAGER_NOT_ENTERED));
+	PyModule_AddObject(m, "RTS_FLAG_NONE", PyInt_FromLong(RTS_FLAG_NONE));
+	PyModule_AddObject(m, "DCERPC_FRAG_LEN_OFFSET", PyInt_FromLong(8));
 	PyModule_AddObject(m, "DCERPC_DREP_LE", PyInt_FromLong(0x10));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INVALID_TAG", PyInt_FromLong(DCERPC_NCA_S_FAULT_INVALID_TAG));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_CONC_MPX", PyInt_FromLong(0x10));
-	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_BAD_ACTID", PyInt_FromLong(DCERPC_NCA_S_FAULT_BAD_ACTID));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_KRB5_1", PyInt_FromLong(DCERPC_AUTH_TYPE_KRB5_1));
-	PyModule_AddObject(m, "DCERPC_PKT_FAULT", PyInt_FromLong(DCERPC_PKT_FAULT));
-	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_SPNEGO", PyInt_FromLong(DCERPC_AUTH_TYPE_SPNEGO));
-	PyModule_AddObject(m, "RTS_FLAG_EOF", PyInt_FromLong(RTS_FLAG_EOF));
+	PyModule_AddObject(m, "DCERPC_NCA_S_YOU_CRASHED", PyInt_FromLong(DCERPC_NCA_S_YOU_CRASHED));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_UNDERFLOW", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_UNDERFLOW));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_LAST", PyInt_FromLong(DCERPC_PFC_FLAG_LAST));
+	PyModule_AddObject(m, "DCERPC_FAULT_UNK_IF", PyInt_FromLong(0x1c010003));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_MAX_SIZE", PyInt_FromLong(1024));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_REMOTE_NO_MEMORY", PyInt_FromLong(DCERPC_NCA_S_FAULT_REMOTE_NO_MEMORY));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_REMOTE_COMM_FAILURE", PyInt_FromLong(DCERPC_NCA_S_FAULT_REMOTE_COMM_FAILURE));
+	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_INTEGRITY", PyInt_FromLong(DCERPC_AUTH_LEVEL_INTEGRITY));
+	PyModule_AddObject(m, "DCERPC_PKT_FACK", PyInt_FromLong(DCERPC_PKT_FACK));
+	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_PRIVACY", PyInt_FromLong(DCERPC_AUTH_LEVEL_PRIVACY));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_USER_DEFINED", PyInt_FromLong(DCERPC_NCA_S_FAULT_USER_DEFINED));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_MAYBE", PyInt_FromLong(DCERPC_PFC_FLAG_MAYBE));
+	PyModule_AddObject(m, "DCERPC_FAULT_NDR", PyInt_FromLong(0x000006f7));
+	PyModule_AddObject(m, "RTS_FLAG_IN_CHANNEL", PyInt_FromLong(RTS_FLAG_IN_CHANNEL));
+	PyModule_AddObject(m, "DCERPC_CALL_ID_OFFSET", PyInt_FromLong(12));
+	PyModule_AddObject(m, "DCERPC_NCA_S_UNUSED_1C00001E", PyInt_FromLong(DCERPC_NCA_S_UNUSED_1C00001E));
+	PyModule_AddObject(m, "DCERPC_PKT_ALTER_RESP", PyInt_FromLong(DCERPC_PKT_ALTER_RESP));
+	PyModule_AddObject(m, "DCERPC_PKT_PING", PyInt_FromLong(DCERPC_PKT_PING));
+	PyModule_AddObject(m, "DCERPC_REQUEST_LENGTH", PyInt_FromLong(24));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_UNSPEC_REJECT", PyInt_FromLong(DCERPC_NCA_S_FAULT_UNSPEC_REJECT));
 	PyModule_AddObject(m, "DCERPC_NCA_S_UNSUPPORTED_AUTHN_LEVEL", PyInt_FromLong(DCERPC_NCA_S_UNSUPPORTED_AUTHN_LEVEL));
+	PyModule_AddObject(m, "DCERPC_PKT_NOCALL", PyInt_FromLong(DCERPC_PKT_NOCALL));
+	PyModule_AddObject(m, "DCERPC_NCACN_PAYLOAD_OFFSET", PyInt_FromLong(16));
+	PyModule_AddObject(m, "DCERPC_FAULT_OP_RNG_ERROR", PyInt_FromLong(0x1c010002));
+	PyModule_AddObject(m, "DCERPC_NCA_S_COMM_FAILURE", PyInt_FromLong(DCERPC_NCA_S_COMM_FAILURE));
+	PyModule_AddObject(m, "DCERPC_NCA_S_UNKNOWN_IF", PyInt_FromLong(DCERPC_NCA_S_UNKNOWN_IF));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_ERROR));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_OBJECT_UUID", PyInt_FromLong(DCERPC_PFC_FLAG_OBJECT_UUID));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_ORDER", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_ORDER));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_MSMQ", PyInt_FromLong(DCERPC_AUTH_TYPE_MSMQ));
+	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_CONNECT", PyInt_FromLong(DCERPC_AUTH_LEVEL_CONNECT));
+	PyModule_AddObject(m, "DCERPC_NCA_S_OUT_ARGS_TOO_BIG", PyInt_FromLong(DCERPC_NCA_S_OUT_ARGS_TOO_BIG));
 	PyModule_AddObject(m, "DCERPC_PKT_CO_CANCEL", PyInt_FromLong(DCERPC_PKT_CO_CANCEL));
-	PyModule_AddObject(m, "DCERPC_PFC_FLAG_DID_NOT_EXECUTE", PyInt_FromLong(0x20));
-	PyModule_AddObject(m, "DCERPC_PKT_BIND_ACK", PyInt_FromLong(DCERPC_PKT_BIND_ACK));
+	PyModule_AddObject(m, "DCERPC_FAULT_CONTEXT_MISMATCH", PyInt_FromLong(0x1c00001a));
+	PyModule_AddObject(m, "DCERPC_PKT_BIND_NAK", PyInt_FromLong(DCERPC_PKT_BIND_NAK));
+	PyModule_AddObject(m, "FDServer", PyInt_FromLong(FDServer));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_ILL_INST", PyInt_FromLong(DCERPC_NCA_S_FAULT_ILL_INST));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_FIRST", PyInt_FromLong(DCERPC_PFC_FLAG_FIRST));
+	PyModule_AddObject(m, "FDClient", PyInt_FromLong(FDClient));
+	PyModule_AddObject(m, "DCERPC_PKT_CL_CANCEL", PyInt_FromLong(DCERPC_PKT_CL_CANCEL));
+	PyModule_AddObject(m, "DCERPC_PKT_FAULT", PyInt_FromLong(DCERPC_PKT_FAULT));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_COMMAND_HEADER2", PyInt_FromLong(DCERPC_SEC_VT_COMMAND_HEADER2));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INT_DIV_BY_ZERO", PyInt_FromLong(DCERPC_NCA_S_FAULT_INT_DIV_BY_ZERO));
+	PyModule_AddObject(m, "DCERPC_FRAG_MAX_SIZE", PyInt_FromLong(5840));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_MSN", PyInt_FromLong(DCERPC_AUTH_TYPE_MSN));
+	PyModule_AddObject(m, "DCERPC_PKT_ACK", PyInt_FromLong(DCERPC_PKT_ACK));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_CONTEXT_MISMATCH", PyInt_FromLong(DCERPC_NCA_S_FAULT_CONTEXT_MISMATCH));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_STRING_TOO_LARGE", PyInt_FromLong(DCERPC_NCA_S_FAULT_STRING_TOO_LARGE));
+	PyModule_AddObject(m, "DCERPC_AUTH_TRAILER_LENGTH", PyInt_FromLong(8));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_CANCEL", PyInt_FromLong(DCERPC_NCA_S_FAULT_CANCEL));
+	PyModule_AddObject(m, "DCERPC_DREP_OFFSET", PyInt_FromLong(4));
+	PyModule_AddObject(m, "DCERPC_AUTH_LEVEL_PACKET", PyInt_FromLong(DCERPC_AUTH_LEVEL_PACKET));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_COMMAND_ENUM", PyInt_FromLong(DCERPC_SEC_VT_COMMAND_ENUM));
+	PyModule_AddObject(m, "RTS_FLAG_PING", PyInt_FromLong(RTS_FLAG_PING));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_FP_OVERRFLOW", PyInt_FromLong(DCERPC_NCA_S_FAULT_FP_OVERRFLOW));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_MEMORY", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_MEMORY));
+	PyModule_AddObject(m, "DCERPC_FAULT_INVALID_TAG", PyInt_FromLong(0x1c000006));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_COMMAND_PCONTEXT", PyInt_FromLong(DCERPC_SEC_VT_COMMAND_PCONTEXT));
+	PyModule_AddObject(m, "DCERPC_NCA_S_INVALID_PRES_CONTEXT_ID", PyInt_FromLong(DCERPC_NCA_S_INVALID_PRES_CONTEXT_ID));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_CLIENT_SUPPORTS_HEADER_SIGNING", PyInt_FromLong(DCERPC_SEC_VT_CLIENT_SUPPORTS_HEADER_SIGNING));
 	PyModule_AddObject(m, "DCERPC_NCA_S_UNUSED_1C000011", PyInt_FromLong(DCERPC_NCA_S_UNUSED_1C000011));
+	PyModule_AddObject(m, "DCERPC_RESPONSE_LENGTH", PyInt_FromLong(24));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_WHO_ARE_YOU_FAILED", PyInt_FromLong(DCERPC_NCA_S_FAULT_WHO_ARE_YOU_FAILED));
+	PyModule_AddObject(m, "DCERPC_PKT_ALTER", PyInt_FromLong(DCERPC_PKT_ALTER));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_INVALID_BOUND", PyInt_FromLong(DCERPC_NCA_S_FAULT_INVALID_BOUND));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_OBJECT_NOT_FOUND", PyInt_FromLong(DCERPC_NCA_S_FAULT_OBJECT_NOT_FOUND));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_NTLMSSP", PyInt_FromLong(DCERPC_AUTH_TYPE_NTLMSSP));
+	PyModule_AddObject(m, "RTS_FLAG_RECYCLE_CHANNEL", PyInt_FromLong(RTS_FLAG_RECYCLE_CHANNEL));
+	PyModule_AddObject(m, "DCERPC_NCA_S_SERVER_TOO_BUSY", PyInt_FromLong(DCERPC_NCA_S_SERVER_TOO_BUSY));
+	PyModule_AddObject(m, "DCERPC_BIND_REASON_INVALID_AUTH_TYPE", PyInt_FromLong(8));
+	PyModule_AddObject(m, "DECRPC_BIND_PROTOCOL_VERSION_NOT_SUPPORTED", PyInt_FromLong(4));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_PIPE_CLOSED", PyInt_FromLong(DCERPC_NCA_S_FAULT_PIPE_CLOSED));
+	PyModule_AddObject(m, "DCERPC_NCA_S_PROTO_ERROR", PyInt_FromLong(DCERPC_NCA_S_PROTO_ERROR));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_BAD_ACTID", PyInt_FromLong(DCERPC_NCA_S_FAULT_BAD_ACTID));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_COMMAND_BITMASK1", PyInt_FromLong(DCERPC_SEC_VT_COMMAND_BITMASK1));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_UNSPEC", PyInt_FromLong(DCERPC_NCA_S_FAULT_UNSPEC));
+	PyModule_AddObject(m, "DCERPC_PKT_RESPONSE", PyInt_FromLong(DCERPC_PKT_RESPONSE));
+	PyModule_AddObject(m, "DCERPC_PKT_CANCEL_ACK", PyInt_FromLong(DCERPC_PKT_CANCEL_ACK));
+	PyModule_AddObject(m, "DCERPC_FAULT_OTHER", PyInt_FromLong(0x00000001));
+	PyModule_AddObject(m, "DCERPC_PKT_REQUEST", PyInt_FromLong(DCERPC_PKT_REQUEST));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_CONC_MPX", PyInt_FromLong(DCERPC_PFC_FLAG_CONC_MPX));
+	PyModule_AddObject(m, "RTS_IPV4", PyInt_FromLong(RTS_IPV4));
+	PyModule_AddObject(m, "DCERPC_PFC_OFFSET", PyInt_FromLong(3));
+	PyModule_AddObject(m, "DCERPC_SEC_VT_MUST_PROCESS", PyInt_FromLong(DCERPC_SEC_VT_MUST_PROCESS));
+	PyModule_AddObject(m, "FDOutProxy", PyInt_FromLong(FDOutProxy));
+	PyModule_AddObject(m, "DCERPC_NCACN_PAYLOAD_MAX_SIZE", PyInt_FromLong(0x400000));
+	PyModule_AddObject(m, "DCERPC_PKT_BIND", PyInt_FromLong(DCERPC_PKT_BIND));
+	PyModule_AddObject(m, "DCERPC_PKT_BIND_ACK", PyInt_FromLong(DCERPC_PKT_BIND_ACK));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_NCALRPC_AS_SYSTEM", PyInt_FromLong(DCERPC_AUTH_TYPE_NCALRPC_AS_SYSTEM));
+	PyModule_AddObject(m, "RTS_IPV6", PyInt_FromLong(RTS_IPV6));
+	PyModule_AddObject(m, "RTS_FLAG_OTHER_CMD", PyInt_FromLong(RTS_FLAG_OTHER_CMD));
+	PyModule_AddObject(m, "DCERPC_NCA_S_UNSUPPORTED_TYPE", PyInt_FromLong(DCERPC_NCA_S_UNSUPPORTED_TYPE));
+	PyModule_AddObject(m, "DCERPC_PKT_AUTH3", PyInt_FromLong(DCERPC_PKT_AUTH3));
+	PyModule_AddObject(m, "DCERPC_PFC_FLAG_PENDING_CANCEL", PyInt_FromLong(DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_KRB5_1", PyInt_FromLong(DCERPC_AUTH_TYPE_KRB5_1));
+	PyModule_AddObject(m, "DCERPC_FAULT_SEC_PKG_ERROR", PyInt_FromLong(0x00000721));
+	PyModule_AddObject(m, "DCERPC_AUTH_TYPE_SPNEGO", PyInt_FromLong(DCERPC_AUTH_TYPE_SPNEGO));
+	PyModule_AddObject(m, "DCERPC_PKT_REJECT", PyInt_FromLong(DCERPC_PKT_REJECT));
+	PyModule_AddObject(m, "DCERPC_NCA_S_FAULT_CODESET_CONV_ERROR", PyInt_FromLong(DCERPC_NCA_S_FAULT_CODESET_CONV_ERROR));
 	Py_INCREF((PyObject *)(void *)&dcerpc_ctx_list_Type);
 	PyModule_AddObject(m, "ctx_list", (PyObject *)(void *)&dcerpc_ctx_list_Type);
 	Py_INCREF((PyObject *)(void *)&dcerpc_bind_Type);
@@ -6262,6 +6961,16 @@ void initdcerpc(void)
 	PyModule_AddObject(m, "ncacn_packet", (PyObject *)(void *)&ncacn_packet_Type);
 	Py_INCREF((PyObject *)(void *)&ncadg_packet_Type);
 	PyModule_AddObject(m, "ncadg_packet", (PyObject *)(void *)&ncadg_packet_Type);
+	Py_INCREF((PyObject *)(void *)&dcerpc_sec_vt_pcontext_Type);
+	PyModule_AddObject(m, "sec_vt_pcontext", (PyObject *)(void *)&dcerpc_sec_vt_pcontext_Type);
+	Py_INCREF((PyObject *)(void *)&dcerpc_sec_vt_header2_Type);
+	PyModule_AddObject(m, "sec_vt_header2", (PyObject *)(void *)&dcerpc_sec_vt_header2_Type);
+	Py_INCREF((PyObject *)(void *)&dcerpc_sec_vt_Type);
+	PyModule_AddObject(m, "sec_vt", (PyObject *)(void *)&dcerpc_sec_vt_Type);
+	Py_INCREF((PyObject *)(void *)&dcerpc_sec_vt_count_Type);
+	PyModule_AddObject(m, "sec_vt_count", (PyObject *)(void *)&dcerpc_sec_vt_count_Type);
+	Py_INCREF((PyObject *)(void *)&dcerpc_sec_verification_trailer_Type);
+	PyModule_AddObject(m, "sec_verification_trailer", (PyObject *)(void *)&dcerpc_sec_verification_trailer_Type);
 #ifdef PY_MOD_DCERPC_PATCH
 	PY_MOD_DCERPC_PATCH(m);
 #endif

@@ -8,6 +8,7 @@
 #include "libcli/util/ntstatus.h"
 
 #include "librpc/gen_ndr/misc.h"
+extern const uint8_t DCERPC_SEC_VT_MAGIC[8];
 #ifndef _HEADER_dcerpc
 #define _HEADER_dcerpc
 
@@ -29,20 +30,18 @@
 #define DCERPC_FAULT_TODO	( 0x00000042 )
 #define DCERPC_AUTH_LEVEL_DEFAULT	( DCERPC_AUTH_LEVEL_CONNECT )
 #define DCERPC_AUTH_TRAILER_LENGTH	( 8 )
-#define DCERPC_PFC_FLAG_FIRST	( 0x01 )
-#define DCERPC_PFC_FLAG_LAST	( 0x02 )
-#define DCERPC_PFC_FLAG_PENDING_CANCEL	( 0x04 )
-#define DCERPC_PFC_FLAG_SUPPORT_HEADER_SIGN	( DCERPC_PFC_FLAG_PENDING_CANCEL )
-#define DCERPC_PFC_FLAG_CONC_MPX	( 0x10 )
-#define DCERPC_PFC_FLAG_DID_NOT_EXECUTE	( 0x20 )
-#define DCERPC_PFC_FLAG_MAYBE	( 0x40 )
-#define DCERPC_PFC_FLAG_OBJECT_UUID	( 0x80 )
+#define DCERPC_PFC_FLAG_PENDING_CANCEL	( DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING )
+#define DCERPC_PFC_FLAG_SUPPORT_HEADER_SIGN	( DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING )
 #define DCERPC_PFC_OFFSET	( 3 )
 #define DCERPC_DREP_OFFSET	( 4 )
 #define DCERPC_FRAG_LEN_OFFSET	( 8 )
+#define DCERPC_FRAG_MAX_SIZE	( 5840 )
 #define DCERPC_AUTH_LEN_OFFSET	( 10 )
 #define DCERPC_CALL_ID_OFFSET	( 12 )
+#define DCERPC_NCACN_PAYLOAD_OFFSET	( 16 )
+#define DCERPC_NCACN_PAYLOAD_MAX_SIZE	( 0x400000 )
 #define DCERPC_DREP_LE	( 0x10 )
+#define DCERPC_SEC_VT_MAX_SIZE	( 1024 )
 struct dcerpc_ctx_list {
 	uint16_t context_id;
 	uint8_t num_transfer_syntaxes;
@@ -568,6 +567,15 @@ union dcerpc_payload {
 	struct dcerpc_rts rts;/* [case(DCERPC_PKT_RTS)] */
 }/* [nodiscriminant] */;
 
+/* bitmap dcerpc_pfc_flags */
+#define DCERPC_PFC_FLAG_FIRST ( 0x01 )
+#define DCERPC_PFC_FLAG_LAST ( 0x02 )
+#define DCERPC_PFC_FLAG_PENDING_CANCEL_OR_HDR_SIGNING ( 0x04 )
+#define DCERPC_PFC_FLAG_CONC_MPX ( 0x10 )
+#define DCERPC_PFC_FLAG_DID_NOT_EXECUTE ( 0x20 )
+#define DCERPC_PFC_FLAG_MAYBE ( 0x40 )
+#define DCERPC_PFC_FLAG_OBJECT_UUID ( 0x80 )
+
 struct ncacn_packet {
 	uint8_t rpc_vers;
 	uint8_t rpc_vers_minor;
@@ -602,6 +610,67 @@ struct ncadg_packet {
 	uint8_t serial_low;
 	union dcerpc_payload u;/* [switch_is(ptype)] */
 }/* [public] */;
+
+/* bitmap dcerpc_sec_vt_command */
+#define DCERPC_SEC_VT_COMMAND_ENUM ( 0x3FFF )
+#define DCERPC_SEC_VT_COMMAND_END ( 0x4000 )
+#define DCERPC_SEC_VT_MUST_PROCESS ( 0x8000 )
+
+enum dcerpc_sec_vt_command_enum
+#ifndef USE_UINT_ENUMS
+ {
+	DCERPC_SEC_VT_COMMAND_BITMASK1=(int)(0x0001),
+	DCERPC_SEC_VT_COMMAND_PCONTEXT=(int)(0x0002),
+	DCERPC_SEC_VT_COMMAND_HEADER2=(int)(0x0003)
+}
+#else
+ { __donnot_use_enum_dcerpc_sec_vt_command_enum=0x7FFFFFFF}
+#define DCERPC_SEC_VT_COMMAND_BITMASK1 ( 0x0001 )
+#define DCERPC_SEC_VT_COMMAND_PCONTEXT ( 0x0002 )
+#define DCERPC_SEC_VT_COMMAND_HEADER2 ( 0x0003 )
+#endif
+;
+
+/* bitmap dcerpc_sec_vt_bitmask1 */
+#define DCERPC_SEC_VT_CLIENT_SUPPORTS_HEADER_SIGNING ( 0x00000001 )
+
+struct dcerpc_sec_vt_pcontext {
+	struct ndr_syntax_id abstract_syntax;
+	struct ndr_syntax_id transfer_syntax;
+};
+
+struct dcerpc_sec_vt_header2 {
+	enum dcerpc_pkt_type ptype;
+	uint8_t reserved1;/* [value(0)] */
+	uint16_t reserved2;/* [value(0)] */
+	uint8_t drep[4];
+	uint32_t call_id;
+	uint16_t context_id;
+	uint16_t opnum;
+};
+
+union dcerpc_sec_vt_union {
+	uint32_t bitmask1;/* [case(DCERPC_SEC_VT_COMMAND_BITMASK1)] */
+	struct dcerpc_sec_vt_pcontext pcontext;/* [case(DCERPC_SEC_VT_COMMAND_PCONTEXT)] */
+	struct dcerpc_sec_vt_header2 header2;/* [case(DCERPC_SEC_VT_COMMAND_HEADER2)] */
+	DATA_BLOB _unknown;/* [flag(LIBNDR_FLAG_REMAINING),default] */
+}/* [nodiscriminant,switch_type(dcerpc_sec_vt_command_enum)] */;
+
+struct dcerpc_sec_vt {
+	uint16_t command;
+	union dcerpc_sec_vt_union u;/* [subcontext(2),switch_is(command&DCERPC_SEC_VT_COMMAND_ENUM),flag(LIBNDR_FLAG_SUBCONTEXT_NO_UNREAD_BYTES)] */
+};
+
+struct dcerpc_sec_vt_count {
+	uint16_t count;
+}/* [nopush,public,nopull] */;
+
+struct dcerpc_sec_verification_trailer {
+	DATA_BLOB _pad;/* [flag(LIBNDR_FLAG_ALIGN4)] */
+	uint8_t magic[8];/* [value(DCERPC_SEC_VT_MAGIC)] */
+	struct dcerpc_sec_vt_count count;
+	struct dcerpc_sec_vt *commands;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 #endif /* _HEADER_dcerpc */
 #endif /* _PIDL_HEADER_dcerpc */

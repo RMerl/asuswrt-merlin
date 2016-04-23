@@ -130,10 +130,23 @@ enum ndr_err_code ndr_pull_dcerpc_rts(struct ndr_pull *ndr, int ndr_flags, struc
 void ndr_print_dcerpc_rts(struct ndr_print *ndr, const char *name, const struct dcerpc_rts *r);
 void ndr_print_dcerpc_pkt_type(struct ndr_print *ndr, const char *name, enum dcerpc_pkt_type r);
 void ndr_print_dcerpc_payload(struct ndr_print *ndr, const char *name, const union dcerpc_payload *r);
+void ndr_print_dcerpc_pfc_flags(struct ndr_print *ndr, const char *name, uint8_t r);
 enum ndr_err_code ndr_push_ncacn_packet(struct ndr_push *ndr, int ndr_flags, const struct ncacn_packet *r);
 enum ndr_err_code ndr_pull_ncacn_packet(struct ndr_pull *ndr, int ndr_flags, struct ncacn_packet *r);
 void ndr_print_ncacn_packet(struct ndr_print *ndr, const char *name, const struct ncacn_packet *r);
 enum ndr_err_code ndr_push_ncadg_packet(struct ndr_push *ndr, int ndr_flags, const struct ncadg_packet *r);
 enum ndr_err_code ndr_pull_ncadg_packet(struct ndr_pull *ndr, int ndr_flags, struct ncadg_packet *r);
 void ndr_print_ncadg_packet(struct ndr_print *ndr, const char *name, const struct ncadg_packet *r);
+void ndr_print_dcerpc_sec_vt_command(struct ndr_print *ndr, const char *name, uint16_t r);
+void ndr_print_dcerpc_sec_vt_bitmask1(struct ndr_print *ndr, const char *name, uint32_t r);
+void ndr_print_dcerpc_sec_vt_pcontext(struct ndr_print *ndr, const char *name, const struct dcerpc_sec_vt_pcontext *r);
+void ndr_print_dcerpc_sec_vt_header2(struct ndr_print *ndr, const char *name, const struct dcerpc_sec_vt_header2 *r);
+void ndr_print_dcerpc_sec_vt_union(struct ndr_print *ndr, const char *name, const union dcerpc_sec_vt_union *r);
+void ndr_print_dcerpc_sec_vt(struct ndr_print *ndr, const char *name, const struct dcerpc_sec_vt *r);
+enum ndr_err_code ndr_push_dcerpc_sec_vt_count(struct ndr_push *ndr, int ndr_flags, const struct dcerpc_sec_vt_count *r);
+enum ndr_err_code ndr_pull_dcerpc_sec_vt_count(struct ndr_pull *ndr, int ndr_flags, struct dcerpc_sec_vt_count *r);
+void ndr_print_dcerpc_sec_vt_count(struct ndr_print *ndr, const char *name, const struct dcerpc_sec_vt_count *r);
+enum ndr_err_code ndr_push_dcerpc_sec_verification_trailer(struct ndr_push *ndr, int ndr_flags, const struct dcerpc_sec_verification_trailer *r);
+enum ndr_err_code ndr_pull_dcerpc_sec_verification_trailer(struct ndr_pull *ndr, int ndr_flags, struct dcerpc_sec_verification_trailer *r);
+void ndr_print_dcerpc_sec_verification_trailer(struct ndr_print *ndr, const char *name, const struct dcerpc_sec_verification_trailer *r);
 #endif /* _HEADER_NDR_dcerpc */
