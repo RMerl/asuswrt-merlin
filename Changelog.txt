@@ -2,7 +2,11 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.59 (xx-xxx-2016)
-    - NEW: Merged with 380_2697 GPL
+    NOTE: This version isn't available for the RT-N66U and RT-AC56U due to missing
+          GPL components.
+
+    - NEW: Merged with 380_2697 GPL.  This includes beta MU-MIMO support for the
+           RT-AC87U/AC88U/AC3100/AC5300.
     - NEW: Option on OpenVPN client/server page to reset them back to the factory
            default settings.
     - CHANGED: WAN -> NAT Passthrough now allows you to determine wether or not to load
@@ -15,7 +19,7 @@ Asuswrt-Merlin Changelog
     - CHANGED: Integrated Asus's networkmap into the DHCP reservations page
     - CHANGED: Updated Tor to 0.2.7.6
     - FIXED: Daily/Monthly traffic monitoring shows invalid values on the RT-AC88U/3100/5300,
-             even with CTF disabled.
+             even with CTF disabled.  Implemented a temporary workaround.
     - FIXED: WPS wasn't working on the RT-AC3200
     - FIXED: Backported security fixes from OpenWRT to Samba 3.6.25, addressing the following: 
              CVE-2015-5252, CVE-2015-5370, CVE-2015-5296, CVE-2015-5299, CVE-2015-7560,
