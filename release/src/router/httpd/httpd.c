@@ -369,7 +369,7 @@ send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
 	if(url == NULL)
 		strncpy(url_tmp, "index.asp", sizeof(url_tmp));
 	else
-		strncpy(url_tmp, url, sizeof(url_tmp));
+		strlcpy(url_tmp, url, sizeof(url_tmp));
 		
 	if(fromapp_flag == 0){
 		snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s&lock_time=%d';</script>",error_status, url_tmp, lock_time);
@@ -597,9 +597,9 @@ send_token_headers( int status, char* title, char* extra_header, char* mime_type
     memset(asus_token,0,sizeof(asus_token));
 
     if(nvram_match("x_Setting", "0") && strcmp( gen_token, "") != 0){
-        strncpy(asus_token, gen_token, sizeof(asus_token));
+        strlcpy(asus_token, gen_token, sizeof(asus_token));
     }else{
-	strncpy(asus_token, generate_token(), sizeof(asus_token));
+	strlcpy(asus_token, generate_token(), sizeof(asus_token));
         add_asus_token(asus_token);
     }
 

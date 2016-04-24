@@ -2293,11 +2293,11 @@ static int validate_apply(webs_t wp, json_object *root) {
 						|| !strcmp(t->name, "http_passwd")){
 #ifdef RTCONFIG_USB
 					if(!strcmp(t->name, "http_username")){
-						strncpy(orig_acc, nvram_safe_get(name), 128);
-						strncpy(modified_acc, value, 128);
+						strlcpy(orig_acc, nvram_safe_get(name), 128);
+						strlcpy(modified_acc, value, 128);
 					}
 					else if(!strcmp(t->name, "http_passwd"))
-						strncpy(modified_pass, value, 128);
+						strlcpy(modified_pass, value, 128);
 
 #endif
 
@@ -2388,9 +2388,9 @@ static int validate_apply(webs_t wp, json_object *root) {
 
 #ifdef RTCONFIG_USB
 		if(strlen(orig_acc) <= 0)
-			strncpy(orig_acc, nvram_safe_get("http_username"), 128);
+			strlcpy(orig_acc, nvram_safe_get("http_username"), 128);
 		if(strlen(modified_pass) <= 0)
-			strncpy(modified_pass, nvram_safe_get("http_passwd"), 128);
+			strlcpy(modified_pass, nvram_safe_get("http_passwd"), 128);
 
 		if(strlen(modified_acc) <= 0)
 			mod_account(orig_acc, NULL, modified_pass);
@@ -4720,7 +4720,7 @@ static char *get_stok(char *str, char *dest, char delimiter)
 		if (p == str)
 			*dest = '\0';
 		else
-			strncpy(dest, str, p-str);
+			strlcpy(dest, str, p-str);
 
 		p++;
 	} else
@@ -6703,37 +6703,37 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		if(!strcmp(current_url, "Main_Netstat_Content.asp") && (
 			strncasecmp(system_cmd, "netstat", 7) == 0
 		)){
-			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+			strlcpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else if(!strcmp(current_url, "Main_Analysis_Content.asp") && (
 			   strncasecmp(system_cmd, "ping", 4) == 0
 			|| strncasecmp(system_cmd, "traceroute", 10) == 0
 			|| strncasecmp(system_cmd, "nslookup", 8) == 0
 		)){
-			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+			strlcpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else if(!strcmp(current_url, "Main_WOL_Content.asp") && (
 			strncasecmp(system_cmd, "ether-wake", 10) == 0
 		)){
-			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+			strlcpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 			sys_script("syscmd.sh");        // Immediately run it
 		}
 		else if(!strcmp(current_url, "Main_AdmStatus_Content.asp"))
 		{
 			if(strncasecmp(system_cmd, "run_telnetd", 11) == 0){
-				strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+				strlcpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 				sys_script("syscmd.sh");
 			}else if(strncasecmp(system_cmd, "run_infosvr", 11) == 0){
 				nvram_set("ateCommand_flag", "1");
 			}else if(strncasecmp(system_cmd, "set_factory_mode", 16) == 0){
-				strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+				strlcpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 				sys_script("syscmd.sh");
 			}
 		}
 		else if(!strcmp(current_url, "Main_ConnStatus_Content.asp") && (
 			strncasecmp(system_cmd, "netstat-nat", 11) == 0
 		)){
-			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+			strlcpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else{
 			_dprintf("[httpd] Invalid SystemCmd!\n");
@@ -7323,7 +7323,7 @@ do_auth(char *userid, char *passwd, char *realm)
 
 	reget_passwd = 0;
 
-	strncpy(userid, UserID, AUTH_MAX);
+	strlcpy(userid, UserID, AUTH_MAX);
 
 	if (!is_auth())
 	{
@@ -7331,9 +7331,9 @@ do_auth(char *userid, char *passwd, char *realm)
 	}
 	else
 	{
-		strncpy(passwd, UserPass, AUTH_MAX);
+		strlcpy(passwd, UserPass, AUTH_MAX);
 	}
-	strncpy(realm, ProductID, AUTH_MAX);
+	strlcpy(realm, ProductID, AUTH_MAX);
 }
 
 //andi
@@ -8492,7 +8492,7 @@ prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, cha
 #endif
 	ddns_flag = websGetVar(wp, "path", "");
 	if(strcmp(ddns_flag, "0") == 0){
-		strncpy(ddns_hostname_tmp, nvram_get("ddns_hostname_x"), sizeof(ddns_hostname_tmp));
+		strlcpy(ddns_hostname_tmp, nvram_get("ddns_hostname_x"), sizeof(ddns_hostname_tmp));
 		nvram_set("ddns_transfer", "");
 		nvram_set("ddns_hostname_x", "");
 	}
@@ -8950,11 +8950,11 @@ asus_token_t* create_list(char *token)
 	        printf("\n Node creation failed \n");
 	        return NULL;
 	}
-	strncpy(ptr->useragent, user_agent, 1024);
-	strncpy(ptr->token, token, 32);
-	strncpy(ptr->ipaddr, login_ip_str, 16);
-	strncpy(ptr->login_timestampstr, login_timestr, 32);
-	strncpy(ptr->host, host_name, 64);
+	strlcpy(ptr->useragent, user_agent, 1024);
+	strlcpy(ptr->token, token, 32);
+	strlcpy(ptr->ipaddr, login_ip_str, 16);
+	strlcpy(ptr->login_timestampstr, login_timestr, 32);
+	strlcpy(ptr->host, host_name, 64);
 	ptr->next = NULL;
 
     head = curr = ptr;
@@ -8988,11 +8988,11 @@ asus_token_t* add_token_to_list(char *token, int add_to_end)
 	memset(login_timestr, 0, 32);
 	sprintf(login_timestr, "%lu", now);
 
-	strncpy(ptr->useragent, user_agent, 1024);
-	strncpy(ptr->token, token, 32);
-	strncpy(ptr->ipaddr, login_ip_str, 16);
-	strncpy(ptr->login_timestampstr, login_timestr, 32);
-	strncpy(ptr->host, host_name, 64);
+	strlcpy(ptr->useragent, user_agent, 1024);
+	strlcpy(ptr->token, token, 32);
+	strlcpy(ptr->ipaddr, login_ip_str, 16);
+	strlcpy(ptr->login_timestampstr, login_timestr, 32);
+	strlcpy(ptr->host, host_name, 64);
 	ptr->next = NULL;
 
 	if(add_to_end == 1)
@@ -9265,7 +9265,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				snprintf(referer_host,sizeof(host_name),"%s",host_name);
 		}
 
-		strncpy(asus_token, generate_token(), sizeof(asus_token));
+		strlcpy(asus_token, generate_token(), sizeof(asus_token));
 		add_asus_token(asus_token);
 
 		websWrite(wp,"Set-Cookie: asus_token=%s; HttpOnly;\r\n",asus_token);
@@ -11412,7 +11412,7 @@ int ej_cloud_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/asuswebstorage", "r");
 	char line[PATH_MAX], buf[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX];
 
 	websWrite(wp, "cloud_sync=\"%s\";\n", nvram_safe_get("cloud_sync"));
 
@@ -11423,7 +11423,7 @@ int ej_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -11483,7 +11483,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/asuswebstorage", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], captcha_url[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], captcha_url[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -11495,7 +11495,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -11571,7 +11571,7 @@ int ej_UI_cloud_dropbox_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/dropbox", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_dropbox_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -11583,7 +11583,7 @@ int ej_UI_cloud_dropbox_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -11659,7 +11659,7 @@ int ej_UI_cloud_ftpclient_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/ftpclient", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_ftpclient_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -11671,7 +11671,7 @@ int ej_UI_cloud_ftpclient_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -11747,7 +11747,7 @@ int ej_UI_cloud_sambaclient_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/sambaclient", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_sambaclient_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -11759,7 +11759,7 @@ int ej_UI_cloud_sambaclient_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -11836,7 +11836,7 @@ int ej_UI_cloud_usbclient_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/usbclient", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_usbclient_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -11848,7 +11848,7 @@ int ej_UI_cloud_usbclient_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -11924,7 +11924,7 @@ int ej_UI_rs_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/Cloud/log/WebDAV", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char rulenum[PATH_MAX], status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX];
+	char rulenum[PATH_MAX], status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "rs_rulenum=\"\";\n");
@@ -11936,7 +11936,7 @@ int ej_UI_rs_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(rulenum, 0, PATH_MAX);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
@@ -13778,7 +13778,7 @@ json_unescape(char *s)
 		if (*s == '%') {
 			sscanf(s + 1, "%02x", &c);
 			*s++ = (char) c;
-			strncpy(s, s + 2, strlen(s) + 1);
+			strlcpy(s, s + 2, strlen(s) + 1);
 		}
 		/* Space is special */
 		else if (*s == '+')
