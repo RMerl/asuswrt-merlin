@@ -4,6 +4,9 @@
 // The only interference it has with the global scope is the variable "merlinWS"
 // Contribution by Allan Jensen, WinterNet Studio, www.winternet.no. Anyone is free do use and do with the code whatever they want.
 var merlinWS = {
+
+	firstCol_newSortIndex: 0,
+
 	sortStaticIpList: function(colIndex) {
 		var theList = merlinWS.parseAsusList(dhcp_staticlist_array);
 
@@ -25,6 +28,23 @@ var merlinWS = {
 			for (var i in arr) {
 				if (typeof arr[i] == 'string' && arr[i].length > 0) {
 					row = arr[i].split('&#62');
+
+					// Add the nickname as well (must match code for clientName in showdhcp_staticlist() so that we end up with the same nickname)
+					var clientName;
+
+					if (typeof clientList != 'undefined') {
+						if (clientList[row[0]]) {  //clientList is a global variable, row[0] is the MAC address
+							clientName = (clientList[row[0]].nickName == "") ? clientList[row[0]].name : clientList[row[0]].nickName;
+						} else {
+							clientName = 'New device';
+						}
+					} else {
+						// fallback in case clientList should disappear in future updates
+						clientName = row[0];
+					}
+					row.push(clientName);
+
+
 					output.push(row);
 				}
 			}
@@ -38,7 +58,7 @@ var merlinWS = {
 			if (typeof arr[i] == 'function') continue;
 			str += '&#60';
 			for (var j in arr[i]) {
-				if (typeof arr[i][j] == 'function') continue;
+				if (typeof arr[i][j] == 'function' || j == 3) continue;   //leave out index 3 because that value (the nickname) doesn't come from dhcp_staticlist_array
 				str += arr[i][j] +'&#62';
 			}
 			str = str.substr(str, str.length-4);  //remove last "&#62"
@@ -91,7 +111,14 @@ jQuery(function($) {
 
 		// NOTE: if using borderTop Chrome has a strange bug that due to the colspan above makes it display incorrectly!
 		$(staticHeaderTable).find('th:eq(0)').on('click', function(e) {
-			merlinWS.sortStaticIpList(0);
+			var newIndx;
+			if (merlinWS.firstCol_newSortIndex == 0) {
+				merlinWS.firstCol_newSortIndex = 3;
+			} else {
+				merlinWS.firstCol_newSortIndex = 0;
+			}
+
+			merlinWS.sortStaticIpList(merlinWS.firstCol_newSortIndex);
 			$(staticHeaderTable).find('th').css({borderBottom: 'none'});
 			$(e.target).closest('th').css({borderBottom: '2px solid #fc0'});
 		});
@@ -100,12 +127,14 @@ jQuery(function($) {
 			merlinWS.sortStaticIpList(1);
 			$(staticHeaderTable).find('th').css({borderBottom: 'none'});
 			$(e.target).closest('th').css({borderBottom: '2px solid #fc0'});
+			merlinWS.firstCol_newSortIndex = 0;  //reset this
 		});
 
 		$(staticHeaderTable).find('th:eq(2)').on('click', function(e) {
 			merlinWS.sortStaticIpList(2);
 			$(staticHeaderTable).find('th').css({borderBottom: 'none'});
 			$(e.target).closest('th').css({borderBottom: '2px solid #fc0'});
+			merlinWS.firstCol_newSortIndex = 0;  //reset this
 		});
 	}
 });
