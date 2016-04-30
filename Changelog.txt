@@ -2,13 +2,21 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.59 (xx-xxx-2016)
-    NOTE: This version isn't available for the RT-N66U and RT-AC56U due to 
-          missing GPL components.
-
     - NEW: Merged with 380_2697 GPL.  This includes beta MU-MIMO support for 
            the RT-AC87U/AC88U/AC3100/AC5300, and IPTV fixes.
     - NEW: Option on OpenVPN client/server page to reset them back to the 
            factory default settings.
+    - EXPERIMENTAL: Added support for codel and fq_codel to ARM models
+                    (RT-AC56U and newer).
+                    When enabling Traditional QoS or Bandwidth Limiter,
+                    you can now change from the default sfq queue 
+                    discipline to codel or fq_codel.
+                    (based on Kyle Sanderson's Tomato backport)
+
+                    NOTE: Traditional QoS is currently broken on the
+                          newer models (RT-AC88U and up).  This is a known
+                          issue in recent Asus releases.
+
     - CHANGED: WAN -> NAT Passthrough now allows you to determine whether or 
                not to load the NAT helper module for h323, rtsp and sip.  
                Asus's old behaviour is "Enabled + NAT Helper".
