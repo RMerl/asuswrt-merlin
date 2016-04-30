@@ -772,7 +772,10 @@ static int start_tqos(void)
 			qsched = "codel";
 			break;
 		case 2:
-			qsched = "fq_codel";
+			if (bw < 51200)
+				qsched = "fq_codel quantum 300 noecn";
+			else
+				qsched = "fq_codel noecn";
 			break;
 		default:
 			qsched = "sfq perturb 10";
@@ -1205,7 +1208,7 @@ static int start_bandwidth_limiter(void)
 			qsched = "codel";
 			break;
 		case 2:
-			qsched = "fq_codel";
+			qsched = "fq_codel quantum 300";
 			break;
 		default:
 			qsched = "sfq perturb 10";
