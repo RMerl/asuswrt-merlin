@@ -766,6 +766,7 @@ static int start_tqos(void)
 	mtu = strtoul(nvram_safe_get("wan_mtu"), NULL, 10);
 	bw = obw;
 
+#ifdef RTCONFIG_BCMARM
 	switch(nvram_get_int("qos_sched")){
 		case 1:
 			qsched = "codel";
@@ -777,6 +778,9 @@ static int start_tqos(void)
 			qsched = "sfq perturb 10";
 			break;
 	}
+#else
+	qsched = "sfq perturb 10";
+#endif
 
 	/* WAN */
 	fprintf(f,
@@ -1195,7 +1199,7 @@ static int start_bandwidth_limiter(void)
 		"start)\n"
 		, get_wan_ifname(wan_primary_ifunit())
 	);
-
+#ifdef RTCONFIG_BCMARM
 	switch(nvram_get_int("qos_sched")){
 		case 1:
 			qsched = "codel";
@@ -1207,6 +1211,9 @@ static int start_bandwidth_limiter(void)
 			qsched = "sfq perturb 10";
 			break;
 	}
+#else
+	qsched = "sfq perturb 10";
+#endif
 
 	/* ASUSWRT
 	qos_bw_rulelist :
