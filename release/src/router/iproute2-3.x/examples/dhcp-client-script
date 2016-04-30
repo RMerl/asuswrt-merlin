@@ -14,7 +14,7 @@
 # we should install and preserve.
 #
 
-exec >> /tmp/DHS.log 2>&1
+exec >> /var/log/DHS.log 2>&1
 
 echo dhc-script $* reason=$reason
 set | grep "^\(old_\|new_\|check_\)"

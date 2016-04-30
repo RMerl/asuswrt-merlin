@@ -67,7 +67,7 @@ static int prio_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				fprintf(stderr, "Illegal \"priomap\" element\n");
 				return -1;
 			}
-			if (band > opt.bands) {
+			if (band >= opt.bands) {
 				fprintf(stderr, "\"priomap\" element is out of bands\n");
 				return -1;
 			}
@@ -112,7 +112,7 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (tb[TCA_PRIO_MQ])
 		fprintf(f, " multiqueue: %s ",
-		    *(unsigned char *)RTA_DATA(tb[TCA_PRIO_MQ]) ? "on" : "off");
+			rta_getattr_u8(tb[TCA_PRIO_MQ]) ? "on" : "off");
 
 	return 0;
 }

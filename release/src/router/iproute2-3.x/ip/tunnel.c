@@ -12,8 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with this program; if not, see <http://www.gnu.org/licenses>.
  */
 /*
  * split from ip_tunnel.c
@@ -52,6 +51,9 @@ const char *tnl_strproto(__u8 proto)
 	case IPPROTO_IPV6:
 		strcpy(buf, "ipv6");
 		break;
+	case IPPROTO_ESP:
+		strcpy(buf, "esp");
+		break;
 	case 0:
 		strcpy(buf, "any");
 		break;
@@ -74,7 +76,7 @@ int tnl_get_ioctl(const char *basedev, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCGETTUNNEL, &ifr);
 	if (err)
-		fprintf(stderr, "get tunnel %s failed: %s\n", basedev, 
+		fprintf(stderr, "get tunnel \"%s\" failed: %s\n", basedev,
 			strerror(errno));
 
 	close(fd);
@@ -95,7 +97,7 @@ int tnl_add_ioctl(int cmd, const char *basedev, const char *name, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, cmd, &ifr);
 	if (err)
-		fprintf(stderr, "add tunnel %s failed: %s\n", ifr.ifr_name,
+		fprintf(stderr, "add tunnel \"%s\" failed: %s\n", ifr.ifr_name,
 			strerror(errno));
 	close(fd);
 	return err;
@@ -116,13 +118,13 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCDELTUNNEL, &ifr);
 	if (err)
-		fprintf(stderr, "delete tunnel %s failed: %s\n",
+		fprintf(stderr, "delete tunnel \"%s\" failed: %s\n",
 			ifr.ifr_name, strerror(errno));
 	close(fd);
 	return err;
 }
 
-static int tnl_gen_ioctl(int cmd, const char *name, 
+static int tnl_gen_ioctl(int cmd, const char *name,
 			 void *p, int skiperr)
 {
 	struct ifreq ifr;
@@ -145,7 +147,6 @@ int tnl_prl_ioctl(int cmd, const char *name, void *p)
 	return tnl_gen_ioctl(cmd, name, p, -1);
 }
 
-#ifndef NO_IPV6
 int tnl_6rd_ioctl(int cmd, const char *name, void *p)
 {
 	return tnl_gen_ioctl(cmd, name, p, -1);
@@ -155,4 +156,3 @@ int tnl_ioctl_get_6rd(const char *name, void *p)
 {
 	return tnl_gen_ioctl(SIOCGET6RD, name, p, EINVAL);
 }
-#endif	// NO_IPV6

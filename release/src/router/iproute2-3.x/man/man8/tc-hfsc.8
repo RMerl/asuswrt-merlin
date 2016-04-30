@@ -1,0 +1,61 @@
+.TH HFSC 8 "31 October 2011" iproute2 Linux
+.
+.SH NAME
+HFSC \- Hierarchical Fair Service Curve's control under linux
+.
+.SH SYNOPSIS
+.nf
+tc qdisc add ... hfsc [ \fBdefault\fR CLASSID ]
+
+tc class add ... hfsc [ [ \fBrt\fR SC ] [ \fBls\fR SC ] | [ \fBsc\fR SC ] ] [ \fBul\fR SC ]
+
+\fBrt\fR : realtime service curve
+\fBls\fR : linkshare service curve
+\fBsc\fR : rt+ls service curve
+\fBul\fR : upperlimit service curve
+
+\(bu at least one of \fBrt\fR, \fBls\fR or \fBsc\fR must be specified
+\(bu \fBul\fR can only be specified with \fBls\fR or \fBsc\fR
+.
+.IP "SC := [ [ \fBm1\fR BPS ] \fBd\fR SEC ] \fBm2\fR BPS"
+\fBm1\fR : slope of the first segment
+\fBd\fR  : x\-coordinate of intersection
+\fBm2\fR : slope of the second segment
+.PP
+.IP "SC := [ [ \fBumax\fR BYTE ] \fBdmax\fR SEC ] \fBrate\fR BPS"
+\fBumax\fR : maximum unit of work
+\fBdmax\fR : maximum delay
+\fBrate\fR : rate
+.PP
+.fi
+For description of BYTE, BPS and SEC \- please see \fBUNITS\fR
+section of \fBtc\fR(8).
+.
+.SH DESCRIPTION (qdisc)
+HFSC qdisc has only one optional parameter \- \fBdefault\fR.  CLASSID specifies
+the minor part of the default classid, where packets not classified by other
+means (e.g. u32 filter, CLASSIFY target of iptables) will be enqueued. If
+\fBdefault\fR is not specified, unclassified packets will be dropped.
+.
+.SH DESCRIPTION (class)
+HFSC class is used to create a class hierarchy for HFSC scheduler. For
+explanation of the algorithm, and the meaning behind \fBrt\fR, \fBls\fR,
+\fBsc\fR and \fBul\fR service curves \- please refer to \fBtc\-hfsc\fR(7).
+
+As you can see in \fBSYNOPSIS\fR, service curve (SC) can be specified in two
+ways. Either as maximum delay for certain amount of work, or as a bandwidth
+assigned for certain amount of time. Obviously, \fBm1\fR is simply
+\fBumax\fR/\fBdmax\fR.
+
+Both \fBm2\fR and \fBrate\fR are mandatory. If you omit other
+parameters, you will specify linear service curve.
+.
+.SH "SEE ALSO"
+.
+\fBtc\fR(8), \fBtc\-hfsc\fR(7), \fBtc\-stab\fR(8)
+
+Please direct bugreports and patches to: <net...@vger.kernel.org>
+.
+.SH "AUTHOR"
+.
+Manpage created by Michal Soltys (sol...@ziu.info)

@@ -1,6 +1,6 @@
 /*
  * m_ipt.c	iptables based targets
- * 		utilities mostly ripped from iptables <duh, its the linux way>
+ *		utilities mostly ripped from iptables <duh, its the linux way>
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
@@ -396,11 +396,9 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	char **argv = *argv_p;
 	int argc = 0, iargc = 0;
 	char k[16];
-	int res = -1;
 	int size = 0;
 	int iok = 0, ok = 0;
 	__u32 hook = 0, index = 0;
-	res = 0;
 
 	lib_dir = getenv("IPTABLES_LIB_DIR");
 	if (!lib_dir)
@@ -417,7 +415,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr,"bad arguements to ipt %d vs %d \n", argc, rargc);
+		fprintf(stderr,"bad arguments to ipt %d vs %d \n", argc, rargc);
 		return -1;
 	}
 
@@ -554,7 +552,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		fprintf(f, "[NULL ipt table name ] assuming mangle ");
 	} else {
 		fprintf(f, "tablename: %s ",
-			(char *) RTA_DATA(tb[TCA_IPT_TABLE]));
+			rta_getattr_str(tb[TCA_IPT_TABLE]));
 	}
 
 	if (tb[TCA_IPT_HOOK] == NULL) {
@@ -562,7 +560,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		return -1;
 	} else {
 		__u32 hook;
-		hook = *(__u32 *) RTA_DATA(tb[TCA_IPT_HOOK]);
+		hook = rta_getattr_u32(tb[TCA_IPT_HOOK]);
 		fprintf(f, " hook: %s \n", ipthooks[hook]);
 	}
 
@@ -593,7 +591,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 			fprintf(f, " [NULL ipt target index ]\n");
 		} else {
 			__u32 index;
-			index = *(__u32 *) RTA_DATA(tb[TCA_IPT_INDEX]);
+			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
 			fprintf(f, " \n\tindex %d", index);
 		}
 

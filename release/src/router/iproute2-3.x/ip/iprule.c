@@ -39,6 +39,9 @@ static void usage(void)
 	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
 	fprintf(stderr, "          [ goto NUMBER ]\n");
+	fprintf(stderr, "          SUPPRESSOR\n");
+	fprintf(stderr, "SUPPRESSOR := [ suppress_prefixlength NUMBER ]\n");
+	fprintf(stderr, "              [ suppress_ifgroup DEVGROUP ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | NUMBER ]\n");
 	exit(-1);
 }
@@ -86,7 +89,6 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[FRA_SRC]) {
 		if (r->rtm_src_len != host_len) {
 			fprintf(fp, "from %s/%u ", rt_addr_n2a(r->rtm_family,
-							 RTA_PAYLOAD(tb[FRA_SRC]),
 							 RTA_DATA(tb[FRA_SRC]),
 							 abuf, sizeof(abuf)),
 				r->rtm_src_len
@@ -107,7 +109,6 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[FRA_DST]) {
 		if (r->rtm_dst_len != host_len) {
 			fprintf(fp, "to %s/%u ", rt_addr_n2a(r->rtm_family,
-							 RTA_PAYLOAD(tb[FRA_DST]),
 							 RTA_DATA(tb[FRA_DST]),
 							 abuf, sizeof(abuf)),
 				r->rtm_dst_len
@@ -127,37 +128,52 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
 
- 	if (tb[FRA_FWMARK] || tb[FRA_FWMASK]) {
+	if (tb[FRA_FWMARK] || tb[FRA_FWMASK]) {
 		__u32 mark = 0, mask = 0;
 
 		if (tb[FRA_FWMARK])
-			mark = *(__u32*)RTA_DATA(tb[FRA_FWMARK]);
+			mark = rta_getattr_u32(tb[FRA_FWMARK]);
 
 		if (tb[FRA_FWMASK] &&
-		    (mask = *(__u32*)RTA_DATA(tb[FRA_FWMASK])) != 0xFFFFFFFF)
+		    (mask = rta_getattr_u32(tb[FRA_FWMASK])) != 0xFFFFFFFF)
 			fprintf(fp, "fwmark 0x%x/0x%x ", mark, mask);
 		else
 			fprintf(fp, "fwmark 0x%x ", mark);
 	}
 
 	if (tb[FRA_IFNAME]) {
-		fprintf(fp, "iif %s ", (char*)RTA_DATA(tb[FRA_IFNAME]));
+		fprintf(fp, "iif %s ", rta_getattr_str(tb[FRA_IFNAME]));
 		if (r->rtm_flags & FIB_RULE_IIF_DETACHED)
 			fprintf(fp, "[detached] ");
 	}
 
 	if (tb[FRA_OIFNAME]) {
-		fprintf(fp, "oif %s ", (char*)RTA_DATA(tb[FRA_OIFNAME]));
+		fprintf(fp, "oif %s ", rta_getattr_str(tb[FRA_OIFNAME]));
 		if (r->rtm_flags & FIB_RULE_OIF_DETACHED)
 			fprintf(fp, "[detached] ");
 	}
 
 	table = rtm_get_table(r, tb);
-	if (table)
+	if (table) {
 		fprintf(fp, "lookup %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
 
+		if (tb[FRA_SUPPRESS_PREFIXLEN]) {
+			int pl = rta_getattr_u32(tb[FRA_SUPPRESS_PREFIXLEN]);
+			if (pl != -1) {
+				fprintf(fp, "suppress_prefixlength %d ", pl);
+			}
+		}
+		if (tb[FRA_SUPPRESS_IFGROUP]) {
+			int group = rta_getattr_u32(tb[FRA_SUPPRESS_IFGROUP]);
+			if (group != -1) {
+				SPRINT_BUF(b1);
+				fprintf(fp, "suppress_ifgroup %s ", rtnl_group_n2a(group, b1, sizeof(b1)));
+			}
+		}
+	}
+
 	if (tb[FRA_FLOW]) {
-		__u32 to = *(__u32*)RTA_DATA(tb[FRA_FLOW]);
+		__u32 to = rta_getattr_u32(tb[FRA_FLOW]);
 		__u32 from = to>>16;
 		to &= 0xFFFF;
 		if (from) {
@@ -180,7 +196,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	} else if (r->rtm_type == FR_ACT_GOTO) {
 		fprintf(fp, "goto ");
 		if (tb[FRA_GOTO])
-			fprintf(fp, "%u", *(__u32 *) RTA_DATA(tb[FRA_GOTO]));
+			fprintf(fp, "%u", rta_getattr_u32(tb[FRA_GOTO]));
 		else
 			fprintf(fp, "none");
 		if (r->rtm_flags & FIB_RULE_UNRESOLVED)
@@ -212,7 +228,7 @@ static int iprule_list(int argc, char **argv)
 		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, print_rule, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, print_rule, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
@@ -225,9 +241,9 @@ static int iprule_modify(int cmd, int argc, char **argv)
 {
 	int table_ok = 0;
 	struct {
-		struct nlmsghdr 	n;
-		struct rtmsg 		r;
-		char   			buf[1024];
+		struct nlmsghdr	n;
+		struct rtmsg		r;
+		char  			buf[1024];
 	} req;
 
 	memset(&req, 0, sizeof(req));
@@ -310,6 +326,20 @@ static int iprule_modify(int cmd, int argc, char **argv)
 				addattr32(&req.n, sizeof(req), FRA_TABLE, tid);
 			}
 			table_ok = 1;
+		} else if (matches(*argv, "suppress_prefixlength") == 0 ||
+			   strcmp(*argv, "sup_pl") == 0) {
+			int pl;
+			NEXT_ARG();
+			if (get_s32(&pl, *argv, 0) || pl < 0)
+				invarg("suppress_prefixlength value is invalid\n", *argv);
+			addattr32(&req.n, sizeof(req), FRA_SUPPRESS_PREFIXLEN, pl);
+		} else if (matches(*argv, "suppress_ifgroup") == 0 ||
+			   strcmp(*argv, "sup_group") == 0) {
+			NEXT_ARG();
+			int group;
+			if (rtnl_group_a2n(&group, *argv))
+				invarg("Invalid \"suppress_ifgroup\" value\n", *argv);
+			addattr32(&req.n, sizeof(req), FRA_SUPPRESS_IFGROUP, group);
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "iif") == 0) {
 			NEXT_ARG();
@@ -355,7 +385,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	if (!table_ok && cmd == RTM_NEWRULE)
 		req.r.rtm_table = RT_TABLE_MAIN;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		return 2;
 
 	return 0;
@@ -382,7 +412,7 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *a
 		if (rtnl_open(&rth2, 0) < 0)
 			return -1;
 
-		if (rtnl_talk(&rth2, n, 0, 0, NULL, NULL, NULL) < 0)
+		if (rtnl_talk(&rth2, n, 0, 0, NULL) < 0)
 			return -2;
 
 		rtnl_close(&rth2);
@@ -408,7 +438,7 @@ static int iprule_flush(int argc, char **argv)
 		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, flush_rule, NULL, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, flush_rule, NULL) < 0) {
 		fprintf(stderr, "Flush terminated\n");
 		return 1;
 	}

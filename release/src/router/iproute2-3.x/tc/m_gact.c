@@ -68,7 +68,7 @@ usage(void)
 	exit(-1);
 }
 
-int
+static int
 get_act(char ***argv_p)
 {
 	char **argv = *argv_p;
@@ -89,8 +89,9 @@ get_act(char ***argv_p)
 	}
 }
 
-int
-parse_gact(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
+static int
+parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
+	   int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -202,7 +203,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struc
 	return 0;
 }
 
-int
+static int
 print_gact(struct action_util *au,FILE * f, struct rtattr *arg)
 {
 	SPRINT_BUF(b1);

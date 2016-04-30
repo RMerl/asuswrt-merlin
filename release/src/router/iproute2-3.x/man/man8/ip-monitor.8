@@ -1,0 +1,99 @@
+.TH IP\-MONITOR 8 "13 Dec 2012" "iproute2" "Linux"
+.SH "NAME"
+ip-monitor, rtmon \- state monitoring
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.BR "ip " " [ "
+.IR ip-OPTIONS " ]"
+.BR  "monitor" " [ " all " |"
+.IR OBJECT-LIST " ] ["
+.BI file " FILENAME "
+] [
+.BI dev " DEVICE "
+]
+.sp
+
+.SH OPTIONS
+
+.TP
+.BR "\-t" , " \-timestamp"
+Prints timestamp before the event message on the separated line in format:
+    Timestamp: <Day> <Month> <DD> <hh:mm:ss> <YYYY> <usecs> usec
+    <EVENT>
+
+.TP
+.BR "\-ts" , " \-tshort"
+Prints short timestamp before the event message on the same line in format:
+    [<YYYY>-<MM>-<DD>T<hh:mm:ss>.<ms>] <EVENT>
+
+.SH DESCRIPTION
+The
+.B ip
+utility can monitor the state of devices, addresses
+and routes continuously.  This option has a slightly different format.
+Namely, the
+.B monitor
+command is the first in the command line and then the object list follows:
+
+.BR "ip monitor" " [ " all " |"
+.IR OBJECT-LIST " ] ["
+.BI file " FILENAME "
+] [
+.BI dev " DEVICE "
+]
+
+.I OBJECT-LIST
+is the list of object types that we want to monitor.
+It may contain
+.BR link ", " address ", " route ", " mroute ", " prefix ", "
+.BR neigh " and " netconf "."
+If no
+.B file
+argument is given,
+.B ip
+opens RTNETLINK, listens on it and dumps state changes in the format
+described in previous sections.
+
+.P
+If the
+.BI file
+option is given, the program does not listen on RTNETLINK,
+but opens the given file, and dumps its contents. The file
+should contain RTNETLINK messages saved in binary format.
+Such a file can be generated with the
+.B rtmon
+utility.  This utility has a command line syntax similar to
+.BR "ip monitor" .
+Ideally,
+.B rtmon
+should be started before the first network configuration command
+is issued. F.e. if you insert:
+.sp
+.in +8
+rtmon file /var/log/rtmon.log
+.in -8
+.sp
+in a startup script, you will be able to view the full history
+later.
+
+.P
+Nevertheless, it is possible to start
+.B rtmon
+at any time.
+It prepends the history with the state snapshot dumped at the moment
+of starting.
+
+.P
+If the
+.BI dev
+option is given, the program prints only events related to this device.
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

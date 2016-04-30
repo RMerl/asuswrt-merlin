@@ -140,25 +140,25 @@ static int dsmark_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (!RTA_PAYLOAD(tb[TCA_DSMARK_MASK]))
 			fprintf(stderr,"dsmark: empty mask\n");
 		else fprintf(f,"mask 0x%02x ",
-			    *(__u8 *) RTA_DATA(tb[TCA_DSMARK_MASK]));
+			    rta_getattr_u8(tb[TCA_DSMARK_MASK]));
 	}
 	if (tb[TCA_DSMARK_VALUE]) {
 		if (!RTA_PAYLOAD(tb[TCA_DSMARK_VALUE]))
 			fprintf(stderr,"dsmark: empty value\n");
 		else fprintf(f,"value 0x%02x ",
-			    *(__u8 *) RTA_DATA(tb[TCA_DSMARK_VALUE]));
+			    rta_getattr_u8(tb[TCA_DSMARK_VALUE]));
 	}
 	if (tb[TCA_DSMARK_INDICES]) {
 		if (RTA_PAYLOAD(tb[TCA_DSMARK_INDICES]) < sizeof(__u16))
 			fprintf(stderr,"dsmark: indices too short\n");
 		else fprintf(f,"indices 0x%04x ",
-			    *(__u16 *) RTA_DATA(tb[TCA_DSMARK_INDICES]));
+			    rta_getattr_u16(tb[TCA_DSMARK_INDICES]));
 	}
 	if (tb[TCA_DSMARK_DEFAULT_INDEX]) {
 		if (RTA_PAYLOAD(tb[TCA_DSMARK_DEFAULT_INDEX]) < sizeof(__u16))
 			fprintf(stderr,"dsmark: default_index too short\n");
 		else fprintf(f,"default_index 0x%04x ",
-			    *(__u16 *) RTA_DATA(tb[TCA_DSMARK_DEFAULT_INDEX]));
+			    rta_getattr_u16(tb[TCA_DSMARK_DEFAULT_INDEX]));
 	}
 	if (tb[TCA_DSMARK_SET_TC_INDEX]) fprintf(f,"set_tc_index ");
 	return 0;

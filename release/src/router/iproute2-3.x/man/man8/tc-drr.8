@@ -45,6 +45,7 @@ To attach to device eth0, using the interface MTU as its quantum:
 Adding two classes:
 .P
 # tc class add dev eth0 parent 1: classid 1:1 drr
+.br
 # tc class add dev eth0 parent 1: classid 1:2 drr
 .P
 You also need to add at least one filter to classify packets.
@@ -64,9 +65,9 @@ flow filter:
 
 .B for i in .. 1024;do
 .br
-.B \ttc class add dev ..  classid $handle:$(print %x $i)
+.B "\ttc class add dev .. classid $handle:$(print %x $i)"
 .br
-.B \ttc qdisc add dev .. fifo limit 16
+.B "\ttc qdisc add dev .. fifo limit 16"
 .br
 .B done
 

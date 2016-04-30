@@ -261,6 +261,15 @@ var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 var qos_bw_rulelist = "<% nvram_get("qos_bw_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var select_all_checked = 0;
+if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC68U") ||
+    (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC3200") ||
+    (based_modelid == "RT-AC88U") || (based_modelid == "RT-AC5300") ||
+    (based_modelid == "RT-AC3100"))
+		var codel_support = true;
+else
+		var codel_support = false;
+
+
 function initial(){
 	show_menu();
 	if(downsize_4m_support || downsize_8m_support)
@@ -516,6 +525,7 @@ function change_qos_type(value){
 		document.getElementById('upload_tr').style.display = "";
 		document.getElementById('download_tr').style.display = "";
 		document.getElementById('list_table').style.display = "none";
+		if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
 		document.form.qos_bw_rulelist.disabled = true;
 		if(document.form.qos_type_orig.value == 0 && document.form.qos_enable_orig.value != 0){
 			document.form.action_script.value = "restart_qos;restart_firewall";
@@ -533,6 +543,7 @@ function change_qos_type(value){
 		document.getElementById('bw_limit_type').checked = false;
 		document.getElementById('bandwidth_setting_tr').style.display = "";
 		document.getElementById('list_table').style.display = "none";
+		if (codel_support) document.getElementById('qos_sched_tr').style.display = "none";
 		document.form.qos_bw_rulelist.disabled = true;
 		if(document.getElementById("auto").checked){
 			document.getElementById('upload_tr').style.display = "none";
@@ -561,6 +572,7 @@ function change_qos_type(value){
 		document.getElementById('upload_tr').style.display = "none";
 		document.getElementById('download_tr').style.display = "none";
 		document.getElementById('list_table').style.display = "block";
+		if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
 		document.form.qos_bw_rulelist.disabled = false;
 		if(document.form.qos_type_orig.value == 2 && document.form.qos_enable_orig.value != 0)
 			document.form.action_script.value = "restart_qos;restart_firewall";
@@ -1271,6 +1283,7 @@ function check_field(){
 															 function() {
 																document.form.qos_enable.value = 1;
 																if(document.form.qos_enable_orig.value != 1){
+																	if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
 																	if(document.getElementById('int_type').checked == true && bwdpi_support)
 																		document.form.next_page.value = "QoS_EZQoS.asp";
 																	else if(document.getElementById('trad_type').checked)		//Traditional QoS
@@ -1299,6 +1312,7 @@ function check_field(){
 																document.getElementById('qos_type_tr').style.display = "none";
 																document.getElementById('bandwidth_setting_tr').style.display = "none";
 																document.getElementById('list_table').style.display = "none";
+																if (codel_support) document.getElementById('qos_sched_tr').style.display = "none";
 	
 																if(bwdpi_support){																	
 																	
@@ -1326,6 +1340,15 @@ function check_field(){
 												<input id="manu" name="bw_setting_name" onClick="bandwidth_setting();" type="radio"><label for="manu">Manual</label>
 											</td>
 										</tr>		
+
+										<tr id="qos_sched_tr" style="display:none">
+											<th>Queue Discipline</th>
+											<td colspan="2">
+												<input id="sfq" name="qos_sched" value="0" type="radio" <% nvram_match("qos_sched", "0","checked"); %>><label for="sfq">sfq</label>
+												<input id="codel" name="qos_sched" value="1" type="radio" <% nvram_match("qos_sched", "1","checked"); %>><label for="codel">codel</label>
+												<input id="fq_codel" name="qos_sched" value="2" type="radio" <% nvram_match("qos_sched", "2","checked"); %>><label for="fq_codel">fq_codel</label>
+											</td>
+										</tr>
 										
 										<tr id="upload_tr">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#upload_bandwidth#></a></th>

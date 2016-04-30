@@ -38,7 +38,6 @@ static void usage(void)
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ] [ overhead BYTES ]\n");
 	fprintf(stderr, "                [ linklayer TYPE ] [ ACTIONTERM ]\n");
 
-	fprintf(stderr, "Old Syntax ACTIONTERM := action <EXCEEDACT>[/NOTEXCEEDACT] \n");
 	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n");
 	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue \n");
 	fprintf(stderr, "Where:  pipe is only valid for new syntax \n");
@@ -50,7 +49,7 @@ static void explain1(char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-char *police_action_n2a(int action, char *buf, int len)
+static const char *police_action_n2a(int action, char *buf, int len)
 {
 	switch (action) {
 	case -1:
@@ -72,7 +71,7 @@ char *police_action_n2a(int action, char *buf, int len)
 	}
 }
 
-int police_action_a2n(char *arg, int *result)
+static int police_action_a2n(const char *arg, int *result)
 {
 	int res;
 
@@ -100,7 +99,7 @@ int police_action_a2n(char *arg, int *result)
 }
 
 
-int get_police_result(int *action, int *result, char *arg)
+static int get_police_result(int *action, int *result, char *arg)
 {
 	char *p = strchr(arg, '/');
 
@@ -230,8 +229,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 			p.action = TC_POLICE_OK;
 		} else if (matches(*argv, "pipe") == 0) {
 			p.action = TC_POLICE_PIPE;
-		} else if (strcmp(*argv, "action") == 0 ||
-			   strcmp(*argv, "conform-exceed") == 0) {
+		} else if (strcmp(*argv, "conform-exceed") == 0) {
 			NEXT_ARG();
 			if (get_police_result(&p.action, &presult, *argv)) {
 				fprintf(stderr, "Illegal \"action\"\n");
@@ -322,9 +320,11 @@ int
 print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 {
 	SPRINT_BUF(b1);
+	SPRINT_BUF(b2);
 	struct tc_police *p;
 	struct rtattr *tb[TCA_POLICE_MAX+1];
 	unsigned buffer;
+	unsigned int linklayer;
 
 	if (arg == NULL)
 		return 0;
@@ -353,13 +353,16 @@ print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	if (p->peakrate.rate)
 		fprintf(f, "peakrate %s ", sprint_rate(p->peakrate.rate, b1));
 	if (tb[TCA_POLICE_AVRATE])
-		fprintf(f, "avrate %s ", sprint_rate(*(__u32*)RTA_DATA(tb[TCA_POLICE_AVRATE]), b1));
+		fprintf(f, "avrate %s ", sprint_rate(rta_getattr_u32(tb[TCA_POLICE_AVRATE]), b1));
 	fprintf(f, "action %s", police_action_n2a(p->action, b1, sizeof(b1)));
 	if (tb[TCA_POLICE_RESULT]) {
 		fprintf(f, "/%s ", police_action_n2a(*(int*)RTA_DATA(tb[TCA_POLICE_RESULT]), b1, sizeof(b1)));
 	} else
 		fprintf(f, " ");
 	fprintf(f, "overhead %ub ", p->rate.overhead);
+	linklayer = (p->rate.linklayer & TC_LINKLAYER_MASK);
+	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
+		fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b2));
 	fprintf(f, "\nref %d bind %d\n",p->refcnt, p->bindcnt);
 
 	return 0;

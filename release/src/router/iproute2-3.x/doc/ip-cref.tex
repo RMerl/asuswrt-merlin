@@ -61,6 +61,9 @@ forms. Currently, the following options are available:
 appears twice or more, the amount of information increases.
 As a rule, the information is statistics or some time values.
 
+\item \verb|-d|, \verb|-details|
+
+--- output more detailed information.
 
 \item \verb|-f|, \verb|-family| followed by a protocol family
 identifier: \verb|inet|, \verb|inet6| or \verb|link|.
@@ -102,6 +105,38 @@ host addresses.
 \begin{NB}
  \verb|ip| never uses DNS to resolve names to addresses.
 \end{NB}
+
+\item \verb|-b|, \verb|-batch FILE|
+
+--- read commands from provided file or standart input and invoke them.
+First failure will cause termination of \verb|ip|.
+In batch \verb|FILE| everything which begins with \verb|#| symbol is
+ignored and can be used for comments.
+\paragraph{Example:}
+\begin{verbatim}
+kuznet@kaiser $ cat /tmp/ip_batch.ip
+# This is a comment
+tuntap add mode tap tap1 # This is an another comment
+link set up dev tap1
+addr add 10.0.0.1/24 dev tap1
+kuznet@kaiser $ sudo ip -b /tmp/ip_batch.ip
+\end{verbatim}
+or from standart input:
+\begin{verbatim}
+kuznet@kaiser $ cat /tmp/ip_batch.ip | sudo ip -b -
+\end{verbatim}
+
+\item \verb|-force|
+
+--- don't terminate ip on errors in batch mode.
+If there were any errors during execution of the commands,
+the application return code will be non zero.
+
+\item \verb|-l|, \verb|-loops COUNT|
+
+--- specify maximum number of loops the 'ip addr flush' logic will attempt
+before giving up. The default is 10.  Zero (0) means loop until all
+addresses are removed.
 
 \end{itemize}
 
@@ -2542,13 +2577,15 @@ Namely,
 the \verb|monitor| command is the first in the command line and then
 the object list follows:
 \begin{verbatim}
-  ip monitor [ file FILE ] [ all | OBJECT-LIST ]
+  ip monitor [ file FILE ] [ all | OBJECT-LIST ] [ label ]
 \end{verbatim}
-\verb|OBJECT-LIST| is the list of object types that we want to monitor.
-It may contain \verb|link|, \verb|address| and \verb|route|.
-If no \verb|file| argument is given, \verb|ip| opens RTNETLINK,
-listens on it and dumps state changes in the format described
-in previous sections.
+\verb|OBJECT-LIST| is the list of object types that we want to
+monitor.  It may contain \verb|link|, \verb|address| and \verb|route|.
+Specifying \verb|label| indicates that output lines should be labelled
+with the type of object being printed --- this happens by default if
+\verb|all| is specified.  If no \verb|file| argument is given,
+\verb|ip| opens RTNETLINK, listens on it and dumps state changes in
+the format described in previous sections.
 
 If a file name is given, it does not listen on RTNETLINK,
 but opens the file containing RTNETLINK messages saved in binary format

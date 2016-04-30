@@ -12,22 +12,28 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <resolv.h>
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
+#include <linux/param.h>
 #include <time.h>
 #include <sys/time.h>
+#include <errno.h>
 
 
 #include "utils.h"
+#include "namespace.h"
+
+int timestamp_short = 0;
 
 int get_integer(int *val, const char *arg, int base)
 {
@@ -36,9 +42,28 @@ int get_integer(int *val, const char *arg, int base)
 
 	if (!arg || !*arg)
 		return -1;
+
 	res = strtol(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res > INT_MAX || res < INT_MIN)
+
+	/* If there were no digits at all, strtol()  stores
+         * the original value of nptr in *endptr (and returns 0).
+	 * In particular, if *nptr is not '\0' but **endptr is '\0' on return,
+	 * the entire string is valid.
+	 */
+	if (!ptr || ptr == arg || *ptr)
 		return -1;
+
+	/* If an underflow occurs, strtol() returns LONG_MIN.
+	 * If an overflow occurs,  strtol() returns LONG_MAX.
+	 * In both cases, errno is set to ERANGE.
+	 */
+	if ((res == LONG_MAX || res == LONG_MIN) && errno == ERANGE)
+		return -1;
+
+	/* Outside range of int */
+	if (res < INT_MIN || res > INT_MAX)
+		return -1;
+
 	*val = res;
 	return 0;
 }
@@ -85,9 +110,21 @@ int get_unsigned(unsigned *val, const char *arg, int base)
 
 	if (!arg || !*arg)
 		return -1;
+
 	res = strtoul(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res > UINT_MAX)
+
+	/* empty string or trailing non-digits */
+	if (!ptr || ptr == arg || *ptr)
 		return -1;
+
+	/* overflow */
+	if (res == ULONG_MAX && errno == ERANGE)
+		return -1;
+
+	/* out side range of unsigned */
+	if (res > UINT_MAX)
+		return -1;
+
 	*val = res;
 	return 0;
 }
@@ -105,17 +142,32 @@ int get_time_rtt(unsigned *val, const char *arg, int *raw)
 	unsigned long res;
 	char *p;
 
-	if (strchr(arg,'.') != NULL) {
-		t = strtod(arg,&p);
+	if (strchr(arg, '.') != NULL) {
+		t = strtod(arg, &p);
 		if (t < 0.0)
 			return -1;
-	}
-	else {
-		res = strtoul(arg, &p, 0);
-		if (res > UINT_MAX)
+
+		/* no digits? */
+		if (!p || p == arg)
 			return -1;
+
+		/* over/underflow */
+		if ((t == HUGE_VALF || t == HUGE_VALL) && errno == ERANGE)
+			return -1;
+	} else {
+		res = strtoul(arg, &p, 0);
+
+		/* empty string? */
+		if (!p || p == arg)
+			return -1;
+
+		/* overflow */
+		if (res == ULONG_MAX && errno == ERANGE)
+			return -1;
+
 		t = (double)res;
 	}
+
 	if (p == arg)
 		return -1;
 	*raw = 1;
@@ -149,9 +201,21 @@ int get_u64(__u64 *val, const char *arg, int base)
 
 	if (!arg || !*arg)
 		return -1;
+
 	res = strtoull(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res == 0xFFFFFFFFULL)
- 		return -1;
+
+	/* empty string or trailing non-digits */
+	if (!ptr || ptr == arg || *ptr)
+		return -1;
+
+	/* overflow */
+	if (res == ULLONG_MAX && errno == ERANGE)
+		return -1;
+
+	/* in case ULL is 128 bits */
+	if (res > 0xFFFFFFFFFFFFFFFFULL)
+		return -1;
+
  	*val = res;
  	return 0;
 }
@@ -164,8 +228,19 @@ int get_u32(__u32 *val, const char *arg, int base)
 	if (!arg || !*arg)
 		return -1;
 	res = strtoul(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res > 0xFFFFFFFFUL)
+
+	/* empty string or trailing non-digits */
+	if (!ptr || ptr == arg || *ptr)
 		return -1;
+
+	/* overflow */
+	if (res == ULONG_MAX && errno == ERANGE)
+		return -1;
+
+	/* in case UL > 32 bits */
+	if (res > 0xFFFFFFFFUL)
+		return -1;
+
 	*val = res;
 	return 0;
 }
@@ -178,8 +253,18 @@ int get_u16(__u16 *val, const char *arg, int base)
 	if (!arg || !*arg)
 		return -1;
 	res = strtoul(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res > 0xFFFF)
+
+	/* empty string or trailing non-digits */
+	if (!ptr || ptr == arg || *ptr)
 		return -1;
+
+	/* overflow */
+	if (res == ULONG_MAX && errno == ERANGE)
+		return -1;
+
+	if (res > 0xFFFFUL)
+		return -1;
+
 	*val = res;
 	return 0;
 }
@@ -191,9 +276,40 @@ int get_u8(__u8 *val, const char *arg, int base)
 
 	if (!arg || !*arg)
 		return -1;
+
 	res = strtoul(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res > 0xFF)
+	/* empty string or trailing non-digits */
+	if (!ptr || ptr == arg || *ptr)
 		return -1;
+
+	/* overflow */
+	if (res == ULONG_MAX && errno == ERANGE)
+		return -1;
+
+	if (res > 0xFFUL)
+		return -1;
+
+	*val = res;
+	return 0;
+}
+
+int get_s32(__s32 *val, const char *arg, int base)
+{
+	long res;
+	char *ptr;
+
+	errno = 0;
+
+	if (!arg || !*arg)
+		return -1;
+	res = strtol(arg, &ptr, base);
+	if (!ptr || ptr == arg || *ptr)
+		return -1;
+	if ((res == LONG_MIN || res == LONG_MAX) && errno == ERANGE)
+		return -1;
+	if (res > INT32_MAX || res < INT32_MIN)
+		return -1;
+
 	*val = res;
 	return 0;
 }
@@ -206,8 +322,13 @@ int get_s16(__s16 *val, const char *arg, int base)
 	if (!arg || !*arg)
 		return -1;
 	res = strtol(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res > 0x7FFF || res < -0x8000)
+	if (!ptr || ptr == arg || *ptr)
 		return -1;
+	if ((res == LONG_MIN || res == LONG_MAX) && errno == ERANGE)
+		return -1;
+	if (res > 0x7FFF || res < -0x8000)
+		return -1;
+
 	*val = res;
 	return 0;
 }
@@ -220,7 +341,11 @@ int get_s8(__s8 *val, const char *arg, int base)
 	if (!arg || !*arg)
 		return -1;
 	res = strtol(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr || res > 0x7F || res < -0x80)
+	if (!ptr || ptr == arg || *ptr)
+		return -1;
+	if ((res == LONG_MIN || res == LONG_MAX) && errno == ERANGE)
+		return -1;
+	if (res > 0x7F || res < -0x80)
 		return -1;
 	*val = res;
 	return 0;
@@ -332,19 +457,19 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 	err = get_addr_1(dst, arg, family);
 	if (err == 0) {
 		switch(dst->family) {
-			case AF_INET6:
-				dst->bitlen = 128;
-				break;
-			case AF_DECnet:
-				dst->bitlen = 16;
-				break;
-			default:
-			case AF_INET:
-				dst->bitlen = 32;
+		case AF_INET6:
+			dst->bitlen = 128;
+			break;
+		case AF_DECnet:
+			dst->bitlen = 16;
+			break;
+		default:
+		case AF_INET:
+			dst->bitlen = 32;
 		}
 		if (slash) {
 			if (get_netmask(&plen, slash+1, 0)
-					|| plen > dst->bitlen) {
+			    || plen > dst->bitlen) {
 				err = -1;
 				goto done;
 			}
@@ -499,7 +624,7 @@ int __get_user_hz(void)
 	return sysconf(_SC_CLK_TCK);
 }
 
-const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen)
+const char *rt_addr_n2a(int af, const void *addr, char *buf, int buflen)
 {
 	switch (af) {
 	case AF_INET:
@@ -606,7 +731,7 @@ const char *format_host(int af, int len, const void *addr,
 			return n;
 	}
 #endif
-	return rt_addr_n2a(af, len, addr, buf, buflen);
+	return rt_addr_n2a(af, addr, buf, buflen);
 }
 
 
@@ -621,10 +746,6 @@ char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen)
 		sprintf(ptr, "%02x", str[i]);
 		ptr += 2;
 		blen -= 2;
-		if (i != len-1 && blen > 1) {
-			*ptr++ = ':';
-			blen--;
-		}
 	}
 	return buf;
 }
@@ -632,52 +753,46 @@ char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen)
 __u8* hexstring_a2n(const char *str, __u8 *buf, int blen)
 {
 	int cnt = 0;
+	char *endptr;
 
-	for (;;) {
-		unsigned acc;
-		char ch;
+	if (strlen(str) % 2)
+		return NULL;
+	while (cnt < blen && strlen(str) > 1) {
+		unsigned int tmp;
+		char tmpstr[3];
 
-		acc = 0;
-
-		while ((ch = *str) != ':' && ch != 0) {
-			if (ch >= '0' && ch <= '9')
-				ch -= '0';
-			else if (ch >= 'a' && ch <= 'f')
-				ch -= 'a'-10;
-			else if (ch >= 'A' && ch <= 'F')
-				ch -= 'A'-10;
-			else
-				return NULL;
-			acc = (acc<<4) + ch;
-			str++;
-		}
-
-		if (acc > 255)
+		strncpy(tmpstr, str, 2);
+		tmpstr[2] = '\0';
+		tmp = strtoul(tmpstr, &endptr, 16);
+		if (errno != 0 || tmp > 0xFF || *endptr != '\0')
 			return NULL;
-		if (cnt < blen) {
-			buf[cnt] = acc;
-			cnt++;
-		}
-		if (ch == 0)
-			break;
-		++str;
+		buf[cnt++] = tmp;
+		str += 2;
 	}
-	if (cnt < blen)
-		memset(buf+cnt, 0, blen-cnt);
 	return buf;
 }
 
 int print_timestamp(FILE *fp)
 {
 	struct timeval tv;
-	char *tstr;
+	struct tm *tm;
 
-	memset(&tv, 0, sizeof(tv));
 	gettimeofday(&tv, NULL);
+	tm = localtime(&tv.tv_sec);
 
-	tstr = asctime(localtime(&tv.tv_sec));
-	tstr[strlen(tstr)-1] = 0;
-	fprintf(fp, "Timestamp: %s %lu usec\n", tstr, tv.tv_usec);
+	if (timestamp_short) {
+		char tshort[40];
+
+		strftime(tshort, sizeof(tshort), "%Y-%m-%dT%H:%M:%S", tm);
+		fprintf(fp, "[%s.%06ld] ", tshort, tv.tv_usec);
+	} else {
+		char *tstr = asctime(tm);
+
+		tstr[strlen(tstr)-1] = 0;
+		fprintf(fp, "Timestamp: %s %ld usec\n",
+			tstr, tv.tv_usec);
+	}
+
 	return 0;
 }
 
@@ -745,4 +860,49 @@ int makeargs(char *line, char *argv[], int maxargs)
 	argv[argc] = NULL;
 
 	return argc;
+}
+
+int inet_get_addr(const char *src, __u32 *dst, struct in6_addr *dst6)
+{
+	if (strchr(src, ':'))
+		return inet_pton(AF_INET6, src, dst6);
+	else
+		return inet_pton(AF_INET, src, dst);
+}
+
+void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n)
+{
+	char *tstr;
+	time_t secs = ((__u32*)NLMSG_DATA(n))[0];
+	long usecs = ((__u32*)NLMSG_DATA(n))[1];
+	tstr = asctime(localtime(&secs));
+	tstr[strlen(tstr)-1] = 0;
+	fprintf(fp, "Timestamp: %s %lu us\n", tstr, usecs);
+}
+
+static int on_netns(char *nsname, void *arg)
+{
+	struct netns_func *f = arg;
+
+	if (netns_switch(nsname))
+		return -1;
+
+	return f->func(nsname, f->arg);
+}
+
+static int on_netns_label(char *nsname, void *arg)
+{
+	printf("\nnetns: %s\n", nsname);
+	return on_netns(nsname, arg);
+}
+
+int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
+		bool show_label)
+{
+	struct netns_func nsf = { .func = func, .arg = arg };
+
+	if (show_label)
+		return netns_foreach(on_netns_label, &nsf);
+
+	return netns_foreach(on_netns, &nsf);
 }

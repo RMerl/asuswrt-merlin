@@ -24,6 +24,21 @@
 #include "utils.h"
 #include "tc_util.h"
 #include "tc_common.h"
+#include "hlist.h"
+
+struct graph_node {
+	struct hlist_node hlist;
+	__u32 id;
+	__u32 parent_id;
+	struct graph_node *parent_node;
+	struct graph_node *right_node;
+	void *data;
+	int data_len;
+	int nodes_count;
+};
+
+static struct hlist_head cls_list = {};
+static struct hlist_head root_cls_list = {};
 
 static void usage(void);
 
@@ -40,7 +55,7 @@ static void usage(void)
 	return;
 }
 
-int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
+static int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr 	n;
@@ -74,12 +89,12 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (req.t.tcm_handle)
 				duparg("classid", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid class ID");
+				invarg("invalid class ID", *argv);
 			req.t.tcm_handle = handle;
 		} else if (strcmp(*argv, "handle") == 0) {
 			fprintf(stderr, "Error: try \"classid\" instead of \"handle\"\n");
 			return -1;
- 		} else if (strcmp(*argv, "root") == 0) {
+		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID.\n");
 				return -1;
@@ -91,7 +106,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (req.t.tcm_parent)
 				duparg("parent", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid parent ID");
+				invarg("invalid parent ID", *argv);
 			req.t.tcm_parent = handle;
 		} else if (matches(*argv, "estimator") == 0) {
 			if (parse_estimator(&argc, &argv, &est))
@@ -138,7 +153,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		return 2;
 
 	return 0;
@@ -148,13 +163,152 @@ int filter_ifindex;
 __u32 filter_qdisc;
 __u32 filter_classid;
 
+static void graph_node_add(__u32 parent_id, __u32 id, void *data,
+		int len)
+{
+	struct graph_node *node = malloc(sizeof(struct graph_node));
+
+	memset(node, 0, sizeof(*node));
+	node->id         = id;
+	node->parent_id  = parent_id;
+
+	if (data && len) {
+		node->data       = malloc(len);
+		node->data_len   = len;
+		memcpy(node->data, data, len);
+	}
+
+	if (parent_id == TC_H_ROOT)
+		hlist_add_head(&node->hlist, &root_cls_list);
+	else
+		hlist_add_head(&node->hlist, &cls_list);
+}
+
+static void graph_indent(char *buf, struct graph_node *node, int is_newline,
+		int add_spaces)
+{
+	char spaces[100] = {0};
+
+	while (node && node->parent_node) {
+		node->parent_node->right_node = node;
+		node = node->parent_node;
+	}
+	while (node && node->right_node) {
+		if (node->hlist.next)
+			strcat(buf, "|    ");
+		else
+			strcat(buf, "     ");
+
+		node = node->right_node;
+	}
+
+	if (is_newline) {
+		if (node->hlist.next && node->nodes_count)
+			strcat(buf, "|    |");
+		else if (node->hlist.next)
+			strcat(buf, "|     ");
+		else if (node->nodes_count)
+			strcat(buf, "     |");
+		else if (!node->hlist.next)
+			strcat(buf, "      ");
+	}
+	if (add_spaces > 0) {
+		sprintf(spaces, "%-*s", add_spaces, "");
+		strcat(buf, spaces);
+	}
+}
+
+static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
+		int level)
+{
+	struct hlist_node *n, *tmp_cls;
+	char cls_id_str[256] = {};
+	struct rtattr *tb[TCA_MAX + 1] = {};
+	struct qdisc_util *q;
+	char str[100] = {};
+
+	hlist_for_each_safe(n, tmp_cls, root_list) {
+		struct hlist_node *c, *tmp_chld;
+		struct hlist_head children = {};
+		struct graph_node *cls = container_of(n, struct graph_node,
+				hlist);
+
+		hlist_for_each_safe(c, tmp_chld, &cls_list) {
+			struct graph_node *child = container_of(c,
+					struct graph_node, hlist);
+
+			if (cls->id == child->parent_id) {
+				hlist_del(c);
+				hlist_add_head(c, &children);
+				cls->nodes_count++;
+				child->parent_node = cls;
+			}
+		}
+
+		graph_indent(buf, cls, 0, 0);
+
+		print_tc_classid(cls_id_str, sizeof(cls_id_str), cls->id);
+		sprintf(str, "+---(%s)", cls_id_str);
+		strcat(buf, str);
+
+		parse_rtattr(tb, TCA_MAX, (struct rtattr *)cls->data,
+				cls->data_len);
+
+		if (tb[TCA_KIND] == NULL) {
+			strcat(buf, " [unknown qdisc kind] ");
+		} else {
+			const char *kind = rta_getattr_str(tb[TCA_KIND]);
+
+			sprintf(str, " %s ", kind);
+			strcat(buf, str);
+			fprintf(fp, "%s", buf);
+			buf[0] = '\0';
+
+			q = get_qdisc_kind(kind);
+			if (q && q->print_copt) {
+				q->print_copt(q, fp, tb[TCA_OPTIONS]);
+			}
+			if (q && show_stats) {
+				int cls_indent = strlen(q->id) - 2 +
+					strlen(cls_id_str);
+				struct rtattr *stats = NULL;
+
+				graph_indent(buf, cls, 1, cls_indent);
+
+				if (tb[TCA_STATS] || tb[TCA_STATS2]) {
+					fprintf(fp, "\n");
+					print_tcstats_attr(fp, tb, buf, &stats);
+					buf[0] = '\0';
+				}
+				if (cls->hlist.next || cls->nodes_count) {
+					strcat(buf, "\n");
+					graph_indent(buf, cls, 1, 0);
+				}
+			}
+		}
+		free(cls->data);
+		fprintf(fp, "%s\n", buf);
+		buf[0] = '\0';
+
+		graph_cls_show(fp, buf, &children, level + 1);
+		if (!cls->hlist.next) {
+			graph_indent(buf, cls, 0, 0);
+			strcat(buf, "\n");
+		}
+
+		fprintf(fp, "%s", buf);
+		buf[0] = '\0';
+		free(cls);
+	}
+}
+
 int print_class(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[TCA_MAX+1];
+	struct rtattr *tb[TCA_MAX + 1] = {};
 	struct qdisc_util *q;
 	char abuf[256];
 
@@ -167,13 +321,18 @@ int print_class(const struct sockaddr_nl *who,
 		fprintf(stderr, "Wrong len %d\n", len);
 		return -1;
 	}
+
+	if (show_graph) {
+		graph_node_add(t->tcm_parent, t->tcm_handle, TCA_RTA(t), len);
+		return 0;
+	}
+
 	if (filter_qdisc && TC_H_MAJ(t->tcm_handle^filter_qdisc))
 		return 0;
 
 	if (filter_classid && t->tcm_handle != filter_classid)
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
 
 	if (tb[TCA_KIND] == NULL) {
@@ -191,7 +350,7 @@ int print_class(const struct sockaddr_nl *who,
 		else
 			print_tc_classid(abuf, sizeof(abuf), t->tcm_handle);
 	}
-	fprintf(fp, "class %s %s ", (char*)RTA_DATA(tb[TCA_KIND]), abuf);
+	fprintf(fp, "class %s %s ", rta_getattr_str(tb[TCA_KIND]), abuf);
 
 	if (filter_ifindex == 0)
 		fprintf(fp, "dev %s ", ll_index_to_name(t->tcm_ifindex));
@@ -232,14 +391,18 @@ int print_class(const struct sockaddr_nl *who,
 }
 
 
-int tc_class_list(int argc, char **argv)
+static int tc_class_list(int argc, char **argv)
 {
 	struct tcmsg t;
 	char d[16];
+	char buf[1024] = {0};
 
 	memset(&t, 0, sizeof(t));
 	t.tcm_family = AF_UNSPEC;
 	memset(d, 0, sizeof(d));
+
+	filter_qdisc = 0;
+	filter_classid = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -252,13 +415,13 @@ int tc_class_list(int argc, char **argv)
 			if (filter_qdisc)
 				duparg("qdisc", *argv);
 			if (get_qdisc_handle(&filter_qdisc, *argv))
-				invarg(*argv, "invalid qdisc ID");
+				invarg("invalid qdisc ID", *argv);
 		} else if (strcmp(*argv, "classid") == 0) {
 			NEXT_ARG();
 			if (filter_classid)
 				duparg("classid", *argv);
 			if (get_tc_classid(&filter_classid, *argv))
-				invarg(*argv, "invalid class ID");
+				invarg("invalid class ID", *argv);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
@@ -271,7 +434,7 @@ int tc_class_list(int argc, char **argv)
 				duparg("parent", *argv);
 			NEXT_ARG();
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid parent ID");
+				invarg("invalid parent ID", *argv);
 			t.tcm_parent = handle;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
@@ -283,7 +446,7 @@ int tc_class_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
- 	ll_init_map(&rth);
+	ll_init_map(&rth);
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
@@ -293,15 +456,18 @@ int tc_class_list(int argc, char **argv)
 		filter_ifindex = t.tcm_ifindex;
 	}
 
- 	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
+	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&rth, print_class, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, print_class, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
+
+	if (show_graph)
+		graph_cls_show(stdout, &buf[0], &root_cls_list, 0);
 
 	return 0;
 }

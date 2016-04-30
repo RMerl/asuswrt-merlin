@@ -103,6 +103,8 @@ __PF(IEEE802154, ieee802.15.4)
 __PF(PHONET, phonet)
 __PF(PHONET_PIPE, phonet_pipe)
 __PF(CAIF, caif)
+__PF(IP6GRE, gre6)
+__PF(NETLINK, netlink)
 
 __PF(NONE, none)
 __PF(VOID,void)

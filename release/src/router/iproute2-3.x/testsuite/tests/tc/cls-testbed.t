@@ -5,10 +5,15 @@ source lib/generic.sh
 
 QDISCS="cbq htb dsmark"
 
+if [ ! -d tests/cls ]; then
+    ts_log "tests/cls folder does not exist"
+    ts_skip
+fi
+
 for q in ${QDISCS}; do
 	ts_log "Preparing classifier testbed with qdisc $q"
 
-	for c in tests/cls/*.t; do
+	for c in tests/cls/*.c; do
 
 		case "$q" in
 		cbq)

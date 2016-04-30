@@ -21,6 +21,11 @@ ts_err_cat()
 	ts_cat "$@" | tee >> $ERRF
 }
 
+ts_skip()
+{
+    exit 127
+}
+
 ts_tc()
 {
 	SCRIPT=$1; shift
@@ -57,8 +62,9 @@ ts_ip()
 	TMP_OUT=`mktemp /tmp/tc_testsuite.XXXXXX` || exit
 
 	$IP $@ 2> $TMP_ERR > $TMP_OUT
+        RET=$?
 
-	if [ -s $TMP_ERR ]; then
+	if [ -s $TMP_ERR ] || [ "$RET" != "0" ]; then
 		ts_err "${SCRIPT}: ${DESC} failed:"
 		ts_err "command: $IP $@"
 		ts_err "stderr output:"
@@ -85,4 +91,9 @@ ts_qdisc_available()
 	else
 		return 1;
 	fi
+}
+
+rand_dev()
+{
+    echo "dev-$(tr -dc "[:alpha:]" < /dev/urandom | head -c 6)"
 }

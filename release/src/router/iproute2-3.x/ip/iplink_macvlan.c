@@ -20,11 +20,16 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void explain(void)
+static void print_explain(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 		"Usage: ... macvlan mode { private | vepa | bridge | passthru }\n"
 	);
+}
+
+static void explain(void)
+{
+	print_explain(stderr);
 }
 
 static int mode_arg(void)
@@ -58,7 +63,7 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "macvlan: what is \"%s\"?\n", *argv);
+			fprintf(stderr, "macvlan: unknown option \"%s\"?\n", *argv);
 			explain();
 			return -1;
 		}
@@ -79,7 +84,7 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 	    RTA_PAYLOAD(tb[IFLA_MACVLAN_MODE]) < sizeof(__u32))
 		return;
 
-	mode = *(__u32 *)RTA_DATA(tb[IFLA_VLAN_ID]);
+	mode = rta_getattr_u32(tb[IFLA_MACVLAN_MODE]);
 	fprintf(f, " mode %s ",
 		  mode == MACVLAN_MODE_PRIVATE ? "private"
 		: mode == MACVLAN_MODE_VEPA    ? "vepa"
@@ -88,9 +93,16 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		:				 "unknown");
 }
 
+static void macvlan_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util macvlan_link_util = {
 	.id		= "macvlan",
 	.maxattr	= IFLA_MACVLAN_MAX,
 	.parse_opt	= macvlan_parse_opt,
 	.print_opt	= macvlan_print_opt,
+	.print_help	= macvlan_print_help,
 };

@@ -88,7 +88,7 @@ static int rr_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlm
 	return 0;
 }
 
-int rr_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int rr_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	int i;
 	struct tc_prio_qopt *qopt;
@@ -107,7 +107,7 @@ int rr_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (tb[TCA_PRIO_MQ])
 		fprintf(f, " multiqueue: %s ",
-		    *(unsigned char *)RTA_DATA(tb[TCA_PRIO_MQ]) ? "on" : "off");
+			rta_getattr_u8(tb[TCA_PRIO_MQ]) ? "on" : "off");
 
 	return 0;
 }

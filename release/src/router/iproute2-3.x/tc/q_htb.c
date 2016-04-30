@@ -31,9 +31,11 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... qdisc add ... htb [default N] [r2q N]\n"
+		"                      [direct_qlen P]\n"
 		" default  minor id of class to which unclassified packets are sent {0}\n"
 		" r2q      DRR quantums are computed as rate in Bps/r2q {10}\n"
 		" debug    string of 16 numbers each 0-3 {0}\n\n"
+		" direct_qlen  Limit of the direct queue {in packets}\n"
 		"... class add ... htb rate R1 [burst B1] [mpu B] [overhead O]\n"
 		"                      [prio P] [slot S] [pslot PS]\n"
 		"                      [ceil R2] [cburst B2] [mtu MTU] [quantum Q]\n"
@@ -60,6 +62,7 @@ static void explain1(char *arg)
 
 static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
+	unsigned int direct_qlen = ~0U;
 	struct tc_htb_glob opt;
 	struct rtattr *tail;
 	unsigned i; char *p;
@@ -69,21 +72,26 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 
 	while (argc > 0) {
 		if (matches(*argv, "r2q") == 0) {
-		    NEXT_ARG();
-		    if (get_u32(&opt.rate2quantum, *argv, 10)) {
-			explain1("r2q"); return -1;
-		    }
+			NEXT_ARG();
+			if (get_u32(&opt.rate2quantum, *argv, 10)) {
+				explain1("r2q"); return -1;
+			}
 		} else if (matches(*argv, "default") == 0) {
-		    NEXT_ARG();
-		    if (get_u32(&opt.defcls, *argv, 16)) {
-			explain1("default"); return -1;
-		    }
+			NEXT_ARG();
+			if (get_u32(&opt.defcls, *argv, 16)) {
+				explain1("default"); return -1;
+			}
 		} else if (matches(*argv, "debug") == 0) {
-		    NEXT_ARG(); p = *argv;
-		    for (i=0; i<16; i++,p++) {
-			if (*p<'0' || *p>'3') break;
-			opt.debug |= (*p-'0')<<(2*i);
-		    }
+			NEXT_ARG(); p = *argv;
+			for (i=0; i<16; i++,p++) {
+				if (*p<'0' || *p>'3') break;
+				opt.debug |= (*p-'0')<<(2*i);
+			}
+		} else if (matches(*argv, "direct_qlen") == 0) {
+			NEXT_ARG();
+			if (get_u32(&direct_qlen, *argv, 10)) {
+				explain1("direct_qlen"); return -1;
+			}
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
 			explain();
@@ -94,6 +102,9 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 2024, TCA_HTB_INIT, &opt, NLMSG_ALIGN(sizeof(opt)));
+	if (direct_qlen != ~0U)
+		addattr_l(n, 2024, TCA_HTB_DIRECT_QLEN,
+			  &direct_qlen, sizeof(direct_qlen));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -110,6 +121,7 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	unsigned short overhead = 0;
 	unsigned int linklayer  = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
+	__u64 ceil64 = 0, rate64 = 0;
 
 	memset(&opt, 0, sizeof(opt)); mtu = 1600; /* eth packet len */
 
@@ -146,8 +158,8 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				explain1("quantum"); return -1;
 			}
 		} else if (matches(*argv, "burst") == 0 ||
-			strcmp(*argv, "buffer") == 0 ||
-			strcmp(*argv, "maxburst") == 0) {
+			   strcmp(*argv, "buffer") == 0 ||
+			   strcmp(*argv, "maxburst") == 0) {
 			NEXT_ARG();
 			if (get_size_and_cell(&buffer, &cell_log, *argv) < 0) {
 				explain1("buffer");
@@ -155,8 +167,8 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			}
 			ok++;
 		} else if (matches(*argv, "cburst") == 0 ||
-			strcmp(*argv, "cbuffer") == 0 ||
-			strcmp(*argv, "cmaxburst") == 0) {
+			   strcmp(*argv, "cbuffer") == 0 ||
+			   strcmp(*argv, "cmaxburst") == 0) {
 			NEXT_ARG();
 			if (get_size_and_cell(&cbuffer, &ccell_log, *argv) < 0) {
 				explain1("cbuffer");
@@ -165,22 +177,22 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			ok++;
 		} else if (strcmp(*argv, "ceil") == 0) {
 			NEXT_ARG();
-			if (opt.ceil.rate) {
+			if (ceil64) {
 				fprintf(stderr, "Double \"ceil\" spec\n");
 				return -1;
 			}
-			if (get_rate(&opt.ceil.rate, *argv)) {
+			if (get_rate64(&ceil64, *argv)) {
 				explain1("ceil");
 				return -1;
 			}
 			ok++;
 		} else if (strcmp(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (opt.rate.rate) {
+			if (rate64) {
 				fprintf(stderr, "Double \"rate\" spec\n");
 				return -1;
 			}
-			if (get_rate(&opt.rate.rate, *argv)) {
+			if (get_rate64(&rate64, *argv)) {
 				explain1("rate");
 				return -1;
 			}
@@ -196,20 +208,26 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		argc--; argv++;
 	}
 
-/*	if (!ok)
+	/*	if (!ok)
 		return 0;*/
 
-	if (opt.rate.rate == 0) {
+	if (!rate64) {
 		fprintf(stderr, "\"rate\" is required.\n");
 		return -1;
 	}
 	/* if ceil params are missing, use the same as rate */
-	if (!opt.ceil.rate) opt.ceil = opt.rate;
+	if (!ceil64)
+		ceil64 = rate64;
+
+	opt.rate.rate = (rate64 >= (1ULL << 32)) ? ~0U : rate64;
+	opt.ceil.rate = (ceil64 >= (1ULL << 32)) ? ~0U : ceil64;
 
 	/* compute minimal allowed burst from rate; mtu is added here to make
 	   sute that buffer is larger than mtu and to have some safeguard space */
-	if (!buffer) buffer = opt.rate.rate / get_hz() + mtu;
-	if (!cbuffer) cbuffer = opt.ceil.rate / get_hz() + mtu;
+	if (!buffer)
+		buffer = rate64 / get_hz() + mtu;
+	if (!cbuffer)
+		cbuffer = ceil64 / get_hz() + mtu;
 
 	opt.ceil.overhead = overhead;
 	opt.rate.overhead = overhead;
@@ -221,16 +239,23 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		fprintf(stderr, "htb: failed to calculate rate table.\n");
 		return -1;
 	}
-	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer);
+	opt.buffer = tc_calc_xmittime(rate64, buffer);
 
 	if (tc_calc_rtable(&opt.ceil, ctab, ccell_log, mtu, linklayer) < 0) {
 		fprintf(stderr, "htb: failed to calculate ceil rate table.\n");
 		return -1;
 	}
-	opt.cbuffer = tc_calc_xmittime(opt.ceil.rate, cbuffer);
+	opt.cbuffer = tc_calc_xmittime(ceil64, cbuffer);
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
+
+	if (rate64 >= (1ULL << 32))
+		addattr_l(n, 1124, TCA_HTB_RATE64, &rate64, sizeof(rate64));
+
+	if (ceil64 >= (1ULL << 32))
+		addattr_l(n, 1224, TCA_HTB_CEIL64, &ceil64, sizeof(ceil64));
+
 	addattr_l(n, 2024, TCA_HTB_PARMS, &opt, sizeof(opt));
 	addattr_l(n, 3024, TCA_HTB_RTAB, rtab, 1024);
 	addattr_l(n, 4024, TCA_HTB_CTAB, ctab, 1024);
@@ -240,61 +265,87 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 
 static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
-	struct rtattr *tb[TCA_HTB_RTAB+1];
+	struct rtattr *tb[TCA_HTB_MAX + 1];
 	struct tc_htb_opt *hopt;
 	struct tc_htb_glob *gopt;
 	double buffer,cbuffer;
+	unsigned int linklayer;
+	__u64 rate64, ceil64;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 	SPRINT_BUF(b3);
+	SPRINT_BUF(b4);
 
 	if (opt == NULL)
 		return 0;
 
-	parse_rtattr_nested(tb, TCA_HTB_RTAB, opt);
+	parse_rtattr_nested(tb, TCA_HTB_MAX, opt);
 
 	if (tb[TCA_HTB_PARMS]) {
-
-	    hopt = RTA_DATA(tb[TCA_HTB_PARMS]);
-	    if (RTA_PAYLOAD(tb[TCA_HTB_PARMS])  < sizeof(*hopt)) return -1;
+		hopt = RTA_DATA(tb[TCA_HTB_PARMS]);
+		if (RTA_PAYLOAD(tb[TCA_HTB_PARMS])  < sizeof(*hopt)) return -1;
 
 		if (!hopt->level) {
 			fprintf(f, "prio %d ", (int)hopt->prio);
 			if (show_details)
 				fprintf(f, "quantum %d ", (int)hopt->quantum);
 		}
-	    fprintf(f, "rate %s ", sprint_rate(hopt->rate.rate, b1));
-	    buffer = tc_calc_xmitsize(hopt->rate.rate, hopt->buffer);
-	    fprintf(f, "ceil %s ", sprint_rate(hopt->ceil.rate, b1));
-	    cbuffer = tc_calc_xmitsize(hopt->ceil.rate, hopt->cbuffer);
-	    if (show_details) {
-		fprintf(f, "burst %s/%u mpu %s overhead %s ",
-			sprint_size(buffer, b1),
-			1<<hopt->rate.cell_log,
-			sprint_size(hopt->rate.mpu&0xFF, b2),
-			sprint_size((hopt->rate.mpu>>8)&0xFF, b3));
-		fprintf(f, "cburst %s/%u mpu %s overhead %s ",
-			sprint_size(cbuffer, b1),
-			1<<hopt->ceil.cell_log,
-			sprint_size(hopt->ceil.mpu&0xFF, b2),
-			sprint_size((hopt->ceil.mpu>>8)&0xFF, b3));
-		fprintf(f, "level %d ", (int)hopt->level);
-	    } else {
-		fprintf(f, "burst %s ", sprint_size(buffer, b1));
-		fprintf(f, "cburst %s ", sprint_size(cbuffer, b1));
-	    }
-	    if (show_raw)
-		fprintf(f, "buffer [%08x] cbuffer [%08x] ",
-			hopt->buffer,hopt->cbuffer);
+
+		rate64 = hopt->rate.rate;
+		if (tb[TCA_HTB_RATE64] &&
+		    RTA_PAYLOAD(tb[TCA_HTB_RATE64]) >= sizeof(rate64)) {
+			rate64 = rta_getattr_u64(tb[TCA_HTB_RATE64]);
+		}
+
+		ceil64 = hopt->ceil.rate;
+		if (tb[TCA_HTB_CEIL64] &&
+		    RTA_PAYLOAD(tb[TCA_HTB_CEIL64]) >= sizeof(ceil64))
+			ceil64 = rta_getattr_u64(tb[TCA_HTB_CEIL64]);
+
+		fprintf(f, "rate %s ", sprint_rate(rate64, b1));
+		if (hopt->rate.overhead)
+			fprintf(f, "overhead %u ", hopt->rate.overhead);
+		buffer = tc_calc_xmitsize(rate64, hopt->buffer);
+
+		fprintf(f, "ceil %s ", sprint_rate(ceil64, b1));
+		cbuffer = tc_calc_xmitsize(ceil64, hopt->cbuffer);
+		linklayer = (hopt->rate.linklayer & TC_LINKLAYER_MASK);
+		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
+			fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b4));
+		if (show_details) {
+			fprintf(f, "burst %s/%u mpu %s overhead %s ",
+				sprint_size(buffer, b1),
+				1<<hopt->rate.cell_log,
+				sprint_size(hopt->rate.mpu&0xFF, b2),
+				sprint_size((hopt->rate.mpu>>8)&0xFF, b3));
+			fprintf(f, "cburst %s/%u mpu %s overhead %s ",
+				sprint_size(cbuffer, b1),
+				1<<hopt->ceil.cell_log,
+				sprint_size(hopt->ceil.mpu&0xFF, b2),
+				sprint_size((hopt->ceil.mpu>>8)&0xFF, b3));
+			fprintf(f, "level %d ", (int)hopt->level);
+		} else {
+			fprintf(f, "burst %s ", sprint_size(buffer, b1));
+			fprintf(f, "cburst %s ", sprint_size(cbuffer, b1));
+		}
+		if (show_raw)
+			fprintf(f, "buffer [%08x] cbuffer [%08x] ",
+				hopt->buffer,hopt->cbuffer);
 	}
 	if (tb[TCA_HTB_INIT]) {
-	    gopt = RTA_DATA(tb[TCA_HTB_INIT]);
-	    if (RTA_PAYLOAD(tb[TCA_HTB_INIT])  < sizeof(*gopt)) return -1;
+		gopt = RTA_DATA(tb[TCA_HTB_INIT]);
+		if (RTA_PAYLOAD(tb[TCA_HTB_INIT])  < sizeof(*gopt)) return -1;
 
-	    fprintf(f, "r2q %d default %x direct_packets_stat %u",
-		    gopt->rate2quantum,gopt->defcls,gopt->direct_pkts);
+		fprintf(f, "r2q %d default %x direct_packets_stat %u",
+			gopt->rate2quantum,gopt->defcls,gopt->direct_pkts);
 		if (show_details)
 			fprintf(f," ver %d.%d",gopt->version >> 16,gopt->version & 0xffff);
+	}
+	if (tb[TCA_HTB_DIRECT_QLEN] &&
+	    RTA_PAYLOAD(tb[TCA_HTB_DIRECT_QLEN]) >= sizeof(__u32)) {
+		__u32 direct_qlen = rta_getattr_u32(tb[TCA_HTB_DIRECT_QLEN]);
+
+		fprintf(f, " direct_qlen %u", direct_qlen);
 	}
 	return 0;
 }
@@ -317,16 +368,6 @@ static int htb_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 
 struct qdisc_util htb_qdisc_util = {
 	.id 		= "htb",
-	.parse_qopt	= htb_parse_opt,
-	.print_qopt	= htb_print_opt,
-	.print_xstats 	= htb_print_xstats,
-	.parse_copt	= htb_parse_class_opt,
-	.print_copt	= htb_print_opt,
-};
-
-/* for testing of old one */
-struct qdisc_util htb2_qdisc_util = {
-	.id		=  "htb2",
 	.parse_qopt	= htb_parse_opt,
 	.print_qopt	= htb_print_opt,
 	.print_xstats 	= htb_print_xstats,

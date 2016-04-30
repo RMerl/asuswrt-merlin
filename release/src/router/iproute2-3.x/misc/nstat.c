@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <math.h>
+#include <getopt.h>
 
 #include <SNAPSHOT.h>
 
@@ -33,6 +34,7 @@ int dump_zeros = 0;
 int reset_history = 0;
 int ignore_history = 0;
 int no_output = 0;
+int json_output = 0;
 int no_update = 0;
 int scan_interval = 0;
 int time_constant = 0;
@@ -55,17 +57,17 @@ static int generic_proc_open(const char *env, char *name)
 	return open(p, O_RDONLY);
 }
 
-int net_netstat_open(void)
+static int net_netstat_open(void)
 {
 	return generic_proc_open("PROC_NET_NETSTAT", "net/netstat");
 }
 
-int net_snmp_open(void)
+static int net_snmp_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP", "net/snmp");
 }
 
-int net_snmp6_open(void)
+static int net_snmp6_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP6", "net/snmp6");
 }
@@ -75,20 +77,19 @@ struct nstat_ent
 	struct nstat_ent *next;
 	char		 *id;
 	unsigned long long val;
-	unsigned long	   ival;
 	double		   rate;
 };
 
 struct nstat_ent *kern_db;
 struct nstat_ent *hist_db;
 
-char *useless_numbers[] = {
-"IpForwarding", "IpDefaultTTL",
-"TcpRtoAlgorithm", "TcpRtoMin", "TcpRtoMax",
-"TcpMaxConn", "TcpCurrEstab"
+static const char *useless_numbers[] = {
+	"IpForwarding", "IpDefaultTTL",
+	"TcpRtoAlgorithm", "TcpRtoMin", "TcpRtoMax",
+	"TcpMaxConn", "TcpCurrEstab"
 };
 
-int useless_number(char *id)
+static int useless_number(const char *id)
 {
 	int i;
 	for (i=0; i<sizeof(useless_numbers)/sizeof(*useless_numbers); i++)
@@ -97,7 +98,7 @@ int useless_number(char *id)
 	return 0;
 }
 
-int match(char *id)
+static int match(const char *id)
 {
 	int i;
 
@@ -111,7 +112,7 @@ int match(char *id)
 	return 0;
 }
 
-void load_good_table(FILE *fp)
+static void load_good_table(FILE *fp)
 {
 	char buf[4096];
 	struct nstat_ent *db = NULL;
@@ -141,7 +142,6 @@ void load_good_table(FILE *fp)
 		if ((n = malloc(sizeof(*n))) == NULL)
 			abort();
 		n->id = strdup(idbuf);
-		n->ival = (unsigned long)val;
 		n->val = val;
 		n->rate = rate;
 		n->next = db;
@@ -156,8 +156,17 @@ void load_good_table(FILE *fp)
 	}
 }
 
+static int count_spaces(const char *line)
+{
+	int count = 0;
+	char c;
 
-void load_ugly_table(FILE *fp)
+	while ((c = *line++) != 0)
+		count += c == ' ' || c == '\n';
+	return count;
+}
+
+static void load_ugly_table(FILE *fp)
 {
 	char buf[4096];
 	struct nstat_ent *db = NULL;
@@ -167,10 +176,12 @@ void load_ugly_table(FILE *fp)
 		char idbuf[sizeof(buf)];
 		int  off;
 		char *p;
+		int count1, count2, skip = 0;
 
 		p = strchr(buf, ':');
 		if (!p)
 			abort();
+		count1 = count_spaces(buf);
 		*p = 0;
 		idbuf[0] = 0;
 		strncat(idbuf, buf, sizeof(idbuf) - 1);
@@ -199,17 +210,19 @@ void load_ugly_table(FILE *fp)
 		n = db;
 		if (fgets(buf, sizeof(buf), fp) == NULL)
 			abort();
+		count2 = count_spaces(buf);
+		if (count2 > count1)
+			skip = count2 - count1;
 		do {
 			p = strrchr(buf, ' ');
 			if (!p)
 				abort();
 			*p = 0;
-			if (sscanf(p+1, "%lu", &n->ival) != 1)
+			if (sscanf(p+1, "%llu", &n->val) != 1)
 				abort();
-			n->val = n->ival;
 			/* Trick to skip "dummy" trailing ICMP MIB in 2.4 */
-			if (strcmp(idbuf, "IcmpOutAddrMaskReps") == 0)
-				idbuf[5] = 0;
+			if (skip)
+				skip--;
 			else
 				n = n->next;
 		} while (p > buf + off + 2);
@@ -228,7 +241,7 @@ void load_ugly_table(FILE *fp)
 	}
 }
 
-void load_snmp(void)
+static void load_snmp(void)
 {
 	FILE *fp = fdopen(net_snmp_open(), "r");
 	if (fp) {
@@ -237,7 +250,7 @@ void load_snmp(void)
 	}
 }
 
-void load_snmp6(void)
+static void load_snmp6(void)
 {
 	FILE *fp = fdopen(net_snmp6_open(), "r");
 	if (fp) {
@@ -246,7 +259,7 @@ void load_snmp6(void)
 	}
 }
 
-void load_netstat(void)
+static void load_netstat(void)
 {
 	FILE *fp = fdopen(net_netstat_open(), "r");
 	if (fp) {
@@ -255,11 +268,18 @@ void load_netstat(void)
 	}
 }
 
-void dump_kern_db(FILE *fp, int to_hist)
+
+static void dump_kern_db(FILE *fp, int to_hist)
 {
 	struct nstat_ent *n, *h;
+	const char *eol = "\n";
+
 	h = hist_db;
-	fprintf(fp, "#%s\n", info_source);
+	if (json_output)
+		fprintf(fp, "{ \"%s\":{", info_source);
+	else
+		fprintf(fp, "#%s\n", info_source);
+
 	for (n=kern_db; n; n=n->next) {
 		unsigned long long val = n->val;
 		if (!dump_zeros && !val && !n->rate)
@@ -276,15 +296,29 @@ void dump_kern_db(FILE *fp, int to_hist)
 				}
 			}
 		}
-		fprintf(fp, "%-32s%-16llu%6.1f\n", n->id, val, n->rate);
+
+		if (json_output) {
+			fprintf(fp, "%s    \"%s\":%llu",
+				eol, n->id, val);
+			eol = ",\n";
+		} else
+			fprintf(fp, "%-32s%-16llu%6.1f\n", n->id, val, n->rate);
 	}
+	if (json_output)
+		fprintf(fp, "\n} }\n");
 }
 
-void dump_incr_db(FILE *fp)
+static void dump_incr_db(FILE *fp)
 {
 	struct nstat_ent *n, *h;
+	const char *eol = "\n";
+
 	h = hist_db;
-	fprintf(fp, "#%s\n", info_source);
+	if (json_output)
+		fprintf(fp, "{ \"%s\":{", info_source);
+	else
+		fprintf(fp, "#%s\n", info_source);
+
 	for (n=kern_db; n; n=n->next) {
 		int ovfl = 0;
 		unsigned long long val = n->val;
@@ -304,18 +338,26 @@ void dump_incr_db(FILE *fp)
 			continue;
 		if (!match(n->id))
 			continue;
-		fprintf(fp, "%-32s%-16llu%6.1f%s\n", n->id, val,
-			n->rate, ovfl?" (overflow)":"");
+
+		if (json_output) {
+			fprintf(fp, "%s    \"%s\":%llu",
+				eol, n->id, val);
+			eol = ",\n";
+		} else
+			fprintf(fp, "%-32s%-16llu%6.1f%s\n", n->id, val,
+				n->rate, ovfl?" (overflow)":"");
 	}
+	if (json_output)
+		fprintf(fp, "\n} }\n");
 }
 
 static int children;
 
-void sigchild(int signo)
+static void sigchild(int signo)
 {
 }
 
-void update_db(int interval)
+static void update_db(int interval)
 {
 	struct nstat_ent *n, *h;
 
@@ -334,10 +376,10 @@ void update_db(int interval)
 		for (h1 = h; h1; h1 = h1->next) {
 			if (strcmp(h1->id, n->id) == 0) {
 				double sample;
-				unsigned long incr = h1->ival - n->ival;
-				n->val += incr;
-				n->ival = h1->ival;
-				sample = (double)(incr*1000)/interval;
+				unsigned long long incr = h1->val - n->val;
+
+				n->val = h1->val;
+				sample = (double)incr * 1000.0 / interval;
 				if (interval >= scan_interval) {
 					n->rate += W*(sample-n->rate);
 				} else if (interval >= 1000) {
@@ -367,7 +409,7 @@ void update_db(int interval)
 #define T_DIFF(a,b) (((a).tv_sec-(b).tv_sec)*1000 + ((a).tv_usec-(b).tv_usec)/1000)
 
 
-void server_loop(int fd)
+static void server_loop(int fd)
 {
 	struct timeval snaptime = { 0 };
 	struct pollfd p;
@@ -419,7 +461,7 @@ void server_loop(int fd)
 	}
 }
 
-int verify_forging(int fd)
+static int verify_forging(int fd)
 {
 	struct ucred cred;
 	socklen_t olen = sizeof(cred);
@@ -437,11 +479,33 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr,
-"Usage: nstat [ -h?vVzrnasd:t: ] [ PATTERN [ PATTERN ] ]\n"
-		);
+"Usage: nstat [OPTION] [ PATTERN [ PATTERN ] ]\n"
+"   -h, --help		this message\n"
+"   -a, --ignore	ignore history\n"
+"   -d, --scan=SECS	sample every statistics every SECS\n"
+"   -j, --json          format output in JSON\n"
+"   -n, --nooutput	do history only\n"
+"   -r, --reset		reset history\n"
+"   -s, --noupdate	don\'t update history\n"
+"   -t, --interval=SECS	report average over the last SECS\n"
+"   -V, --version	output version information\n"
+"   -z, --zeros		show entries with zero activity\n");
 	exit(-1);
 }
 
+static const struct option longopts[] = {
+	{ "help", 0, 0, 'h' },
+	{ "ignore",  0,  0, 'a' },
+	{ "scan", 1, 0, 'd'},
+	{ "nooutput", 0, 0, 'n' },
+	{ "json", 0, 0, 'j' },
+	{ "reset", 0, 0, 'r' },
+	{ "noupdate", 0, 0, 's' },
+	{ "interval", 1, 0, 't' },
+	{ "version", 0, 0, 'V' },
+	{ "zeros", 0, 0, 'z' },
+	{ 0 }
+};
 
 int main(int argc, char *argv[])
 {
@@ -451,7 +515,8 @@ int main(int argc, char *argv[])
 	int ch;
 	int fd;
 
-	while ((ch = getopt(argc, argv, "h?vVzrnasd:t:")) != EOF) {
+	while ((ch = getopt_long(argc, argv, "h?vVzrnasd:t:j",
+				 longopts, NULL)) != EOF) {
 		switch(ch) {
 		case 'z':
 			dump_zeros = 1;
@@ -477,6 +542,9 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "nstat: invalid time constant divisor\n");
 				exit(-1);
 			}
+			break;
+		case 'j':
+			json_output = 1;
 			break;
 		case 'v':
 		case 'V':
@@ -614,8 +682,10 @@ int main(int argc, char *argv[])
 	if (!no_update) {
 		ftruncate(fileno(hist_fp), 0);
 		rewind(hist_fp);
+
+		json_output = 0;
 		dump_kern_db(hist_fp, 1);
-		fflush(hist_fp);
+		fclose(hist_fp);
 	}
 	exit(0);
 }

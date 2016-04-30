@@ -15,10 +15,6 @@ It can display more TCP and state informations than other tools.
 When no option is used ss displays a list of 
 open non-listening TCP sockets that have established connection.
 .TP
-These programs follow the usual GNU command line syntax, with long
-options starting with two dashes (`-').
-A summary of options is included below.
-.TP
 .B \-h, \-\-help
 Show summary of options.
 .TP
@@ -57,6 +53,40 @@ Print summary statistics. This option does not parse socket lists obtaining
 summary from various sources. It is useful when amount of sockets is so huge
 that parsing /proc/net/tcp is painful.
 .TP
+.B \-Z, \-\-context
+As the
+.B \-p
+option but also shows process security context.
+.sp
+For
+.BR netlink (7)
+sockets the initiating process context is displayed as follows:
+.RS
+.RS
+.IP "1." 4
+If valid pid show the process context.
+.IP "2." 4
+If destination is kernel (pid = 0) show kernel initial context.
+.IP "3." 4
+If a unique identifier has been allocated by the kernel or netlink user,
+show context as "unavailable". This will generally indicate that a
+process has more than one netlink socket active.
+.RE
+.RE
+.TP
+.B \-z, \-\-contexts
+As the
+.B \-Z
+option but also shows the socket context. The socket context is
+taken from the associated inode and is not the actual socket
+context held by the kernel. Sockets are typically labeled with the
+context of the creating process, however the context shown will reflect
+any policy role, type and/or range transition rules applied,
+and is therefore a useful reference.
+.TP
+.B \-b, \-\-bpf
+Show socket BPF filters (only administrators are allowed to get these information).
+.TP
 .B \-4, \-\-ipv4
 Display only IP version 4 sockets (alias for -f inet).
 .TP
@@ -88,7 +118,7 @@ Currently the following families are supported: unix, inet, inet6, link, netlink
 .B \-A QUERY, \-\-query=QUERY, \-\-socket=QUERY
 List of socket tables to dump, separated by commas. The following identifiers
 are understood: all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram,
-unix_stream, packet_raw, packet_dgram.
+unix_stream, unix_seqpacket, packet_raw, packet_dgram.
 .TP
 .B \-D FILE, \-\-diag=FILE
 Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If FILE is - stdout is used.
@@ -97,12 +127,48 @@ Do not display anything, just dump raw information about TCP sockets to FILE aft
 Read filter information from FILE.
 Each line of FILE is interpreted like single command line option. If FILE is - stdin is used.
 .TP
-.B FILTER := [ state TCP-STATE ] [ EXPRESSION ]
+.B FILTER := [ state STATE-FILTER ] [ EXPRESSION ]
 Please take a look at the official documentation (Debian package iproute-doc) for details regarding filters.
+
+.SH STATE-FILTER
+
+.B STATE-FILTER
+allows to construct arbitrary set of states to match. Its syntax is sequence of keywords state and exclude followed by identifier of state.
+.TP
+Available identifiers are:
+
+All standard TCP states:
+.BR established ", " syn-sent ", " syn-recv ", " fin-wait-1 ", " fin-wait-2 ", " time-wait ", " closed ", " close-wait ", " last-ack ", "
+.BR  listen " and " closing.
+
+.B all
+- for all the states
+
+.B connected
+- all the states except for
+.BR listen " and " closed
+
+.B synchronized
+- all the
+.B connected
+states except for
+.B syn-sent
+
+.B bucket
+- states, which are maintained as minisockets, i.e.
+.BR time-wait " and " syn-recv
+
+.B big
+- opposite to
+.B bucket
+
 .SH USAGE EXAMPLES
 .TP
 .B ss -t -a
 Display all TCP sockets.
+.TP
+.B ss -t -a -Z
+Display all TCP sockets with process SELinux security contexts.
 .TP
 .B ss -u -a
 Display all UDP sockets.
@@ -117,10 +183,14 @@ Find all local processes connected to X server.
 List all the tcp sockets in state FIN-WAIT-1 for our apache to network 193.233.7/24 and look at their timers.
 .SH SEE ALSO
 .BR ip (8),
-.BR /usr/share/doc/iproute-doc/ss.html " (package iproute­doc)"
+.BR /usr/share/doc/iproute-doc/ss.html " (package iproute­doc)",
+.br
+.BR RFC " 793 "
+- https://tools.ietf.org/rfc/rfc793.txt (TCP states) 
+
 .SH AUTHOR
 .I ss 
-was written by Alexey Kuznetosv, <kuznet@ms2.inr.ac.ru>.
+was written by Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>.
 .PP
 This manual page was written by Michael Prokop <mika@grml.org>
 for the Debian project (but may be used by others).

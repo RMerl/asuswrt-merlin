@@ -36,9 +36,9 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip tuntap { add | del } [ dev PHYS_DEV ] \n");
+	fprintf(stderr, "Usage: ip tuntap { add | del | show | list | lst | help } [ dev PHYS_DEV ] \n");
 	fprintf(stderr, "          [ mode { tun | tap } ] [ user USER ] [ group GROUP ]\n");
-	fprintf(stderr, "          [ one_queue ] [ pi ] [ vnet_hdr ]\n");
+	fprintf(stderr, "          [ one_queue ] [ pi ] [ vnet_hdr ] [ multi_queue ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: USER  := { STRING | NUMBER }\n");
 	fprintf(stderr, "       GROUP := { STRING | NUMBER }\n");
@@ -128,7 +128,7 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 				}
 				ifr->ifr_flags |= IFF_TAP;
 			} else {
-				fprintf(stderr,"Cannot guess tunnel mode.\n");
+				fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
 				exit(-1);
 			}
 		} else if (uid && matches(*argv, "user") == 0) {
@@ -168,6 +168,8 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 			ifr->ifr_flags |= IFF_ONE_QUEUE;
 		} else if (matches(*argv, "vnet_hdr") == 0) {
 			ifr->ifr_flags |= IFF_VNET_HDR;
+		} else if (matches(*argv, "multi_queue") == 0) {
+			ifr->ifr_flags |= IFF_MULTI_QUEUE;
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			strncpy(ifr->ifr_name, *argv, IFNAMSIZ-1);
@@ -184,6 +186,11 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 		argc--; argv++;
 	}
 
+	if (!(ifr->ifr_flags & TUN_TYPE_MASK)) {
+		fprintf(stderr, "You failed to specify a tunnel mode\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -197,10 +204,6 @@ static int do_add(int argc, char **argv)
 	if (parse_args(argc, argv, &ifr, &uid, &gid) < 0)
 		return -1;
 
-	if (!(ifr.ifr_flags & TUN_TYPE_MASK)) {
-		fprintf(stderr, "You failed to specify a tunnel mode\n");
-		return -1;
-	}
 	return tap_add_ioctl(&ifr, uid, gid);
 }
 
@@ -307,7 +310,7 @@ int do_iptuntap(int argc, char **argv)
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)
 			return do_add(argc-1, argv+1);
-		if (matches(*argv, "del") == 0)
+		if (matches(*argv, "delete") == 0)
 			return do_del(argc-1, argv+1);
 		if (matches(*argv, "show") == 0 ||
                     matches(*argv, "lst") == 0 ||

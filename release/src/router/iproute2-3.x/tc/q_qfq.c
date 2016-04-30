@@ -102,12 +102,12 @@ static int qfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (tb[TCA_QFQ_WEIGHT]) {
 		fprintf(f, "weight %u ",
-			*(__u32 *)RTA_DATA(tb[TCA_QFQ_WEIGHT]));
+			rta_getattr_u32(tb[TCA_QFQ_WEIGHT]));
 	}
 
 	if (tb[TCA_QFQ_LMAX]) {
 		fprintf(f, "maxpkt %u ",
-			*(__u32 *)RTA_DATA(tb[TCA_QFQ_LMAX]));
+			rta_getattr_u32(tb[TCA_QFQ_LMAX]));
 	}
 
 	return 0;

@@ -12,9 +12,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place - Suite 330, Boston, MA 02111-1307 USA.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Authors:	Alexander Duyck <alexander.h.duyck@intel.com>
  *
@@ -31,7 +30,7 @@
 static void
 explain(void)
 {
- 	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM]>\n"
+	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM]>\n"
 		"QM = queue_mapping QUEUE_MAPPING\n"
 		"PM = priority PRIORITY \n"
 		"MM = mark MARK \n"
@@ -100,6 +99,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		argv++;
 	}
 
+	sel.action = TC_ACT_PIPE;
 	if (argc) {
 		if (matches(*argv, "reclassify") == 0) {
 			sel.action = TC_ACT_RECLASSIFY;
@@ -165,6 +165,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	__u32 *priority;
 	__u32 *mark;
 	__u16 *queue_mapping;
+	struct tc_skbedit *p = NULL;
 
 	if (arg == NULL)
 		return -1;
@@ -175,6 +176,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, "[NULL skbedit parameters]");
 		return -1;
 	}
+	p = RTA_DATA(tb[TCA_SKBEDIT_PARMS]);
 
 	fprintf(f, " skbedit");
 
@@ -191,12 +193,16 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, " mark %d", *mark);
 	}
 
+	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
+
 	if (show_stats) {
 		if (tb[TCA_SKBEDIT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_SKBEDIT_TM]);
 			print_tm(f, tm);
 		}
 	}
+
+	fprintf(f, "\n ");
 
 	return 0;
 }

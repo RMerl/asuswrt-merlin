@@ -16,6 +16,7 @@
 #include <syslog.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -25,7 +26,7 @@
 #include "tc_util.h"
 
 #ifndef LIBDIR
-#define LIBDIR "/usr/lib/"
+#define LIBDIR "/usr/lib"
 #endif
 
 const char *get_tc_lib(void)
@@ -152,73 +153,71 @@ int get_rate(unsigned *rate, const char *str)
 	if (p == str)
 		return -1;
 
-	if (*p == '\0') {
-		*rate = bps / 8.;	/* assume bytes/sec */
-		return 0;
-	}
-
 	for (s = suffixes; s->name; ++s) {
 		if (strcasecmp(s->name, p) == 0) {
-			*rate = (bps * s->scale) / 8.;
-			return 0;
+			bps *= s->scale;
+			p += strlen(p);
+			break;
 		}
 	}
 
-	return -1;
-}
+	if (*p)
+		return -1; /* unknown suffix */
 
-int get_rate_and_cell(unsigned *rate, int *cell_log, char *str)
-{
-	char * slash = strchr(str, '/');
-
-	if (slash)
-		*slash = 0;
-
-	if (get_rate(rate, str))
+	bps /= 8; /* -> bytes per second */
+	*rate = bps;
+	/* detect if an overflow happened */
+	if (*rate != floor(bps))
 		return -1;
-
-	if (slash) {
-		int cell;
-		int i;
-
-		if (get_integer(&cell, slash+1, 0))
-			return -1;
-		*slash = '/';
-
-		for (i=0; i<32; i++) {
-			if ((1<<i) == cell) {
-				*cell_log = i;
-				return 0;
-			}
-		}
-		return -1;
-	}
 	return 0;
 }
 
-void print_rate(char *buf, int len, __u32 rate)
+int get_rate64(__u64 *rate, const char *str)
 {
-	double tmp = (double)rate*8;
-	extern int use_iec;
+	char *p;
+	double bps = strtod(str, &p);
+	const struct rate_suffix *s;
 
-	if (use_iec) {
-		if (tmp >= 1000.0*1024.0*1024.0)
-			snprintf(buf, len, "%.0fMibit", tmp/1024.0*1024.0);
-		else if (tmp >= 1000.0*1024)
-			snprintf(buf, len, "%.0fKibit", tmp/1024);
-		else
-			snprintf(buf, len, "%.0fbit", tmp);
-	} else {
-		if (tmp >= 1000.0*1000000.0)
-			snprintf(buf, len, "%.0fMbit", tmp/1000000.0);
-		else if (tmp >= 1000.0 * 1000.0)
-			snprintf(buf, len, "%.0fKbit", tmp/1000.0);
-		else
-			snprintf(buf, len, "%.0fbit",  tmp);
+	if (p == str)
+		return -1;
+
+	for (s = suffixes; s->name; ++s) {
+		if (strcasecmp(s->name, p) == 0) {
+			bps *= s->scale;
+			p += strlen(p);
+			break;
+		}
 	}
+
+	if (*p)
+		return -1; /* unknown suffix */
+
+	bps /= 8; /* -> bytes per second */
+	*rate = bps;
+	return 0;
 }
 
-char * sprint_rate(__u32 rate, char *buf)
+void print_rate(char *buf, int len, __u64 rate)
+{
+	extern int use_iec;
+	unsigned long kilo = use_iec ? 1024 : 1000;
+	const char *str = use_iec ? "i" : "";
+	int i = 0;
+	static char *units[5] = {"", "K", "M", "G", "T"};
+
+	rate <<= 3; /* bytes/sec -> bits/sec */
+
+	for (i = 0; i < ARRAY_SIZE(units); i++)  {
+		if (rate < kilo)
+			break;
+		if (((rate % kilo) != 0) && rate < 1000*kilo)
+			break;
+		rate /= kilo;
+	}
+	snprintf(buf, len, "%.0f%s%sbit", (double)rate, units[i], str);
+}
+
+char * sprint_rate(__u64 rate, char *buf)
 {
 	print_rate(buf, SPRINT_BSIZE-1, rate);
 	return buf;
@@ -349,33 +348,6 @@ void print_size(char *buf, int len, __u32 sz)
 char * sprint_size(__u32 size, char *buf)
 {
 	print_size(buf, SPRINT_BSIZE-1, size);
-	return buf;
-}
-
-static const double max_percent_value = 0xffffffff;
-
-int get_percent(__u32 *percent, const char *str)
-{
-	char *p;
-	double per = strtod(str, &p) / 100.;
-
-	if (per > 1. || per < 0)
-		return -1;
-	if (*p && strcmp(p, "%"))
-		return -1;
-
-	*percent = (unsigned) rint(per * max_percent_value);
-	return 0;
-}
-
-void print_percent(char *buf, int len, __u32 per)
-{
-	snprintf(buf, len, "%g%%", 100. * (double) per / max_percent_value);
-}
-
-char * sprint_percent(__u32 per, char *buf)
-{
-	print_percent(buf, SPRINT_BSIZE-1, per);
 	return buf;
 }
 
@@ -512,9 +484,19 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 			q.drops, q.overlimits, q.requeues);
 	}
 
-	if (tbs[TCA_STATS_RATE_EST]) {
+	if (tbs[TCA_STATS_RATE_EST64]) {
+		struct gnet_stats_rate_est64 re = {0};
+
+		memcpy(&re, RTA_DATA(tbs[TCA_STATS_RATE_EST64]),
+		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_RATE_EST64]),
+			   sizeof(re)));
+		fprintf(fp, "\n%srate %s %llupps ",
+			prefix, sprint_rate(re.bps, b1), re.pps);
+	} else if (tbs[TCA_STATS_RATE_EST]) {
 		struct gnet_stats_rate_est re = {0};
-		memcpy(&re, RTA_DATA(tbs[TCA_STATS_RATE_EST]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_RATE_EST]), sizeof(re)));
+
+		memcpy(&re, RTA_DATA(tbs[TCA_STATS_RATE_EST]),
+		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_RATE_EST]), sizeof(re)));
 		fprintf(fp, "\n%srate %s %upps ",
 			prefix, sprint_rate(re.bps, b1), re.pps);
 	}

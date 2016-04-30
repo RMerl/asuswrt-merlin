@@ -40,8 +40,12 @@ to the interface txqueuelen, as specified with
 .BR ifconfig (8)
 or
 .BR ip (8).
+The range for this parameter is [0, UINT32_MAX].
 
 For bfifo, it defaults to the txqueuelen multiplied by the interface MTU.
+The range for this parameter is [0, UINT32_MAX] bytes.
+
+Note: The link layer header was considered when counting packets length.
 
 .SH OUTPUT
 The output of 

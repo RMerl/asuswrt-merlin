@@ -28,16 +28,16 @@ static void explain(void)
 {
 	fprintf(stderr, "Usage: ... rsvp ipproto PROTOCOL session DST[/PORT | GPI ]\n");
 	fprintf(stderr, "                [ sender SRC[/PORT | GPI ]\n");
-	fprintf(stderr, "                [ classid CLASSID ] [ police POLICE_SPEC ]\n");
+	fprintf(stderr, "                [ classid CLASSID ] [ action ACTION_SPEC ]\n");
 	fprintf(stderr, "                [ tunnelid ID ] [ tunnel ID skip NUMBER ]\n");
 	fprintf(stderr, "Where: GPI := { flowlabel NUMBER | spi/ah SPI | spi/esp SPI |\n");
 	fprintf(stderr, "                u{8|16|32} NUMBER mask MASK at OFFSET}\n");
-	fprintf(stderr, "       POLICE_SPEC := ... look at TBF\n");
+	fprintf(stderr, "       ACTION_SPEC := ... look at individual actions\n");
 	fprintf(stderr, "       FILTERID := X:Y\n");
 	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
-int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
+static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
 		    struct tc_rsvp_pinfo *pinfo, int dir, int family)
 {
 	int argc = *argc_p;
@@ -261,6 +261,13 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 			}
 			pinfo.tunnelhdr = tid;
 			pinfo_ok++;
+		} else if (matches(*argv, "action") == 0) {
+			NEXT_ARG();
+			if (parse_action(&argc, &argv, TCA_RSVP_ACT, n)) {
+				fprintf(stderr, "Illegal \"action\"\n");
+				return -1;
+			}
+			continue;
 		} else if (matches(*argv, "police") == 0) {
 			NEXT_ARG();
 			if (parse_police(&argc, &argv, TCA_RSVP_POLICE, n)) {
@@ -336,9 +343,9 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 	if (tb[TCA_RSVP_CLASSID]) {
 		SPRINT_BUF(b1);
 		if (!pinfo || pinfo->tunnelhdr == 0)
-			fprintf(f, "flowid %s ", sprint_tc_classid(*(__u32*)RTA_DATA(tb[TCA_RSVP_CLASSID]), b1));
+			fprintf(f, "flowid %s ", sprint_tc_classid(rta_getattr_u32(tb[TCA_RSVP_CLASSID]), b1));
 		else
-			fprintf(f, "tunnel %d skip %d ", *(__u32*)RTA_DATA(tb[TCA_RSVP_CLASSID]), pinfo->tunnelhdr);
+			fprintf(f, "tunnel %d skip %d ", rta_getattr_u32(tb[TCA_RSVP_CLASSID]), pinfo->tunnelhdr);
 	} else if (pinfo && pinfo->tunnelhdr)
 		fprintf(f, "tunnel [BAD] skip %d ", pinfo->tunnelhdr);
 
@@ -384,6 +391,10 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 	} else if (pinfo && pinfo->spi.mask) {
 		SPRINT_BUF(b2);
 		fprintf(f, "sender [NONE]%s ", sprint_spi(&pinfo->spi, 0, b2));
+	}
+
+	if (tb[TCA_RSVP_ACT]) {
+		tc_print_action(f, tb[TCA_RSVP_ACT]);
 	}
 	if (tb[TCA_RSVP_POLICE])
 		tc_print_police(f, tb[TCA_RSVP_POLICE]);

@@ -30,7 +30,7 @@
  */
 
 struct tc_stats {
-	__u64	bytes;			/* NUmber of enqueues bytes */
+	__u64	bytes;			/* Number of enqueued bytes */
 	__u32	packets;		/* Number of enqueued packets	*/
 	__u32	drops;			/* Packets dropped because of lack of resources */
 	__u32	overlimits;		/* Number of throttle events when this
@@ -73,9 +73,17 @@ struct tc_estimator {
 #define TC_H_ROOT	(0xFFFFFFFFU)
 #define TC_H_INGRESS    (0xFFFFFFF1U)
 
+/* Need to corrospond to iproute2 tc/tc_core.h "enum link_layer" */
+enum tc_link_layer {
+	TC_LINKLAYER_UNAWARE, /* Indicate unaware old iproute2 util */
+	TC_LINKLAYER_ETHERNET,
+	TC_LINKLAYER_ATM,
+};
+#define TC_LINKLAYER_MASK 0x0F /* limit use to lower 4 bits */
+
 struct tc_ratespec {
 	unsigned char	cell_log;
-	unsigned char	__reserved;
+	__u8		linklayer; /* lower 4 bits */
 	unsigned short	overhead;
 	short		cell_align;
 	unsigned short	mpu;
@@ -127,6 +135,27 @@ struct tc_multiq_qopt {
 	__u16	max_bands;		/* Maximum number of queues */
 };
 
+/* PLUG section */
+
+#define TCQ_PLUG_BUFFER                0
+#define TCQ_PLUG_RELEASE_ONE           1
+#define TCQ_PLUG_RELEASE_INDEFINITE    2
+#define TCQ_PLUG_LIMIT                 3
+
+struct tc_plug_qopt {
+	/* TCQ_PLUG_BUFFER: Inset a plug into the queue and
+	 *  buffer any incoming packets
+	 * TCQ_PLUG_RELEASE_ONE: Dequeue packets from queue head
+	 *   to beginning of the next plug.
+	 * TCQ_PLUG_RELEASE_INDEFINITE: Dequeue all packets from queue.
+	 *   Stop buffering packets until the next TCQ_PLUG_BUFFER
+	 *   command is received (just act as a pass-thru queue).
+	 * TCQ_PLUG_LIMIT: Increase/decrease queue size
+	 */
+	int             action;
+	__u32           limit;
+};
+
 /* TBF section */
 
 struct tc_tbf_qopt {
@@ -142,6 +171,10 @@ enum {
 	TCA_TBF_PARMS,
 	TCA_TBF_RTAB,
 	TCA_TBF_PTAB,
+	TCA_TBF_RATE64,
+	TCA_TBF_PRATE64,
+	TCA_TBF_BURST,
+	TCA_TBF_PBURST,
 	__TCA_TBF_MAX,
 };
 
@@ -162,48 +195,36 @@ struct tc_sfq_qopt {
 	unsigned	flows;		/* Maximal number of flows  */
 };
 
+struct tc_sfqred_stats {
+	__u32           prob_drop;      /* Early drops, below max threshold */
+	__u32           forced_drop;	/* Early drops, after max threshold */
+	__u32           prob_mark;      /* Marked packets, below max threshold */
+	__u32           forced_mark;    /* Marked packets, after max threshold */
+	__u32           prob_mark_head; /* Marked packets, below max threshold */
+	__u32           forced_mark_head;/* Marked packets, after max threshold */
+};
+
+struct tc_sfq_qopt_v1 {
+	struct tc_sfq_qopt v0;
+	unsigned int	depth;		/* max number of packets per flow */
+	unsigned int	headdrop;
+/* SFQRED parameters */
+	__u32		limit;		/* HARD maximal flow queue length (bytes) */
+	__u32		qth_min;	/* Min average length threshold (bytes) */
+	__u32		qth_max;	/* Max average length threshold (bytes) */
+	unsigned char   Wlog;		/* log(W)		*/
+	unsigned char   Plog;		/* log(P_max/(qth_max-qth_min))	*/
+	unsigned char   Scell_log;	/* cell size for idle damping */
+	unsigned char	flags;
+	__u32		max_P;		/* probability, high resolution */
+/* SFQRED stats */
+	struct tc_sfqred_stats stats;
+};
+
+
 struct tc_sfq_xstats {
 	__s32		allot;
 };
-
-/*
- *  NOTE: limit, divisor and flows are hardwired to code at the moment.
- *
- *	limit=flows=128, divisor=1024;
- *
- *	The only reason for this is efficiency, it is possible
- *	to change these parameters in compile time.
- *
- *	If you need to play with these values use esfq instead.
- */
-
-/* ESFQ section */
-
-enum
-{
-	/* traditional */
-	TCA_SFQ_HASH_CLASSIC,
-	TCA_SFQ_HASH_DST,
-	TCA_SFQ_HASH_SRC,
-	TCA_SFQ_HASH_FWMARK,
-	/* conntrack */
-	TCA_SFQ_HASH_CTORIGDST,
-	TCA_SFQ_HASH_CTORIGSRC,
-	TCA_SFQ_HASH_CTREPLDST,
-	TCA_SFQ_HASH_CTREPLSRC,
-	TCA_SFQ_HASH_CTNATCHG,
-};
-
-struct tc_esfq_qopt
-{
-	unsigned	quantum;	/* Bytes per round allocated to flow */
-	int		perturb_period;	/* Period of hash perturbation */
-	__u32		limit;		/* Maximal packets in queue */
-	unsigned	divisor;	/* Hash divisor  */
-	unsigned	flows;		/* Maximal number of flows  */
-	unsigned        hash_kind;      /* Hash function to use for flow identification */
-};
-
 
 /* RED section */
 
@@ -211,6 +232,7 @@ enum {
 	TCA_RED_UNSPEC,
 	TCA_RED_PARMS,
 	TCA_RED_STAB,
+	TCA_RED_MAX_P,
 	__TCA_RED_MAX,
 };
 
@@ -224,8 +246,9 @@ struct tc_red_qopt {
 	unsigned char   Plog;		/* log(P_max/(qth_max-qth_min))	*/
 	unsigned char   Scell_log;	/* cell size for idle damping */
 	unsigned char	flags;
-#define TC_RED_ECN	1
-#define TC_RED_HARDDROP	2
+#define TC_RED_ECN		1
+#define TC_RED_HARDDROP		2
+#define TC_RED_ADAPTATIVE	4
 };
 
 struct tc_red_xstats {
@@ -244,6 +267,7 @@ enum {
        TCA_GRED_PARMS,
        TCA_GRED_STAB,
        TCA_GRED_DPS,
+       TCA_GRED_MAX_P,
 	   __TCA_GRED_MAX,
 };
 
@@ -283,6 +307,7 @@ enum {
 	TCA_CHOKE_UNSPEC,
 	TCA_CHOKE_PARMS,
 	TCA_CHOKE_STAB,
+	TCA_CHOKE_MAX_P,
 	__TCA_CHOKE_MAX,
 };
 
@@ -327,7 +352,7 @@ struct tc_htb_glob {
 	__u32 debug;		/* debug flags */
 
 	/* stats */
-	__u32 direct_pkts; /* count of non shapped packets */
+	__u32 direct_pkts; /* count of non shaped packets */
 };
 enum {
 	TCA_HTB_UNSPEC,
@@ -335,6 +360,9 @@ enum {
 	TCA_HTB_INIT,
 	TCA_HTB_CTAB,
 	TCA_HTB_RTAB,
+	TCA_HTB_DIRECT_QLEN,
+	TCA_HTB_RATE64,
+	TCA_HTB_CEIL64,
 	__TCA_HTB_MAX,
 };
 
@@ -495,6 +523,9 @@ enum {
 	TCA_NETEM_REORDER,
 	TCA_NETEM_CORRUPT,
 	TCA_NETEM_LOSS,
+	TCA_NETEM_RATE,
+	TCA_NETEM_ECN,
+	TCA_NETEM_RATE64,
 	__TCA_NETEM_MAX,
 };
 
@@ -525,6 +556,13 @@ struct tc_netem_corrupt {
 	__u32	correlation;
 };
 
+struct tc_netem_rate {
+	__u32	rate;	/* byte/s */
+	__s32	packet_overhead;
+	__u32	cell_size;
+	__s32	cell_overhead;
+};
+
 enum {
 	NETEM_LOSS_UNSPEC,
 	NETEM_LOSS_GI,		/* General Intuitive - 4 state model */
@@ -533,7 +571,7 @@ enum {
 };
 #define NETEM_LOSS_MAX (__NETEM_LOSS_MAX - 1)
 
-/* State transition probablities for 4 state model */
+/* State transition probabilities for 4 state model */
 struct tc_netem_gimodel {
 	__u32	p13;
 	__u32	p31;
@@ -633,4 +671,176 @@ struct tc_qfq_stats {
 	__u32 lmax;
 };
 
+/* CODEL */
+
+enum {
+	TCA_CODEL_UNSPEC,
+	TCA_CODEL_TARGET,
+	TCA_CODEL_LIMIT,
+	TCA_CODEL_INTERVAL,
+	TCA_CODEL_ECN,
+	__TCA_CODEL_MAX
+};
+
+#define TCA_CODEL_MAX	(__TCA_CODEL_MAX - 1)
+
+struct tc_codel_xstats {
+	__u32	maxpacket; /* largest packet we've seen so far */
+	__u32	count;	   /* how many drops we've done since the last time we
+			    * entered dropping state
+			    */
+	__u32	lastcount; /* count at entry to dropping state */
+	__u32	ldelay;    /* in-queue delay seen by most recently dequeued packet */
+	__s32	drop_next; /* time to drop next packet */
+	__u32	drop_overlimit; /* number of time max qdisc packet limit was hit */
+	__u32	ecn_mark;  /* number of packets we ECN marked instead of dropped */
+	__u32	dropping;  /* are we in dropping state ? */
+};
+
+/* FQ_CODEL */
+
+enum {
+	TCA_FQ_CODEL_UNSPEC,
+	TCA_FQ_CODEL_TARGET,
+	TCA_FQ_CODEL_LIMIT,
+	TCA_FQ_CODEL_INTERVAL,
+	TCA_FQ_CODEL_ECN,
+	TCA_FQ_CODEL_FLOWS,
+	TCA_FQ_CODEL_QUANTUM,
+	__TCA_FQ_CODEL_MAX
+};
+
+#define TCA_FQ_CODEL_MAX	(__TCA_FQ_CODEL_MAX - 1)
+
+enum {
+	TCA_FQ_CODEL_XSTATS_QDISC,
+	TCA_FQ_CODEL_XSTATS_CLASS,
+};
+
+struct tc_fq_codel_qd_stats {
+	__u32	maxpacket;	/* largest packet we've seen so far */
+	__u32	drop_overlimit; /* number of time max qdisc
+				 * packet limit was hit
+				 */
+	__u32	ecn_mark;	/* number of packets we ECN marked
+				 * instead of being dropped
+				 */
+	__u32	new_flow_count; /* number of time packets
+				 * created a 'new flow'
+				 */
+	__u32	new_flows_len;	/* count of flows in new list */
+	__u32	old_flows_len;	/* count of flows in old list */
+};
+
+struct tc_fq_codel_cl_stats {
+	__s32	deficit;
+	__u32	ldelay;		/* in-queue delay seen by most recently
+				 * dequeued packet
+				 */
+	__u32	count;
+	__u32	lastcount;
+	__u32	dropping;
+	__s32	drop_next;
+};
+
+struct tc_fq_codel_xstats {
+	__u32	type;
+	union {
+		struct tc_fq_codel_qd_stats qdisc_stats;
+		struct tc_fq_codel_cl_stats class_stats;
+	};
+};
+
+/* FQ */
+
+enum {
+	TCA_FQ_UNSPEC,
+
+	TCA_FQ_PLIMIT,		/* limit of total number of packets in queue */
+
+	TCA_FQ_FLOW_PLIMIT,	/* limit of packets per flow */
+
+	TCA_FQ_QUANTUM,		/* RR quantum */
+
+	TCA_FQ_INITIAL_QUANTUM,		/* RR quantum for new flow */
+
+	TCA_FQ_RATE_ENABLE,	/* enable/disable rate limiting */
+
+	TCA_FQ_FLOW_DEFAULT_RATE,/* obsolete, do not use */
+
+	TCA_FQ_FLOW_MAX_RATE,	/* per flow max rate */
+
+	TCA_FQ_BUCKETS_LOG,	/* log2(number of buckets) */
+
+	TCA_FQ_FLOW_REFILL_DELAY,	/* flow credit refill delay in usec */
+
+	__TCA_FQ_MAX
+};
+
+#define TCA_FQ_MAX	(__TCA_FQ_MAX - 1)
+
+struct tc_fq_qd_stats {
+	__u64	gc_flows;
+	__u64	highprio_packets;
+	__u64	tcp_retrans;
+	__u64	throttled;
+	__u64	flows_plimit;
+	__u64	pkts_too_long;
+	__u64	allocation_errors;
+	__s64	time_next_delayed_flow;
+	__u32	flows;
+	__u32	inactive_flows;
+	__u32	throttled_flows;
+	__u32	pad;
+};
+
+/* Heavy-Hitter Filter */
+
+enum {
+	TCA_HHF_UNSPEC,
+	TCA_HHF_BACKLOG_LIMIT,
+	TCA_HHF_QUANTUM,
+	TCA_HHF_HH_FLOWS_LIMIT,
+	TCA_HHF_RESET_TIMEOUT,
+	TCA_HHF_ADMIT_BYTES,
+	TCA_HHF_EVICT_TIMEOUT,
+	TCA_HHF_NON_HH_WEIGHT,
+	__TCA_HHF_MAX
+};
+
+#define TCA_HHF_MAX	(__TCA_HHF_MAX - 1)
+
+struct tc_hhf_xstats {
+	__u32	drop_overlimit; /* number of times max qdisc packet limit
+				 * was hit
+				 */
+	__u32	hh_overlimit;   /* number of times max heavy-hitters was hit */
+	__u32	hh_tot_count;   /* number of captured heavy-hitters so far */
+	__u32	hh_cur_count;   /* number of current heavy-hitters */
+};
+
+/* PIE */
+enum {
+	TCA_PIE_UNSPEC,
+	TCA_PIE_TARGET,
+	TCA_PIE_LIMIT,
+	TCA_PIE_TUPDATE,
+	TCA_PIE_ALPHA,
+	TCA_PIE_BETA,
+	TCA_PIE_ECN,
+	TCA_PIE_BYTEMODE,
+	__TCA_PIE_MAX
+};
+#define TCA_PIE_MAX   (__TCA_PIE_MAX - 1)
+
+struct tc_pie_xstats {
+	__u32 prob;             /* current probability */
+	__u32 delay;            /* current delay in ms */
+	__u32 avg_dq_rate;      /* current average dq_rate in bits/pie_time */
+	__u32 packets_in;       /* total number of packets enqueued */
+	__u32 dropped;          /* packets dropped due to pie_action */
+	__u32 overlimit;        /* dropped due to lack of space in queue */
+	__u32 maxq;             /* maximum queue size */
+	__u32 ecn_mark;         /* packets marked with ecn*/
+};
 #endif

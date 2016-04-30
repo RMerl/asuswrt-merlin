@@ -442,7 +442,9 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_cbq_wrropt *wrr = NULL;
 	struct tc_cbq_fopt *fopt = NULL;
 	struct tc_cbq_ovl *ovl = NULL;
+	unsigned int linklayer;
 	SPRINT_BUF(b1);
+	SPRINT_BUF(b2);
 
 	if (opt == NULL)
 		return 0;
@@ -486,6 +488,9 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		char buf[64];
 		print_rate(buf, sizeof(buf), r->rate);
 		fprintf(f, "rate %s ", buf);
+		linklayer = (r->linklayer & TC_LINKLAYER_MASK);
+		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
+			fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b2));
 		if (show_details) {
 			fprintf(f, "cell %ub ", 1<<r->cell_log);
 			if (r->mpu)

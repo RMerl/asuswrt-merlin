@@ -9,9 +9,9 @@
  * Authors:  J Hadi Salim (hadi@cyberus.ca)
  *
  * TODO:
- * 	1) Big endian broken in some spots
- * 	2) A lot of this stuff was added on the fly; get a big double-double
- * 	and clean it up at some point.
+ *	1) Big endian broken in some spots
+ *	2) A lot of this stuff was added on the fly; get a big double-double
+ *	and clean it up at some point.
  *
  */
 
@@ -30,7 +30,7 @@
 #include "m_pedit.h"
 
 static struct m_pedit_util *pedit_list;
-int pedit_debug = 1;
+static int pedit_debug;
 
 static void
 explain(void)
@@ -73,8 +73,7 @@ pedit_parse_nopopt (int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct 
 
 }
 
-struct m_pedit_util
-*get_pedit_kind(char *str)
+static struct m_pedit_util *get_pedit_kind(const char *str)
 {
 	static void *pBODY;
 	void *dlh;
@@ -411,7 +410,7 @@ done:
 	return res;
 }
 
-int
+static int
 parse_munge(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel)
 {
 	struct tc_pedit_key tkey;

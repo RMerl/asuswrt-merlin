@@ -77,6 +77,44 @@ u32 random32(void)
 }
 EXPORT_SYMBOL(random32);
 
+
+/**
+ *	prandom_u32_state - seeded pseudo-random number generator.
+ *	@state: pointer to state structure holding seeded state.
+ *
+ *	This is used for pseudo-randomness with no outside seeding.
+ *	For more random results, use prandom_u32().
+ */
+u32 prandom_u32_state(struct rnd_state *state)
+{
+#define TAUSWORTHE(s, a, b, c, d) ((s & c) << d) ^ (((s << a) ^ s) >> b)
+	state->s1 = TAUSWORTHE(state->s1,  6U, 13U, 4294967294U, 18U);
+	state->s2 = TAUSWORTHE(state->s2,  2U, 27U, 4294967288U,  2U);
+	state->s3 = TAUSWORTHE(state->s3, 13U, 21U, 4294967280U,  7U);
+
+	return (state->s1 ^ state->s2 ^ state->s3);
+}
+EXPORT_SYMBOL(prandom_u32_state);
+
+/**
+ *	prandom_u32 - pseudo random number generator
+ *
+ *	A 32 bit pseudo-random number is generated using a fast
+ *	algorithm suitable for simulation. This algorithm is NOT
+ *	considered safe for cryptographic use.
+ */
+u32 prandom_u32(void)
+{
+	struct rnd_state *state = &get_cpu_var(net_rand_state);
+	u32 res;
+
+	res = prandom_u32_state(state);
+	put_cpu_var(state);
+
+	return res;
+}
+EXPORT_SYMBOL(prandom_u32);
+
 /**
  *	srandom32 - add entropy to pseudo random number generator
  *	@seed: seed value

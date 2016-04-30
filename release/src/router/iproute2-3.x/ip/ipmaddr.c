@@ -28,6 +28,7 @@
 
 #include "rt_names.h"
 #include "utils.h"
+#include "ip_common.h"
 
 static struct {
 	char *dev;
@@ -45,7 +46,7 @@ static void usage(void)
 
 static int parse_hex(char *str, unsigned char *addr, size_t size)
 {
-	int len=0;
+	int len = 0;
 
 	while (*str && (len < 2 * size)) {
 		int tmp;
@@ -70,11 +71,11 @@ struct ma_info
 	inet_prefix	addr;
 };
 
-void maddr_ins(struct ma_info **lst, struct ma_info *m)
+static void maddr_ins(struct ma_info **lst, struct ma_info *m)
 {
 	struct ma_info *mp;
 
-	for (; (mp=*lst) != NULL; lst = &mp->next) {
+	for (; (mp = *lst) != NULL; lst = &mp->next) {
 		if (mp->index > m->index)
 			break;
 	}
@@ -82,7 +83,7 @@ void maddr_ins(struct ma_info **lst, struct ma_info *m)
 	*lst = m;
 }
 
-void read_dev_mcast(struct ma_info **result_p)
+static void read_dev_mcast(struct ma_info **result_p)
 {
 	char buf[256];
 	FILE *fp = fopen("/proc/net/dev_mcast", "r");
@@ -119,7 +120,7 @@ void read_dev_mcast(struct ma_info **result_p)
 	fclose(fp);
 }
 
-void read_igmp(struct ma_info **result_p)
+static void read_igmp(struct ma_info **result_p)
 {
 	struct ma_info m;
 	char buf[256];
@@ -158,7 +159,7 @@ void read_igmp(struct ma_info **result_p)
 }
 
 
-void read_igmp6(struct ma_info **result_p)
+static void read_igmp6(struct ma_info **result_p)
 {
 	char buf[256];
 	FILE *fp = fopen("/proc/net/igmp6", "r");
@@ -275,7 +276,7 @@ static int multiaddr_list(int argc, char **argv)
 	return 0;
 }
 
-int multiaddr_modify(int cmd, int argc, char **argv)
+static int multiaddr_modify(int cmd, int argc, char **argv)
 {
 	struct ifreq ifr;
 	int fd;

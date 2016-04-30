@@ -143,6 +143,8 @@ extern int line;
 /* Your shared library should call one of these. */
 extern void register_match(struct iptables_match *me);
 extern void register_target(struct iptables_target *me);
+extern void xtables_register_target(struct iptables_target *me);
+extern int build_st(struct iptables_target *target, struct ipt_entry_target *t);
 
 extern struct in_addr *dotted_to_addr(const char *dotted);
 extern char *addr_to_dotted(const struct in_addr *addrp);

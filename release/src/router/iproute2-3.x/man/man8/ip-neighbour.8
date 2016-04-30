@@ -1,0 +1,204 @@
+.TH IP\-NEIGHBOUR 8 "20 Dec 2011" "iproute2" "Linux"
+.SH "NAME"
+ip-neighbour \- neighbour/arp tables management.
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B neigh
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "ip neigh" " { " add " | " del " | " change " | " replace " } { "
+.IR ADDR " [ "
+.B  lladdr
+.IR LLADDR " ] [ "
+.BR nud " { " permanent " | " noarp " | " stale " | " reachable " } ] | " proxy
+.IR ADDR " } [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "ip neigh" " { " show " | " flush " } [ " proxy " ] [ " to
+.IR PREFIX " ] [ "
+.B  dev
+.IR DEV " ] [ "
+.B  nud
+.IR STATE " ]"
+
+
+.SH DESCRIPTION
+The 
+.B ip neigh
+command manipulates 
+.I neighbour
+objects that establish bindings between protocol addresses and
+link layer addresses for hosts sharing the same link.
+Neighbour entries are organized into tables. The IPv4 neighbour table
+is also known by another name - the ARP table.
+
+.P
+The corresponding commands display neighbour bindings
+and their properties, add new neighbour entries and delete old ones.
+
+.TP
+ip neighbour add
+add a new neighbour entry
+.TP
+ip neighbour change
+change an existing entry
+.TP
+ip neighbour replace
+add a new entry or change an existing one
+.RS
+.PP
+These commands create new neighbour records or update existing ones.
+
+.TP
+.BI to " ADDRESS " (default)
+the protocol address of the neighbour. It is either an IPv4 or IPv6 address.
+
+.TP
+.BI dev " NAME"
+the interface to which this neighbour is attached.
+
+.TP
+.BI lladdr " LLADDRESS"
+the link layer address of the neighbour.
+.I LLADDRESS
+can also be
+.BR "null" .
+
+.TP
+.BI nud " NUD_STATE"
+the state of the neighbour entry.
+.B nud
+is an abbreviation for 'Neighbour Unreachability Detection'.
+The state can take one of the following values:
+
+.TP
+.B permanent
+the neighbour entry is valid forever and can be only
+be removed administratively.
+.TP
+.B noarp
+the neighbour entry is valid. No attempts to validate
+this entry will be made but it can be removed when its lifetime expires.
+.TP
+.B reachable
+the neighbour entry is valid until the reachability
+timeout expires.
+.TP
+.B stale
+the neighbour entry is valid but suspicious.
+This option to
+.B ip neigh
+does not change the neighbour state if it was valid and the address
+is not changed by this command.
+.RE
+
+.TP
+ip neighbour delete
+delete a neighbour entry
+.RS
+.PP
+The arguments are the same as with
+.BR "ip neigh add" ,
+except that
+.B lladdr
+and
+.B nud
+are ignored.
+
+.PP
+.B Warning:
+Attempts to delete or manually change a
+.B noarp
+entry created by the kernel may result in unpredictable behaviour.
+Particularly, the kernel may try to resolve this address even
+on a
+.B NOARP
+interface or if the address is multicast or broadcast.
+.RE
+
+.TP
+ip neighbour show
+list neighbour entries
+.RS
+.TP
+.BI to " ADDRESS " (default)
+the prefix selecting the neighbours to list.
+
+.TP
+.BI dev " NAME"
+only list the neighbours attached to this device.
+
+.TP
+.BI proxy
+list neighbour proxies.
+
+.TP
+.B unused
+only list neighbours which are not currently in use.
+
+.TP
+.BI nud " NUD_STATE"
+only list neighbour entries in this state.
+.I NUD_STATE
+takes values listed below or the special value
+.B all
+which means all states.  This option may occur more than once.
+If this option is absent,
+.B ip
+lists all entries except for
+.B none
+and
+.BR "noarp" .
+.RE
+
+.TP
+ip neighbour flush
+flush neighbour entries
+.RS
+This command has the same arguments as
+.B show.
+The differences are that it does not run when no arguments are given,
+and that the default neighbour states to be flushed do not include
+.B permanent
+and
+.BR "noarp" .
+
+.PP
+With the
+.B -statistics
+option, the command becomes verbose.  It prints out the number of
+deleted neighbours and the number of rounds made to flush the
+neighbour table.  If the option is given
+twice,
+.B ip neigh flush
+also dumps all the deleted neighbours.
+.RE
+
+.SH EXAMPLES
+.PP
+ip neighbour
+.RS
+Shows the current neighbour table in kernel.
+.RE
+.PP
+ip neigh flush dev eth0
+.RS
+Removes entries in the neighbour table on device eth0.
+.RE
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

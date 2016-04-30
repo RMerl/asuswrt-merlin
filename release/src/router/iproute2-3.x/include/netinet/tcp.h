@@ -172,6 +172,7 @@ enum
 # define TCPI_OPT_SACK		2
 # define TCPI_OPT_WSCALE	4
 # define TCPI_OPT_ECN		8
+# define TCPI_OPT_ECN_SEEN	16
 
 /* Values for tcpi_state.  */
 enum tcp_ca_state

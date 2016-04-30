@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -26,167 +27,231 @@
 #include <linux/if_arp.h>
 #include <linux/sockios.h>
 
+#include <rt_names.h>
 #include "utils.h"
-
-char filter_dev[16];
-int  filter_family;
+#include "ip_common.h"
 
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip mroute show [ PREFIX ] [ from PREFIX ] [ iif DEVICE ]\n");
+	fprintf(stderr, "Usage: ip mroute show [ [ to ] PREFIX ] [ from PREFIX ] [ iif DEVICE ]\n");
+	fprintf(stderr, "                      [ table TABLE_ID ]\n");
+	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
 #if 0
 	fprintf(stderr, "Usage: ip mroute [ add | del ] DESTINATION from SOURCE [ iif DEVICE ] [ oif DEVICE ]\n");
 #endif
 	exit(-1);
 }
 
-static char *viftable[32];
-
 struct rtfilter
 {
+	int tb;
+	int af;
+	int iif;
 	inet_prefix mdst;
 	inet_prefix msrc;
 } filter;
 
-static void read_viftable(void)
+int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
-	char buf[256];
-	FILE *fp = fopen("/proc/net/ip_mr_vif", "r");
+	FILE *fp = (FILE*)arg;
+	struct rtmsg *r = NLMSG_DATA(n);
+	int len = n->nlmsg_len;
+	struct rtattr * tb[RTA_MAX+1];
+	char abuf[256];
+	char obuf[256];
+	SPRINT_BUF(b1);
+	__u32 table;
+	int iif = 0;
+	int family;
 
-	if (!fp)
-		return;
-
-	if (!fgets(buf, sizeof(buf), fp)) {
-		fclose(fp);
-		return;
+	if ((n->nlmsg_type != RTM_NEWROUTE &&
+	     n->nlmsg_type != RTM_DELROUTE) ||
+	    !(n->nlmsg_flags & NLM_F_MULTI)) {
+		fprintf(stderr, "Not a multicast route: %08x %08x %08x\n",
+			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
+		return 0;
 	}
-	while (fgets(buf, sizeof(buf), fp)) {
-		int vifi;
-		char dev[256];
-
-		if (sscanf(buf, "%d%s", &vifi, dev) < 2)
-			continue;
-
-		if (vifi<0 || vifi>31)
-			continue;
-
-		viftable[vifi] = strdup(dev);
+	len -= NLMSG_LENGTH(sizeof(*r));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
 	}
-	fclose(fp);
-}
-
-static void read_mroute_list(FILE *ofp)
-{
-	char buf[256];
-	FILE *fp = fopen("/proc/net/ip_mr_cache", "r");
-
-	if (!fp)
-		return;
-
-	if (!fgets(buf, sizeof(buf), fp)) {
-		fclose(fp);
-		return;
+	if (r->rtm_type != RTN_MULTICAST) {
+		fprintf(stderr, "Not a multicast route (type: %s)\n",
+			rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
+		return 0;
 	}
 
-	while (fgets(buf, sizeof(buf), fp)) {
-		inet_prefix maddr, msrc;
-		unsigned pkts, b, w;
-		int vifi;
-		char oiflist[256];
-		char sbuf[256];
-		char mbuf[256];
-		char obuf[256];
+	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
+	table = rtm_get_table(r, tb);
 
-		oiflist[0] = 0;
-		if (sscanf(buf, "%x%x%d%u%u%u %[^\n]",
-			   maddr.data, msrc.data, &vifi,
-			   &pkts, &b, &w, oiflist) < 6)
-			continue;
+	if (filter.tb > 0 && filter.tb != table)
+		return 0;
 
-		if (vifi!=-1 && (vifi < 0 || vifi>31))
-			continue;
+	if (tb[RTA_IIF])
+		iif = *(int*)RTA_DATA(tb[RTA_IIF]);
+	if (filter.iif && filter.iif != iif)
+		return 0;
 
-		if (filter_dev[0] && (vifi<0 || strcmp(filter_dev, viftable[vifi])))
-			continue;
-		if (filter.mdst.family && inet_addr_match(&maddr, &filter.mdst, filter.mdst.bitlen))
-			continue;
-		if (filter.msrc.family && inet_addr_match(&msrc, &filter.msrc, filter.msrc.bitlen))
-			continue;
+	if (filter.af && filter.af != r->rtm_family)
+		return 0;
 
-		snprintf(obuf, sizeof(obuf), "(%s, %s)",
-			 format_host(AF_INET, 4, &msrc.data[0], sbuf, sizeof(sbuf)),
-			 format_host(AF_INET, 4, &maddr.data[0], mbuf, sizeof(mbuf)));
+	if (tb[RTA_DST] &&
+	    filter.mdst.bitlen > 0 &&
+	    inet_addr_match(RTA_DATA(tb[RTA_DST]), &filter.mdst, filter.mdst.bitlen))
+		return 0;
 
-		fprintf(ofp, "%-32s Iif: ", obuf);
+	if (tb[RTA_SRC] &&
+	    filter.msrc.bitlen > 0 &&
+	    inet_addr_match(RTA_DATA(tb[RTA_SRC]), &filter.msrc, filter.msrc.bitlen))
+		return 0;
 
-		if (vifi == -1)
-			fprintf(ofp, "unresolved ");
-		else
-			fprintf(ofp, "%-10s ", viftable[vifi]);
+	family = r->rtm_family == RTNL_FAMILY_IPMR ? AF_INET : AF_INET6;
 
-		if (oiflist[0]) {
-			char *next = NULL;
-			char *p = oiflist;
-			int ovifi, ottl;
+	if (n->nlmsg_type == RTM_DELROUTE)
+		fprintf(fp, "Deleted ");
 
-			fprintf(ofp, "Oifs: ");
+	if (tb[RTA_SRC])
+		len = snprintf(obuf, sizeof(obuf),
+			       "(%s, ", rt_addr_n2a(family,
+						    RTA_DATA(tb[RTA_SRC]),
+						    abuf, sizeof(abuf)));
+	else
+		len = sprintf(obuf, "(unknown, ");
+	if (tb[RTA_DST])
+		snprintf(obuf + len, sizeof(obuf) - len,
+			 "%s)", rt_addr_n2a(family,
+					    RTA_DATA(tb[RTA_DST]),
+					    abuf, sizeof(abuf)));
+	else
+		snprintf(obuf + len, sizeof(obuf) - len, "unknown) ");
 
-			while (p) {
-				next = strchr(p, ' ');
-				if (next) {
-					*next = 0;
-					next++;
-				}
-				if (sscanf(p, "%d:%d", &ovifi, &ottl)<2) {
-					p = next;
-					continue;
-				}
-				p = next;
+	fprintf(fp, "%-32s Iif: ", obuf);
+	if (iif)
+		fprintf(fp, "%-10s ", ll_index_to_name(iif));
+	else
+		fprintf(fp, "unresolved ");
 
-				fprintf(ofp, "%s", viftable[ovifi]);
-				if (ottl>1)
-					fprintf(ofp, "(ttl %d) ", ovifi);
-				else
-					fprintf(ofp, " ");
+	if (tb[RTA_MULTIPATH]) {
+		struct rtnexthop *nh = RTA_DATA(tb[RTA_MULTIPATH]);
+		int first = 1;
+
+		len = RTA_PAYLOAD(tb[RTA_MULTIPATH]);
+
+		for (;;) {
+			if (len < sizeof(*nh))
+				break;
+			if (nh->rtnh_len > len)
+				break;
+
+			if (first) {
+				fprintf(fp, "Oifs: ");
+				first = 0;
 			}
+			fprintf(fp, "%s", ll_index_to_name(nh->rtnh_ifindex));
+			if (nh->rtnh_hops > 1)
+				fprintf(fp, "(ttl %d) ", nh->rtnh_hops);
+			else
+				fprintf(fp, " ");
+			len -= NLMSG_ALIGN(nh->rtnh_len);
+			nh = RTNH_NEXT(nh);
 		}
-
-		if (show_stats && b) {
-			fprintf(ofp, "%s  %u packets, %u bytes", _SL_, pkts, b);
-			if (w)
-				fprintf(ofp, ", %u arrived on wrong iif.", w);
-		}
-		fprintf(ofp, "\n");
 	}
-	fclose(fp);
+	if (show_stats && tb[RTA_MFC_STATS]) {
+		struct rta_mfc_stats *mfcs = RTA_DATA(tb[RTA_MFC_STATS]);
+
+		fprintf(fp, "%s  %"PRIu64" packets, %"PRIu64" bytes", _SL_,
+			(uint64_t)mfcs->mfcs_packets,
+			(uint64_t)mfcs->mfcs_bytes);
+		if (mfcs->mfcs_wrong_if)
+			fprintf(fp, ", %"PRIu64" arrived on wrong iif.",
+				(uint64_t)mfcs->mfcs_wrong_if);
+	}
+	fprintf(fp, "\n");
+	fflush(fp);
+	return 0;
 }
 
+void ipmroute_reset_filter(int ifindex)
+{
+	memset(&filter, 0, sizeof(filter));
+	filter.mdst.bitlen = -1;
+	filter.msrc.bitlen = -1;
+	filter.iif = ifindex;
+}
 
 static int mroute_list(int argc, char **argv)
 {
+	char *id = NULL;
+	int family;
+
+	ipmroute_reset_filter(0);
+	if (preferred_family == AF_UNSPEC)
+		family = AF_INET;
+	else
+		family = AF_INET6;
+	if (family == AF_INET) {
+		filter.af = RTNL_FAMILY_IPMR;
+		filter.tb = RT_TABLE_DEFAULT;  /* for backward compatibility */
+	} else
+		filter.af = RTNL_FAMILY_IP6MR;
+
 	while (argc > 0) {
-		if (strcmp(*argv, "iif") == 0) {
+		if (matches(*argv, "table") == 0) {
+			__u32 tid;
 			NEXT_ARG();
-			strncpy(filter_dev, *argv, sizeof(filter_dev)-1);
+			if (rtnl_rttable_a2n(&tid, *argv)) {
+				if (strcmp(*argv, "all") == 0) {
+					filter.tb = 0;
+				} else if (strcmp(*argv, "help") == 0) {
+					usage();
+				} else {
+					invarg("table id value is invalid\n", *argv);
+				}
+			} else
+				filter.tb = tid;
+		} else if (strcmp(*argv, "iif") == 0) {
+			NEXT_ARG();
+			id = *argv;
 		} else if (matches(*argv, "from") == 0) {
 			NEXT_ARG();
-			get_prefix(&filter.msrc, *argv, AF_INET);
+			get_prefix(&filter.msrc, *argv, family);
 		} else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
 			}
 			if (matches(*argv, "help") == 0)
 				usage();
-			get_prefix(&filter.mdst, *argv, AF_INET);
+			get_prefix(&filter.mdst, *argv, family);
 		}
-		argv++; argc--;
+		argc--; argv++;
 	}
 
-	read_viftable();
-	read_mroute_list(stdout);
-	return 0;
+	ll_init_map(&rth);
+
+	if (id)  {
+		int idx;
+
+		if ((idx = ll_name_to_index(id)) == 0) {
+			fprintf(stderr, "Cannot find device \"%s\"\n", id);
+			return -1;
+		}
+		filter.iif = idx;
+	}
+
+	if (rtnl_wilddump_request(&rth, filter.af, RTM_GETROUTE) < 0) {
+		perror("Cannot send dump request");
+		return 1;
+	}
+
+	if (rtnl_dump_filter(&rth, print_mroute, stdout) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		exit(1);
+	}
+
+	exit(0);
 }
 
 int do_multiroute(int argc, char **argv)

@@ -18,6 +18,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <math.h>
 
 #include "utils.h"
 #include "tc_util.h"
@@ -41,6 +42,7 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	int ecn_ok = 0;
 	int wlog;
 	__u8 sbuf[256];
+	__u32 max_P;
 	struct rtattr *tail;
 
 	memset(&opt, 0, sizeof(opt));
@@ -106,11 +108,11 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
-	/* Compute default min/max thresholds based on 
+	/* Compute default min/max thresholds based on
 	   Sally Floyd's recommendations:
 	   http://www.icir.org/floyd/REDparameters.txt
 	*/
-	if (!opt.qth_max) 
+	if (!opt.qth_max)
 		opt.qth_max = opt.limit / 4;
 	if (!opt.qth_min)
 		opt.qth_min = opt.qth_max / 3;
@@ -133,7 +135,7 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 	if (wlog >= 10)
-		fprintf(stderr, "CHOKE: WARNING. Burst %d seems to be to large.\n", burst);
+		fprintf(stderr, "CHOKE: WARNING. Burst %d seems to be too large.\n", burst);
 	opt.Wlog = wlog;
 
 	wlog = tc_red_eval_P(opt.qth_min*avpkt, opt.qth_max*avpkt, probability);
@@ -156,25 +158,31 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 1024, TCA_CHOKE_PARMS, &opt, sizeof(opt));
 	addattr_l(n, 1024, TCA_CHOKE_STAB, sbuf, 256);
+	max_P = probability * pow(2, 32);
+	addattr_l(n, 1024, TCA_CHOKE_MAX_P, &max_P, sizeof(max_P));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
 
 static int choke_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
-	struct rtattr *tb[TCA_CHOKE_STAB+1];
+	struct rtattr *tb[TCA_CHOKE_MAX+1];
 	const struct tc_red_qopt *qopt;
+	__u32 max_P = 0;
 
 	if (opt == NULL)
 		return 0;
 
-	parse_rtattr_nested(tb, TCA_CHOKE_STAB, opt);
+	parse_rtattr_nested(tb, TCA_CHOKE_MAX, opt);
 
 	if (tb[TCA_CHOKE_PARMS] == NULL)
 		return -1;
 	qopt = RTA_DATA(tb[TCA_CHOKE_PARMS]);
 	if (RTA_PAYLOAD(tb[TCA_CHOKE_PARMS])  < sizeof(*qopt))
 		return -1;
+	if (tb[TCA_CHOKE_MAX_P] &&
+	    RTA_PAYLOAD(tb[TCA_CHOKE_MAX_P]) >= sizeof(__u32))
+		max_P = rta_getattr_u32(tb[TCA_CHOKE_MAX_P]);
 
 	fprintf(f, "limit %up min %up max %up ",
 		qopt->limit, qopt->qth_min, qopt->qth_max);
@@ -183,8 +191,12 @@ static int choke_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		fprintf(f, "ecn ");
 
 	if (show_details) {
-		fprintf(f, "ewma %u Plog %u Scell_log %u",
-			qopt->Wlog, qopt->Plog, qopt->Scell_log);
+		fprintf(f, "ewma %u ", qopt->Wlog);
+		if (max_P)
+			fprintf(f, "probability %g ", max_P / pow(2, 32));
+		else
+			fprintf(f, "Plog %u ", qopt->Plog);
+		fprintf(f, "Scell_log %u", qopt->Scell_log);
 	}
 	return 0;
 }

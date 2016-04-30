@@ -18,78 +18,123 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
-#include <linux/if.h>
+#include <net/if.h>
 
 #include "libnetlink.h"
 #include "ll_map.h"
+#include "hlist.h"
 
-extern unsigned int if_nametoindex (const char *);
-
-struct ll_cache
-{
-	struct ll_cache   *idx_next;
+struct ll_cache {
+	struct hlist_node idx_hash;
+	struct hlist_node name_hash;
 	unsigned	flags;
-	int		index;
+	unsigned 	index;
 	unsigned short	type;
-	unsigned short	alen;
 	char		name[IFNAMSIZ];
-	unsigned char	addr[20];
 };
 
 #define IDXMAP_SIZE	1024
-static struct ll_cache *idx_head[IDXMAP_SIZE];
+static struct hlist_head idx_head[IDXMAP_SIZE];
+static struct hlist_head name_head[IDXMAP_SIZE];
 
-static inline struct ll_cache *idxhead(int idx)
+static struct ll_cache *ll_get_by_index(unsigned index)
 {
-	return idx_head[idx & (IDXMAP_SIZE - 1)];
+	struct hlist_node *n;
+	unsigned h = index & (IDXMAP_SIZE - 1);
+
+	hlist_for_each(n, &idx_head[h]) {
+		struct ll_cache *im
+			= container_of(n, struct ll_cache, idx_hash);
+		if (im->index == index)
+			return im;
+	}
+
+	return NULL;
+}
+
+static unsigned namehash(const char *str)
+{
+	unsigned hash = 5381;
+
+	while (*str)
+		hash = ((hash << 5) + hash) + *str++; /* hash * 33 + c */
+
+	return hash;
+}
+
+static struct ll_cache *ll_get_by_name(const char *name)
+{
+	struct hlist_node *n;
+	unsigned h = namehash(name) & (IDXMAP_SIZE - 1);
+
+	hlist_for_each(n, &name_head[h]) {
+		struct ll_cache *im
+			= container_of(n, struct ll_cache, name_hash);
+
+		if (strncmp(im->name, name, IFNAMSIZ) == 0)
+			return im;
+	}
+
+	return NULL;
 }
 
 int ll_remember_index(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg)
 {
-	int h;
+	unsigned int h;
+	const char *ifname;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct ll_cache *im, **imp;
+	struct ll_cache *im;
 	struct rtattr *tb[IFLA_MAX+1];
 
-	if (n->nlmsg_type != RTM_NEWLINK)
+	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return 0;
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(ifi)))
 		return -1;
 
+	im = ll_get_by_index(ifi->ifi_index);
+	if (n->nlmsg_type == RTM_DELLINK) {
+		if (im) {
+			hlist_del(&im->name_hash);
+			hlist_del(&im->idx_hash);
+			free(im);
+		}
+		return 0;
+	}
+
 	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), IFLA_PAYLOAD(n));
-	if (tb[IFLA_IFNAME] == NULL)
+	ifname = rta_getattr_str(tb[IFLA_IFNAME]);
+	if (ifname == NULL)
 		return 0;
 
-	h = ifi->ifi_index & (IDXMAP_SIZE - 1);
-	for (imp = &idx_head[h]; (im=*imp)!=NULL; imp = &im->idx_next)
-		if (im->index == ifi->ifi_index)
-			break;
+	if (im) {
+		/* change to existing entry */
+		if (strcmp(im->name, ifname) != 0) {
+			hlist_del(&im->name_hash);
+			h = namehash(ifname) & (IDXMAP_SIZE - 1);
+			hlist_add_head(&im->name_hash, &name_head[h]);
+		}
 
-	if (im == NULL) {
-		im = malloc(sizeof(*im));
-		if (im == NULL)
-			return 0;
-		im->idx_next = *imp;
-		im->index = ifi->ifi_index;
-		*imp = im;
+		im->flags = ifi->ifi_flags;
+		return 0;
 	}
 
+	im = malloc(sizeof(*im));
+	if (im == NULL)
+		return 0;
+	im->index = ifi->ifi_index;
+	strcpy(im->name, ifname);
 	im->type = ifi->ifi_type;
 	im->flags = ifi->ifi_flags;
-	if (tb[IFLA_ADDRESS]) {
-		int alen;
-		im->alen = alen = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
-		if (alen > sizeof(im->addr))
-			alen = sizeof(im->addr);
-		memcpy(im->addr, RTA_DATA(tb[IFLA_ADDRESS]), alen);
-	} else {
-		im->alen = 0;
-		memset(im->addr, 0, sizeof(im->addr));
-	}
-	strcpy(im->name, RTA_DATA(tb[IFLA_IFNAME]));
+
+	h = ifi->ifi_index & (IDXMAP_SIZE - 1);
+	hlist_add_head(&im->idx_hash, &idx_head[h]);
+
+	h = namehash(ifname) & (IDXMAP_SIZE - 1);
+	hlist_add_head(&im->name_hash, &name_head[h]);
+
 	return 0;
 }
 
@@ -100,14 +145,15 @@ const char *ll_idx_n2a(unsigned idx, char *buf)
 	if (idx == 0)
 		return "*";
 
-	for (im = idxhead(idx); im; im = im->idx_next)
-		if (im->index == idx)
-			return im->name;
+	im = ll_get_by_index(idx);
+	if (im)
+		return im->name;
 
-	snprintf(buf, IFNAMSIZ, "if%d", idx);
+	if (if_indextoname(idx, buf) == NULL)
+		snprintf(buf, IFNAMSIZ, "if%d", idx);
+
 	return buf;
 }
-
 
 const char *ll_index_to_name(unsigned idx)
 {
@@ -122,69 +168,33 @@ int ll_index_to_type(unsigned idx)
 
 	if (idx == 0)
 		return -1;
-	for (im = idxhead(idx); im; im = im->idx_next)
-		if (im->index == idx)
-			return im->type;
-	return -1;
+
+	im = ll_get_by_index(idx);
+	return im ? im->type : -1;
 }
 
-unsigned ll_index_to_flags(unsigned idx)
+int ll_index_to_flags(unsigned idx)
 {
 	const struct ll_cache *im;
 
 	if (idx == 0)
 		return 0;
 
-	for (im = idxhead(idx); im; im = im->idx_next)
-		if (im->index == idx)
-			return im->flags;
-	return 0;
-}
-
-unsigned ll_index_to_addr(unsigned idx, unsigned char *addr,
-			  unsigned alen)
-{
-	const struct ll_cache *im;
-
-	if (idx == 0)
-		return 0;
-
-	for (im = idxhead(idx); im; im = im->idx_next) {
-		if (im->index == idx) {
-			if (alen > sizeof(im->addr))
-				alen = sizeof(im->addr);
-			if (alen > im->alen)
-				alen = im->alen;
-			memcpy(addr, im->addr, alen);
-			return alen;
-		}
-	}
-	return 0;
+	im = ll_get_by_index(idx);
+	return im ? im->flags : -1;
 }
 
 unsigned ll_name_to_index(const char *name)
 {
-	static char ncache[IFNAMSIZ];
-	static int icache;
-	struct ll_cache *im;
-	int i;
+	const struct ll_cache *im;
 	unsigned idx;
 
 	if (name == NULL)
 		return 0;
 
-	if (icache && strcmp(name, ncache) == 0)
-		return icache;
-
-	for (i=0; i<IDXMAP_SIZE; i++) {
-		for (im = idx_head[i]; im; im = im->idx_next) {
-			if (strcmp(im->name, name) == 0) {
-				icache = im->index;
-				strcpy(ncache, name);
-				return im->index;
-			}
-		}
-	}
+	im = ll_get_by_name(name);
+	if (im)
+		return im->index;
 
 	idx = if_nametoindex(name);
 	if (idx == 0)
@@ -192,24 +202,22 @@ unsigned ll_name_to_index(const char *name)
 	return idx;
 }
 
-int ll_init_map(struct rtnl_handle *rth)
+void ll_init_map(struct rtnl_handle *rth)
 {
 	static int initialized;
 
 	if (initialized)
-		return 0;
+		return;
 
 	if (rtnl_wilddump_request(rth, AF_UNSPEC, RTM_GETLINK) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(rth, ll_remember_index, NULL, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(rth, ll_remember_index, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
 
 	initialized = 1;
-
-	return 0;
 }

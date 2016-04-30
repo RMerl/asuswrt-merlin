@@ -300,6 +300,8 @@ static inline int is_vmalloc_or_module_addr(const void *x)
 }
 #endif
 
+extern void kvfree(const void *addr);
+
 static inline struct page *compound_head(struct page *page)
 {
 	if (unlikely(PageTail(page)))

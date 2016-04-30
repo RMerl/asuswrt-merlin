@@ -1,0 +1,800 @@
+.TH IP\-ROUTE 8 "13 Dec 2012" "iproute2" "Linux"
+.SH "NAME"
+ip-route \- routing table management
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " ip-OPTIONS " ]"
+.B route
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+.ti -8
+
+.ti -8
+.BR "ip route" " { "
+.BR list " | " flush " } "
+.I  SELECTOR
+
+.ti -8
+.BR "ip route save"
+.I SELECTOR
+
+.ti -8
+.BR "ip route restore"
+
+.ti -8
+.B  ip route get
+.IR ADDRESS " [ "
+.BI from " ADDRESS " iif " STRING"
+.RB " ] [ " oif
+.IR STRING " ] [ "
+.B  tos
+.IR TOS " ]"
+
+.ti -8
+.BR "ip route" " { " add " | " del " | " change " | " append " | "\
+replace " } "
+.I  ROUTE
+
+.ti -8
+.IR SELECTOR " := "
+.RB "[ " root
+.IR PREFIX " ] [ "
+.B  match
+.IR PREFIX " ] [ "
+.B  exact
+.IR PREFIX " ] [ "
+.B  table
+.IR TABLE_ID " ] [ "
+.B  proto
+.IR RTPROTO " ] [ "
+.B  type
+.IR TYPE " ] [ "
+.B  scope
+.IR SCOPE " ]"
+
+.ti -8
+.IR ROUTE " := " NODE_SPEC " [ " INFO_SPEC " ]"
+
+.ti -8
+.IR NODE_SPEC " := [ " TYPE " ] " PREFIX " ["
+.B  tos
+.IR TOS " ] [ "
+.B  table
+.IR TABLE_ID " ] [ "
+.B  proto
+.IR RTPROTO " ] [ "
+.B  scope
+.IR SCOPE " ] [ "
+.B  metric
+.IR METRIC " ]"
+
+.ti -8
+.IR INFO_SPEC " := " "NH OPTIONS FLAGS" " ["
+.B  nexthop
+.IR NH " ] ..."
+
+.ti -8
+.IR NH " := [ "
+.B  via
+.IR ADDRESS " ] [ "
+.B  dev
+.IR STRING " ] [ "
+.B  weight
+.IR NUMBER " ] " NHFLAGS
+
+.ti -8
+.IR OPTIONS " := " FLAGS " [ "
+.B  mtu
+.IR NUMBER " ] [ "
+.B  advmss
+.IR NUMBER " ] [ "
+.B  rtt
+.IR TIME " ] [ "
+.B  rttvar
+.IR TIME " ] [ "
+.B  reordering
+.IR NUMBER " ] [ "
+.B  window
+.IR NUMBER " ] [ "
+.B  cwnd
+.IR NUMBER " ] [ "
+.B  ssthresh
+.IR REALM " ] [ "
+.B  realms
+.IR REALM " ] [ "
+.B  rto_min
+.IR TIME " ] [ "
+.B  initcwnd
+.IR NUMBER " ] [ "
+.B  initrwnd
+.IR NUMBER " ] [ "
+.B  features
+.IR FEATURES " ] [ "
+.B  quickack
+.IR BOOL " ]"
+
+.ti -8
+.IR TYPE " := [ "
+.BR unicast " | " local " | " broadcast " | " multicast " | "\
+throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
+
+.ti -8
+.IR TABLE_ID " := [ "
+.BR local "| " main " | " default " | " all " |"
+.IR NUMBER " ]"
+
+.ti -8
+.IR SCOPE " := [ "
+.BR host " | " link " | " global " |"
+.IR NUMBER " ]"
+
+.ti -8
+.IR NHFLAGS " := [ "
+.BR onlink " | " pervasive " ]"
+
+.ti -8
+.IR RTPROTO " := [ "
+.BR kernel " | " boot " | " static " |"
+.IR NUMBER " ]"
+
+.ti -8
+.IR FEATURES " := [ "
+.BR ecn " | ]"
+
+
+.SH DESCRIPTION
+.B ip route
+is used to manipulate entries in the kernel routing tables.
+.sp
+.B Route types:
+
+.in +8
+.B unicast
+- the route entry describes real paths to the destinations covered
+by the route prefix.
+
+.sp
+.B unreachable
+- these destinations are unreachable.  Packets are discarded and the
+ICMP message
+.I host unreachable
+is generated.
+The local senders get an
+.I EHOSTUNREACH
+error.
+
+.sp
+.B blackhole
+- these destinations are unreachable.  Packets are discarded silently.
+The local senders get an
+.I EINVAL
+error.
+
+.sp
+.B prohibit
+- these destinations are unreachable.  Packets are discarded and the
+ICMP message
+.I communication administratively prohibited
+is generated.  The local senders get an
+.I EACCES
+error.
+
+.sp
+.B local
+- the destinations are assigned to this host.  The packets are looped
+back and delivered locally.
+
+.sp
+.B broadcast
+- the destinations are broadcast addresses.  The packets are sent as
+link broadcasts.
+
+.sp
+.B throw
+- a special control route used together with policy rules. If such a
+route is selected, lookup in this table is terminated pretending that
+no route was found.  Without policy routing it is equivalent to the
+absence of the route in the routing table.  The packets are dropped
+and the ICMP message
+.I net unreachable
+is generated.  The local senders get an
+.I ENETUNREACH
+error.
+
+.sp
+.B nat
+- a special NAT route.  Destinations covered by the prefix
+are considered to be dummy (or external) addresses which require translation
+to real (or internal) ones before forwarding.  The addresses to translate to
+are selected with the attribute
+.BR "via" .
+.B Warning:
+Route NAT is no longer supported in Linux 2.6.
+
+.sp
+.B anycast
+.RI "- " "not implemented"
+the destinations are
+.I anycast
+addresses assigned to this host.  They are mainly equivalent
+to
+.B local
+with one difference: such addresses are invalid when used
+as the source address of any packet.
+
+.sp
+.B multicast
+- a special type used for multicast routing.  It is not present in
+normal routing tables.
+.in -8
+
+.P
+.B Route tables:
+Linux-2.x can pack routes into several routing tables identified
+by a number in the range from 1 to 2^31 or by name from the file
+.B @SYSCONFDIR@/rt_tables
+By default all normal routes are inserted into the
+.B main
+table (ID 254) and the kernel only uses this table when calculating routes.
+Values (0, 253, 254, and 255) are reserved for built-in use.
+
+.sp
+Actually, one other table always exists, which is invisible but
+even more important.  It is the
+.B local
+table (ID 255).  This table
+consists of routes for local and broadcast addresses.  The kernel maintains
+this table automatically and the administrator usually need not modify it
+or even look at it.
+
+The multiple routing tables enter the game when
+.I policy routing
+is used.
+
+.TP
+ip route add
+add new route
+.TP
+ip route change
+change route
+.TP
+ip route replace
+change or add new one
+.RS
+.TP
+.BI to " TYPE PREFIX " (default)
+the destination prefix of the route.  If
+.I TYPE
+is omitted,
+.B ip
+assumes type
+.BR "unicast" .
+Other values of
+.I TYPE
+are listed above.
+.I PREFIX
+is an IP or IPv6 address optionally followed by a slash and the
+prefix length.  If the length of the prefix is missing,
+.B ip
+assumes a full-length host route.  There is also a special
+.I PREFIX
+.B default
+- which is equivalent to IP
+.B 0/0
+or to IPv6
+.BR "::/0" .
+
+.TP
+.BI tos " TOS"
+.TP
+.BI dsfield " TOS"
+the Type Of Service (TOS) key.  This key has no associated mask and
+the longest match is understood as: First, compare the TOS
+of the route and of the packet.  If they are not equal, then the packet
+may still match a route with a zero TOS.
+.I TOS
+is either an 8 bit hexadecimal number or an identifier
+from
+.BR "@SYSCONFDIR@/rt_dsfield" .
+
+.TP
+.BI metric " NUMBER"
+.TP
+.BI preference " NUMBER"
+the preference value of the route.
+.I NUMBER
+is an arbitrary 32bit number.
+
+.TP
+.BI table " TABLEID"
+the table to add this route to.
+.I TABLEID
+may be a number or a string from the file
+.BR "@SYSCONFDIR@/rt_tables" .
+If this parameter is omitted,
+.B ip
+assumes the
+.B main
+table, with the exception of
+.BR local ", " broadcast " and " nat
+routes, which are put into the
+.B local
+table by default.
+
+.TP
+.BI dev " NAME"
+the output device name.
+
+.TP
+.BI via " ADDRESS"
+the address of the nexthop router.  Actually, the sense of this field
+depends on the route type.  For normal
+.B unicast
+routes it is either the true next hop router or, if it is a direct
+route installed in BSD compatibility mode, it can be a local address
+of the interface.  For NAT routes it is the first address of the block
+of translated IP destinations.
+
+.TP
+.BI src " ADDRESS"
+the source address to prefer when sending to the destinations
+covered by the route prefix.
+
+.TP
+.BI realm " REALMID"
+the realm to which this route is assigned.
+.I REALMID
+may be a number or a string from the file
+.BR "@SYSCONFDIR@/rt_realms" .
+
+.TP
+.BI mtu " MTU"
+.TP
+.BI "mtu lock" " MTU"
+the MTU along the path to the destination.  If the modifier
+.B lock
+is not used, the MTU may be updated by the kernel due to
+Path MTU Discovery.  If the modifier
+.B lock
+is used, no path MTU discovery will be tried, all packets
+will be sent without the DF bit in IPv4 case or fragmented
+to MTU for IPv6.
+
+.TP
+.BI window " NUMBER"
+the maximal window for TCP to advertise to these destinations,
+measured in bytes.  It limits maximal data bursts that our TCP
+peers are allowed to send to us.
+
+.TP
+.BI rtt " TIME"
+the initial RTT ('Round Trip Time') estimate. If no suffix is
+specified the units are raw values passed directly to the
+routing code to maintain compatibility with previous releases.
+Otherwise if a suffix of s, sec or secs is used to specify
+seconds and ms, msec or msecs to specify milliseconds.
+
+
+.TP
+.BI rttvar " TIME " "(2.3.15+ only)"
+the initial RTT variance estimate. Values are specified as with
+.BI rtt
+above.
+
+.TP
+.BI rto_min " TIME " "(2.6.23+ only)"
+the minimum TCP Retransmission TimeOut to use when communicating with this
+destination.  Values are specified as with
+.BI rtt
+above.
+
+.TP
+.BI ssthresh " NUMBER " "(2.3.15+ only)"
+an estimate for the initial slow start threshold.
+
+.TP
+.BI cwnd " NUMBER " "(2.3.15+ only)"
+the clamp for congestion window.  It is ignored if the
+.B lock
+flag is not used.
+
+.TP
+.BI initcwnd " NUMBER " "(2.5.70+ only)"
+the initial congestion window size for connections to this destination.
+Actual window size is this value multiplied by the MSS
+(``Maximal Segment Size'') for same connection. The default is
+zero, meaning to use the values specified in RFC2414.
+
+.TP
+.BI initrwnd " NUMBER " "(2.6.33+ only)"
+the initial receive window size for connections to this destination.
+Actual window size is this value multiplied by the MSS of the connection.
+The default value is zero, meaning to use Slow Start value.
+
+.TP
+.BI features " FEATURES " (3.18+ only)
+Enable or disable per-route features.  Only available feature at this
+time is
+.B ecn
+to enable explicit congestion notification when initiating connections to the
+given destination network.
+When responding to a connection request from the given network, ecn will
+also be used even if the
+.B net.ipv4.tcp_ecn
+sysctl is set to 0.
+
+.TP
+.BI quickack " BOOL " "(3.11+ only)"
+Enable or disable quick ack for connections to this destination.
+
+.TP
+.BI advmss " NUMBER " "(2.3.15+ only)"
+the MSS ('Maximal Segment Size') to advertise to these
+destinations when establishing TCP connections.  If it is not given,
+Linux uses a default value calculated from the first hop device MTU.
+(If the path to these destination is asymmetric, this guess may be wrong.)
+
+.TP
+.BI reordering " NUMBER " "(2.3.15+ only)"
+Maximal reordering on the path to this destination.
+If it is not given, Linux uses the value selected with
+.B sysctl
+variable
+.BR "net/ipv4/tcp_reordering" .
+
+.TP
+.BI nexthop " NEXTHOP"
+the nexthop of a multipath route.
+.I NEXTHOP
+is a complex value with its own syntax similar to the top level
+argument lists:
+
+.in +8
+.BI via " ADDRESS"
+- is the nexthop router.
+.sp
+
+.BI dev " NAME"
+- is the output device.
+.sp
+
+.BI weight " NUMBER"
+- is a weight for this element of a multipath
+route reflecting its relative bandwidth or quality.
+.in -8
+
+.TP
+.BI scope " SCOPE_VAL"
+the scope of the destinations covered by the route prefix.
+.I SCOPE_VAL
+may be a number or a string from the file
+.BR "@SYSCONFDIR@/rt_scopes" .
+If this parameter is omitted,
+.B ip
+assumes scope
+.B global
+for all gatewayed
+.B unicast
+routes, scope
+.B link
+for direct
+.BR unicast " and " broadcast
+routes and scope
+.BR host " for " local
+routes.
+
+.TP
+.BI protocol " RTPROTO"
+the routing protocol identifier of this route.
+.I RTPROTO
+may be a number or a string from the file
+.BR "@SYSCONFDIR@/rt_protos" .
+If the routing protocol ID is not given,
+.B ip assumes protocol
+.B boot
+(i.e. it assumes the route was added by someone who doesn't
+understand what they are doing).  Several protocol values have
+a fixed interpretation.
+Namely:
+
+.in +8
+.B redirect
+- the route was installed due to an ICMP redirect.
+.sp
+
+.B kernel
+- the route was installed by the kernel during autoconfiguration.
+.sp
+
+.B boot
+- the route was installed during the bootup sequence.
+If a routing daemon starts, it will purge all of them.
+.sp
+
+.B static
+- the route was installed by the administrator
+to override dynamic routing. Routing daemon will respect them
+and, probably, even advertise them to its peers.
+.sp
+
+.B ra
+- the route was installed by Router Discovery protocol.
+.in -8
+
+.sp
+The rest of the values are not reserved and the administrator is free
+to assign (or not to assign) protocol tags.
+
+.TP
+.B onlink
+pretend that the nexthop is directly attached to this link,
+even if it does not match any interface prefix.
+.RE
+
+.TP
+ip route delete
+delete route
+.RS
+.B ip route del
+has the same arguments as
+.BR "ip route add" ,
+but their semantics are a bit different.
+
+Key values
+.RB "(" to ", " tos ", " preference " and " table ")"
+select the route to delete.  If optional attributes are present,
+.B ip
+verifies that they coincide with the attributes of the route to delete.
+If no route with the given key and attributes was found,
+.B ip route del
+fails.
+.RE
+
+.TP
+ip route show
+list routes
+.RS
+the command displays the contents of the routing tables or the route(s)
+selected by some criteria.
+
+.TP
+.BI to " SELECTOR " (default)
+only select routes from the given range of destinations.
+.I SELECTOR
+consists of an optional modifier
+.RB "(" root ", " match " or " exact ")"
+and a prefix.
+.BI root " PREFIX"
+selects routes with prefixes not shorter than
+.IR PREFIX "."
+F.e.
+.BI root " 0/0"
+selects the entire routing table.
+.BI match " PREFIX"
+selects routes with prefixes not longer than
+.IR PREFIX "."
+F.e.
+.BI match " 10.0/16"
+selects
+.IR 10.0/16 ","
+.IR 10/8 " and " 0/0 ,
+but it does not select
+.IR 10.1/16 " and " 10.0.0/24 .
+And
+.BI exact " PREFIX"
+(or just
+.IR PREFIX ")"
+selects routes with this exact prefix. If neither of these options
+are present,
+.B ip
+assumes
+.BI root " 0/0"
+i.e. it lists the entire table.
+
+.TP
+.BI tos " TOS"
+.TP
+.BI dsfield " TOS"
+only select routes with the given TOS.
+
+.TP
+.BI table " TABLEID"
+show the routes from this table(s).  The default setting is to show table
+.BR main "."
+.I TABLEID
+may either be the ID of a real table or one of the special values:
+.sp
+.in +8
+.B all
+- list all of the tables.
+.sp
+.B cache
+- dump the routing cache.
+.in -8
+
+.TP
+.B cloned
+.TP
+.B cached
+list cloned routes i.e. routes which were dynamically forked from
+other routes because some route attribute (f.e. MTU) was updated.
+Actually, it is equivalent to
+.BR "table cache" "."
+
+.TP
+.BI from " SELECTOR"
+the same syntax as for
+.BR to ","
+but it binds the source address range rather than destinations.
+Note that the
+.B from
+option only works with cloned routes.
+
+.TP
+.BI protocol " RTPROTO"
+only list routes of this protocol.
+
+.TP
+.BI scope " SCOPE_VAL"
+only list routes with this scope.
+
+.TP
+.BI type " TYPE"
+only list routes of this type.
+
+.TP
+.BI dev " NAME"
+only list routes going via this device.
+
+.TP
+.BI via " PREFIX"
+only list routes going via the nexthop routers selected by
+.IR PREFIX "."
+
+.TP
+.BI src " PREFIX"
+only list routes with preferred source addresses selected
+by
+.IR PREFIX "."
+
+.TP
+.BI realm " REALMID"
+.TP
+.BI realms " FROMREALM/TOREALM"
+only list routes with these realms.
+.RE
+
+.TP
+ip route flush
+flush routing tables
+.RS
+this command flushes routes selected by some criteria.
+
+.sp
+The arguments have the same syntax and semantics as the arguments of
+.BR "ip route show" ,
+but routing tables are not listed but purged.  The only difference is
+the default action:
+.B show
+dumps all the IP main routing table but
+.B flush
+prints the helper page.
+
+.sp
+With the
+.B -statistics
+option, the command becomes verbose. It prints out the number of
+deleted routes and the number of rounds made to flush the routing
+table. If the option is given
+twice,
+.B ip route flush
+also dumps all the deleted routes in the format described in the
+previous subsection.
+.RE
+
+.TP
+ip route get
+get a single route
+.RS
+this command gets a single route to a destination and prints its
+contents exactly as the kernel sees it.
+
+.TP
+.BI to " ADDRESS " (default)
+the destination address.
+
+.TP
+.BI from " ADDRESS"
+the source address.
+
+.TP
+.BI tos " TOS"
+.TP
+.BI dsfield " TOS"
+the Type Of Service.
+
+.TP
+.BI iif " NAME"
+the device from which this packet is expected to arrive.
+
+.TP
+.BI oif " NAME"
+force the output device on which this packet will be routed.
+
+.TP
+.B connected
+if no source address
+.RB "(option " from ")"
+was given, relookup the route with the source set to the preferred
+address received from the first lookup.
+If policy routing is used, it may be a different route.
+
+.P
+Note that this operation is not equivalent to
+.BR "ip route show" .
+.B show
+shows existing routes.
+.B get
+resolves them and creates new clones if necessary.  Essentially,
+.B get
+is equivalent to sending a packet along this path.
+If the
+.B iif
+argument is not given, the kernel creates a route
+to output packets towards the requested destination.
+This is equivalent to pinging the destination
+with a subsequent
+.BR "ip route ls cache" ,
+however, no packets are actually sent.  With the
+.B iif
+argument, the kernel pretends that a packet arrived from this interface
+and searches for a path to forward the packet.
+.RE
+
+.TP
+ip route save
+save routing table information to stdout
+.RS
+This command behaves like
+.BR "ip route show"
+except that the output is raw data suitable for passing to
+.BR "ip route restore" .
+.RE
+
+.TP
+ip route restore
+restore routing table information from stdin
+.RS
+This command expects to read a data stream as returned from
+.BR "ip route save" .
+It will attempt to restore the routing table information exactly as
+it was at the time of the save, so any translation of information
+in the stream (such as device indexes) must be done first.  Any existing
+routes are left unchanged.  Any routes specified in the data stream that
+already exist in the table will be ignored.
+.RE
+
+.SH EXAMPLES
+.PP
+ip ro
+.RS 4
+Show all route entries in the kernel.
+.RE
+.PP
+ip route add default via 192.168.1.1 dev eth0
+.RS 4
+Adds a default route (for all addresses) via the local gateway 192.168.1.1 that can
+be reached on device eth0.
+.RE
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Original Manpage by Michail Litvak <mci@owl.openwall.com>

@@ -15,33 +15,35 @@ and
 are simple tools to monitor kernel snmp counters and network interface statistics.
 
 .SH OPTIONS
-.TP
--h -?
+.B \-h, \-\-help
 Print help
 .TP
--v -V
+.B \-V, \-\-version
 Print version
 .TP
--z
+.B \-z, \-\-zero
 Dump zero counters too. By default they are not shown.
 .TP
--r
+.B \-r, \-\-reset
 Reset history.
 .TP
--n
+.B \-n, \-\-nooutput
 Do not display anything, only update history.
 .TP
--a
+.B \-a, \-\-ignore
 Dump absolute values of counters. The default is to calculate increments since the previous use.
 .TP
--s
+.B \-s, \-\-noupdate
 Do not update history, so that the next time you will see counters including values accumulated to the moment of this measurement too.
+.B \-j, \-\-json
+Display results in JSON format.
 .TP
--d <INTERVAL>
+.B \-d, \-\-interval <INTERVAL>
 Run in daemon mode collecting statistics. <INTERVAL> is interval between measurements in seconds.
 .TP
--t <INTERVAL>
+
 Time interval to average rates. Default value is 60 seconds.
+.TP
 
 .SH SEE ALSO
 lnstat(8)

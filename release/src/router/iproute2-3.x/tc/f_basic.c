@@ -27,11 +27,12 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... basic [ match EMATCH_TREE ] [ police POLICE_SPEC ]\n");
+	fprintf(stderr, "Usage: ... basic [ match EMATCH_TREE ] \n");
 	fprintf(stderr, "                 [ action ACTION_SPEC ] [ classid CLASSID ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: SELECTOR := SAMPLE SAMPLE ...\n");
 	fprintf(stderr, "       FILTERID := X:Y:Z\n");
+	fprintf(stderr, "       ACTION_SPEC := ... look at individual actions\n");
 	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
@@ -122,7 +123,7 @@ static int basic_print_opt(struct filter_util *qu, FILE *f,
 	if (tb[TCA_BASIC_CLASSID]) {
 		SPRINT_BUF(b1);
 		fprintf(f, "flowid %s ",
-			sprint_tc_classid(*(__u32*)RTA_DATA(tb[TCA_BASIC_CLASSID]), b1));
+			sprint_tc_classid(rta_getattr_u32(tb[TCA_BASIC_CLASSID]), b1));
 	}
 
 	if (tb[TCA_BASIC_EMATCHES])

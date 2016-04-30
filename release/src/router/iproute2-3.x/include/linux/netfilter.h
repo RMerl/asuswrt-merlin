@@ -5,6 +5,7 @@
 
 #include <linux/sysctl.h>
 
+
 /* Responses from hook functions. */
 #define NF_DROP 0
 #define NF_ACCEPT 1
@@ -50,6 +51,7 @@ enum nf_inet_hooks {
 
 enum {
 	NFPROTO_UNSPEC =  0,
+	NFPROTO_INET   =  1,
 	NFPROTO_IPV4   =  2,
 	NFPROTO_ARP    =  3,
 	NFPROTO_BRIDGE =  7,
@@ -66,4 +68,4 @@ union nf_inet_addr {
 	struct in6_addr	in6;
 };
 
-#endif /*__LINUX_NETFILTER_H*/
+#endif /* __LINUX_NETFILTER_H */

@@ -45,7 +45,7 @@ Terminology and advices about setting CBQ parameters may be found in Sally Floyd
 papers. 
 
 
-Pairs X:Y are class handles, X:0 are qdisc heandles.
+Pairs X:Y are class handles, X:0 are qdisc handles.
 weight should be proportional to rate for leaf classes
 (I choosed it ten times less, but it is not necessary)
 

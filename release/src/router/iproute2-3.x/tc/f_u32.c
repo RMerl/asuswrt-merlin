@@ -32,7 +32,7 @@ static void explain(void)
 {
 	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ]"
 		" [ classid CLASSID ]\n");
-	fprintf(stderr, "               [ police POLICE_SPEC ]"
+	fprintf(stderr, "               [ action ACTION_SPEC ]"
 		" [ offset OFFSET_SPEC ]\n");
 	fprintf(stderr, "               [ ht HTID ] [ hashkey HASHKEY_SPEC ]\n");
 	fprintf(stderr, "               [ sample SAMPLE ]\n");
@@ -45,7 +45,7 @@ static void explain(void)
 	fprintf(stderr, "\nNOTE: CLASSID is parsed at hexadecimal input.\n");
 }
 
-int get_u32_handle(__u32 *handle, const char *str)
+static int get_u32_handle(__u32 *handle, const char *str)
 {
 	__u32 htid=0, hash=0, nodeid=0;
 	char *tmp = strchr(str, ':');
@@ -80,7 +80,7 @@ int get_u32_handle(__u32 *handle, const char *str)
 	return 0;
 }
 
-char * sprint_u32_handle(__u32 handle, char *buf)
+static char * sprint_u32_handle(__u32 handle, char *buf)
 {
 	int bsize = SPRINT_BSIZE-1;
 	__u32 htid = TC_U32_HTID(handle);
@@ -194,7 +194,7 @@ static int pack_key8(struct tc_u32_sel *sel, __u32 key, __u32 mask, int off, int
 }
 
 
-int parse_at(int *argc_p, char ***argv_p, int *off, int *offmask)
+static int parse_at(int *argc_p, char ***argv_p, int *off, int *offmask)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -513,7 +513,7 @@ static int parse_ip(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 		res = pack_key16(sel, 0, 0x3FFF, 6, 0);
 	} else if (strcmp(*argv, "firstfrag") == 0) {
 		argc--; argv++;
-		res = pack_key16(sel, 0, 0x1FFF, 6, 0);
+		res = pack_key16(sel, 0x2000, 0x3FFF, 6, 0);
 	} else if (strcmp(*argv, "df") == 0) {
 		argc--; argv++;
 		res = pack_key16(sel, 0x4000, 0x4000, 6, 0);
@@ -531,7 +531,7 @@ static int parse_ip(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 		res = parse_u8(&argc, &argv, sel, 20, 0);
 	} else if (strcmp(*argv, "icmp_code") == 0) {
 		NEXT_ARG();
-		res = parse_u8(&argc, &argv, sel, 20, 1);
+		res = parse_u8(&argc, &argv, sel, 21, 0);
 	} else
 		return -1;
 
@@ -539,7 +539,7 @@ static int parse_ip(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	*argv_p = argv;
 	return res;
 }
-				
+
 static int parse_ip6(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 {
 	int res = -1;
@@ -732,7 +732,7 @@ static int parse_selector(int *argc_p, char ***argv_p,
 	} else if (matches(*argv, "ether") == 0) {
 		NEXT_ARG();
 		res = parse_ether(&argc, &argv, sel);
-	} else 
+	} else
 		return -1;
 
 	*argc_p = argc;
@@ -847,7 +847,7 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 	case 16: {
 			int bits = mask2bits(key->mask);
 			if (bits >= 0) {
-				fprintf(f, "\n  %s %s/%d", 
+				fprintf(f, "\n  %s %s/%d",
 					key->off == 12 ? "match IP src" : "match IP dst",
 					inet_ntop(AF_INET, &key->val,
 						  abuf, sizeof(abuf)),
@@ -903,7 +903,7 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 	case 16: {
 			int bits = mask2bits(key->mask);
 			if (bits >= 0) {
-				fprintf(f, "\n  %s %s/%d", 
+				fprintf(f, "\n  %s %s/%d",
 					key->off == 12 ? "match IP src" : "match IP dst",
 					inet_ntop(AF_INET, &key->val,
 						  abuf, sizeof(abuf)),
@@ -936,7 +936,7 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 
 static void print_raw(FILE *f, const struct tc_u32_key *key)
 {
-	fprintf(f, "\n  match %08x/%08x at %s%d", 
+	fprintf(f, "\n  match %08x/%08x at %s%d",
 		(unsigned int)ntohl(key->val),
 		(unsigned int)ntohl(key->mask),
 		key->offmask ? "nexthdr+" : "",
@@ -1152,7 +1152,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	/* We dont necessarily need class/flowids */
 	if (terminal_ok)
 		sel.sel.flags |= TC_U32_TERMINAL;
-	
+
 	if (order) {
 		if (TC_U32_NODE(t->tcm_handle) && order != TC_U32_NODE(t->tcm_handle)) {
 			fprintf(stderr, "\"order\" contradicts \"handle\"\n");
@@ -1164,7 +1164,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	if (htid)
 		addattr_l(n, MAX_MSG, TCA_U32_HASH, &htid, 4);
 	if (sel_ok)
-		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel, 
+		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel,
 			  sizeof(sel.sel)+sel.sel.nkeys*sizeof(struct tc_u32_key));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
@@ -1198,9 +1198,9 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	}
 
 	if (tb[TCA_U32_DIVISOR]) {
-		fprintf(f, "ht divisor %d ", *(__u32*)RTA_DATA(tb[TCA_U32_DIVISOR]));
+		fprintf(f, "ht divisor %d ", rta_getattr_u32(tb[TCA_U32_DIVISOR]));
 	} else if (tb[TCA_U32_HASH]) {
-		__u32 htid = *(__u32*)RTA_DATA(tb[TCA_U32_HASH]);
+		__u32 htid = rta_getattr_u32(tb[TCA_U32_HASH]);
 		fprintf(f, "key ht %x bkt %x ", TC_U32_USERHTID(htid),
 			TC_U32_HASH(htid));
 	} else {
@@ -1210,14 +1210,14 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		SPRINT_BUF(b1);
 		fprintf(f, "%sflowid %s ",
 			!sel || !(sel->flags&TC_U32_TERMINAL) ? "*" : "",
-			sprint_tc_classid(*(__u32*)RTA_DATA(tb[TCA_U32_CLASSID]), b1));
+			sprint_tc_classid(rta_getattr_u32(tb[TCA_U32_CLASSID]), b1));
 	} else if (sel && sel->flags&TC_U32_TERMINAL) {
 		fprintf(f, "terminal flowid ??? ");
 	}
 	if (tb[TCA_U32_LINK]) {
 		SPRINT_BUF(b1);
 		fprintf(f, "link %s ",
-			sprint_u32_handle(*(__u32*)RTA_DATA(tb[TCA_U32_LINK]), b1));
+			sprint_u32_handle(rta_getattr_u32(tb[TCA_U32_LINK]), b1));
 	}
 
 	if (tb[TCA_U32_PCNT]) {
@@ -1278,7 +1278,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	}
 	if (tb[TCA_U32_INDEV]) {
 		struct rtattr *idev = tb[TCA_U32_INDEV];
-		fprintf(f, "\n  input dev %s\n", (char *) RTA_DATA(idev));
+		fprintf(f, "\n  input dev %s\n", rta_getattr_str(idev));
 	}
 	if (tb[TCA_U32_ACT]) {
 		tc_print_action(f, tb[TCA_U32_ACT]);

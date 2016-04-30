@@ -1,0 +1,132 @@
+.TH ematch 8 "6 August 2012" iproute2 Linux
+.
+.SH NAME
+ematch \- extended matches for use with "basic" or "flow" filters
+.
+.SH SYNOPSIS
+.sp
+.ad l
+.B "tc filter add .. basic match"
+.RI EXPR
+.B .. flowid ..
+.sp
+
+.IR EXPR " := " TERM " [ { "
+.B and | or
+}
+.IR EXPR
+]
+
+.IR TERM " := [ " \fBnot " ] { " MATCH " | '(' " EXPR " ')' } "
+
+.IR MATCH " := " module " '(' " ARGS " ')' "
+
+.IR ARGS " := " ARG1 " " ARG2 " ..
+
+.SH MATCHES
+
+.SS cmp
+Simple comparison ematch: arithmetic compare of packet data to a given value.
+
+.IR cmp "( " ALIGN " at " OFFSET " [ " ATTRS " ] { " eq " | " lt " | " gt " } " VALUE " )
+
+.IR ALIGN " := { " u8 " | " u16 " | " u32 " } "
+
+.IR ATTRS " := [ layer " LAYER " ] [ mask " MASK " ] [ trans ]
+
+.IR LAYER " := { " link " | " network " | " transport " | " 0..2 " }
+
+.SS meta
+Metadata ematch
+
+.IR meta "( " OBJECT " { " eq " | " lt " |" gt " } " OBJECT " )
+
+.IR OBJECT " := { " META_ID " |  " VALUE " }
+
+.IR META_ID " := " id " [ shift " SHIFT " ] [ mask " MASK " ]
+
+.TP
+meta attributes:
+
+\fBrandom\fP 32 bit random value
+
+\fBloadavg_1\fP Load average in last 5 minutes
+
+\fBnf_mark\fP Netfilter mark
+
+\fBvlan\fP Vlan tag
+
+\fBsk_rcvbuf\fP Receive buffer size
+
+\fBsk_snd_queue\fP Send queue length
+
+.PP
+A full list of meta attributes can be obtained via
+
+# tc filter add dev eth1 basic match 'meta(list)'
+
+.SS nbyte
+match packet data byte sequence
+
+.IR nbyte "( " NEEDLE  " at " OFFSET " [ layer " LAYER " ] )
+
+.IR NEEDLE  " := { " string " | " c-escape-sequence "  } "
+
+.IR OFFSET  " := " int
+
+.IR LAYER " := { " link " | " network " | " transport " | " 0..2 " }
+
+.SS u32
+u32 ematch
+
+.IR u32 "( " ALIGN " " VALUE " " MASK " at [ nexthdr+ ] " OFFSET " )
+
+.IR ALIGN " := { " u8 " | " u16 " | " u32 " }
+
+.SS ipset
+test packet against ipset membership
+
+.IR ipset "( " SETNAME " " FLAGS " )
+
+.IR SETNAME " := " string
+
+.IR FLAGS " := { " FLAG " [, " FLAGS "] }
+
+The flag options are the same as those used by the iptables "set" match.
+
+When using the ipset ematch with the "ip_set_hash:net,iface" set type,
+the interface can be queried using "src,dst (source ip address, outgoing interface) or
+"src,src" (source ip address, incoming interface) syntax.
+
+.SH CAVEATS
+
+The ematch syntax uses '(' and ')' to group expressions. All braces need to be
+escaped properly to prevent shell commandline from interpreting these directly.
+
+When using the ipset ematch with the "ifb" device, the outgoing device will be the
+ifb device itself, e.g. "ifb0".
+The original interface (i.e. the device the packet arrived on) is treated as the incoming interface.
+
+.SH EXAMPLE & USAGE
+
+# tc filter add .. basic match ...
+
+# 'cmp(u16 at 3 layer 2 mask 0xff00 gt 20)'
+
+# 'meta(nfmark gt 24)' and 'meta(tcindex mask 0xf0 eq 0xf0)'
+
+# 'nbyte("ababa" at 12 layer 1)'
+
+# 'u32(u16 0x1122 0xffff at nexthdr+4)'
+
+Check if packet source ip address is member of set named \fBbulk\fP:
+
+# 'ipset(bulk src)'
+
+Check if packet source ip and the interface the packet arrived on is member of "hash:net,iface" set named \fBinteractive\fP:
+
+# 'ipset(interactive src,src)'
+
+.SH "AUTHOR"
+
+The extended match infrastructure was added by Thomas Graf.

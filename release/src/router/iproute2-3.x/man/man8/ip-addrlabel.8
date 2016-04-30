@@ -1,0 +1,69 @@
+.TH IP\-ADDRLABEL 8 "20 Dec 2011" "iproute2" "Linux"
+.SH "NAME"
+ip-addrlabel \- protocol address label management
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]" 
+.B addrlabel 
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-s\fR[\fItatistics\fR] |
+\fB\-r\fR[\fIesolve\fR] |
+\fB\-f\fR[\fIamily\fR] {
+.BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
+\fB\-o\fR[\fIneline\fR] }
+
+.ti -8
+.BR "ip addrlabel" " { " add " | " del " } " prefix
+.BR PREFIX " [ "
+.B dev
+.IR DEV " ] [ "
+.B label
+.IR NUMBER " ]"
+
+.ti -8
+.BR "ip addrlabel" " { " list " | " flush " }"
+
+.SH "DESCRIPTION"
+IPv6 address labels are used for address selection;
+they are described in RFC 3484.  Precedence is managed by userspace,
+and only the label itself is stored in the kernel.
+
+.SS ip addrlabel add - add an address label
+add an address label entry to the kernel.
+.TP
+.BI prefix " PREFIX"
+.TP
+.BI dev " DEV"
+the outgoing interface.
+.TP
+.BI label " NUMBER"
+the label for the prefix.
+0xffffffff is reserved.
+.SS ip addrlabel del - delete an address label
+delete an address label entry from the kernel.
+.B Arguments:
+coincide with the arguments of
+.B ip addrlabel add
+but the label is not required.
+.SS ip addrlabel list - list address labels
+list the current address label entries in the kernel.
+.SS ip addrlabel flush - flush address labels
+flush all address labels in the kernel. This does not restore any default settings.
+
+.SH SEE ALSO
+.br
+.BR ip (8)
+
+.SH AUTHOR
+Manpage by Yoshifuji Hideaki / 吉藤英明
+

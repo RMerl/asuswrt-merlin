@@ -22,17 +22,21 @@
 #include "SNAPSHOT.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "namespace.h"
 
 int preferred_family = AF_UNSPEC;
+int human_readable = 0;
+int use_iec = 0;
 int show_stats = 0;
 int show_details = 0;
 int resolve_hosts = 0;
 int oneline = 0;
 int timestamp = 0;
 char * _SL_ = NULL;
-char *batch_file = NULL;
 int force = 0;
 int max_flush_loops = 10;
+int batch_mode = 0;
+bool do_all = false;
 
 struct rtnl_handle rth = { .fd = -1 };
 
@@ -44,25 +48,29 @@ static void usage(void)
 "Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "       ip [ -force ] -batch filename\n"
 "where  OBJECT := { link | addr | addrlabel | route | rule | neigh | ntable |\n"
-"                   tunnel | tuntap | maddr | mroute | mrule | monitor | xfrm }\n"
+"                   tunnel | tuntap | maddr | mroute | mrule | monitor | xfrm |\n"
+"                   netns | l2tp | fou | tcp_metrics | token | netconf }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
-"                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
+"                    -h[uman-readable] | -iec |\n"
+"                    -f[amily] { inet | inet6 | ipx | dnet | bridge | link } |\n"
+"                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
-"                    -o[neline] | -t[imestamp] | -b[atch] [filename] |\n"
-"                    -rc[vbuf] [size]}\n");
+"                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
+"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] }\n");
 	exit(-1);
 }
 
 static int do_help(int argc, char **argv)
 {
 	usage();
+        return 0;
 }
 
 static const struct cmd {
 	const char *cmd;
 	int (*func)(int argc, char **argv);
 } cmds[] = {
-	{ "address", 	do_ipaddr },
+	{ "address",	do_ipaddr },
 	{ "addrlabel",	do_ipaddrlabel },
 	{ "maddress",	do_multiaddr },
 	{ "route",	do_iproute },
@@ -72,14 +80,21 @@ static const struct cmd {
 	{ "ntable",	do_ipntable },
 	{ "ntbl",	do_ipntable },
 	{ "link",	do_iplink },
+	{ "l2tp",	do_ipl2tp },
+	{ "fou",	do_ipfou },
 	{ "tunnel",	do_iptunnel },
 	{ "tunl",	do_iptunnel },
 	{ "tuntap",	do_iptuntap },
 	{ "tap",	do_iptuntap },
+	{ "token",	do_iptoken },
+	{ "tcpmetrics",	do_tcp_metrics },
+	{ "tcp_metrics",do_tcp_metrics },
 	{ "monitor",	do_ipmonitor },
 	{ "xfrm",	do_xfrm },
 	{ "mroute",	do_multiroute },
 	{ "mrule",	do_multirule },
+	{ "netns",	do_netns },
+	{ "netconf",	do_ipnetconf },
 	{ "help",	do_help },
 	{ 0 }
 };
@@ -89,31 +104,34 @@ static int do_cmd(const char *argv0, int argc, char **argv)
 	const struct cmd *c;
 
 	for (c = cmds; c->cmd; ++c) {
-		if (matches(argv0, c->cmd) == 0)
-			return c->func(argc-1, argv+1);
+		if (matches(argv0, c->cmd) == 0) {
+			return -(c->func(argc-1, argv+1));
+		}
 	}
 
 	fprintf(stderr, "Object \"%s\" is unknown, try \"ip help\".\n", argv0);
-	return -1;
+	return EXIT_FAILURE;
 }
 
 static int batch(const char *name)
 {
 	char *line = NULL;
 	size_t len = 0;
-	int ret = 0;
+	int ret = EXIT_SUCCESS;
+
+	batch_mode = 1;
 
 	if (name && strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
 			fprintf(stderr, "Cannot open file \"%s\" for reading: %s\n",
 				name, strerror(errno));
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	cmdlineno = 0;
@@ -127,7 +145,7 @@ static int batch(const char *name)
 
 		if (do_cmd(largv[0], largc, largv)) {
 			fprintf(stderr, "Command failed %s:%d\n", name, cmdlineno);
-			ret = 1;
+			ret = EXIT_FAILURE;
 			if (!force)
 				break;
 		}
@@ -143,6 +161,7 @@ static int batch(const char *name)
 int main(int argc, char **argv)
 {
 	char *basename;
+	char *batch_file = NULL;
 
 	basename = strrchr(argv[0], '/');
 	if (basename == NULL)
@@ -181,10 +200,12 @@ int main(int argc, char **argv)
 				preferred_family = AF_PACKET;
 			else if (strcmp(argv[1], "ipx") == 0)
 				preferred_family = AF_IPX;
+			else if (strcmp(argv[1], "bridge") == 0)
+				preferred_family = AF_BRIDGE;
 			else if (strcmp(argv[1], "help") == 0)
 				usage();
 			else
-				invarg(argv[1], "invalid protocol family");
+				invarg("invalid protocol family", argv[1]);
 		} else if (strcmp(opt, "-4") == 0) {
 			preferred_family = AF_INET;
 		} else if (strcmp(opt, "-6") == 0) {
@@ -195,6 +216,13 @@ int main(int argc, char **argv)
 			preferred_family = AF_IPX;
 		} else if (strcmp(opt, "-D") == 0) {
 			preferred_family = AF_DECnet;
+		} else if (strcmp(opt, "-B") == 0) {
+			preferred_family = AF_BRIDGE;
+		} else if (matches(opt, "-human") == 0 ||
+			   matches(opt, "-human-readable") == 0) {
+			++human_readable;
+		} else if (matches(opt, "-iec") == 0) {
+			++use_iec;
 		} else if (matches(opt, "-stats") == 0 ||
 			   matches(opt, "-statistics") == 0) {
 			++show_stats;
@@ -206,6 +234,9 @@ int main(int argc, char **argv)
 			++oneline;
 		} else if (matches(opt, "-timestamp") == 0) {
 			++timestamp;
+		} else if (matches(opt, "-tshort") == 0) {
+			++timestamp;
+			++timestamp_short;
 #if 0
 		} else if (matches(opt, "-numeric") == 0) {
 			rtnl_names_numeric++;
@@ -236,6 +267,12 @@ int main(int argc, char **argv)
 			rcvbuf = size;
 		} else if (matches(opt, "-help") == 0) {
 			usage();
+		} else if (matches(opt, "-netns") == 0) {
+			NEXT_ARG();
+			if (netns_switch(argv[1]))
+				exit(-1);
+		} else if (matches(opt, "-all") == 0) {
+			do_all = true;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"ip -help\".\n", opt);
 			exit(-1);
