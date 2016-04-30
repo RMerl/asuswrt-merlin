@@ -1259,8 +1259,9 @@ static int start_bandwidth_limiter(void)
 		"$TFA parent 1: prio 1 protocol ip handle 9 fw flowid 1:9\n"
 		"\n"
 		"$TCAU parent 2:1 classid 2:9 htb rate 10240000kbit ceil 10240000kbit prio 1\n"
-		"$TQAU parent 2:9 handle 9: $SFQ\n"
+		"$TQAU parent 2:9 handle 9: %s\n"
 		"$TFAU parent 2: prio 1 protocol ip handle 9 fw flowid 2:9\n",
+		qsched,
 		qsched
 		);
 	}
@@ -1282,13 +1283,13 @@ static int start_bandwidth_limiter(void)
 				"$TFA parent 1: protocol ip prio %d u32 match u16 0x0800 0xFFFF at -2 match u32 0x%02X%02X%02X%02X 0xFFFFFFFF at -12 match u16 0x%02X%02X 0xFFFF at -14 flowid 1:%d"
 				"\n"
 				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
-				"$TQAU parent 2:%d handle %d: $SFQ\n"
+				"$TQAU parent 2:%d handle %d: %s\n"
 				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
 				, class, dlc, dlc, class
 				, class, class, qsched
 				, class, s[2], s[3], s[4], s[5], s[0], s[1], class
 				, class, upc, upc, class
-				, class, class
+				, class, class, qsched
 				, class, class, class
 			);
 		}
@@ -1301,13 +1302,13 @@ static int start_bandwidth_limiter(void)
 				"$TFA parent 1: prio %d protocol ip handle %d fw flowid 1:%d\n"
 				"\n"
 				"$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
-				"$TQAU parent 2:%d handle %d: $SFQ\n"
+				"$TQAU parent 2:%d handle %d: %s\n"
 				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
 				, class, dlc, dlc, class
 				, class, class, qsched
 				, class, class, class
 				, class, upc, upc, class
-				, class, class
+				, class, class, qsched
 				, class, class, class
 			);
 		}
@@ -1352,7 +1353,7 @@ static int start_bandwidth_limiter(void)
 				"$TFA%d%d parent %d: prio %d protocol ip handle %d fw flowid %d:%d\n" // 10
 				"\n"
 				"$TCAU parent 2:1 classid 2:%d htb rate 1kbit ceil %skbit prio %d\n"
-				"$TQAU parent 2:%d handle %d: $SFQ\n"
+				"$TQAU parent 2:%d handle %d: %s\n"
 				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n" // 13
 				, wl_if
 				, i, j, wl_if
@@ -1365,7 +1366,7 @@ static int start_bandwidth_limiter(void)
 				, i, j, guest, class, class, qsched
 				, i, j, guest, class, class, guest, class // 10
 				, class, upc, class
-				, class, class
+				, class, class, qsched
 				, class, class, class //13
 			);
 			_dprintf("[BWLIT] %s: create %s bandwidth limiter, qdisc=%d, class=%d\n", __FUNCTION__, wl_if, guest, class);
