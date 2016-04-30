@@ -41,6 +41,11 @@ function initial(){
 	show_menu();
 	refreshRate = getRefresh();
 	get_wlclient_list();
+
+	if (bcm_mumimo_support) {
+                document.getElementById("flags_mumimo_div").style.display = "";
+		document.getElementById("flags_div").style.display = "none";
+	}
 }
 
 
@@ -232,7 +237,8 @@ function setRefresh(obj) {
 									<br><br>
 									<div id="wifi52headerblock"></div>
 									<div id="wifi52block"></div>
-									<div>Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">M</span>=MU Beamforming,<span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated, <span class="wifiheader">G</span>=Guest</div>
+									<div id="flags_mumimo_div" style="display:none;">Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">M</span>=MU Beamforming,<span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated, <span class="wifiheader">G</span>=Guest</div>
+									<div id="flags_div">Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated, <span class="wifiheader">G</span>=Guest</div>
 									<br>
 									<div class="apply_gen">
 										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen" >
