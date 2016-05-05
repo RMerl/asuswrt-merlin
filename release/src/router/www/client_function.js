@@ -3194,17 +3194,18 @@ function ajaxCallJsonp(target){
 }
 
 function oui_query_full_vendor(mac){
-//	if ((typeof clientList[mac] != "undefined") && (clientList[mac].vendor != "")) {
-	if (0) {
-		setTimeout(function(){
+	setTimeout(function(){
+		var manufacturer_id = mac.replace(/\:/g,"").substring(0, 6);
+
+		if(ouiClientListArray[manufacturer_id] != undefined) {
 			var overlibStrTmp = retOverLibStr(clientList[mac]);
 			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
-			overlibStrTmp += clientList[mac].vendor;
+			overlibStrTmp += ouiClientListArray[manufacturer_id];  //transformManufacturerName(ouiClientListArray[manufacturer_id]);
 			return overlib(overlibStrTmp);
-		}, 1);
-	} else {
-		return oui_query_web(mac);
-	}
+		} else {
+			return oui_query_web(mac);
+		}
+	}, 1);
 }
 
 function oui_query_web(mac){
