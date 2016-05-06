@@ -736,6 +736,9 @@ static int start_tqos(void)
 	char *protocol="802.1q";
 #endif
 	char *qsched;
+	int overhead = 0;
+	char overheadstr[sizeof("overhead 64 atm")];
+
 
 	// judge interface by get_wan_ifname
 	// add Qos iptable rules in mangle table,
@@ -785,6 +788,13 @@ static int start_tqos(void)
 	qsched = "sfq perturb 10";
 #endif
 
+	overhead = nvram_get_int("qos_overhead");
+
+	if (overhead > 0)
+		snprintf(overheadstr, sizeof(overheadstr),"overhead %d atm", overhead);
+	else
+		strcpy(overheadstr, "");
+
 	/* WAN */
 	fprintf(f,
 		"#!/bin/sh\n"
@@ -810,13 +820,13 @@ static int start_tqos(void)
 		"\t$TQADL root handle 2: htb default %u\n"
 #endif
 		"# upload 1:1\n"
-		"\t$TCA parent 1: classid 1:1 htb rate %ukbit ceil %ukbit %s\n" ,
+		"\t$TCA parent 1: classid 1:1 htb rate %ukbit ceil %ukbit %s %s\n" ,
 			get_wan_ifname(wan_primary_ifunit()), // judge WAN interface
 			(nvram_get_int("qos_default") + 1) * 10,
 #ifdef CLS_ACT
 			(nvram_get_int("qos_default") + 1) * 10,
 #endif
-			bw, bw, burst_root);
+			bw, bw, burst_root, overheadstr);
 
 	/* LAN protocol: 802.1q */
 #ifdef CONFIG_BCMWL5 // TODO: it is only for the case, eth0 as wan, vlanx as lan
@@ -853,11 +863,11 @@ static int start_tqos(void)
 
 		fprintf(f,
 			"# egress %d: %u-%u%%\n"
-			"\t$TCA parent 1:1 classid 1:%d htb rate %ukbit %s %s prio %d quantum %u\n"
+			"\t$TCA parent 1:1 classid 1:%d htb rate %ukbit %s %s prio %d quantum %u %s\n"
 			"\t$TQA parent 1:%d handle %d: %s\n"
 			"\t$TFA parent 1: prio %d protocol ip handle %d fw flowid 1:%d\n",
 				i, rate, ceil,
-				x, calc(bw, rate), s, burst_leaf, (i >= 6) ? 7 : (i + 1), mtu,
+				x, calc(bw, rate), s, burst_leaf, (i >= 6) ? 7 : (i + 1), mtu, overheadstr,
 				x, x, qsched,
 				x, i + 1, x);
 	}
@@ -947,11 +957,11 @@ static int start_tqos(void)
 			x = (i + 1) * 10;
 			fprintf(f,
 				"# ingress %d: %u%%\n"
-				"\t$TCADL parent 2:1 classid 2:%d htb rate %ukbit %s prio %d quantum %u\n"
+				"\t$TCADL parent 2:1 classid 2:%d htb rate %ukbit %s prio %d quantum %u %s\n"
 				"\t$TQADL parent 2:%d handle %d: $SFQ\n"
 				"\t$TFADL parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n",
 					i, rate,
-					x, calc(bw, rate), burst_leaf, (i >= 6) ? 7 : (i + 1), mtu,
+					x, calc(bw, rate), burst_leaf, (i >= 6) ? 7 : (i + 1), mtu, overheadstr,
 					x, x,
 					x, i + 1, x);
 #else
