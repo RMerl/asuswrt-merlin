@@ -2380,11 +2380,30 @@ TRACE_PT("writing Parental Control\n");
 				fprintf(fp, "-A SSHBFP -j %s\n", logaccept);
 				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
 				        wan_if, nvram_get_int("sshd_port") ? : 22);
+
+#ifdef RTCONFIG_IPV6
+				if (ipv6_enabled())
+				{
+					fprintf(fp_ipv6, "-N SSHBFP\n");
+					fprintf(fp_ipv6, "-A SSHBFP -m recent --set --name SSH --rsource\n");
+					fprintf(fp_ipv6, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
+					fprintf(fp_ipv6, "-A SSHBFP -j %s\n", logaccept);
+					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
+					nvram_get_int("sshd_port") ? : 22);
+				}
+#endif
+
 			}
 			else
 			{
 				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n",
 				        wan_if, nvram_get_int("sshd_port") ? : 22, logaccept);
+#ifdef RTCONFIG_IPV6
+				if (ipv6_enabled())
+					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -j %s\n",
+						nvram_get_int("sshd_port") ? : 22, logaccept);
+#endif
+
 			}
 		}
 #endif
@@ -3320,11 +3339,30 @@ TRACE_PT("writing Parental Control\n");
 				fprintf(fp, "-A SSHBFP -j %s\n", logaccept);
 				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
 				        wan_if, nvram_get_int("sshd_port") ? : 22);
+#ifdef RTCONFIG_IPV6
+				if (ipv6_enabled())
+				{
+					fprintf(fp_ipv6, "-N SSHBFP\n");
+					fprintf(fp_ipv6, "-A SSHBFP -m recent --set --name SSH --rsource\n");
+					fprintf(fp_ipv6, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
+					fprintf(fp_ipv6, "-A SSHBFP -j %s\n", logaccept);
+					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
+						nvram_get_int("sshd_port") ? : 22);
+				}
+#endif
+
 			}
 			else
 			{
 				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n",
 				        wan_if, nvram_get_int("sshd_port") ? : 22, logaccept);
+#ifdef RTCONFIG_IPV6
+				if (ipv6_enabled())
+					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -j %s\n",
+						nvram_get_int("sshd_port") ? : 22, logaccept);
+
+#endif
+
 			}
 		}
 #endif
