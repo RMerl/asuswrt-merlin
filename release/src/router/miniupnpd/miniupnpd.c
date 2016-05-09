@@ -182,14 +182,14 @@ tomato_load(void)
 		current_time = time(NULL);
 		s[sizeof(s) - 1] = 0;
 		while (fgets(s, sizeof(s) - 1, f)) {
-			if (sscanf(s, "%3s %hu %31s %hu [%*s] %u", proto, &eport, iaddr, &iport, &timestamp) >= 4)
+			if (sscanf(s, "%3s %hu %31s %hu [%*[^]]] %u", proto, &eport, iaddr, &iport, &timestamp) >= 4)
 			{
 				if (((a = strchr(s, '[')) != NULL) && ((b = strrchr(a, ']')) != NULL))
 				{
 					if (timestamp > 0)
 					{
 						if (timestamp > current_time)
-							leaseduration = current_time - timestamp;
+							leaseduration = timestamp - current_time;
 						else
 							continue;
 					}
@@ -199,6 +199,8 @@ tomato_load(void)
 					}
 					*b = 0;
 					rhost = NULL;
+					syslog(LOG_DEBUG, "Read redirection [%s] from file: %s port %hu to %s port %hu, timestamp: %u (%u)",
+						a + 1, proto, eport, iaddr, iport, timestamp, leaseduration);
 					upnp_redirect(rhost, eport, iaddr, iport, proto, a + 1, leaseduration);
 				}
 			}

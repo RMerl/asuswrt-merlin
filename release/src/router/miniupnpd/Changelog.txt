@@ -1,4 +1,12 @@
-$Id: Changelog.txt,v 1.425 2016/02/20 19:11:58 nanard Exp $
+$Id: Changelog.txt,v 1.428 2016/04/19 21:10:36 nanard Exp $
+
+VERSION 2.0 : released on 2016/04/19
+
+2016/04/18:
+  linux/netfilter: fix compile time detection of iptables version >= 1.4.3
+
+2016/03/08:
+  linux/netfilter: do not add MASQUERADE rule if ports are equals
 
 2016/02/19:
   set IPv6 Hop limit to 10
