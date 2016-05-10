@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 380.59 (xx-xxx-2016)
+Asuswrt-Merlin - build 380.59 (10-May-2016)
 ===========================================
 
 About
@@ -98,6 +98,8 @@ Networking:
    - Policy routing for the OpenVPN client (based on source or
      destination IPs), sometimes referred to as "selective routing")
    - DNSSEC support
+   - Experimental support for fq_codel in Traditionnal QoS
+     (ARM-based models only)
 
 
 Web interface:
@@ -651,8 +653,8 @@ config files must be enabled under Administration -> System.
 
 
 
-OpenVPN client policy routing
------------------------------
+** OpenVPN client policy routing **
+
 When configuring your router to act as an OpenVPN client (for instance 
 to connect your whole LAN to an OpenVPN tunnel provider), you can 
 define policies that determines which clients, or which destinations 

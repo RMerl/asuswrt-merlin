@@ -1,13 +1,14 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.59 (xx-xxx-2016)
+380.59 (10-May-2016)
     - NEW: Merged with 380_2697 GPL.  This includes beta MU-MIMO support for 
            the RT-AC87U/AC88U/AC3100/AC5300, and IPTV fixes.
     - NEW: Option on OpenVPN client/server page to reset them back to the 
            factory default settings.
     - EXPERIMENTAL: Added support for codel and fq_codel to ARM models
                     (RT-AC56U and newer).
+
                     When enabling Traditional QoS or Bandwidth Limiter,
                     you can now change from the default sfq queue 
                     discipline to codel or fq_codel.
@@ -30,6 +31,7 @@ Asuswrt-Merlin Changelog
     - CHANGED: SSH WAN access will also work over IPv6
     - CHANGED: Updated miniupnpd to 2.0
     - CHANGED: Fields on the DHCP static lease page are now sortable
+               (original patch by Allan Jensen)
     - FIXED: Daily/Monthly traffic monitoring shows invalid values on the 
              RT-AC88U/3100/5300, even with CTF disabled.  Implemented a 
              temporary workaround.
