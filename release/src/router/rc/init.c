@@ -5520,7 +5520,7 @@ int init_nvram(void)
 		nvram_unset("wan0_dhcpc_options");
 	}
 
-	oldclientid = nvram_safe_get("wan0_dhcpc_options");
+	oldclientid = nvram_safe_get("wan1_dhcpc_options");
 	if (*oldclientid) {
 		nvram_set("wan1_clientid", oldclientid);
 		nvram_unset("wan1_dhcpc_options");
