@@ -5514,14 +5514,17 @@ int init_nvram(void)
 /*** Update nvram ***/
 
 /* migrate dhcpc_options to wanxxx_clientid */
-	if (!nvram_match("wan0_dhcpc_options", "")) {
-		nvram_set("wan0_clientid", nvram_get("wan0_dhcpc_options"));
+	char *oldclientid = nvram_safe_get("wan0_dhcpc_options");
+	if (*oldclientid) {
+		nvram_set("wan0_clientid", oldclientid);
 		nvram_unset("wan0_dhcpc_options");
 	}
-        if (!nvram_match("wan1_dhcpc_options", "")) {
-                nvram_set("wan1_clientid", nvram_get("wan1_dhcpc_options"));
-                nvram_unset("wan1_dhcpc_options");
-        }
+
+	oldclientid = nvram_safe_get("wan0_dhcpc_options");
+	if (*oldclientid) {
+		nvram_set("wan1_clientid", oldclientid);
+		nvram_unset("wan1_dhcpc_options");
+	}
 
 /* Migrate to Asus's new tri-state sshd_enable to our dual nvram setup */
 	if (nvram_match("sshd_enable", "1")) {
