@@ -374,14 +374,18 @@ static int decomp(const char *fname, void *buffer, int size, int max)
 	FILE *fp;
 	long file_size = 0;
 
+#ifdef DEBUG
 	_dprintf("%s: fname=%s\n", __FUNCTION__, fname);
+#endif
 
 	unlink(uncomp_fn);
 
 	n = 0;
 	sprintf(s, "gzip -dc %s > %s", fname, uncomp_fn);
 	if (system(s)) {
+#ifdef DEBUG
 		_dprintf("%s: %s != 0\n", __func__, s);
+#endif
 		goto exit_decomp;
 	}
 	if (!(fp = fopen(uncomp_fn, "r")))
@@ -391,12 +395,16 @@ static int decomp(const char *fname, void *buffer, int size, int max)
 	file_size = ftell(fp);
 	fclose(fp);
 	if ((size * max) != file_size) {
+#ifdef DEBUG
 		_dprintf("%s: filesize mismatch! (%ld/%ld)\n", (size * max), file_size);
+#endif
 		goto exit_decomp;
 	}
 
 	n = f_read(uncomp_fn, buffer, size * max);
+#ifdef DEBUG
 	_dprintf("%s: n=%d\n", __func__, n);
+#endif
 	if (n <= 0)
 		n = 0;
 	else
@@ -419,13 +427,17 @@ static int load_history(const char *fname)
 {
 	history_t hist;
 
+#ifdef DEBUG
 	_dprintf("%s: fname=%s\n", __FUNCTION__, fname);
+#endif
 
 	if ((decomp(fname, &hist, sizeof(hist), 1) != 1) || (hist.id != CURRENT_ID)) {
 		history_v0_t v0;
 
 		if ((decomp(fname, &v0, sizeof(v0), 1) != 1) || (v0.id != ID_V0)) {
+#ifdef DEBUG
 			_dprintf("%s: load failed\n", __FUNCTION__);
+#endif
 			return 0;
 		}
 		else {
@@ -444,7 +456,9 @@ static int load_history(const char *fname)
 		memcpy(&history, &hist, sizeof(history));
 	}
 
+#ifdef DEBUG
 	_dprintf("%s: dailyp=%d monthlyp=%d\n", __FUNCTION__, history.dailyp, history.monthlyp);
+#endif
 	return 1;
 }
 
