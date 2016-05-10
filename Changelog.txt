@@ -27,6 +27,9 @@ Asuswrt-Merlin Changelog
     - CHANGED: Enable SPNEGO support in Samba
     - CHANGED: Integrated Asus's networkmap into the DHCP reservations page
     - CHANGED: Updated Tor to 0.2.7.6
+    - CHANGED: SSH WAN access will also work over IPv6
+    - CHANGED: Updated miniupnpd to 2.0
+    - CHANGED: Fields on the DHCP static lease page are now sortable
     - FIXED: Daily/Monthly traffic monitoring shows invalid values on the 
              RT-AC88U/3100/5300, even with CTF disabled.  Implemented a 
              temporary workaround.
