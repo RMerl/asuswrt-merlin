@@ -93,11 +93,6 @@ extern int x_msg_line_num;
 
 #define M_ERRNO           (1<<8)	 /* show errno description */
 
-#ifdef ENABLE_CRYPTO_OPENSSL
-#  define M_SSL_DH          (1<<9)
-#  define M_SSL             (1<<10)	 /* show SSL error */
-#endif
-
 #define M_NOMUTE          (1<<11)        /* don't do mute processing */
 #define M_NOPREFIX        (1<<12)        /* don't show date/time prefix */
 #define M_USAGE_SMALL     (1<<13)        /* fatal options error, call usage_small */
@@ -108,8 +103,6 @@ extern int x_msg_line_num;
 
 /* flag combinations which are frequently used */
 #define M_ERR     (M_FATAL | M_ERRNO)
-#define M_SSLERR  (M_FATAL | M_SSL)
-#define M_SSLDHERR  (M_FATAL | M_SSL_DH)
 #define M_USAGE   (M_USAGE_SMALL | M_NOPREFIX | M_OPTERR)
 #define M_CLIENT  (M_MSG_VIRT_OUT | M_NOMUTE | M_NOIPREFIX)
 
@@ -142,26 +135,31 @@ extern int x_msg_line_num;
  * msg() as a macro for optimization win.
  */
 
-bool dont_mute (unsigned int flags); /* check muting filter */
+/** Check muting filter */
+bool dont_mute (unsigned int flags);
 
-#define MSG_TEST(flags) (unlikely((((unsigned int)flags) & M_DEBUG_LEVEL) <= x_debug_level) && dont_mute (flags))
+/** Return true if flags represent an enabled, not muted log level */
+static inline bool msg_test (unsigned int flags)
+{
+  return ((flags & M_DEBUG_LEVEL) <= x_debug_level) && dont_mute (flags);
+}
 
 /* Macro to ensure (and teach static analysis tools) we exit on fatal errors */
 #define EXIT_FATAL(flags) do { if ((flags) & M_FATAL) _exit(1); } while (false)
 
 #if defined(HAVE_CPP_VARARG_MACRO_ISO) && !defined(__LCLINT__)
 # define HAVE_VARARG_MACROS
-# define msg(flags, ...) do { if (MSG_TEST(flags)) x_msg((flags), __VA_ARGS__); EXIT_FATAL(flags); } while (false)
+# define msg(flags, ...) do { if (msg_test(flags)) x_msg((flags), __VA_ARGS__); EXIT_FATAL(flags); } while (false)
 # ifdef ENABLE_DEBUG
-#  define dmsg(flags, ...) do { if (MSG_TEST(flags)) x_msg((flags), __VA_ARGS__); EXIT_FATAL(flags); } while (false)
+#  define dmsg(flags, ...) do { if (msg_test(flags)) x_msg((flags), __VA_ARGS__); EXIT_FATAL(flags); } while (false)
 # else
 #  define dmsg(flags, ...)
 # endif
 #elif defined(HAVE_CPP_VARARG_MACRO_GCC) && !defined(__LCLINT__)
 # define HAVE_VARARG_MACROS
-# define msg(flags, args...) do { if (MSG_TEST(flags)) x_msg((flags), args); EXIT_FATAL(flags); } while (false)
+# define msg(flags, args...) do { if (msg_test(flags)) x_msg((flags), args); EXIT_FATAL(flags); } while (false)
 # ifdef ENABLE_DEBUG
-#  define dmsg(flags, args...) do { if (MSG_TEST(flags)) x_msg((flags), args); EXIT_FATAL(flags); } while (false)
+#  define dmsg(flags, args...) do { if (msg_test(flags)) x_msg((flags), args); EXIT_FATAL(flags); } while (false)
 # else
 #  define dmsg(flags, args...)
 # endif
@@ -360,6 +358,12 @@ ignore_sys_error (const int err)
 #endif
 
   return false;
+}
+
+/** Convert fatal errors to nonfatal, don't touch other errors */
+static inline unsigned int
+nonfatal(const unsigned int err) {
+  return err & M_FATAL ? (err ^ M_FATAL) | M_NONFATAL : err;
 }
 
 #include "errlevel.h"

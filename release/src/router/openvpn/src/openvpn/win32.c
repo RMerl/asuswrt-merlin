@@ -1223,13 +1223,14 @@ win_wfp_block_dns (const NET_IFINDEX index)
     /* Prepare filter. */
     Filter.subLayerKey = SubLayer.subLayerKey;
     Filter.displayData.name = FIREWALL_NAME;
-    Filter.weight.type = FWP_EMPTY;
+    Filter.weight.type = FWP_UINT8;
+    Filter.weight.uint8 = 0xF;
     Filter.filterCondition = Condition;
     Filter.numFilterConditions = 2;
 
-    /* First filter. Block IPv4 DNS queries except from OpenVPN itself. */
+    /* First filter. Permit IPv4 DNS queries from OpenVPN itself. */
     Filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
-    Filter.action.type = FWP_ACTION_BLOCK;
+    Filter.action.type = FWP_ACTION_PERMIT;
 
     Condition[0].fieldKey = FWPM_CONDITION_IP_REMOTE_PORT;
     Condition[0].matchType = FWP_MATCH_EQUAL;
@@ -1237,26 +1238,44 @@ win_wfp_block_dns (const NET_IFINDEX index)
     Condition[0].conditionValue.uint16 = 53;
 
     Condition[1].fieldKey = FWPM_CONDITION_ALE_APP_ID;
-    Condition[1].matchType = FWP_MATCH_NOT_EQUAL;
+    Condition[1].matchType = FWP_MATCH_EQUAL;
     Condition[1].conditionValue.type = FWP_BYTE_BLOB_TYPE;
     Condition[1].conditionValue.byteBlob = openvpnblob;
 
     /* Add filter condition to our interface. */
     if (!win_wfp_add_filter(m_hEngineHandle, &Filter, NULL, &filterid))
         goto err;
-    dmsg (D_LOW, "Filter (Block IPv4 DNS) added with ID=%I64d", filterid);
+    dmsg (D_LOW, "Filter (Permit OpenVPN IPv4 DNS) added with ID=%I64d", filterid);
 
-    /* Second filter. Block IPv6 DNS queries except from OpenVPN itself. */
+    /* Second filter. Permit IPv6 DNS queries from OpenVPN itself. */
     Filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V6;
 
     /* Add filter condition to our interface. */
     if (!win_wfp_add_filter(m_hEngineHandle, &Filter, NULL, &filterid))
         goto err;
+    dmsg (D_LOW, "Filter (Permit OpenVPN IPv6 DNS) added with ID=%I64d", filterid);
+
+    /* Third filter. Block all IPv4 DNS queries. */
+    Filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+    Filter.action.type = FWP_ACTION_BLOCK;
+    Filter.weight.type = FWP_EMPTY;
+    Filter.numFilterConditions = 1;
+
+    if (!win_wfp_add_filter(m_hEngineHandle, &Filter, NULL, &filterid))
+        goto err;
+    dmsg (D_LOW, "Filter (Block IPv4 DNS) added with ID=%I64d", filterid);
+
+    /* Forth filter. Block all IPv6 DNS queries. */
+    Filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V6;
+
+    if (!win_wfp_add_filter(m_hEngineHandle, &Filter, NULL, &filterid))
+        goto err;
     dmsg (D_LOW, "Filter (Block IPv6 DNS) added with ID=%I64d", filterid);
 
-    /* Third filter. Permit IPv4 DNS queries from TAP. */
+    /* Fifth filter. Permit IPv4 DNS queries from TAP. */
     Filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
     Filter.action.type = FWP_ACTION_PERMIT;
+    Filter.numFilterConditions = 2;
 
     Condition[1].fieldKey = FWPM_CONDITION_IP_LOCAL_INTERFACE;
     Condition[1].matchType = FWP_MATCH_EQUAL;
@@ -1268,7 +1287,7 @@ win_wfp_block_dns (const NET_IFINDEX index)
         goto err;
     dmsg (D_LOW, "Filter (Permit IPv4 DNS queries from TAP) added with ID=%I64d", filterid);
 
-    /* Forth filter. Permit IPv6 DNS queries from TAP. */
+    /* Sixth filter. Permit IPv6 DNS queries from TAP. */
     Filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V6;
 
     /* Add filter condition to our interface. */
@@ -1323,6 +1342,20 @@ win32_version_info()
     }
 }
 
+bool
+win32_is_64bit()
+{
+#if defined(_WIN64)
+    return true;  // 64-bit programs run only on Win64
+#elif defined(_WIN32)
+    // 32-bit programs run on both 32-bit and 64-bit Windows
+    BOOL f64 = FALSE;
+    return IsWow64Process(GetCurrentProcess(), &f64) && f64;
+#else
+    return false; // Win64 does not support Win16
+#endif
+}
+
 const char *
 win32_version_string(struct gc_arena *gc, bool add_name)
 {
@@ -1348,6 +1381,8 @@ win32_version_string(struct gc_arena *gc, bool add_name)
             buf_printf (&out, "0.0%s", add_name ? " (unknown)" : "");
             break;
     }
+
+    buf_printf (&out, win32_is_64bit() ? " 64bit" : " 32bit");
 
     return (const char *)out.data;
 }

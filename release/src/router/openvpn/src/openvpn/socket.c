@@ -842,7 +842,7 @@ socket_listen_accept (socket_descriptor_t sd,
       struct timeval tv;
 
       FD_ZERO (&reads);
-      FD_SET (sd, &reads);
+      openvpn_fd_set (sd, &reads);
       tv.tv_sec = 0;
       tv.tv_usec = 0;
 
@@ -934,16 +934,22 @@ openvpn_connect (socket_descriptor_t sd,
     {
       while (true)
 	{
+#if POLL
+	  struct pollfd fds[1];
+	  fds[0].fd = sd;
+	  fds[0].events = POLLOUT;
+	  status = poll(fds, 1, 0);
+#else
 	  fd_set writes;
 	  struct timeval tv;
 
 	  FD_ZERO (&writes);
-	  FD_SET (sd, &writes);
+	  openvpn_fd_set (sd, &writes);
 	  tv.tv_sec = 0;
 	  tv.tv_usec = 0;
 
 	  status = select (sd + 1, NULL, &writes, NULL, &tv);
-
+#endif
 	  if (signal_received)
 	    {
 	      get_signal (signal_received);
@@ -962,7 +968,11 @@ openvpn_connect (socket_descriptor_t sd,
 	    {
 	      if (--connect_timeout < 0)
 		{
+#ifdef WIN32
+		  status = WSAETIMEDOUT;
+#else
 		  status = ETIMEDOUT;
+#endif
 		  break;
 		}
 	      openvpn_sleep (1);

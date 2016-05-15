@@ -1360,7 +1360,11 @@ parameter is interpreted in the same way as the
 .B \-\-link\-mtu
 parameter, i.e. the UDP packet size after encapsulation
 overhead has been added in, but not including
-the UDP header itself.
+the UDP header itself. Resulting packet would be at most 28
+bytes larger for IPv4 and 48 bytes for IPv6 (20/40 bytes for IP
+header and 8 bytes for UDP header). Default value of 1450 allows
+IPv4 packets to be transmitted over a link with MTU 1473 or higher
+without IP level fragmentation.
 
 The
 .B \-\-mssfix
@@ -2118,15 +2122,12 @@ parameter can point to an empty directory, however
 complications can result when scripts or restarts
 are executed after the chroot operation.
 
-Note: if OpenVPN is built using the PolarSSL SSL
-library,
-.B \-\-chroot
-will only work if a /dev/urandom device node is available
-inside the chroot directory
+Note: The SSL library will probably need /dev/urandom to be available inside
+the chroot directory
 .B dir.
-This is due to the way PolarSSL works (it wants to open
-/dev/urandom every time randomness is needed, not just once
-at startup) and nothing OpenVPN can influence.
+This is because SSL libraries occasionally need to collect fresh random.  Newer
+linux kernels and some BSDs implement a getrandom() or getentropy() syscall
+that removes the need for /dev/urandom to be available.
 .\"*********************************************************
 .TP
 .B \-\-setcon context
@@ -4554,8 +4555,9 @@ is an expert feature, which - if used correcly - can improve the security of
 your VPN connection.  But it is also easy to unwittingly use it to carefully
 align a gun with your foot, or just break your connection.  Use with care!
 
-The default for --tls-cipher is to use PolarSSL's default cipher list
-when using PolarSSL or "DEFAULT:!EXP:!PSK:!SRP:!kRSA" when using OpenSSL.
+The default for \-\-tls\-cipher is to use PolarSSL's default cipher list
+when using PolarSSL or "DEFAULT:!EXP:!LOW:!MEDIUM:!PSK:!SRP:!kRSA" when using
+OpenSSL.
 .\"*********************************************************
 .TP
 .B \-\-tls\-timeout n
@@ -5454,6 +5456,16 @@ DNS leaks. This option prevents any application from accessing
 TCP or UDP port 53 except one inside the tunnel. It uses
 Windows Filtering Platform (WFP) and works on Windows Vista or
 later.
+
+This option is considered unknown on non-Windows platforms
+and unsupported on Windows XP, resulting in fatal error.
+You may want to use
+.B \-\-setenv opt
+or
+.B \-\-ignore\-unknown\-option
+(not suitable for Windows XP) to ignore said error.
+Note that pushing unknown options from server does not trigger
+fatal errors.
 .\"*********************************************************
 .TP
 .B \-\-dhcp\-renew
