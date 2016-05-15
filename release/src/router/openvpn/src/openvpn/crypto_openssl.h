@@ -91,7 +91,7 @@ void crypto_print_openssl_errors(const unsigned int flags);
 # define crypto_msg(flags, ...) \
 do { \
   crypto_print_openssl_errors(nonfatal(flags)); \
-  msg((flags), __VA_ARGS__); \
+  msg((flags | M_SSL), __VA_ARGS__); \
 } while (false)
 
 

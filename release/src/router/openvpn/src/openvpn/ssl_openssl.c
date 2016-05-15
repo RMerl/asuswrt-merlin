@@ -413,20 +413,20 @@ tls_ctx_load_dh_params (struct tls_root_ctx *ctx, const char *dh_file,
   if (!strcmp (dh_file, INLINE_FILE_TAG) && dh_file_inline)
     {
       if (!(bio = BIO_new_mem_buf ((char *)dh_file_inline, -1)))
-	crypto_msg (M_FATAL, "Cannot open memory BIO for inline DH parameters");
+	crypto_msg (M_FATAL | M_SSL_DH, "Cannot open memory BIO for inline DH parameters");
     }
   else
     {
       /* Get Diffie Hellman Parameters */
       if (!(bio = BIO_new_file (dh_file, "r")))
-	crypto_msg (M_FATAL, "Cannot open %s for DH parameters", dh_file);
+	crypto_msg (M_FATAL | M_SSL_DH, "Cannot open %s for DH parameters", dh_file);
     }
 
   dh = PEM_read_bio_DHparams (bio, NULL, NULL, NULL);
   BIO_free (bio);
 
   if (!dh)
-    crypto_msg (M_FATAL, "Cannot load DH parameters from %s", dh_file);
+    crypto_msg (M_FATAL | M_SSL_DH, "Cannot load DH parameters from %s", dh_file);
   if (!SSL_CTX_set_tmp_dh (ctx->ctx, dh))
     crypto_msg (M_FATAL, "SSL_CTX_set_tmp_dh");
 
