@@ -723,7 +723,6 @@ jQuery(function($) {
 
 		// NOTE: if using borderTop Chrome has a strange bug that due to the colspan above makes it display incorrectly!
 		$(staticHeaderTable).find('th:eq(0)').on('click', function(e) {
-			var newIndx;
 
 			merlinWS.sortStaticIpList(0);
 			$(staticHeaderTable).find('th').css({borderBottom: 'none'});
@@ -734,14 +733,12 @@ jQuery(function($) {
 			merlinWS.sortStaticIpList(1);
 			$(staticHeaderTable).find('th').css({borderBottom: 'none'});
 			$(e.target).closest('th').css({borderBottom: '2px solid #fc0'});
-			merlinWS.firstCol_newSortIndex = 0;  //reset this
 		});
 
 		$(staticHeaderTable).find('th:eq(2)').on('click', function(e) {
 			merlinWS.sortStaticIpList(2);
 			$(staticHeaderTable).find('th').css({borderBottom: 'none'});
 			$(e.target).closest('th').css({borderBottom: '2px solid #fc0'});
-			merlinWS.firstCol_newSortIndex = 0;  //reset this
 		});
 	}
 });
