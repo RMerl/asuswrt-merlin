@@ -3164,6 +3164,10 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 /* Exported from device-map/clients.asp */
 
 function retOverLibStr(client){
+
+	if (typeof client == "undefined")
+		return "";
+
 	var overlibStr = "<p><#MAC_Address#>:</p>" + client.mac.toUpperCase();
 
 	if(client.ssid)
@@ -3198,7 +3202,10 @@ function oui_query_full_vendor(mac){
 		var manufacturer_id = mac.replace(/\:/g,"").substring(0, 6);
 
 		if(ouiClientListArray[manufacturer_id] != undefined) {
-			var overlibStrTmp = retOverLibStr(clientList[mac]);
+			if (typeof clientList[mac] != "undefined")
+				var overlibStrTmp = retOverLibStr(clientList[mac]);
+			else
+				var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
 			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
 			overlibStrTmp += ouiClientListArray[manufacturer_id];  //transformManufacturerName(ouiClientListArray[manufacturer_id]);
 			return overlib(overlibStrTmp);
