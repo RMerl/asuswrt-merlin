@@ -1,6 +1,12 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.60 (xx-xxx-2016)
+    - CHANGED: Updated OpenVPN to 2.3.11
+    - FIXED: OpenVPN server instances weren't properly reporting
+             if an error occurred at start time.
+
+
 380.59 (10-May-2016)
     - NEW: Merged with 380_2697 GPL.  This includes beta MU-MIMO support for 
            the RT-AC87U/AC88U/AC3100/AC5300, and IPTV fixes.
