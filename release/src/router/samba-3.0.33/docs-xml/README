@@ -1,0 +1,125 @@
+!==
+!== docbook.txt for Samba 3.0
+!==
+!== Author:	David Bannon, D.Bannon@latrobe.edu.au  November, 2000
+!== Updates:	Gerald (Jerry) Carter, jerry@samba.org, Feb. 2001
+!== Updates:	Jelmer Vernooij, jelmer@samba.org,		Aug, 2002
+!== Updates:	Jelmer Vernooij, jelmer@samba.org,		Jun, 2003
+!== Updates: 	Jelmer Vernooij, jelmer@samba.org,		May, 2004
+!== Updates:    Jelmer Vernooij, jelmer@samba.org,              May, 2005
+
+Quick start
+-----------
+
+Run:
+
+make all
+
+What are DocBook documents doing in the Samba Distribution ?
+-----------------------------------------------------------
+
+We have converted all samba docs to XML/DocBook V4.2
+in order to make them easier to maintain and produce a nicer looking
+product.
+
+This short note (strange isn't it how it always starts out as a short note
+and becomes a long one ?) will explain very briefly how and why we have
+done this.
+
+
+The format
+----------
+If you are new to xml, regard an xml file as 'source code'. You don't
+read it directly, but use it to create other formats (like the txt and html
+included in ../txtdocs and ../htmldocs).
+
+Docbook is a particular XML style, particularly suited to producing
+technical manuals. 
+
+For more information on DocBook tags and format, see "DocBook: The 
+Definitive Guide" by Walsh and Muellner, (c) O'Reilly Publishing.
+This book covers DocBook V4.2 and is available on-line
+at http://www.docbook.org/
+
+The Output
+----------
+The current Samba Subversion tree contains the XML/DocBook source files.
+
+A regularly generated version can be found at http://samba.org/samba/docs/.
+
+The Tools
+---------
+
+To generate the docs, you need to have the following packages installed:
+
+ * GNU Make
+ * GNU autoconf
+ * docbook-utils
+ * xsltproc
+ * pngtopnm and pnmtops (from the netpbm utilities)
+ * inkscape
+
+For generating PDF (thru LaTeX):
+ * db2latex (from http://db2latex.sf.net/). Make sure to get CVS version
+   dated 20030622 -- it works best. Versions previous to 20030425 are known
+   to have problems, as well as current (as of 20031210) snapshots.
+ * pdflatex
+ * thumbpdf
+
+For generating PDF (thru FO):
+ * fop (http://xml.apache.org/fop/)
+
+For generating PostScript (thru LaTeX):
+ * db2latex
+ * latex
+ * dvips 
+
+For generating ASCII:
+ * html2text
+
+For generating Palm-viewable docs:
+ * plucker-build
+
+For generating texi files:
+ * docbook2x-texi
+ * makeinfo
+
+For validating:
+ * xmllint
+
+This directory now contains a ./configure script and Makefile to 
+support the automated building of man pages (including HTML versions), and 
+the building of the Samba-HOWTO-Collection and the 
+Samba Developers Guide (HTML,DVI,TeX,PDF,PS,Text versions).
+
+The configure script detects which of the required utilities are installed 
+and builds as much docs as it can using these tools.
+
+Help! Building the docs generates a lot of HTTP traffic...
+-------------
+To be able to build the docs without an internet connection (or faster with 
+a slow internet connection), you need to set up "catalogs".
+
+A catalog contains a list of mappings to locally cached documents. E.g. :
+http://db2latex.sf.net/xsl/ -> /usr/share/sgml/docbook/db2latex/xsl/
+
+Add the following two lines to /etc/xml/catalog for db2latex:
+<rewriteURI uriStartString="http://db2latex.sourceforge.net/xsl/" rewritePrefix="/export/user/me/source/docbook/db2latex/xsl/"/>
+<rewriteURI uriStartString="http://docbook.sourceforge.net/release/xsl/current/" rewritePrefix="/export/user/me/source/docbook/docbook-xsl/"/>
+
+For the Pearson DTD, add something like:
+
+  <public publicId="-//Pearson//DTD Books//DE" uri="file:///home/jelmer/Xml_dtd_1.1/pearson.dtd"/>
+
+For the Samba DTD's, add something like:
+  <rewriteURI uriStartString="http://www.samba.org/samba/DTD" rewritePrefix="file:///home/jelmer/samba-web/DTD"/>
+
+(of course, adapt /export/user/me/source/ to whatever path db2latex is 
+ installed in...)
+
+catalog entries for the other DTD's and XSL scripts should be present on your 
+system already.
+
+Windows Help files
+----------
+http://htmlhelp.berlios.de/howto/mshh4wine.php

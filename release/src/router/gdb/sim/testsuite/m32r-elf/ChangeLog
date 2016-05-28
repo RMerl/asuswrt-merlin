@@ -1,9 +1,0 @@
-2005-01-07  Andrew Cagney  <cagney@gnu.org>
-
-	* configure.ac: Rename configure.in, require autoconf 2.59.
-	* configure: Re-generate.
-
-Thu Feb 12 19:09:38 1998  Doug Evans  <devans@canuck.cygnus.com>
-
-	* Directory created.
-

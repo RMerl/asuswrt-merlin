@@ -1,0 +1,218 @@
+Contributor:	Andrew Tridgell and the Samba Team
+Date:		June 27, 1997
+Satus:		Always out of date! (Would not be the same without it!)
+
+Subject:	A bit of history and a bit of fun
+============================================================================
+
+This is a short history of this project. It's not supposed to be
+comprehensive, just enough so that new users can get a feel for where
+this project has come from and maybe where it's going to.
+
+The whole thing really started in December 1991. I was (and still am)
+a PhD student in the Computer Sciences Laboratory at the Australian
+National University, in Canberra, Australia. We had just got a
+beta copy of eXcursion from Digital, and I was testing it on my PC. At
+this stage I was a MS-DOS user, dabbling in windows.
+
+eXcursion ran (at the time) only with Dec's `Pathworks' network for
+DOS. I had up till then been using PC-NFS to connect to our local sun
+workstations, and was reasonably happy with it. In order to run
+pathworks I had to stop using PC-NFS and try using pathworks to mount
+disk space. Unfortunately pathworks was only available for digital
+workstations running VMS or Ultrix so I couldn't mount from the suns
+anymore.
+
+I had access to a a decstation 3100 running Ultrix that I used to
+administer, and I got the crazy notion that the protocol that
+pathworks used to talk to ultrix couldn't be that hard, and maybe I
+could work it out. I had never written a network program before, and
+certainly didn't know what a socket was.
+
+In a few days, after looking at some example code for sockets, I
+discovered it was pretty easy to write a program to "spy" on the file
+sharing protocol. I wrote and installed this program (the sockspy.c
+program supplied with this package) and captured everything that the
+pathworks client said to the pathworks server.
+
+I then tried writing short C programs (using Turbo C under DOS) to do
+simple file operations on the network drive (open, read, cd etc) and
+looked at the packets that the server and client exchanged. From this
+I worked out what some of the bytes in the packets meant, and started
+to write my own program to do the same thing on a sun.
+
+After a day or so more I had my first successes and actually managed
+to get a connection and to read a file. From there it was all
+downhill, and a week later I was happily (if a little unreliably)
+mounting disk space from a sun to my PC running pathworks. The server
+code had a lot of `magic' values in it, which seemed to be always
+present with the ultrix server. It was not till 2 years later that I
+found out what all these values meant.
+
+Anyway, I thought other people might be interested in what I had done,
+so I asked a few people at uni, and noone seemed much interested. I
+also spoke to a person at Digital in Canberra (the person who had
+organised a beta test of eXcursion) and asked if I could distribute
+what I'd done, or was it illegal. It was then that I first heard the
+word "netbios" when he told me that he thought it was all covered by a
+spec of some sort (the netbios spec) and thus what I'd done was not
+only legal, but silly.
+
+I found the netbios spec after asking around a bit (the RFC1001 and
+RFC1002 specs) and found they looked nothing like what I'd written, so
+I thought maybe the Digital person was mistaken. I didn't realise RFCs
+referred to the name negotiation and packet encapsulation over TCP/IP,
+and what I'd written was really a SMB implementation.
+
+Anyway, he encouraged me to release it so I put out "Server 0.1" in
+January 1992. I got quite a good response from people wanting to use
+pathworks with non-digital unix workstations, and I soon fixed a few
+bugs, and released "Server 0.5" closely followed by "Server 1.0". All
+three releases came out within about a month of each other.
+
+At this point I got an X Terminal on my desk, and I no longer needed eXcursion
+and I prompty forgot about the whole project, apart from a few people
+who e-mailed me occasionally about it.
+
+Nearly two years then passed with just occasional e-mails asking about
+new versions and bugs. I even added a note to the ftp site asking for
+a volunteer to take over the code as I no longer used it. No one
+volunteered.
+
+During this time I did hear from a couple of people who said it should
+be possible to use my code with Lanmanager, but I never got any
+definite confirmation.
+
+One e-mail I got about the code did, however, make an impression. It
+was from Dan Shearer at the university of South Australia, and he said
+this:
+
+ 
+	I heard a hint about a free Pathworks server for Unix in the
+	Net channel of the Linux list. After quite a bit of chasing
+	(and lots of interested followups from other Linux people) I
+	got hold of a release news article from you, posted in Jan 92,
+	from someone in the UK.
+
+	Can you tell me what the latest status is? I think you might
+	suddenly find a whole lot of interested hackers in the Linux
+	world at least, which is a place where things tend to happen
+	fast (and even some reliable code gets written, BION!)
+
+I asked him what Linux was, and he told me it was a free Unix for PCs.
+This was in November 1992 and a few months later I was a Linux
+convert! I still didn't need a pathworks server though, so I didn't do
+the port, but I think Dan did.
+
+At about this time I got an e-mail from Digital, from a person working
+on the Alpha software distribution. He asked if I would mind if they
+included my server with the "contributed" cd-rom. This was a bit of a
+shock to me as I never expected Dec to ask me if they could use my
+code! I wrote back saying it was OK, but never heard from him again. I
+don't know if it went on the cd-rom.
+
+Anyway, the next big event was in December 1993, when Dan again sent
+me an e-mail saying my server had "raised its ugly head" on
+comp.protocols.tcpip.ibmpc. I had a quick look on the group, and was
+surprised to see that there were people interested in this thing.
+
+At this time a person from our computer center offered me a couple of
+cheap ethernet cards (3c505s for $15 each) and coincidentially someone
+announced on one of the Linux channels that he had written a 3c505
+driver for Linux. I bought the cards, hacked the driver a little and
+setup a home network between my wifes PC and my Linux box. I then
+needed some way to connect the two, and I didn't own PC-NFS at home,
+so I thought maybe my server could be useful. On the newsgroup among
+the discussions of my server someone had mentioned that there was a
+free client that might work with my server that Microsoft had put up
+for ftp. I downloaded it and found to my surprise that it worked first
+time with my `pathworks' server!
+
+Well, I then did a bit of hacking, asked around a bit and found (I
+think from Dan) that the spec I needed was for the "SMB" protocol, and
+that it was available via ftp. I grabbed it and started removing all
+those ugly constants from the code, now that all was explained.
+
+On December 1st 1993 I announced the start of the "Netbios for Unix"
+project, seeding the mailing list with all the people who had e-mailed
+me over the years asking about the server.
+
+About 35 versions (and two months) later I wrote a short history of
+the project, which you have just read. There are now over a hundred
+people on the mailing list, and lots of people report that they use
+the code and like it. In a few days I will be announcing the release
+of version 1.6 to some of the more popular (and relevant) newsgroups.
+
+
+Andrew Tridgell
+6th February 1994
+
+---------------------
+
+It is now May 1995 and there are about 1400 people on the mailing
+list. I got downloads from the main Samba ftp site from around 5000
+unique hosts in a two month period. There are several mirror
+sites as well. The current version number is 1.9.13.
+
+---------------------
+
+
+---------------------
+It's now March 1996 and version 1.9.16alpha1 has just been
+released. There have been lots of changes recently with master browser
+support and the ability to do domain logons etc. Samba has also been
+ported to OS/2, the amiga and NetWare. There are now 3000 people on
+the samba mailing list.
+---------------------
+
+
+---------------------
+It's now June 1997 and samba-1.9.17 is due out soon. My how time passes!
+Please refer to the WHATSNEW.txt for an update on new features. Just when
+you think you understand what is happening the ground rules change - this
+is a real world after all. Since the heady days of March 1996 there has
+been a concerted effort within the SMB protocol using community to document
+and standardize the protocols. The CIFS initiative has helped a long way
+towards creating a better understood and more interoperable environment.
+The Samba Team has grown in number and have been very active in the standards
+formation and documentation process.
+
+The net effect has been that we have had to do a lot of work to bring Samba
+into line with new features and capabilities in the SMB protocols.
+
+The past year has been a productive one with the following releases:
+	1.9.16, 1.9.16p2, 1.9.16p6, 1.9.16p9, 1.9.16p10, 1.9.16p11
+
+There are some who believe that 1.9.15p8 was the best release and others
+who would not want to be without the latest. Whatever your perception we
+hope that 1.9.17 will close the gap and convince you all that the long
+wait and the rolling changes really were worth it. Here is functionality
+and a level of code maturity that ..., well - you can be the judge!
+
+Happy SMB networking!
+Samba Team
+
+ps: The bugs are ours, so please report any you find.
+---------------------
+
+---------------------
+It's now October 1998. We just got back from the 3rd CIFS conference
+in SanJose. The Samba Team was the biggest contingent there.
+
+Samba 2.0 should be shipping in the next few weeks with much better
+domain controller support, GUI configuration, a new user space SMB
+filesystem and lots of other neat stuff. I've also noticed that a
+search of job ads in DejaNews turned up 3900 that mention Samba. Looks
+like we've created a small industry.
+
+I've been asked again where the name Samba came from. I might as well
+put it down here for everyone to read. The code in Samba was first
+called just "server", it then got renamed "smbserver" when I
+discovered that the protocol is called SMB. Then in April 1994 I got
+an email from Syntax, the makers of "TotalNet advanced Server", a
+commercial SMB server. They told me that they had a trademark on the
+name SMBserver and I would have to change the name. I ran an egrep for
+words containing S, M, and B on /usr/dict/words and the name Samba
+looked like the best choice. Strangely enough when I repeat that now I
+notice that Samba isn't in /usr/dict/words on my system anymore! 
+---------------------

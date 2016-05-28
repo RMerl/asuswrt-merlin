@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="idmap_rid.8">
+
+<refmeta>
+	<refentrytitle>idmap_rid</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>idmap_rid</refname>
+	<refpurpose>Samba's idmap_rid Backend for Winbind</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<title>DESCRIPTION</title>
+	<para>The idmap_rid backend provides a way to use an algorithmic
+	mapping scheme to map UIDs/GIDs and SIDs. No database is required
+	in this case as the mapping is deterministic.</para>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>IDMAP OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>range = low - high</term>
+		<listitem><para>
+			Defines the available matching uid and gid range for which the
+			backend is authoritative. Note that the range acts as a filter.
+			If algorithmically determined UID or GID fall outside the
+			range, they are ignored and the corresponding map is discarded.
+			It is intended as a way to avoid accidental UID/GID overlaps
+			between local and remotely defined IDs.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>base_rid = INTEGER</term>
+		<listitem><para>
+			Defines the base integer used to build SIDs out of an UID or a GID,
+			and to rebase the UID or GID to be obtained from a SID. User RIDs
+			by default start at 1000 (512 hexadecimal), this means a good value
+			for base_rid can be 1000 as the resulting ID is calculated this way:
+			ID = RID - BASE_RID + LOW RANGE ID.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+	<para>This example shows how to configure 2 domains with idmap_rid</para>
+
+	<programlisting>
+	[global]
+	    idmap domains = MAIN TRUSTED1
+
+	    idmap config MAIN:backend      = rid
+	    idmap config MAIN:base_rid     = 0
+	    idmap config MAIN:range        = 10000 - 49999
+
+	    idmap config TRUSTED1:backend  = rid
+	    idmap config TRUSTED1:base_rid = 1000
+	    idmap config TRUSTED1:range    = 50000 - 99999
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</para>
+</refsect1>
+
+</refentry>

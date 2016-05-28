@@ -1,0 +1,833 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="ServerType">
+<chapterinfo>
+	&author.tridge;
+	&author.jelmer;
+	&author.jht;
+</chapterinfo>
+
+<title>Server Types and Security Modes</title>
+
+<para>
+<indexterm><primary>migrate</primary></indexterm>
+<indexterm><primary>security mode</primary></indexterm>
+This chapter provides information regarding the types of server that Samba may be configured to be. A
+Microsoft network administrator who wishes to migrate to or use Samba will want to know the meaning, within a
+Samba context, of terms familiar to the MS Windows administrator. This means that it is essential also to
+define how critical security modes function before we get into the details of how to configure the server
+itself.
+</para>
+
+<para>
+This chapter provides an overview of the security modes of which Samba is capable and how they relate to MS
+Windows servers and clients.
+</para>
+
+<para>
+A question often asked is, <quote>Why would I want to use Samba?</quote> Most chapters contain a section that
+highlights features and benefits. We hope that the information provided will help to answer this question. Be
+warned though, we want to be fair and reasonable, so not all features are positive toward Samba. The benefit
+may be on the side of our competition.
+</para>
+
+<sect1>
+<title>Features and Benefits</title>
+
+<para>
+Two men were walking down a dusty road, when one suddenly kicked up a small red stone. It
+hurt his toe and lodged in his sandal. He took the stone out and cursed it with a passion
+and fury befitting his anguish. The other looked at the stone and said, <quote>This is a garnet.
+I can turn that into a precious gem and some day it will make a princess very happy!</quote>
+</para>
+
+<para>
+The moral of this tale: Two men, two very different perspectives regarding the same stone.
+Like it or not, Samba is like that stone. Treat it the right way and it can bring great
+pleasure, but if you are forced to use it and have no time for its secrets, then it can be
+a source of discomfort.
+</para>
+
+<para>
+<indexterm><primary>UNIX</primary><secondary>server</secondary></indexterm>
+<indexterm><primary>interoperability</primary></indexterm>
+Samba started out as a project that sought to provide interoperability for MS Windows 3.x
+clients with a UNIX server. It has grown up a lot since its humble beginnings and now provides
+features and functionality fit for large-scale deployment. It also has some warts. In sections
+like this one, we tell of both.
+</para>
+
+<para>
+So, what are the benefits of the features mentioned in this chapter?
+</para>
+
+<itemizedlist>
+	<listitem><para>
+	<indexterm><primary>domain</primary><secondary>controller</secondary></indexterm>
+	Samba-3 can replace an MS Windows NT4 domain controller.
+	</para></listitem>
+
+	<listitem><para>
+	<indexterm><primary>active directory</primary></indexterm>
+	Samba-3 offers excellent interoperability with MS Windows NT4-style
+	domains as well as natively with Microsoft Active Directory domains.
+	</para></listitem>
+
+	<listitem><para>
+	<indexterm><primary>interdomain</primary><secondary>trustrs</secondary></indexterm>
+	Samba-3 permits full NT4-style interdomain trusts.
+	</para></listitem>
+
+	<listitem><para>
+	<indexterm><primary>authentication</primary></indexterm>
+	<indexterm><primary>security</primary><secondary>modes</secondary></indexterm>
+	Samba has security modes that permit more flexible authentication
+	than is possible with MS Windows NT4 domain controllers.
+	</para></listitem>
+
+	<listitem><para>
+	<indexterm><primary>account</primary><secondary>database</secondary><tertiary>backends</tertiary></indexterm>
+	<indexterm><primary>encrypted</primary></indexterm>
+	Samba-3 permits use of multiple concurrent account database backends.
+	(Encrypted passwords that are stored in the account database are in
+	formats that are unique to Windows networking).
+	</para></listitem>
+
+	<listitem><para>
+	<indexterm><primary>replicated</primary></indexterm>
+	The account database backends can be distributed
+	and replicated using multiple methods. This gives Samba-3
+	greater flexibility than MS Windows NT4 and in many cases a
+	significantly higher utility than Active Directory domains
+	with MS Windows 200x.
+	</para></listitem>
+</itemizedlist>
+
+</sect1>
+
+<sect1>
+<title>Server Types</title>
+
+
+<para>
+<indexterm><primary>Server Type</primary></indexterm>
+Administrators of Microsoft networks often refer to three different types of servers:
+</para>
+
+<itemizedlist>
+	<listitem><para>Domain Controller</para>
+		<itemizedlist>
+			<listitem><para>Primary Domain Controller (PDC)</para></listitem>
+			<listitem><para>Backup Domain Controller (BDC)</para></listitem>
+			<listitem><para>ADS Domain Controller</para></listitem>
+		</itemizedlist>
+	</listitem>
+	<listitem><para>Domain Member Server</para>
+		<itemizedlist>
+			<listitem><para>Active Directory Domain Server</para></listitem>
+			<listitem><para>NT4 Style Domain Domain Server</para></listitem>
+		</itemizedlist>
+	</listitem>
+	<listitem><para>Standalone Server</para></listitem>
+</itemizedlist>
+
+<para>
+<indexterm><primary>domain</primary><secondary>control</secondary></indexterm>
+<indexterm><primary>domain</primary><secondary>member</secondary></indexterm>
+<indexterm><primary>domain control</primary><secondary>primary</secondary></indexterm>
+<indexterm><primary>domain control</primary><secondary>backup</secondary></indexterm>
+The chapters covering domain control (<link linkend="samba-pdc">Domain Control</link>), 
+backup domain control (<link linkend="samba-bdc">Backup Domain Control</link>), and 
+domain membership (<link linkend="domain-member">Domain Membership</link>) provide
+pertinent information regarding Samba configuration for each of these server roles.
+You are strongly encouraged to become intimately familiar with these chapters because
+they lay the foundation for deployment of Samba domain security.
+</para>
+
+<para>
+<indexterm><primary>standalone</primary></indexterm>
+A Standalone server is autonomous in respect of the source of its account backend.
+Refer to <link linkend="StandAloneServer">Standalone Servers</link> to gain a wider appreciation
+of what is meant by a server being configured as a <emphasis>standalone</emphasis> server.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Samba Security Modes</title>
+
+
+<para>
+<indexterm><primary>Security Mode</primary></indexterm>
+<indexterm><primary>security</primary></indexterm>
+In this section, the function and purpose of Samba's security modes are described. An accurate understanding of
+how Samba implements each security mode as well as how to configure MS Windows clients for each mode will
+significantly reduce user complaints and administrator heartache.
+</para>
+
+<para>
+<indexterm><primary>Server Message Block</primary><see>SMB</see></indexterm>
+<indexterm><primary>Common Internet Filesystem</primary><see>CIFS</see></indexterm>
+Microsoft Windows networking uses a protocol that was originally called the Server Message Block (SMB)
+protocol. Since some time around 1996 the protocol has been better known as the Common Internet Filesystem
+(CIFS) protocol.
+</para>
+
+<para>
+<indexterm><primary>security levels</primary></indexterm>
+<indexterm><primary>security modes</primary></indexterm>
+<indexterm><primary>user-level</primary></indexterm>
+<indexterm><primary>share-level</primary></indexterm>
+In the SMB/CIFS networking world, there are only two types of security: <emphasis>user-level</emphasis> and
+<emphasis>share level</emphasis>. We refer to these collectively as <emphasis>security levels</emphasis>.  In
+implementing these two security levels, Samba provides flexibilities that are not available with MS Windows
+NT4/200x servers. In fact, Samba implements <emphasis>share-level</emphasis> security only one way, but has
+four ways of implementing <emphasis>user-level</emphasis> security. Collectively, we call the Samba
+implementations of the security levels <emphasis>security modes</emphasis>. They are known as
+<emphasis>share</emphasis>, <emphasis>user</emphasis>, <emphasis>domain</emphasis>, <emphasis>ADS</emphasis>,
+and <emphasis>server</emphasis> modes.  They are documented in this chapter.
+</para>
+
+<para>
+An SMB server informs the client, at the time of a session setup, the security level the server is running.
+There are two options: share-level and user-level. Which of these two the client receives affects the way the
+client then tries to authenticate itself. It does not directly affect (to any great extent) the way the Samba
+server does security. This may sound strange, but it fits in with the client/server approach of SMB.  In SMB
+everything is initiated and controlled by the client, and the server can only tell the client what is
+available and whether an action is allowed.
+</para>
+
+<para>
+The term <literal>client</literal> refers to all agents whether it is a Windows workstation, a Windows server,
+another Samba server, or any vanilla SMB or CIFS client application (e.g., <command>smbclient</command>) that
+make use of services provided by an SMB/CIFS server.
+</para>
+
+<sect2>
+<title>User Level Security</title>
+
+<para>
+<indexterm><primary>user-level</primary></indexterm>
+We describe user-level security first because its simpler.  In user-level security, the client sends a session
+setup request directly following protocol negotiation.  This request provides a username and password. The
+server can either accept or reject that username/password combination. At this stage the server has no idea
+what share the client will eventually try to connect to, so it can't base the
+<emphasis>accept/reject</emphasis> on anything other than:
+</para>
+
+<orderedlist>
+<listitem><para>the username/password.</para></listitem>
+<listitem><para>the name of the client machine.</para></listitem>
+</orderedlist>
+
+<para>
+<indexterm><primary>credentials</primary></indexterm>
+If the server accepts the username/password credentials, the client expects to be able to mount shares (using
+a <emphasis>tree connection</emphasis>) without further specifying a password. It expects that all access
+rights will be as the username/password credentials set that was specified in the initial <emphasis>session
+setup</emphasis>.
+</para>
+
+<para>
+<indexterm><primary>session setup</primary></indexterm>
+It is also possible for a client to send multiple <emphasis>session setup</emphasis>
+requests. When the server responds, it gives the client a <emphasis>uid</emphasis> to use
+as an authentication tag for that username/password. The client can maintain multiple
+authentication contexts in this way (WinDD is an example of an application that does this).
+</para>
+
+<para>
+<indexterm><primary>LanManager</primary></indexterm>
+<indexterm><primary>case-preserving</primary></indexterm>
+<indexterm><primary>case-insensitive</primary></indexterm>
+<indexterm><primary>upper-case</primary></indexterm>
+<indexterm><primary>lower-case</primary></indexterm>
+Windows networking user account names are case-insensitive, meaning that upper-case and lower-case characters
+in the account name are considered equivalent. They are said to be case-preserving, but not case significant.
+Windows and LanManager systems previous to Windows NT version 3.10 have case-insensitive passwords that were
+not necessarilty case-preserving. All Windows NT family systems treat passwords as case-preserving and
+case-sensitive.
+</para>
+
+<sect3>
+<title>Example Configuration</title>
+
+<para>
+The &smb.conf; parameter that sets user-level security is:
+</para>
+
+<para><smbconfblock>
+<smbconfoption name="security">user</smbconfoption>
+</smbconfblock></para>
+
+<para>
+This is the default setting since Samba-2.2.x.
+</para>
+
+</sect3>
+
+</sect2>
+<sect2>
+<title>Share-Level Security</title>
+
+<para>
+<indexterm><primary>share-level</primary></indexterm>
+<indexterm><primary>mount</primary></indexterm>
+In share-level security, the client authenticates itself separately for each share. It sends a password along
+with each tree connection request (share mount), but it does not explicitly send a username with this
+operation. The client expects a password to be associated with each share, independent of the user. This means
+that Samba has to work out what username the client probably wants to use, the SMB server is not explicitly
+sent the username.  Some commercial SMB servers such as NT actually associate passwords directly with shares
+in share-level security, but Samba always uses the UNIX authentication scheme where it is a username/password
+pair that is authenticated, not a share/password pair.
+</para>
+
+<para>
+To understand the MS Windows networking parallels, think in terms of MS Windows 9x/Me where you can create a
+shared folder that provides read-only or full access, with or without a password.
+</para>
+
+<para>
+Many clients send a session setup request even if the server is in share-level security. They normally send a valid
+username but no password. Samba records this username in a list of possible usernames. When the client then
+issues a tree connection request, it also adds to this list the name of the share they try to connect to (useful for
+home directories) and any users listed in the <smbconfoption name="user"/> parameter in the &smb.conf; file.
+The password is then checked in turn against these possible usernames. If a match is found, then the client is
+authenticated as that user.
+</para>
+
+<para>
+<indexterm><primary>name service switch</primary><see>NSS</see></indexterm>
+<indexterm><primary>/etc/passwd</primary></indexterm>
+<indexterm><primary>nsswitch.conf</primary></indexterm>
+Where the list of possible user names is not provided, Samba makes a UNIX system call to find the user
+account that has a password that matches the one provided from the standard account database. On a system that
+has no name service switch (NSS) facility, such lookups will be from the <filename>/etc/passwd</filename>
+database. On NSS enabled systems, the lookup will go to the libraries that have been specified in the
+<filename>nsswitch.conf</filename> file. The entries in that file in which the libraries are specified are:
+<screen>
+passwd: files nis ldap
+shadow: files nis ldap
+group: files nis ldap
+</screen>
+<indexterm><primary>/etc/passwd</primary></indexterm>
+<indexterm><primary>/etc/group</primary></indexterm>
+<indexterm><primary>NIS</primary></indexterm>
+In the example shown here (not likely to be used in practice) the lookup will check
+<filename>/etc/passwd</filename> and <filename>/etc/group</filename>, if not found it will check NIS, then
+LDAP.
+</para>
+
+<sect3>
+<title>Example Configuration</title>
+
+<para>
+The &smb.conf; parameter that sets share-level security is:
+</para>
+
+<para><smbconfblock>
+<smbconfoption name="security">share</smbconfoption>
+</smbconfblock></para>
+
+</sect3>
+</sect2>
+
+<sect2>
+<title>Domain Security Mode (User-Level Security)</title>
+
+<para>
+<indexterm><primary>domain</primary><secondary>controllers</secondary></indexterm>
+<indexterm><primary>security</primary><secondary>controllers</secondary></indexterm>
+<indexterm><primary>PDC</primary></indexterm>
+<indexterm><primary>BDC</primary></indexterm>
+<indexterm><primary>logon</primary></indexterm>
+<indexterm><primary>authentication</primary></indexterm>
+Domain security provides a mechanism for storing all user and group accounts in a central, shared, account
+repository. The centralized account repository is shared between domain (security) controllers. Servers that
+act as domain controllers provide authentication and validation services to all machines that participate in
+the security context for the domain. A primary domain controller (PDC) is a server that is responsible for
+maintaining the integrity of the security account database. Backup domain controllers (BDCs) provide only domain
+logon and authentication services. Usually, BDCs will answer network logon requests more responsively than
+will a PDC.
+</para>
+
+<para>
+<indexterm><primary>domain member</primary></indexterm>
+<indexterm><primary>trust account</primary></indexterm>
+<indexterm><primary>trust</primary><secondary>account</secondary></indexterm>
+<indexterm><primary>domain</primary><secondary>security</secondary></indexterm>
+<indexterm><primary>domain</primary><secondary>controller</secondary></indexterm>
+When Samba is operating in <smbconfoption name="security">domain</smbconfoption> mode, the Samba server has a
+domain security trust account (a machine account) and causes all authentication requests to be passed through
+to the domain controllers.  In other words, this configuration makes the Samba server a domain member server,
+even when it is in fact acting as a domain controller. All machines that participate in domain security must
+have a machine account in the security database.
+</para>
+
+<para>
+<indexterm><primary>account</primary><secondary>database</secondary></indexterm>
+<indexterm><primary>machine</primary><secondary>account</secondary></indexterm>
+<indexterm><primary>NetBIOS</primary><secondary>name</secondary></indexterm>
+<indexterm><primary>NetBIOS</primary></indexterm>
+Within the domain security environment, the underlying security architecture uses user-level security. Even
+machines that are domain members must authenticate on startup. The machine account consists of an account
+entry in the accounts database, the name of which is the NetBIOS name of the machine and of which the password
+is randomly generated and known to both the domain controllers and the member machine. If the machine account
+cannot be validated during startup, users will not be able to log on to the domain using this machine because
+it cannot be trusted. The machine account is referred to as a machine trust account.
+</para>
+
+<para>
+There are three possible domain member configurations:
+</para>
+
+<orderedlist>
+	<listitem><para>Primary domain controller (PDC) - of which there is one per domain.</para></listitem>
+	<listitem><para>Backup domain controller (BDC) - of which there can be any number per domain.</para></listitem>
+	<listitem><para>Domain member server (DMS) - of which there can be any number per domain.</para></listitem>
+</orderedlist>
+
+<para>
+<indexterm><primary>DMS</primary></indexterm>
+We will discuss each of these in separate chapters. For now, we are most interested in basic DMS
+configuration.
+</para>
+
+<sect3>
+<title>Example Configuration</title>
+<para><emphasis>
+Samba as a Domain Member Server
+</emphasis></para>
+
+
+<para>
+<indexterm><primary>server type</primary><secondary>domain member</secondary></indexterm>
+This method involves addition of the following parameters in the &smb.conf; file:
+<smbconfblock>
+<smbconfoption name="security">domain</smbconfoption>
+<smbconfoption name="workgroup">&example.workgroup;</smbconfoption>
+</smbconfblock>
+</para>
+
+<para>
+In order for this method to work, the Samba server needs to join the MS Windows NT
+security domain. This is done as follows:
+<indexterm><primary>net</primary><secondary>rpc</secondary></indexterm>
+<indexterm><primary>Domain Member</primary><secondary>joining</secondary></indexterm>
+</para>
+
+
+<procedure>
+        <step><para>On the MS Windows NT domain controller, using
+        the Server Manager, add a machine account for the Samba server.
+        </para></step>
+
+        <step><para>On the UNIX/Linux system execute:</para>
+	
+			<para><screen>&rootprompt;<userinput>net rpc join -U administrator%password</userinput></screen></para>
+		</step>
+</procedure>
+
+<note><para>
+<indexterm><primary>smbpasswd</primary></indexterm>
+Samba-2.2.4 and later Samba 2.2.x series releases can autojoin a Windows NT4-style domain just by executing:
+<screen>
+&rootprompt;<userinput>smbpasswd -j <replaceable>DOMAIN_NAME</replaceable> -r <replaceable>PDC_NAME</replaceable> \
+	 -U Administrator%<replaceable>password</replaceable></userinput>
+</screen>
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>join</tertiary></indexterm>
+Samba-3 can do the same by executing:
+<screen>
+&rootprompt;<userinput>net rpc join -U Administrator%<replaceable>password</replaceable></userinput>
+</screen>
+It is not necessary with Samba-3 to specify the <replaceable>DOMAIN_NAME</replaceable> or the
+<replaceable>PDC_NAME</replaceable>, as it figures this out from the &smb.conf; file settings.
+</para></note>
+
+<para>
+<indexterm><primary>invalid shell</primary></indexterm>
+<indexterm><primary>/etc/passwd</primary></indexterm>
+<indexterm><primary>/bin/false</primary></indexterm>
+Use of this mode of authentication requires there to be a standard UNIX account for each user in order to
+assign a UID once the account has been authenticated by the Windows domain controller. This account can be
+blocked to prevent logons by clients other than MS Windows through means such as setting an invalid shell in
+the <filename>/etc/passwd</filename> entry. The best way to allocate an invalid shell to a user account is to
+set the shell to the file <filename>/bin/false</filename>.
+</para>
+
+<para>
+<indexterm><primary>PDC</primary></indexterm>
+<indexterm><primary>BDC</primary></indexterm>
+Domain controllers can be located anywhere that is convenient. The best advice is to have a BDC on every
+physical network segment, and if the PDC is on a remote network segment the use of WINS (see <link
+linkend="NetworkBrowsing">Network Browsing</link> for more information) is almost essential.
+</para>
+
+<para>
+An alternative to assigning UIDs to Windows users on a Samba member server is presented in <link
+linkend="winbind">Winbind</link>, <link linkend="winbind">Winbind: Use of Domain Accounts</link>.
+</para>
+
+<para>
+For more information regarding domain membership, <link linkend="domain-member">Domain Membership</link>.
+</para>
+
+</sect3>
+</sect2>
+
+<sect2>
+<title>ADS Security Mode (User-Level Security)</title>
+
+<para>
+<indexterm><primary>ADS</primary></indexterm>
+<indexterm><primary>native mode</primary></indexterm>
+Both Samba-2.2, and Samba-3 can join an Active Directory domain using NT4 style RPC based security.  This is
+possible if the domain is run in native mode. Active Directory in native mode perfectly allows NT4-style
+domain members. This is contrary to popular belief.
+</para>
+
+<para>
+If you are using Active Directory, starting with Samba-3 you can join as a native AD member. Why would you
+want to do that?  Your security policy might prohibit the use of NT-compatible authentication protocols. All
+your machines are running Windows 2000 and above and all use Kerberos. In this case, Samba, as an NT4-style
+domain, would still require NT-compatible authentication data. Samba in AD-member mode can accept Kerberos
+tickets.
+</para>
+
+<para>
+<indexterm><primary>realm</primary></indexterm>
+<indexterm><primary>mixed mode</primary></indexterm>
+Sites that use Microsoft Windows active directory services (ADS) should be aware of the significance of the
+terms: <literal>native mode</literal> and <literal>mixed mode</literal> ADS operation. The term
+<literal>realm</literal> is used to describe a Kerberos-based security architecture (such as is used by
+Microsoft ADS).
+</para>
+
+<sect3>
+<title>Example Configuration</title>
+
+<para><smbconfblock>
+<smbconfoption name="realm">your.kerberos.REALM</smbconfoption>
+<smbconfoption name="security">ADS</smbconfoption>
+</smbconfblock></para>
+
+<para>
+The following parameter may be required:
+</para>
+
+<para><smbconfblock>
+<smbconfoption name="password server">your.kerberos.server</smbconfoption>
+</smbconfblock></para>
+
+<para>
+Please refer to <link linkend="domain-member">Domain Membership</link>, and <link linkend="ads-member">Samba
+ADS Domain Membership</link> for more information regarding this configuration option.
+</para>
+
+</sect3>
+</sect2>
+
+<sect2>
+<title>Server Security (User Level Security)</title>
+
+<para>
+Server security mode is left over from the time when Samba was not capable of acting
+as a domain member server. It is highly recommended not to use this feature. Server
+security mode has many drawbacks that include:
+</para>
+
+<itemizedlist>
+	<listitem><para>Potential account lockout on MS Windows NT4/200x password servers.</para></listitem>
+	<listitem><para>Lack of assurance that the password server is the one specified.</para></listitem>
+	<listitem><para>Does not work with Winbind, which is particularly needed when storing profiles remotely.</para></listitem>
+	<listitem><para>This mode may open connections to the password server and keep them open for extended periods.</para></listitem>
+	<listitem><para>Security on the Samba server breaks badly when the remote password server suddenly shuts down.</para></listitem>
+	<listitem><para>With this mode there is NO security account in the domain that the password server belongs to for the Samba server.</para></listitem>
+</itemizedlist>
+
+<para>
+<indexterm><primary>session setup</primary></indexterm>
+<indexterm><primary>SMB</primary></indexterm>
+In server security mode the Samba server reports to the client that it is in user-level security. The client
+then does a session setup as described earlier.  The Samba server takes the username/password that the client
+sends and attempts to log into the <smbconfoption name="password server"/> by sending exactly the same
+username/password that it got from the client. If that server is in user-level security and accepts the
+password, then Samba accepts the client's connection. This parameter allows the Samba server to use another
+SMB server as the <smbconfoption name="password server"/>.
+</para>
+
+<para>
+<indexterm><primary>security level</primary></indexterm>
+<indexterm><primary>encryption</primary></indexterm>
+You should also note that at the start of all this, when the server tells the client
+what security level it is in, it also tells the client if it supports encryption. If it
+does, it supplies the client with a random cryptkey. The client will then send all
+passwords in encrypted form. Samba supports this type of encryption by default.
+</para>
+
+<para>
+The parameter <smbconfoption name="security">server</smbconfoption> means that Samba reports to clients that
+it is running in <emphasis>user mode</emphasis> but actually passes off all authentication requests to another
+user mode server. This requires an additional parameter <smbconfoption name="password server"/> that points to
+the real authentication server.  The real authentication server can be another Samba server, or it can be a
+Windows NT server, the latter being natively capable of encrypted password support.
+</para>
+
+<note><para>
+<indexterm><primary>password server</primary></indexterm>
+<indexterm><primary>workgroup</primary></indexterm>
+When Samba is running in <emphasis>server security mode</emphasis>, it is essential that the parameter
+<emphasis>password server</emphasis> is set to the precise NetBIOS machine name of the target authentication
+server. Samba cannot determine this from NetBIOS name lookups because the choice of the target authentication
+server is arbitrary and cannot be determined from a domain name. In essence, a Samba server that is in
+<emphasis>server security mode</emphasis> is operating in what used to be known as workgroup mode.
+</para></note>
+
+<sect3>
+<title>Example Configuration</title>
+<para><emphasis>
+Using MS Windows NT as an Authentication Server
+</emphasis></para>
+
+<para>
+This method involves the additions of the following parameters in the &smb.conf; file:
+</para>
+
+<para><smbconfblock>
+<smbconfoption name="encrypt passwords">Yes</smbconfoption>
+<smbconfoption name="security">server</smbconfoption>
+<smbconfoption name="password server">"NetBIOS_name_of_a_DC"</smbconfoption>
+</smbconfblock></para>
+
+
+<para>
+There are two ways of identifying whether or not a username and password pair is valid.
+One uses the reply information provided as part of the authentication messaging
+process, the other uses just an error code.
+</para>
+
+<para>
+<indexterm><primary>bogus</primary></indexterm>
+<indexterm><primary>lockout</primary></indexterm>
+The downside of this mode of configuration is that for security reasons Samba
+will send the password server a bogus username and a bogus password, and if the remote
+server fails to reject the bogus username and password pair, then an alternative mode of
+identification or validation is used. Where a site uses password lockout, after a
+certain number of failed authentication attempts, this will result in user lockouts.
+</para>
+
+<para>
+Use of this mode of authentication requires a standard UNIX account for the user.
+This account can be blocked to prevent logons by non-SMB/CIFS clients.
+</para>
+
+</sect3>
+</sect2>
+
+</sect1>
+
+<sect1>
+<title>Password Checking</title>
+
+<para>
+MS Windows clients may use encrypted passwords as part of a challenge/response
+authentication model (a.k.a. NTLMv1 and NTLMv2) or alone, or clear-text strings for simple
+password-based authentication. It should be realized that with the SMB protocol,
+the password is passed over the network either in plaintext or encrypted, but
+not both in the same authentication request.
+</para>
+
+<para>
+<indexterm><primary>encrypted passwords</primary></indexterm>
+<indexterm><primary>encrypted</primary></indexterm>
+When encrypted passwords are used, a password that has been entered by the user
+is encrypted in two ways:
+</para>
+
+<itemizedlist>
+        <listitem><para>An MD4 hash of the unicode of the password
+        string. This is known as the NT hash.
+        </para></listitem>
+
+        <listitem><para>The password is converted to uppercase,
+        and then padded or truncated to 14 bytes. This string is
+        then appended with 5 bytes of NULL characters and split to
+        form two 56-bit DES keys to encrypt a "magic" 8-byte value.
+        The resulting 16 bytes form the LanMan hash.
+        </para></listitem>
+</itemizedlist>
+
+<para>
+<indexterm><primary>plain-text</primary><secondary>passwords</secondary></indexterm>
+MS Windows 95 pre-service pack 1 and MS Windows NT versions 3.x and version 4.0 pre-service pack 3 will use
+either mode of password authentication. All versions of MS Windows that follow these versions no longer
+support plain-text passwords by default.
+</para>
+
+<para>
+<indexterm><primary>cached</primary><secondary>password</secondary></indexterm>
+MS Windows clients have a habit of dropping network mappings that have been idle
+for 10 minutes or longer. When the user attempts to use the mapped drive
+connection that has been dropped, the client re-establishes the connection using
+a cached copy of the password.
+</para>
+
+<para>
+When Microsoft changed the default password mode, support was dropped for caching
+of the plaintext password. This means that when the registry parameter is changed
+to re-enable use of plaintext passwords, it appears to work, but when a dropped
+service connection mapping attempts to revalidate, this will fail if the remote
+authentication server does not support encrypted passwords. It is definitely not
+a good idea to re-enable plaintext password support in such clients.
+</para>
+
+<para>
+The following parameters can be used to work around the issue of Windows 9x/Me clients
+uppercasing usernames and passwords before transmitting them to the SMB server
+when using clear-text authentication:
+</para>
+
+
+<?latex \newpage ?>
+<smbconfblock>
+<smbconfoption name="password level"><replaceable>integer</replaceable></smbconfoption>
+<smbconfoption name="username level"><replaceable>integer</replaceable></smbconfoption>
+</smbconfblock>
+
+<para>
+By default Samba will convert to lowercase the username before attempting to lookup the user
+in the database of local system accounts. Because UNIX usernames conventionally
+only contain lowercase characters, the <smbconfoption name="username-level"/> parameter
+is rarely needed.
+</para>
+
+<para>
+<indexterm><primary>clear-text</primary></indexterm>
+However, passwords on UNIX systems often make use of mixed-case characters.  This means that in order for a
+user on a Windows 9x/Me client to connect to a Samba server using clear-text authentication, the
+<smbconfoption name="password level"/> must be set to the maximum number of uppercase letters that
+<emphasis>could</emphasis> appear in a password. Note that if the Server OS uses the traditional DES version
+of crypt(), a <smbconfoption name="password level"/> of 8 will result in case-insensitive passwords as seen
+from Windows users. This will also result in longer login times because Samba has to compute the permutations
+of the password string and try them one by one until a match is located (or all combinations fail).
+</para>
+
+<para>
+The best option to adopt is to enable support for encrypted passwords wherever
+Samba is used. Most attempts to apply the registry change to re-enable plaintext
+passwords will eventually lead to user complaints and unhappiness.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Common Errors</title>
+
+<para>
+We all make mistakes. It is okay to make mistakes, as long as they are made in the right places
+and at the right time. A mistake that causes lost productivity is seldom tolerated; however, a mistake
+made in a developmental test lab is expected.
+</para>
+
+<para>
+Here we look at common mistakes and misapprehensions that have been the subject of discussions
+on the Samba mailing lists. Many of these are avoidable by doing your homework before attempting
+a Samba implementation. Some are the result of a misunderstanding of the English language,
+which has many phrases that are potentially vague and may be highly confusing
+to those for whom English is not their native tongue.
+</para>
+
+<sect2>
+<title>What Makes Samba a Server?</title>
+
+<para>
+To some, the nature of the Samba security mode is obvious, but entirely
+wrong all the same. It is assumed that <smbconfoption name="security">server</smbconfoption> means that Samba
+will act as a server. Not so! This setting means that Samba will <emphasis>try</emphasis>
+to use another SMB server as its source for user authentication alone.
+</para>
+
+<para>
+Samba is a server regardless of which security mode is chosen. When Samba is used outside of a domain security
+context, it is best to leave the security mode at the default setting. By default Samba-3 uses user-mode
+security.
+</para>
+
+</sect2>
+
+<sect2>
+<title>What Makes Samba a Domain Controller?</title>
+
+<para>
+<indexterm><primary>server-mode</primary></indexterm>
+The &smb.conf; parameter <smbconfoption name="security">domain</smbconfoption> does not really make Samba behave
+as a domain controller. This setting means we want Samba to be a domain member. See <link
+linkend="samba-pdc">Samba as a PDC</link> for more information.
+</para>
+
+</sect2>
+
+<sect2>
+<title>What Makes Samba a Domain Member?</title>
+
+<para>
+Guess! So many others do. But whatever you do, do not think that <smbconfoption name="security">user</smbconfoption>
+makes Samba act as a domain member. Read the manufacturer's manual before the warranty expires. See 
+<link linkend="domain-member">Domain Membership</link>, for more information.
+</para>
+
+</sect2>
+
+
+<sect2>
+<title>Constantly Losing Connections to Password Server</title>
+
+<para><quote>
+Why does server_validate() simply give up rather than re-establish its connection to the
+password server?  Though I am not fluent in the SMB protocol, perhaps the cluster server
+process passes along to its client workstation the session key it receives from the password
+server, which means the password hashes submitted by the client would not work on a subsequent
+connection whose session key would be different. So server_validate() must give up.
+</quote></para>
+
+<para>
+Indeed. That's why <smbconfoption name="security">server</smbconfoption>
+is at best a nasty hack. Please use <smbconfoption name="security">domain</smbconfoption>;
+<smbconfoption name="security">server</smbconfoption> mode is also known as pass-through authentication.
+</para>
+
+</sect2>
+
+<sect2>
+<title>Stand-alone Server is converted to Domain Controller &smbmdash; Now User accounts don't work</title>
+
+<para><quote>
+When I try to log in to the DOMAIN, the eventlog shows <emphasis>tried credentials DOMAIN/username; effective
+credentials SERVER/username</emphasis>
+</quote></para>
+
+<para>
+Usually this is due to a user or machine account being created before the Samba server is configured to be a
+domain controller. Accounts created before the server becomes a domain controller will be
+<emphasis>local</emphasis> accounts and authenticated as what looks like a member in the SERVER domain, much
+like local user accounts in Windows 2000 and later.  Accounts created after the Samba server becomes a domain
+controller will be <emphasis>domain</emphasis> accounts and will be authenticated as a member of the DOMAIN
+domain.
+</para>
+
+<para>
+This can be verified by issuing the command <command>pdbedit -L -v username</command>.  If this reports DOMAIN
+then the account is a domain account, if it reports SERVER then the account is a local account.
+</para>
+
+<para>
+The easiest way to resolve this is to remove and recreate the account; however this may cause problems with
+established user profiles. You can also use <command>pdbedit -u username -I DOMAIN</command>. You may also
+need to change the User SID and Primary Group SID to match the domain.
+</para>
+
+</sect2>
+
+</sect1>
+
+</chapter>

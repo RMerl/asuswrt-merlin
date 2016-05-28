@@ -240,7 +240,15 @@ static inline void __choose_mrate(char *prefix, int *mcast_phy, int *mcast_mcs, 
 	*rate=150000;
 	char tmp[128];
 
-	if (ipv6_enabled() && nvram_get_int(ipv6_nvname("ipv6_radvd"))) {
+#ifdef RTCONFIG_IPV6
+	switch (get_ipv6_service()) {
+	default:
+		if (!nvram_get_int(ipv6_nvname("ipv6_radvd")))
+			break;
+		/* fall through */
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
 		if (!strncmp(prefix, "wl0", 3)) {
 			phy = 2;
 			mcs = 2;	/* 2G: OFDM 12Mbps */
@@ -250,7 +258,11 @@ static inline void __choose_mrate(char *prefix, int *mcast_phy, int *mcast_mcs, 
 			mcs = 1;	/* 5G: HTMIX 13/30Mbps */
 			*rate=30000;
 		}
+		/* fall through */
+	case IPV6_DISABLED:
+		break;
 	}
+#endif
 
 	if (nvram_match(strcat_r(prefix, "nmode_x", tmp), "2") ||	/* legacy mode */
 	    strstr(nvram_safe_get(strcat_r(prefix, "crypto", tmp)), "tkip")) {	/* tkip */
@@ -1072,6 +1084,7 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 				fprintf(fp3, "wifitool %s block_acs_channel 36,40,44,48,52,56,60,64\n",wif);
 		}	
 #endif		
+		fprintf(fp3, "iwpriv wifi%d dcs_enable 0\n",band);	//not to scan and change to other channels
 	   	fprintf(fp3, "iwconfig %s channel auto\n",wif);
 	}
 	if(!band && strstr(t_mode, "11N") != NULL) //only 2.4G && N mode is used
@@ -1290,6 +1303,11 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		   	fprintf(fp,"#auth_server_shared_secret=\n");
 	}	
 
+#if defined(RTAC55U) || defined(RTAC55UHP) || defined(RT4GAC55U)
+	/* Enable MLME debug message on "Direct Attach" WiFi interface of AC55U series product. */
+	if (!band)
+		fprintf(fp2, "iwpriv %s dbgLVL 0x80000000\n", wif);
+#endif
 
 	//if(subnet==0) //for ath0 & ath1
 	{

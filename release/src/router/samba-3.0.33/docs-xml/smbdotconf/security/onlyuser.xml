@@ -1,0 +1,25 @@
+<samba:parameter name="only user"
+					type="boolean"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This is a boolean option that controls whether 
+    connections with usernames not in the <parameter moreinfo="none">user</parameter> 
+    list will be allowed. By default this option is disabled so that a 
+    client can supply a username to be used by the server.  Enabling
+    this parameter will force the server to only use the login 
+    names from the <parameter moreinfo="none">user</parameter> list and is only really
+    useful in <smbconfoption name="security">share</smbconfoption> level security.</para>
+
+    <para>Note that this also means Samba won't try to deduce 
+    usernames from the service name. This can be annoying for 
+    the [homes] section. To get around this you could use <command moreinfo="none">user =
+    %S</command> which means your <parameter moreinfo="none">user</parameter> list
+    will be just the service name, which for home directories is the 
+    name of the user.</para>
+</description>
+
+<related>user</related>
+
+<value type="default">no</value>
+</samba:parameter>

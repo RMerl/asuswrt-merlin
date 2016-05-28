@@ -426,6 +426,9 @@ function initial(){
 	if(getflag == "vpnClient" || getflag == "background" || action_script == "saveNvram"){
 		return false;
 	}
+	else if(getflag == "pppoe_retry"){
+		return false;
+	}
 	else if(getflag == "set_language"){
 		if(navigator.appName.indexOf("Microsoft") >= 0)
 			parent.parent.location.reload();
@@ -481,8 +484,13 @@ function initial(){
 					else
 						qis_delay_redirect('/qis/QIS_wireless.htm');		
 				}
+				else if(getflag == "pppoe"){
+					setTimeout("qis_delay_redirect('/qis/QIS_wireless.htm');", 500);
+				}
+				else if(getflag == "pppoe_fail"){
+					return;
+				}
 				else{
-				
 					if(isMobile())
 						setTimeout("qis_delay_redirect('/qis_m/QIS_verify_detect.htm');", restart_time*1000);
 					else

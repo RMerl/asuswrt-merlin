@@ -1,0 +1,205 @@
+
+<!--
+     File isoamsr.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1991
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY ape              "&#x0224A;" ><!--/approxeq R: approximate, equals -->
+<!ENTITY apE              "&#x0224A;" ><!--approximately equal or equal to -->
+<!ENTITY apid             "&#x0224B;" ><!--approximately identical to -->
+<!ENTITY asymp            "&#x0224D;" ><!--/asymp R: asymptotically equal to -->
+<!ENTITY Barv             "&#x02AE7;" ><!--vert, dbl bar (over) -->
+<!ENTITY bcong            "&#x0224C;" ><!--/backcong R: reverse congruent -->
+<!ENTITY bepsi            "&#x0213C;" ><!--/backepsilon R: such that -->
+<!ENTITY bowtie           "&#x022C8;" ><!--/bowtie R: -->
+<!ENTITY bsim             "&#x0223D;" ><!--/backsim R: reverse similar -->
+<!ENTITY bsime            "&#x022CD;" ><!--/backsimeq R: reverse similar, eq -->
+<!ENTITY bsolhsub         "&#x0005C;&#x02282;" ><!--reverse solidus, subset -->
+<!ENTITY bump             "&#x0224E;" ><!--/Bumpeq R: bumpy equals -->
+<!ENTITY bumpe            "&#x0224F;" ><!--/bumpeq R: bumpy equals, equals -->
+<!ENTITY bumpE            "&#x02AAE;" ><!--bump, equals -->
+<!ENTITY cire             "&#x02257;" ><!--/circeq R: circle, equals -->
+<!ENTITY Colon            "&#x02237;" ><!--/Colon, two colons -->
+<!ENTITY colone           "&#x02254;" ><!--/coloneq R: colon, equals -->
+<!ENTITY Colone           "&#x02A74;" ><!--double colon, equals -->
+<!ENTITY congdot          "&#x02A6D;" ><!--congruent, dot -->
+<!ENTITY csub             "&#x02ACF;" ><!--subset, closed -->
+<!ENTITY csube            "&#x02AD1;" ><!--subset, closed, equals -->
+<!ENTITY csup             "&#x02AD0;" ><!--superset, closed -->
+<!ENTITY csupe            "&#x02AD2;" ><!--superset, closed, equals -->
+<!ENTITY cuepr            "&#x022DE;" ><!--/curlyeqprec R: curly eq, precedes -->
+<!ENTITY cuesc            "&#x022DF;" ><!--/curlyeqsucc R: curly eq, succeeds -->
+<!ENTITY dashv            "&#x022A3;" ><!--/dashv R: dash, vertical -->
+<!ENTITY Dashv            "&#x02AE4;" ><!--dbl dash, vertical -->
+<!ENTITY easter           "&#x0225B;" ><!--equal, asterisk above -->
+<!ENTITY ecir             "&#x02256;" ><!--/eqcirc R: circle on equals sign -->
+<!ENTITY ecolon           "&#x02255;" ><!--/eqcolon R: equals, colon -->
+<!ENTITY eDDot            "&#x02A77;" ><!--/ddotseq R: equal with four dots -->
+<!ENTITY eDot             "&#x02251;" ><!--/doteqdot /Doteq R: eq, even dots -->
+<!ENTITY efDot            "&#x02252;" ><!--/fallingdotseq R: eq, falling dots -->
+<!ENTITY eg               "&#x02A9A;" ><!--equal-or-greater -->
+<!ENTITY egs              "&#x022DD;" ><!--/eqslantgtr R: equal-or-gtr, slanted -->
+<!ENTITY egsdot           "&#x02A98;" ><!--equal-or-greater, slanted, dot inside -->
+<!ENTITY el               "&#x02A99;" ><!--equal-or-less -->
+<!ENTITY els              "&#x022DC;" ><!--/eqslantless R: eq-or-less, slanted -->
+<!ENTITY elsdot           "&#x02A97;" ><!--equal-or-less, slanted, dot inside -->
+<!ENTITY equest           "&#x0225F;" ><!--/questeq R: equal with questionmark -->
+<!ENTITY equivDD          "&#x02A78;" ><!--equivalent, four dots above -->
+<!ENTITY erDot            "&#x02253;" ><!--/risingdotseq R: eq, rising dots -->
+<!ENTITY esdot            "&#x02250;" ><!--/doteq R: equals, single dot above -->
+<!ENTITY esim             "&#x02242;" ><!--/esim R: equals, similar -->
+<!ENTITY Esim             "&#x02A73;" ><!--equal, similar -->
+<!ENTITY fork             "&#x022D4;" ><!--/pitchfork R: pitchfork -->
+<!ENTITY forkv            "&#x02AD9;" ><!--fork, variant -->
+<!ENTITY frown            "&#x02322;" ><!--/frown R: down curve -->
+<!ENTITY gap              "&#x02273;" ><!--/gtrapprox R: greater, approximate -->
+<!ENTITY gE               "&#x02267;" ><!--/geqq R: greater, double equals -->
+<!ENTITY gel              "&#x022DB;" ><!--/gtreqless R: greater, equals, less -->
+<!ENTITY gEl              "&#x022DB;" ><!--/gtreqqless R: gt, dbl equals, less -->
+<!ENTITY ges              "&#x02A7E;" ><!--/geqslant R: gt-or-equal, slanted -->
+<!ENTITY gescc            "&#x02AA9;" ><!--greater than, closed by curve, equal, slanted -->
+<!ENTITY gesdot           "&#x02A80;" ><!--greater-than-or-equal, slanted, dot inside -->
+<!ENTITY gesdoto          "&#x02A82;" ><!--greater-than-or-equal, slanted, dot above -->
+<!ENTITY gesdotol         "&#x02A84;" ><!--greater-than-or-equal, slanted, dot above left -->
+<!ENTITY gesl             "&#x022DB;&#x02063;" ><!--greater, equal, slanted, less -->
+<!ENTITY gesles           "&#x02A94;" ><!--greater, equal, slanted, less, equal, slanted -->
+<!ENTITY Gg               "&#x022D9;" ><!--/ggg /Gg /gggtr R: triple gtr-than -->
+<!ENTITY gl               "&#x02277;" ><!--/gtrless R: greater, less -->
+<!ENTITY gla              "&#x02AA5;" ><!--greater, less, apart -->
+<!ENTITY glE              "&#x02A92;" ><!--greater, less, equal -->
+<!ENTITY glj              "&#x02AA4;" ><!--greater, less, overlapping -->
+<!ENTITY gsim             "&#x02273;" ><!--/gtrsim R: greater, similar -->
+<!ENTITY gsime            "&#x02A8E;" ><!--greater, similar, equal -->
+<!ENTITY gsiml            "&#x02A90;" ><!--greater, similar, less -->
+<!ENTITY Gt               "&#x0226B;" ><!--/gg R: dbl greater-than sign -->
+<!ENTITY gtcc             "&#x02AA7;" ><!--greater than, closed by curve -->
+<!ENTITY gtcir            "&#x02A7A;" ><!--greater than, circle inside -->
+<!ENTITY gtdot            "&#x022D7;" ><!--/gtrdot R: greater than, with dot -->
+<!ENTITY gtquest          "&#x02A7C;" ><!--greater than, questionmark above -->
+<!ENTITY gtrarr           "&#x02978;" ><!--greater than, right arrow -->
+<!ENTITY homtht           "&#x0223B;" ><!--homothetic -->
+<!ENTITY lap              "&#x02272;" ><!--/lessapprox R: less, approximate -->
+<!ENTITY lat              "&#x02AAB;" ><!--larger than -->
+<!ENTITY late             "&#x02AAD;" ><!--larger than or equal -->
+<!ENTITY lates            "&#x02AAD;&#x02063;" ><!--larger than or equal, slanted -->
+<!ENTITY lE               "&#x02266;" ><!--/leqq R: less, double equals -->
+<!ENTITY leg              "&#x022DA;" ><!--/lesseqgtr R: less, eq, greater -->
+<!ENTITY lEg              "&#x022DA;" ><!--/lesseqqgtr R: less, dbl eq, greater -->
+<!ENTITY les              "&#x02A7D;" ><!--/leqslant R: less-than-or-eq, slant -->
+<!ENTITY lescc            "&#x02AA8;" ><!--less than, closed by curve, equal, slanted -->
+<!ENTITY lesdot           "&#x02A7F;" ><!--less-than-or-equal, slanted, dot inside -->
+<!ENTITY lesdoto          "&#x02A81;" ><!--less-than-or-equal, slanted, dot above -->
+<!ENTITY lesdotor         "&#x02A83;" ><!--less-than-or-equal, slanted, dot above right -->
+<!ENTITY lesg             "&#x022DA;&#x02063;" ><!--less, equal, slanted, greater -->
+<!ENTITY lesges           "&#x02A93;" ><!--less, equal, slanted, greater, equal, slanted -->
+<!ENTITY lg               "&#x02276;" ><!--/lessgtr R: less, greater -->
+<!ENTITY lgE              "&#x02A91;" ><!--less, greater, equal -->
+<!ENTITY Ll               "&#x022D8;" ><!--/Ll /lll /llless R: triple less-than -->
+<!ENTITY lsim             "&#x02272;" ><!--/lesssim R: less, similar -->
+<!ENTITY lsime            "&#x02A8D;" ><!--less, similar, equal -->
+<!ENTITY lsimg            "&#x02A8F;" ><!--less, similar, greater -->
+<!ENTITY Lt               "&#x0226A;" ><!--/ll R: double less-than sign -->
+<!ENTITY ltcc             "&#x02AA6;" ><!--less than, closed by curve -->
+<!ENTITY ltcir            "&#x02A79;" ><!--less than, circle inside -->
+<!ENTITY ltdot            "&#x022D6;" ><!--/lessdot R: less than, with dot -->
+<!ENTITY ltlarr           "&#x02976;" ><!--less than, left arrow -->
+<!ENTITY ltquest          "&#x02A7B;" ><!--less than, questionmark above -->
+<!ENTITY ltrie            "&#x022B4;" ><!--/trianglelefteq R: left triangle, eq -->
+<!ENTITY mcomma           "&#x02A29;" ><!--minus, comma above -->
+<!ENTITY mDDot            "&#x0223A;" ><!--minus with four dots, geometric properties -->
+<!ENTITY mid              "&#x02223;" ><!--/mid R: -->
+<!ENTITY mlcp             "&#x02ADB;" ><!--/mlcp -->
+<!ENTITY models           "&#x022A7;" ><!--/models R: -->
+<!ENTITY mstpos           "&#x0223E;" ><!--most positive -->
+<!ENTITY pr               "&#x0227A;" ><!--/prec R: precedes -->
+<!ENTITY Pr               "&#x02ABB;" ><!--dbl precedes -->
+<!ENTITY prap             "&#x0227E;" ><!--/precapprox R: precedes, approximate -->
+<!ENTITY prcue            "&#x0227C;" ><!--/preccurlyeq R: precedes, curly eq -->
+<!ENTITY pre              "&#x02AAF;" ><!--/preceq R: precedes, equals -->
+<!ENTITY prE              "&#x02AAF;" ><!--precedes, dbl equals -->
+<!ENTITY prsim            "&#x0227E;" ><!--/precsim R: precedes, similar -->
+<!ENTITY prurel           "&#x022B0;" ><!--element precedes under relation -->
+<!ENTITY ratio            "&#x02236;" ><!--/ratio -->
+<!ENTITY rtrie            "&#x022B5;" ><!--/trianglerighteq R: right tri, eq -->
+<!ENTITY rtriltri         "&#x029CE;" ><!--right triangle above left triangle -->
+<!ENTITY sc               "&#x0227B;" ><!--/succ R: succeeds -->
+<!ENTITY Sc               "&#x02ABC;" ><!--dbl succeeds -->
+<!ENTITY scap             "&#x0227F;" ><!--/succapprox R: succeeds, approximate -->
+<!ENTITY sccue            "&#x0227D;" ><!--/succcurlyeq R: succeeds, curly eq -->
+<!ENTITY sce              "&#x0227D;" ><!--/succeq R: succeeds, equals -->
+<!ENTITY scE              "&#x0227E;" ><!--succeeds, dbl equals -->
+<!ENTITY scsim            "&#x0227F;" ><!--/succsim R: succeeds, similar -->
+<!ENTITY sdote            "&#x02A66;" ><!--equal, dot below -->
+<!ENTITY simg             "&#x02A9E;" ><!--similar, greater -->
+<!ENTITY simgE            "&#x02AA0;" ><!--similar, greater, equal -->
+<!ENTITY siml             "&#x02A9D;" ><!--similar, less -->
+<!ENTITY simlE            "&#x02A9F;" ><!--similar, less, equal -->
+<!ENTITY smid             "&#x02223;&#x02063;" ><!--/shortmid R: -->
+<!ENTITY smile            "&#x02323;" ><!--/smile R: up curve -->
+<!ENTITY smt              "&#x02AAA;" ><!--smaller than -->
+<!ENTITY smte             "&#x02AAC;" ><!--smaller than or equal -->
+<!ENTITY smtes            "&#x02AAC;&#x02063;" ><!--smaller than or equal, slanted -->
+<!ENTITY spar             "&#x02225;&#x02063;" ><!--/shortparallel R: short parallel -->
+<!ENTITY sqsub            "&#x0228F;" ><!--/sqsubset R: square subset -->
+<!ENTITY sqsube           "&#x02291;" ><!--/sqsubseteq R: square subset, equals -->
+<!ENTITY sqsup            "&#x02290;" ><!--/sqsupset R: square superset -->
+<!ENTITY sqsupe           "&#x02292;" ><!--/sqsupseteq R: square superset, eq -->
+<!ENTITY Sub              "&#x022D0;" ><!--/Subset R: double subset -->
+<!ENTITY subE             "&#x02286;" ><!--/subseteqq R: subset, dbl equals -->
+<!ENTITY subedot          "&#x02AC3;" ><!--subset, equals, dot -->
+<!ENTITY submult          "&#x02AC1;" ><!--subset, multiply -->
+<!ENTITY subplus          "&#x02ABF;" ><!--subset, plus -->
+<!ENTITY subrarr          "&#x02979;" ><!--subset, right arrow -->
+<!ENTITY subsim           "&#x02AC7;" ><!--subset, similar -->
+<!ENTITY subsub           "&#x02AD5;" ><!--subset above subset -->
+<!ENTITY subsup           "&#x02AD3;" ><!--subset above superset -->
+<!ENTITY Sup              "&#x022D1;" ><!--/Supset R: dbl superset -->
+<!ENTITY supdsub          "&#x02AD8;" ><!--superset, subset, dash joining them -->
+<!ENTITY supE             "&#x02287;" ><!--/supseteqq R: superset, dbl equals -->
+<!ENTITY supedot          "&#x02AC4;" ><!--superset, equals, dot -->
+<!ENTITY suphsol          "&#x02283;&#x0002F;" ><!--superset, solidus -->
+<!ENTITY suphsub          "&#x02AD7;" ><!--superset, subset -->
+<!ENTITY suplarr          "&#x0297B;" ><!--superset, left arrow -->
+<!ENTITY supmult          "&#x02AC2;" ><!--superset, multiply -->
+<!ENTITY supplus          "&#x02AC0;" ><!--superset, plus -->
+<!ENTITY supsim           "&#x02AC8;" ><!--superset, similar -->
+<!ENTITY supsub           "&#x02AD4;" ><!--superset above subset -->
+<!ENTITY supsup           "&#x02AD6;" ><!--superset above superset -->
+<!ENTITY thkap            "&#x02248;&#x02063;" ><!--/thickapprox R: thick approximate -->
+<!ENTITY thksim           "&#x0223C;" ><!--/thicksim R: thick similar -->
+<!ENTITY topfork          "&#x02ADA;" ><!--fork with top -->
+<!ENTITY trie             "&#x0225C;" ><!--/triangleq R: triangle, equals -->
+<!ENTITY twixt            "&#x0226C;" ><!--/between R: between -->
+<!ENTITY vBar             "&#x02AE8;" ><!--vert, dbl bar (under) -->
+<!ENTITY Vbar             "&#x02AEB;" ><!--dbl vert, bar (under) -->
+<!ENTITY vBarv            "&#x02AE9;" ><!--dbl bar, vert over and under -->
+<!ENTITY vdash            "&#x022A2;" ><!--/vdash R: vertical, dash -->
+<!ENTITY vDash            "&#x022A8;" ><!--/vDash R: vertical, dbl dash -->
+<!ENTITY Vdash            "&#x022A9;" ><!--/Vdash R: dbl vertical, dash -->
+<!ENTITY VDash            "&#x022AB;" ><!--dbl vert, dbl dash -->
+<!ENTITY Vdashl           "&#x02AE6;" ><!--vertical, dash (long) -->
+<!ENTITY vltri            "&#x022B2;" ><!--/vartriangleleft R: l tri, open, var -->
+<!ENTITY vprop            "&#x0221D;" ><!--/varpropto R: proportional, variant -->
+<!ENTITY vrtri            "&#x022B3;" ><!--/vartriangleright R: r tri, open, var -->
+<!ENTITY Vvdash           "&#x022AA;" ><!--/Vvdash R: triple vertical, dash -->

@@ -1,0 +1,13 @@
+<samba:parameter name="mangling char"
+                 context="S"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+ <description>
+	<para>This controls what character is used as 
+	the <emphasis>magic</emphasis> character in <smbconfoption name="name mangling"/>. The 
+	default is a '~' but this may interfere with some software. Use this option to set 
+	it to whatever you prefer. This is effective only when mangling method is hash.</para>
+</description>
+<value type="default">~</value>
+<value type="example">^</value>
+</samba:parameter>

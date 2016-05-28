@@ -141,8 +141,8 @@ int host_addr_info(const char *name, int af, struct sockaddr_storage *buf)
 			addrtypes |= IPT_V6;
 			break;
 		}
-		if (buf && (hints.ai_family == p->ai_family) && res->ai_addrlen) {
-			memcpy(buf, res->ai_addr, res->ai_addrlen);
+		if (buf && (hints.ai_family == p->ai_family) && p->ai_addrlen) {
+			memcpy(buf, p->ai_addr, p->ai_addrlen);
 		}
 	}
 
@@ -1197,8 +1197,24 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	//if (nvram_match("misc_natlog_x", "1"))
 	// 	fprintf(fp, "-A PREROUTING -i %s -j LOG --log-prefix ALERT --log-level 4\n", wan_if);
 
-	/* VSERVER chain */
+#ifdef RTCONFIG_AUTOCOVER_SIP
+	if(nvram_get_int("atcover_sip") == 1 && !strcmp(lan_ip, nvram_default_get("lan_ipaddr")) && strcmp(lan_ip, nvram_safe_get("atcover_sip_ip"))){
+		int dst_port;
 
+		if(nvram_get_int("atcover_sip_type") == 1)
+			dst_port = 80;
+		else
+			dst_port = 18017;
+
+		fprintf(fp, "-A PREROUTING -d %s -p tcp --dport 80 -j DNAT --to-destination %s:%d\n",
+				nvram_safe_get("atcover_sip_ip"),
+				lan_ip,
+				dst_port
+				);
+	}
+#endif
+
+	/* VSERVER chain */
 	if (inet_addr_(wan_ip))
 		fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wan_ip);
 	/* prerouting physical WAN port connection (DHCP+PPP case) */
@@ -1482,6 +1498,23 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			free(nv);
 		}
 	}
+#endif
+
+#ifdef RTCONFIG_AUTOCOVER_SIP
+		if(nvram_get_int("atcover_sip") == 1 && !strcmp(lan_ipaddr_t, nvram_default_get("lan_ipaddr")) && strcmp(lan_ipaddr_t, nvram_safe_get("atcover_sip_ip"))){
+			int dst_port;
+
+			if(nvram_get_int("atcover_sip_type") == 1)
+				dst_port = 80;
+			else
+				dst_port = 18017;
+
+			fprintf(redirect_fp, "-A PREROUTING -d %s -p tcp --dport 80 -j DNAT --to-destination %s:%d\n",
+					nvram_safe_get("atcover_sip_ip"),
+					lan_ipaddr_t,
+					dst_port
+					);
+		}
 #endif
 	}
 	if (!fp) {
@@ -1835,8 +1868,8 @@ start_default_filter(int lanunit)
 
 	fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
 	fprintf(fp, "-A INPUT -m state --state INVALID -j DROP\n");
-	fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", "lo");
 	fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", lan_if);
+	fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", "lo");
 	//fprintf(fp, "-A FORWARD -m state --state INVALID -j DROP\n");
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT\n");
 #ifdef RTCONFIG_PORT_BASED_VLAN
@@ -1872,8 +1905,8 @@ start_default_filter(int lanunit)
 	if (ipv6_enabled()) {
 		fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
 		fprintf(fp, "-A INPUT -m state --state INVALID -j DROP\n");
-		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", "lo");
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", lan_if);
+		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", "lo");
 		//fprintf(fp, "-A FORWARD -m state --state INVALID -j DROP\n");
 		fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT\n");
 		fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", lan_if, lan_if);
@@ -2323,18 +2356,17 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 		/* Filter known SPI state */
-		fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
-			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
-			  "-A INPUT -i lo -m state --state NEW -j %s\n"
-			  "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
+		fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n", logaccept);
+		fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n", logdrop);
+		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", lan_if, "ACCEPT");
+		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", "lo", "ACCEPT");
 #ifdef RTCONFIG_IPV6
-		if (ipv6_enabled())
-		fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
-			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
-			  "-A INPUT -i lo -m state --state NEW -j %s\n"
-			  "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
+		if (ipv6_enabled()) {
+			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n", logdrop);
+			fprintf(fp_ipv6, "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n", logaccept);
+			fprintf(fp_ipv6, "-A INPUT -i %s -m state --state NEW -j %s\n", lan_if, "ACCEPT");
+			fprintf(fp_ipv6, "-A INPUT -i %s -m state --state NEW -j %s\n", "lo", "ACCEPT");
+		}
 #endif
 		/* Pass multicast */
 		if (nvram_match("mr_enable_x", "1") || nvram_invmatch("udpxy_enable_x", "0")) {
@@ -2484,9 +2516,9 @@ TRACE_PT("writing Parental Control\n");
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 		//Add for pptp server
-		if (nvram_match("pptpd_enable", "1")) {
-			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, 1723, logaccept);
-			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
+		if (nvram_get_int("pptpd_enable")) {
+			fprintf(fp, "-A INPUT -p tcp --dport %d -j %s\n", 1723, logaccept);
+			fprintf(fp, "-A INPUT -p 47 -j %s\n", logaccept);
 		}
 #endif
 
@@ -2516,8 +2548,10 @@ TRACE_PT("writing Parental Control\n");
 #endif
 
 #ifdef RTCONFIG_TR069
-		fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
-		fprintf(fp, "-A INPUT -i %s -p udp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
+		if (nvram_get_int("tr_conn_port")) {
+			fprintf(fp, "-A INPUT -p tcp --dport %d -j %s\n", nvram_get_int("tr_conn_port"), logaccept);
+			fprintf(fp, "-A INPUT -p udp --dport %d -j %s\n", nvram_get_int("tr_conn_port"), logaccept);
+		}
 #endif
 
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
@@ -2563,15 +2597,16 @@ TRACE_PT("writing Parental Control\n");
 #ifdef RTCONFIG_IPV6
 	switch (get_ipv6_service()) {
 	case IPV6_NATIVE_DHCP:
+	case IPV6_MANUAL:
 #ifdef RTCONFIG_6RELAYD
 	case IPV6_PASSTHROUGH:
 #endif
-	case IPV6_MANUAL:
 		if (
 #if defined(RTCONFIG_USB_MODEM)
 		    dualwan_unit__nonusbif(unit) &&
 #endif
-		    !nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+		    !(strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+		      nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp")))
 			break;
 		/* fall through */
 	case IPV6_6IN4:
@@ -2672,13 +2707,17 @@ TRACE_PT("writing Parental Control\n");
 			"-A INPUT -i lo -j ACCEPT\n",
 				lan_if);
 
-		if (get_ipv6_service() == IPV6_NATIVE_DHCP
+		switch (get_ipv6_service()) {
 #ifdef RTCONFIG_6RELAYD
-			|| get_ipv6_service() == IPV6_PASSTHROUGH
+		case IPV6_PASSTHROUGH:
+			/* allow responses from the dhcpv6 server to relay, not used so far
+			fprintf(fp_ipv6, "-A INPUT -p udp --sport 547 --dport 547 -j %s\n", logaccept); */
+			/* fall through */
 #endif
-			) {
-			// allow responses from the dhcpv6 server
+		case IPV6_NATIVE_DHCP:
+			/* allow responses from the dhcpv6 server to client */
 			fprintf(fp_ipv6, "-A INPUT -p udp --sport 547 --dport 546 -j %s\n", logaccept);
+			break;
 		}
 
 		// ICMPv6 rules
@@ -3257,18 +3296,17 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 		/* Filter known SPI state */
-		fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
-			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
-			  "-A INPUT -i lo -m state --state NEW -j %s\n"
-			  "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
+		fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n", logaccept);
+		fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n", logdrop);
+		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", lan_if, "ACCEPT");
+		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", "lo", "ACCEPT");
 #ifdef RTCONFIG_IPV6
-		if (ipv6_enabled())
-		fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
-			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
-			  "-A INPUT -i lo -m state --state NEW -j %s\n"
-			  "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
+		if (ipv6_enabled()) {
+			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n", logdrop);
+			fprintf(fp_ipv6, "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n", logaccept);
+			fprintf(fp_ipv6, "-A INPUT -i %s -m state --state NEW -j %s\n", lan_if, "ACCEPT");
+			fprintf(fp_ipv6, "-A INPUT -i %s -m state --state NEW -j %s\n", "lo", "ACCEPT");
+		}
 #endif
 
 		/* Pass multicast */
@@ -3428,18 +3466,9 @@ TRACE_PT("writing Parental Control\n");
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 		//Add for pptp server
-		if (nvram_match("pptpd_enable", "1")) {
-			for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
-				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-				if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
-					continue;
-
-				wan_if = get_wan_ifname(unit);
-
-				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, 1723, logaccept);
-			}
-
-			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
+		if (nvram_get_int("pptpd_enable")) {
+			fprintf(fp, "-A INPUT -p tcp --dport %d -j %s\n", 1723, logaccept);
+			fprintf(fp, "-A INPUT -p 47 -j %s\n", logaccept);
 		}
 #endif
 		//Add for snmp daemon
@@ -3468,14 +3497,9 @@ TRACE_PT("writing Parental Control\n");
 #endif		
 
 #ifdef RTCONFIG_TR069
-		for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
-			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
-				continue;
-
-			wan_if = get_wan_ifname(unit);
-			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
-			fprintf(fp, "-A INPUT -i %s -p udp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
+		if (nvram_get_int("tr_conn_port")) {
+			fprintf(fp, "-A INPUT -p tcp --dport %d -j %s\n", nvram_get_int("tr_conn_port"), logaccept);
+			fprintf(fp, "-A INPUT -p udp --dport %d -j %s\n", nvram_get_int("tr_conn_port"), logaccept);
 		}
 #endif
 
@@ -3530,15 +3554,16 @@ TRACE_PT("writing Parental Control\n");
 #ifdef RTCONFIG_IPV6
 	switch (get_ipv6_service()) {
 	case IPV6_NATIVE_DHCP:
+	case IPV6_MANUAL:
 #ifdef RTCONFIG_6RELAYD
 	case IPV6_PASSTHROUGH:
 #endif
-	case IPV6_MANUAL:
 		if (
 #if defined(RTCONFIG_USB_MODEM)
 		    dualwan_unit__nonusbif(wan_primary_ifunit()) &&
 #endif
-		    !nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+		    !(strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+		      nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp")))
 			break;
 		/* fall through */
 	case IPV6_6IN4:
@@ -3635,13 +3660,17 @@ TRACE_PT("writing Parental Control\n");
 			"-A INPUT -i lo -j ACCEPT\n",
 				lan_if);
 
-		if (get_ipv6_service() == IPV6_NATIVE_DHCP
+		switch (get_ipv6_service()) {
 #ifdef RTCONFIG_6RELAYD
-			|| get_ipv6_service() == IPV6_PASSTHROUGH
+		case IPV6_PASSTHROUGH:
+			/* allow responses from the dhcpv6 server to relay, not used so far
+			fprintf(fp_ipv6, "-A INPUT -p udp --sport 547 --dport 547 -j %s\n", logaccept); */
+			/* fall through */
 #endif
-			) {
-			// allow responses from the dhcpv6 server
+		case IPV6_NATIVE_DHCP:
+			/* allow responses from the dhcpv6 server */
 			fprintf(fp_ipv6, "-A INPUT -p udp --sport 547 --dport 546 -j %s\n", logaccept);
+			break;
 		}
 
 		// ICMPv6 rules

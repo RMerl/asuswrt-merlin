@@ -1,0 +1,117 @@
+
+<!--
+     File isoamsn.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1991
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY gnap             "&#x02A8A;" ><!--/gnapprox N: greater, not approximate -->
+<!ENTITY gne              "&#x02269;" ><!--/gneq N: greater, not equals -->
+<!ENTITY gnE              "&#x02269;" ><!--/gneqq N: greater, not dbl equals -->
+<!ENTITY gnsim            "&#x022E7;" ><!--/gnsim N: greater, not similar -->
+<!ENTITY gvnE             "&#x02269;&#x00338;" ><!--/gvertneqq N: gt, vert, not dbl eq -->
+<!ENTITY lnap             "&#x02A89;" ><!--/lnapprox N: less, not approximate -->
+<!ENTITY lne              "&#x02268;" ><!--/lneq N: less, not equals -->
+<!ENTITY lnE              "&#x02268;" ><!--/lneqq N: less, not double equals -->
+<!ENTITY lnsim            "&#x022E6;" ><!--/lnsim N: less, not similar -->
+<!ENTITY lvnE             "&#x02268;&#x00338;" ><!--/lvertneqq N: less, vert, not dbl eq -->
+<!ENTITY nap              "&#x02249;" ><!--/napprox N: not approximate -->
+<!ENTITY napE             "&#x02A70;&#x00338;" ><!--not approximately equal or equal to -->
+<!ENTITY napid            "&#x0224B;&#x00338;" ><!--not approximately identical to -->
+<!ENTITY ncong            "&#x02247;" ><!--/ncong N: not congruent with -->
+<!ENTITY ncongdot         "&#x02A6D;&#x00338;" ><!--not congruent, dot -->
+<!ENTITY nequiv           "&#x02262;" ><!--/nequiv N: not identical with -->
+<!ENTITY nge              "&#x02271;&#x020E5;" ><!--/ngeq N: not greater-than-or-equal -->
+<!ENTITY ngE              "&#x02271;" ><!--/ngeqq N: not greater, dbl equals -->
+<!ENTITY nges             "&#x02271;" ><!--/ngeqslant N: not gt-or-eq, slanted -->
+<!ENTITY nGg              "&#x022D9;&#x00338;" ><!--not triple greater than -->
+<!ENTITY ngsim            "&#x02275;" ><!--not greater, similar -->
+<!ENTITY ngt              "&#x0226F;" ><!--/ngtr N: not greater-than -->
+<!ENTITY nGt              "&#x0226B;&#x00338;" ><!--not, vert, much greater than -->
+<!ENTITY nGtv             "&#x0226B;&#x00338;&#x02063;" ><!--not much greater than, variant -->
+<!ENTITY nle              "&#x02270;&#x020E5;" ><!--/nleq N: not less-than-or-equal -->
+<!ENTITY nlE              "&#x02270;" ><!--/nleqq N: not less, dbl equals -->
+<!ENTITY nles             "&#x02270;" ><!--/nleqslant N: not less-or-eq, slant -->
+<!ENTITY nLl              "&#x022D8;&#x00338;" ><!--not triple less than -->
+<!ENTITY nlsim            "&#x02274;" ><!--not less, similar -->
+<!ENTITY nlt              "&#x0226E;" ><!--/nless N: not less-than -->
+<!ENTITY nLt              "&#x0226A;&#x00338;" ><!--not, vert, much less than -->
+<!ENTITY nltri            "&#x022EA;" ><!--/ntriangleleft N: not left triangle -->
+<!ENTITY nltrie           "&#x022EC;" ><!--/ntrianglelefteq N: not l tri, eq -->
+<!ENTITY nLtv             "&#x0226A;&#x00338;&#x02063;" ><!--not much less than, variant -->
+<!ENTITY nmid             "&#x02224;" ><!--/nmid -->
+<!ENTITY npar             "&#x02226;" ><!--/nparallel N: not parallel -->
+<!ENTITY npr              "&#x02280;" ><!--/nprec N: not precedes -->
+<!ENTITY nprcue           "&#x022E0;" ><!--not curly precedes, eq -->
+<!ENTITY npre             "&#x02AAF;&#x00338;" ><!--/npreceq N: not precedes, equals -->
+<!ENTITY nrtri            "&#x022EB;" ><!--/ntriangleright N: not rt triangle -->
+<!ENTITY nrtrie           "&#x022ED;" ><!--/ntrianglerighteq N: not r tri, eq -->
+<!ENTITY nsc              "&#x02281;" ><!--/nsucc N: not succeeds -->
+<!ENTITY nsccue           "&#x022E1;" ><!--not succeeds, curly eq -->
+<!ENTITY nsce             "&#x02AB0;&#x00338;" ><!--/nsucceq N: not succeeds, equals -->
+<!ENTITY nsim             "&#x02241;" ><!--/nsim N: not similar -->
+<!ENTITY nsime            "&#x02244;" ><!--/nsimeq N: not similar, equals -->
+<!ENTITY nsmid            "&#x02224;&#x02063;" ><!--/nshortmid -->
+<!ENTITY nspar            "&#x02226;&#x02063;" ><!--/nshortparallel N: not short par -->
+<!ENTITY nsqsube          "&#x022E2;" ><!--not, square subset, equals -->
+<!ENTITY nsqsupe          "&#x022E3;" ><!--not, square superset, equals -->
+<!ENTITY nsub             "&#x02284;" ><!--not subset -->
+<!ENTITY nsube            "&#x02288;" ><!--/nsubseteq N: not subset, equals -->
+<!ENTITY nsubE            "&#x02288;" ><!--/nsubseteqq N: not subset, dbl eq -->
+<!ENTITY nsup             "&#x02285;" ><!--not superset -->
+<!ENTITY nsupe            "&#x02289;" ><!--/nsupseteq N: not superset, equals -->
+<!ENTITY nsupE            "&#x02289;" ><!--/nsupseteqq N: not superset, dbl eq -->
+<!ENTITY ntgl             "&#x02279;" ><!--not greater, less -->
+<!ENTITY ntlg             "&#x02278;" ><!--not less, greater -->
+<!ENTITY nvap             "&#x02249;&#x00338;" ><!--not, vert, approximate -->
+<!ENTITY nvdash           "&#x022AC;" ><!--/nvdash N: not vertical, dash -->
+<!ENTITY nvDash           "&#x022AD;" ><!--/nvDash N: not vertical, dbl dash -->
+<!ENTITY nVdash           "&#x022AE;" ><!--/nVdash N: not dbl vertical, dash -->
+<!ENTITY nVDash           "&#x022AF;" ><!--/nVDash N: not dbl vert, dbl dash -->
+<!ENTITY nvge             "&#x02271;" ><!--not, vert, greater-than-or-equal -->
+<!ENTITY nvgt             "&#x0226F;" ><!--not, vert, greater-than -->
+<!ENTITY nvle             "&#x02270;" ><!--not, vert, less-than-or-equal -->
+<!ENTITY nvlt             "&#x0226E;" ><!--not, vert, less-than -->
+<!ENTITY nvltrie          "&#x022EC;&#x00338;" ><!--not, vert, left triangle, equals -->
+<!ENTITY nvrtrie          "&#x022ED;&#x00338;" ><!--not, vert, right triangle, equals -->
+<!ENTITY nvsim            "&#x02241;&#x00338;" ><!--not, vert, similar -->
+<!ENTITY parsim           "&#x02AF3;" ><!--parallel, similar -->
+<!ENTITY prnap            "&#x022E8;" ><!--/precnapprox N: precedes, not approx -->
+<!ENTITY prnE             "&#x02AB5;" ><!--/precneqq N: precedes, not dbl eq -->
+<!ENTITY prnsim           "&#x022E8;" ><!--/precnsim N: precedes, not similar -->
+<!ENTITY rnmid            "&#x02AEE;" ><!--reverse /nmid -->
+<!ENTITY scnap            "&#x022E9;" ><!--/succnapprox N: succeeds, not approx -->
+<!ENTITY scnE             "&#x02AB6;" ><!--/succneqq N: succeeds, not dbl eq -->
+<!ENTITY scnsim           "&#x022E9;" ><!--/succnsim N: succeeds, not similar -->
+<!ENTITY simne            "&#x02246;" ><!--similar, not equals -->
+<!ENTITY solbar           "&#x0233F;" ><!--solidus, bar through -->
+<!ENTITY subne            "&#x0228A;" ><!--/subsetneq N: subset, not equals -->
+<!ENTITY subnE            "&#x0228A;" ><!--/subsetneqq N: subset, not dbl eq -->
+<!ENTITY supne            "&#x0228B;" ><!--/supsetneq N: superset, not equals -->
+<!ENTITY supnE            "&#x0228B;" ><!--/supsetneqq N: superset, not dbl eq -->
+<!ENTITY vnsub            "&#x02284;" ><!--/nsubset N: not subset, var -->
+<!ENTITY vnsup            "&#x02285;" ><!--/nsupset N: not superset, var -->
+<!ENTITY vsubne           "&#x0228A;&#x02063;" ><!--/varsubsetneq N: subset, not eq, var -->
+<!ENTITY vsubnE           "&#x0228A;&#x02063;" ><!--/varsubsetneqq N: subset not dbl eq, var -->
+<!ENTITY vsupne           "&#x0228B;&#x02063;" ><!--/varsupsetneq N: superset, not eq, var -->
+<!ENTITY vsupnE           "&#x0228B;&#x02063;" ><!--/varsupsetneqq N: super not dbl eq, var -->

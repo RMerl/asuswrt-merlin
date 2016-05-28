@@ -1,8 +1,0 @@
-/rv/reg 0xd0000000 64
-/rv/remote-reg 0xa8800
-/rv/intnum 4 2
-/cris/vec-for-int 4 0x33 8 0x34 0xaa 0xea
-/rv/mem 0x20000 0x400
-/rv/remote-mem 0xe000
-/rv/mbox 0xc000f000
-/rv > int int /cris

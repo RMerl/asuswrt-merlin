@@ -1,8 +1,0 @@
-#!/bin/ksh
-
-# Get the address of a symbol in Hex.
-# $1 = object/executable file name
-# $2 = symbol name
-/usr/ccs/bin/elfdump -t +s .symtab "$1" | grep "$2"$ | awk '{print $6}'
-
-exit 0

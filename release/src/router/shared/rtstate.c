@@ -161,8 +161,6 @@ char *get_wan_ifname(int unit)
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 
-	//_dprintf("wan_proto: %s\n", wan_proto);
-
 #ifdef RTCONFIG_USB_MODEM
 	if (dualwan_unit__usbif(unit)) {
 		if (strcmp(wan_proto, "dhcp") == 0)
@@ -174,21 +172,56 @@ char *get_wan_ifname(int unit)
 	if (strcmp(wan_proto, "pppoe") == 0 ||
 	    strcmp(wan_proto, "pptp") == 0 ||
 	    strcmp(wan_proto, "l2tp") == 0) {
-#ifdef RTCONFIG_IPV6
-		int service = get_ipv6_service_by_unit(unit);
-		if ((service == IPV6_NATIVE_DHCP || service == IPV6_MANUAL) &&
-		    nvram_match(ipv6_nvname("ipv6_ifdev"), "eth"))
-			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-		else
-#endif
 		wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
 	} else
 		wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
-	//_dprintf("wan_ifname: %s\n", wan_ifname);
+	return wan_ifname;
+}
+
+// Get wan ipv6 ifname of working connection
+#ifdef RTCONFIG_IPV6
+char *get_wan6_ifname(int unit)
+{
+	char *wan_proto, *wan_ifname;
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
+
+	switch (get_ipv6_service_by_unit(unit)) {
+	case IPV6_NATIVE_DHCP:
+	case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
+
+#ifdef RTCONFIG_USB_MODEM
+		if (dualwan_unit__usbif(unit)) {
+			if (strcmp(wan_proto, "dhcp") == 0)
+				wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+			else
+				wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
+		} else
+#endif
+		if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+		    nvram_match(ipv6_nvname_by_unit("ipv6_ifdev", unit), "ppp")) {
+			wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
+		} else
+			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+		break;
+	case IPV6_6TO4:
+	case IPV6_6IN4:
+	case IPV6_6RD:
+		/* no ipv6 multiwan tunnel support so far */
+		wan_ifname = "v6tun0";
+		break;
+	default:
+		return "";
+	}
 
 	return wan_ifname;
 }
+#endif
 
 // OR all lan port status
 int get_lanports_status(void)

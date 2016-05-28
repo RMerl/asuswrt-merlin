@@ -71,6 +71,11 @@
 
 #include <sys/stat.h>
 
+#ifdef RTAC68U
+#include <shared.h>
+#include <bcmnvram.h>
+#endif
+
 #include "config.h"
 
 #ifdef ENABLE_NLS
@@ -318,6 +323,7 @@ check_db(sqlite3 *db, int new_db, pid_t *scanner_pid)
 	int i, rows = 0;
 	int ret;
 	int retry_times;
+	char *ptr, *shift;
 
 	if (!new_db)
 	{
@@ -371,6 +377,13 @@ rescan:
 		sqlite3_close(db);
 
 		retry_times = 0;
+
+		memset(db_path_spec, 0, 256);
+		for (ptr = db_path, shift = db_path_spec; *ptr; ++ptr, ++shift) {
+			if (strchr("()", *ptr))
+				*shift++ = '\\';
+			*shift = *ptr;
+		}
 retry:
 		snprintf(cmd, sizeof(cmd), "rm -rf %s/files.db %s/art_cache", db_path_spec, db_path_spec);
 		if (system(cmd) != 0) {
@@ -1060,6 +1073,12 @@ retry:
 #define PATH_ICON_PNG_LRG	"/rom/dlna/icon_lrg.png"
 #define PATH_ICON_JPEG_SM	"/rom/dlna/icon_sm.jpg"
 #define PATH_ICON_JPEG_LRG	"/rom/dlna/icon_lrg.jpg"
+#ifdef RTAC68U
+#define PATH_ICON_ALT_PNG_SM	"/rom/dlna/icon_alt_sm.png"
+#define PATH_ICON_ALT_PNG_LRG	"/rom/dlna/icon_alt_lrg.png"
+#define PATH_ICON_ALT_JPEG_SM	"/rom/dlna/icon_alt_sm.jpg"
+#define PATH_ICON_ALT_JPEG_LRG	"/rom/dlna/icon_alt_lrg.jpg"
+#endif
 unsigned char buf_png_sm[65536];
 unsigned char buf_png_lrg[65536];
 unsigned char buf_jpeg_sm[65536];
@@ -1079,22 +1098,38 @@ init_icon(const char *iconfile)
 	size_t i, offset;
 	int ret = 0;
 
-	if( strcmp(iconfile, PATH_ICON_PNG_SM) == 0 )
+	if (strcmp(iconfile, PATH_ICON_PNG_SM) == 0
+#ifdef RTAC68U
+		|| strcmp(iconfile, PATH_ICON_ALT_PNG_SM) == 0
+#endif
+	)
 	{
 		buf = buf_png_sm;
 		size = &size_png_sm;
 	}
-	else if( strcmp(iconfile, PATH_ICON_PNG_LRG) == 0 )
+	else if (strcmp(iconfile, PATH_ICON_PNG_LRG) == 0
+#ifdef RTAC68U
+		|| strcmp(iconfile, PATH_ICON_ALT_PNG_LRG) == 0
+#endif
+	)
 	{
 		buf = buf_png_lrg;
 		size = &size_png_lrg;
 	}
-	else if( strcmp(iconfile, PATH_ICON_JPEG_SM) == 0 )
+	else if (strcmp(iconfile, PATH_ICON_JPEG_SM) == 0
+#ifdef RTAC68U
+		|| strcmp(iconfile, PATH_ICON_ALT_JPEG_SM) == 0
+#endif
+	)
 	{
 		buf = buf_jpeg_sm;
 		size = &size_jpeg_sm;
 	}
-	else if( strcmp(iconfile, PATH_ICON_JPEG_LRG) == 0 )
+	else if (strcmp(iconfile, PATH_ICON_JPEG_LRG) == 0
+#ifdef RTAC68U
+		|| strcmp(iconfile, PATH_ICON_ALT_JPEG_LRG) == 0
+#endif
+	)
 	{
 		buf = buf_jpeg_lrg;
 		size = &size_jpeg_lrg;
@@ -1147,7 +1182,7 @@ init_icon(const char *iconfile)
 		/* loop through the file */
 		offset = 0;
 		memset(buf, 0, *size);
-		while ( (i = fread(buf + offset, 1, BUFSIZ, in)) != 0 ) {
+		while ((i = fread(buf + offset, 1, BUFSIZ, in)) != 0) {
 			offset += i;
 		}
 	}
@@ -1196,10 +1231,21 @@ main(int argc, char **argv)
 		return 1;
 
 #if (!defined(RTN66U) && !defined(RTN56U))
-	init_icon(PATH_ICON_PNG_SM);
-	init_icon(PATH_ICON_PNG_LRG);
-	init_icon(PATH_ICON_JPEG_SM);
-	init_icon(PATH_ICON_JPEG_LRG);
+#ifdef RTAC68U
+	if (!strcmp(get_productid(), "RT-AC66U V2")) {
+		init_icon(PATH_ICON_ALT_PNG_SM);
+		init_icon(PATH_ICON_ALT_PNG_LRG);
+		init_icon(PATH_ICON_ALT_JPEG_SM);
+		init_icon(PATH_ICON_ALT_JPEG_LRG);
+	}
+	else
+#endif
+	{
+		init_icon(PATH_ICON_PNG_SM);
+		init_icon(PATH_ICON_PNG_LRG);
+		init_icon(PATH_ICON_JPEG_SM);
+		init_icon(PATH_ICON_JPEG_LRG);
+	}
 #endif
 
 	DPRINTF(E_WARN, L_GENERAL, "Starting " SERVER_NAME " version " MINIDLNA_VERSION ".\n");

@@ -1,0 +1,42 @@
+<samba:parameter name="remote announce"
+	         context="G"
+		 advanced="1" developer="1"
+		 type="list"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This option allows you to setup <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>to periodically announce itself 
+	to arbitrary IP addresses with an arbitrary workgroup name.
+	</para>
+
+	<para>
+	This is useful if you want your Samba server to appear in a remote workgroup for 
+	which the normal browse propagation rules don't work. The remote workgroup can be 
+	anywhere that you can send IP packets to.
+	</para>
+
+	<para>
+	For example:
+<programlisting>
+<command moreinfo="none">remote announce = 192.168.2.255/SERVERS 192.168.4.255/STAFF</command>
+</programlisting>
+	the above line would cause <command moreinfo="none">nmbd</command> to announce itself 
+	to the two given IP addresses using the given workgroup names. If you leave out the 
+	workgroup name then the one given in the <smbconfoption name="workgroup"/> parameter 
+	is used instead.
+	</para>
+
+	<para>
+	The IP addresses you choose would normally be the broadcast addresses of the remote 
+	networks, but can also be the IP addresses of known browse masters if your network 
+	config is that stable.
+	</para>
+
+	<para>
+	See the chapter on Network Browsing in the Samba-HOWTO book.
+	</para>
+</description>
+
+<value type="default"></value>
+</samba:parameter>

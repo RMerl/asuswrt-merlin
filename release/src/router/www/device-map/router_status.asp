@@ -166,7 +166,7 @@ function tabclickhandler(wl_unit){
 			document.form.wl_subunit.value = 1;
 
 		document.form.wl_unit.value = wl_unit;
-		document.form.current_page.value = "device-map/router.asp";
+		document.form.current_page.value = "device-map/router.asp?time=" + Math.round(new Date().getTime()/1000);
 		FormActions("/apply.cgi", "change_wl_unit", "", "");
 		document.form.target = "hidden_frame";
 		document.form.submit();
@@ -344,7 +344,7 @@ function generate_cpu_field(){
 		document.getElementById('cpu'+i+'_graph').style.display = "";
 	}
 
-	if(getBrowser_info().ie == "9.0")
+	if(getBrowser_info().ie == "9.0" || getBrowser_info().ie == "8.0")
 		document.getElementById('cpu_field').outerHTML = code;
 	else
 		document.getElementById('cpu_field').innerHTML = code;

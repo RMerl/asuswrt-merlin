@@ -875,12 +875,6 @@ void init_syspara(void)
 		}
 	}
 
-#ifdef RA_SINGLE_SKU
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
-	gen_ra_sku(nvram_safe_get("reg_spec"));
-#endif	/* RTAC52U && RTAC51U && RTN54U && RTAC54U && RTAC1200HP && RTN56UB1 && RTN56UB1 && RTN11P && RTN300 */
-#endif	/* RA_SINGLE_SKU */
-
 	{
 #ifdef RTCONFIG_ODMPID
 		char modelname[16];
@@ -1093,11 +1087,6 @@ void init_syspara(void)
 			nvram_set("territory_code", "CN/01");
 		}
 	}
-
-	if( nvram_match("odmpid", "RT-N12+") && !strncmp(nvram_safe_get("territory_code"), "IN", 2 )) {
-		nvram_set("reg_spec", "NCC");
-		nvram_set("wl0_country_code", "US");
-	}
 #endif	/* RTN11P */
 	
 	/* PSK */
@@ -1183,6 +1172,12 @@ void init_syspara(void)
 		}
 	}
 #endif
+
+#ifdef RA_SINGLE_SKU
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2)
+	gen_ra_sku(nvram_safe_get("reg_spec"));
+#endif	/* RTAC52U && RTAC51U && RTN54U && RTAC54U && RTAC1200HP && RTN56UB1 && RTN56UB1 && RTN11P && RTN300 */
+#endif	/* RA_SINGLE_SKU */
 
 	nvram_set("firmver", rt_version);
 	nvram_set("productid", rt_buildname);

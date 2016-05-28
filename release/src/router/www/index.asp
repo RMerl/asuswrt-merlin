@@ -177,7 +177,10 @@ window.onresize = function() {
 	}
 } 
 
-function initial(){   
+function initial(){
+	var autodet_state = '<% nvram_get("autodet_state"); %>';
+	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';	
+	var wan_proto = '<% nvram_get("wan_proto"); %>';
 	show_menu();
 	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
 	if(isIE6)
@@ -306,6 +309,10 @@ function initial(){
 		document.getElementById("wlSecurityContext").style.display = "none";
 		document.getElementById("mbModeContext").style.display = "";
 	}
+
+	if(disnwmd_support) 
+		$("#networkmap_switch").show();
+
 	if(wans_flag && gobi_support){
 		var eLAN_str = "<#Ethernet_wan#>:".replace(/WAN/, "LAN");
 		if(dualwan_first_if == 'wan')
@@ -330,6 +337,12 @@ function initial(){
 				document.getElementById("second_wan_title").innerHTML = "<#Mobile_title#>:";
 			else
 				document.getElementById("second_wan_title").innerHTML = "<#menu5_4_4#>:";
+		}
+	}
+
+	if(is_TW_sku && document.referrer.indexOf("QIS") != -1){
+		if(autodet_state == 2 && autodet_auxstate == 6 && wan_proto == "dhcp"){
+			notification.notiClick();
 		}
 	}
 }
@@ -860,8 +873,9 @@ function change_wan_unit(wan_unit_flag){
 }
 
 function show_ddns_fail_hint() {
+	var ddns_return_code = '<% nvram_get_ddns("LANHostConfig","ddns_return_code"); %>';
 	var str="";
-	if( !((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")) )
+	if(sw_mode != 3 && document.getElementById("connect_status").className == "connectstatusoff")
 		str = "<#Disconnected#>";
 	else if(ddns_server = 'WWW.ASUS.COM') {
 		var ddnsHint = getDDNSState(ddns_return_code, "<%nvram_get("ddns_hostname_x");%>", "<%nvram_get("ddns_old_name");%>");
@@ -1737,7 +1751,7 @@ function popupEditBlock(clientObj){
 }
 
 function check_usb3(){
-	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"){
+	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"){
 		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
 	}
 	else if(based_modelid == "RT-N65U"){
@@ -2073,6 +2087,15 @@ function closeClientDetailView() {
 	<input type="hidden" name="current_page" value="httpd_check.xml">
 	<input type="hidden" name="next_page" value="httpd_check.xml">
 	<input type="hidden" name="client_info_tmp" value="">	
+</form>
+<!-- stop networkmapd -->
+<form method="post" name="stopNetworkmapd" action="/start_apply.htm" target="hidden_frame">
+	<input type="hidden" name="action_mode" value="apply">
+	<input type="hidden" name="action_script" value="restart_networkmap">
+	<input type="hidden" name="action_wait" value="2">
+	<input type="hidden" name="current_page" value="index.asp">
+	<input type="hidden" name="next_page" value="index.asp">
+	<input type="hidden" name="networkmap_enable" value="<% nvram_get("networkmap_enable"); %>">
 </form>
 
 <div id="edit_usericon_block" class="contentM_usericon">
@@ -2453,7 +2476,27 @@ function closeClientDetailView() {
 							</a>
 							<div class="clients" id="clientNumber" style="cursor:pointer;"></div>
 						</div>
+
 						<input type="button" class="button_gen" value="View List" style="margin-top:15px;" onClick="pop_clientlist_listview(true)">
+
+						<div id="networkmap_switch" style="display:none">
+							<div align="center" class="left" style="width:94px; cursor:pointer;margin-top:10px" id="networkmap_enable_t"></div>
+							<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
+								<script type="text/javascript">
+									$('#networkmap_enable_t').iphoneSwitch('<% nvram_get("networkmap_enable"); %>',
+										function(){
+											document.stopNetworkmapd.networkmap_enable.value = 1;
+											document.stopNetworkmapd.submit()
+										},
+										function(){
+											document.stopNetworkmapd.networkmap_enable.value = 0;
+											document.stopNetworkmapd.submit()
+										}
+									);
+								</script>			
+							</div>
+						</div>
+
 						<!--div id="" onclick="">
 							<img style="margin-top:15px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
 							<a id="" href="device-map/clients.asp" target="statusframe">

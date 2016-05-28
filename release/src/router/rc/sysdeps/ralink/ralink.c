@@ -655,13 +655,25 @@ static inline void __choose_mrate(char *prefix, int *mcast_phy, int *mcast_mcs)
 	int phy = 3, mcs = 7;			/* HTMIX 65/150Mbps */
 	char tmp[128];
 
-	if (ipv6_enabled() && nvram_get_int(ipv6_nvname("ipv6_radvd"))) {
+#ifdef RTCONFIG_IPV6
+	switch (get_ipv6_service()) {
+	default:
+		if (!nvram_get_int(ipv6_nvname("ipv6_radvd")))
+			break;
+		/* fall through */
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
 		if (!strncmp(prefix, "wl0", 3)) {
 			phy = 2; mcs = 2;	/* 2G: OFDM 12Mbps */
 		} else {
 			phy = 3; mcs = 1;	/* 5G: HTMIX 13/30Mbps */
 		}
+		/* fall through */
+	case IPV6_DISABLED:
+		break;
 	}
+#endif
 
 	if (nvram_match(strcat_r(prefix, "nmode_x", tmp), "2") ||		/* legacy mode */
 	    strstr(nvram_safe_get(strcat_r(prefix, "crypto", tmp)), "tkip"))	/* tkip */

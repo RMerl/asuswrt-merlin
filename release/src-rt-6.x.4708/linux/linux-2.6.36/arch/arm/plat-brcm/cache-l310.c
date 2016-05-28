@@ -60,25 +60,21 @@ static inline void cache_wait(void __iomem *reg, unsigned long mask)
  */
 static inline void atomic_cache_sync( void __iomem *base )
 {
-	cache_wait(base + L2X0_CACHE_SYNC, 1);
 	writel_relaxed(0, base + L2X0_CACHE_SYNC);
 }
 
 static inline void atomic_clean_line( void __iomem *base, unsigned long addr)
 {
-	cache_wait(base + L2X0_CLEAN_LINE_PA, 1);
 	writel_relaxed(addr, base + L2X0_CLEAN_LINE_PA);
 }
 
 static inline void atomic_inv_line( void __iomem *base, unsigned long addr)
 {
-	cache_wait(base + L2X0_INV_LINE_PA, 1);
 	writel_relaxed(addr, base + L2X0_INV_LINE_PA);
 }
 
 static inline void atomic_flush_line( void __iomem *base, unsigned long addr)
 {
-	cache_wait(base + L2X0_INV_LINE_PA, 1);
 	writel_relaxed(addr, base + L2X0_CLEAN_INV_LINE_PA);
 }
 
@@ -97,17 +93,13 @@ static void BCMFASTPATH l2x0_inv_range(unsigned long start, unsigned long end)
 	void __iomem *base = l2x0_base;
 
 	/* Range edges could contain live dirty data */
-	if (start & (CACHE_LINE_SIZE - 1)) {
-		start &= ~(CACHE_LINE_SIZE - 1);
-		atomic_flush_line(base, start);
-		start += CACHE_LINE_SIZE;
-	}
+	if( start & (CACHE_LINE_SIZE-1) )
+		atomic_flush_line(base, start & ~(CACHE_LINE_SIZE-1));
+	if( end & (CACHE_LINE_SIZE-1) )
+		atomic_flush_line(base, end & ~(CACHE_LINE_SIZE-1));
 
-	if (end & (CACHE_LINE_SIZE - 1)) {
-		end &= ~(CACHE_LINE_SIZE - 1);
-		atomic_flush_line(base, end);
-	}
- 
+	start &= ~(CACHE_LINE_SIZE - 1);
+
 	while (start < end) {
 		atomic_inv_line(base, start);
 		start += CACHE_LINE_SIZE;

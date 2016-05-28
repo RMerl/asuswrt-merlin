@@ -52,10 +52,10 @@ function wl_chanspec_list_change(){
 										else if((wl_channel_list_5g[i] == "56") && country == "TW")		//56 belong 20MHz only for TW
 											wl_channel_list_5g[i] = wl_channel_list_5g[i];										
 										else if(band5g_11ac_support){
-												if(country == "EU" && parseInt(wl_channel_list_5g[i]) == 116){		//	belong to 20MHz
+												if((country == "EU" || country == "E0") && parseInt(wl_channel_list_5g[i]) == 116){		//	belong to 20MHz
 													wl_channel_list_5g[i] = wl_channel_list_5g[i];
 												}
-												else if(country == "EU" && parseInt(wl_channel_list_5g[i]) > 116 && parseInt(wl_channel_list_5g[i]) < 140){	// belong to 40MHz	
+												else if((country == "EU" || country == "E0") && parseInt(wl_channel_list_5g[i]) > 116 && parseInt(wl_channel_list_5g[i]) < 140){	// belong to 40MHz	
 													wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// belong to 40MHz
 													wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
@@ -79,7 +79,7 @@ function wl_chanspec_list_change(){
 							document.getElementById('wl_nctrlsb_field').style.display = "";
 								for(var i=wl_channel_list_5g.length-1;i>=0;i--){									
 																
-											if(country == "EU" && parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140){	// rm 80MHz invalid channel
+											if((country == "EU" || country == "E0") && parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140){	// rm 80MHz invalid channel
 												wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
 											}
 											else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// rm 80MHz invalid channel														
@@ -100,12 +100,12 @@ function wl_chanspec_list_change(){
 									wl_channel_list_5g.splice(index, 1);
 								}
 
-								if(country == "EU" && wl_channel_list_5g.indexOf("116") != -1){			// remove channel 116, 
+								if((country == "EU" || country == "E0") && wl_channel_list_5g.indexOf("116") != -1){			// remove channel 116, 
 									var index = wl_channel_list_5g.indexOf("116");
 									wl_channel_list_5g.splice(index, 1);
 								}
 		
-								if((country == "EU" || country == "JP") && wl_channel_list_5g.indexOf("140") != -1){			// remove channel 140
+								if((country == "EU" || country == "E0" || country == "JP") && wl_channel_list_5g.indexOf("140") != -1){			// remove channel 140
 									index = wl_channel_list_5g.indexOf("140");
 									wl_channel_list_5g.splice(index, 1);
 								}
@@ -513,7 +513,7 @@ function change_channel(obj){
 	
 	if(band == 1){
 		if(country == "EU"){		// for DFS channel
-			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"
+			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U"
 			|| (based_modelid == "RT-AC66U" && wl1_dfs == "1")
 			|| based_modelid == "RT-N66U"){
 				if(document.form.wl_channel.value  == 0){
@@ -543,7 +543,7 @@ function change_channel(obj){
 			}
 		}
 		else if(country == "US" || country == "SG"){			//for acs band1 channel
-			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"
+			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U"
 			|| based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S"
 			|| based_modelid == "RT-AC66U"
 			|| based_modelid == "RT-N66U"

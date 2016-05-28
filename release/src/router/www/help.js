@@ -207,7 +207,7 @@ function overHint(itemNum){
 	var title5_2 = 0;	
 	
 	if(itemNum == 50){
-		statusmenu ="<span>Enable PPTP or L2TP client (optional)</span>";
+		statusmenu ="<span><#QIS_PPTP_L2TP_enable#></span>";
 	}
 		
 	if(itemNum == 85){

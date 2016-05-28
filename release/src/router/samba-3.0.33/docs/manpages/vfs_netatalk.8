@@ -1,0 +1,47 @@
+.\"     Title: vfs_netatalk
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_NETATALK" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_netatalk - hide .AppleDouble files from CIFS clients
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = netatalk
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The
+vfs_netatalk
+VFS module dynamically hides \.AppleDouble files, preventing spurious errors on some CIFS clients\. \.AppleDouble files may be created by historic implementations of AFP (Apple Filing Protocol) on servers\.
+.PP
+This module is stackable\.
+.SH "EXAMPLES"
+.PP
+Hide \.AppleDouble files on the [data] share:
+.sp
+.RS 4
+.nf
+        \fI[data]\fR
+	\fIvfs objects = netatalk\fR
+.fi
+.RE
+.SH "CAVEATS"
+.PP
+This module is largely historic and unlikely to be of use in modern networks since current Apple systems are able to mount CIFS shares natively\.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

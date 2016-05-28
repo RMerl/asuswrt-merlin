@@ -1,0 +1,45 @@
+.\"     Title: vfs_catia
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_CATIA" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_catia - translate illegal characters in Catia filenames
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = catia
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The Catia CAD package commonly creates filenames that use characters that are illegal in CIFS filenames\. The
+vfs_catia
+VFS module implements a fixed character mapping so that these files can be shared with CIFS clients\.
+.PP
+This module is stackable\.
+.SH "EXAMPLES"
+.PP
+Map Catia filenames on the [CAD] share:
+.sp
+.RS 4
+.nf
+        \fI[CAD]\fR
+	\fIpath = /data/cad\fR
+	\fIvfs objects = catia\fR
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

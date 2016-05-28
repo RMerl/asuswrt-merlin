@@ -1,0 +1,53 @@
+
+<!--
+     File isocyr2.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY djcy             "&#x00452;" ><!--=small dje, Serbian -->
+<!ENTITY DJcy             "&#x00402;" ><!--=capital DJE, Serbian -->
+<!ENTITY dscy             "&#x00455;" ><!--=small dse, Macedonian -->
+<!ENTITY DScy             "&#x00405;" ><!--=capital DSE, Macedonian -->
+<!ENTITY dzcy             "&#x0045F;" ><!--=small dze, Serbian -->
+<!ENTITY DZcy             "&#x0040F;" ><!--=capital dze, Serbian -->
+<!ENTITY gjcy             "&#x00453;" ><!--=small gje, Macedonian -->
+<!ENTITY GJcy             "&#x00403;" ><!--=capital GJE Macedonian -->
+<!ENTITY iukcy            "&#x00456;" ><!--=small i, Ukrainian -->
+<!ENTITY Iukcy            "&#x00406;" ><!--=capital I, Ukrainian -->
+<!ENTITY jsercy           "&#x00458;" ><!--=small je, Serbian -->
+<!ENTITY Jsercy           "&#x00408;" ><!--=capital JE, Serbian -->
+<!ENTITY jukcy            "&#x00454;" ><!--=small je, Ukrainian -->
+<!ENTITY Jukcy            "&#x00404;" ><!--=capital JE, Ukrainian -->
+<!ENTITY kjcy             "&#x0045C;" ><!--=small kje Macedonian -->
+<!ENTITY KJcy             "&#x0040C;" ><!--=capital KJE, Macedonian -->
+<!ENTITY ljcy             "&#x00459;" ><!--=small lje, Serbian -->
+<!ENTITY LJcy             "&#x00409;" ><!--=capital LJE, Serbian -->
+<!ENTITY njcy             "&#x0045A;" ><!--=small nje, Serbian -->
+<!ENTITY NJcy             "&#x0040A;" ><!--=capital NJE, Serbian -->
+<!ENTITY tshcy            "&#x0045B;" ><!--=small tshe, Serbian -->
+<!ENTITY TSHcy            "&#x0040B;" ><!--=capital TSHE, Serbian -->
+<!ENTITY ubrcy            "&#x0045E;" ><!--=small u, Byelorussian -->
+<!ENTITY Ubrcy            "&#x0040E;" ><!--=capital U, Byelorussian -->
+<!ENTITY yicy             "&#x00457;" ><!--=small yi, Ukrainian -->
+<!ENTITY YIcy             "&#x00407;" ><!--=capital YI, Ukrainian -->

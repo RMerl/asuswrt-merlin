@@ -1,0 +1,28 @@
+<samba:parameter name="guest account"
+                 context="G"
+				 type="string"
+                 basic="1" advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This is a username which will be used for access 
+    to services which are specified as <smbconfoption name="guest ok"/> (see below). Whatever privileges this 
+    user has will be available to any client connecting to the guest service. 
+    This user must exist in the password file, but does not require
+    a valid login. The user account &quot;ftp&quot; is often a good choice 
+    for this parameter. 
+    </para>
+
+    <para>On some systems the default guest account &quot;nobody&quot; may not 
+    be able to print. Use another account in this case. You should test 
+    this by trying to log in as your guest user (perhaps by using the 
+    <command moreinfo="none">su -</command> command) and trying to print using the 
+    system print command such as <command moreinfo="none">lpr(1)</command> or <command moreinfo="none">
+    lp(1)</command>.</para>
+
+    <para>This parameter does not accept % macros, because
+    many parts of the system require this value to be
+	constant for correct operation.</para>
+</description>
+<value type="default">nobody<comment>default can be changed at compile-time</comment></value>
+<value type="example">ftp</value>
+</samba:parameter>

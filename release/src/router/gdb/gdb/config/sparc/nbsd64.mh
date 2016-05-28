@@ -1,5 +1,0 @@
-# Host: NetBSD/sparc64
-NATDEPFILES= fork-child.o inf-ptrace.o \
-	sparc64nbsd-nat.o sparc-nat.o bsd-kvm.o
-
-LOADLIBES= -lkvm

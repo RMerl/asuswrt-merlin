@@ -1,0 +1,41 @@
+.\"     Title: idmap_nss
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "IDMAP_NSS" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+idmap_nss - Samba's idmap_nss Backend for Winbind
+.SH "DESCRIPTION"
+.PP
+The idmap_nss plugin provides a means to map Unix users and groups to Windows accounts and obseletes the "winbind trusted domains only" smb\.conf option\. This provides a simple means of ensuring that the SID for a Unix user named jsmith is reported as the one assigned to DOMAIN\ejsmith which is necessary for reporting ACLs on files and printers stored on a Samba member server\.
+.SH "EXAMPLES"
+.PP
+This example shows how to use idmap_nss to check the local accounts for its own domain while using allocation to create new mappings for trusted domains
+.sp
+.RS 4
+.nf
+	[global]
+	    idmap domains = SAMBA TRUSTEDDOMAINS
+
+	    idmap config SAMBA:backend  = nss
+	    idmap config SAMBA:readonly = yes
+
+	    idmap config TRUSTEDDOMAINS:default = yes
+	    idmap config TRUSTEDDOMAINS:backend = tdb
+	    idmap config TRUSTEDDOMAINS:range   = 10000 \- 50000
+
+	    idmap alloc backend      = tdb
+	    idmap alloc config:range = 10000 \- 50000
+	
+.fi
+.RE
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

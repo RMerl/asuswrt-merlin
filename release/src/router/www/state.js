@@ -132,6 +132,7 @@ function in_territory_code(_ptn){
 var ttc = '<% nvram_get("territory_code"); %>';
 var is_KR_sku = in_territory_code("KR");
 var is_CN = in_territory_code("CN");
+var is_TW_sku = in_territory_code("TW");
 
 //wireless
 var wl_nband_title = [];
@@ -232,7 +233,7 @@ var nfsd_support = isSupport("nfsd");
 var wifilogo_support = isSupport("WIFI_LOGO"); 
 var band2g_support = isSupport("2.4G"); 
 var band5g_support = isSupport("5G");
-var live_update_support = isSupport("update"); 
+var live_update_support = false;	// isSupport("update"); 
 var cooler_support = isSupport("fanctrl");
 var power_support = isSupport("pwrctrl");
 var repeater_support = isSupport("repeater");
@@ -306,6 +307,9 @@ var tmo_support = isSupport("tmo");
 var wl_mfp_support = isSupport("wl_mfp");	// For Protected Management Frames, ARM platform
 var bwdpi_support = isSupport("bwdpi");
 var traffic_analyzer_support = bwdpi_support;
+if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
+	traffic_analyzer_support = false;
+}
 
 var adBlock_support = isSupport("adBlock");
 var keyGuard_support = isSupport("keyGuard");
@@ -321,6 +325,7 @@ var tr069_support = isSupport("tr069");
 var tor_support = isSupport("tor");
 var stainfo_support = isSupport("stainfo");
 var dhcp_override_support = isSupport("dhcp_override");
+var disnwmd_support = isSupport("disable_nwmd");
 var wtfast_support = isSupport("wtfast");
 var powerline_support = isSupport("plc");
 var reboot_schedule_support = isSupport("reboot_schedule");
@@ -330,7 +335,7 @@ var app_support = false;
 if( based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U"
  || based_modelid == "RT-AC3200"
  || based_modelid == "RT-AC87U" || based_modelid == "RT-AC87R"
- ||based_modelid == "RT-AC68U" || based_modelid == "RT-AC68R" || based_modelid == "RT-AC68P" || based_modelid == "RT-AC68W"
+ || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC68R" || based_modelid == "RT-AC68P" || based_modelid == "RT-AC68W"
  || based_modelid == "RT-AC66U" || based_modelid == "RT-AC66R"
  || based_modelid == "RT-AC56U"
  || based_modelid == "RT-N66U" || based_modelid == "RT-N66R" || based_modelid == "RT-N66W"){
@@ -468,37 +473,6 @@ var realip_state = "";
 var realip_ip = "";
 var external_ip = 0;
 
-function getBrowser_info(){
-	var browser = {};
-        var temp = navigator.userAgent.toUpperCase();
-
-	if(temp.match(/RV:([\d.]+)\) LIKE GECKO/)){	     // for IE 11
-		browser.ie = temp.match(/RV:([\d.]+)\) LIKE GECKO/)[1];
-	}
-	else if(temp.match(/MSIE ([\d.]+)/)){	   // for IE 10 or older
-		browser.ie = temp.match(/MSIE ([\d.]+)/)[1];
-	}
-	else if(temp.match(/CHROME\/([\d.]+)/)){
-		if(temp.match(/OPR\/([\d.]+)/)){		// for Opera 15 or newer
-			browser.opera = temp.match(/OPR\/([\d.]+)/)[1];
-		}
-		else{
-			browser.chrome = temp.match(/CHROME\/([\d.]+)/)[1];	     // for Google Chrome
-		}
-	}
-	else if(temp.match(/FIREFOX\/([\d.]+)/)){
-		browser.firefox = temp.match(/FIREFOX\/([\d.]+)/)[1];
-	}
-	else if(temp.match(/OPERA\/([\d.]+)/)){	 // for Opera 12 or older
-		browser.opera = temp.match(/OPERA\/([\d.]+)/)[1];
-	}
-	else if(temp.match(/VERSION\/([\d.]+).*SAFARI/)){	       // for Safari
-		browser.safari = temp.match(/VERSION\/([\d.]+).*SAFARI/)[1];
-	}
-
-	return browser;
-}
-
 var banner_code, menu_code="", menu1_code="", menu2_code="", tab_code="", footer_code;
 function show_banner(L3){// L3 = The third Level of Menu
 	var banner_code = "";
@@ -577,6 +551,16 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<input type="hidden" name="rc_service" value="stop_dsl_diag">\n';
 	banner_code +='<input type="hidden" name="action_wait" value="">\n';	
 	banner_code +='</form>\n';
+
+	//banner_code +='<form method="post" name="wan_form" action="/start_apply.htm" target="hidden_frame">\n';
+	//banner_code +='<input type="hidden" name="next_page" value="index.asp">\n';
+	//banner_code +='<input type="hidden" name="current_page" value="index.asp">\n';
+	//banner_code +='<input type="hidden" name="action_mode" value="apply">\n';
+	//banner_code +='<input type="hidden" name="action_script" value="restart_wan_if">\n';
+	//banner_code +='<input type="hidden" name="action_wait" value="5">\n';    
+	//banner_code +='<input type="hidden" name="wan_unit" value="<% nvram_get("wan_unit"); %>">\n';    
+	//banner_code +='<input type="hidden" name="wan_pppoe_username" value="<% nvram_get("wan_pppoe_username"); %>">\n';    
+	//banner_code +='</form>\n'; 
 	
 	if(bwdpi_support){
 		banner_code +='<form method="post" name="qosDisableForm" action="/start_apply.htm" target="hidden_frame">\n';
@@ -588,15 +572,6 @@ function show_banner(L3){// L3 = The third Level of Menu
 		banner_code +='<input type="hidden" name="qos_enable" value="0">\n';
 		banner_code +='</form>\n';
 	}	
-
-	/*IE 8/9/10 support notice*/
-	banner_code += '<div id="ie_notice" style="display:none;color:#FFF;padding:10px 50px 0px;font-size:16px;"><div style="width:950px;margin:0 auto;background:#465155;padding:20px;border:solid 1px #81E2FF;">';
-	banner_code += '<div><#IE_notice1#></div>';
-	banner_code += '<div><#IE_notice2#></div>';
-	banner_code += '<div><#IE_notice3#></div>';
-	banner_code += '<div><#IE_notice4#></div>';
-	banner_code += '</div></div>';
-	/*IE 8 support notice*/
 
 	banner_code +='<div id="banner1" class="banner1" align="center"><img src="images/New_ui/asustitle.png" width="218" height="54" align="left">\n';
 	banner_code +='<div style="margin-top:13px;margin-left:-90px;*margin-top:0px;*margin-left:0px;" align="center"><span id="modelName_top" onclick="this.focus();" class="modelName_top"><#Web_Title2#></span></div>';
@@ -634,7 +609,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 
 	//APP Link
 	if(app_support){
-		banner_code +='<td width="30"><div id="app_icon" style="cursor:pointer;padding-right:10px;">App</div>';
+		banner_code +='<td width="30"><div id="app_icon" style="cursor:pointer;padding-right:10px;font-size:12px;font-weight:bold;color:#07C503">App</div>';
 		banner_code +='<div id="app_link_table" style="display:none;width:325px;height:360px;position:absolute;background-color:rgb(35, 38, 41);z-index:10;margin-top:13px;margin-left:-170px;;border-radius:5px;box-shadow:3px 3px 4px #000;opacity:.95">';
 		banner_code +='<div style="padding:10px;">';
 		banner_code +='<div id="cancel_app" style="width:20px;height:20px;background:url(\'images/button-close.png\') no-repeat;position:absolute;right:10px;"></div>';
@@ -753,13 +728,6 @@ function show_banner(L3){// L3 = The third Level of Menu
 	}
 
 	document.getElementById("TopBanner").innerHTML = banner_code;
-
-	var browser = getBrowser_info();
-	if(browser.ie){
-		if(browser.ie.indexOf('8') != "-1" || browser.ie.indexOf('9') != "-1" || browser.ie.indexOf('10') != "-1"){
-			document.getElementById("ie_notice").style.display = "block";			
-		}
-	}
 	
 	show_loading_obj();
 	show_top_status();
@@ -970,6 +938,14 @@ else{
 		menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "<#Menu_TrafficManager#>", "<#Parental_Control#>", "<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
 		menuL1_link = new Array("", "index.asp", "Guest_network.asp", "QoS_EZQoS.asp", "ParentalControl.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
 	}	
+}
+
+if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
+	tabtitle[11] = new Array("", "<#menu5_3_2#>", "<#traffic_monitor#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "Spectrum");
+	tablink[11] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "AdaptiveQoS_ROG.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "Bandwidth_Limiter.asp");
+	
+	menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, "<#Menu_TrafficManager#>", "<#Menu_usb_application#>", AiCloud_Title_add_br, "<#menu5#>");
+	menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "QoS_EZQoS.asp", "APP_Installation.asp", "cloud_main.asp", "");
 }
 
 var calculate_height = menuL1_link.length + menuL2_link.length - 1;
@@ -1406,6 +1382,13 @@ Array.prototype.del = function(n){
 
 var current_url = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
 function show_menu(){
+	var autodet_state = '<% nvram_get("autodet_state"); %>';
+	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';	
+	var wan_proto = '<% nvram_get("wan0_proto"); %>';	
+	var wan_pppoe_username = '<% nvram_get("wan0_pppoe_username"); %>';
+	var cht_pppoe = wan_pppoe_username.split("@");
+	is_CHT_pppoe = (cht_pppoe[1] == "hinet.net") ? true : false;
+	is_CHT_pppoe_static = (cht_pppoe[1] == "ip.hinet.net") ? true : false;
 
 	var L1 = 0, L2 = 0, L3 = 0;
 	if(current_url == "") current_url = "index.asp";
@@ -1451,6 +1434,10 @@ function show_menu(){
 			else{
 				L3 = 1;		
 			}
+			
+			if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
+				L3 = 1;
+			}	
 		}
 		else if(current_url.indexOf("AdaptiveQoS_ROG") == 0){
 			L1 = traffic_L1_dx; 
@@ -1471,7 +1458,11 @@ function show_menu(){
 					L3 = 4;
 			}
 			else{
-				L3 = 2;				
+				L3 = 2;
+			}
+			
+			if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
+				L3 = 2;
 			}
 			if(wtfast_support){
 				L3++;
@@ -1889,13 +1880,52 @@ function show_menu(){
 	}else
 		notification.send_debug_log = 0;
 
-	if( notification.acpw || notification.upgrade || notification.wifi_2g || notification.wifi_5g || notification.ftp || notification.samba || notification.loss_sync || notification.experience_FB || notification.notif_hint || notification.send_debug_log || notification.mobile_traffic || notification.sim_record || notification.external_ip){
+	var browser = getBrowser_info();
+	if(browser.ie){
+		if(browser.ie.indexOf('8') != "-1" || browser.ie.indexOf('9') != "-1" || browser.ie.indexOf('10') != "-1"){
+			notification.ie_legacy = 1;
+			notification.array[16] = 'noti_ie_legacy';
+			notification.desc[16] = '<#IE_notice1#><#IE_notice2#><#IE_notice3#><#IE_notice4#>';
+			notification.action_desc[16] = "";
+			notification.clickCallBack[16] = "";
+		}
+	}
+
+	/*if(is_TW_sku && wan_proto == "pppoe" && is_CHT_pppoe && !is_CHT_pppoe_static){
+		notification.pppoe_tw_static = 1;
+		notification.array[17] = 'noti_pppoe_tw_static';
+		notification.desc[17] = '中華電信撥號連線。是否更改成固定IP撥號連線?<br>須與ISP確認是否有申請此服務';
+		notification.action_desc[17] = '改成固定IP撥號連線(PPPoE)';
+		notification.clickCallBack[17] = "change_cht_pppoe_static();";					
+	}
+	else if(is_TW_sku && autodet_state == 2 && autodet_auxstate == 6 && !is_CHT_pppoe_static){*/
+	if(is_TW_sku && autodet_state == 2 && autodet_auxstate == 6 && wan_proto != "pppoe"){	
+		notification.pppoe_tw = 1;
+		notification.array[15] = 'noti_pppoe_tw';
+		notification.desc[15] = '<#CHT_ppp_notice_1#>';
+		notification.action_desc[15] = '<#CHT_ppp_notice_2#>';
+		notification.clickCallBack[15] = "location.href = 'Advanced_WAN_Content.asp?af=wan_proto'";			
+	}
+	
+	if( notification.acpw || notification.upgrade || notification.wifi_2g || notification.wifi_5g || notification.ftp || notification.samba || notification.loss_sync || notification.experience_FB || notification.notif_hint || notification.send_debug_log || notification.mobile_traffic || notification.sim_record || notification.external_ip || notification.pppoe_tw || notification.pppoe_tw_static || notification.ie_legacy){
 		notification.stat = "on";
 		notification.flash = "on";
 		notification.run();
 	}
 	/*--notification end--*/
 }
+
+/*
+//for changing CHT PPPoE to PPPoE staitc IP
+function change_cht_pppoe_static(){
+	var wan_pppoe_username = '<% nvram_get("wan_pppoe_username"); %>';
+	var cht_pppoe = wan_pppoe_username.split("@");
+	var temp = "";
+	temp = cht_pppoe[0] + "@ip." + cht_pppoe[1];
+	
+	document.wan_form.wan_pppoe_username.value = temp;
+	document.wan_form.submit();
+}*/
 
 function get_helplink(){
 	var href_lang = get_supportsite_lang();
@@ -2723,100 +2753,7 @@ function MicrosoftEventHandler_KeyDown(){
 
 // display selected language in language bar, Viz modified at 2013/03/22
 function show_selected_language(){
-	switch(document.getElementById("preferred_lang").value){
-		case 'EN':{
-			document.getElementById('selected_lang').innerHTML = "English";
-			break;
-		}
-		case 'CN':{
-			document.getElementById('selected_lang').innerHTML = "简体中文";
-			break;
-		}	
-		case 'TW':{
-			document.getElementById('selected_lang').innerHTML = "繁體中文";
-			break;
-		}
-		case 'BR':{
-			document.getElementById('selected_lang').innerHTML = "Portuguese(Brazil)&nbsp&nbsp";
-			break;
-		}
-		case 'CZ':{
-			document.getElementById('selected_lang').innerHTML = "Česky";
-			break;
-		}
-		case 'DA':{
-			document.getElementById('selected_lang').innerHTML = "Dansk";
-			break;
-		}	
-		case 'DE':{
-			document.getElementById('selected_lang').innerHTML = "Deutsch";
-			break;
-		}
-		case 'ES':{
-			document.getElementById('selected_lang').innerHTML = "Español";
-			break;
-		}
-		case 'FI':{
-			document.getElementById('selected_lang').innerHTML = "Suomi";
-			break;
-		}
-		case 'FR':{
-			document.getElementById('selected_lang').innerHTML = "Français";
-			break;
-		}
-		case 'HU':{
-			document.getElementById('selected_lang').innerHTML = "Hungarian";
-			break;
-		}
-		case 'IT':{
-			document.getElementById('selected_lang').innerHTML = "Italiano";
-			break;
-		}		
-		case 'JP':{
-			document.getElementById('selected_lang').innerHTML = "日本語";
-			break;
-		}
-		case 'KR':{
-			document.getElementById('selected_lang').innerHTML = "한국어";
-                        break;
-		}
-		case 'MS':{
-			document.getElementById('selected_lang').innerHTML = "Malay";
-			break;
-		}
-		case 'NO':{
-			document.getElementById('selected_lang').innerHTML = "Norsk";
-			break;
-		}
-		case 'PL':{
-			document.getElementById('selected_lang').innerHTML = "Polski";
-			break;
-		}
-		case 'RO':{
-			document.getElementById('selected_lang').innerHTML = "Romanian";
-			break;
-		}
-		case 'RU':{
-			document.getElementById('selected_lang').innerHTML = "Pусский";
-			break;
-		}
-		case 'SV':{
-			document.getElementById('selected_lang').innerHTML = "Svensk";
-			break;
-		}		
-		case 'TH':{
-			document.getElementById('selected_lang').innerHTML = "ไทย";
-			break;
-		}			
-		case 'TR':{
-			document.getElementById('selected_lang').innerHTML = "Türkçe";
-			break;
-		}	
-		case 'UK':{
-			document.getElementById('selected_lang').innerHTML = "Український";
-			break;
-		}		
-	}
+	document.getElementById('selected_lang').innerHTML = "<#selected_language#>";
 }
 
 
@@ -3159,9 +3096,7 @@ function inputCtrl(obj, flag){
 			obj.style.backgroundImage = "url(/images/New_ui/inputbg_disable.png)";
 	}
 	else{
-		obj.disabled = false;
-		if(obj.type != "select-one")	
-			obj.style.backgroundColor = "#FFF";
+		obj.disabled = false;		
 		if(obj.type == "radio" || obj.type == "checkbox")
 			obj.style.backgroundColor = "#475A5F";
 		if(obj.type == "text" || obj.type == "password")
@@ -3186,6 +3121,7 @@ function inputCtrl(obj, flag){
 	|| current_url.indexOf("router.asp") == 0
 	|| current_url.indexOf("Advanced_MobileBroadband_Content") == 0
 	|| current_url.indexOf("Advanced_Feedback") == 0
+	|| current_url.indexOf("Advanced_FirmwareUpgrade_Content.asp") == 0
 	){
 		if(obj.type == "checkbox")
 			return true;
@@ -3398,6 +3334,10 @@ function refreshStatus(xhr){
 		document.getElementById("bwdpi_status").onclick = function(){openHint(24,9);}
 		document.getElementById("bwdpi_status").onmouseover = function(){overHint("A");}
 		document.getElementById("bwdpi_status").onmouseout = function(){nd();}
+		
+		if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
+			document.getElementById("bwdpi_status").style.display = "none";
+		}	
 	}
 
 	// internet
@@ -3493,7 +3433,7 @@ function refreshStatus(xhr){
 		}	
 	}
 	else if(sw_mode == 3){
-		if(dhcp_override_support){
+		if(dhcp_override_support && (location.pathname == "/" || location.pathname == "/index.asp")){
 			if(dnsqmode == "1")
 				document.getElementById('single_wan').className = "single_wan_connected";
 			else
@@ -3879,7 +3819,7 @@ function refreshStatus(xhr){
 	}
 	else if(notification.stat == "on" && !notification.mobile_traffic && !notification.sim_record && !notification.external_ip && !notification.upgrade && !notification.wifi_2g && 
 			!notification.wifi_5g && !notification.ftp && !notification.samba && !notification.loss_sync && !notification.experience_FB && !notification.notif_hint && !notification.mobile_traffic && 
-			!notification.send_debug_log){
+			!notification.send_debug_log && !notification.pppoe_tw && !notification.pppoe_tw_static && !notification.ie_legacy){
 		cookie.unset("notification_history");
 		clearInterval(notification.flashTimer);
 		document.getElementById("notification_status").className = "notification_off";
@@ -3918,12 +3858,13 @@ var notification = {
 	redirectFeedbackInfo:function(){location.href = 'Feedback_Info.asp';},
 	redirectHint:function(){location.href = location.href;},
 	clickCallBack: [],
+	pppoe_tw: 0,
+	ie_legacy: 0,
 	notiClick: function(){
 		// stop flashing after the event is checked.
-		cookie.set("notification_history", [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint, notification.mobile_traffic, notification.send_debug_log, notification.sim_record, notification.external_ip].join(), 1000);
+		cookie.set("notification_history", [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint, notification.mobile_traffic, notification.send_debug_log, notification.sim_record, notification.external_ip, notification.pppoe_tw, notification.pppoe_tw_static, notification.ie_legacy].join(), 1000);
 		clearInterval(notification.flashTimer);
 		document.getElementById("notification_status").className = "notification_on";
-
 		if(notification.clicking == 0){
 			var txt = '<div id="notiDiv"><table width="100%">'
 
@@ -3976,7 +3917,7 @@ var notification = {
 			tarObj1.className = "notification_on1";
 		}
 
-		if(this.flash == "on" && cookie.get("notification_history") != [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint, notification.mobile_traffic, notification.send_debug_log, notification.sim_record, notification.external_ip].join()){
+		if(this.flash == "on" && cookie.get("notification_history") != [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint, notification.mobile_traffic, notification.send_debug_log, notification.sim_record, notification.external_ip, notification.pppoe_tw, notification.pppoe_tw_static, notification.ie_legacy].join()){
 			notification.flashTimer = setInterval(function(){
 				tarObj.className = (tarObj.className == "notification_on") ? "notification_off" : "notification_on";
 			}, 1000);
@@ -4243,6 +4184,37 @@ var isNewFW = function(FWVer){
 	}
 	
 	return false;
+}
+
+function getBrowser_info(){
+	var browser = {};
+        var temp = navigator.userAgent.toUpperCase();
+
+	if(temp.match(/RV:([\d.]+)\) LIKE GECKO/)){	     // for IE 11
+		browser.ie = temp.match(/RV:([\d.]+)\) LIKE GECKO/)[1];
+	}
+	else if(temp.match(/MSIE ([\d.]+)/)){	   // for IE 10 or older
+		browser.ie = temp.match(/MSIE ([\d.]+)/)[1];
+	}
+	else if(temp.match(/CHROME\/([\d.]+)/)){
+		if(temp.match(/OPR\/([\d.]+)/)){		// for Opera 15 or newer
+			browser.opera = temp.match(/OPR\/([\d.]+)/)[1];
+		}
+		else{
+			browser.chrome = temp.match(/CHROME\/([\d.]+)/)[1];	     // for Google Chrome
+		}
+	}
+	else if(temp.match(/FIREFOX\/([\d.]+)/)){
+		browser.firefox = temp.match(/FIREFOX\/([\d.]+)/)[1];
+	}
+	else if(temp.match(/OPERA\/([\d.]+)/)){	 // for Opera 12 or older
+		browser.opera = temp.match(/OPERA\/([\d.]+)/)[1];
+	}
+	else if(temp.match(/VERSION\/([\d.]+).*SAFARI/)){	       // for Safari
+		browser.safari = temp.match(/VERSION\/([\d.]+).*SAFARI/)[1];
+	}
+
+	return browser;
 }
 
 function regen_band(obj_name){

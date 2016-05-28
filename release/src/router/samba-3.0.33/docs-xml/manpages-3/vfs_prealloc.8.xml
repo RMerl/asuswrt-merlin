@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_prealloc.8">
+
+<refmeta>
+	<refentrytitle>vfs_prealloc</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_prealloc</refname>
+	<refpurpose>preallocate matching files to a predetermined size</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = prealloc</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_prealloc</command> VFS module preallocates
+	files to a specified size each time a new file is created. This
+	is useful in environments where files are of a predetermined
+	size will be written to a disk subsystem where extending file
+	allocations is expensive.  </para>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+		<term>prealloc:EXT = BYTES</term>
+		<listitem>
+		<para>Preallocate all files with the extension EXT to
+		the size specified by BYTES.
+		</para>
+
+		<para>The following suffixes may be applied to BYTES:</para>
+		<itemizedlist>
+		<listitem><para><command>K</command> - BYTES is a number of kilobytes</para></listitem>
+		<listitem><para><command>M</command> - BYTES is a number of megabytes</para></listitem>
+		<listitem><para><command>G</command> - BYTES is a number of gigabytes</para></listitem>
+		</itemizedlist>
+
+		</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>A process writes TIFF files to a Samba share, and the
+	is known these files will almost always be around 4 megabytes
+	(4194304 bytes): </para>
+
+<programlisting>
+        <smbconfsection name="[frames]"/>
+	<smbconfoption name="path">/data/frames</smbconfoption>
+	<smbconfoption name="vfs objects">prealloc</smbconfoption>
+	<smbconfoption name="prealloc:tiff">4M</smbconfoption>
+</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>CAVEATS</title>
+	<para><command>vfs_prealloc</command> is not supported on all
+	platforms and filesystems. Currently only XFS filesystems on
+	Linux and IRIX are supported.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.0.25 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

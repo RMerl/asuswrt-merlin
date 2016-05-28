@@ -1,0 +1,46 @@
+<!ELEMENT samba:crypt (#PCDATA)* >
+<!ATTLIST samba:crypt type CDATA #REQUIRED >
+
+<!ELEMENT samba:password (samba:crypt*) >
+<!ATTLIST samba:password last_set CDATA #IMPLIED 
+		 				 must_change CDATA #IMPLIED 
+				         can_change CDATA #IMPLIED>
+
+<!ELEMENT samba:group (#PCDATA)* >
+<!ATTLIST samba:group sid CDATA #REQUIRED 
+				gid CDATA #IMPLIED >
+	
+<!ELEMENT samba:domain (#PCDATA)* >
+<!ELEMENT samba:fullname (#PCDATA)* >
+<!ELEMENT samba:nt_username (#PCDATA)* >
+<!ELEMENT samba:logon_script (#PCDATA)* >
+<!ELEMENT samba:profile_path (#PCDATA)* >
+<!ELEMENT samba:logon_time (#PCDATA)* >
+<!ELEMENT samba:logoff_time (#PCDATA)* >
+<!ELEMENT samba:kickoff_time (#PCDATA)* >
+<!ELEMENT samba:logon_divs (#PCDATA)* >
+<!ELEMENT samba:hours_len (#PCDATA)* >
+<!ELEMENT samba:unknown_3 (#PCDATA)* >
+<!ELEMENT samba:unknown_5 (#PCDATA)* >
+<!ELEMENT samba:unknown_6 (#PCDATA)* >
+<!ELEMENT samba:homedir (#PCDATA)* >
+<!ELEMENT samba:unknown_str (#PCDATA)* >
+<!ELEMENT samba:dir_drive (#PCDATA)* >
+<!ELEMENT samba:munged_dial (#PCDATA)* >
+<!ELEMENT samba:acct_desc (#PCDATA)* >
+<!ELEMENT samba:acct_ctrl (#PCDATA)* >
+<!ELEMENT samba:workstations (#PCDATA)* >
+
+<!ELEMENT samba:user ( samba:group?, samba:domain?, samba:nt_username?, samba:fullname?, samba:homedir?, samba:dir_drive?, samba:logon_script?, samba:profile_path?, samba:password?, samba:acct_ctrl?,samba:unknown_3?, samba:logon_divs?, samba:hours_len?, samba:logon_time?, samba:logoff_time?, samba:kickoff_time?,  samba:unknown_5?, samba:unknown_6?, samba:unknown_str?, samba:munged_dial?, samba:acct_desc?, samba:workstations?  ) >
+
+<!ATTLIST samba:user sid CDATA #REQUIRED 
+	uid CDATA #IMPLIED 
+	name CDATA #REQUIRED>
+
+<!ELEMENT samba:users (samba:user*) >
+
+<!ELEMENT samba (samba:users?) >
+
+<!ATTLIST samba
+  xmlns CDATA #FIXED 'http://www.samba.org/samba/DTD/passdb'>
+

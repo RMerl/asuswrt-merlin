@@ -711,7 +711,13 @@ function submitForm(){
 
 	remove_red_field();
 	if(validForm() == true){
+		if(parent.flag_manual == 1){
+			document.form.action_wait.value = 0;
+		}
+		else{
 			simple_showLoading();
+		}
+			
 			document.form.wan_dhcpenable_x[0].disabled = 0;
 			document.form.wan_dhcpenable_x[1].disabled = 0;
 			document.form.wan_ipaddr_x.disabled = 0;

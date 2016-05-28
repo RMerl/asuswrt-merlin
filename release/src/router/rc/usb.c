@@ -2347,7 +2347,6 @@ void start_dms(void)
 	int dircount = 0, typecount = 0, sharecount = 0;
 	char dirlist[32][1024];
 	unsigned char typelist[32];
-	int default_dms_dir_used = 0;
 	unsigned char type = 0;
 	char types[5];
 	int index = 4;
@@ -2395,10 +2394,6 @@ void start_dms(void)
 				while ((b = strsep(&nvp, "<")) != NULL) {
 					if (!strlen(b)) continue;
 
-					if (!default_dms_dir_used &&
-						!strcmp(b, nvram_default_get("dms_dir")))
-						default_dms_dir_used = 1;
-
 					if (check_if_dir_exist(b))
 						strncpy(dirlist[dircount++], b, 1024);
 				}
@@ -2440,29 +2435,13 @@ void start_dms(void)
 			{
 				strcpy(dirlist[dircount++], nvram_default_get("dms_dir"));
 				typelist[typecount++] = ALL_MEDIA;
-				default_dms_dir_used = 1;
 			}
 
 			memset(dbdir, 0, sizeof(dbdir));
-			if (default_dms_dir_used)
-				find_dms_dbdir(dbdir);
-			else {
-				for (i = 0; i < dircount; i++)
-				{
-					if (!strcmp(dirlist[i], nvram_default_get("dms_dir")))
-						continue;
-
-					if (dirlist[i][strlen(dirlist[i])-1]=='/')
-						sprintf(dbdir, "%s.minidlna", dirlist[i]);
-					else
-						sprintf(dbdir, "%s/.minidlna", dirlist[i]);
-
-					break;
-				}
-			}
+			find_dms_dbdir(dbdir);
 
 			if (strlen(dbdir))
-			mkdir_if_none(dbdir);
+				mkdir_if_none(dbdir);
 			if (!check_if_dir_exist(dbdir))
 			{
 				strcpy(dbdir, nvram_default_get("dms_dbdir"));
@@ -2592,14 +2571,15 @@ void force_stop_dms(void)
 	killall_tk(MEDIA_SERVER_APP);
 
 	if (!check_if_file_exist("/usr/sbin/minidlna"))
-	eval("rm", "-rf", nvram_safe_get("dms_dbdir"));
+	eval("rm", "-rf", nvram_safe_get("dms_dbcwd"));
 }
 
 void
 write_mt_daapd_conf(char *servername)
 {
 	FILE *fp;
-	char *dmsdir;
+	char *dmsdir, *ptr;
+	char dbdir[128], dbdir_t[128];
 
 	if (check_if_file_exist("/etc/mt-daapd.conf"))
 		return;
@@ -2610,13 +2590,21 @@ write_mt_daapd_conf(char *servername)
 		return;
 
 	dmsdir = nvram_safe_get("dms_dir");
-	if(!check_if_dir_exist(dmsdir))
+	if (!check_if_dir_exist(dmsdir))
 		dmsdir = nvram_default_get("dms_dir");
+
 #if 1
+	memset(dbdir, 0, sizeof(dbdir));
+	if (find_dms_dbdir_candidate(dbdir_t))
+		sprintf(dbdir, "%s/.mt-daapd", dbdir_t);
+
+	ptr = strlen(dbdir) ? dbdir : "/var/cache/mt-daapd";
+	nvram_set("daapd_dbdir", ptr);
+
 	fprintf(fp, "web_root /etc/web\n");
 	fprintf(fp, "port 3689\n");
 	fprintf(fp, "admin_pw %s\n", nvram_safe_get("http_passwd"));
-	fprintf(fp, "db_dir /var/cache/mt-daapd\n");
+	fprintf(fp, "db_dir %s\n", ptr);
 	fprintf(fp, "mp3_dir %s\n", dmsdir);
 	fprintf(fp, "servername %s\n", servername);
 	fprintf(fp, "runas %s\n", nvram_safe_get("http_username"));
@@ -2668,6 +2656,13 @@ start_mt_daapd()
 		servername[0] = '\0';
 	if (strlen(servername)==0) strncpy(servername, get_productid(), sizeof(servername));
 		write_mt_daapd_conf(servername);
+
+	if (pids("mt-daapd")) {
+		killall_tk("mt-daapd");
+
+		if (check_if_dir_exist(nvram_safe_get("daapd_dbdir")))
+			eval("rm", "-rf", nvram_safe_get("daapd_dbdir"));
+	}
 
 #if !(defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS))
 	if (is_routing_enabled())
@@ -2724,6 +2719,9 @@ stop_mt_daapd()
 		killall_tk("mt-daapd");
 
 	unlink("/etc/mt-daapd.conf");
+
+	if (check_if_dir_exist(nvram_safe_get("daapd_dbdir")))
+		eval("rm", "-rf", nvram_safe_get("daapd_dbdir"));
 
 	logmessage("iTunes", "daemon is stopped");
 }

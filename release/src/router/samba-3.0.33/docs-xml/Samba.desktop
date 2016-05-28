@@ -1,0 +1,16 @@
+[Desktop Entry]
+Name=Samba
+Name[cz]=Samba
+Name[de]=Samba
+Name[nl]=Samba
+Name[sk]=Samba
+Comment=The file and print service to SMB/ CIFS clients
+Comment[cz]=Souborové a tiskové služby pre klienty SMB/ CIFS
+Comment[de]=SMB/ CIFS Datei- und Druck-Server
+Comment[nl]=SMB/CIFS Bestand en Print-Server
+Comment[pl]=Usługa plików i drukarek dla klientów SMB/CIFS
+Comment[sk]=Súborové a tlačové služby pre klientov SMB/ CIFS
+DocPath=/usr/share/doc/packages/samba/htmldocs/index.html
+X-DOC-SearchMethod=htdig
+X-DOC-SearchEnabledDefault=true
+X-DOC-Weight=-5000

@@ -32,7 +32,6 @@ static void usage(void)
 	exit(-1);
 }
 
-
 int accept_msg(const struct sockaddr_nl *who,
 	       struct nlmsghdr *n, void *arg)
 {
@@ -55,6 +54,13 @@ int accept_msg(const struct sockaddr_nl *who,
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWNEIGH || n->nlmsg_type == RTM_DELNEIGH) {
+		if (preferred_family) {
+			struct ndmsg *r = NLMSG_DATA(n);
+
+			if (r->ndm_family != preferred_family)
+				return 0;
+		}
+
 		print_neigh(who, n, arg);
 		return 0;
 	}
@@ -94,6 +100,7 @@ int do_ipmonitor(int argc, char **argv)
 	int laddr=0;
 	int lroute=0;
 	int lprefix=0;
+	int lneigh=0;
 
 	rtnl_close(&rth);
 	ipaddr_reset_filter(1);
@@ -115,6 +122,9 @@ int do_ipmonitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "prefix") == 0) {
 			lprefix=1;
+			groups = 0;
+		} else if (matches(*argv, "neigh") == 0) {
+			lneigh = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
@@ -145,7 +155,9 @@ int do_ipmonitor(int argc, char **argv)
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= RTMGRP_IPV6_PREFIX;
 	}
-
+	if (lneigh) {
+		groups |= RTMGRP_NEIGH;
+	}
 	if (file) {
 		FILE *fp;
 		fp = fopen(file, "r");

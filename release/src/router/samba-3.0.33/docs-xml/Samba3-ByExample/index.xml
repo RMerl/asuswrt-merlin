@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+
+<book id="S3bE"
+	xmlns:xi="http://www.w3.org/2003/XInclude">
+	<title>Samba-3 by Example</title>
+	<subtitle>Practical Exercises in Successful Samba Deployment</subtitle>
+	<bookinfo>
+		<authorgroup>
+			<author>&person.jht;</author>
+		</authorgroup>
+		<pubdate>July, 2006</pubdate>
+	</bookinfo>
+
+	<?latex \clearpage ?>
+	<?latex \setcounter{page}{7} ?>
+
+	<xi:include href="SBE-inside-cover.xml"/>
+	<xi:include href="SBE-acknowledgements.xml"/>
+	<?latex \cleardoublepage ?>
+
+	<toc/>
+	<?latex \cleardoublepage ?>
+	<?latex \listofexamples ?>
+	<?latex \cleardoublepage ?>
+	<lot/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-foreword.xml"/>
+	<xi:include href="SBE-preface.xml"/>
+<!-- Chapters -->
+
+<part id="ExNetworks">
+<title>Example Network Configurations</title>
+<partintro>
+<title>Example Network Configurations</title>
+
+<?latex \pagenumbering{arabic} ?>
+
+<para>
+This section of <emphasis>Samba-3 by Example</emphasis> provides example network
+configurations that can be copied, or modified as needed, and deployed as-is.
+The contents have been marginally updated to reflect changes made in Samba=3.0.23.
+</para>
+
+<para>
+Best use can be made of this book by finding in this section the network design and
+layout that best approximates your estimated needs. It is recommended that you will
+implement the design pattern exactly as it appears, then after the installation has
+been proven to work make any changes or modifications needed at your site.
+</para>
+
+<para>
+The examples have been tested with Red Hat Fedora Core 2, Novell SUSE Linux Professional
+9.3 and Novell SUSE Linux Enterprise Server (SLES) 9. The principals of implementation
+apply to all Linux and UNIX systems in general, though some system files and tools will 
+be different and the location of some Samba file locations will be different since these 
+are determined by the person who packages Samba for each platform.
+</para>
+
+<para>
+If you are deploying Samba is a mission-critical environment, or if you simply want
+to save time and get your Samba network operational with minimal fuss, there is the
+option to purchase commercial, professional, Samba support. Information regarding
+commercial support options may be obtained from the commercial
+<ulink url="http://www.samba.org/samba/support/">support</ulink> pages from 
+the Samba web site.
+</para>
+
+</partintro>
+
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-SimpleOfficeServer.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-TheSmallOffice.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-SecureOfficeServer.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-500UserNetwork.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-MakingHappyUsers.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-2000UserNetwork.xml"/>
+	<?latex \cleardoublepage ?>
+
+</part>
+
+<part id="DMSMig">
+<title>Domain Members, Updating Samba and Migration</title>
+<partintro>
+<title>Domain Members, Updating Samba and Migration</title>
+
+<para>
+This section <emphasis>Samba-3 by Example</emphasis> covers two main topics: How to add
+Samba Domain Member Servers and Samba Domain Member Clients to a Samba domain, the other
+subject is that of how to migrate from and NT4 Domain, a NetWare server, or from an earlier
+Samba version to environments that use the most recent Samba-3 release. 
+</para>
+
+<para>
+Those who are making use of the chapter on Adding UNIX clients and servers running Samba
+to a Samba or a Windows networking domain may also benefit by referring to the book
+<emphasis>The Official Samba-3 HOWTO and Reference Guide.</emphasis>
+</para>
+
+</partintro>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-AddingUNIXClients.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-UpgradingSamba.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-MigrateNT4Samba3.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-MigrateNW4Samba3.xml"/>
+	<?latex \cleardoublepage ?>
+</part>
+
+<part id="RefSection">
+<title>Reference Section</title>
+<partintro>
+<title>Reference Section</title>
+
+<para>
+This section <emphasis>Samba-3 by Example</emphasis> provides important reference material
+that may help you to solve network performance issues, to answer some of the critiques
+published regarding Samba, or just to gain a more broad understanding of how Samba can
+play in a Windows networking world.
+</para>
+
+</partintro>
+
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-KerberosFastStart.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-DomainAppsSupport.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-HighAvailability.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-Support.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-Appendix1.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="SBE-Appendix2.xml"/>
+	<?latex \cleardoublepage ?>
+	<xi:include href="gpl-3.0.xml"/>
+	<?latex \cleardoublepage ?>
+
+</part>
+
+	<xi:include href="SBE-glossary.xml"/>
+	<?latex \cleardoublepage ?>
+	<index/>
+
+</book>

@@ -1,1 +1,1 @@
-﻿iAmAlive({httpd:"OK"})
+﻿iAmAlive(<% httpd_check(); %>)

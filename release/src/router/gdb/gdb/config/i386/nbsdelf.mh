@@ -1,5 +1,0 @@
-# Host: NetBSD/i386 ELF
-NATDEPFILES= fork-child.o inf-ptrace.o \
-	nbsd-nat.o i386bsd-nat.o i386nbsd-nat.o bsd-kvm.o
-
-LOADLIBES= -lkvm

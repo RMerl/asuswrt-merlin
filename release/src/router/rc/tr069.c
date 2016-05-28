@@ -288,9 +288,8 @@ start_tr(void)
 	pid_t pid;
 	int ret;
 
-	if (!nvram_match("tr_enable", "1") || nvram_match("tr_acs_url", "")) {
+	if (!nvram_get_int("tr_enable") || !nvram_invmatch("tr_acs_url", ""))
 		return 0;
-	}
 
 	if (getpid() != 1) {
 		notify_rc_after_wait("start_tr");

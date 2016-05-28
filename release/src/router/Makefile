@@ -104,7 +104,6 @@ export CFLAGS += -O2
 export OPTCFLAGS = -O2
 WLCFGDIR=$(SRCBASE)/wl/config
 
-ROOT_IMG := target.squashfs
 CRAMFSDIR := cramfs
 
 export MKSYM := $(shell which $(TOP)/misc/mksym.pl)
@@ -139,6 +138,7 @@ export CONFIG_DHDAP=y
 export CFLAGS += -D__CONFIG_DHDAP__
 ifeq ($(RTCONFIG_BCM_7114),y)
 export SRCBASE_DHD := $(SRCBASE)/../dhd/src
+export SRCBASE_FW := $(SRCBASE)/../4365/src
 export SRCBASE_SYS := $(SRCBASE_DHD)
 include Makefile.fw
 else	# 7114
@@ -318,7 +318,7 @@ ifneq ($(RTCONFIG_BCMARM),y)
 obj-y += lzma-loader
 endif
 
-endif	# RTCONFIG_RALINK
+endif
 
 ifeq ($(RTCONFIG_DSL),y)
 obj-y += dsl_drv_tool
@@ -457,6 +457,9 @@ obj-$(RTCONFIG_USB_BECEEM) += wpa_supplicant-0.7.3 # for GCT WiMAX
 obj-$(RTCONFIG_USB_BECEEM) += zlib # for GCT WiMAX
 obj-$(RTCONFIG_USB_BECEEM) += gctwimax-0.0.3rc4 # for GCT WiMAX
 
+obj-$(RTCONFIG_USB_SMS_MODEM) += libiconv-1.14
+obj-$(RTCONFIG_USB_SMS_MODEM) += smspdu
+
 obj-y += libdisk
 
 obj-y += e2fsprogs
@@ -491,8 +494,8 @@ endif
 obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
 
 ifneq ($(RTCONFIG_SAMBA_MODERN),y)
-ifeq ($(RTCONFIG_BCMARM),y)
-obj-$(NEED_SAMBA3) += samba-3.0.25b
+ifeq ($(CONFIG_BCMWL5),y)
+obj-$(NEED_SAMBA3) += samba-3.0.33
 else
 obj-$(NEED_SAMBA3) += samba3
 endif
@@ -664,7 +667,6 @@ endif
 
 obj-$(RTCONFIG_STRACE) += strace
 
-obj-$(RTCONFIG_GDB) += gdb
 obj-$(RTCONFIG_LLDP) += openlldp
 
 obj-$(RTCONFIG_IPERF) += iperf
@@ -744,11 +746,7 @@ endif
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 
-ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
 MKSQUASHFS_TARGET = mksquashfs
-else
-MKSQUASHFS_TARGET = mksquashfs-lzma
-endif
 MKSQUASHFS = $(MKSQUASHFS_TARGET)
 
 ifneq ($(or $(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
@@ -856,6 +854,7 @@ else	# RTCONFIG_BCMARM
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/bcm57xx/bcm57xx.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/emf/emf.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/igs/igs.ko)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/net/dpsta/dpsta.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/connector/cn.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/scsi/scsi_wait_scan.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/usb/host/xhci-hcd.ko)
@@ -877,7 +876,12 @@ else ifeq ($(RTCONFIG_QCA),y)
 else
 ifneq ($(RTCONFIG_BCMARM),y)
 lzma-loader:
-	$(MAKE) -C $(SRCBASE)/lzma-loader CROSS_COMPILE=$(CROSS_COMPILE) LD=$(LD)
+	@[ ! -d $(SRCBASE)/lzma-loader ] || \
+		$(MAKE) -C $(SRCBASE)/lzma-loader CROSS_COMPILE=$(CROSS_COMPILE) LD=$(LD)
+
+lzma-loader-clean:
+	@[ ! -d $(SRCBASE)/lzma-loader ] || \
+		$(MAKE) -C $(SRCBASE)/lzma-loader clean
 
 lzma-loader-install: lzma-loader
 	@$(SEP)
@@ -1192,13 +1196,6 @@ ifeq ($(RTCONFIG_QTN),y)
 	install -D qtnimage/start-stateless-slave $(TARGETDIR)/rom/qtn/start-stateless-slave
 	install -D qtnimage/tweak_qcomm $(TARGETDIR)/rom/qtn/tweak_qcomm
 endif
-#ifeq ($(RTCONFIG_SPEEDTEST),y)
-	# for speedtest
-	install -D curl-7.21.7/src/.libs/curl $(TARGETDIR)/usr/sbin/curl
-	install -D curl-7.21.7/ddns-start.sh $(TARGETDIR)/usr/sbin/ddns-start.sh
-	$(STRIP) $(TARGETDIR)/usr/sbin/curl
-#endif
-
 ifeq ($(RTCONFIG_BWDPI),y)
 	install -d $(TARGETDIR)/usr/bwdpi/
 	cp -f bwdpi_bin/*.so $(TARGETDIR)/usr/lib/
@@ -1230,12 +1227,15 @@ gen_gpl_excludes_router:
 	@[ ! -d ../../../buildtools/ ] || ../../../buildtools/gpl_excludes_router.sh $(SRCBASE) "$(obj-y) $(released_dir)"
 
 image:
-ifneq ($(RTCONFIG_BCMARM),y)
+	@rm -f $(PLATFORMDIR)/target.image
+ifneq (,$(filter y,$(RTCONFIG_RALINK) $(RTCONFIG_QCA)))
 	@$(MAKE) -C $(LINUXDIR)/scripts/squashfs $(MKSQUASHFS_TARGET)
-	@$(LINUXDIR)/scripts/squashfs/$(MKSQUASHFS) $(TARGETDIR) $(PLATFORMDIR)/target.image -all-root -noappend -nopad | tee target.info
+	@$(LINUXDIR)/scripts/squashfs/$(MKSQUASHFS) $(TARGETDIR) $(PLATFORMDIR)/target.image -all-root -noappend -nopad
+else ifeq ($(RTCONFIG_BCMARM),y)
+	@$(SRCBASE)/ctools/mksquashfs $(TARGETDIR) $(PLATFORMDIR)/target.image -all-root -noappend
 else
-	+$(MAKE) -C squashfs-4.2 mksquashfs
-	squashfs-4.2/mksquashfs $(TARGETDIR) $(PLATFORMDIR)/$(ROOT_IMG) -noappend -all-root
+	@$(MAKE) -C $(LINUXDIR)/scripts/squashfs $(MKSQUASHFS_TARGET)
+	@$(LINUXDIR)/scripts/squashfs/$(MKSQUASHFS) $(TARGETDIR) $(PLATFORMDIR)/target.image -all-root -noappend
 endif
 #	Package kernel and filesystem
 #	if grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
@@ -1578,7 +1578,7 @@ wb: openssl libxml2 curl-7.21.7
 
 push_log: wb
 
-rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi)
+rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_USB_SMS_MODEM),smspdu)
 # Dig into our collection of prebuilt objects based on model and architecture.
 	@-rm -f rc/prebuild/*.o || true
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -2731,33 +2731,38 @@ ntpclient: nvram$(BCMEX) shared
 
 rstats: nvram$(BCMEX) shared
 
+
+dropbear/config.h: dropbear/config.h.in
+	cd dropbear && CPPFLAGS="-O2 -Wall $(EXTRACFLAGS) -DARGTYPE=3 -ffunction-sections -fdata-sections" \
+		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+		$(CONFIGURE) --disable-zlib --disable-pam \
+		--enable-openpty --enable-syslog --enable-shadow --enable-bundled-libtom \
+		--disable-lastlog \
+		--disable-utmp --disable-utmpx \
+		--disable-wtmp --disable-wtmpx \
+		--disable-loginfunc \
+		--disable-pututline --disable-pututxline
+
+
 dropbear: dropbear/config.h
 	@$(SEP)
-	@$(MAKE) -C dropbear PROGRAMS="dropbear dbclient dropbearkey scp" MULTI=1 $(PARALLEL_BUILD)
+	@$(MAKE) -C $@ PROGRAMS="dropbear dbclient dropbearkey scp" MULTI=1 $(PARALLEL_BUILD)
 
 dropbear-install:
 	install -D dropbear/dropbearmulti $(INSTALLDIR)/dropbear/usr/bin/dropbearmulti
 	$(STRIP) $(INSTALLDIR)/dropbear/usr/bin/dropbearmulti
 	cd $(INSTALLDIR)/dropbear/usr/bin && \
-	ln -sf dropbearmulti dropbear && \
-	ln -sf dropbearmulti dropbearconvert && \
 	ln -sf dropbearmulti dropbearkey && \
 	ln -sf dropbearmulti dbclient && \
 	ln -sf dropbearmulti ssh && \
 	ln -sf dropbearmulti scp
+	install -d $(INSTALLDIR)/dropbear/usr/sbin
+	cd $(INSTALLDIR)/dropbear/usr/sbin && \
+	ln -sf ../bin/dropbearmulti dropbear
 
 dropbear-clean:
 	-@$(MAKE) -C dropbear clean
 	@rm -f dropbear/config.h
-
-dropbear/config.h:
-	cd dropbear && CFLAGS="-O2 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
-		ac_cv_func_logout=no ac_cv_func_logwtmp=no \
-		$(CONFIGURE) --disable-zlib --enable-syslog --disable-lastlog --disable-utmp \
-		--disable-utmpx --disable-wtmp --disable-wtmpx --disable-pututline \
-		--disable-pututxline --disable-loginfunc --disable-pam --enable-openpty
-	-@$(MAKE) -C dropbear clean
 
 wtfast-configure:
 	@true
@@ -3018,6 +3023,7 @@ minidlna-configure:
 	LIBS="-ldl -lm -lpthread -lz -lexif -ljpeg -lsqlite3 -lid3tag -lFLAC -lvorbis -logg -lavformat -lavcodec -lavutil" \
 	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURC -D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
 		$(if $(RTN65U,y),-DRTN56U=1) $(if $(or $(RTN66U), $(RTAC66U)),-DRTN66U=1)" \
+		$(if $(RTAC68U,y),-I$(SRCBASE)/include) \
 	CPPFLAGS="-I$(TOP)/zlib \
 		-I$(TOP)/ffmpeg/libavutil -I$(TOP)/ffmpeg/libavcodec -I$(TOP)/ffmpeg/libavformat \
 		-I$(TOP)/ffmpeg/libswscale -I$(TOP)/ffmpeg \
@@ -3030,6 +3036,7 @@ minidlna-configure:
 		-L$(TOP)/libogg/src/.libs -L$(TOP)/libexif/libexif/.libs -L$(TOP)/flac/src/libFLAC/.libs \
 		-L$(TOP)/ffmpeg/libavutil -L$(TOP)/ffmpeg/libavcodec -L$(TOP)/ffmpeg/libavformat \
 		-L$(TOP)/libid3tag/.libs" \
+		$(if $(RTAC68U,y),-L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared) \
 	ac_cv_header_linux_netlink_h=no \
 	$(CONFIGURE)  --with-db-path=/tmp/minidlna --with-log-path=/tmp/minidlna \
 		--with-os-name=Asuswrt --with-os-version=378.xx --with-os-url="http://asuswrt.lostrealm.ca" \
@@ -3173,19 +3180,26 @@ CLM_BLOB_IMAGES := $(CLM_BLOBS:=.clm_bin)
 OBJCOPY         := $(CROSS_COMPILE)objcopy
 OBJCOPYFLAGS    := -R .reginfo -R .note -R .comment -R .mdebug -R .logstrs -R .lognums -S
 OBJCOPYBIN      := $(OBJCOPY) -O binary $(OBJCOPYFLAGS)
-CLMBASE=$(SRCBASE)/wl/clm
+CLMBASE=$(SRCBASE_FW)/wl/clm
 ifeq ($(wildcard $(CLMBASE)/private),)
 %.clm_bin: $(info "CLM In $(CLMBASE)/src/ NOT CREATING new clm_blob ...");
-	echo $(CLM_BLOB_IMAGES)
+ifeq ($(CONFIG_DHDAP),y)
+ifneq ($(wildcard $(SRCBASE_FW)/wl/clm/private),)
+	cp $(SRCBASE_FW)/wl/clm/src/$*.clm_blob $(CLMBASE)/src
+	mkdir -p $(SRCBASE_FW)/$(WLAN_GEN_BASEDIR)/wl/clm/src
+	$(foreach clmb,$(CLM_BLOBS), \
+		cp $(CLMBASE)/src/$(clmb).clm_blob $(SRCBASE_FW)/$(WLAN_GEN_BASEDIR)/wl/clm/src/$(clmb).clm_blob.GEN)
+endif
+endif
 else
 %.clm_bin: CHIPID := $(shell if [[ $(CHIP) -gt 5999 ]] ; then echo $(CHIP); else echo $$((0x$(CHIP)));  fi)
 %.clm_bin: $(CLMBASE)/types/%.clm $(CLMBASE)/private/wlc_clm_data.xml
 	@echo ClmCompiling config file $*.clm to $*.clm_bin and $*.clm_bin.  Config file content:
 	cat $(CLMBASE)/types/$*.clm
-	$(SRCBASE)/tools/build/ClmCompiler --clmapi_include_dir $(CLMBASE)/include --bcmwifi_include_dir $(SRCBASE)/shared/bcmwifi/include --config_file $(CLMBASE)/types/$*.clm $(CLMBASE)/private/wlc_clm_data.xml $(CLMBASE)/src/$*.c
+	$(SRCBASE_FW)/tools/build/ClmCompiler --clmapi_include_dir $(CLMBASE)/include --bcmwifi_include_dir $(SRCBASE_FW)/shared/bcmwifi/include --config_file $(CLMBASE)/types/$*.clm $(CLMBASE)/private/wlc_clm_data.xml $(CLMBASE)/src/$*.c
 	#@echo C compile $*.c to $*.o
 	##$(LOUD)$(CC) $(call file_cflags,$*.c) -D_FILENAME_=\"$*.c\" -c -o $*.o $*.c
-	$(LOUD)$(CC) $(call file_cflags,$*.c) -D_FILENAME_=\"$*.c\" -I$(CLMBASE)/include -I$(SRCBASE)/shared/bcmwifi/include -c -o $(CLMBASE)/src/$*.o $(CLMBASE)/src/$*.c
+	$(LOUD)$(CC) $(call file_cflags,$*.c) -D_FILENAME_=\"$*.c\" -I$(CLMBASE)/include -I$(SRCBASE_FW)/shared/bcmwifi/include -c -o $(CLMBASE)/src/$*.o $(CLMBASE)/src/$*.c
 	#@echo Linking $*.o to $*.exe
 	( \
 		echo 'SECTIONS {'; \
@@ -3205,8 +3219,13 @@ else
 	$(OBJCOPYBIN) $(CLMBASE)/src/$*.exe $(CLMBASE)/src/$*.clm_bin
 	@echo Done $*.clm_bin
 	@echo Create clm_blob .....
-	python $(SRCBASE)/tools/build/blob.py $(CLMBASE)/src/$*.clm_bin $(CLMBASE)/src/$*.clm_blob '$(CHIPID)'
+	python $(SRCBASE_FW)/tools/build/blob.py $(CLMBASE)/src/$*.clm_bin $(CLMBASE)/src/$*.clm_blob '$(CHIPID)'
 	$(RM) $(CLMBASE)/src/$*.o $(CLMBASE)/src/$*.lds $(CLMBASE)/src/$*.map $(CLMBASE)/src/$*.exe
+ifneq ($(WLAN_GEN_BASEDIR),)
+	mkdir -p $(SRCBASE_FW)/$(WLAN_GEN_BASEDIR)/wl/clm/src
+	$(foreach clmb,$(CLM_BLOBS), \
+		cp $(CLMBASE)/src/$(clmb).clm_blob $(SRCBASE_FW)/$(WLAN_GEN_BASEDIR)/wl/clm/src/$(clmb).clm_blob.GEN)
+endif
 endif
 
 clm: $(CLM_BLOB_IMAGES)
@@ -3214,15 +3233,15 @@ clm: $(CLM_BLOB_IMAGES)
 clm-install:
 	@echo clm-install INSTALLDIR = $(INSTALLDIR) ....
 	@echo clm-install TARGETDIR = $(TARGETDIR) ....
-	install -d $(TARGETDIR)/etc/brcm/clm
-	install -D $(BASEDIR)/src/wl/clm/src/*.clm_blob $(TARGETDIR)/etc/brcm/clm
+	install -d $(TARGETDIR)/brcm/clm
+	install -D $(SRCBASE_FW)/wl/clm/src/*.clm_blob $(TARGETDIR)/brcm/clm
 
 clm-clean:
 	$(foreach clmb,$(CLM_BLOBS), \
 		@echo Removing from $(CLMBASE)/src $(clmb).c $(clmb).clm_bin $(clmb).clm_blob; \
 		$(RM) $(CLMBASE)/src/$(clmb).c; \
 		$(RM) $(CLMBASE)/src/$(clmb).clm_bin; \
-		$(RM) $(TARGETDIR)/etc/brcm/clm/$(clmb).clm_blob )
+		$(RM) $(TARGETDIR)/brcm/clm/$(clmb).clm_blob )
 
 SRC_WLEXE = $(SRCBASE_SYS)/wl/exe
 SRC_PRE_WLEXE = $(SRCBASE)/wl/exe
@@ -3264,7 +3283,7 @@ endif
 .PHONY: wlexe-clean
 wlexe-clean:
 ifneq ($(wildcard $(SRC_WLEXE)/GNUmakefile),)
-	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRC_WLEXE) clean
+	$(MAKE) TARGETARCH=arm_le TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRC_WLEXE) clean
 	$(RM) wlexe/wl	
 	$(RM) wlexe/wl_server_socket
 endif
@@ -3397,7 +3416,7 @@ openvpn-configure:
 		CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections $(if $(RTCONFIG_HTTPS),-I$(TOP)/openssl/include/openssl)" \
 		LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared $(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client) $(if $(RTCONFIG_HTTPS),-L$(TOP)/openssl -lcrypto -lssl) -L$(TOP)/zlib -lz -lpthread -ldl -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 		CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
-		IPROUTE="/usr/sbin/ip" IFCONFIG="/sbin/ifconfig" \
+		IPROUTE="/usr/sbin/ip" IFCONFIG="/sbin/ifconfig" ROUTE="/sbin/route" \
 		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 			--disable-debug --enable-management --disable-small \
 			--disable-selinux --disable-socks \
@@ -3422,18 +3441,16 @@ sdparm-1.02: sdparm-1.02/Makefile
 	$(MAKE) -C $@
 
 sdparm-1.02/Makefile: sdparm-1.02/configure
-	$(MAKE) sdparm-1.02-configure
-
-sdparm-1.02/configure:
-	( cd sdparm-1.02 ; ./autogen.sh )
-
-sdparm-1.02-configure:
-	( cd sdparm-1.02 ; \
-		$(CONFIGURE) \
+	cd sdparm-1.02 && \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	LDFLAGS="$(EXTRALDFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	$(CONFIGURE) \
 		--prefix=/usr \
 		--bindir=/usr/bin \
-		--libdir=/usr/lib \
-	)
+		--libdir=/usr/lib
+
+sdparm-1.02/configure:
+	cd sdparm-1.02 && ./autogen.sh
 
 sdparm-1.02-install: sdparm-1.02
 	@[ ! -d sdparm-1.02 ] || install -D sdparm-1.02/src/sdparm $(INSTALLDIR)/sdparm-1.02/usr/bin/sdparm
@@ -3528,7 +3545,10 @@ nas$(BCMEX)$(EX7): nvram$(BCMEX)
 eapd$(BCMEX)$(EX7)-clean:
 	-@cd eapd$(BCMEX)$(EX7)/linux && make clean
 
-lighttpd-1.4.39/stamp-h1:
+lighttpd-1.4.39/Makefile:
+	cd lighttpd-1.4.39 && ./autogen.sh
+
+lighttpd-1.4.39/stamp-h1: lighttpd-1.4.39/Makefile
 ifneq ($(RTCONFIG_QTN),y)
 	cd lighttpd-1.4.39 && ./preconfigure-script touch $@
 else
@@ -3628,6 +3648,10 @@ libiconv-1.14-install: libiconv-1.14
 	install -D libiconv-1.14/lib/.libs/libiconv.so.2.5.1 $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
 	$(STRIP) $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
 	cd $(INSTALLDIR)/libiconv-1.14/usr/lib && ln -sf libiconv.so.2.5.1 libiconv.so && ln -sf libiconv.so.2.5.1 libiconv.so.2
+ifeq ($(RTCONFIG_USB_SMS_MODEM),y)
+	install -D libiconv-1.14/src/.libs/iconv_no_i18n $(INSTALLDIR)/libiconv-1.14/usr/bin/iconv
+	$(STRIP) $(INSTALLDIR)/libiconv-1.14/usr/bin/iconv
+endif
 
 libiconv-1.14-clean:
 	-@$(MAKE) -C libiconv-1.14 clean
@@ -3746,13 +3770,10 @@ webdav_client$(BCMEX)-clean:
 #add by gauss
 #add install libcurl
 curl-7.21.7: curl-7.21.7/Makefile
-	@$(MAKE) -C curl-7.21.7 $(PARALLEL_BUILD) && $(MAKE) $@-stage
+	@$(MAKE) -C $@ $(PARALLEL_BUILD) && $(MAKE) $@-stage
 
-curl-7.21.7/Makefile:
-	$(MAKE) curl-7.21.7-configure
-
-curl-7.21.7-configure:
-	( cd curl-7.21.7 ; $(CONFIGURE) CC=$(CC) \
++curl-7.21.7/Makefile: curl-7.21.7/configure
+	@cd curl-7.21.7 && $(CONFIGURE) CC=$(CC) \
 		--prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 		--enable-http --with-ssl=$(TOP)/openssl LDFLAGS="-ldl" \
 		--with-ca-bundle=/rom/ca-bundle.crt \
@@ -3763,6 +3784,11 @@ curl-7.21.7-install: curl-7.21.7
 	install -D curl-7.21.7/lib/.libs/libcurl.so.4.2.0 $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
 	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
 	cd $(INSTALLDIR)/curl-7.21.7/usr/lib && ln -sf libcurl.so.4.2.0 libcurl.so && ln -sf libcurl.so.4.2.0 libcurl.so.4
+ifeq ($(RTCONFIG_SPEEDTEST),y)
+	# for speedtest
+	install -D curl-7.21.7/src/.libs/curl $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
+	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
+endif
 
 curl-7.21.7-clean:
 	[ ! -f curl-7.21.7/Makefile ] || $(MAKE) -C curl-7.21.7 clean

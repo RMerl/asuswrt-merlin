@@ -41,26 +41,28 @@
 #include <arpa/inet.h>
 #include <net/if_arp.h>
 
-static int
-handle_special_char_for_pppd(char *buf, size_t buf_size, char *src)
+char *ppp_escape(char *src, char *buf, size_t size)
 {
-	const char special_chars[] = "'\\";
-	char *p, *q;
-	size_t len;
+	const char special_chars[] = "'\"\\";
+	char *dst = buf;
+	char *end = buf + size - 1;
 
-	if (!buf || !src || buf_size <= 1)
-		return -1;
+	if (src == NULL || dst == NULL || size == 0)
+		return NULL;
 
-	for (p = src, q = buf, len = buf_size; *p != '\0' && len > 1; ++p, --len) {
-		if (strchr(special_chars, *p))
-			*q++ = '\\';
-
-		*q++ = *p;
+	while (*src && dst < end) {
+		if (strchr(special_chars, *src) != NULL)
+			*dst++ = '\\';
+		*dst++ = *src++;
 	}
+	*dst++ = '\0';
 
-	*q++ = '\0';
+	return buf;
+}
 
-	return 0;
+char *ppp_safe_escape(char *src, char *buf, size_t size)
+{
+	return ppp_escape(src, buf, size) ? : "";
 }
 
 int
@@ -102,10 +104,10 @@ start_pppd(int unit)
 	/* do not authenticate peer and do not use eap */
 	fprintf(fp, "noauth\n");
 	fprintf(fp, "refuse-eap\n");
-	handle_special_char_for_pppd(buf, sizeof(buf), nvram_safe_get(strcat_r(prefix, "pppoe_username", tmp)));
-	fprintf(fp, "user '%s'\n", buf);
-	handle_special_char_for_pppd(buf, sizeof(buf), nvram_safe_get(strcat_r(prefix, "pppoe_passwd", tmp)));
-	fprintf(fp, "password '%s'\n", buf);
+	fprintf(fp, "user '%s'\n",
+		ppp_safe_escape(nvram_safe_get(strcat_r(prefix, "pppoe_username", tmp)), buf, sizeof(buf)));
+	fprintf(fp, "password '%s'\n",
+		ppp_safe_escape(nvram_safe_get(strcat_r(prefix, "pppoe_passwd", tmp)), buf, sizeof(buf)));
 
 	if (nvram_match(strcat_r(prefix, "proto", tmp), "pptp")) {
 		fprintf(fp, "plugin pptp.so\n");
@@ -235,6 +237,9 @@ start_pppd(int unit)
 	switch (get_ipv6_service_by_unit(unit)) {
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
 		if (nvram_match(ipv6_nvname_by_unit("ipv6_ifdev", unit), "ppp")
 #ifdef RTCONFIG_DUALWAN
 			&& !(!strstr(nvram_safe_get("wans_dualwan"), "none") &&
@@ -243,7 +248,6 @@ start_pppd(int unit)
 #endif
 		)
 			fprintf(fp, "+ipv6\n");
-
 		break;
 	}
 #endif

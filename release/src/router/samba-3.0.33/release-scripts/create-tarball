@@ -1,0 +1,222 @@
+#!/bin/bash
+
+## option defaults
+OPT_BRANCH=""
+OPT_DOCSDIR=""
+OPT_TAG=""
+OPT_KEYID=""
+
+TOPDIR="`dirname $0`/.."
+VER_H="${TOPDIR}/source/include/version.h"
+
+function exitOnError
+{
+    local _error="$1"
+    local _msg="$2"
+
+    if [ ${_error} -eq 0 ]; then
+	return 0
+    fi
+
+    echo "FAILURE: ${_msg}"
+    exit ${_error}
+}
+
+##
+## Print help usage
+##
+
+function printUsage
+{
+    echo "Usage $0 [options]"
+    echo "    --help             Print command usage"
+    echo "    --branch <name>    Specify the branch to to create the archive file from"
+    echo "    --copy-docs <dir>  Copy documentation from <dir> rather than building"
+    echo "    --tag <name>       Tag name for release"
+    echo "    --keyid <email>    The GnuPG key ID used to sign the release tag"
+    echo ""
+}
+
+##
+## Parse the command line options 
+##
+
+function parseOptions
+{
+    while [ -n "$1" ]; do
+	case "$1" in
+	    --help)
+		printUsage
+		exit 0
+		;;
+	    --branch)
+		shift
+		if [ -z "$1" ]; then
+		    printUsage
+		    return 1
+		fi
+		OPT_BRANCH="$1"
+		shift
+		;;
+	    --copy-docs)
+		shift
+		if [ -z "$1" ]; then
+		    printUsage
+		    return 1
+		fi
+		OPT_DOCSDIR="$1"
+		shift
+		;;
+	    --tag)
+		shift
+		if [ -z "$1" ]; then
+		    printUsage
+		    return 1
+		fi
+		OPT_TAG="$1"
+		shift
+		;;
+	    --keyid)
+		shift
+		if [ -z "$1" ]; then
+		    printUsage
+		    return 1
+		fi
+		OPT_KEYID="$1"
+		shift
+		;;
+	    *)
+		printUsage
+		return 1
+		;;
+	esac
+    done
+
+    if [ -z "${OPT_BRANCH}" ]; then
+	echo "You must specify a branch name!"
+	printUsage
+	return 1
+    fi
+}
+
+##
+## Build the dopcumentation (may be a no-op)
+##
+
+function buildDocs
+{
+    if [ -n "${OPT_DOCSDIR}" ]; then
+	if [ ! -d "${OPT_DOCSDIR}" ]; then
+	    exitOnError 1 "${OPT_DOCSDIR} does not exist.  Please specify the absolute path."
+	fi
+
+	mkdir docs
+	exitOnError $? "Failed to create docs directory"
+
+	rsync -av "${OPT_DOCSDIR}"/ docs/
+	exitOnError $? "Failed top copy docs from ${OPT_DOCSDIR}"
+	
+	return 0
+    fi
+
+    echo "Building documentation.  This may take a while.  Log file in /tmp/docs-build.log.$$"
+
+    ${TOPDIR}/release-scripts/build-docs 2> /tmp/docs-build.log.$$
+    return $?
+
+}
+
+
+##
+## Create a release tag
+##
+function createReleaseTag
+{
+    if [ -z "${OPT_TAG}" ]; then
+	echo "Tagging disabled"
+	return 0
+    fi
+
+    if [ "x`git-tag -l ${OPT_TAG}`" != "x" ]; then
+	echo -n "Tag exists.  Do you wish to overwrite? (y/N): "
+	read answer
+
+	if [ "x$answer" != "xy" ]; then
+      	    echo "Tag creation aborted."
+	    exit 1
+	fi
+    fi
+
+    if [ -z "${OPT_KEYID}" ]; then
+	echo -n "Enter the keyid:"
+	read OPT_KEYID
+	if [ -z "${OPT_KEYID}" ]; then
+	    exitOnError 1 "No keyid specified"
+	fi
+    fi
+
+    git-tag -u ${OPT_KEYID} ${OPT_TAG}
+    exitOnError $? "Failed to create tag"
+
+    return 0
+}
+##
+## Main driver
+##
+function main 
+{
+    parseOptions "$@"
+    exitOnError $? "Failed to parse options"
+    
+    cd $TOPDIR
+
+    git-checkout ${OPT_BRANCH}
+    exitOnError $? "Invalid branch name \"${OPT_BRANCH}\""
+
+    (cd source && ./script/mkversion.sh)
+    if [ ! -f $VER_H ]; then
+	exitOnError 1 "Failed to find ${VER_H}!"
+    fi
+
+    version=`grep SAMBA_VERSION_OFFICIAL_STRING $VER_H | awk '{print $3}'`
+    vendor_version=`grep SAMBA_VERSION_VENDOR_SUFFIX $VER_H | awk '{print $3}'`
+    if [ -n "$vendor_version" ]; then
+	version="$version-$vendor_version"
+    fi
+    version=`echo $version | sed 's/\"//g'`
+
+    echo "Creating release tarball for Samba $version"
+
+    /bin/rm -rf ../samba-${version}
+    git-archive --format=tar --prefix=samba-${version}/ HEAD | (cd .. && tar xf -)
+    exitOnError $? "Failed to create release directory tree"
+
+    pushd ../samba-${version}
+
+    packaging/bin/update-pkginfo ${version} 1 ""
+
+    buildDocs
+    exitOnError $? "Failed to build documentation"
+
+    ( cd source && ./autogen.sh )
+
+    cd ..
+    tar cf samba-${version}.tar --exclude=.git* --exclude=CVS --exclude=.svn samba-${version}
+    exitOnError $? "Failed to create tarball from git tree"
+
+    gpg --detach-sign --armor samba-${version}.tar
+    ## exitOnError $? "Failed to sign tarball"
+
+    gzip -9 samba-${version}.tar
+    exitOnError $? "Failed to compress archive"
+
+    popd
+
+    createReleaseTag
+    exitOnError $? "Failed to create release tag"
+
+    return 0
+}
+
+main "$@"
+exit $?

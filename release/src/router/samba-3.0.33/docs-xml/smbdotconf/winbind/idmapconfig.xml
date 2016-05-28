@@ -1,0 +1,66 @@
+<samba:parameter name="idmap config"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	The idmap config prefix provides a means of managing each domain 
+	defined by the <smbconfoption name="idmap domains"/> option using Samba's
+	parametric option support. The idmap config prefix should be
+	followed by the name of the domain, a colon, and a setting specific to 
+	the chosen backend. There are three options available for all domains:
+	</para>
+	<variablelist>  
+		<varlistentry>
+		<term>backend = backend_name</term>
+		<listitem><para>
+			Specifies the name of the idmap plugin to use as the 
+			SID/uid/gid backend for this domain.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>default = [yes|no]</term>
+		<listitem><para>
+			The default domain/backend will be used for searching for 
+			users and groups not belonging to one of the explicitly
+			listed domains (matched by comparing the account SID and the 
+			domain SID).
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>readonly = [yes|no]</term>
+		<listitem><para>
+			Mark the domain as readonly which means that no attempts to
+			allocate a uid or gid (by the <smbconfoption name="idmap alloc 
+			backend"/>) for any user or group in that domain
+			will be attempted.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>
+	The following example illustrates how to configure the <citerefentry>
+	<refentrytitle>idmap_ad</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
+	for the CORP domain and the <citerefentry><refentrytitle>idmap_tdb</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> backend for all other domains. The
+	TRUSTEDDOMAINS string is simply an arbitrary key used to reference the &quot;idmap
+	config&quot; settings and does not represent the actual name of a domain.
+	It is a catchall domain backend for any domain not explicitly listed.
+	</para>
+
+	<programlisting>
+	idmap domains = CORP TRUSTEDDOMAINS
+
+	idmap config CORP:backend  = ad
+	idmap config CORP:readonly = yes
+
+	idmap config TRUSTEDDOMAINS:backend = tdb
+	idmap config TRUSTEDDOMAINS:default = yes
+	idmap config TRUSTEDDOMAINS:range   = 1000 - 9999
+	</programlisting>
+	
+</description>
+</samba:parameter>

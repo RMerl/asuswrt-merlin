@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<l:l10n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0" language="es" english-language-name="Spanish">
+<!-- This file was generated automatically. -->
+<!-- Developers should not commit sundry patches against this file. -->
+<!-- The source file (with documentation!) is in the admin directory. -->
+<!-- -->
+  <l:gentext key="blockquote" text=""/>
+  <l:gentext key="formalpara" text="p&#225;rrafo"/>
+  <l:gentext key="nonexistantelement" text="elemento inexistente"/>
+  <l:gentext key="glossseealso" text="Ver tambi&#233;n"/>
+  <l:gentext key="keyword" text="palabra clave"/>
+  <l:gentext key="keywords" text="Palabras Clave"/>
+  <l:gentext key="keywordset" text="Palabras Clave"/>
+  <l:gentext key="the section called" text="the secci&#243; titulada"/>
+<!-- Any further gentexts were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+  <l:gentext key="Abstract" text="Resumen"/>
+  <l:gentext key="abstract" text="resumen"/>
+  <l:gentext key="Answer" text="R:"/>
+  <l:gentext key="answer" text="r:"/>
+  <l:gentext key="Appendix" text="Ap&#233;ndice"/>
+  <l:gentext key="appendix" text="ap&#233;ndice"/>
+  <l:gentext key="Article" text="Art&#237;culo"/>
+  <l:gentext key="article" text="art&#237;culo"/>
+  <l:gentext key="Bibliography" text="Bibliograf&#237;a"/>
+  <l:gentext key="bibliography" text="bibliograf&#237;a"/>
+  <l:gentext key="Book" text="Libro"/>
+  <l:gentext key="book" text="libro"/>
+  <l:gentext key="CAUTION" text="ATENCI&#211;N"/>
+  <l:gentext key="Caution" text="Atenci&#243;n"/>
+  <l:gentext key="caution" text="atenci&#243;n"/>
+  <l:gentext key="Chapter" text="Cap&#237;tulo"/>
+  <l:gentext key="chapter" text="cap&#237;tulo"/>
+  <l:gentext key="Colophon" text="Colof&#243;n"/>
+  <l:gentext key="colophon" text="colof&#243;n"/>
+  <l:gentext key="Copyright" text="Copyright"/>
+  <l:gentext key="copyright" text="copyright"/>
+  <l:gentext key="Dedication" text="Dedicatoria"/>
+  <l:gentext key="dedication" text="dedicatoria"/>
+  <l:gentext key="Edition" text="Edici&#243;n"/>
+  <l:gentext key="edition" text="edici&#243;n"/>
+  <l:gentext key="Equation" text="Ecuaci&#243;n"/>
+  <l:gentext key="equation" text="ecuaci&#243;n"/>
+  <l:gentext key="Example" text="Ejemplo"/>
+  <l:gentext key="example" text="ejemplo"/>
+  <l:gentext key="Figure" text="Figura"/>
+  <l:gentext key="figure" text="figura"/>
+  <l:gentext key="Glossary" text="Glosario"/>
+  <l:gentext key="glossary" text="glosario"/>
+  <l:gentext key="GlossSee" text="Ver"/>
+  <l:gentext key="glosssee" text="ver"/>
+  <l:gentext key="GlossSeeAlso" text="Ver tambi&#233;n"/>
+  <l:gentext key="IMPORTANT" text="IMPORTANTE"/>
+  <l:gentext key="Important" text="Importante"/>
+  <l:gentext key="important" text="importante"/>
+  <l:gentext key="Index" text="&#205;ndice"/>
+  <l:gentext key="index" text="&#237;ndice"/>
+  <l:gentext key="ISBN" text="ISBN"/>
+  <l:gentext key="isbn" text="isbn"/>
+  <l:gentext key="LegalNotice" text="Aviso Legal"/>
+  <l:gentext key="legalnotice" text="aviso legal"/>
+  <l:gentext key="MsgAud" text="Audiencia"/>
+  <l:gentext key="msgaud" text="audiencia"/>
+  <l:gentext key="MsgLevel" text="Nivel"/>
+  <l:gentext key="msglevel" text="nivel"/>
+  <l:gentext key="MsgOrig" text="Origen"/>
+  <l:gentext key="msgorig" text="origen"/>
+  <l:gentext key="NOTE" text="NOTA"/>
+  <l:gentext key="Note" text="Nota"/>
+  <l:gentext key="note" text="nota"/>
+  <l:gentext key="Part" text="Parte"/>
+  <l:gentext key="part" text="parte"/>
+  <l:gentext key="Preface" text="Prefacio"/>
+  <l:gentext key="preface" text="prefacio"/>
+  <l:gentext key="Procedure" text="Procedimiento"/>
+  <l:gentext key="procedure" text="procedimiento"/>
+  <l:gentext key="ProductionSet" text="Producci&#243;n"/>
+  <l:gentext key="PubDate" text="Fecha de publicaci&#243;n"/>
+  <l:gentext key="pubdate" text="fecha de publicaci&#243;n"/>
+  <l:gentext key="Published" text="Publicado"/>
+  <l:gentext key="published" text="publicado"/>
+  <l:gentext key="Question" text="P:"/>
+  <l:gentext key="question" text="p:"/>
+  <l:gentext key="RefEntry" text="Entrada de referencia"/>
+  <l:gentext key="refentry" text="entrada de referencia"/>
+  <l:gentext key="Reference" text="Referencia"/>
+  <l:gentext key="reference" text="referencia"/>
+  <l:gentext key="RefName" text="Nombre de referencia"/>
+  <l:gentext key="refname" text="nombre de referencia"/>
+  <l:gentext key="RefSection" text="Secci&#243;n de referencia"/>
+  <l:gentext key="refsection" text="secci&#243;n de referencia"/>
+  <l:gentext key="RefSynopsisDiv" text="Sinopsis"/>
+  <l:gentext key="refsynopsisdiv" text="sinopsis"/>
+  <l:gentext key="RevHistory" text="Historial de revisiones"/>
+  <l:gentext key="revhistory" text="Historial de revisiones"/>
+  <l:gentext key="Revision" text="Revisi&#243;n"/>
+  <l:gentext key="revision" text="revisi&#243;n"/>
+  <l:gentext key="sect1" text="Secci&#243;n"/>
+  <l:gentext key="sect2" text="Secci&#243;n"/>
+  <l:gentext key="sect3" text="Secci&#243;n"/>
+  <l:gentext key="sect4" text="Secci&#243;n"/>
+  <l:gentext key="sect5" text="Secci&#243;n"/>
+  <l:gentext key="Section" text="Secci&#243;n"/>
+  <l:gentext key="section" text="secci&#243;n"/>
+  <l:gentext key="See" text="Ver"/>
+  <l:gentext key="see" text="ver"/>
+  <l:gentext key="SeeAlso" text="Ver Tambi&#233;n"/>
+  <l:gentext key="Seealso" text="Ver tambi&#233;n"/>
+  <l:gentext key="seealso" text="ver tambi&#233;n"/>
+  <l:gentext key="Set" text="Conjunto"/>
+  <l:gentext key="set" text="conjunto"/>
+  <l:gentext key="SetIndex" text="&#205;ndice del Conjunto"/>
+  <l:gentext key="setindex" text="&#237;ndice del conjunto"/>
+  <l:gentext key="Sidebar" text="Barra lateral"/>
+  <l:gentext key="sidebar" text="barra lateral"/>
+  <l:gentext key="Step" text="Paso"/>
+  <l:gentext key="step" text="paso"/>
+  <l:gentext key="Table" text="Tabla"/>
+  <l:gentext key="table" text="tabla"/>
+  <l:gentext key="TIP" text="SUGERENCIA"/>
+  <l:gentext key="Tip" text="Sugerencia"/>
+  <l:gentext key="tip" text="sugerencia"/>
+  <l:gentext key="WARNING" text="AVISO"/>
+  <l:gentext key="Warning" text="Aviso"/>
+  <l:gentext key="warning" text="aviso"/>
+  <l:gentext key="and" text="y"/>
+  <l:gentext key="by" text="por"/>
+  <l:gentext key="Edited" text="Editado"/>
+  <l:gentext key="edited" text="editado"/>
+  <l:gentext key="Editedby" text="Editado por"/>
+  <l:gentext key="editedby" text="editado por"/>
+  <l:gentext key="in" text="en"/>
+  <l:gentext key="lastlistcomma" text=","/>
+  <l:gentext key="listcomma" text=","/>
+  <l:gentext key="notes" text="notas"/>
+  <l:gentext key="Notes" text="Notas"/>
+  <l:gentext key="Pgs" text="Pags."/>
+  <l:gentext key="pgs" text="pags."/>
+  <l:gentext key="Revisedby" text="Revisado por: "/>
+  <l:gentext key="revisedby" text="revisado por: "/>
+  <l:gentext key="TableNotes" text="Notas de Tabla"/>
+  <l:gentext key="tablenotes" text="notas de tabla"/>
+  <l:gentext key="TableofContents" text="Tabla de contenidos"/>
+  <l:gentext key="tableofcontents" text="tabla de contenidos"/>
+  <l:gentext key="unexpectedelementname" text="nombre de elemento inesperado"/>
+  <l:gentext key="unsupported" text="no soportado"/>
+  <l:gentext key="xrefto" text="referencia a"/>
+  <l:gentext key="listofequations" text="lista de ecuaciones"/>
+  <l:gentext key="ListofEquations" text="Lista de ecuaciones"/>
+  <l:gentext key="ListofExamples" text="Lista de ejemplos"/>
+  <l:gentext key="listofexamples" text="lista de ejemplos"/>
+  <l:gentext key="ListofFigures" text="Lista de figuras"/>
+  <l:gentext key="listoffigures" text="lista de figuras"/>
+  <l:gentext key="listoftables" text="lista de tablas"/>
+  <l:gentext key="ListofTables" text="Lista de tablas"/>
+  <l:gentext key="ListofUnknown" text="Lista de desconocido"/>
+  <l:gentext key="listofunknown" text="lista de desconocido"/>
+  <l:gentext key="nav-home" text="Inicio"/>
+  <l:gentext key="nav-next" text="Siguiente"/>
+  <l:gentext key="nav-next-sibling" text="Avanzar"/>
+  <l:gentext key="nav-prev" text="Anterior"/>
+  <l:gentext key="nav-prev-sibling" text="Retroceder"/>
+  <l:gentext key="nav-up" text="Subir"/>
+  <l:gentext key="index symbols" text="S&#237;mbolos"/>
+  <l:gentext key="Draft" text="Borrador"/>
+  <l:gentext key="above" text="arriba"/>
+  <l:gentext key="below" text="abajo"/>
+  <l:gentext key="sectioncalled" text="secci&#243;n llamada"/>
+  <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyz&#225;&#233;&#237;&#243;&#250;&#241;"/>
+  <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZ&#193;&#201;&#205;&#211;&#218;&#209;"/>
+  <l:dingbat key="startquote" text="{``}"/>
+  <l:dingbat key="endquote" text="{''}"/>
+  <l:dingbat key="nestedstartquote" text="{`}"/>
+  <l:dingbat key="nestedendquote" text="{'}"/>
+  <l:dingbat key="singlestartquote" text="{`}"/>
+  <l:dingbat key="singleendquote" text="{'}"/>
+  <l:dingbat key="urlstartquote" text="{\textless}"/>
+  <l:dingbat key="urlendquote" text="{\textgreater}"/>
+  <l:dingbat key="bullet" text="\textbullet{}"/>
+  <l:dingbat key="decimalpoint" text="."/>
+  <l:dingbat key="latexdecimal" text="."/>
+<!-- Any further dingbats were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+<!-- The following contexts were merged from two source files. -->
+  <l:context name="naturalinlinelist">
+    <l:template name="start" text=""/>
+    <l:template name="middle" text=", "/>
+    <l:template name="lastoftwo" text=" y "/>
+    <l:template name="lastofmany" text=", y "/>
+    <l:template name="end" text=". "/>
+<!-- Any further templates were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+  </l:context>
+  <l:context name="naturalblocklist">
+    <l:template name="start" text=""/>
+    <l:template name="middle" text=", "/>
+    <l:template name="lastoftwo" text=", "/>
+    <l:template name="lastofmany" text=", "/>
+    <l:template name="end" text=""/>
+<!-- Any further templates were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+  </l:context>
+  <l:context name="xref">
+    <l:template name="page.citation" text=" en la p&#225;gina %p"/>
+<!-- Any further templates were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+    <l:template name="abstract" text="%t"/>
+    <l:template name="answer" text="R:&#160;%n"/>
+    <l:template name="appendix" text="%t"/>
+    <l:template name="article" text="%t"/>
+    <l:template name="authorblurb" text="%t"/>
+    <l:template name="bibliodiv" text="%t"/>
+    <l:template name="bibliography" text="%t"/>
+    <l:template name="bibliomset" text="%t"/>
+    <l:template name="biblioset" text="%t"/>
+    <l:template name="blockquote" text="%t"/>
+    <l:template name="book" text="%t"/>
+    <l:template name="calloutlist" text="%t"/>
+    <l:template name="caution" text="%t"/>
+    <l:template name="chapter" text="%t"/>
+    <l:template name="colophon" text="%t"/>
+    <l:template name="constraintdef" text="%t"/>
+    <l:template name="dedication" text="%t"/>
+    <l:template name="equation" text="%t"/>
+    <l:template name="example" text="%t"/>
+    <l:template name="figure" text="%t"/>
+    <l:template name="formalpara" text="%t"/>
+    <l:template name="glossary" text="%t"/>
+    <l:template name="glossdiv" text="%t"/>
+    <l:template name="important" text="%t"/>
+    <l:template name="index" text="%t"/>
+    <l:template name="indexdiv" text="%t"/>
+    <l:template name="itemizedlist" text="%t"/>
+    <l:template name="legalnotice" text="%t"/>
+    <l:template name="listitem" text="%n"/>
+    <l:template name="lot" text="%t"/>
+    <l:template name="msg" text="%t"/>
+    <l:template name="msgexplan" text="%t"/>
+    <l:template name="msgmain" text="%t"/>
+    <l:template name="msgrel" text="%t"/>
+    <l:template name="msgset" text="%t"/>
+    <l:template name="msgsub" text="%t"/>
+    <l:template name="note" text="%t"/>
+    <l:template name="orderedlist" text="%t"/>
+    <l:template name="part" text="%t"/>
+    <l:template name="partintro" text="%t"/>
+    <l:template name="preface" text="%t"/>
+    <l:template name="procedure" text="%t"/>
+    <l:template name="productionset" text="%t"/>
+    <l:template name="qandadiv" text="%t"/>
+    <l:template name="qandaentry" text="P:&#160;%n"/>
+    <l:template name="qandaset" text="%t"/>
+    <l:template name="question" text="P:&#160;%n"/>
+    <l:template name="reference" text="%t"/>
+    <l:template name="refsynopsisdiv" text="%t"/>
+    <l:template name="segmentedlist" text="%t"/>
+    <l:template name="set" text="%t"/>
+    <l:template name="setindex" text="%t"/>
+    <l:template name="sidebar" text="%t"/>
+    <l:template name="table" text="%t"/>
+    <l:template name="tip" text="%t"/>
+    <l:template name="toc" text="%t"/>
+    <l:template name="variablelist" text="%t"/>
+    <l:template name="varlistentry" text="%n"/>
+    <l:template name="warning" text="%t"/>
+    <l:template name="bridgehead" text="&#8220;%t&#8221;"/>
+    <l:template name="refsection" text="&#8220;%t&#8221;"/>
+    <l:template name="refsect1" text="&#8220;%t&#8221;"/>
+    <l:template name="refsect2" text="&#8220;%t&#8221;"/>
+    <l:template name="refsect3" text="&#8220;%t&#8221;"/>
+    <l:template name="sect1" text="&#8220;%t&#8221;"/>
+    <l:template name="sect2" text="&#8220;%t&#8221;"/>
+    <l:template name="sect3" text="&#8220;%t&#8221;"/>
+    <l:template name="sect4" text="&#8220;%t&#8221;"/>
+    <l:template name="sect5" text="&#8220;%t&#8221;"/>
+    <l:template name="section" text="&#8220;%t&#8221;"/>
+    <l:template name="simplesect" text="&#8220;%t&#8221;"/>
+  </l:context>
+  <l:context name="xref-number">
+    <l:template name="appendix" text="Ap&#233;ndice&#160;%n"/>
+    <l:template name="chapter" text="Cap&#237;tulo&#160;%n, %t"/>
+    <l:template name="reference" text="Referencia&#160;%n"/>
+<!-- Any further templates were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+    <l:template name="answer" text="R:&#160;%n"/>
+    <l:template name="bridgehead" text="Secci&#243;n&#160;%n"/>
+    <l:template name="equation" text="Ecuaci&#243;n&#160;%n"/>
+    <l:template name="example" text="Ejemplo&#160;%n"/>
+    <l:template name="figure" text="Figura&#160;%n"/>
+    <l:template name="part" text="Parte&#160;%n"/>
+    <l:template name="procedure" text="Procedimiento&#160;%n"/>
+    <l:template name="productionset" text="Producci&#243;n&#160;%n"/>
+    <l:template name="qandadiv" text="Q &amp; A&#160;%n"/>
+    <l:template name="qandaentry" text="P:&#160;%n"/>
+    <l:template name="question" text="P:&#160;%n"/>
+    <l:template name="sect1" text="Secci&#243;n&#160;%n"/>
+    <l:template name="sect2" text="Secci&#243;n&#160;%n"/>
+    <l:template name="sect3" text="Secci&#243;n&#160;%n"/>
+    <l:template name="sect4" text="Secci&#243;n&#160;%n"/>
+    <l:template name="sect5" text="Secci&#243;n&#160;%n"/>
+    <l:template name="section" text="Secci&#243;n&#160;%n"/>
+    <l:template name="table" text="Tabla&#160;%n"/>
+  </l:context>
+  <l:context name="datetime">
+    <l:template name="format" text="d-m-Y"/>
+<!-- Any further templates were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+  </l:context>
+  <l:context name="htmlhelp">
+    <l:template name="langcode" text="0x0C0A Spanish (SPAIN)"/>
+<!-- Any further templates were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/es.xml -->
+  </l:context>
+<!-- Any further contexts were found only in the "other" file. -->
+  <l:context name="styles">
+    <l:template name="person-name" text="first-last"/>
+  </l:context>
+  <l:context name="title">
+    <l:template name="abstract" text="%t"/>
+    <l:template name="answer" text="%t"/>
+    <l:template name="appendix" text="Ap&#233;ndice %n. %t"/>
+    <l:template name="article" text="%t"/>
+    <l:template name="authorblurb" text="%t"/>
+    <l:template name="bibliodiv" text="%t"/>
+    <l:template name="biblioentry" text="%t"/>
+    <l:template name="bibliography" text="%t"/>
+    <l:template name="bibliomixed" text="%t"/>
+    <l:template name="bibliomset" text="%t"/>
+    <l:template name="biblioset" text="%t"/>
+    <l:template name="blockquote" text="%t"/>
+    <l:template name="book" text="%t"/>
+    <l:template name="calloutlist" text="%t"/>
+    <l:template name="caution" text="%t"/>
+    <l:template name="chapter" text="Cap&#237;tulo %n. %t"/>
+    <l:template name="colophon" text="%t"/>
+    <l:template name="dedication" text="%t"/>
+    <l:template name="equation" text="Ecuaci&#243;n %n. %t"/>
+    <l:template name="example" text="Ejemplo %n. %t"/>
+    <l:template name="figure" text="Figura %n. %t"/>
+    <l:template name="formalpara" text="%t"/>
+    <l:template name="glossary" text="%t"/>
+    <l:template name="glossdiv" text="%t"/>
+    <l:template name="important" text="%t"/>
+    <l:template name="index" text="%t"/>
+    <l:template name="indexdiv" text="%t"/>
+    <l:template name="itemizedlist" text="%t"/>
+    <l:template name="legalnotice" text="%t"/>
+    <l:template name="listitem" text=""/>
+    <l:template name="lot" text="%t"/>
+    <l:template name="msg" text="%t"/>
+    <l:template name="msgexplan" text="%t"/>
+    <l:template name="msgmain" text="%t"/>
+    <l:template name="msgrel" text="%t"/>
+    <l:template name="msgset" text="%t"/>
+    <l:template name="msgsub" text="%t"/>
+    <l:template name="note" text="%t"/>
+    <l:template name="orderedlist" text="%t"/>
+    <l:template name="part" text="Parte %n. %t"/>
+    <l:template name="partintro" text="%t"/>
+    <l:template name="preface" text="%t"/>
+    <l:template name="procedure" text="%t"/>
+    <l:template name="procedure.formal" text="Procedimiento %n. %t"/>
+    <l:template name="productionset" text="%t"/>
+    <l:template name="productionset.formal" text="Producci&#243;n %n"/>
+    <l:template name="qandadiv" text="%t"/>
+    <l:template name="qandaentry" text="%t"/>
+    <l:template name="qandaset" text="%t"/>
+    <l:template name="question" text="%t"/>
+    <l:template name="refentry" text="%t"/>
+    <l:template name="reference" text="%t"/>
+    <l:template name="refsection" text="%t"/>
+    <l:template name="refsect1" text="%t"/>
+    <l:template name="refsect2" text="%t"/>
+    <l:template name="refsect3" text="%t"/>
+    <l:template name="refsynopsisdiv" text="%t"/>
+    <l:template name="refsynopsisdivinfo" text="%t"/>
+    <l:template name="segmentedlist" text="%t"/>
+    <l:template name="set" text="%t"/>
+    <l:template name="setindex" text="%t"/>
+    <l:template name="sidebar" text="%t"/>
+    <l:template name="step" text="%t"/>
+    <l:template name="table" text="Tabla %n. %t"/>
+    <l:template name="tip" text="%t"/>
+    <l:template name="toc" text="%t"/>
+    <l:template name="variablelist" text="%t"/>
+    <l:template name="warning" text="%t"/>
+  </l:context>
+  <l:context name="title-unnumbered">
+    <l:template name="appendix" text="%t"/>
+    <l:template name="bridgehead" text="%t"/>
+    <l:template name="chapter" text="%t"/>
+    <l:template name="sect1" text="%t"/>
+    <l:template name="sect2" text="%t"/>
+    <l:template name="sect3" text="%t"/>
+    <l:template name="sect4" text="%t"/>
+    <l:template name="sect5" text="%t"/>
+    <l:template name="section" text="%t"/>
+    <l:template name="simplesect" text="%t"/>
+  </l:context>
+  <l:context name="title-numbered">
+    <l:template name="appendix" text="Ap&#233;ndice %n. %t"/>
+    <l:template name="bridgehead" text="%n. %t"/>
+    <l:template name="chapter" text="Cap&#237;tulo %n. %t"/>
+    <l:template name="sect1" text="%n. %t"/>
+    <l:template name="sect2" text="%n. %t"/>
+    <l:template name="sect3" text="%n. %t"/>
+    <l:template name="sect4" text="%n. %t"/>
+    <l:template name="sect5" text="%n. %t"/>
+    <l:template name="section" text="%n. %t"/>
+    <l:template name="simplesect" text="%t"/>
+  </l:context>
+  <l:context name="subtitle">
+    <l:template name="appendix" text="%s"/>
+    <l:template name="article" text="%s"/>
+    <l:template name="bibliodiv" text="%s"/>
+    <l:template name="biblioentry" text="%s"/>
+    <l:template name="bibliography" text="%s"/>
+    <l:template name="bibliomixed" text="%s"/>
+    <l:template name="bibliomset" text="%s"/>
+    <l:template name="biblioset" text="%s"/>
+    <l:template name="book" text="%s"/>
+    <l:template name="chapter" text="%s"/>
+    <l:template name="colophon" text="%s"/>
+    <l:template name="dedication" text="%s"/>
+    <l:template name="glossary" text="%s"/>
+    <l:template name="glossdiv" text="%s"/>
+    <l:template name="index" text="%s"/>
+    <l:template name="indexdiv" text="%s"/>
+    <l:template name="lot" text="%s"/>
+    <l:template name="part" text="%s"/>
+    <l:template name="partintro" text="%s"/>
+    <l:template name="preface" text="%s"/>
+    <l:template name="refentry" text="%s"/>
+    <l:template name="reference" text="%s"/>
+    <l:template name="refsection" text="%s"/>
+    <l:template name="refsect1" text="%s"/>
+    <l:template name="refsect2" text="%s"/>
+    <l:template name="refsect3" text="%s"/>
+    <l:template name="refsynopsisdiv" text="%s"/>
+    <l:template name="sect1" text="%s"/>
+    <l:template name="sect2" text="%s"/>
+    <l:template name="sect3" text="%s"/>
+    <l:template name="sect4" text="%s"/>
+    <l:template name="sect5" text="%s"/>
+    <l:template name="section" text="%s"/>
+    <l:template name="set" text="%s"/>
+    <l:template name="setindex" text="%s"/>
+    <l:template name="sidebar" text="%s"/>
+    <l:template name="simplesect" text="%s"/>
+    <l:template name="toc" text="%s"/>
+  </l:context>
+  <l:context name="xref-number-and-title">
+    <l:template name="appendix" text="Ap&#233;ndice&#160;%n, %t"/>
+    <l:template name="bridgehead" text="Secci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="chapter" text="Cap&#237;tulo&#160;%n, %t"/>
+    <l:template name="equation" text="Ecuaci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="example" text="Ejemplo&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="figure" text="Figura&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="part" text="Parte&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="procedure" text="Procedimiento&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="productionset" text="Producci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="qandadiv" text="Q &amp; A&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="refsect1" text="secci&#243;n llamada &#8220;%t&#8221;"/>
+    <l:template name="refsect2" text="secci&#243;n llamada &#8220;%t&#8221;"/>
+    <l:template name="refsect3" text="secci&#243;n llamada &#8220;%t&#8221;"/>
+    <l:template name="refsection" text="secci&#243;n llamada &#8220;%t&#8221;"/>
+    <l:template name="sect1" text="Secci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="sect2" text="Secci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="sect3" text="Secci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="sect4" text="Secci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="sect5" text="Secci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="section" text="Secci&#243;n&#160;%n, &#8220;%t&#8221;"/>
+    <l:template name="simplesect" text="secci&#243;n llamada &#8220;%t&#8221;"/>
+    <l:template name="table" text="Tabla&#160;%n, &#8220;%t&#8221;"/>
+  </l:context>
+  <l:context name="authorgroup">
+    <l:template name="sep" text=", "/>
+    <l:template name="sep2" text=" y "/>
+    <l:template name="seplast" text=", y "/>
+  </l:context>
+  <l:context name="glossary">
+    <l:template name="see" text="Ver "/>
+    <l:template name="seealso" text="Ver tambi&#233;n "/>
+  </l:context>
+  <l:context name="msgset">
+    <l:template name="MsgAud" text="Audiencia: "/>
+    <l:template name="MsgLevel" text="Nivel: "/>
+    <l:template name="MsgOrig" text="Origen: "/>
+  </l:context>
+</l:l10n>

@@ -1,7 +1,7 @@
 #
 # Broadcom Linux Router WL firmware Makefile
 #
-# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2016, Broadcom. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -50,7 +50,7 @@ FW_43602a1_OS_PATH		:= $(FW_43602a1_SRCBASE)/hndrte
 ifeq ($(WLTEST),1)
     FW_43602a1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-ringer-dmaindex16
 else
-        FW_43602a1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-ringer-dmaindex16
+    FW_43602a1_TARGET      := pcie-ag-splitrx-fdap-mbss-mfp-osen-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-ringer-dmaindex16
 endif
 
 
@@ -62,9 +62,9 @@ FW_4366b1_MAKE_PATH		:= $(FW_4366b1_SRCBASE)/dongle/make/wl
 FW_4366b1_BUILD_PATH		:= $(FW_4366b1_SRCBASE)/../build/dongle/$(FW_4366b1_BUILD_PREFIX)
 FW_4366b1_OS_PATH		:= $(FW_4366b1_SRCBASE)/../components/threadx
 ifeq ($(WLTEST),1)
-    FW_4366b1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)
+    FW_4366b1_TARGET   := pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
 else
-        FW_4366b1_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)
+    FW_4366b1_TARGET   := pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
 endif
 
 # 4366c0-roml target
@@ -75,9 +75,9 @@ FW_4366c0_MAKE_PATH		:= $(FW_4366c0_SRCBASE)/dongle/make/wl
 FW_4366c0_BUILD_PATH		:= $(FW_4366c0_SRCBASE)/../build/dongle/$(FW_4366c0_BUILD_PREFIX)
 FW_4366c0_OS_PATH		:= $(FW_4366c0_SRCBASE)/../components/threadx
 ifeq ($(WLTEST),1)
-    FW_4366c0_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)
+    FW_4366c0_TARGET   := pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
 else
-        FW_4366c0_TARGET	:= pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)
+    FW_4366c0_TARGET       := pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
 endif
 
 
@@ -147,6 +147,7 @@ $(obj-pciefd):
 		if [ -f $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/*.clm_blob ]; then \
 			echo "Save clm blobs $(R_CLM_BLOBS) for $(R_CHIP) ...." && \
 			cp $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/*.clm_blob $(FW_$(R_CHIP)_SRCBASE)/wl/clm/src; \
+			cp $(FW_$(R_CHIP)_BUILD_PATH)/$(FW_$(R_CHIP)_TARGET)/$(CLM_BLOBS_$(R_CHIP)).clm_blob $(FW_$(R_CHIP)_SRCBASE)/wl/clm/src/$(CLM_BLOBS_$(R_CHIP)).clm_blob.GEN; \
 		else \
 			echo "No clm blobs for $(R_CHIP) ...."; \
 		fi && \

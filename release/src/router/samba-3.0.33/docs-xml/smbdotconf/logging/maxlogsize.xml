@@ -1,0 +1,18 @@
+<samba:parameter name="max log size"
+				 type="integer"
+                 context="G"
+                 developer="1" advanced="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    This option (an integer in kilobytes) specifies the max size the log file should grow to. 
+    Samba periodically checks the size and if it is exceeded it will rename the file, adding 
+	a <filename moreinfo="none">.old</filename> extension.
+	</para>
+
+	<para>A size of 0 means no limit.
+	</para>
+</description>
+<value type="default">5000</value>
+<value type="example">1000</value>
+</samba:parameter>

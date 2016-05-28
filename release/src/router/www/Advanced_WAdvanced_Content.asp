@@ -159,6 +159,8 @@ var sdk_7 = sdk_version_array[0] == "7" ? true:false
 var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
 var reboot_needed_time = eval("<% get_default_reboot_time(); %>");
 var orig_region = '<% nvram_get("location_code"); %>';
+var machine_name = '<% get_machine_name(); %>';
+var machine_arm = (machine_name.search("arm") == -1) ? false : true;
 var array = new Array(7);
 var clock_type = "";
 var wifi_schedule_value = '<% nvram_get("wl_sched"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
@@ -207,7 +209,7 @@ function initial(){
 		document.getElementById("DLSCapable").style.display = "none";	
 		document.getElementById("PktAggregate").style.display = "none";
 		
-		if('<% nvram_get("wl_unit"); %>' == '1' || sdk_version_array[0] >= 6 ){	// MODELDEP: for Broadcom SDK 6.x model
+		if('<% nvram_get("wl_unit"); %>' == '1' || machine_arm){	// MODELDEP: for Broadcom SDK 6.x model
 			inputCtrl(document.form.wl_noisemitigation, 0);
 		}
 	}
@@ -248,9 +250,9 @@ function initial(){
 	inputCtrl(document.form.traffic_5g, 0);
 
 	if('<% nvram_get("wl_unit"); %>' == '1' || '<% nvram_get("wl_unit"); %>' == '2'){ // 5GHz up
-		if(	based_modelid == "RT-AC3200" || based_modelid == "RT-AC69U" ||
+		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87" ||
 			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
 			based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R")
@@ -294,9 +296,8 @@ function initial(){
 
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-N18U" ||
-			based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC87U" ||
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
 			based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R")
 		{
@@ -389,8 +390,8 @@ function initial(){
 	/*Airtime fairness, only for Broadcom ARM platform, except RT-AC87U 5 GHz*/
 	if(	based_modelid == "RT-N18U" ||
 		based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" ||
-		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
-		based_modelid == "RT-AC69U" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC3200" ||
+		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" ||
+		based_modelid == "RT-AC87U" || based_modelid == "RT-AC3200" ||
 		based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" ||
 		based_modelid == "RT-AC5300R" || based_modelid == "RT-AC1200G" || based_modelid == "RT-AC1200G+"){
 		
@@ -1425,7 +1426,7 @@ function handle_beamforming(value){
 						</td>
 					</tr>
 
-					<tr> <!-- BRCM SDK 5.x Only  -->
+					<tr> <!-- BRCM MIPS Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,21);"><#WLANConfig11b_x_EnhanInter_itemname#></a></th>
 						<td>
 							<select name="wl_noisemitigation" class="input_option" onChange="">
@@ -1435,7 +1436,7 @@ function handle_beamforming(value){
 						</td>
 					</tr>
 
-					<tr> <!-- MODELDEP: RT-AC3200 / RT-AC68U / RT-AC68U_V2 / RT-AC69U / DSL-AC68U Only  -->
+					<tr> <!-- MODELDEP: RT-AC3200 / RT-AC68U / DSL-AC68U Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,29);"><#WLANConfig11b_x_ReduceUSB3#></a></th>
 						<td>
 							<select name="usb_usb3" class="input_option">

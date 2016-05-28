@@ -106,8 +106,28 @@ function initial(){
 		document.form.wl_subunit.value = 1;
 
 	if(smart_connect_support){
-		if(based_modelid == "RT-AC5300"){
-			if('<% nvram_get("smart_connect_x"); %>' !=0)
+		var smart_connect_x = '<% nvram_get("smart_connect_x"); %>';
+		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC88U"){
+			var value = new Array();
+			var desc = new Array();
+				
+			if(based_modelid == "RT-AC5300"){
+				desc = ["none", "Tri-Band Smart Connect", "5GHz Smart Connect"];
+				value = ["0", "1", "2"];
+				add_options_x2(document.form.smart_connect_t, desc, value, smart_connect_x);
+			}
+			else if(based_modelid == "RT-AC3200"){
+				desc = ["none", "Tri-Band Smart Connect"];
+				value = ["0", "1"];
+				add_options_x2(document.form.smart_connect_t, desc, value, smart_connect_x);						
+			}
+			else if(based_modelid == "RT-AC88U"){
+				desc = ["none", "Dual-Band Smart Connect"];
+				value = ["0", "1"];
+				add_options_x2(document.form.smart_connect_t, desc, value, smart_connect_x);						
+			}
+		
+			if(smart_connect_x !=0)
 				document.getElementById("smart_connect_field").style.display = '';
 		}else{
 			document.getElementById("smartcon_enable_field").style.display = '';
@@ -193,8 +213,9 @@ function tabclickhandler(wl_unit){
 		if(smart_connect_support){
 			var smart_connect_flag = document.form.smart_connect_x.value;
 			document.form.current_page.value = "device-map/router.asp?flag=" + smart_connect_flag;
-		}else
-			document.form.current_page.value = "device-map/router.asp";
+		}else{
+			document.form.current_page.value = "device-map/router.asp?time=" + Math.round(new Date().getTime()/1000);
+		}
 		FormActions("/apply.cgi", "change_wl_unit", "", "");
 		document.form.target = "hidden_frame";
 		document.form.submit();
@@ -455,7 +476,7 @@ function submitForm(){
 		//confirm common string combination	#JS_common_passwd#
 		var is_common_string = check_common_string(document.form.wl_wpa_psk.value, "wpa_key");
 		if(is_common_string){
-			if(confirm("<#JS_common_passwd#>")){
+			if(!confirm("<#JS_common_passwd#>")){
 				document.form.wl_wpa_psk.focus();
 				document.form.wl_wpa_psk.select();
 				return false;	
@@ -541,10 +562,11 @@ function tab_reset(v){
 			document.getElementById("t2").style.display = "none";
 		}
 	}else if(v == 1){	//Smart Connect
-		if(based_modelid == "RT-AC5300")
+		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200")
 			document.getElementById("span0").innerHTML = "2.4GHz, 5GHz-1 and 5GHz-2";
-		else
-			document.getElementById("span0").innerHTML = "Tri-band Smart Connect";
+		else if(based_modelid == "RT-AC88U")
+			document.getElementById("span0").innerHTML = "2.4GHz and 5GHz";
+		
 		document.getElementById("t1").style.display = "none";
 		document.getElementById("t2").style.display = "none";				
 		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total+10) +'px';
@@ -560,7 +582,6 @@ function tab_reset(v){
 
 function change_smart_connect(v){
 	document.form.smart_connect_x.value = v;
-
 	if(based_modelid=="RT-AC5300")
 		document.form.smart_connect_t.value = v;
 
@@ -665,11 +686,7 @@ function change_smart_connect(v){
                <tr id="smart_connect_field" style="display:none">
                        <td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
                                <p class="formfonttitle_nwm" >Smart Connect</p>
-                               <select style="*margin-top:-7px;" name="smart_connect_t" class="input_option" onchange="change_smart_connect(this.value);">
-                                       <option value="0" <% nvram_match("smart_connect_x", "0", "selected"); %>>none</option>
-                                       <option value="1" <% nvram_match("smart_connect_x", "1", "selected"); %>>Tri-band Smart Connect</option>
-                                       <option value="2" <% nvram_match("smart_connect_x", "2", "selected"); %>>5GHz Smart Connect</option>
-                               </select>                               
+                               <select style="*margin-top:-7px;" name="smart_connect_t" class="input_option" onchange="change_smart_connect(this.value);"></select>                               
                                <img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
                        </td>
                </tr>

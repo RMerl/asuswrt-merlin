@@ -1,0 +1,24 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_commit</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="vfs_commit.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_commit &#8212; flush dirty data at specified intervals</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = commit</code></p></div></div><div class="refsect1" lang="en"><a name="id2518311"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_commit</code> VFS module keeps track of
+	the amount of data written to a file and synchronizes it to
+	disk when a specified amount accumulates.
+	</p><p><code class="literal">vfs_commit</code> is useful in two
+	circumstances. First, if you have very precious data, the
+	impact of unexpected power loss can be minimized by a small
+	commit:dthresh value. Secondly, write performance can be
+	improved on some systems by flushing file data early and at
+	regular intervals.</p><p>This module is stackable.</p></div><div class="refsect1" lang="en"><a name="id2480134"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">commit:dthresh = BYTES</span></dt><dd><p>Synchronize file data each time the specified
+		number of bytes has been written.
+		</p><p>The following suffixes may be applied to BYTES:</p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">K</code> - BYTES is a number of kilobytes</p></li><li><p><code class="literal">M</code> - BYTES is a number of megabytes</p></li><li><p><code class="literal">G</code> - BYTES is a number of gigabytes</p></li></ul></div></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2482434"></a><h2>EXAMPLES</h2><p>Synchronize the file data on the [precious] share after
+	every 512 kilobytes (524288 bytes) of data is written:</p><pre class="programlisting">
+        <em class="parameter"><code>[precious]</code></em>
+	<a class="link" href="smb.conf.5.html#PATH">path = /data/precious</a>
+	<a class="link" href="smb.conf.5.html#VFSOBJECTS">vfs objects = commit</a>
+	<a class="link" href="smb.conf.5.html#COMMIT:DTHRESH">commit:dthresh = 512K</a>
+</pre></div><div class="refsect1" lang="en"><a name="id2482598"></a><h2>CAVEATS</h2><p>On some systems, the data synchronization performed by
+	<code class="literal">commit</code> may reduce performance.
+	</p></div><div class="refsect1" lang="en"><a name="id2482615"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.
+	</p></div><div class="refsect1" lang="en"><a name="id2482626"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

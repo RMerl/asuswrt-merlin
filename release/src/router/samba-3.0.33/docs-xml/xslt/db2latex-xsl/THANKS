@@ -1,0 +1,82 @@
+Without this people, DB2LaTeX would not exist:
+---------------------------------------------------
+* Norman Walsh and OASIS comitee:
+* Docbook/DSSSL/XSL/Mailing Lists contributors
+* Open Source Developers
+* David Carlisle
+* James Clark
+
+
+
+DB2LaTeX
+------------------
+The following people have contributed by sending sending patches, bug reports, suggestions or simply interesting comments.  
+Thank you.
+R.
+
+* Michel Goosens
+* James Devenish
+* Michael Wiedmann
+* Steve Fisher
+* Camille Begnis
+* Andrea Giuliano.
+* Frederic Schwebel
+* Emmanuel Pietriga
+* Benoit G/Nicolas Marsgui
+* Sebastien Blondeel
+* Olivier Dameron
+* Sebastien Schneider
+* Marco Kuhlmann
+* Raphael Goubet
+* Indrek Pehk
+* Balazs Scheider
+* Jakob VoB
+* David Nelson
+* Jirka Kosek
+* Steinar Bang
+* Vitaly Ostanin
+* Brian McGurk
+
+* Roman Kennkee roman(at)cognition(dot)uni-freiburg(dot)de 24 Feb 2003 11:50:13 +0100
+	- Patches for MathML
+
+* Ralph Meijer rmeijer(at)users(dot)sourceforge(dot)net 12 Mar 2003 12:01:30 +0100
+	- Bug report : mediaobject is not processed according to DocBook guidelines.
+	- Submitted patch for mediaobject.mod.xsl
+
+* Stephane Bortzmeyer 13 Mar 2003
+	- Bug reports
+	- Patch for qanda.mod.xsl 
+
+* Jan Pavlovic 02 Avr 2003
+	- Bug reports and Suggestions
+	- Suggested the use of textbackslash
+	- Suggested a new processing for lot. Now you can use the @label to output only tables, figures or both
+	- graphic.default.extension is now honoured.
+	- added support for child::editor and others in biblio.
+	- Index terms are now scaped.
+	- updated keywordset so now it uses latex.mapping
+    - added xsl template for keyword
+	- added xsl template for inlineequation
+	- keywords are now processed in bookinfo
+
+* Thomas Schraitle (tom_schr) 14 Avr 2003
+	- Submitted patch for indexterm.
+
+* Michael Wiedmann <mw(at)miwie(dot)in-berlin(dot)de>  14 Avr 2003 and beyond
+	- Bug Reports concerning authorgroup/author articleinfo and incorrect title in preface processing.
+	- Useful comments.
+	- Patches.
+	- 'Contrib' templates.
+	- Gentext localisation strings.
+
+* Florence HENRY <Florence(dot)Henry(at)obspm(dot)fr> 7 Oct 2003
+	- Several LaTeX suggestions.
+	- Help with colsep.
+
+* LEGUEDOIS, Frederic <F.LEGUEDOIS(at)OBERTHURCS(dot)com>
+	- Bug report in xsl/common/common.xsl regarding count() and has.ext with saxon.
+
+* Cesar A. R. Crusius <cesarcrusius(at)earthlink(dot)net> 3 Nov 2003
+	- Some new MathML templates.
+

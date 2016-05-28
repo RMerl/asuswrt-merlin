@@ -9,6 +9,7 @@
 <script type="text/JavaScript" src="/js/jquery.js"></script>
 <script type="text/javascript">
 var now_flag = '<% get_parameter("flag"); %>';
+var odmpid = '<% nvram_get("odmpid"); %>';
 
 function initial(){
 	if(parent.ISMOBILE){
@@ -22,6 +23,9 @@ function initial(){
 		document.getElementById("go_detect").focus();
 	}
 
+	if(odmpid == "RT-AC66U V2")
+		document.getElementById("modem_plug_img").src = "/images/RT-AC66U_V2/modem_plug.png";
+	
 	parent.doResetModem();
 }
 
@@ -76,7 +80,7 @@ function submitenter(myfield,e)
 		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
 			<tr>
 				<td align="center" colspan="2">
-					<br/><br/><img src="/images/modem_plug.png"></span>
+					<br/><br/><img id="modem_plug_img" src="/images/modem_plug.png"></span>
 				</td>
 			</tr>
 		</table>

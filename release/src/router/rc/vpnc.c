@@ -47,28 +47,6 @@
 
 int vpnc_unit = 5;
 
-static int
-handle_special_char_for_vpnclient(char *buf, size_t buf_size, char *src)
-{
-	const char special_chars[] = "'\\";
-	char *p, *q;
-	size_t len;
-
-	if (!buf || !src || buf_size <= 1)
-		return -1;
-
-	for (p = src, q = buf, len = buf_size; *p != '\0' && len > 1; ++p, --len) {
-		if (strchr(special_chars, *p))
-			*q++ = '\\';
-
-		*q++ = *p;
-	}
-
-	*q++ = '\0';
-
-	return 0;
-}
-
 int vpnc_pppstatus(void)
 {
 	FILE *fp;
@@ -143,10 +121,10 @@ start_vpnc(void)
 	/* do not authenticate peer and do not use eap */
 	fprintf(fp, "noauth\n");
 	fprintf(fp, "refuse-eap\n");
-	handle_special_char_for_vpnclient(buf, sizeof(buf), nvram_safe_get(strcat_r(prefix, "pppoe_username", tmp)));
-	fprintf(fp, "user '%s'\n", buf);
-	handle_special_char_for_vpnclient(buf, sizeof(buf), nvram_safe_get(strcat_r(prefix, "pppoe_passwd", tmp)));
-	fprintf(fp, "password '%s'\n", buf);
+	fprintf(fp, "user '%s'\n",
+		ppp_safe_escape(nvram_safe_get(strcat_r(prefix, "pppoe_username", tmp)), buf, sizeof(buf)));
+	fprintf(fp, "password '%s'\n",
+		ppp_safe_escape(nvram_safe_get(strcat_r(prefix, "pppoe_passwd", tmp)), buf, sizeof(buf)));
 
 	if (nvram_match(strcat_r(prefix, "proto", tmp), "pptp")) {
 		fprintf(fp, "plugin pptp.so\n");

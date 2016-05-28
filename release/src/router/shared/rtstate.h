@@ -144,7 +144,8 @@ enum {
 	FW_UPLOADING_ERROR,
 	FW_WRITING,
 	FW_WRITING_ERROR,
-	FW_WRITE_SUCCESS
+	FW_WRITE_SUCCESS,
+	FW_TRX_CHECK_ERROR
 };
 
 #ifdef RTCONFIG_USB
@@ -293,6 +294,9 @@ extern int is_phy_connect(int unit);
 extern int get_wan_state(int unit);
 extern int get_wan_unit(char *ifname);
 extern char *get_wan_ifname(int unit);
+#ifdef RTCONFIG_IPV6
+extern char *get_wan6_ifname(int unit);
+#endif
 extern int get_wanports_status(int wan_unit);
 extern char *get_usb_ehci_port(int port);
 extern char *get_usb_ohci_port(int port);

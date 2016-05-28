@@ -1,0 +1,75 @@
+<samba:parameter name="socket options"
+                 context="G"
+				 type="list"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This option allows you to set socket options 
+    to be used when talking with the client.</para>
+
+    <para>Socket options are controls on the networking layer 
+    of the operating systems which allow the connection to be 
+    tuned.</para>
+
+    <para>This option will typically be used to tune your Samba  server
+    for optimal performance for your local network. There is  no way
+    that Samba can know what the optimal parameters are for  your net,
+    so you must experiment and choose them yourself. We  strongly
+    suggest you read the appropriate documentation for your  operating
+    system first (perhaps <command moreinfo="none">man
+    setsockopt</command> will help).</para>
+
+    <para>You may find that on some systems Samba will say 
+    &quot;Unknown socket option&quot; when you supply an option. This means you 
+    either incorrectly  typed it or you need to add an include file 
+    to includes.h for your OS.  If the latter is the case please 
+    send the patch to <ulink url="mailto:samba-technical@samba.org">
+    samba-technical@samba.org</ulink>.</para>
+
+    <para>Any of the supported socket options may be combined 
+    in any way you like, as long as your OS allows it.</para>
+
+    <para>This is the list of socket options currently settable 
+    using this option:</para>
+
+    <itemizedlist>
+    	<listitem><para>SO_KEEPALIVE</para></listitem>
+    	<listitem><para>SO_REUSEADDR</para></listitem>
+    	<listitem><para>SO_BROADCAST</para></listitem>
+    	<listitem><para>TCP_NODELAY</para></listitem>
+    	<listitem><para>IPTOS_LOWDELAY</para></listitem>
+    	<listitem><para>IPTOS_THROUGHPUT</para></listitem>
+    	<listitem><para>SO_SNDBUF *</para></listitem>
+    	<listitem><para>SO_RCVBUF *</para></listitem>
+    	<listitem><para>SO_SNDLOWAT *</para></listitem>
+    	<listitem><para>SO_RCVLOWAT *</para></listitem>
+    </itemizedlist>
+
+    <para>Those marked with a <emphasis>'*'</emphasis> take an integer 
+    argument. The others can optionally take a 1 or 0 argument to enable 
+    or disable the option, by default they will be enabled if you 
+    don't specify 1 or 0.</para>
+
+    <para>To specify an argument use the syntax SOME_OPTION = VALUE 
+    for example <command moreinfo="none">SO_SNDBUF = 8192</command>. Note that you must 
+    not have any spaces before or after the = sign.</para>
+
+    <para>If you are on a local network then a sensible option 
+    might be:</para>
+
+    <para><command moreinfo="none">socket options = IPTOS_LOWDELAY</command></para>
+
+    <para>If you have a local network then you could try:</para>
+
+    <para><command moreinfo="none">socket options = IPTOS_LOWDELAY TCP_NODELAY</command></para>
+
+    <para>If you are on a wide area network then perhaps try 
+    setting IPTOS_THROUGHPUT. </para>
+
+    <para>Note that several of the options may cause your Samba 
+		server to fail completely. Use these options with caution!</para>
+</description>
+
+<value type="default">TCP_NODELAY</value>
+<value type="example">IPTOS_LOWDELAY</value>
+</samba:parameter>

@@ -9,6 +9,7 @@
 <script type="text/JavaScript" src="/js/jquery.js"></script>
 <script type="text/javascript">
 var now_flag = '<% get_parameter("flag"); %>';
+var odmpid = '<% nvram_get("odmpid"); %>';
 
 function initial(){
 	if(parent.ISMOBILE){
@@ -21,6 +22,9 @@ function initial(){
 		parent.set_step("t1");
 		document.getElementById("button1").focus();
 	}
+	
+	if(odmpid == "RT-AC66U V2")
+		document.getElementById("modem_unplug_img").src = "/images/RT-AC66U_V2/modem_unplug.png";
 
 	parent.doResetModem();
 	setTimeout("gotoPage('/qis/QIS_resetModem2.htm', now_flag, 0);", 2*60*1000);
@@ -82,7 +86,7 @@ function submitenter(myfield,e)
 		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="3" cellspacing="0" style="margin-top:-25px;">
 			<tr>
 				<td align="center" colspan="2">
-					<br/><br/><img src="/images/modem_unplug.png"></span>
+					<br/><br/><img id="modem_unplug_img" src="/images/modem_unplug.png"></span>
 				</td>
 			</tr>
 		</table>

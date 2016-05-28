@@ -91,9 +91,9 @@ function initial(){
 		based_modelid != "RT-AC88U" &&
 		based_modelid != "RT-AC87U" && 
 		based_modelid != "RT-AC68U" &&
+		based_modelid != "RT-AC68A" &&
 		based_modelid != "RT-AC66U" &&
 		based_modelid != "RT-AC56U" &&
-		based_modelid != "RT-AC56S" &&
 		based_modelid != "RT-AC51U" &&
 		based_modelid != "RT-N66U" &&
 		based_modelid != "RT-N18U"
@@ -105,9 +105,11 @@ function initial(){
 	if( based_modelid != "RT-AC5300" &&
 		based_modelid != "RT-AC3200" &&
 		based_modelid != "RT-AC3100" &&
+		based_modelid != "RT-AC1200G+" &&
 		based_modelid != "RT-AC88U" &&
 		based_modelid != "RT-AC87U" &&
 		based_modelid != "RT-AC68U" &&
+		based_modelid != "RT-AC68A" &&
 		based_modelid != "RT-AC66U" &&
 		based_modelid != "RT-AC56U" &&
 		based_modelid != "RT-AC56S" &&

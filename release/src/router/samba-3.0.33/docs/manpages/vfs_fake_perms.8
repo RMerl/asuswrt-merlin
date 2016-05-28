@@ -1,0 +1,43 @@
+.\"     Title: vfs_fake_perms
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_FAKE_PERMS" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_fake_perms - enable read only Roaming Profiles
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = fake_perms
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The
+vfs_fake_perms
+VFS module was created to allow Roaming Profile files and directories to be set (on the Samba server under UNIX) as read only\. This module will, if installed on the Profiles share, report to the client that the Profile files and directories are writeable\. This satisfies the client even though the files will never be overwritten as the client logs out or shuts down\.
+.PP
+This module is stackable\.
+.SH "EXAMPLES"
+.sp
+.RS 4
+.nf
+        \fI[Profiles]\fR
+	\fIpath = /profiles\fR
+	\fIvfs objects = fake_perms\fR
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

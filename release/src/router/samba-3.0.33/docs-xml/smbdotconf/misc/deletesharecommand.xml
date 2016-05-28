@@ -1,0 +1,50 @@
+<samba:parameter name="delete share command"
+                 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	Samba 2.2.0 introduced the ability to dynamically add and delete shares via the Windows NT 4.0 Server
+	Manager.  The <parameter moreinfo="none">delete share command</parameter> is used to define an external
+	program or script which will remove an existing service definition from
+	<filename moreinfo="none">smb.conf</filename>.  In order to successfully execute the
+	<parameter moreinfo="none">delete share command</parameter>, <command moreinfo="none">smbd</command>
+	requires that the administrator be connected using a root account (i.e.  uid == 0).
+	</para>
+
+    <para>
+    If the connected account has <literal>SeDiskOperatorPrivilege</literal>, scripts defined in
+    <parameter moreinfo="none">change share</parameter> parameter are executed as root.
+    </para>
+
+	<para>
+	When executed, <command moreinfo="none">smbd</command> will automatically invoke the
+	<parameter moreinfo="none">delete share command</parameter> with two parameters.
+	</para>
+
+	<itemizedlist>
+		<listitem>
+			<para><parameter moreinfo="none">configFile</parameter> - the location
+			of the global <filename moreinfo="none">smb.conf</filename> file.
+			</para>
+		</listitem>
+
+		<listitem>
+			<para><parameter moreinfo="none">shareName</parameter> - the name of
+			the existing service.
+			</para>
+		</listitem>
+	</itemizedlist>
+
+	<para>
+	This parameter is only used to remove file shares.  To delete printer shares,
+	see the <smbconfoption name="deleteprinter command"/>.
+	</para>
+</description>
+
+<related>add share command</related>
+<related>delete share command</related>
+<value type="default"></value>
+<value type="example">/usr/local/bin/delshare</value>
+</samba:parameter>

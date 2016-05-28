@@ -84,6 +84,18 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
+var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
+var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
+var iAmAlive = function(ret){if(ret.isdomain) top.location.href="http://" + ROUTERHOSTNAME + "/QIS_default.cgi?flag=welcome";};
+(function(){
+	var locationOrigin = window.location.protocol + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
+	if(location.hostname !== ROUTERHOSTNAME && ROUTERHOSTNAME != "" && isFirst){
+		setTimeout(function(){
+			var s=document.createElement("script");s.type="text/javascript";s.src=locationOrigin+"/httpd_check.json?hostname="+location.hostname;var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
+		}, 1);
+	}
+})();
+
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 var based_modelid = '<% nvram_get("productid"); %>';
 if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
@@ -91,6 +103,7 @@ if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (s
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
 var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
+var pppoe_failed_flag = false;
 
 if(isMobile() && tmo_support && sw_mode != 2 && qisFlag != "sitesurvey_rep" && qisFlag != "sitesurvey_mb")
 	location.href = "MobileQIS_Login.asp";
@@ -110,7 +123,6 @@ var flag_manual = 0;
 var isSubmit = false;
 var isrescan = 0;
 var getBand = '<% get_parameter("band"); %>';
-var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
 var ISMOBILE = false;
 var isPassChanged = false;
 var yadns_stage = 0;
@@ -135,6 +147,7 @@ var retry = 0;
 var isStatic = false;
 var staticIP = false;
 
+var changeSubnet = false;
 var restartTime = false;
 var restartWireless = false;
 var sysReboot = false;
@@ -707,7 +720,7 @@ function detect_httpd(){
 	<input type="hidden" name="action_mode" value="apply">
 	<input type="hidden" name="action_script" value="">
 	<input type="hidden" name="action_wait" value="3">
-	<input type="hidden" name="x_Setting" value="1">
+	<input type="hidden" name="x_Setting" value="1" disabled>
 </form>
 <form method="post" name="titleForm" id="titleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="next_page" value="">

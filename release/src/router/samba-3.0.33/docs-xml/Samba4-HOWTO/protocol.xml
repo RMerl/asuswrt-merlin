@@ -1,0 +1,204 @@
+<chapter id="protocol">
+	<title>The SMB/CIFS protocol</title>
+
+	<!-- 
+	Some parts shamelessly borrowed from myself. 
+	Original on http://jelmer.vernstok.nl/publications/cifs-developments.pdf
+	-->
+
+	<para>
+		"SMB" (also known as "CIFS") is a 
+		file-sharing protocol that has been used since the mid-eighties. 
+		Most people know SMB as the protocol behind the "Network Neighbourhood" 
+		and remote printing in Windows.
+	</para>
+
+	<para>
+		Several parts of the protocol are not discussed in this chapter, such 
+		as mailslots, browsing and dfs, to prevent it from getting too complex. 
+		CIFS internals are documented in detail in <citation>Hertel, 2003</citation>.
+	</para>
+
+
+	<sect1>
+		<title>History</title>
+
+		<sect2>
+			<title>Invention by IBM</title>
+
+			<para>
+				SMB is not very old, but it has a long history of modifications and extensions.
+				The original protocol was meant to run over ``NetBIOS'', which was the 
+				name of the DOS interface to a very simple LAN system developed by IBM.
+				NetBIOS was developed because SNA, IBM's other main 
+				protocol at the time, was much too advanced for use in DOS.
+			</para>
+
+			<para>
+				The NetBIOS API in these days (early eighties) was nothing more then the 
+				interface to a very simple link-layer protocol 
+				over which several protocols, including SMB, were used. It could do reads and 
+				writes to services on remote hosts, which were identified by case-insensitive 
+				names, and discover all available hosts and services.
+			</para>
+
+			<para>
+				Dr. Barry Feigenbau, an IBM employee, invented the core of the original SMB protocol, 
+				which he initially named after himself: ``BAF''. He later changed the name to 
+				be ``SMB'' (for ``Server Message Block''). Every packet in the protocol 
+				starts with a byte $0xFF$ and these three letters. 
+			</para>
+
+			<para>
+				IBM, Microsoft, 3Com and Intel made up the rest of the initial protocol 
+				together. The commands the protocol supported at this stage were basically
+				a mirror of the DOS File IO API calls, which meant the protocol wasn't very 
+				efficient. The protocol also lacked authentication support. Everybody on the 
+				network could do reads and writes, which meant this protocol 
+				wasn't very suitable for large enterprises.
+			</para>
+
+			<para>
+				NetBIOS is an API that has had various implementations; there is 
+				NetBIOS over TCP/IP (NBT), NetBIOS over IPX, NetBIOS over SNA and 
+				even NetBIOS over DECNEt. Mostly used these days is
+				NetBIOS over TCP (NBT). 
+			</para>
+
+			<para>
+				This is also were things are starting to get hairy. Since NetBIOS identifies 
+				hosts by their name, NetBIOS clients had to start doing IP broadcasts to 
+				figure out the IP of the host they had to connect to. Several schemes were 
+				introduced to do name lookups crossing subnet boundaries, using name servers, 
+				etc. We're basically emulating a NetBIOS LAN in order to be able to run SMB.
+			</para>
+
+			<para>
+				Doing NetBIOS over IP is not very sane, however, the NBT implementation itself 
+				in Windows isn't very nice either. It has horrible 
+				limits, special exceptions, several broken schemes for looking up 
+				names (including two kinds of name servers). NetBIOS and NetBIOS over TCP/IP 
+				are described in RFC1001 and RFC1002.
+			</para>	
+		</sect2>
+
+		<sect2>
+			<title>The various incarnations of SMB</title>
+
+			<para>Over the years, several usage models for SMB have been developed. While SMB originally started out as a file sharing protocol, it was later extended to include support for network management and other network services 
+				as well.</para>
+
+			<para>
+				One of the reasons for the various "upgrades" of the SMB 
+				protocol is the fact that networks have become larger 
+				and larger and with them the need for privilege separation 
+				and scalability has increased.
+			</para>
+
+			<sect3>
+				<title>DOS</title>
+
+				<para>
+					The original model in which SMB was used was as a 
+					simple file-sharing service in a NetBIOS-environment.
+				</para>
+				
+				<para>
+					File sharing worked basically by specifying a list of directories that had 
+					to be shared and what name they had to be shared under ("shares"). Eventually, 
+					one could password-protect a share. At most one password per share could be set.
+				</para>
+			</sect3>
+
+			<sect3>
+				<title>Windows For Workgroups</title>
+				
+				<para>
+					After the ``CORE'' dialect, 
+					IBM and Microsoft implemented a new dialect known as ``LANMAN''.
+					This dialect was used by Windows for 
+					Workgroups, OS/2 and Windows 9x which all know it under a different name. A 
+					'virtual' file system was also added, which was used for doing remote function 
+					calls (RAP, for ``Remote Administration Protocol'').
+				</para>
+
+				<para>
+					Computers are grouped into "Workgroups" in this model. Everybody is equal to 
+					the others and there is no central point of control.
+				</para>
+			</sect3>
+
+			<sect3>
+				<title>Windows NT</title>
+				<para>
+					For Windows NT, yet another dialect was added, named 'NT'. The NT dialect 
+					had it's own set of file I/O functions (similar to the NT File I/O API) 
+					and it had support for yet another way of doing remote function calls:
+					DCE/RPC. RPC's are used for DCOM and several of the subsystems in NT
+					that can be accessed remotely (registry, printing, user management, logging 
+					on, etc).
+				</para>
+
+				<para>
+					Windows NT works with a new concept for grouping computers called ``domains''<footnote>In the protocol, domains are actually an upgraded version of a workgroup</footnote>. Each computer is member of exactly one domain. There are several roles a computer can have in the domain: PDC (primary domain controller, the "manager" of the domain, that coordinates all authentication and authorization), BDC (Backup domain controller, in case the PDC goes down) or just a regular domain member. The PDC decides who is to be a member of the domain.
+				</para>
+			</sect3>
+
+			<sect3>
+				<title>Windows 2000</title>
+				<para>
+					In Windows NT 5 (marketing name: Windows 2000), NetBIOS-less SMB was
+					introduced. This means SMB is used directly over TCP port 445 instead of 
+					via NetBIOS over TCP/IP. DNS 
+					is used for looking up machine names. 
+				</para>
+
+				<para>Windows 2000 was also the first operating system from Microsoft
+					that had support for Active Directory. Active Directory is very 
+					similar to the "domain" concept used by NT4, though it 
+					is implemented differently (using modified open protocols), 
+					and has some additional features (one of the most important ones being decentralized).
+				</para>
+
+				<para>
+					Active directory no longer uses a central point of authority 
+					and there are fewer limits to the size of a domain. Several 
+					DC's can exist, so there is no longer a single point of 
+					failure as well as better scalability. 
+				</para>
+			</sect3>
+		</sect2>
+
+		<sect2>
+			<title>Samba versions and their support for the SMB models</title>
+
+			<sect3>
+				<title>Samba 2.2</title>
+
+				<para>Full CORE and Workgroup support. Somewhat basic 
+					NT4-style support.</para>
+			</sect3>
+
+			<sect3>
+				<title>Samba 3.0</title>
+
+				<para>Full CORE and Workgroup support. Almost complete 
+					NT4-style support.
+				</para>
+			</sect3>
+
+			<sect3>
+				<title>Samba 3.2</title>
+
+				<para>FIXME</para>
+			</sect3>
+
+			<sect3>
+				<title>Samba 4.0</title>
+				
+				<para>Full CORE, Workgroup, NT4 and ADS support.</para>
+
+			</sect3>
+		</sect2>
+	</sect1>
+</chapter>

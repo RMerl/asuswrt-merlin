@@ -1,0 +1,21 @@
+<samba:parameter name="announce as"
+                 context="G"
+				 type="string"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This specifies what type of server <citerefentry><refentrytitle>nmbd</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry> will announce itself as, to a network neighborhood browse 
+    list. By default this is set to Windows NT. The valid options 
+    are : &quot;NT Server&quot; (which can also be written as &quot;NT&quot;), 
+    &quot;NT Workstation&quot;, &quot;Win95&quot; or &quot;WfW&quot; meaning Windows NT Server, 
+    Windows NT Workstation, Windows 95 and Windows for Workgroups 
+    respectively. Do not change this parameter unless you have a 
+    specific need to stop Samba appearing as an NT server as this 
+    may prevent Samba servers from participating as browser servers 
+	correctly.</para>
+</description>
+
+<value type="default">NT Server</value>
+<value type="example">Win95</value>
+</samba:parameter>

@@ -1,0 +1,69 @@
+<!-- 
+
+     File isogrk4.ent produced by the dsssl script ent.dsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments in the STIX proposal for characters
+     for Mathematics.
+
+     The STIX assignments are temporary and will change if
+     the proposal or some variant of it is adopted by the
+     Unicode Consortium.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1991
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+-->
+
+<!ENTITY b.alpha    "&#59136;" ><!--UE700 small alpha, Greek -->
+<!ENTITY b.beta     "&#59137;" ><!--UE701 small beta, Greek -->
+<!ENTITY b.chi      "&#59175;" ><!--UE727 small chi, Greek -->
+<!ENTITY b.delta    "&#59142;" ><!--UE706 small delta, Greek -->
+<!ENTITY b.Delta    "&#59143;" ><!--UE707 capital delta, Greek -->
+<!ENTITY b.epsi     "&#59144;" ><!--UE708 small epsilon, Greek -->
+<!ENTITY b.epsiv    "&#59146;" ><!--UE709 varepsilion -->
+<!ENTITY b.eta      "&#59148;" ><!--UE70C small eta, Greek -->
+<!ENTITY b.gamma    "&#59138;" ><!--UE702 small gamma, Greek -->
+<!ENTITY b.gammad   "&#59140;" ><!--UE704 digamma, Greek -->
+<!ENTITY b.Gamma    "&#59139;" ><!--UE703 capital gamma, Greek -->
+<!ENTITY b.Gammad   "&#59141;" ><!--UE705 capital digamma, Greek -->
+<!ENTITY b.iota     "&#59152;" ><!--UE710 small iota, Greek -->
+<!ENTITY b.kappa    "&#59153;" ><!--UE711 small kappa, Greek -->
+<!ENTITY b.kappav   "&#59154;" ><!--UE712 var kappa, Greek -->
+<!ENTITY b.lambda   "&#59155;" ><!--UE713 small lambda, Greek -->
+<!ENTITY b.Lambda   "&#59156;" ><!--UE714 capital lambda, Greek -->
+<!ENTITY b.mu       "&#59157;" ><!--UE715 small mu, Greek -->
+<!ENTITY b.nu       "&#59158;" ><!--UE716 small nu, Greek -->
+<!ENTITY b.omega    "&#59178;" ><!--UE72A small omega, Greek -->
+<!ENTITY b.Omega    "&#59179;" ><!--UE72B capital Omega, Greek -->
+<!ENTITY b.phis     "&#59172;" ><!--UE724 straight phi, Greek -->
+<!ENTITY b.phiv     "&#59174;" ><!--UE726 varphi -->
+<!ENTITY b.pi       "&#59161;" ><!--UE719 small pi, Greek -->
+<!ENTITY b.piv      "&#59163;" ><!--UE71B varpi -->
+<!ENTITY b.psi      "&#59176;" ><!--UE728 small psi, Greek -->
+<!ENTITY b.Phi      "&#59173;" ><!--UE725 capital Phi, Greek -->
+<!ENTITY b.Pi       "&#59162;" ><!--UE71A capital pi, Greek -->
+<!ENTITY b.Psi      "&#59177;" ><!--UE729 capital Psi, Greek -->
+<!ENTITY b.rho      "&#59164;" ><!--UE71C small rho, Greek -->
+<!ENTITY b.rhov     "&#59165;" ><!--UE71D varrho -->
+<!ENTITY b.sigma    "&#59166;" ><!--UE71E small sigma, Greek -->
+<!ENTITY b.sigmav   "&#59168;" ><!--UE720 varsigma -->
+<!ENTITY b.Sigma    "&#59167;" ><!--UE71F capital sigma, Greek -->
+<!ENTITY b.tau      "&#59169;" ><!--UE721 small tau, Greek -->
+<!ENTITY b.thetas   "&#59149;" ><!--UE70D straight theta, Greek -->
+<!ENTITY b.thetav   "&#59151;" ><!--UE70F var theta, Greek -->
+<!ENTITY b.Theta    "&#59150;" ><!--UE70E capital theta, Greek -->
+<!ENTITY b.upsi     "&#59170;" ><!--UE722 small upsilon, Greek -->
+<!ENTITY b.Upsilon  "&#59171;" ><!--UE723 capital upsilon, Greek -->
+<!ENTITY b.xi       "&#59159;" ><!--UE717 small xi, Greek -->
+<!ENTITY b.Xi       "&#59160;" ><!--UE718 capital xi, Greek -->
+<!ENTITY b.zeta     "&#59145;" ><!--UE70B small zeta, Greek -->

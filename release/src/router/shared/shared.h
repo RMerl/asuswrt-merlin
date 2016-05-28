@@ -63,6 +63,15 @@
 #define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
 
+#ifdef RTCONFIG_TRAFFIC_LIMITER
+/* debug message */
+#define TLD_DEBUG		"/tmp/TLD_DEBUG"
+#define TL_DBG(fmt,args...) \
+	if(f_exists(TLD_DEBUG) > 0) { \
+		dbg("[TRAFFIC LIMITER][%s:(%d)]"fmt, __FUNCTION__, __LINE__, ##args); \
+	}
+#endif
+
 //version.c
 extern const char *rt_version;
 extern const char *rt_serialno;
@@ -165,6 +174,11 @@ extern char *get_upper_str(const char *const str, char **target);
 extern int upper_strcmp(const char *const str1, const char *const str2);
 extern int upper_strncmp(const char *const str1, const char *const str2, int count);
 extern char *upper_strstr(const char *const str, const char *const target);
+
+extern in_addr_t inet_addr_(const char *addr);
+extern int inet_equal(const char *addr1, const char *mask1, const char *addr2, const char *mask2);
+extern int inet_intersect(const char *addr1, const char *mask1, const char *addr2, const char *mask2);
+extern int inet_deconflict(const char *addr1, const char *mask1, const char *addr2, const char *mask2, struct in_addr *result);
 
 extern void chld_reap(int sig);
 extern int get_wan_proto(void);
@@ -375,7 +389,7 @@ extern int module_loaded(const char *module);
 
 // files.c
 extern int check_if_dir_empty(const char *dirpath);
-extern int file_lock(char *tag);
+extern int file_lock(const char *tag);
 extern void file_unlock(int lockfd);
 
 
@@ -886,13 +900,10 @@ extern int check_filesize_over(char *path, long int size);
 extern time_t get_last_month_timestamp();
 extern int get_iface_hwaddr(char *name, unsigned char *hwaddr);
 #ifdef RTCONFIG_TRAFFIC_LIMITER
-extern int TL_UNIT_S; // traffic limiter dual wan unit start
-extern int TL_UNIT_E; // traffic limiter dual wan unit end
 extern unsigned int traffic_limiter_read_bit(const char *type);
 extern void traffic_limiter_set_bit(const char *type, int unit);
 extern void traffic_limiter_clear_bit(const char *type, int unit);
 extern double traffic_limiter_get_realtime(int unit);
-extern int traffic_limiter_dualwan_check(char *dualwan_mode);
 #endif
 #define xstart(args...) _xstart(args, NULL)
 extern int _xstart(const char *cmd, ...);

@@ -1050,7 +1050,7 @@ function clean_macerr(){
 				<ul type="disc">
 					<li style="line-height:15px; margin-left:-25px; margin-top:-10px; color:#949393;"><#Game_Boost_Benefit1#></li>
 					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit2#></li>
-					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit3#><br>(Windows, Macintosh, Linux, Mobile, Console game).</li>
+					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit3#><br>(<#Game_Boost_Benefit3_1#>)</li>
 					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit4#></li>
 					<li style="line-height:15px; margin-left:-25px; color:#949393;"><#Game_Boost_Benefit5#></li>
 				</ul>

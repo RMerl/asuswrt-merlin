@@ -1,0 +1,16 @@
+<samba:parameter name="open files database hash size"
+				 type="integer"
+                 context="G"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter was added in Samba 3.0.23. This is an internal tuning parameter that sets
+	the hash size of the tdb used for the open file databases. The presence of this parameter
+	allows tuning of the system for very large (thousands of concurrent users) Samba setups.
+	The default setting of this parameter should be sufficient for most normal environments.
+	It is advised not to change this parameter unless advised to by a Samba Team member.</para>
+</description>
+
+<value type="default">10007</value>
+<value type="example">1338457</value>
+</samba:parameter>

@@ -99,6 +99,11 @@ static int send_pack(struct in_addr *src_addr, struct in_addr *dst_addr, struct 
 	int i;
 #endif
 
+#ifdef RTCONFIG_QCA_PLC_UTILS
+	if (nvram_match("plc_wake", "0"))
+		return 0;
+#endif
+
 	ah->ar_hrd = htons(ARPHRD_ETHER);
 	ah->ar_pro = htons(ETH_P_IP);
 	ah->ar_hln = ME->sll_halen;

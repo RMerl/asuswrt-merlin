@@ -1,0 +1,32 @@
+<samba:parameter name="client ntlmv2 auth"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter determines whether or not <citerefentry><refentrytitle>smbclient</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry> will attempt to
+    authenticate itself to servers using the NTLMv2 encrypted password
+    response.</para>
+
+    <para>If enabled, only an NTLMv2 and LMv2 response (both much more
+    secure than earlier versions) will be sent.  Many servers
+    (including NT4 &lt; SP4, Win9x and Samba 2.2) are not compatible with
+    NTLMv2.  </para>
+
+    <para>Similarly, if enabled, NTLMv1, <command
+    moreinfo="none">client lanman auth</command> and <command
+    moreinfo="none">client plaintext auth</command>
+    authentication will be disabled.  This also disables share-level 
+    authentication. </para>
+
+    <para>If disabled, an NTLM response (and possibly a LANMAN response)
+    will be sent by the client, depending on the value of <command
+    moreinfo="none">client lanman auth</command>.  </para>
+
+    <para>Note that some sites (particularly
+    those following 'best practice' security polices) only allow NTLMv2
+	responses, and not the weaker LM or NTLM.</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

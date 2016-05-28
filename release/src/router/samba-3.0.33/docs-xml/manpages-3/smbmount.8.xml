@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbmount.8">
+
+<refmeta>
+	<refentrytitle>smbmount</refentrytitle>
+	<manvolnum>8</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbmount</refname>
+	<refpurpose>mount an smbfs filesystem</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbmount</command>
+		<arg choice="req">service</arg>
+		<arg choice="req">mount-point</arg>
+		<arg choice="opt">-o options</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para><command>smbmount</command> mounts a Linux SMB filesystem. It 
+	is usually invoked as <command>mount.smbfs</command> by
+	the <citerefentry><refentrytitle>mount</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> command when using the 
+	"-t smbfs" option. This command only works in Linux, and the kernel must
+	support the smbfs filesystem.</para>
+
+	<para>WARNING: <command>smbmount</command> is deprecated and not
+	maintained any longer. <command>mount.cifs</command> (mount -t cifs)
+	should be used instead of <command>smbmount</command>.</para>
+
+	<para>Options to <command>smbmount</command> are specified as a comma-separated
+	list of key=value pairs. It is possible to send options other
+	than those listed here, assuming that smbfs supports them. If
+	you get mount failures, check your kernel log for errors on
+	unknown options.</para>
+
+	<para><command>smbmount</command> is a daemon. After mounting it keeps running until
+	the mounted smbfs is umounted. It will log things that happen
+	when in daemon mode using the "machine name" smbmount, so
+	typically this output will end up in <filename>log.smbmount</filename>. The <command>
+	smbmount</command> process may also be called mount.smbfs.</para>
+
+	<note><para> <command>smbmount</command> 
+	calls <citerefentry><refentrytitle>smbmnt</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> to do the actual mount. You 
+	must make sure that <command>smbmnt</command> is in the path so 
+	that it can be found. </para></note>
+	
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>username=&lt;arg&gt;</term>
+		<listitem><para>
+		specifies the username to connect as. If this is not given, then the environment variable <envar> USER</envar>
+		is used. This option can also take the form "user%password" or "user/workgroup" or "user/workgroup%password"
+		to allow the password and workgroup to be specified as part of the username.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>password=&lt;arg&gt;</term>
+		<listitem><para>
+		specifies the SMB password. If this option is not given then the environment 
+		variable <literal>PASSWD</literal> is used. If it can find no password 
+		<command>smbmount</command> will prompt for a password, unless the guest option is given.
+		</para>
+
+		<para>
+		Note that passwords which contain the argument delimiter character (i.e. a comma ',') will failed to be parsed
+		correctly on the command line.  However, the same password defined in the PASSWD environment variable or a
+		credentials file (see below) will be read correctly.
+		</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>credentials=&lt;filename&gt;</term>
+		<listitem><para>specifies a file that contains a username and/or password. 
+The format of the file is:
+<programlisting>
+username=value
+password=value
+</programlisting></para>
+
+		<para>This is preferred over having passwords in plaintext in a
+		shared file, such as <filename>/etc/fstab</filename>. Be sure to protect any
+		credentials file properly.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>krb</term>
+		<listitem><para>Use kerberos (Active Directory). </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>netbiosname=&lt;arg&gt;</term>
+		<listitem><para>sets the source NetBIOS name. It defaults 
+		to the local hostname. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>uid=&lt;arg&gt;</term>
+		<listitem><para>sets the uid that will own all files on
+		the mounted filesystem.
+		It may be specified as either a username or a numeric uid.
+		</para></listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>gid=&lt;arg&gt;</term>
+		<listitem><para>sets the gid that will own all files on
+		the mounted filesystem.
+		It may be specified as either a groupname or a numeric 
+		gid. </para></listitem>		
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>port=&lt;arg&gt;</term>
+		<listitem><para>sets the remote SMB port number. The default 
+		is 445, fallback is 139. </para></listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>fmask=&lt;arg&gt;</term>
+		<listitem><para>sets the file mask. This determines the 
+		permissions that remote files have in the local filesystem. 
+		This is not a umask, but the actual permissions for the files.
+		The default is based on the current umask. </para></listitem>
+		</varlistentry>
+		
+
+		<varlistentry>
+		<term>dmask=&lt;arg&gt;</term>
+		<listitem><para>Sets the directory mask. This determines the 
+		permissions that remote directories have in the local filesystem. 
+		This is not a umask, but the actual permissions for the directories.
+		The default is based on the current umask. </para></listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>debug=&lt;arg&gt;</term>
+		<listitem><para>Sets the debug level. This is useful for 
+		tracking down SMB connection problems. A suggested value to
+		start with is 4. If set too high there will be a lot of
+		output, possibly hiding the useful output.</para></listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>ip=&lt;arg&gt;</term>
+		<listitem><para>Sets the destination host or IP address.
+		</para></listitem>
+		</varlistentry>
+
+
+
+		<varlistentry>
+		<term>workgroup=&lt;arg&gt;</term>
+		<listitem><para>Sets the workgroup on the destination </para>
+		</listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>sockopt=&lt;arg&gt;</term>
+		<listitem><para>Sets the TCP socket options. See the <ulink
+		url="smb.conf.5.html#SOCKETOPTIONS"><citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry></ulink> <parameter>socket options</parameter> option.
+		</para></listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>scope=&lt;arg&gt;</term>
+		<listitem><para>Sets the NetBIOS scope </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>guest</term>
+		<listitem><para>Don't prompt for a password </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>ro</term>
+		<listitem><para>mount read-only </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>rw</term><listitem><para>mount read-write </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>iocharset=&lt;arg&gt;</term>
+		<listitem><para>
+		sets the charset used by the Linux side for codepage
+		to charset translations (NLS). Argument should be the
+		name of a charset, like iso8859-1. (Note: only kernel
+		2.4.0 or later)
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>codepage=&lt;arg&gt;</term>
+		<listitem><para>
+		sets the codepage the server uses. See the iocharset
+		option. Example value cp850. (Note: only kernel 2.4.0
+		or later)
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>ttl=&lt;arg&gt;</term>
+		<listitem><para>
+		sets how long a directory listing is cached in milliseconds
+		(also affects visibility of file size and date
+		changes). A higher value means that changes on the
+		server take longer to be noticed but it can give
+		better performance on large directories, especially
+		over long distances. Default is 1000ms but something
+		like 10000ms (10 seconds) is probably more reasonable
+		in many cases.
+		(Note: only kernel 2.4.2 or later)
+		</para></listitem>
+		</varlistentry>
+
+	</variablelist>
+
+
+</refsect1>
+
+<refsect1>
+	<title>ENVIRONMENT VARIABLES</title>
+
+	<para>The variable <envar>USER</envar> may contain the username of the
+	person using the client.  This information is used only if the
+	protocol level is high enough to support session-level
+	passwords. The variable can be used to set both username and
+	password by using the format username%password.</para>
+
+	<para>The variable <envar>PASSWD</envar> may contain the password of the
+	person using the client.  This information is used only if the
+	protocol level is high enough to support session-level
+	passwords.</para>
+
+	<para>The variable <envar>PASSWD_FILE</envar> may contain the pathname
+	of a file to read the password from. A single line of input is
+	read and used as the password.</para>
+</refsect1>
+
+<refsect1>
+	<title>OTHER COMMANDS</title>
+
+	<para>
+	File systems that have been mounted using the <command>smbmount</command>
+	can be unmounted using the <command>smbumount</command> or the UNIX system
+	<command>umount</command> command.
+	</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>BUGS</title>
+
+	<para>Passwords and other options containing , can not be handled.
+	For passwords an alternative way of passing them is in a credentials
+	file or in the PASSWD environment.</para>
+
+	<para>The credentials file does not handle usernames or passwords with
+	leading space.</para>
+
+	<para>One smbfs bug is important enough to mention here, even if it
+	is a bit misplaced:</para>
+
+	<itemizedlist>
+
+	<listitem><para>Mounts sometimes stop working. This is usually
+	caused by smbmount terminating. Since smbfs needs smbmount to
+	reconnect when the server disconnects, the mount will eventually go
+	dead. An umount/mount normally fixes this. At least 2 ways to
+	trigger this bug are known.</para></listitem>
+
+	</itemizedlist>
+
+	<para>Note that the typical response to a bug report is suggestion
+	to try the latest version first. So please try doing that first,
+	and always include which versions you use of relevant software
+	when reporting bugs (minimum: samba, kernel, distribution)</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>Documentation/filesystems/smbfs.txt in the linux kernel
+	source tree may contain additional options and information.</para>
+
+	<para>FreeBSD also has a smbfs, but it is not related to smbmount</para>
+
+	<para>For Solaris, HP-UX and others you may want to look at <citerefentry><refentrytitle>smbsh</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry> or at other solutions, such as 
+	Sharity or perhaps replacing the SMB server with a NFS server.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>Volker Lendecke, Andrew Tridgell, Michael H. Warfield 
+	and others.</para>
+	
+	<para>The current maintainer of smbfs and the userspace
+	tools <command>smbmount</command>, <command>smbumount</command>,
+	and <command>smbmnt</command> is <ulink 
+	url="mailto:urban@teststation.com">Urban Widmark</ulink>.
+	The <ulink url="mailto:samba@samba.org">SAMBA Mailing list</ulink>
+	is the preferred place to ask questions regarding these programs.
+	</para>
+	
+	<para>The conversion of this manpage for Samba 2.2 was performed 
+	by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0
+	was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

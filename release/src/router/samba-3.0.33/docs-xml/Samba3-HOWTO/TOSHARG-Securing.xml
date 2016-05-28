@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="securing-samba">
+
+<chapterinfo>
+	&author.tridge;
+	&author.jht;
+	<pubdate>May 26, 2003</pubdate>
+</chapterinfo>
+
+<title>Securing Samba</title>
+
+<sect1>
+<title>Introduction</title>
+
+<para>
+<indexterm><primary>security</primary></indexterm>
+<indexterm><primary>direct internet access</primary></indexterm>
+<indexterm><primary>firewall</primary></indexterm>
+<indexterm><primary>private network</primary></indexterm>
+<indexterm><primary>barriers</primary></indexterm>
+<indexterm><primary>deterents</primary></indexterm>
+<indexterm><primary>secured networks</primary></indexterm>
+The information contained in this chapter applies in general to all Samba installations. Security is
+everyone's concern in the information technology world. A surprising number of Samba servers are being
+installed on machines that have direct internet access, thus security is made more critical than it would have been had the
+server been located behind a firewall and on a private network. Paranoia regarding server security is causing
+some  network administrators to insist on the installation of robust firewalls even on servers that are located
+inside secured networks. This chapter provides information to assist the administrator who understands
+how to create the needed barriers and deterents against <quote>the enemy</quote>, no matter where [s]he may
+come from.
+</para>
+
+<blockquote>
+<para>
+A new apprentice reported for duty to the chief engineer of a boiler house. He said, <quote>Here I am,
+if you will show me the boiler I'll start working on it.</quote> Then engineer replied, <quote>You're leaning
+on it!</quote>
+</para>
+</blockquote>
+
+<para>
+Security concerns are just like that. You need to know a little about the subject to appreciate
+how obvious most of it really is. The challenge for most of us is to discover that first morsel
+of knowledge with which we may unlock the secrets of the masters.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Features and Benefits</title>
+
+<para>
+<indexterm><primary>moderately secure</primary></indexterm>
+<indexterm><primary>perimeter firewall</primary></indexterm>
+<indexterm><primary>host security</primary></indexterm>
+<indexterm><primary>Samba security</primary></indexterm>
+There are three levels at which security principles must be observed in order to render a site
+at least moderately secure. They are the perimeter firewall, the configuration of the host
+server that is running Samba, and Samba itself.
+</para>
+
+<para>
+Samba permits a most flexible approach to network security. As far as possible Samba implements
+the latest protocols to permit more secure MS Windows file and print operations.
+</para>
+
+<para>
+<indexterm><primary>host-based protection</primary></indexterm>
+<indexterm><primary>interface-based exclusion</primary></indexterm>
+<indexterm><primary>resource-based exclusion</primary></indexterm>
+Samba can be secured from connections that originate from outside the local network. This can be done using
+<emphasis>host-based protection</emphasis>, using Samba's implementation of a technology known as
+<quote>tcpwrappers,</quote> or it may be done be using <emphasis>interface-based exclusion</emphasis> so
+&smbd; will bind only to specifically permitted interfaces. It is also possible to set specific share- or
+resource-based exclusions, for example, on the <smbconfsection name="[IPC$]"/> autoshare. The <smbconfsection
+name="[IPC$]"/> share is used for browsing purposes as well as to establish TCP/IP connections.
+</para>
+
+<para>
+<indexterm><primary>Access Control Entries</primary><see>ACE</see></indexterm>
+<indexterm><primary>ACL</primary></indexterm>
+<indexterm>controls<primary></primary></indexterm>
+Another method by which Samba may be secured is by setting Access Control Entries (ACEs) in an Access 
+Control List (ACL) on the shares themselves. This is discussed in
+<link linkend="AccessControls">File, Directory, and Share Access Controls</link>.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Technical Discussion of Protective Measures and Issues</title>
+
+<para>
+The key challenge of security is that protective measures suffice at best
+only to close the door on known exploits and breach techniques. Never assume that
+because you have followed these few measures, the Samba server is now an impenetrable
+fortress! Given the history of information systems so far, it is only a matter of time
+before someone will find yet another vulnerability.
+</para>
+
+	<sect2>
+	<title>Using Host-Based Protection</title>
+
+	<para>
+<indexterm><primary>outside threat</primary></indexterm>
+<indexterm><primary>insecure</primary></indexterm>
+<indexterm><primary>Internet</primary></indexterm>
+	In many installations of Samba, the greatest threat comes from outside
+	your immediate network. By default, Samba accepts connections from
+	any host, which means that if you run an insecure version of Samba on
+	a host that is directly connected to the Internet, you can be
+	especially vulnerable.
+	</para>
+
+	<para>
+<indexterm><primary>allow access</primary></indexterm>
+<indexterm><primary>range of hosts</primary></indexterm>
+	One of the simplest fixes in this case is to use the <smbconfoption name="hosts allow"/> and
+	<smbconfoption name="hosts deny"/> options in the Samba &smb.conf; configuration file to
+	allow access to your server only from a specific range of hosts. An example might be:
+	<smbconfblock>
+	<smbconfoption name="hosts allow">127.0.0.1 192.168.2.0/24 192.168.3.0/24</smbconfoption>
+	<smbconfoption name="hosts deny">0.0.0.0/0</smbconfoption>
+	</smbconfblock>
+	</para>
+
+	<para>
+<indexterm><primary>localhost</primary></indexterm>
+<indexterm><primary>private networks</primary></indexterm>
+<indexterm><primary>called name</primary></indexterm>
+	The above will allow SMB connections only from <constant>localhost</constant> (your own
+	computer) and from the two private networks 192.168.2 and 192.168.3. All other
+	connections will be refused as soon as the client sends its first packet. The refusal
+	will be marked as <literal>not listening on called name</literal> error.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>User-Based Protection</title>
+
+	<para>
+	If you want to restrict access to your server to valid users only, then the following
+	method may be of use. In the &smb.conf; <smbconfsection name="[global]"/> section put:
+	<smbconfblock>
+	<smbconfoption name="valid users">@smbusers, jacko</smbconfoption>
+	</smbconfblock>
+	</para>
+
+	<para>
+<indexterm><primary>smbusers</primary></indexterm>
+	This restricts all server access either to the user <emphasis>jacko</emphasis>
+	or to members of the system group <emphasis>smbusers</emphasis>.
+	</para>
+
+	</sect2>
+
+	<sect2>
+
+	<title>Using Interface Protection</title>
+
+	<para>
+<indexterm><primary>network interface</primary></indexterm>
+<indexterm><primary>accept connections</primary></indexterm>
+<indexterm><primary>Internet</primary></indexterm>
+	By default, Samba accepts connections on any network interface that
+	it finds on your system. That means if you have an ISDN line or a PPP
+	connection to the Internet then Samba will accept connections on those
+	links. This may not be what you want.
+	</para>
+
+	<para>
+	You can change this behavior using options like this:
+	<smbconfblock>
+	<smbconfoption name="interfaces">eth* lo</smbconfoption>
+	<smbconfoption name="bind interfaces only">yes</smbconfoption>
+	</smbconfblock>
+	</para>
+
+	<para>
+<indexterm><primary>interfaces</primary></indexterm>
+<indexterm><primary>loopback interface</primary></indexterm>
+<indexterm><primary>Ethernet adapters</primary></indexterm>
+<indexterm><primary>listen for connections</primary></indexterm>
+	This tells Samba to listen for connections only on interfaces with a name starting with
+	<constant>eth</constant> such as <constant>eth0</constant> or <constant>eth1</constant>, plus on the loopback interface called
+	<constant>lo</constant>. The name you will need to use depends on what OS you are using. In the above, I used
+	the common name for Ethernet adapters on Linux.
+	</para>
+
+	<para>
+<indexterm><primary>PPP</primary></indexterm>
+<indexterm><primary>SMB</primary></indexterm>
+<indexterm><primary>cracker</primary></indexterm>
+<indexterm><primary>confirm address</primary></indexterm>
+	If you use the above and someone tries to make an SMB connection to your host over a PPP interface called
+	<constant>ppp0</constant>, then [s]he will get a TCP connection refused reply. In that case, no Samba code
+	is run at all, because the operating system has been told not to pass connections from that interface to any
+	Samba process. However, the refusal helps a would-be cracker by confirming that the IP address provides
+	valid active services.
+	</para>
+
+	<para>
+<indexterm><primary>ignore connection</primary></indexterm>
+<indexterm><primary>refusing connection</primary></indexterm>
+<indexterm><primary>exploitation</primary></indexterm>
+<indexterm><primary>denial of service</primary></indexterm>
+<indexterm><primary>firewall</primary></indexterm>
+	A better response would be to ignore the connection (from, for example, ppp0) altogether. The
+	advantage of ignoring the connection attempt, as compared with refusing it, is that it foils those who
+	probe an interface with the sole intention of finding valid IP addresses for later use in exploitation
+	or denial of service attacks. This method of dealing with potential malicious activity demands the
+	use of appropriate firewall mechanisms.
+	</para>
+
+	</sect2>
+
+	<sect2 id="firewallports">
+	<title>Using a Firewall</title>
+
+	<para>
+<indexterm><primary>deny access</primary></indexterm>
+<indexterm><primary>exposed</primary></indexterm>
+<indexterm><primary>firewall active</primary></indexterm>
+	Many people use a firewall to deny access to services they do not want exposed outside their network. This can
+	be a good idea, although I recommend using it in conjunction with the above methods so you are protected even
+	if your firewall is not active for some reason.
+	</para>
+
+	<para>
+	If you are setting up a firewall, you need to know what TCP and UDP ports to allow and block. Samba uses
+	the following:
+<indexterm><primary>Port 135/TCP</primary></indexterm>
+<indexterm><primary>Port 137/UDP</primary></indexterm>
+<indexterm><primary>Port 138/UDP</primary></indexterm>
+<indexterm><primary>Port 139/TCP</primary></indexterm>
+<indexterm><primary>Port 445/TCP</primary></indexterm>
+	</para>
+
+	<simplelist>
+		<member>Port 135/TCP - used by smbd</member>
+		<member>Port 137/UDP - used by nmbd</member>
+		<member>Port 138/UDP - used by nmbd</member>
+		<member>Port 139/TCP - used by smbd</member>
+		<member>Port 445/TCP - used by smbd</member>
+	</simplelist>
+
+	<para>
+<indexterm><primary>firewall setups</primary></indexterm>
+	The last one is important because many older firewall setups may not be aware of it, given that this port
+	was only added to the protocol in recent years.
+	</para>
+
+	<para>
+<indexterm><primary>configuring a firewall</primary></indexterm>
+<indexterm><primary>high order ports</primary></indexterm>
+<indexterm><primary>block incoming packets</primary></indexterm>
+	When configuring a firewall, the high order ports (1024-65535) are often used for outgoing connections and
+	therefore should be permitted through the firewall. It is prudent to block incoming packets on the high order
+	ports except for established connections.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Using IPC$ Share-Based Denials </title>
+
+	<para>
+<indexterm><primary>IPC$</primary></indexterm>
+<indexterm><primary>deny</primary></indexterm>
+<indexterm><primary>security hole</primary></indexterm>
+	If the above methods are not suitable, then you could also place a more specific deny on the IPC$ share that
+	is used in the recently discovered security hole. This allows you to offer access to other shares while
+	denying access to IPC$ from potentially untrustworthy hosts.
+	</para>
+
+	<para>
+	To do this you could use:
+	<smbconfblock>
+	<smbconfsection name="[IPC$]"/>
+	<smbconfoption name="hosts allow">192.168.115.0/24 127.0.0.1</smbconfoption>
+	<smbconfoption name="hosts deny">0.0.0.0/0</smbconfoption>
+	</smbconfblock>
+	</para>
+
+	<para>
+<indexterm><primary>IPC$</primary></indexterm>
+<indexterm><primary>protection against attackers</primary></indexterm>
+<indexterm><primary>valid username/password</primary></indexterm>
+	This instructs Samba that IPC$ connections are not allowed from anywhere except the two listed network
+	addresses (localhost and the 192.168.115 subnet). Connections to other shares are still allowed. Because the
+	IPC$ share is the only share that is always accessible anonymously, this provides some level of protection
+	against attackers who do not know a valid username/password for your host.
+	</para>
+
+	<para>
+<indexterm><primary>access denied</primary></indexterm>
+<indexterm><primary>IPC$</primary></indexterm>
+<indexterm><primary>browse shares</primary></indexterm>
+	If you use this method, then clients will be given an <literal>`access denied'</literal> reply when they try
+	to access the IPC$ share. Those clients will not be able to browse shares and may also be unable to access
+	some other resources.  This is not recommended unless for some reason you cannot use one of the other methods
+	just discussed.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>NTLMv2 Security</title>
+
+	<para>
+<indexterm><primary>NTLMv2</primary></indexterm>
+	To configure NTLMv2 authentication, the following registry keys are worth knowing about:
+	</para>
+
+	<para>
+		<screen>
+		[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa]
+		"lmcompatibilitylevel"=dword:00000003
+		</screen>
+	</para>
+
+	<para>
+	The value 0x00000003 means to send NTLMv2 response only. Clients will use NTLMv2 authentication;
+	use NTLMv2 session security if the server supports it. Domain controllers accept LM,
+	NTLM, and NTLMv2 authentication.
+	</para>
+
+	<para>
+		<screen>
+		[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0]
+		"NtlmMinClientSec"=dword:00080000
+		</screen>
+	</para>
+
+	<para>
+	The value 0x00080000 means permit only NTLMv2 session security. If either NtlmMinClientSec or
+	NtlmMinServerSec is set to 0x00080000, the connection will fail if NTLMv2
+	session security is negotiated.
+	</para>
+	</sect2>
+</sect1>
+
+<sect1>
+<title>Upgrading Samba</title>
+
+<para>
+<indexterm><primary>updates</primary></indexterm>
+<indexterm><primary>important announcements</primary></indexterm>
+<indexterm><primary>security vulnerability</primary></indexterm>
+Please check regularly on <ulink noescape="1" url="http://www.samba.org/">http://www.samba.org/</ulink> for
+updates and important announcements. Occasionally security releases are made, and it is highly recommended to
+upgrade Samba promptly when a security vulnerability is discovered. Check with your OS vendor for OS-specific
+upgrades.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Common Errors</title>
+
+<para>
+If all Samba and host platform configurations were really as intuitive as one might like them to be, this
+chapter would not be necessary. Security issues are often vexing for a support person to resolve, not because
+of the complexity of the problem, but because most administrators who post what turns out to be a security
+problem request are totally convinced that the problem is with Samba.
+</para>
+
+	<sect2>
+	<title>Smbclient Works on Localhost, but the Network Is Dead</title>
+
+	<para>
+	This is a common problem. Linux vendors tend to install a default firewall.
+	With the default firewall in place, only traffic on the loopback adapter (IP address 127.0.0.1)
+	is allowed through the firewall.
+	</para>
+
+	<para>
+	The solution is either to remove the firewall (stop it) or modify the firewall script to
+	allow SMB networking traffic through. See <link linkend="firewallports">the Using a 
+	Firewall</link> section.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Why Can Users Access Other Users' Home Directories?</title>
+
+	<para>
+	<quote>
+<indexterm><primary>mapping home directory</primary></indexterm>
+<indexterm><primary>own home directory</primary></indexterm>
+	We are unable to keep individual users from mapping to any other user's home directory once they have
+	supplied a valid password! They only need to enter their own password. I have not found any method to
+	configure Samba so that users may map only their own home directory.
+	</quote>
+	</para>
+
+	<para><quote>
+	User xyzzy can map his home directory. Once mapped, user xyzzy can also map anyone else's home directory.
+	</quote></para>
+
+	<para>
+<indexterm><primary>security flaw</primary></indexterm>
+<indexterm><primary>defined shares</primary></indexterm>
+	This is not a security flaw, it is by design. Samba allows users to have exactly the same access to the UNIX
+	file system as when they were logged on to the UNIX box, except that it only allows such views onto the file
+	system as are allowed by the defined shares.
+	</para>
+
+	<para>
+<indexterm><primary>UNIX home directories</primary></indexterm>
+<indexterm><primary>permissions</primary></indexterm>
+	If your UNIX home directories are set up so that one user can happily <command>cd</command>
+	into another user's directory and execute <command>ls</command>, the UNIX security solution is to change file
+	permissions on the user's home directories so that the <command>cd</command> and <command>ls</command> are denied.
+	</para>
+
+	<para>
+<indexterm><primary>security policies</primary></indexterm>
+<indexterm><primary>permissions</primary></indexterm>
+	Samba tries very hard not to second guess the UNIX administrator's security policies and
+	trusts the UNIX admin to set the policies and permissions he or she desires.
+	</para>
+
+	<para>
+	Samba allows the behavior you require. Simply put the <smbconfoption name="only user">%S</smbconfoption>
+	option in the <smbconfsection name="[homes]"/> share definition.
+	</para>
+
+	<para>
+	The <smbconfoption name="only user"></smbconfoption> works in conjunction with the <smbconfoption name="users">list</smbconfoption>,
+	so to get the behavior you require, add the line:
+	<smbconfblock>
+	<smbconfoption name="users">%S</smbconfoption>
+	</smbconfblock>
+	This is equivalent to adding
+	<smbconfblock>
+	<smbconfoption name="valid users">%S</smbconfoption>
+	</smbconfblock>
+	to the definition of the <smbconfsection name="[homes]"/> share, as recommended in
+	the &smb.conf; man page.
+	</para>
+	</sect2>
+
+</sect1>
+</chapter>

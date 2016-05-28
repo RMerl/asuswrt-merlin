@@ -1,0 +1,12 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_notify_fam</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="vfs_notify_fam.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_notify_fam &#8212; FAM support for file change notifications</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = notify_fam</code></p></div></div><div class="refsect1" lang="en"><a name="id2518311"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_notify_fam</code> module makes use of
+	the system FAM (File Alteration Monitor) daemon to implement
+	file change notifications for Windows clients. FAM is generally
+	present only on IRIX and some BSD systems.</p><p>This module is not stackable.</p></div><div class="refsect1" lang="en"><a name="id2480126"></a><h2>EXAMPLES</h2><p>Support FAM notifications globally:</p><pre class="programlisting">
+        <em class="parameter"><code>[global]</code></em>
+	<a class="link" href="smb.conf.5.html#VFSOBJECTS">vfs objects = notify_fam</a>
+</pre></div><div class="refsect1" lang="en"><a name="id2480159"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.
+	</p></div><div class="refsect1" lang="en"><a name="id2480170"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

@@ -87,6 +87,8 @@
 #ifdef RTCONFIG_WPS_RST_BTN
 #define WPS_RST_DO_WPS_COUNT		( 1*10)	/*  1 seconds */
 #define WPS_RST_DO_RESTORE_COUNT	(10*10)	/* 10 seconds */
+#undef RESET_WAIT_COUNT
+#define RESET_WAIT_COUNT		WPS_RST_DO_RESTORE_COUNT
 #endif	/* RTCONFIG_WPS_RST_BTN */
 
 #ifdef RTCONFIG_WPS_ALLLED_BTN
@@ -173,6 +175,11 @@ static int freeze_duck_count = 0;
 #define NO_ASSOC_CHECK 6 // 6x30 sec
 static int pwrsave_status = MODE_NORMAL;
 static int no_assoc_check = 0;
+#endif
+
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+#define WDG_MONITOR_PERIOD 60 /* second */
+static int wdg_timer_alive = 1;
 #endif
 
 void
@@ -404,9 +411,6 @@ void btn_check(void)
 			}
 			else
 			{	/* Whenever it is pushed steady */
-#ifdef RTCONFIG_WPS_RST_BTN
-				btn_count++;
-#else	/* ! RTCONFIG_WPS_RST_BTN */
 				if (++btn_count > RESET_WAIT_COUNT)
 				{
 					fprintf(stderr, "You can release RESET button now!\n");
@@ -430,12 +434,25 @@ void btn_check(void)
 				/* 0123456789 */
 				/* 0011100111 */
 					if ((btn_count % 10) < 2 || ((btn_count % 10) > 4 && (btn_count % 10) < 7))
+#if defined(RTN11P) || defined(RTN300)
+					{
+						led_control(LED_LAN, LED_OFF);
+						led_control(LED_WAN, LED_OFF);
+						led_control(LED_WPS, LED_OFF);
+					}
+					else
+					{
+						led_control(LED_LAN, LED_ON);
+						led_control(LED_WAN, LED_ON);
+						led_control(LED_WPS, LED_ON);
+					}
+#else	/* ! (RTN11P || RTN300) */
 						led_control(LED_POWER, LED_OFF);
 					else
 						led_control(LED_POWER, LED_ON);
+#endif	/* ! (RTN11P || RTN300) */
 #endif
 				}
-#endif	/* ! RTCONFIG_WPS_RST_BTN */
 			}
 	}
 #if defined(RTCONFIG_WIRELESS_SWITCH) && defined(RTCONFIG_DSL)
@@ -1477,6 +1494,13 @@ static void catch_sig(int sig)
 
 		wsc_timeout = WPS_TIMEOUT_COUNT;
 	}
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+	else if (sig == SIGHUP)
+	{
+		_dprintf("[%s] Reset alarm timer...\n",  __FUNCTION__);
+		alarmtimer(NORMAL_PERIOD, 0);
+	}
+#endif
 #ifdef RTCONFIG_RALINK
 	else if (sig == SIGTTIN)
 	{
@@ -1629,6 +1653,7 @@ void fake_etlan_led(void)
 	static int status = -1;
 	static int status_old;
 
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 	if (nvram_match("AllLED", "0")) {
 		if (allstatus)
 			led_control(LED_LAN, LED_OFF);
@@ -1636,6 +1661,7 @@ void fake_etlan_led(void)
 		return;
 	}
 	allstatus = 1;
+#endif
 
 	if (!GetPhyStatus(0)) {
 		if (lstatus)
@@ -1905,6 +1931,7 @@ void led_check(int sig)
 	int all_led;
 	int turnoff_counts = swled_alloff_counts?:3;
 
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 	if ((all_led=nvram_get_int("AllLED")) == 0 && swled_alloff_x < turnoff_counts) {
 		/* turn off again x times in case timing issues */
 		led_table_ctrl(LED_OFF);
@@ -1917,6 +1944,7 @@ void led_check(int sig)
 		swled_alloff_x = 0;
 	else
 		return;
+#endif
 
 	if (!confirm_led()) {
 		get_gpio_values_once(1);
@@ -2253,6 +2281,7 @@ static void client_check(void)
 #warning TBD: PL-AC66U...
 #endif
 		plc_wake = 0;
+		nvram_set("plc_wake", "0");
 	}
 	else if (plc_wake == 0 && no_client_cnt == 0) {
 		//dbg("%s: trigger Powerline to wake...\n", __func__);
@@ -2264,6 +2293,7 @@ static void client_check(void)
 #warning TBD: PL-AC66U...
 #endif
 		plc_wake = 1;
+		nvram_set("plc_wake", "1");
 	}
 
 	if (no_client_cnt >= 5)
@@ -2738,7 +2768,7 @@ static void auto_firmware_check()
 			dbg("retrieve firmware information\n");
 
 #if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
-#if defined(RTAC68U)
+#if defined(RTAC68U) && !defined(RTAC68A)
 			if (!After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1")) || nvram_get_int("PA") || nvram_match("cpurev", "c0"))
 				return;
 #endif
@@ -2755,10 +2785,6 @@ static void auto_firmware_check()
 				return;
 			}
 
-//#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
-//			stop_httpd();
-//#endif
-//
 			nvram_set_int("auto_upgrade", 1);
 
 			eval("/usr/sbin/webs_upgrade.sh");
@@ -3497,6 +3523,11 @@ void watchdog(int sig)
 	ntevent_disk_usage_check();
 #endif
 
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+	if (pids("wdg_monitor"))
+		kill_pidfile_s("/var/run/wdg_monitor.pid", SIGUSR1);
+#endif
+
 	return;
 }
 
@@ -3507,6 +3538,27 @@ void watchdog02(int sig)
 	return;
 }
 #endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
+
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+void wdg_heartbeat(int sig)
+{
+	if(factory_debug())
+		return;
+
+	if(sig == SIGUSR1) {
+		wdg_timer_alive++;
+	}
+	else if(sig == SIGALRM) {
+		if(wdg_timer_alive) {
+			wdg_timer_alive = 0;
+		}
+		else {
+			_dprintf("[%s] Watchdog's heartbeat is stop! Recover...\n", __FUNCTION__);
+			kill_pidfile_s("/var/run/watchdog.pid", SIGHUP);
+		}
+	}
+}
+#endif
 
 int
 watchdog_main(int argc, char *argv[])
@@ -3540,6 +3592,10 @@ watchdog_main(int argc, char *argv[])
 	signal(SIGUSR2, catch_sig);
 	signal(SIGTSTP, catch_sig);
 	signal(SIGALRM, watchdog);
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+	signal(SIGHUP, catch_sig);
+#endif
+
 #ifdef RTCONFIG_RALINK
 	signal(SIGTTIN, catch_sig);
 #if 0
@@ -3628,3 +3684,26 @@ int sw_devled_main(int argc, char *argv[])
 	}
 	return 0;
 }
+
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+/* workaroud of watchdog timer shutdown */
+int wdg_monitor_main(int argc, char *argv[])
+{
+	FILE *fp;
+	if ((fp = fopen("/var/run/wdg_monitor.pid", "w")) != NULL) {
+		fprintf(fp, "%d", getpid());
+		fclose(fp);
+	}
+
+	signal(SIGUSR1, wdg_heartbeat);
+	signal(SIGALRM, wdg_heartbeat);
+
+	alarmtimer(WDG_MONITOR_PERIOD, 0);
+
+
+	while(1) {
+		pause();
+	}
+	return 0;
+}
+#endif

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="ChangeNotes">
+<chapterinfo>
+	&author.jht;
+	&author.jerry;
+</chapterinfo>
+
+<title>Important and Critical Change Notes for the Samba 3.x Series</title>
+<para>
+Please read this chapter carefully before update or upgrading Samba.  You should expect to find only critical
+or very important information here. Comprehensive change notes and guidance information can be found in the
+section <link linkend="upgrading-to-3.0">Updating and Upgrading Samba</link>.
+</para>
+
+<sect1>
+
+<title>Important Samba-3.2.x Change Notes</title>
+<para>
+!!!!!!!!!!!!Add all critical update notes here!!!!!!!!!!!!!
+</para>
+
+</sect1>
+
+<sect1>
+
+<title>Important Samba-3.0.x Change Notes</title>
+<para>
+These following notes pertain in particular to Samba 3.0.23 through Samba 3.0.25c (or more recent 3.0.25
+update).  Samba is a fluid and ever changing project. Changes throughout the 3.0.x series release are
+documented in this documention - See <link linkend="oldupdatenotes">Upgrading from Samba-2.x to Samba-3.0.25</link>.
+</para>
+
+<para>
+Sometimes it is difficult to figure out which part, or parts, of the HOWTO documentation should be updated to
+reflect the impact of new or modified features. At other times it becomes clear that the documentation is in
+need of being restructured.
+</para>
+
+<para>
+In recent times a group of Samba users has joined the thrust to create a new <ulink
+url="http://wiki.samba.org/">Samba Wiki</ulink> that is slated to become the all-singing and all-dancing
+new face of Samba documentation. Hopefully, the Wiki will benefit from greater community input and
+thus may be kept more up to date. Until that golden dream materializes and matures it is necessary to
+continue to maintain the HOWTO. This chapter will document major departures from earlier behavior until
+such time as the body of this HOWTO is restructured or modified.
+</para>
+
+<para>
+This chapter is new to the release of the HOWTO for Samba 3.0.23. It includes much of the notes provided
+in the <filename>WHATSNEW.txt</filename> file that is included with the Samba source code release tarball.
+</para>
+
+<sect2>
+<title>User and Group Changes</title>
+
+<para>
+The change documented here affects unmapped user and group accounts only.
+</para>
+
+<para>
+<indexterm><primary>user</primary></indexterm>
+<indexterm><primary>group</primary></indexterm>
+<indexterm><primary>Relative Identifiers</primary><see>RID</see></indexterm>
+<indexterm><primary>net</primary><secondary>groupmap</secondary></indexterm>
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>vampire</tertiary></indexterm>
+The user and group internal management routines have been rewritten to prevent overlaps of
+assigned Relative Identifiers (RIDs).  In the past the has been a potential problem when
+either manually mapping Unix groups with the <command>net groupmap</command> command or
+when migrating a Windows domain to a Samba domain by executing:
+<command>net rpc vampire</command>.
+</para>
+
+<para>
+<indexterm><primary>SID</primary></indexterm>
+<indexterm><primary>SAM</primary></indexterm>
+<indexterm><primary>RID</primary></indexterm>
+<indexterm><primary>net</primary><secondary>getlocalsid</secondary></indexterm>
+Unmapped users are now assigned a SID in the <literal>S-1-22-1</literal> domain and unmapped
+groups are assigned a SID in the <literal>S-1-22-2</literal> domain.  Previously they were
+assigned a RID within the SAM on the Samba server.  For a domain controller this would have been under the
+authority of the domain SID where as on a member server or standalone server, this would have
+been under the authority of the local SAM (see the man page for <command>net getlocalsid</command>).
+</para>
+
+<para>
+<indexterm><primary>unmapped users</primary></indexterm>
+<indexterm><primary>unmapped groups</primary></indexterm>
+<indexterm><primary>SID</primary></indexterm>
+<indexterm><primary>NTFS</primary></indexterm>
+<indexterm><primary>GID</primary></indexterm>
+The result is that any unmapped users or groups on an upgraded Samba domain controller may
+be assigned a new SID.  Because the SID rather than a name is stored in Windows security
+descriptors, this can cause a user to no longer have access to a resource for example if a
+file was copied from a Samba file server to a local Windows client NTFS partition.  Any files
+stored on the Samba server itself will continue to be accessible because UNIX stores the UNIX
+GID and not the SID for authorization checks.
+</para>
+
+<para>
+An example helps to illustrate the change:
+</para>
+
+<para>
+<indexterm><primary>group mapping</primary></indexterm>
+<indexterm><primary>GID</primary></indexterm>
+<indexterm><primary>ACL</primary></indexterm>
+<indexterm><primary>SID</primary></indexterm>
+Assume that a group named <emphasis>developers</emphasis> exists with a UNIX GID of 782. In this
+case this user does not exist in Samba's group mapping table. It would be perfectly normal for
+this group to be appear in an ACL editor.  Prior to Samba-3.0.23, the group SID might appear as
+<literal>S-1-5-21-647511796-4126122067-3123570092-2565</literal>.
+</para>
+
+<para>
+<indexterm><primary>SID</primary></indexterm>
+<indexterm><primary>NTFS</primary></indexterm>
+<indexterm><primary>access</primary></indexterm>
+<indexterm><primary>group permissions</primary></indexterm>
+With the release of Samba-3.0.23, the group SID would be reported as <literal>S-1-22-2-782</literal>.  Any
+security descriptors associated with files stored on a Windows NTFS disk partition will not allow access based
+on the group permissions if the user was not a member of the
+<literal>S-1-5-21-647511796-4126122067-3123570092-2565</literal>  group.  Because this group SID is
+<literal>S-1-22-2-782</literal> and not reported in a user's token, Windows would fail the authorization check
+even though both SIDs in some respect refer to the same UNIX group.
+</para>
+
+<para>
+<indexterm><primary>group mapping</primary></indexterm>
+<indexterm><primary>SID</primary></indexterm>
+The workaround for versions of Samba prior to 3.0.23, is to create a manual domain group mapping
+entry for the group <emphasis>developers</emphasis> to point at the
+<literal>S-1-5-21-647511796-4126122067-3123570092-2565</literal> SID. With the release of Samba-3.0.23 this
+workaround is no longer needed.
+</para>
+</sect2>
+
+<sect2>
+<title>Essential Group Mappings</title>
+<para>
+Samba 3.0.x series  releases before 3.0.23 automatically created group mappings for the essential Windows
+domain groups <literal>Domain Admins, Domain Users, Domain Guests</literal>. Commencing with Samba 3.0.23
+these mappings need to be created by the Samba administrator. Failure to do this may result in a failure to
+correctly authenticate and recoognize valid domain users. When this happens users will not be able to log onto
+the Windows client.
+</para>
+
+<note><para>
+Group mappings are essentail only if the Samba servers is running as a PDC/BDC. Stand-alone servers do not
+require these group mappings.
+</para></note>
+
+<para>
+The following mappings are required:
+</para>
+
+<table frame="all" id="TOSH-domgroups">
+	<title>Essential Domain Group Mappings</title>
+	<tgroup align="center" cols="3">
+	<thead>
+		<row><entry>Domain Group</entry><entry>RID</entry><entry>Example UNIX Group</entry></row>
+	</thead>
+	<tbody>
+		<row><entry>Domain Admins</entry><entry>512</entry><entry>root</entry></row>
+		<row><entry>Domain Users</entry><entry>513</entry><entry>users</entry></row>
+		<row><entry>Domain Guests</entry><entry>514</entry><entry>nobody</entry></row>
+	</tbody>
+	</tgroup>
+</table>
+
+<para>
+When the POSIX (UNIX) groups are stored in LDAP, it may be desirable to call these <literal>domadmins, domusers,
+domguests</literal> respectively.
+</para>
+
+<para>
+For further information regarding group mappings see <link linkend="groupmapping">Group Mapping: MS Windows
+and UNIX</link>.
+</para>
+
+</sect2>
+
+<sect2>
+<title>Passdb Changes</title>
+
+<para>
+<indexterm><primary>backends</primary></indexterm>
+<indexterm><primary>GID</primary></indexterm>
+<indexterm><primary>SQL</primary></indexterm>
+<indexterm><primary>XML</primary></indexterm>
+The <smbconfoption name="passdb backend"/> parameter no long accepts multiple passdb backends in a
+chained configuration.  Also be aware that the SQL and XML based passdb modules have been
+removed in the Samba-3.0.23 release.  More information regarding external support for a SQL
+passdb module can be found on the  <ulink url="http://pdbsql.sourceforge.net/">pdbsql</ulink> web site.
+</para>
+
+</sect2>
+
+<sect2>
+<title>Group Mapping Changes in Samba-3.0.23</title>
+
+<para>
+<indexterm><primary>default mapping</primary></indexterm>
+<indexterm><primary>Domain Admins</primary></indexterm>
+<indexterm><primary>smbpasswd</primary></indexterm>
+<indexterm><primary>tdbsam</primary></indexterm>
+<indexterm><primary>passdb backend</primary></indexterm>
+<indexterm><primary>group mappings</primary></indexterm>
+<indexterm><primary>GID</primary></indexterm>
+<indexterm><primary>SID</primary></indexterm>
+<indexterm><primary>IDMAP</primary></indexterm>
+<indexterm><primary>winbindd</primary></indexterm>
+<indexterm><primary>domain groups</primary></indexterm>
+The default mapping entries for groups such as <literal>Domain Admins</literal> are no longer
+created when using an <literal>smbpasswd</literal> file or a <literal>tdbsam</literal> passdb
+backend.  This means that it is necessary to explicitly execute the <command>net groupmap add</command>
+to create group mappings, rather than use the <command>net groupmap modify</command> method to create the
+Windows group SID to UNIX GID mappings.  This change has no effect on winbindd's IDMAP functionality
+for domain groups.
+</para>
+
+</sect2>
+
+<sect2>
+<title>LDAP Changes in Samba-3.0.23</title>
+
+<para>
+<indexterm><primary>LDAP schema</primary></indexterm>
+<indexterm><primary>sambaSID</primary></indexterm>
+<indexterm><primary>OpenLDAP</primary></indexterm>
+<indexterm><primary>slapindex</primary></indexterm>
+<indexterm><primary>slapd.conf</primary></indexterm>
+There has been a minor update the Samba LDAP schema file. A substring matching rule has been
+added to the <literal>sambaSID</literal> attribute definition.  For OpenLDAP servers, this
+will require the addition of <literal>index sambaSID sub</literal> to the
+<filename>slapd.conf</filename> configuration file.  It will be necessary to execute the
+<command>slapindex</command> command after making this change. There has been no change to the
+actual data storage schema.
+</para>
+
+</sect2>
+</sect1>
+
+</chapter>

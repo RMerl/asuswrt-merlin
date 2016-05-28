@@ -107,6 +107,10 @@ endif
 
 	cp -f webs_scripts/ssl_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 
+ifeq ($(RTAC68A),y)
+	cp -f webs_scripts/force_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
+endif
+
 ifeq ($(RTCONFIG_BWDPI),y)
 	cp -f webs_scripts/sig_upgrade.sh $(INSTALLDIR)/usr/sbin/sig_upgrade.sh
 	cp -f webs_scripts/sig_update.sh $(INSTALLDIR)/usr/sbin/sig_update.sh
@@ -156,12 +160,12 @@ endif
 
 ifeq ($(RTCONFIG_MEDIA_SERVER),y)
 	mkdir -p $(INSTALLDIR)/rom/dlna
-ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
-	cp -rf dlna/icon_sm.rt-ac68u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
-	cp -rf dlna/icon_sm.rt-ac68u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
-	cp -rf dlna/icon_lrg.rt-ac68u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg
-	cp -rf dlna/icon_lrg.rt-ac68u.png $(INSTALLDIR)/rom/dlna/icon_lrg.png
-else
+ifeq ($(BUILD_NAME), RT-AC68U)
+	cp -rf dlna/icon_sm.rt-ac66u_v2.jpg $(INSTALLDIR)/rom/dlna/icon_alt_sm.jpg
+	cp -rf dlna/icon_sm.rt-ac66u_v2.png $(INSTALLDIR)/rom/dlna/icon_alt_sm.png
+	cp -rf dlna/icon_lrg.rt-ac66u_v2.jpg $(INSTALLDIR)/rom/dlna/icon_alt_lrg.jpg
+	cp -rf dlna/icon_lrg.rt-ac66u_v2.png $(INSTALLDIR)/rom/dlna/icon_alt_lrg.png
+endif
 ifeq ($(and $(LJPG),$(SJPG),$(LPNG),$(SPNG)),)
 	$(warning Add media server icon for $(BUILD_NAME) !!!!!!!!!!!!)
 else
@@ -169,10 +173,11 @@ else
 		install -D dlna/$(f).$(LCMODELNAME).png $(INSTALLDIR)/rom/dlna/$(f).png;)
 endif
 endif
-endif
 
 ifeq ($(RTCONFIG_GETREALIP),y)
 	mkdir -p $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/getrealip.sh $(INSTALLDIR)/usr/sbin/getrealip.sh
 endif
+
+	install -m 0755 webs_scripts/ddns-start.sh $(INSTALLDIR)/usr/sbin
 

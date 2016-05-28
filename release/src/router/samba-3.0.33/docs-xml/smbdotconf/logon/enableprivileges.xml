@@ -1,0 +1,26 @@
+<samba:parameter name="enable privileges"
+                 context="G"
+		 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter controls whether or not smbd will honor privileges assigned to specific SIDs via either
+	 <command>net rpc rights</command> or one of the Windows user and group manager tools.  This parameter is
+	enabled by default. It can be disabled to prevent members of the Domain Admins group from being able to
+	assign privileges to users or groups which can then result in certain smbd operations running as root that
+	would normally run under the context of the connected user.
+	</para>
+
+	<para>
+	An example of how privileges can be used is to assign the right to join clients to a Samba controlled
+	domain without providing root access to the server via smbd.
+	</para>
+
+	<para>
+	Please read the extended description provided in the Samba HOWTO documentation.
+	</para>
+
+</description>
+<value type="default">yes</value>
+</samba:parameter>

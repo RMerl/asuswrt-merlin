@@ -37,8 +37,7 @@
 
 
 window.onresize = cal_panel_block;
-var tr_enable = '<% nvram_get("tr_enable"); %>';
-var tr_acs_url = '<% nvram_get("tr_acs_url"); %>';
+var tr_discovery = '<% nvram_get("tr_discovery"); %>';
 
 var jffs2_support = isSupport("jffs2");
 
@@ -48,28 +47,48 @@ function initial(){
 	show_menu();
 	//load_body();
 
+	enable_discovery(document.form.tr_discovery.value != '0');
+
 	//if(based_modelid != "RT-AC68U" && based_modelid != "RT-AC66U" && based_modelid != "RT-N66U"
 	// && based_modelid != "RT-N18U")
 	if(!jffs2_support)
 		showhide("cert_text", false);
 }
 
-function applyRule(){
-	if (document.form.tr_enable[0].checked) {
-		if (document.form.tr_acs_url.value == "")
-			document.form.tr_discovery.value = "1";
-		else if (document.form.tr_acs_url.value != tr_acs_url)
-			document.form.tr_discovery.value = "0";
-		document.form.action_script.value = "restart_tr";
-		if (document.form.tr_discovery.value != "0")
-			document.form.action_script.value += ";restart_wan_if";
+function validForm(){
+	if (document.form.tr_enable[0].checked &&
+	    document.form.tr_discovery.value == '0' &&
+	    document.form.tr_acs_url.value == "") {
+		alert("<#JS_fieldblank#>");
+		document.form.tr_acs_url.focus();
+		document.form.tr_acs_url.select();
+		return false;
 	}
-	showLoading();
-	document.form.submit();	
+
+	return true;
+}
+
+function applyRule(){
+	if (validForm()) {
+		if (document.form.tr_discovery.value != tr_discovery) {
+			if (document.form.tr_discovery.value != '0')
+				document.form.tr_acs_url.value = "";
+			document.form.action_script.value += ";restart_wan_if";
+		}
+
+		showLoading();
+		document.form.submit();	
+	}
 }
 
 function done_validating(action){
 	refreshpage();
+}
+
+function enable_discovery(flag){
+	document.form.tr_acs_url.disabled = flag ? true : false;
+	document.form.tr_acs_url.style.display = flag ? "none" : "";
+	document.getElementById('tr_acs_url_text').style.display = flag ? "" : "none";
 }
 
 function set_cert(){
@@ -197,7 +216,6 @@ function cal_panel_block(){
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="tr_discovery" value="<% nvram_get("tr_discovery"); %>">
 <input type="hidden" name="tr_ca_cert" value="<% nvram_clean_get("tr_ca_cert"); %>">
 <input type="hidden" name="tr_client_cert" value="<% nvram_clean_get("tr_client_cert"); %>">
 <input type="hidden" name="tr_client_key" value="<% nvram_clean_get("tr_client_key"); %>">
@@ -224,7 +242,7 @@ function cal_panel_block(){
 	<tr>
 		  <td bgcolor="#4D595D" valign="top"  >
 		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#menu5_6#> - TR069</div>
+		  <div class="formfonttitle"><#menu5_6#> - TR-069</div>
 		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  <!--<div class="formfontdesc"><#FirewallConfig_display2_sectiondesc#></div>-->
 
@@ -236,7 +254,7 @@ function cal_panel_block(){
 				</thead>	
 
 				<tr>
-					<th>Enable TR069</th>
+					<th>Enable TR-069</th>
 					<td>
 						<input type="radio" name="tr_enable" class="input" value="1" <% nvram_match_x("", "tr_enable", "1", "checked"); %>>Enable
 						<input type="radio" name="tr_enable" class="input" value="0" <% nvram_match_x("", "tr_enable", "0", "checked"); %>>Disable
@@ -244,10 +262,20 @@ function cal_panel_block(){
 				</tr>
 
 				<tr>
-					<th>URL</th>
+					<th>Enable ACS Discovery</th>
+					<td>
+						<input type="radio" name="tr_discovery" class="input" value="1" <% nvram_match_x("", "tr_discovery", "1", "checked"); %> onclick="enable_discovery(1);">Enable
+						<input type="radio" name="tr_discovery" class="input" value="0" <% nvram_match_x("", "tr_discovery", "0", "checked"); %> onclick="enable_discovery(0);">Disable
+					</td>
+				</tr>
+
+
+				<tr>
+					<th>ACS URL</th>
 					<td>
 						<input type="text" maxlength="64" name="tr_acs_url" class="input_32_table" value="<% nvram_get("tr_acs_url"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
-						<span id="cert_text" onclick="set_cert();" style="text-decoration:underline;cursor:pointer;">Import Certificate</span>
+						<div id="tr_acs_url_text" class="input" style="color:#FFFFFF;margin-left: 8px;height: 23px;padding: 1px;"><% nvram_get("tr_acs_url"); %></div>
+						<span id="cert_text" onclick="set_cert();" style="float:right;margin-right:8px;height: 23px;padding: 1px;text-decoration:underline;cursor:pointer;">Import Certificate</span>
 					</td>
 				</tr>
 

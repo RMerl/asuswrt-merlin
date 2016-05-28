@@ -34,4 +34,22 @@ extern void save_plc_setting(void);
 
 extern void turn_led_pwr_off(void);
 
+struct remote_plc {
+	char mac[18];
+	char pwd[20];
+	int status;	/*
+			1: connect and known password
+			2: disconnect and known password
+			3: connect and unknown password
+			*/
+	int tx;
+	int rx;
+};
+
+extern int apply_private_name(char *pnn, char *nv);
+extern int get_connected_plc(struct remote_plc **rplc);
+extern int get_known_plc(struct remote_plc **rplc);
+extern int trigger_plc_pair(void);
+extern int add_remote_plc(char *mac, char *pwd);
+
 #endif /* _plc_utils_h_ */

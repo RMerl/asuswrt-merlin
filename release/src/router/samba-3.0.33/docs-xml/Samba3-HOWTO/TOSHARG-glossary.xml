@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE glossary PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<glossary>
+	<title>Glossary</title>
+
+	<glossentry>
+		<glossterm>Access Control List</glossterm>
+		<acronym>ACL</acronym>
+		<glossdef><para>
+		A detailed list of permissions granted to users or groups with respect to file and network resource access.
+		 See <link linkend="AccessControls"/>, 
+		for details.</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Active Directory Service</glossterm>
+		<acronym>ADS</acronym>
+		<glossdef><para>
+		A service unique to Microsoft Windows 200x servers that provides a centrally managed
+		directory for management of user identities and computer objects, as well as the permissions
+		each user or computer may be granted to access
+		distributed network resources. ADS uses Kerberos-based
+		authentication and LDAP over Kerberos for directory access.
+		</para></glossdef>
+        </glossentry>
+
+	<glossentry>
+		<glossterm>Common Internet File System</glossterm>
+		<acronym>CIFS</acronym>
+		<glossdef><para>The new name for SMB. Microsoft renamed the 
+		SMB protocol to CIFS during the Internet hype in the nineties.
+		At about the time that the SMB protocol was renamed to CIFS, an
+		additional dialect of the SMB protocol was in development.
+		The need for the deployment of the NetBIOS layer was also
+		removed, thus paving the way for use of the SMB protocol natively
+		over TCP/IP (known as NetBIOS-less SMB or <quote>naked</quote>  TCP transport).
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Common UNIX Printing System</glossterm>
+		<acronym>CUPS</acronym>
+		<glossdef><para>
+		A recent implementation of a high capability printing system for UNIX developed by
+		<ulink url="http://www.easysw.com/"></ulink>. The design objective of CUPS was to provide
+		a rich print processing system that has built-in intelligence capable of correctly rendering (processing)
+		a file that is submitted for printing even if it was formatted for an entirely different printer.
+		</para>
+		</glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Domain Master Browser</glossterm>
+		<acronym>DMB</acronym>
+		<glossdef><para>The domain master browser maintains a list of all the servers that 
+		have announced their services within a given workgroup or NT domain. See <link linkend="DMB"/> for details.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+                <glossterm>Domain Name Service</glossterm>
+		<acronym>DNS</acronym>
+		<glossdef><para>
+		A protocol by which computer hostnames may be resolved to the matching IP address/es. DNS is implemented
+		by the Berkeley Internet Name Daemon. There exists a recent version of DNS that allows dynamic name registration
+		by network clients or by a DHCP server. This recent protocol is known as dynamic DNS (DDNS).
+		</para></glossdef>
+        </glossentry>
+
+	<glossentry>
+                <glossterm>Dynamic Host Configuration Protocol</glossterm>
+		<acronym>DHCP</acronym>
+		<glossdef><para>
+		A protocol that was based on the BOOTP protocol that may be used to dynamically assign an IP address,
+		from a reserved pool of addresses, to a network client or device. Additionally, DHCP may assign all
+		network configuration settings and may be used to register a computer name and its address with a
+		dynamic DNS server.
+		</para></glossdef>
+        </glossentry>
+	<glossentry>
+		<glossterm>Extended Meta-file Format</glossterm>
+		<acronym>EMF</acronym>
+		<glossdef>
+			<para>
+			An intermediate file format used by Microsoft Windows-based servers and clients. EMF files may be
+			rendered into a page description language by a print processor.
+		</para>
+		</glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Graphical Device Interface</glossterm>
+		<acronym>GDI</acronym>
+		<glossdef><para>
+		Device-independent format for printing used by Microsoft Windows. 
+		It is quite similar to what PostScript is for UNIX. Printing jobs are first generated in GDI and
+		then converted to a device-specific format. See <link linkend="gdipost"/> for details.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Group IDentifier</glossterm>
+		<acronym>GID</acronym>
+		<glossdef><para>
+		The UNIX system group identifier; on older systems, a 32-bit unsigned integer, and on newer systems
+		an unsigned 64-bit integer. The GID is used in UNIX-like operating systems for all group-level access
+		control.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Internet Print Protocol</glossterm>
+		<acronym>IPP</acronym>
+		<glossdef><para>An IETF standard for network printing. CUPS
+		implements IPP.</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Key Distribution Center</glossterm>
+		<acronym>KDC</acronym>
+		<glossdef><para>The Kerberos authentication protocol makes use of security keys (also called a ticket)
+		by which access to network resources is controlled. The issuing of Kerberos tickets is effected by
+		a KDC.</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>NetBIOS Extended User Interface</glossterm>
+		<acronym>NetBEUI</acronym>
+		<glossdef><para>
+		Very simple network protocol invented by IBM and Microsoft. It is used 
+		to do NetBIOS over Ethernet with low overhead. NetBEUI is a nonroutable
+		protocol.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Network Basic Input/Output System</glossterm>
+		<acronym>NetBIOS</acronym>
+		<glossdef><para>
+		NetBIOS is a simple application programming interface (API) invented in the 1980s 
+		that allows programs to send data to certain network names. 
+		NetBIOS is always run over another network protocol such 
+		as IPX/SPX, TCP/IP, or Logical Link Control (LLC). NetBIOS run over LLC
+		is best known as NetBEUI (NetBIOS Extended User Interface &smbmdash; a complete misnomer!).
+		</para></glossdef>
+	</glossentry>
+
+
+	<glossentry>
+		<glossterm>NetBT</glossterm>
+		<acronym>NBT</acronym>
+		<glossdef><para>Protocol for transporting NetBIOS frames over TCP/IP. Uses ports 137, 138, and 139. 
+		NetBT is a fully routable protocol.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Local Master Browser</glossterm>
+		<acronym>LMB</acronym>
+		<glossdef><para>The local master browser maintains a list 
+		of all servers that have announced themselves within a given workgroup or NT domain on a particular
+		broadcast-isolated subnet. See <link linkend="DMB"/> for details.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Printer Command Language</glossterm>
+		<acronym>PCL</acronym>
+		<glossdef><para>
+		A printer page description language that was developed by Hewlett-Packard
+		and is in common use today.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Portable Document Format</glossterm>
+		<acronym>PDF</acronym>
+		<glossdef>
+		<para>
+		A highly compressed document format, based on PostScript, used as a document distribution format
+		that is supported by Web browsers as well as many applications. Adobe also distributes an application
+		called <quote>Acrobat,</quote> which is a PDF reader.
+		</para>
+		</glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Page Description Language</glossterm>
+		<acronym>PDL</acronym>
+		<glossdef><para>A language for describing the layout and contents of a printed page.
+		The best-known PDLs are Adobe PostScript and Hewlett-Packard PCL (Printer Control Language),
+		both of which are used to control laser printers.</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>PostScript Printer Description</glossterm>
+		<acronym>PPD</acronym>
+		<glossdef><para>
+		PPDs specify and control options supported by PostScript printers, such as duplexing, stapling, 
+		and DPI. See also <link linkend="post-and-ghost"/>. PPD files can be read by printing applications
+		to enable correct PostScript page layout for a particular PostScript printer.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+        <glossterm>Remote Procedure Call</glossterm>
+        <acronym>RPC</acronym>
+        <glossdef><para>
+		RPCs are a means for executing network operations. The RPC protocol is independent of transport protocols. RPC
+		does not try to implement any kind of reliability and the application that uses RPCs must be aware of the type
+		of transport protocol underneath RPC. An RPC is like a programmatic jump subroutine over a network. RPCs used
+		in the UNIX environment are specified in RFC 1050. RPC is a powerful technique for constructing distributed,
+		client-server based applications. It is based on extending the notion of conventional, or local procedure
+		calling, so that the called procedure need not exist in the same address space as the calling procedure. The
+		two processes may be on the same system, or they may be on different systems with a network connecting them.
+		By using RPC, programmers of distributed applications avoid the details of the interface with the network. The
+		transport independence of RPC isolates the application from the physical and logical elements of the data
+		communications mechanism and allows the application to use a variety of transports.
+        </para></glossdef>
+    </glossentry>
+
+	<glossentry>
+		<glossterm>Server Message Block</glossterm>
+		<acronym>SMB</acronym>
+		<glossdef><para>
+		SMB was the original name of the protocol `spoken' by 
+		Samba. It was invented in the 1980s by IBM and adopted 
+		and extended further by Microsoft. Microsoft 
+		renamed the protocol to CIFS during the Internet hype in the 
+		1990s.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>User IDentifier</glossterm>
+		<acronym>UID</acronym>
+		<glossdef><para>
+		The UNIX system user identifier; on older systems a 32-bit unsigned integer, and on newer systems,
+		an unsigned 64-bit integer. The UID is used in UNIX-like operating systems for all user-level access
+		control.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Universal Naming Convention</glossterm>
+		<acronym>UNC</acronym>
+		<glossdef><para>A syntax for specifying the location of network resources (such as file shares).
+		The UNC syntax was developed in the early days of MS DOS 3.x and is used internally by the SMB protocol.
+		</para></glossdef>
+	</glossentry>
+
+	
+
+</glossary>

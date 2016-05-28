@@ -1,4 +1,0 @@
-# Host: SGI Iris running irix 5.x
-NAT_FILE= nm-irix5.h
-NATDEPFILES= fork-child.o irix5-nat.o corelow.o procfs.o \
-	proc-api.o proc-events.o proc-flags.o proc-why.o

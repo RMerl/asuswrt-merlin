@@ -1,0 +1,95 @@
+.\"     Title: vfs_prealloc
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_PREALLOC" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_prealloc - preallocate matching files to a predetermined size
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = prealloc
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The
+vfs_prealloc
+VFS module preallocates files to a specified size each time a new file is created\. This is useful in environments where files are of a predetermined size will be written to a disk subsystem where extending file allocations is expensive\.
+.PP
+This module is stackable\.
+.SH "OPTIONS"
+.PP
+prealloc:EXT = BYTES
+.RS 4
+Preallocate all files with the extension EXT to the size specified by BYTES\.
+.sp
+The following suffixes may be applied to BYTES:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+K
+\- BYTES is a number of kilobytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+M
+\- BYTES is a number of megabytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+G
+\- BYTES is a number of gigabytes
+.sp
+.RE
+.RE
+.SH "EXAMPLES"
+.PP
+A process writes TIFF files to a Samba share, and the is known these files will almost always be around 4 megabytes (4194304 bytes):
+.sp
+.RS 4
+.nf
+        \fI[frames]\fR
+	\fIpath = /data/frames\fR
+	\fIvfs objects = prealloc\fR
+	\fIprealloc:tiff = 4M\fR
+.fi
+.RE
+.SH "CAVEATS"
+.PP
+vfs_prealloc
+is not supported on all platforms and filesystems\. Currently only XFS filesystems on Linux and IRIX are supported\.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

@@ -18,6 +18,8 @@
  * $Id: udhcpc.c,v 1.27 2009/12/02 20:06:40 Exp $
  */
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -175,8 +177,7 @@ opt_get(const void *buf, size_t size, unsigned char id)
 static char
 *stropt(const struct opt_hdr *opt, char *buf)
 {
-	strncpy(buf, (char *) opt->data, opt->len);
-	buf[opt->len] = '\0';
+	*stpncpy(buf, opt->data, opt->len) = '\0';
 	return buf;
 }
 
@@ -390,14 +391,15 @@ bound(void)
 			url = buf;
 		else if (strstr(value, "://") > value)
 			url = trim_r(value);
-		if (url && *url) {
+		if (url && strncmp(url, "http", sizeof("http") - 1) == 0) {
+			//nvram_set(strcat_r(wanprefix, "tr_acs_url", tmp), url);
 			nvram_set("tr_acs_url", url);
 			nvram_set_int("tr_enable", 1);
 		}
-		//if ((opt = opt_get(value, size, 1)))
-		//	nvram_set(strcat_r(wanprefix, "tr_acs_url", tmp), stropt(opt, buf));
-		//if ((opt = opt_get(value, size, 2)))
-		//	nvram_set(strcat_r(wanprefix, "tr_pvgcode", tmp), stropt(opt, buf));
+		if ((opt = opt_get(value, size, 2))) {
+			//nvram_set(strcat_r(wanprefix, "tr_pvgcode", tmp), stropt(opt, buf));
+			nvram_set("pvgcode", stropt(opt, buf));
+		}
 		free(value);
 	}
 #ifdef RTCONFIG_TR181
@@ -595,7 +597,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
 	char clientid[sizeof("61:") + (128*2) + 1];
 #ifdef RTCONFIG_TR069
-	char vendorid[32+32+1+sizeof(",dslforum.org")];
+	char vendorid[32+32+sizeof(" dslforum.org")];
 #ifdef RTCONFIG_TR181
 	unsigned char optbuf[sizeof(struct viopt_hdr) + 128];
 	unsigned char hwaddr[6];
@@ -704,13 +706,11 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	/* Vendor ID */
 	value = nvram_safe_get(strcat_r(prefix, "vendorid", tmp));
 #ifdef RTCONFIG_TR069
-	if (!nvram_invmatch("tr_acs_url", ""))
-		nvram_set_int("tr_discovery", 1);
-	if (nvram_get_int("tr_enable") && nvram_get_int("tr_discovery")) {
+	if (nvram_get_int("tr_discovery")) {
 		/* Add dslforum.org to VCI and request VSI */
-		snprintf(vendorid, sizeof(vendorid) - sizeof(",dslforum.org") + 1, "%s", value);
-		len = strlen(vendorid);
-		snprintf(vendorid + len, sizeof(vendorid) - len, len ? ",%s" : "%s", "dslforum.org");
+		value = stpncpy(vendorid, *value ? value : "udhcp",
+				sizeof(vendorid) - sizeof(" dslforum.org"));
+		snprintf(value, sizeof(vendorid) - (value - vendorid), " %s", "dslforum.org");
 		value = vendorid;
 		dhcp_argv[index++] = "-O43";
 	}
@@ -1068,7 +1068,7 @@ deconfig6(char *wan_ifname)
 	}
 
 	if (get_ipv6_service() == IPV6_NATIVE_DHCP &&
-		nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
+	    nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
 		if (nvram_invmatch(ipv6_nvname("ipv6_prefix"), "") ||
 		    nvram_get_int(ipv6_nvname("ipv6_prefix_length")) != 0) {
 			eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
@@ -1084,10 +1084,6 @@ deconfig6(char *wan_ifname)
 		nvram_set(ipv6_nvname("ipv6_get_domain"), "");
 		if (nvram_get_int(ipv6_nvname("ipv6_dnsenable")))
 			update_resolvconf();
-#ifdef RTCONFIG_6RELAYD
-		if (get_ipv6_service() == IPV6_PASSTHROUGH)
-			stop_6relayd();
-#endif
 	}
 
 	return 0;
@@ -1133,7 +1129,7 @@ bound6(char *wan_ifname, int bound)
 
 	prefix_changed = 0;
 	if (get_ipv6_service() == IPV6_NATIVE_DHCP &&
-		nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
+	    nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
 		value = safe_getenv("PREFIXES");
 		if (*value) {
 			foreach(tmp, value, next) {
@@ -1187,11 +1183,6 @@ skip:
 	if (dns_changed && nvram_get_int(ipv6_nvname("ipv6_dnsenable")))
 		update_resolvconf();
 
-#ifdef RTCONFIG_6RELAYD
-	if (dns_changed && get_ipv6_service() == IPV6_PASSTHROUGH)
-		start_6relayd();
-#endif
-
 	if (bound == 1 || wanaddr_changed || prefix_changed) {
 		char *address = nvram_safe_get(ipv6_nvname("ipv6_wan_addr"));
 		char *prefix = nvram_safe_get(ipv6_nvname("ipv6_prefix"));
@@ -1239,11 +1230,6 @@ ra_updated6(char *wan_ifname)
 	if (dns_changed && nvram_get_int(ipv6_nvname("ipv6_dnsenable")))
 		update_resolvconf();
 
-#ifdef RTCONFIG_6RELAYD
-	if (dns_changed && get_ipv6_service() == IPV6_PASSTHROUGH)
-		start_6relayd();
-#endif
-
 	return 0;
 }
 
@@ -1276,11 +1262,7 @@ start_dhcp6c(void)
 {
 	char *wan_ifname = (char *) get_wan6face();
 	char *dhcp6c_argv[] = { "odhcp6c",
-#ifndef RTCONFIG_BCMARM
-		"-f",
-#else
 		"-df",
-#endif
 		"-R",
 		"-s", "/tmp/dhcp6c",
 		"-N", "try",
@@ -1295,25 +1277,20 @@ start_dhcp6c(void)
 	struct duid duid;
 	char duid_arg[sizeof(duid)*2+1];
 	char prefix_arg[sizeof("128:xxxxxxxx")];
-	int i;
-#ifndef RTCONFIG_BCMARM
-	pid_t pid;
-#endif
+	int service, i;
 
 	/* Check if enabled */
-	if (get_ipv6_service() != IPV6_NATIVE_DHCP
+	service = get_ipv6_service();
+	if (
 #ifdef RTCONFIG_6RELAYD
-		&& get_ipv6_service() != IPV6_PASSTHROUGH
+	    service != IPV6_PASSTHROUGH &&
 #endif
-	)
+	    service != IPV6_NATIVE_DHCP)
 		return 0;
 
 	if (!wan_ifname || *wan_ifname == '\0')
 		return -1;
 
-#ifdef RTCONFIG_6RELAYD
-	stop_6relayd();
-#endif
 	stop_dhcp6c();
 
 	if (get_duid(&duid)) {
@@ -1322,8 +1299,8 @@ start_dhcp6c(void)
 		dhcp6c_argv[index++] = duid_arg;
 	}
 
-	if (get_ipv6_service() == IPV6_NATIVE_DHCP &&
-		nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
+	if (service == IPV6_NATIVE_DHCP &&
+	    nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"))) {
 		/* Generate IA_PD IAID from the last 7 digits of WAN MAC */
 		unsigned long iaid = ether_atoe(nvram_safe_get("wan0_hwaddr"), duid.ea) ?
 			((unsigned long)(duid.ea[3] & 0x0f) << 16) |
@@ -1337,11 +1314,7 @@ start_dhcp6c(void)
 		dhcp6c_argv[index++] = prefix_arg;
 	}
 
-	if (nvram_get_int(ipv6_nvname("ipv6_dnsenable"))
-#ifdef RTCONFIG_6RELAYD
-		|| get_ipv6_service() == IPV6_PASSTHROUGH
-#endif
-		) {
+	if (nvram_get_int(ipv6_nvname("ipv6_dnsenable"))) {
 		dhcp6c_argv[index++] = "-r23";	/* dns */
 		dhcp6c_argv[index++] = "-r24";	/* domain */
 	}
@@ -1353,15 +1326,50 @@ start_dhcp6c(void)
 
 	dhcp6c_argv[index++] = wan_ifname;
 
-#ifndef RTCONFIG_BCMARM
-	return _eval(dhcp6c_argv, NULL, 0, &pid);
-#else
 	return _eval(dhcp6c_argv, NULL, 0, NULL);
-#endif
 }
 
 void stop_dhcp6c(void)
 {
 	killall_tk("odhcp6c");
 }
+
+#ifdef RTCONFIG_6RELAYD
+int start_6relayd(void)
+{
+	char *lan_ifname = nvram_safe_get("lan_ifname");
+	char *wan_ifname = (char *) get_wan6face();
+	char *relayd_argv[] = { "6relayd",
+		"-drs",
+		"-Rrelay", "-Dserver", "-N",
+		"-n",
+		NULL,		/* -v */
+		NULL,		/* master ifname */
+		NULL,		/* internal ifname */
+		NULL };
+	int index = 6;
+
+	if (get_ipv6_service() != IPV6_PASSTHROUGH)
+		return 0;
+
+	if (!wan_ifname || *wan_ifname == '\0')
+		return -1;
+
+	stop_6relayd();
+
+	if (nvram_get_int("ipv6_debug"))
+		relayd_argv[index++] = "-v";
+
+	relayd_argv[index++] = wan_ifname;
+	relayd_argv[index++] = lan_ifname;
+
+	return _eval(relayd_argv, NULL, 0, NULL);
+}
+
+void stop_6relayd(void)
+{
+	killall_tk("6relayd");
+}
+#endif // RTCONFIG_6RELAYD
+
 #endif // RTCONFIG_IPV6

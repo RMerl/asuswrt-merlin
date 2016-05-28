@@ -916,6 +916,11 @@ int chk_proto(int wan_unit){
 				record_wan_state_nvram(wan_unit, WAN_STATE_STOPPED, WAN_STOPPED_REASON_DATALIMIT, -1);
 				current_state[wan_unit] = WAN_STATE_STOPPED;
 				wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
+
+				/* stop_wan_if() */
+				char cmd[32];
+				snprintf(cmd, 32, "stop_wan_if %d", wan_unit);
+				notify_rc(cmd);
 			}
 		}
 #endif
@@ -973,6 +978,11 @@ int chk_proto(int wan_unit){
 				record_wan_state_nvram(wan_unit, WAN_STATE_STOPPED, WAN_STOPPED_REASON_DATALIMIT, -1);
 				current_state[wan_unit] = WAN_STATE_STOPPED;
 				wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
+
+				/* stop_wan_if() */
+				char cmd[32];
+				snprintf(cmd, 32, "stop_wan_if %d", wan_unit);
+				notify_rc(cmd);
 			}
 		}
 #endif
@@ -1582,10 +1592,8 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 		strcpy(dut_addr, DUT_DOMAIN_NAME);
 	else
 #endif
-	if(isFirstUse)
-		strcpy(dut_addr, DUT_DOMAIN_NAME);
-	else
-		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
+
+	strcpy(dut_addr, DUT_DOMAIN_NAME);
 
 #ifdef RTCONFIG_HTTPS
 	if (nvram_get_int("http_enable") == 1) {
@@ -1602,43 +1610,48 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 		sprintf(redirection, "%s%s%s", "Location:", dut_proto, dut_addr);
 	}
 	else{
-		sprintf(redirection, "%s%s%s%s%s", "refresh:1.0001; url=", dut_proto, dut_addr, ":", dut_port);
+		// sprintf(redirection, "%s%s%s%s%s", "refresh:1.0001; url=", dut_proto, dut_addr, ":", dut_port);
+		sprintf(redirection, "%s%s%s%s%s", "Location:", dut_proto, dut_addr, ":", dut_port);
 	}
 
 	// TODO: Only send pages for the wan(0)'s state.
 	if(isFirstUse){
+
 #ifdef RTCONFIG_WIRELESSREPEATER
 		if(sw_mode == SW_MODE_REPEATER || sw_mode == SW_MODE_HOTSPOT)
-			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "", redirection, "/QIS_default.cgi?flag=sitesurvey", "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
+			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "", redirection, "/QIS_default.cgi?flag=sitesurvey", "\r\nContent-Type: text/html\r\n", "");
 		else
 #endif
 #ifdef RTCONFIG_TMOBILE
-			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "", redirection, "/MobileQIS_Login.asp", "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
+			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "", redirection, "/MobileQIS_Login.asp", "\r\nContent-Type: text/html\r\n", "");
 #else
-			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "", redirection, "/QIS_default.cgi?flag=welcome", "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
+			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "", redirection, "/QIS_default.cgi?flag=welcome", "\r\nContent-Type: text/html\r\n", "");
 #endif
 	}
 	else if(conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN){
 #if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 		if(disconn_case[wan_unit] == CASE_DATALIMIT)
-			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/blocking.asp?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "");
+			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/blocking.asp?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/html\r\n", "");
 		else
 #endif
 #ifdef RTCONFIG_USB_MODEM
 #ifdef RTCONFIG_DYN_MODEM
 		if(wan_unit == WAN_UNIT_FIRST && dualwan_unit__nonusbif(wan_unit) && get_dualwan_by_unit(other_wan_unit) == WANS_DUALWAN_IF_NONE && link_wan[other_wan_unit])
-			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/error_page.htm?flag=", disconn_case[other_wan_unit], "\r\nContent-Type: text/plain\r\n", "");
+			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/error_page.htm?flag=", disconn_case[other_wan_unit], "\r\nContent-Type: text/html\r\n", "");
 		else
 #endif
 #endif
-		if(disconn_case[wan_unit] == CASE_THESAMESUBNET)
-			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "");
+		if(disconn_case[wan_unit] == CASE_THESAMESUBNET){
+			if(!isFirstUse){
+				sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/html\r\n", "");
+			}
+		}
 		else
-			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "");
+			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "", redirection, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/html\r\n", "");
 	}
 #ifdef RTCONFIG_WIRELESSREPEATER
 	else
-		sprintf(buf, "%s%s%s%s%s", buf, "Connection: close\r\n", "", redirection, "/index.asp\r\nContent-Type: text/plain\r\n\r\n<html></html>\r\n");
+		sprintf(buf, "%s%s%s%s%s", buf, "Connection: close\r\n", "", redirection, "/index.asp\r\nContent-Type: text/html\r\n");
 #endif
 
 #ifdef NO_IOS_DETECT_INTERNET
@@ -3501,6 +3514,31 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 				else
 					switch_wan_line(other_wan_unit, 1);
 			}
+#ifdef RTCONFIG_AUTOCOVER_SIP
+			else if(disconn_case[current_wan_unit] == CASE_THESAMESUBNET && isFirstUse){
+#if 1
+				struct in_addr addr;
+				in_addr_t new_addr;
+
+				if (inet_deconflict(current_lan_ipaddr, current_lan_netmask,
+						    current_lan_ipaddr, current_lan_netmask, &addr)) {
+					nvram_set("lan_ipaddr", inet_ntoa(addr));
+					nvram_set("lan_ipaddr_rt", inet_ntoa(addr));
+
+					new_addr = ntohl(addr.s_addr);
+					addr.s_addr = htonl(new_addr + 1);
+					nvram_set("dhcp_start", inet_ntoa(addr));
+					addr.s_addr = htonl((new_addr | ~inet_network(current_lan_netmask)) & 0xfffffffe);
+					nvram_set("dhcp_end", inet_ntoa(addr));
+
+					notify_rc_and_wait("restart_net_and_phy");
+				}
+#else
+				/* nb: it does the commit, code above - not */
+				notify_rc_and_wait("restart_subnet");
+#endif
+			}
+#endif
 		}
 		// phy connected -> disconnected -> connected
 		else if(conn_changed_state[current_wan_unit] == PHY_RECONN){
@@ -3541,8 +3579,8 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 				notify_rc_and_wait(cmd);
 			}
 		}
-#if defined(RTAC68U) || defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)|| defined(RTAC5300R)
 
+#if defined(RTAC68U) || defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)|| defined(RTAC5300R)
 		if (strcmp(dualwan_wans, "wan none")) {
 			if(nvram_match("AllLED", "1")
 #ifdef RTAC68U
@@ -3572,6 +3610,7 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 		}
 #endif
 #endif
+
 #ifdef RTCONFIG_QTN
 		if (nvram_get_int("ntp_ready") == 1 && nvram_get_int("qtn_ready") == 1){
 			if (nvram_get_int("qtn_ntp_ready") == 0){

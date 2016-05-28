@@ -18,6 +18,9 @@ var wl2_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); 
 var wl0_wpa_psk_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>');
 var wl1_wpa_psk_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>');
 var wl2_wpa_psk_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>');
+var ttc = '<% nvram_get("territory_code"); %>';
+var is_TW_sku = (ttc.search("TW") == -1) ? false : true;
+var is_CN_sku = (ttc.search("CN") == -1) ? false : true;
 
 if('<% nvram_get("x_Setting"); %>' == '0')
 	var smart_connect_tmp = '1';
@@ -152,9 +155,8 @@ var timezones_dst = {
  
 function QKWireless_load_body(){	
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
-	parent.set_step("t3");	
-	
-	/*To Handle copy, paste for mobile device*/
+	parent.set_step("t3");
+		/*To Handle copy, paste for mobile device*/
 	if (document.getElementById("wl0_ssid").addEventListener){
 		document.getElementById("wl0_ssid").addEventListener("paste", function(e){setTimeout(function(){Sync_2ghz(2);},100);});
 		document.getElementById("wl0_wpa_psk").addEventListener("paste", function(e){setTimeout(function(){Sync_2ghz(2);},100);});
@@ -281,11 +283,37 @@ function QKWireless_load_body(){
 			document.getElementById("field_general").style.display = "";
 	}
 
+	if((parent.document.QKform.sw_mode.value == 1) && (is_TW_sku || is_CN_sku)){	
+		check_wan_state();
+	}	
+	
 	setTimeout(function(){
 		parent.document.start_update.action_script.value = "start_webs_update";
 		parent.document.start_update.flag.value = "background";
 		parent.document.start_update.submit();
 	}, 100);
+}
+
+function check_wan_state(){
+	$.ajax({
+		url: '/result_of_get_changed_status_QIS.asp',
+		dataType: 'script',		
+		error: function(xhr){
+			setTimeout("check_wan_state();", 1000);
+		},
+		success: function(response){
+			setTimeout("check_wan_state();", 1000);
+			if((wanstate  == 1 && wansbstate == 0 && wanauxstate == 0) || (wanstate  == 6 && wansbstate == 0 && wanauxstate == 0) || (wanstate  == 4 && wansbstate == 2 && wanauxstate == 0)){
+				if(!parent.flag_manual)
+					parent.pppoe_failed_flag = true;
+			}
+			else{	
+				if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
+					parent.pppoe_failed_flag = false;
+				}
+			}
+		}
+	});	
 }
 
 function submitForm(){
@@ -365,7 +393,7 @@ function submitForm(){
 			//confirm common string combination     #JS_common_passwd#
 			var is_common_string0 = check_common_string(document.form.wl0_wpa_psk.value, "wpa_key");
 			if(is_common_string0){
-				if(confirm("<#JS_common_passwd#>")){
+				if(!confirm("<#JS_common_passwd#>")){
 					document.form.wl0_wpa_psk.focus();
 					document.form.wl0_wpa_psk.select();
 					return false;   
@@ -458,7 +486,7 @@ function submitForm(){
 					//confirm common string combination     #JS_common_passwd#
 					var is_common_string1 = check_common_string(document.form.wl1_wpa_psk.value, "wpa_key");
 					if(is_common_string1){
-						if(confirm("<#JS_common_passwd#>")){
+						if(!confirm("<#JS_common_passwd#>")){
 							document.form.wl1_wpa_psk.focus();
 							document.form.wl1_wpa_psk.select();
 							return false;   
@@ -551,7 +579,7 @@ function submitForm(){
 					//confirm common string combination     #JS_common_passwd#
 					var is_common_string2 = check_common_string(document.form.wl2_wpa_psk.value, "wpa_key");
 					if(is_common_string2){
-						if(confirm("<#JS_common_passwd#>")){
+						if(!confirm("<#JS_common_passwd#>")){
 							document.form.wl2_wpa_psk.focus();
 							document.form.wl2_wpa_psk.select();
 							return false;   
@@ -863,11 +891,22 @@ function submitForm(){
 		document.form.action_script.value = "saveNvram";
 		document.form.action_wait.value = "0";
 		
-		if(document.form.sw_mode.value == "1" && !document.form.wl0_ssid.disabled) parent.restartWireless = true;
+		if(document.form.sw_mode.value == "1" && !document.form.wl0_ssid.disabled) 
+			parent.restartWireless = true;
+	}
+
+	if(parent.pppoe_failed_flag && parent.document.QKform.sw_mode.value == 1 && !parent.flag_manual){
+		document.form.action_script.value = "saveNvram";
+		document.form.flag.value = "pppoe_failed";
+		document.form.next_page.value = "/qis/QIS_internet_account.htm";
+	}
+
+	if(parent.document.QKform.wan_proto.value == "pppoe" && parent.flag_manual){
+		document.form.action_script.value += "restart_wan_if";
 	}
 
 	document.form.submit();
-	if(document.form.sw_mode.value == "1" || document.form.sw_mode.value == "3"){
+	if((document.form.sw_mode.value == "1" || document.form.sw_mode.value == "3") && !parent.pppoe_failed_flag){
 		setTimeout(function(){
 			location.href = "/qis/QIS_finish.htm";
 		}, 500)
@@ -875,7 +914,6 @@ function submitForm(){
 }
 
 function timezone_by_preferred_lang(v){
-
 		switch("<% nvram_get("preferred_lang"); %>"){
 			case "BR":	//"EBST3DST_1",	#TZ21#"
 					break;
@@ -1474,7 +1512,7 @@ function detect_LANStatus(_flag){
 <input type="hidden" name="prev_page" value="QIS_internet_success.htm">
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="wsc_config_state" value="1">
-
+<input type="hidden" name="wan_unit" value="0">
 
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="3">
@@ -1668,10 +1706,8 @@ function detect_LANStatus(_flag){
 			</td>
 		</tr>
 	</table>
-
 	<br/>
 	<div class="QISWireless_DescSetting" align="left"><#qis_wireless_setting#></div>
-	<br/>
 	<table class="QISform_wireless" width="400" border=0 align="center" cellpadding="4" cellspacing="0">
 	<tr>
 		<th colspan="2" id="wl0_desc_name" class="QISWireless_DescSecurity">2.4 GHz - <#Security#> </th>
@@ -1683,14 +1719,14 @@ function detect_LANStatus(_flag){
 		</td>
 	</tr>
 	<tr id="wl_unit_field_0">
-		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
+		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
 			<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" tabindex="4" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="64" autocomplete="off" autocorrect="off" autocapitalize="off"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_1">
 		<th id="wl_unit_field_1_1" class="QISWireless_DescSecurity">5 GHz - <#Security#> </th>
-		<td class="QISformtd" id="wl_unit_field_1_2" style="padding-top:12px;">
+		<td class="QISformtd" id="wl_unit_field_1_2" style="padding-top:12px;display:none">
 			<input type="checkbox" id="sync_with_2ghz" name="sync_with_2ghz" tabindex="5" class="input" onclick="setTimeout('Sync_2ghz(2);',0);" checked="checked"><span id="syncCheckbox"><#qis_ssid_desc#></span>
 		</td>
 	</tr>
@@ -1701,14 +1737,14 @@ function detect_LANStatus(_flag){
 		</td>
 	</tr>
 	<tr id="wl_unit_field_3">
-		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
+		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
 			<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" tabindex="7" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="64" autocomplete="off" autocorrect="off" autocapitalize="off"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_4" style="display:none;">
 		<th class="QISWireless_DescSecurity">5 GHz-2 - <#Security#> </th>
-		<td class="QISformtd" id="wl_unit_field_4_2" style="padding-top:12px;">
+		<td class="QISformtd" id="wl_unit_field_4_2" style="padding-top:12px;display:none">
 			<input type="checkbox" id="sync_with_5ghz" name="sync_with_5ghz" tabindex="8" class="input" onclick="setTimeout('Sync_5ghz(2);',0);" checked="checked"><span id="syncCheckbox_5_2"><#qis_ssid_desc#></span>
 		</td>
 	</tr>
@@ -1719,7 +1755,7 @@ function detect_LANStatus(_flag){
 		</td>
 	</tr>
 	<tr id="wl_unit_field_6" style="display:none;">
-		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
+		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
 			<input id="wl2_wpa_psk" name="wl2_wpa_psk" tabindex="10" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl2_wpa_psk"); %>" onkeyup="Sync_5ghz(5);" style="height:25px;" class="input_32_table" maxlength="64" autocomplete="off"  autocorrect="off" autocapitalize="off"/>
 		</td>

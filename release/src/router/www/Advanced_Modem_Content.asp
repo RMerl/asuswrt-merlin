@@ -643,7 +643,7 @@ function change_apn_mode(){
 		document.getElementById("modem_user_div_tr").style.display = "";
 		document.getElementById("modem_pass_div_tr").style.display = "";	
 		if(document.form.modem_enable.value == "1")
-			mdoem_enable_str = "WCDMA (UMTS)";
+			mdoem_enable_str = "WCDMA (UMTS) / LTE";
 		else if(document.form.modem_enable.value == "2")
 			mdoem_enable_str = "CDMA2000 (EVDO)";
 		else if(document.form.modem_enable.value == "3")
@@ -832,7 +832,7 @@ function change_apn_mode(){
 						</th>
 						<td>
 							<select name="modem_enable_option" id="modem_enable_option" class="input_option" onchange="switch_modem_mode(this.value);reloadProfile();">
-								<option value="1" <% nvram_match("modem_enable", "1", "selected"); %>>WCDMA (UMTS)</option>
+								<option value="1" <% nvram_match("modem_enable", "1", "selected"); %>>WCDMA (UMTS) / LTE</option>
 								<option value="2" <% nvram_match("modem_enable", "2", "selected"); %>>CDMA2000 (EVDO)</option>
 								<option value="3" <% nvram_match("modem_enable", "3", "selected"); %>>TD-SCDMA</option>
 								<option value="4" <% nvram_match("modem_enable", "4", "selected"); %>>WiMAX</option>

@@ -398,7 +398,7 @@ function validForm(){
 		//confirm common string combination	#JS_common_passwd#
 		var is_common_string = check_common_string(document.form.wl_wpa_psk.value, "wpa_key");
 		if(is_common_string){
-			if(confirm("<#JS_common_passwd#>")){
+			if(!confirm("<#JS_common_passwd#>")){
 				document.form.wl_wpa_psk.focus();
 				document.form.wl_wpa_psk.select();
 				return false;	

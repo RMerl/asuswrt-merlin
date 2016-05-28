@@ -1,0 +1,27 @@
+<samba:parameter name="idmap domains"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	The idmap domains option defines a list of Windows domains which will each
+	have a separately configured backend for managing Winbind's SID/uid/gid
+	tables.  This parameter is mutually exclusive with the older <smbconfoption 
+	name="idmap backend"/> option.
+	</para>
+
+	<para>
+	Values consist of the short domain name for Winbind's primary or collection
+	of trusted domains.  You may also use an arbitrary string to represent a catchall
+	domain backend for any domain not explicitly listed.
+	</para>
+
+	<para>
+	Refer to the <smbconfoption name="idmap config"/> for details about
+	managing the SID/uid/gid backend for each domain.
+	</para>
+</description>
+
+<value type="example">default AD CORP</value>
+</samba:parameter>

@@ -28,6 +28,7 @@ extern struct nvram_tuple router_defaults[];
 #define IN_CLASSB_HOST          (0xffffffff & ~IN_CLASSB_NET)
 // from net.h
 #define LINKLOCAL_ADDR	0xa9fe0000
+
 // from zcip.c and revised
 // Pick a random link local IP address on 169.254/16, except that
 // the first and last 256 addresses are reserved.
@@ -396,13 +397,13 @@ void start_dsl()
 			sprintf(wan_if, "eth2.1.%d", x);
 			eval("vconfig", "add", "eth2.1", wan_num);
 #else
-			/* create IPTV PVC interface and begin from eth0.101 */
-			sprintf(wan_num, "%d", (100 + x -1));
+			/* create IPTV PVC interface and begin from eth0.3881 */
+			sprintf(wan_num, "%d", (DSL_WAN_VID + x -1));
 			sprintf(wan_if, "vlan%s", wan_num);
 			eval("vconfig", "set_name_type", "VLAN_PLUS_VID_NO_PAD");
 			eval("vconfig", "add", "eth0", wan_num);
 			//Set switch
-			sprintf(wan_num, "0x%04x", (100 + x -1));
+			sprintf(wan_num, "0x%04x", (DSL_WAN_VID + x -1));
 			eval("et", "robowr", "0x05", "0x83", "0x0021");
 			eval("et", "robowr", "0x05", "0x81", wan_num);
 			eval("et", "robowr", "0x05", "0x80", "0x0000");

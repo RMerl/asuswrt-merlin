@@ -1,6 +1,0 @@
-# Host: FreeBSD/sparc64
-NATDEPFILES= fork-child.o inf-ptrace.o \
-	fbsd-nat.o sparc-nat.o sparc64-nat.o sparc64fbsd-nat.o \
-	gcore.o bsd-kvm.o
-
-LOADLIBES= -lkvm

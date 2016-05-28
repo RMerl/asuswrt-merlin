@@ -83,16 +83,12 @@ function QKinternettype_load_body(){
 			hide_specialISP();
 		}
 
-		if( parent.based_modelid != "RT-AC3200" &&
-			parent.based_modelid != "RT-AC87U" &&
-			parent.based_modelid != "RT-AC68U" &&
-			parent.based_modelid != "RT-AC66U" &&
-			parent.based_modelid != "RT-AC51U" &&
-			parent.based_modelid != "RT-N66U" &&
-			parent.based_modelid != "RT-N18U"
-		){	// MODELDEP: RT-AC3200, RT-AC87U@sysdep/RT-AC55U, RT-AC68U, RT-AC66U, RT-AC51U, RT-N66U, RT-N18U
+		if( parent.based_modelid != "RT-N14U" ){
 			document.getElementById('meoOption').outerHTML = "";
 			document.getElementById('meoDiv').outerHTML = "";
+                        document.getElementById('vodafoneOption').outerHTML = "";
+                        document.getElementById('vodafoneDiv').outerHTML = "";
+
 		}	
 	
 		if(parent.ruisp_support)
@@ -320,6 +316,14 @@ function ISP_Profile_Selection(isp){
 		document.getElementById("wan_voip_port3_x").style.display = "none";
 		document.applyForm.switch_wantag.value = "meo";
 	}
+        else if(isp == "vodafone"){
+                document.getElementById("wan_iptv_x").style.display = "";
+                document.getElementById("wan_voip_x").style.display = "";
+                document.getElementById("wan_internet_x").style.display = "none";
+                document.getElementById("wan_iptv_port4_x").style.display = "none";
+                document.getElementById("wan_voip_port3_x").style.display = "none";
+                document.applyForm.switch_wantag.value = "vodafone";
+        }
 	else if(isp == "manual"){
 		document.getElementById("wan_iptv_x").style.display = "";
 		document.getElementById("wan_voip_x").style.display = "";
@@ -328,6 +332,16 @@ function ISP_Profile_Selection(isp){
 		document.getElementById("wan_voip_port3_x").style.display = "";
 		document.applyForm.switch_wantag.value = "manual";
 	}	
+
+        if(isp == "vodafone" || isp == "meo")
+                document.getElementById("iptv_title").innerHTML = "Bridge Port: ";
+        else
+                document.getElementById("iptv_title").innerHTML = "IPTV STB Port: ";
+
+        if(isp == "vodafone")
+                document.getElementById("voip_title").innerHTML = "IPTV STB Port: ";
+        else
+                document.getElementById("voip_title").innerHTML = "VoIP Port: ";
 }
 
 function set_ISP_profile(){
@@ -421,10 +435,20 @@ function set_ISP_profile(){
                 document.applyForm.switch_wan2tagid.value = "";
                 document.applyForm.switch_wan2prio.value = "0";
         }
+        else if(document.applyForm.switch_wantag.value == "vodafone") {
+        	document.applyForm.switch_stb_x.value = "3";
+	        document.applyForm.switch_wan0tagid.value = "100";
+	        document.applyForm.switch_wan0prio.value = "1";
+	        document.applyForm.switch_wan1tagid.value = "";
+	        document.applyForm.switch_wan1prio.value = "0";
+	        document.applyForm.switch_wan2tagid.value = "105";
+	        document.applyForm.switch_wan2prio.value = "1";
+        }
 
 		if(document.applyForm.switch_wantag.value == "maxis_fiber_sp_iptv" || 
 		   document.applyForm.switch_wantag.value == "maxis_fiber_iptv" ||
-		   document.applyForm.switch_wantag.value == "meo"
+		   document.applyForm.switch_wantag.value == "meo" ||
+		   document.applyForm.switch_wantag.value == "vodafone"
 		) {
 			document.applyForm.mr_enable_x.value = "1";
 			document.applyForm.emf_enable.value = "1";
@@ -655,6 +679,7 @@ function detect_if_wan_plug(flag){
 				<option value="maxis_fiber_sp" <% nvram_match("switch_wantag", "maxis_fiber_sp", "selected"); %>>Maxis-Fiber-Special</option>
 				<!--option value="movistar" <% nvram_match("switch_wantag", "movistar", "selected"); %>>Movistar</option-->
 				<option id="meoOption" value="meo" <% nvram_match("switch_wantag", "meo", "selected"); %>>Meo</option>
+				<option id="vodafoneOption" value="vodafone" <% nvram_match("switch_wantag", "vodafone", "selected"); %>>Vodafone</option>
 <!--					
 				<option value="maxis_fiber_iptv" <% nvram_match("switch_wantag", "maxis_fiber_iptv", "selected"); %>>Maxis-Fiber-IPTV</option>
 				<option value="maxis_fiber_sp_iptv" <% nvram_match("switch_wantag", "maxis_fiber_sp_iptv", "selected"); %>>Maxis-Fiber-Special-IPTV</option>
@@ -744,6 +769,9 @@ function detect_if_wan_plug(flag){
 			</div>
                         <div id="meoDiv"class="row">
                                 <a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='meo';mySel(this, false);" myselected="false">Meo</a>
+                        </div>
+                        <div id="vodafoneDiv"class="row">
+                                <a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='vodafone';mySel(this, false);" myselected="false">Vodafone</a>
                         </div>
 			<div class="row_end">
 				<a class="iuiA_unsel_check" onclick="document.applyForm.switch_wantag.value='manual';mySel(this, false);" myselected="false"><#Manual_Setting_btn#></a>

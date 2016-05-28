@@ -1,0 +1,29 @@
+<samba:parameter name="preferred master"
+                 context="G"
+				 type="boolean-auto"
+                 basic="1" advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>prefered master</synonym>
+ <description>
+	<para>
+	This boolean parameter controls if <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> is a preferred master browser  for its workgroup.
+	</para>
+
+	<para>
+	If this is set to <constant>yes</constant>, on startup, <command moreinfo="none">nmbd</command> will force
+	an election, and it will have a slight advantage in winning the election.  It is recommended that this
+	parameter is used in conjunction with <smbconfoption name="domain master">yes</smbconfoption>, so that
+	<command moreinfo="none">nmbd</command> can guarantee becoming a domain master.
+	</para>
+		
+	<para>
+	Use this option with caution, because if there are several hosts (whether Samba servers, Windows 95 or NT)
+	that are preferred  master browsers on the same subnet, they will each periodically  and continuously attempt
+	to become the local master browser. This will result in unnecessary broadcast traffic and reduced browsing
+	capabilities.
+	</para>
+</description>
+<related>os level</related>
+<value type="default">auto</value>
+</samba:parameter>

@@ -1,4 +1,0 @@
-# Host: Intel 386 running QNX.
-
-NATDEPFILES= nto-procfs.o
-NAT_FILE= config/nm-nto.h

@@ -1,0 +1,17 @@
+<samba:parameter name="acl compatibility"
+                 context="S"
+				 type="enum"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies what OS ACL semantics should 
+	be compatible with. Possible values are <emphasis>winnt</emphasis> for Windows NT 4, 
+	<emphasis>win2k</emphasis> for Windows 2000 and above and <emphasis>auto</emphasis>.
+	If you specify <emphasis>auto</emphasis>, the value for this parameter 
+	will be based upon the version of the client. There should 
+	be no reason to change this parameter from the default.</para>
+</description>
+
+<value type="default">Auto</value>
+<value type="example">win2k</value>
+</samba:parameter>

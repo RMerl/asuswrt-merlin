@@ -1,0 +1,13 @@
+<!ELEMENT latexbindings	(latexmapping+)>
+<!ELEMENT latexmapping 	(mapping+)>
+<!ELEMENT mapping (line*)>
+<!ELEMENT line (#PCDATA)>
+
+<!ATTLIST latexmapping 
+role	CDATA	#REQUIRED
+>
+<!ATTLIST mapping 
+key	CDATA	#REQUIRED
+text	CDATA	#REQUIRED
+>
+

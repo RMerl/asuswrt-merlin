@@ -62,13 +62,11 @@ static void traffic_limiter_set_max(const char *type, int unit, double value)
 
 static void _traffic_limiter_recover_connect(char *wan_if, int unit)
 {
+	TL_DBG("RECOVER wan%d: %s connection\n", unit, wan_if);
+
 	/* recover wan connection function */
-	int debug = nvram_get_int("tl_debug");
-
-	if (debug) dbg("[TRAFFIC LIMITER] %s recover connect\n", wan_if);
-
 	update_wan_state(wan_if, WAN_STATE_CONNECTED, 0);
-	//start_wan_if(unit);
+	start_wan_if(unit);
 	traffic_limiter_clear_bit("limit", unit);
 }
 
@@ -83,11 +81,8 @@ void reset_traffic_limiter_counter(int force)
 	int unit;
 	double val;
 
-	/* check daul wan mode */
-	if (traffic_limiter_dualwan_check(nvram_safe_get("wans_mode")) == 0)
-		return;
-
-	for (unit = TL_UNIT_S; unit < TL_UNIT_E; ++unit) {
+	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+	{
 		snprintf(prefix, sizeof(prefix), "tl%d_", unit);
 		snprintf(wan_if, sizeof(wan_if), "wan%d_", unit);
 		strcat_r(prefix, "limit_max", tmp1);
@@ -129,8 +124,6 @@ static void traffic_limiter_cycle_detect(void)
 	time_t now, new_date;
 	char buf[32];
 
-	int debug = nvram_get_int("tl_debug");
-
 	/* current timestamp */
 	time(&now);
 	
@@ -138,8 +131,8 @@ static void traffic_limiter_cycle_detect(void)
 	localtime_r(&now, &t1);
 	localtime_r(&date_start, &t2);
 
-	if (debug) dbg("t1: %d-%d-%d, %d:%d:%d\n", t1.tm_year+1900, t1.tm_mon+1, t1.tm_mday, t1.tm_hour, t1.tm_min, t1.tm_sec);
-	if (debug) dbg("t2: %d-%d-%d, %d:%d:%d\n", t2.tm_year+1900, t2.tm_mon+1, t2.tm_mday, t2.tm_hour, t2.tm_min, t2.tm_sec);
+	TL_DBG("t1: %d-%d-%d, %d:%d:%d\n", t1.tm_year+1900, t1.tm_mon+1, t1.tm_mday, t1.tm_hour, t1.tm_min, t1.tm_sec);
+	TL_DBG("t2: %d-%d-%d, %d:%d:%d\n", t2.tm_year+1900, t2.tm_mon+1, t2.tm_mday, t2.tm_hour, t2.tm_min, t2.tm_sec);
 
 	if ((t1.tm_mon == (t2.tm_mon+1)) && (t1.tm_mday == t2.tm_mday)) {
 		// step1. save database
@@ -153,7 +146,7 @@ static void traffic_limiter_cycle_detect(void)
 
 		snprintf(buf, sizeof(buf), "%ld", new_date);
 		nvram_set("tl_date_start", buf);
-		if (debug) dbg("buf=%s, %d-%d-%d, %d:%d:%d\n", buf, t1.tm_year+1900, t1.tm_mon+1, t1.tm_mday, t1.tm_hour, t1.tm_min, t1.tm_sec);
+		TL_DBG("buf=%s\n", buf);
 
 		// step3. recover connection
 		reset_traffic_limiter_counter(1);

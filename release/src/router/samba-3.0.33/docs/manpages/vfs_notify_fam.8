@@ -1,0 +1,44 @@
+.\"     Title: vfs_notify_fam
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_NOTIFY_FAM" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_notify_fam - FAM support for file change notifications
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = notify_fam
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The
+vfs_notify_fam
+module makes use of the system FAM (File Alteration Monitor) daemon to implement file change notifications for Windows clients\. FAM is generally present only on IRIX and some BSD systems\.
+.PP
+This module is not stackable\.
+.SH "EXAMPLES"
+.PP
+Support FAM notifications globally:
+.sp
+.RS 4
+.nf
+        \fI[global]\fR
+	\fIvfs objects = notify_fam\fR
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

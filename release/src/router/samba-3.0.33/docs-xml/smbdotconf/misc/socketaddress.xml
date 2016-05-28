@@ -1,0 +1,18 @@
+<samba:parameter name="socket address"
+	         context="G"
+			 type="string"
+		 developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This option allows you to control what 
+	address Samba will listen for connections on. This is used to 
+	support multiple virtual interfaces on the one server, each 
+	with a different configuration.</para>
+		
+	<para>By default Samba will accept connections on any 
+		address.</para>
+</description>
+
+<value type="default"></value>
+<value type="example">192.168.2.20</value>
+</samba:parameter>

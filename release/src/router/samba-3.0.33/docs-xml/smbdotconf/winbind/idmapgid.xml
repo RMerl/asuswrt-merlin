@@ -1,0 +1,21 @@
+<samba:parameter name="idmap gid"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+		<synonym>winbind gid</synonym>
+<description>
+	<para>The idmap gid parameter specifies the range of group ids 
+	that are allocated for the purpose of mapping UNX groups to NT group 
+	SIDs. This range of group ids should have no 
+	existing local or NIS groups within it as strange conflicts can 
+	occur otherwise.</para>
+
+	<para>See also the <smbconfoption name="idmap backend"/>, <smbconfoption 
+	name="idmap domains"/>, and <smbconfoption name="idmap config"/> options.
+	</para>
+</description>
+
+<value type="default"></value>
+<value type="example">10000-20000</value>
+</samba:parameter>

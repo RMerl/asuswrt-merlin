@@ -1,0 +1,19 @@
+<samba:parameter name="winbind use default domain"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies whether the
+	 <citerefentry><refentrytitle>winbindd</refentrytitle> 
+	<manvolnum>8</manvolnum></citerefentry> daemon should operate on users  
+	without domain component in their username. Users without a domain
+	component are treated as is part of the winbindd server's own
+	domain. While this does not benifit Windows users, it makes SSH, FTP and
+	e-mail function in a way much closer to the way they
+	would in a native unix system.</para>
+</description>
+
+<value type="default">no</value>
+<value type="example">yes</value>
+</samba:parameter>

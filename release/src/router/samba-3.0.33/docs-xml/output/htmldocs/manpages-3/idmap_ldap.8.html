@@ -1,0 +1,69 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>idmap_ldap</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="idmap_ldap.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>idmap_ldap &#8212; Samba's idmap_ldap Backend for Winbind</p></div><div class="refsynopsisdiv"><h2>DESCRIPTION</h2><p>The idmap_ldap plugin provides a means for Winbind to
+	store and retrieve SID/uid/gid mapping tables in an LDAP directory
+	service.  The module implements both the "idmap" and
+	"idmap alloc" APIs.
+	</p></div><div class="refsect1" lang="en"><a name="id2518311"></a><h2>IDMAP OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">ldap_base_dn = DN</span></dt><dd><p>
+			Defines the directory base suffix to use when searching for
+			SID/uid/gid mapping entries.  If not defined, idmap_ldap will default
+			to using the "ldap idmap suffix" option from smb.conf.
+		</p></dd><dt><span class="term">ldap_user_dn = DN</span></dt><dd><p>
+			Defines the user DN to be used for authentication. If absent an
+			anonymous bind will be performed.
+		</p></dd><dt><span class="term">ldap_url = ldap://server/</span></dt><dd><p>
+			Specifies the LDAP server to use when searching for existing
+			SID/uid/gid map entries. If not defined, idmap_ldap will
+			assume that ldap://localhost/ should be used.
+		</p></dd><dt><span class="term">range = low - high</span></dt><dd><p>
+			Defines the available matching uid and gid range for which the
+			backend is authoritative.  Note that the range commonly matches
+			the allocation range due to the fact that the same backend will
+			store and retrieve SID/uid/gid mapping entries.  If the parameter
+			is absent, Winbind fail over to use the "idmap uid" and
+			"idmap gid" options from smb.conf.
+                </p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2480156"></a><h2>IDMAP ALLOC OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">ldap_base_dn = DN</span></dt><dd><p>
+			Defines the directory base suffix under which new SID/uid/gid mapping
+			entries should be stored.  If not defined, idmap_ldap will default
+			to using the "ldap idmap suffix" option from smb.conf.
+		</p></dd><dt><span class="term">ldap_user_dn = DN</span></dt><dd><p>
+			Defines the user DN to be used for authentication. If absent an
+			anonymous bind will be performed.
+		</p></dd><dt><span class="term">ldap_url = ldap://server/</span></dt><dd><p>
+			Specifies the LDAP server to which modify/add/delete requests should
+			be sent.  If not defined, idmap_ldap will assume that ldap://localhost/
+			should be used.
+		</p></dd><dt><span class="term">range = low - high</span></dt><dd><p>
+			Defines the available matching uid and gid range from which
+			winbindd can allocate for users and groups.  If the parameter
+			is absent, Winbind fail over to use the "idmap uid"
+			and "idmap gid" options from smb.conf.
+                </p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2482463"></a><h2>EXAMPLES</h2><p>
+	The follow sets of a LDAP configuration which uses a slave server
+	running on localhost for fast fetching SID/gid/uid mappings, it
+	implies correct configuration of referrals.
+	The idmap alloc backend is pointed directly to the master to skip
+	the referral (and consequent reconnection to the master) that the
+	slave would return as allocation requires writing on the master.
+	</p><pre class="programlisting">
+	[global]
+	    idmap domains = ALLDOMAINS
+	    idmap config ALLDOMAINS:default      = yes
+	    idmap config ALLDOMAINS:backend      = ldap
+	    idmap config ALLDOMAINS:ldap_base_dn = ou=idmap,dc=example,dc=com
+	    idmap config ALLDOMAINS:ldap_url     = ldap://localhost/
+	    idmap config ALLDOMAINS:range        = 10000 - 50000
+
+	    idmap alloc backend = ldap
+	    idmap alloc config:ldap_base_dn = ou=idmap,dc=example,dc=com
+	    idmap alloc config:ldap_url     = ldap://master.example.com/
+	    idmap alloc config:range        = 10000 - 50000
+	</pre></div><div class="refsynopsisdiv"><h2>NOTE</h2><p>In order to use authentication against ldap servers you may
+	need to provide a DN and a password. To avoid exposing the password
+	in plain text in the configuration file we store it into a security
+	store. The "net idmap " command is used to store a secret
+	for the DN specified in a specific idmap domain.
+	</p></div><div class="refsect1" lang="en"><a name="id2482509"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</p></div></div></body></html>

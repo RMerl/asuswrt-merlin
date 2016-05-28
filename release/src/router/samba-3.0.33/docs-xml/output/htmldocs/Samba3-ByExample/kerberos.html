@@ -1,0 +1,826 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 11. Active Directory, Kerberos, and Security</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"><link rel="start" href="index.html" title="Samba-3 by Example"><link rel="up" href="RefSection.html" title="Part III. Reference Section"><link rel="prev" href="RefSection.html" title="Part III. Reference Section"><link rel="next" href="DomApps.html" title="Chapter 12. Integrating Additional Services"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 11. Active Directory, Kerberos, and Security</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="RefSection.html">Prev</a> </td><th width="60%" align="center">Part III. Reference Section</th><td width="20%" align="right"> <a accesskey="n" href="DomApps.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="kerberos"></a>Chapter 11. Active Directory, Kerberos, and Security</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="kerberos.html#id2603717">Introduction</a></span></dt><dd><dl><dt><span class="sect2"><a href="kerberos.html#id2604367">Assignment Tasks</a></span></dt></dl></dd><dt><span class="sect1"><a href="kerberos.html#id2604384">Dissection and Discussion</a></span></dt><dd><dl><dt><span class="sect2"><a href="kerberos.html#id2604780">Technical Issues</a></span></dt></dl></dd><dt><span class="sect1"><a href="kerberos.html#ch10expl">Implementation</a></span></dt><dd><dl><dt><span class="sect2"><a href="kerberos.html#id2606410">Share Access Controls</a></span></dt><dt><span class="sect2"><a href="kerberos.html#id2606759">Share Definition Controls</a></span></dt><dt><span class="sect2"><a href="kerberos.html#id2607372">Share Point Directory and File Permissions</a></span></dt><dt><span class="sect2"><a href="kerberos.html#id2607775">Managing Windows 200x ACLs</a></span></dt><dt><span class="sect2"><a href="kerberos.html#id2608502">Key Points Learned</a></span></dt></dl></dd><dt><span class="sect1"><a href="kerberos.html#id2608636">Questions and Answers</a></span></dt></dl></div><p><a class="indexterm" name="id2603652"></a>
+	By this point in the book, you have been exposed to many Samba-3 features and capabilities.
+	More importantly, if you have implemented the examples given, you are well on your way to becoming 
+	a Samba-3 networking guru who knows a lot about Microsoft Windows. If you have taken the time to 
+	practice, you likely have thought of improvements and scenarios with which you can experiment. You 
+	are rather well plugged in to the many flexible ways Samba can be used.
+	</p><p><a class="indexterm" name="id2603672"></a>
+	This is a book about Samba-3. Understandably, its intent is to present it in a positive light. 
+	The casual observer might conclude that this book is one-eyed about Samba. It is  what 
+	would you expect? This chapter exposes some criticisms that have been raised concerning 
+	the use of Samba. For each criticism, there are good answers and appropriate solutions.
+	</p><p>
+	Some criticism always comes from deep inside ranks that one would expect to be supportive of a particular 
+	decision. Criticism can be expected from the outside. Let's see how the interesting dynamic of 
+	criticism develops with respect to Abmas.
+	</p><p><a class="indexterm" name="id2603700"></a>
+	This chapter provides a shameless self-promotion of Samba-3. The objections raised were not pulled
+	out of thin air. They were drawn from comments made by Samba users and from criticism during 
+	discussions with Windows network administrators. The tone of the objections reflects as closely 
+	as possible that of the original. The case presented is a straw-man example that is designed to 
+	permit each objection to be answered as it might occur in real life.
+	</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603717"></a>Introduction</h2></div></div></div><p><a class="indexterm" name="id2603723"></a><a class="indexterm" name="id2603731"></a><a class="indexterm" name="id2603739"></a><a class="indexterm" name="id2603747"></a><a class="indexterm" name="id2603755"></a>
+	Abmas is continuing its meteoric growth with yet further acquisitions. The investment community took
+	note of the spectacular projection of Abmas onto the global business stage. Abmas is building an
+	interesting portfolio of companies that includes accounting services, financial advice, investment
+	portfolio management, property insurance, risk assessment, and the recent addition of a a video rental
+	business. The pieces do not always appear to fit together, but Mr. Meany is certainly executing an 
+	interesting business growth and development plan. Abmas Video Rentals was recently acquired. 
+	During the time that the acquisition was closing, the Video Rentals business upgraded its Windows 
+	NT4-based network to Windows 2003 Server and Active Directory.
+	</p><p><a class="indexterm" name="id2603779"></a>
+	You have accepted the fact that Abmas Video Rentals will use Microsoft Active Directory.
+	The IT team, led by Stan Soroka, is committed to Samba-3 and to maintaining a uniform technology platform. 
+	Stan Soroka's team voiced its disapproval over the decision to permit this business to continue to 
+	operate with a solution that is viewed by Christine and her group as &#8220;<span class="quote">an island of broken 
+	technologies.</span>&#8221; This comment was made by one of Christine's staff as they were installing a new 
+	Samba-3 server at the new business.
+	</p><p><a class="indexterm" name="id2603803"></a><a class="indexterm" name="id2603810"></a>
+	Abmas Video Rentals' head of IT heard of this criticism. He was offended that a junior engineer
+	should make such a comment. He felt that he had to prepare in case he might be criticized for his 
+	decision to use Active Directory. He decided he would defend his decision by hiring the services 
+	of an outside security systems consultant to report<sup>[<a name="id2603826" href="#ftn.id2603826" class="footnote">12</a>]</sup> on his unit's operations 
+	and to investigate the role of Samba at his site. Here are key extracts from this hypothetical 
+	report:
+	</p><div class="blockquote"><blockquote class="blockquote"><p><a class="indexterm" name="id2603836"></a><a class="indexterm" name="id2603844"></a><a class="indexterm" name="id2603852"></a><a class="indexterm" name="id2603860"></a>
+	... the implementation of Microsoft Active Directory at the Abmas Video Rentals, Bamingsham site,
+	 has been examined. We find no evidence to support a notion that vulnerabilities exist at your site.  
+	... we took additional steps to validate the integrity of the installation and operation of Active 
+	Directory and are pleased that your staff are following sound practices.
+	</p><p>
+	...
+	</p><p><a class="indexterm" name="id2603881"></a><a class="indexterm" name="id2603892"></a><a class="indexterm" name="id2603904"></a><a class="indexterm" name="id2603912"></a><a class="indexterm" name="id2603920"></a><a class="indexterm" name="id2603927"></a>
+	User and group accounts, and respective privileges, have been well thought out. File system shares are
+	appropriately secured. Backup and disaster recovery plans are well managed and validated regularly, and
+	effective off-site storage practices are considered to exceed industry norms.
+	</p><p><a class="indexterm" name="id2603944"></a><a class="indexterm" name="id2603951"></a><a class="indexterm" name="id2603959"></a>
+	Your staff are justifiably concerned that the use of Samba may compromise their good efforts to maintain
+	a secure network. 
+	</p><p><a class="indexterm" name="id2603976"></a><a class="indexterm" name="id2603984"></a><a class="indexterm" name="id2603992"></a><a class="indexterm" name="id2604000"></a>
+	The recently installed Linux file and application server uses a tool called <code class="literal">winbind</code> 
+	that is indiscriminate about security. All user accounts in Active Directory can be used to access data 
+	stored on the Linux system. We are alarmed that secure information is accessible to staff who should 
+	not even be aware that it exists. We share the concerns of your network management staff who have gone 
+	to great lengths to set fine-grained controls that limit information access to those who need access. 
+	It seems incongruous to us that Samba winbind should be permitted to be used considering that it voids this fine work.
+	</p><p><a class="indexterm" name="id2604040"></a><a class="indexterm" name="id2604047"></a><a class="indexterm" name="id2604055"></a>
+	Graham Judd [head of network administration] has locked down the security of all systems and is following 
+	the latest Microsoft guidelines. ... null session connections have been disabled ... the internal network 
+	is isolated from the outside world, the [product name removed] firewall is under current contract 
+	maintenance support from [the manufacturer].  ... our attempts to penetrate security of your systems 
+	failed to find problems common to Windows networking sites. We commend your staff on their attention to 
+	detail and for following Microsoft recommended best practices.
+	</p><p>
+	...
+	</p><p><a class="indexterm" name="id2604080"></a><a class="indexterm" name="id2604088"></a><a class="indexterm" name="id2604096"></a><a class="indexterm" name="id2604104"></a>
+	Regarding the use of Samba, we offer the following comments: Samba is in use in nearly half of
+	all sites we have surveyed. ... It is our opinion that Samba offers no better security than Microsoft
+	... what worries us regarding Samba is the need to disable essential Windows security features such as
+	secure channel support, digital sign'n'seal on all communication traffic, and running Active Directory in
+	mixed mode so that Samba clients and servers can authenticate all of it. Additionally, we are concerned that
+	Samba is not at the full capabilities of Microsoft Windows NT4 server. Microsoft has moved well beyond that
+	with trusted computing initiatives that the Samba developers do not participate in.
+	</p><p><a class="indexterm" name="id2604127"></a><a class="indexterm" name="id2604135"></a><a class="indexterm" name="id2604143"></a><a class="indexterm" name="id2604150"></a><a class="indexterm" name="id2604158"></a><a class="indexterm" name="id2604166"></a><a class="indexterm" name="id2604174"></a>
+	One wonders about the integrity of an open source program that is developed by a team of hackers 
+	who cannot be held accountable for the flaws in their code. The sheer number of updates and bug
+	fixes they have released should ring alarm bells in any business.
+	</p><p><a class="indexterm" name="id2604190"></a><a class="indexterm" name="id2604198"></a><a class="indexterm" name="id2604205"></a>
+	Another factor that should be considered is that buying Microsoft products and services helps to 
+	provide employment in the IT industry. Samba and Open Source software place those jobs at risk.
+	</p></blockquote></div><p><a class="indexterm" name="id2604220"></a><a class="indexterm" name="id2604228"></a>
+	This is also a challenge to rise above the trouble spot. You call Stan's team together for a simple 
+	discussion, but it gets further out of hand.  When you return to your office, you find the following 
+	email in your in-box:
+	</p><p>
+	Good afternoon,
+	</p><div class="blockquote"><table border="0" width="100%" cellspacing="0" cellpadding="0" class="blockquote" summary="Block quote"><tr><td width="10%" valign="top"> </td><td width="80%" valign="top"><p>
+	I apologize for the leak of internal discussions to the new business. It reflects poorly on our 
+	professionalism and has put you in an unpleasant position. I regret the incident.
+	</p><p>
+	I also wish to advise that two of the recent recruits want to implement Kerberos authentication 
+	across all systems. I concur with the desire to improve security. One of the new guys who is championing
+	the move to Kerberos was responsible for the comment that caused the embarrassment.
+	</p><p><a class="indexterm" name="id2604265"></a><a class="indexterm" name="id2604273"></a><a class="indexterm" name="id2604280"></a><a class="indexterm" name="id2604288"></a>
+	I am experiencing difficulty in handling the sharp push for Kerberos. He claims that Kerberos, OpenLDAP, 
+	plus Samba-3 will seamlessly replace Microsoft Active Directory. I am a little out of my depth with respect 
+	to the feasibility of such a move, but have taken steps to pull both of them into line. With your consent, 
+	I would like to hire the services of a well-known Samba consultant to set the record straight.
+	</p><p><a class="indexterm" name="id2604307"></a><a class="indexterm" name="id2604315"></a><a class="indexterm" name="id2604322"></a><a class="indexterm" name="id2604330"></a><a class="indexterm" name="id2604338"></a><a class="indexterm" name="id2604346"></a>
+	I intend to use this report to answer the criticism raised and would like to establish a policy that we
+	will approve the use of Microsoft Windows Servers (and Active Directory) subject to all costs being covered 
+	out of the budget of the division that wishes to go its own way. I propose that dissenters will still remain
+	responsible to meet the budgeted contribution to IT operations as a whole. I believe we should not coerce 
+	use of any centrally proposed standards, but make all noncompliance the financial responsibility of the 
+	out-of-step division. Hopefully, this will encourage all divisions to walk with us and not alone.
+	</p></td><td width="10%" valign="top"> </td></tr><tr><td width="10%" valign="top"> </td><td colspan="2" align="right" valign="top">--<span class="attribution">Stan</span></td></tr></table></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2604367"></a>Assignment Tasks</h3></div></div></div><p>
+		You agreed with Stan's recommendations and hired a consultant to help defuse the powder
+		keg. The consultant's task is to provide a tractable answer to each of the issues raised. The consultant must be able
+		to support his or her claims, keep emotions to the side, and answer technically.
+		</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2604384"></a>Dissection and Discussion</h2></div></div></div><p><a class="indexterm" name="id2604390"></a><a class="indexterm" name="id2604398"></a><a class="indexterm" name="id2604406"></a><a class="indexterm" name="id2604414"></a><a class="indexterm" name="id2604422"></a><a class="indexterm" name="id2604430"></a><a class="indexterm" name="id2604438"></a>
+	Samba-3 is a tool. No one is pounding your door to make you use Samba. That is a choice that you are free to 
+	make or reject. It is likely that your decision to use Samba can greatly benefit your company. 
+	The Samba Team obviously believes that the Samba software is a worthy choice. 
+	If you hire a consultant to assist with the installation and/or deployment of Samba, or if you hire 
+	someone to help manage your Samba installation, you can create income and employment. Alternately, 
+	money saved by not spending in the IT area can be spent elsewhere in the business. All money saved 
+	or spent creates employment.
+	</p><p><a class="indexterm" name="id2604459"></a><a class="indexterm" name="id2604468"></a><a class="indexterm" name="id2604476"></a><a class="indexterm" name="id2604484"></a><a class="indexterm" name="id2604492"></a>
+	In the long term, the use of Samba must be economically sustainable. In some situations, Samba is adopted
+	purely to provide file and print service interoperability on platforms that otherwise cannot provide 
+	access to data and to printers for Microsoft Windows clients. Samba is used by some businesses to
+	effect a reduction in the cost of providing IT services. Obviously, it is also used by some as an 
+	alternative to the use of a Microsoft file and print serving platforms with no consideration of costs.
+	</p><p><a class="indexterm" name="id2604511"></a><a class="indexterm" name="id2604519"></a><a class="indexterm" name="id2604527"></a><a class="indexterm" name="id2604535"></a>
+	It would be foolish to adopt a technology that might put any data or users at risk. Security affects 
+	everyone. The Samba-Team is fully cognizant of the responsibility they have to their users. 
+	The Samba documentation clearly reveals that full responsibility is accepted to fix anything 
+	that is broken.
+	</p><p><a class="indexterm" name="id2604551"></a><a class="indexterm" name="id2604559"></a><a class="indexterm" name="id2604567"></a><a class="indexterm" name="id2604575"></a><a class="indexterm" name="id2604587"></a><a class="indexterm" name="id2604594"></a><a class="indexterm" name="id2604602"></a><a class="indexterm" name="id2604610"></a><a class="indexterm" name="id2604618"></a><a class="indexterm" name="id2604626"></a><a class="indexterm" name="id2604634"></a>
+	There is a mistaken perception in the IT industry that commercial software providers are fully 
+	accountable for the defects in products. Open Source software comes with no warranty, so it is 
+	often assumed that its use confers a higher degree of risk. Everyone should read commercial software 
+	End User License Agreements (EULAs). You should determine what real warranty is offered and the 
+	extent of liability that is accepted. Doing so soon dispels the popular notion that
+	commercial software vendors are willingly accountable for product defects. In many cases, the
+	commercial vendor accepts liability only to reimburse the price paid for the software. 
+	</p><p><a class="indexterm" name="id2604656"></a><a class="indexterm" name="id2604664"></a><a class="indexterm" name="id2604672"></a><a class="indexterm" name="id2604680"></a><a class="indexterm" name="id2604688"></a><a class="indexterm" name="id2604696"></a>
+	The real issues that a consumer (like you) needs answered are What is the way of escape from technical 
+	problems, and how long will it take? The average problem turnaround time in the Open Source community is 
+	approximately 48 hours. What does the EULA offer? What is the track record in the commercial software 
+	industry? What happens when your commercial vendor decides to cease providing support?
+	</p><p><a class="indexterm" name="id2604721"></a><a class="indexterm" name="id2604729"></a><a class="indexterm" name="id2604736"></a><a class="indexterm" name="id2604744"></a><a class="indexterm" name="id2604752"></a><a class="indexterm" name="id2604760"></a><a class="indexterm" name="id2604768"></a>
+	Open Source software at least puts you in possession of the source code. This means that when
+	all else fails, you can hire a programmer to solve the problem.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2604780"></a>Technical Issues</h3></div></div></div><p>
+		Each issue is now discussed and, where appropriate, example implementation steps are
+		provided.
+		</p><div class="variablelist"><dl><dt><span class="term">Winbind and Security</span></dt><dd><p><a class="indexterm" name="id2604801"></a><a class="indexterm" name="id2604809"></a><a class="indexterm" name="id2604817"></a><a class="indexterm" name="id2604829"></a><a class="indexterm" name="id2604837"></a><a class="indexterm" name="id2604845"></a><a class="indexterm" name="id2604852"></a><a class="indexterm" name="id2604861"></a><a class="indexterm" name="id2604869"></a><a class="indexterm" name="id2604876"></a>
+				Windows network administrators may be dismayed to find that <code class="literal">winbind</code> 
+				exposes all domain users so that they may use their domain account credentials to 
+				log on to a UNIX/Linux system. The fact that all users in the domain can see the 
+				UNIX/Linux server in their Network Neighborhood and can browse the shares on the 
+				server seems to excite them further.
+				</p><p><a class="indexterm" name="id2604900"></a><a class="indexterm" name="id2604908"></a><a class="indexterm" name="id2604916"></a><a class="indexterm" name="id2604924"></a>
+				<code class="literal">winbind</code> provides for the UNIX/Linux domain member server or 
+				client, the same as one would obtain by adding a Microsoft Windows server or 
+				client to the domain. The real objection is the fact that Samba is not MS Windows 
+				and therefore requires handling a little differently from the familiar Windows systems.
+				One must recognize fear of the unknown.
+				</p><p><a class="indexterm" name="id2604946"></a><a class="indexterm" name="id2604955"></a><a class="indexterm" name="id2604962"></a><a class="indexterm" name="id2604970"></a><a class="indexterm" name="id2604978"></a><a class="indexterm" name="id2604990"></a>
+				Windows network administrators need to recognize that <code class="literal">winbind</code> does
+				not, and cannot, override account controls set using the Active Directory management
+				tools. The control is the same. Have no fear.
+				</p><p><a class="indexterm" name="id2605010"></a><a class="indexterm" name="id2605018"></a><a class="indexterm" name="id2605030"></a><a class="indexterm" name="id2605037"></a><a class="indexterm" name="id2605045"></a><a class="indexterm" name="id2605053"></a><a class="indexterm" name="id2605061"></a><a class="indexterm" name="id2605069"></a><a class="indexterm" name="id2605077"></a><a class="indexterm" name="id2605085"></a>
+				Where Samba and the ADS domain account information obtained through the use of
+				<code class="literal">winbind</code> permits access, by browsing or by the drive mapping to
+				a share, to data that should be better protected. This can only happen when security
+				controls have not been properly implemented. Samba permits access controls to be set
+				on:
+				</p><div class="itemizedlist"><ul type="disc"><li><p>Shares themselves (i.e., the logical share itself)</p></li><li><p>The share definition in <code class="filename">smb.conf</code></p></li><li><p>The shared directories and files using UNIX permissions</p></li><li><p>Using Windows 2000 ACLs  if the file system is POSIX enabled</p></li></ul></div><p>
+				Examples of each are given in <a class="link" href="kerberos.html#ch10expl" title="Implementation">&#8220;Implementation&#8221;</a>.
+				</p></dd><dt><span class="term">User and Group Controls</span></dt><dd><p><a class="indexterm" name="id2605159"></a><a class="indexterm" name="id2605167"></a><a class="indexterm" name="id2605179"></a><a class="indexterm" name="id2605190"></a><a class="indexterm" name="id2605198"></a><a class="indexterm" name="id2605206"></a><a class="indexterm" name="id2605213"></a><a class="indexterm" name="id2605221"></a><a class="indexterm" name="id2605229"></a>
+				User and group management facilities as known in the Windows ADS environment may be
+				used to provide equivalent access control constraints or to provide equivalent
+				permissions and privileges on Samba servers. Samba offers greater flexibility in the
+				use of user and group controls because it has additional layers of control compared to
+				Windows 200x/XP. For example, access controls on a Samba server may be set within
+				the share definition in a manner for which Windows has no equivalent.
+				</p><p><a class="indexterm" name="id2605249"></a><a class="indexterm" name="id2605257"></a><a class="indexterm" name="id2605265"></a><a class="indexterm" name="id2605273"></a><a class="indexterm" name="id2605284"></a><a class="indexterm" name="id2605292"></a><a class="indexterm" name="id2605300"></a>
+				In any serious analysis of system security, it is important to examine the safeguards
+				that remain when all other protective measures fail. An administrator may inadvertently
+				set excessive permissions on the file system of a shared resource, or he may set excessive
+				privileges on the share itself. If that were to happen in a Windows 2003 Server environment,
+				the data would indeed be laid bare to abuse. Yet, within a Samba share definition, it is
+				possible to guard against that by enforcing controls on the share definition itself. You
+				see a practical example of this a little later in this chapter.
+				</p><p><a class="indexterm" name="id2605322"></a><a class="indexterm" name="id2605330"></a>
+				The report that is critical of Samba really ought to have exercised greater due
+				diligence: the real weakness is on the side of a Microsoft Windows environment.
+				</p></dd><dt><span class="term">Security Overall</span></dt><dd><p><a class="indexterm" name="id2605352"></a>
+				Samba is designed in such a manner that weaknesses inherent in the design of
+				Microsoft Windows networking ought not to expose the underlying UNIX/Linux file
+				system in any way. All software has potential defects, and Samba is no exception.
+				What matters more is how defects that are discovered get dealt with.
+				</p><p><a class="indexterm" name="id2605369"></a><a class="indexterm" name="id2605376"></a><a class="indexterm" name="id2605384"></a><a class="indexterm" name="id2605392"></a>
+				The Samba Team totally agrees with the necessity to observe and fully implement
+				every security facility to provide a level of protection and security that is necessary
+				and that the end user (or network administrator) needs. Never would the Samba Team
+				recommend a compromise to system security, nor would deliberate defoliation of
+				security be publicly condoned; yet this is the practice by many Windows network
+				administrators just to make happy users who have no notion of consequential risk.
+				</p><p><a class="indexterm" name="id2605412"></a><a class="indexterm" name="id2605420"></a><a class="indexterm" name="id2605428"></a><a class="indexterm" name="id2605436"></a><a class="indexterm" name="id2605444"></a><a class="indexterm" name="id2605452"></a><a class="indexterm" name="id2605460"></a>
+				The report condemns Samba for releasing updates and security fixes, yet Microsoft
+				online updates need to be applied almost weekly. The answer to the criticism 
+				lies in the fact that Samba development is continuing, documentation is improving, 
+				user needs are being increasingly met or exceeded, and security updates are issued 
+				with a short turnaround time.
+				</p><p><a class="indexterm" name="id2605478"></a><a class="indexterm" name="id2605486"></a><a class="indexterm" name="id2605494"></a><a class="indexterm" name="id2605501"></a><a class="indexterm" name="id2605509"></a>
+				The release of Samba-4 is expected around late 2004 to early 2005 and involves a near 
+				complete rewrite to permit extensive modularization and to prepare Samba for new 
+				functionality planned for addition during the next-generation series. The Samba Team 
+				is responsible and can be depended upon; the history to date suggests a high 
+				degree of dependability and on charter development consistent with published 
+				roadmap projections.
+				</p><p><a class="indexterm" name="id2605539"></a><a class="indexterm" name="id2605547"></a><a class="indexterm" name="id2605559"></a><a class="indexterm" name="id2605570"></a><a class="indexterm" name="id2605578"></a><a class="indexterm" name="id2605586"></a><a class="indexterm" name="id2605594"></a>
+				Not well published is the fact that Microsoft was a foundation member of
+				the Common Internet File System (CIFS) initiative, together with the participation 
+				of the network attached storage (NAS) industry. Unfortunately, for the past few years,
+				Microsoft has been absent from active involvement at CIFS conferences and has
+				not exercised the leadership expected of a major force in the networking technology
+				space. The Samba Team has maintained consistent presence and leadership at all
+				CIFS conferences and at the interoperability laboratories run concurrently with
+				them.
+				</p></dd><dt><span class="term">Cryptographic Controls (schannel, sign'n'seal)</span></dt><dd><p><a class="indexterm" name="id2605624"></a><a class="indexterm" name="id2605632"></a><a class="indexterm" name="id2605640"></a>
+				The report correctly mentions that Samba did not support the most recent
+				<code class="constant">schannel</code> and <code class="constant">digital sign'n'seal</code> features
+				of Microsoft Windows NT/200x/XPPro products. This is one of the key features 
+				of the Samba-3 release. Market research reports take so long to generate that they are
+				seldom a reflection of current practice, and in many respects reports are like a
+				pathology report  they reflect accurately (at best) status at a snapshot in time.
+				Meanwhile, the world moves on.
+				</p><p><a class="indexterm" name="id2605670"></a><a class="indexterm" name="id2605678"></a><a class="indexterm" name="id2605685"></a><a class="indexterm" name="id2605693"></a><a class="indexterm" name="id2605701"></a><a class="indexterm" name="id2605716"></a><a class="indexterm" name="id2605724"></a>
+				It should be pointed out that had clear public specifications for the protocols
+				been published, it would have been much easier to implement these features and would have
+				taken less time to do. The sole mechanism used to find an algorithm that is compatible
+				with the methods used by Microsoft has been based on observation of network traffic
+				and trial-and-error implementation of potential techniques. The real value of public
+				and defensible standards is obvious to all and would have enabled more secure networking
+				for everyone.
+				</p><p><a class="indexterm" name="id2605745"></a><a class="indexterm" name="id2605752"></a>
+				Critics of Samba often ignore fundamental problems that may plague (or may have plagued)
+				the users of Microsoft's products also. Those who are first to criticize Samba
+				for not rushing into release of <code class="constant">digital sign'n'seal</code> support
+				often dismiss the problems that Microsoft has 
+				<a class="ulink" href="http://support.microsoft.com/default.aspx?kbid=321733" target="_top">acknowledged</a>
+				and for which a fix was provided. In fact,
+				<a class="ulink" href="http://www.tangent-systems.com/support/delayedwrite.html" target="_top">Tangent Systems</a> 
+				have documented a significant problem with delays writes that can be connected with the
+				implementation of sign'n'seal. They provide a work-around that is not trivial for many
+				Windows networking sites. From notes such as this it is clear that there are benefits
+				from not rushing new technology out of the door too soon.
+				</p><p><a class="indexterm" name="id2605792"></a><a class="indexterm" name="id2605801"></a><a class="indexterm" name="id2605809"></a><a class="indexterm" name="id2605816"></a><a class="indexterm" name="id2605824"></a><a class="indexterm" name="id2605832"></a><a class="indexterm" name="id2605840"></a><a class="indexterm" name="id2605848"></a><a class="indexterm" name="id2605856"></a>
+				One final comment is warranted. If companies want more secure networking protocols,
+				the most effective method by which this can be achieved is by users seeking
+				and working together to help define open and publicly refereed standards. The
+				development of closed source, proprietary methods that are developed in a
+				clandestine framework of secrecy, under claims of digital rights protection, does
+				not favor the diffusion of safe networking protocols and certainly does not
+				help the consumer to make a better choice.
+				</p></dd><dt><span class="term">Active Directory Replacement with Kerberos, LDAP, and Samba</span></dt><dd><p>
+				</p><div class="literallayout"><p>    </p></div><p>
+				The Microsoft networking protocols extensively make use of remote procedure call (RPC)
+				technology. Active Directory is not a simple mixture of LDAP and Kerberos together
+				with file and print services, but rather is a complex, intertwined implementation
+				of them that uses RPCs that are not supported by any of these component technologies
+				and yet by which they are made to interoperate in ways that the components do not
+				support.
+				</p><p><a class="indexterm" name="id2605944"></a><a class="indexterm" name="id2605955"></a><a class="indexterm" name="id2605963"></a><a class="indexterm" name="id2605971"></a><a class="indexterm" name="id2605979"></a>
+				In order to make the popular request for Samba to be an Active Directory Server a
+				reality, it is necessary to add to OpenLDAP, Kerberos, as well as Samba, RPC calls
+				that are not presently supported. The Samba Team has not been able to gain critical
+				overall support for all project maintainers to work together on the complex
+				challenge of developing and integrating the necessary technologies. Therefore, if
+				the Samba Team does not make it a priority to absorb Kerberos and LDAP functionality
+				into the Samba project, this dream request cannot become a reality.
+				</p><p><a class="indexterm" name="id2606010"></a><a class="indexterm" name="id2606018"></a><a class="indexterm" name="id2606026"></a><a class="indexterm" name="id2606037"></a><a class="indexterm" name="id2606044"></a>
+				At this time, the integration of LDAP, Kerberos, and the missing RPCs is not on the
+				Samba development roadmap. If it is not on the published roadmap, it cannot be delivered
+				anytime soon. Ergo, ADS server support is not a current goal for Samba development.
+				The Samba Team is most committed to permitting Samba to be a full ADS domain member
+				that is increasingly capable of being managed using Microsoft Windows MMC tools.
+				</p></dd></dl></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2606064"></a>Kerberos Exposed</h4></div></div></div><p><a class="indexterm" name="id2606071"></a><a class="indexterm" name="id2606079"></a><a class="indexterm" name="id2606087"></a>
+	Kerberos is a network authentication protocol that provides secure authentication for 
+	client-server applications by using secret-key cryptography. Firewalls are an insufficient 
+	barrier mechanism in today's networking world; at best they only restrict incoming network 
+	traffic but cannot prevent network traffic that comes from authorized locations from 
+	performing unauthorized activities.
+	</p><p><a class="indexterm" name="id2606105"></a><a class="indexterm" name="id2606113"></a><a class="indexterm" name="id2606121"></a>
+	Kerberos was created by MIT as a solution to network security problems. The Kerberos protocol uses 
+	strong cryptography so that a client can prove its identity to a server (and vice versa) across an 
+	insecure network connection. After a client and server has used Kerberos to prove their identity, 
+	they can also encrypt all of their communications to assure privacy and data integrity as they go 
+	about their business.
+	</p><p><a class="indexterm" name="id2606139"></a><a class="indexterm" name="id2606147"></a><a class="indexterm" name="id2606155"></a><a class="indexterm" name="id2606163"></a><a class="indexterm" name="id2606174"></a>
+	Kerberos is a trusted third-party service. That means that there is a third party (the kerberos 
+	server) that is trusted by all the entities on the network (users and services, usually called 
+	principals). All principals share a secret password (or key) with the kerberos server and this 
+	enables principals to verify that the messages from the kerberos server are authentic. Therefore, 
+	trusting the kerberos server, users and services can authenticate each other.
+	</p><p>
+	<a class="indexterm" name="id2606194"></a>
+	<a class="indexterm" name="id2606201"></a>
+	<a class="indexterm" name="id2606208"></a>
+	Kerberos was, until recently, a technology that was restricted from being exported from the United States.
+	For many years that hindered global adoption of more secure networking technologies both within the United States
+	and abroad. A free and unencumbered implementation of MIT Kerberos has been produced in Europe
+	and is available from the <a class="ulink" href="http://www.pdc.kth.se/heimdal/" target="_top">Royal Institute</a> of
+	Technology (KTH), Sweden. It is known as the Heimdal Kerberos project.  In recent times the U.S. government
+	has removed sanctions affecting the global distribution of MIT Kerberos.  It is likely that there will be a
+	significant surge forward in the development of Kerberos-enabled applications and in the general deployment
+	and use of Kerberos across the spectrum of the information technology industry.
+	</p><p>
+	<a class="indexterm" name="id2606238"></a>
+	A storm has broken out concerning interoperability between MIT Kerberos and Microsofts' implementation
+	of it. For example, a 2002
+	<a class="ulink" href="http://www.idg.com.sg/idgwww.nsf/0/5DDA8D153A7505A748256BAB000D992A?OpenDocument" target="_top">IDG</a>
+	report<sup>[<a name="id2606256" href="#ftn.id2606256" class="footnote">13</a>]</sup> by
+	states:
+	</p><div class="blockquote"><blockquote class="blockquote"><p>
+	A Microsoft Corp. executive testified at the software giant's remedy hearing that the company goes to 
+	great lengths to disclose interfaces and protocols that allow third-party software products to interact 
+	with Windows. But a lawyer with the states suing Microsoft pointed out that when it comes to the company's 
+	use of the Kerberos authentication specification, not everyone agrees.
+	</p><p>
+	<a class="indexterm" name="id2606282"></a>
+	Robert Short, vice president of Windows core technology at Microsoft, wrote in his direct testimony prepared 
+	before his appearance that non-Microsoft operating systems can disregard the portion of the Kerberos version 
+	5 specification that Windows clients use for proprietary purposes and still achieve interoperability with 
+	the Microsoft OS. Microsoft takes advantage of unspecified fields in the Kerberos specification for storing 
+	Windows-specific authorization data, Short wrote. The designers of Kerberos left these fields undefined so 
+	that software developers could add their own authorization information, he said.
+	</p></blockquote></div><p>
+	<a class="indexterm" name="id2606305"></a>
+	<a class="indexterm" name="id2606312"></a>
+	It so happens that Microsoft Windows clients depend on and expect the contents of the <span class="emphasis"><em>unspecified
+	fields</em></span> in the Kerberos 5 communications data stream for their Windows interoperability,
+	particularly when Samba is expected to emulate a Windows Server 200x domain controller. But the interoperability
+	issue goes far deeper than this. In the domain control protocols that are used by MS Windows XP Professional,
+	there is a tight interdependency between the Kerberos protocols and the Microsoft distributed computing environment
+	(DCE) RPCs that themselves are an integral part of the SMB/CIFS protocols as used by
+	Microsoft.
+	</p><p>
+	Microsoft makes the following comment in a reference in a
+	<a class="ulink" href="http://www.microsoft.com/technet/itsolutions/interop/mgmt/kerberos.asp" target="_top">
+	technet</a> article:
+	</p><div class="blockquote"><blockquote class="blockquote"><p><a class="indexterm" name="id2606347"></a><a class="indexterm" name="id2606359"></a>
+	The DCE Security Services are also layered on the Kerberos protocol. DCE authentication services use RPC 
+	representation of Kerberos protocol messages. In addition, DCE uses the authorization data field in Kerberos 
+	tickets to convey Privilege Attribute Certificates (PACs) that define user identity and group membership. 
+	The DCE PAC is used in a similar manner as Windows NT Security IDs for user authorization and access control. 
+	Windows NT services will not be able to translate DCE PACs into Windows NT user and group identifiers. This 
+	is not an issue with Kerberos interoperability, but rather an issue of interoperability between DCE and 
+	Windows NT access control information.
+	</p></blockquote></div></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="ch10expl"></a>Implementation</h2></div></div></div><p>
+	The following procedures outline the implementation of the security measures discussed so far.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2606410"></a>Share Access Controls</h3></div></div></div><p><a class="indexterm" name="id2606417"></a><a class="indexterm" name="id2606425"></a><a class="indexterm" name="id2606433"></a>
+	Access control entries placed on the share itself act as a filter at the time a when CIFS/SMB client (such as
+	Windows XP Pro) attempts to make a connection to the Samba server.
+	</p><div class="procedure"><a name="id2606446"></a><p class="title"><b>Procedure 11.1. Create/Edit/Delete Share ACLs</b></p><ol type="1"><li><p><a class="indexterm" name="id2606456"></a><a class="indexterm" name="id2606465"></a>
+		From a Windows 200x/XP Professional workstation, log on to the domain using the Domain Administrator 
+		account (on Samba domains, this is usually the account called <code class="constant">root</code>).
+		</p></li><li><p>
+		Click 
+		<span class="guimenu">Start</span> &#8594; <span class="guimenuitem">Settings</span> &#8594; <span class="guimenuitem">Control Panel</span> &#8594; <span class="guimenuitem">Administrative Tools</span> &#8594; <span class="guimenuitem">Computer Management</span>.
+		</p></li><li><p>
+		In the left panel,
+		<span class="guimenu">[Right mouse menu item] Computer Management (Local)</span> &#8594; <span class="guimenuitem">Connect to another computer ...</span> &#8594; <span class="guimenuitem">Browse...</span> &#8594; <span class="guimenuitem">Advanced</span> &#8594; <span class="guimenuitem">Find Now</span>. In the lower panel, click on the name of the server you wish to
+		administer. Click <span class="guimenu">OK</span> &#8594; <span class="guimenuitem">OK</span> &#8594; <span class="guimenuitem">OK</span>.<a class="indexterm" name="id2606588"></a>
+		In the left panel, the entry <span class="guimenu">Computer Management (Local)</span> should now reflect
+		the change made. For example, if the server you are administering is called <code class="constant">FRODO</code>,
+		the Computer Management entry should now say <span class="guimenu">Computer Management (FRODO)</span>.
+		</p></li><li><p>
+		In the left panel, click <span class="guimenu">Computer Management (FRODO)</span> &#8594; <span class="guimenuitem">[+] Shared Folders</span> &#8594; <span class="guimenuitem">Shares</span>.
+		</p></li><li><p><a class="indexterm" name="id2606652"></a><a class="indexterm" name="id2606660"></a>
+		In the right panel, double-click on the share on which you wish to set/edit ACLs. This
+		will bring up the Properties panel. Click the <span class="guimenu">Share Permissions</span> tab.
+		</p></li><li><p><a class="indexterm" name="id2606683"></a><a class="indexterm" name="id2606691"></a><a class="indexterm" name="id2606699"></a><a class="indexterm" name="id2606707"></a><a class="indexterm" name="id2606715"></a><a class="indexterm" name="id2606723"></a>
+		You may now edit/add/remove access control settings. Be very careful. Many problems have been
+		created by people who decided that everyone should be rejected but one particular group should
+		have full control. This is a catch-22 situation because members of that particular group also
+		belong to the group <code class="constant">Everyone</code>, which therefore overrules any permissions
+		set for the permitted group.
+		</p></li><li><p>
+		When you are done with editing, close all panels by clicking through the <span class="guimenu">OK</span>
+		buttons.
+		</p></li></ol></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2606759"></a>Share Definition Controls</h3></div></div></div><p><a class="indexterm" name="id2606766"></a><a class="indexterm" name="id2606777"></a><a class="indexterm" name="id2606785"></a><a class="indexterm" name="id2606793"></a><a class="indexterm" name="id2606801"></a><a class="indexterm" name="id2606809"></a>
+	Share-definition-based access controls can be used like a checkpoint or like a pile-driver. Just as a
+	checkpoint can be used to require someone who wants to get through to meet certain requirements, so
+	it is possible to require the user (or group the user belongs to) to meet specified credential-related 
+	objectives. It can be likened to a pile-driver by overriding default controls in that having met the 
+	credential-related objectives, the user can be granted powers and privileges that would not normally be 
+	available under default settings.
+	</p><p><a class="indexterm" name="id2606829"></a><a class="indexterm" name="id2606837"></a><a class="indexterm" name="id2606845"></a><a class="indexterm" name="id2606853"></a>
+	It must be emphasized that the controls discussed here can act as a filter or give rights of passage
+	that act as a superstructure over normal directory and file access controls. However, share-level
+	ACLs act at a higher level than do share definition controls because the user must filter through the
+	share-level controls to get to the share-definition controls. The proper hierarchy of controls implemented
+	by Samba and Windows networking consists of:
+	</p><div class="orderedlist"><ol type="1"><li><p>Share-level ACLs</p></li><li><p>Share-definition controls</p></li><li><p>Directory and file permissions</p></li><li><p>Directory and file POSIX ACLs</p></li></ol></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2606898"></a>Checkpoint Controls</h4></div></div></div><p><a class="indexterm" name="id2606905"></a>
+	Consider the following extract from a <code class="filename">smb.conf</code> file defining the share called <code class="constant">Apps</code>:
+</p><pre class="screen">
+[Apps]
+	comment = Application Share
+	path = /data/apps
+	read only = Yes
+	valid users = @Employees
+</pre><p>
+	This definition permits only those who are members of the group called <code class="constant">Employees</code> to 
+	access the share.
+	</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p><a class="indexterm" name="id2606941"></a><a class="indexterm" name="id2606952"></a><a class="indexterm" name="id2606960"></a><a class="indexterm" name="id2606968"></a><a class="indexterm" name="id2606976"></a>
+	On domain member servers and clients, even when the <em class="parameter"><code>winbind use default domain</code></em> has
+	been specified, the use of domain accounts in security controls requires fully qualified domain specification,
+	for example, <a class="link" href="smb.conf.5.html#VALIDUSERS">valid users = @"MEGANET\Northern Engineers"</a>. 
+	Note the necessity to use the double quotes to avoid having the space in the Windows group name interpreted as a
+	delimiter. 
+	</p></div><p><a class="indexterm" name="id2607011"></a><a class="indexterm" name="id2607018"></a><a class="indexterm" name="id2607026"></a>
+	If there is an ACL on the share itself to permit read/write access for all <code class="constant">Employees</code>
+	as well as read/write for the group <code class="constant">Doctors</code>, both groups are permitted through
+	to the share. However, at the moment an attempt is made to set up a connection to the share, a member of
+	the group <code class="constant">Doctors</code>, who is not also a member of the group <code class="constant">Employees</code>,
+	would immediately fail to validate.
+	</p><p><a class="indexterm" name="id2607058"></a>
+	Consider another example. In this case, you want to permit all members of the group <code class="constant">Employees</code>
+	except the user <code class="constant">patrickj</code> to access the <code class="constant">Apps</code> share. This can be
+	easily achieved by setting a share-level ACL permitting only <code class="constant">Employees</code> to access the share,
+	and then in the share definition controls excluding just <code class="constant">patrickj</code>. Here is how that might
+	be done:
+</p><pre class="screen">
+[Apps]
+        comment = Application Share
+        path = /data/apps
+        read only = Yes
+        invalid users = patrickj
+</pre><p>
+	    <a class="indexterm" name="id2607098"></a>
+	Let us assume that you want to permit the user <code class="constant">gbshaw</code> to manage any file in the
+	UNIX/Linux file system directory <code class="filename">/data/apps</code>, but you do not want to grant any write
+	permissions beyond that directory tree. Here is one way this can be done:
+</p><pre class="screen">
+[Apps]
+        comment = Application Share
+        path = /data/apps
+        read only = Yes
+        invalid users = patrickj
+        admin users = gbshaw
+</pre><p>
+	    <a class="indexterm" name="id2607129"></a>
+	Now we have a set of controls that permits only <code class="constant">Employees</code> who are also members of
+	the group <code class="constant">Doctors</code>, excluding the user <code class="constant">patrickj</code>, to have 
+	read-only privilege, but the user <code class="constant">gbshaw</code> is granted administrative rights.
+	The administrative rights conferred upon the user <code class="constant">gbshaw</code> permit operation as
+	if that user has logged in as the user <code class="constant">root</code> on the UNIX/Linux system and thus,
+	for access to the directory tree that has been shared (exported), permit the user to override controls
+	that apply to all other users on that resource.
+	</p><p>
+	There are additional checkpoint controls that may be used. For example, if for the same share we now
+	want to provide the user <code class="constant">peters</code> with the ability to write to one directory to
+	which he has write privilege in the UNIX file system, you can specifically permit that with the
+	following settings:
+</p><pre class="screen">
+[Apps]
+        comment = Application Share
+        path = /data/apps
+        read only = Yes
+        invalid users = patrickj
+        admin users = gbshaw
+        write list = peters
+</pre><p>
+	    <a class="indexterm" name="id2607189"></a>
+	This is a particularly complex example at this point, but it begins to demonstrate the possibilities.
+	You should refer to the online manual page for the <code class="filename">smb.conf</code> file for more information regarding
+	the checkpoint controls that Samba implements.
+	</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2607210"></a>Override Controls</h4></div></div></div><p><a class="indexterm" name="id2607217"></a>
+	Override controls implemented by Samba permit actions like the adoption of a different identity 
+	during file system operations, the forced overwriting of normal file and directory permissions,
+	and so on. You should refer to the online manual page for the <code class="filename">smb.conf</code> file for more information regarding
+        the override controls that Samba implements.
+	</p><p>
+	In the following example, you want to create a Windows networking share that any user can access.
+	However, you want all read and write operations to be performed as if the user <code class="constant">billc</code>
+	and member of the group <code class="constant">Mentors</code> read/write the files. Here is one way this
+	can be done:
+</p><pre class="screen">
+[someshare]
+	comment = Some Files Everyone May Overwrite
+	path = /data/somestuff
+	read only = No
+	force user = billc
+	force group = Mentors
+</pre><p>
+	    <a class="indexterm" name="id2607261"></a><a class="indexterm" name="id2607269"></a>
+	That is all there is to it. Well, it is almost that simple. The downside of this method is that
+	users are logged onto the Windows client as themselves, and then immediately before accessing the
+	file, Samba makes system calls to change the effective user and group to the forced settings
+	specified, completes the file transaction, and then reverts to the actually logged-on identity.
+	This imposes significant overhead on Samba. The alternative way to effectively achieve the same result
+	(but with lower system CPU overheads) is described next.
+	</p><p><a class="indexterm" name="id2607289"></a><a class="indexterm" name="id2607297"></a><a class="indexterm" name="id2607305"></a><a class="indexterm" name="id2607316"></a><a class="indexterm" name="id2607324"></a>
+	The use of the <em class="parameter"><code>force user</code></em> or the <em class="parameter"><code>force group</code></em> may
+	also have a severe impact on system (particularly on Windows client) performance. If opportunistic
+	locking is enabled on the share (the default), it causes an <code class="constant">oplock break</code> to be
+	sent to the client even if the client has not opened the file. On networks that have high traffic
+	density, or on links that are routed to a remote network segment, <code class="constant">oplock breaks</code>
+	can be lost. This results in possible retransmission of the request, or the client may time-out while
+	waiting for the file system transaction (read or write) to complete. The result can be a profound
+	apparent performance degradation as the client continually attempts to reconnect to overcome the
+	effect of the lost <code class="constant">oplock break</code>, or time-out.
+	</p></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2607372"></a>Share Point Directory and File Permissions</h3></div></div></div><p><a class="indexterm" name="id2607379"></a><a class="indexterm" name="id2607387"></a><a class="indexterm" name="id2607395"></a><a class="indexterm" name="id2607403"></a>
+	Samba has been designed and implemented so that it respects as far as is feasible the security and
+	user privilege controls that are built into the UNIX/Linux operating system. Samba does nothing
+	with respect to file system access that violates file system permission settings, unless it is
+	explicitly instructed to do otherwise through share definition controls. Given that Samba obeys
+	UNIX file system controls, this chapter does not document simple information that can be obtained
+	from a basic UNIX training guide. Instead, one common example of a typical problem is used
+	to demonstrate the most effective solution referred to in the immediately preceding paragraph.
+	</p><p><a class="indexterm" name="id2607425"></a><a class="indexterm" name="id2607433"></a><a class="indexterm" name="id2607441"></a>
+	One of the common issues that repeatedly pops up on the Samba mailing lists involves the saving of
+	Microsoft Office files (Word and Excel) to a network drive. Here is the typical sequence:
+	</p><div class="orderedlist"><ol type="1"><li><p>
+		A user opens a Work document from a network drive. The file was owned by user <code class="constant">janetp</code>
+		and  [users], and was set read/write-enabled for everyone.
+		</p></li><li><p>
+		File changes and edits are made.
+		</p></li><li><p>
+		The file is saved, and MS Word is closed.
+		</p></li><li><p>
+		The file is now owned by the user <code class="constant">billc</code> and group <code class="constant">doctors</code>,
+		and is set read/write by <code class="constant">billc</code>, read-only by <code class="constant">doctors</code>, and
+		no access by everyone.
+		</p></li><li><p>
+		The original owner cannot now access her own file and is &#8220;<span class="quote">justifiably</span>&#8221; upset.
+		</p></li></ol></div><p>
+	There have been many postings over the years that report the same basic problem. Frequently Samba users
+	want to know when this &#8220;<span class="quote">bug</span>&#8221; will be fixed. The fact is, this is not a bug in Samba at all.
+	Here is the real sequence of what happens in this case.
+	</p><p><a class="indexterm" name="id2607533"></a><a class="indexterm" name="id2607541"></a><a class="indexterm" name="id2607549"></a>
+	When the user saves a file, MS Word creates a new (temporary) file. This file is naturally owned
+	by the user who creates the file (<code class="constant">billc</code>) and has the permissions that follow
+	that user's default settings within the operating system (UNIX/Linux). When MS Word has finished writing
+	the file to disk, it then renames the new (temporary) file to the name of the old one. MS Word does not
+	change the ownership or permissions to what they were on the original file. The file is thus a totally
+	new file, and the old one has been deleted in the process.
+	</p><p>
+	Samba received a request to create a new file, and then to rename the file to a new name. The old file that
+	has the same name is now automatically deleted. Samba has no way of knowing that the new file should
+	perhaps have the same ownership and permissions as the old file. To Samba, these are entirely independent
+	operations.
+	</p><p>
+	The question is, &#8220;<span class="quote">How can we solve the problem?</span>&#8221;
+	</p><p>
+	The solution is simple. Use UNIX file system permissions and controls to your advantage. Follow these
+	simple steps to create a share in which all files will consistently be owned by the same user and the
+	same group:
+	</p><div class="procedure"><a name="id2607595"></a><p class="title"><b>Procedure 11.2. Using Directory Permissions to Force File User and Group Ownership</b></p><ol type="1"><li><p>
+		Change your share definition so that it matches this pattern:
+</p><pre class="screen">
+[finance]
+        path = /usr/data/finance
+        browseable = Yes
+        read only = No
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2607621"></a><a class="indexterm" name="id2607633"></a>
+		Set consistent user and group permissions recursively down the directory tree as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> chown -R janetp.users /usr/data/finance
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2607664"></a>
+		Set the files and directory permissions to be read/write for owner and group, and not accessible
+		to others (everyone), using the following command:
+</p><pre class="screen">
+<code class="prompt">root# </code> chmod ug+rwx,o-rwx /usr/data/finance
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2607694"></a>
+		Set the SGID (supergroup) bit on all directories from the top down. This means all files 
+		can be created with the permissions of the group set on the directory. It means all users 
+		who are members of the group <code class="constant">finance</code> can read and write all files in 
+		the directory. The directory is not readable or writable by anyone who is not in the 
+		<code class="constant">finance</code> group. Simply follow this example:
+</p><pre class="screen">
+<code class="prompt">root# </code> find /usr/data/finance -type d -exec chmod ug+s {}\;
+</pre><p>
+
+		</p></li><li><p><a class="indexterm" name="id2607734"></a><a class="indexterm" name="id2607742"></a><a class="indexterm" name="id2607750"></a>
+		Make sure all users that must have read/write access to the directory have 
+		<code class="constant">finance</code> group membership as their primary group, 
+		for example, the group they belong to in <code class="filename">/etc/passwd</code>.
+		</p></li></ol></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2607775"></a>Managing Windows 200x ACLs</h3></div></div></div><p><a class="indexterm" name="id2607782"></a><a class="indexterm" name="id2607790"></a><a class="indexterm" name="id2607798"></a><a class="indexterm" name="id2607805"></a>
+	Samba must translate Windows 2000 ACLs to UNIX POSIX ACLs. This has some interesting side effects because
+	there is not a one-to-one equivalence between them. The as-close-as-possible ACLs match means
+	that some transactions are not possible from MS Windows clients. One of these is to reset the ownership
+	of directories and files. If you want to reset ownership, this must be done from a UNIX/Linux login.
+	</p><p>
+	There are two possible ways to set ACLs on UNIX/Linux file systems from a Windows network workstation,
+	either via File Manager or via the Microsoft Management Console (MMC) Computer Management interface.
+	</p><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2607829"></a>Using the MMC Computer Management Interface</h4></div></div></div><div class="procedure"><ol type="1"><li><p>
+		From a Windows 200x/XP Professional workstation, log on to the domain using the Domain Administrator 
+		account (on Samba domains, this is usually the account called <code class="constant">root</code>).
+		</p></li><li><p>
+		Click 
+		<span class="guimenu">Start</span> &#8594; <span class="guimenuitem">Settings</span> &#8594; <span class="guimenuitem">Control Panel</span> &#8594; <span class="guimenuitem">Administrative Tools</span> &#8594; <span class="guimenuitem">Computer Management</span>.
+		</p></li><li><p>
+		In the left panel,
+		<span class="guimenu">[Right mouse menu item] Computer Management (Local)</span> &#8594; <span class="guimenuitem">Connect to another computer ...</span> &#8594; <span class="guimenuitem">Browse...</span> &#8594; <span class="guimenuitem">Advanced</span> &#8594; <span class="guimenuitem">Find Now</span>. In the lower panel, click on the name of the server you wish to
+		administer. Click <span class="guimenu">OK</span> &#8594; <span class="guimenuitem">OK</span> &#8594; <span class="guimenuitem">OK</span>.
+		In the left panel, the entry <span class="guimenu">Computer Management (Local)</span> should now reflect
+		the change made. For example, if the server you are administering is called <code class="constant">FRODO</code>,
+		the Computer Management entry should now say: <span class="guimenu">Computer Management (FRODO)</span>.
+		</p></li><li><p>
+		In the left panel, click <span class="guimenu">Computer Management (FRODO)</span> &#8594; <span class="guimenuitem">[+] Shared Folders</span> &#8594; <span class="guimenuitem">Shares</span>.
+		</p></li><li><p><a class="indexterm" name="id2608012"></a><a class="indexterm" name="id2608020"></a><a class="indexterm" name="id2608028"></a><a class="indexterm" name="id2608036"></a>
+		In the right panel, double-click on the share on which you wish to set/edit ACLs. This
+		brings up the Properties panel. Click the <span class="guimenu">Security</span> tab. It is best
+		to edit ACLs using the <code class="constant">Advanced</code> editing features. Click the 
+		<span class="guimenu">Advanced</span> button. This opens a panel that has four tabs. Only the 
+		functionality under the <code class="constant">Permissions</code> tab can be utilized with respect 
+		to a Samba domain server.
+		</p></li><li><p><a class="indexterm" name="id2608076"></a><a class="indexterm" name="id2608084"></a>
+		You may now edit/add/remove access control settings. Be very careful. Many problems have been
+		created by people who decided that everyone should be rejected but one particular group should
+		have full control. This is a catch-22 situation because members of that particular group also
+		belong to the group <code class="constant">Everyone</code>, which therefore overrules any permissions
+		set for the permitted group.
+		</p></li><li><p>
+		When you are done with editing, close all panels by clicking through the <span class="guimenu">OK</span>
+		buttons until the last panel closes.
+		</p></li></ol></div></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2608120"></a>Using MS Windows Explorer (File Manager)</h4></div></div></div><p>
+	The following alternative method may be used from a Windows workstation. In this example we work
+	with a domain called <code class="constant">MEGANET</code>, a server called <code class="constant">MASSIVE</code>, and a
+	share called <code class="constant">Apps</code>. The underlying UNIX/Linux share point for this share is
+	<code class="filename">/data/apps</code>.
+	</p><div class="procedure"><ol type="1"><li><p>
+		Click <span class="guimenu">Start</span> &#8594; <span class="guimenuitem">[right-click] My Computer</span> &#8594; <span class="guimenuitem">Explore</span> &#8594; <span class="guimenuitem">[left panel] [+] My Network Places</span> &#8594; <span class="guimenuitem">[+] Entire Network</span> &#8594; <span class="guimenuitem">[+] Microsoft Windows Network</span> &#8594; <span class="guimenuitem">[+] Meganet</span> &#8594; <span class="guimenuitem">[+] Massive</span> &#8594; <span class="guimenuitem">[right-click] Apps</span> &#8594; <span class="guimenuitem">Properties</span> &#8594; <span class="guimenuitem">Security</span> &#8594; <span class="guimenuitem">Advanced</span>. This opens a panel that has four tabs. Only the functionality under the 
+		<code class="constant">Permissions</code> tab can be utilized for a Samba domain server.
+		</p></li><li><p><a class="indexterm" name="id2608245"></a><a class="indexterm" name="id2608253"></a>
+                You may now edit/add/remove access control settings. Be very careful. Many problems have been
+                created by people who decided that everyone should be rejected but one particular group should
+                have full control. This is a catch-22 situation because members of that particular group also
+                belong to the group <code class="constant">Everyone</code>, which therefore overrules any permissions
+                set for the permitted group.
+                </p></li><li><p>
+                When you are done with editing, close all panels by clicking through the <span class="guimenu">OK</span>
+                buttons until the last panel closes.
+                </p></li></ol></div></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2608291"></a>Setting Posix ACLs in UNIX/Linux</h4></div></div></div><p><a class="indexterm" name="id2608298"></a><a class="indexterm" name="id2608307"></a>
+	Yet another alternative method for setting desired security settings on the shared resource files and
+	directories can be achieved by logging into UNIX/Linux and setting POSIX ACLs directly using command-line
+	tools. Here is an example session on the same resource as in the immediately preceding example on a SUSE 9
+	Linux system:
+	</p><div class="procedure"><ol type="1"><li><p>
+		Log into the Linux system as the user <code class="constant">root</code>.
+		</p></li><li><p>
+		Change directory to the location of the exported (shared) Windows file share (Apps), which is in
+		the directory <code class="filename">/data</code>. Execute the following:
+</p><pre class="screen">
+<code class="prompt">root# </code> cd /data
+</pre><p>
+		Retrieve the existing POSIX ACLs entry by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> getfacl apps
+# file: apps
+# owner: root
+# group: root
+user::rwx
+group::rwx
+other::r-x
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2608381"></a>
+		You want to add permission for <code class="constant">AppsMgrs</code> to enable them to
+		manage the applications (apps) share. It is important to set the ACL recursively
+		so that the AppsMgrs have this capability throughout the directory tree that is 
+		being shared. This is done using the <code class="constant">-R</code> option as shown.
+		Execute the following:
+</p><pre class="screen">
+<code class="prompt">root# </code> setfacl -m -R group:AppsMgrs:rwx /data/apps
+</pre><p>
+		Because setting an ACL does not provide a response, you immediately validate the command executed
+		as follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> getfacl /data/apps
+# file: apps
+# owner: root
+# group: root
+user::rwx
+group::rwx
+group:AppsMgrs:rwx
+mask::rwx
+other::r-x
+</pre><p>
+		This confirms that the change of POSIX ACL permissions has been effective.
+		</p></li><li><p><a class="indexterm" name="id2608436"></a><a class="indexterm" name="id2608444"></a><a class="indexterm" name="id2608452"></a><a class="indexterm" name="id2608460"></a><a class="indexterm" name="id2608468"></a>
+		It is highly recommended that you read the online manual page for the <code class="literal">setfacl</code>
+		and <code class="literal">getfacl</code> commands. This provides information regarding how to set/read the default
+		ACLs and how that may be propagated through the directory tree. In Windows ACLs terms, this is the equivalent
+		of setting <code class="constant">inheritance</code> properties.
+		</p></li></ol></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2608502"></a>Key Points Learned</h3></div></div></div><p>
+		The mish-mash of issues were thrown together into one chapter because it seemed like a good idea.
+		Looking back, this chapter could be broken into two, but it's too late now. It has been done.
+		The highlights covered are as follows:
+		</p><div class="itemizedlist"><ul type="disc"><li><p><a class="indexterm" name="id2608519"></a><a class="indexterm" name="id2608527"></a><a class="indexterm" name="id2608535"></a><a class="indexterm" name="id2608543"></a>
+			Winbind honors and does not override account controls set in Active Directory.
+			This means that password change, logon hours, and so on, are (or soon will be) enforced
+			by Samba winbind. At this time, an out-of-hours login is denied and password
+			change is enforced. At this time, if logon hours expire, the user is not forcibly
+			logged off. That may be implemented at some later date.
+			</p></li><li><p><a class="indexterm" name="id2608562"></a><a class="indexterm" name="id2608570"></a>
+			Sign'n'seal (plus schannel support) has been implemented in Samba-3. Beware of potential
+			problems acknowledged by Microsoft as having been fixed but reported by some as still
+			possibly an open issue.
+			</p></li><li><p><a class="indexterm" name="id2608585"></a><a class="indexterm" name="id2608593"></a><a class="indexterm" name="id2608601"></a><a class="indexterm" name="id2608609"></a>
+			The combination of Kerberos 5, plus OpenLDAP, plus Samba, cannot replace Microsoft
+			Active Directory. The possibility to do this is not planned in the current Samba-3
+			roadmap. Samba-3 does aim to provide further improvements in interoperability so that
+			UNIX/Linux systems may be fully integrated into Active Directory domains.
+			</p></li><li><p>
+			This chapter reviewed mechanisms by which Samba servers may be kept secure. Each of
+			the four key methodologies was reviewed with specific reference to example deployment
+			techniques.
+			</p></li></ul></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2608636"></a>Questions and Answers</h2></div></div></div><p>
+	</p><div class="qandaset"><dl><dt> <a href="kerberos.html#id2608652">
+		Does Samba-3 require the Sign'n'seal registry hacks needed by Samba-2?
+		</a></dt><dt> <a href="kerberos.html#id2608722">
+		Does Samba-3 support Active Directory?
+		</a></dt><dt> <a href="kerberos.html#id2608753">
+		When Samba-3 is used with Active Directory, is it necessary to run mixed-mode operation, as was
+		necessary with Samba-2?
+		</a></dt><dt> <a href="kerberos.html#id2608792">
+		Is it safe to set share-level access controls in Samba?
+		</a></dt><dt> <a href="kerberos.html#id2608821">
+		Is it mandatory to set share ACLs to get a secure Samba-3 server?
+		</a></dt><dt> <a href="kerberos.html#id2608897">
+		The valid users did not work on the [homes].
+		Has this functionality been restored yet?
+		</a></dt><dt> <a href="kerberos.html#id2608963">
+		Is the bias against use of the force user and force group
+		really warranted?
+		</a></dt><dt> <a href="kerberos.html#id2609027">
+		The example given for file and directory access control forces all files to be owned by one
+		particular user. I do not like that. Is there any way I can see who created the file?
+		</a></dt><dt> <a href="kerberos.html#id2609075">
+		In the book, &#8220;The Official Samba-3 HOWTO and Reference Guide&#8221;, you recommended use
+		of the Windows NT4 Server Manager (part of the SRVTOOLS.EXE) utility. Why
+		have you mentioned only the use of the Windows 200x/XP MMC Computer Management utility?
+		</a></dt><dt> <a href="kerberos.html#id2609142">
+		I tried to set valid users = @Engineers, but it does not work. My Samba
+		server is an Active Directory domain member server. Has this been fixed now?
+		</a></dt></dl><table border="0" summary="Q and A Set"><col align="left" width="1%"><tbody><tr class="question"><td align="left" valign="top"><a name="id2608652"></a><a name="id2608654"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2608657"></a><a class="indexterm" name="id2608665"></a>
+		Does Samba-3 require the <code class="constant">Sign'n'seal</code> registry hacks needed by Samba-2?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2608684"></a><a class="indexterm" name="id2608692"></a><a class="indexterm" name="id2608700"></a>
+		No. Samba-3 fully supports <code class="constant">Sign'n'seal</code> as well as <code class="constant">schannel</code>
+		operation. The registry change should not be applied when Samba-3 is used as a domain controller.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2608722"></a><a name="id2608724"></a></td><td align="left" valign="top"><p>
+		Does Samba-3 support Active Directory?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2608735"></a>
+		Yes. Samba-3 can be a fully participating native mode Active Directory client. Samba-3 does not
+		provide Active Directory services. It cannot be used to replace a Microsoft Active Directory
+		server implementation. Samba-3 can function as an Active Directory client (workstation) toolkit,
+		and it can function as an Active Directory domain member server.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2608753"></a><a name="id2608755"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2608758"></a>
+		When Samba-3 is used with Active Directory, is it necessary to run mixed-mode operation, as was
+		necessary with Samba-2?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2608775"></a>
+		No. Samba-3 can be used with NetBIOS over TCP/IP disabled, just as can be done with Windows 200x
+		Server and 200x/XPPro client products. It is no longer necessary to run mixed-mode operation,
+		because Samba-3 can join a native Windows 2003 Server ADS domain.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2608792"></a><a name="id2608794"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2608797"></a>
+		Is it safe to set share-level access controls in Samba?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		Yes. Share-level access controls have been supported since early versions of Samba-2. This is
+		very mature technology. Not enough sites make use of this powerful capability, neither on
+		Windows server or with Samba servers.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2608821"></a><a name="id2608823"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2608826"></a>
+		Is it mandatory to set share ACLs to get a secure Samba-3 server?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2608842"></a><a class="indexterm" name="id2608850"></a><a class="indexterm" name="id2608858"></a><a class="indexterm" name="id2608866"></a><a class="indexterm" name="id2608874"></a>
+		No. Samba-3 honors UNIX/Linux file system security, supports Windows 200x ACLs, and provides 
+		means of securing shares through share definition controls in the <code class="filename">smb.conf</code> file. The additional
+		support for share-level ACLs is like frosting on the cake. It adds to security but is not essential
+		to it.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2608897"></a><a name="id2608900"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2608903"></a>
+		The <em class="parameter"><code>valid users</code></em> did not work on the <em class="parameter"><code>[homes]</code></em>.
+		Has this functionality been restored yet?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2608930"></a>
+		Yes. This was fixed in Samba-3.0.2. The use of this parameter is strongly recommended as a safeguard
+		on the <em class="parameter"><code>[homes]</code></em> meta-service. The correct way to specify this is:
+		<a class="link" href="smb.conf.5.html#VALIDUSERS">valid users = %S</a>.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2608963"></a><a name="id2608966"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2608969"></a><a class="indexterm" name="id2608976"></a><a class="indexterm" name="id2608984"></a>
+		Is the bias against use of the <em class="parameter"><code>force user</code></em> and <em class="parameter"><code>force group</code></em>
+		really warranted?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2609011"></a>
+		There is no bias. There is a determination to recommend the right tool for the task at hand.
+		After all, it is better than putting users through performance problems, isn't it?
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2609027"></a><a name="id2609029"></a></td><td align="left" valign="top"><p>
+		The example given for file and directory access control forces all files to be owned by one
+		particular user. I do not like that. Is there any way I can see who created the file?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2609042"></a>
+		Sure. You do not have to set the SUID bit on the directory. Simply execute the following command
+		to permit file ownership to be retained by the user who created it:
+</p><pre class="screen">
+<code class="prompt">root# </code> find /usr/data/finance -type d -exec chmod g+s {}\;
+</pre><p>
+		Note that this required no more than removing the <code class="constant">u</code> argument so that the
+		SUID bit is not set for the owner.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2609075"></a><a name="id2609077"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2609080"></a>
+		In the book, &#8220;<span class="quote">The Official Samba-3 HOWTO and Reference Guide</span>&#8221;, you recommended use
+		of the Windows NT4 Server Manager (part of the <code class="filename">SRVTOOLS.EXE</code>) utility. Why
+		have you mentioned only the use of the Windows 200x/XP MMC Computer Management utility?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2609108"></a><a class="indexterm" name="id2609116"></a>
+		Either tool can be used with equal effect. There is no benefit of one over the other, except that
+		the MMC utility is present on all Windows 200x/XP systems and does not require additional software
+		to be downloaded and installed. Note that if you want to manage user and group accounts in your
+		Samba-controlled domain, the only tool that permits that is the NT4 Domain User Manager, which
+		is provided as part of the <code class="filename">SRVTOOLS.EXE</code> utility.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2609142"></a><a name="id2609144"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2609147"></a><a class="indexterm" name="id2609155"></a><a class="indexterm" name="id2609163"></a>
+		I tried to set <em class="parameter"><code>valid users = @Engineers</code></em>, but it does not work. My Samba
+		server is an Active Directory domain member server. Has this been fixed now?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		The use of this parameter has always required the full specification of the domain account, for
+		example, <em class="parameter"><code>valid users = @"MEGANET2\Domain Admins"</code></em>.
+		</p></td></tr></tbody></table></div></div><div class="footnotes"><br><hr width="100" align="left"><div class="footnote"></div><div class="footnote"><a class="ulink" href="http://199.105.191.226/Man/2699/020430msdoj/" target="_top"><sup>[<a name="ftn.id2606256" href="#id2606256" class="ulink">13</a>] </sup>ITWorld.com</a></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="RefSection.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="RefSection.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="DomApps.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Part III. Reference Section </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 12. Integrating Additional Services</td></tr></table></div></body></html>

@@ -83,11 +83,14 @@ LDFLAGS += -L$(TOP)/libdisk -ldisk
 ifeq ($(BCM_MMC),y)
 CFLAGS += -DBCM_MMC
 endif
-endif
-
 ifeq ($(RTCONFIG_USB_MODEM),y)
 CFLAGS += -DSET_USB_MODEM_MTU_ETH
 CFLAGS += -DSET_USB_MODEM_MTU_PPP
+ifeq ($(RTCONFIG_USB_SMS_MODEM),y)
+CFLAGS += -I$(TOP)/smspdu
+LDFLAGS += -L$(TOP)/smspdu -lsmspdu
+endif
+endif
 endif
 
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
@@ -119,6 +122,10 @@ endif
 
 ifeq ($(RA_SKU),y)
 export CFLAGS += -DRA_SINGLE_SKU
+endif
+
+ifeq ($(RTAC68A), y)
+CFLAGS += -DRTAC68U
 endif
 
 LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
@@ -226,6 +233,10 @@ endif
 
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 OBJS += dsl_fb.o
+endif
+
+ifeq ($(RTCONFIG_DSL),y)
+OBJS += asustest.o
 endif
 
 ifeq ($(RTCONFIG_DSL),y)
@@ -421,6 +432,9 @@ ifneq ($(RTCONFIG_QCA)$(RTCONFIG_RALINK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog02
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc sw_devled
+ifeq ($(RTAC1200G),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc wdg_monitor
+endif
 ifeq ($(RTCONFIG_FANCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc phy_tempsense
 endif
@@ -522,6 +536,9 @@ ifeq ($(RTCONFIG_BCMARM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc nvram_erase
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ATE
+ifeq ($(RTCONFIG_DSL),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc asustest
+endif
 ifeq ($(or $(RTCONFIG_RALINK),$(RTCONFIG_QCA)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc FWRITE
 	@cd $(INSTALLDIR)/sbin && ln -sf rc FREAD
@@ -640,6 +657,18 @@ endif
 endif
 endif
 
+# asustest command is for DSL models only, debugging purpose.
+ifeq ($(RTCONFIG_DSL),y)
+ifneq ($(wildcard ./prebuild/asustest.o),)
+asustest.o:
+	@-cp -f ./prebuild/asustest.o .
+else
+asustest.o:asustest.c
+	@echo "compile asustest"
+	$(CC) $(CFLAGS) -c asustest.c
+endif
+endif
+
 ifeq ($(RTCONFIG_HTTPS),y)
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 ifneq ($(wildcard ./prebuild/pwdec.o),)
@@ -665,7 +694,6 @@ cfe.o:
 endif
 endif
 endif
-
 
 ifeq ($(RTCONFIG_RALINK),y)
 ifneq ($(wildcard ./prebuild/ate-ralink.o),)

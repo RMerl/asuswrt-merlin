@@ -31,7 +31,8 @@ if((location.href.search('https://') >= 0) || (location.href.search('HTTPS://') 
         isFromHTTPS = true;
 }
 
-var http_clientlist_array = '<% nvram_get("http_clientlist"); %>';
+var orig_http_clientlist = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
+var http_clientlist_array = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
 var accounts = [<% get_all_accounts(); %>];
 for(var i=0; i<accounts.length; i++){
 	accounts[i] = decodeURIComponent(accounts[i]);	
@@ -196,7 +197,7 @@ function applyRule(){
 			return false;
 		}
 
-		if(document.form.http_clientlist.value != '<% nvram_get("http_clientlist"); %>'){
+		if(document.form.http_client[0].checked && document.form.http_clientlist.value != orig_http_clientlist){
 			document.form.action_script.value = "restart_time;restart_httpd;restart_upnp";
 		}
 
@@ -378,7 +379,7 @@ function validForm(){
 	//confirm common string combination	#JS_common_passwd#
 	var is_common_string = check_common_string(document.form.http_passwd2.value, "httpd_password");
 	if(document.form.http_passwd2.value.length > 0 && is_common_string){
-			if(confirm("<#JS_common_passwd#>")){
+			if(!confirm("<#JS_common_passwd#>")){
 				document.form.http_passwd2.focus();
 				document.form.http_passwd2.select();
 				return false;	
@@ -775,7 +776,7 @@ function hide_https_wanport(_value){
 
 // show clientlist
 function show_http_clientlist(){
-	var http_clientlist_row = http_clientlist_array.split('&#60');
+	var http_clientlist_row = http_clientlist_array.split('<');
 	var code = "";
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="http_clientlist_table">'; 
 	if(http_clientlist_row.length == 1)
@@ -819,7 +820,7 @@ function deleteRow(r){
   
 	var http_clientlist_value = "";
 	for(i=0; i<document.getElementById('http_clientlist_table').rows.length; i++){
-		http_clientlist_value += "&#60";
+		http_clientlist_value += "<";
 		http_clientlist_value += document.getElementById('http_clientlist_table').rows[i].cells[0].innerHTML;
 	}
 	
@@ -860,7 +861,7 @@ function addRow(obj, upper){
 			}
 		}
 		
-		http_clientlist_array += "&#60";
+		http_clientlist_array += "<";
 		http_clientlist_array += obj.value;
 		obj.value = "";		
 		show_http_clientlist();

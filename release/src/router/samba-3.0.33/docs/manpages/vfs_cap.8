@@ -1,0 +1,48 @@
+.\"     Title: vfs_cap
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_CAP" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_cap - CAP encode filenames
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = cap
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+CAP (Columbia Appletalk Protocol) encoding is a technique for representing non\-ASCII filenames in ASCII\. The
+vfs_cap
+VFS module translates filenames to and from CAP format, allowing users to name files in their native encoding\.
+.PP
+CAP encoding is most commonly used in Japanese language environments\.
+.PP
+This module is stackable\.
+.SH "EXAMPLES"
+.PP
+On a system using GNU libiconv, use CAP encoding to support users in the Shift_JIS locale:
+.sp
+.RS 4
+.nf
+        \fI[global]\fR
+	\fIdos charset = CP932\fR
+	\fIdos charset = CP932\fR
+	\fIvfs objects = cap\fR
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

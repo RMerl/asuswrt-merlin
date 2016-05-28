@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc" [
+<!ATTLIST book 
+	xmlns:xi CDATA #FIXED "http://www.w3.org/2003/XInclude">
+]>
+
+<book id="Samba-Developers-Guide"
+	xmlns:xi="http://www.w3.org/2003/XInclude">
+
+<title>SAMBA Developers Guide</title>
+
+<bookinfo>
+<authorgroup>
+	<editor>&person.jelmer;</editor>
+</authorgroup>
+	
+<abstract>
+<para>
+<emphasis>Last Update</emphasis> : Fri Oct 10 00:59:58 CEST 2003
+</para>
+
+<para>
+This book is a collection of documents that might be useful for 
+people developing samba or those interested in doing so.
+It's nothing more than a collection of documents written by samba developers about 
+the internals of various parts of samba and the SMB protocol. It's still (and will always be) incomplete.
+The most recent version of this document
+can be found at <ulink url="http://devel.samba.org/">http://devel.samba.org/</ulink>.
+</para>
+
+<para>
+This documentation is distributed under the GNU General Public License (GPL) 
+version 2.  A copy of the license is included with the Samba source
+distribution.  A copy can be found on-line at <ulink 
+url="http://www.fsf.org/licenses/gpl.txt">http://www.fsf.org/licenses/gpl.txt</ulink>
+</para>
+
+<warning>
+	<para>This document is incomplete and unmaintained. It is merely a 
+	collection of development-related notes.</para>
+</warning>
+
+</abstract>
+
+</bookinfo>
+
+<xi:include href="../Samba3-Developers-Guide-attributions.xml">
+	<xi:fallback/>
+</xi:include>
+
+<?latex \cleardoublepage ?>
+
+<!-- Contents -->
+<toc/>
+
+<?latex \pagenumbering{arabic} ?>
+<!-- Chapters -->
+<part>
+	<title>The protocol</title>
+
+	<xi:include href="unix-smb.xml"/>
+	<xi:include href="cifsntdomain.xml"/>
+
+</part>
+
+<part>
+	<title>Samba Basics</title>
+
+	<xi:include href="architecture.xml"/>
+	<xi:include href="debug.xml"/>
+	<xi:include href="internals.xml"/>
+	<xi:include href="CodingSuggestions.xml"/>
+	<xi:include href="contributing.xml"/>
+	<xi:include href="modules.xml"/>
+</part>
+
+<part>
+	<title>Samba Subsystems</title>
+	
+	<xi:include href="rpc_plugin.xml"/>
+	<xi:include href="vfs.xml"/>
+	<xi:include href="parsing.xml"/>
+	<xi:include href="wins.xml"/>
+	<xi:include href="encryption.xml"/>
+
+</part>
+
+<part>
+	<title>Debugging and tracing</title>
+
+	<xi:include href="Tracing.xml"/>
+	<xi:include href="printing.xml"/>
+</part>
+
+<part><title>Appendices</title>
+	<xi:include href="packagers.xml"/>
+</part>
+
+</book>

@@ -1,0 +1,104 @@
+<!--############################################################################# 
+ |	$Id: COPYRIGHT,v 1.3 2004/01/25 01:45:16 j-devenish Exp $
+ |- #############################################################################
+ |	$Author: j-devenish $
+ |														
+ |   PURPOSE:
+ |   DB2LaTeX is distributed according to the GPL v2 license.
+ + ############################################################################## -->
+
+<warning><para>
+IMPORTANT: These stylesheets ARE NOT the official DocBook XSL stylesheets. These stylesheets ARE NOT
+maintained by Norman Walsh. Please, DO NOT e-mail Norman about any question regarding these stylesheets
+</para></warning>
+
+**********************************************************************
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+**********************************************************************
+
+
+DocBook to LaTeX XSL Transformation Stylesheets
+(c) 2000-2004 Ramon Casellas
+
+
+--------------------------------------------------------------------------------
+
+   
+FROM THE OFFICIAL XSL Docbook Stylesheets
+____________________________________________
+Copyright (C) 1999, 2000, 2001, 2002 Norman Walsh
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the ``Software''), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+Except as contained in this notice, the names of individuals
+credited with contribution to this software shall not be used in
+advertising or otherwise to promote the sale, use or other
+dealings in this Software without prior written authorization
+from the individuals in question.
+
+Any stylesheet derived from this Software that is publically
+distributed will be identified with a different name and the
+version strings in any derived Software will be changed so that
+no possibility of confusion between the derived package and this
+Software will exist.
+
+Warranty
+--------
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.  IN NO EVENT SHALL NORMAN WALSH OR ANY OTHER
+CONTRIBUTOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+ORIGINAL DOCBOOK XSL STYLESHEETS
+* Norman Walsh XSL Stylesheets http://www.nwalsh.com
+
+DOCBOOK DTD
+* Arbortex, Oasis, etc
+* See Docbook copyrigth
+
+MATHML PORTIONS
+--------------------------------------------------------------
+  Unlimited use, reproduction, and distribution of this software is
+  permitted.  Any copy of this software must include both the above
+  copyright notice of Xerox Corporation and this paragraph.  Any
+  distribution of this software must comply with all applicable United
+  States export control laws.  This software is made available AS IS,
+  and XEROX CORPORATION DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+  INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS FOR A PARTICULAR PURPOSE, AND NOTWITHSTANDING ANY OTHER
+  PROVISION CONTAINED HEREIN, ANY LIABILITY FOR DAMAGES RESULTING FROM
+  THE SOFTWARE OR ITS USE IS EXPRESSLY DISCLAIMED, WHETHER ARISING IN
+  CONTRACT, TORT (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, EVEN IF
+  XEROX CORPORATION IS ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+  emmanuel.pietriga@xrce.xerox.com
+  This work is done for the OPERA project (INRIA) during a thesis work under a
+  CIFRE contract.
+-----------------------------------------------------------------
+
+* string-replace by David Carlisle http://www.jclark.com
+
+* xt by James Clarck http://www.jclark.com
+
+
+BUGS and MISSING FEATURES :)
+* Ramon Casellas 
+casellas@aist.enst.fr
+http://www.enst.fr/~casellas

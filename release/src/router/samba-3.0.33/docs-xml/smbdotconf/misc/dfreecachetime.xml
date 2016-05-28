@@ -1,0 +1,27 @@
+<samba:parameter name="dfree cache time"
+	         context="S"
+			 type="integer"
+		 advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	The <parameter moreinfo="none">dfree cache time</parameter> should only be used on systems where a problem
+	occurs with the internal disk space calculations. This has been known to happen with Ultrix, but may occur
+	with other operating systems. The symptom that was seen was an error of &quot;Abort Retry Ignore&quot; at the
+	end of each directory listing.
+	</para>
+
+	<para>
+	This is a new parameter introduced in Samba version 3.0.21.  It specifies in seconds the time that smbd will
+	cache the output of a disk free query. If set to zero (the default) no caching is done. This allows a heavily
+	loaded server to prevent rapid spawning of <smbconfoption name="dfree command"/> scripts increasing the load.
+	</para>
+
+	<para>
+	By default this parameter is zero, meaning no caching will be done.
+	</para>
+
+</description>
+<value type="example">dfree cache time = 60</value>
+</samba:parameter>

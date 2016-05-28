@@ -309,8 +309,8 @@ checkcrc_end:
 }
 
 /* 
- * 0: illegal image
- * 1: legal image
+ * 0: legal image
+ * 1: illegal image
  *
  * check product id, crc ..
  */
@@ -318,8 +318,8 @@ checkcrc_end:
 int check_imagefile(char *fname)
 {
 	if (!checkcrc(fname))
-		return 1;
-	return 0;
+		return 0;
+	return 1;
 }
 
 int wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq)

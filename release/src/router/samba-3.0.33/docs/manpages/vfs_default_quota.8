@@ -1,0 +1,71 @@
+.\"     Title: vfs_default_quota
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_DEFAULT_QUOTA" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_default_quota - store default quota records for Windows clients
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = default_quota
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+Many common quota implementations only store quotas for users and groups, but do not store a default quota\. The
+vfs_default_quota
+module allows Samba to store default quota values which can be examined using the Windows Explorer interface\.
+.PP
+By default, Samba returns NO_LIMIT the default quota and refuses to update them\.
+vfs_default_quota
+maps the default quota to the quota record of a user\. By default the root user is taken because quota limits for root are typically not enforced\.
+.PP
+This module is stackable\.
+.SH "OPTIONS"
+.PP
+default_quota:uid = UID
+.RS 4
+UID specifies the user ID of the quota record where the default user quota values are stored\.
+.RE
+.PP
+default_quota:gid = GID
+.RS 4
+GID specifies the group ID of the quota record where the default group quota values are stored\.
+.RE
+.PP
+default_quota:uid nolimit = BOOL
+.RS 4
+If this parameter is True, then the user whose quota record is storing the default user quota will be reported as having a quota of NO_LIMIT\. Otherwise, the stored values will be reported\.
+.RE
+.PP
+default_quota:gid nolimit = BOOL
+.RS 4
+If this parameter is True, then the group whose quota record is storing the default group quota will be reported as having a quota of NO_LIMIT\. Otherwise, the stored values will be reported\.
+.RE
+.SH "EXAMPLES"
+.PP
+Store the default quota record in the quota record for the user with ID 65535 and report that user as having no quota limits:
+.sp
+.RS 4
+.nf
+        \fI[global]\fR
+	\fIvfs objects = default_quota\fR
+	\fIdefault_quota:uid = 65535\fR
+	\fIdefault_quota:uid nolimit = yes\fR
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

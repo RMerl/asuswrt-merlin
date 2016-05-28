@@ -201,11 +201,22 @@ if(typeof Array.prototype.forEach != 'function'){
 }
 
 var lock_time = '<% get_parameter("lock_time"); %>';
-var remaining_time;
-remaining_time = 60 - lock_time;
+var remaining_time = 60 - lock_time;
 var countdownid, rtime_obj;
-
 var redirect_page = '<% get_parameter("page"); %>';
+var isRouterMode = ('<% nvram_get("sw_mode"); %>' == '1') ? true : false;
+var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
+var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.href.replace(location.hostname, ROUTERHOSTNAME)+"?page="+redirect_page};
+(function(){
+	var locationOrigin = window.location.protocol + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
+	if(location.hostname !== ROUTERHOSTNAME && ROUTERHOSTNAME != "" && isRouterMode){
+		setTimeout(function(){
+			var s=document.createElement("script");s.type="text/javascript";s.src=locationOrigin+"/httpd_check.json?hostname="+location.hostname;;var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
+		}, 1);
+	}
+})();
+
+<% login_state_hook(); %>
 
 function initial(){
 	var flag = '<% get_parameter("error_status"); %>';
@@ -218,8 +229,10 @@ function initial(){
 
 	if(flag != ""){
 		document.getElementById("error_status_field").style.display ="";
-		if(flag == 3)
+
+		if(flag == 3){
 			document.getElementById("error_status_field").innerHTML ="* Invalid username or password";
+		}
 		else if(flag == 7){
 			document.getElementById("error_status_field").innerHTML ="You have entered an incorrect username or password 5 times. Please try again after "+"<span id='rtime'></span>"+" seconds.";
 			document.getElementById("error_status_field").className = "error_hint error_hint1";
@@ -228,12 +241,12 @@ function initial(){
 			rtime_obj=document.getElementById("rtime");
 			rtime_obj.innerHTML=remaining_time;
 			countdownid = window.setInterval(countdownfunc,1000);
-		}else if(flag == 8){
+		}
+		else if(flag == 8){
 			document.getElementById("login_filed").style.display ="none";
 			document.getElementById("logout_field").style.display ="";
-		}else if(flag == 9){
-			<% login_state_hook(); %> 
-
+		}
+		else if(flag == 9){
 			var loginUserIp = (function(){
 				return (typeof login_ip_str === "function") ? login_ip_str().replace("0.0.0.0", "") : "";
 			})();
@@ -254,11 +267,12 @@ function initial(){
 			};
 
 			document.getElementById("logined_ip_str").innerHTML = getLoginUser();
-
 			document.getElementById("login_filed").style.display ="none";
 			document.getElementById("nologin_field").style.display ="";
-		}else
+		}
+		else{
 			document.getElementById("error_status_field").style.display ="none";
+		}
 	}
 
 	document.form.login_username.focus();
@@ -365,10 +379,24 @@ function login(){
 	document.form.login_authorization.value = btoa(document.form.login_username.value + ':' + document.form.login_passwd.value);
 	document.form.login_username.disabled = true;
 	document.form.login_passwd.disabled = true;
-	if(redirect_page == "" || redirect_page == "Logout.asp" || redirect_page == "Main_Login.asp" || redirect_page.indexOf(" ") != -1 || (redirect_page.indexOf(".asp") == -1 && redirect_page.indexOf(".htm") == -1))
+
+	try{
+		if(redirect_page == "" 
+			|| redirect_page == "Logout.asp" 
+			|| redirect_page == "Main_Login.asp" 
+			|| redirect_page.indexOf(" ") != -1 
+			|| (redirect_page.indexOf(".asp") == -1 && redirect_page.indexOf(".htm") == -1)
+		){
+			document.form.next_page.value = "index.asp";
+		}
+		else{
+			document.form.next_page.value = redirect_page;
+		}
+	}
+	catch(e){
 		document.form.next_page.value = "index.asp";
-	else
-		document.form.next_page.value = redirect_page;
+	}		
+
 	document.form.submit();
 }
 
@@ -392,6 +420,7 @@ function disable_button(val){
 </head>
 <body class="wrapper" onload="initial();">
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
+<iframe id="dmRedirection" width="0" height="0" frameborder="0" scrolling="no" src=""></iframe>
 
 <form method="post" name="form" action="login.cgi" target="">
 <input type="hidden" name="group_id" value="">

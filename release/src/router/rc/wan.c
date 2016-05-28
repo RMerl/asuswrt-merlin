@@ -684,6 +684,9 @@ start_ecmh(const char *wan_ifname)
 	switch (service) {
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
 		eval("/bin/ecmh", "-u", nvram_safe_get("http_username"), "-i", (char*)wan_ifname);
 		break;
 	}
@@ -1673,19 +1676,23 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 		}
 
 #ifdef RTCONFIG_IPV6
-		if (get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL)
-		{
-			if (strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
-				nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
-			{
+/* TODO: rewrite enabling/disabling IPv6 */
+		switch (get_ipv6_service()) {
+		case IPV6_NATIVE_DHCP:
+		case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
+			if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+			    nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp")) {
 				disable_ipv6(wan_ifname);
 #if !defined(RTCONFIG_BCMARM) && !defined(RTCONFIG_RALINK) && !defined(RTCONFIG_QCA)
 				if (with_ipv6_linklocal_addr(wan_ifname))
 					doSystem("ip -6 addr flush dev %s scope link", wan_ifname);
 #endif
-			}
-			else
+			} else
 				enable_ipv6(wan_ifname);
+			break;
 		}
 #endif
 		ether_atoe((const char *) nvram_safe_get(strcat_r(prefix, "hwaddr", tmp)), (unsigned char *) eabuf);
@@ -1695,13 +1702,26 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 			ifconfig(wan_ifname, 0, NULL, NULL);
 		}
 #ifdef RTCONFIG_IPV6
+/* TODO: rewrite syncing MAC with enabled IPv6 */
 #ifdef RTCONFIG_RALINK
-		if (((get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL) &&
-		     strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
-		     nvram_match(ipv6_nvname("ipv6_ifdev"), "eth") &&
-		     !with_ipv6_linklocal_addr(wan_ifname)) ||
-			with_ipv6_linklocal_addr(wan_ifname))
-			ifconfig(wan_ifname, 0, NULL, NULL);
+		switch (get_ipv6_service()) {
+		case IPV6_NATIVE_DHCP:
+		case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
+			if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+			    nvram_match(ipv6_nvname("ipv6_ifdev"), "eth") &&
+			    !with_ipv6_linklocal_addr(wan_ifname)) {
+				ifconfig(wan_ifname, 0, NULL, NULL);
+				break;
+			}
+			/* fall through */
+		default:
+			if (with_ipv6_linklocal_addr(wan_ifname))
+				ifconfig(wan_ifname, 0, NULL, NULL);
+			break;
+		}
 #endif
 #endif
 		/* Configure i/f only once, specially for wireless i/f shared by multiple connections */
@@ -2046,10 +2066,19 @@ stop_wan_if(int unit)
 		killall_tk("ntpclient");
 
 #ifdef RTCONFIG_IPV6
-		if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
-			nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-			(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
+		switch (get_ipv6_service()) {
+		case IPV6_NATIVE_DHCP:
+		case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
+			if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+			    nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+				break;
+			/* fall through */
+		default:
 			stop_wan6();
+			break;
 		}
 #endif
 		/* Shutdown and kill all possible tasks */
@@ -2284,20 +2313,24 @@ int update_resolvconf(void)
 #endif
 
 #ifdef RTCONFIG_IPV6
-	if (ipv6_enabled() &&
-#ifdef RTCONFIG_6RELAYD
-		(get_ipv6_service() != IPV6_PASSTHROUGH) &&
-#endif
-		is_routing_enabled()) {
+	if (ipv6_enabled() && is_routing_enabled()) {
 		char dnsbuf[INET6_ADDRSTRLEN*3 + 3];
 		struct in6_addr addr;
 
 	/* TODO: Skip unconnected wan */
 
-		if (get_ipv6_service() == IPV6_NATIVE_DHCP && nvram_get_int(ipv6_nvname("ipv6_dnsenable"))) {
-			wan_dns = nvram_safe_get(ipv6_nvname("ipv6_get_dns"));
-			wan_domain = nvram_safe_get(ipv6_nvname("ipv6_get_domain"));
-		} else {
+		switch (get_ipv6_service()) {
+		case IPV6_NATIVE_DHCP:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
+			if (nvram_get_int(ipv6_nvname("ipv6_dnsenable"))) {
+				wan_dns = nvram_safe_get(ipv6_nvname("ipv6_get_dns"));
+				wan_domain = nvram_safe_get(ipv6_nvname("ipv6_get_domain"));
+				break;
+			}
+			/* fall through */
+		default:
 			next = strcpy(dnsbuf, "");
 			for (unit = 1; unit <= 3; unit++) {
 				snprintf(tmp, sizeof(tmp), "ipv6_dns%d", unit);
@@ -2386,10 +2419,12 @@ void wan6_up(const char *wan_ifname)
 	set_intf_ipv6_dad(wan_ifname, 0, 1);
 
 	switch (service) {
-	case IPV6_NATIVE_DHCP:
 #ifdef RTCONFIG_6RELAYD
 	case IPV6_PASSTHROUGH:
+		start_6relayd();
+		/* fall through */
 #endif
+	case IPV6_NATIVE_DHCP:
 		start_dhcp6c();
 		break;
 	case IPV6_MANUAL:
@@ -2503,10 +2538,19 @@ void start_wan6(void)
 	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
 	wan_proto = nvram_get(strcat_r(prefix, "proto", tmp));
 
-	if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
-		nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-		(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
+	switch (get_ipv6_service()) {
+	case IPV6_NATIVE_DHCP:
+	case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+	case IPV6_PASSTHROUGH:
+#endif
+		if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+		    nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+			break;
+		/* fall though */
+	default:
 		wan6_up(get_wan6face());
+		break;
 	}
 }
 
@@ -2542,10 +2586,19 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #ifdef RTCONFIG_IPV6
 		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 		if (wan_unit == wan_primary_ifunit()) {
-			if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
-				nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-				(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
+			switch (get_ipv6_service()) {
+			case IPV6_NATIVE_DHCP:
+			case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+			case IPV6_PASSTHROUGH:
+#endif
+				if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+				    nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+					break;
+				/* fall through */
+			default:
 				wan6_up(get_wan6face());
+				break;
 			}
 		}
 #endif
@@ -2638,10 +2691,19 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 
 #ifdef RTCONFIG_IPV6
 	if (wan_unit == wan_primary_ifunit()) {
-		if (!(strcmp(wan_proto, "dhcp") && strcmp(wan_proto, "static") &&
-			nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") &&
-			(get_ipv6_service() == IPV6_NATIVE_DHCP || get_ipv6_service() == IPV6_MANUAL))) {
+		switch (get_ipv6_service()) {
+		case IPV6_NATIVE_DHCP:
+		case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
+			if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+			    nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+				break;
+			/* fall through */
+		default:
 			wan6_up(get_wan6face());
+			break;
 		}
 	}
 #endif
@@ -2752,7 +2814,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		start_vpnc();
 #endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-	if (nvram_match("pptpd_enable", "1")) {
+	if (nvram_get_int("pptpd_enable")) {
 		stop_pptpd();
 		start_pptpd();
 	}
@@ -3278,7 +3340,7 @@ stop_wan(void)
 	stop_vpn_eas();
 #endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-	if (nvram_match("pptpd_enable", "1"))
+	if (nvram_get_int("pptpd_enable"))
 		stop_pptpd();
 #endif
 
@@ -3627,22 +3689,28 @@ struct hostent *timeGethostbyname(const char *domain, int timeout){
 int do_dns_detect(){
 	char *test_url = "www.google.com www.baidu.com www.yandex.com";
 	char word[64], *next;
+	struct hostent *host;
 
 	foreach(word, test_url, next){
 		if(nvram_get_int("old_resolve") > 0){
 			_dprintf("do_dns_detect old: %s.\n", word);
-			if(gethostbyname(word) != NULL){
-				nvram_set_int("link_internet", 2);
-				return 1;
-			}
+			if((host = gethostbyname(word)) == NULL)
+				continue;
 		}
 		else{
 			_dprintf("do_dns_detect new: %s.\n", word);
-			if(timeGethostbyname(word, 2) != NULL){
-				nvram_set_int("link_internet", 2);
-				return 1;
-			}
+			if((host = timeGethostbyname(word, 2)) == NULL)
+				continue;
 		}
+
+		char *ip = inet_ntoa(*((struct in_addr *)host->h_addr_list[0]));
+		_dprintf("do_dns_detect: %s's IP is %s.\n", word, ip);
+
+		if(!strcmp(ip, "10.0.0.1"))
+			continue;
+
+		nvram_set_int("link_internet", 2);
+		return 1;
 	}
 
 	_dprintf("do_dns_detect: fail to resolve the dns.\n");

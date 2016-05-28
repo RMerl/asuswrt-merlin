@@ -1,0 +1,35 @@
+<samba:parameter name="root directory"
+	context="G"
+	type="string"
+                 advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>root</synonym>
+<synonym>root dir</synonym>
+<description>
+    <para>The server will <command moreinfo="none">chroot()</command> (i.e. 
+    Change its root directory) to this directory on startup. This is 
+    not strictly necessary for secure operation. Even without it the 
+    server will deny access to files not in one of the service entries. 
+    It may also check for, and deny access to, soft links to other 
+    parts of the filesystem, or attempts to use &quot;..&quot; in file names 
+    to access other directories (depending on the setting of the
+	<smbconfoption name="wide smbconfoptions"/> parameter).
+    </para>
+
+    <para>Adding a <parameter moreinfo="none">root directory</parameter> entry other 
+    than &quot;/&quot; adds an extra level of security, but at a price. It 
+    absolutely ensures that no access is given to files not in the 
+    sub-tree specified in the <parameter moreinfo="none">root directory</parameter> 
+    option, <emphasis>including</emphasis> some files needed for 
+    complete operation of the server. To maintain full operability 
+    of the server you will need to mirror some system files 
+    into the <parameter moreinfo="none">root directory</parameter> tree. In particular 
+    you will need to mirror <filename moreinfo="none">/etc/passwd</filename> (or a 
+    subset of it), and any binaries or configuration files needed for 
+    printing (if required). The set of files that must be mirrored is
+    operating system dependent.</para>
+</description>
+
+<value type="default">/</value>
+<value type="example">/homes/smb</value>
+</samba:parameter>

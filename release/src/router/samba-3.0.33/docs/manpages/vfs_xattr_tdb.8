@@ -1,0 +1,39 @@
+.\"     Title: vfs_xattr_tdb
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_XATTR_TDB" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_xattr_tdb - Save Extended Attributes (EAs) in a tdb file
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = xattr_tdb
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The
+vfs_xattr_tdb
+VFS module stores Extended Attributes (EAs) in a tdb file\. This enables the usage of Extended Attributes on OS and filesystems which do not support Extended Attributes by themselves\.
+.PP
+This module is stackable\.
+.SH "OPTIONS"
+.PP
+xattr_tdb:file = PATH
+.RS 4
+Name of the tdb file the EAs are stored in\. If this option is not set, the default filename
+\fIxattr\.tdb\fR
+is used\.
+.RE
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

@@ -232,16 +232,11 @@ function goWireless(){
 
 function send_setting(){
 	$.ajax({
-		url: '/setting_lan.htm',
+		url: '/updateSubnet.htm',
 		dataType: 'script',
 		
 		error: function(xhr){
 			setTimeout("send_setting();", 1000);
-		},
-		success: function(response){
-			setTimeout(function(){
-				parent.location.href = "http://" + get_new_lanip() + '/QIS_wizard.htm?flag=detect';
-			}, 30000);
 		}
 	});
 }

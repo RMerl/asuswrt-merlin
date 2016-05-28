@@ -93,7 +93,7 @@ export RT-AC88U_BASE := IPV6SUPP=y HTTPS=y ARM=y BCM57=y AUTODICT=y BBEXTRAS=y U
                         JFFS2LOG=y BWDPI=y DUMP_OOPS_MSG=y LINUX_MTD="64" DEBUGFS=y TEMPROOTFS=y SSH=y WIFILOGO=n \
                         DROPBOXCLIENT=y EMAIL=y ROG=y SSD=n STAINFO=y BCM5301X_TRAFFIC_MONITOR=n PROXYSTA=y \
                         BCM_RECVFILE=y TFAT=y NTFS="tuxera" HFS="tuxera" CFEZ=y NATNL=y ERPTEST=n CLOUDCHECK=y \
-                        ASPMD=n BCMEVENT=n WLCLMLOAD=n BCM_MUMIMO=y \
+                        ASPMD=n BCMEVENT=n WLCLMLOAD=y BCM_MUMIMO=y \
                         NFS=y IPSEC=n DNSFILTER=y SAMBA36=y SNMPD=y TOR=y UPNPIGD2=n DNSSEC=y
 
 export RT-AC88U := $(RT-AC88U_BASE)

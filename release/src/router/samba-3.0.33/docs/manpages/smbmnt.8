@@ -1,0 +1,82 @@
+.\"     Title: smbmnt
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: 
+.\"    Source: 
+.\"
+.TH "SMBMNT" "8" "11/20/2008" "" ""
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+smbmnt - helper utility for mounting SMB filesystems
+.SH "SYNOPSIS"
+.HP 1
+smbmnt {mount\-point} [\-s\ <share>] [\-r] [\-u\ <uid>] [\-g\ <gid>] [\-f\ <mask>] [\-d\ <mask>] [\-o\ <options>] [\-h]
+.SH "DESCRIPTION"
+.PP
+smbmnt
+is a helper application used by the smbmount program to do the actual mounting of SMB shares\.
+smbmnt
+can be installed setuid root if you want normal users to be able to mount their SMB shares\.
+.PP
+A setuid smbmnt will only allow mounts on directories owned by the user, and that the user has write permission on\.
+.PP
+The
+smbmnt
+program is normally invoked by
+\fBsmbmount\fR(8)\. It should not be invoked directly by users\.
+.PP
+smbmount searches the normal PATH for smbmnt\. You must ensure that the smbmnt version in your path matches the smbmount used\.
+.SH "OPTIONS"
+.PP
+\-r
+.RS 4
+mount the filesystem read\-only
+.RE
+.PP
+\-u uid
+.RS 4
+specify the uid that the files will be owned by
+.RE
+.PP
+\-g gid
+.RS 4
+specify the gid that the files will be owned by
+.RE
+.PP
+\-f mask
+.RS 4
+specify the octal file mask applied
+.RE
+.PP
+\-d mask
+.RS 4
+specify the octal directory mask applied
+.RE
+.PP
+\-o options
+.RS 4
+list of options that are passed as\-is to smbfs, if this command is run on a 2\.4 or higher Linux kernel\.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\.
+.RE
+.SH "AUTHOR"
+.PP
+Volker Lendecke, Andrew Tridgell, Michael H\. Warfield and others\.
+.PP
+The current maintainer of smbfs and the userspace tools
+smbmount,
+smbumount, and
+smbmnt
+is
+Urban Widmark\. The
+SAMBA Mailing list
+is the preferred place to ask questions regarding these programs\.
+.PP
+The conversion of this manpage for Samba 2\.2 was performed by Gerald Carter\. The conversion to DocBook XML 4\.2 for Samba 3\.0 was done by Alexander Bokovoy\.

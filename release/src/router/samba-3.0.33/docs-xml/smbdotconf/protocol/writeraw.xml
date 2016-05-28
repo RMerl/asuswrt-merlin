@@ -1,0 +1,13 @@
+<samba:parameter name="write raw"
+                 context="G"
+				 type="boolean"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter controls whether or not the server 
+    will support raw write SMB's when transferring data from clients. 
+    You should never need to change this parameter.</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

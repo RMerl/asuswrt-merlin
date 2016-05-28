@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="bugreport">
+
+<chapterinfo>
+	&author.jht;
+	&author.jelmer;
+	&author.tridge;
+	<pubdate> 27 June 1997 </pubdate>
+</chapterinfo>
+
+<title>Reporting Bugs</title>
+
+<sect1>
+<title>Introduction</title>
+
+<para>
+<indexterm><primary>Bugzilla</primary></indexterm>
+<indexterm><primary>bug reports</primary></indexterm>
+Please report bugs using Samba's <ulink url="https://bugzilla.samba.org/">Bugzilla</ulink> facilities and take
+the time to read this file before you submit a bug report. Also, check to see if it has changed between
+releases, as we may be changing the bug reporting mechanism at some point.
+</para>
+
+<para>
+Please do as much as you can yourself to help track down the
+bug. Samba is maintained by a dedicated group of people who volunteer
+their time, skills, and efforts. We receive far more mail than
+we can possibly answer, so you have a much higher chance of a response
+and a fix if you send us a <quote>developer-friendly</quote> bug report that lets
+us fix it fast. 
+</para>
+
+<para>
+<indexterm><primary>comp.protocols.smb</primary></indexterm>
+<indexterm><primary>newsgroup</primary></indexterm>
+<indexterm><primary>configuration problem</primary></indexterm>
+If you post the bug to the comp.protocols.smb
+newsgroup or the mailing list, do not assume that we will read it. If you suspect that your 
+problem is not a bug but a configuration problem, it is better to send 
+it to the Samba mailing list, as there are thousands of other users on
+that list who may be able to help you.
+</para>
+
+<para>
+You may also like to look though the recent mailing list archives,
+which are conveniently accessible on the Samba Web pages
+at <ulink noescape="1" url="http://samba.org/samba/">http://samba.org/samba/</ulink>.
+</para>
+
+</sect1>
+
+<sect1>
+<title>General Information</title>
+
+<para>
+Before submitting a bug report, check your config for silly
+errors. Look in your log files for obvious messages that tell
+you've misconfigured something. Run testparm to check your config
+file for correct syntax.
+</para>
+
+<para>
+Have you looked through <link linkend="diagnosis">The Samba Checklist</link>? This is extremely important.
+</para>
+
+<para>
+If you include part of a log file with your bug report, then be sure to
+annotate it with exactly what you were doing on the client at the
+time and exactly what the results were.
+</para>
+
+</sect1>
+
+<sect1 id="dbglvl">
+<title>Debug Levels</title>
+
+<para>
+If the bug has anything to do with Samba behaving incorrectly as a
+server (like refusing to open a file), then the log files will probably
+be quite useful. Depending on the problem, a log level of between 3 and
+10 showing the problem may be appropriate. A higher level gives more
+detail but may use too much disk space.
+</para>
+
+<para>
+<indexterm><primary>debug level</primary></indexterm>
+<indexterm><primary>log level</primary></indexterm>
+To set the debug level, use the <smbconfoption name="log level"/> in your 
+&smb.conf;. You may also find it useful to set the log 
+level higher for just one machine and keep separate logs for each machine. 
+To do this, add the following lines to your main &smb.conf; file:
+</para>
+
+<smbconfblock>
+<smbconfoption name="log level">10</smbconfoption>
+<smbconfoption name="log file">/usr/local/samba/lib/log.%m</smbconfoption>
+<smbconfoption name="include">/usr/local/samba/lib/smb.conf.%m</smbconfoption>
+</smbconfblock>
+
+<para>
+and create a file <filename>/usr/local/samba/lib/smb.conf.<replaceable>machine</replaceable></filename> where
+<replaceable>machine</replaceable> is the name of the client you wish to debug. In that file put any
+&smb.conf; commands you want; for example, <smbconfoption name="log level"/> may be useful. This also allows
+you to experiment with different security systems, protocol levels, and so on, on just one machine.
+</para>
+
+<para>
+The &smb.conf; entry <smbconfoption name="log level"/> is synonymous with the parameter <smbconfoption
+name="debuglevel"/> that has been used in older versions of Samba and is being retained for backward
+compatibility of &smb.conf; files.
+</para>
+
+<para>
+As the <smbconfoption name="log level"/> value is increased, you will record a significantly greater level of
+debugging information. For most debugging operations, you may not need a setting higher than
+<constant>3</constant>. Nearly all bugs can be tracked at a setting of <constant>10</constant>, but be
+prepared for a large volume of log data.
+</para>
+
+	<sect2>
+	<title>Debugging-Specific Operations</title>
+
+	<para>
+<indexterm><primary>debugging</primary></indexterm>
+<indexterm><primary>logging</primary></indexterm>
+<indexterm><primary>functional components</primary></indexterm>
+<indexterm><primary>cluttering</primary></indexterm>
+	Samba-3.x permits debugging (logging) of specific functional components without unnecessarily
+	cluttering the log files with detailed logs for all operations. An example configuration to 
+	achieve this is shown in:
+	</para>
+
+<para>
+<smbconfblock>
+<smbconfoption name="log level">0 tdb:3 passdb:5 auth:4 vfs:2</smbconfoption>
+<smbconfoption name="max log size">0</smbconfoption>
+<smbconfoption name="log file">/var/log/samba/%U.%m.log</smbconfoption>
+</smbconfblock>
+</para>
+
+	<para>
+	This will cause the level of detail to be expanded to the debug class (log level) passed to
+	each functional area per the value shown above. The first value passed to the <parameter>log level</parameter>
+	of <constant>0</constant> means turn off all unnecessary debugging except the debug classes set for
+	the functional areas as specified. The table shown in <link linkend="dbgclass">Debuggable Functions</link>
+	may be used to attain very precise analysis of each SMB operation Samba is conducting.
+	</para>
+
+	<table frame="all" id="dbgclass">
+		<title>Debuggable Functions</title>
+	<tgroup cols="2" align="center">
+		<thead>
+		<row><entry>Function Name</entry><entry>Function Name</entry></row>
+		</thead>
+		<tbody>
+		<row><entry>all</entry><entry>passdb</entry></row>
+		<row><entry>tdb</entry><entry>sam</entry></row>
+		<row><entry>printdrivers</entry><entry>auth</entry></row>
+		<row><entry>lanman</entry><entry>winbind</entry></row>
+		<row><entry>smb</entry><entry>vfs</entry></row>
+		<row><entry>rpc_parse</entry><entry>idmap</entry></row>
+		<row><entry>rpc_srv</entry><entry>quota</entry></row>
+		<row><entry>rpc_cli</entry><entry>acls</entry></row>
+		</tbody>
+	</tgroup>
+	</table>
+
+	</sect2>
+
+</sect1>
+
+<sect1>
+<title>Internal Errors</title>
+
+<para>
+If you get the message <quote><errorname>INTERNAL ERROR</errorname></quote> in your log files, 
+it means that Samba got an unexpected signal while running. It is probably a
+segmentation fault and almost certainly means a bug in Samba (unless
+you have faulty hardware or system software).
+</para>
+
+<para>
+If the message came from smbd, it will probably be accompanied by
+a message that details the last SMB message received by smbd. This
+information is often useful in tracking down the problem, so please
+include it in your bug report.
+</para>
+
+<para>
+You should also detail how to reproduce the problem, if
+possible. Please make this reasonably detailed.
+</para>
+
+
+<para>
+<indexterm><primary>core files</primary></indexterm>
+You may also find that a core file appeared in a <filename>corefiles</filename>
+subdirectory of the directory where you keep your Samba log
+files. This file is the most useful tool for tracking down the bug. To
+use it, you do this:
+<indexterm><primary>gdb</primary></indexterm>
+<indexterm><primary>debug</primary></indexterm>
+<screen>
+&prompt;<userinput>gdb smbd core</userinput>
+</screen>
+</para>
+
+<para>
+<indexterm><primary>dbx</primary></indexterm>
+<indexterm><primary>stack trace</primary></indexterm>
+adding appropriate paths to smbd and core so gdb can find them. If you
+do not have gdb, try <userinput>dbx</userinput>. Then within the debugger,
+use the command <command>where</command> to give a stack trace of where the
+problem occurred. Include this in your report.
+</para>
+
+<para>
+<indexterm><primary>disass</primary></indexterm>
+If you know any assembly language, do a <command>disass</command> of the routine
+where the problem occurred (if it's in a library routine, then
+disassemble the routine that called it) and try to work out exactly
+where the problem is by looking at the surrounding code. Even if you
+do not know assembly, including this information in the bug report can be
+useful. 
+</para>
+</sect1>
+
+<sect1>
+<title>Attaching to a Running Process</title>
+
+<para>
+<indexterm><primary>PID</primary></indexterm>
+<indexterm><primary>gdb</primary></indexterm>
+<indexterm><primary>smbstatus</primary></indexterm>
+Unfortunately, some UNIXes (in particular some recent Linux kernels)
+refuse to dump a core file if the task has changed UID (which smbd
+does often). To debug with this sort of system, you could try to attach
+to the running process using
+<userinput>gdb smbd <replaceable>PID</replaceable></userinput>, where you get
+<replaceable>PID</replaceable> from <application>smbstatus</application>.
+Then use <command>c</command> to continue and try to cause the core dump
+using the client. The debugger should catch the fault and tell you
+where it occurred.
+</para>
+
+<para>
+Sometimes it is necessary to build Samba binary files that have debugging
+symbols so as to make it possible to capture enough information from a crashed
+operation to permit the Samba Team to fix the problem.
+</para>
+
+<para>
+Compile with <constant>-g</constant> to ensure you have symbols in place. 
+Add the following line to the &smb.conf; file global section:
+<screen>
+panic action = "/bin/sleep 90000"
+</screen>
+to catch any panics. If <command>smbd</command> seems to be frozen, look for any sleep
+processes. If it is not, and appears to be spinning, find the PID
+of the spinning process and type:
+<screen>
+&rootprompt; gdb /usr/local/samba/sbin/smbd
+</screen>
+<indexterm><primary>spinning process</primary></indexterm>
+then <quote>attach `pid'</quote> (of the spinning process), then type <quote>bt</quote> to
+get a backtrace to see where the smbd is in the call path.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Patches</title>
+
+
+<para>
+<indexterm><primary>diff</primary></indexterm>
+<indexterm><primary>patch</primary></indexterm>
+The best sort of bug report is one that includes a fix! If you send us
+patches, please use <userinput>diff -u</userinput> format if your version of 
+diff supports it; otherwise, use <userinput>diff -c4</userinput>. Make sure 
+you do the diff against a clean version of the source and let me know 
+exactly what version you used. 
+</para>
+
+</sect1>
+</chapter>

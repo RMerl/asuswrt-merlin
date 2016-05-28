@@ -115,6 +115,12 @@
 	((unsigned char *)&addr)[2], \
 	((unsigned char *)&addr)[3]
 
+
+#ifdef CTF_IPV6
+#define FRAG_IPV6_UDP_H	(NULL + 1)
+#define FRAG_IPV6_UDP_DUMMY_PORT	0
+#endif
+
 #ifdef CTF_PPTP
 #define ctf_pptp_cache(ci,f,h)	\
 	(CTF_ENAB((ci)) ? ((ci))->fn.pptp_cache((ci), (f), (h)) : BCME_OK)

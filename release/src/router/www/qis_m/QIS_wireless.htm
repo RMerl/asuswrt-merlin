@@ -307,7 +307,7 @@ function submitForm(){
 			//confirm common string combination     #JS_common_passwd#
                         var is_common_string0 = check_common_string(document.form.wl0_wpa_psk.value, "wpa_key");
                         if(is_common_string0){
-                                if(confirm("<#JS_common_passwd#>")){
+                                if(!confirm("<#JS_common_passwd#>")){
                                         return false;
                                 }
                         }
@@ -399,7 +399,7 @@ function submitForm(){
 					//confirm common string combination     #JS_common_passwd#
 		                        var is_common_string1 = check_common_string(document.form.wl1_wpa_psk.value, "wpa_key");
                 		        if(is_common_string1){
-                                		if(confirm("<#JS_common_passwd#>")){
+                                		if(!confirm("<#JS_common_passwd#>")){
 							return false;
 						}
 					}
@@ -489,7 +489,7 @@ function submitForm(){
 					//confirm common string combination     #JS_common_passwd#
                         		var is_common_string2 = check_common_string(document.form.wl2_wpa_psk.value, "wpa_key");
 		                        if(is_common_string2){
-		                                if(confirm("<#JS_common_passwd#>")){
+		                                if(!confirm("<#JS_common_passwd#>")){
                        			                return false;
 		                                }
                        			}

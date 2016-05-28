@@ -1,0 +1,215 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 15. Samba Printing Internals</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"><link rel="start" href="index.html" title="SAMBA Developers Guide"><link rel="up" href="pt04.html" title="Part IV. Debugging and tracing"><link rel="prev" href="tracing.html" title="Chapter 14. Tracing samba system calls"><link rel="next" href="pt05.html" title="Part V. Appendices"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 15. Samba Printing Internals</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="tracing.html">Prev</a> </td><th width="60%" align="center">Part IV. Debugging and tracing</th><td width="20%" align="right"> <a accesskey="n" href="pt05.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="devprinting"></a>Chapter 15. Samba Printing Internals</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Gerald</span> <span class="surname">Carter</span></h3></div></div><div><p class="pubdate">October 2002</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="devprinting.html#id2553971">Abstract</a></span></dt><dt><span class="sect1"><a href="devprinting.html#id2553984">
+Printing Interface to Various Back ends
+</a></span></dt><dt><span class="sect1"><a href="devprinting.html#id2554063">
+Print Queue TDB's
+</a></span></dt><dt><span class="sect1"><a href="devprinting.html#id2554239">
+ChangeID and Client Caching of Printer Information
+</a></span></dt><dt><span class="sect1"><a href="devprinting.html#id2554251">
+Windows NT/2K Printer Change Notify
+</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2553971"></a>Abstract</h2></div></div></div><p>
+The purpose of this document is to provide some insight into
+Samba's printing functionality and also to describe the semantics
+of certain features of Windows client printing.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2553984"></a>
+Printing Interface to Various Back ends
+</h2></div></div></div><p>
+Samba uses a table of function pointers to seven functions.  The
+function prototypes are defined in the <code class="varname">printif</code> structure declared
+in <code class="filename">printing.h</code>.
+</p><div class="itemizedlist"><ul type="disc"><li><p>retrieve the contents of a print queue</p></li><li><p>pause the print queue</p></li><li><p>resume a paused print queue</p></li><li><p>delete a job from the queue</p></li><li><p>pause a job in the print queue</p></li><li><p>result a paused print job in the queue</p></li><li><p>submit a job to the print queue</p></li></ul></div><p>
+Currently there are only two printing back end implementations
+defined.
+</p><div class="itemizedlist"><ul type="disc"><li><p>a generic set of functions for working with standard UNIX
+	printing subsystems</p></li><li><p>a set of CUPS specific functions (this is only enabled if
+	the CUPS libraries were located at compile time).</p></li></ul></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2554063"></a>
+Print Queue TDB's
+</h2></div></div></div><p>
+Samba provides periodic caching of the output from the "lpq command"
+for performance reasons.  This cache time is configurable in seconds.
+Obviously the longer the cache time the less often smbd will be
+required to exec a copy of lpq.  However, the accuracy of the print
+queue contents displayed to clients will be diminished as well.
+</p><p>
+The list of currently opened print queue TDB's can be found
+be examining the list of tdb_print_db structures ( see print_db_head
+in printing.c ). A queue TDB is opened using the wrapper function
+printing.c:get_print_db_byname().  The function ensures that smbd
+does not open more than MAX_PRINT_DBS_OPEN in an effort to prevent
+a large print server from exhausting all available file descriptors.
+If the number of open queue TDB's exceeds the MAX_PRINT_DBS_OPEN
+limit, smbd falls back to a most recently used algorithm for maintaining
+a list of open TDB's.
+</p><p>
+There are two ways in which a a print job can be entered into
+a print queue's TDB.  The first is to submit the job from a Windows
+client which will insert the job information directly into the TDB.
+The second method is to have the print job picked up by executing the
+"lpq command".
+</p><pre class="programlisting">
+/* included from printing.h */
+struct printjob {
+	pid_t pid; /* which process launched the job */
+	int sysjob; /* the system (lp) job number */
+	int fd; /* file descriptor of open file if open */
+	time_t starttime; /* when the job started spooling */
+	int status; /* the status of this job */
+	size_t size; /* the size of the job so far */
+	int page_count;	/* then number of pages so far */
+	BOOL spooled; /* has it been sent to the spooler yet? */
+	BOOL smbjob; /* set if the job is a SMB job */
+	fstring filename; /* the filename used to spool the file */
+	fstring jobname; /* the job name given to us by the client */
+	fstring user; /* the user who started the job */
+	fstring queuename; /* service number of printer for this job */
+	NT_DEVICEMODE *nt_devmode;
+};
+</pre><p>
+The current manifestation of the printjob structure contains a field
+for the UNIX job id returned from the "lpq command" and a Windows job
+ID (32-bit bounded by PRINT_MAX_JOBID).  When a print job is returned
+by the "lpq command" that does not match an existing job in the queue's
+TDB, a 32-bit job ID above the &lt;*vance doesn't know what word is missing here*&gt; is generating by adding UNIX_JOB_START to
+the id reported by lpq.
+</p><p>
+In order to match a 32-bit Windows jobid onto a 16-bit lanman print job
+id, smbd uses an in memory TDB to match the former to a number appropriate
+for old lanman clients.
+</p><p>
+When updating a print queue, smbd will perform the following
+steps ( refer to <code class="filename">print.c:print_queue_update()</code> ):
+</p><div class="orderedlist"><ol type="1"><li><p>Check to see if another smbd is currently in 
+	the process of updating the queue contents by checking the pid 
+	stored in <code class="constant">LOCK/<em class="replaceable"><code>printer_name</code></em></code>.  
+	If so, then do not update the TDB.</p></li><li><p>Lock the mutex entry in the TDB and store our own pid.
+	Check that this succeeded, else fail.</p></li><li><p>Store the updated time stamp for the new cache
+	listing</p></li><li><p>Retrieve the queue listing via "lpq command"</p></li><li><pre class="programlisting">
+	foreach job in the queue
+     	{
+		if the job is a UNIX job, create a new entry;
+		if the job has a Windows based jobid, then
+		{
+			Lookup the record by the jobid;
+			if the lookup failed, then
+				treat it as a UNIX job;
+			else
+				update the job status only
+		}
+	}</pre></li><li><p>Delete any jobs in the TDB that are not
+	in the in the lpq listing</p></li><li><p>Store the print queue status in the TDB</p></li><li><p>update the cache time stamp again</p></li></ol></div><p>
+Note that it is the contents of this TDB that is returned to Windows
+clients and not the actual listing from the "lpq command".
+</p><p>
+The NT_DEVICEMODE stored as part of the printjob structure is used to
+store a pointer to a non-default DeviceMode associated with the print
+job.  The pointer will be non-null when the client included a Device
+Mode in the OpenPrinterEx() call and subsequently submitted a job for
+printing on that same handle.  If the client did not include a Device
+Mode in the OpenPrinterEx() request, the nt_devmode field is NULL
+and the job has the printer's device mode associated with it by default.
+</p><p>
+Only non-default Device Mode are stored with print jobs in the print
+queue TDB.  Otherwise, the Device Mode is obtained from the printer
+object when the client issues a GetJob(level == 2) request.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2554239"></a>
+ChangeID and Client Caching of Printer Information
+</h2></div></div></div><p>
+[To be filled in later]
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2554251"></a>
+Windows NT/2K Printer Change Notify
+</h2></div></div></div><p>
+When working with Windows NT+ clients, it is possible for a
+print server to use RPC to send asynchronous change notification
+events to clients for certain printer and print job attributes.
+This can be useful when the client needs to know that a new
+job has been added to the queue for a given printer or that the
+driver for a printer has been changed.  Note that this is done
+entirely orthogonal to cache updates based on a new ChangeID for
+a printer object.
+</p><p>
+The basic set of RPC's used to implement change notification are
+</p><div class="itemizedlist"><ul type="disc"><li><p>RemoteFindFirstPrinterChangeNotifyEx ( RFFPCN )</p></li><li><p>RemoteFindNextPrinterChangeNotifyEx ( RFNPCN )</p></li><li><p>FindClosePrinterChangeNotify( FCPCN )</p></li><li><p>ReplyOpenPrinter</p></li><li><p>ReplyClosePrinter</p></li><li><p>RouteRefreshPrinterChangeNotify ( RRPCN )</p></li></ul></div><p>
+One additional RPC is available to a server, but is never used by the
+Windows spooler service:
+</p><div class="itemizedlist"><ul type="disc"><li><p>RouteReplyPrinter()</p></li></ul></div><p>
+The opnum for all of these RPC's are defined in include/rpc_spoolss.h
+</p><p>
+Windows NT print servers use a bizarre method of sending print
+notification event to clients.  The process of registering a new change
+notification handle is as follows.  The 'C' is for client and the
+'S' is for server.  All error conditions have been eliminated.
+</p><pre class="programlisting">
+C:	Obtain handle to printer or to the printer
+	server via the standard OpenPrinterEx() call.
+S:	Respond with a valid handle to object
+
+C:	Send a RFFPCN request with the previously obtained
+	handle with either (a) set of flags for change events
+	to monitor, or (b) a PRINTER_NOTIFY_OPTIONS structure
+	containing the event information to monitor.  The windows
+	spooler has only been observed to use (b).
+S:	The &lt;* another missing word*&gt; opens a new TCP session to the client (thus requiring
+	all print clients to be CIFS servers as well) and sends
+	a ReplyOpenPrinter() request to the client.
+C:	The client responds with a printer handle that can be used to
+	send event notification messages.
+S:	The server replies success to the RFFPCN request.
+
+C:	The windows spooler follows the RFFPCN with a RFNPCN
+	request to fetch the current values of all monitored
+	attributes.
+S:	The server replies with an array SPOOL_NOTIFY_INFO_DATA
+	structures (contained in a SPOOL_NOTIFY_INFO structure).
+
+C:	If the change notification handle is ever released by the
+	client via a FCPCN request, the server sends a ReplyClosePrinter()
+	request back to the client first.  However a request of this
+	nature from the client is often an indication that the previous
+	notification event was not marshalled correctly by the server
+	or a piece of data was wrong.
+S:	The server closes the internal change notification handle
+	(POLICY_HND) and does not send any further change notification
+	events to the client for that printer or job.
+</pre><p>
+The current list of notification events supported by Samba can be
+found by examining the internal tables in srv_spoolss_nt.c
+</p><div class="itemizedlist"><ul type="disc"><li><p>printer_notify_table[]</p></li><li><p>job_notify_table[]</p></li></ul></div><p>
+When an event occurs that could be monitored, smbd sends a message
+to itself about the change.  The list of events to be transmitted
+are queued by the smbd process sending the message to prevent an
+overload of TDB usage and the internal message is sent during smbd's
+idle loop (refer to printing/notify.c and the functions
+send_spoolss_notify2_msg() and print_notify_send_messages() ).
+</p><p>
+The decision of whether or not the change is to be sent to connected
+clients is made by the routine which actually sends the notification.
+( refer to srv_spoolss_nt.c:recieve_notify2_message() ).
+</p><p>
+Because it possible to receive a listing of multiple changes for
+multiple printers, the notification events must be split into
+categories by the printer name.  This makes it possible to group
+multiple change events to be sent in a single RPC according to the
+printer handle obtained via a ReplyOpenPrinter().
+</p><p>
+The actual change notification is performed using the RRPCN request
+RPC.  This packet contains
+</p><div class="itemizedlist"><ul type="disc"><li><p>the printer handle registered with the
+client's spooler on which the change occurred</p></li><li><p>The change_low value which was sent as part
+of the last RFNPCN request from the client</p></li><li><p>The SPOOL_NOTIFY_INFO container with the event
+information</p></li></ul></div><p>
+A <code class="varname">SPOOL_NOTIFY_INFO</code> contains:
+</p><div class="itemizedlist"><ul type="disc"><li><p>the version and flags field are predefined
+and should not be changed</p></li><li><p>The count field is the number of entries
+in the SPOOL_NOTIFY_INFO_DATA array</p></li></ul></div><p>
+The <code class="varname">SPOOL_NOTIFY_INFO_DATA</code> entries contain:
+</p><div class="itemizedlist"><ul type="disc"><li><p>The type defines whether or not this event
+is for a printer or a print job</p></li><li><p>The field is the flag identifying the event</p></li><li><p>the notify_data union contains the new valuie of the
+attribute</p></li><li><p>The enc_type defines the size of the structure for marshalling
+and unmarshalling</p></li><li><p>(a) the id must be 0 for a printer event on a printer handle.
+(b) the id must be the job id for an event on a printer job
+(c) the id must be the matching number of the printer index used
+in the response packet to the RFNPCN when using a print server
+handle for notification.  Samba currently uses the snum of
+the printer for this which can break if the list of services
+has been modified since the notification handle was registered.</p></li><li><p>The size is either (a) the string length in UNICODE for strings,
+(b) the size in bytes of the security descriptor, or (c) 0 for
+data values.</p></li></ul></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tracing.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="pt04.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="pt05.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 14. Tracing samba system calls </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Part V. Appendices</td></tr></table></div></body></html>

@@ -304,7 +304,7 @@ GEN_CONF:
 			eval("wl", "-i", ifname, "txpwr1", "-o", "-m", nvram_get_int(wl_nvname("txpwr", unit, 0)) ? nvram_safe_get(wl_nvname("txpwr", unit, 0)) : "-1");
 			eval("wl", "-i", ifname, "interference", nvram_safe_get(wl_nvname("interfmode", unit, 0)));
 #endif
-#ifndef RTCONFIG_BCMWL6
+#ifndef RTCONFIG_BCMARM
 			switch (model) {
 				default:
 					if ((unit == 0) &&
@@ -1404,6 +1404,7 @@ ALL:
 		case IPV6_PASSTHROUGH:
 #endif
 			set_default_accept_ra(1);
+			break;
 		case IPV6_6IN4:
 		case IPV6_6TO4:
 		case IPV6_6RD:
@@ -1418,17 +1419,10 @@ ALL:
 	else set_default_accept_ra(0);
 }
 
-#ifdef RTCONFIG_DUALWAN
 void start_lan_ipv6(void)
 {
 	char *lan_ifname = strdup(nvram_safe_get("lan_ifname"));
-	char *dualwan_wans = nvram_safe_get("wans_dualwan");
-	char *dualwan_mode = nvram_safe_get("wans_mode");
 	int unit, ipv6_service = 0;
-
-	if (!(!strstr(dualwan_wans, "none") &&
-		(!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))))
-		return;
 
 	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 		if (get_ipv6_service_by_unit(unit) != IPV6_DISABLED) {
@@ -1446,18 +1440,13 @@ void start_lan_ipv6(void)
 void stop_lan_ipv6(void)
 {
 	char *lan_ifname = strdup(nvram_safe_get("lan_ifname"));
-	char *dualwan_wans = nvram_safe_get("wans_dualwan");
-	char *dualwan_mode = nvram_safe_get("wans_mode");
-
-	if (!(!strstr(dualwan_wans, "none") &&
-		(!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))))
-		return;
 
 	stop_ipv6();
 	set_intf_ipv6_dad(lan_ifname, 0, 0);
 	config_ipv6(0, 1);
 }
 
+#ifdef RTCONFIG_DUALWAN
 void restart_dnsmasq_ipv6(void)
 {
 	char *dualwan_wans = nvram_safe_get("wans_dualwan");
@@ -1574,7 +1563,7 @@ void start_lan(void)
 	    wps_band_ssid_broadcast_off(get_radio_band(nvram_get_int("wps_band"))))
 		nvram_set("wps_enable", "0");
 	/* recover wps enable option back to original state */
-	else if(!nvram_match("wps_enable", nvram_safe_get("wps_enable_old"))){
+	else if (nvram_get("wps_enable_old") && !nvram_match("wps_enable", nvram_safe_get("wps_enable_old"))) {
 		nvram_set("wps_enable", nvram_safe_get("wps_enable_old"));
 	}
 
@@ -3629,7 +3618,7 @@ void start_lan_wl(void)
 	    wps_band_ssid_broadcast_off(get_radio_band(nvram_get_int("wps_band"))))
 		nvram_set("wps_enable", "0");
 	/* recover wps enable option back to original state */
-	else if(!nvram_match("wps_enable", nvram_safe_get("wps_enable_old"))){
+	else if (nvram_get("wps_enable_old") && !nvram_match("wps_enable", nvram_safe_get("wps_enable_old"))) {
 		nvram_set("wps_enable", nvram_safe_get("wps_enable_old"));
 	}
 

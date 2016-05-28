@@ -835,8 +835,11 @@ void generate_switch_para(void)
 				// port for DSL
 				if (get_wans_dualwan()&WANSCAP_DSL) {
 					switch_gen_config(wan, ports, wancfg, 1, "t");
-					nvram_set("vlan100ports", wan);
-					nvram_set("vlan100hwname", "et0");
+					char buf[32];
+					snprintf(buf, sizeof(buf), "%sports", DSL_WAN_VIF);
+					nvram_set(buf, wan);
+					snprintf(buf, sizeof(buf), "%shwname", DSL_WAN_VIF);
+					nvram_set(buf, "et0");
 				}
 
 				// port for LAN/WAN
@@ -2520,7 +2523,7 @@ void init_others(void)
 #endif
 #endif // RTCONFIG_BCM_7114
 
-#ifdef RTAC68U
+#if defined(RTAC68U) && !defined(RTAC68A)
 	update_cfe();
 #endif
 #ifdef RTAC3200
@@ -6085,6 +6088,10 @@ void wlconf_post(const char *ifname)
 }
 
 #ifdef RTCONFIG_BCMWL6
+#define WL_5G_BAND_2	1 << (2 - 1)
+#define WL_5G_BAND_3	1 << (3 - 1)
+#define WL_5G_BAND_4	1 << (4 - 1)
+
 void set_acs_ifnames()
 {
 	char acs_ifnames[64];
@@ -6092,6 +6099,9 @@ void set_acs_ifnames()
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	int unit;
 	int dfs_in_use = 0;
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
+	int dfs_in_use2 = 0;
+#endif
 
 	wl_check_5g_band_group();
 
@@ -6119,117 +6129,60 @@ void set_acs_ifnames()
 				sprintf(acs_ifnames, "%s", word);
 		}
 
+#ifndef RTCONFIG_BCM_7114
+		nvram_set(strcat_r(prefix, "acs_pol", tmp), "-65 40 -1 -100 -100 -1 -100 50 -100 0 1 0");
+#endif
+
 		unit++;
 	}
 
 	nvram_set("acs_ifnames", acs_ifnames);
 
 	/* exclude acsd from selecting chanspec 12, 12u, 13, 13u, 14, 14u */
-	nvram_set("wl0_acs_excl_chans", "0x100c,0x190a,0x100d,0x190b,0x100e,0x190c");
+	nvram_set("wl0_acs_excl_chans", nvram_match("acs_ch13", "1") ? "" : "0x100c,0x190a,0x100d,0x190b,0x100e,0x190c");
 
-#if defined(RTAC3200)
-	if (nvram_match("wl1_country_code", "E0")) {
-		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-		nvram_set("wl2_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
-	} else if (nvram_match("wl1_country_code", "JP")) {
-		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 116l, 116/80, 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80, 132, 132l, 136, 136u, 140 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd876,0xe07a,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a,0xd084,0xd886,0xd088,0xd986,0xd08c");
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-		nvram_set("wl2_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
-	} else {
-		/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
-		nvram_set("wl2_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
-	}
-#elif defined(RTAC5300)|| defined(RTAC5300R)
-	if (nvram_match("wl1_country_code", "E0")) {
-		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80*/
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
-		/* exclude acsd from selecting chanspec 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80*/
-		nvram_set("wl2_acs_excl_chans",
-			  "0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a");
-	} else if (nvram_match("wl1_country_code", "JP")) {
-		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 116l, 116/80, 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80, 132, 132l, 136, 136u, 140 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd876,0xe07a,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a,0xd084,0xd886,0xd088,0xd986,0xd08c");
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-		nvram_set("wl2_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
-	} else {
-		/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
-		nvram_set("wl2_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
-	}
-#elif defined(RTAC88U) || defined(RTAC3100)
-	if (nvram_match("wl1_country_code", "E0") || nvram_match("wl1_country_code", "JP") || nvram_match("mr_test", "1"))
-		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
-	else if (nvram_match("acs_band1", "1"))
-		nvram_set("wl1_acs_excl_chans", "0xd0a5");
-	else
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
-#elif defined(RTAC1200GP)
-	if (nvram_match("wl1_country_code", "E0"))
-		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
-	else if (nvram_match("acs_band1", "1"))
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
+	nvram_set("wl1_acs_excl_chans", "");
+	dfs_in_use = nvram_get_int("wl1_band5grp") & WL_5G_BAND_2;
+
+	/* exclude acsd from selecting chanspec 165 */
+	nvram_set("wl2_acs_excl_chans", (nvram_get_int("wl2_band5grp") & WL_5G_BAND_4) ? "0xd0a5" : "");
+	dfs_in_use2 = nvram_get_int("wl2_band5grp") & WL_5G_BAND_3;
+#else
+	if (nvram_match("wl1_band5grp", "7")) {		// EU, JP, UA
+#ifdef RTAC66U
+		if (!nvram_match("wl1_dfs", "1"))
+			nvram_set("acs_dfs", "0");
+#endif
+		if (!strncmp(nvram_safe_get("territory_code"), "UA", 2))
+			/* exclude acsd from selecting chanspec 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
+			nvram_set("wl1_acs_excl_chans", nvram_match("acs_band3", "1") ? "" : "0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
+		else
+			/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
+			nvram_set("wl1_acs_excl_chans", nvram_match("acs_dfs", "1") ? "" : "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
+
+		dfs_in_use = nvram_match("acs_dfs", "1");
+	} else if (nvram_match("wl1_band5grp", "9")) {	// US, CA, TW, SG, KR, AU (FCC)
+		if (nvram_match("wl1_country_code", "US") ||
+		    nvram_match("wl1_country_code", "Q1") || nvram_match("wl1_country_code", "Q2") ||
+		    nvram_match("wl1_country_code", "SG") ||
+		    !strncmp(nvram_safe_get("territory_code"), "US", 2) ||
+		    !strncmp(nvram_safe_get("territory_code"), "AU", 2))
+			// enable band 1 for US region
+			nvram_set("acs_band1", "1");
+
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 for non-US region by default */
+		nvram_set("wl1_acs_excl_chans", nvram_match("acs_band1", "1") ? "0xd0a5" : "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
+	} else {					// CN, AU (FCC + CE)
 		/* exclude acsd from selecting chanspec 165 */
 		nvram_set("wl1_acs_excl_chans", "0xd0a5");
-	else	/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
-#else
-	if (nvram_match("wl1_country_code", "EU"))
-	{
-		if (nvram_match("acs_dfs", "1")
-#ifdef RTAC66U
-			&& nvram_match("wl1_dfs", "1")
-#endif
-		) {
-			/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-			nvram_set("wl1_acs_excl_chans",
-				  "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e");
-			dfs_in_use = 1;
-		}
-		else	/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
-			nvram_set("wl1_acs_excl_chans",
-				  "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
-	}
-	else if (nvram_match("wl1_country_code", "JP"))
-	{
-		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-		nvram_set("wl1_acs_excl_chans",
-			  "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e");
-	}
-	else
-	{
-		if (nvram_match("acs_band1", "1"))
-			/* exclude acsd from selecting chanspec 165 */
-			nvram_set("wl1_acs_excl_chans", "0xd0a5");
-		else	/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
-			nvram_set("wl1_acs_excl_chans",
-				  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
 	}
 #endif
 
 	nvram_set_int("wl1_acs_dfs", dfs_in_use ? 2 : 0);
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
+	nvram_set_int("wl2_acs_dfs", dfs_in_use ? 2 : 0);
+#endif
 }
 #endif
 

@@ -749,7 +749,7 @@ int main (int argc, char **argv)
   if (!option_bool(OPT_NOWILD)) 
     for (if_tmp = daemon->if_names; if_tmp; if_tmp = if_tmp->next)
       if (if_tmp->name && !if_tmp->used)
-	my_syslog(LOG_WARNING, _("warning: interface %s does not currently exist"), if_tmp->name);
+	my_syslog(LOG_DEBUG, _("warning: interface %s does not currently exist"), if_tmp->name);
    
   if (daemon->port != 0 && option_bool(OPT_NO_RESOLV))
     {

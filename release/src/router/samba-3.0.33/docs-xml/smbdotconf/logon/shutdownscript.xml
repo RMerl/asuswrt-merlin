@@ -1,0 +1,60 @@
+<samba:parameter name="shutdown script"
+                 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This a full path name to a script called by 
+	 <citerefentry><refentrytitle>smbd</refentrytitle> 
+        <manvolnum>8</manvolnum></citerefentry> that should 
+	start a shutdown procedure.</para>
+
+	<para>If the connected user posseses the <constant>SeRemoteShutdownPrivilege</constant>,
+	right, this command will be run as user.</para>
+
+	<para>The %z %t %r %f variables are expanded as follows:</para>
+	
+	<itemizedlist>
+		<listitem>
+			<para><parameter moreinfo="none">%z</parameter> will be substituted with the
+			shutdown message sent to the server.</para>
+		</listitem>
+		
+		<listitem>
+			<para><parameter moreinfo="none">%t</parameter> will be substituted with the
+			number of seconds to wait before effectively starting the
+			shutdown procedure.</para>
+		</listitem>
+		
+		<listitem>
+			<para><parameter moreinfo="none">%r</parameter> will be substituted with the
+			switch <emphasis>-r</emphasis>. It means reboot after shutdown
+			for NT.</para>
+		</listitem>
+		
+		<listitem>
+			<para><parameter moreinfo="none">%f</parameter> will be substituted with the
+			switch <emphasis>-f</emphasis>. It means force the shutdown
+			even if applications do not respond for NT.</para>
+		</listitem>
+	</itemizedlist>
+
+	<para>Shutdown script example:
+<programlisting format="linespecific">
+#!/bin/bash
+		
+$time=0
+let &quot;time/60&quot;
+let &quot;time++&quot;
+
+/sbin/shutdown $3 $4 +$time $1 &amp;
+</programlisting>
+        Shutdown does not return so we need to launch it in background.
+	</para>
+
+</description>
+<related>abort shutdown script</related>
+<value type="default"></value>
+<value type="example">/usr/local/samba/sbin/shutdown %m %t %r %f</value>
+
+</samba:parameter>

@@ -1,0 +1,36 @@
+<samba:parameter name="printing"
+                 context="S"
+				 type="enum"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameters controls how printer status  information is
+    interpreted on your system. It also affects the  default values for
+    the <parameter moreinfo="none">print command</parameter>,  <parameter
+    moreinfo="none">lpq command</parameter>, <parameter
+    moreinfo="none">lppause command </parameter>, <parameter
+    moreinfo="none">lpresume command</parameter>, and  <parameter
+    moreinfo="none">lprm command</parameter> if specified in the 
+    [global] section.</para>
+
+    <para>Currently nine printing styles are supported. They are
+    <constant>BSD</constant>, <constant>AIX</constant>, 
+    <constant>LPRNG</constant>, <constant>PLP</constant>,
+    <constant>SYSV</constant>, <constant>HPUX</constant>,
+    <constant>QNX</constant>, <constant>SOFTQ</constant>,
+    and <constant>CUPS</constant>.</para>
+
+    <para>To see what the defaults are for the other print 
+    commands when using the various options use the <citerefentry><refentrytitle>testparm</refentrytitle>
+    <manvolnum>1</manvolnum></citerefentry> program.</para>
+
+    <para>This option can be set on a per printer basis.  Please be 
+    aware however, that you must place any of the various printing 
+    commands (e.g. print command, lpq command, etc...) after defining
+    the value for the <parameter>printing</parameter> option since it will 
+    reset the printing commands to default values.</para>
+
+    <para>See also the discussion in the <link linkend="PRINTERSSECT">
+    [printers]</link> section.</para>
+</description>
+</samba:parameter>

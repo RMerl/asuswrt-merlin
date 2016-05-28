@@ -1,0 +1,56 @@
+.\"     Title: profiles
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"
+.TH "PROFILES" "1" "11/20/2008" "Samba 3\.0" "User Commands"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+profiles - A utility to report and change SIDs in registry files
+.SH "SYNOPSIS"
+.HP 1
+profiles [\-v] [\-c\ SID] [\-n\ SID] {file}
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+profiles
+is a utility that reports and changes SIDs in windows registry files\. It currently only supports NT\.
+.SH "OPTIONS"
+.PP
+file
+.RS 4
+Registry file to view or edit\.
+.RE
+.PP
+\-v,\-\-verbose
+.RS 4
+Increases verbosity of messages\.
+.RE
+.PP
+\-c SID1 \-n SID2
+.RS 4
+Change all occurences of SID1 in
+\fIfile\fR
+by SID2\.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.
+.PP
+The profiles man page was written by Jelmer Vernooij\.

@@ -1,0 +1,81 @@
+NOTE: the debian-unstable and debian-woody are not updated anymore,
+they are left only as a reference for now. --SSS
+
+Building Samba Packages for Debian GNU/Linux
+--------------------------------------------
+
+Building Debian packages is not as hard as some people might think.
+The following instructions will allow you to build your own Samba
+Debian packages. These instructions and the files in packaging/Debian/
+should be current as of Samba 3.0.2, and allow you to build Debian
+packages for Debian unstable (so you need some development packages
+available only in Debian unstable.) If you are using something newer
+than 3.0.2 you might want to try to follow the instructions to see if
+patches apply cleanly. If some patches don't apply cleanly please e-mail
+samba@packages.debian.org since we might have fixed patches that we have
+not yet integrated into upstream Samba.
+
+We try to maintain as much compatibility with previous releases
+of Debian as possible, so it is possible that the files in
+packaging/Debian/ can also be used to build Samba Debian packages for
+other Debian releases. However, sometimes this is just not possible
+because we need to use stuff that is only available on Debian unstable.
+
+Instructions
+------------
+
+If you want to build Samba packages for Debian and you just want to use
+upstream sources, i.e. you don't want to wait for us to put official
+packages out, or you want packages for a Debian version for which we
+don't provide deb's, or you don't want to use official packages, or
+you want to add --this-cool-switch to configure, or whatever, follow
+these instructions:
+
+0) Make sure you have the following packages installed (in addition
+to the normal Debian development packages -- dpkg-dev, libc6-dev,
+devscripts, etc.):
+
+  autoconf
+  debhelper (>= 4.1.13)
+  libpam0g-dev
+  libreadline4-dev
+  libcupsys2-dev
+  libacl1-dev, libacl1 (>= 2.2.11-1)
+  libkrb5-dev
+  libldap2-dev
+  po-debconf
+  python2.3-dev
+
+  Notes regarding the packages required to build Samba Debian packages:
+
+  * The libcupsys2-dev is not available in Debian Potato (Debian 2.2).
+    That's fine; the configure script won't detect CUPS support and the
+    resulting binaries won't support CUPS.
+
+  * The list above is current as of samba-3.0.0rc2, but it can get
+    out of date. The best way to check what packages are required to
+    build the samba packages on Debian is to look for the Build-Depends:
+    field in the file debian/control.
+
+1) cd samba[-<version>]. For example, "cd samba-3.0.2".
+2) cp -a packaging/Debian/debian/ .
+  It's important that you copy instead of symlink because the build
+  tools in Potato have a problem that prevents the build to work with
+  a symlink. If you are running a recent Debian distribution you don't
+  have to copy the directory and you can use a symlink instead:
+  "ln -s packaging/Debian/debian/ ."
+3) dch -i (this is completely optional - only do it if you understand
+   Debian version numbers! Don't complain later if you can't upgrade
+   to official versions of the Samba packages for Debian.)
+  - Edit the changelog and make sure the version is right. For example,
+    for Samba 3.0.2, the version number should something like 3.0.2-0.1.
+4) Run 'fakeroot debian/rules binary'.
+5) That's it. Your new packages should be in ../. Install with dpkg.
+
+Please e-mail samba@packages.debian.org with comments, questions or
+suggestions. Please talk to us and not to the Samba Team. They have
+better things to do and know nothing about the Debian packaging system.
+
+Eloy A. Paris <peloy@debian.org>
+Steve Langasek <vorlon@debian.org>
+

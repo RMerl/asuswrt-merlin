@@ -1,0 +1,28 @@
+<samba:parameter name="share modes"
+	type="boolean"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This enables or disables the honoring of 
+	the <parameter moreinfo="none">share modes</parameter> during a file open. These 
+	modes are used by clients to gain exclusive read or write access 
+	to a file.</para>
+
+	<para>These open modes are not directly supported by UNIX, so
+	they are simulated using shared memory, or lock files if your 
+	UNIX doesn't support shared memory (almost all do).</para>
+
+	<para>The share modes that are enabled by this option are 
+	 <constant>DENY_DOS</constant>, <constant>DENY_ALL</constant>,
+	<constant>DENY_READ</constant>, <constant>DENY_WRITE</constant>,
+	<constant>DENY_NONE</constant> and <constant>DENY_FCB</constant>.
+	</para>
+
+	<para>This option gives full share compatibility and enabled 
+	by default.</para>
+
+	<para>You should <emphasis>NEVER</emphasis> turn this parameter 
+	off as many Windows applications will break if you do so.</para>
+</description>
+<value type="default">yes</value>
+</samba:parameter>

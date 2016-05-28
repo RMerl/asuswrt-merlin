@@ -199,16 +199,14 @@ image:
 	fi
 
 	@rm -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
-ifeq ($(ARM),)
 	@$(MAKE) -C router image
-endif
 
 ifeq ($(CONFIG_RALINK),y)
 # MTK/Ralink platform
 	# generate kernel part
 	@rm -rf $(PLATFORMDIR)/zImage.lzma ; \
-	mipsel-linux-objcopy -O binary $(LINUXDIR)/vmlinux $(PLATFORMDIR)/vmlinus ; \
-	asustools/lzma -9 -f -c $(PLATFORMDIR)/vmlinus > $(PLATFORMDIR)/zImage.lzma ; \
+	mipsel-linux-objcopy -O binary -R .reginfo -R .note -R .comment -R .mdebug -S $(LINUXDIR)/vmlinux $(PLATFORMDIR)/vmlinus ; \
+	asustools/lzma_9k e $(PLATFORMDIR)/vmlinus $(PLATFORMDIR)/zImage.lzma -lc2 -lp2 -pb2 -mfbt2 ; \
 	cp -f $(PLATFORMDIR)/zImage.lzma $(PLATFORMDIR)/zImage.img ; \
 	# padded kernel image size
 	@SIZE=`wc -c $(PLATFORMDIR)/zImage.img | awk '{print $$1}'`; \
@@ -299,22 +297,21 @@ else ifeq ($(QCA),y)
 else
 # Broadcom ARM/MIPS platform
 	$(MAKE) -C ctools clean
-	$(MAKE) -C ctools
+	$(MAKE) -C ctools $(if $(CONFIG_BCMWL5),TRX=NEW,)
 	# Create generic TRX image
-	ctools/mksquashfs $(PLATFORMDIR)/target ctools/target.squashfs -noappend -all-root
 ifeq ($(ARM),y)
-	ctools/objcopy -O binary -R .note -R .note.gnu.build-id -R .comment -S $(LINUXDIR)/vmlinux ctools/piggy
+	ctools/objcopy -O binary -R .note -R .note.gnu.build-id -R .comment -S $(LINUXDIR)/vmlinux $(PLATFORMDIR)/piggy
 else
-	ctools/objcopy -O binary -R .reginfo -R .note -R .comment -R .mdebug -S $(LINUXDIR)/vmlinux ctools/piggy
+	ctools/objcopy -O binary -R .reginfo -R .note -R .comment -R .mdebug -S $(LINUXDIR)/vmlinux $(PLATFORMDIR)/piggy
 endif
 ifneq (,$(filter y,$(BCMWL6) $(BCMWL6A) $(BOOTLZMA) $(ARM)))
-	ctools/lzma_4k e ctools/piggy  ctools/vmlinuz-lzma
-	ctools/trx -o image/linux-lzma.trx ctools/vmlinuz-lzma ctools/target.squashfs
+	ctools/lzma_4k e $(PLATFORMDIR)/piggy $(PLATFORMDIR)/vmlinuz-lzma
+	ctools/trx -o image/linux-lzma.trx $(PLATFORMDIR)/vmlinuz-lzma $(PLATFORMDIR)/target.image
 else
-	ctools/lzma_9k e ctools/piggy ctools/vmlinuz-lzma -eos -lc2 -lp2 -pb2 -mfbt2
-	ctools/trx -o image/linux-lzma.trx lzma-loader/loader.gz ctools/vmlinuz-lzma ctools/target.squashfs
+	ctools/lzma_9k e $(PLATFORMDIR)/piggy $(PLATFORMDIR)/vmlinuz-lzma -eos -lc2 -lp2 -pb2 -mfbt2
+	ctools/trx -o image/linux-lzma.trx lzma-loader/loader.gz $(PLATFORMDIR)/vmlinuz-lzma $(PLATFORMDIR)/target.image
 endif
-ifeq ($(BCMWL6A),y)
+ifneq ($(CONFIG_BCMWL5),)
 ifeq ($(FAKEHDR),y)
 	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),$(FORCE_SN),$(FORCE_EN),image/$(IMGNAME).trx
 else
@@ -325,7 +322,6 @@ else
 endif
 	@rm -f image/linux-lzma.trx
 endif
-	
 #	md5sum image/$(IMGNAME).trx > image/$(IMGNAME).md5
 
 ifeq ($(DSL_TCLINUX),y)
@@ -364,10 +360,10 @@ clean:
 	@touch router/.config
 	@rm -f router/config_[a-z]
 	@rm -f router/busybox/config_[a-z]
-	@$(MAKE) -C router $@
+	@-$(MAKE) -C router $@
 	@-$(MAKE) -C $(LINUXDIR) $@
+	@-$(MAKE) cleantools
 	@-rm -rf $(PLATFORMDIR)
-	@$(MAKE) -C btools clean
 
 cleanimage:
 	@rm -f fpkg.log
@@ -377,14 +373,14 @@ cleanimage:
 	@-mkdir image
 
 cleantools:
-	@$(MAKE) -C $(LINUXDIR)/scripts/squashfs clean
+	@[ ! -d $(LINUXDIR)/scripts/squashfs ] || \
+		$(MAKE) -C $(LINUXDIR)/scripts/squashfs clean
 	@$(MAKE) -C btools clean
 ifeq ($(CONFIG_RALINK),y)
 else ifeq ($(CONFIG_QCA),y)
 else
 	@$(MAKE) -C ctools clean
 endif
-
 
 cleankernel:
 	@cd $(LINUXDIR) && \
@@ -627,6 +623,8 @@ define RouterOptions
 		echo "# RTCONFIG_UPNPC is not set" >>$(1); \
 		sed -i "/RTCONFIG_BONJOUR/d" $(1); \
 		echo "# RTCONFIG_BONJOUR is not set" >>$(1); \
+		sed -i "/RTCONFIG_SPEEDTEST/d" $(1); \
+		echo "# RTCONFIG_SPEEDTEST is not set" >>$(1); \
 	fi; \
 	if [ "$(SFP8M)" = "y" ]; then \
 		sed -i "/RTCONFIG_8M_SFP/d" $(1); \
@@ -635,6 +633,8 @@ define RouterOptions
 		echo "# RTCONFIG_UPNPC is not set" >>$(1); \
 		sed -i "/RTCONFIG_BONJOUR/d" $(1); \
 		echo "# RTCONFIG_BONJOUR is not set" >>$(1); \
+		sed -i "/RTCONFIG_SPEEDTEST/d" $(1); \
+		echo "# RTCONFIG_SPEEDTEST is not set" >>$(1); \
 	fi; \
 	if [ "$(SFPRAM16M)" = "y" ]; then \
 		sed -i "/RTCONFIG_16M_RAM_SFP/d" $(1); \
@@ -876,6 +876,10 @@ define RouterOptions
 				sed -i "/RTCONFIG_DYN_MODEM/d" $(1); \
 				echo "RTCONFIG_DYN_MODEM=y" >>$(1); \
 			fi; \
+			if [ "$(USBSMS)" = "y" ]; then \
+				sed -i "/RTCONFIG_USB_SMS_MODEM/d" $(1); \
+				echo "RTCONFIG_USB_SMS_MODEM=y" >>$(1); \
+			fi; \
 		fi; \
 		if [ "$(PRINTER)" = "y" ]; then \
 			sed -i "/RTCONFIG_USB_PRINTER/d" $(1); \
@@ -1007,29 +1011,6 @@ define RouterOptions
 	if [ "$(STRACE)" = "y" ] ; then \
 		sed -i "/RTCONFIG_STRACE/d" $(1); \
 		echo "RTCONFIG_STRACE=y" >>$(1); \
-	fi; \
-	if [ "$(DEBUG)" = "y" ] || [ "$(GDB)" = "y" ]; then \
-                sed -i "/CONFIG_ELF_CORE/d" $(1); \
-                echo "CONFIG_ELF_CORE=y" >>$(1); \
-        	if [ "$(BCMWL6A)" = "y" ]; then \
-                	sed -i "/CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS/d" $(1); \
-                	echo "# CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS is not set" >>$(1); \
-        	fi; \
-        fi; \
-        if [ "$(DUMP_OOPS_MSG)" = "y" ]; then \
-                if [ "$(BUILD_NAME)" = "RT-AC66U" ] || [ "$(BUILD_NAME)" = "RT-N66U" ]; then \
-                        echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
-                        echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x07FFE000" >>$(1); \
-                        echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
-                else \
-                        echo "# CONFIG_DUMP_PREV_OOPS_MSG is not set" >>$(1); \
-                fi; \
-        else \
-                echo "# CONFIG_DUMP_PREV_OOPS_MSG is not set" >>$(1); \
-        fi; \
-	if [ "$(DNSMASQ)" = "y" ]; then \
-		sed -i "/RTCONFIG_DNSMASQ/d" $(1); \
-		echo "RTCONFIG_DNSMASQ=y" >>$(1); \
 	fi; \
 	if [ "$(ISP_METER)" = "y" ]; then \
 		sed -i "/RTCONFIG_ISP_METER/d" $(1); \
@@ -1515,10 +1496,18 @@ define RouterOptions
 		sed -i "/RTCONFIG_PORT_BASED_VLAN/d" $(1); \
 		echo "RTCONFIG_PORT_BASED_VLAN=y" >>$(1); \
 	fi; \
-        if [ "$(NOIPTV)" = "y" ]; then \
-                sed -i "/RTCONFIG_NOIPTV/d" $(1); \
-                echo "RTCONFIG_NOIPTV=y" >>$(1); \
-        fi; \
+	if [ "$(NOIPTV)" = "y" ]; then \
+		sed -i "/RTCONFIG_NOIPTV/d" $(1); \
+		echo "RTCONFIG_NOIPTV=y" >>$(1); \
+	fi; \
+	if [ "$(ATCOVER)" = "y" ]; then \
+		sed -i "/RTCONFIG_AUTOCOVER_SIP/d" $(1); \
+		echo "RTCONFIG_AUTOCOVER_SIP=y" >>$(1); \
+	fi; \
+	if [ "$(LAN50)" = "y" ]; then \
+		sed -i "/RTCONFIG_DEFLAN50/d" $(1); \
+		echo "RTCONFIG_DEFLAN50=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef
@@ -2034,8 +2023,6 @@ if [ "$(TUNEK)" != "n" ]; then \
 	else \
 		sed -i "/CONFIG_IPV6/d" $(1); \
 		echo "# CONFIG_IPV6 is not set" >>$(1); \
-		sed -i "/CONFIG_RA_HW_NAT_IPV6/d" $(1); \
-		echo "# CONFIG_RA_HW_NAT_IPV6 is not set" >>$(1); \
 	fi; \
 	sed -i "/CONFIG_BCM57XX/d" $(1); \
 	if [ "$(BCM57)" = "y" ]; then \
@@ -2738,8 +2725,7 @@ install gen_target:
 gen_prebuilt:
 	-mkdir -p $(PBDIR)
 	$(MAKE) -f upb.mak PBDIR=${PBDIR}
-
-	-@[ -f .gpl_excludes_router ] && cp -f .gpl_excludes_router ${PBDIR}/release/.
+	@if [ -f .gpl_excludes_router ]; then cp -f .gpl_excludes_router ${PBDIR}/release/.; fi
 
 #
 # Generic rules

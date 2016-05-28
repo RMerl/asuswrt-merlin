@@ -1,0 +1,101 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 1. The SMB/CIFS protocol</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"><link rel="start" href="index.html" title="The Official Samba-4 HOWTO"><link rel="up" href="pt01.html" title="Part I. Introduction to SMB networks"><link rel="prev" href="pt01.html" title="Part I. Introduction to SMB networks"><link rel="next" href="samba.html" title="Chapter 2. Samba"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 1. The SMB/CIFS protocol</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="pt01.html">Prev</a> </td><th width="60%" align="center">Part I. Introduction to SMB networks</th><td width="20%" align="right"> <a accesskey="n" href="samba.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="protocol"></a>Chapter 1. The SMB/CIFS protocol</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="protocol.html#id2495806">History</a></span></dt><dd><dl><dt><span class="sect2"><a href="protocol.html#id2495812">Invention by IBM</a></span></dt><dt><span class="sect2"><a href="protocol.html#id2495883">The various incarnations of SMB</a></span></dt><dt><span class="sect2"><a href="protocol.html#id2496008">Samba versions and their support for the SMB models</a></span></dt></dl></dd></dl></div><p>
+		"SMB" (also known as "CIFS") is a 
+		file-sharing protocol that has been used since the mid-eighties. 
+		Most people know SMB as the protocol behind the "Network Neighbourhood" 
+		and remote printing in Windows.
+	</p><p>
+		Several parts of the protocol are not discussed in this chapter, such 
+		as mailslots, browsing and dfs, to prevent it from getting too complex. 
+		CIFS internals are documented in detail in [<span class="citation">Hertel, 2003</span>].
+	</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2495806"></a>History</h2></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2495812"></a>Invention by IBM</h3></div></div></div><p>
+				SMB is not very old, but it has a long history of modifications and extensions.
+				The original protocol was meant to run over ``NetBIOS'', which was the 
+				name of the DOS interface to a very simple LAN system developed by IBM.
+				NetBIOS was developed because SNA, IBM's other main 
+				protocol at the time, was much too advanced for use in DOS.
+			</p><p>
+				The NetBIOS API in these days (early eighties) was nothing more then the 
+				interface to a very simple link-layer protocol 
+				over which several protocols, including SMB, were used. It could do reads and 
+				writes to services on remote hosts, which were identified by case-insensitive 
+				names, and discover all available hosts and services.
+			</p><p>
+				Dr. Barry Feigenbau, an IBM employee, invented the core of the original SMB protocol, 
+				which he initially named after himself: ``BAF''. He later changed the name to 
+				be ``SMB'' (for ``Server Message Block''). Every packet in the protocol 
+				starts with a byte $0xFF$ and these three letters. 
+			</p><p>
+				IBM, Microsoft, 3Com and Intel made up the rest of the initial protocol 
+				together. The commands the protocol supported at this stage were basically
+				a mirror of the DOS File IO API calls, which meant the protocol wasn't very 
+				efficient. The protocol also lacked authentication support. Everybody on the 
+				network could do reads and writes, which meant this protocol 
+				wasn't very suitable for large enterprises.
+			</p><p>
+				NetBIOS is an API that has had various implementations; there is 
+				NetBIOS over TCP/IP (NBT), NetBIOS over IPX, NetBIOS over SNA and 
+				even NetBIOS over DECNEt. Mostly used these days is
+				NetBIOS over TCP (NBT). 
+			</p><p>
+				This is also were things are starting to get hairy. Since NetBIOS identifies 
+				hosts by their name, NetBIOS clients had to start doing IP broadcasts to 
+				figure out the IP of the host they had to connect to. Several schemes were 
+				introduced to do name lookups crossing subnet boundaries, using name servers, 
+				etc. We're basically emulating a NetBIOS LAN in order to be able to run SMB.
+			</p><p>
+				Doing NetBIOS over IP is not very sane, however, the NBT implementation itself 
+				in Windows isn't very nice either. It has horrible 
+				limits, special exceptions, several broken schemes for looking up 
+				names (including two kinds of name servers). NetBIOS and NetBIOS over TCP/IP 
+				are described in RFC1001 and RFC1002.
+			</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2495883"></a>The various incarnations of SMB</h3></div></div></div><p>Over the years, several usage models for SMB have been developed. While SMB originally started out as a file sharing protocol, it was later extended to include support for network management and other network services 
+				as well.</p><p>
+				One of the reasons for the various "upgrades" of the SMB 
+				protocol is the fact that networks have become larger 
+				and larger and with them the need for privilege separation 
+				and scalability has increased.
+			</p><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2495902"></a>DOS</h4></div></div></div><p>
+					The original model in which SMB was used was as a 
+					simple file-sharing service in a NetBIOS-environment.
+				</p><p>
+					File sharing worked basically by specifying a list of directories that had 
+					to be shared and what name they had to be shared under ("shares"). Eventually, 
+					one could password-protect a share. At most one password per share could be set.
+				</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2495922"></a>Windows For Workgroups</h4></div></div></div><p>
+					After the ``CORE'' dialect, 
+					IBM and Microsoft implemented a new dialect known as ``LANMAN''.
+					This dialect was used by Windows for 
+					Workgroups, OS/2 and Windows 9x which all know it under a different name. A 
+					'virtual' file system was also added, which was used for doing remote function 
+					calls (RAP, for ``Remote Administration Protocol'').
+				</p><p>
+					Computers are grouped into "Workgroups" in this model. Everybody is equal to 
+					the others and there is no central point of control.
+				</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2495944"></a>Windows NT</h4></div></div></div><p>
+					For Windows NT, yet another dialect was added, named 'NT'. The NT dialect 
+					had it's own set of file I/O functions (similar to the NT File I/O API) 
+					and it had support for yet another way of doing remote function calls:
+					DCE/RPC. RPC's are used for DCOM and several of the subsystems in NT
+					that can be accessed remotely (registry, printing, user management, logging 
+					on, etc).
+				</p><p>
+					Windows NT works with a new concept for grouping computers called ``domains''<sup>[<a name="id2495963" href="#ftn.id2495963" class="footnote">1</a>]</sup>. Each computer is member of exactly one domain. There are several roles a computer can have in the domain: PDC (primary domain controller, the "manager" of the domain, that coordinates all authentication and authorization), BDC (Backup domain controller, in case the PDC goes down) or just a regular domain member. The PDC decides who is to be a member of the domain.
+				</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2495976"></a>Windows 2000</h4></div></div></div><p>
+					In Windows NT 5 (marketing name: Windows 2000), NetBIOS-less SMB was
+					introduced. This means SMB is used directly over TCP port 445 instead of 
+					via NetBIOS over TCP/IP. DNS 
+					is used for looking up machine names. 
+				</p><p>Windows 2000 was also the first operating system from Microsoft
+					that had support for Active Directory. Active Directory is very 
+					similar to the "domain" concept used by NT4, though it 
+					is implemented differently (using modified open protocols), 
+					and has some additional features (one of the most important ones being decentralized).
+				</p><p>
+					Active directory no longer uses a central point of authority 
+					and there are fewer limits to the size of a domain. Several 
+					DC's can exist, so there is no longer a single point of 
+					failure as well as better scalability. 
+				</p></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2496008"></a>Samba versions and their support for the SMB models</h3></div></div></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2496014"></a>Samba 2.2</h4></div></div></div><p>Full CORE and Workgroup support. Somewhat basic 
+					NT4-style support.</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2496025"></a>Samba 3.0</h4></div></div></div><p>Full CORE and Workgroup support. Almost complete 
+					NT4-style support.
+				</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2496036"></a>Samba 3.2</h4></div></div></div><p>FIXME</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2496046"></a>Samba 4.0</h4></div></div></div><p>Full CORE, Workgroup, NT4 and ADS support.</p></div></div></div><div class="footnotes"><br><hr width="100" align="left"><div class="footnote"></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pt01.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="pt01.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="samba.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Part I. Introduction to SMB networks </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 2. Samba</td></tr></table></div></body></html>

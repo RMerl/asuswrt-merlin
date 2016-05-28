@@ -1,3 +1,0 @@
-# Host: NetBSD/amd64
-NATDEPFILES= fork-child.o inf-ptrace.o \
-	amd64-nat.o amd64bsd-nat.o amd64nbsd-nat.o

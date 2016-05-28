@@ -106,6 +106,7 @@ define platformKernelConfig
 			else \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm_7114/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			fi; \
+			cp -f $(SRCBASE)/router/dpsta/bcm7114/dpsta.o $(SRCBASE)/router/dpsta/linux; \
 		elif [ "$(BCM10)" = "y" ]; then \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \

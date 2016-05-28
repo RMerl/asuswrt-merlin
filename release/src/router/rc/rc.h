@@ -167,6 +167,9 @@ do {					\
 #define PPPOE0		0
 #define PPPOE1		1
 
+#define DSL_WAN_VID		3880		//0x0F28
+#define DSL_WAN_VIF		"vlan3880"	
+
 #define GOT_IP			0x01
 #define RELEASE_IP		0x02
 #define	GET_IP_ERROR		0x03
@@ -201,6 +204,7 @@ extern int asus_ate_command(const char *command, const char *value, const char *
 extern int ate_dev_status(void);
 extern int isValidMacAddr(const char* mac);
 extern int isValidCountryCode(const char *Ccode);
+extern int isValidRegrev(char *regrev);
 extern int isValidSN(const char *sn);
 extern int pincheck(const char *a);
 extern int isValidChannel(int is_2G, char *channel);
@@ -436,6 +440,8 @@ extern void set_intf_ipv6_dad(const char *ifname, int bridge, int flag);
 extern void config_ipv6(int enable, int incl_wan);
 extern void enable_ipv6(const char *ifname);
 extern void disable_ipv6(const char *ifname);
+extern void start_lan_ipv6(void);
+extern void stop_lan_ipv6(void);
 #endif
 #ifdef RTCONFIG_WIRELESSREPEATER
 extern void start_lan_wlc(void);
@@ -485,6 +491,8 @@ extern int ppp_ifunit(char *ifname);
 extern int ppp_linkunit(char *linkname);
 
 // pppd.c
+extern char *ppp_escape(char *src, char *buf, size_t size);
+extern char *ppp_safe_escape(char *src, char *buf, size_t size);
 extern int start_pppd(int unit);
 extern void stop_pppd(int unit);
 extern int start_demand_ppp(int unit, int wait);
@@ -536,6 +544,10 @@ extern void stop_zcip(int unit);
 extern int dhcp6c_wan(int argc, char **argv);
 extern int start_dhcp6c(void);
 extern void stop_dhcp6c(void);
+#ifdef RTCONFIG_6RELAYD
+extern void stop_6relayd(void);
+extern int start_6relayd(void);
+#endif
 #endif
 
 #ifdef RTCONFIG_WPS
@@ -590,6 +602,7 @@ extern void btn_check(void);
 extern int watchdog_main(int argc, char *argv[]);
 extern int watchdog02_main(int argc, char *argv[]);
 extern int sw_devled_main(int argc, char *argv[]);
+extern int wdg_monitor_main(int argc, char *argv[]);
 extern void init_wllc(void);
 extern void rssi_check_unit(int unit);
 
@@ -619,8 +632,6 @@ extern void stop_ots(void);
 extern int start_ots(void);
 
 // common.c
-extern in_addr_t inet_addr_(const char *cp);	// oleg patch
-extern int inet_equal(char *addr1, char *mask1, char *addr2, char *mask2);
 extern void usage_exit(const char *cmd, const char *help) __attribute__ ((noreturn));
 #define modprobe(mod, args...) ({ char *argv[] = { "modprobe", "-s", mod, ## args, NULL }; _eval(argv, NULL, 0, NULL); })
 extern int modprobe_r(const char *mod);
@@ -846,10 +857,6 @@ extern void start_ipv6(void);
 extern void stop_ipv6(void);
 extern void ipv6_sysconf(const char *ifname, const char *name, int value);
 extern int ipv6_getconf(const char *ifname, const char *name);
-#ifdef RTCONFIG_6RELAYD
-extern void stop_6relayd(void);
-extern int start_6relayd(void);
-#endif
 #endif
 extern int wps_band_radio_off(int wps_band);
 #ifdef CONFIG_BCMWL5
@@ -862,6 +869,10 @@ extern void stop_eapd(void);
 extern int start_nas(void);
 extern void stop_nas(void);
 extern void set_acs_ifnames();
+#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
+extern int stop_psta_monitor();
+extern int start_psta_monitor();
+#endif
 #endif
 void start_cstats(int new);
 void restart_cstats(void);

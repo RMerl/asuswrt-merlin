@@ -1,0 +1,19 @@
+<samba:parameter name="max stat cache size"
+                 context="G"
+                 developer="1"
+		 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter limits the size in memory of any 
+	  <parameter moreinfo="none">stat cache</parameter> being used
+	  to speed up case insensitive name mappings. It represents
+	  the number of kilobyte (1024) units the stat cache can use.
+	  A value of zero, meaning unlimited, is not advisable due to
+	  increased memory useage.  You should not need to change this
+	  parameter.
+	</para>
+</description>
+<related>stat cache</related>
+<value type="default">256</value>
+<value type="example">100</value>
+</samba:parameter>

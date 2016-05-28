@@ -1,9 +1,0 @@
-- header file dependencies revisit
-- hooks cleanup
-- testsuites
-- FIXME's
-- memory accesses still test if profiling is on even in fast mode
-- fill nop counting done even in fast mode
-- have semantic code use G/SET_H_FOO if not default [incl fun-access]
-- have G/SET_H_FOO macros call function if fun-access
-- --> can always use G/S_H_FOO macros

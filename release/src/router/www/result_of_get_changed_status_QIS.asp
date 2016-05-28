@@ -24,3 +24,6 @@ puk_remaining_count = '<% nvram_get("usb_modem_act_auth_puk"); %>';
 usb_modem_auto_lines = '<% nvram_get("usb_modem_auto_lines"); %>';
 usb_modem_auto_running = '<% nvram_get("usb_modem_auto_running"); %>';
 usb_modem_auto_spn = '<% nvram_get("usb_modem_auto_spn"); %>';
+var link_internet = '<% nvram_get("link_internet"); %>';
+var wan0_realip_state = '<% nvram_get("wan0_realip_state"); %>';
+var wan1_realip_state = '<% nvram_get("wan1_realip_state"); %>';

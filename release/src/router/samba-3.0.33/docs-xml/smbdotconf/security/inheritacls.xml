@@ -1,0 +1,16 @@
+<samba:parameter name="inherit acls"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter can be used to ensure that if default acls
+    exist on parent directories, they are always honored when creating a
+    new file or subdirectory in these parent directories. The default 
+    behavior is to use the unix mode specified when creating the directory. 
+    Enabling this option sets the unix mode to 0777, thus guaranteeing that 
+    default directory acls are propagated.
+</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

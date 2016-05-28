@@ -1,0 +1,22 @@
+<samba:parameter name="eventlog list"
+		 type="string"
+                 context="G"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This option defines a list of log names that Samba will 
+    report to the Microsoft EventViewer utility.  The listed 
+    eventlogs will be associated with tdb file on disk in the 
+    <filename>$(lockdir)/eventlog</filename>.
+    </para>
+
+    <para>
+    The administrator must use an external process to parse the normal 
+    Unix logs such as <filename>/var/log/messages</filename>
+    and write then entries to the eventlog tdb files.  Refer to the
+    eventlogadm(8) utility for how to write eventlog entries.
+    </para>
+</description>
+
+<value type="default"/>
+<value type="example">Security Application Syslog Apache</value>
+</samba:parameter>

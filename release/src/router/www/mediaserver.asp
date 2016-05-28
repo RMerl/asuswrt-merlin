@@ -262,7 +262,9 @@ function applyRule(){
 		document.form.dms_dir_x.disabled = true;
 		document.form.dms_dir_type_x.disabled = true;		
 	}
-	
+
+	document.form.dms_dir.disabled = true;
+
 	showLoading();
 	FormActions("start_apply.htm", "apply", "restart_media", "5");
 	document.form.submit();

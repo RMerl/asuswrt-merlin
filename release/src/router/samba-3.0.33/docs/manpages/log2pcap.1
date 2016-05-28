@@ -1,0 +1,99 @@
+.\"     Title: log2pcap
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"
+.TH "LOG2PCAP" "1" "11/20/2008" "Samba 3\.0" "User Commands"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+log2pcap - Extract network traces from Samba log files
+.SH "SYNOPSIS"
+.HP 1
+log2pcap [\-h] [\-q] [logfile] [pcap_file]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+log2pcap
+reads in a samba log file and generates a pcap file (readable by most sniffers, such as ethereal or tcpdump) based on the packet dumps in the log file\.
+.PP
+The log file must have a
+\fIlog level\fR
+of at least
+\fB5\fR
+to get the SMB header/parameters right,
+\fB10\fR
+to get the first 512 data bytes of the packet and
+\fB50\fR
+to get the whole packet\.
+.SH "OPTIONS"
+.PP
+\-h
+.RS 4
+If this parameter is specified the output file will be a hex dump, in a format that is readable by the
+text2pcap
+utility\.
+.RE
+.PP
+\-q
+.RS 4
+Be quiet\. No warning messages about missing or incomplete data will be given\.
+.RE
+.PP
+logfile
+.RS 4
+Samba log file\. log2pcap will try to read the log from stdin if the log file is not specified\.
+.RE
+.PP
+pcap_file
+.RS 4
+Name of the output file to write the pcap (or hexdump) data to\. If this argument is not specified, output data will be written to stdout\.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\.
+.RE
+.SH "EXAMPLES"
+.PP
+Extract all network traffic from all samba log files:
+.PP
+.RS 4
+.nf
+			$ log2pcap < /var/log/* > trace\.pcap
+	
+.fi
+.RE
+.PP
+Convert to pcap using text2pcap:
+.PP
+.RS 4
+.nf
+	$ log2pcap \-h samba\.log | text2pcap \-T 139,139 \- trace\.pcap
+	
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0 of the Samba suite\.
+.SH "BUGS"
+.PP
+Only SMB data is extracted from the samba logs, no LDAP, NetBIOS lookup or other data\.
+.PP
+The generated TCP and IP headers don\'t contain a valid checksum\.
+.SH "SEE ALSO"
+.PP
+\fBtext2pcap\fR(1),
+\fBethereal\fR(1)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.
+.PP
+This manpage was written by Jelmer Vernooij\.

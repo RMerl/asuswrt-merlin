@@ -54,7 +54,7 @@ var auth_mode = '<% nvram_get("wl1_auth_mode_x"); %>';
 var wep_x = '<% nvram_get("wl1_wep_x"); %>';
 var key_x = '<% nvram_get("wl1_key"); %>';
 var wpa_mode = '<% nvram_get("wl1_wpa_mode"); %>';
-var reIP = '<% nvram_get("lan_ipaddr"); %>';
+var reIP = (parent.changeSubnet) ? [<% get_next_lanip(); %>][0].next_lanip : '<% nvram_get("lan_ipaddr"); %>';
 var JS_timeObj = new Date();
 var uptimeStr = "<% uptime(); %>";
 var newformat_systime = uptimeStr.substring(8,11) + " " + uptimeStr.substring(5,7) + " " + uptimeStr.substring(17,25) + " " + uptimeStr.substring(12,16);  //Ex format: Jun 23 10:33:31 2008
@@ -325,7 +325,6 @@ function QKfinish_load_body(){
 		
 	document.getElementById("QISmain").style.display = "";
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
-	parent.document.getElementById("btn_gotoindex").style.visibility = "hidden";
 
 	if(gobi_support){
 		$("#freqtitle2")[0].style.display = "none";
@@ -1192,38 +1191,23 @@ function goto_index(){
 		document.getElementById('loadingIcon').style.display = '';
 	}
 	else{
+		var actionScriptArray = [];
+
+		if(parent.changeSubnet){
+			actionScriptArray.push("restart_subnet");
+			document.restartForm.action_wait.value = 10;
+		}
+		else if(parent.restartWireless){
+			actionScriptArray.push("restart_wireless");
+			document.restartForm.action_wait.value = 6;
+		}
 		if(parent.restartTime){
-			document.restartForm.action_script.value = "restart_time";
+			actionScriptArray.push("restart_time");
+			document.restartForm.action_wait.value = 6;
 		}
 
-		if(top.restartWireless){
-			if(document.restartForm.productid.value == "RT-AC88U" || document.restartForm.productid.value == "RT-AC3100" || document.restartForm.productid.value == "RT-AC5300")
-				document.restartForm.action_wait.value = 6;
-			else
-				document.restartForm.action_wait.value = 2;
-				
-			if(document.restartForm.action_script.value == "")
-				document.restartForm.action_script.value = "restart_wireless";
-			else
-				document.restartForm.action_script.value += ";restart_wireless";
-		}
-		
-		if(parent.restartTime){
-			if(document.restartForm.productid.value == "RT-AC88U" || document.restartForm.productid.value == "RT-AC3100" || document.restartForm.productid.value == "RT-AC5300")
-				document.restartForm.action_wait.value = 6;
-			else
-				document.restartForm.action_wait.value = 5;
-		}	
+		document.restartForm.action_script.value = actionScriptArray.join(";");
 	}	
-
-	/*if(document.restartForm.action_wait.value == 0){
-		document.getElementById('loadingIcon').style.display = '';
-	}
-	else{
-		document.getElementById("QISmain").style.display = "none";
-		document.getElementById("liveUpdate_div").style.display = "none";
-		document.getElementById('qisFinish_div').style.display = '';
-	}*/
 
 	if(parent.based_modelid == "4G-AC55U" && wans_mode == "lb"){
 		document.restartForm.wans_mode.disabled = false;
@@ -1242,9 +1226,15 @@ function startLiveDetect(){
 }
 
 function redirect_index(){
+	if(parent.changeSubnet){
+		document.getElementById('loadingIcon').style.display = "";
+		return false;
+	}
+
 	parent.document.getElementById("btn_gotoindex").onclick = "";
 	parent.document.getElementById("btn_gotoindex").style.cursor = "";
 	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";	
+
 	if(parent.new_FW){
 		return checkIsNewFirmware();
 	}
@@ -1441,6 +1431,26 @@ function chkMBConState(){
 		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#></td>	
 	</tr>
 
+	<!-- WAN -->
+	<tr class="reItem wanItem">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><div id="wan_hd1"><#menu5_3#></div></td>	
+	</tr>
+	<tr class="reItem wanItem">
+	  <th width="180"><span id="wantype_item"></span></th>
+	  <td class="QISformtd"><span id="wantype"></span></td>
+	  <td class="QISformtd"><span id="wantype2" style="display: none;"></span></td>
+	</tr>
+	<tr class="reItem wanItem" id="wanstatus_tr1">
+	  <th width="180"><#Status_Str#> </th>
+	  <td class="QISformtd"><span id="wanstatus1"></span></td>
+	  <td class="QISformtd"><span id="wanstatus2" style="display: none;"></span></td>
+	</tr>
+	<tr class="reItem wanItem" id="wanip_tr">
+	  <th width="180"><span id="wanip_item"></span></th>
+	  <td class="QISformtd"><span id="wanip"></span></td>
+	  <td class="QISformtd"><span id="wanip2" style="display: none;"></span></td>
+	</tr>	
+	
 	<!--2.4G  5G-->
 	<tr id="band_block">
 	  <th width="250"><#Interface#></th>
@@ -1530,26 +1540,6 @@ function chkMBConState(){
 	  <td class="QISformtd">
 			<span id="security5_2"></span>
 	  </td>
-	</tr>
-
-	<!-- WAN -->
-	<tr class="reItem wanItem">
-		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><div id="wan_hd1"><#menu5_3#></div></td>	
-	</tr>
-	<tr class="reItem wanItem">
-	  <th width="180"><span id="wantype_item"></span></th>
-	  <td class="QISformtd"><span id="wantype"></span></td>
-	  <td class="QISformtd"><span id="wantype2" style="display: none;"></span></td>
-	</tr>
-	<tr class="reItem wanItem" id="wanstatus_tr1">
-	  <th width="180"><#Status_Str#> </th>
-	  <td class="QISformtd"><span id="wanstatus1"></span></td>
-	  <td class="QISformtd"><span id="wanstatus2" style="display: none;"></span></td>
-	</tr>
-	<tr class="reItem wanItem" id="wanip_tr">
-	  <th width="180"><span id="wanip_item"></span></th>
-	  <td class="QISformtd"><span id="wanip"></span></td>
-	  <td class="QISformtd"><span id="wanip2" style="display: none;"></span></td>
 	</tr>
 
 	<!-- LAN -->
@@ -1663,7 +1653,7 @@ function chkMBConState(){
 
 <div id="applyBtn" class="apply_gen" style="margin-top:30px">
 	<!--input type="button" id="nextButton" value="<#CTL_finish#>" onclick="gotoNext();" class="button_gen"-->
-	<input type="button" id="nextButton" value="<#CTL_finish#>" onclick="redirect_index();" class="button_gen">
+	<input type="button" id="nextButton" value="<#Main_alert_proceeding_desc3#>" onclick="redirect_index();" class="button_gen">
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
 </div>
@@ -1808,6 +1798,7 @@ function chkMBConState(){
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
+<input type="hidden" name="x_Setting" value="1">
 </form>
 
 <form method="post" name="yadns_update" action="/start_apply2.htm" target="hidden_frame">

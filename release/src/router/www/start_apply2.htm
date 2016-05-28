@@ -18,6 +18,17 @@ var action_wait = '<% get_parameter("action_wait"); %>';
 var group_id = '<% get_parameter("group_id"); %>';
 var getflag = '<% get_parameter("flag"); %>';
 
+/* debug
+console.log("====== " + document.referrer + " ======");
+console.log("current_page:" + current_page);
+console.log("next_page:" + next_page);
+console.log("action_script:" + action_script);
+console.log("action_mode:" + action_mode);
+console.log("action_wait:" + action_wait);
+console.log("group_id:" + group_id);
+console.log("getflag:" + getflag);
+ */
+
 function started_validating(){
 }
 
@@ -396,6 +407,10 @@ function afterLiveUpdate(){
 }
 
 function initial(){
+	var doDetect = function(){
+		setInterval(function(){var a;if(window.XMLHttpRequest)a=new XMLHttpRequest;else{if(!window.ActiveXObject)return!1;a=new ActiveXObject("Microsoft.XMLHTTP")}a.onreadystatechange=function(){4==a.readyState&&200==a.status&&(top.location.href="/")},a.open("GET","/httpd_check.xml",!0),a.send(null)},3e3);
+	}
+
 	var isWLclient = function () {  //detect login client is by wireless or wired
 		<% login_state_hook(); %>
 		var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
@@ -413,7 +428,7 @@ function initial(){
 	
 	if(getflag == "finishQIS"){
 		if(isWLclient()){
-			if(action_script.search("restart_wireless") != -1){
+			if(action_script.search("restart_wireless") != -1 || action_script.search("restart_subnet") != -1){
 				showWlHint();
 				return;
 			}
@@ -421,6 +436,9 @@ function initial(){
 
 		if(action_script == "reboot"){
 			setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+		}
+		else if(action_script.search("restart_subnet") !== -1){
+			setTimeout(doDetect, restart_time*1000);
 		}
 
 		return;
@@ -448,6 +466,10 @@ function initial(){
 	else if(getflag == "next"){
 		parent.gotoNext();
 	}
+	else if(getflag == "pppoe_failed"){
+		top.pppoe_failed_flag = true;
+		setTimeout("parent.location.href='/qis/QIS_internet_account.htm';", restart_time*1000);
+	}	
 	else if(action_script == "saveNvram"){
 		return;
 	}
@@ -496,7 +518,7 @@ function initial(){
 	else if(getflag == "background"){
 			return;
 	}
-	else if(action_script == "reboot"){
+	else if(action_script == "reboot" || action_script.search("restart_subnet") !== -1){
 		parent.showLoading(restart_time);
 		setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 	}

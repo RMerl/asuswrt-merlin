@@ -1,0 +1,99 @@
+.\"     Title: vfs_commit
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_COMMIT" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_commit - flush dirty data at specified intervals
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = commit
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The
+vfs_commit
+VFS module keeps track of the amount of data written to a file and synchronizes it to disk when a specified amount accumulates\.
+.PP
+vfs_commit
+is useful in two circumstances\. First, if you have very precious data, the impact of unexpected power loss can be minimized by a small commit:dthresh value\. Secondly, write performance can be improved on some systems by flushing file data early and at regular intervals\.
+.PP
+This module is stackable\.
+.SH "OPTIONS"
+.PP
+commit:dthresh = BYTES
+.RS 4
+Synchronize file data each time the specified number of bytes has been written\.
+.sp
+The following suffixes may be applied to BYTES:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+K
+\- BYTES is a number of kilobytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+M
+\- BYTES is a number of megabytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+G
+\- BYTES is a number of gigabytes
+.sp
+.RE
+.RE
+.SH "EXAMPLES"
+.PP
+Synchronize the file data on the [precious] share after every 512 kilobytes (524288 bytes) of data is written:
+.sp
+.RS 4
+.nf
+        \fI[precious]\fR
+	\fIpath = /data/precious\fR
+	\fIvfs objects = commit\fR
+	\fIcommit:dthresh = 512K\fR
+.fi
+.RE
+.SH "CAVEATS"
+.PP
+On some systems, the data synchronization performed by
+commit
+may reduce performance\.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

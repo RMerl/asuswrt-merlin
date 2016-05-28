@@ -1,0 +1,16 @@
+<samba:parameter name="abort shutdown script"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This a full path name to a script called by <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> that
+	should stop a shutdown procedure issued by the <smbconfoption name="shutdown script"/>.</para>
+		
+	<para>If the connected user posseses the <constant>SeRemoteShutdownPrivilege</constant>,
+	right, this command will be run as user.</para>
+</description>
+<value type="default">&quot;&quot;</value>
+<value type="example">/sbin/shutdown -c</value>
+</samba:parameter>

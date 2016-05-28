@@ -1,0 +1,130 @@
+<samba:parameter name="username map"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+	This option allows you to specify a file containing a mapping of usernames from the clients to the server.
+	This can be used for several purposes. The most common is to map usernames that users use on DOS or Windows
+	machines to those that the UNIX box uses. The other is to map multiple users to a single username so that they
+	can more easily share files.
+	</para>
+
+    <para>
+	Please note that for user or share mode security, the username map is applied prior to validating the user
+	credentials.  Domain member servers (domain or ads) apply the username map after the user has been
+	successfully authenticated by the domain controller and require fully qualified enties in the map table (e.g.
+	biddle = <literal>DOMAIN\foo</literal>).
+	</para>
+    
+    <para>
+	The map file is parsed line by line. Each line should contain a single UNIX username on the left then a '='
+	followed by a list of usernames on the right. The list of usernames on the right may contain names of the form
+	@group in which case they will match any UNIX username in that group. The special client name '*' is a
+	wildcard and matches any name. Each line of the map file may be up to 1023 characters long.
+	</para>
+
+    <para>
+	The file is processed on each line by taking the supplied username and comparing it with each username on the
+	right hand side of the '=' signs. If the supplied name matches any of the names on the right hand side then it
+	is replaced with the name on the left. Processing then continues with the next line.
+	</para>
+
+    <para>
+	If any line begins with a '#' or a ';' then it is ignored.
+	</para>
+
+    <para>
+	If any line begins with an '!' then the processing will stop after that line if a mapping was done by the
+	line.  Otherwise mapping continues with every line being processed.  Using '!' is most useful when you have a
+	wildcard mapping line later in the file.
+	</para>
+
+    <para>
+	For example to map from the name <constant>admin</constant> or <constant>administrator</constant> to the UNIX
+	name <constant> root</constant> you would use:
+<programlisting>
+<command moreinfo="none">root = admin administrator</command>
+</programlisting>
+	Or to map anyone in the UNIX group <constant>system</constant> to the UNIX name <constant>sys</constant> you would use:
+<programlisting>
+<command moreinfo="none">sys = @system</command>
+</programlisting>
+	</para>
+
+    <para>
+	You can have as many mappings as you like in a username map file.
+	</para>
+
+
+    <para>
+	If your system supports the NIS NETGROUP option then the netgroup database is checked before the <filename
+	moreinfo="none">/etc/group </filename> database for matching groups.
+	</para>
+
+    <para>
+	You can map Windows usernames that have spaces in them by using double quotes around the name. For example:
+<programlisting>
+<command moreinfo="none">tridge = &quot;Andrew Tridgell&quot;</command>
+</programlisting>
+    would map the windows username &quot;Andrew Tridgell&quot; to the unix username &quot;tridge&quot;.
+	</para>
+
+    <para>
+	The following example would map mary and fred to the unix user sys, and map the rest to guest. Note the use of the
+    '!' to tell Samba to stop processing if it gets a match on that line:
+<programlisting format="linespecific">
+!sys = mary fred
+guest = *
+</programlisting>
+    </para>
+
+    <para>
+	Note that the remapping is applied to all occurrences of usernames.  Thus if you connect to \\server\fred and
+	<constant>fred</constant> is remapped to <constant>mary</constant> then you will actually be connecting to
+	\\server\mary and will need to supply a password suitable for <constant>mary</constant> not
+	<constant>fred</constant>. The only exception to this is the username passed to the <smbconfoption
+	name="password server"/> (if you have one). The password server will receive whatever username the client
+	supplies without  modification.
+    </para>
+
+    <para>
+	Also note that no reverse mapping is done. The main effect this has is with printing. Users who have been
+	mapped may have trouble deleting print jobs as PrintManager under WfWg will think they don't own the print
+	job.
+	</para>
+
+   <para>
+	Samba versions prior to 3.0.8 would only support reading the fully qualified username 
+	(e.g.: <literal>DOMAIN\user</literal>) from
+	the username map when performing a kerberos login from a client.  However, when looking up a map entry for a
+	user authenticated by NTLM[SSP], only the login name would be used for matches.  This resulted in inconsistent
+	behavior sometimes even on the same server.
+   </para>
+
+   <para>
+   The following functionality is obeyed in version 3.0.8 and later:
+   </para>
+
+   <para>
+    When performing local authentication, the username map is applied to the login name before attempting to authenticate
+    the connection.
+    </para>
+
+    <para>
+    When relying upon a external domain controller for validating authentication requests, smbd will apply the username map
+    to the fully qualified username (i.e. <literal>DOMAIN\user</literal>) only after the user has been successfully authenticated.
+    </para>
+
+    <para>
+    An example of use is:
+<programlisting>
+username map = /usr/local/samba/lib/users.map
+</programlisting>
+    </para>
+
+</description>
+
+<value type="default"><comment>no username map</comment></value>
+</samba:parameter>

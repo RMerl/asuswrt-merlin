@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+
+<book id="testdoc"
+	xmlns:xi="http://www.w3.org/2003/XInclude">
+<title>Test-document</title>
+
+<bookinfo>
+	<authorgroup>
+	<editor>&person.jelmer;</editor>
+	</authorgroup>
+	<pubdate><?latex \today ?></pubdate>
+</bookinfo>
+
+<chapter>
+	<title>Foo</title>
+
+	<para>Bar</para>
+</chapter>
+
+</book>

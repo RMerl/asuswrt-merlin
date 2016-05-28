@@ -1,0 +1,22 @@
+<samba:parameter name="netbios name"
+                 context="G"
+                 basic="1" advanced="1" wizard="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+        <para>
+		This sets the NetBIOS name by which a Samba server is known. By default it is the same as the first component
+		of the host's DNS name. If a machine is a browse server or logon server this name (or the first component of
+		the hosts DNS name) will be the name that these services are advertised under.
+		</para>
+
+		<para>
+		There is a bug in Samba-3 that breaks operation of browsing and access to shares if the netbios name
+		is set to the literal name <literal>PIPE</literal>. To avoid this problem, do not name your Samba-3
+		server <literal>PIPE</literal>.
+		</para>
+</description>
+
+<related>netbios aliases</related>
+<value type="default"><comment>machine DNS name</comment></value>
+<value type="example">MYNAME</value>
+</samba:parameter>

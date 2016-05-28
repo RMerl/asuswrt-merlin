@@ -10,6 +10,7 @@
 <script type="text/JavaScript" src="/js/jquery.js"></script>
 <script type="text/javascript">
 var now_flag = '<% get_parameter("flag"); %>';
+var odmpid = '<% nvram_get("odmpid"); %>';
 
 function initial(){
 	if(parent.ISMOBILE){
@@ -22,6 +23,9 @@ function initial(){
 		//parent.set_step("t1");
 		document.getElementById("go_detect").focus();
 	}
+	
+	if(odmpid == "RT-AC66U V2")
+		document.getElementById("modem_plug_img").src = "/images/RT-AC66U_V2/modem_plug.png";
 
 	parent.doResetModem();
 }
@@ -65,7 +69,7 @@ body{
 	<div style="margin-left:15px;"><#QIS_modem2_desc2#></div>
 	<div style="margin-left:15px;"><#QIS_modem2_desc3#></div>
 	<div style="text-align:center;">
-		<img style="width:100%;" src="/images/modem_plug.png">
+		<img id="modem_plug_img" style="width:100%;" src="/images/modem_plug.png">
 	</div>
 	<div style="margin-left:15px;"><#QIS_modem_desc4#></div>
 	<div style="margin-left:15px;"><#QIS_modem_desc5#></div>	

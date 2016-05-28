@@ -1,0 +1,98 @@
+.\"     Title: vfs_readahead
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_READAHEAD" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_readahead - pre-load the kernel buffer cache
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = readahead
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+This
+vfs_readahead
+VFS module detects read requests at multiples of a given offset (hex 0x80000 by default) and then tells the kernel via either the readahead system call (on Linux) or the posix_fadvise system call to pre\-fetch this data into the buffer cache\.
+.PP
+This module is useful for Windows Vista clients reading data using the Windows Explorer program, which asynchronously does multiple file read requests at offset boundaries of 0x80000 bytes\.
+.PP
+The offset multiple used is given by the readahead:offset option, which defaults to 0x80000\.
+.PP
+The size of the disk read operations performed by
+vfs_readahead
+is determined by the readahead:length option\. By default this is set to the same value as the readahead:offset option and if not set explicitly will use the current value of readahead:offset\.
+.PP
+This module is stackable\.
+.SH "OPTIONS"
+.PP
+readahead:offset = BYTES
+.RS 4
+The offset multiple that causes readahead to be requested of the kernel buffer cache\.
+.RE
+.PP
+readahead:length = BYTES
+.RS 4
+The number of bytes requested to be read into the kernel buffer cache on each readahead call\.
+.RE
+.PP
+The following suffixes may be applied to BYTES:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+K
+\- BYTES is a number of kilobytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+M
+\- BYTES is a number of megabytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+G
+\- BYTES is a number of gigabytes
+.SH "EXAMPLES"
+.sp
+.RS 4
+.nf
+	\fI[hypothetical]\fR
+	\fIvfs objects = readahead\fR
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

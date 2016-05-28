@@ -1,0 +1,53 @@
+
+<!--
+     File isomopf.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1991
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY Aopf             "&#x1D538;" ><!--/Bbb A, open face A -->
+<!ENTITY Bopf             "&#x1D539;" ><!--/Bbb B, open face B -->
+<!ENTITY Copf             "&#x1D53A;" ><!--/Bbb C, open face C -->
+<!ENTITY Dopf             "&#x1D53B;" ><!--/Bbb D, open face D -->
+<!ENTITY Eopf             "&#x1D53C;" ><!--/Bbb E, open face E -->
+<!ENTITY Fopf             "&#x1D53D;" ><!--/Bbb F, open face F -->
+<!ENTITY Gopf             "&#x1D53E;" ><!--/Bbb G, open face G -->
+<!ENTITY Hopf             "&#x1D53F;" ><!--/Bbb H, open face H -->
+<!ENTITY Iopf             "&#x1D540;" ><!--/Bbb I, open face I -->
+<!ENTITY Jopf             "&#x1D541;" ><!--/Bbb J, open face J -->
+<!ENTITY Kopf             "&#x1D542;" ><!--/Bbb K, open face K  -->
+<!ENTITY Lopf             "&#x1D543;" ><!--/Bbb L, open face L  -->
+<!ENTITY Mopf             "&#x1D544;" ><!--/Bbb M, open face M  -->
+<!ENTITY Nopf             "&#x1D545;" ><!--/Bbb N, open face N -->
+<!ENTITY Oopf             "&#x1D546;" ><!--/Bbb O, open face O -->
+<!ENTITY Popf             "&#x1D547;" ><!--/Bbb P, open face P -->
+<!ENTITY Qopf             "&#x1D548;" ><!--/Bbb Q, open face Q -->
+<!ENTITY Ropf             "&#x1D549;" ><!--/Bbb R, open face R -->
+<!ENTITY Sopf             "&#x1D54A;" ><!--/Bbb S, open face S -->
+<!ENTITY Topf             "&#x1D54B;" ><!--/Bbb T, open face T -->
+<!ENTITY Uopf             "&#x1D54C;" ><!--/Bbb U, open face U -->
+<!ENTITY Vopf             "&#x1D54D;" ><!--/Bbb V, open face V -->
+<!ENTITY Wopf             "&#x1D54E;" ><!--/Bbb W, open face W -->
+<!ENTITY Xopf             "&#x1D54F;" ><!--/Bbb X, open face X -->
+<!ENTITY Yopf             "&#x1D550;" ><!--/Bbb Y, open face Y -->
+<!ENTITY Zopf             "&#x1D551;" ><!--/Bbb Z, open face Z -->

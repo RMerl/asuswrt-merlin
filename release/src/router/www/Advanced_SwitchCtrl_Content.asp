@@ -158,14 +158,14 @@ function applyRule(){
 											</tr>
 
 											<tr id="lacp_tr" style="display:none;">
-		      									<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);">Bonding/ Link aggregation</a></th><!--untranslated-->
+		      									<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);"><#NAT_lacp#></a></th>
 												<td>
 													<select name="lacp_enabled" class="input_option">
 														<option class="content_input_fd" value="0" <% nvram_match("lacp_enabled", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 														<option class="content_input_fd" value="1" <% nvram_match("lacp_enabled", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 													</select>
 													&nbsp
-													<div id="lacp_desc"><span id="lacp_note">Please enable Bonding (802.3ad) support of your wired client and connect it to Router LAN1 and LAN2.</span><div><!--untranslated-->
+													<div id="lacp_desc"><span id="lacp_note"><#NAT_lacp_note#></span><div>
 												</td>
 											</tr> 											  
 										</table>

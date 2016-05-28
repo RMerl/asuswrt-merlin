@@ -1,4 +1,0 @@
-#
-xterm -e sis $* &
-xterm -e tip /dev/ttypc &
-

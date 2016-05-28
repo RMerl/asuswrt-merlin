@@ -1,5 +1,0 @@
-# Host: OpenBSD/amd64
-NATDEPFILES= fork-child.o inf-ptrace.o \
-	amd64-nat.o amd64bsd-nat.o amd64obsd-nat.o bsd-kvm.o
-
-LOADLIBES= -lkvm

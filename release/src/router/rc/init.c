@@ -728,6 +728,10 @@ wan_defaults(void)
 		}
 	}
 #endif
+	if(nvram_get_int("ATEMODE") != 0)
+		logmessage("ATE", "not valid user mode");
+
+	nvram_unset("wps_enable_old");
 }
 
 void
@@ -1369,58 +1373,63 @@ restore_defaults(void)
 }
 
 #ifdef WLCLMLOAD
-/* clm_blob files will be installed in /etc/brcm/clm/<chipnum><extra_id>.clm */
+/* clm_blob files will be installed in /brcm/clm/<chipnum><extra_id>.clm */
 /* wl -i <ethx> <blobfilename> will be used to download */
 int download_clmblob_files()
 {
-  int i = 0;
-  char ifname[16] = {0};
-  wlc_rev_info_t revinfo;
-  int err;
-  const char *fmt;
-  char chn[8];
-  int chnlen=8;
-  uint chipid;
-  char blob_fname[60];
+	int i = 0;
+	char ifname[16] = {0};
+	wlc_rev_info_t revinfo;
+	int err;
+	const char *fmt;
+	char chn[8];
+	int chnlen=8;
+	uint chipid;
+	char blob_fname[60];
 
-  for (i = 1; i <= DEV_NUMIFS; i++) {
-     snprintf(ifname, sizeof(ifname), "eth%d", i);
-     if (!wl_probe(ifname)) {
-        memset(&revinfo, 0, sizeof(revinfo));
-        if ((err = wl_ioctl(ifname, WLC_GET_REVINFO, &revinfo, sizeof(revinfo))) < 0) {
-          printf("\n*** BEFORE-CLMLOAD %s WLC_GET_REVINFO err=%d ", ifname, err);
-        }
-        else {
-          printf("\n*** BEFORE-CLMLOAD %s - chipnum = 0x%x (%d)  ", ifname, revinfo.chipnum, revinfo.chipnum);
-          chipid = revinfo.chipnum;
-          /* blob filename based on chipid */
-          fmt = ((chipid > 0xa000) || (chipid < 0x4000)) ? "%d" : "%x";
-          snprintf(chn, chnlen, fmt, chipid);
+	for (i = 1; i <= DEV_NUMIFS; i++) {
+		snprintf(ifname, sizeof(ifname), "eth%d", i);
+		if (!wl_probe(ifname)) {
+			memset(&revinfo, 0, sizeof(revinfo));
+			if ((err = wl_ioctl(ifname, WLC_GET_REVINFO, &revinfo, sizeof(revinfo))) < 0) {
+				printf("\n*** BEFORE-CLMLOAD %s WLC_GET_REVINFO err=%d ", ifname, err);
+			}
+			else {
+				printf("\n*** BEFORE-CLMLOAD %s - chipnum = 0x%x (%d)  ", ifname, revinfo.chipnum, revinfo.chipnum);
+				chipid = revinfo.chipnum;
 
-          memset(&(blob_fname[0]), 0, sizeof(blob_fname));
-          if (chipid == BCM4366_CHIP_ID) {
-            sprintf(blob_fname, "%s%s_access.clm_blob", "./etc/brcm/clm/",chn);
-            printf("\n Download %s to %s ......", blob_fname, ifname);
-            eval("wl", "-i", ifname, "clmload", blob_fname);
-          }
-          else if (chipid == BCM43602_CHIP_ID) {
-            sprintf(blob_fname, "%s%sa1_access.clm_blob", "./etc/brcm/clm/",chn);
-            printf("\n Download %s to %s ......", blob_fname, ifname);
-            eval("wl", "-i", ifname, "clmload", blob_fname);
-          }
-          else {
-            sprintf(blob_fname, "%srouter.clm_blob", "./etc/brcm/clm/");
-            printf("\n Download %s to %s ......", blob_fname, ifname);
-            eval("wl", "-i", ifname, "clmload", blob_fname);
-            if (revinfo.phytype == WLC_PHY_TYPE_AC) {
-                printf("\n *** Is PHY_TYPE_AC %d - set vhtmode 1", revinfo.phytype);
-                eval("wl", "-i", ifname, "vhtmode", "1");
-            }
-          }
-        }
-     }
-  } /* for */
-  return (0);
+				/* Use same 4366 blob for 43664 */
+				if (chipid == BCM43664_CHIP_ID)
+					chipid = BCM4366_CHIP_ID;
+
+				/* blob filename based on chipid */
+				fmt = ((chipid > 0xa000) || (chipid < 0x4000)) ? "%d" : "%x";
+				snprintf(chn, chnlen, fmt, chipid);
+
+				memset(&(blob_fname[0]), 0, sizeof(blob_fname));
+				if (chipid == BCM4366_CHIP_ID) {
+					sprintf(blob_fname, "%s%s_access.clm_blob", "./brcm/clm/",chn);
+					printf("\n Download %s to %s ......", blob_fname, ifname);
+					eval("wl", "-i", ifname, "clmload", blob_fname);
+				}
+				else if (chipid == BCM43602_CHIP_ID) {
+					sprintf(blob_fname, "%s%sa1_access.clm_blob", "./brcm/clm/",chn);
+					printf("\n Download %s to %s ......", blob_fname, ifname);
+					eval("wl", "-i", ifname, "clmload", blob_fname);
+				}
+				else {
+					sprintf(blob_fname, "%srouter.clm_blob", "./brcm/clm/");
+					printf("\n Download %s to %s ......", blob_fname, ifname);
+					eval("wl", "-i", ifname, "clmload", blob_fname);
+					if (revinfo.phytype == WLC_PHY_TYPE_AC) {
+						printf("\n *** Is PHY_TYPE_AC %d - set vhtmode 1", revinfo.phytype);
+						eval("wl", "-i", ifname, "vhtmode", "1");
+					}
+				}
+			}
+		}
+	} /* for */
+	return (0);
 }
 #endif /* WLCLMLOAD */
 
@@ -3938,7 +3947,7 @@ int init_nvram(void)
 			{
 				//Andy Chiu, 2015/09/11
 				char buf[64];
-				sprintf(buf, "vlan100 %s", vlanif);
+				sprintf(buf, "%s %s", DSL_WAN_VIF, vlanif);
 				nvram_set("wandevs", buf);
 			}
 			else
@@ -3961,23 +3970,27 @@ int init_nvram(void)
 					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_5G)
 						add_wan_phy("eth2");
 					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL)
-						add_wan_phy("vlan100");
+						add_wan_phy(DSL_WAN_VIF);
 					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
 						add_wan_phy("usb");
 				}
 			}
 			else
-				nvram_set("wan_ifnames", "vlan100 usb");
+			{
+				char buf[64];
+				snprintf(buf, sizeof(buf), "%s usb", DSL_WAN_VIF);
+				nvram_set("wan_ifnames", buf);
+			}
 		}
 		else{
 			nvram_set("wandevs", "et0");
 			nvram_set("lan_ifnames", "vlan1 eth1 eth2");
-			nvram_set("wan_ifnames", "vlan100");
+			nvram_set("wan_ifnames", DSL_WAN_VIF);
 			nvram_unset("wan1_ifname");
 		}
 #else
 		nvram_set("lan_ifnames", "vlan1 eth1 eth2");
-		nvram_set("wan_ifnames", "vlan100");
+		nvram_set("wan_ifnames", DSL_WAN_VIF);
 #endif
 		nvram_set("wl_ifnames", "eth1 eth2");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
@@ -4331,10 +4344,6 @@ int init_nvram(void)
 		add_rc_support("manual_stb");
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("update");
-		if (model == MODEL_RTAC1200GP) {
-			if(!strncmp(nvram_safe_get("territory_code"), "UK", 2))
-				add_rc_support("repeater");
-		}
 		if (model == MODEL_RTAC1200G) {
 			add_rc_support("noitunes");
 			add_rc_support("nodm");
@@ -6099,7 +6108,7 @@ static void sysinit(void)
 		model==MODEL_RTN10U ||
 		model==MODEL_RTN12B1 || model==MODEL_RTN12C1 ||
 		model==MODEL_RTN12D1 || model==MODEL_RTN12VP || model==MODEL_RTN12HP || model==MODEL_RTN12HP_B1 ||
-		model==MODEL_RTN15U) {
+		model==MODEL_RTN15U || model==MODEL_RTN14UHP) {
 
 		f_write_string("/proc/sys/vm/panic_on_oom", "1", 0, 0);
 		f_write_string("/proc/sys/vm/overcommit_ratio", "100", 0, 0);

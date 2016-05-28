@@ -487,6 +487,11 @@ config RTCONFIG_USB_MODEM_PIN
 	depends on RTCONFIG_USB_MODEM
 	default n
 
+config RTCONFIG_USB_SMS_MODEM
+	bool "USB Modem SMS Support"
+	depends on RTCONFIG_USB_MODEM
+	default n
+
 config RTCONFIG_USB_BECEEM
 	bool "BECEEM USB dongle Support"
 	depends on RTCONFIG_USB_MODEM
@@ -757,10 +762,6 @@ config RTCONFIG_ISP_METER
 
 config RTCONFIG_NVRAM_64K
 	bool "NVRAM_64K"
-	default n
-
-config RTCONFIG_GDB
-	bool "GDB"
 	default n
 
 config RTCONFIG_USB_XHCI
@@ -1118,4 +1119,12 @@ config RTCONFIG_PORT_BASED_VLAN
 
 config RTCONFIG_NOIPTV
         bool "No IPTV support"
+        default n
+
+config RTCONFIG_AUTOCOVER_SIP
+        bool "Auto cover the special IP"
+        default n
+
+config RTCONFIG_DEFLAN50
+        bool "Let the default LAN subnet be 192.168.50.1"
         default n

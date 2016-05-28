@@ -2,11 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <bcmnvram.h>
 #include <shutils.h>
 
-#include "shared.h"
+#include <rc.h>
+#include <shared.h>
 #include "web-qtn.h"
 #include "net80211/ieee80211_dfs_reentry.h"
 
@@ -16,13 +20,6 @@
 #endif
 
 static int lock_qtn_apscan = -1;
-
-extern int isValidCountryCode(const char *Ccode);
-extern int isValidRegrev(char *regrev);
-extern int isValidMacAddr(const char* mac);
-extern int file_lock(char *tag);
-extern void file_unlock(int lockfd);
-extern void char_to_ascii(const char *output, const char *input);
 
 #define	WIFINAME	"wifi0"
 #if 0

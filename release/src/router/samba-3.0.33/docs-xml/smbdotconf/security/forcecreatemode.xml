@@ -1,0 +1,25 @@
+<samba:parameter name="force create mode"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter specifies a set of UNIX mode bit 
+    permissions that will <emphasis>always</emphasis> be set on a 
+    file created by Samba. This is done by bitwise 'OR'ing these bits onto 
+    the mode bits of a file that is being created or having its 
+    permissions changed. The default for this parameter is (in octal) 
+    000. The modes in this parameter are bitwise 'OR'ed onto the file 
+    mode after the mask set in the <parameter moreinfo="none">create mask</parameter> 
+    parameter is applied.</para>
+
+	<para>The example below would force all created files to have read and execute 
+    permissions set for 'group' and 'other' as well as the 
+    read/write/execute bits set for the 'user'.</para>
+
+</description>
+
+<related>create mask</related>
+<related>inherit permissions</related>
+
+<value type="default">000</value>
+<value type="example">0755</value>
+</samba:parameter>

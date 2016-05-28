@@ -27,8 +27,8 @@
 
 #include <zlib.h>
 
-#define ZLIB_LC 3
-#define ZLIB_LP 0
+#define ZLIB_LC 0
+#define ZLIB_LP 2
 #define ZLIB_PB 2
 
 #ifdef WIN32

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+
+<book id="Samba-HOWTO"
+	xmlns:xi="http://www.w3.org/2003/XInclude">
+<title>The Official Samba-4 HOWTO</title>
+
+<bookinfo>
+	<authorgroup>
+	<editor>&person.jelmer;</editor>
+	</authorgroup>
+	<pubdate><?latex \today ?></pubdate>
+
+</bookinfo>
+
+<?latex \setcounter{page}{5} ?>
+
+<preface>
+	<title>Attribution</title>
+	<para>
+		<xi:include href="../Samba4-HOWTO-attributions.xml"/>
+	</para>
+</preface>
+
+<?latex \cleardoublepage ?>
+
+<!-- Contents -->
+<toc/>
+<?latex \cleardoublepage ?>
+
+<part>
+	<title>Introduction to SMB networks</title>
+
+	<para>Not everybody is already familiar with SMB networks and the jargon 
+		used in such networks. This part describes the evolution of SMB, 
+		how the protocol is structured and what Samba can be used for. </para>
+
+	<para>NT admins, already familiar with SMB networks, are probably only 
+		interested in the chapter about Samba itself.</para>
+
+	<xi:include href="protocol.xml"/>
+	<xi:include href="samba.xml"/>
+
+</part>
+
+<part>
+	<title>Samba 4 Basics</title>
+
+	<para>FIXME</para>
+
+	<xi:include href="config.xml"/>
+	<xi:include href="ldb.xml"/>
+</part>
+
+<part>
+	<title>Network model</title>
+
+	<para>
+		A SMB server is used in a certain network type 
+		(workgroup, domain, active directory) with a specific 
+		role (stand-alone, primary domain controller, backup domain controller, etc) in that network. Samba has to be configured according to that role. 
+		Each of the chapters in this part describes how to configure Samba 
+		for a specific role.
+	</para>
+
+</part>
+
+<part>
+	<title>Network Model: Share-based security</title>
+		
+	<xi:include href="security=share.xml"/>
+</part>
+
+<part>
+	<title>Network Model: User-based security</title>
+	<xi:include href="security=user.xml"/>
+</part>
+
+<part id="domain">
+	<title>Network Model: NT4-style domains</title>
+
+	<xi:include href="domain-pdc.xml"/>
+	<xi:include href="domain-bdc.xml"/>
+	<xi:include href="domain-member.xml"/>
+</part>
+
+<part id="ad">
+	<title>Network Model - Active Directory</title>
+
+	<xi:include href="ad-dc.xml"/>
+	<xi:include href="ad-member.xml"/>
+</part>
+
+<part>
+	<title>Common services</title>
+
+	<para>
+		Independent of the role the server has, it can provide services. 
+		Examples of services are printing, user management, authentication, etc.
+	</para>
+
+	<xi:include href="shares.xml"/>
+	<xi:include href="printing.xml"/>
+	<xi:include href="auth.xml"/>
+	<xi:include href="registry.xml"/>
+</part>
+
+<part>
+	<title>Clients</title>
+
+	<para>Samba includes a number of different clients for accessing 
+	SMB file, print and other services. Pretty much every service can 
+	be access using a command-line utility, though there are several 
+	GUI clients available as well.</para>
+
+	<xi:include href="smbclient.xml"/>
+	<xi:include href="cifsfs.xml"/>
+	<xi:include href="gui-clients.xml"/>
+</part>
+
+<part>
+	<title>Appendices</title>
+
+	<xi:include href="compiling.xml"/>
+
+</part>
+
+<lot/>
+
+<?latex \include{gpl}?>
+
+<!--<xi:include href="../Samba-HOWTO-Collection/glossary.xml"/>-->
+
+<?latex \chaptermark{Subject index} ?>
+<index/>
+
+</book>

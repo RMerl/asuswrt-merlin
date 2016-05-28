@@ -1,0 +1,80 @@
+BODY {
+	font-family: helvetica, arial, lucida sans, sans-serif;
+	background-color: white;
+}
+
+H1, H2, H3 {
+	color: blue;
+	font-size: 120%;
+	padding: 2px;
+	margin-top: 0px;
+}
+
+H1 {
+	background-color: #EEEEFF;
+	color: blue;
+}
+
+H2 {
+	background-color: #DDDDFF;
+	color: blue;
+}
+
+H3 {
+	background-color: #CCCCFF;
+	color: blue;
+}
+
+H4 {
+	color: blue;
+}
+
+TR.qandadiv TD {
+	padding-top: 1em;
+}
+
+DIV.navhead {
+	font-size: 80%;
+}
+
+A:link {
+	color: #36F;
+}
+
+A:visited {
+	color: #96C;
+}
+
+A:active {
+	color: #F63;
+}
+
+TR.question {
+	color: #33C;
+	font-weight: bold;
+}
+
+TR.question TD {
+	padding-top: 1em;
+}
+
+DIV.variablelist {
+	padding-left: 2em;
+	color: #33C;
+}
+
+P {
+	color: black;
+}
+
+DIV.note, DIV.warning, DIV.caution, DIV.tip, DIV.important {
+	border: dashed 1px;
+	background-color: #EEEEFF;
+	width: 40em;
+}
+
+PRE.programlisting, PRE.screen {
+	border: #630 1px dashed;
+	color: #630;
+}
+

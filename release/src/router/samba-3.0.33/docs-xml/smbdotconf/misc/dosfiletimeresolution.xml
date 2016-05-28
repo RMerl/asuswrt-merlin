@@ -1,0 +1,25 @@
+<samba:parameter name="dos filetime resolution"
+		 context="S"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>Under the DOS and Windows FAT filesystem, the finest 
+	granularity on time resolution is two seconds. Setting this parameter 
+	for a share causes Samba to round the reported time down to the 
+	nearest two second boundary when a query call that requires one second 
+	resolution is made to <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>.</para>
+
+	<para>This option is mainly used as a compatibility option for Visual 
+	C++ when used against Samba shares. If oplocks are enabled on a 
+	share, Visual C++ uses two different time reading calls to check if a 
+	file has changed since it was last read. One of these calls uses a
+	one-second granularity, the other uses a two second granularity. As
+	the two second call rounds any odd second down, then if the file has a
+	timestamp of an odd number of seconds then the two timestamps will not
+	match and Visual C++ will keep reporting the file has changed. Setting
+	this option causes the two timestamps to match, and Visual C++ is
+	happy.</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

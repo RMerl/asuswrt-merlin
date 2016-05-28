@@ -333,17 +333,17 @@ bool ra_process(void)
 		if (!ra_icmpv6_valid(&from, hlim, buf, len))
 			continue;
 
-		// Stop sending solicits
-		if (rs_attempt > 0) {
-			alarm(0);
-			rs_attempt = 0;
-		}
-
 		if (!found) {
 			odhcp6c_expire();
 			found = true;
 		}
 		uint32_t router_valid = ntohs(adv->nd_ra_router_lifetime);
+
+		// Stop sending solicits
+		if (rs_attempt > 0 && router_valid) {
+			alarm(0);
+			rs_attempt = 0;
+		}
 
 		// Parse default route
 		entry->target = any;

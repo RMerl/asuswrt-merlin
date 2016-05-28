@@ -269,6 +269,9 @@ if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC68U") ||
 else
 		var codel_support = false;
 
+if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
+	bwdpi_support = false;
+}
 
 function initial(){
 	show_menu();
@@ -284,8 +287,8 @@ function initial(){
 	
 	if(document.form.qos_enable_orig.value == 1){
 		if(document.form.qos_type.value == 2){		//Bandwidth Limiter
-			document.getElementById('upload_tr').style.display = "";
-			document.getElementById('download_tr').style.display = "";
+			document.getElementById('upload_tr').style.display = "none";
+			document.getElementById('download_tr').style.display = "none";
 			genMain_table();
 			if(document.form.qos_enable.value == 1)
 				showhide("list_table",1);
@@ -337,10 +340,7 @@ function initial(){
 			if(document.form.qos_type.value == 0){		//Traditional Type				
 				add_option(document.getElementById("settingSelection"), '<#qos_user_rules#>', 3, 0);
 				add_option(document.getElementById("settingSelection"), '<#qos_user_prio#>', 4, 0);
-			}
-			else if(document.form.qos_type.value == 2){		//Bandwidth Limiter
-				add_option(document.getElementById("settingSelection"), "Bandwidth Limiter", 5, 0);
-			}
+			}			
 			else{		//Adaptive Type or else
 				document.getElementById('settingSelection').style.display = "none";	
 			}
@@ -350,13 +350,14 @@ function initial(){
 		}
 	}
 	else{
-		if(document.form.qos_type.value == 2){		//Bandwidth Limiter
-			add_option(document.getElementById("settingSelection"), "Bandwidth Limiter", 5, 0);
-		}
-		else{		//Traditional Type			
+		if(document.form.qos_type.value == 0){		//Traditional Type			
 			add_option(document.getElementById("settingSelection"), '<#qos_user_rules#>', 3, 0);
 			add_option(document.getElementById("settingSelection"), '<#qos_user_prio#>', 4, 0);
 		}
+		else{	//Bandwidth Limiter
+			document.getElementById('settingSelection').style.display = "none";	
+		}
+			
 		document.getElementById('content_title').innerHTML = "<#Menu_TrafficManager#> - <#menu5_3_2#>";		
 		document.getElementById('function_int_desc').style.display = "none";				
 	}
@@ -827,14 +828,19 @@ function addRow_main(obj, length){
 	if(document.form.PC_devicename.value == "" || document.getElementById("download_rate").value == "" || document.getElementById("upload_rate").value == ""){
 		return true;
 	}
-	
+
 	var enable_checkbox = $(obj.parentNode).siblings()[0].children[0];
 	var invalid_char = "";
 	var qos_bw_rulelist_row =  qos_bw_rulelist.split("<");
 	var max_priority = 0;
 	if(qos_bw_rulelist != "")
-		max_priority = qos_bw_rulelist_row.length;	
-	
+		max_priority = qos_bw_rulelist_row.length;
+
+	if(qos_bw_rulelist_row.length >= length){
+		alert("<#JS_itemlimit1#> " + length + " <#JS_itemlimit2#>");
+		return false;   
+	}
+
 	if(!validator.string(document.form.PC_devicename))
 		return false;
 	
@@ -1257,10 +1263,9 @@ function check_field(){
 														<ul>
 															<li id="function_int_desc"><#EzQoS_desc_Adaptive#></li>
 															<li><#EzQoS_desc_Traditional#></li>
-															<li><span style="font-size:14px;font-weight:bolder">Bandwidth Limiter</span> helps you to control download and upload max speed of your client devices.</li><!--untranslated string--> 
+															<li><#EzQoS_desc_Bandwidth_Limiter#></li>
 														</ul>
-														<!--#EzQoS_desc_note#-->
-														To enable QoS function, click the QoS slide switch and fill in the upload and download.<!--unstranlated string-->
+														<#EzQoS_desc_note#>														
 													</div>
 													<div class="formfontdesc">
 														<a id="faq" href="http://www.asus.com/us/support/FAQ/1008718/" target="_blank" style="text-decoration:underline;">QoS FAQ</a>
@@ -1322,7 +1327,7 @@ function check_field(){
 															 }
 														);
 													</script>			
-												<div id="qos_enable_hint" style="color:#FC0;margin:5px 0px 0px 100px;display:none">Enabling QoS may take several minutes.<!--#Adaptive_note#--></div><!--untranslated string-->
+												<div id="qos_enable_hint" style="color:#FC0;margin:5px 0px 0px 100px;display:none"><#QzQoS_note#></div>
 											</td>
 										</tr>
 										<tr id="qos_type_tr" style="display:none">
@@ -1359,8 +1364,8 @@ function check_field(){
 											<td rowspan="2" style="width:250px;">
 												<div>
 													<ul style="padding:0 10px;margin:5px 0;">
-														<li>Get the bandwidth information from ISP or go to <a href="http://speedtest.net" target="_blank" style="text-decoration:underline;color:#FC0">Speedtest</a> to check bandwidth</li>
-														<li id="hint_zero">The default is 0, which means unlimited bandwidth</li>
+														<li><#EzQoS_bandwidth_note1#></li>
+														<li id="hint_zero"><#EzQoS_bandwidth_note2#></li>
 													</ul>
 												</div>
 												
@@ -1381,7 +1386,7 @@ function check_field(){
 						<table id="quick_setup_desc" width="98%" border="0" style="margin-top:5px;margin-left:5px;display:none;">
 							<tr>
 								<td height="30" align="left" valign="top" bgcolor="#4D595D">																		
-									<div class="formfontdesc" style="line-height:20px;font-size:14px;">Please select priority mode depending on your networking environment. You can also choice customize mode to prioritize app category.</div>	<!-- untranslated -->
+									<div class="formfontdesc" style="line-height:20px;font-size:14px;"><#Adaptive_QoS_priority#></div>
 								</td>								
 							</tr>
 						</table>	
@@ -1408,13 +1413,13 @@ function check_field(){
 							</tr>
 							<tr height="40px" align="center">
 								<td width="10px"></td>
-								<td class="Quick_Setup_title" align="center">Game</td>	<!-- untranslated -->
+								<td class="Quick_Setup_title" align="center"><#AiProtection_filter_stream1#></td><!--Games-->
 								<td width="50px"></td>
-								<td class="Quick_Setup_title" align="center">Media Streaming</td>	<!-- untranslated -->
+								<td class="Quick_Setup_title" align="center"><#AiProtection_filter_stream2#></td><!--Media Streaming-->
 								<td width="50px"></td>
-								<td class="Quick_Setup_title" align="center">Web Surfing</td>	<!-- untranslated -->
+								<td class="Quick_Setup_title" align="center"><#Adaptive_WebSurf#></td><!--Web Surfing-->
 								<td width="50px"></td>
-								<td class="Quick_Setup_title" align="center">Customize</td>	<!-- untranslated -->
+								<td class="Quick_Setup_title" align="center"><#Customize#></td>
 								<td width="20px"></td>
 							</tr>						
 							<tr height="40">

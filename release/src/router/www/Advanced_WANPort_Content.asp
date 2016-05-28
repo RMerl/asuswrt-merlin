@@ -397,9 +397,17 @@ function changeWANProto(obj){
 					else
 						document.form.wans_second.value = "lan";
 				}
+				else if(obj.value == "usb"){
+					if(wans_caps.search("wan") >= 0)
+						document.form.wans_second.value = "wan";
+					else if(wans_caps.search("lan") >= 0)
+						document.form.wans_second.value = "lan";
+				}
 				else{
 					if(wans_caps.search("wan") >= 0)
 						document.form.wans_second.value = "wan";					
+					else if(wans_caps.search("usb") >= 0)
+						document.form.wans_second.value = "usb";
 				}
 			}
 			else if(obj.name == "wans_second"){

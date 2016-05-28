@@ -1,0 +1,18 @@
+<samba:parameter name="dos filemode"
+		 context="S"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para> The default behavior in Samba is to provide
+	UNIX-like behavior where only the owner of a file/directory is
+	able to change the permissions on it.  However, this behavior
+	is often confusing to  DOS/Windows users.  Enabling this parameter
+	allows a user who has write access to the file (by whatever
+	means, including an ACL permission) to modify the permissions
+	(including ACL) on it. Note that a user belonging to the group
+	owning the file will not be allowed to change permissions if
+	the group is only granted read access. Ownership of the
+	file/directory may also be changed.</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

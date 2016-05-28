@@ -661,8 +661,6 @@ setAllLedOn(void)
 		}
 	}
 
-	wan_red_led_control(LED_ON);
-
 	puts("1");
 	return 0;
 }
@@ -1002,8 +1000,6 @@ setAllLedOff(void)
 		}
 	}
 
-	wan_red_led_control(LED_OFF);
-
 	puts("1");
 	return 0;
 }
@@ -1170,6 +1166,62 @@ setATEModeLedOn(void) {
 
 	return 0;
 }
+
+#ifdef RTCONFIG_BCMARM
+int
+setWanLedMode1(void)
+{
+	int model = get_model();
+	switch(model) {
+		case MODEL_RTAC87U:
+		case MODEL_RTAC68U:
+		case MODEL_RTAC3200:
+		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
+		case MODEL_RTAC88U:
+		case MODEL_RTAC3100:
+#ifdef RTAC68U
+			if (strcmp(get_productid(), "RT-AC66U V2"))
+				goto exit;
+#endif
+			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
+			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
+			led_control(LED_WAN, LED_ON);
+
+			break;
+	}
+exit:
+	puts("1");
+	return 0;
+}
+
+int
+setWanLedMode2(void)
+{
+	int model = get_model();
+	switch(model) {
+		case MODEL_RTAC87U:
+		case MODEL_RTAC68U:
+		case MODEL_RTAC3200:
+		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
+		case MODEL_RTAC88U:
+		case MODEL_RTAC3100:
+#ifdef RTAC68U
+			if (strcmp(get_productid(), "RT-AC66U V2"))
+				goto exit;
+#endif
+			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x0101");	// lan/wan ethernet/giga led
+			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
+			led_control(LED_WAN, LED_OFF);
+
+			break;
+	}
+exit:
+	puts("1");
+	return 0;
+}
+#endif
 
 #ifdef RTCONFIG_FANCTRL
 int
@@ -3364,3 +3416,51 @@ int wl_subband(char *wif, int idx)
 	return -1;
 }
 #endif
+
+#define DOT11_MAX_SSID_LEN	32	/* d11 max ssid length */
+#define SSID_FMT_BUF_LEN	((4 * DOT11_MAX_SSID_LEN) + 1)
+
+int
+wl_format_ssid(char* ssid_buf, uint8* ssid, int ssid_len)
+{
+	int i, c;
+	char *p = ssid_buf;
+
+	if (ssid_len > 32) ssid_len = 32;
+
+	for (i = 0; i < ssid_len; i++) {
+		c = (int)ssid[i];
+		if (c == '\\') {
+			*p++ = '\\';
+			*p++ = '\\';
+		} else if (isprint((uchar)c)) {
+			*p++ = (char)c;
+		} else {
+			p += sprintf(p, "\\x%02X", c);
+		}
+	}
+	*p = '\0';
+
+	return p - ssid_buf;
+}
+
+int
+getSSID(int unit)
+{
+	char tmp[100], prefix[] = "wlXXXXXXXXXX_";
+	char *name = NULL;
+        wlc_ssid_t ssid;
+        char ssidbuf[SSID_FMT_BUF_LEN];
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+	ssid.SSID_len = 0;
+	wl_ioctl(name, WLC_GET_SSID, &ssid, sizeof(wlc_ssid_t));
+
+	memset(ssidbuf, 0, sizeof(ssidbuf));
+	wl_format_ssid(ssidbuf, ssid.SSID, dtoh32(ssid.SSID_len));
+
+	puts(ssidbuf);
+
+	return 0;
+}

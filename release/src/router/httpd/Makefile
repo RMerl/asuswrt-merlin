@@ -33,10 +33,6 @@ ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN
 CFLAGS += -DRA_ESW
 endif
 
-ifeq ($(RTCONFIG_USB),y)
-CFLAGS += -I$(TOP)/libdisk	
-endif
-
 ifeq ($(RTCONFIG_DNSMASQ),y)
 CFLAGS += -DDNSMASQ
 endif
@@ -48,6 +44,10 @@ endif
 ifeq ($(RTCONFIG_TRAFFIC_LIMITER),y)
 CFLAGS += -I$(TOP)/traffic_limiter
 CFLAGS += -I$(TOP)/sqlite
+endif
+
+ifeq ($(RTAC68A), y)
+CFLAGS += -DRTAC68U
 endif
 
 OBJS = httpd.o cgi.o ej.o 
@@ -111,7 +111,12 @@ endif
 endif
 
 ifeq ($(RTCONFIG_USB),y)
+CFLAGS += -I$(TOP)/libdisk	
 LIBS += -L$(TOP)/libdisk -ldisk
+ifeq ($(RTCONFIG_USB_SMS_MODEM),y)
+CFLAGS += -I$(TOP)/smspdu
+LIBS += -L$(TOP)/smspdu -lsmspdu
+endif
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)

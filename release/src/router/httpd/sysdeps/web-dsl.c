@@ -258,7 +258,7 @@ int ej_get_isp_dhcp_opt_list(int eid, webs_t wp, int argc, char_t **argv){
 	if (fpIsp != NULL)
 	{
 	  // read out UTF-8 3 bytes header
-	        fread(bufIsp,3,1,fpIsp);
+	        //fread(bufIsp,3,1,fpIsp);
 		while(!feof(fpIsp))
 		{
 			char* ret_fgets;

@@ -1221,7 +1221,6 @@ int main(int argc, char *argv[])
 					#ifdef RTCONFIG_UPNPC
 						query_ret = QuerymUPnPCInfo(p_client_detail_info_tab, i);
 					#endif
-					FindAllApp(my_ipaddr, p_client_detail_info_tab, i);
 				}
 
 				NMP_DEBUG("Fill: %d-> %d.%d.%d.%d\n", i,
@@ -1286,6 +1285,7 @@ int main(int argc, char *argv[])
 	    if(p_client_detail_info_tab->detail_info_num < p_client_detail_info_tab->ip_mac_num) {
 		NMP_DEBUG_M("Deep Scan and write to DB!\n");
 		nvram_set("networkmap_status", "1");
+		FindAllApp(my_ipaddr, p_client_detail_info_tab, p_client_detail_info_tab->detail_info_num);
 		lock = file_lock("networkmap");
 		FindHostname(p_client_detail_info_tab);
 		StringChk(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);

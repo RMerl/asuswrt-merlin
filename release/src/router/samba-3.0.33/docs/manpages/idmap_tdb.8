@@ -1,0 +1,49 @@
+.\"     Title: idmap_tdb
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "IDMAP_TDB" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+idmap_tdb - Samba's idmap_tdb Backend for Winbind
+.SH "DESCRIPTION"
+.PP
+The idmap_tdb plugin is the default backend used by winbindd for storing SID/uid/gid mapping tables and implements both the "idmap" and "idmap alloc" APIs\.
+.SH "IDMAP OPTIONS"
+.PP
+range = low \- high
+.RS 4
+Defines the available matching uid and gid range for which the backend is authoritative\. Note that the range commonly matches the allocation range due to the fact that the same backend will store and retrieve SID/uid/gid mapping entries\. If the parameter is absent, Winbind fail over to use the "idmap uid" and "idmap gid" options from smb\.conf\.
+.RE
+.SH "IDMAP ALLOC OPTIONS"
+.PP
+range = low \- high
+.RS 4
+Defines the available matching uid and gid range from which winbindd can allocate for users and groups\. If the parameter is absent, Winbind fail over to use the "idmap uid" and "idmap gid" options from smb\.conf\.
+.RE
+.SH "EXAMPLES"
+.PP
+The following example is equivalent to the pre\-3\.0\.25 default idmap configuration using the "idmap backend = tdb" setting\.
+.sp
+.RS 4
+.nf
+	[global]
+	    idmap domains = ALLDOMAINS
+	    idmap config ALLDOMAINS:default = yes
+	    idmap config ALLDOMAINS:backend = tdb
+	    idmap config ALLDOMAINS:range   = 10000 \- 50000
+
+	    idmap alloc backend = tdb
+	    idmap alloc config:range = 10000 \- 50000
+	
+.fi
+.RE
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+DOCSRCDIR=`dirname $0`/../docs-xml
+
+cd $DOCSRCDIR || exit 1
+
+git-clean -d -x -f
+autoconf && \
+	./configure --with-papersize=letter && \
+	make smbdotconf/parameters.all.xml && \
+	make release
+
+if [ $? != 0 ]; then
+        echo "Docs build failed!"
+        exit 1
+fi
+
+mkdir ../docs
+rsync -Ca --delete --exclude=.git output/ ../docs/
+rsync -Ca --exclude=.svn registry ../docs/
+rsync -Ca --exclude=.svn archives/ ../docs/
+
+cd ../docs || exit 1
+/bin/rm -rf test.pdf Samba4*pdf htmldocs/Samba4* htmldocs/test
+mv manpages-3 manpages
+mv htmldocs/manpages-3 htmldocs/manpages
+
+exit

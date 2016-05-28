@@ -1,0 +1,42 @@
+<samba:parameter name="lpq command"
+                 context="S"
+				 type="string"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+ <description>
+    <para>This parameter specifies the command to be 
+    executed on the server host in order to obtain <command moreinfo="none">lpq
+    </command>-style printer status information.</para>
+
+    <para>This command should be a program or script which 
+    takes a printer name as its only parameter and outputs printer 
+    status information.</para>
+
+    <para>Currently nine styles of printer status information 
+    are supported; BSD, AIX, LPRNG, PLP, SYSV, HPUX, QNX, CUPS, and SOFTQ. 
+    This covers most UNIX systems. You control which type is expected 
+    using the <parameter moreinfo="none">printing =</parameter> option.</para>
+
+    <para>Some clients (notably Windows for Workgroups) may not 
+    correctly send the connection number for the printer they are 
+    requesting status information about. To get around this, the 
+    server reports on the first printer service connected to by the 
+    client. This only happens if the connection number sent is invalid.</para>
+
+    <para>If a <parameter moreinfo="none">%p</parameter> is given then the printer name 
+    is put in its place. Otherwise it is placed at the end of the 
+    command.</para>
+
+    <para>Note that it is good practice to include the absolute path 
+    in the <parameter moreinfo="none">lpq command</parameter> as the <envar>$PATH
+    </envar> may not be available to the server.  When compiled with
+    the CUPS libraries, no <parameter moreinfo="none">lpq command</parameter> is
+    needed because smbd will make a library call to obtain the 
+	print queue listing.</para>
+</description>
+
+<related>printing</related>
+
+<value type="example">/usr/bin/lpq -P%p</value>
+<value type="default"></value>
+</samba:parameter>

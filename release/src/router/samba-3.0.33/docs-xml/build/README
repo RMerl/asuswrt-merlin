@@ -1,0 +1,26 @@
+HOW TO BUILD SAMBA DOCUMENTATION WITHOUT NETWORK ACCESS
+-------------------------------------------------------
+
+Samba documentation depends on several DTD schema specification and XML files
+that are stored in samba-web Subversion repository and hosted publicly through
+Samba.org web-site. In order to do networkless builds a local XML catalog should
+provide a local replica of those files.
+
+The easiest way to provide them is to fetch samba-docs subversion repository.
+In this directory (build/) we reference samba-web repository as external source
+so that Subversion fetches current state of DTDs out of samba-web repository.
+You then need to point xsltproc utility to use locally-provided version of DTDs.
+
+It is done by setting XML_CATALOG_FILES variable:
+
+export XML_CATALOG_FILES="file:///etc/xml/catalog file://$(pwd)/build/catalog.xml"
+
+where $(pwd)/build/catalog.xml is generated from $(pwd)/build/catalog.xml.in by a 
+following command:
+
+cat $(pwd)/build/catalog.xml.in | sed -e "s|@BUILDDIR@|$(pwd)|g" > $(pwd)/build/catalog.xml
+
+where $(pwd) assumes that you're in the top-level directory of samba-docs.
+
+After those steps a regular make process can be followed and xsltproc will automatically
+use locally-provided DTDs through catalog.xml we've created.

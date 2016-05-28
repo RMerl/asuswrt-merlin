@@ -1,0 +1,41 @@
+
+<!--
+     File isodia.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY acute            "&#x000B4;" ><!--=acute accent -->
+<!ENTITY breve            "&#x002D8;" ><!--=breve -->
+<!ENTITY caron            "&#x002C7;" ><!--=caron -->
+<!ENTITY cedil            "&#x000B8;" ><!--=cedilla -->
+<!ENTITY circ             "&#x0005E;" ><!--circumflex accent -->
+<!ENTITY dblac            "&#x002DD;" ><!--=double acute accent -->
+<!ENTITY die              "&#x000A8;" ><!--=dieresis -->
+<!ENTITY dot              "&#x002D9;" ><!--=dot above -->
+<!ENTITY grave            "&#x00060;" ><!--=grave accent -->
+<!ENTITY macr             "&#x000AF;" ><!--=macron -->
+<!ENTITY ogon             "&#x002DB;" ><!--=ogonek -->
+<!ENTITY ring             "&#x002DA;" ><!--=ring -->
+<!ENTITY tilde            "&#x002DC;" ><!--=tilde -->
+<!ENTITY uml              "&#x000A8;" ><!--=umlaut mark -->

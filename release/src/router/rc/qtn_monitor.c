@@ -168,6 +168,12 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 			if (ret < 0)
 				dbG("enable_mu %s error, return: %d\n", WIFINAME, ret);
 		}
+#ifdef RTCONFIG_IPV6
+		if (get_ipv6_service() == IPV6_DISABLED)
+			qcsapi_wifi_run_script("router_command.sh", "ipv6_off wifi0");
+		else
+			qcsapi_wifi_run_script("router_command.sh", "ipv6_on wifi0");
+#endif
 	}else if (unit == 1 && subunit == 1){
 		if(nvram_get_int("wl1.1_bss_enabled") == 1){
 			rpc_update_mbss("wl1.1_ssid", nvram_safe_get("wl1.1_ssid"));
@@ -187,6 +193,12 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_del, 4000 /* vid */);
 				}
 			}
+#ifdef RTCONFIG_IPV6
+			if (get_ipv6_service() == IPV6_DISABLED)
+				qcsapi_wifi_run_script("router_command.sh", "ipv6_off wifi1");
+			else
+				qcsapi_wifi_run_script("router_command.sh", "ipv6_on wifi1");
+#endif
 		}
 		else{
 			qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));
@@ -210,6 +222,12 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_del, 4001 /* vid */);
 				}
 			}
+#ifdef RTCONFIG_IPV6
+			if (get_ipv6_service() == IPV6_DISABLED)
+				qcsapi_wifi_run_script("router_command.sh", "ipv6_off wifi2");
+			else
+				qcsapi_wifi_run_script("router_command.sh", "ipv6_on wifi2");
+#endif
 		}
 		else{
 			qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));
@@ -233,6 +251,12 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_del, 4002 /* vid */);
 				}
 			}
+#ifdef RTCONFIG_IPV6
+			if (get_ipv6_service() == IPV6_DISABLED)
+				qcsapi_wifi_run_script("router_command.sh", "ipv6_off wifi3");
+			else
+				qcsapi_wifi_run_script("router_command.sh", "ipv6_on wifi3");
+#endif
 		}
 		else{
 			qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));

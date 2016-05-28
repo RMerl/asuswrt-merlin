@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<l:l10n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0" language="hr" english-language-name="Croatian">
+<!-- This file was generated automatically. -->
+<!-- Developers should not commit sundry patches against this file. -->
+<!-- The source file (with documentation!) is in the admin directory. -->
+<!-- -->
+<!-- Any further gentexts were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/hr.xml -->
+  <l:gentext key="Abstract" text="Sa&#382;etak"/>
+  <l:gentext key="abstract" text="Sa&#382;etak"/>
+  <l:gentext key="Answer" text="Odgovor:"/>
+  <l:gentext key="answer" text="Odgovor:"/>
+  <l:gentext key="Appendix" text="Dodatak"/>
+  <l:gentext key="appendix" text="dodatak"/>
+  <l:gentext key="Article" text="&#268;lanak"/>
+  <l:gentext key="article" text="&#268;lanak"/>
+  <l:gentext key="Bibliography" text="Literatura"/>
+  <l:gentext key="bibliography" text="Literatura"/>
+  <l:gentext key="Book" text="Knjiga"/>
+  <l:gentext key="book" text="Knjiga"/>
+  <l:gentext key="CAUTION" text="OPREZ"/>
+  <l:gentext key="Caution" text="Oprez"/>
+  <l:gentext key="caution" text="Oprez"/>
+  <l:gentext key="Chapter" text="Poglavlje"/>
+  <l:gentext key="chapter" text="poglavlje"/>
+  <l:gentext key="Colophon" text="Impresum"/>
+  <l:gentext key="colophon" text="Impresum"/>
+  <l:gentext key="Copyright" text="Autorska prava"/>
+  <l:gentext key="copyright" text="Autorska prava"/>
+  <l:gentext key="Dedication" text="Posveta"/>
+  <l:gentext key="dedication" text="Posveta"/>
+  <l:gentext key="Edition" text="Izdanje"/>
+  <l:gentext key="edition" text="Izdanje"/>
+  <l:gentext key="Equation" text="Jednad&#382;ba"/>
+  <l:gentext key="equation" text="Jednad&#382;ba"/>
+  <l:gentext key="Example" text="Primjer"/>
+  <l:gentext key="example" text="Primjer"/>
+  <l:gentext key="Figure" text="Slika"/>
+  <l:gentext key="figure" text="Slika"/>
+  <l:gentext key="Glossary" text="Rje&#269;nik"/>
+  <l:gentext key="glossary" text="Rje&#269;nik"/>
+  <l:gentext key="GlossSee" text="Vidi"/>
+  <l:gentext key="glosssee" text="Vidi"/>
+  <l:gentext key="GlossSeeAlso" text="Vidi i"/>
+  <l:gentext key="glossseealso" text="Vidi i"/>
+  <l:gentext key="IMPORTANT" text="VA&#381;NO"/>
+  <l:gentext key="important" text="Va&#382;no"/>
+  <l:gentext key="Important" text="Va&#382;no"/>
+  <l:gentext key="Index" text="Kazalo"/>
+  <l:gentext key="index" text="Kazalo"/>
+  <l:gentext key="ISBN" text="ISBN"/>
+  <l:gentext key="isbn" text="ISBN"/>
+  <l:gentext key="LegalNotice" text="Pravne odredbe"/>
+  <l:gentext key="legalnotice" text="Pravne odredbe"/>
+  <l:gentext key="MsgAud" text="Primatelji"/>
+  <l:gentext key="msgaud" text="Primatelji"/>
+  <l:gentext key="MsgLevel" text="Razina"/>
+  <l:gentext key="msglevel" text="Razina"/>
+  <l:gentext key="MsgOrig" text="Izvor"/>
+  <l:gentext key="msgorig" text="Izvor"/>
+  <l:gentext key="NOTE" text="BILJE&#352;KA"/>
+  <l:gentext key="Note" text="Bilje&#353;ka"/>
+  <l:gentext key="note" text="Bilje&#353;ka"/>
+  <l:gentext key="Part" text="Dio"/>
+  <l:gentext key="part" text="Dio"/>
+  <l:gentext key="Preface" text="Predgovor"/>
+  <l:gentext key="preface" text="Predgovor"/>
+  <l:gentext key="Procedure" text="Postupak"/>
+  <l:gentext key="procedure" text="Postupak"/>
+  <l:gentext key="ProductionSet" text="Produkcija"/>
+  <l:gentext key="Published" text="Objavljeno"/>
+  <l:gentext key="published" text="Objavljeno"/>
+  <l:gentext key="Question" text="Pitanje:"/>
+  <l:gentext key="question" text="Pitanje:"/>
+  <l:gentext key="RefEntry" text=""/>
+  <l:gentext key="refentry" text=""/>
+  <l:gentext key="Reference" text="Referenca"/>
+  <l:gentext key="reference" text="Referenca"/>
+  <l:gentext key="RefName" text="Ime"/>
+  <l:gentext key="refname" text="Ime"/>
+  <l:gentext key="RefSection" text=""/>
+  <l:gentext key="refsection" text=""/>
+  <l:gentext key="RefSynopsisDiv" text="Pregled"/>
+  <l:gentext key="refsynopsisdiv" text="Pregled"/>
+  <l:gentext key="RevHistory" text="Povijest preinaka"/>
+  <l:gentext key="revhistory" text="Povijest preinaka"/>
+  <l:gentext key="revision" text="Preinaka"/>
+  <l:gentext key="Revision" text="Preinaka"/>
+  <l:gentext key="sect1" text="Odjeljak"/>
+  <l:gentext key="sect2" text="Odjeljak"/>
+  <l:gentext key="sect3" text="Odjeljak"/>
+  <l:gentext key="sect4" text="Odjeljak"/>
+  <l:gentext key="sect5" text="Odjeljak"/>
+  <l:gentext key="section" text="Odjeljak"/>
+  <l:gentext key="Section" text="Odjeljak"/>
+  <l:gentext key="see" text="vidi"/>
+  <l:gentext key="seealso" text="vidi i"/>
+  <l:gentext key="set" text="Set"/>
+  <l:gentext key="Set" text="Set"/>
+  <l:gentext key="setindex" text="Kazalo seta"/>
+  <l:gentext key="SetIndex" text="Kazalo seta"/>
+  <l:gentext key="Sidebar" text=""/>
+  <l:gentext key="sidebar" text="sidebar"/>
+  <l:gentext key="step" text="korak"/>
+  <l:gentext key="Step" text="Korak"/>
+  <l:gentext key="Table" text="Tablica"/>
+  <l:gentext key="table" text="Tablica"/>
+  <l:gentext key="tip" text="Savjet"/>
+  <l:gentext key="TIP" text="SAVJET"/>
+  <l:gentext key="Tip" text="Savjet"/>
+  <l:gentext key="Warning" text="Upozorenje"/>
+  <l:gentext key="warning" text="Upozorenje"/>
+  <l:gentext key="WARNING" text="UPOZORENJE"/>
+  <l:gentext key="and" text="i"/>
+  <l:gentext key="by" text="po"/>
+  <l:gentext key="Edited" text="Uredio/la"/>
+  <l:gentext key="edited" text="Uredio/la"/>
+  <l:gentext key="Editedby" text="Uredio/la"/>
+  <l:gentext key="editedby" text="Uredio/la"/>
+  <l:gentext key="in" text="u"/>
+  <l:gentext key="lastlistcomma" text=","/>
+  <l:gentext key="listcomma" text=","/>
+  <l:gentext key="nonexistantelement" text="nepostoje&#263;i element"/>
+  <l:gentext key="notes" text="Bilje&#353;ke"/>
+  <l:gentext key="Notes" text="Bilje&#353;ke"/>
+  <l:gentext key="Pgs" text="Str."/>
+  <l:gentext key="pgs" text="Str."/>
+  <l:gentext key="Revisedby" text="Promijenjeno po: "/>
+  <l:gentext key="revisedby" text="Promijenjeno po: "/>
+  <l:gentext key="TableNotes" text="Napomene"/>
+  <l:gentext key="tablenotes" text="Napomene"/>
+  <l:gentext key="TableofContents" text="Sadr&#382;aj"/>
+  <l:gentext key="tableofcontents" text="Sadr&#382;aj"/>
+  <l:gentext key="unexpectedelementname" text="Neo&#269;ekivano ime elementa"/>
+  <l:gentext key="unsupported" text="nepodr&#382;ano"/>
+  <l:gentext key="xrefto" text="xref za"/>
+  <l:gentext key="listofequations" text="Popis jednad&#382;bi"/>
+  <l:gentext key="ListofEquations" text="Popis jednad&#382;bi"/>
+  <l:gentext key="ListofExamples" text="Popis primjera"/>
+  <l:gentext key="listofexamples" text="Popis primjera"/>
+  <l:gentext key="ListofFigures" text="Popis slika"/>
+  <l:gentext key="listoffigures" text="Popis slika"/>
+  <l:gentext key="ListofProcedures" text="Popis postupaka"/>
+  <l:gentext key="listofprocedures" text="Popis postupaka"/>
+  <l:gentext key="listoftables" text="Popis tablica"/>
+  <l:gentext key="ListofTables" text="Popis tablica "/>
+  <l:gentext key="ListofUnknown" text="Popis nepoznanica"/>
+  <l:gentext key="listofunknown" text="Popis nepoznanica"/>
+  <l:gentext key="nav-home" text="Po&#269;etak"/>
+  <l:gentext key="nav-next" text="Naprijed"/>
+  <l:gentext key="nav-next-sibling" text="Sko&#269;i unaprijed"/>
+  <l:gentext key="nav-prev" text="Natrag"/>
+  <l:gentext key="nav-prev-sibling" text="Sko&#269;i unatrag"/>
+  <l:gentext key="nav-up" text="Gore"/>
+  <l:gentext key="nav-toc" text="Sadr&#382;aj"/>
+  <l:gentext key="Draft" text="Nacrt"/>
+  <l:gentext key="above" text="iznad"/>
+  <l:gentext key="below" text="ispod"/>
+  <l:gentext key="sectioncalled" text="the section called"/>
+  <l:gentext key="index symbols" text="Oznake"/>
+  <l:gentext key="lowercase.alpha" text="abc&#269;&#263;d&#273;efghijklmnopqrs&#353;tuvwxyz&#382;"/>
+  <l:gentext key="uppercase.alpha" text="ABC&#268;&#262;D&#272;EFGHIJKLMNOPQRS&#352;TUVWXYZ&#381;"/>
+  <l:gentext key="hyphenation-character" text="&#8208;"/>
+  <l:gentext key="hyphenation-push-character-count" text="2"/>
+  <l:gentext key="hyphenation-remain-character-count" text="2"/>
+<!-- Any further dingbats were selectively imported from http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/*checkout*/docbook/gentext/locale/hr.xml -->
+  <l:dingbat key="startquote" text="&#8222;"/>
+  <l:dingbat key="endquote" text="&#8220;"/>
+  <l:dingbat key="nestedstartquote" text="&#8218;"/>
+  <l:dingbat key="nestedendquote" text="&#8216;"/>
+  <l:dingbat key="bullet" text="&#8226;"/>
+<!-- Any further contexts were found only in the "other" file. -->
+  <l:context name="styles">
+    <l:template name="person-name" text="first-last"/>
+  </l:context>
+  <l:context name="title">
+    <l:template name="abstract" text="%t"/>
+    <l:template name="answer" text="%t"/>
+    <l:template name="appendix" text="Dodatak&#160;%n.&#160;%t"/>
+    <l:template name="article" text="%t"/>
+    <l:template name="authorblurb" text="%t"/>
+    <l:template name="bibliodiv" text="%t"/>
+    <l:template name="biblioentry" text="%t"/>
+    <l:template name="bibliography" text="%t"/>
+    <l:template name="bibliomixed" text="%t"/>
+    <l:template name="bibliomset" text="%t"/>
+    <l:template name="biblioset" text="%t"/>
+    <l:template name="blockquote" text="%t"/>
+    <l:template name="book" text="%t"/>
+    <l:template name="calloutlist" text="%t"/>
+    <l:template name="caution" text="%t"/>
+    <l:template name="chapter" text="Poglavlje&#160;%n.&#160;%t"/>
+    <l:template name="colophon" text="%t"/>
+    <l:template name="dedication" text="%t"/>
+    <l:template name="equation" text="Jednad&#382;ba&#160;%n.&#160;%t"/>
+    <l:template name="example" text="Primjer&#160;%n.&#160;%t"/>
+    <l:template name="figure" text="Slika&#160;%n.&#160;%t"/>
+    <l:template name="formalpara" text="%t"/>
+    <l:template name="glossary" text="%t"/>
+    <l:template name="glossdiv" text="%t"/>
+    <l:template name="glossentry" text="%t"/>
+    <l:template name="important" text="%t"/>
+    <l:template name="index" text="%t"/>
+    <l:template name="indexdiv" text="%t"/>
+    <l:template name="itemizedlist" text="%t"/>
+    <l:template name="legalnotice" text="%t"/>
+    <l:template name="listitem" text=""/>
+    <l:template name="lot" text="%t"/>
+    <l:template name="msg" text="%t"/>
+    <l:template name="msgexplan" text="%t"/>
+    <l:template name="msgmain" text="%t"/>
+    <l:template name="msgrel" text="%t"/>
+    <l:template name="msgset" text="%t"/>
+    <l:template name="msgsub" text="%t"/>
+    <l:template name="note" text="%t"/>
+    <l:template name="orderedlist" text="%t"/>
+    <l:template name="part" text="Dio&#160;%n.&#160;%t"/>
+    <l:template name="partintro" text="%t"/>
+    <l:template name="preface" text="%t"/>
+    <l:template name="procedure" text="%t"/>
+    <l:template name="procedure.formal" text="Postupak&#160;%n.&#160;%t"/>
+    <l:template name="productionset" text="%t"/>
+    <l:template name="productionset.formal" text="Produkcija&#160;%n"/>
+    <l:template name="qandadiv" text="%t"/>
+    <l:template name="qandaentry" text="%t"/>
+    <l:template name="qandaset" text="%t"/>
+    <l:template name="question" text="%t"/>
+    <l:template name="refentry" text="%t"/>
+    <l:template name="reference" text="%t"/>
+    <l:template name="refsection" text="%t"/>
+    <l:template name="refsect1" text="%t"/>
+    <l:template name="refsect2" text="%t"/>
+    <l:template name="refsect3" text="%t"/>
+    <l:template name="refsynopsisdiv" text="%t"/>
+    <l:template name="refsynopsisdivinfo" text="%t"/>
+    <l:template name="segmentedlist" text="%t"/>
+    <l:template name="set" text="%t"/>
+    <l:template name="setindex" text="%t"/>
+    <l:template name="sidebar" text="%t"/>
+    <l:template name="step" text="%t"/>
+    <l:template name="table" text="Tablica&#160;%n.&#160;%t"/>
+    <l:template name="tip" text="%t"/>
+    <l:template name="toc" text="%t"/>
+    <l:template name="variablelist" text="%t"/>
+    <l:template name="varlistentry" text=""/>
+    <l:template name="warning" text="%t"/>
+  </l:context>
+  <l:context name="title-unnumbered">
+    <l:template name="appendix" text="%t"/>
+    <l:template name="article/appendix" text="%t"/>
+    <l:template name="bridgehead" text="%t"/>
+    <l:template name="chapter" text="%t"/>
+    <l:template name="sect1" text="%t"/>
+    <l:template name="sect2" text="%t"/>
+    <l:template name="sect3" text="%t"/>
+    <l:template name="sect4" text="%t"/>
+    <l:template name="sect5" text="%t"/>
+    <l:template name="section" text="%t"/>
+    <l:template name="simplesect" text="%t"/>
+  </l:context>
+  <l:context name="title-numbered">
+    <l:template name="appendix" text="Dodatak&#160;%n.&#160;%t"/>
+    <l:template name="article/appendix" text="%n.&#160;%t"/>
+    <l:template name="bridgehead" text="%n.&#160;%t"/>
+    <l:template name="chapter" text="Poglavlje&#160;%n.&#160;%t"/>
+    <l:template name="sect1" text="%n.&#160;%t"/>
+    <l:template name="sect2" text="%n.&#160;%t"/>
+    <l:template name="sect3" text="%n.&#160;%t"/>
+    <l:template name="sect4" text="%n.&#160;%t"/>
+    <l:template name="sect5" text="%n.&#160;%t"/>
+    <l:template name="section" text="%n.&#160;%t"/>
+    <l:template name="simplesect" text="%t"/>
+  </l:context>
+  <l:context name="subtitle">
+    <l:template name="appendix" text="%s"/>
+    <l:template name="article" text="%s"/>
+    <l:template name="bibliodiv" text="%s"/>
+    <l:template name="biblioentry" text="%s"/>
+    <l:template name="bibliography" text="%s"/>
+    <l:template name="bibliomixed" text="%s"/>
+    <l:template name="bibliomset" text="%s"/>
+    <l:template name="biblioset" text="%s"/>
+    <l:template name="book" text="%s"/>
+    <l:template name="chapter" text="%s"/>
+    <l:template name="colophon" text="%s"/>
+    <l:template name="dedication" text="%s"/>
+    <l:template name="glossary" text="%s"/>
+    <l:template name="glossdiv" text="%s"/>
+    <l:template name="index" text="%s"/>
+    <l:template name="indexdiv" text="%s"/>
+    <l:template name="lot" text="%s"/>
+    <l:template name="part" text="%s"/>
+    <l:template name="partintro" text="%s"/>
+    <l:template name="preface" text="%s"/>
+    <l:template name="refentry" text="%s"/>
+    <l:template name="reference" text="%s"/>
+    <l:template name="refsection" text="%s"/>
+    <l:template name="refsect1" text="%s"/>
+    <l:template name="refsect2" text="%s"/>
+    <l:template name="refsect3" text="%s"/>
+    <l:template name="refsynopsisdiv" text="%s"/>
+    <l:template name="sect1" text="%s"/>
+    <l:template name="sect2" text="%s"/>
+    <l:template name="sect3" text="%s"/>
+    <l:template name="sect4" text="%s"/>
+    <l:template name="sect5" text="%s"/>
+    <l:template name="section" text="%s"/>
+    <l:template name="set" text="%s"/>
+    <l:template name="setindex" text="%s"/>
+    <l:template name="sidebar" text="%s"/>
+    <l:template name="simplesect" text="%s"/>
+    <l:template name="toc" text="%s"/>
+  </l:context>
+  <l:context name="xref">
+    <l:template name="abstract" text="%t"/>
+    <l:template name="answer" text="Odgovor:&#160;%n"/>
+    <l:template name="appendix" text="%t"/>
+    <l:template name="article" text="%t"/>
+    <l:template name="authorblurb" text="%t"/>
+    <l:template name="bibliodiv" text="%t"/>
+    <l:template name="bibliography" text="%t"/>
+    <l:template name="bibliomset" text="%t"/>
+    <l:template name="biblioset" text="%t"/>
+    <l:template name="blockquote" text="%t"/>
+    <l:template name="book" text="%t"/>
+    <l:template name="calloutlist" text="%t"/>
+    <l:template name="caution" text="%t"/>
+    <l:template name="chapter" text="%t"/>
+    <l:template name="colophon" text="%t"/>
+    <l:template name="constraintdef" text="%t"/>
+    <l:template name="dedication" text="%t"/>
+    <l:template name="equation" text="%t"/>
+    <l:template name="example" text="%t"/>
+    <l:template name="figure" text="%t"/>
+    <l:template name="formalpara" text="%t"/>
+    <l:template name="glossary" text="%t"/>
+    <l:template name="glossdiv" text="%t"/>
+    <l:template name="important" text="%t"/>
+    <l:template name="index" text="%t"/>
+    <l:template name="indexdiv" text="%t"/>
+    <l:template name="itemizedlist" text="%t"/>
+    <l:template name="legalnotice" text="%t"/>
+    <l:template name="listitem" text="%n"/>
+    <l:template name="lot" text="%t"/>
+    <l:template name="msg" text="%t"/>
+    <l:template name="msgexplan" text="%t"/>
+    <l:template name="msgmain" text="%t"/>
+    <l:template name="msgrel" text="%t"/>
+    <l:template name="msgset" text="%t"/>
+    <l:template name="msgsub" text="%t"/>
+    <l:template name="note" text="%t"/>
+    <l:template name="orderedlist" text="%t"/>
+    <l:template name="part" text="%t"/>
+    <l:template name="partintro" text="%t"/>
+    <l:template name="preface" text="%t"/>
+    <l:template name="procedure" text="%t"/>
+    <l:template name="productionset" text="%t"/>
+    <l:template name="qandadiv" text="%t"/>
+    <l:template name="qandaentry" text="Pitanje:&#160;%n"/>
+    <l:template name="qandaset" text="%t"/>
+    <l:template name="question" text="Pitanje:&#160;%n"/>
+    <l:template name="reference" text="%t"/>
+    <l:template name="refsynopsisdiv" text="%t"/>
+    <l:template name="segmentedlist" text="%t"/>
+    <l:template name="set" text="%t"/>
+    <l:template name="setindex" text="%t"/>
+    <l:template name="sidebar" text="%t"/>
+    <l:template name="table" text="%t"/>
+    <l:template name="tip" text="%t"/>
+    <l:template name="toc" text="%t"/>
+    <l:template name="variablelist" text="%t"/>
+    <l:template name="varlistentry" text="%n"/>
+    <l:template name="warning" text="%t"/>
+    <l:template name="page.citation" text=" [%p]"/>
+    <l:template name="bridgehead" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="refsection" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="refsect1" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="refsect2" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="refsect3" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="sect1" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="sect2" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="sect3" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="sect4" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="sect5" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="section" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="simplesect" text="the section called &#8222;%t&#8220;"/>
+  </l:context>
+  <l:context name="xref-number">
+    <l:template name="answer" text="Odgovor:&#160;%n"/>
+    <l:template name="appendix" text="Dodatak&#160;%n"/>
+    <l:template name="bridgehead" text="Odjeljak&#160;%n"/>
+    <l:template name="chapter" text="Poglavlje&#160;%n"/>
+    <l:template name="equation" text="Jednad&#382;ba&#160;%n"/>
+    <l:template name="example" text="Primjer&#160;%n"/>
+    <l:template name="figure" text="Slika&#160;%n"/>
+    <l:template name="part" text="Dio&#160;%n"/>
+    <l:template name="procedure" text="Postupak&#160;%n"/>
+    <l:template name="productionset" text="Produkcija&#160;%n"/>
+    <l:template name="qandadiv" text="Q &amp; A&#160;%n"/>
+    <l:template name="qandaentry" text="Pitanje:&#160;%n"/>
+    <l:template name="question" text="Pitanje:&#160;%n"/>
+    <l:template name="sect1" text="Odjeljak&#160;%n"/>
+    <l:template name="sect2" text="Odjeljak&#160;%n"/>
+    <l:template name="sect3" text="Odjeljak&#160;%n"/>
+    <l:template name="sect4" text="Odjeljak&#160;%n"/>
+    <l:template name="sect5" text="Odjeljak&#160;%n"/>
+    <l:template name="section" text="Odjeljak&#160;%n"/>
+    <l:template name="table" text="Tablica&#160;%n"/>
+  </l:context>
+  <l:context name="xref-number-and-title">
+    <l:template name="appendix" text="Dodatak&#160;%n, %t"/>
+    <l:template name="bridgehead" text="Odjeljak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="chapter" text="Poglavlje&#160;%n, %t"/>
+    <l:template name="equation" text="Jednad&#382;ba&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="example" text="Primjer&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="figure" text="Slika&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="part" text="Dio&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="procedure" text="Postupak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="productionset" text="Produkcija&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="qandadiv" text="Q &amp; A&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="refsect1" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="refsect2" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="refsect3" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="refsection" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="sect1" text="Odjeljak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="sect2" text="Odjeljak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="sect3" text="Odjeljak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="sect4" text="Odjeljak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="sect5" text="Odjeljak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="section" text="Odjeljak&#160;%n, &#8222;%t&#8220;"/>
+    <l:template name="simplesect" text="the section called &#8222;%t&#8220;"/>
+    <l:template name="table" text="Tablica&#160;%n, &#8222;%t&#8220;"/>
+  </l:context>
+  <l:context name="authorgroup">
+    <l:template name="sep" text=", "/>
+    <l:template name="sep2" text=" i "/>
+    <l:template name="seplast" text=", i "/>
+  </l:context>
+  <l:context name="glossary">
+    <l:template name="see" text="Vidi "/>
+    <l:template name="seealso" text="Vidi i "/>
+  </l:context>
+  <l:context name="msgset">
+    <l:template name="MsgAud" text="Primatelji: "/>
+    <l:template name="MsgLevel" text="Razina: "/>
+    <l:template name="MsgOrig" text="Izvor: "/>
+  </l:context>
+  <l:context name="datetime">
+    <l:template name="format" text="m/d/Y"/>
+  </l:context>
+  <l:context name="datetime-full">
+    <l:template name="January" text="Sije&#269;anj"/>
+    <l:template name="February" text="Velja&#269;a"/>
+    <l:template name="March" text="O&#382;ujak"/>
+    <l:template name="April" text="Travanj"/>
+    <l:template name="May" text="Svibanj"/>
+    <l:template name="June" text="Lipanj"/>
+    <l:template name="July" text="Srpanj"/>
+    <l:template name="August" text="Kolovoz"/>
+    <l:template name="September" text="Rujan"/>
+    <l:template name="October" text="Listopad"/>
+    <l:template name="November" text="Studeni"/>
+    <l:template name="December" text="Prosinac"/>
+    <l:template name="Monday" text="Ponedjeljak"/>
+    <l:template name="Tuesday" text="Utorak"/>
+    <l:template name="Wednesday" text="Srijeda"/>
+    <l:template name="Thursday" text="&#268;etvrtak"/>
+    <l:template name="Friday" text="Petak"/>
+    <l:template name="Saturday" text="Subota"/>
+    <l:template name="Sunday" text="Nedjelja"/>
+  </l:context>
+  <l:context name="datetime-abbrev">
+    <l:template name="Jan" text="Sij"/>
+    <l:template name="Feb" text="Velj"/>
+    <l:template name="Mar" text="O&#382;u"/>
+    <l:template name="Apr" text="Tra"/>
+    <l:template name="May" text="Svi"/>
+    <l:template name="Jun" text="Lip"/>
+    <l:template name="Jul" text="Srp"/>
+    <l:template name="Aug" text="Kol"/>
+    <l:template name="Sep" text="Ruj"/>
+    <l:template name="Oct" text="Lis"/>
+    <l:template name="Nov" text="Stu"/>
+    <l:template name="Dec" text="Pro"/>
+    <l:template name="Mon" text="Pon"/>
+    <l:template name="Tue" text="Uto"/>
+    <l:template name="Wed" text="Sri"/>
+    <l:template name="Thu" text="&#268;et"/>
+    <l:template name="Fri" text="Pet"/>
+    <l:template name="Sat" text="Sub"/>
+    <l:template name="Sun" text="Ned"/>
+  </l:context>
+  <l:context name="htmlhelp">
+    <l:template name="langcode" text="0x041a Croatian"/>
+  </l:context>
+</l:l10n>

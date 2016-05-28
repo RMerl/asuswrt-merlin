@@ -1,0 +1,386 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Preface</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"><link rel="start" href="index.html" title="Samba-3 by Example"><link rel="up" href="index.html" title="Samba-3 by Example"><link rel="prev" href="pr03.html" title="Foreword"><link rel="next" href="ExNetworks.html" title="Part I. Example Network Configurations"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Preface</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="pr03.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="ExNetworks.html">Next</a></td></tr></table><hr></div><div class="preface" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="preface"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="preface.html#id2496086">Why Is This Book Necessary?</a></span></dt><dd><dl><dt><span class="sect2"><a href="preface.html#id2494873">Samba 3.0.20 Update Edition</a></span></dt></dl></dd><dt><span class="sect1"><a href="preface.html#id2494769">Prerequisites</a></span></dt><dt><span class="sect1"><a href="preface.html#id2494801">Approach</a></span></dt><dt><span class="sect1"><a href="preface.html#id2542046">Summary of Topics</a></span></dt><dt><span class="sect1"><a href="preface.html#id2542784">Conventions Used</a></span></dt></dl></div><p>
+	Network administrators live busy lives. We face distractions and pressures
+	that drive us to seek proven, working case scenarios that can be easily
+	implemented. Often this approach lands us in trouble. There is a 
+	saying that, geometrically speaking, the shortest distance between two 
+	points is a straight line, but practically we find that the quickest 
+	route to a stable network solution is the long way around.
+	</p><p>
+	This book is your means to the straight path. It provides step-by-step,
+	proven, working examples of Samba deployments.  If you want to deploy
+	Samba-3 with the least effort, or if you want to become an expert at deploying
+	Samba-3 without having to search through lots of documentation, this
+	book is the ticket to your destination.
+	</p><p>
+	Samba is software that can be run on a platform other than Microsoft Windows,
+	for example, UNIX, Linux, IBM System 390, OpenVMS, and other operating systems.
+	Samba uses the TCP/IP protocol that is installed on the host server. When
+	correctly configured, it allows that host to interact with a Microsoft Windows
+	client or server as if it is a Windows file and print server. This book
+	will help you to implement Windows-compatible file and print services.
+	</p><p>
+	The examples presented in this book are typical of various businesses and
+	reflect the problems and challenges they face. Care has been taken to preserve
+	attitudes, perceptions, practices, and demands from real network case studies.
+	The maximum benefit may be obtained from this book by working carefully through
+	each exercise. You may be in a hurry to satisfy a specific need, so feel
+	free to locate the example that most closely matches your need, copy it, and
+	innovate as much as you like. Above all, enjoy the process of learning the
+	secrets of MS Windows networking that is truly liberated by Samba.
+	</p><p>
+	The focus of attention in this book is Samba-3. Specific notes are made in
+	respect of how Samba may be made secure. This book does not attempt to provide
+	detailed information regarding secure operation and configuration of peripheral
+	services and applications such as OpenLDAP, DNS and DHCP, the need for which
+	can be met from other resources that are dedicated to the subject.
+	</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2496086"></a>Why Is This Book Necessary?</h2></div></div></div><p>
+	This book is the result of observations and feedback. The feedback from
+	the Samba-HOWTO-Collection has been positive and complimentary. There
+	have been requests for far more worked examples, a
+	&#8220;<span class="quote">Samba Cookbook,</span>&#8221; and for training materials to
+	help kick-start the process of mastering Samba.
+	</p><p>
+	The Samba mailing lists users have asked for sample configuration files
+	that work. It is natural to question one's own ability to correctly
+	configure a complex tool such as Samba until a minimum necessary
+	knowledge level has been attained.
+	</p><p>
+	The Samba-HOWTO-Collection  as does <span class="emphasis"><em>The Official Samba-3 HOWTO and 
+	Reference Guide</em></span>  documents Samba features and functionality in
+	a topical context.  This book takes a completely different approach. It
+	walks through Samba network configurations that are working within particular
+	environmental contexts, providing documented step-by-step implementations.
+	All example case configuration files, scripts, and other tools are provided
+	on the CD-ROM. This book is descriptive, provides detailed diagrams, and
+	makes deployment of Samba-3 a breeze.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2494873"></a>Samba 3.0.20 Update Edition</h3></div></div></div><p>
+	The Samba 3.0.x series has been remarkably popular. At the time this book first
+	went to print samba-3.0.2 was being released. There have been significant modifications
+	and enhancements between samba-3.0.2 and samba-3.0.14 (the current release) that
+	necessitate this documentation update. This update has the specific intent to
+	refocus this book so that its guidance can be followed for samba-3.0.20
+	and beyond. Further changes are expected as Samba-3 matures further and will 
+	be reflected in future updates.
+	</p><p>
+	The changes shown in <a class="link" href="preface.html#pref-new" title="Table 1. Samba Changes 3.0.2 to 3.0.20">&#8220;Samba Changes  3.0.2 to 3.0.20&#8221;</a> are incorporated in this update.
+	</p><div class="table"><a name="pref-new"></a><p class="title"><b>Table 1. Samba Changes  3.0.2 to 3.0.20</b></p><div class="table-contents"><table summary="Samba Changes  3.0.2 to 3.0.20" border="1"><colgroup><col align="left"><col align="justify"></colgroup><thead><tr><th align="left">
+						<p>
+						New Feature
+						</p>
+					</th><th align="left">
+						<p>
+						Description
+						</p>
+					</th></tr></thead><tbody><tr><td align="left">
+						<p>
+						Winbind Case Handling
+						</p>
+					</td><td align="justify">
+						<p>
+						User and group names returned by <code class="literal">winbindd</code> are now converted to lower case
+						for better consistency. Samba implementations that depend on the case of information returned
+						by winbind (such as %u and %U) must now convert the dependency to expecting lower case values.
+						This affects mail spool files, home directories, valid user lines in the <code class="filename">smb.conf</code> file, etc.
+						</p>
+					</td></tr><tr><td align="left">
+						<p>
+						Schema Changes
+						</p>
+					</td><td align="justify">
+						<p>
+						Addition of code to handle password aging, password uniqueness controls, bad
+						password instances at logon time, have made necessary extensions to the SambaSAM
+						schema. This change affects all sites that use LDAP and means that the directory
+						schema must be updated. 
+						</p>
+					</td></tr><tr><td align="left">
+						<p>
+						Username Map Handling
+						</p>
+					</td><td align="justify">
+						<p>
+						Samba-3.0.8 redefined the behavior: Local authentication results in a username map file
+						lookup before authenticating the connection. All authentication via an external domain
+						controller will result in the use of the fully qualified name (i.e.: DOMAIN\username)
+						after the user has been successfully authenticated.
+						</p>
+					</td></tr><tr><td align="left">
+						<p>
+						UNIX Extension Handling
+						</p>
+					</td><td align="justify">
+						<p>
+						Symbolically linked files and directories on the UNIX host to absolute paths will
+						now be followed. This can be turned off using &#8220;<span class="quote">wide links = No</span>&#8221; in
+						the share stanza in the <code class="filename">smb.conf</code> file. Turning off &#8220;<span class="quote">wide links</span>&#8221;
+						support will degrade server performance because each path must be checked.
+						</p>
+					</td></tr><tr><td align="left">
+						<p>
+						Privileges Support
+						</p>
+					</td><td align="justify">
+						<p>
+						Versions of Samba prior to samba-3.0.11 required the use of the UNIX <code class="constant">root</code>
+						account from network Windows clients. The new &#8220;<span class="quote">enable privileges = Yes</span>&#8221; capability
+						means that functions such as adding machines to the domain, managing printers, etc. can now
+						be delegated to normal user accounts or to groups of users.
+						</p>
+					</td></tr></tbody></table></div></div><br class="table-break"></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2494769"></a>Prerequisites</h2></div></div></div><p>
+	This book is not a tutorial on UNIX or Linux administration. UNIX and Linux
+	training is best obtained from books dedicated to the subject. This book
+	assumes that you have at least the basic skill necessary to use these operating
+	systems, and that you can use a basic system editor to edit and configure files.
+	It has been written with the assumption that you have experience with Samba, 
+	have read <span class="emphasis"><em>The Official Samba-3 HOWTO and Reference Guide</em></span> and
+	the Samba-HOWTO-Collection, or that you have familiarity with Microsoft Windows.
+	</p><p>
+	If you do not have this experience, you can follow the examples in this book but may
+	find yourself at times intimidated by assumptions made. In this situation, you
+	may need to refer to administrative guides or manuals for your operating system
+	platform to find what is the best method to achieve what the text of this book describes.
+	</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2494801"></a>Approach</h2></div></div></div><p>
+	The first chapter deals with some rather thorny network analysis issues. Do not be
+	put off by this. The information you glean, even without a detailed understanding
+	of network protocol analysis, can help you understand how Windows networking functions.
+	</p><p>
+	Each following chapter of this book opens with the description of a networking solution
+	sought by a hypothetical site. Bob Jordan is a hypothetical decision maker
+	for an imaginary company, <code class="constant">Abmas Biz NL</code>. We will use the
+	non-existent domain name <code class="constant">abmas.biz</code>. All <span class="emphasis"><em>facts</em></span> 
+	presented regarding this company are fictitious and have been drawn from a variety of real 
+	business scenarios over many years. Not one of these reveal the identify of the 
+	real-world company from which the scenario originated.
+	</p><p> 
+	In any case, Mr. Jordan likes to give all his staff nasty little assignments.
+	Stanley Saroka is one of his proteges; Christine Roberson is the network administrator 
+	Bob trusts. Jordan is inclined to treat other departments well because they finance 
+	Abmas IT operations.
+	</p><p>
+	Each chapter presents a summary of the network solution we have chosen to
+	demonstrate together with a rationale to help you to understand the
+	thought process that drove that solution. The chapter then documents in precise
+	detail all configuration files and steps that must be taken to implement the
+	example solution. Anyone wishing to gain serious value from this book will
+	do well to take note of the implications of points made, so watch out for the
+	<span class="emphasis"><em>this means that</em></span> notations.
+	</p><p>
+	Each chapter has a set of questions and answers to help you to
+	to understand and digest key attributes of the solutions presented.
+	</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2542046"></a>Summary of Topics</h2></div></div></div><p>
+	The contents of this second edition of <span class="emphasis"><em>Samba-3 by Example</em></span>
+	have been rearranged based on feedback from purchasers of the first edition.
+	</p><p>
+	Clearly the first edition contained most of what was needed and that was missing
+	from other books that cover this difficult subject. The new arrangement adds
+	additional material to meet consumer requests and includes changes that originated
+	as suggestions for improvement.
+	</p><p>
+	Chapter 1 now dives directly into the heart of the implementation of Windows
+	file and print server networks that use Samba at the heart.
+	</p><div class="variablelist"><dl><dt><span class="term">Chapter 1  No Frills Samba Servers.</span></dt><dd><p>
+		Here you design a solution for three different business scenarios, each for a 
+		company called Abmas. There are two simple networking problems and one slightly 
+		more complex networking challenge. In the first two cases, Abmas has a small 
+		simple office, and they want to replace a Windows 9x peer-to-peer network. The 
+		third example business uses Windows 2000 Professional. This must be simple, 
+		so let's see how far we can get. If successful, Abmas grows quickly and
+		soon needs to replace all servers and workstations.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  This chapter demands:
+			</p><div class="itemizedlist"><ul type="disc"><li><p>Case 1: The simplest <code class="filename">smb.conf</code> file that may
+					reasonably be used. Works with Samba-2.x also. This
+					configuration uses Share Mode security. Encrypted
+					passwords are not used, so there is no 
+					<code class="filename">smbpasswd</code> file.
+					</p></li><li><p>Case 2: Another simple <code class="filename">smb.conf</code> file that adds
+					WINS support and printing support. This case deals with
+					a special requirement that demonstrates how to deal with
+					purpose-built software that has a particular requirement
+					for certain share names and printing demands. This
+					configuration uses Share Mode security and also works with
+					Samba-2.x. Encrypted passwords are not used, so there is no
+					<code class="filename">smbpasswd</code> file.
+					</p></li><li><p>Case 3: This <code class="filename">smb.conf</code> configuration uses User Mode
+					security. The file share configuration demonstrates
+					the ability to provide master access to an administrator
+					while restricting all staff to their own work areas.
+					Encrypted passwords are used, so there is an implicit
+					<code class="filename">smbpasswd</code> file.
+					</p></li></ul></div><p>
+		</p></dd><dt><span class="term">Chapter 2  Small Office Networking.</span></dt><dd><p>
+		Abmas is a successful company now. They have 50 network users
+		and want a little more varoom from the network. This is a typical
+		small office and they want better systems to help them to grow. This is
+		your chance to really give advanced users a bit more functionality and usefulness.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  This <code class="filename">smb.conf</code> file
+		makes use of encrypted passwords, so there is an <code class="filename">smbpasswd</code>
+		file. It also demonstrates use of the <em class="parameter"><code>valid users</code></em> and
+		<em class="parameter"><code>valid groups</code></em> to restrict share access. The Windows
+		clients access the server as Domain members. Mobile users log onto
+		the Domain while in the office, but use a local machine account while on the
+		road. The result is an environment that answers mobile computing user needs.
+		</p></dd><dt><span class="term">Chapter 3  Secure Office Networking.</span></dt><dd><p>
+		Abmas is growing rapidly now. Money is a little tight, but with 130
+		network users, security has become a concern. They have many new machines
+		to install and the old equipment will be retired. This time they want the
+		new network to scale and grow for at least two years. Start with a sufficient
+		system and allow room for growth. You are now implementing an Internet
+		connection and have a few reservations about user expectations.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  This <code class="filename">smb.conf</code> file
+                makes use of encrypted passwords, and you can use a <code class="filename">tdbsam</code>
+                password backend. Domain logons are introduced. Applications are served from the central
+		server. Roaming profiles are mandated. Access to the server is tightened up
+		so that only domain members can access server resources. Mobile computing
+		needs still are catered to.
+		</p></dd><dt><span class="term">Chapter 4  The 500 User Office.</span></dt><dd><p>
+		The two-year projections were met. Congratulations, you are a star.
+		Now Abmas needs to replace the network. Into the existing user base, they
+		need to merge a 280-user company they just acquired. It is time to build a serious
+		network. There are now three buildings on one campus and your assignment is 
+		to keep everyone working while a new network is rolled out. Oh, isn't it nice 
+		to roll out brand new clients and servers! Money is no longer tight, you get 
+		to buy and install what you ask for. You will install routers and a firewall.
+		This is exciting!
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  This <code class="filename">smb.conf</code> file
+                makes use of encrypted passwords, and a <code class="filename">tdbsam</code>
+		password backend is used. You are not ready to launch into LDAP yet, so you
+		accept the limitation of having one central Domain Controller with a Domain
+		Member server in two buildings on your campus. A number of clever techniques
+		are used to demonstrate some of the smart options built into Samba.
+		</p></dd><dt><span class="term">Chapter 5  Making Happy Users.</span></dt><dd><p>
+		Congratulations again. Abmas is happy with your services and you have been given another raise.
+		Your users are becoming much more capable and are complaining about little
+		things that need to be fixed. Are you up to the task? Mary says it takes her 20 minutes
+		to log onto the network and it is killing her productivity. Email is a bit <span class="emphasis"><em>
+		unreliable</em></span>  have you been sleeping on the job? We do not discuss the
+		technology of email but when the use of mail clients breaks because of networking
+		problems, you had better get on top of it. It's time for a change.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  This <code class="filename">smb.conf</code> file
+                makes use of encrypted passwords; a distributed <code class="filename">ldapsam</code>
+                password backend is used. Roaming profiles are enabled. Desktop profile controls
+		are introduced. Check out the techniques that can improve the user experience 
+		of network performance. As a special bonus, this chapter documents how to configure
+		smart downloading of printer drivers for drag-and-drop printing support. And, yes,
+		the secret of configuring CUPS is clearly documented. Go for it; this one will
+		tease you, too.
+                </p></dd><dt><span class="term">Chapter 6  A Distributed 2000 User Network.</span></dt><dd><p>
+		Only eight months have passed, and Abmas has acquired another company. You now need to expand
+		the network further. You have to deal with a network that spans several countries.
+		There are three new networks in addition to the original three buildings at the head-office 
+		campus. The head office is in New York and you have branch offices in Washington, Los Angeles, and 
+		London. Your desktop standard is Windows XP Professional. In many ways, everything has changed
+		and yet it must remain the same. Your team is primed for another roll-out. You know there are
+		further challenges ahead.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  Slave LDAP servers are introduced. Samba is
+		configured to use multiple LDAP backends. This is a brief chapter; it assumes that the
+		technology has been mastered and gets right down to concepts and how to deploy them.
+		</p></dd><dt><span class="term">Chapter 7  Adding UNIX/Linux Servers and Clients.</span></dt><dd><p>
+		Well done, Bob, your team has achieved much. Now help Abmas integrate the entire network.
+		You want central control and central support and you need to cut costs. How can you reduce administrative
+		overheads and yet get better control of the network?
+		</p><p>
+		This chapter has been contributed by Mark Taylor <code class="email">&lt;<a class="email" href="mailto:mark.taylor@siriusit.co.uk">mark.taylor@siriusit.co.uk</a>&gt;</code>
+		and is based on a live site. For further information regarding this example case, 
+		please contact Mark directly.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  It is time to consider how to add Samba servers
+		and UNIX and Linux network clients. Users who convert to Linux want to be able to log on
+		using Windows network accounts. You explore nss_ldap, pam_ldap, winbind, and a few neat
+		techniques for taking control. Are you ready for this?
+		</p></dd><dt><span class="term">Chapter 8  Updating Samba-3.</span></dt><dd><p>
+		This chapter is the result of repeated requests for better documentation of the steps
+		that must be followed when updating or upgrading a Samba server. It attempts to cover
+		the entire subject in broad-brush but at the same time provides detailed background
+		information that is not covered elsewhere in the Samba documentation.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  Samba stores a lot of essential network
+		information in a large and growing collection of files. This chapter documents the
+		essentials of where those files may be located and how to find them. It also provides
+		an insight into inter-related matters that affect a Samba installation.
+		</p></dd><dt><span class="term">Chapter 9  Migrating NT4 Domain to Samba-3.</span></dt><dd><p>
+		Another six months have passed. Abmas has acquired yet another company. You will find a
+		way to migrate all users off the old network onto the existing network without loss
+		of passwords and will effect the change-over during one weekend. May the force (and caffeine) be with
+		you, may you keep your back to the wind and may the sun shine on your face.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  This chapter demonstrates the use of
+		the <code class="literal">net rpc migrate</code> facility using an LDAP ldapsam backend, and also
+		using a tdbsam passdb backend. Both are much-asked-for examples of NT4 Domain migration.
+		</p></dd><dt><span class="term">Chapter 10  Migrating NetWare 4.11 Server to Samba.</span></dt><dd><p>
+		Misty Stanley-Jones has contributed information that summarizes her experience at migration
+		from a NetWare server to Samba-3.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  The documentation provided demonstrates
+		how one site migrated from NetWare to Samba. Some alternatives tools are mentioned. These
+		could be used to provide another pathway to a successful migration.
+		</p></dd><dt><span class="term">Chapter 11  Active Directory, Kerberos and Security.</span></dt><dd><p>
+		Abmas has acquired another company that has just migrated to running Windows Server 2003 and 
+		Active Directory. One of your staff makes offhand comments that land you in hot water.
+		A network security auditor is hired by the head of the new business and files a damning 
+		report, and you must address the <span class="emphasis"><em>defects</em></span> reported. You have hired new 
+		network engineers who want to replace Microsoft Active Directory with a pure Kerberos 
+		solution. How will you handle this? 
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  This chapter is your answer. Learn about
+		share access controls, proper use of UNIX/Linux file system access controls, and Windows
+		200x Access Control Lists. Follow these steps to beat the critics.
+		</p></dd><dt><span class="term">Chapter 12  Integrating Additional Services.</span></dt><dd><p>
+		The battle is almost over, Samba-3 has won the day. Your team are delighted and now you
+		find yourself at yet another cross-roads. Abmas have acquired a snack food business, you
+		made promises you must keep. IT costs must be reduced, you have new resistance, but you
+		will win again. This time you choose to install the Squid proxy server to validate the
+		fact that Samba is far more than just a file and print server. SPNEGO authentication 
+		support means that your Microsoft Windows clients gain transparent proxy access.
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  Samba provides the <code class="literal">ntlm_auth</code>
+		module that makes it possible for MS Windows Internet Explorer to connect via the Squid Web
+		and FTP proxy server. You will configure Samba-3 as well as Squid to deliver authenticated
+		access control using the Active Directory Domain user security credentials.
+                </p></dd><dt><span class="term">Chapter 13  Performance, Reliability and Availability.</span></dt><dd><p>
+		Bob, are you sure the new Samba server is up to the load? Your network is serving many
+		users who risk becoming unproductive. What can you do to keep ahead of demand? Can you
+		keep the cost under control also? What can go wrong?
+		</p><p><span class="emphasis"><em>TechInfo</em></span>  Hot tips that put chili into your
+		network. Avoid name resolution problems, identify potential causes of network collisions,
+		avoid Samba configuration options that will weigh the server down. MS distributed file
+		services to make your network fly and much more. This chapter contains a good deal of 
+		&#8220;<span class="quote">Did I tell you about this...?</span>&#8221; type of hints to help keep your name on the top
+		performers list.
+		</p></dd><dt><span class="term">Chapter 14  Samba Support.</span></dt><dd><p>
+		This chapter has been added specifically to help those who are seeking professional
+		paid support for Samba. The critics of Open Source Software often assert that
+		there is no support for free software. Some critics argue that free software 
+		undermines the service that proprietary commercial software vendors depend on.
+		This chapter explains what are the support options for Samba and the fact that
+		a growing number of businesses make money by providing commercial paid-for
+		Samba support.
+		</p></dd><dt><span class="term">Chapter 15  A Collection of Useful Tid-bits.</span></dt><dd><p>
+		Sometimes it seems that there is not a good place for certain odds and ends that
+		impact Samba deployment. Some readers would argue that everyone can be expected
+		to know this information, or at least be able to find it easily. So to avoid
+		offending a reader's sensitivities, the tid-bits have been placed in this chapter.
+		Do check out the contents, you may find something of value among the loose ends.
+		</p></dd><dt><span class="term">Chapter 16  Windows Networking Primer.</span></dt><dd><p>
+		Here we cover practical exercises to help us to understand how MS Windows
+		network protocols function. A network protocol analyzer helps you to
+		appreciate the fact that Windows networking is highly dependent on broadcast
+		messaging. Additionally, you can look into network packets that a Windows
+		client sends to a network server to set up a network connection. On completion,
+		you should have a basic understanding of how network browsing functions and
+		have seen some of the information a Windows client sends to
+		a file and print server to create a connection over which file and print
+		operations may take place.
+		</p></dd></dl></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2542784"></a>Conventions Used</h2></div></div></div><p>
+    The following notation conventions are used throughout this book:
+    </p><div class="itemizedlist"><ul type="disc"><li><p>
+	TOSHARG2 is used as an abbreviation for the book, &#8220;<span class="quote">The Official Samba-3
+	HOWTO and Reference Guide, Second Edition</span>&#8221; Editors: John H. Terpstra and Jelmer R. Vernooij,
+	Publisher: Prentice Hall, ISBN: 0131882228.
+	</p></li><li><p>
+	S3bE2 is used as an abbreviation for the book, &#8220;<span class="quote">Samba-3 by Example, Second Edition</span>&#8221; 
+	Editors: John H. Terpstra, Publisher: Prentice Hall, ISBN: 013188221X.
+	</p></li><li><p>
+	Directories and filenames appear in mono-font. For example,
+        <code class="filename">/etc/pam.conf</code>.
+        </p></li><li><p>
+	Executable names are bolded. For example, <code class="literal">smbd</code>.
+	</p></li><li><p>
+	Menu items and buttons appear in bold. For example, click <span class="guibutton">Next</span>.
+        </p></li><li><p>
+	Selecting a menu item is indicated as:
+	<span class="guimenu">Start</span> &#8594; <span class="guimenuitem">Control Panel</span> &#8594; <span class="guimenuitem">Administrative Tools</span> &#8594; <span class="guimenuitem">Active Directory Users and Computers</span>
+       </p></li></ul></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pr03.html">Prev</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="ExNetworks.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Foreword </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Part I. Example Network Configurations</td></tr></table></div></body></html>

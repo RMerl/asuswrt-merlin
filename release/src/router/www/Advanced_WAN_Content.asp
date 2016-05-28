@@ -406,7 +406,7 @@ function validForm(){
 			}
 			if((document.form.ewan_vid.value >= 1 && document.form.ewan_vid.value <= 3) ||
 				(document.form.ewan_vid.value == 20) ||
-				(document.form.ewan_vid.value >= 100 && document.form.ewan_vid.value <= 107) ||
+				(document.form.ewan_vid.value >= 3880 && document.form.ewan_vid.value <= 3887) ||
 				(document.form.ewan_vid.value >= 4000 && document.form.ewan_vid.value <= 4002)){
 				alert("VLAN ID " + document.form.ewan_vid.value + " is reserved for internal usage. Please change to another one."); /* untranslated */
 				document.form.ewan_vid.focus();

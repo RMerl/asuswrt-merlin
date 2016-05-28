@@ -135,7 +135,7 @@ URIHANDLER_FUNC(mod_craete_captcha_image_physical_handler){
 		
 	response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
 
-	buffer *b = chunkqueue_get_append_buffer(con->write_queue);
+	buffer *b = buffer_init();
 	
 	char* img_cap[] = {
 		"data:image/jpeg;base64,/9j/4AAQSkZJRgABAgAAZABkAAD/7AARRHVja3kAAQAEAAAAHgAA/+4ADkFkb2JlAGTAAAAAAf/bAIQAEAsLCwwLEAwMEBcPDQ8XGxQQEBQbHxcXFxcXHx4XGhoaGhceHiMlJyUjHi8vMzMvL0BAQEBAQEBAQEBAQEBAQAERDw8RExEVEhIVFBEUERQaFBYWFBomGhocGhomMCMeHh4eIzArLicnJy4rNTUwMDU1QEA/QEBAQEBAQEBAQEBA/8AAEQgAKAAoAwEiAAIRAQMRAf/EAH4AAQACAwAAAAAAAAAAAAAAAAADBQIEBgEBAQEBAAAAAAAAAAAAAAAAAQACBBAAAgIBAwMCAwcFAAAAAAAAAQIDBAUAERIhMRNBIlGBBvBhkcEyIxSxkiQ0FREAAAUDBAIDAQAAAAAAAAAAAAERISICEjIxQVFC8GFxkbEj/9oADAMBAAIRAxEAPwDUyuVykeUuRx3J0RJ5VVVlcAAOwAADaXMrlFr0GW5OC8DM5ErgsfPOu593XoANMrcrrlLitQgcieUF2afdiHbqeM4HX7hrYGUpVRQmmxsEq/x3KJvJsp88wAHkeQbdN+oJ107FEcDrVNPvkRwX81JibUyWbLmOaEmQSSHinCfn7t+g347/AC1HjcrlHsOr3J2AgssAZXI3WCRlP6vQjfXRQZl8l9OZCeWvEscO6JAOQTjsp2biyn19Ntc7jbldrDgUIEPgsncNPvsIJCR7pz37f00E5VRCZIdCVqvzyGKyuUkylOOS5O6PPErK0rkEF1BBBbTTFXK7ZSmq0IEJniAdWn3Ul16jlOR0+8aaWu02Ap2ZdvYZWPFnKXDJYnVzPLyVYEYA823AJsLv+GlyPF/x6HKxOAIG4EQISR55+p/yBt13+P5aZXG2Hylx1eABp5SA1mBTsXburSAj56kmw1+1Fj4a4illFdhwWeEk/vzt7f3PcNj3H5alJCcSGtUf3kWmJSiPpjJCOaVoSx5u0Sq49q/pQSsD/cNU+NjxYsPwsTk+CzuDAgG3gk5H/YPYfYd9X+MwmTg+nchSlh42Z2JiTmh5dFHcNsO3qdU9XAZWlYLW4khDwWVXnNENyYJB09/pv1+Hc9NZIylIbqpq/nDQuDZxBio8WMpTMdidnE8XFWgRQTzXYEiw234aaYrG2EylN2eAhZ4iQtmBjsHXsqyEn5aa012uwwh2Y9vYZXFZSTKXJI6c7o88rKyxOQQXYgghdZ2MfmY4qDV61lZI67KxSOQMpM852PEbjow001SQtBQWrLwxLHF9R/8ANnBS75vPBwBEvLjwn57eu2/Hf5awp087JYY2oLbqILIUypIQGeCRQByHcnYaaaHfELRz8MRYrFZSPKU5JKc6Ik8TMzROAAHUkkldNNNMrttAQs7ZD//Z",
@@ -192,7 +192,10 @@ URIHANDLER_FUNC(mod_craete_captcha_image_physical_handler){
 	buffer_append_string(b,captcha_code);
 	buffer_append_string_len(b,CONST_STR_LEN("</code>"));
 	buffer_append_string_len(b,CONST_STR_LEN("</result>"));
-	
+
+	chunkqueue_append_buffer(con->write_queue, b);
+	buffer_free(b);
+					
 	con->file_finished = 1;
 	return HANDLER_FINISHED;
 		

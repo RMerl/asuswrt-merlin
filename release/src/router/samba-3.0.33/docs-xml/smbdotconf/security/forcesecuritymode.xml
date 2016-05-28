@@ -1,0 +1,41 @@
+<samba:parameter name="force security mode"
+                 context="S"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+	This parameter controls what UNIX permission bits can be modified when a Windows NT client is manipulating 
+    the UNIX permission on a file using the native NT security dialog box.
+	</para>
+		
+    <para>
+	This parameter is applied as a mask (OR'ed with) to the changed permission bits, thus forcing any bits in this
+	mask that the user may have modified to be on.  Make sure not to mix up this parameter with <smbconfoption
+	name="security mask"/>, which works similar like this one but uses logical AND instead of OR. 
+	</para>
+
+	<para>
+	Essentially, one bits in this mask may be treated as a set of bits that, when modifying security on a file,
+	the user has always set to be on.
+	</para>
+
+    <para>
+	If not set explicitly this parameter is set to 0, and allows a user to modify all the user/group/world
+	permissions on a file, with no restrictions.
+	</para>
+		
+    <para><emphasis>
+	Note</emphasis> that users who can access the Samba server through other means can easily bypass this
+	restriction, so it is primarily useful for standalone &quot;appliance&quot; systems. Administrators of most
+	normal systems will probably want to leave this set to 0000.
+	</para>
+
+</description>
+
+<value type="default">0</value>
+<value type="example">700</value>
+
+<related>force directory security mode</related>
+<related>directory security mask</related>
+<related>security mask</related>
+</samba:parameter>

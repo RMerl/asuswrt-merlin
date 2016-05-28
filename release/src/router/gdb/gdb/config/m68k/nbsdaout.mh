@@ -1,5 +1,0 @@
-# Host: NetBSD/m68k a.out
-NATDEPFILES= m68kbsd-nat.o fork-child.o inf-ptrace.o \
-	solib.o solib-sunos.o
-
-LOADLIBES= -lkvm

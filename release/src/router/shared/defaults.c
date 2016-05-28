@@ -51,9 +51,6 @@ struct nvram_tuple router_defaults[] = {
 
 	// NVRAM for switch
 	{ "switch_stb_x", "0"}, 		// oleg patch
-#if defined(RTCONFIG_QCA)
-	{ "switch_stb_sx", "0"}, 		// oleg patch
-#endif
 	{ "switch_wantag", "none"},		//for IPTV/VoIP case
 	{ "switch_wan0tagid", "" },		//Wan Port
 	{ "switch_wan0prio", "0" },
@@ -61,12 +58,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "switch_wan1prio", "0" },
 	{ "switch_wan2tagid", "" },		//VoIP Port
 	{ "switch_wan2prio", "0" },
-#if defined(RTCONFIG_QCA)
-	{ "switch_wan3tagid", "" },		//IPTV Port
-	{ "switch_wan3prio", "0" },
-	{ "switch_wan4tagid", "" },		//IPTV Port
-	{ "switch_wan4prio", "0" },
-#endif
 	{ "wl_unit",		"0"	},
 	{ "wl_subunit", 	"-1"	},
 	{ "wl_vifnames", 	""	},	/* Virtual Interface Names */
@@ -652,7 +643,6 @@ struct nvram_tuple router_defaults[] = {
 // WPS
 //	#if defined (W7_LOGO) || defined (WIFI_LOGO)
 	{ "wps_enable", "1"},
-	{ "wps_enable_old", "1"},
 //	#else
 //	{ "wps_enable", "0"},					// win7 logo
 //	#endif
@@ -676,10 +666,10 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_BCMWL6
 	{ "acs_ifnames", "", 0 },
-#if defined (RTAC68U) || defined (RTAC66U) || defined (RTN66U) || defined (RTCONFIG_QTN) || defined (DSL_AC68U)
-	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
-#endif
-	{ "acs_band1", "0", 0},
+	{ "acs_dfs", "1", 0 },			/* disable DFS channels for acsd by default */
+	{ "acs_band1", "0", 0 },
+	{ "acs_band3", "0", 0 },
+	{ "acs_ch13", "0", 0 },
 
 	{ "wl_wet_tunnel", "0", 0 },		/* Disable wet tunnel */
 
@@ -756,11 +746,15 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMWL6
         { "acs_2g_ch_no_restrict", "1", 0 },    /* 0: only pick from channel 1, 6, 11 */
         { "acs_no_restrict_align", "1", 0 },    /* 0: only aligned chanspec(few) can be picked (non-20Hz) */
-#if defined(RTAC88U) || defined(RTAC3100)
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
 		     /* bgn  itf  BSS  BUSY  INTF  I-ADJ  FCS   TXP  NOISE TOT  CNS  ADJ*/
         { "wl0_acs_pol", "0  100  -20  -15   -18   -1     -10   30   -1    1    1    0",  0 },    /* acs default policy  */
         { "wl1_acs_pol", "0  100  -20  -15   -18   -1     -10   35   -1    1    1    0",  0 },    /* acs default policy  */
+#if defined(RTAC5300)
+        { "wl2_acs_pol", "0  100  -20  -15   -18   -1     -10   35   -1    1    1    0",  0 },    /* acs default policy  */
 #endif
+#endif
+
 #endif
 
 #ifdef RTCONFIG_BCM10
@@ -1165,6 +1159,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_sra", "1" }, /* Paul add 2012/10/15, for setting SRA. */
 	{ "dslx_bitswap", "1" }, /* Paul add 2013/10/23, for Bitswap control. */
 	{ "dslx_adsl_rx_agc", "Default" }, /* Renjie add 2014/12/23, for ADSL Rx AGC(Auto Gain Control) */
+	{ "dslx_adsl_esnp", "0" }, //Enhanced Sudden Noise Protection
 #ifdef RTCONFIG_DSL_ANNEX_B //Paul add 2012/8/21
 	{ "dslx_annex", "6" }, // Annex BJM (EnumAdslTypeB_J_M)
 #else
@@ -1183,6 +1178,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_vdsl_nonstd_vectoring", "0" },
 	{ "dslx_vdsl_target_snrm", "32767" },
 	{ "dslx_vdsl_tx_gain_off", "32767" },
+	{ "dslx_vdtxpwrtestmode", "0" },
 	{ "dslx_vdsl_rx_agc", "65535" },
 	{ "dslx_vdsl_upbo", "auto" },
 	{ "dslx_vdsl_esnp", "0" }, //Enhanced Sudden Noise Protection
@@ -2582,7 +2578,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 #if defined(RTCONFIG_TR069)
 	{ "tr_enable", "0"},
-	{ "tr_discovery", "0" },
+	{ "tr_discovery", "1" },
 	{ "tr_inform_enable", "1"},
 	{ "tr_inform_interval", "86400"},
 	{ "tr_acs_url", ""},
@@ -2677,6 +2673,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "subnet_rulelist", ""},
 	{ "gvlan_rulelist", ""},
 #endif
+
+#ifdef RTCONFIG_AUTOCOVER_SIP
+	{ "atcover_sip", "0"},
+	{ "atcover_sip_ip", "192.168.1.1"},
+	{ "atcover_sip_type", "0"},
+#endif
+
 	{ NULL, NULL }
 }; // router_defaults
 
@@ -4913,6 +4916,7 @@ fix_name(const char *name, char *fixed_name)
 	strcpy(fixed_name, name);
 }
 
+extern char *tcode_default_get(const char *name);
 
 /*
  * Find nvram param name; return pointer which should be treated as const
@@ -4977,6 +4981,7 @@ nvram_default_get(const char *name)
 
 	return NULL;
 }
+
 /* validate/restore all per-interface related variables */
 void
 nvram_validate_all(char *prefix, bool restore)

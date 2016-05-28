@@ -1,0 +1,32 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_shadow_copy</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.73.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="vfs_shadow_copy.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_shadow_copy &#8212; Make a Samba share read only for a specified time period</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = shadow_copy</code></p></div></div><div class="refsect1" lang="en"><a name="id2518313"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_shadow_copy</code> VFS module functionality
+	that is similar to Microsoft Shadow Copy services. When setup properly,
+	this module allows Microsoft Shadow Copy clients to browse
+	"shadow copies" on Samba shares.
+	</p><p>This module is stackable.</p></div><div class="refsect1" lang="en"><a name="id2480131"></a><h2>CONFIGURATION</h2><p><code class="literal">vfs_shadow_copy</code> relies on a filesystem
+	snapshot implementation. Many common filesystems have native
+	support for this.
+	</p><p>Filesystem snapshots must be mounted on
+	specially named directories in order to be recognized by
+	<code class="literal">vfs_shadow_copy</code>. The snapshot mount points must
+	be immediate children of a the directory being shared.</p><p>The snapshot naming convention is @GMT-YYYY.MM.DD-hh.mm.ss,
+	where:
+       	</p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">YYYY</code> is the 4 digit year</p></li><li><p><code class="literal">MM</code> is the 2 digit month</p></li><li><p><code class="literal">DD</code> is the 2 digit day</p></li><li><p><code class="literal">hh</code> is the 2 digit hour</p></li><li><p><code class="literal">mm</code> is the 2 digit minute</p></li><li><p><code class="literal">ss</code> is the 2 digit second.</p></li></ul></div><p>
+	</p><p>The <code class="literal">vfs_shadow_copy</code> snapshot naming convention can be produced with the following
+	<a class="citerefentry" href="date.1.html"><span class="citerefentry"><span class="refentrytitle">date</span>(1)</span></a> command:
+	</p><pre class="programlisting">
+	TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S
+	</pre></div><div class="refsect1" lang="en"><a name="id2482481"></a><h2>EXAMPLES</h2><p>Add shadow copy support to user home directories:</p><pre class="programlisting">
+        <em class="parameter"><code>[homes]</code></em>
+	<a class="link" href="smb.conf.5.html#VFSOBJECTS">vfs objects = shadow_copy</a>
+</pre></div><div class="refsect1" lang="en"><a name="id2482618"></a><h2>CAVEATS</h2><p>This is not a backup, archival, or version control solution.
+	</p><p>With Samba or Windows servers,
+	<code class="literal">vfs_shadow_copy</code> is designed to be an end-user
+	tool only. It does not replace or enhance your backup and
+	archival solutions and should in no way be considered as
+	such. Additionally, if you need version control, implement a
+	version control system.</p></div><div class="refsect1" lang="en"><a name="id2482642"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.
+	</p></div><div class="refsect1" lang="en"><a name="id2482654"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

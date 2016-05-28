@@ -1,0 +1,111 @@
+
+<!--
+     File isopub.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY blank            "&#x02423;" ><!--=significant blank symbol -->
+<!ENTITY blk12            "&#x02592;" ><!--=50% shaded block -->
+<!ENTITY blk14            "&#x02591;" ><!--=25% shaded block -->
+<!ENTITY blk34            "&#x02593;" ><!--=75% shaded block -->
+<!ENTITY block            "&#x02588;" ><!--=full block -->
+<!ENTITY bull             "&#x02022;" ><!--/bullet B: =round bullet, filled -->
+<!ENTITY caret            "&#x02041;" ><!--=caret (insertion mark) -->
+<!ENTITY check            "&#x02713;" ><!--/checkmark =tick, check mark -->
+<!ENTITY cir              "&#x025CB;" ><!--/circ B: =circle, open -->
+<!ENTITY clubs            "&#x02663;" ><!--/clubsuit =club suit symbol  -->
+<!ENTITY copysr           "&#x02117;" ><!--=sound recording copyright sign -->
+<!ENTITY cross            "&#x02717;" ><!--=ballot cross -->
+<!ENTITY dagger           "&#x02020;" ><!--/dagger B: =dagger -->
+<!ENTITY Dagger           "&#x02021;" ><!--/ddagger B: =double dagger -->
+<!ENTITY dash             "&#x02010;" ><!--=hyphen (true graphic) -->
+<!ENTITY diams            "&#x02666;" ><!--/diamondsuit =diamond suit symbol  -->
+<!ENTITY dlcrop           "&#x0230D;" ><!--downward left crop mark  -->
+<!ENTITY drcrop           "&#x0230C;" ><!--downward right crop mark  -->
+<!ENTITY dtri             "&#x025BF;" ><!--/triangledown =down triangle, open -->
+<!ENTITY dtrif            "&#x025BE;" ><!--/blacktriangledown =dn tri, filled -->
+<!ENTITY emsp             "&#x02003;" ><!--=em space -->
+<!ENTITY emsp13           "&#x02004;" ><!--=1/3-em space -->
+<!ENTITY emsp14           "&#x02005;" ><!--=1/4-em space -->
+<!ENTITY ensp             "&#x02002;" ><!--=en space (1/2-em) -->
+<!ENTITY female           "&#x02640;" ><!--=female symbol -->
+<!ENTITY ffilig           "&#x0FB03;" ><!--small ffi ligature -->
+<!ENTITY fflig            "&#x0FB00;" ><!--small ff ligature -->
+<!ENTITY ffllig           "&#x0FB04;" ><!--small ffl ligature -->
+<!ENTITY filig            "&#x0FB01;" ><!--small fi ligature -->
+<!ENTITY flat             "&#x0266D;" ><!--/flat =musical flat -->
+<!ENTITY fllig            "&#x0FB02;" ><!--small fl ligature -->
+<!ENTITY frac13           "&#x02153;" ><!--=fraction one-third -->
+<!ENTITY frac15           "&#x02155;" ><!--=fraction one-fifth -->
+<!ENTITY frac16           "&#x02159;" ><!--=fraction one-sixth -->
+<!ENTITY frac23           "&#x02154;" ><!--=fraction two-thirds -->
+<!ENTITY frac25           "&#x02156;" ><!--=fraction two-fifths -->
+<!ENTITY frac35           "&#x02157;" ><!--=fraction three-fifths -->
+<!ENTITY frac45           "&#x02158;" ><!--=fraction four-fifths -->
+<!ENTITY frac56           "&#x0215A;" ><!--=fraction five-sixths -->
+<!ENTITY hairsp           "&#x0200A;" ><!--=hair space -->
+<!ENTITY hearts           "&#x02661;" ><!--/heartsuit =heart suit symbol  -->
+<!ENTITY hellip           "&#x02026;" ><!--=ellipsis (horizontal) -->
+<!ENTITY hybull           "&#x02043;" ><!--rectangle, filled (hyphen bullet) -->
+<!ENTITY incare           "&#x02105;" ><!--=in-care-of symbol -->
+<!ENTITY ldquor           "&#x0201E;" ><!--=rising dbl quote, left (low) -->
+<!ENTITY lhblk            "&#x02584;" ><!--=lower half block -->
+<!ENTITY loz              "&#x025CA;" ><!--/lozenge - lozenge or total mark -->
+<!ENTITY lozf             "&#x029EB;" ><!--/blacklozenge - lozenge, filled -->
+<!ENTITY lsquor           "&#x0201A;" ><!--=rising single quote, left (low) -->
+<!ENTITY ltri             "&#x025C3;" ><!--/triangleleft B: l triangle, open -->
+<!ENTITY ltrif            "&#x025C2;" ><!--/blacktriangleleft R: =l tri, filled -->
+<!ENTITY male             "&#x02642;" ><!--=male symbol -->
+<!ENTITY malt             "&#x02720;" ><!--/maltese =maltese cross -->
+<!ENTITY marker           "&#x025AE;" ><!--=histogram marker -->
+<!ENTITY mdash            "&#x02014;" ><!--=em dash  -->
+<!ENTITY mldr             "&#x02026;" ><!--em leader -->
+<!ENTITY natur            "&#x0266E;" ><!--/natural - music natural -->
+<!ENTITY ndash            "&#x02013;" ><!--=en dash -->
+<!ENTITY nldr             "&#x02025;" ><!--=double baseline dot (en leader) -->
+<!ENTITY numsp            "&#x02007;" ><!--=digit space (width of a number) -->
+<!ENTITY phone            "&#x0260E;" ><!--=telephone symbol  -->
+<!ENTITY puncsp           "&#x02008;" ><!--=punctuation space (width of comma) -->
+<!ENTITY rdquor           "&#x0201D;" ><!--rising dbl quote, right (high) -->
+<!ENTITY rect             "&#x025AD;" ><!--=rectangle, open -->
+<!ENTITY rsquor           "&#x02019;" ><!--rising single quote, right (high) -->
+<!ENTITY rtri             "&#x025B9;" ><!--/triangleright B: r triangle, open -->
+<!ENTITY rtrif            "&#x025B8;" ><!--/blacktriangleright R: =r tri, filled -->
+<!ENTITY rx               "&#x0211E;" ><!--pharmaceutical prescription (Rx) -->
+<!ENTITY sext             "&#x02736;" ><!--sextile (6-pointed star) -->
+<!ENTITY sharp            "&#x0266F;" ><!--/sharp =musical sharp -->
+<!ENTITY spades           "&#x02660;" ><!--/spadesuit =spades suit symbol  -->
+<!ENTITY squ              "&#x025A1;" ><!--=square, open -->
+<!ENTITY squf             "&#x025AA;" ><!--/blacksquare =sq bullet, filled -->
+<!ENTITY star             "&#x022C6;" ><!--=star, open -->
+<!ENTITY starf            "&#x02605;" ><!--/bigstar - star, filled  -->
+<!ENTITY target           "&#x02316;" ><!--register mark or target -->
+<!ENTITY telrec           "&#x02315;" ><!--=telephone recorder symbol -->
+<!ENTITY thinsp           "&#x02009;" ><!--=thin space (1/6-em) -->
+<!ENTITY uhblk            "&#x02580;" ><!--=upper half block -->
+<!ENTITY ulcrop           "&#x0230F;" ><!--upward left crop mark  -->
+<!ENTITY urcrop           "&#x0230E;" ><!--upward right crop mark  -->
+<!ENTITY utri             "&#x025B5;" ><!--/triangle =up triangle, open -->
+<!ENTITY utrif            "&#x025B4;" ><!--/blacktriangle =up tri, filled -->
+<!ENTITY vellip           "&#x022EE;" ><!--vertical ellipsis -->

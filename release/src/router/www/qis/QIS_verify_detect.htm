@@ -142,7 +142,25 @@ function getWANStatus(){
 					setTimeout("getWANStatus();", 2000);
 			}
 			else if(wanstate == 4 && wansbstate == 4){
-				parent.location.href = "/error_page.htm?flag=6";
+				parent.changeSubnet = true;
+
+				if(based_modelid == "4G-AC55U")
+				{
+					if(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0){
+						redirect_page("wireless");
+					}
+					else{
+						redirect_page("dualconnect_status");
+					}
+				}
+				else{	
+					if(parent.hadPlugged("modem")){
+						redirect_page("modem");
+					}	
+					else{
+						redirect_page("wireless");
+					}
+				}
 			}
 			else{
 				if(wanauxstate != 1 && wanstate == 2){ //success case

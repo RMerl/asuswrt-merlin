@@ -48,8 +48,7 @@ function initial(){
 	parent.set_step("t1");
 
 	if(wanstate == 4 && wansbstate == 4){
-		gotoPage("/error_page.htm", "6", 1);
-		return;
+		parent.changeSubnet = true;
 	}
 	
 	$("#string_obj1")[0].innerHTML = "<#QIS_autoMAC_desc3#>";
@@ -136,7 +135,6 @@ function ajax_detectWAN(){
 			}
 
 			parent.set_detectWAN(wanauxstate);
-			
 			check_changed_status();
 		}
 	});
@@ -145,8 +143,7 @@ function ajax_detectWAN(){
 // Define of return value: 1st bit is NTP, 2nd bit is WAN DNS, 3rd bit is more DNS.
 function check_changed_status(){
 	if(wanstate == 4 && wansbstate == 4){
-		gotoPage("/error_page.htm", "6", 1);
-		return;
+		parent.changeSubnet = true;
 	}
 	else if(wanstate != 2 || wanauxstate == 1){
 		if(run_times < MAX_RUN_TIMES){

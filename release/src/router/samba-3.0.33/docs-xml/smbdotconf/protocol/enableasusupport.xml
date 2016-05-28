@@ -1,0 +1,17 @@
+<samba:parameter name="enable asu support"
+                 context="G"
+                 advanced="1" developer="1"
+		 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>Hosts running the "Advanced Server for Unix (ASU)" product 
+    require some special accomodations such as creating a builting [ADMIN$] 
+    share that only supports IPC connections.  The has been the default
+    behavior in smbd for many years.  However, certain Microsoft applications
+    such as the Print Migrator tool require that the remote server support
+    an [ADMIN$} file share.  Disabling this parameter allows for creating 
+    an [ADMIN$] file share in smb.conf.</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

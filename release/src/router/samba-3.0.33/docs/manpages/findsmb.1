@@ -1,0 +1,112 @@
+.\"     Title: findsmb
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"
+.TH "FINDSMB" "1" "11/20/2008" "Samba 3\.0" "User Commands"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+findsmb - list info about machines that respond to SMB name queries on a subnet
+.SH "SYNOPSIS"
+.HP 1
+findsmb [subnet\ broadcast\ address]
+.SH "DESCRIPTION"
+.PP
+This perl script is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+findsmb
+is a perl script that prints out several pieces of information about machines on a subnet that respond to SMB name query requests\. It uses
+\fBnmblookup\fR(1)
+and
+\fBsmbclient\fR(1)
+to obtain this information\.
+.SH "OPTIONS"
+.PP
+\-r
+.RS 4
+Controls whether
+findsmb
+takes bugs in Windows95 into account when trying to find a Netbios name registered of the remote machine\. This option is disabled by default because it is specific to Windows 95 and Windows 95 machines only\. If set,
+\fBnmblookup\fR(1)
+will be called with
+\fB\-B\fR
+option\.
+.RE
+.PP
+subnet broadcast address
+.RS 4
+Without this option,
+findsmb
+will probe the subnet of the machine where
+\fBfindsmb\fR(1)
+is run\. This value is passed to
+\fBnmblookup\fR(1)
+as part of the
+\fB\-B\fR
+option\.
+.RE
+.SH "EXAMPLES"
+.PP
+The output of
+findsmb
+lists the following information for all machines that respond to the initial
+nmblookup
+for any name: IP address, NetBIOS name, Workgroup name, operating system, and SMB server version\.
+.PP
+There will be a \'+\' in front of the workgroup name for machines that are local master browsers for that workgroup\. There will be an \'*\' in front of the workgroup name for machines that are the domain master browser for that workgroup\. Machines that are running Windows for Workgroups, Windows 95 or Windows 98 will not show any information about the operating system or server version\.
+.PP
+The command with
+\fB\-r\fR
+option must be run on a system without
+\fBnmbd\fR(8)
+running\. If
+nmbd
+is running on the system, you will only get the IP address and the DNS name of the machine\. To get proper responses from Windows 95 and Windows 98 machines, the command must be run as root and with
+\fB\-r\fR
+option on a machine without
+nmbd
+running\.
+.PP
+For example, running
+findsmb
+without
+\fB\-r\fR
+option set would yield output similar to the following
+.sp
+.RS 4
+.nf
+IP ADDR         NETBIOS NAME   WORKGROUP/OS/VERSION 
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\- 
+192\.168\.35\.10   MINESET\-TEST1  [DMVENGR]
+192\.168\.35\.55   LINUXBOX      *[MYGROUP] [Unix] [Samba 2\.0\.6]
+192\.168\.35\.56   HERBNT2        [HERB\-NT]
+192\.168\.35\.63   GANDALF        [MVENGR] [Unix] [Samba 2\.0\.5a for IRIX]
+192\.168\.35\.65   SAUNA          [WORKGROUP] [Unix] [Samba 1\.9\.18p10]
+192\.168\.35\.71   FROGSTAR       [ENGR] [Unix] [Samba 2\.0\.0 for IRIX]
+192\.168\.35\.78   HERBDHCP1     +[HERB]
+192\.168\.35\.88   SCNT2         +[MVENGR] [Windows NT 4\.0] [NT LAN Manager 4\.0]
+192\.168\.35\.93   FROGSTAR\-PC    [MVENGR] [Windows 5\.0] [Windows 2000 LAN Manager]
+192\.168\.35\.97   HERBNT1       *[HERB\-NT] [Windows NT 4\.0] [NT LAN Manager 4\.0]
+.fi
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0 of the Samba suite\.
+.SH "SEE ALSO"
+.PP
+\fBnmbd\fR(8),
+\fBsmbclient\fR(1), and
+\fBnmblookup\fR(1)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.
+.PP
+The original Samba man pages were written by Karl Auer\. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\.icce\.rug\.nl/pub/unix/) and updated for the Samba 2\.0 release by Jeremy Allison\. The conversion to DocBook for Samba 2\.2 was done by Gerald Carter\. The conversion to DocBook XML 4\.2 for Samba 3\.0 was done by Alexander Bokovoy\.

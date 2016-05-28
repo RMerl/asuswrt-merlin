@@ -1,0 +1,26 @@
+<samba:parameter name="oplock contention limit"
+                 context="S"
+				 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This is a <emphasis>very</emphasis> advanced <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> tuning option to improve the efficiency of the 
+	granting of oplocks under multiple client contention for the same file.
+	</para>
+		
+	<para>
+	In brief it specifies a number, which causes <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>not to grant an oplock even when requested if the 
+	approximate number of clients contending for an oplock on the same file goes over this 
+	limit. This causes <command moreinfo="none">smbd</command> to behave in a similar 
+	way to Windows NT.
+	</para>
+
+	<warning><para>
+	DO NOT CHANGE THIS PARAMETER UNLESS YOU HAVE READ AND UNDERSTOOD THE SAMBA OPLOCK CODE.
+	</para></warning>
+
+</description>
+<value type="default">2</value>
+</samba:parameter>

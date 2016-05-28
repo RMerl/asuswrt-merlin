@@ -1,7 +1,0 @@
-#!/bin/ksh
-
-# First source /app/appserver
-. /app/appserver
-
-# Exec the executable.
-exec $APPROOT/usr/contrib/bin/$(basename $0) "$@"

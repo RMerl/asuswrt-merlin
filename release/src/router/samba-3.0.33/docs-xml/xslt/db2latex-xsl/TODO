@@ -1,0 +1,77 @@
+<!--############################################################################# 
+ |	$Id: TODO,v 1.11 2003/06/29 08:31:10 j-devenish Exp $
+ |- #############################################################################
+ |	$Author: j-devenish $
+ |														
+ |   PURPOSE:
+ + ############################################################################## -->
+
+SHORT
+
+20030418 - JD 
+	* Hyperlinks in QandA
+	* Support for regular typeface characterset within verbatim (for literallayout
+	  support -- see test_article).
+	* Fix \maketitle to reduce space waste in articles.
+
+20030418 - RCAS 
+	* Refactor code regarding authors and authorgroups in a single named tempalte.
+	* Test articles in books   -> book/article and the author/authorgroup prcessing
+	* Start support por partinfos/chapterinfos and to be able to output a ToC per
+	  part / chapter ...
+
+200303XX - JD
+	* There also needs to be some way of handling character entities like
+	&mdash; (or their Unicode equivalents).  It is a pity that XPath
+	doesn't have functions for regular expression substitution.
+
+	* Tables, tables, tables, always tables... Anyone?
+	* Bibliography 
+		* bibliomixed is not supported
+		* Manage .bst files ?
+
+	* Qanda is not supported at all (but patch supplied by S.B. 13 Mar 2003)
+		RCAS: Added basic support.
+			A QandASet has several QandADivs that have several QandAEntries.
+			See xsl/sample/test_qanda
+
+	* Math
+		* Improve support for MathElems tags (customized DTD)
+		* Improve support for tm and inlinetm (embedded LaTeX Math)
+		* Start MathML support
+	* Lists
+		* Ordered lists are mapped to enumerate, regardless of 'continues'
+
+	* Index : basic support. Only ONE index per LaTeX Document.
+		Support for several see/seealso
+
+	* Footnote: if possible, improve upon the existing \catcode kludge
+		for \urls within \footnotes.
+
+	* Tables/figures: look into whether page-spanning floats are possible
+		when using two-column <article>s. Add Q&A about this.
+
+LONG
+	* Update localisation.
+
+	* Overhaul handling of titles.
+
+	* Index support.
+
+	* Add chunking, so each chapter/part/etc... is created on a separate .tex file
+	  and manage the \input. (Also: automation of cover file generation.)
+
+		RCAS: Done. See xsl/sample/chunking
+		Depends on Norman Walsh chunker.xsl.
+
+	* Document latex.* variables (see vars.mod.xsl).
+
+	* Better support of everything :)
+
+	* Package.. rpm/deb/tgz 
+		RCAS: rpm & tar.gz ok.
+		RCAS: .deb pending (check debian mailing lists for a mantainer.)
+
+	* Add autoconf/automake 
+		* Detect jdk if required.
+		* Detect xslt processors.

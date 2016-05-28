@@ -235,7 +235,7 @@ function validForm(){
 	//confirm common string combination	#JS_common_passwd#
 	var is_common_string = check_common_string(document.form.http_passwd_x.value, "httpd_password");
 	if(document.form.http_passwd_x.value.length > 0 && is_common_string){
-		if(confirm("<#JS_common_passwd#>")){
+		if(!confirm("<#JS_common_passwd#>")){
 			document.form.http_passwd_x.focus();
 			document.form.http_passwd_x.select();
 			return false;	

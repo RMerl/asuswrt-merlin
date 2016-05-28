@@ -1,3 +1,0 @@
-# Host: NetBSD/arm
-NATDEPFILES= fork-child.o inf-ptrace.o corelow.o armnbsd-nat.o \
-	solib-sunos.o

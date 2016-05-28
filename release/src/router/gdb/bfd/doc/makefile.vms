@@ -1,5 +1,0 @@
-CFLAGS = /noopt/include=([],[-],[-.-.include])
-LDFLAGS = /nomap
-LDLIBS = ,sys$$library:vaxcrtl.olb/lib
-
-all: chew.exe

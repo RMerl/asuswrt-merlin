@@ -34,6 +34,8 @@
 #define PROFILE_HEADER_NEW	"HDR2"
 #endif
 
+#define PROTECT_CHAR	'x'
+
 /*******************************************************************
 * NAME: _secure_romfile
 * AUTHOR: Andy Chiu
@@ -50,7 +52,7 @@ static int _secure_conf(char* buf)
 {
 	char name[128], *item;
 	int i, flag;
-	const char *keyword_token[] = {"http_username", "pppoe_username", "passwd", "password", ""};	//Andy Chiu, 2015/12/18
+	const char *keyword_token[] = {"http_username", "passwd", "password", ""};	//Andy Chiu, 2015/12/18
 	
 	const char *token1[] = {"wan_pppoe_passwd", "modem_pass", "modem_pincode", 
 		"http_passwd", "wan0_pppoe_passwd", "dslx_pppoe_passwd", "ddns_passwd_x", 
@@ -79,6 +81,9 @@ static int _secure_conf(char* buf)
 
 	const char cloud_token[] = "cloud_sync";
 //	0>aaaaaaaaaaa>9999999999>none>0>/tmp/mnt/SANDISK_32G/aaa>1
+
+	const char pppoe_username_token[] = "pppoe_username";
+	//replace xxx@aaa.bbb
 
 	if(!buf)
 		return -1;
@@ -230,6 +235,17 @@ static int _secure_conf(char* buf)
 				}
 			}while(b);
 			//fprintf(stderr, "[%s, %d]<%s>replace(%s)\n", __FUNCTION__, __LINE__, name, ptr);			
+		}
+
+		if(strstr(name, pppoe_username_token))
+		{
+			int len = strlen(ptr);
+			for(i = 0; i < len; ++i)
+			{
+				if(ptr[i] == '@')
+					break;
+				ptr[i] = PROTECT_CHAR;
+			}
 		}
 	}
 	return 0;

@@ -1,0 +1,25 @@
+<samba:parameter name="hosts deny"
+                 context="S"
+				 type="list"
+                 basic="1" advanced="1" print="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>deny hosts</synonym>
+<description>
+    <para>The opposite of <parameter moreinfo="none">hosts allow</parameter> 
+    - hosts listed here are <emphasis>NOT</emphasis> permitted access to 
+    services unless the specific services have their own lists to override 
+    this one. Where the lists conflict, the <parameter moreinfo="none">allow</parameter> 
+	list takes precedence.</para>
+
+	<para>
+	In the event that it is necessary to deny all by default, use the keyword
+	ALL (or the netmask <literal>0.0.0.0/0</literal>) and then explicitly specify
+	to the <smbconfoption name="hosts allow">hosts allow</smbconfoption> parameter those hosts
+	that should be permitted access.
+	</para>
+</description>
+
+<value type="default"><comment>none (i.e., no hosts specifically excluded)</comment></value>
+
+<value type="example">150.203.4. badhost.mynet.edu.au</value>
+</samba:parameter>

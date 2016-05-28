@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="log2pcap.1">
+
+<refmeta>
+	<refentrytitle>log2pcap</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>log2pcap</refname>
+	<refpurpose>Extract network traces from Samba log files</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>log2pcap</command>
+		<arg choice="opt">-h</arg>
+		<arg choice="opt">-q</arg>
+		<arg choice="opt">logfile</arg>
+		<arg choice="opt">pcap_file</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>log2pcap</command> reads in a 
+	samba log file and generates a pcap file (readable 
+	by most sniffers, such as ethereal or tcpdump) based on the packet 
+	dumps in the log file.</para>
+
+	<para>The log file must have a <parameter>log level</parameter> 
+	of at least <constant>5</constant> to get the SMB header/parameters 
+	right, <constant>10</constant> to get the first 512 data bytes of the 
+	packet and <constant>50</constant> to get the whole packet.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+	    <varlistentry>
+		<term>-h</term>
+		<listitem><para>If this parameter is 
+		specified the output file will be a 
+		hex dump, in a format that is readable 
+		by the <application>text2pcap</application> utility.</para></listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	    	<term>-q</term>
+		<listitem><para>Be quiet. No warning messages about missing 
+		or incomplete data will be given.</para></listitem>
+	    </varlistentry>
+		
+	    <varlistentry>
+		<term>logfile</term>
+		<listitem><para>
+		Samba log file. log2pcap will try to read the log from stdin 
+		if the log file is not specified.
+		</para></listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+		<term>pcap_file</term>
+		<listitem><para>
+		Name of the output file to write the pcap (or hexdump) data to.
+		If this argument is not specified, output data will be written 
+		to stdout.
+		</para></listitem>
+	    </varlistentry>
+
+	    &stdarg.help;
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Extract all network traffic from all samba log files:</para>
+
+	<para><programlisting>
+			<prompt>$</prompt> log2pcap &lt; /var/log/* &gt; trace.pcap
+	</programlisting></para>
+
+	<para>Convert to pcap using text2pcap:</para>
+
+	<para><programlisting>
+	<prompt>$</prompt> log2pcap -h samba.log | text2pcap -T 139,139 - trace.pcap
+	</programlisting></para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+
+	<para>Only SMB data is extracted from the samba logs, no LDAP, 
+	NetBIOS lookup or other data.</para>
+
+	<para>The generated TCP and IP headers don't contain a valid 
+	checksum.</para>
+	
+</refsect1>
+
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>text2pcap</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>ethereal</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>This manpage was written by Jelmer Vernooij.</para>
+</refsect1>
+
+</refentry>

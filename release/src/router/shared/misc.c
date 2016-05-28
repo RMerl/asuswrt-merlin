@@ -188,6 +188,74 @@ extern char *upper_strstr(const char *const str, const char *const target){
 	return (char *)(str+len);
 }
 
+in_addr_t inet_addr_(const char *addr)
+{
+	struct in_addr in;
+	return inet_aton(addr, &in) ? in.s_addr : INADDR_ANY;
+}
+
+int inet_equal(const char *addr1, const char *mask1, const char *addr2, const char *mask2)
+{
+	return ((inet_network(addr1) & inet_network(mask1)) ==
+		(inet_network(addr2) & inet_network(mask2)));
+}
+
+int inet_intersect(const char *addr1, const char *mask1, const char *addr2, const char *mask2)
+{
+	in_addr_t max_netmask = inet_network(mask1) | inet_network(mask2);
+	return ((inet_network(addr1) & max_netmask) ==
+		(inet_network(addr2) & max_netmask));
+}
+
+int inet_deconflict(const char *addr1, const char *mask1, const char *addr2, const char *mask2, struct in_addr *result)
+{
+	const static struct class {
+		in_addr_t network;
+		in_addr_t netmask;
+	} classes[] = {
+		{ 0xc0a80000, 0xffff0000 }, /* 192.168.0.0/16 */
+		{ 0xac100000, 0xfff00000 }, /* 172.16.0.0/12 */
+		{ 0x0a000000, 0xff000000 }, /* 10.0.0.0/8 */
+		{ 0, 0 }
+	};
+	struct class *class, *found;
+	in_addr_t lan_ipaddr = inet_network(addr1);
+	in_addr_t lan_netmask = inet_network(mask1);
+	in_addr_t wan_ipaddr = inet_network(addr2);
+	in_addr_t wan_netmask = inet_network(mask2);
+	in_addr_t max_netmask = lan_netmask | wan_netmask;
+
+	if ((lan_ipaddr & max_netmask) != (wan_ipaddr & max_netmask)) {
+		/* not really intersecting */
+		return 0;
+	}
+
+	found = NULL;
+	for (class = (struct class *) classes; class->network; class++) {
+		if (~lan_netmask > ~class->netmask)
+			continue;
+		if ((lan_ipaddr & class->netmask) != class->network)
+			found = found ? : class;
+		else if (~lan_netmask < ~class->netmask) {
+			found = class;
+			lan_ipaddr += ~lan_netmask + 1;
+			break;
+		}
+	}
+	if (found)
+		lan_ipaddr = found->network | (lan_ipaddr & ~found->netmask);
+	else {
+		/* non-private address or too big network mask,
+		 * address might become non-RFC1918 */
+		lan_ipaddr += ~lan_netmask + 1;
+	}
+
+	if (result)
+		result->s_addr = htonl(lan_ipaddr);
+
+	return found ? 1 : 2;
+}
+
 #ifdef RTCONFIG_IPV6
 char *ipv6_nvname_by_unit(const char *name, int unit)
 {
@@ -676,21 +744,7 @@ const char *get_wanface(void)
 #ifdef RTCONFIG_IPV6
 const char *get_wan6face(void)
 {
-	switch (get_ipv6_service()) {
-	case IPV6_NATIVE_DHCP:
-#ifdef RTCONFIG_6RELAYD
-	case IPV6_PASSTHROUGH:
-#endif
-	case IPV6_MANUAL:
-		return get_wanface();
-	case IPV6_6TO4:
-		return "v6to4";
-	case IPV6_6IN4:
-		return "v6in4";
-	case IPV6_6RD:
-		return "6rd";
-	}
-	return "";
+	return get_wan6_ifname(wan_primary_ifunit());
 }
 
 int update_6rd_info(void)
@@ -790,7 +844,7 @@ const char *_getifaddr(const char *ifname, int family, int flags, char *buf, int
 				if (len < maxlen) {
 					netmask = memchr(buf, 0, size);
 					if (netmask)
-						snprintf(netmask, size - ((char *) netmask - buf), "/%d", len);
+						snprintf((char *) netmask, size - ((char *) netmask - buf), "/%d", len);
 				}
 			}
 			freeifaddrs(ifap);
@@ -2062,13 +2116,12 @@ unsigned int traffic_limiter_read_bit(const char *type)
 	char *path;
 	char buf[sizeof("4294967295")];
 	unsigned int val = 0;
-	int debug = nvram_get_int("tl_debug");
 
 	path = traffic_limiter_get_path(type);
 	if (path && f_read_string(path, buf, sizeof(buf)) > 0)
 		val = strtoul(buf, NULL, 10);
 
-	if (debug) dbg("%s : path = %s, val=%u\n", __FUNCTION__, path ? : "NULL", val);
+	TL_DBG("path = %s, val=%u\n", path ? : "NULL", val);
 	return val;
 }
 
@@ -2077,7 +2130,6 @@ void traffic_limiter_set_bit(const char *type, int unit)
 	char *path;
 	char buf[sizeof("4294967295")];
 	unsigned int val = 0;
-	int debug = nvram_get_int("tl_debug");
 
 	path = traffic_limiter_get_path(type);
 	if (path) {
@@ -2087,7 +2139,7 @@ void traffic_limiter_set_bit(const char *type, int unit)
 		f_write_string(path, buf, 0, 0);
 	}
 
-	if (debug) dbg("%s : path = %s, val=%u\n", __FUNCTION__, path ? : "NULL", val);
+	TL_DBG("path = %s, val=%u\n", path ? : "NULL", val);
 }
 
 void traffic_limiter_clear_bit(const char *type, int unit)
@@ -2095,7 +2147,6 @@ void traffic_limiter_clear_bit(const char *type, int unit)
 	char *path;
 	char buf[sizeof("4294967295")];
 	unsigned int val = 0;
-	int debug = nvram_get_int("tl_debug");
 
 	path = traffic_limiter_get_path(type);
 	if (path) {
@@ -2105,7 +2156,7 @@ void traffic_limiter_clear_bit(const char *type, int unit)
 		f_write_string(path, buf, 0, 0);
 	}
 
-	if (debug) dbg("%s : path = %s, val=%u\n", __FUNCTION__, path ? : "NULL", val);
+	TL_DBG("path = %s, val=%u\n", path ? : "NULL", val);
 }
 
 double traffic_limiter_get_realtime(int unit)
@@ -2119,35 +2170,6 @@ double traffic_limiter_get_realtime(int unit)
 		val = atof(buf);
 
 	return val;
-}
-
-int TL_UNIT_S; // traffic limiter dual wan unit start
-int TL_UNIT_E; // traffic limiter dual wan unit end
-
-int traffic_limiter_dualwan_check(char *dualwan_mode)
-{
-	int ret = 1;
-
-	/* check daul wan mode */
-	if (!strcmp(dualwan_mode, "lb"))
-	{
-		// load balance
-		TL_UNIT_S = WAN_UNIT_FIRST;
-		TL_UNIT_E = WAN_UNIT_MAX;
-	}
-	else if (!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))
-	{
-		// fail over or fail back
-		TL_UNIT_S = wan_primary_ifunit();
-		TL_UNIT_E = wan_primary_ifunit() + 1;
-	}
-	else
-	{
-		printf("%s : can't identify daulwan_mode\n", __FUNCTION__);
-		ret = 0;
-	}
-
-	return ret;
 }
 #endif
 

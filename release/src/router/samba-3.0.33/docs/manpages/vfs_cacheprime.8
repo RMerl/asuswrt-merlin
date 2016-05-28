@@ -1,0 +1,98 @@
+.\"     Title: vfs_cacheprime
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2008
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"
+.TH "VFS_CACHEPRIME" "8" "11/20/2008" "Samba 3\.0" "System Administration tools"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+vfs_cacheprime - prime the kernel file data cache
+.SH "SYNOPSIS"
+.HP 1
+vfs objects = cacheprime
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\.
+.PP
+The
+vfs_cacheprime
+VFS module reads chunks of file data near the range requested by clients in order to make sure the data is present in the kernel file data cache at the time when it is actually requested by clients\.
+.PP
+The size of the disk read operations performed by
+vfs_cacheprime
+is determined by the cacheprime:rsize option\. All disk read operations are aligned on boundaries that are a multiple of this size\. Each range of the file data is primed at most once during the time the client has the file open\.
+.PP
+This module is stackable\.
+.SH "OPTIONS"
+.PP
+cacheprime:rsize = BYTES
+.RS 4
+The number of bytes with which to prime the kernel data cache\.
+.sp
+The following suffixes may be applied to BYTES:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+K
+\- BYTES is a number of kilobytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+M
+\- BYTES is a number of megabytes
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+G
+\- BYTES is a number of gigabytes
+.sp
+.RE
+.RE
+.SH "EXAMPLES"
+.PP
+For a hypothetical disk array, it is necessary to ensure that all read operations are of size 1 megabyte (1048576 bytes), and aligned on 1 megabyte boundaries:
+.sp
+.RS 4
+.nf
+	\fI[hypothetical]\fR
+	\fIvfs objects = cacheprime\fR
+	\fIcacheprime:rsize = 1M\fR
+.fi
+.RE
+.SH "CAVEATS"
+.PP
+cacheprime
+is not a a substitute for a general\-purpose readahead mechanism\. It is intended for use only in very specific environments where disk operations must be aligned and sized to known values (as much as that is possible)\.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\.0\.25 of the Samba suite\.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\.

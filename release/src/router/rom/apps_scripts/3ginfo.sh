@@ -21,24 +21,23 @@ nvram get firmver
 echo ">"
 nvram get buildno
 echo ">"
-nvram show|grep extendno
+nvram show |grep extendno
 echo ">"
 echo "dualwan nvram:>"
-nvram show|grep ^wans_
+nvram show |grep ^wans_
 echo ">"
 echo "wan state:>"
-nvram show|grep state |grep wan0_
-nvram show|grep state |grep wan1_
+nvram show |grep state |grep wan[01]_
 echo ">"
 echo "modem nvram:>"
 nvram get Dev3G
 echo ">"
-nvram show|grep ^modem_ |grep -v "modem_pincode="
+nvram show |grep ^modem_ |grep -v "modem_pincode="
 echo ">"
 echo "modem state:>"
-nvram show|grep g3state
+nvram show |grep g3state
 echo ">"
-nvram show|grep g3err
+nvram show |grep g3err
 echo ">"
 echo "modem act state:>"
 str=`nvram get usb_modem_act_path`
@@ -83,7 +82,11 @@ str=`nvram get usb_modem_act_startsec`
 echo "usb_modem_act_startsec=$str"
 echo ">"
 echo "modem autoapn:>"
-nvram show|grep ^usb_modem_auto
+nvram show |grep ^usb_modem_auto
+echo ">"
+echo "real ip detect:>"
+nvram show |grep "_ipaddr=" |grep wan[01]_
+nvram show |grep real |grep wan[01]_
 echo ">"
 echo "resolv.conf >"
 cat /etc/resolv.conf
@@ -92,7 +95,7 @@ echo "udhcpd.conf >"
 cat /tmp/udhcpd.conf
 echo ">"
 echo "show dns nvram >"
-nvram show|grep dns
+nvram show |grep dns |grep wan[01]
 echo ">"
 echo "syslog>"
 cat /tmp/syslog.log |tail -n 50

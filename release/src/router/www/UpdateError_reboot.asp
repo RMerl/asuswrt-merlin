@@ -14,12 +14,18 @@
 	
 	if(upgrade_fw_status == 2 || upgrade_fw_status == 4){
 		parent.document.getElementById("hiddenMask").style.visibility = "hidden";
-		// parent.document.getElementById('loading_block1').style.display = "none";
 		parent.document.getElementById('loading_block2').innerHTML = "<#FIRM_fail_desc#>";
-		// parent.document.getElementById('loading_block3').innerHTML = "<#Main_alert_proceeding_desc5#>"; wrong status
 		parent.document.getElementById('loading_block3').style.display = "none";
 		parent.showLoadingBar(reboottime);
 		setTimeout("parent.detect_httpd();", reboottime*1000);	
+	}
+	else if(upgrade_fw_status == 6){
+		parent.document.getElementById("hiddenMask").style.visibility = "hidden";
+		
+                parent.document.getElementById('loading_block2').innerHTML = "To comply with regulatory amendments, we have modified our certification rule to ensure better firmware quality. This version is not compatible with all previously released ASUS firmware and uncertified third party firmware. Please check our official websites for the certified firmware.";	/* untranslated */
+                parent.document.getElementById('loading_block3').style.display = "none";
+                parent.showLoadingBar(reboottime);
+                setTimeout("parent.detect_httpd();", reboottime*1000);
 	}
 	else{
 		aler("<#FIRM_fail_desc#>");

@@ -57,22 +57,6 @@
 
 void update_lan_status(int);
 
-in_addr_t inet_addr_(const char *cp)
-{
-	struct in_addr a;
-
-	if (!inet_aton(cp, &a))
-		return INADDR_ANY;
-	else
-		return a.s_addr;
-}
-
-inline int inet_equal(char *addr1, char *mask1, char *addr2, char *mask2)
-{
-	return ((inet_network(addr1) & inet_network(mask1)) ==
-		(inet_network(addr2) & inet_network(mask2)));
-}
-
 /* remove space in the end of string */
 char *trim_r(char *str)
 {
@@ -1351,7 +1335,7 @@ int setup_dnsmq(int mode)
 	else {
 		eval("ebtables", "-F");
 		eval("ebtables", "-t", "broute", "-F");
-		eval("ebtables", "-I", "FORWARD", "-i", "eth1", "-j", "DROP");
+		eval("ebtables", "-I", "FORWARD", "-i", nvram_safe_get(wlc_nvname("ifname")), "-j", "DROP");
 	}	
 	
 	eval("iptables", "-t", "nat", "-F", "PREROUTING");
@@ -1362,9 +1346,11 @@ int setup_dnsmq(int mode)
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 		if (!is_psta(nvram_get_int("wlc_band")) && !is_psr(nvram_get_int("wlc_band")))
 #endif
-		snprintf(tmp, sizeof(tmp), "%s:%d", nvram_safe_get("lan_ipaddr"), /*nvram_get_int("http_lanport") ? :*/ 80);
-		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80",
-			"-j", "DNAT", "--to-destination", tmp);
+		{
+			snprintf(tmp, sizeof(tmp), "%s:%d", nvram_safe_get("lan_ipaddr"), /*nvram_get_int("http_lanport") ? :*/ 80);
+			eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80",
+				"-j", "DNAT", "--to-destination", tmp);
+		}
 	
 		//sprintf(v, "%x my.%s", inet_addr("10.0.0.1"), get_productid());
 		sprintf(v, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);

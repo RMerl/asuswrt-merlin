@@ -1,0 +1,46 @@
+<!-- 
+
+     File isogrk2.ent produced by the dsssl script ent.dsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments in the STIX proposal for characters
+     for Mathematics.
+
+     The STIX assignments are temporary and will change if
+     the proposal or some variant of it is adopted by the
+     Unicode Consortium.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+-->
+
+<!ENTITY aacgr      "&#940;"   ><!--U03AC =small alpha, accent, Greek -->
+<!ENTITY Aacgr      "&#902;"   ><!--U0386 =capital Alpha, accent, Greek -->
+<!ENTITY eacgr      "&#941;"   ><!--U03AD =small epsilon, accent, Greek -->
+<!ENTITY eeacgr     "&#942;"   ><!--U03AE =small eta, accent, Greek -->
+<!ENTITY Eacgr      "&#904;"   ><!--U0388 =capital Epsilon, accent, Greek -->
+<!ENTITY EEacgr     "&#905;"   ><!--U0389 =capital Eta, accent, Greek -->
+<!ENTITY iacgr      "&#943;"   ><!--U03AF =small iota, accent, Greek -->
+<!ENTITY idiagr     "&#912;"   ><!--U0390 =small iota, dieresis, accent, Greek -->
+<!ENTITY idigr      "&#970;"   ><!--U03CA =small iota, dieresis, Greek -->
+<!ENTITY Iacgr      "&#906;"   ><!--U038A =capital Iota, accent, Greek -->
+<!ENTITY Idigr      "&#938;"   ><!--U03AA =capital Iota, dieresis, Greek -->
+<!ENTITY oacgr      "&#972;"   ><!--U03CC =small omicron, accent, Greek -->
+<!ENTITY ohacgr     "&#974;"   ><!--U03CE =small omega, accent, Greek -->
+<!ENTITY Oacgr      "&#908;"   ><!--U038C =capital Omicron, accent, Greek -->
+<!ENTITY OHacgr     "&#911;"   ><!--U038F =capital Omega, accent, Greek -->
+<!ENTITY uacgr      "&#973;"   ><!--U03CD =small upsilon, accent, Greek -->
+<!ENTITY udiagr     "&#944;"   ><!--U03B0 =small upsilon, dieresis, accent, Greek -->
+<!ENTITY udigr      "&#971;"   ><!--U03CB =small upsilon, dieresis, Greek -->
+<!ENTITY Uacgr      "&#910;"   ><!--U038E =capital Upsilon, accent, Greek -->
+<!ENTITY Udigr      "&#939;"   ><!--U03AB =capital Upsilon, dieresis, Greek -->

@@ -27,6 +27,9 @@ var accounts = [<% get_all_accounts(); %>];
 <% wanstate(); %>
 var autodet_state = '<% nvram_get("autodet_state"); %>';
 var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';
+var link_internet = '<% nvram_get("link_internet"); %>';
+var wan0_realip_state = '<% nvram_get("wan0_realip_state"); %>';
+var wan1_realip_state = '<% nvram_get("wan1_realip_state"); %>';
 if(accounts.length == 0)
 	accounts = ['<% nvram_get("http_username"); %>'];
 
@@ -35,6 +38,7 @@ for(var i=0; i<accounts.length; i++){
 }
 
 function QKinternettype_load_body(){
+	detect_wan();
 	if(parent.based_modelid == "RT-N11P" || parent.based_modelid == "RT-N300" || parent.based_modelid == "PL-N12" || parent.based_modelid == "PL-AC56"){
 			document.getElementById("point4").style.display = "none";
 	}
@@ -63,7 +67,16 @@ function QKinternettype_load_body(){
 		if (dsl_support) {
 			document.getElementById("prev_btn").style.display = "none";
 			var detect_status = "<% nvram_get("dsltmp_autodet_state"); %>";	
-			if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") || 
+			var wan_type = "<% nvram_get("dsltmp_autodet_wan_type"); %>";
+			var dslx_annex_state = "<% nvram_get("dslx_annex"); %>";
+
+			if(detect_status == "up" && wan_type == "PTM"){
+				document.form.next_page.value = "/qis/QIS_PTM_manual_setting.htm"; 
+			}
+			else if(detect_status == "up" && wan_type == "ATM" && (dslx_annex_state == 5 || dslx_annex_state == 6)){
+				document.form.next_page.value = "/qis/QIS_manual_setting.htm"; 
+			}
+			else if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") || 
 				(detect_status == "init") || (detect_status == "initializing") || 
 				(detect_status == "up") || (detect_status == "wait") || (detect_status == "down")) {
 				document.form.next_page.value = "/qis/QIS_detect.htm";
@@ -92,6 +105,23 @@ function QKinternettype_load_body(){
 		var RetryCountDown_fail = 5;
 		update_dsl_info();
 	}
+	
+	if(wanauxstate == 1)
+		document.getElementById("prev_btn").style.display = "";
+}
+
+function detect_wan(){
+	$.ajax({
+		url: '/result_of_get_changed_status_QIS.asp',
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout("detect_wan();", 1000);		
+		},
+		success: function(response){
+			setTimeout("detect_wan();", 1000);
+				// trigger hook only, to get latest values
+		}
+	});	
 }
 
 function submitForm(){
@@ -223,7 +253,7 @@ function submitForm(){
 	//confirm common string combination	#JS_common_passwd#
 	var is_common_string = check_common_string(document.form.http_passwd.value, "httpd_password");
 	if(is_common_string){
-			if(confirm("<#JS_common_passwd#>")){
+			if(!confirm("<#JS_common_passwd#>")){
 				document.form.http_passwd.focus();
 				document.form.http_passwd.select();
 				changeiuiBackground(0);
@@ -259,15 +289,25 @@ function submitForm(){
 	else if(parent.flag_manual == "modem")
 		document.form.action = "/qis/QIS_modem.htm";
 	else if(parent.document.QKform.sw_mode.value == "1"){
-		//document.form.action = "/qis/QIS_detect.htm";
 		if(autodet_state == "2" && autodet_auxstate == "6"){
-			document.form.action = "/qis/QIS_internet_type.htm";
+			if((wanstate  == 2 && wansbstate == 0 && wanauxstate == 0) && (link_internet == "2" || wan0_realip_state == "2" || wan1_realip_state == "2")){
+				document.form.action = "/qis/QIS_wireless.htm";
+			}
+			else if(wanstate == 4 && wansbstate == 4 && wanauxstate == 0){
+				document.form.action = "/qis/QIS_wireless.htm";
+			}
+			else{
+				document.form.action = "/qis/QIS_internet_account.htm";
+			}
 		}
 		else if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
 			document.form.action = "/qis/QIS_wireless.htm";
 		}
+		else if(wanstate == 4 && wansbstate == 4 && wanauxstate == 0){
+			document.form.action = "/qis/QIS_wireless.htm";
+		}
 		else{
-			document.form.action = "/qis/QIS_detect.htm";
+			document.form.action = "/qis/QIS_internet_type.htm";
 		}
 	}	
 	else
@@ -427,7 +467,6 @@ function paste_password(){
 		<ul>
 			<li><#QIS_pass_desc3#>
 			<li id="point4"><div id="general_desc4" style="display:none;"><#QIS_pass_desc4#></div>
-			<li><#QIS_pass_desc5#>&nbsp;<% nvram_default_get("http_username"); %>&nbsp;/&nbsp;<% nvram_default_get("http_passwd"); %>
 		</ul>
 	</div>
 	<div id="loginImage" style="margin-left:320px;margin-top:-200px;"><img width="300px" style="border-radius:5px;" src="/images/qis/router_login.jpg"></span></div>
@@ -441,7 +480,7 @@ function paste_password(){
 
 <div class="apply_gen" id="applyBtn">
 	<span id="skip_btn" style="display:none;"><input type="button" value="<#CTL_Skip#>" tabindex="6" onclick="skipsetting();" class="button_gen"></span>
-	<span id="prev_btn"><input type="button" value="<#CTL_prev#>" tabindex="6" onclick="gotoPrev();" class="button_gen"></span>
+	<span id="prev_btn" style="display:none"><input type="button" value="<#CTL_prev#>" tabindex="6" onclick="gotoPrev();" class="button_gen"></span>
 	<input type="submit" id="nextButton" tabindex="5"	value="<#CTL_next#>" class="button_gen">
 </div>
 

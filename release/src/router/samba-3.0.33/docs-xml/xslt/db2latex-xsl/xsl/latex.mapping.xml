@@ -1,0 +1,498 @@
+<?xml version='1.0'?>
+<!DOCTYPE latexbindings SYSTEM "latex.mapping.dtd" []>
+
+<latexbindings>
+
+    <!-- 	
+    ################################################################
+    Keywords
+    %id%
+    %title%
+    ################################################################ -->	
+
+
+    <!-- LaTeX mapping, role, BEGIN -->
+    <latexmapping role="begin">
+
+	<mapping key="abstract" text="">
+	    <line>&#10;</line>
+	    <line>% --------------------------------------------&#10;</line>
+	    <line>% Abstract &#10;</line>
+	    <line>% --------------------------------------------&#10;</line>
+	    <line>\begin{abstract}&#10;</line>
+	</mapping>	
+
+	<mapping key="abstract-title" text="">
+	    <line>&#10;</line>
+	    <line>% --------------------------------------------&#10;</line>
+	    <line>% Abstract &#10;</line>
+	    <line>% --------------------------------------------&#10;</line>
+      <line>\makeatletter\let\save@@abstractname\abstractname\makeatother&#10;</line>
+      <line>\renewcommand{\abstractname}{%title%}&#10;</line>
+	    <line>\begin{abstract}&#10;</line>
+	</mapping>	
+
+	<mapping key="admonition"	text="">
+	    <line>&#10;</line>
+	    <line>\begin{admonition}%title%% NOTICE: see the db2latex FAQ w.r.t db2latex variable $latex.admonition.path&#10;</line>
+	</mapping>
+
+	<mapping key="appendices-chapter"	text="">
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>% Appendices start here&#10;</line>
+	    <line>% -------------------------------------------------------------&#10;</line>
+	    <line>\appendix&#10;</line>
+	</mapping>
+
+	<mapping key="appendices-section"	text=""/>
+
+	<mapping key="appendix"		text="">
+	    <line>&#10;</line>
+	    <line>% -------------------------------------------------------------&#10;</line>
+	    <line>% appendix:  %title% &#10;</line>
+	    <line>% ------------------------------------------------------------- 	&#10;</line>
+	    <line>\dbappendix{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="article"	text="">
+    <line>\begin{document}&#10;</line>
+	</mapping>
+
+	<mapping key="bibliography-chapter" text="">
+		<line>% ------------------------------------------- &#10;</line>
+		<line>%&#10;</line>
+		<line>%  Bibliography - chapter&#10;</line>
+		<line>%&#10;</line>
+		<line>% ------------------------------------------- &#10;</line>
+	</mapping>
+
+	<mapping key="bibliography-section" text=""/>
+
+	<mapping key="blockquote"	text="">
+		<line>\begin{quote}&#10;</line>
+	</mapping>
+
+	<mapping key="chapter"	text="">
+	    <line>&#10;</line>
+	    <line>% -------------------------------------------------------------&#10;</line>
+	    <line>% Chapter %title% &#10;</line>
+	    <line>% ------------------------------------------------------------- 	&#10;</line>
+	    <line>\chapter{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="colophon" text="">
+		<line>% -------------------------------------------------------------&#10;</line>
+		<line>% Colophon &#10;</line>
+		<line>% -------------------------------------------------------------&#10;</line>
+		<line>\chapter*{%title%}%&#10;</line>
+		<line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="dedication" text="">
+		<line>% -------------------------------------------------------------&#10;</line>
+		<line>% Dedication &#10;</line>
+		<line>% -------------------------------------------------------------&#10;</line>
+		<line>\chapter*{%title%}%&#10;</line>
+		<line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="epigraph"	text="">
+		<line>\begin{quote}&#10;</line>
+	</mapping>
+
+	<mapping key="figure"	text="">
+	    <line>&#10;</line>
+	    <line>% figure ------------------------------------------------------&#10;</line>
+	    <line>\begin{figure}[%title%]&#10;</line>
+	    <line>\begin{center}%&#10;</line>
+	    <line>\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="index" text="">
+		<line>\indexspace&#10;</line>
+	</mapping>
+
+	<mapping key="informalfigure"	text="">
+	    <line>&#10;</line>
+	    <line>% informalfigure ------------------------------------------------------&#10;</line>
+	    <line>\begin{center}%&#10;</line>
+	    <line>\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="keywordset"	text="">
+	    <line>&#10;</line>
+	    <line>% keywords ------------------------------------------------------&#10;</line>
+	    <line><![CDATA[
+\vspace{-.3em}{
+\if@twocolumn\small\textit{%title%}\bfseries---$\!$%
+\else\begin{center}\small\bfseries{%title%}\end{center}\begin{quote}\small%
+\fi
+]]></line>
+	</mapping>
+
+	<mapping key="table"	text="">
+	    <line>&#10;</line>
+	    <line>% table ------------------------------------------------------&#10;</line>
+	    <line>\begin{table}[%title%]&#10;</line>
+	    <line>\begin{center}%&#10;</line>
+	    <line>\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="informaltable"	text="">
+	    <line>&#10;</line>
+	    <line>% tabular ------------------------------------------------------&#10;</line>
+	    <line>\begin{center}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="equation"	text="">
+	    <line>&#10;\begin{dbequation}&#10;</line>
+	    <line>\begin{center}&#10;</line>
+	    <line>\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="glossary"	text="">
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>% &#10;</line>
+	    <line>% GLOSSARY %title%&#10;</line>
+	    <line>% &#10;</line>
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>\dbglossary{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="glossdiv"	text="">
+	    <line>% &#10;</line>
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>\dbglossdiv{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	    <line>\noindent%&#10;</line>
+	    <line>\begin{description}%&#10;</line>
+	</mapping>
+
+	<mapping key="glosslist"	text="">
+	    <line>% &#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	    <line>\noindent%&#10;</line>
+	    <line>\begin{description}%&#10;</line>
+	</mapping>
+
+	<mapping key="part"	text="">
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>% &#10;</line>
+	    <line>% PART %title%&#10;</line>
+	    <line>% &#10;</line>
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>\part{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="partintro"	text="">
+	    <line>&#10;</line>
+	    <line>% -------------------------------------------------------------&#10;</line>
+	    <line>% PartIntro %title% &#10;</line>
+	    <line>% ------------------------------------------------------------- 	&#10;</line>
+	    <line>\chapter*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="preface" text="">
+		<line>% -------------------------------------------------------------&#10;</line>
+		<line>% Preface &#10;</line>
+		<line>% -------------------------------------------------------------&#10;</line>
+		<line>\chapter*{%title%}%&#10;</line>
+		<line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="refentry"	text="">
+	    <line>% &#10;</line>
+	    <line>% -------------------------------------------------------------&#10;</line>
+	    <line>% Refentry &#10;</line>
+	    <line>% ------------------------------------------------------------- 	&#10;</line>
+	    <line>\section*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="refsect1"		text="&#10;\subsection*{%title%}&#10;\label{%id%}&#10;"/>
+	<mapping key="refsect2"		text="&#10;\subsubsection*{%title%}&#10;\label{%id%}&#10;"/>
+	<mapping key="refsect3"		text="&#10;\paragraph*{%title%}&#10;\label{%id%}&#10;"/>
+
+	<mapping key="reference" text="">
+	    <line>% &#10;</line>
+	    <line>% -------------------------------------------------------------&#10;</line>
+	    <line>% Reference &#10;</line>
+	    <line>% ------------------------------------------------------------- 	&#10;</line>
+	    <line>\chapter{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="revhistory" text="">
+	    <line>&#10;</line>
+	    <line>% ------------------------   &#10;</line>
+	    <line>% RevHistory                                 &#10;</line>
+	    <line>% ------------------------   &#10;</line>
+	    <line>\pagebreak&#10;</line>
+	    <line>\section*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	    <line>\begin{center}&#10;</line>
+	    <line>\begin{tt}&#10;</line>
+	    <line>\begin{tabular}{|l||l|l|} \hline&#10;</line>
+	</mapping>
+
+	<mapping key="example"		text="&#10;\begin{example}%&#10;\hypertarget{%id%}{}%&#10;"/>
+
+	<mapping key="programlisting"	text="&#10;\begin{program}%&#10;"/>
+
+	<mapping key="sect1"		text="">
+	    <line>&#10;</line>
+	    <line>% ------------------------   &#10;</line>
+	    <line>% Section &#10;</line>
+	    <line>\section{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect1*"		text="">
+	    <line>&#10;</line>
+	    <line>% ------------------------   &#10;</line>
+	    <line>% Section &#10;</line>
+	    <line>\section*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect2"		text="">
+	    <line>\subsection{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect2*"		text="">
+	    <line>\subsection*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect3"		text="">
+	    <line>\subsubsection{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect3*"		text="">
+	    <line>\subsubsection*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect4"		text="">
+	    <line>\subparagraph*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect4*"		text="">
+	    <line>\subparagraph*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect5"		text="">
+	    <line>\subparagraph*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect5*"		text="">
+	    <line>\subparagraph*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect6"		text="">
+	    <line>\subparagraph*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="sect6*"		text="">
+	    <line>\subparagraph*{%title%}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="set"	text="">
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>% &#10;</line>
+	    <line>% SET %title%&#10;</line>
+	    <line>% &#10;</line>
+	    <line>% ------------------------------------------------------------- &#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+	<mapping key="setindex" text="">
+		<line>\indexspace&#10;</line>
+	</mapping>
+
+	<mapping key="formalpara"		text="">
+	    <line>\subsubsection*{\small{%title%}}&#10;</line>
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	</mapping>
+
+    </latexmapping>
+
+
+
+    <!-- LaTeX mapping, role, END -->
+
+    <latexmapping role="end">
+
+	<mapping key="abstract" text="">
+	    <line>\end{abstract}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="abstract-title" text="">
+	    <line>\end{abstract}&#10;</line>
+      <line>\makeatletter\let\abstractname\save@@abstractname\makeatother&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="admonition" text="">
+	    <line>\end{admonition}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="appendices-chapter"	text=""/>
+
+	<mapping key="appendices-section"	text=""/>
+
+	<mapping key="appendix"		text=""/>
+
+	<mapping key="article"	text="">
+    <line>\end{document}&#10;</line>
+	</mapping>
+
+	<mapping key="bibliography-chapter" text="">
+		<line>\addcontentsline{toc}{chapter}{%title%}&#10;</line>
+	</mapping>
+
+	<mapping key="bibliography-section" text=""/>
+
+	<mapping key="blockquote"	text="">
+		<line>\end{quote}&#10;</line>
+	</mapping>
+
+	<mapping key="book" text="">
+	    <line>&#10;</line>
+	    <line>\end{document}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="chapter"	text=""/>
+
+	<mapping key="colophon" text=""/>
+
+	<mapping key="dedication" text=""/>
+
+	<mapping key="epigraph"	text="">
+		<line>\end{quote}&#10;</line>
+	</mapping>
+
+	<mapping key="example" text="">
+	    <line>\end{example}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="figure" text="">
+	    <line>\end{center}&#10;</line>
+	    <line>\end{figure}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="index" text="">
+		<line>\addcontentsline{toc}{chapter}{%title%}&#10;</line>
+	</mapping>
+
+	<mapping key="informalfigure" text="">
+	    <line>\label{%id%}&#10;</line>
+	    <line>\end{center}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="equation" text="">
+	    <line>\end{center}&#10;</line>
+	    <line>\end{dbequation}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="glossary"	text="">
+    <line>\addcontentsline{toc}{chapter}{%title%}&#10;</line>
+	</mapping>
+
+	<mapping key="glossdiv"	text="">
+	    <line>\end{description}%&#10;</line>
+	</mapping>
+
+	<mapping key="glosslist"	text="">
+	    <line>\end{description}%&#10;</line>
+	</mapping>
+
+	<mapping key="informaltable" text="">
+	    <line>\end{center}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="keywordset"	text="">
+	    <line><![CDATA[
+\vspace{0.6em}\par
+\if@twocolumn\else\end{quote}\fi
+%\normalsize\rmfamily
+}
+]]></line>
+	</mapping>
+
+	<mapping key="part"	text=""/>
+	<mapping key="partintro"	text=""/>
+	<mapping key="reference"		text=""/>
+	<mapping key="refentry"		text=""/>
+	<mapping key="refsect1"		text=""/>
+	<mapping key="refsect2"		text=""/>
+	<mapping key="refsect3"		text=""/>
+
+	<mapping key="sect1"		text=""/>
+	<mapping key="sect1*"		text=""/>
+	<mapping key="sect2"		text=""/>
+	<mapping key="sect2*"		text=""/>
+	<mapping key="sect3"		text=""/>
+	<mapping key="sect3*"		text=""/>
+	<mapping key="sect4"		text=""/>
+	<mapping key="sect4*"		text=""/>
+	<mapping key="sect5"		text=""/>
+	<mapping key="sect5*"		text=""/>
+	<mapping key="set"	text=""/>
+
+	<mapping key="setindex" text="">
+		<line>\addcontentsline{toc}{chapter}{%title%}&#10;</line>
+	</mapping>
+
+	<mapping key="table" text="">
+	    <line>\end{center}&#10;</line>
+	    <line>\end{table}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="preface" text=""/>
+
+	<mapping key="programlisting" text="">
+	    <line>\label{%id%}\hypertarget{%id%}{}%&#10;</line>
+	    <line>\end{center}&#10;</line>
+	    <line>\end{program}&#10;</line>
+	    <line>&#10;</line>
+	</mapping>	
+
+	<mapping key="revhistory" text="">
+	    <line>\end{tabular}&#10;</line>
+	    <line>\end{tt}&#10;</line>
+	    <line>\end{center}&#10;</line>
+	    <line>% ------------------------  &#10;</line>
+	    <line>% End RevHistory  &#10;</line>
+	    <line>% ------------------------  &#10;</line>
+	</mapping>	
+    </latexmapping>
+
+    <latexmapping role="entities">
+	<mapping key="&#x0221E;"	text=" \infty "/>
+    </latexmapping>
+
+</latexbindings>

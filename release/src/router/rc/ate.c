@@ -421,6 +421,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return EINVAL;
 	}
 #ifdef RTCONFIG_BCMARM
+	else if (!strcmp(command, "Set_WanLedMode1")) {
+		return setWanLedMode1();
+	}
+	else if (!strcmp(command, "Set_WanLedMode2")) {
+		return setWanLedMode2();
+	}
 	else if (!strcmp(command, "Set_AteModeLedOn")) {
 		return setATEModeLedOn();
 	}
@@ -438,11 +444,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		{
 			UpperMac[i] = toupper(p[i]);
 		}
-
+#if 0
 		char tmp[256];
 		snprintf(tmp, sizeof(tmp), "<%s;%s>", value, UpperMac);
 		puts(tmp);
-		
+#endif
 		if( !setMAC_2G(UpperMac) )
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
@@ -1574,6 +1580,20 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts(buf);
 		}
 		return 0;
+	}
+#endif
+#ifdef CONFIG_BCMWL5
+	else if (!strcmp(command, "Get_SSID_2G")) {
+	        getSSID(0);
+	        return 0;
+	}
+	else if (!strcmp(command, "Get_SSID_5G")) {
+	        getSSID(1);
+	        return 0;
+	}
+	else if (!strcmp(command, "Get_SSID_5G_2")) {
+	        getSSID(2);
+	        return 0;
 	}
 #endif
 	else 

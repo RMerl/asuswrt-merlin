@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbd.8">
+
+<refmeta>
+	<refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbd</refname>
+	<refpurpose>server to provide SMB/CIFS services to clients</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbd</command>
+		<arg choice="opt">-D</arg>
+		<arg choice="opt">-F</arg>
+		<arg choice="opt">-S</arg>
+		<arg choice="opt">-i</arg>
+		<arg choice="opt">-h</arg>
+		<arg choice="opt">-V</arg>
+		<arg choice="opt">-b</arg>
+		<arg choice="opt">-d &lt;debug level&gt;</arg>
+		<arg choice="opt">-l &lt;log directory&gt;</arg>
+		<arg choice="opt">-p &lt;port number(s)&gt;</arg>
+		<arg choice="opt">-P &lt;profiling level&gt;</arg>
+		<arg choice="opt">-O &lt;socket option&gt;</arg>
+		<arg choice="opt">-s &lt;configuration file&gt;</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+	<para>This program is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>smbd</command> is the server daemon that 
+	provides filesharing and printing services to Windows clients. 
+	The server provides filespace and printer services to
+	clients using the SMB (or CIFS) protocol. This is compatible 
+	with the LanManager protocol, and can service LanManager 
+	clients.  These include MSCLIENT 3.0 for DOS, Windows for 
+	Workgroups, Windows 95/98/ME, Windows NT, Windows 2000, 
+	OS/2, DAVE for Macintosh, and smbfs for Linux.</para>
+
+	<para>An extensive description of the services that the 
+	server can provide is given in the man page for the 
+	configuration file controlling the attributes of those 
+	services (see <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>.  This man page will not describe the 
+	services, but will concentrate on the administrative aspects 
+	of running the server.</para>
+
+	<para>Please note that there are significant security 
+	implications to running this server, and the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry> manual page should be regarded as mandatory reading before 
+	proceeding with installation.</para>
+
+	<para>A session is created whenever a client requests one. 
+	Each client gets a copy of the server for each session. This 
+	copy then services all connections made by the client during 
+	that session. When all connections from its client are closed, 
+	the copy of the server for that client terminates.</para>
+
+	<para>The configuration file, and any files that it includes, 
+	are automatically reloaded every minute, if they change.  You 
+	can force a reload by sending a SIGHUP to the server.  Reloading 
+	the configuration file will not affect connections to any service 
+	that is already established.  Either the user will have to 
+	disconnect from the service, or <command>smbd</command> killed and restarted.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-D</term>
+		<listitem><para>If specified, this parameter causes 
+		the server to operate as a daemon. That is, it detaches 
+		itself and runs in the background, fielding requests 
+		on the appropriate port. Operating the server as a
+		daemon is the recommended way of running <command>smbd</command> for 
+		servers that provide more than casual use file and 
+		print services.  This switch is assumed if <command>smbd
+		</command> is executed on the command line of a shell.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-F</term>
+		<listitem><para>If specified, this parameter causes
+		the main <command>smbd</command> process to not daemonize,
+		i.e. double-fork and disassociate with the terminal.
+		Child processes are still created as normal to service
+		each connection request, but the main process does not
+		exit. This operation mode is suitable for running
+		<command>smbd</command> under process supervisors such
+		as <command>supervise</command> and <command>svscan</command>
+		from Daniel J. Bernstein's <command>daemontools</command>
+		package, or the AIX process monitor.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-S</term>
+		<listitem><para>If specified, this parameter causes
+		<command>smbd</command> to log to standard output rather
+		than a file.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-i</term>
+		<listitem><para>If this parameter is specified it causes the
+		server to run "interactively", not as a daemon, even if the
+		server is executed on the command line of a shell. Setting this
+		parameter negates the implicit deamon mode when run from the
+		command line. <command>smbd</command> also logs to standard
+		output, as if the <command>-S</command> parameter had been
+		given.
+		</para></listitem>
+		</varlistentry>
+		
+		&stdarg.server.debug;
+		&popt.common.samba;
+		&stdarg.help;
+
+		<varlistentry>
+		<term>-b</term>
+		<listitem><para>Prints information about how 
+		Samba was built.</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-p|--port&lt;port number(s)&gt;</term>
+		<listitem><para><replaceable>port number(s)</replaceable> is a 
+		space or comma-separated list of TCP ports smbd should listen on.
+		The default value is taken from the <smbconfoption name="ports"/> parameter in &smb.conf;</para>
+
+		<para>The default ports are 139 (used for SMB over NetBIOS over TCP)
+			and port 445 (used for plain SMB over TCP).
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-P|--profiling-level&lt;profiling level&gt;</term>
+		<listitem><para><replaceable>profiling level</replaceable> is a
+		number specifying the level of profiling data to be collected.
+		0 turns off profiling, 1 turns on counter profiling only,
+		2 turns on complete profiling, and 3 resets all profiling data.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>FILES</title>
+
+	<variablelist>
+		<varlistentry>
+		<term><filename>/etc/inetd.conf</filename></term>
+		<listitem><para>If the server is to be run by the 
+		<command>inetd</command> meta-daemon, this file 
+		must contain suitable startup information for the 
+		meta-daemon. 
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term><filename>/etc/rc</filename></term>
+		<listitem><para>or whatever initialization script your 
+		system uses).</para>
+
+		<para>If running the server as a daemon at startup, 
+		this file will need to contain an appropriate startup 
+		sequence for the server. </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term><filename>/etc/services</filename></term>
+		<listitem><para>If running the server via the 
+		meta-daemon <command>inetd</command>, this file 
+		must contain a mapping of service name (e.g., netbios-ssn) 
+		to service port (e.g., 139) and protocol type (e.g., tcp). 
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term><filename>/usr/local/samba/lib/smb.conf</filename></term>
+		<listitem><para>This is the default location of the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> server configuration file. Other common places that systems 
+		install this file are <filename>/usr/samba/lib/smb.conf</filename> 
+		and <filename>/etc/samba/smb.conf</filename>.</para>
+		
+		<para>This file describes all the services the server 
+		is to make available to clients. See <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> for more information.</para>
+		</listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>LIMITATIONS</title>
+	<para>On some systems <command>smbd</command> cannot change uid back 
+	to root after a setuid() call.  Such systems are called 
+	trapdoor uid systems. If you have such a system, 
+	you will be unable to connect from a client (such as a PC) as 
+	two different users at once. Attempts to connect the
+	second user will result in access denied or 
+	similar.</para>
+</refsect1>
+
+<refsect1>
+	<title>ENVIRONMENT VARIABLES</title>
+
+	<variablelist>
+		<varlistentry>
+		<term><envar>PRINTER</envar></term>
+		<listitem><para>If no printer name is specified to 
+		printable services, most systems will use the value of 
+		this variable (or <constant>lp</constant> if this variable is 
+		not defined) as the name of the printer to use. This 
+		is not specific to the server, however.</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+        <title>PAM INTERACTION</title>
+	<para>Samba uses PAM for authentication (when presented with a plaintext 
+	password), for account checking (is this account disabled?) and for
+	session management.  The degree too which samba supports PAM is restricted
+	by the limitations of the SMB protocol and the <smbconfoption name="obey pam restrictions"/> <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry> paramater.  When this is set, the following restrictions apply:
+	</para>
+
+	<itemizedlist>
+	<listitem><para><emphasis>Account Validation</emphasis>:  All accesses to a 
+	samba server are checked 
+	against PAM to see if the account is vaild, not disabled and is permitted to 
+	login at this time.  This also applies to encrypted logins.
+	</para></listitem>
+
+	<listitem><para><emphasis>Session Management</emphasis>:  When not using share 
+	level secuirty, users must pass PAM's session checks before access 
+	is granted.  Note however, that this is bypassed in share level secuirty.  
+	Note also that some older pam configuration files may need a line 
+	added for session support. 
+	</para></listitem>
+	</itemizedlist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of 
+	the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>DIAGNOSTICS</title>
+
+	<para>Most diagnostics issued by the server are logged 
+	in a specified log file. The log file name is specified 
+	at compile time, but may be overridden on the command line.</para>
+
+	<para>The number and nature of diagnostics available depends 
+	on the debug level used by the server. If you have problems, set 
+	the debug level to 3 and peruse the log files.</para>
+
+	<para>Most messages are reasonably self-explanatory. Unfortunately, 
+	at the time this man page was created, there are too many diagnostics 
+	available in the source code to warrant describing each and every 
+	diagnostic. At this stage your best bet is still to grep the 
+	source code and inspect the conditions that gave rise to the 
+	diagnostics you are seeing.</para>
+</refsect1>
+
+<refsect1>
+	<title>TDB FILES</title>
+
+	<para>Samba stores it's data in several TDB (Trivial Database) files, usually located in <filename>/var/lib/samba</filename>.</para>
+	
+	<para>
+	(*) information persistent across restarts (but not
+	necessarily important to backup).
+	</para>
+
+<variablelist>
+<varlistentry><term>account_policy.tdb*</term>
+<listitem>
+<para>NT account policy settings such as pw expiration, etc...</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term>brlock.tdb</term>
+<listitem><para>byte range locks</para></listitem>
+</varlistentry>
+
+<varlistentry><term>browse.dat</term>
+<listitem><para>browse lists</para></listitem>
+</varlistentry>
+
+<varlistentry><term>connections.tdb</term>
+<listitem><para>share connections (used to enforce max connections, etc...)</para></listitem>
+</varlistentry>
+
+<varlistentry><term>gencache.tdb</term>
+<listitem><para>generic caching db</para></listitem>
+</varlistentry>
+
+<varlistentry><term>group_mapping.tdb*</term>
+<listitem><para>group mapping information</para></listitem>
+</varlistentry>
+
+<varlistentry><term>locking.tdb</term>
+<listitem><para>share modes &amp; oplocks</para></listitem>
+</varlistentry>
+
+<varlistentry><term>login_cache.tdb*</term>
+<listitem><para>bad pw attempts</para></listitem>
+</varlistentry>
+
+<varlistentry><term>messages.tdb</term>
+<listitem><para>Samba messaging system</para></listitem>
+</varlistentry>
+
+<varlistentry><term>netsamlogon_cache.tdb*</term>
+<listitem><para>cache of user net_info_3 struct	from net_samlogon() request (as a domain member)</para></listitem>
+</varlistentry>
+
+<varlistentry><term>ntdrivers.tdb*</term>
+<listitem><para>installed printer drivers</para></listitem>
+</varlistentry>
+
+<varlistentry><term>ntforms.tdb*</term>
+<listitem><para>installed printer forms</para></listitem>
+</varlistentry>
+
+<varlistentry><term>ntprinters.tdb*</term>
+<listitem><para>installed printer information</para></listitem>
+</varlistentry>
+
+<varlistentry><term>printing/</term>
+<listitem><para>directory containing tdb per print queue of cached lpq output</para></listitem>
+</varlistentry>
+
+<varlistentry><term>registry.tdb</term>
+<listitem><para>Windows registry skeleton (connect via regedit.exe)</para></listitem>
+</varlistentry>
+
+<varlistentry><term>sessionid.tdb</term>
+<listitem><para>session information (e.g. support for 'utmp = yes')</para></listitem>
+</varlistentry>
+
+<varlistentry><term>share_info.tdb*</term>
+<listitem><para>share acls</para></listitem>
+</varlistentry>
+
+<varlistentry><term>winbindd_cache.tdb</term>
+<listitem><para>winbindd's cache of user lists, etc...</para></listitem>
+</varlistentry>
+
+<varlistentry><term>winbindd_idmap.tdb*</term>
+<listitem><para>winbindd's local idmap db</para></listitem>
+</varlistentry>
+
+<varlistentry><term>wins.dat*</term>
+<listitem><para>wins database when 'wins support = yes'</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1>
+	<title>SIGNALS</title>
+
+	<para>Sending the <command>smbd</command> a SIGHUP will cause it to 
+	reload its <filename>smb.conf</filename> configuration 
+	file within a short period of time.</para>
+
+	<para>To shut down a user's <command>smbd</command> process it is recommended 
+	that <command>SIGKILL (-9)</command> <emphasis>NOT</emphasis> 
+	be used, except as a last resort, as this may leave the shared
+	memory area in an inconsistent state. The safe way to terminate 
+	an <command>smbd</command> is to send it a SIGTERM (-15) signal and wait for 
+	it to die on its own.</para>
+
+	<para>The debug log level of <command>smbd</command> may be raised
+	or lowered using <citerefentry><refentrytitle>smbcontrol</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry> program (SIGUSR[1|2] signals are no longer 
+	used since Samba 2.2). This is to allow transient problems to be diagnosed, 
+	whilst still running at a normally low log level.</para>
+
+	<para>Note that as the signal handlers send a debug write, 
+	they are not re-entrant in <command>smbd</command>. This you should wait until 
+	<command>smbd</command> is in a state of waiting for an incoming SMB before 
+	issuing them. It is possible to make the signal handlers safe 
+	by un-blocking the signals before the select call and re-blocking 
+	them after, however this would affect performance.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>hosts_access</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>inetd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>smbclient</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>testparm</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>testprns</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, and the 
+	Internet RFC's	<filename>rfc1001.txt</filename>, <filename>rfc1002.txt</filename>. 
+	In addition the CIFS (formerly SMB) specification is available 
+	as a link from the Web page <ulink noescape="1" url="http://samba.org/cifs/"> 
+	http://samba.org/cifs/</ulink>.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <ulink url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2 for
+	Samba 3.0 was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

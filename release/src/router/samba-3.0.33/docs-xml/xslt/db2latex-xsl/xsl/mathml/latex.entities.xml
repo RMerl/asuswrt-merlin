@@ -1,0 +1,12 @@
+<?xml version='1.0'?>
+<!DOCTYPE latex SYSTEM "latex.entities.dtd" []>
+
+<latex>
+  <character entity="&#948;">\delta</character>
+  <character entity="&#954;">\kappa</character>
+  <character entity="&#960;">\pi</character>
+  <character entity="&#x02212;">-</character>
+  <character entity="&#x003B2;">\beta</character>
+  <character entity="&#x00302;">\sphat</character><!-- superscript=""-->
+  <character entity="&#x00302;" arguments="1">\hat</character>
+</latex>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_xattr_tdb.8">
+
+<refmeta>
+	<refentrytitle>vfs_xattr_tdb</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_xattr_tdb</refname>
+	<refpurpose>Save Extended Attributes (EAs) in a tdb file</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = xattr_tdb</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_xattr_tdb</command> VFS module stores
+	Extended Attributes (EAs) in a tdb file. 
+	This enables the usage of Extended Attributes on OS and 
+	filesystems which do not support Extended Attributes 
+	by themselves.	
+	</para>
+
+	<para>This module is stackable.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>xattr_tdb:file = PATH</term>
+		<listitem>
+		<para>Name of the tdb file the EAs are stored in.
+		If this option is not set, the default filename 
+		<filename>xattr.tdb</filename> is used.</para>
+		</listitem>
+		</varlistentry>
+	</variablelist>
+
+	
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

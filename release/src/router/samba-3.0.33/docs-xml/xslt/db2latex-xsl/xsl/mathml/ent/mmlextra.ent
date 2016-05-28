@@ -1,0 +1,134 @@
+
+<!--
+     File mmlextra.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+-->
+
+<!ENTITY af               "&#x02061;" ><!--short form of &ApplyFunction; -->
+<!ENTITY ApplyFunction    "&#x02061;" ><!--character showing function application in presentation tagging -->
+<!ENTITY Assign           "&#x02254;" ><!--assignment operator -->
+<!ENTITY CapitalDifferentialD "&#x02145;" ><!--D for use in differentials, e.g., within integrals -->
+<!ENTITY Cayleys          "&#x0212D;" ><!--the non-associative ring of octonions or Cayley numbers -->
+<!ENTITY complexes        "&#x02102;" ><!--the field of complex numbers -->
+<!ENTITY Cross            "&#x02A2F;" ><!--cross or vector product -->
+<!ENTITY dd               "&#x02146;" ><!--short form of &DifferentialD; -->
+<!ENTITY DD               "&#x02145;" ><!--short form of CapitalDifferentialD -->
+<!ENTITY DifferentialD    "&#x02146;" ><!--d for use in differentials, e.g., within integrals -->
+<!ENTITY DownArrowBar     "&#x02913;" ><!--down arrow to bar -->
+<!ENTITY DownBreve        "&#x00311;" ><!--breve, inverted (non-spacing) -->
+<!ENTITY DownLeftRightVector "&#x02950;" ><!--left-down-right-down harpoon -->
+<!ENTITY DownLeftTeeVector "&#x0295E;" ><!--left-down harpoon from bar -->
+<!ENTITY DownLeftVectorBar "&#x02956;" ><!--left-down harpoon to bar -->
+<!ENTITY DownRightTeeVector "&#x0295F;" ><!--right-down harpoon from bar -->
+<!ENTITY DownRightVectorBar "&#x02957;" ><!--right-down harpoon to bar -->
+<!ENTITY DownTeeArrow     "&#x021A7;" ><!--alias for mapstodown -->
+<!ENTITY ee               "&#x02147;" ><!--short form of &ExponentialE; -->
+<!ENTITY EmptySmallSquare "&#x025FD;" ><!--empty small square -->
+<!ENTITY EmptyVerySmallSquare "&#x025FD;" ><!--empty small square -->
+<!ENTITY Equal            "&#x02A75;" ><!--two consecutive equal signs -->
+<!ENTITY expectation      "&#x02130;" ><!--expectation (operator) -->
+<!ENTITY exponentiale     "&#x0212F;" ><!--base of the Napierian logarithms -->
+<!ENTITY ExponentialE     "&#x02147;" ><!--e use for the exponential base of the natural logarithms -->
+<!ENTITY FilledSmallSquare "&#x025FE;" ><!--filled small square -->
+<!ENTITY FilledVerySmallSquare "&#x025FE;" ><!--filled very small square -->
+<!ENTITY Fouriertrf       "&#x02131;" ><!--Fourier transform -->
+<!ENTITY GreaterGreater   "&#x02AA2;" ><!--alias for GT -->
+<!ENTITY HilbertSpace     "&#x0210B;" ><!--Hilbert space -->
+<!ENTITY HorizontalLine   "&#x02500;" ><!--short horizontal line  -->
+<!ENTITY ic               "&#x0200B;" ><!--short form of  &InvisibleComma; -->
+<!ENTITY ii               "&#x02148;" ><!--short form of &ImaginaryI; -->
+<!ENTITY ImaginaryI       "&#x02148;" ><!--i for use as a square root of -1 -->
+<!ENTITY imagline         "&#x02110;" ><!--the geometric imaginary line -->
+<!ENTITY integers         "&#x02124;" ><!--the ring of integers -->
+<!ENTITY InvisibleComma   "&#x0200B;" ><!--used as a separator, e.g., in indices -->
+<!ENTITY InvisibleTimes   "&#x02062;" ><!--marks multiplication when it is understood without a mark -->
+<!ENTITY it               "&#x02062;" ><!--short form of &InvisibleTimes; -->
+<!ENTITY Laplacetrf       "&#x02112;" ><!--Laplace transform -->
+<!ENTITY larrb            "&#x021E4;" ><!--leftwards arrow to bar -->
+<!ENTITY LeftArrowBar     "&#x021E4;" ><!--alias for larrb -->
+<!ENTITY LeftDownTeeVector "&#x02961;" ><!--down-left harpoon from bar -->
+<!ENTITY LeftDownVectorBar "&#x02959;" ><!--down-left harpoon to bar -->
+<!ENTITY LeftRightVector  "&#x0294E;" ><!--left-up-right-up harpoon -->
+<!ENTITY LeftTeeArrow     "&#x021A4;" ><!--alias for mapstoleft -->
+<!ENTITY LeftTeeVector    "&#x0295A;" ><!--left-up harpoon from bar -->
+<!ENTITY LeftTriangleBar  "&#x029CF;" ><!--not left triangle, vertical bar -->
+<!ENTITY LeftUpDownVector "&#x02951;" ><!--up-left-down-left harpoon -->
+<!ENTITY LeftUpTeeVector  "&#x02960;" ><!--up-left harpoon from bar -->
+<!ENTITY LeftUpVectorBar  "&#x02958;" ><!--up-left harpoon to bar -->
+<!ENTITY LeftVectorBar    "&#x02952;" ><!--left-up harpoon to bar -->
+<!ENTITY LessLess         "&#x02AA1;" ><!--alias for Lt -->
+<!ENTITY mapstodown       "&#x021A7;" ><!--downwards arrow from bar -->
+<!ENTITY mapstoleft       "&#x021A4;" ><!--leftwards arrow from bar -->
+<!ENTITY mapstoup         "&#x021A5;" ><!--upwards arrow from bar -->
+<!ENTITY Mellintrf        "&#x02133;" ><!--Mellin transform -->
+<!ENTITY naturals         "&#x02115;" ><!--the semi-ring of natural numbers -->
+<!ENTITY nbump            "&#x0224E;&#x00338;" ><!--not bumpy equals -->
+<!ENTITY nbumpe           "&#x0224F;&#x00338;" ><!--not bumpy single equals -->
+<!ENTITY NegativeMediumSpace "&#x0205F;&#x02063;" ><!--space of width -4/18 em -->
+<!ENTITY NegativeThickSpace "&#x02005;&#x02063;" ><!--space of width -5/18 em -->
+<!ENTITY NegativeThinSpace "&#x02009;&#x02063;" ><!--space of width -3/18 em -->
+<!ENTITY NegativeVeryThinSpace "&#x0200A;&#x02063;" ><!--space of width -1/18 em -->
+<!ENTITY nesim            "&#x02242;&#x00338;" ><!--not equal or similar -->
+<!ENTITY NewLine          "&#x0000A;" ><!--force a line break; line feed -->
+<!ENTITY NoBreak          "&#x0FEFF;" ><!--never break line here -->
+<!ENTITY NotCupCap        "&#x0226D;" ><!--alias for &nasymp; -->
+<!ENTITY NotEqualTilde    "&#x02242;&#x00338;" ><!--alias for  &nesim; -->
+<!ENTITY NotHumpDownHump  "&#x0224E;&#x00338;" ><!--alias for &nbump; -->
+<!ENTITY NotHumpEqual     "&#x0224F;&#x00338;" ><!--alias for &nbumpe; -->
+<!ENTITY NotLeftTriangleBar "&#x029CF;&#x00338;" ><!--not left triangle, vertical bar -->
+<!ENTITY NotNestedGreaterGreater "&#x024A2;&#x00338;" ><!--not double greater-than sign -->
+<!ENTITY NotNestedLessLess "&#x024A1;&#x00338;" ><!--not double less-than sign -->
+<!ENTITY NotRightTriangleBar "&#x029D0;&#x00338;" ><!--not vertical bar, right triangle -->
+<!ENTITY NotSquareSubset  "&#x0228F;&#x00338;" ><!--square not subset -->
+<!ENTITY NotSquareSuperset "&#x02290;&#x00338;" ><!--negated set-like partial order operator -->
+<!ENTITY NotSucceedsTilde "&#x0227F;&#x00338;" ><!--not succeeds or similar -->
+<!ENTITY OverBar          "&#x000AF;" ><!--over bar -->
+<!ENTITY OverBrace        "&#x0FE37;" ><!--over brace  -->
+<!ENTITY OverBracket      "&#x023B4;" ><!--over bracket -->
+<!ENTITY OverParenthesis  "&#x0FE35;" ><!--over parenthesis -->
+<!ENTITY planckh          "&#x0210E;" ><!--the ring (skew field) of quaternions -->
+<!ENTITY Poincareplane    "&#x0210C;" ><!--the Poincare upper half-plane -->
+<!ENTITY primes           "&#x02119;" ><!--the prime natural numbers -->
+<!ENTITY Product          "&#x0220F;" ><!--alias for &prod -->
+<!ENTITY quaternions      "&#x0210D;" ><!--the ring (skew field) of quaternions -->
+<!ENTITY rarrb            "&#x021E5;" ><!--leftwards arrow to bar -->
+<!ENTITY rationals        "&#x0211A;" ><!--the field of rational numbers -->
+<!ENTITY realine          "&#x0211B;" ><!--the geometric real line -->
+<!ENTITY reals            "&#x0211D;" ><!--the field of real numbers -->
+<!ENTITY RightArrowBar    "&#x021E5;" ><!--alias for rarrb -->
+<!ENTITY RightDownTeeVector "&#x0295D;" ><!--down-right harpoon from bar -->
+<!ENTITY RightDownVectorBar "&#x02955;" ><!--down-right harpoon to bar -->
+<!ENTITY RightTeeVector   "&#x0295B;" ><!--right-up harpoon from bar -->
+<!ENTITY RightTriangleBar "&#x029D0;" ><!--vertical bar, right triangle -->
+<!ENTITY RightUpDownVector "&#x0294F;" ><!--up-right-down-right harpoon -->
+<!ENTITY RightUpTeeVector "&#x0295C;" ><!--up-right harpoon from bar -->
+<!ENTITY RightUpVectorBar "&#x02954;" ><!--up-right harpoon to bar -->
+<!ENTITY RightVectorBar   "&#x02953;" ><!--up-right harpoon to bar -->
+<!ENTITY RoundImplies     "&#x02970;" ><!--round implies -->
+<!ENTITY RuleDelayed      "&#x029F4;" ><!--rule-delayed (colon right arrow) -->
+<!ENTITY ShortDownArrow   "&#x02304;&#x02063;" ><!--short down arrow -->
+<!ENTITY ShortUpArrow     "&#x02303;&#x02063;" ><!--short up arrow  -->
+<!ENTITY Tab              "&#x00009;" ><!--tabulator stop; horizontal tabulation -->
+<!ENTITY ThickSpace       "&#x02005;" ><!--space of width 5/18 em -->
+<!ENTITY UnderBar         "&#x00332;" ><!--combining low line -->
+<!ENTITY UnderBrace       "&#x0FE38;" ><!--under brace  -->
+<!ENTITY UnderBracket     "&#x023B5;" ><!--under bracket -->
+<!ENTITY UpArrowBar       "&#x02912;" ><!--up arrow to bar -->
+<!ENTITY UpTeeArrow       "&#x021A5;" ><!--Alias mapstoup -->
+<!ENTITY VerticalLine     "&#x02758;" ><!--short vertical line  -->
+<!ENTITY VerticalSeparator "&#x02758;" ><!--vertical separating operator -->
+<!ENTITY zeetrf           "&#x02128;" ><!--zee transform -->
+<!ENTITY ZeroWidthSpace   "&#x0200B;" ><!--zero width space -->

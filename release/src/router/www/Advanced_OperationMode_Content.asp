@@ -406,7 +406,10 @@ Media Bridge:        sw_mode: 3, wlc_express: 0, wlc_psta: 1
 function setScenerion(mode, express){
 	if(mode == '2'){
 		document.form.sw_mode.value = 2;
-		$("#Senario").css({"height": "", "background": "url(/images/New_ui/re.jpg) center no-repeat", "margin-bottom": "30px"});
+		if(odmpid == "RT-AC66U V2")
+			$("#Senario").css({"height": "", "background": "url(/images/RT-AC66U_V2/re.jpg) center no-repeat", "margin-bottom": "30px"});
+		else
+			$("#Senario").css({"height": "", "background": "url(/images/New_ui/re.jpg) center no-repeat", "margin-bottom": "30px"});
 		
 		clearTimeout(id_WANunplungHint);
 		$("#Unplug-hint").css("display", "none");
@@ -431,7 +434,10 @@ function setScenerion(mode, express){
 	else if(mode == '3'){		// AP mode
 		document.form.sw_mode.value = 3;
 		document.form.wlc_express.value = 0;
-		$("#Senario").css({"height": "", "background": "url(/images/New_ui/ap.jpg) center no-repeat", "margin-bottom": "30px"});
+		if(odmpid == "RT-AC66U V2")
+			$("#Senario").css({"height": "", "background": "url(/images/RT-AC66U_V2/ap.jpg) center no-repeat", "margin-bottom": "30px"});
+		else
+			$("#Senario").css({"height": "", "background": "url(/images/New_ui/ap.jpg) center no-repeat", "margin-bottom": "30px"});
 		if(findasus_support){
 			$("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#OP_AP_hint#></span>");
 		}else{
@@ -452,7 +458,10 @@ function setScenerion(mode, express){
 			pstaDesc += "<br><#OP_MB_desc6#>";
 			pstaDesc += "<br/><span style=\"color:#FC0\"><#deviceDiscorvy4#></span>";
 
-		$("#Senario").css({"height": "300px", "background": "url(/images/New_ui/mb.jpg) center no-repeat", "margin-bottom": "-40px"});
+		if(odmpid == "RT-AC66U V2")
+			$("#Senario").css({"height": "300px", "background": "url(/images/RT-AC66U_V2/mb.jpg) center no-repeat", "margin-bottom": "-40px"});
+		else
+			$("#Senario").css({"height": "300px", "background": "url(/images/New_ui/mb.jpg) center no-repeat", "margin-bottom": "-40px"});
 		$("#mode_desc").html(pstaDesc);
 		clearTimeout(id_WANunplungHint);
 		$("#Unplug-hint").css("display", "none");
@@ -461,7 +470,11 @@ function setScenerion(mode, express){
 	else{ // Default: Router
 		document.form.sw_mode.value = 1;
 		document.form.wlc_express.value = 0;
-		$("#Senario").css({"height": "", "background": "url(/images/New_ui/rt.jpg) center no-repeat", "margin-bottom": "30px"});
+		
+		if(odmpid == "RT-AC66U V2")
+			$("#Senario").css({"height": "", "background": "url(/images/RT-AC66U_V2/rt.jpg) center no-repeat", "margin-bottom": "30px"});
+		else
+			$("#Senario").css({"height": "", "background": "url(/images/New_ui/rt.jpg) center no-repeat", "margin-bottom": "30px"});
 		$("#mode_desc").html("<#OP_GW_desc#>");
 		document.form.sw_mode_radio[0].checked = true;
 	}

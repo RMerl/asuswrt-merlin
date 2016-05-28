@@ -1,2 +1,0 @@
-# Host: VAX running 4.2BSD or Ultrix
-NATDEPFILES= vax-nat.o fork-child.o inf-ptrace.o corelow.o

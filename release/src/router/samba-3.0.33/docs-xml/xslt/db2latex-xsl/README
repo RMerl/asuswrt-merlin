@@ -1,0 +1,39 @@
+<!--############################################################################# 
+ |	$Id: README,v 1.2 2004/01/31 12:53:35 j-devenish Exp $
+ |- #############################################################################
+ |	$Author: j-devenish $
+ |														
+ |   PURPOSE:
+ + ############################################################################## -->
+
+Note
+=====================
+This file is obsolete. Please see the instructions available at the DB2LaTeX
+project website <http://db2latex.sourceforge.net/> -- a local HTML copy
+accompanies this distribution.
+
+Disclaimer
+=====================
+Documentation is *needed* and obviously very important, but bear
+in mind that it is also very boring. WYSIWID:  What you see is 
+what it's done... 
+
+Installation
+=====================
+DB2LaTeX is now a standalone product, the main driver stylesheet is docbook.xsl. 
+Process your document with your favourite (and I hope supported) XSLT engine.
+See the sample directory.
+
+Extending the stylesheets
+=========================
+XSL variables that are supposed to affect the output of the XSLT are in vars.mod.xsl
+Cfr. Norman Walsh documentation on how to extend (add a customization layer).
+
+Thanks
+=====================
+See the THANKS file
+
+Authors
+=====================
+Ramon Casellas casellas@infres.enst.fr
+James Devenish j-devenish@users.sourceforge.net
