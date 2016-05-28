@@ -1994,12 +1994,20 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 	int32 i = 0, cidx = 0;
 	bool chaining = PKTC_ENAB(et);
 #endif
+	uint16 ether_type;
 
 	/* read the buffers first */
 	while ((p = (*chops->rx)(ch))) {
 #ifdef PKTC
 		ASSERT(PKTCLINK(p) == NULL);
 		evh = PKTDATA(et->osh, p) + HWRXOFF;
+
+		ether_type = ((struct ether_header *) evh)->ether_type;
+		if (ether_type == HTON16(ETHER_TYPE_BRCM)) {
+			PKTFREE(osh, p, FALSE);
+			continue;
+		}
+
 		prio = IP_TOS46(evh + ETHERVLAN_HDR_LEN) >> IPV4_TOS_PREC_SHIFT;
 		if (cd[0].h_da == NULL) {
 			cd[0].h_da = evh; cd[0].h_sa = evh + ETHER_ADDR_LEN;
@@ -2046,6 +2054,12 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		} else
 			PKTCENQTAIL(h, t, p);
 #else /* PKTC */
+		ether_type = ((struct ether_header *) PKTDATA(et->osh, p))->ether_type;
+		if (ether_type == HTON16(ETHER_TYPE_BRCM)) {
+			PKTFREE(osh, p, FALSE);
+			continue;
+		}
+
 		PKTSETLINK(p, NULL);
 		if (t == NULL)
 			h = t = p;

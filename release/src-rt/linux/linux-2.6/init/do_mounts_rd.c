@@ -106,11 +106,15 @@ identify_ramdisk_image(int fd, int start_block)
 	}
 
 	/* squashfs is at block zero too */
-	if (squashfsb->s_magic == SQUASHFS_MAGIC) {
+	if (squashfsb->s_magic == SQUASHFS_MAGIC ||
+	    squashfsb->s_magic == SQUASHFS_MAGIC_LZMA) {
 		printk(KERN_NOTICE
 		       "RAMDISK: squashfs filesystem found at block %d\n",
 		       start_block);
-		nblocks = (squashfsb->bytes_used+BLOCK_SIZE-1)>>BLOCK_SIZE_BITS;
+		if (squashfsb->s_major < 3)
+			nblocks = (squashfsb->bytes_used_2+BLOCK_SIZE-1)>>BLOCK_SIZE_BITS;
+		else
+			nblocks = (squashfsb->bytes_used+BLOCK_SIZE-1)>>BLOCK_SIZE_BITS;
 		goto done;
 	}
 

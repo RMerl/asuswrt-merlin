@@ -99,6 +99,10 @@
 	((unsigned char *)&addr)[2], \
 	((unsigned char *)&addr)[3]
 
+#ifdef CTF_IPV6
+#define FRAG_IPV6_UDP_H	(NULL + 1)
+#define FRAG_IPV6_UDP_DUMMY_PORT	0
+#endif
 
 #define PPPOE_ETYPE_OFFSET	12
 #define PPPOE_VER_OFFSET	14

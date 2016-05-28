@@ -4,7 +4,7 @@
 /*
  * Squashfs
  *
- * Copyright (c) 2002, 2003, 2004, 2005, 2006
+ * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007
  * Phillip Lougher <phillip@lougher.org.uk>
  *
  * This program is free software; you can redistribute it and/or
@@ -51,6 +51,12 @@ struct inode_info {
 	squashfs_inode		inode;
 	unsigned int		type;
 	unsigned int		inode_number;
+	char			read;
 	struct inode_info	*next;
+};
+
+struct priority_entry {
+	struct dir_ent *dir;
+	struct priority_entry *next;
 };
 #endif

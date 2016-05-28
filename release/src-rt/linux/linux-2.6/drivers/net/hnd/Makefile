@@ -117,3 +117,5 @@ endif
 
 $(src)/shared_ksyms.c: $(src)/shared_ksyms.sh $(HND_OBJS)
 	sh -e $< $(HND_OBJS) > $@
+
+clean-files += $(SHARED)/*.o $(SHARED)/.*.o.cmd

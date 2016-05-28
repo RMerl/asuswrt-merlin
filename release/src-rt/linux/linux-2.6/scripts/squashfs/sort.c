@@ -1,7 +1,7 @@
 /*
  * Create a squashfs filesystem.  This is a highly compressed read only filesystem.
  *
- * Copyright (c) 2002, 2003, 2004, 2005
+ * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007
  * Phillip Lougher <phillip@lougher.org.uk>
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <squashfs_fs.h>
+#include "squashfs_fs.h"
 #include "global.h"
 #include "sort.h"
 
@@ -70,11 +70,6 @@ struct sort_info {
 };
 
 struct sort_info *sort_info_list[65536];
-
-struct priority_entry {
-	struct dir_ent *dir;
-	struct priority_entry *next;
-};
 
 struct priority_entry *priority_list[65536];
 
@@ -234,8 +229,6 @@ void sort_files_and_write(struct dir_info *dir)
 	struct priority_entry *entry;
 	squashfs_inode inode;
 	int duplicate_file;
-
-	generate_file_priorities(dir, 0, &dir->dir_ent->inode->buf);
 
 	for(i = 65535; i >= 0; i--)
 		for(entry = priority_list[i]; entry; entry = entry->next) {

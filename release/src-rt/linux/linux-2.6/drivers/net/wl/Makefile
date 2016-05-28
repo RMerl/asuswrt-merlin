@@ -62,5 +62,9 @@ wlsubdirs := $(addprefix wl_,$(foreach v,$(VLIST),$(shell echo "$(v)" | tr A-Z a
 #subdir-y += $(wlsubdirs)
 #subdir-m += $(wlsubdirs)
 
+ifeq ($(CONFIG_WL_USBAP),y)
+subdir-m += wl_high
+endif
+
 .NOTPARALLEL:
 include $(src)/wl_generic.mk

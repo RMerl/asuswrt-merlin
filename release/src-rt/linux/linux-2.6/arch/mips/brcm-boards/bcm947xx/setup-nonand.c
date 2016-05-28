@@ -531,13 +531,13 @@ init_mtd_partitions(struct mtd_info *mtd, size_t size)
 		}
 
 		/* squashfs is at block zero too */
-		if (squashfsb->s_magic == SQUASHFS_MAGIC
-			|| squashfsb->s_magic == SQUASHFS_MAGIC_LZMA) {
+		if (squashfsb->s_magic == SQUASHFS_MAGIC ||
+		    squashfsb->s_magic == SQUASHFS_MAGIC_LZMA) {
 			printk(KERN_NOTICE
 			       "%s: squashfs filesystem found at block %d\n",
 			       mtd->name, off / BLOCK_SIZE);
 			goto done;
-                }
+		}
 	}
 
 	printk(KERN_NOTICE
