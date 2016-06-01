@@ -313,12 +313,9 @@ int main(int argc, char *argv[])
 	fprintf(fp, "strict allocate = No\n");		// ASUS add
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
 	fprintf(fp, "bind interfaces only = yes\n");    // ASUS add
-
-#ifndef RTCONFIG_BCMARM
-	fprintf(fp, "interfaces = lo br0 %s\n", (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
-#else
-	fprintf(fp, "interfaces = br0 %s/%s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
-#endif
+	fprintf(fp, "interfaces = lo br0 %s/%s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
+	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 	fprintf(fp, "use sendfile = no\n");
 #else
@@ -349,6 +346,10 @@ int main(int argc, char *argv[])
 	// If we only want name services then skip share definition
 	if (nvram_match("enable_samba", "0"))
 		goto confpage;
+
+	fprintf(fp, "[ipc$]\n");
+	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
 
 	disks_info = read_disk_data();
 	if (disks_info == NULL) {

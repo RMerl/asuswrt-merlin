@@ -2367,6 +2367,7 @@ function create_clientlist_listview() {
 	divObj.setAttribute("id","clientlist_viewlist_block");
 
 	var obj_width_map = [["15%", "20%", "25%", "20%", "20%"],["10%", "10%", "30%", "20%", "20%", "10%"],["6%", "6%", "27%", "20%", "15%", "6%", "6%", "6%", "8%"]];
+	if(top.isIE8) obj_width_map = [["", "", "40%", "40%", "20%"],["", "", "40%", "30%", "20%", "10%"],["", "", "33%", "26%", "15%", "6%", "6%", "6%", "8%"]];
 	var obj_width = stainfo_support ? obj_width_map[2] : obj_width_map[1];
 	var wl_colspan = stainfo_support ? 9 : 6;
 
@@ -2374,7 +2375,12 @@ function create_clientlist_listview() {
 
 	var drawSwitchMode = function(mode) {
 		var drawSwitchModeHtml = "";
-		drawSwitchModeHtml += "<div style='margin-top:15px;margin-left:15px;'>";
+
+		if(isSwMode('mb') || isSwMode('ew'))
+			drawSwitchModeHtml += "<div style='margin-top:15px;margin-left:15px;display:none'>";
+		else
+			drawSwitchModeHtml += "<div style='margin-top:15px;margin-left:15px;'>";
+
 		if(mode == "All") {
 			drawSwitchModeHtml += "<div class='block_filter_pressed clientlist_All'>";
 			drawSwitchModeHtml += "<div class='block_filter_name' style='color:#93A9B1;'><#All#></div>";
@@ -2406,8 +2412,8 @@ function create_clientlist_listview() {
 			code += "<a id='all_expander'class='clientlist_expander' onclick='showHideContent(\"clientlist_all_list_Block\", this);'>[ Hide ]</a>";/*untranslated*/
 			code += "</td></tr></thead>";
 			code += "<tr id='tr_all_title' height='40px'>";
-			code += "<th width=" + obj_width[0] + "><#Internet#></th>";
-			code += "<th width=" + obj_width[1] + ">Icon</th>";/*untranslated*/
+			code += "<th class='IE8HACK' width=" + obj_width[0] + "><#Internet#></th>";
+			code += "<th class='IE8HACK' width=" + obj_width[1] + ">Icon</th>";/*untranslated*/
 			code += "<th width=" + obj_width[2] + " onclick='sorter.addBorder(this);sorter.doSorter(2, \"str\", \"all_list\");' style='cursor:pointer;'><#ParentalCtrl_username#></th>";
 			code += "<th width=" + obj_width[3] + " onclick='sorter.addBorder(this);sorter.doSorter(3, \"num\", \"all_list\");' style='cursor:pointer;'>Clients IP Address</th>";/*untranslated*/
 			code += "<th width=" + obj_width[4] + " onclick='sorter.addBorder(this);sorter.doSorter(4, \"str\", \"all_list\");' style='cursor:pointer;'><#ParentalCtrl_hwaddr#></th>";
@@ -2427,8 +2433,8 @@ function create_clientlist_listview() {
 			code += "<a id='wired_expander' class='clientlist_expander' onclick='showHideContent(\"clientlist_wired_list_Block\", this);'>[ Hide ]</a>";/*untranslated*/
 			code += "</td></tr></thead>";
 			code += "<tr id='tr_wired_title' height='40px'>";
-			code += "<th width=" + obj_width[0] + "><#Internet#></th>";
-			code += "<th width=" + obj_width[1] + ">Icon</th>";/*untranslated*/
+			code += "<th class='IE8HACK' width=" + obj_width[0] + "><#Internet#></th>";
+			code += "<th class='IE8HACK' width=" + obj_width[1] + ">Icon</th>";/*untranslated*/
 			code += "<th width=" + obj_width[2] + " onclick='sorter.addBorder(this);sorter.doSorter(2, \"str\", \"wired_list\");' style='cursor:pointer;'><#ParentalCtrl_username#></th>";
 			code += "<th width=" + obj_width[3] + " onclick='sorter.addBorder(this);sorter.doSorter(3, \"num\", \"wired_list\");' style='cursor:pointer;'>Clients IP Address</th>";/*untranslated*/
 			code += "<th width=" + obj_width[4] + " onclick='sorter.addBorder(this);sorter.doSorter(4, \"str\", \"wired_list\");' style='cursor:pointer;'><#ParentalCtrl_hwaddr#></th>";
@@ -2450,8 +2456,8 @@ function create_clientlist_listview() {
 				code += "<a id='wl" + wl_map[wl_nband_title[i]] + "_expander' class='clientlist_expander' onclick='showHideContent(\"clientlist_wl" + wl_map[wl_nband_title[i]] + "_list_Block\", this);'>[ Hide ]</a>";/*untranslated*/
 				code += "</td></tr></thead>";
 				code += "<tr id='tr_wl" + wl_map[wl_nband_title[i]] + "_title' height='40px'>";
-				code += "<th width=" + obj_width[0] + "><#Internet#></th>";
-				code += "<th width=" + obj_width[1] + ">Icon</th>";/*untranslated*/
+				code += "<th class='IE8HACK' width=" + obj_width[0] + "><#Internet#></th>";
+				code += "<th class='IE8HACK' width=" + obj_width[1] + ">Icon</th>";/*untranslated*/
 				code += "<th width=" + obj_width[2] + " onclick='sorter.addBorder(this);sorter.doSorter(2, \"str\", \"wl"+wl_map[wl_nband_title[i]]+"_list\");' style='cursor:pointer;'><#ParentalCtrl_username#></th>";
 				code += "<th width=" + obj_width[3] + " onclick='sorter.addBorder(this);sorter.doSorter(3, \"num\", \"wl"+wl_map[wl_nband_title[i]]+"_list\");' style='cursor:pointer;'>Clients IP Address</th>";
 				code += "<th width=" + obj_width[4] + " onclick='sorter.addBorder(this);sorter.doSorter(4, \"str\", \"wl"+wl_map[wl_nband_title[i]]+"_list\");' style='cursor:pointer;'><#ParentalCtrl_hwaddr#></th>";
@@ -2609,6 +2615,7 @@ function drawClientListBlock(objID) {
 			removeElement(document.getElementById("tb_" + objID));
 		}
 		var obj_width_map = [["15%", "20%", "25%", "20%", "20%"],["10%", "10%", "30%", "20%", "20%", "10%"],["6%", "6%", "27%", "20%", "15%", "6%", "6%", "6%", "8%"]];
+		if(top.isIE8) obj_width_map = [["", "", "40%", "40%", "20%"],["", "", "40%", "30%", "20%", "10%"],["", "", "33%", "26%", "15%", "6%", "6%", "6%", "8%"]];
 		//var obj_width = (objID == "wired_list") ? obj_width_map[0] : ((stainfo_support) ? obj_width_map[2] : obj_width_map[1]);
 		var obj_width = (stainfo_support) ? obj_width_map[2] : obj_width_map[1];
 		var wl_colspan = stainfo_support ? 9 : 6;
@@ -2650,10 +2657,12 @@ function drawClientListBlock(objID) {
 					internetStateCss = "internetBlock";
 					internetStateTip = "Block Internet access";
 				}
-				clientListCode += "<td width='" + obj_width[0] + "' align='center'>";
+
+				clientListCode += "<td class='IE8HACK' width='" + obj_width[0] + "' align='center'>";
 				clientListCode += "<div class=" + internetStateCss + " title=\"" + internetStateTip + "\"></div>";
 				clientListCode += "</td>";
-				clientListCode += "<td width='" + obj_width[1] + "' align='center'>";
+
+				clientListCode += "<td class='IE8HACK' width='" + obj_width[1] + "' align='center'>";
 				// display how many clients that hide behind a repeater.
 				if(clientlist_sort[j].macRepeat > 1){
 					clientListCode += '<div class="clientlist_circle"';
@@ -2690,6 +2699,7 @@ function drawClientListBlock(objID) {
 					}				
 				}
 				clientListCode += "</td>";
+
 				clientListCode += "<td style='word-wrap:break-word; word-break:break-all;' width='" + obj_width[2] + "'>";
 				clientListCode += "<div id='div_clientName_"+objID+"_"+j+"' class='viewclientlist_clientName_edit' onclick='editClientName(\""+objID+"_"+j+"\");'>"+clientlist_sort[j].name+"</div>";
 				clientListCode += "<input id='client_name_"+objID+"_"+j+"' type='text' value='"+clientlist_sort[j].name+"' class='input_25_table' maxlength='32' style='width:95%;margin-left:0px;display:none;' onblur='saveClientName(\""+objID+"_"+j+"\", "+clientlist_sort[j].type+", this);'>";

@@ -564,6 +564,10 @@ config RTCONFIG_LOCALE2012
 	depends on RTCONFIG_RALINK_RT3883
 	default n
 
+config RTCONFIG_NEWSSID_REV2
+	bool "New ASUS_2GMAC_xG rule"
+	default n
+
 config RTCONFIG_QCA
 	bool "Qualcomm Atheros Chip Support"
 	default n

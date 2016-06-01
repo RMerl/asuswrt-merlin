@@ -33,18 +33,15 @@ var wan1_realip_state = '<% nvram_get("wan1_realip_state"); %>';
 if(accounts.length == 0)
 	accounts = ['<% nvram_get("http_username"); %>'];
 
+var is_CN_sku = (ttc.search("CN") == -1) ? false : true;
 for(var i=0; i<accounts.length; i++){
 		accounts[i] = decodeURIComponent(accounts[i]);	
 }
 
 function QKinternettype_load_body(){
 	detect_wan();
-	if(parent.based_modelid == "RT-N11P" || parent.based_modelid == "RT-N300" || parent.based_modelid == "PL-N12" || parent.based_modelid == "PL-AC56"){
-			document.getElementById("point4").style.display = "none";
-	}
-	else{
-			document.getElementById("general_desc4").style.display = "";
-	}		
+	if(is_CN_sku)
+		document.getElementById("loginImage").style.display = "none";
 	
 	if(parent.ISMOBILE){
 		parent.document.title = "<#Web_Title2#>";
@@ -293,10 +290,8 @@ function submitForm(){
 			if((wanstate  == 2 && wansbstate == 0 && wanauxstate == 0) && (link_internet == "2" || wan0_realip_state == "2" || wan1_realip_state == "2")){
 				document.form.action = "/qis/QIS_wireless.htm";
 			}
-			else if(wanstate == 4 && wansbstate == 4 && wanauxstate == 0){
-				document.form.action = "/qis/QIS_wireless.htm";
-			}
 			else{
+				parent.document.QKform.wan_proto.value = "pppoe";
 				document.form.action = "/qis/QIS_internet_account.htm";
 			}
 		}
@@ -465,8 +460,7 @@ function paste_password(){
 	<br>
 	<div id="adminPassDesc" class="QISTutorFont_admin_pass" style="height:200px;margin-left:-10px;">
 		<ul>
-			<li><#QIS_pass_desc3#>
-			<li id="point4"><div id="general_desc4" style="display:none;"><#QIS_pass_desc4#></div>
+			<li><#QIS_pass_desc3#></li>
 		</ul>
 	</div>
 	<div id="loginImage" style="margin-left:320px;margin-top:-200px;"><img width="300px" style="border-radius:5px;" src="/images/qis/router_login.jpg"></span></div>

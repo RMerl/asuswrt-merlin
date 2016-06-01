@@ -92,7 +92,7 @@ void
 start_lpd()
 {
 	pid_t pid;
-	char *lpd_argv[] = { "lpd", NULL };
+	char *lpd_argv[] = { "lpd", NULL, NULL };
 
 	if(getpid()!=1) {
 		notify_rc("start_lpd");
@@ -101,6 +101,8 @@ start_lpd()
 
 	if (!pids("lpd"))
 	{
+		if (is_routing_enabled())
+			lpd_argv[1] = nvram_safe_get("lan_ifname");
 		unlink("/var/run/lpdparent.pid");
 		//return xstart("lpd");
 		_eval(lpd_argv, NULL, 0, &pid);
@@ -1347,7 +1349,7 @@ done:
 			strncpy(apps_folder, nvram_safe_get("apps_install_folder"), 32);
 
 			memset(command, 0, PATH_MAX);
-			sprintf(command, "app_check_folder.sh %s", mountpoint);
+			sprintf(command, "/usr/sbin/app_check_folder.sh %s", mountpoint);
 			system(command);
 			//sleep(1);
 
@@ -1373,7 +1375,7 @@ done:
 					diskmon_status(DISKMON_SCAN);
 
 					memset(command, 0, PATH_MAX);
-					sprintf(command, "app_fsck.sh %s %s", type, dev_name);
+					sprintf(command, "/usr/sbin/app_fsck.sh %s %s", type, dev_name);
 					system(command);
 
 					cprintf("%s: re-mount partition %s...\n", apps_folder, dev_name);
@@ -1402,9 +1404,7 @@ done:
 					putenv(buff2);
 					/* Run user *.asusrouter and post-mount scripts if any. */
 					memset(command, 0, PATH_MAX);
-					//sprintf(command, "%s/%s", mountpoint, apps_folder);
-					//run_userfile(command, ".asusrouter", NULL, 3);
-					sprintf(command, "%s/%s/.asusrouter", mountpoint, apps_folder);
+					sprintf(command, "%s/.asusrouter", nvram_safe_get("apps_local_space"));
 					system(command);
 					unsetenv("APPS_DEV");
 					unsetenv("APPS_MOUNTED_PATH");
@@ -3534,7 +3534,7 @@ static void start_diskscan(char *port_path)
 			eval("mount"); /* what for ??? */
 			cprintf("disk_monitor: scan partition %s...\n", partition_info->device);
 			diskmon_status(DISKMON_SCAN);
-			eval("app_fsck.sh", partition_info->file_system, devpath);
+			eval("/usr/sbin/app_fsck.sh", partition_info->file_system, devpath);
 
 			if(stop_diskscan())
 				goto stop_scan;
@@ -3899,7 +3899,7 @@ int start_app(void)
 		return -1;
 
 	memset(cmd, 0, PATH_MAX);
-	sprintf(cmd, "/opt/.asusrouter %s %s", apps_dev, apps_mounted_path);
+	sprintf(cmd, "%s/.asusrouter %s %s", nvram_safe_get("apps_local_space"), apps_dev, apps_mounted_path);
 	system(cmd);
 
 	return 0;
@@ -3913,7 +3913,7 @@ int stop_app(void)
 	if(strlen(apps_dev) <= 0 || strlen(apps_mounted_path) <= 0)
 		return -1;
 
-	system("app_stop.sh");
+	system("/usr/sbin/app_stop.sh");
 	sync();
 
 	return 0;

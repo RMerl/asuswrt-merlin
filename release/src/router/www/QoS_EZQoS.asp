@@ -1049,14 +1049,16 @@ function device_filter(obj){
 		for(var i = 0; i < clientList.length; i += 1) {
 			var clientObj = clientList[clientList[i]];
 			var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
-			if(clientList[i].indexOf(obj.value) == -1 && clientName.indexOf(obj.value) == -1)
+			if(clientList[i].toLowerCase().indexOf(obj.value.toLowerCase()) == -1 && clientName.toLowerCase().indexOf(obj.value.toLowerCase()) == -1)
 				continue;
 			
-			code += '<a title=' + clientList[i] + '><div style="height:auto;" onclick="setClientIP(\'' + clientName + '\', \'' + clientObj.mac + '\');"><strong>' + clientName + '</strong> ';
-			code += ' </div></a>';
+			code += '<div><a title=' + clientList[i] + '><div style="height:100px;" onclick="setClientIP(\'' + clientName + '\', \'' + clientObj.mac + '\');"><strong>' + clientName + '</strong> ';
+			code += ' </div><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]--></a></div>';
 		}		
 		
-		document.getElementById("ClientList_Block_PC").innerHTML = code;		
+		document.getElementById("ClientList_Block_PC").innerHTML = code;
+
+		if(document.getElementById("ClientList_Block_PC").childNodes.length == "0")	hideClients_Block();
 	}
 }
 

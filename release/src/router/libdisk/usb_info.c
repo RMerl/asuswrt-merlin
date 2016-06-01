@@ -1163,7 +1163,7 @@ int is_usb_modem_ready(void)
 	snprintf(usb_act, 8, "%s", nvram_safe_get(strcat_r(prefix, "_act", tmp)));
 
 	if(!strcmp(nvram_safe_get("usb_modem_act_type"), ""))
-		eval("find_modem_type.sh");
+		eval("/usr/sbin/find_modem_type.sh");
 	snprintf(modem_type, 32, "%s", nvram_safe_get("usb_modem_act_type"));
 
 	if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){

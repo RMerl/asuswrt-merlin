@@ -4549,11 +4549,11 @@ int asus_usb_interface(const char *device_name, const char *action){
 	}
 	else if(isSerialInterface(device_name, 1, vid, pid)){
 		usb_dbg("(%s): Runing USB serial with (0x%04x/0x%04x)...\n", device_name, vid, pid);
-		sleep(1);
-		modprobe("usbserial");
+		eval("insmod", "usbserial");
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
-		modprobe("usb_wwan");
+		eval("insmod", "usb_wwan");
 #endif
+		sleep(2);
 		snprintf(modem_cmd, 128, "vendor=0x%04x", vid);
 		snprintf(buf, 128, "product=0x%04x", pid);
 		eval("insmod", "option", modem_cmd, buf);

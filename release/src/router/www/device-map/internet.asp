@@ -193,6 +193,27 @@ function initial(){
 			document.getElementById("RemoteAPtd").title = decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>");
 		}else				
 			showtext(document.getElementById("RemoteAP"), decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>"));
+
+		if(parent.concurrent_pap){
+			if(parent.pap_click_flag == 0){
+				if(decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc0_ssid"); %>").length >= 28){
+					showtext(document.getElementById("RemoteAP"), decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc0_ssid"); %>").substring(0, 26)+"...");
+					document.getElementById("RemoteAPtd").title = decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc0_ssid"); %>");
+				}
+				else{
+					showtext(document.getElementById("RemoteAP"), decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc0_ssid"); %>"));
+				}		
+			}
+			else{
+				if(decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc1_ssid"); %>").length >= 28){
+					showtext(document.getElementById("RemoteAP"), decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc1_ssid"); %>").substring(0, 26)+"...");
+					document.getElementById("RemoteAPtd").title = decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc1_ssid"); %>");
+				}
+				else{
+					showtext(document.getElementById("RemoteAP"), decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc1_ssid"); %>"));
+				}						
+			}		
+		}
 				
 		if(lanproto == "static")
 			showtext(document.getElementById("LanProto"), "<#BOP_ctype_title5#>");

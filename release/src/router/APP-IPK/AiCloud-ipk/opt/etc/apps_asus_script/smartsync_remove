@@ -6,4 +6,4 @@ APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
 sleep 4
 
-app_remove.sh smartsync
+/usr/sbin/app_remove.sh smartsync

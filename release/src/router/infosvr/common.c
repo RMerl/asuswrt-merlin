@@ -269,7 +269,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 #ifdef RTCONFIG_PROXYSTA
 			if (is_psta(nvram_get_int("wlc_band")) || is_psr(nvram_get_int("wlc_band")))
 			{
-				snprintf(prefix, sizeof(prefix), "wl%d_", 1 - nvram_get_int("wlc_band"));
+				snprintf(prefix, sizeof(prefix), "wl%d_", nvram_get_int("wlc_band"));
 				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
 			}
 			else
@@ -281,6 +281,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
 		     strcpy(ginfo->FirmwareVersion, firmver_g);	// disable for tmp
 		     memcpy(ginfo->MacAddress, mac, 6);
+		     ginfo->sw_mode = nvram_get_int("sw_mode");
 #ifdef WCLIENT
 		     ginfo->OperationMode = OPERATION_MODE_WB;
 		     ginfo->Regulation = 0xff;
@@ -338,7 +339,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 #ifdef RTCONFIG_PROXYSTA
 			if (is_psta(nvram_get_int("wlc_band")) || is_psr(nvram_get_int("wlc_band")))
 			{
-				snprintf(prefix, sizeof(prefix), "wl%d_", 1 - nvram_get_int("wlc_band"));
+				snprintf(prefix, sizeof(prefix), "wl%d_", nvram_get_int("wlc_band"));
 				strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), 32);
 			}
 			else
@@ -350,7 +351,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
 		     strcpy(ginfo->FirmwareVersion, firmver_g); // disable for tmp
 		     memcpy(ginfo->MacAddress, mac, 6);
-		     ginfo->OperationMode = (char)nvram_get_int("sw_mode");
+		     ginfo->sw_mode = nvram_get_int("sw_mode");
 
 #ifdef WAVESERVER    // eric++
 	     	     // search /tmp/waveserver and get information

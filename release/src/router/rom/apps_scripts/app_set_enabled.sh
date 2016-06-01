@@ -6,7 +6,7 @@
 # return value. 1: have package. 0: no package.
 _check_package(){
 	package_ready=`ipkg list_installed | grep "$1 "`
-	package_ready2=`app_get_field.sh $1 Enabled 1`
+	package_ready2=`/usr/sbin/app_get_field.sh $1 Enabled 1`
 
 	if [ -z "$package_ready" ] && [ -z "$package_ready2" ]; then
 		return 0
@@ -41,7 +41,7 @@ fi
 
 
 nvram set apps_state_enable=1 # SETTING
-orig_value=`app_get_field.sh $1 Enabled 1`
+orig_value=`/usr/sbin/app_get_field.sh $1 Enabled 1`
 if [ "$orig_value" == "$2" ]; then
 	echo "The field(Enabled) was set \"$2\" already."
 else
@@ -57,10 +57,10 @@ fi
 if [ "$3" != "0" ]; then
 	if [ "$2" == "yes" ]; then
 		echo "Restarting the package..."
-		app_init_run.sh $1 restart
+		/usr/sbin/app_init_run.sh $1 restart
 	else
 		echo "Stop the package..."
-		app_init_run.sh $1 stop
+		/usr/sbin/app_init_run.sh $1 stop
 	fi
 else
 	if [ "$2" == "yes" ]; then

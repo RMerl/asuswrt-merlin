@@ -42,6 +42,13 @@ the configuration file.
 Read and syntax check configuration file(s). Exit with code 0 if all
 is OK, or a non-zero code otherwise. Do not start up dnsmasq.
 .TP
+.B \-w, --help
+Display all command-line options. 
+.B --help dhcp 
+will display known DHCPv4 configuration options, and 
+.B --help dhcp6 
+will display DHCPv6 options.
+.TP
 .B \-h, --no-hosts
 Don't read the hostnames in /etc/hosts.
 .TP
@@ -60,13 +67,16 @@ in the same way as for DHCP-derived names. Note that this does not
 apply to domain names in cnames, PTR records, TXT records etc.
 .TP
 .B \-T, --local-ttl=<time>
-When replying with information from /etc/hosts or the DHCP leases
+When replying with information from /etc/hosts or configuration or the DHCP leases
 file dnsmasq by default sets the time-to-live field to zero, meaning
 that the requester should not itself cache the information. This is
 the correct thing to do in almost all situations. This option allows a
 time-to-live (in seconds) to be given for these replies. This will
 reduce the load on the server at the expense of clients using stale
 data under some circumstances.
+.TP
+.B --dhcp-ttl=<time>
+As for --local-ttl, but affects only replies with information from DHCP leases. If both are given, --dhcp-ttl applies for DHCP information, and --local-ttl for others. Setting this to zero eliminates the effect of --local-ttl for DHCP.
 .TP
 .B --neg-ttl=<time>
 Negative replies from upstream servers normally contain time-to-live
@@ -174,6 +184,13 @@ queries. Dnsmasq picks random ports as source for outbound queries:
 when this option is given, the ports used will always to larger
 than that specified. Useful for systems behind firewalls. 
 .TP
+.B --max-port=<port>
+Use ports lower than that given as source for outbound DNS queries.
+Dnsmasq picks random ports as source for outbound queries:
+when this option is given, the ports used will always be lower
+than that specified. Useful for systems behind firewalls.
+.TP
+
 .B \-i, --interface=<interface name>
 Listen only on the specified interface(s). Dnsmasq automatically adds
 the loopback (local) interface to the list of interfaces to use when
@@ -307,7 +324,7 @@ instead of the correct NXDOMAIN response. This option tells dnsmasq to
 fake the correct response when it sees this behaviour. As at Sept 2003
 the IP address being returned by Verisign is 64.94.110.11
 .TP 
-.B \-B, --ignore-address=<ipaddr>
+.B --ignore-address=<ipaddr>
 Ignore replies to A-record queries which include the specified address. 
 No error is generated, dnsmasq simply continues to listen for another reply. 
 This is useful to defeat blocking strategies which rely on quickly supplying a
@@ -405,7 +422,10 @@ xxx.internal.thekelleys.org.uk at 192.168.1.1 then giving  the flag
 .B -S /internal.thekelleys.org.uk/192.168.1.1 
 will send all queries for
 internal machines to that nameserver, everything else will go to the
-servers in /etc/resolv.conf. An empty domain specification,
+servers in /etc/resolv.conf. DNSSEC validation is turned off for such
+private nameservers, UNLESS a
+.B --trust-anchor
+is specified for the domain in question. An empty domain specification,
 .B // 
 has the special meaning of "unqualified names only" ie names without any
 dots in them. A non-standard port may be specified as 
@@ -519,7 +539,7 @@ zone files: the port, weight and priority numbers are in a different
 order. More than one SRV record for a given service/domain is allowed,
 all that match are returned.
 .TP
-.B --host-record=<name>[,<name>....],[<IPv4-address>],[<IPv6-address>]
+.B --host-record=<name>[,<name>....],[<IPv4-address>],[<IPv6-address>][,<TTL>]
 Add A, AAAA and PTR records to the DNS. This adds one or more names to
 the DNS with associated IPv4 (A) and IPv6 (AAAA) records. A name may
 appear in more than one 
@@ -536,6 +556,10 @@ is in effect. Short and long names may appear in the same
 .B host-record,
 eg. 
 .B --host-record=laptop,laptop.thekelleys.org,192.168.0.1,1234::100
+
+If the time-to-live is given, it overrides the default, which is zero
+or the value of --local-ttl. The value is a positive integer and gives 
+the time-to-live in seconds.
 .TP
 .B \-Y, --txt-record=<name>[[,<text>],<text>]
 Return a TXT DNS record. The value of TXT record is a set of strings,
@@ -549,7 +573,7 @@ Return a PTR DNS record.
 .B --naptr-record=<name>,<order>,<preference>,<flags>,<service>,<regexp>[,<replacement>]
 Return an NAPTR DNS record, as specified in RFC3403.
 .TP
-.B --cname=<cname>,<target>
+.B --cname=<cname>,<target>[,<TTL>]
 Return a CNAME record which indicates that <cname> is really
 <target>. There are significant limitations on the target; it must be a
 DNS name which is known to dnsmasq from /etc/hosts (or additional
@@ -558,6 +582,10 @@ hosts files), from DHCP, from --interface-name or from another
 If the target does not satisfy this
 criteria, the whole cname is ignored. The cname must be unique, but it
 is permissable to have more than one cname pointing to the same target.
+
+If the time-to-live is given, it overrides the default, which is zero
+or the value of -local-ttl. The value is a positive integer and gives 
+the time-to-live in seconds.
 .TP
 .B --dns-rr=<name>,<RR-number>,[<hex data>]
 Return an arbitrary DNS Resource Record. The number is the type of the
@@ -594,7 +622,7 @@ configured a zero is added in front of the label. ::1 becomes 0--1.
 The address range can be of the form
 <ip address>,<ip address> or <ip address>/<netmask>
 .TP
-.B --add-mac
+.B --add-mac[=base64|text]
 Add the MAC address of the requestor to DNS queries which are
 forwarded upstream. This may be used to DNS filtering by the upstream
 server. The MAC address can only be added if the requestor is on the same
@@ -602,7 +630,12 @@ subnet as the dnsmasq server. Note that the mechanism used to achieve this (an E
 is not yet standardised, so this should be considered
 experimental. Also note that exposing MAC addresses in this way may
 have security and privacy implications. The warning about caching
-given for --add-subnet applies to --add-mac too.
+given for --add-subnet applies to --add-mac too. An alternative encoding of the 
+MAC, as base64, is enabled by adding the "base64" parameter and a human-readable encoding of hex-and-colons is enabled by added the "text" parameter.
+.TP
+.B --add-cpe-id=<string>
+Add a arbitrary identifying string to o DNS queries which are
+forwarded upstream.
 .TP 
 .B --add-subnet[[=[<IPv4 address>/]<IPv4 prefix length>][,[<IPv6 address>/]<IPv6 prefix length>]]
 Add a subnet address to the DNS queries which are forwarded
@@ -757,7 +790,7 @@ compiled in and the kernel must have conntrack support
 included and configured. This option cannot be combined with
 --query-port. 
 .TP
-.B \-F, --dhcp-range=[tag:<tag>[,tag:<tag>],][set:<tag>,]<start-addr>[,<end-addr>][,<mode>][,<netmask>[,<broadcast>]][,<lease time>]
+.B \-F, --dhcp-range=[tag:<tag>[,tag:<tag>],][set:<tag>,]<start-addr>[,<end-addr>|<mode>][,<netmask>[,<broadcast>]][,<lease time>]
 .TP
 .B \-F, --dhcp-range=[tag:<tag>[,tag:<tag>],][set:<tag>,]<start-IPv6addr>[,<end-IPv6addr>|constructor:<interface>][,<mode>][,<prefix-len>][,<lease time>]
 
@@ -1325,7 +1358,7 @@ functions when supported by a suitable DHCP server.
 This specifies a boot option which may appear in a PXE boot menu. <CSA> is
 client system type, only services of the correct type will appear in a
 menu. The known types are x86PC, PC98, IA64_EFI, Alpha, Arc_x86,
-Intel_Lean_Client, IA32_EFI, BC_EFI, Xscale_EFI and X86-64_EFI; an
+Intel_Lean_Client, IA32_EFI,  X86-64_EFI, Xscale_EFI, BC_EFI, ARM32_EFI and ARM64_EFI; an
 integer may be used for other types. The
 parameter after the menu text may be a file name, in which case dnsmasq acts as a
 boot server and directs the PXE client to download the file by TFTP,
@@ -1334,8 +1367,9 @@ either from itself (
 must be set for this to work) or another TFTP server if the final server
 address/name is given.
 Note that the "layer"
-suffix (normally ".0") is supplied by PXE, and should not be added to
-the basename. If an integer boot service type, rather than a basename
+suffix (normally ".0") is supplied by PXE, and need not be added to
+the basename. Alternatively, the basename may be a filename, complete with suffix, in which case
+no layer suffix is added. If an integer boot service type, rather than a basename
 is given, then the PXE client will search for a
 suitable boot service for that type on the network. This search may be done
 by broadcast, or direct to a server if its IP address/name is provided.  
@@ -1533,11 +1567,11 @@ At dnsmasq startup, the script will be invoked for
 all existing leases as they are read from the lease file. Expired
 leases will be called with "del" and others with "old". When dnsmasq
 receives a HUP signal, the script will be invoked for existing leases
-with an "old " event.
+with an "old" event.
 
 
-There are two further actions which may appear as the first argument
-to the script, "init" and "tftp". More may be added in the future, so
+There are four further actions which may appear as the first argument
+to the script, "init", "arp-add", "arp-del" and "tftp". More may be added in the future, so
 scripts should be written to ignore unknown actions. "init" is
 described below in 
 .B --leasefile-ro
@@ -1545,6 +1579,11 @@ The "tftp" action is invoked when a TFTP file transfer completes: the
 arguments are the file size in bytes, the address to which the file
 was sent, and the complete pathname of the file.
  
+The "arp-add" and "arp-del" actions are only called if enabled with
+.B --script-arp
+They are are supplied with a MAC address and IP address as arguments. "arp-add" indicates
+the arrival of a new entry in the ARP or neighbour table, and "arp-del" indicates the deletion of same.
+
 .TP
 .B --dhcp-luascript=<path>
 Specify a script written in Lua, to be run when leases are created,
@@ -1591,10 +1630,24 @@ table holds the tags
 .B file_name
 and 
 .B file_size.
+
+The 
+.B arp
+and
+.B arp-old
+functions are called only when enabled with
+.B --script-arp
+and have a table which holds the tags
+.B mac_addres
+and
+.B client_address.
 .TP
 .B --dhcp-scriptuser
 Specify the user as which to run the lease-change script or Lua script. This defaults to root, but can be changed to another user using this flag. 
-.TP 
+.TP
+.B --script-arp
+Enable the "arp" and "arp-old" functions in the dhcp-script and dhcp-luascript.
+.TP
 .B \-9, --leasefile-ro
 Completely suppress use of the lease database file. The file will not
 be created, read, or written. Change the way the lease-change
@@ -1764,6 +1817,10 @@ descriptors, serving different files simultaneously to n clients will
 require about (2*n) + 10 descriptors. If 
 .B --tftp-port-range
 is given, that can affect the number of concurrent connections.
+.TP
+.B --tftp-mtu=<mtu size>
+Use size as the ceiling of the MTU supported by the intervening network when 
+negotiating TFTP blocksize, overriding the MTU setting of the local interface  if it is larger.
 .TP
 .B --tftp-no-blocksize
 Stop the TFTP server from negotiating the "blocksize" option with a

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -91,8 +91,11 @@ int main (int argc, char **argv)
   if (daemon->edns_pktsz < PACKETSZ)
     daemon->edns_pktsz = PACKETSZ;
 
-  daemon->packet_buff_sz = daemon->edns_pktsz > DNSMASQ_PACKETSZ ? 
-    daemon->edns_pktsz : DNSMASQ_PACKETSZ;
+  /* Min buffer size: we check after adding each record, so there must be 
+     memory for the largest packet, and the largest record so the
+     min for DNS is PACKETSZ+MAXDNAME+RRFIXEDSZ which is < 1000.
+     This might be increased is EDNS packet size if greater than the minimum. */ 
+  daemon->packet_buff_sz = daemon->edns_pktsz + MAXDNAME + RRFIXEDSZ;
   daemon->packet = safe_malloc(daemon->packet_buff_sz);
   
   daemon->addrbuff = safe_malloc(ADDRSTRLEN);
@@ -166,8 +169,16 @@ int main (int argc, char **argv)
   if (option_bool(OPT_DNSSEC_VALID))
     {
 #ifdef HAVE_DNSSEC
-      if (!daemon->ds)
-	die(_("no trust anchors provided for DNSSEC"), NULL, EC_BADCONF);
+      struct ds_config *ds;
+
+      /* Must have at least a root trust anchor, or the DNSSEC code
+	 can loop forever. */
+      for (ds = daemon->ds; ds; ds = ds->next)
+	if (ds->name[0] == 0)
+	  break;
+
+      if (!ds)
+	die(_("no root trust anchor provided for DNSSEC"), NULL, EC_BADCONF);
       
       if (daemon->cachesize < CACHESIZ)
 	die(_("cannot reduce cache size from default when DNSSEC enabled"), NULL, EC_BADCONF);
@@ -208,7 +219,13 @@ int main (int argc, char **argv)
   if (option_bool(OPT_LOOP_DETECT))
     die(_("loop detection not available: set HAVE_LOOP in src/config.h"), NULL, EC_BADCONF);
 #endif
-  
+
+  if (daemon->max_port != MAX_PORT && daemon->min_port == 0)
+    daemon->min_port = 1024u;
+
+  if (daemon->max_port < daemon->min_port)
+    die(_("max_port cannot be smaller than min_port"), NULL, EC_BADCONF);
+
   now = dnsmasq_time();
 
   /* Create a serial at startup if not configured. */
@@ -242,8 +259,11 @@ int main (int argc, char **argv)
   /* Note that order matters here, we must call lease_init before
      creating any file descriptors which shouldn't be leaked
      to the lease-script init process. We need to call common_init
-     before lease_init to allocate buffers it uses.*/
-  if (daemon->dhcp || daemon->doing_dhcp6 || daemon->relay4 || daemon->relay6)
+     before lease_init to allocate buffers it uses.
+     The script subsystem relies on DHCP buffers, hence the last two
+     conditions below. */  
+  if (daemon->dhcp || daemon->doing_dhcp6 || daemon->relay4 || 
+      daemon->relay6 || option_bool(OPT_TFTP) || option_bool(OPT_SCRIPT_ARP))
     {
       dhcp_common_init();
       if (daemon->dhcp || daemon->doing_dhcp6)
@@ -541,17 +561,21 @@ int main (int argc, char **argv)
      {       
        /* open  stdout etc to /dev/null */
        int nullfd = open("/dev/null", O_RDWR);
-       dup2(nullfd, STDOUT_FILENO);
-       dup2(nullfd, STDERR_FILENO);
-       dup2(nullfd, STDIN_FILENO);
-       close(nullfd);
+       if (nullfd != -1)
+	 {
+	   dup2(nullfd, STDOUT_FILENO);
+	   dup2(nullfd, STDERR_FILENO);
+	   dup2(nullfd, STDIN_FILENO);
+	   close(nullfd);
+	 }
      }
    
    /* if we are to run scripts, we need to fork a helper before dropping root. */
   daemon->helperfd = -1;
 #ifdef HAVE_SCRIPT 
-  if ((daemon->dhcp || daemon->dhcp6) && (daemon->lease_change_command || daemon->luascript))
-    daemon->helperfd = create_helper(pipewrite, err_pipe[1], script_uid, script_gid, max_fd);
+  if ((daemon->dhcp || daemon->dhcp6 || option_bool(OPT_TFTP) || option_bool(OPT_SCRIPT_ARP)) && 
+      (daemon->lease_change_command || daemon->luascript))
+      daemon->helperfd = create_helper(pipewrite, err_pipe[1], script_uid, script_gid, max_fd);
 #endif
 
   if (!option_bool(OPT_DEBUG) && getuid() == 0)   
@@ -911,9 +935,15 @@ int main (int argc, char **argv)
       
       poll_listen(piperead, POLLIN);
 
-#ifdef HAVE_DHCP
-#  ifdef HAVE_SCRIPT
-      while (helper_buf_empty() && do_script_run(now));
+#ifdef HAVE_SCRIPT
+#    ifdef HAVE_DHCP
+      while (helper_buf_empty() && do_script_run(now)); 
+#    endif
+
+      /* Refresh cache */
+      if (option_bool(OPT_SCRIPT_ARP))
+	find_mac(NULL, NULL, 0, now);
+      while (helper_buf_empty() && do_arp_script_run());
 
 #    ifdef HAVE_TFTP
       while (helper_buf_empty() && do_tftp_script_run());
@@ -921,16 +951,20 @@ int main (int argc, char **argv)
 
       if (!helper_buf_empty())
 	poll_listen(daemon->helperfd, POLLOUT);
-#  else
+#else
       /* need this for other side-effects */
+#    ifdef HAVE_DHCP
       while (do_script_run(now));
+#    endif
+
+      while (do_arp_script_run());
 
 #    ifdef HAVE_TFTP 
       while (do_tftp_script_run());
 #    endif
 
-#  endif
 #endif
+
    
       /* must do this just before select(), when we know no
 	 more calls to my_syslog() can occur */
@@ -1308,7 +1342,7 @@ static void async_event(int pipe, time_t now)
 	  if (daemon->tcp_pids[i] != 0)
 	    kill(daemon->tcp_pids[i], SIGALRM);
 	
-#if defined(HAVE_SCRIPT)
+#if defined(HAVE_SCRIPT) && defined(HAVE_DHCP)
 	/* handle pending lease transitions */
 	if (daemon->helperfd != -1)
 	  {

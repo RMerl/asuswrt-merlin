@@ -17,7 +17,7 @@ static int traffic_limiter_is_first = 1;
 void traffic_limiter_sendSMS(const char *type, int unit)
 {
 	char phone[32], message[IFPATH_MAX];
-	char *at_cmd[] = {"modem_status.sh", "send_sms", phone, message, NULL};
+	char *at_cmd[] = {"/usr/sbin/modem_status.sh", "send_sms", phone, message, NULL};
 	char buf[32];
 
 	snprintf(buf, sizeof(buf), "tl%d_%s_max", unit, type);

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 #define NAMESERVER_PORT 53
 #define TFTP_PORT       69
+#define MAX_PORT        65535u
 
 #define IN6ADDRSZ       16
 #define INADDRSZ        4
@@ -77,6 +78,8 @@
 
 #define EDNS0_OPTION_MAC            65001 /* dyndns.org temporary assignment */
 #define EDNS0_OPTION_CLIENT_SUBNET  8     /* IANA */
+#define EDNS0_OPTION_NOMDEVICEID    65073 /* Nominum temporary assignment */
+#define EDNS0_OPTION_NOMCPEID       65074 /* Nominum temporary assignment */
 
 struct dns_header {
   u16 id;

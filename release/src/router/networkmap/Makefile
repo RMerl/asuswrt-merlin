@@ -34,7 +34,8 @@ endif
 include $(SRCBASE)/.config
 
 #CFLAGS	+= -DDEBUG #-DDEBUG_MORE #-DDEBUG_FUNCTION
-CFLAGS  += -DNMP_DB
+CFLAGS += -DNMP_DB
+CFLAGS += -DBTN_SETUP
 
 all: $(EXEC) asusdiscovery arpstorm
 

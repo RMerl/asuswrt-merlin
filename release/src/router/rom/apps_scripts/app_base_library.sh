@@ -39,7 +39,7 @@ apps_local_space=`nvram get apps_local_space`
 # return value. 1: have package. 0: no package.
 _check_package(){
 	package_ready=`ipkg list_installed | grep "$1 "`
-	package_ready2=`app_get_field.sh $1 Enabled 1`
+	package_ready2=`/usr/sbin/app_get_field.sh $1 Enabled 1`
 
 	if [ -z "$package_ready" ] && [ -z "$package_ready2" ]; then
 		return 0
@@ -99,7 +99,7 @@ _loop_delay(){
 
 # $1: package name, $2: ipkg log file.
 _log_ipkg_install(){
-	package_deps=`app_get_field.sh $1 Depends 2`
+	package_deps=`/usr/sbin/app_get_field.sh $1 Depends 2`
 	package_deps=`echo $package_deps |sed 's/,/ /g'`
 	package_deps_do=
 
@@ -247,14 +247,14 @@ fi
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
 if [ "$APPS_MOUNTED_TYPE" == "vfat" ] || [ "$APPS_MOUNTED_TYPE" == "tfat" ]; then
-	app_move_to_pool.sh $APPS_DEV
+	/usr/sbin/app_move_to_pool.sh $APPS_DEV
 	if [ "$?" != "0" ]; then
 		# apps_state_error was already set by app_move_to_pool.sh.
 		exit 1
 	fi
 fi
 
-app_base_link.sh
+/usr/sbin/app_base_link.sh
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_base_link.sh.
 	exit 1

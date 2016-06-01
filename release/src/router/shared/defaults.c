@@ -1082,6 +1082,7 @@ struct nvram_tuple router_defaults[] = {
 	/* PPPoE parameters */
 	{ "wan_pppoe_username", ""},	/* PPP username */
 	{ "wan_pppoe_passwd", ""},	/* PPP password */
+	{ "wan_auth_ok", "0"},		/* PPP had ever authenticated */
 	{ "wan_pppoe_idletime", "0"},	// oleg patch
 	{ "wan_pppoe_mru", "1492"},	/* Negotiate MRU to this value */
 	{ "wan_pppoe_mtu", "1492"},	/* Negotiate MTU to the smaller of this value or the peer MRU */
@@ -1093,8 +1094,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "wan_pppoe_auth", "" },
 #endif
 	{ "wan_ppp_echo", "1"},
-	{ "wan_lcp_intv", "6"},
-	{ "wan_lcp_fail", "10"},
+	{ "wan_ppp_echo_interval", "6"},
+	{ "wan_ppp_echo_failure", "10"},
 
 	/* Misc WAN parameters */
 	{ "wan_desc", ""},		/* WAN connection description */
@@ -1109,6 +1110,8 @@ struct nvram_tuple router_defaults[] = {
 	{"wan_clientid_type", "0"},	/* 0: MAC 1: Node-specific RFC4361 */
 	{"wan_clientid", ""},
 	{"wan_vendorid", ""},
+
+	{ "stop_dns_detect", "0"},
 
 	// For miniupnpd, so far default value only
 	{ "upnp_enable", "1" },
@@ -1644,7 +1647,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_user", "nas"},
 //	{ "smbd_wgroup", "WORKGROUP"},
 	{ "smbd_wins", "0"},
-	{ "smbd_wanac", "0"},
 	{ "smbd_simpler_naming", "0"},
 	{ "smbd_enable_smb2", "0"},
 	{ "enable_samba_tuxera", "0"},

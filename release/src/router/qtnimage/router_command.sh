@@ -56,6 +56,14 @@ if [ "$1" == "80211h_off" ] ; then
 	iwpriv wifi0 pc_override 0 &
 fi
 
+if [ "$1" == "ipv6_on" ] ; then
+	echo "0" > /proc/sys/net/ipv6/conf/$2/disable_ipv6
+fi
+
+if [ "$1" == "ipv6_off" ] ; then
+	echo "1" > /proc/sys/net/ipv6/conf/$2/disable_ipv6
+fi
+
 eth1_1_speed=`cat /sys/class/net/eth1_1/speed`
 if [ "$1" == "get_eth_1000m" ] ; then
         if [ "$eth1_1_speed" == "1000" ] ; then

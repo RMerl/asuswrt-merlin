@@ -15,7 +15,6 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <style>
 #Aidisk_png{
@@ -73,14 +72,11 @@
 }
 </style>
 <script>
-
+if(usb_support) addNewScript("/disk_functions.js");
 
 var apps_array = <% apps_info("asus"); %>;
-
 <% apps_state_info(); %>
-
 var apps_download_percent_done = 0;
-
 <% apps_action(); %> //trigger apps_action.
 
 var stoppullstate = 0;

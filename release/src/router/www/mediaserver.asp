@@ -17,7 +17,6 @@
 <script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-<script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/form.js"></script>
 <style type="text/css">
 .upnp_table{
@@ -99,6 +98,8 @@
 }
 </style>
 <script>
+if(usb_support) addNewScript("/disk_functions.js");
+
 var dms_status = <% dms_info(); %>;
 var _dms_dir = '<%nvram_get("dms_dir");%>';
 <% get_AiDisk_status(); %>

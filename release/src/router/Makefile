@@ -495,7 +495,11 @@ obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
 
 ifneq ($(RTCONFIG_SAMBA_MODERN),y)
 ifeq ($(CONFIG_BCMWL5),y)
+ifneq ($(RTCONFIG_8M_SFP),y)
 obj-$(NEED_SAMBA3) += samba-3.0.33
+else
+obj-$(NEED_SAMBA3) += samba3
+endif
 else
 obj-$(NEED_SAMBA3) += samba3
 endif
@@ -3545,10 +3549,7 @@ nas$(BCMEX)$(EX7): nvram$(BCMEX)
 eapd$(BCMEX)$(EX7)-clean:
 	-@cd eapd$(BCMEX)$(EX7)/linux && make clean
 
-lighttpd-1.4.39/Makefile:
-	cd lighttpd-1.4.39 && ./autogen.sh
-
-lighttpd-1.4.39/stamp-h1: lighttpd-1.4.39/Makefile
+lighttpd-1.4.39/stamp-h1:
 ifneq ($(RTCONFIG_QTN),y)
 	cd lighttpd-1.4.39 && ./preconfigure-script touch $@
 else

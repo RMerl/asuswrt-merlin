@@ -60,7 +60,7 @@ nvram set apps_mounted_path=$APPS_MOUNTED_PATH
 
 nvram set apps_state_switch=1 # STOPPING apps
 if [ -n "$ORIG_APPS_MOUNTED_PATH" ] && [ -d "$ORIG_APPS_INSTALL_PATH" ]; then
-	app_stop.sh
+	/usr/sbin/app_stop.sh
 
 	if [ -f "$ORIG_APPS_INSTALL_PATH/$autorun_file" ]; then
 		mv $ORIG_APPS_INSTALL_PATH/$autorun_file $ORIG_APPS_INSTALL_PATH/$nonautorun_file
@@ -83,7 +83,7 @@ fi
 
 
 nvram set apps_state_switch=3 # CHECKING the chosed pool
-mount_ready=`app_check_pool.sh $2`
+mount_ready=`/usr/sbin/app_check_pool.sh $2`
 if [ "$mount_ready" == "Non-mounted" ]; then
 	echo "Had not mounted yet!"
 	nvram set apps_state_error=2
@@ -91,7 +91,7 @@ if [ "$mount_ready" == "Non-mounted" ]; then
 fi
 
 if [ -d "$APPS_INSTALL_PATH" ]; then
-	app_base_link.sh
+	/usr/sbin/app_base_link.sh
 	if [ "$?" != "0" ]; then
 		# apps_state_error was already set by app_base_link.sh.
 		exit 1
@@ -105,7 +105,7 @@ fi
 
 
 nvram set apps_state_switch=4 # EXECUTING
-app_install.sh $1
+/usr/sbin/app_install.sh $1
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_install.sh.
 	exit 1

@@ -284,6 +284,9 @@ enum {
 	MODEL_PLN12,
 	MODEL_PLAC56,
 	MODEL_PLAC66U,
+	MODEL_RTAC88N,
+	MODEL_BRTAC828M2,
+	MODEL_RTAC88S,
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -752,6 +755,11 @@ extern uint32_t set_gpio(uint32_t gpio, uint32_t value);
 extern uint32_t get_gpio(uint32_t gpio);
 extern int get_switch_model(void);
 extern uint32_t get_phy_speed(uint32_t portmask);
+extern char *get_lan_mac_name(void);
+extern char *get_wan_mac_name(void);
+extern char *get_2g_hwaddr(void);
+extern char *get_lan_hwaddr(void);
+extern char *get_wan_hwaddr(void);
 #if defined(RTCONFIG_RALINK_MT7620)
 extern int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx);
 #elif defined(RTCONFIG_RALINK_MT7621)

@@ -68,9 +68,6 @@ static const char rcsid[] = RCSID;
 
 static void lcp_delayed_up __P((void *));
 
-/* JYWeng 20031216: add to wanstatus.log */
-void saveWANStatus(char *currentstatus, int statusindex);
-
 /*
  * LCP-related command-line options.
  */
@@ -404,7 +401,6 @@ lcp_close(unit, reason)
 {
     fsm *f = &lcp_fsm[unit];
     int oldstate;
-    int statusindex = 0;/* JYWeng 20031216: add to wanstatus.log */
 
     if (phase != PHASE_DEAD && phase != PHASE_MASTER)
 	new_phase(PHASE_TERMINATE);
@@ -428,14 +424,10 @@ lcp_close(unit, reason)
 	lcp_finished(f);
     }
 /* JYWeng 20031216: add to wanstatus.log */
-    if(strstr(reason, "Link inactive")) {
-	    statusindex = 1;
-	    saveWANStatus("Terminating connection due to lack of activity.", statusindex);
-    }
-    else {
-	    statusindex = 2;
-	    saveWANStatus(reason, statusindex);
-    }
+    if (reason && strstr(reason, "Link inactive") != NULL)
+	save_wanstatus("Terminating connection due to lack of activity.", 1);
+    else
+	save_wanstatus(reason, 2);
 /* JYWeng 20031216: add to wanstatus.log */
 }
 

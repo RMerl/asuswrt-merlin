@@ -178,7 +178,7 @@ _get_pdp_str(){
 
 
 if [ "$modem_type" == "" ]; then
-	find_modem_type.sh
+	/usr/sbin/find_modem_type.sh
 
 	modem_type=`nvram get usb_modem_act_type`
 	if [ "$modem_type" == "" ]; then
@@ -208,7 +208,7 @@ act_node=
 
 modem_act_node=`nvram get $act_node`
 if [ "$modem_act_node" == "" ]; then
-	find_modem_node.sh
+	/usr/sbin/find_modem_node.sh
 
 	modem_act_node=`nvram get $act_node`
 	if [ "$modem_act_node" == "" ]; then
@@ -228,7 +228,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		echo "Reset modem."
 		nvram set usb_modem_act_reset=1
 		nvram set usb_modem_act_reset_path="$modem_act_path"
-		at_ret=`$at_lock modem_at.sh '+CFUN=1,1' |grep "OK" 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+CFUN=1,1' |grep "OK" 2>/dev/null`
 		if [ "$at_ret" == "OK" ]; then
 			tries=1
 			while [ $tries -le 30 -a "$modem_act_node" != "" ]; do
@@ -272,7 +272,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				fi
 			fi
 
-			find_modem_node.sh
+			/usr/sbin/find_modem_node.sh
 
 			modem_act_node=`nvram get $act_node`
 			if [ "$modem_act_node" == "" ]; then
@@ -288,10 +288,10 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	fi
 
 	# Set full functionality
-	at_ret=`$at_lock modem_at.sh '+CFUN?' |grep "+CFUN: 1" 2>/dev/null`
+	at_ret=`$at_lock /usr/sbin/modem_at.sh '+CFUN?' |grep "+CFUN: 1" 2>/dev/null`
 	if [ "$at_ret" == "" ]; then
 		echo "CFUN: Set full functionality."
-		at_ret=`$at_lock modem_at.sh '+CFUN=1' |grep "OK" 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+CFUN=1' |grep "OK" 2>/dev/null`
 		if [ "$at_ret" == "OK" ]; then
 			tries=1
 			at_ret=""
@@ -299,7 +299,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				echo "CFUN: wait for setting CFUN...$tries"
 				sleep 1
 
-				at_ret=`$at_lock modem_at.sh '+CFUN?' |grep "+CFUN: 1" 2>/dev/null`
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '+CFUN?' |grep "+CFUN: 1" 2>/dev/null`
 				tries=$((tries+1))
 			done
 
@@ -315,17 +315,17 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 	# input PIN if need.
 	echo "PIN: detect PIN if it's needed."
-	modem_status.sh sim
-	modem_status.sh simauth
+	/usr/sbin/modem_status.sh sim
+	/usr/sbin/modem_status.sh simauth
 	ret=`nvram get usb_modem_act_sim`
 	if [ "$ret" != "1" ]; then
 		if [ "$ret" == "2" -a "$modem_pin" != "" ]; then
 			echo "Input the PIN code..."
-			modem_status.sh simpin "$modem_pin"
+			/usr/sbin/modem_status.sh simpin "$modem_pin"
 			sleep 1
 
-			modem_status.sh sim
-			modem_status.sh simauth
+			/usr/sbin/modem_status.sh sim
+			/usr/sbin/modem_status.sh simauth
 			ret=`nvram get usb_modem_act_sim`
 		fi
 
@@ -335,13 +335,13 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 	fi
 
-	modem_status.sh imsi
-	modem_status.sh iccid
+	/usr/sbin/modem_status.sh imsi
+	/usr/sbin/modem_status.sh iccid
 
 	# Auto-APN
 	if [ "$modem_autoapn" != "" -a "$modem_autoapn" != "0" -a "$modem_auto_spn" == "" ]; then
 		echo "Running autoapn..."
-		modem_autoapn.sh
+		/usr/sbin/modem_autoapn.sh
 
 		modem_isp=`nvram get modem_isp`
 		modem_spn=`nvram get modem_spn`
@@ -353,12 +353,12 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	if [ "$modem_type" == "gobi" ]; then
 		if [ "$usb_gobi2" == "1" ]; then
 			echo "Gobi2: Pause the autoconnect."
-			at_ret=`$at_lock modem_at.sh "+CAUTOCONNECT=0" |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh "+CAUTOCONNECT=0" |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
 				echo "Gobi2: Fail to stop the autoconnect."
 				exit 0
 			fi
-			at_ret=`$at_lock modem_at.sh "+CWWAN=0" |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh "+CWWAN=0" |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
 				echo "Gobi2: Fail to stop the connection."
 				exit 0
@@ -366,7 +366,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 			pdp_str=`_get_pdp_str`
 			echo "Gobi2: set the PDP be $pdp_str & APN be $modem_apn."
-			at_ret=`$at_lock modem_at.sh '+CGDCONT=1,"'$pdp_str'","'$modem_apn'"' |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGDCONT=1,"'$pdp_str'","'$modem_apn'"' |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
 				echo "Gobi2: Fail to set the APN profile."
 				exit 0
@@ -377,8 +377,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				#if [ "$modem_authmode" == "3" ]; then
 				#	modem_authmode=2 # When auth type is BOTH, choose CHAP.
 				#fi
-				#at_ret=`$at_lock modem_at.sh '$QCPDPP=1,'$modem_authmode',"'$modem_pass'","'$modem_user'"' |grep "OK" 2>/dev/null`
-				at_ret=`$at_lock modem_at.sh '$PPP='$modem_user','$modem_pass |grep "OK" 2>/dev/null`
+				#at_ret=`$at_lock /usr/sbin/modem_at.sh '$QCPDPP=1,'$modem_authmode',"'$modem_pass'","'$modem_user'"' |grep "OK" 2>/dev/null`
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '$PPP='$modem_user','$modem_pass |grep "OK" 2>/dev/null`
 				if [ "$at_ret" != "OK" ]; then
 					echo "Gobi2: Fail to set the PPP profile."
 					exit 0
@@ -467,7 +467,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		echo "$modem_type: set the ISP profile."
 		pdp_str=`_get_pdp_str`
 		echo "$modem_type: set the PDP be $pdp_str."
-		at_ret=`$at_lock modem_at.sh '+CGDCONT=1,"'$pdp_str'","'$modem_apn'"' |grep "OK" 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGDCONT=1,"'$pdp_str'","'$modem_apn'"' |grep "OK" 2>/dev/null`
 		if [ "$at_ret" != "OK" ]; then
 			echo "$modem_type: Fail to set the profile."
 			exit 0
@@ -475,14 +475,16 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	fi
 
 	# set COPS.
-	at_ret=`$at_lock modem_at.sh '+COPS?' |grep "OK" 2>/dev/null`
+	at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS?' |grep "OK" 2>/dev/null`
 	if [ "$at_ret" == "OK" ]; then
 		echo "COPS: Can execute +COPS..."
 
 		if [ "$modem_vid" == "6797" -a "$modem_pid" == "4098" ]; then # BandLuxe C120.
 			echo "COPS: BandLuxe C120 start with CFUN=0, so don't need to unregister the network."
+		elif [ "$modem_vid" == "12d1" -a "$modem_pid" == "1506" ]; then # Huawei E3276.
+			echo "COPS: Huawei E3276 cannot COPS=2/COPS=?, so skip it."
 		else
-			at_ret=`$at_lock modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
 				echo "Can't deregister from network."
 				exit 6
@@ -492,7 +494,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		# Home service.
 		if [ "$modem_roaming" != "1" ]; then
 			echo "COPS: set +COPS=0."
-			at_ret=`$at_lock modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
 				echo "COPS: Fail to set +COPS=0."
 				exit 6
@@ -501,10 +503,10 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			# roaming manually...
 			echo "roaming manually..."
 			if [ -n "$modem_roaming_isp" ]; then
-				modem_status.sh station "$modem_roaming_isp"
+				/usr/sbin/modem_status.sh station "$modem_roaming_isp"
 			fi
 			# Don't need to change the modem settings.
-			#modem_autoapn.sh set $modem_roaming_imsi
+			#/usr/sbin/modem_autoapn.sh set $modem_roaming_imsi
 
 			#modem_isp=`nvram get modem_isp`
 			#modem_spn=`nvram get modem_spn`
@@ -514,7 +516,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		else
 			# roaming automatically...
 			echo "roaming automatically..."
-			at_ret=`$at_lock modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
 				echo "COPS: Fail to set +COPS=0 to roam automatically."
 				exit 6
@@ -524,11 +526,11 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		echo "COPS: Don't support +COPS."
 	fi
 
-	modem_status.sh setmode $modem_mode
+	/usr/sbin/modem_status.sh setmode $modem_mode
 
 	# check the register state after set COPS.
 	echo "CGATT: 1. Check the register state..."
-	at_ret=`$at_lock modem_at.sh '+CGATT?' 2>/dev/null`
+	at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' 2>/dev/null`
 	ret=`echo -n "$at_ret" |grep "OK"`
 	if [ "$ret" == "OK" ]; then
 		tries=1
@@ -537,7 +539,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			echo "CGATT: wait for network registered...$tries"
 			sleep 1
 
-			at_ret=`$at_lock modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
 			tries=$((tries+1))
 		done
 
@@ -553,7 +555,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 	if [ "$modem_vid" == "8193" ];then
 		# just for D-Link DWM-156 A7.
-		#at_ret=`$at_lock modem_at.sh '+BMHPLMN' |grep "+BMHPLMN: " 2>/dev/null`
+		#at_ret=`$at_lock /usr/sbin/modem_at.sh '+BMHPLMN' |grep "+BMHPLMN: " 2>/dev/null`
 		#if [ "$at_ret" != "" ]; then
 		#	plmn=`echo $at_ret | awk '{print $2}'`
 		#	echo "IMSI: $plmn."
@@ -562,7 +564,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		# put the dongle in the general procedure.
 		exit 0
 
-		at_ret=`$at_lock modem_at.sh '+CFUN=1' |grep "OK" 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+CFUN=1' |grep "OK" 2>/dev/null`
 		if [ "$at_ret" != "OK" ]; then
 			echo "Fail to set CFUN=1."
 			exit -1
@@ -574,7 +576,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			echo "wait for network registered...$tries"
 			sleep 1
 
-			at_ret=`$at_lock modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
 			tries=$((tries+1))
 		done
 
@@ -641,7 +643,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 			echo "Restarting the MT and set it as online mode..."
 			nvram set usb_modem_reset_huawei=1
-			at_ret=`$at_lock modem_at.sh '+CFUN=1,1'`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+CFUN=1,1'`
 
 			tries=1
 			at_ret=""
@@ -649,7 +651,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				echo "wait the modem to wake up...$tries"
 				sleep 1
 
-				at_ret=`$at_lock modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
 				tries=$((tries+1))
 			done
 
@@ -666,7 +668,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	elif [ "$modem_type" == "gobi" ]; then
 		echo "Connect the line automatically."
 		if [ "$usb_gobi2" == "1" ]; then
-			at_ret=`$at_lock modem_at.sh "+CAUTOCONNECT=1" |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh "+CAUTOCONNECT=1" |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
 				echo "Gobi2: Fail to start the autoconnect."
 				exit 0
@@ -691,10 +693,10 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			sleep 1
 		fi
 
-		modem_status.sh rate
-		modem_status.sh band
+		/usr/sbin/modem_status.sh rate
+		/usr/sbin/modem_status.sh band
 
-		at_cgnws=`$at_lock modem_at.sh '+CGNWS' |grep "+CGNWS:" |awk '{FS=":"; print $2}' 2>/dev/null`
+		at_cgnws=`$at_lock /usr/sbin/modem_at.sh '+CGNWS' |grep "+CGNWS:" |awk '{FS=":"; print $2}' 2>/dev/null`
 		if [ "$at_cgnws" != "" ]; then
 			mcc=`echo -n "$at_cgnws" |awk '{FS=","; print $5}' 2>/dev/null`
 			mnc=`echo -n "$at_cgnws" |awk '{FS=","; print $6}' 2>/dev/null`
@@ -724,7 +726,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 	if [ "$modem_type" == "qmi" ]; then
 		echo "CGATT: 2. Check the register state..."
-		at_ret=`$at_lock modem_at.sh '+CGATT?' 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' 2>/dev/null`
 		ret=`echo -n "$at_ret" |grep "OK"`
 		if [ "$ret" == "OK" ]; then
 			tries=1
@@ -733,7 +735,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				echo "CGATT: wait for network registered...$tries"
 				sleep 1
 
-				at_ret=`$at_lock modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
 				tries=$((tries+1))
 			done
 
@@ -748,14 +750,14 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 	elif [ "$modem_type" == "gobi" ]; then
 		echo "Gobi: Check if the IP is bounded..."
-		at_ret=`$at_lock modem_at.sh '$CWWANS' |grep '$CWWANS:1' 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '$CWWANS' |grep '$CWWANS:1' 2>/dev/null`
 		if [ "$at_ret" == "" ]; then
 			tries=1
 			while [ $tries -le 30 -a "$at_ret" == "" ]; do
 				echo "Gobi: wait for renewing the IP...$tries"
 				sleep 1
 
-				at_ret=`$at_lock modem_at.sh '$CWWANS' |grep '$CWWANS:1' 2>/dev/null`
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '$CWWANS' |grep '$CWWANS:1' 2>/dev/null`
 				tries=$((tries+1))
 			done
 

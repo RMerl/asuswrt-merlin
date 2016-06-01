@@ -58,4 +58,6 @@
   <sim>tx_bytes=<% nvram_get("modem_bytes_tx"); %></sim>
   <sim>modem_sim_order=<% nvram_get("modem_sim_order"); %></sim>
   <dhcp>dnsqmode=<% nvram_get("dnsqmode"); %></dhcp>
+  <wan>wlc0_state=<% nvram_get("wlc0_state"); %></wan>
+  <wan>wlc1_state=<% nvram_get("wlc1_state"); %></wan>
 </devicemap>

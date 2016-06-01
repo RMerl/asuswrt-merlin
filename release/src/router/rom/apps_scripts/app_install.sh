@@ -42,7 +42,7 @@ esac
 # return value. 1: have package. 0: no package.
 _check_package(){
 	package_ready=`ipkg list_installed | grep "$1 "`
-	package_ready2=`app_get_field.sh $1 Enabled 1`
+	package_ready2=`/usr/sbin/app_get_field.sh $1 Enabled 1`
 
 	if [ -z "$package_ready" ] && [ -z "$package_ready2" ]; then
 		return 0
@@ -53,7 +53,7 @@ _check_package(){
 
 # $1: package name, $2: ipkg server name, $3: force(1/0).
 _get_pkg_file_name_old(){
-	pkg_file_full=`app_get_field.sh $1 Filename 2`
+	pkg_file_full=`/usr/sbin/app_get_field.sh $1 Filename 2`
 	old_pkg_file=`echo "$pkg_file_full" |awk '{FS=".ipk";print $1}'`
 	pkg_file=`echo "$old_pkg_file" |sed 's/\./-/g'`
 
@@ -66,7 +66,7 @@ _get_pkg_file_name_old(){
 
 # $1: package name.
 _get_pkg_file_name(){
-	pkg_file_full=`app_get_field.sh $1 Filename 2`
+	pkg_file_full=`/usr/sbin/app_get_field.sh $1 Filename 2`
 
 	echo "$pkg_file_full"
 }
@@ -122,7 +122,7 @@ _loop_delay(){
 
 # $1: package name, $2: ipkg log file.
 _log_ipkg_install(){
-	package_deps=`app_get_field.sh $1 Depends 2`
+	package_deps=`/usr/sbin/app_get_field.sh $1 Depends 2`
 	package_deps=`echo $package_deps |sed 's/,/ /g'`
 	package_deps_do=
 
@@ -171,7 +171,7 @@ _download_package(){
 	fi
 
 	if [ -n "$installed_ipk_path" ]; then
-		list_ver4=`app_get_field.sh $1 Version 2 |awk '{FS=".";print $4}'`
+		list_ver4=`/usr/sbin/app_get_field.sh $1 Version 2 |awk '{FS=".";print $4}'`
 		file_name=`echo $installed_ipk_path |awk '{FS="/"; print $NF}'`
 		file_ver=`echo $file_name |awk '{FS="_"; print $2}'`
 		file_ver4=`echo $file_ver |awk '{FS="."; print $4}'`
@@ -237,7 +237,7 @@ echo "file_ver4=$file_ver4, list_ver4=$list_ver4."
 		done
 
 		wget_pid=`pidof wget`
-		size=`app_get_field.sh $1 Size 2`
+		size=`/usr/sbin/app_get_field.sh $1 Size 2`
 		target_size=`ls -l $target |awk '{printf $5}'`
 		percent=$((target_size*100/size))
 		nvram set apps_download_percent=$percent
@@ -317,7 +317,7 @@ APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
 
 nvram set apps_state_install=1 # CHECKING_PARTITION
-app_base_packages.sh $APPS_DEV
+/usr/sbin/app_base_packages.sh $APPS_DEV
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_base_packages.sh.
 	exit 1
@@ -326,6 +326,7 @@ fi
 _check_package $1
 if [ "$?" != "0" ]; then
 	echo "The \"$1\" is installed already!"
+	/usr/sbin/app_init_run.sh allpkg restart
 	nvram set apps_state_install=5 # FINISHED
 	exit 0
 fi
@@ -368,20 +369,20 @@ if [ "$link_internet" != "2" ]; then
 		cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
 	fi
 elif [ "$1" == "downloadmaster" ] && [ -z "$apps_from_internet" ]; then
-	app_update.sh optware.asus
+	/usr/sbin/app_update.sh optware.asus
 	if [ -n "$third_lib" ]; then
 		cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
 	fi
 else
-	app_update.sh
+	/usr/sbin/app_update.sh
 fi
 
 need_asuslighttpd=0
 need_asusffmpeg=0
 need_smartsync=0
 if [ "$1" == "downloadmaster" ]; then
-	DM_version1=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
-	DM_version4=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
+	DM_version1=`/usr/sbin/app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
+	DM_version4=`/usr/sbin/app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
 
 	if [ "$DM_version1" -gt "3" ]; then
 		need_asuslighttpd=1
@@ -389,8 +390,8 @@ if [ "$1" == "downloadmaster" ]; then
 		need_asuslighttpd=1
 	fi
 elif [ "$1" == "mediaserver" ]; then
-	MS_version1=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $1}'`
-	MS_version4=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
+	MS_version1=`/usr/sbin/app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $1}'`
+	MS_version4=`/usr/sbin/app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
 
 	if [ "$MS_version1" -gt "1" ]; then
 		need_asuslighttpd=1
@@ -404,8 +405,8 @@ elif [ "$1" == "mediaserver" ]; then
 		need_asusffmpeg=1
 	fi
 elif [ "$1" == "aicloud" ]; then
-	AC_version1=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $1}'`
-	AC_version4=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $4}'`
+	AC_version1=`/usr/sbin/app_get_field.sh aicloud Version 2 |awk '{FS=".";print $1}'`
+	AC_version4=`/usr/sbin/app_get_field.sh aicloud Version 2 |awk '{FS=".";print $4}'`
 
 	if [ "$AC_version1" -gt "1" ]; then
 		need_smartsync=1
@@ -445,7 +446,7 @@ if [ "$need_asusffmpeg" == "1" ]; then
 fi
 if [ "$need_smartsync" == "1" ]; then
 	if [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
-		deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
+		deps=`/usr/sbin/app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
 
 		for dep in $deps; do
 			echo "Downloading the dependent package of smartsync: $dep..."
@@ -495,13 +496,13 @@ echo "target_file=$target_file..."
 nvram set apps_state_install=4 # INSTALLING
 if [ "$1" == "downloadmaster" ] && [ -z "$apps_from_internet" ]; then
 	echo "downloadmaster_file=$download_file..."
-	app_base_library.sh $APPS_DEV $download_file
+	/usr/sbin/app_base_library.sh $APPS_DEV $download_file
 	if [ "$?" != "0" ]; then
 		# apps_state_error was already set by app_base_library.sh.
 		return 1
 	fi
 elif [ "$1" == "asuslighttpd" ] && [ -z "$apps_from_internet" ]; then
-	app_base_library.sh $APPS_DEV
+	/usr/sbin/app_base_library.sh $APPS_DEV
 	if [ "$?" != "0" ]; then
 		# apps_state_error was already set by app_base_library.sh.
 		return 1
@@ -525,14 +526,14 @@ done
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
 if [ "$APPS_MOUNTED_TYPE" == "vfat" ] || [ "$APPS_MOUNTED_TYPE" == "tfat" ]; then
-	app_move_to_pool.sh $APPS_DEV
+	/usr/sbin/app_move_to_pool.sh $APPS_DEV
 	if [ "$?" != "0" ]; then
 		# apps_state_error was already set by app_move_to_pool.sh.
 		exit 1
 	fi
 fi
 
-app_base_link.sh
+/usr/sbin/app_base_link.sh
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_base_link.sh.
 	exit 1
@@ -540,31 +541,31 @@ fi
 
 if [ "$need_asuslighttpd" == "1" ]; then
 	echo "Enabling the dependent package: asuslighttpd..."
-	app_set_enabled.sh asuslighttpd "yes"
+	/usr/sbin/app_set_enabled.sh asuslighttpd "yes"
 fi
 if [ "$need_asusffmpeg" == "1" ]; then
 	echo "Enabling the dependent package: asusffmpeg..."
-	app_set_enabled.sh asusffmpeg "yes"
+	/usr/sbin/app_set_enabled.sh asusffmpeg "yes"
 fi
 if [ "$need_smartsync" == "1" ]; then
 	if [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
-		deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
+		deps=`/usr/sbin/app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
 
 		for dep in $deps; do
 			echo "Enabling the dependent package of smartsync: $dep..."
-			app_set_enabled.sh $dep "yes"
+			/usr/sbin/app_set_enabled.sh $dep "yes"
 		done
 	fi
 
 	echo "Enabling the dependent package: smartsync..."
-	app_set_enabled.sh smartsync "yes"
+	/usr/sbin/app_set_enabled.sh smartsync "yes"
 fi
 
 echo "Enabling the package: $1..."
-app_set_enabled.sh $1 "yes"
+/usr/sbin/app_set_enabled.sh $1 "yes"
 
 if [ "$link_internet" == "2" ]; then
-	app_update.sh&
+	/usr/sbin/app_update.sh&
 fi
 
 test_of_var_files "$APPS_MOUNTED_PATH"

@@ -394,7 +394,7 @@ extern int test_gateway(char *gw, char *wan_ifname);
 #else
 static inline int test_gateway(char *gw, char *wan_ifname) { return 0; }
 #endif
-extern int do_dns_detect();
+extern int do_dns_detect(int wan_unit);
 
 // lan.c
 extern void update_lan_state(int state, int reason);
@@ -663,7 +663,8 @@ extern void setup_udp_timeout(int connflag);
 extern void setup_ftp_conntrack(int port);
 extern void setup_pt_conntrack(void);
 extern void remove_conntrack(void);
-extern int pppstatus(void);
+extern int _pppstatus(const char *statusfile);
+extern int pppstatus(int unit);
 extern void time_zone_x_mapping(void);
 extern void stop_if_misc(void);
 extern int mssid_mac_validate(const char *macaddr);
@@ -680,10 +681,12 @@ extern void remove_usb_module(void);
 extern void stop_usb_program(int mode);
 extern void restart_usb(int f_stop);
 extern void stop_usb(int f_force);
+#ifdef RTCONFIG_USB_PRINTER
 extern void start_lpd();
 extern void stop_lpd();
 extern void start_u2ec();
 extern void stop_u2ec();
+#endif
 extern int ejusb_main(int argc, char *argv[]);
 extern void webdav_account_default(void);
 extern void remove_storage_main(int shutdn);

@@ -1584,13 +1584,6 @@ int no_need_to_start_wps(void)
 		return 0;
 #endif
 
-#ifdef RTCONFIG_TCODE
-	if (nvram_match("x_Setting", "0") &&
-		(!strncmp(nvram_safe_get("territory_code"), "CN", 2) ||
-		 !strncmp(nvram_safe_get("territory_code"), "TW", 2)))
-		return 1;
-#endif
-
 	if ((nvram_get_int("sw_mode") != SW_MODE_ROUTER) &&
 		(nvram_get_int("sw_mode") != SW_MODE_AP))
 		return 1;
@@ -2502,9 +2495,9 @@ start_ddns(void)
 	nvram_unset("ddns_status");
 	nvram_unset("ddns_updated");
 
-       	_dprintf("asus_ddns : %d\n",asus_ddns);
+	_dprintf("asus_ddns : %d\n",asus_ddns);
 
-       	if(3 == asus_ddns)
+	if(3 == asus_ddns)
 	{
 		if((time_fp=fopen("/tmp/ddns.cache","w")))
 		{				
@@ -2513,7 +2506,7 @@ start_ddns(void)
 		}
 		eval("ddns-start.sh",user,passwd,host);
 		//eval("ddns-start.sh",host,passwd);		
-       	}
+	}
 	else if (asus_ddns == 2) { //Peanuthull DDNS
 		if( (fp = fopen("/etc/phddns.conf", "w")) != NULL ) {
 			fprintf(fp, "[settings]\n");
@@ -4258,6 +4251,10 @@ stop_services(void)
 #ifdef RTCONFIG_DISK_MONITOR
 	stop_diskmon();
 #endif
+#ifdef RTCONFIG_USB_PRINTER
+	stop_lpd();
+	stop_u2ec();
+#endif
 #endif
 	stop_upnp();
 	stop_lltd();
@@ -4441,7 +4438,7 @@ start_watchdog(void)
 	return _eval(watchdog_argv, NULL, 0, &whpid);
 }
 
-#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
+#ifdef RTAC87U
 int
 start_watchdog02(void)
 {
@@ -4452,7 +4449,7 @@ start_watchdog02(void)
 
 	return _eval(watchdog_argv, NULL, 0, &whpid);
 }
-#endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
+#endif
 
 int
 start_sw_devled(void)
@@ -4849,7 +4846,7 @@ again:
 #ifdef RTCONFIG_USB
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 		_dprintf("modem data: save the data during the reboot service\n");
-		eval("modem_status.sh", "bytes+");
+		eval("/usr/sbin/modem_status.sh", "bytes+");
 #endif
 
 #ifdef RTCONFIG_USB_MODEM
@@ -4934,7 +4931,7 @@ again:
 			stop_hour_monitor_service();
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 			_dprintf("modem data: save the data during upgrading\n");
-			eval("modem_status.sh", "bytes+");
+			eval("/usr/sbin/modem_status.sh", "bytes+");
 #endif
 
 			eval("/sbin/ejusb", "-1", "0");
@@ -5138,10 +5135,10 @@ again:
 		stop_udhcpc(-1);
 #ifdef RTCONFIG_USB
 		stop_usbled();
-#endif
 #ifdef RTCONFIG_USB_PRINTER
 		stop_lpd();
 		stop_u2ec();
+#endif
 #endif
 		platform_start_ate_mode();
 #ifdef RTCONFIG_QCA_PLC_UTILS
@@ -5159,6 +5156,10 @@ again:
 			// including switch setting
 			// used for system mode change and vlan setting change
 			sleep(2); // wait for all httpd event done
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			stop_lpd();
+			stop_u2ec();
+#endif
 			stop_networkmap();
 			stop_httpd();
 			stop_telnetd();
@@ -5203,7 +5204,10 @@ again:
 			stop_dsl();
 #endif
 			stop_vlan();
-
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			stop_lpd();
+			stop_u2ec();
+#endif
 
 			// TODO free memory here
 		}
@@ -5262,6 +5266,9 @@ again:
 			start_sshd();
 #endif
 			start_networkmap(0);
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			start_usblpsrv();
+#endif
 			start_wl();
 			lanaccess_wl();
 #ifdef RTCONFIG_BCMWL6
@@ -5274,7 +5281,8 @@ again:
 	else if (strcmp(script, "net") == 0) {
 		if(action & RC_SERVICE_STOP) {
 			sleep(2); // wait for all httpd event done
-#ifdef RTCONFIG_USB_PRINTER
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			stop_lpd();
 			stop_u2ec();
 #endif
 			stop_networkmap();
@@ -5373,8 +5381,8 @@ again:
 			start_sshd();
 #endif
 			start_networkmap(0);
-#ifdef RTCONFIG_USB_PRINTER
-			start_u2ec();
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			start_usblpsrv();
 #endif
 			start_wl();
 			lanaccess_wl();
@@ -5397,13 +5405,12 @@ again:
 			force_stop_dms();
 			stop_mt_daapd();
 #endif
-
 #if defined(RTCONFIG_SAMBASRV) && defined(RTCONFIG_FTP)
 			stop_ftpd();
 			stop_samba();
 #endif
-
-#ifdef RTCONFIG_USB_PRINTER
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			stop_lpd();
 			stop_u2ec();
 #endif
 			stop_networkmap();
@@ -5515,10 +5522,9 @@ again:
 			start_sshd();
 #endif
 			start_networkmap(0);
-#ifdef RTCONFIG_USB_PRINTER
-			start_u2ec();
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			start_usblpsrv();
 #endif
-
 #if defined(RTCONFIG_SAMBASRV) && defined(RTCONFIG_FTP)
 			setup_passwd();
 			start_samba();
@@ -5691,8 +5697,8 @@ _dprintf("multipath(%s): unit_now: (%d, %d, %s), unit_next: (%d, %d, %s).\n", mo
 
 			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
 #endif
-
-#ifdef RTCONFIG_USB_PRINTER
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			stop_lpd();
 			stop_u2ec();
 #endif
 			stop_networkmap();
@@ -5708,8 +5714,8 @@ _dprintf("multipath(%s): unit_now: (%d, %d, %s), unit_next: (%d, %d, %s).\n", mo
 #endif
 
 			start_networkmap(0);
-#ifdef RTCONFIG_USB_PRINTER
-			start_u2ec();
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			start_usblpsrv();
 #endif
 			start_ecoguard(); //for app eco mode
 		}
@@ -5848,7 +5854,8 @@ check_ddr_done:
 	}
 	else if (strcmp(script, "dsl_wireless") == 0) {
 		if(action&RC_SERVICE_STOP) {
-#ifdef RTCONFIG_USB_PRINTER
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			stop_lpd();
 			stop_u2ec();
 #endif
 			stop_networkmap();
@@ -5863,8 +5870,8 @@ check_ddr_done:
 		}
 		if(action & RC_SERVICE_START) {
 			start_networkmap(0);
-#ifdef RTCONFIG_USB_PRINTER
-			start_u2ec();
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			start_usblpsrv();
 #endif
 		}
 	}
@@ -6082,8 +6089,7 @@ check_ddr_done:
 		killall("wtfslhd", SIGHUP);
 	}
 #endif
-//#endif
-#ifdef RTCONFIG_USB_PRINTER
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
 	else if (strcmp(script, "lpd") == 0)
 	{
 		if(action & RC_SERVICE_STOP) stop_lpd();
@@ -6134,21 +6140,21 @@ check_ddr_done:
 	{
 		if(action & RC_SERVICE_START) {
 			if(strcmp(script, "apps_update")==0)
-				strcpy(nvtmp, "app_update.sh");
+				strcpy(nvtmp, "/usr/sbin/app_update.sh");
 			else if(strcmp(script, "apps_stop")==0)
-				strcpy(nvtmp, "app_stop.sh");
+				strcpy(nvtmp, "/usr/sbin/app_stop.sh");
 			else if(strcmp(script, "apps_upgrade")==0)
-				strcpy(nvtmp, "app_upgrade.sh");
+				strcpy(nvtmp, "/usr/sbin/app_upgrade.sh");
 			else if(strcmp(script, "apps_install")==0)
-				strcpy(nvtmp, "app_install.sh");
+				strcpy(nvtmp, "/usr/sbin/app_install.sh");
 			else if(strcmp(script, "apps_remove")==0)
-				strcpy(nvtmp, "app_remove.sh");
+				strcpy(nvtmp, "/usr/sbin/app_remove.sh");
 			else if(strcmp(script, "apps_enable")==0)
-				strcpy(nvtmp, "app_set_enabled.sh");
+				strcpy(nvtmp, "/usr/sbin/app_set_enabled.sh");
 			else if(strcmp(script, "apps_switch")==0)
-				strcpy(nvtmp, "app_switch.sh");
+				strcpy(nvtmp, "/usr/sbin/app_switch.sh");
 			else if(strcmp(script, "apps_cancel")==0)
-				strcpy(nvtmp, "app_cancel.sh");
+				strcpy(nvtmp, "/usr/sbin/app_cancel.sh");
 			else strcpy(nvtmp, "");
 
 			if(strlen(nvtmp) > 0) {
@@ -6172,14 +6178,14 @@ check_ddr_done:
 	}
 #ifdef RTCONFIG_USB_MODEM
 	else if(!strncmp(script, "simauth", 7)){
-		char *at_cmd[] = {"modem_status.sh", "simauth", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "simauth", NULL};
 
 		_eval(at_cmd, NULL, 0, NULL);
 	}
 	else if(!strncmp(script, "simpin", 6)){
 		char pincode[8];
-		char *at_cmd[] = {"modem_status.sh", "simpin", pincode, NULL};
-		char *at_cmd2[] = {"modem_status.sh", "simauth", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "simpin", pincode, NULL};
+		char *at_cmd2[] = {"/usr/sbin/modem_status.sh", "simauth", NULL};
 
 		if(nvram_get_int("usb_modem_act_sim") == 2){
 			snprintf(pincode, 8, "%s", cmd[1]);
@@ -6190,8 +6196,8 @@ check_ddr_done:
 	}
 	else if(!strncmp(script, "simpuk", 6)){
 		char pukcode[10], pincode[8];
-		char *at_cmd[] = {"modem_status.sh", "simpuk", pukcode, pincode, NULL};
-		char *at_cmd2[] = {"modem_status.sh", "simauth", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "simpuk", pukcode, pincode, NULL};
+		char *at_cmd2[] = {"/usr/sbin/modem_status.sh", "simauth", NULL};
 
 		if(nvram_get_int("usb_modem_act_sim") == 3){
 			snprintf(pukcode, 10, "%s", cmd[1]);
@@ -6203,8 +6209,8 @@ check_ddr_done:
 	}
 	else if(!strncmp(script, "lockpin", 7)){
 		char lock[4], pincode[8];
-		char *at_cmd[] = {"modem_status.sh", "lockpin", lock, pincode, NULL};
-		char *at_cmd2[] = {"modem_status.sh", "simauth", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "lockpin", lock, pincode, NULL};
+		char *at_cmd2[] = {"/usr/sbin/modem_status.sh", "simauth", NULL};
 
 		if(nvram_get_int("usb_modem_act_sim") == 1){
 			snprintf(pincode, 8, "%s", cmd[1]);
@@ -6223,8 +6229,8 @@ check_ddr_done:
 	}
 	else if(!strncmp(script, "pwdpin", 6)){
 		char pincode[8], pincode_new[8];
-		char *at_cmd[] = {"modem_status.sh", "pwdpin", pincode, pincode_new, NULL};
-		char *at_cmd2[] = {"modem_status.sh", "simauth", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "pwdpin", pincode, pincode_new, NULL};
+		char *at_cmd2[] = {"/usr/sbin/modem_status.sh", "simauth", NULL};
 
 		if(nvram_get_int("usb_modem_act_sim") == 1){
 			snprintf(pincode, 8, "%s", cmd[1]);
@@ -6235,7 +6241,7 @@ check_ddr_done:
 		}
 	}
 	else if(!strncmp(script, "modemscan", 9)){
-		char *at_cmd[] = {"modem_status.sh", "scan", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "scan", NULL};
 		int usb_unit;
 #ifdef RTCONFIG_DUALWAN
 		char word[256], *next;
@@ -6263,7 +6269,7 @@ check_ddr_done:
 	}
 	else if(!strncmp(script, "modemsta", 8)){
 		char isp[32];
-		char *at_cmd[] = {"modem_status.sh", "station", isp, NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "station", isp, NULL};
 
 		snprintf(isp, 32, "%s", nvram_safe_get("modem_roaming_isp"));
 
@@ -6272,7 +6278,7 @@ check_ddr_done:
 	}
 	else if(!strncmp(script, "sendSMS", 7)){
 		char phone[32], message[PATH_MAX];
-		char *at_cmd[] = {"modem_status.sh", "send_sms", phone, message, NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "send_sms", phone, message, NULL};
 
 		snprintf(phone, 32, "%s", nvram_safe_get("modem_sms_phone"));
 		if(!strcmp(cmd[1], "alert"))
@@ -6480,14 +6486,14 @@ check_ddr_done:
 #endif // RTCONFIG_USB_SMS_MODEM
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 	else if(!strncmp(script, "datacount", 9)){
-		char *at_cmd[] = {"modem_status.sh", "bytes", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "bytes", NULL};
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
 	else if(!strncmp(script, "resetcount", 10)){
 		time_t now;
 		char timebuf[32];
-		char *at_cmd[] = {"modem_status.sh", "bytes-", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "bytes-", NULL};
 
 		time(&now);
 		snprintf(timebuf, 32, "%d", (int)now);
@@ -6497,14 +6503,14 @@ check_ddr_done:
 	}
 	else if(!strncmp(script, "sim_del", 7)){
 		char sim_order[32];
-		char *at_cmd[] = {"modem_status.sh", "imsi_del", sim_order, NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "imsi_del", sim_order, NULL};
 
 		snprintf(sim_order, 32, "%s", cmd[1]);
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
 	else if(!strncmp(script, "set_dataset", 11)){
-		char *at_cmd[] = {"modem_status.sh", "set_dataset", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "set_dataset", NULL};
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
@@ -6513,8 +6519,8 @@ check_ddr_done:
 	else if(!strncmp(script, "simdetect", 9)){
 		// Need to reboot after this.
 		char buf[4];
-		char *at_cmd1[] = {"modem_status.sh", "simdetect", NULL};
-		char *at_cmd2[] = {"modem_status.sh", "simdetect", buf, NULL};
+		char *at_cmd1[] = {"/usr/sbin/modem_status.sh", "simdetect", NULL};
+		char *at_cmd2[] = {"/usr/sbin/modem_status.sh", "simdetect", buf, NULL};
 
 		if(cmd[1]){
 			snprintf(buf, 4, "%s", cmd[1]);
@@ -6524,13 +6530,13 @@ check_ddr_done:
 			_eval(at_cmd1, ">/tmp/modem_action.ret", 0, NULL);
 	}
 	else if(!strncmp(script, "getband", 7)){
-		char *at_cmd[] = {"modem_status.sh", "band", NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "band", NULL};
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
 	else if(!strncmp(script, "setband", 7)){
 		char buf[8];
-		char *at_cmd[] = {"modem_status.sh", "setband", buf, NULL};
+		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "setband", buf, NULL};
 
 		snprintf(buf, 8, "%s", nvram_safe_get("modem_lte_band"));
 		if(strlen(buf) <= 0)
@@ -6902,8 +6908,8 @@ check_ddr_done:
 			stop_ftpd();
 			stop_samba();
 #endif
-
-#ifdef RTCONFIG_USB_PRINTER
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			stop_lpd();
 			stop_u2ec();
 #endif
 			stop_networkmap();
@@ -6926,10 +6932,9 @@ check_ddr_done:
 			start_sshd();
 #endif
 			start_networkmap(0);
-#ifdef RTCONFIG_USB_PRINTER
-			start_u2ec();
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_PRINTER)
+			start_usblpsrv();
 #endif
-
 #if defined(RTCONFIG_SAMBASRV) && defined(RTCONFIG_FTP)
 			setup_passwd();
 			start_samba();
@@ -7543,7 +7548,7 @@ int run_app_script(const char *pkg_name, const char *pkg_action)
 	else
 		strcpy(app_name, pkg_name);
 
-	doSystem("app_init_run.sh %s %s", app_name, pkg_action);
+	doSystem("/usr/sbin/app_init_run.sh %s %s", app_name, pkg_action);
 
 	sleep(5);
 	start_upnp();

@@ -38,9 +38,9 @@ typedef u_int8_t __u8;
 #include <shared.h>
 #include <wlscan.h>
 
+#include <bcmendian.h>
 #ifdef RTCONFIG_BCM_7114
 #include <bcmutils.h>
-#include <bcmendian.h>
 #include <security_ipc.h>
 #endif
 

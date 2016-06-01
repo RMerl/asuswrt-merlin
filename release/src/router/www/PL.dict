@@ -51,6 +51,7 @@ CTL_Add_enrollee=Połącz
 CTL_apply=Zastosuj
 CTL_apply1=Zastosuj wszystkie ustawienia
 CTL_Cancel=Anuluj
+CTL_Detect_Again=Wykryj ponownie
 CTL_factory_default=Zastosuj domyślne ustawienia fabryczne
 CTL_modify=Zmodyfikuj
 CTL_next=Następny
@@ -82,7 +83,8 @@ File_Pop_content_alert_desc6=Hasło nie może być puste.
 File_Pop_content_alert_desc7=Hasła powinny być jednakowe!
 FIRM_fail_desc=Aktualizacja firmware przerwana. Sprawdź plik źródłowy, połączenie pomiędzy routerem a PC i spróbój ponownie.
 FIRM_ok_desc=Trwa aktualizacja firmware. Potrwa to około 3 minuty.
-Firm_reboot_manually=Aktualizacja firmware została wykonana. Uruchom ponownie ZVMODELVZ ręcznie.
+FIRM_reboot_manually=Aktualizacja firmware została wykonana. Uruchom ponownie ZVMODELVZ ręcznie.
+FIRM_trx_valid_fail_desc=To comply with regulatory amendments, we have modified our certification rule to ensure better firmware quality. This version is not compatible with all previously released ASUS firmware and uncertified third party firmware. Please check our official websites for the certified firmware.
 footer_copyright_desc=2016 ASUSTeK Computer Inc. Wszystkie prawa zastrzeżone.
 FW_n1=Bieżąca konfiguracja zostanie zapisana i automatycznie przeniesiona. Po restarcie urządzenia, ponowna konfiguracja nie będzie konieczna.
 General_x_FirmwareVersion_itemname=Wersja firmware:
@@ -349,8 +351,6 @@ QIS_pass_desc1=Zmień hasło routera w celu zapobieżenia nieautoryzowanemu dost
 QIS_pass_desc2=W nazwie użytkownika i haśle rozróżniane są wielkie i małe litery.
 QIS_pass_desc3=Ustawienia administracji routera wymagają zalogowania do routera.
 [###MODEL_DEP###][PL-AC56][PL-N12]QIS_pass_desc3=Your PLC login information is used for accessing your PLC's administration settings.
-QIS_pass_desc4=Informacje logowania do routera są także wykorzystywane dla uzyskania dostępu do dodatkowych funkcji, takich jak FTP i AiCloud 2.0.
-[###MODEL_DEP###][RT-N53][RT-N15U][RT-N12][RT-N12B1][RT-N12C1][RT-N12D1][RT-N12HP][RT-N12HP_B1][RT-N12VP][AP-N12HP][RT-N10+][RT-N10D1][RT-N10P][RT-N10PV2][RT-N10U]QIS_pass_desc4=Informacje logowania do routera są także wykorzystywane dla uzyskania dostępu do dodatkowych funkcji, takich jak FTP.
 QIS_pass_desc5=Domyślna nazwa użytkownika i hasło to :
 QIS_pass_title=Ustawienia informacji logowania
 [###MODEL_DEP###][PL-AC56][PL-N12]QIS_pass_title=Setup of PLC login information
@@ -562,11 +562,25 @@ UPnPMediaServer=Media Server
 USB_Application_account_alert=Nazwą konta użytkownika nie może być 'root', 'guest', 'anonymous'! Proszę wpisać poprawną nazwę konta.
 vpn_Adv=Szczegóły VPN
 WANJS9Text=Wprowadź nazwę użytkownika i hasło.
+web_redirect_case1_suggestion1=Please ensure that the cable is plugged between ZVMODELVZ WAN port and the modem.
+web_redirect_case1_suggestion2=Please check if you need to change the <a style='color:#FFF' href='/Advanced_OperationMode_Content.asp'>Operation Mode</a>.
+web_redirect_case2_suggestion1=Your PPPoE account or password is not accepted, please <a style='color:#FFF' href='/Advanced_WAN_Content.asp'>check</a>.
+web_redirect_case2_title1=PPPoE Authentication Failure
+web_redirect_case3_button=Change WAN type
+web_redirect_case3_suggestion1=Please check the <a style='color:#FFF' href='/Advanced_WAN_Content.asp'>connection settings</a> is correct.
+web_redirect_case5_suggestion1=We suggest you turn on the <a style='color:#FFF' href='/index.asp'>WAN connection button</a>.
+web_redirect_case5_suggestion2=Please check USB modem is power on.
+web_redirect_case5_suggestion3=Change <a style='color:#FFF' href='/Advanced_Modem_Content.asp'>USB modem setting</a>.
+web_redirect_case5_title1=The WAN cnnection is turned off
+web_redirect_case5_title2=USB modem is not ready
 web_redirect_case6_desc1=Click (Next) to get a new IP address. The new IP address is:
 web_redirect_case6_desc2=Please confirm that related services using the new IP address, such as Port Forwarding or DMZ.
+web_redirect_case8_suggestion1=Please confirm Parent AP can connect to Internet.
+web_redirect_case8_suggestion2=<a style='color:#FFF' href='/QIS_wizard.htm?flag=manual'>Change the connection setting</a>.
+web_redirect_case8_title=Unable to connect to Parent AP
 web_redirect_fail_reason0=Powód niepowodzenia przy połączeniu
 web_redirect_message=Nie powiódł się dostęp do strony, jaką chciałeś otworzyć.
-web_redirect_reason1=The network cable is unplugged.
+web_redirect_reason1=Niepodłączony kabel sieciowy.
 web_redirect_reason2_1=Autentykacja Twojego PPPoE bądź VPN nie powiodła się.
 web_redirect_reason2_2=Brak odpowiedzi ze zdalnego serwera.
 web_redirect_reason3_1=DHCP Twojego dostawcy Internetu nie działa poprawnie.
@@ -595,20 +609,6 @@ web_redirect_suggestion6=Skonfiguruj ponownie lokalny adres IP ZVMODELVZ, upewni
 web_redirect_suggestion7=Po podłączeniu routera do modemu kliknij pozycję "GO", aby uruchomić kreatora szybkiej konfiguracji.
 web_redirect_suggestion8=Aby skonfigurować połączenie sieci WAN w trybie offline lub zmienić tryb pracy na Access Point (Punkt dostępu), kliknij pozycję Ustaw. Ręczne.
 web_redirect_suggestion9=W kolejnym kroku ustaw zabezpieczenie w postaci nazwy logowania i hasła.
-web_redirect_case1_suggestion1=Please ensure that the cable is plugged between ZVMODELVZ WAN port and the modem.
-web_redirect_case1_suggestion2=Please check if you need to change the <a style='color:#FFF' href='/Advanced_OperationMode_Content.asp'>Operation Mode</a>.
-web_redirect_case2_title1=PPPoE Authentication Failure
-web_redirect_case2_suggestion1=Your PPPoE account or password is not accepted, please <a style='color:#FFF' href='/Advanced_WAN_Content.asp'>check</a>.
-web_redirect_case3_suggestion1=Please check the connection settings is correct.
-web_redirect_case3_button=Change WAN type
-web_redirect_case5_title1=The WAN cnnection is turned off
-web_redirect_case5_title2=USB modem is not ready
-web_redirect_case5_suggestion1=We suggest you turn on the <a style='color:#FFF' href='/index.asp'>WAN connection button</a>.
-web_redirect_case5_suggestion2=Please check USB modem is power on.
-web_redirect_case5_suggestion3=Change <a style='color:#FFF' href='/Advanced_Modem_Content.asp'>USB modem setting</a>.
-web_redirect_case8_title=Unable to connect to Parent AP
-web_redirect_case8_suggestion1=Please confirm Parent AP can connect to Internet.
-web_redirect_case8_suggestion2=<a style='color:#FFF' href='/QIS_wizard.htm?flag=manual'>Change the connection setting</a>.
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-AC68U]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-AC1900 Gigabit VDSL2/ADSL2+ Modem Router
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
@@ -627,6 +627,7 @@ WLANConfig11b_x_BRApply_itemname2=Połącz do zdalnych AP z listy?
 WLANConfig11n_nmode_limition_hint=ZVMODELVZ zmieni szyfrowanie WEP lub TKIP na AES w trybie [n Only] (Wyłącznie n), co umożliwia prawidłowe połączenie klientów.
 WPS_PBCbutton_hint_success=Połączenie ustaniowione poprawnie.
 CHAR_set=UTF-8
+selected_language=Polski
 Access_Intranet=Dostęp do Intranetu
 Access_Intranet_desc=Zezwalaj gościom na dostęp do intranetu.
 access_service=Można teraz uzyskać dostęp do urządzenia pamięci USB i urządzeń z włączoną funkcją Network place (Samba), podłączonych do ZVMODELVZ.
@@ -947,7 +948,6 @@ CTL_check_log=Dziennik kontroli
 CTL_clear=Wyczyść
 CTL_close=Zamknij
 CTL_del=Usuń
-CTL_Detect_Again=Wykryj ponownie
 CTL_Disabled=Wyłączony
 CTL_Disagree=Nie zgadzam się
 CTL_Disconnect=Rozłączony
@@ -2492,6 +2492,27 @@ YandexDNS_qis_lua=I want to use Yandex.DNS and agree to the <a class="link" href
 YandexDNS_settings_hint=Clients are using Yandex.DNS regardless of the DNS setting.
 yoursharesetting=Ustawienia udostępnionego folderu to:
 zero_disable=Wyłączenia : 0
-CHT_ppp_notice_1=Tip: 您正使用中華電信光世代，我們已幫您使用自動取得IP方式上網，若你想提高網路品質、取得公共IP ，建議使用PPPoE 撥號上網
-CHT_ppp_notice_2=前往設定撥號連線(PPPoE)
-selected_language=Polski
+CHT_ppp_notice_1=註：您正使用中華電信光世代，我們已幫您使用自動取得 IP 方式上網，若你想提高網路品質、取得公共 IP，建議使用 PPPoE 撥號上網。
+CHT_ppp_notice_2=前往設定撥號連線( PPPoE )
+Facebook_page=Page Setting
+Facebook_WiFi_connecting=Connecting to Facebook page...
+Facebook_WiFi_desc=Facebook Wi-Fi kets customers check in to participating businesses on Facebok for free Wi-Fi access. When people check int to your Page, you can share offers and other announcements with them.
+Facebook_WiFi_disclaim=Disclaimer:
+Facebook_WiFi_disclaim_title=Term of use
+Facebook_WiFi_disclaim1=Please be noted to keep Facebook Wi-Fi enabled firmware stay up to date.
+Facebook_WiFi_disclaim2=Please be noted Facebook Wi-Fi service is provided by Facebook which will be terminated upon official announcement.
+Facebook_WiFi_disclaim3=Please be noted there will be a 1 year grace period upon termination where Facebook will continue supporting the service. After that period, this feature will cease to operate.
+Facebook_WiFi_disclaim4=Any non-certificated router is prohibited to use Facebook Wi-Fi enabled firmware.
+Facebook_WiFi_disconnected=Unable to connect to Facebook page, please check your internet status.
+Facebook_WiFi_enable=Enable Facebook Wi-Fi
+Facebook_WiFi_FAQ1=What is Facebook Wi-Fi?
+Facebook_WiFi_FAQ2=What benefit I can get by Facebook Wi-Fi?
+Facebook_WiFi_FAQ3=How to setup Facebook Wi-Fi?
+Facebook_WiFi_FAQ4=FAQs about Facebook Wi-Fi
+Facebook_WiFi_page=Facebook Page Settings
+Facebook_WiFi_page_connection=Confugure Facebook page connection.
+Facebook_WiFi_page_desc=Choose a Facebook page for this Wi-Fi network, and manage page settings here :
+Facebook_WiFi_unit_hint0=All 2.4 GHz guest networks are used, if you want to use 2.4 GHz band for Facebook Wi-Fi, please remove one 2.4 GHz guest network<br>
+Facebook_WiFi_unit_hint1=All 5 GHz guest networks are used, if you want to use 5 GHz band for Facebook Wi-Fi, please remove one 5 GHz guest network<br>
+Facebook_WiFi_unit_hint2=All 5 GHz-2 guest networks are used, if you want to use 5 GHz band for Facebook Wi-Fi, please remove one 5 GHz-2 guest network
+Facebook_WiFi_unit_hint_all=All guest networks are used now, please remove at least one guest network then try to enable Facebook Wi-Fi again.

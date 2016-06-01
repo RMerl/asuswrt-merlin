@@ -219,16 +219,15 @@ start_pppd(int unit)
 	fprintf(fp, "novj nobsdcomp nodeflate\n");
 
 	/* echo failures */
-	if (!(nvram_match(strcat_r(prefix, "proto", tmp), "pppoe") && dualwan_unit__nonusbif(unit)) ||
-	    nvram_get_int(strcat_r(prefix, "ppp_echo", tmp))) {
-		fprintf(fp, "lcp-echo-interval %d\n", nvram_get_int(strcat_r(prefix, "lcp_intv", tmp)) ? : 6);
-		fprintf(fp, "lcp-echo-failure %d\n", nvram_get_int(strcat_r(prefix, "lcp_fail", tmp)) ? : 10);
-	}
-
-	/* pptp has Echo Request/Reply, l2tp has Hello packets */
-	if (nvram_match(strcat_r(prefix, "proto", tmp), "pptp") ||
-	    nvram_match(strcat_r(prefix, "proto", tmp), "l2tp"))
+	if (dualwan_unit__usbif(unit)) {
+		fprintf(fp, "lcp-echo-interval %d\n", 6);
+		fprintf(fp, "lcp-echo-failure %d\n", 10);
+	} else
+	if (nvram_get_int(strcat_r(prefix, "ppp_echo", tmp))) {
+		fprintf(fp, "lcp-echo-interval %d\n", nvram_get_int(strcat_r(prefix, "ppp_echo_interval", tmp)));
+		fprintf(fp, "lcp-echo-failure %d\n", nvram_get_int(strcat_r(prefix, "ppp_echo_failure", tmp)));
 		fprintf(fp, "lcp-echo-adaptive\n");
+	}
 
 	fprintf(fp, "unit %d\n", unit);
 	fprintf(fp, "linkname wan%d\n", unit);

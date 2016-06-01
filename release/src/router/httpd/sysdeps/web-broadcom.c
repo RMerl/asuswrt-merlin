@@ -1353,6 +1353,80 @@ ej_wl_chanspecs_5g_2(int eid, webs_t wp, int argc, char_t **argv)
 	return ej_wl_chanspecs(eid, wp, argc, argv, 2);
 }
 
+#define	WL_IW_RSSI_NO_SIGNAL	-91	/* NDIS RSSI link quality cutoffs */
+
+static int ej_wl_rssi(int eid, webs_t wp, int argc, char_t **argv, int unit)
+{
+	int retval = 0;
+	char tmp[256], prefix[] = "wlXXXXXXXXXX_";
+	char *name;
+	char word[256], *next;
+	int unit_max = 0, unit_cur = -1;
+	char rssi_buf[32];
+	char *mode = NULL;
+	int sta = 0, wet = 0, psta = 0, psr = 0;
+	int rssi = WL_IW_RSSI_NO_SIGNAL, ret;
+
+	sprintf(rssi_buf, "0 dBm");
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next)
+		unit_max++;
+
+	if (unit > (unit_max - 1))
+		goto ERROR;
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+	mode = nvram_safe_get(strcat_r(prefix, "mode", tmp));
+	sta = !strcmp(mode, "sta");
+	wet = !strcmp(mode, "wet");
+	psta = !strcmp(mode, "psta");
+	psr = !strcmp(mode, "psr");
+
+	if (wet || sta || psta || psr) {
+		ret = wl_ioctl(name, WLC_GET_RSSI, &rssi, sizeof(rssi));
+		if (ret < 0)
+			dbg("Err: reading intf:%s RSSI\n", name);
+
+		dbg("RSSI: %d\n", dtoh32(rssi));
+	}
+
+	wl_ioctl(name, WLC_GET_INSTANCE, &unit_cur, sizeof(unit_cur));
+	if (unit != unit_cur)
+		goto ERROR;
+	else if (!(wet || sta || psta || psr))
+		goto ERROR;
+	else if (wl_ioctl(name, WLC_GET_RSSI, &rssi, sizeof(rssi))) {
+		dbg("can not get rssi info of %s\n", name);
+		goto ERROR;
+	} else {
+		rssi = dtoh32(rssi);
+		sprintf(rssi_buf, "%d dBm", rssi);
+	}
+
+ERROR:
+	retval += websWrite(wp, "%s", rssi_buf);
+	return retval;
+}
+
+int
+ej_wl_rssi_2g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return ej_wl_rssi(eid, wp, argc, argv, 0);
+}
+
+int
+ej_wl_rssi_5g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return ej_wl_rssi(eid, wp, argc, argv, 1);
+}
+
+int
+ej_wl_rssi_5g_2(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return ej_wl_rssi(eid, wp, argc, argv, 2);
+}
+
 static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
 	int retval = 0;

@@ -49,25 +49,10 @@ int vpnc_unit = 5;
 
 int vpnc_pppstatus(void)
 {
-	FILE *fp;
-	char sline[128], buf[128], *p;
+	char statusfile[sizeof("/var/run/ppp-vpnXXXXXXXXXX.status")];
 
-	if ((fp=fopen("/tmp/vpncstatus.log", "r")) && fgets(sline, sizeof(sline), fp))
-	{
-		p = strstr(sline, ",");
-		strcpy(buf, p+1);
-	}
-	else
-	{
-		strcpy(buf, "unknown reason");
-	}
-
-	if(fp) fclose(fp);
-
-	if(strstr(buf, "No response from ISP.")) return WAN_STOPPED_REASON_PPP_NO_ACTIVITY;
-	else if(strstr(buf, "Failed to authenticate ourselves to peer")) return WAN_STOPPED_REASON_PPP_AUTH_FAIL;
-	else if(strstr(buf, "Terminating connection due to lack of activity")) return WAN_STOPPED_REASON_PPP_LACK_ACTIVITY;
-	else return WAN_STOPPED_REASON_NONE;
+	snprintf(statusfile, sizeof(statusfile), "/var/run/ppp-vpn%d.status", vpnc_unit);
+	return _pppstatus(statusfile);
 }
 
 int
@@ -347,8 +332,9 @@ void update_vpnc_state(char *prefix, int state, int reason)
 		// keep ip info if it is stopped from connected
 		nvram_set_int(strcat_r(prefix, "sbstate_t", tmp), reason);
 	}
-	else if(state == WAN_STATE_STOPPING){
-		unlink("/tmp/vpncstatus.log");
+	else if(state == WAN_STATE_STOPPING) {
+		snprintf(tmp, sizeof(tmp), "/var/run/ppp-vpn%d.status", vpnc_unit);
+		unlink(tmp);
 	}
 }
 

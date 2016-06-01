@@ -28,7 +28,7 @@ act_node=
 
 modem_act_node=`nvram get $act_node`
 if [ -z "$modem_act_node" ]; then
-	find_modem_node.sh
+	/usr/sbin/find_modem_node.sh
 
 	modem_act_node=`nvram get $act_node`
 	if [ -z "$modem_act_node" ]; then
@@ -43,7 +43,7 @@ else
 	modem_imsi=`nvram get usb_modem_act_imsi |cut -c '1-6' 2>/dev/null`
 fi
 if [ -z "$modem_imsi" ]; then
-	modem_status.sh imsi
+	/usr/sbin/modem_status.sh imsi
 	modem_imsi=`nvram get usb_modem_act_imsi |cut -c '1-6' 2>/dev/null`
 	if [ -z "$modem_imsi" ]; then
 		echo "Can't get IMI of SIM!"

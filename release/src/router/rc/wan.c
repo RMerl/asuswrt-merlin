@@ -886,8 +886,12 @@ int enable_qos()
 void update_wan_state(char *prefix, int state, int reason)
 {
 	char tmp[100], tmp1[100], *ptr;
+	int unit = -1;
 
 	_dprintf("%s(%s, %d, %d)\n", __FUNCTION__, prefix, state, reason);
+
+	if (strncmp(prefix, "wan", 3) == 0)
+		unit = atoi(prefix + 3);
 
 	nvram_set_int(strcat_r(prefix, "state_t", tmp), state);
 	if(state == WAN_STATE_CONNECTED)
@@ -966,8 +970,9 @@ void update_wan_state(char *prefix, int state, int reason)
 		nvram_set_int(strcat_r(prefix, "sbstate_t", tmp), reason);
 	}
 #endif
-	else if(state == WAN_STATE_STOPPING){
-		unlink("/tmp/wanstatus.log");
+	else if(state == WAN_STATE_STOPPING) {
+		snprintf(tmp, sizeof(tmp), "/var/run/ppp-wan%d.status", unit);
+		unlink(tmp);
 	}
         else if (state == WAN_STATE_CONNECTED) {
 		sprintf(tmp,"%c",prefix[3]);
@@ -982,10 +987,7 @@ void update_wan_state(char *prefix, int state, int reason)
 	case WAN_STATE_STOPPING:
 	case WAN_STATE_CONNECTED:
 		/* update WAN LED(s) as soon as possible. */
-		if (strncmp(prefix, "wan", 3) == 0) {
-			int unit = atoi(prefix + 3);
-			update_wan_leds(unit);
-		}
+		update_wan_leds(unit);
 	}
 #endif
 }
@@ -1411,7 +1413,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 			}
 
 			// find the modem node at every start_wan_if() to avoid the incorrct one sometimes.
-			eval("find_modem_node.sh");
+			eval("/usr/sbin/find_modem_node.sh");
 		}
 
 		if(nvram_get_int("usb_modem_act_reset") == 1){
@@ -1447,7 +1449,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 			write_3g_ppp_conf();
 		}
 		else if(strcmp(modem_type, "wimax")){
-			char *modem_argv[] = {"modem_enable.sh", NULL};
+			char *modem_argv[] = {"/usr/sbin/modem_enable.sh", NULL};
 			char *ptr;
 			int sim_state;
 
@@ -2042,7 +2044,10 @@ stop_wan_if(int unit)
 #if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_DATALIMIT)
 		end_wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
+	else
 #endif
+	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_PPP_AUTH_FAIL)
+		end_wan_sbstate = WAN_STOPPED_REASON_PPP_AUTH_FAIL;
 
 	update_wan_state(prefix, WAN_STATE_STOPPING, end_wan_sbstate);
 
@@ -2206,7 +2211,7 @@ stop_wan_if(int unit)
 #endif	/* RTCONFIG_USB_BECEEM */
 
 #ifdef RTCONFIG_INTERNAL_GOBI
-		char *const modem_argv[] = {"modem_stop.sh", NULL};
+		char *const modem_argv[] = {"/usr/sbin/modem_stop.sh", NULL};
 
 		_eval(modem_argv, ">>/tmp/usb.log", 0, NULL);
 #endif
@@ -2762,10 +2767,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #ifdef RTCONFIG_USB_MODEM
 #ifdef RTCONFIG_INTERNAL_GOBI
 	if(dualwan_unit__usbif(wan_unit)){
-		eval("modem_status.sh", "operation");
+		eval("/usr/sbin/modem_status.sh", "operation");
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
-		eval("modem_status.sh", "get_dataset");
-		eval("modem_status.sh", "bytes");
+		eval("/usr/sbin/modem_status.sh", "get_dataset");
+		eval("/usr/sbin/modem_status.sh", "bytes");
 #endif
 
 		char start_sec[32], *str = file2str("/proc/uptime");
@@ -2782,7 +2787,16 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	stop_vpn_eas();
 #endif
 
-	do_dns_detect();
+	if(wan_unit == wan_primary_ifunit()
+#ifdef RTCONFIG_DUALWAN
+					|| nvram_match("wans_mode", "lb")
+#endif
+			){
+		if(do_dns_detect(wan_unit))
+			nvram_set_int("link_internet", 2);
+		else
+			nvram_set_int("link_internet", 1);
+	}
 
 	if (wan_unit != wan_primary_ifunit())
 	{
@@ -3686,35 +3700,47 @@ struct hostent *timeGethostbyname(const char *domain, int timeout){
 	return ipHostent;
 }
 
-int do_dns_detect(){
+int do_dns_detect(int wan_unit){
 	char *test_url = "www.google.com www.baidu.com www.yandex.com";
 	char word[64], *next;
 	struct hostent *host;
+	int debug = nvram_get_int("wan_dnsdet_deb");
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
+
+	if(nvram_get_int("stop_dns_detect"))
+		return 1;
+
+	if(strlen(nvram_safe_get(strcat_r(prefix, "dns", tmp))) <= 0)
+		return 1;
 
 	foreach(word, test_url, next){
 		if(nvram_get_int("old_resolve") > 0){
-			_dprintf("do_dns_detect old: %s.\n", word);
+			if(debug)
+				printf("do_dns_detect old: %s.\n", word);
 			if((host = gethostbyname(word)) == NULL)
 				continue;
 		}
 		else{
-			_dprintf("do_dns_detect new: %s.\n", word);
+			if(debug)
+				printf("do_dns_detect new: %s.\n", word);
 			if((host = timeGethostbyname(word, 2)) == NULL)
 				continue;
 		}
 
 		char *ip = inet_ntoa(*((struct in_addr *)host->h_addr_list[0]));
-		_dprintf("do_dns_detect: %s's IP is %s.\n", word, ip);
+		if(debug)
+			printf("do_dns_detect: %s's IP is %s.\n", word, ip);
 
 		if(!strcmp(ip, "10.0.0.1"))
 			continue;
 
-		nvram_set_int("link_internet", 2);
 		return 1;
 	}
 
-	_dprintf("do_dns_detect: fail to resolve the dns.\n");
-	nvram_set_int("link_internet", 1);
+	if(debug)
+		printf("do_dns_detect: fail to resolve the dns.\n");
 
 	return 0;
 }

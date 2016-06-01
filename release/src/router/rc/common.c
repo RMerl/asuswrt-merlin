@@ -256,28 +256,31 @@ void wanmessage(char *fmt, ...)
 	va_end(args);
 }
 
-int pppstatus(void)
+int _pppstatus(const char *statusfile)
 {
-	FILE *fp;
-	char sline[128], buf[128], *p;
+	char line[128], *status = line;
 
-	if ((fp = fopen("/tmp/wanstatus.log", "r")) && fgets(sline, sizeof(sline), fp))
-	{
-		fcntl(fileno(fp), F_SETFL, fcntl(fileno(fp), F_GETFL) | O_NONBLOCK);
-		p = strstr(sline, ",");
-		strcpy(buf, p+1);
-	}
+	if (statusfile && f_read_string(statusfile, line, sizeof(line)) > 0)
+		strsep(&status, ",");
+	if (!status || *status == '\0')
+		status = "unknown reason";
+
+	if (strstr(status, "No response from ISP.") != NULL)
+		return WAN_STOPPED_REASON_PPP_NO_ACTIVITY;
+	else if (strstr(status, "Failed to authenticate ourselves to peer") != NULL)
+		return WAN_STOPPED_REASON_PPP_AUTH_FAIL;
+	else if (strstr(status, "Terminating connection due to lack of activity") != NULL)
+		return WAN_STOPPED_REASON_PPP_LACK_ACTIVITY;
 	else
-	{
-		strcpy(buf, "unknown reason");
-	}
+		return WAN_STOPPED_REASON_NONE;
+}
 
-	if(fp) fclose(fp);
+int pppstatus(int unit)
+{
+	char statusfile[sizeof("/var/run/ppp-wanXXXXXXXXXX.status")];
 
-	if(strstr(buf, "Failed to authenticate ourselves to peer")) return WAN_STOPPED_REASON_PPP_AUTH_FAIL;
-	else if(strstr(buf, "Terminating connection due to lack of activity")) return WAN_STOPPED_REASON_PPP_LACK_ACTIVITY;
-	else if(strstr(buf, "No response from ISP.")) return WAN_STOPPED_REASON_PPP_NO_ACTIVITY;
-	else return WAN_STOPPED_REASON_NONE;
+	snprintf(statusfile, sizeof(statusfile), "/var/run/ppp-wan%d.status", unit);
+	return _pppstatus(statusfile);
 }
 
 void usage_exit(const char *cmd, const char *help)

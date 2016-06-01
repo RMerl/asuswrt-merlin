@@ -105,12 +105,12 @@ static int rctest_main(int argc, char *argv[])
 			if(on) start_watchdog();
 			else stop_watchdog();
 		}
-#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
+#ifdef RTAC87U
 		else if (strcmp(argv[1], "watchdog02") == 0) {
 			if(on) start_watchdog02();
 			else stop_watchdog02();
 		}
-#endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
+#endif
 		else if (strcmp(argv[1], "sw_devled") == 0) {
 			if(on) start_sw_devled();
 			else stop_sw_devled();

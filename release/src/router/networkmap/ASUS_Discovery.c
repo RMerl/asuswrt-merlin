@@ -285,8 +285,10 @@ void PROCESS_UNPACK_GET_INFO(char *pbuf, struct sockaddr_in from_addr)
     memcpy(searchRouterInfo[a_GetRouterCount].routerProductID,       get_discovery_info.ProductID,         32);
     memcpy(searchRouterInfo[a_GetRouterCount].routerFirmwareVersion, get_discovery_info.FirmwareVersion,   16);
 	memcpy(searchRouterInfo[a_GetRouterCount].routerMacAddress,      get_discovery_info.MacAddress,        6);
-    searchRouterInfo[a_GetRouterCount].routerOperationMode =  get_discovery_info.OperationMode;
+    searchRouterInfo[a_GetRouterCount].routerOperationMode =  get_discovery_info.sw_mode;
+#ifdef WCLIENT
     searchRouterInfo[a_GetRouterCount].routerRegulation =     get_discovery_info.Regulation;
+#endif
     
     char cTemp[512] = {0};
     myAsusDiscoveryDebugPrint("********************* Search a Router ********************");

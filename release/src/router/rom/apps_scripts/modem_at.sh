@@ -23,7 +23,7 @@ if [ -n "$3" -a "$3" == "bulk" -a "$modem_act_node" == "" ]; then
 fi
 
 if [ "$modem_act_node" == "" ]; then
-	find_modem_node.sh
+	/usr/sbin/find_modem_node.sh
 
 	modem_act_node=`nvram get $act_node`
 	if [ "$modem_act_node" == "" ]; then

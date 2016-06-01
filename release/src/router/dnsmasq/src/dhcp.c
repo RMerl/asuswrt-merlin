@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -146,6 +146,7 @@ void dhcp_packet(time_t now, int pxe_fd)
   struct iovec iov;
   ssize_t sz; 
   int iface_index = 0, unicast_dest = 0, is_inform = 0;
+  int rcvd_iface_index;
   struct in_addr iface_addr;
   struct iface_param parm;
 #ifdef HAVE_LINUX_NETWORK
@@ -230,6 +231,7 @@ void dhcp_packet(time_t now, int pxe_fd)
      --bridge-interface option), change ifr.ifr_name so that we look
      for DHCP contexts associated with the aliased interface instead
      of with the aliasing one. */
+  rcvd_iface_index = iface_index;
   for (bridge = daemon->bridges; bridge; bridge = bridge->next)
     {
       for (alias = bridge->alias; alias; alias = alias->next)
@@ -387,7 +389,7 @@ void dhcp_packet(time_t now, int pxe_fd)
       msg.msg_controllen = sizeof(control_u);
       cmptr = CMSG_FIRSTHDR(&msg);
       pkt = (struct in_pktinfo *)CMSG_DATA(cmptr);
-      pkt->ipi_ifindex = iface_index;
+      pkt->ipi_ifindex = rcvd_iface_index;
       pkt->ipi_spec_dst.s_addr = 0;
       msg.msg_controllen = cmptr->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
       cmptr->cmsg_level = IPPROTO_IP;
@@ -651,7 +653,7 @@ int address_allocate(struct dhcp_context *context,
   /* hash hwaddr: use the SDBM hashing algorithm.  Seems to give good
      dispersal even with similarly-valued "strings". */ 
   for (j = 0, i = 0; i < hw_len; i++)
-    j += hwaddr[i] + (j << 6) + (j << 16) - j;
+    j = hwaddr[i] + (j << 6) + (j << 16) - j;
   
   for (pass = 0; pass <= 1; pass++)
     for (c = context; c; c = c->current)

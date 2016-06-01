@@ -22,7 +22,7 @@
 	else if(upgrade_fw_status == 6){
 		parent.document.getElementById("hiddenMask").style.visibility = "hidden";
 		
-                parent.document.getElementById('loading_block2').innerHTML = "To comply with regulatory amendments, we have modified our certification rule to ensure better firmware quality. This version is not compatible with all previously released ASUS firmware and uncertified third party firmware. Please check our official websites for the certified firmware.";	/* untranslated */
+                parent.document.getElementById('loading_block2').innerHTML = "<#FIRM_trx_valid_fail_desc#>";
                 parent.document.getElementById('loading_block3').style.display = "none";
                 parent.showLoadingBar(reboottime);
                 setTimeout("parent.detect_httpd();", reboottime*1000);

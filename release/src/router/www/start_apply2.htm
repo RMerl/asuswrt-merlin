@@ -443,6 +443,14 @@ function initial(){
 
 		return;
 	}	
+	if(getflag == "finishDSLQIS"){
+		if(isWLclient()){
+			if(action_script.search("restart_dsl_wireless") != -1){
+				showWlHint();
+			}
+		}
+		setTimeout("parent.parent.location.href='"+next_page+"';", action_wait*1000);
+	}
 	else if(getflag == "liveUpdate"){
 		setTimeout(function(){
 			parent.parent.detect_firmware();

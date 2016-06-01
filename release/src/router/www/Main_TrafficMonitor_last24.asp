@@ -338,27 +338,26 @@ function Zoom(func){
 							</span>
 							<!--========= svg =========-->
 							<!--[if IE]>
-										<div id="svg-table" align="left">
-										<object id="graph" src="tm.svg" classid="image/svg+xml" width="730" height="350">
-										</div>
+								<div id="svg-table" align="left" class="IE8HACK">
+									<object id="graph" src="tm.svg" classid="image/svg+xml" width="730" height="350">
+								</div>
 							<![endif]-->
 							<!--[if !IE]>-->
 								<object id="graph" data="tm.svg" type="image/svg+xml" width="730" height="350">
 							<!--<![endif]-->
 								</object>
 							<!--========= svg =========-->
-
                     	</td>
         	    	</tr>
 
   		     		<tr>
 						<td>
-						<table width="730px" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px;margin-left:-1px;*margin-left:-10px;">
+				    	 	<table width="730px" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:0px;margin-left:-1px;*margin-left:-10px;margin-left:-12px \9;">
 						  		<tr>
-						  			<th style="text-align:center;width:160px;height:25px;"><#Current#></th>
-						  			<th style="text-align:center;width:160px;height:25px;"><#Average#></th>
-						  			<th style="text-align:center;width:160px;height:25px;"><#Maximum#></th>
-						  			<th style="text-align:center;width:160px;height:25px;"><#Total#></th>
+						  			<th style="text-align:center;width:160px;"><#Current#></th>
+						  			<th style="text-align:center;width:160px;"><#Average#></th>
+						  			<th style="text-align:center;width:160px;"><#Maximum#></th>
+						  			<th style="text-align:center;width:160px;"><#Total#></th>
 						  		</tr>
 						  		<tr>
 						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><div id="rx-current"></div></td>

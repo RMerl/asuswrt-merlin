@@ -610,12 +610,27 @@ restore_defaults_wifi(int all)
 	unsigned int max_mssid;
 	char prefix[]="wlXXXXXX_", tmp[100];
 
+#if !defined(RTCONFIG_NEWSSID_REV2)
 	if (!nvram_contains_word("rc_support", "defpsk") || !strlen(nvram_safe_get("wifi_psk")))
 		return;
+#endif
 
+#if defined(RTCONFIG_NEWSSID_REV2)
+	int band_num = 0;
+
+	/* count the number of supported band */
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		band_num++;
+	}
+
+	macp = get_2g_hwaddr();
+	ether_atoe(macp, mac_binary);
+	sprintf((char *)ssidbase, "ASUS_%02X", mac_binary[5]);
+#else
 	macp = get_lan_hwaddr();
 	ether_atoe(macp, mac_binary);
 	sprintf((char *)ssidbase, "%s_%02X", get_productid(), mac_binary[5]);
+#endif
 
 	unit = 0;
 	max_mssid = num_of_mssid_support(unit);
@@ -623,28 +638,59 @@ restore_defaults_wifi(int all)
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
+#if defined(RTCONFIG_NEWSSID_REV2)
+		sprintf((char *) ssid, "%s%s", ssidbase, unit ? (unit == 2 ? "_5G-2" : (band_num > 2 ? "_5G-1" : "_5G")) : (band_num > 1 ? "_2G" : ""));
+#else
 		sprintf((char *) ssid, "%s%s", ssidbase, unit ? (unit == 2 ? "_5G-2" : "_5G") : "_2G");
+#endif
 		nvram_set(strcat_r(prefix, "ssid", tmp), (char *) ssid);
+#if defined(RTCONFIG_NEWSSID_REV2)
+		if (!strlen(nvram_safe_get("wifi_psk"))) {
+			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "open");
+			nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+			nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
+		} else {
+#endif
 		nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
 		nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
 		nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
+#if defined(RTCONFIG_NEWSSID_REV2)
+		}
+#endif
 
 		if (all)
 		for (subunit = 1; subunit < max_mssid+1; subunit++) {
 			snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
 
+#if defined(RTCONFIG_NEWSSID_REV2)
+			sprintf((char *) ssid, "%s%s_Guest", ssidbase, unit ? (unit == 2 ? "_5G-2" : (band_num > 2 ? "_5G-1" : "_5G")) : (band_num > 1 ? "_2G" : ""));
+#else
 			sprintf((char *) ssid, "%s%s_Guest", ssidbase, unit ? (unit == 2 ? "_5G-2" : "_5G") : "_2G");
+#endif
 			if (subunit > 1)
 				sprintf((char *) ssid, "%s%d", (char *) ssid, subunit);
 			nvram_set(strcat_r(prefix, "ssid", tmp), (char *) ssid);
+#if defined(RTCONFIG_NEWSSID_REV2)
+			if (!strlen(nvram_safe_get("wifi_psk"))) {
+				nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "open");
+				nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+				nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
+			} else {
+#endif
 			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
 			nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
 			nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
+#if defined(RTCONFIG_NEWSSID_REV2)
+			}
+#endif
 		}
 
 		unit++;
 	}
 
+#if defined(RTCONFIG_NEWSSID_REV2)
+	if (strlen(nvram_safe_get("wifi_psk")))
+#endif
 	nvram_set("w_Setting", "1");
 }
 
@@ -1398,8 +1444,8 @@ int download_clmblob_files()
 				printf("\n*** BEFORE-CLMLOAD %s - chipnum = 0x%x (%d)  ", ifname, revinfo.chipnum, revinfo.chipnum);
 				chipid = revinfo.chipnum;
 
-				/* Use same 4366 blob for 43664 */
-				if (chipid == BCM43664_CHIP_ID)
+				/* Use same 4366 blob for 43664 and 4365 */
+				if (chipid == BCM43664_CHIP_ID || chipid == BCM4365_CHIP_ID)
 					chipid = BCM4366_CHIP_ID;
 
 				/* blob filename based on chipid */
@@ -2255,10 +2301,8 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_WIRELESSREPEATER
-#ifndef CONFIG_BCMWL5
 	if (nvram_get_int("sw_mode") != SW_MODE_REPEATER)
-#endif
-		nvram_unset("ure_disable");
+		nvram_set("ure_disable", "1");
 #endif
 
 	/* initialize this value to check fw upgrade status */
@@ -6162,7 +6206,7 @@ static void sysinit(void)
 	init_nvram();  // for system indepent part after getting model
 	restore_defaults(); // restore default if necessary
 	init_nvram2();
-	
+
 #ifdef RTCONFIG_ATEUSB3_FORCE
 	post_syspara(); // adjust nvram variable after restore_defaults
 #endif
@@ -6332,7 +6376,7 @@ int init_main(int argc, char *argv[])
 		case SIGTERM:		/* REBOOT */
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 		_dprintf("modem data: save the data during the signal %d.\n", state);
-		eval("modem_status.sh", "bytes+");
+		eval("/usr/sbin/modem_status.sh", "bytes+");
 #endif
 
 #ifdef RTCONFIG_DSL_TCLINUX

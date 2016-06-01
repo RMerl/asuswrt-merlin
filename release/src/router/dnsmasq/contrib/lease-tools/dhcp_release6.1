@@ -1,0 +1,38 @@
+.TH DHCP_RELEASE 1
+.SH NAME
+dhcp_release6 \- Release a DHCPv6 lease on a the local dnsmasq DHCP server.
+.SH SYNOPSIS
+.B dhcp_release6 --iface <interface> --client-id <client-id> --server-id
+server-id --iaid <iaid>  --ip <IP>  [--dry-run] [--help]
+.SH "DESCRIPTION"
+A utility which forces the DHCP server running on this machine to release a 
+DHCPv6 lease.
+.SS OPTIONS
+.IP "-a, --ip"
+IPv6 address to release.
+.IP "-c, --client-id"
+Colon-separated hex string representing DHCPv6 client id. Normally
+it can be found in leases file both on client and server.
+.IP "-d, --dry-run"
+Print hexadecimal representation of generated DHCPv6 release packet to standard
+output and exit.
+.IP "-h, --help"
+print usage information to standard output and exit.
+.IP "-i, --iaid"
+Decimal representation of DHCPv6 IAID. Normally it can be found in leases file
+both on client and server.
+.IP "-n, --iface"
+Network interface to send a DHCPv6 release packet from.
+.IP "-s, --server-id"
+Colon-separated hex string representing DHCPv6 server id. Normally
+it can be found in leases file both on client and server.
+.SH NOTES
+MUST be run as root - will fail otherwise.
+.SH LIMITATIONS
+Only usable on IPv6 DHCP leases.
+.SH SEE ALSO
+.BR dnsmasq (8)
+.SH AUTHOR
+This manual page was written by Simon Kelley <simon@thekelleys.org.uk>.
+
+

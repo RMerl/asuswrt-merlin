@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
  
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,7 +54,10 @@ static char *my_readlink(char *path)
 	{
 	  /* Not link or doesn't exist. */
 	  if (errno == EINVAL || errno == ENOENT)
-	    return NULL;
+	    {
+	      free(buf);
+	      return NULL;
+	    }
 	  else
 	    die(_("cannot access path %s: %s"), path, EC_MISC);
 	}
@@ -200,6 +203,8 @@ void set_dynamic_inotify(int flag, int total_size, struct crec **rhash, int revh
 	       free(path);
 	     }
 	 }
+
+       closedir(dir_stream);
     }
 }
 

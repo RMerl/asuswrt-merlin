@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -406,346 +406,6 @@ size_t resize_packet(struct dns_header *header, size_t plen, unsigned char *phea
     }
 
   return ansp - (unsigned char *)header;
-}
-
-unsigned char *find_pseudoheader(struct dns_header *header, size_t plen, size_t  *len, unsigned char **p, int *is_sign)
-{
-  /* See if packet has an RFC2671 pseudoheader, and if so return a pointer to it. 
-     also return length of pseudoheader in *len and pointer to the UDP size in *p
-     Finally, check to see if a packet is signed. If it is we cannot change a single bit before
-     forwarding. We look for SIG and TSIG in the addition section, and TKEY queries (for GSS-TSIG) */
-  
-  int i, arcount = ntohs(header->arcount);
-  unsigned char *ansp = (unsigned char *)(header+1);
-  unsigned short rdlen, type, class;
-  unsigned char *ret = NULL;
-
-  if (is_sign)
-    {
-      *is_sign = 0;
-
-      if (OPCODE(header) == QUERY)
-	{
-	  for (i = ntohs(header->qdcount); i != 0; i--)
-	    {
-	      if (!(ansp = skip_name(ansp, header, plen, 4)))
-		return NULL;
-	      
-	      GETSHORT(type, ansp); 
-	      GETSHORT(class, ansp);
-	      
-	      if (class == C_IN && type == T_TKEY)
-		*is_sign = 1;
-	    }
-	}
-    }
-  else
-    {
-      if (!(ansp = skip_questions(header, plen)))
-	return NULL;
-    }
-    
-  if (arcount == 0)
-    return NULL;
-  
-  if (!(ansp = skip_section(ansp, ntohs(header->ancount) + ntohs(header->nscount), header, plen)))
-    return NULL; 
-  
-  for (i = 0; i < arcount; i++)
-    {
-      unsigned char *save, *start = ansp;
-      if (!(ansp = skip_name(ansp, header, plen, 10)))
-	return NULL; 
-
-      GETSHORT(type, ansp);
-      save = ansp;
-      GETSHORT(class, ansp);
-      ansp += 4; /* TTL */
-      GETSHORT(rdlen, ansp);
-      if (!ADD_RDLEN(header, ansp, plen, rdlen))
-	return NULL;
-      if (type == T_OPT)
-	{
-	  if (len)
-	    *len = ansp - start;
-	  if (p)
-	    *p = save;
-	  ret = start;
-	}
-      else if (is_sign && 
-	       i == arcount - 1 && 
-	       class == C_ANY && 
-	       type == T_TSIG)
-	*is_sign = 1;
-    }
-  
-  return ret;
-}
-
-struct macparm {
-  unsigned char *limit;
-  struct dns_header *header;
-  size_t plen;
-  union mysockaddr *l3;
-};
- 
-static size_t add_pseudoheader(struct dns_header *header, size_t plen, unsigned char *limit, 
-			       int optno, unsigned char *opt, size_t optlen, int set_do)
-{ 
-  unsigned char *lenp, *datap, *p;
-  int rdlen, is_sign;
-  
-  if (!(p = find_pseudoheader(header, plen, NULL, NULL, &is_sign)))
-    {
-      if (is_sign)
-	return plen;
-
-      /* We are adding the pseudoheader */
-      if (!(p = skip_questions(header, plen)) ||
-	  !(p = skip_section(p, 
-			     ntohs(header->ancount) + ntohs(header->nscount) + ntohs(header->arcount), 
-			     header, plen)))
-	return plen;
-      *p++ = 0; /* empty name */
-      PUTSHORT(T_OPT, p);
-      PUTSHORT(SAFE_PKTSZ, p); /* max packet length, this will be overwritten */
-      PUTSHORT(0, p);    /* extended RCODE and version */
-      PUTSHORT(set_do ? 0x8000 : 0, p); /* DO flag */
-      lenp = p;
-      PUTSHORT(0, p);    /* RDLEN */
-      rdlen = 0;
-      if (((ssize_t)optlen) > (limit - (p + 4)))
-	return plen; /* Too big */
-      header->arcount = htons(ntohs(header->arcount) + 1);
-      datap = p;
-    }
-  else
-    {
-      int i;
-      unsigned short code, len, flags;
-      
-      /* Must be at the end, if exists */
-      if (ntohs(header->arcount) != 1 ||
-	  is_sign ||
-	  (!(p = skip_name(p, header, plen, 10))))
-	return plen;
-      
-      p += 6; /* skip UDP length and RCODE */
-      GETSHORT(flags, p);
-      if (set_do)
-	{
-	  p -=2;
-	  PUTSHORT(flags | 0x8000, p);
-	}
-
-      lenp = p;
-      GETSHORT(rdlen, p);
-      if (!CHECK_LEN(header, p, plen, rdlen))
-	return plen; /* bad packet */
-      datap = p;
-
-       /* no option to add */
-      if (optno == 0)
-	return plen;
-      	  
-      /* check if option already there */
-      for (i = 0; i + 4 < rdlen; i += len + 4)
-	{
-	  GETSHORT(code, p);
-	  GETSHORT(len, p);
-	  if (code == optno)
-	    return plen;
-	  p += len;
-	}
-      
-      if (((ssize_t)optlen) > (limit - (p + 4)))
-	return plen; /* Too big */
-    }
-  
-  if (optno != 0)
-    {
-      PUTSHORT(optno, p);
-      PUTSHORT(optlen, p);
-      memcpy(p, opt, optlen);
-      p += optlen;  
-    }
-
-  PUTSHORT(p - datap, lenp);
-  return p - (unsigned char *)header;
-  
-}
-
-static int filter_mac(int family, char *addrp, char *mac, size_t maclen, void *parmv)
-{
-  struct macparm *parm = parmv;
-  int match = 0;
-    
-  if (family == parm->l3->sa.sa_family)
-    {
-      if (family == AF_INET && memcmp(&parm->l3->in.sin_addr, addrp, INADDRSZ) == 0)
-	match = 1;
-#ifdef HAVE_IPV6
-      else
-	if (family == AF_INET6 && memcmp(&parm->l3->in6.sin6_addr, addrp, IN6ADDRSZ) == 0)
-	  match = 1;
-#endif
-    }
- 
-  if (!match)
-    return 1; /* continue */
-
-  parm->plen = add_pseudoheader(parm->header, parm->plen, parm->limit,  EDNS0_OPTION_MAC, (unsigned char *)mac, maclen, 0);
-  
-  return 0; /* done */
-}	      
-     
-size_t add_mac(struct dns_header *header, size_t plen, char *limit, union mysockaddr *l3)
-{
-  struct macparm parm;
-     
-/* Must have an existing pseudoheader as the only ar-record, 
-   or have no ar-records. Must also not be signed */
-   
-  if (ntohs(header->arcount) > 1)
-    return plen;
-
-  parm.header = header;
-  parm.limit = (unsigned char *)limit;
-  parm.plen = plen;
-  parm.l3 = l3;
-
-  iface_enumerate(AF_UNSPEC, &parm, filter_mac);
-  
-  return parm.plen; 
-}
-
-struct subnet_opt {
-  u16 family;
-  u8 source_netmask, scope_netmask;
-#ifdef HAVE_IPV6 
-  u8 addr[IN6ADDRSZ];
-#else
-  u8 addr[INADDRSZ];
-#endif
-};
-
-static void *get_addrp(union mysockaddr *addr, const short family) 
-{
-#ifdef HAVE_IPV6
-  if (family == AF_INET6)
-    return &addr->in6.sin6_addr;
-#endif
-
-  return &addr->in.sin_addr;
-}
-
-static size_t calc_subnet_opt(struct subnet_opt *opt, union mysockaddr *source)
-{
-  /* http://tools.ietf.org/html/draft-vandergaast-edns-client-subnet-02 */
-  
-  int len;
-  void *addrp;
-  int sa_family = source->sa.sa_family;
-
-#ifdef HAVE_IPV6
-  if (source->sa.sa_family == AF_INET6)
-    {
-      opt->source_netmask = daemon->add_subnet6->mask;
-      if (daemon->add_subnet6->addr_used) 
-	{
-	  sa_family = daemon->add_subnet6->addr.sa.sa_family;
-	  addrp = get_addrp(&daemon->add_subnet6->addr, sa_family);
-	} 
-      else 
-	addrp = &source->in6.sin6_addr;
-    }
-  else
-#endif
-    {
-      opt->source_netmask = daemon->add_subnet4->mask;
-      if (daemon->add_subnet4->addr_used)
-	{
-	  sa_family = daemon->add_subnet4->addr.sa.sa_family;
-	  addrp = get_addrp(&daemon->add_subnet4->addr, sa_family);
-	} 
-      else 
-	addrp = &source->in.sin_addr;
-    }
-  
-  opt->scope_netmask = 0;
-  len = 0;
-  
-  if (opt->source_netmask != 0)
-    {
-#ifdef HAVE_IPV6
-      opt->family = htons(sa_family == AF_INET6 ? 2 : 1);
-#else
-      opt->family = htons(1);
-#endif
-      len = ((opt->source_netmask - 1) >> 3) + 1;
-      memcpy(opt->addr, addrp, len);
-      if (opt->source_netmask & 7)
-	opt->addr[len-1] &= 0xff << (8 - (opt->source_netmask & 7));
-    }
-
-  return len + 4;
-}
- 
-size_t add_source_addr(struct dns_header *header, size_t plen, char *limit, union mysockaddr *source)
-{
-  /* http://tools.ietf.org/html/draft-vandergaast-edns-client-subnet-02 */
-  
-  int len;
-  struct subnet_opt opt;
-  
-  len = calc_subnet_opt(&opt, source);
-  return add_pseudoheader(header, plen, (unsigned char *)limit, EDNS0_OPTION_CLIENT_SUBNET, (unsigned char *)&opt, len, 0);
-}
-
-#ifdef HAVE_DNSSEC
-size_t add_do_bit(struct dns_header *header, size_t plen, char *limit)
-{
-  return add_pseudoheader(header, plen, (unsigned char *)limit, 0, NULL, 0, 1);
-}
-#endif
-
-int check_source(struct dns_header *header, size_t plen, unsigned char *pseudoheader, union mysockaddr *peer)
-{
-  /* Section 9.2, Check that subnet option in reply matches. */
-
-
- int len, calc_len;
-  struct subnet_opt opt;
-  unsigned char *p;
-  int code, i, rdlen;
-  
-   calc_len = calc_subnet_opt(&opt, peer);
-   
-   if (!(p = skip_name(pseudoheader, header, plen, 10)))
-     return 1;
-   
-   p += 8; /* skip UDP length and RCODE */
-   
-   GETSHORT(rdlen, p);
-   if (!CHECK_LEN(header, p, plen, rdlen))
-     return 1; /* bad packet */
-   
-   /* check if option there */
-   for (i = 0; i + 4 < rdlen; i += len + 4)
-     {
-       GETSHORT(code, p);
-       GETSHORT(len, p);
-       if (code == EDNS0_OPTION_CLIENT_SUBNET)
-	 {
-	   /* make sure this doesn't mismatch. */
-	   opt.scope_netmask = p[3];
-	   if (len != calc_len || memcmp(p, &opt, len) != 0)
-	     return 0;
-	 }
-       p += len;
-     }
-   
-   return 1;
 }
 
 /* is addr in the non-globally-routed IP space? */ 
@@ -1236,9 +896,7 @@ size_t setup_reply(struct dns_header *header, size_t qlen,
   header->nscount = htons(0);
   header->arcount = htons(0);
   header->ancount = htons(0); /* no answers unless changed below */
-  if (flags == F_NEG)
-    SET_RCODE(header, SERVFAIL); /* couldn't get memory */
-  else if (flags == F_NOERR)
+  if (flags == F_NOERR)
     SET_RCODE(header, NOERROR); /* empty domain */
   else if (flags == F_NXDOMAIN)
     SET_RCODE(header, NXDOMAIN);
@@ -1275,11 +933,9 @@ int check_for_local_domain(char *name, time_t now)
   struct naptr *naptr;
 
   /* Note: the call to cache_find_by_name is intended to find any record which matches
-     ie A, AAAA, CNAME, DS. Because RRSIG records are marked by setting both F_DS and F_DNSKEY,
-     cache_find_by name ordinarily only returns records with an exact match on those bits (ie
-     for the call below, only DS records). The F_NSIGMATCH bit changes this behaviour */
+     ie A, AAAA, CNAME. */
 
-  if ((crecp = cache_find_by_name(NULL, name, now, F_IPV4 | F_IPV6 | F_CNAME | F_DS | F_NO_RR | F_NSIGMATCH)) &&
+  if ((crecp = cache_find_by_name(NULL, name, now, F_IPV4 | F_IPV6 | F_CNAME |F_NO_RR)) &&
       (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
     return 1;
   
@@ -1511,11 +1167,23 @@ int add_resource_record(struct dns_header *header, char *limit, int *truncp, int
 static unsigned long crec_ttl(struct crec *crecp, time_t now)
 {
   /* Return 0 ttl for DHCP entries, which might change
-     before the lease expires. */
+     before the lease expires, unless configured otherwise. */
 
-  if  (crecp->flags & (F_IMMORTAL | F_DHCP))
-    return daemon->local_ttl;
+  if (crecp->flags & F_DHCP)
+    {
+      int conf_ttl = daemon->use_dhcp_ttl ? daemon->dhcp_ttl : daemon->local_ttl;
+      
+      /* Apply ceiling of actual lease length to configured TTL. */
+      if (!(crecp->flags & F_IMMORTAL) && (crecp->ttd - now) < conf_ttl)
+	return crecp->ttd - now;
+      
+      return conf_ttl;
+    }	  
   
+  /* Immortal entries other than DHCP are local, and hold TTL in TTD field. */
+  if (crecp->flags & F_IMMORTAL)
+    return crecp->ttd;
+
   /* Return the Max TTL value if it is lower then the actual TTL */
   if (daemon->max_ttl == 0 || ((unsigned)(crecp->ttd - now) < daemon->max_ttl))
     return crecp->ttd - now;
@@ -1527,54 +1195,37 @@ static unsigned long crec_ttl(struct crec *crecp, time_t now)
 /* return zero if we can't answer from cache, or packet size if we can */
 size_t answer_request(struct dns_header *header, char *limit, size_t qlen,  
 		      struct in_addr local_addr, struct in_addr local_netmask, 
-		      time_t now, int *ad_reqd, int *do_bit) 
+		      time_t now, int ad_reqd, int do_bit, int have_pseudoheader) 
 {
   char *name = daemon->namebuff;
-  unsigned char *p, *ansp, *pheader;
+  unsigned char *p, *ansp;
   unsigned int qtype, qclass;
   struct all_addr addr;
   int nameoffset;
   unsigned short flag;
   int q, ans, anscount = 0, addncount = 0;
-  int dryrun = 0, sec_reqd = 0, have_pseudoheader = 0;
+  int dryrun = 0;
   struct crec *crecp;
   int nxdomain = 0, auth = 1, trunc = 0, sec_data = 1;
   struct mx_srv_record *rec;
   size_t len;
- 
+  
+  if (ntohs(header->ancount) != 0 ||
+      ntohs(header->nscount) != 0 ||
+      ntohs(header->qdcount) == 0 || 
+      OPCODE(header) != QUERY )
+    return 0;
+  
   /* Don't return AD set if checking disabled. */
   if (header->hb4 & HB4_CD)
     sec_data = 0;
   
-  /* RFC 6840 5.7 */
-  *ad_reqd = header->hb4 & HB4_AD;
-  *do_bit = 0;
-
-  /* If there is an RFC2671 pseudoheader then it will be overwritten by
+  /* If there is an  additional data section then it will be overwritten by
      partial replies, so we have to do a dry run to see if we can answer
-     the query. We check to see if the do bit is set, if so we always
-     forward rather than answering from the cache, which doesn't include
-     security information, unless we're in DNSSEC validation mode. */
+     the query. */
+  if (ntohs(header->arcount) != 0)
+    dryrun = 1;
 
-  if (find_pseudoheader(header, qlen, NULL, &pheader, NULL))
-    { 
-      unsigned short flags;
-      
-      have_pseudoheader = 1;
-
-      pheader += 4; /* udp size, ext_rcode */
-      GETSHORT(flags, pheader);
-      
-      if ((sec_reqd = flags & 0x8000))
-	*do_bit = 1;/* do bit */ 
-
-      *ad_reqd = 1;
-      dryrun = 1;
-    }
-
-  if (ntohs(header->qdcount) == 0 || OPCODE(header) != QUERY )
-    return 0;
-  
   for (rec = daemon->mxnames; rec; rec = rec->next)
     rec->offset = 0;
   
@@ -1597,11 +1248,6 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
             
       GETSHORT(qtype, p); 
       GETSHORT(qclass, p);
-
-      /* Don't filter RRSIGS from answers to ANY queries, even if do-bit
-	 not set. */
-      if (qtype == T_ANY)
-	*do_bit = 1;
 
       ans = 0; /* have we answered this question */
       
@@ -1636,98 +1282,6 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 	    }
 	}
 
-#ifdef HAVE_DNSSEC
-      if (option_bool(OPT_DNSSEC_VALID) && (qtype == T_DNSKEY || qtype == T_DS))
-	{
-	  int gotone = 0;
-	  struct blockdata *keydata;
-
-	  /* Do we have RRSIG? Can't do DS or DNSKEY otherwise. */
-	  if (sec_reqd)
-	    {
-	      crecp = NULL;
-	      while ((crecp = cache_find_by_name(crecp, name, now, F_DNSKEY | F_DS)))
-		if (crecp->uid == qclass && crecp->addr.sig.type_covered == qtype)
-		  break;
-	    }
-	  
-	  if (!sec_reqd || crecp)
-	    {
-	      if (qtype == T_DS)
-		{
-		  crecp = NULL;
-		  while ((crecp = cache_find_by_name(crecp, name, now, F_DS)))
-		    if (crecp->uid == qclass)
-		      {
-			gotone = 1; 
-			if (!dryrun)
-			  {
-			    if (crecp->flags & F_NEG)
-			      {
-				if (crecp->flags & F_NXDOMAIN)
-				  nxdomain = 1;
-				log_query(F_UPSTREAM, name, NULL, "no DS");	
-			      }
-			    else if ((keydata = blockdata_retrieve(crecp->addr.ds.keydata, crecp->addr.ds.keylen, NULL)))
-			      {			     			      
-				struct all_addr a;
-				a.addr.keytag =  crecp->addr.ds.keytag;
-				log_query(F_KEYTAG | (crecp->flags & F_CONFIG), name, &a, "DS keytag %u");
-				if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-							crec_ttl(crecp, now), &nameoffset,
-							T_DS, qclass, "sbbt", 
-							crecp->addr.ds.keytag, crecp->addr.ds.algo, 
-							crecp->addr.ds.digest, crecp->addr.ds.keylen, keydata))
-				  anscount++;
-				
-			      } 
-			  }
-		      }
-		}
-	      else /* DNSKEY */
-		{
-		  crecp = NULL;
-		  while ((crecp = cache_find_by_name(crecp, name, now, F_DNSKEY)))
-		    if (crecp->uid == qclass)
-		      {
-			gotone = 1;
-			if (!dryrun && (keydata = blockdata_retrieve(crecp->addr.key.keydata, crecp->addr.key.keylen, NULL)))
-			  {			     			      
-			    struct all_addr a;
-			    a.addr.keytag =  crecp->addr.key.keytag;
-			    log_query(F_KEYTAG | (crecp->flags & F_CONFIG), name, &a, "DNSKEY keytag %u");
-			    if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-						    crec_ttl(crecp, now), &nameoffset,
-						    T_DNSKEY, qclass, "sbbt", 
-						    crecp->addr.key.flags, 3, crecp->addr.key.algo, crecp->addr.key.keylen, keydata))
-			      anscount++;
-			  }
-		      }
-		}
-	    }
-	  
-	  /* Now do RRSIGs */
-	  if (gotone)
-	    {
-	      ans = 1;
-	      auth = 0;
-	      if (!dryrun && sec_reqd)
-		{
-		  crecp = NULL;
-		  while ((crecp = cache_find_by_name(crecp, name, now, F_DNSKEY | F_DS)))
-		    if (crecp->uid == qclass && crecp->addr.sig.type_covered == qtype &&
-			(keydata = blockdata_retrieve(crecp->addr.sig.keydata, crecp->addr.sig.keylen, NULL)))
-		      {
-			add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-					    crec_ttl(crecp, now), &nameoffset,
-					    T_RRSIG, qclass, "t", crecp->addr.sig.keylen, keydata);
-			anscount++;
-		      }
-		}
-	    }
-	}
-#endif	     
-      
       if (qclass == C_IN)
 	{
 	  struct txt_record *t;
@@ -1736,6 +1290,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 	    if ((t->class == qtype || qtype == T_ANY) && hostname_isequal(name, t->name))
 	      {
 		ans = 1;
+		sec_data = 0;
 		if (!dryrun)
 		  {
 		    log_query(F_CONFIG | F_RRNAME, name, NULL, "<RR>");
@@ -1792,6 +1347,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 	      
 	      if (intr)
 		{
+		  sec_data = 0;
 		  ans = 1;
 		  if (!dryrun)
 		    {
@@ -1805,6 +1361,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 	      else if (ptr)
 		{
 		  ans = 1;
+		  sec_data = 0;
 		  if (!dryrun)
 		    {
 		      log_query(F_CONFIG | F_RRNAME, name, NULL, "<PTR>");
@@ -1819,38 +1376,12 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 		}
 	      else if ((crecp = cache_find_by_addr(NULL, &addr, now, is_arpa)))
 		{
-		  if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)) && sec_reqd)
-		    {
-		      if (!option_bool(OPT_DNSSEC_VALID) || ((crecp->flags & F_NEG) && (crecp->flags & F_DNSSECOK)))
-			crecp = NULL;
-#ifdef HAVE_DNSSEC
-		      else if (crecp->flags & F_DNSSECOK)
-			{
-			  int gotsig = 0;
-			  struct crec *rr_crec = NULL;
-
-			  while ((rr_crec = cache_find_by_name(rr_crec, name, now, F_DS | F_DNSKEY)))
-			    {
-			      if (rr_crec->addr.sig.type_covered == T_PTR && rr_crec->uid == C_IN)
-				{
-				  char *sigdata = blockdata_retrieve(rr_crec->addr.sig.keydata, rr_crec->addr.sig.keylen, NULL);
-				  gotsig = 1;
-				  
-				  if (!dryrun && 
-				      add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-							  rr_crec->ttd - now, &nameoffset,
-							  T_RRSIG, C_IN, "t", crecp->addr.sig.keylen, sigdata))
-				    anscount++;
-				}
-			    } 
-			  
-			  if (!gotsig)
-			    crecp = NULL;
-			}
-#endif
-		    }
-
-		  if (crecp)
+		  /* Don't use cache when DNSSEC data required, unless we know that
+		     the zone is unsigned, which implies that we're doing
+		     validation. */
+		  if ((crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)) || 
+		      !do_bit || 
+		      (option_bool(OPT_DNSSEC_VALID) && !(crecp->flags & F_DNSSECOK)))
 		    {
 		      do 
 			{ 
@@ -1860,19 +1391,19 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 			  
 			  if (!(crecp->flags & F_DNSSECOK))
 			    sec_data = 0;
-			  
+			   
+			  ans = 1;
+			   
 			  if (crecp->flags & F_NEG)
 			    {
-			      ans = 1;
 			      auth = 0;
 			      if (crecp->flags & F_NXDOMAIN)
 				nxdomain = 1;
 			      if (!dryrun)
 				log_query(crecp->flags & ~F_FORWARD, name, &addr, NULL);
 			    }
-			  else if ((crecp->flags & (F_HOSTS | F_DHCP)) || !sec_reqd || option_bool(OPT_DNSSEC_VALID))
+			  else
 			    {
-			      ans = 1;
 			      if (!(crecp->flags & (F_HOSTS | F_DHCP)))
 				auth = 0;
 			      if (!dryrun)
@@ -1892,6 +1423,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 	      else if (is_rev_synth(is_arpa, &addr, name))
 		{
 		  ans = 1;
+		  sec_data = 0;
 		  if (!dryrun)
 		    {
 		      log_query(F_CONFIG | F_REVERSE | is_arpa, name, &addr, NULL); 
@@ -1908,6 +1440,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 		{
 		  /* if not in cache, enabled and private IPV4 address, return NXDOMAIN */
 		  ans = 1;
+		  sec_data = 0;
 		  nxdomain = 1;
 		  if (!dryrun)
 		    log_query(F_CONFIG | F_REVERSE | F_IPV4 | F_NEG | F_NXDOMAIN, 
@@ -1955,6 +1488,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 		  if (i == 4)
 		    {
 		      ans = 1;
+		      sec_data = 0;
 		      if (!dryrun)
 			{
 			  addr.addr.addr4.s_addr = htonl(a);
@@ -1993,6 +1527,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 				continue;
 #endif	
 			      ans = 1;	
+			      sec_data = 0;
 			      if (!dryrun)
 				{
 				  gotit = 1;
@@ -2032,48 +1567,8 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 		      crecp = save;
 		    }
 
-		  /* If the client asked for DNSSEC and we can't provide RRSIGs, either
-		     because we've not doing DNSSEC or the cached answer is signed by negative,
-		     don't answer from the cache, forward instead. */
-		  if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)) && sec_reqd)
-		    {
-		      if (!option_bool(OPT_DNSSEC_VALID) || ((crecp->flags & F_NEG) && (crecp->flags & F_DNSSECOK)))
-			crecp = NULL;
-#ifdef HAVE_DNSSEC
-		      else if (crecp->flags & F_DNSSECOK)
-			{
-			  /* We're returning validated data, need to return the RRSIG too. */
-			  struct crec *rr_crec = NULL;
-			  int sigtype = type;
-			  /* The signature may have expired even though the data is still in cache, 
-			     forward instead of answering from cache if so. */
-			  int gotsig = 0;
-			  
-			  if (crecp->flags & F_CNAME)
-			    sigtype = T_CNAME;
-			  
-			  while ((rr_crec = cache_find_by_name(rr_crec, name, now, F_DS | F_DNSKEY)))
-			    {
-			      if (rr_crec->addr.sig.type_covered == sigtype && rr_crec->uid == C_IN)
-				{
-				  char *sigdata = blockdata_retrieve(rr_crec->addr.sig.keydata, rr_crec->addr.sig.keylen, NULL);
-				  gotsig = 1;
-				  
-				  if (!dryrun && 
-				      add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-							  rr_crec->ttd - now, &nameoffset,
-							  T_RRSIG, C_IN, "t", rr_crec->addr.sig.keylen, sigdata))
-				    anscount++;
-				}
-			    }
-			  
-			  if (!gotsig)
-			    crecp = NULL;
-			}
-#endif
-		    }		 
-
-		  if (crecp)
+		  /* If the client asked for DNSSEC  don't use cached data. */
+		  if ((crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)) || !do_bit || !(crecp->flags & F_DNSSECOK))
 		    do
 		      { 
 			/* don't answer wildcard queries with data not from /etc/hosts
@@ -2107,17 +1602,12 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 			
 			if (crecp->flags & F_NEG)
 			  {
-			    /* We don't cache NSEC records, so if a DNSSEC-validated negative answer
-			       is cached and the client wants DNSSEC, forward rather than answering from the cache */
-			    if (!sec_reqd || !(crecp->flags & F_DNSSECOK))
-			      {
-				ans = 1;
-				auth = 0;
-				if (crecp->flags & F_NXDOMAIN)
-				  nxdomain = 1;
-				if (!dryrun)
-				  log_query(crecp->flags, name, NULL, NULL);
-			      }
+			    ans = 1;
+			    auth = 0;
+			    if (crecp->flags & F_NXDOMAIN)
+			      nxdomain = 1;
+			    if (!dryrun)
+			      log_query(crecp->flags, name, NULL, NULL);
 			  }
 			else 
 			  {
@@ -2355,10 +1845,11 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 
   len = ansp - (unsigned char *)header;
   
+  /* Advertise our packet size limit in our reply */
   if (have_pseudoheader)
-    len = add_pseudoheader(header, len, (unsigned char *)limit, 0, NULL, 0, sec_reqd);
+    len = add_pseudoheader(header, len, (unsigned char *)limit, daemon->edns_pktsz, 0, NULL, 0, do_bit, 0);
   
-  if (*ad_reqd && sec_data)
+  if (ad_reqd && sec_data)
     header->hb4 |= HB4_AD;
   else
     header->hb4 &= ~HB4_AD;

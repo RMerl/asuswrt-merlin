@@ -21,7 +21,7 @@
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <style type="text/css">
-.contentM_qis{
+.contentM_qis{ 
 	width:650px;
 	height:475px;
 	margin-top:-160px;

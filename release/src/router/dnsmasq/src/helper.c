@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -219,7 +219,18 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 	  action_str = "tftp";
 	  is6 = (data.flags != AF_INET);
 	}
-      else
+      else if (data.action == ACTION_ARP)
+	{
+	  action_str = "arp-add";
+	  is6 = (data.flags != AF_INET);
+	}
+       else if (data.action == ACTION_ARP_DEL)
+	{
+	  action_str = "arp-del";
+	  is6 = (data.flags != AF_INET);
+	  data.action = ACTION_ARP;
+	}
+       else 
 	continue;
 
       	
@@ -289,7 +300,7 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
     
       if (!is6)
 	inet_ntop(AF_INET, &data.addr, daemon->addrbuff, ADDRSTRLEN);
-#ifdef HAVE_DHCP6
+#ifdef HAVE_IPV6
       else
 	inet_ntop(AF_INET6, &data.addr6, daemon->addrbuff, ADDRSTRLEN);
 #endif
@@ -318,6 +329,22 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 		  lua_setfield(lua, -2, "file_name"); 
 		  lua_pushstring(lua, is6 ? daemon->packet : daemon->dhcp_buff);
 		  lua_setfield(lua, -2, "file_size");
+		  lua_call(lua, 2, 0);	/* pass 2 values, expect 0 */
+		}
+	    }
+	  else if (data.action == ACTION_ARP)
+	    {
+	      lua_getglobal(lua, "arp"); 
+	      if (lua_type(lua, -1) != LUA_TFUNCTION)
+		lua_pop(lua, 1); /* arp function optional */
+	      else
+		{
+		  lua_pushstring(lua, action_str); /* arg1 - action */
+		  lua_newtable(lua);               /* arg2 - data table */
+		  lua_pushstring(lua, daemon->addrbuff);
+		  lua_setfield(lua, -2, "client_address");
+		  lua_pushstring(lua, daemon->dhcp_buff);
+		  lua_setfield(lua, -2, "mac_address");
 		  lua_call(lua, 2, 0);	/* pass 2 values, expect 0 */
 		}
 	    }
@@ -478,7 +505,7 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 	  continue;
 	}
       
-      if (data.action != ACTION_TFTP)
+      if (data.action != ACTION_TFTP && data.action != ACTION_ARP)
 	{
 #ifdef HAVE_DHCP6
 	  my_setenv("DNSMASQ_IAID", is6 ? daemon->dhcp_buff3 : NULL, &err);
@@ -550,10 +577,9 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 	  my_setenv("DNSMASQ_OLD_HOSTNAME", data.action == ACTION_OLD_HOSTNAME ? hostname : NULL, &err);
 	  if (data.action == ACTION_OLD_HOSTNAME)
 	    hostname = NULL;
-	}
-
-      my_setenv("DNSMASQ_LOG_DHCP", option_bool(OPT_LOG_OPTS) ? "1" : NULL, &err);
-      
+	  
+	  my_setenv("DNSMASQ_LOG_DHCP", option_bool(OPT_LOG_OPTS) ? "1" : NULL, &err);
+    }
       /* we need to have the event_fd around if exec fails */
       if ((i = fcntl(event_fd, F_GETFD)) != -1)
 	fcntl(event_fd, F_SETFD, i | FD_CLOEXEC);
@@ -563,8 +589,8 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
       if (err == 0)
 	{
 	  execl(daemon->lease_change_command, 
-		p ? p+1 : daemon->lease_change_command,
-		action_str, is6 ? daemon->packet : daemon->dhcp_buff, 
+		p ? p+1 : daemon->lease_change_command, action_str, 
+		(is6 && data.action != ACTION_ARP) ? daemon->packet : daemon->dhcp_buff, 
 		daemon->addrbuff, hostname, (char*)NULL);
 	  err = errno;
 	}
@@ -759,6 +785,30 @@ void queue_tftp(off_t file_len, char *filename, union mysockaddr *peer)
   bytes_in_buf = sizeof(struct script_data) +  filename_len;
 }
 #endif
+
+void queue_arp(int action, unsigned char *mac, int maclen, int family, struct all_addr *addr)
+{
+  /* no script */
+  if (daemon->helperfd == -1)
+    return;
+  
+  buff_alloc(sizeof(struct script_data));
+  memset(buf, 0, sizeof(struct script_data));
+
+  buf->action = action;
+  buf->hwaddr_len = maclen;
+  buf->hwaddr_type =  ARPHRD_ETHER; 
+  if ((buf->flags = family) == AF_INET)
+    buf->addr = addr->addr.addr4;
+#ifdef HAVE_IPV6
+  else
+    buf->addr6 = addr->addr.addr6;
+#endif
+  
+  memcpy(buf->hwaddr, mac, maclen);
+  
+  bytes_in_buf = sizeof(struct script_data);
+}
 
 int helper_buf_empty(void)
 {

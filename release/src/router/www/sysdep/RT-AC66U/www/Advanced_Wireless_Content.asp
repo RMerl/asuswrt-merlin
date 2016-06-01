@@ -138,6 +138,55 @@ function initial(){
 		}
 	}
 
+	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+		if(!Qcawifi_support && !Rawifi_support){
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+				document.getElementById('acs_ch13_checkbox').style.display = "";				
+		}
+	}
+
+	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+		if(!Qcawifi_support && !Rawifi_support){
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+				document.getElementById('acs_ch13_checkbox').style.display = "";				
+		}
+	}
+
+	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+		if(!Qcawifi_support && !Rawifi_support){
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+				document.getElementById('acs_ch13_checkbox').style.display = "";				
+		}
+	}
+
+	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+		if(!Qcawifi_support && !Rawifi_support){
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+				document.getElementById('acs_ch13_checkbox').style.display = "";				
+		}
+	}
+
+	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+		if(!Qcawifi_support && !Rawifi_support){
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+				document.getElementById('acs_ch13_checkbox').style.display = "";				
+		}
+	}
+
+	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+		if(!Qcawifi_support && !Rawifi_support){
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+				document.getElementById('acs_ch13_checkbox').style.display = "";				
+		}
+	}
+
+	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+		if(!Qcawifi_support && !Rawifi_support){
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+				document.getElementById('acs_ch13_checkbox').style.display = "";				
+		}
+	}
+
 	if(smart_connect_support){
 		var flag = '<% get_parameter("flag"); %>';		
 		var smart_connect_flag_t;
@@ -586,6 +635,55 @@ function check_acs_band1_support(obj){
 		document.form.acs_band1.value = 0;
 }
 
+function check_acs_ch13_support(obj){
+	if(obj.checked)
+		document.form.acs_ch13.value = 1;
+	else
+		document.form.acs_ch13.value = 0;
+}
+
+function check_acs_ch13_support(obj){
+	if(obj.checked)
+		document.form.acs_ch13.value = 1;
+	else
+		document.form.acs_ch13.value = 0;
+}
+
+function check_acs_ch13_support(obj){
+	if(obj.checked)
+		document.form.acs_ch13.value = 1;
+	else
+		document.form.acs_ch13.value = 0;
+}
+
+function check_acs_ch13_support(obj){
+	if(obj.checked)
+		document.form.acs_ch13.value = 1;
+	else
+		document.form.acs_ch13.value = 0;
+}
+
+function check_acs_ch13_support(obj){
+	if(obj.checked)
+		document.form.acs_ch13.value = 1;
+	else
+		document.form.acs_ch13.value = 0;
+}
+
+function check_acs_ch13_support(obj){
+	if(obj.checked)
+		document.form.acs_ch13.value = 1;
+	else
+		document.form.acs_ch13.value = 0;
+}
+
+function check_acs_ch13_support(obj){
+	if(obj.checked)
+		document.form.acs_ch13.value = 1;
+	else
+		document.form.acs_ch13.value = 0;
+}
+
 function tmo_wl_nmode(){
 	var tmo2nmode = [["0",  "<#Auto#>"],["6",       "B Only"],["5", "G Only"],["1", "N Only"],["2",	"B/G Mixed"],["4", "G/N Mixed"]];
 	var tmo5nmode = [["0",  "<#Auto#>"],["7",       "A Only"],["1", "N Only"],["3", "AC Only"],["4", "A/N Mixed"]];
@@ -747,6 +845,7 @@ function regen_auto_option(obj){
 <input type="hidden" name="wl_subunit" value='-1'>
 <input type="hidden" name="acs_dfs" value='<% nvram_get("acs_dfs"); %>'>
 <input type="hidden" name="acs_band1" value='<% nvram_get("acs_band1"); %>'>
+<input type="hidden" name="acs_ch13" value='<% nvram_get("acs_ch13"); %>'>
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
 <input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>">
 <input type="hidden" name="wps_dualband" value="<% nvram_get("wps_dualband"); %>">
@@ -902,6 +1001,7 @@ function regen_auto_option(obj){
 						<span id="auto_channel" style="display:none;margin-left:10px;"></span><br>
 						<span id="dfs_checkbox" style="display:none"><input type="checkbox" onClick="check_DFS_support(this);" name="acs_dfs_checkbox" <% nvram_match("acs_dfs", "1", "checked"); %>><#WLANConfig11b_EChannel_dfs#></input></span>
 						<span id="acs_band1_checkbox" style="display:none;"><input type="checkbox" onClick="check_acs_band1_support(this);" <% nvram_match("acs_band1", "1", "checked"); %>><#WLANConfig11b_EChannel_band1#></input></span>
+						<span id="acs_ch13_checkbox" style="display:none;"><input type="checkbox" onClick="check_acs_ch13_support(this);" <% nvram_match("acs_ch13", "1", "checked"); %>>Auto select channel including channel 12, 13</input></span>
 					</td>
 			  </tr> 
 		  	<!-- end -->

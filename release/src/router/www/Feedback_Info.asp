@@ -172,10 +172,6 @@ function reset_diag_state(){
 <div id="fb_success_dsl_1" style="display:none;">
 	<br>
 	<div class="feedback_info_1">We are working hard to improve the firmware of <#Web_Title2#> and your feedback is very important to us. We will use your feedbacks and comments to strive to improve your ASUS experience.</div>
-	<br>
-	<br>
-	<div class="feedback_info_1">To get help from other users, you could post your question in the <a href="http://vip.asus.com/forum/topic.aspx?board_id=11&SLanguage=en-us" style="color:#FFCC00;" target="_blank">ASUS VIP Forum</a>.</div>
-	<br>
 	<br>	
 </div>
 

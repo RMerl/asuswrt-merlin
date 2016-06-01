@@ -46,8 +46,8 @@ fi
 need_asuslighttpd=0
 need_smartsync=0
 if [ "$1" == "downloadmaster" ]; then
-	DM_version1=`app_get_field.sh downloadmaster Version 1 |awk '{FS=".";print $1}'`
-	DM_version4=`app_get_field.sh downloadmaster Version 1 |awk '{FS=".";print $4}'`
+	DM_version1=`/usr/sbin/app_get_field.sh downloadmaster Version 1 |awk '{FS=".";print $1}'`
+	DM_version4=`/usr/sbin/app_get_field.sh downloadmaster Version 1 |awk '{FS=".";print $4}'`
 
 	if [ "$DM_version1" -gt "3" ]; then
 		need_asuslighttpd=1
@@ -55,8 +55,8 @@ if [ "$1" == "downloadmaster" ]; then
 		need_asuslighttpd=1
 	fi
 elif [ "$1" == "mediaserver" ]; then
-	MS_version1=`app_get_field.sh mediaserver Version 1 |awk '{FS=".";print $1}'`
-	MS_version4=`app_get_field.sh mediaserver Version 1 |awk '{FS=".";print $4}'`
+	MS_version1=`/usr/sbin/app_get_field.sh mediaserver Version 1 |awk '{FS=".";print $1}'`
+	MS_version4=`/usr/sbin/app_get_field.sh mediaserver Version 1 |awk '{FS=".";print $4}'`
 
 	if [ "$MS_version1" -gt "1" ]; then
 		need_asuslighttpd=1
@@ -64,8 +64,8 @@ elif [ "$1" == "mediaserver" ]; then
 		need_asuslighttpd=1
 	fi
 elif [ "$1" == "aicloud" ]; then
-	AC_version1=`app_get_field.sh aicloud Version 1 |awk '{FS=".";print $1}'`
-	AC_version4=`app_get_field.sh aicloud Version 1 |awk '{FS=".";print $4}'`
+	AC_version1=`/usr/sbin/app_get_field.sh aicloud Version 1 |awk '{FS=".";print $1}'`
+	AC_version4=`/usr/sbin/app_get_field.sh aicloud Version 1 |awk '{FS=".";print $4}'`
 
 	if [ "$AC_version1" -gt "1" ]; then
 		need_smartsync=1
@@ -90,7 +90,7 @@ fi
 
 nvram set apps_state_remove=1 # REMOVING
 echo "Removing the package: $1..."
-app_set_enabled.sh $1 no
+/usr/sbin/app_set_enabled.sh $1 no
 ipkg remove $1
 if [ "$?" != "0" ]; then
 	nvram set apps_state_error=9
@@ -101,7 +101,7 @@ if [ "$need_asuslighttpd" == "1" ]; then
 	_check_package asuslighttpd
 	if [ "$?" != "0" ]; then
 		echo "Removing the dependent package: asuslighttpd..."
-		app_set_enabled.sh asuslighttpd no
+		/usr/sbin/app_set_enabled.sh asuslighttpd no
 		ipkg remove asuslighttpd
 		if [ "$?" != "0" ]; then
 			nvram set apps_state_error=9
@@ -112,7 +112,7 @@ elif [ "$need_smartsync" == "1" ]; then
 	_check_package smartsync
 	if [ "$?" != "0" ]; then
 		echo "Removing the dependent package: smartsync..."
-		app_set_enabled.sh smartsync no
+		/usr/sbin/app_set_enabled.sh smartsync no
 		ipkg remove smartsync
 		if [ "$?" != "0" ]; then
 			nvram set apps_state_error=9
@@ -120,13 +120,13 @@ elif [ "$need_smartsync" == "1" ]; then
 		fi
 	fi
 
-	deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
+	deps=`/usr/sbin/app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
 
 	for dep in $deps; do
 		_check_package $dep
 		if [ "$?" != "0" ]; then
 			echo "Removing the dependent package of smartsync: $dep..."
-			app_set_enabled.sh $dep no
+			/usr/sbin/app_set_enabled.sh $dep no
 			ipkg remove $dep
 			if [ "$?" != "0" ]; then
 				nvram set apps_state_error=9
@@ -175,7 +175,7 @@ for obj in $objs; do
 	fi
 done
 
-app_base_link.sh
+/usr/sbin/app_base_link.sh
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_base_link.sh.
 	exit 1

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,9 @@
 #include <ifaddrs.h>
 
 #include <sys/param.h>
+#if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
 #include <sys/sysctl.h>
+#endif
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -103,8 +103,10 @@ void tftp_request(struct listener *listen, time_t now)
       if (listen->iface)
 	{
 	  addr = listen->iface->addr;
-	  mtu = listen->iface->mtu;
 	  name = listen->iface->name;
+	  mtu = listen->iface->mtu;
+	  if (daemon->tftp_mtu != 0 && daemon->tftp_mtu < mtu)
+	    mtu = daemon->tftp_mtu;
 	}
       else
 	{
@@ -234,8 +236,16 @@ void tftp_request(struct listener *listen, time_t now)
 
       strncpy(ifr.ifr_name, name, IF_NAMESIZE);
       if (ioctl(listen->tftpfd, SIOCGIFMTU, &ifr) != -1)
-	mtu = ifr.ifr_mtu;      
+	{
+	  mtu = ifr.ifr_mtu;  
+	  if (daemon->tftp_mtu != 0 && daemon->tftp_mtu < mtu)
+	    mtu = daemon->tftp_mtu;    
+	}
     }
+
+  /* Failed to get interface mtu - can use configured value. */
+  if (mtu == 0)
+    mtu = daemon->tftp_mtu;
 
   if (name)
     {
@@ -336,14 +346,15 @@ void tftp_request(struct listener *listen, time_t now)
 	    {
 	      if ((opt = next(&p, end)) && !option_bool(OPT_TFTP_NOBLOCK))
 		{
+		  /* 32 bytes for IP, UDP and TFTP headers, 52 bytes for IPv6 */
+		  int overhead = (listen->family == AF_INET) ? 32 : 52;
 		  transfer->blocksize = atoi(opt);
 		  if (transfer->blocksize < 1)
 		    transfer->blocksize = 1;
 		  if (transfer->blocksize > (unsigned)daemon->packet_buff_sz - 4)
 		    transfer->blocksize = (unsigned)daemon->packet_buff_sz - 4;
-		  /* 32 bytes for IP, UDP and TFTP headers */
-		  if (mtu != 0 && transfer->blocksize > (unsigned)mtu - 32)
-		    transfer->blocksize = (unsigned)mtu - 32;
+		  if (mtu != 0 && transfer->blocksize > (unsigned)mtu - overhead)
+		    transfer->blocksize = (unsigned)mtu - overhead;
 		  transfer->opt_blocksize = 1;
 		  transfer->block = 0;
 		}

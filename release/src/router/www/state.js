@@ -329,7 +329,6 @@ var disnwmd_support = isSupport("disable_nwmd");
 var wtfast_support = isSupport("wtfast");
 var powerline_support = isSupport("plc");
 var reboot_schedule_support = isSupport("reboot_schedule");
-var noiptv_support = isSupport("noiptv");
 var app_support = false;
 
 if( based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U"
@@ -341,6 +340,8 @@ if( based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_model
  || based_modelid == "RT-N66U" || based_modelid == "RT-N66R" || based_modelid == "RT-N66W"){
 	app_support = true;	 
  }
+var disnwmd_support = isSupport("disable_nwmd");
+var noiptv_support = isSupport("noiptv");
 var QISWIZARD = "QIS_wizard.htm";
 
 var wl_version = "<% nvram_get("wl_version"); %>";
@@ -456,6 +457,9 @@ function change_wl_unit_status(_unit){
 	document.titleForm.action = "apply.cgi";
 	document.titleForm.target = "";
 	document.titleForm.submit();
+}
+else if(!tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (location.hostname.search('repeater.asus') == -1)){
+        isFromWAN = true;
 }
 
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
@@ -1065,6 +1069,8 @@ function remove_url(){
 		if(sw_mode == 4){
 			menuL2_title[1]="";
 			menuL2_link[1]="";
+			// Log
+			remove_menu_item("Main_WStatus_Content.asp");
 		}
 		else if(sw_mode == 2){
 			if(userRSSI_support){
@@ -1231,8 +1237,8 @@ function remove_url(){
 	}
 
 	if(!usb_support){
-		menuL1_title[5] = "";
-		menuL1_link[5] = "";
+		menuL1_title[menuL1_link.indexOf("APP_Installation.asp")] = "";
+		menuL1_link[menuL1_link.indexOf("APP_Installation.asp")] = "";
 	}
 
 	if(noftp_support){
@@ -1851,13 +1857,16 @@ function show_menu(){
 		
 	//experiencing DSL issue experience_fb=0: notif, 1:no display again.
 	if(experience_fb == 0){		//case7
-			notification.array[7] = 'noti_experience_FB';
-			notification.experience_FB = 1;
-			notification.desc[7] = Untranslated.ASUSGATE_note7;
-			notification.action_desc[7] = Untranslated.ASUSGATE_act_feedback;
-			notification.clickCallBack[7] = "setTimeout('document.noti_experience_Feedback.submit();', 1);setTimeout('notification.redirectFeedback()', 1000);";
+		notification.array[7] = 'noti_experience_FB';
+		notification.array[18] = 'noti_experience_DSL_cancel';
+		notification.experience_FB = 1;
+		notification.desc[7] = Untranslated.ASUSGATE_note7;
+		notification.action_desc[7] = Untranslated.ASUSGATE_act_feedback;
+		notification.clickCallBack[7] = "setTimeout('document.noti_experience_Feedback.submit();', 1);setTimeout('notification.redirectFeedback()', 1000);";
+		notification.action_desc[18] = '<#CTL_Cancel#>';
+		notification.clickCallBack[18] = "setTimeout('document.noti_experience_Feedback.submit();', 1);setTimeout('notification.redirectRefresh()', 1000);";
 	}else
-			notification.experience_FB = 0;
+		notification.experience_FB = 0;
 
 	//Notification hint-- null&0: default, 1:display info
 	if(noti_notif_Flag == 1 && notif_msg != ""){               //case8
@@ -3217,6 +3226,17 @@ var date_month = date.getMonth();
 var modem_enable = '';
 var modem_sim_order = '';
 var wanConnectStatus = true;
+var wlc0_ssid = '<% nvram_get("wlc0_ssid"); %>';
+var wlc1_ssid = '<% nvram_get("wlc1_ssid"); %>';
+var concurrent_pap = false;
+var pap_flag = 0;
+var pap_click_flag = 0;
+if((sw_mode == "2" && wlc_express == "0")|| sw_mode == "4"){
+	if(wlc0_ssid != "" && wlc1_ssid != ""){
+		concurrent_pap = true;
+		pap_flag = 1;
+	}
+}
 
 function refreshStatus(xhr){
 	if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/index.asp";
@@ -3254,6 +3274,10 @@ function refreshStatus(xhr){
 	wan1_ipaddr = wanStatus[23].firstChild.nodeValue.replace("wan1_ipaddr=", "");
 	wan0_realip_ip = wanStatus[24].firstChild.nodeValue.replace("wan0_realip_ip=", "");
 	wan1_realip_ip = wanStatus[25].firstChild.nodeValue.replace("wan1_realip_ip=", "");
+	if(concurrent_pap){
+		_wlc0_state = wanStatus[26].firstChild.nodeValue;
+		_wlc1_state = wanStatus[27].firstChild.nodeValue;
+	}
 
 	var vpnStatus = devicemapXML[0].getElementsByTagName("vpn");
 
@@ -3356,40 +3380,98 @@ function refreshStatus(xhr){
 						document.getElementById("adsl_line_status").className = "linestatuselse";
 				}else{
 						document.getElementById("adsl_line_status").className = "linestatusdown";
-				}
+				}		
 				document.getElementById("adsl_line_status").onmouseover = function(){overHint(9);}
 				document.getElementById("adsl_line_status").onmouseout = function(){nd();}
 		}
 
-		if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
-			document.getElementById("connect_status").className = "connectstatuson";
-			if(location.pathname == "/" || location.pathname == "/index.asp"){
-				document.getElementById("NM_connect_status").innerHTML = "<#Connected#>";
-				document.getElementById('single_wan').className = "single_wan_connected";
-			}	
-			wanConnectStatus = true;
-		}
-		else if(dualwan_enabled &&
-				((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")) ||
-				((secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2"))){
-			document.getElementById("connect_status").className = "connectstatuson";
-			if(location.pathname == "/" || location.pathname == "/index.asp"){
-				document.getElementById("NM_connect_status").innerHTML = "<#Connected#>";
-				document.getElementById('single_wan').className = "single_wan_connected";
-			}
-			wanConnectStatus = true;
-		}
-		else{
-			document.getElementById("connect_status").className = "connectstatusoff";
-			if(location.pathname == "/" || location.pathname == "/index.asp"){
-				document.getElementById("NM_connect_status").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/'+ QISWIZARD +'?flag=detect"><#Disconnected#></a>';
-				document.getElementById('single_wan').className = "single_wan_disconnected";
-				document.getElementById("wanIP_div").style.display = "none";		
-			}
-			wanConnectStatus = false;
-		}
+		(function(){
+			var NM_connect_obj = function(_link_status, _link_sbstatus, _link_auxstatus, unit){
+				this.hint = "<#Disconnected#>";
+				this.link = "/" + QISWIZARD + "?flag=detect";
+				this.className = "_disconnected";
+				this.hasInternet = false;
 
-		document.getElementById("connect_status").onclick = function(){openHint(24,3);}
+				if(_link_auxstatus == "1"){
+					this.hint = "<#web_redirect_reason1#>";
+					this.link = "/error_page.htm?flag=1";
+					this.className = "_disconnected";
+				}
+				else if(_link_status == "2"){
+					this.link = "";
+
+					var wans_mode = '<%nvram_get("wans_mode");%>';
+					if(dualwan_enabled && active_wan_unit != unit && (wans_mode == "fo" || wans_mode == "fb")){	
+						this.hint = "<#Status_Standby#>";
+						this.className = "_standby";
+					}
+					else{
+						this.hint = "<#Connected#>";
+						this.className = "_connected";
+						this.hasInternet = true;
+					}
+				}
+				else if(_link_status == "4"){
+					if(_link_sbstatus == "1"){
+						this.hint = "<#QKSet_Internet_Setup_fail_reason3#>";
+						this.link = "/Advanced_WAN_Content.asp?af=wan_pppoe_username";
+						this.className = "_error";
+					}
+					else if(_link_sbstatus == "2"){
+						this.hint = "<#QKSet_Internet_Setup_fail_reason2#>";
+						this.link = "/Advanced_WAN_Content.asp?af=wan_pppoe_username";
+						this.className = "_error";
+					}
+					else if(_link_sbstatus == "3"){
+						this.hint = "<#web_redirect_reason3_1#>";
+						this.link = "/" + QISWIZARD + "?flag=detect";
+						this.className = "_error";
+					}
+					else if(_link_sbstatus == "4"){
+						this.hint = "<#web_redirect_reason6#>";
+						this.link = "/error_page.htm?flag=6";
+						this.className = "_error";
+					}
+				}
+				else if(_link_status == "5"){
+					this.hint = "<#web_redirect_reason5_1#>";
+					this.link = "/Advanced_WAN_Content.asp";
+					this.className = "_error";
+				}
+
+				return this;
+			}
+
+			if(dualwan_enabled){
+				var NM_connect_status = {
+					primary: new NM_connect_obj(first_link_status, first_link_sbstatus, first_link_auxstatus, 0),
+					secondary: new NM_connect_obj(secondary_link_status, secondary_link_sbstatus, secondary_link_auxstatus, 1)
+				};
+
+				if(document.getElementById("primary_status")){
+					document.getElementById('primary_status').innerHTML = NM_connect_status.primary.hint;
+					document.getElementById('primary_line').className = "primary_wan" + NM_connect_status.primary.className;
+					document.getElementById('secondary_status').innerHTML = NM_connect_status.secondary.hint;
+					document.getElementById('secondary_line').className = "secondary_wan" + NM_connect_status.secondary.className;
+				}
+				document.getElementById("connect_status").className = (NM_connect_status.primary.hasInternet || NM_connect_status.secondary.hasInternet) ? "connectstatuson" : "connectstatusoff";
+				wanConnectStatus = NM_connect_status.primary.hasInternet || NM_connect_status.secondary.hasInternet;
+			}
+			else{
+				var NM_connect_status = new NM_connect_obj(link_status, link_sbstatus, link_auxstatus, 0);
+
+				if(document.getElementById("NM_connect_status")){
+					document.getElementById("NM_connect_status").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="'+ NM_connect_status.link +'">' + NM_connect_status.hint + '</a>';
+					document.getElementById('single_wan').className = "single_wan" + NM_connect_status.className;
+					document.getElementById("wanIP_div").style.display = NM_connect_status.hasInternet ? "" : "none";
+					document.getElementById("ddnsHostName_div").style.display = NM_connect_status.hasInternet ? "" : "none";
+				}
+				document.getElementById("connect_status").className = NM_connect_status.hasInternet ? "connectstatuson" : "connectstatusoff";
+				wanConnectStatus = NM_connect_status.hasInternet;
+			}
+		})()
+
+		document.getElementById("connect_status").onclick = wanConnectStatus ? function(){openHint(24,3);} : function(){return false};
 		document.getElementById("connect_status").onmouseover = function(){overHint(3);}
 		document.getElementById("connect_status").onmouseout = function(){nd();}
 	}
@@ -3407,15 +3489,15 @@ function refreshStatus(xhr){
 			if(location.pathname == "/" || location.pathname == "/index.asp"){
 				document.getElementById("NM_connect_status").innerHTML = "<#Connected#>";
 				document.getElementById('single_wan').className = "single_wan_connected";
-			}
+			}	
 			wanConnectStatus = true;
 		}
 		else{
 			document.getElementById("connect_status").className = "connectstatusoff";
 			if(location.pathname == "/" || location.pathname == "/index.asp"){
-				document.getElementById("NM_connect_status").innerHTML = "<#Disconnected#>";
-				document.getElementById('single_wan').className = "single_wan_disconnected";
-			}
+				document.getElementById("NM_connect_status").innerHTML = "<#Disconnected#>";		 
+				document.getElementById('single_wan').className = "single_wan_disconnected";				
+			}	
 			wanConnectStatus = false;
 		}
 		document.getElementById("connect_status").onmouseover = function(){overHint(3);}
@@ -3429,7 +3511,26 @@ function refreshStatus(xhr){
 			else if (wlc_band == 2)
 				var speed_info = data_rate_info_5g_2;
 			
-			document.getElementById('speed_status').innerHTML = speed_info;
+			if(concurrent_pap){
+				document.getElementById('speed_info_primary').innerHTML = "Link Rate: " + data_rate_info_2g;
+				document.getElementById('speed_info_secondary').innerHTML = "Link Rate: " + data_rate_info_5g;
+				if(_wlc0_state == "wlc0_state=2"){
+					document.getElementById('primary_line').className = "primary_wan_connected";				
+				}
+				else{
+					document.getElementById('primary_line').className = "primary_wan_disconnected";					
+				}
+				
+				if(_wlc1_state == "wlc1_state=2"){
+					document.getElementById('secondary_line').className = "secondary_wan_connected";
+				}
+				else{
+					document.getElementById('secondary_line').className = "secondary_wan_disconnected";
+				}
+			}
+			else{
+				document.getElementById('speed_status').innerHTML = speed_info;
+			}	
 		}	
 	}
 	else if(sw_mode == 3){
@@ -3856,6 +3957,7 @@ var notification = {
 	redirectsamba:function(){location.href = 'Advanced_AiDisk_samba.asp';},
 	redirectFeedback:function(){location.href = 'Advanced_Feedback.asp';},
 	redirectFeedbackInfo:function(){location.href = 'Feedback_Info.asp';},
+	redirectRefresh:function(){location.href = location.pathname;},
 	redirectHint:function(){location.href = location.href;},
 	clickCallBack: [],
 	pppoe_tw: 0,
@@ -3881,6 +3983,12 @@ var notification = {
 		  						txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i+1] + '">' + notification.action_desc[i+1] + '</div></td></tr>';
 		  				notification.array[3] = "off";
 		  			}
+					else if( i == 7){
+						if(notification.array[18] != null && notification.array[18] != "off")
+							txt += '<tr><td width="100%"><div style="text-align:right;text-decoration:underline;color:#FFCC00;font-size:14px;"><span style="cursor: pointer" onclick="' + notification.clickCallBack[18] + '">' + notification.action_desc[18] + '</span>';
+						notification.array[18] = "off";
+						txt += '<span style="margin-left:10px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</span></div></td></tr>';
+					}
 					else if( i == 9){
 		  				txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</div></td></tr>';
 							if(notification.array[10] != null && notification.array[10] != "off")

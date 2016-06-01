@@ -23,6 +23,23 @@ body {
 .top-messgaea {font-family :Verdana;font-size : 10px;text-align:left;color:#000000;font-weight:normal;text-align:left;background-color:#7aa3bd}
 .tbg2a{font-family :Verdana;font-size : 10px;text-align:center;color:#197b30;font-weight:normal;background-color:#9fccdd;}
 .tbg1a{font-family :Verdana;font-size : 10px;text-align:center;color:#23344d;font-weight:normal;background-color:#9fccdd}
+
+.clientIconIE8HACK{
+	margin: 0 auto;
+	width: 50px;
+	height: 50px;
+	background-color: #798D94;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	border-width: 1px;
+	border-style: double;
+	border-color: #3E4243;
+	background-image: url('/images/New_ui/networkmap/client.png');
+	background-position: 52% 1%;
+	background-repeat:no-repeat;
+	cursor:pointer;
+}
 .clientIcon{
 	margin: 0 auto;
 	width: 50px;
@@ -36,7 +53,6 @@ body {
 	border-color: #3E4243;
 	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
-	background-position:0% 0.5%;
 	cursor:pointer;
 	background-size: 900%;
 }
@@ -58,7 +74,6 @@ body {
 	border-color: #3E4243;
 	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
-	background-position:0% 0.5%;
 	cursor:pointer;
 	background-size: 900%;
 }
@@ -75,7 +90,6 @@ body {
 	border-color: #3E4243;
 	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
-	background-position:0% 0.5%;
 	cursor:pointer;
 	background-size: 900%;
 }
@@ -157,110 +171,110 @@ Smartphone		33
 Desktop			34
 */
 .type0{
-	background-image:url('/images/New_ui/networkmap/client.svg') !important;;
+	background-image:url('/images/New_ui/networkmap/client.svg');
 	background-size: 100%;
 }
 .type1{
-	background-position:16.5% 16.5% !important;
+	background-position: 16.5% 16.5%;
 }
 .type2{
-	background-position:66.5% 50% !important;
+	background-position:66.5% 50%;
 }
 .type3{
-	background-position:66.5% 50% !important;
+	background-position:66.5% 50%;
 }
 .type4{
-	background-position:83% 50% !important;
+	background-position:83% 50%;
 }
 .type5{
-	background-position:66.5% 83.3% !important;
+	background-position:66.5% 83.3%;
 }
 .type6{
-	background-position:49.8% 33% !important;
+	background-position:49.8% 33%;
 }
 .type7{
-	background-position:100.2% 16.5% !important;
+	background-position:100.2% 16.5%;
 }
 .type8{
-	background-position:100.2% 16.5% !important;
+	background-position:100.2% 16.5%;
 }
 .type9{
-	background-position:33.3% 16.35% !important;
+	background-position:33.3% 16.35%;
 }
 .type10{
-	background-position:49.8% 16.5% !important;
+	background-position:49.8% 16.5%;
 }
 .type11{
-	background-position:49.8% 49.5% !important;
+	background-position:49.8% 49.5%;
 }
 .type12{
-	background-position:100.2% 67% !important;
+	background-position:100.2% 67%;
 }
 .type13{
-	background-position:100.2% 16.5% !important;
+	background-position:100.2% 16.5%;
 }
 .type14{
-	background-position:49.8% 66.5% !important;
+	background-position:49.8% 66.5%;
 }
 .type15{
-	background-position:100.2% 83% !important;
+	background-position:100.2% 83%;
 }
 .type16{
-	background-position:100.2% 16.5% !important;
+	background-position:100.2% 16.5%;
 }
 .type17{
-	background-position:100.2% 16.5% !important;
+	background-position:100.2% 16.5%;
 }
 .type18{
-	background-position:83% 33% !important;
+	background-position:83% 33%;
 }
 .type19{
-	background-position:16.5% 50.5% !important;
+	background-position:16.5% 50.5%;
 }
 .type20{
-	background-position:33.3% 33% !important;
+	background-position:33.3% 33%;
 }
 .type21{
-	background-position:49.8% 82.85% !important;
+	background-position:49.8% 82.85%;
 }
 .type22{
-	background-position:-0.2% 16.5% !important;
+	background-position:-0.2% 16.5%;
 }
 .type23{
-	background-position:83% 82.5% !important;
+	background-position:83% 82.5%;
 }
 .type24{
-	background-position:66.5% 67% !important;
+	background-position:66.5% 67%;
 }
 .type25{
-	background-position:100.4% 100.2% !important;
+	background-position:100.4% 100.2%;
 }
 .type26{
-	background-position:83% 16.4% !important;
+	background-position:83% 16.4%;
 }
 .type27{
-	background-position:83% 0% !important;
+	background-position:83% 0%;
 }
 .type28{
-	background-position:66.4% 16.5% !important;
+	background-position:66.4% 16.5%;
 }
 .type29{
-	background-position:66.7% 100% !important;
+	background-position:66.7% 100%;
 }
 .type30{
-	background-position:16.5% 0% !important;
+	background-position:16.5% 0%;
 }
 .type31{
-	background-position:33.3% 0% !important;
+	background-position:33.3% 0%;
 }
 .type32{
-	background-position:49.8% 0% !important;
+	background-position:49.8% 0%;
 }
 .type33{
-	background-position:100% 32.7% !important;
+	background-position:100% 32.7%;
 }
 .type34{
-	background-position:100% 50% !important;
+	background-position:100% 50%;
 }
 
 .type0:hover{
@@ -279,85 +293,85 @@ Desktop			34
 }
 
 .adobe{
-	background-position:52% -0.05% !important;
+	background-position:52% -0.05%;
 }
 .google{
-	background-position:52% 3.73% !important;
+	background-position:52% 3.73%;
 }
 .apple{
-	background-position:52% 7.53% !important;
+	background-position:52% 7.53%;
 }
 .belkin{
-	background-position:52% 11.3% !important;
+	background-position:52% 11.3%;
 }
 .dell{
-	background-position:52% 15.08% !important;
+	background-position:52% 15.08%;
 }
 .microsoft{
-	background-position:52% 18.85% !important;
+	background-position:52% 18.85%;
 }
 .amazon{
-	background-position:52% 22.65% !important;
+	background-position:52% 22.65%;
 }
 .ibm{
-	background-position:52% 26.43% !important;
+	background-position:52% 26.43%;
 }
 .sony{
-	background-position:52% 30.2% !important;
+	background-position:52% 30.2%;
 }
 .htc{
-	background-position:52% 33.98% !important;
+	background-position:52% 33.98%;
 }
 .huawei{
-	background-position:52% 37.77% !important;
+	background-position:52% 37.77%;
 }
 .samsung{
-	background-position:52% 41.55% !important;
+	background-position:52% 41.55%;
 }
 .nec{
-	background-position:52% 45.35% !important;
+	background-position:52% 45.35%;
 }
 .synology{
-	background-position:52% 49.13% !important;
+	background-position:52% 49.13%;
 }
 .lenovo{
-	background-position:52% 52.9% !important;
+	background-position:52% 52.9%;
 }
 .fujitsu{
-	background-position:52% 56.7% !important;
+	background-position:52% 56.7%;
 }
 .panasonic{
-	background-position:52% 60.48% !important;
+	background-position:52% 60.48%;
 }
 .toshiba{
-	background-position:52% 64.25% !important;
+	background-position:52% 64.25%;
 }
 .pioneer{
-	background-position:52% 68.05% !important;
+	background-position:52% 68.05%;
 }
 .asus{
-	background-position:52% 71.82% !important;
+	background-position:52% 71.82%;
 }
 .ralink{
-	background-position:52% 75.6% !important;
+	background-position:52% 75.6%;
 }
 .tp-link{
-	background-position:52% 79.4% !important;
+	background-position:52% 79.4%;
 }
 .honhai{
-	background-position:52% 83.18% !important;
+	background-position:52% 83.18%;
 }
 .buffalo{
-	background-position:52% 86.95% !important;
+	background-position:52% 86.95%;
 }
 .vmware{
-	background-position:52% 90.73% !important;
+	background-position:52% 90.73%;
 }
 .bizlink{
-	background-position:52% 94.52% !important;
+	background-position:52% 94.52%;
 }
 .d-link{
-	background-position:52% 98.3% !important;
+	background-position:52% 98.3%;
 }
 
 .clientBg{
@@ -467,7 +481,6 @@ Desktop			34
 	height:60px;
 	width:60px;
 	cursor:pointer;
-	background-position:0% 0.5%;
 	background-size: 900%;
 	background-color: #788D94;
 	border-radius: 10px;

@@ -7,7 +7,6 @@
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <script type="text/javascript">
-
 var page_modified = 0;
 var restart_time = 0;
 var rc_support = '<% nvram_get("rc_support"); %>'; 
@@ -430,16 +429,16 @@ function initial(){
 		return false;
 	}
 	else if(getflag == "set_language"){
-		if(navigator.appName.indexOf("Microsoft") >= 0)
+		if(navigator.appName.indexOf("Microsoft") != -1)
 			parent.parent.location.reload();
 		else
 			parent.parent.location.href = parent.parent.location.href.split('#')[0];
 	}
-	else if(next_page.indexOf("MobileQIS_Login") >= 0){
+	else if(next_page.indexOf("MobileQIS_Login") != -1){
 	}
-	else if(next_page.indexOf("QIS_") >= 0){
+	else if(next_page.indexOf("QIS_") != -1){
 		if(dsl_support){
-			if(current_page.indexOf("QIS_annex_setting.htm") >= 0 || current_page.indexOf("QIS_detect.htm") >= 0){
+			if(current_page.indexOf("QIS_annex_setting.htm") != -1 || current_page.indexOf("QIS_detect.htm") != -1){
 				var update_dsl_info = function(){
 					makeRequest.start('/start_dsl_autodet.asp', function(){}, update_dsl_info);
 				};
@@ -533,15 +532,15 @@ function initial(){
 			}
 		}
 	}
-	else if(current_page.indexOf("ParentalControl_") >= 0){
+	else if(current_page.indexOf("ParentalControl_") != -1){
 		parent.showLoading(restart_time, "waiting");
 		setTimeout(getXMLAndRedirect, restart_time*1000);
 	}
-	else if(current_page.indexOf("AiProtection_") >= 0){
+	else if(current_page.indexOf("AiProtection_") != -1){
 		parent.showLoading(restart_time, "waiting");
 		setTimeout(getXMLAndRedirect, restart_time*1000);
 	}
-	else if(current_page.indexOf("Feedback") >= 0){
+	else if(current_page.indexOf("Feedback") != -1){
 		setTimeout("parent.redirect();", action_wait*1000);
 	}	
 	else if(getflag == "ddnscheck"){
@@ -551,13 +550,13 @@ function initial(){
 		parent.Webdav_status = (parent.Webdav_status == 1) ? 0 : 1;
 		parent.resultOfSwitchWebdavStatus();
 	}
-	else if(action_script.indexOf("aidisk_asusddns_register") >= 0){
+	else if(action_script.indexOf("aidisk_asusddns_register") != -1){
 		setTimeout("parent.checkDDNSReturnCode();", 1000);
 	}
-	else if(action_script.indexOf("restart_ddns") >= 0) {
+	else if(action_script.indexOf("restart_ddns") != -1) {
   		setTimeout("parent.parent.checkDDNSReturnCode();", 1000);
 	}
-	else if(action_script.indexOf("start_webs_upgrade") >= 0) {
+	else if(action_script.indexOf("start_webs_upgrade") != -1) {
   		setTimeout("parent.startDownloading();", 1000);
 	}
 	else if(action_script == "restart_cloudsync"){
@@ -567,8 +566,11 @@ function initial(){
 	else if(action_script == "reboot"){
 		parent.stopFlag = 1;
 		parent.showLoading(restart_time);
-		if(!current_page.indexOf("Advanced_WAN_Content.asp"))
-			setTimeout("parent.parent.location.href='"+next_page+"';", (restart_time+2)*1000);
+		if(current_page.indexOf("Advanced_WAN_Content.asp") == -1){
+			setTimeout(function(){
+				top.location.href = next_page;
+			}, (parseInt(restart_time)+2)*1000);
+		}
 	}else if(action_script == "start_sig_check"){	//check signature, do nothing
 		
 	}
@@ -593,18 +595,18 @@ function initial(){
 			if(action_script == "restart_wireless" && isWLclient()){
 				showWlHint();
 			}
-			else if(current_page.indexOf("clients.asp") >= 0){
+			else if(current_page.indexOf("clients.asp") != -1){
 				document.redirectForm.flag.value = "Client";
 				setTimeout("top_delay_redirect('/');", restart_time*1000);
 			}
-			else if(current_page.indexOf("Advanced_OperationMode_Content.asp") >= 0){
+			else if(current_page.indexOf("Advanced_OperationMode_Content.asp") != -1){
 				parent.document.getElementById('drword').innerHTML = "<#LAN_IP_changed_suggedtion1#>"+parent.document.form.lan_ipaddr.value+"<#LAN_IP_changed_suggedtion2#><br/>";
 				setTimeout("hideLoading()	",20000);
 				setTimeout("parent.document.getElementById('Loading').style.display = 'none';",20000);
 				setTimeout("parent.dr_advise();",20000);
 				setTimeout("redirect()", restart_time*1000);
 			}
-			else if(current_page.indexOf("Advanced_LAN_Content.asp") >= 0){
+			else if(current_page.indexOf("Advanced_LAN_Content.asp") != -1){
 				if(lan_proto == "dhcp"){
 					parent.document.getElementById('drword').innerHTML = "<#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#>";
 				}
@@ -618,7 +620,7 @@ function initial(){
 			else if(getflag == "nodetect"){
 				setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
 			}
-			else if(current_page.indexOf("Advanced_System_Content") >= 0){
+			else if(current_page.indexOf("Advanced_System_Content") != -1){
 				if(getflag != ""){
 					setTimeout("parent.parent.location.href='"+getflag+"/"+current_page+"';", restart_time*1000);
 				}

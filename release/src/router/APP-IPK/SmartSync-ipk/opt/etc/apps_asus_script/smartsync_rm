@@ -7,12 +7,12 @@ APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
 sleep 4
 
-app_remove.sh webdavclient
+/usr/sbin/app_remove.sh webdavclient
 sleep 2
-app_remove.sh asuswebstorage
+/usr/sbin/app_remove.sh asuswebstorage
 sleep 2
-app_remove.sh ftpclient
+/usr/sbin/app_remove.sh ftpclient
 sleep 2
-app_remove.sh dropboxclient
+/usr/sbin/app_remove.sh dropboxclient
 sleep 2
-app_remove.sh inotify
+/usr/sbin/app_remove.sh inotify

@@ -1503,10 +1503,12 @@ function wireless_mode_change(obj){
 function limit_auth_method(g_unit){
 	var auth_method_array = document.form.wl_auth_mode_x.value;
 	if(sw_mode == 2){
-			if(based_modelid == "RT-AC87U" && g_unit)
-					var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			if(based_modelid.search("RP-AC66") != -1)
+				var auth_array = [["Open System", "open"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			else if(based_modelid == "RT-AC87U" && g_unit)
+				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
 			else if(based_modelid == "RT-AC87U" && g_unit =='0')
-					var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+				var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
 			else{		
 				if((based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'))
 					var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];

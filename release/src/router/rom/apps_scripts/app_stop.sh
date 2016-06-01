@@ -11,7 +11,7 @@ APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
 
 nvram set apps_state_stop=1 # STOPPING
 # stop all APPs by order.
-app_init_run.sh allpkg stop
+/usr/sbin/app_init_run.sh allpkg stop
 
 
 nvram set apps_state_stop=2 # REMOVING_SWAP

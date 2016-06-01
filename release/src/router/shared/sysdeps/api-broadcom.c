@@ -679,3 +679,56 @@ void set_radio(int on, int unit, int subunit)
 		led_control(LED_5G, LED_OFF);
 	}
 }
+
+/* Return nvram variable name, e.g. et0macaddr, which is used to repented as LAN MAC.
+ * @return:
+ */
+char *get_lan_mac_name(void)
+{
+#ifdef RTCONFIG_BCMARM
+	switch(get_model()) {
+		case MODEL_RTAC87U:
+		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
+		case MODEL_RTAC88U:
+			return "et1macaddr";
+		default:
+			return "et0macaddr";
+	}
+#endif
+	return "et0macaddr";
+}
+
+/* Return nvram variable name, e.g. et1macaddr, which is used to repented as WAN MAC.
+ * @return:
+ */
+char *get_wan_mac_name(void)
+{
+#ifdef RTCONFIG_BCMARM
+	switch(get_model()) {
+		case MODEL_RTAC87U:
+		case MODEL_RTAC5300:
+		case MODEL_RTAC5300R:
+		case MODEL_RTAC88U:
+			return "et1macaddr";
+		default:
+			return "et0macaddr";
+	}
+#endif
+	return "et0macaddr";
+}
+
+char *get_lan_hwaddr(void)
+{
+	return nvram_safe_get(get_lan_mac_name());
+}
+
+char *get_2g_hwaddr(void)
+{
+	return nvram_safe_get(get_lan_mac_name());
+}
+
+char *get_wan_hwaddr(void)
+{
+	return nvram_safe_get(get_wan_mac_name());
+}

@@ -200,6 +200,8 @@ if(typeof Array.prototype.forEach != 'function'){
 	};
 }
 
+var isIE8 = navigator.userAgent.search("MSIE 8") > -1; 
+var isIE9 = navigator.userAgent.search("MSIE 9") > -1; 
 var lock_time = '<% get_parameter("lock_time"); %>';
 var remaining_time = 60 - lock_time;
 var countdownid, rtime_obj;
@@ -220,6 +222,10 @@ var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.hre
 
 function initial(){
 	var flag = '<% get_parameter("error_status"); %>';
+	if(isIE8 || isIE9){
+		document.getElementById("name_title_ie").style.display ="";
+		document.getElementById("password_title_ie").style.display ="";
+	}
 
 	if('<% check_asus_model(); %>' == '0'){
 		document.getElementById("warming_field").style.display ="";
@@ -444,16 +450,19 @@ function disable_button(val){
 		<!-- Login field -->
 		<div id="login_filed">
 			<div class="p1 title_gap"><#Sign_in_title#></div>
+
+			<div id="name_title_ie" style="display:none;margin:20px 0 -10px 78px;" class="p1 title_gap"><#HSDPAConfig_Username_itemname#></div>
 			<div class="title_gap">
 				<input type="text" id="login_username" name="login_username" tabindex="1" class="form_input" maxlength="20" autocapitalize="off" autocomplete="off" placeholder="<#HSDPAConfig_Username_itemname#>">
 			</div>
+			<div id="password_title_ie" style="display:none;margin:20px 0 -20px 78px;" class="p1 title_gap"><#HSDPAConfig_Password_itemname#></div>
 			<div class="password_gap">
 				<input type="password" name="login_passwd" tabindex="2" class="form_input" maxlength="16" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalize="off" autocomplete="off">
 			</div>
 			<div class="error_hint" style="display:none;" id="error_status_field"></div>
 				<div class="button" onclick="login();"><#CTL_signin#></div>
 		</div>
-		
+
 		<!-- No Login field -->
 		<div id="nologin_field" style="display:none;">
 			<div class="p1 title_gap"></div>

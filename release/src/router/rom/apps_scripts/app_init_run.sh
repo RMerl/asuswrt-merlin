@@ -56,7 +56,7 @@ for f in $APPS_RUN_DIR/S*; do
 	fi
 
 	if [ "$2" == "start" ] || [ "$2" == "firewall-start" ]; then
-		app_enable=`app_get_field.sh $tmp_apps_name "Enabled" 1`
+		app_enable=`/usr/sbin/app_get_field.sh $tmp_apps_name "Enabled" 1`
 		if [ "$app_enable" != "yes" ]; then
 			if [ "$1" != "allpkg" ] && [ "$1" == "$tmp_apps_name" ]; then
 				echo "No permission to start with the app: $1!"

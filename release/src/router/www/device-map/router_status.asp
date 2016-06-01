@@ -233,34 +233,66 @@ function render_CPU(cpu_info_new){
 
 
 function detect_CPU_RAM(){
-	$.ajax({
-    	url: '/cpu_ram_status.xml',
-    	dataType: 'xml',
-    	error: function(xhr){
-    		detect_CPU_RAM();
-    	},
-    	success: function(response){
-			var cpu_info_new = new Array();
-			data = response;
-			cpu_object = data.getElementsByTagName('cpu');
-			for(i=0;i<core_num;i++){
-				cpu_info_new[i] = {
-					total: cpu_object[i].childNodes[1].textContent,
-					usage: cpu_object[i].childNodes[3].textContent
-				};
+	if(parent.isIE8){
+		require(['/require/modules/makeRequest.js'], function(makeRequest){
+			makeRequest.start('/cpu_ram_status.xml', function(xhr){
+				var cpu_info_new = new Array();
+				var cpu_object_container = xhr.responseXML.getElementsByTagName("info");
+				var cpu_info = cpu_object_container[0].getElementsByTagName("cpu_info");
+				var cpu_object = cpu_info[0].getElementsByTagName("cpu");
+
+				for(i=0;i<core_num;i++){
+					var totalValue = cpu_object[i].getElementsByTagName("total")[0].firstChild.nodeValue
+					var usageValue = cpu_object[i].getElementsByTagName("usage")[0].firstChild.nodeValue
+
+					cpu_info_new.push({
+						total: totalValue,
+						usage: usageValue
+					});
+				}
+
+				mem_info = xhr.responseXML.getElementsByTagName('mem_info')[0];
+				mem_object = {
+					total: mem_info.getElementsByTagName('total')[0].firstChild.nodeValue,
+					free: mem_info.getElementsByTagName('free')[0].firstChild.nodeValue,
+					used: mem_info.getElementsByTagName('used')[0].firstChild.nodeValue,		
+				}
+				
+				render_CPU(cpu_info_new);
+				render_RAM(mem_object.total, mem_object.free, mem_object.used);	
+				setTimeout("detect_CPU_RAM();", 2000);
+			}, function(){});
+		});
+	}
+	else{
+		$.ajax({
+	    	url: '/cpu_ram_status.xml',
+	    	dataType: 'xml',
+	    	error: detect_CPU_RAM,
+	    	success: function(data){
+				var cpu_info_new = new Array();
+
+				cpu_object = data.getElementsByTagName('cpu');
+				for(i=0;i<core_num;i++){
+					cpu_info_new[i] = {
+						total: cpu_object[i].childNodes[1].textContent,
+						usage: cpu_object[i].childNodes[3].textContent
+					};
+				}
+				
+				mem_info = data.getElementsByTagName('mem_info')[0];
+				mem_object = {
+					total: mem_info.getElementsByTagName('total')[0].textContent,
+					free: mem_info.getElementsByTagName('free')[0].textContent,
+					used: mem_info.getElementsByTagName('used')[0].textContent,		
+				}
+				
+				render_CPU(cpu_info_new);
+				render_RAM(mem_object.total, mem_object.free, mem_object.used);	
+				setTimeout("detect_CPU_RAM();", 2000);
 			}
-			mem_info = data.getElementsByTagName('mem_info')[0];
-			mem_object = {
-				total: mem_info.getElementsByTagName('total')[0].textContent,
-				free: mem_info.getElementsByTagName('free')[0].textContent,
-				used: mem_info.getElementsByTagName('used')[0].textContent,	
-			}
-			
-			render_CPU(cpu_info_new);
-			render_RAM(mem_object.total, mem_object.free, mem_object.used);	
-			setTimeout("detect_CPU_RAM();", 2000);
-  		}
-	});
+		});
+	}
 }
 
 function tab_reset(v){
@@ -408,7 +440,7 @@ function generate_cpu_field(){
 				</td>
 			</tr>
 			
-			<tr style="height:100px;">
+			<tr style="height:100px;" class="IE8HACK">
 				<td colspan="3">
 					<div style="margin:0px 11px 0px 11px;background-color:black;">
 						<svg width="270px" height="100px">
@@ -496,7 +528,7 @@ function generate_cpu_field(){
 					</div>
 				</td>
 			</tr>
-			<tr style="height:100px;">
+			<tr style="height:100px;" class="IE8HACK">
 				<td colspan="3">
 					<div style="margin:0px 11px 0px 11px;background-color:black;">
 						<svg width="270px" height="100px">

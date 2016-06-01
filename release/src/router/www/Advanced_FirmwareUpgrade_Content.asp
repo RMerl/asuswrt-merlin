@@ -217,7 +217,7 @@ function detect_httpd(){
 				document.getElementById('loading_block1').style.display = "none";
 				document.getElementById('loading_block2').style.display = "none";
 				document.getElementById('loading_block3').style.display = "";
-				document.getElementById('loading_block3').innerHTML = "<div><#Firm_reboot_manually#></div>";
+				document.getElementById('loading_block3').innerHTML = "<div><#FIRM_reboot_manually#></div>";
 			}
 			else{
 				dead++;

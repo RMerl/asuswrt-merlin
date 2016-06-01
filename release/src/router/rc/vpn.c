@@ -119,6 +119,7 @@ void start_pptpd(void)
 //		"ipcp-accept-remote\n"
 		"lcp-echo-failure 10\n"
 		"lcp-echo-interval 6\n"
+		"lcp-echo-adaptive\n"
 		"deflate 0\n"
 		"auth\n"
 		"refuse-chap\n"

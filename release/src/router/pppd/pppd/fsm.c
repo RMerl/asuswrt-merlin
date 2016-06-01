@@ -70,8 +70,6 @@ static void fsm_sconfreq __P((fsm *, int));
 
 int peer_mru[NUM_PPP];
 
-/* JYWeng 20031216: add to wanstatus.log */
-void saveWANStatus(char *currentstatus, int statusindex);
 
 /*
  * fsm_init - Initialize fsm.
@@ -309,8 +307,7 @@ fsm_timeout(arg)
     case ACKSENT:
 	if (f->retransmits <= 0) {
 /* JYWeng 20031216: add to wanstatus.log */
-	    int statusindex=0; 
-	    saveWANStatus("No response from ISP.", statusindex);
+	    save_wanstatus("No response from ISP.", 0);
 /* JYWeng 20031216: add to wanstatus.log */
 	    warn("%s: timeout sending Config-Requests\n", PROTO_NAME(f));
 	    f->state = STOPPED;

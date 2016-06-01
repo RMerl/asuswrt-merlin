@@ -2554,7 +2554,7 @@ void modem_flow_check(void) {
 	if (!modem_data_save) {
 		if (debug == 1)
 			_dprintf("modem_flow_check: save the data usage.\n");
-		eval("modem_status.sh", "bytes+");
+		eval("/usr/sbin/modem_status.sh", "bytes+");
 	}
 
 	if (++modem_flow_count >= MODEM_FLOW_PERIOD) {
@@ -2567,7 +2567,7 @@ void modem_flow_check(void) {
 		if (strlen(timebuf) <= 0 || !strcmp(timebuf, "0")) {
 			snprintf(timebuf, 32, "%d", (int)now);
 			nvram_set("modem_bytes_data_start", timebuf);
-			eval("modem_status.sh", "bytes-");
+			eval("/usr/sbin/modem_status.sh", "bytes-");
 		}
 		start = strtol(nvram_safe_get("modem_bytes_data_start"), NULL, 10);
 		memcpy(&tm_start, localtime(&start), sizeof(struct tm));
@@ -2641,7 +2641,7 @@ void modem_flow_check(void) {
 		if (reset) {
 			snprintf(timebuf, 32, "%d", (int)now);
 			nvram_set("modem_bytes_data_start", timebuf);
-			eval("modem_status.sh", "bytes-");
+			eval("/usr/sbin/modem_status.sh", "bytes-");
 		}
 
 		modem_flow_count = 0;

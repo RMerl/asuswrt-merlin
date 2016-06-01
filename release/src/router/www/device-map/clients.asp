@@ -187,7 +187,13 @@ function drawClientList(tab){
 		}
 		
 		var deviceTitle = (clientObj.dpiDevice == "") ? clientObj.vendor : clientObj.dpiDevice;
-		if(userIconBase64 != "NoIcon") {
+		if(top.isIE8){
+			clientHtmlTd += '<div class="clientIconIE8HACK"';
+			clientHtmlTd += ' title="';
+			clientHtmlTd += deviceTitle;
+			clientHtmlTd += '"></div>';
+		}
+		else if(userIconBase64 != "NoIcon") {
 			clientHtmlTd += '<div title="'+ deviceTitle + '"">';
 			clientHtmlTd += '<img id="imgUserIcon_'+ i +'" class="imgUserIcon" src="' + userIconBase64 + '"';
 			clientHtmlTd += '</div>';

@@ -104,10 +104,18 @@ var is_KR_sku = (function(){
 	var ttc = '<% nvram_get("territory_code"); %>';
 	return (ttc.search("KR") == -1) ? false : true;
 })();
+var isIE8 = navigator.userAgent.search("MSIE 8") > -1; 
+var isIE9 = navigator.userAgent.search("MSIE 9") > -1; 
 
 function initial(){
 	if(is_KR_sku)
 		document.getElementById("KRHint").style.display = "";
+
+	if(isIE8 || isIE9){
+		document.getElementById("router_name_tr").style.display = "";
+		document.getElementById("router_password_tr").style.display = "";
+		document.getElementById("router_password_confirm_tr").style.display = "";
+	}
 
 	var windowHeight = (function(){
 		if(window.innerHeight)
@@ -415,7 +423,12 @@ function showError(str){
 								</div>
 							</div>
 						</td>
-					</tr>					
+					</tr>
+					<tr id="router_name_tr" style="display:none">
+						<td colspan="2">
+							<div style="color:#FFF;margin:20px 0px -10px 78px;"><#Router_Login_Name#></div>
+						</td>
+					</tr>				
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:20px 0px 0px 78px;">
@@ -423,6 +436,11 @@ function showError(str){
 							</div>
 						</td>
 					</tr>
+					<tr id="router_password_tr" style="display:none">
+						<td colspan="2">
+							<div style="color:#FFF;margin:20px 0px -20px 78px;"><#PASS_new#></div>
+						</td>
+					</tr>					
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:30px 0px 0px 78px;">
@@ -430,6 +448,11 @@ function showError(str){
 							</div>
 						</td>
 					</tr>
+					<tr id="router_password_confirm_tr" style="display:none">
+						<td colspan="2">
+							<div style="color:#FFF;margin:20px 0px -20px 78px;"><#Confirmpassword#></div>
+						</td>
+					</tr>							
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:30px 0px 0px 78px;">

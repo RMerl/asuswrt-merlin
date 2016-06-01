@@ -147,6 +147,8 @@ ipup_main(int argc, char **argv)
 	}
 
 	nvram_set(strcat_r(prefix, "dns", tmp), buf);
+	nvram_set(strcat_r(prefix, "auth_ok", tmp), "1");
+	nvram_commit();
 
 	wan_up(wan_ifname);
 
@@ -177,7 +179,7 @@ ipdown_main(int argc, char **argv)
 	wan_down(wan_ifname);
 
 	// override wan_state to get real reason
-	update_wan_state(prefix, WAN_STATE_STOPPED, pppstatus());
+	update_wan_state(prefix, WAN_STATE_STOPPED, pppstatus(unit));
 
 	unlink(strcat_r("/tmp/ppp/link.", wan_ifname, tmp));
 
@@ -278,8 +280,10 @@ authfail_main(int argc, char **argv)
 	if (nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp)))
 		nvram_set_int(strcat_r(prefix, "pppoe_demand", tmp), 1);
 
+#if 0 // wanduck will do something before set it. Finally wanduck will still set it.
 	// override wan_state
 	update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PPP_AUTH_FAIL);
+#endif
 
 	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;

@@ -51,6 +51,7 @@ CTL_Add_enrollee=建立联机
 CTL_apply=应用本页面设置
 CTL_apply1=应用目前所有设置
 CTL_Cancel=取消
+CTL_Detect_Again=再次侦测
 CTL_factory_default=使用出厂默认设定
 CTL_modify=修改
 CTL_next=下一步
@@ -82,7 +83,8 @@ File_Pop_content_alert_desc6=密码不能为空!
 File_Pop_content_alert_desc7=输入的密码与确认密码不相符。
 FIRM_fail_desc=固件升级未完成。原因可能出自映像不实或传输出错。请确认固件版本后再做尝试。
 FIRM_ok_desc=固件升级中，过程大约需要三分钟...
-Firm_reboot_manually=固件升级完成。请手动重新启动 ZVMODELVZ。
+FIRM_reboot_manually=固件升级完成。请手动重新启动 ZVMODELVZ。
+FIRM_trx_valid_fail_desc=为了符合新法规修订，ASUS 调整验证规则以提供更好的韧体品质。您使用的韧体版本与先前发布的韧体及未经验证过的第三方韧体不相容，建议您至官方网站下载最新版韧体使用。
 footer_copyright_desc=2016 版权属于 华硕电脑股份有限公司
 FW_n1=针对同时存在于新旧固件中的配置参数，其设置值在整个升级的过程中会一直保留。
 General_x_FirmwareVersion_itemname=固件版本：
@@ -349,8 +351,6 @@ QIS_pass_desc1=更改路由器密码，以阻止未授权客户端访问您的�
 QIS_pass_desc2=用户名与密码，区分大小写。
 QIS_pass_desc3=您的路由器登录信息，用于访问路由器的管理设置。
 [###MODEL_DEP###][PL-AC56][PL-N12]QIS_pass_desc3=您的电力网络桥接器登录信息，用于访问电力网络桥接器的管理设置。
-QIS_pass_desc4=路由器的登录信息，也可用于访问 FTP 和 AiCloud 2.0 等附加功能，。
-[###MODEL_DEP###][RT-N53][RT-N15U][RT-N12][RT-N12B1][RT-N12C1][RT-N12D1][RT-N12HP][RT-N12HP_B1][RT-N12VP][AP-N12HP][RT-N10+][RT-N10D1][RT-N10P][RT-N10PV2][RT-N10U]QIS_pass_desc4=路由器的登录信息，也可用于访问 FTP 等附加功能。
 QIS_pass_desc5=默认的用户名和密码为：
 QIS_pass_title=设置路由器登录资讯
 [###MODEL_DEP###][PL-AC56][PL-N12]QIS_pass_title=设置电力网络桥接器登录信息
@@ -562,8 +562,22 @@ UPnPMediaServer=媒体服务器
 USB_Application_account_alert=用户账号不能为'root','guest','anonymous' 请输入有效的账号名称！
 vpn_Adv=虚拟专用网 (VPN) 详细设置
 WANJS9Text=输入用户名与密码。
+web_redirect_case1_suggestion1=请确认 ZVMODELVZ 的 WAN 端口与互联网之间的网路线已接上。
+web_redirect_case1_suggestion2=请确认是否需要更改 <a style='color:#FFF' href='/Advanced_OperationMode_Content.asp'>操作模式</a>。
+web_redirect_case2_suggestion1=您的 PPPoE 或是 VPN 的帐号、密码不被接受，请<a style='color:#FFF' href='/Advanced_WAN_Content.asp'>重新输入</a>。
+web_redirect_case2_title1=PPPoE 认证失败
+web_redirect_case3_button=切换 WAN 类型
+web_redirect_case3_suggestion1=请确认 <a style='color:#FFF' href='/Advanced_WAN_Content.asp'>网路设置</a>内容正确。
+web_redirect_case5_suggestion1=建议开启 WAN 连线。 <a style='color:#FFF' href='/index.asp'>更改设置。</a>
+web_redirect_case5_suggestion2=请检查 USB 网卡是否已正常开机完成。
+web_redirect_case5_suggestion3=更改您的 <a style='color:#FFF' href='/Advanced_Modem_Content.asp'>USB 网卡设置</a>。
+web_redirect_case5_title1=您已手动中断 WAN 连线
+web_redirect_case5_title2=USB 网卡正在重开机或关闭
 web_redirect_case6_desc1=点击【下一步】更换成新的 IP 地址。新的 IP 地址为：
-web_redirect_case6_desc2=更改IP地址后，请确认相关服务的IP设置是否需要调整，如端口转发或 DMZ 等功能。
+web_redirect_case6_desc2=更改 IP 地址后，请确认相关服务的 IP 设置是否需要调整，如端口转发或 DMZ 等功能。
+web_redirect_case8_suggestion1=请确认前端基地台的网路连线正常。
+web_redirect_case8_suggestion2=<a style='color:#FFF' href='/QIS_wizard.htm?flag=manual'>重新设置连线</a>。
+web_redirect_case8_title=无法与 Parent-AP 连线
 web_redirect_fail_reason0=联机失败原因
 web_redirect_message=您的网络联机出现问题，导致您无法前往您想要阅读的网页
 web_redirect_reason1=未连接网线。
@@ -595,20 +609,6 @@ web_redirect_suggestion6=请重新设置您的 ZVMODELVZ 的近端网络地址�
 web_redirect_suggestion7=请插入网线，将宽带网线插入路由器 WAN 接口，并选择「自动设置」按钮。
 web_redirect_suggestion8=如果希望在没有连接网线的状况下完成配置，请选择「手动设置」按钮。
 web_redirect_suggestion9=下一步，请设定安全的路由器登录名称和密码。
-web_redirect_case1_suggestion1=请确认 ZVMODELVZ 的 WAN 端口与互联网之间的网路线已接上。
-web_redirect_case1_suggestion2=请确认是否需要更改 <a href='/Advanced_OperationMode_Content.asp'>操作模式。</a>
-web_redirect_case2_title1=PPPoE 认证失败。
-web_redirect_case2_suggestion1=您的 PPPoE 或是 VPN 的帐号、密码不被接受，请 <a href='/Advanced_WAN_Content.asp'>重新输入。</a>
-web_redirect_case3_suggestion1=请确认网路设置内容正确。
-web_redirect_case3_button=切换WAN类型
-web_redirect_case5_title1=您已手动中断WAN连线。
-web_redirect_case5_title2=USB网卡正在重开机或关闭
-web_redirect_case5_suggestion1=建议开启WAN连线。 <a href='/index.asp'>更改设置。</a>
-web_redirect_case5_suggestion2=请检查USB网卡是否已正常开机完成。
-web_redirect_case5_suggestion3=更改您的<a href='/Advanced_Modem_Content.asp'>USB网卡设置。</a>
-web_redirect_case8_title=无法与Parent-AP 连线。
-web_redirect_case8_suggestion1=请确认前端基地台的网路连线正常。
-web_redirect_case8_suggestion2=<a style='color:#FFF' href='/QIS_wizard.htm?flag=manual'>重新设置连线</a>。
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-AC68U]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-AC1900 Gigabit VDSL2/ADSL2+ Modem Router
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
@@ -627,6 +627,7 @@ WLANConfig11b_x_BRApply_itemname2=连接列表中的访问点
 WLANConfig11n_nmode_limition_hint=[n Only]模式下，原WEP或TKIP加密设定将自动调整为AES加密，以取得正确的联机。
 WPS_PBCbutton_hint_success=联机成功
 CHAR_set=UTF-8
+selected_language=简体中文
 Access_Intranet=访问内部网络
 Access_Intranet_desc=允许访客使用内部网络。
 access_service=现在您可以访问您的 USB 存储设备以及连接到 ZVMODELVZ 并开启网络位置 (Samba) 功能的设备。
@@ -947,7 +948,6 @@ CTL_check_log=查询记录
 CTL_clear=清除
 CTL_close=关闭
 CTL_del=删除
-CTL_Detect_Again=再次侦测
 CTL_Disabled=未启用
 CTL_Disagree=不同意
 CTL_Disconnect=未联机
@@ -2492,6 +2492,27 @@ YandexDNS_qis_lua=I want to use Yandex.DNS and agree to the <a class="link" href
 YandexDNS_settings_hint=Clients are using Yandex.DNS regardless of the DNS setting.
 yoursharesetting=即将设置文件共享方式为：
 zero_disable=关闭：0
-CHT_ppp_notice_1=Tip: 您正使用中華電信光世代，我們已幫您使用自動取得IP方式上網，若你想提高網路品質、取得公共IP ，建議使用PPPoE 撥號上網
-CHT_ppp_notice_2=前往設定撥號連線(PPPoE)
-selected_language=简体中文
+CHT_ppp_notice_1=註：您正使用中華電信光世代，我們已幫您使用自動取得 IP 方式上網，若你想提高網路品質、取得公共 IP，建議使用 PPPoE 撥號上網。
+CHT_ppp_notice_2=前往設定撥號連線( PPPoE )
+Facebook_page=Page Setting
+Facebook_WiFi_connecting=Connecting to Facebook page...
+Facebook_WiFi_desc=Facebook Wi-Fi kets customers check in to participating businesses on Facebok for free Wi-Fi access. When people check int to your Page, you can share offers and other announcements with them.
+Facebook_WiFi_disclaim=Disclaimer:
+Facebook_WiFi_disclaim_title=Term of use
+Facebook_WiFi_disclaim1=Please be noted to keep Facebook Wi-Fi enabled firmware stay up to date.
+Facebook_WiFi_disclaim2=Please be noted Facebook Wi-Fi service is provided by Facebook which will be terminated upon official announcement.
+Facebook_WiFi_disclaim3=Please be noted there will be a 1 year grace period upon termination where Facebook will continue supporting the service. After that period, this feature will cease to operate.
+Facebook_WiFi_disclaim4=Any non-certificated router is prohibited to use Facebook Wi-Fi enabled firmware.
+Facebook_WiFi_disconnected=Unable to connect to Facebook page, please check your internet status.
+Facebook_WiFi_enable=Enable Facebook Wi-Fi
+Facebook_WiFi_FAQ1=What is Facebook Wi-Fi?
+Facebook_WiFi_FAQ2=What benefit I can get by Facebook Wi-Fi?
+Facebook_WiFi_FAQ3=How to setup Facebook Wi-Fi?
+Facebook_WiFi_FAQ4=FAQs about Facebook Wi-Fi
+Facebook_WiFi_page=Facebook Page Settings
+Facebook_WiFi_page_connection=Confugure Facebook page connection.
+Facebook_WiFi_page_desc=Choose a Facebook page for this Wi-Fi network, and manage page settings here :
+Facebook_WiFi_unit_hint0=All 2.4 GHz guest networks are used, if you want to use 2.4 GHz band for Facebook Wi-Fi, please remove one 2.4 GHz guest network<br>
+Facebook_WiFi_unit_hint1=All 5 GHz guest networks are used, if you want to use 5 GHz band for Facebook Wi-Fi, please remove one 5 GHz guest network<br>
+Facebook_WiFi_unit_hint2=All 5 GHz-2 guest networks are used, if you want to use 5 GHz band for Facebook Wi-Fi, please remove one 5 GHz-2 guest network
+Facebook_WiFi_unit_hint_all=All guest networks are used now, please remove at least one guest network then try to enable Facebook Wi-Fi again.

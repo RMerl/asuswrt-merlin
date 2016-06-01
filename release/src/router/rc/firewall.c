@@ -1398,6 +1398,19 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 
 	wan_unit = wan_ifunit(wan_if);
 	_dprintf("wanport_status(%d) %d\n", wan_unit, wanport_status(wan_unit));
+
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	int wan_auth_ok, wan_sbstate;
+
+	sprintf(prefix, "wan%d_", wan_unit);
+	wan_auth_ok = nvram_get_int(strcat_r(prefix, "auth_ok", tmp));
+	wan_sbstate = nvram_get_int(strcat_r(prefix, "sbstate_t", tmp));
+
+	if(!wan_auth_ok && wan_sbstate == WAN_STOPPED_REASON_PPP_AUTH_FAIL){
+		_dprintf("nat_rule: AUTH_FAIL, so skip start_nat_rules.\n");
+		return;
+	}
+
 	if (wan_unit || get_wanports_status(wan_unit)) {
 		/* force nat update */
 		nvram_set_int("nat_state", NAT_STATE_UPDATE);
@@ -3169,7 +3182,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	char *setting;
 	char macaccept[32], chain[32];
 	char *ftype; //, *dtype;
-	char *wan_proto;
+	char *wan_proto = "";
 	int i;
 //2008.09 magic{
 #ifdef WEBSTRFILTER
@@ -4344,7 +4357,8 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 		}
 		if (nvram_match("fw_nat_loopback", "1")) {
 			/* mark VTS loopback connections */
-			if (nvram_match("vts_enable_x", "1")||!nvram_match("dmz_ip", "")) {
+			if (nvram_match("vts_enable_x", "1") || !nvram_match("dmz_ip", "") ||
+				(is_nat_enabled() && nvram_get_int("upnp_enable"))) {
 				char lan_class[32];
 
 				ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
@@ -4530,7 +4544,8 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 		if (nvram_match("fw_nat_loopback", "1")) {
 			/* mark VTS loopback connections */
-			if (nvram_match("vts_enable_x", "1")||!nvram_match("dmz_ip", "")) {
+			if (nvram_match("vts_enable_x", "1") || !nvram_match("dmz_ip", "") ||
+				(is_nat_enabled() && nvram_get_int("upnp_enable"))) {
 				char lan_class[32];
 
 				ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);

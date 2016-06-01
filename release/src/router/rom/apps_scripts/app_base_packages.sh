@@ -201,14 +201,14 @@ fi
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
 if [ "$APPS_MOUNTED_TYPE" == "vfat" ] || [ "$APPS_MOUNTED_TYPE" == "tfat" ]; then
-	app_move_to_pool.sh $APPS_DEV
+	/usr/sbin/app_move_to_pool.sh $APPS_DEV
 	if [ "$?" != "0" ]; then
 		# apps_state_error was already set by app_move_to_pool.sh.
 		exit 1
 	fi
 fi
 
-app_base_link.sh
+/usr/sbin/app_base_link.sh
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_base_link.sh.
 	exit 1

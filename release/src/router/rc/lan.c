@@ -2512,7 +2512,7 @@ NEITHER_WDS_OR_PSTA:
 
 			while(!strcmp(nvram_safe_get("usb_modem_act_type"), "") && i++ < 3){
 				_dprintf("hotplug net(%s): wait for the modem driver at %d second...\n", interface, i);
-				eval("find_modem_type.sh");
+				eval("/usr/sbin/find_modem_type.sh");
 				sleep(1);
 			}
 

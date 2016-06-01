@@ -141,7 +141,6 @@
 	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
 	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 .FormTable thead th{
 	color: #000000;
@@ -222,7 +221,6 @@
 	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
 	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 .FormTable_table thead th{
 	width: 98px;
@@ -259,7 +257,6 @@
 	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
 	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 .FormTable_NWM th.select_table{
 	width:100px;
@@ -1899,18 +1896,6 @@ padding-top:1px;
 	text-decoration:underline;
 	background-color:#065280;
 }
-.textarea_ssh_table{
-	margin-left:2px;
-	padding-left:0.4em;
-	width:500px;
-	height:184px;
-	line-height:18px;
-	font-size:12px;
-	background:#576D73;
-	border:2px ridge #777;
-	border-style:bevel;
-	color:#FFFFFF;
-}
 .notification_on{
 	background-image:url(images/New_ui/notification.png);
 	background-repeat:no-repeat;	
@@ -2243,62 +2228,109 @@ padding-top:1px;
 .single_wan_connected{
 	background-image:url(images/New_ui/networkmap/line_dualwan.png);
 	background-repeat:no-repeat;
-	height:40px;
+	background-position:0px -5px;
+	height:35px;
 	width:20px;
 }
 .single_wan_disconnected{
 	background-image:url(images/New_ui/networkmap/line_dualwan_disconnected.png);
 	background-repeat:no-repeat;
-	height:40px;
+	background-position:0px -5px;
+	height:35px;
+	width:20px;
+}
+.single_wan_error{
+	background-image:url(images/New_ui/networkmap/line_singwan_error.png);
+	background-repeat:no-repeat;
+	background-position:0px -5px;
+	height:35px;
 	width:20px;
 }
 .primary_wan_connected{
 	background-image:url(images/New_ui/networkmap/line_dualwan.png);
 	background-repeat:no-repeat;
+	background-position:0px -5px;
 	margin-left:68px;
-	height:40px;
+	height:35px;
 	width:20px;
 }
 .primary_wan_disconnected{
 	background-image:url(images/New_ui/networkmap/line_dualwan_disconnected.png);
 	background-repeat:no-repeat;
+	background-position:0px -5px;
 	margin-left:68px;
-	height:40px;
+	height:35px;
 	width:20px;
 }
 .primary_wan_standby{
 	background-image:url(images/New_ui/networkmap/line_dualwan_dot.png);
 	background-repeat:no-repeat;
+	background-position:0px -5px;
 	margin-left:68px;
-	height:40px;
+	height:35px;
+	width:20px;
+}
+.primary_wan_error{
+	background-image:url(images/New_ui/networkmap/line_singwan_error.png);
+	background-repeat:no-repeat;
+	background-position:0px -5px;
+	margin-left:68px;
+	height:35px;
 	width:20px;
 }
 .secondary_wan_connected{
 	background-image:url(images/New_ui/networkmap/line_dualwan.png);
 	background-repeat:no-repeat;
+	background-position:0px -5px;
 	margin-left:105px;
 	*margin-left:103px;
-	height:40px;
+	height:35px;
 	width:20px;
 }
 .secondary_wan_disconnected{
 	background-image:url(images/New_ui/networkmap/line_dualwan_disconnected.png);
 	background-repeat:no-repeat;
+	background-position:0px -5px;
 	margin-left:105px;
 	*margin-left:103px;
-	height:40px;
+	height:35px;
 	width:20px;
 }
 .secondary_wan_standby{
 	background-image:url(images/New_ui/networkmap/line_dualwan_dot.png);
 	background-repeat:no-repeat;
+	background-position:0px -5px;
 	margin-left:105px;
 	*margin-left:103px;
-	height:40px;
+	height:35px;
 	width:20px;
+}
+.secondary_wan_error{
+	background-image:url(images/New_ui/networkmap/line_singwan_error.png);
+	background-repeat:no-repeat;
+	background-position:0px -5px;
+	margin-left:105px;
+	*margin-left:103px;
+	height:35px;
+	width:20px;
+}
+.textarea_ssh_table{
+	margin-left:2px;
+	padding-left:0.4em;
+	width:500px;
+	height:184px;
+	line-height:18px;
+	font-size:12px;
+	background:#576D73;
+	border:2px ridge #777;
+	border-style:bevel;
+	color:#FFFFFF;
 }
 .link{
 	cursor:pointer !important;
 	text-decoration:underline !important;
 }
 
+.IE8HACK{
+	display: none \9;
+}

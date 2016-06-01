@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <linux/lp.h>
@@ -152,6 +153,8 @@ int main(int argc, char *argv[])
 	int lock;
 	int pid = 0;
 	FILE *fp;
+	struct ifreq ifr;
+	struct in_addr local;
 
 	fp = fopen("/var/run/lpdparent.pid", "r");
 	if (fp) {
@@ -191,11 +194,20 @@ int main(int argc, char *argv[])
         exit(0);
     }
     
+    local.s_addr = htonl(INADDR_ANY);
+    if (argv[1]) {
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_name, argv[1], sizeof(ifr.ifr_name));
+	if(ioctl(sockfd, SIOCGIFADDR, &ifr) < 0)
+	    syslog(LOGOPTS, "can't get interface %s address: %m", argv[1]);
+	else
+	    local.s_addr = ((struct sockaddr_in *) &ifr.ifr_addr)->sin_addr.s_addr;
+    }
+    
     bzero((char *)&serv_addr , sizeof(serv_addr));
     serv_addr.sin_family        = AF_INET;
-    serv_addr.sin_addr.s_addr   = htonl(INADDR_ANY);
+    serv_addr.sin_addr.s_addr   = local.s_addr;
     serv_addr.sin_port          = htons(PNT_SVR_PORT_LPR);
-
     
     if(bind(sockfd,(struct sockaddr *)&serv_addr , sizeof(serv_addr)) < 0 )
     {
@@ -223,7 +235,7 @@ int main(int argc, char *argv[])
 	}
 	netaddr.sin_family = AF_INET;
 	netaddr.sin_port = htons(BASEPORT);
-	netaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	netaddr.sin_addr.s_addr = local.s_addr;
 	memset(netaddr.sin_zero, 0, sizeof(netaddr.sin_zero));
 	if (bind(netfd, (struct sockaddr*) &netaddr, sizeof(netaddr)) < 0)
 	{
@@ -247,7 +259,7 @@ int main(int argc, char *argv[])
 	}
     	bzero((char *)&serv_addr_ASUS , sizeof(serv_addr_ASUS));
     	serv_addr_ASUS.sin_family        = AF_INET;
-    	serv_addr_ASUS.sin_addr.s_addr   = htonl(INADDR_ANY);
+    	serv_addr_ASUS.sin_addr.s_addr   = local.s_addr;
     	serv_addr_ASUS.sin_port          = htons(PNT_SVR_PORT_ASUS);
 
     	if(bind(sockfd_ASUS,(struct sockaddr *)&serv_addr_ASUS , sizeof(serv_addr_ASUS)) < 0 )
@@ -1244,15 +1256,18 @@ void check_prn_status(char *status_prn, char *cliadd_prn)
 /*JY1114: get printer queue name for LPR*/
 int get_queue_name(char *input)
 {
+#if 0
 	char QueueName_got[32];
 	char *index1;
 	int rps_i=0, rps_j=0;
 	while(index1 = strrchr(input, ' '))
 		index1[0] = 0;
 	rps_i = 0;
-	strcpy(QueueName_got, input);
+	memset(QueueName_got, 0, sizeof(QueueName_got));
+	strncpy(QueueName_got, input, sizeof(QueueName_got) - 1);
 	//return(strcmp(QueueName_got, "LPRServer"));
 	//by pass queue Name Check
+#endif
 	return 0;
 }
 

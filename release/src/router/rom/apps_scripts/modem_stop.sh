@@ -42,12 +42,12 @@ _get_qcqmi_by_usbnet(){
 if [ "$modem_type" == "gobi" ]; then
 	if [ "$usb_gobi2" == "1" ]; then
 		echo "Gobi2: Pause the autoconnect."
-		at_ret=`$at_lock modem_at.sh "+CAUTOCONNECT=0" |grep "OK" 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh "+CAUTOCONNECT=0" |grep "OK" 2>/dev/null`
 		if [ "$at_ret" != "OK" ]; then
 			echo "Gobi2: Fail to stop the autoconnect."
 			exit 0
 		fi
-		at_ret=`$at_lock modem_at.sh "+CWWAN=0" |grep "OK" 2>/dev/null`
+		at_ret=`$at_lock /usr/sbin/modem_at.sh "+CWWAN=0" |grep "OK" 2>/dev/null`
 		if [ "$at_ret" != "OK" ]; then
 			echo "Gobi2: Fail to stop the connection."
 			exit 0

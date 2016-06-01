@@ -120,7 +120,7 @@ apps_info_t *get_apps_list(char *argv){
 	FILE *fp;
 	unsigned long file_size = 0;
 	int pid;
-	char *cmd[] = {"app_update.sh", NULL};
+	char *cmd[] = {"/usr/sbin/app_update.sh", NULL};
 	char line[128], buf[4096];
 	char *tmp_apps_name;
 	int got_apps;

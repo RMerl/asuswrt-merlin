@@ -42,9 +42,9 @@
 #endif
 
 #include <wlscan.h>
+#include <bcmendian.h>
 #ifdef RTCONFIG_BCM_7114
 #include <bcmutils.h>
-#include <bcmendian.h>
 #include <security_ipc.h>
 #endif
 
@@ -554,7 +554,7 @@ wl_scan(int unit)
 		for (i = 0; i < ap_count; i++)
 		{
 			memset(ssid_str, 0, sizeof(ssid_str));
-			char_to_ascii(ssid_str, (const char *) trim_r(ap_list[i].ssid));
+			char_to_ascii(ssid_str, (const char *) trim_r((char *) ap_list[i].ssid));
 
 			ether_etoa((const unsigned char *) &ap_list[i].BSSID, macstr);
 			if (psta_debug)
@@ -598,7 +598,7 @@ wl_autho(char *name, struct ether_addr *ea)
 	return 0;
 }
 #ifdef PSTA_DEBUG
-static void check_wl_rate(const char *ifname)
+static void check_wl_rate(char *ifname)
 {
 	int rate = 0;
 	char rate_buf[32];
@@ -695,14 +695,31 @@ PSTA_ERR:
 	else
 	{
 		if (psta_debug) dbg("psta disconnected\n");
-		if (++count_bss_down > 9)
+		if (++count_bss_down > 3)
 		{
 			count_bss_down = 0;
 			if (wl_scan(unit))
 			{
-				eval("wlconf", name, "down");
-				eval("wlconf", name, "up");
-				eval("wlconf", name, "start");
+				eval("wl", "-i", name, "disassoc");
+				char *amode, *sec = nvram_safe_get(strcat_r(prefix, "akm", tmp));
+				char *argv[] = { "wl", "-i", name, "join", nvram_safe_get(strcat_r(prefix, "ssid", tmp)), "amode", NULL, NULL, NULL, NULL };
+				int index = 6;
+				unsigned char ea[ETHER_ADDR_LEN];
+
+				if (strstr(sec, "psk2")) amode = "wpa2psk";
+				else if (strstr(sec, "psk")) amode = "wpapsk";
+				else if (strstr(sec, "wpa2")) amode = "wpa2";
+				else if (strstr(sec, "wpa")) amode = "wpa";
+				else if (nvram_get_int(strcat_r(prefix, "auth", tmp))) amode = "shared";
+				else amode = "open";
+
+				argv[index++] = amode;
+				if (ether_atoe(nvram_safe_get("wlc_hwaddr"), ea)) {
+					argv[index++] = "-b";
+					argv[index++] = nvram_safe_get("wlc_hwaddr");
+				}
+
+				_eval(argv, NULL, 0, NULL);
 			}
 		}
 		else

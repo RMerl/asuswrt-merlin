@@ -558,5 +558,103 @@ function change_channel(obj){
 				}
 			}
 		}
+	}
+	else if(band == 0){
+		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+			if(!Qcawifi_support && !Rawifi_support){
+				if(document.form.wl_channel.value  == '0'){
+					document.getElementById('acs_ch13_checkbox').style.display = "";
+					document.form.acs_ch13.disabled = false;					
+				}
+				else{
+					document.getElementById('acs_ch13_checkbox').style.display = "none";
+					document.form.acs_ch13.disabled = true;							
+				}
+			}
+		}
+	}
+	else if(band == 0){
+		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+			if(!Qcawifi_support && !Rawifi_support){
+				if(document.form.wl_channel.value  == '0'){
+					document.getElementById('acs_ch13_checkbox').style.display = "";
+					document.form.acs_ch13.disabled = false;					
+				}
+				else{
+					document.getElementById('acs_ch13_checkbox').style.display = "none";
+					document.form.acs_ch13.disabled = true;							
+				}
+			}
+		}
+	}
+	else if(band == 0){
+		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+			if(!Qcawifi_support && !Rawifi_support){
+				if(document.form.wl_channel.value  == '0'){
+					document.getElementById('acs_ch13_checkbox').style.display = "";
+					document.form.acs_ch13.disabled = false;					
+				}
+				else{
+					document.getElementById('acs_ch13_checkbox').style.display = "none";
+					document.form.acs_ch13.disabled = true;							
+				}
+			}
+		}
+	}
+	else if(band == 0){
+		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+			if(!Qcawifi_support && !Rawifi_support){
+				if(document.form.wl_channel.value  == '0'){
+					document.getElementById('acs_ch13_checkbox').style.display = "";
+					document.form.acs_ch13.disabled = false;					
+				}
+				else{
+					document.getElementById('acs_ch13_checkbox').style.display = "none";
+					document.form.acs_ch13.disabled = true;							
+				}
+			}
+		}
+	}
+	else if(band == 0){
+		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+			if(!Qcawifi_support && !Rawifi_support){
+				if(document.form.wl_channel.value  == '0'){
+					document.getElementById('acs_ch13_checkbox').style.display = "";
+					document.form.acs_ch13.disabled = false;					
+				}
+				else{
+					document.getElementById('acs_ch13_checkbox').style.display = "none";
+					document.form.acs_ch13.disabled = true;							
+				}
+			}
+		}
+	}
+	else if(band == 0){
+		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+			if(!Qcawifi_support && !Rawifi_support){
+				if(document.form.wl_channel.value  == '0'){
+					document.getElementById('acs_ch13_checkbox').style.display = "";
+					document.form.acs_ch13.disabled = false;					
+				}
+				else{
+					document.getElementById('acs_ch13_checkbox').style.display = "none";
+					document.form.acs_ch13.disabled = true;							
+				}
+			}
+		}
+	}
+	else if(band == 0){
+		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
+			if(!Qcawifi_support && !Rawifi_support){
+				if(document.form.wl_channel.value  == '0'){
+					document.getElementById('acs_ch13_checkbox').style.display = "";
+					document.form.acs_ch13.disabled = false;					
+				}
+				else{
+					document.getElementById('acs_ch13_checkbox').style.display = "none";
+					document.form.acs_ch13.disabled = true;							
+				}
+			}
+		}
 	}	
 }

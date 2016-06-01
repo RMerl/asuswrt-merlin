@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -130,7 +130,7 @@ static int dhcp6_maybe_relay(struct state *state, void *inbuff, size_t sz,
       MAC address from the local ND cache. */
       
       if (!state->link_address)
-	get_client_mac(client_addr, state->interface, state->mac, &state->mac_len, &state->mac_type);
+	get_client_mac(client_addr, state->interface, state->mac, &state->mac_len, &state->mac_type, now);
       else
 	{
 	  struct dhcp_context *c;
@@ -2057,7 +2057,8 @@ static unsigned int opt6_uint(unsigned char *opt, int offset, int size)
   return ret;
 } 
 
-void relay_upstream6(struct dhcp_relay *relay, ssize_t sz, struct in6_addr *peer_address, u32 scope_id)
+void relay_upstream6(struct dhcp_relay *relay, ssize_t sz, 
+		     struct in6_addr *peer_address, u32 scope_id, time_t now)
 {
   /* ->local is same value for all relays on ->current chain */
   
@@ -2071,7 +2072,7 @@ void relay_upstream6(struct dhcp_relay *relay, ssize_t sz, struct in6_addr *peer
   unsigned char mac[DHCP_CHADDR_MAX];
 
   inet_pton(AF_INET6, ALL_SERVERS, &multicast);
-  get_client_mac(peer_address, scope_id, mac, &maclen, &mactype);
+  get_client_mac(peer_address, scope_id, mac, &maclen, &mactype, now);
 
   /* source address == relay address */
   from.addr.addr6 = relay->local.addr.addr6;

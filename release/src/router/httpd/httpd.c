@@ -391,9 +391,8 @@ __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
 static int
 referer_check(char* referer, int fromapp_flag)
 {
-
 	char *auth_referer=NULL;
-	char *cp1=NULL, *cp2=NULL, *location_cp1=NULL;
+	char *cp1=NULL, *cp2=NULL, *location_cp=NULL, *location_cp1=NULL;
 
 	if(fromapp_flag != 0)
 		return 0;
@@ -401,16 +400,22 @@ referer_check(char* referer, int fromapp_flag)
 		send_login_page(fromapp_flag, NOREFERER, NULL, 0);
 		return NOREFERER;
 	}else{
-		location_cp1 = strstr(referer,"//");
-		if(location_cp1 != (char*) 0){
-			cp1 = &location_cp1[2];
+
+		if(strstr(referer,"\r") != (char*) 0)
+			location_cp1 = strtok(referer, "\r");
+		else
+			location_cp1 = referer;
+
+		location_cp = strstr(location_cp1,"//");
+		if(location_cp != (char*) 0){
+			cp1 = &location_cp[2];
 			if(strstr(cp1,"/") != (char*) 0){
 				cp2 = strtok(cp1, "/");
 				auth_referer = cp2;
 			}else
 				auth_referer = cp1;
 		}else
-			auth_referer = referer;
+			auth_referer = location_cp1;
 
 	}
 	if(referer_host[0] == 0){
@@ -421,7 +426,7 @@ referer_check(char* referer, int fromapp_flag)
 			strcpy(auth_referer, nvram_safe_get("lan_ipaddr"));
 	}
 	/* form based referer info? */
-	if(strncmp( auth_referer, referer_host, strlen(referer_host) ) == 0){
+	if((strlen(auth_referer) == strlen(referer_host)) && strncmp( auth_referer, referer_host, strlen(referer_host) ) == 0){
 		//_dprintf("asus token referer_check: the right user and password\n");
 		return 0;
 	}else{
@@ -889,7 +894,14 @@ handle_request(void)
 							_dprintf("%s", Accept_Language);
 							nvram_set("ui_Setting", "1");
 							nvram_set("preferred_lang", Accept_Language);
+							
 
+#if defined(RTCONFIG_TCODE)
+							if (find_word(nvram_safe_get("rc_support"), "tcode") && nvram_get("territory_code")){
+								if (!strncmp(nvram_get("territory_code"), "CN", 2))
+									nvram_set("preferred_lang", "CN");
+							}
+#endif
 						#ifdef RTCONFIG_DSL_TCLINUX
 							if(!strcmp(Accept_Language, "CZ") || !strcmp(Accept_Language, "DE")) {
 								int do_restart = 0;
@@ -1247,7 +1259,7 @@ handle_request(void)
 	}
 
 	if (!handler->pattern){
-		if(strlen(file) > 50 && !(strstr(file, "findasus"))){
+		if(strlen(file) > 50 && !(strstr(file, "findasus")) && !(strstr(file, "acme-challenge"))){
 			char inviteCode[256];
 			snprintf(inviteCode, sizeof(inviteCode), "<script>location.href='/cloud_sync.asp?flag=%s';</script>", file);
 			send_page( 200, "OK", (char*) 0, inviteCode, 0);

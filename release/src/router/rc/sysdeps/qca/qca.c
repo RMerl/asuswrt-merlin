@@ -1303,11 +1303,6 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		   	fprintf(fp,"#auth_server_shared_secret=\n");
 	}	
 
-#if defined(RTAC55U) || defined(RTAC55UHP) || defined(RT4GAC55U)
-	/* Enable MLME debug message on "Direct Attach" WiFi interface of AC55U series product. */
-	if (!band)
-		fprintf(fp2, "iwpriv %s dbgLVL 0x80000000\n", wif);
-#endif
 
 	//if(subnet==0) //for ath0 & ath1
 	{

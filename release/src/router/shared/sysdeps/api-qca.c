@@ -991,3 +991,199 @@ int get_channel_list_via_country(int unit, const char *country_code,
 
 	return (p - buffer);
 }
+
+#ifdef RTCONFIG_POWER_SAVE
+#define SYSFS_CPU	"/sys/devices/system/cpu"
+#define CPUFREQ		"cpufreq"
+
+void set_cpufreq_attr(char *attr, char *val)
+{
+	int cpu;
+	char path[128], prefix[128];
+
+	if (!attr || !val)
+		return;
+
+	for (cpu = 0; cpu < 16; ++cpu) {
+		snprintf(prefix, sizeof(prefix), "%s/cpu%d", SYSFS_CPU, cpu);
+		if (!d_exists(prefix))
+			continue;
+
+		snprintf(path, sizeof(path), "%s/%s/%s", prefix, CPUFREQ, attr);
+		if (!f_exists(path)) {
+			_dprintf("%s: %s not exist!\n", __func__, path);
+			continue;
+		}
+
+		f_write_string(path, val, 0, 0);
+	}
+}
+
+static void set_cpu_power_save_mode(void)
+{
+#if defined(RTCONFIG_SOC_IPQ8064)
+	char path[128];
+
+	snprintf(path, sizeof(path), "%s/cpu%d/%s", SYSFS_CPU, 0, CPUFREQ);
+	if (!d_exists(path)) {
+		_dprintf("%s: cpufreq is not enabled!\n", __func__);
+		return;
+	}
+
+	switch (nvram_get_int("pwrsave_mode")) {
+	case 2:
+		/* CPU: powersave - min. freq */
+		set_cpufreq_attr("scaling_governor", "powersave");
+		break;
+	case 1:
+		/* CPU: On Demand - auto */
+		set_cpufreq_attr("scaling_governor", "ondemand");
+		break;
+	default:
+		/* CPU: performance - max. freq */
+		set_cpufreq_attr("scaling_governor", "performance");
+		break;
+	}
+#endif
+}
+
+#define PROC_NSS_CLOCK	"/proc/sys/dev/nss/clock"
+static void set_nss_power_save_mode(void)
+{
+#if defined(RTCONFIG_SOC_IPQ8064)
+	int r;
+	unsigned long nss_min_freq = 0, nss_max_freq = 0;
+	char path[128], buf[128] = "", nss_freq[16] = "";
+
+	/* NSS */
+	if (!d_exists(PROC_NSS_CLOCK)) {
+		_dprintf("%s: NSS is not enabled\n", __func__);
+		return;
+	}
+
+	/* The /proc/sys/dev/nss/clock/freq_table is not readable.
+	 * Hardcode NSS min/max freq. based on max. CPU freq. instead.
+	 */
+	snprintf(path, sizeof(path), "%s/cpu%d/%s/cpuinfo_max_freq", SYSFS_CPU, 0, CPUFREQ);
+	if ((r = f_read_string(path, buf, sizeof(buf))) <= 0) {
+		return;
+	}
+
+	nss_min_freq = 110 * 1000000;
+	if (atoi(buf) == 1400000) {
+		nss_max_freq = 733 * 1000000;	/* IPQ8064 */
+	} else {
+		nss_max_freq = 800 * 1000000;	/* IPQ8065 */
+	}
+
+	_dprintf("%s: NSS min/max freq: %lu/%lu\n", __func__, nss_min_freq, nss_max_freq);
+	if (!nss_min_freq || !nss_max_freq)
+		return;
+
+	switch (nvram_get_int("pwrsave_mode")) {
+	case 2:
+		/* NSS: powersave - min. freq */
+		snprintf(path, sizeof(path), "%s/auto_scale", PROC_NSS_CLOCK);
+		f_write_string(path, "0", 0, 0);
+		snprintf(nss_freq, sizeof(nss_freq), "%lu", nss_min_freq);
+		snprintf(path, sizeof(path), "%s/current_freq", PROC_NSS_CLOCK);
+		f_write_string(path, nss_freq, 0, 0);
+		break;
+	case 1:
+		/* NSS: On Demand - auto */
+		snprintf(path, sizeof(path), "%s/auto_scale", PROC_NSS_CLOCK);
+		f_write_string(path, "1", 0, 0);
+		break;
+	default:
+		/* NSS: performance - max. freq */
+		snprintf(path, sizeof(path), "%s/auto_scale", PROC_NSS_CLOCK);
+		f_write_string(path, "0", 0, 0);
+		snprintf(nss_freq, sizeof(nss_freq), "%lu", nss_max_freq);
+		snprintf(path, sizeof(path), "%s/current_freq", PROC_NSS_CLOCK);
+		f_write_string(path, nss_freq, 0, 0);
+		break;
+	}
+#endif	/* RTCONFIG_SOC_IPQ8064 */
+}
+
+void set_power_save_mode(void)
+{
+	set_cpu_power_save_mode();
+	set_nss_power_save_mode();
+}
+#endif	/* RTCONFIG_POWER_SAVE */
+
+/* Return nvram variable name, e.g. et1macaddr, which is used to repented as LAN MAC.
+ * @return:
+ */
+char *get_lan_mac_name(void)
+{
+	int model = get_model();
+	char *mac_name = "et1macaddr";
+
+	/* Check below configuration in convert_wan_nvram() too. */
+	switch (model) {
+	case MODEL_PLN12:	/* fall-through */
+	case MODEL_PLAC56:	/* fall-through */
+	case MODEL_RTAC55U:	/* fall-through */
+	case MODEL_RTAC55UHP:	/* fall-through */
+	case MODEL_RT4GAC55U:	/* fall-through */
+	case MODEL_BRTAC828M2:	/* fall-through */
+	case MODEL_RTAC88S:	/* fall-through */
+	case MODEL_RTAC88N:	/* fall-through */
+		/* Use 5G MAC address as LAN MAC address. */
+		mac_name = "et1macaddr";
+		break;
+	default:
+		dbg("%s: Define LAN MAC address for model %d\n", __func__, model);
+		mac_name = "et1macaddr";
+		break;
+	};
+
+	return mac_name;
+}
+
+/* Return nvram variable name, e.g. et0macaddr, which is used to repented as WAN MAC.
+ * @return:
+ */
+char *get_wan_mac_name(void)
+{
+	int model = get_model();
+	char *mac_name = "et0macaddr";
+
+	/* Check below configuration in convert_wan_nvram() too. */
+	switch (model) {
+	case MODEL_PLN12:	/* fall-through */
+	case MODEL_PLAC56:	/* fall-through */
+	case MODEL_RTAC55U:	/* fall-through */
+	case MODEL_RTAC55UHP:	/* fall-through */
+	case MODEL_RT4GAC55U:	/* fall-through */
+	case MODEL_BRTAC828M2:	/* fall-through */
+	case MODEL_RTAC88S:	/* fall-through */
+	case MODEL_RTAC88N:	/* fall-through */
+		/* Use 2G MAC address as LAN MAC address. */
+		mac_name = "et0macaddr";
+		break;
+	default:
+		dbg("%s: Define WAN MAC address for model %d\n", __func__, model);
+		mac_name = "et0macaddr";
+		break;
+	};
+
+	return mac_name;
+}
+
+char *get_2g_hwaddr(void)
+{
+        return nvram_safe_get(get_wan_mac_name());
+}
+
+char *get_lan_hwaddr(void)
+{
+        return nvram_safe_get(get_lan_mac_name());
+}
+
+char *get_wan_hwaddr(void)
+{
+        return nvram_safe_get(get_wan_mac_name());
+}

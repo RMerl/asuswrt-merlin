@@ -1,4 +1,8 @@
 /************************************************************/
+/*  Version 2.4     by Edison      2016/5/16		    */
+/*  Using unsigned integer for 64 bits to 32 bits           */
+/************************************************************/
+/************************************************************/
 /*  Version 2.4     by Cheni      2015/5/27		    */
 /*  HW Control Info                                         */
 /************************************************************/
@@ -57,8 +61,8 @@
 /*              FOR LINUX               */
 /****************************************/
 #ifndef  WIN32
-#define ULONG   unsigned long
-#define DWORD   unsigned long
+#define ULONG   unsigned int	//Using unsigned integer for 64 bits to 32 bits.
+#define DWORD   unsigned int	//Using unsigned integer for 64 bits to 32 bits.
 #define BYTE    char
 #define PBYTE   char *
 #define WORD    unsigned short
@@ -67,6 +71,7 @@
 
 #define SVRPORT 9999
 #define OTSPORT 9998
+#define MAX_NO_OF_IBOX  255
 #define OTS_IPADD "192.168.1.1"
 #define WLHDD_SUPPORT 1
 //Define Error Code
@@ -184,8 +189,11 @@ typedef struct PktGetInfo
   	BYTE ProductID[32];
   	BYTE FirmwareVersion[16];
   	BYTE OperationMode; 
-  	BYTE MacAddress[6]; 
-  	BYTE Regulation;
+	BYTE MacAddress[6];
+#ifdef WCLIENT
+	BYTE Regulation;
+#endif
+	BYTE sw_mode;
 } PKT_GET_INFO;
 
 #ifdef WAVESERVER			// eric++

@@ -1667,22 +1667,6 @@ void init_switch()
 
 }
 
-char *get_lan_hwaddr(void)
-{
-#ifdef RTCONFIG_BCMARM
-	switch(get_model()) {
-		case MODEL_RTAC87U:
-		case MODEL_RTAC5300:
-		case MODEL_RTAC5300R:
-		case MODEL_RTAC88U:
-			return cfe_nvram_safe_get("et1macaddr");
-		default:
-			return cfe_nvram_safe_get("et0macaddr");
-	}
-#endif
-	return nvram_safe_get("et0macaddr");
-}
-
 int
 switch_exist(void)
 {
@@ -2861,7 +2845,7 @@ void generate_wl_para(int unit, int subunit)
 	// convert wlc_xxx to wlX_ according to wlc_band == unit
 	if (is_ure(unit)) {
 		if (subunit == -1) {
-			nvram_set("ure_disable", is_routing_enabled() ? "0" : "1");
+			nvram_set("ure_disable", "0");
 
 			nvram_set(strcat_r(prefix, "ssid", tmp), nvram_safe_get("wlc_ssid"));
 			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), nvram_safe_get("wlc_auth_mode"));
@@ -6078,6 +6062,13 @@ void wlconf_post(const char *ifname)
 		if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2") &&
 			nvram_match(strcat_r(prefix, "country_rev", tmp), "33"))
 		eval("wl", "-i", ifname, "radioreg", "0x892", "0x5068", "cr0");
+	}
+#endif
+
+#ifdef RTAC68U
+	if (!strcmp(get_productid(), "RT-AC66U V2")) {
+		if (unit) eval("wl", "-i", ifname, "radioreg", "0x892", "0x4068");
+		eval("wl", "-i", ifname, "aspm", "3");
 	}
 #endif
 

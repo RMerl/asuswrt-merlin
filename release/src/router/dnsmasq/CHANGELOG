@@ -18,7 +18,106 @@ version 2.76
 	    that the same name is empty. Thanks to Edwin Török for
 	    the patch.
 
-	
+	    Fix failure to correctly calculate cache-size when 
+	    reading a hosts-file fails. Thanks to André Glüpker 
+	    for the patch.
+
+	    Fix wrong answer to simple name query when --domain-needed
+	    set, but no upstream servers configured. Dnsmasq returned
+	    REFUSED, in this case, when it should be the same as when
+	    upstream servers are configured - NOERROR. Thanks to 
+	    Allain Legacy for spotting the problem.
+
+	    Return REFUSED when running out of forwarding table slots,
+	    not SERVFAIL.
+
+            Add --max-port configuration. Thanks to Hans Dedecker for
+	    the patch.
+
+	    Add --script-arp and two new functions for the dhcp-script.
+	    These are "arp" and "arp-old" which announce the arrival and
+	    removal of entries in the ARP or nieghbour tables.
+
+	    Extend --add-mac to allow a new encoding of the MAC address 
+	    as base64, by configurting --add-mac=base64
+ 
+	    Add --add-cpe-id option.
+
+            Don't crash with divide-by-zero if an IPv6 dhcp-range
+	    is declared as a whole /64.
+	    (ie xx::0 to xx::ffff:ffff:ffff:ffff) 
+	    Thanks to Laurent Bendel for spotting this problem.
+
+	    Add support for a TTL parameter in --host-record and
+	    --cname.
+
+	    Add --dhcp-ttl option.
+
+	    Add --tftp-mtu option. Thanks to Patrick McLean for the 
+	    initial patch.
+
+	    Check return-code of inet_pton() when parsing dhcp-option.
+	    Bad addresses could fail to generate errors and result in
+	    garbage dhcp-options being sent. Thanks to Marc Branchaud 
+	    for spotting this.
+
+	    Fix wrong value for EDNS UDP packet size when using 
+	    --servers-file to define upstream DNS servers. Thanks to
+	    Scott Bonar for the bug report.
+
+	    Move the dhcp_release and dhcp_lease_time tools from 
+	    contrib/wrt to contrib/lease-tools.
+
+	    Add dhcp_release6 to contrib/lease-tools. Many thanks 
+	    to Sergey Nechaev for this code.
+
+	    To avoid filling logs in configurations which define
+	    many upstream nameservers, don't log more that 30 servers.
+	    The number to be logged can be changed as SERVERS_LOGGED
+	    in src/config.h.
+
+	    Swap the values if BC_EFI and x86-64_EFI in --pxe-service. 
+	    These were previously wrong due to an error in RFC 4578.
+	    If you're using BC_EFI to boot 64-bit EFI machines, you
+	    will need to update your config.
+
+	    Add ARM32_EFI and ARM64_EFI as valid architectures in
+	    --pxe-service.
+
+            Fix PXE booting for UEFI architectures. Modify PXE boot
+	    sequence in this case to force the client to talk to dnsmasq
+	    over port 4011. This makes PXE and especially proxy-DHCP PXE
+	    work with these archictectures.
+
+	    Workaround problems with UEFI PXE clients. There exist
+	    in the wild PXE clients which have problems with PXE
+	    boot menus. To work around this, when there's a single
+	    --pxe-service which applies to client, then that target
+	    will be booted directly, rather then sending a
+	    single-item boot menu.
+
+            Many thanks to Jarek Polok, Michael Kuron and Dreamcat4 
+	    for their work on the long-standing UEFI PXE problem.
+
+	    Subtle change in the semantics of "basename" in
+	    --pxe-service. The historical behaviour has always been
+	    that the actual filename downloaded from the TFTP server
+	    is <basename>.<layer> where <layer> is an integer which
+	    corresponds to the layer parameter supplied by the client.
+	    It's not clear what the function of the "layer" 
+	    actually is in the PXE protocol, and in practise layer 
+	    is always zero, so the filename is <basename>.0
+	    The new behaviour is the same as the old, except when
+	    <basename> includes a file suffix, in which case
+	    the layer suffix is no longer added. This allows
+	    sensible suffices to be used, rather then the
+	    meaningless ".0". Only in the unlikely event that you
+	    have a config with a basename which already has a
+	    suffix, is this an incompatible change, since the file
+	    downloaded will change from name.suffix.0 to just 
+	    name.suffix
+
+
 version 2.75
             Fix reversion on 2.74 which caused 100% CPU use when a 
 	    dhcp-script is configured. Thanks to Adrian Davey for

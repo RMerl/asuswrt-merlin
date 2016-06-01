@@ -204,6 +204,9 @@ function tabclickhandler(wl_unit){
 		else if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == wl_unit){
 			document.form.wl_subunit.value = 1;
 		}
+		else if (parent.sw_mode == 2 && parent.concurrep_support){
+			document.form.wl_subunit.value = 1;
+		}
 		else{
 			document.form.wl_subunit.value = -1;
 		}
@@ -304,6 +307,11 @@ function change_wep_type(mode){
 		value_array = new Array("1", "2");
 		show_wep_x = 1;
 	}
+	else if(based_modelid == "RP-AC66"){
+		wep_type_array = new Array("None");
+		value_array = new Array("0");
+		cur_wep = "0";
+	}
 	else if(mode == "open" && (document.form.wl_nmode_x.value == 2 || sw_mode == 2)){
 		wep_type_array = new Array("None", "WEP-64bits", "WEP-128bits");
 		value_array = new Array("0", "1", "2");
@@ -374,7 +382,7 @@ function show_LAN_info(v){
 	else	
 		showtext(document.getElementById("LANIP"), '<% nvram_get("lan_ipaddr"); %>');
 
-	if(yadns_support){
+	if(yadns_support && parent.sw_mode == 1){
 		var mode = (yadns_enable != 0) ? yadns_mode : -1;
 		showtext(document.getElementById("yadns_mode"), get_yadns_modedesc(mode));
 		for(var i = 0; i < 3; i++){

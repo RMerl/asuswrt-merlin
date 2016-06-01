@@ -51,6 +51,7 @@ CTL_Add_enrollee=เชื่อมต่อ
 CTL_apply=นำไปใช้
 CTL_apply1=ใช้การตั้งค่าทั้งหมด
 CTL_Cancel=ยกเลิก
+CTL_Detect_Again=ตรวจจับอีกครั้ง
 CTL_factory_default=ใช้ค่าเริ่มต้นจากโรงงาน
 CTL_modify=แก้ไข
 CTL_next=ถัดไป
@@ -82,7 +83,8 @@ File_Pop_content_alert_desc6=รหัสผ่านไม่สามารถ
 File_Pop_content_alert_desc7=รหัสผ่านควรตรงกัน
 FIRM_fail_desc=การอัปเกรดเฟิร์มแวร์ล้มเหลว อาจเกิดจากอิมเมจไม่ถูกต้อง หรือการส่งผิดพลาด โปรดตรวจสอบเวอร์ชั่นของเฟิร์มแวร์ และลองอีกครั้ง
 FIRM_ok_desc=กำลังอัปเกรดเฟิร์มแวร์ โปรดรอประมาณ 3 นาที
-Firm_reboot_manually=อัปเกรดเฟิร์มแวร์เสร็จ โปรดบูต ZVMODELVZ ใหม่ด้วยตัวเอง
+FIRM_reboot_manually=อัปเกรดเฟิร์มแวร์เสร็จ โปรดบูต ZVMODELVZ ใหม่ด้วยตัวเอง
+FIRM_trx_valid_fail_desc=To comply with regulatory amendments, we have modified our certification rule to ensure better firmware quality. This version is not compatible with all previously released ASUS firmware and uncertified third party firmware. Please check our official websites for the certified firmware.
 footer_copyright_desc=2016 ASUSTeK Computer Inc. สงวนลิขสิทธิ์
 FW_n1=สำหรับการกำหนดค่าพารามิเตอร์ที่มีอยู่แล้วทั้งในเฟิร์มแวร์เก่าและใหม่ การตั้งค่าจะถูกเก็บรักษาไว้ระหว่างกระบวนการอัปเกรด
 General_x_FirmwareVersion_itemname=เวอร์ชั่นเฟิร์มแวร์:
@@ -349,8 +351,6 @@ QIS_pass_desc1=เปลี่ยนรหัสผ่านของเรา�
 QIS_pass_desc2=ชื่อผู้ใช้และรหัสผ่านต้องตรงตามตัวพิมพ์ใหญ่-เล็ก
 QIS_pass_desc3=ข้อมูลล็อกอินเราเตอร์ของคุณจะถูกใช้สำหรับการเข้าถึงการตั้งค่าการดูแลระบบของเราเตอร์ของคุณ
 [###MODEL_DEP###][PL-AC56][PL-N12]QIS_pass_desc3=ข้อมูลล็อกอิน PLC ของคุณจะถูกใช้สำหรับการเข้าถึงการตั้งค่าการดูแลระบบของ PLC ของคุณ
-QIS_pass_desc4=ข้อมูลล็อกอินเราเตอร์ยังถูกใช้ในการเข้าถึงคุณสมบัติต่างๆ เพิ่มเติม เช่น FTP และ AiCloud 2.0
-[###MODEL_DEP###][RT-N53][RT-N15U][RT-N12][RT-N12B1][RT-N12C1][RT-N12D1][RT-N12HP][RT-N12HP_B1][RT-N12VP][AP-N12HP][RT-N10+][RT-N10D1][RT-N10P][RT-N10PV2][RT-N10U]QIS_pass_desc4=ข้อมูลล็อกอินเราเตอร์ยังถูกใช้ในการเข้าถึงคุณสมบัติต่างๆ เพิ่มเติม เช่น FTP
 QIS_pass_desc5=ชื่อผู้ใช้และรหัสผ่านเริ่มต้นคือ :
 QIS_pass_title=การตั้งค่าข้อมูลล็อกอิน
 [###MODEL_DEP###][PL-AC56][PL-N12]QIS_pass_title=Setup of PLC login information
@@ -562,11 +562,25 @@ UPnPMediaServer=มีเดีย เซิร์ฟเวอร์
 USB_Application_account_alert=บัญชีของผู้ใช้ ไม่สามารถ เป็น 'root', 'guest', 'anonymous' ได้! โปรดป้อนบัญชีที่ถูกต้อง
 vpn_Adv=รายละเอียด VPN
 WANJS9Text=ป้อนชื่อผู้ใช้และรหัสผ่าน
+web_redirect_case1_suggestion1=Please ensure that the cable is plugged between ZVMODELVZ WAN port and the modem.
+web_redirect_case1_suggestion2=Please check if you need to change the <a style='color:#FFF' href='/Advanced_OperationMode_Content.asp'>Operation Mode</a>.
+web_redirect_case2_suggestion1=Your PPPoE account or password is not accepted, please <a style='color:#FFF' href='/Advanced_WAN_Content.asp'>check</a>.
+web_redirect_case2_title1=PPPoE Authentication Failure
+web_redirect_case3_button=Change WAN type
+web_redirect_case3_suggestion1=Please check the <a style='color:#FFF' href='/Advanced_WAN_Content.asp'>connection settings</a> is correct.
+web_redirect_case5_suggestion1=We suggest you turn on the <a style='color:#FFF' href='/index.asp'>WAN connection button</a>.
+web_redirect_case5_suggestion2=Please check USB modem is power on.
+web_redirect_case5_suggestion3=Change <a style='color:#FFF' href='/Advanced_Modem_Content.asp'>USB modem setting</a>.
+web_redirect_case5_title1=The WAN cnnection is turned off
+web_redirect_case5_title2=USB modem is not ready
 web_redirect_case6_desc1=Click (Next) to get a new IP address. The new IP address is:
 web_redirect_case6_desc2=Please confirm that related services using the new IP address, such as Port Forwarding or DMZ.
+web_redirect_case8_suggestion1=Please confirm Parent AP can connect to Internet.
+web_redirect_case8_suggestion2=<a style='color:#FFF' href='/QIS_wizard.htm?flag=manual'>Change the connection setting</a>.
+web_redirect_case8_title=Unable to connect to Parent AP
 web_redirect_fail_reason0=เหตุผลสำหรับการเชื่อมต่อที่ล้มเหลว
 web_redirect_message=คุณไม่สามารถเข้าถึงเว็บเพจที่คุณต้องการดูได้
-web_redirect_reason1=The network cable is unplugged.
+web_redirect_reason1=สายเคเบิลเครือข่ายไม่ได้เชื่อมต่อ
 web_redirect_reason2_1=การยืนยันตัวบุคคล PPPoE หรือ VPN ของคุณล้มเหลว
 web_redirect_reason2_2=ไม่มีการตอบสนองจากรีโมทเซิร์ฟเวอร์
 web_redirect_reason3_1=DHCP ของ ISP ของคุณไม่ทำงานอย่างเหมาะสม
@@ -595,20 +609,6 @@ web_redirect_suggestion6=โปรดกำหนดค่าโลคัล IP 
 web_redirect_suggestion7=หลังจากที่เชื่อมต่อเราเตอร์ไปยังโมเด็ม คลิก "ไป" เพื่อเรียกใช้ตัวช่วยสร้างการตั้งค่าด่วน
 web_redirect_suggestion8=ในการตั้งค่าการเชื่อมต่อ WAN ออฟไลน์ หรือเปลี่ยนโหมดการทำงานไปเป็นแอคเซสพอยต์ คลิก ตั้งค่าแมนนวล
 web_redirect_suggestion9=ในขั้นตอนถัดไป ตั้งชื่อล็อกอิน และรหัสผ่านเพื่อความปลอดภัย
-web_redirect_case1_suggestion1=Please ensure that the cable is plugged between ZVMODELVZ WAN port and the modem.
-web_redirect_case1_suggestion2=Please check if you need to change the <a style='color:#FFF' href='/Advanced_OperationMode_Content.asp'>Operation Mode</a>.
-web_redirect_case2_title1=PPPoE Authentication Failure
-web_redirect_case2_suggestion1=Your PPPoE account or password is not accepted, please <a style='color:#FFF' href='/Advanced_WAN_Content.asp'>check</a>.
-web_redirect_case3_suggestion1=Please check the connection settings is correct.
-web_redirect_case3_button=Change WAN type
-web_redirect_case5_title1=The WAN cnnection is turned off
-web_redirect_case5_title2=USB modem is not ready
-web_redirect_case5_suggestion1=We suggest you turn on the <a style='color:#FFF' href='/index.asp'>WAN connection button</a>.
-web_redirect_case5_suggestion2=Please check USB modem is power on.
-web_redirect_case5_suggestion3=Change <a style='color:#FFF' href='/Advanced_Modem_Content.asp'>USB modem setting</a>.
-web_redirect_case8_title=Unable to connect to Parent AP
-web_redirect_case8_suggestion1=Please confirm Parent AP can connect to Internet.
-web_redirect_case8_suggestion2=<a style='color:#FFF' href='/QIS_wizard.htm?flag=manual'>Change the connection setting</a>.
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-AC68U]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-AC1900 Gigabit VDSL2/ADSL2+ Modem Router
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
@@ -627,6 +627,7 @@ WLANConfig11b_x_BRApply_itemname2=เชื่อมต่อไปยัง AP 
 WLANConfig11n_nmode_limition_hint=ZVMODELVZ จะเปลี่ยนการเข้ารหัส WEP หรือ TKIP ไปเป็น AES ในโหมด [n Only (เฉพาะ n)] เพื่อให้แน่ใจว่าไคลเอ็นต์จะได้การเชื่อมต่อที่เหมาะสม
 WPS_PBCbutton_hint_success=สร้างการเชื่อมต่อสำเร็จ
 CHAR_set=UTF-8
+selected_language=ไทย
 Access_Intranet=เข้าถึงอินทราเน็ต
 Access_Intranet_desc=อนุญาตให้แขกรับเชิญเข้าถึงอินทราเน็ต
 access_service=ขณะนี้คุณสามารถเข้าถึงอุปกรณ์ที่เก็บข้อมูล USB ของคุณและอุปกรณ์ เน็ตเวิร์กเพลส (Samba) ที่เชื่อมต่ออยู่กับ ZVMODELVZ
@@ -947,7 +948,6 @@ CTL_check_log=ตรวจสอบบันทึก
 CTL_clear=ล้าง
 CTL_close=ปิด
 CTL_del=ลบ
-CTL_Detect_Again=ตรวจจับอีกครั้ง
 CTL_Disabled=ปิดทำงาน
 CTL_Disagree=ไม่เห็นด้วย
 CTL_Disconnect=ตัดการเชื่อมต่อ
@@ -2492,6 +2492,27 @@ YandexDNS_qis_lua=I want to use Yandex.DNS and agree to the <a class="link" href
 YandexDNS_settings_hint=Clients are using Yandex.DNS regardless of the DNS setting.
 yoursharesetting=การตั้งค่าแชร์โฟลเดอร์ของคุณคือ
 zero_disable=ปิดทำงาน : 0
-CHT_ppp_notice_1=Tip: 您正使用中華電信光世代，我們已幫您使用自動取得IP方式上網，若你想提高網路品質、取得公共IP ，建議使用PPPoE 撥號上網
-CHT_ppp_notice_2=前往設定撥號連線(PPPoE)
-selected_language=ไทย
+CHT_ppp_notice_1=註：您正使用中華電信光世代，我們已幫您使用自動取得 IP 方式上網，若你想提高網路品質、取得公共 IP，建議使用 PPPoE 撥號上網。
+CHT_ppp_notice_2=前往設定撥號連線( PPPoE )
+Facebook_page=Page Setting
+Facebook_WiFi_connecting=Connecting to Facebook page...
+Facebook_WiFi_desc=Facebook Wi-Fi kets customers check in to participating businesses on Facebok for free Wi-Fi access. When people check int to your Page, you can share offers and other announcements with them.
+Facebook_WiFi_disclaim=Disclaimer:
+Facebook_WiFi_disclaim_title=Term of use
+Facebook_WiFi_disclaim1=Please be noted to keep Facebook Wi-Fi enabled firmware stay up to date.
+Facebook_WiFi_disclaim2=Please be noted Facebook Wi-Fi service is provided by Facebook which will be terminated upon official announcement.
+Facebook_WiFi_disclaim3=Please be noted there will be a 1 year grace period upon termination where Facebook will continue supporting the service. After that period, this feature will cease to operate.
+Facebook_WiFi_disclaim4=Any non-certificated router is prohibited to use Facebook Wi-Fi enabled firmware.
+Facebook_WiFi_disconnected=Unable to connect to Facebook page, please check your internet status.
+Facebook_WiFi_enable=Enable Facebook Wi-Fi
+Facebook_WiFi_FAQ1=What is Facebook Wi-Fi?
+Facebook_WiFi_FAQ2=What benefit I can get by Facebook Wi-Fi?
+Facebook_WiFi_FAQ3=How to setup Facebook Wi-Fi?
+Facebook_WiFi_FAQ4=FAQs about Facebook Wi-Fi
+Facebook_WiFi_page=Facebook Page Settings
+Facebook_WiFi_page_connection=Confugure Facebook page connection.
+Facebook_WiFi_page_desc=Choose a Facebook page for this Wi-Fi network, and manage page settings here :
+Facebook_WiFi_unit_hint0=All 2.4 GHz guest networks are used, if you want to use 2.4 GHz band for Facebook Wi-Fi, please remove one 2.4 GHz guest network<br>
+Facebook_WiFi_unit_hint1=All 5 GHz guest networks are used, if you want to use 5 GHz band for Facebook Wi-Fi, please remove one 5 GHz guest network<br>
+Facebook_WiFi_unit_hint2=All 5 GHz-2 guest networks are used, if you want to use 5 GHz band for Facebook Wi-Fi, please remove one 5 GHz-2 guest network
+Facebook_WiFi_unit_hint_all=All guest networks are used now, please remove at least one guest network then try to enable Facebook Wi-Fi again.

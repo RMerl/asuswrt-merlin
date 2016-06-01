@@ -586,6 +586,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_QCA_TW_AUTO_BAND4/d" $(1); \
 		echo "RTCONFIG_QCA_TW_AUTO_BAND4=y" >>$(1); \
 	fi; \
+	if [ "$(NEWSSID_REV2)" = "y" ]; then \
+		sed -i "/RTCONFIG_NEWSSID_REV2/d" $(1); \
+		echo "RTCONFIG_NEWSSID_REV2=y" >>$(1); \
+	fi; \
 	if [ "$(FINDASUS)" = "y" ]; then \
 		sed -i "/RTCONFIG_FINDASUS/d" $(1); \
 		echo "RTCONFIG_FINDASUS=y" >>$(1); \
