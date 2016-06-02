@@ -64,8 +64,10 @@ UTS_TRUNCATE="cut -b -$UTS_LEN"
   echo \#define UTS_VERSION \"`echo $UTS_VERSION | $UTS_TRUNCATE`\"
 
   echo \#define LINUX_COMPILE_TIME \"`date +%T`\"
-  echo \#define LINUX_COMPILE_BY \"`whoami`\"
-  echo \#define LINUX_COMPILE_HOST \"`hostname | $UTS_TRUNCATE`\"
+# echo \#define LINUX_COMPILE_BY \"`whoami`\"
+# echo \#define LINUX_COMPILE_HOST \"`hostname | $UTS_TRUNCATE`\"
+  echo \#define LINUX_COMPILE_BY \"root\"
+  echo \#define LINUX_COMPILE_HOST \"asus\"
 
   domain=`dnsdomainname 2> /dev/null`
   if [ -z "$domain" ]; then

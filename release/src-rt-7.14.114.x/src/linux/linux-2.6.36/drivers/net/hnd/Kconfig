@@ -115,7 +115,7 @@ endchoice
 #endif
 config DPSTA
 	tristate "Broadcom dualband wireless proxy repeater support"
-	depends on WL
+	depends on (WL || DHDAP) 
 config LACP
 	tristate "Broadcom lacp support"
 config EMF

@@ -1,7 +1,7 @@
 /*
  * Broadcom device-specific manifest constants.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdevs.h 590848 2015-10-06 07:54:06Z $
+ * $Id: bcmdevs.h 633731 2016-04-25 09:48:22Z $
  */
 
 #ifndef	_BCMDEVS_H
@@ -368,8 +368,11 @@
 
 #define BCM4365_CHIP_ID		0x4365		/* 4365 chipcommon chipid */
 #define BCM4366_CHIP_ID		0x4366		/* 4366 chipcommon chipid */
+#define BCM43664_CHIP_ID	43664		/* 4366E chipcommon chipid */
 #define BCM4365_CHIP(chipid)	((CHIPID(chipid) == BCM4365_CHIP_ID) || \
-				(CHIPID(chipid) == BCM4366_CHIP_ID))
+				(CHIPID(chipid) == BCM4366_CHIP_ID) || \
+				(CHIPID(chipid) == BCM43664_CHIP_ID))
+
 #define BCM43602_CHIP_ID	0xaa52		/* 43602 chipcommon chipid */
 #define BCM43462_CHIP_ID	0xa9c6		/* 43462 chipcommon chipid */
 #define BCM43522_CHIP_ID	0xaa02		/* 43522 chipcommon chipid */
