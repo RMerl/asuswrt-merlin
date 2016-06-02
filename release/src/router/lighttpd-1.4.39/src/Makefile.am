@@ -57,25 +57,6 @@ mod_ssi_exprparser.c: $(srcdir)/mod_ssi_exprparser.y $(srcdir)/lempar.c lemon$(E
 parsers: configparser.c mod_ssi_exprparser.c
 endif
 
-copy-prebuild:
-	@if test -f "mod_smbdav.c"; then :; else \
-		cp ../prebuild/mod_smbdav.so.l .libs/mod_smbdav.so; \
-		cp ../prebuild/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
-		cp ../prebuild/mod_aicloud_sharelink.so.l .libs/mod_aicloud_sharelink.so; \
-		cp ../prebuild/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
-		cp ../prebuild/mod_aicloud_invite.so.l .libs/mod_aicloud_invite.so; \
-		cp ../prebuild/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
-	fi
-copy-prebuild-arm:
-	@if test -f "mod_smbdav.c"; then :; else \
-		cp ../prebuild_arm/mod_smbdav.so.l .libs/mod_smbdav.so; \
-		cp ../prebuild_arm/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
-		cp ../prebuild_arm/mod_aicloud_sharelink.so.l .libs/mod_aicloud_sharelink.so; \
-		cp ../prebuild_arm/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
-		cp ../prebuild_arm/mod_aicloud_invite.so.l .libs/mod_aicloud_invite.so; \
-		cp ../prebuild_arm/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
-	fi
-
 BUILT_SOURCES = parsers versionstamp
 MAINTAINERCLEANFILES = configparser.c configparser.h mod_ssi_exprparser.c mod_ssi_exprparser.h
 CLEANFILES = versionstamp.h versionstamp.h.tmp
