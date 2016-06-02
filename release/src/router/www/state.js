@@ -310,6 +310,8 @@ var traffic_analyzer_support = bwdpi_support;
 if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
 	traffic_analyzer_support = false;
 }
+var traffic_limiter_support = isSupport("traffic_limiter");
+var force_upgrade_support = isSupport("fupgrade");
 
 var adBlock_support = isSupport("adBlock");
 var keyGuard_support = isSupport("keyGuard");
@@ -370,13 +372,14 @@ var stopFlag = 0;
 
 //isFromWAN
 if(tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (location.hostname.search('cellspot.router') == -1)){
-        isFromWAN = true;
+	isFromWAN = true;
 }
 else if(!tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (location.hostname.search('router.asus') == -1)){
-        isFromWAN = true;
+	isFromWAN = true;
 }
-var traffic_limiter_support = isSupport("traffic_limiter");
-var force_upgrade_support = isSupport("fupgrade");
+else if(!tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (location.hostname.search('repeater.asus') == -1)){
+	isFromWAN = true;
+}
 
 var gn_array_2g = <% wl_get_guestnetwork("0"); %>;
 var gn_array_5g = <% wl_get_guestnetwork("1"); %>;
@@ -457,9 +460,6 @@ function change_wl_unit_status(_unit){
 	document.titleForm.action = "apply.cgi";
 	document.titleForm.target = "";
 	document.titleForm.submit();
-}
-else if(!tmo_support && (location.hostname.search('<% nvram_get("lan_ipaddr"); %>') == -1) && (location.hostname.search('repeater.asus') == -1)){
-        isFromWAN = true;
 }
 
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
