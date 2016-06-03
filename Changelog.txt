@@ -2,6 +2,13 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.60 (xx-xxx-2016)
+    IMPORTANT: The firmware image file format was changed by Asus.
+               Starting with 380.60, you will no longer be able to
+               flash versions older than 380.60, or Asus versions
+               older than 3.0.0.4.380_3000.
+
+    - NEW: Merged with GPL 3459.  This includes the new file format
+           required for certification purposes.
     - CHANGED: Updated OpenVPN to 2.3.11
     - FIXED: OpenVPN server instances weren't properly reporting
              if an error occurred at start time.
