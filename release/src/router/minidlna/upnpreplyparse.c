@@ -122,7 +122,7 @@ DisplayNameValueList(char * buffer, int bufsize)
 {
     struct NameValueParserData pdata;
     struct NameValue * nv;
-    ParseNameValue(buffer, bufsize, &pdata);
+    ParseNameValue(buffer, bufsize, &pdata, 0);
     for(nv = pdata.head.lh_first;
         nv != NULL;
         nv = nv->entries.le_next)

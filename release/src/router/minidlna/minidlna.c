@@ -1193,7 +1193,7 @@ RETURN:
 }
 #endif
 
-#define MIN_MCAST_REFRESH	250
+#define NOTIFY_INTERVAL	3
 
 /* === main === */
 /* process HTTP or SSDP requests */
@@ -1210,7 +1210,6 @@ main(int argc, char **argv)
 	fd_set writeset;
 	struct timeval timeout, timeofday, lastnotifytime = {0, 0};
 	time_t lastupdatetime = 0;
-	time_t lastrenewmcast = 0;
 	int max_fd = -1;
 	int last_changecnt = 0;
 	pid_t scanner_pid = 0;
@@ -1313,7 +1312,7 @@ main(int argc, char **argv)
 #if 0
 	lastnotifytime.tv_sec = time(NULL) + runtime_vars.notify_interval;
 #else
-	lastnotifytime.tv_sec = lastrenewmcast = uptime();
+	lastnotifytime.tv_sec = uptime();
 #endif
 
 	/* main loop */
@@ -1334,30 +1333,41 @@ main(int argc, char **argv)
 		timeofday.tv_usec = 0;
 #endif
 		{
-			if ((runtime_vars.notify_interval > MIN_MCAST_REFRESH) &&
-				(uptime() >= (lastrenewmcast + MIN_MCAST_REFRESH)))
-			{
-				reload_ifaces(0);
-				lastrenewmcast = uptime();
-			}
-
 			/* the comparison is not very precise but who cares ? */
+#if 0
 			if (timeofday.tv_sec >= (lastnotifytime.tv_sec + runtime_vars.notify_interval))
+#else
+			if (timeofday.tv_sec >= (lastnotifytime.tv_sec + NOTIFY_INTERVAL))
+#endif
 			{
 				DPRINTF(E_DEBUG, L_SSDP, "Sending SSDP notifies\n");
 				for (i = 0; i < n_lan_addr; i++)
 				{
+#if 0
 					SendSSDPNotifies(lan_addr[i].snotify, lan_addr[i].str,
 						runtime_vars.port, runtime_vars.notify_interval);
+#else
+					SendSSDPNotifies(lan_addr[i].snotify, lan_addr[i].str,
+						runtime_vars.port, NOTIFY_INTERVAL);
+#endif
 				}
 				memcpy(&lastnotifytime, &timeofday, sizeof(struct timeval));
+#if 0
 				timeout.tv_sec = runtime_vars.notify_interval;
+#else
+				timeout.tv_sec = NOTIFY_INTERVAL;
+#endif
 				timeout.tv_usec = 0;
 			}
 			else
 			{
+#if 0
 				timeout.tv_sec = lastnotifytime.tv_sec + runtime_vars.notify_interval
 				                 - timeofday.tv_sec;
+#else
+				timeout.tv_sec = lastnotifytime.tv_sec + NOTIFY_INTERVAL
+						 - timeofday.tv_sec;
+#endif
 				if (timeofday.tv_usec > lastnotifytime.tv_usec)
 				{
 					timeout.tv_usec = 1000000 + lastnotifytime.tv_usec
