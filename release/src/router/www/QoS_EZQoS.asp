@@ -261,13 +261,8 @@ var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 var qos_bw_rulelist = "<% nvram_get("qos_bw_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var select_all_checked = 0;
-if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC68U") ||
-    (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC3200") ||
-    (based_modelid == "RT-AC88U") || (based_modelid == "RT-AC5300") ||
-    (based_modelid == "RT-AC3100"))
-		var codel_support = true;
-else
-		var codel_support = false;
+var machine_name = '<% get_machine_name(); %>';
+var codel_support = (machine_name.search("arm") == -1) ? false : true;
 
 if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
 	bwdpi_support = false;
