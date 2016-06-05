@@ -522,6 +522,7 @@ function change_qos_type(value){
 		document.getElementById('download_tr').style.display = "";
 		document.getElementById('list_table').style.display = "none";
 		if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
+		document.getElementById('qos_overhead_tr').style.display = "";
 		document.form.qos_bw_rulelist.disabled = true;
 		if(document.form.qos_type_orig.value == 0 && document.form.qos_enable_orig.value != 0){
 			document.form.action_script.value = "restart_qos;restart_firewall";
@@ -540,6 +541,7 @@ function change_qos_type(value){
 		document.getElementById('bandwidth_setting_tr').style.display = "";
 		document.getElementById('list_table').style.display = "none";
 		if (codel_support) document.getElementById('qos_sched_tr').style.display = "none";
+		document.getElementById('qos_overhead_tr').style.display = "none";
 		document.form.qos_bw_rulelist.disabled = true;
 		if(document.getElementById("auto").checked){
 			document.getElementById('upload_tr').style.display = "none";
@@ -569,6 +571,7 @@ function change_qos_type(value){
 		document.getElementById('download_tr').style.display = "none";
 		document.getElementById('list_table').style.display = "block";
 		if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
+		document.getElementById('qos_overhead_tr').style.display = "";
 		document.form.qos_bw_rulelist.disabled = false;
 		if(document.form.qos_type_orig.value == 2 && document.form.qos_enable_orig.value != 0)
 			document.form.action_script.value = "restart_qos;restart_firewall";
@@ -1286,6 +1289,7 @@ function check_field(){
 																document.form.qos_enable.value = 1;
 																if(document.form.qos_enable_orig.value != 1){
 																	if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
+																	document.getElementById('qos_overhead_tr').style.display = "";
 																	if(document.getElementById('int_type').checked == true && bwdpi_support)
 																		document.form.next_page.value = "QoS_EZQoS.asp";
 																	else if(document.getElementById('trad_type').checked)		//Traditional QoS
@@ -1315,6 +1319,7 @@ function check_field(){
 																document.getElementById('bandwidth_setting_tr').style.display = "none";
 																document.getElementById('list_table').style.display = "none";
 																if (codel_support) document.getElementById('qos_sched_tr').style.display = "none";
+																document.getElementById('qos_overhead_tr').style.display = "none";
 	
 																if(bwdpi_support){																	
 																	
@@ -1349,6 +1354,17 @@ function check_field(){
 												<input id="sfq" name="qos_sched" value="0" type="radio" <% nvram_match("qos_sched", "0","checked"); %>><label for="sfq">sfq</label>
 												<input id="codel" name="qos_sched" value="1" type="radio" <% nvram_match("qos_sched", "1","checked"); %>><label for="codel">codel</label>
 												<input id="fq_codel" name="qos_sched" value="2" type="radio" <% nvram_match("qos_sched", "2","checked"); %>><label for="fq_codel">fq_codel</label>
+											</td>
+										</tr>
+
+										<tr id="qos_overhead_tr" style="display:none">
+											<th>WAN packet overhead</th>
+											<td colspan="2">
+												<select name="qos_overhead" class="input_option" >
+													<option value="0" <% nvram_match("qos_overhead", "0","selected"); %>>0-None</option>
+													<option value="32" <% nvram_match("qos_overhead", "32","selected"); %>>32-PPPoE VC-Mux, RFC2684/RFC1483 Bridged LLC/Snap</option>
+													<option value="40" <% nvram_match("qos_overhead", "40","selected"); %>>40-PPPoE LLC/Snap</option>
+												</select>
 											</td>
 										</tr>
 										
