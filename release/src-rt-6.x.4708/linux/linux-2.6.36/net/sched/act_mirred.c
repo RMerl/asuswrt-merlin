@@ -29,6 +29,13 @@
 
 #include <linux/if_arp.h>
 
+// CONNMARK //
+// headers //
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <net/netfilter/nf_conntrack_core.h>
+// CONNMARK //
+
 #define MIRRED_TAB_MASK     7
 static struct tcf_common *tcf_mirred_ht[MIRRED_TAB_MASK + 1];
 static u32 mirred_idx_gen;
@@ -163,6 +170,39 @@ static int tcf_mirred(struct sk_buff *skb, struct tc_action *a,
 	u32 at;
 	int retval, err = 1;
 
+// CONNMARK //
+// main function --> after var definitions in tcf_mirred //
+        struct nf_conn *c;
+        enum ip_conntrack_info ctinfo;
+        int proto;
+        int r;
+
+        if (skb->protocol == htons(ETH_P_IP)) {
+                if (skb->len < sizeof(struct iphdr))
+                        goto out1;
+                proto = PF_INET;
+        } else if (skb->protocol == htons(ETH_P_IPV6)) {
+                if (skb->len < sizeof(struct ipv6hdr))
+                        goto out1;
+                proto = PF_INET6;
+        } else
+                goto out1;
+
+        r = nf_conntrack_in(dev_net(skb->dev), proto, NF_INET_PRE_ROUTING, skb);
+        if (r != NF_ACCEPT)
+                goto out1;
+
+        c = nf_ct_get(skb, &ctinfo);
+        if (!c)
+                goto out1;
+
+        skb->mark = c->mark;
+        nf_conntrack_put(skb->nfct);
+        skb->nfct = NULL;
+
+out1:
+// CONNMARK //
+
 	spin_lock(&m->tcf_lock);
 	m->tcf_tm.lastuse = jiffies;
 	m->tcf_bstats.bytes += qdisc_pkt_len(skb);
@@ -277,8 +317,8 @@ static struct tc_action_ops act_mirred_ops = {
 	.walk		=	tcf_generic_walker
 };
 
-MODULE_AUTHOR("Jamal Hadi Salim(2002)");
-MODULE_DESCRIPTION("Device Mirror/redirect actions");
+MODULE_AUTHOR("Jamal Hadi Salim(2002) / George Amanakis(2015)");
+MODULE_DESCRIPTION("Device Mirror/redirect actions / CONNMARK retrieval");
 MODULE_LICENSE("GPL");
 
 static int __init mirred_init_module(void)
