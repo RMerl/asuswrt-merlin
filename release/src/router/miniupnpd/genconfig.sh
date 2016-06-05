@@ -343,6 +343,7 @@ case $OS_NAME in
 #		echo "#ifdef RTCONFIG_IPV6" >> ${CONFIGFILE}
 #		echo "#define ENABLE_IPV6" >> ${CONFIGFILE}
 #		echo "#endif" >> ${CONFIGFILE}
+		echo "#define LIB_UUID" >> ${CONFIGFILE}
 		FW=netfilter
 		;;
 	Darwin)
@@ -385,12 +386,12 @@ case $FW in
 esac
 
 # UUID API
-if grep uuid_create /usr/include/uuid.h > /dev/null 2>&1 ; then
-	echo "#define BSD_UUID" >> ${CONFIGFILE}
-fi
-if grep uuid_generate /usr/include/uuid/uuid.h > /dev/null 2>&1 ; then
-	echo "#define LIB_UUID" >> ${CONFIGFILE}
-fi
+#if grep uuid_create /usr/include/uuid.h > /dev/null 2>&1 ; then
+#	echo "#define BSD_UUID" >> ${CONFIGFILE}
+#fi
+#if grep uuid_generate /usr/include/uuid/uuid.h > /dev/null 2>&1 ; then
+#	echo "#define LIB_UUID" >> ${CONFIGFILE}
+#fi
 
 # set V6SOCKETS_ARE_V6ONLY to 0 if it was not set above
 if [ -z "$V6SOCKETS_ARE_V6ONLY" ] ; then
