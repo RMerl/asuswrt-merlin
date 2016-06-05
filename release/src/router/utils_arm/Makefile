@@ -18,6 +18,7 @@ WLU_OBJS := wlu.o wlu_cmd.o wlu_iov.o wlu_linux.o bcmutils.o bcmwifi_channels.o 
 ifneq ($(wildcard $(SRCBASE)/wl/exe/wlu_common.c),)
 WLU_OBJS += wlu_common.o
 endif
+WLU_OBJS += wlc_clm_data.o
 
 ifeq ($(RWL),1)
 WL_OBJS := $(WLU_OBJS)
@@ -54,17 +55,11 @@ CFLAGS += -DD11AC_IOTYPES -DPPR_API
 CFLAGS += -DWLCNT
 #endif
 
-ifeq ($(RTCONFIG_5301X),y)
-CFLAGS += -DBCM5301X
-endif
-
 ifeq ($(CONFIG_TRAFFIC_MGMT),y)
 CFLAGS += -DTRAFFIC_MGMT
 endif
 
 vpath %.c $(SRCBASE)/tools/misc $(WLAN_ComponentSrcDirs)
-
-UTILS += robocfg
 
 ifneq ($(wildcard $(SRCBASE)/et/linux/et.c),)
 UTILS += et
@@ -74,7 +69,7 @@ endif
 ifneq ($(wildcard $(SRCBASE)/wl/exe),)
 CFLAGS += -I$(SRCBASE)/wl/exe
 UTILS += wl
-vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/shared
+vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/wl/clm/src $(SRCBASE)/shared
 endif
 
 ifeq ($(RWL),1)
@@ -97,17 +92,20 @@ vpath %.c $(SRCBASE)/wl/exe $(SRCBASE)/shared
 endif
 endif
 
-ifneq ($(wildcard ./prebuilt),)
-all: robocfg
-	-cp prebuilt/et ./
-	-cp prebuilt/wl ./
-	-cp prebuilt/epi_ttcp ./
-else
-all: $(UTILS)
+ifeq ($(RTCONFIG_5301X),y)
+CFLAGS += -DBCM5301X
 endif
+UTILS += robocfg
 
+all: $(UTILS)
+
+ifeq ($(wildcard $(SRCBASE)/wl/exe/*.c),)
+wl:
+	-cp -f $(SRCBASE)/wl/exe/prebuilt/wl wl
+else
 wl: $(WLU_OBJS)
 	$(CC) $^ -o $@ $(LDFLAGS)
+endif
 
 ifeq ($(RWL),1)
 $(WFA_APUT_ALL): $(WFA_APUT_OBJS)
@@ -131,7 +129,12 @@ wifi/%.o: %.c
 	$(CC) -c $(CFLAGS) -DRWL_WIFI -o $@ $^
 endif
 
+ifeq ($(wildcard $(SRCBASE)/router/utils/robocfg.c),)
+robocfg:
+	-cp -f $(SRCBASE)/wl/exe/prebuilt/robocfg robocfg
+else
 robocfg: robocfg.c etc53xx.h
+endif
 
 clean:
 	rm -f *.o *~ $(UTILS)
