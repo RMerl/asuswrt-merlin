@@ -737,7 +737,7 @@ static int start_tqos(void)
 #endif
 	char *qsched;
 	int overhead = 0;
-	char overheadstr[sizeof("overhead 64 atm")];
+	char overheadstr[sizeof("overhead 64 linklayer atm")];
 
 
 	// judge interface by get_wan_ifname
@@ -791,7 +791,7 @@ static int start_tqos(void)
 	overhead = nvram_get_int("qos_overhead");
 
 	if (overhead > 0)
-		snprintf(overheadstr, sizeof(overheadstr),"overhead %d atm", overhead);
+		snprintf(overheadstr, sizeof(overheadstr),"overhead %d linklayer atm", overhead);
 	else
 		strcpy(overheadstr, "");
 
