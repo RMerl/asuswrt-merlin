@@ -236,8 +236,8 @@ function initial(){
 			document.getElementById("usbPathContainer_"+parseInt(i+1)).style.display = "";
 		}
 		
-		if(document.getElementById('usbPathContainer_2').style.display == "none")
-			document.getElementById('space_block').style.display = "";
+		//if(document.getElementById('usbPathContainer_2').style.display == "none")
+			//document.getElementById('space_block').style.display = "";
 		
 		check_usb3();
 	 	require(['/require/modules/diskList.js'], function(diskList){

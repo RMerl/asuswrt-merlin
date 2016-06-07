@@ -972,17 +972,20 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		  ||
 		nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp),"radius"))
 			fprintf(fp, "wpa=0\n");
-	else if (nvram_match(strcat_r(prefix_mssid, "crypto", temp), "tkip")) 
+	else if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "psk") 
+			|| nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "wpa"))
 	{	
 			wpapsk=1;   
 			fprintf(fp, "wpa=1\n");
 	}		
-	else if (nvram_match(strcat_r(prefix_mssid, "crypto", temp), "aes")) 
+	else if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "psk2") 
+			|| nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "wpa2"))
 	{		
    			wpapsk=2;	   
 	 		fprintf(fp, "wpa=2\n");
 	}		
-	else if (nvram_match(strcat_r(prefix_mssid, "crypto", temp), "tkip+aes")) 
+	else if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "pskpsk2") 
+			|| nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "wpawpa2"))
 	{	
 	   		wpapsk=3;
 	 	  	fprintf(fp, "wpa=3\n");

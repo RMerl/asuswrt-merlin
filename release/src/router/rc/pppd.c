@@ -80,7 +80,8 @@ start_pppd(int unit)
 
 #ifdef RTCONFIG_DUALWAN
 	if (!strstr(nvram_safe_get("wans_dualwan"), "none")
-		&& (!strcmp(nvram_safe_get("wans_mode"), "fo") || !strcmp(nvram_safe_get("wans_mode"), "fb"))
+		//&& (!strcmp(nvram_safe_get("wans_mode"), "fo") || !strcmp(nvram_safe_get("wans_mode"), "fb"))
+		&& !strcmp(nvram_safe_get("wans_mode"), "fo")
 		&& (wan_primary_ifunit() != unit)) {
 		_dprintf("%s: skip non-primary unit %d\n", __FUNCTION__, unit);
 		return -1;

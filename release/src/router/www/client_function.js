@@ -652,7 +652,15 @@ function genClientList(){
 			clientList[thisClientMacAddr].from = "customList";
 		}
 
-		clientList[thisClientMacAddr].nickName = thisClient[0];
+		if(thisClient[0] == "New device") {
+			if(clientList[thisClientMacAddr].name == "") {
+				clientList[thisClientMacAddr].nickName = thisClient[0];
+			}
+		}
+		else {
+			clientList[thisClientMacAddr].nickName = thisClient[0];
+		}
+
 		clientList[thisClientMacAddr].mac = thisClient[1];
 		clientList[thisClientMacAddr].group = thisClient[2];
 		clientList[thisClientMacAddr].type = thisClient[3];

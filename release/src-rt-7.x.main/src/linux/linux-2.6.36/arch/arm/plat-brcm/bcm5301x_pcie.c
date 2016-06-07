@@ -454,6 +454,12 @@ static void plx_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 		BUG_ON(((port->owin_res->start + SZ_32M) >> 16) & 0xf);
 		soc_pci_write_config(bus, devfn, PCI_MEMORY_LIMIT, 2,
 			(port->owin_res->start + SZ_32M) >> 16);
+
+		/* Set 0dB de-emphasis on PEX8603 UpPort to improve TX signal */
+		printk("PCIE: Setting PEX8603 UpPort to 0dB de-emphasis.\n");
+		soc_pci_read_config(bus, devfn, 0xb80, 4, &dRead);
+		dRead |= (1 << 20);
+		soc_pci_write_config(bus, devfn, 0xb80, 4, dRead);
 	} else if (bus->number == (bus_inc + 2)) {
 		/* TODO: I need to fix these hard coded addresses. */
 		if (devfn == 0x8) {
@@ -1573,7 +1579,8 @@ bcm5301x_pcie_phy_init(void)
 				break;
 		}
 
-		/* Change blkaddr */
+		/* Change blkaddr to 0x863 */
+		blkaddr = 0x863;
 		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
 		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (blkra << 18) |
 			(ta << 16) | (blkaddr << 4);
@@ -1591,6 +1598,52 @@ bcm5301x_pcie_phy_init(void)
 		regaddr = 0x19;
 		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
 			(ta << 16) | 0x0191;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Set 0dB pre-emphasis in TxBlock 0x820 to improve TX signal */
+		uint32 op_r = 2, tmp_val;
+		blkaddr = 0x820;
+
+		/* Change blkaddr to 0x820 */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (blkra << 18) |
+			(ta << 16) | (blkaddr << 4);
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Read 0x18 regaddr for GEN1 */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		regaddr = 0x18;
+		val = (sb << 30) | (op_r << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		tmp_val = readl(ccb_mii_mng_cmd_data_addr);
+
+		/* Set GEN1 0dB pre-emphasis */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x18;
+		tmp_val &= ~(0xf << 4);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | tmp_val;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Read 0x17 regaddr for GEN2 */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		regaddr = 0x17;
+		val = (sb << 30) | (op_r << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		tmp_val = readl(ccb_mii_mng_cmd_data_addr);
+
+		/* Set GEN2 0dB pre-emphasis */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x17;
+		tmp_val &= ~(0xf << 8);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | tmp_val;
 		writel(val, ccb_mii_mng_cmd_data_addr);
 	}
 

@@ -307,7 +307,7 @@ fsm_timeout(arg)
     case ACKSENT:
 	if (f->retransmits <= 0) {
 /* JYWeng 20031216: add to wanstatus.log */
-	    save_wanstatus("No response from ISP.", 0);
+	    save_wanstatus("No response from ISP.");
 /* JYWeng 20031216: add to wanstatus.log */
 	    warn("%s: timeout sending Config-Requests\n", PROTO_NAME(f));
 	    f->state = STOPPED;

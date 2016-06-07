@@ -424,10 +424,7 @@ lcp_close(unit, reason)
 	lcp_finished(f);
     }
 /* JYWeng 20031216: add to wanstatus.log */
-    if (reason && strstr(reason, "Link inactive") != NULL)
-	save_wanstatus("Terminating connection due to lack of activity.", 1);
-    else
-	save_wanstatus(reason, 2);
+    save_wanstatus(reason);
 /* JYWeng 20031216: add to wanstatus.log */
 }
 

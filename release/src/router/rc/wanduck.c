@@ -869,12 +869,8 @@ int chk_proto(int wan_unit){
 		else if(current_state[wan_unit] == WAN_STATE_CONNECTING){
 			ppp_fail_state = pppstatus(wan_unit);
 
-			if(ppp_fail_state == WAN_STOPPED_REASON_PPP_AUTH_FAIL)
-				record_wan_state_nvram(wan_unit, -1, WAN_STOPPED_REASON_PPP_AUTH_FAIL, -1);
-			else if(ppp_fail_state == WAN_STOPPED_REASON_PPP_LACK_ACTIVITY)
-				record_wan_state_nvram(wan_unit, -1, WAN_STOPPED_REASON_PPP_LACK_ACTIVITY, -1);
-			else if(ppp_fail_state == WAN_STOPPED_REASON_PPP_NO_ACTIVITY)
-				record_wan_state_nvram(wan_unit, -1, WAN_STOPPED_REASON_PPP_NO_ACTIVITY, -1);
+			if(ppp_fail_state != WAN_STOPPED_REASON_NONE)
+				record_wan_state_nvram(wan_unit, -1, ppp_fail_state, -1);
 
 			disconn_case[wan_unit] = CASE_PPPFAIL;
 			return DISCONN;
@@ -989,8 +985,8 @@ int chk_proto(int wan_unit){
 			current_state[wan_unit] = WAN_STATE_STOPPED;
 			wan_sbstate = WAN_STOPPED_REASON_PPP_AUTH_FAIL;
 
-			snprintf(cmd, 32, "stop_wan_if %d", wan_unit);
-			notify_rc(cmd);
+			/*snprintf(cmd, 32, "stop_wan_if %d", wan_unit);
+			notify_rc(cmd);//*/
 
 			rule_setup = 1;
 			stop_nat_rules();
@@ -1007,12 +1003,8 @@ int chk_proto(int wan_unit){
 			return DISCONN;
 		}
 		else if(current_state[wan_unit] == WAN_STATE_CONNECTING){
-			if(ppp_fail_state == WAN_STOPPED_REASON_PPP_AUTH_FAIL)
-				record_wan_state_nvram(wan_unit, -1, WAN_STOPPED_REASON_PPP_AUTH_FAIL, -1);
-			else if(ppp_fail_state == WAN_STOPPED_REASON_PPP_LACK_ACTIVITY)
-				record_wan_state_nvram(wan_unit, -1, WAN_STOPPED_REASON_PPP_LACK_ACTIVITY, -1);
-			else if(ppp_fail_state == WAN_STOPPED_REASON_PPP_NO_ACTIVITY)
-				record_wan_state_nvram(wan_unit, -1, WAN_STOPPED_REASON_PPP_NO_ACTIVITY, -1);
+			if(ppp_fail_state != WAN_STOPPED_REASON_NONE)
+				record_wan_state_nvram(wan_unit, -1, ppp_fail_state, -1);
 
 			disconn_case[wan_unit] = CASE_PPPFAIL;
 			return DISCONN;
@@ -1957,7 +1949,7 @@ void record_conn_status(int wan_unit){
 				logmessage(log_title, "Failed to authenticate ourselves to peer.");
 			else if(ppp_fail_state == WAN_STOPPED_REASON_PPP_LACK_ACTIVITY)
 				logmessage(log_title, "Terminating connection due to lack of activity.");
-			else if(ppp_fail_state == WAN_STOPPED_REASON_PPP_NO_ACTIVITY)
+			else if(ppp_fail_state == WAN_STOPPED_REASON_PPP_NO_RESPONSE)
 				logmessage(log_title, "No response from ISP.");
 			else
 				logmessage(log_title, "Fail to connect with some issues.");
@@ -2841,7 +2833,7 @@ _dprintf("wanduck(%d)(fo   conn): state %d, state_old %d, changed %d, wan_state 
 					csprintf("# wanduck: set S_IDLE: CASE_THESAMESUBNET.\n");
 					set_disconn_count(current_wan_unit, S_IDLE);
 				}
-				else if(!wan_auth_ok && disconn_case[current_wan_unit] == CASE_PPPFAIL && wan_sbstate == WAN_STOPPED_REASON_PPP_AUTH_FAIL){
+				else if(wan_auth_ok && disconn_case[current_wan_unit] == CASE_PPPFAIL && wan_sbstate == WAN_STOPPED_REASON_PPP_AUTH_FAIL){
 					set_disconn_count(current_wan_unit, S_IDLE);
 				}
 #ifdef RTCONFIG_USB_MODEM
@@ -3013,7 +3005,7 @@ _dprintf("wanduck(%d) fail-back: state %d, state_old %d, changed %d, wan_state %
 					csprintf("# wanduck: set S_IDLE: CASE_THESAMESUBNET.\n");
 					set_disconn_count(current_wan_unit, S_IDLE);
 				}
-				else if(!wan_auth_ok && disconn_case[current_wan_unit] == CASE_PPPFAIL && wan_sbstate == WAN_STOPPED_REASON_PPP_AUTH_FAIL){
+				else if(wan_auth_ok && disconn_case[current_wan_unit] == CASE_PPPFAIL && wan_sbstate == WAN_STOPPED_REASON_PPP_AUTH_FAIL){
 					set_disconn_count(current_wan_unit, S_IDLE);
 				}
 #ifdef RTCONFIG_USB_MODEM
@@ -3208,7 +3200,7 @@ _dprintf("wanduck(%d): detect the modem to be reset...\n", current_wan_unit);
 					csprintf("# wanduck: set S_IDLE: CASE_THESAMESUBNET.\n");
 					set_disconn_count(current_wan_unit, S_IDLE);
 				}
-				else if(!wan_auth_ok && disconn_case[current_wan_unit] == CASE_PPPFAIL && wan_sbstate == WAN_STOPPED_REASON_PPP_AUTH_FAIL){
+				else if(wan_auth_ok && disconn_case[current_wan_unit] == CASE_PPPFAIL && wan_sbstate == WAN_STOPPED_REASON_PPP_AUTH_FAIL){
 					set_disconn_count(current_wan_unit, S_IDLE);
 				}
 #ifdef RTCONFIG_USB_MODEM

@@ -293,7 +293,7 @@ var hwmodeSwitch_support = isSupport("swmode_switch");
 var diskUtility_support = isSupport("diskutility");
 var networkTool_support = isSupport("nwtool");
 var band5g_11ac_support = isSupport("11AC");
-if("<% nvram_get("preferred_lang"); %>" == "UK" || based_modelid == "RT-N600")		//remove 80MHz(11ac) for UK , remove 80MHz(11ac) for MODELDEP: RT-N600
+if(based_modelid == "RT-N600")		//UK , remove 80MHz(11ac) for MODELDEP: RT-N600
 	band5g_11ac_support = false;
 var optimizeXbox_support = isSupport("optimize_xbox");
 var spectrum_support = isSupport("spectrum");
@@ -470,7 +470,7 @@ var dsl_index = wans_dualwan_array.getIndexByValue("dsl");
 var active_wan_unit = '<% get_wan_unit(); %>';
 var wan0_enable = '<% nvram_get("wan0_enable"); %>';
 var wan1_enable = '<% nvram_get("wan1_enable"); %>';
-var dualwan_enabled = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+var dualwan_enabled = (dualWAN_support && wans_dualwan_orig.search("none") == -1) ? 1 : 0;
 
 var realip_support = isSupport("realip");
 var realip_state = "";
@@ -1070,7 +1070,7 @@ function remove_url(){
 			menuL2_title[1]="";
 			menuL2_link[1]="";
 			// Log
-			remove_menu_item("Main_WStatus_Content.asp");
+			//remove_menu_item("Main_WStatus_Content.asp");
 		}
 		else if(sw_mode == 2){
 			if(userRSSI_support){

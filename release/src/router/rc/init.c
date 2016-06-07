@@ -3505,8 +3505,6 @@ int init_nvram(void)
 		//nvram_set("wandevs", "et0");
 		nvram_set("wl_ifnames", "eth1");
 
-	if (model == MODEL_RTN12D1 || model == MODEL_RTN12HP || model == MODEL_RTN12HP_B1)
-	{
 #ifdef RTCONFIG_DUALWAN
 		if (nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
 			if (get_wans_dualwan()&WANSCAP_WAN && get_wans_dualwan()&WANSCAP_LAN)
@@ -3561,13 +3559,6 @@ int init_nvram(void)
 		nvram_set("wan_ifnames", "eth0");
 		nvram_set("wandevs", "et0");
 #endif
-	}
-	else
-	{
-		nvram_set("lan_ifnames", "vlan0 eth1");
-		nvram_set("wan_ifnames", "eth0");
-		nvram_set("wandevs", "et0");
-	}
 		break;
 
 #ifdef RTN14UHP

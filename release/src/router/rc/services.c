@@ -4854,6 +4854,11 @@ again:
 		eval("rm", "-rf", "/jffs/sim");
 #endif
 #endif
+#ifdef RTCONFIG_OPENVPN
+#if defined(RTCONFIG_UBIFS)
+		eval("rm", "-rf", OVPN_FS_PATH);
+#endif
+#endif
 
 		if (get_model() == MODEL_RTN53){
 			eval("wlconf", "eth2", "down");

@@ -411,6 +411,12 @@ function initial(){
 		document.getElementById("wl_dtim_th").onClick = function (){openHint(3, 4);}
 	else
 		document.getElementById("wl_dtim_th").onClick = function (){openHint(3, 11);}
+
+	/* 2.4GHz Bluetooth Coexisistence mode, only for Broadcom platform */
+	if (!Qcawifi_support && !Rawifi_support && '<% nvram_get("wl_unit"); %>' == '0')
+		inputCtrl(document.form.wl_btc_mode, 1)
+	else
+		inputCtrl(document.form.wl_btc_mode, 0)
 	
 	/*location_code Setting*/		
 	if(location_list_support){
@@ -1291,6 +1297,18 @@ function handle_beamforming(value){
 			  				<input type="text" maxlength="3" name="wl_user_rssi" class="input_3_table" value="<% nvram_get("wl_user_rssi"); %>" autocorrect="off" autocapitalize="off">
 								dBm
 							</span>
+						</td>
+					</tr>
+
+					<!-- 2.4GHz Bluetooth Coexisistence mode, only for Broadcom platform -->
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,34);">Bluetooth Coexistance</a></th>
+						<td>
+							<select name="wl_btc_mode" class="input_option">
+									<option value="0" <% nvram_match("wl_btc_mode", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_btc_mode", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+									<option value="2" <% nvram_match("wl_btc_mode", "2","selected"); %> >Pre-emptive</option>
+							</select>
 						</td>
 					</tr>
 

@@ -1041,24 +1041,22 @@ unlock()
 
 /* JYWeng 20031216: add to wanstatus.log */
 static void
-create_status(statusname, status, statusindex)
+create_status(statusname, status)
     char *statusname;
     char *status;
-    int statusindex;
 {
     FILE *fp;
 
     if ((fp = fopen(statusname, "w")) != NULL) {
-	fprintf(fp, "%d,%s\n", statusindex, status ? : "");
+	fprintf(fp, "%s\n", status ? : "");
 	(void) fclose(fp);
     } else
 	error("Failed to create status file %s: %m", statusname);
 }
 
 void
-save_wanstatus(status, statusindex)
+save_wanstatus(status)
     char *status;
-    int statusindex;
 {
     char statusname[MAXPATHLEN];
 
@@ -1069,12 +1067,12 @@ save_wanstatus(status, statusindex)
     /* ifname.status is unused
     slprintf(statusname, sizeof(statusname), "%s%s.status",
 	     _PATH_VARRUN, ifname);
-    create_status(statusname, status, statusindex);
+    create_status(statusname, status);
     */
 
     if (linkname[0]) {
 	slprintf(statusname, sizeof(statusname), "%sppp-%s.status",
 		 _PATH_VARRUN, linkname);
-	create_status(statusname, status, statusindex);
+	create_status(statusname, status);
     }
 }

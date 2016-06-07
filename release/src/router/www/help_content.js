@@ -72,7 +72,8 @@ helpcontent[3] = new Array("",
 							"<#RTS_for_AMPDU#>",
 							"<#WLANConfig11b_x_roamingassit_desc#>",	//31
 							"Provide Airtime Fairness between multiple links",	/* untranslated */
-							"<#WLANConfig11b_x_Auto#>"
+							"<#WLANConfig11b_x_Auto#>",
+							"Enable/Disable Bluetooth Coexisistence. Data rate 1Mbps and 2 Mbps are not allowed in Pre-emptive mode. TX Bursting is also not allowed in Pre-emptive mode."
 							 );
 
 helpcontent[4] = new Array("",

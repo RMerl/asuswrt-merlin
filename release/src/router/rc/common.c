@@ -258,21 +258,22 @@ void wanmessage(char *fmt, ...)
 
 int _pppstatus(const char *statusfile)
 {
-	char line[128], *status = line;
+	char status[128];
 
-	if (statusfile && f_read_string(statusfile, line, sizeof(line)) > 0)
-		strsep(&status, ",");
-	if (!status || *status == '\0')
-		status = "unknown reason";
-
-	if (strstr(status, "No response from ISP.") != NULL)
-		return WAN_STOPPED_REASON_PPP_NO_ACTIVITY;
-	else if (strstr(status, "Failed to authenticate ourselves to peer") != NULL)
-		return WAN_STOPPED_REASON_PPP_AUTH_FAIL;
-	else if (strstr(status, "Terminating connection due to lack of activity") != NULL)
-		return WAN_STOPPED_REASON_PPP_LACK_ACTIVITY;
-	else
+	if (!statusfile || f_read_string(statusfile, status, sizeof(status)) <= 0)
 		return WAN_STOPPED_REASON_NONE;
+
+	if (strstr(status, "No response from ISP") != NULL)
+		return WAN_STOPPED_REASON_PPP_NO_RESPONSE;
+	else if (strstr(status, "Peer not responding") != NULL)
+		return WAN_STOPPED_REASON_NONE; /* Connection appears to be disconnected */
+	else if (strstr(status, "Failed to authenticate ourselves to peer") != NULL ||
+		 strstr(status, "Authentication failed") != NULL)
+		return WAN_STOPPED_REASON_PPP_AUTH_FAIL;
+	else if (strstr(status, "Link inactive") != NULL)
+		return WAN_STOPPED_REASON_PPP_LACK_ACTIVITY;
+
+	return WAN_STOPPED_REASON_NONE;
 }
 
 int pppstatus(int unit)

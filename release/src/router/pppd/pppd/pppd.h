@@ -549,7 +549,7 @@ void dump_packet __P((const char *, u_char *, int));
 ssize_t complete_read __P((int, void *, size_t));
 				/* read a complete buffer */
 /* JYWeng 20031216: add to wanstatus.log */
-void save_wanstatus __P((char *, int));
+void save_wanstatus __P((char *));
 
 /* Procedures exported from auth.c */
 void link_required __P((int));	  /* we are starting to use the link */
