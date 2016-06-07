@@ -7,8 +7,10 @@ Asuswrt-Merlin Changelog
                flash versions older than 380.60, or Asus versions
                older than 3.0.0.4.380_3000.
 
-    - NEW: Merged with GPL 3459.  This includes the new file format
+    - NEW: Merged with GPL 3479.  This includes the new file format
            required for certification purposes.
+    - NEW: Option to enable overhead calculation on Traditional QoS
+           for DSL users (ARM-only)
     - CHANGED: Updated OpenVPN to 2.3.11
     - FIXED: OpenVPN server instances weren't properly reporting
              if an error occurred at start time.
