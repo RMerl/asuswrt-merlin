@@ -73,7 +73,11 @@ var webs_state_update = '<% nvram_get("webs_state_update"); %>';
 var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
 var webs_state_info = '<% nvram_get("webs_state_info"); %>';
-var firmver_info = "<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>";
+
+var extendno = "<% nvram_get("extendno"); %>";
+var firmver_info = "<% nvram_get("buildno"); %>";
+if ((extendno != "") && (extendno != "0"))
+	firmver_info += "_" + extendno;
 
 var varload = 0;
 var helplink = "";
@@ -99,7 +103,7 @@ function initial(){
 		document.getElementById("update").style.display = "none";
 		document.getElementById("linkpage_div").style.display = "";
 		document.getElementById("linkpage").style.display = "";
-		helplink = "http://asuswrt.lostrealm.ca/";
+		helplink = "https://asuswrt.lostrealm.ca/download";
 		document.getElementById("linkpage").href = helplink;
 	} 
 	else{
@@ -418,16 +422,14 @@ function sig_check_status(){
 		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  <div class="formfontdesc"><strong><#FW_note#></strong>
 				<ol>
-				<li id="jffs_warning" style="display:none; color:#FFCC00;">WARNING: you have JFFS enabled.  Make sure you have a backup of its content, as upgrading your firmware MIGHT overwrite it!</li>
+					<li id="jffs_warning" style="display:none; color:#FFCC00;">WARNING: you have JFFS enabled.  Make sure you have a backup of its content, as upgrading your firmware MIGHT overwrite it!</li>
 					<li><#FW_n0#></li>
 					<li><#FW_n1#></li>
 					<li id="fw_note2"><#FW_n2#></li>
 					<li id="fw_note3" style="display:none;"><#FW_desc0#></li>
 				</ol>
-			<br>
+		  </div>
 		  <br>
-		  <div class="formfontdesc">Visit <a style="text-decoration: underline;" href="http://asuswrt.lostrealm.ca/download" target="_blank">http://asuswrt.lostrealm.ca/download<a> for the latest version.<br>
-		  For support related to the original firmware, visit <a style="text-decoration: underline;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a></div>
 
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			<tr>
