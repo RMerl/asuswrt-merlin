@@ -1066,21 +1066,6 @@ struct nvram_tuple router_defaults[] = {
 	// { "wan_wins", "" },		/* x.x.x.x x.x.x.x ... */
 	{ "wan_heartbeat_x", "" }, 	/* VPN Server */
 	{ "wan_hostname", "" },		/* WAN hostname */
-	{ "wan_proto", "dhcp" },	/* [static|dhcp|pppoe|pptp/l2tp|disabled] */
-	{ "wan_nat_x", "1" },
-	{ "wan_dhcpenable_x", "1" }, 	// replace x_DHCPClient
-	{ "wan_ipaddr_x", "0.0.0.0" },	/* WAN IP address */
-	{ "wan_ipaddr", "0.0.0.0" },
-	{ "wan_netmask_x", "0.0.0.0" },	/* WAN netmask */
-	{ "wan_gateway_x", "0.0.0.0" },	/* WAN gateway */
-	{ "wan_gateway", "0.0.0.0" },
-	{ "wan_dnsenable_x", "1" },
-	{ "wan_dns1_x", "" },		/* x.x.x.x x.x.x.x ... */
-	{ "wan_dns2_x", "" },
-	{ "wan_dns", "" },
-	// { "wan_wins", "" },		/* x.x.x.x x.x.x.x ... */
-	{ "wan_heartbeat_x", "" }, 	/* VPN Server */
-	{ "wan_hostname", "" },		/* WAN hostname */
 	{ "wan_hwaddr_x", "" },		/* Cloned mac */
 #ifdef TODO
 	{ "wan_domain", "" },		/* WAN domain name */
