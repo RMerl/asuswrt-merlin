@@ -1399,6 +1399,14 @@ function paste_password(){
 				</tr>
 
 				<tr>
+					<th>Redirect webui access to router.asus.com</th>
+					<td>
+						<input type="radio" name="http_dut_redir" class="input" value="1" <% nvram_match_x("","http_dut_redir","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="http_dut_redir" class="input" value="0" <% nvram_match_x("","http_dut_redir","0", "checked"); %> ><#checkbox_No#>
+					</td>
+				</tr>
+
+				<tr>
 					<th><#System_login_specified_IP#></th>
 					<td>
 						<input type="radio" name="http_client" class="input" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>

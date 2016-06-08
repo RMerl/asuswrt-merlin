@@ -1799,6 +1799,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "http_clientlist", "" },
 	{ "http_enable", "0" },		// 0: http, 1: https, 2: both
 /*	{ "http_lanport", "80" }, */
+	{ "http_dut_redir", "0" },	// 1: redir lan_ip to router.asus.com
 #ifdef RTCONFIG_HTTPS
 	{ "https_lanport", "8443" },
 	{ "https_crt_file", "" },

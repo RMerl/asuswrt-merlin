@@ -206,6 +206,8 @@ var lock_time = '<% get_parameter("lock_time"); %>';
 var remaining_time = 60 - lock_time;
 var countdownid, rtime_obj;
 var redirect_page = '<% get_parameter("page"); %>';
+
+if ('<% nvram_get("http_dut_redir"); %>' == '1') {
 var isRouterMode = ('<% nvram_get("sw_mode"); %>' == '1') ? true : false;
 var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
 var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.href.replace(location.hostname, ROUTERHOSTNAME)+"?page="+redirect_page};
@@ -217,6 +219,7 @@ var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.hre
 		}, 1);
 	}
 })();
+}
 
 <% login_state_hook(); %>
 

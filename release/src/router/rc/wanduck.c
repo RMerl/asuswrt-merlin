@@ -1596,7 +1596,10 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	else
 #endif
 
-	strcpy(dut_addr, DUT_DOMAIN_NAME);
+	if ((isFirstUse) || (nvram_get_int("http_dut_redir") == 1))
+		strcpy(dut_addr, DUT_DOMAIN_NAME);
+	else
+		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
 
 #ifdef RTCONFIG_HTTPS
 	if (nvram_get_int("http_enable") == 1) {
