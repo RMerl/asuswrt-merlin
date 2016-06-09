@@ -673,13 +673,13 @@ function validForm(){
 	
 	if(document.form.ipv6_service.value=="other"){
 				if(!ipv6_valid(document.form.ipv6_ipaddr) || 
-						!validator.range(document.form.ipv6_prefix_len_wan, 3, 64) ||
+						!validator.range(document.form.ipv6_prefix_len_wan, 3, 126) ||
 						!ipv6_valid(document.form.ipv6_gateway)){
 						return false;
 				}
 				
 				//!ipv6_valid(document.form.ipv6_prefix) || Viz rm 2013.05
-				if(	!validator.range(document.form.ipv6_prefix_length, 3, 64) ||
+				if(	!validator.range(document.form.ipv6_prefix_length, 3, 126) ||
 						!ipv6_valid(document.form.ipv6_rtr_addr)){
 						return false;
 				}
@@ -763,7 +763,7 @@ function validForm(){
 	
 	if(document.form.ipv6_service.value=="6rd" && document.form.ipv6_6rd_dhcp[1].checked){
 			if(!ipv6_valid(document.form.ipv6_6rd_prefix) ||
-					!validator.range(document.form.ipv6_6rd_prefixlen, 3, 64)){
+					!validator.range(document.form.ipv6_6rd_prefixlen, 3, 126)){
 					return false;
 			}
 			if(!validator.ipRange(document.form.ipv6_6rd_router, "")) return false;  //6rd ip4 router
@@ -1022,7 +1022,7 @@ function showInfo(){
 					<tr style="display:none;">
 						<th><#IPv6_Prefix_Length#></th>
 		     		<td>
-							<input type="text" maxlength="2" class="input_3_table" name="ipv6_6rd_prefixlen" value="<% nvram_get("ipv6_6rd_prefixlen"); %>" autocorrect="off" autocapitalize="off">
+							<input type="text" maxlength="3" class="input_3_table" name="ipv6_6rd_prefixlen" value="<% nvram_get("ipv6_6rd_prefixlen"); %>" autocorrect="off" autocapitalize="off">
 		     		</td>
 		     	</tr>
 					<tr style="display:none;">
@@ -1046,7 +1046,7 @@ function showInfo(){
 					<tr style="display:none;">
 						<th><#IPv6_Prefix_Length#></th>
 		     		<td>
-							<input type="text" maxlength="2" class="input_3_table" name="ipv6_tun_addrlen" value="<% nvram_get("ipv6_tun_addrlen"); %>" autocorrect="off" autocapitalize="off">
+							<input type="text" maxlength="3" class="input_3_table" name="ipv6_tun_addrlen" value="<% nvram_get("ipv6_tun_addrlen"); %>" autocorrect="off" autocapitalize="off">
 		     		</td>
 		     	</tr>
 					<tr style="display:none;">
@@ -1086,7 +1086,7 @@ function showInfo(){
 					<tr>
 						<th><#IPv6_wan_Prefix_len#></th>
 						<td>
-								<input type="text" maxlength="2" class="input_3_table" name="ipv6_prefix_len_wan" value="<% nvram_get("ipv6_prefix_len_wan"); %>" autocorrect="off" autocapitalize="off">
+								<input type="text" maxlength="3" class="input_3_table" name="ipv6_prefix_len_wan" value="<% nvram_get("ipv6_prefix_len_wan"); %>" autocorrect="off" autocapitalize="off">
 		     		</td>
 		     	</tr>
 					<tr>
@@ -1122,7 +1122,7 @@ function showInfo(){
 					<tr>
 						<th><#Prefix_lan_Length#></th>
 						<td>
-								<input type="text" maxlength="2" class="input_3_table" name="ipv6_prefix_length" value="<% nvram_get("ipv6_prefix_length"); %>" autocorrect="off" autocapitalize="off">
+								<input type="text" maxlength="3" class="input_3_table" name="ipv6_prefix_length" value="<% nvram_get("ipv6_prefix_length"); %>" autocorrect="off" autocapitalize="off">
 		     		</td>
 		     	</tr>
 					<tr id="ipv6_prefix_length_r">
