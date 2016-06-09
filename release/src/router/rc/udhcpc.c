@@ -1306,8 +1306,8 @@ start_dhcp6c(void)
 			((unsigned long)(duid.ea[3] & 0x0f) << 16) |
 			((unsigned long)(duid.ea[4]) << 8) |
 			((unsigned long)(duid.ea[5])) : 1;
-		i = 64 - (nvram_get_int(ipv6_nvname("ipv6_prefix_length")) ? : 64);
-		if (i < 0)
+		i = (nvram_get_int(ipv6_nvname("ipv6_prefix_length")) ? : 64);
+		if ((i < 0) || (i > 128))
 			i = 0;
 		snprintf(prefix_arg, sizeof(prefix_arg), "%d:%lx", i, iaid);
 		dhcp6c_argv[index++] = "-FP";
