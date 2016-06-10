@@ -6684,10 +6684,12 @@ int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
 
 	memset(lang, 0, 4);
 	strcpy(lang, nvram_safe_get("preferred_lang"));
+#if 0
 	if(!strncmp(nvram_safe_get("territory_code"), "JP", 2) && strcmp(nvram_safe_get("ATEMODE"), "1")){
 		websWrite(wp, "<li style=\"visibility:hidden;\"><dl><a href=\"#\"><dt id=\"selected_lang\"></dt></a>\\n");
 	}
 	else{
+#endif
 		websWrite(wp, "<li><dl><a href=\"#\"><dt id=\"selected_lang\"></dt></a>\\n");
 		while (1) {
 			memset(buffer, 0, sizeof(buffer));
@@ -6720,8 +6722,9 @@ int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
 			else
 				break;
 		}
+#if 0
 	}
-
+#endif
 	websWrite(wp, "</dl></li>\\n");
 	fclose(fp);
 
