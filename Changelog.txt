@@ -11,9 +11,23 @@ Asuswrt-Merlin Changelog
            required for certification purposes.
     - NEW: Option to enable overhead calculation on Traditional QoS
            for DSL users (ARM-only)
+    - NEW: Option on System page to disable the new forced 
+           redirection to router.asus.com
     - CHANGED: Updated OpenVPN to 2.3.11
+    - CHANGED: Allow to specify IPv6 prefixes up to 126 on the IPv6 config
+    - CHANGED: Roaming Assistant allow threshold to go as high as -50 (was 
+               previously limited to -70)
+    - CHANGED: Networkmap will now announce itself as "Asuswrt/networkmap"
+               when connecting to LAN's web services.
     - FIXED: OpenVPN server instances weren't properly reporting
              if an error occurred at start time.
+    - FIXED: wget was unable to access https site due to not
+             having a CA bundle to verify certificates
+    - FIXED: odhcp6c was sending bogus preferred prefixes, so
+             anything larger than 64 could result in an invalid
+             prefix
+    - FIXED: Language selector is missing on router set for the
+             JP region (reverted Asus change)
 
 
 380.59 (10-May-2016)
