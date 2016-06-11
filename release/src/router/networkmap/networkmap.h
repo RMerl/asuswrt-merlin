@@ -75,6 +75,8 @@ enum
 };
 #endif
 
+#define USERAGENT "Asuswrt/networkmap"
+
 #if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1) || defined(RTCONFIG_BRCM_NAND_JFFS2))
 #define NMP_CLIENT_LIST_FILENAME        "/jffs/nmp_client_list"
 #else
