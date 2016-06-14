@@ -15,6 +15,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/form.js"></script>
 <style>
 .weakness{
@@ -86,7 +87,7 @@
 }
 </style>
 <script>
-if(usb_support) addNewScript("/disk_functions.js");
+//if(usb_support) addNewScript("/disk_functions.js");
 
 window.onresize = function() {
 	if(document.getElementById("weakness_div").style.display == "block") {

@@ -96,9 +96,10 @@
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="/disk_functions.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <script>
-if(usb_support) addNewScript("/disk_functions.js");
+//if(usb_support) addNewScript("/disk_functions.js");
 
 var userIconBase64 = "NoIcon";
 var verderIcon = "";
