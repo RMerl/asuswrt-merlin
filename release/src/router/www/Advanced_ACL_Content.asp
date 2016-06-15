@@ -109,25 +109,25 @@ function show_wl_maclist_x(){
 			code +='<td width="80%" align="center">';
 			code += '<table style="width:100%;"><tr><td style="width:35%;height:56px;border:0px;float:right;">';
 			if(clientList[clientMac] == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'ACL\')"></div>';
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;&quot;, &quot;&quot;, &quot;ACL&quot;)"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'ACL\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;&quot;, &quot;&quot;, &quot;ACL&quot;)"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' +clientMac + '\', this, \'\', \'\', \'ACL\')"></div>';
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' +clientMac + '&quot;, this, &quot;&quot;, &quot;&quot;, &quot;ACL&quot;)"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "" && !downsize_4m_support) {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'ACL\')"></div>';
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;&quot;, &quot;&quot;, &quot;ACL&quot;)"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'ACL\')"></div>';
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;&quot;, &quot;&quot;, &quot;ACL&quot;)"></div>';
 					}
 				}
 			}
@@ -136,7 +136,7 @@ function show_wl_maclist_x(){
 			code += '<div>' + clientMac + '</div>';
 			code += '</td></tr></table>';
 			code += '</td>';
-			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this, \'' + clientMac + '\');\" value=\"\"/></td></tr>';		
+			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this, &quot;' + clientMac + '&quot;);\" value=\"\"/></td></tr>';		
 		});
 	}	
 	

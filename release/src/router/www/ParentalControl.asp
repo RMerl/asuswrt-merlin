@@ -305,25 +305,25 @@ function gen_mainTable(){
 		
 			code += '<table width="100%"><tr><td style="width:35%;border:0;float:right;padding-right:30px;">';
 			if(clientList[MULTIFILTER_MAC_row[i]] == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + MULTIFILTER_MAC_row[i] + '\', this, \'' + clientName + '\', \'\', \'ParentalControl\')"></div>';
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(&quot;' + MULTIFILTER_MAC_row[i] + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;ParentalControl&quot;)"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(MULTIFILTER_MAC_row[i].replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + MULTIFILTER_MAC_row[i] + '\', this, \'' + clientName + '\', \'\', \'ParentalControl\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(&quot;' + MULTIFILTER_MAC_row[i] + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;ParentalControl&quot;)"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + MULTIFILTER_MAC_row[i] + '\', this, \'' + clientName + '\', \'\', \'ParentalControl\')"></div>';
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + MULTIFILTER_MAC_row[i] + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;ParentalControl&quot;)"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "" && !downsize_4m_support) {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + MULTIFILTER_MAC_row[i] + '\', this, \'' + clientName + '\', \'\', \'ParentalControl\')"></div>';
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(&quot;' + MULTIFILTER_MAC_row[i] + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;ParentalControl&quot;)"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + MULTIFILTER_MAC_row[i] + '\', this, \'' + clientName + '\', \'\', \'ParentalControl\')"></div>';
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + MULTIFILTER_MAC_row[i] + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;ParentalControl&quot;)"></div>';
 					}
 				}
 			}

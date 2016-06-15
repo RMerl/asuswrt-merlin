@@ -131,25 +131,25 @@ function show_dnsfilter_list(){
 
 			code += '<table width="100%"><tr><td style="width:35%;border:0;float:right;padding-right:30px;">';
 			if(clientList[mac] == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(mac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "") {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + mac + '\', this, \'' + clientName + '\', \'\', \'DNSFilter\')"></div>';
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
 					}
 				}
 			}

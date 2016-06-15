@@ -297,25 +297,25 @@ function showdhcp_staticlist(){
 			code += '<td width="32%" align="center" title="' + clientMac +'">';
 			code += '<table style="width:100%;"><tr><td style="width:20%;height:56px;border:0px;">';
 			if(clientList[clientMac] == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;' + clientIP + '&quot;, &quot;DHCP&quot;)"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;' + clientIP + '&quot;, &quot;DHCP&quot;)"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;' + clientIP + '&quot;, &quot;DHCP&quot;)"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "" && !downsize_4m_support) {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;' + clientIP + '&quot;, &quot;DHCP&quot;)"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + clientMac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;' + clientIP + '&quot;, &quot;DHCP&quot;)"></div>';
 					}
 				}
 			}
@@ -511,13 +511,13 @@ function showLANIPList(){
 		if(clientObj.ip == "offline") continue;
 		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
 
-		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
+		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(&quot;';
 		htmlCode += clientObj.mac;
-		htmlCode += '\', \'';
+		htmlCode += '&quot;, &quot;';
 		htmlCode += clientObj.ip;
-                htmlCode += '\', \'';
+                htmlCode += '&quot;, &quot;';
                 htmlCode += clientObj.name;
-		htmlCode += '\');"><strong>';
+		htmlCode += '&quot;);"><strong>';
 		htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';
 	}
