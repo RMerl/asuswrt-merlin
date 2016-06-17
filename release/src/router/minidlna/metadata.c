@@ -489,6 +489,7 @@ libjpeg_error_handler(j_common_ptr cinfo)
 	return;
 }
 
+#if 0
 #ifdef RTCONFIG_WEBDAV
 //- 20130708 Sungmin add
 static int
@@ -503,6 +504,7 @@ thumb_cache_exists(const char *orig_path, char **cache_file)
 
 	return (!access(*cache_file, F_OK));
 }
+#endif
 #endif
 
 int64_t
@@ -612,6 +614,7 @@ GetImageMetadata(const char *path, char *name)
 		else
 		{
 			thumb = 1;
+#if 0
 #ifdef RTCONFIG_WEBDAV
 			//- 20130708 Sungmin add
 			if(ed->data && ed->size)
@@ -634,6 +637,7 @@ GetImageMetadata(const char *path, char *name)
 				}
 				free(art_file);
 			}
+#endif
 #endif
 		}
 	}
