@@ -2119,8 +2119,11 @@ start_samba(void)
 		return;
 	}
 
-	if (!sd_partition_num() && !nvram_match("usb_debug", "1"))
+	if ((!sd_partition_num() && !nvram_match("usb_debug", "1")) &&
+            (nvram_match("smbd_master", "0")) &&
+            (nvram_match("smbd_wins", "0"))) {
 		return;
+	}
 
 #ifdef RTCONFIG_GROCTRL
 	enable_gro(2);
