@@ -7,12 +7,16 @@ Asuswrt-Merlin Changelog
                flash versions older than 380.60, or Asus versions
                older than 3.0.0.4.380_3000.
 
+               You can currently downgrade by using Firmware Recovery
+               mode, but there's not guarantee that this will keep
+               working in the future.
+
     - NEW: Merged with GPL 3479.  This includes the new file format
            required for certification purposes.
     - NEW: Option to enable overhead calculation on Traditional QoS
            for DSL users (ARM-only)
     - NEW: Option on System page to disable the new forced 
-           redirection to router.asus.com
+           redirection to router.asus.com (defaults to disabled)
     - CHANGED: Updated OpenVPN to 2.3.11
     - CHANGED: Allow to specify IPv6 prefixes up to 126 on the IPv6 config
     - CHANGED: Roaming Assistant allow threshold to go as high as -50 (was 
@@ -28,6 +32,10 @@ Asuswrt-Merlin Changelog
              prefix
     - FIXED: Language selector is missing on router set for the
              JP region (reverted Asus change)
+    - FIXED: Client names with single quotes couldn't be edited
+             in the networkmap client popup (Asus bug)
+    - FIXED: Router wouldn't run SMB to provide browser master
+             or Wins services if no USB disk was plugged
 
 
 380.59 (10-May-2016)
