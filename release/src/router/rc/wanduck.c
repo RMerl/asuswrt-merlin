@@ -2023,9 +2023,9 @@ void record_conn_status(int wan_unit){
 		}
 	}
 	else if(conn_changed_state[wan_unit] == D2C){
-		if(disconn_case_old[wan_unit] == 10)
+		if(disconn_case_old[wan_unit] == -1)
 			return;
-		disconn_case_old[wan_unit] = 10;
+		disconn_case_old[wan_unit] = -1;
 
 		logmessage(log_title, "WAN was restored.");
 	}
