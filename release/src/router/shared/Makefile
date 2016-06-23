@@ -195,13 +195,13 @@ install: all
 clean:
 	rm -f *.o *.so *.a .*.depend *.prep sysdeps/*.o sysdeps/broadcom/*.o sysdeps/ralink/*.o sysdeps/qtn/*.o
 
-%.o: %.c .%.depend
-	@echo " [shared] CC $@"
-	@$(CC) $(CFLAGS) -o $@ -c $<
-
 %.o: prebuild/%.o
 	@echo " [shared] cp $@"
 	@cp -f $< $@
+
+%.o: %.c .%.depend
+	@echo " [shared] CC $@"
+	@$(CC) $(CFLAGS) -o $@ -c $<
 
 .depend: $(OBJS:%.o=%.c)
 	@$(CC) $(CFLAGS) -M $^ > .depend
