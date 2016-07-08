@@ -19,8 +19,6 @@ Asuswrt-Merlin Changelog
            redirection to router.asus.com (defaults to disabled)
     - CHANGED: Updated OpenVPN to 2.3.11
     - CHANGED: Allow to specify IPv6 prefixes up to 126 on the IPv6 config
-    - CHANGED: Roaming Assistant allow threshold to go as high as -50 (was 
-               previously limited to -70)
     - CHANGED: Networkmap will now announce itself as "Asuswrt/networkmap"
                when connecting to LAN's web services.
     - FIXED: OpenVPN server instances weren't properly reporting
@@ -36,6 +34,8 @@ Asuswrt-Merlin Changelog
              in the networkmap client popup (Asus bug)
     - FIXED: Router wouldn't run SMB to provide browser master
              or Wins services if no USB disk was plugged
+    - FIXED: Router would sometime fail to renew a WAN DHCP lease.
+             (fix by theMIROn)
 
 
 380.59 (10-May-2016)

@@ -32,13 +32,13 @@ Supported devices are:
  * RT-N66U
  * RT-AC66U
  * RT-AC56U
- * RT-AC68U
- * RT-AC68P
+ * RT-AC68U & RT-AC68P
  * RT-AC87U
  * RT-AC3200
  * RT-AC88U
  * RT-AC3100
- * RT-AC5300U
+ * RT-AC5300
+ * RT-AC1900 & RT-AC1900P
 
 Devices that are no longer officially supported:
  * RT-N16
