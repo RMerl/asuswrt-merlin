@@ -10,16 +10,16 @@ for people who prefer the original firmware featureset.
 
 At this time, the supported devices are:
 
-- RT-AC56U
 - RT-N66U
 - RT-AC66U
-- RT-AC68U (including revision C1)
-- RT-AC68P
+- RT-AC56U
+- RT-AC68U & RT-AC68P (including revision C1)
 - RT-AC87U
 - RT-AC3200
 - RT-AC88U
 - RT-AC3100
 - RT-AC5300
+- RT-AC1900 & RT-AC1900P
 
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
