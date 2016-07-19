@@ -20,7 +20,7 @@
 			|| parent.based_modelid == "RT-AC56S"
 			|| parent.based_modelid == "RT-AC56U"
 			|| parent.based_modelid == "RT-AC66U"
-			|| parent.based_modelid == "RT-AC68U" || parent.based_modelid == "RT-AC68A"
+			|| parent.based_modelid == "RT-AC68U" || parent.based_modelid == "RT-AC68A" || parent.based_modelid == "4G-AC68U"
 			|| parent.based_modelid == "RT-AC3200" || parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC5300R"
 			|| parent.based_modelid == "RT-AC88U" || parent.based_modelid == "RT-AC3100"
 	){

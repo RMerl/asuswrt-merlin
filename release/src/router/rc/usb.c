@@ -3,7 +3,8 @@
 	USB Support
 
 */
-#include "rc.h"
+
+#include <rc.h>
 
 #ifdef RTCONFIG_USB
 #include <sys/types.h>
@@ -24,7 +25,6 @@
 #include <rc_event.h>
 #include <shared.h>
 
-#include <usb_info.h>
 #include <disk_io_tools.h>
 #include <disk_share.h>
 #include <disk_initial.h>
@@ -555,8 +555,14 @@ void stop_usb_program(int mode)
 #endif
 }
 
+#ifndef RTCONFIG_ERPTEST
+void stop_usb()
+{
+	int f_force = 0;
+#else
 void stop_usb(int f_force)
 {
+#endif
 	int disabled = !nvram_get_int("usb_enable");
 
 	stop_usb_program(0);
@@ -620,6 +626,7 @@ void stop_usb(int f_force)
 	}
 }
 
+#ifdef RTCONFIG_ERPTEST
 void restart_usb(int stopit)
 {
 	stop_usb(1);
@@ -630,6 +637,7 @@ void restart_usb(int stopit)
 	sleep(2);
 	start_usb();
 }
+#endif
 
 #ifdef RTCONFIG_USB_PRINTER
 void start_usblpsrv(void)
@@ -2102,7 +2110,7 @@ start_samba(void)
 	char cmd[256];
 	char *nv, *nvp, *b;
 	char *tmp_ascii_user, *tmp_ascii_passwd;
-#ifdef RTCONFIG_BCMARM
+#if defined(RTCONFIG_BCMARM) && defined(SMP)
 	int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
 	int taskset_ret = -1;
 #endif

@@ -78,6 +78,7 @@ start_pppd(int unit)
 
 	_dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 
+#if 0
 #ifdef RTCONFIG_DUALWAN
 	if (!strstr(nvram_safe_get("wans_dualwan"), "none")
 		//&& (!strcmp(nvram_safe_get("wans_mode"), "fo") || !strcmp(nvram_safe_get("wans_mode"), "fb"))
@@ -86,6 +87,7 @@ start_pppd(int unit)
 		_dprintf("%s: skip non-primary unit %d\n", __FUNCTION__, unit);
 		return -1;
 	}
+#endif
 #endif
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -224,7 +226,7 @@ start_pppd(int unit)
 		fprintf(fp, "lcp-echo-interval %d\n", 6);
 		fprintf(fp, "lcp-echo-failure %d\n", 10);
 	} else
-	if (nvram_get_int(strcat_r(prefix, "ppp_echo", tmp))) {
+	if (nvram_get_int(strcat_r(prefix, "ppp_echo", tmp)) == 1) {
 		fprintf(fp, "lcp-echo-interval %d\n", nvram_get_int(strcat_r(prefix, "ppp_echo_interval", tmp)));
 		fprintf(fp, "lcp-echo-failure %d\n", nvram_get_int(strcat_r(prefix, "ppp_echo_failure", tmp)));
 		fprintf(fp, "lcp-echo-adaptive\n");

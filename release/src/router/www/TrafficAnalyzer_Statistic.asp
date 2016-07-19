@@ -73,7 +73,6 @@ var flow_obj;
 var pie_obj;
 window.onresize = function(){
 	cal_panel_block("client_all_info_block");
-	cal_panel_block("demo_background");
 }
 
 function initial(){
@@ -123,7 +122,7 @@ function load_time(){
 function cancel_demo(){
 	clearTimeout(time_flag);
 	document.getElementById("demo_image").style.background = "";
-	document.getElementById("demo_background").style.display = "none";
+	$("#demo_background").fadeOut(100);
 }
 
 var top5_client_array = new Array();
@@ -1479,11 +1478,9 @@ function setHover_css(){
 }
 var time_flag;
 function introduce_demo(){
-	cal_panel_block("demo_background");
-	document.getElementById("demo_background").style.display = "";
 	document.getElementById("demo_background").style.zIndex = "5";
 	document.getElementById("demo_image").style.background = "url('/images/New_ui/TrafficAnalyzer.gif') no-repeat"
-	document.getElementById("demo_background").style.display = "";
+	$("#demo_background").fadeIn(300);
 	time_flag = setTimeout(function(){cancel_demo();}, "41000");
 
 }
@@ -1520,10 +1517,7 @@ function getClientCurrentName(_mac) {
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 <input type="hidden" name="bwdpi_db_enable" value="<% nvram_get("bwdpi_db_enable"); %>">
-<div id="demo_background" style="background-color:#3E464A; width:760px;height:900px;position:absolute;z-index:5;margin: -100px 0 0 210px;opacity:0.9;display:none;border-radius:7px;display:none">
-	<div style="background:url('images/New_ui/cancel.svg');width:40px;height:40px;z-index:12;position:absolute;top:10px;right:20px;cursor:pointer" onclick="cancel_demo();"></div>
-	<div id="demo_image" style="width:750px;height:990px;background-size:88%;margin:10px 0 0 10px"></div>
-</div>
+
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -1534,6 +1528,12 @@ function getClientCurrentName(_mac) {
 		</td>	
 		<td valign="top">
 			<div id="tabMenu" class="submenuBlock"></div>		
+
+			<div id="demo_background" style="background-color:#3E464A; width:760px;height:96%;position:absolute;z-index:5;opacity:0.9;display:none;display:none">
+				<div style="background:url('images/New_ui/cancel.svg');width:40px;height:40px;z-index:12;position:absolute;top:10px;right:20px;cursor:pointer" onclick="cancel_demo();"></div>
+				<div id="demo_image" style="width:750px;height:990px;background-size:88%;margin:10px 0 0 10px"></div>
+			</div>
+
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
 					<td align="left" valign="top">				

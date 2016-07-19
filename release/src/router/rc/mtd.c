@@ -35,6 +35,7 @@
 #include <linux/mtd/mtd.h>
 #endif
 #include <stdint.h>
+#include <arpa/inet.h>
 
 #include <trxhdr.h>
 #include <bcmutils.h>

@@ -517,4 +517,4 @@ waitForPADO(PPPoEConnection *conn, int timeout);
 void
 discovery(PPPoEConnection *conn);
 
-int discover_all();
+int discover_all(int wan_unit);

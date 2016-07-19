@@ -23,7 +23,7 @@
 #include <ctype.h>
 #include <bcmnvram.h>
 #include <shutils.h>
-#include <rtconfig.h>
+#include <shared.h>
 
 #include "usb_info.h"
 #include "disk_initial.h"
@@ -314,8 +314,32 @@ int main(int argc, char *argv[])
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
 	fprintf(fp, "bind interfaces only = yes\n");    // ASUS add
 	fprintf(fp, "interfaces = lo br0 %s/%s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
+#if 0
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
+	int ip[5];
+	char pptpd_subnet[16];
+	char openvpn_subnet[32];
+
+	memset(pptpd_subnet, 0 , sizeof(pptpd_subnet));
+	memset(openvpn_subnet, 0 , sizeof(openvpn_subnet));
+	if (is_routing_enabled()) {
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+		if (nvram_get_int("pptpd_enable")) {
+			sscanf(nvram_safe_get("pptpd_clients"), "%d.%d.%d.%d-%d", &ip[0], &ip[1], &ip[2], &ip[3], &ip[4]);
+			sprintf(pptpd_subnet, "%d.%d.%d.", ip[0], ip[1], ip[2]);
+		}
+#endif
+#ifdef RTCONFIG_OPENVPN
+		if (nvram_get_int("VPNServer_enable") && strstr(nvram_safe_get("vpn_server1_if"), "tun") && nvram_get_int("vpn_server1_plan"))
+			sprintf(openvpn_subnet, "%s/%s", nvram_safe_get("vpn_server1_sn"), nvram_safe_get("vpn_server1_nm"));
+#endif
+	}
+	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s %s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), pptpd_subnet, openvpn_subnet);
+#else
 	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+#endif
 	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
+#endif // #if 0
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 	fprintf(fp, "use sendfile = no\n");
 #else
@@ -347,10 +371,15 @@ int main(int argc, char *argv[])
 	if (nvram_match("enable_samba", "0"))
 		goto confpage;
 
+#if 0
 	fprintf(fp, "[ipc$]\n");
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
+	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s %s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), pptpd_subnet, openvpn_subnet);
+#else
 	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+#endif
 	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
-
+#endif // #if 0
 	disks_info = read_disk_data();
 	if (disks_info == NULL) {
 		usb_dbg("Couldn't get disk list when writing smb.conf!\n");

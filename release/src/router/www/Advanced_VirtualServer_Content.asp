@@ -73,6 +73,13 @@ function initial(){
 
 	//if(dualWAN_support && wans_mode == "lb")
 	//	document.getElementById("lb_note").style.display = "";
+
+	if('<% get_parameter("af"); %>' == 'KnownApps' && '<% get_parameter("item"); %>' == 'ftp'){
+		var KnownApps = document.form.KnownApps;
+		KnownApps.options[1].selected = 1;
+		change_wizard(KnownApps, 'KnownApps');
+		if(addRow_Group(32)) applyRule();
+	}
 }
 
 function isChange(){
@@ -292,7 +299,7 @@ function addRow_Group(upper){
 		var item_num = document.getElementById('vts_rulelist_table').rows[0].cells.length;	
 		if(rule_num >= upper){
 				alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
-				return;
+				return false;
 		}	
 		
 //Viz check same rule  //match(out port+out_proto) is not accepted
@@ -308,7 +315,7 @@ function addRow_Group(upper){
 									document.form.vts_port_x_0.value =="";
 									document.form.vts_port_x_0.focus();
 									document.form.vts_port_x_0.select();							
-									return;
+									return false;
 							}
 						}else{
 							if(document.form.vts_port_x_0.value == document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML){
@@ -316,7 +323,7 @@ function addRow_Group(upper){
 									document.form.vts_port_x_0.value =="";
 									document.form.vts_port_x_0.focus();
 									document.form.vts_port_x_0.select();							
-									return;
+									return false;
 							}
 						}	
 				}	
@@ -340,6 +347,8 @@ function addRow_Group(upper){
 			backup_proto = "";
 			document.getElementById('vts_rulelist_table').rows[rule_num-1].scrollIntoView();
 		}
+
+		return true;
 	}
 }
 

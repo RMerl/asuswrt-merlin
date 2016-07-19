@@ -189,8 +189,8 @@ function detect_firmware(){
 					retry++;
 			}
 			else{
-				if(webs_state_error != 1){
-					var Latest_firmver = webs_state_info.split("_");
+				if(webs_state_error == 0){
+					/*var Latest_firmver = webs_state_info.split("_");
 					var Latest_firm = parseInt(Latest_firmver[0]);
 					var Latest_buildno = parseInt(Latest_firmver[1]);
 					var Latest_extendno = Latest_firmver[2];
@@ -210,6 +210,9 @@ function detect_firmware(){
       			{
 							new_FW = true;
 						}
+					}*/
+					if(isNewFW(webs_state_info, 0, current_firmware_path) && exist_firmver[0] != 9){
+						new_FW = true;
 					}
 				}
 				liveUpdateFinish = true;					
@@ -597,7 +600,7 @@ function detect_httpd(){
 
 <table width="998px"  border="0" align="center" cellpadding="0" cellspacing="0" background="/images/New_ui/middown_bg.png">
   <tr>
-		<td style="width:218px;*width:263px;" valign="top">
+		<td style="width:210px;*width:263px;" valign="top">
 			<div class="m_qis_r" id="btn_gotoindex" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div class="_index"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
 			<div class="lefttabhead" style="margin-left:15px;" id="option0"><table width="192px" height="37px"><tbody><tr><td><#QIS_title#></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t1" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep1.png"></td><td><div class="qismenu"><#QIS_step2#></div></td></tr></tbody></table></div>

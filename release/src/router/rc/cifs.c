@@ -5,7 +5,7 @@
 
 */
 
-#include "rc.h"
+#include <rc.h>
 
 #include <sys/mount.h>
 #include <sys/stat.h>

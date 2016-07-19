@@ -41,6 +41,11 @@
 #include <ra3052.h>
 #endif
 
+#ifdef RTAC51U /* FIX EU2CN */
+#include "rtac51u_eu2cn.h"
+#endif /* RTAC51U FIX EU2CN */
+
+
 void init_devs(void)
 {
 #define MKNOD(name,mode,dev)	if(mknod(name,mode,dev)) perror("## mknod " name)
@@ -767,7 +772,12 @@ void init_syspara(void)
 	char blver[20];
 	unsigned char txbf_para[33];
 	char ea[ETHER_ADDR_LEN];
+#ifndef RTN56U
 	const char *reg_spec_def;
+#endif
+#ifdef RTAC51U	/* FIX EU2CN */
+	int NEED_eu2cn = 0;
+#endif	/* RTAC51U */
 
 #if defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2)
 	char fixch;
@@ -810,6 +820,21 @@ void init_syspara(void)
 			ether_etoa(buffer, macaddr2);
 	}
 #endif
+#ifdef RTAC51U	/* FIX EU2CN */
+	_dprintf("# MAC_2G: %s\n", macaddr2);
+	if(dst[0] == 0xD0 && dst[1] == 0x17 && dst[2] == 0xC2) {
+		int i = 0;
+		unsigned int mac_unsigned = dst[2] << 24 | dst[3] << 16 | dst[4] << 8 | dst[5];
+		while(rtac51u_eu2cn_mac[i]) {
+			if(rtac51u_eu2cn_mac[i] == mac_unsigned) {
+				_dprintf("# NEED_eu2cn @ i(%d)\n", i);
+				NEED_eu2cn = 1;
+				break;
+			}
+			i++;
+		}
+	}
+#endif	/* RTAC51U FIX EU2CN */
 
 #if defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2)
 	fixch='0';
@@ -928,6 +953,13 @@ void init_syspara(void)
 #endif
 	bytes = MAX_REGSPEC_LEN;
 	memset(dst, 0, MAX_REGSPEC_LEN+1);
+
+#ifdef RTAC51U	/* FIX EU2CN */
+	if(NEED_eu2cn) {
+		nvram_set("reg_spec", "CN");
+	}
+	else
+#endif	/* RTAC51U FIX EU2CN */
 	if(FRead(dst, REGSPEC_ADDR, bytes) < 0)
 		nvram_set("reg_spec", reg_spec_def); // DEFAULT
 	else
@@ -942,6 +974,12 @@ void init_syspara(void)
 			nvram_set("reg_spec", reg_spec_def); // DEFAULT
 	}
 
+#ifdef RTAC51U	/* FIX EU2CN */
+	if(NEED_eu2cn) {
+		nvram_set("wl0_country_code", "CN");
+	}
+	else
+#endif	/* RTAC51U FIX EU2CN */
 	if (FRead(dst, REG2G_EEPROM_ADDR, MAX_REGDOMAIN_LEN)<0 || memcmp(dst,"2G_CH", 5) != 0)
 	{
 		_dprintf("Read REG2G_EEPROM_ADDR fail or invalid value\n");
@@ -967,6 +1005,12 @@ void init_syspara(void)
 			nvram_set("wl0_country_code", "DB");
 	}
 #ifdef RTCONFIG_HAS_5G
+#ifdef RTAC51U	/* FIX EU2CN */
+	if(NEED_eu2cn) {
+		nvram_set("wl1_country_code", "US");
+	}
+	else
+#endif	/* RTAC51U FIX EU2CN */
 	if (FRead(dst, REG5G_EEPROM_ADDR, MAX_REGDOMAIN_LEN)<0 || memcmp(dst,"5G_", 3) != 0)
 	{
 		_dprintf("Read REG5G_EEPROM_ADDR fail or invalid value\n");
@@ -1054,6 +1098,12 @@ void init_syspara(void)
 #if defined(RTCONFIG_TCODE)
 	/* Territory code */
 	memset(buffer, 0, sizeof(buffer));
+#ifdef RTAC51U	/* FIX EU2CN */
+	if(NEED_eu2cn) {
+		nvram_set("territory_code", "CN/01");
+	}
+	else
+#endif	/* RTAC51U FIX EU2CN */
 	if (FRead(buffer, OFFSET_TERRITORY_CODE, 5) < 0) {
 		_dprintf("READ ASUS territory code: Out of scope\n");
 		nvram_unset("territory_code");

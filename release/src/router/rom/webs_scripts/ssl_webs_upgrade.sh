@@ -14,12 +14,23 @@ touch /tmp/update_url
 update_url=`cat /tmp/update_url`
 #update_url="http://192.168.123.198"
 
+# current firmware information
+firmware_path=`nvram get firmware_path`
 get_productid=`nvram get productid`
 get_productid=`echo $get_productid | sed s/+/plus/;`	#replace 'plus' to '+' for one time
 
-firmware_file=`echo $get_productid`_`nvram get webs_state_info`_un.zip
+if [ "$firmware_path" = "1" ]; then
+	firmware_file=`echo $get_productid`_`nvram get webs_state_info_beta`_un.zip
+else
+	firmware_file=`echo $get_productid`_`nvram get webs_state_info`_un.zip
+fi
+
 if [ "$rsa_enabled" != "" ]; then
-firmware_rsasign=`echo $get_productid`_`nvram get webs_state_info`_rsa.zip
+	if [ "$firmware_path" = "1" ]; then
+		firmware_rsasign=`echo $get_productid`_`nvram get webs_state_info_beta`_rsa.zip
+	else
+		firmware_rsasign=`echo $get_productid`_`nvram get webs_state_info`_rsa.zip
+	fi	
 fi
 
 small_fw_update=`nvram show | grep rc_support | grep small_fw`

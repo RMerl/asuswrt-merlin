@@ -94,6 +94,24 @@ extern int cpu_turbo_mode;
 
 #endif	// end of DSLAC68U
 
+#ifdef RT4GAC68U
+#define	PWR_LED_GPIO	(1 << 3)	// GPIO 3
+#undef WAN_LED_GPIO
+#undef LAN_LED_GPIO
+#define	LAN_LED_GPIO	(1 << 10)	// GPIO 10
+#undef USB_LED_GPIO
+#define	USB_LED_GPIO	(1 << 0)	// GPIO 0
+#undef USB3_LED_GPIO
+#define	USB3_LED_GPIO	(1 << 14)	// GPIO 14
+#define USB_PWR1_GPIO	(1 << 9)	// GPIO 9
+#undef USB_PWR2_GPIO
+#define	LTE_3G_GPIO	(1 << 1)	// GPIO 1
+#define	LTE_4G_GPIO	(1 << 2)	// GPIO 2
+#define	LTE_SIG1_GPIO	(1 << 4)	// GPIO 4
+#define	LTE_SIG2_GPIO	(1 << 5)	// GPIO 5
+#define	LTE_SIG3_GPIO	(1 << 8)	// GPIO 8
+#endif
+
 void
 board_pinmux_init(si_t *sih)
 {
@@ -131,13 +149,13 @@ board_pinmux_init(si_t *sih)
 #endif
 	si_gpioouten(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
-#if !defined(RTAC68U) && !defined(RTAC87U)
+#if !defined(RTAC68U) && !defined(RTAC87U) && !defined(RT4GAC68U)
 	si_gpioouten(sih, WAN_LED_GPIO, WAN_LED_GPIO, GPIO_DRV_PRIORITY);
 	si_gpioouten(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U
 	si_gpioouten(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
-#if !defined(RTAC68U) && !defined(RTAC87U)
+#if !defined(RTAC68U) && !defined(RTAC87U) && !defined(RT4GAC68U)
 	si_gpioouten(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #endif
@@ -158,13 +176,13 @@ board_pinmux_init(si_t *sih)
 #endif
 	si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
-#if !defined(RTAC68U) && !defined(RTAC87U)
+#if !defined(RTAC68U) && !defined(RTAC87U) && !defined(RT4GAC68U)
 	si_gpioout(sih, WAN_LED_GPIO, WAN_LED_GPIO, GPIO_DRV_PRIORITY);
 	si_gpioout(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U to enable USB power
 	si_gpioout(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
-#if !defined(RTAC68U) && !defined(RTAC87U)
+#if !defined(RTAC68U) && !defined(RTAC87U) && !defined(RT4GAC68U)
 	si_gpioout(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #endif
@@ -184,6 +202,21 @@ board_pinmux_init(si_t *sih)
 	si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 
+#ifdef RT4GAC68U
+	si_gpioouten(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, LTE_3G_GPIO, LTE_3G_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, LTE_4G_GPIO, LTE_4G_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, LTE_SIG1_GPIO, LTE_SIG1_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, LTE_SIG2_GPIO, LTE_SIG2_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, LTE_SIG3_GPIO, LTE_SIG3_GPIO, GPIO_DRV_PRIORITY);
+
+	si_gpioout(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, LTE_3G_GPIO, LTE_3G_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, LTE_4G_GPIO, LTE_4G_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, LTE_SIG1_GPIO, LTE_SIG1_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, LTE_SIG2_GPIO, LTE_SIG2_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, LTE_SIG3_GPIO, LTE_SIG3_GPIO, GPIO_DRV_PRIORITY);
+#endif
 }
 
 void

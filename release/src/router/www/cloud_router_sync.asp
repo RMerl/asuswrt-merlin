@@ -16,6 +16,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
+<script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/md5.js"></script>
@@ -122,8 +123,6 @@ sizingMethod='scale')";
 }
 </style>
 <script>
-//if(usb_support) addNewScript("/disk_functions.js");
-
 <% wanlink(); %>
 <% get_AiDisk_status(); %>
 var cloud_status = "";

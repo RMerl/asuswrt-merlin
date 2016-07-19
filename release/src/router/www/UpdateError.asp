@@ -9,7 +9,14 @@
 </head>
 <body>
 <script>
-	alert("<#FIRM_fail_desc#>");
+	var upgrade_fw_status = '<% nvram_get("upgrade_fw_status"); %>';
+	if(upgrade_fw_status == 6){
+		alert("<#FIRM_trx_valid_fail_desc#>");
+	}
+	else{
+		alert("<#FIRM_fail_desc#>");
+	}
+
 	parent.location.href=parent.location.href;
 </script>
 </body>

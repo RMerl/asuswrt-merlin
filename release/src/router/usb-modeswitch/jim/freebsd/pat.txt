@@ -1,0 +1,84 @@
+                                                                                                                                                                                                                                                             
+Delivered-To: oyvindharboe@gmail.com
+Received: by 10.100.7.20 with SMTP id 20cs108097ang;
+        Wed, 16 Jul 2008 07:49:02 -0700 (PDT)
+Received: by 10.142.232.20 with SMTP id e20mr80874wfh.138.1216219741865;
+        Wed, 16 Jul 2008 07:49:01 -0700 (PDT)
+Return-Path: <patthoyts@users.sourceforge.net>
+Received: from cpanel5.proisp.no (cpanel5.proisp.no [209.85.100.29])
+        by mx.google.com with ESMTP id 30si10551683wff.18.2008.07.16.07.49.01;
+        Wed, 16 Jul 2008 07:49:01 -0700 (PDT)
+Received-SPF: neutral (google.com: 209.85.100.29 is neither permitted nor denied by best guess record for domain of patthoyts@users.sourceforge.net) client-ip=209.85.100.29;
+Authentication-Results: mx.google.com; spf=neutral (google.com: 209.85.100.29 is neither permitted nor denied by best guess record for domain of patthoyts@users.sourceforge.net) smtp.mail=patthoyts@users.sourceforge.net
+Received: from smtp-out4.blueyonder.co.uk ([195.188.213.7]:38596)
+	by cpanel5.proisp.no with esmtp (Exim 4.69)
+	(envelope-from <patthoyts@users.sourceforge.net>)
+	id 1KJ8JH-0000Vd-OT
+	for oyvind.harboe@zylin.com; Wed, 16 Jul 2008 16:48:52 +0200
+Received: from [172.23.170.141] (helo=anti-virus02-08)
+	by smtp-out4.blueyonder.co.uk with smtp (Exim 4.52)
+	id 1KJ8JO-0007r0-Cy; Wed, 16 Jul 2008 15:48:58 +0100
+Received: from [77.102.249.21] (helo=badger.patthoyts.tk)
+	by asmtp-out4.blueyonder.co.uk with esmtp (Exim 4.52)
+	id 1KJ8J6-0000gY-VY; Wed, 16 Jul 2008 15:48:41 +0100
+Received: by badger.patthoyts.tk (Postfix, from userid 1000)
+	id 810535184F; Wed, 16 Jul 2008 15:48:40 +0100 (BST)
+Sender: pat@badger.patthoyts.tk
+To: =?iso-8859-1?q?=D8yvind_Harboe?= <oyvind.harboe@zylin.com>
+Cc: jim-devel@lists.berlios.de
+Subject: Re: Change Jim Tcl license
+References: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+X-Face:  .`d#euqz@6H{";Ysmx2IVe_7M3vA+2w1X[QLk?ZO&QRauXQL{*L'$3getx}9+zK.-KWDx3.
+ qrlR)76MFb`6bgoGvLpLtcQKB=X~;*<JKLtwLBM(IA'?rVjs1*tq\VHn?WMNsB,3XXWF@5.)4SRFa+
+ '?a?.s#@hl7CiTo'F"O!fvbL0
+X-Url: http://www.patthoyts.tk/
+From: Pat Thoyts <patthoyts@users.sourceforge.net>
+Date: 16 Jul 2008 15:48:39 +0100
+In-Reply-To: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+Message-ID: <87fxq97um0.fsf@badger.patthoyts.tk>
+Lines: 27
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+X-Spam-Status: No, score=-2.6
+X-Spam-Score: -25
+X-Spam-Bar: --
+X-Spam-Flag: NO
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - cpanel5.proisp.no
+X-AntiAbuse: Original Domain - zylin.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - users.sourceforge.net
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+"=D8yvind Harboe" <oyvind.harboe@zylin.com> writes:
+
+>If you have contributed to Jim Tcl, please reply to this email
+>that you agree that we can switch Jim Tcl to a FreeBSD license.
+>
+>Once I have a record of all contributors agreeing to switch
+>to a FreeBSD license, I'll update CVS.
+
+I hereby agree to permit my contributions to the Jim project to be
+re-licensed under a BSD compatible license.
+
+- --=20
+Pat Thoyts                            http://www.patthoyts.tk/
+PGP fingerprint 2C 6E 98 07 2C 59 C8 97  10 CE 11 E6 04 E0 B9 DD
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.8 (SunOS)
+Comment: Processed by Mailcrypt 3.5.8 <http://mailcrypt.sourceforge.net/>
+
+iQCVAwUBSH4KO2B90JXwhOSJAQKtqQP9ERwSXpbP69l4JSrunG29Rhu2F3r83zu3
+GAKpFu4HwkVnIStLQ4o3tsqG9uKrVDbRMa187eSwHmlXXIMwDlkCKNsDFxvdLDZz
+kbTYDibspYSw6CjwOUSTXifK9P7ho4Q7PtsRnJ8T1IMlGJlwg39Rxd+mpEO/if3q
+ExIwM1aBbAs=3D
+=3Du8si
+-----END PGP SIGNATURE-----
+

@@ -1763,7 +1763,7 @@ char *enc_str(char *str, char *enc_buf)
         memset(buf2, 0, sizeof(buf2));
         memset(enc_buf, 0, sizeof(enc_buf));
 
-        strcpy(buf, str);
+        strcpy((char *) buf, str);
 
         shortstr_encrypt(buf, buf2, &used_shift);
         memcpy(enc_buf, buf2, DATA_WORDS_LEN);
@@ -1780,7 +1780,7 @@ char *dec_str(char *ec_str, char *dec_buf)
         memset(dec_buf, 0, sizeof(dec_buf));
         memcpy(buf, ec_str, DATA_WORDS_LEN+1);
         buf[DATA_WORDS_LEN] = 0;
-        shortstr_decrypt(buf, dec_buf, used_shift);
+        shortstr_decrypt(buf, (unsigned char *) dec_buf, used_shift);
 
         return dec_buf;
 }

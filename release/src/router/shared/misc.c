@@ -188,6 +188,37 @@ extern char *upper_strstr(const char *const str, const char *const target){
 	return (char *)(str+len);
 }
 
+#ifdef HND_ROUTER
+// defined (__GLIBC__) && !defined(__UCLIBC__)
+size_t strlcpy(char *dst, const char *src, size_t size)
+{
+	size_t srclen, len;
+
+	srclen = strlen(src);
+	if (size <= 0)
+		return srclen;
+
+	len = (srclen < size) ? srclen : size - 1;
+	memcpy(dst, src, len); /* should not overlap */
+	dst[len] = '\0';
+
+	return srclen;
+}
+
+size_t strlcat(char *dst, const char *src, size_t size)
+{
+	size_t dstlen;
+	char *null;
+
+	null = memchr(dst, '\0', size);
+	if (null == NULL)
+		null = dst + size;
+	dstlen = null - dst;
+
+	return dstlen + strlcpy(null, src, size - dstlen);
+}
+#endif
+
 in_addr_t inet_addr_(const char *addr)
 {
 	struct in_addr in;
@@ -288,6 +319,7 @@ int get_ipv6_service_by_unit(int unit)
 		{ "dhcp6",	IPV6_NATIVE_DHCP },
 #ifdef RTCONFIG_6RELAYD
 		{ "ipv6pt",     IPV6_PASSTHROUGH },
+		{ "flets",	IPV6_PASSTHROUGH },
 #endif
 		{ "6to4",	IPV6_6TO4 },
 		{ "6in4",	IPV6_6IN4 },
@@ -2089,11 +2121,6 @@ int internet_ready(void)
 	if(nvram_get_int("ntp_ready") == 1)
 		return 1;
 	return 0;
-}
-
-void set_no_internet_ready(void)
-{
-	nvram_set("ntp_ready", "0");
 }
 
 #ifdef RTCONFIG_TRAFFIC_LIMITER

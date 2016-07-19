@@ -52,7 +52,7 @@ int is_wan_connect(int unit){
 
 int is_phy_connect(int unit){
 	char tmp[100], prefix[]="wanXXXXXX_";
-	int wan_state, wan_sbstate, wan_auxstate;
+	int wan_auxstate;
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 

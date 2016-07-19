@@ -52,42 +52,6 @@ struct server_ctx  g_srv;
 
 /*********************************************************/
 
-#if defined(__UCLIBC__) \
- && (__UCLIBC_MAJOR__ == 0 \
- && (__UCLIBC_MINOR__ < 9 || (__UCLIBC_MINOR__ == 9 && __UCLIBC_SUBLEVEL__ < 29)))
-int __attribute__ ((weak))
-pselect(int nfds, fd_set *readfds, fd_set *writefds,
-	fd_set *exceptfds, const struct timespec *timeout,
-	const sigset_t *sigmask)
-{
-	struct timeval tv;
-	sigset_t savemask;
-	int err, retval;
-
-	if (timeout != NULL) {
-		tv.tv_sec = timeout->tv_sec;
-		tv.tv_usec = timeout->tv_nsec / 1000;
-	}
-
-	if (sigmask != NULL) {
-		retval = sigprocmask(SIG_SETMASK, sigmask, &savemask);
-		if (retval != 0)
-			return retval;
-	}
-
-	retval = select(nfds, readfds, writefds, exceptfds,
-			timeout != NULL ? &tv : NULL);
-
-	if (sigmask != NULL) {
-		err = errno;
-		sigprocmask(SIG_SETMASK, &savemask, NULL);
-		errno = err;
-	}
-
-	return retval;
-}
-#endif
-
 /* process client requests */
 int
 srv_loop( const char* ipaddr, int port,

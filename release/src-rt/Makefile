@@ -143,6 +143,14 @@ else
 export IMGNAME := $(BUILD_NAME)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(BUILDREV)
 endif
 
+ifeq ($(BUILD_NAME),DSL-AC68U)
+DSLIMGNAME=$(IMGNAME)_DSL
+else ifeq ($(BUILD_NAME),DSL-N55U)
+DSLIMGNAME=$(IMGNAME)_Annex_A
+else ifeq ($(BUILD_NAME),DSL-N55U-B)
+DSLIMGNAME=$(IMGNAME)_Annex_B
+endif
+
 ifeq ($(PBDIR),)
 export PBDIR   := ../../../asuswrt.prebuilt/$(BUILD_NAME).$(KERNEL_VER).$(FS_VER).$(SERIALNO).$(EXTENDNO)
 endif
@@ -324,12 +332,16 @@ endif
 endif
 #	md5sum image/$(IMGNAME).trx > image/$(IMGNAME).md5
 
+ifeq ($(DSL),y)
+	$(call dsl_genbintrx_epilog)
 ifeq ($(DSL_TCLINUX),y)
-	cat image/$(IMGNAME).trx tc_fw/tclinux.bin > image/$(IMGNAME)_DSL.trx
-	md5sum image/$(IMGNAME)_DSL.trx > image/$(IMGNAME)_DSL.md5
+	cat image/$(IMGNAME).trx tc_fw/tclinux.bin > image/$(DSLIMGNAME).trx
+endif
+
+	md5sum image/$(DSLIMGNAME).trx > image/$(DSLIMGNAME).md5
 ifeq ($(HTTPS),y)
 ifneq ("$(wildcard $(SRCBASE)/../../../buildtools/private.pem)","")
-	openssl sha1 -sign $(SRCBASE)/../../buildtools/private.pem -out image/$(IMGNAME)_DSL_rsa.zip image/$(IMGNAME)_DSL.trx
+	openssl sha1 -sign $(SRCBASE)/../../buildtools/private.pem -out image/$(DSLIMGNAME)_rsa.zip image/$(DSLIMGNAME).trx
 endif
 endif
 endif
@@ -489,6 +501,8 @@ define RouterOptions
 	if [ "$(BCMWL6)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCMWL6/d" $(1); \
 		echo "RTCONFIG_BCMWL6=y" >>$(1); \
+		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
+		echo "RTCONFIG_BCMDCS=y" >>$(1); \
 	fi; \
 	if [ "$(BCMWL6A)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCMWL6A/d" $(1); \
@@ -1279,10 +1293,6 @@ define RouterOptions
 		echo "RTCONFIG_BCM_7114=y" >>$(1); \
 		sed -i "/RTCONFIG_BCMBSD/d" $(1); \
 		echo "RTCONFIG_BCMBSD=y" >>$(1); \
-		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
-		echo "RTCONFIG_BCMDCS=y" >>$(1); \
-		sed -i "/RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY/d" $(1); \
-		echo "RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY=y" >>$(1); \
 		sed -i "/RTCONFIG_WLEXE/d" $(1); \
 		echo "RTCONFIG_WLEXE=y" >>$(1); \
 	fi; \
@@ -1295,14 +1305,10 @@ define RouterOptions
 	if [ "$(BCM10)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCM10/d" $(1); \
 		echo "RTCONFIG_BCM10=y" >>$(1); \
-		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
-		echo "RTCONFIG_BCMDCS=y" >>$(1); \
 	fi; \
 	if [ "$(BCM9)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCM9/d" $(1); \
 		echo "RTCONFIG_BCM9=y" >>$(1); \
-		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
-		echo "RTCONFIG_BCMDCS=y" >>$(1); \
 		sed -i "/RTCONFIG_WLEXE/d" $(1); \
 		echo "RTCONFIG_WLEXE=y" >>$(1); \
 	fi; \
@@ -1313,10 +1319,6 @@ define RouterOptions
 		echo "RTCONFIG_TOAD=y" >>$(1); \
 		sed -i "/RTCONFIG_BCMBSD/d" $(1); \
 		echo "RTCONFIG_BCMBSD=y" >>$(1); \
-		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
-		echo "RTCONFIG_BCMDCS=y" >>$(1); \
-		sed -i "/RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY/d" $(1); \
-		echo "RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY=y" >>$(1); \
 		sed -i "/RTCONFIG_GMAC3/d" $(1); \
 		echo "RTCONFIG_GMAC3=y" >>$(1); \
 	fi; \
@@ -2637,7 +2639,6 @@ dsl-% DSL-%:
 	$(call dsl_genbintrx_prolog)
 	$(call save_src_config, $@)
 	@$(MAKE) bin
-	$(call dsl_genbintrx_epilog)
 
 setprofile:
 	@echo ""

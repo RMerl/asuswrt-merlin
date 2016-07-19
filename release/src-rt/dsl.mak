@@ -22,9 +22,8 @@ define dsl_genbintrx_epilog
 		cp -R asustools/autobuild-tool/make_img make_img; \
 		cp -R asustools/autobuild-tool/tc_asus_bin tc_asus_bin; \
 		echo "#!/bin/sh" > cptrx.sh; \
-		echo "cp image/DSL*.trx reltmp" >> cptrx.sh; \
-		echo "cp image/DSL*.trx make_img" >> cptrx.sh; \
-		echo "rm -f image/*.trx" >> cptrx.sh; \
+		echo "cp image/$(BUILD_NAME)_*.trx reltmp" >> cptrx.sh; \
+		echo "cp image/$(BUILD_NAME)_*.trx make_img" >> cptrx.sh; \
 		chmod 777 ./cptrx.sh; \
 		./cptrx.sh; \
 		rm -f cptrx.sh; \
@@ -33,8 +32,8 @@ define dsl_genbintrx_epilog
 		chmod 777 ./LnxBinMrg; \
 		./LnxBinMrg `cut -d / -f2 tmp.txt`; \
 		echo "#!/bin/sh" > cptrx2.sh; \
-		echo "cp DSL*.trx ../image" >> cptrx2.sh; \
-		echo "cp DSL*.bin ../image" >> cptrx2.sh; \
+		echo "cp $(BUILD_NAME)_*.trx ../image" >> cptrx2.sh; \
+		echo "cp $(BUILD_NAME)_*.bin ../image" >> cptrx2.sh; \
 		chmod 777 ./cptrx2.sh; \
 		./cptrx2.sh; \
 		cd ..; \

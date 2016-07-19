@@ -252,7 +252,7 @@ function initial(){
 	if('<% nvram_get("wl_unit"); %>' == '1' || '<% nvram_get("wl_unit"); %>' == '2'){ // 5GHz up
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" || based_modelid == "4G-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87" ||
 			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
 			based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R")
@@ -297,7 +297,7 @@ function initial(){
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-N18U" ||
 			based_modelid == "RT-AC87U" ||
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" || based_modelid == "4G-AC68U" ||
 			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
 			based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R")
 		{
@@ -390,7 +390,7 @@ function initial(){
 	/*Airtime fairness, only for Broadcom ARM platform, except RT-AC87U 5 GHz*/
 	if(	based_modelid == "RT-N18U" ||
 		based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" ||
-		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" ||
+		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U" || based_modelid == "4G-AC68U" ||
 		based_modelid == "RT-AC87U" || based_modelid == "RT-AC3200" ||
 		based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" ||
 		based_modelid == "RT-AC5300R" || based_modelid == "RT-AC1200G" || based_modelid == "RT-AC1200G+"){

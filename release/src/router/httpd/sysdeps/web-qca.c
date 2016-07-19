@@ -294,6 +294,24 @@ typedef struct _WIFI_STA_TABLE {
 } WIFI_STA_TABLE;
 
 
+void
+convert_mac_string(char *mac)
+{
+	int i;
+	char mac_str[18];
+	memset(mac_str,0,sizeof(mac_str));
+
+	for(i=0;i<strlen(mac);i++)
+        {
+                if(*(mac+i)>0x60 && *(mac+i)<0x67) 
+                       sprintf(mac_str,"%s%c",mac_str,*(mac+i)-0x20);
+                else
+                       sprintf(mac_str,"%s%c",mac_str,*(mac+i));
+        }
+	strncpy(mac,mac_str,strlen(mac_str));
+}
+
+
 static int getSTAInfo(int unit, WIFI_STA_TABLE *sta_info)
 {
 	#define STA_INFO_PATH "/tmp/wlanconfig_athX_list"
@@ -364,6 +382,8 @@ ADDR               AID CHAN TXRATE RXRATE RSSI IDLE  TXSEQ  RXSEQ  CAPS        A
 					r->u_acaps, r->u_erp, r->u_state_maxrate, r->htcaps, r->ie,
 					r->mode, r->u_psmode);
 #endif
+
+				convert_mac_string(r->addr);
 			}
 
 			fclose(fp);
@@ -742,6 +762,7 @@ char *getWscStatus(int unit)
 char *getAPPIN(int unit)
 {
 	static char buffer[128];
+#if 0
 	char cmd[64];
 	FILE *fp;
 	int len;
@@ -759,6 +780,10 @@ char *getAPPIN(int unit)
 		}
 	}
 	return "";
+#else
+	snprintf(buffer, sizeof(buffer), "%s", nvram_safe_get("secret_code"));
+	return buffer;
+#endif
 }
 
 int

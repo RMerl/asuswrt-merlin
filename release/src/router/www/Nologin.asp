@@ -15,7 +15,7 @@
 	var loginUser = (function(){
 		if(loginUserIp === "") return "";
 
-		var dhcpLeaseInfo = <% IP_dhcpLeaseInfo(); %>
+		var dhcpLeaseInfo = [];
 		var hostName = "";
 		dhcpLeaseInfo.forEach(function(elem){
 			if(elem[0] === loginUserIp){

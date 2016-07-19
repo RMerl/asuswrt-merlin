@@ -214,48 +214,49 @@ function showLoadingUpdate(){
     		showLoadingUpdate();
     	},
     	success: function(){
-				if(stopScan == 0)
-					document.getElementById("updateProgress").style.width = progressBar+"%";
+			if(stopScan == 0)
+				document.getElementById("updateProgress").style.width = progressBar+"%";
+				
+			if( scan_status == 1 && stopScan == 0){	// To control message of scanning status
+				if(progressBar >= 5)
+					progressBar =5;
 					
-				if( scan_status == 1 && stopScan == 0){	// To control message of scanning status
-					if(progressBar >= 5)
-						progressBar =5;
-						
-					document.getElementById('scan_message').innerHTML = "<#diskUtility_initial#>";
-				}	
-				else if(scan_status == 2 && stopScan == 0){
-					if(progressBar <= 5)
-						progressBar = 6;
-					else if (progressBar >= 15)	
-						progressBar = 15;
-				
-					document.getElementById('scan_message').innerHTML = "<#diskUtility_umount#>";								
-				}
-				else if(scan_status == 3 && stopScan == 0){
-					if(progressBar <= 15)
-						progressBar = 16;
-					else if (progressBar >= 40)	
-						progressBar = 40;
-						
-					document.getElementById('scan_message').innerHTML = "Disk scanning ...";					
-				}	
-				else if(scan_status == 4 && stopScan == 0){
-					if(progressBar <= 40)
-						progressBar = 41;
-					else if (progressBar >= 90)	
-						progressBar = 90;
-						
-					document.getElementById('scan_message').innerHTML = "<#diskUtility_reMount#>";
-				}
-				else if(scan_status == 5 && stopScan == 0){
-					if(progressBar <= 90)
-						progressBar = 91;
-				
-					document.getElementById('scan_message').innerHTML = "<#diskUtility_finish#>";				
-				}
-				else{
-					document.getElementById('scan_message').innerHTML = "Stop disk scanning force...";	
-				}
+				document.getElementById('scan_message').innerHTML = "<#diskUtility_initial#>";
+			}	
+			else if(scan_status == 2 && stopScan == 0){
+				if(progressBar <= 5)
+					progressBar = 6;
+				else if (progressBar >= 15)	
+					progressBar = 15;
+			
+				document.getElementById('scan_message').innerHTML = "<#diskUtility_umount#>";								
+			}
+			else if(scan_status == 3 && stopScan == 0){
+				if(progressBar <= 15)
+					progressBar = 16;
+				else if (progressBar >= 40)	
+					progressBar = 40;
+					
+				document.getElementById('scan_message').innerHTML = "Disk scanning ...";					
+			}	
+			else if(scan_status == 4 && stopScan == 0){
+				if(progressBar <= 40)
+					progressBar = 41;
+				else if (progressBar >= 90)	
+					progressBar = 90;
+					
+				document.getElementById('scan_message').innerHTML = "<#diskUtility_reMount#>";
+			}
+			else if(scan_status == 5 && stopScan == 0){
+				if(progressBar <= 90)
+					progressBar = 91;
+			
+				document.getElementById('scan_message').innerHTML = "<#diskUtility_finish#>";				
+			}
+			else{
+				document.getElementById('scan_message').innerHTML = "Stop disk scanning force...";	
+			}
+
 			if(progressBar > 100){
 				scan_done = 1;
 				document.getElementById('btn_scan').style.display = "";
@@ -274,7 +275,7 @@ function showLoadingUpdate(){
 				document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
 				progressBar++;
 			}		
-			timer = setTimeout("showLoadingUpdate();", 100);		
+			timer = setTimeout(showLoadingUpdate, 100);		
 		}
 	});
 	
@@ -295,21 +296,19 @@ function abort_scan(){
 	document.getElementById('progressBar').style.display  = "none";
 	stop_diskmon();
 	reset_force_stop();
-	setTimeout('disk_scan_status("")',1000);
+	setTimeout(disk_scan_status, 1000);
 }
 
 function disk_scan_status(){
-	require(['/require/modules/diskList.js'], function(diskList){
-	 	diskList.update(function(){
-	 		$.each(parent.usbPorts, function(i, curPort){
-		 		$.each(diskList.list(), function(j, usbDevice){
-	 				if(curPort.node == usbDevice.node)
-	 					parent.usbPorts[i] = usbDevice;
-		 		});
-	 		});
+	require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
+		$.each(parent.usbPorts, function(i, curPort){
+			$.each(diskList.list(), function(j, usbDevice){
+				if(curPort.node == usbDevice.node)
+					parent.usbPorts[i] = usbDevice;
+			});
+		});
 
-			check_status(parent.usbPorts[diskOrder-1]);		
-		})
+		check_status(parent.usbPorts[diskOrder-1]);		
 	});
 }
 

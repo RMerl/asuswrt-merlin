@@ -117,7 +117,7 @@ function QKinternettype_load_body(){
 	else if(odmpid.length > 0 && odmpid != based_modelid){	//odmpid MODELDEP
 		if(odmpid == "RT-N66W" || odmpid == "RT-AC66W" || odmpid == "RT-AC68W" || odmpid == "RT-AC68RW")
 			document.getElementById("ModelPid_img").src="/images/Model_product_W.png";
-		else if(odmpid == "RT-AC66U V2")
+		else if(odmpid == "RT-AC66U_B1")
 			document.getElementById("ModelPid_img").src="/images/RT-AC66U_V2/Model_product.png";
 		else
 			document.getElementById("ModelPid_img").src="/images/Model_product.png";
@@ -354,7 +354,7 @@ function startDetect(){
 	if(parent.powerline_support)
 		update_plc_info();
 	else{
-		if((autodet_state == "2" && autodet_auxstate == "6") || (wanstate  == 2 && wansbstate == 0 && wanauxstate == 0)){
+		if((autodet_state == "6" || autodet_auxstate == "6") || (wanstate  == 2 && wansbstate == 0 && wanauxstate == 0)){
 			submitForm(1);
 		}
 		else{
@@ -373,13 +373,13 @@ function startPoll(){
 		if(parent.ISMOBILE){
 			if(document.getElementById("unplugImg1_m").style.display == "none"){
 				$("#unplugImg2_m").fadeOut(500);
-				if(odmpid == "RT-AC66U V2")
+				if(odmpid == "RT-AC66U_B1")
 					document.getElementById("unplugImg1_m").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 				setTimeout('$("#unplugImg1_m").fadeIn(500);', 500);	
 			}
 			else{
 				$("#unplugImg1_m").fadeOut(500);
-				if(odmpid == "RT-AC66U V2")
+				if(odmpid == "RT-AC66U_B1")
 					document.getElementById("unplugImg2_m").src = "/images/RT-AC66U_V2/WANunplug_usb.png";
 				setTimeout('$("#unplugImg2_m").fadeIn(500);', 500);	
 			}
@@ -388,13 +388,13 @@ function startPoll(){
 			if(usb_flag != "" && based_modelid != "RT-AC87U"){
 				if(document.getElementById("unplugImg1").style.display == "none"){
 					$("#unplugImg2").fadeOut(500);
-					if(odmpid == "RT-AC66U V2")
+					if(odmpid == "RT-AC66U_B1")
 						document.getElementById("unplugImg1").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 					setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
 				}
 				else{
 					$("#unplugImg1").fadeOut(500);	
-					if(odmpid == "RT-AC66U V2")
+					if(odmpid == "RT-AC66U_B1")
 						document.getElementById("unplugImg2").src = "/images/RT-AC66U_V2/WANunplug_usb.png";
 					setTimeout('$("#unplugImg2").fadeIn(500);', 500);	
 				}
@@ -408,13 +408,13 @@ function startPoll(){
 	else{
 		if(parent.ISMOBILE){
 			$("#unplugImg1_m").fadeOut(500);
-			if(odmpid == "RT-AC66U V2")
+			if(odmpid == "RT-AC66U_B1")
 				document.getElementById("unplugImg1_m").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 			setTimeout('$("#unplugImg1_m").fadeIn(500);', 500);	
 		}
 		else{
 			$("#unplugImg1").fadeOut(500);
-			if(odmpid == "RT-AC66U V2")
+			if(odmpid == "RT-AC66U_B1")
 				document.getElementById("unplugImg1").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 			setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
 		}

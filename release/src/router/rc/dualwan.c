@@ -117,7 +117,7 @@ int init_dualwan(int argc, char *argv[])
 }
 #endif
 
-void dualwan_control(void)
+int dualwan_control(int argc, char *argv[])
 {
 	int sw_mode;
 	char dualwan_mode[8];
@@ -131,7 +131,7 @@ void dualwan_control(void)
 	if (strcmp(cfe_nvram_safe_get("model"), MODEL_PROTECT) != 0){
 #endif
 		_dprintf("illegal, cannot enable DualWAN\n");
-		return;
+		return -1;
 	}
 
 	memset(dualwan_mode, 0, 8);
@@ -145,12 +145,12 @@ void dualwan_control(void)
 
 	sw_mode = nvram_get_int("sw_mode");
 
-	if(strcmp(dualwan_mode, "lb") != 0) return;
-	if(strcmp(dualwan_wans, "wan lan") != 0) return;
+	if(strcmp(dualwan_mode, "lb") != 0) goto EXIT;
+	if(strcmp(dualwan_wans, "wan lan") != 0) goto EXIT;
 	if(strcmp(wan0_proto, "pptp") == 0 ||
 		strcmp(wan1_proto, "l2tp") == 0)
-		return;
-	if (sw_mode != SW_MODE_ROUTER) return;
+		goto EXIT;
+	if (sw_mode != SW_MODE_ROUTER) goto EXIT;
 
 	while(1){
 		f_write_string("/proc/sys/net/ipv4/route/flush", "1", 0, 0);
@@ -158,6 +158,9 @@ void dualwan_control(void)
 		f_write_string("/proc/sys/net/ipv4/route/flush", "1", 0, 0);
 		sleep(1);
 	}
+
+EXIT:
+	return 0;
 }
 
 #endif

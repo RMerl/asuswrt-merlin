@@ -92,16 +92,16 @@ extern const char *rt_swpjverno;
 #define LED_CTRL_HIPRIO 	"LED_CTRL_HIPRIO"
 
 #ifdef RTCONFIG_IPV6
+/* NOTE: Do not insert new entries in the middle of this enum,
+ * always add them to the end! */
 enum {
 	IPV6_DISABLED = 0,
 	IPV6_NATIVE_DHCP,
-#ifdef RTCONFIG_6RELAYD
-	IPV6_PASSTHROUGH,
-#endif
 	IPV6_6TO4,
 	IPV6_6IN4,
 	IPV6_6RD,
-	IPV6_MANUAL
+	IPV6_MANUAL,
+	IPV6_PASSTHROUGH
 };
 
 #ifndef RTF_UP
@@ -174,6 +174,11 @@ extern char *get_upper_str(const char *const str, char **target);
 extern int upper_strcmp(const char *const str1, const char *const str2);
 extern int upper_strncmp(const char *const str1, const char *const str2, int count);
 extern char *upper_strstr(const char *const str, const char *const target);
+#if defined(HND_ROUTER)
+// defined (__GLIBC__) && !defined(__UCLIBC__)
+size_t strlcpy(char *dst, const char *src, size_t size);
+size_t strlcat(char *dst, const char *src, size_t size);
+#endif
 
 extern in_addr_t inet_addr_(const char *addr);
 extern int inet_equal(const char *addr1, const char *mask1, const char *addr2, const char *mask2);
@@ -261,8 +266,10 @@ extern int exec_for_host(int host, int obsolete, uint flags, host_exec func);
 extern int is_no_partition(const char *discname);
 #endif //RTCONFIG_USB
 
-// id.c
+/* NOTE: Do not insert new entries in the middle of this enum,
+ * always add them to the end! */
 enum {
+	MODEL_GENERIC = -1,
 	MODEL_UNKNOWN = 0,
 	MODEL_DSLN55U,
 	MODEL_DSLAC68U,
@@ -284,11 +291,6 @@ enum {
 	MODEL_PLN12,
 	MODEL_PLAC56,
 	MODEL_PLAC66U,
-#if defined (RTAC3200) || defined(RTAC87U)
-	MODEL_RTAC88N,
-	MODEL_BRTAC828M2,
-	MODEL_RTAC88S,
-#endif
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -326,16 +328,20 @@ enum {
 	MODEL_RTN10PV2,
 	MODEL_RTAC1200G,
 	MODEL_RTAC1200GP,
-	MODEL_GENERIC
+	MODEL_RTAC88N,
+	MODEL_BRTAC828M2,
+	MODEL_RTAC88S
 };
 
+/* NOTE: Do not insert new entries in the middle of this enum,
+ * always add them to the end! */
 enum {
-	SWITCH_UNKNOWN,
+	SWITCH_GENERIC = -1,
+	SWITCH_UNKNOWN = 0,
 	SWITCH_BCM5325,
 	SWITCH_BCM53115,
 	SWITCH_BCM53125,
-	SWITCH_BCM5301x,
-	SWITCH_GENERIC
+	SWITCH_BCM5301x
 };
 
 #define RTCONFIG_NVRAM_VER "1"
@@ -464,7 +470,9 @@ enum led_id {
 	LED_SIG1,
 	LED_SIG2,
 	LED_SIG3,
+#ifdef RT4GAC68U
 	LED_SIG4,
+#endif
 #endif
 #if (defined(PLN12) || defined(PLAC56))
 	PLC_WAKE,
@@ -820,6 +828,14 @@ extern int rtkswitch_Reset_Storm_Control(void);
 extern int get_qca8337_PHY_power(int port);
 #endif
 
+/* sysdeps/broadcom/ *.c */
+#ifdef CONFIG_BCMWL5
+#ifdef RTCONFIG_BCMFA
+extern int get_fa_rev(void);
+extern int get_fa_dump(void);
+#endif
+#endif
+
 // base64.c
 extern int base64_encode(unsigned char *in, char *out, int inlen);		// returns amount of out buffer used
 extern int base64_decode(const char *in, unsigned char *out, int inlen);	// returns amount of out buffer used
@@ -829,9 +845,10 @@ extern int base64_decoded_len(int len);										// maximum possible, not actual
 /* boardapi.c */
 extern int extract_gpio_pin(const char *gpio);
 extern int lanport_status(void);
+extern void get_gpio_values_once(int force);
 
 /* discover.c */
-extern int discover_all(void);
+extern int discover_all(int wan_unit);
 
 // strings.c
 extern int char_to_ascii_safe(const char *output, const char *input, int outsize);
@@ -938,6 +955,19 @@ extern int notify_rc_and_wait(const char *event_name);
 extern int notify_rc_and_wait_1min(const char *event_name);
 extern int notify_rc_and_wait_2min(const char *event_name);
 extern int notify_rc_and_period_wait(const char *event_name, int wait);
+
+/* models.c */
+extern int get_blver(char *bls);
+
+/* wl.c */
+#ifdef CONFIG_BCMWL5
+#ifdef __CONFIG_DHDAP__
+extern int dhd_probe(char *name);
+extern int dhd_ioctl(char *name, int cmd, void *buf, int len);
+extern int dhd_iovar_setbuf(char *ifname, char *iovar, void *param, int paramlen, void *bufptr, int buflen);
+extern int dhd_iovar_setint(char *ifname, char *iovar, int val);
+#endif
+#endif
 
 /* rtstate.c */
 extern char *get_wanx_ifname(int unit);
@@ -1191,5 +1221,9 @@ static inline int is_usb3_port(char *usb_node)
 #define WAN0DEV "vlan2"
 #endif
 #endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
+
+#ifdef RTAC68U
+#define MODEL_STR_RTAC66UV2    "RT-AC66U_B1"
+#endif
 
 #endif	/* !__SHARED_H__ */

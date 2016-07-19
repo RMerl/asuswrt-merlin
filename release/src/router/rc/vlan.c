@@ -23,7 +23,8 @@
  * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
  *
  */
-#include "rc.h"
+
+#include <rc.h>
 
 #include <stdio.h>
 #include <stdlib.h>

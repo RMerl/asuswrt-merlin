@@ -8,6 +8,7 @@
 */
 
 #include <rc.h>
+#include <disk_io_tools.h>
 
 // define function bit, you can define more functions as below
 #define TM_WRS_MAIL		0x01

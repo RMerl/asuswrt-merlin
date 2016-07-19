@@ -208,7 +208,7 @@ function Reload_pdesc(obj, url){
 		desclist.push(["Rescue Mode","Rescue"]);
 		url_group.push(["Rescue"]);//false value
 
-		desclist.push(["With other network devices","Other Devices"]);	//25
+		desclist.push(["<#feedback_compat_wond#>","Other Devices"]);	//25
 		url_group.push(["Other_Device"]);//false value
 
 		desclist.push(["Cannot access firmware page","Fail to access"]);
@@ -220,27 +220,27 @@ function Reload_pdesc(obj, url){
 	}
 	else if(ptype == "Connection_or_Speed_Problem"){
 		
-		desclist.push(["Slow wireless speed","Wireless speed"]);
-		desclist.push(["Slow wired speed","Wired speed"]);
-		desclist.push(["Unstable connection problem","Unstable connection"]);
-		desclist.push(["Router reboot automatically","Router reboot"]);
+		desclist.push(["<#feedback_conn_swls#>","Wireless speed"]);
+		desclist.push(["<#feedback_conn_sws#>","Wired speed"]);
+		desclist.push(["<#feedback_conn_ucp#>","Unstable connection"]);
+		desclist.push(["<#feedback_conn_rra#>","Router reboot"]);
 		
 	}
 	else if(ptype == "Compatibility_Problem"){
 		
-		desclist.push(["with modem","Compatible Problem"]);
-		desclist.push(["with other router","Compatible Problem"]);
-		desclist.push(["On OS or Application","Compatible Problem"]);
-		desclist.push(["with printer","Compatible Problem"]);
-		desclist.push(["with USB modem","Compatible Problem"]);
-		desclist.push(["with external hardware disk","Compatible Problem"]);
-		desclist.push(["with other network devices","Compatible Problem"]);
+		desclist.push(["<#feedback_compat_wm#>","Compatible Problem"]);
+		desclist.push(["<#feedback_compat_wor#>","Compatible Problem"]);
+		desclist.push(["<#feedback_compat_oooa#>","Compatible Problem"]);
+		desclist.push(["<#feedback_compat_wp#>","Compatible Problem"]);
+		desclist.push(["<#feedback_compat_wum#>","Compatible Problem"]);
+		desclist.push(["<#feedback_compat_wehd#>","Compatible Problem"]);
+		desclist.push(["<#feedback_compat_wond#>","Compatible Problem"]);
 
 	}
 	else if(ptype == "Translated_Suggestion"){
 		
 		desclist.splice(0,1);
-		desclist.push(["Translated Suggestion","Translation"]);		
+		desclist.push(["<#feedback_translation_ts#>","Translation"]);		
 	}
 	else{	//Other_Problem
 		
@@ -533,7 +533,7 @@ function change_dsl_diag_enable(value) {
 <tr>
 	<td colspan="2">
 		<div><#feedback_optional#></div>
-		<input class="button_gen" style="margin-left: 305px;" name="btn_send" onclick="applyRule()" type="button" value="Send"/>
+		<input class="button_gen" style="margin-left: 305px;" name="btn_send" onclick="applyRule()" type="button" value="<#btn_send#>"/>
 	</td>
 </tr>
 

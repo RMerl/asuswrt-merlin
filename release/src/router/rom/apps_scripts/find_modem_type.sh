@@ -74,6 +74,7 @@ _find_act_type(){
 	fi
 }
 
+type=`_find_act_type`
 if [ "$usb_gobi2" == "1" ]; then
 	type="gobi"
 elif [ "$modem_enable" == "4" ]; then
@@ -83,8 +84,6 @@ elif [ "$modem_enable" == "2" -a "$type" == "qmi" ]; then
 	type="tty"
 elif [ "$modem_vid" == "19d2" -a "$modem_pid" == "1589" ]; then # ZTE MF193A
 	type="tty"
-else
-	type=`_find_act_type`
 fi
 echo "type=$type."
 

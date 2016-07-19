@@ -46,7 +46,7 @@ CFLAGS += -I$(TOP)/traffic_limiter
 CFLAGS += -I$(TOP)/sqlite
 endif
 
-ifeq ($(RTAC68A), y)
+ifeq ($(or $(RTAC68A),$(RT4GAC68U)),y)
 CFLAGS += -DRTAC68U
 endif
 
@@ -61,13 +61,9 @@ OBJS += web-ralink.o
 else ifeq ($(CONFIG_QCA),y)
 OBJS += web-qca.o
 else
-ifeq ($(RTCONFIG_BCMWL6),y)
-OBJS += web-broadcom-wl6.o
+OBJS += web-broadcom.o
 ifeq ($(RTCONFIG_QTN),y)
 OBJS += find_host_addr.o
-endif
-else
-OBJS += web-broadcom.o
 endif
 endif
 

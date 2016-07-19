@@ -129,3 +129,5 @@ extern int isMMCDevice(const char *device_name);
 #endif
 
 extern char *find_sg_of_device(const char *device_name, char *buf, const int buf_size);
+
+extern char *get_gobi_portpath();

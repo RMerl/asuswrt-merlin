@@ -78,6 +78,7 @@ RESCUE_MODE := 1        # disable for tmp
 RGMII_P5 := 0
 DSLAC68U := 0
 RTAC68U := 0
+RT4GAC68U := 0
 PATYPE := 0
 BCM470XC0 := 0
 MTDSIZE ?= 64
@@ -143,6 +144,10 @@ endif
 
 ifeq ($(strip $(RTAC68U)),1)
 CFLAGS += -DRTAC68U
+endif
+
+ifeq ($(strip $(RT4GAC68U)),1)
+CFLAGS += -DRT4GAC68U
 endif
 
 ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC88U RT-AC88B RT-AC5400))

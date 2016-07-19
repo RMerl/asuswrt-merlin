@@ -1,8 +1,6 @@
 ﻿var Untranslated = {
 	fw_size_higher_mem : 'Memory space is NOT enough to upgrade on internet. Please wait for rebooting.',
 	the_array_is_end : "end here.",
-	namecheap_username_title: "Domain Name",
-	link_rate : "Link rate",
 	ASUSGATE_note9 : "Your DSL line appears to be unstable. DLA (Dynamic Line Adjustment) which enabled by default already adopted necessary changes and ensure stability. However if interruption continues please submit a feedback form for our analysis.",
 	ASUSGATE_note6 : "Your DSL line appears to be unstable. We strongly recommend that you submit a feedback form for our analysis.",
 	ASUSGATE_note7 : "If you are experiencing any DSL related issues or have any comments / suggestions, please feel free to inform our support team.",
@@ -120,13 +118,41 @@ function enableMonomode(){
 	document.titleForm.submit();
 }
 
-function remove_disk(disk_num){
+function remove_all_disk(){
 	var str = "<#Safelyremovedisk_confirm#>";
 	if(confirm(str)){
-		showLoading();		
-		document.diskForm_title.disk.value = disk_num;
-		setTimeout("document.diskForm_title.submit();", 1);
+		showLoading();
+		document.diskForm_title.disk.value = "all";
+		setTimeout(function(){
+			document.diskForm_title.submit();
+		}, 1);
 	}
+}
+
+function remove_disk(disksIndex){
+	require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
+		var removeHandler = function(disk){
+			var str = "";
+			str += (disk.isBusy) ? "<#ALERT_OF_ERROR_System3#> ".split(":")[1] : "" ;
+			str += "<#Safelyremovedisk_confirm#>";
+
+			if(confirm(str)){
+				parent.showLoading();			
+				document.diskForm_title.disk.value = disk.node;
+				setTimeout(function(){
+					document.diskForm_title.submit();
+				}, 1);
+			}
+		}
+
+		var usbDevicesList = diskList.list();
+		for(var i=0; i < usbDevicesList.length; i++){
+			if(usbDevicesList[i].node == disksIndex){
+				removeHandler(usbDevicesList[i]);
+				break;
+			}
+		}
+	});
 }
 
 function gotoguestnetwork(){
@@ -160,7 +186,8 @@ function high_channel(a, b)
         return a > b ? a : b;
 }
 
-function gotoModem(){	
+function gotoModem(){
+	document.titleForm.wan_unit.disabled = false;	
 	document.titleForm.wan_unit.value = usb_index;
 	if( usb_index == -1){
 		top.location.href = "/Advanced_WANPort_Content.asp";	
@@ -178,6 +205,7 @@ function gotoModem(){
 }
 
 function setTrafficLimit(){
+	document.titleForm.wan_unit.disabled = false;	
 	document.titleForm.wan_unit.value = usb_index;
 	document.titleForm.current_page.value = "Advanced_MobileBroadband_Content.asp?af=data_limit;show=0";
 	document.titleForm.action_mode.value = "change_wan_unit";
@@ -187,6 +215,7 @@ function setTrafficLimit(){
 }
 
 function upated_sim_record(){ //delete the oldest record and save the current data usage settings
+	document.titleForm.sim_order.disabled = false;
 	document.titleForm.current_page.value = "Advanced_MobileBroadband_Content.asp";
 	document.titleForm.action_mode.value = "restart_sim_del";
 	document.titleForm.sim_order.value = "1";
@@ -220,7 +249,7 @@ function overHint(itemNum){
 		statusmenu ="<span>This mode is suitable for playing video streaming and make sure your viewing experience.<br><#Adaptive_Category2#></span>";	/* untranslated */
 	}
 	else if(itemNum == 88){
-		statusmenu ="<span>This mode is suitable for general web browsing and avoid to networking latency whileﬁfile transferring.<br><#Adaptive_Category4#></span>";	/* untranslated */
+		statusmenu ="<span>This mode is suitable for general web browsing and avoid to networking latency while?file transferring.<br><#Adaptive_Category4#></span>";	/* untranslated */
 	}
 	else if(itemNum == 89){
 		statusmenu ="<span>Enable this function allow block advertisement in the streaming video.</span>";
@@ -747,7 +776,17 @@ function overHint(itemNum){
 							statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g;
 						else if(wlc_band == 2)
 							statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g_2;
-					}	
+
+						if(!Rawifi_support && !Qcawifi_support) {
+							statusmenu += "<br><br>";
+							if(wlc_band == 0)
+								statusmenu += "<b>RSSI: </b>"+ rssi_2g;
+							else if(wlc_band == 1)
+								statusmenu += "<b>RSSI: </b>"+ rssi_5g;
+							else if(wlc_band == 2)
+								statusmenu += "<b>RSSI: </b>"+ rssi_5g_2;
+						}
+					}
 					else{
 						if(_wlc_sbstate == "wlc_sbstate=2")
 							statusmenu += "<span><#APSurvey_action_ConnectingStatus1#></span>";
@@ -1054,7 +1093,7 @@ function openHint(hint_array_id, hint_show_id, flag){
 				if(statusmenu == "")
 					statusmenu = "<span class='StatusHint'><#DISK_UNMOUNTED#></span>";
 				else if(statusmenu.howMany("remove_disk") > 1)
-					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(\"all\");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Eject all USB disks</div>";
+					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_all_disk();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Eject all USB disks</div>";
 
 				_caption = "USB storage";
 				return overlib(statusmenu, OFFSETX, -160, LEFT, STICKY, CAPTION, " ", CLOSETITLE, '');
@@ -2852,6 +2891,7 @@ String.prototype.strReverse = function() {
 // ---------- Viz add for pwd strength check [End] 2012.12 -----
 
 function goToWAN(index){
+	document.titleForm.wan_unit.disabled = false;
 	document.titleForm.wan_unit.value = index;
 	if(index == usb_index){
 		if(gobi_support)

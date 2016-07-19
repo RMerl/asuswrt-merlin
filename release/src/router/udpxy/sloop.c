@@ -18,13 +18,17 @@
  *  along with udpxy.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _XOPEN_SOURCE 600
-#define _BSD_SOURCE
+#define _GNU_SOURCE
 
+#include <features.h>
 #include <sys/syscall.h>
 
 /* need to know if pselect(2) is available */
-#if defined(SYS_pselect6)
+#if defined(__UCLIBC__) \
+  && (__UCLIBC_MAJOR__ == 0 \
+  && (__UCLIBC_MINOR__ < 9 || (__UCLIBC_MINOR__ == 9 && __UCLIBC_SUBLEVEL__ < 29)))
+    #define USE_SELECT 1
+#elif defined(SYS_pselect6)
     #define HAS_PSELECT 1
 #endif
 

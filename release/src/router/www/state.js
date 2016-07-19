@@ -72,6 +72,64 @@ String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, '');
 }
 
+var htmlEnDeCode = (function() {
+    var charToEntityRegex,
+        entityToCharRegex,
+        charToEntity,
+        entityToChar;
+
+    function resetCharacterEntities() {
+        charToEntity = {};
+        entityToChar = {};
+        // add the default set
+        addCharacterEntities({
+            '&amp;'     :   '&',
+            '&gt;'      :   '>',
+            '&lt;'      :   '<',
+            '&quot;'    :   '"',
+            '&#39;'     :   "'"
+        });
+    }
+
+    function addCharacterEntities(newEntities) {
+        var charKeys = [],
+            entityKeys = [],
+            key, echar;
+        for (key in newEntities) {
+            echar = newEntities[key];
+            entityToChar[key] = echar;
+            charToEntity[echar] = key;
+            charKeys.push(echar);
+            entityKeys.push(key);
+        }
+        charToEntityRegex = new RegExp('(' + charKeys.join('|') + ')', 'g');
+        entityToCharRegex = new RegExp('(' + entityKeys.join('|') + '|&#[0-9]{1,5};' + ')', 'g');
+    }
+
+    function htmlEncode(value){
+        var htmlEncodeReplaceFn = function(match, capture) {
+            return charToEntity[capture];
+        };
+
+        return (!value) ? value : String(value).replace(charToEntityRegex, htmlEncodeReplaceFn);
+    }
+
+    function htmlDecode(value) {
+        var htmlDecodeReplaceFn = function(match, capture) {
+            return (capture in entityToChar) ? entityToChar[capture] : String.fromCharCode(parseInt(capture.substr(2), 10));
+        };
+
+        return (!value) ? value : String(value).replace(entityToCharRegex, htmlDecodeReplaceFn);
+    }
+
+    resetCharacterEntities();
+
+    return {
+        htmlEncode: htmlEncode,
+        htmlDecode: htmlDecode
+    };
+})();
+
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 var wlc_band = '<% nvram_get("wlc_band"); %>';
 /*Media Bridge mode
@@ -124,6 +182,7 @@ var svc_ready = '<% nvram_get("svc_ready"); %>';
 var qos_enable_flag = ('<% nvram_get("qos_enable"); %>' == 1) ? true : false;
 var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");
 var qos_type_flag = "<% nvram_get("qos_type"); %>";
+var exist_firmver="<% nvram_get("firmver"); %>";
 
 //territory_code sku
 function in_territory_code(_ptn){
@@ -133,6 +192,7 @@ var ttc = '<% nvram_get("territory_code"); %>';
 var is_KR_sku = in_territory_code("KR");
 var is_CN = in_territory_code("CN");
 var is_TW_sku = in_territory_code("TW");
+var is_US_sku = in_territory_code("US");
 
 //wireless
 var wl_nband_title = [];
@@ -236,6 +296,9 @@ var band5g_support = isSupport("5G");
 var live_update_support = false;	// isSupport("update"); 
 var cooler_support = isSupport("fanctrl");
 var power_support = isSupport("pwrctrl");
+if(is_US_sku)
+	power_support = false;
+
 var repeater_support = isSupport("repeater");
 var concurrep_support = isSupport("concurrep");
 var psta_support = isSupport("psta");
@@ -336,7 +399,7 @@ var app_support = false;
 if( based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC88U"
  || based_modelid == "RT-AC3200"
  || based_modelid == "RT-AC87U" || based_modelid == "RT-AC87R"
- || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC68R" || based_modelid == "RT-AC68P" || based_modelid == "RT-AC68W"
+ || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" || based_modelid == "RT-AC68R" || based_modelid == "RT-AC68P" || based_modelid == "RT-AC68W"
  || based_modelid == "RT-AC66U" || based_modelid == "RT-AC66R"
  || based_modelid == "RT-AC56U"
  || based_modelid == "RT-N66U" || based_modelid == "RT-N66R" || based_modelid == "RT-N66W"){
@@ -351,6 +414,16 @@ var sdk_version_array = new Array();
 sdk_version_array = wl_version.split(".");
 var sdk_7 = sdk_version_array[0] == 7 ? true : false;
 var bcm_mumimo_support = isSupport("mumimo");		//Broadcom MU-MIMOs
+
+if(live_update_support){
+	if(exist_firmver[0] == 9)
+		var current_firmware_path = 1;
+	else
+		var current_firmware_path = 0;	
+}	
+else{
+	var current_firmware_path = 0;
+}	
 
 // Todo: Support repeater mode
 /*if(isMobile() && sw_mode != 2 && !dsl_support)
@@ -409,8 +482,8 @@ if(based_modelid == "DSL-AC68U"){
 }
 else{
 	var dla_modified = "0";
-        var dsl_loss_sync = "0";
-        var experience_fb = "2";
+	var dsl_loss_sync = "0";
+	var experience_fb = "2";
 }
 if(dsl_support){
 	var noti_notif_Flag = '<% nvram_get("webs_notif_flag"); %>';
@@ -494,9 +567,9 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<input type="hidden" name="wl_subunit" value="-1" disabled>\n';
 	banner_code +='<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">\n';
 	banner_code +='<input type="hidden" name="flag" value="">\n';
-	banner_code +='<input type="hidden" name="wan_unit" value="">\n';
+	banner_code +='<input type="hidden" name="wan_unit" value="" disabled>\n';
 	if(gobi_support && (usb_index != -1) && (sim_state != "")){
-		banner_code +='<input type="hidden" name="sim_order" value="">\n';
+		banner_code +='<input type="hidden" name="sim_order" value="" disabled>\n';
 	}
 	banner_code +='</form>\n';
 
@@ -539,7 +612,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<input type="hidden" name="action_script" value="restart_wan_if">\n';
 	banner_code +='<input type="hidden" name="action_wait" value="5">\n';
 	banner_code +='<input type="hidden" name="wan_enable" value="<% nvram_get("wan_enable"); %>">\n';
-	banner_code +='<input type="hidden" name="wan_unit" value="<% get_wan_unit(); %>">\n';
+	banner_code +='<input type="hidden" name="wan_unit" value="<% get_wan_unit(); %>" >\n';
 	banner_code +='<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">\n';
 	banner_code +='<input type="hidden" name="dslx_link_enable" value="<% nvram_get("dslx_link_enable"); %>">\n';
 	banner_code +='</form>\n';
@@ -1763,18 +1836,12 @@ function show_menu(){
 	}else
 		notification.acpw = 0;
 /*
-	if(isNewFW('<% nvram_get("webs_state_info"); %>')){	//case2
+	if(isNewFW('<% nvram_get("webs_state_info"); %>', 0, current_firmware_path) && exist_firmver[0] != 9){	//case2		//beta FW to disable notification case 2
 		notification.array[1] = 'noti_upgrade';
 		notification.upgrade = 1;
 		notification.desc[1] = '<#ASUSGATE_note2#>';
-		if(!live_update_support || !HTTPS_support){
-			notification.action_desc[1] = '<a id="link_to_downlodpage" target="_blank" href="'+get_helplink()+'" style="color:#FFCC00;"><#ASUSGATE_act_update#></a>';
-			notification.clickCallBack[1] = "";
-		}
-		else{
-			notification.action_desc[1] = '<#ASUSGATE_act_update#>';
-			notification.clickCallBack[1] = "location.href = 'Advanced_FirmwareUpgrade_Content.asp';"
-		}
+		notification.action_desc[1] = '<#ASUSGATE_act_update#>';
+		notification.clickCallBack[1] = "location.href = 'Advanced_FirmwareUpgrade_Content.asp?confirm_show=1';"
 	}else
 */
 		notification.upgrade = 0;
@@ -1865,7 +1932,8 @@ function show_menu(){
 		notification.clickCallBack[7] = "setTimeout('document.noti_experience_Feedback.submit();', 1);setTimeout('notification.redirectFeedback()', 1000);";
 		notification.action_desc[18] = '<#CTL_Cancel#>';
 		notification.clickCallBack[18] = "setTimeout('document.noti_experience_Feedback.submit();', 1);setTimeout('notification.redirectRefresh()', 1000);";
-	}else
+	}
+	else
 		notification.experience_FB = 0;
 
 	//Notification hint-- null&0: default, 1:display info
@@ -1907,8 +1975,8 @@ function show_menu(){
 		notification.action_desc[17] = '改成固定IP撥號連線(PPPoE)';
 		notification.clickCallBack[17] = "change_cht_pppoe_static();";					
 	}
-	else if(is_TW_sku && autodet_state == 2 && autodet_auxstate == 6 && !is_CHT_pppoe_static){*/
-	if(is_TW_sku && autodet_state == 2 && autodet_auxstate == 6 && wan_proto != "pppoe"){	
+	else if(is_TW_sku && (autodet_state == 6 || autodet_auxstate == 6) && !is_CHT_pppoe_static){*/
+	if(is_TW_sku && (autodet_state == 6 || autodet_auxstate == 6)  && wan_proto != "pppoe"){	
 		notification.pppoe_tw = 1;
 		notification.array[15] = 'noti_pppoe_tw';
 		notification.desc[15] = '<#CHT_ppp_notice_1#>';
@@ -1947,29 +2015,29 @@ function get_helplink(){
 function addOnlineHelp(obj, keywordArray){
 	var support_path = "support/Knowledge-searchV2/?";
 	var faqLang = {
-		EN : "/us/",
-		TW : "/us/",
-		CN : "/us/",
-		CZ : "/us/",
-		PL : "/us/",
-		RU : "/us/",
-		DE : "/us/",
-		FR : "/us/",
-		TR : "/us/",
-		TH : "/us/",
-		MS : "/us/",
-		NO : "/us/",
-		FI : "/us/",
-		DA : "/us/",
-		SV : "/us/",
-		BR : "/us/",
-		JP : "/us/",
-		ES : "/us/",
-		IT : "/us/",
-		UK : "/us/",
-		HU : "/us/",
-		RO : "/us/",
-		KR : "/us/"
+		EN : "/",
+		TW : "/",
+		CN : "/",
+		CZ : "/",
+		PL : "/",
+		RU : "/",
+		DE : "/",
+		FR : "/",
+		TR : "/",
+		TH : "/",
+		MS : "/",
+		NO : "/",
+		FI : "/",
+		DA : "/",
+		SV : "/",
+		BR : "/",
+		JP : "/",
+		ES : "/",
+		IT : "/",
+		UK : "/",
+		HU : "/",
+		RO : "/",
+		KR : "/"
 	}
 
 	// exception start
@@ -2121,29 +2189,29 @@ function addOnlineHelp(obj, keywordArray){
         faqLang.KR = "/kr/";
         faqLang.UK = "/ua/";
 	}else{
-		faqLang.BR = "/us/";
-		faqLang.CN = "/us/";
-		faqLang.CZ = "/us/";
-		faqLang.DA = "/us/";
-		faqLang.DE = "/us/";
-		faqLang.EN = "/us/";
-		faqLang.ES = "/us/";
-		faqLang.FI = "/us/";
-		faqLang.FR = "/us/";
-		faqLang.HU = "/us/";
-		faqLang.IT = "/us/";
-		faqLang.JP = "/us/";
-		faqLang.KR = "/us/";
-		faqLang.MS = "/us/";
-		faqLang.NO = "/us/";
-		faqLang.PL = "/us/";
-		faqLang.RO = "/us/";
-		faqLang.RU = "/us/";
-		faqLang.SV = "/us/";
-		faqLang.TH = "/us/";
-		faqLang.TR = "/us/";
-		faqLang.TW = "/us/";
-		faqLang.UK = "/us/";
+		faqLang.BR = "/";
+		faqLang.CN = "/";
+		faqLang.CZ = "/";
+		faqLang.DA = "/";
+		faqLang.DE = "/";
+		faqLang.EN = "/";
+		faqLang.ES = "/";
+		faqLang.FI = "/";
+		faqLang.FR = "/";
+		faqLang.HU = "/";
+		faqLang.IT = "/";
+		faqLang.JP = "/";
+		faqLang.KR = "/";
+		faqLang.MS = "/";
+		faqLang.NO = "/";
+		faqLang.PL = "/";
+		faqLang.RO = "/";
+		faqLang.RU = "/";
+		faqLang.SV = "/";
+		faqLang.TH = "/";
+		faqLang.TR = "/";
+		faqLang.TW = "/";
+		faqLang.UK = "/";
 	}		
 	// exception end	
 
@@ -2344,7 +2412,7 @@ function close_contactus(){
 
 function get_supportsite_lang(obj){
 	var faqLang = {
-		EN : "/us/",
+		EN : "/",
 		TW : "/tw/",
 		CN : ".cn/",
 		BR : "/br/",
@@ -2375,7 +2443,7 @@ function get_supportsite_lang(obj){
 
 function search_supportsite(obj){
 	var faqLang = {
-		EN : "/us/",
+		EN : "/",
 		TW : "/tw/",
 		CN : ".cn/",
 		BR : "/br/",
@@ -3278,6 +3346,9 @@ function refreshStatus(xhr){
 		_wlc0_state = wanStatus[26].firstChild.nodeValue;
 		_wlc1_state = wanStatus[27].firstChild.nodeValue;
 	}
+	rssi_2g = wanStatus[28].firstChild.nodeValue.replace("rssi_2g=", "");
+	rssi_5g = wanStatus[29].firstChild.nodeValue.replace("rssi_5g=", "");
+	rssi_5g_2 = wanStatus[30].firstChild.nodeValue.replace("rssi_5g_2=", "");
 
 	var vpnStatus = devicemapXML[0].getElementsByTagName("vpn");
 
@@ -3504,12 +3575,16 @@ function refreshStatus(xhr){
 		document.getElementById("connect_status").onmouseout = function(){nd();}
 		
 		if(location.pathname == "/" || location.pathname == "/index.asp"){
-			if(wlc_band == 0)		// show repeater and media bridge date rate
-				var speed_info = data_rate_info_2g;	
-			else if (wlc_band == 1)
+			if(wlc_band == 0) {	// show repeater and media bridge date rate
+				var speed_info = data_rate_info_2g;
+				var rssi_info = rssi_2g;
+			} else if (wlc_band == 1) {
 				var speed_info = data_rate_info_5g;
-			else if (wlc_band == 2)
+				var rssi_info = rssi_5g;
+			} else if (wlc_band == 2) {
 				var speed_info = data_rate_info_5g_2;
+				var rssi_info = rssi_5g_2;
+			}
 			
 			if(concurrent_pap){
 				document.getElementById('speed_info_primary').innerHTML = "Link Rate: " + data_rate_info_2g;
@@ -3530,6 +3605,8 @@ function refreshStatus(xhr){
 			}
 			else{
 				document.getElementById('speed_status').innerHTML = speed_info;
+				if(!Rawifi_support && !Qcawifi_support)
+					document.getElementById('rssi_status').innerHTML = rssi_info;
 			}	
 		}	
 	}
@@ -3972,29 +4049,32 @@ var notification = {
 
 			for(i=0; i<notification.array.length; i++){
 				if(notification.array[i] != null && notification.array[i] != "off"){
-					txt += '<tr><td><table id="notiDiv_table3" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#232629">';
+						txt += '<tr><td><table id="notiDiv_table3" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#232629">';
 		  			txt += '<tr><td><table id="notiDiv_table5" border="0" cellpadding="5" cellspacing="0" bgcolor="#232629" width="100%">';
 		  			txt += '<tr><td valign="TOP" width="100%"><div style="white-space:pre-wrap;font-size:13px;color:white;cursor:text">' + notification.desc[i] + '</div>';
 		  			txt += '</td></tr>';
 
 		  			if( i == 2 ){					  				
 		  				txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</div></td></tr>';
-		  				if(band5g_support && notification.array[3] != null && notification.array[i] != "off")
+		  				if(band5g_support && notification.array[3] != null && notification.array[i] != "off"){
 		  						txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i+1] + '">' + notification.action_desc[i+1] + '</div></td></tr>';
+		  				}		
 		  				notification.array[3] = "off";
 		  			}
-					else if( i == 7){
-						if(notification.array[18] != null && notification.array[18] != "off")
-							txt += '<tr><td width="100%"><div style="text-align:right;text-decoration:underline;color:#FFCC00;font-size:14px;"><span style="cursor: pointer" onclick="' + notification.clickCallBack[18] + '">' + notification.action_desc[18] + '</span>';
-						notification.array[18] = "off";
-						txt += '<span style="margin-left:10px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</span></div></td></tr>';
-					}
-					else if( i == 9){
+						else if( i == 7){
+							if(notification.array[18] != null){
+								txt += '<tr><td width="100%"><div style="text-align:right;text-decoration:underline;color:#FFCC00;font-size:14px;"><span style="cursor: pointer" onclick="' + notification.clickCallBack[18] + '">' + notification.action_desc[18] + '</span>';
+							}								
+							txt += '<span style="margin-left:10px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</span></div></td></tr>';
+							notification.array[18] = "off";
+						}
+						else if( i == 9){
 		  				txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</div></td></tr>';
-							if(notification.array[10] != null && notification.array[10] != "off")
-									txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i+1] + '">' + notification.action_desc[i+1] + '</div></td></tr>';
+							if(notification.array[10] != null && notification.array[10] != "off"){
+								txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i+1] + '">' + notification.action_desc[i+1] + '</div></td></tr>';
+							}		
 							notification.array[10] = "off";
-					}
+						}
 		  			else{
 	  					txt += '<tr><td><table width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</div></table></td></tr>';
 		  			}
@@ -4185,7 +4265,7 @@ function set_variable(_variable, _val){
 }
 
 function isPortConflict(_val){
-	if(_val == /*'<% nvram_get("http_lanport"); %>'*/ '80')
+	if(_val == '80')
 		return "<#portConflictHint#> HTTP LAN port.";
 	else if(_val == '<% nvram_get("dm_http_port"); %>')
 		return "<#portConflictHint#> Download Master.";
@@ -4269,29 +4349,35 @@ function decodeURIComponentSafe(_ascii){
 	}
 }
 
-var isNewFW = function(FWVer){
-	var Latest_firmver = FWVer.split("_");
-
-	if (odmpid == "TM-AC1900" && (bl_version == "2.1.2.2" || bl_version == "2.1.2.6"))
-		return true;
-
-	if(typeof Latest_firmver[0] !== "undefined" && typeof Latest_firmver[1] !== "undefined" && typeof Latest_firmver[2] !== "undefined"){
-		var Latest_firm = parseInt(Latest_firmver[0]);
-		var Latest_buildno = parseInt(Latest_firmver[1]);
-		var Latest_extendno = parseInt(Latest_firmver[2].split("-g")[0]);
-
-		current_firm = parseInt('<% nvram_get("firmver"); %>'.replace(/[.]/gi,""));
-		current_buildno = parseInt('<% nvram_get("buildno"); %>');
-		current_extendno = parseInt('<% nvram_get("extendno"); %>'.split("-g")[0]);
-		if((current_buildno < Latest_buildno) || 
-			 (current_firm < Latest_firm && current_buildno == Latest_buildno) ||
-			 (current_extendno < Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
-		{
-			return true;
-		}
+var isNewFW = function(FWVer, check_path, current_path){	//path> 0:stable, 1:beta
+	if(check_path != current_path){
+		if(FWVer.length < 5)	//length should be longer than 17 (e.g. 3004_380_0-g123456) 
+			return false;
+		else
+			return true;	// suppose new fw on stable path if current_path is beta path.
 	}
-	
-	return false;
+	else{
+			
+			var Latest_firmver = FWVer.split("_");			
+			// 3004_999_2262-g260cdd9
+			if(typeof Latest_firmver[0] !== "undefined" && typeof Latest_firmver[1] !== "undefined" && typeof Latest_firmver[2] !== "undefined"){
+				var Latest_firm = parseInt(Latest_firmver[0]);
+				var Latest_buildno = parseInt(Latest_firmver[1]);
+				var Latest_extendno = parseInt(Latest_firmver[2].split("-g")[0]);
+
+				current_firm = parseInt('<% nvram_get("firmver"); %>'.replace(/[.]/gi,""));
+				current_buildno = parseInt('<% nvram_get("buildno"); %>');
+				current_extendno = parseInt('<% nvram_get("extendno"); %>'.split("-g")[0]);
+				if((current_buildno < Latest_buildno) || 
+						(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
+						(current_extendno < Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
+				{
+					return true;
+				}
+			}
+		
+		return false;
+	}
 }
 
 function getBrowser_info(){

@@ -33,10 +33,6 @@
 #include <shutils.h>
 #include <rc.h>
 
-#ifdef RTCONFIG_USB_MODEM
-#include <usb_info.h>
-#endif
-
 /*
 * parse ifname to retrieve unit #
 */
@@ -149,9 +145,6 @@ ipup_main(int argc, char **argv)
 	nvram_set(strcat_r(prefix, "dns", tmp), buf);
 
 	wan_up(wan_ifname);
-
-	nvram_set(strcat_r(prefix, "auth_ok", tmp), "1");
-	nvram_commit();
 
 	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
@@ -281,10 +274,8 @@ authfail_main(int argc, char **argv)
 	if (nvram_get_int(strcat_r(prefix, "pppoe_demand", tmp)))
 		nvram_set_int(strcat_r(prefix, "pppoe_demand", tmp), 1);
 
-#if 0 // wanduck will do something before set it. Finally wanduck will still set it.
 	// override wan_state
 	update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PPP_AUTH_FAIL);
-#endif
 
 	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;

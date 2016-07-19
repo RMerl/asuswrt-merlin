@@ -458,7 +458,7 @@ function initial(){
 						setTimeout("qis_delay_redirect('/qis/QIS_modem.htm');", restart_time*1000);
 				}	
 				else{
-					if(isMobile())
+					if(isMobile() && (parent.based_modelid == "RT-AC88U" || parent.based_modelid == "RT-AC3100" || parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC5300R"))
 						setTimeout("qis_delay_redirect('/qis_m/QIS_wireless.htm');", restart_time*1000);
 					else
 						setTimeout("qis_delay_redirect('/qis/QIS_wireless.htm');", restart_time*1000);

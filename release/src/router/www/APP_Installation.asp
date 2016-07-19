@@ -15,6 +15,7 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <style>
@@ -73,8 +74,6 @@
 }
 </style>
 <script>
-//if(usb_support) addNewScript("/disk_functions.js");
-
 var apps_array = <% apps_info("asus"); %>;
 <% apps_state_info(); %>
 var apps_download_percent_done = 0;
@@ -726,7 +725,7 @@ var hasNewVer = function(arr){
 
 var partitions_array = [];
 function show_partition(){
- 	require(['/require/modules/diskList.js'], function(diskList){
+ 	require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
 		var htmlcode = "";
 		var mounted_partition = 0;
 		partitions_array = [];
@@ -781,14 +780,6 @@ function show_partition(){
 	});
 }
 
-function detectUSBStatusApp(){
- 	require(['/require/modules/diskList.js'], function(diskList){
-		setInterval(function(){
-			diskList.update(show_partition); 
-		}, 2000);
-	});
-}
-
 function apps_form(_act, _name, _flag){
 	cookie.set("apps_last", _name, 1000);
 
@@ -808,8 +799,8 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 		document.getElementById("return_btn").style.display = "none";
 	}
 	else if(flag2 != "none"){ // partition list
-		detectUSBStatusApp();
-		show_partition();
+	 	setInterval(show_partition, 2000);
+		show_partition()
 		document.getElementById("return_btn").style.display = "";
 		calHeight(1);
 	}

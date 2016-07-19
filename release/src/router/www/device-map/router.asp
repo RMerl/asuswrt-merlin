@@ -107,11 +107,15 @@ function initial(){
 
 	if(smart_connect_support){
 		var smart_connect_x = '<% nvram_get("smart_connect_x"); %>';
-		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC88U"){
+		if(based_modelid == "RT-AC5300" ||
+			based_modelid == "RT-AC5300R" || 
+			based_modelid == "RT-AC3200" || 
+			based_modelid == "RT-AC88U" ||
+			based_modelid == "RT-AC3100"){
 			var value = new Array();
 			var desc = new Array();
 				
-			if(based_modelid == "RT-AC5300"){
+			if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"){
 				desc = ["none", "Tri-Band Smart Connect", "5GHz Smart Connect"];
 				value = ["0", "1", "2"];
 				add_options_x2(document.form.smart_connect_t, desc, value, smart_connect_x);
@@ -121,7 +125,7 @@ function initial(){
 				value = ["0", "1"];
 				add_options_x2(document.form.smart_connect_t, desc, value, smart_connect_x);						
 			}
-			else if(based_modelid == "RT-AC88U"){
+			else if(based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100"){
 				desc = ["none", "Dual-Band Smart Connect"];
 				value = ["0", "1"];
 				add_options_x2(document.form.smart_connect_t, desc, value, smart_connect_x);						
@@ -570,9 +574,9 @@ function tab_reset(v){
 			document.getElementById("t2").style.display = "none";
 		}
 	}else if(v == 1){	//Smart Connect
-		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200")
+		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300R")
 			document.getElementById("span0").innerHTML = "2.4GHz, 5GHz-1 and 5GHz-2";
-		else if(based_modelid == "RT-AC88U")
+		else if(based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100")
 			document.getElementById("span0").innerHTML = "2.4GHz and 5GHz";
 		
 		document.getElementById("t1").style.display = "none";

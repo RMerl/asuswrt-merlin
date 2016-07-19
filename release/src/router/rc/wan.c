@@ -58,9 +58,6 @@
 
 #ifdef RTCONFIG_USB
 #include <disk_io_tools.h>
-#ifdef RTCONFIG_USB_MODEM
-#include <usb_info.h>
-#endif
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -1329,10 +1326,10 @@ start_wan_if(int unit)
 	int s;
 	struct ifreq ifr;
 	pid_t pid;
+#ifdef RTCONFIG_USB_MODEM
 	char usb_node[32], port_path[8];
 	char nvram_name[32];
 	int i = 0;
-#ifdef RTCONFIG_USB_MODEM
 	char modem_type[32];
 #ifdef RTCONFIG_USB_BECEEM
 	unsigned int uvid, upid;
@@ -1384,7 +1381,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 	if (dualwan_unit__usbif(unit)) {
 		FILE *fp;
 
-		if(is_usb_modem_ready() != 1){ // find_modem_type.sh would be run by is_usb_modem_ready().
+		if(is_usb_modem_ready() != 1){
 			TRACE_PT("No USB Modem!\n");
 			return;
 		}
@@ -1399,6 +1396,10 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 		update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 
 		snprintf(modem_type, 32, "%s", nvram_safe_get("usb_modem_act_type"));
+		if(strlen(modem_type) <= 0){
+			eval("/usr/sbin/find_modem_type.sh");
+			snprintf(modem_type, 32, "%s", nvram_safe_get("usb_modem_act_type"));
+		}
 
 		if(!strcmp(modem_type, "tty") || !strcmp(modem_type, "qmi") || !strcmp(modem_type, "mbim") || !strcmp(modem_type, "gobi")){
 			if(!strcmp(nvram_safe_get("usb_modem_act_int"), "")){
@@ -2044,10 +2045,7 @@ stop_wan_if(int unit)
 #if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_DATALIMIT)
 		end_wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
-	else
 #endif
-	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_PPP_AUTH_FAIL)
-		end_wan_sbstate = WAN_STOPPED_REASON_PPP_AUTH_FAIL;
 
 	update_wan_state(prefix, WAN_STATE_STOPPING, end_wan_sbstate);
 
@@ -2452,8 +2450,11 @@ void wan6_up(const char *wan_ifname)
 		if (mtu)
 			ipv6_sysconf(nvram_safe_get("lan_ifname"), "mtu", mtu);
 		/* workaround to update ndp entry for now */
-		eval("ping6", "-c", "2", "-I", (char *)wan_ifname, "ff02::1");
-		eval("ping6", "-c", "2", nvram_safe_get(ipv6_nvname("ipv6_gateway")));
+		char *ping6_argv[] = {"ping6", "-c", "2", "-I", (char *)wan_ifname, "ff02::1", NULL};
+		char *ping6_argv2[] = {"ping6", "-c", "2", nvram_safe_get(ipv6_nvname("ipv6_gateway")), NULL};
+		pid_t pid;
+		_eval(ping6_argv, NULL, 0, &pid);
+		_eval(ping6_argv2, NULL, 0, &pid);
 
 		break;
 	case IPV6_6TO4:
@@ -2787,6 +2788,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	stop_vpn_eas();
 #endif
 
+#if 0 // unsure changes
 	if(wan_unit == wan_primary_ifunit()
 #ifdef RTCONFIG_DUALWAN
 					|| nvram_match("wans_mode", "lb")
@@ -2797,6 +2799,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		else
 			nvram_set_int("link_internet", 1);
 	}
+#endif
 
 	if (wan_unit != wan_primary_ifunit())
 	{
@@ -3573,7 +3576,7 @@ int autodet_main(int argc, char *argv[]){
 
 		// it shouldnot happen, because it is only called in default mode
 		if(!nvram_match(strcat_r(prefix, "proto", tmp), "dhcp")){
-			status = discover_all();
+			status = discover_all(unit);
 			if(status == -1)
 				nvram_set_int(strcat_r(prefix2, "auxstate", tmp2), AUTODET_STATE_FINISHED_NOLINK);
 			else if(status == 2)
@@ -3603,7 +3606,7 @@ int autodet_main(int argc, char *argv[]){
 			//}
 		}
 
-		status = discover_all();
+		status = discover_all(unit);
 
 		// check for pppoe status only,
 		if(get_wan_state(unit) == WAN_STATE_CONNECTED){
@@ -3635,7 +3638,8 @@ int autodet_main(int argc, char *argv[]){
 
 		i = 0;
 		while(i < mac_num && get_wan_state(unit) != WAN_STATE_CONNECTED){
-			if(!(nvram_match("wl0_country_code", "SG"))){ // Singpore do not auto clone
+			if(!(nvram_match("wl0_country_code", "SG")) && 
+			   strncmp(nvram_safe_get("territory_code"), "SG", 2) != 0){ // Singpore do not auto clone
 				_dprintf("try clone %s\n", mac_clone[i]);
 				nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
 			}
@@ -3665,82 +3669,6 @@ int autodet_main(int argc, char *argv[]){
 		}
 		nvram_commit();
 	}
-
-	return 0;
-}
-
-#include <setjmp.h>
-static sigjmp_buf jmpbuf;
-
-void alarm_func(){
-	siglongjmp(jmpbuf, 1);
-}
-
-#include <netdb.h>
-
-struct hostent *timeGethostbyname(const char *domain, int timeout){
-	struct hostent *ipHostent = NULL;
-
-	signal(SIGALRM, alarm_func);
-
-	if(sigsetjmp(jmpbuf, 1) != 0){
-		alarm(0); //timout
-
-		signal(SIGALRM, SIG_IGN);
-
-		return NULL;
-	}
-
-	alarm(timeout); //setting alarm
-
-	ipHostent = gethostbyname(domain);
-
-	signal(SIGALRM, SIG_IGN);
-
-	return ipHostent;
-}
-
-int do_dns_detect(int wan_unit){
-	char *test_url = "www.google.com www.baidu.com www.yandex.com";
-	char word[64], *next;
-	struct hostent *host;
-	int debug = nvram_get_int("wan_dnsdet_deb");
-	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
-
-	snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
-
-	if(nvram_get_int("stop_dns_detect"))
-		return 1;
-
-	if(strlen(nvram_safe_get(strcat_r(prefix, "dns", tmp))) <= 0)
-		return 1;
-
-	foreach(word, test_url, next){
-		if(nvram_get_int("old_resolve") > 0){
-			if(debug)
-				printf("do_dns_detect old: %s.\n", word);
-			if((host = gethostbyname(word)) == NULL)
-				continue;
-		}
-		else{
-			if(debug)
-				printf("do_dns_detect new: %s.\n", word);
-			if((host = timeGethostbyname(word, 2)) == NULL)
-				continue;
-		}
-
-		char *ip = inet_ntoa(*((struct in_addr *)host->h_addr_list[0]));
-		if(debug)
-			printf("do_dns_detect: %s's IP is %s.\n", word, ip);
-
-		if(!strcmp(ip, "10.0.0.1"))
-			continue;
-
-		return 1;
-	}
-
-	if(debug)
-		printf("do_dns_detect: fail to resolve the dns.\n");
 
 	return 0;
 }

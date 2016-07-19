@@ -36,8 +36,9 @@
 #define DEBUGP(format, args...)
 
 unsigned int dnsmq_ip=0;
-//struct in6_addr dnsmq_ipv6;
+struct in6_addr dnsmq_ipv6 = IN6ADDR_ANY_INIT;
 char dnsmq_name[32];
+char dnsmq_name_ipv6[32];
 unsigned char dnsmq_mac[ETH_ALEN] = { 0x00, 0xe0, 0x11, 0x22, 0x33, 0x44 };
 typedef int (*dnsmqHitHook)(struct sk_buff *skb);
 dnsmqHitHook dnsmq_hit_hook = NULL;
@@ -186,7 +187,6 @@ static inline int dnsmq_func(struct sk_buff *skb)
 				}
 			}
 		}
-#if 0
 		// IP & HTTP & Original Locol IP & Looking for my host name
 		else if (ip6h->nexthdr == IPPROTO_TCP) {
 			tcph = (struct tcphdr *)(skb->data+hlen+sizeof(struct ipv6hdr));
@@ -196,7 +196,6 @@ static inline int dnsmq_func(struct sk_buff *skb)
 				return 1;
 			}
 		}
-#endif
 	} else {
 		iph = (struct iphdr *)(skb->data+hlen);
 
@@ -242,7 +241,6 @@ static int dnsmq_ctrl(struct file *file, const char *buffer, unsigned long lengt
 			s[i] = 0;
 			ptr = s + i + 1;
 			dnsmq_ip = simple_strtoul(s, NULL, 16);
-//			ipv6_addr_set_v4mapped(dnsmq_ip, &dnsmq_ipv6);
 
 			// convert to dnsname format
 			j=0;
@@ -270,6 +268,50 @@ static int dnsmq_ctrl(struct file *file, const char *buffer, unsigned long lengt
 	return length;
 }
 
+static int dnsmq_ctrl_ipv6(struct file *file, const char *buffer, unsigned long length, void *data)
+{
+	char s[64];
+	char *ptr;
+	int i, j;
+
+	// "[dnsmq ipv6] [dnsmq name]
+	if ((length > 0) && (length < 64)) {
+		memcpy(s, buffer, length);
+		s[length] = 0;
+		for(i=0;i<length;i++) {
+			if (s[i] == ' ') break;
+		}
+		if (i<length) {
+			s[i] = 0;
+			ptr = s + i + 1;
+			in6_pton(s, length, (void *)&dnsmq_ipv6, '\n', NULL);
+
+			// convert to dnsname format
+			j=0;
+			for(;i<length;i++) {
+				if (s[i] == '.') {
+					s[i]=0;
+					dnsmq_name_ipv6[j]=strlen(ptr);
+					memcpy(dnsmq_name_ipv6+j+1, ptr, strlen(ptr));
+					j += strlen(ptr) + 1;
+					ptr = s + i + 1;
+				}
+			}
+			dnsmq_name_ipv6[j]=strlen(ptr);
+			memcpy(dnsmq_name_ipv6+j+1, ptr, strlen(ptr));
+			dnsmq_name_ipv6[j+1+strlen(ptr)]=0;
+		}
+	}
+	else memset(&dnsmq_ipv6, 0, sizeof(struct in6_addr));
+
+	printk(KERN_DEBUG "dnsmq ctrl ipv6: %pI6 %s\n", &dnsmq_ipv6, dnsmq_name_ipv6);
+
+	if (ipv6_addr_equal(&dnsmq_ipv6, &in6addr_any)) dnsmq_hit_hook_func (NULL);
+	else dnsmq_hit_hook_func(dnsmq_func);
+
+	return length;
+}
+
 static int __init init(void)
 {
 #ifdef CONFIG_PROC_FS
@@ -281,6 +323,11 @@ static int __init init(void)
 		//p->owner = THIS_MODULE;
 		p->write_proc = dnsmq_ctrl;
 	}
+
+	p = create_proc_entry("dnsmqctrl_ipv6", 0200, init_net.proc_net);
+
+	if (p)
+		p->write_proc = dnsmq_ctrl_ipv6;
 #endif
 	// it will be enabled later
 	dnsmq_hit_hook_func (NULL);

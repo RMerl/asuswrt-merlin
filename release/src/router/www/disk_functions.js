@@ -19,6 +19,7 @@ var newDisk = function(){
 	this.hasErrPart = false;
 	this.hasAppDev = false;
 	this.hasTM = false;
+	this.isBusy = false;
 	this.partition = new Array(0);
 }
 

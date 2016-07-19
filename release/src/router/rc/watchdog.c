@@ -58,14 +58,13 @@
 #include <typedefs.h>
 #else
 #include <wlioctl.h>
+#include <wlutils.h>
 #endif
 #endif
 
 #if defined(RTCONFIG_USB) && defined(RTCONFIG_NOTIFICATION_CENTER)
 #include <libnt.h>
 #endif
-
-
 
 #define BCM47XX_SOFTWARE_RESET	0x40		/* GPIO 6 */
 #define RESET_WAIT		2		/* seconds */
@@ -116,7 +115,9 @@ unsigned int tor_check_count = 0;
 
 static struct itimerval itv;
 /* to check watchdog alive */
+#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 static struct itimerval itv02;
+#endif
 static int watchdog_period = 0;
 #ifdef RTCONFIG_BCMARM
 static int chkusb3_period = 0;
@@ -199,6 +200,7 @@ alarmtimer(unsigned long sec, unsigned long usec)
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
+#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 /* to check watchdog alive */
 static void
 alarmtimer02(unsigned long sec, unsigned long usec)
@@ -208,6 +210,7 @@ alarmtimer02(unsigned long sec, unsigned long usec)
 	itv02.it_interval = itv02.it_value;
 	setitimer(ITIMER_REAL, &itv02, NULL);
 }
+#endif
 
 extern int no_need_to_start_wps();
 
@@ -344,8 +347,8 @@ void btn_check(void)
 #ifdef RTCONFIG_LED_BTN /* currently for RT-AC68U only */
 #if defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 		if (!button_pressed(BTN_LED))
-#else
-		if (!strcmp(get_productid(), "RT-AC66U V2"))
+#elif defined(RTAC68U)
+		if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 			;
 		else if (((!nvram_match("cpurev", "c0") || nvram_get_int("PA") == 5023) && button_pressed(BTN_LED)) ||
 			   (nvram_match("cpurev", "c0") && nvram_get_int("PA") != 5023 && !button_pressed(BTN_LED)))
@@ -743,7 +746,7 @@ void btn_check(void)
 
 #if defined(RTAC68U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 #if defined(RTAC68U)
-	if (!strcmp(get_productid(), "RT-AC66U V2"))
+	if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		;
 	else if (nvram_match("cpurev", "c0") && nvram_get_int("PA") != 5023) {
 		if (!LED_status &&
@@ -822,7 +825,7 @@ void btn_check(void)
 			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 #else
 #ifdef RTAC68U
-			if (!strcmp(get_productid(), "RT-AC66U V2"))
+			if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 				kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 			else
 #endif
@@ -1923,15 +1926,18 @@ int confirm_led()
 	return led_confirmed;
 }
 
-static int swled_alloff_x = 0;
+#ifdef SW_DEVLED
 static int swled_alloff_counts = 0;
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
+static int swled_alloff_x = 0;
+#endif
 
 void led_check(int sig)
 {
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 	int all_led;
 	int turnoff_counts = swled_alloff_counts?:3;
 
-#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 	if ((all_led=nvram_get_int("AllLED")) == 0 && swled_alloff_x < turnoff_counts) {
 		/* turn off again x times in case timing issues */
 		led_table_ctrl(LED_OFF);
@@ -1971,7 +1977,7 @@ void led_check(int sig)
 	fake_etlan_led();
 #endif
 
-#if defined(RTCONFIG_USB) && !defined(RTCONFIG_BLINK_LED)
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_BCM_7114)
 	char *p1_node, *p2_node, *ehci_ports, *xhci_ports;
 
 	/* led indicates which usb port */
@@ -2035,6 +2041,7 @@ if (nvram_match("dsltmp_adslsyncsts","up") && nvram_match("wan0_state_t","2"))
 #endif
 #endif
 }
+#endif
 
 void led_table_ctrl(int on_off)
 {
@@ -2359,7 +2366,7 @@ void ddns_check(void)
 			if ( !strcmp(nvram_safe_get("ddns_return_code_chk"),"auth_fail") )
 				return;
 		}
-		if (internet_ready() == 1) {
+		if (nvram_get_int("ntp_ready") == 1) {
 			nvram_set("ddns_update_by_wdog", "1");
 			//unlink("/tmp/ddns.cache");
 			logmessage("watchdog", "start ddns.");
@@ -2450,8 +2457,10 @@ void qtn_module_check(void)
 	if (!nvram_get_int("qtn_ready"))
 		return;
 
+#if 0
 	if (nvram_get_int("qtn_diagnostics") == 1)
 		return;
+#endif
 
 	if(icmp_check(src_ip, dst_ip) == 0 ){
 		failed++;
@@ -3435,10 +3444,11 @@ void watchdog(int sig)
 #ifdef RTCONFIG_BCMARM
 	if (u3_chk_life < 20) {
 		chkusb3_period = (chkusb3_period + 1) % u3_chk_life;
-		if (!chkusb3_period && nvram_match("usb_usb3", "1") && nvram_match("usb_path1_speed", "12")
-				&& strcmp(nvram_safe_get("usb_path1"), "printer")
-				&& strcmp(nvram_safe_get("usb_path1"), "modem")
-				) {
+		if (!chkusb3_period && nvram_get_int("usb_usb3") &&
+		    ((nvram_match("usb_path1_speed", "12") &&
+		      !nvram_match("usb_path1", "printer") && !nvram_match("usb_path1", "modem")) ||
+		     (nvram_match("usb_path2_speed", "12") &&
+		      !nvram_match("usb_path2", "printer") && !nvram_match("usb_path2", "modem")))) {
 			_dprintf("force reset usb pwr\n");
 			stop_usb_program(1);
 			sleep(1);
@@ -3659,6 +3669,7 @@ int watchdog02_main(int argc, char *argv[])
 }
 #endif	/* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
 
+#ifdef SW_DEVLED
 /* to control misc dev led */
 int sw_devled_main(int argc, char *argv[])
 {
@@ -3684,6 +3695,7 @@ int sw_devled_main(int argc, char *argv[])
 	}
 	return 0;
 }
+#endif
 
 #if defined(RTAC1200G) || defined(RTAC1200GP)
 /* workaroud of watchdog timer shutdown */

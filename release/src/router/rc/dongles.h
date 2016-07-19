@@ -239,6 +239,7 @@ enum DONGLE_LIST_T {
 	SN_Huawei_E303u				,
 	SN_Huawei_E3531s			,
 	SN_Huawei_K5160				,
+	SN_LG_L_03F					,
 	SN_END
 };
 

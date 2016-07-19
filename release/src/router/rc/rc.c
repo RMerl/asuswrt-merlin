@@ -111,10 +111,12 @@ static int rctest_main(int argc, char *argv[])
 			else stop_watchdog02();
 		}
 #endif
+#ifdef SW_DEVLED
 		else if (strcmp(argv[1], "sw_devled") == 0) {
 			if(on) start_sw_devled();
 			else stop_sw_devled();
 		}
+#endif
 #if defined(RTAC1200G) || defined(RTAC1200GP)
 		else if (strcmp(argv[1], "wdg_monitor") == 0) {
 			if(on) start_wdg_monitor();
@@ -321,7 +323,9 @@ static const applets_t applets[] = {
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 	{ "watchdog02",			watchdog02_main			},
 #endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
+#ifdef SW_DEVLED
 	{ "sw_devled",			sw_devled_main			},
+#endif
 #if defined(RTAC1200G) || defined(RTAC1200GP)
 	{ "wdg_monitor",		wdg_monitor_main		},
 #endif
@@ -523,6 +527,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 #ifdef RTCONFIG_USB
+#ifdef RTCONFIG_ERPTEST
 	else if(!strcmp(base, "restart_usb")){
 		int f_stop = 0;
 		if(argc == 2)
@@ -531,6 +536,7 @@ int main(int argc, char **argv)
 		restart_usb(f_stop);
 		return 0;
 	}
+#endif
 	else if(!strcmp(base, "get_apps_name")){
 		if(argc != 2){
 			printf("Usage: get_apps_name [File name]\n");
@@ -836,7 +842,7 @@ int main(int argc, char **argv)
 #endif
 #if defined(CONFIG_BCMWL5) && defined(RTCONFIG_DUALWAN)
 	else if (!strcmp(base, "dualwan")){
-		dualwan_control();
+		dualwan_control(argc, argv);
 	}
 #endif
 #ifdef RTCONFIG_WIRELESSREPEATER

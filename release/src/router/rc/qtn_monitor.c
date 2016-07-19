@@ -156,6 +156,11 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 			if (ret < 0)
 				dbG("rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
 		}
+
+		ret = qcsapi_wps_upnp_enable(WIFINAME, 0);
+		if (ret < 0)
+			dbG("disable WPS UPnP %s error, return: %d\n", WIFINAME, ret);
+
 		if(nvram_get_int("sw_mode") == SW_MODE_ROUTER ||
 			(nvram_get_int("sw_mode") == SW_MODE_AP && nvram_get_int("wlc_psta") == 1)){
 			if(nvram_get_int("wl1_mumimo") == 1){
@@ -265,6 +270,9 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER){
 		create_mbssid_vlan();
 	}
+
+	/* disable UPNP */
+	qcsapi_wps_upnp_enable(WIFINAME, 0);
 
 //	rpc_show_config();
 }

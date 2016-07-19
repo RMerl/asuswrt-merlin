@@ -92,6 +92,7 @@ function initial(){
 		based_modelid != "RT-AC87U" && 
 		based_modelid != "RT-AC68U" &&
 		based_modelid != "RT-AC68A" &&
+		based_modelid != "4G-AC68U" &&
 		based_modelid != "RT-AC66U" &&
 		based_modelid != "RT-AC56U" &&
 		based_modelid != "RT-AC51U" &&
@@ -110,6 +111,7 @@ function initial(){
 		based_modelid != "RT-AC87U" &&
 		based_modelid != "RT-AC68U" &&
 		based_modelid != "RT-AC68A" &&
+		based_modelid != "4G-AC68U" &&
 		based_modelid != "RT-AC66U" &&
 		based_modelid != "RT-AC56U" &&
 		based_modelid != "RT-AC56S" &&
@@ -135,7 +137,7 @@ function load_ISP_profile(){
 		setting_value = [["10", "0"], ["20", "4"], ["30", "4"], "6"]; 
 	}
 	else if(document.form.switch_wantag.value == "singtel_others"){
-		setting_value = [["10", "0"], ["20", "4"], ["", "4"], "4"];  
+		setting_value = [["10", "0"], ["20", "4"], ["", "0"], "4"];  
 	}
 	else if(document.form.switch_wantag.value == "m1_fiber"){
 		setting_value = [["1103", "1"], ["", "0"], ["1107", "1"], "3"]; 
@@ -160,6 +162,9 @@ function load_ISP_profile(){
 	}
         else if(document.form.switch_wantag.value == "vodafone") {
                 setting_value = [["100", "1"], ["", "0"], ["105", "1"], "3"]; 
+        }
+        else if(document.form.switch_wantag.value == "hinet") {
+                setting_value = [["", "0"], ["", "0"], ["", "0"], "4"]; 
         }
 	
 	if(setting_value.length == 4){
@@ -213,7 +218,7 @@ function ISP_Profile_Selection(isp){
 	if(isp == "none"){
 		ISP_setting = ["", "none", "none", "none", "none", "none", "0", "", "", "none", "none"];
 	}
-	else if(isp == "unifi_home" || isp == "singtel_others" || isp == "meo"){
+	else if(isp == "unifi_home" || isp == "singtel_others" || isp == "meo" || isp == "hinet"){
 		ISP_setting = ["none", "", "none", "none", "none", "none", "4", "", "", "none", "none"];
 	}
 	else if(isp == "unifi_biz"){
@@ -1253,6 +1258,7 @@ function pass_checked(obj){
 					<option id="movistarOption" value="movistar" <% nvram_match("switch_wantag", "movistar", "selected"); %>>Movistar Triple VLAN</option>
 					<option id="meoOption" value="meo" <% nvram_match("switch_wantag", "meo", "selected"); %>>Meo</option>
 					<option id="vodafoneOption" value="vodafone" <% nvram_match("switch_wantag", "vodafone", "selected"); %>>Vodafone</option>
+					<option value="hinet" <% nvram_match("switch_wantag", "hinet", "selected"); %>>Hinet MOD</option>
 <!--					
 					<option value="maxis_fiber_iptv" <% nvram_match("switch_wantag", "maxis_fiber_iptv", "selected"); %>>Maxis-Fiber-IPTV</option>
 					<option value="maxis_fiber_sp_iptv" <% nvram_match("switch_wantag", "maxis_fiber_sp_iptv", "selected"); %>>Maxis-Fiber-Special-IPTV</option>

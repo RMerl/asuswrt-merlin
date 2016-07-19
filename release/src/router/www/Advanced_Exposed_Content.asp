@@ -114,9 +114,29 @@ function dmz_on_off(){
 							<tr>
 								<td bgcolor="#4D595D" valign="top" >
 									<div>&nbsp;</div>
-									<div class="formfonttitle"><#menu5_3#> - <#menu5_3_5#></div>
+									<div class="formfonttitle">
+										<#menu5_3#> - <#menu5_3_5#>
+									</div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-									<div class="formfontdesc"><#IPConnection_ExposedIP_sectiondesc#><br/><#IPConnection_BattleNet_sectionname#>: <#IPConnection_BattleNet_sectiondesc#></div>
+									<div class="formfontdesc">
+										<#IPConnection_ExposedIP_sectiondesc#>
+										<br/>
+										<br/>
+										<#IPConnection_BattleNet_sectionname#>:
+										<!-- untranslated  -->
+										<ul>
+											<li><#IPConnection_BattleNet_sectiondesc#></li>
+											<li>Please <span style="text-decoration:underline;cursor:pointer" id="addVtsRule_ftp">add a rule</span> to port forwarding list for USB Disk access properly on FTP service.</li>
+											<script>
+												document.getElementById("addVtsRule_ftp").onclick = function(){
+													/* untranslated */
+													if(confirm("Are you sure you want to add a port forwarding rule on FTP service?")){
+														location.href = "/Advanced_VirtualServer_Content.asp?af=KnownApps&item=ftp";
+													}
+												}
+											</script>
+										</ul>
+									</div>
 									<div class="formfontdesc" style="margin-top:-10px;">
 										<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">DMZ FAQ</a>
 									</div>

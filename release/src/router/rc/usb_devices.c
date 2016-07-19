@@ -16,7 +16,6 @@
 #include <bcmgpio.h>
 #endif
 #include <notify_rc.h>
-#include <usb_info.h>
 #include <disk_initial.h>
 
 #if defined(RTCONFIG_USB) && defined(RTCONFIG_NOTIFICATION_CENTER)
@@ -474,11 +473,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "Configuration=%d\n",	2);
 			fprintf(fp, "SonyMode=1\n");
 			break;
-		case SN_LG_LDU_1900D:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1000);
-			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000aff554d53434847000000000000000000");
-			break;
 		case SN_Samsung_SGH_Z810:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x05c6);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1000);
@@ -918,13 +912,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "TargetProduct=0x%04x\n",	0x3716);
 			fprintf(fp, "MessageContent=%s\n",	"555342431234567824000000800008ff020000000000000000000000000000");
 			break;
-		case SN_LG_AD600:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x6190);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x61a7);
-			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
-			break;
 		case SN_GW_D301:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0fd1);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1000);
@@ -1032,22 +1019,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "CheckSuccess=%d\n",	20);
 			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011060000000000000000000000000000");
 			break;
-		case SN_LG_LUU_2100TI:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x613f);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x6141);
-			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
-			fprintf(fp, "NeedResponse=1\n");
-			break;
-		case SN_LG_L_05A:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x613a);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x6124);
-			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
-			fprintf(fp, "NeedResponse=1\n");
-			break;
 		case SN_ZTE_MU351:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0003);
@@ -1116,13 +1087,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0482);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x024d);
 			fprintf(fp, "Configuration=%d\n",	2);
-			break;
-		case SN_LG_HDM_2100:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0x607f);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x6114);
-			fprintf(fp, "MessageContent=%s\n",	"1201100102000040041014610000010200018006000100001200");
 			break;
 		case SN_Beceem_BCSM250:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x198f);
@@ -1291,6 +1255,55 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "MessageContent2=%s\n",	"5553424312345679c000000080000671030000000000000000000000000000");
 			fprintf(fp, "NeedResponse=1\n");
 			break;
+		case SN_IODATA_WMX2_U:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x04bb);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0xbccd);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x04bb);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x0949);
+			fprintf(fp, "MessageContent=%s\n",	"55534243f0298d8124000000800006bc626563240000000000000000000000");
+			break;
+		case SN_Option_GI1515:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0af0);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0xd001);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x0af0);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0xd157);
+			fprintf(fp, "MessageContent=%s\n",	"55534243785634120100000080000601000000000000000000000000000000");
+			break;
+		case SN_LG_LDU_1900D:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1000);
+			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000aff554d53434847000000000000000000");
+			break;
+		case SN_LG_AD600:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x6190);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x61a7);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_LG_LUU_2100TI:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x613f);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x6141);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			fprintf(fp, "NeedResponse=1\n");
+			break;
+		case SN_LG_L_05A:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x613a);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x6124);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			fprintf(fp, "NeedResponse=1\n");
+			break;
+		case SN_LG_HDM_2100:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x607f);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x6114);
+			fprintf(fp, "MessageContent=%s\n",	"1201100102000040041014610000010200018006000100001200");
+			break;
 		case SN_LG_L_02C_LTE:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x61dd);
@@ -1314,20 +1327,6 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
 			fprintf(fp, "NeedResponse=1\n");
 			break;
-		case SN_IODATA_WMX2_U:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x04bb);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0xbccd);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x04bb);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x0949);
-			fprintf(fp, "MessageContent=%s\n",	"55534243f0298d8124000000800006bc626563240000000000000000000000");
-			break;
-		case SN_Option_GI1515:
-			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0af0);
-			fprintf(fp, "DefaultProduct=0x%04x\n",	0xd001);
-			fprintf(fp, "TargetVendor=0x%04x\n",	0x0af0);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0xd157);
-			fprintf(fp, "MessageContent=%s\n",	"55534243785634120100000080000601000000000000000000000000000000");
-			break;
 		case SN_LG_L_07A:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x614e);
@@ -1337,6 +1336,16 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "MessageContent2=%s\n",	"5553424312345679000000000000061b000000020000000000000000000000");
 			fprintf(fp, "NeedResponse=1\n");
 			break;
+#if 0
+		case SN_LG_L_03F:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x6367);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1004);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x6366);
+			fprintf(fp, "MessageContent=%s\n",	"5553424308e02186000000000000061b000000020000000000000000000000");
+			fprintf(fp, "NeedResponse=1\n");
+			break;
+#endif
 		case SN_ZTE_A371B:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0169);
@@ -2075,6 +2084,10 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_LG_L_08C, 1, vid, pid);
 		else if(vid == 0x1004 && pid == 0x614e)
 			write_3g_conf(fp, SN_LG_L_07A, 1, vid, pid);
+#if 0
+		else if(vid == 0x1004 && pid == 0x6367)
+			write_3g_conf(fp, SN_LG_L_03F, 1, vid, pid);
+#endif
 		else if(vid == 0x0fd1 && pid == 0x1000)
 			write_3g_conf(fp, SN_GW_D301, 1, vid, pid);
 		else if(vid == 0x05c7 && pid == 0x1000)
@@ -2564,14 +2577,11 @@ int write_gct_conf(void)
 	retry = 0;
 	while((lock = file_lock("3g")) == -1 && retry < MAX_WAIT_FILE)
 		sleep(1);
-	if(lock == -1){
-		usb_dbg("test 1.\n");
+	if(lock == -1)
 		return 0;
-	}
 
 	unlink(WIMAX_CONF);
 	if((fp = fopen(WIMAX_CONF, "w+")) == NULL){
-		usb_dbg("test 2.\n");
 		file_unlock(lock);
 		return 0;
 	}
@@ -2583,7 +2593,6 @@ int write_gct_conf(void)
 	char *ttlsid = nvram_safe_get("modem_ttlsid");
 
 	if(strcmp(modem_enable, "4") || !strcmp(isp, "")){
-		usb_dbg("test 3.\n");
 		file_unlock(lock);
 		return 0;
 	}
@@ -4439,16 +4448,22 @@ int asus_usb_interface(const char *device_name, const char *action){
 		return 0;
 	}
 #ifdef RTCONFIG_INTERNAL_GOBI
-	else if((nvram_get_int("usb_gobi") == 1 && strcmp(port_path, "2"))
-			|| (nvram_get_int("usb_gobi") != 1 && !strcmp(port_path, "2"))
+	else if((nvram_get_int("usb_gobi") == 1 && strcmp(port_path, get_gobi_portpath()))
+			|| (nvram_get_int("usb_gobi") != 1 && !strcmp(port_path, get_gobi_portpath()))
 			){
-		if(nvram_get_int("usb_gobi") == 1){
+		if(nvram_get_int("usb_gobi") == 1)
 			usb_dbg("(%s): Just use the built-in Gobi and disable the USB modem.\n", device_name);
-			file_unlock(isLock);
-			return 0;
-		}
 		else
 			usb_dbg("(%s): Just use the USB modem and disable the built-in Gobi.\n", device_name);
+
+		file_unlock(isLock);
+		return 0;
+	}
+#elif defined(RT4GAC55U)
+	else if(!strcmp(port_path, get_gobi_portpath())){
+		usb_dbg("(%s): Disable the built-in Gobi.\n", device_name);
+		file_unlock(isLock);
+		return 0;
 	}
 #endif
 
@@ -4539,9 +4554,11 @@ int asus_usb_interface(const char *device_name, const char *action){
 	else if(!strcmp(nvram_safe_get("stop_ui_insmod"), "1")){
 		usb_dbg("(%s): Don't insmod the serial modules.\n", device_name);
 	}
+#ifdef RTCONFIG_INTERNAL_GOBI
 	else if(isSerialInterface(device_name, 1, vid, pid) && vid == 0x05c6 && pid == 0x9026 && nvram_get_int("usb_gobi") == 1){
 		usb_dbg("(%s): Runing Gobi ...\n", device_name);
 	}
+#endif
 	else if(!(vid == 0x05c6 && pid == 0x9026) &&
 			(!strncmp(nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), "Android", 7) || !strncmp(nvram_safe_get(strcat_r(prefix, "_product", tmp)), "Android", 7))
 			){

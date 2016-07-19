@@ -1638,7 +1638,6 @@ static int __wps_pbc(const int multiband)
 //              dbg("WPS: PBC\n");
 		g_isEnrollee[i] = 1;
 		eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_pbc");
-		eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_ap_pin", "disable");
 
 		++i;
 	}
@@ -1747,7 +1746,6 @@ void start_wsc(void)
 			dbg("WPS: PBC\n");	// PBC method
 			g_isEnrollee[i] = 1;
 			eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_pbc");
-			eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_ap_pin", "disable");
 		}
 
 		++i;

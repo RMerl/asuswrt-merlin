@@ -44,118 +44,12 @@ var smart_connect_desc_flag = '0';
 var wlc_state = '0';
 var wlc_sbstate = '0';
 var wlc_scan_state = '0';
-var systime = new Date();
-
-Date.prototype.stdTimezoneOffset_if_dst = function() {
-    var jan = new Date(this.getFullYear(), 0, 1);
-    var jul = new Date(this.getFullYear(), 6, 1);
-    if(jan != jul)
-    	return true;	// w/ DST
-    else
-    	return false;	// w/o DST
-}
-
-Date.prototype.stdTimezoneOffset_withoutDST = function() {
-    var jan = new Date(this.getFullYear(), 0, 1);
-    var jul = new Date(this.getFullYear(), 6, 1);
-    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());	//DST w/o offset value
-}
-
-Date.prototype.dst = function() {
-	if(this.stdTimezoneOffset_if_dst()){	// w/ DST		
-		if(this.getTimezoneOffset() == this.stdTimezoneOffset_withoutDST()){
-			return 2; //is in not DST now
-		}	
-		else if(this.getTimezoneOffset() < this.stdTimezoneOffset_withoutDST()){
-			return 3; //is in DST now
-		}
-		else
-			return 2;
-	}
-	else{	// w/o DST
-		return 1;
-	}
-}
-
 var isDefault = false;
-
-var timezones = {
-	"720":"UTC12",
-	"660":"UTC11",
-	"600":"UTC10",
-	"540":"NAST9DST",
-	"480":"PST8DST",
-	"420":"MST7_2",
-	"360":"CST6_2",
-	"300":"UTC5_1",
-	"270":"UTC4.30",
-	"240":"UTC4_1",
-	"210":"NST3.30DST",
-	"180":"UTC3",
-	"120":"NORO2DST",
-	"60":"UTC1",
-	"0":"GMT0",
-	"-60":"UTC-1_2",
-	"-120":"UTC-2_1",
-	"-180":"UTC-3_1",
-	"-210":"UTC-3.30DST",
-	"-240":"UTC-4_5",
-	"-270":"UTC-4.30",
-	"-300":"UTC-5",
-	"-330":"UTC-5.30_1",
-	"-345":"UTC-5.45",
-	"-360":"UTC-6",
-	"-390":"UTC-6.30",
-	"-420":"UTC-7",
-	"-480":"CCT-8",
-	"-540":"JST",
-	"-570":"CST-9.30",
-	"-600":"UTC-10_2",
-	"-660":"UTC-11",
-	"-720":"UTC-12",
-	"-780":"UTC-13"
-};
-
-var timezones_dst = {
-	"720":"UTC12",
-	"660":"UTC11",
-	"600":"UTC10",
-	"540":"NAST9DST",
-	"480":"PST8DST",
-	"420":"MST7DST_1",
-	"360":"UTC6DST",
-	"300":"EST5DST",
-	"270":"UTC4.30",
-	"240":"AST4DST",
-	"210":"NST3.30DST",
-	"180":"EBST3DST_1",
-	"120":"NORO2DST",
-	"60":"EUT1DST",
-	"0":"GMT0DST_1",
-	"-60":"UTC-1DST_1",
-	"-120":"UTC-2DST",
-	"-180":"IST-3",
-	"-210":"UTC-3.30DST",
-	"-240":"UTC-4DST_2",
-	"-270":"UTC-4.30",
-	"-300":"UTC-5",
-	"-330":"UTC-5.30_1",
-	"-345":"UTC-5.45",
-	"-360":"RFT-6",
-	"-390":"UTC-6.30",
-	"-420":"UTC-7",
-	"-480":"CCT-8",
-	"-540":"JST",
-	"-570":"UTC-9.30DST",
-	"-600":"UTC-10DST_1",
-	"-660":"UTC-11",
-	"-720":"NZST-12DST",
-	"-780":"UTC-13"
-};
  
 function QKWireless_load_body(){	
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
 	parent.set_step("t3");
+	check_pppoe_state();
 		/*To Handle copy, paste for mobile device*/
 	if (document.getElementById("wl0_ssid").addEventListener){
 		document.getElementById("wl0_ssid").addEventListener("paste", function(e){setTimeout(function(){Sync_2ghz(2);},100);});
@@ -286,6 +180,19 @@ function QKWireless_load_body(){
 	if((parent.document.QKform.sw_mode.value == 1) && (is_TW_sku || is_CN_sku)){	
 		check_wan_state();
 	}	
+
+	if(parent.isFirst && !parent.swisscom_support){
+		require(['/require/modules/timeZone.js'], function(timeZone) {
+			var preferredLang = top.document.titleForm.preferred_lang.value;
+			var timeZoneObj = new timeZone.get(preferredLang);
+
+			document.form.time_zone.value = timeZoneObj.time_zone;
+			document.form.time_zone.disabled = false;
+			document.form.time_zone_dst.value = (timeZoneObj.hasDst) ? 1 : 0;
+			document.form.time_zone_dst.disabled = !timeZoneObj.hasDst;
+			parent.restartTime = true;
+		});
+	}
 	
 	setTimeout(function(){
 		parent.document.start_update.action_script.value = "start_webs_update";
@@ -825,41 +732,6 @@ function submitForm(){
 		}	
 	}
 
-	/* Viz patched to set time_zone automatically 2014.06 start */
-	if(timezones[systime.getTimezoneOffset()] != undefined 
-			&& timezones[systime.getTimezoneOffset()] != "" 
-			&& document.form.time_zone.value != timezones[systime.getTimezoneOffset()]
-			&& parent.isFirst
-			&& !parent.swisscom_support)
-	{
-				document.form.time_zone.disabled = false;				
-				if(systime.dst() == 2){		// w/ DST and is not in DST now		
-					if(timezones_dst[systime.getTimezoneOffset()] != "")
-						document.form.time_zone.value = timezones_dst[systime.getTimezoneOffset()];
-					else if(document.form.time_zone.value == "")
-						document.form.time_zone.value = timezones_dst[0];
-				}
-				else if(systime.dst() == 3){		// w/ DST and is in DST now
-					if(timezones_dst[systime.getTimezoneOffset()+60] != "")
-						document.form.time_zone.value = timezones_dst[systime.getTimezoneOffset()+60];
-					else if(document.form.time_zone.value == "")
-						document.form.time_zone.value = timezones_dst[0];
-				}
-				else{	// w/o DST
-					if(timezones[systime.getTimezoneOffset()] != "")
-						document.form.time_zone.value = timezones[systime.getTimezoneOffset()];	
-					else if(document.form.time_zone.value == "")
-						document.form.time_zone.value = timezones_dst[0];	
-					
-					document.form.time_zone_dst.disabled = false;	
-					document.form.time_zone_dst.value = "0";	//Do disable manual dstoff
-				}
-
-				parent.restartTime = true;
-				timezone_by_preferred_lang(document.form.time_zone.value);
-	}
-
-	/* Viz patched to set time_zone automatically 2014.06 end */
 	child_macaddr = '';
 	parent.w_Setting_tmp = document.form.w_Setting.value;
 	document.getElementById("loadingIcon").style.display = "";
@@ -911,89 +783,6 @@ function submitForm(){
 			location.href = "/qis/QIS_finish.htm";
 		}, 500)
 	}
-}
-
-function timezone_by_preferred_lang(v){
-		switch("<% nvram_get("preferred_lang"); %>"){
-			case "BR":	//"EBST3DST_1",	#TZ21#"
-					break;
-			case "CN":
-					if(v == "CCT-8")
-							document.form.time_zone.value = "CST-8";
-					break;
-			case "CZ":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "UTC-1DST_1_1";				
-					break;
-			case "DA":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "MET-1DST";
-					break;
-			case "DE":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "MEZ-1DST";
-					break;
-			case "ES":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "MET-1DST_1";
-					break;
-			case "FI":
-					if(v == "UTC-2DST")
-							document.form.time_zone.value = "UTC-2DST_3";
-					break;
-			case "FR":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "MET-1DST_1";
-					break;
-			case "HU":
-					break;
-			case "IT":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "MEZ-1DST_1";
-					break;
-			case "JP":
-					break;
-			case "KR":
-					if(v == "JST")
-							document.form.time_zone.value = "UTC-9_1";
-					break;
-			case "MS":
-					if(v == "CCT-8")
-							document.form.time_zone.value = "SST-8";
-					break;
-			case "NO":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "MET-1DST";
-					break;
-			case "PL":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "UTC-1DST_2";
-					break;
-			case "RO":
-					break;
-			case "RU":
-					if(v == "UTC-3_1")
-							document.form.time_zone.value = "UTC-3_4";
-					break;
-			case "SV":
-					if(v == "UTC-1DST_1")
-							document.form.time_zone.value = "MET-1DST";
-					break;
-			case "TH":
-					break;
-			case "TR":
-					if(v == "UTC-2DST")
-							document.form.time_zone.value = "UTC-2DST_2";
-					break;
-			case "TW":
-					break;
-			case "UK":
-					if(v == "UTC-2DST")
-							document.form.time_zone.value = "EET-2DST";
-					break;
-			default:
-					break;
-		}
 }
 
 function reset_wl_hwaddr(prefix){
@@ -1499,6 +1288,26 @@ function detect_LANStatus(_flag){
 				setTimeout("detect_LANStatus('"+_flag+"');", 2000);
 		}
 	});
+}
+
+function check_pppoe_state(){
+	$.ajax({
+		url: '/result_of_get_changed_status_QIS.asp',
+		dataType: 'script',		
+		error: function(xhr){
+			check_pppoe_state();		
+		},
+		success: function(response){
+			setTimeout("check_pppoe_state();", 1000);
+			if((wanstate  == 1 && wansbstate == 0 && wanauxstate == 0) || (wanstate  == 1 && wansbstate == 0 && wanauxstate == 1) || (wanstate  == 6 && wansbstate == 0 && wanauxstate == 0) || (wanstate  == 4 && wansbstate == 2 && wanauxstate == 0)){
+				if(!parent.flag_manual)
+					parent.pppoe_failed_flag = true;				
+			}
+			else if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
+				parent.pppoe_failed_flag = false;
+			}	
+		}
+	});	
 }
 </script>
 </head>

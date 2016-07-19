@@ -28,6 +28,8 @@
  *
  * $Id: web_ex.c,v 1.4 2007/04/09 12:01:50 shinjung Exp $
  */
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -198,7 +200,7 @@ extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **arg
 
 static int b64_decode( const char* str, unsigned char* space, int size );
 
-extern void send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
+extern void send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time);
 extern void __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
 
 extern char *get_cgi_json(char *name, json_object *root);
@@ -1454,6 +1456,12 @@ ej_wl_get_guestnetwork(int eid, webs_t wp, int argc, char_t **argv)
 		ret += webWriteNvram2(wp, strcat_r(word2, "_maclist_x", tmp));	// gn_array[][16]
 		ret += websWrite(wp, "\", \"");
 		ret += webWriteNvram2(wp, strcat_r(word2, "_phrase_x", tmp));	// gn_array[][17]
+		ret += websWrite(wp, "\", \"");
+		ret += webWriteNvram2(wp, strcat_r(word2, "_bw_enabled", tmp));	// gn_array[][18]
+		ret += websWrite(wp, "\", \"");
+		ret += webWriteNvram2(wp, strcat_r(word2, "_bw_dl", tmp));	// gn_array[][19]
+		ret += websWrite(wp, "\", \"");
+		ret += webWriteNvram2(wp, strcat_r(word2, "_bw_ul", tmp));	// gn_array[][20]
 		ret += websWrite(wp, "\"]");
 	}
 	ret += websWrite(wp, "]");
@@ -1975,6 +1983,7 @@ void del_upload_icon(char *value) {
 #define NVRAM_MODIFIED_DUALWAN_ADDUSB		8	/* ex: {wan, none}  =>  {wan, usb} */
 #define NVRAM_MODIFIED_DUALWAN_EXCHANGE		16	/* ex: {wan, usb}   =>  {usb, wan}   {wan, lan} => {lan, wan}*/
 #define NVRAM_MODIFIED_DUALWAN_REBOOT		32	/* Other cases */
+#define NVRAM_MODIFIED_DUALWAN_MODE			64  /* ex: FO => LB  or LB => FO */
 
 int validate_instance(webs_t wp, char *name, json_object *root)
 {
@@ -2206,14 +2215,6 @@ static int validate_apply(webs_t wp, json_object *root) {
 					nvram_set(tmp, value);
 					nvram_modified = 1;
 					_dprintf("set %s=%s\n", tmp, value);
-
-					if(!strcmp(name+4, "proto")
-							|| !strcmp(name+4, "pppoe_username")
-							|| !strcmp(name+4, "pppoe_passwd")
-							|| !strcmp(name+4, "pptp_options_x")
-							){
-						nvram_set(strcat_r(prefix, "auth_ok", tmp), "0");
-					}
 				}
 			}
 			else if(!strncmp(name, "lan_", 4) && unit != -1) {
@@ -2355,25 +2356,25 @@ static int validate_apply(webs_t wp, json_object *root) {
 					if( strstr(orig_wans_dualwan, "none") && (strstr(orig_wans_dualwan, "usb") == NULL) &&
 					    strstr(wans_dualwan, "usb") && (strstr(wans_dualwan, "none") == NULL) &&
 					   (strstr(wans_dualwan, orig_primary) || strstr(wans_dualwan, orig_second)) ){ //Add USB
-						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_ADDUSB\n");
 						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_ADDUSB;
 					}
 					else if( strstr(orig_wans_dualwan, "usb") && (strstr(orig_wans_dualwan, "none") == NULL) &&
 					    strstr(wans_dualwan, "none") && (strstr(wans_dualwan, "usb") == NULL) &&
 					   (strstr(wans_dualwan, orig_primary) || strstr(wans_dualwan, orig_second)) ){ //Remove USB
-						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_ADDUSB Remove\n");
 						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_ADDUSB;
 					}
 					else if(!strcmp(orig_primary, new_second) && !strcmp(orig_second, new_primary)){ // Exchange Value
-						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_EXCHANGE\n");
 						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_EXCHANGE;
 					}
 					else{
-						//_dprintf("validate_apply: NVRAM_MODIFIED_DUALWAN_REBOOT\n");
 						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_REBOOT;
 					}
 					free(tmp);
 					free(tmp2);
+				}
+
+				if(!strcmp(name, "wans_mode")){
+					wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_MODE;
 				}
 #endif
 
@@ -2388,7 +2389,7 @@ static int validate_apply(webs_t wp, json_object *root) {
 				}
 
 				nvram_set(name, value);
-				if(strcmp(name, "wans_dualwan")) //not wans_dualwan
+				if(strcmp(name, "wans_dualwan") && strcmp(name, "wans_mode")) //not wans_dualwan
 					nvram_modified = 1;
 				_dprintf("set %s=%s\n", name, value);
 
@@ -3115,20 +3116,19 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 #ifdef RTCONFIG_DUALWAN
 			memset(new_action_script, 0, sizeof(new_action_script));
 			memset(new_action_wait, 0, sizeof(new_action_wait));
-			//_dprintf("has_modify = 0X%X\n\n", has_modify);
 			if( (has_modify & 1) == 0){
-				if( ((has_modify & NVRAM_MODIFIED_DUALWAN_ADDUSB) == NVRAM_MODIFIED_DUALWAN_ADDUSB) ||
-					((has_modify & NVRAM_MODIFIED_DUALWAN_EXCHANGE) == NVRAM_MODIFIED_DUALWAN_EXCHANGE)){
-					//_dprintf("ej_update_variables: start_multipath\n");
-					strcpy(new_action_script, "start_multipath");
-					action_script = (char *)new_action_script;
-					strcpy(new_action_wait, "10");
-					action_wait = (char *)new_action_wait;
-				}
-				else if( (has_modify & NVRAM_MODIFIED_DUALWAN_REBOOT) == NVRAM_MODIFIED_DUALWAN_REBOOT){
+				if( (has_modify & NVRAM_MODIFIED_DUALWAN_REBOOT) == NVRAM_MODIFIED_DUALWAN_REBOOT){
 					strcpy(new_action_script, "reboot");
 					action_script = (char *)new_action_script;
 					strcpy(new_action_wait, nvram_safe_get("reboot_time"));
+					action_wait = (char *)new_action_wait;
+				}
+				else if( ((has_modify & NVRAM_MODIFIED_DUALWAN_ADDUSB) == NVRAM_MODIFIED_DUALWAN_ADDUSB) ||
+					((has_modify & NVRAM_MODIFIED_DUALWAN_EXCHANGE) == NVRAM_MODIFIED_DUALWAN_EXCHANGE) ||
+					((has_modify & NVRAM_MODIFIED_DUALWAN_MODE) == NVRAM_MODIFIED_DUALWAN_MODE) ){
+					strcpy(new_action_script, "start_multipath");
+					action_script = (char *)new_action_script;
+					strcpy(new_action_wait, "10");
 					action_wait = (char *)new_action_wait;
 				}
 			}
@@ -5505,6 +5505,10 @@ static int ej_get_ap_info(int eid, webs_t wp, int argc, char_t **argv)
 	int i;
 	int lock;
 
+	int fromapp_flag = 0;
+
+	fromapp_flag = check_user_agent(user_agent);
+
 	// get info from file generated by wlc_scan
 	if(nvram_get_int("wlc_scan_state")!=WLCSCAN_STATE_FINISHED){
 		ret_l += websWrite(wp, "[]");
@@ -5517,7 +5521,8 @@ static int ej_get_ap_info(int eid, webs_t wp, int argc, char_t **argv)
 		ret_l += websWrite(wp, "[]");
 		return ret_l;
 	}else{
-		//ret_l += websWrite(wp, "[");
+		if(fromapp_flag != 0)
+			ret_l += websWrite(wp, "[");
 		i = 0;
 		while (fgets(buf, MAX_LINE_SIZE, fp)){
 			if(i>0) ret_l += websWrite(wp, ",");
@@ -5533,7 +5538,8 @@ static int ej_get_ap_info(int eid, webs_t wp, int argc, char_t **argv)
 			memset(buf, 0, MAX_LINE_SIZE);
 			i++;
 		}
-		//ret_l += websWrite(wp, "];");	/* insert empty for last record */
+		if(fromapp_flag != 0)
+			ret_l += websWrite(wp, "]");
 	}
 	fclose(fp);
 	file_unlock(lock);
@@ -5569,7 +5575,7 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 
 	p_client_info_tab = (P_CLIENT_DETAIL_INFO_TABLE)shared_client_info;
 	for(i=0; i<p_client_info_tab->ip_mac_num; i++) {
-		if(strcmp((const char *)p_client_info_tab->user_define[i], ""))
+		if (*p_client_info_tab->user_define[i])
 			strlcpy(dev_name, (const char *)p_client_info_tab->user_define[i], sizeof (dev_name));
 		else
 			strlcpy(dev_name, (const char *)p_client_info_tab->device_name[i], sizeof (dev_name));
@@ -6081,6 +6087,438 @@ static int ej_disk_pool_mapping_info(int eid, webs_t wp, int argc, char_t **argv
 	return 0;
 }
 
+static long old_uptime = 0;
+
+static int ej_get_usb_info(int eid, webs_t wp, int argc, char_t **argv){
+	disk_info_t *disks_info, *follow_disk;
+	partition_info_t *follow_partition;
+	char ascii_tag[PATH_MAX];
+	int disk_num = 0;
+	char *Ptr;
+	//int fromapp_flag = 0;
+
+	//fromapp_flag = check_user_agent(user_agent);
+
+	disks_info = read_disk_data();
+	if (disks_info == NULL){
+		websWrite(wp, "[]");
+		return -1;
+	}
+
+	char disk_size[16], disk_use[16], partNumber[16], mountNumber[16], part_disk_size[16], part_disk_use[16], error_code_s[16], usb_path_tmp[16];
+	struct json_object *item = NULL;
+	struct json_object *part_item = NULL;
+	struct json_object *part_array_obj = NULL;
+	struct json_object *part_array_obj_size = NULL;
+	struct json_object *part_array_obj_use = NULL;
+
+	json_object *jarray = json_object_new_array();
+	json_object *part_jarray = NULL;
+
+	for (follow_disk = disks_info; follow_disk != NULL; follow_disk = follow_disk->next){
+
+		item = json_object_new_object();
+		part_jarray = json_object_new_array();
+
+		/* tmpdisk.deviceIndex */
+		json_object_object_add(item,"deviceIndex", json_object_new_int(disk_num));
+
+		/* tmpdisk.deviceName */
+		memset(ascii_tag, 0, PATH_MAX);
+		char_to_ascii_safe(ascii_tag, follow_disk->tag, PATH_MAX);
+		json_object_object_add(item,"deviceName", json_object_new_string(ascii_tag));
+
+		/* tmpdisk.usbPath */
+		memset(usb_path_tmp, 0, 16);
+		sprintf(usb_path_tmp, "%c", follow_disk->port[0]);
+		json_object_object_add(item,"usbPath", json_object_new_string(usb_path_tmp));
+
+		/* tmpdisk.node */
+		json_object_object_add(item,"node", json_object_new_string(follow_disk->port));
+
+		/* tmpdisk.deviceType */
+		json_object_object_add(item,"deviceType", json_object_new_string("storage"));
+
+		/* tmpdisk.mountNumber */
+		memset(mountNumber, 0, 16);
+		sprintf(mountNumber, "%u", follow_disk->mounted_number);
+		json_object_object_add(item,"mountNumber", json_object_new_string(mountNumber));
+
+		/* tmpdisk.partNumber */
+		memset(partNumber, 0, 16);
+		sprintf(partNumber, "%u", follow_disk->partition_number);
+		json_object_object_add(item,"partNumber", json_object_new_string(partNumber));
+
+		for (follow_partition = follow_disk->partitions; follow_partition != NULL; follow_partition = follow_partition->next){
+			part_item = json_object_new_object();
+
+			/* tmpParts.partName tmpParts.format tmpParts.status */
+			if (follow_partition->mount_point == NULL){
+				json_object_object_add(part_item,"partName", json_object_new_string(follow_partition->device));
+				json_object_object_add(part_item,"format", json_object_new_string("unknown"));
+				json_object_object_add(part_item,"status", json_object_new_string("unmounted"));
+			}else{
+				Ptr = rindex(follow_partition->mount_point, '/');
+				if (Ptr == NULL)
+					json_object_object_add(part_item,"partName", json_object_new_string("unknown"));
+				else{
+					++Ptr;
+					json_object_object_add(part_item,"partName", json_object_new_string(Ptr));
+				}
+
+				json_object_object_add(part_item,"format", json_object_new_string(follow_partition->file_system));
+				json_object_object_add(part_item,"status", json_object_new_string("rw"));
+			}
+
+			/* tmpParts.mountPoint */
+			json_object_object_add(part_item,"mountPoint", json_object_new_string(follow_partition->device));
+
+			/* tmpParts.isAppDev tmpdisk.hasAppDev */
+			if(nvram_match("apps_dev", follow_partition->device)){
+				json_object_object_add(part_item,"isAppDev", json_object_new_int(1));
+				json_object_object_add(item,"hasAppDev", json_object_new_int(1));
+			}else{
+				json_object_object_add(part_item,"isAppDev", json_object_new_int(0));
+				json_object_object_add(item,"hasAppDev", json_object_new_int(0));
+			}
+
+			/* tmpParts.isTM tmpdisk.hasTM */
+			if(nvram_match("tm_device_name", follow_partition->device)){
+
+				json_object_object_add(part_item,"isTM", json_object_new_int(1));
+				json_object_object_add(item,"hasTM", json_object_new_int(1));
+			}else{
+				json_object_object_add(part_item,"isTM", json_object_new_int(0));
+				json_object_object_add(item,"hasTM", json_object_new_int(0));
+			}
+
+			/* tmpParts.size */
+			memset(part_disk_size, 0, 16);
+			sprintf(part_disk_size, "%llu", follow_partition->size_in_kilobytes);
+			json_object_object_add(part_item,"size", json_object_new_string(part_disk_size));
+			json_object_object_add(part_item,"size_int", json_object_new_int(follow_partition->size_in_kilobytes));
+
+			/* tmpParts.used */
+			memset(part_disk_use, 0, 16);
+			sprintf(part_disk_use, "%llu", follow_partition->used_kilobytes);
+			json_object_object_add(part_item,"used", json_object_new_string(part_disk_use));
+			json_object_object_add(part_item,"used_int", json_object_new_int(follow_partition->used_kilobytes));
+
+			/* tmpParts.fsck */
+#define MAX_ERROR_CODE 3
+			int error_code, got_code;
+			char file_name[32];
+			FILE *fp;
+			for(error_code = 0, got_code = 0; error_code <= MAX_ERROR_CODE; ++error_code){
+				memset(file_name, 0, 32);
+				sprintf(file_name, "/tmp/fsck_ret/%s.%d", follow_partition->device, error_code);
+
+				if((fp = fopen(file_name, "r")) != NULL){
+					fclose(fp);
+					memset(error_code_s, 0, 16);
+					sprintf(error_code_s, "%d", error_code);
+					json_object_object_add(part_item,"fsck", json_object_new_string(error_code_s));
+					got_code = 1;
+					break;
+				}
+			}
+			if(!got_code)
+				json_object_object_add(part_item,"fsck", json_object_new_string(""));
+
+			/* tmpDisk.hasErrPart */
+			if(error_code == 1)
+				json_object_object_add(item,"hasErrPart", json_object_new_int(1));
+			else
+				json_object_object_add(item,"hasErrPart", json_object_new_int(0));
+
+			json_object_array_add(part_jarray,part_item);
+		}
+
+		json_object_object_add(item,"partition", part_jarray);	//add Partition to item
+
+		/* tmpdisk.totalSize tmpdisk.totalUsed */
+		int i, arraylen = 0, total_size = 0, total_use = 0;
+		arraylen = json_object_array_length(part_jarray);
+		for (i = 0; i < arraylen; i++){
+			part_array_obj = json_object_array_get_idx(part_jarray, i);
+			part_array_obj_size = json_object_object_get(part_array_obj, "size_int");
+			part_array_obj_use = json_object_object_get(part_array_obj, "used_int");
+			total_size += json_object_get_int(part_array_obj_size);
+			total_use += json_object_get_int(part_array_obj_use);
+		}
+		memset(disk_size, 0, 16);
+		sprintf(disk_size, "%d", total_size);
+		memset(disk_use, 0, 16);
+		sprintf(disk_use, "%d", total_use);
+		json_object_object_add(item,"totalSize", json_object_new_string(disk_size));
+		json_object_object_add(item,"totalUsed", json_object_new_string(disk_use));
+
+		json_object_array_add(jarray,item);
+
+		disk_num++;
+	}
+
+	/*** show_usb_path ***/
+	DIR *bus_usb;
+	struct dirent *interface;
+	char usb_port[8], port_path[8], *ptr;
+	int port_num, port_order, hub_order;
+	char all_usb_path[MAX_USB_PORT][MAX_USB_HUB_PORT][3][16]; // MAX USB hub port number is 6.
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
+
+	if((bus_usb = opendir(USB_DEVICE_PATH)) == NULL)
+		return -1;
+
+	memset(all_usb_path, 0, MAX_USB_PORT*MAX_USB_HUB_PORT*3*16);
+
+	while((interface = readdir(bus_usb)) != NULL){
+		if(interface->d_name[0] == '.')
+			continue;
+
+		if(!isdigit(interface->d_name[0]))
+			continue;
+
+		if(strchr(interface->d_name, ':'))
+			continue;
+
+		if(get_usb_port_by_string(interface->d_name, usb_port, 8) == NULL)
+			continue;
+
+		port_num = get_usb_port_number(usb_port);
+		port_order = port_num-1;
+		if((ptr = strchr(interface->d_name+strlen(usb_port), '.')) != NULL)
+			hub_order = atoi(ptr+1);
+		else
+			hub_order = 0;
+
+		if(get_path_by_node(interface->d_name, port_path, 8) == NULL)
+			continue;
+
+		strncpy(all_usb_path[port_order][hub_order][0], port_path, 16);
+		snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+		strncpy(all_usb_path[port_order][hub_order][1], nvram_safe_get(prefix), 16);
+		strncpy(all_usb_path[port_order][hub_order][2], nvram_safe_get(strcat_r(prefix, "_speed", tmp)), 16);
+	}
+	closedir(bus_usb);
+	/*** show_usb_path end ***/
+
+	/*** get_printer_info ***/
+	int printer_num, got_printer;
+	char printer_array[MAX_USB_PRINTER_NUM][4][64];
+	char usb_node[32];
+
+	memset(printer_array, 0, MAX_USB_PRINTER_NUM*4*64);
+
+	for(printer_num = 0, got_printer = 0; printer_num < MAX_USB_PRINTER_NUM; ++printer_num){
+		snprintf(prefix, sizeof(prefix), "usb_path_lp%d", printer_num);
+		memset(usb_node, 0, 32);
+		strncpy(usb_node, nvram_safe_get(prefix), 32);
+
+		if(strlen(usb_node) > 0){
+			if(get_path_by_node(usb_node, port_path, 8) != NULL){
+				snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+
+				strncpy(printer_array[got_printer][0], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
+				strncpy(printer_array[got_printer][1], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
+				strncpy(printer_array[got_printer][2], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
+				strncpy(printer_array[got_printer][3], port_path, 64);
+
+				++got_printer;
+			}
+		}
+	}
+	/*** get_printer_info end ***/
+
+	/* get_modem_info */
+	int i, j, got_modem;
+#ifdef RTCONFIG_INTERNAL_GOBI
+	char modem_array[MAX_USB_PORT*MAX_USB_HUB_PORT][6][64];
+#else
+	char modem_array[MAX_USB_PORT*MAX_USB_HUB_PORT][4][64];
+#endif
+	char act_node[32], act_port_path[8];
+	long now;
+#ifdef RTCONFIG_INTERNAL_GOBI
+	char *cmd_sig[] = {"/usr/sbin/modem_status.sh", "signal", NULL};
+	char *cmd_op[] = {"/usr/sbin/modem_status.sh", "operation", NULL};
+	int pid;
+#endif
+
+	snprintf(act_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(act_node) <= 0 || get_path_by_node(act_node, act_port_path, 8) == NULL){
+		memset(act_port_path, 0, 8);
+		old_uptime = 0;
+	}
+	else{
+		now = uptime();
+		if(!old_uptime || now-old_uptime >= 60){
+#ifdef RTCONFIG_INTERNAL_GOBI
+_dprintf("httpd: run modem_status.sh.\n");
+#if 0
+			_eval(cmd_sig, NULL, 0, &pid);
+			_eval(cmd_op, NULL, 0, &pid);
+#else
+			eval("/usr/sbin/modem_status.sh", "signal");
+			eval("/usr/sbin/modem_status.sh", "operation");
+#endif
+#endif
+			old_uptime = now;
+		}
+	}
+
+#ifdef RTCONFIG_INTERNAL_GOBI
+	memset(modem_array, 0, MAX_USB_PORT*MAX_USB_HUB_PORT*6*64);
+#else
+	memset(modem_array, 0, MAX_USB_PORT*MAX_USB_HUB_PORT*4*64);
+#endif
+
+	got_modem = 0;
+	for(i = 1; i <= MAX_USB_PORT; ++i){
+		snprintf(prefix, sizeof(prefix), "usb_path%d", i);
+		if(!strcmp(nvram_safe_get(prefix), "modem")){
+			snprintf(port_path, 8, "%d", i);
+
+			strncpy(modem_array[got_modem][0], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
+			strncpy(modem_array[got_modem][1], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
+			strncpy(modem_array[got_modem][2], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
+			strncpy(modem_array[got_modem][3], port_path, 64);
+#ifdef RTCONFIG_INTERNAL_GOBI
+			if(!strcmp(port_path, act_port_path)){
+				strncpy(modem_array[got_modem][4], nvram_safe_get("usb_modem_act_signal"), 64);
+				strncpy(modem_array[got_modem][5], nvram_safe_get("usb_modem_act_operation"), 64);
+			}
+#endif
+
+			++got_modem;
+		}
+		else{
+			for(j = 1; j <= MAX_USB_HUB_PORT; ++j){
+				snprintf(prefix, sizeof(prefix), "usb_path%d.%d", i, j);
+
+				if(!strcmp(nvram_safe_get(prefix), "modem")){
+					snprintf(port_path, 8, "%d.%d", i, j);
+
+					strncpy(modem_array[got_modem][0], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
+					strncpy(modem_array[got_modem][1], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
+					strncpy(modem_array[got_modem][2], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
+					strncpy(modem_array[got_modem][3], port_path, 64);
+#ifdef RTCONFIG_INTERNAL_GOBI
+					if(!strcmp(port_path, act_port_path)){
+						strncpy(modem_array[got_modem][4], nvram_safe_get("usb_modem_act_signal"), 64);
+						strncpy(modem_array[got_modem][5], nvram_safe_get("usb_modem_act_operation"), 64);
+					}
+#endif
+
+					++got_modem;
+				}
+			}
+		}
+	}
+	/* end get_modem_info */
+
+	/* generate printer/modem json data */
+	char manuf_device_name[128];
+	for(port_order = 0; port_order < MAX_USB_PORT; ++port_order){
+	   for(hub_order = 0; hub_order < MAX_USB_HUB_PORT; ++hub_order){
+	     if(strlen(all_usb_path[port_order][hub_order][1]) > 0){
+	        if(all_usb_path[port_order][hub_order][1] != NULL && !strstr(all_usb_path[port_order][hub_order][1],"storage")){
+		   item = json_object_new_object();
+		   if(strcmp(all_usb_path[port_order][hub_order][1], "printer") == 0){
+		      for(printer_num = 0; printer_num < got_printer; ++printer_num){
+		         if(strlen(printer_array[printer_num][3]) > 0
+			    && (strlen(all_usb_path[port_order][hub_order][0]) == strlen(printer_array[printer_num][3]))
+			    && strcmp(all_usb_path[port_order][hub_order][0], printer_array[printer_num][3]) == 0){
+				/* tmpDisk.manufacturer */
+				if(strlen(printer_array[printer_num][0]) > 0){
+				   json_object_object_add(item,"manufacturer", json_object_new_string(printer_array[printer_num][0]));
+				}else
+				   json_object_object_add(item,"manufacturer", json_object_new_string(""));
+
+				/* tmpDisk.deviceName */
+				if(strlen(printer_array[printer_num][0]) > 0 && strlen(printer_array[printer_num][1]) > 0 && !strstr(printer_array[printer_num][1],printer_array[printer_num][0])){
+					memset(manuf_device_name, 0, 128);
+					sprintf(manuf_device_name, "%s %s", printer_array[printer_num][0], printer_array[printer_num][1]);
+					json_object_object_add(item,"deviceName", json_object_new_string(manuf_device_name));
+				}else
+					json_object_object_add(item,"deviceName", json_object_new_string(printer_array[printer_num][1]));
+
+				/* tmpDisk.serialNum */
+				if(strlen(printer_array[printer_num][2]) > 0)
+					json_object_object_add(item,"serialNum", json_object_new_string(printer_array[printer_num][2]));
+				else
+					json_object_object_add(item,"serialNum", json_object_new_string(""));
+			 } // end strlen(printer_array[printer_num][3]) > 0
+		      } //end printer_num for loop
+		   }else if(strcmp(all_usb_path[port_order][hub_order][1], "modem") == 0){
+		      for(i = 0; i < got_modem; ++i){
+		         if(strlen(modem_array[i][3]) > 0
+			    && (strlen(all_usb_path[port_order][hub_order][0]) == strlen(modem_array[i][3]))
+			    && strcmp(all_usb_path[port_order][hub_order][0], modem_array[i][3]) == 0){
+				if(strlen(modem_array[i][0]) > 0){
+				   json_object_object_add(item,"manufacturer", json_object_new_string(modem_array[i][0]));
+				}else
+				   json_object_object_add(item,"manufacturer", json_object_new_string(""));
+
+				/* tmpDisk.deviceName */
+				if(strlen(modem_array[i][0]) > 0 && strlen(modem_array[i][1]) > 0 && !strstr(modem_array[i][1],modem_array[i][0])){
+					memset(manuf_device_name, 0, 128);
+					sprintf(manuf_device_name, "%s %s", modem_array[i][0], modem_array[i][1]);
+					json_object_object_add(item,"deviceName", json_object_new_string(manuf_device_name));
+				}else
+					json_object_object_add(item,"deviceName", json_object_new_string(modem_array[i][1]));
+
+				/* tmpDisk.serialNum */
+				if(strlen(modem_array[i][2]) > 0)
+					json_object_object_add(item,"serialNum", json_object_new_string(modem_array[i][2]));
+				else
+					json_object_object_add(item,"serialNum", json_object_new_string(""));
+			 }
+		      }
+		   }//find printer/medom
+
+		   /* tmpdisk.usbPath */
+		   if(strlen(all_usb_path[port_order][hub_order][0]) > 0){
+		   memset(usb_path_tmp, 0, 16);
+		   sprintf(usb_path_tmp, "%c", all_usb_path[port_order][hub_order][0][0]);
+		   json_object_object_add(item,"usbPath", json_object_new_string(usb_path_tmp));
+		   }
+
+		   /* tmpdisk.deviceIndex */
+		   json_object_object_add(item,"deviceIndex", json_object_new_int(disk_num));
+
+		   /* tmpdisk.node */
+		   json_object_object_add(item,"node", json_object_new_string(all_usb_path[port_order][hub_order][0]));
+
+		   /* tmpdisk.deviceType */
+		   json_object_object_add(item,"deviceType", json_object_new_string(all_usb_path[port_order][hub_order][1]));
+
+		   /* tmpdisk.hasAppDev */
+		   json_object_object_add(item,"hasAppDev", json_object_new_int(0));
+
+		   /* tmpdisk.hasTM */
+		   json_object_object_add(item,"hasTM", json_object_new_int(0));
+
+		   /* tmpdisk.hasErrPart */
+		   json_object_object_add(item,"hasErrPart", json_object_new_int(0));
+
+		   disk_num++;
+		   json_object_array_add(jarray,item);
+		} // end not storage device
+	      }	//end all_usb_path[port_order][hub_order][1] if
+	   }	//end hub_order for loop
+	} //end port_order for loop
+
+	//_dprintf ("The json object created: %s\n",json_object_to_json_string(jarray));
+
+	websWrite(wp, "%s", json_object_to_json_string(jarray));
+
+	json_object_put(jarray);
+
+	free_disk_data(&disks_info);
+
+	return 0;
+}
+
 static int ej_available_disk_names_and_sizes(int eid, webs_t wp, int argc, char_t **argv){
 	disk_info_t *disks_info, *follow_disk;
 	int first;
@@ -6313,8 +6751,6 @@ static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
 	return 0;
 }
 
-static long old_uptime = 0;
-
 static int ej_get_modem_info(int eid, webs_t wp, int argc, char_t **argv){
 	int i, j, got_modem;
 	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
@@ -6326,10 +6762,12 @@ static int ej_get_modem_info(int eid, webs_t wp, int argc, char_t **argv){
 	char port_path[8];
 	char act_node[32], act_port_path[8];
 	long now;
+#if 0
 #ifdef RTCONFIG_INTERNAL_GOBI
 	char *cmd_sig[] = {"/usr/sbin/modem_status.sh", "signal", NULL};
 	char *cmd_op[] = {"/usr/sbin/modem_status.sh", "operation", NULL};
 	int pid;
+#endif
 #endif
 
 	snprintf(act_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
@@ -6340,6 +6778,7 @@ static int ej_get_modem_info(int eid, webs_t wp, int argc, char_t **argv){
 	else{
 		now = uptime();
 		if(!old_uptime || now-old_uptime >= 60){
+#if 0
 #ifdef RTCONFIG_INTERNAL_GOBI
 _dprintf("httpd: run modem_status.sh.\n");
 #if 0
@@ -6348,6 +6787,7 @@ _dprintf("httpd: run modem_status.sh.\n");
 #else
 			eval("/usr/sbin/modem_status.sh", "signal");
 			eval("/usr/sbin/modem_status.sh", "operation");
+#endif
 #endif
 #endif
 			old_uptime = now;
@@ -6841,6 +7281,7 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 
 	if(!action_mode){
 		_dprintf("action_mode get null\n");
+		json_object_put(root);
 		return 1;
 	}
 
@@ -7822,37 +8263,21 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	}
 	fclose(fifo);
 	fifo = NULL;
+
 #ifdef RTCONFIG_DSL
-
 	int ret_val_sep;
-#ifdef RTCONFIG_RALINK
-	ret_val_sep = separate_tc_fw_from_trx();	//TODO: merge truncated_trx
-
-	// should router update tc fw?
-	if (ret_val_sep)
-	{
-		if(check_tc_firmware_crc()) /* return 0 when pass */
-			goto err;
-	}
-	//TODO: if merge truncated_trx() to separate_tc_fw_from_trx()
-	//then all use check_imagefile(upload_fifo)
-#else
 	ret_val_sep = separate_tc_fw_from_trx(upload_fifo);
-
 	// should router update tc fw?
 	if (ret_val_sep)
 	{
 		if(check_tc_firmware_crc()) /* return 0 when pass */
 			goto err;
+#ifndef RTCONFIG_RALINK
 		nvram_set_int("reboot_time", nvram_get_int("reboot_time")+100);
+#endif
 	}
-
-	upgrade_err = check_imagefile(upload_fifo);
-	if (upgrade_err) /* 0: legal image, 1: illegal image 2: new trx format validation failure */
-		goto err;
 #endif
 
-#else
 #ifdef RTAC68U
 	if (!nvram_match("cpurev", "c0") &&
 	    (nvram_match("bl_version", "2.1.2.2") || nvram_match("bl_version", "2.1.2.6"))) {
@@ -7887,7 +8312,6 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	upgrade_err = check_imagefile(upload_fifo);
 	if (upgrade_err) /* 0: legal image, 1: illegal image 2: new trx format validation failure */
 		goto err;
-#endif
 
 err:
 	nvram_set_int("upgrade_fw_status", FW_UPLOADING_ERROR);
@@ -7909,30 +8333,22 @@ do_upgrade_cgi(char *url, FILE *stream)
 
 	if (upgrade_err == 0)
 	{
-#ifdef RTCONFIG_DSL
-#ifdef RTCONFIG_RALINK
-		int ret_val_trunc;
-		ret_val_trunc = truncate_trx();
-		printf("truncate_trx ret=%d\n",ret_val_trunc);
-		if (ret_val_trunc)
-		{
-			int ret_val_comp;
+#if defined(RTCONFIG_DSL) && defined(RTCONFIG_RALINK)
+		int ret_val_comp;
 
-			do_upgrade_adsldrv();
-			ret_val_comp = compare_linux_image();
-			printf("compare_linux_image ret=%d\n",ret_val_comp);
-			if (ret_val_comp == 0)
-			{
-				// same trx
-				unlink("/tmp/linux.trx");
-			}
-			else
-			{
-				// different trx
-				// it will call rc_service automatically for firmware upgrading
-			}
+		do_upgrade_adsldrv();
+		ret_val_comp = compare_linux_image();
+		printf("compare_linux_image ret=%d\n",ret_val_comp);
+		if (ret_val_comp == 0)
+		{
+			// same trx
+			unlink("/tmp/linux.trx");
 		}
-#endif
+		else
+		{
+			// different trx
+			// it will call rc_service automatically for firmware upgrading
+		}
 #endif
 #if !defined(RTCONFIG_SMALL_FW_UPDATE)
 		if (!stop_upgrade_once){
@@ -9011,8 +9427,14 @@ static void GetPhyRate(FILE *stream)
 	struct remote_plc *plc = NULL;
 	int cnt, i;
 	int comma_need = 0;
+	int fromapp_flag = 0;
+
+	fromapp_flag = check_user_agent(user_agent);
 
 	cnt = get_connected_plc(&plc);
+
+	if (fromapp_flag != 0)
+		websWrite(stream, "{\"plc_PhyRate\":");
 
 	websWrite(stream, "[");
 	for (i = 0; i < cnt; i++) {
@@ -9025,6 +9447,9 @@ static void GetPhyRate(FILE *stream)
 	}
 	websWrite(stream, "]");
 
+	if (fromapp_flag != 0)
+		websWrite(stream, "}");
+
 	if (plc)
 		free(plc);
 }
@@ -9032,7 +9457,17 @@ static void GetPhyRate(FILE *stream)
 static void
 do_plc_cgi(char *url, FILE *stream)
 {
-	char *action_mode = websGetVar(stream, "action_mode", "");
+	struct json_object *root=NULL;
+
+	if(check_user_agent(user_agent) != 0){
+		decode_json_buffer(post_json_buf);
+		root = json_tokener_parse(post_json_buf);
+		if (!root) {
+			//return 0; /* Aicloud app can not use JSON format */
+		}
+	}
+
+	char *action_mode = get_cgi_json("action_mode", root);
 
 	dbg("%s: [%s]\n", __func__, action_mode);
 
@@ -9048,6 +9483,7 @@ do_plc_cgi(char *url, FILE *stream)
 	else if (!strcmp(action_mode, "GetPhyRate")) {
 		GetPhyRate(stream);
 	}
+	json_object_put(root);
 }
 #endif
 
@@ -9471,6 +9907,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char asus_token[32];
 	char *next_page=NULL;
 	int fromapp_flag = 0;
+	char *cloud_file=NULL;
 
 	fromapp_flag = check_user_agent(user_agent);
 
@@ -9565,8 +10002,13 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=Main_Password.asp\">\r\n"));
 			else if(next_page == NULL || strcmp(next_page, "") == 0 || strstr(next_page, "http") != NULL)
 				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=index.asp\">\r\n"));
-			else
-				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=%s\">\r\n"), next_page);
+			else{
+				if(strncmp(next_page, "cloud_sync.asp", strlen(next_page))==0){
+					cloud_file = websGetVar(wp, "cloud_file", "");
+					websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=%s?flag=%s\">\r\n"), next_page, cloud_file);
+				}else
+					websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=%s\">\r\n"), next_page);
+			}
 
 			websWrite(wp,"</HEAD></HTML>\n" );
 		}else{
@@ -9808,7 +10250,7 @@ struct mime_handler mime_handlers[] = {
 	{ "general.js|quick.js",  "text/javascript", no_cache_IE7, NULL, do_ej, do_auth },
 #endif //TRANSLATE_ON_FLY
 
-	{ "**.js",  "text/javascript", no_cache_IE7, NULL, do_ej, do_auth },
+	{ "**.js",  "text/javascript", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "**.cab", "text/txt", NULL, NULL, do_file, do_auth },
 	{ "**.CFG", "application/force-download", NULL, do_html_post_and_get, do_prf_file, do_auth },
 	{ "uploadIconFile.tar", "application/force-download", NULL, NULL, do_uploadIconFile_file, do_auth },
@@ -10126,15 +10568,119 @@ static int notify_rc_for_nas(char *cmd)
 	return 0;
 }
 
+int stor_dev_busy(const char *devname)
+{
+	int busy = 0;
+	FILE *fp = fopen( "/proc/diskstats", "r" );
+	char buf[128];
+	int major, minor;
+	char name[32];
+	unsigned long rio, rmerge, wio, wmerge;
+	unsigned long long rsect, wsect;
+	unsigned int ruse, wuse, running, use, aveq;
+
+	if (fp) {
+		while (fgets(buf, sizeof(buf), fp) != NULL) {
+			if (sscanf(buf, "%4d %7d %s %lu %lu %llu %u %lu %lu %llu %u %u %u %u\n", &major, &minor, name, &rio, &rmerge, &rsect, &ruse, &wio, &wmerge, &wsect, &wuse, &running, &use, &aveq) != 14)
+				break;
+
+			if (!strcmp(devname, name) && running) {
+				busy = 1;
+				break;
+			}
+		}
+
+		fclose(fp);
+	}
+
+	return busy;
+}
+
+int usb_port_stor_busy(const char *port_path)
+{
+	int busy = 0;
+	disk_info_t *disk_list, *disk_info;
+	partition_info_t *partition_info;
+	char d_port[16], *d_dot;
+
+	if (atoi(port_path) == -1)
+		return -1;
+
+	disk_list = read_disk_data();
+	if(disk_list == NULL) {
+		printf("Can't get any disk's information.\n");
+		return -1;
+	}
+
+	for (disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next) {
+		/* If hub port number is not specified in port_path,
+		 * don't compare it with hub port number in disk_info->port.
+		 */
+		strlcpy(d_port, disk_info->port, sizeof(d_port));
+		d_dot = strchr(d_port, '.');
+		if (!strchr(port_path, '.') && d_dot)
+			*d_dot = '\0';
+
+		if (strcmp(d_port, port_path))
+			continue;
+
+		for (partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next) {
+			if (partition_info->mount_point != NULL) {
+				if (stor_dev_busy(partition_info->device)) {
+					busy = 1;
+					break;
+				}
+			}
+		}
+	}
+	free_disk_data(&disk_list);
+
+	return busy;
+}
+
+int ej_usb_port_stor_act(int eid, webs_t wp, int argc, char **argv)
+{
+	int retval = 0;
+	disk_info_t *disks_info, *follow_disk;
+	int first = 1;
+
+	retval += websWrite(wp, "[");
+
+	disks_info = read_disk_data();
+	if (disks_info != NULL)
+	for (follow_disk = disks_info; follow_disk != NULL; follow_disk = follow_disk->next) {
+		if (first == 1)
+			first = 0;
+		else
+			retval += websWrite(wp, ", ");
+		retval += websWrite(wp, "\"%d\"", usb_port_stor_busy(follow_disk->port));
+	}
+
+	retval += websWrite(wp, "]");
+
+	return retval;
+}
+
 static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
+
 	int result;
-	char *disk_port = websGetVar(wp, "disk", "");
+	struct json_object *root=NULL;
+
+	if(check_user_agent(user_agent) != 0){
+		decode_json_buffer(post_json_buf);
+		root = json_tokener_parse(post_json_buf);
+	}
+
+	char *disk_port = get_cgi_json("disk", root);
 //	disk_info_t *disks_info = NULL, *follow_disk = NULL;
 //	int disk_num = 0;
 	int part_num = 0;
 	char *fn = "safely_remove_disk_error";
 
 	csprintf("disk_port = %s\n", disk_port);
+
+	if (usb_port_stor_busy(disk_port) == 1)
+		csprintf("disk_port %s is busy\n", disk_port);
 
 	if(!strcmp(disk_port, "all")){
 		result = eval("/sbin/ejusb", "-1", "0");
@@ -10145,6 +10691,7 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 
 	if (result != 0){
 		insert_hook_func(wp, fn, "alert_msg.Action9");
+		json_object_put(root);
 		return -1;
 	}
 
@@ -10172,6 +10719,7 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 
 	insert_hook_func(wp, "safely_remove_disk_success", "");
 
+	json_object_put(root);
 	return 0;
 }
 
@@ -11474,7 +12022,7 @@ int ej_apps_fsck_log(int eid, webs_t wp, int argc, char **argv)
 {
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
-	char file_name[32], d_port[16]/*, *d_dot*/;
+	char file_name[32], d_port[16], *d_dot;
 	char *port_path = websGetVar(wp, "diskmon_usbport", "-1");
 	int ret, all_disk;
 
@@ -11489,8 +12037,9 @@ int ej_apps_fsck_log(int eid, webs_t wp, int argc, char **argv)
 		 * don't compare it with hub port number in disk_info->port.
 		 */
 		strlcpy(d_port, disk_info->port, sizeof(d_port));
-		/*if (!strchr(port_path, '.') && d_dot)
-			*d_dot = '\0';*/
+		d_dot = strchr(d_port, '.');
+		if (!strchr(port_path, '.') && d_dot)
+			*d_dot = '\0';
 		if (!all_disk && strcmp(d_port, port_path))
 			continue;
 
@@ -11582,13 +12131,23 @@ int ej_apps_state_info(int eid, webs_t wp, int argc, char **argv){
 }
 
 int ej_apps_action(int eid, webs_t wp, int argc, char **argv){
-	char *apps_action = websGetVar(wp, "apps_action", "");
-	char *apps_name = websGetVar(wp, "apps_name", "");
-	char *apps_flag = websGetVar(wp, "apps_flag", "");
+	struct json_object *root=NULL;
+
+	if(check_user_agent(user_agent) != 0){
+		decode_json_buffer(post_json_buf);
+		root = json_tokener_parse(post_json_buf);
+		if (!root) {
+			//return 0; /* Aicloud app can not use JSON format */
+		}
+	}
+
+	char *apps_action = get_cgi_json("apps_action", root);
+	char *apps_name = get_cgi_json("apps_name", root);
+	char *apps_flag = get_cgi_json("apps_flag", root);
 	char command[128];
 
-	if(strlen(apps_action) <= 0)
-		return 0;
+	if(!apps_action || strlen(apps_action) <= 0)
+		goto SET_APPS_ACTION_FINISH;
 
 	nvram_set("apps_state_action", apps_action);
 
@@ -11596,7 +12155,7 @@ int ej_apps_action(int eid, webs_t wp, int argc, char **argv){
 
 	if(!strcmp(apps_action, "install")){
 		if(strlen(apps_name) <= 0 || strlen(apps_flag) <= 0)
-			return 0;
+			goto SET_APPS_ACTION_FINISH;
 
 		snprintf(command, sizeof(command), "start_apps_install %s %s", apps_name, apps_flag);
 	}
@@ -11608,28 +12167,28 @@ int ej_apps_action(int eid, webs_t wp, int argc, char **argv){
 	}
 	else if(!strcmp(apps_action, "upgrade")){
 		if(strlen(apps_name) <= 0)
-			return 0;
+			goto SET_APPS_ACTION_FINISH;
 
 		snprintf(command, sizeof(command), "start_apps_upgrade %s", apps_name);
 	}
 	else if(!strcmp(apps_action, "remove")){
 		if(strlen(apps_name) <= 0)
-			return 0;
+			goto SET_APPS_ACTION_FINISH;
 
 		snprintf(command, sizeof(command), "start_apps_remove %s", apps_name);
 	}
 	else if(!strcmp(apps_action, "enable")){
 		if(strlen(apps_name) <= 0 || strlen(apps_flag) <= 0)
-			return 0;
+			goto SET_APPS_ACTION_FINISH;
 
 		if(strcmp(apps_flag, "yes") && strcmp(apps_flag, "no"))
-			return 0;
+			goto SET_APPS_ACTION_FINISH;
 
 		snprintf(command, sizeof(command), "start_apps_enable %s %s", apps_name, apps_flag);
 	}
 	else if(!strcmp(apps_action, "switch")){
 		if(strlen(apps_name) <= 0 || strlen(apps_flag) <= 0)
-			return 0;
+			goto SET_APPS_ACTION_FINISH;
 
 		snprintf(command, sizeof(command), "start_apps_switch %s %s", apps_name, apps_flag);
 	}
@@ -11640,7 +12199,12 @@ int ej_apps_action(int eid, webs_t wp, int argc, char **argv){
 	if(strlen(command) > 0)
 		notify_rc(command);
 
-	return 0;
+	goto SET_APPS_ACTION_FINISH;
+
+SET_APPS_ACTION_FINISH:
+	json_object_put(root);
+ 	return 0;
+
 }
 
 #ifdef RTCONFIG_MEDIA_SERVER
@@ -14465,6 +15029,8 @@ struct ej_handler ej_handlers[] = {
 	{ "modify_sharedfolder", ej_modify_sharedfolder},	/* no ccc*/
 	{ "set_share_mode", ej_set_share_mode},
 	{ "initial_folder_var_file", ej_initial_folder_var_file},
+	{ "usb_port_stor_act", ej_usb_port_stor_act},
+	{ "get_usb_info", ej_get_usb_info},
 #ifdef RTCONFIG_DISK_MONITOR
 	{ "apps_fsck_log", ej_apps_fsck_log},
 #endif

@@ -33,6 +33,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <disk_io_tools.h>
+
 #define TIMEMACHINE_BACKUP_NAME	"Backups.backupdb"
 #define CNID_DIR_NAME		"CNID"
 #define AFP_CONFIG_PATH		"/tmp/netatalk"

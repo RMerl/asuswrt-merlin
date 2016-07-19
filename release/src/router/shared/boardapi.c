@@ -333,7 +333,9 @@ void get_gpio_values_once(int force)
 	led_gpio_table[LED_SIG1] = __get_gpio("led_sig1_gpio");
 	led_gpio_table[LED_SIG2] = __get_gpio("led_sig2_gpio");
 	led_gpio_table[LED_SIG3] = __get_gpio("led_sig3_gpio");
+#ifdef RT4GAC68U
 	led_gpio_table[LED_SIG4] = __get_gpio("led_sig4_gpio");
+#endif
 #endif
 
 #if defined(RTCONFIG_RTAC5300) || defined(RTCONFIG_RTAC5300R)
@@ -629,7 +631,7 @@ int led_control_atomic(int which, int mode)
 	return led_control(which, mode);
 }
 
-#ifdef RTCONFIG_INTERNAL_GOBI
+#ifdef RT4GAC55U
 void led_control_lte(int percent)
 {
 	if(percent >= 0)
@@ -664,7 +666,7 @@ void led_control_lte(int percent)
 		}
 	}
 }
-#endif	/* RTCONFIG_INTERNAL_GOBI */
+#endif	/* RT4GAC55U */
 
 
 extern uint32_t get_phy_status(uint32_t portmask);

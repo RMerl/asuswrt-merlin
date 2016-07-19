@@ -745,11 +745,11 @@ This agreement constitutes the entire agreement between you and ASUS with respec
    												<td><div class="formfontdesc" id="usbHint"><#AiCloud_maintext_note#></div></td> 
   										</tr>
 											<tr>
-   												<td><div class="formfontdesc" id="usbHint2"><#Learn_more#> : <a href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank" style="color:#FC0;text-decoration: underline; font-family:Lucida Console;">http://aicloud-faq.asuscomm.com/aicloud-faq/</a></div></td> 
+   												<td><div class="formfontdesc" id="usbHint2"><#Learn_more#> : <a href="http://www.asus.com/search/results.aspx?SearchKey=AiCloud&SearchType=FAQ&IsSupport=True&Page=1" target="_blank" style="color:#FC0;text-decoration: underline; font-family:Lucida Console;">GO</a></div></td> 
   										</tr>  
-  										<tr>
+  										<!--tr>
    												<td valign="top"><div id="cloud_movie" style="box-shadow: 2px 2px 15px #222;margin-top: 50px;width:400px;height:241px;margin-left:165px;background:url(images/movie.jpg) no-repeat center;cursor:pointer" onClick="window.open('http://www.youtube.com/watch?v=MgIAfG5ZhPs')"></div></td>
-  										</tr>  	   
+  										</tr-->  	   
   										<tr>
    												<td align="center" width="740px" height="60px">
 													<div id="gotonext">
@@ -777,11 +777,11 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 																	<li style="margin-top:-5px;">
 																 	<div id="accessMethod"></div>
 																 	</li>
-																 	<li style="margin-top:-5px;">
+																 	<!--li style="margin-top:-5px;">
 																	 <#Video_Find#> <a style="font-weight: bolder;text-decoration: underline;" href="http://www.youtube.com/asusrouters" target="_blank">GO</a>
-																	</li>
+																	</li-->
 																	<li style="margin-top:-5px;">
-																	 <#FAQ_Find#> <a style="font-weight: bolder;text-decoration: underline;" href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank">GO</a>
+																	 <#FAQ_Find#> <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asus.com/search/results.aspx?SearchKey=AiCloud&SearchType=FAQ&IsSupport=True&Page=1" target="_blank">GO</a>
 																	</li>
 																	<li style="margin-top:-5px;">
 																		<#NSlookup_help#>

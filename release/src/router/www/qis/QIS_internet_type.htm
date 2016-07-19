@@ -37,7 +37,7 @@ var contentM_height_orig = parent.document.getElementById("contentM").height;
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_type_head#>";
 
-	if('<% nvram_get("autodet_state"); %>' != "2" && '<% nvram_get("autodet_auxstate"); %>' != "6"){
+	if(!('<% nvram_get("autodet_state"); %>' == "6" || '<% nvram_get("autodet_auxstate"); %>' == "6")){ // no PPPoE.
 		document.getElementById("wd3").style.display = "";
 		document.getElementById("wd4").style.display = "";
 		document.getElementById("wd5").style.display = "";
@@ -324,6 +324,14 @@ function ISP_Profile_Selection(isp){
                 document.getElementById("wan_voip_port3_x").style.display = "none";
                 document.applyForm.switch_wantag.value = "vodafone";
         }
+        else if(isp == "hinet"){
+                document.getElementById("wan_iptv_x").style.display = "";
+                document.getElementById("wan_voip_x").style.display = "none";
+                document.getElementById("wan_internet_x").style.display = "none";
+                document.getElementById("wan_iptv_port4_x").style.display = "none";
+                document.getElementById("wan_voip_port3_x").style.display = "none";
+                document.applyForm.switch_wantag.value = "hinet";
+        }
 	else if(isp == "manual"){
 		document.getElementById("wan_iptv_x").style.display = "";
 		document.getElementById("wan_voip_x").style.display = "";
@@ -331,17 +339,7 @@ function ISP_Profile_Selection(isp){
 		document.getElementById("wan_iptv_port4_x").style.display = "";
 		document.getElementById("wan_voip_port3_x").style.display = "";
 		document.applyForm.switch_wantag.value = "manual";
-	}	
-
-        if(isp == "vodafone" || isp == "meo")
-                document.getElementById("iptv_title").innerHTML = "Bridge Port: ";
-        else
-                document.getElementById("iptv_title").innerHTML = "IPTV STB Port: ";
-
-        if(isp == "vodafone")
-                document.getElementById("voip_title").innerHTML = "IPTV STB Port: ";
-        else
-                document.getElementById("voip_title").innerHTML = "VoIP Port: ";
+	}
 }
 
 function set_ISP_profile(){
@@ -444,7 +442,15 @@ function set_ISP_profile(){
 	        document.applyForm.switch_wan2tagid.value = "105";
 	        document.applyForm.switch_wan2prio.value = "1";
         }
-
+	else if(document.applyForm.switch_wantag.value == "hinet") {
+                document.applyForm.switch_stb_x.value = "4";
+                document.applyForm.switch_wan0tagid.value = "";
+                document.applyForm.switch_wan0prio.value = "0";
+                document.applyForm.switch_wan1tagid.value = "";
+                document.applyForm.switch_wan1prio.value = "0";
+                document.applyForm.switch_wan2tagid.value = "0";
+                document.applyForm.switch_wan2prio.value = "0";
+        }
 		if(document.applyForm.switch_wantag.value == "maxis_fiber_sp_iptv" || 
 		   document.applyForm.switch_wantag.value == "maxis_fiber_iptv" ||
 		   document.applyForm.switch_wantag.value == "meo" ||
@@ -680,6 +686,7 @@ function detect_if_wan_plug(flag){
 				<!--option value="movistar" <% nvram_match("switch_wantag", "movistar", "selected"); %>>Movistar</option-->
 				<option id="meoOption" value="meo" <% nvram_match("switch_wantag", "meo", "selected"); %>>Meo</option>
 				<option id="vodafoneOption" value="vodafone" <% nvram_match("switch_wantag", "vodafone", "selected"); %>>Vodafone</option>
+				<option value="hinet" <% nvram_match( "switch_wantag", "hinet", "selected"); %>>Hinet MOD</option>
 <!--					
 				<option value="maxis_fiber_iptv" <% nvram_match("switch_wantag", "maxis_fiber_iptv", "selected"); %>>Maxis-Fiber-IPTV</option>
 				<option value="maxis_fiber_sp_iptv" <% nvram_match("switch_wantag", "maxis_fiber_sp_iptv", "selected"); %>>Maxis-Fiber-Special-IPTV</option>
@@ -773,6 +780,8 @@ function detect_if_wan_plug(flag){
                         <div id="vodafoneDiv"class="row">
                                 <a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='vodafone';mySel(this, false);" myselected="false">Vodafone</a>
                         </div>
+                        <div class="row">
+                                <a class="iuiA_unsel" onclick="document.applyForm.switch_wantag.value='hinet';mySel(this, false);" myselected="false">Hinet MOD</a>
 			<div class="row_end">
 				<a class="iuiA_unsel_check" onclick="document.applyForm.switch_wantag.value='manual';mySel(this, false);" myselected="false"><#Manual_Setting_btn#></a>
 				<span class="sel_check" onclick='showHidden_slide("unify_input", ["field_mobile_unify"]);'></span>

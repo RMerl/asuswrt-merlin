@@ -39,6 +39,10 @@
 #include "sysdeps.h"
 #include <linux/version.h>
 
+#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_MODEM)
+#include <usb_info.h>
+#endif
+
 #define IFUP (IFF_UP | IFF_RUNNING | IFF_BROADCAST | IFF_MULTICAST)
 
 #define USBCORE_MOD	"usbcore"
@@ -81,6 +85,9 @@ extern char wan6face[];
 /* services.c */
 extern int g_reboot;
 extern int wan_phyid;
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1) || defined(RTCONFIG_BRCM_NAND_JFFS2)
+extern int jffs2_fail;
+#endif
 
 #ifdef RTCONFIG_BCMARM
 #ifndef LINUX_KERNEL_VERSION
@@ -204,10 +211,25 @@ extern int asus_ate_command(const char *command, const char *value, const char *
 extern int ate_dev_status(void);
 extern int isValidMacAddr(const char* mac);
 extern int isValidCountryCode(const char *Ccode);
-extern int isValidRegrev(char *regrev);
+extern int isValidRegrev(const char *regrev);
 extern int isValidSN(const char *sn);
+extern int isNumber(const char *num);
 extern int pincheck(const char *a);
 extern int isValidChannel(int is_2G, char *channel);
+extern int setPSK(const char *psk);
+extern int getPSK(void);
+#if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
+extern int start_envrams(void);
+extern int chk_envrams_proc(void);
+#endif
+
+/* tcode_rc.c */
+#ifdef RTCONFIG_TCODE
+extern int config_tcode(int type);
+#ifdef RTAC68U
+extern unsigned int hardware_flag();
+#endif
+#endif
 
 /* shared/boardapi.c */
 extern int wanport_ctrl(int ctrl);
@@ -215,6 +237,7 @@ extern int lanport_ctrl(int ctrl);
 extern int wanport_status(int wan_unit);
 
 /* board API under sysdeps directory */
+extern void set_factory_mode();
 extern void ate_commit_bootlog(char *err_code);
 extern int setAllLedOn(void);
 extern int setAllLedOff(void);
@@ -272,6 +295,9 @@ extern int setWlOffLed(void);
 extern int setWlOffLed(void);
 #error
 #endif
+#ifndef CONFIG_BCMWL5
+extern int IS_ATE_FACTORY_MODE(void);
+#endif
 
 /* board API under sysdeps/ralink/ralink.c */
 #ifdef RTCONFIG_RALINK
@@ -325,6 +351,74 @@ extern u_int ieee80211_mhz2ieee(u_int freq);
 #endif
 extern int country_to_code(char *ctry, int band);
 
+/* board API under sysdeps/init-broadcom.c sysdeps/broadcom sysdeps/tcode_brcm.c */
+#ifdef CONFIG_BCMWL5
+extern void wl_vif_hwaddr_set(const char *name);
+extern int wlconf(char *ifname, int unit, int subunit);
+extern int wl_send_dif_event(const char *ifname, uint32 event);
+extern int check_wl_client(char *ifname, int unit, int subunit);
+extern void wlconf_post(const char *ifname);
+extern void wlconf_pre();
+extern void init_wl_compact(void);
+extern void check_afterburner(void);
+extern void init_others(void);
+extern int set_wltxpower();
+extern int is_ure(int unit);
+#ifdef RTCONFIG_BCMWL6
+extern void led_bh_prep(int post);
+extern int wl_check_chanspec();
+extern void wl_check_5g_band_group();
+#if defined(RTCONFIG_BCMARM) && defined(RTCONFIG_PROXYSTA)
+extern void reset_psr_hwaddr();
+#endif
+#endif
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
+extern void ldo_patch();
+extern int wl_channel_valid(char *wif, int channel);
+extern int wl_subband(char *wif, int idx);
+#endif
+extern void wl_dfs_radarthrs_config(char *ifname, int unit);
+#ifdef RTCONFIG_BCM_7114
+extern int wlcscan_core_escan(char *ofile, char *wif);
+#endif
+extern int setRegrev_2G(const char *regrev);
+extern int setRegrev_5G(const char *regrev);
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
+extern int setMAC_5G_2(const char *mac);
+extern int getMAC_5G_2(void);
+extern int Get_ChannelList_5G_2(void);
+#endif
+extern int setCommit(void);
+extern int setWaitTime(const char *wtime);
+extern int setWiFi2G(const char *act);
+extern int setWiFi5G(const char *act);
+extern int getCountryCode_5G(void);
+extern int getRegrev_2G(void);
+extern int getRegrev_5G(void);
+extern int getSSID(int unit);
+extern void check_wl_country();
+extern void wl_dfs_support(int unit);
+#if defined(RTAC3200) || defined(RTAC68U) || defined(RTAC5300) || defined(RTAC5300R) || defined(RTAC88U) || defined(RTAC3100)
+extern void wl_disband5grp();
+#endif
+#ifdef RTCONFIG_BCMARM
+extern int setWanLedMode1(void);
+extern int setWanLedMode2(void);
+extern void tweak_smp_affinity(int enable_samba);
+#endif
+#ifdef WLCLMLOAD
+extern int download_clmblob_files();
+#endif
+#ifdef RTAC68U
+extern void check_cfe_ac68u();
+extern void update_cfe();
+#endif
+#ifdef RTAC3200
+extern void update_cfe_ac3200();
+extern void bsd_defaults(void);
+#endif
+#endif
+
 /* sysdeps/dsl-*.c */
 extern int check_tc_firmware_crc(void);
 extern int truncate_trx(void);
@@ -342,6 +436,10 @@ extern void wl_defaults_wps(void);
 extern void restore_defaults_module(char *prefix);
 extern void clean_modem_state(int flag);
 extern void clean_vlan_ifnames(void);
+extern unsigned int num_of_mssid_support(unsigned int unit);
+#ifdef RTCONFIG_BCMFA
+extern void fa_nvram_adjust();
+#endif
 
 // interface.c
 extern int _ifconfig(const char *name, int flags, const char *addr, const char *netmask, const char *dstaddr, int mtu);
@@ -527,6 +625,12 @@ extern int start_iQos(void);
 extern void stop_iQos(void);
 extern void del_iQosRules(void);
 extern int add_iQosRules(char *pcWANIF);
+#ifdef CONFIG_BCMWL5
+extern void del_EbtablesRules(void);
+extern void add_EbtablesRules(void);
+#endif
+extern void ForceDisableWLan_bw(void);
+extern int check_wl_guest_bw_enable();
 
 /* rtstate.c */
 extern void add_rc_support(char *feature);
@@ -594,6 +698,11 @@ static inline void start_jffs2(void) { }
 static inline void stop_jffs2(int stop) { }
 #endif
 
+// alert_mail.c
+#ifdef RTCONFIG_PUSH_EMAIL
+extern void alert_mail_service();
+#endif
+
 // watchdog.c
 extern void led_control_normal(void);
 extern void erase_nvram(void);
@@ -601,10 +710,15 @@ extern int init_toggle(void);
 extern void btn_check(void);
 extern int watchdog_main(int argc, char *argv[]);
 extern int watchdog02_main(int argc, char *argv[]);
+#ifdef SW_DEVLED
 extern int sw_devled_main(int argc, char *argv[]);
+#endif
 extern int wdg_monitor_main(int argc, char *argv[]);
 extern void init_wllc(void);
 extern void rssi_check_unit(int unit);
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
+extern void led_table_ctrl(int on_off);
+#endif
 
 // usbled.c
 extern int usbled_main(int argc, char *argv[]);
@@ -630,6 +744,7 @@ extern int ntp_main(int argc, char *argv[]);
 extern int ots_main(int argc, char *argv[]);
 extern void stop_ots(void);
 extern int start_ots(void);
+extern int rand_seed_by_time(void);
 
 // common.c
 extern void usage_exit(const char *cmd, const char *help) __attribute__ ((noreturn));
@@ -658,6 +773,7 @@ extern void restart_lfp(void);
 extern int get_meminfo_item(const char *name);
 extern void setup_timezone(void);
 extern int is_valid_hostname(const char *name);
+extern int is_valid_domainname(const char *name);
 extern void setup_ct_timeout(int connflag);
 extern void setup_udp_timeout(int connflag);
 extern void setup_ftp_conntrack(int port);
@@ -679,8 +795,12 @@ extern void hotplug_usb(void);
 extern void start_usb(void);
 extern void remove_usb_module(void);
 extern void stop_usb_program(int mode);
+#ifndef RTCONFIG_ERPTEST
+extern void stop_usb();
+#else
 extern void restart_usb(int f_stop);
 extern void stop_usb(int f_force);
+#endif
 #ifdef RTCONFIG_USB_PRINTER
 extern void start_lpd();
 extern void stop_lpd();
@@ -860,9 +980,22 @@ extern void start_ipv6(void);
 extern void stop_ipv6(void);
 extern void ipv6_sysconf(const char *ifname, const char *name, int value);
 extern int ipv6_getconf(const char *ifname, const char *name);
+#ifdef RTCONFIG_DUALWAN
+extern void restart_dnsmasq_ipv6();
+#endif
 #endif
 extern int wps_band_radio_off(int wps_band);
 #ifdef CONFIG_BCMWL5
+#ifdef RTCONFIG_HSPOT
+extern void stop_hspotap(void);
+extern int start_hspotap(void);
+#endif
+extern void start_igmp_proxy(void);
+extern void stop_igmp_proxy(void);
+#if defined(BCM_BSD)
+extern int start_bsd(void);
+extern void stop_bsd(void);
+#endif
 #ifdef BCM_ASPMD
 extern int start_aspmd(void);
 extern int stop_aspmd(void);
@@ -871,6 +1004,9 @@ extern int start_eapd(void);
 extern void stop_eapd(void);
 extern int start_nas(void);
 extern void stop_nas(void);
+#ifdef RTCONFIG_BCMWL6
+extern void stop_acsd(void);
+extern int start_acsd();
 extern void set_acs_ifnames();
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 extern int stop_psta_monitor();
@@ -894,7 +1030,10 @@ extern void stop_cnid_metad(void);
 extern int start_avahi_daemon(void);
 extern void stop_avahi_daemon(void);
 #endif
-
+#ifdef RTCONFIG_QUAGGA
+extern void stop_quagga(void);
+extern int start_quagga(void);
+#endif
 #if defined(RTCONFIG_MDNS)
 extern int generate_mdns_config(void);
 extern int generate_afpd_service_config(void);
@@ -904,7 +1043,9 @@ extern int start_mdns(void);
 extern void stop_mdns(void);
 extern void restart_mdns(void);
 #endif
-
+#ifdef RTCONFIG_DUALWAN
+extern int restart_dualwan(void);
+#endif
 #ifdef __CONFIG_NORTON__
 extern int start_norton(void);
 extern int stop_norton(void);
@@ -956,6 +1097,35 @@ extern int bwdpi_wred_alive_main(int argc, char **argv);
 extern int show_wrs_main(int argc, char **argv);
 extern int rsasign_sig_check_main(int argc, char *argv[]);
 extern int bwdpi_db_10_main(int argc, char **argv);
+extern void stop_bwdpi_check();
+extern void start_bwdpi_check();
+extern void stop_bwdpi_wred_alive();
+extern void extract_data(char *path, FILE *fp);
+extern int merge_log(char *path, int len);
+extern void stop_dpi_engine_service(int forced);
+extern void start_dpi_engine_service();
+extern void setup_wrs_conf();
+extern void auto_sig_check();
+extern void sqlite_db_check();
+extern int tm_qos_main(char *cmd);
+extern int qosd_main(char *cmd);
+extern int wrs_main(char *cmd);
+extern int stat_main(char *mode, char *name, char *dura, char *date);
+extern int clear_user_domain(void);
+extern int web_history_main(char *MAC, char *page);
+extern int wrs_app_main(char *cmd);
+extern int set_cc(char *cmd);
+extern int set_vp(char *cmd);
+extern int get_vp(char *cmd);
+extern int data_collect_main(char *cmd, char *path);
+extern int device_main(char *MAC);
+extern int device_info_main(char *MAC);
+extern int wrs_url_main();
+extern int rewrite_main(char *path1, char *path2, char *path3);
+extern int check_filesize_main(char *path, char *size);
+extern int extract_data_main(char *path);
+extern int get_anomaly_main(char *cmd);
+extern int get_app_patrol_main();
 #endif
 
 // hour_monitor.c
@@ -1033,8 +1203,13 @@ enum BTNSETUP_STATE
 	BTNSETUP_FINISH
 };
 #endif
-extern void start_nat_rules(void);
-extern void stop_nat_rules(void);
+#ifdef RTCONFIG_DHDAP
+extern int start_dhd_monitor(void);
+extern int stop_dhd_monitor(void);
+#endif
+#endif
+extern int start_nat_rules(void);
+extern int stop_nat_rules(void);
 extern void stop_syslogd(void);
 extern void stop_klogd(void);
 extern int start_syslogd(void);
@@ -1044,6 +1219,14 @@ extern void start_dfs(void);
 extern void handle_notifications(void);
 extern void stop_watchdog(void);
 extern int start_watchdog(void);
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+extern void stop_wdg_monitor(void);
+extern int start_wdg_monitor(void);
+#endif
+#ifdef SW_DEVLED
+extern void stop_sw_devled(void);
+extern int start_sw_devled(void);
+#endif
 extern int get_apps_name(const char *string);
 extern int run_app_script(const char *pkg_name, const char *pkg_action);
 extern void set_hostname(void);
@@ -1060,6 +1243,7 @@ extern void stop_wtfast(void);
 #endif
 extern void start_hotplug2(void);
 extern void stop_services(void);
+extern void stop_services_mfg(void);
 extern void stop_logger(void);
 extern void setup_passwd(void);
 extern void create_passwd(void);
@@ -1156,6 +1340,7 @@ extern char *cfe_nvram_safe_get(const char *name);
 extern char *cfe_nvram_get_raw(const char *name);
 extern char *cfe_nvram_safe_get_raw(const char *name);
 extern int cfe_nvram_set(const char *name);
+extern int refresh_cfe_nvram();
 extern int factory_debug();
 #if !(defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM))
 extern char *ATE_BRCM_PREFIX(void);
@@ -1169,7 +1354,7 @@ void config_lacp(void);
 #endif
 
 #if defined(CONFIG_BCMWL5) && defined(RTCONFIG_DUALWAN)
-void dualwan_control(void);
+int dualwan_control(int argc, char *argv[]);
 #endif
 
 #ifdef RTCONFIG_PORT_BASED_VLAN
@@ -1186,5 +1371,9 @@ extern void set_vlan_ifnames(int index, int wlmap, char *subnet_name, char *vlan
 extern void stop_vlan_wl_ifnames(void);
 extern void start_vlan_wl(void);
 #endif
+
+// timemachine.c
+extern void find_backup_mac_date(char *mpname);
+extern void write_timemachine_tokeninfo(char *mpname);
 
 #endif	/* __RC_H__ */

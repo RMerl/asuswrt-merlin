@@ -179,5 +179,5 @@ ifeq ($(RTCONFIG_GETREALIP),y)
 	install -m 0755 apps_scripts/getrealip.sh $(INSTALLDIR)/usr/sbin/getrealip.sh
 endif
 
-	install -m 0755 webs_scripts/ddns-start.sh $(INSTALLDIR)/usr/sbin
+	install -m 0755 webs_scripts/GoogleDNS_Update.sh $(INSTALLDIR)/usr/sbin
 

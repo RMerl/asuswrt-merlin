@@ -1582,3 +1582,22 @@ void usbi_log(struct libusb_context *ctx, enum usbi_log_level level,
 	fprintf(stream, "\n");
 }
 
+/** \ingroup misc
+ * Returns a constant NULL-terminated string with the ASCII name of a libusb
+ * error or transfer status code. The caller must not free() the returned
+ * string.
+ *
+ * \param error_code The \ref libusb_error or libusb_transfer_status code to
+ * return the name of.
+ * \returns The error name, or the string **UNKNOWN** if the value of
+ * error_code is not a known error / status code.
+ */
+API_EXPORTED const char * libusb_error_name(int error_code)
+{
+	switch (error_code) {
+	case 0:
+		return "LIBUSB_SUCCESS / LIBUSB_TRANSFER_COMPLETED";
+	default:
+		return "**UNKNOWN**";
+	}
+}

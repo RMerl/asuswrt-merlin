@@ -949,6 +949,28 @@ function change_apn_mode(){
 					</tr>
 				</table>	
 	
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px">
+				<thead>
+				<tr>
+					<td colspan="2"><#PPPConnection_x_HostNameForISP_sectionname#></td>
+				</tr>
+				</thead>
+				<tr>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#Extend_TTL_Value#></a></th>
+						<td>
+							<input type="radio" name="ttl_inc_enable" class="input" value="1" <% nvram_match("ttl_inc_enable", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="ttl_inc_enable" class="input" value="0" <% nvram_match("ttl_inc_enable", "0", "checked"); %>><#checkbox_No#>
+						</td>
+				</tr>
+				<tr>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#Spoof_TTL_Value#></a></th>
+						<td>
+							<input type="radio" name="ttl_spoof_enable" class="input" value="1" <% nvram_match("ttl_spoof_enable", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="ttl_spoof_enable" class="input" value="0" <% nvram_match("ttl_spoof_enable", "0", "checked"); %>><#checkbox_No#>
+						</td>
+				</tr>
+				</table>
+
 				<div class="apply_gen">
 					<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 				</div>

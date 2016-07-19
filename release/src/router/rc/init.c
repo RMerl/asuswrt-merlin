@@ -27,8 +27,6 @@
 #include <sys/stat.h>
 #include <sys/sysinfo.h>
 #endif
-#include <wlutils.h>
-#include <bcmdevs.h>
 
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
@@ -130,9 +128,6 @@ static char *defenv[] = {
 extern struct nvram_tuple router_defaults[];
 extern struct nvram_tuple router_state_defaults[];
 extern int set_tcode_misc();
-#ifdef WLCLMLOAD
-int download_clmblob_files();
-#endif
 
 unsigned int num_of_mssid_support(unsigned int unit)
 {
@@ -317,7 +312,7 @@ misc_ioctrl(void)
 	char buf[16];
 
 #ifdef RTAC68U
-	if (strcmp(get_productid(), "RT-AC66U V2"))
+	if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		return;
 #endif
 
@@ -438,6 +433,13 @@ wl_defaults(void)
 				nvram_set(strcat_r(prefix, "unit", tmp), tmp2);
 			}
 
+			if (!nvram_get(strcat_r(prefix, "bw_enabled", tmp)))
+			{
+				nvram_set(strcat_r(prefix, "bw_enabled", tmp), "0");
+				nvram_set(strcat_r(prefix, "bw_dl", tmp), "");
+				nvram_set(strcat_r(prefix, "bw_ul", tmp), "");
+			}
+			
 			if (!nvram_get(strcat_r(prefix, "ssid", tmp))) {
 				pssid = nvram_default_get(strcat_r(pprefix, "ssid", tmp));
 				if (strlen(pssid))
@@ -644,19 +646,16 @@ restore_defaults_wifi(int all)
 		sprintf((char *) ssid, "%s%s", ssidbase, unit ? (unit == 2 ? "_5G-2" : "_5G") : "_2G");
 #endif
 		nvram_set(strcat_r(prefix, "ssid", tmp), (char *) ssid);
-#if defined(RTCONFIG_NEWSSID_REV2)
-		if (!strlen(nvram_safe_get("wifi_psk"))) {
+
+		if (!strlen(nvram_safe_get("wifi_psk")) || !nvram_contains_word("rc_support", "defpsk")) {
 			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "open");
 			nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
 			nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
 		} else {
-#endif
-		nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
-		nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
-		nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
-#if defined(RTCONFIG_NEWSSID_REV2)
+			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
+			nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+			nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
 		}
-#endif
 
 		if (all)
 		for (subunit = 1; subunit < max_mssid+1; subunit++) {
@@ -670,19 +669,16 @@ restore_defaults_wifi(int all)
 			if (subunit > 1)
 				sprintf((char *) ssid, "%s%d", (char *) ssid, subunit);
 			nvram_set(strcat_r(prefix, "ssid", tmp), (char *) ssid);
-#if defined(RTCONFIG_NEWSSID_REV2)
-			if (!strlen(nvram_safe_get("wifi_psk"))) {
+
+			if (!strlen(nvram_safe_get("wifi_psk")) || !nvram_contains_word("rc_support", "defpsk")) {
 				nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "open");
 				nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
 				nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
 			} else {
-#endif
-			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
-			nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
-			nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
-#if defined(RTCONFIG_NEWSSID_REV2)
+				nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
+				nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+				nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
 			}
-#endif
 		}
 
 		unit++;
@@ -774,8 +770,6 @@ wan_defaults(void)
 		}
 	}
 #endif
-	if(nvram_get_int("ATEMODE") != 0)
-		logmessage("ATE", "not valid user mode");
 
 	nvram_unset("wps_enable_old");
 }
@@ -997,11 +991,11 @@ convert_defaults()
 void
 misc_defaults(int restore_defaults)
 {
+#ifdef RTCONFIG_USB
 	char prefix[32];
 	int i;
 
 	// default for USB state control variables. {
-#ifdef RTCONFIG_USB
 	for(i = 1; i <= MAX_USB_PORT; ++i) { // MAX USB port number is 3.
 		snprintf(prefix, sizeof(prefix), "usb_led%d", i);
 		nvram_unset(prefix);
@@ -1009,20 +1003,27 @@ misc_defaults(int restore_defaults)
 
 	/* Unset all usb_path related nvram variables, e.g. usb_path1, usb_path2.4.3, usb_path_. */
 	char buf[MAX_NVRAM_SPACE];
-	char *name, *p;
+	char *name, *p, w;
 
 	nvram_getall(buf, sizeof(buf));
-	for (name = buf; *name; name += strlen(name) + 1) {
-		if (strncmp(name, "usb_path", 8))
+	for(name = buf; *name; name += strlen(name)+1){
+		if(strncmp(name, "usb_path", 8))
 			continue;
 
-		if (strstr(name, "_diskmon"))
+		if(strstr(name, "_diskmon"))
 			continue;
 
-		if ((p = strchr(name, '=')) != NULL)
+		if((p = strchr(name, '=')) != NULL){
+			w = *p;
 			*p = '\0';
+		}
+		else
+			w = -1;
 
 		nvram_unset(name);
+
+		if(w != -1)
+			*p = w;
 	}
 
 #ifdef RTCONFIG_USB_MODEM
@@ -1069,6 +1070,7 @@ misc_defaults(int restore_defaults)
 #ifdef RTCONFIG_BCMARM
 #ifdef RTAC56U
 		case MODEL_RTAC56U:
+			nvram_set("ATEMODE", "0");
 			if(chk_ate_ccode())
 				fix_ate_ccode();
 #endif
@@ -1195,6 +1197,9 @@ misc_defaults(int restore_defaults)
 	if (restore_defaults)
 	{
 		nvram_set("jffs2_clean_fs", "1");
+#if defined(RTCONFIG_UBIFS)
+		nvram_set("ubifs_clean_fs", "1");
+#endif
 #ifdef RTCONFIG_QTN
 		nvram_set("qtn_restore_defaults", "1");
 #endif
@@ -1417,67 +1422,6 @@ restore_defaults(void)
 
 	misc_defaults(restore_defaults);
 }
-
-#ifdef WLCLMLOAD
-/* clm_blob files will be installed in /brcm/clm/<chipnum><extra_id>.clm */
-/* wl -i <ethx> <blobfilename> will be used to download */
-int download_clmblob_files()
-{
-	int i = 0;
-	char ifname[16] = {0};
-	wlc_rev_info_t revinfo;
-	int err;
-	const char *fmt;
-	char chn[8];
-	int chnlen=8;
-	uint chipid;
-	char blob_fname[60];
-
-	for (i = 1; i <= DEV_NUMIFS; i++) {
-		snprintf(ifname, sizeof(ifname), "eth%d", i);
-		if (!wl_probe(ifname)) {
-			memset(&revinfo, 0, sizeof(revinfo));
-			if ((err = wl_ioctl(ifname, WLC_GET_REVINFO, &revinfo, sizeof(revinfo))) < 0) {
-				printf("\n*** BEFORE-CLMLOAD %s WLC_GET_REVINFO err=%d ", ifname, err);
-			}
-			else {
-				printf("\n*** BEFORE-CLMLOAD %s - chipnum = 0x%x (%d)  ", ifname, revinfo.chipnum, revinfo.chipnum);
-				chipid = revinfo.chipnum;
-
-				/* Use same 4366 blob for 43664 and 4365 */
-				if (chipid == BCM43664_CHIP_ID || chipid == BCM4365_CHIP_ID)
-					chipid = BCM4366_CHIP_ID;
-
-				/* blob filename based on chipid */
-				fmt = ((chipid > 0xa000) || (chipid < 0x4000)) ? "%d" : "%x";
-				snprintf(chn, chnlen, fmt, chipid);
-
-				memset(&(blob_fname[0]), 0, sizeof(blob_fname));
-				if (chipid == BCM4366_CHIP_ID) {
-					sprintf(blob_fname, "%s%s_access.clm_blob", "./brcm/clm/",chn);
-					printf("\n Download %s to %s ......", blob_fname, ifname);
-					eval("wl", "-i", ifname, "clmload", blob_fname);
-				}
-				else if (chipid == BCM43602_CHIP_ID) {
-					sprintf(blob_fname, "%s%sa1_access.clm_blob", "./brcm/clm/",chn);
-					printf("\n Download %s to %s ......", blob_fname, ifname);
-					eval("wl", "-i", ifname, "clmload", blob_fname);
-				}
-				else {
-					sprintf(blob_fname, "%srouter.clm_blob", "./brcm/clm/");
-					printf("\n Download %s to %s ......", blob_fname, ifname);
-					eval("wl", "-i", ifname, "clmload", blob_fname);
-					if (revinfo.phytype == WLC_PHY_TYPE_AC) {
-						printf("\n *** Is PHY_TYPE_AC %d - set vhtmode 1", revinfo.phytype);
-						eval("wl", "-i", ifname, "vhtmode", "1");
-					}
-				}
-			}
-		}
-	} /* for */
-	return (0);
-}
-#endif /* WLCLMLOAD */
 
 /* Set terminal settings to reasonable defaults */
 static void set_term(int fd)
@@ -3437,8 +3381,7 @@ int init_nvram(void)
 		nvram_set("sb/1/mcs2gpo5", "0x8866");
 		nvram_set("sb/1/mcs2gpo6", "0x4422");
 		nvram_set("sb/1/mcs2gpo7", "0x8866");
-		if (model == MODEL_RTN12VP)
-			add_rc_support("update");
+		add_rc_support("update");
 		if (model == MODEL_RTN12D1) {
 			if (nvram_match("regulation_domain", "US") && nvram_match("sb/1/regrev", "0")) {
 				nvram_set("sb/1/regrev", "2");
@@ -3973,7 +3916,7 @@ int init_nvram(void)
 			int ewan_dot1q = nvram_get_int("ewan_dot1q");	//Andy Chiu, 2015/09/08
 			int ewan_vid = nvram_get_int("ewan_vid");		//Andy Chiu, 2015/09/08
 			char vlanif[16];
-			if(ewan_dot1q && ewan_vid> 0 && !(ewan_vid >= 100 && ewan_vid<= 107))
+			if(ewan_dot1q && ewan_vid> 0 && !(ewan_vid >= DSL_WAN_VID && ewan_vid<= (DSL_WAN_VID + 7)))
 				sprintf(vlanif, "vlan%d", ewan_vid);
 			else
 				strcpy(vlanif, "vlan4");
@@ -4283,54 +4226,80 @@ int init_nvram(void)
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
 #endif
 
-		if (strcmp(get_productid(), "RT-AC66U V2"))
-		nvram_set_int("led_5g_gpio", 6|GPIO_ACTIVE_LOW);// 4360's fake led 5g
+#ifdef RT4GAC68U
+		nvram_set_int("led_lan_gpio", 10|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_3g_gpio", 1|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_lte_gpio", 2|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_sig1_gpio", 4|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_sig2_gpio", 5|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_sig3_gpio", 8|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_sig4_gpio", 6|GPIO_ACTIVE_LOW);
+#else
+		if(strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+			nvram_set_int("led_5g_gpio", 6|GPIO_ACTIVE_LOW);// 4360's fake led 5g
 #ifdef RTCONFIG_LED_BTN
-		if (strcmp(get_productid(), "RT-AC66U V2"))
-		nvram_set_int("btn_led_gpio", 5);		// active high
+		if(strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+			nvram_set_int("btn_led_gpio", 5);		// active high
 #endif
+#ifdef RTCONFIG_TURBO
+		if(strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+			nvram_set_int("led_turbo_gpio", 4|GPIO_ACTIVE_LOW);
+#endif
+#endif
+
 		nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), "RT-AC66U V2"))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		nvram_set_int("led_usb_gpio", 0|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), "RT-AC66U V2"))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		nvram_set_int("led_pwr_gpio", 3|GPIO_ACTIVE_LOW);
 		else
 		nvram_set_int("led_pwr_gpio", 0|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), "RT-AC66U V2"))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		nvram_set_int("led_wps_gpio", 3|GPIO_ACTIVE_LOW);
 		else
 		nvram_set_int("led_wps_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_rst_gpio", 11|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), "RT-AC66U V2"))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		nvram_set_int("led_usb3_gpio", 14|GPIO_ACTIVE_LOW);
 #ifdef RTCONFIG_WIFI_TOG_BTN
-		if (strcmp(get_productid(), "RT-AC66U V2"))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		nvram_set_int("btn_wltog_gpio", 15|GPIO_ACTIVE_LOW);
 #endif
-#ifdef RTCONFIG_TURBO
-		if (strcmp(get_productid(), "RT-AC66U V2"))
-		nvram_set_int("led_turbo_gpio", 4|GPIO_ACTIVE_LOW);
-#endif
-		if (!strcmp(get_productid(), "RT-AC66U V2"))
+		if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		nvram_set_int("led_wan_gpio", 5);
 
 #ifdef RTCONFIG_XHCIMODE
 		nvram_set("xhci_ports", "1-1");
+#ifdef RT4GAC68U
+		nvram_set("ehci_ports", "2-1 2-2.2 2-2.1");
+		nvram_set("ohci_ports", "3-1 3-2.2 3-2.1");
+#else
 		nvram_set("ehci_ports", "2-1 2-2");
 		nvram_set("ohci_ports", "3-1 3-2");
-#else
+#endif
+#else // RTCONFIG_XHCIMODE
 		if (nvram_get_int("usb_usb3") == 1) {
 			nvram_set("xhci_ports", "1-1");
+#ifdef RT4GAC68U
+			nvram_set("ehci_ports", "2-1 2-2.2 2-2.1");
+			nvram_set("ohci_ports", "3-1 3-2.2 3-2.1");
+#else
 			nvram_set("ehci_ports", "2-1 2-2");
 			nvram_set("ohci_ports", "3-1 3-2");
+#endif
 		}
 		else{
 			nvram_unset("xhci_ports");
+#ifdef RT4GAC68U
+			nvram_set("ehci_ports", "1-1 1-2.2 1-2.1");
+			nvram_set("ohci_ports", "2-1 2-2.2 2-2.1");
+#else
 			nvram_set("ehci_ports", "1-1 1-2");
 			nvram_set("ohci_ports", "2-1 2-2");
-		}
 #endif
+		}
+#endif // RTCONFIG_XHCIMODE
 
 		if (!nvram_get("ct_max"))
 			nvram_set("ct_max", "300000");
@@ -4571,7 +4540,7 @@ int init_nvram(void)
 #ifdef RTCONFIG_FORCE_AUTO_UPGRADE
 		add_rc_support("fupgrade");
 #endif
-#if defined(RTAC5300) || defined(RTAC5300R) || defined(RTAC88U)
+#if defined(RTAC5300) || defined(RTAC5300R) || defined(RTAC88U) || defined(RTAC3100)
 		add_rc_support("smart_connect");
 #endif
 		break;
@@ -5209,19 +5178,24 @@ int init_nvram(void)
 		switch (model) {
 		case MODEL_RTN11P:
 		case MODEL_RTN300:
-			yadns_support = nvram_match("reg_spec", "CE") && nvram_match("wl_reg_2g", "2G_CH13");	//for CE & RU area. (but IN could also be included)
+			/* Enabled for CE & RU area. (but IN could also be included) */
+			yadns_support = nvram_match("reg_spec", "CE") && nvram_match("wl_reg_2g", "2G_CH13");
 			break;
+		case MODEL_RTN12VP:
+		case MODEL_RTN10P:
+		case MODEL_RTN10PV2:
+			/* Enabled unconditionally */
+			yadns_support = 1;
+			break;
+		default:
 #ifdef RTCONFIG_TCODE
-		case MODEL_RTN12D1:
-		case MODEL_RTN12HP_B1:
-		case MODEL_RTAC51U:
 			/* Only enabled by territory_code */
 			yadns_support = 0;
-			break;
-#endif
-		default:
+#else
 			/* Enabled by default since YANDEXDNS=y */
 			yadns_support = 1;
+#endif
+			break;
 		}
 		if (yadns_support == 0)
 			nvram_set_int("yadns_enable_x", 0);
@@ -6388,7 +6362,11 @@ int init_main(int argc, char *argv[])
 				remove_storage_main(1);
 				if (!g_reboot) {
 #if !(defined(RTN56UB1) || defined(RTN56UB2))
+#ifndef RTCONFIG_ERPTEST
+					stop_usb();
+#else
 					stop_usb(0);
+#endif
 					stop_usbled();
 #endif
 				}
@@ -6717,8 +6695,10 @@ if (nvram_match("commit_test", "1")) {
 			break;
 		}
 
-		chld_reap(0);		/* Periodically reap zombies. */
-		check_services();
+		if (!nvram_get_int("asus_mfg")) {
+			chld_reap(0);	/* Periodically reap zombies. */
+			check_services();
+		}
 
 		do {
 		ret = sigwaitinfo(&sigset, &info);

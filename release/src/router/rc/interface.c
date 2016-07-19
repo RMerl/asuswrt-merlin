@@ -12,6 +12,8 @@
  * $Id: interface.c,v 1.13 2005/03/07 08:35:32 kanki Exp $
  */
 
+#include <rc.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -39,7 +41,6 @@
 #include <linux/sockios.h>
 #endif
 
-#include "rc.h"
 #include "interface.h"
 
 /* Default switch configs */
@@ -509,7 +510,7 @@ int start_vlan(void)
 	close(s);
 
 #if (defined(RTCONFIG_QCA) || (defined(RTCONFIG_RALINK) && (defined(RTCONFIG_RALINK_MT7620) || defined(RTCONFIG_RALINK_MT7621))))
-	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))
+	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")&&!nvram_match("switch_wantag", "hinet"))
 	{
 #if defined(RTCONFIG_QCA)
 		char *wan_base_if = "eth0";
@@ -524,7 +525,7 @@ int start_vlan(void)
 	}
 #endif
 #ifdef CONFIG_BCMWL5
-	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))
+	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")&&!nvram_match("switch_wantag", "hinet"))
 		set_wan_tag((char *) &ifr.ifr_name);
 #endif
 #if defined(RTCONFIG_RGMII_BRCM5301X) || defined(RTAC3100) || defined(RTAC5300R)

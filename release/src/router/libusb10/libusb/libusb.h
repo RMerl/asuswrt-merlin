@@ -774,6 +774,7 @@ struct libusb_transfer {
 int libusb_init(libusb_context **ctx);
 void libusb_exit(libusb_context *ctx);
 void libusb_set_debug(libusb_context *ctx, int level);
+const char * libusb_error_name(int errcode);
 
 ssize_t libusb_get_device_list(libusb_context *ctx,
 	libusb_device ***list);

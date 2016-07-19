@@ -19,7 +19,7 @@ else ifeq ($(BUILD_NAME), RT-AC87U)
 	install lld2d.rtac87u $(INSTALLDIR)/usr/sbin/lld2d
 	install icon.rtac87u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtac87u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
-else ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC68A))
+else ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC68A 4G-AC68U))
 	install lld2d.rtac68u $(INSTALLDIR)/usr/sbin/lld2d
 	install lld2d.rtac68p $(INSTALLDIR)/usr/sbin/lld2d.rtac68p
 	install lld2d.rtac68r $(INSTALLDIR)/usr/sbin/lld2d.rtac68r
@@ -27,13 +27,13 @@ else ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC68A))
 	install lld2d.rtac68rw $(INSTALLDIR)/usr/sbin/lld2d.rtac68rw
 	install lld2d.rtac1900 $(INSTALLDIR)/usr/sbin/lld2d.rtac1900
 	install lld2d.rtac1900p $(INSTALLDIR)/usr/sbin/lld2d.rtac1900p
-	install lld2d.rtac66u_v2 $(INSTALLDIR)/usr/sbin/lld2d.rtac66u_v2
+	install lld2d.rtac66u_b1 $(INSTALLDIR)/usr/sbin/lld2d.rtac66u_b1
 	install lld2d.rtac68a $(INSTALLDIR)/usr/sbin/lld2d.rtac68a
 	install lld2d.rtac68uf $(INSTALLDIR)/usr/sbin/lld2d.rtac68uf
 	install icon.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
-	install icon.rtac66u_v2.ico $(INSTALLDIR)/usr/sbin/icon_alt.ico
-	install icon.large.rtac66u_v2.ico $(INSTALLDIR)/usr/sbin/icon_alt.large.ico
+	install icon.rtac66u_b1.ico $(INSTALLDIR)/usr/sbin/icon_alt.ico
+	install icon.large.rtac66u_b1.ico $(INSTALLDIR)/usr/sbin/icon_alt.large.ico
 else ifeq ($(BUILD_NAME), RT-AC88U)
 	install lld2d.rtac88u $(INSTALLDIR)/usr/sbin/lld2d
 	install icon.rtac88u.ico $(INSTALLDIR)/usr/sbin/icon.ico

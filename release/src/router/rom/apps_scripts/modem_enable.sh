@@ -34,6 +34,8 @@ modem_reg_time=`nvram get modem_reg_time`
 
 usb_gobi2=`nvram get usb_gobi2`
 
+Dev3G=`nvram get Dev3G`
+
 at_lock="flock -x /tmp/at_cmd_lock"
 pdp_old=0
 
@@ -476,19 +478,19 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 	# set COPS.
 	at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS?' |grep "OK" 2>/dev/null`
-	if [ "$at_ret" == "OK" ]; then
+	if [ "$Dev3G" == "Docomo_dongles" ] || [ "$modem_vid" == "4100" -a "$modem_pid" == "25446" ]; then # Docomo L03F.
+		echo "COPS: Docomo dongles cannot COPS=0, so skip it."
+	elif [ "$modem_vid" == "6797" -a "$modem_pid" == "4098" ]; then # BandLuxe C120.
+		echo "COPS: BandLuxe C120 start with CFUN=0, so don't need to unregister the network."
+	elif [ "$modem_vid" == "4817" -a "$modem_pid" == "5382" ]; then # Huawei E3276.
+		echo "COPS: Huawei E3276 cannot COPS=2/COPS=?, so skip it."
+	elif [ "$at_ret" == "OK" ]; then
 		echo "COPS: Can execute +COPS..."
 
-		if [ "$modem_vid" == "6797" -a "$modem_pid" == "4098" ]; then # BandLuxe C120.
-			echo "COPS: BandLuxe C120 start with CFUN=0, so don't need to unregister the network."
-		elif [ "$modem_vid" == "12d1" -a "$modem_pid" == "1506" ]; then # Huawei E3276.
-			echo "COPS: Huawei E3276 cannot COPS=2/COPS=?, so skip it."
-		else
-			at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
-			if [ "$at_ret" != "OK" ]; then
-				echo "Can't deregister from network."
-				exit 6
-			fi
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
+		if [ "$at_ret" != "OK" ]; then
+			echo "Can't deregister from network."
+			exit 6
 		fi
 
 		# Home service.
@@ -532,7 +534,9 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	echo "CGATT: 1. Check the register state..."
 	at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' 2>/dev/null`
 	ret=`echo -n "$at_ret" |grep "OK"`
-	if [ "$ret" == "OK" ]; then
+	if [ "$Dev3G" == "Docomo_dongles" ] || [ "$modem_vid" == "4100" -a "$modem_pid" == "25446" ]; then # Docomo L03F.
+		echo "COPS: Docomo dongles cannot CGATT=1, so skip it."
+	elif [ "$ret" == "OK" ]; then
 		tries=1
 		at_ret=`echo -n "$at_ret" |grep "+CGATT: 1"`
 		while [ $tries -le 30 -a "$at_ret" == "" ]; do

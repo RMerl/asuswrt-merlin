@@ -234,7 +234,7 @@ function initial(){
 			var tmpDisk = new newDisk();
 			tmpDisk.usbPath = i+1;
 			show_USBDevice(tmpDisk);
-			document.getElementById("usbPathContainer_"+parseInt(i+1)).style.display = "";
+			document.getElementById("usbPathContainer_"+parseInt(i+1)).style.visibility = "visible";;
 		}
 		
 		//if(document.getElementById('usbPathContainer_2').style.display == "none")
@@ -282,6 +282,10 @@ function initial(){
 		if(sw_mode == 2 || sw_mode == 4){
 			document.getElementById('wlc_band_div').style.display = "";
 			document.getElementById('dataRate_div').style.display = "";
+			if(Rawifi_support || Qcawifi_support)
+				document.getElementById('rssi_div').style.display = "none";
+			else
+				document.getElementById('rssi_div').style.display = "";
 			if(wlc_band == 0)
 				document.getElementById('wlc_band_status').innerHTML = "2.4GHz"; 
 			else	
@@ -354,7 +358,7 @@ function initial(){
 	}
 
 	if(is_TW_sku && document.referrer.indexOf("QIS") != -1){
-		if(autodet_state == 2 && autodet_auxstate == 6 && wan_proto == "dhcp"){
+		if((autodet_state == 6 || autodet_auxstate == 6) && wan_proto == "dhcp"){
 			notification.notiClick();
 		}
 	}
@@ -2302,7 +2306,7 @@ function closeClientDetailView() {
 							<div style="padding: 3px 0">2.4 GHz Parent-AP</div>
 							<div id="speed_info_primary">Link Rate:</div>
 						</div>
-						<div><strong id="primary_status"></strong></div>
+						<div style="padding:5px"><strong id="primary_status"></strong></div>
 					</td>
 					<td id="dual_wan_gap" width="40px" style="display:none">
 					</td>
@@ -2313,7 +2317,7 @@ function closeClientDetailView() {
 							<div style="padding: 3px 0">5 GHz Parent-AP</div>
 							<div id="speed_info_secondary">Link Rate:</div>
 						</div>
-						<div><strong id="secondary_status"></strong></div>
+						<div style="padding:5px"><strong id="secondary_status"></strong></div>
 					</td>
 					<!--== single WAN ==-->
 					<td id="single_wan_icon" align="right" class="NM_radius_left" valign="middle" bgcolor="#444f53" onclick="showstausframe('Internet');">
@@ -2342,7 +2346,10 @@ function closeClientDetailView() {
 							<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;">Link rate:</span>
 							<strong id="speed_status" class="index_status" style="font-size:14px;"></strong>
 						</div>
-						
+						<div id="rssi_div" style="margin-top:5px;display:none">
+							<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;">RSSI:</span>
+							<strong id="rssi_status" class="index_status" style="font-size:14px;"></strong>
+						</div>
 					</td>
 					<td width="40px" rowspan="11" valign="top">
 						<div class="statusTitle" id="statusTitle_NM">
@@ -2441,7 +2448,7 @@ function closeClientDetailView() {
 					<td width="36" rowspan="6" id="clientspace_td"></td>
 
 					<td id="usb_td" width="160" bgcolor="#444f53" align="center" valign="top" class="NM_radius" style="padding-bottom:5px;">
-						<div id="usbPathContainer_1" style="display:none">
+						<div id="usbPathContainer_1" style="visibility:hidden;height:175px">
 							<div style="margin-top:20px;margin-bottom:10px;" id="deviceIcon_1"></div>
 							<div><img id="usb1_image" src="images/New_ui/networkmap/USB2.png"></div>
 							<div style="margin:10px 0px;">
@@ -2450,7 +2457,7 @@ function closeClientDetailView() {
 							</div>
 							<div id="deviceDec_1"></div>
 						</div>
-						<div id="usbPathContainer_2" style="display:none">
+						<div id="usbPathContainer_2" style="visibility:hidden;height:175px">
 							<img style="margin-top:5px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
 							<div style="margin-top:15px;margin-bottom:10px;" id="deviceIcon_2"></div>
 							<div><img id="usb2_image" src="images/New_ui/networkmap/USB2.png"></div>
@@ -2482,36 +2489,32 @@ function closeClientDetailView() {
 	initial();
 
 	document.getElementById('deviceOption_1').onchange = function(){
-	 	require(['/require/modules/diskList.js'], function(diskList){
-	 		diskList.update(function(){
-		 		var usbDevicesList = diskList.list();
-				show_USBDevice(usbDevicesList[document.getElementById('deviceOption_1').value]);
-				setSelectedDiskOrder('iconUSBdisk_1');
+	 	require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
+	 		var usbDevicesList = diskList.list();
+			show_USBDevice(usbDevicesList[document.getElementById('deviceOption_1').value]);
+			setSelectedDiskOrder('iconUSBdisk_1');
 
-				if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "modem")
-					clickEvent(document.getElementById('iconModem_1'));
-				else if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "printer")
-					clickEvent(document.getElementById('iconPrinter_1'));
-				else
-					clickEvent(document.getElementById('iconUSBdisk_1'));
-			});
+			if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "modem")
+				clickEvent(document.getElementById('iconModem_1'));
+			else if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "printer")
+				clickEvent(document.getElementById('iconPrinter_1'));
+			else
+				clickEvent(document.getElementById('iconUSBdisk_1'));
 		});
 	}
 
 	document.getElementById('deviceOption_2').onchange = function(){
-	 	require(['/require/modules/diskList.js'], function(diskList){
-	 		diskList.update(function(){
-		 		var usbDevicesList = diskList.list();
-				show_USBDevice(usbDevicesList[document.getElementById('deviceOption_2').value]);
-				setSelectedDiskOrder('iconUSBdisk_2');
+	 	require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
+	 		var usbDevicesList = diskList.list();
+			show_USBDevice(usbDevicesList[document.getElementById('deviceOption_2').value]);
+			setSelectedDiskOrder('iconUSBdisk_2');
 
-				if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "modem")
-					clickEvent(document.getElementById('iconModem_2'));
-				else if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "printer")
-					clickEvent(document.getElementById('iconPrinter_2'));
-				else
-					clickEvent(document.getElementById('iconUSBdisk_2'));
-			});
+			if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "modem")
+				clickEvent(document.getElementById('iconModem_2'));
+			else if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "printer")
+				clickEvent(document.getElementById('iconPrinter_2'));
+			else
+				clickEvent(document.getElementById('iconUSBdisk_2'));
 		});
 	}
 	/* Disable networkmapd update for RP-AC66

@@ -1141,44 +1141,27 @@ int isGCTInterface(const char *interface_name){
 }
 #endif
 
-// 0: no modem, 1: has modem, 2: has modem but system isn't ready.
+// 0: no modem, 1: has modem
 int is_usb_modem_ready(void)
 {
 	char prefix[32], tmp[32];
 	char usb_act[8];
 	char usb_node[32], port_path[8];
-	char modem_type[32];
 
 	if(nvram_match("modem_enable", "0"))
 		return 0;
 
-	snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
-	if(strlen(usb_node) <= 0)
+	if(snprintf(usb_node, sizeof(usb_node), "%s", nvram_safe_get("usb_modem_act_path")) <= 0)
 		return 0;
 
 	if(get_path_by_node(usb_node, port_path, 8) == NULL)
 		return 0;
 
-	snprintf(prefix, 32, "usb_path%s", port_path);
-	snprintf(usb_act, 8, "%s", nvram_safe_get(strcat_r(prefix, "_act", tmp)));
+	snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+	snprintf(usb_act, sizeof(usb_act), "%s", nvram_safe_get(strcat_r(prefix, "_act", tmp)));
 
-	if(!strcmp(nvram_safe_get("usb_modem_act_type"), ""))
-		eval("/usr/sbin/find_modem_type.sh");
-	snprintf(modem_type, 32, "%s", nvram_safe_get("usb_modem_act_type"));
-
-	if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){
-#if 0
-		// for the router dongle: Huawei E353, E3131.
-		if((!strncmp(usb_act, "eth", 3) && strcmp(modem_type, "rndis")) // LU-150: ethX with RNDIS
-				|| (!strncmp(usb_act, "usb", 3) && !strcmp(modem_type, "ncm"))
-				){
-			if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.1.", 10))
-				return 2;
-		}
-#endif
-
+	if(nvram_match(prefix, "modem") && *usb_act)
 		return 1;
-	}
 
 	return 0;
 }
@@ -1301,4 +1284,14 @@ char *find_sg_of_device(const char *device_name, char *buf, const int buf_size)
 		return NULL;
 
 	return buf;
+}
+
+char *get_gobi_portpath(){
+#ifdef RT4GAC68U
+	return "3";
+#elif defined(RT4GAC55U)
+	return "2";
+#endif
+
+	return "";
 }

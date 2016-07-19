@@ -213,7 +213,7 @@ function startDetect(){
 	if(parent.powerline_support)
 		update_plc_info();
 	else{
-		if((autodet_state == "2" && autodet_auxstate == "6") || (wanstate  == 2 && wansbstate == 0 && wanauxstate == 0)){
+		if((autodet_state == "6" || autodet_auxstate == "6") || (wanstate  == 2 && wansbstate == 0 && wanauxstate == 0)){
 			submitForm(1);
 		}
 		else{

@@ -37,43 +37,43 @@ var wdogWarn = null;
 var href_lang = get_supportsite_lang();
 switch("<% nvram_get("preferred_lang"); %>"){
 	case "KR":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "RO":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "HU":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "IT":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "DA":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;	
 	case "BR":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "SV":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "FI":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "NO":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "TH":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "DE":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "PL":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	case "CZ":
-						href_lang = "/us/";
+						href_lang = "/";
 						break;
 	default:
 						break;

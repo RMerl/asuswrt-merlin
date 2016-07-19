@@ -911,7 +911,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?1000:600,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" || 
+				based_modelid == "RT-AC3100")?1000:600,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl0_bsd_steering_phy_l').value = ui.value; 
@@ -925,7 +928,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?1000:600,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?1000:600,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl0_bsd_steering_phy_g').value = ui.value; 
@@ -939,7 +945,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl1_bsd_steering_phy_l').value = ui.value; 
@@ -953,7 +962,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl1_bsd_steering_phy_g').value = ui.value; 
@@ -967,7 +979,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl2_bsd_steering_phy_l').value = ui.value; 
@@ -981,7 +996,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl2_bsd_steering_phy_g').value = ui.value; 
@@ -995,7 +1013,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?1000:600,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?1000:600,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl0_bsd_sta_select_policy_phy_l').value = ui.value; 
@@ -1009,7 +1030,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?1000:600,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?1000:600,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl0_bsd_sta_select_policy_phy_g').value = ui.value; 
@@ -1023,7 +1047,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl1_bsd_sta_select_policy_phy_l').value = ui.value; 
@@ -1037,7 +1064,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl1_bsd_sta_select_policy_phy_g').value = ui.value; 
@@ -1051,7 +1081,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl2_bsd_sta_select_policy_phy_l').value = ui.value; 
@@ -1065,7 +1098,10 @@ function register_event(){
 			orientation: "horizontal",
 			range: "min",
 			min:0,
-			max: (based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")?2167:1300,
+			max: (based_modelid == "RT-AC5300" || 
+				based_modelid == "RT-AC5300R" || 
+				based_modelid == "RT-AC88U" ||
+				based_modelid == "RT-AC3100")?2167:1300,
 			value:1,
 			slide:function(event, ui){
 				document.getElementById('wl2_bsd_sta_select_policy_phy_g').value = ui.value; 
@@ -1133,7 +1169,10 @@ function check_power(power_value,flag){
 		}
 	}else if(flag == 'phyrate'){
 		var power_value_limit;
-		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")
+		if(based_modelid == "RT-AC5300" || 
+			based_modelid == "RT-AC5300R" || 
+			based_modelid == "RT-AC88U" ||
+			based_modelid == "RT-AC3100")
 			power_value_limit = 2167;
 		else
 			power_value_limit = 1300;
@@ -1155,13 +1194,19 @@ function set_bandutil_qualify_power(power_value,flag){
 function set_lg_power(power_value,flag,idx){
 	var divd;
 	if(idx == 0){
-		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")
+		if(based_modelid == "RT-AC5300" || 
+			based_modelid == "RT-AC5300R" || 
+			based_modelid == "RT-AC88U" ||
+			based_modelid == "RT-AC3100")
 			divd = 10;
 		else
 			divd = 6;
 	}
 	else{
-		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC88U")
+		if(based_modelid == "RT-AC5300" || 
+			based_modelid == "RT-AC5300R" || 
+			based_modelid == "RT-AC88U" ||
+			based_modelid == "RT-AC3100")
 			divd = 21;
 		else
 			divd = 13;

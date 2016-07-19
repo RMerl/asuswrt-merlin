@@ -35,6 +35,7 @@
 #include <error.h>
 #include <sys/ioctl.h>
 #include <sys/sysinfo.h>
+#include <arpa/inet.h>
 
 #ifdef LINUX26
 #include <mtd/mtd-user.h>

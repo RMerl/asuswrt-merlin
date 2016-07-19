@@ -823,7 +823,7 @@ function eula_confirm(){
 													<li><#AiProtection_filter_desc4#></li>
 												</ol>
 												<span><#AiProtection_filter_note#></span>
-												<div><a style="text-decoration:underline;" href="http://www.asus.com/us/support/FAQ/1008720/" target="_blank"><#Parental_Control#> FAQ</a></div>
+												<div><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1008720/" target="_blank"><#Parental_Control#> FAQ</a></div>
 											</td>
 										</tr>
 									</table>

@@ -1127,7 +1127,7 @@ function QKfinish_load_body(){
 			$("#latestFW")[0].innerHTML += parent.Latest_extendno;
 		}
 	}
-	else{		
+	else{
 		parent.set_step("t3");
 		parent.document.getElementById("LoadingBar").style.visibility = 'hidden';
 	}
@@ -1138,11 +1138,11 @@ function QKfinish_load_body(){
 function check_firmware(){
 	if(!parent.new_FW){
 		gotoNext();
-	}	
+	}
 }
 
 function iAmAlive(){
-	top.location.href = "http://" + parent.staticIP;					
+	top.location.href = "http://" + parent.staticIP;
 }
 
 function gotoASUS(){
@@ -1233,13 +1233,18 @@ function redirect_index(){
 
 	parent.document.getElementById("btn_gotoindex").onclick = "";
 	parent.document.getElementById("btn_gotoindex").style.cursor = "";
-	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";	
+	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";
+
+	if(parent.yadns_support && parent.yadns_stage == 1) {
+		parent.yadns_stage++;
+		return yadns_apply();
+	}
 
 	if(parent.new_FW){
 		return checkIsNewFirmware();
 	}
 	else if(parent.sysReboot){
-		return gotoNext();		
+		return gotoNext();
 	}
 	else{
 		parent.location.href = "/index.asp";
@@ -1301,27 +1306,27 @@ function submitenter(myfield,event){
 function set_timezone(){
 	var systime = new Date();
 	Date.prototype.stdTimezoneOffset_north = function() {
-    var jan = new Date(this.getFullYear(), 0, 1);
-    var jul = new Date(this.getFullYear(), 6, 1);
-    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+		var jan = new Date(this.getFullYear(), 0, 1);
+		var jul = new Date(this.getFullYear(), 6, 1);
+		return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
 	}
 
 	Date.prototype.stdTimezoneOffset_south = function() {
-    var jan = new Date(this.getFullYear(), 0, 1);
-    var jul = new Date(this.getFullYear(), 6, 1);
-    return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+		var jan = new Date(this.getFullYear(), 0, 1);
+		var jul = new Date(this.getFullYear(), 6, 1);
+		return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset());
 	}
 
 	Date.prototype.dst = function() {
-    return (this.getTimezoneOffset() < this.stdTimezoneOffset_north() || this.getTimezoneOffset() > this.stdTimezoneOffset_south());
+		return (this.getTimezoneOffset() < this.stdTimezoneOffset_north() || this.getTimezoneOffset() > this.stdTimezoneOffset_south());
 	}	
 	
 	var system_timezone_dut = document.form.time_zone.value;
-	var system_timezone = parseInt(document.form.time_zone_x.value.substring(3));	
+	var system_timezone = parseInt(document.form.time_zone_x.value.substring(3));
 	var client_timezone = systime.getTimezoneOffset();
 
 	if(parent.isFirst && (system_timezone*60 != client_timezone)){		//Tune DUT time while x_Setting=0
-			systime_millsec += (-client_timezone*60000);			
+			systime_millsec += (-client_timezone*60000);
 	}
 	
 	if(typeof timezones[system_timezone_dut] != "undefined")
@@ -1334,6 +1339,7 @@ function set_timezone(){
 
 	showclock();
 }
+
 function showclock(){
 	JS_timeObj.setTime(systime_millsec);
 	systime_millsec += 1000;

@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <fcntl.h>
 #include <signal.h>
 #include <time.h>
@@ -154,17 +156,6 @@ int f_read_string(const char *path, char *buffer, int max)
 	int n = f_read(path, buffer, max - 1);
 	buffer[(n > 0) ? n : 0] = 0;
 	return n;
-}
-
- size_t strlcpy(char *d, const char *s, size_t bufsize)
-{
-	size_t len = strlen(s);
-	size_t ret = len;
-	if (bufsize <= 0) return 0;
-	if (len >= bufsize) len = bufsize-1;
-	memcpy(d, s, len);
-	d[len] = 0;
-	return ret;
 }
 
 char *psname(int pid, char *buffer, int maxlen)

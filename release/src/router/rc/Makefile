@@ -124,7 +124,7 @@ ifeq ($(RA_SKU),y)
 export CFLAGS += -DRA_SINGLE_SKU
 endif
 
-ifeq ($(RTAC68A), y)
+ifeq ($(or $(RTAC68A),$(RT4GAC68U)),y)
 CFLAGS += -DRTAC68U
 endif
 
@@ -187,11 +187,11 @@ OBJS += usb_devices.o
 endif
 
 ifeq ($(RTCONFIG_JFFS2),y)
-OBJS += jffs2.o
+OBJS += jffs2.o 
 endif
 
 ifeq ($(RTCONFIG_BRCM_NAND_JFFS2),y)
-OBJS += jffs2.o
+OBJS += jffs2.o 
 endif
 
 ifeq ($(RTCONFIG_UBIFS),y)
@@ -210,11 +210,7 @@ ifeq ($(RTCONFIG_WTFAST),y)
 OBJS += wtfast.o
 endif
 
-ifeq ($(RTCONFIG_PPTPD),y)
-OBJS += vpn.o
-endif
-
-ifeq ($(RTCONFIG_ACCEL_PPTPD),y)
+ifeq ($(or $(RTCONFIG_PPTPD),$(RTCONFIG_ACCEL_PPTPD)),y)
 OBJS += vpn.o
 endif
 
@@ -271,10 +267,8 @@ ifeq ($(RTCONFIG_SHP),y)
 CFLAGS += -DSHP
 endif
 
-ifeq ($(RTCONFIG_USB),y)
-ifneq ($(RTCONFIG_BLINK_LED),y)
+ifeq ($(and $(RTCONFIG_USB),$(RTCONFIG_BCM_7114)),y)
 SW_USBLED=y
-endif
 endif
 
 ifeq ($(RTCONFIG_DSL),y)
@@ -431,7 +425,9 @@ endif
 ifneq ($(RTCONFIG_QCA)$(RTCONFIG_RALINK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog02
 endif
+ifneq (,$(filter y,$(RTCONFIG_WLAN_LED) $(RTN18U) $(RTCONFIG_FAKE_ETLAN_LED) $(SW_USBLED) $(RTCONFIG_MMC_LED) $(RTCONFIG_BRCM_USBAP) $(RTAC66U) $(BCM4352) $(SW_DSLWANLED)))
 	@cd $(INSTALLDIR)/sbin && ln -sf rc sw_devled
+endif
 ifeq ($(RTAC1200G),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wdg_monitor
 endif
@@ -531,7 +527,9 @@ endif
 ifeq ($(RTCONFIG_BCM_7114),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc stop_wl
 endif
+ifeq ($(RTCONFIG_ERPTEST),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_usb
+endif
 ifeq ($(RTCONFIG_BCMARM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc nvram_erase
 endif

@@ -975,7 +975,7 @@ function check_smtp_server_type(){
 														<tr>
 															<td>
 																<div style="width:430px"><#AiProtection_HomeDesc2#></div>
-																<div style="width:430px"><a style="text-decoration:underline;" href="http://www.asus.com/us/support/FAQ/1008719/" target="_blank"><#AiProtection_Home#> FAQ</a></div>
+																<div style="width:430px"><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1008719/" target="_blank"><#AiProtection_Home#> FAQ</a></div>
 															</td>
 															<td>
 																<div style="width:100px;height:48px;margin-left:-40px;background-image:url('images/New_ui/tm_logo.png');"></div>

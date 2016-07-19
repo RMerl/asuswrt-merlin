@@ -340,6 +340,9 @@ function applyRule() {
 			if(check_pptpd_clients_range() == false)
 				return false;
 
+			if (enable_samba == 1)
+				document.form.action_script.value += ";restart_samba";
+
 			check_vpn_conflict();	
 			if(!validator.range(document.form.pptpd_mru, 576, 1492)) {
 				document.form.pptpd_mru.focus();

@@ -107,11 +107,11 @@ config RTCONFIG_RGMII_BCM_FA
 
 config RTCONFIG_5301X
 	bool "Bcm 5301x"
-	default y
+	default n
 
 config RTCONFIG_4352_5G
 	bool "4352 needs"
-	default y
+	default n
 
 config RTCONFIG_SSH
 	bool "SSH"
@@ -195,10 +195,6 @@ config RTCONFIG_BCMSSD
 
 config RTCONFIG_BCMDCS
 	bool "Broadcom Dynamic Channel Selection"
-	default n
-
-config RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY
-	bool "Traffic Management RSSI policy"
 	default n
 
 config RTCONFIG_TOAD
@@ -928,6 +924,7 @@ config RTCONFIG_QTN
 
 config RTCONFIG_RGMII_BRCM5301X
 	bool "Config 5301x to RGMII mode"
+	depends on RTCONFIG_5301X
 	default n
 
 config RTCONFIG_WPS_DUALBAND
@@ -952,6 +949,7 @@ config RTCONFIG_TRAFFIC_LIMITER
 
 config RTCONFIG_BCM5301X_TRAFFIC_MONITOR
 	bool "read BCM5301x register for traffic monitor"
+	depends on RTCONFIG_5301X
 	default n
 
 config RTCONFIG_SPEEDTEST
@@ -1132,3 +1130,8 @@ config RTCONFIG_AUTOCOVER_SIP
 config RTCONFIG_DEFLAN50
         bool "Let the default LAN subnet be 192.168.50.1"
         default n
+
+config RTCONFIG_WLCEVENTD
+	bool "BRCM WLC_E event monitor"
+	depends on RTCONFIG_BCMARM && RTCONFIG_BCMWL6
+	default n

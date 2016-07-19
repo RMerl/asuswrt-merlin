@@ -60,4 +60,7 @@
   <dhcp>dnsqmode=<% nvram_get("dnsqmode"); %></dhcp>
   <wan>wlc0_state=<% nvram_get("wlc0_state"); %></wan>
   <wan>wlc1_state=<% nvram_get("wlc1_state"); %></wan>
+  <wan>rssi_2g=<% wl_rssi_2g(); %></wan>
+  <wan>rssi_5g=<% wl_rssi_5g(); %></wan>
+  <wan>rssi_5g_2=<% wl_rssi_5g_2(); %></wan>
 </devicemap>

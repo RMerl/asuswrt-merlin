@@ -49,8 +49,6 @@
 #define RTKSWITCH_DEV  "/dev/rtkswitch"
 #endif
 
-#define LED_CONTROL(led, flag) ralink_gpio_write_bit(led, flag)
-
 //#ifdef RTCONFIG_WIRELESSREPEATER
 char *wlc_nvname(char *keyword);
 //#endif

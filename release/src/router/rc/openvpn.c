@@ -6,7 +6,7 @@
 
 */
 
-#include "rc.h"
+#include <rc.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>

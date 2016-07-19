@@ -1286,6 +1286,31 @@ is_valid_hostname(const char *name)
 	return len;
 }
 
+int
+is_valid_domainname(const char *name)
+{
+	int len, i;
+	unsigned char c;
+
+	if (!name)
+		return 0;
+
+	len = strlen(name);
+	for (i = 0; i < len; i++) {
+		c = name[i];
+		if (((c | 0x20) < 'a' || (c | 0x20) > 'z') &&
+		    ((c < '0' || c > '9')) &&
+		    (c != '.' && c != '-' && c != '_')) {
+			len = 0;
+			break;
+		}
+	}
+#if 0
+	printf("%s is %svalid for domainname\n", name, len ? "" : "in");
+#endif
+	return len;
+}
+
 int get_meminfo_item(const char *name)
 {
 	FILE *fp;

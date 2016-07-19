@@ -177,7 +177,7 @@ confmtd_backup()
 
 	/* create mtd header content */
 	memset(&mtd_hdr, 0, sizeof(mtd_hdr));
-	snprintf(&mtd_hdr.magic, sizeof(mtd_hdr.magic), "%s", CONFMTD_MAGIC);
+	snprintf((char *) &mtd_hdr.magic, sizeof(mtd_hdr.magic), "%s", CONFMTD_MAGIC);
 	mtd_hdr.len = tmp_stat.st_size;
 	mtd_hdr.checksum = confmtd_checksum(tmp_buf, tmp_stat.st_size);
 
@@ -230,7 +230,7 @@ confmtd_restore()
 	FILE *fp = NULL;
 	char *buf = NULL;
 	int ret = -1;
-	confmtd_hdr_t mtd_hdr = {0};
+	confmtd_hdr_t mtd_hdr = { { 0,0,0,0,0,0,0,0 }, 0, 0 };
 	struct stat tmp_stat;
 	DIR *dir;
 
@@ -266,7 +266,7 @@ confmtd_restore()
 		goto fail;
 	}
 
-	if (strcmp(&mtd_hdr.magic, CONFMTD_MAGIC) != 0) {
+	if (strcmp((const char *)&mtd_hdr.magic, CONFMTD_MAGIC) != 0) {
 		printf("magic incorrect\n");
 		goto fail;
 	}

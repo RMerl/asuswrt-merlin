@@ -60,6 +60,7 @@ var wan_proto_orig = '<% nvram_get("wan_proto"); %>';
 var original_wan_type = wan_proto_orig;
 var original_wan_dhcpenable = parseInt('<% nvram_get("wan_dhcpenable_x"); %>');
 var original_dnsenable = parseInt('<% nvram_get("wan_dnsenable_x"); %>');
+var original_ppp_echo = parseInt('<% nvram_get("wan_ppp_echo"); %>');
 var wan_unit_flag = '<% nvram_get("wan_unit"); %>';
 
 if(yadns_support){
@@ -494,8 +495,7 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "";
-		inputCtrl(document.form.wan_ppp_echo[0], 1);
-		inputCtrl(document.form.wan_ppp_echo[1], 1);
+		inputCtrl(document.form.wan_ppp_echo, 1);
 		ppp_echo_control();
 	}
 	else if(wan_type == "pptp"){
@@ -520,8 +520,7 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 1);
 		document.getElementById("vpn_dhcp").style.display = "none";
-		inputCtrl(document.form.wan_ppp_echo[0], 1);
-		inputCtrl(document.form.wan_ppp_echo[1], 1);
+		inputCtrl(document.form.wan_ppp_echo, 1);
 		ppp_echo_control();
 	}
 	else if(wan_type == "l2tp"){
@@ -546,8 +545,7 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 1);
 		document.getElementById("vpn_dhcp").style.display = "none";
-		inputCtrl(document.form.wan_ppp_echo[0], 1);
-		inputCtrl(document.form.wan_ppp_echo[1], 1);
+		inputCtrl(document.form.wan_ppp_echo, 1);
 		ppp_echo_control();
 	}
 	else if(wan_type == "static"){
@@ -572,8 +570,7 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "none";
-		inputCtrl(document.form.wan_ppp_echo[0], 0);
-		inputCtrl(document.form.wan_ppp_echo[1], 0);
+		inputCtrl(document.form.wan_ppp_echo, 0);
 		inputCtrl(document.form.wan_ppp_echo_interval, 0);
 		inputCtrl(document.form.wan_ppp_echo_failure, 0);
 	}
@@ -599,8 +596,7 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "none";
-		inputCtrl(document.form.wan_ppp_echo[0], 0);
-		inputCtrl(document.form.wan_ppp_echo[1], 0);
+		inputCtrl(document.form.wan_ppp_echo, 0);
 		inputCtrl(document.form.wan_ppp_echo_interval, 0);
 		inputCtrl(document.form.wan_ppp_echo_failure, 0);
 	}
@@ -626,25 +622,32 @@ function fixed_change_wan_type(wan_type){
 			document.form.wan_dnsenable_x[0].checked = original_dnsenable;
 			document.form.wan_dnsenable_x[1].checked = !original_dnsenable;
 			change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', original_dnsenable);
+			document.form.wan_ppp_echo.value = original_ppp_echo;
+			ppp_echo_control();
 		}
 		else{
 			document.form.wan_dnsenable_x[0].checked = 1;
 			document.form.wan_dnsenable_x[1].checked = 0;
-			change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', 1);	
+			change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', 1);
+			document.form.wan_ppp_echo.value = 1;
+			ppp_echo_control();
 		}		
 	}else if(wan_type == "pptp"	|| wan_type == "l2tp"){	
 		if(wan_type == original_wan_type){
 			document.form.wan_dnsenable_x[0].checked = original_dnsenable;
 			document.form.wan_dnsenable_x[1].checked = !original_dnsenable;
 			change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', original_dnsenable);
+			document.form.wan_ppp_echo.value = original_ppp_echo;
+			ppp_echo_control();
 		}
 		else{
 			document.form.wan_dnsenable_x[0].checked = 0;
 			document.form.wan_dnsenable_x[1].checked = 1;
 			change_common_radio(document.form.wan_dnsenable_x, 'IPConnection', 'wan_dnsenable_x', 0);
-			
 			inputCtrl(document.form.wan_dnsenable_x[0], 1);
 			inputCtrl(document.form.wan_dnsenable_x[1], 1);
+			document.form.wan_ppp_echo.value = 1;
+			ppp_echo_control();
 		}
 	}
 	else if(wan_type == "static"){
@@ -804,11 +807,7 @@ function pass_checked(obj){
 }
 
 function ppp_echo_control(){
-	if(document.form.wan_ppp_echo_interval.value == 0){
-		document.form.wan_ppp_echo[0].checked = false;
-		document.form.wan_ppp_echo[1].checked = true;
-	}
-	var enable = document.form.wan_ppp_echo[0].checked ? 1 : 0;
+	var enable = (document.form.wan_ppp_echo.value == 1) ? 1 : 0;
 	inputCtrl(document.form.wan_ppp_echo_interval, enable);
 	inputCtrl(document.form.wan_ppp_echo_failure, enable);
 }
@@ -963,13 +962,6 @@ function ppp_echo_control(){
 										<input type="text" maxlength="5" name="upnp_max_port_ext" class="input_6_table" value="<% nvram_get("upnp_max_port_ext"); %>" onkeypress="return validator.isNumber(this,event);">
 									</td>
 							</tr>										
-							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);">Enable Internet Detect</a></th><!--untranslated-->
-								<td>
-									<input type="radio" name="stop_dns_detect" class="input" value="0" <% nvram_match("stop_dns_detect", "0", "checked"); %> /><#checkbox_Yes#>
-									<input type="radio" name="stop_dns_detect" class="input" value="1" <% nvram_match("stop_dns_detect", "1", "checked"); %> /><#checkbox_No#>
-								</td>
-							</tr>
 						</table>
 
 						<table id="dot1q_setting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -1114,10 +1106,13 @@ function ppp_echo_control(){
 		</td>
 		</tr>
 		<tr>
-			<th><a class="hintstyle" href="javascript:void(0);">Enable PPP Echo Detect</a></th><!--untranslated-->
+			<th><a class="hintstyle" href="javascript:void(0);">Internet Detection</a></th><!--untranslated-->
 			<td>
-				<input type="radio" name="wan_ppp_echo" class="input" value="1" <% nvram_match("wan_ppp_echo", "1", "checked"); %> onclick="ppp_echo_control()"/><#checkbox_Yes#>
-				<input type="radio" name="wan_ppp_echo" class="input" value="0" <% nvram_match("wan_ppp_echo", "0", "checked"); %> onclick="ppp_echo_control()"/><#checkbox_No#>
+				<select name="wan_ppp_echo" class="input_option">
+				<option value="0" <% nvram_match("wan_ppp_echo", "0","selected"); %>><#btn_disable#></option>
+				<option value="1" <% nvram_match("wan_ppp_echo", "1","selected"); %>>PPP Echo</option>
+				<option value="2" <% nvram_match("wan_ppp_echo", "2","selected"); %>>DNS Probe</option>
+				</select>
 			</td>
 		</tr>
 		<tr>
@@ -1190,6 +1185,13 @@ function ppp_echo_control(){
 				<td>
 					<input type="radio" name="ttl_inc_enable" class="input" value="1" <% nvram_match("ttl_inc_enable", "1", "checked"); %>><#checkbox_Yes#>
 					<input type="radio" name="ttl_inc_enable" class="input" value="0" <% nvram_match("ttl_inc_enable", "0", "checked"); %>><#checkbox_No#>
+				</td>
+		</tr>	
+		<tr>
+			<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#Spoof_TTL_Value#></a></th>
+				<td>
+					<input type="radio" name="ttl_spoof_enable" class="input" value="1" <% nvram_match("ttl_spoof_enable", "1", "checked"); %>><#checkbox_Yes#>
+					<input type="radio" name="ttl_spoof_enable" class="input" value="0" <% nvram_match("ttl_spoof_enable", "0", "checked"); %>><#checkbox_No#>
 				</td>
 		</tr>	
 		</table>

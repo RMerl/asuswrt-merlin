@@ -22,7 +22,6 @@ else
 export CFLAGS += -DBCMWPA2
 ifeq ($(RTCONFIG_BCMWL6),y)
 export CFLAGS += -DBCMQOS
-export CFLAGS += -DBCM_DCS
 export CFLAGS += -DEXT_ACS
 export CFLAGS += -DD11AC_IOTYPES
 export CFLAGS += -DPHYMON
@@ -37,7 +36,6 @@ endif
 endif
 export CFLAGS += $(EXTRACFLAGS)
 endif
-
 
 ifneq ($(findstring 4G-,$(BUILD_NAME)),)
 MODEL = RT$(subst -,,$(BUILD_NAME))
@@ -72,11 +70,6 @@ export BCMSRC=src-rt-7.14.114.x/src
 export OLD_SRC=$(SRCBASE)/../../src
 export  BUILD_MFG := 0
 export  EX7 := _7114
-else ifeq ($(RTCONFIG_BCM10),y)
-export BCMSRC=src-rt-10.10.22.x/src
-export OLD_SRC=$(SRCBASE)/../../src
-export  BUILD_MFG := 0
-export  EX7 := _10
 else ifeq ($(RTCONFIG_BCM9),y)
 export BCMSRC=src-rt-9.x/src
 export OLD_SRC=$(SRCBASE)/../../src
@@ -116,10 +109,6 @@ WLAN_ComponentsInUse := bcmwifi clm ppr
 ifeq ($(or $(RTCONFIG_BCMWL6A),$(RTAC53U)),y)
 WLAN_ComponentsInUse += olpc
 endif
-ifeq ($(RTCONFIG_BCM10),y)
-WLAN_ComponentsInUse += keymgmt iocv dump phymods/cmn phymods/n phymods/lcn phymods/ac phymods/lcn40 phymods/ht
-endif
-
 
 include ../../$(SRCBASE)/makefiles/WLAN_Common.mk
 endif
@@ -197,10 +186,6 @@ endif
 
 ifeq ($(RTCONFIG_BCMDCS),y)
 export CFLAGS += -DBCM_DCS
-endif
-
-ifeq ($(RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY),y)
-export CFLAGS += -DTRAFFIC_MGMT_RSSI_POLICY
 endif
 
 ifeq ($(RTCONFIG_EMF),y)
@@ -436,17 +421,17 @@ endif
 
 ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
 ifeq ($(or $(RTN65U),$(RTAC55U),$(RTAC55UHP),$(RTN56UB1),$(RTN56UB2)),y)
-obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
+obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-1.2.3
 else
 ifneq ($(RTCONFIG_INTERNAL_GOBI),y)
-obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.3
+obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch
 endif
 endif
 else
 ifeq ($(RTCONFIG_BCMWL6),y)
-obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.3
+obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch
 else
-obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch
+obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-1.2.3
 endif
 endif
 
@@ -646,9 +631,7 @@ else
 obj-y += lltd
 endif
 ifeq ($(RTCONFIG_BCMWL6),y)
-#ifneq ($(RTCONFIG_BCM10),y)
 obj-y += acsd$(BCMEX)$(EX7)
-#endif
 endif
 else
 obj-y += lldt
@@ -656,10 +639,14 @@ endif
 obj-$(RTCONFIG_JFFS2USERICON) += lltdc
 
 obj-$(RTCONFIG_TOAD) += toad
+ifeq ($(RTCONFIG_BCMARM),y)
+ifneq ($(RTCONFIG_QTN),y)
 ifeq ($(RTCONFIG_BCM_7114),y)
 obj-$(RTCONFIG_BCMBSD) += bsd_arm_7114
 else
 obj-$(RTCONFIG_BCMBSD) += bsd
+endif
+endif
 endif
 obj-$(RTCONFIG_BCMSSD) += ssd
 obj-y += networkmap
@@ -1306,26 +1293,26 @@ roldconf: config/conf
 ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) compressed-clean
 endif
-ifeq ($(RTCONFIG_DHDAP),y)
-ifeq ($(RTCONFIG_BCM7),y)
-ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
-ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2011.09),)
-	# build 43602 src and to match its path
-	sudo mkdir /projects/hnd/tools/linux -p
-	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2011.09
-	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2011.09 /projects/hnd/tools/linux/hndtools-armeabi-2011.09
-endif
-endif
-else ifeq ($(RTCONFIG_BCM_7114),y)
-ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2013.11),)
-	# build pciefd
-	sudo mkdir /projects/hnd/tools/linux/bin -p
-	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2013.11
-	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2013.11 /projects/hnd/tools/linux/hndtools-armeabi-2013.11
-	sudo ln -sf $(SRCBASE)/toolchains/fwtag.ini /projects/hnd/tools/linux/bin/fwtag.ini
-endif
-endif
-endif
+#ifeq ($(RTCONFIG_DHDAP),y)
+#ifeq ($(RTCONFIG_BCM7),y)
+#ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
+#ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2011.09),)
+#	# build 43602 src and to match its path
+#	sudo mkdir /projects/hnd/tools/linux -p
+#	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2011.09
+#	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2011.09 /projects/hnd/tools/linux/hndtools-armeabi-2011.09
+#endif
+#endif
+#else ifeq ($(RTCONFIG_BCM_7114),y)
+#ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2013.11),)
+#	# build pciefd
+#	sudo mkdir /projects/hnd/tools/linux/bin -p
+#	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2013.11
+#	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2013.11 /projects/hnd/tools/linux/hndtools-armeabi-2013.11
+#	sudo ln -sf $(SRCBASE)/toolchains/fwtag.ini /projects/hnd/tools/linux/bin/fwtag.ini
+#endif
+#endif
+#endif
 
 kconf:
 	$(MAKE) -C $(LINUXDIR) config
@@ -2060,54 +2047,27 @@ libusb-clean:
 	-@$(MAKE) -C libusb clean
 	@rm -f libusb/stamp-h1
 
-#usbmodeswitch: libusb10
-#	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) -DLIBUSB10 \
-#		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread \
-#		-I$(TOP)/libusb10/libusb -L$(TOP)/libusb10/libusb/.libs -lusb-1.0"
-
-usbmodeswitch: libusb-0.1.12
-	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) \
+usb-modeswitch-1.2.3: libusb-0.1.12
+	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) -I$(TOP)/libusb-0.1.12" LIBS="\
 		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread -ldl\
-		-I$(TOP)/libusb-0.1.12 -L$(TOP)/libusb-0.1.12/.libs -lusb"
+		-L$(TOP)/libusb-0.1.12/.libs -lusb"
 
-usbmodeswitch-install: usbmodeswitch usbmodeswitch-install
-	install -D usbmodeswitch/usb_modeswitch $(INSTALLDIR)/usbmodeswitch/usr/sbin/usb_modeswitch
-	$(STRIP) -s $(INSTALLDIR)/usbmodeswitch/usr/sbin/usb_modeswitch
+usb-modeswitch-1.2.3-install: usb-modeswitch-1.2.3
+	install -D usb-modeswitch-1.2.3/usb_modeswitch $(INSTALLDIR)/usb-modeswitch-1.2.3/usr/sbin/usb_modeswitch
+	$(STRIP) -s $(INSTALLDIR)/usb-modeswitch-1.2.3/usr/sbin/usb_modeswitch
 	@mkdir -p $(TARGETDIR)/rom/etc
-	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usbmodeswitch/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
+	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usb-modeswitch-1.2.3/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
 
-usbmodeswitch-1.2.3: libusb-0.1.12
-	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) \
-		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread -ldl\
-		-I$(TOP)/libusb-0.1.12 -L$(TOP)/libusb-0.1.12/.libs -lusb"
+usb-modeswitch: libusb10
+	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) -I$(TOP)/libusb10/libusb" LIBS="\
+		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread -ldl \
+		-L$(TOP)/libusb10/libusb/.libs -lusb-1.0"
 
-usbmodeswitch-1.2.3-install: usbmodeswitch-1.2.3
-	install -D usbmodeswitch-1.2.3/usb_modeswitch $(INSTALLDIR)/usbmodeswitch-1.2.3/usr/sbin/usb_modeswitch
-	$(STRIP) -s $(INSTALLDIR)/usbmodeswitch-1.2.3/usr/sbin/usb_modeswitch
+usb-modeswitch-install: usb-modeswitch
+	install -D usb-modeswitch/usb_modeswitch $(INSTALLDIR)/usb-modeswitch/usr/sbin/usb_modeswitch
+	$(STRIP) -s $(INSTALLDIR)/usb-modeswitch/usr/sbin/usb_modeswitch
 	@mkdir -p $(TARGETDIR)/rom/etc
-	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usbmodeswitch-1.2.3/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
-
-usb-modeswitch-2.2.0: libusb10
-	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) \
-		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread -ldl\
-		-I$(TOP)/libusb10/libusb -L$(TOP)/libusb10/libusb/.libs -lusb-1.0"
-
-usb-modeswitch-2.2.0-install: usb-modeswitch-2.2.0
-	install -D usb-modeswitch-2.2.0/usb_modeswitch $(INSTALLDIR)/usb-modeswitch-2.2.0/usr/sbin/usb_modeswitch
-	$(STRIP) -s $(INSTALLDIR)/usb-modeswitch-2.2.0/usr/sbin/usb_modeswitch
-	@mkdir -p $(TARGETDIR)/rom/etc
-	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usb-modeswitch-2.2.0/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
-
-usb-modeswitch-2.2.3: libusb10
-	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) \
-		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread -ldl\
-		-I$(TOP)/libusb10/libusb -L$(TOP)/libusb10/libusb/.libs -lusb-1.0"
-
-usb-modeswitch-2.2.3-install: usb-modeswitch-2.2.3
-	install -D usb-modeswitch-2.2.3/usb_modeswitch $(INSTALLDIR)/usb-modeswitch-2.2.3/usr/sbin/usb_modeswitch
-	$(STRIP) -s $(INSTALLDIR)/usb-modeswitch-2.2.3/usr/sbin/usb_modeswitch
-	@mkdir -p $(TARGETDIR)/rom/etc
-	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usb-modeswitch-2.2.3/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
+	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usb-modeswitch/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
 
 libusb-0.1.12/stamp-h1:
 	cd libusb-0.1.12 && CFLAGS="-Os -Wall $(EXTRACFLAGS)" LIBS="-lpthread -ldl" \

@@ -513,7 +513,7 @@ function change_channel(obj){
 	
 	if(band == 1){
 		if(country == "EU"){		// for DFS channel
-			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U"
+			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" || based_modelid == "DSL-AC68U"
 			|| (based_modelid == "RT-AC66U" && wl1_dfs == "1")
 			|| based_modelid == "RT-N66U"){
 				if(document.form.wl_channel.value  == 0){
@@ -543,7 +543,7 @@ function change_channel(obj){
 			}
 		}
 		else if(country == "US" || country == "SG"){			//for acs band1 channel
-			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U"
+			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" || based_modelid == "DSL-AC68U"
 			|| based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S"
 			|| based_modelid == "RT-AC66U"
 			|| based_modelid == "RT-N66U"
@@ -555,90 +555,6 @@ function change_channel(obj){
 				else{
 					document.getElementById('acs_band1_checkbox').style.display = "none";
 					document.form.acs_band1.disabled = true;
-				}
-			}
-		}
-	}
-	else if(band == 0){
-		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-			if(!Qcawifi_support && !Rawifi_support){
-				if(document.form.wl_channel.value  == '0'){
-					document.getElementById('acs_ch13_checkbox').style.display = "";
-					document.form.acs_ch13.disabled = false;					
-				}
-				else{
-					document.getElementById('acs_ch13_checkbox').style.display = "none";
-					document.form.acs_ch13.disabled = true;							
-				}
-			}
-		}
-	}
-	else if(band == 0){
-		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-			if(!Qcawifi_support && !Rawifi_support){
-				if(document.form.wl_channel.value  == '0'){
-					document.getElementById('acs_ch13_checkbox').style.display = "";
-					document.form.acs_ch13.disabled = false;					
-				}
-				else{
-					document.getElementById('acs_ch13_checkbox').style.display = "none";
-					document.form.acs_ch13.disabled = true;							
-				}
-			}
-		}
-	}
-	else if(band == 0){
-		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-			if(!Qcawifi_support && !Rawifi_support){
-				if(document.form.wl_channel.value  == '0'){
-					document.getElementById('acs_ch13_checkbox').style.display = "";
-					document.form.acs_ch13.disabled = false;					
-				}
-				else{
-					document.getElementById('acs_ch13_checkbox').style.display = "none";
-					document.form.acs_ch13.disabled = true;							
-				}
-			}
-		}
-	}
-	else if(band == 0){
-		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-			if(!Qcawifi_support && !Rawifi_support){
-				if(document.form.wl_channel.value  == '0'){
-					document.getElementById('acs_ch13_checkbox').style.display = "";
-					document.form.acs_ch13.disabled = false;					
-				}
-				else{
-					document.getElementById('acs_ch13_checkbox').style.display = "none";
-					document.form.acs_ch13.disabled = true;							
-				}
-			}
-		}
-	}
-	else if(band == 0){
-		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-			if(!Qcawifi_support && !Rawifi_support){
-				if(document.form.wl_channel.value  == '0'){
-					document.getElementById('acs_ch13_checkbox').style.display = "";
-					document.form.acs_ch13.disabled = false;					
-				}
-				else{
-					document.getElementById('acs_ch13_checkbox').style.display = "none";
-					document.form.acs_ch13.disabled = true;							
-				}
-			}
-		}
-	}
-	else if(band == 0){
-		if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-			if(!Qcawifi_support && !Rawifi_support){
-				if(document.form.wl_channel.value  == '0'){
-					document.getElementById('acs_ch13_checkbox').style.display = "";
-					document.form.acs_ch13.disabled = false;					
-				}
-				else{
-					document.getElementById('acs_ch13_checkbox').style.display = "none";
-					document.form.acs_ch13.disabled = true;							
 				}
 			}
 		}

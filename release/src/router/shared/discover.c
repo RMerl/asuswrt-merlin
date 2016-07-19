@@ -874,10 +874,11 @@ void closeall(int fd1, int fd2) {
 	close(fd2);
 }
 
-int discover_all(void)
+int discover_all(int wan_unit)
 {
 	fd_set rfds;
 	int retval;
+	char nvram_name[16], current_wan_ifname[16];	
 	
 	struct timeval tv;
 	int max_fd;
@@ -896,21 +897,20 @@ int discover_all(void)
 	if (!is_routing_enabled())
 		return 0;
 	
+	if(dualwan_unit__usbif(wan_unit))
+		return 0;
+	
 	/* Initialize connection info */
 	memset(&conn, 0, sizeof(conn));
 	conn.discoverySocket = -1;
 	conn.sessionSocket = -1;
 	conn.useHostUniq = 1;
 	
-	int current_wan_unit = wan_primary_ifunit();
-	char nvram_name[16], current_wan_ifname[16];
-	
-	memset(nvram_name, 0, 16);
-	sprintf(nvram_name, "wan%d_ifname", current_wan_unit);
-	
-	memset(current_wan_ifname, 0, 16);
-	strcpy(current_wan_ifname, nvram_safe_get(nvram_name));
-	
+	snprintf(nvram_name, 16, "wan%d_ifname", wan_unit);
+	snprintf(current_wan_ifname, 16, "%s", nvram_safe_get(nvram_name));
+	if(strlen(current_wan_ifname) <= 0)
+		return 0;
+
 	/* Pick a default interface name */
 	SET_STRING(conn.ifName, current_wan_ifname);
 	
@@ -1008,43 +1008,43 @@ int discover_all(void)
 		retval = select(max_fd + 1, &rfds, NULL, NULL, &tv);
 
 		if (retval == -1) {
-eprintf("--- discover_all: error on select! ---\n");
+eprintf("--- discover_all(%d): error on select! ---\n", wan_unit);
 			fprintf(stderr, "error on select\n");
 
 			if (errno == EINTR)	/* a signal was caught */
 			{
-eprintf("--- discover_all: a signal was caught! ---\n");
+eprintf("--- discover_all(%d): a signal was caught! ---\n", wan_unit);
 				fprintf(stderr, "a signal was caught!\n");
 				sleep(1);
 				continue;
 			}
 			else if (errno == EBADF)
 			{
-eprintf("--- discover_all: An invalid file descriptor was given in one of the sets ---\n");
+eprintf("--- discover_all(%d): An invalid file descriptor was given in one of the sets ---\n", wan_unit);
 				fprintf(stderr, "An invalid file descriptor was given in one of the sets\n");
 				break;
 			}
 			else if (errno == EINVAL)
 			{
-eprintf("--- discover_all: max_fd + 1 is negative or the value contained within timeout is invalid ---\n");
+eprintf("--- discover_all(%d): max_fd + 1 is negative or the value contained within timeout is invalid ---\n", wan_unit);
 				fprintf(stderr, "max_fd + 1 is negative or the value contained within timeout is invalid\n");
 				break;
 			}
 			else if (errno == ENOMEM)
 			{
-eprintf("--- discover_all: unable to allocate memory for internal tables ---\n");
+eprintf("--- discover_all(%d): unable to allocate memory for internal tables ---\n", wan_unit);
 				fprintf(stderr, "unable to allocate memory for internal tables\n");
 				break;
 			}
 			else
 			{
-eprintf("--- discover_all: unknown errno: %x ---\n", errno);
+eprintf("--- discover_all(%d): unknown errno: %x ---\n", wan_unit, errno);
 				fprintf(stderr, "unknown errno: %x\n", errno);
 				break;
 			}
 		}
 		else if (retval < 0) {
-eprintf("--- discover_all: this should not happen! ---\n");
+eprintf("--- discover_all(%d): this should not happen! ---\n", wan_unit);
 			fprintf(stderr, "this should not happen\n");
 			break;
 		}
@@ -1055,17 +1055,17 @@ eprintf("--- discover_all: this should not happen! ---\n");
 #endif // DHCP_DETECT
 		if (FD_ISSET(conn.discoverySocket, &rfds))
 			got_PPP = 1;
-eprintf("--- discover_all: got_DHCP=%d, got_PPP=%d. ---\n", got_DHCP, got_PPP);
+eprintf("--- discover_all(%d): got_DHCP=%d, got_PPP=%d. ---\n", wan_unit, got_DHCP, got_PPP);
 		if (retval == 0) {
-eprintf("--- discover_all: retval == 0. ---\n");
-			//fprintf(stderr, "timeout occur when discover dhcp or pppoe\n");
+eprintf("--- discover_all(%d): retval == 0. ---\n", wan_unit);
+			//fprintf(stderr, "timeout occur when discover dhcp or pppoe\n", wan_unit);
 			FD_ZERO(&rfds);
 			closeall(cfd, conn.discoverySocket);
 			return 0;
 		}
 #ifdef DHCP_DETECT
 		if (retval > 0 && listen_mode != LISTEN_NONE && got_DHCP == 1) {
-eprintf("--- discover_all: discovery DHCP! ---\n");
+eprintf("--- discover_all(%d): discovery DHCP! ---\n", wan_unit);
 			/* a packet is ready, read it */
 			if (listen_mode == LISTEN_KERNEL)
 				len = get_packet(&packet, cfd);
@@ -1080,7 +1080,7 @@ eprintf("--- discover_all: discovery DHCP! ---\n");
 			
 			if ((len < 0) || (packet.xid != xid) || ((message = get_option(&packet, DHCP_MESSAGE_TYPE)) == NULL)) {
 				++count;
-eprintf("--- discover_all: Got the wrong %d packet when detecting DHCP! ---\n", count);
+eprintf("--- discover_all(%d): Got the wrong %d packet when detecting DHCP! ---\n", wan_unit, count);
 #ifdef DHCP_SOCKET
 				FD_ZERO(&rfds);
 				closeall(cfd, conn.discoverySocket);
@@ -1100,14 +1100,14 @@ eprintf("--- discover_all: Got the wrong %d packet when detecting DHCP! ---\n", 
 			/* Must be a DHCPOFFER to one of our xid's */
 			//if (*message == DHCPOFFER) {
 			else if (*message == DHCPOFFER) {
-eprintf("--- discover_all: Got the DHCP! ---\n");
+eprintf("--- discover_all(%d): Got the DHCP! ---\n", wan_unit);
 				FD_ZERO(&rfds);
 				closeall(cfd, conn.discoverySocket);
 				return 1;
 			}
 			else
 					got_DHCP = -1;
-eprintf("--- discover_all: end to analyse the DHCP's packet! ---\n");
+eprintf("--- discover_all(%d): end to analyse the DHCP's packet! ---\n", wan_unit);
 		}
 #endif // DHCP_DETECT
 		
@@ -1116,20 +1116,20 @@ eprintf("--- discover_all: end to analyse the DHCP's packet! ---\n");
 		
 		//else if (retval > 0 && listen_mode != LISTEN_NONE && got_PPP) {
 		if (retval > 0 && listen_mode != LISTEN_NONE && got_PPP == 1) {
-eprintf("--- discover_all: discovery PPPoE! ---\n");
+eprintf("--- discover_all(%d): discovery PPPoE! ---\n", wan_unit);
 			receivePacket(conn.discoverySocket, &ppp_packet, &ppp_len);
 			
 			if (ppp_packet.code == CODE_PADO) {
-eprintf("--- discover_all: Got the PPPoE! ---\n");
+eprintf("--- discover_all(%d): Got the PPPoE! ---\n", wan_unit);
 				FD_ZERO(&rfds);
 				closeall(cfd, conn.discoverySocket);
 				return 2;
 			}
 			
 			got_PPP = -1;
-eprintf("--- discover_all: end to analyse the PPPoE's packet! ---\n");
+eprintf("--- discover_all(%d): end to analyse the PPPoE's packet! ---\n", wan_unit);
 		}
-eprintf("--- Go to next detect loop. ---\n");
+eprintf("--- discover_all(%d): Go to next detect loop. ---\n", wan_unit);
 	}
 	
 	FD_ZERO(&rfds);

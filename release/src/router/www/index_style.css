@@ -61,7 +61,7 @@ body {
 	position:relative;
 	margin-top: -2px;
 	background-color:#3A4042;
-	border: 2px groove #6B7071;
+	border: 1px solid #6B7071;
 }
 
 .menu:hover, .menu:active{
@@ -96,7 +96,7 @@ body {
 	background: -ms-linear-gradient(top, #838383  0%, #262626 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #838383 0%, #262626 100%); /* W3C */
 	border-radius:6px;
-	border: 2px groove;
+	border: 1px solid #6B7071;
 	border-top-color:#A3A3A3;
 	border-left-color:#7A7A7A;
 	border-bottom-color:#5C5C5C;
@@ -135,7 +135,7 @@ body {
 	background: -ms-linear-gradient(top, #838383  0%, #262626 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #838383 0%, #262626 100%); /* W3C */
 	border-radius:6px;
-	border: 2px groove;
+	border: 1px solid #6B7071;
 	border-top-color:#A3A3A3;
 	border-left-color:#7A7A7A;
 	border-bottom-color:#5C5C5C;
@@ -153,7 +153,7 @@ body {
 	padding-top:0px;
 	position:relative;
 	text-shadow: 1px 1px 0px black;
-	border: 2px groove #6B7071;
+	border: 1px solid #6B7071;
 	border-top-left-radius:8px;
 	border-top-right-radius:8px;
 	height:33px;
@@ -177,7 +177,7 @@ body {
 	background: -o-linear-gradient(top,  #8AA6BE 0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* Opera 11.10+ */
 	background: -ms-linear-gradient(top,  #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* W3C */
-	border:2px groove #8AA6BE;
+	border:1px solid #8AA6BE;
 	border-bottom-color: #6297A9;
 }
 
@@ -191,7 +191,7 @@ body {
 /*for Firefox*/
 @-moz-document url-prefix(){
 	.menu, .m0_r, .menu_clicked{
-		border: 2px groove #000;
+		border: 1px solid #000;
 	}
 	
 	.m_qis_r{

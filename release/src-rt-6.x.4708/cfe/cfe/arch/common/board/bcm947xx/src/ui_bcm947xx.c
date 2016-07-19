@@ -93,6 +93,13 @@ extern void FANON(void);
 
 #endif	//end of DSLAC68U
 
+#ifdef RT4GAC68U
+#define PWR_LED_GPIO	(1 << 3)	// GPIO 3
+#define RST_BTN_GPIO	(1 << 11)	// GPIO 11
+#undef WPS_BTN_GPIO
+#define WPS_BTN_GPIO	(1 << 7)	// GPIO 7
+#endif
+
 #ifdef RTL8365MB
 #define SMI_SCK_GPIO	(1 << 6)	// GPIO 6
 #define SMI_SDA_GPIO	(1 << 7)	// GPIO 7

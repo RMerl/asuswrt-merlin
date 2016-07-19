@@ -209,7 +209,7 @@ legend {
 	padding-top:0px;
 	position:relative;
 	background-color:#4E5659;
-	border: 2px groove #6B7071;
+	border: 1px solid #6B7071;
 	border-top-left-radius:8px;
 	border-top-right-radius:8px;
 	height:33px;
@@ -233,7 +233,7 @@ legend {
 	background: -ms-linear-gradient(top,  #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8AA6BE', endColorstr='#376C9B',GradientType=0 ); /* IE6-9 */
-	border:2px groove #8AA6BE;
+	border:1px solid #8AA6BE;
 	border-bottom-color: #6297A9;
 }
 
@@ -246,19 +246,19 @@ legend {
 	position:relative;
 	margin-top: -2px;
 	background-color:#3A4042;
-	border: 2px groove #6B7071;
+	border: 1px solid #6B7071;
 }
 @-moz-document url-prefix(){
 	.lefttabmid{
-		border: 1px groove #6B7071;
+		border: 1px solid #6B7071;
 	}
 	
 	.lefttabmidfocus{
-		border:1px groove #8AA6BE;
+		border:1px solid #8AA6BE;
 	}
 	
 	.lefttabhead{
-		border: 1px groove #6B7071;
+		border: 1px solid #6B7071;
 	}
 	
 }
@@ -421,7 +421,7 @@ legend {
 	color:#FFFFFF;
 }
 .QISTutorFont_admin_pass{
-	font-family:Georgia, Arial, sans-serif;
+	font-family: Verdana, Arial, sans-serif;
 	line-height: 20px;
 	width:320px;
 }
@@ -447,3 +447,4 @@ legend {
 	font-weight:bolder;
 	color:#FC0;
 }
+

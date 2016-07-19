@@ -24,6 +24,8 @@
 #ifndef _httpd_h_
 #define _httpd_h_
 
+#define _GNU_SOURCE
+
 #include <arpa/inet.h>
 #if defined(DEBUG) && defined(DMALLOC)
 #include <dmalloc.h>

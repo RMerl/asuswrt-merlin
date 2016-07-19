@@ -1,0 +1,152 @@
+﻿@keyframes confirm {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.confirm{
+	animation: confirm 0.3s ease 1 forwards;
+	background-color: rgb(43, 55, 59);/*rgb(33,51,62);*/
+	border-radius: 10px;
+	max-width: 600px;
+	min-width: 200px;
+	margin: auto;
+	box-shadow: 0 0 20px #21333E;
+}
+.confirm_block{
+	position:absolute;
+	width:100%;
+	top:10%;
+	left:0%;
+	text-align:center;
+}
+.confirm_title{
+	font-size: 18pt;
+	padding:20px 10px;
+	color:#FFF;
+}
+.confirm_contentA{
+	font-size: 12pt;
+	padding:0 15px 20px;
+	color:#B8B8B8;
+	text-align:left;	
+}
+.confirm_contentB{
+	font-size: 12pt;
+	padding:0 15px 20px;
+	color:#B8B8B8;
+	text-align:left;
+	line-height:22px;
+}
+.confirm_contentC{
+	font-size: 12pt;
+	padding:0 15px 20px;
+	color:#FFCC00;
+	text-align:left;
+}
+.confirm_button{
+	cursor:pointer;
+	vertical-align:middle;
+	border-top: 1px solid #B4B4B4; 
+	display:table-cell;
+	background: transparent;
+	color: #FFF;
+	width: 50%;
+	height: 60px;
+	font-size: 14pt;
+}
+.confirm_button:focus,
+.confirm_button:hover {
+	background: #6699CC;
+	font-size: 16pt;
+}
+
+.confirm_button:active {
+  background: #6699CC;
+  font-size: 16pt;
+}
+.confirm_button_left{
+	border-right: 1px solid #B4B4B4;
+}
+.confirm_button_left:focus,
+.confirm_button_left:hover,
+.confirm_button_left:active{
+	border-bottom-left-radius: 10px;
+}
+.confirm_button_right:focus,
+.confirm_button_right:hover,
+.confirm_button_right:active{
+	border-bottom-right-radius: 10px;
+}
+
+.confirm_button_gen_long_left{
+	font-weight: bolder;
+	text-shadow: 1px 1px 0px black;
+  background: transparent url(../images/New_ui/logout_bt.png) no-repeat scroll center top;
+  border:0;
+  color: #FFFFFF;
+  width:155px;
+	height:34px;
+	text-align:center;
+	line-height:34px;
+	margin:0px 0px 20px 265px;
+	font-family:Verdana;
+	font-size:12px; 	
+  overflow:visible;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
+}
+.confirm_button_gen_long_left:hover	/*, .button:active*/{
+  background: transparent url(../images/New_ui/logout_btover.png) no-repeat scroll center top;
+  border:0;
+  color: #FFFFFF;
+	height:34px;
+	font-family:Verdana;
+	font-size:12px;
+ 	width:155px;
+  overflow:visible;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
+}
+
+.confirm_button_gen_long_right{
+	font-weight: bolder;
+	text-shadow: 1px 1px 0px black;
+  background: transparent url(../images/New_ui/logout_bt.png) no-repeat scroll center top;
+  border:0;
+  color: #FFFFFF;
+  width:155px;
+	height:34px;
+	text-align:center;
+	line-height:34px;
+	margin:-54px 0px 20px 430px;
+	font-family:Verdana;
+	font-size:12px; 	
+  overflow:visible;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
+}
+.confirm_button_gen_long_right:hover	/*, .button:active*/{
+  background: transparent url(../images/New_ui/logout_btover.png) no-repeat scroll center top;
+  border:0;
+  color: #FFFFFF;
+	height:34px;
+	font-family:Verdana;
+	font-size:12px;
+ 	width:155px;
+  overflow:visible;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
+}

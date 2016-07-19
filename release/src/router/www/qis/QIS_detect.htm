@@ -156,7 +156,7 @@ function getWANStatus(){
 					setTimeout('getWANStatus();', 500);
 				}
 			}
-			else if(autodet_state == "2" && autodet_auxstate == "6"){
+			else if(autodet_state == "6" || autodet_auxstate == "6"){
 				if((wanstate  == 2 && wansbstate == 0 && wanauxstate == 0) && (link_internet == "2" || wan0_realip_state == "2" || wan1_realip_state == "2")){
 					redirect_page("wireless");
 				}
@@ -434,7 +434,7 @@ function getWANStatus(){
 					redirect_page("wireless");
 				}
 			}
-			else if(autodet_state == "6"){
+			/*else if(autodet_state == "6"){
 				document.getElementById("tblsetting_1").style.display = "none";
 					
 				if(parent.ISMOBILE){
@@ -443,7 +443,7 @@ function getWANStatus(){
 				else{
 					document.getElementById("pppoe_detected").style.display = "";
 				}
-			}
+			}*/
 			else
 				redirect_page("internet_type");
 		}

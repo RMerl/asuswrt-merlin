@@ -89,12 +89,14 @@ void hm_traffic_limiter_save()
 	eval("traffic_limiter", "-w");
 }
 
+#if 1
 static void hm_networkmap_rescan()
 {
 	nvram_set("client_info_tmp", "");
 	nvram_set("refresh_networkmap", "1");
 	eval("killall", "-SIGUSR1", "networkmap");
 }
+#endif
 
 int hour_monitor_function_check()
 {

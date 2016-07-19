@@ -61,7 +61,7 @@ ifeq ($(RTCONFIG_BCM7)$(RTCONFIG_HSPOT),y)
 CFLAGS += -DD11AC_IOTYPES
 endif
 
-ifeq ($(RTAC68A), y)
+ifeq ($(or $(RTAC68A),$(RT4GAC68U)),y)
 CFLAGS += -DRTAC68U
 endif
 
@@ -154,7 +154,9 @@ OBJS    += tcode.o
 endif
 
 ifeq ($(CONFIG_BCMWL5),y)
+ifneq ($(RTCONFIG_DSL),y)
 CFLAGS += -DTRX_NEW
+endif
 OBJS += private.o
 OBJS += wlif_utils.o UdpLib.o bcmutils.o
 OBJS += bcmwifi_channels.o

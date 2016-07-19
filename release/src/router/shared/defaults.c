@@ -170,7 +170,11 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_bss_opmode_cap_reqd", "0", 0 },
 #endif
+#if defined(RTCONFIG_BCM9)
+	{ "wl_rxchain_pwrsave_enable", "1", 0 },/* Rxchain powersave enable */
+#else
 	{ "wl_rxchain_pwrsave_enable", "0", 0 },/* Rxchain powersave enable */
+#endif
 	{ "wl_rxchain_pwrsave_quiet_time", "1800", 0 },	/* Quiet time for power save */
 	{ "wl_rxchain_pwrsave_pps", "10", 0 },	/* Packets per second threshold for power save */
 	{ "wl_rxchain_pwrsave_stas_assoc_check", "0", 0 }, /* STAs associated before powersave */
@@ -184,6 +188,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_RALINK
 #elif defined(RTCONFIG_QCA)
 #else
+#if defined(RTCONFIG_BCM9)
+	{ "wl_dwds", "", 0 },
+#endif
 	{ "wl_lazywds", "0", 0 },		/* Enable "lazy" WDS mode (0|1) */
 	{ "wl_wds", "", 0 },			/* xx:xx:xx:xx:xx:xx ... */
 	{ "wl_wds_timeout", "1", 0 },		/* WDS link detection interval defualt 1 sec */
@@ -227,7 +234,7 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "wl_frameburst", "off", 0 },
 #endif
-#if defined (RTCONFIG_BCMARM) && !defined (RTCONFIG_BCM7)
+#if defined (RTCONFIG_BCMARM) && !defined (RTCONFIG_BCM7) && !defined(RTCONFIG_BCM9)
 	{ "frameburst_dyn", "0", 0 },		/* Frameburst controlled dynamically if on */
 #endif
 	{ "wl_rateset", "default", 0 },		/* "default" or "all" or "12" */
@@ -330,7 +337,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_RALINK
 #elif defined(RTCONFIG_QCA)
 #else
-#if defined(RTCONFIG_BCM_7114)
+#if defined(RTCONFIG_BCM_7114) || defined(RTCONFIG_BCM9)
 	{ "wl_ampdu_rtylimit_tid", "5 5 5 5 5 5 5 5", 0 },
 	{ "wl_ampdu_rr_rtylimit_tid", "2 2 2 2 2 2 2 2", 0 },
 #else
@@ -340,16 +347,18 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_ampdu_rr_rtylimit_tid", "3 3 3 3 3 3 3 3", 0 },
 #endif
 	{ "wl_amsdu", "auto", 0 },		/* Default AMSDU setting */
-#if defined (RTCONFIG_BCMARM) && !defined (RTCONFIG_BCM7) && !defined (RTCONFIG_BCM_7114)
+#if defined (RTCONFIG_BCMARM) && !defined (RTCONFIG_BCM7) && !defined (RTCONFIG_BCM_7114) && !defined (RTCONFIG_BCM9)
 	{ "wl_rx_amsdu_in_ampdu", "auto", 0 },	/* Default RX AMSDU In AMPDU setting */
 #endif
 	{ "wl_obss_coex", "1", 0 },		/* Default OBSS Coexistence setting - OFF */
 #ifdef RTCONFIG_BCMWL6
-#if !defined (RTCONFIG_BCM7) && !defined (RTCONFIG_BCM_7114)
+#if !defined (RTCONFIG_BCM7) && !defined (RTCONFIG_BCM_7114) && !defined(RTCONFIG_BCM9)
 	{ "wl_ack_ratio", "0", 0 },
 #endif
+#if !defined(RTCONFIG_BCM9)
 	{ "wl_ampdu_mpdu", "0", 0 },
 	{ "wl_ampdu_rts", "1", 0 },
+#endif
 #ifdef RTCONFIG_BCMARM
 #ifdef RTCONFIG_BCM_7114
 	{ "wl_turbo_qam", "2", 0 },
@@ -753,7 +762,7 @@ struct nvram_tuple router_defaults[] = {
 
 #endif
 
-#ifdef RTCONFIG_BCM10
+#ifdef RTCONFIG_BCM9
 	{ "wl_pspretend_retry_limit", "5", 0 }, /* Enable PsPretend */
 #else
 	{ "wl_pspretend_retry_limit", "0", 0 }, /* Disable PsPretend */
@@ -820,7 +829,7 @@ struct nvram_tuple router_defaults[] = {
 	{"wl2_bsd_if_qualify_policy_x", "0 0x4", 0 },
 	{"bsd_bounce_detect_x", "180 2 3600", 0 },
 	{"bsd_aclist_timeout", "3", 0},
-#elif defined(RTAC88U)
+#elif defined(RTAC88U) || defined(RTAC3100)
 	// Dual-Band
 	{"bsd_ifnames", "eth1 eth2", 0 },
 	{"wl0_bsd_steering_policy", "0 5 3 -52 0 110 0x22", 0 },
@@ -847,14 +856,16 @@ struct nvram_tuple router_defaults[] = {
 	{ "ssd_enable", "0", 0 },		/* Disable SSID Steer Daemon */
 	{ "wl_ssd_type", "0", 0 },		/* default ssd_type "disabled" */
 #endif
-#if defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114)
+#if defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114) || defined(RTCONFIG_BCM9)
 	{ "wl_dfs_pref", "" },			/* DFS Preferred channel value */
 	{ "wl_probresp_mf", "0", 0 },		/* MAC filter based probe response */
 	{ "wl_probresp_sw", "1", 0 },		/* SW probe response */
 	{ "wl_vht_features", "-1", 0 }, 	/* VHT features */
 #endif
-#ifdef RTCONFIG_BCM_7114
+#if defined(RTCONFIG_BCM_7114) || defined(RTCONFIG_BCM9)
 	{ "wl_obss_dyn_bw", "0", 0},		/* Dynamic BWSW disable defaults */
+#endif
+#ifdef RTCONFIG_BCM_7114
 	{ "wl_tpc_db", "0", 0},			/* TPC Mitigation (db) */
 #endif
 #endif
@@ -913,7 +924,7 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "lan_proto",			"static"	},	// DHCP server [static|dhcp]	//Barry add 2004 09 16
 #endif
-#if defined(RTN300) || defined(RTAC1200G)
+#if defined(RTN300)
 	{ "lan_ipaddr",			"192.168.50.1"	},	// LAN IP address
 	{ "lan_ipaddr_rt",		"192.168.50.1"	},
 #else
@@ -964,7 +975,7 @@ struct nvram_tuple router_defaults[] = {
 	// NVRAM for start_dhcpd
 	// DHCP server parameters
 	{ "dhcp_enable_x", "1" },
-#if defined(RTN300) || defined(RTAC1200G)
+#if defined(RTN300)
 	{ "dhcp_start", "192.168.50.2" },
 	{ "dhcp_end", "192.168.50.254" },
 #else
@@ -1078,7 +1089,6 @@ struct nvram_tuple router_defaults[] = {
 	/* PPPoE parameters */
 	{ "wan_pppoe_username", "" },	/* PPP username */
 	{ "wan_pppoe_passwd", "" },	/* PPP password */
-	{ "wan_auth_ok", "0" },		/* PPP had ever authenticated */
 	{ "wan_pppoe_idletime", "0" },	// oleg patch
 	{ "wan_pppoe_mru", "1492" },	/* Negotiate MRU to this value */
 	{ "wan_pppoe_mtu", "1492" },	/* Negotiate MTU to the smaller of this value or the peer MRU */
@@ -1093,6 +1103,14 @@ struct nvram_tuple router_defaults[] = {
 	{ "wan_ppp_echo_interval", "6" },
 	{ "wan_ppp_echo_failure", "10" },
 
+	{ "dns_probe_host", "dns.msftncsi.com" },	// host to resolve
+#ifdef RTCONFIG_IPV6
+	{ "dns_probe_content", "131.107.255.255 fd3e:4f5a:5b81::1" },	// resolve target addr or wildcard *
+#else
+	{ "dns_probe_content", "131.107.255.255" },	// resolve target addr or wildcard *
+#endif
+	{ "dns_delay_round", "2" },
+
 	/* Misc WAN parameters */
 	{ "wan_desc", "" },		/* WAN connection description */
 	{ "wan_upnp_enable", "1" }, 	// upnp igd
@@ -1106,8 +1124,6 @@ struct nvram_tuple router_defaults[] = {
 	{"wan_clientid_type", "0" },	/* 0: MAC 1: Node-specific RFC4361 */
 	{"wan_clientid", "" },
 	{"wan_vendorid", "" },
-
-	{ "stop_dns_detect", "0" },
 
 	// For miniupnpd, so far default value only
 	{ "upnp_enable", "1" },
@@ -1806,6 +1822,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "https_crt_save", "0" },
 	{ "https_crt_gen", "1" },
 	{ "https_crt_cn", "" },
+	{ "webs_last_info", ""},
+	{ "firmware_path", "0"},
 #endif
 
 	{ "temp_lang", "" },
@@ -2608,6 +2626,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "nmap_hm_scan",		"1" },		/* Hourly networkmap rescans */
 	{ "nmp_client_list",		"" },
 	{ "ttl_inc_enable",		"0" },		/* enable TTL increment */
+	{ "ttl_spoof_enable",		"0" },		/* enable TTL spoofing */
 #ifdef RTCONFIG_TOR
 	{ "Tor_enable",                 "0" },           /* enable Tor Transparent Proxy */
 	{ "Tor_socksport",              "9050" },
@@ -2956,12 +2975,6 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_cfg_iptv_num_pvc", "0" },
 	{ "dsltmp_cfg_iptv_pvclist", "" },
 	{ "dsltmp_cfg_iptv_enable", "0" },
-	{ "dsltmp_cfg_ginp", "0" },
-	{ "dsltmp_cfg_th3bb", "0" },
-	{ "dsltmp_cfg_modulation", "" },
-	{ "dsltmp_cfg_annex", "" },
-	{ "dsltmp_cfg_de17a", "0" },
-	{ "dsltmp_cfg_vdslprofile", "" },
 
 // tmp variable for QIS , it will write to dsl0_xxx after finish page
 	{ "dsltmp_qis_reboot", "0" },	//tmp for reboot flag before implement proper service without reboot

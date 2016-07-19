@@ -35,11 +35,7 @@
 #include <shutils.h>
 #include <shared.h>
 #include <wlioctl.h>
-#ifdef PSTA_DEBUG
 #include <rc.h>
-#else
-#include <signal.h>
-#endif
 
 #include <wlscan.h>
 #include <bcmendian.h>

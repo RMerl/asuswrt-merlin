@@ -94,7 +94,7 @@ int setRegrev_5G_qtn(const char *regrev)
 	int ret;
 	char value[20] = {0};
 
-	if( regrev==NULL || !isValidRegrev((char *)regrev) )
+	if( regrev==NULL || !isValidRegrev(regrev) )
 		return 0;
 
 	if (!rpc_qtn_ready()) {

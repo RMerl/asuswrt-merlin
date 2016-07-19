@@ -52,7 +52,7 @@ function initial(){
 	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){ //AC 5G
 		if(based_modelid == "RT-AC87U") 
 			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 6)};//#WLANConfig11b_x_Mode_itemdescAC2#	
-		else if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" ||
+		else if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" ||
 				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC53U"){
 			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 7)};//#WLANConfig11b_x_Mode_itemdescAC3#
 		}	
@@ -115,7 +115,7 @@ function initial(){
 				
 	change_wl_nmode(document.form.wl_nmode_x);
 	if(country == "EU"){		//display checkbox of DFS channel under 5GHz
-		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U"
+		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" || based_modelid == "DSL-AC68U"
 		|| based_modelid == "RT-AC87U"
 		|| based_modelid == "RT-AC3200"
 		|| (based_modelid == "RT-AC66U" && wl1_dfs == "1")		//0: A2 not support, 1: B0 support
@@ -127,7 +127,7 @@ function initial(){
 		}
 	}
 	else if(country == "US" || country == "SG"){		//display checkbox of band1 channel under 5GHz
-		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "DSL-AC68U"
+		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" || based_modelid == "DSL-AC68U"
 		|| based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S"
 		|| based_modelid == "RT-N18U"
 		|| based_modelid == "RT-AC66U"
@@ -135,48 +135,6 @@ function initial(){
 		|| based_modelid == "RT-AC53U"){		
 			if(document.form.wl_channel.value  == '0' && wl_unit == '1')
 				document.getElementById('acs_band1_checkbox').style.display = "";					
-		}
-	}
-
-	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-		if(!Qcawifi_support && !Rawifi_support){
-			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
-				document.getElementById('acs_ch13_checkbox').style.display = "";				
-		}
-	}
-
-	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-		if(!Qcawifi_support && !Rawifi_support){
-			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
-				document.getElementById('acs_ch13_checkbox').style.display = "";				
-		}
-	}
-
-	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-		if(!Qcawifi_support && !Rawifi_support){
-			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
-				document.getElementById('acs_ch13_checkbox').style.display = "";				
-		}
-	}
-
-	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-		if(!Qcawifi_support && !Rawifi_support){
-			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
-				document.getElementById('acs_ch13_checkbox').style.display = "";				
-		}
-	}
-
-	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-		if(!Qcawifi_support && !Rawifi_support){
-			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
-				document.getElementById('acs_ch13_checkbox').style.display = "";				
-		}
-	}
-
-	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
-		if(!Qcawifi_support && !Rawifi_support){
-			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
-				document.getElementById('acs_ch13_checkbox').style.display = "";				
 		}
 	}
 
@@ -213,7 +171,25 @@ function initial(){
 	
 	if(document.form.wl_channel.value  == '0'){
 		document.getElementById("auto_channel").style.display = "";
-		document.getElementById("auto_channel").innerHTML = "Current control channel: "+cur_control_channel[wl_unit];
+		var temp = "";
+		if(smart_connect_flag_t == "1"){		//Tri-Band Smart Connect
+			temp = cur_control_channel[0] + ", " + cur_control_channel[1] + ", " + cur_control_channel[2];
+			document.getElementById("auto_channel").innerHTML = "Current Control Channel: " + temp;
+		}
+		else if(smart_connect_flag_t == "2"){		//5 GHz Smart Connect
+			if(wl_unit == "0"){
+				temp = cur_control_channel[0];
+				document.getElementById("auto_channel").innerHTML = "Current Control Channel: " + temp;
+			}
+			else{
+				temp = cur_control_channel[1] + ", " + cur_control_channel[2];
+				document.getElementById("auto_channel").innerHTML = "Current Control Channel: "+ temp;		
+			}
+		}
+		else{		//smart_connect_flag_t == 0, disable Smart Connect
+			temp = cur_control_channel[wl_unit];
+			document.getElementById("auto_channel").innerHTML = "Current Control Channel: " + temp;
+		}
 	}
 }
 
@@ -291,7 +267,7 @@ function genBWTable(_unit){
 					bwsDesc = ["20 MHz", "40 MHz", "80 MHz"];
 				}
 			}
-			else if((based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" ||
+			else if((based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" ||
 				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || 
 				based_modelid == "RT-AC66U" || 
 				based_modelid == "RT-AC3200" || 
@@ -642,48 +618,6 @@ function check_acs_ch13_support(obj){
 		document.form.acs_ch13.value = 0;
 }
 
-function check_acs_ch13_support(obj){
-	if(obj.checked)
-		document.form.acs_ch13.value = 1;
-	else
-		document.form.acs_ch13.value = 0;
-}
-
-function check_acs_ch13_support(obj){
-	if(obj.checked)
-		document.form.acs_ch13.value = 1;
-	else
-		document.form.acs_ch13.value = 0;
-}
-
-function check_acs_ch13_support(obj){
-	if(obj.checked)
-		document.form.acs_ch13.value = 1;
-	else
-		document.form.acs_ch13.value = 0;
-}
-
-function check_acs_ch13_support(obj){
-	if(obj.checked)
-		document.form.acs_ch13.value = 1;
-	else
-		document.form.acs_ch13.value = 0;
-}
-
-function check_acs_ch13_support(obj){
-	if(obj.checked)
-		document.form.acs_ch13.value = 1;
-	else
-		document.form.acs_ch13.value = 0;
-}
-
-function check_acs_ch13_support(obj){
-	if(obj.checked)
-		document.form.acs_ch13.value = 1;
-	else
-		document.form.acs_ch13.value = 0;
-}
-
 function tmo_wl_nmode(){
 	var tmo2nmode = [["0",  "<#Auto#>"],["6",       "B Only"],["5", "G Only"],["1", "N Only"],["2",	"B/G Mixed"],["4", "G/N Mixed"]];
 	var tmo5nmode = [["0",  "<#Auto#>"],["7",       "A Only"],["1", "N Only"],["3", "AC Only"],["4", "A/N Mixed"]];
@@ -715,13 +649,17 @@ function enableSmartCon(val){
 		value = ["1"];
 		add_options_x2(document.form.smart_connect_t, desc, value, val);	
 	}
-	else if(based_modelid == "RT-AC88U"){
+	else if(based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100"){
 		desc = ["Dual-Band Smart Connect (2.4GHz and 5GHz)"];
 		value = ["1"];
 		add_options_x2(document.form.smart_connect_t, desc, value, val);		
 	}
 	
-	if(based_modelid=="RT-AC5300" || based_modelid=="RT-AC5300R" || based_modelid=="RT-AC3200" || based_modelid=="RT-AC88U"){
+	if(based_modelid=="RT-AC5300" || 
+		based_modelid=="RT-AC5300R" || 
+		based_modelid=="RT-AC3200" || 
+		based_modelid=="RT-AC88U" ||
+		based_modelid=="RT-AC3100"){
 		if(val == 0){
 			document.getElementById("smart_connect_field").style.display = "none";
 			document.getElementById("smartcon_rule_link").style.display = "none";
@@ -902,7 +840,7 @@ function regen_auto_option(obj){
 
 								$('#radio_smartcon_enable').iphoneSwitch( smart_connect_flag_t > 0, 
 								 function() {
-								 	if(based_modelid != "RT-AC5300" && based_modelid != "RT-AC5300R" && based_modelid !="RT-AC3200" && based_modelid != "RT-AC88U")
+								 	if(based_modelid != "RT-AC5300" && based_modelid != "RT-AC5300R" && based_modelid !="RT-AC3200" && based_modelid != "RT-AC88U" && based_modelid != "RT-AC3100")
 										enableSmartCon(1);
 									else{
 										if(document.form.smart_connect_t.value)

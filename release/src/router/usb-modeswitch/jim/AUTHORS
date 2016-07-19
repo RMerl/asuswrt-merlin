@@ -1,0 +1,41 @@
+Salvatore Sanfilippo <antirez@invece.org>
+
+with the help (patches, bug reports, ideas, extensions) of:
+
+Pat Thoyts
+Clemens Hintze
+
+See also the ChangeLog and README files for other credits.
+
+DESIGN CREDITS:
+
+some of the idea inside Jim are the fruit of long discussions
+inside the Tclers chat room. The feedback of the Tcl
+comunity in general, and of the members of the Tcl Core Team, was
+very important to avoid mistakes: I used the great experience of
+this people as a test for some of the ideas I put into Jim.
+Bad ideas tend to be demolished in no time by good engineers.
+
+Also the following ideas are due to the following authors:
+
+- Jim locals were originally proposed by Miguel Sofer, I (SS) added
+  the feature that make they similar to lexical scoped closures
+  using capturing of the local variables value if no explicit
+  intialization is provided.
+
+- The [lmap] command is my (SS) design, but I incorporated inside the
+  command an interesting idea of Donal K. Fellows that proposed that
+  the [continue] command may be used to skip the accumulation of the
+  current-iteartion result, providing in one command the power of
+  [map] and [filter] together.
+
+ 
+ChangeLog committers to be identified. Tentative list:  
+ 
+antirez - Salvatore Sanfilippo <antirez@gmail.com>
+patthoyts - Pat Thoyts <patthoyts@users.sf.net> 
+oharboe - Øyvind Harboe - soyvind.harboe@zylin.com
+Andrew Lunn <andrew@lunn.ch> 
+Duane Ellis <openocd@duaneellis.com>
+Uwe Klein <uklein@klein-messgeraete.de>
+Clemens Hintze ml-jim@qiao.in-berlin.de aka chi

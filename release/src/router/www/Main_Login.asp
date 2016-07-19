@@ -206,11 +206,11 @@ var lock_time = '<% get_parameter("lock_time"); %>';
 var remaining_time = 60 - lock_time;
 var countdownid, rtime_obj;
 var redirect_page = '<% get_parameter("page"); %>';
-
+var cloud_file = '<% get_parameter("file"); %>';
 if ('<% nvram_get("http_dut_redir"); %>' == '1') {
 var isRouterMode = ('<% nvram_get("sw_mode"); %>' == '1') ? true : false;
 var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
-var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.href.replace(location.hostname, ROUTERHOSTNAME)+"?page="+redirect_page};
+var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.href.replace(location.hostname, ROUTERHOSTNAME)};
 (function(){
 	var locationOrigin = window.location.protocol + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
 	if(location.hostname !== ROUTERHOSTNAME && ROUTERHOSTNAME != "" && isRouterMode){
@@ -263,7 +263,7 @@ function initial(){
 			var getLoginUser = function(){
 				if(loginUserIp === "") return "";
 
-				var dhcpLeaseInfo = <% IP_dhcpLeaseInfo(); %>
+				var dhcpLeaseInfo = [];
 				var hostName = "";
 
 				dhcpLeaseInfo.forEach(function(elem){
@@ -406,6 +406,11 @@ function login(){
 		document.form.next_page.value = "index.asp";
 	}		
 
+	if(document.form.next_page.value == "cloud_sync.asp"){
+		document.form.cloud_file.disabled = false;
+		document.form.cloud_file.value = cloud_file;
+	}
+
 	document.form.submit();
 }
 
@@ -439,6 +444,7 @@ function disable_button(val){
 <input type="hidden" name="current_page" value="Main_Login.asp">
 <input type="hidden" name="next_page" value="Main_Login.asp">
 <input type="hidden" name="login_authorization" value="">
+<input type="hidden" name="cloud_file" value="" disabled>
 <div class="div_table main_field_gap">
 	<div class="div_tr">
 		<div id="warming_field" style="display:none;" class="warming_desc">Note: the router you are using is not an ASUS device or has not been authorised by ASUS. ASUSWRT might not work properly on this device.</div>

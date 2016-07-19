@@ -196,8 +196,14 @@ function submitForm(){
 		document.form.action = "QIS_modem.htm";
 	else if(parent.document.QKform.sw_mode.value == "1"){
 		//document.form.action = "/qis/QIS_detect.htm";
-		if(autodet_state == "2" && autodet_auxstate == "6"){
-			document.form.action = "/qis_m/QIS_internet_type.htm";
+		if(autodet_state == "6" || autodet_auxstate == "6"){
+			if((wanstate  == 2 && wansbstate == 0 && wanauxstate == 0) && (link_internet == "2" || wan0_realip_state == "2" || wan1_realip_state == "2")){
+				document.form.action = "/qis/QIS_wireless.htm";
+			}
+			else{
+				parent.document.QKform.wan_proto.value = "pppoe";
+				document.form.action = "/qis/QIS_internet_account.htm";
+			}
 		}
 		else if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
 			document.form.action = "/qis_m/QIS_wireless.htm";

@@ -88,7 +88,7 @@ function QKinternettype_load_body(){
 		if(!parent.manualstb_support) 
 			document.applyForm.switch_wantag.remove(8);
 
-		if(odmpid == "RT-AC66U V2")
+		if(odmpid == "RT-AC66U_B1")
 			document.getElementById("image_field").className = "image_field_RT-AC66U_V2";
 
 		detect_if_wan_plug();			
@@ -402,7 +402,7 @@ function switch_dialUp_type(obj){
 		document.getElementById("dhcp_scenario_2").style.display = "none";
 	}
 	else if(obj.id == "non_dialUp"){
-		if(odmpid == "RT-AC66U V2")
+		if(odmpid == "RT-AC66U_B1")
 			document.getElementById("image_field").className = "non_dialUp_RT-AC66U_V2";
 		else
 			document.getElementById("image_field").className = "non_dialUp";
@@ -510,7 +510,7 @@ function switch_dhcp_type(obj){
 		document.getElementById("static_ip_desc").style.display = "";
 	}
 	else{
-		if(odmpid == "RT-AC66U V2")
+		if(odmpid == "RT-AC66U_B1")
 			document.getElementById("image_field").className = "non_dialUp_RT-AC66U_V2";
 		else
 			document.getElementById("image_field").className = "non_dialUp";
@@ -535,7 +535,7 @@ function previous_step(flag){
 		document.getElementById('previous_button').style.display = "none";
 		document.getElementById('title_desc').innerHTML = "<#QIS_SmartConn_title1#>";
 		if(document.getElementById("image_field").className == "static_image"){
-			if(odmpid == "RT-AC66U V2")
+			if(odmpid == "RT-AC66U_B1")
 				document.getElementById("image_field").className = "non_dialUp_RT-AC66U_V2";
 			else
 				document.getElementById("image_field").className = "non_dialUp";

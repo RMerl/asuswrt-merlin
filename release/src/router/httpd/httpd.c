@@ -215,7 +215,7 @@ struct language_table language_tables[] = {
 
 /* Forwards. */
 static int initialize_listen_socket(usockaddr* usa, const char *ifname);
-static int auth_check( char* dirname, char* authorization, char* url, char* cookies, int fromapp_flag);
+static int auth_check( char* dirname, char* authorization, char* url, char* file, char* cookies, int fromapp_flag);
 static int referer_check(char* referer, int fromapp_flag);
 char *generate_token(void);
 static void send_error( int status, char* title, char* extra_header, char* text );
@@ -227,7 +227,7 @@ static void send_token_headers( int status, char* title, char* extra_header, cha
 static int match( const char* pattern, const char* string );
 static int match_one( const char* pattern, int patternlen, const char* string );
 static void handle_request(void);
-void send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
+void send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time);
 void __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
 int check_user_agent(char* user_agent);
 #ifdef RTCONFIG_IFTTT
@@ -361,10 +361,11 @@ error:
 }
 
 void 
-send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
+send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time)
 {
 	char inviteCode[256]={0};
 	char url_tmp[64]={0};
+	char *cp, *file_var=NULL;
 
 	if(url == NULL)
 		strncpy(url_tmp, "index.asp", sizeof(url_tmp));
@@ -372,7 +373,15 @@ send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
 		strlcpy(url_tmp, url, sizeof(url_tmp));
 		
 	if(fromapp_flag == 0){
-		snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s&lock_time=%d';</script>",error_status, url_tmp, lock_time);
+		if(strncmp(url_tmp, "cloud_sync.asp", strlen(url_tmp))==0){
+			if(file != NULL){
+				cp = strstr(file,"flag=");
+				if(cp != (char*) 0)
+					file_var = &cp[5];
+			}
+			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s&file=%s&lock_time=%d';</script>",error_status, url_tmp, file_var, lock_time);
+		}else
+			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s&lock_time=%d';</script>",error_status, url_tmp, lock_time);
 	}else{
 		snprintf(inviteCode, sizeof(inviteCode), "\"error_status\":\"%d\"", error_status);
 	}
@@ -385,7 +394,7 @@ __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
 	login_try++;
 	last_login_timestamp = login_timestamp_tmp;
 	
-	send_login_page(fromapp_flag, error_status, url, lock_time);
+	send_login_page(fromapp_flag, error_status, url, NULL, lock_time);
 }
 
 static int
@@ -397,7 +406,7 @@ referer_check(char* referer, int fromapp_flag)
 	if(fromapp_flag != 0)
 		return 0;
 	if(!referer){
-		send_login_page(fromapp_flag, NOREFERER, NULL, 0);
+		send_login_page(fromapp_flag, NOREFERER, NULL, NULL, 0);
 		return NOREFERER;
 	}else{
 
@@ -419,7 +428,7 @@ referer_check(char* referer, int fromapp_flag)
 
 	}
 	if(referer_host[0] == 0){
-		send_login_page(fromapp_flag, WEB_NOREFERER, NULL, 0);
+		send_login_page(fromapp_flag, WEB_NOREFERER, NULL, NULL, 0);
 		return WEB_NOREFERER;
 	}
 	if(strncmp(DUT_DOMAIN_NAME, auth_referer, strlen(DUT_DOMAIN_NAME))==0){
@@ -431,17 +440,17 @@ referer_check(char* referer, int fromapp_flag)
 		return 0;
 	}else{
 		//_dprintf("asus token referer_check: the wrong user and password\n");
-		send_login_page(fromapp_flag, REFERERFAIL, NULL, 0);
+		send_login_page(fromapp_flag, REFERERFAIL, NULL, NULL, 0);
 		return REFERERFAIL;
 	}
-	send_login_page(fromapp_flag, REFERERFAIL, NULL, 0);
+	send_login_page(fromapp_flag, REFERERFAIL, NULL, NULL, 0);
 	return REFERERFAIL;
 }
 
 #define	HEAD_HTTP_LOGIN	"HTTP login"	// copy from push_log/push_log.h
 
 static int
-auth_check( char* dirname, char* authorization ,char* url, char* cookies, int fromapp_flag)
+auth_check( char* dirname, char* authorization, char* url, char* file, char* cookies, int fromapp_flag)
 {
 	struct in_addr temp_ip_addr;
 	char *temp_ip_str;
@@ -469,7 +478,7 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, int fr
 			logmessage(HEAD_HTTP_LOGIN, "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
 
 //#ifdef LOGIN_LOCK
-		send_login_page(fromapp_flag, LOGINLOCK, url, dt);
+		send_login_page(fromapp_flag, LOGINLOCK, url, NULL, dt);
 		return LOGINLOCK;
 //#endif
 	}
@@ -481,7 +490,7 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, int fr
 	}
 
 	if(!cookies){
-		send_login_page(fromapp_flag, NOTOKEN, url, 0);
+		send_login_page(fromapp_flag, NOTOKEN, url, file, 0);
 		return NOTOKEN;
 	}else{
 		location_cp = strstr(cookies,"asus_token");
@@ -490,7 +499,7 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, int fr
 			cp += strspn( cp, " \t" );
 			snprintf(asustoken, sizeof(asustoken), "%s", cp);
 		}else{
-			send_login_page(fromapp_flag, NOTOKEN, url, 0);
+			send_login_page(fromapp_flag, NOTOKEN, url, file, 0);
 			return NOTOKEN;
 		}
 	}
@@ -507,11 +516,11 @@ auth_check( char* dirname, char* authorization ,char* url, char* cookies, int fr
 		return 0;
 	}else{
 		//_dprintf("asus token auth_check: the wrong user and password\n");
-		send_login_page(fromapp_flag, AUTHFAIL, url, 0);
+		send_login_page(fromapp_flag, AUTHFAIL, url, file, 0);
 		return AUTHFAIL;
 	}
 
-	send_login_page(fromapp_flag, AUTHFAIL, url, 0);
+	send_login_page(fromapp_flag, AUTHFAIL, url, file, 0);
 	return AUTHFAIL;
 }
 
@@ -1080,6 +1089,7 @@ handle_request(void)
 
 	//printf("httpd url: %s file: %s\n", url, file);
 	//_dprintf("httpd url: %s file: %s\n", url, file);
+
 	mime_exception = 0;
 	do_referer = 0;
 
@@ -1095,7 +1105,7 @@ handle_request(void)
 			}else{
 				if(strncmp(file, "Main_Login.asp?error_status=7", 29)==0 || strstr(url, ".png")){
 				}else{
-					send_login_page(fromapp, LOGINLOCK, url, dt_t);
+					send_login_page(fromapp, LOGINLOCK, url, NULL, dt_t);
 					return;
 				}
 			}
@@ -1144,7 +1154,7 @@ handle_request(void)
 							handler->input(file, conn_fp, cl, boundary);
 						}
 					}
-					send_login_page(fromapp, NOLOGIN, NULL, 0);
+					send_login_page(fromapp, NOLOGIN, NULL, NULL, 0);
 					return;
 				}
 			}
@@ -1162,21 +1172,21 @@ handle_request(void)
 								if (handler->input) {
 									handler->input(file, conn_fp, cl, boundary);
 								}
-								send_login_page(fromapp, referer_result, NULL, 0);
+								send_login_page(fromapp, referer_result, NULL, NULL, 0);
 							}
 							//if(!fromapp) http_logout(login_ip_tmp, cookies);
 							return;
 						}
 					}
 					handler->auth(auth_userid, auth_passwd, auth_realm);
-					auth_result = auth_check(auth_realm, authorization, url, cookies, fromapp);
+					auth_result = auth_check(auth_realm, authorization, url, file, cookies, fromapp);
 					if (auth_result != 0)
 					{
 						if(strcasecmp(method, "post") == 0){
 							if (handler->input) {
 								handler->input(file, conn_fp, cl, boundary);
 							}
-							send_login_page(fromapp, auth_result, NULL, 0);
+							send_login_page(fromapp, auth_result, NULL, NULL, 0);
 						}
 						//if(!fromapp) http_logout(login_ip_tmp, cookies);
 						return;
@@ -1196,7 +1206,7 @@ handle_request(void)
 
 			if(!strcmp(file, "Logout.asp")){
 				http_logout(login_ip_tmp, cookies, fromapp);
-				send_login_page(fromapp, ISLOGOUT, NULL, 0);
+				send_login_page(fromapp, ISLOGOUT, NULL, NULL, 0);
 				return;
 			}
 			if (strcasecmp(method, "post") == 0 && !handler->input) {
