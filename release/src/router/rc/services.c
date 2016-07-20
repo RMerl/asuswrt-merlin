@@ -1078,7 +1078,7 @@ void start_dnsmasq(void)
 		value = nvram_safe_get("dhcp_dns1_x");
 		value2 = nvram_safe_get("dhcp_dns2_x");
 		if ((*value && inet_addr(value)) || (*value2 && inet_addr(value2)))
-			fprintf(fp, "dhcp-option=lan,6,%s%s%s%s%s\n",
+			fprintf(fp, "dhcp-option=lan,6%s%s%s%s%s\n",
 			             (*value && inet_addr(value) ? "," : ""),
 			             (*value && inet_addr(value) ? value : ""),
 			             (*value2 && inet_addr(value2) ? "," : ""),
