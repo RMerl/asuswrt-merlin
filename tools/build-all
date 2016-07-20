@@ -4,18 +4,21 @@
 ### Start config
 
 ### Manual/hardcoded
+# Append git revision
+BUILDREV=1
+
 # Set DEFAULTBUILD to "none", then
 # uncomment desired models
 #
 # You can also set DEFAULTBUILD to one of the BUILDMODELS flags (see below)
 
-DEFAULTBUILD="all"
+DEFAULTBUILD="none"
 
-#BN66=y
-#BAC66=y
+BN66=y
+BAC66=y
 
 #BAC56=y
-#BAC68=y
+BAC68=y
 #BAC87=y
 
 #BAC3200=y
