@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 380.60 (xx-xxx-2016)
+Asuswrt-Merlin - build 380.61 (xx-xxx-2016)
 ===========================================
 
 About

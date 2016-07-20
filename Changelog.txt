@@ -1,7 +1,11 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.60 (xx-xxx-2016)
+380.61 alpha (xx-xxx-2016)
+   - NEW: Merged with GPL 3831.
+
+
+380.60 Beta 2 (5-July-2016)
     IMPORTANT: The firmware image file format was changed by Asus.
                Starting with 380.60, you will no longer be able to
                flash versions older than 380.60, or Asus versions
