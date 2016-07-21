@@ -2623,7 +2623,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "webui_resolve_conn",		"0" },
 	{ "led_disable",		"0" },
 	{ "custom_clientlist",		"" },		/* for customize device name */
-	{ "nmap_hm_scan",		"1" },		/* Hourly networkmap rescans */
 	{ "nmp_client_list",		"" },
 	{ "ttl_inc_enable",		"0" },		/* enable TTL increment */
 	{ "ttl_spoof_enable",		"0" },		/* enable TTL spoofing */
