@@ -89,7 +89,7 @@ void hm_traffic_limiter_save()
 	eval("traffic_limiter", "-w");
 }
 
-#if 1
+#if 0
 static void hm_networkmap_rescan()
 {
 	nvram_set("client_info_tmp", "");
@@ -113,9 +113,12 @@ int hour_monitor_function_check()
 	if(nvram_get_int("bwdpi_db_enable"))
 		value |= TRAFFIC_ANALYZER;
 
+#if 0
+	//disable for preventing wake up sleep device
 	// networkmap
 	if(pidof("networkmap") != -1)
 		value |= NETWORKMAP;
+#endif
 	
 	if(debug)
 	{

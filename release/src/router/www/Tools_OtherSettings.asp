@@ -920,13 +920,6 @@ function done_validating(action){
 						</tr>
 					</thead>
 					<tr>
-						<th>Networkmap: Hourly full network rescans (default: Yes)</th>
-						<td>
-							<input type="radio" name="nmap_hm_scan" class="input" value="1" <% nvram_match_x("", "nmap_hm_scan", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="nmap_hm_scan" class="input" value="0" <% nvram_match_x("", "nmap_hm_scan", "0", "checked"); %>><#checkbox_No#>
-						</td>
-					</tr>
-					<tr>
 						<th>Samba: Enable SMB2 protocol (default: No)</th>
 						<td>
 							<input type="radio" name="smbd_enable_smb2" class="input" value="1" <% nvram_match_x("", "smbd_enable_smb2", "1", "checked"); %>><#checkbox_Yes#>
