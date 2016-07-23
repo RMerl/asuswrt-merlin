@@ -140,11 +140,6 @@ static void hour_monitor_call_fucntion()
 
 	if((value & TRAFFIC_ANALYZER) != 0)
 		hm_traffic_analyzer_save();
-
-	if(nvram_get_int("nmap_hm_scan")) {
-		if((value & NETWORKMAP) != 0)
-			hm_networkmap_rescan();
-	}
 }
 
 static void hour_monitor_save_database()
