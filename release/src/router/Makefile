@@ -4279,7 +4279,7 @@ libmnl-clean:
 
 ipset_arm/stamp-h1: libmnl
 	cd $(TOP)/ipset_arm && CC=$(CC) STRIP=$(STRIP) \
-	autoreconf && \
+	autoreconf -i -f && \
 	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	libmnl_CFLAGS="-I$(TOP)/libmnl/staged/usr/include" \
