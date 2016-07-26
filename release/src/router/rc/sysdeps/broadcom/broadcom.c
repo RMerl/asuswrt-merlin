@@ -4195,3 +4195,40 @@ void led_bh_prep(int post)
 	}
 }
 #endif
+
+#if !defined(RTAC66U) && !defined(RTN66U) && !defined(RTAC68U)
+int
+getWiFiStatus(const char *ifc)
+{
+	FILE *fp;
+	char buf[128], *line;
+	int ret = 1;
+
+	if (!strcmp(ifc, "2G"))
+		sprintf(buf, "wl radio");
+	else if (!strcmp(ifc, "5G"))
+		sprintf(buf, "wl -i eth2 radio");
+	else
+		return 0;
+
+	fp = popen(buf, "r");
+	if (fp == NULL) {
+		perror("popen");
+		return 0;
+	}
+
+	line = fgets(buf, sizeof(buf), fp);
+	if (line == NULL)
+		ret = 0;
+	else if (strstr(line, "0x0000"))
+		puts("1");
+	else if (strstr(line, "0x0001"))
+		puts("0");
+	else
+		ret = 0;
+
+	return ret;
+}
+#endif
+
+

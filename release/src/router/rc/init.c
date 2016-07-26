@@ -6749,3 +6749,67 @@ int reboothalt_main(int argc, char *argv[])
 	return 0;
 }
 
+#ifdef WLCLMLOAD
+#include <wlutils.h>
+#include <bcmdevs.h>
+int download_clmblob_files();
+/* clm_blob files will be installed in /brcm/clm/<chipnum><extra_id>.clm */
+/* wl -i <ethx> <blobfilename> will be used to download */
+int download_clmblob_files()
+{
+	int i = 0;
+	char ifname[16] = {0};
+	wlc_rev_info_t revinfo;
+	int err;
+	const char *fmt;
+	char chn[8];
+	int chnlen=8;
+	uint chipid;
+	char blob_fname[60];
+
+	for (i = 1; i <= DEV_NUMIFS; i++) {
+		snprintf(ifname, sizeof(ifname), "eth%d", i);
+		if (!wl_probe(ifname)) {
+			memset(&revinfo, 0, sizeof(revinfo));
+			if ((err = wl_ioctl(ifname, WLC_GET_REVINFO, &revinfo, sizeof(revinfo))) < 0) {
+				printf("\n*** BEFORE-CLMLOAD %s WLC_GET_REVINFO err=%d ", ifname, err);
+			}
+			else {
+				printf("\n*** BEFORE-CLMLOAD %s - chipnum = 0x%x (%d)  ", ifname, revinfo.chipnum, revinfo.chipnum);
+				chipid = revinfo.chipnum;
+
+				/* Use same 4366 blob for 43664 and 4365 */
+				if (chipid == BCM43664_CHIP_ID || chipid == BCM4365_CHIP_ID)
+					chipid = BCM4366_CHIP_ID;
+
+				/* blob filename based on chipid */
+				fmt = ((chipid > 0xa000) || (chipid < 0x4000)) ? "%d" : "%x";
+				snprintf(chn, chnlen, fmt, chipid);
+
+				memset(&(blob_fname[0]), 0, sizeof(blob_fname));
+				if (chipid == BCM4366_CHIP_ID) {
+					sprintf(blob_fname, "%s%s_access.clm_blob", "./brcm/clm/",chn);
+					printf("\n Download %s to %s ......", blob_fname, ifname);
+					eval("wl", "-i", ifname, "clmload", blob_fname);
+				}
+				else if (chipid == BCM43602_CHIP_ID) {
+					sprintf(blob_fname, "%s%sa1_access.clm_blob", "./brcm/clm/",chn);
+					printf("\n Download %s to %s ......", blob_fname, ifname);
+					eval("wl", "-i", ifname, "clmload", blob_fname);
+				}
+				else {
+					sprintf(blob_fname, "%srouter.clm_blob", "./brcm/clm/");
+					printf("\n Download %s to %s ......", blob_fname, ifname);
+					eval("wl", "-i", ifname, "clmload", blob_fname);
+					if (revinfo.phytype == WLC_PHY_TYPE_AC) {
+						printf("\n *** Is PHY_TYPE_AC %d - set vhtmode 1", revinfo.phytype);
+						eval("wl", "-i", ifname, "vhtmode", "1");
+					}
+				}
+			}
+		}
+	} /* for */
+	return (0);
+}
+#endif /* WLCLMLOAD */
+
