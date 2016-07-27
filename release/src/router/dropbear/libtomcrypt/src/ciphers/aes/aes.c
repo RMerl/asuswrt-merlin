@@ -122,9 +122,10 @@ static ulong32 setup_mix2(ulong32 temp)
  */
 int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *skey)
 {
-    int i, j;
+    int i;
     ulong32 temp, *rk;
 #ifndef ENCRYPT_ONLY
+    int j;
     ulong32 *rrk;
 #endif    
     LTC_ARGCHK(key  != NULL);
@@ -148,7 +149,9 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
     LOAD32H(rk[2], key +  8);
     LOAD32H(rk[3], key + 12);
     if (keylen == 16) {
+        #ifndef ENCRYPT_ONLY
         j = 44;
+        #endif
         for (;;) {
             temp  = rk[3];
             rk[4] = rk[0] ^ setup_mix(temp) ^ rcon[i];
@@ -161,7 +164,9 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
             rk += 4;
         }
     } else if (keylen == 24) {
+        #ifndef ENCRYPT_ONLY
         j = 52;   
+        #endif
         LOAD32H(rk[4], key + 16);
         LOAD32H(rk[5], key + 20);
         for (;;) {
@@ -182,7 +187,9 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
             rk += 6;
         }
     } else if (keylen == 32) {
+        #ifndef ENCRYPT_ONLY
         j = 60;
+        #endif
         LOAD32H(rk[4], key + 16);
         LOAD32H(rk[5], key + 20);
         LOAD32H(rk[6], key + 24);
@@ -728,6 +735,7 @@ int ECB_TEST(void)
 */
 void ECB_DONE(symmetric_key *skey)
 {
+   (void)skey;
 }
 
 

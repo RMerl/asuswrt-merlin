@@ -84,7 +84,28 @@ void recv_msg_kexdh_init() {
 	TRACE(("leave recv_msg_kexdh_init"))
 }
 
+
 #ifdef DROPBEAR_DELAY_HOSTKEY
+
+static void fsync_parent_dir(const char* fn) {
+#ifdef HAVE_LIBGEN_H
+	char *fn_dir = m_strdup(fn);
+	char *dir = dirname(fn_dir);
+	int dirfd = open(dir, O_RDONLY);
+
+	if (dirfd != -1) {
+		if (fsync(dirfd) != 0) {
+			TRACE(("fsync of directory %s failed: %s", dir, strerror(errno)))
+		}
+		m_close(dirfd);
+	} else {
+		TRACE(("error opening directory %s for fsync: %s", dir, strerror(errno)))
+	}
+
+	free(fn_dir);
+#endif
+}
+
 static void svr_ensure_hostkey() {
 
 	const char* fn = NULL;
@@ -117,7 +138,7 @@ static void svr_ensure_hostkey() {
 			break;
 #endif
 		default:
-			(void)0;
+			dropbear_assert(0);
 	}
 
 	if (readhostkey(fn, svr_opts.hostkey, &type) == DROPBEAR_SUCCESS) {
@@ -141,6 +162,10 @@ static void svr_ensure_hostkey() {
 			goto out;
 		}
 	}
+
+	/* ensure directory update is flushed to disk, otherwise we can end up
+	with zero-byte hostkey files if the power goes off */
+	fsync_parent_dir(fn);
 
 	ret = readhostkey(fn, svr_opts.hostkey, &type);
 
@@ -222,7 +247,7 @@ static void send_msg_kexdh_reply(mp_int *dh_e, buffer *ecdh_qs) {
 			{
 			struct kex_curve25519_param *param = gen_kexcurve25519_param();
 			kexcurve25519_comb_key(param, ecdh_qs, svr_opts.hostkey);
-			buf_putstring(ses.writepayload, param->pub, CURVE25519_LEN);
+			buf_putstring(ses.writepayload, (const char*)param->pub, CURVE25519_LEN);
 			free_kexcurve25519_param(param);
 			}
 #endif

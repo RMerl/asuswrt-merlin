@@ -30,6 +30,7 @@
 #include "runopts.h"
 #include "session.h"
 #include "ssh.h"
+#include "netio.h"
 
 #ifdef ENABLE_CLI_REMOTETCPFWD
 static int newtcpforwarded(struct Channel * channel);
@@ -59,6 +60,23 @@ static const struct ChanType cli_chan_tcplocal = {
 };
 #endif
 
+#ifdef ENABLE_CLI_ANYTCPFWD
+static void fwd_failed(const char* format, ...) ATTRIB_PRINTF(1,2);
+static void fwd_failed(const char* format, ...)
+{
+	va_list param;
+	va_start(param, format);
+
+	if (cli_opts.exit_on_fwd_failure) {
+		_dropbear_exit(EXIT_FAILURE, format, param);
+	} else {
+		_dropbear_log(LOG_WARNING, format, param);
+	}
+
+	va_end(param);
+}
+#endif
+
 #ifdef ENABLE_CLI_LOCALTCPFWD
 void setup_localtcp() {
 	m_list_elem *iter;
@@ -74,7 +92,7 @@ void setup_localtcp() {
 				fwd->connectaddr,
 				fwd->connectport);
 		if (ret == DROPBEAR_FAILURE) {
-			dropbear_log(LOG_WARNING, "Failed local port forward %s:%d:%s:%d",
+			fwd_failed("Failed local port forward %s:%d:%s:%d",
 					fwd->listenaddr,
 					fwd->listenport,
 					fwd->connectaddr,
@@ -180,7 +198,10 @@ void cli_recv_msg_request_failure() {
 		struct TCPFwdEntry *fwd = (struct TCPFwdEntry*)iter->item;
 		if (!fwd->have_reply) {
 			fwd->have_reply = 1;
-			dropbear_log(LOG_WARNING, "Remote TCP forward request failed (port %d -> %s:%d)", fwd->listenport, fwd->connectaddr, fwd->connectport);
+			fwd_failed("Remote TCP forward request failed (port %d -> %s:%d)",
+					fwd->listenport,
+					fwd->connectaddr,
+					fwd->connectport);
 			return;
 		}
 	}
@@ -210,12 +231,11 @@ void setup_remotetcp() {
 
 static int newtcpforwarded(struct Channel * channel) {
 
-    char *origaddr = NULL;
+	char *origaddr = NULL;
 	unsigned int origport;
 	m_list_elem * iter = NULL;
 	struct TCPFwdEntry *fwd;
 	char portstring[NI_MAXSERV];
-	int sock;
 	int err = SSH_OPEN_ADMINISTRATIVELY_PROHIBITED;
 
 	origaddr = buf_getstring(ses.payload, NULL);
@@ -247,26 +267,14 @@ static int newtcpforwarded(struct Channel * channel) {
 
 	if (iter == NULL) {
 		/* We didn't request forwarding on that port */
-        	cleantext(origaddr);
+		cleantext(origaddr);
 		dropbear_log(LOG_INFO, "Server sent unrequested forward from \"%s:%d\"", 
                 origaddr, origport);
 		goto out;
 	}
 	
-	snprintf(portstring, sizeof(portstring), "%d", fwd->connectport);
-	sock = connect_remote(fwd->connectaddr, portstring, 1, NULL);
-	if (sock < 0) {
-		TRACE(("leave newtcpdirect: sock failed"))
-		err = SSH_OPEN_CONNECT_FAILED;
-		goto out;
-	}
-
-	ses.maxfd = MAX(ses.maxfd, sock);
-
-	/* We don't set readfd, that will get set after the connection's
-	 * progress succeeds */
-	channel->writefd = sock;
-	channel->initconn = 1;
+	snprintf(portstring, sizeof(portstring), "%u", fwd->connectport);
+	channel->conn_pending = connect_remote(fwd->connectaddr, portstring, channel_connect_done, channel);
 
 	channel->prio = DROPBEAR_CHANNEL_PRIO_UNKNOWABLE;
 	

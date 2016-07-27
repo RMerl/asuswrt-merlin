@@ -1871,6 +1871,7 @@ void des_done(symmetric_key *skey)
 */
 void des3_done(symmetric_key *skey)
 {
+   (void)skey;
 }
 
 

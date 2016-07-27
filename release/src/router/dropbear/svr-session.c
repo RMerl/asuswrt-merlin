@@ -41,7 +41,7 @@
 #include "runopts.h"
 #include "crypto_desc.h"
 
-static void svr_remoteclosed();
+static void svr_remoteclosed(void);
 
 struct serversession svr_ses; /* GLOBAL */
 
@@ -78,18 +78,14 @@ static const struct ChanType *svr_chantypes[] = {
 };
 
 static void
-svr_session_cleanup(void)
-{
+svr_session_cleanup(void) {
 	/* free potential public key options */
 	svr_pubkey_options_cleanup();
-}
 
-static void
-svr_sessionloop() {
-	if (svr_ses.connect_time != 0 
-		&& monotonic_now() - svr_ses.connect_time >= AUTH_TIMEOUT) {
-		dropbear_close("Timeout before auth");
-	}
+	m_free(svr_ses.addrstring);
+	m_free(svr_ses.remotehost);
+	m_free(svr_ses.childpids);
+	svr_ses.childpidsize = 0;
 }
 
 void svr_session(int sock, int childpipe) {
@@ -97,8 +93,6 @@ void svr_session(int sock, int childpipe) {
 	size_t len;
 
 	common_session_init(sock, sock);
-
-	svr_ses.connect_time = monotonic_now();;
 
 	/* Initialise server specific parts of the session */
 	svr_ses.childpipe = childpipe;
@@ -134,13 +128,15 @@ void svr_session(int sock, int childpipe) {
 
 	/* exchange identification, version etc */
 	send_session_identification();
+	
+	kexfirstinitialise(); /* initialise the kex state */
 
 	/* start off with key exchange */
 	send_msg_kexinit();
 
 	/* Run the main for loop. NULL is for the dispatcher - only the client
 	 * code makes use of it */
-	session_loop(svr_sessionloop);
+	session_loop(NULL);
 
 	/* Not reached */
 
@@ -148,30 +144,33 @@ void svr_session(int sock, int childpipe) {
 
 /* failure exit - format must be <= 100 chars */
 void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
+	char exitmsg[150];
+	char fullmsg[300];
+	int i;
 
-	char fmtbuf[300];
+	/* Render the formatted exit message */
+	vsnprintf(exitmsg, sizeof(exitmsg), format, param);
 
+	/* Add the prefix depending on session/auth state */
 	if (!sessinitdone) {
 		/* before session init */
-		snprintf(fmtbuf, sizeof(fmtbuf), 
-				"Early exit: %s", format);
+		snprintf(fullmsg, sizeof(fullmsg), "Early exit: %s", exitmsg);
 	} else if (ses.authstate.authdone) {
 		/* user has authenticated */
-		snprintf(fmtbuf, sizeof(fmtbuf),
+		snprintf(fullmsg, sizeof(fullmsg),
 				"Exit (%s): %s", 
-				ses.authstate.pw_name, format);
+				ses.authstate.pw_name, exitmsg);
 	} else if (ses.authstate.pw_name) {
 		/* we have a potential user */
-		snprintf(fmtbuf, sizeof(fmtbuf), 
-				"Exit before auth (user '%s', %d fails): %s",
-				ses.authstate.pw_name, ses.authstate.failcount, format);
+		snprintf(fullmsg, sizeof(fullmsg), 
+				"Exit before auth (user '%s', %u fails): %s",
+				ses.authstate.pw_name, ses.authstate.failcount, exitmsg);
 	} else {
 		/* before userauth */
-		snprintf(fmtbuf, sizeof(fmtbuf), 
-				"Exit before auth: %s", format);
+		snprintf(fullmsg, sizeof(fullmsg), "Exit before auth: %s", exitmsg);
 	}
 
-	_dropbear_log(LOG_INFO, fmtbuf, param);
+	dropbear_log(LOG_INFO, "%s", fullmsg);
 
 #ifdef USE_VFORK
 	/* For uclinux only the main server process should cleanup - we don't want
@@ -181,6 +180,15 @@ void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 	{
 		/* must be after we've done with username etc */
 		session_cleanup();
+	}
+
+	if (svr_opts.hostkey) {
+		sign_key_free(svr_opts.hostkey);
+		svr_opts.hostkey = NULL;
+	}
+	for (i = 0; i < DROPBEAR_MAX_PORTS; i++) {
+		m_free(svr_opts.addresses[i]);
+		m_free(svr_opts.ports[i]);
 	}
 
 	exit(exitcode);
@@ -198,7 +206,7 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 	vsnprintf(printbuf, sizeof(printbuf), format, param);
 
 #ifndef DISABLE_SYSLOG
-	if (svr_opts.usingsyslog) {
+	if (opts.usingsyslog) {
 		syslog(priority, "%s", printbuf);
 	}
 #endif
@@ -209,8 +217,7 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 	havetrace = debug_trace;
 #endif
 
-	if (!svr_opts.usingsyslog || havetrace)
-	{
+	if (!opts.usingsyslog || havetrace) {
 		struct tm * local_tm = NULL;
 		timesec = time(NULL);
 		local_tm = localtime(&timesec);

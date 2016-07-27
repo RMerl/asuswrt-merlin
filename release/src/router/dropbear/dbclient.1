@@ -3,24 +3,31 @@
 dbclient \- lightweight SSH client
 .SH SYNOPSIS
 .B dbclient
-[\-Tt] [\-p
+[\fIflag arguments\fR] [\-p
 .I port\fR] [\-i
 .I id\fR] [\-L
-.I l\fR:\fIh\fR:\fIr\fR] [\-R
-.I l\fR:\fIh\fR:\fIr\fR] [\-l
+.I l\fR:\fIh\fR:\fIp\fR] [\-R
+.I l\fR:\fIh\fR:\fIp\fR] [\-l
 .IR user ]
 .I host
+.RI [ \fImore\ flags\fR ]
 .RI [ command ]
 
 .B dbclient
-[
-.I args ]
-.I [user1]@host1[^port1],[user2]@host2[^port2],...
+[\fIargs\fR]
+[\fIuser1\fR]@\fIhost1\fR[^\fIport1\fR],[\fIuser2\fR]@\fIhost2\fR[^\fIport2\fR],...
 
 .SH DESCRIPTION
 .B dbclient
 is a small SSH client 
 .SH OPTIONS
+.TP
+.TP
+.B command
+A command to run on the remote host. This will normally be run by the remote host
+using the user's shell. The command begins at the first hyphen argument after the 
+host argument. If no command is specified an interactive terminal will be opened
+(see -t and -T).
 .TP
 .B \-p \fIport
 Connect to 
@@ -33,9 +40,9 @@ Identity file.
 Read the identity key from file
 .I idfile
 (multiple allowed). This file is created with dropbearkey(1) or converted
-from OpenSSH with dropbearconvert(1).
+from OpenSSH with dropbearconvert(1). The default path ~/.ssh/id_dropbear is used
 .TP
-.B \-L [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
+.B \-L\fR [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
 Local port forwarding.
 Forward the port
 .I listenport
@@ -44,7 +51,7 @@ on the local host through the SSH connection to port
 on the host
 .IR host .
 .TP
-.B \-R [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
+.B \-R\fR [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
 Remote port forwarding.
 Forward the port
 .I listenport
@@ -60,10 +67,12 @@ Login as
 on the remote host.
 .TP
 .B \-t
-Allocate a PTY.
+Allocate a PTY. This is the default when no command is given, it gives a full
+interactive remote session. The main effect is that keystrokes are sent remotely 
+immediately as opposed to local line-based editing.
 .TP
 .B \-T
-Don't allocate a PTY.
+Don't allocate a PTY. This is the default a command is given. See -t.
 .TP
 .B \-N
 Don't request a remote shell or run any commands. Any command arguments are ignored.
@@ -105,7 +114,8 @@ Disconnect the session if no traffic is transmitted or received for \fIidle_time
 .B \-J \fIproxy_command
 Use the standard input/output of the program \fIproxy_command\fR rather than using
 a normal TCP connection. A hostname should be still be provided, as this is used for
-comparing saved hostkeys.
+comparing saved hostkeys. This command will be executed as "exec proxy_command ..." with the
+default shell.
 .TP
 .B \-B \fIendhost:endport
 "Netcat-alike" mode, where Dropbear will connect to the given host, then create a
@@ -118,6 +128,22 @@ Specify a comma separated list of ciphers to enable. Use \fI-c help\fR to list p
 .B \-m \fIMAClist
 Specify a comma separated list of authentication MACs to enable. Use \fI-m help\fR to list possibilities.
 .TP
+.B \-o \fIoption
+Can be used to give options in the format used by OpenSSH config file. This is
+useful for specifying options for which there is no separate command-line flag.
+For full details of the options listed below, and their possible values, see
+ssh_config(5).
+
+For now following options have been implemented:
+.RS
+.TP
+.B ExitOnForwardFailure
+Specifies whether dbclient should terminate the connection if it cannot set up all requested local and remote port forwardings. The argument must be “yes” or “no”.  The default is “no”.
+.TP
+.B UseSyslog
+Send dbclient log messages to syslog in addition to stderr.
+.RE
+.TP
 .B \-s 
 The specified command will be requested as a subsystem, used for sftp. Dropbear doesn't implement sftp itself but the OpenSSH sftp client can be used eg \fIsftp -S dbclient user@host\fR
 .TP
@@ -129,7 +155,7 @@ Dropbear will also allow multiple "hops" to be specified, separated by commas. I
 this case a connection will be made to the first host, then a TCP forwarded 
 connection will be made through that to the second host, and so on. Hosts other than
 the final destination will not see anything other than the encrypted SSH stream. 
-A port for a host can be specified with a hash (eg matt@martello^44 ).
+A port for a host can be specified with a caret (eg matt@martello^44 ).
 This syntax can also be used with scp or rsync (specifying dbclient as the 
 ssh/rsh command). A file can be "bounced" through multiple SSH hops, eg
 
@@ -157,6 +183,10 @@ SSH_ASKPASS should be set to the path of a program that will return a password
 on standard output. This program will only be used if either DISPLAY is set and
 standard input is not a TTY, or the environment variable SSH_ASKPASS_ALWAYS is
 set.
+.SH NOTES
+If compiled with zlib support and if the server supports it, dbclient will
+always use compression.
+
 .SH AUTHOR
 Matt Johnston (matt@ucc.asn.au).
 .br

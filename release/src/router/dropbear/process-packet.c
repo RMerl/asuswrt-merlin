@@ -37,7 +37,7 @@
 
 #define MAX_UNAUTH_PACKET_TYPE SSH_MSG_USERAUTH_PK_OK
 
-static void recv_unimplemented();
+static void recv_unimplemented(void);
 
 /* process a decrypted packet, call the appropriate handler */
 void process_packet() {

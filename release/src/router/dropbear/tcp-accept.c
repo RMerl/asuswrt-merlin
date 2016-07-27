@@ -75,7 +75,7 @@ static void tcp_acceptor(struct Listener *listener, int sock) {
 	}
 
 	if (send_msg_channel_open_init(fd, tcpinfo->chantype) == DROPBEAR_SUCCESS) {
-		unsigned char* addr = NULL;
+		char* addr = NULL;
 		unsigned int port = 0;
 
 		if (tcpinfo->tcp_type == direct) {
@@ -121,7 +121,7 @@ int listen_tcpfwd(struct TCPListener* tcpinfo) {
 	TRACE(("enter listen_tcpfwd"))
 
 	/* first we try to bind, so don't need to do so much cleanup on failure */
-	snprintf(portstring, sizeof(portstring), "%d", tcpinfo->listenport);
+	snprintf(portstring, sizeof(portstring), "%u", tcpinfo->listenport);
 
 	nsocks = dropbear_listen(tcpinfo->listenaddr, portstring, socks, 
 			DROPBEAR_MAX_SOCKS, &errstring, &ses.maxfd);

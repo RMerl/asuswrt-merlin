@@ -67,7 +67,7 @@ dropbear_dss_key * gen_dss_priv_key(unsigned int size) {
 
 static void getq(dropbear_dss_key *key) {
 
-	char buf[QSIZE];
+	unsigned char buf[QSIZE];
 
 	/* 160 bit prime */
 	genrandom(buf, QSIZE);

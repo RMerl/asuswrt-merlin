@@ -119,7 +119,7 @@ fail:
 	/* cleanup */
 	m_free(chansess->x11authprot);
 	m_free(chansess->x11authcookie);
-	close(fd);
+	m_close(fd);
 
 	return DROPBEAR_FAILURE;
 }
@@ -130,7 +130,7 @@ static void x11accept(struct Listener* listener, int sock) {
 
 	int fd;
 	struct sockaddr_in addr;
-	int len;
+	socklen_t len;
 	int ret;
 	struct ChanSess * chansess = (struct ChanSess *)(listener->typedata);
 
@@ -165,7 +165,7 @@ void x11setauth(struct ChanSess *chansess) {
 	}
 
 	/* create the DISPLAY string */
-	val = snprintf(display, sizeof(display), "localhost:%d.%d",
+	val = snprintf(display, sizeof(display), "localhost:%d.%u",
 			chansess->x11port - X11BASEPORT, chansess->x11screennum);
 	if (val < 0 || val >= (int)sizeof(display)) {
 		/* string was truncated */
@@ -175,7 +175,7 @@ void x11setauth(struct ChanSess *chansess) {
 	addnewvar("DISPLAY", display);
 
 	/* create the xauth string */
-	val = snprintf(display, sizeof(display), "unix:%d.%d",
+	val = snprintf(display, sizeof(display), "unix:%d.%u",
 			chansess->x11port - X11BASEPORT, chansess->x11screennum);
 	if (val < 0 || val >= (int)sizeof(display)) {
 		/* string was truncated */
@@ -198,7 +198,7 @@ void x11cleanup(struct ChanSess *chansess) {
 	m_free(chansess->x11authprot);
 	m_free(chansess->x11authcookie);
 
-	TRACE(("chansess %p", chansess))
+	TRACE(("chansess %p", (void*)chansess))
 	if (chansess->x11listener != NULL) {
 		remove_listener(chansess->x11listener);
 		chansess->x11listener = NULL;

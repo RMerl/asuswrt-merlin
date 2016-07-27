@@ -684,6 +684,7 @@ int twofish_test(void)
 */
 void twofish_done(symmetric_key *skey)
 {
+   (void)skey;
 }
 
 /**

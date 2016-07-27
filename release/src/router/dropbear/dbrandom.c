@@ -32,7 +32,7 @@
 /* this is used to generate unique output from the same hashpool */
 static uint32_t counter = 0;
 /* the max value for the counter, so it won't integer overflow */
-#define MAX_COUNTER 1<<30 
+#define MAX_COUNTER (1<<30)
 
 static unsigned char hashpool[SHA1_HASH_SIZE] = {0};
 static int donerandinit = 0;
@@ -141,7 +141,7 @@ out:
 	return ret;
 }
 
-void addrandom(char * buf, unsigned int len)
+void addrandom(unsigned char * buf, unsigned int len)
 {
 	hash_state hs;
 
@@ -306,7 +306,7 @@ void gen_random_mpint(mp_int *max, mp_int *rand) {
 
 		/* keep regenerating until we get one satisfying
 		 * 0 < rand < max    */
-	} while (mp_cmp(rand, max) != MP_LT);
+	} while (!(mp_cmp(rand, max) == MP_LT && mp_cmp_d(rand, 0) == MP_GT));
 	m_burn(randbuf, len);
 	m_free(randbuf);
 }

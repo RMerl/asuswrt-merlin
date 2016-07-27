@@ -22,23 +22,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _PACKET_H_
+#ifndef DROPBEAR_PACKET_H_
 
-#define _PACKET_H_
+#define DROPBEAR_PACKET_H_
 
 #include "includes.h"
+#include "queue.h"
+#include "buffer.h"
 
-void write_packet();
-void read_packet();
-void decrypt_packet();
-void encrypt_packet();
+void write_packet(void);
+void read_packet(void);
+void decrypt_packet(void);
+void encrypt_packet(void);
 
-void process_packet();
+void writebuf_enqueue(buffer * writebuf, unsigned char packet_type);
 
-void maybe_flush_reply_queue();
+void process_packet(void);
+
+void maybe_flush_reply_queue(void);
 typedef struct PacketType {
 	unsigned char type; /* SSH_MSG_FOO */
-	void (*handler)();
+	void (*handler)(void);
 } packettype;
 
 #define PACKET_PADDING_OFF 4
@@ -46,4 +50,4 @@ typedef struct PacketType {
 
 #define INIT_READBUF 128
 
-#endif /* _PACKET_H_ */
+#endif /* DROPBEAR_PACKET_H_ */

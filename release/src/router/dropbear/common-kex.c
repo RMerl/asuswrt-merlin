@@ -29,6 +29,7 @@
 #include "buffer.h"
 #include "session.h"
 #include "kex.h"
+#include "dh_groups.h"
 #include "ssh.h"
 #include "packet.h"
 #include "bignum.h"
@@ -37,55 +38,13 @@
 #include "ecc.h"
 #include "crypto_desc.h"
 
-/* diffie-hellman-group1-sha1 value for p */
-const unsigned char dh_p_1[DH_P_1_LEN] = {
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2,
-    0x21, 0x68, 0xC2, 0x34, 0xC4, 0xC6, 0x62, 0x8B, 0x80, 0xDC, 0x1C, 0xD1,
-	0x29, 0x02, 0x4E, 0x08, 0x8A, 0x67, 0xCC, 0x74, 0x02, 0x0B, 0xBE, 0xA6,
-	0x3B, 0x13, 0x9B, 0x22, 0x51, 0x4A, 0x08, 0x79, 0x8E, 0x34, 0x04, 0xDD,
-	0xEF, 0x95, 0x19, 0xB3, 0xCD, 0x3A, 0x43, 0x1B, 0x30, 0x2B, 0x0A, 0x6D,
-	0xF2, 0x5F, 0x14, 0x37, 0x4F, 0xE1, 0x35, 0x6D, 0x6D, 0x51, 0xC2, 0x45,
-	0xE4, 0x85, 0xB5, 0x76, 0x62, 0x5E, 0x7E, 0xC6, 0xF4, 0x4C, 0x42, 0xE9,
-	0xA6, 0x37, 0xED, 0x6B, 0x0B, 0xFF, 0x5C, 0xB6, 0xF4, 0x06, 0xB7, 0xED,
-	0xEE, 0x38, 0x6B, 0xFB, 0x5A, 0x89, 0x9F, 0xA5, 0xAE, 0x9F, 0x24, 0x11,
-	0x7C, 0x4B, 0x1F, 0xE6, 0x49, 0x28, 0x66, 0x51, 0xEC, 0xE6, 0x53, 0x81,
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-/* diffie-hellman-group14-sha1 value for p */
-const unsigned char dh_p_14[DH_P_14_LEN] = {
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2, 
-    0x21, 0x68, 0xC2, 0x34, 0xC4, 0xC6, 0x62, 0x8B, 0x80, 0xDC, 0x1C, 0xD1, 
-	0x29, 0x02, 0x4E, 0x08, 0x8A, 0x67, 0xCC, 0x74, 0x02, 0x0B, 0xBE, 0xA6,
-	0x3B, 0x13, 0x9B, 0x22, 0x51, 0x4A, 0x08, 0x79, 0x8E, 0x34, 0x04, 0xDD,
-	0xEF, 0x95, 0x19, 0xB3, 0xCD, 0x3A, 0x43, 0x1B, 0x30, 0x2B, 0x0A, 0x6D,
-	0xF2, 0x5F, 0x14, 0x37, 0x4F, 0xE1, 0x35, 0x6D, 0x6D, 0x51, 0xC2, 0x45,
-	0xE4, 0x85, 0xB5, 0x76, 0x62, 0x5E, 0x7E, 0xC6, 0xF4, 0x4C, 0x42, 0xE9,
-	0xA6, 0x37, 0xED, 0x6B, 0x0B, 0xFF, 0x5C, 0xB6, 0xF4, 0x06, 0xB7, 0xED,
-	0xEE, 0x38, 0x6B, 0xFB, 0x5A, 0x89, 0x9F, 0xA5, 0xAE, 0x9F, 0x24, 0x11,
-	0x7C, 0x4B, 0x1F, 0xE6, 0x49, 0x28, 0x66, 0x51, 0xEC, 0xE4, 0x5B, 0x3D,
-	0xC2, 0x00, 0x7C, 0xB8, 0xA1, 0x63, 0xBF, 0x05, 0x98, 0xDA, 0x48, 0x36,
-	0x1C, 0x55, 0xD3, 0x9A, 0x69, 0x16, 0x3F, 0xA8, 0xFD, 0x24, 0xCF, 0x5F,
-	0x83, 0x65, 0x5D, 0x23, 0xDC, 0xA3, 0xAD, 0x96, 0x1C, 0x62, 0xF3, 0x56,
-	0x20, 0x85, 0x52, 0xBB, 0x9E, 0xD5, 0x29, 0x07, 0x70, 0x96, 0x96, 0x6D,
-	0x67, 0x0C, 0x35, 0x4E, 0x4A, 0xBC, 0x98, 0x04, 0xF1, 0x74, 0x6C, 0x08,
-	0xCA, 0x18, 0x21, 0x7C, 0x32, 0x90, 0x5E, 0x46, 0x2E, 0x36, 0xCE, 0x3B,
-	0xE3, 0x9E, 0x77, 0x2C, 0x18, 0x0E, 0x86, 0x03, 0x9B, 0x27, 0x83, 0xA2,
-	0xEC, 0x07, 0xA2, 0x8F, 0xB5, 0xC5, 0x5D, 0xF0, 0x6F, 0x4C, 0x52, 0xC9,
-	0xDE, 0x2B, 0xCB, 0xF6, 0x95, 0x58, 0x17, 0x18, 0x39, 0x95, 0x49, 0x7C,
-	0xEA, 0x95, 0x6A, 0xE5, 0x15, 0xD2, 0x26, 0x18, 0x98, 0xFA, 0x05, 0x10,
-	0x15, 0x72, 0x8E, 0x5A, 0x8A, 0xAC, 0xAA, 0x68, 0xFF, 0xFF, 0xFF, 0xFF,
-	0xFF, 0xFF, 0xFF, 0xFF};
-
-/* Same for group1 and group14 */
-static const int DH_G_VAL = 2;
-
-static void kexinitialise();
-static void gen_new_keys();
+static void kexinitialise(void);
+static void gen_new_keys(void);
 #ifndef DISABLE_ZLIB
-static void gen_new_zstream_recv();
-static void gen_new_zstream_trans();
+static void gen_new_zstream_recv(void);
+static void gen_new_zstream_trans(void);
 #endif
-static void read_kex_algos();
+static void read_kex_algos(void);
 /* helper function for gen_new_keys */
 static void hashkeys(unsigned char *out, unsigned int outlen, 
 		const hash_state * hs, const unsigned char X);
@@ -238,14 +197,24 @@ void recv_msg_newkeys() {
 void kexfirstinitialise() {
 	ses.kexstate.donefirstkex = 0;
 
-#ifndef DISABLE_ZLIB
-	if (opts.enable_compress) {
-		ses.compress_algos = ssh_compress;
-	} else
-#endif
+#ifdef DISABLE_ZLIB
+	ses.compress_algos = ssh_nocompress;
+#else
+	switch (opts.compress_mode)
 	{
-		ses.compress_algos = ssh_nocompress;
+		case DROPBEAR_COMPRESS_DELAYED:
+			ses.compress_algos = ssh_delaycompress;
+			break;
+
+		case DROPBEAR_COMPRESS_ON:
+			ses.compress_algos = ssh_compress;
+			break;
+
+		case DROPBEAR_COMPRESS_OFF:
+			ses.compress_algos = ssh_nocompress;
+			break;
 	}
+#endif
 	kexinitialise();
 }
 
@@ -303,7 +272,7 @@ static void hashkeys(unsigned char *out, unsigned int outlen,
 		hash_desc->done(&hs2, tmpout);
 		memcpy(&out[offset], tmpout, MIN(outlen - offset, hash_desc->hashsize));
 	}
-
+	m_burn(&hs2, sizeof(hash_state));
 }
 
 /* Generate the actual encryption/integrity keys, using the results of the
@@ -339,17 +308,17 @@ static void gen_new_keys() {
 	ses.hash = NULL;
 
 	if (IS_DROPBEAR_CLIENT) {
-	    trans_IV	= C2S_IV;
-	    recv_IV		= S2C_IV;
-	    trans_key	= C2S_key;
-	    recv_key	= S2C_key;
+		trans_IV	= C2S_IV;
+		recv_IV		= S2C_IV;
+		trans_key	= C2S_key;
+		recv_key	= S2C_key;
 		mactransletter = 'E';
 		macrecvletter = 'F';
 	} else {
-	    trans_IV	= S2C_IV;
-	    recv_IV		= C2S_IV;
-	    trans_key	= S2C_key;
-	    recv_key	= C2S_key;
+		trans_IV	= S2C_IV;
+		recv_IV		= C2S_IV;
+		trans_key	= S2C_key;
+		recv_key	= C2S_key;
 		mactransletter = 'F';
 		macrecvletter = 'E';
 	}
@@ -403,6 +372,7 @@ static void gen_new_keys() {
 	m_burn(C2S_key, sizeof(C2S_key));
 	m_burn(S2C_IV, sizeof(S2C_IV));
 	m_burn(S2C_key, sizeof(S2C_key));
+	m_burn(&hs, sizeof(hash_state));
 
 	TRACE(("leave gen_new_keys"))
 }
@@ -500,7 +470,7 @@ void recv_msg_kexinit() {
 
 	/* start the kex hash */
 	local_ident_len = strlen(LOCAL_IDENT);
-	remote_ident_len = strlen((char*)ses.remoteident);
+	remote_ident_len = strlen(ses.remoteident);
 
 	kexhashbuf_len = local_ident_len + remote_ident_len
 		+ ses.transkexinit->len + ses.payload->len
@@ -514,17 +484,18 @@ void recv_msg_kexinit() {
 		read_kex_algos();
 
 		/* V_C, the client's version string (CR and NL excluded) */
-	    buf_putstring(ses.kexhashbuf,
-			(unsigned char*)LOCAL_IDENT, local_ident_len);
+		buf_putstring(ses.kexhashbuf, LOCAL_IDENT, local_ident_len);
 		/* V_S, the server's version string (CR and NL excluded) */
-	    buf_putstring(ses.kexhashbuf, ses.remoteident, remote_ident_len);
+		buf_putstring(ses.kexhashbuf, ses.remoteident, remote_ident_len);
 
 		/* I_C, the payload of the client's SSH_MSG_KEXINIT */
-	    buf_putstring(ses.kexhashbuf,
-			ses.transkexinit->data, ses.transkexinit->len);
+		buf_putstring(ses.kexhashbuf,
+			(const char*)ses.transkexinit->data, ses.transkexinit->len);
 		/* I_S, the payload of the server's SSH_MSG_KEXINIT */
-	    buf_setpos(ses.payload, 0);
-	    buf_putstring(ses.kexhashbuf, ses.payload->data, ses.payload->len);
+		buf_setpos(ses.payload, ses.payload_beginning);
+		buf_putstring(ses.kexhashbuf,
+			(const char*)buf_getptr(ses.payload, ses.payload->len-ses.payload->pos),
+			ses.payload->len-ses.payload->pos);
 		ses.requirenext = SSH_MSG_KEXDH_REPLY;
 	} else {
 		/* SERVER */
@@ -532,18 +503,19 @@ void recv_msg_kexinit() {
 		/* read the peer's choice of algos */
 		read_kex_algos();
 		/* V_C, the client's version string (CR and NL excluded) */
-	    buf_putstring(ses.kexhashbuf, ses.remoteident, remote_ident_len);
+		buf_putstring(ses.kexhashbuf, ses.remoteident, remote_ident_len);
 		/* V_S, the server's version string (CR and NL excluded) */
-	    buf_putstring(ses.kexhashbuf, 
-				(unsigned char*)LOCAL_IDENT, local_ident_len);
+		buf_putstring(ses.kexhashbuf, LOCAL_IDENT, local_ident_len);
 
 		/* I_C, the payload of the client's SSH_MSG_KEXINIT */
-	    buf_setpos(ses.payload, 0);
-	    buf_putstring(ses.kexhashbuf, ses.payload->data, ses.payload->len);
+		buf_setpos(ses.payload, ses.payload_beginning);
+		buf_putstring(ses.kexhashbuf, 
+			(const char*)buf_getptr(ses.payload, ses.payload->len-ses.payload->pos),
+			ses.payload->len-ses.payload->pos);
 
 		/* I_S, the payload of the server's SSH_MSG_KEXINIT */
-	    buf_putstring(ses.kexhashbuf,
-			ses.transkexinit->data, ses.transkexinit->len);
+		buf_putstring(ses.kexhashbuf,
+			(const char*)ses.transkexinit->data, ses.transkexinit->len);
 
 		ses.requirenext = SSH_MSG_KEXDH_INIT;
 	}
@@ -618,16 +590,20 @@ void free_kexdh_param(struct kex_dh_param *param)
 void kexdh_comb_key(struct kex_dh_param *param, mp_int *dh_pub_them,
 		sign_key *hostkey) {
 
-	mp_int dh_p;
+	DEF_MP_INT(dh_p);
+	DEF_MP_INT(dh_p_min1);
 	mp_int *dh_e = NULL, *dh_f = NULL;
 
-	/* read the prime and generator*/
-	m_mp_init(&dh_p);
+	m_mp_init_multi(&dh_p, &dh_p_min1, NULL);
 	load_dh_p(&dh_p);
 
-	/* Check that dh_pub_them (dh_e or dh_f) is in the range [1, p-1] */
-	if (mp_cmp(dh_pub_them, &dh_p) != MP_LT 
-			|| mp_cmp_d(dh_pub_them, 0) != MP_GT) {
+	if (mp_sub_d(&dh_p, 1, &dh_p_min1) != MP_OKAY) { 
+		dropbear_exit("Diffie-Hellman error");
+	}
+
+	/* Check that dh_pub_them (dh_e or dh_f) is in the range [2, p-2] */
+	if (mp_cmp(dh_pub_them, &dh_p_min1) != MP_LT 
+			|| mp_cmp_d(dh_pub_them, 1) != MP_GT) {
 		dropbear_exit("Diffie-Hellman error");
 	}
 	
@@ -638,7 +614,7 @@ void kexdh_comb_key(struct kex_dh_param *param, mp_int *dh_pub_them,
 	}
 
 	/* clear no longer needed vars */
-	mp_clear_multi(&dh_p, NULL);
+	mp_clear_multi(&dh_p, &dh_p_min1, NULL);
 
 	/* From here on, the code needs to work with the _same_ vars on each side,
 	 * not vice-versaing for client/server */
@@ -686,6 +662,9 @@ void kexecdh_comb_key(struct kex_ecdh_param *param, buffer *pub_them,
 	ecc_key *Q_C, *Q_S, *Q_them;
 
 	Q_them = buf_get_ecc_raw_pubkey(pub_them, algo_kex->ecc_curve);
+	if (Q_them == NULL) {
+		dropbear_exit("ECC error");
+	}
 
 	ses.dh_K = dropbear_ecc_shared_secret(Q_them, &param->key);
 
@@ -740,6 +719,7 @@ void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *buf_pub_
 	unsigned char out[CURVE25519_LEN];
 	const unsigned char* Q_C = NULL;
 	const unsigned char* Q_S = NULL;
+	char zeroes[CURVE25519_LEN] = {0};
 
 	if (buf_pub_them->len != CURVE25519_LEN)
 	{
@@ -747,6 +727,11 @@ void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *buf_pub_
 	}
 
 	curve25519_donna(out, param->priv, buf_pub_them->data);
+
+	if (constant_time_memcmp(zeroes, out, CURVE25519_LEN) == 0) {
+		dropbear_exit("Bad curve25519");
+	}
+
 	m_mp_alloc_init_multi(&ses.dh_K, NULL);
 	bytes_to_mp(ses.dh_K, out, CURVE25519_LEN);
 	m_burn(out, sizeof(out));
@@ -764,9 +749,9 @@ void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *buf_pub_
 	/* K_S, the host key */
 	buf_put_pub_key(ses.kexhashbuf, hostkey, ses.newkeys->algo_hostkey);
 	/* Q_C, client's ephemeral public key octet string */
-	buf_putstring(ses.kexhashbuf, Q_C, CURVE25519_LEN);
+	buf_putstring(ses.kexhashbuf, (const char*)Q_C, CURVE25519_LEN);
 	/* Q_S, server's ephemeral public key octet string */
-	buf_putstring(ses.kexhashbuf, Q_S, CURVE25519_LEN);
+	buf_putstring(ses.kexhashbuf, (const char*)Q_S, CURVE25519_LEN);
 	/* K, the shared secret */
 	buf_putmpint(ses.kexhashbuf, ses.dh_K);
 
@@ -798,6 +783,7 @@ static void finish_kexhashbuf(void) {
 
 	buf_burn(ses.kexhashbuf);
 	buf_free(ses.kexhashbuf);
+	m_burn(&hs, sizeof(hash_state));
 	ses.kexhashbuf = NULL;
 	
 	/* first time around, we set the session_id to H */
@@ -805,7 +791,6 @@ static void finish_kexhashbuf(void) {
 		/* create the session_id, this never needs freeing */
 		ses.session_id = buf_newcopy(ses.hash);
 	}
-
 }
 
 /* read the other side's algo list. buf_match_algo is a callback to match

@@ -1,7 +1,7 @@
 #ifndef TOMCRYPT_CUSTOM_H_
 #define TOMCRYPT_CUSTOM_H_
 
-/* this will sort out which stuff based on the user-config in options.h */
+/* compile options depend on Dropbear options.h */
 #include "options.h"
 
 /* macros for various libc functions you can change for embedded targets */

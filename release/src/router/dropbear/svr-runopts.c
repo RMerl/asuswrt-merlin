@@ -33,7 +33,7 @@
 svr_runopts svr_opts; /* GLOBAL */
 
 static void printhelp(const char * progname);
-static void addportandaddress(char* spec);
+static void addportandaddress(const char* spec);
 static void loadhostkey(const char *keyfile, int fatal_duplicate);
 static void addhostkey(const char *keyfile);
 
@@ -112,13 +112,14 @@ static void printhelp(const char * progname) {
 
 void svr_getopts(int argc, char ** argv) {
 
-	unsigned int i;
+	unsigned int i, j;
 	char ** next = 0;
 	int nextisport = 0;
 	char* recv_window_arg = NULL;
 	char* keepalive_arg = NULL;
 	char* idle_timeout_arg = NULL;
 	char* keyfile = NULL;
+	char c;
 
 
 	/* see printhelp() for options */
@@ -140,9 +141,15 @@ void svr_getopts(int argc, char ** argv) {
 #ifdef ENABLE_SVR_REMOTETCPFWD
 	svr_opts.noremotetcp = 0;
 #endif
+
 #ifndef DISABLE_ZLIB
-	opts.enable_compress = 1;
+#if DROPBEAR_SERVER_DELAY_ZLIB
+	opts.compress_mode = DROPBEAR_COMPRESS_DELAYED;
+#else
+	opts.compress_mode = DROPBEAR_COMPRESS_ON;
 #endif
+#endif 
+
 	/* not yet
 	opts.ipv4 = 1;
 	opts.ipv6 = 1;
@@ -151,7 +158,7 @@ void svr_getopts(int argc, char ** argv) {
 	svr_opts.domotd = 1;
 #endif
 #ifndef DISABLE_SYSLOG
-	svr_opts.usingsyslog = 1;
+	opts.usingsyslog = 1;
 #endif
 	opts.recv_window = DEFAULT_RECV_WINDOW;
 	opts.keepalive_secs = DEFAULT_KEEPALIVE;
@@ -162,28 +169,11 @@ void svr_getopts(int argc, char ** argv) {
 #endif
 
 	for (i = 1; i < (unsigned int)argc; i++) {
-		if (nextisport) {
-			addportandaddress(argv[i]);
-			nextisport = 0;
-			continue;
-		}
-	  
-		if (next) {
-			*next = argv[i];
-			if (*next == NULL) {
-				dropbear_exit("Invalid null argument");
-			}
-			next = 0x00;
+		if (argv[i][0] != '-' || argv[i][1] == '\0')
+			dropbear_exit("Invalid argument: %s", argv[i]);
 
-			if (keyfile) {
-				addhostkey(keyfile);
-				keyfile = NULL;
-			}
-			continue;
-		}
-
-		if (argv[i][0] == '-') {
-			switch (argv[i][1]) {
+		for (j = 1; (c = argv[i][j]) != '\0' && !next && !nextisport; j++) {
+			switch (c) {
 				case 'b':
 					next = &svr_opts.bannerfile;
 					break;
@@ -199,7 +189,7 @@ void svr_getopts(int argc, char ** argv) {
 					break;
 #ifndef DISABLE_SYSLOG
 				case 'E':
-					svr_opts.usingsyslog = 0;
+					opts.usingsyslog = 0;
 					break;
 #endif
 #ifdef ENABLE_SVR_LOCALTCPFWD
@@ -272,10 +262,37 @@ void svr_getopts(int argc, char ** argv) {
 					exit(EXIT_SUCCESS);
 					break;
 				default:
-					fprintf(stderr, "Unknown argument %s\n", argv[i]);
+					fprintf(stderr, "Invalid option -%c\n", c);
 					printhelp(argv[0]);
 					exit(EXIT_FAILURE);
 					break;
+			}
+		}
+
+		if (!next && !nextisport)
+			continue;
+
+		if (c == '\0') {
+			i++;
+			j = 0;
+			if (!argv[i]) {
+				dropbear_exit("Missing argument");
+			}
+		}
+
+		if (nextisport) {
+			addportandaddress(&argv[i][j]);
+			nextisport = 0;
+		} else if (next) {
+			*next = &argv[i][j];
+			if (*next == NULL) {
+				dropbear_exit("Invalid null argument");
+			}
+			next = 0x00;
+
+			if (keyfile) {
+				addhostkey(keyfile);
+				keyfile = NULL;
 			}
 		}
 	}
@@ -331,54 +348,56 @@ void svr_getopts(int argc, char ** argv) {
 	}
 }
 
-static void addportandaddress(char* spec) {
-
-	char *myspec = NULL;
+static void addportandaddress(const char* spec) {
+	char *spec_copy = NULL, *myspec = NULL, *port = NULL, *address = NULL;
 
 	if (svr_opts.portcount < DROPBEAR_MAX_PORTS) {
 
 		/* We don't free it, it becomes part of the runopt state */
-		myspec = m_strdup(spec);
+		spec_copy = m_strdup(spec);
+		myspec = spec_copy;
 
 		if (myspec[0] == '[') {
 			myspec++;
-			svr_opts.ports[svr_opts.portcount] = strchr(myspec, ']');
-			if (svr_opts.ports[svr_opts.portcount] == NULL) {
+			port = strchr(myspec, ']');
+			if (!port) {
 				/* Unmatched [ -> exit */
 				dropbear_exit("Bad listen address");
 			}
-			svr_opts.ports[svr_opts.portcount][0] = '\0';
-			svr_opts.ports[svr_opts.portcount]++;
-			if (svr_opts.ports[svr_opts.portcount][0] != ':') {
+			port[0] = '\0';
+			port++;
+			if (port[0] != ':') {
 				/* Missing port -> exit */
 				dropbear_exit("Missing port");
 			}
 		} else {
 			/* search for ':', that separates address and port */
-			svr_opts.ports[svr_opts.portcount] = strrchr(myspec, ':');
+			port = strrchr(myspec, ':');
 		}
 
-		if (svr_opts.ports[svr_opts.portcount] == NULL) {
+		if (!port) {
 			/* no ':' -> the whole string specifies just a port */
-			svr_opts.ports[svr_opts.portcount] = myspec;
+			port = myspec;
 		} else {
 			/* Split the address/port */
-			svr_opts.ports[svr_opts.portcount][0] = '\0'; 
-			svr_opts.ports[svr_opts.portcount]++;
-			svr_opts.addresses[svr_opts.portcount] = myspec;
+			port[0] = '\0'; 
+			port++;
+			address = myspec;
 		}
 
-		if (svr_opts.addresses[svr_opts.portcount] == NULL) {
+		if (!address) {
 			/* no address given -> fill in the default address */
-			svr_opts.addresses[svr_opts.portcount] = m_strdup(DROPBEAR_DEFADDRESS);
+			address = DROPBEAR_DEFADDRESS;
 		}
 
-		if (svr_opts.ports[svr_opts.portcount][0] == '\0') {
+		if (port[0] == '\0') {
 			/* empty port -> exit */
 			dropbear_exit("Bad port");
 		}
-
+		svr_opts.ports[svr_opts.portcount] = m_strdup(port);
+		svr_opts.addresses[svr_opts.portcount] = m_strdup(address);
 		svr_opts.portcount++;
+		m_free(spec_copy);
 	}
 }
 
@@ -534,6 +553,6 @@ void load_all_hostkeys() {
 #endif /* DROPBEAR_ECDSA */
 
 	if (!any_keys) {
-		dropbear_exit("No hostkeys available");
+		dropbear_exit("No hostkeys available. 'dropbear -R' may be useful or run dropbearkey.");
 	}
 }

@@ -8,10 +8,8 @@ VERSION=0.40
 VPATH=@srcdir@
 srcdir=@srcdir@
 
-# Dropbear takes flags from the toplevel makefile
-CFLAGS += -I$(srcdir)
-
-#CFLAGS  +=  -I./ -Wall -W -Wshadow -Wsign-compare
+# So that libtommath can include Dropbear headers for options and m_burn()
+CFLAGS += -I$(srcdir)/../libtomcrypt/src/headers/ -I$(srcdir)/../
 
 ifndef IGNORE_SPEED
 

@@ -21,8 +21,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
-#ifndef _AGENTFWD_H_
-#define _AGENTFWD_H_
+#ifndef DROPBEAR_AGENTFWD_H_
+#define DROPBEAR_AGENTFWD_H_
 
 #include "includes.h"
 #include "chansession.h"
@@ -60,4 +60,4 @@ void svr_agentset(struct ChanSess *chansess);
 
 #endif /* ENABLE_SVR_AGENTFWD */
 
-#endif /* _AGENTFWD_H_ */
+#endif /* DROPBEAR_AGENTFWD_H_ */

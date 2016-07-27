@@ -29,7 +29,7 @@
 */
 int hmac_init(hmac_state *hmac, int hash, const unsigned char *key, unsigned long keylen)
 {
-    unsigned char *buf;
+    unsigned char buf[MAXBLOCKSIZE];
     unsigned long hashsize;
     unsigned long i, z;
     int err;
@@ -49,16 +49,9 @@ int hmac_init(hmac_state *hmac, int hash, const unsigned char *key, unsigned lon
         return CRYPT_INVALID_KEYSIZE;
     }
 
-    /* allocate ram for buf */
-    buf = XMALLOC(HMAC_BLOCKSIZE);
-    if (buf == NULL) {
-       return CRYPT_MEM;
-    }
-
     /* allocate memory for key */
     hmac->key = XMALLOC(HMAC_BLOCKSIZE);
     if (hmac->key == NULL) {
-       XFREE(buf);
        return CRYPT_MEM;
     }
 
@@ -101,7 +94,6 @@ done:
    zeromem(buf, HMAC_BLOCKSIZE);
 #endif
  
-   XFREE(buf);
    return err;    
 }
 

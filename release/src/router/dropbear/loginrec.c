@@ -305,21 +305,6 @@ login_set_current_time(struct logininfo *li)
 	li->tv_usec = tv.tv_usec;
 }
 
-/* copy a sockaddr_* into our logininfo */
-void
-login_set_addr(struct logininfo *li, const struct sockaddr *sa,
-	       const unsigned int sa_size)
-{
-	unsigned int bufsize = sa_size;
-
-	/* make sure we don't overrun our union */
-	if (sizeof(li->hostaddr) < sa_size)
-		bufsize = sizeof(li->hostaddr);
-
-	memcpy((void *)&(li->hostaddr.sa), (const void *)sa, bufsize);
-}
-
-
 /**
  ** login_write: Call low-level recording functions based on autoconf
  ** results
