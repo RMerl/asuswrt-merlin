@@ -272,7 +272,7 @@
  * Currently server is enabled but client is disabled by default until there
  * is further compatibility testing */
 #ifdef __linux__
-/* #define DROPBEAR_SERVER_TCP_FAST_OPEN */
+#define DROPBEAR_SERVER_TCP_FAST_OPEN
 /* #define DROPBEAR_CLIENT_TCP_FAST_OPEN */
 #endif
 

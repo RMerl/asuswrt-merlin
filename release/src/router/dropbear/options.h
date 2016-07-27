@@ -353,4 +353,9 @@ be overridden at runtime with -I. 0 disables idle timeouts */
  * in sysoptions.h */
 #include "sysoptions.h"
 
+/* Overrides for sysoptions.h */
+#ifdef DROPBEAR_SERVER_TCP_FAST_OPEN
+#undef DROPBEAR_SERVER_TCP_FAST_OPEN
+#endif
+
 #endif /* DROPBEAR_OPTIONS_H_ */
