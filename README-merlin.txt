@@ -38,7 +38,7 @@ Supported devices are:
  * RT-AC88U
  * RT-AC3100
  * RT-AC5300
- * RT-AC1900 & RT-AC1900P
+ * RT-AC1900 & RT-AC1900P (use the RT-AC68U firmware)
 
 Devices that are no longer officially supported:
  * RT-N16
@@ -145,7 +145,8 @@ You can revert back to an original Asus firmware at any time just
 by flashing a firmware downloaded from Asus's website.
 
 If the firmware upgrade fails, try rebooting your router to free 
-up sufficient memory, then try flashing it again.
+up sufficient memory, without any USB disk plugged in,
+then try flashing it again.
 
 NOTE: resetting to factory default after flashing is 
 strongly recommended for the following cases:
@@ -153,8 +154,8 @@ strongly recommended for the following cases:
 - Updating from a firmware version that is more than 3 releases older
 - Switching from a Tomato/DD-WRT/OpenWRT firmware
 
-If upgrading from anything older and you experience issues, then 
-consider doing a factory default reset then as well.
+If you run into any issue after an upgrade and you haven't done so,
+try doing a factory default reset as well.
 
 Always read the changelog, as mandatory resets will be mentionned 
 there when they are necessary.
@@ -166,6 +167,8 @@ sure to create a new backup of your settings after reconfiguring.
 
 
 
+Documentation
+-------------
 For documentation on how to use the features that are specific to 
 Asuswrt-Merlin, please visit the Wiki:
 
@@ -218,8 +221,13 @@ nobody but a highly paid lawyer would even understand anyway:
 I take no responsibility for issues caused by this project. I do my best to 
 ensure that everything works fine. If something goes wrong, my apologies.
 
+The Asuswrt-merlin firmware is released under a GPL licence.  In short, you 
+are free to use, redistribute and modify it, as long as all the associated 
+licences are respected, and that any changes you make to the GPL code is 
+made publicly available.
+
 Copyrights belong to the appropriate individuals/entities, under the appropriate 
-licences. GPL code is covered by GPL, proprietary code is (c)Copyright their 
+licences. GPL code is covered by GPL, proprietary code is Copyright their 
 respective owners, yadda yadda.
 
 I try my best to honor the licences (as far as I can understand them, as a 

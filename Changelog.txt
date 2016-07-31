@@ -1,8 +1,15 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.61 alpha (xx-xxx-2016)
+380.61 Beta 1 (31-July-2016)
    - NEW: Merged with GPL 3831.
+   - FIXED: Do not enforce b/g mode as "auto" if wireless mode
+            is also set to Auto.
+
+
+380.60
+    There was no non-beta release, due to limited model support
+    and unsolved WAN stability issues.
 
 
 380.60 Beta 2 (5-July-2016)
