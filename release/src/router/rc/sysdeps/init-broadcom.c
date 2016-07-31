@@ -3232,11 +3232,11 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "2");	// devices must advertise HT (11n) capabilities to be allowed to associate
 		}
 #endif
-
+#if 0
 		if (nvram_match(strcat_r(prefix, "nband", tmp), "2") &&
 			nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
 			nvram_set(strcat_r(prefix, "gmode_protection", tmp), "auto");
-
+#endif
 #ifdef RTCONFIG_BCMWL6
 		if (nvram_match(strcat_r(prefix, "bw", tmp), "0"))			// Auto
 		{
