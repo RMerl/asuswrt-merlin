@@ -42,12 +42,11 @@
 #include "process.h"
 #include "config.h"
 #include "log.h"
-#include "utils.h"
 
 struct child *children = NULL;
 int number_of_children = 0;
 
-static int
+static void
 add_process_info(pid_t pid, struct client_cache_s *client)
 {
 	struct child *child;
@@ -60,14 +59,12 @@ add_process_info(pid_t pid, struct client_cache_s *client)
 			continue;
 		child->pid = pid;
 		child->client = client;
-		child->age = uptime();
-		return 1;
+		child->age = time(NULL);
+		break;
 	}
-
-	return 0;
 }
 
-static inline int
+static inline void
 remove_process_info(pid_t pid)
 {
 	struct child *child;
@@ -81,10 +78,8 @@ remove_process_info(pid_t pid)
 		child->pid = 0;
 		if (child->client)
 			child->client->connections--;
-		return 1;
+		break;
 	}
-
-	return 0;
 }
 
 pid_t
@@ -101,10 +96,10 @@ process_fork(struct client_cache_s *client)
 	pid_t pid = fork();
 	if (pid > 0)
 	{
+		number_of_children++;
 		if (client)
 			client->connections++;
-		if (add_process_info(pid, client))
-			number_of_children++;
+		add_process_info(pid, client);
 	}
 
 	return pid;
@@ -124,8 +119,8 @@ process_handle_child_termination(int signal)
 			else
 				break;
 		}
-		if (remove_process_info(pid))
-			number_of_children--;
+		number_of_children--;
+		remove_process_info(pid);
 	}
 }
 

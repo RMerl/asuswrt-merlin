@@ -458,7 +458,7 @@ next_header:
 		    (ctype == ESamsungSeriesB && type == ESamsungSeriesA))
 			return;
 		h->req_client->type = &client_types[client];
-		h->req_client->age = uptime();
+		h->req_client->age = time(NULL);
 	}
 }
 
@@ -635,7 +635,7 @@ SendResp_presentation(struct upnphttp * h)
 	}
 	strcatf(&str, "</table>");
 
-	strcatf(&str, "<br>%d connection%s currently open<br>", (number_of_children > 0 ? : 0), (number_of_children == 1 ? "" : "s"));
+	strcatf(&str, "<br>%d connection%s currently open<br>", number_of_children, (number_of_children == 1 ? "" : "s"));
 	strcatf(&str, "</BODY></HTML>\r\n");
 
 	BuildResp_upnphttp(h, str.data, str.off);
@@ -1353,6 +1353,7 @@ SendResp_icon(struct upnphttp * h, char * icon)
 	int size;
 	struct string_s str;
 #if defined(RTN66U) || defined(RTN56U)
+
 	if( strcmp(icon, "sm.png") == 0 )
 	{
 		DPRINTF(E_DEBUG, L_HTTP, "Sending small PNG icon\n");

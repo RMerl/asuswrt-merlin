@@ -22,7 +22,6 @@
 #include "clients.h"
 #include "getifaddr.h"
 #include "log.h"
-#include "utils.h"
 
 struct client_type_s client_types[] =
 {
@@ -251,7 +250,7 @@ SearchClientCache(struct in_addr addr, int quiet)
 		if (clients[i].addr.s_addr == addr.s_addr)
 		{
 			/* Invalidate this client cache if it's older than 1 hour */
-			if ((uptime() - clients[i].age) > 3600)
+			if ((time(NULL) - clients[i].age) > 3600)
 			{
 				unsigned char mac[6];
 				if (get_remote_mac(addr, mac) == 0 &&
@@ -259,7 +258,7 @@ SearchClientCache(struct in_addr addr, int quiet)
 				{
 					/* Same MAC as last time when we were able to identify the client,
 					 * so extend the timeout by another hour. */
-					clients[i].age = uptime();
+					clients[i].age = time(NULL);
 				}
 				else
 				{
@@ -289,7 +288,7 @@ AddClientCache(struct in_addr addr, int type)
 		get_remote_mac(addr, clients[i].mac);
 		clients[i].addr = addr;
 		clients[i].type = &client_types[type];
-		clients[i].age = uptime();
+		clients[i].age = time(NULL);
 		DPRINTF(E_DEBUG, L_HTTP, "Added client [%s/%s/%02X:%02X:%02X:%02X:%02X:%02X] to cache slot %d.\n",
 					client_types[type].name, inet_ntoa(clients[i].addr),
 					clients[i].mac[0], clients[i].mac[1], clients[i].mac[2],

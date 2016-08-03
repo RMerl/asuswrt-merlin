@@ -136,12 +136,8 @@ OpenAndConfSSDPNotifySocket(struct lan_addr_s *iface)
 {
 	int s;
 	unsigned char loopchar = 0;
-	/* no need
 	int bcast = 1;
-	*/
-	uint8_t ttl = 2; /* UDA v1.1 says :
-		The TTL for the IP packet SHOULD default to 2 and
-		SHOULD be configurable. */
+	uint8_t ttl = 4;
 	struct in_addr mc_if;
 	struct sockaddr_in sockname;
 	
@@ -169,15 +165,13 @@ OpenAndConfSSDPNotifySocket(struct lan_addr_s *iface)
 	}
 
 	setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
-
-	/* no need
+	
 	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &bcast, sizeof(bcast)) < 0)
 	{
 		DPRINTF(E_ERROR, L_SSDP, "setsockopt(udp_notify, SO_BROADCAST): %s\n", strerror(errno));
 		close(s);
 		return -1;
 	}
-	*/
 
 	memset(&sockname, 0, sizeof(struct sockaddr_in));
 	sockname.sin_family = AF_INET;
@@ -481,7 +475,7 @@ close:
 	else
 	{
 		client->type = &client_types[type];
-		client->age = uptime();
+		client->age = time(NULL);
 	}
 }
 
@@ -585,7 +579,7 @@ ProcessSSDPRequest(int s, unsigned short port)
 				if (client->type->type < EStandardDLNA150 &&
 				    client->type->type != ESamsungSeriesA)
 				{
-					client->age = uptime();
+					client->age = time(NULL);
 					return;
 				}
 			}

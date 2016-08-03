@@ -440,7 +440,7 @@ inotify_insert_file(char * name, const char * path)
 		sqlite3_free(id);
 		if( (is_audio(path) || is_playlist(path)) && next_pl_fill != 1 )
 		{
-			next_pl_fill = uptime() + 120; // Schedule a playlist scan for 2 minutes from now.
+			next_pl_fill = time(NULL) + 120; // Schedule a playlist scan for 2 minutes from now.
 			//DEBUG DPRINTF(E_WARN, L_INOTIFY,  "Playlist scan scheduled for %s", ctime(&next_pl_fill));
 		}
 	}
@@ -489,7 +489,7 @@ inotify_insert_directory(int fd, char *name, const char * path)
 		{
 			DPRINTF(E_ERROR, L_INOTIFY, "add_watch() failed\n");
 		}
-else
+		else
 		{
 			DPRINTF(E_INFO, L_INOTIFY, "Added watch to %s [%d]\n", path, wd);
 		}
@@ -699,7 +699,7 @@ start_inotify()
                 length = poll(pollfds, 1, timeout);
 		if( !length )
 		{
-			if( next_pl_fill && (uptime() >= next_pl_fill) )
+			if( next_pl_fill && (time(NULL) >= next_pl_fill) )
 			{
 				fill_playlists();
 				next_pl_fill = 0;

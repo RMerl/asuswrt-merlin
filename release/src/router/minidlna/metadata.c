@@ -44,8 +44,6 @@
 #include "sql.h"
 #include "log.h"
 
-#include "rtconfig.h"
-
 #define FLAG_TITLE	0x00000001
 #define FLAG_ARTIST	0x00000002
 #define FLAG_ALBUM	0x00000004
@@ -489,24 +487,6 @@ libjpeg_error_handler(j_common_ptr cinfo)
 	return;
 }
 
-#if 0
-#ifdef RTCONFIG_WEBDAV
-//- 20130708 Sungmin add
-static int
-thumb_cache_exists(const char *orig_path, char **cache_file)
-{
-	if( asprintf(cache_file, "%s/art_cache%s", db_path, orig_path) < 0 )
-	{
-		*cache_file = NULL;
-		return 0;
-	}
-	strcpy(strchr(*cache_file, '\0')-4, ".jpg");
-
-	return (!access(*cache_file, F_OK));
-}
-#endif
-#endif
-
 int64_t
 GetImageMetadata(const char *path, char *name)
 {
@@ -612,34 +592,7 @@ GetImageMetadata(const char *path, char *name)
 			}
 		}
 		else
-		{
 			thumb = 1;
-#if 0
-#ifdef RTCONFIG_WEBDAV
-			//- 20130708 Sungmin add
-			if(ed->data && ed->size)
-			{
-				char* art_file;
-				if( !thumb_cache_exists(path, &art_file) )
-				{
-					char cache_dir[MAXPATHLEN];
-					strncpyt(cache_dir, art_file, sizeof(cache_dir));
-					make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
-
-					FILE *thumb = fopen(art_file, "wb");
-					//DPRINTF(E_WARN, L_METADATA, " * cache_dir: %s\n", cache_dir);
-					//DPRINTF(E_WARN, L_METADATA, " * thumbnail: %s\n", art_file);
-					if(thumb)
-					{
-						fwrite(ed->data, 1, ed->size, thumb);
-						fclose(thumb);
-					}
-				}
-				free(art_file);
-			}
-#endif
-#endif
-		}
 	}
 	//DEBUG DPRINTF(E_DEBUG, L_METADATA, " * thumbnail: %d\n", thumb);
 
@@ -893,10 +846,6 @@ GetVideoMetadata(const char *path, char *name)
 			xasprintf(&m.mime, "video/x-matroska");
 		else if( strcmp(ctx->iformat->name, "flv") == 0 )
 			xasprintf(&m.mime, "video/x-flv");
-		else if( strcmp(ctx->iformat->name, "rm") == 0 )
-			xasprintf(&m.mime, "video/x-pn-realvideo");
-		else if( strcmp(ctx->iformat->name, "rmvb") == 0 )
-			xasprintf(&m.mime, "video/x-pn-realvideo");
 		if( m.mime )
 			goto video_no_dlna;
 

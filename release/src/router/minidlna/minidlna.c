@@ -185,7 +185,7 @@ sighup(int sig)
 static void
 set_startup_time(void)
 {
-#if 0
+#if 1
 	startup_time = time(NULL);
 #else
 	startup_time = uptime();
@@ -1309,7 +1309,7 @@ main(int argc, char **argv)
 #endif
 
 	reload_ifaces(0);
-#if 0
+#if 1
 	lastnotifytime.tv_sec = time(NULL) + runtime_vars.notify_interval;
 #else
 	lastnotifytime.tv_sec = uptime();
@@ -1320,7 +1320,7 @@ main(int argc, char **argv)
 	{
 		/* Check if we need to send SSDP NOTIFY messages and do it if
 		 * needed */
-#if 0
+#if 1
 		if (gettimeofday(&timeofday, 0) < 0)
 		{
 			DPRINTF(E_ERROR, L_GENERAL, "gettimeofday(): %s\n", strerror(errno));
@@ -1334,7 +1334,7 @@ main(int argc, char **argv)
 #endif
 		{
 			/* the comparison is not very precise but who cares ? */
-#if 0
+#if 1
 			if (timeofday.tv_sec >= (lastnotifytime.tv_sec + runtime_vars.notify_interval))
 #else
 			if (timeofday.tv_sec >= (lastnotifytime.tv_sec + NOTIFY_INTERVAL))
@@ -1343,7 +1343,7 @@ main(int argc, char **argv)
 				DPRINTF(E_DEBUG, L_SSDP, "Sending SSDP notifies\n");
 				for (i = 0; i < n_lan_addr; i++)
 				{
-#if 0
+#if 1
 					SendSSDPNotifies(lan_addr[i].snotify, lan_addr[i].str,
 						runtime_vars.port, runtime_vars.notify_interval);
 #else
@@ -1352,7 +1352,7 @@ main(int argc, char **argv)
 #endif
 				}
 				memcpy(&lastnotifytime, &timeofday, sizeof(struct timeval));
-#if 0
+#if 1
 				timeout.tv_sec = runtime_vars.notify_interval;
 #else
 				timeout.tv_sec = NOTIFY_INTERVAL;
@@ -1361,7 +1361,7 @@ main(int argc, char **argv)
 			}
 			else
 			{
-#if 0
+#if 1
 				timeout.tv_sec = lastnotifytime.tv_sec + runtime_vars.notify_interval
 				                 - timeofday.tv_sec;
 #else
