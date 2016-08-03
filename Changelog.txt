@@ -1,8 +1,21 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.61 (xx-Aug-2016)
+   - CHANGED: Reverted a lot of Asus's minidlna customizations in an
+              attempt to resolve various issues that aren't occuring
+              with the original minidlna.
+   - FIXED: Connected OpenVPN clients reporting as disconnected
+            on the status page following any wireless config change
+            (Asus bug)
+   - FIXED: OpenVPN server would report being "Initializing"
+            while it already was ready, follwoing any
+            wireless config change (Asus bug)
+
+
 380.61 Beta 1 (31-July-2016)
    - NEW: Merged with GPL 3831.
+   - CHANGED: updated dropbear to 2016.74.
    - FIXED: Do not enforce b/g mode as "auto" if wireless mode
             is also set to Auto.
 
