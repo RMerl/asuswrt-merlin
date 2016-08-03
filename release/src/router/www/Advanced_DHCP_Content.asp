@@ -208,6 +208,7 @@ function addRow_Group(upper){
 			}
 		}
 
+		document.form.dhcp_staticmac_x_0.value = document.form.dhcp_staticmac_x_0.value.toUpperCase();
 		addRow(document.form.dhcp_staticmac_x_0 ,1);
 		addRow(document.form.dhcp_staticip_x_0, 0);
 		addRow(document.form.dhcp_staticname_x_0, 0);
@@ -252,7 +253,7 @@ function edit_Row(r){
 	backup_mac = document.form.dhcp_staticmac_x_0.value;
 	backup_ip = document.form.dhcp_staticip_x_0.value;
 	backup_name = document.form.dhcp_staticname_x_0.value;
- 	del_Row(r);
+	del_Row(r);
 	document.form.dhcp_staticmac_x_0.focus();
 }
 
