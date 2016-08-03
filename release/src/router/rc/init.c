@@ -5508,29 +5508,6 @@ int init_nvram(void)
 	add_rc_support("usbsms");
 #endif
 
-/*** Update nvram ***/
-
-/* migrate dhcpc_options to wanxxx_clientid */
-	char *oldclientid = nvram_safe_get("wan0_dhcpc_options");
-	if (*oldclientid) {
-		nvram_set("wan0_clientid", oldclientid);
-		nvram_unset("wan0_dhcpc_options");
-	}
-
-	oldclientid = nvram_safe_get("wan1_dhcpc_options");
-	if (*oldclientid) {
-		nvram_set("wan1_clientid", oldclientid);
-		nvram_unset("wan1_dhcpc_options");
-	}
-
-/* Migrate to Asus's new tri-state sshd_enable to our dual nvram setup */
-	if (nvram_match("sshd_enable", "1")) {
-		if (nvram_match("sshd_wan", "0"))
-			nvram_set("sshd_enable", "2");	// LAN-only
-		// else stay WAN+LAN
-		nvram_unset("sshd_wan");
-	}
-
 	return 0;
 }
 
@@ -5551,6 +5528,8 @@ int init_nvram2(void)
 #endif
 
 #ifdef RTCONFIG_OPENVPN
+/* Initialize OpenVPN state flags */
+
 	for (i = 1; i <= MAX_OVPN_CLIENT; i++) {
 		sprintf(varname, "vpn_client%d_state", i);
 		nvram_set(varname, "0");
@@ -5570,6 +5549,27 @@ int init_nvram2(void)
 		nvram_unset("vpn_server_clientlist");
 	}
 #endif
+
+/* migrate dhcpc_options to wanxxx_clientid */
+        char *oldclientid = nvram_safe_get("wan0_dhcpc_options");
+	if (*oldclientid) {
+		nvram_set("wan0_clientid", oldclientid);
+		nvram_unset("wan0_dhcpc_options");
+	}
+
+	oldclientid = nvram_safe_get("wan1_dhcpc_options");
+	if (*oldclientid) {
+		nvram_set("wan1_clientid", oldclientid);
+		nvram_unset("wan1_dhcpc_options");
+	}
+
+/* Migrate to Asus's new tri-state sshd_enable to our dual nvram setup */
+	if (nvram_match("sshd_enable", "1")) {
+		if (nvram_match("sshd_wan", "0"))
+			nvram_set("sshd_enable", "2");  // LAN-only
+		// else stay WAN+LAN
+		nvram_unset("sshd_wan");
+	}
 
 	if (restore_defaults_g)
 	{
