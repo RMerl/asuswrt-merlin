@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.61 (xx-Aug-2016)
+380.61 Beta 2 (3-Aug-2016)
    - CHANGED: Reverted a lot of Asus's minidlna customizations in an
               attempt to resolve various issues that aren't occuring
               with the original minidlna.
