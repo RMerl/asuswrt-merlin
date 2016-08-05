@@ -1,16 +1,15 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.61 Beta 2 (3-Aug-2016)
-   - CHANGED: Reverted a lot of Asus's minidlna customizations in an
-              attempt to resolve various issues that aren't occuring
-              with the original minidlna.
+380.61 (4-Aug-2016)
    - FIXED: Connected OpenVPN clients reporting as disconnected
             on the status page following any wireless config change
             (Asus bug)
    - FIXED: OpenVPN server would report being "Initializing"
             while it already was ready, follwoing any
             wireless config change (Asus bug)
+   - FIXED: Various stability issues with minidlna (reverted some
+            of Asus's customizations)
 
 
 380.61 Beta 1 (31-July-2016)
