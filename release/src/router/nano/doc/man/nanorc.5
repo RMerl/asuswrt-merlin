@@ -1,0 +1,758 @@
+.\" Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+.\" 2013, 2014, 2015 Free Software Foundation, Inc.
+.\"
+.\" This document is dual-licensed.  You may distribute and/or modify it
+.\" under the terms of either of the following licenses:
+.\"
+.\" * The GNU General Public License, as published by the Free Software
+.\"   Foundation, version 3 or (at your option) any later version.  You
+.\"   should have received a copy of the GNU General Public License
+.\"   along with this program.  If not, see
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.\" * The GNU Free Documentation License, as published by the Free
+.\"   Software Foundation, version 1.2 or (at your option) any later
+.\"   version, with no Invariant Sections, no Front-Cover Texts, and no
+.\"   Back-Cover Texts.  You should have received a copy of the GNU Free
+.\"   Documentation License along with this program.  If not, see
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.TH NANORC 5 "version 2.6.3" "August 2016"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.SH NAME
+nanorc \- nano's rcfile
+.SH DESCRIPTION
+The \fInanorc\fP file contains the default settings for \fBnano\fP, a
+small and friendly editor.  The file should be in Unix format, not in
+DOS or Mac format.  During startup, \fBnano\fP will first read the
+system-wide settings, from \fB/etc/nanorc\fP (the exact path might be
+different), and then the user-specific settings, from \fB~/.nanorc\fP.
+
+.SH OPTIONS
+The configuration file accepts a series of \fBset\fP and \fBunset\fP
+commands, which can be used to configure nano on startup without using
+command-line options.  Additionally, there are some commands to define
+syntax highlighting and to rebind keys -- see the two separate sections
+on those.  \fBnano\fP reads one command per line.
+.PP
+Options in \fInanorc\fP files take precedence over nano's defaults, and
+command-line options override \fInanorc\fP settings.  Also, options that
+do not take an argument are unset by default.  So using the \fBunset\fR
+command is only needed when wanting to override a setting of the system's
+\fInanorc\fR file in your own \fB~/.nanorc\fR.  Options that take an
+argument cannot be unset.
+.PP
+Below, the \fIstring\fR parameters need to be enclosed in double quotes.
+Quotes inside these string parameters don't have to be escaped with
+backslashes.  The last double quote in the string will be treated as its
+end.  For example, for the \fBbrackets\fP option, "\fB"')>]}\fP" will
+match \fB"\fP, \fB'\fP, \fB)\fP, \fB>\fP, \fB]\fP, and \fB}\fP.
+.PP
+The supported commands and arguments are:
+
+.TP 3
+.B set allow_insecure_backup
+When backing up files, allow the backup to succeed even if its permissions
+can't be (re)set due to special OS considerations.  You should
+NOT enable this option unless you are sure you need it.
+.TP
+.B set autoindent
+Use auto-indentation.
+.TP
+.B set backup
+When saving a file, create a backup file by adding a tilde (\fB~\fP) to
+the file's name.
+.TP
+.B set backupdir "\fIdirectory\fP"
+Make and keep not just one backup file, but make and keep a uniquely
+numbered one every time a file is saved --- when backups are enabled
+with \fBset backup\fR or \fB\-\-backup\fR or \fB\-B\fR.
+The uniquely numbered files are stored in the specified \fIdirectory\fR.
+.TP
+.B set backwards
+Do backwards searches by default.
+.TP
+.B set boldtext
+Use bold instead of reverse video for the titlebar, statusbar, key combos,
+and selected text.  This can be overridden for the first three by setting
+the options \fBtitlecolor\fP, \fBstatuscolor\fP, and \fBkeycolor\fP.
+.TP
+.B set brackets "\fIstring\fP"
+Set the characters treated as closing brackets when justifying
+paragraphs.  This may not include blank characters.  Only closing
+punctuation (see \fBpunct\fP), optionally followed by the specified
+closing brackets, can end sentences.  The default value is "\fB"')>]}\fP".
+.TP
+.B set casesensitive
+Do case-sensitive searches by default.
+.TP
+.B set constantshow
+Constantly display the cursor position in the status bar.
+(The old form of this option, '\fBset const\fR', is deprecated.)
+.TP
+.B set cut
+Use cut-to-end-of-line by default, instead of cutting the whole line.
+.TP
+.B set fill \fInumber\fR
+Hard-wrap lines at column number \fInumber\fR.  If \fInumber\fR is 0 or less,
+the maximum line length will be the screen width less \fInumber\fP columns.
+The default value is \fB\-8\fR.
+.TP
+.B set functioncolor \fIfgcolor\fR,\fIbgcolor\fR
+Specify the color combination to use for the function descriptions
+in the two help lines at the bottom of the screen.
+See \fBset titlecolor\fR for more details.
+.TP
+.B set historylog
+Enable the use of \fB~/.nano/search_history\fP for saving and reading
+search/replace strings.
+.TP
+.B set justifytrim
+When justifying text, trailing whitespace will automatically be removed.
+.TP
+.B set keycolor \fIfgcolor\fR,\fIbgcolor\fR
+Specify the color combination to use for the shortcut key combos
+in the two help lines at the bottom of the screen.
+See \fBset titlecolor\fR for more details.
+.TP
+.B set locking
+Enable vim-style lock-files for when editing files.
+.TP
+.B set matchbrackets "\fIstring\fP"
+Set the opening and closing brackets that can be found by bracket
+searches.  This may not include blank characters.  The opening set must
+come before the closing set, and the two sets must be in the same order.
+The default value is "\fB(<[{)>]}\fP".
+.TP
+.B set morespace
+Use the blank line below the titlebar as extra editing space.
+.TP
+.B set mouse
+Enable mouse support, if available for your system.  When enabled, mouse
+clicks can be used to place the cursor, set the mark (with a double
+click), and execute shortcuts.  The mouse will work in the X Window
+System, and on the console when gpm is running.  Text can still be
+selected through dragging by holding down the Shift key.
+.TP
+.B set multibuffer
+When reading in a file with ^R, insert it into a new buffer by default.
+.TP
+.B set noconvert
+Don't convert files from DOS/Mac format.
+.TP
+.B set nohelp
+Don't display the two help lines at the bottom of the screen.
+.TP
+.B set nonewlines
+Don't automatically add a newline to the ends of files.
+.TP
+.B set nowrap
+Don't hard-wrap text at all.
+.TP
+.B set operatingdir "\fIdirectory\fP"
+\fBnano\fP will only read and write files inside \fIdirectory\fP and its
+subdirectories.  Also, the current directory is changed to here, so
+files are inserted from this directory.  By default, the operating
+directory feature is turned off.
+.TP
+.B set positionlog
+Save the cursor position of files between editing sessions.
+The cursor position is remembered for the 200 most-recently edited files.
+(The old form of this option, '\fBset poslog\fR', is deprecated.)
+.TP
+.B set preserve
+Preserve the XON and XOFF keys (^Q and ^S).
+.TP
+.B set punct "\fIstring\fP"
+Set the characters treated as closing punctuation when justifying
+paragraphs.  This may not include blank characters.  Only the
+specfified closing punctuation, optionally followed by closing brackets
+(see \fBbrackets\fP), can end sentences.  The default value is "\fB!.?\fP".
+.TP
+.B set quickblank
+Do quick statusbar blanking.  Statusbar messages will disappear after 1
+keystroke instead of 25.
+.TP
+.B set quiet
+\fBnano\fP will not report errors in the \fInanorc\fP file nor ask them
+to be acknowledged by pressing Enter at startup.  If this is used, it
+should be placed at the top of the file to be fully effective.
+.TP
+.B set quotestr "\fIstring\fP"
+The email-quote string, used to justify email-quoted paragraphs.  This
+is an extended regular expression if your system supports them,
+otherwise a literal string.  The default value is
+"\fB^([\ \\t]*[#:>\\|}])+\fP" if you have extended regular expression
+support, and "\fB>\ \fP" otherwise.  Note that '\\t' stands for a literal
+Tab character.
+.TP
+.B set rebinddelete
+Interpret the Delete key differently so that both Backspace and Delete
+work properly.  You should only need to use this option if Backspace
+acts like Delete on your system.
+.TP
+.B set rebindkeypad
+Interpret the numeric keypad keys so that they all work properly.  You
+should only need to use this option if they don't, as mouse support
+won't work properly with this option enabled.
+.TP
+.B set regexp
+Do extended regular expression searches by default.
+.TP
+.B set smarthome
+Make the Home key smarter.  When Home is pressed anywhere but at the
+very beginning of non-whitespace characters on a line, the cursor will
+jump to that beginning (either forwards or backwards).  If the cursor is
+already at that position, it will jump to the true beginning of the
+line.
+.TP
+.B set smooth
+Use smooth scrolling by default.
+.TP
+.B set softwrap
+Enable soft line wrapping for easier viewing of very long lines.
+.TP
+.B set speller "\fIspellprog\fP"
+Use spelling checker \fIspellprog\fP instead of the built-in one, which
+calls \fIspell\fP.
+.TP
+.B set statuscolor \fIfgcolor\fR,\fIbgcolor\fR
+Specify the color combination to use for the statusbar.
+See \fBset titlecolor\fR for more details.
+.TP
+.B set suspend
+Allow \fBnano\fP to be suspended.
+.TP
+.B set tabsize \fInumber\fR
+Use a tab size of \fInumber\fR columns.  The value of \fInumber\fP must be
+greater than 0.  The default value is \fB8\fR.
+.TP
+.B set tabstospaces
+Convert typed tabs to spaces.
+.TP
+.B set tempfile
+Save automatically on exit, don't prompt.
+.TP
+.B set titlecolor \fIfgcolor\fR,\fIbgcolor\fR
+Specify the color combination to use for the titlebar.
+Valid color names for foreground and background are:
+.BR white , \ black , \ red , \ blue , \ green , \ yellow , \ magenta ", and " cyan .
+And either "\fIfgcolor\fR" or ",\fIbgcolor\fR" may be left out.
+.TP
+.B set unix
+Save a file by default in Unix format.  This overrides nano's
+default behavior of saving a file in the format that it had.
+(This option has no effect when you also use \fBset noconvert\fR.)
+.TP
+.B set view
+Disallow file modification.
+.TP
+.B set whitespace "\fIstring\fP"
+Set the two characters used to indicate the presence of tabs and
+spaces.  They must be single-column characters.
+.TP
+.B set wordbounds
+Detect word boundaries differently by treating punctuation
+characters as parts of words.
+.TP
+.B set wordchars \fIstring\fP
+Specify which other characters (besides the normal alphanumeric ones)
+should be considered as parts of words.  This overrides the option
+\fBwordbounds\fR.
+
+.SH SYNTAX HIGHLIGHTING
+Coloring the different syntactic elements of a file
+is done via regular expressions (see the \fBcolor\fR command below).
+This is inherently imperfect, because regular expressions are not
+powerful enough to fully parse a file.  Nevertheless, regular
+expressions can do a lot and are easy to make, so they are a
+good fit for a small editor like \fBnano\fR.
+.sp
+A separate syntax can be defined for each kind of file
+via the following commands:
+.TP
+.BR syntax " ""\fIstr\fR"" [""\fIfileregex\fR"" ...]"
+Defines a syntax named \fIstr\fP which can be activated via the
+.BR \-Y / \-\-syntax
+command-line option, or will be automatically activated if
+the current filename matches the extended regular expression
+\fIfileregex\fP.  All subsequent \fBcolor\fR, \fBicolor\fR,
+\fBheader\fR and other such statements will apply to this
+\fIstr\fP syntax until a new \fBsyntax\fR command is encountered.
+
+The \fBnone\fP syntax is reserved; specifying it on the command line is
+the same as not having a syntax at all.  The \fBdefault\fP syntax is
+special: it takes no \fIfileregex\fP, and applies to files that don't
+match any syntax's \fIfileregex\fP.
+.TP
+.BI linter " program " \fR[ "arg " \fR...]
+Use the given \fIprogram\fR to run a syntax check on the current file
+(this overrides the speller function when defined).
+.TP
+.BI formatter " program " \fR[ "arg " \fR...]
+Use the given \fIprogram\fR to automatically reformat text.
+Useful in certain programming languages (e.g. Go).
+.TP
+.BR header " \fIregex\fR " ...
+Add one or more regexes which will
+be compared against the very first line of the file to be edited,
+to determine whether this syntax should be used for that file.
+.TP
+.BR magic " \fIregex\fR " ...
+Add one or more regexes which
+will be compared against the result of querying the \fBmagic\fP
+database about the file to be edited, to determine whether this
+syntax should be used for that file.  This
+functionality only works when \fBlibmagic\fP is installed on the
+system and will be silently ignored otherwise.
+.TP
+.BI comment " string"
+Use the given string for commenting and uncommenting lines.  A vertical bar or
+pipe character (|) designates bracket-style comments; for example, "/*|*/" for
+CSS files.  The characters before the pipe are prepended to the line and the
+characters after the pipe are appended at the end of the line.  If no pipe
+character is present, the entire string is prepended; for example, "#" for
+Python files.  If empty double quotes are specified, the comment/uncomment
+function is disabled; for example, "" for JSON.  Double quotes or backslashes
+may be escaped with a backslash; for example, ".\\"" for man page source.
+.TP
+.B color \fIfgcolor\fR,\fIbgcolor\fR """\fIregex\fR""" ...
+Display all pieces of text that match
+the extended regular expression \fIregex\fP with foreground color
+\fIfgcolor\fP and background color \fIbgcolor\fP, at least one of which
+must be specified.  Valid colors for foreground and background
+are: white, black, red, blue, green, yellow, magenta, and cyan.  You may
+use the prefix "bright" to get a stronger color highlight for the
+foreground.  If your terminal supports transparency, not specifying a
+\fIbgcolor\fP tells \fBnano\fP to attempt to use a transparent
+background.
+.TP
+.B icolor \fIfgcolor\fR,\fIbgcolor\fR """\fIregex\fR""" ...
+Same as above, except that the text matching is case insensitive.
+.TP
+.BR color " \fIfgcolor\fR,\fIbgcolor\fR " start= """\fIsr\fR"" " end= """\fIer\fR""
+Display all pieces of text whose start matches extended regular expression
+\fIsr\fP and whose end matches extended regular expression \fIer\fP with
+foreground color \fIfgcolor\fP and background color \fIbgcolor\fP,
+at least one of which must be specified.  This means that, after an
+initial instance of \fIsr\fP, all text will be highlighted until the
+first instance of \fIer\fP.  This allows syntax highlighting to span
+multiple lines.
+.TP
+.BR icolor " \fIfgcolor\fR,\fIbgcolor\fR " start= """\fIsr\fR"" " end= """\fIer\fR""
+Same as above, except that the text matching is case insensitive.
+.TP
+.BR include " ""\fIsyntaxfile\fR"""
+Read in self-contained color syntaxes from \fIsyntaxfile\fP.  Note that
+\fIsyntaxfile\fP may contain only the above commands, from \fBsyntax\fP
+to \fBicolor\fP.
+.TP
+.BI extendsyntax " str directive " \fR[ "arg " \fR...]
+Extend the syntax previously defined as \fIstr\fP to include
+new information.  This allows you to add a new \fBcolor\fP, \fBicolor\fP,
+\fBheader\fP, \fBmagic\fP, \fBcomment\fP, \fBlinter\fP, or \fBformatter\fP directive
+to an already defined syntax -- useful when you want to
+slightly improve a syntax defined in one of the system-installed
+files (which are normally not writable)
+.SH REBINDING KEYS
+Key bindings can be changed via the following two commands:
+.TP
+.BI bind " key function menu"
+Rebinds the key \fIkey\fP to a new function named \fIfunction\fP in the
+context of menu \fImenu\fP (or in all menus where the function exists
+by using \fBall\fP).
+.TP
+.BI unbind " key menu"
+Unbinds the key \fIkey\fP from the menu named \fImenu\fP (or from all
+menus where it exists by using \fBall\fP).
+
+.TP
+The format of \fIkey\fP should be one of:
+.RS 3
+.TP 3
+.B ^
+followed by an alpha character or the word "Space".
+Example: ^C
+.TP
+.B M-
+followed by a printable character or the word "Space".
+Example: M-C
+.TP
+.B F
+followed by a numeric value from 1 to 16.
+Example: F10
+.RE
+
+.TP
+Valid \fIfunction\fP names to be bound are:
+.RS 3
+.TP 2
+.B help
+Invokes the help viewer.
+.TP
+.B cancel
+Cancels the current command.
+.TP
+.B exit
+Exits from the program (or from the help viewer or the file browser).
+.TP
+.B writeout
+Writes the current buffer to disk, asking for a name.
+.TP
+.B savefile
+Writes the current file to disk without prompting or warning.
+.TP
+.B insert
+Inserts a file into the current buffer (at the current cursor position),
+or into a new buffer when option \fBmultibuffer\fR is set.
+.TP
+.B whereis
+Searches for text in the current buffer -- or for filenames matching
+a string in the current list in the file browser.
+.TP
+.B searchagain
+Repeats the last search command without prompting.
+.TP
+.B findprevious
+As \fBsearchagain\fR, but always in the backward direction.
+.TP
+.B findnext
+As \fBsearchagain\fR, but always in the forward direction.
+.TP
+.B replace
+Interactively replaces text within the current buffer.
+.TP
+.B cut
+Cuts and stores the current line (or the marked region).
+.TP
+.B copytext
+Copies the current line (or the marked region) without deleting it.
+.TP
+.B uncut
+Copies the currently stored text into the current buffer at the
+current cursor position.
+.TP
+.B mark
+Sets the mark at the current position, to start selecting text.
+.TP
+.B cutwordleft
+Cuts from the cursor position to the beginning of the preceding word.
+.TP
+.B cutwordright
+Cuts from the cursor position to the beginning of the next word.
+.TP
+.B cutrestoffile
+Cuts all text from the cursor position till the end of the buffer.
+.TP
+.B curpos
+Shows the current cursor position: the line, column, and character positions.
+.TP
+.B wordcount
+Counts the number of words, lines and characters in the current buffer.
+.TP
+.B speller
+Invokes a spell-checking program (or a linting program, if the current
+syntax highlighting defines one).
+.TP
+.B linter
+A synonym of \fBspeller\fR (for when the speller has not been configured).
+.TP
+.B justify
+Justifies the current paragraph.
+.TP
+.B fulljustify
+Justifies the entire current buffer.
+.TP
+.B indent
+Indents (shifts to the right) the currently marked text.
+.TP
+.B unindent
+Unindents (shifts to the left) the currently marked text.
+.TP
+.B comment
+Comments or uncomments the current line or marked lines, using the comment
+style specified in the active syntax.
+.TP
+.B left
+Goes left one position (in the editor or browser).
+.TP
+.B right
+Goes right one position (in the editor or browser).
+.TP
+.B up
+Goes one line up (in the editor or browser).
+.TP
+.B down
+Goes one line down (in the editor or browser).
+.TP
+.B scrollup
+Scrolls up one line of text from the current position.
+.TP
+.B scrolldown
+Scrolls down one line of text from the current position.
+.TP
+.B prevword
+Moves the cursor to the beginning of the previous word.
+.TP
+.B nextword
+Moves the cursor to the beginning of the next word.
+.TP
+.B home
+Moves the cursor to the beginning of the current line.
+.TP
+.B end
+Moves the cursor to the end of the current line.
+.TP
+.B beginpara
+Moves the cursor to the beginning of the current paragraph.
+.TP
+.B endpara
+Moves the cursor to the end of the current paragraph.
+.TP
+.B prevblock
+Moves the cursor to the beginning of the current or preceding block of text.
+(Blocks are separated by one or more blank lines.)
+.TP
+.B nextblock
+Moves the cursor to the beginning of the next block of text.
+.TP
+.B prevpage
+Goes up one screenful.
+.TP
+.B nextpage
+Goes down one screenful.
+.TP
+.B firstline
+Goes to the first line of the file.
+.TP
+.B lastline
+Goes to the last line of the file.
+.TP
+.B gotoline
+Goes to a specific line (and column if specified).  Negative numbers count
+from the end of the file (and end of the line).
+.TP
+.B gototext
+Switches from targeting a line number to searching for text.
+.TP
+.B findbracket
+Moves the cursor to the bracket (brace, parenthesis, etc.) that matches
+(pairs) with the one under the cursor.
+.TP
+.B prevbuf
+Switches to editing/viewing the previous buffer when multiple buffers are open.
+.TP
+.B nextbuf
+Switches to editing/viewing the next buffer when multiple buffers are open.
+.TP
+.B verbatim
+Inserts the next keystroke verbatim into the file.
+.TP
+.B tab
+Inserts a tab at the current cursor location.
+.TP
+.B enter
+Inserts a new line below the current one.
+.TP
+.B delete
+Deletes the character under the cursor.
+.TP
+.B backspace
+Deletes the character before the cursor.
+.TP
+.B undo
+Undoes the last performed text action (add text, delete text, etc).
+.TP
+.B redo
+Redoes the last undone action (i.e., it undoes an undo).
+.TP
+.B refresh
+Refreshes the screen.
+.TP
+.B suspend
+Suspends the editor (if the suspending function is enabled, see the
+"suspendenable" entry below).
+.TP
+.B casesens
+Toggles case sensitivity in searching (search/replace menus only).
+.TP
+.B regexp
+Toggles whether searching/replacing is based on literal strings or regular expressions.
+.TP
+.B backwards
+Toggles whether searching/replacing goes forward or backward.
+.TP
+.B prevhistory
+Shows the previous history entry in the prompt menus (e.g. search).
+.TP
+.B nexthistory
+Shows the next history entry in the prompt menus (e.g. search).
+.TP
+.B flipreplace
+Toggles between searching for something and replacing something.
+.TP
+.B flipexecute
+Toggles between inserting a file and executing a command.
+.TP
+.B flipnewbuffer
+Toggles between inserting into the current buffer and into a new
+empty buffer.
+.TP
+.B dosformat
+When writing a file, switches to writing a DOS format (CR/LF).
+.TP
+.B macformat
+When writing a file, switches to writing a Mac format.
+.TP
+.B append
+When writing a file, appends to the end instead of overwriting.
+.TP
+.B prepend
+When writing a file, 'prepends' (writes at the beginning) instead of overwriting.
+.TP
+.B backup
+When writing a file, creates a backup of the current file.
+.TP
+.B discardbuffer
+When about to write a file, discard the current buffer without saving.
+(This function is bound by default only when option \fB\-\-tempfile\fR
+is in effect.)
+.TP
+.B tofiles
+Starts the file browser, allowing to select a file from a list.
+.TP
+.B gotodir
+Goes to a directory to be specified, allowing to browse anywhere
+in the filesystem.
+.TP
+.B firstfile
+Goes to the first file when using the file browser (reading or writing files).
+.TP
+.B lastfile
+Goes to the last file when using the file browser (reading or writing files).
+.TP
+.B nohelp
+Toggles the presence of the two-line list of key bindings at the bottom of the screen.
+.TP
+.B constupdate
+Toggles the constant display of the current line, column, and character positions.
+.TP
+.B morespace
+Toggles the presence of the blank line which 'separates' the titlebar from the file text.
+.TP
+.B smoothscroll
+Toggles smooth scrolling (when moving around with the arrow keys).
+.TP
+.B softwrap
+Toggles the displaying of overlong lines on multiple screen lines.
+.TP
+.B whitespacedisplay
+Toggles the showing of whitespace.
+.TP
+.B nosyntax
+Toggles syntax highlighting.
+.TP
+.B smarthome
+Toggles the smartness of the Home key.
+.TP
+.B autoindent
+Toggles whether new lines will contain the same amount of whitespace as the preceding line.
+.TP
+.B cuttoend
+Toggles whether cutting text will cut the whole line or just from the current cursor
+position to the end of the line.
+.TP
+.B nowrap
+Toggles whether long lines will be hard-wrapped to the next line.
+.TP
+.B tabstospaces
+Toggles whether typed tabs will be converted to spaces.
+.TP
+.B backupfile
+Toggles whether a backup will be made of the file being edited.
+.TP
+.B multibuffer
+Toggles whether a file is inserted into the current buffer
+or read into a new buffer.
+.TP
+.B mouse
+Toggles mouse support.
+.TP
+.B noconvert
+Toggles automatic conversion of files from DOS/Mac format.
+.TP
+.B suspendenable
+Toggles whether the suspend sequence (normally ^Z) will suspend the editor window.
+.RE
+
+.TP
+Valid \fImenu\fP sections are:
+.RS 3
+.TP 2
+.B main
+The main editor window where text is entered and edited.
+.TP
+.B search
+The search menu (AKA whereis).
+.TP
+.B replace
+The 'search to replace' menu.
+.TP
+.B replacewith
+The 'replace with' menu, which comes up after 'search to replace'.
+.TP
+.B gotoline
+The 'goto line (and column)' menu.
+.TP
+.B writeout
+The 'write file' menu.
+.TP
+.B insert
+The 'insert file' menu.
+.TP
+.B extcmd
+The menu for inserting output from an external command, reached from the insert menu.
+.TP
+.B help
+The help-viewer menu.
+.TP
+.B spell
+The interactive spell checker Yes/no menu.
+.TP
+.B linter
+The linter menu.
+.TP
+.B browser
+The file browser for inserting or writing a file.
+.TP
+.B whereisfile
+The 'search for a file' menu in the file browser.
+.TP
+.B gotodir
+The 'go to directory' menu in the file browser.
+.TP
+.B all
+A special name that encompasses all menus.
+For \fBbind\fR it means all menus where the specified \fIfunction\fR exists;
+for \fBunbind\fR it means all menus where the specified \fIkey\fR exists.
+.RE
+
+.SH FILES
+.TP
+.B /etc/nanorc
+System-wide configuration file.
+.TP
+.B ~/.nanorc
+Per-user configuration file.
+.SH SEE ALSO
+.TP
+\fBnano\fP(1)
+.PP
+\fI/usr/share/doc/nano/examples/nanorc.sample\fP (or equivalent on your
+system)
+.SH AUTHOR
+Chris Allegretta <chrisa@asty.org>, et al (see \fIAUTHORS\fP and
+\fITHANKS\fP for details).  This manual page was originally written by
+Jordi Mallach <jordi@gnu.org>, for the Debian system (but may be used by
+others).

@@ -1,0 +1,256 @@
+## Sample initialization file for nano.
+##
+## Please note that you must have configured nano with --enable-nanorc
+## for this file to be read!  Also note that this file should not be in
+## DOS or Mac format, and that characters specially interpreted by the
+## shell should not be escaped here.
+##
+## To make sure an option is disabled, use "unset <option>".
+##
+## For the options that take parameters, the default value is given.
+## Other options are unset by default.
+##
+## Quotes inside string parameters don't have to be escaped with
+## backslashes.  The last double quote in the string will be treated as
+## its end.  For example, for the "brackets" option, ""')>]}" will match
+## ", ', ), >, ], and }.
+
+## Silently ignore problems with unknown directives in the nanorc file.
+## Useful when your nanorc file might be read on systems with multiple
+## versions of nano installed (e.g. your home directory is on NFS).
+# set quiet
+
+## Use auto-indentation.
+# set autoindent
+
+## Back up files to the current filename plus a tilde.
+# set backup
+
+## The directory to put unique backup files in.
+# set backupdir ""
+
+## Do backwards searches by default.
+# set backwards
+
+## Use bold text instead of reverse video text.
+# set boldtext
+
+## The characters treated as closing brackets when justifying
+## paragraphs.  They cannot contain blank characters.  Only closing
+## punctuation, optionally followed by closing brackets, can end
+## sentences.
+# set brackets ""')>]}"
+
+## Do case-sensitive searches by default.
+# set casesensitive
+
+## Constantly display the cursor position in the statusbar.  Note that
+## this overrides "quickblank".
+# set constantshow
+## (The old form, 'const', is deprecated.)
+
+## Use cut-to-end-of-line by default.
+# set cut
+
+## Set the line length for wrapping text and justifying paragraphs.
+## If the value is 0 or less, the wrapping point will be the screen
+## width less this number.
+# set fill -8
+
+## Remember the used search/replace strings for the next session.
+# set historylog
+
+## Make the justify command kill whitespace at the end of lines.
+# set justifytrim
+
+## Enable vim-style lock-files.  This is just to let a vim user know you
+## are editing a file [s]he is trying to edit and vice versa. There are
+## no plans to implement vim-style undo state in these files.
+# set locking
+
+## The opening and closing brackets that can be found by bracket
+## searches.  They cannot contain blank characters.  The former set must
+## come before the latter set, and both must be in the same order.
+# set matchbrackets "(<[{)>]}"
+
+## Use the blank line below the titlebar as extra editing space.
+# set morespace
+
+## Enable mouse support, if available for your system.  When enabled,
+## mouse clicks can be used to place the cursor, set the mark (with a
+## double click), and execute shortcuts.  The mouse will work in the X
+## Window System, and on the console when gpm is running.
+# set mouse
+
+## Switch on multiple file buffers (inserting a file will put it into
+## a separate buffer).
+# set multibuffer
+
+## Don't convert files from DOS/Mac format.
+# set noconvert
+
+## Don't display the helpful shortcut lists at the bottom of the screen.
+# set nohelp
+
+## Don't add newlines to the ends of files.
+# set nonewlines
+
+## Don't wrap text at all.
+# set nowrap
+
+## Set operating directory.  nano will not read or write files outside
+## this directory and its subdirectories.  Also, the current directory
+## is changed to here, so any files are inserted from this dir.  A blank
+## string means the operating-directory feature is turned off.
+# set operatingdir ""
+
+## Remember the cursor position in each file for the next editing session.
+# set positionlog
+## (The old form, 'poslog', is deprecated.)
+
+## Preserve the XON and XOFF keys (^Q and ^S).
+# set preserve
+
+## The characters treated as closing punctuation when justifying
+## paragraphs.  They cannot contain blank characters.  Only closing
+## punctuation, optionally followed by closing brackets, can end
+## sentences.
+# set punct "!.?"
+
+## Do quick statusbar blanking.  Statusbar messages will disappear after
+## 1 keystroke instead of 26.  Note that "const" overrides this.
+# set quickblank
+
+## The email-quote string, used to justify email-quoted paragraphs.
+## This is an extended regular expression if your system supports them,
+## otherwise a literal string.
+## If you have extended regular expression support, the default is:
+# set quotestr "^([ 	]*[#:>\|}])+"
+## Otherwise:
+# set quotestr "> "
+
+## Fix Backspace/Delete confusion problem.
+# set rebinddelete
+
+## Fix numeric keypad key confusion problem.
+# set rebindkeypad
+
+## Do extended regular expression searches by default.
+# set regexp
+
+## Make the Home key smarter.  When Home is pressed anywhere but at the
+## very beginning of non-whitespace characters on a line, the cursor
+## will jump to that beginning (either forwards or backwards).  If the
+## cursor is already at that position, it will jump to the true
+## beginning of the line.
+# set smarthome
+
+## Use smooth scrolling as the default.
+# set smooth
+
+## Enable soft line wrapping (AKA full-line display).
+# set softwrap
+
+## Use this spelling checker instead of the internal one.  This option
+## does not properly have a default value.
+# set speller "aspell -x -c"
+
+## Allow nano to be suspended.
+# set suspend
+
+## Use this tab size instead of the default; it must be greater than 0.
+# set tabsize 8
+
+## Convert typed tabs to spaces.
+# set tabstospaces
+
+## Save automatically on exit; don't prompt.
+# set tempfile
+
+## Disallow file modification.  Why would you want this in an rcfile? ;)
+# set view
+
+## The two single-column characters used to display the first characters
+## of tabs and spaces.  187 in ISO 8859-1 (0000BB in Unicode) and 183 in
+## ISO-8859-1 (0000B7 in Unicode) seem to be good values for these.
+## The default when in a UTF-8 locale:
+# set whitespace "»·"
+## The default otherwise:
+# set whitespace ">."
+
+## Detect word boundaries differently by treating punctuation
+## characters as parts of words.
+# set wordbounds
+
+## The characters (besides alphanumeric ones) that should be considered
+## as parts of words.  This option does not have a default value.  When
+## set, it overrides option 'set wordbounds'.
+# set wordchars "<_>."
+
+
+## Paint the interface elements of nano.
+## This is an example; by default there are no colors.
+# set titlecolor brightwhite,blue
+# set statuscolor brightwhite,green
+# set keycolor green
+# set functioncolor yellow
+
+
+## Setup of syntax coloring.
+##
+## Format:
+##
+## syntax "short description" ["filename regex" ...]
+##
+## The "none" syntax is reserved; specifying it on the command line is
+## the same as not having a syntax at all.  The "default" syntax is
+## special: it takes no filename regexes, and applies to files that
+## don't match any other syntax's filename regexes.
+##
+## color foreground,background "regex" ["regex"...]
+## or
+## icolor foreground,background "regex" ["regex"...]
+##
+## "color" will do case-sensitive matches, while "icolor" will do
+## case-insensitive matches.
+##
+## Valid colors: white, black, red, blue, green, yellow, magenta, cyan.
+## For foreground colors, you may use the prefix "bright" to get a
+## stronger highlight.
+##
+## To use multi-line regexes, use the start="regex" end="regex"
+## [start="regex" end="regex"...] format.
+##
+## If your system supports transparency, not specifying a background
+## color will use a transparent color.  If you don't want this, be sure
+## to set the background color to black or white.
+##
+## All regexes should be extended regular expressions.
+##
+## If you wish, you may put your syntax definitions in separate files.
+## You can make use of such files as follows:
+##
+## include "/path/to/syntax_file.nanorc"
+##
+## Unless otherwise noted, the name of the syntax file (without the
+## ".nanorc" extension) should be the same as the "short description"
+## name inside that file.  These names are kept fairly short to make
+## them easier to remember and faster to type using nano's -Y option.
+##
+## To include all existing syntax definitions, you can do:
+# include "@PKGDATADIR@/*.nanorc"
+
+
+## Key bindings.
+## See nanorc(5) (section REBINDING KEYS) for more details on this.
+##
+## The following five functions are not bound to any key by default.
+## You may wish to choose different keys than the ones suggested here.
+# bind ^S savefile main
+# bind M-Q findprevious main
+# bind M-W findnext main
+# bind M-B cutwordleft main
+# bind M-N cutwordright main
+
+## Set this if your Backspace key sends Del most of the time.
+# bind Del backspace all

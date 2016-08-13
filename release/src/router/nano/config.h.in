@@ -1,0 +1,314 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define this to enable debug messages and assert warnings. */
+#undef DEBUG
+
+/* Define this to disable the built-in file browser. */
+#undef DISABLE_BROWSER
+
+/* Define this to disable syntax highlighting. */
+#undef DISABLE_COLOR
+
+/* Define this to disable extra stuff. */
+#undef DISABLE_EXTRA
+
+/* Define this to disable the help text display. */
+#undef DISABLE_HELP
+
+/* Define this to disable search and position histories. */
+#undef DISABLE_HISTORIES
+
+/* Define this to disable the justify routines. */
+#undef DISABLE_JUSTIFY
+
+/* Define this to disable the mouse support. */
+#undef DISABLE_MOUSE
+
+/* Define this to disable multiple file buffers. */
+#undef DISABLE_MULTIBUFFER
+
+/* Define this to disable the use of .nanorc files. */
+#undef DISABLE_NANORC
+
+/* Define this to disable the setting of the operating directory (chroot of
+   sorts). */
+#undef DISABLE_OPERATINGDIR
+
+/* Define this to disable text wrapping as root by default. */
+#undef DISABLE_ROOTWRAPPING
+
+/* Define this to disable the spell checker functions. */
+#undef DISABLE_SPELLER
+
+/* Define this to disable the tab completion functions for files and search
+   strings. */
+#undef DISABLE_TABCOMP
+
+/* Define this to disable all text wrapping. */
+#undef DISABLE_WRAPPING
+
+/* Define this to disable the comment/uncomment functionality. */
+#undef ENABLE_COMMENT
+
+/* Define to 1 if translation of program messages to the user's native
+   language is requested. */
+#undef ENABLE_NLS
+
+/* Define this if your system has sufficient UTF-8 support (a wide curses
+   library, iswalnum(), iswpunct(), iswblank() or iswspace(), nl_langinfo,
+   mblen(), mbstowcs(), mbtowc(), wctomb(), and wcwidth()). */
+#undef ENABLE_UTF8
+
+/* Define this if the system supports GNU-style word boundaries in regexes. */
+#undef GNU_WORDBOUNDS
+
+/* Define to 1 if you have the <curses.h> header file. */
+#undef HAVE_CURSES_H
+
+/* Define if the GNU dcgettext() function is already present or preinstalled.
+   */
+#undef HAVE_DCGETTEXT
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+#undef HAVE_DOPRNT
+
+/* Define to 1 if you have the `getdelim' function. */
+#undef HAVE_GETDELIM
+
+/* Define to 1 if you have the `getline' function. */
+#undef HAVE_GETLINE
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define to 1 if you have the `getopt_long' function. */
+#undef HAVE_GETOPT_LONG
+
+/* Define if the GNU gettext() function is already present or preinstalled. */
+#undef HAVE_GETTEXT
+
+/* Define if you have the iconv() function. */
+#undef HAVE_ICONV
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `isblank' function. */
+#undef HAVE_ISBLANK
+
+/* Define to 1 if you have the `iswalnum' function. */
+#undef HAVE_ISWALNUM
+
+/* Define to 1 if you have the `iswblank' function. */
+#undef HAVE_ISWBLANK
+
+/* Define to 1 if you have the `iswpunct' function. */
+#undef HAVE_ISWPUNCT
+
+/* Define to 1 if you have the `iswspace' function. */
+#undef HAVE_ISWSPACE
+
+/* Define this if your curses library has the key_defined() command. */
+#undef HAVE_KEY_DEFINED
+
+/* Define to 1 if you have the <libintl.h> header file. */
+#undef HAVE_LIBINTL_H
+
+/* Define to 1 if you have the `magic' library (-lmagic). */
+#undef HAVE_LIBMAGIC
+
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <magic.h> header file. */
+#undef HAVE_MAGIC_H
+
+/* Define to 1 if you have the `mblen' function. */
+#undef HAVE_MBLEN
+
+/* Define to 1 if you have the `mbstowcs' function. */
+#undef HAVE_MBSTOWCS
+
+/* Define to 1 if you have the `mbtowc' function. */
+#undef HAVE_MBTOWC
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <ncurses.h> header file. */
+#undef HAVE_NCURSES_H
+
+/* Define to 1 if you have the `nl_langinfo' function. */
+#undef HAVE_NL_LANGINFO
+
+/* Define to 1 if you have the <regex.h> header file. */
+#undef HAVE_REGEX_H
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strcasestr' function. */
+#undef HAVE_STRCASESTR
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#undef HAVE_STRNCASECMP
+
+/* Define to 1 if you have the `strnlen' function. */
+#undef HAVE_STRNLEN
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define this if your curses library has the use_default_colors() command. */
+#undef HAVE_USE_DEFAULT_COLORS
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the `wctomb' function. */
+#undef HAVE_WCTOMB
+
+/* Define to 1 if you have the <wctype.h> header file. */
+#undef HAVE_WCTYPE_H
+
+/* Define to 1 if you have the `wcwidth' function. */
+#undef HAVE_WCWIDTH
+
+/* Define to 1 if you have the <zlib.h> header file. */
+#undef HAVE_ZLIB_H
+
+/* Flag(s) to use to get the full range of extended regular expressions */
+#undef NANO_REG_EXTENDED
+
+/* Define this to make the nano executable as small as possible. */
+#undef NANO_TINY
+
+/* Shut up assert warnings :-) */
+#undef NDEBUG
+
+/* Define this if you need the _XOPEN_SOURCE_EXTENDED macro for color support
+   */
+#undef NEED_XOPEN_SOURCE_EXTENDED
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Where data are placed to. */
+#undef PKGDATADIR
+
+/* Specify an alternate rcfile name (default: .nanorc). */
+#undef RCFILE_NAME
+
+/* Define this if you know your curses library allows LINES and COLS to be
+   redefined to deal with a resizing bug */
+#undef REDEFINING_MACROS_OK
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define this to use the slang wrappers for curses instead of native curses.
+   */
+#undef USE_SLANG
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
+/* Version number of package */
+#undef VERSION
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE

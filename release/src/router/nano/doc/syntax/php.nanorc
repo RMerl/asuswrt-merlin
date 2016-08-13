@@ -1,0 +1,32 @@
+## Here is an example for PHP.
+
+syntax "php" "\.php[2345s~]?$"
+magic "PHP script text"
+comment "//"
+
+# PHP markings.
+color brightgreen "(<\?(php)?|\?>)"
+
+# Functions.
+color white "\<[a-z_]*\("
+
+# Types.
+color green "\<(var|float|global|double|bool|char|int|enum|const)\>"
+
+# Structure.
+color brightyellow "\<(class|new|private|public|function|for|foreach|if|while|do|else|elseif|case|default|switch)\>"
+
+# Control flow.
+color magenta "\<(goto|continue|break|return)\>"
+
+# Strings.
+color brightyellow "<[^=       ]*>" ""(\.|[^"])*""
+
+# Comments.
+color brightblue "//.*"
+color brightblue start="/\*" end="\*/"
+##color blue start="<" end=">"
+##color red "&[^;[:space:]]*;"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"

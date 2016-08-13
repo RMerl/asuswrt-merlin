@@ -1,0 +1,25 @@
+## Here is an example for assembler.
+
+syntax "asm" "\.(S|s|asm)$"
+magic "[Aa]ssembl(y|er)"
+comment "//"
+
+color red "\<[A-Z_]{2,}\>"
+color brightgreen "\.(data|subsection|text)"
+color green "\.(align|file|globl|global|hidden|section|size|type|weak)"
+color brightyellow "\.(ascii|asciz|byte|double|float|hword|int|long|short|single|struct|word)"
+icolor brightred "^[[:space:]]*[.0-9A-Z_]*:"
+color brightcyan "^[[:space:]]*#[[:space:]]*(define|undef|include|ifn?def|endif|elif|else|if|warning|error)"
+
+# Strings.
+color brightyellow "<[^= 	]*>" ""(\\.|[^"])*""
+# Multiline strings.  This regex is VERY resource intensive,
+# and sometimes colours things that shouldn't be coloured.
+###color brightyellow start=""(\\.|[^"])*\\[[:space:]]*$" end="^(\\.|[^"])*""
+
+# Comments.
+color brightblue "//.*"
+color brightblue start="/\*" end="\*/"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"

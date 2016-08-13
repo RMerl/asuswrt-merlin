@@ -1,0 +1,635 @@
+<!-- Creator     : groff version 1.22.3 -->
+<!-- CreationDate: Wed Apr 13 20:45:14 2016 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>NANORC</title>
+
+</head>
+<body>
+
+<h1 align="center">NANORC</h1>
+
+<a href="#NOM">NOM</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#FICHIERS">FICHIERS</a><br>
+<a href="#VOIR AUSSI">VOIR AUSSI</a><br>
+<a href="#AUTEUR">AUTEUR</a><br>
+<a href="#TRADUCTION">TRADUCTION</a><br>
+
+<hr>
+
+
+<h2>NOM
+<a name="NOM"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">nanorc &minus;
+fichier de configuration de l&rsquo;&Atilde;&copy;diteur
+nano du projet GNU</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette page de
+manuel d&Atilde;&copy;crit bri&Atilde;&uml;vement le fichier
+de configuration de l&rsquo;&Atilde;&copy;diteur <b>nano</b>
+GNU.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b> est
+un petit &Atilde;&copy;diteur sympathique et libre, qui vise
+&Atilde;&nbsp; remplacer Pico, l&rsquo;&Atilde;&copy;diteur
+par d&Atilde;&copy;faut du logiciel non libre Pine.
+<b>nano</b> ne se contentant pas de copier l&rsquo;interface
+et l&rsquo;ergonomie de Pico, il offre
+&Atilde;&copy;galement certaines
+fonctionnalit&Atilde;&copy;s manquantes (ou
+d&Atilde;&copy;sactiv&Atilde;&copy;es par
+d&Atilde;&copy;faut) de Pico. Ces
+fonctionnalit&Atilde;&copy;s sont, par exemple, les
+fonctions de recherche et de remplacement et la
+possibilit&Atilde;&copy; de sauter directement
+&Atilde;&nbsp; une ligne et &Atilde;&nbsp; une colonne
+pr&Atilde;&copy;cise.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Le fichier
+<i>nanorc</i> contient les param&Atilde;&uml;tres par
+d&Atilde;&copy;faut de <b>nano</b>. Il ne doit pas
+&Atilde;&ordf;tre au format DOS ou Mac. Lors de son
+d&Atilde;&copy;marrage, nano commencera par lire le fichier
+de configuration g&Atilde;&copy;n&Atilde;&copy;ral
+<i>SYSCONFDIR/nanorc</i>, puis lira le fichier de
+configuration personnel de l&rsquo;utilisateur
+<i>~/.nanorc</i>.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Le fichier de
+configuration accepte une s&Atilde;&copy;rie de commandes
+<b>set</b> (activer) et <b>unset</b>
+(d&Atilde;&copy;sactiver), qui permettent de
+d&Atilde;&copy;finir le param&Atilde;&copy;trage de nano au
+d&Atilde;&copy;marrage sans avoir &Atilde;&nbsp; utiliser
+d&rsquo;options de ligne de commande. De plus, les mots
+clefs <b>syntax</b> (syntaxe), <b>color</b> (couleur) et
+<b>icolor</b> (couleur insensible &Atilde;&nbsp; la casse)
+sont utilis&Atilde;&copy;s pour d&Atilde;&copy;finir les
+r&Atilde;&uml;gles de colorisation pour
+diff&Atilde;&copy;rents motifs de texte. <b>nano</b> lit une
+commande par ligne.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Les options du
+fichier de configuration ont priorit&Atilde;&copy; sur les
+valeurs par d&Atilde;&copy;faut utilis&Atilde;&copy;es par
+nano. Les options de la ligne de commande sont prioritaires
+par rapport aux options du fichier de configuration. Les
+options sont d&Atilde;&copy;sactiv&Atilde;&copy;es (unset)
+par d&Atilde;&copy;faut, sauf les options prenant un
+argument.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Les apostrophes
+(&Acirc;&laquo;&nbsp;<i>&rsquo;&nbsp;</i>&Acirc;&raquo;) et
+les guillemets droits
+(&Acirc;&laquo;&nbsp;<i>&quot;&nbsp;</i>&Acirc;&raquo;)
+pr&Atilde;&copy;sents dans des cha&Atilde;&reg;nes de
+caract&Atilde;&uml;res utilis&Atilde;&copy;es comme
+param&Atilde;&uml;tres n&rsquo;ont pas besoin
+d&rsquo;&Atilde;&ordf;tre
+pr&Atilde;&copy;c&Atilde;&copy;d&Atilde;&copy;es d&rsquo;une
+barre oblique invers&Atilde;&copy;e
+(&Acirc;&laquo;&nbsp;<i>\&nbsp;</i>&Acirc;&raquo;). La
+cha&Atilde;&reg;ne sera termin&Atilde;&copy;e par le dernier
+guillemet droit. Par exemple, pour l&rsquo;option
+<b>brackets</b>, &quot;<i>&quot;&rsquo;)&gt;]}</i>&quot;
+correspondra &Atilde;&nbsp; <i>&quot;</i>, <i>&rsquo;</i>,
+<i>)</i>, <i>&gt;</i>, <i>]</i> et <i>}</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Les commandes
+et arguments reconnus sont&nbsp;: <b><br>
+set/unset autoindent</b></p>
+
+<p style="margin-left:15%;">Active l&rsquo;indentation
+automatique.</p>
+
+<p style="margin-left:11%;"><b>set/unset backup</b></p>
+
+<p style="margin-left:15%;">Cr&Atilde;&copy;e des copies de
+s&Atilde;&copy;curit&Atilde;&copy; nomm&Atilde;&copy;es
+<i>nom_du_fichier~</i>.</p>
+
+<p style="margin-left:11%;"><b>set backupdir</b>
+<i>r&Atilde;&copy;pertoire</i></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;finit le
+r&Atilde;&copy;pertoire utilis&Atilde;&copy; par <b>nano</b>
+pour enregistrer les copies de
+s&Atilde;&copy;curit&Atilde;&copy; uniques, si
+l&rsquo;enregistrement de copies de
+s&Atilde;&copy;curit&Atilde;&copy; est
+activ&Atilde;&copy;.</p>
+
+<p style="margin-left:11%;"><b>set/unset backwards</b></p>
+
+<p style="margin-left:15%;">Par d&Atilde;&copy;faut, les
+recherches se font vers l&rsquo;arri&Atilde;&uml;re.</p>
+
+<p style="margin-left:11%;"><b>set/unset boldtext</b></p>
+
+<p style="margin-left:15%;">Utilise des
+caract&Atilde;&uml;res gras &Atilde;&nbsp; la place de la
+vid&Atilde;&copy;o inverse.</p>
+
+<p style="margin-left:11%;"><b>set brackets</b>
+<i>cha&Atilde;&reg;ne</i></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;finit les
+caract&Atilde;&uml;res consid&Atilde;&copy;r&Atilde;&copy;s
+comme des crochets fermants lors de la justification des
+paragraphes. Ces caract&Atilde;&uml;res ne doivent pas
+contenir d&rsquo;espaces. Seules les ponctuations
+terminales, &Atilde;&copy;ventuellement suivies de crochets
+fermants, peuvent terminer une phrase.</p>
+
+<p style="margin-left:15%; margin-top: 1em">La valeur par
+d&Atilde;&copy;faut de cette option est&nbsp;:
+&quot;<i>&quot;&rsquo;)&gt;]}</i>&quot;.</p>
+
+<p style="margin-left:15%; margin-top: 1em">N.D.T.&nbsp;:
+reportez-vous au paragraphe sur l&rsquo;option <b>punct</b>
+pour plus d&rsquo;informations.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+casesensitive</b></p>
+
+<p style="margin-left:15%;">Par d&Atilde;&copy;faut, les
+recherches ne tiennent pas compte de la casse.</p>
+
+<p style="margin-left:11%;"><b>set/unset const</b></p>
+
+<p style="margin-left:15%;">Affiche en permanence la
+position du curseur dans la ligne
+d&rsquo;&Atilde;&copy;tat.</p>
+
+<p style="margin-left:11%;"><b>set/unset cut</b></p>
+
+<p style="margin-left:15%;">Par d&Atilde;&copy;faut, coupe
+le texte du curseur &Atilde;&nbsp; la fin de la ligne, au
+lieu de couper la ligne enti&Atilde;&uml;re.</p>
+
+<p style="margin-left:11%;"><b>set fill</b> <i>n</i></p>
+
+<p style="margin-left:15%;">Passe automatiquement
+&Atilde;&nbsp; la ligne une fois arriv&Atilde;&copy;
+&Atilde;&nbsp; la colonne <i>n</i>. Si la valeur
+indiqu&Atilde;&copy;e est de 0 ou moins, le point de passage
+&Atilde;&nbsp; la ligne aura lieu &Atilde;&nbsp; la taille
+de l&rsquo;&Atilde;&copy;cran moins <i>n</i>. Cela permet de
+faire varier le point de passage &Atilde;&nbsp; la ligne
+lorsque l&rsquo;on change la taille de
+l&rsquo;&Atilde;&copy;cran. La valeur par
+d&Atilde;&copy;faut est de &minus;8.</p>
+
+<p style="margin-left:11%;"><b>set/unset historylog</b></p>
+
+<p style="margin-left:15%;">Active l&rsquo;utilisation de
+<i>~/.nano_history</i> pour enregistrer et relire les
+cha&Atilde;&reg;nes ayant fait l&rsquo;objet d&rsquo;une
+recherche ou d&rsquo;un remplacement.</p>
+
+<p style="margin-left:11%;"><b>set matchbrackets</b>
+<i>cha&Atilde;&reg;ne</i></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;finit les
+crochets ouvrants et fermant pour la recherche de crochets
+correspondants. Cette liste ne doit pas contenir de blancs.
+L&rsquo;ensemble des crochets ouvrants doit
+&Atilde;&ordf;tre indiqu&Atilde;&copy; en premier, suivi de
+l&rsquo;ensemble des crochets fermant, qui doit
+&Atilde;&ordf;tre dans le m&Atilde;&ordf;me ordre. La valeur
+par d&Atilde;&copy;faut de cette option est
+&quot;<i>(&lt;[{)&gt;]}</i>&quot;.</p>
+
+<p style="margin-left:11%;"><b>set/unset morespace</b></p>
+
+<p style="margin-left:15%;">Utiliser la ligne blanche
+situ&Atilde;&copy;e sous la ligne de titre comme espace
+suppl&Atilde;&copy;mentaire
+d&rsquo;&Atilde;&copy;dition.</p>
+
+<p style="margin-left:11%;"><b>set/unset mouse</b></p>
+
+<p style="margin-left:15%;">Active l&rsquo;utilisation de
+la souris, si elle est disponible pour votre
+syst&Atilde;&uml;me. Lorsque celle-ci est
+activ&Atilde;&copy;e, il est possible d&rsquo;utiliser la
+souris pour positionner le curseur, pour marquer le texte
+(avec un double-clic) et pour lancer les fonctions
+correspondant aux raccourcis. Il est possible
+d&rsquo;utiliser la souris sous X&nbsp;Window ou en mode
+console avec gpm.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+multibuffer</b></p>
+
+<p style="margin-left:15%;">Mode multi-espace&nbsp;: permet
+de charger les fichiers dans leur propre espace.</p>
+
+<p style="margin-left:11%;"><b>set/unset noconvert</b></p>
+
+<p style="margin-left:15%;">Pas de conversion depuis les
+formats DOS et Mac.</p>
+
+<p style="margin-left:11%;"><b>set/unset nofollow</b></p>
+
+<p style="margin-left:15%;">Ne suit pas les liens
+symboliques lors de l&rsquo;&Atilde;&copy;criture des
+fichiers.</p>
+
+<p style="margin-left:11%;"><b>set/unset nohelp</b></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;sactive les
+lignes d&rsquo;aide affich&Atilde;&copy;e en bas de
+l&rsquo;&Atilde;&copy;cran.</p>
+
+<p style="margin-left:11%;"><b>set/unset nonewlines</b></p>
+
+<p style="margin-left:15%;">Ne pas ajouter de passage
+&Atilde;&nbsp; la ligne &Atilde;&nbsp; la fin des
+fichiers.</p>
+
+<p style="margin-left:11%;"><b>set/unset nowrap</b></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;sactive le
+passage automatique &Atilde;&nbsp; la ligne.</p>
+
+<p style="margin-left:11%;"><b>set operatingdir</b>
+<i>r&Atilde;&copy;pertoire</i></p>
+
+<p style="margin-left:15%;"><b>nano</b> ne lira et
+n&rsquo;&Atilde;&copy;crira des fichiers
+qu&rsquo;&Atilde;&nbsp; l&rsquo;int&Atilde;&copy;rieur du
+<i>r&Atilde;&copy;pertoire</i> et de ses
+sous-r&Atilde;&copy;pertoires. De plus, celui-ci devient le
+r&Atilde;&copy;pertoire courant, afin que les fichiers
+soient lus depuis ce r&Atilde;&copy;pertoire. Par
+d&Atilde;&copy;faut, cette fonction est
+d&Atilde;&copy;sactiv&Atilde;&copy;e.</p>
+
+<p style="margin-left:11%;"><b>set/unset preserve</b></p>
+
+<p style="margin-left:15%;">Pr&Atilde;&copy;serve les
+s&Atilde;&copy;quences XON et XOFF (^Q et ^S).</p>
+
+<p style="margin-left:11%;"><b>set punct</b>
+<i>cha&Atilde;&reg;ne</i></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;finit les
+caract&Atilde;&uml;res interpr&Atilde;&copy;t&Atilde;&copy;s
+comme des ponctuations terminales lors de la justification
+des paragraphes. Ces caract&Atilde;&uml;res ne peuvent
+inclure de blancs. Seules les ponctuations terminales,
+&Atilde;&copy;ventuellement suivies de crochets fermants,
+peuvent terminer une phrase. La valeur par
+d&Atilde;&copy;faut de cette option est
+&quot;<i>!.?</i>&quot;.</p>
+
+<p style="margin-left:15%; margin-top: 1em">N.D.T.&nbsp;:
+ce r&Atilde;&copy;glage permet, lors de la justification, de
+conserver 2&nbsp;espaces au lieu d&rsquo;une
+derri&Atilde;&uml;re les ponctuations terminales, ce qui
+correspond aux normes typographiques anglo-saxonnes, mais
+n&rsquo;a pas lieu d&rsquo;&Atilde;&ordf;tre en
+fran&Atilde;&sect;ais. Pour le fran&Atilde;&sect;ais, le
+plus simple est d&rsquo;indiquer, dans le fichier nanorc,
+une cha&Atilde;&reg;ne vide pour ce
+param&Atilde;&uml;tre.</p>
+
+<p style="margin-left:11%;"><b>set/unset quickblank</b></p>
+
+<p style="margin-left:15%;">Effacement rapide de la ligne
+d&rsquo;&Atilde;&copy;tat. Les messages
+affich&Atilde;&copy;s par la ligne d&rsquo;&Atilde;&copy;tat
+dispara&Atilde;&reg;tront apr&Atilde;&uml;s une frappe
+clavier au lieu de 25.</p>
+
+<p style="margin-left:11%;"><b>set quotestr</b>
+<i>cha&Atilde;&reg;ne</i></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;finit le
+pr&Atilde;&copy;fixe par d&Atilde;&copy;faut
+utilis&Atilde;&copy; pour les citations dans les courriers
+&Atilde;&copy;lectroniques. Ce pr&Atilde;&copy;fixe est
+utilis&Atilde;&copy; pour r&Atilde;&copy;aliser une
+justification correcte de ces citations. Il s&rsquo;agira,
+si votre syst&Atilde;&uml;me le permet, d&rsquo;une
+expression rationnelle &Atilde;&copy;tendue. Dans le cas
+contraire, il s&rsquo;agira d&rsquo;une cha&Atilde;&reg;ne
+de texte brut. Si vous disposez des expressions
+rationnelles, la valeur par d&Atilde;&copy;faut de cette
+option sera &quot;<i>^([&nbsp;\t]*[#:&gt;\|}])+</i>&quot;,
+sinon, ce sera &quot;&gt;&nbsp;&quot;. Notez que le
+&Acirc;&laquo;&nbsp;\t&nbsp;&Acirc;&raquo; ci-dessus
+correspond &Atilde;&nbsp; un caract&Atilde;&uml;re de
+tabulation.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+rebinddelete</b></p>
+
+<p style="margin-left:15%;">Interpr&Atilde;&uml;te
+diff&Atilde;&copy;remment la touche
+&Acirc;&laquo;&nbsp;Supprimer&nbsp;&Acirc;&raquo;, afin que
+les touches &Acirc;&laquo;&nbsp;Effacement
+arri&Atilde;&uml;re&nbsp;&Acirc;&raquo; et
+&Acirc;&laquo;&nbsp;Supprimer&nbsp;&Acirc;&raquo;
+fonctionnent correctement. Vous ne devriez avoir besoin de
+cette option que si, sur votre syst&Atilde;&uml;me, la
+touche &Acirc;&laquo;&nbsp;Effacement
+arri&Atilde;&uml;re&nbsp;&Acirc;&raquo; produit
+l&rsquo;effet de la touche &Acirc;&laquo;&nbsp;
+Supprimer&nbsp;&Acirc;&raquo;.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+rebindkeypad</b></p>
+
+<p style="margin-left:15%;">Interpr&Atilde;&uml;te les
+touches du pav&Atilde;&copy; num&Atilde;&copy;rique afin
+qu&rsquo;elles fonctionnent toutes correctement. Vous ne
+devriez utiliser cette option que si ce n&rsquo;est pas le
+cas, car nano ne sera plus capable d&rsquo;utiliser la
+souris correctement lorsque cette option sera
+activ&Atilde;&copy;e.</p>
+
+<p style="margin-left:11%;"><b>set/unset regexp</b></p>
+
+<p style="margin-left:15%;">Utilise par d&Atilde;&copy;faut
+des expressions rationnelles &Atilde;&copy;tendues pour les
+recherches.</p>
+
+<p style="margin-left:11%;"><b>set/unset smarthome</b></p>
+
+<p style="margin-left:15%;">Rend plus malin le
+fonctionnement de la touche
+&Acirc;&laquo;&nbsp;D&Atilde;&copy;but&nbsp;&Acirc;&raquo;.
+Lorsque cette touche est press&Atilde;&copy;e &Atilde;&nbsp;
+n&rsquo;importe quel endroit except&Atilde;&copy; au tout
+d&Atilde;&copy;but du texte d&rsquo;une ligne (i.&nbsp;e. au
+premier caract&Atilde;&uml;re non blanc), le curseur se
+positionnera au d&Atilde;&copy;but du texte de la ligne
+(qu&rsquo;il soit en avant ou en arri&Atilde;&uml;re). Si le
+curseur est d&Atilde;&copy;j&Atilde;&nbsp; l&Atilde;&nbsp;,
+il se placera au vrai d&Atilde;&copy;but de la ligne.</p>
+
+<p style="margin-left:11%;"><b>set/unset smooth</b></p>
+
+<p style="margin-left:15%;">Active le
+d&Atilde;&copy;filement ligne-par-ligne du texte.</p>
+
+<p style="margin-left:11%;"><b>set speller</b>
+<i>programme</i></p>
+
+<p style="margin-left:15%;">Utilise le correcteur
+orthographique <i>programme</i> au lieu du correcteur
+int&Atilde;&copy;gr&Atilde;&copy;, qui s&rsquo;appuie sur
+<i>spell</i>.</p>
+
+<p style="margin-left:11%;"><b>set/unset suspend</b></p>
+
+<p style="margin-left:15%;">Autorise &Atilde;&nbsp;
+suspendre <b>nano</b>.</p>
+
+<p style="margin-left:11%;"><b>set tabsize</b> <i>n</i></p>
+
+<p style="margin-left:15%;">Utilise une taille de
+tabulation de <i>n</i> colonnes. Cette valeur doit
+&Atilde;&ordf;tre strictement sup&Atilde;&copy;rieure
+&Atilde;&nbsp; 0. La valeur par d&Atilde;&copy;faut est
+de&nbsp;8.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+tabstospaces</b></p>
+
+<p style="margin-left:15%;">Convertit les tabulations
+clavier en espaces.</p>
+
+<p style="margin-left:11%;"><b>set/unset tempfile</b></p>
+
+<p style="margin-left:15%;">S&rsquo;il a
+&Atilde;&copy;t&Atilde;&copy; modifi&Atilde;&copy;, le
+fichier sera sauvegard&Atilde;&copy; automatiquement en
+quittant, sans demande de confirmation.</p>
+
+<p style="margin-left:11%;"><b>set/unset view</b></p>
+
+<p style="margin-left:15%;">Interdit de modifier les
+fichiers.</p>
+
+<p style="margin-left:11%;"><b>set whitespace</b>
+<i>cha&Atilde;&reg;ne</i></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;finit les deux
+caract&Atilde;&uml;res utilis&Atilde;&copy;s pour afficher
+les premiers caract&Atilde;&uml;res des tabulations et des
+espaces. Ces deux caract&Atilde;&uml;res doivent
+&Atilde;&ordf;tre mono-colonne.</p>
+
+<p style="margin-left:11%;"><b>set/unset wordbounds</b></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;tection plus
+pr&Atilde;&copy;cise des limites de mots, obtenue en
+consid&Atilde;&copy;rant les caract&Atilde;&uml;res de
+ponctuation comme faisant partie des mots.</p>
+
+<p style="margin-left:11%;"><b>syntax</b>
+<i>cha&Atilde;&reg;ne</i>
+<b>[&quot;</b><i>motif_de_fichier</i><b>&quot; ... ]</b></p>
+
+<p style="margin-left:15%;">D&Atilde;&copy;finit une
+syntaxe nomm&Atilde;&copy;e <i>cha&Atilde;&reg;ne</i> qui
+pourra &Atilde;&ordf;tre activ&Atilde;&copy; via
+l&rsquo;option <b>-Y</b> (ou <b>--syntax</b>) ou qui sera
+automatiquement activ&Atilde;&copy;e si le nom du fichier en
+cours correspond &Atilde;&nbsp; l&rsquo;expression
+rationnelle &Atilde;&copy;tendue <i>motif_de_fichier</i>.
+Toutes les instructions suivantes de colorisation
+<b>color</b> ou <b>icolor</b> s&rsquo;appliqueront
+&Atilde;&nbsp; cette syntaxe, jusqu&rsquo;&Atilde;&nbsp; la
+d&Atilde;&copy;finition d&rsquo;une nouvelle syntaxe.</p>
+
+<p style="margin-left:15%; margin-top: 1em">La syntaxe
+nomm&Atilde;&copy;e <i>none</i> (aucune) est
+r&Atilde;&copy;serv&Atilde;&copy;e&nbsp;; si elle est
+indiqu&Atilde;&copy;e dans la ligne de commande, cela
+revient &Atilde;&nbsp; ne d&Atilde;&copy;finir aucune
+syntaxe. La syntaxe nomm&Atilde;&copy;e <i>default</i> (par
+d&Atilde;&copy;faut) est sp&Atilde;&copy;ciale, elle ne
+n&Atilde;&copy;cessite aucun motif de
+<i>motif_de_fichier</i>, et s&rsquo;applique aux fichiers ne
+correspondant &Atilde;&nbsp; aucun des
+<i>motif_de_fichier</i> des autres syntaxes.</p>
+
+<p style="margin-left:11%;"><b>color</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]</b>
+<i>motif</i> <b>...</b></p>
+
+<p style="margin-left:15%;">Pour la syntaxe en cours,
+affiche toutes les expressions correspondant &Atilde;&nbsp;
+l&rsquo;expression rationnelle &Atilde;&copy;tendue
+<i>motif</i> en utilisant la couleur de texte
+<i>couleur_texte</i> et la couleur de fond
+<i>couleur_fond</i>, l&rsquo;une de ces deux couleurs au
+moins devant &Atilde;&ordf;tre d&Atilde;&copy;finie. Les
+couleurs accept&Atilde;&copy;es par <b>nano</b> pour le
+texte et le fond sont&nbsp;: <i>white</i> (blanc),
+<i>black</i> (noir), <i>red</i> (rouge), <i>blue</i> (bleu),
+<i>green</i> (vert), <i>yellow</i> (jaune), <i>magenta</i>,
+et <i>cyan</i>. Pour la couleur du texte, vous pouvez
+ajouter &Atilde;&nbsp; ces couleurs le pr&Atilde;&copy;fixe
+<i>bright</i> (lumineux) pour obtenir une couleur plus
+lumineuse. Si votre terminal est capable de
+g&Atilde;&copy;rer la transparence, ne pas
+sp&Atilde;&copy;cifier de <i>couleur_fond</i> indique
+&Atilde;&nbsp; <b>nano</b> d&rsquo;essayer d&rsquo;utiliser
+un fond transparent.</p>
+
+<p style="margin-left:11%;"><b>icolor</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]</b>
+<i>motif</i> <b>...</b></p>
+
+<p style="margin-left:15%;">Comme ci-dessus, mais la
+recherche des motifs est effectu&Atilde;&copy;e sans tenir
+compte de la casse.</p>
+
+<p style="margin-left:11%;"><b>color</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]
+start=&quot;</b><i>motif_d&Atilde;&copy;but</i><b>&quot;
+end=&quot;</b><i>motif_fin</i><b>&quot;</b></p>
+
+<p style="margin-left:15%;">Affiche les expressions
+commen&Atilde;&sect;ant par l&rsquo;expression rationnelle
+&Atilde;&copy;tendue <i>motif_d&Atilde;&copy;but</i> et se
+terminant par l&rsquo;expression rationnelle
+&Atilde;&copy;tendue <i>motif_fin</i> en utilisant la
+couleur de texte <i>couleur_texte</i> et la couleur de fond
+<i>couleur_fond</i>, l&rsquo;une de ces deux couleurs au
+moins devant &Atilde;&ordf;tre d&Atilde;&copy;finie. Cela
+permet &Atilde;&nbsp; la colorisation syntaxique de
+s&rsquo;&Atilde;&copy;tendre sur plusieurs lignes. Notez que
+toutes les occurrences successives de
+<i>motif_d&Atilde;&copy;but</i> apr&Atilde;&uml;s le
+<i>motif_d&Atilde;&copy;but</i> initial seront
+surlign&Atilde;&copy;es jusqu&rsquo;&Atilde;&nbsp; la
+prochaine instance de <i>motif_fin</i>.</p>
+
+<p style="margin-left:11%;"><b>icolor</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]
+start=&quot;</b><i>motif_d&Atilde;&copy;but</i><b>&quot;
+<br>
+end=&quot;</b><i>motif_fin</i><b>&quot;</b></p>
+
+<p style="margin-left:15%;">Comme ci-dessus, mais la
+recherche des motifs est effectu&Atilde;&copy;e sans tenir
+compte de la casse.</p>
+
+<p style="margin-left:11%;"><b>include</b>
+<i>fichier_de_syntaxes</i></p>
+
+<p style="margin-left:15%;">Lit le fichier
+<i>fichier_de_syntaxes</i> contenant une liste
+autosuffisante de d&Atilde;&copy;finitions de syntaxes. Ce
+fichier ne doit contenir que des commandes <b>syntax</b>,
+<b>color</b> et <b>icolor</b>.</p>
+
+<h2>FICHIERS
+<a name="FICHIERS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>$SYSCONFDIR/nanorc</i></p>
+
+<p style="margin-left:22%;">Fichier de configuration
+g&Atilde;&copy;n&Atilde;&copy;ral</p>
+
+<p style="margin-left:11%;"><i>~/.nanorc</i></p>
+
+<p style="margin-left:22%;">Fichier de configuration
+personnel</p>
+
+<h2>VOIR AUSSI
+<a name="VOIR AUSSI"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b>(1)
+<i><br>
+/usr/share/doc/nano/examples/nanorc.sample</i> (ou son
+&Atilde;&copy;quivalent sur votre syst&Atilde;&uml;me)</p>
+
+<h2>AUTEUR
+<a name="AUTEUR"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Chris
+Allegretta &lt;chrisa@asty.org&gt; et d&rsquo;autres (voir
+les fichiers <i>AUTHORS</i> et <i>THANKS</i> pour plus
+d&rsquo;information). Cette page de manuel a
+&Atilde;&copy;t&Atilde;&copy; initialement
+r&Atilde;&copy;dig&Atilde;&copy;e par Jordi Mallach
+&lt;jordi@gnu.org&gt; pour le syst&Atilde;&uml;me Debian
+(mais elle peut &Atilde;&ordf;tre utilis&Atilde;&copy;e par
+d&rsquo;autres).</p>
+
+<h2>TRADUCTION
+<a name="TRADUCTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette
+adaptation fran&Atilde;&sect;aise a
+&Atilde;&copy;t&Atilde;&copy;
+r&Atilde;&copy;alis&Atilde;&copy;e par
+Jean-Philippe&nbsp;Gu&Atilde;&copy;rard
+&lt;jean-philippe.guerard@tigreraye.org&gt; le
+29&nbsp;novembre&nbsp;2007 &Atilde;&nbsp; partir de la
+version 1.56 du 11&nbsp;octobre&nbsp;2007 de la page de
+manuel de nanorc (pour la version 2.0.0 de nano). Cette page
+a &Atilde;&copy;t&Atilde;&copy; relue par
+G&Atilde;&copy;rard Delafond.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Un maximum de
+soin a &Atilde;&copy;t&Atilde;&copy; apport&Atilde;&copy;
+lors de l&rsquo;&Atilde;&copy;laboration de cette
+traduction&nbsp;; n&Atilde;&copy;anmoins, quelques
+imperfections peuvent subsister. Si vous en rencontrez, que
+ce soit dans la version fran&Atilde;&sect;aise ou dans la
+version originale, n&rsquo;h&Atilde;&copy;sitez pas
+&Atilde;&nbsp; les signaler &Atilde;&nbsp; l&rsquo;auteur ou
+au traducteur.</p>
+
+<p style="margin-left:11%; margin-top: 1em">La version
+originale la plus &Atilde;&nbsp; jour de ce document est
+toujours consultable via la commande&nbsp;:</p>
+
+<p style="margin-left:11%; margin-top: 1em">LANGUAGE=en man
+nano</p>
+<hr>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!-- Creator     : groff version 1.22.3 -->
+<!-- CreationDate: Wed Aug 10 11:43:49 2016 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>NANO</title>
+
+</head>
+<body>
+
+<h1 align="center">NANO</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#EDITING">EDITING</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#INITIALIZATION FILE">INITIALIZATION FILE</a><br>
+<a href="#NOTES">NOTES</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#HOMEPAGE">HOMEPAGE</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">nano &minus;
+Nano&rsquo;s ANOther editor, an enhanced free Pico clone</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b>
+[<i>options</i>]
+[[+<i>line</i>,<i>column</i>]&nbsp;<i>file</i>]...</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b> is
+a small, free and friendly editor which aims to replace
+Pico, the default editor included in the non-free Pine
+package. On top of copying Pico&rsquo;s look and feel,
+<b>nano</b> also implements some missing (or disabled by
+default) features in Pico, such as &quot;search and
+replace&quot; and &quot;go to line and column
+number&quot;.</p>
+
+<h2>EDITING
+<a name="EDITING"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Entering text
+and moving around in a file is straightforward: typing the
+letters and using the normal cursor movement keys. Commands
+are entered by using the Control (^) and the Alt or Meta
+(M-) keys. Typing <b>^K</b> deletes the current line and
+puts it in the cutbuffer. Consecutive <b>^K</b>s will put
+all deleted lines together in the cutbuffer. Any cursor
+movement or executing any other command will cause the next
+<b>^K</b> to overwrite the cutbuffer. A <b>^U</b> will paste
+the current contents of the cutbuffer at the current cursor
+position.</p>
+
+<p style="margin-left:11%; margin-top: 1em">When a more
+precise piece of text needs to be cut or copied, one can
+mark its start with <b>^6</b>, move the cursor to its end
+(the marked text will be highlighted), and then use
+<b>^K</b> to cut it, or <b>M-6</b> to copy it to the
+cutbuffer. One can also save the marked text to a file with
+<b>^O</b>, or spell check it with <b>^T</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The two lines
+at the bottom of the screen show the most important
+commands; the built-in help (<b>^G</b>) lists all the
+available ones. The default key bindings can be changed via
+the .nanorc file -- see <b>nanorc</b>(5).</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>+</b><i>line</i><b>,</b><i>column</i></p>
+
+<p style="margin-left:22%;">Places the cursor on line
+number <i>line</i> and at column number <i>column</i> (at
+least one of which must be specified) on startup, instead of
+the default line 1, column 1.</p>
+
+<p style="margin-left:11%;"><b>&minus;A</b>,
+<b>&minus;&minus;smarthome</b></p>
+
+<p style="margin-left:22%;">Make the Home key smarter. When
+Home is pressed anywhere but at the very beginning of
+non-whitespace characters on a line, the cursor will jump to
+that beginning (either forwards or backwards). If the cursor
+is already at that position, it will jump to the true
+beginning of the line.</p>
+
+<p style="margin-left:11%;"><b>&minus;B</b>,
+<b>&minus;&minus;backup</b></p>
+
+<p style="margin-left:22%;">When saving a file, back up the
+previous version of it, using the current filename suffixed
+with a tilde (<b>~</b>).</p>
+
+
+<p style="margin-left:11%;"><b>&minus;C&nbsp;</b><i>directory</i>,
+<b>&minus;&minus;backupdir=</b><i>directory</i></p>
+
+<p style="margin-left:22%;">Make and keep not just one
+backup file, but make and keep a uniquely numbered one every
+time a file is saved -- when backups are enabled. The
+uniquely numbered files are stored in the specified
+<i>directory</i>.</p>
+
+<p style="margin-left:11%;"><b>&minus;D</b>,
+<b>&minus;&minus;boldtext</b></p>
+
+<p style="margin-left:22%;">Use bold text instead of
+reverse video text.</p>
+
+<p style="margin-left:11%;"><b>&minus;E</b>,
+<b>&minus;&minus;tabstospaces</b></p>
+
+<p style="margin-left:22%;">Convert typed tabs to
+spaces.</p>
+
+<p style="margin-left:11%;"><b>&minus;F</b>,
+<b>&minus;&minus;multibuffer</b></p>
+
+<p style="margin-left:22%;">Enable multiple file buffers
+(if support for them has been compiled in).</p>
+
+<p style="margin-left:11%;"><b>&minus;G</b>,
+<b>&minus;&minus;locking</b></p>
+
+<p style="margin-left:22%;">Enable vim-style file locking
+when editing files.</p>
+
+<p style="margin-left:11%;"><b>&minus;H</b>,
+<b>&minus;&minus;historylog</b></p>
+
+<p style="margin-left:22%;">Log search and replace strings
+to <i>~/.nano/search_history</i>, so they can be retrieved
+in later sessions.</p>
+
+<p style="margin-left:11%;"><b>&minus;I</b>,
+<b>&minus;&minus;ignorercfiles</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t look at the
+system&rsquo;s <b>nanorc</b> nor at <b>~/.nanorc</b>.</p>
+
+<p style="margin-left:11%;"><b>&minus;K</b>,
+<b>&minus;&minus;rebindkeypad</b></p>
+
+<p style="margin-left:22%;">Interpret the numeric keypad
+keys so that they all work properly. You should only need to
+use this option if they don&rsquo;t, as mouse support
+won&rsquo;t work properly with this option enabled.</p>
+
+<p style="margin-left:11%;"><b>&minus;L</b>,
+<b>&minus;&minus;nonewlines</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t add newlines to the
+ends of files.</p>
+
+<p style="margin-left:11%;"><b>&minus;N</b>,
+<b>&minus;&minus;noconvert</b></p>
+
+<p style="margin-left:22%;">Disable automatic conversion of
+files from DOS/Mac format.</p>
+
+<p style="margin-left:11%;"><b>&minus;O</b>,
+<b>&minus;&minus;morespace</b></p>
+
+<p style="margin-left:22%;">Use the blank line below the
+titlebar as extra editing space.</p>
+
+<p style="margin-left:11%;"><b>&minus;P</b>,
+<b>&minus;&minus;positionlog</b></p>
+
+<p style="margin-left:22%;">For the 200 most recent files,
+log the last position of the cursor, and place it at that
+position again upon reopening such a file. (The old form of
+this option, <b>&minus;&minus;poslog</b>, is
+deprecated.)</p>
+
+<p style="margin-left:11%;"><b>&minus;Q
+&quot;</b><i>characters</i><b>&quot;</b>,
+<b>&minus;&minus;quotestr=&quot;</b><i>characters</i><b>&quot;</b></p>
+
+<p style="margin-left:22%;">Set the quoting string for
+justifying. The default is
+<b>&quot;^([&nbsp;\t]*[#:&gt;\|}])+&quot;</b> if extended
+regular expression support is available, or
+<b>&quot;&gt;&nbsp;&quot;</b> otherwise. Note that <b>\t</b>
+stands for a Tab.</p>
+
+<p style="margin-left:11%;"><b>&minus;R</b>,
+<b>&minus;&minus;restricted</b></p>
+
+<p style="margin-left:22%;">Restricted mode: don&rsquo;t
+read or write to any file not specified on the command line;
+don&rsquo;t read any <i>nanorc</i> files nor history files;
+don&rsquo;t allow suspending nor spell checking; don&rsquo;t
+allow a file to be appended to, prepended to, or saved under
+a different name if it already has one; and don&rsquo;t use
+backup files. This restricted mode is also accessible by
+invoking <b>nano</b> with any name beginning with
+&rsquo;r&rsquo; (e.g. &quot;rnano&quot;).</p>
+
+<p style="margin-left:11%;"><b>&minus;S</b>,
+<b>&minus;&minus;smooth</b></p>
+
+<p style="margin-left:22%;">Enable smooth scrolling. Text
+will scroll line-by-line, instead of the usual
+chunk-by-chunk behavior.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;T&nbsp;</b><i>number</i>,
+<b>&minus;&minus;tabsize=</b><i>number</i></p>
+
+<p style="margin-left:22%;">Set the size (width) of a tab
+to <i>number</i> columns. The value of <i>number</i> must be
+greater than 0. The default value is 8.</p>
+
+<p style="margin-left:11%;"><b>&minus;U</b>,
+<b>&minus;&minus;quickblank</b></p>
+
+<p style="margin-left:22%;">Do quick statusbar blanking.
+Statusbar messages will disappear after 1 keystroke instead
+of 25. Note that <b>&minus;c</b> overrides this.</p>
+
+<p style="margin-left:11%;"><b>&minus;V</b>,
+<b>&minus;&minus;version</b></p>
+
+<p style="margin-left:22%;">Show the current version number
+and exit.</p>
+
+<p style="margin-left:11%;"><b>&minus;W</b>,
+<b>&minus;&minus;wordbounds</b></p>
+
+<p style="margin-left:22%;">Detect word boundaries
+differently by treating punctuation characters as part of a
+word.</p>
+
+<p style="margin-left:11%;"><b>&minus;X
+&quot;</b><i>characters</i><b>&quot;</b>,
+<b>&minus;&minus;wordchars=&quot;</b><i>characters</i><b>&quot;</b></p>
+
+<p style="margin-left:22%;">Specify which other characters
+(besides the normal alphanumeric ones) should be considered
+as part of a word. This overrides option <b>&minus;W</b>
+(<b>&minus;&minus;wordbounds</b>).</p>
+
+
+<p style="margin-left:11%;"><b>&minus;Y&nbsp;</b><i>name</i>,
+<b>&minus;&minus;syntax=</b><i>name</i></p>
+
+<p style="margin-left:22%;">Specify the name of the syntax
+highlighting to use from among the ones defined in the
+<i>nanorc</i> files.</p>
+
+<p style="margin-left:11%;"><b>&minus;c</b>,
+<b>&minus;&minus;constantshow</b></p>
+
+<p style="margin-left:22%;">Constantly show the cursor
+position. Note that this overrides <b>&minus;U</b>.</p>
+
+<p style="margin-left:11%;"><b>&minus;d</b>,
+<b>&minus;&minus;rebinddelete</b></p>
+
+<p style="margin-left:22%;">Interpret the Delete key
+differently so that both Backspace and Delete work properly.
+You should only need to use this option if Backspace acts
+like Delete on your system.</p>
+
+<p style="margin-left:11%;"><b>&minus;h</b>,
+<b>&minus;&minus;help</b></p>
+
+<p style="margin-left:22%;">Show a summary of the available
+command-line options and exit.</p>
+
+<p style="margin-left:11%;"><b>&minus;i</b>,
+<b>&minus;&minus;autoindent</b></p>
+
+<p style="margin-left:22%;">Indent new lines to the
+previous line&rsquo;s indentation. Useful when editing
+source code.</p>
+
+<p style="margin-left:11%;"><b>&minus;k</b>,
+<b>&minus;&minus;cut</b></p>
+
+<p style="margin-left:22%;">Make the &rsquo;Cut Text&rsquo;
+command (normally ^K) cut from the current cursor position
+to the end of the line, instead of cutting the entire
+line.</p>
+
+<p style="margin-left:11%;"><b>&minus;m</b>,
+<b>&minus;&minus;mouse</b></p>
+
+<p style="margin-left:22%;">Enable mouse support, if
+available for your system. When enabled, mouse clicks can be
+used to place the cursor, set the mark (with a double
+click), and execute shortcuts. The mouse will work in the X
+Window System, and on the console when gpm is running. Text
+can still be selected through dragging by holding down the
+Shift key.</p>
+
+<p style="margin-left:11%;"><b>&minus;n</b>,
+<b>&minus;&minus;noread</b></p>
+
+<p style="margin-left:22%;">Treat any name given on the
+command line as a new file. This allows <b>nano</b> to write
+to named pipes: it will start with a blank buffer, and will
+write to the pipe when the user saves the &quot;file&quot;.
+This way <b>nano</b> can be used as an editor in combination
+with for instance <b>gpg</b> without having to write
+sensitive data to disk first.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;o&nbsp;</b><i>directory</i>,
+<b>&minus;&minus;operatingdir=</b><i>directory</i></p>
+
+<p style="margin-left:22%;">Set the operating directory.
+This makes <b>nano</b> set up something similar to a
+chroot.</p>
+
+<p style="margin-left:11%;"><b>&minus;p</b>,
+<b>&minus;&minus;preserve</b></p>
+
+<p style="margin-left:22%;">Preserve the XON and XOFF
+sequences (^Q and ^S) so they will be caught by the
+terminal.</p>
+
+<p style="margin-left:11%;"><b>&minus;q</b>,
+<b>&minus;&minus;quiet</b></p>
+
+<p style="margin-left:22%;">Do not report errors in the
+<i>nanorc</i> files nor ask them to be acknowledged by
+pressing Enter at startup.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;r&nbsp;</b><i>number</i>,
+<b>&minus;&minus;fill=</b><i>number</i></p>
+
+<p style="margin-left:22%;">Hard-wrap lines at column
+<i>number</i>. If this value is 0 or less, wrapping will
+occur at the width of the screen less <i>number</i> columns,
+allowing the wrap point to vary along with the width of the
+screen if the screen is resized. The default value is
+&minus;8. This option conflicts with <b>&minus;w</b> -- the
+last one given takes effect.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;s&nbsp;</b><i>program</i>,
+<b>&minus;&minus;speller=</b><i>program</i></p>
+
+<p style="margin-left:22%;">Use this alternative spell
+checker command.</p>
+
+<p style="margin-left:11%;"><b>&minus;t</b>,
+<b>&minus;&minus;tempfile</b></p>
+
+<p style="margin-left:22%;">Always save a changed buffer
+without prompting. Same as Pico&rsquo;s <b>&minus;t</b>
+option.</p>
+
+<p style="margin-left:11%;"><b>&minus;u</b>,
+<b>&minus;&minus;unix</b></p>
+
+<p style="margin-left:22%;">Save a file by default in Unix
+format. This overrides nano&rsquo;s default behavior of
+saving a file in the format that it had. (This option has no
+effect when you also use
+<b>&minus;&minus;noconvert</b>.)</p>
+
+<p style="margin-left:11%;"><b>&minus;v</b>,
+<b>&minus;&minus;view</b></p>
+
+<p style="margin-left:22%;">View-file (read-only) mode.</p>
+
+<p style="margin-left:11%;"><b>&minus;w</b>,
+<b>&minus;&minus;nowrap</b></p>
+
+<p style="margin-left:22%;">Disable the hard-wrapping of
+long lines. This option conflicts with <b>&minus;r</b> --
+the last one given takes effect.</p>
+
+<p style="margin-left:11%;"><b>&minus;x</b>,
+<b>&minus;&minus;nohelp</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t show the two help
+lines at the bottom of the screen.</p>
+
+<p style="margin-left:11%;"><b>&minus;z</b>,
+<b>&minus;&minus;suspend</b></p>
+
+<p style="margin-left:22%;">Enable the suspend ability.</p>
+
+<p style="margin-left:11%;"><b>&minus;$</b>,
+<b>&minus;&minus;softwrap</b></p>
+
+<p style="margin-left:22%;">Enable &rsquo;soft
+wrapping&rsquo;. This will make <b>nano</b> attempt to
+display the entire contents of any line, even if it is
+longer than the screen width, by continuing it over multiple
+screen lines. Since &rsquo;$&rsquo; normally refers to a
+variable in the Unix shell, you should specify this option
+last when using other options (e.g. &rsquo;nano
+&minus;wS$&rsquo;) or pass it separately (e.g. &rsquo;nano
+&minus;wS &minus;$&rsquo;).</p>
+
+<p style="margin-left:11%;"><b>&minus;a</b>,
+<b>&minus;b</b>, <b>&minus;e</b>, <b>&minus;f</b>,
+<b>&minus;g</b>, <b>&minus;j</b></p>
+
+<p style="margin-left:22%;">Ignored, for compatibility with
+Pico.</p>
+
+<h2>INITIALIZATION FILE
+<a name="INITIALIZATION FILE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b>
+will read initialization files in the following order: the
+system&rsquo;s <b>nanorc</b> (if it exists), and then the
+user&rsquo;s <b>~/.nanorc</b> (if it exists). Please see
+<b>nanorc</b>(5) for more information on the possible
+contents of those files.</p>
+
+<h2>NOTES
+<a name="NOTES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If no
+alternative spell checker command is specified on the
+command line nor in one of the <i>nanorc</i> files,
+<b>nano</b> will check the <b>SPELL</b> environment variable
+for one.</p>
+
+<p style="margin-left:11%; margin-top: 1em">In some cases
+<b>nano</b> will try to dump the buffer into an emergency
+file. This will happen mainly if <b>nano</b> receives a
+SIGHUP or SIGTERM or runs out of memory. It will write the
+buffer into a file named <i>nano.save</i> if the buffer
+didn&rsquo;t have a name already, or will add a
+&quot;.save&quot; suffix to the current filename. If an
+emergency file with that name already exists in the current
+directory, it will add &quot;.save&quot; plus a number (e.g.
+&quot;.save.1&quot;) to the current filename in order to
+make it unique. In multibuffer mode, <b>nano</b> will write
+all the open buffers to their respective emergency
+files.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Justifications
+(<b>^J</b>) and reindentations (<b>M-{</b> and <b>M-}</b>)
+are not yet covered by the general undo system. So after a
+justification that is not immediately undone, or after any
+reindentation, earlier edits cannot be undone any more. The
+workaround is, of course, to exit without saving.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Please report
+any other bugs that you encounter via
+https://savannah.gnu.org/bugs/?group=nano.</p>
+
+<h2>HOMEPAGE
+<a name="HOMEPAGE"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">https://nano-editor.org/</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nanorc</b>(5)
+<i><br>
+/usr/share/doc/nano/</i> (or equivalent on your system)</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Chris
+Allegretta &lt;chrisa@asty.org&gt;, et al (see the files
+<i>AUTHORS</i> and <i>THANKS</i> for details). This manual
+page was originally written by Jordi Mallach
+&lt;jordi@gnu.org&gt;, for the Debian system (but may be
+used by others).</p>
+<hr>
+</body>
+</html>

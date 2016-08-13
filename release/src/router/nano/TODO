@@ -1,0 +1,92 @@
+TODO file (? means the feature may be implemented, but not definitely)
+------------------------------------------------------------------------
+
+For the future (no targeted version, catch-all)
+- FriBidi support?
+- Port to DJGPP?
+- Make matching bracket searches sophisticated enough to skip over
+  brackets inside comments?
+- Allow indentation of marked text by spaces as well as tabs?
+- Allow indentation to add just enough columns to reach the nearest
+  multiple of tabsize, rather than always adding tabsize columns?
+- Allow conversion between different character sets.  Maybe use glib's
+  iconv() if the system's iconv() is inadequate, since we already use
+  glib's vsnprintf() if the system lacks vsnprintf()?
+- Allow color syntaxes to apply to more than just color, so that we can
+  e.g. specify a different alternate spell checker depending on which
+  file type we have open.
+- Allow setting marks (saved positions, not to be confused with the mark
+  set via Ctrl-^) at various lines and/or columns in the buffer, and
+  allow movement between them with a single keystroke?  (We're running
+  out of keystrokes, though.)
+- Allow searching for and replacing newlines.
+
+For version 2.6:
+- New regression framework built on expect.
+- Allow text searches in the help viewer.
+- Add the ability to move to different lines of the screen with a single
+  keystroke, e.g. M-` (M-~) to go to the top line, M-& (M-7) to go to
+  the center line, and M-' (M-") to go to the last line.
+- Detect when we're pasting text, so that we can handle it differently
+  (i.e. faster than currently with screen redraws).
+- Allow piping marked text to an external command and replacing it with
+  the command's output (as the internal spell checker already does with
+  the "spell" command)?
+
+For version 2.4:
+- Handle window resizes better.  After we've resized, we should stay
+  wherever we were before we resized, as Pico does. [DONE]
+- Allow even better file-type detection than we have currently, e.g.
+  through libmagic. [DONE]
+- Compatibility with vim status files to let other editors know we're
+  in a file. [DONE]
+
+For version 2.2:
+- Rebindable keys? [DONE]
+- Undo/Redo keys (M-U and M-E)? [DONE]
+- Fix problems with color syntaxes highlighting lines too aggressively. [DONE]
+- Allow nano to work like a pager (reading from stdin). [DONE]
+- Allow color syntaxes to be selected based on more than just filename
+  extension. [DONE]
+- Allow soft wrapping as well as hard wrapping? [DONE]
+
+For version 2.0:
+- UTF-8 support. [DONE]
+- Support for paragraph searches. [DONE]
+- Support for justifying the entire file at once. [DONE]
+- Support for filename searches in the file browser. [DONE]
+- Keystroke to implement "Add next sequence as raw" like vi's ^V. [DONE]
+- Spell check selected text only. [DONE]
+- Make "To Line" (^W^T) and "Read from Command" (^R^X) reenter their
+  parent menu when their keystroke is entered a second time (^W^T^T and
+  (^R^X^X) (requires figuring out when to keep cursor position and when
+  not to). [DONE]
+- Fix resetstatuspos global which we shouldn't have. [DONE]
+
+For version 1.2:
+- Single-line scroll up/down? [DONE]
+- Color syntax highlighting? (Certainly seems like there's a demand for
+  it.) [DONE]
+- .nanorc [DONE]
+- Backup making (filename~)? [DONE]
+- Search/replace string history. [DONE]
+- Implement Pico's -j and -g flags, as they are pretty easy to do. [DONE]
+- Make mouse support work with clicking on the shortcuts (-m). [DONE]
+- Implement -o (chroot of sorts). [DONE]
+- Allow -r to take a negative argument, meaning right margin instead of
+  left (allows resizing that way), formerly -W arg. [DONE]
+
+For version 1.0:
+- Implement Spelling. [DONE]
+- Implement Help. [DONE]
+- Internationalization [In progress, translators welcome!]
+- Allow nano to be resized in X. [DONE]
+- On PageUp/Down, put the cursor on the first line (like Pico), not the
+  center line. [DONE]
+- Rewrite edit_refresh, if at all possible. [DONE]
+- Implement justify function. [DONE]
+- Cut to end of line. [DONE]
+- Built-in speller command. [DONE]
+- Better statusbar interaction (scrolling, tab completion). [DONE]
+- Unjustify command (^U after ^J). [DONE]
+- Username completion (~user). [DONE]

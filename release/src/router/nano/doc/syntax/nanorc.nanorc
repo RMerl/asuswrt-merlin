@@ -1,0 +1,29 @@
+## Here is an example for nanorc files.
+
+syntax "nanorc" "\.?nanorc$"
+comment "#"
+
+# Possible errors and parameters
+icolor brightred "^[[:space:]]*((un)?(bind|set)|include|syntax|header|comment|magic|linter|i?color|extendsyntax).*$"
+
+# Keywords
+icolor brightgreen "^[[:space:]]*(set|unset)[[:space:]]+(allow_insecure_backup|autoindent|backup|backwards|boldtext|casesensitive|const(antshow)?|cut|fill|historylog|justifytrim|locking|morespace|mouse|multibuffer|noconvert|nohelp|nonewlines|nowrap|pos(ition)?log|preserve|quickblank|quiet|rebinddelete|rebindkeypad|regexp|smarthome|smooth|softwrap|suspend|tabsize|tabstospaces|tempfile|unix|view|wordbounds)\>"
+icolor yellow "^[[:space:]]*set[[:space:]]+(functioncolor|keycolor|statuscolor|titlecolor)[[:space:]]+(bright)?(white|black|red|blue|green|yellow|magenta|cyan)?(,(white|black|red|blue|green|yellow|magenta|cyan))?\>"
+icolor brightgreen "^[[:space:]]*set[[:space:]]+(backupdir|brackets|functioncolor|keycolor|matchbrackets|operatingdir|punct|quotestr|speller|statuscolor|titlecolor|whitespace)[[:space:]]+"
+icolor brightgreen "^[[:space:]]*bind[[:space:]]+((\^|M-)([[:alpha:]]|space|[]]|[0-9^_=+{}|;:'\",./<>\?-])|F([1-9]|1[0-6])|Ins|Del)[[:space:]]+[[:alpha:]]+[[:space:]]+(all|main|search|replace(2|with)?|gotoline|writeout|insert|ext(ernal)?cmd|help|spell|linter|browser|whereisfile|gotodir)([[:space:]]+#|[[:space:]]*$)"
+icolor brightgreen "^[[:space:]]*unbind[[:space:]]+((\^|M-)([[:alpha:]]|space|[]]|[0-9^_=+{}|;:'\",./<>\?-])|F([1-9]|1[0-6])|Ins|Del)[[:space:]]+(all|main|search|replace(2|with)?|gotoline|writeout|insert|ext(ernal)?cmd|help|spell|linter|browser|whereisfile|gotodir)([[:space:]]+#|[[:space:]]*$)"
+icolor brightgreen "^[[:space:]]*extendsyntax[[:space:]]+[[:alpha:]]+[[:space:]]+(i?color|header|magic|comment|linter|formatter)[[:space:]]+.*$"
+icolor green "^[[:space:]]*((un)?(bind|set)|include|syntax|header|magic|comment|linter|formatter|extendsyntax)\>"
+
+# Colors
+icolor yellow "^[[:space:]]*i?color[[:space:]]*(bright)?(white|black|red|blue|green|yellow|magenta|cyan)?(,(white|black|red|blue|green|yellow|magenta|cyan))?\>"
+icolor magenta "^[[:space:]]*i?color\>" "\<(start|end)="
+
+# Strings
+icolor brightmagenta ""(\\.|[^"])*""
+# Comments
+icolor brightblue "(^|[[:space:]]+)#.*$"
+icolor cyan "^[[:space:]]*##.*$"
+
+# Trailing whitespace
+color ,green "[[:space:]]+$"

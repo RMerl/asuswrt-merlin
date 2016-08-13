@@ -1,0 +1,9 @@
+*.o
+Makefile
+src/nano
+src/revision.h
+config.h
+doc/nanorc.sample
+src/.deps
+po/Makefile.in
+po/POTFILES

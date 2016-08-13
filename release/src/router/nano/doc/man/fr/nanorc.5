@@ -1,0 +1,374 @@
+.\" Copyright (C) 2003, 2004, 2005, 2006, 2007
+.\" Free Software Foundation, Inc.
+.\"
+.\" Le travail d'adaptation française de cette page de manuel a été
+.\" réalisé par Jean-Philippe Guérard, en 2003, 2004, 2005, 2006 et 2007.
+.\" Ce travail d'adaptation est dans le domaine public. Attention, la
+.\" page traduite reste soumise au droit d'auteur de ses auteurs
+.\" originaux.
+.\"
+.\" The French translation of this document is a public domain work of
+.\" Jean-Philippe Guérard. This translation work was made in 2003, 2004,
+.\" 2005, 2006 and 2007. The translated man page in itself is still
+.\" subject to the copyright of its original authors.
+.\"
+.\" This document is dual-licensed.  You may distribute and/or modify it
+.\" under the terms of either of the following licenses:
+.\"
+.\" * The GNU General Public License, as published by the Free Software
+.\"   Foundation, version 3 or (at your option) any later version.  You
+.\"   should have received a copy of the GNU General Public License
+.\"   along with this program.  If not, see
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.\" * The GNU Free Documentation License, as published by the Free
+.\"   Software Foundation, version 1.2 or (at your option) any later
+.\"   version, with no Invariant Sections, no Front-Cover Texts, and no
+.\"   Back-Cover Texts.  You should have received a copy of the GNU Free
+.\"   Documentation License along with this program.  If not, see
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.\" Ce document est publié sous une double licence. Vous pouvez
+.\" le distribuer et le modifier selon les termes de l'une des deux
+.\" licences ci-dessous :
+.\"
+.\" * La Licence publique générale GNU (GNU GPL) version 3 ou, à
+.\"   votre choix, supérieure, telle que publiée par la Free
+.\"   Software Foundation. Vous devriez avoir reçu une copie de la
+.\"   Licence publique générale GNU avec ce programme. Si ce n'est 
+.\"   pas le cas, consultez <http://www.gnu.org/licenses/>.
+.\"
+.\" * La Licence de documentation libre GNU (GNU FDL), version 1.2 
+.\"   ou, à votre choix, supérieure, telle que publiée par la Free
+.\"   Software Foundation, sans section invariante, ni texte de
+.\"   première ou de quatrième de couverture. Vous devriez avoir reçu
+.\"   une copie de la Licence de documentation libre GNU avec ce
+.\"   programme. Si ce n'est pas le cas, consultez
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.TH NANORC 5 "version 2.0.0" "29\ novembre\ 2007"
+.\" Please adjust this date whenever revising the manpage.
+.\" Merci de modifier ces dates à chaque mise à jour de cette page.
+
+.SH NOM
+nanorc \- fichier de configuration de l'éditeur nano du projet GNU 
+
+.SH DESCRIPTION
+Cette page de manuel décrit brièvement le fichier de configuration de 
+l'éditeur \fBnano\fP GNU.
+.PP
+\fBnano\fP est un petit éditeur sympathique et libre, qui vise à 
+remplacer Pico, l'éditeur par défaut du logiciel non libre Pine. 
+\fBnano\fP ne se contentant pas de copier l'interface et l'ergonomie de 
+Pico, il offre également certaines fonctionnalités manquantes (ou 
+désactivées par défaut) de Pico. Ces fonctionnalités sont, par exemple, 
+les fonctions de recherche et de remplacement et la possibilité de 
+sauter directement à une ligne et à une colonne précise.
+.PP
+Le fichier \fInanorc\fP contient les paramètres par défaut de 
+\fBnano\fP. Il ne doit pas être au format DOS ou Mac. Lors de son 
+démarrage, nano commencera par lire le fichier de configuration général 
+\fISYSCONFDIR/nanorc\fP, puis lira le fichier de configuration personnel 
+de l'utilisateur \fI~/.nanorc\fP.
+
+.SH OPTIONS
+Le fichier de configuration accepte une série de commandes \fBset\fP 
+(activer) et \fBunset\fP (désactiver), qui permettent de définir le 
+paramétrage de nano au démarrage sans avoir à utiliser d'options de
+ligne de commande. De plus, les mots clefs \fBsyntax\fP (syntaxe),
+\fBcolor\fP (couleur) et \fBicolor\fP (couleur insensible à la casse) 
+sont utilisés pour définir les règles de colorisation pour différents 
+motifs de texte. \fBnano\fP lit une commande par ligne.
+
+Les options du fichier de configuration ont priorité sur les valeurs par 
+défaut utilisées par nano. Les options de la ligne de commande sont 
+prioritaires par rapport aux options du fichier de configuration. Les 
+options sont désactivées (unset) par défaut, sauf les options prenant un 
+argument.
+
+Les apostrophes («\ \fI'\fP\ ») et les guillemets droits («\ \fI"\fP\ »)
+présents dans des chaînes de caractères utilisées comme paramètres n'ont 
+pas besoin d'être précédées d'une barre oblique inversée
+(«\ \fI\\\fP\ »). La chaîne sera terminée par le dernier guillemet 
+droit. Par exemple, pour l'option \fBbrackets\fP, "\fI"')>]}\fP" 
+correspondra à \fI"\fP, \fI'\fP, \fI)\fP, \fI>\fP, \fI]\fP et \fI}\fP.
+
+Les commandes et arguments reconnus sont\ :
+
+.TP 3
+.B set/unset autoindent
+Active l'indentation automatique.
+.TP
+.B set/unset backup
+Crée des copies de sécurité nommées
+.IR nom_du_fichier~ .
+.TP
+.B set backupdir "\fIrépertoire\fP"
+Définit le répertoire utilisé par \fBnano\fP pour enregistrer les copies 
+de sécurité uniques, si l'enregistrement de copies de sécurité est 
+activé.
+.TP
+.B set/unset backwards
+Par défaut, les recherches se font vers l'arrière.
+.TP
+.B set/unset boldtext
+Utilise des caractères gras à la place de la vidéo inverse.
+.TP
+.B set brackets "\fIchaîne\fP"
+Définit les caractères considérés comme des crochets fermants lors de la 
+justification des paragraphes. Ces caractères ne doivent pas contenir 
+d'espaces. Seules les ponctuations terminales, éventuellement suivies 
+de crochets fermants, peuvent terminer une phrase.
+
+La valeur par défaut de cette option est\ : "\fI"')>]}\fP".
+
+N.D.T.\ : reportez-vous au paragraphe sur l'option \fBpunct\fR pour 
+plus d'informations.
+
+.TP
+.B set/unset casesensitive
+Par défaut, les recherches ne tiennent pas compte de la casse.
+.TP
+.B set/unset const
+Affiche en permanence la position du curseur dans la ligne d'état.
+.TP
+.B set/unset cut
+Par défaut, coupe le texte du curseur à la fin de la ligne, au lieu de 
+couper la ligne entière.
+.TP
+.B set fill \fIn\fP
+Passe automatiquement à la ligne une fois arrivé à la colonne 
+\fIn\fR. Si la valeur indiquée est de 0 ou moins, le point de passage à 
+la ligne aura lieu à la taille de l'écran moins \fIn\fR. Cela permet de 
+faire varier le point de passage à la ligne lorsque l'on change la 
+taille de l'écran. La valeur par défaut est de \-8.
+.TP
+.B set/unset historylog
+Active l'utilisation de
+.I ~/.nano_history
+pour enregistrer et relire les chaînes ayant fait l'objet d'une 
+recherche ou d'un remplacement.
+.TP
+.B set matchbrackets "\fIchaîne\fP"
+Définit les crochets ouvrants et fermant pour la recherche de crochets 
+correspondants. Cette liste ne doit pas contenir de blancs. L'ensemble 
+des crochets ouvrants doit être indiqué en premier, suivi de l'ensemble 
+des crochets fermant, qui doit être dans le même ordre. La valeur par 
+défaut de cette option est "\fI(<[{)>]}\fP".
+.TP
+.B set/unset morespace
+Utiliser la ligne blanche située sous la ligne de titre comme espace 
+supplémentaire d'édition.
+.TP
+.B set/unset mouse
+Active l'utilisation de la souris, si elle est disponible pour votre
+système. Lorsque celle-ci est activée, il est possible d'utiliser la
+souris pour positionner le curseur, pour marquer le texte (avec un
+double-clic) et pour lancer les fonctions correspondant aux raccourcis.
+Il est possible d'utiliser la souris sous X\ Window ou en mode console
+avec gpm.
+.TP
+.B set/unset multibuffer
+Mode multi-espace\ : permet de charger les fichiers dans leur propre 
+espace.
+.TP
+.B set/unset noconvert
+Pas de conversion depuis les formats DOS et Mac.
+.TP
+.B set/unset nofollow
+Ne suit pas les liens symboliques lors de l'écriture des fichiers.
+.TP
+.B set/unset nohelp
+Désactive les lignes d'aide affichée en bas de l'écran.
+.TP
+.B set/unset nonewlines
+Ne pas ajouter de passage à la ligne à la fin des fichiers.
+.TP
+.B set/unset nowrap
+Désactive le passage automatique à la ligne.
+.TP
+.B set operatingdir "\fIrépertoire\fP"
+\fBnano\fP ne lira et n'écrira des fichiers qu'à l'intérieur du 
+\fIrépertoire\fP et de ses sous-répertoires. De plus, celui-ci devient 
+le répertoire courant, afin que les fichiers soient lus depuis ce 
+répertoire. Par défaut, cette fonction est désactivée.
+.TP
+.B set/unset preserve
+Préserve les séquences XON et XOFF (^Q et ^S).
+.TP
+.B set punct "\fIchaîne\fP"
+Définit les caractères interprétés comme des ponctuations terminales 
+lors de la justification des paragraphes. Ces caractères ne peuvent 
+inclure de blancs. Seules les ponctuations terminales, éventuellement 
+suivies de crochets fermants, peuvent terminer une phrase. La valeur par 
+défaut de cette option est "\fI!.?\fP".
+
+N.D.T.\ : ce réglage permet, lors de la justification, de conserver
+2\ espaces au lieu d'une derrière les ponctuations terminales, ce qui 
+correspond aux normes typographiques anglo-saxonnes, mais n'a pas lieu 
+d'être en français. Pour le français, le plus simple est d'indiquer, 
+dans le fichier nanorc, une chaîne vide pour ce paramètre.
+.TP
+.B set/unset quickblank
+Effacement rapide de la ligne d'état. Les messages affichés par la ligne
+d'état disparaîtront après une frappe clavier au lieu de 25.
+.TP
+.B set quotestr "\fIchaîne\fP"
+Définit le préfixe par défaut utilisé pour les citations dans les 
+courriers électroniques. Ce préfixe est utilisé pour réaliser une 
+justification correcte de ces citations. Il s'agira, si votre système le 
+permet, d'une expression rationnelle étendue. Dans le cas 
+contraire, il s'agira d'une chaîne de texte brut. Si vous disposez des 
+expressions rationnelles, la valeur par défaut de cette option sera 
+"\fI^([\ \\t]*[#:>\\|}])+\fP", sinon, ce sera ">\ ". Notez que le
+«\ \\t\ » ci-dessus correspond à un caractère de tabulation.
+.TP
+.B set/unset rebinddelete
+Interprète différemment la touche «\ Supprimer\ », afin que les touches 
+«\ Effacement arrière\ » et «\ Supprimer\ » fonctionnent correctement. 
+Vous ne devriez avoir besoin de cette option que si, sur votre système, 
+la touche «\ Effacement arrière\ » produit l'effet de la touche «\ 
+Supprimer\ ».
+.TP
+.B set/unset rebindkeypad
+Interprète les touches du pavé numérique afin qu'elles fonctionnent 
+toutes correctement. Vous ne devriez utiliser cette option que si ce 
+n'est pas le cas, car nano ne sera plus capable d'utiliser la souris 
+correctement lorsque cette option sera activée.
+.TP
+.B set/unset regexp
+Utilise par défaut des expressions rationnelles étendues pour les 
+recherches.
+.TP
+.B set/unset smarthome
+Rend plus malin le fonctionnement de la touche «\ Début\ ». Lorsque
+cette touche est pressée à n'importe quel endroit excepté au tout début
+du texte d'une ligne (i.\ e. au premier caractère non blanc), le curseur
+se positionnera au début du texte de la ligne (qu'il soit en avant ou en 
+arrière). Si le curseur est déjà là, il se placera au vrai début de la 
+ligne.
+.TP
+.B set/unset smooth
+Active le défilement ligne-par-ligne du texte.
+.TP
+.B set speller "\fIprogramme\fP"
+Utilise le correcteur orthographique \fIprogramme\fP au lieu du 
+correcteur intégré, qui s'appuie sur \fIspell\fP.
+.TP
+.B set/unset suspend
+Autorise à suspendre \fBnano\fP.
+.TP
+.B set tabsize \fIn\fP
+Utilise une taille de tabulation de \fIn\fP colonnes. Cette valeur doit 
+être strictement supérieure à 0. La valeur par défaut est de\ 8.
+.TP
+.B set/unset tabstospaces
+Convertit les tabulations clavier en espaces.
+.TP
+.B set/unset tempfile
+S'il a été modifié, le fichier sera sauvegardé automatiquement en 
+quittant, sans demande de confirmation.
+.TP
+.B set/unset view
+Interdit de modifier les fichiers.
+.TP
+.B set whitespace "\fIchaîne\fP"
+Définit les deux caractères utilisés pour afficher les premiers 
+caractères des tabulations et des espaces. Ces deux caractères doivent 
+être mono-colonne.
+.TP
+.B set/unset wordbounds
+Détection plus précise des limites de mots, obtenue en considérant les
+caractères de ponctuation comme faisant partie des mots.
+.TP
+.B syntax "\fIchaîne\fP" ["\fImotif_de_fichier\fP" ... ]
+Définit une syntaxe nommée \fIchaîne\fP qui pourra être activé via 
+l'option \fB-Y\fP (ou \fB--syntax\fP) ou qui sera automatiquement 
+activée si le nom du fichier en cours correspond à l'expression 
+rationnelle étendue \fImotif_de_fichier\fP. Toutes les instructions 
+suivantes de colorisation \fBcolor\fP ou \fBicolor\fP s'appliqueront à 
+cette syntaxe, jusqu'à la définition d'une nouvelle syntaxe.
+
+La syntaxe nommée \fInone\fP (aucune) est réservée\ ; si elle est 
+indiquée dans la ligne de commande, cela revient à ne définir aucune 
+syntaxe. La syntaxe nommée \fIdefault\fP (par défaut) est spéciale, elle 
+ne nécessite aucun motif de \fImotif_de_fichier\fP, et s'applique aux 
+fichiers ne correspondant à aucun des \fImotif_de_fichier\fP des autres 
+syntaxes.
+.TP
+.B color \fIcouleur_texte\fP[,\fIcouleur_fond\fP] "\fImotif\fP" ...
+Pour la syntaxe en cours, affiche toutes les expressions correspondant à 
+l'expression rationnelle étendue \fImotif\fP en utilisant la couleur de 
+texte \fIcouleur_texte\fP et la couleur de fond \fIcouleur_fond\fP, 
+l'une de ces deux couleurs au moins devant être définie. Les couleurs 
+acceptées par \fBnano\fP pour le texte et le fond sont\ : \fIwhite\fP 
+(blanc), \fIblack\fP (noir), \fIred\fP (rouge), \fIblue\fP (bleu), 
+\fIgreen\fP (vert), \fIyellow\fP (jaune), \fImagenta\fP, et \fIcyan\fP. 
+Pour la couleur du texte, vous pouvez ajouter à ces couleurs le préfixe 
+\fIbright\fP (lumineux) pour obtenir une couleur plus lumineuse. Si 
+votre terminal est capable de gérer la transparence, ne pas spécifier de 
+\fIcouleur_fond\fP indique à \fBnano\fP d'essayer d'utiliser un fond 
+transparent.
+.TP
+.B icolor \fIcouleur_texte\fP[,\fIcouleur_fond\fP] "\fImotif\fP" ...
+Comme ci-dessus, mais la recherche des motifs est effectuée sans tenir 
+compte de la casse.
+.TP
+.B color \fIcouleur_texte\fP[,\fIcouleur_fond\fP] start="\fImotif_début\fP" end="\fImotif_fin\fP"
+Affiche les expressions commençant par l'expression rationnelle étendue 
+\fImotif_début\fP et se terminant par l'expression rationnelle étendue 
+\fImotif_fin\fP en utilisant la couleur de texte \fIcouleur_texte\fP 
+et la couleur de fond \fIcouleur_fond\fP, l'une de ces deux couleurs au 
+moins devant être définie. Cela permet à la colorisation syntaxique de 
+s'étendre sur plusieurs lignes. Notez que toutes les occurrences 
+successives de \fImotif_début\fP après le \fImotif_début\fP initial 
+seront surlignées jusqu'à la prochaine instance de \fImotif_fin\fP.
+.TP
+.B icolor \fIcouleur_texte\fP[,\fIcouleur_fond\fP] start="\fImotif_début\fP" end="\fImotif_fin\fP"
+Comme ci-dessus, mais la recherche des motifs est effectuée sans tenir 
+compte de la casse.
+.TP
+.B include "\fIfichier_de_syntaxes\fP"
+Lit le fichier \fIfichier_de_syntaxes\fP contenant une liste 
+autosuffisante de définitions de syntaxes. Ce fichier ne doit contenir 
+que des commandes \fBsyntax\fP, \fBcolor\fP et \fBicolor\fP.
+
+.SH FICHIERS
+.TP
+.I $SYSCONFDIR/nanorc
+Fichier de configuration général
+.TP
+.I ~/.nanorc
+Fichier de configuration personnel
+
+.SH VOIR AUSSI
+.PD 0
+.TP
+\fBnano\fP(1)
+.PP
+\fI/usr/share/doc/nano/examples/nanorc.sample\fP (ou son équivalent sur 
+votre système)
+
+.SH AUTEUR
+Chris Allegretta <chrisa@asty.org> et d'autres (voir les fichiers
+\fIAUTHORS\fP et \fITHANKS\fP pour plus d'information). Cette page de
+manuel a été initialement rédigée par Jordi Mallach <jordi@gnu.org> pour
+le système Debian (mais elle peut être utilisée par d'autres).
+
+.SH TRADUCTION
+Cette adaptation française a été réalisée par Jean-Philippe\ Guérard
+<jean-philippe.guerard@tigreraye.org> le 29\ novembre\ 2007 à partir de
+la version 1.56 du 11\ octobre\ 2007 de la page de manuel de nanorc 
+(pour la version 2.0.0 de nano). Cette page a été relue par Gérard 
+Delafond.
+
+Un maximum de soin a été apporté lors de l'élaboration de cette
+traduction\ ; néanmoins, quelques imperfections peuvent subsister. Si
+vous en rencontrez, que ce soit dans la version française ou dans la
+version originale, n'hésitez pas à les signaler à l'auteur ou au
+traducteur.
+
+La version originale la plus à jour de ce document est toujours 
+consultable via la commande\ :
+
+LANGUAGE=en man nano

@@ -706,6 +706,8 @@ obj-$(RTCONFIG_TCPDUMP) += tcpdump-4.4.0
 # Merlin addons
 obj-n += wol
 obj-y += ipset
+obj-$(RTCONFIG_NANO) += ncurses
+obj-$(RTCONFIG_NANO) += nano
 
 obj-$(RTCONFIG_BLINK_LED) += bled
 obj-$(RTCONFIG_BONDING) += ifenslave
@@ -4165,6 +4167,51 @@ ipset-install:
 	install ipset/*.so $(INSTALLDIR)/ipset/usr/lib/
 	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*.so
 	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
+
+ncurses/Makefile:
+	cd ncurses && CFLAGS="$(EXTRACFLAGS) -Os -I$(STAGEDIR)/usr/include" \
+	$(CONFIGURE) --prefix=/usr --without-cxx --without-cxx-binding \
+	LDFLAGS="$(LDFLAGS) -L$(STAGEDIR)/usr/lib" \
+	--enable-echo --enable-const --enable-overwrite --disable-rpath --without-ada \
+	--without-debug --without-manpages --without-profile --without-progs --without-tests \
+	--disable-home-terminfo --with-normal --with-shared --with-build-cppflags=-D_GNU_SOURCE \
+	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux"
+
+#	--with-default-terminfo-dir=/usr/share/terminfo --with-terminfo-dirs=/usr/share/terminfo
+
+ncurses: ncurses/Makefile
+	@$(SEP)
+	cd ncurses && $(MAKE) -C ncurses
+
+ncurses-clean:
+	-@$(MAKE) -C ncurses distclean
+	@rm -f ncurses/Makefile
+
+ncurses-install:
+	install -D ncurses/lib/libncurses.so.6.0 $(INSTALLDIR)/ncurses/usr/lib/libncurses.so.6.0
+	$(STRIP) $(INSTALLDIR)/ncurses/usr/lib/*.so.*
+	cd $(INSTALLDIR)/ncurses/usr/lib && \
+		ln -sf libncurses.so.6.0 libncurses.so.6
+
+nano/Makefile:
+	cd nano && $(CONFIGURE) --prefix=$(INSTALLDIR)/nano/usr \
+		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses/include" \
+		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses/lib" \
+		ac_cv_lib_ncursesw_get_wch=no \
+		--disable-nls --enable-tiny --enable-wrapping --disable-glibtest \
+		--disable-libmagic --disable-utf8
+
+nano-clean:
+	-@$(MAKE) -C nano distclean
+	@rm -f nano/Makefile
+
+nano-install:
+	@$(MAKE) -C nano install-exec INSTALLDIR=$(INSTALLDIR)/nano/usr/bin/nano
+	$(STRIP) $(INSTALLDIR)/nano/usr/bin/nano
+
+nano: ncurses nano/Makefile
+	@$(SEP)
+	$(MAKE) -C $@
 
 tftp:
 	cd tftp && CC=$(CC) && $(MAKE)

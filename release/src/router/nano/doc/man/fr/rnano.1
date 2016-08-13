@@ -1,0 +1,152 @@
+.\" Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
+.\" Skeleton based on nano-tiny.1:
+.\" Copyright (C) 2002 Free Software Foundation, Inc.
+.\"
+.\" Le travail d'adaptation française de cette page de manuel a été
+.\" réalisé par Jean-Philippe Guérard, en 2006 et 2007. Ce travail
+.\" d'adaptation est dans le domaine public. Attention, la page traduite
+.\" reste soumise au droit d'auteur de ses auteurs originaux.
+.\"
+.\" The French translation of this document is a public domain work of
+.\" Jean-Philippe Guérard. This translation work was made in 2006 and
+.\" 2007. The translated man page in itself is still subject to the
+.\" copyright of its original authors.
+.\"
+.\" This document is dual-licensed.  You may distribute and/or modify it
+.\" under the terms of either of the following licenses:
+.\"
+.\" * The GNU General Public License, as published by the Free Software
+.\"   Foundation, version 3 or (at your option) any later version.  You
+.\"   should have received a copy of the GNU General Public License
+.\"   along with this program.  If not, see
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.\" * The GNU Free Documentation License, as published by the Free
+.\"   Software Foundation, version 1.2 or (at your option) any later
+.\"   version, with no Invariant Sections, no Front-Cover Texts, and no
+.\"   Back-Cover Texts.  You should have received a copy of the GNU Free
+.\"   Documentation License along with this program.  If not, see
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.\" Ce document est publié sous une double licence. Vous pouvez
+.\" le distribuer et le modifier selon les termes de l'une des deux
+.\" licences ci-dessous :
+.\"
+.\" * La Licence publique générale GNU (GNU GPL) version 3 ou, à
+.\"   votre choix, supérieure, telle que publiée par la Free
+.\"   Software Foundation. Vous devriez avoir reçu une copie de la
+.\"   Licence publique générale GNU avec ce programme. Si ce n'est pas
+.\"   le cas, consultez <http://www.gnu.org/licenses/>.
+.\"
+.\" * La Licence de documentation libre GNU (GNU FDL), version 1.2 ou,
+.\"   à votre choix, supérieure, telle que publiée par la Free
+.\"   Software Foundation, sans section invariante, ni texte de
+.\"   première ou de quatrième de couverture. Vous devriez avoir reçu
+.\"   une copie de la Licence de documentation libre GNU avec ce
+.\"   programme. Si ce n'est pas le cas, consultez
+.\"   <http://www.gnu.org/licenses/>.
+.\"
+.TH RNANO 1 "version 2.0.0" "29\ novembre\ 20O7"
+.\" Please adjust this date whenever revising the manpage.
+.\" Merci de modifier ces dates à chaque mise à jour de cette page.
+.\"
+.SH NOM
+rnano \- Le mode restreint de NAno un NOuvel éditeur, un clone libre et 
+amélioré de Pico
+
+.SH SYNOPSIS
+.B rnano
+.I [OPTIONS]\ [[+LIGNE,COLONNE]\ FICHIER]...
+.br
+
+.SH DESCRIPTION
+Cette page de manuel décrit brièvement la commande \fBrnano\fR.
+.PP
+.\" TeX users may be more comfortable with the \fB<whatever>\fP and
+.\" \fI<whatever>\fP escape sequences to invoke bold face and italics, 
+.\" respectively.
+\fBnano\fR est un éditeur petit, sympathique et libre, qui vise à 
+remplacer Pico, l'éditeur par défaut du logiciel non libre Pine. 
+\fBnano\fR ne se contentant pas de copier l'interface et l'ergonomie de 
+Pico, il offre également certaines fonctions manquantes (ou désactivées 
+par défaut) dans Pico. Ces fonctionnalités sont, par exemple, les 
+fonctions de recherche et de remplacement, et la possibilité de sauter 
+directement à une ligne et à une colonne précise..
+.PP
+\fBrnano\fP est une version de \fBnano\fP fonctionnant en mode 
+restreint, qui ne permet d'éditer que les fichiers indiqués et qui 
+n'autorise pas l'utilisateur à accéder au système de fichier ou à un 
+interpréteur de commandes.
+.PP
+En mode restreint, \fBnano\fP refusera\ :
+.IP \[bu] 2
+de lire ou d'écrire dans un fichier n'ayant pas été indiqué dans la 
+ligne de commande\ ;
+.IP \[bu]
+de lire un fichier nanorc\ ;
+.IP \[bu]
+de permettre de suspendre l'édition\ ;
+.IP \[bu]
+de permettre d'ajouter en début ou en fin d'un fichier, ou de 
+l'enregistrer sous un nom différent\ ;
+.IP \[bu]
+l'utilisation de copies de sécurité ou de la correction orthographique.
+
+.SH OPTIONS
+.TP
+.B +\fILIGNE\fP,\fICOLONNE\fP
+Démarre avec le curseur positionné à la colonne \fICOLONNE\fP de
+la ligne \fILIGNE\fR (l'un des deux, au moins, devant être spécifié) au
+lieu de démarrer à la colonne\ 1, ligne\ 1.
+.TP
+.B \-?
+Identique à \fB\-h (\-\-help)\fP.
+.TP
+.B \-h (\-\-help)
+Affiche un résumé des options de lancement de nano, puis s'arrête.
+.TP
+.B \-V (\-\-version)
+Affiche la version, puis s'arrête.
+.PP
+Reportez-vous à la page de manuel \fBnano\fP(1) si vous souhaitez 
+consulter la documentation complète de \fBnano\fP.
+
+.SH BOGUES
+Merci de nous faire parvenir vos commentaires et de nous signaler les
+bogues, en écrivant, en anglais, à \fBnano@nano-editor.org\fR.
+
+La liste de discussion anglophone \fBnano\fR est disponible à l'adresse
+\fBnano-devel@gnu.org\fR.
+
+Pour vous abonner, envoyez un courrier électronique à
+\fBnano-devel-request@gnu.org\fR, ayant pour objet «\ subscribe\ ».
+
+N'hésitez pas également à envoyez vos commentaires, suggestions et
+corrections relatives à l'adaptation française de cette page de manuel
+ou du logiciel à \fBjean-philippe.guerard@tigreraye.org\fR.
+
+.SH "SITE INTERNET"
+http://www.nano-editor.org/
+
+.SH AUTEUR
+Chris Allegretta <chrisa@asty.org> et d'autres (voir le fichier
+\fIAUTHORS\fR). Cette page de manuel a été initialement rédigée par 
+Thijs Kinkhorst <thijs@kinkhorst.com>, pour le système GNU Debian (mais 
+elle peut être utilisée par d'autres).
+
+.SH TRADUCTION
+Cette adaptation française a été réalisée par Jean-Philippe\ Guérard
+<jean-philippe.guerard@tigreraye.org> le 29\ novembre\ 2007 à partir
+de la version 1.19 du 6\ novembre\ 2007 de la page de manuel de rnano 
+(pour la version 2.0.0 de nano).
+
+Un maximum de soin a été apporté lors de l'élaboration de cette
+traduction\ ; néanmoins, quelques imperfections peuvent subsister. Si
+vous en rencontrez, que ce soit dans la version française ou dans la
+version originale, n'hésitez pas à les signaler à l'auteur ou au
+traducteur.
+
+La version originale la plus à jour de ce document est toujours
+consultable via la commande\ :
+
+LANGUAGE=en man nano

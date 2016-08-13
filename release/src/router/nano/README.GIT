@@ -1,0 +1,84 @@
+INSTRUCTIONS TO COMPILE AND INSTALL NANO GIT VERSIONS
+=====================================================
+
+The latest version of nano is available via git, but building this needs a
+bit more care than the official stable and unstable tarballs.
+
+
+Prerequisites
+-------------
+
+To successfully compile nano from the git repo, you'll need the following
+packages:
+
+- autoconf    (version >= 2.61)
+- automake    (version >= 1.7)
+- gettext     (version >= 0.11.5)
+- git         (version >= 2.7.4)
+- groff       (version >= 1.12)
+- pkg-config  (version >= 0.22)
+- texinfo     (version >= 4.0)
+- glib 2.x    (in case your system doesn't have vsnprintf(), which the
+               configure script will check for)
+- make, gcc, and
+- the normal development libraries (curses or slang, etc.)
+
+These should all be available in your distro's package manager or software
+center, or otherwise on any GNU mirror.  Note that you'll need a version of
+curses or slang with wide character support if you want nano to use UTF-8.
+
+
+Download the source
+-------------------
+
+To obtain the current nano development code (called 'master', or sometimes
+'trunk'), use the following command.  It will create a copy of the files in
+a subdirectory of your current working directory called 'nano':
+
+    $ git clone git://git.savannah.gnu.org/nano.git nano
+
+
+Generate the configure script
+-----------------------------
+
+Once you have the sources in the "nano" directory,
+
+    $ cd nano
+    $ ./autogen.sh
+
+This will set up a configure script and a Makefile.in file.
+
+
+Configure your build
+--------------------
+
+To configure your build, run the configure script from the nano source
+directory:
+
+    $ ./configure [--add-options-here]
+
+
+Build and install
+-----------------
+
+From the nano source directory, build the code with:
+
+    $ make
+
+Then, once it's done compiling, run:
+
+    $ make install
+
+which should copy various files (i.e. the nano executable, the info and
+man pages, and syntax highlighting pattern files) to their appropriate
+directories.
+
+If you're installing into the default install directory (/usr/local),
+you'll need to run that "make install" command with root privileges.
+
+
+Problems?
+---------
+
+Please submit any bugs in the git repository using the Savannah project's
+bug tracker (https://savannah.gnu.org/bugs/?group=nano).

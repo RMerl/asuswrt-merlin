@@ -1,0 +1,11 @@
+## A default syntax, which is used
+## for files that do not match any other syntax.
+
+syntax "default"
+comment "#"
+
+# Spaces in front of tabs.
+color ,red " +	+"
+
+# Nano's name, including version.
+color brightred "(GNU )?nano [1-9]\.[0-9]\.[^[:space:][:punct:]]+"

@@ -1,0 +1,4190 @@
+# Translation of the nano editor to French.
+# Messages en langue française pour l'éditeur nano.
+# Copyright (C) 2000, 2001 Free Software Foundation, Inc.
+# This file is distributed under the same license as the nano package.
+#
+# Pierre Tane <tanep@bigfoot.com>, 2000.
+# Clement Laforet <sheep.killer@free.fr>, 2000.
+# Michel Robitaille <robitail@IRO.UMontreal.CA>, 2001.
+# Jean-Philippe Guérard <jean-philippe.guerard@corbeaunoir.org>, 2001-2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: nano 2.6.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-08-10 11:51+0200\n"
+"PO-Revision-Date: 2016-07-28 22:52+0200\n"
+"Last-Translator: Jean-Philippe Guérard <jean-philippe.guerard@corbeaunoir."
+"org>\n"
+"Language-Team: French <traduc@traduc.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n >= 2);\n"
+"X-Generator: Gtranslator 2.91.6\n"
+
+#
+# File: src/browser.c, line: 207
+# File: src/browser.c, line: 207
+#. TRANSLATORS: This is a prompt.
+#: src/browser.c:233
+msgid "Go To Directory"
+msgstr "Changer de répertoire"
+
+#
+# File: src/browser.c, line: 218
+# File: src/browser.c, line: 680
+# File: src/files.c, line: 736
+# File: src/files.c, line: 1788
+# File: src/nano.c, line: 956
+# File: src/search.c, line: 212
+# File: src/search.c, line: 934
+# File: src/search.c, line: 995
+# File: src/browser.c, line: 218
+# File: src/browser.c, line: 680
+# File: src/files.c, line: 736
+# File: src/files.c, line: 1788
+# File: src/nano.c, line: 956
+# File: src/search.c, line: 212
+# File: src/search.c, line: 934
+# File: src/search.c, line: 995
+#: src/browser.c:238 src/browser.c:701 src/files.c:1134 src/files.c:2295
+#: src/nano.c:1098 src/search.c:194 src/search.c:296 src/search.c:855
+#: src/search.c:922 src/text.c:3181 src/text.c:3388
+msgid "Cancelled"
+msgstr "Annulé"
+
+#
+# File: src/files.c, line: 1286
+# File: src/files.c, line: 1286
+#. TRANSLATORS: This refers to the confining effect of the
+#. * option --operatingdir, not of --restricted.
+#: src/browser.c:259 src/browser.c:291
+#, c-format
+msgid "Can't go outside of %s"
+msgstr "Impossible d'aller hors de %s"
+
+#
+# File: src/browser.c, line: 288
+# File: src/browser.c, line: 288
+#: src/browser.c:282
+msgid "Can't move up a directory"
+msgstr "Impossible de passer au répertoire supérieur"
+
+#
+# File: src/browser.c, line: 257
+# File: src/browser.c, line: 309
+# File: src/browser.c, line: 325
+# File: src/files.c, line: 610
+# File: src/files.c, line: 618
+# File: src/files.c, line: 1332
+# File: src/files.c, line: 1420
+# File: src/files.c, line: 1466
+# File: src/files.c, line: 1487
+# File: src/files.c, line: 1609
+# File: src/files.c, line: 2376
+# File: src/rcfile.c, line: 366
+# File: src/rcfile.c, line: 383
+# File: src/rcfile.c, line: 913
+# File: src/browser.c, line: 257
+# File: src/browser.c, line: 309
+# File: src/browser.c, line: 325
+# File: src/files.c, line: 610
+# File: src/files.c, line: 618
+# File: src/files.c, line: 1332
+# File: src/files.c, line: 1420
+# File: src/files.c, line: 1466
+# File: src/files.c, line: 1487
+# File: src/files.c, line: 1609
+# File: src/files.c, line: 2376
+# File: src/rcfile.c, line: 366
+# File: src/rcfile.c, line: 383
+# File: src/rcfile.c, line: 913
+#: src/browser.c:298 src/files.c:1004 src/files.c:1011 src/files.c:1799
+#: src/files.c:1924 src/files.c:1968 src/files.c:1988 src/files.c:2104
+#: src/files.c:3020 src/files.c:3243 src/rcfile.c:539 src/rcfile.c:1279
+#, c-format
+msgid "Error reading %s: %s"
+msgstr "Erreur lors de la lecture de %s : %s"
+
+#
+# File: src/browser.c, line: 564
+# File: src/browser.c, line: 569
+# File: src/browser.c, line: 564
+# File: src/browser.c, line: 569
+#. TRANSLATORS: Try to keep this at most 7 characters.
+#: src/browser.c:568 src/browser.c:576
+msgid "(dir)"
+msgstr "(rép.)"
+
+#. TRANSLATORS: Try to keep this at most 12 characters.
+#: src/browser.c:573
+msgid "(parent dir)"
+msgstr "(remonter)"
+
+#. TRANSLATORS: Try to keep this at most 7 characters.
+#. * If necessary, you can leave out the parentheses.
+#: src/browser.c:603
+msgid "(huge)"
+msgstr "énorme"
+
+#
+# File: src/browser.c, line: 651
+# File: src/search.c, line: 179
+# File: src/browser.c, line: 651
+# File: src/search.c, line: 179
+#. TRANSLATORS: This is the main search prompt.
+#: src/browser.c:690 src/search.c:165
+msgid "Search"
+msgstr "Recherche"
+
+#
+# File: src/browser.c, line: 760
+# File: src/browser.c, line: 768
+# File: src/search.c, line: 369
+# File: src/browser.c, line: 760
+# File: src/browser.c, line: 768
+# File: src/search.c, line: 369
+#: src/browser.c:732 src/search.c:369
+msgid "Search Wrapped"
+msgstr "La recherche a fait le tour"
+
+#
+# File: src/browser.c, line: 855
+# File: src/browser.c, line: 888
+# File: src/search.c, line: 486
+# File: src/search.c, line: 489
+# File: src/search.c, line: 546
+# File: src/search.c, line: 549
+# File: src/browser.c, line: 855
+# File: src/browser.c, line: 888
+# File: src/search.c, line: 486
+# File: src/search.c, line: 489
+# File: src/search.c, line: 546
+# File: src/search.c, line: 549
+#: src/browser.c:742 src/search.c:513
+msgid "This is the only occurrence"
+msgstr "C'est la seule occurrence"
+
+#
+# File: src/browser.c, line: 891
+# File: src/search.c, line: 555
+# File: src/browser.c, line: 891
+# File: src/search.c, line: 555
+#: src/browser.c:786 src/search.c:474
+msgid "No current search pattern"
+msgstr "Aucun motif de recherche défini"
+
+#
+# File: src/rcfile.c, line: 247
+# File: src/rcfile.c, line: 247
+#: src/color.c:185
+#, c-format
+msgid "Unknown syntax name: %s"
+msgstr "nom de syntaxe inconnu : %s"
+
+#: src/color.c:246
+#, c-format
+msgid "magic_load() failed: %s"
+msgstr "Échec de magic_load() : %s"
+
+#: src/color.c:250
+#, c-format
+msgid "magic_file(%s) failed: %s"
+msgstr "Échec de magic_file(%s) : %s"
+
+#
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+#: src/files.c:47
+#, c-format
+msgid "Directory '%s' does not exist"
+msgstr "Le répertoire « %s » n'existe pas"
+
+#: src/files.c:49
+#, c-format
+msgid "Path '%s': %s"
+msgstr "Chemin « %s » : %s"
+
+#
+# File: src/files.c, line: 605
+# File: src/rcfile.c, line: 375
+# File: src/rcfile.c, line: 870
+# File: src/rcfile.c, line: 904
+# File: src/files.c, line: 605
+# File: src/rcfile.c, line: 375
+# File: src/rcfile.c, line: 870
+# File: src/rcfile.c, line: 904
+#: src/files.c:51
+#, c-format
+msgid "Path '%s' is not a directory"
+msgstr "Le chemin « %s » n'est pas un répertoire"
+
+#: src/files.c:53
+#, c-format
+msgid "Path '%s' is not accessible"
+msgstr "Le chemin « %s » n'est pas accessible"
+
+#
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+#: src/files.c:55
+#, fuzzy, c-format
+msgid "Directory '%s' is not writable"
+msgstr "Le répertoire « %s » n'existe pas"
+
+#. TRANSLATORS: Keep the next ten messages at most 76 characters.
+#: src/files.c:150
+msgid ""
+"Warning: Modifying a file which is not locked, check directory permission?"
+msgstr ""
+"Attention : modification d'un fichier non verrouillé. Vérifiez les droits du "
+"répertoire."
+
+#: src/files.c:189
+msgid "Couldn't determine my identity for lock file (getpwuid() failed)"
+msgstr "Fichier verrou : compte actuel inconnu (échec de getpwuid())"
+
+#: src/files.c:198
+#, c-format
+msgid "Couldn't determine hostname for lock file: %s"
+msgstr "Impossible d'identifier l'hôte courant pour créer le verrou : %s"
+
+#
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+#: src/files.c:218 src/files.c:227 src/files.c:265 src/files.c:275
+#, c-format
+msgid "Error writing lock file %s: %s"
+msgstr "Erreur d'écriture du fichier verrou %s : %s"
+
+#
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+#: src/files.c:294
+#, c-format
+msgid "Error deleting lock file %s: %s"
+msgstr "Erreur de suppression du fichier verrou %s : %s"
+
+#
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+#: src/files.c:328
+#, c-format
+msgid "Error opening lock file %s: %s"
+msgstr "Erreur d'ouverture du fichier verrou %s : %s"
+
+#: src/files.c:340
+#, c-format
+msgid "Error reading lock file %s: Not enough data read"
+msgstr "Erreur de lecture du fichier verrou %s : pas assez de données lues"
+
+#. TRANSLATORS: The second %s is the name of the user, the third that of the editor.
+#: src/files.c:361
+#, fuzzy, c-format
+msgid "File %s is being edited (by %s with %s, PID %s); continue?"
+msgstr "Le fichier %s est ouvert (par %s avec %s, PID %d) ; continuer ?"
+
+#
+# File: src/files.c, line: 119
+# File: src/files.c, line: 119
+#: src/files.c:439
+#, c-format
+msgid "Can't insert file from outside of %s"
+msgstr "Impossible d'insérer le fichier depuis l'extérieur de %s"
+
+#
+# File: src/files.c, line: 605
+# File: src/rcfile.c, line: 375
+# File: src/rcfile.c, line: 870
+# File: src/rcfile.c, line: 904
+# File: src/files.c, line: 605
+# File: src/rcfile.c, line: 375
+# File: src/rcfile.c, line: 870
+# File: src/rcfile.c, line: 904
+#: src/files.c:454 src/files.c:999 src/rcfile.c:532 src/rcfile.c:1229
+#: src/rcfile.c:1270
+#, c-format
+msgid "\"%s\" is a directory"
+msgstr "« %s » est un répertoire"
+
+#
+# File: src/files.c, line: 606
+# File: src/rcfile.c, line: 376
+# File: src/rcfile.c, line: 871
+# File: src/rcfile.c, line: 905
+# File: src/files.c, line: 606
+# File: src/rcfile.c, line: 376
+# File: src/rcfile.c, line: 871
+# File: src/rcfile.c, line: 905
+#: src/files.c:456
+#, c-format
+msgid "\"%s\" is not a normal file"
+msgstr "« %s » n'est pas un fichier ordinaire"
+
+#
+# File: src/files.c, line: 228
+# File: src/files.c, line: 228
+#: src/files.c:580
+msgid "No more open file buffers"
+msgstr "Plus aucun fichier ouvert"
+
+#
+# File: src/files.c, line: 244
+# File: src/files.c, line: 244
+#: src/files.c:595
+#, c-format
+msgid "Switched to %s"
+msgstr "Basculement vers %s"
+
+#
+# File: src/files.c, line: 245
+# File: src/global.c, line: 302
+# File: src/winio.c, line: 2022
+# File: src/files.c, line: 245
+# File: src/global.c, line: 302
+# File: src/winio.c, line: 2022
+#: src/files.c:597 src/global.c:1002 src/winio.c:1857
+msgid "New Buffer"
+msgstr "Nouvel espace"
+
+#
+# File: src/files.c, line: 559
+# File: src/files.c, line: 559
+#. TRANSLATORS: Keep the next four messages at most 76 characters.
+#: src/files.c:921
+#, c-format
+msgid "Read %lu line (Converted from DOS and Mac format)"
+msgid_plural "Read %lu lines (Converted from DOS and Mac format)"
+msgstr[0] "Lecture de %lu ligne (convertie des formats DOS et Mac)"
+msgstr[1] "Lecture de %lu lignes (converties des formats DOS et Mac)"
+
+#
+# File: src/files.c, line: 564
+# File: src/files.c, line: 564
+#: src/files.c:927
+#, c-format
+msgid "Read %lu line (Converted from Mac format)"
+msgid_plural "Read %lu lines (Converted from Mac format)"
+msgstr[0] "Lecture de %lu ligne (convertie du format Mac)"
+msgstr[1] "Lecture de %lu lignes (converties du format Mac)"
+
+#
+# File: src/files.c, line: 569
+# File: src/files.c, line: 569
+#: src/files.c:933
+#, c-format
+msgid "Read %lu line (Converted from DOS format)"
+msgid_plural "Read %lu lines (Converted from DOS format)"
+msgstr[0] "Lecture de %lu ligne (convertie du format DOS)"
+msgstr[1] "Lecture de %lu lignes (converties du format DOS)"
+
+#
+# File: src/files.c, line: 574
+# File: src/files.c, line: 574
+#: src/files.c:938
+#, c-format
+msgid "Read %lu line"
+msgid_plural "Read %lu lines"
+msgstr[0] "Lecture de %lu ligne"
+msgstr[1] "Lecture de %lu lignes"
+
+#
+# File: src/files.c, line: 623
+# File: src/files.c, line: 623
+#: src/files.c:982 src/files.c:1014
+msgid "Reading File"
+msgstr "Lecture du fichier"
+
+#
+# File: src/files.c, line: 594
+# File: src/files.c, line: 594
+#: src/files.c:988
+msgid "New File"
+msgstr "Nouveau fichier"
+
+#
+# File: src/files.c, line: 597
+# File: src/files.c, line: 597
+#: src/files.c:991
+#, c-format
+msgid "File \"%s\" not found"
+msgstr "Fichier « %s » non trouvé"
+
+#
+# File: src/files.c, line: 606
+# File: src/rcfile.c, line: 376
+# File: src/rcfile.c, line: 871
+# File: src/rcfile.c, line: 905
+# File: src/files.c, line: 606
+# File: src/rcfile.c, line: 376
+# File: src/rcfile.c, line: 871
+# File: src/rcfile.c, line: 905
+#: src/files.c:1000 src/rcfile.c:533 src/rcfile.c:1230 src/rcfile.c:1271
+#, c-format
+msgid "\"%s\" is a device file"
+msgstr "« %s » est un périphérique"
+
+#
+# File: src/files.c, line: 696
+# File: src/files.c, line: 696
+#: src/files.c:1091
+#, c-format
+msgid "Command to execute in new buffer [from %s] "
+msgstr "Commande à exécuter dans un nouvel espace [à partir de %s] "
+
+#
+# File: src/files.c, line: 698
+# File: src/files.c, line: 698
+#: src/files.c:1093
+#, c-format
+msgid "Command to execute [from %s] "
+msgstr "Commande à exécuter [à partir de %s] "
+
+#
+# File: src/files.c, line: 704
+# File: src/files.c, line: 704
+#: src/files.c:1100
+#, c-format
+msgid "File to insert into new buffer [from %s] "
+msgstr "Fichier à insérer dans un nouvel espace [à partir de %s] "
+
+#
+# File: src/files.c, line: 706
+# File: src/files.c, line: 706
+#: src/files.c:1102
+#, c-format
+msgid "File to insert [from %s] "
+msgstr "Fichier à insérer [à partir de %s] "
+
+#
+# File: src/files.c, line: 885
+# File: src/files.c, line: 885
+#: src/files.c:1345
+msgid "Key invalid in non-multibuffer mode"
+msgstr "Touche illégale hors du mode multi-espace"
+
+#: src/files.c:1637
+msgid "Failed to write backup file; continue saving? (Say N if unsure.) "
+msgstr ""
+"Impossible d'écrire la copie de sécurité, sauver quand même ? (Dites N en "
+"cas de doute.) "
+
+#
+# File: src/files.c, line: 1286
+# File: src/files.c, line: 1286
+#: src/files.c:1755
+#, c-format
+msgid "Can't write outside of %s"
+msgstr "Impossible d'écrire à l'extérieur de %s"
+
+#
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+#: src/files.c:1838 src/files.c:1863 src/files.c:1881 src/files.c:1894
+#: src/files.c:1905 src/files.c:1933
+#, c-format
+msgid "Error writing backup file %s: %s"
+msgstr "Erreur d'écriture de la copie de sécurité %s : %s"
+
+#
+# File: src/files.c, line: 1374
+# File: src/nano.c, line: 624
+# File: src/files.c, line: 1374
+# File: src/nano.c, line: 624
+#: src/files.c:1839 src/nano.c:673
+msgid "Too many backup files?"
+msgstr "Trop de copies de sécurité ?"
+
+#
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+# File: src/files.c, line: 1476
+# File: src/text.c, line: 2315
+# File: src/text.c, line: 2327
+#: src/files.c:1977 src/files.c:1999 src/text.c:3111 src/text.c:3123
+#: src/text.c:3488 src/text.c:3497
+#, c-format
+msgid "Error writing temp file: %s"
+msgstr "Erreur d'écriture du fichier temporaire : %s"
+
+#
+# File: src/files.c, line: 1373
+# File: src/files.c, line: 1397
+# File: src/files.c, line: 1424
+# File: src/files.c, line: 1442
+# File: src/files.c, line: 1499
+# File: src/files.c, line: 1518
+# File: src/files.c, line: 1530
+# File: src/files.c, line: 1553
+# File: src/files.c, line: 1571
+# File: src/files.c, line: 1581
+# File: src/files.c, line: 1617
+# File: src/files.c, line: 2449
+# File: src/files.c, line: 2458
+# File: src/files.c, line: 1373
+# File: src/files.c, line: 1397
+# File: src/files.c, line: 1424
+# File: src/files.c, line: 1442
+# File: src/files.c, line: 1499
+# File: src/files.c, line: 1518
+# File: src/files.c, line: 1530
+# File: src/files.c, line: 1553
+# File: src/files.c, line: 1571
+# File: src/files.c, line: 1581
+# File: src/files.c, line: 1617
+# File: src/files.c, line: 2449
+# File: src/files.c, line: 2458
+#: src/files.c:2018 src/files.c:2028 src/files.c:2052 src/files.c:2069
+#: src/files.c:2079 src/files.c:2111 src/files.c:2118
+#, c-format
+msgid "Error writing %s: %s"
+msgstr "Erreur lors de l'écriture de %s : %s"
+
+#
+# File: src/files.c, line: 1651
+# File: src/files.c, line: 1651
+#: src/files.c:2157
+#, c-format
+msgid "Wrote %lu line"
+msgid_plural "Wrote %lu lines"
+msgstr[0] "%lu ligne écrite"
+msgstr[1] "%lu lignes écrites"
+
+#
+# File: src/files.c, line: 1751
+# File: src/files.c, line: 1751
+#: src/files.c:2252
+msgid " [DOS Format]"
+msgstr " [Format DOS]"
+
+#
+# File: src/files.c, line: 1752
+# File: src/files.c, line: 1752
+#: src/files.c:2253
+msgid " [Mac Format]"
+msgstr " [Format Mac]"
+
+#
+# File: src/files.c, line: 1754
+# File: src/files.c, line: 1754
+#: src/files.c:2255
+msgid " [Backup]"
+msgstr " [Copie de sécurité]"
+
+#
+# File: src/files.c, line: 1758
+# File: src/files.c, line: 1758
+#: src/files.c:2262
+msgid "Prepend Selection to File"
+msgstr "Ajouter la sélection au début d'un fichier"
+
+#
+# File: src/files.c, line: 1759
+# File: src/files.c, line: 1759
+#: src/files.c:2263
+msgid "Append Selection to File"
+msgstr "Ajouter la sélection à la fin d'un fichier"
+
+#
+# File: src/files.c, line: 1760
+# File: src/files.c, line: 1760
+#: src/files.c:2264
+msgid "Write Selection to File"
+msgstr "Écrire la sélection dans un fichier"
+
+#
+# File: src/files.c, line: 1763
+# File: src/files.c, line: 1763
+#: src/files.c:2267
+msgid "File Name to Prepend to"
+msgstr "Nom du fichier au tête duquel ajouter"
+
+#
+# File: src/files.c, line: 1764
+# File: src/files.c, line: 1764
+#: src/files.c:2268
+msgid "File Name to Append to"
+msgstr "Nom du fichier à la fin duquel ajouter"
+
+#
+# File: src/files.c, line: 1765
+# File: src/files.c, line: 1765
+#: src/files.c:2269
+msgid "File Name to Write"
+msgstr "Nom du fichier à écrire"
+
+#: src/files.c:2304
+msgid "Save modified buffer anyway? "
+msgstr "Sauver l'espace modifié de toutes façons ?"
+
+#
+# File: src/files.c, line: 1871
+# File: src/files.c, line: 1871
+#: src/files.c:2415
+msgid "Save file under DIFFERENT NAME? "
+msgstr "Écrire le fichier sous un NOM MODIFIÉ ? "
+
+#
+# File: src/files.c, line: 1856
+# File: src/files.c, line: 1856
+#: src/files.c:2423
+#, c-format
+msgid "File \"%s\" exists; OVERWRITE? "
+msgstr "Le fichier « %s » existe, VOULEZ-VOUS L'ÉCRASER ? "
+
+#: src/files.c:2444
+msgid "File was modified since you opened it; continue saving? "
+msgstr "Le fichier a été modifié depuis son ouverture. Continuer à sauver ?"
+
+#
+# File: src/files.c, line: 2298
+# File: src/files.c, line: 2298
+#: src/files.c:2875
+msgid "(more)"
+msgstr "(suite)"
+
+#
+# File: src/files.c, line: 2379
+# File: src/rcfile.c, line: 848
+# File: src/files.c, line: 2379
+# File: src/rcfile.c, line: 848
+#: src/files.c:2960
+#, c-format
+msgid ""
+"\n"
+"Press Enter to continue\n"
+msgstr ""
+"\n"
+"Appuyez sur « Entrée » pour continuer\n"
+
+#: src/files.c:2976
+#, c-format
+msgid ""
+"Unable to create directory %s: %s\n"
+"It is required for saving/loading search history or cursor positions.\n"
+msgstr ""
+"Impossible de créer le répertoire %s : %s\n"
+"Il permet de conserver l'historique des recherches\n"
+"et les positions du curseur\n"
+
+#: src/files.c:2983
+#, c-format
+msgid ""
+"Path %s is not a directory and needs to be.\n"
+"Nano will be unable to load or save search history or cursor positions.\n"
+msgstr ""
+"Le chemin %s n'est pas un répertoire et devrait l'être.\n"
+"Nano ne pourra pas conserver l'historique des recherches\n"
+"et les positions du curseur\n"
+
+#: src/files.c:3003
+#, c-format
+msgid ""
+"Detected a legacy nano history file (%s) which I tried to move\n"
+"to the preferred location (%s) but encountered an error: %s"
+msgstr ""
+"Un ancien fichier d'historique (%s) a été détecté, mais une\n"
+"tentative de déplacement vers le nouvel emplacement (%s)\n"
+"a rencontré une erreur : %s"
+
+#: src/files.c:3007
+#, c-format
+msgid ""
+"Detected a legacy nano history file (%s) which I moved\n"
+"to the preferred location (%s)\n"
+"(see the nano FAQ about this change)"
+msgstr ""
+"Un ancien fichier d'historique (%s) a été détecté, et déplacé\n"
+"vers le nouvel emplacement (%s)\n"
+"(consultez la FAQ nano pour plus d'information)"
+
+#
+# File: src/files.c, line: 1373
+# File: src/files.c, line: 1397
+# File: src/files.c, line: 1424
+# File: src/files.c, line: 1442
+# File: src/files.c, line: 1499
+# File: src/files.c, line: 1518
+# File: src/files.c, line: 1530
+# File: src/files.c, line: 1553
+# File: src/files.c, line: 1571
+# File: src/files.c, line: 1581
+# File: src/files.c, line: 1617
+# File: src/files.c, line: 2449
+# File: src/files.c, line: 2458
+# File: src/files.c, line: 1373
+# File: src/files.c, line: 1397
+# File: src/files.c, line: 1424
+# File: src/files.c, line: 1442
+# File: src/files.c, line: 1499
+# File: src/files.c, line: 1518
+# File: src/files.c, line: 1530
+# File: src/files.c, line: 1553
+# File: src/files.c, line: 1571
+# File: src/files.c, line: 1581
+# File: src/files.c, line: 1617
+# File: src/files.c, line: 2449
+# File: src/files.c, line: 2458
+#: src/files.c:3090 src/files.c:3098 src/files.c:3122 src/files.c:3134
+#, c-format
+msgid "Error writing %s: %s\n"
+msgstr "Erreur lors de l'écriture de %s : %s\n"
+
+#
+# File: src/global.c, line: 266
+# File: src/global.c, line: 266
+#. TRANSLATORS: Try to keep the next fifteen strings at most 10 characters.
+#: src/global.c:469
+msgid "Exit"
+msgstr "Quitter"
+
+#
+# File: src/global.c, line: 477
+# File: src/global.c, line: 477
+#: src/global.c:470
+msgid "Close"
+msgstr "Fermer"
+
+#
+# File: src/global.c, line: 539
+# File: src/global.c, line: 539
+#: src/global.c:471
+msgid "Uncut Text"
+msgstr "Coller"
+
+#
+# File: src/global.c, line: 534
+# File: src/global.c, line: 534
+#: src/global.c:473
+msgid "Unjustify"
+msgstr "Dé-justif."
+
+#
+# File: src/global.c, line: 505
+# File: src/global.c, line: 505
+#: src/global.c:479
+msgid "Read File"
+msgstr "Lire fich."
+
+#
+# File: src/global.c, line: 267
+# File: src/global.c, line: 267
+#: src/global.c:480
+msgid "Where Is"
+msgstr "Chercher"
+
+#
+# File: src/global.c, line: 272
+# File: src/global.c, line: 272
+#: src/global.c:481
+msgid "Replace"
+msgstr "Remplacer"
+
+#
+# File: src/global.c, line: 270
+# File: src/global.c, line: 270
+#: src/global.c:482
+msgid "Go To Line"
+msgstr "Aller lig."
+
+#
+# File: src/global.c, line: 614
+# File: src/global.c, line: 1083
+# File: src/global.c, line: 614
+# File: src/global.c, line: 1083
+#: src/global.c:483
+msgid "Prev Line"
+msgstr "Ligne préc."
+
+#
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+#: src/global.c:484
+msgid "Next Line"
+msgstr "Ligne suiv."
+
+#
+# File: src/global.c, line: 268
+# File: src/global.c, line: 268
+#: src/global.c:485
+msgid "Prev Page"
+msgstr "Page préc."
+
+#
+# File: src/global.c, line: 269
+# File: src/global.c, line: 269
+#: src/global.c:486
+msgid "Next Page"
+msgstr "Page suiv."
+
+#
+# File: src/global.c, line: 488
+# File: src/global.c, line: 488
+#: src/global.c:488
+msgid "Justify"
+msgstr "Justifier"
+
+#
+# File: src/global.c, line: 286
+# File: src/global.c, line: 286
+#: src/global.c:489
+msgid "FullJstify"
+msgstr "Justifier"
+
+#
+# File: src/global.c, line: 288
+# File: src/global.c, line: 288
+#: src/global.c:491
+msgid "Refresh"
+msgstr "Rafraîchir"
+
+#
+# File: src/global.c, line: 275
+# File: src/global.c, line: 275
+#. TRANSLATORS: Try to keep this string at most 12 characters.
+#: src/global.c:494
+msgid "WhereIs Next"
+msgstr "Cherch.suiv."
+
+#
+# File: src/global.c, line: 325
+# File: src/global.c, line: 325
+#. TRANSLATORS: The next long series of strings are shortcut descriptions;
+#. * they are best kept shorter than 56 characters, but may be longer.
+#: src/global.c:501
+msgid "Justify the current paragraph"
+msgstr "Justifier le paragraphe courant"
+
+#
+# File: src/global.c, line: 314
+# File: src/global.c, line: 314
+#: src/global.c:503
+msgid "Cancel the current function"
+msgstr "Annuler la fonction courante"
+
+#
+# File: src/global.c, line: 315
+# File: src/global.c, line: 315
+#: src/global.c:504
+msgid "Display this help text"
+msgstr "Afficher ce message"
+
+#
+# File: src/global.c, line: 318
+# File: src/global.c, line: 318
+#: src/global.c:507
+msgid "Close the current file buffer / Exit from nano"
+msgstr "Fermer l'espace en cours / Quitter nano"
+
+#
+# File: src/global.c, line: 320
+# File: src/global.c, line: 320
+#: src/global.c:509
+msgid "Exit from nano"
+msgstr "Quitter nano"
+
+#
+# File: src/global.c, line: 324
+# File: src/global.c, line: 324
+#: src/global.c:513
+msgid "Write the current file to disk"
+msgstr "Écrire le fichier en cours sur le disque"
+
+#
+# File: src/global.c, line: 327
+# File: src/global.c, line: 327
+#: src/global.c:515
+msgid "Insert another file into the current one"
+msgstr "Insérer un autre fichier dans l'espace en cours"
+
+#
+# File: src/global.c, line: 329
+# File: src/global.c, line: 329
+#: src/global.c:517
+msgid "Search for a string or a regular expression"
+msgstr "Rechercher une chaîne ou une expression rationnelle"
+
+#
+# File: src/global.c, line: 329
+# File: src/global.c, line: 329
+#: src/global.c:519
+msgid "Search for a string"
+msgstr "Recherche d'une chaîne"
+
+#: src/global.c:520
+msgid "Refresh the file list"
+msgstr "Mettre à jour la liste des fichiers"
+
+#
+# File: src/global.c, line: 340
+# File: src/global.c, line: 340
+#: src/global.c:521
+msgid "Go to lefthand column"
+msgstr "Aller à la colonne de gauche"
+
+#
+# File: src/global.c, line: 340
+# File: src/global.c, line: 340
+#: src/global.c:522
+msgid "Go to righthand column"
+msgstr "Aller à la colonne de droite"
+
+#
+# File: src/global.c, line: 331
+# File: src/global.c, line: 331
+#: src/global.c:524
+msgid "Go one screenful up"
+msgstr "Monter d'un écran"
+
+#
+# File: src/global.c, line: 331
+# File: src/global.c, line: 331
+#: src/global.c:525
+msgid "Go one screenful down"
+msgstr "Descendre d'un écran"
+
+#
+# File: src/global.c, line: 333
+# File: src/global.c, line: 333
+#: src/global.c:527
+msgid "Cut the current line and store it in the cutbuffer"
+msgstr "Couper la ligne courante vers le presse-papiers"
+
+#
+# File: src/global.c, line: 335
+# File: src/global.c, line: 335
+#: src/global.c:529
+msgid "Uncut from the cutbuffer into the current line"
+msgstr "Coller le presse-papiers à partir de la ligne courante"
+
+#
+# File: src/global.c, line: 337
+# File: src/global.c, line: 337
+#: src/global.c:530
+msgid "Display the position of the cursor"
+msgstr "Indiquer la position du curseur"
+
+#
+# File: src/global.c, line: 339
+# File: src/global.c, line: 339
+#: src/global.c:532
+msgid "Invoke the spell checker, if available"
+msgstr "Appeler le correcteur orthographique (si dispo.)"
+
+#
+# File: src/global.c, line: 342
+# File: src/global.c, line: 342
+#: src/global.c:534
+msgid "Replace a string or a regular expression"
+msgstr "Remplacer une chaîne ou une expression rationnelle"
+
+#
+# File: src/global.c, line: 340
+# File: src/global.c, line: 340
+#: src/global.c:535
+msgid "Go to line and column number"
+msgstr "Aller à la ligne et à la colonne indiquées"
+
+#
+# File: src/global.c, line: 344
+# File: src/global.c, line: 344
+#: src/global.c:537
+msgid "Mark text starting from the cursor position"
+msgstr "Marquer le texte depuis la position du curseur"
+
+#
+# File: src/global.c, line: 345
+# File: src/global.c, line: 345
+#: src/global.c:538
+msgid "Repeat the last search"
+msgstr "Recommencer la dernière recherche"
+
+#
+# File: src/global.c, line: 347
+# File: src/global.c, line: 347
+#: src/global.c:540
+msgid "Copy the current line and store it in the cutbuffer"
+msgstr "Copier la ligne courante dans le presse-papiers"
+
+#
+# File: src/global.c, line: 314
+# File: src/global.c, line: 314
+#: src/global.c:541
+msgid "Indent the current line"
+msgstr "Augmenter la marge de la ligne courante"
+
+#
+# File: src/global.c, line: 314
+# File: src/global.c, line: 314
+#: src/global.c:542
+msgid "Unindent the current line"
+msgstr "Diminuer la marge de la ligne courante"
+
+#: src/global.c:544
+msgid "Comment/uncomment the current line or marked lines"
+msgstr "Commenter ou décommenter la ligne courante ou les lignes marquées"
+
+#: src/global.c:546
+msgid "Undo the last operation"
+msgstr "Annuler la dernière opération"
+
+#: src/global.c:547
+msgid "Redo the last undone operation"
+msgstr "Refaire la dernière opération annulée"
+
+#
+# File: src/global.c, line: 352
+# File: src/global.c, line: 352
+#: src/global.c:549
+msgid "Go back one character"
+msgstr "Reculer d'un caractère"
+
+#
+# File: src/global.c, line: 351
+# File: src/global.c, line: 351
+#: src/global.c:550
+msgid "Go forward one character"
+msgstr "Avancer d'un caractère"
+
+#
+# File: src/global.c, line: 355
+# File: src/global.c, line: 355
+#: src/global.c:552
+msgid "Go back one word"
+msgstr "Reculer d'un mot"
+
+#
+# File: src/global.c, line: 354
+# File: src/global.c, line: 354
+#: src/global.c:553
+msgid "Go forward one word"
+msgstr "Avancer d'un mot"
+
+#
+# File: src/global.c, line: 357
+# File: src/global.c, line: 357
+#: src/global.c:555
+msgid "Go to previous line"
+msgstr "Aller à la ligne précédente"
+
+#
+# File: src/global.c, line: 358
+# File: src/global.c, line: 358
+#: src/global.c:556
+msgid "Go to next line"
+msgstr "Aller à la ligne suivante"
+
+#
+# File: src/global.c, line: 360
+# File: src/global.c, line: 360
+#: src/global.c:557
+msgid "Go to beginning of current line"
+msgstr "Aller au début de la ligne courante"
+
+#
+# File: src/global.c, line: 362
+# File: src/global.c, line: 362
+#: src/global.c:558
+msgid "Go to end of current line"
+msgstr "Aller à la fin de la ligne courante"
+
+#
+# File: src/global.c, line: 357
+# File: src/global.c, line: 357
+#: src/global.c:560
+msgid "Go to previous block of text"
+msgstr "Aller au bloc de texte précédent"
+
+#
+# File: src/global.c, line: 358
+# File: src/global.c, line: 358
+#: src/global.c:561
+msgid "Go to next block of text"
+msgstr "Aller au bloc de texte suivant"
+
+#
+# File: src/global.c, line: 365
+# File: src/global.c, line: 365
+#: src/global.c:565
+msgid "Go to beginning of paragraph; then of previous paragraph"
+msgstr "Aller au début du paragraphe, puis à celui du précédent"
+
+#
+# File: src/global.c, line: 367
+# File: src/global.c, line: 367
+#: src/global.c:567
+msgid "Go just beyond end of paragraph; then of next paragraph"
+msgstr "Aller à la fin du paragraphe, puis à celle du suivant"
+
+#
+# File: src/global.c, line: 370
+# File: src/global.c, line: 370
+#: src/global.c:569
+msgid "Go to the first line of the file"
+msgstr "Aller à la première ligne du fichier"
+
+#
+# File: src/global.c, line: 372
+# File: src/global.c, line: 372
+#: src/global.c:570
+msgid "Go to the last line of the file"
+msgstr "Aller à la dernière ligne du fichier"
+
+#
+# File: src/global.c, line: 374
+# File: src/global.c, line: 374
+#: src/global.c:572
+msgid "Go to the matching bracket"
+msgstr "Aller au crochet correspondant"
+
+#
+# File: src/global.c, line: 376
+# File: src/global.c, line: 376
+#: src/global.c:574
+msgid "Scroll up one line without scrolling the cursor"
+msgstr "Remonter d'une ligne sans déplacer le curseur"
+
+#
+# File: src/global.c, line: 378
+# File: src/global.c, line: 378
+#: src/global.c:576
+msgid "Scroll down one line without scrolling the cursor"
+msgstr "Descendre d'une ligne sans déplacer le curseur"
+
+#
+# File: src/global.c, line: 382
+# File: src/global.c, line: 382
+#: src/global.c:579
+msgid "Switch to the previous file buffer"
+msgstr "Basculer vers l'espace précédent"
+
+#
+# File: src/global.c, line: 384
+# File: src/global.c, line: 384
+#: src/global.c:580
+msgid "Switch to the next file buffer"
+msgstr "Basculer vers l'espace suivant"
+
+#
+# File: src/global.c, line: 387
+# File: src/global.c, line: 387
+#: src/global.c:582
+msgid "Insert the next keystroke verbatim"
+msgstr "Insérer le prochain caractère tel quel"
+
+#
+# File: src/global.c, line: 389
+# File: src/global.c, line: 389
+#: src/global.c:583
+msgid "Insert a tab at the cursor position"
+msgstr "Insérer une tabulation à la position du curseur"
+
+#
+# File: src/global.c, line: 391
+# File: src/global.c, line: 391
+#: src/global.c:584
+msgid "Insert a newline at the cursor position"
+msgstr "Insérer un passage à la ligne à la position du curseur"
+
+#
+# File: src/global.c, line: 393
+# File: src/global.c, line: 393
+#: src/global.c:585
+msgid "Delete the character under the cursor"
+msgstr "Supprimer le caractère sous le curseur"
+
+#
+# File: src/global.c, line: 395
+# File: src/global.c, line: 395
+#: src/global.c:587
+msgid "Delete the character to the left of the cursor"
+msgstr "Supprimer le caractère à la gauche du curseur"
+
+#
+# File: src/nano.c, line: 799
+# File: src/nano.c, line: 799
+#: src/global.c:590
+msgid "Cut backward from cursor to word start"
+msgstr "Coupe en arrière du curseur au début du mot"
+
+#
+# File: src/nano.c, line: 799
+# File: src/nano.c, line: 799
+#: src/global.c:592
+msgid "Cut forward from cursor to next word start"
+msgstr "Coupe en avant du curseur à la fin du mot"
+
+#
+# File: src/global.c, line: 398
+# File: src/global.c, line: 398
+#: src/global.c:594
+msgid "Cut from the cursor position to the end of the file"
+msgstr "Couper du curseur à la fin du fichier"
+
+#
+# File: src/global.c, line: 401
+# File: src/global.c, line: 401
+#: src/global.c:597
+msgid "Justify the entire file"
+msgstr "Justifier le fichier entier"
+
+#
+# File: src/global.c, line: 405
+# File: src/global.c, line: 405
+#: src/global.c:601
+msgid "Count the number of words, lines, and characters"
+msgstr "Compter le nombre de mots, de lignes et de caractères"
+
+#
+# File: src/global.c, line: 408
+# File: src/global.c, line: 408
+#: src/global.c:604
+msgid "Refresh (redraw) the current screen"
+msgstr "Rafraîchir (redessiner) l'écran courant"
+
+#: src/global.c:606
+msgid "Suspend the editor (if suspension is enabled)"
+msgstr "Suspendre l'éditeur (si suspendre est activé)"
+
+#: src/global.c:608
+msgid "Save file without prompting"
+msgstr "Écrire sans poser de question"
+
+#: src/global.c:609
+msgid "Search next occurrence backward"
+msgstr "Rechercher la prochaine occurernce en avant"
+
+#: src/global.c:610
+msgid "Search next occurrence forward"
+msgstr "Rechercher la prochaine occurernce en arrière"
+
+#
+# File: src/global.c, line: 411
+# File: src/global.c, line: 411
+#: src/global.c:612
+msgid "Toggle the case sensitivity of the search"
+msgstr "Chercher en tenant compte de la casse (commutateur)"
+
+#
+# File: src/global.c, line: 413
+# File: src/global.c, line: 413
+#: src/global.c:614
+msgid "Reverse the direction of the search"
+msgstr "Inverser le sens de la recherche"
+
+#
+# File: src/global.c, line: 417
+# File: src/global.c, line: 417
+#: src/global.c:618
+msgid "Toggle the use of regular expressions"
+msgstr "Utiliser des expressions rationnelles (commutateur)"
+
+#
+# File: src/global.c, line: 421
+# File: src/global.c, line: 421
+#: src/global.c:622
+msgid "Recall the previous search/replace string"
+msgstr "Rappeler la précédente chaîne de recherche"
+
+#
+# File: src/global.c, line: 423
+# File: src/global.c, line: 423
+#: src/global.c:624
+msgid "Recall the next search/replace string"
+msgstr "Rappeler la chaîne de recherche suivante"
+
+#
+# File: src/global.c, line: 426
+# File: src/global.c, line: 426
+#: src/global.c:627
+msgid "Go to file browser"
+msgstr "Ouvrir le navigateur de fichiers"
+
+#
+# File: src/global.c, line: 429
+# File: src/global.c, line: 429
+#: src/global.c:630
+msgid "Toggle the use of DOS format"
+msgstr "Utiliser le format DOS (commutateur)"
+
+#
+# File: src/global.c, line: 430
+# File: src/global.c, line: 430
+#: src/global.c:631
+msgid "Toggle the use of Mac format"
+msgstr "Utiliser le format Mac (commutateur)"
+
+#
+# File: src/global.c, line: 432
+# File: src/global.c, line: 432
+#: src/global.c:632
+msgid "Toggle appending"
+msgstr "Ajouter à la fin du fichier (commutateur)"
+
+#
+# File: src/global.c, line: 433
+# File: src/global.c, line: 433
+#: src/global.c:633
+msgid "Toggle prepending"
+msgstr "Ajouter au début du fichier (commutateur)"
+
+#
+# File: src/global.c, line: 436
+# File: src/global.c, line: 436
+#: src/global.c:634
+msgid "Toggle backing up of the original file"
+msgstr "Créer une copie de sécurité de l'original (commutateur)"
+
+#
+# File: src/global.c, line: 437
+# File: src/global.c, line: 437
+#: src/global.c:635
+msgid "Execute external command"
+msgstr "Exécuter une commande externe"
+
+#: src/global.c:637
+msgid "Close buffer without saving it"
+msgstr "Fermer l'espace sans l'écrire"
+
+#
+# File: src/global.c, line: 441
+# File: src/global.c, line: 441
+#: src/global.c:639
+msgid "Toggle the use of a new buffer"
+msgstr "Utiliser un nouvel espace (commutateur)"
+
+#
+# File: src/global.c, line: 444
+# File: src/global.c, line: 444
+#: src/global.c:642
+msgid "Exit from the file browser"
+msgstr "Sortir du navigateur de fichiers"
+
+#
+# File: src/global.c, line: 446
+# File: src/global.c, line: 446
+#: src/global.c:643
+msgid "Go to the first file in the list"
+msgstr "Aller au premier fichier de la liste"
+
+#
+# File: src/global.c, line: 448
+# File: src/global.c, line: 448
+#: src/global.c:644
+msgid "Go to the last file in the list"
+msgstr "Aller au dernier fichier de la liste"
+
+#
+# File: src/global.c, line: 446
+# File: src/global.c, line: 446
+#: src/global.c:645
+msgid "Go to the previous file in the list"
+msgstr "Aller au précédent fichier de la liste"
+
+#
+# File: src/global.c, line: 448
+# File: src/global.c, line: 448
+#: src/global.c:646
+msgid "Go to the next file in the list"
+msgstr "Aller au prochain fichier de la liste"
+
+#
+# File: src/global.c, line: 449
+# File: src/global.c, line: 449
+#: src/global.c:647
+msgid "Go to directory"
+msgstr "Changer de répertoire"
+
+#
+# File: src/global.c, line: 339
+# File: src/global.c, line: 339
+#: src/global.c:650
+msgid "Invoke the linter, if available"
+msgstr "Appeler l'analyseur statique (si dispo.)"
+
+#
+# File: src/global.c, line: 357
+# File: src/global.c, line: 357
+#: src/global.c:651
+msgid "Go to previous linter msg"
+msgstr "Aller au message précédent de l'analyse statique"
+
+#
+# File: src/global.c, line: 358
+# File: src/global.c, line: 358
+#: src/global.c:652
+msgid "Go to next linter msg"
+msgstr "Aller au message suivant de l'analyse statique"
+
+#
+# File: src/global.c, line: 339
+# File: src/global.c, line: 339
+#: src/global.c:654
+msgid "Invoke formatter, if available"
+msgstr "Appeler l'outil de mise en forme (si dispo.)"
+
+#
+# Les messages suivants doivent tenir sur 10 caractères !
+# Ils sont utilisés comme entrée des menus du bas d'écran.
+# File: src/global.c, line: 265
+# File: src/global.c, line: 265
+#. TRANSLATORS: Try to keep the following strings at most 10 characters.
+#: src/global.c:669
+msgid "Get Help"
+msgstr "Aide"
+
+#
+# File: src/global.c, line: 264
+# File: src/prompt.c, line: 1281
+# File: src/global.c, line: 264
+# File: src/prompt.c, line: 1281
+#: src/global.c:672 src/prompt.c:832
+msgid "Cancel"
+msgstr "Annuler"
+
+#
+# File: src/global.c, line: 483
+# File: src/global.c, line: 483
+#: src/global.c:685
+msgid "Write Out"
+msgstr "Écrire"
+
+#
+# File: src/global.c, line: 1154
+# File: src/global.c, line: 1154
+#: src/global.c:721
+msgid "Go To Dir"
+msgstr "Aller -> rép."
+
+#
+# File: src/global.c, line: 528
+# File: src/global.c, line: 528
+#: src/global.c:736
+msgid "Cut Text"
+msgstr "Couper"
+
+#
+# File: src/global.c, line: 552
+# File: src/global.c, line: 552
+#: src/global.c:751
+msgid "To Spell"
+msgstr "Orthograp."
+
+#
+# File: src/global.c, line: 270
+# File: src/global.c, line: 270
+#: src/global.c:755
+msgid "To Linter"
+msgstr "Analyse statique"
+
+#
+# File: src/global.c, line: 958
+# File: src/global.c, line: 958
+#: src/global.c:758
+msgid "Formatter"
+msgstr "Formateur"
+
+#
+# File: src/global.c, line: 290
+# File: src/global.c, line: 290
+#: src/global.c:765
+msgid "Case Sens"
+msgstr "Resp.casse"
+
+#
+# File: src/global.c, line: 294
+# File: src/global.c, line: 294
+#: src/global.c:770
+msgid "Regexp"
+msgstr "Exp. ratio."
+
+#
+# File: src/global.c, line: 291
+# File: src/global.c, line: 291
+#: src/global.c:775
+msgid "Backwards"
+msgstr "->Arrière"
+
+#
+# File: src/global.c, line: 828
+# File: src/global.c, line: 828
+#: src/global.c:782
+msgid "No Replace"
+msgstr "Rechercher"
+
+#
+# File: src/global.c, line: 544
+# File: src/global.c, line: 544
+#: src/global.c:790
+msgid "Cur Pos"
+msgstr "Pos. cur."
+
+#
+# File: src/global.c, line: 278
+# File: src/global.c, line: 278
+#: src/global.c:805
+msgid "First Line"
+msgstr "Première ligne"
+
+#
+# File: src/global.c, line: 279
+# File: src/global.c, line: 279
+#: src/global.c:807
+msgid "Last Line"
+msgstr "Dernière ligne"
+
+#
+# File: src/search.c, line: 1167
+# File: src/search.c, line: 1167
+#: src/global.c:814
+msgid "To Bracket"
+msgstr "Parenthèse corresp."
+
+#
+# File: src/global.c, line: 575
+# File: src/global.c, line: 575
+#: src/global.c:817
+msgid "Mark Text"
+msgstr "Marquer"
+
+#
+# File: src/global.c, line: 583
+# File: src/global.c, line: 583
+#: src/global.c:820
+msgid "Copy Text"
+msgstr "Copier"
+
+#
+# File: src/global.c, line: 587
+# File: src/global.c, line: 587
+#: src/global.c:823
+msgid "Indent Text"
+msgstr "Indenter"
+
+#
+# File: src/global.c, line: 591
+# File: src/global.c, line: 591
+#: src/global.c:825
+msgid "Unindent Text"
+msgstr "Supprimer l'indentation"
+
+#: src/global.c:828
+msgid "Undo"
+msgstr "Annuler"
+
+#: src/global.c:830
+msgid "Redo"
+msgstr "Refaire"
+
+#
+# File: src/global.c, line: 600
+# File: src/global.c, line: 600
+#: src/global.c:834 src/global.c:840
+msgid "Back"
+msgstr "En arrière"
+
+#
+# File: src/global.c, line: 596
+# File: src/global.c, line: 596
+#: src/global.c:836 src/global.c:842
+msgid "Forward"
+msgstr "En avant"
+
+#
+# File: src/global.c, line: 609
+# File: src/global.c, line: 609
+#: src/global.c:847
+msgid "Prev Word"
+msgstr "Mot précédent"
+
+#
+# File: src/global.c, line: 605
+# File: src/global.c, line: 605
+#: src/global.c:849
+msgid "Next Word"
+msgstr "Mot suivant"
+
+#
+# File: src/global.c, line: 622
+# File: src/global.c, line: 622
+#: src/global.c:853
+msgid "Home"
+msgstr "Début doc."
+
+#
+# File: src/global.c, line: 626
+# File: src/global.c, line: 626
+#: src/global.c:855
+msgid "End"
+msgstr "Fin"
+
+#
+# File: src/global.c, line: 609
+# File: src/global.c, line: 609
+#: src/global.c:864
+msgid "Prev Block"
+msgstr "Bloc précédent"
+
+#
+# File: src/global.c, line: 605
+# File: src/global.c, line: 605
+#: src/global.c:866
+msgid "Next Block"
+msgstr "Bloc suivant"
+
+#
+# File: src/global.c, line: 284
+# File: src/global.c, line: 284
+#: src/global.c:871
+msgid "Beg of Par"
+msgstr "Début para."
+
+#
+# File: src/global.c, line: 285
+# File: src/global.c, line: 285
+#: src/global.c:873
+msgid "End of Par"
+msgstr "Fin para."
+
+#
+# File: src/global.c, line: 653
+# File: src/global.c, line: 653
+#: src/global.c:878
+msgid "Scroll Up"
+msgstr "Remonter"
+
+#
+# File: src/global.c, line: 657
+# File: src/global.c, line: 657
+#: src/global.c:880
+msgid "Scroll Down"
+msgstr "Descendre"
+
+#
+# File: src/global.c, line: 663
+# File: src/global.c, line: 663
+#: src/global.c:885
+msgid "Prev File"
+msgstr "Fichier précédent"
+
+#
+# File: src/global.c, line: 668
+# File: src/global.c, line: 668
+#: src/global.c:887
+msgid "Next File"
+msgstr "Fichier suivant"
+
+#
+# File: src/global.c, line: 673
+# File: src/text.c, line: 2431
+# File: src/global.c, line: 673
+# File: src/text.c, line: 2431
+#: src/global.c:896
+msgid "Verbatim"
+msgstr "Entrée telle quelle"
+
+#
+# File: src/global.c, line: 677
+# File: src/global.c, line: 677
+#: src/global.c:899
+msgid "Tab"
+msgstr "Tabulation"
+
+#
+# File: src/global.c, line: 681
+# File: src/global.c, line: 681
+#: src/global.c:901
+msgid "Enter"
+msgstr "Entrée"
+
+#
+# File: src/global.c, line: 685
+# File: src/global.c, line: 685
+#: src/global.c:904
+msgid "Delete"
+msgstr "Supprimer"
+
+#
+# File: src/global.c, line: 689
+# File: src/global.c, line: 689
+#: src/global.c:906
+msgid "Backspace"
+msgstr "RetourArr."
+
+#
+# File: src/global.c, line: 528
+# File: src/global.c, line: 528
+#. TRANSLATORS: The next two strings refer to cutting words.
+#: src/global.c:917
+msgid "Cut Left"
+msgstr "Couper à gauche"
+
+#: src/global.c:919
+msgid "Cut Right"
+msgstr "Couper à droite"
+
+#
+# File: src/global.c, line: 281
+# File: src/global.c, line: 281
+#: src/global.c:921
+msgid "CutTillEnd"
+msgstr "Coup.->Fin"
+
+#
+# File: src/global.c, line: 710
+# File: src/global.c, line: 710
+#: src/global.c:931
+msgid "Word Count"
+msgstr "Nombre de mots "
+
+#
+# File: src/global.c, line: 1360
+# File: src/global.c, line: 1360
+#: src/global.c:938
+msgid "Suspend"
+msgstr "Suspendre"
+
+#
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+#: src/global.c:942
+msgid "Comment Lines"
+msgstr "Commenter la ligne"
+
+#: src/global.c:946
+msgid "Save"
+msgstr "Écrire"
+
+#: src/global.c:949
+msgid "Previous"
+msgstr "Précédent"
+
+#
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+#: src/global.c:951
+msgid "Next"
+msgstr "Suivant"
+
+#
+# File: src/global.c, line: 297
+# File: src/global.c, line: 297
+#: src/global.c:957
+msgid "PrevHstory"
+msgstr "Précédente"
+
+#
+# File: src/global.c, line: 299
+# File: src/global.c, line: 299
+#: src/global.c:960
+msgid "NextHstory"
+msgstr "Suivante"
+
+#
+# File: src/global.c, line: 919
+# File: src/global.c, line: 919
+#: src/global.c:969
+msgid "Go To Text"
+msgstr "Rechercher"
+
+#
+# File: src/global.c, line: 958
+# File: src/global.c, line: 958
+#: src/global.c:973
+msgid "DOS Format"
+msgstr "Format DOS"
+
+#
+# File: src/global.c, line: 964
+# File: src/global.c, line: 964
+#: src/global.c:975
+msgid "Mac Format"
+msgstr "Format Mac"
+
+#
+# File: src/global.c, line: 971
+# File: src/global.c, line: 971
+#: src/global.c:983
+msgid "Append"
+msgstr "Ajout (à la fin)"
+
+#
+# File: src/global.c, line: 977
+# File: src/global.c, line: 977
+#: src/global.c:985
+msgid "Prepend"
+msgstr "Ajout (au début)"
+
+#
+# File: src/global.c, line: 984
+# File: src/global.c, line: 984
+#: src/global.c:988
+msgid "Backup File"
+msgstr "Copie de sécu."
+
+#
+# File: src/global.c, line: 1021
+# File: src/global.c, line: 1021
+#: src/global.c:995
+msgid "Execute Command"
+msgstr "Exécuter une commande"
+
+#
+# File: src/global.c, line: 307
+# File: src/global.c, line: 307
+#: src/global.c:1010
+msgid "To Files"
+msgstr "Parcourir"
+
+#
+# File: src/global.c, line: 309
+# File: src/global.c, line: 309
+#: src/global.c:1018
+msgid "First File"
+msgstr "Prem. fich."
+
+#
+# File: src/global.c, line: 311
+# File: src/global.c, line: 311
+#: src/global.c:1020
+msgid "Last File"
+msgstr "Dern. fich."
+
+#: src/global.c:1024
+msgid "Discard buffer"
+msgstr "Abandonner l'espace"
+
+#: src/global.c:1035
+msgid "Left Column"
+msgstr "Colonne de gauche"
+
+#: src/global.c:1037
+msgid "Right Column"
+msgstr "Colonne de droite"
+
+#
+# File: src/global.c, line: 614
+# File: src/global.c, line: 1083
+# File: src/global.c, line: 614
+# File: src/global.c, line: 1083
+#. TRANSLATORS: Try to keep the next two strings at most 20 characters.
+#: src/global.c:1044
+msgid "Prev Lint Msg"
+msgstr "Analyse préc."
+
+#
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+#: src/global.c:1046
+msgid "Next Lint Msg"
+msgstr "Analyse suiv."
+
+#
+# File: src/global.c, line: 1277
+# File: src/global.c, line: 1277
+#. TRANSLATORS: The next seventeen strings are toggle descriptions;
+#. * they are best kept shorter than 40 characters, but may be longer.
+#: src/global.c:1317
+msgid "Help mode"
+msgstr "Mode aide"
+
+#
+# File: src/global.c, line: 1280
+# File: src/global.c, line: 1280
+#: src/global.c:1319
+msgid "Constant cursor position display"
+msgstr "Afficher la position du curseur"
+
+#
+# File: src/global.c, line: 1283
+# File: src/global.c, line: 1283
+#: src/global.c:1321
+msgid "Use of one more line for editing"
+msgstr "Utiliser 1 ligne de plus pour l'édition"
+
+#
+# File: src/global.c, line: 1285
+# File: src/nano.c, line: 776
+# File: src/global.c, line: 1285
+# File: src/nano.c, line: 776
+#: src/global.c:1323
+msgid "Smooth scrolling"
+msgstr "Défilement progressif"
+
+#
+# File: src/nano.c, line: 824
+# File: src/nano.c, line: 824
+#: src/global.c:1325
+msgid "Soft wrapping of overlong lines"
+msgstr "Affichage automatique sur plusieurs lignes"
+
+#
+# File: src/global.c, line: 1294
+# File: src/global.c, line: 1294
+#: src/global.c:1327
+msgid "Whitespace display"
+msgstr "Afficher les blancs"
+
+#
+# File: src/global.c, line: 1304
+# File: src/global.c, line: 1304
+#: src/global.c:1329
+msgid "Color syntax highlighting"
+msgstr "Coloration syntaxique"
+
+#
+# File: src/global.c, line: 1308
+# File: src/global.c, line: 1308
+#: src/global.c:1331
+msgid "Smart home key"
+msgstr "Touche « Début » intelligente"
+
+#
+# File: src/global.c, line: 1311
+# File: src/global.c, line: 1311
+#: src/global.c:1333
+msgid "Auto indent"
+msgstr "Indenter automatiquement"
+
+#
+# File: src/global.c, line: 1314
+# File: src/global.c, line: 1314
+#: src/global.c:1335
+msgid "Cut to end"
+msgstr "Couper jusqu'en fin de ligne"
+
+#
+# File: src/nano.c, line: 824
+# File: src/nano.c, line: 824
+#: src/global.c:1337
+msgid "Hard wrapping of overlong lines"
+msgstr "Passer à la ligne automatiquement"
+
+#
+# File: src/global.c, line: 1323
+# File: src/global.c, line: 1323
+#: src/global.c:1339
+msgid "Conversion of typed tabs to spaces"
+msgstr "La touche tabulation ajoute des espaces"
+
+#
+# File: src/global.c, line: 1334
+# File: src/global.c, line: 1334
+#: src/global.c:1341
+msgid "Backup files"
+msgstr "Conserver des copies de sécurité"
+
+#: src/global.c:1343
+msgid "Reading file into separate buffer"
+msgstr "Lecture du fichier dans un autre espace"
+
+#
+# File: src/global.c, line: 1346
+# File: src/global.c, line: 1346
+#: src/global.c:1345
+msgid "Mouse support"
+msgstr "Utiliser la souris"
+
+#
+# File: src/global.c, line: 1354
+# File: src/global.c, line: 1354
+#: src/global.c:1347
+msgid "No conversion from DOS/Mac format"
+msgstr "Pas de conversion des formats DOS et Mac"
+
+#
+# File: src/global.c, line: 1360
+# File: src/global.c, line: 1360
+#: src/global.c:1349
+msgid "Suspension"
+msgstr "Autoriser à suspendre"
+
+#
+# File: src/help.c, line: 228
+# File: src/help.c, line: 228
+#: src/help.c:211
+msgid ""
+"Search Command Help Text\n"
+"\n"
+" Enter the words or characters you would like to search for, and then press "
+"Enter.  If there is a match for the text you entered, the screen will be "
+"updated to the location of the nearest match for the search string.\n"
+"\n"
+" The previous search string will be shown in brackets after the search "
+"prompt.  Hitting Enter without entering any text will perform the previous "
+"search.  "
+msgstr ""
+" Aide de la commande de recherche\n"
+"\n"
+" Entrez les mots ou les caractères que vous désirez chercher, puis appuyez "
+"sur « Entrée ». Si un texte correspondant est trouvé, vous serez conduit à "
+"l'emplacement de la plus proche occurrence du texte recherché.\n"
+"\n"
+" La chaîne précédemment recherchée sera affichée entre crochets derrière "
+"l'invite de recherche. Appuyer sur « Entrée » sans indiquer de texte "
+"recommencera la recherche précédente. "
+
+#
+# File: src/help.c, line: 237
+# File: src/help.c, line: 237
+#: src/help.c:220
+msgid ""
+"If you have selected text with the mark and then search to replace, only "
+"matches in the selected text will be replaced.\n"
+"\n"
+" The following function keys are available in Search mode:\n"
+"\n"
+msgstr ""
+"Si vous avez sélectionné un zone de texte en marquant le texte et que vous "
+"effectuez un remplacement seules les correspondances du texte sélectionné "
+"seront remplacées.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles en mode recherche :\n"
+"\n"
+
+#
+# File: src/help.c, line: 243
+# File: src/help.c, line: 243
+#: src/help.c:226
+msgid ""
+"Go To Line Help Text\n"
+"\n"
+" Enter the line number that you wish to go to and hit Enter.  If there are "
+"fewer lines of text than the number you entered, you will be brought to the "
+"last line of the file.\n"
+"\n"
+" The following function keys are available in Go To Line mode:\n"
+"\n"
+msgstr ""
+" Aide de la commande aller à la ligne indiquée\n"
+"\n"
+" Indiquez le numéro de ligne que vous désirez atteindre et appuyer sur "
+"« Entrée ». S'il y a moins de lignes de texte que le nombre que vous avez "
+"indiqué, vous serez conduit à la dernière ligne de texte du fichier.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles dans le mode sauter à la "
+"ligne :\n"
+"\n"
+
+#
+# File: src/help.c, line: 252
+# File: src/help.c, line: 252
+#: src/help.c:235
+msgid ""
+"Insert File Help Text\n"
+"\n"
+" Type in the name of a file to be inserted into the current file buffer at "
+"the current cursor location.\n"
+"\n"
+" If you have compiled nano with multiple file buffer support, and enable "
+"multiple file buffers with the -F or --multibuffer command line flags, the "
+"Meta-F toggle, or a nanorc file, inserting a file will cause it to be loaded "
+"into a separate buffer (use Meta-< and > to switch between file buffers).  "
+msgstr ""
+" Aide de l'insertion de fichier\n"
+"\n"
+" Indiquez le nom du fichier que vous désirez insérer dans l'espace courant. "
+"Il sera copié là où se trouve le curseur.\n"
+"\n"
+" Si vous avez compilé nano avec la capacité de traiter simultanément "
+"plusieurs espaces et que cette option a été activée soit via l'une des "
+"options de démarrage -F ou --multibuffer, soit via le commutateur Méta-F, "
+"soit via le fichier nanorc, l'insertion d'un fichier entraînera son "
+"chargement dans un espace séparé (utilisez Méta-< et > pour passer d'un "
+"espace à l'autre). "
+
+#
+# File: src/help.c, line: 261
+# File: src/help.c, line: 261
+#: src/help.c:244
+msgid ""
+"If you need another blank buffer, do not enter any filename, or type in a "
+"nonexistent filename at the prompt and press Enter.\n"
+"\n"
+" The following function keys are available in Insert File mode:\n"
+"\n"
+msgstr ""
+"Si vous avez besoin de créer un nouvel espace, appuyez sur « Entrée » à "
+"l'invite sans indiquer de nom de fichier ou en indiquant le nom d'un fichier "
+"inexistant.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles en mode insertion de "
+"fichier :\n"
+"\n"
+
+#
+# File: src/help.c, line: 267
+# File: src/help.c, line: 267
+#: src/help.c:250
+msgid ""
+"Write File Help Text\n"
+"\n"
+" Type the name that you wish to save the current file as and press Enter to "
+"save the file.\n"
+"\n"
+" If you have selected text with the mark, you will be prompted to save only "
+"the selected portion to a separate file.  To reduce the chance of "
+"overwriting the current file with just a portion of it, the current filename "
+"is not the default in this mode.\n"
+"\n"
+" The following function keys are available in Write File mode:\n"
+"\n"
+msgstr ""
+" Aide de l'écriture de fichier\n"
+"\n"
+" Indiquez le nom sous lequel vous désirez écrire le fichier courant et "
+"appuyez sur la touche « Entrée » pour sauver le fichier.\n"
+"\n"
+" Si vous avez sélectionné du texte en le marquant, il vous sera proposé de "
+"sauver seulement la partie sélectionnée du texte dans un fichier différent. "
+"Pour limiter le risque d'écraser le fichier en cours avec une simple portion "
+"de ce dernier, le nom du fichier courant ne vous sera proposé par défaut "
+"dans ce mode.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles en mode écriture de "
+"fichier :\n"
+"\n"
+
+#
+# File: src/help.c, line: 281
+# File: src/help.c, line: 281
+#: src/help.c:264
+msgid ""
+"File Browser Help Text\n"
+"\n"
+" The file browser is used to visually browse the directory structure to "
+"select a file for reading or writing.  You may use the arrow keys or Page Up/"
+"Down to browse through the files, and S or Enter to choose the selected file "
+"or enter the selected directory.  To move up one level, select the directory "
+"called \"..\" at the top of the file list.\n"
+"\n"
+" The following function keys are available in the file browser:\n"
+"\n"
+msgstr ""
+" Aide du navigateur de fichiers\n"
+"\n"
+" Le navigateur de fichiers est utilisé pour parcourir visuellement la "
+"structure des répertoires afin de sélectionner un fichier en lecture ou en "
+"écriture. Les flèches et les touches « page précédente » et « page "
+"suivante » peuvent être utilisées pour parcourir les fichiers, les touches "
+"« S » et « Entrée » permettent de sélectionner un fichier ou de descendre "
+"dans un répertoire. Pour remonter dans l'arborescence des répertoires, "
+"sélectionner le répertoire appelé  « .. » en haut de la liste des fichiers.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles en mode navigateur de "
+"fichiers :\n"
+"\n"
+
+#
+# File: src/help.c, line: 294
+# File: src/help.c, line: 294
+#: src/help.c:277
+msgid ""
+"Browser Search Command Help Text\n"
+"\n"
+" Enter the words or characters you would like to search for, and then press "
+"Enter.  If there is a match for the text you entered, the screen will be "
+"updated to the location of the nearest match for the search string.\n"
+"\n"
+" The previous search string will be shown in brackets after the search "
+"prompt.  Hitting Enter without entering any text will perform the previous "
+"search.\n"
+"\n"
+msgstr ""
+" Aide de la commande de recherche du navigateur\n"
+"\n"
+" Entrez les mots ou les caractères que vous désirez chercher, puis appuyez "
+"sur « Entrée ». Si un texte correspondant est trouvé, vous serez conduit à "
+"l'emplacement de la plus proche occurrence du texte recherché.\n"
+"\n"
+" La chaîne précédemment recherchée sera affichée entre crochets derrière "
+"l'invite de recherche. Appuyer sur « Entrée » sans indiquer de texte "
+"recommencera la recherche précédente. \n"
+"\n"
+
+#
+# File: src/help.c, line: 303
+# File: src/help.c, line: 303
+#: src/help.c:286
+msgid ""
+" The following function keys are available in Browser Search mode:\n"
+"\n"
+msgstr ""
+" Les touches de fonction suivantes sont disponibles dans le mode recherche "
+"du navigateur :\n"
+"\n"
+
+#
+# File: src/help.c, line: 307
+# File: src/help.c, line: 307
+#: src/help.c:290
+msgid ""
+"Browser Go To Directory Help Text\n"
+"\n"
+" Enter the name of the directory you would like to browse to.\n"
+"\n"
+" If tab completion has not been disabled, you can use the Tab key to "
+"(attempt to) automatically complete the directory name.\n"
+"\n"
+" The following function keys are available in Browser Go To Directory mode:\n"
+"\n"
+msgstr ""
+" Aide du changement de répertoire\n"
+"\n"
+" Entrer le nom du répertoire que vous désirez parcourir.\n"
+"\n"
+" Si l'utilisation de « Tab. » pour compléter les noms de fichier n'a pas été "
+"désactivée, vous pouvez utiliser la touche « Tab. » pour (essayer de) "
+"compléter automatiquement le nom du répertoire.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles dans le mode changement "
+"de répertoire :\n"
+"\n"
+
+#
+# File: src/help.c, line: 320
+# File: src/help.c, line: 320
+#: src/help.c:303
+msgid ""
+"Spell Check Help Text\n"
+"\n"
+" The spell checker checks the spelling of all text in the current file.  "
+"When an unknown word is encountered, it is highlighted and a replacement can "
+"be edited.  It will then prompt to replace every instance of the given "
+"misspelled word in the current file, or, if you have selected text with the "
+"mark, in the selected text.\n"
+"\n"
+" The following function keys are available in Spell Check mode:\n"
+"\n"
+msgstr ""
+" Aide du correcteur orthographique\n"
+"\n"
+" Le correcteur orthographique traite tout le texte du fichier en cours. "
+"Lorsqu'un mot inconnu est rencontré, il sera surligné et pourra être "
+"corrigé. Il vous sera alors proposé de remplacer toutes les instances de ce "
+"mot dans le fichier courant ou, si vous avez sélectionné une zone de texte "
+"en la marquant, dans le texte sélectionné.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles dans le correcteur "
+"orthographique :\n"
+"\n"
+
+#
+# File: src/help.c, line: 335
+# File: src/help.c, line: 335
+#: src/help.c:318
+msgid ""
+"Execute Command Help Text\n"
+"\n"
+" This mode allows you to insert the output of a command run by the shell "
+"into the current buffer (or a new buffer in multiple file buffer mode).  If "
+"you need another blank buffer, do not enter any command.\n"
+"\n"
+" The following function keys are available in Execute Command mode:\n"
+"\n"
+msgstr ""
+" Aide des commandes externes\n"
+"\n"
+" Ce menu vous permet d'insérer le texte produit par l'exécution d'une "
+"commande externe dans l'espace en cours (ou dans un nouvel espace en mode "
+"multi-espace). Si vous avez besoin d'un autre espace vide, n'entrez aucune "
+"commande.\n"
+"\n"
+" Les touches de fonction suivantes sont disponibles en mode Commande "
+"externe :\n"
+"\n"
+
+#
+# File: src/help.c, line: 348
+# File: src/help.c, line: 348
+#: src/help.c:331
+msgid ""
+"Main nano help text\n"
+"\n"
+" The nano editor is designed to emulate the functionality and ease-of-use of "
+"the UW Pico text editor.  There are four main sections of the editor.  The "
+"top line shows the program version, the current filename being edited, and "
+"whether or not the file has been modified.  Next is the main editor window "
+"showing the file being edited.  The status line is the third line from the "
+"bottom and shows important messages.  "
+msgstr ""
+" Message d'aide de nano\n"
+"\n"
+" L'éditeur nano est conçu pour reproduire les fonctions et la facilité "
+"d'utilisation de l'éditeur Pico de l'Université de Washington. Il comporte "
+"quatre sections principales : la ligne du haut affiche la version du "
+"programme, le fichier actuellement en cours d'édition et s'il a été modifié "
+"ou non. En dessous se trouve la fenêtre principale d'édition qui affiche le "
+"fichier en cours de modification. La ligne d'état est la troisième ligne en "
+"partant du bas, elle affiche les messages importants. "
+
+#
+# File: src/help.c, line: 359
+# File: src/help.c, line: 359
+#: src/help.c:341
+msgid ""
+"The bottom two lines show the most commonly used shortcuts in the editor.\n"
+"\n"
+" Shortcuts are written as follows: Control-key sequences are notated with a "
+"'^' and can be entered either by using the Ctrl key or pressing the Esc key "
+"twice.  Meta-key sequences are notated with 'M-' and can be entered using "
+"either the Alt, Cmd, or Esc key, depending on your keyboard setup.  "
+msgstr ""
+"Les deux dernières lignes affichent les raccourcis les plus couramment "
+"utilisés.\n"
+"\n"
+" Les raccourcis sont représentés de la façon suivante : la touche "
+"« Contrôle » est représentée par l'accent circonflexe (^) et peut être "
+"entrée soit via la touche Contrôle (Ctrl), soit en pressant 2 fois la touche "
+"« Échap. ». Les séquences d'échappement sont représentées par le symbole "
+"« Méta » (M) et peuvent être entrées via les touches « Échap. », « Alt. » ou "
+"« Méta » selon la configuration de votre clavier. "
+
+#
+# File: src/help.c, line: 366
+# File: src/help.c, line: 366
+#: src/help.c:348
+msgid ""
+"Also, pressing Esc twice and then typing a three-digit decimal number from "
+"000 to 255 will enter the character with the corresponding value.  The "
+"following keystrokes are available in the main editor window.  Alternative "
+"keys are shown in parentheses:\n"
+"\n"
+msgstr ""
+"Appuyer 2 fois sur la touche « Échap. » puis entrer un nombre à 3 chiffres "
+"entre 000 et 255 insère le caractère de code correspondant. Les raccourcis "
+"suivantes sont disponibles dans la fenêtre principale de l'éditeur. Les "
+"raccourcis pouvant être utilisées comme alternatives sont affichées entre "
+"parenthèses :\n"
+"\n"
+
+#
+# File: src/help.c, line: 397
+# File: src/help.c, line: 551
+# File: src/help.c, line: 397
+# File: src/help.c, line: 551
+#: src/help.c:380 src/help.c:457
+msgid "enable/disable"
+msgstr "(commutateur)"
+
+#
+# File: src/nano.c, line: 522
+# File: src/nano.c, line: 522
+#: src/nano.c:544
+msgid "Key is invalid in view mode"
+msgstr "Touche illégale en mode visualisation"
+
+#
+# File: src/browser.c, line: 246
+# File: src/browser.c, line: 299
+# File: src/browser.c, line: 246
+# File: src/browser.c, line: 299
+#: src/nano.c:550
+msgid "This function is disabled in restricted mode"
+msgstr "Cette fonction est désactivée en mode restreint"
+
+#: src/nano.c:558
+msgid "Help is not available"
+msgstr "L'aide n'est pas disponible"
+
+#
+# Fin des entrées de menu sur 10 caractères
+# File: src/nano.c, line: 618
+# File: src/nano.c, line: 618
+#: src/nano.c:667
+#, c-format
+msgid ""
+"\n"
+"Buffer written to %s\n"
+msgstr ""
+"\n"
+"Espace écrit dans %s\n"
+
+#
+# Fin des entrées de menu sur 10 caractères
+# File: src/nano.c, line: 620
+# File: src/nano.c, line: 620
+#: src/nano.c:669
+#, c-format
+msgid ""
+"\n"
+"Buffer not written to %s: %s\n"
+msgstr ""
+"\n"
+"Espace non écrit dans %s : %s\n"
+
+#
+# Fin des entrées de menu sur 10 caractères
+# File: src/nano.c, line: 623
+# File: src/nano.c, line: 623
+#: src/nano.c:672
+#, c-format
+msgid ""
+"\n"
+"Buffer not written: %s\n"
+msgstr ""
+"\n"
+"Espace non écrit : %s\n"
+
+#
+# File: src/nano.c, line: 635
+# File: src/nano.c, line: 635
+#: src/nano.c:698
+msgid "Window size is too small for nano...\n"
+msgstr "La taille de la fenêtre est trop petite pour nano...\n"
+
+#
+# File: src/nano.c, line: 727
+# File: src/nano.c, line: 727
+#: src/nano.c:790
+#, c-format
+msgid ""
+"Usage: nano [OPTIONS] [[+LINE,COLUMN] FILE]...\n"
+"\n"
+msgstr ""
+"Utilisation : nano [OPTIONS] [[+LIGNE,COLONNE] FICHIER]...\n"
+"\n"
+
+#
+# File: src/nano.c, line: 730
+# File: src/nano.c, line: 730
+#: src/nano.c:793
+#, c-format
+msgid "Option\t\tGNU long option\t\tMeaning\n"
+msgstr "Option\t\tOption longue GNU\t\tDescription\n"
+
+#
+# File: src/nano.c, line: 732
+# File: src/nano.c, line: 732
+#: src/nano.c:795
+#, c-format
+msgid "Option\t\tMeaning\n"
+msgstr "Option\t\tSignification\n"
+
+#
+# File: src/nano.c, line: 736
+# File: src/nano.c, line: 736
+#: src/nano.c:798
+msgid "+LINE,COLUMN"
+msgstr "+LIGNE,COLONNE"
+
+#
+# File: src/nano.c, line: 737
+# File: src/nano.c, line: 737
+#. TRANSLATORS: The next forty or so strings are option descriptions
+#. * for the --help output.  Try to keep them at most 40 characters.
+#: src/nano.c:801
+msgid "Start at line LINE, column COLUMN"
+msgstr "Démarre ligne LIGNE, colonne COLONNE"
+
+#
+# File: src/nano.c, line: 739
+# File: src/nano.c, line: 739
+#: src/nano.c:803
+msgid "Enable smart home key"
+msgstr "Touche « Début » intelligente"
+
+#
+# File: src/nano.c, line: 740
+# File: src/nano.c, line: 740
+#: src/nano.c:805
+msgid "Save backups of existing files"
+msgstr "Créer des copies de sécurité des fichiers existants"
+
+#
+# File: src/nano.c, line: 741
+# File: src/nano.c, line: 741
+#: src/nano.c:806
+msgid "-C <dir>"
+msgstr "-C <rép.>"
+
+#
+# File: src/nano.c, line: 741
+# File: src/nano.c, line: 741
+#: src/nano.c:806
+msgid "--backupdir=<dir>"
+msgstr "--backupdir=<rép.>"
+
+#
+# File: src/nano.c, line: 742
+# File: src/nano.c, line: 742
+#: src/nano.c:807
+msgid "Directory for saving unique backup files"
+msgstr "Répertoire des copies de sécu. uniques"
+
+#
+# File: src/nano.c, line: 745
+# File: src/nano.c, line: 745
+#: src/nano.c:810
+msgid "Use bold instead of reverse video text"
+msgstr "Affiche en gras le texte vidéo inverse"
+
+#
+# File: src/nano.c, line: 748
+# File: src/nano.c, line: 748
+#: src/nano.c:812
+msgid "Convert typed tabs to spaces"
+msgstr "La touche tabulation ajoute des espaces"
+
+#: src/nano.c:817
+msgid "Read a file into a new buffer by default"
+msgstr "Par défaut, lire un fichier dans un nouvel espace"
+
+#: src/nano.c:820
+msgid "Use (vim-style) lock files"
+msgstr "Utilisation de fichiers verrou (du type vim)"
+
+#
+# File: src/nano.c, line: 756
+# File: src/nano.c, line: 756
+#: src/nano.c:825
+msgid "Log & read search/replace string history"
+msgstr "Mémorise les recherches & remplacements"
+
+#
+# File: src/nano.c, line: 759
+# File: src/nano.c, line: 759
+#: src/nano.c:829
+msgid "Don't look at nanorc files"
+msgstr "Ne pas utiliser les fichiers nanorc"
+
+#
+# File: src/nano.c, line: 762
+# File: src/nano.c, line: 762
+#: src/nano.c:832
+msgid "Fix numeric keypad key confusion problem"
+msgstr "Corrige la gestion du pavé numérique"
+
+#
+# File: src/nano.c, line: 764
+# File: src/nano.c, line: 764
+#: src/nano.c:834
+msgid "Don't add newlines to the ends of files"
+msgstr "Pas d'ajout de ligne en fin de fichier"
+
+#
+# File: src/nano.c, line: 767
+# File: src/nano.c, line: 767
+#: src/nano.c:837
+msgid "Don't convert files from DOS/Mac format"
+msgstr "Pas de conversion depuis DOS et Mac"
+
+#
+# File: src/global.c, line: 1283
+# File: src/global.c, line: 1283
+#: src/nano.c:839
+msgid "Use one more line for editing"
+msgstr "Utiliser 1 ligne de plus pour l'édition"
+
+#
+# File: src/global.c, line: 389
+# File: src/global.c, line: 389
+#: src/nano.c:843
+msgid "Log & read location of cursor position"
+msgstr "Mémoriser la position du curseur"
+
+#
+# File: src/nano.c, line: 771
+# File: src/nano.c, line: 771
+#: src/nano.c:846
+msgid "-Q <str>"
+msgstr "-Q <chaîne>"
+
+#
+# File: src/nano.c, line: 771
+# File: src/nano.c, line: 771
+#: src/nano.c:846
+msgid "--quotestr=<str>"
+msgstr "--quotestr=<chaîne>"
+
+#
+# File: src/nano.c, line: 772
+# File: src/nano.c, line: 772
+#: src/nano.c:846
+msgid "Quoting string"
+msgstr "Préfixe des citations"
+
+#
+# File: src/nano.c, line: 774
+# File: src/nano.c, line: 774
+#: src/nano.c:849
+msgid "Restricted mode"
+msgstr "Mode restreint"
+
+#: src/nano.c:851
+msgid "Scroll by line instead of half-screen"
+msgstr "Défilement ligne par ligne"
+
+#
+# File: src/nano.c, line: 778
+# File: src/nano.c, line: 778
+#: src/nano.c:853
+msgid "-T <#cols>"
+msgstr "-T <nombre>"
+
+#
+# File: src/nano.c, line: 778
+# File: src/nano.c, line: 778
+#: src/nano.c:853
+msgid "--tabsize=<#cols>"
+msgstr "--tabsize=<nombre>"
+
+#
+# File: src/nano.c, line: 779
+# File: src/nano.c, line: 779
+#: src/nano.c:854
+msgid "Set width of a tab to #cols columns"
+msgstr "Largeur des tabulations"
+
+#
+# File: src/nano.c, line: 781
+# File: src/nano.c, line: 781
+#: src/nano.c:856
+msgid "Do quick statusbar blanking"
+msgstr "Effacement rapide de la barre d'état"
+
+#
+# File: src/nano.c, line: 784
+# File: src/nano.c, line: 784
+#: src/nano.c:858
+msgid "Print version information and exit"
+msgstr "Affiche la version et s'arrête"
+
+#
+# File: src/nano.c, line: 787
+# File: src/nano.c, line: 787
+#: src/nano.c:861
+msgid "Detect word boundaries more accurately"
+msgstr "Meilleure détection des limites de mots"
+
+#
+# File: src/nano.c, line: 771
+# File: src/nano.c, line: 771
+#: src/nano.c:862
+#, fuzzy
+msgid "-X <str>"
+msgstr "-Q <chaîne>"
+
+#
+# File: src/nano.c, line: 771
+# File: src/nano.c, line: 771
+#: src/nano.c:862
+#, fuzzy
+msgid "--wordchars=<str>"
+msgstr "--quotestr=<chaîne>"
+
+#: src/nano.c:863
+msgid "Which other characters are word parts"
+msgstr "Quels autres caractères font partie des mots"
+
+#
+# File: src/nano.c, line: 790
+# File: src/nano.c, line: 790
+#: src/nano.c:867
+msgid "-Y <str>"
+msgstr "-Y <chaîne>"
+
+#
+# File: src/nano.c, line: 790
+# File: src/nano.c, line: 790
+#: src/nano.c:867
+msgid "--syntax=<str>"
+msgstr "--syntax=<chaîne>"
+
+#
+# File: src/nano.c, line: 791
+# File: src/nano.c, line: 791
+#: src/nano.c:868
+msgid "Syntax definition to use for coloring"
+msgstr "Définit la syntaxe de coloration"
+
+#
+# File: src/nano.c, line: 793
+# File: src/nano.c, line: 793
+#: src/nano.c:870
+msgid "Constantly show cursor position"
+msgstr "Afficher la position du curseur"
+
+#
+# File: src/nano.c, line: 795
+# File: src/nano.c, line: 795
+#: src/nano.c:872
+msgid "Fix Backspace/Delete confusion problem"
+msgstr "Corrige la confusion effac. arr./suppr."
+
+#
+# File: src/global.c, line: 315
+# File: src/global.c, line: 315
+#: src/nano.c:873
+msgid "Show this help text and exit"
+msgstr "Affiche ce message et se termine"
+
+#
+# File: src/nano.c, line: 798
+# File: src/nano.c, line: 798
+#: src/nano.c:875
+msgid "Automatically indent new lines"
+msgstr "Indentation automatique"
+
+#
+# File: src/nano.c, line: 799
+# File: src/nano.c, line: 799
+#: src/nano.c:876
+msgid "Cut from cursor to end of line"
+msgstr "Coupe du curseur à la fin de la ligne"
+
+#
+# File: src/nano.c, line: 804
+# File: src/nano.c, line: 804
+#: src/nano.c:879
+msgid "Enable the use of the mouse"
+msgstr "Active l'utilisation de la souris"
+
+#: src/nano.c:881
+msgid "Do not read the file (only write it)"
+msgstr "Ne pas lire le fichier existant (mais l'écraser)"
+
+#
+# File: src/nano.c, line: 807
+# File: src/nano.c, line: 807
+#: src/nano.c:883
+msgid "-o <dir>"
+msgstr "-o <rép.>"
+
+#
+# File: src/nano.c, line: 807
+# File: src/nano.c, line: 807
+#: src/nano.c:883
+msgid "--operatingdir=<dir>"
+msgstr "--operatingdir=<rép.>"
+
+#
+# File: src/nano.c, line: 808
+# File: src/nano.c, line: 808
+#: src/nano.c:884
+msgid "Set operating directory"
+msgstr "Répertoire de fonctionnement"
+
+#
+# File: src/nano.c, line: 811
+# File: src/nano.c, line: 811
+#: src/nano.c:886
+msgid "Preserve XON (^Q) and XOFF (^S) keys"
+msgstr "Préserver ^Q (XON) & ^S (XOFF)"
+
+#: src/nano.c:890
+msgid "Silently ignore startup issues like rc file errors"
+msgstr "Pas d'erreur au démarrage (nanorc...)"
+
+#
+# File: src/nano.c, line: 813
+# File: src/nano.c, line: 813
+#: src/nano.c:893
+msgid "-r <#cols>"
+msgstr "-r <numéro>"
+
+#
+# File: src/nano.c, line: 813
+# File: src/nano.c, line: 813
+#: src/nano.c:893
+msgid "--fill=<#cols>"
+msgstr "--fill=<numéro>"
+
+#
+# File: src/nano.c, line: 779
+# File: src/nano.c, line: 779
+#: src/nano.c:894
+msgid "Set hard-wrapping point at column #cols"
+msgstr "Passer automatiquement à la ligne à la colonne #col"
+
+#
+# File: src/nano.c, line: 817
+# File: src/nano.c, line: 817
+#: src/nano.c:898
+msgid "-s <prog>"
+msgstr "-s <prog>"
+
+#
+# File: src/nano.c, line: 817
+# File: src/nano.c, line: 817
+#: src/nano.c:898
+msgid "--speller=<prog>"
+msgstr "--speller=<prog>"
+
+#
+# File: src/nano.c, line: 818
+# File: src/nano.c, line: 818
+#: src/nano.c:899
+msgid "Enable alternate speller"
+msgstr "Correcteur orthographique"
+
+#
+# File: src/nano.c, line: 821
+# File: src/nano.c, line: 821
+#: src/nano.c:901
+msgid "Auto save on exit, don't prompt"
+msgstr "Sauver en quittant, sans question"
+
+#: src/nano.c:903
+msgid "Save a file by default in Unix format"
+msgstr "Écrire par défaut au format Unix"
+
+#
+# File: src/nano.c, line: 822
+# File: src/nano.c, line: 822
+#: src/nano.c:905
+msgid "View mode (read-only)"
+msgstr "Mode visualisation (lecture seule)"
+
+#
+# File: src/nano.c, line: 824
+# File: src/nano.c, line: 824
+#: src/nano.c:907
+msgid "Don't hard-wrap long lines"
+msgstr "Désactive le passage auto. à la ligne"
+
+#
+# File: src/nano.c, line: 826
+# File: src/nano.c, line: 826
+#: src/nano.c:909
+msgid "Don't show the two help lines"
+msgstr "Ne pas afficher les deux lignes d'aide"
+
+#
+# File: src/nano.c, line: 827
+# File: src/nano.c, line: 827
+#: src/nano.c:911
+msgid "Enable suspension"
+msgstr "Autoriser à suspendre"
+
+#
+# File: src/global.c, line: 1318
+# File: src/global.c, line: 1318
+#: src/nano.c:913
+msgid "Enable soft line wrapping"
+msgstr "Affichage multiligne automatique"
+
+#
+# File: src/nano.c, line: 841
+# File: src/nano.c, line: 841
+#: src/nano.c:925
+#, c-format
+msgid " nano, version %s\n"
+msgstr " nano, version %s\n"
+
+#: src/nano.c:928
+#, c-format
+msgid " (C) 2014..%s the contributors to nano\n"
+msgstr " (C) 2014..%s les contributeurs de nano\n"
+
+#
+# File: src/nano.c, line: 844
+# File: src/nano.c, line: 844
+#: src/nano.c:930
+#, c-format
+msgid " Email: nano@nano-editor.org\tWeb: https://nano-editor.org/"
+msgstr " Adr. él. : nano@nano-editor.org\tSite : http://nano-editor.org/"
+
+#
+# File: src/nano.c, line: 845
+# File: src/nano.c, line: 845
+#: src/nano.c:931
+#, c-format
+msgid ""
+"\n"
+" Compiled options:"
+msgstr ""
+"\n"
+" Compilé avec les options :"
+
+#: src/nano.c:1051
+msgid "No file name"
+msgstr "Pas de nom de fichier"
+
+#: src/nano.c:1085
+msgid "Save modified buffer?  (Answering \"No\" will DISCARD changes.) "
+msgstr ""
+"Écrire l'espace modifié ? (Répondre « Non » ABANDONNE les modifications.)"
+
+#: src/nano.c:1146
+msgid "Couldn't reopen stdin from keyboard, sorry\n"
+msgstr "Impossible de rouvrir l'entrée standard depuis le clavier, désolé\n"
+
+#: src/nano.c:1170
+#, c-format
+msgid "Reading from stdin, ^C to abort\n"
+msgstr "Lecture depuis l'entrée standard, ^C pour abandonner\n"
+
+#
+# File: src/nano.c, line: 1003
+# File: src/nano.c, line: 1003
+#: src/nano.c:1234
+msgid "Received SIGHUP or SIGTERM\n"
+msgstr "Réception de SIGHUP ou SIGTERM\n"
+
+#
+# File: src/nano.c, line: 1020
+# File: src/nano.c, line: 1020
+#: src/nano.c:1250
+#, c-format
+msgid "Use \"fg\" to return to nano.\n"
+msgstr "Utilisez « fg » pour revenir à nano.\n"
+
+#: src/nano.c:1272
+msgid "Suspension is not enabled"
+msgstr "Suspendre est désactivé"
+
+#
+# File: src/nano.c, line: 1186
+# File: src/nano.c, line: 1186
+#: src/nano.c:1426
+msgid "enabled"
+msgstr "- marche"
+
+#
+# File: src/nano.c, line: 1187
+# File: src/nano.c, line: 1187
+#: src/nano.c:1426
+msgid "disabled"
+msgstr "- arrêt"
+
+#: src/nano.c:1540
+msgid "Unbound key"
+msgstr "Touche non affectée"
+
+#: src/nano.c:1543
+msgid "Unbindable key: M-["
+msgstr "Touche non assignable : M-["
+
+#: src/nano.c:1545
+#, c-format
+msgid "Unbound key: M-%c"
+msgstr "Touche non affectée : M-%c"
+
+#: src/nano.c:1547
+#, c-format
+msgid "Unbound key: ^%c"
+msgstr "Touche non affectée : ^%c"
+
+#: src/nano.c:1549
+#, c-format
+msgid "Unbound key: %c"
+msgstr "Touche non affectée : %c"
+
+#
+# File: src/nano.c, line: 1425
+# File: src/nano.c, line: 1425
+#: src/nano.c:1699
+msgid "XON ignored, mumble mumble"
+msgstr "XON ignoré, humm humm"
+
+#
+# File: src/nano.c, line: 1428
+# File: src/nano.c, line: 1428
+#: src/nano.c:1704
+msgid "XOFF ignored, mumble mumble"
+msgstr "XOFF ignoré, humm humm"
+
+#
+# File: src/nano.c, line: 1827
+# File: src/rcfile.c, line: 814
+# File: src/nano.c, line: 1827
+# File: src/rcfile.c, line: 814
+#: src/nano.c:2118 src/rcfile.c:1190
+#, c-format
+msgid "Requested tab size \"%s\" is invalid"
+msgstr "taille de tabulation « %s » demandée non valide"
+
+#
+# File: src/nano.c, line: 1883
+# File: src/rcfile.c, line: 739
+# File: src/nano.c, line: 1883
+# File: src/rcfile.c, line: 739
+#: src/nano.c:2182 src/rcfile.c:1128
+#, c-format
+msgid "Requested fill size \"%s\" is invalid"
+msgstr "la colonne maximale « %s » n'est pas valide"
+
+#: src/nano.c:2231
+#, c-format
+msgid "Type '%s -h' for a list of available options.\n"
+msgstr "Entrez « %s -h » pour une liste des options disponibles.\n"
+
+#
+# File: src/prompt.c, line: 1252
+# File: src/prompt.c, line: 1252
+#. TRANSLATORS: For the next three strings, if possible, specify
+#. * the single-byte shortcuts for both your language and English.
+#. * For example, in French: "OoYy" for "Oui".
+#: src/prompt.c:795
+msgid "Yy"
+msgstr "Oo"
+
+#
+# File: src/prompt.c, line: 1253
+# File: src/prompt.c, line: 1253
+#: src/prompt.c:796
+msgid "Nn"
+msgstr "Nn"
+
+#
+# File: src/prompt.c, line: 1254
+# File: src/prompt.c, line: 1254
+#: src/prompt.c:797
+msgid "Aa"
+msgstr "Tt"
+
+#
+# File: src/prompt.c, line: 1268
+# File: src/prompt.c, line: 1268
+#: src/prompt.c:819
+msgid "Yes"
+msgstr "Oui"
+
+#
+# File: src/prompt.c, line: 1273
+# File: src/prompt.c, line: 1273
+#: src/prompt.c:824
+msgid "All"
+msgstr "Tous"
+
+#
+# File: src/prompt.c, line: 1278
+# File: src/prompt.c, line: 1278
+#: src/prompt.c:829
+msgid "No"
+msgstr "Non"
+
+#
+# File: src/rcfile.c, line: 120
+# File: src/rcfile.c, line: 120
+#: src/rcfile.c:145
+#, c-format
+msgid "Error in %s on line %lu: "
+msgstr "Erreur dans %s (ligne %lu) : "
+
+#
+# File: src/rcfile.c, line: 174
+# File: src/rcfile.c, line: 174
+#: src/rcfile.c:204
+#, c-format
+msgid "Argument '%s' has an unterminated \""
+msgstr "l'argument %s contient un \" non fermé"
+
+#
+# File: src/rcfile.c, line: 201
+# File: src/rcfile.c, line: 253
+# File: src/rcfile.c, line: 524
+# File: src/rcfile.c, line: 581
+# File: src/rcfile.c, line: 201
+# File: src/rcfile.c, line: 253
+# File: src/rcfile.c, line: 524
+# File: src/rcfile.c, line: 581
+#: src/rcfile.c:232 src/rcfile.c:673 src/rcfile.c:724 src/rcfile.c:823
+msgid "Regex strings must begin and end with a \" character"
+msgstr "les expr. rationnelles doivent être encadrées par des « \" »"
+
+#
+# File: src/rcfile.c, line: 226
+# File: src/search.c, line: 62
+# File: src/rcfile.c, line: 226
+# File: src/search.c, line: 62
+#: src/rcfile.c:258 src/search.c:61
+#, c-format
+msgid "Bad regex \"%s\": %s"
+msgstr "mauvaise expr. rationnelle « %s » : %s"
+
+#
+# File: src/rcfile.c, line: 247
+# File: src/rcfile.c, line: 247
+#: src/rcfile.c:280
+msgid "Missing syntax name"
+msgstr "nom de syntaxe manquant"
+
+#: src/rcfile.c:289
+msgid "A syntax name must be quoted"
+msgstr "Un nom de syntaxe doit être entre guillemets"
+
+#
+# File: src/rcfile.c, line: 302
+# File: src/rcfile.c, line: 302
+#: src/rcfile.c:298
+msgid "The \"none\" syntax is reserved"
+msgstr "le nom « none » est un nom de syntaxe réservé"
+
+#
+# File: src/rcfile.c, line: 309
+# File: src/rcfile.c, line: 309
+#: src/rcfile.c:328
+msgid "The \"default\" syntax does not accept extensions"
+msgstr "la syntaxe « default » n'accepte pas d'extension"
+
+#
+# File: src/rcfile.c, line: 247
+# File: src/rcfile.c, line: 247
+#: src/rcfile.c:370
+msgid "Missing key name"
+msgstr "Raccourci manquant"
+
+#: src/rcfile.c:379 src/rcfile.c:390
+msgid "Key name is too short"
+msgstr "Raccourci trop court"
+
+#: src/rcfile.c:400
+msgid "Key name must begin with \"^\", \"M\", or \"F\""
+msgstr "Les raccourcis doivent commencer par « ^ », « M » ou « F »"
+
+#
+# File: src/nano.c, line: 1827
+# File: src/rcfile.c, line: 814
+# File: src/nano.c, line: 1827
+# File: src/rcfile.c, line: 814
+#: src/rcfile.c:403
+#, c-format
+msgid "Key name %s is invalid"
+msgstr "La touche %s n'existe pas"
+
+#: src/rcfile.c:412
+msgid "Must specify a function to bind the key to"
+msgstr "Vous devez indiquer la fonction à laquelle ce raccourci est associée"
+
+#. TRANSLATORS: Do not translate the word "all".
+#: src/rcfile.c:422
+msgid "Must specify a menu (or \"all\") in which to bind/unbind the key"
+msgstr ""
+"Vous devez indiquer le menu (ou « all » pour tous) auquel ce raccourci est "
+"rattaché"
+
+#: src/rcfile.c:429
+#, c-format
+msgid "Cannot map name \"%s\" to a function"
+msgstr "impossible de trouver la fonction « %s »"
+
+#: src/rcfile.c:436
+#, c-format
+msgid "Cannot map name \"%s\" to a menu"
+msgstr "impossible de trouver le menu « %s »"
+
+#: src/rcfile.c:468
+#, c-format
+msgid "Function '%s' does not exist in menu '%s'"
+msgstr "La fonction « %s » n'existe pas dans le menu « %s »"
+
+#: src/rcfile.c:478
+#, c-format
+msgid "Sorry, keystroke \"%s\" may not be rebound"
+msgstr "désolé, le raccourci « %s » ne peut être réattribué"
+
+#
+# File: src/browser.c, line: 257
+# File: src/browser.c, line: 309
+# File: src/browser.c, line: 325
+# File: src/files.c, line: 610
+# File: src/files.c, line: 618
+# File: src/files.c, line: 1332
+# File: src/files.c, line: 1420
+# File: src/files.c, line: 1466
+# File: src/files.c, line: 1487
+# File: src/files.c, line: 1609
+# File: src/files.c, line: 2376
+# File: src/rcfile.c, line: 366
+# File: src/rcfile.c, line: 383
+# File: src/rcfile.c, line: 913
+# File: src/browser.c, line: 257
+# File: src/browser.c, line: 309
+# File: src/browser.c, line: 325
+# File: src/files.c, line: 610
+# File: src/files.c, line: 618
+# File: src/files.c, line: 1332
+# File: src/files.c, line: 1420
+# File: src/files.c, line: 1466
+# File: src/files.c, line: 1487
+# File: src/files.c, line: 1609
+# File: src/files.c, line: 2376
+# File: src/rcfile.c, line: 366
+# File: src/rcfile.c, line: 383
+# File: src/rcfile.c, line: 913
+#: src/rcfile.c:575
+#, c-format
+msgid "Error expanding %s: %s"
+msgstr "Erreur lors de l'expansion de %s : %s"
+
+#
+# File: src/rcfile.c, line: 438
+# File: src/rcfile.c, line: 438
+#: src/rcfile.c:615
+#, c-format
+msgid ""
+"Color \"%s\" not understood.\n"
+"Valid colors are \"green\", \"red\", \"blue\",\n"
+"\"white\", \"yellow\", \"cyan\", \"magenta\" and\n"
+"\"black\", with the optional prefix \"bright\"\n"
+"for foreground colors."
+msgstr ""
+"couleur « %s » inconnue.\n"
+"Les couleurs légales sont « green » (vert),\n"
+"« red » (rouge), « blue » (bleu),\n"
+"« white » (blanc), « yellow » (jaune),\n"
+"« cyan », « magenta » et « black » (noir),\n"
+"avec comme préfixe optionnel « bright » (lumineux)\n"
+"pour les couleurs de texte."
+
+#: src/rcfile.c:636 src/rcfile.c:794 src/rcfile.c:857
+#, c-format
+msgid "A '%s' command requires a preceding 'syntax' command"
+msgstr "Une commande « %s » doit être précédée d'une commande « syntaxe »"
+
+#
+# File: src/rcfile.c, line: 465
+# File: src/rcfile.c, line: 465
+#: src/rcfile.c:642
+msgid "Missing color name"
+msgstr "nom de couleur manquant"
+
+#
+# File: src/rcfile.c, line: 465
+# File: src/rcfile.c, line: 465
+#: src/rcfile.c:652 src/rcfile.c:806
+#, c-format
+msgid "Missing regex string after '%s' command"
+msgstr "Expression rationnelle manquante après la commande « %s »"
+
+#
+# File: src/rcfile.c, line: 575
+# File: src/rcfile.c, line: 575
+#: src/rcfile.c:718
+msgid "\"start=\" requires a corresponding \"end=\""
+msgstr "« start » nécessite un « end » correspondant"
+
+#
+# File: src/rcfile.c, line: 485
+# File: src/rcfile.c, line: 485
+#: src/rcfile.c:767
+#, c-format
+msgid "Background color \"%s\" cannot be bright"
+msgstr "une couleur de fond « %s » ne peut pas être lumineuse (bright)"
+
+#
+# File: src/rcfile.c, line: 309
+# File: src/rcfile.c, line: 309
+#: src/rcfile.c:801
+#, c-format
+msgid "The \"default\" syntax does not accept '%s' regexes"
+msgstr ""
+"la syntaxe « default » n'accepte pas les expressions rationnelles « %s »"
+
+#
+# File: src/rcfile.c, line: 465
+# File: src/rcfile.c, line: 465
+#: src/rcfile.c:862
+#, c-format
+msgid "Missing command after '%s'"
+msgstr "Commande manquante aprè « %s »"
+
+#
+# File: src/rcfile.c, line: 174
+# File: src/rcfile.c, line: 174
+#: src/rcfile.c:878
+#, c-format
+msgid "Argument of '%s' lacks closing \""
+msgstr "l'argument de « %s » n'est pas terminé par un \""
+
+#: src/rcfile.c:909
+#, c-format
+msgid "Fatal error: no keys mapped for function \"%s\".  Exiting.\n"
+msgstr ""
+"Erreur bloquante : aucun raccourci n'est associé à la fonction « %s ». "
+"Arrêt.\n"
+
+#: src/rcfile.c:911
+#, c-format
+msgid ""
+"If needed, use nano with the -I option to adjust your nanorc settings.\n"
+msgstr ""
+"Si besoin, lancez nano avec l'option -I pour modifier les paramètres de "
+"votre fichier nanorc\n"
+
+#: src/rcfile.c:970
+#, c-format
+msgid "Could not find syntax \"%s\" to extend"
+msgstr "impossible de trouver la syntaxe « %s » à étendre"
+
+#
+# File: src/rcfile.c, line: 671
+# File: src/rcfile.c, line: 838
+# File: src/rcfile.c, line: 671
+# File: src/rcfile.c, line: 838
+#: src/rcfile.c:992 src/rcfile.c:1201
+#, c-format
+msgid "Syntax \"%s\" has no color commands"
+msgstr "la syntaxe « %s » ne contient aucune commande de coloration (color)"
+
+#
+# File: src/rcfile.c, line: 646
+# File: src/rcfile.c, line: 655
+# File: src/rcfile.c, line: 665
+# File: src/rcfile.c, line: 646
+# File: src/rcfile.c, line: 655
+# File: src/rcfile.c, line: 665
+#: src/rcfile.c:1023
+#, c-format
+msgid "Command \"%s\" not allowed in included file"
+msgstr "la commande « %s » est interdite dans un fichier inclus"
+
+#
+# File: src/rcfile.c, line: 680
+# File: src/rcfile.c, line: 680
+#: src/rcfile.c:1038
+#, c-format
+msgid "Command \"%s\" not understood"
+msgstr "impossible de comprendre la commande « %s »"
+
+#
+# File: src/rcfile.c, line: 465
+# File: src/rcfile.c, line: 465
+#: src/rcfile.c:1050
+msgid "Missing option"
+msgstr "Option manquante"
+
+#
+# File: src/rcfile.c, line: 834
+# File: src/rcfile.c, line: 834
+#: src/rcfile.c:1064
+#, c-format
+msgid "Unknown option \"%s\""
+msgstr "Option « %s » inconnue"
+
+#
+# File: src/rcfile.c, line: 828
+# File: src/rcfile.c, line: 828
+#: src/rcfile.c:1077
+#, c-format
+msgid "Cannot unset option \"%s\""
+msgstr "impossible de désactiver l'option « %s »"
+
+#
+# File: src/rcfile.c, line: 708
+# File: src/rcfile.c, line: 708
+#: src/rcfile.c:1089
+#, c-format
+msgid "Option \"%s\" requires an argument"
+msgstr "l'option « %s » nécessite un argument"
+
+#
+# File: src/rcfile.c, line: 726
+# File: src/rcfile.c, line: 726
+#: src/rcfile.c:1105
+msgid "Option is not a valid multibyte string"
+msgstr "l'option n'est pas une chaîne multioctet valide"
+
+#
+# File: src/rcfile.c, line: 752
+# File: src/rcfile.c, line: 780
+# File: src/rcfile.c, line: 789
+# File: src/rcfile.c, line: 752
+# File: src/rcfile.c, line: 780
+# File: src/rcfile.c, line: 789
+#: src/rcfile.c:1139 src/rcfile.c:1160 src/rcfile.c:1167
+msgid "Non-blank characters required"
+msgstr "les blancs sont interdits"
+
+#
+# File: src/rcfile.c, line: 762
+# File: src/rcfile.c, line: 762
+#: src/rcfile.c:1146
+msgid "Two single-column characters required"
+msgstr "indiquez 2 caractères (mono-colonne)"
+
+#
+# File: src/rcfile.c, line: 894
+# File: src/rcfile.c, line: 894
+#: src/rcfile.c:1257
+msgid "I can't find my home directory!  Wah!"
+msgstr "impossible de trouver mon répertoire personnel ! Ouah !"
+
+#
+# File: src/files.c, line: 2379
+# File: src/rcfile.c, line: 848
+# File: src/files.c, line: 2379
+# File: src/rcfile.c, line: 848
+#: src/rcfile.c:1294
+#, c-format
+msgid ""
+"\n"
+"Press Enter to continue starting nano.\n"
+msgstr ""
+"\n"
+"Appuyez sur « Entrée » pour poursuivre le démarrage de nano.\n"
+
+#
+# File: src/search.c, line: 94
+# File: src/search.c, line: 94
+#: src/search.c:95
+#, c-format
+msgid "\"%.*s%s\" not found"
+msgstr "« %.*s%s » non trouvé"
+
+#
+# File: src/browser.c, line: 655
+# File: src/search.c, line: 183
+# File: src/browser.c, line: 655
+# File: src/search.c, line: 183
+#. TRANSLATORS: The next three strings are modifiers of the search prompt.
+#: src/search.c:168
+msgid " [Case Sensitive]"
+msgstr " [Resp. casse]"
+
+#
+# File: src/browser.c, line: 661
+# File: src/search.c, line: 189
+# File: src/browser.c, line: 661
+# File: src/search.c, line: 189
+#: src/search.c:172
+msgid " [Regexp]"
+msgstr " [Exp. ration.]"
+
+#
+# File: src/browser.c, line: 667
+# File: src/search.c, line: 195
+# File: src/browser.c, line: 667
+# File: src/search.c, line: 195
+#: src/search.c:176
+msgid " [Backwards]"
+msgstr " [Arrière]"
+
+#
+# File: src/search.c, line: 199
+# File: src/search.c, line: 199
+#. TRANSLATORS: The next two strings are modifiers of the search prompt.
+#: src/search.c:181
+msgid " (to replace) in selection"
+msgstr " (à remplacer) dans la sélection"
+
+#
+# File: src/search.c, line: 201
+# File: src/search.c, line: 201
+#: src/search.c:183
+msgid " (to replace)"
+msgstr " (à remplacer)"
+
+#
+# File: src/browser.c, line: 651
+# File: src/search.c, line: 179
+# File: src/browser.c, line: 651
+# File: src/search.c, line: 179
+#. TRANSLATORS: This is shown when searching takes
+#. * more than half a second.
+#: src/search.c:306
+msgid "Searching..."
+msgstr "Recherche..."
+
+#
+# File: src/search.c, line: 753
+# File: src/search.c, line: 753
+#. TRANSLATORS: This is a prompt.
+#: src/search.c:699
+msgid "Replace this instance?"
+msgstr "Remplacer cette occurrence ?"
+
+#
+# File: src/search.c, line: 921
+# File: src/search.c, line: 921
+#. TRANSLATORS: This is a prompt.
+#: src/search.c:844
+msgid "Replace with"
+msgstr "Remplacer par"
+
+#
+# File: src/search.c, line: 963
+# File: src/search.c, line: 963
+#: src/search.c:879
+#, c-format
+msgid "Replaced %lu occurrence"
+msgid_plural "Replaced %lu occurrences"
+msgstr[0] "%lu remplacement effectué"
+msgstr[1] "%lu remplacements effectués"
+
+#
+# File: src/search.c, line: 989
+# File: src/search.c, line: 989
+#. TRANSLATORS: This is a prompt.
+#: src/search.c:918
+msgid "Enter line number, column number"
+msgstr "Entrez : numéro de ligne, numéro de colonne "
+
+#
+# File: src/search.c, line: 989
+# File: src/search.c, line: 989
+#: src/search.c:940
+msgid "Invalid line or column number"
+msgstr "numéro de ligne ou de colonne incorrect"
+
+#
+# File: src/search.c, line: 1167
+# File: src/search.c, line: 1167
+#: src/search.c:1093
+msgid "Not a bracket"
+msgstr "N'est pas un crochet"
+
+#
+# File: src/search.c, line: 1234
+# File: src/search.c, line: 1234
+#: src/search.c:1159
+msgid "No matching bracket"
+msgstr "Aucun crochet correspondant"
+
+#
+# File: src/text.c, line: 54
+# File: src/text.c, line: 54
+#: src/text.c:53
+msgid "Mark Set"
+msgstr "Marque posée"
+
+#
+# File: src/text.c, line: 58
+# File: src/text.c, line: 58
+#: src/text.c:57
+msgid "Mark Unset"
+msgstr "Marque enlevée"
+
+#
+# File: src/text.c, line: 2206
+# File: src/text.c, line: 2206
+#: src/text.c:69
+#, c-format
+msgid "Error invoking \"%s\""
+msgstr "erreur d'appel de « %s »"
+
+#: src/text.c:461
+msgid "Commenting is not supported for this file type"
+msgstr ""
+"L'ajout de commentaire n'est pas pris en charge pour ce type de fichier"
+
+#: src/text.c:477
+msgid "Cannot comment past end of file"
+msgstr "Impossible de dépasser la fin du fichier"
+
+#: src/text.c:670
+msgid "Nothing in undo buffer!"
+msgstr "Aucune opération à annuler !"
+
+#. TRANSLATORS: Eight of the next nine strings describe actions
+#. * that are undone or redone.  It are all nouns, not verbs.
+#: src/text.c:688 src/text.c:717 src/text.c:850 src/text.c:891
+msgid "text add"
+msgstr "ajout de texte"
+
+#
+# File: src/global.c, line: 668
+# File: src/global.c, line: 668
+#: src/text.c:698 src/text.c:861
+msgid "text delete"
+msgstr "effacement de texte"
+
+#: src/text.c:721 src/text.c:900
+msgid "line join"
+msgstr "fusion de lignes"
+
+#: src/text.c:740 src/text.c:916
+msgid "text cut"
+msgstr "texte coupé"
+
+#: src/text.c:745 src/text.c:920
+msgid "text uncut"
+msgstr "texte restauré"
+
+#: src/text.c:751 src/text.c:896
+msgid "Internal error: line is missing.  Please save your work."
+msgstr "Erreur interne : la ligne a disparu. Sauvez votre travail."
+
+#: src/text.c:755 src/text.c:870
+msgid "line break"
+msgstr "nouvelle ligne"
+
+#: src/text.c:765 src/text.c:940
+msgid "comment"
+msgstr "commenter"
+
+#: src/text.c:769 src/text.c:944
+msgid "uncomment"
+msgstr "décommenter"
+
+#
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+# File: src/global.c, line: 618
+# File: src/global.c, line: 1087
+#: src/text.c:773 src/text.c:931
+msgid "text insert"
+msgstr "insertion de texte"
+
+#
+# File: src/search.c, line: 201
+# File: src/search.c, line: 201
+#: src/text.c:793 src/text.c:924
+msgid "text replace"
+msgstr "remplacement de texte"
+
+#: src/text.c:800 src/text.c:948 src/text.c:1260 src/text.c:1430
+msgid "Internal error: unknown type.  Please save your work."
+msgstr "Erreur interne : type inconnu. Sauvez votre travail"
+
+#: src/text.c:806
+#, c-format
+msgid "Undid action (%s)"
+msgstr "Action annulée (%s)"
+
+#: src/text.c:825
+msgid "Nothing to re-do!"
+msgstr "Rien à refaire !"
+
+#: src/text.c:834
+msgid "Internal error: cannot set up redo.  Please save your work."
+msgstr ""
+"Erreur interne : impossible de préparer le retour en avant. Sauvez votre "
+"travail."
+
+#: src/text.c:954
+#, c-format
+msgid "Redid action (%s)"
+msgstr "Action refaite (%s)"
+
+#
+# File: src/text.c, line: 1944
+# File: src/text.c, line: 1944
+#: src/text.c:1044 src/text.c:2759 src/text.c:3190
+msgid "Could not create pipe"
+msgstr "Impossible de créer un tube"
+
+#
+# File: src/text.c, line: 468
+# File: src/text.c, line: 2032
+# File: src/text.c, line: 2179
+# File: src/text.c, line: 468
+# File: src/text.c, line: 2032
+# File: src/text.c, line: 2179
+#: src/text.c:1070 src/text.c:2846 src/text.c:2999 src/text.c:3238
+#: src/text.c:3530
+msgid "Could not fork"
+msgstr "Impossible de créer un nouveau processus"
+
+#
+# File: src/text.c, line: 1270
+# File: src/text.c, line: 1270
+#: src/text.c:2110
+#, c-format
+msgid "Bad quote string %s: %s"
+msgstr "Mauvaise chaîne de citation %s : %s"
+
+#
+# File: src/text.c, line: 1666
+# File: src/text.c, line: 1666
+#: src/text.c:2492
+msgid "Can now UnJustify!"
+msgstr "Il est maintenant possible de dé-justifier !"
+
+#: src/text.c:2671
+#, fuzzy, c-format
+msgid "Unfindable word: %s"
+msgstr "Touche non assignable : M-["
+
+#
+# File: src/text.c, line: 1858
+# File: src/text.c, line: 1858
+#: src/text.c:2691
+msgid "Edit a replacement"
+msgstr "Entrez une correction"
+
+#
+# File: src/global.c, line: 605
+# File: src/global.c, line: 605
+#. TRANSLATORS: Shown after fixing misspellings in one word.
+#: src/text.c:2707
+msgid "Next word..."
+msgstr "Mot suivant"
+
+#
+# File: src/text.c, line: 1946
+# File: src/text.c, line: 1946
+#: src/text.c:2761
+msgid "Creating misspelled word list, please wait..."
+msgstr "Création de la liste des fautes, veuillez patienter..."
+
+#
+# File: src/text.c, line: 2038
+# File: src/text.c, line: 2038
+#: src/text.c:2852 src/text.c:3245
+msgid "Could not get size of pipe buffer"
+msgstr "Impossible d'obtenir la taille de tampon du tube"
+
+#
+# File: src/text.c, line: 2089
+# File: src/text.c, line: 2089
+#: src/text.c:2901
+msgid "Error invoking \"spell\""
+msgstr "erreur d'appel de « spell »"
+
+#
+# File: src/text.c, line: 2092
+# File: src/text.c, line: 2092
+#: src/text.c:2904
+msgid "Error invoking \"sort -f\""
+msgstr "erreur à l'appel de « sort -f »"
+
+#
+# File: src/text.c, line: 2095
+# File: src/text.c, line: 2095
+#: src/text.c:2907
+msgid "Error invoking \"uniq\""
+msgstr "erreur à l'appel de « uniq »"
+
+#
+# File: src/global.c, line: 339
+# File: src/global.c, line: 339
+#: src/text.c:3129
+msgid "Invoking spell checker, please wait"
+msgstr "Appel du correcteur orthographique, veuillez patienter"
+
+#
+# File: src/text.c, line: 2346
+# File: src/text.c, line: 2346
+#: src/text.c:3143
+#, c-format
+msgid "Spell checking failed: %s"
+msgstr "Échec de la correction : %s"
+
+#
+# File: src/text.c, line: 2348
+# File: src/text.c, line: 2348
+#: src/text.c:3145
+#, c-format
+msgid "Spell checking failed: %s: %s"
+msgstr "Échec de la correction : %s : %s"
+
+#
+# File: src/text.c, line: 2351
+# File: src/text.c, line: 2351
+#: src/text.c:3148
+msgid "Finished checking spelling"
+msgstr "Vérification orthographique terminée"
+
+#
+# File: src/nano.c, line: 764
+# File: src/nano.c, line: 764
+#: src/text.c:3173
+msgid "No linter defined for this type of file!"
+msgstr "Aucun analyseur statique défini pour ce type de fichiers !"
+
+#: src/text.c:3178
+msgid "Save modified buffer before linting?"
+msgstr "Sauver l'espace modifié avant l'analyse statique ?"
+
+#: src/text.c:3195
+msgid "Invoking linter, please wait"
+msgstr "Lancement de l'analyse statique, veuillez patienter"
+
+#: src/text.c:3350
+#, c-format
+msgid "Got 0 parsable lines from command: %s"
+msgstr "La commande « %s » n'a produit aucune ligne analysable"
+
+#: src/text.c:3380
+#, c-format
+msgid "This message is for unopened file %s, open it in a new buffer?"
+msgstr ""
+"Ce message concerne le fichier non ouvert %s. L'ouvrir dans un nouvel "
+"espace ?"
+
+#: src/text.c:3399
+msgid "No more errors in unopened files, cancelling"
+msgstr "Plus d'erreur dans les fichiers non ouverts, abandon."
+
+#
+# File: src/nano.c, line: 735
+# File: src/nano.c, line: 735
+#: src/text.c:3439
+msgid "At last message"
+msgstr "Dernier message"
+
+#
+# File: src/nano.c, line: 735
+# File: src/nano.c, line: 735
+#: src/text.c:3444
+msgid "At first message"
+msgstr "Premier message"
+
+#: src/text.c:3481
+msgid "Finished"
+msgstr "Terminé"
+
+#: src/text.c:3503
+msgid "Invoking formatter, please wait"
+msgstr "Lancement de la mise en forme, veuillez patienter"
+
+#: src/text.c:3558
+msgid "Finished formatting"
+msgstr "Mise en forme terminée"
+
+#
+# File: src/text.c, line: 2416
+# File: src/text.c, line: 2416
+#: src/text.c:3640
+#, c-format
+msgid "%sWords: %lu  Lines: %ld  Chars: %lu"
+msgstr "%s %lu mots,  %ld lignes, %lu caractères"
+
+#
+# File: src/text.c, line: 2417
+# File: src/text.c, line: 2417
+#: src/text.c:3641
+msgid "In Selection:  "
+msgstr "Contenu de la sélection : "
+
+#
+# File: src/global.c, line: 673
+# File: src/text.c, line: 2431
+# File: src/global.c, line: 673
+# File: src/text.c, line: 2431
+#. TRANSLATORS: This is displayed when the next keystroke will be
+#. * inserted verbatim.
+#: src/text.c:3655
+msgid "Verbatim Input"
+msgstr "Entrée telle quelle"
+
+#
+# File: src/utils.c, line: 365
+# File: src/utils.c, line: 377
+# File: src/utils.c, line: 365
+# File: src/utils.c, line: 377
+#: src/utils.c:389 src/utils.c:401
+msgid "nano is out of memory!"
+msgstr "nano n'a plus de mémoire !"
+
+#: src/utils.c:621
+#, c-format
+msgid "Internal error: can't match line %d.  Please save your work."
+msgstr ""
+"Erreur interne : impossible de trouver une correspondance pour la ligne %d. "
+"Sauvez votre travail."
+
+#. TRANSLATORS: This refers to a sequence of escape codes
+#. * (from the keyboard) that nano does not know about.
+#: src/winio.c:1071
+msgid "Unknown sequence"
+msgstr "Séquence inconnue"
+
+#
+# File: src/winio.c, line: 1467
+# File: src/winio.c, line: 1467
+#. TRANSLATORS: This is shown while a six-digit hexadecimal
+#. * Unicode character code (%s) is being typed in.
+#: src/winio.c:1235
+#, c-format
+msgid "Unicode Input: %s"
+msgstr "Entrée Unicode : %s"
+
+#
+# File: src/winio.c, line: 2018
+# File: src/winio.c, line: 2018
+#: src/winio.c:1852
+msgid "DIR:"
+msgstr "RÉP. :"
+
+#
+# File: src/winio.c, line: 2025
+# File: src/winio.c, line: 2025
+#: src/winio.c:1860
+msgid "File:"
+msgstr "Fichier :"
+
+#
+# File: src/winio.c, line: 2004
+# File: src/winio.c, line: 2007
+# File: src/winio.c, line: 2004
+# File: src/winio.c, line: 2007
+#: src/winio.c:1864 src/winio.c:1868
+msgid "Modified"
+msgstr "Modifié"
+
+#
+# Cela devrait être « visualisation », pour être logique.
+# Mais il faut quelque chose de court qui tienne sans
+# déborder sur le bord haut de l'écran.
+# File: src/winio.c, line: 2005
+# File: src/winio.c, line: 2005
+#: src/winio.c:1866
+msgid "View"
+msgstr "Voir"
+
+#
+# File: src/winio.c, line: 3046
+# File: src/winio.c, line: 3046
+#: src/winio.c:2972
+#, c-format
+msgid "line %ld/%ld (%d%%), col %lu/%lu (%d%%), char %lu/%lu (%d%%)"
+msgstr "ligne %ld/%ld (%d%%), col. %lu/%lu (%d%%), car. %lu/%lu (%d%%)"
+
+#
+# File: src/winio.c, line: 3166
+# File: src/winio.c, line: 3166
+#: src/winio.c:3102
+msgid "The nano text editor"
+msgstr "L'éditeur de texte nano"
+
+#
+# File: src/winio.c, line: 3167
+# File: src/winio.c, line: 3167
+#: src/winio.c:3103
+msgid "version"
+msgstr "version"
+
+#
+# File: src/winio.c, line: 3168
+# File: src/winio.c, line: 3168
+#: src/winio.c:3104
+msgid "Brought to you by:"
+msgstr "Proposé par :"
+
+#
+# File: src/winio.c, line: 3169
+# File: src/winio.c, line: 3169
+#: src/winio.c:3105
+msgid "Special thanks to:"
+msgstr "Remerciements particuliers à :"
+
+#
+# File: src/winio.c, line: 3170
+# File: src/winio.c, line: 3170
+#: src/winio.c:3106
+msgid "The Free Software Foundation"
+msgstr "La Free Software Foundation"
+
+#: src/winio.c:3107
+msgid "the many translators and the TP"
+msgstr "les nombreux traducteurs et le TP"
+
+#
+# File: src/winio.c, line: 3171
+# File: src/winio.c, line: 3171
+#: src/winio.c:3108
+msgid "For ncurses:"
+msgstr "Pour ncurses :"
+
+#
+# File: src/winio.c, line: 3172
+# File: src/winio.c, line: 3172
+#: src/winio.c:3109
+msgid "and anyone else we forgot..."
+msgstr "et toute autre personne que nous aurions oubliée..."
+
+#
+# File: src/winio.c, line: 3173
+# File: src/winio.c, line: 3173
+#: src/winio.c:3110
+msgid "Thank you for using nano!"
+msgstr "Merci d'utiliser nano !"
+
+#
+# File: src/browser.c, line: 246
+# File: src/browser.c, line: 299
+# File: src/browser.c, line: 246
+# File: src/browser.c, line: 299
+#~ msgid "Can't go outside of %s in confined mode"
+#~ msgstr "En mode restreint, sortir de %s est impossible"
+
+#
+# File: src/files.c, line: 559
+# File: src/files.c, line: 559
+#~ msgid ""
+#~ "Read %lu line (Converted from DOS and Mac format - Warning: No write "
+#~ "permission)"
+#~ msgid_plural ""
+#~ "Read %lu lines (Converted from DOS and Mac format - Warning: No write "
+#~ "permission)"
+#~ msgstr[0] ""
+#~ "Lecture de %lu ligne (convertie des formats DOS et Mac - En lecture "
+#~ "seule !)"
+#~ msgstr[1] ""
+#~ "Lecture de %lu lignes (converties des formats DOS et Mac - En lecture "
+#~ "seule !)"
+
+#
+# File: src/files.c, line: 564
+# File: src/files.c, line: 564
+#~ msgid ""
+#~ "Read %lu line (Converted from Mac format - Warning: No write permission)"
+#~ msgid_plural ""
+#~ "Read %lu lines (Converted from Mac format - Warning: No write permission)"
+#~ msgstr[0] ""
+#~ "Lecture de %lu ligne (convertie du format Mac - En lecture seule !)"
+#~ msgstr[1] ""
+#~ "Lecture de %lu lignes (converties du format Mac - En lecture seule !)"
+
+#
+# File: src/files.c, line: 569
+# File: src/files.c, line: 569
+#~ msgid ""
+#~ "Read %lu line (Converted from DOS format - Warning: No write permission)"
+#~ msgid_plural ""
+#~ "Read %lu lines (Converted from DOS format - Warning: No write permission)"
+#~ msgstr[0] ""
+#~ "Lecture de %lu ligne (convertie du format DOS - En lecture seule !)"
+#~ msgstr[1] ""
+#~ "Lecture de %lu lignes (converties du format DOS - En lecture seule !)"
+
+#~ msgid "Read %lu line (Warning: No write permission)"
+#~ msgid_plural "Read %lu lines (Warning: No write permission)"
+#~ msgstr[0] "Lecture de %lu ligne (Attention : en lecture seule !)"
+#~ msgstr[1] "Lecture de %lu lignes (Attention : en lecture seule !)"
+
+#
+# File: src/nano.c, line: 940
+# File: src/nano.c, line: 940
+#~ msgid "Save modified buffer (ANSWERING \"No\" WILL DESTROY CHANGES) ? "
+#~ msgstr ""
+#~ "Sauver l'espace modifié (RÉPONDRE « Non » EFFACERA LES CHANGEMENTS) ? "
+
+#
+# File: src/nano.c, line: 1361
+# File: src/winio.c, line: 530
+# File: src/nano.c, line: 1361
+# File: src/winio.c, line: 530
+#~ msgid "Unknown Command"
+#~ msgstr "Commande inconnue"
+
+#
+# File: src/rcfile.c, line: 460
+# File: src/rcfile.c, line: 460
+#~ msgid "Cannot add a color command without a syntax command"
+#~ msgstr ""
+#~ "un directive de coloration (color) doit être précédée d'une commande "
+#~ "« syntax »"
+
+#
+# File: src/rcfile.c, line: 503
+# File: src/rcfile.c, line: 503
+#~ msgid "Missing regex string"
+#~ msgstr "chaîne d'expr. rationnelle manquante"
+
+#
+# File: src/rcfile.c, line: 460
+# File: src/rcfile.c, line: 460
+#~ msgid "Cannot add a header regex without a syntax command"
+#~ msgstr ""
+#~ "impossible d'ajouter un motif d'en-tête non précédé d'une commande "
+#~ "« syntax »"
+
+#
+# File: src/rcfile.c, line: 460
+# File: src/rcfile.c, line: 460
+#~ msgid "Cannot add a magic string regex without a syntax command"
+#~ msgstr "impossible d'ajouter un motif Magic sans commande « syntax »"
+
+#
+# File: src/rcfile.c, line: 503
+# File: src/rcfile.c, line: 503
+#~ msgid "Missing magic string name"
+#~ msgstr "chaîne de motif Magic manquante"
+
+#
+# File: src/rcfile.c, line: 460
+# File: src/rcfile.c, line: 460
+#~ msgid "Cannot add a linter without a syntax command"
+#~ msgstr "impossible d'ajouter un analyseur statique sans commande « syntax »"
+
+#
+# File: src/rcfile.c, line: 460
+# File: src/rcfile.c, line: 460
+#~ msgid "Cannot add formatter without a syntax command"
+#~ msgstr ""
+#~ "Impossible d'ajouter un outil de mise en forme sans commande « syntax »"
+
+#
+# File: src/rcfile.c, line: 465
+# File: src/rcfile.c, line: 465
+#~ msgid "Missing formatter command"
+#~ msgstr "Commande de l'outil de mise en forme manquante"
+
+#
+# File: src/files.c, line: 1301
+# File: src/files.c, line: 1301
+#~ msgid "Cannot prepend or append to a symlink with --nofollow set"
+#~ msgstr "Impossible d'ajouter pour un lien symbolique (option --nofollow)"
+
+#
+# File: src/nano.c, line: 802
+# File: src/nano.c, line: 802
+#~ msgid "Don't follow symbolic links, overwrite"
+#~ msgstr "Écraser les liens sym., sans les suivre"
+
+#
+# File: src/nano.c, line: 923
+# File: src/nano.c, line: 923
+#~ msgid "Sorry, support for this function has been disabled"
+#~ msgstr "Désolé, le support de cette fonction a été désactivé"
+
+#~ msgid "Internal error: cannot set up uncut.  Please save your work."
+#~ msgstr ""
+#~ "Erreur interne : impossible de préparer l'action « coller ». Sauvez votre "
+#~ "travail."
+
+#~ msgid "Error: no formatter defined"
+#~ msgstr "Erreur : aucun formateur n'est défini"
+
+#
+# File: src/global.c, line: 1342
+# File: src/global.c, line: 1342
+#~ msgid "Multiple file buffers"
+#~ msgstr "Mode multi-espace"
+
+#
+# File: src/nano.c, line: 751
+# File: src/nano.c, line: 751
+#~ msgid "Enable multiple file buffers"
+#~ msgstr "Mode multi-espace"
+
+#~ msgid "Internal error: can't match line %ld.  Please save your work."
+#~ msgstr ""
+#~ "Erreur interne : pas de correspondance pour la ligne %ld. Sauvez votre "
+#~ "travail."
+
+#
+# File: src/global.c, line: 1318
+# File: src/global.c, line: 1318
+#~ msgid "line wrap"
+#~ msgstr "passage à la ligne"
