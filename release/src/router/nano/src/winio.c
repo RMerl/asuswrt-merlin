@@ -502,7 +502,6 @@ int parse_kbinput(WINDOW *win)
 	return sc_seq_or(do_prev_block, 0);
     else if (retval == controldown)
 	return sc_seq_or(do_next_block, 0);
-#endif
 
     /* When not running under X, check for the bare arrow keys whether
      * the Ctrl key is being held together with them. */
@@ -521,6 +520,7 @@ int parse_kbinput(WINDOW *win)
 		return sc_seq_or(do_next_word_void, 0);
 	}
     }
+#endif
 
     switch (retval) {
 #ifdef KEY_SLEFT
