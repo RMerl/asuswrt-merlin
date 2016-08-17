@@ -2987,7 +2987,7 @@ minidlna/configure:
 minidlna-configure:
 	cd minidlna && \
 	LIBS="-ldl -lm -lpthread -lz -lexif -ljpeg -lsqlite3 -lid3tag -lFLAC -lvorbis -logg -lavformat -lavcodec -lavutil" \
-	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURC -D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
 		$(if $(RTN65U,y),-DRTN56U=1) $(if $(or $(RTN66U), $(RTAC66U)),-DRTN66U=1)" \
 		$(if $(RTAC68U,y),-I$(SRCBASE)/include) \
 	CPPFLAGS="-I$(TOP)/zlib \
@@ -4175,7 +4175,7 @@ ncurses/Makefile:
 	--enable-echo --enable-const --enable-overwrite --disable-rpath --without-ada \
 	--without-debug --without-manpages --without-profile --without-progs --without-tests \
 	--disable-home-terminfo --with-normal --with-shared --with-build-cppflags=-D_GNU_SOURCE \
-	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux"
+	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux,ansi"
 
 #	--with-default-terminfo-dir=/usr/share/terminfo --with-terminfo-dirs=/usr/share/terminfo
 
