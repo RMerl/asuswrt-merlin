@@ -3,6 +3,7 @@
    Information about library version.
 
    Copyright (C) 2015 Red Hat, Inc.
+   Copyright (C) 2015 Niels Möller
 
    This file is part of GNU Nettle.
 
@@ -49,6 +50,12 @@ extern "C" {
 #if NETTLE_USE_MINI_GMP
 # define GMP_NUMB_BITS @GMP_NUMB_BITS@
 #endif
+
+int
+nettle_version_major (void);
+
+int
+nettle_version_minor (void);
 
 #ifdef __cplusplus
 }

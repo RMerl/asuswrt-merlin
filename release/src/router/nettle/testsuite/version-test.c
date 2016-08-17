@@ -1,8 +1,6 @@
-/* rsa-pkcs1-sign-tr.c
+/* version-test.c
 
-   Creating timing resistant RSA signatures.
-
-   Copyright (C) 2012 Nikos Mavrogiannopoulos
+   Copyright (C) 2015 Niels Möller
 
    This file is part of GNU Nettle.
 
@@ -31,29 +29,13 @@
    not, see http://www.gnu.org/licenses/.
 */
 
-#if HAVE_CONFIG_H
-# include "config.h"
-#endif
-#include "rsa.h"
+#include "testutils.h"
 
-#include "pkcs1.h"
-
-/* Side-channel resistant version of rsa_pkcs1_sign() */
-int
-rsa_pkcs1_sign_tr(const struct rsa_public_key *pub,
-  	          const struct rsa_private_key *key,
-	          void *random_ctx, nettle_random_func *random,
-	          size_t length, const uint8_t *digest_info,
-   	          mpz_t s)
+void
+test_main (void)
 {
-  mpz_t m;
-  int ret;
-
-  mpz_init(m);
-
-  ret = (pkcs1_rsa_digest_encode (m, key->size, length, digest_info)
-	 && rsa_compute_root_tr (pub, key, random_ctx, random,
-				 s, m));
-  mpz_clear(m);
-  return ret;
+  /* This also checks that we don't by accident link with a different
+     version of nettle which is installed on the system. */
+  ASSERT (nettle_version_major () == NETTLE_VERSION_MAJOR);
+  ASSERT (nettle_version_minor () == NETTLE_VERSION_MINOR);
 }

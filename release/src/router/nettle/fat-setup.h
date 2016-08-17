@@ -77,6 +77,15 @@
 # endif
 #endif
 
+/* Disable use of ifunc for now. Problem is, there's no guarantee that
+   one can call any libc functions from the ifunc resolver. On x86 and
+   x86_64, the corresponding IRELATIVE relocs are supposed to be
+   processed last, but that doesn't seem to happen, and its a
+   platform-specific feature. To trigger problems, simply try dlopen
+   ("libnettle.so", RTLD_NOW), which crashes in an uninitialized plt
+   entry. */
+#undef HAVE_LINK_IFUNC
+
 #if !HAVE_SECURE_GETENV
 #define secure_getenv(s) NULL
 #endif

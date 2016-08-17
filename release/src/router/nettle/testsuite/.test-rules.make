@@ -100,6 +100,9 @@ serpent-test$(EXEEXT): serpent-test.$(OBJEXT)
 twofish-test$(EXEEXT): twofish-test.$(OBJEXT)
 	$(LINK) twofish-test.$(OBJEXT) $(TEST_OBJS) -o twofish-test$(EXEEXT)
 
+version-test$(EXEEXT): version-test.$(OBJEXT)
+	$(LINK) version-test.$(OBJEXT) $(TEST_OBJS) -o version-test$(EXEEXT)
+
 knuth-lfib-test$(EXEEXT): knuth-lfib-test.$(OBJEXT)
 	$(LINK) knuth-lfib-test.$(OBJEXT) $(TEST_OBJS) -o knuth-lfib-test$(EXEEXT)
 
@@ -171,6 +174,9 @@ random-prime-test$(EXEEXT): random-prime-test.$(OBJEXT)
 
 pkcs1-test$(EXEEXT): pkcs1-test.$(OBJEXT)
 	$(LINK) pkcs1-test.$(OBJEXT) $(TEST_OBJS) -o pkcs1-test$(EXEEXT)
+
+rsa-sign-tr-test$(EXEEXT): rsa-sign-tr-test.$(OBJEXT)
+	$(LINK) rsa-sign-tr-test.$(OBJEXT) $(TEST_OBJS) -o rsa-sign-tr-test$(EXEEXT)
 
 rsa-test$(EXEEXT): rsa-test.$(OBJEXT)
 	$(LINK) rsa-test.$(OBJEXT) $(TEST_OBJS) -o rsa-test$(EXEEXT)

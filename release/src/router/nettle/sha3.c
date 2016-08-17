@@ -94,7 +94,7 @@ _sha3_pad (struct sha3_state *state,
 	   unsigned block_size, uint8_t *block, unsigned pos)
 {
   assert (pos < block_size);
-  block[pos++] = 1;
+  block[pos++] = 6;
 
   memset (block + pos, 0, block_size - pos);
   block[block_size - 1] |= 0x80;

@@ -7,7 +7,7 @@
 @syncodeindex fn cp
 @c %**end of header
 
-@set UPDATED-FOR 3.1
+@set UPDATED-FOR 3.2
 @set AUTHOR Niels Möller
 
 @copying
@@ -409,10 +409,9 @@ The most commonly used hash functions are MD5 and SHA1. Unfortunately,
 both these fail the collision-resistance requirement; cryptologists have
 found ways to construct colliding inputs. The recommended hash functions
 for new applications are SHA2 (with main variants SHA256 and SHA512). At
-the time of this writing (December 2012), the winner of the NIST SHA3
-competition has recently been announced, and the new SHA3 (earlier known
-as Keccak) and other top SHA3 candidates may also be reasonable
-alternatives.
+the time of this writing (Autumn 2015), SHA3 has recently been
+standardized, and the new SHA3 and other top SHA3 candidates may also be
+reasonable alternatives.
 
 @menu
 * Recommended hash functions::
@@ -599,6 +598,7 @@ corresponding init function.
 @end deftypefun
 
 @subsubsection @acronym{SHA3-224}
+@cindex SHA3
 
 The SHA3 hash functions were specified by NIST in response to weaknesses
 in SHA1, and doubts about SHA2 hash functions which structurally are
@@ -607,16 +607,21 @@ winner, also known as Keccak, was designed by Guido Bertoni, Joan
 Daemen, Michaël Peeters and Gilles Van Assche. It is structurally very
 different from all widely used earlier hash functions. Like SHA2, there
 are several variants, with output sizes of 224, 256, 384 and 512 bits
-(28, 32, 48 and 64 octets, respectively).
+(28, 32, 48 and 64 octets, respectively). In August 2015, it was
+formally standardized by NIST, as FIPS 202,
+@uref{http://dx.doi.org/10.6028/NIST.FIPS.202}.
 
-Nettle's implementation of SHA3 should be considered
-@strong{experimental}. It is based on the design from the competition.
-Unfortunately, it is likely that when the standard is finalized, there
-will be small changes making Nettle's current implementation
-incompatible with the standard. Nettle's implementation may need
-incompatible changes to track standardization. Latest standard draft, at
-the time of writing, is at
-@uref{http://csrc.nist.gov/publications/drafts/fips-202/fips_202_draft.pdf}.
+Note that the SHA3 implementation in earlier versions of Nettle was
+based on the specification at the time Keccak was announced as the
+winner of the competition, which is incompatible with the final standard
+and hence with current versions of Nettle. The @file{nette/sha3.h}
+defines a preprocessor symbol @code{NETTLE_SHA3_FIPS202} to indicate
+conformance with the standard.
+
+@defvr Constant NETTLE_SHA3_FIPS202
+Defined to 1 in Nettle versions supporting FIPS 202. Undefined in
+earlier versions.
+@end defvr
 
 Nettle defines SHA3-224 in @file{<nettle/sha3.h>}.
 
@@ -2120,7 +2125,7 @@ and decryption.
 Both associated data and the message data (cleartext or ciphertext) can
 be processed incrementally. In general, all associated data must be
 processed before the message data, and all calls but the last one must
-use a length that is a multiple of he block size, although some
+use a length that is a multiple of the block size, although some
 @acronym{AEAD} may implement more liberal conventions. The @acronym{CCM}
 mode is a bit special in that it requires the message lengths up front,
 other @acronym{AEAD} constructions don't have this restriction.
@@ -3532,7 +3537,7 @@ F(x) = x^e mod n
 I.e. raise x to the @code{e}'th power, while discarding all multiples of
 @code{n}. The pair of numbers @code{n} and @code{e} is the public key.
 @code{e} can be quite small, even @code{e = 3} has been used, although
-slightly larger numbers are recommended. @code{n} should be about 1000
+slightly larger numbers are recommended. @code{n} should be about 2000
 bits or larger.
 
 If @code{n} is large enough, and properly chosen, the inverse of F,
@@ -3541,8 +3546,8 @@ But, where's the trapdoor?
 
 Let's first look at how @acronym{RSA} key-pairs are generated. First
 @code{n} is chosen as the product of two large prime numbers @code{p}
-and @code{q} of roughly the same size (so if @code{n} is 1000 bits,
-@code{p} and @code{q} are about 500 bits each). One also computes the
+and @code{q} of roughly the same size (so if @code{n} is 2000 bits,
+@code{p} and @code{q} are about 1000 bits each). One also computes the
 number @code{phi = (p-1)(q-1)}, in mathematical speak, @code{phi} is the
 order of the multiplicative group of integers modulo n.
 
@@ -3585,6 +3590,16 @@ The verification operation is straight-forward, @code{x} is computed
 from the message in the same way as above. Then @code{s^e mod n} is
 computed, the operation returns true if and only if the result equals
 @code{x}.
+
+The @acronym{RSA} algorithm can also be used for encryption. RSA encryption uses
+the public key @code{(n,e)} to compute the ciphertext @code{m^e mod n}.
+The @cite{PKCS#1} padding scheme will use at least 8 random and non-zero
+octets, using @var{m} of the form @code{[00 02 padding 00 plaintext]}.
+It is required that @code{m < n}, and therefor the plaintext must be
+smaller than the octet size of the modulo @code{n}, with some margin.
+
+To decrypt the message, one needs the private key to compute @code{m =
+c^e mod n} followed by checking and removing the padding.
 
 @subsubsection Nettle's @acronym{RSA} support
 
@@ -3636,17 +3651,60 @@ zero if the key can't be used, for instance if the modulo is smaller
 than the minimum size needed for @acronym{RSA} operations specified by PKCS#1.
 @end deftypefun
 
+For each operation using the private key, there are two variants, e.g.,
+@code{rsa_sha256_sign} and @code{rsa_sha256_sign_tr}. The former
+function is older, and it should be avoided, because it provides no
+defenses against side-channel attacks. The latter function use
+randomized @acronym{RSA} blinding, which defends against timing attacks
+using chosen-ciphertext, and it also checks the correctness of the
+private key computation using the public key, which defends against
+software or hardware errors which could leak the private key.
+
 Before signing or verifying a message, you first hash it with the
 appropriate hash function. You pass the hash function's context struct
 to the @acronym{RSA} signature function, and it will extract the message
 digest and do the rest of the work. There are also alternative functions
-that take the hash digest as argument. 
+that take the hash digest as argument.
 
 There is currently no support for using SHA224 or SHA384 with
 @acronym{RSA} signatures, since there's no gain in either computation
 time nor message size compared to using SHA256 and SHA512, respectively.
 
-Creation and verification of signatures is done with the following functions:
+Creating an @acronym{RSA} signature is done with one of the following
+functions:
+
+@deftypefun int rsa_md5_sign_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, struct md5_ctx *@var{hash}, mpz_t @var{signature})
+@deftypefunx int rsa_sha1_sign_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, struct sha1_ctx *@var{hash}, mpz_t @var{signature})
+@deftypefunx int rsa_sha256_sign_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, struct sha256_ctx *@var{hash}, mpz_t @var{signature})
+@deftypefunx int rsa_sha512_sign_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, struct sha512_ctx *@var{hash}, mpz_t @var{signature})
+The signature is stored in @var{signature} (which must have been
+@code{mpz_init}'ed earlier). The hash context is reset so that it can be
+used for new messages. The @var{random_ctx} and @var{random} pointers
+are used to generate the @acronym{RSA} blinding. Returns one on success,
+or zero on failure. Signing fails if an error in the computation was
+detected, or if the key is too small for the given hash size, e.g., it's
+not possible to create a signature using SHA512 and a 512-bit
+@acronym{RSA} key.
+@end deftypefun
+
+@deftypefun int rsa_md5_sign_digest_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, const uint8_t *@var{digest}, mpz_t @var{signature})
+@deftypefunx int rsa_sha1_sign_digest_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, const uint8_t *@var{digest}, mpz_t @var{signature})
+@deftypefunx int rsa_sha256_sign_digest_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, const uint8_t *@var{digest}, mpz_t @var{signature})
+@deftypefunx int rsa_sha512_sign_digest_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, const uint8_t *@var{digest}, mpz_t @var{signature})
+Creates a signature from the given hash digest. @var{digest} should
+point to a digest of size @code{MD5_DIGEST_SIZE},
+@code{SHA1_DIGEST_SIZE}, @code{SHA256_DIGEST_SIZE}, or
+@code{SHA512_DIGEST_SIZE}respectively. The signature is stored in
+@var{signature} (which must have been @code{mpz_init}:ed earlier).
+Returns one on success, or zero on failure.
+@end deftypefun
+
+@deftypefun int rsa_pkcs1_sign_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, size_t @var{length}, const uint8_t *@var{digest_info}, mpz_t @var{signature})
+Similar to the above @code{_sign_digest_tr} functions, but the input is not the
+plain hash digest, but a PKCS#1 ``DigestInfo'', an ASN.1 DER-encoding
+of the digest together with an object identifier for the used hash
+algorithm.
+@end deftypefun
 
 @deftypefun int rsa_md5_sign (const struct rsa_private_key *@var{key}, struct md5_ctx *@var{hash}, mpz_t @var{signature})
 @deftypefunx int rsa_sha1_sign (const struct rsa_private_key *@var{key}, struct sha1_ctx *@var{hash}, mpz_t @var{signature})
@@ -3664,12 +3722,22 @@ it's not possible to create a signature using SHA512 and a 512-bit
 @deftypefunx int rsa_sha1_sign_digest (const struct rsa_private_key *@var{key}, const uint8_t *@var{digest}, mpz_t @var{signature});
 @deftypefunx int rsa_sha256_sign_digest (const struct rsa_private_key *@var{key}, const uint8_t *@var{digest}, mpz_t @var{signature});
 @deftypefunx int rsa_sha512_sign_digest (const struct rsa_private_key *@var{key}, const uint8_t *@var{digest}, mpz_t @var{signature});
-Creates a signature from the given hash digest. @var{digest} should
-point to a digest of size @code{MD5_DIGEST_SIZE},
-@code{SHA1_DIGEST_SIZE}, or @code{SHA256_DIGEST_SIZE}, respectively. The
-signature is stored in @var{signature} (which must have been
+Creates a signature from the given hash digest; otherwise analoguous to
+the above signing functions. @var{digest} should point to a digest of
+size @code{MD5_DIGEST_SIZE}, @code{SHA1_DIGEST_SIZE},
+@code{SHA256_DIGEST_SIZE}, or @code{SHA512_DIGEST_SIZE}, respectively.
+The signature is stored in @var{signature} (which must have been
 @code{mpz_init}:ed earlier). Returns one on success, or zero on failure.
 @end deftypefun
+
+@deftypefun int rsa_pkcs1_sign(const struct rsa_private_key *@var{key}, size_t @var{length}, const uint8_t *@var{digest_info}, mpz_t @var{s})
+Similar to the above _sign_digest functions, but the input is not the
+plain hash digest, but a PKCS#1 ``DigestInfo'', an ASN.1 DER-encoding
+of the digest together with an object identifier for the used hash
+algorithm.
+@end deftypefun
+
+Verifying an RSA signature is done with one of the following functions:
 
 @deftypefun int rsa_md5_verify (const struct rsa_public_key *@var{key}, struct md5_ctx *@var{hash}, const mpz_t @var{signature})
 @deftypefunx int rsa_sha1_verify (const struct rsa_public_key *@var{key}, struct sha1_ctx *@var{hash}, const mpz_t @var{signature})
@@ -3683,9 +3751,36 @@ the hash context is reset so that it can be used for new messages.
 @deftypefunx int rsa_sha1_verify_digest (const struct rsa_public_key *@var{key}, const uint8_t *@var{digest}, const mpz_t @var{signature})
 @deftypefunx int rsa_sha256_verify_digest (const struct rsa_public_key *@var{key}, const uint8_t *@var{digest}, const mpz_t @var{signature})
 @deftypefunx int rsa_sha512_verify_digest (const struct rsa_public_key *@var{key}, const uint8_t *@var{digest}, const mpz_t @var{signature})
-Returns 1 if the signature is valid, or 0 if it isn't. @var{digest} should
-point to a digest of size @code{MD5_DIGEST_SIZE},
-@code{SHA1_DIGEST_SIZE}, or @code{SHA256_DIGEST_SIZE}, respectively.
+Returns 1 if the signature is valid, or 0 if it isn't. @var{digest}
+should point to a digest of size @code{MD5_DIGEST_SIZE},
+@code{SHA1_DIGEST_SIZE}, @code{SHA256_DIGEST_SIZE}, or
+@code{SHA512_DIGEST_SIZE} respectively.
+@end deftypefun
+
+@deftypefun int rsa_pkcs1_verify(const struct rsa_public_key *@var{key}, size_t @var{length}, const uint8_t *@var{digest_info}, const mpz_t @var{signature})
+Similar to the above _verify_digest functions, but the input is not the
+plain hash digest, but a PKCS#1 ``DigestInfo'', and ASN.1 DER-encoding
+of the digest together with an object identifier for the used hash
+algorithm.
+@end deftypefun
+
+The following function is used to encrypt a clear text message using RSA.
+@deftypefun int rsa_encrypt (const struct rsa_public_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, size_t @var{length}, const uint8_t *@var{cleartext}, mpz_t @var{ciphertext})
+Returns 1 on success, 0 on failure. If the message is too long then this
+will lead to a failure.
+@end deftypefun
+The following function is used to decrypt a cipher text message using RSA.
+@deftypefun int rsa_decrypt (const struct rsa_private_key *@var{key}, size_t *@var{length}, uint8_t *@var{cleartext}, const mpz_t @var{ciphertext})
+Returns 1 on success, 0 on failure. Causes of failure include decryption
+failing or the resulting message being to large. The message buffer
+pointed to by @var{cleartext} must be of size *@var{length}. After
+decryption, *@var{length} will be updated with the size of the
+message.
+@end deftypefun
+There is also a timing resistant version of decryption that utilizes
+randomized RSA blinding.
+@deftypefun int rsa_decrypt_tr (const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, size_t *@var{length}, uint8_t *@var{message}, const mpz_t @var{ciphertext})
+Returns 1 on success, 0 on failure.
 @end deftypefun
 
 If you need to use the @acronym{RSA} trapdoor, the private key, in a way
@@ -3693,8 +3788,13 @@ that isn't supported by the above functions Nettle also includes a
 function that computes @code{x^d mod n} and nothing more, using the
 @acronym{CRT} optimization.
 
+@deftypefun int rsa_compute_root_tr(const struct rsa_public_key *@var{pub}, const struct rsa_private_key *@var{key}, void *@var{random_ctx}, nettle_random_func *@var{random}, mpz_t @var{x}, const mpz_t @var{m})
+Computes @code{x = m^d}. Returns one on success, or zero if a failure in
+the computation was detected.
+@end deftypefun
+
 @deftypefun void rsa_compute_root (struct rsa_private_key *@var{key}, mpz_t @var{x}, const mpz_t @var{m})
-Computes @code{x = m^d}, efficiently.
+Computes @code{x = m^d}.
 @end deftypefun
 
 At last, how do you create new keys?

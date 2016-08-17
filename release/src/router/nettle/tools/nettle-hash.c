@@ -134,6 +134,19 @@ digest_file(const struct nettle_hash *alg,
   return 1;
 }
 
+static void
+usage (FILE *f)
+{
+  fprintf(f, "Usage: nettle-hash -a ALGORITHM [OPTIONS] [FILE ...]\n"
+	  "Options:\n"
+	  "  --help              Show this help.\n"
+	  "  -V, --version       Show version information.\n"
+	  "  --list              List supported hash algorithms.\n"
+	  "  -a, --algorithm=ALG Hash algorithm to use.\n"
+	  "  -l, --length=LENGTH Desired digest length (octets)\n"
+	  "  --raw               Raw binary output.\n");
+}
+
 /* FIXME: Be more compatible with md5sum and sha1sum. Options -c
    (check), -b (binary), -t (text), and output format with hex hash
    sum, optional star (meaning binary mode), and file name. */
@@ -165,15 +178,11 @@ main (int argc, char **argv)
       {
       default:
 	abort();
+      case '?':
+	usage (stderr);
+	return EXIT_FAILURE;
       case OPT_HELP:
-	printf("nettle-hash -a ALGORITHM [OPTIONS] [FILE ...]\n"
-	       "Options:\n"
-	       "  --help              Show this help.\n"
-	       "  -V, --version       Show version information.\n"
-	       "  --list              List supported hash algorithms.\n"
-	       "  -a, --algorithm=ALG Hash algorithm to use.\n"
-	       "  -l, --length=LENGTH Desired digest length (octets)\n"
-	       "  --raw               Raw binary output.\n");
+	usage (stdout);
 	return EXIT_SUCCESS;
       case 'V':
 	printf("nettle-hash (" PACKAGE_STRING ")\n");

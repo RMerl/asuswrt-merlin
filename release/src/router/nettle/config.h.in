@@ -21,6 +21,9 @@
 /* Define if clock_gettime is available */
 #undef HAVE_CLOCK_GETTIME
 
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
 /* Define if fcntl file locking is available */
 #undef HAVE_FCNTL_LOCKING
 
@@ -32,6 +35,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have dlopen (with -ldl). */
+#undef HAVE_LIBDL
 
 /* Define to 1 if you have the `gmp' library (-lgmp). */
 #undef HAVE_LIBGMP

@@ -51,7 +51,7 @@
 static void
 usage (FILE *f)
 {
-  fprintf(f, "nettle-pbkdf2 [OPTIONS] SALT\n"
+  fprintf(f, "Usage: nettle-pbkdf2 [OPTIONS] SALT\n"
 	  "Options:\n"
 	  "  --help                 Show this help.\n"
 	  "  -V, --version          Show version information.\n"
@@ -97,6 +97,9 @@ main (int argc, char **argv)
       {
       default:
 	abort();
+      case '?':
+	usage (stderr);
+	return EXIT_FAILURE;
       case OPT_HELP:
 	usage (stdout);
 	return EXIT_SUCCESS;
