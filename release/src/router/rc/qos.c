@@ -786,11 +786,11 @@ static int start_tqos(void)
 			qsched = "sfq perturb 10";
 			break;
 	}
+
+        overhead = nvram_get_int("qos_overhead");
 #else
 	qsched = "sfq perturb 10";
 #endif
-
-	overhead = nvram_get_int("qos_overhead");
 
 	if (overhead > 0)
 		snprintf(overheadstr, sizeof(overheadstr),"overhead %d linklayer atm", overhead);

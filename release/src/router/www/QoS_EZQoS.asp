@@ -524,8 +524,10 @@ function change_qos_type(value){
 		document.getElementById('upload_tr').style.display = "";
 		document.getElementById('download_tr').style.display = "";
 		document.getElementById('list_table').style.display = "none";
-		if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
-		document.getElementById('qos_overhead_tr').style.display = "";
+		if (codel_support) {
+			document.getElementById('qos_sched_tr').style.display = "";
+			document.getElementById('qos_overhead_tr').style.display = "";
+		}
 		document.form.qos_bw_rulelist.disabled = true;
 		if(document.form.qos_type_orig.value == 0 && document.form.qos_enable_orig.value != 0){
 			document.form.action_script.value = "restart_qos;restart_firewall";
@@ -543,8 +545,10 @@ function change_qos_type(value){
 		document.getElementById('bw_limit_type').checked = false;
 		document.getElementById('bandwidth_setting_tr').style.display = "";
 		document.getElementById('list_table').style.display = "none";
-		if (codel_support) document.getElementById('qos_sched_tr').style.display = "none";
-		document.getElementById('qos_overhead_tr').style.display = "none";
+		if (codel_support) {
+			document.getElementById('qos_sched_tr').style.display = "none";
+			document.getElementById('qos_overhead_tr').style.display = "none";
+		}
 		document.form.qos_bw_rulelist.disabled = true;
 		if(document.getElementById("auto").checked){
 			document.getElementById('upload_tr').style.display = "none";
@@ -573,8 +577,10 @@ function change_qos_type(value){
 		document.getElementById('upload_tr').style.display = "none";
 		document.getElementById('download_tr').style.display = "none";
 		document.getElementById('list_table').style.display = "block";
-		if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
-		document.getElementById('qos_overhead_tr').style.display = "";
+		if (codel_support) {
+			document.getElementById('qos_sched_tr').style.display = "";
+			document.getElementById('qos_overhead_tr').style.display = "";
+		}
 		document.form.qos_bw_rulelist.disabled = false;
 		if(document.form.qos_type_orig.value == 2 && document.form.qos_enable_orig.value != 0)
 			document.form.action_script.value = "restart_qos;restart_firewall";
@@ -1292,8 +1298,10 @@ function check_field(){
 															 function() {
 																document.form.qos_enable.value = 1;
 																if(document.form.qos_enable_orig.value != 1){
-																	if (codel_support) document.getElementById('qos_sched_tr').style.display = "";
-																	document.getElementById('qos_overhead_tr').style.display = "";
+																	if (codel_support) {
+																		document.getElementById('qos_sched_tr').style.display = "";
+																		document.getElementById('qos_overhead_tr').style.display = "";
+																	}
 																	if(document.getElementById('int_type').checked == true && bwdpi_support)
 																		document.form.next_page.value = "QoS_EZQoS.asp";
 																	else if(document.getElementById('trad_type').checked)		//Traditional QoS
@@ -1322,9 +1330,10 @@ function check_field(){
 																document.getElementById('qos_type_tr').style.display = "none";
 																document.getElementById('bandwidth_setting_tr').style.display = "none";
 																document.getElementById('list_table').style.display = "none";
-																if (codel_support) document.getElementById('qos_sched_tr').style.display = "none";
-																document.getElementById('qos_overhead_tr').style.display = "none";
-	
+																if (codel_support) {
+																	document.getElementById('qos_sched_tr').style.display = "none";
+																	document.getElementById('qos_overhead_tr').style.display = "none";
+																}
 																if(bwdpi_support){																	
 																	
 																	document.getElementById('qos_enable_hint').style.display = "none";
