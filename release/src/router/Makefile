@@ -4198,7 +4198,8 @@ nano/Makefile:
 		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses/include" \
 		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses/lib" \
 		ac_cv_lib_ncursesw_get_wch=no \
-		--disable-nls --enable-tiny --enable-wrapping --disable-glibtest \
+		--disable-nls $(if $(RTCONFIG_BCMARM),,--enable-tiny) \
+		--disable-speller --disable-extra --disable-tabcomp --enable-wrapping --disable-glibtest \
 		--disable-libmagic --disable-utf8
 
 nano-clean:
