@@ -57,6 +57,7 @@ enum client_types {
 	EDirecTV,
 	EFreeBox,
 	ELGDevice,
+	ELGNetCastDevice,
 	ELifeTab,
 	EMarantzDMP,
 	EMediaRoom,

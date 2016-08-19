@@ -68,6 +68,10 @@ msgstr "フォルダ"
 msgid "Playlists"
 msgstr "プレイリスト"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "最近追加された"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "ビデオ"

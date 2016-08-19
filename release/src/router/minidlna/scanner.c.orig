@@ -595,8 +595,7 @@ CreateDatabase(void)
 			ret = sql_exec(db, "INSERT into OBJECTS (OBJECT_ID, PARENT_ID, DETAIL_ID, CLASS, NAME)"
 			                   " values "
 					   "('%s', '%s', %lld, 'container.storageFolder', '%q')",
-					   magic->objectid_match, parent,
-					   GetFolderMetadata(_(magic->name), NULL, NULL, NULL, 0), _(magic->name));
+					   magic->objectid_match, parent, GetFolderMetadata(magic->name, NULL, NULL, NULL, 0), magic->name);
 			free(parent);
 			if( ret != SQLITE_OK )
 				goto sql_failed;

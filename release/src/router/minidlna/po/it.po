@@ -70,6 +70,10 @@ msgstr "Cartelle"
 msgid "Playlists"
 msgstr "Scalette"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "Aggiunto recentemente"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "Video"

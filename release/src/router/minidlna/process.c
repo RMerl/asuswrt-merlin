@@ -96,10 +96,10 @@ process_fork(struct client_cache_s *client)
 	pid_t pid = fork();
 	if (pid > 0)
 	{
-		number_of_children++;
 		if (client)
 			client->connections++;
 		add_process_info(pid, client);
+		number_of_children++;
 	}
 
 	return pid;

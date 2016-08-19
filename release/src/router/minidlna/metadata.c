@@ -149,7 +149,7 @@ check_for_captions(const char *path, int64_t detailID)
 
 	if (ret == 0)
 	{
-		sql_exec(db, "INSERT into CAPTIONS"
+		sql_exec(db, "INSERT OR REPLACE into CAPTIONS"
 		             " (ID, PATH) "
 		             "VALUES"
 		             " (%lld, %Q)", detailID, file);

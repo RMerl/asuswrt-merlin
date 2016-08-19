@@ -68,6 +68,10 @@ msgstr "Dossiers"
 msgid "Playlists"
 msgstr "Liste de lecture"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "Ajouts récents"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "Vidéo"

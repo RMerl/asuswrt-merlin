@@ -575,7 +575,6 @@ AC_ARG_ENABLE(readynas,
 		AC_DEFINE([NETGEAR],[1],[Define to 1 if you want to enable generic NETGEAR device support])
 		AC_DEFINE([READYNAS],[1],[Define to 1 if you want to enable NETGEAR ReadyNAS support])
 		AC_DEFINE([TIVO_SUPPORT], 1, [Define to 1 if you want to enable TiVo support])
-		AC_DEFINE([PNPX],[5],[Define to 5 if you want to enable NETGEAR ReadyNAS PnP-X support])
 		AC_DEFINE_UNQUOTED([OS_URL],"http://www.readynas.com/")
 		AC_DEFINE_UNQUOTED([ROOTDEV_MANUFACTURERURL],"http://www.netgear.com/")
 		AC_DEFINE_UNQUOTED([ROOTDEV_MANUFACTURER],"NETGEAR")

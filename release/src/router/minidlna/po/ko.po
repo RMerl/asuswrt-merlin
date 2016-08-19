@@ -68,6 +68,10 @@ msgstr "폴더"
 msgid "Playlists"
 msgstr "재생 목록"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "최근에 추가"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "비디오"

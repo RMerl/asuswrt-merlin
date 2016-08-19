@@ -68,6 +68,10 @@ msgstr "Carpetas"
 msgid "Playlists"
 msgstr "Listas"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "Recientemente añadido"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "Vídeo"
