@@ -1,6 +1,15 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.62 (xx-xxx-2016)
+   - NEW: Added nano text editor
+   - CHANGED: Updated nettle to 3.2 (used for dnssec)
+   - FIXED: OpenVPN client shouldn't display policy routing settings
+            when using a TAP interface.
+   - FIXED: DSL/ATM overhead setting was visible on MIPS models, which
+            don't support it.
+
+
 380.61 (4-Aug-2016)
    - FIXED: Connected OpenVPN clients reporting as disconnected
             on the status page following any wireless config change

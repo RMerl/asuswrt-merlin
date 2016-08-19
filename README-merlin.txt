@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 380.61 (3-Aug-2016)
+Asuswrt-Merlin - build 380.62 (xx-xxx-2016)
 ===========================================
 
 About
@@ -67,6 +67,7 @@ System:
    - Entware easy setup script (alternative to Optware - the two are 
      mutually exclusive)
    - SNMP support (based on experimental code from Asus)
+   - Nano text editor (for more user-friendly script edition)
 
 
 Disk sharing:
