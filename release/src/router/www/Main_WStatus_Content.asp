@@ -104,7 +104,15 @@ function display_clients(clientsarray, obj) {
 			code += '<td><span style="margin-top:-15px; color: white;" class="link" onclick="oui_query_full_vendor(\'' + client[0] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ client[0] +'</span></td>'; 
 
 			code += '<td>' + client[1] + '</td>';	// IP
-			code += '<td>' + client[2] + '</td>';	// Name
+
+			if(client[2].length > 16) {		// Name
+				hostname = client[2];
+				client[2] = client[2].substring(0, 13)+"...";
+				code +='<td title="' + hostname + '">'+ client[2] +'</td>';
+			}else{
+				code +='<td>'+ client[2] +'</td>';
+			}
+
 			code += '<td>' + client[3] + ' dBm</td>';	// RSSI
 			code += '<td>' + client[4] + ' / ' + client[5] +' Mbps</td>';	// Rate
 			code += '<td>' + client[6] + '</td>';	// Time

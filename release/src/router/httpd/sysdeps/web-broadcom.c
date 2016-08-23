@@ -4547,7 +4547,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int i, ii, val = 0, ret = 0;
 	char *arplist = NULL, *arplistptr;
 	char *leaselist = NULL, *leaselistptr;
-	char hostnameentry[32];
+	char hostnameentry[65];
 	char ipentry[40], macentry[18];
 	int found, noclients = 0;
 	char rxrate[12], txrate[12];
@@ -4754,7 +4754,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (leaselist) {
 			leaselistptr = leaselist;
 
-			while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, tmp) == 3)) {
+			while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %32s %*s", macentry, ipentry, tmp) == 3)) {
 				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
 					found += 2;
 					break;
@@ -4877,7 +4877,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				if (leaselist) {
 					leaselistptr = leaselist;
 
-					while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, tmp) == 3)) {
+					while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %32s %*s", macentry, ipentry, tmp) == 3)) {
 						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[ii], ea)) == 0) {
 							found += 2;
 							break;
