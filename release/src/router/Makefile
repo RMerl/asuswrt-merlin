@@ -4173,6 +4173,7 @@ ncurses/Makefile:
 	$(CONFIGURE) --prefix=/usr --without-cxx --without-cxx-binding \
 	LDFLAGS="$(LDFLAGS) -L$(STAGEDIR)/usr/lib" \
 	--enable-echo --enable-const --enable-overwrite --disable-rpath --without-ada \
+	$(if $(RTCONFIG_BCMARM),--enable-widec,) \
 	--without-debug --without-manpages --without-profile --without-progs --without-tests \
 	--disable-home-terminfo --with-normal --with-shared --with-build-cppflags=-D_GNU_SOURCE \
 	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux,ansi"
@@ -4188,19 +4189,29 @@ ncurses-clean:
 	@rm -f ncurses/Makefile
 
 ncurses-install:
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -D ncurses/lib/libncursesw.so.6.0 $(INSTALLDIR)/ncurses/usr/lib/libncursesw.so.6.0
+else
 	install -D ncurses/lib/libncurses.so.6.0 $(INSTALLDIR)/ncurses/usr/lib/libncurses.so.6.0
+endif
+
 	$(STRIP) $(INSTALLDIR)/ncurses/usr/lib/*.so.*
-	cd $(INSTALLDIR)/ncurses/usr/lib && \
-		ln -sf libncurses.so.6.0 libncurses.so.6
+
+ifeq ($(RTCONFIG_BCMARM),y)
+	cd $(INSTALLDIR)/ncurses/usr/lib && ln -sf libncursesw.so.6.0 libncursesw.so.6
+else
+	cd $(INSTALLDIR)/ncurses/usr/lib && ln -sf libncurses.so.6.0 libncurses.so.6
+endif
+
 
 nano/Makefile:
 	cd nano && $(CONFIGURE) --prefix=$(INSTALLDIR)/nano/usr \
 		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses/include" \
 		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses/lib" \
-		ac_cv_lib_ncursesw_get_wch=no \
-		--disable-nls $(if $(RTCONFIG_BCMARM),,--enable-tiny) \
+		$(if $(RTCONFIG_BCMARM),ac_cv_lib_ncursesw_get_wch=yes,ac_cv_lib_ncursesw_get_wch=no) \
+		$(if $(RTCONFIG_BCMARM),--enable-utf8,--enable-tiny) \
 		--disable-speller --disable-extra --disable-tabcomp --enable-wrapping --disable-glibtest \
-		--disable-libmagic --disable-utf8
+		--disable-libmagic --disable-nls
 
 nano-clean:
 	-@$(MAKE) -C nano distclean
