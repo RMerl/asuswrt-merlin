@@ -2070,6 +2070,7 @@ void enable_gro(int interval)
 }
 #endif
 
+#if 0
 int suit_double_quote(const char *output, const char *input, int outsize){
 	char *src = (char *)input;
 	char *dst = (char *)output;
@@ -2095,6 +2096,7 @@ int suit_double_quote(const char *output, const char *input, int outsize){
 
 	return dst-output;
 }
+#endif
 
 #if 0
 #ifdef RTCONFIG_BCMARM
@@ -2173,11 +2175,11 @@ start_samba(void)
 			memset(char_user, 0, 64);
 			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
 			memset(suit_user, 0, 64);
-			suit_double_quote(suit_user, char_user, 64);
+			str_escape_quotes(suit_user, char_user, 64);
 			memset(char_passwd, 0, 64);
 			ascii_to_char_safe(char_passwd, tmp_ascii_passwd, 64);
 			memset(suit_passwd, 0, 64);
-			suit_double_quote(suit_passwd, char_passwd, 64);
+			str_escape_quotes(suit_passwd, char_passwd, 64);
 
 			sprintf(cmd, "smbpasswd \"%s\" \"%s\"", suit_user, suit_passwd);
 _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
