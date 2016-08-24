@@ -432,7 +432,10 @@ function applyRule(){
 			for(var i = 1; i < rule_num; i += 1) {
 				tmp_value += "<"		
 				for(var j = 1; j < item_num - 1; j += 1) {
-					if(document.getElementById("openvpnd_clientlist_table").rows[i].cells[j].innerHTML.lastIndexOf("...") < 0) {
+					if (j == 2) {		// Password
+						tmp_value += overlib_str3[i];
+					}
+					else if(document.getElementById("openvpnd_clientlist_table").rows[i].cells[j].innerHTML.lastIndexOf("...") < 0) {
 						tmp_value += document.getElementById("openvpnd_clientlist_table").rows[i].cells[j].innerHTML;
 					}
 					else {
@@ -579,6 +582,7 @@ function addRow_Group(upper){
 function del_Row(rowdata){
 	var i = rowdata.parentNode.parentNode.rowIndex;
 	document.getElementById("openvpnd_clientlist_table").deleteRow(i);
+	overlib_str3.splice(i,1);
 	var vpn_server_clientlist_value = "";
 	var rowLength = document.getElementById("openvpnd_clientlist_table").rows.length;
 	for(var k = 1; k < rowLength; k += 1){
@@ -591,10 +595,7 @@ function del_Row(rowdata){
 
 		vpn_server_clientlist_value += ">";
 
-		if (document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].innerHTML.lastIndexOf("...") < 0)
-		        vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].innerHTML;
-		else
-		        vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].title;
+		vpn_server_clientlist_value += overlib_str3[k];
 	}
 
 	vpn_server_clientlist_array = vpn_server_clientlist_value;
@@ -621,7 +622,7 @@ function showopenvpnd_clientlist(){
 			for(var j = 0; j < vpn_server_clientlist_col.length; j++){
 				if(j == 0){
 					if(vpn_server_clientlist_col[0].length >32){
-						overlib_str2[i] += vpn_server_clientlist_col[0];
+						overlib_str2[i] = vpn_server_clientlist_col[0];
 						vpn_server_clientlist_col[0] = vpn_server_clientlist_col[0].substring(0, 30)+"...";
 						code +='<td width="35%" title="'+overlib_str2[i]+'">'+ vpn_server_clientlist_col[0] +'</td>';
 					}else{
@@ -629,8 +630,10 @@ function showopenvpnd_clientlist(){
 					}	
 				}
 				else if(j ==1){
-					if(vpn_server_clientlist_col[1].length >32){
-						overlib_str3[i] += vpn_server_clientlist_col[1];
+					overlib_str3[i] = vpn_server_clientlist_col[1];
+					if (document.getElementById('show_pass').checked == false) {
+						code +='<td width="35%">*****</td>';
+					}else if(vpn_server_clientlist_col[1].length >32){
 						vpn_server_clientlist_col[1] = vpn_server_clientlist_col[1].substring(0, 30)+"...";
 						code +='<td width="35%" title="'+overlib_str3[i]+'">'+ vpn_server_clientlist_col[1] +'</td>';
 					}else{
@@ -699,7 +702,7 @@ function update_vpn_server_state() {
 
 		success: function() {
 			if(vpnd_state != '2' && (vpnd_errno == '1' || vpnd_errno == '2')){
-				document.getElementById('openvpn_initial').style.display = "none";    						
+				document.getElementById('openvpn_initial').style.display = "none";
 				document.getElementById('openvpn_error_message').innerHTML = "<span><#vpn_openvpn_fail1#></span>";
 				document.getElementById('openvpn_error_message').style.display = "";
 			}
@@ -1220,8 +1223,8 @@ function defaultSettings() {
 														formShowAndHide(0, "openvpn");
 													}
 													);
-												</script>			
-											</td>			
+												</script>
+											</td>
 										</tr>
 										<tr id="trVPNServerMode">
 											<th><#vpn_Adv#></th>
@@ -1245,17 +1248,17 @@ function defaultSettings() {
 													}
 													document.getElementById("exportViaEmail").onclick = function(){
 														showMailPanel();
-													}	
+													}
 												</script>
-              									<div id="openvpn_initial" style="display:none;margin-left:5px;">
-              										<span>              												
-              											 <#vpn_openvpn_init#>
-              											 <img src="images/InternetScan.gif" />
-              										</span>              											
-              									</div>
-              									<div id="openvpn_error_message" style="display:none;margin-left:5px;"></div>	
-            								</td>
-          								</tr>
+										<div id="openvpn_initial" style="display:none;margin-left:5px;">
+											<span>
+												 <#vpn_openvpn_init#>
+												 <img src="images/InternetScan.gif" />
+											</span>
+										</div>
+										<div id="openvpn_error_message" style="display:none;margin-left:5px;"></div>
+									</td>
+									</tr>
 									</table>
 									<div id="OpenVPN_setting" style="display:none;margin-top:8px;">
 										<div class="formfontdesc">
@@ -1267,19 +1270,22 @@ function defaultSettings() {
 												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/37EC8F08-3F50-4F82-807E-6D2DCFE5146A/" target="_blank" style="text-decoration:underline;">iPhone/iPad</a>
 												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/8DCA7DA6-E5A0-40C2-8AED-B9361E89C844/" target="_blank" style="text-decoration:underline;">Android</a>
 											<ol>
-										</div>										
+										</div>
+
+										<div style="color:#FFCC00;"><input type="checkbox" name="show_pass" id="show_pass" onclick="showopenvpnd_clientlist();">Show passwords</div>
+
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
 											<tr>
 												<td colspan="4"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;32)</td>
 											</tr>
-											</thead>								
+											</thead>
 											<tr>
 												<th><#PPPConnection_x_WANLink_itemname#></th>
 												<th><#HSDPAConfig_Username_itemname#></th>
 												<th><#HSDPAConfig_Password_itemname#></th>
 												<th><#list_add_delete#></th>
-											</tr>			  
+											</tr>
 											<tr>
 												<td width="15%" style="text-align:center;">-
 												</td>
@@ -1292,10 +1298,10 @@ function defaultSettings() {
 												<td width="15%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(32);" value=""></div>
 												</td>
-											</tr>	 			  
-										</table>        
-														
-										<div id="openvpnd_clientlist_Block"></div>	
+											</tr>
+										</table>
+
+										<div id="openvpnd_clientlist_Block"></div>
 									</div>
 
 									<div id="divAdvanced" style="display:none;margin-top:8px;">
@@ -1432,7 +1438,7 @@ function defaultSettings() {
 													<input type="radio" name="vpn_server_dhcp" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_dhcp", "1", "checked"); %>><#checkbox_Yes#>
 													<input type="radio" name="vpn_server_dhcp" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_dhcp", "0", "checked"); %>><#checkbox_No#>
 												</td>
-		 									</tr>
+											</tr>
 											<tr id="server_range">
 												<th><#vpn_openvpn_ClientPool#></th>
 												<td>
@@ -1460,28 +1466,28 @@ function defaultSettings() {
 													<input type="radio" name="vpn_server_plan" class="input" value="1" <% nvram_match_x("", "vpn_server_plan", "1", "checked"); %>><#checkbox_Yes#>
 													<input type="radio" name="vpn_server_plan" class="input" value="0" <% nvram_match_x("", "vpn_server_plan", "0", "checked"); %>><#checkbox_No#>
 												</td>
-		 									</tr>
+											</tr>
 											<tr>
 												<th><#vpn_openvpn_RedirectInternet#></th>
 												<td>
 													<input type="radio" name="vpn_server_rgw" class="input" value="1" <% nvram_match_x("", "vpn_server_rgw", "1", "checked"); %>><#checkbox_Yes#>
 													<input type="radio" name="vpn_server_rgw" class="input" value="0" <% nvram_match_x("", "vpn_server_rgw", "0", "checked"); %>><#checkbox_No#>
 												</td>
-		 									</tr>
+											</tr>
 											<tr>
 												<th><#vpn_openvpn_ResponseDNS#></th>
 												<td>
 													<input type="radio" name="vpn_server_x_dns" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
 													<input type="radio" name="vpn_server_x_dns" class="input" value="0" onclick="update_visibility();"><#checkbox_No#>
 												</td>
-		 									</tr>
+											</tr>
 											<tr id="server_pdns">
 												<th><#vpn_openvpn_AdvDNS#></th>
 												<td>
 													<input type="radio" name="vpn_server_pdns" class="input" value="1" <% nvram_match_x("", "vpn_server_pdns", "1", "checked"); %>><#checkbox_Yes#>
 													<input type="radio" name="vpn_server_pdns" class="input" value="0" <% nvram_match_x("", "vpn_server_pdns", "0", "checked"); %>><#checkbox_No#>
 												</td>
-		 									</tr>
+											</tr>
 											<tr>
 												<th><#vpn_openvpn_Encrypt#></th>
 												<td>
@@ -1519,7 +1525,7 @@ function defaultSettings() {
 													<input type="radio" name="vpn_server_ccd" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd", "1", "checked"); %>><#checkbox_Yes#>
 													<input type="radio" name="vpn_server_ccd" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd", "0", "checked"); %>><#checkbox_No#>
 												</td>
-		 									</tr>
+											</tr>
 											<tr id="server_c2c">
 												<th><#vpn_openvpn_ClientMutual#></th>
 												<td>
@@ -1533,7 +1539,7 @@ function defaultSettings() {
 													<input type="radio" name="vpn_server_ccd_excl" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd_excl", "1", "checked"); %>><#checkbox_Yes#>
 													<input type="radio" name="vpn_server_ccd_excl" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd_excl", "0", "checked"); %>><#checkbox_No#>
 												</td>
-		 									</tr>
+											</tr>
 										</table>
 										<!-- Advanced setting table end-->
 										<!-- Allowed Clients setting table start-->
@@ -1553,23 +1559,23 @@ function defaultSettings() {
 											<tr>							
 												<div id="VPNClientList_Block_PC" class="VPNClientList_Block_PC"></div>
 												<td width="36%">
-								 					<input type="text" class="input_25_table" maxlength="25" name="vpn_clientlist_commonname_0" autocorrect="off" autocapitalize="off">
-								 				</td>
+													<input type="text" class="input_25_table" maxlength="25" name="vpn_clientlist_commonname_0" autocorrect="off" autocapitalize="off">
+												</td>
 												<td width="20%">
-								 					<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_subnet_0"  onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
-								 				</td>
+													<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_subnet_0"  onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
+												</td>
 												<td width="20%">
-								 					<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_netmask_0"  onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
-								 				</td>
-								 				<td width="12%">
+													<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_netmask_0"  onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
+												</td>
+												<td width="12%">
 													<select name="vpn_clientlist_push_0" class="input_option">
 														<option value="0" selected>No</option>
 														<option value="1">Yes</option>
 													</select>
 												</td>
-								 				<td width="12%">
-								 					<input class="add_btn" type="button" onClick="addRow_Group_Advanced(128);" name="vpn_clientlist2" value="">
-								 				</td>
+												<td width="12%">
+													<input class="add_btn" type="button" onClick="addRow_Group_Advanced(128);" name="vpn_clientlist2" value="">
+												</td>
 											</tr>
 										</table>
 										<div id="openvpn_clientlist_Block"></div>
@@ -1699,7 +1705,7 @@ function defaultSettings() {
 						</script>
 					</td>
 				</tr>
-				<input type="hidden" name="PM_SMTP_PORT_TMP" value="<% nvram_get("PM_SMTP_PORT"); %>">  				      			
+				<input type="hidden" name="PM_SMTP_PORT_TMP" value="<% nvram_get("PM_SMTP_PORT"); %>">
 				<tr>
 					<th>PM_SMTP_AUTH_USER</th>
 					<td valign="top">
@@ -1711,25 +1717,25 @@ function defaultSettings() {
 							}
 						</script>
 					</td>
-				</tr>    				      			
+				</tr>
 				<tr>
 					<th>PM_SMTP_AUTH_PASS</th>
 					<td valign="top">
 						<input type="password" class="input_32_table" name="PM_SMTP_AUTH_PASS_TMP" maxlength="100" value="" autocorrect="off" autocapitalize="off">
 					</td>
-				</tr>    				      			
+				</tr>
 				<tr>
 					<th>PM_MY_NAME (Optional)</th>
 					<td valign="top">
 						<input type="text" class="input_32_table" name="PM_MY_NAME_TMP" value="<% nvram_get("PM_MY_NAME"); %>" autocorrect="off" autocapitalize="off">
 					</td>
-				</tr>    				      			
+				</tr>
 				<tr>
 					<th>PM_MY_EMAIL (Optional)</th>
 					<td valign="top">
 						<input type="text" class="input_32_table" name="PM_MY_EMAIL_TMP" value="<% nvram_get("PM_MY_EMAIL"); %>" autocorrect="off" autocapitalize="off">
 					</td>
-				</tr>    				      			
+				</tr>
 			</table>
 
 			<div class="panelSubmiter">
