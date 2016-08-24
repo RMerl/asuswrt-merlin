@@ -579,13 +579,22 @@ function addRow_Group(upper){
 function del_Row(rowdata){
 	var i = rowdata.parentNode.parentNode.rowIndex;
 	document.getElementById("openvpnd_clientlist_table").deleteRow(i);
-  	var vpn_server_clientlist_value = "";
-  	var rowLength = document.getElementById("openvpnd_clientlist_table").rows.length;
+	var vpn_server_clientlist_value = "";
+	var rowLength = document.getElementById("openvpnd_clientlist_table").rows.length;
 	for(var k = 1; k < rowLength; k += 1){
 		vpn_server_clientlist_value += "<";
-		vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[1].innerHTML;
+
+		if (document.getElementById("openvpnd_clientlist_table").rows[k].cells[1].innerHTML.lastIndexOf("...") < 0)
+			vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[1].innerHTML;
+		else
+			vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[1].title;
+
 		vpn_server_clientlist_value += ">";
-		vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].innerHTML;
+
+		if (document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].innerHTML.lastIndexOf("...") < 0)
+		        vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].innerHTML;
+		else
+		        vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].title;
 	}
 
 	vpn_server_clientlist_array = vpn_server_clientlist_value;
