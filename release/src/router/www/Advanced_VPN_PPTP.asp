@@ -222,17 +222,20 @@ function applyRule() {
 		var get_group_value = function () {
 			var rule_num = document.getElementById("pptpd_clientlist_table").rows.length;
 			var item_num = document.getElementById("pptpd_clientlist_table").rows[0].cells.length;
-			var tmp_value = "";	
+			var tmp_value = "";
 
 			for(var i = 0; i < rule_num; i += 1) {
-				tmp_value += "<"		
+				tmp_value += "<"
 				for(var j = 1; j < item_num - 2; j += 1) {
-					if(document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML.lastIndexOf("...") < 0) {
+					if (j == 2) {
+						tmp_value += overlib_str1[i];
+					}
+					else if(document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML.lastIndexOf("...") < 0) {
 						tmp_value += document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML;
 					}
 					else {
 						tmp_value += document.getElementById("pptpd_clientlist_table").rows[i].cells[j].title;
-					}					
+					}
 					if(j != item_num - 3)
 						tmp_value += ">";
 				}
@@ -457,17 +460,21 @@ function del_Row(rowdata){
 	var i = rowdata.parentNode.parentNode.rowIndex;
 	var delUserName = rowdata.parentNode.parentNode.cells[1].innerHTML;
 	document.getElementById("pptpd_clientlist_table").deleteRow(i);
+	overlib_str1.splice(i,1);
 	var pptpd_clientlist_value = "";
 	var rowLength = document.getElementById("pptpd_clientlist_table").rows.length;
 	for(var k = 0; k < rowLength; k += 1) {
-		for(var j = 1; j < document.getElementById("pptpd_clientlist_table").rows[k].cells.length - 2; j += 1) {	//cell 1 & 2
-			if(j == 1)
-				pptpd_clientlist_value += "<";				
-			else
-				pptpd_clientlist_value += ">";
-				
-			pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[j].innerHTML;
-		}
+
+		pptpd_clientlist_value += "<";
+
+		if (document.getElementById("pptpd_clientlist_table").rows[k].cells[1].innerHTML.lastIndexOf("...") < 0)
+			pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[1].innerHTML;
+		else
+			pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[1].title;
+
+		pptpd_clientlist_value += ">";
+
+		pptpd_clientlist_value += overlib_str1[k];
 	}
 
 	pptpd_clientlist_array = pptpd_clientlist_value;
@@ -507,17 +514,19 @@ function showpptpd_clientlist(){
 				if(j == 0){
 					pptp_user_name = pptpd_clientlist_col[0];
 					if(pptpd_clientlist_col[0].length >28){
-						overlib_str0[i] += pptpd_clientlist_col[0];
+						overlib_str0[i-1] = pptpd_clientlist_col[0];
 						pptpd_clientlist_col[0]=pptpd_clientlist_col[0].substring(0, 26)+"...";
 						code +='<td width="30%" title="'+overlib_str0[i]+'">'+ pptpd_clientlist_col[0] +'</td>';
 					}else
 						code +='<td width="30%" title="'+pptpd_clientlist_col[0]+'">'+ pptpd_clientlist_col[0] +'</td>';
 				}
 				else if(j == 1){
-					if(pptpd_clientlist_col[1].length >28){
-						overlib_str1[i] += pptpd_clientlist_col[1];
+					overlib_str1[i-1] = pptpd_clientlist_col[1];
+					if (document.getElementById('show_pass').checked == false) {
+						code +='<td width="30%">*****</td>';
+					}else if(pptpd_clientlist_col[1].length >28){
 						pptpd_clientlist_col[1]=pptpd_clientlist_col[1].substring(0, 26)+"...";
-						code +='<td width="30%" title="'+overlib_str1[i]+'">'+ pptpd_clientlist_col[1] +'</td>';
+						code +='<td width="30%" title="'+overlib_str1[i-1]+'">'+ pptpd_clientlist_col[1] +'</td>';
 					}else
 						code +='<td width="30%">'+ pptpd_clientlist_col[1] +'</td>';
 				} 
@@ -868,6 +877,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 												</li>
 											</ul>
 										</div>
+										<div style="color:#FFCC00;"><input type="checkbox" name="show_pass" id="show_pass" onclick="showpptpd_clientlist();">Show passwords</div>
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
 											<tr>
