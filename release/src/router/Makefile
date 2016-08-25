@@ -4169,9 +4169,9 @@ ipset-install:
 	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
 
 ncurses/Makefile:
-	cd ncurses && CFLAGS="$(EXTRACFLAGS) -Os -I$(STAGEDIR)/usr/include" \
+	cd ncurses && CFLAGS="$(EXTRACFLAGS) -Os -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections -fPIC" \
 	$(CONFIGURE) --prefix=/usr --without-cxx --without-cxx-binding \
-	LDFLAGS="$(LDFLAGS) -L$(STAGEDIR)/usr/lib" \
+	LDFLAGS="$(LDFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(STAGEDIR)/usr/lib" \
 	--enable-echo --enable-const --enable-overwrite --disable-rpath --without-ada \
 	$(if $(RTCONFIG_BCMARM),--enable-widec,) \
 	--without-debug --without-manpages --without-profile --without-progs --without-tests \
@@ -4206,8 +4206,8 @@ endif
 
 nano/Makefile:
 	cd nano && $(CONFIGURE) --prefix=$(INSTALLDIR)/nano/usr \
-		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses/include" \
-		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses/lib" \
+		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses/include -ffunction-sections -fdata-sections" \
+		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses/lib -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 		$(if $(RTCONFIG_BCMARM),ac_cv_lib_ncursesw_get_wch=yes,ac_cv_lib_ncursesw_get_wch=no) \
 		$(if $(RTCONFIG_BCMARM),--enable-utf8,--enable-tiny) \
 		--disable-speller --disable-extra --disable-tabcomp --enable-wrapping --disable-glibtest \
