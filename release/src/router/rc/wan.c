@@ -766,7 +766,7 @@ start_igmpproxy(char *wan_ifname)
 
 	append_custom_config("igmpproxy.conf", fp);
 	fclose(fp);
-	use_custom_config("igmpproxy", igmpproxy_conf);
+	use_custom_config("igmpproxy.conf", igmpproxy_conf);
 	run_postconf("igmpproxy", igmpproxy_conf);
 
 	eval("/usr/sbin/igmpproxy", igmpproxy_conf);
