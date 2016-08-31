@@ -32,7 +32,7 @@ function initial(){
 	show_menu();
 
 	if (openvpnd_support) {
-		setTimeout("refreshState()",3000);
+		refreshState();
 	} else {
 		showhide("server1", 0);
 		showhide("server2", 0);
@@ -148,7 +148,6 @@ function refreshState(){
 		showhide("vpnc", 0);
 	}
 
-	showhide("waitmsg", 0);
 }
 
 
@@ -476,7 +475,6 @@ function show_vpnc_rulelist(){
                 <div>&nbsp;</div>
                 <div class="formfonttitle">VPN - Status</div>
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		<div class="formfontdesc" style="height:15px;"><span id="waitmsg" style="color:#FC0;">Updating, please wait...</span></div>
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" id="pptpserver" class="FormTable"></br>
 					<thead>
 						<tr>
