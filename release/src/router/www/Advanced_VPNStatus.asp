@@ -267,6 +267,8 @@ function parseStatus(text, block){
 		{
 			if (i == 0) {
 				code +='<th style="text-align:left;">' + clientTableHeaders[i] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-2] + '</span></th>';
+			} else if (clientTableHeaders[i].search("Bytes") != -1 ) {
+				code +='<th style="text-align:left;">' + clientTableHeaders[i].replace("Bytes","MBytes") + '</th>';
 			} else {
 				code +='<th style="text-align:left;">' + clientTableHeaders[i] + '</th>';
 			}
@@ -283,7 +285,7 @@ function parseStatus(text, block){
 				if (j == 0) {
 					code += '<td style="white-space:nowrap; text-align:left;">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-2] +'</span></td>';
 				} else if ((j == 3) || (j == 4)) {
-					code += '<td style="vertical-align:top; text-align:left;">' + Number(clientTableEntries[i][j]).toLocaleString() + '</td>';
+					code += '<td style="vertical-align:top; text-align:left;">' + Number(clientTableEntries[i][j]/1024/1024).toFixed(2).toLocaleString() + '</td>';
 				} else {
 					code += '<td style="vertical-align:top; text-align:left;">' + clientTableEntries[i][j] + '</td>';
 				}
