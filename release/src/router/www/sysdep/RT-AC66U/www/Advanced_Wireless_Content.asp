@@ -44,7 +44,8 @@ function initial(){
 
 	genBWTable(wl_unit);	
 
-	if((sw_mode == 2 || sw_mode == 4) && wl_unit == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
+	if(((sw_mode == 2 || sw_mode == 4) && wl_unit == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1') ||
+	  ('<% nvram_get("wl_subunit"); %>' != '-1')){
 		_change_wl_unit(wl_unit);
 	}
 
