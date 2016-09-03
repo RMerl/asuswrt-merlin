@@ -32,7 +32,7 @@ function initial(){
 	show_menu();
 
 	if (openvpnd_support) {
-		refreshState();
+		setTimeout("refreshState()",1000);
 	} else {
 		showhide("server1", 0);
 		showhide("server2", 0);
