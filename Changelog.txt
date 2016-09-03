@@ -22,6 +22,11 @@ Asuswrt-Merlin Changelog
    - FIXED: Editing OpenVPN or PPTP users with any value longer than
             32 chars could lead to corruption of the user list.
    - FIXED: Custom config file for igmpproxy wasn't working.
+   - FIXED: After turning off a Guest network, the next visit to the
+            Wireless Settings page would show that guest network's settings
+            instead of the parent band settings (Asus bug)
+   - FIXED: Smart Connect rules didn't apply on the RT-AC88U (fix ported
+            from 380_3941).
 
 
 380.61 (4-Aug-2016)
