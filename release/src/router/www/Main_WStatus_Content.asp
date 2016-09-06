@@ -88,9 +88,9 @@ function display_clients(clientsarray, obj) {
 
 	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
 	code += '<thead><tr>';
-	code += '<td width="15%">MAC</td>';
-	code += '<td width="16%">IP</td>';
-	code += '<td width="16%">Name</td><td width="10%">RSSI</td><td width="16%">Rx / Tx Rate</td><td width="12%">Connected</td>';
+	code += '<td width="25%">Device</td>';
+	code += '<td width="37%">IP</td>';
+	code += '<td width="16%">Rx/Tx & RSSI</td><td width="12%">Connected</td>';
 	code += '<td width="10%">Flags</td>';
 	code += '</tr></thead>';
 
@@ -99,24 +99,24 @@ function display_clients(clientsarray, obj) {
 			client = clientsarray[i];
 			code += '<tr>';
 
-			// MAC
+			// Mac
 			overlib_str = "<p><#MAC_Address#>:</p>" + client[0];
-			code += '<td><span style="margin-top:-15px; color: white;" class="link" onclick="oui_query_full_vendor(\'' + client[0] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ client[0] +'</span></td>'; 
+			code += '<td><span style="margin-top:-15px; color: white;" class="link" onclick="oui_query_full_vendor(\'' + client[0] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ client[0] +'</span>';
 
-			code += '<td>' + client[1] + '</td>';	// IP
-
-			if(client[2].length > 16) {		// Name
-				hostname = client[2];
-				client[2] = client[2].substring(0, 13)+"...";
-				code +='<td title="' + hostname + '">'+ client[2] +'</td>';
-			}else{
-				code +='<td>'+ client[2] +'</td>';
+			if (client[2].length > 24) {		// Name
+				code +='<br><span style="margin-top:-15px; color: cyan;" title="' + client[2] + '">'+ client[2].substring(0,20) +'...</span></td>';
+			} else {
+				code +='<br><span style="margin-top:-15px; color: cyan;">'+ client[2] +'</span></td>';
 			}
 
-			code += '<td>' + client[3] + ' dBm</td>';	// RSSI
-			code += '<td>' + client[4] + ' / ' + client[5] +' Mbps</td>';	// Rate
-			code += '<td>' + client[6] + '</td>';	// Time
-			code += '<td>' + client[7] + '</td>';	// Flags
+			code += '<td style="vertical-align: top;">' + client[1];				// IPv4
+			code += '<br><span style="margin-top:-15px; color: cyan;">'+ client[3] +'</span></td>';	// IPv6
+
+
+			code += '<td style="text-align: right;">' + client[5] + ' / ' + client[6] +' Mbps';	// Rate
+			code += '<br><span style="margin-top:-15px; color: cyan;">' + client[4] + ' dBm</td>';	// RSSI
+			code += '<td style="text-align: right;">' + client[7] + '</td>';	// Time
+			code += '<td>' + client[8] + '</td>';	// Flags
 			code += '</tr>';
 		}
 	} else {

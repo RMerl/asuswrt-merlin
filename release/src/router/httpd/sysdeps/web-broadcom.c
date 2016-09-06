@@ -4536,6 +4536,10 @@ wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	return retval;
 }
 
+#ifdef RTCONFIG_IPV6
+#define IPV6_CLIENT_LIST        "/tmp/ipv6_client_list"
+#endif
+
 int
 ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
@@ -4547,9 +4551,10 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int i, ii, val = 0, ret = 0;
 	char *arplist = NULL, *arplistptr;
 	char *leaselist = NULL, *leaselistptr;
+	char *ipv6list = NULL, *ipv6listptr;
 	char hostnameentry[65];
-	char ipentry[40], macentry[18];
-	int found, noclients = 0;
+	char ipentry[42], macentry[18];
+	int found, foundipv6 = 0, noclients = 0;
 	char rxrate[12], txrate[12];
 	char ea[ETHER_ADDR_STR_LEN];
 	scb_val_t scb_val;
@@ -4723,6 +4728,15 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	   cases where a device uses a static IP rather than DHCP */
 	leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
 
+#ifdef RTCONFIG_IPV6
+	/* Obtain IPv6 info */
+	if (ipv6_enabled()) {
+		get_ipv6_client_info();
+		get_ipv6_client_list();
+		ipv6list = read_whole_file(IPV6_CLIENT_LIST);
+	}
+#endif
+
 	/* build authenticated sta list */
 	for (i = 0; i < auth->count; i ++) {
 		sta = wl_sta_info(name, &auth->ea[i]);
@@ -4780,6 +4794,27 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			}
 		} else {
 			ret += websWrite(wp, "\"<unknown>\",");
+		}
+
+#ifdef RTCONFIG_IPV6
+// Retrieve IPv6
+		if (ipv6list) {
+			ipv6listptr = ipv6list;
+			foundipv6 = 0;
+			while ((ipv6listptr < ipv6list+strlen(ipv6list)-2) && (sscanf(ipv6listptr,"%*s %17s %40s", macentry, ipentry) == 2)) {
+				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
+					ret += websWrite(wp, "\"%s\",", ipentry);
+					foundipv6 = 1;
+					break;
+				} else {
+					ipv6listptr = strstr(ipv6listptr,"\n")+1;
+				}
+			}
+		}
+#endif
+
+		if (foundipv6 == 0) {
+			ret += websWrite(wp, "\"\",");
 		}
 
 // RSSI
@@ -4906,6 +4941,26 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					ret += websWrite(wp, "\"<unknown>\",");
 				}
 
+#ifdef RTCONFIG_IPV6
+// Retrieve IPv6
+				if (ipv6list) {
+					ipv6listptr = ipv6list;
+					foundipv6 = 0;
+					while ((ipv6listptr < ipv6list+strlen(ipv6list)-2) && (sscanf(ipv6listptr,"%*s %17s %40s", macentry, ipentry) == 2)) {
+						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
+							ret += websWrite(wp, "\"%s\",", ipentry);
+							foundipv6 = 1;
+							break;
+						} else {
+							ipv6listptr = strstr(ipv6listptr,"\n")+1;
+						}
+					}
+				}
+#endif
+
+				if (foundipv6 == 0) {
+					ret += websWrite(wp, "\"\",");
+				}
 // RSSI
 				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
 				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
@@ -4963,6 +5018,7 @@ exit:
 	if (auth) free(auth);
 	if (arplist) free(arplist);
 	if (leaselist) free(leaselist);
+	if (ipv6list) free(ipv6list);
 
 	return ret;
 }

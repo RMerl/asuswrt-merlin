@@ -41,6 +41,8 @@
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #endif
 
+#define IPV6_CLIENT_LIST        "/tmp/ipv6_client_list"
+
 /* Generic MIME type handler */
 struct mime_handler {
 	char *pattern;

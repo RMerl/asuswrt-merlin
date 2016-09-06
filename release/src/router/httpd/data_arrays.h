@@ -21,7 +21,6 @@ extern int ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef RTCONFIG_IGD2
 extern int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
 #endif
-#define IPV6_CLIENT_LIST        "/tmp/ipv6_client_list"
 #endif
 
 extern int ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv);

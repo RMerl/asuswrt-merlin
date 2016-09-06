@@ -4792,7 +4792,7 @@ ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 #define DHCP_LEASE_FILE         "/var/lib/misc/dnsmasq.leases"
 #define IPV6_CLIENT_NEIGH	"/tmp/ipv6_neigh"
 #define IPV6_CLIENT_INFO	"/tmp/ipv6_client_info"
-#define	IPV6_CLIENT_LIST	"/tmp/ipv6_client_list"
+//#define	IPV6_CLIENT_LIST	"/tmp/ipv6_client_list"	// Moved to httpd.h
 #define	MAC			1
 #define	HOSTNAME		2
 #define	IPV6_ADDRESS		3
