@@ -12,9 +12,15 @@ Asuswrt-Merlin Changelog
               optimization level.
    - CHANGED: Updated minidlna to 1.1.6
    - CHANGED: Updated OpenVPN to 2.3.12
-   - CHANGED: Improvements to the Wireless Log page.
+   - CHANGED: Revamped the Wireless Log page.
+                - Merged some columns to gain more horizontal space
+                - Longer hostname shown (truncated names shown in
+                  tooltip)
+                - Display clients' IPv6 if they have one
    - CHANGED: Accept up to 250 characters for OpenVPN client's
               username and password (one provider needs 64).
+   - CHANGED: Hide the WPA key on the Wireless config page, and only
+              reveal it when you click on the field to edit it.
    - FIXED: OpenVPN client shouldn't display policy routing settings
             when using a TAP interface.
    - FIXED: DSL/ATM overhead setting was visible on MIPS models, which
