@@ -431,8 +431,8 @@ NMP_DEBUG("*** write_to_memory: %s ***\n",new_mac);
 
 	b = strstr(search_list, new_mac);
 	if(b!=NULL) { //find the client in the DB
-		dst_list = malloc(sizeof(char)*(strlen(nmp_client_list)+SINGLE_CLIENT_SIZE));
-		dst_list_tmp = malloc(sizeof(char)*(strlen(nmp_client_list)+SINGLE_CLIENT_SIZE));
+		dst_list = malloc(sizeof(char)*(strlen(nmp_client_list)+SINGLE_CLIENT_SIZE)+1);
+		dst_list_tmp = malloc(sizeof(char)*(strlen(nmp_client_list)+SINGLE_CLIENT_SIZE)+1);
 
 NMP_DEBUG_M("client data in DB: %s\n", new_mac);
 
@@ -580,9 +580,8 @@ NMP_DEBUG_M("*** Update nmp_client_list:\n%s\n", nmp_client_list);
 		free(dst_list_tmp);
 	}
 	else { //new client
-		nmp_client_list = realloc(nmp_client_list, sizeof(char)*(strlen(search_list)+SINGLE_CLIENT_SIZE));
-		dst_list_tmp = malloc(sizeof(char)*(strlen(search_list)+SINGLE_CLIENT_SIZE));
-// NOTE: Shouldn't that be buffer +1, for null terminator in case of maximum length?
+		nmp_client_list = realloc(nmp_client_list, sizeof(char)*(strlen(search_list)+SINGLE_CLIENT_SIZE)+1);
+		dst_list_tmp = malloc(sizeof(char)*(strlen(search_list)+SINGLE_CLIENT_SIZE)+1);
 
 		if (strlen(search_list))
 			strcpy(nmp_client_list, search_list);
@@ -981,14 +980,14 @@ int main(int argc, char *argv[])
 				NMP_DEBUG("Read Client list DB: %s from %s\n", nmp_client_list, NMP_CLIENT_LIST_FILENAME);
 			}
 			else {
-				nmp_client_list = malloc(sizeof(char)*SINGLE_CLIENT_SIZE);
+				nmp_client_list = malloc(sizeof(char)*SINGLE_CLIENT_SIZE+1);
 				NMP_DEBUG("Read Client list DB fail!\nSize is %d...remove oversize file.\n", size_ncl);
 				eval("rm", NMP_CLIENT_LIST_FILENAME);				
 			}
 			fclose(fp_ncl);
 		}
 		else
-			nmp_client_list = malloc(sizeof(char)*SINGLE_CLIENT_SIZE);
+			nmp_client_list = malloc(sizeof(char)*SINGLE_CLIENT_SIZE+1);
 
 		//signal(SIGUSR2, reset_db);
 	#endif
