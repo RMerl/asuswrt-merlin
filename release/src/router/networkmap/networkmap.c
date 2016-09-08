@@ -467,6 +467,8 @@ NMP_DEBUG_M("-%s,%s,%s,%s,%d,%d,%d,%d-\n", db_mac, db_user_def, db_device_name, 
 			)
 			{
 NMP_DEBUG("DATA the same!\n");
+				free(dst_list);
+				free(dst_list_tmp);
 				return;
 			}
 			sprintf(dst_list_tmp, "%s<%s>%s", dst_list, db_mac, db_user_def);
@@ -570,11 +572,11 @@ NMP_DEBUG("DATA the same!\n");
 			}
 			nmp_client_list = realloc(nmp_client_list, sizeof(char)*(strlen(dst_list)+1));
 			strlcpy(nmp_client_list, dst_list, strlen(dst_list)+1);
-			free(dst_list);
 
 NMP_DEBUG_M("*** Update nmp_client_list:\n%s\n", nmp_client_list);
 			break;
 		}
+		free(dst_list);
 		free(dst_list_tmp);
 	}
 	else { //new client
