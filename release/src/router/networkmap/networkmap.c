@@ -409,7 +409,7 @@ NMP_DEBUG("check_nmp_db:\n");
 void
 write_to_DB(CLIENT_DETAIL_INFO_TABLE *p_client_tab)
 {
-	char new_mac[13], *dst_list;
+	char new_mac[13], *dst_list, *dst_list_tmp;
 	char *nv, *nvp, *b, *search_list;
 	char *db_mac, *db_user_def, *db_device_name, *db_type, *db_http, *db_printer, *db_itune, *db_apple_model;
 #ifdef RTCONFIG_BWDPI
@@ -432,6 +432,8 @@ NMP_DEBUG("*** write_to_memory: %s ***\n",new_mac);
 	b = strstr(search_list, new_mac);
 	if(b!=NULL) { //find the client in the DB
 		dst_list = malloc(sizeof(char)*(strlen(nmp_client_list)+SINGLE_CLIENT_SIZE));
+		dst_list_tmp = malloc(sizeof(char)*(strlen(nmp_client_list)+SINGLE_CLIENT_SIZE));
+
 NMP_DEBUG_M("client data in DB: %s\n", new_mac);
 
 	        nvp = nv = b;
@@ -467,87 +469,98 @@ NMP_DEBUG_M("-%s,%s,%s,%s,%d,%d,%d,%d-\n", db_mac, db_user_def, db_device_name, 
 NMP_DEBUG("DATA the same!\n");
 				return;
 			}
-			sprintf(dst_list, "%s<%s>%s", dst_list, db_mac, db_user_def);
+			sprintf(dst_list_tmp, "%s<%s>%s", dst_list, db_mac, db_user_def);
+			strcpy(dst_list, dst_list_tmp);
 
 		        if (strcmp((char *)p_client_tab->device_name[p_client_tab->detail_info_num], "")) {
 				client_updated = 1;
       	        	        NMP_DEBUG("Update device name: %s.\n", p_client_tab->device_name[p_client_tab->detail_info_num]);
-				sprintf(dst_list, "%s>%s", dst_list, p_client_tab->device_name[p_client_tab->detail_info_num]);
+				sprintf(dst_list_tmp, "%s>%s", dst_list, p_client_tab->device_name[p_client_tab->detail_info_num]);
 		        }
 			else
-				sprintf(dst_list, "%s>%s", dst_list, db_device_name);
+				sprintf(dst_list_tmp, "%s>%s", dst_list, db_device_name);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (strcmp((char *)p_client_tab->apple_model[p_client_tab->detail_info_num], "")) {
 				client_updated = 1;
                                 NMP_DEBUG("Update Apple device: %s.\n", p_client_tab->apple_model[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%s", dst_list, p_client_tab->apple_model[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, p_client_tab->apple_model[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_apple_model);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_apple_model);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (p_client_tab->type[p_client_tab->detail_info_num] != 0) {
 				client_updated = 1;
                                 NMP_DEBUG("Update type: %d\n", p_client_tab->type[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%d", dst_list, p_client_tab->type[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%d", dst_list, p_client_tab->type[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_type);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_type);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (!strcmp(db_http, "0") ) {
                                 client_updated = 1;
                                 NMP_DEBUG("Update http: %d\n", p_client_tab->http[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%d", dst_list, p_client_tab->http[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%d", dst_list, p_client_tab->http[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_http);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_http);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (!strcmp(db_printer, "0") ) {
                                 client_updated = 1;
                                 NMP_DEBUG("Update printer: %d\n", p_client_tab->printer[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%d", dst_list, p_client_tab->printer[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%d", dst_list, p_client_tab->printer[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_printer);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_printer);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (!strcmp(db_itune, "0")) {
                                 client_updated = 1;
                                 NMP_DEBUG("Update iTune: %d\n", p_client_tab->itune[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%d", dst_list, p_client_tab->itune[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%d", dst_list, p_client_tab->itune[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_itune);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_itune);
+			strcpy(dst_list, dst_list_tmp);
 #ifdef RTCONFIG_BWDPI
                         if (strcmp(p_client_tab->bwdpi_host[p_client_tab->detail_info_num], "")) {
                                 client_updated = 1;
                                 NMP_DEBUG("Update bwdpi_host: %s.\n", p_client_tab->bwdpi_host[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%s", dst_list, p_client_tab->bwdpi_host[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, p_client_tab->bwdpi_host[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_bwdpi_host);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_bwdpi_host);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (strcmp(p_client_tab->bwdpi_vendor[p_client_tab->detail_info_num], "")) {
                                 client_updated = 1;
                                 NMP_DEBUG("Update bwdpi_vendor: %s.\n", p_client_tab->bwdpi_vendor[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%s", dst_list, p_client_tab->bwdpi_vendor[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, p_client_tab->bwdpi_vendor[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_bwdpi_vendor);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_bwdpi_vendor);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (strcmp(p_client_tab->bwdpi_type[p_client_tab->detail_info_num], "")) {
                                 client_updated = 1;
                                 NMP_DEBUG("Update bwdpi_type: %s.\n", p_client_tab->bwdpi_type[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%s", dst_list, p_client_tab->bwdpi_type[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, p_client_tab->bwdpi_type[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_bwdpi_type);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_bwdpi_type);
+			strcpy(dst_list, dst_list_tmp);
 
                         if (strcmp(p_client_tab->bwdpi_device[p_client_tab->detail_info_num], "")) {
                                 client_updated = 1;
                                 NMP_DEBUG("Update bwdpi_device: %s.\n", p_client_tab->bwdpi_device[p_client_tab->detail_info_num]);
-                                sprintf(dst_list, "%s>%s", dst_list, p_client_tab->bwdpi_device[p_client_tab->detail_info_num]);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, p_client_tab->bwdpi_device[p_client_tab->detail_info_num]);
                         }
                         else
-                                sprintf(dst_list, "%s>%s", dst_list, db_bwdpi_device);
+                                sprintf(dst_list_tmp, "%s>%s", dst_list, db_bwdpi_device);
+			strcpy(dst_list, dst_list_tmp);
 
 #endif
 			NMP_DEBUG_M("nv %s\n nvp:%s\n b:%s\n dist_list:%s\n", nv, nvp, b, dst_list);
@@ -558,12 +571,17 @@ NMP_DEBUG("DATA the same!\n");
 			nmp_client_list = realloc(nmp_client_list, sizeof(char)*(strlen(dst_list)+1));
 			strlcpy(nmp_client_list, dst_list, strlen(dst_list)+1);
 			free(dst_list);
+
 NMP_DEBUG_M("*** Update nmp_client_list:\n%s\n", nmp_client_list);
 			break;
 		}
+		free(dst_list_tmp);
 	}
 	else { //new client
 		nmp_client_list = realloc(nmp_client_list, sizeof(char)*(strlen(search_list)+SINGLE_CLIENT_SIZE));
+		dst_list_tmp = malloc(sizeof(char)*(strlen(search_list)+SINGLE_CLIENT_SIZE));
+// NOTE: Shouldn't that be buffer +1, for null terminator in case of maximum length?
+
 		if (strlen(search_list))
 			strlcpy(nmp_client_list, search_list, strlen(search_list)+1);
 NMP_DEBUG_M("new client: %d-%s,%s,%d\n",p_client_tab->detail_info_num,
@@ -571,7 +589,7 @@ NMP_DEBUG_M("new client: %d-%s,%s,%d\n",p_client_tab->detail_info_num,
         	p_client_tab->device_name[p_client_tab->detail_info_num],
 	        p_client_tab->type[p_client_tab->detail_info_num]);
 
-		sprintf(nmp_client_list,"%s<%s>>%s>%s>%d>%d>%d>%d", nmp_client_list, 
+		sprintf(dst_list_tmp,"%s<%s>>%s>%s>%d>%d>%d>%d", nmp_client_list, 
 		new_mac,
 	        p_client_tab->device_name[p_client_tab->detail_info_num],
 		p_client_tab->apple_model[p_client_tab->detail_info_num],
@@ -580,13 +598,18 @@ NMP_DEBUG_M("new client: %d-%s,%s,%d\n",p_client_tab->detail_info_num,
 		p_client_tab->printer[p_client_tab->detail_info_num],
 		p_client_tab->itune[p_client_tab->detail_info_num]
 		);
+		strcpy(nmp_client_list, dst_list_tmp);
+
 #ifdef RTCONFIG_BWDPI
-		sprintf(nmp_client_list,"%s>%s>%s>%s>%s", nmp_client_list,
+		sprintf(dst_list_tmp,"%s>%s>%s>%s>%s", nmp_client_list,
                 p_client_tab->bwdpi_host[p_client_tab->detail_info_num],
                 p_client_tab->bwdpi_vendor[p_client_tab->detail_info_num],
                 p_client_tab->bwdpi_type[p_client_tab->detail_info_num],
                 p_client_tab->bwdpi_device[p_client_tab->detail_info_num]);
+		strcpy(nmp_client_list, dst_list_tmp);
 #endif
+
+		free(dst_list_tmp);
 	}
 
 
