@@ -571,7 +571,7 @@ NMP_DEBUG("DATA the same!\n");
 				strcat(dst_list, nvp);
 			}
 			nmp_client_list = realloc(nmp_client_list, sizeof(char)*(strlen(dst_list)+1));
-			strlcpy(nmp_client_list, dst_list, strlen(dst_list)+1);
+			strcpy(nmp_client_list, dst_list);
 
 NMP_DEBUG_M("*** Update nmp_client_list:\n%s\n", nmp_client_list);
 			break;
@@ -585,7 +585,7 @@ NMP_DEBUG_M("*** Update nmp_client_list:\n%s\n", nmp_client_list);
 // NOTE: Shouldn't that be buffer +1, for null terminator in case of maximum length?
 
 		if (strlen(search_list))
-			strlcpy(nmp_client_list, search_list, strlen(search_list)+1);
+			strcpy(nmp_client_list, search_list);
 NMP_DEBUG_M("new client: %d-%s,%s,%d\n",p_client_tab->detail_info_num,
 	        new_mac,
         	p_client_tab->device_name[p_client_tab->detail_info_num],
