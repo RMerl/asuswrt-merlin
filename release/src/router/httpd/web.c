@@ -1017,12 +1017,13 @@ ej_load_clientlist_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 		str = (char *)malloc(sizeof(char)*size_ncl+1);
 		if (fread(str, 1, size_ncl, fp) != size_ncl) {
 			csprintf("Read nmp_client_list FILE ERR\n");
+			close(fp);
 			return 0;
 		}
-	}
-	else
+	} else {
+		fclose(fp);
 		return 0;
-	fclose(fp);
+	}
 	str[size_ncl] = '\0';
 
 	/* each char expands to %XX at max */
@@ -5555,7 +5556,7 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 	char output_buf[128], dev_name[32];
 	P_CLIENT_DETAIL_INFO_TABLE p_client_info_tab;
 	int lock;
-	char devname[LINE_SIZE], character;
+	char devname[32], character;
 	int j, len;
 
 	lock = file_lock("networkmap");
@@ -5581,11 +5582,11 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 			strlcpy(dev_name, (const char *)p_client_info_tab->device_name[i], sizeof (dev_name));
 
 		memset(output_buf, 0, 128);
-		memset(devname, 0, LINE_SIZE);
+		memset(devname, 0, 32);
 
 	    if(p_client_info_tab->exist[i]==1) {
 		len = strlen(dev_name);
-		for (j=0; (j < len) && (j < LINE_SIZE-1); j++) {
+		for (j=0; (j < len) && (j < 32-1); j++) {
 			character = dev_name[j];
 			if ((isalnum(character)) || (character == ' ') || (character == '-') || (character == '_'))
 				devname[j] = character;
@@ -14605,7 +14606,7 @@ ej_get_clientlist(int eid, webs_t wp, int argc, char **argv){
 	char ipaddr[16];
 	P_CLIENT_DETAIL_INFO_TABLE p_client_info_tab;
 	int lock;
-	char devname[LINE_SIZE], character;
+	char devname[32], character;
 	int j, len;
 	int first_mac=1, first_info=1;
 
@@ -14631,7 +14632,7 @@ ej_get_clientlist(int eid, webs_t wp, int argc, char **argv){
 		memset(output_buf, 0, 2048);
 		memset(ipaddr, 0, 16);
 		memset(mac_buf, 0, 32);
-		memset(devname, 0, LINE_SIZE);
+		memset(devname, 0, 32);
 
 		if(strcmp((const char *)p_client_info_tab->user_define[i], ""))
 			strlcpy(dev_name, (const char *)p_client_info_tab->user_define[i], sizeof(dev_name));
@@ -14640,7 +14641,7 @@ ej_get_clientlist(int eid, webs_t wp, int argc, char **argv){
 
 	    if(p_client_info_tab->exist[i]==1) {
 		len = strlen(dev_name);
-		for (j=0; (j < len) && (j < LINE_SIZE-1); j++) {
+		for (j=0; (j < len) && (j < 32-1); j++) {
 			character = dev_name[j];
 			if ((isalnum(character)) || (character == ' ') || (character == '-') || (character == '_'))
 				devname[j] = character;
@@ -14670,7 +14671,7 @@ ej_get_clientlist(int eid, webs_t wp, int argc, char **argv){
 			websWrite(wp, ",\n");
 		}
 
-		sprintf(output_buf, "%s:{\"type\":\"%d\",\"name\":\"%s\",\"ip\":\"%s\",\"mac\":%s,\"from\":\"networkmapd\",\"macRepeat\":\"%d\",\"isGateway\":\"%s\",\"isWebServer\":\"%d\",\"isPrinter\":\"%d\",\"isITunes\":\"%d\",\"isOnline\":\"true\"}",
+		snprintf(output_buf, sizeof(output_buf), "%s:{\"type\":\"%d\",\"name\":\"%s\",\"ip\":\"%s\",\"mac\":%s,\"from\":\"networkmapd\",\"macRepeat\":\"%d\",\"isGateway\":\"%s\",\"isWebServer\":\"%d\",\"isPrinter\":\"%d\",\"isITunes\":\"%d\",\"isOnline\":\"true\"}",
 		mac_buf,
 		p_client_info_tab->type[i],
 		devname,
