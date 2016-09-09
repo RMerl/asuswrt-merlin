@@ -737,9 +737,11 @@ int create_msearch_ctrlpt(int Mx)
         sprintf(tmp, "MX:%d\r\n\r\n", Mx);
         strcat(data, tmp);
                                                                                                                                              
-        if(sendto(ssdp_fd, data, strlen(data), 0, (struct sockaddr *)&addr, sizeof(addr)) <0)
+        if(sendto(ssdp_fd, data, strlen(data), 0, (struct sockaddr *)&addr, sizeof(addr)) <0) {
+		free(data);
                 return 0;
-                                                                                                                                             
+	}
+	free(data);
         return 1;
                                                                                                                                              
 }
