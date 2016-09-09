@@ -170,10 +170,10 @@ int main()
         // create UDP socket and bind to "br0" to get ARP packet//
 	arp_sockfd = create_socket(INTERFACE);
 
-        if(arp_sockfd < 0)
+        if(arp_sockfd < 0) {
                 perror("create socket ERR:");
 		return -1;
-	else {
+	} else {
 		setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
 		dst_sockll = src_sockll; //2008.06.27 Yau add copy sockaddr info to dst
 		memset(dst_sockll.sll_addr, -1, sizeof(dst_sockll.sll_addr)); // set dmac addr FF:FF:FF:FF:FF:FF
