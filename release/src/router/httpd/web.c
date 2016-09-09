@@ -1017,9 +1017,11 @@ ej_load_clientlist_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 		str = (char *)malloc(sizeof(char)*size_ncl+1);
 		if (fread(str, 1, size_ncl, fp) != size_ncl) {
 			csprintf("Read nmp_client_list FILE ERR\n");
-			close(fp);
+			fclose(fp);
+			free(str);
 			return 0;
 		}
+		fclose(fp);
 	} else {
 		fclose(fp);
 		return 0;
@@ -1032,6 +1034,7 @@ ej_load_clientlist_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 		buf = (char *)malloc(ret);
 		if (buf == NULL) {
 			csprintf("No memory.\n");
+			free(str);
 			return 0;
 		}
 	}
@@ -1040,7 +1043,7 @@ ej_load_clientlist_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 
 	if (buf != tmp)
 		free(buf);
-
+	free(str);
 	return ret;
 }
 
