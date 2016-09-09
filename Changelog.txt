@@ -8,14 +8,15 @@ Asuswrt-Merlin Changelog
           for the RT-N66U and RT-AC66U.
    - NEW: Option to toggle the display of passwords on the PPTPD and
           OpenVPN server pages.
+   - NEW: Allow providing a vendor class on the WAN page (DHCP option 60)
    - CHANGED: Updated nettle to 3.2 (used for dnssec) and increased
               optimization level.
    - CHANGED: Updated minidlna to 1.1.6
    - CHANGED: Updated OpenVPN to 2.3.12
-   - CHANGED: Revamped the Wireless Log page.
+   - CHANGED: Revamped the Wireless Log page:
                 - Merged some columns to gain more horizontal space
-                - Longer hostname shown (truncated names shown in
-                  tooltip)
+                - Longer hostname shown (truncated names are now
+                  shown in a tooltip)
                 - Display clients' IPv6 if they have one
    - CHANGED: Accept up to 250 characters for OpenVPN client's
               username and password (one provider needs 64).
@@ -31,8 +32,11 @@ Asuswrt-Merlin Changelog
    - FIXED: After turning off a Guest network, the next visit to the
             Wireless Settings page would show that guest network's settings
             instead of the parent band settings (Asus bug)
-   - FIXED: Smart Connect rules didn't apply on the RT-AC88U (fix ported
+   - FIXED: Smart Connect rules didn't apply on the RT-AC88U (backported
             from 380_3941).
+   - FIXED: Numerous memory leaks in the networkmap service.
+   - FIXED: Potential buffer overrun in the networkmap service.
+
 
 
 380.61 (4-Aug-2016)
@@ -40,7 +44,7 @@ Asuswrt-Merlin Changelog
             on the status page following any wireless config change
             (Asus bug)
    - FIXED: OpenVPN server would report being "Initializing"
-            while it already was ready, follwoing any
+            while it already was ready, following any
             wireless config change (Asus bug)
    - FIXED: Various stability issues with minidlna (reverted some
             of Asus's customizations)
