@@ -1,2 +1,2 @@
-var trarrif = new Array();
+var traffic = new Array();
 traffic = <% traffic_limiter_wanStat(""); %>;
