@@ -59,6 +59,8 @@ int ASUS_Discovery()
     if (setsockopt(a_socket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) < 0)
     {
         myAsusDiscoveryDebugPrint("setsockopt: SO_REUSEADDR failed\n");
+	close(a_socket);
+	a_socket = 0;
         return 0;
     }
 

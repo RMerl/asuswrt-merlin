@@ -172,6 +172,7 @@ int main()
 
         if(arp_sockfd < 0)
                 perror("create socket ERR:");
+		return -1;
 	else {
 		setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
 		dst_sockll = src_sockll; //2008.06.27 Yau add copy sockaddr info to dst
