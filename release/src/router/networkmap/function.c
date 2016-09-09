@@ -999,7 +999,7 @@ void store_description(char *msg)
                                 mxend++;
                         }
                         tmp[j-1] = '\0';
-                        strlcpy(description.service[s_num].name, tmp, sizeof(description.service));
+                        strlcpy(description.service[s_num].name, tmp, sizeof(description.service[s_num].name));
                         NMP_DEBUG_F("service %d name = %s\n", s_num, tmp);
                         break;
                 case 7:
