@@ -5584,12 +5584,12 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 		else
 			strlcpy(dev_name, (const char *)p_client_info_tab->device_name[i], sizeof (dev_name));
 
-		memset(output_buf, 0, 128);
-		memset(devname, 0, 32);
+		memset(output_buf, 0, sizeof(output_buf));
+		memset(devname, 0, sizeof(devname));
 
 	    if(p_client_info_tab->exist[i]==1) {
 		len = strlen(dev_name);
-		for (j=0; (j < len) && (j < 32-1); j++) {
+		for (j=0; (j < len) && (j < (sizeof(devname) - 1)); j++) {
 			character = dev_name[j];
 			if ((isalnum(character)) || (character == ' ') || (character == '-') || (character == '_'))
 				devname[j] = character;
