@@ -33,10 +33,13 @@ Asuswrt-Merlin Changelog
             Wireless Settings page would show that guest network's settings
             instead of the parent band settings (Asus bug)
    - FIXED: Smart Connect rules didn't apply on the RT-AC88U (backported
-            from 380_3941).
-   - FIXED: Numerous memory leaks in the networkmap service.
-   - FIXED: Potential buffer overrun in the networkmap service.
-
+            fix from 380_3941).
+   - FIXED: Numerous memory leaks in the networkmap service. (Asus bug)
+   - FIXED: Potential buffer overrun in the networkmap service. (Asus bug)
+   - FIXED: Broken IPv6 connectivity if enabling SSH brute force
+            protection (only MIPS models were affected)
+   - FIXED: DHCP lease renewals would fail with ISPs with a broken
+            DHCP server that sent replies from a different IP address.
 
 
 380.61 (4-Aug-2016)
