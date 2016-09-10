@@ -2372,7 +2372,6 @@ TRACE_PT("writing Parental Control\n");
 		 * of security, but it does not work otherwise (conntrack does not work) :-(
 		 */
 		if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "bigpond") ||
-		    !strcmp(wan_ipaddr, "0.0.0.0") ||
 		    nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp)))
 		{
 			fprintf(fp, "-A INPUT -p udp --sport 67 --dport 68 -j %s\n", logaccept);
@@ -3334,7 +3333,7 @@ TRACE_PT("writing Parental Control\n");
 			wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 			wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 
-			if(!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "bigpond") || !strcmp(wan_ip, "0.0.0.0"))	// oleg patch
+			if(!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "bigpond"))	// oleg patch
 				fprintf(fp, "-A INPUT -p udp --sport 67 --dport 68 -j %s\n", logaccept);
 
 			break; // set one time.
