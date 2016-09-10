@@ -36,7 +36,7 @@ PF6_EXT_SLIB+=SKIPLOG
 endif
 PF6_EXT_SLIB+=policy
 ifeq ($(CONFIG_LINUX26),y)
-PF6_EXT_SLIB+=connlimit ROUTE connbytes HL #recent NFQUEUE hashlimit
+PF6_EXT_SLIB+=connlimit ROUTE connbytes HL recent #NFQUEUE hashlimit
 endif
 endif
 
