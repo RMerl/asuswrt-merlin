@@ -177,6 +177,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
     if (-1 == status)
     {
         NMP_DEBUG_F("NBNS: bind error.\n");
+	close(sock_nbns);
         return -1;
     }                                                                                                         
 
@@ -299,13 +300,12 @@ int lpd515(unsigned char *dest_ip)
         /* Receive data */
         recvlen1 = recv(sockfd1, recvbuf1, MAXDATASIZE, 0);
         memcpy(&lpd, recvbuf1, 1);
+	close(sockfd1);
         if (lpd.cmd_code == LPR_RESPONSE)
         {
-           	close(sockfd1);
                	return 0;
         }
 
-	close(sockfd1);
        	return -1;
 }
 
@@ -385,14 +385,14 @@ int open_socket_ipv4( unsigned char *src_ip )
         if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &any, sizeof(struct in_addr)) < 0)
         {
                 //printf("IP_MULTICAST_IF failed: %s\n", strerror(errno));
-                return -1;
+		goto fail;
         }
 	/* Set timeout. Cherry Cho added in 2009/2/20. */
 	struct timeval timeout={1, 0};
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval)) < 0)
         {
                 NMP_DEBUG_F("SO_RCVTIMEO failed: %s\n", strerror(errno));
-                return -1;
+		goto fail;
         }
                                                                                                                  
         memset(&local, 0, sizeof(local));
@@ -404,7 +404,7 @@ int open_socket_ipv4( unsigned char *src_ip )
         if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)
         {
                 NMP_DEBUG_F("SO_REUSEADDR failed: %s\n", strerror(errno));
-                return -1;
+		goto fail;
         }
         if(bind(fd, (struct sockaddr*) &local, sizeof(local)) < 0)
         {
@@ -542,6 +542,7 @@ int send_mdns_packet_ipv4 (unsigned char *src_ip, unsigned char *dest_ip)
                 }
                 else //Found iTune Server
                 {
+			close(sockfd);
                         return 1;
                 }
         }
