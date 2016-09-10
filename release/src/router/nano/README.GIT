@@ -1,14 +1,14 @@
 INSTRUCTIONS TO COMPILE AND INSTALL NANO GIT VERSIONS
 =====================================================
 
-The latest version of nano is available via git, but building this needs a
-bit more care than the official stable and unstable tarballs.
+The latest version of GNU nano is available via git, but building this needs
+a bit more care than the official stable and unstable tarballs.
 
 
 Prerequisites
 -------------
 
-To successfully compile nano from the git repo, you'll need the following
+To successfully compile GNU nano from the git repo, you'll need the following
 packages:
 
 - autoconf    (version >= 2.61)
@@ -80,5 +80,26 @@ you'll need to run that "make install" command with root privileges.
 Problems?
 ---------
 
-Please submit any bugs in the git repository using the Savannah project's
-bug tracker (https://savannah.gnu.org/bugs/?group=nano).
+Please submit any bugs you find in the code in git via the bug tracker
+on Savannah (https://savannah.gnu.org/bugs/?group=nano).
+
+
+Contributing something
+----------------------
+
+If you have a fix for a bug, or the code for a new or improved feature,
+first create a branch off of master:
+
+    $ git checkout -b somename
+
+Then change the code so it does what you want, and commit it, with in the
+commit message (after the one-line summary) a rationale for the change:
+
+    $ git commit -as
+
+Then create a patch (or patches):
+
+    $ git format-patch master
+
+Send that patch (or patches) to <nano-devel@gnu.org>, as an attachment
+or with git send-email.

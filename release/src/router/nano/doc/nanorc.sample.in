@@ -1,4 +1,4 @@
-## Sample initialization file for nano.
+## Sample initialization file for GNU nano.
 ##
 ## Please note that you must have configured nano with --enable-nanorc
 ## for this file to be read!  Also note that this file should not be in

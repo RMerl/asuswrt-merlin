@@ -1,22 +1,21 @@
 /**************************************************************************
- *   proto.h                                                              *
+ *   proto.h  --  This file is part of GNU nano.                          *
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   This program is free software; you can redistribute it and/or modify *
- *   it under the terms of the GNU General Public License as published by *
- *   the Free Software Foundation; either version 3, or (at your option)  *
- *   any later version.                                                   *
  *                                                                        *
- *   This program is distributed in the hope that it will be useful, but  *
- *   WITHOUT ANY WARRANTY; without even the implied warranty of           *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    *
- *   General Public License for more details.                             *
+ *   GNU nano is free software: you can redistribute it and/or modify     *
+ *   it under the terms of the GNU General Public License as published    *
+ *   by the Free Software Foundation, either version 3 of the License,    *
+ *   or (at your option) any later version.                               *
+ *                                                                        *
+ *   GNU nano is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty          *
+ *   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.              *
+ *   See the GNU General Public License for more details.                 *
  *                                                                        *
  *   You should have received a copy of the GNU General Public License    *
- *   along with this program; if not, write to the Free Software          *
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA            *
- *   02110-1301, USA.                                                     *
+ *   along with this program.  If not, see http://www.gnu.org/licenses/.  *
  *                                                                        *
  **************************************************************************/
 
@@ -30,8 +29,13 @@
 extern volatile sig_atomic_t sigwinch_counter;
 #endif
 
+#if defined(__linux__) && !defined(NANO_TINY)
 extern bool console;
+#endif
+
 extern bool meta_key;
+extern bool shift_held;
+
 extern bool focusing;
 
 extern message_type lastmessage;
@@ -41,6 +45,14 @@ extern int controlleft;
 extern int controlright;
 extern int controlup;
 extern int controldown;
+extern int shiftcontrolleft;
+extern int shiftcontrolright;
+extern int shiftcontrolup;
+extern int shiftcontroldown;
+extern int shiftaltleft;
+extern int shiftaltright;
+extern int shiftaltup;
+extern int shiftaltdown;
 #endif
 
 #ifndef DISABLE_WRAPJUSTIFY
@@ -514,16 +526,6 @@ size_t get_statusbar_page_start(size_t start_col, size_t column);
 void reinit_statusbar_x(void);
 void reset_statusbar_cursor(void);
 void update_the_statusbar(void);
-void update_bar_if_needed(void);
-functionptrtype get_prompt_string(int *value, bool allow_tabs,
-#ifndef DISABLE_TABCOMP
-	bool allow_files, bool *listed,
-#endif
-	const char *curranswer,
-#ifndef DISABLE_HISTORIES
-	filestruct **history_list,
-#endif
-	void (*refresh_func)(void));
 int do_prompt(bool allow_tabs,
 #ifndef DISABLE_TABCOMP
 	bool allow_files,

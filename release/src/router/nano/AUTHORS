@@ -1,9 +1,9 @@
 This file lists people who have made significant contributions to the
 nano editor.  Please see the ChangeLog for specific changes by author.
--------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Chris Allegretta <chrisa@asty.org>
-	* Original program author, former and current maintainer.
+	* Original program author and long-time maintainer.
 
 David Lawrence Ramsey <pooka109@gmail.com>
 	* Former stable series maintainer.  Multiple buffer support,
@@ -44,6 +44,13 @@ Mike Frysinger <vapier@gentoo.org>
 Mark Majeres <mark@engine12.com>
 	* A functional undo/redo system, and coloring nano's interface.
 
+Mahyar Abbaspour <mahyar.abaspour@gmail.com>
+	* Improved handling of SIGWINCH.
+
+Mike Scalora <mike@scalora.org>
+	* The comment/uncomment feature.
+
 Benno Schulenberg <bensberg@justemail.net>
-	* A bunch of small bug fixes, the cutword routines, some extra
+	* An array of small bug fixes, the cut-word and block-jump
+	  routines, text selection by holding Shift, and some extra
 	  key bindings.  Current maintainer.

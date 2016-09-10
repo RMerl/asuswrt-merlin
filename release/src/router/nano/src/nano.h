@@ -1,22 +1,22 @@
 /**************************************************************************
- *   nano.h                                                               *
+ *   nano.h  --  This file is part of GNU nano.                           *
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   This program is free software; you can redistribute it and/or modify *
- *   it under the terms of the GNU General Public License as published by *
- *   the Free Software Foundation; either version 3, or (at your option)  *
- *   any later version.                                                   *
+ *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
+ *
+ *   GNU nano is free software: you can redistribute it and/or modify     *
+ *   it under the terms of the GNU General Public License as published    *
+ *   by the Free Software Foundation, either version 3 of the License,    *
+ *   or (at your option) any later version.                               *
  *                                                                        *
- *   This program is distributed in the hope that it will be useful, but  *
- *   WITHOUT ANY WARRANTY; without even the implied warranty of           *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    *
- *   General Public License for more details.                             *
+ *   GNU nano is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty          *
+ *   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.              *
+ *   See the GNU General Public License for more details.                 *
  *                                                                        *
  *   You should have received a copy of the GNU General Public License    *
- *   along with this program; if not, write to the Free Software          *
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA            *
- *   02110-1301, USA.                                                     *
+ *   along with this program.  If not, see http://www.gnu.org/licenses/.  *
  *                                                                        *
  **************************************************************************/
 
@@ -178,6 +178,10 @@ typedef enum {
 typedef enum {
     OVERWRITE, APPEND, PREPEND
 } kind_of_writing_type;
+
+typedef enum {
+    SOFTMARK, HARDMARK
+} mark_type;
 
 typedef enum {
     UPWARD, DOWNWARD
@@ -402,6 +406,8 @@ typedef struct openfilestruct {
 	/* The file's line where the mark is, if any. */
     size_t mark_begin_x;
 	/* The file's mark's x-coordinate position, if any. */
+    mark_type kind_of_mark;
+	/* Whether this is a soft or a hard mark. */
     file_format fmt;
 	/* The file's format. */
     undo *undotop;
@@ -560,6 +566,18 @@ enum
 #define CONTROL_RIGHT 0x402
 #define CONTROL_UP 0x403
 #define CONTROL_DOWN 0x404
+#define SHIFT_CONTROL_LEFT 0x405
+#define SHIFT_CONTROL_RIGHT 0x406
+#define SHIFT_CONTROL_UP 0x407
+#define SHIFT_CONTROL_DOWN 0x408
+#define SHIFT_ALT_LEFT 0x409
+#define SHIFT_ALT_RIGHT 0x40a
+#define SHIFT_ALT_UP 0x40b
+#define SHIFT_ALT_DOWN 0x40c
+#define SHIFT_PAGEUP 0x40d
+#define SHIFT_PAGEDOWN 0x40e
+#define SHIFT_HOME 0x40f
+#define SHIFT_END 0x410
 
 #ifndef NANO_TINY
 /* An imaginary key for when we get a SIGWINCH (window resize). */
@@ -575,11 +593,6 @@ enum
 
 /* The maximum number of entries displayed in the main shortcut list. */
 #define MAIN_VISIBLE (((COLS + 40) / 20) * 2)
-
-/* The minimum editor window columns and rows required for nano to work
- * correctly.  Don't make these smaller than 4 and 1. */
-#define MIN_EDITOR_COLS 4
-#define MIN_EDITOR_ROWS 1
 
 /* The default number of characters from the end of the line where
  * wrapping occurs. */

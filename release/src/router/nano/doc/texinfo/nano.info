@@ -11,7 +11,7 @@ File: nano.info,  Node: Top,  Next: Introduction,  Up: (dir)
 nano
 ****
 
-This manual documents 'nano', a small and friendly text editor.
+This manual documents GNU 'nano', a small and friendly text editor.
 
 * Menu:
 
@@ -32,8 +32,8 @@ File: nano.info,  Node: Introduction,  Next: Invoking,  Prev: Top,  Up: Top
 1 Introduction
 **************
 
-'nano' is a small and friendly text editor.  Besides basic text editing,
-'nano' offers many extra features, such as an interactive
+GNU 'nano' is a small and friendly text editor.  Besides basic text
+editing, 'nano' offers many extra features, such as an interactive
 search-and-replace, undo/redo, syntax coloring, smooth scrolling,
 auto-indentation, go-to-line-and-column-number, feature toggles, file
 locking, backup files, and internationalization support.
@@ -1481,7 +1481,7 @@ familiar with compiling programs with autoconf support:
 
 '--disable-nls'
      Disables Native Language support.  This will disable the use of any
-     available 'nano' translations.
+     available GNU 'nano' translations.
 
 '--disable-wrapping-as-root'
      Disable hard-wrapping of overlong lines by default when 'nano' is
@@ -1510,28 +1510,28 @@ familiar with compiling programs with autoconf support:
 
 Tag Table:
 Node: Top199
-Node: Introduction556
-Node: Invoking1306
-Node: Command-line Options2099
-Ref: Expert Mode9578
-Node: Editor Basics10540
-Node: Entering Text10823
-Node: Commands11562
-Node: The Cutbuffer12347
-Node: The Mark13025
-Node: Screen Layout13763
-Node: Search and Replace14932
-Node: Using the Mouse15630
-Node: Limitation16246
-Node: Built-in Help16649
-Node: Feature Toggles17040
-Node: Nanorc Files19155
-Node: Settings20587
-Ref: Whitespace27867
-Node: Syntax Highlighting28407
-Node: Rebinding Keys33117
-Node: The File Browser42745
-Node: Pico Compatibility43567
-Node: Building and Configure Options45538
+Node: Introduction560
+Node: Invoking1314
+Node: Command-line Options2107
+Ref: Expert Mode9586
+Node: Editor Basics10548
+Node: Entering Text10831
+Node: Commands11570
+Node: The Cutbuffer12355
+Node: The Mark13033
+Node: Screen Layout13771
+Node: Search and Replace14940
+Node: Using the Mouse15638
+Node: Limitation16254
+Node: Built-in Help16657
+Node: Feature Toggles17048
+Node: Nanorc Files19163
+Node: Settings20595
+Ref: Whitespace27875
+Node: Syntax Highlighting28415
+Node: Rebinding Keys33125
+Node: The File Browser42753
+Node: Pico Compatibility43575
+Node: Building and Configure Options45546
 
 End Tag Table

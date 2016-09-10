@@ -1,22 +1,22 @@
 /**************************************************************************
- *   search.c                                                             *
+ *   search.c  --  This file is part of GNU nano.                         *
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   This program is free software; you can redistribute it and/or modify *
- *   it under the terms of the GNU General Public License as published by *
- *   the Free Software Foundation; either version 3, or (at your option)  *
- *   any later version.                                                   *
+ *   Copyright (C) 2015, 2016 Benno Schulenberg                           *
  *                                                                        *
- *   This program is distributed in the hope that it will be useful, but  *
- *   WITHOUT ANY WARRANTY; without even the implied warranty of           *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    *
- *   General Public License for more details.                             *
+ *   GNU nano is free software: you can redistribute it and/or modify     *
+ *   it under the terms of the GNU General Public License as published    *
+ *   by the Free Software Foundation, either version 3 of the License,    *
+ *   or (at your option) any later version.                               *
+ *                                                                        *
+ *   GNU nano is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty          *
+ *   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.              *
+ *   See the GNU General Public License for more details.                 *
  *                                                                        *
  *   You should have received a copy of the GNU General Public License    *
- *   along with this program; if not, write to the Free Software          *
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA            *
- *   02110-1301, USA.                                                     *
+ *   along with this program.  If not, see http://www.gnu.org/licenses/.  *
  *                                                                        *
  **************************************************************************/
 
@@ -155,32 +155,32 @@ int search_init(bool replacing, bool use_answer)
     /* This is now one simple call.  It just does a lot. */
     i = do_prompt(FALSE,
 #ifndef DISABLE_TABCOMP
-	TRUE,
+		TRUE,
 #endif
-	replacing ? MREPLACE : MWHEREIS, backupstring,
+		replacing ? MREPLACE : MWHEREIS, backupstring,
 #ifndef DISABLE_HISTORIES
-	&search_history,
+		&search_history,
 #endif
-	/* TRANSLATORS: This is the main search prompt. */
-	edit_refresh, "%s%s%s%s%s%s", _("Search"),
+		/* TRANSLATORS: This is the main search prompt. */
+		edit_refresh, "%s%s%s%s%s%s", _("Search"),
 #ifndef NANO_TINY
-	/* TRANSLATORS: The next three strings are modifiers of the search prompt. */
-	ISSET(CASE_SENSITIVE) ? _(" [Case Sensitive]") :
+		/* TRANSLATORS: The next three modify the search prompt. */
+		ISSET(CASE_SENSITIVE) ? _(" [Case Sensitive]") :
 #endif
-	"",
+		"",
 #ifdef HAVE_REGEX_H
-	ISSET(USE_REGEXP) ? _(" [Regexp]") :
+		ISSET(USE_REGEXP) ? _(" [Regexp]") :
 #endif
-	"",
+		"",
 #ifndef NANO_TINY
-	ISSET(BACKWARDS_SEARCH) ? _(" [Backwards]") :
+		ISSET(BACKWARDS_SEARCH) ? _(" [Backwards]") :
 #endif
-	"", replacing ?
+		"", replacing ?
 #ifndef NANO_TINY
-	/* TRANSLATORS: The next two strings are modifiers of the search prompt. */
-	openfile->mark_set ? _(" (to replace) in selection") :
+		/* TRANSLATORS: The next two modify the search prompt. */
+		openfile->mark_set ? _(" (to replace) in selection") :
 #endif
-	_(" (to replace)") : "", buf);
+		_(" (to replace)") : "", buf);
 
     /* Release buf now that we don't need it anymore. */
     free(buf);
@@ -834,14 +834,14 @@ void do_replace(void)
 
     i = do_prompt(FALSE,
 #ifndef DISABLE_TABCOMP
-	TRUE,
+		TRUE,
 #endif
-	MREPLACEWITH, NULL,
+		MREPLACEWITH, NULL,
 #ifndef DISABLE_HISTORIES
-	&replace_history,
+		&replace_history,
 #endif
-	/* TRANSLATORS: This is a prompt. */
-	edit_refresh, _("Replace with"));
+		/* TRANSLATORS: This is a prompt. */
+		edit_refresh, _("Replace with"));
 
 #ifndef DISABLE_HISTORIES
     /* If the replace string is not "", add it to the replace history list. */

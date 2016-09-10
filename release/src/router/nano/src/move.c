@@ -1,22 +1,22 @@
 /**************************************************************************
- *   move.c                                                               *
+ *   move.c  --  This file is part of GNU nano.                           *
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   This program is free software; you can redistribute it and/or modify *
- *   it under the terms of the GNU General Public License as published by *
- *   the Free Software Foundation; either version 3, or (at your option)  *
- *   any later version.                                                   *
+ *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
- *   This program is distributed in the hope that it will be useful, but  *
- *   WITHOUT ANY WARRANTY; without even the implied warranty of           *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    *
- *   General Public License for more details.                             *
+ *   GNU nano is free software: you can redistribute it and/or modify     *
+ *   it under the terms of the GNU General Public License as published    *
+ *   by the Free Software Foundation, either version 3 of the License,    *
+ *   or (at your option) any later version.                               *
+ *                                                                        *
+ *   GNU nano is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty          *
+ *   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.              *
+ *   See the GNU General Public License for more details.                 *
  *                                                                        *
  *   You should have received a copy of the GNU General Public License    *
- *   along with this program; if not, write to the Free Software          *
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA            *
- *   02110-1301, USA.                                                     *
+ *   along with this program.  If not, see http://www.gnu.org/licenses/.  *
  *                                                                        *
  **************************************************************************/
 
@@ -50,15 +50,15 @@ void do_last_line(void)
 /* Move up one page. */
 void do_page_up(void)
 {
-    int i, skipped = 0;
+    int i, mustmove, skipped = 0;
 
     /* If the cursor is less than a page away from the top of the file,
      * put it at the beginning of the first line. */
     if (openfile->current->lineno == 1 || (
 #ifndef NANO_TINY
-	!ISSET(SOFTWRAP) &&
+		!ISSET(SOFTWRAP) &&
 #endif
-	openfile->current->lineno <= editwinrows - 2)) {
+		openfile->current->lineno <= editwinrows - 2)) {
 	do_first_line();
 	return;
     }
@@ -66,16 +66,16 @@ void do_page_up(void)
     /* If we're not in smooth scrolling mode, put the cursor at the
      * beginning of the top line of the edit window, as Pico does. */
 #ifndef NANO_TINY
-    if (!ISSET(SMOOTH_SCROLL)) {
+    if (!ISSET(SMOOTH_SCROLL))
 #endif
+    {
 	openfile->current = openfile->edittop;
 	openfile->placewewant = openfile->current_y = 0;
-#ifndef NANO_TINY
     }
-#endif
 
-    for (i = editwinrows - 2; i - skipped > 0 && openfile->current !=
-	openfile->fileage; i--) {
+    mustmove = (editwinrows < 3) ? 1 : editwinrows - 2;
+
+    for (i = mustmove; i - skipped > 0 && openfile->current != openfile->fileage; i--) {
 	openfile->current = openfile->current->prev;
 #ifndef NANO_TINY
 	if (ISSET(SOFTWRAP) && openfile->current) {
@@ -93,7 +93,7 @@ void do_page_up(void)
 
 #ifdef DEBUG
     fprintf(stderr, "do_page_up: openfile->current->lineno = %lu, skipped = %d\n",
-	(unsigned long)openfile->current->lineno, skipped);
+			(unsigned long)openfile->current->lineno, skipped);
 #endif
 
     /* Scroll the edit window up a page. */
@@ -104,7 +104,7 @@ void do_page_up(void)
 /* Move down one page. */
 void do_page_down(void)
 {
-    int i;
+    int i, mustmove;
 
     /* If the cursor is less than a page away from the bottom of the file,
      * put it at the end of the last line. */
@@ -116,16 +116,16 @@ void do_page_down(void)
     /* If we're not in smooth scrolling mode, put the cursor at the
      * beginning of the top line of the edit window, as Pico does. */
 #ifndef NANO_TINY
-    if (!ISSET(SMOOTH_SCROLL)) {
+    if (!ISSET(SMOOTH_SCROLL))
 #endif
+    {
 	openfile->current = openfile->edittop;
 	openfile->placewewant = openfile->current_y = 0;
-#ifndef NANO_TINY
     }
-#endif
 
-    for (i = maxrows - 2; i > 0 && openfile->current !=
-	openfile->filebot; i--) {
+    mustmove = (maxrows < 3) ? 1 : maxrows - 2;
+
+    for (i = mustmove; i > 0 && openfile->current != openfile->filebot; i--) {
 	openfile->current = openfile->current->next;
 #ifdef DEBUG
 	fprintf(stderr, "do_page_down: moving to line %lu\n", (unsigned long)openfile->current->lineno);

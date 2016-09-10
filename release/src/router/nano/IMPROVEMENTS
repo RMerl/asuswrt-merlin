@@ -1,7 +1,8 @@
-Improvements in nano
-====================
+Improvements in GNU nano
+========================
 
 Since 2.6.0:
+  - Shift plus the cursor keys can be used for selecting text.
   - Ctrl+Arrow should now work also on a Linux virtual console.
   - Ctrl+Up and Ctrl+Down jump to previous or next block of text.
   - Feedback during Unicode Input (M-V followed by six digits).

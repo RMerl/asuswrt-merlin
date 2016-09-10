@@ -1,3 +1,11 @@
+2016.09.01 - GNU nano 2.7.0 "Suni" adds a new feature: allowing text to be
+		selected by holding Shift together with the cursor keys.
+		Besides that, nano now works also when run in very tiny
+		terminals (down to one line, one column), and improves
+		the handling of the prompt in cramped spaces.  Not much,
+		but it's time to get it out there.
+
+
 2016.08.10 - nano 2.6.3 "Marika" makes the Ctrl+Arrow keys work also on
 		a Linux virtual console, takes as verbatim only the very
 		first keystroke after M-V, removes any lock files that it

@@ -1,5 +1,5 @@
 %define name	nano
-%define version	2.6.3
+%define version	2.7.0
 %define release	1
 
 Name		: %{name}
@@ -18,7 +18,7 @@ Requires(post)	: info
 Requires(preun)	: info
 
 %description
-nano is a small and friendly text editor.  It aims to emulate the
+GNU nano is a small and friendly text editor.  It aims to emulate the
 Pico text editor while also offering several enhancements.
 
 %prep

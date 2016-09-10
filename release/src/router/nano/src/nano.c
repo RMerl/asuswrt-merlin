@@ -1,22 +1,22 @@
 /**************************************************************************
- *   nano.c                                                               *
+ *   nano.c  --  This file is part of GNU nano.                           *
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   This program is free software; you can redistribute it and/or modify *
- *   it under the terms of the GNU General Public License as published by *
- *   the Free Software Foundation; either version 3, or (at your option)  *
- *   any later version.                                                   *
+ *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
- *   This program is distributed in the hope that it will be useful, but  *
- *   WITHOUT ANY WARRANTY; without even the implied warranty of           *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    *
- *   General Public License for more details.                             *
+ *   GNU nano is free software: you can redistribute it and/or modify     *
+ *   it under the terms of the GNU General Public License as published    *
+ *   by the Free Software Foundation, either version 3 of the License,    *
+ *   or (at your option) any later version.                               *
+ *                                                                        *
+ *   GNU nano is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty          *
+ *   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.              *
+ *   See the GNU General Public License for more details.                 *
  *                                                                        *
  *   You should have received a copy of the GNU General Public License    *
- *   along with this program; if not, write to the Free Software          *
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA            *
- *   02110-1301, USA.                                                     *
+ *   along with this program.  If not, see http://www.gnu.org/licenses/.  *
  *                                                                        *
  **************************************************************************/
 
@@ -605,7 +605,7 @@ void die(const char *msg, ...)
 
 #ifndef NANO_TINY
     /* If the current buffer has a lockfile, remove it. */
-    if (ISSET(LOCKING) && openfile->lock_filename)
+    if (openfile && ISSET(LOCKING) && openfile->lock_filename)
 	delete_lockfile(openfile->lock_filename);
 #endif
 
@@ -686,37 +686,37 @@ void die_save_file(const char *die_filename, struct stat *die_stat)
     free(targetname);
 }
 
-#define TOP_ROWS    (ISSET(MORE_SPACE) ? 1 : 2)
-#define BOTTOM_ROWS    (ISSET(NO_HELP) ? 1 : 3)
-
 /* Initialize the three window portions nano uses. */
 void window_init(void)
 {
-    /* If the screen height is too small, get out. */
-    editwinrows = LINES - TOP_ROWS - BOTTOM_ROWS;
-    if (COLS < MIN_EDITOR_COLS || editwinrows < MIN_EDITOR_ROWS)
-	die(_("Window size is too small for nano...\n"));
+    /* First delete existing windows, in case of resizing. */
+    delwin(topwin);
+    topwin = NULL;
+    delwin(edit);
+    delwin(bottomwin);
 
-#ifndef DISABLE_WRAPJUSTIFY
-    /* Set up fill, based on the screen width. */
-    fill = wrap_at;
-    if (fill <= 0)
-	fill += COLS;
-    if (fill < 0)
-	fill = 0;
-#endif
+    /* If the terminal is very flat, don't set up a titlebar. */
+    if (LINES < 3) {
+	editwinrows = 1;
+	/* Set up two subwindows.  If the terminal is just one line,
+	 * edit window and statusbar window will cover each other. */
+	edit = newwin(1, COLS, 0, 0);
+	bottomwin = newwin(1, COLS, LINES - 1, 0);
+    } else {
+	int toprows = (ISSET(MORE_SPACE) ? 1 : (LINES < 6) ? 1 : 2);
+	int bottomrows = (ISSET(NO_HELP) ? 1 : (LINES < 5) ? 1 : 3);
 
-    if (topwin != NULL)
-	delwin(topwin);
-    if (edit != NULL)
-	delwin(edit);
-    if (bottomwin != NULL)
-	delwin(bottomwin);
+	editwinrows = LINES - toprows - bottomrows;
 
-    /* Set up the windows. */
-    topwin = newwin(TOP_ROWS, COLS, 0, 0);
-    edit = newwin(editwinrows, COLS, TOP_ROWS, 0);
-    bottomwin = newwin(BOTTOM_ROWS, COLS, TOP_ROWS + editwinrows, 0);
+	/* Set up the normal three subwindows. */
+	topwin = newwin(toprows, COLS, 0, 0);
+	edit = newwin(editwinrows, COLS, toprows, 0);
+	bottomwin = newwin(bottomrows, COLS, toprows + editwinrows, 0);
+    }
+
+    /* In case the terminal shrunk, make sure the status line is clear. */
+    blank_statusbar();
+    wnoutrefresh(bottomwin);
 
     /* Turn the keypad on for the windows, if necessary. */
     if (!ISSET(REBIND_KEYPAD)) {
@@ -724,6 +724,15 @@ void window_init(void)
 	keypad(edit, TRUE);
 	keypad(bottomwin, TRUE);
     }
+
+#ifndef DISABLE_WRAPJUSTIFY
+    /* Set up the wrapping point, accounting for screen width when negative. */
+    fill = wrap_at;
+    if (fill <= 0)
+	fill += COLS;
+    if (fill < 0)
+	fill = 0;
+#endif
 }
 
 #ifndef DISABLE_MOUSE
@@ -920,9 +929,9 @@ void usage(void)
 void version(void)
 {
 #ifdef REVISION
-    printf(" nano from git, %s\n", REVISION);
+    printf(" GNU nano from git, %s\n", REVISION);
 #else
-    printf(_(" nano, version %s\n"), VERSION);
+    printf(_(" GNU nano, version %s\n"), VERSION);
 #endif
     printf(" (C) 1999..2016 Free Software Foundation, Inc.\n");
     printf(_(" (C) 2014..%s the contributors to nano\n"), "2016");
@@ -1533,6 +1542,19 @@ void terminal_init(void)
 #endif
 }
 
+#if !defined(NANO_TINY) && defined(HAVE_KEY_DEFINED)
+/* Ask ncurses for a keycode, or assign a default one. */
+int get_keycode(const char *keyname, const int standard)
+{
+    const char *keyvalue = tigetstr(keyname);
+
+    if (keyvalue == 0 || keyvalue == (char *)-1)
+	return standard;
+    else
+	return key_defined(keyvalue);
+}
+#endif
+
 /* Say that an unbound key was struck, and if possible which one. */
 void unbound_key(int code)
 {
@@ -1602,87 +1624,110 @@ int do_input(bool allow_funcs)
 	}
     }
 
-    if (allow_funcs) {
-	/* If the keystroke isn't a shortcut nor a toggle, it's a normal text
-	 * character: add the character to the input buffer -- or display a
-	 * warning when we're in view mode. */
-	if (input != ERR && !have_shortcut) {
-	    if (ISSET(VIEW_MODE))
-		print_view_warning();
-	    else {
-		/* Store the byte, and leave room for a terminating zero. */
-		puddle = charealloc(puddle, depth + 2);
-		puddle[depth++] = (char)input;
-	    }
-	}
+    if (!allow_funcs)
+	return input;
 
-	/* If we got a shortcut or toggle, or if there aren't any other
-	 * characters waiting after the one we read in, we need to output
-	 * all available characters in the input puddle.  Note that this
-	 * puddle will be empty if we're in view mode. */
-	if (have_shortcut || get_key_buffer_len() == 0) {
+    /* If the keystroke isn't a shortcut nor a toggle, it's a normal text
+     * character: add the character to the input buffer -- or display a
+     * warning when we're in view mode. */
+     if (input != ERR && !have_shortcut) {
+	if (ISSET(VIEW_MODE))
+	    print_view_warning();
+	else {
+	    /* Store the byte, and leave room for a terminating zero. */
+	    puddle = charealloc(puddle, depth + 2);
+	    puddle[depth++] = (char)input;
+	}
+#ifndef NANO_TINY
+	if (openfile->mark_set && openfile->kind_of_mark == SOFTMARK) {
+	    openfile->mark_set = FALSE;
+	    refresh_needed = TRUE;
+	}
+#endif
+    }
+
+    /* If we got a shortcut or toggle, or if there aren't any other
+     * characters waiting after the one we read in, we need to output
+     * all available characters in the input puddle.  Note that this
+     * puddle will be empty if we're in view mode. */
+    if (have_shortcut || get_key_buffer_len() == 0) {
 #ifndef DISABLE_WRAPPING
-	    /* If we got a shortcut or toggle, and it's not the shortcut
-	     * for verbatim input, turn off prepending of wrapped text. */
-	    if (have_shortcut && s->scfunc != do_verbatim_input)
-		wrap_reset();
+	/* If we got a shortcut or toggle, and it's not the shortcut
+	 * for verbatim input, turn off prepending of wrapped text. */
+	if (have_shortcut && s->scfunc != do_verbatim_input)
+	    wrap_reset();
 #endif
 
-	    if (puddle != NULL) {
-		/* Insert all bytes in the input buffer into the edit buffer
-		 * at once, filtering out any low control codes. */
-		puddle[depth] = '\0';
-		do_output(puddle, depth, FALSE);
+	if (puddle != NULL) {
+	    /* Insert all bytes in the input buffer into the edit buffer
+	     * at once, filtering out any low control codes. */
+	    puddle[depth] = '\0';
+	    do_output(puddle, depth, FALSE);
 
-		/* Empty the input buffer. */
-		free(puddle);
-		puddle = NULL;
-		depth = 0;
-	    }
+	    /* Empty the input buffer. */
+	    free(puddle);
+	    puddle = NULL;
+	    depth = 0;
+	}
+    }
+
+    if (have_shortcut) {
+	const subnfunc *f = sctofunc(s);
+
+	if (ISSET(VIEW_MODE) && f && !f->viewok) {
+	    print_view_warning();
+	    return ERR;
 	}
 
-	if (have_shortcut) {
-	    const subnfunc *f = sctofunc(s);
-	    /* If the function associated with this shortcut is
-	     * cutting or copying text, remember this. */
-	    if (s->scfunc == do_cut_text_void
+	/* If the function associated with this shortcut is
+	 * cutting or copying text, remember this. */
+	if (s->scfunc == do_cut_text_void
 #ifndef NANO_TINY
 		|| s->scfunc == do_copy_text || s->scfunc == do_cut_till_eof
 #endif
 		)
-		preserve = TRUE;
+	    preserve = TRUE;
 
-	    if (s->scfunc == NULL) {
-		statusbar("Internal error: shortcut without function!");
-		return ERR;
-	    }
-	    if (ISSET(VIEW_MODE) && f && !f->viewok)
-		print_view_warning();
-	    else {
 #ifndef NANO_TINY
-		if (s->scfunc == do_toggle_void) {
-		    do_toggle(s->toggle);
-		    if (s->toggle != CUT_TO_END)
-			preserve = TRUE;
-		} else
+	if (s->scfunc == do_toggle_void) {
+	    do_toggle(s->toggle);
+	    if (s->toggle != CUT_TO_END)
+		preserve = TRUE;
+	} else
 #endif
-		{
-		    /* Execute the function of the shortcut. */
-		    s->scfunc();
-#ifndef DISABLE_COLOR
-		    if (f && !f->viewok)
-			reset_multis(openfile->current, FALSE);
-#endif
-		    if (refresh_needed) {
-#ifdef DEBUG
-			fprintf(stderr, "running edit_refresh() as refresh_needed is true\n");
-#endif
-			edit_refresh();
-			refresh_needed = FALSE;
-		    } else if (s->scfunc == do_delete || s->scfunc == do_backspace)
-			update_line(openfile->current, openfile->current_x);
-		}
+	{
+#ifndef NANO_TINY
+	    /* If Shifted movement occurs, set the mark. */
+	    if (shift_held && !openfile->mark_set) {
+		openfile->mark_set = TRUE;
+		openfile->mark_begin = openfile->current;
+		openfile->mark_begin_x = openfile->current_x;
+		openfile->kind_of_mark = SOFTMARK;
 	    }
+#endif
+	    /* Execute the function of the shortcut. */
+	    s->scfunc();
+#ifndef NANO_TINY
+	    /* If Shiftless movement occurred, discard a soft mark. */
+	    if (openfile->mark_set && !shift_held &&
+				openfile->kind_of_mark == SOFTMARK) {
+		openfile->mark_set = FALSE;
+		openfile->mark_begin = NULL;
+		refresh_needed = TRUE;
+	    }
+#endif
+#ifndef DISABLE_COLOR
+	    if (f && !f->viewok)
+		reset_multis(openfile->current, FALSE);
+#endif
+	    if (refresh_needed) {
+#ifdef DEBUG
+		fprintf(stderr, "running edit_refresh() as refresh_needed is true\n");
+#endif
+		edit_refresh();
+		refresh_needed = FALSE;
+	    } else if (s->scfunc == do_delete || s->scfunc == do_backspace)
+		update_line(openfile->current, openfile->current_x);
 	}
     }
 
@@ -2482,8 +2527,10 @@ int main(int argc, char **argv)
     /* Set up the terminal state. */
     terminal_init();
 
+#if defined(__linux__) && !defined(NANO_TINY)
     /* Check whether we're running on a Linux console. */
     console = (getenv("DISPLAY") == NULL);
+#endif
 
 #ifdef DEBUG
     fprintf(stderr, "Main: set up windows\n");
@@ -2511,20 +2558,21 @@ int main(int argc, char **argv)
 #endif
 
 #if !defined(NANO_TINY) && defined(HAVE_KEY_DEFINED)
-    const char *keyvalue;
     /* Ask ncurses for the key codes for Control+Left/Right/Up/Down. */
-    keyvalue = tigetstr("kLFT5");
-    if (keyvalue != 0 && keyvalue != (char *)-1)
-	controlleft = key_defined(keyvalue);
-    keyvalue = tigetstr("kRIT5");
-    if (keyvalue != 0 && keyvalue != (char *)-1)
-	controlright = key_defined(keyvalue);
-    keyvalue = tigetstr("kUP5");
-    if (keyvalue != 0 && keyvalue != (char *)-1)
-	controlup = key_defined(keyvalue);
-    keyvalue = tigetstr("kDN5");
-    if (keyvalue != 0 && keyvalue != (char *)-1)
-	controldown = key_defined(keyvalue);
+    controlleft = get_keycode("kLFT5", CONTROL_LEFT);
+    controlright = get_keycode("kRIT5", CONTROL_RIGHT);
+    controlup = get_keycode("kUP5", CONTROL_UP);
+    controldown = get_keycode("kDN5", CONTROL_DOWN);
+    /* Ask for the codes for Shift+Control+Left/Right/Up/Down. */
+    shiftcontrolleft = get_keycode("kLFT6", SHIFT_CONTROL_LEFT);
+    shiftcontrolright = get_keycode("kRIT6", SHIFT_CONTROL_RIGHT);
+    shiftcontrolup = get_keycode("kUP6", SHIFT_CONTROL_UP);
+    shiftcontroldown = get_keycode("kDN6", SHIFT_CONTROL_DOWN);
+    /* Ask for the codes for Shift+Alt+Left/Right/Up/Down. */
+    shiftaltleft = get_keycode("kLFT4", SHIFT_ALT_LEFT);
+    shiftaltright = get_keycode("kRIT4", SHIFT_ALT_RIGHT);
+    shiftaltup = get_keycode("kUP4", SHIFT_ALT_UP);
+    shiftaltdown = get_keycode("kDN4", SHIFT_ALT_DOWN);
 #endif
 
 #ifndef USE_SLANG
@@ -2544,6 +2592,7 @@ int main(int argc, char **argv)
 	optind++;
     }
 
+    /* If one of the arguments is a dash, read text from standard input. */
     if (optind < argc && !strcmp(argv[optind], "-")) {
 	stdin_pager();
 	set_modified();
@@ -2620,7 +2669,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef DEBUG
-    fprintf(stderr, "Main: bottom win, top win and edit win\n");
+    fprintf(stderr, "Main: show buffer contents, and enter main loop\n");
 #endif
 
     display_buffer();

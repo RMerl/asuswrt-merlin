@@ -17,7 +17,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANO 1 "version 2.6.3" "August 2016"
+.TH NANO 1 "version 2.7.0" "September 2016"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 
@@ -48,8 +48,12 @@ contents of the cutbuffer at the current cursor position.
 When a more precise piece of text needs to be cut or copied, one can mark
 its start with \fB^6\fR, move the cursor to its end (the marked text will be
 highlighted), and then use \fB^K\fR to cut it, or \fBM-6\fR to copy it to the
-cutbuffer. One can also save the marked text to a file with \fB^O\fR, or
+cutbuffer.  One can also save the marked text to a file with \fB^O\fR, or
 spell check it with \fB^T\fR.
+.PP
+Since nano-2.7.0, text can also be selected by holding Shift and moving the
+cursor with the arrow keys.  Holding down the Alt key too will increase the
+stride.
 .PP
 The two lines at the bottom of the screen show the most important commands;
 the built-in help (\fB^G\fR) lists all the available ones.

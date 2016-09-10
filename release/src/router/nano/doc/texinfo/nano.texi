@@ -6,8 +6,8 @@
 
 @smallbook
 @set EDITION 0.4
-@set VERSION 2.6.3
-@set UPDATED August 2016
+@set VERSION 2.7.0
+@set UPDATED September 2016
 
 @dircategory Editors
 @direntry
@@ -19,16 +19,16 @@
 @c end tex
 
 @titlepage
-@title @code{nano}
+@title GNU @code{nano}
 @subtitle a small and friendly text editor.
-@subtitle version 2.6.3
+@subtitle version 2.7.0
 
 @author Chris Allegretta
 @page
 
-This manual documents @code{nano}, a small and friendly text editor.
+This manual documents GNU @code{nano}, a small and friendly text editor.
 
-This manual is part of the @code{nano} distribution.@*
+This manual is part of the GNU @code{nano} distribution.@*
 @sp 4
 Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
 2009, 2014, 2015 Free Software Foundation, Inc.
@@ -55,7 +55,7 @@ e-mail: @email{chrisa@@asty.org}@*
 @node Top
 @top
 
-This manual documents @code{nano}, a small and friendly text editor.
+This manual documents GNU @code{nano}, a small and friendly text editor.
 
 @menu
 * Introduction::
@@ -74,7 +74,7 @@ This manual documents @code{nano}, a small and friendly text editor.
 @node Introduction
 @chapter Introduction
 
-@code{nano} is a small and friendly text editor.  Besides basic text
+GNU @code{nano} is a small and friendly text editor.  Besides basic text
 editing, @code{nano} offers many extra features, such as an interactive
 search-and-replace, undo/redo, syntax coloring, smooth scrolling,
 auto-indentation, go-to-line-and-column-number, feature toggles,
@@ -1491,7 +1491,7 @@ chances are you only want this feature when you're working on the nano source.
 
 @item --disable-nls
 Disables Native Language support.  This will disable the use of any
-available @code{nano} translations.
+available GNU @code{nano} translations.
 
 @item --disable-wrapping-as-root
 Disable hard-wrapping of overlong lines by default when @code{nano}

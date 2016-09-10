@@ -1,22 +1,22 @@
 /**************************************************************************
- *   global.c                                                             *
+ *   global.c  --  This file is part of GNU nano.                          *
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   This program is free software; you can redistribute it and/or modify *
- *   it under the terms of the GNU General Public License as published by *
- *   the Free Software Foundation; either version 3, or (at your option)  *
- *   any later version.                                                   *
+ *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
- *   This program is distributed in the hope that it will be useful, but  *
- *   WITHOUT ANY WARRANTY; without even the implied warranty of           *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    *
- *   General Public License for more details.                             *
+ *   GNU nano is free software: you can redistribute it and/or modify     *
+ *   it under the terms of the GNU General Public License as published    *
+ *   by the Free Software Foundation, either version 3 of the License,    *
+ *   or (at your option) any later version.                               *
+ *                                                                        *
+ *   GNU nano is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty          *
+ *   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.              *
+ *   See the GNU General Public License for more details.                 *
  *                                                                        *
  *   You should have received a copy of the GNU General Public License    *
- *   along with this program; if not, write to the Free Software          *
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA            *
- *   02110-1301, USA.                                                     *
+ *   along with this program.  If not, see http://www.gnu.org/licenses/.  *
  *                                                                        *
  **************************************************************************/
 
@@ -33,10 +33,15 @@ volatile sig_atomic_t sigwinch_counter = 0;
 	/* Is incremented by the handler whenever a SIGWINCH occurs. */
 #endif
 
+#if defined(__linux__) && !defined(NANO_TINY)
 bool console;
 	/* Whether we're running on a Linux VC (TRUE) or under X (FALSE). */
+#endif
+
 bool meta_key;
 	/* Whether the current keystroke is a Meta key. */
+bool shift_held;
+	/* Whether Shift was being held together with a movement key. */
 bool focusing = TRUE;
 	/* Whether an update of the edit window should center the cursor. */
 
@@ -44,10 +49,9 @@ message_type lastmessage = HUSH;
 	/* Messages of type HUSH should not overwrite type MILD nor ALERT. */
 
 #ifndef NANO_TINY
-int controlleft = CONTROL_LEFT;
-int controlright = CONTROL_RIGHT;
-int controlup = CONTROL_UP;
-int controldown = CONTROL_DOWN;
+int controlleft, controlright, controlup, controldown;
+int shiftcontrolleft, shiftcontrolright, shiftcontrolup, shiftcontroldown;
+int shiftaltleft, shiftaltright, shiftaltup, shiftaltdown;
 #endif
 
 #ifndef DISABLE_WRAPJUSTIFY
@@ -230,9 +234,9 @@ size_t length_of_list(int menu)
     size_t i = 0;
 
     for (f = allfuncs; f != NULL; f = f->next)
-	if ((f->menus & menu) != 0) {
+	if ((f->menus & menu) && first_sc_for(menu, f->scfunc) != NULL)
 	    i++;
-	}
+
     return i;
 }
 

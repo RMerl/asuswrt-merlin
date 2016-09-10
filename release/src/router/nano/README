@@ -1,5 +1,5 @@
 
-	nano - an enhanced clone of the Pico text editor
+	GNU nano - an enhanced clone of the Pico text editor.
 
 Overview
 
@@ -68,5 +68,5 @@ Mailing Lists and Bug Reports
 
 Current Status
 
-	nano has reached its seventh milestone, 2.6.x.  Since 2.5.0, it is
-	a "rolling" release: bug fixing and development go hand in hand.
+	GNU nano has reached its seventh milestone, 2.6.x.  Since 2.5.0, it
+	is a "rolling" release: bug fixing and development go hand in hand.

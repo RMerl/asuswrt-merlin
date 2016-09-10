@@ -1,29 +1,31 @@
 /**************************************************************************
- *   winio.c                                                              *
+ *   winio.c  --  This file is part of GNU nano.                          *
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   This program is free software; you can redistribute it and/or modify *
- *   it under the terms of the GNU General Public License as published by *
- *   the Free Software Foundation; either version 3, or (at your option)  *
- *   any later version.                                                   *
+ *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
- *   This program is distributed in the hope that it will be useful, but  *
- *   WITHOUT ANY WARRANTY; without even the implied warranty of           *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU    *
- *   General Public License for more details.                             *
+ *   GNU nano is free software: you can redistribute it and/or modify     *
+ *   it under the terms of the GNU General Public License as published    *
+ *   by the Free Software Foundation, either version 3 of the License,    *
+ *   or (at your option) any later version.                               *
+ *                                                                        *
+ *   GNU nano is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty          *
+ *   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.              *
+ *   See the GNU General Public License for more details.                 *
  *                                                                        *
  *   You should have received a copy of the GNU General Public License    *
- *   along with this program; if not, write to the Free Software          *
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA            *
- *   02110-1301, USA.                                                     *
+ *   along with this program.  If not, see http://www.gnu.org/licenses/.  *
  *                                                                        *
  **************************************************************************/
 
 #include "proto.h"
 #include "revision.h"
 
+#if defined(__linux__) && !defined(NANO_TINY)
 #include <sys/ioctl.h>
+#endif
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -303,11 +305,15 @@ int *get_input(WINDOW *win, size_t input_len)
 /* Read in a single keystroke, ignoring any that are invalid. */
 int get_kbinput(WINDOW *win)
 {
-    int kbinput;
+    int kbinput = ERR;
 
     /* Extract one keystroke from the input stream. */
-    while ((kbinput = parse_kbinput(win)) == ERR)
-	;
+#ifdef KEY_RESIZE
+    while (kbinput == ERR || kbinput == KEY_RESIZE)
+#else
+    while (kbinput == ERR)
+#endif
+	kbinput = parse_kbinput(win);
 
 #ifdef DEBUG
     fprintf(stderr, "after parsing:  kbinput = %d, meta_key = %s\n",
@@ -334,6 +340,7 @@ int parse_kbinput(WINDOW *win)
     int *kbinput, keycode, retval = ERR;
 
     meta_key = FALSE;
+    shift_held = FALSE;
 
     /* Read in a character. */
     kbinput = get_input(win, 1);
@@ -502,61 +509,125 @@ int parse_kbinput(WINDOW *win)
 	return sc_seq_or(do_prev_block, 0);
     else if (retval == controldown)
 	return sc_seq_or(do_next_block, 0);
+    else if (retval == shiftcontrolleft) {
+	shift_held = TRUE;
+	return sc_seq_or(do_prev_word_void, 0);
+    } else if (retval == shiftcontrolright) {
+	shift_held = TRUE;
+	return sc_seq_or(do_next_word_void, 0);
+    } else if (retval == shiftcontrolup) {
+	shift_held = TRUE;
+	return sc_seq_or(do_prev_block, 0);
+    } else if (retval == shiftcontroldown) {
+	shift_held = TRUE;
+	return sc_seq_or(do_next_block, 0);
+    } else if (retval == shiftaltleft) {
+	shift_held = TRUE;
+	return sc_seq_or(do_home, 0);
+    } else if (retval == shiftaltright) {
+	shift_held = TRUE;
+	return sc_seq_or(do_end, 0);
+    } else if (retval == shiftaltup) {
+	shift_held = TRUE;
+	return sc_seq_or(do_page_up, 0);
+    } else if (retval == shiftaltdown) {
+	shift_held = TRUE;
+	return sc_seq_or(do_page_down, 0);
+    }
+#endif
 
+#if defined(__linux__) && !defined(NANO_TINY)
     /* When not running under X, check for the bare arrow keys whether
-     * the Ctrl key is being held together with them. */
-    if (console && (retval == KEY_UP || retval == KEY_DOWN ||
-			retval == KEY_LEFT || retval == KEY_RIGHT)) {
-	unsigned char modifiers = 6;
+     * Shift/Ctrl/Alt are being held together with them. */
+    unsigned char modifiers = 6;
 
-	if (ioctl(0, TIOCLINUX, &modifiers) >= 0 && (modifiers & 0x04)) {
+    if (console && ioctl(0, TIOCLINUX, &modifiers) >= 0) {
+	if (modifiers & 0x01)
+	    shift_held =TRUE;
+
+	/* Is Ctrl being held? */
+	if (modifiers & 0x04) {
 	    if (retval == KEY_UP)
 		return sc_seq_or(do_prev_block, 0);
 	    else if (retval == KEY_DOWN)
 		return sc_seq_or(do_next_block, 0);
 	    else if (retval == KEY_LEFT)
 		return sc_seq_or(do_prev_word_void, 0);
-	    else
+	    else if (retval == KEY_RIGHT)
 		return sc_seq_or(do_next_word_void, 0);
 	}
+
+	/* Are both Shift and Alt being held? */
+	if ((modifiers & 0x09) == 0x09) {
+	    if (retval == KEY_UP)
+		return sc_seq_or(do_page_up, 0);
+	    else if (retval == KEY_DOWN)
+		return sc_seq_or(do_page_down, 0);
+	    else if (retval == KEY_LEFT)
+		return sc_seq_or(do_home, 0);
+	    else if (retval == KEY_RIGHT)
+		return sc_seq_or(do_end, 0);
+	}
     }
-#endif
+#endif /* __linux__ && !NANO_TINY */
 
     switch (retval) {
 #ifdef KEY_SLEFT
 	/* Slang doesn't support KEY_SLEFT. */
 	case KEY_SLEFT:
+	    shift_held = TRUE;
 	    return sc_seq_or(do_left, keycode);
 #endif
 #ifdef KEY_SRIGHT
 	/* Slang doesn't support KEY_SRIGHT. */
 	case KEY_SRIGHT:
+	    shift_held = TRUE;
 	    return sc_seq_or(do_right, keycode);
 #endif
+#ifdef KEY_SR
 #ifdef KEY_SUP
 	/* ncurses and Slang don't support KEY_SUP. */
 	case KEY_SUP:
+#endif
+	case KEY_SR:	/* Scroll backward, on Xfce4-terminal. */
+	    shift_held = TRUE;
 	    return sc_seq_or(do_up_void, keycode);
 #endif
+#ifdef KEY_SF
 #ifdef KEY_SDOWN
 	/* ncurses and Slang don't support KEY_SDOWN. */
 	case KEY_SDOWN:
+#endif
+	case KEY_SF:	/* Scroll forward, on Xfce4-terminal. */
+	    shift_held = TRUE;
 	    return sc_seq_or(do_down_void, keycode);
 #endif
 #ifdef KEY_SHOME
 	/* HP-UX 10-11 and Slang don't support KEY_SHOME. */
 	case KEY_SHOME:
 #endif
+	case SHIFT_HOME:
+	    shift_held = TRUE;
 	case KEY_A1:	/* Home (7) on keypad with NumLock off. */
 	    return sc_seq_or(do_home, keycode);
 #ifdef KEY_SEND
 	/* HP-UX 10-11 and Slang don't support KEY_SEND. */
 	case KEY_SEND:
 #endif
+	case SHIFT_END:
+	    shift_held = TRUE;
 	case KEY_C1:	/* End (1) on keypad with NumLock off. */
 	    return sc_seq_or(do_end, keycode);
+#ifndef NANO_TINY
+	case SHIFT_PAGEUP:		/* Fake key, from Shift+Alt+Up. */
+	    shift_held = TRUE;
+#endif
 	case KEY_A3:	/* PageUp (9) on keypad with NumLock off. */
 	    return sc_seq_or(do_page_up, keycode);
+#ifndef NANO_TINY
+	case SHIFT_PAGEDOWN:	/* Fake key, from Shift+Alt+Down. */
+	    shift_held = TRUE;
+#endif
 	case KEY_C3:	/* PageDown (3) on keypad with NumLock off. */
 	    return sc_seq_or(do_page_down, keycode);
 #ifdef KEY_SDC
@@ -642,6 +713,7 @@ int convert_sequence(const int *seq, size_t seq_len)
 		    case 'B': /* Esc O 1 ; 2 B == Shift-Down on Terminal. */
 		    case 'C': /* Esc O 1 ; 2 C == Shift-Right on Terminal. */
 		    case 'D': /* Esc O 1 ; 2 D == Shift-Left on Terminal. */
+			shift_held = TRUE;
 			return arrow_from_abcd(seq[4]);
 		    case 'P': /* Esc O 1 ; 2 P == F13 on Terminal. */
 			return KEY_F(13);
@@ -847,9 +919,26 @@ int convert_sequence(const int *seq, size_t seq_len)
 		    case 'B': /* Esc [ 1 ; 2 B == Shift-Down on xterm. */
 		    case 'C': /* Esc [ 1 ; 2 C == Shift-Right on xterm. */
 		    case 'D': /* Esc [ 1 ; 2 D == Shift-Left on xterm. */
+			shift_held = TRUE;
 			return arrow_from_abcd(seq[4]);
 		}
 		break;
+#ifndef NANO_TINY
+	    case '4':
+		/* When the arrow keys are held together with Shift+Meta,
+		 * act as if they are Home/End/PgUp/PgDown with Shift. */
+		switch (seq[4]) {
+		    case 'A': /* Esc [ 1 ; 4 A == Shift-Alt-Up on xterm. */
+			return SHIFT_PAGEUP;
+		    case 'B': /* Esc [ 1 ; 4 B == Shift-Alt-Down on xterm. */
+			return SHIFT_PAGEDOWN;
+		    case 'C': /* Esc [ 1 ; 4 C == Shift-Alt-Right on xterm. */
+			return SHIFT_END;
+		    case 'D': /* Esc [ 1 ; 4 D == Shift-Alt-Left on xterm. */
+			return SHIFT_HOME;
+		}
+		break;
+#endif
 	    case '5':
 		switch (seq[4]) {
 		    case 'A': /* Esc [ 1 ; 5 A == Ctrl-Up on xterm. */
@@ -862,6 +951,20 @@ int convert_sequence(const int *seq, size_t seq_len)
 			return CONTROL_LEFT;
 		}
 		break;
+#ifndef NANO_TINY
+	    case '6':
+		switch (seq[4]) {
+		    case 'A': /* Esc [ 1 ; 6 A == Shift-Ctrl-Up on xterm. */
+			return shiftcontrolup;
+		    case 'B': /* Esc [ 1 ; 6 B == Shift-Ctrl-Down on xterm. */
+			return shiftcontroldown;
+		    case 'C': /* Esc [ 1 ; 6 C == Shift-Ctrl-Right on xterm. */
+			return shiftcontrolright;
+		    case 'D': /* Esc [ 1 ; 6 D == Shift-Ctrl-Left on xterm. */
+			return shiftcontrolleft;
+		}
+		break;
+#endif
 	}
 
 			} else if (seq_len > 2 && seq[2] == '~')
@@ -997,6 +1100,7 @@ int convert_sequence(const int *seq, size_t seq_len)
 		    case 'b': /* Esc [ b == Shift-Down on rxvt/Eterm. */
 		    case 'c': /* Esc [ c == Shift-Right on rxvt/Eterm. */
 		    case 'd': /* Esc [ d == Shift-Left on rxvt/Eterm. */
+			shift_held = TRUE;
 			return arrow_from_abcd(seq[1]);
 		    case '[':
 			if (seq_len > 2 ) {
@@ -1453,9 +1557,8 @@ int get_mouseinput(int *mouse_x, int *mouse_y, bool allow_shortcuts)
 		 * two, in the shortcut list in bottomwin. */
 	    int j;
 		/* The calculated index number of the clicked item. */
-	    size_t currslen;
-		/* The number of shortcuts in the current shortcut
-		 * list. */
+	    size_t number;
+		/* The number of available shortcuts in the current menu. */
 
 	    /* Translate the mouse event coordinates so that they're
 	     * relative to bottomwin. */
@@ -1472,38 +1575,32 @@ int get_mouseinput(int *mouse_x, int *mouse_y, bool allow_shortcuts)
 		return 0;
 	    }
 
-	    /* Get the shortcut lists' length. */
-	    if (currmenu == MMAIN)
-		currslen = MAIN_VISIBLE;
-	    else {
-		currslen = length_of_list(currmenu);
+	    /* Determine how many shortcuts are being shown. */
+	    number = length_of_list(currmenu);
 
-		/* We don't show any more shortcuts than the main list
-		 * does. */
-		if (currslen > MAIN_VISIBLE)
-		    currslen = MAIN_VISIBLE;
-	    }
+	    if (number > MAIN_VISIBLE)
+		number = MAIN_VISIBLE;
 
 	    /* Calculate the width of all of the shortcuts in the list
 	     * except for the last two, which are longer by (COLS % i)
 	     * columns so as to not waste space. */
-	    if (currslen < 2)
+	    if (number < 2)
 		i = COLS / (MAIN_VISIBLE / 2);
 	    else
-		i = COLS / ((currslen / 2) + (currslen % 2));
+		i = COLS / ((number / 2) + (number % 2));
 
 	    /* Calculate the one-based index in the shortcut list. */
 	    j = (*mouse_x / i) * 2 + *mouse_y;
 
 	    /* Adjust the index if we hit the last two wider ones. */
-	    if ((j > currslen) && (*mouse_x % i < COLS % i))
+	    if ((j > number) && (*mouse_x % i < COLS % i))
 		j -= 2;
 #ifdef DEBUG
 	    fprintf(stderr, "Calculated %i as index in shortcut list, currmenu = %x.\n", j, currmenu);
 #endif
 	    /* Ignore releases/clicks of the first mouse button beyond
 	     * the last shortcut. */
-	    if (j > currslen)
+	    if (j > number)
 		return 2;
 
 	    /* Go through the list of functions to determine which
@@ -1635,7 +1732,7 @@ void blank_statusbar(void)
  * portion of the window. */
 void blank_bottombars(void)
 {
-    if (!ISSET(NO_HELP)) {
+    if (!ISSET(NO_HELP) && LINES > 4) {
 	blank_line(bottomwin, 1, 0, COLS);
 	blank_line(bottomwin, 2, 0, COLS);
     }
@@ -1661,6 +1758,10 @@ void check_statusblank(void)
 	reset_cursor();
 	wnoutrefresh(edit);
     }
+
+    /* If the subwindows overlap, make sure to show the edit window now. */
+    if (LINES == 1)
+	edit_refresh();
 }
 
 /* Convert buf into a string that can be displayed on screen.  The
@@ -1836,6 +1937,10 @@ void titlebar(const char *path)
     char *fragment;
 	/* The tail part of the pathname when dottified. */
 
+    /* If the screen is too small, there is no titlebar. */
+    if (topwin == NULL)
+	return;
+
     assert(path != NULL || openfile->filename != NULL);
 
     wattron(topwin, interface_color_pair[TITLE_BAR]);
@@ -1944,8 +2049,9 @@ void statusbar(const char *msg)
 void statusline(message_type importance, const char *msg, ...)
 {
     va_list ap;
-    char *bar, *foo;
+    char *compound, *message;
     size_t start_x;
+    bool bracketed;
 #ifndef NANO_TINY
     bool old_whitespace = ISSET(WHITESPACE_DISPLAY);
 
@@ -1981,24 +2087,24 @@ void statusline(message_type importance, const char *msg, ...)
 
     blank_statusbar();
 
-    bar = charalloc(mb_cur_max() * (COLS - 3));
-    vsnprintf(bar, mb_cur_max() * (COLS - 3), msg, ap);
+    /* Construct the message out of all the arguments. */
+    compound = charalloc(mb_cur_max() * (COLS + 1));
+    vsnprintf(compound, mb_cur_max() * (COLS + 1), msg, ap);
     va_end(ap);
-    foo = display_string(bar, 0, COLS - 4, FALSE);
-    free(bar);
+    message = display_string(compound, 0, COLS, FALSE);
+    free(compound);
 
-#ifndef NANO_TINY
-    if (old_whitespace)
-	SET(WHITESPACE_DISPLAY);
-#endif
-    start_x = (COLS - strlenpt(foo) - 4) / 2;
+    start_x = (COLS - strlenpt(message)) / 2;
+    bracketed = (start_x > 1);
 
-    wmove(bottomwin, 0, start_x);
+    wmove(bottomwin, 0, (bracketed ? start_x - 2 : start_x));
     wattron(bottomwin, interface_color_pair[STATUS_BAR]);
-    waddstr(bottomwin, "[ ");
-    waddstr(bottomwin, foo);
-    free(foo);
-    waddstr(bottomwin, " ]");
+    if (bracketed)
+	waddstr(bottomwin, "[ ");
+    waddstr(bottomwin, message);
+    free(message);
+    if (bracketed)
+	waddstr(bottomwin, " ]");
     wattroff(bottomwin, interface_color_pair[STATUS_BAR]);
 
     /* Push the message to the screen straightaway. */
@@ -2007,10 +2113,12 @@ void statusline(message_type importance, const char *msg, ...)
 
     suppress_cursorpos = TRUE;
 
-    /* If we're doing quick statusbar blanking, blank it after just one
-     * keystroke.  Otherwise, blank it after twenty-six keystrokes, as
-     * Pico does. */
 #ifndef NANO_TINY
+    if (old_whitespace)
+	SET(WHITESPACE_DISPLAY);
+
+    /* If doing quick blanking, blank the statusbar after just one keystroke.
+     * Otherwise, blank it after twenty-six keystrokes, as Pico does. */
     if (ISSET(QUICK_BLANK))
 	statusblank = 1;
     else
@@ -2022,42 +2130,36 @@ void statusline(message_type importance, const char *msg, ...)
  * of the bottom portion of the window. */
 void bottombars(int menu)
 {
-    size_t i, colwidth, slen;
+    size_t number, itemwidth, i;
     subnfunc *f;
     const sc *s;
 
     /* Set the global variable to the given menu. */
     currmenu = menu;
 
-    if (ISSET(NO_HELP))
+    if (ISSET(NO_HELP) || LINES < 5)
 	return;
 
-    if (menu == MMAIN) {
-	slen = MAIN_VISIBLE;
+    /* Determine how many shortcuts there are to show. */
+    number = length_of_list(menu);
 
-	assert(slen <= length_of_list(menu));
-    } else {
-	slen = length_of_list(menu);
+    if (number > MAIN_VISIBLE)
+	number = MAIN_VISIBLE;
 
-	/* Don't show any more shortcuts than the main list does. */
-	if (slen > MAIN_VISIBLE)
-	    slen = MAIN_VISIBLE;
-    }
+    /* Compute the width of each keyname-plus-explanation pair. */
+    itemwidth = COLS / ((number / 2) + (number % 2));
 
-    /* There will be this many characters per column, except for the
-     * last two, which will be longer by (COLS % colwidth) columns so as
-     * to not waste space.  We need at least three columns to display
-     * anything properly. */
-    colwidth = COLS / ((slen / 2) + (slen % 2));
+    /* If there is no room, don't print anything. */
+    if (itemwidth == 0)
+	return;
 
     blank_bottombars();
 
 #ifdef DEBUG
-    fprintf(stderr, "In bottombars, and slen == \"%d\"\n", (int) slen);
+    fprintf(stderr, "In bottombars, number of items == \"%d\"\n", (int) number);
 #endif
 
-    for (f = allfuncs, i = 0; i < slen && f != NULL; f = f->next) {
-
+    for (f = allfuncs, i = 0; i < number && f != NULL; f = f->next) {
 #ifdef DEBUG
 	fprintf(stderr, "Checking menu items....");
 #endif
@@ -2074,11 +2176,12 @@ void bottombars(int menu)
 #endif
 	    continue;
 	}
-	wmove(bottomwin, 1 + i % 2, (i / 2) * colwidth);
+
+	wmove(bottomwin, 1 + i % 2, (i / 2) * itemwidth);
 #ifdef DEBUG
 	fprintf(stderr, "Calling onekey with keystr \"%s\" and desc \"%s\"\n", s->keystr, f->desc);
 #endif
-	onekey(s->keystr, _(f->desc), colwidth + (COLS % colwidth));
+	onekey(s->keystr, _(f->desc), itemwidth + (COLS % itemwidth));
 	i++;
     }
 
