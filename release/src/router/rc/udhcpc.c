@@ -1270,6 +1270,7 @@ start_dhcp6c(void)
 		NULL, NULL,	/* -rdns -rdomain */
 		NULL, NULL, 	/* -rsolmaxrt -r infmaxrt */
 		NULL,		/* -v */
+		NULL,		/* -k */
 		NULL,		/* interface */
 		NULL };
 	int index = 7;
@@ -1324,6 +1325,9 @@ start_dhcp6c(void)
 
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6c_argv[index++] = "-v";
+
+	if (nvram_get_int(ipv6_nvname("ipv6_dhcp6c_release")) == 0)
+		dhcp6c_argv[index++] = "-k";
 
 	dhcp6c_argv[index++] = wan_ifname;
 
