@@ -4848,21 +4848,21 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 // Flags
 #ifdef RTCONFIG_BCMARM
 			ret += websWrite(wp, "\"%s%s%s",
-				(sta->flags & WL_STA_PS) ? "P" : " ",
-				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : " ",
-				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : " ");
+				(sta->flags & WL_STA_PS) ? "P" : "_",
+				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : "_",
+				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : "_");
 #ifdef RTCONFIG_MUMIMO
 			ret += websWrite(wp, "%s",
-				((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "M" : " ");
+				((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "M" : "_");
 #endif
 #else
 			ret += websWrite(wp, "\"%s",
-				(sta->flags & WL_STA_PS) ? "P" : " ");
+				(sta->flags & WL_STA_PS) ? "P" : "_");
 #endif
 		}
-		ret += websWrite(wp, "%s%s\"],",
-			(sta->flags & WL_STA_ASSOC) ? "A" : " ",
-			(sta->flags & WL_STA_AUTHO) ? "U" : " ");
+		ret += websWrite(wp, "%s%s_\"],",
+			(sta->flags & WL_STA_ASSOC) ? "A" : "_",
+			(sta->flags & WL_STA_AUTHO) ? "U" : "_");
 	}
 
 	for (i = 1; i < 4; i++) {
@@ -4992,23 +4992,23 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 // Flags
 #ifdef RTCONFIG_BCMARM
 					ret += websWrite(wp, "\"%s%s%s",
-						(sta->flags & WL_STA_PS) ? "P" : " ",
-						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : " ",
-						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : " ");
+						(sta->flags & WL_STA_PS) ? "P" : "_",
+						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : "_",
+						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : "_");
 #ifdef RTCONFIG_MUMIMO
 					ret += websWrite(wp, "%s",
 						((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "M" : " ");
 #endif
 #else
 					ret += websWrite(wp, "\"%s",
-						(sta->flags & WL_STA_PS) ? "P" : " ");
+						(sta->flags & WL_STA_PS) ? "P" : "_");
 #endif
 				}
 
 // Auth/Ass (and Guest) flags
 				ret += websWrite(wp, "%s%sG\"],",
-					(sta->flags & WL_STA_ASSOC) ? "A" : " ",
-					(sta->flags & WL_STA_AUTHO) ? "U" : " ");
+					(sta->flags & WL_STA_ASSOC) ? "A" : "_",
+					(sta->flags & WL_STA_AUTHO) ? "U" : "_");
 			}
 		}
 	}
