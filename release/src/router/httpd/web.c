@@ -9912,6 +9912,8 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char *next_page=NULL;
 	int fromapp_flag = 0;
 	char *cloud_file=NULL;
+	char filename[128];
+	memset(filename, 0, 128);
 
 	fromapp_flag = check_user_agent(user_agent);
 
@@ -10001,13 +10003,16 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		websWrite(wp,"Connection: close\r\n" );
 		websWrite(wp,"\r\n" );
 		if (fromapp_flag == 0){
+
+			snprintf(filename, sizeof(filename), "/www/%s", next_page);
+
 			websWrite(wp,"<HTML><HEAD>\n" );
 			if(!strcmp(nvram_default_get("http_passwd"), nvram_safe_get("http_passwd")) && !nvram_match("ATEMODE", "1"))
 				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=Main_Password.asp\">\r\n"));
-			else if(next_page == NULL || strcmp(next_page, "") == 0 || strstr(next_page, "http") != NULL)
+			else if(next_page == NULL || strcmp(next_page, "") == 0 || strstr(next_page, "http") != NULL || strstr(next_page, "//") != NULL || (!check_if_file_exist(filename)))
 				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=index.asp\">\r\n"));
 			else{
-				if(strncmp(next_page, "cloud_sync.asp", strlen(next_page))==0){
+				if(strncmp(next_page, "cloud_sync.asp", 14)==0){
 					cloud_file = websGetVar(wp, "cloud_file", "");
 					websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=%s?flag=%s\">\r\n"), next_page, cloud_file);
 				}else
@@ -10398,6 +10403,10 @@ struct mime_referer mime_referers[] = {
 	{ "jffsupload.cgi", CHECK_REFERER},
 	{ "findasus.cgi", CHECK_REFERER},
 	{ "ftpServerTree.cgi", CHECK_REFERER},
+	{ "aidisk/create_account.asp", CHECK_REFERER},
+#if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_CONCURRENTREPEATER)
+	{ "apscan.asp", CHECK_REFERER},
+#endif
 #ifdef RTCONFIG_QCA_PLC_UTILS
 	{ "plc.cgi", CHECK_REFERER},
 #endif
