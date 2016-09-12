@@ -952,7 +952,6 @@ function check_sshd_enable(obj_value){
 		state = "none";
 
 	document.getElementById("remote_forwarding_tr").style.display = state;
-	document.getElementById("remote_access_tr").style.display = state;
 	document.getElementById("auth_keys_tr").style.display = state;
 	document.getElementById("sshd_bfp_field").style.display = state;
 	document.getElementById("sshd_password_tr").style.display = state;
