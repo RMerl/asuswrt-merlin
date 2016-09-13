@@ -321,10 +321,11 @@ function tab_reset(v){
 			document.getElementById("t2").style.display = "none";
 		}
 	}else if(v == 1){	//Smart Connect
-		if(based_modelid == "RT-AC5300")
+		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300R")
 			document.getElementById("span0").innerHTML = "2.4GHz, 5GHz-1 and 5GHz-2";
-		else
-			document.getElementById("span0").innerHTML = "Tri-band Smart Connect";
+		else if(based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100")
+			document.getElementById("span0").innerHTML = "2.4GHz and 5GHz";
+		
 		document.getElementById("t1").style.display = "none";
 		document.getElementById("t2").style.display = "none";				
 		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total+10) +'px';

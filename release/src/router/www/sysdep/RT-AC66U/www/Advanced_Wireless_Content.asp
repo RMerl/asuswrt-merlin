@@ -174,7 +174,10 @@ function initial(){
 		document.getElementById("auto_channel").style.display = "";
 		var temp = "";
 		if(smart_connect_flag_t == "1"){		//Tri-Band Smart Connect
-			temp = cur_control_channel[0] + ", " + cur_control_channel[1] + ", " + cur_control_channel[2];
+			temp = cur_control_channel[0] + ", " + cur_control_channel[1];
+			if(wl_info.band5g_2_support)
+				temp += ", " + cur_control_channel[2];
+			
 			document.getElementById("auto_channel").innerHTML = "Current Control Channel: " + temp;
 		}
 		else if(smart_connect_flag_t == "2"){		//5 GHz Smart Connect
