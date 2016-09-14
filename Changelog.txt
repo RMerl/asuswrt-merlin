@@ -48,6 +48,17 @@ Asuswrt-Merlin Changelog
             OpenVPN client config when using Namecheap DDNS.
    - FIXED: Security vulnerability (XSS/CSR) in httpd (backported
             fix from 380_4005).
+   - FIXED: IPTraffic database was no longer properly named after
+            the router's MAC address on the AC88/AC3100/AC5300.
+            If you recently enabled it, you will need to either
+            re-create a new database, or rename the existing
+            database from tomato_cstats_000000000000.gz to
+            tomato_cstats_XXXXXXXXXXXX.gz, where "XXXXXXXXXXXX" is
+            your MAC as found with "nvram get et2macaddr".
+            (AC88/AC3100/AC5300 only).
+
+            Regular traffic monitoring (stored in
+            tomato_rstats_XXXXXXXXXXXX.gz) is fine.
 
 
 380.61 (4-Aug-2016)
