@@ -54,8 +54,8 @@ Asuswrt-Merlin Changelog
             re-create a new database, or rename the existing
             database from tomato_cstats_000000000000.gz to
             tomato_cstats_XXXXXXXXXXXX.gz, where "XXXXXXXXXXXX" is
-            your MAC as found with "nvram get et2macaddr".
-            (AC88/AC3100/AC5300 only).
+            your MAC as found with "nvram get et2macaddr", in
+            lowercase (AC88/AC3100/AC5300 only).
 
             Regular traffic monitoring (stored in
             tomato_rstats_XXXXXXXXXXXX.gz) is fine.
