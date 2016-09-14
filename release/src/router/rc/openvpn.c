@@ -829,10 +829,16 @@ void start_vpnserver(int serverNum)
 	fprintf(fp, "port %d\n", nvram_get_int(&buffer[0]));
 
 	if(nvram_get_int("ddns_enable_x"))
-		fprintf(fp_client, "remote %s %s\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get(&buffer[0]));
+	{
+		if (nvram_match("ddns_server_x","WWW.NAMECHEAP.COM"))
+			fprintf(fp_client, "remote %s.%s %s\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_username_x"), nvram_safe_get(&buffer[0]));
+		else
+			fprintf(fp_client, "remote %s %s\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get(&buffer[0]));
+	}
 	else
+	{
 		fprintf(fp_client, "remote %s %s\n", nvram_safe_get("wan0_ipaddr"), nvram_safe_get(&buffer[0]));
-
+	}
 	fprintf(fp_client, "float\n");
 
 
