@@ -603,7 +603,7 @@ int led_control_atomic(int which, int mode)
 				else if (mode == LED_OFF)
 					eval("wl", "-i", "eth3", "ledbh", "10", "0");
 			}
-			// Fall through regular LED_5G to handle other models
+			which = LED_5G;	// Fall through regular LED_5G to handle other models
 		case LED_5G:
 			if ((model == MODEL_RTN66U) || (model == MODEL_RTN16)) {
                                 if (mode == LED_ON)
