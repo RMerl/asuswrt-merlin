@@ -43,6 +43,11 @@ Asuswrt-Merlin Changelog
             protection (only MIPS models were affected)
    - FIXED: DHCP lease renewals would fail with ISPs with a broken
             DHCP server that sent replies from a different IP address.
+   - FIXED: 5G LED would fail to turn back on when exiting stealth mode.
+   - FIXED: Only hostname was used as remote server in an exported
+            OpenVPN client config when using Namecheap DDNS.
+   - FIXED: Security vulnerability (XSS/CSR) in httpd (backported
+            fix from 380_4005).
 
 
 380.61 (4-Aug-2016)
