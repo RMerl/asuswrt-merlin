@@ -133,7 +133,8 @@ function ddns_load_body(){
             else
                 document.getElementById("ddns_hostname_x").value = "<#asusddns_inputhint#>";
         }
-		
+	inputCtrl(document.form.ddns_refresh_x, 1);
+
         change_ddns_setting(document.form.ddns_server_x.value);
 	    if(document.form.ddns_server_x.value == "WWW.ORAY.COM"){
 		    if(ddns_updated_t == "1"){
@@ -149,6 +150,7 @@ function ddns_load_body(){
         inputCtrl(document.form.ddns_passwd_x, 0);
         document.form.ddns_wildcard_x[0].disabled= 1;
         document.form.ddns_wildcard_x[1].disabled= 1;
+	inputCtrl(document.form.ddns_refresh_x, 0);
         showhide("wildcard_field",0);
     }   
    
@@ -430,7 +432,7 @@ function onSubmitApply(s){
 					<input type="radio" value="0" name="ddns_wildcard_x" onClick="return change_common_radio(this, 'LANHostConfig', 'ddns_wildcard_x', '0')" <% nvram_match("ddns_wildcard_x", "0", "checked"); %>><#checkbox_No#>
 				</td>
 			</tr>
-			<tr>
+			<tr style="display:none;">
 				<th>Forced refresh interval (in days)</th>
 				<td>
 					<input type="text" maxlength="3" name="ddns_refresh_x" class="input_3_table" value="<% nvram_get("ddns_refresh_x"); %>" onKeyPress="return validator.isNumber(this,event)">
