@@ -4176,7 +4176,7 @@ ncurses/Makefile:
 	$(if $(RTCONFIG_BCMARM),--enable-widec,) \
 	--without-debug --without-manpages --without-profile --without-progs --without-tests \
 	--disable-home-terminfo --with-normal --with-shared --with-build-cppflags=-D_GNU_SOURCE \
-	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux,ansi"
+	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux,ansi,xterm-256color"
 
 #	--with-default-terminfo-dir=/usr/share/terminfo --with-terminfo-dirs=/usr/share/terminfo
 
