@@ -106,7 +106,7 @@ function display_clients(clientsarray, obj) {
 			if (client[2].length > 24) {		// Name
 				code +='<br><span style="margin-top:-15px; color: cyan;" title="' + client[2] + '">'+ client[2].substring(0,20) +'...</span></td>';
 			} else {
-				code +='<br><span style="margin-top:-15px; color: cyan;">'+ client[2] +'</span></td>';
+				code +='<br><span style="margin-top:-15px; color: cyan;">'+ htmlEnDeCode.htmlEncode(client[2]) +'</span></td>';
 			}
 
 			code += '<td style="vertical-align: top;">' + client[1];				// IPv4
