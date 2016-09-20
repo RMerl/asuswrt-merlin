@@ -4758,7 +4758,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			}
 
 			if (found || !leaselist) {
-				ret += websWrite(wp, "\"%s\",", (found ? ipentry : ""));
+				ret += websWrite(wp, "\"%s\",", (found ? ipentry : "<unknown>"));
 			}
 		} else {
 			ret += websWrite(wp, "\"<unknown>\",");

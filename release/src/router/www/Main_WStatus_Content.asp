@@ -109,7 +109,7 @@ function display_clients(clientsarray, obj) {
 				code +='<br><span style="margin-top:-15px; color: cyan;">'+ htmlEnDeCode.htmlEncode(client[2]) +'</span></td>';
 			}
 
-			code += '<td style="vertical-align: top;">' + client[1];				// IPv4
+			code += '<td style="vertical-align: top;">' + htmlEnDeCode.htmlEncode(client[1]);	// IPv4
 			code += '<br><span style="margin-top:-15px; color: cyan;">'+ client[3] +'</span></td>';	// IPv6
 
 
