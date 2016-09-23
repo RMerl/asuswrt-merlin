@@ -1,11 +1,13 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.62 (xx-xxx-2016)
+380.62 (23-Sept-2016)
    - NEW: Added nano 2.7.0 (user-friendly text editor)
           Documentation: https://www.nano-editor.org/dist/v2.6/nano.html
           Note that for space reasons, some of its features are disabled
-          for the RT-N66U and RT-AC66U.
+          for the RT-N66U and RT-AC66U.  Entware users might want to
+          uninstall the Entware version if they had it installed and want
+          to use the built-in version instead.
    - NEW: Option to toggle the display of passwords on the PPTPD and
           OpenVPN server pages.
    - NEW: Allow providing a vendor class on the WAN page (DHCP option 60)
@@ -16,6 +18,7 @@ Asuswrt-Merlin Changelog
               optimization level.
    - CHANGED: Updated minidlna to 1.1.6
    - CHANGED: Updated OpenVPN to 2.3.12
+   - CHANGED: Updated OpenSSL to 1.0.2i
    - CHANGED: Revamped the Wireless Log page:
                 - Merged some columns to gain more horizontal space
                 - Longer hostname shown (truncated names are now
@@ -41,13 +44,13 @@ Asuswrt-Merlin Changelog
    - FIXED: Potential buffer overrun in the networkmap service. (Asus bug)
    - FIXED: Broken IPv6 connectivity if enabling SSH brute force
             protection (only MIPS models were affected)
-   - FIXED: DHCP lease renewals would fail with ISPs with a broken
-            DHCP server that sent replies from a different IP address.
    - FIXED: 5G LED would fail to turn back on when exiting stealth mode.
    - FIXED: Only hostname was used as remote server in an exported
             OpenVPN client config when using Namecheap DDNS.
    - FIXED: Security vulnerability (XSS/CSR) in httpd (backported
             fix from 380_4005).
+   - FIXED: Chrome would try to autofill some fields (such as on the
+            DDNS configuration page), which could be problematic.
    - FIXED: IPTraffic database was no longer properly named after
             the router's MAC address on the AC88/AC3100/AC5300.
             If you recently enabled it, you will need to either
