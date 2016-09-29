@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.62_1 (xx-xxx-2016)
+380.62_1 (29-Sept-2016)
    - CHANGED: Updated OpenSSL to 1.0.2j
 
 
