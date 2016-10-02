@@ -4176,13 +4176,14 @@ ncurses/Makefile:
 	$(if $(RTCONFIG_BCMARM),--enable-widec,) \
 	--without-debug --without-manpages --without-profile --without-progs --without-tests \
 	--disable-home-terminfo --with-normal --with-shared --with-build-cppflags=-D_GNU_SOURCE \
+	--enable-pc-files \
 	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux,ansi,xterm-256color"
 
 #	--with-default-terminfo-dir=/usr/share/terminfo --with-terminfo-dirs=/usr/share/terminfo
 
 ncurses: ncurses/Makefile
 	@$(SEP)
-	cd ncurses && $(MAKE) -C ncurses
+	cd ncurses && $(MAKE) -C ncurses && $(MAKE) -C misc pc-files
 
 ncurses-clean:
 	-@$(MAKE) -C ncurses distclean
@@ -4208,6 +4209,7 @@ nano/Makefile:
 	cd nano && $(CONFIGURE) --prefix=$(INSTALLDIR)/nano/usr \
 		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses/include -ffunction-sections -fdata-sections" \
 		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses/lib -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+		PKG_CONFIG_LIBDIR="$(TOP)/ncurses/misc" PKG_CONFIG_PATH="$(TOP)/ncurses/misc" \
 		$(if $(RTCONFIG_BCMARM),ac_cv_lib_ncursesw_get_wch=yes,ac_cv_lib_ncursesw_get_wch=no) \
 		$(if $(RTCONFIG_BCMARM),--enable-utf8,--enable-tiny) \
 		--disable-speller --disable-extra --disable-tabcomp --enable-wrapping --disable-glibtest \
