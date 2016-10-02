@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -1445,6 +1445,7 @@ rend_service_receive_introduction(origin_circuit_t *circuit,
   int status = 0, result;
   const or_options_t *options = get_options();
   char *err_msg = NULL;
+  int err_msg_severity = LOG_WARN;
   const char *stage_descr = NULL;
   int reason = END_CIRC_REASON_TORPROTOCOL;
   /* Service/circuit/key stuff we can learn before parsing */
@@ -1596,8 +1597,10 @@ rend_service_receive_introduction(origin_circuit_t *circuit,
 
   /* Find the rendezvous point */
   rp = find_rp_for_intro(parsed_req, &err_msg);
-  if (!rp)
+  if (!rp) {
+    err_msg_severity = LOG_PROTOCOL_WARN;
     goto log_error;
+  }
 
   /* Check if we'd refuse to talk to this router */
   if (options->StrictNodes &&
@@ -1676,7 +1679,7 @@ rend_service_receive_introduction(origin_circuit_t *circuit,
   /* help predict this next time */
   rep_hist_note_used_internal(now, circ_needs_uptime, 1);
 
-  /* Launch a circuit to alice's chosen rendezvous point.
+  /* Launch a circuit to the client's chosen rendezvous point.
    */
   for (i=0;i<MAX_REND_FAILURES;i++) {
     int flags = CIRCLAUNCH_NEED_CAPACITY | CIRCLAUNCH_IS_INTERNAL;
@@ -1735,7 +1738,7 @@ rend_service_receive_introduction(origin_circuit_t *circuit,
     }
   }
 
-  log_warn(LD_REND, "%s on circ %u", err_msg,
+  log_fn(err_msg_severity, LD_REND, "%s on circ %u", err_msg,
            (unsigned)circuit->base_.n_circ_id);
  err:
   status = -1;
@@ -1797,7 +1800,7 @@ find_rp_for_intro(const rend_intro_cell_t *intro,
     if (!rp) {
       if (err_msg_out) {
         tor_asprintf(&err_msg,
-                     "Could build extend_info_t for router %s named "
+                     "Couldn't build extend_info_t for router %s named "
                      "in INTRODUCE2 cell",
                      escaped_safe_str_client(rp_nickname));
       }
@@ -1818,11 +1821,25 @@ find_rp_for_intro(const rend_intro_cell_t *intro,
     goto err;
   }
 
+  /* Make sure the RP we are being asked to connect to is _not_ a private
+   * address unless it's allowed. Let's avoid to build a circuit to our
+   * second middle node and fail right after when extending to the RP. */
+  if (!extend_info_addr_is_allowed(&rp->addr)) {
+    if (err_msg_out) {
+      tor_asprintf(&err_msg,
+                   "Relay IP in INTRODUCE2 cell is private address.");
+    }
+    extend_info_free(rp);
+    rp = NULL;
+    goto err;
+  }
   goto done;
 
  err:
-  if (err_msg_out) *err_msg_out = err_msg;
-  else tor_free(err_msg);
+  if (err_msg_out)
+    *err_msg_out = err_msg;
+  else
+    tor_free(err_msg);
 
  done:
   return rp;
@@ -2705,7 +2722,7 @@ rend_service_intro_has_opened(origin_circuit_t *circuit)
                 circuit->rend_data->rend_pk_digest);
   if (!service) {
     log_warn(LD_REND, "Unrecognized service ID %s on introduction circuit %u.",
-             serviceid, (unsigned)circuit->base_.n_circ_id);
+             safe_str_client(serviceid), (unsigned)circuit->base_.n_circ_id);
     reason = END_CIRC_REASON_NOSUCHSERVICE;
     goto err;
   }
@@ -2970,7 +2987,7 @@ rend_service_rendezvous_has_opened(origin_circuit_t *circuit)
   /* Append the cpath entry. */
   hop->state = CPATH_STATE_OPEN;
   /* set the windows to default. these are the windows
-   * that bob thinks alice has.
+   * that the service thinks the client has.
    */
   hop->package_window = circuit_initial_package_window();
   hop->deliver_window = CIRCWINDOW_START;
@@ -3203,39 +3220,72 @@ upload_service_descriptor(rend_service_t *service)
 
   rendpostperiod = get_options()->RendPostPeriod;
 
-  /* Upload descriptor? */
-  if (get_options()->PublishHidServDescriptors) {
-    networkstatus_t *c = networkstatus_get_latest_consensus();
-    if (c && smartlist_len(c->routerstatus_list) > 0) {
-      int seconds_valid, i, j, num_descs;
-      smartlist_t *descs = smartlist_new();
-      smartlist_t *client_cookies = smartlist_new();
-      /* Either upload a single descriptor (including replicas) or one
-       * descriptor for each authorized client in case of authorization
-       * type 'stealth'. */
-      num_descs = service->auth_type == REND_STEALTH_AUTH ?
-                      smartlist_len(service->clients) : 1;
-      for (j = 0; j < num_descs; j++) {
-        crypto_pk_t *client_key = NULL;
-        rend_authorized_client_t *client = NULL;
-        smartlist_clear(client_cookies);
-        switch (service->auth_type) {
-          case REND_NO_AUTH:
-            /* Do nothing here. */
-            break;
-          case REND_BASIC_AUTH:
-            SMARTLIST_FOREACH(service->clients, rend_authorized_client_t *,
-                cl, smartlist_add(client_cookies, cl->descriptor_cookie));
-            break;
-          case REND_STEALTH_AUTH:
-            client = smartlist_get(service->clients, j);
-            client_key = client->client_key;
-            smartlist_add(client_cookies, client->descriptor_cookie);
-            break;
-        }
-        /* Encode the current descriptor. */
+  networkstatus_t *c = networkstatus_get_latest_consensus();
+  if (c && smartlist_len(c->routerstatus_list) > 0) {
+    int seconds_valid, i, j, num_descs;
+    smartlist_t *descs = smartlist_new();
+    smartlist_t *client_cookies = smartlist_new();
+    /* Either upload a single descriptor (including replicas) or one
+     * descriptor for each authorized client in case of authorization
+     * type 'stealth'. */
+    num_descs = service->auth_type == REND_STEALTH_AUTH ?
+                    smartlist_len(service->clients) : 1;
+    for (j = 0; j < num_descs; j++) {
+      crypto_pk_t *client_key = NULL;
+      rend_authorized_client_t *client = NULL;
+      smartlist_clear(client_cookies);
+      switch (service->auth_type) {
+        case REND_NO_AUTH:
+          /* Do nothing here. */
+          break;
+        case REND_BASIC_AUTH:
+          SMARTLIST_FOREACH(service->clients, rend_authorized_client_t *,
+              cl, smartlist_add(client_cookies, cl->descriptor_cookie));
+          break;
+        case REND_STEALTH_AUTH:
+          client = smartlist_get(service->clients, j);
+          client_key = client->client_key;
+          smartlist_add(client_cookies, client->descriptor_cookie);
+          break;
+      }
+      /* Encode the current descriptor. */
+      seconds_valid = rend_encode_v2_descriptors(descs, service->desc,
+                                                 now, 0,
+                                                 service->auth_type,
+                                                 client_key,
+                                                 client_cookies);
+      if (seconds_valid < 0) {
+        log_warn(LD_BUG, "Internal error: couldn't encode service "
+                 "descriptor; not uploading.");
+        smartlist_free(descs);
+        smartlist_free(client_cookies);
+        return;
+      }
+      rend_get_service_id(service->desc->pk, serviceid);
+      if (get_options()->PublishHidServDescriptors) {
+        /* Post the current descriptors to the hidden service directories. */
+        log_info(LD_REND, "Launching upload for hidden service %s",
+                     serviceid);
+        directory_post_to_hs_dir(service->desc, descs, NULL, serviceid,
+                                 seconds_valid);
+      }
+      /* Free memory for descriptors. */
+      for (i = 0; i < smartlist_len(descs); i++)
+        rend_encoded_v2_service_descriptor_free(smartlist_get(descs, i));
+      smartlist_clear(descs);
+      /* Update next upload time. */
+      if (seconds_valid - REND_TIME_PERIOD_OVERLAPPING_V2_DESCS
+          > rendpostperiod)
+        service->next_upload_time = now + rendpostperiod;
+      else if (seconds_valid < REND_TIME_PERIOD_OVERLAPPING_V2_DESCS)
+        service->next_upload_time = now + seconds_valid + 1;
+      else
+        service->next_upload_time = now + seconds_valid -
+            REND_TIME_PERIOD_OVERLAPPING_V2_DESCS + 1;
+      /* Post also the next descriptors, if necessary. */
+      if (seconds_valid < REND_TIME_PERIOD_OVERLAPPING_V2_DESCS) {
         seconds_valid = rend_encode_v2_descriptors(descs, service->desc,
-                                                   now, 0,
+                                                   now, 1,
                                                    service->auth_type,
                                                    client_key,
                                                    client_cookies);
@@ -3246,51 +3296,23 @@ upload_service_descriptor(rend_service_t *service)
           smartlist_free(client_cookies);
           return;
         }
-        /* Post the current descriptors to the hidden service directories. */
-        rend_get_service_id(service->desc->pk, serviceid);
-        log_info(LD_REND, "Launching upload for hidden service %s",
-                     serviceid);
-        directory_post_to_hs_dir(service->desc, descs, NULL, serviceid,
-                                 seconds_valid);
+        if (get_options()->PublishHidServDescriptors) {
+          directory_post_to_hs_dir(service->desc, descs, NULL, serviceid,
+                                   seconds_valid);
+        }
         /* Free memory for descriptors. */
         for (i = 0; i < smartlist_len(descs); i++)
           rend_encoded_v2_service_descriptor_free(smartlist_get(descs, i));
         smartlist_clear(descs);
-        /* Update next upload time. */
-        if (seconds_valid - REND_TIME_PERIOD_OVERLAPPING_V2_DESCS
-            > rendpostperiod)
-          service->next_upload_time = now + rendpostperiod;
-        else if (seconds_valid < REND_TIME_PERIOD_OVERLAPPING_V2_DESCS)
-          service->next_upload_time = now + seconds_valid + 1;
-        else
-          service->next_upload_time = now + seconds_valid -
-              REND_TIME_PERIOD_OVERLAPPING_V2_DESCS + 1;
-        /* Post also the next descriptors, if necessary. */
-        if (seconds_valid < REND_TIME_PERIOD_OVERLAPPING_V2_DESCS) {
-          seconds_valid = rend_encode_v2_descriptors(descs, service->desc,
-                                                     now, 1,
-                                                     service->auth_type,
-                                                     client_key,
-                                                     client_cookies);
-          if (seconds_valid < 0) {
-            log_warn(LD_BUG, "Internal error: couldn't encode service "
-                     "descriptor; not uploading.");
-            smartlist_free(descs);
-            smartlist_free(client_cookies);
-            return;
-          }
-          directory_post_to_hs_dir(service->desc, descs, NULL, serviceid,
-                                   seconds_valid);
-          /* Free memory for descriptors. */
-          for (i = 0; i < smartlist_len(descs); i++)
-            rend_encoded_v2_service_descriptor_free(smartlist_get(descs, i));
-          smartlist_clear(descs);
-        }
       }
-      smartlist_free(descs);
-      smartlist_free(client_cookies);
-      uploaded = 1;
+    }
+    smartlist_free(descs);
+    smartlist_free(client_cookies);
+    uploaded = 1;
+    if (get_options()->PublishHidServDescriptors) {
       log_info(LD_REND, "Successfully uploaded v2 rend descriptors!");
+    } else {
+      log_info(LD_REND, "Successfully stored created v2 rend descriptors!");
     }
   }
 
@@ -3443,8 +3465,6 @@ rend_service_desc_has_uploaded(const rend_data_t *rend_data)
 
   service = rend_service_get_by_service_id(rend_data->onion_address);
   if (service == NULL) {
-    log_warn(LD_REND, "Service %s not found after descriptor upload",
-             safe_str_client(rend_data->onion_address));
     return;
   }
 
@@ -3634,9 +3654,6 @@ rend_consider_services_upload(time_t now)
   int rendinitialpostdelay = (get_options()->TestingTorNetwork ?
                               MIN_REND_INITIAL_POST_DELAY_TESTING :
                               MIN_REND_INITIAL_POST_DELAY);
-
-  if (!get_options()->PublishHidServDescriptors)
-    return;
 
   for (i=0; i < smartlist_len(rend_service_list); ++i) {
     service = smartlist_get(rend_service_list, i);

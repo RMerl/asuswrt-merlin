@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -148,7 +148,7 @@ get_link_history(const char *from_id, const char *to_id)
     return NULL;
   if (tor_digest_is_zero(to_id))
     return NULL;
-  lhist = (link_history_t*) digestmap_get(orhist->link_history_map, to_id);
+  lhist = digestmap_get(orhist->link_history_map, to_id);
   if (!lhist) {
     lhist = tor_malloc_zero(sizeof(link_history_t));
     rephist_total_alloc += sizeof(link_history_t);
@@ -920,7 +920,7 @@ parse_possibly_bad_iso_time(const char *s, time_t *time_out)
  * that's about as much before <b>now</b> as <b>t</b> was before
  * <b>stored_at</b>.
  */
-static INLINE time_t
+static inline time_t
 correct_time(time_t t, time_t now, time_t stored_at, time_t started_measuring)
 {
   if (t < started_measuring - 24*60*60*365)
@@ -1190,7 +1190,7 @@ commit_max(bw_array_t *b)
 }
 
 /** Shift the current observation time of <b>b</b> forward by one second. */
-static INLINE void
+static inline void
 advance_obs(bw_array_t *b)
 {
   int nextidx;
@@ -1216,7 +1216,7 @@ advance_obs(bw_array_t *b)
 
 /** Add <b>n</b> bytes to the number of bytes in <b>b</b> for second
  * <b>when</b>. */
-static INLINE void
+static inline void
 add_obs(bw_array_t *b, time_t when, uint64_t n)
 {
   if (when < b->cur_obs_time)
@@ -1250,6 +1250,18 @@ bw_array_new(void)
   return b;
 }
 
+/** Free storage held by bandwidth array <b>b</b>. */
+static void
+bw_array_free(bw_array_t *b)
+{
+  if (!b) {
+    return;
+  }
+
+  rephist_total_alloc -= sizeof(bw_array_t);
+  tor_free(b);
+}
+
 /** Recent history of bandwidth observations for read operations. */
 static bw_array_t *read_array = NULL;
 /** Recent history of bandwidth observations for write operations. */
@@ -1266,10 +1278,11 @@ static bw_array_t *dir_write_array = NULL;
 static void
 bw_arrays_init(void)
 {
-  tor_free(read_array);
-  tor_free(write_array);
-  tor_free(dir_read_array);
-  tor_free(dir_write_array);
+  bw_array_free(read_array);
+  bw_array_free(write_array);
+  bw_array_free(dir_read_array);
+  bw_array_free(dir_write_array);
+
   read_array = bw_array_new();
   write_array = bw_array_new();
   dir_read_array = bw_array_new();
@@ -1780,6 +1793,7 @@ rep_hist_remove_predicted_ports(const smartlist_t *rmv_ports)
   SMARTLIST_FOREACH_BEGIN(predicted_ports_list, predicted_port_t *, pp) {
     if (bitarray_is_set(remove_ports, pp->port)) {
       tor_free(pp);
+      rephist_total_alloc -= sizeof(*pp);
       SMARTLIST_DEL_CURRENT(predicted_ports_list, pp);
     }
   } SMARTLIST_FOREACH_END(pp);
@@ -1853,14 +1867,17 @@ any_predicted_circuits(time_t now)
 int
 rep_hist_circbuilding_dormant(time_t now)
 {
+  const or_options_t *options = get_options();
+
   if (any_predicted_circuits(now))
     return 0;
 
   /* see if we'll still need to build testing circuits */
-  if (server_mode(get_options()) &&
-      (!check_whether_orport_reachable() || !circuit_enough_testing_circs()))
+  if (server_mode(options) &&
+      (!check_whether_orport_reachable(options) ||
+       !circuit_enough_testing_circs()))
     return 0;
-  if (!check_whether_dirport_reachable())
+  if (!check_whether_dirport_reachable(options))
     return 0;
 
   return 1;
@@ -3026,21 +3043,21 @@ rep_hist_stored_maybe_new_hs(const crypto_pk_t *pubkey)
 
 /* The number of cells that are supposed to be hidden from the adversary
  * by adding noise from the Laplace distribution.  This value, divided by
- * EPSILON, is Laplace parameter b. */
+ * EPSILON, is Laplace parameter b. It must be greather than 0. */
 #define REND_CELLS_DELTA_F 2048
 /* Security parameter for obfuscating number of cells with a value between
- * 0 and 1.  Smaller values obfuscate observations more, but at the same
+ * ]0.0, 1.0]. Smaller values obfuscate observations more, but at the same
  * time make statistics less usable. */
 #define REND_CELLS_EPSILON 0.3
 /* The number of cells that are supposed to be hidden from the adversary
  * by rounding up to the next multiple of this number. */
 #define REND_CELLS_BIN_SIZE 1024
-/* The number of service identities that are supposed to be hidden from
- * the adversary by adding noise from the Laplace distribution.  This
- * value, divided by EPSILON, is Laplace parameter b. */
+/* The number of service identities that are supposed to be hidden from the
+ * adversary by adding noise from the Laplace distribution. This value,
+ * divided by EPSILON, is Laplace parameter b. It must be greater than 0. */
 #define ONIONS_SEEN_DELTA_F 8
 /* Security parameter for obfuscating number of service identities with a
- * value between 0 and 1.  Smaller values obfuscate observations more, but
+ * value between ]0.0, 1.0]. Smaller values obfuscate observations more, but
  * at the same time make statistics less usable. */
 #define ONIONS_SEEN_EPSILON 0.3
 /* The number of service identities that are supposed to be hidden from
@@ -3172,10 +3189,19 @@ rep_hist_free_all(void)
 {
   hs_stats_free(hs_stats);
   digestmap_free(history_map, free_or_history);
-  tor_free(read_array);
-  tor_free(write_array);
-  tor_free(dir_read_array);
-  tor_free(dir_write_array);
+
+  bw_array_free(read_array);
+  read_array = NULL;
+
+  bw_array_free(write_array);
+  write_array = NULL;
+
+  bw_array_free(dir_read_array);
+  dir_read_array = NULL;
+
+  bw_array_free(dir_write_array);
+  dir_write_array = NULL;
+
   tor_free(exit_bytes_read);
   tor_free(exit_bytes_written);
   tor_free(exit_streams);
@@ -3190,5 +3216,8 @@ rep_hist_free_all(void)
   }
   rep_hist_desc_stats_term();
   total_descriptor_downloads = 0;
+
+  tor_assert(rephist_total_alloc == 0);
+  tor_assert(rephist_total_num == 0);
 }
 

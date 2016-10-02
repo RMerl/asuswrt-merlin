@@ -1,7 +1,11 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-/* Wrapper code for a curve25519 implementation. */
+/**
+ * \file crypto_curve25519.c
+ *
+ * \brief Wrapper code for a curve25519 implementation.
+ */
 
 #define CRYPTO_CURVE25519_PRIVATE
 #include "orconfig.h"
@@ -111,19 +115,11 @@ curve25519_public_key_is_ok(const curve25519_public_key_t *key)
 int
 curve25519_rand_seckey_bytes(uint8_t *out, int extra_strong)
 {
-  uint8_t k_tmp[CURVE25519_SECKEY_LEN];
+  if (extra_strong)
+    crypto_strongest_rand(out, CURVE25519_SECKEY_LEN);
+  else
+    crypto_rand((char*)out, CURVE25519_SECKEY_LEN);
 
-  if (crypto_rand((char*)out, CURVE25519_SECKEY_LEN) < 0)
-    return -1;
-  if (extra_strong && !crypto_strongest_rand(k_tmp, CURVE25519_SECKEY_LEN)) {
-    /* If they asked for extra-strong entropy and we have some, use it as an
-     * HMAC key to improve not-so-good entropy rather than using it directly,
-     * just in case the extra-strong entropy is less amazing than we hoped. */
-    crypto_hmac_sha256((char*) out,
-                       (const char *)k_tmp, sizeof(k_tmp),
-                       (const char *)out, CURVE25519_SECKEY_LEN);
-  }
-  memwipe(k_tmp, 0, sizeof(k_tmp));
   return 0;
 }
 
@@ -161,7 +157,7 @@ curve25519_keypair_generate(curve25519_keypair_t *keypair_out,
   return 0;
 }
 
-/** DOCDOC */
+/* DOCDOC */
 int
 curve25519_keypair_write_to_file(const curve25519_keypair_t *keypair,
                                  const char *fname,
@@ -184,7 +180,7 @@ curve25519_keypair_write_to_file(const curve25519_keypair_t *keypair,
   return r;
 }
 
-/** DOCDOC */
+/* DOCDOC */
 int
 curve25519_keypair_read_from_file(curve25519_keypair_t *keypair_out,
                                   char **tag_out,

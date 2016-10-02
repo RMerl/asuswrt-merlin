@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -70,6 +70,8 @@ void assert_cpath_layer_ok(const crypt_path_t *cp);
 void assert_circuit_ok(const circuit_t *c);
 void circuit_free_all(void);
 void circuits_handle_oom(size_t current_allocation);
+
+void circuit_clear_testing_cell_stats(circuit_t *circ);
 
 void channel_note_destroy_pending(channel_t *chan, circid_t id);
 MOCK_DECL(void, channel_note_destroy_not_pending,

@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -14,9 +14,13 @@
 
 #include "testsupport.h"
 
-const char *get_dirportfrontpage(void);
-MOCK_DECL(const or_options_t *,get_options,(void));
-or_options_t *get_options_mutable(void);
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(DARWIN)
+#define KERNEL_MAY_SUPPORT_IPFW
+#endif
+
+MOCK_DECL(const char*, get_dirportfrontpage, (void));
+MOCK_DECL(const or_options_t *, get_options, (void));
+MOCK_DECL(or_options_t *, get_options_mutable, (void));
 int set_options(or_options_t *new_val, char **msg);
 void config_free_all(void);
 const char *safe_str_client(const char *address);
@@ -76,7 +80,7 @@ int write_to_data_subdir(const char* subdir, const char* fname,
 
 int get_num_cpus(const or_options_t *options);
 
-const smartlist_t *get_configured_ports(void);
+MOCK_DECL(const smartlist_t *,get_configured_ports,(void));
 int get_first_advertised_port_by_type_af(int listener_type,
                                          int address_family);
 #define get_primary_or_port() \
@@ -136,10 +140,23 @@ smartlist_t *get_options_from_transport_options_line(const char *line,
 smartlist_t *get_options_for_server_transport(const char *transport);
 
 #ifdef CONFIG_PRIVATE
+
+#define CL_PORT_NO_STREAM_OPTIONS (1u<<0)
+#define CL_PORT_WARN_NONLOCAL (1u<<1)
+#define CL_PORT_ALLOW_EXTRA_LISTENADDR (1u<<2)
+#define CL_PORT_SERVER_OPTIONS (1u<<3)
+#define CL_PORT_FORBID_NONLOCAL (1u<<4)
+#define CL_PORT_TAKES_HOSTNAMES (1u<<5)
+#define CL_PORT_IS_UNIXSOCKET (1u<<6)
+#define CL_PORT_DFLT_GROUP_WRITABLE (1u<<7)
+
+STATIC int options_act(const or_options_t *old_options);
 #ifdef TOR_UNIT_TESTS
 extern struct config_format_t options_format;
 #endif
 
+STATIC port_cfg_t *port_cfg_new(size_t namelen);
+STATIC void port_cfg_free(port_cfg_t *port);
 STATIC void or_options_free(or_options_t *options);
 STATIC int options_validate(or_options_t *old_options,
                             or_options_t *options,
@@ -150,10 +167,22 @@ STATIC int parse_transport_line(const or_options_t *options,
                                 int server);
 STATIC int consider_adding_dir_servers(const or_options_t *options,
                                        const or_options_t *old_options);
+STATIC void add_default_trusted_dir_authorities(dirinfo_type_t type);
 MOCK_DECL(STATIC void, add_default_fallback_dir_servers, (void));
-STATIC int
-parse_dir_fallback_line(const char *line,
-                        int validate_only);
+STATIC int parse_dir_authority_line(const char *line,
+                                    dirinfo_type_t required_type,
+                                    int validate_only);
+STATIC int parse_dir_fallback_line(const char *line, int validate_only);
+STATIC int have_enough_mem_for_dircache(const or_options_t *options,
+                                        size_t total_mem, char **msg);
+STATIC int parse_port_config(smartlist_t *out,
+                  const config_line_t *ports,
+                  const config_line_t *listenaddrs,
+                  const char *portname,
+                  int listener_type,
+                  const char *defaultaddr,
+                  int defaultport,
+                  const unsigned flags);
 #endif
 
 #endif

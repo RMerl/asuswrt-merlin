@@ -148,8 +148,7 @@ ed25519_donna_seckey(unsigned char *sk)
 {
   ed25519_secret_key seed;
 
-  if (crypto_strongest_rand(seed, 32))
-    return -1;
+  crypto_strongest_rand(seed, 32);
 
   ed25519_extsk(sk, seed);
 
@@ -169,8 +168,8 @@ ed25519_donna_seckey_expand(unsigned char *sk, const unsigned char *skseed)
 int
 ed25519_donna_pubkey(unsigned char *pk, const unsigned char *sk)
 {
-  bignum256modm a;
-  ge25519 ALIGN(16) A;
+  bignum256modm a = {0};
+  ge25519 ALIGN(16) A = {{0}, {0}, {0}, {0}};
 
   /* A = aB */
   expand256_modm(a, sk, 32);
@@ -205,8 +204,8 @@ ed25519_donna_sign(unsigned char *sig, const unsigned char *m, size_t mlen,
   const unsigned char *sk, const unsigned char *pk)
 {
   ed25519_hash_context ctx;
-  bignum256modm r, S, a;
-  ge25519 ALIGN(16) R;
+  bignum256modm r = {0}, S, a;
+  ge25519 ALIGN(16) R = {{0}, {0}, {0}, {0}};
   hash_512bits hashr, hram;
 
   /* This is equivalent to the removed `ED25519_FN(ed25519_sign)` routine,

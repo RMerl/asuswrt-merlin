@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2015, The Tor Project, Inc. */
+/* Copyright (c) 2009-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_COMPAT_LIBEVENT_H
@@ -90,6 +90,43 @@ void tor_gettimeofday_cache_clear(void);
 void tor_gettimeofday_cache_set(const struct timeval *tv);
 #endif
 void tor_gettimeofday_cached_monotonic(struct timeval *tv);
+
+#ifdef COMPAT_LIBEVENT_PRIVATE
+/** A number representing a version of Libevent.
+
+    This is a 4-byte number, with the first three bytes representing the
+    major, minor, and patchlevel respectively of the library.  The fourth
+    byte is unused.
+
+    This is equivalent to the format of LIBEVENT_VERSION_NUMBER on Libevent
+    2.0.1 or later.  For versions of Libevent before 1.4.0, which followed the
+    format of "1.0, 1.0a, 1.0b", we define 1.0 to be equivalent to 1.0.0, 1.0a
+    to be equivalent to 1.0.1, and so on.
+*/
+typedef uint32_t le_version_t;
+
+/** @{ */
+/** Macros: returns the number of a libevent version as a le_version_t */
+#define V(major, minor, patch) \
+  (((major) << 24) | ((minor) << 16) | ((patch) << 8))
+#define V_OLD(major, minor, patch) \
+  V((major), (minor), (patch)-'a'+1)
+/** @} */
+
+/** Represetns a version of libevent so old we can't figure out what version
+ * it is. */
+#define LE_OLD V(0,0,0)
+/** Represents a version of libevent so weird we can't figure out what version
+ * it is. */
+#define LE_OTHER V(0,0,99)
+
+STATIC void
+libevent_logging_callback(int severity, const char *msg);
+STATIC le_version_t
+tor_decode_libevent_version(const char *v);
+STATIC int
+le_versions_compatibility(le_version_t v);
+#endif
 
 #endif
 

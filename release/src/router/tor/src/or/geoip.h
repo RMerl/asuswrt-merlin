@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -18,6 +18,7 @@
 STATIC int geoip_parse_entry(const char *line, sa_family_t family);
 STATIC int geoip_get_country_by_ipv4(uint32_t ipaddr);
 STATIC int geoip_get_country_by_ipv6(const struct in6_addr *addr);
+STATIC void clear_geoip_db(void);
 #endif
 int should_record_bridge_info(const or_options_t *options);
 int geoip_load_file(sa_family_t family, const char *filename);

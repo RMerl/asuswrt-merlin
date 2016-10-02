@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -42,6 +42,18 @@ uint8_t answer_type,const cached_resolve_t *resolved));
 
 MOCK_DECL(STATIC void,send_resolved_hostname_cell,(edge_connection_t *conn,
 const char *hostname));
+
+cached_resolve_t *dns_get_cache_entry(cached_resolve_t *query);
+void dns_insert_cache_entry(cached_resolve_t *new_entry);
+
+MOCK_DECL(STATIC int,
+set_exitconn_info_from_resolve,(edge_connection_t *exitconn,
+                                const cached_resolve_t *resolve,
+                                char **hostname_out));
+
+MOCK_DECL(STATIC int,
+launch_resolve,(cached_resolve_t *resolve));
+
 #endif
 
 #endif

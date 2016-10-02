@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -44,6 +44,7 @@
 #include "nodelist.h"
 #include "ntmain.h"
 #include "onion.h"
+#include "periodic.h"
 #include "policies.h"
 #include "transports.h"
 #include "relay.h"
@@ -190,32 +191,6 @@ int quiet_level = 0;
  *
  ****************************************************************************/
 
-#if 0 && defined(USE_BUFFEREVENTS)
-static void
-free_old_inbuf(connection_t *conn)
-{
-  if (! conn->inbuf)
-    return;
-
-  tor_assert(conn->outbuf);
-  tor_assert(buf_datalen(conn->inbuf) == 0);
-  tor_assert(buf_datalen(conn->outbuf) == 0);
-  buf_free(conn->inbuf);
-  buf_free(conn->outbuf);
-  conn->inbuf = conn->outbuf = NULL;
-
-  if (conn->read_event) {
-    event_del(conn->read_event);
-    tor_event_free(conn->read_event);
-  }
-  if (conn->write_event) {
-    event_del(conn->read_event);
-    tor_event_free(conn->write_event);
-  }
-  conn->read_event = conn->write_event = NULL;
-}
-#endif
-
 #if defined(_WIN32) && defined(USE_BUFFEREVENTS)
 /** Remove the kernel-space send and receive buffers for <b>s</b>. For use
  * with IOCP only. */
@@ -224,11 +199,13 @@ set_buffer_lengths_to_zero(tor_socket_t s)
 {
   int zero = 0;
   int r = 0;
-  if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (void*)&zero, sizeof(zero))) {
+  if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (void*)&zero,
+                 (socklen_t)sizeof(zero))) {
     log_warn(LD_NET, "Unable to clear SO_SNDBUF");
     r = -1;
   }
-  if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, (void*)&zero, sizeof(zero))) {
+  if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, (void*)&zero,
+                 (socklen_t)sizeof(zero))) {
     log_warn(LD_NET, "Unable to clear SO_RCVBUF");
     r = -1;
   }
@@ -499,8 +476,7 @@ connection_in_array(connection_t *conn)
   return smartlist_contains(connection_array, conn);
 }
 
-/** Set <b>*array</b> to an array of all connections, and <b>*n</b>
- * to the length of the array. <b>*array</b> and <b>*n</b> must not
+/** Set <b>*array</b> to an array of all connections. <b>*array</b> must not
  * be modified.
  */
 smartlist_t *
@@ -567,6 +543,46 @@ connection_is_reading(connection_t *conn)
     (conn->read_event && event_pending(conn->read_event, EV_READ, NULL));
 }
 
+/** Check whether <b>conn</b> is correct in having (or not having) a
+ * read/write event (passed in <b>ev</b>). On success, return 0. On failure,
+ * log a warning and return -1. */
+static int
+connection_check_event(connection_t *conn, struct event *ev)
+{
+  int bad;
+
+  if (conn->type == CONN_TYPE_AP && TO_EDGE_CONN(conn)->is_dns_request) {
+    /* DNS requests which we launch through the dnsserv.c module do not have
+     * any underlying socket or any underlying linked connection, so they
+     * shouldn't have any attached events either.
+     */
+    bad = ev != NULL;
+  } else {
+    /* Everytyhing else should have an underlying socket, or a linked
+     * connection (which is also tracked with a read_event/write_event pair).
+     */
+    bad = ev == NULL;
+  }
+
+  if (bad) {
+    log_warn(LD_BUG, "Event missing on connection %p [%s;%s]. "
+             "socket=%d. linked=%d. "
+             "is_dns_request=%d. Marked_for_close=%s:%d",
+             conn,
+             conn_type_to_string(conn->type),
+             conn_state_to_string(conn->type, conn->state),
+             (int)conn->s, (int)conn->linked,
+             (conn->type == CONN_TYPE_AP &&
+                               TO_EDGE_CONN(conn)->is_dns_request),
+             conn->marked_for_close_file ? conn->marked_for_close_file : "-",
+             conn->marked_for_close
+             );
+    log_backtrace(LOG_WARN, LD_BUG, "Backtrace attached.");
+    return -1;
+  }
+  return 0;
+}
+
 /** Tell the main loop to stop notifying <b>conn</b> of any read events. */
 MOCK_IMPL(void,
 connection_stop_reading,(connection_t *conn))
@@ -578,7 +594,9 @@ connection_stop_reading,(connection_t *conn))
       return;
   });
 
-  tor_assert(conn->read_event);
+  if (connection_check_event(conn, conn->read_event) < 0) {
+    return;
+  }
 
   if (conn->linked) {
     conn->reading_from_linked_conn = 0;
@@ -603,7 +621,9 @@ connection_start_reading,(connection_t *conn))
       return;
   });
 
-  tor_assert(conn->read_event);
+  if (connection_check_event(conn, conn->read_event) < 0) {
+    return;
+  }
 
   if (conn->linked) {
     conn->reading_from_linked_conn = 1;
@@ -643,7 +663,9 @@ connection_stop_writing,(connection_t *conn))
       return;
   });
 
-  tor_assert(conn->write_event);
+  if (connection_check_event(conn, conn->write_event) < 0) {
+    return;
+  }
 
   if (conn->linked) {
     conn->writing_to_linked_conn = 0;
@@ -669,7 +691,9 @@ connection_start_writing,(connection_t *conn))
       return;
   });
 
-  tor_assert(conn->write_event);
+  if (connection_check_event(conn, conn->write_event) < 0) {
+    return;
+  }
 
   if (conn->linked) {
     conn->writing_to_linked_conn = 1;
@@ -944,18 +968,6 @@ conn_close_if_marked(int i)
            * would make much more sense to react in
            * connection_handle_read_impl, or to just stop reading in
            * mark_and_flush */
-#if 0
-#define MARKED_READING_RATE 180
-          static ratelim_t marked_read_lim = RATELIM_INIT(MARKED_READING_RATE);
-          char *m;
-          if ((m = rate_limit_log(&marked_read_lim, now))) {
-            log_warn(LD_BUG, "Marked connection (fd %d, type %s, state %s) "
-                     "is still reading; that shouldn't happen.%s",
-                     (int)conn->s, conn_type_to_string(conn->type),
-                     conn_state_to_string(conn->type, conn->state), m);
-            tor_free(m);
-          }
-#endif
           conn->read_blocked_on_bw = 1;
           connection_stop_reading(conn);
         }
@@ -1038,12 +1050,12 @@ directory_all_unreachable(time_t now)
 /** This function is called whenever we successfully pull down some new
  * network statuses or server descriptors. */
 void
-directory_info_has_arrived(time_t now, int from_cache)
+directory_info_has_arrived(time_t now, int from_cache, int suppress_logs)
 {
   const or_options_t *options = get_options();
 
   if (!router_have_minimum_dir_info()) {
-    int quiet = from_cache ||
+    int quiet = suppress_logs || from_cache ||
                 directory_too_idle_to_fetch_descriptors(options, now);
     tor_log(quiet ? LOG_INFO : LOG_NOTICE, LD_DIR,
         "I learned some more directory information, but not enough to "
@@ -1227,39 +1239,85 @@ get_signewnym_epoch(void)
   return newnym_epoch;
 }
 
-typedef struct {
-  time_t last_rotated_x509_certificate;
-  time_t check_v3_certificate;
-  time_t check_listeners;
-  time_t download_networkstatus;
-  time_t try_getting_descriptors;
-  time_t reset_descriptor_failures;
-  time_t add_entropy;
-  time_t write_bridge_status_file;
-  time_t downrate_stability;
-  time_t save_stability;
-  time_t clean_caches;
-  time_t recheck_bandwidth;
-  time_t check_for_expired_networkstatus;
-  time_t write_stats_files;
-  time_t write_bridge_stats;
-  time_t check_port_forwarding;
-  time_t launch_reachability_tests;
-  time_t retry_dns_init;
-  time_t next_heartbeat;
-  time_t check_descriptor;
-  /** When do we next launch DNS wildcarding checks? */
-  time_t check_for_correct_dns;
-  /** When do we next make sure our Ed25519 keys aren't about to expire? */
-  time_t check_ed_keys;
+/** True iff we have initialized all the members of <b>periodic_events</b>.
+ * Used to prevent double-initialization. */
+static int periodic_events_initialized = 0;
 
-} time_to_t;
+/* Declare all the timer callback functions... */
+#undef CALLBACK
+#define CALLBACK(name) \
+  static int name ## _callback(time_t, const or_options_t *)
+CALLBACK(rotate_onion_key);
+CALLBACK(check_ed_keys);
+CALLBACK(launch_descriptor_fetches);
+CALLBACK(reset_descriptor_failures);
+CALLBACK(rotate_x509_certificate);
+CALLBACK(add_entropy);
+CALLBACK(launch_reachability_tests);
+CALLBACK(downrate_stability);
+CALLBACK(save_stability);
+CALLBACK(check_authority_cert);
+CALLBACK(check_expired_networkstatus);
+CALLBACK(write_stats_file);
+CALLBACK(record_bridge_stats);
+CALLBACK(clean_caches);
+CALLBACK(rend_cache_failure_clean);
+CALLBACK(retry_dns);
+CALLBACK(check_descriptor);
+CALLBACK(check_for_reachability_bw);
+CALLBACK(fetch_networkstatus);
+CALLBACK(retry_listeners);
+CALLBACK(expire_old_ciruits_serverside);
+CALLBACK(check_dns_honesty);
+CALLBACK(write_bridge_ns);
+CALLBACK(check_fw_helper_app);
+CALLBACK(heartbeat);
 
-static time_to_t time_to = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+#undef CALLBACK
+
+/* Now we declare an array of periodic_event_item_t for each periodic event */
+#define CALLBACK(name) PERIODIC_EVENT(name)
+
+static periodic_event_item_t periodic_events[] = {
+  CALLBACK(rotate_onion_key),
+  CALLBACK(check_ed_keys),
+  CALLBACK(launch_descriptor_fetches),
+  CALLBACK(reset_descriptor_failures),
+  CALLBACK(rotate_x509_certificate),
+  CALLBACK(add_entropy),
+  CALLBACK(launch_reachability_tests),
+  CALLBACK(downrate_stability),
+  CALLBACK(save_stability),
+  CALLBACK(check_authority_cert),
+  CALLBACK(check_expired_networkstatus),
+  CALLBACK(write_stats_file),
+  CALLBACK(record_bridge_stats),
+  CALLBACK(clean_caches),
+  CALLBACK(rend_cache_failure_clean),
+  CALLBACK(retry_dns),
+  CALLBACK(check_descriptor),
+  CALLBACK(check_for_reachability_bw),
+  CALLBACK(fetch_networkstatus),
+  CALLBACK(retry_listeners),
+  CALLBACK(expire_old_ciruits_serverside),
+  CALLBACK(check_dns_honesty),
+  CALLBACK(write_bridge_ns),
+  CALLBACK(check_fw_helper_app),
+  CALLBACK(heartbeat),
+  END_OF_PERIODIC_EVENTS
 };
+#undef CALLBACK
 
-/** Reset all the time_to's so we'll do all our actions again as if we
+/* These are pointers to members of periodic_events[] that are used to
+ * implement particular callbacks.  We keep them separate here so that we
+ * can access them by name.  We also keep them inside periodic_events[]
+ * so that we can implement "reset all timers" in a reasonable way. */
+static periodic_event_item_t *check_descriptor_event=NULL;
+static periodic_event_item_t *fetch_networkstatus_event=NULL;
+static periodic_event_item_t *launch_descriptor_fetches_event=NULL;
+static periodic_event_item_t *check_dns_honesty_event=NULL;
+
+/** Reset all the periodic events so we'll do all our actions again as if we
  * just started up.
  * Useful if our clock just moved back a long time from the future,
  * so we don't wait until that future arrives again before acting.
@@ -1267,7 +1325,77 @@ static time_to_t time_to = {
 void
 reset_all_main_loop_timers(void)
 {
-  memset(&time_to, 0, sizeof(time_to));
+  int i;
+  for (i = 0; periodic_events[i].name; ++i) {
+    periodic_event_reschedule(&periodic_events[i]);
+  }
+}
+
+/** Return the member of periodic_events[] whose name is <b>name</b>.
+ * Return NULL if no such event is found.
+ */
+static periodic_event_item_t *
+find_periodic_event(const char *name)
+{
+  int i;
+  for (i = 0; periodic_events[i].name; ++i) {
+    if (strcmp(name, periodic_events[i].name) == 0)
+      return &periodic_events[i];
+  }
+  return NULL;
+}
+
+/** Helper, run one second after setup:
+ * Initializes all members of periodic_events and starts them running.
+ *
+ * (We do this one second after setup for backward-compatibility reasons;
+ * it might not actually be necessary.) */
+static void
+initialize_periodic_events_cb(evutil_socket_t fd, short events, void *data)
+{
+  (void) fd;
+  (void) events;
+  (void) data;
+  int i;
+  for (i = 0; periodic_events[i].name; ++i) {
+    periodic_event_launch(&periodic_events[i]);
+  }
+}
+
+/** Set up all the members of periodic_events[], and configure them all to be
+ * launched from a callback. */
+STATIC void
+initialize_periodic_events(void)
+{
+  tor_assert(periodic_events_initialized == 0);
+  periodic_events_initialized = 1;
+
+  int i;
+  for (i = 0; periodic_events[i].name; ++i) {
+    periodic_event_setup(&periodic_events[i]);
+  }
+
+#define NAMED_CALLBACK(name) \
+  STMT_BEGIN name ## _event = find_periodic_event( #name ); STMT_END
+
+  NAMED_CALLBACK(check_descriptor);
+  NAMED_CALLBACK(fetch_networkstatus);
+  NAMED_CALLBACK(launch_descriptor_fetches);
+  NAMED_CALLBACK(check_dns_honesty);
+
+  struct timeval one_second = { 1, 0 };
+  event_base_once(tor_libevent_get_base(), -1, EV_TIMEOUT,
+                  initialize_periodic_events_cb, NULL,
+                  &one_second);
+}
+
+STATIC void
+teardown_periodic_events(void)
+{
+  int i;
+  for (i = 0; periodic_events[i].name; ++i) {
+    periodic_event_destroy(&periodic_events[i]);
+  }
 }
 
 /**
@@ -1278,7 +1406,8 @@ reset_all_main_loop_timers(void)
 void
 reschedule_descriptor_update_check(void)
 {
-  time_to.check_descriptor = 0;
+  tor_assert(check_descriptor_event);
+  periodic_event_reschedule(check_descriptor_event);
 }
 
 /**
@@ -1288,8 +1417,34 @@ reschedule_descriptor_update_check(void)
 void
 reschedule_directory_downloads(void)
 {
-  time_to.download_networkstatus = 0;
-  time_to.try_getting_descriptors = 0;
+  tor_assert(fetch_networkstatus_event);
+  tor_assert(launch_descriptor_fetches_event);
+
+  periodic_event_reschedule(fetch_networkstatus_event);
+  periodic_event_reschedule(launch_descriptor_fetches_event);
+}
+
+#define LONGEST_TIMER_PERIOD (30 * 86400)
+/** Helper: Return the number of seconds between <b>now</b> and <b>next</b>,
+ * clipped to the range [1 second, LONGEST_TIMER_PERIOD]. */
+static inline int
+safe_timer_diff(time_t now, time_t next)
+{
+  if (next > now) {
+    /* There were no computers at signed TIME_MIN (1902 on 32-bit systems),
+     * and nothing that could run Tor. It's a bug if 'next' is around then.
+     * On 64-bit systems with signed TIME_MIN, TIME_MIN is before the Big
+     * Bang. We cannot extrapolate past a singularity, but there was probably
+     * nothing that could run Tor then, either.
+     **/
+    tor_assert(next > TIME_MIN + LONGEST_TIMER_PERIOD);
+
+    if (next - LONGEST_TIMER_PERIOD > now)
+      return LONGEST_TIMER_PERIOD;
+    return (int)(next - now);
+  } else {
+    return 1;
+  }
 }
 
 /** Perform regular maintenance tasks.  This function gets run once per
@@ -1298,12 +1453,7 @@ reschedule_directory_downloads(void)
 static void
 run_scheduled_events(time_t now)
 {
-  static int should_init_bridge_stats = 1;
   const or_options_t *options = get_options();
-
-  int is_server = server_mode(options);
-  int i;
-  int have_dir_info;
 
   /* 0. See if we've been asked to shut down and our timeout has
    * expired; or if our bandwidth limits are exhausted and we
@@ -1322,285 +1472,17 @@ run_scheduled_events(time_t now)
   /* 0c. If we've deferred log messages for the controller, handle them now */
   flush_pending_log_callbacks();
 
-  /* 1a. Every MIN_ONION_KEY_LIFETIME seconds, rotate the onion keys,
-   *  shut down and restart all cpuworkers, and update the directory if
-   *  necessary.
-   */
-  if (is_server &&
-      get_onion_key_set_at()+MIN_ONION_KEY_LIFETIME < now) {
-    log_info(LD_GENERAL,"Rotating onion key.");
-    rotate_onion_key();
-    cpuworkers_rotate_keyinfo();
-    if (router_rebuild_descriptor(1)<0) {
-      log_info(LD_CONFIG, "Couldn't rebuild router descriptor");
-    }
-    if (advertised_server_mode() && !options->DisableNetwork)
-      router_upload_dir_desc_to_dirservers(0);
-  }
-
-  if (is_server && time_to.check_ed_keys < now) {
-    if (should_make_new_ed_keys(options, now)) {
-      if (load_ed_keys(options, now) < 0 ||
-          generate_ed_link_cert(options, now)) {
-        log_err(LD_OR, "Unable to update Ed25519 keys!  Exiting.");
-        tor_cleanup();
-        exit(0);
-      }
-    }
-    time_to.check_ed_keys = now + 30;
-  }
-
-  if (!should_delay_dir_fetches(options, NULL) &&
-      time_to.try_getting_descriptors < now) {
-    update_all_descriptor_downloads(now);
-    update_extrainfo_downloads(now);
-    if (router_have_minimum_dir_info())
-      time_to.try_getting_descriptors = now + LAZY_DESCRIPTOR_RETRY_INTERVAL;
-    else
-      time_to.try_getting_descriptors = now + GREEDY_DESCRIPTOR_RETRY_INTERVAL;
-  }
-
-  if (time_to.reset_descriptor_failures < now) {
-    router_reset_descriptor_download_failures();
-    time_to.reset_descriptor_failures =
-      now + DESCRIPTOR_FAILURE_RESET_INTERVAL;
-  }
-
-  if (options->UseBridges && !options->DisableNetwork)
+  if (options->UseBridges && !options->DisableNetwork) {
     fetch_bridge_descriptors(options, now);
-
-  /* 1b. Every MAX_SSL_KEY_LIFETIME_INTERNAL seconds, we change our
-   * TLS context. */
-  if (!time_to.last_rotated_x509_certificate)
-    time_to.last_rotated_x509_certificate = now;
-  if (time_to.last_rotated_x509_certificate +
-      MAX_SSL_KEY_LIFETIME_INTERNAL < now) {
-    log_info(LD_GENERAL,"Rotating tls context.");
-    if (router_initialize_tls_context() < 0) {
-      log_warn(LD_BUG, "Error reinitializing TLS context");
-      /* XXX is it a bug here, that we just keep going? -RD */
-    }
-    time_to.last_rotated_x509_certificate = now;
-    /* We also make sure to rotate the TLS connections themselves if they've
-     * been up for too long -- but that's done via is_bad_for_new_circs in
-     * connection_run_housekeeping() above. */
   }
 
-  if (time_to.add_entropy < now) {
-    if (time_to.add_entropy) {
-      /* We already seeded once, so don't die on failure. */
-      crypto_seed_rng();
-    }
-/** How often do we add more entropy to OpenSSL's RNG pool? */
-#define ENTROPY_INTERVAL (60*60)
-    time_to.add_entropy = now + ENTROPY_INTERVAL;
-  }
-
-  /* 1c. If we have to change the accounting interval or record
-   * bandwidth used in this accounting interval, do so. */
-  if (accounting_is_enabled(options))
+  if (accounting_is_enabled(options)) {
     accounting_run_housekeeping(now);
-
-  if (time_to.launch_reachability_tests < now &&
-      (authdir_mode_tests_reachability(options)) &&
-       !net_is_disabled()) {
-    time_to.launch_reachability_tests = now + REACHABILITY_TEST_INTERVAL;
-    /* try to determine reachability of the other Tor relays */
-    dirserv_test_reachability(now);
   }
 
-  /* 1d. Periodically, we discount older stability information so that new
-   * stability info counts more, and save the stability information to disk as
-   * appropriate. */
-  if (time_to.downrate_stability < now)
-    time_to.downrate_stability = rep_hist_downrate_old_runs(now);
-  if (authdir_mode_tests_reachability(options)) {
-    if (time_to.save_stability < now) {
-      if (time_to.save_stability && rep_hist_record_mtbf_data(now, 1)<0) {
-        log_warn(LD_GENERAL, "Couldn't store mtbf data.");
-      }
-#define SAVE_STABILITY_INTERVAL (30*60)
-      time_to.save_stability = now + SAVE_STABILITY_INTERVAL;
-    }
-  }
-
-  /* 1e. Periodically, if we're a v3 authority, we check whether our cert is
-   * close to expiring and warn the admin if it is. */
-  if (time_to.check_v3_certificate < now) {
-    v3_authority_check_key_expiry();
-#define CHECK_V3_CERTIFICATE_INTERVAL (5*60)
-    time_to.check_v3_certificate = now + CHECK_V3_CERTIFICATE_INTERVAL;
-  }
-
-  /* 1f. Check whether our networkstatus has expired.
-   */
-  if (time_to.check_for_expired_networkstatus < now) {
-    networkstatus_t *ns = networkstatus_get_latest_consensus();
-    /*XXXX RD: This value needs to be the same as REASONABLY_LIVE_TIME in
-     * networkstatus_get_reasonably_live_consensus(), but that value is way
-     * way too high.  Arma: is the bridge issue there resolved yet? -NM */
-#define NS_EXPIRY_SLOP (24*60*60)
-    if (ns && ns->valid_until < now+NS_EXPIRY_SLOP &&
-        router_have_minimum_dir_info()) {
-      router_dir_info_changed();
-    }
-#define CHECK_EXPIRED_NS_INTERVAL (2*60)
-    time_to.check_for_expired_networkstatus = now + CHECK_EXPIRED_NS_INTERVAL;
-  }
-
-  /* 1g. Check whether we should write statistics to disk.
-   */
-  if (time_to.write_stats_files < now) {
-#define CHECK_WRITE_STATS_INTERVAL (60*60)
-    time_t next_time_to_write_stats_files = (time_to.write_stats_files > 0 ?
-           time_to.write_stats_files : now) + CHECK_WRITE_STATS_INTERVAL;
-    if (options->CellStatistics) {
-      time_t next_write =
-          rep_hist_buffer_stats_write(time_to.write_stats_files);
-      if (next_write && next_write < next_time_to_write_stats_files)
-        next_time_to_write_stats_files = next_write;
-    }
-    if (options->DirReqStatistics) {
-      time_t next_write = geoip_dirreq_stats_write(time_to.write_stats_files);
-      if (next_write && next_write < next_time_to_write_stats_files)
-        next_time_to_write_stats_files = next_write;
-    }
-    if (options->EntryStatistics) {
-      time_t next_write = geoip_entry_stats_write(time_to.write_stats_files);
-      if (next_write && next_write < next_time_to_write_stats_files)
-        next_time_to_write_stats_files = next_write;
-    }
-    if (options->HiddenServiceStatistics) {
-      time_t next_write = rep_hist_hs_stats_write(time_to.write_stats_files);
-      if (next_write && next_write < next_time_to_write_stats_files)
-        next_time_to_write_stats_files = next_write;
-    }
-    if (options->ExitPortStatistics) {
-      time_t next_write = rep_hist_exit_stats_write(time_to.write_stats_files);
-      if (next_write && next_write < next_time_to_write_stats_files)
-        next_time_to_write_stats_files = next_write;
-    }
-    if (options->ConnDirectionStatistics) {
-      time_t next_write = rep_hist_conn_stats_write(time_to.write_stats_files);
-      if (next_write && next_write < next_time_to_write_stats_files)
-        next_time_to_write_stats_files = next_write;
-    }
-    if (options->BridgeAuthoritativeDir) {
-      time_t next_write = rep_hist_desc_stats_write(time_to.write_stats_files);
-      if (next_write && next_write < next_time_to_write_stats_files)
-        next_time_to_write_stats_files = next_write;
-    }
-    time_to.write_stats_files = next_time_to_write_stats_files;
-  }
-
-  /* 1h. Check whether we should write bridge statistics to disk.
-   */
-  if (should_record_bridge_info(options)) {
-    if (time_to.write_bridge_stats < now) {
-      if (should_init_bridge_stats) {
-        /* (Re-)initialize bridge statistics. */
-        geoip_bridge_stats_init(now);
-        time_to.write_bridge_stats = now + WRITE_STATS_INTERVAL;
-        should_init_bridge_stats = 0;
-      } else {
-        /* Possibly write bridge statistics to disk and ask when to write
-         * them next time. */
-        time_to.write_bridge_stats = geoip_bridge_stats_write(
-                                           time_to.write_bridge_stats);
-      }
-    }
-  } else if (!should_init_bridge_stats) {
-    /* Bridge mode was turned off. Ensure that stats are re-initialized
-     * next time bridge mode is turned on. */
-    should_init_bridge_stats = 1;
-  }
-
-  /* Remove old information from rephist and the rend cache. */
-  if (time_to.clean_caches < now) {
-    rep_history_clean(now - options->RephistTrackTime);
-    rend_cache_clean(now);
-    rend_cache_clean_v2_descs_as_dir(now, 0);
-    microdesc_cache_rebuild(NULL, 0);
-#define CLEAN_CACHES_INTERVAL (30*60)
-    time_to.clean_caches = now + CLEAN_CACHES_INTERVAL;
-  }
-  /* We don't keep entries that are more than five minutes old so we try to
-   * clean it as soon as we can since we want to make sure the client waits
-   * as little as possible for reachability reasons. */
-  rend_cache_failure_clean(now);
-
-#define RETRY_DNS_INTERVAL (10*60)
-  /* If we're a server and initializing dns failed, retry periodically. */
-  if (time_to.retry_dns_init < now) {
-    time_to.retry_dns_init = now + RETRY_DNS_INTERVAL;
-    if (is_server && has_dns_init_failed())
-      dns_init();
-  }
-
-  /* 2. Periodically, we consider force-uploading our descriptor
-   * (if we've passed our internal checks). */
-
-/** How often do we check whether part of our router info has changed in a
- * way that would require an upload? That includes checking whether our IP
- * address has changed. */
-#define CHECK_DESCRIPTOR_INTERVAL (60)
-
-  /* 2b. Once per minute, regenerate and upload the descriptor if the old
-   * one is inaccurate. */
-  if (time_to.check_descriptor < now && !options->DisableNetwork) {
-    static int dirport_reachability_count = 0;
-    time_to.check_descriptor = now + CHECK_DESCRIPTOR_INTERVAL;
-    check_descriptor_bandwidth_changed(now);
-    check_descriptor_ipaddress_changed(now);
-    mark_my_descriptor_dirty_if_too_old(now);
-    consider_publishable_server(0);
-    /* also, check religiously for reachability, if it's within the first
-     * 20 minutes of our uptime. */
-    if (is_server &&
-        (have_completed_a_circuit() || !any_predicted_circuits(now)) &&
-        !we_are_hibernating()) {
-      if (stats_n_seconds_working < TIMEOUT_UNTIL_UNREACHABILITY_COMPLAINT) {
-        consider_testing_reachability(1, dirport_reachability_count==0);
-        if (++dirport_reachability_count > 5)
-          dirport_reachability_count = 0;
-      } else if (time_to.recheck_bandwidth < now) {
-        /* If we haven't checked for 12 hours and our bandwidth estimate is
-         * low, do another bandwidth test. This is especially important for
-         * bridges, since they might go long periods without much use. */
-        const routerinfo_t *me = router_get_my_routerinfo();
-        if (time_to.recheck_bandwidth && me &&
-            me->bandwidthcapacity < me->bandwidthrate &&
-            me->bandwidthcapacity < 51200) {
-          reset_bandwidth_test();
-        }
-#define BANDWIDTH_RECHECK_INTERVAL (12*60*60)
-        time_to.recheck_bandwidth = now + BANDWIDTH_RECHECK_INTERVAL;
-      }
-    }
-
-    /* If any networkstatus documents are no longer recent, we need to
-     * update all the descriptors' running status. */
-    /* Remove dead routers. */
-    routerlist_remove_old_routers();
-  }
-
-  /* 2c. Every minute (or every second if TestingTorNetwork), check
-   * whether we want to download any networkstatus documents. */
-
-/* How often do we check whether we should download network status
- * documents? */
-#define networkstatus_dl_check_interval(o) ((o)->TestingTorNetwork ? 1 : 60)
-
-  if (!should_delay_dir_fetches(options, NULL) &&
-      time_to.download_networkstatus < now) {
-    time_to.download_networkstatus =
-      now + networkstatus_dl_check_interval(options);
-    update_networkstatus_downloads(now);
-  }
-
-  /* 2c. Let directory voting happen. */
-  if (authdir_mode_v3(options))
+  if (authdir_mode_v3(options)) {
     dirvote_act(options, now);
+  }
 
   /* 3a. Every second, we examine pending circuits and prune the
    *    ones which have been pending for more than a few seconds.
@@ -1622,30 +1504,21 @@ run_scheduled_events(time_t now)
    */
   connection_expire_held_open();
 
-  /* 3d. And every 60 seconds, we relaunch listeners if any died. */
-  if (!net_is_disabled() && time_to.check_listeners < now) {
-    retry_all_listeners(NULL, NULL, 0);
-    time_to.check_listeners = now+60;
-  }
-
   /* 4. Every second, we try a new circuit if there are no valid
    *    circuits. Every NewCircuitPeriod seconds, we expire circuits
    *    that became dirty more than MaxCircuitDirtiness seconds ago,
    *    and we make a new circ if there are no clean circuits.
    */
-  have_dir_info = router_have_minimum_dir_info();
+  const int have_dir_info = router_have_minimum_dir_info();
   if (have_dir_info && !net_is_disabled()) {
     circuit_build_needed_circs(now);
   } else {
     circuit_expire_old_circs_as_needed(now);
   }
 
-  /* every 10 seconds, but not at the same second as other such events */
-  if (now % 10 == 5)
-    circuit_expire_old_circuits_serverside(now);
-
   /* 5. We do housekeeping for each connection... */
   connection_or_set_bad_connections(NULL, 0);
+  int i;
   for (i=0;i<smartlist_len(connection_array);i++) {
     run_connection_housekeeping(i, now);
   }
@@ -1673,59 +1546,483 @@ run_scheduled_events(time_t now)
   channel_run_cleanup();
   channel_listener_run_cleanup();
 
-  /* 9. and if we're an exit node, check whether our DNS is telling stories
-   * to us. */
-  if (!net_is_disabled() &&
-      public_server_mode(options) &&
-      time_to.check_for_correct_dns < now &&
-      ! router_my_exit_policy_is_reject_star()) {
-    if (!time_to.check_for_correct_dns) {
-      time_to.check_for_correct_dns =
-        crypto_rand_time_range(now + 60, now + 180);
-    } else {
-      dns_launch_correctness_checks();
-      time_to.check_for_correct_dns = now + 12*3600 +
-        crypto_rand_int(12*3600);
-    }
-  }
-
-  /* 10. write bridge networkstatus file to disk */
-  if (options->BridgeAuthoritativeDir &&
-      time_to.write_bridge_status_file < now) {
-    networkstatus_dump_bridge_status_to_file(now);
-#define BRIDGE_STATUSFILE_INTERVAL (30*60)
-    time_to.write_bridge_status_file = now+BRIDGE_STATUSFILE_INTERVAL;
-  }
-
-  /* 11. check the port forwarding app */
-  if (!net_is_disabled() &&
-      time_to.check_port_forwarding < now &&
-      options->PortForwarding &&
-      is_server) {
-#define PORT_FORWARDING_CHECK_INTERVAL 5
-    smartlist_t *ports_to_forward = get_list_of_ports_to_forward();
-    if (ports_to_forward) {
-      tor_check_port_forwarding(options->PortForwardingHelper,
-                                ports_to_forward,
-                                now);
-
-      SMARTLIST_FOREACH(ports_to_forward, char *, cp, tor_free(cp));
-      smartlist_free(ports_to_forward);
-    }
-    time_to.check_port_forwarding = now+PORT_FORWARDING_CHECK_INTERVAL;
-  }
-
   /* 11b. check pending unconfigured managed proxies */
   if (!net_is_disabled() && pt_proxies_configuration_pending())
     pt_configure_remaining_proxies();
+}
 
-  /* 12. write the heartbeat message */
-  if (options->HeartbeatPeriod &&
-      time_to.next_heartbeat <= now) {
-    if (time_to.next_heartbeat) /* don't log the first heartbeat */
-      log_heartbeat(now);
-    time_to.next_heartbeat = now+options->HeartbeatPeriod;
+static int
+rotate_onion_key_callback(time_t now, const or_options_t *options)
+{
+  /* 1a. Every MIN_ONION_KEY_LIFETIME seconds, rotate the onion keys,
+   *  shut down and restart all cpuworkers, and update the directory if
+   *  necessary.
+   */
+  if (server_mode(options)) {
+    time_t rotation_time = get_onion_key_set_at()+MIN_ONION_KEY_LIFETIME;
+    if (rotation_time > now) {
+      return safe_timer_diff(now, rotation_time);
+    }
+
+    log_info(LD_GENERAL,"Rotating onion key.");
+    rotate_onion_key();
+    cpuworkers_rotate_keyinfo();
+    if (router_rebuild_descriptor(1)<0) {
+      log_info(LD_CONFIG, "Couldn't rebuild router descriptor");
+    }
+    if (advertised_server_mode() && !options->DisableNetwork)
+      router_upload_dir_desc_to_dirservers(0);
+    return MIN_ONION_KEY_LIFETIME;
   }
+  return PERIODIC_EVENT_NO_UPDATE;
+}
+
+static int
+check_ed_keys_callback(time_t now, const or_options_t *options)
+{
+  if (server_mode(options)) {
+    if (should_make_new_ed_keys(options, now)) {
+      if (load_ed_keys(options, now) < 0 ||
+          generate_ed_link_cert(options, now)) {
+        log_err(LD_OR, "Unable to update Ed25519 keys!  Exiting.");
+        tor_cleanup();
+        exit(0);
+      }
+    }
+    return 30;
+  }
+  return PERIODIC_EVENT_NO_UPDATE;
+}
+
+static int
+launch_descriptor_fetches_callback(time_t now, const or_options_t *options)
+{
+  if (should_delay_dir_fetches(options, NULL))
+      return PERIODIC_EVENT_NO_UPDATE;
+
+  update_all_descriptor_downloads(now);
+  update_extrainfo_downloads(now);
+  if (router_have_minimum_dir_info())
+    return LAZY_DESCRIPTOR_RETRY_INTERVAL;
+  else
+    return GREEDY_DESCRIPTOR_RETRY_INTERVAL;
+}
+
+static int
+reset_descriptor_failures_callback(time_t now, const or_options_t *options)
+{
+  (void)now;
+  (void)options;
+  router_reset_descriptor_download_failures();
+  return DESCRIPTOR_FAILURE_RESET_INTERVAL;
+}
+
+static int
+rotate_x509_certificate_callback(time_t now, const or_options_t *options)
+{
+  static int first = 1;
+  (void)now;
+  (void)options;
+  if (first) {
+    first = 0;
+    return MAX_SSL_KEY_LIFETIME_INTERNAL;
+  }
+
+  /* 1b. Every MAX_SSL_KEY_LIFETIME_INTERNAL seconds, we change our
+   * TLS context. */
+  log_info(LD_GENERAL,"Rotating tls context.");
+  if (router_initialize_tls_context() < 0) {
+    log_warn(LD_BUG, "Error reinitializing TLS context");
+    tor_assert(0);
+  }
+
+  /* We also make sure to rotate the TLS connections themselves if they've
+   * been up for too long -- but that's done via is_bad_for_new_circs in
+   * run_connection_housekeeping() above. */
+  return MAX_SSL_KEY_LIFETIME_INTERNAL;
+}
+
+static int
+add_entropy_callback(time_t now, const or_options_t *options)
+{
+  (void)now;
+  (void)options;
+  /* We already seeded once, so don't die on failure. */
+  if (crypto_seed_rng() < 0) {
+    log_warn(LD_GENERAL, "Tried to re-seed RNG, but failed. We already "
+             "seeded once, though, so we won't exit here.");
+  }
+
+  /** How often do we add more entropy to OpenSSL's RNG pool? */
+#define ENTROPY_INTERVAL (60*60)
+  return ENTROPY_INTERVAL;
+}
+
+static int
+launch_reachability_tests_callback(time_t now, const or_options_t *options)
+{
+  if (authdir_mode_tests_reachability(options) &&
+      !net_is_disabled()) {
+    /* try to determine reachability of the other Tor relays */
+    dirserv_test_reachability(now);
+  }
+  return REACHABILITY_TEST_INTERVAL;
+}
+
+static int
+downrate_stability_callback(time_t now, const or_options_t *options)
+{
+  (void)options;
+  /* 1d. Periodically, we discount older stability information so that new
+   * stability info counts more, and save the stability information to disk as
+   * appropriate. */
+  time_t next = rep_hist_downrate_old_runs(now);
+  return safe_timer_diff(now, next);
+}
+
+static int
+save_stability_callback(time_t now, const or_options_t *options)
+{
+  if (authdir_mode_tests_reachability(options)) {
+    if (rep_hist_record_mtbf_data(now, 1)<0) {
+      log_warn(LD_GENERAL, "Couldn't store mtbf data.");
+    }
+  }
+#define SAVE_STABILITY_INTERVAL (30*60)
+  return SAVE_STABILITY_INTERVAL;
+}
+
+static int
+check_authority_cert_callback(time_t now, const or_options_t *options)
+{
+  (void)now;
+  (void)options;
+  /* 1e. Periodically, if we're a v3 authority, we check whether our cert is
+   * close to expiring and warn the admin if it is. */
+  v3_authority_check_key_expiry();
+#define CHECK_V3_CERTIFICATE_INTERVAL (5*60)
+  return CHECK_V3_CERTIFICATE_INTERVAL;
+}
+
+static int
+check_expired_networkstatus_callback(time_t now, const or_options_t *options)
+{
+  (void)options;
+  /* 1f. Check whether our networkstatus has expired.
+   */
+  networkstatus_t *ns = networkstatus_get_latest_consensus();
+  /*XXXX RD: This value needs to be the same as REASONABLY_LIVE_TIME in
+   * networkstatus_get_reasonably_live_consensus(), but that value is way
+   * way too high.  Arma: is the bridge issue there resolved yet? -NM */
+#define NS_EXPIRY_SLOP (24*60*60)
+  if (ns && ns->valid_until < now+NS_EXPIRY_SLOP &&
+      router_have_minimum_dir_info()) {
+    router_dir_info_changed();
+  }
+#define CHECK_EXPIRED_NS_INTERVAL (2*60)
+  return CHECK_EXPIRED_NS_INTERVAL;
+}
+
+static int
+write_stats_file_callback(time_t now, const or_options_t *options)
+{
+  /* 1g. Check whether we should write statistics to disk.
+   */
+#define CHECK_WRITE_STATS_INTERVAL (60*60)
+  time_t next_time_to_write_stats_files = now + CHECK_WRITE_STATS_INTERVAL;
+  if (options->CellStatistics) {
+    time_t next_write =
+      rep_hist_buffer_stats_write(now);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+  }
+  if (options->DirReqStatistics) {
+    time_t next_write = geoip_dirreq_stats_write(now);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+  }
+  if (options->EntryStatistics) {
+    time_t next_write = geoip_entry_stats_write(now);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+  }
+  if (options->HiddenServiceStatistics) {
+    time_t next_write = rep_hist_hs_stats_write(now);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+  }
+  if (options->ExitPortStatistics) {
+    time_t next_write = rep_hist_exit_stats_write(now);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+  }
+  if (options->ConnDirectionStatistics) {
+    time_t next_write = rep_hist_conn_stats_write(now);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+  }
+  if (options->BridgeAuthoritativeDir) {
+    time_t next_write = rep_hist_desc_stats_write(now);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+  }
+
+  return safe_timer_diff(now, next_time_to_write_stats_files);
+}
+
+static int
+record_bridge_stats_callback(time_t now, const or_options_t *options)
+{
+  static int should_init_bridge_stats = 1;
+
+  /* 1h. Check whether we should write bridge statistics to disk.
+   */
+  if (should_record_bridge_info(options)) {
+    if (should_init_bridge_stats) {
+      /* (Re-)initialize bridge statistics. */
+        geoip_bridge_stats_init(now);
+        should_init_bridge_stats = 0;
+        return WRITE_STATS_INTERVAL;
+    } else {
+      /* Possibly write bridge statistics to disk and ask when to write
+       * them next time. */
+      time_t next = geoip_bridge_stats_write(now);
+      return safe_timer_diff(now, next);
+    }
+  } else if (!should_init_bridge_stats) {
+    /* Bridge mode was turned off. Ensure that stats are re-initialized
+     * next time bridge mode is turned on. */
+    should_init_bridge_stats = 1;
+  }
+  return PERIODIC_EVENT_NO_UPDATE;
+}
+
+static int
+clean_caches_callback(time_t now, const or_options_t *options)
+{
+  /* Remove old information from rephist and the rend cache. */
+  rep_history_clean(now - options->RephistTrackTime);
+  rend_cache_clean(now, REND_CACHE_TYPE_CLIENT);
+  rend_cache_clean(now, REND_CACHE_TYPE_SERVICE);
+  rend_cache_clean_v2_descs_as_dir(now, 0);
+  microdesc_cache_rebuild(NULL, 0);
+#define CLEAN_CACHES_INTERVAL (30*60)
+  return CLEAN_CACHES_INTERVAL;
+}
+
+static int
+rend_cache_failure_clean_callback(time_t now, const or_options_t *options)
+{
+  (void)options;
+  /* We don't keep entries that are more than five minutes old so we try to
+   * clean it as soon as we can since we want to make sure the client waits
+   * as little as possible for reachability reasons. */
+  rend_cache_failure_clean(now);
+  return 30;
+}
+
+static int
+retry_dns_callback(time_t now, const or_options_t *options)
+{
+  (void)now;
+#define RETRY_DNS_INTERVAL (10*60)
+  /* If we're a server and initializing dns failed, retry periodically. */
+  if (server_mode(options) && has_dns_init_failed())
+    dns_init();
+  return RETRY_DNS_INTERVAL;
+}
+
+  /* 2. Periodically, we consider force-uploading our descriptor
+   * (if we've passed our internal checks). */
+
+static int
+check_descriptor_callback(time_t now, const or_options_t *options)
+{
+/** How often do we check whether part of our router info has changed in a
+ * way that would require an upload? That includes checking whether our IP
+ * address has changed. */
+#define CHECK_DESCRIPTOR_INTERVAL (60)
+
+  /* 2b. Once per minute, regenerate and upload the descriptor if the old
+   * one is inaccurate. */
+  if (!options->DisableNetwork) {
+    check_descriptor_bandwidth_changed(now);
+    check_descriptor_ipaddress_changed(now);
+    mark_my_descriptor_dirty_if_too_old(now);
+    consider_publishable_server(0);
+    /* If any networkstatus documents are no longer recent, we need to
+     * update all the descriptors' running status. */
+    /* Remove dead routers. */
+    /* XXXX This doesn't belong here, but it was here in the pre-
+     * XXXX refactoring code. */
+    routerlist_remove_old_routers();
+  }
+
+  return CHECK_DESCRIPTOR_INTERVAL;
+}
+
+static int
+check_for_reachability_bw_callback(time_t now, const or_options_t *options)
+{
+  /* XXXX This whole thing was stuck in the middle of what is now
+   * XXXX check_descriptor_callback.  I'm not sure it's right. */
+
+  static int dirport_reachability_count = 0;
+  /* also, check religiously for reachability, if it's within the first
+   * 20 minutes of our uptime. */
+  if (server_mode(options) &&
+      (have_completed_a_circuit() || !any_predicted_circuits(now)) &&
+      !we_are_hibernating()) {
+    if (stats_n_seconds_working < TIMEOUT_UNTIL_UNREACHABILITY_COMPLAINT) {
+      consider_testing_reachability(1, dirport_reachability_count==0);
+      if (++dirport_reachability_count > 5)
+        dirport_reachability_count = 0;
+      return 1;
+    } else {
+      /* If we haven't checked for 12 hours and our bandwidth estimate is
+       * low, do another bandwidth test. This is especially important for
+       * bridges, since they might go long periods without much use. */
+      const routerinfo_t *me = router_get_my_routerinfo();
+      static int first_time = 1;
+      if (!first_time && me &&
+          me->bandwidthcapacity < me->bandwidthrate &&
+          me->bandwidthcapacity < 51200) {
+        reset_bandwidth_test();
+      }
+      first_time = 0;
+#define BANDWIDTH_RECHECK_INTERVAL (12*60*60)
+      return BANDWIDTH_RECHECK_INTERVAL;
+    }
+  }
+  return CHECK_DESCRIPTOR_INTERVAL;
+}
+
+static int
+fetch_networkstatus_callback(time_t now, const or_options_t *options)
+{
+  /* 2c. Every minute (or every second if TestingTorNetwork, or during
+   * client bootstrap), check whether we want to download any networkstatus
+   * documents. */
+
+  /* How often do we check whether we should download network status
+   * documents? */
+  const int we_are_bootstrapping = networkstatus_consensus_is_bootstrapping(
+                                                                        now);
+  const int prefer_mirrors = !directory_fetches_from_authorities(
+                                                              get_options());
+  int networkstatus_dl_check_interval = 60;
+  /* check more often when testing, or when bootstrapping from mirrors
+   * (connection limits prevent too many connections being made) */
+  if (options->TestingTorNetwork
+      || (we_are_bootstrapping && prefer_mirrors)) {
+    networkstatus_dl_check_interval = 1;
+  }
+
+  if (should_delay_dir_fetches(options, NULL))
+    return PERIODIC_EVENT_NO_UPDATE;
+
+  update_networkstatus_downloads(now);
+  return networkstatus_dl_check_interval;
+}
+
+static int
+retry_listeners_callback(time_t now, const or_options_t *options)
+{
+  (void)now;
+  (void)options;
+  /* 3d. And every 60 seconds, we relaunch listeners if any died. */
+  if (!net_is_disabled()) {
+    retry_all_listeners(NULL, NULL, 0);
+    return 60;
+  }
+  return PERIODIC_EVENT_NO_UPDATE;
+}
+
+static int
+expire_old_ciruits_serverside_callback(time_t now, const or_options_t *options)
+{
+  (void)options;
+  /* every 11 seconds, so not usually the same second as other such events */
+  circuit_expire_old_circuits_serverside(now);
+  return 11;
+}
+
+static int
+check_dns_honesty_callback(time_t now, const or_options_t *options)
+{
+  (void)now;
+  /* 9. and if we're an exit node, check whether our DNS is telling stories
+   * to us. */
+  if (net_is_disabled() ||
+      ! public_server_mode(options) ||
+      router_my_exit_policy_is_reject_star())
+    return PERIODIC_EVENT_NO_UPDATE;
+
+  static int first_time = 1;
+  if (first_time) {
+    /* Don't launch right when we start */
+    first_time = 0;
+    return crypto_rand_int_range(60, 180);
+  }
+
+  dns_launch_correctness_checks();
+  return 12*3600 + crypto_rand_int(12*3600);
+}
+
+static int
+write_bridge_ns_callback(time_t now, const or_options_t *options)
+{
+  /* 10. write bridge networkstatus file to disk */
+  if (options->BridgeAuthoritativeDir) {
+    networkstatus_dump_bridge_status_to_file(now);
+#define BRIDGE_STATUSFILE_INTERVAL (30*60)
+     return BRIDGE_STATUSFILE_INTERVAL;
+  }
+  return PERIODIC_EVENT_NO_UPDATE;
+}
+
+static int
+check_fw_helper_app_callback(time_t now, const or_options_t *options)
+{
+  if (net_is_disabled() ||
+      ! server_mode(options) ||
+      ! options->PortForwarding) {
+    return PERIODIC_EVENT_NO_UPDATE;
+  }
+  /* 11. check the port forwarding app */
+
+#define PORT_FORWARDING_CHECK_INTERVAL 5
+  smartlist_t *ports_to_forward = get_list_of_ports_to_forward();
+  if (ports_to_forward) {
+    tor_check_port_forwarding(options->PortForwardingHelper,
+                              ports_to_forward,
+                              now);
+
+    SMARTLIST_FOREACH(ports_to_forward, char *, cp, tor_free(cp));
+    smartlist_free(ports_to_forward);
+  }
+  return PORT_FORWARDING_CHECK_INTERVAL;
+}
+
+/** Callback to write heartbeat message in the logs. */
+static int
+heartbeat_callback(time_t now, const or_options_t *options)
+{
+  static int first = 1;
+
+  /* Check if heartbeat is disabled */
+  if (!options->HeartbeatPeriod) {
+    return PERIODIC_EVENT_NO_UPDATE;
+  }
+
+  /* Write the heartbeat message */
+  if (first) {
+    first = 0; /* Skip the first one. */
+  } else {
+    log_heartbeat(now);
+  }
+
+  return options->HeartbeatPeriod;
 }
 
 /** Timer: used to invoke second_elapsed_callback() once per second. */
@@ -1792,11 +2089,12 @@ second_elapsed_callback(periodic_timer_t *timer, void *arg)
         TIMEOUT_UNTIL_UNREACHABILITY_COMPLAINT) {
     /* every 20 minutes, check and complain if necessary */
     const routerinfo_t *me = router_get_my_routerinfo();
-    if (me && !check_whether_orport_reachable()) {
+    if (me && !check_whether_orport_reachable(options)) {
       char *address = tor_dup_ip(me->addr);
       log_warn(LD_CONFIG,"Your server (%s:%d) has not managed to confirm that "
-               "its ORPort is reachable. Please check your firewalls, ports, "
-               "address, /etc/hosts file, etc.",
+               "its ORPort is reachable. Relays do not publish descriptors "
+               "until their ORPort and DirPort are reachable. Please check "
+               "your firewalls, ports, address, /etc/hosts file, etc.",
                address, me->or_port);
       control_event_server_status(LOG_WARN,
                                   "REACHABILITY_FAILED ORADDRESS=%s:%d",
@@ -1804,12 +2102,13 @@ second_elapsed_callback(periodic_timer_t *timer, void *arg)
       tor_free(address);
     }
 
-    if (me && !check_whether_dirport_reachable()) {
+    if (me && !check_whether_dirport_reachable(options)) {
       char *address = tor_dup_ip(me->addr);
       log_warn(LD_CONFIG,
                "Your server (%s:%d) has not managed to confirm that its "
-               "DirPort is reachable. Please check your firewalls, ports, "
-               "address, /etc/hosts file, etc.",
+               "DirPort is reachable. Relays do not publish descriptors "
+               "until their ORPort and DirPort are reachable. Please check "
+               "your firewalls, ports, address, /etc/hosts file, etc.",
                address, me->dir_port);
       control_event_server_status(LOG_WARN,
                                   "REACHABILITY_FAILED DIRADDRESS=%s:%d",
@@ -1919,7 +2218,10 @@ got_libevent_error(void)
 void
 ip_address_changed(int at_interface)
 {
-  int server = server_mode(get_options());
+  const or_options_t *options = get_options();
+  int server = server_mode(options);
+  int exit_reject_private = (server && options->ExitRelay
+                             && options->ExitPolicyRejectPrivate);
 
   if (at_interface) {
     if (! server) {
@@ -1933,8 +2235,13 @@ ip_address_changed(int at_interface)
         reset_bandwidth_test();
       stats_n_seconds_working = 0;
       router_reset_reachability();
-      mark_my_descriptor_dirty("IP address changed");
     }
+  }
+
+  /* Exit relays incorporate interface addresses in their exit policies when
+   * ExitPolicyRejectPrivate is set */
+  if (exit_reject_private || (server && !at_interface)) {
+    mark_my_descriptor_dirty("IP address changed");
   }
 
   dns_servers_relaunch_checks();
@@ -1947,7 +2254,10 @@ dns_servers_relaunch_checks(void)
 {
   if (server_mode(get_options())) {
     dns_reset_correctness_checks();
-    time_to.check_for_correct_dns = 0;
+    if (periodic_events_initialized) {
+      tor_assert(check_dns_honesty_event);
+      periodic_event_reschedule(check_dns_honesty_event);
+    }
   }
 }
 
@@ -2041,6 +2351,13 @@ do_main_loop(void)
 {
   time_t now;
 
+  /* initialize the periodic events first, so that code that depends on the
+   * events being present does not assert.
+   */
+  if (! periodic_events_initialized) {
+    initialize_periodic_events();
+  }
+
   /* initialize dns resolve map, spawn workers if needed */
   if (dns_init() < 0) {
     if (get_options()->ServerDNSAllowBrokenConfig)
@@ -2123,7 +2440,7 @@ do_main_loop(void)
    * appropriate.)
    */
   now = time(NULL);
-  directory_info_has_arrived(now, 1);
+  directory_info_has_arrived(now, 1, 0);
 
   if (server_mode(get_options())) {
     /* launch cpuworkers. Need to do this *after* we've read the onion key. */
@@ -2250,6 +2567,11 @@ run_main_loop_once(void)
       return 1;
     }
   }
+
+  /* This will be pretty fast if nothing new is pending. Note that this gets
+   * called once per libevent loop, which will make it happen once per group
+   * of events that fire, or once per second. */
+  connection_ap_attach_pending(0);
 
   return 1;
 }
@@ -2825,8 +3147,8 @@ tor_free_all(int postfork)
   channel_tls_free_all();
   channel_free_all();
   connection_free_all();
+  connection_edge_free_all();
   scheduler_free_all();
-  memarea_clear_freelist();
   nodelist_free_all();
   microdesc_free_all();
   ext_orport_free_all();
@@ -2851,6 +3173,7 @@ tor_free_all(int postfork)
   smartlist_free(closeable_connection_lst);
   smartlist_free(active_linked_connection_lst);
   periodic_timer_free(second_timer);
+  teardown_periodic_events();
 #ifndef USE_BUFFEREVENTS
   periodic_timer_free(refill_timer);
 #endif
@@ -2917,6 +3240,7 @@ do_list_fingerprint(void)
   char buf[FINGERPRINT_LEN+1];
   crypto_pk_t *k;
   const char *nickname = get_options()->Nickname;
+  sandbox_disable_getaddrinfo_cache();
   if (!server_mode(get_options())) {
     log_err(LD_GENERAL,
             "Clients don't have long-term identity keys. Exiting.");
@@ -2990,6 +3314,13 @@ do_dump_config(void)
 static void
 init_addrinfo(void)
 {
+  if (! server_mode(get_options()) ||
+      (get_options()->Address && strlen(get_options()->Address) > 0)) {
+    /* We don't need to seed our own hostname, because we won't be calling
+     * resolve_my_address on it.
+     */
+    return;
+  }
   char hname[256];
 
   // host name to sandbox
@@ -3026,6 +3357,8 @@ sandbox_init_filter(void)
     OPEN_DATADIR2(name, name2 suffix);                  \
   } while (0)
 
+  OPEN(options->DataDirectory);
+  OPEN_DATADIR("keys");
   OPEN_DATADIR_SUFFIX("cached-certs", ".tmp");
   OPEN_DATADIR_SUFFIX("cached-consensus", ".tmp");
   OPEN_DATADIR_SUFFIX("unverified-consensus", ".tmp");
@@ -3151,6 +3484,20 @@ sandbox_init_filter(void)
     }
   }
 
+  SMARTLIST_FOREACH_BEGIN(get_configured_ports(), port_cfg_t *, port) {
+    if (!port->is_unix_addr)
+      continue;
+    /* When we open an AF_UNIX address, we want permission to open the
+     * directory that holds it. */
+    char *dirname = tor_strdup(port->unix_addr);
+    if (get_parent_directory(dirname) == 0) {
+      OPEN(dirname);
+    }
+    tor_free(dirname);
+    sandbox_cfg_allow_chmod_filename(&cfg, tor_strdup(port->unix_addr));
+    sandbox_cfg_allow_chown_filename(&cfg, tor_strdup(port->unix_addr));
+  } SMARTLIST_FOREACH_END(port);
+
   if (options->DirPortFrontPage) {
     sandbox_cfg_allow_open_filename(&cfg,
                                     tor_strdup(options->DirPortFrontPage));
@@ -3171,6 +3518,9 @@ sandbox_init_filter(void)
                          ".tmp");
     OPEN_DATADIR2_SUFFIX("keys", "ed25519_master_id_public_key", ".tmp");
     OPEN_DATADIR2_SUFFIX("keys", "ed25519_signing_secret_key", ".tmp");
+    OPEN_DATADIR2_SUFFIX("keys", "ed25519_signing_secret_key_encrypted",
+                         ".tmp");
+    OPEN_DATADIR2_SUFFIX("keys", "ed25519_signing_public_key", ".tmp");
     OPEN_DATADIR2_SUFFIX("keys", "ed25519_signing_cert", ".tmp");
 
     OPEN_DATADIR2_SUFFIX("stats", "bridge-stats", ".tmp");
@@ -3180,6 +3530,7 @@ sandbox_init_filter(void)
     OPEN_DATADIR2_SUFFIX("stats", "exit-stats", ".tmp");
     OPEN_DATADIR2_SUFFIX("stats", "buffer-stats", ".tmp");
     OPEN_DATADIR2_SUFFIX("stats", "conn-stats", ".tmp");
+    OPEN_DATADIR2_SUFFIX("stats", "hidserv-stats", ".tmp");
 
     OPEN_DATADIR("approved-routers");
     OPEN_DATADIR_SUFFIX("fingerprint", ".tmp");
@@ -3218,6 +3569,7 @@ sandbox_init_filter(void)
              get_datadir_fname2("keys", "secret_onion_key_ntor.old"));
 
     STAT_DATADIR("keys");
+    OPEN_DATADIR("stats");
     STAT_DATADIR("stats");
     STAT_DATADIR2("stats", "dirreq-stats");
   }

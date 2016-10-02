@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -148,20 +148,15 @@ relay_digest_matches(crypto_digest_t *digest, cell_t *cell)
  *
  * If <b>encrypt_mode</b> is 1 then encrypt, else decrypt.
  *
- * Return -1 if the crypto fails, else return 0.
+ * Returns 0.
  */
 static int
 relay_crypt_one_payload(crypto_cipher_t *cipher, uint8_t *in,
                         int encrypt_mode)
 {
-  int r;
   (void)encrypt_mode;
-  r = crypto_cipher_crypt_inplace(cipher, (char*) in, CELL_PAYLOAD_SIZE);
+  crypto_cipher_crypt_inplace(cipher, (char*) in, CELL_PAYLOAD_SIZE);
 
-  if (r) {
-    log_warn(LD_BUG,"Error during relay encryption");
-    return -1;
-  }
   return 0;
 }
 
@@ -833,7 +828,7 @@ connection_ap_process_end_not_open(
             }
           }
         }
-        /* check if he *ought* to have allowed it */
+        /* check if the exit *ought* to have allowed it */
 
         adjust_exit_policy_from_exitpolicy_failure(circ,
                                                    conn,
@@ -1304,6 +1299,7 @@ connection_edge_process_relay_cell_not_open(
              "Got 'connected' while not in state connect_wait. Dropping.");
       return 0;
     }
+    CONNECTION_AP_EXPECT_NONPENDING(entry_conn);
     conn->base_.state = AP_CONN_STATE_OPEN;
     log_info(LD_APP,"'connected' received for circid %u streamid %d "
              "after %d seconds.",
@@ -2255,7 +2251,7 @@ circuit_consider_sending_sendme(circuit_t *circ, crypt_path_t *layer_hint)
 static size_t total_cells_allocated = 0;
 
 /** Release storage held by <b>cell</b>. */
-static INLINE void
+static inline void
 packed_cell_free_unchecked(packed_cell_t *cell)
 {
   --total_cells_allocated;
@@ -2299,7 +2295,7 @@ dump_cell_pool_usage(int severity)
 }
 
 /** Allocate a new copy of packed <b>cell</b>. */
-static INLINE packed_cell_t *
+static inline packed_cell_t *
 packed_cell_copy(const cell_t *cell, int wide_circ_ids)
 {
   packed_cell_t *c = packed_cell_new();
@@ -2378,7 +2374,7 @@ packed_cell_mem_cost(void)
   return sizeof(packed_cell_t);
 }
 
-/** DOCDOC */
+/* DOCDOC */
 STATIC size_t
 cell_queues_get_total_allocation(void)
 {
@@ -2619,6 +2615,15 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
     }
 
     /* Circuitmux told us this was active, so it should have cells */
+    if (/*BUG(*/ queue->n == 0 /*)*/) {
+      log_warn(LD_BUG, "Found a supposedly active circuit with no cells "
+               "to send. Trying to recover.");
+      circuitmux_set_num_cells(cmux, circ, 0);
+      if (! circ->marked_for_close)
+        circuit_mark_for_close(circ, END_CIRC_REASON_INTERNAL);
+      continue;
+    }
+
     tor_assert(queue->n > 0);
 
     /*

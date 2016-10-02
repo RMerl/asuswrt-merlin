@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -190,10 +190,12 @@ static config_var_t option_vars_[] = {
   V(CircuitPriorityHalflife,     DOUBLE,  "-100.0"), /*negative:'Use default'*/
   V(ClientDNSRejectInternalAddresses, BOOL,"1"),
   V(ClientOnly,                  BOOL,     "0"),
-  V(ClientPreferIPv6ORPort,      BOOL,     "0"),
+  V(ClientPreferIPv6ORPort,      AUTOBOOL, "auto"),
+  V(ClientPreferIPv6DirPort,     AUTOBOOL, "auto"),
   V(ClientRejectInternalAddresses, BOOL,   "1"),
   V(ClientTransportPlugin,       LINELIST, NULL),
   V(ClientUseIPv6,               BOOL,     "0"),
+  V(ClientUseIPv4,               BOOL,     "1"),
   V(ConsensusParams,             STRING,   NULL),
   V(ConnLimit,                   UINT,     "1000"),
   V(ConnDirectionStatistics,     BOOL,     "0"),
@@ -212,6 +214,7 @@ static config_var_t option_vars_[] = {
   V(CookieAuthFile,              STRING,   NULL),
   V(CountPrivateBandwidth,       BOOL,     "0"),
   V(DataDirectory,               FILENAME, NULL),
+  V(DataDirectoryGroupReadable,  BOOL,     "0"),
   V(DisableNetwork,              BOOL,     "0"),
   V(DirAllowPrivateAddresses,    BOOL,     "0"),
   V(TestingAuthDirTimeToLearnReachability, INTERVAL, "30 minutes"),
@@ -221,6 +224,7 @@ static config_var_t option_vars_[] = {
   V(DirPortFrontPage,            FILENAME, NULL),
   VAR("DirReqStatistics",        BOOL,     DirReqStatistics_option, "1"),
   VAR("DirAuthority",            LINELIST, DirAuthorities, NULL),
+  V(DirCache,                    BOOL,     "1"),
   V(DirAuthorityFallbackRate,    DOUBLE,   "1.0"),
   V(DisableAllSwap,              BOOL,     "0"),
   V(DisableDebuggerAttachment,   BOOL,     "1"),
@@ -251,6 +255,7 @@ static config_var_t option_vars_[] = {
   V(ExtORPortCookieAuthFileGroupReadable, BOOL, "0"),
   V(ExtraInfoStatistics,         BOOL,     "1"),
   V(FallbackDir,                 LINELIST, NULL),
+  V(UseDefaultFallbackDirs,      BOOL,     "1"),
 
   OBSOLETE("FallbackNetworkstatusFile"),
   V(FascistFirewall,             BOOL,     "0"),
@@ -308,10 +313,12 @@ static config_var_t option_vars_[] = {
   V(Socks5ProxyUsername,         STRING,   NULL),
   V(Socks5ProxyPassword,         STRING,   NULL),
   V(KeepalivePeriod,             INTERVAL, "5 minutes"),
+  V(KeepBindCapabilities,            AUTOBOOL, "auto"),
   VAR("Log",                     LINELIST, Logs,             NULL),
   V(LogMessageDomains,           BOOL,     "0"),
   V(LogTimeGranularity,          MSEC_INTERVAL, "1 second"),
   V(TruncateLogFile,             BOOL,     "0"),
+  V(SyslogIdentityTag,           STRING,   NULL),
   V(LongLivedPorts,              CSV,
         "21,22,706,1863,5050,5190,5222,5223,6523,6667,6697,8300"),
   VAR("MapAddress",              LINELIST, AddressMap,           NULL),
@@ -473,10 +480,40 @@ static config_var_t option_vars_[] = {
   V(TestingClientConsensusDownloadSchedule, CSV_INTERVAL, "0, 0, 60, "
                                  "300, 600, 1800, 3600, 3600, 3600, "
                                  "10800, 21600, 43200"),
+  /* With the ClientBootstrapConsensus*Download* below:
+   * Clients with only authorities will try:
+   *  - 3 authorities over 10 seconds, then wait 60 minutes.
+   * Clients with authorities and fallbacks will try:
+   *  - 2 authorities and 4 fallbacks over 21 seconds, then wait 60 minutes.
+   * Clients will also retry when an application request arrives.
+   * After a number of failed reqests, clients retry every 3 days + 1 hour.
+   *
+   * Clients used to try 2 authorities over 10 seconds, then wait for
+   * 60 minutes or an application request.
+   *
+   * When clients have authorities and fallbacks available, they use these
+   * schedules: (we stagger the times to avoid thundering herds) */
+  V(ClientBootstrapConsensusAuthorityDownloadSchedule, CSV_INTERVAL,
+    "10, 11, 3600, 10800, 25200, 54000, 111600, 262800" /* 3 days + 1 hour */),
+  V(ClientBootstrapConsensusFallbackDownloadSchedule, CSV_INTERVAL,
+    "0, 1, 4, 11, 3600, 10800, 25200, 54000, 111600, 262800"),
+  /* When clients only have authorities available, they use this schedule: */
+  V(ClientBootstrapConsensusAuthorityOnlyDownloadSchedule, CSV_INTERVAL,
+    "0, 3, 7, 3600, 10800, 25200, 54000, 111600, 262800"),
+  /* We don't want to overwhelm slow networks (or mirrors whose replies are
+   * blocked), but we also don't want to fail if only some mirrors are
+   * blackholed. Clients will try 3 directories simultaneously.
+   * (Relays never use simultaneous connections.) */
+  V(ClientBootstrapConsensusMaxInProgressTries, UINT, "3"),
   V(TestingBridgeDownloadSchedule, CSV_INTERVAL, "3600, 900, 900, 3600"),
   V(TestingClientMaxIntervalWithoutRequest, INTERVAL, "10 minutes"),
   V(TestingDirConnectionMaxStall, INTERVAL, "5 minutes"),
   V(TestingConsensusMaxDownloadTries, UINT, "8"),
+  /* Since we try connections rapidly and simultaneously, we can afford
+   * to give up earlier. (This protects against overloading directories.) */
+  V(ClientBootstrapConsensusMaxDownloadTries, UINT, "7"),
+  /* We want to give up much earlier if we're only using authorities. */
+  V(ClientBootstrapConsensusAuthorityOnlyMaxDownloadTries, UINT, "4"),
   V(TestingDescriptorMaxDownloadTries, UINT, "8"),
   V(TestingMicrodescMaxDownloadTries, UINT, "8"),
   V(TestingCertMaxDownloadTries, UINT, "8"),
@@ -500,6 +537,14 @@ static const config_var_t testing_tor_network_defaults[] = {
   V(AssumeReachable,             BOOL,     "1"),
   V(AuthDirMaxServersPerAddr,    UINT,     "0"),
   V(AuthDirMaxServersPerAuthAddr,UINT,     "0"),
+  V(ClientBootstrapConsensusAuthorityDownloadSchedule, CSV_INTERVAL,
+    "0, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8, 16, 32, 60"),
+  V(ClientBootstrapConsensusFallbackDownloadSchedule, CSV_INTERVAL,
+    "0, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8, 16, 32, 60"),
+  V(ClientBootstrapConsensusAuthorityOnlyDownloadSchedule, CSV_INTERVAL,
+    "0, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8, 16, 32, 60"),
+  V(ClientBootstrapConsensusMaxDownloadTries, UINT, "80"),
+  V(ClientBootstrapConsensusAuthorityOnlyMaxDownloadTries, UINT, "80"),
   V(ClientDNSRejectInternalAddresses, BOOL,"0"),
   V(ClientRejectInternalAddresses, BOOL,   "0"),
   V(CountPrivateBandwidth,       BOOL,     "1"),
@@ -547,7 +592,6 @@ static const config_var_t testing_tor_network_defaults[] = {
 static char *get_windows_conf_root(void);
 #endif
 static int options_act_reversible(const or_options_t *old_options, char **msg);
-static int options_act(const or_options_t *old_options);
 static int options_transition_allowed(const or_options_t *old,
                                       const or_options_t *new,
                                       char **msg);
@@ -558,15 +602,12 @@ static int options_transition_affects_descriptor(
 static int check_nickname_list(char **lst, const char *name, char **msg);
 static char *get_bindaddr_from_transport_listen_line(const char *line,
                                                      const char *transport);
-static int parse_dir_authority_line(const char *line,
-                                 dirinfo_type_t required_type,
-                                 int validate_only);
-static void port_cfg_free(port_cfg_t *port);
 static int parse_ports(or_options_t *options, int validate_only,
                               char **msg_out, int *n_ports_out,
                               int *world_writable_control_socket);
 static int check_server_ports(const smartlist_t *ports,
-                              const or_options_t *options);
+                              const or_options_t *options,
+                              int *num_low_ports_out);
 
 static int validate_data_directory(or_options_t *options);
 static int write_configuration_file(const char *fname,
@@ -625,15 +666,15 @@ static char *global_dirfrontpagecontents = NULL;
 static smartlist_t *configured_ports = NULL;
 
 /** Return the contents of our frontpage string, or NULL if not configured. */
-const char *
-get_dirportfrontpage(void)
+MOCK_IMPL(const char*,
+get_dirportfrontpage, (void))
 {
   return global_dirfrontpagecontents;
 }
 
-/** Return the currently configured options. */
-or_options_t *
-get_options_mutable(void)
+/** Returns the currently configured options. */
+MOCK_IMPL(or_options_t *,
+get_options_mutable, (void))
 {
   tor_assert(global_options);
   return global_options;
@@ -793,7 +834,6 @@ config_free_all(void)
 
   tor_free(torrc_fname);
   tor_free(torrc_defaults_fname);
-  tor_free(the_tor_version);
   tor_free(global_dirfrontpagecontents);
 
   tor_free(the_short_tor_version);
@@ -865,30 +905,39 @@ static const char *default_authorities[] = {
     "128.31.0.39:9131 9695 DFC3 5FFE B861 329B 9F1A B04C 4639 7020 CE31",
   "tor26 orport=443 "
     "v3ident=14C131DFC5C6F93646BE72FA1401C02A8DF2E8B4 "
+    "ipv6=[2001:858:2:2:aabb:0:563b:1526]:443 "
     "86.59.21.38:80 847B 1F85 0344 D787 6491 A548 92F9 0493 4E4E B85D",
   "dizum orport=443 "
     "v3ident=E8A9C45EDE6D711294FADF8E7951F4DE6CA56B58 "
     "194.109.206.212:80 7EA6 EAD6 FD83 083C 538F 4403 8BBF A077 587D D755",
-  "Tonga orport=443 bridge "
-    "82.94.251.203:80 4A0C CD2D DC79 9508 3D73 F5D6 6710 0C8A 5831 F16D",
+  "Bifroest orport=443 bridge "
+    "37.218.247.217:80 1D8F 3A91 C37C 5D1C 4C19 B1AD 1D0C FBE8 BF72 D8E1",
   "gabelmoo orport=443 "
     "v3ident=ED03BB616EB2F60BEC80151114BB25CEF515B226 "
+    "ipv6=[2001:638:a000:4140::ffff:189]:443 "
     "131.188.40.189:80 F204 4413 DAC2 E02E 3D6B CF47 35A1 9BCA 1DE9 7281",
   "dannenberg orport=443 "
-    "v3ident=585769C78764D58426B8B52B6651A5A71137189A "
+    "v3ident=0232AF901C31A04EE9848595AF9BB7620D4C5B2E "
     "193.23.244.244:80 7BE6 83E6 5D48 1413 21C5 ED92 F075 C553 64AC 7123",
-  "urras orport=80 "
-    "v3ident=80550987E1D626E3EBA5E5E75A458DE0626D088C "
-    "208.83.223.34:443 0AD3 FA88 4D18 F89E EA2D 89C0 1937 9E0E 7FD9 4417",
   "maatuska orport=80 "
     "v3ident=49015F787433103580E3B66A1707A00E60F2D15B "
+    "ipv6=[2001:67c:289c::9]:80 "
     "171.25.193.9:443 BD6A 8292 55CB 08E6 6FBE 7D37 4836 3586 E46B 3810",
   "Faravahar orport=443 "
     "v3ident=EFCBE720AB3A82B99F9E953CD5BF50F7EEFC7B97 "
     "154.35.175.225:80 CF6D 0AAF B385 BE71 B8E1 11FC 5CFF 4B47 9237 33BC",
   "longclaw orport=443 "
     "v3ident=23D15D965BC35114467363C165C4F724B64B4F66 "
+    "ipv6=[2620:13:4000:8000:60:f3ff:fea1:7cff]:443 "
     "199.254.238.52:80 74A9 1064 6BCE EFBC D2E8 74FC 1DC9 9743 0F96 8145",
+  NULL
+};
+
+/** List of fallback directory authorities. The list is generated by opt-in of
+ * relays that meet certain stability criteria.
+ */
+static const char *default_fallbacks[] = {
+#include "fallback_dirs.inc"
   NULL
 };
 
@@ -896,7 +945,7 @@ static const char *default_authorities[] = {
  * but only add them insofar as they share bits with <b>type</b>.
  * Each authority's bits are restricted to the bits shared with <b>type</b>.
  * If <b>type</b> is ALL_DIRINFO or NO_DIRINFO (zero), add all authorities. */
-static void
+STATIC void
 add_default_trusted_dir_authorities(dirinfo_type_t type)
 {
   int i;
@@ -914,13 +963,10 @@ MOCK_IMPL(void,
 add_default_fallback_dir_servers,(void))
 {
   int i;
-  const char *fallback[] = {
-    NULL
-  };
-  for (i=0; fallback[i]; i++) {
-    if (parse_dir_fallback_line(fallback[i], 0)<0) {
+  for (i=0; default_fallbacks[i]; i++) {
+    if (parse_dir_fallback_line(default_fallbacks[i], 0)<0) {
       log_err(LD_BUG, "Couldn't parse internal FallbackDir line %s",
-              fallback[i]);
+              default_fallbacks[i]);
     }
   }
 }
@@ -990,6 +1036,7 @@ consider_adding_dir_servers(const or_options_t *options,
     !smartlist_len(router_get_fallback_dir_servers()) || !old_options ||
     !config_lines_eq(options->DirAuthorities, old_options->DirAuthorities) ||
     !config_lines_eq(options->FallbackDir, old_options->FallbackDir) ||
+    (options->UseDefaultFallbackDirs != old_options->UseDefaultFallbackDirs) ||
     !config_lines_eq(options->AlternateBridgeAuthority,
                      old_options->AlternateBridgeAuthority) ||
     !config_lines_eq(options->AlternateDirAuthority,
@@ -1018,8 +1065,8 @@ consider_adding_dir_servers(const or_options_t *options,
       type |= V3_DIRINFO | EXTRAINFO_DIRINFO | MICRODESC_DIRINFO;
       /* Only add the default fallback directories when the DirAuthorities,
        * AlternateDirAuthority, and FallbackDir directory config options
-       * are set to their defaults. */
-      if (!options->FallbackDir) {
+       * are set to their defaults, and when UseDefaultFallbackDirs is 1. */
+      if (!options->FallbackDir && options->UseDefaultFallbackDirs) {
         add_default_fallback_dir_servers();
       }
     }
@@ -1043,6 +1090,9 @@ consider_adding_dir_servers(const or_options_t *options,
       return -1;
   return 0;
 }
+
+/* Helps determine flags to pass to switch_id. */
+static int have_low_ports = -1;
 
 /** Fetch the active option list, and take actions based on it. All of the
  * things we do should survive being done repeatedly.  If present,
@@ -1178,7 +1228,16 @@ options_act_reversible(const or_options_t *old_options, char **msg)
 
   /* Setuid/setgid as appropriate */
   if (options->User) {
-    if (switch_id(options->User) != 0) {
+    tor_assert(have_low_ports != -1);
+    unsigned switch_id_flags = 0;
+    if (options->KeepBindCapabilities == 1) {
+      switch_id_flags |= SWITCH_ID_KEEP_BINDLOW;
+      switch_id_flags |= SWITCH_ID_WARN_IF_NO_CAPS;
+    }
+    if (options->KeepBindCapabilities == -1 && have_low_ports) {
+      switch_id_flags |= SWITCH_ID_KEEP_BINDLOW;
+    }
+    if (switch_id(options->User, switch_id_flags) != 0) {
       /* No need to roll back, since you can't change the value. */
       *msg = tor_strdup("Problem with User value. See logs for details.");
       goto done;
@@ -1186,15 +1245,29 @@ options_act_reversible(const or_options_t *old_options, char **msg)
   }
 
   /* Ensure data directory is private; create if possible. */
+  cpd_check_t cpd_opts = running_tor ? CPD_CREATE : CPD_CHECK;
+  if (options->DataDirectoryGroupReadable)
+      cpd_opts |= CPD_GROUP_READ;
   if (check_private_dir(options->DataDirectory,
-                        running_tor ? CPD_CREATE : CPD_CHECK,
+                        cpd_opts,
                         options->User)<0) {
     tor_asprintf(msg,
               "Couldn't access/create private data directory \"%s\"",
               options->DataDirectory);
+
     goto done;
     /* No need to roll back, since you can't change the value. */
   }
+
+#ifndef _WIN32
+  if (options->DataDirectoryGroupReadable) {
+    /* Only new dirs created get new opts, also enforce group read. */
+    if (chmod(options->DataDirectory, 0750)) {
+      log_warn(LD_FS,"Unable to make %s group-readable: %s",
+               options->DataDirectory, strerror(errno));
+    }
+  }
+#endif
 
   /* Bail out at this point if we're not going to be a client or server:
    * we don't run Tor itself. */
@@ -1368,7 +1441,7 @@ options_transition_requires_fresh_tls_context(const or_options_t *old_options,
  * Note: We haven't moved all the "act on new configuration" logic
  * here yet.  Some is still in do_hup() and other places.
  */
-static int
+STATIC int
 options_act(const or_options_t *old_options)
 {
   config_line_t *cl;
@@ -1390,10 +1463,12 @@ options_act(const or_options_t *old_options)
     if (options->DisableDebuggerAttachment && !disabled_debugger_attach &&
         running_tor) {
       int ok = tor_disable_debugger_attach();
+      /* LCOV_EXCL_START the warned_debugger_attach is 0 can't reach inside. */
       if (warned_debugger_attach && ok == 1) {
         log_notice(LD_CONFIG, "Disabled attaching debuggers for unprivileged "
                    "users.");
       }
+      /* LCOV_EXCL_STOP */
       disabled_debugger_attach = (ok == 1);
     } else if (!options->DisableDebuggerAttachment &&
                !warned_debugger_attach) {
@@ -1420,12 +1495,14 @@ options_act(const or_options_t *old_options)
 #endif
 
 #ifdef ENABLE_TOR2WEB_MODE
+/* LCOV_EXCL_START */
   if (!options->Tor2webMode) {
     log_err(LD_CONFIG, "This copy of Tor was compiled to run in "
             "'tor2web mode'. It can only be run with the Tor2webMode torrc "
             "option enabled.");
     return -1;
   }
+/* LCOV_EXCL_STOP */
 #else
   if (options->Tor2webMode) {
     log_err(LD_CONFIG, "This copy of Tor was not compiled to run in "
@@ -1437,7 +1514,7 @@ options_act(const or_options_t *old_options)
 #endif
 
   /* If we are a bridge with a pluggable transport proxy but no
-     Extended ORPort, inform the user that she is missing out. */
+     Extended ORPort, inform the user that they are missing out. */
   if (server_mode(options) && options->ServerTransportPlugin &&
       !options->ExtORPort_lines) {
     log_notice(LD_CONFIG, "We use pluggable transports but the Extended "
@@ -1689,8 +1766,8 @@ options_act(const or_options_t *old_options)
     if (revise_trackexithosts)
       addressmap_clear_excluded_trackexithosts(options);
 
-    if (!options->AutomapHostsOnResolve) {
-      if (old_options->AutomapHostsOnResolve)
+    if (!options->AutomapHostsOnResolve &&
+        old_options->AutomapHostsOnResolve) {
         revise_automap_entries = 1;
     } else {
       if (!smartlist_strings_eq(old_options->AutomapHostsSuffixes,
@@ -1829,8 +1906,8 @@ options_act(const or_options_t *old_options)
       print_notice = 1;
     }
     if (print_notice)
-      log_notice(LD_CONFIG, "Configured to measure statistics. Look for "
-                 "the *-stats files that will first be written to the "
+        log_notice(LD_CONFIG, "Configured to measure statistics. Look for "
+                "the *-stats files that will first be written to the "
                  "data directory in 24 hours from now.");
   }
 
@@ -2113,7 +2190,7 @@ print_usage(void)
   printf(
 "Copyright (c) 2001-2004, Roger Dingledine\n"
 "Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson\n"
-"Copyright (c) 2007-2015, The Tor Project, Inc.\n\n"
+"Copyright (c) 2007-2016, The Tor Project, Inc.\n\n"
 "tor -f <torrc> [args]\n"
 "See man page for options, or https://www.torproject.org/ for "
 "documentation.\n");
@@ -2611,7 +2688,7 @@ options_validate_cb(void *old_options, void *options, void *default_options,
 
 /** Log a warning message iff <b>filepath</b> is not absolute.
  * Warning message must contain option name <b>option</b> and
- * an absolute path that <b>filepath<b> will resolve to.
+ * an absolute path that <b>filepath</b> will resolve to.
  *
  * In case <b>filepath</b> is absolute, do nothing.
  */
@@ -2779,7 +2856,7 @@ options_validate(or_options_t *old_options, or_options_t *options,
       options->TransProxyType_parsed = TPT_TPROXY;
 #endif
     } else if (!strcasecmp(options->TransProxyType, "ipfw")) {
-#if !defined(__FreeBSD__) && !defined( DARWIN )
+#ifndef KERNEL_MAY_SUPPORT_IPFW
       /* Earlier versions of OS X have ipfw */
       REJECT("ipfw is a FreeBSD-specific"
              "and OS X/Darwin-specific feature.");
@@ -2998,6 +3075,8 @@ options_validate(or_options_t *old_options, or_options_t *options,
     }
   }
 
+  /* Terminate Reachable*Addresses with reject *
+   */
   for (i=0; i<3; i++) {
     config_line_t **linep =
       (i==0) ? &options->ReachableAddresses :
@@ -3007,8 +3086,6 @@ options_validate(or_options_t *old_options, or_options_t *options,
       continue;
     /* We need to end with a reject *:*, not an implicit accept *:* */
     for (;;) {
-      if (!strcmp((*linep)->value, "reject *:*")) /* already there */
-        break;
       linep = &((*linep)->next);
       if (!*linep) {
         *linep = tor_malloc_zero(sizeof(config_line_t));
@@ -3024,11 +3101,29 @@ options_validate(or_options_t *old_options, or_options_t *options,
 
   if ((options->ReachableAddresses ||
        options->ReachableORAddresses ||
-       options->ReachableDirAddresses) &&
+       options->ReachableDirAddresses ||
+       options->ClientUseIPv4 == 0) &&
       server_mode(options))
     REJECT("Servers must be able to freely connect to the rest "
            "of the Internet, so they must not set Reachable*Addresses "
-           "or FascistFirewall.");
+           "or FascistFirewall or FirewallPorts or ClientUseIPv4 0.");
+
+  /* We check if Reachable*Addresses blocks all addresses in
+   * parse_reachable_addresses(). */
+
+#define WARN_PLEASE_USE_IPV6_LOG_MSG \
+        "ClientPreferIPv6%sPort 1 is ignored unless tor is using IPv6. " \
+        "Please set ClientUseIPv6 1, ClientUseIPv4 0, or configure bridges."
+
+  if (!fascist_firewall_use_ipv6(options)
+      && options->ClientPreferIPv6ORPort == 1)
+    log_warn(LD_CONFIG, WARN_PLEASE_USE_IPV6_LOG_MSG, "OR");
+
+  if (!fascist_firewall_use_ipv6(options)
+      && options->ClientPreferIPv6DirPort == 1)
+    log_warn(LD_CONFIG, WARN_PLEASE_USE_IPV6_LOG_MSG, "Dir");
+
+#undef WARN_PLEASE_USE_IPV6_LOG_MSG
 
   if (options->UseBridges &&
       server_mode(options))
@@ -3380,8 +3475,30 @@ options_validate(or_options_t *old_options, or_options_t *options,
       options->AccountingRule = ACCT_SUM;
     else if (!strcmp(options->AccountingRule_option, "max"))
       options->AccountingRule = ACCT_MAX;
+    else if (!strcmp(options->AccountingRule_option, "in"))
+      options->AccountingRule = ACCT_IN;
+    else if (!strcmp(options->AccountingRule_option, "out"))
+      options->AccountingRule = ACCT_OUT;
     else
-      REJECT("AccountingRule must be 'sum' or 'max'");
+      REJECT("AccountingRule must be 'sum', 'max', 'in', or 'out'");
+  }
+
+  if (options->DirPort_set && !options->DirCache) {
+    REJECT("DirPort configured but DirCache disabled. DirPort requires "
+           "DirCache.");
+  }
+
+  if (options->BridgeRelay && !options->DirCache) {
+    REJECT("We're a bridge but DirCache is disabled. BridgeRelay requires "
+           "DirCache.");
+  }
+
+  if (server_mode(options)) {
+    char *msg = NULL;
+    if (have_enough_mem_for_dircache(options, 0, &msg)) {
+      log_warn(LD_CONFIG, "%s", msg);
+      tor_free(msg);
+    }
   }
 
   if (options->HTTPProxy) { /* parse it now */
@@ -3531,6 +3648,13 @@ options_validate(or_options_t *old_options, or_options_t *options,
 
   if (validate_addr_policies(options, msg) < 0)
     return -1;
+
+  /* If FallbackDir is set, we don't UseDefaultFallbackDirs */
+  if (options->UseDefaultFallbackDirs && options->FallbackDir) {
+    log_info(LD_CONFIG, "You have set UseDefaultFallbackDirs 1 and "
+             "FallbackDir(s). Ignoring UseDefaultFallbackDirs, and "
+             "using the FallbackDir(s) you have set.");
+  }
 
   if (validate_dir_servers(options, old_options) < 0)
     REJECT("Directory authority/fallback line did not parse. See logs "
@@ -3812,9 +3936,39 @@ options_validate(or_options_t *old_options, or_options_t *options,
   }
 
   if (options->TestingConsensusMaxDownloadTries < 2) {
-    REJECT("TestingConsensusMaxDownloadTries must be greater than 1.");
+    REJECT("TestingConsensusMaxDownloadTries must be greater than 2.");
   } else if (options->TestingConsensusMaxDownloadTries > 800) {
     COMPLAIN("TestingConsensusMaxDownloadTries is insanely high.");
+  }
+
+  if (options->ClientBootstrapConsensusMaxDownloadTries < 2) {
+    REJECT("ClientBootstrapConsensusMaxDownloadTries must be greater "
+           "than 2."
+           );
+  } else if (options->ClientBootstrapConsensusMaxDownloadTries > 800) {
+    COMPLAIN("ClientBootstrapConsensusMaxDownloadTries is insanely "
+             "high.");
+  }
+
+  if (options->ClientBootstrapConsensusAuthorityOnlyMaxDownloadTries
+      < 2) {
+    REJECT("ClientBootstrapConsensusAuthorityOnlyMaxDownloadTries must "
+           "be greater than 2."
+           );
+  } else if (
+        options->ClientBootstrapConsensusAuthorityOnlyMaxDownloadTries
+        > 800) {
+    COMPLAIN("ClientBootstrapConsensusAuthorityOnlyMaxDownloadTries is "
+             "insanely high.");
+  }
+
+  if (options->ClientBootstrapConsensusMaxInProgressTries < 1) {
+    REJECT("ClientBootstrapConsensusMaxInProgressTries must be greater "
+           "than 0.");
+  } else if (options->ClientBootstrapConsensusMaxInProgressTries
+             > 100) {
+    COMPLAIN("ClientBootstrapConsensusMaxInProgressTries is insanely "
+             "high.");
   }
 
   if (options->TestingDescriptorMaxDownloadTries < 2) {
@@ -3949,6 +4103,52 @@ compute_real_max_mem_in_queues(const uint64_t val, int log_guess)
   }
 }
 
+/* If we have less than 300 MB suggest disabling dircache */
+#define DIRCACHE_MIN_MB_BANDWIDTH 300
+#define DIRCACHE_MIN_BANDWIDTH (DIRCACHE_MIN_MB_BANDWIDTH*ONE_MEGABYTE)
+#define STRINGIFY(val) #val
+
+/** Create a warning message for emitting if we are a dircache but may not have
+ * enough system memory, or if we are not a dircache but probably should be.
+ * Return -1 when a message is returned in *msg*, else return 0. */
+STATIC int
+have_enough_mem_for_dircache(const or_options_t *options, size_t total_mem,
+                             char **msg)
+{
+  *msg = NULL;
+  /* XXX We should possibly be looking at MaxMemInQueues here
+   * unconditionally.  Or we should believe total_mem unconditionally. */
+  if (total_mem == 0) {
+    if (get_total_system_memory(&total_mem) < 0) {
+      total_mem = options->MaxMemInQueues >= SIZE_MAX ?
+        SIZE_MAX : (size_t)options->MaxMemInQueues;
+    }
+  }
+  if (options->DirCache) {
+    if (total_mem < DIRCACHE_MIN_BANDWIDTH) {
+      if (options->BridgeRelay) {
+        *msg = strdup("Running a Bridge with less than "
+                      STRINGIFY(DIRCACHE_MIN_MB_BANDWIDTH) " MB of memory is "
+                      "not recommended.");
+      } else {
+        *msg = strdup("Being a directory cache (default) with less than "
+                      STRINGIFY(DIRCACHE_MIN_MB_BANDWIDTH) " MB of memory is "
+                      "not recommended and may consume most of the available "
+                      "resources, consider disabling this functionality by "
+                      "setting the DirCache option to 0.");
+      }
+    }
+  } else {
+    if (total_mem >= DIRCACHE_MIN_BANDWIDTH) {
+      *msg = strdup("DirCache is disabled and we are configured as a "
+               "relay. This may disqualify us from becoming a guard in the "
+               "future.");
+    }
+  }
+  return *msg == NULL ? 0 : -1;
+}
+#undef STRINGIFY
+
 /** Helper: return true iff s1 and s2 are both NULL, or both non-NULL
  * equal strings. */
 static int
@@ -3993,6 +4193,18 @@ options_transition_allowed(const or_options_t *old,
 
   if (!opt_streq(old->User, new_val->User)) {
     *msg = tor_strdup("While Tor is running, changing User is not allowed.");
+    return -1;
+  }
+
+  if (old->KeepBindCapabilities != new_val->KeepBindCapabilities) {
+    *msg = tor_strdup("While Tor is running, changing KeepBindCapabilities is "
+                      "not allowed.");
+    return -1;
+  }
+
+  if (!opt_streq(old->SyslogIdentityTag, new_val->SyslogIdentityTag)) {
+    *msg = tor_strdup("While Tor is running, changing "
+                      "SyslogIdentityTag is not allowed.");
     return -1;
   }
 
@@ -4044,6 +4256,7 @@ options_transition_allowed(const or_options_t *old,
       }                                                                 \
     } while (0)
 
+    SB_NOCHANGE_STR(Address);
     SB_NOCHANGE_STR(PidFile);
     SB_NOCHANGE_STR(ServerDNSResolvConfFile);
     SB_NOCHANGE_STR(DirPortFrontPage);
@@ -4125,7 +4338,10 @@ options_transition_affects_descriptor(const or_options_t *old_options,
       !opt_streq(old_options->MyFamily, new_options->MyFamily) ||
       !opt_streq(old_options->AccountingStart, new_options->AccountingStart) ||
       old_options->AccountingMax != new_options->AccountingMax ||
-      public_server_mode(old_options) != public_server_mode(new_options))
+      old_options->AccountingRule != new_options->AccountingRule ||
+      public_server_mode(old_options) != public_server_mode(new_options) ||
+      old_options->DirCache != new_options->DirCache ||
+      old_options->AssumeReachable != new_options->AssumeReachable)
     return 1;
 
   return 0;
@@ -4937,7 +5153,7 @@ options_init_logs(const or_options_t *old_options, or_options_t *options,
         !strcasecmp(smartlist_get(elts,0), "syslog")) {
 #ifdef HAVE_SYSLOG_H
       if (!validate_only) {
-        add_syslog_log(severity);
+        add_syslog_log(severity, options->SyslogIdentityTag);
       }
 #else
       log_warn(LD_CONFIG, "Syslog is not supported on this system. Sorry.");
@@ -5510,13 +5726,14 @@ get_options_for_server_transport(const char *transport)
  * (minus whatever bits it's missing) as a valid authority.
  * Return 0 on success or filtering out by type,
  * or -1 if the line isn't well-formed or if we can't add it. */
-static int
+STATIC int
 parse_dir_authority_line(const char *line, dirinfo_type_t required_type,
                          int validate_only)
 {
   smartlist_t *items = NULL;
   int r;
   char *addrport=NULL, *address=NULL, *nickname=NULL, *fingerprint=NULL;
+  tor_addr_port_t ipv6_addrport, *ipv6_addrport_ptr = NULL;
   uint16_t dir_port = 0, or_port = 0;
   char digest[DIGEST_LEN];
   char v3_digest[DIGEST_LEN];
@@ -5573,6 +5790,20 @@ parse_dir_authority_line(const char *line, dirinfo_type_t required_type,
       } else {
         type |= V3_DIRINFO|EXTRAINFO_DIRINFO|MICRODESC_DIRINFO;
       }
+    } else if (!strcasecmpstart(flag, "ipv6=")) {
+      if (ipv6_addrport_ptr) {
+        log_warn(LD_CONFIG, "Redundant ipv6 addr/port on DirAuthority line");
+      } else {
+        if (tor_addr_port_parse(LOG_WARN, flag+strlen("ipv6="),
+                                &ipv6_addrport.addr, &ipv6_addrport.port,
+                                -1) < 0
+            || tor_addr_family(&ipv6_addrport.addr) != AF_INET6) {
+          log_warn(LD_CONFIG, "Bad ipv6 addr/port %s on DirAuthority line",
+                   escaped(flag));
+          goto err;
+        }
+        ipv6_addrport_ptr = &ipv6_addrport;
+      }
     } else {
       log_warn(LD_CONFIG, "Unrecognized flag '%s' on DirAuthority line",
                flag);
@@ -5615,6 +5846,7 @@ parse_dir_authority_line(const char *line, dirinfo_type_t required_type,
     log_debug(LD_DIR, "Trusted %d dirserver at %s:%d (%s)", (int)type,
               address, (int)dir_port, (char*)smartlist_get(items,0));
     if (!(ds = trusted_dir_server_new(nickname, address, dir_port, or_port,
+                                      ipv6_addrport_ptr,
                                       digest, v3_digest, type, weight)))
       goto err;
     dir_server_add(ds);
@@ -5652,6 +5884,7 @@ parse_dir_fallback_line(const char *line,
   int ok;
   char id[DIGEST_LEN];
   char *address=NULL;
+  tor_addr_port_t ipv6_addrport, *ipv6_addrport_ptr = NULL;
   double weight=1.0;
 
   memset(id, 0, sizeof(id));
@@ -5670,6 +5903,20 @@ parse_dir_fallback_line(const char *line,
     } else if (!strcmpstart(cp, "id=")) {
       ok = !base16_decode(id, DIGEST_LEN,
                           cp+strlen("id="), strlen(cp)-strlen("id="));
+    } else if (!strcasecmpstart(cp, "ipv6=")) {
+      if (ipv6_addrport_ptr) {
+        log_warn(LD_CONFIG, "Redundant ipv6 addr/port on FallbackDir line");
+      } else {
+        if (tor_addr_port_parse(LOG_WARN, cp+strlen("ipv6="),
+                                &ipv6_addrport.addr, &ipv6_addrport.port,
+                                -1) < 0
+            || tor_addr_family(&ipv6_addrport.addr) != AF_INET6) {
+          log_warn(LD_CONFIG, "Bad ipv6 addr/port %s on FallbackDir line",
+                   escaped(cp));
+          goto end;
+        }
+        ipv6_addrport_ptr = &ipv6_addrport;
+      }
     } else if (!strcmpstart(cp, "weight=")) {
       int ok;
       const char *wstring = cp + strlen("weight=");
@@ -5711,7 +5958,8 @@ parse_dir_fallback_line(const char *line,
 
   if (!validate_only) {
     dir_server_t *ds;
-    ds = fallback_dir_server_new(&addr, dirport, orport, id, weight);
+    ds = fallback_dir_server_new(&addr, dirport, orport, ipv6_addrport_ptr,
+                                 id, weight);
     if (!ds) {
       log_warn(LD_CONFIG, "Couldn't create FallbackDir %s", escaped(line));
       goto end;
@@ -5730,7 +5978,7 @@ parse_dir_fallback_line(const char *line,
 }
 
 /** Allocate and return a new port_cfg_t with reasonable defaults. */
-static port_cfg_t *
+STATIC port_cfg_t *
 port_cfg_new(size_t namelen)
 {
   tor_assert(namelen <= SIZE_T_CEILING - sizeof(port_cfg_t) - 1);
@@ -5742,7 +5990,7 @@ port_cfg_new(size_t namelen)
 }
 
 /** Free all storage held in <b>port</b> */
-static void
+STATIC void
 port_cfg_free(port_cfg_t *port)
 {
   tor_free(port);
@@ -5796,9 +6044,9 @@ warn_nonlocal_ext_orports(const smartlist_t *ports, const char *portname)
   } SMARTLIST_FOREACH_END(port);
 }
 
-/** Given a list of port_cfg_t in <b>ports</b>, warn any controller port there
- * is listening on any non-loopback address.  If <b>forbid_nonlocal</b> is
- * true, then emit a stronger warning and remove the port from the list.
+/** Given a list of port_cfg_t in <b>ports</b>, warn if any controller port
+ * there is listening on any non-loopback address.  If <b>forbid_nonlocal</b>
+ * is true, then emit a stronger warning and remove the port from the list.
  */
 static void
 warn_nonlocal_controller_ports(smartlist_t *ports, unsigned forbid_nonlocal)
@@ -5837,15 +6085,6 @@ warn_nonlocal_controller_ports(smartlist_t *ports, unsigned forbid_nonlocal)
     }
   } SMARTLIST_FOREACH_END(port);
 }
-
-#define CL_PORT_NO_STREAM_OPTIONS (1u<<0)
-#define CL_PORT_WARN_NONLOCAL (1u<<1)
-#define CL_PORT_ALLOW_EXTRA_LISTENADDR (1u<<2)
-#define CL_PORT_SERVER_OPTIONS (1u<<3)
-#define CL_PORT_FORBID_NONLOCAL (1u<<4)
-#define CL_PORT_TAKES_HOSTNAMES (1u<<5)
-#define CL_PORT_IS_UNIXSOCKET (1u<<6)
-#define CL_PORT_DFLT_GROUP_WRITABLE (1u<<7)
 
 #ifdef HAVE_SYS_UN_H
 
@@ -5934,7 +6173,7 @@ config_parse_unix_port(const char *addrport, char **path_out)
  * <b>out</b> for every port that the client should listen on.  Return 0
  * on success, -1 on failure.
  */
-static int
+STATIC int
 parse_port_config(smartlist_t *out,
                   const config_line_t *ports,
                   const config_line_t *listenaddrs,
@@ -6078,7 +6317,9 @@ parse_port_config(smartlist_t *out,
       ipv4_traffic = 1, ipv6_traffic = 0, prefer_ipv6 = 0,
       cache_ipv4 = 1, use_cached_ipv4 = 0,
       cache_ipv6 = 0, use_cached_ipv6 = 0,
-      prefer_ipv6_automap = 1, world_writable = 0, group_writable = 0;
+      prefer_ipv6_automap = 1, world_writable = 0, group_writable = 0,
+      relax_dirmode_check = 0,
+      has_used_unix_socket_only_option = 0;
 
     smartlist_split_string(elts, ports->value, NULL,
                            SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 0);
@@ -6126,6 +6367,7 @@ parse_port_config(smartlist_t *out,
         tor_free(addrtmp);
         goto err;
       }
+      tor_free(addrtmp);
     } else {
       /* Try parsing integer port before address, because, who knows?
          "9050" might be a valid address. */
@@ -6140,7 +6382,7 @@ parse_port_config(smartlist_t *out,
         }
         port = ptmp;
       } else {
-        log_warn(LD_CONFIG, "Couldn't parse address '%s' for %sPort",
+        log_warn(LD_CONFIG, "Couldn't parse address %s for %sPort",
                  escaped(addrport), portname);
         goto err;
       }
@@ -6230,9 +6472,15 @@ parse_port_config(smartlist_t *out,
 
         if (!strcasecmp(elt, "GroupWritable")) {
           group_writable = !no;
+          has_used_unix_socket_only_option = 1;
           continue;
         } else if (!strcasecmp(elt, "WorldWritable")) {
           world_writable = !no;
+          has_used_unix_socket_only_option = 1;
+          continue;
+        } else if (!strcasecmp(elt, "RelaxDirModeCheck")) {
+          relax_dirmode_check = !no;
+          has_used_unix_socket_only_option = 1;
           continue;
         }
 
@@ -6320,9 +6568,10 @@ parse_port_config(smartlist_t *out,
       goto err;
     }
 
-    if ( (world_writable || group_writable) && ! unix_socket_path) {
-      log_warn(LD_CONFIG, "You have a %sPort entry with GroupWritable "
-               "or WorldWritable set, but it is not a unix socket.", portname);
+    if ( has_used_unix_socket_only_option && ! unix_socket_path) {
+      log_warn(LD_CONFIG, "You have a %sPort entry with GroupWritable, "
+               "WorldWritable, or RelaxDirModeCheck, but it is not a "
+               "unix socket.", portname);
       goto err;
     }
 
@@ -6348,6 +6597,7 @@ parse_port_config(smartlist_t *out,
       cfg->type = listener_type;
       cfg->is_world_writable = world_writable;
       cfg->is_group_writable = group_writable;
+      cfg->relax_dirmode_check = relax_dirmode_check;
       cfg->entry_cfg.isolation_flags = isolation;
       cfg->entry_cfg.session_group = sessiongroup;
       cfg->server_cfg.no_advertise = no_advertise;
@@ -6528,10 +6778,13 @@ parse_ports(or_options_t *options, int validate_only,
     }
   }
 
-  if (check_server_ports(ports, options) < 0) {
+  int n_low_ports = 0;
+  if (check_server_ports(ports, options, &n_low_ports) < 0) {
     *msg = tor_strdup("Misconfigured server ports");
     goto err;
   }
+  if (have_low_ports < 0)
+    have_low_ports = (n_low_ports > 0);
 
   *n_ports_out = smartlist_len(ports);
 
@@ -6585,10 +6838,12 @@ parse_ports(or_options_t *options, int validate_only,
 }
 
 /** Given a list of <b>port_cfg_t</b> in <b>ports</b>, check them for internal
- * consistency and warn as appropriate. */
+ * consistency and warn as appropriate.  Set *<b>n_low_ports_out</b> to the
+ * number of sub-1024 ports we will be binding. */
 static int
 check_server_ports(const smartlist_t *ports,
-                   const or_options_t *options)
+                   const or_options_t *options,
+                   int *n_low_ports_out)
 {
   int n_orport_advertised = 0;
   int n_orport_advertised_ipv4 = 0;
@@ -6651,23 +6906,31 @@ check_server_ports(const smartlist_t *ports,
     r = -1;
   }
 
-  if (n_low_port && options->AccountingMax) {
+  if (n_low_port && options->AccountingMax &&
+      (!have_capability_support() || options->KeepBindCapabilities == 0)) {
+    const char *extra = "";
+    if (options->KeepBindCapabilities == 0 && have_capability_support())
+      extra = ", and you have disabled KeepBindCapabilities.";
     log_warn(LD_CONFIG,
           "You have set AccountingMax to use hibernation. You have also "
-          "chosen a low DirPort or OrPort. This combination can make Tor stop "
+          "chosen a low DirPort or OrPort%s."
+          "This combination can make Tor stop "
           "working when it tries to re-attach the port after a period of "
           "hibernation. Please choose a different port or turn off "
           "hibernation unless you know this combination will work on your "
-          "platform.");
+          "platform.", extra);
   }
+
+  if (n_low_ports_out)
+    *n_low_ports_out = n_low_port;
 
   return r;
 }
 
 /** Return a list of port_cfg_t for client ports parsed from the
  * options. */
-const smartlist_t *
-get_configured_ports(void)
+MOCK_IMPL(const smartlist_t *,
+get_configured_ports,(void))
 {
   if (!configured_ports)
     configured_ports = smartlist_new();
@@ -6739,9 +7002,8 @@ get_first_listener_addrport_string(int listener_type)
 int
 get_first_advertised_port_by_type_af(int listener_type, int address_family)
 {
-  if (!configured_ports)
-    return 0;
-  SMARTLIST_FOREACH_BEGIN(configured_ports, const port_cfg_t *, cfg) {
+  const smartlist_t *conf_ports = get_configured_ports();
+  SMARTLIST_FOREACH_BEGIN(conf_ports, const port_cfg_t *, cfg) {
     if (cfg->type == listener_type &&
         !cfg->server_cfg.no_advertise &&
         (tor_addr_family(&cfg->addr) == address_family ||
@@ -7151,7 +7413,7 @@ getinfo_helper_config(control_connection_t *conn,
     smartlist_free(sl);
   } else if (!strcmp(question, "config/defaults")) {
     smartlist_t *sl = smartlist_new();
-    int i, dirauth_lines_seen = 0;
+    int i, dirauth_lines_seen = 0, fallback_lines_seen = 0;
     for (i = 0; option_vars_[i].name; ++i) {
       const config_var_t *var = &option_vars_[i];
       if (var->initvalue != NULL) {
@@ -7161,6 +7423,13 @@ getinfo_helper_config(control_connection_t *conn,
            * count later to decide whether to add the defaults manually
            */
           ++dirauth_lines_seen;
+        }
+        if (strcmp(option_vars_[i].name, "FallbackDir") == 0) {
+          /*
+           * Similarly count fallback lines, so that we can decided later
+           * to add the defaults manually.
+           */
+          ++fallback_lines_seen;
         }
         char *val = esc_for_log(var->initvalue);
         smartlist_add_asprintf(sl, "%s %s\n",var->name,val);
@@ -7183,6 +7452,24 @@ getinfo_helper_config(control_connection_t *conn,
       for (i = default_authorities; *i != NULL; ++i) {
         char *val = esc_for_log(*i);
         smartlist_add_asprintf(sl, "DirAuthority %s\n", val);
+        tor_free(val);
+      }
+    }
+
+    if (fallback_lines_seen == 0 &&
+        get_options()->UseDefaultFallbackDirs == 1) {
+      /*
+       * We didn't see any explicitly configured fallback mirrors,
+       * so add the defaults to the list manually.
+       *
+       * default_fallbacks is included earlier in this file and
+       * is a const char ** NULL-terminated array of fallback config lines.
+       */
+      const char **i;
+
+      for (i = default_fallbacks; *i != NULL; ++i) {
+        char *val = esc_for_log(*i);
+        smartlist_add_asprintf(sl, "FallbackDir %s\n", val);
         tor_free(val);
       }
     }
@@ -7329,8 +7616,7 @@ init_cookie_authentication(const char *fname, const char *header,
 
   /* Generate the cookie */
   *cookie_out = tor_malloc(cookie_len);
-  if (crypto_rand((char *)*cookie_out, cookie_len) < 0)
-    goto done;
+  crypto_rand((char *)*cookie_out, cookie_len);
 
   /* Create the string that should be written on the file. */
   memcpy(cookie_file_str, header, strlen(header));

@@ -1,5 +1,12 @@
-/* Copyright (c) 2014, The Tor Project, Inc. */
+/* Copyright (c) 2014-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file keypin.c
+ *
+ * \brief Functions and structures for associating routers' RSA key
+ * fingerprints with their ED25519 keys.
+ */
 
 #define KEYPIN_PRIVATE
 
@@ -57,14 +64,14 @@ static HT_HEAD(edmap, keypin_ent_st) the_ed_map = HT_INITIALIZER();
 
 /** Hashtable helper: compare two keypin table entries and return true iff
  * they have the same RSA key IDs. */
-static INLINE int
+static inline int
 keypin_ents_eq_rsa(const keypin_ent_t *a, const keypin_ent_t *b)
 {
   return tor_memeq(a->rsa_id, b->rsa_id, sizeof(a->rsa_id));
 }
 
 /** Hashtable helper: hash a keypin table entries based on its RSA key ID */
-static INLINE unsigned
+static inline unsigned
 keypin_ent_hash_rsa(const keypin_ent_t *a)
 {
 return (unsigned) siphash24g(a->rsa_id, sizeof(a->rsa_id));
@@ -72,14 +79,14 @@ return (unsigned) siphash24g(a->rsa_id, sizeof(a->rsa_id));
 
 /** Hashtable helper: compare two keypin table entries and return true iff
  * they have the same ed25519 keys */
-static INLINE int
+static inline int
 keypin_ents_eq_ed(const keypin_ent_t *a, const keypin_ent_t *b)
 {
   return tor_memeq(a->ed25519_key, b->ed25519_key, sizeof(a->ed25519_key));
 }
 
 /** Hashtable helper: hash a keypin table entries based on its ed25519 key */
-static INLINE unsigned
+static inline unsigned
 keypin_ent_hash_ed(const keypin_ent_t *a)
 {
 return (unsigned) siphash24g(a->ed25519_key, sizeof(a->ed25519_key));

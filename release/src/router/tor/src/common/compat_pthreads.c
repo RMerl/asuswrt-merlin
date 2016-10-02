@@ -1,7 +1,14 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file compat_pthreads.c
+ *
+ * \brief Implementation for the pthreads-based multithreading backend
+ * functions.
+ */
 
 #define _GNU_SOURCE
 
@@ -185,7 +192,8 @@ tor_cond_init(tor_cond_t *cond)
     return -1;
   }
 
-#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC) && defined(HAVE_PTHREAD_CONDATTR_SETCLOCK)
+#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC) \
+  && defined(HAVE_PTHREAD_CONDATTR_SETCLOCK)
   /* Use monotonic time so when we timedwait() on it, any clock adjustment
    * won't affect the timeout value. */
   if (pthread_condattr_setclock(&condattr, CLOCK_MONOTONIC)) {

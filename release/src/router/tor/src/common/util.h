@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -29,6 +29,9 @@
 #ifndef O_TEXT
 #define O_TEXT 0
 #endif
+#ifndef O_NOFOLLOW
+#define O_NOFOLLOW 0
+#endif
 
 /* Replace assert() with a variant that sends failures to the log before
  * calling assert() normally.
@@ -45,9 +48,10 @@
 #error "Sorry; we don't support building with NDEBUG."
 #endif
 
-/* Don't use assertions during coverage. It leads to tons of unreached
- * branches which in reality are only assertions we didn't hit. */
-#ifdef TOR_COVERAGE
+/* Sometimes we don't want to use assertions during branch coverage tests; it
+ * leads to tons of unreached branches which in reality are only assertions we
+ * didn't hit. */
+#if defined(TOR_UNIT_TESTS) && defined(DISABLE_ASSERTS_IN_UNIT_TESTS)
 #define tor_assert(a) STMT_BEGIN                                        \
   (void)(a);                                                            \
   STMT_END
@@ -185,6 +189,7 @@ int64_t sample_laplace_distribution(double mu, double b, double p);
 int64_t add_laplace_noise(int64_t signal, double random, double delta_f,
                           double epsilon);
 int n_bits_set_u8(uint8_t v);
+int64_t clamp_double_to_int64(double number);
 
 /* Compute the CEIL of <b>a</b> divided by <b>b</b>, for nonnegative <b>a</b>
  * and positive <b>b</b>.  Works on integer types only. Not defined if a+b can
@@ -352,12 +357,13 @@ file_status_t file_status(const char *filename);
 /** Possible behaviors for check_private_dir() on encountering a nonexistent
  * directory; see that function's documentation for details. */
 typedef unsigned int cpd_check_t;
-#define CPD_NONE 0
-#define CPD_CREATE 1
-#define CPD_CHECK 2
-#define CPD_GROUP_OK 4
-#define CPD_GROUP_READ 8
-#define CPD_CHECK_MODE_ONLY 16
+#define CPD_NONE                 0
+#define CPD_CREATE               (1u << 0)
+#define CPD_CHECK                (1u << 1)
+#define CPD_GROUP_OK             (1u << 2)
+#define CPD_GROUP_READ           (1u << 3)
+#define CPD_CHECK_MODE_ONLY      (1u << 4)
+#define CPD_RELAX_DIRMODE_CHECK  (1u << 5)
 int check_private_dir(const char *dirname, cpd_check_t check,
                       const char *effective_user);
 

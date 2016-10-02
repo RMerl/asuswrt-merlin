@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /* Ordinarily defined in tor_main.c; this bit is just here to provide one
@@ -443,6 +443,45 @@ bench_siphash(void)
 }
 
 static void
+bench_digest(void)
+{
+  char buf[8192];
+  char out[DIGEST512_LEN];
+  const int lens[] = { 1, 16, 32, 64, 128, 512, 1024, 2048, -1 };
+  const int N = 300000;
+  uint64_t start, end;
+  crypto_rand(buf, sizeof(buf));
+
+  for (int alg = 0; alg < N_DIGEST_ALGORITHMS; alg++) {
+    for (int i = 0; lens[i] > 0; ++i) {
+      reset_perftime();
+      start = perftime();
+      for (int j = 0; j < N; ++j) {
+        switch (alg) {
+          case DIGEST_SHA1:
+            crypto_digest(out, buf, lens[i]);
+            break;
+          case DIGEST_SHA256:
+          case DIGEST_SHA3_256:
+            crypto_digest256(out, buf, lens[i], alg);
+            break;
+          case DIGEST_SHA512:
+          case DIGEST_SHA3_512:
+            crypto_digest512(out, buf, lens[i], alg);
+            break;
+          default:
+            tor_assert(0);
+        }
+      }
+      end = perftime();
+      printf("%s(%d): %.2f ns per call\n",
+             crypto_digest_algorithm_get_name(alg),
+             lens[i], NANOCOUNT(start,end,N));
+    }
+  }
+}
+
+static void
 bench_cell_ops(void)
 {
   const int iters = 1<<16;
@@ -589,6 +628,7 @@ typedef struct benchmark_t {
 static struct benchmark_t benchmarks[] = {
   ENT(dmap),
   ENT(siphash),
+  ENT(digest),
   ENT(aes),
   ENT(onion_TAP),
   ENT(onion_ntor),
@@ -643,7 +683,10 @@ main(int argc, const char **argv)
 
   reset_perftime();
 
-  crypto_seed_rng();
+  if (crypto_seed_rng() < 0) {
+    printf("Couldn't seed RNG; exiting.\n");
+    return 1;
+  }
   crypto_init_siphash_key();
   options = options_new();
   init_logging(1);

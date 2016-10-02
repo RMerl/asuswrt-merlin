@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -55,36 +55,40 @@ smartlist_free,(smartlist_t *sl))
 void
 smartlist_clear(smartlist_t *sl)
 {
+  memset(sl->list, 0, sizeof(void *) * sl->num_used);
   sl->num_used = 0;
 }
 
+#if SIZE_MAX < INT_MAX
+#error "We don't support systems where size_t is smaller than int."
+#endif
+
 /** Make sure that <b>sl</b> can hold at least <b>size</b> entries. */
-static INLINE void
-smartlist_ensure_capacity(smartlist_t *sl, int size)
+static inline void
+smartlist_ensure_capacity(smartlist_t *sl, size_t size)
 {
-#if SIZEOF_SIZE_T > SIZEOF_INT
+  /* Set MAX_CAPACITY to MIN(INT_MAX, SIZE_MAX / sizeof(void*)) */
+#if (SIZE_MAX/SIZEOF_VOID_P) > INT_MAX
 #define MAX_CAPACITY (INT_MAX)
 #else
 #define MAX_CAPACITY (int)((SIZE_MAX / (sizeof(void*))))
-#define ASSERT_CAPACITY
 #endif
-  if (size > sl->capacity) {
-    int higher = sl->capacity;
+
+  tor_assert(size <= MAX_CAPACITY);
+
+  if (size > (size_t) sl->capacity) {
+    size_t higher = (size_t) sl->capacity;
     if (PREDICT_UNLIKELY(size > MAX_CAPACITY/2)) {
-#ifdef ASSERT_CAPACITY
-      /* We don't include this assertion when MAX_CAPACITY == INT_MAX,
-       * since int size; (size <= INT_MAX) makes analysis tools think we're
-       * doing something stupid. */
-      tor_assert(size <= MAX_CAPACITY);
-#endif
       higher = MAX_CAPACITY;
     } else {
       while (size > higher)
         higher *= 2;
     }
-    sl->capacity = higher;
     sl->list = tor_reallocarray(sl->list, sizeof(void *),
-                                ((size_t)sl->capacity));
+                                ((size_t)higher));
+    memset(sl->list + sl->capacity, 0,
+           sizeof(void *) * (higher - sl->capacity));
+    sl->capacity = (int) higher;
   }
 #undef ASSERT_CAPACITY
 #undef MAX_CAPACITY
@@ -94,7 +98,7 @@ smartlist_ensure_capacity(smartlist_t *sl, int size)
 void
 smartlist_add(smartlist_t *sl, void *element)
 {
-  smartlist_ensure_capacity(sl, sl->num_used+1);
+  smartlist_ensure_capacity(sl, ((size_t) sl->num_used)+1);
   sl->list[sl->num_used++] = element;
 }
 
@@ -102,11 +106,12 @@ smartlist_add(smartlist_t *sl, void *element)
 void
 smartlist_add_all(smartlist_t *s1, const smartlist_t *s2)
 {
-  int new_size = s1->num_used + s2->num_used;
-  tor_assert(new_size >= s1->num_used); /* check for overflow. */
+  size_t new_size = (size_t)s1->num_used + (size_t)s2->num_used;
+  tor_assert(new_size >= (size_t) s1->num_used); /* check for overflow. */
   smartlist_ensure_capacity(s1, new_size);
   memcpy(s1->list + s1->num_used, s2->list, s2->num_used*sizeof(void*));
-  s1->num_used = new_size;
+  tor_assert(new_size <= INT_MAX); /* redundant. */
+  s1->num_used = (int) new_size;
 }
 
 /** Remove all elements E from sl such that E==element.  Preserve
@@ -123,6 +128,7 @@ smartlist_remove(smartlist_t *sl, const void *element)
     if (sl->list[i] == element) {
       sl->list[i] = sl->list[--sl->num_used]; /* swap with the end */
       i--; /* so we process the new i'th element */
+      sl->list[sl->num_used] = NULL;
     }
 }
 
@@ -132,9 +138,11 @@ void *
 smartlist_pop_last(smartlist_t *sl)
 {
   tor_assert(sl);
-  if (sl->num_used)
-    return sl->list[--sl->num_used];
-  else
+  if (sl->num_used) {
+    void *tmp = sl->list[--sl->num_used];
+    sl->list[sl->num_used] = NULL;
+    return tmp;
+  } else
     return NULL;
 }
 
@@ -165,6 +173,7 @@ smartlist_string_remove(smartlist_t *sl, const char *element)
       tor_free(sl->list[i]);
       sl->list[i] = sl->list[--sl->num_used]; /* swap with the end */
       i--; /* so we process the new i'th element */
+      sl->list[sl->num_used] = NULL;
     }
   }
 }
@@ -321,6 +330,7 @@ smartlist_intersect(smartlist_t *sl1, const smartlist_t *sl2)
     if (!smartlist_contains(sl2, sl1->list[i])) {
       sl1->list[i] = sl1->list[--sl1->num_used]; /* swap with the end */
       i--; /* so we process the new i'th element */
+      sl1->list[sl1->num_used] = NULL;
     }
 }
 
@@ -345,6 +355,7 @@ smartlist_del(smartlist_t *sl, int idx)
   tor_assert(idx>=0);
   tor_assert(idx < sl->num_used);
   sl->list[idx] = sl->list[--sl->num_used];
+  sl->list[sl->num_used] = NULL;
 }
 
 /** Remove the <b>idx</b>th element of sl; if idx is not the last element,
@@ -360,6 +371,7 @@ smartlist_del_keeporder(smartlist_t *sl, int idx)
   --sl->num_used;
   if (idx < sl->num_used)
     memmove(sl->list+idx, sl->list+idx+1, sizeof(void*)*(sl->num_used-idx));
+  sl->list[sl->num_used] = NULL;
 }
 
 /** Insert the value <b>val</b> as the new <b>idx</b>th element of
@@ -375,7 +387,7 @@ smartlist_insert(smartlist_t *sl, int idx, void *val)
   if (idx == sl->num_used) {
     smartlist_add(sl, val);
   } else {
-    smartlist_ensure_capacity(sl, sl->num_used+1);
+    smartlist_ensure_capacity(sl, ((size_t) sl->num_used)+1);
     /* Move other elements away */
     if (idx < sl->num_used)
       memmove(sl->list + idx + 1, sl->list + idx,
@@ -828,9 +840,17 @@ smartlist_sort_pointers(smartlist_t *sl)
  *
  * For a 1-indexed array, we would use LEFT_CHILD[x] = 2*x and RIGHT_CHILD[x]
  *   = 2*x + 1.  But this is C, so we have to adjust a little. */
-//#define LEFT_CHILD(i)  ( ((i)+1)*2 - 1)
-//#define RIGHT_CHILD(i) ( ((i)+1)*2 )
-//#define PARENT(i)      ( ((i)+1)/2 - 1)
+
+/* MAX_PARENT_IDX is the largest IDX in the smartlist which might have
+ * children whose indices fit inside an int.
+ * LEFT_CHILD(MAX_PARENT_IDX) == INT_MAX-2;
+ * RIGHT_CHILD(MAX_PARENT_IDX) == INT_MAX-1;
+ * LEFT_CHILD(MAX_PARENT_IDX + 1) == INT_MAX // impossible, see max list size.
+ */
+#define MAX_PARENT_IDX ((INT_MAX - 2) / 2)
+/* If this is true, then i is small enough to potentially have children
+ * in the smartlist, and it is save to use LEFT_CHILD/RIGHT_CHILD on it. */
+#define IDX_MAY_HAVE_CHILDREN(i) ((i) <= MAX_PARENT_IDX)
 #define LEFT_CHILD(i)  ( 2*(i) + 1 )
 #define RIGHT_CHILD(i) ( 2*(i) + 2 )
 #define PARENT(i)      ( ((i)-1) / 2 )
@@ -857,13 +877,21 @@ smartlist_sort_pointers(smartlist_t *sl)
 /** Helper. <b>sl</b> may have at most one violation of the heap property:
  * the item at <b>idx</b> may be greater than one or both of its children.
  * Restore the heap property. */
-static INLINE void
+static inline void
 smartlist_heapify(smartlist_t *sl,
                   int (*compare)(const void *a, const void *b),
                   int idx_field_offset,
                   int idx)
 {
   while (1) {
+    if (! IDX_MAY_HAVE_CHILDREN(idx)) {
+      /* idx is so large that it cannot have any children, since doing so
+       * would mean the smartlist was over-capacity. Therefore it cannot
+       * violate the heap property by being greater than a child (since it
+       * doesn't have any). */
+      return;
+    }
+
     int left_idx = LEFT_CHILD(idx);
     int best_idx;
 
@@ -937,9 +965,11 @@ smartlist_pqueue_pop(smartlist_t *sl,
   *IDXP(top)=-1;
   if (--sl->num_used) {
     sl->list[0] = sl->list[sl->num_used];
+    sl->list[sl->num_used] = NULL;
     UPDATE_IDX(0);
     smartlist_heapify(sl, compare, idx_field_offset, 0);
   }
+  sl->list[sl->num_used] = NULL;
   return top;
 }
 
@@ -959,9 +989,11 @@ smartlist_pqueue_remove(smartlist_t *sl,
   --sl->num_used;
   *IDXP(item) = -1;
   if (idx == sl->num_used) {
+    sl->list[sl->num_used] = NULL;
     return;
   } else {
     sl->list[idx] = sl->list[sl->num_used];
+    sl->list[sl->num_used] = NULL;
     UPDATE_IDX(idx);
     smartlist_heapify(sl, compare, idx_field_offset, idx);
   }
@@ -1054,35 +1086,35 @@ DEFINE_MAP_STRUCTS(digestmap_t, char key[DIGEST_LEN], digestmap_);
 DEFINE_MAP_STRUCTS(digest256map_t, uint8_t key[DIGEST256_LEN], digest256map_);
 
 /** Helper: compare strmap_entry_t objects by key value. */
-static INLINE int
+static inline int
 strmap_entries_eq(const strmap_entry_t *a, const strmap_entry_t *b)
 {
   return !strcmp(a->key, b->key);
 }
 
 /** Helper: return a hash value for a strmap_entry_t. */
-static INLINE unsigned int
+static inline unsigned int
 strmap_entry_hash(const strmap_entry_t *a)
 {
   return (unsigned) siphash24g(a->key, strlen(a->key));
 }
 
 /** Helper: compare digestmap_entry_t objects by key value. */
-static INLINE int
+static inline int
 digestmap_entries_eq(const digestmap_entry_t *a, const digestmap_entry_t *b)
 {
   return tor_memeq(a->key, b->key, DIGEST_LEN);
 }
 
 /** Helper: return a hash value for a digest_map_t. */
-static INLINE unsigned int
+static inline unsigned int
 digestmap_entry_hash(const digestmap_entry_t *a)
 {
   return (unsigned) siphash24g(a->key, DIGEST_LEN);
 }
 
 /** Helper: compare digestmap_entry_t objects by key value. */
-static INLINE int
+static inline int
 digest256map_entries_eq(const digest256map_entry_t *a,
                         const digest256map_entry_t *b)
 {
@@ -1090,7 +1122,7 @@ digest256map_entries_eq(const digest256map_entry_t *a,
 }
 
 /** Helper: return a hash value for a digest_map_t. */
-static INLINE unsigned int
+static inline unsigned int
 digest256map_entry_hash(const digest256map_entry_t *a)
 {
   return (unsigned) siphash24g(a->key, DIGEST256_LEN);
@@ -1113,49 +1145,49 @@ HT_GENERATE2(digest256map_impl, digest256map_entry_t, node,
              digest256map_entry_hash,
              digest256map_entries_eq, 0.6, tor_reallocarray_, tor_free_)
 
-static INLINE void
+static inline void
 strmap_entry_free(strmap_entry_t *ent)
 {
   tor_free(ent->key);
   tor_free(ent);
 }
-static INLINE void
+static inline void
 digestmap_entry_free(digestmap_entry_t *ent)
 {
   tor_free(ent);
 }
-static INLINE void
+static inline void
 digest256map_entry_free(digest256map_entry_t *ent)
 {
   tor_free(ent);
 }
 
-static INLINE void
+static inline void
 strmap_assign_tmp_key(strmap_entry_t *ent, const char *key)
 {
   ent->key = (char*)key;
 }
-static INLINE void
+static inline void
 digestmap_assign_tmp_key(digestmap_entry_t *ent, const char *key)
 {
   memcpy(ent->key, key, DIGEST_LEN);
 }
-static INLINE void
+static inline void
 digest256map_assign_tmp_key(digest256map_entry_t *ent, const uint8_t *key)
 {
   memcpy(ent->key, key, DIGEST256_LEN);
 }
-static INLINE void
+static inline void
 strmap_assign_key(strmap_entry_t *ent, const char *key)
 {
   ent->key = tor_strdup(key);
 }
-static INLINE void
+static inline void
 digestmap_assign_key(digestmap_entry_t *ent, const char *key)
 {
   memcpy(ent->key, key, DIGEST_LEN);
 }
-static INLINE void
+static inline void
 digest256map_assign_key(digest256map_entry_t *ent, const uint8_t *key)
 {
   memcpy(ent->key, key, DIGEST256_LEN);

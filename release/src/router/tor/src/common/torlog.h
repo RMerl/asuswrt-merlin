@@ -1,7 +1,7 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -135,7 +135,8 @@ void add_stream_log(const log_severity_list_t *severity, const char *name,
 int add_file_log(const log_severity_list_t *severity, const char *filename,
                  const int truncate);
 #ifdef HAVE_SYSLOG_H
-int add_syslog_log(const log_severity_list_t *severity);
+int add_syslog_log(const log_severity_list_t *severity,
+                   const char* syslog_identity_tag);
 #endif
 int add_callback_log(const log_severity_list_t *severity, log_callback cb);
 void logs_set_domain_logging(int enabled);
@@ -183,25 +184,25 @@ void log_fn_ratelim_(struct ratelim_t *ratelim, int severity,
 /** Log a message at level <b>severity</b>, using a pretty-printed version
  * of the current function name. */
 #define log_fn(severity, domain, args...)               \
-  log_fn_(severity, domain, __PRETTY_FUNCTION__, args)
+  log_fn_(severity, domain, __FUNCTION__, args)
 /** As log_fn, but use <b>ratelim</b> (an instance of ratelim_t) to control
  * the frequency at which messages can appear.
  */
 #define log_fn_ratelim(ratelim, severity, domain, args...)      \
-  log_fn_ratelim_(ratelim, severity, domain, __PRETTY_FUNCTION__, args)
+  log_fn_ratelim_(ratelim, severity, domain, __FUNCTION__, args)
 #define log_debug(domain, args...)                                      \
   STMT_BEGIN                                                            \
     if (PREDICT_UNLIKELY(log_global_min_severity_ == LOG_DEBUG))        \
-      log_fn_(LOG_DEBUG, domain, __PRETTY_FUNCTION__, args);            \
+      log_fn_(LOG_DEBUG, domain, __FUNCTION__, args);            \
   STMT_END
 #define log_info(domain, args...)                           \
-  log_fn_(LOG_INFO, domain, __PRETTY_FUNCTION__, args)
+  log_fn_(LOG_INFO, domain, __FUNCTION__, args)
 #define log_notice(domain, args...)                         \
-  log_fn_(LOG_NOTICE, domain, __PRETTY_FUNCTION__, args)
+  log_fn_(LOG_NOTICE, domain, __FUNCTION__, args)
 #define log_warn(domain, args...)                           \
-  log_fn_(LOG_WARN, domain, __PRETTY_FUNCTION__, args)
+  log_fn_(LOG_WARN, domain, __FUNCTION__, args)
 #define log_err(domain, args...)                            \
-  log_fn_(LOG_ERR, domain, __PRETTY_FUNCTION__, args)
+  log_fn_(LOG_ERR, domain, __FUNCTION__, args)
 
 #else /* ! defined(__GNUC__) */
 

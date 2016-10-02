@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -107,13 +107,9 @@ static void dns_found_answer(const char *address, uint8_t query_type,
                              const tor_addr_t *addr,
                              const char *hostname,
                              uint32_t ttl);
-static int launch_resolve(cached_resolve_t *resolve);
 static void add_wildcarded_test_address(const char *address);
 static int configure_nameservers(int force);
 static int answer_is_wildcarded(const char *ip);
-static int set_exitconn_info_from_resolve(edge_connection_t *exitconn,
-                                          const cached_resolve_t *resolve,
-                                          char **hostname_out);
 static int evdns_err_is_transient(int err);
 static void inform_pending_connections(cached_resolve_t *resolve);
 static void make_pending_resolve_cached(cached_resolve_t *cached);
@@ -138,7 +134,7 @@ static int dns_is_broken_for_ipv6 = 0;
 
 /** Function to compare hashed resolves on their addresses; used to
  * implement hash tables. */
-static INLINE int
+static inline int
 cached_resolves_eq(cached_resolve_t *a, cached_resolve_t *b)
 {
   /* make this smarter one day? */
@@ -147,7 +143,7 @@ cached_resolves_eq(cached_resolve_t *a, cached_resolve_t *b)
 }
 
 /** Hash function for cached_resolve objects */
-static INLINE unsigned int
+static inline unsigned int
 cached_resolve_hash(cached_resolve_t *a)
 {
   return (unsigned) siphash24g((const uint8_t*)a->address, strlen(a->address));
@@ -859,10 +855,10 @@ dns_resolve_impl,(edge_connection_t *exitconn, int is_resolve,
  * Return -2 on a transient error, -1 on a permenent error, and 1 on
  * a successful lookup.
  */
-static int
-set_exitconn_info_from_resolve(edge_connection_t *exitconn,
-                               const cached_resolve_t *resolve,
-                               char **hostname_out)
+MOCK_IMPL(STATIC int,
+set_exitconn_info_from_resolve,(edge_connection_t *exitconn,
+                                const cached_resolve_t *resolve,
+                                char **hostname_out))
 {
   int ipv4_ok, ipv6_ok, answer_with_ipv4, r;
   uint32_t begincell_flags;
@@ -1130,7 +1126,7 @@ dns_cancel_pending_resolve,(const char *address))
 
 /** Return true iff <b>address</b> is one of the addresses we use to verify
  * that well-known sites aren't being hijacked by our DNS servers. */
-static INLINE int
+static inline int
 is_test_address(const char *address)
 {
   const or_options_t *options = get_options();
@@ -1664,8 +1660,8 @@ launch_one_resolve(const char *address, uint8_t query_type,
 /** For eventdns: start resolving as necessary to find the target for
  * <b>exitconn</b>.  Returns -1 on error, -2 on transient error,
  * 0 on "resolve launched." */
-static int
-launch_resolve(cached_resolve_t *resolve)
+MOCK_IMPL(STATIC int,
+launch_resolve,(cached_resolve_t *resolve))
 {
   tor_addr_t a;
   int r;
@@ -2118,5 +2114,18 @@ assert_cache_ok_(void)
       }
     });
 }
+
 #endif
+
+cached_resolve_t
+*dns_get_cache_entry(cached_resolve_t *query)
+{
+  return HT_FIND(cache_map, &cache_root, query);
+}
+
+void
+dns_insert_cache_entry(cached_resolve_t *new_entry)
+{
+  HT_INSERT(cache_map, &cache_root, new_entry);
+}
 

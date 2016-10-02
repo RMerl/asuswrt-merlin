@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2015, The Tor Project, Inc. */
+/* Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_EVENTDNS_TOR_H
@@ -11,9 +11,6 @@ typedef unsigned int uint;
 #endif
 #ifndef HAVE_U_CHAR
 typedef unsigned char u_char;
-#endif
-#ifdef _WIN32
-#define inline __inline
 #endif
 #include "torint.h"
 

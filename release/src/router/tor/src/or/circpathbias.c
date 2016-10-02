@@ -1,8 +1,17 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file circpathbias.c
+ *
+ * \brief Code to track success/failure rates of circuits built through
+ * different tor nodes, in an attempt to detect attacks where
+ * an attacker deliberately causes circuits to fail until the client
+ * choses a path they like.
+ */
 
 #include "or.h"
 #include "channel.h"

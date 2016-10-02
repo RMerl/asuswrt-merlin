@@ -1,9 +1,11 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file channeltls.c
- * \brief channel_t concrete subclass using or_connection_t
+ *
+ * \brief A concrete subclass of channel_t using or_connection_t to transfer
+ * cells between Tor instances.
  **/
 
 /*
@@ -1009,6 +1011,11 @@ channel_tls_time_process_cell(cell_t *cell, channel_tls_t *chan, int *time,
  * for cell types specific to the handshake for this transport protocol and
  * handles them, and queues all other cells to the channel_t layer, which
  * eventually will hand them off to command.c.
+ *
+ * The channel layer itself decides whether the cell should be queued or
+ * can be handed off immediately to the upper-layer code.  It is responsible
+ * for copying in the case that it queues; we merely pass pointers through
+ * which we get from connection_or_process_cells_from_inbuf().
  */
 
 void
@@ -1106,6 +1113,12 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
  * related and live below the channel_t layer, so no variable-length
  * cells ever get delivered in the current implementation, but I've left
  * the mechanism in place for future use.
+ *
+ * If we were handing them off to the upper layer, the channel_t queueing
+ * code would be responsible for memory management, and we'd just be passing
+ * pointers through from connection_or_process_cells_from_inbuf().  That
+ * caller always frees them after this function returns, so this function
+ * should never free var_cell.
  */
 
 void
@@ -1663,30 +1676,9 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
 #define NETINFO_NOTICE_SKEW 3600
   if (labs(apparent_skew) > NETINFO_NOTICE_SKEW &&
       router_get_by_id_digest(chan->conn->identity_digest)) {
-    char dbuf[64];
-    int severity;
-    /*XXXX be smarter about when everybody says we are skewed. */
-    if (router_digest_is_trusted_dir(chan->conn->identity_digest))
-      severity = LOG_WARN;
-    else
-      severity = LOG_INFO;
-    format_time_interval(dbuf, sizeof(dbuf), apparent_skew);
-    log_fn(severity, LD_GENERAL,
-           "Received NETINFO cell with skewed time from "
-           "server at %s:%d.  It seems that our clock is %s by %s, or "
-           "that theirs is %s. Tor requires an accurate clock to work: "
-           "please check your time and date settings.",
-           chan->conn->base_.address,
-           (int)(chan->conn->base_.port),
-           apparent_skew > 0 ? "ahead" : "behind",
-           dbuf,
-           apparent_skew > 0 ? "behind" : "ahead");
-    if (severity == LOG_WARN) /* only tell the controller if an authority */
-      control_event_general_status(LOG_WARN,
-                          "CLOCK_SKEW SKEW=%ld SOURCE=OR:%s:%d",
-                          apparent_skew,
-                          chan->conn->base_.address,
-                          chan->conn->base_.port);
+    int trusted = router_digest_is_trusted_dir(chan->conn->identity_digest);
+    clock_skew_warning(TO_CONN(chan->conn), apparent_skew, trusted, LD_GENERAL,
+                       "NETINFO cell", "OR");
   }
 
   /* XXX maybe act on my_apparent_addr, if the source is sufficiently
@@ -1840,7 +1832,8 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
 
     chan->conn->handshake_state->authenticated = 1;
     {
-      const digests_t *id_digests = tor_x509_cert_get_id_digests(id_cert);
+      const common_digests_t *id_digests =
+        tor_x509_cert_get_id_digests(id_cert);
       crypto_pk_t *identity_rcvd;
       if (!id_digests)
         ERR("Couldn't compute digests for key in ID cert");
@@ -2130,7 +2123,7 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
   {
     crypto_pk_t *identity_rcvd =
       tor_tls_cert_get_key(chan->conn->handshake_state->id_cert);
-    const digests_t *id_digests =
+    const common_digests_t *id_digests =
       tor_x509_cert_get_id_digests(chan->conn->handshake_state->id_cert);
 
     /* This must exist; we checked key type when reading the cert. */

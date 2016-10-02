@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, The Tor Project, Inc. */
+/* Copyright (c) 2015-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -48,33 +48,61 @@ typedef struct rend_cache_failure_t {
   digestmap_t *intro_failures;
 } rend_cache_failure_t;
 
+typedef enum {
+  REND_CACHE_TYPE_CLIENT  = 1,
+  REND_CACHE_TYPE_SERVICE = 2,
+} rend_cache_type_t;
+
 void rend_cache_init(void);
-void rend_cache_clean(time_t now);
+void rend_cache_clean(time_t now, rend_cache_type_t cache_type);
 void rend_cache_failure_clean(time_t now);
 void rend_cache_clean_v2_descs_as_dir(time_t now, size_t min_to_remove);
 void rend_cache_purge(void);
 void rend_cache_free_all(void);
 int rend_cache_lookup_entry(const char *query, int version,
                             rend_cache_entry_t **entry_out);
+int rend_cache_lookup_v2_desc_as_service(const char *query,
+                                         rend_cache_entry_t **entry_out);
 int rend_cache_lookup_v2_desc_as_dir(const char *query, const char **desc);
-/** Return value from rend_cache_store_v2_desc_as_{dir,client}. */
-typedef enum {
-  RCS_NOTDIR = -2, /**< We're not a directory */
-  RCS_BADDESC = -1, /**< This descriptor is no good. */
-  RCS_OKAY = 0 /**< All worked as expected */
-} rend_cache_store_status_t;
 
-rend_cache_store_status_t rend_cache_store_v2_desc_as_dir(const char *desc);
-rend_cache_store_status_t rend_cache_store_v2_desc_as_client(const char *desc,
-                                                const char *desc_id_base32,
-                                                const rend_data_t *rend_query,
-                                                rend_cache_entry_t **entry);
+int rend_cache_store_v2_desc_as_dir(const char *desc);
+int rend_cache_store_v2_desc_as_service(const char *desc);
+int rend_cache_store_v2_desc_as_client(const char *desc,
+                                       const char *desc_id_base32,
+                                       const rend_data_t *rend_query,
+                                       rend_cache_entry_t **entry);
 size_t rend_cache_get_total_allocation(void);
 
 void rend_cache_intro_failure_note(rend_intro_point_failure_t failure,
                                    const uint8_t *identity,
                                    const char *service_id);
 void rend_cache_failure_purge(void);
+
+#ifdef RENDCACHE_PRIVATE
+
+STATIC size_t rend_cache_entry_allocation(const rend_cache_entry_t *e);
+STATIC void rend_cache_entry_free(rend_cache_entry_t *e);
+STATIC void rend_cache_failure_intro_entry_free(rend_cache_failure_intro_t
+                                                *entry);
+STATIC void rend_cache_failure_entry_free(rend_cache_failure_t *entry);
+STATIC int cache_failure_intro_lookup(const uint8_t *identity,
+                                      const char *service_id,
+                                      rend_cache_failure_intro_t
+                                      **intro_entry);
+STATIC void rend_cache_decrement_allocation(size_t n);
+STATIC void rend_cache_increment_allocation(size_t n);
+STATIC rend_cache_failure_intro_t *rend_cache_failure_intro_entry_new(
+                                      rend_intro_point_failure_t failure);
+STATIC rend_cache_failure_t *rend_cache_failure_entry_new(void);
+STATIC void rend_cache_failure_remove(rend_service_descriptor_t *desc);
+STATIC void cache_failure_intro_add(const uint8_t *identity,
+                                    const char *service_id,
+                                    rend_intro_point_failure_t failure);
+STATIC void validate_intro_point_failure(const rend_service_descriptor_t *desc,
+                                        const char *service_id);
+
+STATIC void rend_cache_failure_entry_free_(void *entry);
+#endif
 
 #endif /* TOR_RENDCACHE_H */
 

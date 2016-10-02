@@ -3,10 +3,6 @@
 # Copyright (c) 2007-2015, The Tor Project, Inc.
 # See LICENSE for licensing information
 
-# "foreign" means we don't follow GNU package layout standards
-# 1.9 means we require automake vesion 1.9
-AUTOMAKE_OPTIONS = foreign 1.9 subdir-objects
-
 ACLOCAL_AMFLAGS = -I m4
 
 noinst_LIBRARIES=
@@ -21,6 +17,13 @@ bin_SCRIPTS=
 AM_CPPFLAGS=
 AM_CFLAGS = @TOR_SYSTEMD_CFLAGS@
 SHELL = @SHELL@
+
+if COVERAGE_ENABLED
+TESTING_TOR_BINARY="$(top_builddir)/src/or/tor-cov"
+else
+TESTING_TOR_BINARY="$(top_builddir)/src/or/tor"
+endif
+
 include src/include.am
 include doc/include.am
 include contrib/include.am
@@ -35,7 +38,11 @@ EXTRA_DIST+= \
 
 if COVERAGE_ENABLED
 TEST_CFLAGS=-fno-inline -fprofile-arcs -ftest-coverage
+if DISABLE_ASSERTS_IN_UNIT_TESTS
+TEST_CPPFLAGS=-DTOR_UNIT_TESTS -DTOR_COVERAGE -DDISABLE_ASSERTS_IN_UNIT_TESTS
+else
 TEST_CPPFLAGS=-DTOR_UNIT_TESTS -DTOR_COVERAGE
+endif
 TEST_NETWORK_FLAGS=--coverage --hs-multi-client 1
 else
 TEST_CFLAGS=
@@ -65,8 +72,6 @@ dist-rpm: dist-gzip
 	rm -rf "$$RPM_BUILD_DIR";						\
 	echo "RPM build finished";						\
 	#end of dist-rpm
-
-dist: check
 
 doxygen:
 	doxygen && cd doc/doxygen/latex && make
@@ -99,7 +104,7 @@ test-network: need-chutney-path all
 test-network-all: need-chutney-path all test-driver
 	mkdir -p $(TEST_NETWORK_ALL_LOG_DIR)
 	@flavors="$(TEST_CHUTNEY_FLAVORS)"; \
-	if ping6 -q -o ::1 >/dev/null 2>&1; then \
+	if ping6 -q -c 1 -o ::1 >/dev/null 2>&1; then \
 		echo "ping6 ::1 succeeded, running IPv6 flavors: $(TEST_CHUTNEY_FLAVORS_IPV6)."; \
 		flavors="$$flavors $(TEST_CHUTNEY_FLAVORS_IPV6)"; \
 	else \
@@ -129,10 +134,10 @@ need-stem-path:
 		exit 1; \
 	fi
 
-test-stem: need-stem-path $(TESTING_TOR_BINARY)
+test-stem: need-stem-path all
 	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor $(TESTING_TOR_BINARY) --all --log notice --target RUN_ALL;
 
-test-stem-full: need-stem-path $(TESTING_TOR_BINARY)
+test-stem-full: need-stem-path all
 	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor $(TESTING_TOR_BINARY) --all --log notice --target RUN_ALL,ONLINE -v;
 
 test-full: need-stem-path need-chutney-path check test-network test-stem

@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -11,13 +11,16 @@
 #include "or.h"
 #include "circuitbuild.h"
 #include "config.h"
+#include "control.h"
 #include "rendclient.h"
 #include "rendcommon.h"
 #include "rendmid.h"
 #include "rendservice.h"
 #include "rephist.h"
+#include "router.h"
 #include "routerlist.h"
 #include "routerparse.h"
+#include "networkstatus.h"
 
 /** Return 0 if one and two are the same service ids, else -1 or 1 */
 int
@@ -268,11 +271,7 @@ rend_encrypt_v2_intro_points_basic(char **encrypted_out,
   tor_assert(client_cookies && smartlist_len(client_cookies) > 0);
 
   /* Generate session key. */
-  if (crypto_rand(session_key, CIPHER_KEY_LEN) < 0) {
-    log_warn(LD_REND, "Unable to generate random session key to encrypt "
-                      "introduction point string.");
-    goto done;
-  }
+  crypto_rand(session_key, CIPHER_KEY_LEN);
 
   /* Determine length of encrypted introduction points including session
    * keys. */
@@ -334,11 +333,7 @@ rend_encrypt_v2_intro_points_basic(char **encrypted_out,
            REND_BASIC_AUTH_CLIENT_MULTIPLE;
        i < REND_BASIC_AUTH_CLIENT_MULTIPLE - 1; i++) {
     client_part = tor_malloc_zero(REND_BASIC_AUTH_CLIENT_ENTRY_LEN);
-    if (crypto_rand(client_part, REND_BASIC_AUTH_CLIENT_ENTRY_LEN) < 0) {
-      log_warn(LD_REND, "Unable to generate fake client entry.");
-      tor_free(client_part);
-      goto done;
-    }
+    crypto_rand(client_part, REND_BASIC_AUTH_CLIENT_ENTRY_LEN);
     smartlist_add(encrypted_session_keys, client_part);
   }
   /* Sort smartlist and put elements in result in order. */
@@ -461,6 +456,7 @@ rend_encode_v2_descriptors(smartlist_t *descs_out,
                            smartlist_t *client_cookies)
 {
   char service_id[DIGEST_LEN];
+  char service_id_base32[REND_SERVICE_ID_LEN_BASE32+1];
   uint32_t time_period;
   char *ipos_base64 = NULL, *ipos = NULL, *ipos_encrypted = NULL,
        *descriptor_cookie = NULL;
@@ -655,6 +651,11 @@ rend_encode_v2_descriptors(smartlist_t *descs_out,
       goto err;
     }
     smartlist_add(descs_out, enc);
+    /* Add the uploaded descriptor to the local service's descriptor cache */
+    rend_cache_store_v2_desc_as_service(enc->desc_str);
+    base32_encode(service_id_base32, sizeof(service_id_base32),
+          service_id, REND_SERVICE_ID_LEN);
+    control_event_hs_descriptor_created(service_id_base32, desc_id_base32, k);
   }
 
   log_info(LD_REND, "Successfully encoded a v2 descriptor and "
@@ -685,37 +686,6 @@ rend_get_service_id(crypto_pk_t *pk, char *out)
     return -1;
   base32_encode(out, REND_SERVICE_ID_LEN_BASE32+1, buf, REND_SERVICE_ID_LEN);
   return 0;
-}
-
-/** Determines whether <b>a</b> is in the interval of <b>b</b> (excluded) and
- * <b>c</b> (included) in a circular digest ring; returns 1 if this is the
- * case, and 0 otherwise.
- */
-int
-rend_id_is_in_interval(const char *a, const char *b, const char *c)
-{
-  int a_b, b_c, c_a;
-  tor_assert(a);
-  tor_assert(b);
-  tor_assert(c);
-
-  /* There are five cases in which a is outside the interval ]b,c]: */
-  a_b = tor_memcmp(a,b,DIGEST_LEN);
-  if (a_b == 0)
-    return 0; /* 1. a == b (b is excluded) */
-  b_c = tor_memcmp(b,c,DIGEST_LEN);
-  if (b_c == 0)
-    return 0; /* 2. b == c (interval is empty) */
-  else if (a_b <= 0 && b_c < 0)
-    return 0; /* 3. a b c */
-  c_a = tor_memcmp(c,a,DIGEST_LEN);
-  if (c_a < 0 && a_b <= 0)
-    return 0; /* 4. c a b */
-  else if (b_c < 0 && c_a < 0)
-    return 0; /* 5. b c a */
-
-  /* In the other cases (a c b; b a c; c b a), a is inside the interval. */
-  return 1;
 }
 
 /** Return true iff <b>query</b> is a syntactically valid service ID (as
@@ -934,5 +904,40 @@ rend_data_client_create(const char *onion_address, const char *desc_id,
  error:
   rend_data_free(rend_data);
   return NULL;
+}
+
+/** Determine the routers that are responsible for <b>id</b> (binary) and
+ * add pointers to those routers' routerstatus_t to <b>responsible_dirs</b>.
+ * Return -1 if we're returning an empty smartlist, else return 0.
+ */
+int
+hid_serv_get_responsible_directories(smartlist_t *responsible_dirs,
+                                     const char *id)
+{
+  int start, found, n_added = 0, i;
+  networkstatus_t *c = networkstatus_get_latest_consensus();
+  if (!c || !smartlist_len(c->routerstatus_list)) {
+    log_warn(LD_REND, "We don't have a consensus, so we can't perform v2 "
+             "rendezvous operations.");
+    return -1;
+  }
+  tor_assert(id);
+  start = networkstatus_vote_find_entry_idx(c, id, &found);
+  if (start == smartlist_len(c->routerstatus_list)) start = 0;
+  i = start;
+  do {
+    routerstatus_t *r = smartlist_get(c->routerstatus_list, i);
+    if (r->is_hs_dir) {
+      smartlist_add(responsible_dirs, r);
+      if (++n_added == REND_NUMBER_OF_CONSECUTIVE_REPLICAS)
+        return 0;
+    }
+    if (++i == smartlist_len(c->routerstatus_list))
+      i = 0;
+  } while (i != start);
+
+  /* Even though we don't have the desired number of hidden service
+   * directories, be happy if we got any. */
+  return smartlist_len(responsible_dirs) ? 0 : -1;
 }
 

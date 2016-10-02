@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -412,11 +412,15 @@ configure_accounting(time_t now)
 
 /** Return the relevant number of bytes sent/received this interval
  * based on the set AccountingRule */
-static uint64_t
+uint64_t
 get_accounting_bytes(void)
 {
   if (get_options()->AccountingRule == ACCT_SUM)
     return n_bytes_read_in_interval+n_bytes_written_in_interval;
+  else if (get_options()->AccountingRule == ACCT_IN)
+    return n_bytes_read_in_interval;
+  else if (get_options()->AccountingRule == ACCT_OUT)
+    return n_bytes_written_in_interval;
   else
     return MAX(n_bytes_read_in_interval, n_bytes_written_in_interval);
 }
@@ -490,7 +494,7 @@ reset_accounting(time_t now)
 }
 
 /** Return true iff we should save our bandwidth usage to disk. */
-static INLINE int
+static inline int
 time_to_record_bandwidth_usage(time_t now)
 {
   /* Note every 600 sec */
@@ -1010,7 +1014,7 @@ getinfo_helper_accounting(control_connection_t *conn,
     else
       *answer = tor_strdup("awake");
   } else if (!strcmp(question, "accounting/bytes")) {
-    tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
+      tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
                  U64_PRINTF_ARG(n_bytes_read_in_interval),
                  U64_PRINTF_ARG(n_bytes_written_in_interval));
   } else if (!strcmp(question, "accounting/bytes-left")) {
@@ -1022,6 +1026,18 @@ getinfo_helper_accounting(control_connection_t *conn,
         total_left = limit - total_bytes;
       tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
                    U64_PRINTF_ARG(total_left), U64_PRINTF_ARG(total_left));
+    } else if (get_options()->AccountingRule == ACCT_IN) {
+      uint64_t read_left = 0;
+      if (n_bytes_read_in_interval < limit)
+        read_left = limit - n_bytes_read_in_interval;
+      tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
+                   U64_PRINTF_ARG(read_left), U64_PRINTF_ARG(limit));
+    } else if (get_options()->AccountingRule == ACCT_OUT) {
+      uint64_t write_left = 0;
+      if (n_bytes_written_in_interval < limit)
+        write_left = limit - n_bytes_written_in_interval;
+      tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
+                   U64_PRINTF_ARG(limit), U64_PRINTF_ARG(write_left));
     } else {
       uint64_t read_left = 0, write_left = 0;
       if (n_bytes_read_in_interval < limit)

@@ -1,3 +1,1052 @@
+Changes in version 0.2.8.8 - 2016-09-23
+  Tor 0.2.8.8 fixes two crash bugs present in previous versions of the
+  0.2.8.x series. Relays running 0.2.8.x should upgrade, as should users
+  who select public relays as their bridges.
+
+  o Major bugfixes (crash):
+    - Fix a complicated crash bug that could affect Tor clients
+      configured to use bridges when replacing a networkstatus consensus
+      in which one of their bridges was mentioned. OpenBSD users saw
+      more crashes here, but all platforms were potentially affected.
+      Fixes bug 20103; bugfix on 0.2.8.2-alpha.
+
+  o Major bugfixes (relay, OOM handler):
+    - Fix a timing-dependent assertion failure that could occur when we
+      tried to flush from a circuit after having freed its cells because
+      of an out-of-memory condition. Fixes bug 20203; bugfix on
+      0.2.8.1-alpha. Thanks to "cypherpunks" for help diagnosing
+      this one.
+
+  o Minor feature (fallback directories):
+    - Remove broken fallbacks from the hard-coded fallback directory
+      list. Closes ticket 20190; patch by teor.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the September 6 2016 Maxmind GeoLite2
+      Country database.
+
+
+Changes in version 0.2.8.7 - 2016-08-24
+  Tor 0.2.8.7 fixes an important bug related to the ReachableAddresses
+  option in 0.2.8.6, and replaces a retiring bridge authority. Everyone
+  who sets the ReachableAddresses option, and all bridges, are strongly
+  encouraged to upgrade.
+
+  o Directory authority changes:
+    - The "Tonga" bridge authority has been retired; the new bridge
+      authority is "Bifroest". Closes tickets 19728 and 19690.
+
+  o Major bugfixes (client, security):
+    - Only use the ReachableAddresses option to restrict the first hop
+      in a path. In earlier versions of 0.2.8.x, it would apply to
+      every hop in the path, with a possible degradation in anonymity
+      for anyone using an uncommon ReachableAddress setting. Fixes bug
+      19973; bugfix on 0.2.8.2-alpha.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the August 2 2016 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (compilation):
+    - Remove an inappropriate "inline" in tortls.c that was causing
+      warnings on older versions of GCC. Fixes bug 19903; bugfix
+      on 0.2.8.1-alpha.
+
+  o Minor bugfixes (fallback directories):
+    - Avoid logging a NULL string pointer when loading fallback
+      directory information. Fixes bug 19947; bugfix on 0.2.4.7-alpha
+      and 0.2.8.1-alpha. Report and patch by "rubiate".
+
+
+Changes in version 0.2.8.6 - 2016-08-02
+
+  Tor 0.2.8.6 is the first stable version of the Tor 0.2.8 series.
+
+  The Tor 0.2.8 series improves client bootstrapping performance,
+  completes the authority-side implementation of improved identity
+  keys for relays, and includes numerous bugfixes and performance
+  improvements throughout the program. This release continues to
+  improve the coverage of Tor's test suite.  For a full list of
+  changes since Tor 0.2.7, see the ReleaseNotes file.
+
+  Changes since 0.2.8.5-rc:
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the July 6 2016 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (compilation):
+    - Fix a compilation warning in the unit tests on systems where char
+      is signed. Fixes bug 19682; bugfix on 0.2.8.1-alpha.
+
+  o Minor bugfixes (fallback directories):
+    - Remove a fallback that was on the hardcoded list, then opted-out.
+      Fixes bug 19782; update to fallback list from 0.2.8.2-alpha.
+
+  o Minor bugfixes (Linux seccomp2 sandbox):
+    - Allow more syscalls when running with "Sandbox 1" enabled:
+      sysinfo, getsockopt(SO_SNDBUF), and setsockopt(SO_SNDBUFFORCE). On
+      some systems, these are required for Tor to start. Fixes bug
+      18397; bugfix on 0.2.5.1-alpha. Patch from Daniel Pinto.
+    - Allow IPPROTO_UDP datagram sockets when running with "Sandbox 1",
+      so that get_interface_address6_via_udp_socket_hack() can work.
+      Fixes bug 19660; bugfix on 0.2.5.1-alpha.
+
+
+Changes in version 0.2.8.5-rc - 2016-07-07
+  Tor 0.2.8.5-rc is the second release candidate in the Tor 0.2.8
+  series. If we find no new bugs or regressions here, the first stable
+  0.2.8 release will be identical to it. It has a few small bugfixes
+  against previous versions.
+
+  o Directory authority changes:
+    - Urras is no longer a directory authority. Closes ticket 19271.
+
+  o Major bugfixes (heartbeat):
+    - Fix a regression that would crash Tor when the periodic
+      "heartbeat" log messages were disabled. Fixes bug 19454; bugfix on
+      0.2.8.1-alpha. Reported by "kubaku".
+
+  o Minor features (build):
+    - Tor now again builds with the recent OpenSSL 1.1 development
+      branch (tested against 1.1.0-pre6-dev). Closes ticket 19499.
+    - When building manual pages, set the timezone to "UTC", so that the
+      output is reproducible. Fixes bug 19558; bugfix on 0.2.2.9-alpha.
+      Patch from intrigeri.
+
+  o Minor bugfixes (fallback directory selection):
+    - Avoid errors during fallback selection if there are no eligible
+      fallbacks. Fixes bug 19480; bugfix on 0.2.8.3-alpha. Patch
+      by teor.
+
+  o Minor bugfixes (IPv6, microdescriptors):
+    - Don't check node addresses when we only have a routerstatus. This
+      allows IPv6-only clients to bootstrap by fetching microdescriptors
+      from fallback directory mirrors. (The microdescriptor consensus
+      has no IPv6 addresses in it.) Fixes bug 19608; bugfix
+      on 0.2.8.2-alpha.
+
+  o Minor bugfixes (logging):
+    - Reduce pointlessly verbose log messages when directory servers
+      can't be found. Fixes bug 18849; bugfix on 0.2.8.3-alpha and
+      0.2.8.1-alpha. Patch by teor.
+    - When a fallback directory changes its fingerprint from the hard-
+      coded fingerprint, log a less severe, more explanatory log
+      message. Fixes bug 18812; bugfix on 0.2.8.1-alpha. Patch by teor.
+
+  o Minor bugfixes (Linux seccomp2 sandboxing):
+    - Allow statistics to be written to disk when "Sandbox 1" is
+      enabled. Fixes bugs 19556 and 19957; bugfix on 0.2.5.1-alpha and
+      0.2.6.1-alpha respectively.
+
+  o Minor bugfixes (user interface):
+    - Remove a warning message "Service [scrubbed] not found after
+      descriptor upload". This message appears when one uses HSPOST
+      control command to upload a service descriptor. Since there is
+      only a descriptor and no service, showing this message is
+      pointless and confusing. Fixes bug 19464; bugfix on 0.2.7.2-alpha.
+
+  o Fallback directory list:
+    - Add a comment to the generated fallback directory list that
+      explains how to comment out unsuitable fallbacks in a way that's
+      compatible with the stem fallback parser.
+    - Update fallback whitelist and blacklist based on relay operator
+      emails. Blacklist unsuitable (non-working, over-volatile)
+      fallbacks. Resolves ticket 19071. Patch by teor.
+    - Update hard-coded fallback list to remove unsuitable fallbacks.
+      Resolves ticket 19071. Patch by teor.
+
+
+Changes in version 0.2.8.4-rc - 2016-06-15
+  Tor 0.2.8.4-rc is the first release candidate in the Tor 0.2.8 series.
+  If we find no new bugs or regressions here, the first stable 0.2.8
+  release will be identical to it. It has a few small bugfixes against
+  previous versions.
+
+  o Major bugfixes (user interface):
+    - Correctly give a warning in the cases where a relay is specified
+      by nickname, and one such relay is found, but it is not officially
+      Named. Fixes bug 19203; bugfix on 0.2.3.1-alpha.
+
+  o Minor features (build):
+    - Tor now builds once again with the recent OpenSSL 1.1 development
+      branch (tested against 1.1.0-pre5 and 1.1.0-pre6-dev).
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the June 7 2016 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (compilation):
+    - Cause the unit tests to compile correctly on mingw64 versions that
+      lack sscanf. Fixes bug 19213; bugfix on 0.2.7.1-alpha.
+
+  o Minor bugfixes (downloading):
+    - Predict more correctly whether we'll be downloading over HTTP when
+      we determine the maximum length of a URL. This should avoid a
+      "BUG" warning about the Squid HTTP proxy and its URL limits. Fixes
+      bug 19191.
+
+
+Changes in version 0.2.8.3-alpha - 2016-05-26
+  Tor 0.2.8.3-alpha resolves several bugs, most of them introduced over
+  the course of the 0.2.8 development cycle. It improves the behavior of
+  directory clients, fixes several crash bugs, fixes a gap in compiler
+  hardening, and allows the full integration test suite to run on
+  more platforms.
+
+  o Major bugfixes (security, client, DNS proxy):
+    - Stop a crash that could occur when a client running with DNSPort
+      received a query with multiple address types, and the first
+      address type was not supported. Found and fixed by Scott Dial.
+      Fixes bug 18710; bugfix on 0.2.5.4-alpha.
+
+  o Major bugfixes (security, compilation):
+    - Correctly detect compiler flags on systems where _FORTIFY_SOURCE
+      is predefined. Previously, our use of -D_FORTIFY_SOURCE would
+      cause a compiler warning, thereby making other checks fail, and
+      needlessly disabling compiler-hardening support. Fixes one case of
+      bug 18841; bugfix on 0.2.3.17-beta. Patch from "trudokal".
+
+  o Major bugfixes (security, directory authorities):
+    - Fix a crash and out-of-bounds write during authority voting, when
+      the list of relays includes duplicate ed25519 identity keys. Fixes
+      bug 19032; bugfix on 0.2.8.2-alpha.
+
+  o Major bugfixes (client, bootstrapping):
+    - Check if bootstrap consensus downloads are still needed when the
+      linked connection attaches. This prevents tor making unnecessary
+      begindir-style connections, which are the only directory
+      connections tor clients make since the fix for 18483 was merged.
+    - Fix some edge cases where consensus download connections may not
+      have been closed, even though they were not needed. Related to fix
+      for 18809.
+    - Make relays retry consensus downloads the correct number of times,
+      rather than the more aggressive client retry count. Fixes part of
+      ticket 18809.
+    - Stop downloading consensuses when we have a consensus, even if we
+      don't have all the certificates for it yet. Fixes bug 18809;
+      bugfix on 0.2.8.1-alpha. Patches by arma and teor.
+
+  o Major bugfixes (directory mirrors):
+    - Decide whether to advertise begindir support in the the same way
+      we decide whether to advertise our DirPort. Allowing these
+      decisions to become out-of-sync led to surprising behavior like
+      advertising begindir support when hibernation made us not
+      advertise a DirPort. Resolves bug 18616; bugfix on 0.2.8.1-alpha.
+      Patch by teor.
+
+  o Major bugfixes (IPv6 bridges, client):
+    - Actually use IPv6 addresses when selecting directory addresses for
+      IPv6 bridges. Fixes bug 18921; bugfix on 0.2.8.1-alpha. Patch
+      by teor.
+
+  o Major bugfixes (key management):
+    - If OpenSSL fails to generate an RSA key, do not retain a dangling
+      pointer to the previous (uninitialized) key value. The impact here
+      should be limited to a difficult-to-trigger crash, if OpenSSL is
+      running an engine that makes key generation failures possible, or
+      if OpenSSL runs out of memory. Fixes bug 19152; bugfix on
+      0.2.1.10-alpha. Found by Yuan Jochen Kang, Suman Jana, and
+      Baishakhi Ray.
+
+  o Major bugfixes (testing):
+    - Fix a bug that would block 'make test-network-all' on systems where
+      IPv6 packets were lost. Fixes bug 19008; bugfix on 0.2.7.3-rc.
+    - Avoid "WSANOTINITIALISED" warnings in the unit tests. Fixes bug 18668;
+      bugfix on 0.2.8.1-alpha.
+
+  o Minor features (clients):
+    - Make clients, onion services, and bridge relays always use an
+      encrypted begindir connection for directory requests. Resolves
+      ticket 18483. Patch by teor.
+
+  o Minor features (fallback directory mirrors):
+    - Give each fallback the same weight for client selection; restrict
+      fallbacks to one per operator; report fallback directory detail
+      changes when rebuilding list; add new fallback directory mirrors
+      to the whitelist; update fallback directories based on the latest
+      OnionOO data; and any other minor simplifications and fixes.
+      Closes tasks 17158, 17905, 18749, bug 18689, and fixes part of bug
+      18812 on 0.2.8.1-alpha; patch by teor.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the May 4 2016 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (assert, portability):
+    - Fix an assertion failure in memarea.c on systems where "long" is
+      shorter than the size of a pointer. Fixes bug 18716; bugfix
+      on 0.2.1.1-alpha.
+
+  o Minor bugfixes (bootstrap):
+    - Consistently use the consensus download schedule for authority
+      certificates. Fixes bug 18816; bugfix on 0.2.4.13-alpha.
+
+  o Minor bugfixes (build):
+    - Remove a pair of redundant AM_CONDITIONAL declarations from
+      configure.ac. Fixes one final case of bug 17744; bugfix
+      on 0.2.8.2-alpha.
+    - Resolve warnings when building on systems that are concerned with
+      signed char. Fixes bug 18728; bugfix on 0.2.7.2-alpha
+      and 0.2.6.1-alpha.
+    - When libscrypt.h is found, but no libscrypt library can be linked,
+      treat libscrypt as absent. Fixes bug 19161; bugfix
+      on 0.2.6.1-alpha.
+
+  o Minor bugfixes (client):
+    - Turn all TestingClientBootstrap* into non-testing torrc options.
+      This changes simply renames them by removing "Testing" in front of
+      them and they do not require TestingTorNetwork to be enabled
+      anymore. Fixes bug 18481; bugfix on 0.2.8.1-alpha.
+    - Make directory node selection more reliable, mainly for IPv6-only
+      clients and clients with few reachable addresses. Fixes bug 18929;
+      bugfix on 0.2.8.1-alpha. Patch by teor.
+
+  o Minor bugfixes (controller, microdescriptors):
+    - Make GETINFO dir/status-vote/current/consensus conform to the
+      control specification by returning "551 Could not open cached
+      consensus..." when not caching consensuses. Fixes bug 18920;
+      bugfix on 0.2.2.6-alpha.
+
+  o Minor bugfixes (crypto, portability):
+    - The SHA3 and SHAKE routines now produce the correct output on Big
+      Endian systems. No code calls either algorithm yet, so this is
+      primarily a build fix. Fixes bug 18943; bugfix on 0.2.8.1-alpha.
+    - Tor now builds again with the recent OpenSSL 1.1 development
+      branch (tested against 1.1.0-pre4 and 1.1.0-pre5-dev). Closes
+      ticket 18286.
+
+  o Minor bugfixes (directories):
+    - When fetching extrainfo documents, compare their SHA256 digests
+      and Ed25519 signing key certificates with the routerinfo that led
+      us to fetch them, rather than with the most recent routerinfo.
+      Otherwise we generate many spurious warnings about mismatches.
+      Fixes bug 17150; bugfix on 0.2.7.2-alpha.
+
+  o Minor bugfixes (logging):
+    - When we can't generate a signing key because OfflineMasterKey is
+      set, do not imply that we should have been able to load it. Fixes
+      bug 18133; bugfix on 0.2.7.2-alpha.
+    - Stop periodic_event_dispatch() from blasting twelve lines per
+      second at loglevel debug. Fixes bug 18729; fix on 0.2.8.1-alpha.
+    - When rejecting a misformed INTRODUCE2 cell, only log at
+      PROTOCOL_WARN severity. Fixes bug 18761; bugfix on 0.2.8.2-alpha.
+
+  o Minor bugfixes (pluggable transports):
+    - Avoid reporting a spurious error when we decide that we don't need
+      to terminate a pluggable transport because it has already exited.
+      Fixes bug 18686; bugfix on 0.2.5.5-alpha.
+
+  o Minor bugfixes (pointer arithmetic):
+    - Fix a bug in memarea_alloc() that could have resulted in remote
+      heap write access, if Tor had ever passed an unchecked size to
+      memarea_alloc(). Fortunately, all the sizes we pass to
+      memarea_alloc() are pre-checked to be less than 128 kilobytes.
+      Fixes bug 19150; bugfix on 0.2.1.1-alpha. Bug found by
+      Guido Vranken.
+
+  o Minor bugfixes (relays):
+    - Consider more config options when relays decide whether to
+      regenerate their descriptor. Fixes more of bug 12538; bugfix
+      on 0.2.8.1-alpha.
+    - Resolve some edge cases where we might launch an ORPort
+      reachability check even when DisableNetwork is set. Noticed while
+      fixing bug 18616; bugfix on 0.2.3.9-alpha.
+
+  o Minor bugfixes (statistics):
+    - We now include consensus downloads via IPv6 in our directory-
+      request statistics. Fixes bug 18460; bugfix on 0.2.3.14-alpha.
+
+  o Minor bugfixes (testing):
+    - Allow directories in small networks to bootstrap by skipping
+      DirPort checks when the consensus has no exits. Fixes bug 19003;
+      bugfix on 0.2.8.1-alpha. Patch by teor.
+    - Fix a small memory leak that would occur when the
+      TestingEnableCellStatsEvent option was turned on. Fixes bug 18673;
+      bugfix on 0.2.5.2-alpha.
+
+  o Minor bugfixes (time handling):
+    - When correcting a corrupt 'struct tm' value, fill in the tm_wday
+      field. Otherwise, our unit tests crash on Windows. Fixes bug
+      18977; bugfix on 0.2.2.25-alpha.
+
+  o Documentation:
+    - Document the contents of the 'datadir/keys' subdirectory in the
+      manual page. Closes ticket 17621.
+    - Stop recommending use of nicknames to identify relays in our
+      MapAddress documentation. Closes ticket 18312.
+
+
+Changes in version 0.2.8.2-alpha - 2016-03-28
+  Tor 0.2.8.2-alpha is the second alpha in its series. It fixes numerous
+  bugs in earlier versions of Tor, including some that prevented
+  authorities using Tor 0.2.7.x from running correctly. IPv6 and
+  directory support should also be much improved.
+
+  o New system requirements:
+    - Tor no longer supports versions of OpenSSL with a broken
+      implementation of counter mode. (This bug was present in OpenSSL
+      1.0.0, and was fixed in OpenSSL 1.0.0a.) Tor still detects, but no
+      longer runs with, these versions.
+    - Tor no longer attempts to support platforms where the "time_t"
+      type is unsigned. (To the best of our knowledge, only OpenVMS does
+      this, and Tor has never actually built on OpenVMS.) Closes
+      ticket 18184.
+    - Tor now uses Autoconf version 2.63 or later, and Automake 1.11 or
+      later (released in 2008 and 2009 respectively). If you are
+      building Tor from the git repository instead of from the source
+      distribution, and your tools are older than this, you will need to
+      upgrade. Closes ticket 17732.
+
+  o Major bugfixes (security, pointers):
+    - Avoid a difficult-to-trigger heap corruption attack when extending
+      a smartlist to contain over 16GB of pointers. Fixes bug 18162;
+      bugfix on 0.1.1.11-alpha, which fixed a related bug incompletely.
+      Reported by Guido Vranken.
+
+  o Major bugfixes (bridges, pluggable transports):
+    - Modify the check for OR connections to private addresses. Allow
+      bridges on private addresses, including pluggable transports that
+      ignore the (potentially private) address in the bridge line. Fixes
+      bug 18517; bugfix on 0.2.8.1-alpha. Reported by gk, patch by teor.
+
+  o Major bugfixes (compilation):
+    - Repair hardened builds under the clang compiler. Previously, our
+      use of _FORTIFY_SOURCE would conflict with clang's address
+      sanitizer. Fixes bug 14821; bugfix on 0.2.5.4-alpha.
+
+  o Major bugfixes (crash on shutdown):
+    - Correctly handle detaching circuits from muxes when shutting down.
+      Fixes bug 18116; bugfix on 0.2.8.1-alpha.
+    - Fix an assert-on-exit bug related to counting memory usage in
+      rephist.c. Fixes bug 18651; bugfix on 0.2.8.1-alpha.
+
+  o Major bugfixes (crash on startup):
+    - Fix a segfault during startup: If a Unix domain socket was
+      configured as listener (such as a ControlSocket or a SocksPort
+      "unix:" socket), and tor was started as root but not configured to
+      switch to another user, tor would segfault while trying to string
+      compare a NULL value. Fixes bug 18261; bugfix on 0.2.8.1-alpha.
+      Patch by weasel.
+
+  o Major bugfixes (dns proxy mode, crash):
+    - Avoid crashing when running as a DNS proxy. Fixes bug 16248;
+      bugfix on 0.2.0.1-alpha. Patch from "cypherpunks".
+
+  o Major bugfixes (relays, bridge clients):
+    - Ensure relays always allow IPv4 OR and Dir connections. Ensure
+      bridge clients use the address configured in the bridge line.
+      Fixes bug 18348; bugfix on 0.2.8.1-alpha. Reported by sysrqb,
+      patch by teor.
+
+  o Major bugfixes (voting):
+    - Actually enable support for authorities to match routers by their
+      Ed25519 identities. Previously, the code had been written, but
+      some debugging code that had accidentally been left in the
+      codebase made it stay turned off. Fixes bug 17702; bugfix
+      on 0.2.7.2-alpha.
+    - When collating votes by Ed25519 identities, authorities now
+      include a "NoEdConsensus" flag if the ed25519 value (or lack
+      thereof) for a server does not reflect the majority consensus.
+      Related to bug 17668; bugfix on 0.2.7.2-alpha.
+    - When generating a vote with keypinning disabled, never include two
+      entries for the same ed25519 identity. This bug was causing
+      authorities to generate votes that they could not parse when a
+      router violated key pinning by changing its RSA identity but
+      keeping its Ed25519 identity. Fixes bug 17668; fixes part of bug
+      18318. Bugfix on 0.2.7.2-alpha.
+
+  o Minor features (security, win32):
+    - Set SO_EXCLUSIVEADDRUSE on Win32 to avoid a local port-stealing
+      attack. Fixes bug 18123; bugfix on all tor versions. Patch
+      by teor.
+
+  o Minor features (bug-resistance):
+    - Make Tor survive errors involving connections without a
+      corresponding event object. Previously we'd fail with an
+      assertion; now we produce a log message. Related to bug 16248.
+
+  o Minor features (build):
+    - Detect systems with FreeBSD-derived kernels (such as GNU/kFreeBSD)
+      as having possible IPFW support. Closes ticket 18448. Patch from
+      Steven Chamberlain.
+
+  o Minor features (code hardening):
+    - Use tor_snprintf() and tor_vsnprintf() even in external and low-
+      level code, to harden against accidental failures to NUL-
+      terminate. Part of ticket 17852. Patch from jsturgix. Found
+      with Flawfinder.
+
+  o Minor features (crypto):
+    - Validate the hard-coded Diffie-Hellman parameters and ensure that
+      p is a safe prime, and g is a suitable generator. Closes
+      ticket 18221.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the March 3 2016 Maxmind GeoLite2
+      Country database.
+
+  o Minor features (hidden service directory):
+    - Streamline relay-side hsdir handling: when relays consider whether
+      to accept an uploaded hidden service descriptor, they no longer
+      check whether they are one of the relays in the network that is
+      "supposed" to handle that descriptor. Implements ticket 18332.
+
+  o Minor features (IPv6):
+    - Add ClientPreferIPv6DirPort, which is set to 0 by default. If set
+      to 1, tor prefers IPv6 directory addresses.
+    - Add ClientUseIPv4, which is set to 1 by default. If set to 0, tor
+      avoids using IPv4 for client OR and directory connections.
+    - Try harder to obey the IP version restrictions "ClientUseIPv4 0",
+      "ClientUseIPv6 0", "ClientPreferIPv6ORPort", and
+      "ClientPreferIPv6DirPort". Closes ticket 17840; patch by teor.
+
+  o Minor features (linux seccomp2 sandbox):
+    - Reject attempts to change our Address with "Sandbox 1" enabled.
+      Changing Address with Sandbox turned on would never actually work,
+      but previously it would fail in strange and confusing ways. Found
+      while fixing 18548.
+
+  o Minor features (robustness):
+    - Exit immediately with an error message if the code attempts to use
+      Libevent without having initialized it. This should resolve some
+      frequently-made mistakes in our unit tests. Closes ticket 18241.
+
+  o Minor features (unix domain sockets):
+    - Add a new per-socket option, RelaxDirModeCheck, to allow creating
+      Unix domain sockets without checking the permissions on the parent
+      directory. (Tor checks permissions by default because some
+      operating systems only check permissions on the parent directory.
+      However, some operating systems do look at permissions on the
+      socket, and tor's default check is unneeded.) Closes ticket 18458.
+      Patch by weasel.
+
+  o Minor bugfixes (exit policies, security):
+    - Refresh an exit relay's exit policy when interface addresses
+      change. Previously, tor only refreshed the exit policy when the
+      configured external address changed. Fixes bug 18208; bugfix on
+      0.2.7.3-rc. Patch by teor.
+
+  o Minor bugfixes (security, hidden services):
+    - Prevent hidden services connecting to client-supplied rendezvous
+      addresses that are reserved as internal or multicast. Fixes bug
+      8976; bugfix on 0.2.3.21-rc. Patch by dgoulet and teor.
+
+  o Minor bugfixes (build):
+    - Do not link the unit tests against both the testing and non-
+      testing versions of the static libraries. Fixes bug 18490; bugfix
+      on 0.2.7.1-alpha.
+    - Avoid spurious failures from configure files related to calling
+      exit(0) in TOR_SEARCH_LIBRARY. Fixes bug 18625; bugfix on
+      0.2.0.1-alpha. Patch from "cypherpunks".
+    - Silence spurious clang-scan warnings in the ed25519_donna code by
+      explicitly initializing some objects. Fixes bug 18384; bugfix on
+      0.2.7.2-alpha. Patch by teor.
+
+  o Minor bugfixes (client, bootstrap):
+    - Count receipt of new microdescriptors as progress towards
+      bootstrapping. Previously, with EntryNodes set, Tor might not
+      successfully repopulate the guard set on bootstrapping. Fixes bug
+      16825; bugfix on 0.2.3.1-alpha.
+
+  o Minor bugfixes (code correctness):
+    - Update to the latest version of Trunnel, which tries harder to
+      avoid generating code that can invoke memcpy(p,NULL,0). Bug found
+      by clang address sanitizer. Fixes bug 18373; bugfix
+      on 0.2.7.2-alpha.
+
+  o Minor bugfixes (configuration):
+    - Fix a tiny memory leak when parsing a port configuration ending in
+      ":auto". Fixes bug 18374; bugfix on 0.2.3.3-alpha.
+
+  o Minor bugfixes (containers):
+    - If we somehow attempt to construct a heap with more than
+      1073741822 elements, avoid an integer overflow when maintaining
+      the heap property. Fixes bug 18296; bugfix on 0.1.2.1-alpha.
+
+  o Minor bugfixes (correctness):
+    - Fix a bad memory handling bug that would occur if we had queued a
+      cell on a channel's incoming queue. Fortunately, we can't actually
+      queue a cell like that as our code is constructed today, but it's
+      best to avoid this kind of error, even if there isn't any code
+      that triggers it today. Fixes bug 18570; bugfix on 0.2.4.4-alpha.
+
+  o Minor bugfixes (directory):
+    - When generating a URL for a directory server on an IPv6 address,
+      wrap the IPv6 address in square brackets. Fixes bug 18051; bugfix
+      on 0.2.3.9-alpha. Patch from Malek.
+
+  o Minor bugfixes (fallback directory mirrors):
+    - When requesting extrainfo descriptors from a trusted directory
+      server, check whether it is an authority or a fallback directory
+      which supports extrainfo descriptors. Fixes bug 18489; bugfix on
+      0.2.4.7-alpha. Reported by atagar, patch by teor.
+
+  o Minor bugfixes (hidden service, client):
+    - Handle the case where the user makes several fast consecutive
+      requests to the same .onion address. Previously, the first six
+      requests would each trigger a descriptor fetch, each picking a
+      directory (there are 6 overall) and the seventh one would fail
+      because no directories were left, thereby triggering a close on
+      all current directory connections asking for the hidden service.
+      The solution here is to not close the connections if we have
+      pending directory fetches. Fixes bug 15937; bugfix
+      on 0.2.7.1-alpha.
+
+  o Minor bugfixes (hidden service, control port):
+    - Add the onion address to the HS_DESC event for the UPLOADED action
+      both on success or failure. It was previously hardcoded with
+      UNKNOWN. Fixes bug 16023; bugfix on 0.2.7.2-alpha.
+
+  o Minor bugfixes (hidden service, directory):
+    - Bridges now refuse "rendezvous2" (hidden service descriptor)
+      publish attempts. Suggested by ticket 18332.
+
+  o Minor bugfixes (linux seccomp2 sandbox):
+    - Allow the setrlimit syscall, and the prlimit and prlimit64
+      syscalls, which some libc implementations use under the hood.
+      Fixes bug 15221; bugfix on 0.2.5.1-alpha.
+    - Avoid a 10-second delay when starting as a client with "Sandbox 1"
+      enabled and no DNS resolvers configured. This should help TAILS
+      start up faster. Fixes bug 18548; bugfix on 0.2.5.1-alpha.
+    - Fix the sandbox's interoperability with unix domain sockets under
+      setuid. Fixes bug 18253; bugfix on 0.2.8.1-alpha.
+
+  o Minor bugfixes (logging):
+    - When logging information about an unparsable networkstatus vote or
+      consensus, do not say "vote" when we mean consensus. Fixes bug
+      18368; bugfix on 0.2.0.8-alpha.
+    - Scrub service name in "unrecognized service ID" log messages.
+      Fixes bug 18600; bugfix on 0.2.4.11-alpha.
+    - Downgrade logs and backtraces about IP versions to info-level.
+      Only log backtraces once each time tor runs. Assists in diagnosing
+      bug 18351; bugfix on 0.2.8.1-alpha. Reported by sysrqb and
+      Christian, patch by teor.
+
+  o Minor bugfixes (memory safety):
+    - Avoid freeing an uninitialized pointer when opening a socket fails
+      in get_interface_addresses_ioctl(). Fixes bug 18454; bugfix on
+      0.2.3.11-alpha. Reported by toralf and "cypherpunks", patch
+      by teor.
+    - Correctly duplicate addresses in get_interface_address6_list().
+      Fixes bug 18454; bugfix on 0.2.8.1-alpha. Reported by toralf,
+      patch by "cypherpunks".
+    - Fix a memory leak in tor-gencert. Fixes part of bug 18672; bugfix
+      on 0.2.0.1-alpha.
+    - Fix a memory leak in "tor --list-fingerprint". Fixes part of bug
+      18672; bugfix on 0.2.5.1-alpha.
+
+  o Minor bugfixes (private directory):
+    - Prevent a race condition when creating private directories. Fixes
+      part of bug 17852; bugfix on 0.0.2pre13. Part of ticket 17852.
+      Patch from jsturgix. Found with Flawfinder.
+
+  o Minor bugfixes (test networks, IPv6):
+    - Allow internal IPv6 addresses in descriptors in test networks.
+      Fixes bug 17153; bugfix on 0.2.3.16-alpha. Patch by teor, reported
+      by karsten.
+
+  o Minor bugfixes (testing):
+    - We no longer disable assertions in the unit tests when coverage is
+      enabled. Instead, we require you to say --disable-asserts-in-tests
+      to the configure script if you need assertions disabled in the
+      unit tests (for example, if you want to perform branch coverage).
+      Fixes bug 18242; bugfix on 0.2.7.1-alpha.
+
+  o Minor bugfixes (time parsing):
+    - Avoid overflow in tor_timegm when parsing dates in and after 2038
+      on platforms with 32-bit time_t. Fixes bug 18479; bugfix on
+      0.0.2pre14. Patch by teor.
+
+  o Minor bugfixes (tor-gencert):
+    - Correctly handle the case where an authority operator enters a
+      passphrase but sends an EOF before sending a newline. Fixes bug
+      17443; bugfix on 0.2.0.20-rc. Found by junglefowl.
+
+  o Code simplification and refactoring:
+    - Quote all the string interpolations in configure.ac -- even those
+      which we are pretty sure can't contain spaces. Closes ticket
+      17744. Patch from zerosion.
+    - Remove specialized code for non-inplace AES_CTR. 99% of our AES is
+      inplace, so there's no need to have a separate implementation for
+      the non-inplace code. Closes ticket 18258. Patch from Malek.
+    - Simplify return types for some crypto functions that can't
+      actually fail. Patch from Hassan Alsibyani. Closes ticket 18259.
+
+  o Documentation:
+    - Change build messages to refer to "Fedora" instead of "Fedora
+      Core", and "dnf" instead of "yum". Closes tickets 18459 and 18426.
+      Patches from "icanhasaccount" and "cypherpunks".
+
+  o Removed features:
+    - We no longer maintain an internal freelist in memarea.c.
+      Allocators should be good enough to make this code unnecessary,
+      and it's doubtful that it ever had any performance benefit.
+
+  o Testing:
+    - Fix several warnings from clang's address sanitizer produced in
+      the unit tests.
+    - Treat backtrace test failures as expected on FreeBSD until we
+      solve bug 17808. Closes ticket 18204.
+
+
+Changes in version 0.2.8.1-alpha - 2016-02-04
+  Tor 0.2.8.1-alpha is the first alpha release in its series. It
+  includes numerous small features and bugfixes against previous Tor
+  versions, and numerous small infrastructure improvements. The most
+  notable features are a set of improvements to the directory subsystem.
+
+  o Major features (security, Linux):
+    - When Tor starts as root on Linux and is told to switch user ID, it
+      can now retain the capability to bind to low ports. By default,
+      Tor will do this only when it's switching user ID and some low
+      ports have been configured. You can change this behavior with the
+      new option KeepBindCapabilities. Closes ticket 8195.
+
+  o Major features (directory system):
+    - When bootstrapping multiple consensus downloads at a time, use the
+      first one that starts downloading, and close the rest. This
+      reduces failures when authorities or fallback directories are slow
+      or down. Together with the code for feature 15775, this feature
+      should reduces failures due to fallback churn. Implements ticket
+      4483. Patch by teor. Implements IPv4 portions of proposal 210 by
+      mikeperry and teor.
+    - Include a trial list of default fallback directories, based on an
+      opt-in survey of suitable relays. Doing this should make clients
+      bootstrap more quickly and reliably, and reduce the load on the
+      directory authorities. Closes ticket 15775. Patch by teor.
+      Candidates identified using an OnionOO script by weasel, teor,
+      gsathya, and karsten.
+    - Previously only relays that explicitly opened a directory port
+      (DirPort) accepted directory requests from clients. Now all
+      relays, with and without a DirPort, accept and serve tunneled
+      directory requests that they receive through their ORPort. You can
+      disable this behavior using the new DirCache option. Closes
+      ticket 12538.
+
+  o Major key updates:
+    - Update the V3 identity key for the dannenberg directory authority:
+      it was changed on 18 November 2015. Closes task 17906. Patch
+      by teor.
+
+  o Minor features (security, clock):
+    - Warn when the system clock appears to move back in time (when the
+      state file was last written in the future). Tor doesn't know that
+      consensuses have expired if the clock is in the past. Patch by
+      teor. Implements ticket 17188.
+
+  o Minor features (security, exit policies):
+    - ExitPolicyRejectPrivate now rejects more private addresses by
+      default. Specifically, it now rejects the relay's outbound bind
+      addresses (if configured), and the relay's configured port
+      addresses (such as ORPort and DirPort). Fixes bug 17027; bugfix on
+      0.2.0.11-alpha. Patch by teor.
+
+  o Minor features (security, memory erasure):
+    - Set the unused entries in a smartlist to NULL. This helped catch
+      a (harmless) bug, and shouldn't affect performance too much.
+      Implements ticket 17026.
+    - Use SecureMemoryWipe() function to securely clean memory on
+      Windows. Previously we'd use OpenSSL's OPENSSL_cleanse() function.
+      Implements feature 17986.
+    - Use explicit_bzero or memset_s when present. Previously, we'd use
+      OpenSSL's OPENSSL_cleanse() function. Closes ticket 7419; patches
+      from <logan@hackers.mu> and <selven@hackers.mu>.
+    - Make memwipe() do nothing when passed a NULL pointer or buffer of
+      zero size. Check size argument to memwipe() for underflow. Fixes
+      bug 18089; bugfix on 0.2.3.25 and 0.2.4.6-alpha. Reported by gk,
+      patch by teor.
+
+  o Minor features (security, RNG):
+    - Adjust Tor's use of OpenSSL's RNG APIs so that they absolutely,
+      positively are not allowed to fail. Previously we depended on
+      internal details of OpenSSL's behavior. Closes ticket 17686.
+    - Never use the system entropy output directly for anything besides
+      seeding the PRNG. When we want to generate important keys, instead
+      of using system entropy directly, we now hash it with the PRNG
+      stream. This may help resist certain attacks based on broken OS
+      entropy implementations. Closes part of ticket 17694.
+    - Use modern system calls (like getentropy() or getrandom()) to
+      generate strong entropy on platforms that have them. Closes
+      ticket 13696.
+
+  o Minor features (accounting):
+    - Added two modes to the AccountingRule option: One for limiting
+      only the number of bytes sent ("AccountingRule out"), and one for
+      limiting only the number of bytes received ("AccountingRule in").
+      Closes ticket 15989; patch from "unixninja92".
+
+  o Minor features (build):
+    - Since our build process now uses "make distcheck", we no longer
+      force "make dist" to depend on "make check". Closes ticket 17893;
+      patch from "cypherpunks."
+    - Tor now builds successfully with the recent OpenSSL 1.1
+      development branch, and with the latest LibreSSL. Closes tickets
+      17549, 17921, and 17984.
+
+  o Minor features (controller):
+    - Adds the FallbackDir entries to 'GETINFO config/defaults'. Closes
+      tickets 16774 and 17817. Patch by George Tankersley.
+    - New 'GETINFO hs/service/desc/id/' command to retrieve a hidden
+      service descriptor from a service's local hidden service
+      descriptor cache. Closes ticket 14846.
+    - Add 'GETINFO exit-policy/reject-private/[default,relay]', so
+      controllers can examine the the reject rules added by
+      ExitPolicyRejectPrivate. This makes it easier for stem to display
+      exit policies.
+
+  o Minor features (crypto):
+    - Add SHA512 support to crypto.c. Closes ticket 17663; patch from
+      George Tankersley.
+    - Add SHA3 and SHAKE support to crypto.c. Closes ticket 17783.
+    - When allocating a digest state object, allocate no more space than
+      we actually need. Previously, we would allocate as much space as
+      the state for the largest algorithm would need. This change saves
+      up to 672 bytes per circuit. Closes ticket 17796.
+    - Improve performance when hashing non-multiple of 8 sized buffers,
+      based on Andrew Moon's public domain SipHash-2-4 implementation.
+      Fixes bug 17544; bugfix on 0.2.5.3-alpha.
+
+  o Minor features (directory downloads):
+    - Wait for busy authorities and fallback directories to become non-
+      busy when bootstrapping. (A similar change was made in 6c443e987d
+      for directory caches chosen from the consensus.) Closes ticket
+      17864; patch by teor.
+    - Add UseDefaultFallbackDirs, which enables any hard-coded fallback
+      directory mirrors. The default is 1; set it to 0 to disable
+      fallbacks. Implements ticket 17576. Patch by teor.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the January 5 2016 Maxmind GeoLite2
+      Country database.
+
+  o Minor features (IPv6):
+    - Add an argument 'ipv6=address:orport' to the DirAuthority and
+      FallbackDir torrc options, to specify an IPv6 address for an
+      authority or fallback directory. Add hard-coded ipv6 addresses for
+      directory authorities that have them. Closes ticket 17327; patch
+      from Nick Mathewson and teor.
+    - Add address policy assume_action support for IPv6 addresses.
+    - Limit IPv6 mask bits to 128.
+    - Warn when comparing against an AF_UNSPEC address in a policy, it's
+      almost always a bug. Closes ticket 17863; patch by teor.
+    - Allow users to configure directory authorities and fallback
+      directory servers with IPv6 addresses and ORPorts. Resolves
+      ticket 6027.
+    - routerset_parse now accepts IPv6 literal addresses. Fixes bug
+      17060; bugfix on 0.2.1.3-alpha. Patch by teor.
+    - Make tor_ersatz_socketpair work on IPv6-only systems. Fixes bug
+      17638; bugfix on 0.0.2pre8. Patch by teor.
+
+  o Minor features (logging):
+    - When logging to syslog, allow a tag to be added to the syslog
+      identity (the string prepended to every log message). The tag can
+      be configured with SyslogIdentityTag and defaults to none. Setting
+      it to "foo" will cause logs to be tagged as "Tor-foo". Closes
+      ticket 17194.
+
+  o Minor features (portability):
+    - Use timingsafe_memcmp() where available. Closes ticket 17944;
+      patch from <logan@hackers.mu>.
+
+  o Minor features (relay, address discovery):
+    - Add a family argument to get_interface_addresses_raw() and
+      subfunctions to make network interface address interogation more
+      efficient. Now Tor can specifically ask for IPv4, IPv6 or both
+      types of interfaces from the operating system. Resolves
+      ticket 17950.
+    - When get_interface_address6_list(.,AF_UNSPEC,.) is called and
+      fails to enumerate interface addresses using the platform-specific
+      API, have it rely on the UDP socket fallback technique to try and
+      find out what IP addresses (both IPv4 and IPv6) our machine has.
+      Resolves ticket 17951.
+
+  o Minor features (replay cache):
+    - The replay cache now uses SHA256 instead of SHA1. Implements
+      feature 8961. Patch by teor, issue reported by rransom.
+
+  o Minor features (unix file permissions):
+    - Defer creation of Unix sockets until after setuid. This avoids
+      needing CAP_CHOWN and CAP_FOWNER when using systemd's
+      CapabilityBoundingSet, or chown and fowner when using SELinux.
+      Implements part of ticket 17562. Patch from Jamie Nguyen.
+    - If any directory created by Tor is marked as group readable, the
+      filesystem group is allowed to be either the default GID or the
+      root user. Allowing root to read the DataDirectory prevents the
+      need for CAP_READ_SEARCH when using systemd's
+      CapabilityBoundingSet, or dac_read_search when using SELinux.
+      Implements part of ticket 17562. Patch from Jamie Nguyen.
+    - Introduce a new DataDirectoryGroupReadable option. If it is set to
+      1, the DataDirectory will be made readable by the default GID.
+      Implements part of ticket 17562. Patch from Jamie Nguyen.
+
+  o Minor bugfixes (accounting):
+    - The max bandwidth when using 'AccountRule sum' is now correctly
+      logged. Fixes bug 18024; bugfix on 0.2.6.1-alpha. Patch
+      from "unixninja92".
+
+  o Minor bugfixes (code correctness):
+    - When closing an entry connection, generate a warning if we should
+      have sent an end cell for it but we haven't. Fixes bug 17876;
+      bugfix on 0.2.3.2-alpha.
+    - Assert that allocated memory held by the reputation code is freed
+      according to its internal counters. Fixes bug 17753; bugfix
+      on 0.1.1.1-alpha.
+    - Assert when the TLS contexts fail to initialize. Fixes bug 17683;
+      bugfix on 0.0.6.
+
+  o Minor bugfixes (compilation):
+    - Mark all object files that include micro-revision.i as depending
+      on it, so as to make parallel builds more reliable. Fixes bug
+      17826; bugfix on 0.2.5.1-alpha.
+    - Don't try to use the pthread_condattr_setclock() function unless
+      it actually exists. Fixes compilation on NetBSD-6.x. Fixes bug
+      17819; bugfix on 0.2.6.3-alpha.
+    - Fix backtrace compilation on FreeBSD. Fixes bug 17827; bugfix
+      on 0.2.5.2-alpha.
+    - Fix search for libevent libraries on OpenBSD (and other systems
+      that install libevent 1 and libevent 2 in parallel). Fixes bug
+      16651; bugfix on 0.1.0.7-rc. Patch from "rubiate".
+    - Isolate environment variables meant for tests from the rest of the
+      build system. Fixes bug 17818; bugfix on 0.2.7.3-rc.
+    - Replace usage of 'INLINE' with 'inline'. Fixes bug 17804; bugfix
+      on 0.0.2pre8.
+    - Remove config.log only from make distclean, not from make clean.
+      Fixes bug 17924; bugfix on 0.2.4.1-alpha.
+
+  o Minor bugfixes (crypto):
+    - Check the return value of HMAC() and assert on failure. Fixes bug
+      17658; bugfix on 0.2.3.6-alpha. Patch by teor.
+
+  o Minor bugfixes (fallback directories):
+    - Mark fallbacks as "too busy" when they return a 503 response,
+      rather than just marking authorities. Fixes bug 17572; bugfix on
+      0.2.4.7-alpha. Patch by teor.
+
+  o Minor bugfixes (IPv6):
+    - Update the limits in max_dl_per_request for IPv6 address length.
+      Fixes bug 17573; bugfix on 0.2.1.5-alpha.
+
+  o Minor bugfixes (linux seccomp2 sandbox):
+    - Fix a crash when using offline master ed25519 keys with the Linux
+      seccomp2 sandbox enabled. Fixes bug 17675; bugfix on 0.2.7.3-rc.
+
+  o Minor bugfixes (logging):
+    - In log messages that include a function name, use __FUNCTION__
+      instead of __PRETTY_FUNCTION__. In GCC, these are synonymous, but
+      with clang __PRETTY_FUNCTION__ has extra information we don't
+      need. Fixes bug 16563; bugfix on 0.0.2pre8. Fix by Tom van
+      der Woerdt.
+    - Remove needless quotes from a log message about unparseable
+      addresses. Fixes bug 17843; bugfix on 0.2.3.3-alpha.
+
+  o Minor bugfixes (portability):
+    - Remove an #endif from configure.ac so that we correctly detect the
+      presence of in6_addr.s6_addr32. Fixes bug 17923; bugfix
+      on 0.2.0.13-alpha.
+
+  o Minor bugfixes (relays):
+    - Check that both the ORPort and DirPort (if present) are reachable
+      before publishing a relay descriptor. Otherwise, relays publish a
+      descriptor with DirPort 0 when the DirPort reachability test takes
+      longer than the ORPort reachability test. Fixes bug 18050; bugfix
+      on 0.1.0.1-rc. Reported by "starlight", patch by teor.
+
+  o Minor bugfixes (relays, hidden services):
+    - Refuse connection requests to private OR addresses unless
+      ExtendAllowPrivateAddresses is set. Previously, tor would connect,
+      then refuse to send any cells to a private address. Fixes bugs
+      17674 and 8976; bugfix on 0.2.3.21-rc. Patch by teor.
+
+  o Minor bugfixes (safe logging):
+    - When logging a malformed hostname received through socks4, scrub
+      it if SafeLogging says we should. Fixes bug 17419; bugfix
+      on 0.1.1.16-rc.
+
+  o Minor bugfixes (statistics code):
+    - Consistently check for overflow in round_*_to_next_multiple_of
+      functions, and add unit tests with additional and maximal values.
+      Fixes part of bug 13192; bugfix on 0.2.2.1-alpha.
+    - Handle edge cases in the laplace functions: avoid division by
+      zero, avoid taking the log of zero, and silence clang type
+      conversion warnings using round and trunc. Add unit tests for edge
+      cases with maximal values. Fixes part of bug 13192; bugfix
+      on 0.2.6.2-alpha.
+
+  o Minor bugfixes (testing):
+    - The test for log_heartbeat was incorrectly failing in timezones
+      with non-integer offsets. Instead of comparing the end of the time
+      string against a constant, compare it to the output of
+      format_local_iso_time when given the correct input. Fixes bug
+      18039; bugfix on 0.2.5.4-alpha.
+    - Make unit tests pass on IPv6-only systems, and systems without
+      localhost addresses (like some FreeBSD jails). Fixes bug 17632;
+      bugfix on 0.2.7.3-rc. Patch by teor.
+    - Fix a memory leak in the ntor test. Fixes bug 17778; bugfix
+      on 0.2.4.8-alpha.
+    - Check the full results of SHA256 and SHA512 digests in the unit
+      tests. Bugfix on 0.2.2.4-alpha. Patch by teor.
+
+  o Code simplification and refactoring:
+    - Move logging of redundant policy entries in
+      policies_parse_exit_policy_internal into its own function. Closes
+      ticket 17608; patch from "juce".
+    - Extract the more complicated parts of circuit_mark_for_close()
+      into a new function that we run periodically before circuits are
+      freed. This change removes more than half of the functions
+      currently in the "blob". Closes ticket 17218.
+    - Clean up a little duplicated code in
+      crypto_expand_key_material_TAP(). Closes ticket 17587; patch
+      from "pfrankw".
+    - Decouple the list of streams waiting to be attached to circuits
+      from the overall connection list. This change makes it possible to
+      attach streams quickly while simplifying Tor's callgraph and
+      avoiding O(N) scans of the entire connection list. Closes
+      ticket 17590.
+    - When a direct directory request fails immediately on launch,
+      instead of relaunching that request from inside the code that
+      launches it, instead mark the connection for teardown. This change
+      simplifies Tor's callback and prevents the directory-request
+      launching code from invoking itself recursively. Closes
+      ticket 17589
+    - Remove code for configuring OpenSSL dynamic locks; OpenSSL doesn't
+      use them. Closes ticket 17926.
+
+  o Documentation:
+    - Add a description of the correct use of the '--keygen' command-
+      line option. Closes ticket 17583; based on text by 's7r'.
+    - Document the minimum HeartbeatPeriod value. Closes ticket 15638.
+    - Explain actual minima for BandwidthRate. Closes ticket 16382.
+    - Fix a minor formatting typo in the manpage. Closes ticket 17791.
+    - Mention torspec URL in the manpage and point the reader to it
+      whenever we mention a document that belongs in torspce. Fixes
+      issue 17392.
+
+  o Removed features:
+    - Remove client-side support for connecting to Tor relays running
+      versions of Tor before 0.2.3.6-alpha. These relays didn't support
+      the v3 TLS handshake protocol, and are no longer allowed on the
+      Tor network. Implements the client side of ticket 11150. Based on
+      patches by Tom van der Woerdt.
+
+  o Testing:
+    - Add unit tests to check for common RNG failure modes, such as
+      returning all zeroes, identical values, or incrementing values
+      (OpenSSL's rand_predictable feature). Patch by teor.
+    - Log more information when the backtrace tests fail. Closes ticket
+      17892. Patch from "cypherpunks".
+    - Always test both ed25519 backends, so that we can be sure that our
+      batch-open replacement code works. Part of ticket 16794.
+    - Cover dns_resolve_impl() in dns.c with unit tests. Implements a
+      portion of ticket 16831.
+    - More unit tests for compat_libevent.c, procmon.c, tortls.c,
+      util_format.c, directory.c, and options_validate.c. Closes tickets
+      17075, 17082, 17084, 17003, and 17076 respectively. Patches from
+      Ola Bini.
+    - Unit tests for directory_handle_command_get. Closes ticket 17004.
+      Patch from Reinaldo de Souza Jr.
+
+
 Changes in version 0.2.7.6 - 2015-12-10
   Tor version 0.2.7.6 fixes a major bug in entry guard selection, as
   well as a minor bug in hidden service reliability.
@@ -99,16 +1148,17 @@ Changes in version 0.2.7.4-rc - 2015-10-21
     - Fix an integer overflow warning in test_crypto_slow.c. Fixes bug
       17251; bugfix on 0.2.7.2-alpha.
     - Fix compilation of sandbox.c with musl-libc. Fixes bug 17347;
-      bugfix on 0.2.5.1-alpha. Patch from 'jamestk'.
+      bugfix on 0.2.5.1-alpha. Patch from "jamestk".
 
   o Minor bugfixes (portability):
-    - Use libexecinfo on FreeBSD to enable backtrace support. Fixes part
-      of bug 17151; bugfix on 0.2.5.2-alpha. Patch from Marcin Cieślak.
+    - Use libexecinfo on FreeBSD to enable backtrace support. Fixes
+      part of bug 17151; bugfix on 0.2.5.2-alpha. Patch from
+      Marcin Cieślak.
 
   o Minor bugfixes (sandbox):
     - Add the "hidserv-stats" filename to our sandbox filter for the
       HiddenServiceStatistics option to work properly. Fixes bug 17354;
-      bugfix on tor-0.2.6.2-alpha. Patch from David Goulet.
+      bugfix on 0.2.6.2-alpha. Patch from David Goulet.
 
   o Minor bugfixes (testing):
     - Add unit tests for get_interface_address* failure cases. Fixes bug
@@ -118,7 +1168,7 @@ Changes in version 0.2.7.4-rc - 2015-10-21
     - Make the get_ifaddrs_* unit tests more tolerant of different
       network configurations. (Don't assume every test box has an IPv4
       address, and don't assume every test box has a non-localhost
-      address.) Fixes bug 17255; bugfix on 0.2.7.3-rc. Patch by "teor".
+      address.) Fixes bug 17255; bugfix on 0.2.7.3-rc. Patch by teor.
     - Skip backtrace tests when backtrace support is not compiled in.
       Fixes part of bug 17151; bugfix on 0.2.7.1-alpha. Patch from
       Marcin Cieślak.
@@ -168,7 +1218,7 @@ Changes in version 0.2.7.3-rc - 2015-09-25
   o Major features (performance testing):
     - The test-network.sh script now supports performance testing.
       Requires corresponding chutney performance testing changes. Patch
-      by "teor". Closes ticket 14175.
+      by teor. Closes ticket 14175.
 
   o Major features (relay, Ed25519):
     - Significant usability improvements for Ed25519 key management. Log
@@ -229,18 +1279,18 @@ Changes in version 0.2.7.3-rc - 2015-09-25
   o Minor features (testing, authorities, documentation):
     - New TestingDirAuthVote{Exit,Guard,HSDir}IsStrict flags to
       explicitly manage consensus flags in testing networks. Patch by
-      "robgjansen", modified by "teor". Implements part of ticket 14882.
+      robgjansen, modified by teor. Implements part of ticket 14882.
 
   o Minor bugfixes (security, exit policies):
     - ExitPolicyRejectPrivate now also rejects the relay's published
       IPv6 address (if any), and any publicly routable IPv4 or IPv6
-      addresses on any local interfaces. ticket 17027. Patch by "teor".
+      addresses on any local interfaces. ticket 17027. Patch by teor.
       Fixes bug 17027; bugfix on 0.2.0.11-alpha.
 
   o Minor bug fixes (torrc exit policies):
     - In torrc, "accept6 *" and "reject6 *" ExitPolicy lines now only
       produce IPv6 wildcard addresses. Previously they would produce
-      both IPv4 and IPv6 wildcard addresses. Patch by "teor". Fixes part
+      both IPv4 and IPv6 wildcard addresses. Patch by teor. Fixes part
       of bug 16069; bugfix on 0.2.4.7-alpha.
     - When parsing torrc ExitPolicies, we now warn for a number of cases
       where the user's intent is likely to differ from Tor's actual
@@ -252,7 +1302,7 @@ Changes in version 0.2.7.3-rc - 2015-09-25
       message when expanding an "accept/reject *" line to include both
       IPv4 and IPv6 wildcard addresses. Related to ticket 16069.
     - In each instance above, usage advice is provided to avoid the
-      message. Resolves ticket 16069. Patch by "teor". Fixes part of bug
+      message. Resolves ticket 16069. Patch by teor. Fixes part of bug
       16069; bugfix on 0.2.4.7-alpha.
 
   o Minor bugfixes (authority):
@@ -286,7 +1336,7 @@ Changes in version 0.2.7.3-rc - 2015-09-25
       required "ORPort connectivity". While this is true, it is in no
       way unique to the HSDir flag. Of all the flags, only HSDirs need a
       DirPort configured in order for the authorities to assign that
-      particular flag. Patch by "teor". Fixed as part of 14882; bugfix
+      particular flag. Patch by teor. Fixed as part of 14882; bugfix
       on 0.2.6.3-alpha.
 
   o Minor bugfixes (Ed25519):
@@ -302,7 +1352,7 @@ Changes in version 0.2.7.3-rc - 2015-09-25
   o Minor bugfixes (open file limit):
     - Fix set_max_file_descriptors() to set by default the max open file
       limit to the current limit when setrlimit() fails. Fixes bug
-      16274; bugfix on tor- 0.2.0.10-alpha. Patch by dgoulet.
+      16274; bugfix on 0.2.0.10-alpha. Patch by dgoulet.
 
   o Minor bugfixes (portability):
     - Try harder to normalize the exit status of the Tor process to the
@@ -381,10 +1431,10 @@ Changes in version 0.2.7.3-rc - 2015-09-25
       tor functionality during make test-network, while allowing tests
       to succeed on non-IPv6 systems. Requires chutney commit 396da92 in
       test-network-bridges-hs. Closes tickets 16945 (tor) and 16946
-      (chutney). Patches by "teor".
+      (chutney). Patches by teor.
     - Autodetect CHUTNEY_PATH if the chutney and Tor sources are side-
       by-side in the same parent directory. Closes ticket 16903. Patch
-      by "teor".
+      by teor.
     - Use environment variables rather than autoconf substitutions to
       send variables from the build system to the test scripts. This
       change should be easier to maintain, and cause 'make distcheck' to
@@ -398,7 +1448,7 @@ Changes in version 0.2.7.3-rc - 2015-09-25
     - Make the test-workqueue test work on Windows by initializing the
       network before we begin.
     - New make target (make test-network-all) to run multiple applicable
-      chutney test cases. Patch from Teor; closes 16953.
+      chutney test cases. Patch from teor; closes 16953.
     - Unit test dns_resolve(), dns_clip_ttl() and dns_get_expiry_ttl()
       functions in dns.c. Implements a portion of ticket 16831.
     - When building Tor with testing coverage enabled, run Chutney tests
@@ -572,7 +1622,7 @@ Changes in version 0.2.7.2-alpha - 2015-07-27
       A previous typo meant that we could keep going with an
       uninitialized crypto library, and would have OpenSSL initialize
       its own PRNG. Fixes bug 16360; bugfix on 0.2.5.2-alpha, introduced
-      when implementing ticket 4900. Patch by "teor".
+      when implementing ticket 4900. Patch by teor.
 
   o Minor bugfixes (hidden services):
     - Fix a crash when reloading configuration while at least one
@@ -584,12 +1634,12 @@ Changes in version 0.2.7.2-alpha - 2015-07-27
 
   o Minor bugfixes (Linux seccomp2 sandbox):
     - Use the sandbox in tor_open_cloexec whether or not O_CLOEXEC is
-      defined. Patch by "teor". Fixes bug 16515; bugfix on 0.2.3.1-alpha.
+      defined. Patch by teor. Fixes bug 16515; bugfix on 0.2.3.1-alpha.
 
   o Minor bugfixes (Linux seccomp2 sandbox, also in 0.2.6.10):
     - Allow pipe() and pipe2() syscalls in the seccomp2 sandbox: we need
       these when eventfd2() support is missing. Fixes bug 16363; bugfix
-      on 0.2.6.3-alpha. Patch from "teor".
+      on 0.2.6.3-alpha. Patch from teor.
 
   o Minor bugfixes (Linux seccomp2 sandbox, also in 0.2.6.9):
     - Fix sandboxing to work when running as a relay, by allowing the
@@ -622,13 +1672,13 @@ Changes in version 0.2.7.2-alpha - 2015-07-27
 
   o Minor bugfixes (threads, comments):
     - Always initialize return value in compute_desc_id in rendcommon.c
-      Patch by "teor". Fixes part of bug 16115; bugfix on 0.2.7.1-alpha.
-    - Check for NULL values in getinfo_helper_onions(). Patch by "teor".
+      Patch by teor. Fixes part of bug 16115; bugfix on 0.2.7.1-alpha.
+    - Check for NULL values in getinfo_helper_onions(). Patch by teor.
       Fixes part of bug 16115; bugfix on 0.2.7.1-alpha.
     - Remove undefined directive-in-macro in test_util_writepid clang
       3.7 complains that using a preprocessor directive inside a macro
       invocation in test_util_writepid in test_util.c is undefined.
-      Patch by "teor". Fixes part of bug 16115; bugfix on 0.2.7.1-alpha.
+      Patch by teor. Fixes part of bug 16115; bugfix on 0.2.7.1-alpha.
 
   o Code simplification and refactoring:
     - Define WINVER and _WIN32_WINNT centrally, in orconfig.h, in order
@@ -670,7 +1720,7 @@ Changes in version 0.2.7.2-alpha - 2015-07-27
   o Testing:
     - Document use of coverity, clang static analyzer, and clang dynamic
       undefined behavior and address sanitizers in doc/HACKING. Include
-      detailed usage instructions in the blacklist. Patch by "teor".
+      detailed usage instructions in the blacklist. Patch by teor.
       Closes ticket 15817.
     - The link authentication protocol code now has extensive tests.
     - The relay descriptor signature testing code now has
@@ -720,12 +1770,12 @@ Changes in version 0.2.6.10 - 2015-07-12
       A previous typo meant that we could keep going with an
       uninitialized crypto library, and would have OpenSSL initialize
       its own PRNG. Fixes bug 16360; bugfix on 0.2.5.2-alpha, introduced
-      when implementing ticket 4900. Patch by "teor".
+      when implementing ticket 4900. Patch by teor.
 
   o Minor bugfixes (Linux seccomp2 sandbox):
     - Allow pipe() and pipe2() syscalls in the seccomp2 sandbox: we need
       these when eventfd2() support is missing. Fixes bug 16363; bugfix
-      on 0.2.6.3-alpha. Patch from "teor".
+      on 0.2.6.3-alpha. Patch from teor.
 
 
 Changes in version 0.2.6.9 - 2015-06-11
@@ -776,7 +1826,7 @@ Changes in version 0.2.6.8 - 2015-05-21
     - Revert commit that made directory authorities assign the HSDir
       flag to relay without a DirPort; this was bad because such relays
       can't handle BEGIN_DIR cells. Fixes bug 15850; bugfix
-      on tor-0.2.6.3-alpha.
+      on 0.2.6.3-alpha.
 
   o Minor bugfixes (hidden service, backport from 0.2.7.1-alpha):
     - Fix an out-of-bounds read when parsing invalid INTRODUCE2 cells on
@@ -811,13 +1861,13 @@ Changes in version 0.2.7.1-alpha - 2015-05-12
     - New HSFETCH command to launch a request for a hidden service
       descriptor. Closes ticket 14847.
     - New HSPOST command to upload a hidden service descriptor. Closes
-      ticket 3523. Patch by "DonnchaC".
+      ticket 3523. Patch by Donncha.
 
   o Major bugfixes (hidden services):
     - Revert commit that made directory authorities assign the HSDir
       flag to relay without a DirPort; this was bad because such relays
       can't handle BEGIN_DIR cells. Fixes bug 15850; bugfix
-      on tor-0.2.6.3-alpha.
+      on 0.2.6.3-alpha.
 
   o Minor features (clock-jump tolerance):
     - Recover better when our clock jumps back many hours, like might
@@ -884,7 +1934,7 @@ Changes in version 0.2.7.1-alpha - 2015-05-12
     - Add unit tests for control_event_is_interesting(). Add a compile-
       time check that the number of events doesn't exceed the capacity
       of control_event_t.event_mask. Closes ticket 15431, checks for
-      bugs similar to 13085. Patch by "teor".
+      bugs similar to 13085. Patch by teor.
     - Command-line argument tests moved to Stem. Resolves ticket 14806.
     - Integrate the ntor, backtrace, and zero-length keys tests into the
       automake test suite. Closes ticket 15344.
@@ -913,7 +1963,7 @@ Changes in version 0.2.7.1-alpha - 2015-05-12
       currently empty, this fix will only change tor's behavior when it
       has default fallback directories. Includes unit tests for
       consider_adding_dir_servers(). Fixes bug 15642; bugfix on
-      90f6071d8dc0 in 0.2.4.7-alpha. Patch by "teor".
+      90f6071d8dc0 in 0.2.4.7-alpha. Patch by teor.
 
   o Minor bugfixes (correctness):
     - For correctness, avoid modifying a constant string in
@@ -961,7 +2011,7 @@ Changes in version 0.2.7.1-alpha - 2015-05-12
       previous fix used TestingTorNetwork, which implies
       ExtendAllowPrivateAddresses, but this excluded rare configurations
       where ExtendAllowPrivateAddresses is set but TestingTorNetwork is
-      not. Fixes bug 15771; bugfix on 0.2.6.1-alpha. Patch by "teor",
+      not. Fixes bug 15771; bugfix on 0.2.6.1-alpha. Patch by teor,
       issue discovered by CJ Ess.
 
   o Minor bugfixes (testing):
@@ -997,7 +2047,7 @@ Changes in version 0.2.7.1-alpha - 2015-05-12
   o Removed code:
     - Remove `USE_OPENSSL_BASE64` and the corresponding fallback code
       and always use the internal Base64 decoder. The internal decoder
-      has been part of tor since tor-0.2.0.10-alpha, and no one should
+      has been part of tor since 0.2.0.10-alpha, and no one should
       be using the OpenSSL one. Part of ticket 15652.
     - Remove the 'tor_strclear()' function; use memwipe() instead.
       Closes ticket 14922.
@@ -1018,6 +2068,30 @@ Changes in version 0.2.7.1-alpha - 2015-05-12
 
 Changes in version 0.2.4.27 - 2015-04-06
   Tor 0.2.4.27 backports two fixes from 0.2.6.7 for security issues that
+  could be used by an attacker to crash hidden services, or crash clients
+  visiting hidden services. Hidden services should upgrade as soon as
+  possible; clients should upgrade whenever packages become available.
+
+  This release also backports a simple improvement to make hidden
+  services a bit less vulnerable to denial-of-service attacks.
+
+  o Major bugfixes (security, hidden service):
+    - Fix an issue that would allow a malicious client to trigger an
+      assertion failure and halt a hidden service. Fixes bug 15600;
+      bugfix on 0.2.1.6-alpha. Reported by "disgleirio".
+    - Fix a bug that could cause a client to crash with an assertion
+      failure when parsing a malformed hidden service descriptor. Fixes
+      bug 15601; bugfix on 0.2.1.5-alpha. Found by "DonnchaC".
+
+  o Minor features (DoS-resistance, hidden service):
+    - Introduction points no longer allow multiple INTRODUCE1 cells to
+      arrive on the same circuit. This should make it more expensive for
+      attackers to overwhelm hidden services with introductions.
+      Resolves ticket 15515.
+
+
+Changes in version 0.2.5.12 - 2015-04-06
+  Tor 0.2.5.12 backports two fixes from 0.2.6.7 for security issues that
   could be used by an attacker to crash hidden services, or crash clients
   visiting hidden services. Hidden services should upgrade as soon as
   possible; clients should upgrade whenever packages become available.
@@ -1140,7 +2214,7 @@ Changes in version 0.2.5.11 - 2015-03-17
     - Fix a bug that could lead to a relay crashing with an assertion
       failure if a buffer of exactly the wrong layout was passed to
       buf_pullup() at exactly the wrong time. Fixes bug 15083; bugfix on
-      0.2.0.10-alpha. Patch from 'cypherpunks'.
+      0.2.0.10-alpha. Patch from "cypherpunks".
     - Do not assert if the 'data' pointer on a buffer is advanced to the
       very end of the buffer; log a BUG message instead. Only assert if
       it is past that point. Fixes bug 15083; bugfix on 0.2.0.10-alpha.
@@ -1168,7 +2242,7 @@ Changes in version 0.2.5.11 - 2015-03-17
   o Minor bugfixes (client, automapping):
     - Avoid crashing on torrc lines for VirtualAddrNetworkIPv[4|6] when
       no value follows the option. Fixes bug 14142; bugfix on
-      0.2.4.7-alpha. Patch by "teor".
+      0.2.4.7-alpha. Patch by teor.
     - Fix a memory leak when using AutomapHostsOnResolve. Fixes bug
       14195; bugfix on 0.1.0.1-rc.
 
@@ -1219,7 +2293,7 @@ Changes in version 0.2.4.26 - 2015-03-17
     - Fix a bug that could lead to a relay crashing with an assertion
       failure if a buffer of exactly the wrong layout was passed to
       buf_pullup() at exactly the wrong time. Fixes bug 15083; bugfix on
-      0.2.0.10-alpha. Patch from 'cypherpunks'.
+      0.2.0.10-alpha. Patch from "cypherpunks".
     - Do not assert if the 'data' pointer on a buffer is advanced to the
       very end of the buffer; log a BUG message instead. Only assert if
       it is past that point. Fixes bug 15083; bugfix on 0.2.0.10-alpha.
@@ -1477,12 +2551,12 @@ Changes in version 0.2.6.3-alpha - 2015-02-19
       keep the default on a testing network at 30 seconds. This reduces
       HS bootstrap time to around 25 seconds. Also, change the default
       time in test-network.sh to match. Closes ticket 13401. Patch
-      by "teor".
+      by teor.
     - Create TestingDirAuthVoteHSDir to correspond to
       TestingDirAuthVoteExit/Guard. Ensures that authorities vote the
       HSDir flag for the listed relays regardless of uptime or ORPort
       connectivity. Respects the value of VoteOnHidServDirectoriesV2.
-      Partial implementation for ticket 14067. Patch by "teor".
+      Partial implementation for ticket 14067. Patch by teor.
 
   o Minor features (tor2web mode):
     - Introduce the config option Tor2webRendezvousPoints, which allows
@@ -1502,7 +2576,7 @@ Changes in version 0.2.6.3-alpha - 2015-02-19
   o Minor bugfixes (client, automapping):
     - Avoid crashing on torrc lines for VirtualAddrNetworkIPv[4|6] when
       no value follows the option. Fixes bug 14142; bugfix on
-      0.2.4.7-alpha. Patch by "teor".
+      0.2.4.7-alpha. Patch by teor.
     - Fix a memory leak when using AutomapHostsOnResolve. Fixes bug
       14195; bugfix on 0.1.0.1-rc.
     - Prevent changes to other options from removing the wildcard value
@@ -1570,7 +2644,7 @@ Changes in version 0.2.6.3-alpha - 2015-02-19
   o Minor bugfixes (file handling):
     - Stop failing when key files are zero-length. Instead, generate new
       keys, and overwrite the empty key files. Fixes bug 13111; bugfix
-      on all versions of Tor. Patch by "teor".
+      on all versions of Tor. Patch by teor.
     - Stop generating a fresh .old RSA onion key file when the .old file
       is missing. Fixes part of 13111; bugfix on 0.0.6rc1.
     - Avoid overwriting .old key files with empty key files.
@@ -1711,7 +2785,7 @@ Changes in version 0.2.6.3-alpha - 2015-02-19
     - Test that tor generates new keys when keys are missing
       (existing behavior).
     - Test that tor does not overwrite key files that already contain
-      data (existing behavior). Tests bug 13111. Patch by "teor".
+      data (existing behavior). Tests bug 13111. Patch by teor.
     - New "make test-stem" target to run stem integration tests.
       Requires that the "STEM_SOURCE_DIR" environment variable be set.
       Closes ticket 14107.
@@ -1734,7 +2808,7 @@ Changes in version 0.2.6.2-alpha - 2014-12-31
 
   This release contains many new unit tests, along with major
   performance improvements for running testing networks using Chutney.
-  Thanks to a series of patches contributed by "teor", testing networks
+  Thanks to a series of patches contributed by teor, testing networks
   should now bootstrap in seconds, rather than minutes.
 
   o Major features (relay, infrastructure):
@@ -1819,7 +2893,7 @@ Changes in version 0.2.6.2-alpha - 2014-12-31
       feature 13212.
     - New HiddenServiceDirGroupReadable option to cause hidden service
       directories and hostname files to be created group-readable. Patch
-      from "anon", David Stainton, and "meejah". Closes ticket 11291.
+      from "anon", David Stainton, and meejah. Closes ticket 11291.
 
   o Minor features (systemd):
     - Where supported, when running with systemd, report successful
@@ -1908,27 +2982,27 @@ Changes in version 0.2.6.2-alpha - 2014-12-31
       network), allow Tor to build circuits once enough descriptors have
       been downloaded. This assists in bootstrapping a testing Tor
       network. Fixes bug 13718; bugfix on 0.2.4.10-alpha. Patch
-      by "teor".
+      by teor.
     - When V3AuthVotingInterval is low, give a lower If-Modified-Since
       header to directory servers. This allows us to obtain consensuses
       promptly when the consensus interval is very short. This assists
       in bootstrapping a testing Tor network. Fixes parts of bugs 13718
-      and 13963; bugfix on 0.2.0.3-alpha. Patch by "teor".
+      and 13963; bugfix on 0.2.0.3-alpha. Patch by teor.
     - Stop assuming that private addresses are local when checking
       reachability in a TestingTorNetwork. Instead, when testing, assume
       all OR connections are remote. (This is necessary due to many test
       scenarios running all relays on localhost.) This assists in
       bootstrapping a testing Tor network. Fixes bug 13924; bugfix on
-      0.1.0.1-rc. Patch by "teor".
+      0.1.0.1-rc. Patch by teor.
     - Avoid building exit circuits from a consensus with no exits. Now
       thanks to our fix for 13718, we accept a no-exit network as not
       wholly lost, but we need to remember not to try to build exit
-      circuits on it. Closes ticket 13814; patch by "teor".
+      circuits on it. Closes ticket 13814; patch by teor.
     - Stop requiring exits to have non-zero bandwithcapacity in a
       TestingTorNetwork. Instead, when TestingMinExitFlagThreshold is 0,
       ignore exit bandwidthcapacity. This assists in bootstrapping a
       testing Tor network. Fixes parts of bugs 13718 and 13839; bugfix
-      on 0.2.0.3-alpha. Patch by "teor".
+      on 0.2.0.3-alpha. Patch by teor.
     - Add "internal" to some bootstrap statuses when no exits are
       available. If the consensus does not contain Exits, Tor will only
       build internal circuits. In this case, relevant statuses will
@@ -1936,17 +3010,17 @@ Changes in version 0.2.6.2-alpha - 2014-12-31
        spec.txt. When bootstrap completes, Tor will be ready to build
       internal circuits. If a future consensus contains Exits, exit
       circuits may become available. Fixes part of bug 13718; bugfix on
-      0.2.4.10-alpha. Patch by "teor".
+      0.2.4.10-alpha. Patch by teor.
     - Decrease minimum consensus interval to 10 seconds when
       TestingTorNetwork is set, or 5 seconds for the first consensus.
       Fix assumptions throughout the code that assume larger intervals.
       Fixes bugs 13718 and 13823; bugfix on 0.2.0.3-alpha. Patch
-      by "teor".
+      by teor.
     - Avoid excluding guards from path building in minimal test
       networks, when we're in a test network and excluding guards would
       exclude all relays. This typically occurs in incredibly small tor
       networks, and those using "TestingAuthVoteGuard *". Fixes part of
-      bug 13718; bugfix on 0.1.1.11-alpha. Patch by "teor".
+      bug 13718; bugfix on 0.1.1.11-alpha. Patch by teor.
 
   o Code simplification and refactoring:
     - Stop using can_complete_circuits as a global variable; access it
@@ -2157,7 +3231,7 @@ Changes in version 0.2.6.1-alpha - 2014-10-30
   o Minor bugfixes (C correctness):
     - Fix several instances of possible integer overflow/underflow/NaN.
       Fixes bug 13104; bugfix on 0.2.3.1-alpha and later. Patches
-      from "teor".
+      from teor.
     - In circuit_build_times_calculate_timeout() in circuitstats.c,
       avoid dividing by zero in the pareto calculations. This traps
       under clang's "undefined-trap" sanitizer. Fixes bug 13290; bugfix
@@ -2548,14 +3622,14 @@ Changes in version 0.2.5.7-rc - 2014-09-11
       recognize, log its command as an integer. Fixes part of bug 12700;
       bugfix on 0.2.1.10-alpha.
     - Escape all strings from the directory connection before logging
-      them. Fixes bug 13071; bugfix on 0.1.1.15. Patch from "teor".
+      them. Fixes bug 13071; bugfix on 0.1.1.15. Patch from teor.
 
   o Minor bugfixes (controller):
     - Restore the functionality of CookieAuthFileGroupReadable. Fixes
       bug 12864; bugfix on 0.2.5.1-alpha.
     - Actually send TRANSPORT_LAUNCHED and HS_DESC events to
       controllers. Fixes bug 13085; bugfix on 0.2.5.1-alpha. Patch
-      by "teor".
+      by teor.
 
   o Minor bugfixes (compilation):
     - Fix compilation of test.h with MSVC. Patch from Gisle Vanem;
@@ -2564,10 +3638,10 @@ Changes in version 0.2.5.7-rc - 2014-09-11
       0.2.5.1-alpha. Patch from "NewEraCracker".
     - In routerlist_assert_ok(), don't take the address of a
       routerinfo's cache_info member unless that routerinfo is non-NULL.
-      Fixes bug 13096; bugfix on 0.1.1.9-alpha. Patch by "teor".
+      Fixes bug 13096; bugfix on 0.1.1.9-alpha. Patch by teor.
     - Fix a large number of false positive warnings from the clang
       analyzer static analysis tool. This should make real warnings
-      easier for clang analyzer to find. Patch from "teor". Closes
+      easier for clang analyzer to find. Patch from teor. Closes
       ticket 13036.
 
   o Distribution (systemd):
@@ -3033,7 +4107,7 @@ Changes in version 0.2.4.22 - 2014-05-16
       acceptable strength and forward secrecy. Previously, we had left
       some perfectly fine ciphersuites unsupported due to omission or
       typo. Resolves bugs 11513, 11492, 11498, 11499. Bugs reported by
-      'cypherpunks'. Bugfix on 0.2.4.8-alpha.
+      "cypherpunks". Bugfix on 0.2.4.8-alpha.
     - Relays now trust themselves to have a better view than clients of
       which TLS ciphersuites are better than others. (Thanks to bug
       11513, the relay list is now well-considered, whereas the client
@@ -3153,7 +4227,7 @@ Changes in version 0.2.5.4-alpha - 2014-04-25
       acceptable strength and forward secrecy. Previously, we had left
       some perfectly fine ciphersuites unsupported due to omission or
       typo. Resolves bugs 11513, 11492, 11498, 11499. Bugs reported by
-      'cypherpunks'. Bugfix on 0.2.4.8-alpha.
+      "cypherpunks". Bugfix on 0.2.4.8-alpha.
     - Relays now trust themselves to have a better view than clients of
       which TLS ciphersuites are better than others. (Thanks to bug
       11513, the relay list is now well-considered, whereas the client
@@ -3490,7 +4564,7 @@ Changes in version 0.2.5.3-alpha - 2014-03-22
       needed for platforms like 32-bit Intel where "-fomit-frame-pointer"
       is on by default and table generation is not. This doesn't yet
       add Windows support; only Linux, OSX, and some BSDs are affected.
-      Reported by 'cypherpunks'; fixes bug 11047; bugfix on 0.2.5.2-alpha.
+      Reported by "cypherpunks"; fixes bug 11047; bugfix on 0.2.5.2-alpha.
     - Avoid strange behavior if two threads hit failed assertions at the
       same time and both try to log backtraces at once. (Previously, if
       this had happened, both threads would have stored their intermediate
@@ -9002,7 +10076,7 @@ Changes in version 0.2.2.26-beta - 2011-05-17
       at least _half_ the length of the store, not _twice_ the length
       of the store. Bugfix on 0.2.2.6-alpha; fixes part of bug 2230.
     - Fix a potential null-pointer dereference while computing a
-      consensus. Bugfix on tor-0.2.0.3-alpha, found with the help of
+      consensus. Bugfix on 0.2.0.3-alpha, found with the help of
       clang's analyzer.
     - Avoid a possible null-pointer dereference when rebuilding the mdesc
       cache without actually having any descriptors to cache. Bugfix on

@@ -45,6 +45,9 @@
 /* Define to 1 if you have the `backtrace_symbols_fd' function. */
 #undef HAVE_BACKTRACE_SYMBOLS_FD
 
+/* Define to 1 if you have the `cap_set_proc' function. */
+#undef HAVE_CAP_SET_PROC
+
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -110,6 +113,9 @@
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
 
+/* Define to 1 if you have the `explicit_bzero' function. */
+#undef HAVE_EXPLICIT_BZERO
+
 /* Defined if we have extern char **environ already declared */
 #undef HAVE_EXTERN_ENVIRON_DECLARED
 
@@ -124,6 +130,9 @@
 
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
+
+/* Define to 1 if you have the `getentropy' function. */
+#undef HAVE_GETENTROPY
 
 /* Define this if you have any gethostbyname_r() */
 #undef HAVE_GETHOSTBYNAME_R
@@ -161,6 +170,9 @@
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
 
+/* Define to 1 if you have the `htonll' function. */
+#undef HAVE_HTONLL
+
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
@@ -176,8 +188,14 @@
 /* Define to 1 if you have the `issetugid' function. */
 #undef HAVE_ISSETUGID
 
+/* Define to 1 if you have the `cap' library (-lcap). */
+#undef HAVE_LIBCAP
+
 /* Define to 1 if you have the <libscrypt.h> header file. */
 #undef HAVE_LIBSCRYPT_H
+
+/* Define to 1 if you have the `libscrypt_scrypt' function. */
+#undef HAVE_LIBSCRYPT_SCRYPT
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -234,6 +252,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `memset_s' function. */
+#undef HAVE_MEMSET_S
+
 /* Define to 1 if you have the `mlockall' function. */
 #undef HAVE_MLOCKALL
 
@@ -265,6 +286,9 @@
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 
+/* Define to 1 if you have the `pthread_condattr_setclock' function. */
+#undef HAVE_PTHREAD_CONDATTR_SETCLOCK
+
 /* Define to 1 if you have the `pthread_create' function. */
 #undef HAVE_PTHREAD_CREATE
 
@@ -289,11 +313,17 @@
 /* Define to 1 if the system has the type `rlim_t'. */
 #undef HAVE_RLIM_T
 
+/* Define to 1 if you have the `RtlSecureZeroMemory' function. */
+#undef HAVE_RTLSECUREZEROMEMORY
+
 /* Define to 1 if the system has the type `sa_family_t'. */
 #undef HAVE_SA_FAMILY_T
 
 /* Define to 1 if you have the <seccomp.h> header file. */
 #undef HAVE_SECCOMP_H
+
+/* Define to 1 if you have the `SecureZeroMemory' function. */
+#undef HAVE_SECUREZEROMEMORY
 
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
@@ -398,6 +428,9 @@
 /* Have systemd v209 or more */
 #undef HAVE_SYSTEMD_209
 
+/* Define to 1 if you have the <sys/capability.h> header file. */
+#undef HAVE_SYS_CAPABILITY_H
+
 /* Define to 1 if you have the <sys/eventfd.h> header file. */
 #undef HAVE_SYS_EVENTFD_H
 
@@ -437,6 +470,9 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
+/* Define to 1 if you have the <sys/syscall.h> header file. */
+#undef HAVE_SYS_SYSCALL_H
+
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
 #undef HAVE_SYS_SYSCTL_H
 
@@ -463,6 +499,9 @@
 
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
+
+/* Define to 1 if you have the `timingsafe_memcmp' function. */
+#undef HAVE_TIMINGSAFE_MEMCMP
 
 /* Define to 1 if you have the `TLS_method' function. */
 #undef HAVE_TLS_METHOD
@@ -611,9 +650,6 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
-
-/* Define if time_t is signed */
-#undef TIME_T_IS_SIGNED
 
 /* Defined if we're going to use Libevent's buffered IO API */
 #undef USE_BUFFEREVENTS

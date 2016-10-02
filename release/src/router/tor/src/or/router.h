@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -22,7 +22,7 @@ int server_identity_key_is_set(void);
 void set_client_identity_key(crypto_pk_t *k);
 crypto_pk_t *get_tlsclient_identity_key(void);
 int client_identity_key_is_set(void);
-authority_cert_t *get_my_v3_authority_cert(void);
+MOCK_DECL(authority_cert_t *, get_my_v3_authority_cert, (void));
 crypto_pk_t *get_my_v3_authority_signing_key(void);
 authority_cert_t *get_my_v3_legacy_cert(void);
 crypto_pk_t *get_my_v3_legacy_signing_key(void);
@@ -39,8 +39,9 @@ int router_initialize_tls_context(void);
 int init_keys(void);
 int init_keys_client(void);
 
-int check_whether_orport_reachable(void);
-int check_whether_dirport_reachable(void);
+int check_whether_orport_reachable(const or_options_t *options);
+int check_whether_dirport_reachable(const or_options_t *options);
+int dir_server_mode(const or_options_t *options);
 void consider_testing_reachability(int test_or, int test_dir);
 void router_orport_found_reachable(void);
 void router_dirport_found_reachable(void);
@@ -67,7 +68,7 @@ uint16_t router_get_advertised_dir_port(const or_options_t *options,
 
 MOCK_DECL(int, server_mode, (const or_options_t *options));
 MOCK_DECL(int, public_server_mode, (const or_options_t *options));
-int advertised_server_mode(void);
+MOCK_DECL(int, advertised_server_mode, (void));
 int proxy_mode(const or_options_t *options);
 void consider_publishable_server(int force);
 int should_refuse_unknown_exits(const or_options_t *options);
@@ -80,7 +81,7 @@ void check_descriptor_ipaddress_changed(time_t now);
 void router_new_address_suggestion(const char *suggestion,
                                    const dir_connection_t *d_conn);
 int router_compare_to_my_exit_policy(const tor_addr_t *addr, uint16_t port);
-int router_my_exit_policy_is_reject_star(void);
+MOCK_DECL(int, router_my_exit_policy_is_reject_star,(void));
 MOCK_DECL(const routerinfo_t *, router_get_my_routerinfo, (void));
 extrainfo_t *router_get_my_extrainfo(void);
 const char *router_get_my_descriptor(void);
@@ -89,7 +90,8 @@ int router_digest_is_me(const char *digest);
 const uint8_t *router_get_my_id_digest(void);
 int router_extrainfo_digest_is_me(const char *digest);
 int router_is_me(const routerinfo_t *router);
-int router_pick_published_address(const or_options_t *options, uint32_t *addr);
+MOCK_DECL(int,router_pick_published_address,(const or_options_t *options,
+                                             uint32_t *addr));
 int router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e);
 int router_rebuild_descriptor(int force);
 char *router_dump_router_to_string(routerinfo_t *router,

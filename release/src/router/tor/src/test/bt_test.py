@@ -15,6 +15,7 @@ OK
 
 """
 
+from __future__ import print_function
 import sys
 
 
@@ -37,6 +38,16 @@ for I in range(len(LINES)):
     if matches(LINES[I:], FUNCNAMES):
         print("OK")
         sys.exit(0)
-else:
-    print("BAD")
-    sys.exit(1)
+
+print("BAD")
+
+for l in LINES:
+    print("{}".format(l), end="")
+
+if sys.platform.startswith('freebsd'):
+    # See bug #17808 if you know how to fix this.
+    print("Test failed; but FreeBSD is known to have backtrace problems.\n"
+          "Treating as 'SKIP'.")
+    sys.exit(77)
+
+sys.exit(1)

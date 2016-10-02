@@ -1,8 +1,15 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file routerset.c
+ *
+ * \brief Functions and structures to handle set-type selection of routers
+ *  by name, ID, address, etc.
+ */
 
 #define ROUTERSET_PRIVATE
 
@@ -107,10 +114,12 @@ routerset_parse(routerset_t *target, const char *s, const char *description)
                   description);
         smartlist_add(target->country_names, countryname);
         added_countries = 1;
-      } else if ((strchr(nick,'.') || strchr(nick, '*')) &&
-                 (p = router_parse_addr_policy_item_from_string(
+      } else if ((strchr(nick,'.') || strchr(nick, ':') ||  strchr(nick, '*'))
+                 && (p = router_parse_addr_policy_item_from_string(
                                      nick, ADDR_POLICY_REJECT,
                                      &malformed_list))) {
+        /* IPv4 addresses contain '.', IPv6 addresses contain ':',
+         * and wildcard addresses contain '*'. */
         log_debug(LD_CONFIG, "Adding address %s to %s", nick, description);
         smartlist_add(target->policies, p);
       } else if (malformed_list) {

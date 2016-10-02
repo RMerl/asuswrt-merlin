@@ -78,7 +78,8 @@ LIBOR_A_SOURCES = \
   $(threads_impl_source)				\
   $(readpassphrase_source)
 
-src/common/log.o: micro-revision.i
+src/common/src_common_libor_testing_a-log.$(OBJEXT) \
+  src/common/log.$(OBJEXT): micro-revision.i
 
 LIBOR_CRYPTO_A_SOURCES = \
   src/common/aes.c		\
@@ -118,6 +119,7 @@ COMMONHEADERS = \
   src/common/ciphers.inc			\
   src/common/compat.h				\
   src/common/compat_libevent.h			\
+  src/common/compat_openssl.h			\
   src/common/compat_threads.h			\
   src/common/container.h			\
   src/common/crypto.h				\

@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -19,6 +19,7 @@ MOCK_DECL(int, accounting_is_enabled, (const or_options_t *options));
 int accounting_get_interval_length(void);
 MOCK_DECL(time_t, accounting_get_end_time, (void));
 void configure_accounting(time_t now);
+uint64_t get_accounting_bytes(void);
 void accounting_run_housekeeping(time_t now);
 void accounting_add_bytes(size_t n_read, size_t n_written, int seconds);
 int accounting_record_bandwidth_usage(time_t now, or_state_t *state);

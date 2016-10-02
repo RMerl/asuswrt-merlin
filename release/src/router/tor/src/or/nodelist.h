@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -55,10 +55,20 @@ void node_get_address_string(const node_t *node, char *cp, size_t len);
 long node_get_declared_uptime(const node_t *node);
 time_t node_get_published_on(const node_t *node);
 const smartlist_t *node_get_declared_family(const node_t *node);
-int node_ipv6_preferred(const node_t *node);
+
+int node_has_ipv6_addr(const node_t *node);
+int node_has_ipv6_orport(const node_t *node);
+int node_has_ipv6_dirport(const node_t *node);
+/* Deprecated - use node_ipv6_or_preferred or node_ipv6_dir_preferred */
+#define node_ipv6_preferred(node) node_ipv6_or_preferred(node)
+int node_ipv6_or_preferred(const node_t *node);
 int node_get_prim_orport(const node_t *node, tor_addr_port_t *ap_out);
 void node_get_pref_orport(const node_t *node, tor_addr_port_t *ap_out);
 void node_get_pref_ipv6_orport(const node_t *node, tor_addr_port_t *ap_out);
+int node_ipv6_dir_preferred(const node_t *node);
+int node_get_prim_dirport(const node_t *node, tor_addr_port_t *ap_out);
+void node_get_pref_dirport(const node_t *node, tor_addr_port_t *ap_out);
+void node_get_pref_ipv6_dirport(const node_t *node, tor_addr_port_t *ap_out);
 int node_has_curve25519_onion_key(const node_t *node);
 
 MOCK_DECL(smartlist_t *, nodelist_get_list, (void));

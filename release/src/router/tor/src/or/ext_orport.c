@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -151,7 +151,7 @@ init_ext_or_cookie_authentication(int is_enabled)
 }
 
 /** Read data from <b>conn</b> and see if the client sent us the
- *  authentication type that she prefers to use in this session.
+ *  authentication type that they prefer to use in this session.
  *
  *  Return -1 if we received corrupted data or if we don't support the
  *  authentication type. Return 0 if we need more data in
@@ -178,7 +178,7 @@ connection_ext_or_auth_neg_auth_type(connection_t *conn)
   return 1;
 }
 
-/** DOCDOC */
+/* DOCDOC */
 STATIC int
 handle_client_auth_nonce(const char *client_nonce, size_t client_nonce_len,
                          char **client_hash_out,
@@ -193,8 +193,7 @@ handle_client_auth_nonce(const char *client_nonce, size_t client_nonce_len,
     return -1;
 
   /* Get our nonce */
-  if (crypto_rand(server_nonce, EXT_OR_PORT_AUTH_NONCE_LEN) < 0)
-    return -1;
+  crypto_rand(server_nonce, EXT_OR_PORT_AUTH_NONCE_LEN);
 
   { /* set up macs */
     size_t hmac_s_msg_len = strlen(EXT_OR_PORT_AUTH_SERVER_TO_CLIENT_CONST) +

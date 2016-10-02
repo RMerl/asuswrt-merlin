@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -14,11 +14,21 @@
 #include "memarea.h"
 #include "util_process.h"
 
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
+#ifdef HAVE_SYS_UTIME_H
+#include <sys/utime.h>
+#endif
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
 #ifdef _WIN32
 #include <tchar.h>
 #endif
 #include <math.h>
 #include <ctype.h>
+#include <float.h>
 
 /* XXXX this is a minimal wrapper to make the unit tests compile with the
  * changed tor_timegm interface. */
@@ -318,6 +328,25 @@ test_util_time(void *arg)
   tor_gmtime_r(&t_res, &b_time);
   TM_EQUAL(a_time, b_time);
 
+  /* This value is in range with 32 bit and 64 bit time_t */
+  a_time.tm_year = 2037-1900;
+  t_res = 2115180895UL;
+  tt_int_op(t_res, OP_EQ, tor_timegm(&a_time));
+  tor_gmtime_r(&t_res, &b_time);
+  TM_EQUAL(a_time, b_time);
+
+  /* This value is out of range with 32 bit time_t, but in range for 64 bit
+   * time_t */
+  a_time.tm_year = 2039-1900;
+#if SIZEOF_TIME_T == 4
+  tt_int_op((time_t) -1,OP_EQ, tor_timegm(&a_time));
+#elif SIZEOF_TIME_T == 8
+  t_res = 2178252895UL;
+  tt_int_op(t_res, OP_EQ, tor_timegm(&a_time));
+  tor_gmtime_r(&t_res, &b_time);
+  TM_EQUAL(a_time, b_time);
+#endif
+
   /* Test tor_timegm out of range */
 
   /* year */
@@ -538,6 +567,40 @@ test_util_time(void *arg)
   i = parse_rfc1123_time(timestr, &t_res);
   tt_int_op(0,OP_EQ, i);
   tt_int_op(t_res,OP_EQ, (time_t)1091580502UL);
+
+  /* This value is in range with 32 bit and 64 bit time_t */
+  format_rfc1123_time(timestr, (time_t)2080000000UL);
+  tt_str_op("Fri, 30 Nov 2035 01:46:40 GMT",OP_EQ, timestr);
+
+  t_res = 0;
+  i = parse_rfc1123_time(timestr, &t_res);
+  tt_int_op(0,OP_EQ, i);
+  tt_int_op(t_res,OP_EQ, (time_t)2080000000UL);
+
+  /* This value is out of range with 32 bit time_t, but in range for 64 bit
+   * time_t */
+  format_rfc1123_time(timestr, (time_t)2150000000UL);
+#if SIZEOF_TIME_T == 4
+#if 0
+  /* Wrapping around will have made it this. */
+  /* On windows, at least, this is clipped to 1 Jan 1970. ??? */
+  tt_str_op("Sat, 11 Jan 1902 23:45:04 GMT",OP_EQ, timestr);
+#endif
+  /* Make sure that the right date doesn't parse. */
+  strlcpy(timestr, "Wed, 17 Feb 2038 06:13:20 GMT", sizeof(timestr));
+
+  t_res = 0;
+  i = parse_rfc1123_time(timestr, &t_res);
+  tt_int_op(-1,OP_EQ, i);
+#elif SIZEOF_TIME_T == 8
+  tt_str_op("Wed, 17 Feb 2038 06:13:20 GMT",OP_EQ, timestr);
+
+  t_res = 0;
+  i = parse_rfc1123_time(timestr, &t_res);
+  tt_int_op(0,OP_EQ, i);
+  tt_int_op(t_res,OP_EQ, (time_t)2150000000UL);
+#endif
+
   /* The timezone doesn't matter */
   t_res = 0;
   tt_int_op(0,OP_EQ,
@@ -585,6 +648,24 @@ test_util_time(void *arg)
   i = parse_iso_time("2004-8-4 0:48:22", &t_res);
   tt_int_op(0,OP_EQ, i);
   tt_int_op(t_res,OP_EQ, (time_t)1091580502UL);
+
+  /* This value is in range with 32 bit and 64 bit time_t */
+  t_res = 0;
+  i = parse_iso_time("2035-11-30 01:46:40", &t_res);
+  tt_int_op(0,OP_EQ, i);
+  tt_int_op(t_res,OP_EQ, (time_t)2080000000UL);
+
+  /* This value is out of range with 32 bit time_t, but in range for 64 bit
+   * time_t */
+  t_res = 0;
+  i = parse_iso_time("2038-02-17 06:13:20", &t_res);
+#if SIZEOF_TIME_T == 4
+  tt_int_op(-1,OP_EQ, i);
+#elif SIZEOF_TIME_T == 8
+  tt_int_op(0,OP_EQ, i);
+  tt_int_op(t_res,OP_EQ, (time_t)2150000000UL);
+#endif
+
   tt_int_op(-1,OP_EQ, parse_iso_time("2004-08-zz 99-99x99", &t_res));
   tt_int_op(-1,OP_EQ, parse_iso_time("2011-03-32 00:00:00", &t_res));
   tt_int_op(-1,OP_EQ, parse_iso_time("2011-03-30 24:00:00", &t_res));
@@ -612,7 +693,7 @@ test_util_time(void *arg)
 
   /* Test format_iso_time */
 
-  tv.tv_sec = (time_t)1326296338;
+  tv.tv_sec = (time_t)1326296338UL;
   tv.tv_usec = 3060;
   format_iso_time(timestr, (time_t)tv.tv_sec);
   tt_str_op("2012-01-11 15:38:58",OP_EQ, timestr);
@@ -628,6 +709,28 @@ test_util_time(void *arg)
   format_iso_time_nospace_usec(timestr, &tv);
   tt_str_op("2012-01-11T15:38:58.003060",OP_EQ, timestr);
   tt_int_op(strlen(timestr),OP_EQ, ISO_TIME_USEC_LEN);
+
+  tv.tv_usec = 0;
+  /* This value is in range with 32 bit and 64 bit time_t */
+  tv.tv_sec = (time_t)2080000000UL;
+  format_iso_time(timestr, (time_t)tv.tv_sec);
+  tt_str_op("2035-11-30 01:46:40",OP_EQ, timestr);
+
+  /* This value is out of range with 32 bit time_t, but in range for 64 bit
+   * time_t */
+  tv.tv_sec = (time_t)2150000000UL;
+  format_iso_time(timestr, (time_t)tv.tv_sec);
+#if SIZEOF_TIME_T == 4
+  /* format_iso_time should indicate failure on overflow, but it doesn't yet.
+   * Hopefully #18480 will improve the failure semantics in this case.
+   tt_str_op("2038-02-17 06:13:20",OP_EQ, timestr);
+   */
+#elif SIZEOF_TIME_T == 8
+#ifndef _WIN32
+  /* This SHOULD work on windows too; see bug #18665 */
+  tt_str_op("2038-02-17 06:13:20",OP_EQ, timestr);
+#endif
+#endif
 
  done:
   ;
@@ -702,6 +805,25 @@ test_util_parse_http_time(void *arg)
   tt_int_op(0,OP_EQ,parse_http_time("Mon, 31 Dec 2012 00:00:00 GMT", &a_time));
   tt_int_op((time_t)1356912000UL,OP_EQ, tor_timegm(&a_time));
   T("2012-12-31 00:00:00");
+
+  /* This value is in range with 32 bit and 64 bit time_t */
+  tt_int_op(0,OP_EQ,parse_http_time("Fri, 30 Nov 2035 01:46:40 GMT", &a_time));
+  tt_int_op((time_t)2080000000UL,OP_EQ, tor_timegm(&a_time));
+  T("2035-11-30 01:46:40");
+
+  /* This value is out of range with 32 bit time_t, but in range for 64 bit
+   * time_t */
+#if SIZEOF_TIME_T == 4
+  /* parse_http_time should indicate failure on overflow, but it doesn't yet.
+   * Hopefully #18480 will improve the failure semantics in this case. */
+  tt_int_op(0,OP_EQ,parse_http_time("Wed, 17 Feb 2038 06:13:20 GMT", &a_time));
+  tt_int_op((time_t)-1,OP_EQ, tor_timegm(&a_time));
+#elif SIZEOF_TIME_T == 8
+  tt_int_op(0,OP_EQ,parse_http_time("Wed, 17 Feb 2038 06:13:20 GMT", &a_time));
+  tt_int_op((time_t)2150000000UL,OP_EQ, tor_timegm(&a_time));
+  T("2038-02-17 06:13:20");
+#endif
+
   tt_int_op(-1,OP_EQ, parse_http_time("2004-08-zz 99-99x99 GMT", &a_time));
   tt_int_op(-1,OP_EQ, parse_http_time("2011-03-32 00:00:00 GMT", &a_time));
   tt_int_op(-1,OP_EQ, parse_http_time("2011-03-30 24:00:00 GMT", &a_time));
@@ -2175,7 +2297,8 @@ test_util_sscanf(void *arg)
 }
 
 #define tt_char_op(a,op,b) tt_assert_op_type(a,op,b,char,"%c")
-#define tt_ci_char_op(a,op,b) tt_char_op(tolower(a),op,tolower(b))
+#define tt_ci_char_op(a,op,b) \
+  tt_char_op(TOR_TOLOWER((int)a),op,TOR_TOLOWER((int)b))
 
 #ifndef HAVE_STRNLEN
 static size_t
@@ -4097,6 +4220,9 @@ test_util_round_to_next_multiple_of(void *arg)
   tt_u64_op(round_uint64_to_next_multiple_of(99,7), ==, 105);
   tt_u64_op(round_uint64_to_next_multiple_of(99,9), ==, 99);
 
+  tt_u64_op(round_uint64_to_next_multiple_of(UINT64_MAX,2), ==,
+            UINT64_MAX);
+
   tt_i64_op(round_int64_to_next_multiple_of(0,1), ==, 0);
   tt_i64_op(round_int64_to_next_multiple_of(0,7), ==, 0);
 
@@ -4110,7 +4236,27 @@ test_util_round_to_next_multiple_of(void *arg)
 
   tt_i64_op(round_int64_to_next_multiple_of(INT64_MIN,2), ==, INT64_MIN);
   tt_i64_op(round_int64_to_next_multiple_of(INT64_MAX,2), ==,
-                                            INT64_MAX-INT64_MAX%2);
+                                            INT64_MAX);
+
+  tt_int_op(round_uint32_to_next_multiple_of(0,1), ==, 0);
+  tt_int_op(round_uint32_to_next_multiple_of(0,7), ==, 0);
+
+  tt_int_op(round_uint32_to_next_multiple_of(99,1), ==, 99);
+  tt_int_op(round_uint32_to_next_multiple_of(99,7), ==, 105);
+  tt_int_op(round_uint32_to_next_multiple_of(99,9), ==, 99);
+
+  tt_int_op(round_uint32_to_next_multiple_of(UINT32_MAX,2), ==,
+            UINT32_MAX);
+
+  tt_uint_op(round_to_next_multiple_of(0,1), ==, 0);
+  tt_uint_op(round_to_next_multiple_of(0,7), ==, 0);
+
+  tt_uint_op(round_to_next_multiple_of(99,1), ==, 99);
+  tt_uint_op(round_to_next_multiple_of(99,7), ==, 105);
+  tt_uint_op(round_to_next_multiple_of(99,9), ==, 99);
+
+  tt_uint_op(round_to_next_multiple_of(UINT_MAX,2), ==,
+            UINT_MAX);
  done:
   ;
 }
@@ -4143,6 +4289,7 @@ test_util_laplace(void *arg)
    */
   tt_i64_op(INT64_MIN + 20, ==,
             add_laplace_noise(20, 0.0, delta_f, epsilon));
+
   tt_i64_op(-60, ==, add_laplace_noise(20, 0.1, delta_f, epsilon));
   tt_i64_op(-14, ==, add_laplace_noise(20, 0.25, delta_f, epsilon));
   tt_i64_op(20, ==, add_laplace_noise(20, 0.5, delta_f, epsilon));
@@ -4150,15 +4297,146 @@ test_util_laplace(void *arg)
   tt_i64_op(100, ==, add_laplace_noise(20, 0.9, delta_f, epsilon));
   tt_i64_op(215, ==, add_laplace_noise(20, 0.99, delta_f, epsilon));
 
+  /* Test extreme values of signal with maximally negative values of noise
+   * 1.0000000000000002 is the smallest number > 1
+   * 0.0000000000000002 is the double epsilon (error when calculating near 1)
+   * this is approximately 1/(2^52)
+   * per https://en.wikipedia.org/wiki/Double_precision
+   * (let's not descend into the world of subnormals)
+   * >>> laplace.ppf([0, 0.0000000000000002], loc = 0, scale = 1)
+   * array([        -inf, -35.45506713])
+   */
+  const double noscale_df = 1.0, noscale_eps = 1.0;
+
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(0, 0.0, noscale_df, noscale_eps));
+
+  /* is it clipped to INT64_MIN? */
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(-1, 0.0, noscale_df, noscale_eps));
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(INT64_MIN, 0.0,
+                              noscale_df, noscale_eps));
+  /* ... even when scaled? */
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(0, 0.0, delta_f, epsilon));
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(0, 0.0,
+                              DBL_MAX, 1));
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(INT64_MIN, 0.0,
+                              DBL_MAX, 1));
+
+  /* does it play nice with INT64_MAX? */
+  tt_i64_op((INT64_MIN + INT64_MAX), ==,
+            add_laplace_noise(INT64_MAX, 0.0,
+                              noscale_df, noscale_eps));
+
+  /* do near-zero fractional values work? */
+  const double min_dbl_error = 0.0000000000000002;
+
+  tt_i64_op(-35, ==,
+            add_laplace_noise(0, min_dbl_error,
+                              noscale_df, noscale_eps));
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(INT64_MIN, min_dbl_error,
+                              noscale_df, noscale_eps));
+  tt_i64_op((-35 + INT64_MAX), ==,
+            add_laplace_noise(INT64_MAX, min_dbl_error,
+                              noscale_df, noscale_eps));
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(0, min_dbl_error,
+                              DBL_MAX, 1));
+  tt_i64_op((INT64_MAX + INT64_MIN), ==,
+            add_laplace_noise(INT64_MAX, min_dbl_error,
+                              DBL_MAX, 1));
+  tt_i64_op(INT64_MIN, ==,
+            add_laplace_noise(INT64_MIN, min_dbl_error,
+                              DBL_MAX, 1));
+
+  /* does it play nice with INT64_MAX? */
+  tt_i64_op((INT64_MAX - 35), ==,
+            add_laplace_noise(INT64_MAX, min_dbl_error,
+                              noscale_df, noscale_eps));
+
+  /* Test extreme values of signal with maximally positive values of noise
+   * 1.0000000000000002 is the smallest number > 1
+   * 0.9999999999999998 is the greatest number < 1 by calculation
+   * per https://en.wikipedia.org/wiki/Double_precision
+   * >>> laplace.ppf([1.0, 0.9999999999999998], loc = 0, scale = 1)
+   * array([inf,  35.35050621])
+   * but the function rejects p == 1.0, so we just use max_dbl_lt_one
+   */
+  const double max_dbl_lt_one = 0.9999999999999998;
+
+  /* do near-one fractional values work? */
+  tt_i64_op(35, ==,
+            add_laplace_noise(0, max_dbl_lt_one, noscale_df, noscale_eps));
+
+  /* is it clipped to INT64_MAX? */
+  tt_i64_op(INT64_MAX, ==,
+            add_laplace_noise(INT64_MAX - 35, max_dbl_lt_one,
+                              noscale_df, noscale_eps));
+  tt_i64_op(INT64_MAX, ==,
+            add_laplace_noise(INT64_MAX - 34, max_dbl_lt_one,
+                              noscale_df, noscale_eps));
+  tt_i64_op(INT64_MAX, ==,
+            add_laplace_noise(INT64_MAX, max_dbl_lt_one,
+                              noscale_df, noscale_eps));
+  /* ... even when scaled? */
+  tt_i64_op(INT64_MAX, ==,
+            add_laplace_noise(INT64_MAX, max_dbl_lt_one,
+                              delta_f, epsilon));
+  tt_i64_op((INT64_MIN + INT64_MAX), ==,
+            add_laplace_noise(INT64_MIN, max_dbl_lt_one,
+                              DBL_MAX, 1));
+  tt_i64_op(INT64_MAX, ==,
+            add_laplace_noise(INT64_MAX, max_dbl_lt_one,
+                              DBL_MAX, 1));
+  /* does it play nice with INT64_MIN? */
+  tt_i64_op((INT64_MIN + 35), ==,
+            add_laplace_noise(INT64_MIN, max_dbl_lt_one,
+                              noscale_df, noscale_eps));
+
  done:
   ;
 }
 
-#define UTIL_LEGACY(name)                                               \
-  { #name, test_util_ ## name , 0, NULL, NULL }
+static void
+test_util_clamp_double_to_int64(void *arg)
+{
+  (void)arg;
 
-#define UTIL_TEST(name, flags)                          \
-  { #name, test_util_ ## name, flags, NULL, NULL }
+  tt_i64_op(INT64_MIN, ==, clamp_double_to_int64(-INFINITY));
+  tt_i64_op(INT64_MIN, ==,
+            clamp_double_to_int64(-1.0 * pow(2.0, 64.0) - 1.0));
+  tt_i64_op(INT64_MIN, ==,
+            clamp_double_to_int64(-1.0 * pow(2.0, 63.0) - 1.0));
+  tt_i64_op(((uint64_t) -1) << 53, ==,
+            clamp_double_to_int64(-1.0 * pow(2.0, 53.0)));
+  tt_i64_op((((uint64_t) -1) << 53) + 1, ==,
+            clamp_double_to_int64(-1.0 * pow(2.0, 53.0) + 1.0));
+  tt_i64_op(-1, ==, clamp_double_to_int64(-1.0));
+  tt_i64_op(0, ==, clamp_double_to_int64(-0.9));
+  tt_i64_op(0, ==, clamp_double_to_int64(-0.1));
+  tt_i64_op(0, ==, clamp_double_to_int64(0.0));
+  tt_i64_op(0, ==, clamp_double_to_int64(NAN));
+  tt_i64_op(0, ==, clamp_double_to_int64(0.1));
+  tt_i64_op(0, ==, clamp_double_to_int64(0.9));
+  tt_i64_op(1, ==, clamp_double_to_int64(1.0));
+  tt_i64_op((((int64_t) 1) << 53) - 1, ==,
+            clamp_double_to_int64(pow(2.0, 53.0) - 1.0));
+  tt_i64_op(((int64_t) 1) << 53, ==,
+            clamp_double_to_int64(pow(2.0, 53.0)));
+  tt_i64_op(INT64_MAX, ==,
+            clamp_double_to_int64(pow(2.0, 63.0)));
+  tt_i64_op(INT64_MAX, ==,
+            clamp_double_to_int64(pow(2.0, 64.0)));
+  tt_i64_op(INT64_MAX, ==, clamp_double_to_int64(INFINITY));
+
+ done:
+  ;
+}
 
 #ifdef FD_CLOEXEC
 #define CAN_CHECK_CLOEXEC
@@ -4180,9 +4458,14 @@ fd_is_nonblocking(tor_socket_t fd)
 }
 #endif
 
+#define ERRNO_IS_EPROTO(e)    (e == SOCK_ERRNO(EPROTONOSUPPORT))
+#define SOCK_ERR_IS_EPROTO(s) ERRNO_IS_EPROTO(tor_socket_errno(s))
+
+/* Test for tor_open_socket*, using IPv4 or IPv6 depending on arg. */
 static void
 test_util_socket(void *arg)
 {
+  const int domain = !strcmp(arg, "4") ? AF_INET : AF_INET6;
   tor_socket_t fd1 = TOR_INVALID_SOCKET;
   tor_socket_t fd2 = TOR_INVALID_SOCKET;
   tor_socket_t fd3 = TOR_INVALID_SOCKET;
@@ -4193,15 +4476,20 @@ test_util_socket(void *arg)
 
   (void)arg;
 
-  fd1 = tor_open_socket_with_extensions(AF_INET, SOCK_STREAM, 0, 0, 0);
-  fd2 = tor_open_socket_with_extensions(AF_INET, SOCK_STREAM, 0, 0, 1);
+  fd1 = tor_open_socket_with_extensions(domain, SOCK_STREAM, 0, 0, 0);
+  int err = tor_socket_errno(fd1);
+  if (fd1 < 0 && err == SOCK_ERRNO(EPROTONOSUPPORT)) {
+    /* Assume we're on an IPv4-only or IPv6-only system, and give up now. */
+    goto done;
+  }
+  fd2 = tor_open_socket_with_extensions(domain, SOCK_STREAM, 0, 0, 1);
   tt_assert(SOCKET_OK(fd1));
   tt_assert(SOCKET_OK(fd2));
   tt_int_op(get_n_open_sockets(), OP_EQ, n + 2);
-  //fd3 = tor_open_socket_with_extensions(AF_INET, SOCK_STREAM, 0, 1, 0);
-  //fd4 = tor_open_socket_with_extensions(AF_INET, SOCK_STREAM, 0, 1, 1);
-  fd3 = tor_open_socket(AF_INET, SOCK_STREAM, 0);
-  fd4 = tor_open_socket_nonblocking(AF_INET, SOCK_STREAM, 0);
+  //fd3 = tor_open_socket_with_extensions(domain, SOCK_STREAM, 0, 1, 0);
+  //fd4 = tor_open_socket_with_extensions(domain, SOCK_STREAM, 0, 1, 1);
+  fd3 = tor_open_socket(domain, SOCK_STREAM, 0);
+  fd4 = tor_open_socket_nonblocking(domain, SOCK_STREAM, 0);
   tt_assert(SOCKET_OK(fd3));
   tt_assert(SOCKET_OK(fd4));
   tt_int_op(get_n_open_sockets(), OP_EQ, n + 4);
@@ -4250,8 +4538,20 @@ test_util_socketpair(void *arg)
   int n = get_n_open_sockets();
   tor_socket_t fds[2] = {TOR_INVALID_SOCKET, TOR_INVALID_SOCKET};
   const int family = AF_UNIX;
+  int socketpair_result = 0;
 
-  tt_int_op(0, OP_EQ, tor_socketpair_fn(family, SOCK_STREAM, 0, fds));
+  socketpair_result = tor_socketpair_fn(family, SOCK_STREAM, 0, fds);
+  /* If there is no 127.0.0.1 or ::1, tor_ersatz_socketpair will and must fail.
+   * Otherwise, we risk exposing a socketpair on a routable IP address. (Some
+   * BSD jails use a routable address for localhost. Fortunately, they have
+   * the real AF_UNIX socketpair.) */
+  if (ersatz && ERRNO_IS_EPROTO(-socketpair_result)) {
+    /* In my testing, an IPv6-only FreeBSD jail without ::1 returned EINVAL.
+     * Assume we're on a machine without 127.0.0.1 or ::1 and give up now. */
+    goto done;
+  }
+  tt_int_op(0, OP_EQ, socketpair_result);
+
   tt_assert(SOCKET_OK(fds[0]));
   tt_assert(SOCKET_OK(fds[1]));
   tt_int_op(get_n_open_sockets(), OP_EQ, n + 2);
@@ -4270,6 +4570,8 @@ test_util_socketpair(void *arg)
   if (SOCKET_OK(fds[1]))
     tor_close_socket(fds[1]);
 }
+
+#undef SOCKET_EPROTO
 
 static void
 test_util_max_mem(void *arg)
@@ -4377,7 +4679,7 @@ test_util_writepid(void *arg)
   contents = read_file_to_str(fname, 0, NULL);
   tt_assert(contents);
 
-  int n = sscanf(contents, "%lu\n%c", &pid, &c);
+  int n = tor_sscanf(contents, "%lu\n%c", &pid, &c);
   tt_int_op(n, OP_EQ, 1);
 
 #ifdef _WIN32
@@ -4414,6 +4716,92 @@ test_util_get_avail_disk_space(void *arg)
   ;
 }
 
+static void
+test_util_touch_file(void *arg)
+{
+  (void) arg;
+  const char *fname = get_fname("touch");
+
+  const time_t now = time(NULL);
+  struct stat st;
+  write_bytes_to_file(fname, "abc", 3, 1);
+  tt_int_op(0, OP_EQ, stat(fname, &st));
+  /* A subtle point: the filesystem time is not necessarily equal to the
+   * system clock time, since one can be using a monotonic clock, or coarse
+   * monotonic clock, or whatever.  So we might wind up with an mtime a few
+   * microseconds ago.  Let's just give it a lot of wiggle room. */
+  tt_i64_op(st.st_mtime, OP_GE, now - 1);
+
+  const time_t five_sec_ago = now - 5;
+  struct utimbuf u = { five_sec_ago, five_sec_ago };
+  tt_int_op(0, OP_EQ, utime(fname, &u));
+  tt_int_op(0, OP_EQ, stat(fname, &st));
+  /* Let's hope that utime/stat give the same second as a round-trip? */
+  tt_i64_op(st.st_mtime, OP_EQ, five_sec_ago);
+
+  /* Finally we can touch the file */
+  tt_int_op(0, OP_EQ, touch_file(fname));
+  tt_int_op(0, OP_EQ, stat(fname, &st));
+  tt_i64_op(st.st_mtime, OP_GE, now-1);
+
+ done:
+  ;
+}
+
+#ifndef _WIN32
+static void
+test_util_pwdb(void *arg)
+{
+  (void) arg;
+  const struct passwd *me = NULL, *me2, *me3;
+  char *name = NULL;
+  char *dir = NULL;
+
+  /* Uncached case. */
+  /* Let's assume that we exist. */
+  me = tor_getpwuid(getuid());
+  tt_assert(me != NULL);
+  name = tor_strdup(me->pw_name);
+
+  /* Uncached case */
+  me2 = tor_getpwnam(name);
+  tt_assert(me2 != NULL);
+  tt_int_op(me2->pw_uid, OP_EQ, getuid());
+
+  /* Cached case */
+  me3 = tor_getpwuid(getuid());
+  tt_assert(me3 != NULL);
+  tt_str_op(me3->pw_name, OP_EQ, name);
+
+  me3 = tor_getpwnam(name);
+  tt_assert(me3 != NULL);
+  tt_int_op(me3->pw_uid, OP_EQ, getuid());
+
+  dir = get_user_homedir(name);
+  tt_assert(dir != NULL);
+
+ done:
+  tor_free(name);
+  tor_free(dir);
+}
+#endif
+
+#define UTIL_LEGACY(name)                                               \
+  { #name, test_util_ ## name , 0, NULL, NULL }
+
+#define UTIL_TEST(name, flags)                          \
+  { #name, test_util_ ## name, flags, NULL, NULL }
+
+#ifdef _WIN32
+#define UTIL_TEST_NO_WIN(n, f) { #n, NULL, TT_SKIP, NULL, NULL }
+#define UTIL_TEST_WIN_ONLY(n, f) UTIL_TEST(n, (f))
+#define UTIL_LEGACY_NO_WIN(n) UTIL_TEST_NO_WIN(n, 0)
+#else
+#define UTIL_TEST_NO_WIN(n, f) UTIL_TEST(n, (f))
+#define UTIL_TEST_WIN_ONLY(n, f) { #n, NULL, TT_SKIP, NULL, NULL }
+#define UTIL_LEGACY_NO_WIN(n) UTIL_LEGACY(n)
+#endif
+
 struct testcase_t util_tests[] = {
   UTIL_LEGACY(time),
   UTIL_TEST(parse_http_time, 0),
@@ -4421,9 +4809,7 @@ struct testcase_t util_tests[] = {
   UTIL_LEGACY(config_line_quotes),
   UTIL_LEGACY(config_line_comment_character),
   UTIL_LEGACY(config_line_escaped_content),
-#ifndef _WIN32
-  UTIL_LEGACY(expand_filename),
-#endif
+  UTIL_LEGACY_NO_WIN(expand_filename),
   UTIL_LEGACY(escape_string_socks),
   UTIL_LEGACY(string_is_key_value),
   UTIL_LEGACY(strmisc),
@@ -4441,19 +4827,16 @@ struct testcase_t util_tests[] = {
   UTIL_TEST(di_map, 0),
   UTIL_TEST(round_to_next_multiple_of, 0),
   UTIL_TEST(laplace, 0),
+  UTIL_TEST(clamp_double_to_int64, 0),
   UTIL_TEST(find_str_at_start_of_line, 0),
   UTIL_TEST(string_is_C_identifier, 0),
   UTIL_TEST(asprintf, 0),
   UTIL_TEST(listdir, 0),
   UTIL_TEST(parent_dir, 0),
   UTIL_TEST(ftruncate, 0),
-#ifdef _WIN32
-  UTIL_TEST(load_win_lib, 0),
-#endif
-#ifndef _WIN32
-  UTIL_TEST(exit_status, 0),
-  UTIL_TEST(fgets_eagain, 0),
-#endif
+  UTIL_TEST_WIN_ONLY(load_win_lib, 0),
+  UTIL_TEST_NO_WIN(exit_status, 0),
+  UTIL_TEST_NO_WIN(fgets_eagain, 0),
   UTIL_TEST(format_hex_number, 0),
   UTIL_TEST(format_dec_number, 0),
   UTIL_TEST(join_win_cmdline, 0),
@@ -4473,7 +4856,10 @@ struct testcase_t util_tests[] = {
   UTIL_TEST(write_chunks_to_file, 0),
   UTIL_TEST(mathlog, 0),
   UTIL_TEST(weak_random, 0),
-  UTIL_TEST(socket, TT_FORK),
+  { "socket_ipv4", test_util_socket, TT_FORK, &passthrough_setup,
+    (void*)"4" },
+  { "socket_ipv6", test_util_socket, TT_FORK,
+    &passthrough_setup, (void*)"6" },
   { "socketpair", test_util_socketpair, TT_FORK, &passthrough_setup,
     (void*)"0" },
   { "socketpair_ersatz", test_util_socketpair, TT_FORK,
@@ -4483,6 +4869,8 @@ struct testcase_t util_tests[] = {
   UTIL_TEST(ipv4_validation, 0),
   UTIL_TEST(writepid, 0),
   UTIL_TEST(get_avail_disk_space, 0),
+  UTIL_TEST(touch_file, 0),
+  UTIL_TEST_NO_WIN(pwdb, TT_FORK),
   END_OF_TESTCASES
 };
 

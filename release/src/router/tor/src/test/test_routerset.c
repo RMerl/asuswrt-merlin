@@ -423,10 +423,10 @@ NS(test_main)(void *arg)
 }
 
 #undef NS_SUBMODULE
-#define NS_SUBMODULE ASPECT(routerset_parse, policy)
+#define NS_SUBMODULE ASPECT(routerset_parse, policy_wildcard)
 
 /*
- * Structural test for routerset_parse, when given a valid policy.
+ * Structural test for routerset_parse, when given a valid wildcard policy.
  */
 
 NS_DECL(addr_policy_t *, router_parse_addr_policy_item_from_string,
@@ -465,6 +465,100 @@ NS(router_parse_addr_policy_item_from_string)(const char *s,
   (void)assume_action;
   (void)malformed_list;
   CALLED(router_parse_addr_policy_item_from_string)++;
+
+  return NS(mock_addr_policy);
+}
+
+#undef NS_SUBMODULE
+#define NS_SUBMODULE ASPECT(routerset_parse, policy_ipv4)
+
+/*
+ * Structural test for routerset_parse, when given a valid IPv4 address
+ * literal policy.
+ */
+
+NS_DECL(addr_policy_t *, router_parse_addr_policy_item_from_string,
+        (const char *s, int assume_action, int *bogus));
+
+addr_policy_t *NS(mock_addr_policy);
+
+static void
+NS(test_main)(void *arg)
+{
+  routerset_t *set;
+  const char *s;
+  int r;
+  (void)arg;
+
+  NS_MOCK(router_parse_addr_policy_item_from_string);
+  NS(mock_addr_policy) = tor_malloc_zero(sizeof(addr_policy_t));
+
+  set = routerset_new();
+  s = "127.0.0.1";
+  r = routerset_parse(set, s, "");
+  tt_int_op(r, OP_EQ, 0);
+  tt_int_op(smartlist_len(set->policies), OP_NE, 0);
+  tt_int_op(CALLED(router_parse_addr_policy_item_from_string), OP_EQ, 1);
+
+ done:
+  routerset_free(set);
+}
+
+addr_policy_t *
+NS(router_parse_addr_policy_item_from_string)(const char *s, int assume_action,
+                                              int *bogus)
+{
+  (void)s;
+  (void)assume_action;
+  CALLED(router_parse_addr_policy_item_from_string)++;
+  *bogus = 0;
+
+  return NS(mock_addr_policy);
+}
+
+#undef NS_SUBMODULE
+#define NS_SUBMODULE ASPECT(routerset_parse, policy_ipv6)
+
+/*
+ * Structural test for routerset_parse, when given a valid IPv6 address
+ * literal policy.
+ */
+
+NS_DECL(addr_policy_t *, router_parse_addr_policy_item_from_string,
+        (const char *s, int assume_action, int *bad));
+
+addr_policy_t *NS(mock_addr_policy);
+
+static void
+NS(test_main)(void *arg)
+{
+  routerset_t *set;
+  const char *s;
+  int r;
+  (void)arg;
+
+  NS_MOCK(router_parse_addr_policy_item_from_string);
+  NS(mock_addr_policy) = tor_malloc_zero(sizeof(addr_policy_t));
+
+  set = routerset_new();
+  s = "::1";
+  r = routerset_parse(set, s, "");
+  tt_int_op(r, OP_EQ, 0);
+  tt_int_op(smartlist_len(set->policies), OP_NE, 0);
+  tt_int_op(CALLED(router_parse_addr_policy_item_from_string), OP_EQ, 1);
+
+ done:
+  routerset_free(set);
+}
+
+addr_policy_t *
+NS(router_parse_addr_policy_item_from_string)(const char *s,
+                                              int assume_action, int *bad)
+{
+  (void)s;
+  (void)assume_action;
+  CALLED(router_parse_addr_policy_item_from_string)++;
+  *bad = 0;
 
   return NS(mock_addr_policy);
 }
@@ -2109,7 +2203,9 @@ struct testcase_t routerset_tests[] = {
   TEST_CASE_ASPECT(routerset_parse, valid_hexdigest),
   TEST_CASE_ASPECT(routerset_parse, valid_nickname),
   TEST_CASE_ASPECT(routerset_parse, get_countryname),
-  TEST_CASE_ASPECT(routerset_parse, policy),
+  TEST_CASE_ASPECT(routerset_parse, policy_wildcard),
+  TEST_CASE_ASPECT(routerset_parse, policy_ipv4),
+  TEST_CASE_ASPECT(routerset_parse, policy_ipv6),
   TEST_CASE(routerset_subtract_nodes),
   TEST_CASE_ASPECT(routerset_subtract_nodes, null_routerset),
   TEST_CASE(routerset_to_string),

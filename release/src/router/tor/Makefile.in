@@ -110,7 +110,8 @@ DIST_COMMON = README $(am__configure_deps) $(noinst_HEADERS) \
 @UNITTESTS_ENABLED_TRUE@	src/test/test-slow \
 @UNITTESTS_ENABLED_TRUE@	src/test/test-memwipe \
 @UNITTESTS_ENABLED_TRUE@	src/test/test-child \
-@UNITTESTS_ENABLED_TRUE@	src/test/test_workqueue
+@UNITTESTS_ENABLED_TRUE@	src/test/test_workqueue \
+@UNITTESTS_ENABLED_TRUE@	src/test/test-switch-id
 
 @COVERAGE_ENABLED_TRUE@am__append_10 = src/tools/tor-cov-resolve src/tools/tor-cov-gencert
 subdir = .
@@ -308,6 +309,11 @@ am_src_ext_ed25519_ref10_libed25519_ref10_a_OBJECTS = src/ext/ed25519/ref10/src_
 	src/ext/ed25519/ref10/src_ext_ed25519_ref10_libed25519_ref10_a-blinding.$(OBJEXT)
 src_ext_ed25519_ref10_libed25519_ref10_a_OBJECTS =  \
 	$(am_src_ext_ed25519_ref10_libed25519_ref10_a_OBJECTS)
+src_ext_keccak_tiny_libkeccak_tiny_a_AR = $(AR) $(ARFLAGS)
+src_ext_keccak_tiny_libkeccak_tiny_a_LIBADD =
+am_src_ext_keccak_tiny_libkeccak_tiny_a_OBJECTS = src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.$(OBJEXT)
+src_ext_keccak_tiny_libkeccak_tiny_a_OBJECTS =  \
+	$(am_src_ext_keccak_tiny_libkeccak_tiny_a_OBJECTS)
 src_or_libtor_testing_a_AR = $(AR) $(ARFLAGS)
 src_or_libtor_testing_a_LIBADD =
 am__src_or_libtor_testing_a_SOURCES_DIST = src/or/addressmap.c \
@@ -325,14 +331,14 @@ am__src_or_libtor_testing_a_SOURCES_DIST = src/or/addressmap.c \
 	src/or/keypin.c src/or/main.c src/or/microdesc.c \
 	src/or/networkstatus.c src/or/nodelist.c src/or/onion.c \
 	src/or/onion_fast.c src/or/onion_tap.c src/or/transports.c \
-	src/or/policies.c src/or/reasons.c src/or/relay.c \
-	src/or/rendcache.c src/or/rendclient.c src/or/rendcommon.c \
-	src/or/rendmid.c src/or/rendservice.c src/or/rephist.c \
-	src/or/replaycache.c src/or/router.c src/or/routerkeys.c \
-	src/or/routerlist.c src/or/routerparse.c src/or/routerset.c \
-	src/or/scheduler.c src/or/statefile.c src/or/status.c \
-	src/or/torcert.c src/or/onion_ntor.c src/ext/eventdns.c \
-	src/or/ntmain.c
+	src/or/periodic.c src/or/policies.c src/or/reasons.c \
+	src/or/relay.c src/or/rendcache.c src/or/rendclient.c \
+	src/or/rendcommon.c src/or/rendmid.c src/or/rendservice.c \
+	src/or/rephist.c src/or/replaycache.c src/or/router.c \
+	src/or/routerkeys.c src/or/routerlist.c src/or/routerparse.c \
+	src/or/routerset.c src/or/scheduler.c src/or/statefile.c \
+	src/or/status.c src/or/torcert.c src/or/onion_ntor.c \
+	src/ext/eventdns.c src/or/ntmain.c
 @USE_EXTERNAL_EVDNS_FALSE@am__objects_13 = src/ext/src_or_libtor_testing_a-eventdns.$(OBJEXT)
 @BUILD_NT_SERVICES_TRUE@am__objects_14 = src/or/src_or_libtor_testing_a-ntmain.$(OBJEXT)
 am__objects_15 = src/or/src_or_libtor_testing_a-addressmap.$(OBJEXT) \
@@ -374,6 +380,7 @@ am__objects_15 = src/or/src_or_libtor_testing_a-addressmap.$(OBJEXT) \
 	src/or/src_or_libtor_testing_a-onion_fast.$(OBJEXT) \
 	src/or/src_or_libtor_testing_a-onion_tap.$(OBJEXT) \
 	src/or/src_or_libtor_testing_a-transports.$(OBJEXT) \
+	src/or/src_or_libtor_testing_a-periodic.$(OBJEXT) \
 	src/or/src_or_libtor_testing_a-policies.$(OBJEXT) \
 	src/or/src_or_libtor_testing_a-reasons.$(OBJEXT) \
 	src/or/src_or_libtor_testing_a-relay.$(OBJEXT) \
@@ -415,14 +422,14 @@ am__src_or_libtor_a_SOURCES_DIST = src/or/addressmap.c \
 	src/or/keypin.c src/or/main.c src/or/microdesc.c \
 	src/or/networkstatus.c src/or/nodelist.c src/or/onion.c \
 	src/or/onion_fast.c src/or/onion_tap.c src/or/transports.c \
-	src/or/policies.c src/or/reasons.c src/or/relay.c \
-	src/or/rendcache.c src/or/rendclient.c src/or/rendcommon.c \
-	src/or/rendmid.c src/or/rendservice.c src/or/rephist.c \
-	src/or/replaycache.c src/or/router.c src/or/routerkeys.c \
-	src/or/routerlist.c src/or/routerparse.c src/or/routerset.c \
-	src/or/scheduler.c src/or/statefile.c src/or/status.c \
-	src/or/torcert.c src/or/onion_ntor.c src/ext/eventdns.c \
-	src/or/ntmain.c
+	src/or/periodic.c src/or/policies.c src/or/reasons.c \
+	src/or/relay.c src/or/rendcache.c src/or/rendclient.c \
+	src/or/rendcommon.c src/or/rendmid.c src/or/rendservice.c \
+	src/or/rephist.c src/or/replaycache.c src/or/router.c \
+	src/or/routerkeys.c src/or/routerlist.c src/or/routerparse.c \
+	src/or/routerset.c src/or/scheduler.c src/or/statefile.c \
+	src/or/status.c src/or/torcert.c src/or/onion_ntor.c \
+	src/ext/eventdns.c src/or/ntmain.c
 @USE_EXTERNAL_EVDNS_FALSE@am__objects_16 = src/ext/eventdns.$(OBJEXT)
 @BUILD_NT_SERVICES_TRUE@am__objects_17 = src/or/ntmain.$(OBJEXT)
 am__objects_18 = src/or/addressmap.$(OBJEXT) src/or/buffers.$(OBJEXT) \
@@ -444,18 +451,18 @@ am__objects_18 = src/or/addressmap.$(OBJEXT) src/or/buffers.$(OBJEXT) \
 	src/or/microdesc.$(OBJEXT) src/or/networkstatus.$(OBJEXT) \
 	src/or/nodelist.$(OBJEXT) src/or/onion.$(OBJEXT) \
 	src/or/onion_fast.$(OBJEXT) src/or/onion_tap.$(OBJEXT) \
-	src/or/transports.$(OBJEXT) src/or/policies.$(OBJEXT) \
-	src/or/reasons.$(OBJEXT) src/or/relay.$(OBJEXT) \
-	src/or/rendcache.$(OBJEXT) src/or/rendclient.$(OBJEXT) \
-	src/or/rendcommon.$(OBJEXT) src/or/rendmid.$(OBJEXT) \
-	src/or/rendservice.$(OBJEXT) src/or/rephist.$(OBJEXT) \
-	src/or/replaycache.$(OBJEXT) src/or/router.$(OBJEXT) \
-	src/or/routerkeys.$(OBJEXT) src/or/routerlist.$(OBJEXT) \
-	src/or/routerparse.$(OBJEXT) src/or/routerset.$(OBJEXT) \
-	src/or/scheduler.$(OBJEXT) src/or/statefile.$(OBJEXT) \
-	src/or/status.$(OBJEXT) src/or/torcert.$(OBJEXT) \
-	src/or/onion_ntor.$(OBJEXT) $(am__objects_16) \
-	$(am__objects_17)
+	src/or/transports.$(OBJEXT) src/or/periodic.$(OBJEXT) \
+	src/or/policies.$(OBJEXT) src/or/reasons.$(OBJEXT) \
+	src/or/relay.$(OBJEXT) src/or/rendcache.$(OBJEXT) \
+	src/or/rendclient.$(OBJEXT) src/or/rendcommon.$(OBJEXT) \
+	src/or/rendmid.$(OBJEXT) src/or/rendservice.$(OBJEXT) \
+	src/or/rephist.$(OBJEXT) src/or/replaycache.$(OBJEXT) \
+	src/or/router.$(OBJEXT) src/or/routerkeys.$(OBJEXT) \
+	src/or/routerlist.$(OBJEXT) src/or/routerparse.$(OBJEXT) \
+	src/or/routerset.$(OBJEXT) src/or/scheduler.$(OBJEXT) \
+	src/or/statefile.$(OBJEXT) src/or/status.$(OBJEXT) \
+	src/or/torcert.$(OBJEXT) src/or/onion_ntor.$(OBJEXT) \
+	$(am__objects_16) $(am__objects_17)
 am_src_or_libtor_a_OBJECTS = $(am__objects_18)
 src_or_libtor_a_OBJECTS = $(am_src_or_libtor_a_OBJECTS)
 src_trunnel_libor_trunnel_testing_a_AR = $(AR) $(ARFLAGS)
@@ -485,7 +492,8 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
 @UNITTESTS_ENABLED_TRUE@	src/test/test-slow$(EXEEXT) \
 @UNITTESTS_ENABLED_TRUE@	src/test/test-memwipe$(EXEEXT) \
 @UNITTESTS_ENABLED_TRUE@	src/test/test-child$(EXEEXT) \
-@UNITTESTS_ENABLED_TRUE@	src/test/test_workqueue$(EXEEXT)
+@UNITTESTS_ENABLED_TRUE@	src/test/test_workqueue$(EXEEXT) \
+@UNITTESTS_ENABLED_TRUE@	src/test/test-switch-id$(EXEEXT)
 @COVERAGE_ENABLED_TRUE@am__EXEEXT_3 =  \
 @COVERAGE_ENABLED_TRUE@	src/tools/tor-cov-resolve$(EXEEXT) \
 @COVERAGE_ENABLED_TRUE@	src/tools/tor-cov-gencert$(EXEEXT)
@@ -493,8 +501,8 @@ PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am_src_or_tor_OBJECTS = src/or/tor_main.$(OBJEXT)
 src_or_tor_OBJECTS = $(am_src_or_tor_OBJECTS)
 src_or_tor_DEPENDENCIES = src/or/libtor.a src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA) src/common/libor-event.a \
-	src/trunnel/libor-trunnel.a
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
+	src/common/libor-event.a src/trunnel/libor-trunnel.a
 src_or_tor_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(src_or_tor_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am__src_or_tor_cov_SOURCES_DIST = src/or/tor_main.c
@@ -504,7 +512,7 @@ src_or_tor_cov_OBJECTS = $(am_src_or_tor_cov_OBJECTS)
 @COVERAGE_ENABLED_TRUE@	src/or/libtor-testing.a \
 @COVERAGE_ENABLED_TRUE@	src/common/libor-testing.a \
 @COVERAGE_ENABLED_TRUE@	src/common/libor-crypto-testing.a \
-@COVERAGE_ENABLED_TRUE@	$(LIBDONNA) \
+@COVERAGE_ENABLED_TRUE@	$(LIBKECCAK_TINY) $(LIBDONNA) \
 @COVERAGE_ENABLED_TRUE@	src/common/libor-event-testing.a \
 @COVERAGE_ENABLED_TRUE@	src/trunnel/libor-trunnel-testing.a
 src_or_tor_cov_LINK = $(CCLD) $(src_or_tor_cov_CFLAGS) $(CFLAGS) \
@@ -512,11 +520,14 @@ src_or_tor_cov_LINK = $(CCLD) $(src_or_tor_cov_CFLAGS) $(CFLAGS) \
 am_src_test_bench_OBJECTS = src/test/bench.$(OBJEXT)
 src_test_bench_OBJECTS = $(am_src_test_bench_OBJECTS)
 src_test_bench_DEPENDENCIES = src/or/libtor.a src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA) src/common/libor-event.a \
-	src/trunnel/libor-trunnel.a
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
+	src/common/libor-event.a src/trunnel/libor-trunnel.a
 src_test_bench_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(src_test_bench_LDFLAGS) $(LDFLAGS) -o $@
-am_src_test_test_OBJECTS = src/test/src_test_test-test.$(OBJEXT) \
+am_src_test_test_OBJECTS =  \
+	src/test/src_test_test-log_test_helpers.$(OBJEXT) \
+	src/test/src_test_test-rend_test_helpers.$(OBJEXT) \
+	src/test/src_test_test-test.$(OBJEXT) \
 	src/test/src_test_test-test_accounting.$(OBJEXT) \
 	src/test/src_test_test-test_addr.$(OBJEXT) \
 	src/test/src_test_test-test_address.$(OBJEXT) \
@@ -528,13 +539,17 @@ am_src_test_test_OBJECTS = src/test/src_test_test-test.$(OBJEXT) \
 	src/test/src_test_test-test_checkdir.$(OBJEXT) \
 	src/test/src_test_test-test_circuitlist.$(OBJEXT) \
 	src/test/src_test_test-test_circuitmux.$(OBJEXT) \
+	src/test/src_test_test-test_compat_libevent.$(OBJEXT) \
 	src/test/src_test_test-test_config.$(OBJEXT) \
+	src/test/src_test_test-test_connection.$(OBJEXT) \
 	src/test/src_test_test-test_containers.$(OBJEXT) \
 	src/test/src_test_test-test_controller.$(OBJEXT) \
 	src/test/src_test_test-test_controller_events.$(OBJEXT) \
 	src/test/src_test_test-test_crypto.$(OBJEXT) \
 	src/test/src_test_test-test_data.$(OBJEXT) \
 	src/test/src_test_test-test_dir.$(OBJEXT) \
+	src/test/src_test_test-test_dir_common.$(OBJEXT) \
+	src/test/src_test_test-test_dir_handle_get.$(OBJEXT) \
 	src/test/src_test_test-test_entryconn.$(OBJEXT) \
 	src/test/src_test_test-test_entrynodes.$(OBJEXT) \
 	src/test/src_test_test-test_guardfraction.$(OBJEXT) \
@@ -549,9 +564,11 @@ am_src_test_test_OBJECTS = src/test/src_test_test-test.$(OBJEXT) \
 	src/test/src_test_test-test_oom.$(OBJEXT) \
 	src/test/src_test_test-test_options.$(OBJEXT) \
 	src/test/src_test_test-test_policy.$(OBJEXT) \
+	src/test/src_test_test-test_procmon.$(OBJEXT) \
 	src/test/src_test_test-test_pt.$(OBJEXT) \
 	src/test/src_test_test-test_relay.$(OBJEXT) \
 	src/test/src_test_test-test_relaycell.$(OBJEXT) \
+	src/test/src_test_test-test_rendcache.$(OBJEXT) \
 	src/test/src_test_test-test_replay.$(OBJEXT) \
 	src/test/src_test_test-test_routerkeys.$(OBJEXT) \
 	src/test/src_test_test-test_routerlist.$(OBJEXT) \
@@ -560,15 +577,18 @@ am_src_test_test_OBJECTS = src/test/src_test_test-test.$(OBJEXT) \
 	src/test/src_test_test-test_socks.$(OBJEXT) \
 	src/test/src_test_test-test_status.$(OBJEXT) \
 	src/test/src_test_test-test_threads.$(OBJEXT) \
+	src/test/src_test_test-test_tortls.$(OBJEXT) \
 	src/test/src_test_test-test_util.$(OBJEXT) \
+	src/test/src_test_test-test_util_format.$(OBJEXT) \
+	src/test/src_test_test-test_util_process.$(OBJEXT) \
 	src/test/src_test_test-test_helpers.$(OBJEXT) \
 	src/test/src_test_test-test_dns.$(OBJEXT) \
 	src/test/src_test_test-testing_common.$(OBJEXT) \
 	src/ext/src_test_test-tinytest.$(OBJEXT)
 src_test_test_OBJECTS = $(am_src_test_test_OBJECTS)
 src_test_test_DEPENDENCIES = src/or/libtor-testing.a \
-	src/common/libor-testing.a src/common/libor-crypto-testing.a \
-	$(LIBDONNA) src/common/libor.a \
+	src/common/libor-crypto-testing.a $(LIBKECCAK_TINY) \
+	$(LIBDONNA) src/common/libor-testing.a \
 	src/common/libor-event-testing.a \
 	src/trunnel/libor-trunnel-testing.a
 src_test_test_LINK = $(CCLD) $(src_test_test_CFLAGS) $(CFLAGS) \
@@ -586,8 +606,8 @@ am_src_test_test_memwipe_OBJECTS =  \
 	src/test/src_test_test_memwipe-test-memwipe.$(OBJEXT)
 src_test_test_memwipe_OBJECTS = $(am_src_test_test_memwipe_OBJECTS)
 am__DEPENDENCIES_1 = src/or/libtor-testing.a \
-	src/common/libor-testing.a src/common/libor-crypto-testing.a \
-	$(LIBDONNA) src/common/libor.a \
+	src/common/libor-crypto-testing.a $(LIBKECCAK_TINY) \
+	$(LIBDONNA) src/common/libor-testing.a \
 	src/common/libor-event-testing.a \
 	src/trunnel/libor-trunnel-testing.a
 src_test_test_memwipe_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -596,7 +616,8 @@ src_test_test_memwipe_LINK = $(CCLD) $(src_test_test_memwipe_CFLAGS) \
 am_src_test_test_ntor_cl_OBJECTS = src/test/test_ntor_cl.$(OBJEXT)
 src_test_test_ntor_cl_OBJECTS = $(am_src_test_test_ntor_cl_OBJECTS)
 src_test_test_ntor_cl_DEPENDENCIES = src/or/libtor.a \
-	src/common/libor.a src/common/libor-crypto.a $(LIBDONNA)
+	src/common/libor.a src/common/libor-crypto.a $(LIBKECCAK_TINY) \
+	$(LIBDONNA)
 src_test_test_ntor_cl_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(src_test_test_ntor_cl_LDFLAGS) $(LDFLAGS) -o $@
 am_src_test_test_slow_OBJECTS =  \
@@ -609,20 +630,28 @@ src_test_test_slow_OBJECTS = $(am_src_test_test_slow_OBJECTS)
 src_test_test_slow_DEPENDENCIES = $(am__DEPENDENCIES_1)
 src_test_test_slow_LINK = $(CCLD) $(src_test_test_slow_CFLAGS) \
 	$(CFLAGS) $(src_test_test_slow_LDFLAGS) $(LDFLAGS) -o $@
+am_src_test_test_switch_id_OBJECTS =  \
+	src/test/src_test_test_switch_id-test_switch_id.$(OBJEXT)
+src_test_test_switch_id_OBJECTS =  \
+	$(am_src_test_test_switch_id_OBJECTS)
+src_test_test_switch_id_DEPENDENCIES = src/common/libor-testing.a
+src_test_test_switch_id_LINK = $(CCLD) \
+	$(src_test_test_switch_id_CFLAGS) $(CFLAGS) \
+	$(src_test_test_switch_id_LDFLAGS) $(LDFLAGS) -o $@
 am_src_test_test_workqueue_OBJECTS =  \
 	src/test/src_test_test_workqueue-test_workqueue.$(OBJEXT)
 src_test_test_workqueue_OBJECTS =  \
 	$(am_src_test_test_workqueue_OBJECTS)
 src_test_test_workqueue_DEPENDENCIES = src/or/libtor-testing.a \
 	src/common/libor-testing.a src/common/libor-crypto-testing.a \
-	$(LIBDONNA) src/common/libor-event-testing.a
+	$(LIBKECCAK_TINY) $(LIBDONNA) src/common/libor-event-testing.a
 src_test_test_workqueue_LINK = $(CCLD) \
 	$(src_test_test_workqueue_CFLAGS) $(CFLAGS) \
 	$(src_test_test_workqueue_LDFLAGS) $(LDFLAGS) -o $@
 am_src_tools_tor_checkkey_OBJECTS = src/tools/tor-checkkey.$(OBJEXT)
 src_tools_tor_checkkey_OBJECTS = $(am_src_tools_tor_checkkey_OBJECTS)
 src_tools_tor_checkkey_DEPENDENCIES = src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA)
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA)
 src_tools_tor_checkkey_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(src_tools_tor_checkkey_LDFLAGS) $(LDFLAGS) -o $@
 am__src_tools_tor_cov_gencert_SOURCES_DIST = src/tools/tor-gencert.c
@@ -632,7 +661,7 @@ src_tools_tor_cov_gencert_OBJECTS =  \
 @COVERAGE_ENABLED_TRUE@src_tools_tor_cov_gencert_DEPENDENCIES =  \
 @COVERAGE_ENABLED_TRUE@	src/common/libor-testing.a \
 @COVERAGE_ENABLED_TRUE@	src/common/libor-crypto-testing.a \
-@COVERAGE_ENABLED_TRUE@	$(LIBDONNA)
+@COVERAGE_ENABLED_TRUE@	$(LIBKECCAK_TINY) $(LIBDONNA)
 src_tools_tor_cov_gencert_LINK = $(CCLD) \
 	$(src_tools_tor_cov_gencert_CFLAGS) $(CFLAGS) \
 	$(src_tools_tor_cov_gencert_LDFLAGS) $(LDFLAGS) -o $@
@@ -648,7 +677,7 @@ src_tools_tor_cov_resolve_LINK = $(CCLD) \
 am_src_tools_tor_gencert_OBJECTS = src/tools/tor-gencert.$(OBJEXT)
 src_tools_tor_gencert_OBJECTS = $(am_src_tools_tor_gencert_OBJECTS)
 src_tools_tor_gencert_DEPENDENCIES = src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA)
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA)
 src_tools_tor_gencert_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(src_tools_tor_gencert_LDFLAGS) $(LDFLAGS) -o $@
 am_src_tools_tor_resolve_OBJECTS = src/tools/tor-resolve.$(OBJEXT)
@@ -713,6 +742,7 @@ SOURCES = $(src_common_libcurve25519_donna_a_SOURCES) \
 	$(src_common_libor_a_SOURCES) \
 	$(src_ext_ed25519_donna_libed25519_donna_a_SOURCES) \
 	$(src_ext_ed25519_ref10_libed25519_ref10_a_SOURCES) \
+	$(src_ext_keccak_tiny_libkeccak_tiny_a_SOURCES) \
 	$(src_or_libtor_testing_a_SOURCES) $(src_or_libtor_a_SOURCES) \
 	$(src_trunnel_libor_trunnel_testing_a_SOURCES) \
 	$(src_trunnel_libor_trunnel_a_SOURCES) $(src_or_tor_SOURCES) \
@@ -720,6 +750,7 @@ SOURCES = $(src_common_libcurve25519_donna_a_SOURCES) \
 	$(src_test_test_SOURCES) $(src_test_test_bt_cl_SOURCES) \
 	src/test/test-child.c $(src_test_test_memwipe_SOURCES) \
 	$(src_test_test_ntor_cl_SOURCES) $(src_test_test_slow_SOURCES) \
+	$(src_test_test_switch_id_SOURCES) \
 	$(src_test_test_workqueue_SOURCES) \
 	$(src_tools_tor_checkkey_SOURCES) \
 	$(src_tools_tor_cov_gencert_SOURCES) \
@@ -735,6 +766,7 @@ DIST_SOURCES = $(am__src_common_libcurve25519_donna_a_SOURCES_DIST) \
 	$(am__src_common_libor_a_SOURCES_DIST) \
 	$(src_ext_ed25519_donna_libed25519_donna_a_SOURCES) \
 	$(src_ext_ed25519_ref10_libed25519_ref10_a_SOURCES) \
+	$(src_ext_keccak_tiny_libkeccak_tiny_a_SOURCES) \
 	$(am__src_or_libtor_testing_a_SOURCES_DIST) \
 	$(am__src_or_libtor_a_SOURCES_DIST) \
 	$(src_trunnel_libor_trunnel_testing_a_SOURCES) \
@@ -743,6 +775,7 @@ DIST_SOURCES = $(am__src_common_libcurve25519_donna_a_SOURCES_DIST) \
 	$(src_test_test_SOURCES) $(src_test_test_bt_cl_SOURCES) \
 	src/test/test-child.c $(src_test_test_memwipe_SOURCES) \
 	$(src_test_test_ntor_cl_SOURCES) $(src_test_test_slow_SOURCES) \
+	$(src_test_test_switch_id_SOURCES) \
 	$(src_test_test_workqueue_SOURCES) \
 	$(src_tools_tor_checkkey_SOURCES) \
 	$(am__src_tools_tor_cov_gencert_SOURCES_DIST) \
@@ -906,31 +939,31 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# "foreign" means we don't follow GNU package layout standards
-# 1.9 means we require automake vesion 1.9
-AUTOMAKE_OPTIONS = foreign 1.9 subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 noinst_LIBRARIES = $(LIBED25519_REF10) $(LIBED25519_DONNA) \
-	src/trunnel/libor-trunnel.a $(am__append_1) src/common/libor.a \
-	src/common/libor-crypto.a src/common/libor-event.a \
-	$(am__append_2) $(am__append_4) $(am__append_5) \
-	src/or/libtor.a $(am__append_6)
-EXTRA_DIST = src/ext/README src/common/Makefile.nmake src/or/ntmain.c \
+	$(LIBKECCAK_TINY) src/trunnel/libor-trunnel.a $(am__append_1) \
+	src/common/libor.a src/common/libor-crypto.a \
+	src/common/libor-event.a $(am__append_2) $(am__append_4) \
+	$(am__append_5) src/or/libtor.a $(am__append_6)
+EXTRA_DIST = src/ext/README src/trunnel/README \
+	src/common/Makefile.nmake src/or/ntmain.c \
 	src/or/Makefile.nmake src/test/bt_test.py src/test/ntor_ref.py \
 	src/test/slownacl_curve25519.py src/test/zero_length_keys.sh \
 	src/test/test_keygen.sh src/test/test_zero_length_keys.sh \
 	src/test/test_ntor.sh src/test/test_bt.sh \
-	src/test/test-network.sh src/tools/tor-fw-helper/README \
-	src/win32/orconfig.h src/config/geoip src/config/geoip6 \
-	src/config/torrc.minimal.in src/config/torrc.sample.in \
-	src/config/README doc/HACKING doc/asciidoc-helper.sh \
-	$(html_in) $(man_in) $(txt_in) doc/state-contents.txt \
-	doc/torrc_format.txt doc/TUNING doc/WritingTests.txt \
-	contrib/README contrib/client-tools/torify \
-	contrib/dist/rc.subr contrib/dist/suse/tor.sh.in \
-	contrib/dist/tor.sh contrib/dist/torctl \
-	contrib/dist/tor.service.in \
+	src/test/test-network.sh src/test/test_switch_id.sh \
+	src/tools/tor-fw-helper/README src/win32/orconfig.h \
+	src/config/geoip src/config/geoip6 src/config/torrc.minimal.in \
+	src/config/torrc.sample.in src/config/README \
+	doc/asciidoc-helper.sh $(html_in) $(man_in) $(txt_in) \
+	doc/state-contents.txt doc/torrc_format.txt doc/TUNING \
+	doc/HACKING/README.1st.md doc/HACKING/CodingStandards.md \
+	doc/HACKING/GettingStarted.md doc/HACKING/HelpfulTools.md \
+	doc/HACKING/HowToReview.md doc/HACKING/ReleasingTor.md \
+	doc/HACKING/WritingTests.md contrib/README \
+	contrib/client-tools/torify contrib/dist/rc.subr \
+	contrib/dist/suse/tor.sh.in contrib/dist/tor.sh \
+	contrib/dist/torctl contrib/dist/tor.service.in \
 	contrib/operator-tools/linux-tor-prio.sh \
 	contrib/operator-tools/tor-exit-notice.html \
 	contrib/or-tools/exitlist \
@@ -939,14 +972,16 @@ EXTRA_DIST = src/ext/README src/common/Makefile.nmake src/or/ntmain.c \
 	contrib/win32build/tor.nsi.in ChangeLog INSTALL LICENSE \
 	Makefile.nmake README ReleaseNotes
 noinst_HEADERS = $(EXTHEADERS) $(ED25519_REF10_HDRS) \
-	$(ED25519_DONNA_HDRS) $(TRUNNELHEADERS) $(COMMONHEADERS) \
-	$(ORHEADERS) micro-revision.i src/test/fakechans.h \
-	src/test/test.h src/test/test_helpers.h \
+	$(ED25519_DONNA_HDRS) $(LIBKECCAK_TINY_HDRS) $(TRUNNELHEADERS) \
+	$(COMMONHEADERS) $(ORHEADERS) micro-revision.i \
+	src/test/fakechans.h src/test/log_test_helpers.h \
+	src/test/rend_test_helpers.h src/test/test.h \
+	src/test/test_helpers.h src/test/test_dir_common.h \
 	src/test/test_descriptors.inc src/test/example_extrainfo.inc \
 	src/test/failing_routerdescs.inc src/test/ed25519_vectors.inc \
-	src/test/test_descriptors.inc
+	src/test/test_descriptors.inc src/test/vote_descriptors.inc
 CLEANFILES = micro-revision.i src/or/micro-revision.i \
-	micro-revision.tmp $(asciidoc_product) config.log
+	micro-revision.tmp $(asciidoc_product)
 DISTCLEANFILES = $(html_in) $(man_in)
 bin_SCRIPTS = contrib/client-tools/torify
 
@@ -959,6 +994,8 @@ AM_CPPFLAGS = -I$(srcdir)/src/ext -Isrc/ext \
 	-DLOCALSTATEDIR="\"$(localstatedir)\"" \
 	-DBINDIR="\"$(bindir)\""
 AM_CFLAGS = @TOR_SYSTEMD_CFLAGS@
+@COVERAGE_ENABLED_FALSE@TESTING_TOR_BINARY = "$(top_builddir)/src/or/tor"
+@COVERAGE_ENABLED_TRUE@TESTING_TOR_BINARY = "$(top_builddir)/src/or/tor-cov"
 EXTHEADERS = \
   src/ext/ht.h		\
   src/ext/eventdns.h	\
@@ -1080,6 +1117,14 @@ ED25519_DONNA_HDRS = \
 	src/ext/ed25519/donna/test-internals.c
 
 LIBED25519_DONNA = src/ext/ed25519/donna/libed25519_donna.a
+src_ext_keccak_tiny_libkeccak_tiny_a_CFLAGS = 
+src_ext_keccak_tiny_libkeccak_tiny_a_SOURCES = \
+	src/ext/keccak-tiny/keccak-tiny-unrolled.c
+
+LIBKECCAK_TINY_HDRS = \
+	src/ext/keccak-tiny/keccak-tiny.h
+
+LIBKECCAK_TINY = src/ext/keccak-tiny/libkeccak-tiny.a
 TRUNNELINPUTS = \
 	src/trunnel/ed25519_cert.trunnel \
 	src/trunnel/link_handshake.trunnel \
@@ -1181,6 +1226,7 @@ COMMONHEADERS = \
   src/common/ciphers.inc			\
   src/common/compat.h				\
   src/common/compat_libevent.h			\
+  src/common/compat_openssl.h			\
   src/common/compat_threads.h			\
   src/common/container.h			\
   src/common/crypto.h				\
@@ -1248,6 +1294,7 @@ LIBTOR_A_SOURCES = \
 	src/or/onion_fast.c				\
 	src/or/onion_tap.c				\
 	src/or/transports.c				\
+	src/or/periodic.c				\
 	src/or/policies.c				\
 	src/or/reasons.c				\
 	src/or/relay.c					\
@@ -1282,7 +1329,7 @@ src_or_libtor_testing_a_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 # matters a lot there, and is quite hard to debug if you forget to do it.
 src_or_tor_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
 src_or_tor_LDADD = src/or/libtor.a src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA) \
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	src/common/libor-event.a src/trunnel/libor-trunnel.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
 	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
@@ -1292,7 +1339,7 @@ src_or_tor_LDADD = src/or/libtor.a src/common/libor.a \
 @COVERAGE_ENABLED_TRUE@src_or_tor_cov_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 @COVERAGE_ENABLED_TRUE@src_or_tor_cov_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
 @COVERAGE_ENABLED_TRUE@src_or_tor_cov_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
-@COVERAGE_ENABLED_TRUE@	src/common/libor-crypto-testing.a $(LIBDONNA) \
+@COVERAGE_ENABLED_TRUE@	src/common/libor-crypto-testing.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 @COVERAGE_ENABLED_TRUE@	src/common/libor-event-testing.a src/trunnel/libor-trunnel-testing.a \
 @COVERAGE_ENABLED_TRUE@	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
 @COVERAGE_ENABLED_TRUE@	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
@@ -1326,6 +1373,7 @@ ORHEADERS = \
 	src/or/dnsserv.h				\
 	src/or/eventdns_tor.h				\
 	src/or/ext_orport.h				\
+	src/or/fallback_dirs.inc			\
 	src/or/fp_pair.h				\
 	src/or/geoip.h					\
 	src/or/entrynodes.h				\
@@ -1342,6 +1390,7 @@ ORHEADERS = \
 	src/or/onion_tap.h				\
 	src/or/or.h					\
 	src/or/transports.h				\
+	src/or/periodic.h				\
 	src/or/policies.h				\
 	src/or/reasons.h				\
 	src/or/relay.h					\
@@ -1363,7 +1412,19 @@ ORHEADERS = \
 	src/or/status.h					\
 	src/or/torcert.h
 
-TESTSCRIPTS = src/test/test_zero_length_keys.sh $(am__append_8)
+
+# When the day comes that Tor requires Automake >= 1.12 change
+# TESTS_ENVIRONMENT to AM_TESTS_ENVIRONMENT because the former is reserved for
+# users while the later is reserved for developers.
+TESTS_ENVIRONMENT = \
+	export PYTHON="$(PYTHON)"; \
+	export SHELL="$(SHELL)"; \
+	export abs_top_srcdir="$(abs_top_srcdir)"; \
+	export builddir="$(builddir)"; \
+	export TESTING_TOR_BINARY="$(TESTING_TOR_BINARY)";
+
+TESTSCRIPTS = src/test/test_zero_length_keys.sh \
+	src/test/test_switch_id.sh $(am__append_8)
 
 # These flavors are run using automake's test-driver and test-network.sh
 TEST_CHUTNEY_FLAVORS = basic-min bridges-min hs-min bridges+hs
@@ -1384,6 +1445,8 @@ src_test_AM_CPPFLAGS = -DSHARE_DATADIR="\"$(datadir)\"" \
 # This seems to matter nowhere but on Windows, but I assure you that it
 # matters a lot there, and is quite hard to debug if you forget to do it.
 src_test_test_SOURCES = \
+	src/test/log_test_helpers.c \
+	src/test/rend_test_helpers.c \
 	src/test/test.c \
 	src/test/test_accounting.c \
 	src/test/test_addr.c \
@@ -1396,13 +1459,17 @@ src_test_test_SOURCES = \
 	src/test/test_checkdir.c \
 	src/test/test_circuitlist.c \
 	src/test/test_circuitmux.c \
+	src/test/test_compat_libevent.c \
 	src/test/test_config.c \
+	src/test/test_connection.c \
 	src/test/test_containers.c \
 	src/test/test_controller.c \
 	src/test/test_controller_events.c \
 	src/test/test_crypto.c \
 	src/test/test_data.c \
 	src/test/test_dir.c \
+	src/test/test_dir_common.c \
+	src/test/test_dir_handle_get.c \
 	src/test/test_entryconn.c \
 	src/test/test_entrynodes.c \
 	src/test/test_guardfraction.c \
@@ -1417,9 +1484,11 @@ src_test_test_SOURCES = \
 	src/test/test_oom.c \
 	src/test/test_options.c \
 	src/test/test_policy.c \
+	src/test/test_procmon.c \
 	src/test/test_pt.c \
 	src/test/test_relay.c \
 	src/test/test_relaycell.c \
+	src/test/test_rendcache.c \
 	src/test/test_replay.c \
 	src/test/test_routerkeys.c \
 	src/test/test_routerlist.c \
@@ -1428,9 +1497,12 @@ src_test_test_SOURCES = \
 	src/test/test_socks.c \
 	src/test/test_status.c \
 	src/test/test_threads.c \
+	src/test/test_tortls.c \
 	src/test/test_util.c \
+	src/test/test_util_format.c \
+	src/test/test_util_process.c \
 	src/test/test_helpers.c \
-        src/test/test_dns.c \
+	src/test/test_dns.c \
 	src/test/testing_common.c \
 	src/ext/tinytest.c
 
@@ -1454,12 +1526,26 @@ src_test_test_workqueue_SOURCES = \
 
 src_test_test_workqueue_CPPFLAGS = $(src_test_AM_CPPFLAGS)
 src_test_test_workqueue_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
+src_test_test_switch_id_SOURCES = \
+	src/test/test_switch_id.c
+
+src_test_test_switch_id_CPPFLAGS = $(src_test_AM_CPPFLAGS)
+src_test_test_switch_id_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
+src_test_test_switch_id_LDFLAGS = @TOR_LDFLAGS_zlib@
+src_test_test_switch_id_LDADD = \
+	src/common/libor-testing.a \
+	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@
+
 src_test_test_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ \
         @TOR_LDFLAGS_libevent@
 
-src_test_test_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
-	src/common/libor-crypto-testing.a $(LIBDONNA) src/common/libor.a \
-	src/common/libor-event-testing.a src/trunnel/libor-trunnel-testing.a \
+src_test_test_LDADD = src/or/libtor-testing.a \
+	src/common/libor-crypto-testing.a \
+	$(LIBKECCAK_TINY) \
+	$(LIBDONNA) \
+	src/common/libor-testing.a \
+	src/common/libor-event-testing.a \
+	src/trunnel/libor-trunnel-testing.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ \
 	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ \
 	@TOR_SYSTEMD_LIBS@
@@ -1476,7 +1562,7 @@ src_test_bench_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ \
         @TOR_LDFLAGS_libevent@
 
 src_test_bench_LDADD = src/or/libtor.a src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA) \
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	src/common/libor-event.a src/trunnel/libor-trunnel.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ \
 	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ \
@@ -1487,7 +1573,7 @@ src_test_test_workqueue_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ \
 
 src_test_test_workqueue_LDADD = src/or/libtor-testing.a \
 	src/common/libor-testing.a \
-	src/common/libor-crypto-testing.a $(LIBDONNA) \
+	src/common/libor-crypto-testing.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	src/common/libor-event-testing.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ \
 	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
@@ -1495,7 +1581,7 @@ src_test_test_workqueue_LDADD = src/or/libtor-testing.a \
 src_test_test_ntor_cl_SOURCES = src/test/test_ntor_cl.c
 src_test_test_ntor_cl_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
 src_test_test_ntor_cl_LDADD = src/or/libtor.a src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA) \
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ \
 	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
 
@@ -1521,6 +1607,7 @@ src_tools_tor_resolve_LDADD = src/common/libor.a @TOR_LIB_MATH@ @TOR_LIB_WS32@
 src_tools_tor_gencert_SOURCES = src/tools/tor-gencert.c
 src_tools_tor_gencert_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
 src_tools_tor_gencert_LDADD = src/common/libor.a src/common/libor-crypto.a \
+    $(LIBKECCAK_TINY) \
     $(LIBDONNA) \
         @TOR_LIB_MATH@ @TOR_ZLIB_LIBS@ @TOR_OPENSSL_LIBS@ \
         @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
@@ -1531,6 +1618,7 @@ src_tools_tor_gencert_LDADD = src/common/libor.a src/common/libor-crypto.a \
 @COVERAGE_ENABLED_TRUE@src_tools_tor_cov_gencert_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
 @COVERAGE_ENABLED_TRUE@src_tools_tor_cov_gencert_LDADD = src/common/libor-testing.a \
 @COVERAGE_ENABLED_TRUE@    src/common/libor-crypto-testing.a \
+@COVERAGE_ENABLED_TRUE@    $(LIBKECCAK_TINY) \
 @COVERAGE_ENABLED_TRUE@    $(LIBDONNA) \
 @COVERAGE_ENABLED_TRUE@        @TOR_LIB_MATH@ @TOR_ZLIB_LIBS@ @TOR_OPENSSL_LIBS@ \
 @COVERAGE_ENABLED_TRUE@        @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
@@ -1538,6 +1626,7 @@ src_tools_tor_gencert_LDADD = src/common/libor.a src/common/libor-crypto.a \
 src_tools_tor_checkkey_SOURCES = src/tools/tor-checkkey.c
 src_tools_tor_checkkey_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
 src_tools_tor_checkkey_LDADD = src/common/libor.a src/common/libor-crypto.a \
+    $(LIBKECCAK_TINY) \
     $(LIBDONNA) \
         @TOR_LIB_MATH@ @TOR_ZLIB_LIBS@ @TOR_OPENSSL_LIBS@ \
         @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
@@ -1564,7 +1653,8 @@ asciidoc_product = $(nodist_man1_MANS) $(doc_DATA)
 @COVERAGE_ENABLED_FALSE@TEST_CFLAGS = 
 @COVERAGE_ENABLED_TRUE@TEST_CFLAGS = -fno-inline -fprofile-arcs -ftest-coverage
 @COVERAGE_ENABLED_FALSE@TEST_CPPFLAGS = -DTOR_UNIT_TESTS
-@COVERAGE_ENABLED_TRUE@TEST_CPPFLAGS = -DTOR_UNIT_TESTS -DTOR_COVERAGE
+@COVERAGE_ENABLED_TRUE@@DISABLE_ASSERTS_IN_UNIT_TESTS_FALSE@TEST_CPPFLAGS = -DTOR_UNIT_TESTS -DTOR_COVERAGE
+@COVERAGE_ENABLED_TRUE@@DISABLE_ASSERTS_IN_UNIT_TESTS_TRUE@TEST_CPPFLAGS = -DTOR_UNIT_TESTS -DTOR_COVERAGE -DDISABLE_ASSERTS_IN_UNIT_TESTS
 @COVERAGE_ENABLED_FALSE@TEST_NETWORK_FLAGS = --hs-multi-client 1
 @COVERAGE_ENABLED_TRUE@TEST_NETWORK_FLAGS = --coverage --hs-multi-client 1
 TEST_NETWORK_ALL_LOG_DIR = $(top_builddir)/test_network_log
@@ -2010,6 +2100,20 @@ src/ext/ed25519/ref10/libed25519_ref10.a: $(src_ext_ed25519_ref10_libed25519_ref
 	$(AM_V_at)-rm -f src/ext/ed25519/ref10/libed25519_ref10.a
 	$(AM_V_AR)$(src_ext_ed25519_ref10_libed25519_ref10_a_AR) src/ext/ed25519/ref10/libed25519_ref10.a $(src_ext_ed25519_ref10_libed25519_ref10_a_OBJECTS) $(src_ext_ed25519_ref10_libed25519_ref10_a_LIBADD)
 	$(AM_V_at)$(RANLIB) src/ext/ed25519/ref10/libed25519_ref10.a
+src/ext/keccak-tiny/$(am__dirstamp):
+	@$(MKDIR_P) src/ext/keccak-tiny
+	@: > src/ext/keccak-tiny/$(am__dirstamp)
+src/ext/keccak-tiny/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/ext/keccak-tiny/$(DEPDIR)
+	@: > src/ext/keccak-tiny/$(DEPDIR)/$(am__dirstamp)
+src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.$(OBJEXT):  \
+	src/ext/keccak-tiny/$(am__dirstamp) \
+	src/ext/keccak-tiny/$(DEPDIR)/$(am__dirstamp)
+
+src/ext/keccak-tiny/libkeccak-tiny.a: $(src_ext_keccak_tiny_libkeccak_tiny_a_OBJECTS) $(src_ext_keccak_tiny_libkeccak_tiny_a_DEPENDENCIES) $(EXTRA_src_ext_keccak_tiny_libkeccak_tiny_a_DEPENDENCIES) src/ext/keccak-tiny/$(am__dirstamp)
+	$(AM_V_at)-rm -f src/ext/keccak-tiny/libkeccak-tiny.a
+	$(AM_V_AR)$(src_ext_keccak_tiny_libkeccak_tiny_a_AR) src/ext/keccak-tiny/libkeccak-tiny.a $(src_ext_keccak_tiny_libkeccak_tiny_a_OBJECTS) $(src_ext_keccak_tiny_libkeccak_tiny_a_LIBADD)
+	$(AM_V_at)$(RANLIB) src/ext/keccak-tiny/libkeccak-tiny.a
 src/or/$(am__dirstamp):
 	@$(MKDIR_P) src/or
 	@: > src/or/$(am__dirstamp)
@@ -2093,6 +2197,8 @@ src/or/src_or_libtor_testing_a-onion_fast.$(OBJEXT):  \
 src/or/src_or_libtor_testing_a-onion_tap.$(OBJEXT):  \
 	src/or/$(am__dirstamp) src/or/$(DEPDIR)/$(am__dirstamp)
 src/or/src_or_libtor_testing_a-transports.$(OBJEXT):  \
+	src/or/$(am__dirstamp) src/or/$(DEPDIR)/$(am__dirstamp)
+src/or/src_or_libtor_testing_a-periodic.$(OBJEXT):  \
 	src/or/$(am__dirstamp) src/or/$(DEPDIR)/$(am__dirstamp)
 src/or/src_or_libtor_testing_a-policies.$(OBJEXT):  \
 	src/or/$(am__dirstamp) src/or/$(DEPDIR)/$(am__dirstamp)
@@ -2219,6 +2325,8 @@ src/or/onion_fast.$(OBJEXT): src/or/$(am__dirstamp) \
 src/or/onion_tap.$(OBJEXT): src/or/$(am__dirstamp) \
 	src/or/$(DEPDIR)/$(am__dirstamp)
 src/or/transports.$(OBJEXT): src/or/$(am__dirstamp) \
+	src/or/$(DEPDIR)/$(am__dirstamp)
+src/or/periodic.$(OBJEXT): src/or/$(am__dirstamp) \
 	src/or/$(DEPDIR)/$(am__dirstamp)
 src/or/policies.$(OBJEXT): src/or/$(am__dirstamp) \
 	src/or/$(DEPDIR)/$(am__dirstamp)
@@ -2361,6 +2469,10 @@ src/test/bench.$(OBJEXT): src/test/$(am__dirstamp) \
 src/test/bench$(EXEEXT): $(src_test_bench_OBJECTS) $(src_test_bench_DEPENDENCIES) $(EXTRA_src_test_bench_DEPENDENCIES) src/test/$(am__dirstamp)
 	@rm -f src/test/bench$(EXEEXT)
 	$(AM_V_CCLD)$(src_test_bench_LINK) $(src_test_bench_OBJECTS) $(src_test_bench_LDADD) $(LIBS)
+src/test/src_test_test-log_test_helpers.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-rend_test_helpers.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test.$(OBJEXT): src/test/$(am__dirstamp) \
 	src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_accounting.$(OBJEXT):  \
@@ -2385,7 +2497,11 @@ src/test/src_test_test-test_circuitlist.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_circuitmux.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_compat_libevent.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_config.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_connection.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_containers.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
@@ -2399,6 +2515,10 @@ src/test/src_test_test-test_data.$(OBJEXT): src/test/$(am__dirstamp) \
 	src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_dir.$(OBJEXT): src/test/$(am__dirstamp) \
 	src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_dir_common.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_dir_handle_get.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_entryconn.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_entrynodes.$(OBJEXT):  \
@@ -2427,11 +2547,15 @@ src/test/src_test_test-test_options.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_policy.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_procmon.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_pt.$(OBJEXT): src/test/$(am__dirstamp) \
 	src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_relay.$(OBJEXT): src/test/$(am__dirstamp) \
 	src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_relaycell.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_rendcache.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_replay.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
@@ -2449,8 +2573,14 @@ src/test/src_test_test-test_status.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_threads.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_tortls.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_util.$(OBJEXT): src/test/$(am__dirstamp) \
 	src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_util_format.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+src/test/src_test_test-test_util_process.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_helpers.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/src_test_test-test_dns.$(OBJEXT): src/test/$(am__dirstamp) \
@@ -2495,6 +2625,12 @@ src/ext/src_test_test_slow-tinytest.$(OBJEXT):  \
 src/test/test-slow$(EXEEXT): $(src_test_test_slow_OBJECTS) $(src_test_test_slow_DEPENDENCIES) $(EXTRA_src_test_test_slow_DEPENDENCIES) src/test/$(am__dirstamp)
 	@rm -f src/test/test-slow$(EXEEXT)
 	$(AM_V_CCLD)$(src_test_test_slow_LINK) $(src_test_test_slow_OBJECTS) $(src_test_test_slow_LDADD) $(LIBS)
+src/test/src_test_test_switch_id-test_switch_id.$(OBJEXT):  \
+	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
+
+src/test/test-switch-id$(EXEEXT): $(src_test_test_switch_id_OBJECTS) $(src_test_test_switch_id_DEPENDENCIES) $(EXTRA_src_test_test_switch_id_DEPENDENCIES) src/test/$(am__dirstamp)
+	@rm -f src/test/test-switch-id$(EXEEXT)
+	$(AM_V_CCLD)$(src_test_test_switch_id_LINK) $(src_test_test_switch_id_OBJECTS) $(src_test_test_switch_id_LDADD) $(LIBS)
 src/test/src_test_test_workqueue-test_workqueue.$(OBJEXT):  \
 	src/test/$(am__dirstamp) src/test/$(DEPDIR)/$(am__dirstamp)
 src/test/test_workqueue$(EXEEXT): $(src_test_test_workqueue_OBJECTS) $(src_test_test_workqueue_DEPENDENCIES) $(EXTRA_src_test_test_workqueue_DEPENDENCIES) src/test/$(am__dirstamp)
@@ -2979,6 +3115,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/ext/ed25519/ref10/$(DEPDIR)/src_ext_ed25519_ref10_libed25519_ref10_a-sc_muladd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/ext/ed25519/ref10/$(DEPDIR)/src_ext_ed25519_ref10_libed25519_ref10_a-sc_reduce.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/ext/ed25519/ref10/$(DEPDIR)/src_ext_ed25519_ref10_libed25519_ref10_a-sign.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/ext/keccak-tiny/$(DEPDIR)/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/ext/trunnel/$(DEPDIR)/src_common_libor_testing_a-trunnel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/ext/trunnel/$(DEPDIR)/src_trunnel_libor_trunnel_a-trunnel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/ext/trunnel/$(DEPDIR)/src_trunnel_libor_trunnel_testing_a-trunnel.Po@am__quote@
@@ -3023,6 +3160,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/onion_fast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/onion_ntor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/onion_tap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/periodic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/policies.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/reasons.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/relay.Po@am__quote@
@@ -3079,6 +3217,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/src_or_libtor_testing_a-onion_fast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/src_or_libtor_testing_a-onion_ntor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/src_or_libtor_testing_a-onion_tap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/src_or_libtor_testing_a-periodic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/src_or_libtor_testing_a-policies.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/src_or_libtor_testing_a-reasons.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/src_or_libtor_testing_a-relay.Po@am__quote@
@@ -3106,6 +3245,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/torcert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/or/$(DEPDIR)/transports.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/bench.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-log_test_helpers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-rend_test_helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_accounting.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_addr.Po@am__quote@
@@ -3118,13 +3259,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_checkdir.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_circuitlist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_circuitmux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_compat_libevent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_connection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_containers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_controller.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_controller_events.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_crypto.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_dir.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_dir_common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_dir_handle_get.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_dns.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_entryconn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_entrynodes.Po@am__quote@
@@ -3141,9 +3286,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_oom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_options.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_policy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_procmon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_pt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_relay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_relaycell.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_rendcache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_replay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_routerkeys.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_routerlist.Po@am__quote@
@@ -3152,7 +3299,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_socks.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_threads.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_tortls.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_util_format.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-test_util_process.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test-testing_common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test_bt_cl-test_bt_cl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test_memwipe-test-memwipe.Po@am__quote@
@@ -3160,6 +3310,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test_slow-test_slow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test_slow-test_util_slow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test_slow-testing_common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test_switch_id-test_switch_id.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/src_test_test_workqueue-test_workqueue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/test-child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/test_ntor_cl.Po@am__quote@
@@ -4243,6 +4394,20 @@ src/ext/ed25519/ref10/src_ext_ed25519_ref10_libed25519_ref10_a-blinding.obj: src
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(src_ext_ed25519_ref10_libed25519_ref10_a_CFLAGS) $(CFLAGS) -c -o src/ext/ed25519/ref10/src_ext_ed25519_ref10_libed25519_ref10_a-blinding.obj `if test -f 'src/ext/ed25519/ref10/blinding.c'; then $(CYGPATH_W) 'src/ext/ed25519/ref10/blinding.c'; else $(CYGPATH_W) '$(srcdir)/src/ext/ed25519/ref10/blinding.c'; fi`
 
+src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.o: src/ext/keccak-tiny/keccak-tiny-unrolled.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(src_ext_keccak_tiny_libkeccak_tiny_a_CFLAGS) $(CFLAGS) -MT src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.o -MD -MP -MF src/ext/keccak-tiny/$(DEPDIR)/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.Tpo -c -o src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.o `test -f 'src/ext/keccak-tiny/keccak-tiny-unrolled.c' || echo '$(srcdir)/'`src/ext/keccak-tiny/keccak-tiny-unrolled.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/ext/keccak-tiny/$(DEPDIR)/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.Tpo src/ext/keccak-tiny/$(DEPDIR)/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/ext/keccak-tiny/keccak-tiny-unrolled.c' object='src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(src_ext_keccak_tiny_libkeccak_tiny_a_CFLAGS) $(CFLAGS) -c -o src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.o `test -f 'src/ext/keccak-tiny/keccak-tiny-unrolled.c' || echo '$(srcdir)/'`src/ext/keccak-tiny/keccak-tiny-unrolled.c
+
+src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.obj: src/ext/keccak-tiny/keccak-tiny-unrolled.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(src_ext_keccak_tiny_libkeccak_tiny_a_CFLAGS) $(CFLAGS) -MT src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.obj -MD -MP -MF src/ext/keccak-tiny/$(DEPDIR)/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.Tpo -c -o src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.obj `if test -f 'src/ext/keccak-tiny/keccak-tiny-unrolled.c'; then $(CYGPATH_W) 'src/ext/keccak-tiny/keccak-tiny-unrolled.c'; else $(CYGPATH_W) '$(srcdir)/src/ext/keccak-tiny/keccak-tiny-unrolled.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/ext/keccak-tiny/$(DEPDIR)/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.Tpo src/ext/keccak-tiny/$(DEPDIR)/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/ext/keccak-tiny/keccak-tiny-unrolled.c' object='src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(src_ext_keccak_tiny_libkeccak_tiny_a_CFLAGS) $(CFLAGS) -c -o src/ext/keccak-tiny/src_ext_keccak_tiny_libkeccak_tiny_a-keccak-tiny-unrolled.obj `if test -f 'src/ext/keccak-tiny/keccak-tiny-unrolled.c'; then $(CYGPATH_W) 'src/ext/keccak-tiny/keccak-tiny-unrolled.c'; else $(CYGPATH_W) '$(srcdir)/src/ext/keccak-tiny/keccak-tiny-unrolled.c'; fi`
+
 src/or/src_or_libtor_testing_a-addressmap.o: src/or/addressmap.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_libtor_testing_a_CPPFLAGS) $(CPPFLAGS) $(src_or_libtor_testing_a_CFLAGS) $(CFLAGS) -MT src/or/src_or_libtor_testing_a-addressmap.o -MD -MP -MF src/or/$(DEPDIR)/src_or_libtor_testing_a-addressmap.Tpo -c -o src/or/src_or_libtor_testing_a-addressmap.o `test -f 'src/or/addressmap.c' || echo '$(srcdir)/'`src/or/addressmap.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/or/$(DEPDIR)/src_or_libtor_testing_a-addressmap.Tpo src/or/$(DEPDIR)/src_or_libtor_testing_a-addressmap.Po
@@ -4789,6 +4954,20 @@ src/or/src_or_libtor_testing_a-transports.obj: src/or/transports.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_libtor_testing_a_CPPFLAGS) $(CPPFLAGS) $(src_or_libtor_testing_a_CFLAGS) $(CFLAGS) -c -o src/or/src_or_libtor_testing_a-transports.obj `if test -f 'src/or/transports.c'; then $(CYGPATH_W) 'src/or/transports.c'; else $(CYGPATH_W) '$(srcdir)/src/or/transports.c'; fi`
 
+src/or/src_or_libtor_testing_a-periodic.o: src/or/periodic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_libtor_testing_a_CPPFLAGS) $(CPPFLAGS) $(src_or_libtor_testing_a_CFLAGS) $(CFLAGS) -MT src/or/src_or_libtor_testing_a-periodic.o -MD -MP -MF src/or/$(DEPDIR)/src_or_libtor_testing_a-periodic.Tpo -c -o src/or/src_or_libtor_testing_a-periodic.o `test -f 'src/or/periodic.c' || echo '$(srcdir)/'`src/or/periodic.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/or/$(DEPDIR)/src_or_libtor_testing_a-periodic.Tpo src/or/$(DEPDIR)/src_or_libtor_testing_a-periodic.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/or/periodic.c' object='src/or/src_or_libtor_testing_a-periodic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_libtor_testing_a_CPPFLAGS) $(CPPFLAGS) $(src_or_libtor_testing_a_CFLAGS) $(CFLAGS) -c -o src/or/src_or_libtor_testing_a-periodic.o `test -f 'src/or/periodic.c' || echo '$(srcdir)/'`src/or/periodic.c
+
+src/or/src_or_libtor_testing_a-periodic.obj: src/or/periodic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_libtor_testing_a_CPPFLAGS) $(CPPFLAGS) $(src_or_libtor_testing_a_CFLAGS) $(CFLAGS) -MT src/or/src_or_libtor_testing_a-periodic.obj -MD -MP -MF src/or/$(DEPDIR)/src_or_libtor_testing_a-periodic.Tpo -c -o src/or/src_or_libtor_testing_a-periodic.obj `if test -f 'src/or/periodic.c'; then $(CYGPATH_W) 'src/or/periodic.c'; else $(CYGPATH_W) '$(srcdir)/src/or/periodic.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/or/$(DEPDIR)/src_or_libtor_testing_a-periodic.Tpo src/or/$(DEPDIR)/src_or_libtor_testing_a-periodic.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/or/periodic.c' object='src/or/src_or_libtor_testing_a-periodic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_libtor_testing_a_CPPFLAGS) $(CPPFLAGS) $(src_or_libtor_testing_a_CFLAGS) $(CFLAGS) -c -o src/or/src_or_libtor_testing_a-periodic.obj `if test -f 'src/or/periodic.c'; then $(CYGPATH_W) 'src/or/periodic.c'; else $(CYGPATH_W) '$(srcdir)/src/or/periodic.c'; fi`
+
 src/or/src_or_libtor_testing_a-policies.o: src/or/policies.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_libtor_testing_a_CPPFLAGS) $(CPPFLAGS) $(src_or_libtor_testing_a_CFLAGS) $(CFLAGS) -MT src/or/src_or_libtor_testing_a-policies.o -MD -MP -MF src/or/$(DEPDIR)/src_or_libtor_testing_a-policies.Tpo -c -o src/or/src_or_libtor_testing_a-policies.o `test -f 'src/or/policies.c' || echo '$(srcdir)/'`src/or/policies.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/or/$(DEPDIR)/src_or_libtor_testing_a-policies.Tpo src/or/$(DEPDIR)/src_or_libtor_testing_a-policies.Po
@@ -5223,6 +5402,34 @@ src/or/src_or_tor_cov-tor_main.obj: src/or/tor_main.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_or_tor_cov_CPPFLAGS) $(CPPFLAGS) $(src_or_tor_cov_CFLAGS) $(CFLAGS) -c -o src/or/src_or_tor_cov-tor_main.obj `if test -f 'src/or/tor_main.c'; then $(CYGPATH_W) 'src/or/tor_main.c'; else $(CYGPATH_W) '$(srcdir)/src/or/tor_main.c'; fi`
 
+src/test/src_test_test-log_test_helpers.o: src/test/log_test_helpers.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-log_test_helpers.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-log_test_helpers.Tpo -c -o src/test/src_test_test-log_test_helpers.o `test -f 'src/test/log_test_helpers.c' || echo '$(srcdir)/'`src/test/log_test_helpers.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-log_test_helpers.Tpo src/test/$(DEPDIR)/src_test_test-log_test_helpers.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/log_test_helpers.c' object='src/test/src_test_test-log_test_helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-log_test_helpers.o `test -f 'src/test/log_test_helpers.c' || echo '$(srcdir)/'`src/test/log_test_helpers.c
+
+src/test/src_test_test-log_test_helpers.obj: src/test/log_test_helpers.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-log_test_helpers.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-log_test_helpers.Tpo -c -o src/test/src_test_test-log_test_helpers.obj `if test -f 'src/test/log_test_helpers.c'; then $(CYGPATH_W) 'src/test/log_test_helpers.c'; else $(CYGPATH_W) '$(srcdir)/src/test/log_test_helpers.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-log_test_helpers.Tpo src/test/$(DEPDIR)/src_test_test-log_test_helpers.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/log_test_helpers.c' object='src/test/src_test_test-log_test_helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-log_test_helpers.obj `if test -f 'src/test/log_test_helpers.c'; then $(CYGPATH_W) 'src/test/log_test_helpers.c'; else $(CYGPATH_W) '$(srcdir)/src/test/log_test_helpers.c'; fi`
+
+src/test/src_test_test-rend_test_helpers.o: src/test/rend_test_helpers.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-rend_test_helpers.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-rend_test_helpers.Tpo -c -o src/test/src_test_test-rend_test_helpers.o `test -f 'src/test/rend_test_helpers.c' || echo '$(srcdir)/'`src/test/rend_test_helpers.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-rend_test_helpers.Tpo src/test/$(DEPDIR)/src_test_test-rend_test_helpers.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/rend_test_helpers.c' object='src/test/src_test_test-rend_test_helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-rend_test_helpers.o `test -f 'src/test/rend_test_helpers.c' || echo '$(srcdir)/'`src/test/rend_test_helpers.c
+
+src/test/src_test_test-rend_test_helpers.obj: src/test/rend_test_helpers.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-rend_test_helpers.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-rend_test_helpers.Tpo -c -o src/test/src_test_test-rend_test_helpers.obj `if test -f 'src/test/rend_test_helpers.c'; then $(CYGPATH_W) 'src/test/rend_test_helpers.c'; else $(CYGPATH_W) '$(srcdir)/src/test/rend_test_helpers.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-rend_test_helpers.Tpo src/test/$(DEPDIR)/src_test_test-rend_test_helpers.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/rend_test_helpers.c' object='src/test/src_test_test-rend_test_helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-rend_test_helpers.obj `if test -f 'src/test/rend_test_helpers.c'; then $(CYGPATH_W) 'src/test/rend_test_helpers.c'; else $(CYGPATH_W) '$(srcdir)/src/test/rend_test_helpers.c'; fi`
+
 src/test/src_test_test-test.o: src/test/test.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test.Tpo -c -o src/test/src_test_test-test.o `test -f 'src/test/test.c' || echo '$(srcdir)/'`src/test/test.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test.Tpo src/test/$(DEPDIR)/src_test_test-test.Po
@@ -5391,6 +5598,20 @@ src/test/src_test_test-test_circuitmux.obj: src/test/test_circuitmux.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_circuitmux.obj `if test -f 'src/test/test_circuitmux.c'; then $(CYGPATH_W) 'src/test/test_circuitmux.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_circuitmux.c'; fi`
 
+src/test/src_test_test-test_compat_libevent.o: src/test/test_compat_libevent.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_compat_libevent.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_compat_libevent.Tpo -c -o src/test/src_test_test-test_compat_libevent.o `test -f 'src/test/test_compat_libevent.c' || echo '$(srcdir)/'`src/test/test_compat_libevent.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_compat_libevent.Tpo src/test/$(DEPDIR)/src_test_test-test_compat_libevent.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_compat_libevent.c' object='src/test/src_test_test-test_compat_libevent.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_compat_libevent.o `test -f 'src/test/test_compat_libevent.c' || echo '$(srcdir)/'`src/test/test_compat_libevent.c
+
+src/test/src_test_test-test_compat_libevent.obj: src/test/test_compat_libevent.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_compat_libevent.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_compat_libevent.Tpo -c -o src/test/src_test_test-test_compat_libevent.obj `if test -f 'src/test/test_compat_libevent.c'; then $(CYGPATH_W) 'src/test/test_compat_libevent.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_compat_libevent.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_compat_libevent.Tpo src/test/$(DEPDIR)/src_test_test-test_compat_libevent.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_compat_libevent.c' object='src/test/src_test_test-test_compat_libevent.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_compat_libevent.obj `if test -f 'src/test/test_compat_libevent.c'; then $(CYGPATH_W) 'src/test/test_compat_libevent.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_compat_libevent.c'; fi`
+
 src/test/src_test_test-test_config.o: src/test/test_config.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_config.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_config.Tpo -c -o src/test/src_test_test-test_config.o `test -f 'src/test/test_config.c' || echo '$(srcdir)/'`src/test/test_config.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_config.Tpo src/test/$(DEPDIR)/src_test_test-test_config.Po
@@ -5404,6 +5625,20 @@ src/test/src_test_test-test_config.obj: src/test/test_config.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_config.c' object='src/test/src_test_test-test_config.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_config.obj `if test -f 'src/test/test_config.c'; then $(CYGPATH_W) 'src/test/test_config.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_config.c'; fi`
+
+src/test/src_test_test-test_connection.o: src/test/test_connection.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_connection.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_connection.Tpo -c -o src/test/src_test_test-test_connection.o `test -f 'src/test/test_connection.c' || echo '$(srcdir)/'`src/test/test_connection.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_connection.Tpo src/test/$(DEPDIR)/src_test_test-test_connection.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_connection.c' object='src/test/src_test_test-test_connection.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_connection.o `test -f 'src/test/test_connection.c' || echo '$(srcdir)/'`src/test/test_connection.c
+
+src/test/src_test_test-test_connection.obj: src/test/test_connection.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_connection.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_connection.Tpo -c -o src/test/src_test_test-test_connection.obj `if test -f 'src/test/test_connection.c'; then $(CYGPATH_W) 'src/test/test_connection.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_connection.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_connection.Tpo src/test/$(DEPDIR)/src_test_test-test_connection.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_connection.c' object='src/test/src_test_test-test_connection.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_connection.obj `if test -f 'src/test/test_connection.c'; then $(CYGPATH_W) 'src/test/test_connection.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_connection.c'; fi`
 
 src/test/src_test_test-test_containers.o: src/test/test_containers.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_containers.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_containers.Tpo -c -o src/test/src_test_test-test_containers.o `test -f 'src/test/test_containers.c' || echo '$(srcdir)/'`src/test/test_containers.c
@@ -5488,6 +5723,34 @@ src/test/src_test_test-test_dir.obj: src/test/test_dir.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_dir.c' object='src/test/src_test_test-test_dir.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_dir.obj `if test -f 'src/test/test_dir.c'; then $(CYGPATH_W) 'src/test/test_dir.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_dir.c'; fi`
+
+src/test/src_test_test-test_dir_common.o: src/test/test_dir_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_dir_common.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_dir_common.Tpo -c -o src/test/src_test_test-test_dir_common.o `test -f 'src/test/test_dir_common.c' || echo '$(srcdir)/'`src/test/test_dir_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_dir_common.Tpo src/test/$(DEPDIR)/src_test_test-test_dir_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_dir_common.c' object='src/test/src_test_test-test_dir_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_dir_common.o `test -f 'src/test/test_dir_common.c' || echo '$(srcdir)/'`src/test/test_dir_common.c
+
+src/test/src_test_test-test_dir_common.obj: src/test/test_dir_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_dir_common.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_dir_common.Tpo -c -o src/test/src_test_test-test_dir_common.obj `if test -f 'src/test/test_dir_common.c'; then $(CYGPATH_W) 'src/test/test_dir_common.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_dir_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_dir_common.Tpo src/test/$(DEPDIR)/src_test_test-test_dir_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_dir_common.c' object='src/test/src_test_test-test_dir_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_dir_common.obj `if test -f 'src/test/test_dir_common.c'; then $(CYGPATH_W) 'src/test/test_dir_common.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_dir_common.c'; fi`
+
+src/test/src_test_test-test_dir_handle_get.o: src/test/test_dir_handle_get.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_dir_handle_get.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_dir_handle_get.Tpo -c -o src/test/src_test_test-test_dir_handle_get.o `test -f 'src/test/test_dir_handle_get.c' || echo '$(srcdir)/'`src/test/test_dir_handle_get.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_dir_handle_get.Tpo src/test/$(DEPDIR)/src_test_test-test_dir_handle_get.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_dir_handle_get.c' object='src/test/src_test_test-test_dir_handle_get.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_dir_handle_get.o `test -f 'src/test/test_dir_handle_get.c' || echo '$(srcdir)/'`src/test/test_dir_handle_get.c
+
+src/test/src_test_test-test_dir_handle_get.obj: src/test/test_dir_handle_get.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_dir_handle_get.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_dir_handle_get.Tpo -c -o src/test/src_test_test-test_dir_handle_get.obj `if test -f 'src/test/test_dir_handle_get.c'; then $(CYGPATH_W) 'src/test/test_dir_handle_get.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_dir_handle_get.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_dir_handle_get.Tpo src/test/$(DEPDIR)/src_test_test-test_dir_handle_get.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_dir_handle_get.c' object='src/test/src_test_test-test_dir_handle_get.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_dir_handle_get.obj `if test -f 'src/test/test_dir_handle_get.c'; then $(CYGPATH_W) 'src/test/test_dir_handle_get.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_dir_handle_get.c'; fi`
 
 src/test/src_test_test-test_entryconn.o: src/test/test_entryconn.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_entryconn.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_entryconn.Tpo -c -o src/test/src_test_test-test_entryconn.o `test -f 'src/test/test_entryconn.c' || echo '$(srcdir)/'`src/test/test_entryconn.c
@@ -5685,6 +5948,20 @@ src/test/src_test_test-test_policy.obj: src/test/test_policy.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_policy.obj `if test -f 'src/test/test_policy.c'; then $(CYGPATH_W) 'src/test/test_policy.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_policy.c'; fi`
 
+src/test/src_test_test-test_procmon.o: src/test/test_procmon.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_procmon.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_procmon.Tpo -c -o src/test/src_test_test-test_procmon.o `test -f 'src/test/test_procmon.c' || echo '$(srcdir)/'`src/test/test_procmon.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_procmon.Tpo src/test/$(DEPDIR)/src_test_test-test_procmon.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_procmon.c' object='src/test/src_test_test-test_procmon.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_procmon.o `test -f 'src/test/test_procmon.c' || echo '$(srcdir)/'`src/test/test_procmon.c
+
+src/test/src_test_test-test_procmon.obj: src/test/test_procmon.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_procmon.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_procmon.Tpo -c -o src/test/src_test_test-test_procmon.obj `if test -f 'src/test/test_procmon.c'; then $(CYGPATH_W) 'src/test/test_procmon.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_procmon.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_procmon.Tpo src/test/$(DEPDIR)/src_test_test-test_procmon.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_procmon.c' object='src/test/src_test_test-test_procmon.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_procmon.obj `if test -f 'src/test/test_procmon.c'; then $(CYGPATH_W) 'src/test/test_procmon.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_procmon.c'; fi`
+
 src/test/src_test_test-test_pt.o: src/test/test_pt.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_pt.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_pt.Tpo -c -o src/test/src_test_test-test_pt.o `test -f 'src/test/test_pt.c' || echo '$(srcdir)/'`src/test/test_pt.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_pt.Tpo src/test/$(DEPDIR)/src_test_test-test_pt.Po
@@ -5726,6 +6003,20 @@ src/test/src_test_test-test_relaycell.obj: src/test/test_relaycell.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_relaycell.c' object='src/test/src_test_test-test_relaycell.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_relaycell.obj `if test -f 'src/test/test_relaycell.c'; then $(CYGPATH_W) 'src/test/test_relaycell.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_relaycell.c'; fi`
+
+src/test/src_test_test-test_rendcache.o: src/test/test_rendcache.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_rendcache.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_rendcache.Tpo -c -o src/test/src_test_test-test_rendcache.o `test -f 'src/test/test_rendcache.c' || echo '$(srcdir)/'`src/test/test_rendcache.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_rendcache.Tpo src/test/$(DEPDIR)/src_test_test-test_rendcache.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_rendcache.c' object='src/test/src_test_test-test_rendcache.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_rendcache.o `test -f 'src/test/test_rendcache.c' || echo '$(srcdir)/'`src/test/test_rendcache.c
+
+src/test/src_test_test-test_rendcache.obj: src/test/test_rendcache.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_rendcache.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_rendcache.Tpo -c -o src/test/src_test_test-test_rendcache.obj `if test -f 'src/test/test_rendcache.c'; then $(CYGPATH_W) 'src/test/test_rendcache.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_rendcache.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_rendcache.Tpo src/test/$(DEPDIR)/src_test_test-test_rendcache.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_rendcache.c' object='src/test/src_test_test-test_rendcache.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_rendcache.obj `if test -f 'src/test/test_rendcache.c'; then $(CYGPATH_W) 'src/test/test_rendcache.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_rendcache.c'; fi`
 
 src/test/src_test_test-test_replay.o: src/test/test_replay.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_replay.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_replay.Tpo -c -o src/test/src_test_test-test_replay.o `test -f 'src/test/test_replay.c' || echo '$(srcdir)/'`src/test/test_replay.c
@@ -5839,6 +6130,20 @@ src/test/src_test_test-test_threads.obj: src/test/test_threads.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_threads.obj `if test -f 'src/test/test_threads.c'; then $(CYGPATH_W) 'src/test/test_threads.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_threads.c'; fi`
 
+src/test/src_test_test-test_tortls.o: src/test/test_tortls.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_tortls.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_tortls.Tpo -c -o src/test/src_test_test-test_tortls.o `test -f 'src/test/test_tortls.c' || echo '$(srcdir)/'`src/test/test_tortls.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_tortls.Tpo src/test/$(DEPDIR)/src_test_test-test_tortls.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_tortls.c' object='src/test/src_test_test-test_tortls.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_tortls.o `test -f 'src/test/test_tortls.c' || echo '$(srcdir)/'`src/test/test_tortls.c
+
+src/test/src_test_test-test_tortls.obj: src/test/test_tortls.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_tortls.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_tortls.Tpo -c -o src/test/src_test_test-test_tortls.obj `if test -f 'src/test/test_tortls.c'; then $(CYGPATH_W) 'src/test/test_tortls.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_tortls.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_tortls.Tpo src/test/$(DEPDIR)/src_test_test-test_tortls.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_tortls.c' object='src/test/src_test_test-test_tortls.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_tortls.obj `if test -f 'src/test/test_tortls.c'; then $(CYGPATH_W) 'src/test/test_tortls.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_tortls.c'; fi`
+
 src/test/src_test_test-test_util.o: src/test/test_util.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_util.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_util.Tpo -c -o src/test/src_test_test-test_util.o `test -f 'src/test/test_util.c' || echo '$(srcdir)/'`src/test/test_util.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_util.Tpo src/test/$(DEPDIR)/src_test_test-test_util.Po
@@ -5852,6 +6157,34 @@ src/test/src_test_test-test_util.obj: src/test/test_util.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_util.c' object='src/test/src_test_test-test_util.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_util.obj `if test -f 'src/test/test_util.c'; then $(CYGPATH_W) 'src/test/test_util.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_util.c'; fi`
+
+src/test/src_test_test-test_util_format.o: src/test/test_util_format.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_util_format.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_util_format.Tpo -c -o src/test/src_test_test-test_util_format.o `test -f 'src/test/test_util_format.c' || echo '$(srcdir)/'`src/test/test_util_format.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_util_format.Tpo src/test/$(DEPDIR)/src_test_test-test_util_format.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_util_format.c' object='src/test/src_test_test-test_util_format.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_util_format.o `test -f 'src/test/test_util_format.c' || echo '$(srcdir)/'`src/test/test_util_format.c
+
+src/test/src_test_test-test_util_format.obj: src/test/test_util_format.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_util_format.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_util_format.Tpo -c -o src/test/src_test_test-test_util_format.obj `if test -f 'src/test/test_util_format.c'; then $(CYGPATH_W) 'src/test/test_util_format.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_util_format.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_util_format.Tpo src/test/$(DEPDIR)/src_test_test-test_util_format.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_util_format.c' object='src/test/src_test_test-test_util_format.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_util_format.obj `if test -f 'src/test/test_util_format.c'; then $(CYGPATH_W) 'src/test/test_util_format.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_util_format.c'; fi`
+
+src/test/src_test_test-test_util_process.o: src/test/test_util_process.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_util_process.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_util_process.Tpo -c -o src/test/src_test_test-test_util_process.o `test -f 'src/test/test_util_process.c' || echo '$(srcdir)/'`src/test/test_util_process.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_util_process.Tpo src/test/$(DEPDIR)/src_test_test-test_util_process.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_util_process.c' object='src/test/src_test_test-test_util_process.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_util_process.o `test -f 'src/test/test_util_process.c' || echo '$(srcdir)/'`src/test/test_util_process.c
+
+src/test/src_test_test-test_util_process.obj: src/test/test_util_process.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_util_process.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_util_process.Tpo -c -o src/test/src_test_test-test_util_process.obj `if test -f 'src/test/test_util_process.c'; then $(CYGPATH_W) 'src/test/test_util_process.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_util_process.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test-test_util_process.Tpo src/test/$(DEPDIR)/src_test_test-test_util_process.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_util_process.c' object='src/test/src_test_test-test_util_process.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test-test_util_process.obj `if test -f 'src/test/test_util_process.c'; then $(CYGPATH_W) 'src/test/test_util_process.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_util_process.c'; fi`
 
 src/test/src_test_test-test_helpers.o: src/test/test_helpers.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_CPPFLAGS) $(CPPFLAGS) $(src_test_test_CFLAGS) $(CFLAGS) -MT src/test/src_test_test-test_helpers.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test-test_helpers.Tpo -c -o src/test/src_test_test-test_helpers.o `test -f 'src/test/test_helpers.c' || echo '$(srcdir)/'`src/test/test_helpers.c
@@ -6006,6 +6339,20 @@ src/ext/src_test_test_slow-tinytest.obj: src/ext/tinytest.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/ext/tinytest.c' object='src/ext/src_test_test_slow-tinytest.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_slow_CPPFLAGS) $(CPPFLAGS) $(src_test_test_slow_CFLAGS) $(CFLAGS) -c -o src/ext/src_test_test_slow-tinytest.obj `if test -f 'src/ext/tinytest.c'; then $(CYGPATH_W) 'src/ext/tinytest.c'; else $(CYGPATH_W) '$(srcdir)/src/ext/tinytest.c'; fi`
+
+src/test/src_test_test_switch_id-test_switch_id.o: src/test/test_switch_id.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_switch_id_CPPFLAGS) $(CPPFLAGS) $(src_test_test_switch_id_CFLAGS) $(CFLAGS) -MT src/test/src_test_test_switch_id-test_switch_id.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test_switch_id-test_switch_id.Tpo -c -o src/test/src_test_test_switch_id-test_switch_id.o `test -f 'src/test/test_switch_id.c' || echo '$(srcdir)/'`src/test/test_switch_id.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test_switch_id-test_switch_id.Tpo src/test/$(DEPDIR)/src_test_test_switch_id-test_switch_id.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_switch_id.c' object='src/test/src_test_test_switch_id-test_switch_id.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_switch_id_CPPFLAGS) $(CPPFLAGS) $(src_test_test_switch_id_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test_switch_id-test_switch_id.o `test -f 'src/test/test_switch_id.c' || echo '$(srcdir)/'`src/test/test_switch_id.c
+
+src/test/src_test_test_switch_id-test_switch_id.obj: src/test/test_switch_id.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_switch_id_CPPFLAGS) $(CPPFLAGS) $(src_test_test_switch_id_CFLAGS) $(CFLAGS) -MT src/test/src_test_test_switch_id-test_switch_id.obj -MD -MP -MF src/test/$(DEPDIR)/src_test_test_switch_id-test_switch_id.Tpo -c -o src/test/src_test_test_switch_id-test_switch_id.obj `if test -f 'src/test/test_switch_id.c'; then $(CYGPATH_W) 'src/test/test_switch_id.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_switch_id.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/test/$(DEPDIR)/src_test_test_switch_id-test_switch_id.Tpo src/test/$(DEPDIR)/src_test_test_switch_id-test_switch_id.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/test/test_switch_id.c' object='src/test/src_test_test_switch_id-test_switch_id.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_switch_id_CPPFLAGS) $(CPPFLAGS) $(src_test_test_switch_id_CFLAGS) $(CFLAGS) -c -o src/test/src_test_test_switch_id-test_switch_id.obj `if test -f 'src/test/test_switch_id.c'; then $(CYGPATH_W) 'src/test/test_switch_id.c'; else $(CYGPATH_W) '$(srcdir)/src/test/test_switch_id.c'; fi`
 
 src/test/src_test_test_workqueue-test_workqueue.o: src/test/test_workqueue.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_test_test_workqueue_CPPFLAGS) $(CPPFLAGS) $(src_test_test_workqueue_CFLAGS) $(CFLAGS) -MT src/test/src_test_test_workqueue-test_workqueue.o -MD -MP -MF src/test/$(DEPDIR)/src_test_test_workqueue-test_workqueue.Tpo -c -o src/test/src_test_test_workqueue-test_workqueue.o `test -f 'src/test/test_workqueue.c' || echo '$(srcdir)/'`src/test/test_workqueue.c
@@ -6501,6 +6848,8 @@ distclean-generic:
 	-rm -f src/ext/ed25519/donna/$(am__dirstamp)
 	-rm -f src/ext/ed25519/ref10/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/ext/ed25519/ref10/$(am__dirstamp)
+	-rm -f src/ext/keccak-tiny/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/ext/keccak-tiny/$(am__dirstamp)
 	-rm -f src/ext/trunnel/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/ext/trunnel/$(am__dirstamp)
 	-rm -f src/or/$(DEPDIR)/$(am__dirstamp)
@@ -6523,7 +6872,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/common/$(DEPDIR) src/ext/$(DEPDIR) src/ext/curve25519_donna/$(DEPDIR) src/ext/ed25519/donna/$(DEPDIR) src/ext/ed25519/ref10/$(DEPDIR) src/ext/trunnel/$(DEPDIR) src/or/$(DEPDIR) src/test/$(DEPDIR) src/tools/$(DEPDIR) src/trunnel/$(DEPDIR)
+	-rm -rf src/common/$(DEPDIR) src/ext/$(DEPDIR) src/ext/curve25519_donna/$(DEPDIR) src/ext/ed25519/donna/$(DEPDIR) src/ext/ed25519/ref10/$(DEPDIR) src/ext/keccak-tiny/$(DEPDIR) src/ext/trunnel/$(DEPDIR) src/or/$(DEPDIR) src/test/$(DEPDIR) src/tools/$(DEPDIR) src/trunnel/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -6572,7 +6921,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/common/$(DEPDIR) src/ext/$(DEPDIR) src/ext/curve25519_donna/$(DEPDIR) src/ext/ed25519/donna/$(DEPDIR) src/ext/ed25519/ref10/$(DEPDIR) src/ext/trunnel/$(DEPDIR) src/or/$(DEPDIR) src/test/$(DEPDIR) src/tools/$(DEPDIR) src/trunnel/$(DEPDIR)
+	-rm -rf src/common/$(DEPDIR) src/ext/$(DEPDIR) src/ext/curve25519_donna/$(DEPDIR) src/ext/ed25519/donna/$(DEPDIR) src/ext/ed25519/ref10/$(DEPDIR) src/ext/keccak-tiny/$(DEPDIR) src/ext/trunnel/$(DEPDIR) src/or/$(DEPDIR) src/test/$(DEPDIR) src/tools/$(DEPDIR) src/trunnel/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -6618,11 +6967,11 @@ uninstall-man: uninstall-man1
 	uninstall-man uninstall-man1 uninstall-tordataDATA
 
 
-src/common/log.o: micro-revision.i
+src/common/src_common_libor_testing_a-log.$(OBJEXT) \
+  src/common/log.$(OBJEXT): micro-revision.i
 
-src/or/tor_main.o: micro-revision.i
-@COVERAGE_ENABLED_TRUE@export TESTING_TOR_BINARY=$(top_builddir)/src/or/tor-cov
-@COVERAGE_ENABLED_FALSE@export TESTING_TOR_BINARY=$(top_builddir)/src/or/tor
+src/or/tor_main.$(OBJEXT) \
+  src/or/src_or_tor_cov-tor_main.$(OBJEXT): micro-revision.i
 
 micro-revision.i: FORCE
 	$(AM_V_at)rm -f micro-revision.tmp; \
@@ -6643,11 +6992,6 @@ micro-revision.i: FORCE
 	true
 
 FORCE:
-
-export PYTHON=@PYTHON@
-export SHELL=@SHELL@
-export abs_top_srcdir=@abs_top_srcdir@
-export builddir=@builddir@
 # fallback_consensus
 
 # If we don't have it, fake it.
@@ -6713,8 +7057,6 @@ dist-rpm: dist-gzip
 	echo "RPM build finished";						\
 	#end of dist-rpm
 
-dist: check
-
 doxygen:
 	doxygen && cd doc/doxygen/latex && make
 
@@ -6746,7 +7088,7 @@ test-network: need-chutney-path all
 test-network-all: need-chutney-path all test-driver
 	mkdir -p $(TEST_NETWORK_ALL_LOG_DIR)
 	@flavors="$(TEST_CHUTNEY_FLAVORS)"; \
-	if ping6 -q -o ::1 >/dev/null 2>&1; then \
+	if ping6 -q -c 1 -o ::1 >/dev/null 2>&1; then \
 		echo "ping6 ::1 succeeded, running IPv6 flavors: $(TEST_CHUTNEY_FLAVORS_IPV6)."; \
 		flavors="$$flavors $(TEST_CHUTNEY_FLAVORS_IPV6)"; \
 	else \
@@ -6776,10 +7118,10 @@ need-stem-path:
 		exit 1; \
 	fi
 
-test-stem: need-stem-path $(TESTING_TOR_BINARY)
+test-stem: need-stem-path all
 	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor $(TESTING_TOR_BINARY) --all --log notice --target RUN_ALL;
 
-test-stem-full: need-stem-path $(TESTING_TOR_BINARY)
+test-stem-full: need-stem-path all
 	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor $(TESTING_TOR_BINARY) --all --log notice --target RUN_ALL,ONLINE -v;
 
 test-full: need-stem-path need-chutney-path check test-network test-stem

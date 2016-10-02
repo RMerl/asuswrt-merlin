@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "or.h"
@@ -390,8 +390,14 @@ main(int argc, char **argv)
 
   init_logging(1);
   network_init();
-  crypto_global_init(1, NULL, NULL);
-  crypto_seed_rng();
+  if (crypto_global_init(1, NULL, NULL) < 0) {
+    printf("Couldn't initialize crypto subsystem; exiting.\n");
+    return 1;
+  }
+  if (crypto_seed_rng() < 0) {
+    printf("Couldn't seed RNG; exiting.\n");
+    return 1;
+  }
 
   rq = replyqueue_new(as_flags);
   tor_assert(rq);

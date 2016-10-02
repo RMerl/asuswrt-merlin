@@ -1,14 +1,22 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file statefile.c
+ *
+ * \brief Handles parsing and encoding the persistent 'state' file that carries
+ *  miscellaneous persistent state between Tor invocations.
+ */
 
 #define STATEFILE_PRIVATE
 #include "or.h"
 #include "circuitstats.h"
 #include "config.h"
 #include "confparse.h"
+#include "connection.h"
 #include "entrynodes.h"
 #include "hibernate.h"
 #include "rephist.h"
@@ -372,6 +380,12 @@ or_state_load(void)
     new_state = or_state_new();
   } else if (contents) {
     log_info(LD_GENERAL, "Loaded state from \"%s\"", fname);
+    /* Warn the user if their clock has been set backwards,
+     * they could be tricked into using old consensuses */
+    time_t apparent_skew = new_state->LastWritten - time(NULL);
+    if (apparent_skew > 0)
+      clock_skew_warning(NULL, (long)apparent_skew, 1, LD_GENERAL,
+                         "local state file", fname);
   } else {
     log_info(LD_GENERAL, "Initialized state");
   }

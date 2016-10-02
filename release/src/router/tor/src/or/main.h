@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -48,7 +48,7 @@ MOCK_DECL(void,connection_start_writing,(connection_t *conn));
 void connection_stop_reading_from_linked_conn(connection_t *conn);
 
 void directory_all_unreachable(time_t now);
-void directory_info_has_arrived(time_t now, int from_cache);
+void directory_info_has_arrived(time_t now, int from_cache, int suppress_logs);
 
 void ip_address_changed(int at_interface);
 void dns_servers_relaunch_checks(void);
@@ -78,6 +78,8 @@ int tor_init(int argc, char **argv);
 #ifdef MAIN_PRIVATE
 STATIC void init_connection_lists(void);
 STATIC void close_closeable_connections(void);
+STATIC void initialize_periodic_events(void);
+STATIC void teardown_periodic_events(void);
 #endif
 
 #endif

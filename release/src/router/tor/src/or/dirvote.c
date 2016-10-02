@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define DIRVOTE_PRIVATE
@@ -54,7 +54,6 @@ static int dirvote_perform_vote(void);
 static void dirvote_clear_votes(int all_votes);
 static int dirvote_compute_consensuses(void);
 static int dirvote_publish_consensus(void);
-static char *make_consensus_method_list(int low, int high, const char *sep);
 
 /* =====
  * Voting
@@ -558,13 +557,20 @@ compute_consensus_method(smartlist_t *votes)
 static int
 consensus_method_is_supported(int method)
 {
+  if (method == MIN_METHOD_FOR_ED25519_ID_IN_MD) {
+    /* This method was broken due to buggy code accidently left in
+     * dircollate.c; do not actually use it.
+     */
+    return 0;
+  }
+
   return (method >= MIN_SUPPORTED_CONSENSUS_METHOD) &&
     (method <= MAX_SUPPORTED_CONSENSUS_METHOD);
 }
 
 /** Return a newly allocated string holding the numbers between low and high
  * (inclusive) that are supported consensus methods. */
-static char *
+STATIC char *
 make_consensus_method_list(int low, int high, const char *separator)
 {
   char *list;
@@ -1235,6 +1241,9 @@ networkstatus_compute_consensus(smartlist_t *votes,
     smartlist_free(combined_server_versions);
     smartlist_free(combined_client_versions);
 
+    if (consensus_method >= MIN_METHOD_FOR_ED25519_ID_VOTING)
+      smartlist_add(flags, tor_strdup("NoEdConsensus"));
+
     smartlist_sort_strings(flags);
     smartlist_uniq_strings(flags);
 
@@ -1532,6 +1541,8 @@ networkstatus_compute_consensus(smartlist_t *votes,
       num_bandwidths = 0;
       num_mbws = 0;
       num_guardfraction_inputs = 0;
+      int ed_consensus = 0;
+      const uint8_t *ed_consensus_val = NULL;
 
       /* Okay, go through all the entries for this digest. */
       for (int voter_idx = 0; voter_idx < smartlist_len(votes); ++voter_idx) {
@@ -1573,12 +1584,31 @@ networkstatus_compute_consensus(smartlist_t *votes,
 
         if (rs->status.has_bandwidth)
           bandwidths_kb[num_bandwidths++] = rs->status.bandwidth_kb;
+
+        /* Count number for which ed25519 is canonical. */
+        if (rs->ed25519_reflects_consensus) {
+          ++ed_consensus;
+          if (ed_consensus_val) {
+            tor_assert(fast_memeq(ed_consensus_val, rs->ed25519_id,
+                                  ED25519_PUBKEY_LEN));
+          } else {
+            ed_consensus_val = rs->ed25519_id;
+          }
+        }
       }
 
       /* We don't include this router at all unless more than half of
        * the authorities we believe in list it. */
       if (n_listing <= total_authorities/2)
         continue;
+
+      if (ed_consensus > 0) {
+        tor_assert(consensus_method >= MIN_METHOD_FOR_ED25519_ID_VOTING);
+        if (ed_consensus <= total_authorities / 2) {
+          log_warn(LD_BUG, "Not enough entries had ed_consensus set; how "
+                   "can we have a consensus of %d?", ed_consensus);
+        }
+      }
 
       /* The clangalyzer can't figure out that this will never be NULL
        * if n_listing is at least 1 */
@@ -1632,6 +1662,10 @@ networkstatus_compute_consensus(smartlist_t *votes,
             smartlist_add(chosen_flags, (char*)fl);
         } else if (!strcmp(fl, "Unnamed")) {
           if (is_unnamed)
+            smartlist_add(chosen_flags, (char*)fl);
+        } else if (!strcmp(fl, "NoEdConsensus") &&
+                   consensus_method >= MIN_METHOD_FOR_ED25519_ID_VOTING) {
+          if (ed_consensus <= total_authorities/2)
             smartlist_add(chosen_flags, (char*)fl);
         } else {
           if (flag_counts[fl_sl_idx] > n_flag_voters[fl_sl_idx]/2) {
@@ -2115,14 +2149,14 @@ networkstatus_add_detached_signatures(networkstatus_t *target,
 
   /** Make sure all the digests we know match, and at least one matches. */
   {
-    digests_t *digests = strmap_get(sigs->digests, flavor);
+    common_digests_t *digests = strmap_get(sigs->digests, flavor);
     int n_matches = 0;
     int alg;
     if (!digests) {
       *msg_out = "No digests for given consensus flavor";
       return -1;
     }
-    for (alg = DIGEST_SHA1; alg < N_DIGEST_ALGORITHMS; ++alg) {
+    for (alg = DIGEST_SHA1; alg < N_COMMON_DIGEST_ALGORITHMS; ++alg) {
       if (!tor_mem_is_zero(digests->d[alg], DIGEST256_LEN)) {
         if (fast_memeq(target->digests.d[alg], digests->d[alg],
                        DIGEST256_LEN)) {
@@ -2315,7 +2349,7 @@ networkstatus_get_detached_signatures(smartlist_t *consensuses)
 
     /* start with SHA256; we don't include SHA1 for anything but the basic
      * consensus. */
-    for (alg = DIGEST_SHA256; alg < N_DIGEST_ALGORITHMS; ++alg) {
+    for (alg = DIGEST_SHA256; alg < N_COMMON_DIGEST_ALGORITHMS; ++alg) {
       char d[HEX_DIGEST256_LEN+1];
       const char *alg_name =
         crypto_digest_algorithm_get_name(alg);
@@ -3373,8 +3407,8 @@ dirvote_free_all(void)
  * ==== */
 
 /** Return the body of the consensus that we're currently trying to build. */
-const char *
-dirvote_get_pending_consensus(consensus_flavor_t flav)
+MOCK_IMPL(const char *,
+dirvote_get_pending_consensus, (consensus_flavor_t flav))
 {
   tor_assert(((int)flav) >= 0 && (int)flav < N_CONSENSUS_FLAVORS);
   return pending_consensuses[flav].body;
@@ -3382,8 +3416,8 @@ dirvote_get_pending_consensus(consensus_flavor_t flav)
 
 /** Return the signatures that we know for the consensus that we're currently
  * trying to build. */
-const char *
-dirvote_get_pending_detached_signatures(void)
+MOCK_IMPL(const char *,
+dirvote_get_pending_detached_signatures, (void))
 {
   return pending_consensus_signatures;
 }
@@ -3494,10 +3528,11 @@ dirvote_create_microdescriptor(const routerinfo_t *ri, int consensus_method)
     char idbuf[ED25519_BASE64_LEN+1];
     const char *keytype;
     if (consensus_method >= MIN_METHOD_FOR_ED25519_ID_IN_MD &&
-        ri->signing_key_cert &&
-        ri->signing_key_cert->signing_key_included) {
+        ri->cache_info.signing_key_cert &&
+        ri->cache_info.signing_key_cert->signing_key_included) {
       keytype = "ed25519";
-      ed25519_public_to_base64(idbuf, &ri->signing_key_cert->signing_key);
+      ed25519_public_to_base64(idbuf,
+                               &ri->cache_info.signing_key_cert->signing_key);
     } else {
       keytype = "rsa1024";
       digest_to_base64(idbuf, ri->cache_info.identity_digest);

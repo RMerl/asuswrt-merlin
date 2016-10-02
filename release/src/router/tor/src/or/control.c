@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -192,7 +192,7 @@ static void flush_queued_events_cb(evutil_socket_t fd, short what, void *arg);
 
 /** Given a control event code for a message event, return the corresponding
  * log severity. */
-static INLINE int
+static inline int
 event_to_log_severity(int event)
 {
   switch (event) {
@@ -206,7 +206,7 @@ event_to_log_severity(int event)
 }
 
 /** Given a log severity, return the corresponding control event code. */
-static INLINE int
+static inline int
 log_severity_to_event(int severity)
 {
   switch (severity) {
@@ -325,7 +325,7 @@ control_event_is_interesting(int event)
 /** Append a NUL-terminated string <b>s</b> to the end of
  * <b>conn</b>-\>outbuf.
  */
-static INLINE void
+static inline void
 connection_write_str_to_buf(const char *s, control_connection_t *conn)
 {
   size_t len = strlen(s);
@@ -428,7 +428,7 @@ read_escaped_data(const char *data, size_t len, char **out)
 /** If the first <b>in_len_max</b> characters in <b>start</b> contain a
  * double-quoted string with escaped characters, return the length of that
  * string (as encoded, including quotes).  Otherwise return -1. */
-static INLINE int
+static inline int
 get_escaped_string_length(const char *start, size_t in_len_max,
                           int *chars_out)
 {
@@ -1927,6 +1927,22 @@ getinfo_helper_dir(control_connection_t *control_conn,
       *errmsg = "Not found in cache";
       return -1;
     }
+  } else if (!strcmpstart(question, "hs/service/desc/id/")) {
+    rend_cache_entry_t *e = NULL;
+
+    question += strlen("hs/service/desc/id/");
+    if (strlen(question) != REND_SERVICE_ID_LEN_BASE32) {
+      *errmsg = "Invalid address";
+      return -1;
+    }
+
+    if (!rend_cache_lookup_v2_desc_as_service(question, &e)) {
+      /* Descriptor found in cache */
+      *answer = tor_strdup(e->desc);
+    } else {
+      *errmsg = "Not found in cache";
+      return -1;
+    }
   } else if (!strcmpstart(question, "md/id/")) {
     const node_t *node = node_get_by_hex_id(question+strlen("md/id/"));
     const microdesc_t *md = NULL;
@@ -1995,6 +2011,11 @@ getinfo_helper_dir(control_connection_t *control_conn,
       char *filename = get_datadir_fname("cached-consensus");
       *answer = read_file_to_str(filename, RFTS_IGNORE_MISSING, NULL);
       tor_free(filename);
+      if (!*answer) { /* generate an error */
+        *errmsg = "Could not open cached consensus. "
+          "Make sure FetchUselessDescriptors is set to 1.";
+        return -1;
+      }
     }
   } else if (!strcmp(question, "network-status")) { /* v1 */
     routerlist_t *routerlist = router_get_routerlist();
@@ -2127,6 +2148,7 @@ getinfo_helper_events(control_connection_t *control_conn,
                       const char *question, char **answer,
                       const char **errmsg)
 {
+  const or_options_t *options = get_options();
   (void) control_conn;
   if (!strcmp(question, "circuit-status")) {
     smartlist_t *status = smartlist_new();
@@ -2263,17 +2285,19 @@ getinfo_helper_events(control_connection_t *control_conn,
       *answer = tor_strdup(directories_have_accepted_server_descriptor()
                            ? "1" : "0");
     } else if (!strcmp(question, "status/reachability-succeeded/or")) {
-      *answer = tor_strdup(check_whether_orport_reachable() ? "1" : "0");
+      *answer = tor_strdup(check_whether_orport_reachable(options) ?
+                            "1" : "0");
     } else if (!strcmp(question, "status/reachability-succeeded/dir")) {
-      *answer = tor_strdup(check_whether_dirport_reachable() ? "1" : "0");
+      *answer = tor_strdup(check_whether_dirport_reachable(options) ?
+                            "1" : "0");
     } else if (!strcmp(question, "status/reachability-succeeded")) {
       tor_asprintf(answer, "OR=%d DIR=%d",
-                   check_whether_orport_reachable() ? 1 : 0,
-                   check_whether_dirport_reachable() ? 1 : 0);
+                   check_whether_orport_reachable(options) ? 1 : 0,
+                   check_whether_dirport_reachable(options) ? 1 : 0);
     } else if (!strcmp(question, "status/bootstrap-phase")) {
       *answer = tor_strdup(last_sent_bootstrap_message);
     } else if (!strcmpstart(question, "status/version/")) {
-      int is_server = server_mode(get_options());
+      int is_server = server_mode(options);
       networkstatus_t *c = networkstatus_get_latest_consensus();
       version_status_t status;
       const char *recommended;
@@ -2315,7 +2339,7 @@ getinfo_helper_events(control_connection_t *control_conn,
       }
       *answer = bridge_stats;
     } else if (!strcmp(question, "status/fresh-relay-descs")) {
-      if (!server_mode(get_options())) {
+      if (!server_mode(options)) {
         *errmsg = "Only relays have descriptors";
         return -1;
       }
@@ -2481,6 +2505,8 @@ static const getinfo_item_t getinfo_items[] = {
   PREFIX("extra-info/digest/", dir, "Extra-info documents by digest."),
   PREFIX("hs/client/desc/id", dir,
          "Hidden Service descriptor in client's cache by onion."),
+  PREFIX("hs/service/desc/id/", dir,
+         "Hidden Service descriptor in services's cache by onion."),
   PREFIX("net/listeners/", listeners, "Bound addresses by type"),
   ITEM("ns/all", networkstatus,
        "Brief summary of router status (v2 directory format)"),
@@ -2544,6 +2570,12 @@ static const getinfo_item_t getinfo_items[] = {
        "v3 Networkstatus consensus as retrieved from a DirPort."),
   ITEM("exit-policy/default", policies,
        "The default value appended to the configured exit policy."),
+  ITEM("exit-policy/reject-private/default", policies,
+       "The default rules appended to the configured exit policy by"
+       " ExitPolicyRejectPrivate."),
+  ITEM("exit-policy/reject-private/relay", policies,
+       "The relay-specific rules appended to the configured exit policy by"
+       " ExitPolicyRejectPrivate."),
   ITEM("exit-policy/full", policies, "The entire exit policy of onion router"),
   ITEM("exit-policy/ipv4", policies, "IPv4 parts of exit policy"),
   ITEM("exit-policy/ipv6", policies, "IPv6 parts of exit policy"),
@@ -2840,12 +2872,26 @@ handle_control_extendcircuit(control_connection_t *conn, uint32_t len,
   }
 
   /* now circ refers to something that is ready to be extended */
+  int first_node = zero_circ;
   SMARTLIST_FOREACH(nodes, const node_t *, node,
   {
-    extend_info_t *info = extend_info_from_node(node, 0);
-    tor_assert(info); /* True, since node_has_descriptor(node) == true */
+    extend_info_t *info = extend_info_from_node(node, first_node);
+    if (first_node && !info) {
+      log_warn(LD_CONTROL,
+               "controller tried to connect to a node that doesn't have any "
+               "addresses that are allowed by the firewall configuration; "
+               "circuit marked for closing.");
+      circuit_mark_for_close(TO_CIRCUIT(circ), -END_CIRC_REASON_CONNECTFAILED);
+      connection_write_str_to_buf("551 Couldn't start circuit\r\n", conn);
+      goto done;
+    } else {
+      /* True, since node_has_descriptor(node) == true and we are extending
+       * to the node's primary address */
+      tor_assert(info);
+    }
     circuit_append_new_exit(circ, info);
     extend_info_free(info);
+    first_node = 0;
   });
 
   /* now that we've populated the cpath, start extending */
@@ -2987,6 +3033,7 @@ handle_control_attachstream(control_connection_t *conn, uint32_t len,
     edge_conn->end_reason = 0;
     if (tmpcirc)
       circuit_detach_stream(tmpcirc, edge_conn);
+    CONNECTION_AP_EXPECT_NONPENDING(ap_conn);
     TO_CONN(edge_conn)->state = AP_CONN_STATE_CONTROLLER_WAIT;
   }
 
@@ -3418,8 +3465,7 @@ handle_control_authchallenge(control_connection_t *conn, uint32_t len,
     tor_free(client_nonce);
     return -1;
   }
-  const int fail = crypto_rand(server_nonce, SAFECOOKIE_SERVER_NONCE_LEN);
-  tor_assert(!fail);
+  crypto_rand(server_nonce, SAFECOOKIE_SERVER_NONCE_LEN);
 
   /* Now compute and send the server-to-controller response, and the
    * server's nonce. */
@@ -4933,7 +4979,7 @@ sum_up_cell_stats_by_command(circuit_t *circ, cell_stats_t *cell_stats)
 {
   memset(cell_stats, 0, sizeof(cell_stats_t));
   SMARTLIST_FOREACH_BEGIN(circ->testing_cell_stats,
-                          testing_cell_stats_entry_t *, ent) {
+                          const testing_cell_stats_entry_t *, ent) {
     tor_assert(ent->command <= CELL_COMMAND_MAX_);
     if (!ent->removed && !ent->exitward) {
       cell_stats->added_cells_appward[ent->command] += 1;
@@ -4946,10 +4992,8 @@ sum_up_cell_stats_by_command(circuit_t *circ, cell_stats_t *cell_stats)
       cell_stats->removed_cells_exitward[ent->command] += 1;
       cell_stats->total_time_exitward[ent->command] += ent->waiting_time * 10;
     }
-    tor_free(ent);
   } SMARTLIST_FOREACH_END(ent);
-  smartlist_free(circ->testing_cell_stats);
-  circ->testing_cell_stats = NULL;
+  circuit_clear_testing_cell_stats(circ);
 }
 
 /** Helper: append a cell statistics string to <code>event_parts</code>,
@@ -6233,6 +6277,31 @@ get_desc_id_from_query(const rend_data_t *rend_data, const char *hsdir_fp)
   return desc_id;
 }
 
+/** send HS_DESC CREATED event when a local service generates a descriptor.
+ *
+ * <b>service_id</b> is the descriptor onion address.
+ * <b>desc_id_base32</b> is the descriptor ID.
+ * <b>replica</b> is the the descriptor replica number.
+ */
+void
+control_event_hs_descriptor_created(const char *service_id,
+                                    const char *desc_id_base32,
+                                    int replica)
+{
+  if (!service_id || !desc_id_base32) {
+    log_warn(LD_BUG, "Called with service_digest==%p, "
+             "desc_id_base32==%p", service_id, desc_id_base32);
+    return;
+  }
+
+  send_control_event(EVENT_HS_DESC,
+                     "650 HS_DESC CREATED %s UNKNOWN UNKNOWN %s "
+                     "REPLICA=%d\r\n",
+                     service_id,
+                     desc_id_base32,
+                     replica);
+}
+
 /** send HS_DESC upload event.
  *
  * <b>service_id</b> is the descriptor onion address.
@@ -6321,6 +6390,7 @@ control_event_hs_descriptor_receive_end(const char *action,
  */
 void
 control_event_hs_descriptor_upload_end(const char *action,
+                                       const char *onion_address,
                                        const char *id_digest,
                                        const char *reason)
 {
@@ -6337,8 +6407,9 @@ control_event_hs_descriptor_upload_end(const char *action,
   }
 
   send_control_event(EVENT_HS_DESC,
-                     "650 HS_DESC %s UNKNOWN UNKNOWN %s%s\r\n",
+                     "650 HS_DESC %s %s UNKNOWN %s%s\r\n",
                      action,
+                     rend_hsaddress_str_or_unknown(onion_address),
                      node_describe_longname_by_id(id_digest),
                      reason_field ? reason_field : "");
 
@@ -6368,14 +6439,17 @@ control_event_hs_descriptor_received(const char *onion_address,
  * called when we successfully uploaded a hidden service descriptor.
  */
 void
-control_event_hs_descriptor_uploaded(const char *id_digest)
+control_event_hs_descriptor_uploaded(const char *id_digest,
+                                     const char *onion_address)
 {
   if (!id_digest) {
     log_warn(LD_BUG, "Called with id_digest==%p",
              id_digest);
     return;
   }
-  control_event_hs_descriptor_upload_end("UPLOADED", id_digest, NULL);
+
+  control_event_hs_descriptor_upload_end("UPLOADED", onion_address,
+                                         id_digest, NULL);
 }
 
 /** Send HS_DESC event to inform controller that query <b>rend_query</b>
@@ -6437,6 +6511,7 @@ control_event_hs_descriptor_content(const char *onion_address,
  */
 void
 control_event_hs_descriptor_upload_failed(const char *id_digest,
+                                          const char *onion_address,
                                           const char *reason)
 {
   if (!id_digest) {
@@ -6444,7 +6519,7 @@ control_event_hs_descriptor_upload_failed(const char *id_digest,
              id_digest);
     return;
   }
-  control_event_hs_descriptor_upload_end("UPLOAD_FAILED",
+  control_event_hs_descriptor_upload_end("UPLOAD_FAILED", onion_address,
                                          id_digest, reason);
 }
 

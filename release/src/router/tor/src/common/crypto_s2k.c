@@ -1,8 +1,14 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file crypto_s2k.c
+ *
+ * \brief Functions for deriving keys from human-readable passphrases.
+ */
 
 #define CRYPTO_S2K_PRIVATE
 
@@ -13,7 +19,7 @@
 
 #include <openssl/evp.h>
 
-#ifdef HAVE_LIBSCRYPT_H
+#if defined(HAVE_LIBSCRYPT_H) && defined(HAVE_LIBSCRYPT_SCRYPT)
 #define HAVE_SCRYPT
 #include <libscrypt.h>
 #endif

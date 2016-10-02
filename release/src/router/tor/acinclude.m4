@@ -109,7 +109,7 @@ if test -f /etc/debian_version && test x"$tor_$1_$2_debian" != x; then
   fi 
 fi
 if test -f /etc/fedora-release && test x"$tor_$1_$2_redhat" != x; then
-  AC_WARN([On Fedora Core, you can install$h $1 using "yum install $tor_$1_$2_redhat"])
+  AC_WARN([On Fedora, you can install$h $1 using "dnf install $tor_$1_$2_redhat"])
   if test x"$tor_$1_$2_redhat" != x"$tor_$1_devpkg_redhat"; then 
     AC_WARN([   You will probably need to install $tor_$1_devpkg_redhat too.])
   fi 

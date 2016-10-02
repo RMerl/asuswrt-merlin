@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -186,10 +186,10 @@ struct chanid_circid_muxinfo_t {
  * Static function declarations
  */
 
-static INLINE int
+static inline int
 chanid_circid_entries_eq(chanid_circid_muxinfo_t *a,
                          chanid_circid_muxinfo_t *b);
-static INLINE unsigned int
+static inline unsigned int
 chanid_circid_entry_hash(chanid_circid_muxinfo_t *a);
 static chanid_circid_muxinfo_t *
 circuitmux_find_map_entry(circuitmux_t *cmux, circuit_t *circ);
@@ -199,12 +199,12 @@ circuitmux_make_circuit_active(circuitmux_t *cmux, circuit_t *circ,
 static void
 circuitmux_make_circuit_inactive(circuitmux_t *cmux, circuit_t *circ,
                                  cell_direction_t direction);
-static INLINE void
+static inline void
 circuitmux_move_active_circ_to_tail(circuitmux_t *cmux, circuit_t *circ,
                                     cell_direction_t direction);
-static INLINE circuit_t **
+static inline circuit_t **
 circuitmux_next_active_circ_p(circuitmux_t *cmux, circuit_t *circ);
-static INLINE circuit_t **
+static inline circuit_t **
 circuitmux_prev_active_circ_p(circuitmux_t *cmux, circuit_t *circ);
 static void circuitmux_assert_okay_pass_one(circuitmux_t *cmux);
 static void circuitmux_assert_okay_pass_two(circuitmux_t *cmux);
@@ -226,7 +226,7 @@ static int64_t global_destroy_ctr = 0;
  * used by circuitmux_notify_xmit_cells().
  */
 
-static INLINE void
+static inline void
 circuitmux_move_active_circ_to_tail(circuitmux_t *cmux, circuit_t *circ,
                                     cell_direction_t direction)
 {
@@ -306,7 +306,7 @@ circuitmux_move_active_circ_to_tail(circuitmux_t *cmux, circuit_t *circ,
   circuitmux_assert_okay_paranoid(cmux);
 }
 
-static INLINE circuit_t **
+static inline circuit_t **
 circuitmux_next_active_circ_p(circuitmux_t *cmux, circuit_t *circ)
 {
   tor_assert(cmux);
@@ -319,7 +319,7 @@ circuitmux_next_active_circ_p(circuitmux_t *cmux, circuit_t *circ)
   }
 }
 
-static INLINE circuit_t **
+static inline circuit_t **
 circuitmux_prev_active_circ_p(circuitmux_t *cmux, circuit_t *circ)
 {
   tor_assert(cmux);
@@ -338,7 +338,7 @@ circuitmux_prev_active_circ_p(circuitmux_t *cmux, circuit_t *circ)
  * than zero appropriately.
  */
 
-static INLINE int
+static inline int
 chanid_circid_entries_eq(chanid_circid_muxinfo_t *a,
                          chanid_circid_muxinfo_t *b)
 {
@@ -349,7 +349,7 @@ chanid_circid_entries_eq(chanid_circid_muxinfo_t *a,
  * Helper: return a hash based on circuit ID and channel ID in a.
  */
 
-static INLINE unsigned int
+static inline unsigned int
 chanid_circid_entry_hash(chanid_circid_muxinfo_t *a)
 {
     return (((unsigned int)(a->circ_id) << 8) ^

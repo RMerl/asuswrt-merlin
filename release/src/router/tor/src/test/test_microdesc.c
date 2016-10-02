@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2015, The Tor Project, Inc. */
+/* Copyright (c) 2010-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -14,9 +14,30 @@
 
 #include "test.h"
 
+#ifdef __GNUC__
+#define GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
+#endif
+
+#if __GNUC__ && GCC_VERSION >= 402
+#if GCC_VERSION >= 406
+#pragma GCC diagnostic push
+#endif
+/* Some versions of OpenSSL declare X509_STORE_CTX_set_verify_cb twice.
+ * Suppress the GCC warning so we can build with -Wredundant-decl. */
+#pragma GCC diagnostic ignored "-Wredundant-decls"
+#endif
+
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/pem.h>
+
+#if __GNUC__ && GCC_VERSION >= 402
+#if GCC_VERSION >= 406
+#pragma GCC diagnostic pop
+#else
+#pragma GCC diagnostic warning "-Wredundant-decls"
+#endif
+#endif
 
 #ifdef _WIN32
 /* For mkdir() */
@@ -483,7 +504,7 @@ test_md_generate(void *arg)
   md = dirvote_create_microdescriptor(ri, 21);
   tt_str_op(md->body, ==, test_md2_21);
   tt_assert(ed25519_pubkey_eq(md->ed25519_identity_pkey,
-                              &ri->signing_key_cert->signing_key));
+                              &ri->cache_info.signing_key_cert->signing_key));
 
  done:
   microdesc_free(md);

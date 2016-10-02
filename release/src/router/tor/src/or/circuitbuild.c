@@ -1,12 +1,14 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file circuitbuild.c
- * \brief The actual details of building circuits.
+ *
+ * \brief Implements the details of building circuits (by chosing paths,
+ * constructing/sending create/extend cells, and so on).
  **/
 
 #define CIRCUITBUILD_PRIVATE
@@ -493,10 +495,25 @@ circuit_handle_first_hop(origin_circuit_t *circ)
   int err_reason = 0;
   const char *msg = NULL;
   int should_launch = 0;
+  const or_options_t *options = get_options();
 
   firsthop = onion_next_hop_in_cpath(circ->cpath);
   tor_assert(firsthop);
   tor_assert(firsthop->extend_info);
+
+  /* Some bridges are on private addresses. Others pass a dummy private
+   * address to the pluggable transport, which ignores it.
+   * Deny the connection if:
+   * - the address is internal, and
+   * - we're not connecting to a configured bridge, and
+   * - we're not configured to allow extends to private addresses. */
+  if (tor_addr_is_internal(&firsthop->extend_info->addr, 0) &&
+      !extend_info_is_a_configured_bridge(firsthop->extend_info) &&
+      !options->ExtendAllowPrivateAddresses) {
+    log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
+           "Client asked me to connect directly to a private address");
+    return -END_CIRC_REASON_TORPROTOCOL;
+  }
 
   /* now see if we're already connected to the first OR in 'route' */
   log_debug(LD_CIRC,"Looking for firsthop '%s'",
@@ -737,7 +754,7 @@ inform_testing_reachability(void)
 
 /** Return true iff we should send a create_fast cell to start building a given
  * circuit */
-static INLINE int
+static inline int
 should_use_create_fast_for_circuit(origin_circuit_t *circ)
 {
   const or_options_t *options = get_options();
@@ -967,7 +984,7 @@ circuit_send_next_onion_skin(origin_circuit_t *circ)
         }
         control_event_client_status(LOG_NOTICE, "CIRCUIT_ESTABLISHED");
         clear_broken_connection_map(1);
-        if (server_mode(options) && !check_whether_orport_reachable()) {
+        if (server_mode(options) && !check_whether_orport_reachable(options)) {
           inform_testing_reachability();
           consider_testing_reachability(1, 1);
         }
@@ -1760,6 +1777,8 @@ pick_tor2web_rendezvous_node(router_crn_flags_t flags,
   const node_t *rp_node = NULL;
   const int allow_invalid = (flags & CRN_ALLOW_INVALID) != 0;
   const int need_desc = (flags & CRN_NEED_DESC) != 0;
+  const int pref_addr = (flags & CRN_PREF_ADDR) != 0;
+  const int direct_conn = (flags & CRN_DIRECT_CONN) != 0;
 
   smartlist_t *whitelisted_live_rps = smartlist_new();
   smartlist_t *all_live_nodes = smartlist_new();
@@ -1770,7 +1789,9 @@ pick_tor2web_rendezvous_node(router_crn_flags_t flags,
   router_add_running_nodes_to_smartlist(all_live_nodes,
                                         allow_invalid,
                                         0, 0, 0,
-                                        need_desc);
+                                        need_desc,
+                                        pref_addr,
+                                        direct_conn);
 
   /* Filter all_live_nodes to only add live *and* whitelisted RPs to
    * the list whitelisted_live_rps. */
@@ -2136,7 +2157,10 @@ choose_good_entry_server(uint8_t purpose, cpath_build_state_t *state)
   const node_t *choice;
   smartlist_t *excluded;
   const or_options_t *options = get_options();
-  router_crn_flags_t flags = CRN_NEED_GUARD|CRN_NEED_DESC;
+  /* If possible, choose an entry server with a preferred address,
+   * otherwise, choose one with an allowed address */
+  router_crn_flags_t flags = (CRN_NEED_GUARD|CRN_NEED_DESC|CRN_PREF_ADDR|
+                              CRN_DIRECT_CONN);
   const node_t *node;
 
   if (state && options->UseEntryGuards &&
@@ -2152,14 +2176,6 @@ choose_good_entry_server(uint8_t purpose, cpath_build_state_t *state)
     /* Exclude the exit node from the state, if we have one.  Also exclude its
      * family. */
     nodelist_add_node_and_family(excluded, node);
-  }
-  if (firewall_is_fascist_or()) {
-    /* Exclude all ORs that we can't reach through our firewall */
-    smartlist_t *nodes = nodelist_get_list();
-    SMARTLIST_FOREACH(nodes, const node_t *, node, {
-      if (!fascist_firewall_allows_node(node))
-        smartlist_add(excluded, (void*)node);
-    });
   }
   /* and exclude current entry guards and their families,
    * unless we're in a test network, and excluding guards
@@ -2239,9 +2255,11 @@ onion_extend_cpath(origin_circuit_t *circ)
     if (r) {
       /* If we're a client, use the preferred address rather than the
          primary address, for potentially connecting to an IPv6 OR
-         port. */
-      info = extend_info_from_node(r, server_mode(get_options()) == 0);
-      tor_assert(info);
+         port. Servers always want the primary (IPv4) address. */
+      int client = (server_mode(get_options()) == 0);
+      info = extend_info_from_node(r, client);
+      /* Clients can fail to find an allowed address */
+      tor_assert(info || client);
     }
   } else {
     const node_t *r =
@@ -2316,33 +2334,43 @@ extend_info_new(const char *nickname, const char *digest,
  * <b>for_direct_connect</b> is true, in which case the preferred
  * address is used instead. May return NULL if there is not enough
  * info about <b>node</b> to extend to it--for example, if there is no
- * routerinfo_t or microdesc_t.
+ * routerinfo_t or microdesc_t, or if for_direct_connect is true and none of
+ * the node's addresses are allowed by tor's firewall and IP version config.
  **/
 extend_info_t *
 extend_info_from_node(const node_t *node, int for_direct_connect)
 {
   tor_addr_port_t ap;
+  int valid_addr = 0;
 
   if (node->ri == NULL && (node->rs == NULL || node->md == NULL))
     return NULL;
 
+  /* Choose a preferred address first, but fall back to an allowed address.
+   * choose_address returns 1 on success, but get_prim_orport returns 0. */
   if (for_direct_connect)
-    node_get_pref_orport(node, &ap);
+    valid_addr = fascist_firewall_choose_address_node(node,
+                                                      FIREWALL_OR_CONNECTION,
+                                                      0, &ap);
   else
-    node_get_prim_orport(node, &ap);
+    valid_addr = !node_get_prim_orport(node, &ap);
 
-  log_debug(LD_CIRC, "using %s for %s",
-            fmt_addrport(&ap.addr, ap.port),
-            node->ri ? node->ri->nickname : node->rs->nickname);
+  if (valid_addr)
+    log_debug(LD_CIRC, "using %s for %s",
+              fmt_addrport(&ap.addr, ap.port),
+              node->ri ? node->ri->nickname : node->rs->nickname);
+  else
+    log_warn(LD_CIRC, "Could not choose valid address for %s",
+              node->ri ? node->ri->nickname : node->rs->nickname);
 
-  if (node->ri)
+  if (valid_addr && node->ri)
     return extend_info_new(node->ri->nickname,
                              node->identity,
                              node->ri->onion_pkey,
                              node->ri->onion_curve25519_pkey,
                              &ap.addr,
                              ap.port);
-  else if (node->rs && node->md)
+  else if (valid_addr && node->rs && node->md)
     return extend_info_new(node->rs->nickname,
                              node->identity,
                              node->md->onion_pkey,
@@ -2401,5 +2429,22 @@ build_state_get_exit_nickname(cpath_build_state_t *state)
   if (!state || !state->chosen_exit)
     return NULL;
   return state->chosen_exit->nickname;
+}
+
+/** Return true iff the given address can be used to extend to. */
+int
+extend_info_addr_is_allowed(const tor_addr_t *addr)
+{
+  tor_assert(addr);
+
+  /* Check if we have a private address and if we can extend to it. */
+  if ((tor_addr_is_internal(addr, 0) || tor_addr_is_multicast(addr)) &&
+      !get_options()->ExtendAllowPrivateAddresses) {
+    goto disallow;
+  }
+  /* Allowed! */
+  return 1;
+ disallow:
+  return 0;
 }
 

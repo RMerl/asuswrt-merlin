@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -50,7 +50,7 @@ int list_server_status_v1(smartlist_t *routers, char **router_status_out,
 int dirserv_dump_directory_to_string(char **dir_out,
                                      crypto_pk_t *private_key);
 char *dirserv_get_flag_thresholds_line(void);
-void dirserv_compute_bridge_flag_thresholds(routerlist_t *rl);
+void dirserv_compute_bridge_flag_thresholds(void);
 
 int directory_fetches_from_authorities(const or_options_t *options);
 int directory_fetches_dir_info_early(const or_options_t *options);
@@ -63,9 +63,9 @@ int directory_too_idle_to_fetch_descriptors(const or_options_t *options,
 
 cached_dir_t *dirserv_get_consensus(const char *flavor_name);
 void dirserv_set_cached_consensus_networkstatus(const char *consensus,
-                                                const char *flavor_name,
-                                                const digests_t *digests,
-                                                time_t published);
+                                              const char *flavor_name,
+                                              const common_digests_t *digests,
+                                              time_t published);
 void dirserv_clear_old_networkstatuses(time_t cutoff);
 int dirserv_get_routerdesc_fingerprints(smartlist_t *fps_out, const char *key,
                                         const char **msg,

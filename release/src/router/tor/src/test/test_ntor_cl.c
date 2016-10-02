@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -106,6 +106,7 @@ server1(int argc, char **argv)
  done:
   tor_free(keys);
   tor_free(hexkeys);
+  dimap_free(keymap, NULL);
   return result;
 }
 

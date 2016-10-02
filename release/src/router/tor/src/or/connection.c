@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -19,6 +19,7 @@
  */
 #define TOR_CHANNEL_INTERNAL_
 #define CONNECTION_PRIVATE
+#include "backtrace.h"
 #include "channel.h"
 #include "channeltls.h"
 #include "circuitbuild.h"
@@ -37,6 +38,7 @@
 #include "ext_orport.h"
 #include "geoip.h"
 #include "main.h"
+#include "nodelist.h"
 #include "policies.h"
 #include "reasons.h"
 #include "relay.h"
@@ -44,8 +46,10 @@
 #include "rendcommon.h"
 #include "rephist.h"
 #include "router.h"
+#include "routerlist.h"
 #include "transports.h"
 #include "routerparse.h"
+#include "sandbox.h"
 #include "transports.h"
 
 #ifdef USE_BUFFEREVENTS
@@ -678,6 +682,13 @@ connection_free,(connection_t *conn))
   if (conn->type == CONN_TYPE_CONTROL) {
     connection_control_closed(TO_CONTROL_CONN(conn));
   }
+#if 1
+  /* DEBUGGING */
+  if (conn->type == CONN_TYPE_AP) {
+    connection_ap_warn_and_unmark_if_pending_circ(TO_ENTRY_CONN(conn),
+                                                  "connection_free");
+  }
+#endif
   connection_unregister_events(conn);
   connection_free_(conn);
 }
@@ -1004,6 +1015,10 @@ check_location_for_unix_socket(const or_options_t *options, const char *path,
     flags |= CPD_GROUP_OK;
   }
 
+  if (port->relax_dirmode_check) {
+    flags |= CPD_RELAX_DIRMODE_CHECK;
+  }
+
   if (check_private_dir(p, flags, options->User) < 0) {
     char *escpath, *escdir;
     escpath = esc_for_log(path);
@@ -1050,6 +1065,31 @@ make_socket_reuseable(tor_socket_t sock)
   return 0;
 #endif
 }
+
+#ifdef _WIN32
+/** Tell the Windows TCP stack to prevent other applications from receiving
+ * traffic from tor's open ports. Return 0 on success, -1 on failure. */
+static int
+make_win32_socket_exclusive(tor_socket_t sock)
+{
+#ifdef SO_EXCLUSIVEADDRUSE
+  int one=1;
+
+  /* Any socket that sets REUSEADDR on win32 can bind to a port _even when
+   * somebody else already has it bound_, and _even if the original socket
+   * didn't set REUSEADDR_. Use EXCLUSIVEADDRUSE to prevent this port-stealing
+   * on win32. */
+  if (setsockopt(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (void*) &one,
+                 (socklen_t)sizeof(one))) {
+    return -1;
+  }
+  return 0;
+#else
+  (void) sock;
+  return 0;
+#endif
+}
+#endif
 
 /** Max backlog to pass to listen.  We start at */
 static int listen_limit = INT_MAX;
@@ -1104,7 +1144,6 @@ connection_listener_new(const struct sockaddr *listensockaddr,
       start_reading = 1;
 
     tor_addr_from_sockaddr(&addr, listensockaddr, &usePort);
-
     log_notice(LD_NET, "Opening %s on %s",
                conn_type_to_string(type), fmt_addrport(&addr, usePort));
 
@@ -1128,11 +1167,20 @@ connection_listener_new(const struct sockaddr *listensockaddr,
                tor_socket_strerror(errno));
     }
 
-#if defined USE_TRANSPARENT && defined(IP_TRANSPARENT)
+#ifdef _WIN32
+    if (make_win32_socket_exclusive(s) < 0) {
+      log_warn(LD_NET, "Error setting SO_EXCLUSIVEADDRUSE flag on %s: %s",
+               conn_type_to_string(type),
+               tor_socket_strerror(errno));
+    }
+#endif
+
+#if defined(USE_TRANSPARENT) && defined(IP_TRANSPARENT)
     if (options->TransProxyType_parsed == TPT_TPROXY &&
         type == CONN_TYPE_AP_TRANS_LISTENER) {
       int one = 1;
-      if (setsockopt(s, SOL_IP, IP_TRANSPARENT, &one, sizeof(one)) < 0) {
+      if (setsockopt(s, SOL_IP, IP_TRANSPARENT, (void*)&one,
+                     (socklen_t)sizeof(one)) < 0) {
         const char *extra = "";
         int e = tor_socket_errno(s);
         if (e == EPERM)
@@ -1146,16 +1194,11 @@ connection_listener_new(const struct sockaddr *listensockaddr,
 
 #ifdef IPV6_V6ONLY
     if (listensockaddr->sa_family == AF_INET6) {
-#ifdef _WIN32
-      /* In Redmond, this kind of thing passes for standards-conformance. */
-      DWORD one = 1;
-#else
       int one = 1;
-#endif
       /* We need to set IPV6_V6ONLY so that this socket can't get used for
        * IPv4 connections. */
       if (setsockopt(s,IPPROTO_IPV6, IPV6_V6ONLY,
-                     (void*)&one, sizeof(one)) < 0) {
+                     (void*)&one, (socklen_t)sizeof(one)) < 0) {
         int e = tor_socket_errno(s);
         log_warn(LD_NET, "Error setting IPV6_V6ONLY flag: %s",
                  tor_socket_strerror(e));
@@ -1245,11 +1288,16 @@ connection_listener_new(const struct sockaddr *listensockaddr,
 #ifdef HAVE_PWD_H
     if (options->User) {
       pw = tor_getpwnam(options->User);
+      struct stat st;
       if (pw == NULL) {
         log_warn(LD_NET,"Unable to chown() %s socket: user %s not found.",
                  address, options->User);
         goto err;
-      } else if (chown(address, pw->pw_uid, pw->pw_gid) < 0) {
+      } else if (fstat(s, &st) == 0 &&
+                 st.st_uid == pw->pw_uid && st.st_gid == pw->pw_gid) {
+        /* No change needed */
+      } else if (chown(sandbox_intern_string(address),
+                       pw->pw_uid, pw->pw_gid) < 0) {
         log_warn(LD_NET,"Unable to chown() %s socket: %s.",
                  address, strerror(errno));
         goto err;
@@ -1260,6 +1308,7 @@ connection_listener_new(const struct sockaddr *listensockaddr,
     {
       unsigned mode;
       const char *status;
+      struct stat st;
       if (port_cfg->is_world_writable) {
         mode = 0666;
         status = "world-writable";
@@ -1272,7 +1321,9 @@ connection_listener_new(const struct sockaddr *listensockaddr,
       }
       /* We need to use chmod; fchmod doesn't work on sockets on all
        * platforms. */
-      if (chmod(address, mode) < 0) {
+      if (fstat(s, &st) == 0 && (st.st_mode & 0777) == mode) {
+        /* no change needed */
+      } else if (chmod(sandbox_intern_string(address), mode) < 0) {
         log_warn(LD_FS,"Unable to make %s %s.", address, status);
         goto err;
       }
@@ -1437,7 +1488,7 @@ connection_handle_listener_read(connection_t *conn, int new_type)
   if (!SOCKET_OK(news)) { /* accept() error */
     int e = tor_socket_errno(conn->s);
     if (ERRNO_IS_ACCEPT_EAGAIN(e)) {
-      return 0; /* he hung up before we could accept(). that's fine. */
+      return 0; /* they hung up before we could accept(). that's fine. */
     } else if (ERRNO_IS_RESOURCE_LIMIT(e)) {
       warn_too_many_conns();
       return 0;
@@ -1597,6 +1648,8 @@ connection_init_accepted_conn(connection_t *conn,
           break;
         case CONN_TYPE_AP_TRANS_LISTENER:
           TO_ENTRY_CONN(conn)->is_transparent_ap = 1;
+          /* XXXX028 -- is this correct still, with the addition of
+           * pending_entry_connections ? */
           conn->state = AP_CONN_STATE_CIRCUIT_WAIT;
           return connection_ap_process_transparent(TO_ENTRY_CONN(conn));
         case CONN_TYPE_AP_NATD_LISTENER:
@@ -1616,13 +1669,18 @@ connection_init_accepted_conn(connection_t *conn,
   return 0;
 }
 
-static int
-connection_connect_sockaddr(connection_t *conn,
+/** Take conn, make a nonblocking socket; try to connect to
+ * sa, binding to bindaddr if sa is not localhost. If fail, return -1 and if
+ * applicable put your best guess about errno into *<b>socket_error</b>.
+ * If connected return 1, if EAGAIN return 0.
+ */
+MOCK_IMPL(STATIC int,
+connection_connect_sockaddr,(connection_t *conn,
                             const struct sockaddr *sa,
                             socklen_t sa_len,
                             const struct sockaddr *bindaddr,
                             socklen_t bindaddr_len,
-                            int *socket_error)
+                            int *socket_error))
 {
   tor_socket_t s;
   int inprogress = 0;
@@ -1705,10 +1763,86 @@ connection_connect_sockaddr(connection_t *conn,
   return inprogress ? 0 : 1;
 }
 
+/* Log a message if connection attempt is made when IPv4 or IPv6 is disabled.
+ * Log a less severe message if we couldn't conform to ClientPreferIPv6ORPort
+ * or ClientPreferIPv6ORPort. */
+static void
+connection_connect_log_client_use_ip_version(const connection_t *conn)
+{
+  const or_options_t *options = get_options();
+
+  /* Only clients care about ClientUseIPv4/6, bail out early on servers, and
+   * on connections we don't care about */
+  if (server_mode(options) || !conn || conn->type == CONN_TYPE_EXIT) {
+    return;
+  }
+
+  /* We're only prepared to log OR and DIR connections here */
+  if (conn->type != CONN_TYPE_OR && conn->type != CONN_TYPE_DIR) {
+    return;
+  }
+
+  const int must_ipv4 = !fascist_firewall_use_ipv6(options);
+  const int must_ipv6 = (options->ClientUseIPv4 == 0);
+  const int pref_ipv6 = (conn->type == CONN_TYPE_OR
+                         ? fascist_firewall_prefer_ipv6_orport(options)
+                         : fascist_firewall_prefer_ipv6_dirport(options));
+  tor_addr_t real_addr;
+  tor_addr_make_null(&real_addr, AF_UNSPEC);
+
+  /* OR conns keep the original address in real_addr, as addr gets overwritten
+   * with the descriptor address */
+  if (conn->type == CONN_TYPE_OR) {
+    const or_connection_t *or_conn = TO_OR_CONN((connection_t *)conn);
+    tor_addr_copy(&real_addr, &or_conn->real_addr);
+  } else if (conn->type == CONN_TYPE_DIR) {
+    tor_addr_copy(&real_addr, &conn->addr);
+  }
+
+  /* Check if we broke a mandatory address family restriction */
+  if ((must_ipv4 && tor_addr_family(&real_addr) == AF_INET6)
+      || (must_ipv6 && tor_addr_family(&real_addr) == AF_INET)) {
+    static int logged_backtrace = 0;
+    log_info(LD_BUG, "Outgoing %s connection to %s violated ClientUseIPv%s 0.",
+             conn->type == CONN_TYPE_OR ? "OR" : "Dir",
+             fmt_addr(&real_addr),
+             options->ClientUseIPv4 == 0 ? "4" : "6");
+    if (!logged_backtrace) {
+      log_backtrace(LOG_INFO, LD_BUG, "Address came from");
+      logged_backtrace = 1;
+    }
+  }
+
+  /* Bridges are allowed to break IPv4/IPv6 ORPort preferences to connect to
+   * the node's configured address when ClientPreferIPv6ORPort is auto */
+  if (options->UseBridges && conn->type == CONN_TYPE_OR
+      && options->ClientPreferIPv6ORPort == -1) {
+    return;
+  }
+
+  /* Check if we couldn't satisfy an address family preference */
+  if ((!pref_ipv6 && tor_addr_family(&real_addr) == AF_INET6)
+      || (pref_ipv6 && tor_addr_family(&real_addr) == AF_INET)) {
+    log_info(LD_NET, "Outgoing connection to %s doesn't satisfy "
+             "ClientPreferIPv6%sPort %d, with ClientUseIPv4 %d, and "
+             "fascist_firewall_use_ipv6 %d (ClientUseIPv6 %d and UseBridges "
+             "%d).",
+             fmt_addr(&real_addr),
+             conn->type == CONN_TYPE_OR ? "OR" : "Dir",
+             conn->type == CONN_TYPE_OR ? options->ClientPreferIPv6ORPort
+                                        : options->ClientPreferIPv6DirPort,
+             options->ClientUseIPv4, fascist_firewall_use_ipv6(options),
+             options->ClientUseIPv6, options->UseBridges);
+  }
+}
+
 /** Take conn, make a nonblocking socket; try to connect to
- * addr:port (they arrive in *host order*). If fail, return -1 and if
+ * addr:port (port arrives in *host order*). If fail, return -1 and if
  * applicable put your best guess about errno into *<b>socket_error</b>.
  * Else assign s to conn-\>s: if connected return 1, if EAGAIN return 0.
+ *
+ * addr:port can be different to conn->addr:conn->port if connecting through
+ * a proxy.
  *
  * address is used to make the logs useful.
  *
@@ -1725,6 +1859,10 @@ connection_connect(connection_t *conn, const char *address,
   int dest_addr_len, bind_addr_len = 0;
   const or_options_t *options = get_options();
   int protocol_family;
+
+  /* Log if we didn't stick to ClientUseIPv4/6 or ClientPreferIPv6OR/DirPort
+   */
+  connection_connect_log_client_use_ip_version(conn);
 
   if (tor_addr_family(addr) == AF_INET6)
     protocol_family = PF_INET6;
@@ -2380,6 +2518,15 @@ retry_listener_ports(smartlist_t *old_conns,
     tor_assert(real_port <= UINT16_MAX);
     if (port->server_cfg.no_listen)
       continue;
+
+#ifndef _WIN32
+    /* We don't need to be root to create a UNIX socket, so defer until after
+     * setuid. */
+    const or_options_t *options = get_options();
+    if (port->is_unix_addr && !geteuid() && (options->User) &&
+        strcmp(options->User, "root"))
+      continue;
+#endif
 
     if (port->is_unix_addr) {
       listensockaddr = (struct sockaddr *)
@@ -3585,7 +3732,7 @@ connection_read_to_buf(connection_t *conn, ssize_t *max_to_read,
   }
 
   /* Call even if result is 0, since the global read bucket may
-   * have reached 0 on a different conn, and this guy needs to
+   * have reached 0 on a different conn, and this connection needs to
    * know to stop reading. */
   connection_consider_empty_read_buckets(conn);
   if (n_written > 0 && connection_is_writing(conn))
@@ -4081,7 +4228,7 @@ connection_handle_write_impl(connection_t *conn, int force)
   }
 
   /* Call even if result is 0, since the global write bucket may
-   * have reached 0 on a different conn, and this guy needs to
+   * have reached 0 on a different conn, and this connection needs to
    * know to stop writing. */
   connection_consider_empty_write_buckets(conn);
   if (n_read > 0 && connection_is_reading(conn))
@@ -4209,24 +4356,32 @@ connection_write_to_buf_impl_,(const char *string, size_t len,
   }
 }
 
+/** Return a connection_t * from get_connection_array() that satisfies test on
+ * var, and that is not marked for close. */
+#define CONN_GET_TEMPLATE(var, test)               \
+  STMT_BEGIN                                       \
+    smartlist_t *conns = get_connection_array();   \
+    SMARTLIST_FOREACH(conns, connection_t *, var,  \
+    {                                              \
+      if (var && (test) && !var->marked_for_close) \
+        return var;                                \
+    });                                            \
+    return NULL;                                   \
+  STMT_END
+
 /** Return a connection with given type, address, port, and purpose;
- * or NULL if no such connection exists. */
-connection_t *
-connection_get_by_type_addr_port_purpose(int type,
+ * or NULL if no such connection exists (or if all such connections are marked
+ * for close). */
+MOCK_IMPL(connection_t *,
+connection_get_by_type_addr_port_purpose,(int type,
                                          const tor_addr_t *addr, uint16_t port,
-                                         int purpose)
+                                         int purpose))
 {
-  smartlist_t *conns = get_connection_array();
-  SMARTLIST_FOREACH(conns, connection_t *, conn,
-  {
-    if (conn->type == type &&
+  CONN_GET_TEMPLATE(conn,
+       (conn->type == type &&
         tor_addr_eq(&conn->addr, addr) &&
         conn->port == port &&
-        conn->purpose == purpose &&
-        !conn->marked_for_close)
-      return conn;
-  });
-  return NULL;
+        conn->purpose == purpose));
 }
 
 /** Return the stream with id <b>id</b> if it is not already marked for
@@ -4235,13 +4390,7 @@ connection_get_by_type_addr_port_purpose(int type,
 connection_t *
 connection_get_by_global_id(uint64_t id)
 {
-  smartlist_t *conns = get_connection_array();
-  SMARTLIST_FOREACH(conns, connection_t *, conn,
-  {
-    if (conn->global_identifier == id)
-      return conn;
-  });
-  return NULL;
+  CONN_GET_TEMPLATE(conn, conn->global_identifier == id);
 }
 
 /** Return a connection of type <b>type</b> that is not marked for close.
@@ -4249,13 +4398,7 @@ connection_get_by_global_id(uint64_t id)
 connection_t *
 connection_get_by_type(int type)
 {
-  smartlist_t *conns = get_connection_array();
-  SMARTLIST_FOREACH(conns, connection_t *, conn,
-  {
-    if (conn->type == type && !conn->marked_for_close)
-      return conn;
-  });
-  return NULL;
+  CONN_GET_TEMPLATE(conn, conn->type == type);
 }
 
 /** Return a connection of type <b>type</b> that is in state <b>state</b>,
@@ -4264,13 +4407,7 @@ connection_get_by_type(int type)
 connection_t *
 connection_get_by_type_state(int type, int state)
 {
-  smartlist_t *conns = get_connection_array();
-  SMARTLIST_FOREACH(conns, connection_t *, conn,
-  {
-    if (conn->type == type && conn->state == state && !conn->marked_for_close)
-      return conn;
-  });
-  return NULL;
+  CONN_GET_TEMPLATE(conn, conn->type == type && conn->state == state);
 }
 
 /** Return a connection of type <b>type</b> that has rendquery equal
@@ -4281,55 +4418,96 @@ connection_t *
 connection_get_by_type_state_rendquery(int type, int state,
                                        const char *rendquery)
 {
-  smartlist_t *conns = get_connection_array();
-
   tor_assert(type == CONN_TYPE_DIR ||
              type == CONN_TYPE_AP || type == CONN_TYPE_EXIT);
   tor_assert(rendquery);
 
-  SMARTLIST_FOREACH_BEGIN(conns, connection_t *, conn) {
-    if (conn->type == type &&
-        !conn->marked_for_close &&
-        (!state || state == conn->state)) {
-      if (type == CONN_TYPE_DIR &&
+  CONN_GET_TEMPLATE(conn,
+       (conn->type == type &&
+        (!state || state == conn->state)) &&
+        (
+         (type == CONN_TYPE_DIR &&
           TO_DIR_CONN(conn)->rend_data &&
           !rend_cmp_service_ids(rendquery,
                                 TO_DIR_CONN(conn)->rend_data->onion_address))
-        return conn;
-      else if (CONN_IS_EDGE(conn) &&
+         ||
+              (CONN_IS_EDGE(conn) &&
                TO_EDGE_CONN(conn)->rend_data &&
                !rend_cmp_service_ids(rendquery,
                             TO_EDGE_CONN(conn)->rend_data->onion_address))
-        return conn;
-    }
-  } SMARTLIST_FOREACH_END(conn);
-  return NULL;
+         ));
 }
 
-/** Return a directory connection (if any one exists) that is fetching
- * the item described by <b>state</b>/<b>resource</b> */
-dir_connection_t *
-connection_dir_get_by_purpose_and_resource(int purpose,
-                                           const char *resource)
+/** Return a new smartlist of dir_connection_t * from get_connection_array()
+ * that satisfy conn_test on connection_t *conn_var, and dirconn_test on
+ * dir_connection_t *dirconn_var. conn_var must be of CONN_TYPE_DIR and not
+ * marked for close to be included in the list. */
+#define DIR_CONN_LIST_TEMPLATE(conn_var, conn_test,             \
+                               dirconn_var, dirconn_test)       \
+  STMT_BEGIN                                                    \
+    smartlist_t *conns = get_connection_array();                \
+    smartlist_t *dir_conns = smartlist_new();                   \
+    SMARTLIST_FOREACH_BEGIN(conns, connection_t *, conn_var) {  \
+      if (conn_var && (conn_test)                               \
+          && conn_var->type == CONN_TYPE_DIR                    \
+          && !conn_var->marked_for_close) {                     \
+        dir_connection_t *dirconn_var = TO_DIR_CONN(conn_var);  \
+        if (dirconn_var && (dirconn_test)) {                    \
+          smartlist_add(dir_conns, dirconn_var);                \
+        }                                                       \
+      }                                                         \
+    } SMARTLIST_FOREACH_END(conn_var);                          \
+    return dir_conns;                                           \
+  STMT_END
+
+/** Return a list of directory connections that are fetching the item
+ * described by <b>purpose</b>/<b>resource</b>. If there are none,
+ * return an empty list. This list must be freed using smartlist_free,
+ * but the pointers in it must not be freed.
+ * Note that this list should not be cached, as the pointers in it can be
+ * freed if their connections close. */
+smartlist_t *
+connection_dir_list_by_purpose_and_resource(
+                                            int purpose,
+                                            const char *resource)
 {
-  smartlist_t *conns = get_connection_array();
+  DIR_CONN_LIST_TEMPLATE(conn,
+                         conn->purpose == purpose,
+                         dirconn,
+                         0 == strcmp_opt(resource,
+                                         dirconn->requested_resource));
+}
 
-  SMARTLIST_FOREACH_BEGIN(conns, connection_t *, conn) {
-    dir_connection_t *dirconn;
-    if (conn->type != CONN_TYPE_DIR || conn->marked_for_close ||
-        conn->purpose != purpose)
-      continue;
-    dirconn = TO_DIR_CONN(conn);
-    if (dirconn->requested_resource == NULL) {
-      if (resource == NULL)
-        return dirconn;
-    } else if (resource) {
-      if (0 == strcmp(resource, dirconn->requested_resource))
-        return dirconn;
-    }
-  } SMARTLIST_FOREACH_END(conn);
+/** Return a list of directory connections that are fetching the item
+ * described by <b>purpose</b>/<b>resource</b>/<b>state</b>. If there are
+ * none, return an empty list. This list must be freed using smartlist_free,
+ * but the pointers in it must not be freed.
+ * Note that this list should not be cached, as the pointers in it can be
+ * freed if their connections close. */
+smartlist_t *
+connection_dir_list_by_purpose_resource_and_state(
+                                                  int purpose,
+                                                  const char *resource,
+                                                  int state)
+{
+  DIR_CONN_LIST_TEMPLATE(conn,
+                         conn->purpose == purpose && conn->state == state,
+                         dirconn,
+                         0 == strcmp_opt(resource,
+                                         dirconn->requested_resource));
+}
 
-  return NULL;
+#undef DIR_CONN_LIST_TEMPLATE
+
+/** Return an arbitrary active OR connection that isn't <b>this_conn</b>.
+ *
+ * We use this to guess if we should tell the controller that we
+ * didn't manage to connect to any of our bridges. */
+static connection_t *
+connection_get_another_active_or_conn(const or_connection_t *this_conn)
+{
+  CONN_GET_TEMPLATE(conn,
+                    conn != TO_CONN(this_conn) && conn->type == CONN_TYPE_OR);
 }
 
 /** Return 1 if there are any active OR connections apart from
@@ -4340,22 +4518,17 @@ connection_dir_get_by_purpose_and_resource(int purpose,
 int
 any_other_active_or_conns(const or_connection_t *this_conn)
 {
-  smartlist_t *conns = get_connection_array();
-  SMARTLIST_FOREACH_BEGIN(conns, connection_t *, conn) {
-    if (conn == TO_CONN(this_conn)) { /* don't consider this conn */
-      continue;
-    }
-
-    if (conn->type == CONN_TYPE_OR &&
-        !conn->marked_for_close) {
-      log_debug(LD_DIR, "%s: Found an OR connection: %s",
-                __func__, conn->address);
-      return 1;
-    }
-  } SMARTLIST_FOREACH_END(conn);
+  connection_t *conn = connection_get_another_active_or_conn(this_conn);
+  if (conn != NULL) {
+    log_debug(LD_DIR, "%s: Found an OR connection: %s",
+              __func__, conn->address);
+    return 1;
+  }
 
   return 0;
 }
+
+#undef CONN_GET_TEMPLATE
 
 /** Return 1 if <b>conn</b> is a listener conn, else return 0. */
 int
@@ -5010,5 +5183,36 @@ connection_free_all(void)
   if (global_rate_limit)
     bufferevent_rate_limit_group_free(global_rate_limit);
 #endif
+}
+
+/** Log a warning, and possibly emit a control event, that <b>received</b> came
+ * at a skewed time.  <b>trusted</b> indicates that the <b>source</b> was one
+ * that we had more faith in and therefore the warning level should have higher
+ * severity.
+ */
+void
+clock_skew_warning(const connection_t *conn, long apparent_skew, int trusted,
+                   log_domain_mask_t domain, const char *received,
+                   const char *source)
+{
+  char dbuf[64];
+  char *ext_source = NULL;
+  format_time_interval(dbuf, sizeof(dbuf), apparent_skew);
+  if (conn)
+    tor_asprintf(&ext_source, "%s:%s:%d", source, conn->address, conn->port);
+  else
+    ext_source = tor_strdup(source);
+  log_fn(trusted ? LOG_WARN : LOG_INFO, domain,
+         "Received %s with skewed time (%s): "
+         "It seems that our clock is %s by %s, or that theirs is %s%s. "
+         "Tor requires an accurate clock to work: please check your time, "
+         "timezone, and date settings.", received, ext_source,
+         apparent_skew > 0 ? "ahead" : "behind", dbuf,
+         apparent_skew > 0 ? "behind" : "ahead",
+         (!conn || trusted) ? "" : ", or they are sending us the wrong time");
+  if (trusted)
+    control_event_general_status(LOG_WARN, "CLOCK_SKEW SKEW=%ld SOURCE=%s",
+                                 apparent_skew, ext_source);
+  tor_free(ext_source);
 }
 

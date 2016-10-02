@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -119,6 +119,7 @@ main(int argc, char **argv)
   printf("%d\n", we_weave(2));
 
   clean_up_backtrace_handler();
+  logs_free_all();
 
   return 0;
 }

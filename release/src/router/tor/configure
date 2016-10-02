@@ -557,8 +557,8 @@ MAKEFLAGS=
 # Identity of this package.
 PACKAGE_NAME='tor'
 PACKAGE_TARNAME='tor'
-PACKAGE_VERSION='0.2.7.6'
-PACKAGE_STRING='tor 0.2.7.6'
+PACKAGE_VERSION='0.2.8.8'
+PACKAGE_STRING='tor 0.2.8.8'
 PACKAGE_BUGREPORT=''
 PACKAGE_URL=''
 
@@ -686,6 +686,8 @@ SYSTEMD_LIBS
 SYSTEMD_CFLAGS
 USE_OPENBSD_MALLOC_FALSE
 USE_OPENBSD_MALLOC_TRUE
+DISABLE_ASSERTS_IN_UNIT_TESTS_FALSE
+DISABLE_ASSERTS_IN_UNIT_TESTS_TRUE
 COVERAGE_ENABLED_FALSE
 COVERAGE_ENABLED_TRUE
 UNITTESTS_ENABLED_FALSE
@@ -778,6 +780,7 @@ enable_static_zlib
 enable_static_tor
 enable_unittests
 enable_coverage
+enable_asserts_in_tests
 enable_system_torrc
 enable_transparent
 enable_asciidoc
@@ -1364,7 +1367,7 @@ if test "$ac_init_help" = "long"; then
   # Omit some internal or obsolete options to make the list less imposing.
   # This message is too long to be a string in the A/UX 3.1 sh.
   cat <<_ACEOF
-\`configure' configures tor 0.2.7.6 to adapt to many kinds of systems.
+\`configure' configures tor 0.2.8.8 to adapt to many kinds of systems.
 
 Usage: $0 [OPTION]... [VAR=VALUE]...
 
@@ -1434,7 +1437,7 @@ fi
 
 if test -n "$ac_init_help"; then
   case $ac_init_help in
-     short | recursive ) echo "Configuration of tor 0.2.7.6:";;
+     short | recursive ) echo "Configuration of tor 0.2.8.8:";;
    esac
   cat <<\_ACEOF
 
@@ -1459,6 +1462,9 @@ Optional Features:
                           --with-zlib-dir
   --disable-unittests     don't build unit tests for Tor. Risky!
   --enable-coverage       enable coverage support in the unit-test build
+  --disable-asserts-in-tests
+                          disable tor_assert() calls in the unit tests, for
+                          branch coverage
   --disable-system-torrc  don't look for a system-wide torrc file
   --disable-transparent   disable transparent proxy support
   --disable-asciidoc      don't use asciidoc (disables building of manpages)
@@ -3107,7 +3113,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE='tor'
- VERSION='0.2.7.6'
+ VERSION='0.2.8.8'
 
 
 cat >>confdefs.h <<_ACEOF
@@ -3142,6 +3148,7 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 AMTAR='$${TAR-tar}'
 
 am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
+
 
 
 
@@ -3382,8 +3389,8 @@ $as_echo "no" >&6; }
 	fi
 fi
 
-if test -f /etc/redhat-release ; then
-  if test -f /usr/kerberos/include ; then
+if test -f "/etc/redhat-release"; then
+  if test -f "/usr/kerberos/include"; then
     CPPFLAGS="$CPPFLAGS -I/usr/kerberos/include"
   fi
 fi
@@ -3433,13 +3440,22 @@ if test "${enable_coverage+set}" = set; then :
   enableval=$enable_coverage;
 fi
 
+# Check whether --enable-asserts-in-tests was given.
+if test "${enable_asserts_in_tests+set}" = set; then :
+  enableval=$enable_asserts_in_tests;
+fi
+
 # Check whether --enable-system-torrc was given.
 if test "${enable_system_torrc+set}" = set; then :
   enableval=$enable_system_torrc;
 fi
 
 
- if test x$enable_unittests != xno; then
+if test "x$enable_coverage" != "xyes" -a "x$enable_asserts_in_tests" = "xno" ; then
+    as_fn_error $? "Can't disable assertions outside of coverage build" "$LINENO" 5
+fi
+
+ if test "x$enable_unittests" != "xno"; then
   UNITTESTS_ENABLED_TRUE=
   UNITTESTS_ENABLED_FALSE='#'
 else
@@ -3447,12 +3463,20 @@ else
   UNITTESTS_ENABLED_FALSE=
 fi
 
- if test x$enable_coverage = xyes; then
+ if test "x$enable_coverage" = "xyes"; then
   COVERAGE_ENABLED_TRUE=
   COVERAGE_ENABLED_FALSE='#'
 else
   COVERAGE_ENABLED_TRUE='#'
   COVERAGE_ENABLED_FALSE=
+fi
+
+ if test "x$enable_asserts_in_tests" = "xno"; then
+  DISABLE_ASSERTS_IN_UNIT_TESTS_TRUE=
+  DISABLE_ASSERTS_IN_UNIT_TESTS_FALSE='#'
+else
+  DISABLE_ASSERTS_IN_UNIT_TESTS_TRUE='#'
+  DISABLE_ASSERTS_IN_UNIT_TESTS_FALSE=
 fi
 
 
@@ -3469,7 +3493,7 @@ $as_echo "#define DISABLE_SYSTEM_TORRC 1" >>confdefs.h
 
 fi
 
- if test x$enable_openbsd_malloc = xyes; then
+ if test "x$enable_openbsd_malloc" = "xyes"; then
   USE_OPENBSD_MALLOC_TRUE=
   USE_OPENBSD_MALLOC_FALSE='#'
 else
@@ -3477,7 +3501,7 @@ else
   USE_OPENBSD_MALLOC_FALSE=
 fi
 
-if test x$enable_instrument_downloads = xyes; then
+if test "x$enable_instrument_downloads" = "xyes"; then
 
 $as_echo "#define INSTRUMENT_DOWNLOADS 1" >>confdefs.h
 
@@ -3486,8 +3510,8 @@ fi
 # Check whether --enable-transparent was given.
 if test "${enable_transparent+set}" = set; then :
   enableval=$enable_transparent; case "${enableval}" in
-        yes) transparent=true ;;
-        no)  transparent=false ;;
+        "yes") transparent=true ;;
+        "no")  transparent=false ;;
         *) as_fn_error $? "bad value for --enable-transparent" "$LINENO" 5 ;;
       esac
 else
@@ -3498,8 +3522,8 @@ fi
 # Check whether --enable-asciidoc was given.
 if test "${enable_asciidoc+set}" = set; then :
   enableval=$enable_asciidoc; case "${enableval}" in
-        yes) asciidoc=true ;;
-        no)  asciidoc=false ;;
+        "yes") asciidoc=true ;;
+        "no")  asciidoc=false ;;
         *) as_fn_error $? "bad value for --disable-asciidoc" "$LINENO" 5 ;;
       esac
 else
@@ -3511,8 +3535,8 @@ fi
 # Check whether --enable-systemd was given.
 if test "${enable_systemd+set}" = set; then :
   enableval=$enable_systemd; case "${enableval}" in
-        yes) systemd=true ;;
-        no)  systemd=false ;;
+        "yes") systemd=true ;;
+        "no")  systemd=false ;;
         * ) as_fn_error $? "bad value for --enable-systemd" "$LINENO" 5 ;;
       esac
 else
@@ -3523,7 +3547,7 @@ fi
 
 
 # systemd support
-if test x$enable_systemd = xno ; then
+if test "x$enable_systemd" = "xno"; then
     have_systemd=no;
 else
 
@@ -3597,7 +3621,7 @@ else
 $as_echo "yes" >&6; }
 	have_systemd=yes
 fi
-    if test x$have_systemd=xno; then
+    if test "x$have_systemd" = "xno"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: Okay, checking for systemd a different way..." >&5
 $as_echo "$as_me: Okay, checking for systemd a different way..." >&6;}
 
@@ -3674,7 +3698,7 @@ fi
     fi
 fi
 
-if test x$have_systemd = xyes; then
+if test "x$have_systemd" = "xyes"; then
 
 $as_echo "#define HAVE_SYSTEMD 1" >>confdefs.h
 
@@ -3777,11 +3801,11 @@ fi
 
 
 
-if test x$enable_systemd = xyes -a x$have_systemd != xyes ; then
+if test "x$enable_systemd" = "xyes" -a "x$have_systemd" != "xyes" ; then
     as_fn_error $? "Explicitly requested systemd support, but systemd not found" "$LINENO" 5
 fi
 
-case $host in
+case "$host" in
    *-*-solaris* )
 
 $as_echo "#define _REENTRANT 1" >>confdefs.h
@@ -3832,7 +3856,7 @@ fi
 # Tor2web mode flag
 # Check whether --enable-tor2web-mode was given.
 if test "${enable_tor2web_mode+set}" = set; then :
-  enableval=$enable_tor2web_mode; if test x$enableval = xyes; then
+  enableval=$enable_tor2web_mode; if test "x$enableval" = "xyes"; then
     CFLAGS="$CFLAGS -D ENABLE_TOR2WEB_MODE=1"
 fi
 fi
@@ -3958,10 +3982,10 @@ else
 fi
 
 
-if test x$enable_tool_name_check != xno; then
-    if test x$ac_tool_warned = xyes; then
+if test "x$enable_tool_name_check" != "xno"; then
+    if test "x$ac_tool_warned" = "xyes"; then
         as_fn_error $? "We are cross compiling but could not find a properly named toolchain. Do you have your cross-compiling toolchain in PATH? (You can --disable-tool-name-check to ignore this.)" "$LINENO" 5
-	elif test "x$ac_ct_AR" != x -a x$cross_compiling = xmaybe; then
+	elif test "x$ac_ct_AR" != "x" -a "x$cross_compiling" = "xmaybe"; then
 		as_fn_error $? "We think we are cross compiling but could not find a properly named toolchain. Do you have your cross-compiling toolchain in PATH? (You can --disable-tool-name-check to ignore this.)" "$LINENO" 5
 	fi
 fi
@@ -5376,7 +5400,7 @@ done
 test -n "$A2X" || A2X="none"
 
 
- if test x$asciidoc = xtrue; then
+ if test "x$asciidoc" = "xtrue"; then
   USE_ASCIIDOC_TRUE=
   USE_ASCIIDOC_FALSE='#'
 else
@@ -5385,7 +5409,7 @@ else
 fi
 
 
- if test x$natpmp = xtrue || test x$upnp = xtrue; then
+ if test "x$natpmp" = "xtrue" || test "x$upnp" = "xtrue"; then
   USE_FW_HELPER_TRUE=
   USE_FW_HELPER_FALSE='#'
 else
@@ -5393,7 +5417,7 @@ else
   USE_FW_HELPER_FALSE=
 fi
 
- if test x$natpmp = xtrue; then
+ if test "x$natpmp" = "xtrue"; then
   NAT_PMP_TRUE=
   NAT_PMP_FALSE='#'
 else
@@ -5401,7 +5425,7 @@ else
   NAT_PMP_FALSE=
 fi
 
- if test x$upnp = xtrue; then
+ if test "x$upnp" = "xtrue"; then
   MINIUPNPC_TRUE=
   MINIUPNPC_FALSE='#'
 else
@@ -5933,7 +5957,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
 fi
 
 
-if test "$bwin32" = cross; then
+if test "$bwin32" = "cross"; then
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for win32 (cross)" >&5
 $as_echo_n "checking for win32 (cross)... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -5960,7 +5984,7 @@ fi
 
 
 
- if test x$bwin32 = xtrue; then
+ if test "x$bwin32" = "xtrue"; then
   BUILD_NT_SERVICES_TRUE=
   BUILD_NT_SERVICES_FALSE='#'
 else
@@ -5996,7 +6020,7 @@ $as_echo "yes" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-if test "$bmipspro" = true; then
+if test "$bmipspro" = "true"; then
   CFLAGS="$CFLAGS -c99"
 fi
 
@@ -6957,21 +6981,26 @@ else
 fi
 
 
-
 for ac_func in _NSGetEnviron \
+	RtlSecureZeroMemory \
+	SecureZeroMemory \
         accept4 \
         backtrace \
         backtrace_symbols_fd \
         clock_gettime \
 	eventfd \
+	explicit_bzero \
+	timingsafe_memcmp \
         flock \
         ftime \
         getaddrinfo \
+        getentropy \
         getifaddrs \
         getpass \
         getrlimit \
         gettimeofday \
         gmtime_r \
+	htonll \
         inet_aton \
         ioctl \
         issetugid \
@@ -6979,6 +7008,7 @@ for ac_func in _NSGetEnviron \
         localtime_r \
         lround \
         memmem \
+        memset_s \
 	pipe \
 	pipe2 \
         prctl \
@@ -7012,7 +7042,7 @@ fi
 done
 
 
-if test "$bwin32" != true; then
+if test "$bwin32" != "true"; then
   for ac_header in pthread.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
@@ -7036,9 +7066,20 @@ _ACEOF
 fi
 done
 
+  for ac_func in pthread_condattr_setclock
+do :
+  ac_fn_c_check_func "$LINENO" "pthread_condattr_setclock" "ac_cv_func_pthread_condattr_setclock"
+if test "x$ac_cv_func_pthread_condattr_setclock" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_CONDATTR_SETCLOCK 1
+_ACEOF
+
+fi
+done
+
 fi
 
-if test "$bwin32" = true; then
+if test "$bwin32" = "true"; then
   ac_fn_c_check_decl "$LINENO" "SecureZeroMemory" "ac_cv_have_decl_SecureZeroMemory" "
 #include <windows.h>
 #include <conio.h>
@@ -7072,7 +7113,7 @@ _ACEOF
 
 fi
 
- if test x$ac_cv_func_readpassphrase = xno && test $bwin32 = false; then
+ if test "x$ac_cv_func_readpassphrase" = "xno" && test "$bwin32" = "false"; then
   BUILD_READPASSPHRASE_C_TRUE=
   BUILD_READPASSPHRASE_C_FALSE='#'
 else
@@ -7082,7 +7123,7 @@ fi
 
 
 
-if test "$bwin32" = true; then
+if test "$bwin32" = "true"; then
   TOR_LIB_WS32=-lws2_32
   TOR_LIB_IPHLPAPI=-liphlpapi
   # Some of the cargo-cults recommend -lwsock32 as well, but I don't
@@ -7103,7 +7144,7 @@ tor_libevent_devpkg_debian="libevent-dev"
 
 STATIC_LIBEVENT_FLAGS=""
 if test "$enable_static_libevent" = "yes"; then
-    if test "$have_rt" = yes; then
+    if test "$have_rt" = "yes"; then
       STATIC_LIBEVENT_FLAGS=" -lrt "
     fi
 fi
@@ -7175,7 +7216,7 @@ else
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
-void exit(int); void *event_init(void);
+void *event_init(void);
 int
 main ()
 {
@@ -7183,7 +7224,7 @@ main ()
 #ifdef _WIN32
 {WSADATA d; WSAStartup(0x101,&d); }
 #endif
-event_init(); exit(0);
+event_init();
 
   ;
   return 0;
@@ -7206,7 +7247,6 @@ rm -f core conftest.err conftest.$ac_objext \
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
-#include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <event.h>
@@ -7217,7 +7257,7 @@ main ()
 #ifdef _WIN32
 {WSADATA d; WSAStartup(0x101,&d); }
 #endif
-event_init(); exit(0);
+event_init();
 
   ;
   return 0;
@@ -7255,8 +7295,8 @@ $as_echo "$as_me: WARNING:    You will probably need $tor_libevent_devpkg_debian
   fi
 fi
 if test -f /etc/fedora-release && test x"$tor_libevent_pkg_redhat" != x; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora Core, you can install$h libevent using \"yum install $tor_libevent_pkg_redhat\"" >&5
-$as_echo "$as_me: WARNING: On Fedora Core, you can install$h libevent using \"yum install $tor_libevent_pkg_redhat\"" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora, you can install$h libevent using \"dnf install $tor_libevent_pkg_redhat\"" >&5
+$as_echo "$as_me: WARNING: On Fedora, you can install$h libevent using \"dnf install $tor_libevent_pkg_redhat\"" >&2;}
   if test x"$tor_libevent_pkg_redhat" != x"$tor_libevent_devpkg_redhat"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:    You will probably need to install $tor_libevent_devpkg_redhat too." >&5
 $as_echo "$as_me: WARNING:    You will probably need to install $tor_libevent_devpkg_redhat too." >&2;}
@@ -7290,8 +7330,8 @@ $as_echo "$as_me: WARNING:    You will probably need $tor_libevent_devpkg_debian
   fi
 fi
 if test -f /etc/fedora-release && test x"$tor_libevent_devpkg_redhat" != x; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora Core, you can install$h libevent using \"yum install $tor_libevent_devpkg_redhat\"" >&5
-$as_echo "$as_me: WARNING: On Fedora Core, you can install$h libevent using \"yum install $tor_libevent_devpkg_redhat\"" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora, you can install$h libevent using \"dnf install $tor_libevent_devpkg_redhat\"" >&5
+$as_echo "$as_me: WARNING: On Fedora, you can install$h libevent using \"dnf install $tor_libevent_devpkg_redhat\"" >&2;}
   if test x"$tor_libevent_devpkg_redhat" != x"$tor_libevent_devpkg_redhat"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:    You will probably need to install $tor_libevent_devpkg_redhat too." >&5
 $as_echo "$as_me: WARNING:    You will probably need to install $tor_libevent_devpkg_redhat too." >&2;}
@@ -7390,7 +7430,7 @@ else
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
-void exit(int); void *event_init(void);
+void *event_init(void);
 int
 main ()
 {
@@ -7398,7 +7438,7 @@ main ()
 #ifdef _WIN32
 {WSADATA d; WSAStartup(0x101,&d); }
 #endif
-event_init(); exit(0);
+event_init();
 
   ;
   return 0;
@@ -7486,12 +7526,9 @@ fi
 done
 
 
-LIBS="$save_LIBS"
-LDFLAGS="$save_LDFLAGS"
-CPPFLAGS="$save_CPPFLAGS"
+LIBS="$STATIC_LIBEVENT_FLAGS $TOR_LIB_WS32 $save_LIBS"
 
-
- if test x$ac_cv_header_event2_dns_h = xyes; then
+ if test "x$ac_cv_header_event2_dns_h" = "xyes"; then
   USE_EXTERNAL_EVDNS_TRUE=
   USE_EXTERNAL_EVDNS_FALSE='#'
 else
@@ -7507,11 +7544,141 @@ if test "$enable_static_libevent" = "yes"; then
      TOR_LIBEVENT_LIBS="$TOR_LIBDIR_libevent/libevent.a $STATIC_LIBEVENT_FLAGS"
    fi
 else
-     TOR_LIBEVENT_LIBS="-levent"
+     if test "x$ac_cv_header_event2_event_h" = "xyes"; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing event_new" >&5
+$as_echo_n "checking for library containing event_new... " >&6; }
+if ${ac_cv_search_event_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char event_new ();
+int
+main ()
+{
+return event_new ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' event event_core; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_event_new=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_event_new+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_event_new+:} false; then :
+
+else
+  ac_cv_search_event_new=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_event_new" >&5
+$as_echo "$ac_cv_search_event_new" >&6; }
+ac_res=$ac_cv_search_event_new
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  as_fn_error $? "\"libevent2 is installed but linking it failed while searching for event_new\"" "$LINENO" 5
 fi
 
-if test "$enable_bufferevents" = "yes" ; then
-  if test "$ac_cv_header_event2_bufferevent_ssl_h" != "yes" ; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing evdns_base_new" >&5
+$as_echo_n "checking for library containing evdns_base_new... " >&6; }
+if ${ac_cv_search_evdns_base_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char evdns_base_new ();
+int
+main ()
+{
+return evdns_base_new ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' event event_extra; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_evdns_base_new=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_evdns_base_new+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_evdns_base_new+:} false; then :
+
+else
+  ac_cv_search_evdns_base_new=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_evdns_base_new" >&5
+$as_echo "$ac_cv_search_evdns_base_new" >&6; }
+ac_res=$ac_cv_search_evdns_base_new
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  as_fn_error $? "\"libevent2 is installed but linking it failed while searching for evdns_base_new\"" "$LINENO" 5
+fi
+
+
+       if test "$ac_cv_search_event_new" != "none required"; then
+         TOR_LIBEVENT_LIBS="$ac_cv_search_event_new"
+       fi
+       if test "$ac_cv_search_evdns_base_new" != "none required"; then
+         TOR_LIBEVENT_LIBS="$ac_cv_search_evdns_base_new $TOR_LIBEVENT_LIBS"
+       fi
+     else
+       TOR_LIBEVENT_LIBS="-levent"
+     fi
+fi
+
+LIBS="$save_LIBS"
+LDFLAGS="$save_LDFLAGS"
+CPPFLAGS="$save_CPPFLAGS"
+
+if test "$enable_bufferevents" = "yes"; then
+  if test "$ac_cv_header_event2_bufferevent_ssl_h" != "yes"; then
     as_fn_error $? "You've asked for bufferevent support, but you're using a version of Libevent without SSL support.  This won't work.  We need Libevent 2.0.8-rc or later, and you don't seem to even have Libevent 2.0.3-alpha." "$LINENO" 5
   else
 
@@ -7540,7 +7707,7 @@ else
 $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    if test "$event_version_number_works" != 'yes'; then
+    if test "$event_version_number_works" != "yes"; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Version detection on Libevent seems broken.  Your Libevent installation is probably screwed up or very old." >&5
 $as_echo "$as_me: WARNING: Version detection on Libevent seems broken.  Your Libevent installation is probably screwed up or very old." >&2;}
     else
@@ -7673,7 +7840,7 @@ ALT_openssl_WITHVAL=""
 # Check whether --with-ssl-dir was given.
 if test "${with_ssl_dir+set}" = set; then :
   withval=$with_ssl_dir;
-      if test "x$withval" != xno && test "x$withval" != "x" ; then
+      if test "x$withval" != "xno" && test "x$withval" != "x"; then
          ALT_openssl_WITHVAL="$withval"
       fi
 
@@ -7747,7 +7914,7 @@ void RAND_add(const void *buf, int num, double entropy);
 int
 main ()
 {
-RAND_add((void*)0,0,0); exit(0);
+RAND_add((void*)0,0,0);
   ;
   return 0;
 }
@@ -7769,7 +7936,7 @@ rm -f core conftest.err conftest.$ac_objext \
 int
 main ()
 {
-RAND_add((void*)0,0,0); exit(0);
+RAND_add((void*)0,0,0);
   ;
   return 0;
 }
@@ -7806,8 +7973,8 @@ $as_echo "$as_me: WARNING:    You will probably need $tor_openssl_devpkg_debian 
   fi
 fi
 if test -f /etc/fedora-release && test x"$tor_openssl_pkg_redhat" != x; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora Core, you can install$h openssl using \"yum install $tor_openssl_pkg_redhat\"" >&5
-$as_echo "$as_me: WARNING: On Fedora Core, you can install$h openssl using \"yum install $tor_openssl_pkg_redhat\"" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora, you can install$h openssl using \"dnf install $tor_openssl_pkg_redhat\"" >&5
+$as_echo "$as_me: WARNING: On Fedora, you can install$h openssl using \"dnf install $tor_openssl_pkg_redhat\"" >&2;}
   if test x"$tor_openssl_pkg_redhat" != x"$tor_openssl_devpkg_redhat"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:    You will probably need to install $tor_openssl_devpkg_redhat too." >&5
 $as_echo "$as_me: WARNING:    You will probably need to install $tor_openssl_devpkg_redhat too." >&2;}
@@ -7841,8 +8008,8 @@ $as_echo "$as_me: WARNING:    You will probably need $tor_openssl_devpkg_debian 
   fi
 fi
 if test -f /etc/fedora-release && test x"$tor_openssl_devpkg_redhat" != x; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora Core, you can install$h openssl using \"yum install $tor_openssl_devpkg_redhat\"" >&5
-$as_echo "$as_me: WARNING: On Fedora Core, you can install$h openssl using \"yum install $tor_openssl_devpkg_redhat\"" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora, you can install$h openssl using \"dnf install $tor_openssl_devpkg_redhat\"" >&5
+$as_echo "$as_me: WARNING: On Fedora, you can install$h openssl using \"dnf install $tor_openssl_devpkg_redhat\"" >&2;}
   if test x"$tor_openssl_devpkg_redhat" != x"$tor_openssl_devpkg_redhat"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:    You will probably need to install $tor_openssl_devpkg_redhat too." >&5
 $as_echo "$as_me: WARNING:    You will probably need to install $tor_openssl_devpkg_redhat too." >&2;}
@@ -7941,7 +8108,7 @@ void RAND_add(const void *buf, int num, double entropy);
 int
 main ()
 {
-RAND_add((void*)0,0,0); exit(0);
+RAND_add((void*)0,0,0);
   ;
   return 0;
 }
@@ -8172,7 +8339,7 @@ const char * zlibVersion(void);
 int
 main ()
 {
-zlibVersion(); exit(0);
+zlibVersion();
   ;
   return 0;
 }
@@ -8194,7 +8361,7 @@ rm -f core conftest.err conftest.$ac_objext \
 int
 main ()
 {
-zlibVersion(); exit(0);
+zlibVersion();
   ;
   return 0;
 }
@@ -8231,8 +8398,8 @@ $as_echo "$as_me: WARNING:    You will probably need $tor_zlib_devpkg_debian too
   fi
 fi
 if test -f /etc/fedora-release && test x"$tor_zlib_pkg_redhat" != x; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora Core, you can install$h zlib using \"yum install $tor_zlib_pkg_redhat\"" >&5
-$as_echo "$as_me: WARNING: On Fedora Core, you can install$h zlib using \"yum install $tor_zlib_pkg_redhat\"" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora, you can install$h zlib using \"dnf install $tor_zlib_pkg_redhat\"" >&5
+$as_echo "$as_me: WARNING: On Fedora, you can install$h zlib using \"dnf install $tor_zlib_pkg_redhat\"" >&2;}
   if test x"$tor_zlib_pkg_redhat" != x"$tor_zlib_devpkg_redhat"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:    You will probably need to install $tor_zlib_devpkg_redhat too." >&5
 $as_echo "$as_me: WARNING:    You will probably need to install $tor_zlib_devpkg_redhat too." >&2;}
@@ -8266,8 +8433,8 @@ $as_echo "$as_me: WARNING:    You will probably need $tor_zlib_devpkg_debian too
   fi
 fi
 if test -f /etc/fedora-release && test x"$tor_zlib_devpkg_redhat" != x; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora Core, you can install$h zlib using \"yum install $tor_zlib_devpkg_redhat\"" >&5
-$as_echo "$as_me: WARNING: On Fedora Core, you can install$h zlib using \"yum install $tor_zlib_devpkg_redhat\"" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Fedora, you can install$h zlib using \"dnf install $tor_zlib_devpkg_redhat\"" >&5
+$as_echo "$as_me: WARNING: On Fedora, you can install$h zlib using \"dnf install $tor_zlib_devpkg_redhat\"" >&2;}
   if test x"$tor_zlib_devpkg_redhat" != x"$tor_zlib_devpkg_redhat"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:    You will probably need to install $tor_zlib_devpkg_redhat too." >&5
 $as_echo "$as_me: WARNING:    You will probably need to install $tor_zlib_devpkg_redhat too." >&2;}
@@ -8366,7 +8533,7 @@ const char * zlibVersion(void);
 int
 main ()
 {
-zlibVersion(); exit(0);
+zlibVersion();
   ;
   return 0;
 }
@@ -8418,8 +8585,75 @@ fi
 
 
 
+tor_cap_pkg_debian="libcap2"
+tor_cap_pkg_redhat="libcap"
+tor_cap_devpkg_debian="libcap-dev"
+tor_cap_devpkg_redhat="libcap-devel"
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cap_init in -lcap" >&5
+$as_echo_n "checking for cap_init in -lcap... " >&6; }
+if ${ac_cv_lib_cap_cap_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcap  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cap_init ();
+int
+main ()
+{
+return cap_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_cap_cap_init=yes
+else
+  ac_cv_lib_cap_cap_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cap_cap_init" >&5
+$as_echo "$ac_cv_lib_cap_cap_init" >&6; }
+if test "x$ac_cv_lib_cap_cap_init" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBCAP 1
+_ACEOF
+
+  LIBS="-lcap $LIBS"
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: Libcap was not found. Capabilities will not be usable." >&5
+$as_echo "$as_me: Libcap was not found. Capabilities will not be usable." >&6;}
+
+fi
+
+for ac_func in cap_set_proc
+do :
+  ac_fn_c_check_func "$LINENO" "cap_set_proc" "ac_cv_func_cap_set_proc"
+if test "x$ac_cv_func_cap_set_proc" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CAP_SET_PROC 1
+_ACEOF
+
+fi
+done
+
+
+
 all_ldflags_for_check="$TOR_LDFLAGS_zlib $TOR_LDFLAGS_openssl $TOR_LDFLAGS_libevent"
-all_libs_for_check="$TOR_ZLIB_LIBS $TOR_LIB_MATH $TOR_LIBEVENT_LIBS $TOR_OPENSSL_LIBS $TOR_SYSTEMD_LIBS $TOR_LIB_WS32 $TOR_LIB_GDI"
+all_libs_for_check="$TOR_ZLIB_LIBS $TOR_LIB_MATH $TOR_LIBEVENT_LIBS $TOR_OPENSSL_LIBS $TOR_SYSTEMD_LIBS $TOR_LIB_WS32 $TOR_LIB_GDI $TOR_CAP_LIBS"
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8442,9 +8676,9 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-if test x$enable_gcc_hardening != xno; then
-    CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2"
-    if test x$have_clang = xyes; then
+if test "x$enable_gcc_hardening" != "xno"; then
+    CFLAGS="$CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2"
+    if test "x$have_clang" = "xyes"; then
 
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler accepts -Qunused-arguments" >&5
@@ -8886,7 +9120,7 @@ $as_echo "$tor_cv_ldflags__pie" >&6; }
     fi
 fi
 
-if test x$enable_expensive_hardening = xyes ; then
+if test "x$enable_expensive_hardening" = "xyes"; then
 
   as_VAR=`$as_echo "tor_cv_cflags_-fsanitize=address" | $as_tr_sh`
 
@@ -9072,7 +9306,7 @@ $as_echo "$tor_cv_cflags__fno_omit_frame_pointer" >&6; }
 
 fi
 
-if test x$enable_linker_hardening != xno; then
+if test "x$enable_linker_hardening" != "xno"; then
 
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the linker accepts -z relro -z now" >&5
@@ -9272,7 +9506,7 @@ $as_echo "$tor_cv_cflags__fomit_frame_pointer" >&6; }
 
 F_OMIT_FRAME_POINTER=''
 if test "$saved_CFLAGS" != "$CFLAGS"; then
-  if test x$enable_expensive_hardening != xyes ; then
+  if test "x$enable_expensive_hardening" != "xyes"; then
     F_OMIT_FRAME_POINTER='-fomit-frame-pointer'
   fi
 fi
@@ -9481,6 +9715,17 @@ if test "$ac_res" != no; then :
 
 fi
 
+  for ac_func in libscrypt_scrypt
+do :
+  ac_fn_c_check_func "$LINENO" "libscrypt_scrypt" "ac_cv_func_libscrypt_scrypt"
+if test "x$ac_cv_func_libscrypt_scrypt" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBSCRYPT_SCRYPT 1
+_ACEOF
+
+fi
+done
+
 fi
 
 
@@ -9621,10 +9866,10 @@ fi
 $as_echo "$tor_cv_can_use_curve25519_nacl" >&6; }
 
 
- if test x$tor_cv_can_use_curve25519_donna_c64 != xno; then
+ if test "x$tor_cv_can_use_curve25519_donna_c64" != "xno"; then
    build_curve25519_donna_c64=yes
    use_curve25519_donna=yes
- elif test x$tor_cv_can_use_curve25519_nacl = xyes; then
+ elif test "x$tor_cv_can_use_curve25519_nacl" = "xyes"; then
    use_curve25519_nacl=yes
    CURVE25519_LIBS=-lnacl
  else
@@ -9632,17 +9877,17 @@ $as_echo "$tor_cv_can_use_curve25519_nacl" >&6; }
    use_curve25519_donna=yes
  fi
 
-if test x$use_curve25519_donna = xyes; then
+if test "x$use_curve25519_donna" = "xyes"; then
 
 $as_echo "#define USE_CURVE25519_DONNA 1" >>confdefs.h
 
 fi
-if test x$use_curve25519_nacl = xyes; then
+if test "x$use_curve25519_nacl" = "xyes"; then
 
 $as_echo "#define USE_CURVE25519_NACL 1" >>confdefs.h
 
 fi
- if test x$build_curve25519_donna = xyes; then
+ if test "x$build_curve25519_donna" = "xyes"; then
   BUILD_CURVE25519_DONNA_TRUE=
   BUILD_CURVE25519_DONNA_FALSE='#'
 else
@@ -9650,7 +9895,7 @@ else
   BUILD_CURVE25519_DONNA_FALSE=
 fi
 
- if test x$build_curve25519_donna_c64 = xyes; then
+ if test "x$build_curve25519_donna_c64" = "xyes"; then
   BUILD_CURVE25519_DONNA_C64_TRUE=
   BUILD_CURVE25519_DONNA_C64_FALSE='#'
 else
@@ -9864,6 +10109,7 @@ for ac_header in assert.h \
         fcntl.h \
         signal.h \
         string.h \
+	sys/capability.h \
         sys/fcntl.h \
         sys/stat.h \
         sys/time.h \
@@ -9917,6 +10163,7 @@ for ac_header in arpa/inet.h \
         sys/select.h \
         sys/socket.h \
 	sys/statvfs.h \
+        sys/syscall.h \
 	sys/sysctl.h \
         sys/syslimits.h \
         sys/time.h \
@@ -10087,22 +10334,22 @@ fi
 done
 
 
-if test x$transparent = xtrue ; then
+if test "x$transparent" = "xtrue"; then
    transparent_ok=0
-   if test x$net_if_found = x1 && test x$net_pfvar_found = x1 ; then
+   if test "x$net_if_found" = "x1" && test "x$net_pfvar_found" = "x1"; then
      transparent_ok=1
    fi
-   if test x$linux_netfilter_ipv4 = x1 ; then
+   if test "x$linux_netfilter_ipv4" = "x1"; then
      transparent_ok=1
    fi
-   if test x$linux_netfilter_ipv6_ip6_tables = x1 ; then
+   if test "x$linux_netfilter_ipv6_ip6_tables" = "x1"; then
      transparent_ok=1
    fi
-   if test x$transparent_ok = x1 ; then
+   if test "x$transparent_ok" = "x1"; then
 
 $as_echo "#define USE_TRANSPARENT 1" >>confdefs.h
 
-     case $host in
+     case "$host" in
        *-*-openbsd* | *-*-bitrig*)
 
 $as_echo "#define OPENBSD 1" >>confdefs.h
@@ -11128,7 +11375,6 @@ ac_fn_c_check_member "$LINENO" "struct in6_addr" "s6_addr32" "ac_cv_member_struc
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
-#endif
 
 "
 if test "x$ac_cv_member_struct_in6_addr_s6_addr32" = xyes; then :
@@ -11156,7 +11402,6 @@ ac_fn_c_check_member "$LINENO" "struct in6_addr" "s6_addr16" "ac_cv_member_struc
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#endif
 #endif
 
 "
@@ -11186,7 +11431,6 @@ ac_fn_c_check_member "$LINENO" "struct sockaddr_in" "sin_len" "ac_cv_member_stru
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
-#endif
 
 "
 if test "x$ac_cv_member_struct_sockaddr_in_sin_len" = xyes; then :
@@ -11214,7 +11458,6 @@ ac_fn_c_check_member "$LINENO" "struct sockaddr_in6" "sin6_len" "ac_cv_member_st
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#endif
 #endif
 
 "
@@ -11290,17 +11533,14 @@ eval ac_res=\$ax_cv_decl_${typename}_signed
 $as_echo "$ac_res" >&6; }
  symbolname=`echo time_t | sed "s/[^a-zA-Z0-9_]/_/g" | tr "a-z" "A-Z"`
  if eval "test \"\${ax_cv_decl_${typename}_signed}\" = \"yes\""; then
-
-$as_echo "#define TIME_T_IS_SIGNED 1" >>confdefs.h
-
+    :
  elif eval "test \"\${ax_cv_decl_${typename}_signed}\" = \"no\""; then
     :
  fi
 
 
-if test "$ax_cv_decl_time_t_signed" = no; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You have an unsigned time_t; some things will probably break. Please tell the Tor developers about your interesting platform." >&5
-$as_echo "$as_me: WARNING: You have an unsigned time_t; some things will probably break. Please tell the Tor developers about your interesting platform." >&2;}
+if test "$ax_cv_decl_time_t_signed" = "no"; then
+  as_fn_error $? "You have an unsigned time_t; Tor does not support that. Please tell the Tor developers about your interesting platform." "$LINENO" 5
 fi
 
 
@@ -11344,7 +11584,7 @@ $as_echo "$ac_res" >&6; }
  fi
 
 
-if test "$ax_cv_decl_size_t_signed" = yes; then
+if test "$ax_cv_decl_size_t_signed" = "yes"; then
   as_fn_error $? "You have a signed size_t; that's grossly nonconformant." "$LINENO" 5
 fi
 
@@ -11497,13 +11737,13 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tor_cv_null_is_zero" >&5
 $as_echo "$tor_cv_null_is_zero" >&6; }
 
-if test "$tor_cv_null_is_zero" = cross ; then
+if test "$tor_cv_null_is_zero" = "cross"; then
   # Cross-compiling; let's hope that the target isn't raving mad.
   { $as_echo "$as_me:${as_lineno-$LINENO}: Cross-compiling: we'll assume that NULL is represented as a sequence of 0-valued bytes." >&5
 $as_echo "$as_me: Cross-compiling: we'll assume that NULL is represented as a sequence of 0-valued bytes." >&6;}
 fi
 
-if test "$tor_cv_null_is_zero" != no; then
+if test "$tor_cv_null_is_zero" != "no"; then
 
 $as_echo "#define NULL_REP_IS_ZERO_BYTES 1" >>confdefs.h
 
@@ -11541,13 +11781,13 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tor_cv_dbl0_is_zero" >&5
 $as_echo "$tor_cv_dbl0_is_zero" >&6; }
 
-if test "$tor_cv_dbl0_is_zero" = cross ; then
+if test "$tor_cv_dbl0_is_zero" = "cross"; then
   # Cross-compiling; let's hope that the target isn't raving mad.
   { $as_echo "$as_me:${as_lineno-$LINENO}: Cross-compiling: we'll assume that 0.0 can be represented as a sequence of 0-valued bytes." >&5
 $as_echo "$as_me: Cross-compiling: we'll assume that 0.0 can be represented as a sequence of 0-valued bytes." >&6;}
 fi
 
-if test "$tor_cv_dbl0_is_zero" != no; then
+if test "$tor_cv_dbl0_is_zero" != "no"; then
 
 $as_echo "#define DOUBLE_0_REP_IS_ZERO_BYTES 1" >>confdefs.h
 
@@ -11585,13 +11825,13 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tor_cv_malloc_zero_works" >&5
 $as_echo "$tor_cv_malloc_zero_works" >&6; }
 
-if test "$tor_cv_malloc_zero_works" = cross; then
+if test "$tor_cv_malloc_zero_works" = "cross"; then
   # Cross-compiling; let's hope that the target isn't raving mad.
   { $as_echo "$as_me:${as_lineno-$LINENO}: Cross-compiling: we'll assume that we need to check malloc() arguments for 0." >&5
 $as_echo "$as_me: Cross-compiling: we'll assume that we need to check malloc() arguments for 0." >&6;}
 fi
 
-if test "$tor_cv_malloc_zero_works" = yes; then
+if test "$tor_cv_malloc_zero_works" = "yes"; then
 
 $as_echo "#define MALLOC_ZERO_WORKS 1" >>confdefs.h
 
@@ -11624,13 +11864,13 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tor_cv_twos_complement" >&5
 $as_echo "$tor_cv_twos_complement" >&6; }
 
-if test "$tor_cv_twos_complement" = cross ; then
+if test "$tor_cv_twos_complement" = "cross"; then
   # Cross-compiling; let's hope that the target isn't raving mad.
   { $as_echo "$as_me:${as_lineno-$LINENO}: Cross-compiling: we'll assume that negative integers are represented with two's complement." >&5
 $as_echo "$as_me: Cross-compiling: we'll assume that negative integers are represented with two's complement." >&6;}
 fi
 
-if test "$tor_cv_twos_complement" != no ; then
+if test "$tor_cv_twos_complement" != "no"; then
 
 $as_echo "#define USING_TWOS_COMPLEMENT 1" >>confdefs.h
 
@@ -11662,13 +11902,13 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tor_cv_sign_extend" >&5
 $as_echo "$tor_cv_sign_extend" >&6; }
 
-if test "$tor_cv_sign_extend" = cross ; then
+if test "$tor_cv_sign_extend" = "cross"; then
   # Cross-compiling; let's hope that the target isn't raving mad.
   { $as_echo "$as_me:${as_lineno-$LINENO}: Cross-compiling: we'll assume that right-shifting negative integers causes sign-extension" >&5
 $as_echo "$as_me: Cross-compiling: we'll assume that right-shifting negative integers causes sign-extension" >&6;}
 fi
 
-if test "$tor_cv_sign_extend" != no ; then
+if test "$tor_cv_sign_extend" != "no"; then
 
 $as_echo "#define RSHIFT_DOES_SIGN_EXTEND 1" >>confdefs.h
 
@@ -11806,18 +12046,18 @@ else
 fi
 
 
-if test x$tcmalloc = xyes ; then
+if test "x$tcmalloc" = "xyes"; then
    LDFLAGS="-ltcmalloc $LDFLAGS"
 fi
 
 using_custom_malloc=no
-if test x$enable_openbsd_malloc = xyes ; then
+if test "x$enable_openbsd_malloc" = "xyes"; then
    using_custom_malloc=yes
 fi
-if test x$tcmalloc = xyes ; then
+if test "x$tcmalloc" = "xyes"; then
    using_custom_malloc=yes
 fi
-if test $using_custom_malloc = no ; then
+if test "$using_custom_malloc" = "no"; then
    for ac_func in mallinfo
 do :
   ac_fn_c_check_func "$LINENO" "mallinfo" "ac_cv_func_mallinfo"
@@ -12099,25 +12339,25 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tor_cv_have_environ_declared" >&5
 $as_echo "$tor_cv_have_environ_declared" >&6; }
 
-if test "$tor_cv_have_func_macro" = 'yes'; then
+if test "$tor_cv_have_func_macro" = "yes"; then
 
 $as_echo "#define HAVE_MACRO__func__ 1" >>confdefs.h
 
 fi
 
-if test "$tor_cv_have_FUNC_macro" = 'yes'; then
+if test "$tor_cv_have_FUNC_macro" = "yes"; then
 
 $as_echo "#define HAVE_MACRO__FUNC__ 1" >>confdefs.h
 
 fi
 
-if test "$tor_cv_have_FUNCTION_macro" = 'yes'; then
+if test "$tor_cv_have_FUNCTION_macro" = "yes"; then
 
 $as_echo "#define HAVE_MACRO__FUNCTION__ 1" >>confdefs.h
 
 fi
 
-if test "$tor_cv_have_environ_declared" = 'yes'; then
+if test "$tor_cv_have_environ_declared" = "yes"; then
 
 $as_echo "#define HAVE_EXTERN_ENVIRON_DECLARED 1" >>confdefs.h
 
@@ -12160,7 +12400,7 @@ BINDIR=`eval echo $bindir`
 LOCALSTATEDIR=`eval echo $localstatedir`
 
 
-if test "$bwin32" = true; then
+if test "$bwin32" = "true"; then
   # Test if the linker supports the --nxcompat and --dynamicbase options
   # for Windows
   save_LDFLAGS="$LDFLAGS"
@@ -12194,7 +12434,7 @@ fi
 
 # Set CFLAGS _after_ all the above checks, since our warnings are stricter
 # than autoconf's macros like.
-if test "$GCC" = yes; then
+if test "$GCC" = "yes"; then
   # Disable GCC's strict aliasing checks.  They are an hours-to-debug
   # accident waiting to happen.
   CFLAGS="$CFLAGS -Wall -fno-strict-aliasing"
@@ -12217,7 +12457,8 @@ esac
 
 # Add some more warnings which we use in development but not in the
 # released versions.  (Some relevant gcc versions can't handle these.)
-if test x$enable_gcc_warnings = xyes || test x$enable_gcc_warnings_advisory = xyes; then
+if test "x$enable_gcc_warnings" = "xyes" ||
+  test "x$enable_gcc_warnings_advisory" = "xyes"; then
 
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12325,7 +12566,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   CFLAGS="$save_CFLAGS"
 
-  case $host in
+  case "$host" in
     *-*-openbsd* | *-*-bitrig*)
       # Some OpenBSD versions (like 4.8) have -Wsystem-headers by default.
       # That's fine, except that the headers don't pass -Wredundant-decls.
@@ -12340,18 +12581,18 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   CFLAGS="$CFLAGS -Wwrite-strings -Wmissing-declarations -Wredundant-decls"
   CFLAGS="$CFLAGS -Wnested-externs -Wbad-function-cast -Wswitch-enum"
 
-  if test x$enable_gcc_warnings = xyes; then
+  if test "x$enable_gcc_warnings" = "xyes"; then
     CFLAGS="$CFLAGS -Werror"
   fi
 
   # Disabled, so we can use mallinfo(): -Waggregate-return
 
-  if test x$have_gcc4 = xyes ; then
+  if test "x$have_gcc4" = "xyes"; then
     # These warnings break gcc 3.3.5 and work on gcc 4.0.2
     CFLAGS="$CFLAGS -Winit-self -Wmissing-field-initializers -Wold-style-definition"
   fi
 
-  if test x$have_gcc42 = xyes ; then
+  if test "x$have_gcc42" = "xyes"; then
     # These warnings break gcc 4.0.2 and work on gcc 4.2
     # XXXX020 See if any of these work with earlier versions.
     CFLAGS="$CFLAGS -Waddress -Wmissing-noreturn -Wstrict-overflow=1"
@@ -12359,24 +12600,24 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     # We used to use -Wstrict-overflow=5, but that breaks us heavily under 4.3.
   fi
 
-  if test x$have_gcc42 = xyes && test x$have_clang = xno; then
+  if test "x$have_gcc42" = "xyes" && test "x$have_clang" = "xno"; then
     # These warnings break gcc 4.0.2 and clang, but work on gcc 4.2
     CFLAGS="$CFLAGS -Wnormalized=id -Woverride-init"
   fi
 
-  if test x$have_gcc43 = xyes ; then
+  if test "x$have_gcc43" = "xyes"; then
     # These warnings break gcc 4.2 and work on gcc 4.3
     # XXXX020 See if any of these work with earlier versions.
     CFLAGS="$CFLAGS -Wextra -Warray-bounds"
   fi
 
-  if test x$have_gcc46 = xyes ; then
+  if test "x$have_gcc46" = "xyes"; then
     # This warning was added in gcc 4.3, but it appears to generate
     # spurious warnings in gcc 4.4.  I don't know if it works in 4.5.
     CFLAGS="$CFLAGS -Wlogical-op"
   fi
 
-  if test x$have_shorten64_flag = xyes ; then
+  if test "x$have_shorten64_flag" = "xyes"; then
     CFLAGS="$CFLAGS -Wshorten-64-to-32"
   fi
 
@@ -12386,7 +12627,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 # CFLAGS="$CFLAGS -Winline"
 fi
 
-if test "$enable_coverage" = yes && test "$have_clang" = "no"; then
+if test "$enable_coverage" = "yes" && test "$have_clang" = "no"; then
    case "$host_os" in
     darwin*)
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Tried to enable coverage on OSX without using the clang compiler. This might not work! If coverage fails, use CC=clang when configuring with --enable-profiling." >&5
@@ -12399,7 +12640,7 @@ CPPFLAGS="$CPPFLAGS $TOR_CPPFLAGS_libevent $TOR_CPPFLAGS_openssl $TOR_CPPFLAGS_z
 ac_config_files="$ac_config_files Doxyfile Makefile contrib/dist/suse/tor.sh contrib/operator-tools/tor.logrotate contrib/dist/tor.sh contrib/dist/torctl contrib/dist/tor.service src/config/torrc.sample src/config/torrc.minimal scripts/maint/checkOptionDocs.pl scripts/maint/updateVersions.pl"
 
 
-if test x$asciidoc = xtrue && test "$ASCIIDOC" = "none" ; then
+if test "x$asciidoc" = "xtrue" && test "$ASCIIDOC" = "none"; then
   regular_mans="doc/tor doc/tor-gencert doc/tor-resolve doc/torify"
   for file in $regular_mans ; do
     if ! [ -f "$srcdir/$file.1.in" ] || ! [ -f "$srcdir/$file.html.in" ] ; then
@@ -12540,6 +12781,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COVERAGE_ENABLED_TRUE}" && test -z "${COVERAGE_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"COVERAGE_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${DISABLE_ASSERTS_IN_UNIT_TESTS_TRUE}" && test -z "${DISABLE_ASSERTS_IN_UNIT_TESTS_FALSE}"; then
+  as_fn_error $? "conditional \"DISABLE_ASSERTS_IN_UNIT_TESTS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${USE_OPENBSD_MALLOC_TRUE}" && test -z "${USE_OPENBSD_MALLOC_FALSE}"; then

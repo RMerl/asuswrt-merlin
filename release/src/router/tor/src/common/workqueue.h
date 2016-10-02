@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_WORKQUEUE_H

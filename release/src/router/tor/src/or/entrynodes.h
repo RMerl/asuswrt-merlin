@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -127,6 +127,9 @@ int getinfo_helper_entry_guards(control_connection_t *conn,
 void mark_bridge_list(void);
 void sweep_bridge_list(void);
 
+int addr_is_a_configured_bridge(const tor_addr_t *addr, uint16_t port,
+                                const char *digest);
+int extend_info_is_a_configured_bridge(const extend_info_t *ei);
 int routerinfo_is_a_configured_bridge(const routerinfo_t *ri);
 int node_is_a_configured_bridge(const node_t *node);
 void learned_router_identity(const tor_addr_t *addr, uint16_t port,

@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -14,7 +14,8 @@
 
 int router_get_router_hash(const char *s, size_t s_len, char *digest);
 int router_get_dir_hash(const char *s, char *digest);
-int router_get_networkstatus_v3_hashes(const char *s, digests_t *digests);
+int router_get_networkstatus_v3_hashes(const char *s,
+                                       common_digests_t *digests);
 int router_get_extrainfo_hash(const char *s, size_t s_len, char *digest);
 #define DIROBJ_MAX_SIG_LEN 256
 char *router_get_dirobj_signature(const char *digest,

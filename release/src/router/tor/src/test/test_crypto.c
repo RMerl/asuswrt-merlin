@@ -1,10 +1,11 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
 #define CRYPTO_CURVE25519_PRIVATE
+#define CRYPTO_PRIVATE
 #include "or.h"
 #include "test.h"
 #include "aes.h"
@@ -15,6 +16,7 @@
 #include "ed25519_vectors.inc"
 
 #include <openssl/evp.h>
+#include <openssl/rand.h>
 
 extern const char AUTHORITY_SIGNKEY_3[];
 extern const char AUTHORITY_SIGNKEY_A_DIGEST[];
@@ -127,6 +129,38 @@ test_crypto_rng_range(void *arg)
   /* These fail with probability 1/10^603. */
   tt_assert(got_smallest);
   tt_assert(got_largest);
+ done:
+  ;
+}
+
+/* Test for rectifying openssl RAND engine. */
+static void
+test_crypto_rng_engine(void *arg)
+{
+  (void)arg;
+  RAND_METHOD dummy_method;
+  memset(&dummy_method, 0, sizeof(dummy_method));
+
+  /* We should be a no-op if we're already on RAND_OpenSSL */
+  tt_int_op(0, ==, crypto_force_rand_ssleay());
+  tt_assert(RAND_get_rand_method() == RAND_OpenSSL());
+
+  /* We should correct the method if it's a dummy. */
+  RAND_set_rand_method(&dummy_method);
+#ifdef LIBRESSL_VERSION_NUMBER
+  /* On libressl, you can't override the RNG. */
+  tt_assert(RAND_get_rand_method() == RAND_OpenSSL());
+  tt_int_op(0, ==, crypto_force_rand_ssleay());
+#else
+  tt_assert(RAND_get_rand_method() == &dummy_method);
+  tt_int_op(1, ==, crypto_force_rand_ssleay());
+#endif
+  tt_assert(RAND_get_rand_method() == RAND_OpenSSL());
+
+  /* Make sure we aren't calling dummy_method */
+  crypto_rand((void *) &dummy_method, sizeof(dummy_method));
+  crypto_rand((void *) &dummy_method, sizeof(dummy_method));
+
  done:
   ;
 }
@@ -284,10 +318,11 @@ test_crypto_sha(void *arg)
 {
   crypto_digest_t *d1 = NULL, *d2 = NULL;
   int i;
-  char key[160];
-  char digest[32];
-  char data[50];
-  char d_out1[DIGEST_LEN], d_out2[DIGEST256_LEN];
+#define RFC_4231_MAX_KEY_SIZE 131
+  char key[RFC_4231_MAX_KEY_SIZE];
+  char digest[DIGEST256_LEN];
+  char data[DIGEST512_LEN];
+  char d_out1[DIGEST512_LEN], d_out2[DIGEST512_LEN];
   char *mem_op_hex_tmp=NULL;
 
   /* Test SHA-1 with a test vector from the specification. */
@@ -300,6 +335,13 @@ test_crypto_sha(void *arg)
   i = crypto_digest256(data, "abc", 3, DIGEST_SHA256);
   test_memeq_hex(data, "BA7816BF8F01CFEA414140DE5DAE2223B00361A3"
                        "96177A9CB410FF61F20015AD");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Test SHA-512 with a test vector from the specification. */
+  i = crypto_digest512(data, "abc", 3, DIGEST_SHA512);
+  test_memeq_hex(data, "ddaf35a193617abacc417349ae20413112e6fa4e89a97"
+                       "ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3"
+                       "feebbd454d4423643ce80e2a9ac94fa54ca49f");
   tt_int_op(i, OP_EQ, 0);
 
   /* Test HMAC-SHA256 with test cases from wikipedia and RFC 4231 */
@@ -378,15 +420,15 @@ test_crypto_sha(void *arg)
   d2 = crypto_digest_dup(d1);
   tt_assert(d2);
   crypto_digest_add_bytes(d2, "ghijkl", 6);
-  crypto_digest_get_digest(d2, d_out1, sizeof(d_out1));
+  crypto_digest_get_digest(d2, d_out1, DIGEST_LEN);
   crypto_digest(d_out2, "abcdefghijkl", 12);
   tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST_LEN);
   crypto_digest_assign(d2, d1);
   crypto_digest_add_bytes(d2, "mno", 3);
-  crypto_digest_get_digest(d2, d_out1, sizeof(d_out1));
+  crypto_digest_get_digest(d2, d_out1, DIGEST_LEN);
   crypto_digest(d_out2, "abcdefmno", 9);
   tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST_LEN);
-  crypto_digest_get_digest(d1, d_out1, sizeof(d_out1));
+  crypto_digest_get_digest(d1, d_out1, DIGEST_LEN);
   crypto_digest(d_out2, "abcdef", 6);
   tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST_LEN);
   crypto_digest_free(d1);
@@ -399,23 +441,432 @@ test_crypto_sha(void *arg)
   d2 = crypto_digest_dup(d1);
   tt_assert(d2);
   crypto_digest_add_bytes(d2, "ghijkl", 6);
-  crypto_digest_get_digest(d2, d_out1, sizeof(d_out1));
+  crypto_digest_get_digest(d2, d_out1, DIGEST256_LEN);
   crypto_digest256(d_out2, "abcdefghijkl", 12, DIGEST_SHA256);
-  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST_LEN);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST256_LEN);
   crypto_digest_assign(d2, d1);
   crypto_digest_add_bytes(d2, "mno", 3);
-  crypto_digest_get_digest(d2, d_out1, sizeof(d_out1));
+  crypto_digest_get_digest(d2, d_out1, DIGEST256_LEN);
   crypto_digest256(d_out2, "abcdefmno", 9, DIGEST_SHA256);
-  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST_LEN);
-  crypto_digest_get_digest(d1, d_out1, sizeof(d_out1));
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST256_LEN);
+  crypto_digest_get_digest(d1, d_out1, DIGEST256_LEN);
   crypto_digest256(d_out2, "abcdef", 6, DIGEST_SHA256);
-  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST_LEN);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST256_LEN);
+  crypto_digest_free(d1);
+  crypto_digest_free(d2);
+
+  /* Incremental digest code with sha512 */
+  d1 = crypto_digest512_new(DIGEST_SHA512);
+  tt_assert(d1);
+  crypto_digest_add_bytes(d1, "abcdef", 6);
+  d2 = crypto_digest_dup(d1);
+  tt_assert(d2);
+  crypto_digest_add_bytes(d2, "ghijkl", 6);
+  crypto_digest_get_digest(d2, d_out1, DIGEST512_LEN);
+  crypto_digest512(d_out2, "abcdefghijkl", 12, DIGEST_SHA512);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST512_LEN);
+  crypto_digest_assign(d2, d1);
+  crypto_digest_add_bytes(d2, "mno", 3);
+  crypto_digest_get_digest(d2, d_out1, DIGEST512_LEN);
+  crypto_digest512(d_out2, "abcdefmno", 9, DIGEST_SHA512);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST512_LEN);
+  crypto_digest_get_digest(d1, d_out1, DIGEST512_LEN);
+  crypto_digest512(d_out2, "abcdef", 6, DIGEST_SHA512);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST512_LEN);
 
  done:
   if (d1)
     crypto_digest_free(d1);
   if (d2)
     crypto_digest_free(d2);
+  tor_free(mem_op_hex_tmp);
+}
+
+static void
+test_crypto_sha3(void *arg)
+{
+  crypto_digest_t *d1 = NULL, *d2 = NULL;
+  int i;
+  char data[DIGEST512_LEN];
+  char d_out1[DIGEST512_LEN], d_out2[DIGEST512_LEN];
+  char *mem_op_hex_tmp=NULL;
+  char *large = NULL;
+
+  (void)arg;
+
+  /* Test SHA3-[256,512] with a test vectors from the Keccak Code Package.
+   *
+   * NB: The code package's test vectors have length expressed in bits.
+   */
+
+  /* Len = 8, Msg = CC */
+  const uint8_t keccak_kat_msg8[] = { 0xcc };
+  i = crypto_digest256(data, (const char*)keccak_kat_msg8, 1, DIGEST_SHA3_256);
+  test_memeq_hex(data, "677035391CD3701293D385F037BA3279"
+                       "6252BB7CE180B00B582DD9B20AAAD7F0");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest512(data, (const char*)keccak_kat_msg8, 1, DIGEST_SHA3_512);
+  test_memeq_hex(data, "3939FCC8B57B63612542DA31A834E5DC"
+                       "C36E2EE0F652AC72E02624FA2E5ADEEC"
+                       "C7DD6BB3580224B4D6138706FC6E8059"
+                       "7B528051230B00621CC2B22999EAA205");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Len = 24, Msg = 1F877C */
+  const uint8_t keccak_kat_msg24[] = { 0x1f, 0x87, 0x7c };
+  i = crypto_digest256(data, (const char*)keccak_kat_msg24, 3,
+                       DIGEST_SHA3_256);
+  test_memeq_hex(data, "BC22345E4BD3F792A341CF18AC0789F1"
+                       "C9C966712A501B19D1B6632CCD408EC5");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest512(data, (const char*)keccak_kat_msg24, 3,
+                       DIGEST_SHA3_512);
+  test_memeq_hex(data, "CB20DCF54955F8091111688BECCEF48C"
+                       "1A2F0D0608C3A575163751F002DB30F4"
+                       "0F2F671834B22D208591CFAF1F5ECFE4"
+                       "3C49863A53B3225BDFD7C6591BA7658B");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Len = 1080, Msg = B771D5CEF... ...C35AC81B5 (SHA3-256 rate - 1) */
+  const uint8_t keccak_kat_msg1080[] = {
+    0xB7, 0x71, 0xD5, 0xCE, 0xF5, 0xD1, 0xA4, 0x1A, 0x93, 0xD1,
+    0x56, 0x43, 0xD7, 0x18, 0x1D, 0x2A, 0x2E, 0xF0, 0xA8, 0xE8,
+    0x4D, 0x91, 0x81, 0x2F, 0x20, 0xED, 0x21, 0xF1, 0x47, 0xBE,
+    0xF7, 0x32, 0xBF, 0x3A, 0x60, 0xEF, 0x40, 0x67, 0xC3, 0x73,
+    0x4B, 0x85, 0xBC, 0x8C, 0xD4, 0x71, 0x78, 0x0F, 0x10, 0xDC,
+    0x9E, 0x82, 0x91, 0xB5, 0x83, 0x39, 0xA6, 0x77, 0xB9, 0x60,
+    0x21, 0x8F, 0x71, 0xE7, 0x93, 0xF2, 0x79, 0x7A, 0xEA, 0x34,
+    0x94, 0x06, 0x51, 0x28, 0x29, 0x06, 0x5D, 0x37, 0xBB, 0x55,
+    0xEA, 0x79, 0x6F, 0xA4, 0xF5, 0x6F, 0xD8, 0x89, 0x6B, 0x49,
+    0xB2, 0xCD, 0x19, 0xB4, 0x32, 0x15, 0xAD, 0x96, 0x7C, 0x71,
+    0x2B, 0x24, 0xE5, 0x03, 0x2D, 0x06, 0x52, 0x32, 0xE0, 0x2C,
+    0x12, 0x74, 0x09, 0xD2, 0xED, 0x41, 0x46, 0xB9, 0xD7, 0x5D,
+    0x76, 0x3D, 0x52, 0xDB, 0x98, 0xD9, 0x49, 0xD3, 0xB0, 0xFE,
+    0xD6, 0xA8, 0x05, 0x2F, 0xBB,
+  };
+  i = crypto_digest256(data, (const char*)keccak_kat_msg1080, 135,
+                       DIGEST_SHA3_256);
+  test_memeq_hex(data, "A19EEE92BB2097B64E823D597798AA18"
+                       "BE9B7C736B8059ABFD6779AC35AC81B5");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest512(data, (const char*)keccak_kat_msg1080, 135,
+                       DIGEST_SHA3_512);
+  test_memeq_hex(data, "7575A1FB4FC9A8F9C0466BD5FCA496D1"
+                       "CB78696773A212A5F62D02D14E3259D1"
+                       "92A87EBA4407DD83893527331407B6DA"
+                       "DAAD920DBC46489B677493CE5F20B595");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Len = 1088, Msg = B32D95B0... ...8E380C04 (SHA3-256 rate) */
+  const uint8_t keccak_kat_msg1088[] = {
+    0xB3, 0x2D, 0x95, 0xB0, 0xB9, 0xAA, 0xD2, 0xA8, 0x81, 0x6D,
+    0xE6, 0xD0, 0x6D, 0x1F, 0x86, 0x00, 0x85, 0x05, 0xBD, 0x8C,
+    0x14, 0x12, 0x4F, 0x6E, 0x9A, 0x16, 0x3B, 0x5A, 0x2A, 0xDE,
+    0x55, 0xF8, 0x35, 0xD0, 0xEC, 0x38, 0x80, 0xEF, 0x50, 0x70,
+    0x0D, 0x3B, 0x25, 0xE4, 0x2C, 0xC0, 0xAF, 0x05, 0x0C, 0xCD,
+    0x1B, 0xE5, 0xE5, 0x55, 0xB2, 0x30, 0x87, 0xE0, 0x4D, 0x7B,
+    0xF9, 0x81, 0x36, 0x22, 0x78, 0x0C, 0x73, 0x13, 0xA1, 0x95,
+    0x4F, 0x87, 0x40, 0xB6, 0xEE, 0x2D, 0x3F, 0x71, 0xF7, 0x68,
+    0xDD, 0x41, 0x7F, 0x52, 0x04, 0x82, 0xBD, 0x3A, 0x08, 0xD4,
+    0xF2, 0x22, 0xB4, 0xEE, 0x9D, 0xBD, 0x01, 0x54, 0x47, 0xB3,
+    0x35, 0x07, 0xDD, 0x50, 0xF3, 0xAB, 0x42, 0x47, 0xC5, 0xDE,
+    0x9A, 0x8A, 0xBD, 0x62, 0xA8, 0xDE, 0xCE, 0xA0, 0x1E, 0x3B,
+    0x87, 0xC8, 0xB9, 0x27, 0xF5, 0xB0, 0x8B, 0xEB, 0x37, 0x67,
+    0x4C, 0x6F, 0x8E, 0x38, 0x0C, 0x04,
+  };
+  i = crypto_digest256(data, (const char*)keccak_kat_msg1088, 136,
+                       DIGEST_SHA3_256);
+  test_memeq_hex(data, "DF673F4105379FF6B755EEAB20CEB0DC"
+                       "77B5286364FE16C59CC8A907AFF07732");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest512(data, (const char*)keccak_kat_msg1088, 136,
+                       DIGEST_SHA3_512);
+  test_memeq_hex(data, "2E293765022D48996CE8EFF0BE54E87E"
+                       "FB94A14C72DE5ACD10D0EB5ECE029CAD"
+                       "FA3BA17A40B2FFA2163991B17786E51C"
+                       "ABA79E5E0FFD34CF085E2A098BE8BACB");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Len = 1096, Msg = 04410E310... ...601016A0D (SHA3-256 rate + 1) */
+  const uint8_t keccak_kat_msg1096[] = {
+    0x04, 0x41, 0x0E, 0x31, 0x08, 0x2A, 0x47, 0x58, 0x4B, 0x40,
+    0x6F, 0x05, 0x13, 0x98, 0xA6, 0xAB, 0xE7, 0x4E, 0x4D, 0xA5,
+    0x9B, 0xB6, 0xF8, 0x5E, 0x6B, 0x49, 0xE8, 0xA1, 0xF7, 0xF2,
+    0xCA, 0x00, 0xDF, 0xBA, 0x54, 0x62, 0xC2, 0xCD, 0x2B, 0xFD,
+    0xE8, 0xB6, 0x4F, 0xB2, 0x1D, 0x70, 0xC0, 0x83, 0xF1, 0x13,
+    0x18, 0xB5, 0x6A, 0x52, 0xD0, 0x3B, 0x81, 0xCA, 0xC5, 0xEE,
+    0xC2, 0x9E, 0xB3, 0x1B, 0xD0, 0x07, 0x8B, 0x61, 0x56, 0x78,
+    0x6D, 0xA3, 0xD6, 0xD8, 0xC3, 0x30, 0x98, 0xC5, 0xC4, 0x7B,
+    0xB6, 0x7A, 0xC6, 0x4D, 0xB1, 0x41, 0x65, 0xAF, 0x65, 0xB4,
+    0x45, 0x44, 0xD8, 0x06, 0xDD, 0xE5, 0xF4, 0x87, 0xD5, 0x37,
+    0x3C, 0x7F, 0x97, 0x92, 0xC2, 0x99, 0xE9, 0x68, 0x6B, 0x7E,
+    0x58, 0x21, 0xE7, 0xC8, 0xE2, 0x45, 0x83, 0x15, 0xB9, 0x96,
+    0xB5, 0x67, 0x7D, 0x92, 0x6D, 0xAC, 0x57, 0xB3, 0xF2, 0x2D,
+    0xA8, 0x73, 0xC6, 0x01, 0x01, 0x6A, 0x0D,
+  };
+  i = crypto_digest256(data, (const char*)keccak_kat_msg1096, 137,
+                       DIGEST_SHA3_256);
+  test_memeq_hex(data, "D52432CF3B6B4B949AA848E058DCD62D"
+                       "735E0177279222E7AC0AF8504762FAA0");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest512(data, (const char*)keccak_kat_msg1096, 137,
+                       DIGEST_SHA3_512);
+  test_memeq_hex(data, "BE8E14B6757FFE53C9B75F6DDE9A7B6C"
+                       "40474041DE83D4A60645A826D7AF1ABE"
+                       "1EEFCB7B74B62CA6A514E5F2697D585B"
+                       "FECECE12931BBE1D4ED7EBF7B0BE660E");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Len = 1144, Msg = EA40E83C...  ...66DFAFEC (SHA3-512 rate *2 - 1) */
+  const uint8_t keccak_kat_msg1144[] = {
+    0xEA, 0x40, 0xE8, 0x3C, 0xB1, 0x8B, 0x3A, 0x24, 0x2C, 0x1E,
+    0xCC, 0x6C, 0xCD, 0x0B, 0x78, 0x53, 0xA4, 0x39, 0xDA, 0xB2,
+    0xC5, 0x69, 0xCF, 0xC6, 0xDC, 0x38, 0xA1, 0x9F, 0x5C, 0x90,
+    0xAC, 0xBF, 0x76, 0xAE, 0xF9, 0xEA, 0x37, 0x42, 0xFF, 0x3B,
+    0x54, 0xEF, 0x7D, 0x36, 0xEB, 0x7C, 0xE4, 0xFF, 0x1C, 0x9A,
+    0xB3, 0xBC, 0x11, 0x9C, 0xFF, 0x6B, 0xE9, 0x3C, 0x03, 0xE2,
+    0x08, 0x78, 0x33, 0x35, 0xC0, 0xAB, 0x81, 0x37, 0xBE, 0x5B,
+    0x10, 0xCD, 0xC6, 0x6F, 0xF3, 0xF8, 0x9A, 0x1B, 0xDD, 0xC6,
+    0xA1, 0xEE, 0xD7, 0x4F, 0x50, 0x4C, 0xBE, 0x72, 0x90, 0x69,
+    0x0B, 0xB2, 0x95, 0xA8, 0x72, 0xB9, 0xE3, 0xFE, 0x2C, 0xEE,
+    0x9E, 0x6C, 0x67, 0xC4, 0x1D, 0xB8, 0xEF, 0xD7, 0xD8, 0x63,
+    0xCF, 0x10, 0xF8, 0x40, 0xFE, 0x61, 0x8E, 0x79, 0x36, 0xDA,
+    0x3D, 0xCA, 0x5C, 0xA6, 0xDF, 0x93, 0x3F, 0x24, 0xF6, 0x95,
+    0x4B, 0xA0, 0x80, 0x1A, 0x12, 0x94, 0xCD, 0x8D, 0x7E, 0x66,
+    0xDF, 0xAF, 0xEC,
+  };
+  i = crypto_digest512(data, (const char*)keccak_kat_msg1144, 143,
+                       DIGEST_SHA3_512);
+  test_memeq_hex(data, "3A8E938C45F3F177991296B24565D9A6"
+                       "605516615D96A062C8BE53A0D6C5A648"
+                       "7BE35D2A8F3CF6620D0C2DBA2C560D68"
+                       "295F284BE7F82F3B92919033C9CE5D80");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest256(data, (const char*)keccak_kat_msg1144, 143,
+                       DIGEST_SHA3_256);
+  test_memeq_hex(data, "E58A947E98D6DD7E932D2FE02D9992E6"
+                       "118C0C2C606BDCDA06E7943D2C95E0E5");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Len = 1152, Msg = 157D5B7E... ...79EE00C63 (SHA3-512 rate * 2) */
+  const uint8_t keccak_kat_msg1152[] = {
+    0x15, 0x7D, 0x5B, 0x7E, 0x45, 0x07, 0xF6, 0x6D, 0x9A, 0x26,
+    0x74, 0x76, 0xD3, 0x38, 0x31, 0xE7, 0xBB, 0x76, 0x8D, 0x4D,
+    0x04, 0xCC, 0x34, 0x38, 0xDA, 0x12, 0xF9, 0x01, 0x02, 0x63,
+    0xEA, 0x5F, 0xCA, 0xFB, 0xDE, 0x25, 0x79, 0xDB, 0x2F, 0x6B,
+    0x58, 0xF9, 0x11, 0xD5, 0x93, 0xD5, 0xF7, 0x9F, 0xB0, 0x5F,
+    0xE3, 0x59, 0x6E, 0x3F, 0xA8, 0x0F, 0xF2, 0xF7, 0x61, 0xD1,
+    0xB0, 0xE5, 0x70, 0x80, 0x05, 0x5C, 0x11, 0x8C, 0x53, 0xE5,
+    0x3C, 0xDB, 0x63, 0x05, 0x52, 0x61, 0xD7, 0xC9, 0xB2, 0xB3,
+    0x9B, 0xD9, 0x0A, 0xCC, 0x32, 0x52, 0x0C, 0xBB, 0xDB, 0xDA,
+    0x2C, 0x4F, 0xD8, 0x85, 0x6D, 0xBC, 0xEE, 0x17, 0x31, 0x32,
+    0xA2, 0x67, 0x91, 0x98, 0xDA, 0xF8, 0x30, 0x07, 0xA9, 0xB5,
+    0xC5, 0x15, 0x11, 0xAE, 0x49, 0x76, 0x6C, 0x79, 0x2A, 0x29,
+    0x52, 0x03, 0x88, 0x44, 0x4E, 0xBE, 0xFE, 0x28, 0x25, 0x6F,
+    0xB3, 0x3D, 0x42, 0x60, 0x43, 0x9C, 0xBA, 0x73, 0xA9, 0x47,
+    0x9E, 0xE0, 0x0C, 0x63,
+  };
+  i = crypto_digest512(data, (const char*)keccak_kat_msg1152, 144,
+                       DIGEST_SHA3_512);
+  test_memeq_hex(data, "FE45289874879720CE2A844AE34BB735"
+                       "22775DCB6019DCD22B8885994672A088"
+                       "9C69E8115C641DC8B83E39F7311815A1"
+                       "64DC46E0BA2FCA344D86D4BC2EF2532C");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest256(data, (const char*)keccak_kat_msg1152, 144,
+                       DIGEST_SHA3_256);
+  test_memeq_hex(data, "A936FB9AF87FB67857B3EAD5C76226AD"
+                       "84DA47678F3C2FFE5A39FDB5F7E63FFB");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Len = 1160, Msg = 836B34B5... ...11044C53 (SHA3-512 rate * 2 + 1) */
+  const uint8_t keccak_kat_msg1160[] = {
+    0x83, 0x6B, 0x34, 0xB5, 0x15, 0x47, 0x6F, 0x61, 0x3F, 0xE4,
+    0x47, 0xA4, 0xE0, 0xC3, 0xF3, 0xB8, 0xF2, 0x09, 0x10, 0xAC,
+    0x89, 0xA3, 0x97, 0x70, 0x55, 0xC9, 0x60, 0xD2, 0xD5, 0xD2,
+    0xB7, 0x2B, 0xD8, 0xAC, 0xC7, 0x15, 0xA9, 0x03, 0x53, 0x21,
+    0xB8, 0x67, 0x03, 0xA4, 0x11, 0xDD, 0xE0, 0x46, 0x6D, 0x58,
+    0xA5, 0x97, 0x69, 0x67, 0x2A, 0xA6, 0x0A, 0xD5, 0x87, 0xB8,
+    0x48, 0x1D, 0xE4, 0xBB, 0xA5, 0x52, 0xA1, 0x64, 0x57, 0x79,
+    0x78, 0x95, 0x01, 0xEC, 0x53, 0xD5, 0x40, 0xB9, 0x04, 0x82,
+    0x1F, 0x32, 0xB0, 0xBD, 0x18, 0x55, 0xB0, 0x4E, 0x48, 0x48,
+    0xF9, 0xF8, 0xCF, 0xE9, 0xEB, 0xD8, 0x91, 0x1B, 0xE9, 0x57,
+    0x81, 0xA7, 0x59, 0xD7, 0xAD, 0x97, 0x24, 0xA7, 0x10, 0x2D,
+    0xBE, 0x57, 0x67, 0x76, 0xB7, 0xC6, 0x32, 0xBC, 0x39, 0xB9,
+    0xB5, 0xE1, 0x90, 0x57, 0xE2, 0x26, 0x55, 0x2A, 0x59, 0x94,
+    0xC1, 0xDB, 0xB3, 0xB5, 0xC7, 0x87, 0x1A, 0x11, 0xF5, 0x53,
+    0x70, 0x11, 0x04, 0x4C, 0x53,
+  };
+  i = crypto_digest512(data, (const char*)keccak_kat_msg1160, 145,
+                       DIGEST_SHA3_512);
+  test_memeq_hex(data, "AFF61C6E11B98E55AC213B1A0BC7DE04"
+                       "05221AC5EFB1229842E4614F4A029C9B"
+                       "D14A0ED7FD99AF3681429F3F309FDB53"
+                       "166AA9A3CD9F1F1223D04B4A9015E94A");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest256(data, (const char*)keccak_kat_msg1160, 145,
+                       DIGEST_SHA3_256);
+  test_memeq_hex(data, "3A654B88F88086C2751EDAE6D3924814"
+                       "3CF6235C6B0B7969342C45A35194B67E");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* SHA3-[256,512] Empty case (wikipedia) */
+  i = crypto_digest256(data, "", 0, DIGEST_SHA3_256);
+  test_memeq_hex(data, "a7ffc6f8bf1ed76651c14756a061d662"
+                       "f580ff4de43b49fa82d80a4b80f8434a");
+  tt_int_op(i, OP_EQ, 0);
+  i = crypto_digest512(data, "", 0, DIGEST_SHA3_512);
+  test_memeq_hex(data, "a69f73cca23a9ac5c8b567dc185a756e"
+                       "97c982164fe25859e0d1dcc1475c80a6"
+                       "15b2123af1f5f94c11e3e9402c3ac558"
+                       "f500199d95b6d3e301758586281dcd26");
+  tt_int_op(i, OP_EQ, 0);
+
+  /* Incremental digest code with SHA3-256 */
+  d1 = crypto_digest256_new(DIGEST_SHA3_256);
+  tt_assert(d1);
+  crypto_digest_add_bytes(d1, "abcdef", 6);
+  d2 = crypto_digest_dup(d1);
+  tt_assert(d2);
+  crypto_digest_add_bytes(d2, "ghijkl", 6);
+  crypto_digest_get_digest(d2, d_out1, DIGEST256_LEN);
+  crypto_digest256(d_out2, "abcdefghijkl", 12, DIGEST_SHA3_256);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST256_LEN);
+  crypto_digest_assign(d2, d1);
+  crypto_digest_add_bytes(d2, "mno", 3);
+  crypto_digest_get_digest(d2, d_out1, DIGEST256_LEN);
+  crypto_digest256(d_out2, "abcdefmno", 9, DIGEST_SHA3_256);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST256_LEN);
+  crypto_digest_get_digest(d1, d_out1, DIGEST256_LEN);
+  crypto_digest256(d_out2, "abcdef", 6, DIGEST_SHA3_256);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST256_LEN);
+  crypto_digest_free(d1);
+  crypto_digest_free(d2);
+
+  /* Incremental digest code with SHA3-512 */
+  d1 = crypto_digest512_new(DIGEST_SHA3_512);
+  tt_assert(d1);
+  crypto_digest_add_bytes(d1, "abcdef", 6);
+  d2 = crypto_digest_dup(d1);
+  tt_assert(d2);
+  crypto_digest_add_bytes(d2, "ghijkl", 6);
+  crypto_digest_get_digest(d2, d_out1, DIGEST512_LEN);
+  crypto_digest512(d_out2, "abcdefghijkl", 12, DIGEST_SHA3_512);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST512_LEN);
+  crypto_digest_assign(d2, d1);
+  crypto_digest_add_bytes(d2, "mno", 3);
+  crypto_digest_get_digest(d2, d_out1, DIGEST512_LEN);
+  crypto_digest512(d_out2, "abcdefmno", 9, DIGEST_SHA3_512);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST512_LEN);
+  crypto_digest_get_digest(d1, d_out1, DIGEST512_LEN);
+  crypto_digest512(d_out2, "abcdef", 6, DIGEST_SHA3_512);
+  tt_mem_op(d_out1,OP_EQ, d_out2, DIGEST512_LEN);
+  crypto_digest_free(d1);
+
+  /* Attempt to exercise the incremental hashing code by creating a randomized
+   * 100 KiB buffer, and hashing rand[1, 5 * Rate] bytes at a time.  SHA3-512
+   * is used because it has a lowest rate of the family (the code is common,
+   * but the slower rate exercises more of it).
+   */
+  const size_t bufsz = 100 * 1024;
+  size_t j = 0;
+  large = tor_malloc(bufsz);
+  crypto_rand(large, bufsz);
+  d1 = crypto_digest512_new(DIGEST_SHA3_512); /* Running digest. */
+  while (j < bufsz) {
+    /* Pick how much data to add to the running digest. */
+    size_t incr = (size_t)crypto_rand_int_range(1, 72 * 5);
+    incr = MIN(bufsz - j, incr);
+
+    /* Add the data, and calculate the hash. */
+    crypto_digest_add_bytes(d1, large + j, incr);
+    crypto_digest_get_digest(d1, d_out1, DIGEST512_LEN);
+
+    /* One-shot hash the buffer up to the data that was just added,
+     * and ensure that the values match up.
+     *
+     * XXX/yawning: If this actually fails, it'll be rather difficult to
+     * reproduce.  Improvements welcome.
+     */
+    i = crypto_digest512(d_out2, large, j + incr, DIGEST_SHA3_512);
+    tt_int_op(i, OP_EQ, 0);
+    tt_mem_op(d_out1, OP_EQ, d_out2, DIGEST512_LEN);
+
+    j += incr;
+  }
+
+ done:
+  if (d1)
+    crypto_digest_free(d1);
+  if (d2)
+    crypto_digest_free(d2);
+  tor_free(large);
+  tor_free(mem_op_hex_tmp);
+}
+
+/** Run unit tests for our XOF. */
+static void
+test_crypto_sha3_xof(void *arg)
+{
+  uint8_t msg[255];
+  uint8_t out[512];
+  crypto_xof_t *xof;
+  char *mem_op_hex_tmp=NULL;
+
+  (void)arg;
+
+  /* SHAKE256 test vector (Len = 2040) from the Keccak Code Package. */
+  base16_decode((char *)msg, 255,
+                "3A3A819C48EFDE2AD914FBF00E18AB6BC4F14513AB27D0C178A188B61431"
+                "E7F5623CB66B23346775D386B50E982C493ADBBFC54B9A3CD383382336A1"
+                "A0B2150A15358F336D03AE18F666C7573D55C4FD181C29E6CCFDE63EA35F"
+                "0ADF5885CFC0A3D84A2B2E4DD24496DB789E663170CEF74798AA1BBCD457"
+                "4EA0BBA40489D764B2F83AADC66B148B4A0CD95246C127D5871C4F114186"
+                "90A5DDF01246A0C80A43C70088B6183639DCFDA4125BD113A8F49EE23ED3"
+                "06FAAC576C3FB0C1E256671D817FC2534A52F5B439F72E424DE376F4C565"
+                "CCA82307DD9EF76DA5B7C4EB7E085172E328807C02D011FFBF33785378D7"
+                "9DC266F6A5BE6BB0E4A92ECEEBAEB1", 510);
+  const char *squeezed_hex =
+                "8A5199B4A7E133E264A86202720655894D48CFF344A928CF8347F48379CE"
+                "F347DFC5BCFFAB99B27B1F89AA2735E23D30088FFA03B9EDB02B9635470A"
+                "B9F1038985D55F9CA774572DD006470EA65145469609F9FA0831BF1FFD84"
+                "2DC24ACADE27BD9816E3B5BF2876CB112232A0EB4475F1DFF9F5C713D9FF"
+                "D4CCB89AE5607FE35731DF06317949EEF646E9591CF3BE53ADD6B7DD2B60"
+                "96E2B3FB06E662EC8B2D77422DAAD9463CD155204ACDBD38E319613F39F9"
+                "9B6DFB35CA9365160066DB19835888C2241FF9A731A4ACBB5663727AAC34"
+                "A401247FBAA7499E7D5EE5B69D31025E63D04C35C798BCA1262D5673A9CF"
+                "0930B5AD89BD485599DC184528DA4790F088EBD170B635D9581632D2FF90"
+                "DB79665CED430089AF13C9F21F6D443A818064F17AEC9E9C5457001FA8DC"
+                "6AFBADBE3138F388D89D0E6F22F66671255B210754ED63D81DCE75CE8F18"
+                "9B534E6D6B3539AA51E837C42DF9DF59C71E6171CD4902FE1BDC73FB1775"
+                "B5C754A1ED4EA7F3105FC543EE0418DAD256F3F6118EA77114A16C15355B"
+                "42877A1DB2A7DF0E155AE1D8670ABCEC3450F4E2EEC9838F895423EF63D2"
+                "61138BAAF5D9F104CB5A957AEA06C0B9B8C78B0D441796DC0350DDEABB78"
+                "A33B6F1F9E68EDE3D1805C7B7E2CFD54E0FAD62F0D8CA67A775DC4546AF9"
+                "096F2EDB221DB42843D65327861282DC946A0BA01A11863AB2D1DFD16E39"
+                "73D4";
+
+  /* Test oneshot absorb/squeeze. */
+  xof = crypto_xof_new();
+  tt_assert(xof);
+  crypto_xof_add_bytes(xof, msg, sizeof(msg));
+  crypto_xof_squeeze_bytes(xof, out, sizeof(out));
+  test_memeq_hex(out, squeezed_hex);
+  crypto_xof_free(xof);
+  memset(out, 0, sizeof(out));
+
+  /* Test incremental absorb/squeeze. */
+  xof = crypto_xof_new();
+  tt_assert(xof);
+  for (size_t i = 0; i < sizeof(msg); i++)
+    crypto_xof_add_bytes(xof, msg + i, 1);
+  for (size_t i = 0; i < sizeof(out); i++)
+    crypto_xof_squeeze_bytes(xof, out + i, 1);
+  test_memeq_hex(out, squeezed_hex);
+
+ done:
+  if (xof)
+    crypto_xof_free(xof);
   tor_free(mem_op_hex_tmp);
 }
 
@@ -639,7 +1090,7 @@ test_crypto_digests(void *arg)
 {
   crypto_pk_t *k = NULL;
   ssize_t r;
-  digests_t pkey_digests;
+  common_digests_t pkey_digests;
   char digest[DIGEST_LEN];
 
   (void)arg;
@@ -653,7 +1104,7 @@ test_crypto_digests(void *arg)
   tt_mem_op(hex_str(digest, DIGEST_LEN),OP_EQ,
              AUTHORITY_SIGNKEY_A_DIGEST, HEX_DIGEST_LEN);
 
-  r = crypto_pk_get_all_digests(k, &pkey_digests);
+  r = crypto_pk_get_common_digests(k, &pkey_digests);
 
   tt_mem_op(hex_str(pkey_digests.d[DIGEST_SHA1], DIGEST_LEN),OP_EQ,
              AUTHORITY_SIGNKEY_A_DIGEST, HEX_DIGEST_LEN);
@@ -663,6 +1114,11 @@ test_crypto_digests(void *arg)
   crypto_pk_free(k);
 }
 
+#ifndef OPENSSL_1_1_API
+#define EVP_ENCODE_CTX_new() tor_malloc_zero(sizeof(EVP_ENCODE_CTX))
+#define EVP_ENCODE_CTX_free(ctx) tor_free(ctx)
+#endif
+
 /** Encode src into dest with OpenSSL's EVP Encode interface, returning the
  * length of the encoded data in bytes.
  */
@@ -670,12 +1126,13 @@ static int
 base64_encode_evp(char *dest, char *src, size_t srclen)
 {
   const unsigned char *s = (unsigned char*)src;
-  EVP_ENCODE_CTX ctx;
+  EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
   int len, ret;
 
-  EVP_EncodeInit(&ctx);
-  EVP_EncodeUpdate(&ctx, (unsigned char *)dest, &len, s, (int)srclen);
-  EVP_EncodeFinal(&ctx, (unsigned char *)(dest + len), &ret);
+  EVP_EncodeInit(ctx);
+  EVP_EncodeUpdate(ctx, (unsigned char *)dest, &len, s, (int)srclen);
+  EVP_EncodeFinal(ctx, (unsigned char *)(dest + len), &ret);
+  EVP_ENCODE_CTX_free(ctx);
   return ret+ len;
 }
 
@@ -1271,6 +1728,24 @@ test_crypto_curve25519_persist(void *arg)
   tor_free(tag);
 }
 
+static void *
+ed25519_testcase_setup(const struct testcase_t *testcase)
+{
+  crypto_ed25519_testing_force_impl(testcase->setup_data);
+  return testcase->setup_data;
+}
+static int
+ed25519_testcase_cleanup(const struct testcase_t *testcase, void *ptr)
+{
+  (void)testcase;
+  (void)ptr;
+  crypto_ed25519_testing_restore_impl();
+  return 1;
+}
+static const struct testcase_setup_t ed25519_test_setup = {
+  ed25519_testcase_setup, ed25519_testcase_cleanup
+};
+
 static void
 test_crypto_ed25519_simple(void *arg)
 {
@@ -1803,13 +2278,126 @@ test_crypto_siphash(void *arg)
   ;
 }
 
+/* We want the likelihood that the random buffer exhibits any regular pattern
+ * to be far less than the memory bit error rate in the int return value.
+ * Using 2048 bits provides a failure rate of 1/(3 * 10^616), and we call
+ * 3 functions, leading to an overall error rate of 1/10^616.
+ * This is comparable with the 1/10^603 failure rate of test_crypto_rng_range.
+ */
+#define FAILURE_MODE_BUFFER_SIZE (2048/8)
+
+/** Check crypto_rand for a failure mode where it does nothing to the buffer,
+ * or it sets the buffer to all zeroes. Return 0 when the check passes,
+ * or -1 when it fails. */
+static int
+crypto_rand_check_failure_mode_zero(void)
+{
+  char buf[FAILURE_MODE_BUFFER_SIZE];
+
+  memset(buf, 0, FAILURE_MODE_BUFFER_SIZE);
+  crypto_rand(buf, FAILURE_MODE_BUFFER_SIZE);
+
+  for (size_t i = 0; i < FAILURE_MODE_BUFFER_SIZE; i++) {
+    if (buf[i] != 0) {
+      return 0;
+    }
+  }
+
+  return -1;
+}
+
+/** Check crypto_rand for a failure mode where every int64_t in the buffer is
+ * the same. Return 0 when the check passes, or -1 when it fails. */
+static int
+crypto_rand_check_failure_mode_identical(void)
+{
+  /* just in case the buffer size isn't a multiple of sizeof(int64_t) */
+#define FAILURE_MODE_BUFFER_SIZE_I64 \
+  (FAILURE_MODE_BUFFER_SIZE/SIZEOF_INT64_T)
+#define FAILURE_MODE_BUFFER_SIZE_I64_BYTES \
+  (FAILURE_MODE_BUFFER_SIZE_I64*SIZEOF_INT64_T)
+
+#if FAILURE_MODE_BUFFER_SIZE_I64 < 2
+#error FAILURE_MODE_BUFFER_SIZE needs to be at least 2*SIZEOF_INT64_T
+#endif
+
+  int64_t buf[FAILURE_MODE_BUFFER_SIZE_I64];
+
+  memset(buf, 0, FAILURE_MODE_BUFFER_SIZE_I64_BYTES);
+  crypto_rand((char *)buf, FAILURE_MODE_BUFFER_SIZE_I64_BYTES);
+
+  for (size_t i = 1; i < FAILURE_MODE_BUFFER_SIZE_I64; i++) {
+    if (buf[i] != buf[i-1]) {
+      return 0;
+    }
+  }
+
+  return -1;
+}
+
+/** Check crypto_rand for a failure mode where it increments the "random"
+ * value by 1 for every byte in the buffer. (This is OpenSSL's PREDICT mode.)
+ * Return 0 when the check passes, or -1 when it fails. */
+static int
+crypto_rand_check_failure_mode_predict(void)
+{
+  unsigned char buf[FAILURE_MODE_BUFFER_SIZE];
+
+  memset(buf, 0, FAILURE_MODE_BUFFER_SIZE);
+  crypto_rand((char *)buf, FAILURE_MODE_BUFFER_SIZE);
+
+  for (size_t i = 1; i < FAILURE_MODE_BUFFER_SIZE; i++) {
+    /* check if the last byte was incremented by 1, including integer
+     * wrapping */
+    if (buf[i] - buf[i-1] != 1 && buf[i-1] - buf[i] != 255) {
+      return 0;
+    }
+  }
+
+  return -1;
+}
+
+#undef FAILURE_MODE_BUFFER_SIZE
+
+static void
+test_crypto_failure_modes(void *arg)
+{
+  int rv = 0;
+  (void)arg;
+
+  rv = crypto_early_init();
+  tt_assert(rv == 0);
+
+  /* Check random works */
+  rv = crypto_rand_check_failure_mode_zero();
+  tt_assert(rv == 0);
+
+  rv = crypto_rand_check_failure_mode_identical();
+  tt_assert(rv == 0);
+
+  rv = crypto_rand_check_failure_mode_predict();
+  tt_assert(rv == 0);
+
+ done:
+  ;
+}
+
 #define CRYPTO_LEGACY(name)                                            \
   { #name, test_crypto_ ## name , 0, NULL, NULL }
+
+#define ED25519_TEST_ONE(name, fl, which)                               \
+  { #name "/ed25519_" which, test_crypto_ed25519_ ## name, (fl),        \
+    &ed25519_test_setup, (void*)which }
+
+#define ED25519_TEST(name, fl)                  \
+  ED25519_TEST_ONE(name, (fl), "donna"),        \
+  ED25519_TEST_ONE(name, (fl), "ref10")
 
 struct testcase_t crypto_tests[] = {
   CRYPTO_LEGACY(formats),
   CRYPTO_LEGACY(rng),
   { "rng_range", test_crypto_rng_range, 0, NULL, NULL },
+  { "rng_engine", test_crypto_rng_engine, TT_FORK, NULL, NULL },
   { "aes_AES", test_crypto_aes, TT_FORK, &passthrough_setup, (void*)"aes" },
   { "aes_EVP", test_crypto_aes, TT_FORK, &passthrough_setup, (void*)"evp" },
   CRYPTO_LEGACY(sha),
@@ -1817,6 +2405,8 @@ struct testcase_t crypto_tests[] = {
   { "pk_fingerprints", test_crypto_pk_fingerprints, TT_FORK, NULL, NULL },
   { "pk_base64", test_crypto_pk_base64, TT_FORK, NULL, NULL },
   CRYPTO_LEGACY(digests),
+  { "sha3", test_crypto_sha3, TT_FORK, NULL, NULL},
+  { "sha3_xof", test_crypto_sha3_xof, TT_FORK, NULL, NULL},
   CRYPTO_LEGACY(dh),
   { "aes_iv_AES", test_crypto_aes_iv, TT_FORK, &passthrough_setup,
     (void*)"aes" },
@@ -1832,15 +2422,15 @@ struct testcase_t crypto_tests[] = {
   { "curve25519_wrappers", test_crypto_curve25519_wrappers, 0, NULL, NULL },
   { "curve25519_encode", test_crypto_curve25519_encode, 0, NULL, NULL },
   { "curve25519_persist", test_crypto_curve25519_persist, 0, NULL, NULL },
-  { "ed25519_simple", test_crypto_ed25519_simple, 0, NULL, NULL },
-  { "ed25519_test_vectors", test_crypto_ed25519_test_vectors, 0, NULL, NULL },
-  { "ed25519_encode", test_crypto_ed25519_encode, 0, NULL, NULL },
-  { "ed25519_convert", test_crypto_ed25519_convert, 0, NULL, NULL },
-  { "ed25519_blinding", test_crypto_ed25519_blinding, 0, NULL, NULL },
-  { "ed25519_testvectors", test_crypto_ed25519_testvectors, 0, NULL, NULL },
-  { "ed25519_fuzz_donna", test_crypto_ed25519_fuzz_donna, TT_FORK, NULL,
-    NULL },
+  ED25519_TEST(simple, 0),
+  ED25519_TEST(test_vectors, 0),
+  ED25519_TEST(encode, 0),
+  ED25519_TEST(convert, 0),
+  ED25519_TEST(blinding, 0),
+  ED25519_TEST(testvectors, 0),
+  ED25519_TEST(fuzz_donna, TT_FORK),
   { "siphash", test_crypto_siphash, 0, NULL, NULL },
+  { "failure_modes", test_crypto_failure_modes, TT_FORK, NULL, NULL },
   END_OF_TESTCASES
 };
 

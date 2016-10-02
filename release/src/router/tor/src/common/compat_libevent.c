@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2015, The Tor Project, Inc. */
+/* Copyright (c) 2009-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -11,6 +11,7 @@
 
 #include "orconfig.h"
 #include "compat.h"
+#define COMPAT_LIBEVENT_PRIVATE
 #include "compat_libevent.h"
 
 #include "crypto.h"
@@ -28,39 +29,11 @@
 #include <event.h>
 #endif
 
-/** A number representing a version of Libevent.
-
-    This is a 4-byte number, with the first three bytes representing the
-    major, minor, and patchlevel respectively of the library.  The fourth
-    byte is unused.
-
-    This is equivalent to the format of LIBEVENT_VERSION_NUMBER on Libevent
-    2.0.1 or later.  For versions of Libevent before 1.4.0, which followed the
-    format of "1.0, 1.0a, 1.0b", we define 1.0 to be equivalent to 1.0.0, 1.0a
-    to be equivalent to 1.0.1, and so on.
-*/
-typedef uint32_t le_version_t;
-
-/** @{ */
-/** Macros: returns the number of a libevent version as a le_version_t */
-#define V(major, minor, patch) \
-  (((major) << 24) | ((minor) << 16) | ((patch) << 8))
-#define V_OLD(major, minor, patch) \
-  V((major), (minor), (patch)-'a'+1)
-/** @} */
-
-/** Represetns a version of libevent so old we can't figure out what version
- * it is. */
-#define LE_OLD V(0,0,0)
-/** Represents a version of libevent so weird we can't figure out what version
- * it is. */
-#define LE_OTHER V(0,0,99)
-
 /** A string which, if it appears in a libevent log, should be ignored. */
 static const char *suppress_msg = NULL;
 /** Callback function passed to event_set_log() so we can intercept
  * log messages from libevent. */
-static void
+STATIC void
 libevent_logging_callback(int severity, const char *msg)
 {
   char buf[1024];
@@ -274,6 +247,7 @@ tor_libevent_initialize(tor_libevent_cfg *torcfg)
 MOCK_IMPL(struct event_base *,
 tor_libevent_get_base, (void))
 {
+  tor_assert(the_event_base != NULL);
   return the_event_base;
 }
 
@@ -291,7 +265,7 @@ tor_libevent_get_method(void)
 /** Return the le_version_t for the version of libevent specified in the
  * string <b>v</b>.  If the version is very new or uses an unrecognized
  * version, format, return LE_OTHER. */
-static le_version_t
+STATIC le_version_t
 tor_decode_libevent_version(const char *v)
 {
   unsigned major, minor, patchlevel;
@@ -322,7 +296,7 @@ tor_decode_libevent_version(const char *v)
  * Two different versions with different numbers are sure not to be binary
  * compatible.  Two different versions with the same numbers have a decent
  * chance of binary compatibility.*/
-static int
+STATIC int
 le_versions_compatibility(le_version_t v)
 {
   if (v == LE_OTHER)

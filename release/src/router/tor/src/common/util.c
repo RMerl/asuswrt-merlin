@@ -1,6 +1,6 @@
 /* Copyright (c) 2003, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -207,7 +207,7 @@ tor_malloc_zero_(size_t size DMALLOC_PARAMS)
 #define SQRT_SIZE_MAX_P1 (((size_t)1) << (sizeof(size_t)*4))
 
 /** Return non-zero if and only if the product of the arguments is exact. */
-static INLINE int
+static inline int
 size_mul_check(const size_t x, const size_t y)
 {
   /* This first check is equivalent to
@@ -488,42 +488,58 @@ round_to_power_of_2(uint64_t u64)
 }
 
 /** Return the lowest x such that x is at least <b>number</b>, and x modulo
- * <b>divisor</b> == 0. */
+ * <b>divisor</b> == 0.  If no such x can be expressed as an unsigned, return
+ * UINT_MAX */
 unsigned
 round_to_next_multiple_of(unsigned number, unsigned divisor)
 {
+  tor_assert(divisor > 0);
+  if (UINT_MAX - divisor + 1 < number)
+    return UINT_MAX;
   number += divisor - 1;
   number -= number % divisor;
   return number;
 }
 
 /** Return the lowest x such that x is at least <b>number</b>, and x modulo
- * <b>divisor</b> == 0. */
+ * <b>divisor</b> == 0. If no such x can be expressed as a uint32_t, return
+ * UINT32_MAX */
 uint32_t
 round_uint32_to_next_multiple_of(uint32_t number, uint32_t divisor)
 {
+  tor_assert(divisor > 0);
+  if (UINT32_MAX - divisor + 1 < number)
+    return UINT32_MAX;
+
   number += divisor - 1;
   number -= number % divisor;
   return number;
 }
 
 /** Return the lowest x such that x is at least <b>number</b>, and x modulo
- * <b>divisor</b> == 0. */
+ * <b>divisor</b> == 0. If no such x can be expressed as a uint64_t, return
+ * UINT64_MAX */
 uint64_t
 round_uint64_to_next_multiple_of(uint64_t number, uint64_t divisor)
 {
+  tor_assert(divisor > 0);
+  if (UINT64_MAX - divisor + 1 < number)
+    return UINT64_MAX;
   number += divisor - 1;
   number -= number % divisor;
   return number;
 }
 
 /** Return the lowest x in [INT64_MIN, INT64_MAX] such that x is at least
- * <b>number</b>, and x modulo <b>divisor</b> == 0. */
+ * <b>number</b>, and x modulo <b>divisor</b> == 0. If no such x can be
+ * expressed as an int64_t, return INT64_MAX */
 int64_t
 round_int64_to_next_multiple_of(int64_t number, int64_t divisor)
 {
   tor_assert(divisor > 0);
-  if (number >= 0 && INT64_MAX - divisor + 1 >= number)
+  if (INT64_MAX - divisor + 1 < number)
+    return INT64_MAX;
+  if (number >= 0)
     number += divisor - 1;
   number -= number % divisor;
   return number;
@@ -537,33 +553,44 @@ int64_t
 sample_laplace_distribution(double mu, double b, double p)
 {
   double result;
-
   tor_assert(p >= 0.0 && p < 1.0);
+
   /* This is the "inverse cumulative distribution function" from:
    * http://en.wikipedia.org/wiki/Laplace_distribution */
-  result =  mu - b * (p > 0.5 ? 1.0 : -1.0)
-                   * tor_mathlog(1.0 - 2.0 * fabs(p - 0.5));
-
-  if (result >= INT64_MAX)
-    return INT64_MAX;
-  else if (result <= INT64_MIN)
+  if (p <= 0.0) {
+    /* Avoid taking log(0.0) == -INFINITY, as some processors or compiler
+     * options can cause the program to trap. */
     return INT64_MIN;
-  else
-    return (int64_t) result;
+  }
+
+  result = mu - b * (p > 0.5 ? 1.0 : -1.0)
+                  * tor_mathlog(1.0 - 2.0 * fabs(p - 0.5));
+
+  return clamp_double_to_int64(result);
 }
 
-/** Add random noise between INT64_MIN and INT64_MAX coming from a
- * Laplace distribution with mu = 0 and b = <b>delta_f</b>/<b>epsilon</b>
- * to <b>signal</b> based on the provided <b>random</b> value in
- * [0.0, 1.0[. */
+/** Add random noise between INT64_MIN and INT64_MAX coming from a Laplace
+ * distribution with mu = 0 and b = <b>delta_f</b>/<b>epsilon</b> to
+ * <b>signal</b> based on the provided <b>random</b> value in [0.0, 1.0[.
+ * The epsilon value must be between ]0.0, 1.0]. delta_f must be greater
+ * than 0. */
 int64_t
 add_laplace_noise(int64_t signal, double random, double delta_f,
                   double epsilon)
 {
-  int64_t noise = sample_laplace_distribution(
-               0.0, /* just add noise, no further signal */
-               delta_f / epsilon, random);
+  int64_t noise;
 
+  /* epsilon MUST be between ]0.0, 1.0] */
+  tor_assert(epsilon > 0.0 && epsilon <= 1.0);
+  /* delta_f MUST be greater than 0. */
+  tor_assert(delta_f > 0.0);
+
+  /* Just add noise, no further signal */
+  noise = sample_laplace_distribution(0.0,
+                                      delta_f / epsilon,
+                                      random);
+
+  /* Clip (signal + noise) to [INT64_MIN, INT64_MAX] */
   if (noise > 0 && INT64_MAX - noise < signal)
     return INT64_MAX;
   else if (noise < 0 && INT64_MIN - noise > signal)
@@ -1448,9 +1475,19 @@ tor_timegm(const struct tm *tm, time_t *time_out)
 {
   /* This is a pretty ironclad timegm implementation, snarfed from Python2.2.
    * It's way more brute-force than fiddling with tzset().
-   */
-  time_t year, days, hours, minutes, seconds;
+   *
+   * We use int64_t rather than time_t to avoid overflow on multiplication on
+   * platforms with 32-bit time_t. Since year is clipped to INT32_MAX, and
+   * since 365 * 24 * 60 * 60 is approximately 31 million, it's not possible
+   * for INT32_MAX years to overflow int64_t when converted to seconds. */
+  int64_t year, days, hours, minutes, seconds;
   int i, invalid_year, dpm;
+
+  /* Initialize time_out to 0 for now, to avoid bad usage in case this function
+     fails and the caller ignores the return value. */
+  tor_assert(time_out);
+  *time_out = 0;
+
   /* avoid int overflow on addition */
   if (tm->tm_year < INT32_MAX-1900) {
     year = tm->tm_year + 1900;
@@ -1489,7 +1526,17 @@ tor_timegm(const struct tm *tm, time_t *time_out)
 
   minutes = hours*60 + tm->tm_min;
   seconds = minutes*60 + tm->tm_sec;
-  *time_out = seconds;
+  /* Check that "seconds" will fit in a time_t. On platforms where time_t is
+   * 32-bit, this check will fail for dates in and after 2038.
+   *
+   * We already know that "seconds" can't be negative because "year" >= 1970 */
+#if SIZEOF_TIME_T < 8
+  if (seconds < TIME_MIN || seconds > TIME_MAX) {
+    log_warn(LD_BUG, "Result does not fit in tor_timegm");
+    return -1;
+  }
+#endif
+  *time_out = (time_t)seconds;
   return 0;
 }
 
@@ -1676,6 +1723,7 @@ parse_iso_time_(const char *cp, time_t *t, int strict)
   st_tm.tm_hour = hour;
   st_tm.tm_min = minute;
   st_tm.tm_sec = second;
+  st_tm.tm_wday = 0; /* Should be ignored. */
 
   if (st_tm.tm_year < 70) {
     char *esc = esc_for_log(cp);
@@ -1743,6 +1791,7 @@ parse_http_time(const char *date, struct tm *tm)
   tm->tm_hour = (int)tm_hour;
   tm->tm_min = (int)tm_min;
   tm->tm_sec = (int)tm_sec;
+  tm->tm_wday = 0; /* Leave this unset. */
 
   month[3] = '\0';
   /* Okay, now decode the month. */
@@ -2031,57 +2080,98 @@ check_private_dir(const char *dirname, cpd_check_t check,
 {
   int r;
   struct stat st;
-  char *f;
+
+  tor_assert(dirname);
+
 #ifndef _WIN32
-  unsigned unwanted_bits = 0;
+  int fd;
   const struct passwd *pw = NULL;
   uid_t running_uid;
   gid_t running_gid;
-#else
-  (void)effective_user;
-#endif
 
-  tor_assert(dirname);
-  f = tor_strdup(dirname);
-  clean_name_for_stat(f);
-  log_debug(LD_FS, "stat()ing %s", f);
-  r = stat(sandbox_intern_string(f), &st);
-  tor_free(f);
-  if (r) {
+  /*
+   * Goal is to harden the implementation by removing any
+   * potential for race between stat() and chmod().
+   * chmod() accepts filename as argument. If an attacker can move
+   * the file between stat() and chmod(), a potential race exists.
+   *
+   * Several suggestions taken from:
+   * https://developer.apple.com/library/mac/documentation/
+   *     Security/Conceptual/SecureCodingGuide/Articles/RaceConditions.html
+   */
+
+  /* Open directory.
+   * O_NOFOLLOW to ensure that it does not follow symbolic links */
+  fd = open(sandbox_intern_string(dirname), O_NOFOLLOW);
+
+  /* Was there an error? Maybe the directory does not exist? */
+  if (fd == -1) {
+
     if (errno != ENOENT) {
+      /* Other directory error */
       log_warn(LD_FS, "Directory %s cannot be read: %s", dirname,
                strerror(errno));
       return -1;
     }
+
+    /* Received ENOENT: Directory does not exist */
+
+    /* Should we create the directory? */
     if (check & CPD_CREATE) {
       log_info(LD_GENERAL, "Creating directory %s", dirname);
-#if defined (_WIN32)
-      r = mkdir(dirname);
-#else
       if (check & CPD_GROUP_READ) {
         r = mkdir(dirname, 0750);
       } else {
         r = mkdir(dirname, 0700);
       }
-#endif
+
+      /* check for mkdir() error */
       if (r) {
         log_warn(LD_FS, "Error creating directory %s: %s", dirname,
             strerror(errno));
         return -1;
       }
+
+      /* we just created the directory. try to open it again.
+       * permissions on the directory will be checked again below.*/
+      fd = open(sandbox_intern_string(dirname), O_NOFOLLOW);
+
+      if (fd == -1)
+        return -1;
+      else
+        close(fd);
+
     } else if (!(check & CPD_CHECK)) {
       log_warn(LD_FS, "Directory %s does not exist.", dirname);
       return -1;
     }
+
     /* XXXX In the case where check==CPD_CHECK, we should look at the
      * parent directory a little harder. */
     return 0;
   }
+
+  tor_assert(fd >= 0);
+
+  //f = tor_strdup(dirname);
+  //clean_name_for_stat(f);
+  log_debug(LD_FS, "stat()ing %s", dirname);
+  //r = stat(sandbox_intern_string(f), &st);
+  r = fstat(fd, &st);
+  if (r == -1) {
+      log_warn(LD_FS, "fstat() on directory %s failed.", dirname);
+      close(fd);
+      return -1;
+  }
+  //tor_free(f);
+
+  /* check that dirname is a directory */
   if (!(st.st_mode & S_IFDIR)) {
     log_warn(LD_FS, "%s is not a directory", dirname);
+    close(fd);
     return -1;
   }
-#ifndef _WIN32
+
   if (effective_user) {
     /* Look up the user and group information.
      * If we have a problem, bail out. */
@@ -2089,6 +2179,7 @@ check_private_dir(const char *dirname, cpd_check_t check,
     if (pw == NULL) {
       log_warn(LD_CONFIG, "Error setting configured user: %s not found",
                effective_user);
+      close(fd);
       return -1;
     }
     running_uid = pw->pw_uid;
@@ -2097,7 +2188,6 @@ check_private_dir(const char *dirname, cpd_check_t check,
     running_uid = getuid();
     running_gid = getgid();
   }
-
   if (st.st_uid != running_uid) {
     const struct passwd *pw = NULL;
     char *process_ownername = NULL;
@@ -2113,10 +2203,11 @@ check_private_dir(const char *dirname, cpd_check_t check,
                          pw ? pw->pw_name : "<unknown>", (int)st.st_uid);
 
     tor_free(process_ownername);
+    close(fd);
     return -1;
   }
   if ( (check & (CPD_GROUP_OK|CPD_GROUP_READ))
-       && (st.st_gid != running_gid) ) {
+       && (st.st_gid != running_gid) && (st.st_gid != 0)) {
     struct group *gr;
     char *process_groupname = NULL;
     gr = getgrgid(running_gid);
@@ -2129,18 +2220,25 @@ check_private_dir(const char *dirname, cpd_check_t check,
              gr ?  gr->gr_name : "<unknown>", (int)st.st_gid);
 
     tor_free(process_groupname);
+    close(fd);
     return -1;
   }
+  unsigned unwanted_bits = 0;
   if (check & (CPD_GROUP_OK|CPD_GROUP_READ)) {
     unwanted_bits = 0027;
   } else {
     unwanted_bits = 0077;
   }
-  if ((st.st_mode & unwanted_bits) != 0) {
+  unsigned check_bits_filter = ~0;
+  if (check & CPD_RELAX_DIRMODE_CHECK) {
+    check_bits_filter = 0022;
+  }
+  if ((st.st_mode & unwanted_bits & check_bits_filter) != 0) {
     unsigned new_mode;
     if (check & CPD_CHECK_MODE_ONLY) {
       log_warn(LD_FS, "Permissions on directory %s are too permissive.",
                dirname);
+      close(fd);
       return -1;
     }
     log_warn(LD_FS, "Fixing permissions on directory %s", dirname);
@@ -2150,14 +2248,51 @@ check_private_dir(const char *dirname, cpd_check_t check,
       new_mode |= 0050; /* Group should have rx */
     }
     new_mode &= ~unwanted_bits; /* Clear the bits that we didn't want set...*/
-    if (chmod(dirname, new_mode)) {
+    if (fchmod(fd, new_mode)) {
       log_warn(LD_FS, "Could not chmod directory %s: %s", dirname,
                strerror(errno));
+      close(fd);
       return -1;
     } else {
+      close(fd);
       return 0;
     }
   }
+  close(fd);
+#else
+  /* Win32 case: we can't open() a directory. */
+  (void)effective_user;
+
+  char *f = tor_strdup(dirname);
+  clean_name_for_stat(f);
+  log_debug(LD_FS, "stat()ing %s", f);
+  r = stat(sandbox_intern_string(f), &st);
+  tor_free(f);
+  if (r) {
+    if (errno != ENOENT) {
+      log_warn(LD_FS, "Directory %s cannot be read: %s", dirname,
+               strerror(errno));
+      return -1;
+    }
+    if (check & CPD_CREATE) {
+      log_info(LD_GENERAL, "Creating directory %s", dirname);
+      r = mkdir(dirname);
+      if (r) {
+        log_warn(LD_FS, "Error creating directory %s: %s", dirname,
+                 strerror(errno));
+        return -1;
+      }
+    } else if (!(check & CPD_CHECK)) {
+      log_warn(LD_FS, "Directory %s does not exist.", dirname);
+      return -1;
+    }
+    return 0;
+  }
+  if (!(st.st_mode & S_IFDIR)) {
+    log_warn(LD_FS, "%s is not a directory", dirname);
+    return -1;
+  }
+
 #endif
   return 0;
 }
@@ -2873,6 +3008,10 @@ expand_filename(const char *filename)
 {
   tor_assert(filename);
 #ifdef _WIN32
+  /* Might consider using GetFullPathName() as described here:
+   * http://etutorials.org/Programming/secure+programming/
+   *     Chapter+3.+Input+Validation/3.7+Validating+Filenames+and+Paths/
+   */
   return tor_strdup(filename);
 #else
   if (*filename == '~') {
@@ -3791,8 +3930,13 @@ format_helper_exit_status(unsigned char child_state, int saved_errno,
 /* Maximum number of file descriptors, if we cannot get it via sysconf() */
 #define DEFAULT_MAX_FD 256
 
-/** Terminate the process of <b>process_handle</b>.
- *  Code borrowed from Python's os.kill. */
+/** Terminate the process of <b>process_handle</b>, if that process has not
+ * already exited.
+ *
+ * Return 0 if we succeeded in terminating the process (or if the process
+ * already exited), and -1 if we tried to kill the process but failed.
+ *
+ * Based on code originally borrowed from Python's os.kill. */
 int
 tor_terminate_process(process_handle_t *process_handle)
 {
@@ -3812,7 +3956,7 @@ tor_terminate_process(process_handle_t *process_handle)
   }
 #endif
 
-  return -1;
+  return 0; /* We didn't need to kill the process, so report success */
 }
 
 /** Return the Process ID of <b>process_handle</b>. */
@@ -4424,7 +4568,7 @@ tor_get_exit_code(process_handle_t *process_handle,
 /** Helper: return the number of characters in <b>s</b> preceding the first
  * occurrence of <b>ch</b>. If <b>ch</b> does not occur in <b>s</b>, return
  * the length of <b>s</b>. Should be equivalent to strspn(s, "ch"). */
-static INLINE size_t
+static inline size_t
 str_num_before(const char *s, char ch)
 {
   const char *cp = strchr(s, ch);
@@ -5383,5 +5527,40 @@ tor_weak_random_range(tor_weak_rng_t *rng, int32_t top)
     result = (int32_t)(tor_weak_random(rng) / divisor);
   } while (result >= top);
   return result;
+}
+
+/** Cast a given double value to a int64_t. Return 0 if number is NaN.
+ * Returns either INT64_MIN or INT64_MAX if number is outside of the int64_t
+ * range. */
+int64_t
+clamp_double_to_int64(double number)
+{
+  int exp;
+
+  /* NaN is a special case that can't be used with the logic below. */
+  if (isnan(number)) {
+    return 0;
+  }
+
+  /* Time to validate if result can overflows a int64_t value. Fun with
+   * float! Find that exponent exp such that
+   *    number == x * 2^exp
+   * for some x with abs(x) in [0.5, 1.0). Note that this implies that the
+   * magnitude of number is strictly less than 2^exp.
+   *
+   * If number is infinite, the call to frexp is legal but the contents of
+   * exp are unspecified. */
+  frexp(number, &exp);
+
+  /* If the magnitude of number is strictly less than 2^63, the truncated
+   * version of number is guaranteed to be representable. The only
+   * representable integer for which this is not the case is INT64_MIN, but
+   * it is covered by the logic below. */
+  if (isfinite(number) && exp <= 63) {
+    return number;
+  }
+
+  /* Handle infinities and finite numbers with magnitude >= 2^63. */
+  return signbit(number) ? INT64_MIN : INT64_MAX;
 }
 

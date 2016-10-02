@@ -707,15 +707,18 @@ NS(logv)(int severity, log_domain_mask_t domain,
       tt_ptr_op(strstr(funcname, "log_accounting"), OP_NE, NULL);
       tt_ptr_op(suffix, OP_EQ, NULL);
       tt_str_op(format, OP_EQ,
-          "Heartbeat: Accounting enabled. Sent: %s / %s, Received: %s / %s. "
-          "The current accounting interval ends on %s, in %s.");
+          "Heartbeat: Accounting enabled. Sent: %s, Received: %s, Used: %s / "
+          "%s, Rule: %s. The current accounting interval ends on %s, in %s.");
       tt_str_op(va_arg(ap, char *), OP_EQ, "0 kB");  /* acc_sent */
-      tt_str_op(va_arg(ap, char *), OP_EQ, "0 kB");  /* acc_max */
       tt_str_op(va_arg(ap, char *), OP_EQ, "0 kB");  /* acc_rcvd */
+      tt_str_op(va_arg(ap, char *), OP_EQ, "0 kB");  /* acc_used */
       tt_str_op(va_arg(ap, char *), OP_EQ, "0 kB");  /* acc_max */
-      /* format_local_iso_time uses local tz, just check mins and secs. */
-      tt_ptr_op(strstr(va_arg(ap, char *), ":01:00"),
-                OP_NE, NULL); /* end_buf */
+      tt_str_op(va_arg(ap, char *), OP_EQ, "max");  /* acc_rule */
+      /* format_local_iso_time uses local tz, so we can't just compare
+       * the string against a constant */
+      char datetime[ISO_TIME_LEN+1];
+      format_local_iso_time(datetime, 60);
+      tt_str_op(va_arg(ap, char *), OP_EQ, datetime); /* end_buf */
       tt_str_op(va_arg(ap, char *), OP_EQ, "0:01 hours");   /* remaining */
       break;
     case 2:

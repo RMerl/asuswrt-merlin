@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -47,7 +47,7 @@ void microdesc_free_all(void);
 void update_microdesc_downloads(time_t now);
 void update_microdescs_from_networkstatus(time_t now);
 
-int usable_consensus_flavor(void);
+MOCK_DECL(int, usable_consensus_flavor,(void));
 int we_fetch_microdescriptors(const or_options_t *options);
 int we_fetch_router_descriptors(const or_options_t *options);
 int we_use_microdescriptors_for_circuits(const or_options_t *options);

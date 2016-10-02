@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2015, The Tor Project, Inc. */
+/* Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -18,7 +18,6 @@
 #include "geoip.h"
 #include "routerlist.h"
 
-static void clear_geoip_db(void);
 static void init_geoip_countries(void);
 
 /** An entry from the GeoIP IPv4 file: maps an IPv4 range to a country. */
@@ -483,7 +482,7 @@ static HT_HEAD(clientmap, clientmap_entry_t) client_history =
      HT_INITIALIZER();
 
 /** Hashtable helper: compute a hash of a clientmap_entry_t. */
-static INLINE unsigned
+static inline unsigned
 clientmap_entry_hash(const clientmap_entry_t *a)
 {
   unsigned h = (unsigned) tor_addr_hash(&a->addr);
@@ -494,7 +493,7 @@ clientmap_entry_hash(const clientmap_entry_t *a)
   return h;
 }
 /** Hashtable helper: compare two clientmap_entry_t values for equality. */
-static INLINE int
+static inline int
 clientmap_entries_eq(const clientmap_entry_t *a, const clientmap_entry_t *b)
 {
   if (strcmp_opt(a->transport_name, b->transport_name))
@@ -970,7 +969,7 @@ geoip_get_dirreq_history(dirreq_type_t type)
                                                &ent->completion_time);
       if (time_diff == 0)
         time_diff = 1; /* Avoid DIV/0; "instant" answers are impossible
-                        * by law of nature or something, but a milisecond
+                        * by law of nature or something, but a millisecond
                         * is a bit greater than "instantly" */
       bytes_per_second = (uint32_t)(1000 * ent->response_size / time_diff);
       dltimes[ent_sl_idx] = bytes_per_second;
@@ -1207,9 +1206,9 @@ geoip_format_dirreq_stats(time_t now)
 {
   char t[ISO_TIME_LEN+1];
   int i;
-  char *v3_ips_string, *v3_reqs_string, *v3_direct_dl_string,
-       *v3_tunneled_dl_string;
-  char *result;
+  char *v3_ips_string = NULL, *v3_reqs_string = NULL,
+       *v3_direct_dl_string = NULL, *v3_tunneled_dl_string = NULL;
+  char *result = NULL;
 
   if (!start_of_dirreq_stats_interval)
     return NULL; /* Not initialized. */
@@ -1280,6 +1279,8 @@ geoip_dirreq_stats_write(time_t now)
 
   /* Generate history string .*/
   str = geoip_format_dirreq_stats(now);
+  if (! str)
+    goto done;
 
   /* Write dirreq-stats string to disk. */
   if (!check_or_create_data_subdir("stats")) {
@@ -1666,7 +1667,7 @@ getinfo_helper_geoip(control_connection_t *control_conn,
 }
 
 /** Release all storage held by the GeoIP databases and country list. */
-static void
+STATIC void
 clear_geoip_db(void)
 {
   if (geoip_countries) {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, The Tor Project, Inc. */
+/* Copyright (c) 2015-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define CONTROL_PRIVATE

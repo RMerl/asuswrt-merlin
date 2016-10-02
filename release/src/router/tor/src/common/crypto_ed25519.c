@@ -1,7 +1,11 @@
-/* Copyright (c) 2013-2015, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-/* Wrapper code for an ed25519 implementation. */
+/**
+ * \file crypto_ed25519.c
+ *
+ * \brief Wrapper code for an ed25519 implementation.
+ */
 
 #include "orconfig.h"
 #ifdef HAVE_SYS_STAT_H
@@ -96,6 +100,28 @@ get_ed_impl(void)
   return ed25519_impl;
 }
 
+#ifdef TOR_UNIT_TESTS
+static const ed25519_impl_t *saved_ed25519_impl = NULL;
+void
+crypto_ed25519_testing_force_impl(const char *name)
+{
+  tor_assert(saved_ed25519_impl == NULL);
+  saved_ed25519_impl = ed25519_impl;
+  if (! strcmp(name, "donna")) {
+    ed25519_impl = &impl_donna;
+  } else {
+    tor_assert(!strcmp(name, "ref10"));
+    ed25519_impl = &impl_ref10;
+  }
+}
+void
+crypto_ed25519_testing_restore_impl(void)
+{
+  ed25519_impl = saved_ed25519_impl;
+  saved_ed25519_impl = NULL;
+}
+#endif
+
 /**
  * Initialize a new ed25519 secret key in <b>seckey_out</b>.  If
  * <b>extra_strong</b>, take the RNG inputs directly from the operating
@@ -107,7 +133,9 @@ ed25519_secret_key_generate(ed25519_secret_key_t *seckey_out,
 {
   int r;
   uint8_t seed[32];
-  if (! extra_strong || crypto_strongest_rand(seed, sizeof(seed)) < 0)
+  if (extra_strong)
+    crypto_strongest_rand(seed, sizeof(seed));
+ else
     crypto_rand((char*)seed, sizeof(seed));
 
   r = get_ed_impl()->seckey_expand(seckey_out->seckey, seed);
@@ -386,7 +414,7 @@ ed25519_seckey_write_to_file(const ed25519_secret_key_t *seckey,
 
 /**
  * Read seckey unencrypted from <b>filename</b>, storing it into
- * <b>seckey_out</b>.  Set *<b>tag_out</> to the tag it was marked with.
+ * <b>seckey_out</b>.  Set *<b>tag_out</b> to the tag it was marked with.
  * Return 0 on success, -1 on failure.
  */
 int

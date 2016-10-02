@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -115,7 +115,7 @@ TO_EWMA_POL_CIRC_DATA(circuitmux_policy_circ_data_t *);
  * if the cast is impossible.
  */
 
-static INLINE ewma_policy_data_t *
+static inline ewma_policy_data_t *
 TO_EWMA_POL_DATA(circuitmux_policy_data_t *pol)
 {
   if (!pol) return NULL;
@@ -130,7 +130,7 @@ TO_EWMA_POL_DATA(circuitmux_policy_data_t *pol)
  * and assert if the cast is impossible.
  */
 
-static INLINE ewma_policy_circ_data_t *
+static inline ewma_policy_circ_data_t *
 TO_EWMA_POL_CIRC_DATA(circuitmux_policy_circ_data_t *pol)
 {
   if (!pol) return NULL;
@@ -147,7 +147,7 @@ static int compare_cell_ewma_counts(const void *p1, const void *p2);
 static unsigned cell_ewma_tick_from_timeval(const struct timeval *now,
                                             double *remainder_out);
 static circuit_t * cell_ewma_to_circuit(cell_ewma_t *ewma);
-static INLINE double get_scale_factor(unsigned from_tick, unsigned to_tick);
+static inline double get_scale_factor(unsigned from_tick, unsigned to_tick);
 static cell_ewma_t * pop_first_cell_ewma(ewma_policy_data_t *pol);
 static void remove_cell_ewma(ewma_policy_data_t *pol, cell_ewma_t *ewma);
 static void scale_single_cell_ewma(cell_ewma_t *ewma, unsigned cur_tick);
@@ -644,7 +644,7 @@ cell_ewma_set_scale_factor(const or_options_t *options,
 
 /** Return the multiplier necessary to convert the value of a cell sent in
  * 'from_tick' to one sent in 'to_tick'. */
-static INLINE double
+static inline double
 get_scale_factor(unsigned from_tick, unsigned to_tick)
 {
   /* This math can wrap around, but that's okay: unsigned overflow is

@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -117,6 +117,9 @@ MOCK_DECL(const char *, node_describe_longname_by_id,(const char *id_digest));
 void control_event_hs_descriptor_requested(const rend_data_t *rend_query,
                                            const char *desc_id_base32,
                                            const char *hs_dir);
+void control_event_hs_descriptor_created(const char *service_id,
+                                         const char *desc_id_base32,
+                                         int replica);
 void control_event_hs_descriptor_upload(const char *service_id,
                                         const char *desc_id_base32,
                                         const char *hs_dir);
@@ -126,16 +129,19 @@ void control_event_hs_descriptor_receive_end(const char *action,
                                              const char *id_digest,
                                              const char *reason);
 void control_event_hs_descriptor_upload_end(const char *action,
+                                            const char *onion_address,
                                             const char *hs_dir,
                                             const char *reason);
 void control_event_hs_descriptor_received(const char *onion_address,
                                           const rend_data_t *rend_data,
                                           const char *id_digest);
-void control_event_hs_descriptor_uploaded(const char *hs_dir);
+void control_event_hs_descriptor_uploaded(const char *hs_dir,
+                                          const char *onion_address);
 void control_event_hs_descriptor_failed(const rend_data_t *rend_data,
                                         const char *id_digest,
                                         const char *reason);
 void control_event_hs_descriptor_upload_failed(const char *hs_dir,
+                                               const char *onion_address,
                                                const char *reason);
 void control_event_hs_descriptor_content(const char *onion_address,
                                          const char *desc_id,

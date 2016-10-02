@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define TOR_CHANNEL_INTERNAL_
@@ -25,7 +25,9 @@ extern uint64_t estimated_total_queue_size;
 
 static int test_chan_accept_cells = 0;
 static int test_chan_fixed_cells_recved = 0;
+static cell_t * test_chan_last_seen_fixed_cell_ptr = NULL;
 static int test_chan_var_cells_recved = 0;
+static var_cell_t * test_chan_last_seen_var_cell_ptr = NULL;
 static int test_cells_written = 0;
 static int test_destroy_not_pending_calls = 0;
 static int test_doesnt_want_writes_count = 0;
@@ -70,6 +72,7 @@ static void test_channel_flushmux(void *arg);
 static void test_channel_incoming(void *arg);
 static void test_channel_lifecycle(void *arg);
 static void test_channel_multi(void *arg);
+static void test_channel_queue_incoming(void *arg);
 static void test_channel_queue_size(void *arg);
 static void test_channel_write(void *arg);
 
@@ -179,7 +182,7 @@ chan_test_cell_handler(channel_t *ch,
   tt_assert(ch);
   tt_assert(cell);
 
-  tor_free(cell);
+  test_chan_last_seen_fixed_cell_ptr = cell;
   ++test_chan_fixed_cells_recved;
 
  done:
@@ -214,7 +217,7 @@ chan_test_var_cell_handler(channel_t *ch,
   tt_assert(ch);
   tt_assert(var_cell);
 
-  tor_free(var_cell);
+  test_chan_last_seen_var_cell_ptr = var_cell;
   ++test_chan_var_cells_recved;
 
  done:
@@ -608,7 +611,7 @@ test_channel_dumpstats(void *arg)
   make_fake_cell(cell);
   old_count = test_chan_fixed_cells_recved;
   channel_queue_cell(ch, cell);
-  cell = NULL;
+  tor_free(cell);
   tt_int_op(test_chan_fixed_cells_recved, ==, old_count + 1);
   tt_assert(ch->n_bytes_recved > 0);
   tt_assert(ch->n_cells_recved > 0);
@@ -819,7 +822,7 @@ test_channel_incoming(void *arg)
   make_fake_cell(cell);
   old_count = test_chan_fixed_cells_recved;
   channel_queue_cell(ch, cell);
-  cell = NULL;
+  tor_free(cell);
   tt_int_op(test_chan_fixed_cells_recved, ==, old_count + 1);
 
   /* Receive a variable-size cell */
@@ -827,7 +830,7 @@ test_channel_incoming(void *arg)
   make_fake_var_cell(var_cell);
   old_count = test_chan_var_cells_recved;
   channel_queue_var_cell(ch, var_cell);
-  var_cell = NULL;
+  tor_free(cell);
   tt_int_op(test_chan_var_cells_recved, ==, old_count + 1);
 
   /* Close it */
@@ -1423,6 +1426,113 @@ test_channel_queue_impossible(void *arg)
 }
 
 static void
+test_channel_queue_incoming(void *arg)
+{
+  channel_t *ch = NULL;
+  cell_t *cell = NULL;
+  var_cell_t *var_cell = NULL;
+  int old_fixed_count, old_var_count;
+
+  (void)arg;
+
+  /* Mock these for duration of the test */
+  MOCK(scheduler_channel_doesnt_want_writes,
+       scheduler_channel_doesnt_want_writes_mock);
+  MOCK(scheduler_release_channel,
+       scheduler_release_channel_mock);
+
+  /* Accept cells to lower layer */
+  test_chan_accept_cells = 1;
+  /* Use default overhead factor */
+  test_overhead_estimate = 1.0f;
+
+  ch = new_fake_channel();
+  tt_assert(ch);
+  /* Start it off in OPENING */
+  ch->state = CHANNEL_STATE_OPENING;
+  /* We'll need a cmux */
+  ch->cmux = circuitmux_alloc();
+
+  /* Test cell handler getters */
+  tt_ptr_op(channel_get_cell_handler(ch), ==, NULL);
+  tt_ptr_op(channel_get_var_cell_handler(ch), ==, NULL);
+
+  /* Try to register it */
+  channel_register(ch);
+  tt_assert(ch->registered);
+
+  /* Open it */
+  channel_change_state(ch, CHANNEL_STATE_OPEN);
+  tt_int_op(ch->state, ==, CHANNEL_STATE_OPEN);
+
+  /* Assert that the incoming queue is empty */
+  tt_assert(TOR_SIMPLEQ_EMPTY(&(ch->incoming_queue)));
+
+  /* Queue an incoming fixed-length cell */
+  cell = tor_malloc_zero(sizeof(cell_t));
+  make_fake_cell(cell);
+  channel_queue_cell(ch, cell);
+
+  /* Assert that the incoming queue has one entry */
+  tt_int_op(chan_cell_queue_len(&(ch->incoming_queue)), ==, 1);
+
+  /* Queue an incoming var cell */
+  var_cell = tor_malloc_zero(sizeof(var_cell_t) + CELL_PAYLOAD_SIZE);
+  make_fake_var_cell(var_cell);
+  channel_queue_var_cell(ch, var_cell);
+
+  /* Assert that the incoming queue has two entries */
+  tt_int_op(chan_cell_queue_len(&(ch->incoming_queue)), ==, 2);
+
+  /*
+   * Install cell handlers; this will drain the queue, so save the old
+   * cell counters first
+   */
+  old_fixed_count = test_chan_fixed_cells_recved;
+  old_var_count = test_chan_var_cells_recved;
+  channel_set_cell_handlers(ch,
+                            chan_test_cell_handler,
+                            chan_test_var_cell_handler);
+  tt_ptr_op(channel_get_cell_handler(ch), ==, chan_test_cell_handler);
+  tt_ptr_op(channel_get_var_cell_handler(ch), ==, chan_test_var_cell_handler);
+
+  /* Assert cells were received */
+  tt_int_op(test_chan_fixed_cells_recved, ==, old_fixed_count + 1);
+  tt_int_op(test_chan_var_cells_recved, ==, old_var_count + 1);
+
+  /*
+   * Assert that the pointers are different from the cells we allocated;
+   * when queueing cells with no incoming cell handlers installed, the
+   * channel layer should copy them to a new buffer, and free them after
+   * delivery.  These pointers will have already been freed by the time
+   * we get here, so don't dereference them.
+   */
+  tt_ptr_op(test_chan_last_seen_fixed_cell_ptr, !=, cell);
+  tt_ptr_op(test_chan_last_seen_var_cell_ptr, !=, var_cell);
+
+  /* Assert queue is now empty */
+  tt_assert(TOR_SIMPLEQ_EMPTY(&(ch->incoming_queue)));
+
+  /* Close it; this contains an assertion that the incoming queue is empty */
+  channel_mark_for_close(ch);
+  tt_int_op(ch->state, ==, CHANNEL_STATE_CLOSING);
+  chan_test_finish_close(ch);
+  tt_int_op(ch->state, ==, CHANNEL_STATE_CLOSED);
+  channel_run_cleanup();
+  ch = NULL;
+
+ done:
+  free_fake_channel(ch);
+  tor_free(cell);
+  tor_free(var_cell);
+
+  UNMOCK(scheduler_channel_doesnt_want_writes);
+  UNMOCK(scheduler_release_channel);
+
+  return;
+}
+
+static void
 test_channel_queue_size(void *arg)
 {
   channel_t *ch = NULL;
@@ -1666,6 +1776,7 @@ struct testcase_t channel_tests[] = {
   { "lifecycle_2", test_channel_lifecycle_2, TT_FORK, NULL, NULL },
   { "multi", test_channel_multi, TT_FORK, NULL, NULL },
   { "queue_impossible", test_channel_queue_impossible, TT_FORK, NULL, NULL },
+  { "queue_incoming", test_channel_queue_incoming, TT_FORK, NULL, NULL },
   { "queue_size", test_channel_queue_size, TT_FORK, NULL, NULL },
   { "write", test_channel_write, TT_FORK, NULL, NULL },
   END_OF_TESTCASES

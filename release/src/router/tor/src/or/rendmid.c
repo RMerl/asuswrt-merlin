@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -80,7 +80,7 @@ rend_mid_establish_intro(or_circuit_t *circ, const uint8_t *request,
     goto err;
   }
 
-  /* The request is valid.  First, compute the hash of Bob's PK.*/
+  /* The request is valid.  First, compute the hash of the service's PK.*/
   if (crypto_pk_get_digest(pk, pk_digest)<0) {
     log_warn(LD_BUG, "Internal error: couldn't hash public key.");
     goto err;
@@ -178,7 +178,8 @@ rend_mid_introduce(or_circuit_t *circ, const uint8_t *request,
   base32_encode(serviceid, REND_SERVICE_ID_LEN_BASE32+1,
                 (char*)request, REND_SERVICE_ID_LEN);
 
-  /* The first 20 bytes are all we look at: they have a hash of Bob's PK. */
+  /* The first 20 bytes are all we look at: they have a hash of the service's
+   * PK. */
   intro_circ = circuit_get_intro_point((const uint8_t*)request);
   if (!intro_circ) {
     log_info(LD_REND,
@@ -202,7 +203,7 @@ rend_mid_introduce(or_circuit_t *circ, const uint8_t *request,
              "Unable to send INTRODUCE2 cell to Tor client.");
     goto err;
   }
-  /* And send an ack down Alice's circuit.  Empty body means succeeded. */
+  /* And send an ack down the client's circuit.  Empty body means succeeded. */
   if (relay_send_command_from_edge(0,TO_CIRCUIT(circ),
                                    RELAY_COMMAND_INTRODUCE_ACK,
                                    NULL,0,NULL)) {
@@ -337,7 +338,7 @@ rend_mid_rendezvous(or_circuit_t *circ, const uint8_t *request,
     circ->circuit_carries_hs_traffic_stats = 1;
   }
 
-  /* Send the RENDEZVOUS2 cell to Alice. */
+  /* Send the RENDEZVOUS2 cell to the client. */
   if (relay_send_command_from_edge(0, TO_CIRCUIT(rend_circ),
                                    RELAY_COMMAND_RENDEZVOUS2,
                                    (char*)(request+REND_COOKIE_LEN),

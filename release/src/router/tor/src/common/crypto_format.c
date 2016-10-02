@@ -1,10 +1,14 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-/* Formatting and parsing code for crypto-related data structures. */
+/**
+ * \file crypto_format.c
+ *
+ * \brief Formatting and parsing code for crypto-related data structures.
+ */
 
 #include "orconfig.h"
 #ifdef HAVE_SYS_STAT_H

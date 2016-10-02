@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -45,13 +45,13 @@ struct waitpid_callback_t {
   unsigned running;
 };
 
-static INLINE unsigned int
+static inline unsigned int
 process_map_entry_hash_(const waitpid_callback_t *ent)
 {
   return (unsigned) ent->pid;
 }
 
-static INLINE unsigned int
+static inline unsigned int
 process_map_entries_eq_(const waitpid_callback_t *a,
                         const waitpid_callback_t *b)
 {

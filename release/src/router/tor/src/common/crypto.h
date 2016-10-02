@@ -1,7 +1,7 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "torint.h"
 #include "testsupport.h"
+#include "compat.h"
 
 /*
   Macro to create an arbitrary OpenSSL version number as used by
@@ -54,6 +55,8 @@
 /** Length of the output of our second (improved) message digests.  (For now
  * this is just sha256, but it could be any other 256-bit digest.) */
 #define DIGEST256_LEN 32
+/** Length of the output of our 64-bit optimized message digests (SHA512). */
+#define DIGEST512_LEN 64
 /** Length of our symmetric cipher's keys. */
 #define CIPHER_KEY_LEN 16
 /** Length of our symmetric cipher's IV. */
@@ -69,6 +72,9 @@
 /** Length of a sha256 message digest when encoded in base64 with trailing =
  * signs removed. */
 #define BASE64_DIGEST256_LEN 43
+/** Length of a sha512 message digest when encoded in base64 with trailing =
+ * signs removed. */
+#define BASE64_DIGEST512_LEN 86
 
 /** Constant used to indicate OAEP padding for public-key encryption */
 #define PK_PKCS1_OAEP_PADDING 60002
@@ -83,43 +89,49 @@
 #define HEX_DIGEST_LEN 40
 /** Length of hex encoding of SHA256 digest, not including final NUL. */
 #define HEX_DIGEST256_LEN 64
+/** Length of hex encoding of SHA512 digest, not including final NUL. */
+#define HEX_DIGEST512_LEN 128
 
 typedef enum {
   DIGEST_SHA1 = 0,
   DIGEST_SHA256 = 1,
+  DIGEST_SHA512 = 2,
+  DIGEST_SHA3_256 = 3,
+  DIGEST_SHA3_512 = 4,
 } digest_algorithm_t;
-#define  N_DIGEST_ALGORITHMS (DIGEST_SHA256+1)
-#define digest_algorithm_bitfield_t ENUM_BF(digest_algorithm_t)
+#define  N_DIGEST_ALGORITHMS (DIGEST_SHA3_512+1)
+#define  N_COMMON_DIGEST_ALGORITHMS (DIGEST_SHA256+1)
 
-/** A set of all the digests we know how to compute, taken on a single
- * string.  Any digests that are shorter than 256 bits are right-padded
+/** A set of all the digests we commonly compute, taken on a single
+ * string.  Any digests that are shorter than 512 bits are right-padded
  * with 0 bits.
  *
- * Note that this representation wastes 12 bytes for the SHA1 case, so
+ * Note that this representation wastes 44 bytes for the SHA1 case, so
  * don't use it for anything where we need to allocate a whole bunch at
  * once.
  **/
 typedef struct {
-  char d[N_DIGEST_ALGORITHMS][DIGEST256_LEN];
-} digests_t;
+  char d[N_COMMON_DIGEST_ALGORITHMS][DIGEST256_LEN];
+} common_digests_t;
 
 typedef struct crypto_pk_t crypto_pk_t;
 typedef struct crypto_cipher_t crypto_cipher_t;
 typedef struct crypto_digest_t crypto_digest_t;
+typedef struct crypto_xof_t crypto_xof_t;
 typedef struct crypto_dh_t crypto_dh_t;
 
 /* global state */
 const char * crypto_openssl_get_version_str(void);
 const char * crypto_openssl_get_header_version_str(void);
-int crypto_early_init(void);
+int crypto_early_init(void) ATTR_WUR;
 int crypto_global_init(int hardwareAccel,
                        const char *accelName,
-                       const char *accelPath);
+                       const char *accelPath) ATTR_WUR;
 void crypto_thread_cleanup(void);
 int crypto_global_cleanup(void);
 
 /* environment setup */
-crypto_pk_t *crypto_pk_new(void);
+MOCK_DECL(crypto_pk_t *,crypto_pk_new,(void));
 void crypto_pk_free(crypto_pk_t *env);
 
 void crypto_set_tls_dh_prime(void);
@@ -128,7 +140,7 @@ crypto_cipher_t *crypto_cipher_new_with_iv(const char *key, const char *iv);
 void crypto_cipher_free(crypto_cipher_t *env);
 
 /* public key crypto */
-int crypto_pk_generate_key_with_bits(crypto_pk_t *env, int bits);
+MOCK_DECL(int, crypto_pk_generate_key_with_bits,(crypto_pk_t *env, int bits));
 #define crypto_pk_generate_key(env)                     \
   crypto_pk_generate_key_with_bits((env), (PK_BYTES*8))
 
@@ -180,7 +192,8 @@ int crypto_pk_private_hybrid_decrypt(crypto_pk_t *env, char *to,
 int crypto_pk_asn1_encode(crypto_pk_t *pk, char *dest, size_t dest_len);
 crypto_pk_t *crypto_pk_asn1_decode(const char *str, size_t len);
 int crypto_pk_get_digest(const crypto_pk_t *pk, char *digest_out);
-int crypto_pk_get_all_digests(crypto_pk_t *pk, digests_t *digests_out);
+int crypto_pk_get_common_digests(crypto_pk_t *pk,
+                                 common_digests_t *digests_out);
 int crypto_pk_get_fingerprint(crypto_pk_t *pk, char *fp_out,int add_space);
 int crypto_pk_get_hashed_fingerprint(crypto_pk_t *pk, char *fp_out);
 
@@ -194,7 +207,7 @@ int crypto_cipher_encrypt(crypto_cipher_t *env, char *to,
                           const char *from, size_t fromlen);
 int crypto_cipher_decrypt(crypto_cipher_t *env, char *to,
                           const char *from, size_t fromlen);
-int crypto_cipher_crypt_inplace(crypto_cipher_t *env, char *d, size_t len);
+void crypto_cipher_crypt_inplace(crypto_cipher_t *env, char *d, size_t len);
 
 int crypto_cipher_encrypt_with_iv(const char *key,
                                   char *to, size_t tolen,
@@ -207,7 +220,9 @@ int crypto_cipher_decrypt_with_iv(const char *key,
 int crypto_digest(char *digest, const char *m, size_t len);
 int crypto_digest256(char *digest, const char *m, size_t len,
                      digest_algorithm_t algorithm);
-int crypto_digest_all(digests_t *ds_out, const char *m, size_t len);
+int crypto_digest512(char *digest, const char *m, size_t len,
+                     digest_algorithm_t algorithm);
+int crypto_common_digests(common_digests_t *ds_out, const char *m, size_t len);
 struct smartlist_t;
 void crypto_digest_smartlist_prefix(char *digest_out, size_t len_out,
                                     const char *prepend,
@@ -221,6 +236,7 @@ const char *crypto_digest_algorithm_get_name(digest_algorithm_t alg);
 int crypto_digest_algorithm_parse_name(const char *name);
 crypto_digest_t *crypto_digest_new(void);
 crypto_digest_t *crypto_digest256_new(digest_algorithm_t algorithm);
+crypto_digest_t *crypto_digest512_new(digest_algorithm_t algorithm);
 void crypto_digest_free(crypto_digest_t *digest);
 void crypto_digest_add_bytes(crypto_digest_t *digest, const char *data,
                              size_t len);
@@ -232,6 +248,10 @@ void crypto_digest_assign(crypto_digest_t *into,
 void crypto_hmac_sha256(char *hmac_out,
                         const char *key, size_t key_len,
                         const char *msg, size_t msg_len);
+crypto_xof_t *crypto_xof_new(void);
+void crypto_xof_add_bytes(crypto_xof_t *xof, const uint8_t *data, size_t len);
+void crypto_xof_squeeze_bytes(crypto_xof_t *xof, uint8_t *out, size_t len);
+void crypto_xof_free(crypto_xof_t *xof);
 
 /* Key negotiation */
 #define DH_TYPE_CIRCUIT 1
@@ -258,10 +278,10 @@ int crypto_expand_key_material_rfc5869_sha256(
                                     uint8_t *key_out, size_t key_out_len);
 
 /* random numbers */
-int crypto_seed_rng(void);
-MOCK_DECL(int,crypto_rand,(char *to, size_t n));
-int crypto_rand_unmocked(char *to, size_t n);
-int crypto_strongest_rand(uint8_t *out, size_t out_len);
+int crypto_seed_rng(void) ATTR_WUR;
+MOCK_DECL(void,crypto_rand,(char *to, size_t n));
+void crypto_rand_unmocked(char *to, size_t n);
+void crypto_strongest_rand(uint8_t *out, size_t out_len);
 int crypto_rand_int(unsigned int max);
 int crypto_rand_int_range(unsigned int min, unsigned int max);
 uint64_t crypto_rand_uint64_range(uint64_t min, uint64_t max);
@@ -289,11 +309,15 @@ struct evp_pkey_st;
 struct dh_st;
 struct rsa_st *crypto_pk_get_rsa_(crypto_pk_t *env);
 crypto_pk_t *crypto_new_pk_from_rsa_(struct rsa_st *rsa);
-struct evp_pkey_st *crypto_pk_get_evp_pkey_(crypto_pk_t *env,
-                                                int private);
+MOCK_DECL(struct evp_pkey_st *, crypto_pk_get_evp_pkey_,(crypto_pk_t *env,
+                                                         int private));
 struct dh_st *crypto_dh_get_dh_(crypto_dh_t *dh);
 
 void crypto_add_spaces_to_fp(char *out, size_t outlen, const char *in);
+
+#ifdef CRYPTO_PRIVATE
+STATIC int crypto_force_rand_ssleay(void);
+#endif
 
 #endif
 

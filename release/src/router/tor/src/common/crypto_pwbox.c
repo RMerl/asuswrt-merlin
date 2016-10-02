@@ -1,3 +1,12 @@
+/* Copyright (c) 2014-2016, The Tor Project, Inc. */
+/* See LICENSE for licensing information */
+
+/**
+ * \file crypto_pwbox.c
+ *
+ * \brief Code for encrypting secrets in a password-protected form and saving
+ * them to disk.
+ */
 
 #include "crypto.h"
 #include "crypto_s2k.h"

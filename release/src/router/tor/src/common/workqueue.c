@@ -1,6 +1,13 @@
 /* copyright (c) 2013-2015, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
+/**
+ * \file workqueue.c
+ *
+ * \brief Implements worker threads, queues of work for them, and mechanisms
+ * for them to send answers back to the main thread.
+ */
+
 #include "orconfig.h"
 #include "compat.h"
 #include "compat_threads.h"

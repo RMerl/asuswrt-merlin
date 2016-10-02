@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -30,10 +30,7 @@ fast_onionskin_create(fast_handshake_state_t **handshake_state_out,
 {
   fast_handshake_state_t *s;
   *handshake_state_out = s = tor_malloc(sizeof(fast_handshake_state_t));
-  if (crypto_rand((char*)s->state, sizeof(s->state)) < 0) {
-    tor_free(s);
-    return -1;
-  }
+  crypto_rand((char*)s->state, sizeof(s->state));
   memcpy(handshake_out, s->state, DIGEST_LEN);
   return 0;
 }
@@ -56,8 +53,7 @@ fast_server_handshake(const uint8_t *key_in, /* DIGEST_LEN bytes */
   size_t out_len;
   int r = -1;
 
-  if (crypto_rand((char*)handshake_reply_out, DIGEST_LEN)<0)
-    return -1;
+  crypto_rand((char*)handshake_reply_out, DIGEST_LEN);
 
   memcpy(tmp, key_in, DIGEST_LEN);
   memcpy(tmp+DIGEST_LEN, handshake_reply_out, DIGEST_LEN);

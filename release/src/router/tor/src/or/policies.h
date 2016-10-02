@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -22,13 +22,44 @@
 #define EXIT_POLICY_REJECT_PRIVATE (1 << 1)
 #define EXIT_POLICY_ADD_DEFAULT    (1 << 2)
 
+typedef enum firewall_connection_t {
+  FIREWALL_OR_CONNECTION      = 0,
+  FIREWALL_DIR_CONNECTION     = 1
+} firewall_connection_t;
+
 typedef int exit_policy_parser_cfg_t;
 
 int firewall_is_fascist_or(void);
-int fascist_firewall_allows_address_or(const tor_addr_t *addr, uint16_t port);
-int fascist_firewall_allows_or(const routerinfo_t *ri);
-int fascist_firewall_allows_node(const node_t *node);
-int fascist_firewall_allows_address_dir(const tor_addr_t *addr, uint16_t port);
+int firewall_is_fascist_dir(void);
+int fascist_firewall_use_ipv6(const or_options_t *options);
+int fascist_firewall_prefer_ipv6_orport(const or_options_t *options);
+int fascist_firewall_prefer_ipv6_dirport(const or_options_t *options);
+
+int fascist_firewall_allows_address_addr(const tor_addr_t *addr,
+                                         uint16_t port,
+                                         firewall_connection_t fw_connection,
+                                         int pref_only, int pref_ipv6);
+
+int fascist_firewall_allows_rs(const routerstatus_t *rs,
+                               firewall_connection_t fw_connection,
+                               int pref_only);
+int fascist_firewall_allows_node(const node_t *node,
+                                 firewall_connection_t fw_connection,
+                                 int pref_only);
+int fascist_firewall_allows_dir_server(const dir_server_t *ds,
+                                       firewall_connection_t fw_connection,
+                                       int pref_only);
+
+int fascist_firewall_choose_address_rs(const routerstatus_t *rs,
+                                       firewall_connection_t fw_connection,
+                                       int pref_only, tor_addr_port_t* ap);
+int fascist_firewall_choose_address_node(const node_t *node,
+                                         firewall_connection_t fw_connection,
+                                         int pref_only, tor_addr_port_t* ap);
+int fascist_firewall_choose_address_dir_server(const dir_server_t *ds,
+                                          firewall_connection_t fw_connection,
+                                          int pref_only, tor_addr_port_t* ap);
+
 int dir_policy_permits_address(const tor_addr_t *addr);
 int socks_policy_permits_address(const tor_addr_t *addr);
 int authdir_policy_permits_address(uint32_t addr, uint16_t port);
@@ -44,30 +75,38 @@ addr_policy_t *addr_policy_get_canonical_entry(addr_policy_t *ent);
 int cmp_addr_policies(smartlist_t *a, smartlist_t *b);
 MOCK_DECL(addr_policy_result_t, compare_tor_addr_to_addr_policy,
     (const tor_addr_t *addr, uint16_t port, const smartlist_t *policy));
-
 addr_policy_result_t compare_tor_addr_to_node_policy(const tor_addr_t *addr,
                               uint16_t port, const node_t *node);
 
-int policies_parse_exit_policy_from_options(const or_options_t *or_options,
-                                            uint32_t local_address,
-                                            tor_addr_t *ipv6_local_address,
-                                            int reject_interface_addresses,
-                                            smartlist_t **result);
+int policies_parse_exit_policy_from_options(
+                                          const or_options_t *or_options,
+                                          uint32_t local_address,
+                                          const tor_addr_t *ipv6_local_address,
+                                          smartlist_t **result);
 int policies_parse_exit_policy(config_line_t *cfg, smartlist_t **dest,
                                exit_policy_parser_cfg_t options,
-                               uint32_t local_address,
-                               tor_addr_t *ipv6_local_address,
-                               int reject_interface_addresses);
+                               const smartlist_t *configured_addresses);
+void policies_parse_exit_policy_reject_private(
+                                      smartlist_t **dest,
+                                      int ipv6_exit,
+                                      const smartlist_t *configured_addresses,
+                                      int reject_interface_addresses,
+                                      int reject_configured_port_addresses);
 void policies_exit_policy_append_reject_star(smartlist_t **dest);
 void addr_policy_append_reject_addr(smartlist_t **dest,
                                     const tor_addr_t *addr);
+void addr_policy_append_reject_addr_list(smartlist_t **dest,
+                                         const smartlist_t *addrs);
 void policies_set_node_exitpolicy_to_reject_all(node_t *exitrouter);
 int exit_policy_is_general_exit(smartlist_t *policy);
 int policy_is_reject_star(const smartlist_t *policy, sa_family_t family);
+char * policy_dump_to_string(const smartlist_t *policy_list,
+                             int include_ipv4,
+                             int include_ipv6);
 int getinfo_helper_policies(control_connection_t *conn,
                             const char *question, char **answer,
                             const char **errmsg);
-int policy_write_item(char *buf, size_t buflen, addr_policy_t *item,
+int policy_write_item(char *buf, size_t buflen, const addr_policy_t *item,
                       int format_for_desc);
 
 void addr_policy_list_free(smartlist_t *p);
@@ -83,6 +122,21 @@ int short_policy_is_reject_star(const short_policy_t *policy);
 addr_policy_result_t compare_tor_addr_to_short_policy(
                           const tor_addr_t *addr, uint16_t port,
                           const short_policy_t *policy);
+
+#ifdef POLICIES_PRIVATE
+STATIC void append_exit_policy_string(smartlist_t **policy, const char *more);
+STATIC int fascist_firewall_allows_address(const tor_addr_t *addr,
+                                           uint16_t port,
+                                           smartlist_t *firewall_policy,
+                                           int pref_only, int pref_ipv6);
+STATIC const tor_addr_port_t * fascist_firewall_choose_address(
+                                          const tor_addr_port_t *a,
+                                          const tor_addr_port_t *b,
+                                          int want_a,
+                                          firewall_connection_t fw_connection,
+                                          int pref_only, int pref_ipv6);
+
+#endif
 
 #endif
 

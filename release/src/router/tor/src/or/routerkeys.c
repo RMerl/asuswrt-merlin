@@ -1,5 +1,13 @@
-/* Copyright (c) 2014, The Tor Project, Inc. */
+/* Copyright (c) 2014-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file routerkeys.c
+ *
+ * \brief Functions and structures to handle generating and maintaining the
+ *  set of keypairs necessary to be an OR. (Some of the code in router.c
+ *  belongs here.)
+ */
 
 #include "or.h"
 #include "config.h"
@@ -426,6 +434,10 @@ ed_key_init_from_file(const char *fname, uint32_t flags,
       tor_log(severity, LD_OR, "We needed to load a secret key from %s, "
               "but it was encrypted. Try 'tor --keygen' instead, so you "
               "can enter the passphrase.",
+              secret_fname);
+    } else if (offline_secret) {
+      tor_log(severity, LD_OR, "We wanted to load a secret key from %s, "
+              "but you're keeping it offline. (OfflineMasterKey is set.)",
               secret_fname);
     } else {
       tor_log(severity, LD_OR, "We needed to load a secret key from %s, "
@@ -915,7 +927,7 @@ load_ed_keys(const or_options_t *options, time_t now)
   return -1;
 }
 
-/**DOCDOC*/
+/* DOCDOC */
 int
 generate_ed_link_cert(const or_options_t *options, time_t now)
 {
@@ -927,7 +939,7 @@ generate_ed_link_cert(const or_options_t *options, time_t now)
     return -1;
   }
 
-  const digests_t *digests = tor_x509_cert_get_cert_digests(link);
+  const common_digests_t *digests = tor_x509_cert_get_cert_digests(link);
 
   if (link_cert_cert &&
       ! EXPIRES_SOON(link_cert_cert, options->TestingLinkKeySlop) &&
@@ -972,7 +984,7 @@ should_make_new_ed_keys(const or_options_t *options, const time_t now)
   if (tor_tls_get_my_certs(1, &link, &id) < 0 || link == NULL)
     return 1;
 
-  const digests_t *digests = tor_x509_cert_get_cert_digests(link);
+  const common_digests_t *digests = tor_x509_cert_get_cert_digests(link);
 
   if (!fast_memeq(digests->d[DIGEST_SHA256],
                   link_cert_cert->signed_key.pubkey,

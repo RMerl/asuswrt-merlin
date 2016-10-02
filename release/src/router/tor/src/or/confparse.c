@@ -1,8 +1,15 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file confparse.c
+ *
+ * \brief Back-end for parsing and generating key-value files, used to
+ *   implement the torrc file format and the state file.
+ */
 
 #include "or.h"
 #include "confparse.h"

@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -148,7 +148,9 @@ tor_addr_make_af_unix(tor_addr_t *a)
 }
 
 /** Set the tor_addr_t in <b>a</b> to contain the socket address contained in
- * <b>sa</b>. Return 0 on success and -1 on failure. */
+ * <b>sa</b>.  IF <b>port_out</b> is non-NULL and <b>sa</b> contains a port,
+ * set *<b>port_out</b> to that port. Return 0 on success and -1 on
+ * failure. */
 int
 tor_addr_from_sockaddr(tor_addr_t *a, const struct sockaddr *sa,
                        uint16_t *port_out)
@@ -908,6 +910,59 @@ tor_addr_is_loopback(const tor_addr_t *addr)
   }
 }
 
+/* Is addr valid?
+ * Checks that addr is non-NULL and not tor_addr_is_null().
+ * If for_listening is true, IPv4 addr 0.0.0.0 is allowed.
+ * It means "bind to all addresses on the local machine". */
+int
+tor_addr_is_valid(const tor_addr_t *addr, int for_listening)
+{
+  /* NULL addresses are invalid regardless of for_listening */
+  if (addr == NULL) {
+    return 0;
+  }
+
+  /* Only allow IPv4 0.0.0.0 for_listening. */
+  if (for_listening && addr->family == AF_INET
+      && tor_addr_to_ipv4h(addr) == 0) {
+    return 1;
+  }
+
+  /* Otherwise, the address is valid if it's not tor_addr_is_null() */
+  return !tor_addr_is_null(addr);
+}
+
+/* Is the network-order IPv4 address v4n_addr valid?
+ * Checks that addr is not zero.
+ * Except if for_listening is true, where IPv4 addr 0.0.0.0 is allowed. */
+int
+tor_addr_is_valid_ipv4n(uint32_t v4n_addr, int for_listening)
+{
+  /* Any IPv4 address is valid with for_listening. */
+  if (for_listening) {
+    return 1;
+  }
+
+  /* Otherwise, zero addresses are invalid. */
+  return v4n_addr != 0;
+}
+
+/* Is port valid?
+ * Checks that port is not 0.
+ * Except if for_listening is true, where port 0 is allowed.
+ * It means "OS chooses a port". */
+int
+tor_port_is_valid(uint16_t port, int for_listening)
+{
+  /* Any port value is valid with for_listening. */
+  if (for_listening) {
+    return 1;
+  }
+
+  /* Otherwise, zero ports are invalid. */
+  return port != 0;
+}
+
 /** Set <b>dest</b> to equal the IPv4 address in <b>v4addr</b> (given in
  * network order). */
 void
@@ -1039,6 +1094,8 @@ tor_addr_compare_masked(const tor_addr_t *addr1, const tor_addr_t *addr2,
         return r;
       }
       case AF_INET6: {
+        if (mbits > 128)
+          mbits = 128;
         const uint8_t *a1 = tor_addr_to_in6_addr8(addr1);
         const uint8_t *a2 = tor_addr_to_in6_addr8(addr2);
         const int bytes = mbits >> 3;
@@ -1272,7 +1329,7 @@ typedef ULONG (WINAPI *GetAdaptersAddresses_fn_t)(
  * into smartlist of <b>tor_addr_t</b> structures.
  */
 STATIC smartlist_t *
-ifaddrs_to_smartlist(const struct ifaddrs *ifa)
+ifaddrs_to_smartlist(const struct ifaddrs *ifa, sa_family_t family)
 {
   smartlist_t *result = smartlist_new();
   const struct ifaddrs *i;
@@ -1285,6 +1342,8 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa)
       continue;
     if (i->ifa_addr->sa_family != AF_INET &&
         i->ifa_addr->sa_family != AF_INET6)
+      continue;
+    if (family != AF_UNSPEC && i->ifa_addr->sa_family != family)
       continue;
     if (tor_addr_from_sockaddr(&tmp, i->ifa_addr, NULL) < 0)
       continue;
@@ -1299,7 +1358,7 @@ ifaddrs_to_smartlist(const struct ifaddrs *ifa)
  * <b>tor_addr_t</b> structures.
  */
 STATIC smartlist_t *
-get_interface_addresses_ifaddrs(int severity)
+get_interface_addresses_ifaddrs(int severity, sa_family_t family)
 {
 
   /* Most free Unixy systems provide getifaddrs, which gives us a linked list
@@ -1312,7 +1371,7 @@ get_interface_addresses_ifaddrs(int severity)
     return NULL;
   }
 
-  result = ifaddrs_to_smartlist(ifa);
+  result = ifaddrs_to_smartlist(ifa, family);
 
   freeifaddrs(ifa);
 
@@ -1354,7 +1413,7 @@ ip_adapter_addresses_to_smartlist(const IP_ADAPTER_ADDRESSES *addresses)
  * <b>tor_addr_t</b>  structures.
  */
 STATIC smartlist_t *
-get_interface_addresses_win32(int severity)
+get_interface_addresses_win32(int severity, sa_family_t family)
 {
 
   /* Windows XP began to provide GetAdaptersAddresses. Windows 2000 had a
@@ -1388,7 +1447,7 @@ get_interface_addresses_win32(int severity)
   /* Guess how much space we need. */
   size = 15*1024;
   addresses = tor_malloc(size);
-  res = fn(AF_UNSPEC, FLAGS, NULL, addresses, &size);
+  res = fn(family, FLAGS, NULL, addresses, &size);
   if (res == ERROR_BUFFER_OVERFLOW) {
     /* we didn't guess that we needed enough space; try again */
     tor_free(addresses);
@@ -1462,22 +1521,33 @@ ifreq_to_smartlist(char *buf, size_t buflen)
  * <b>tor_addr_t</b> structures.
  */
 STATIC smartlist_t *
-get_interface_addresses_ioctl(int severity)
+get_interface_addresses_ioctl(int severity, sa_family_t family)
 {
   /* Some older unixy systems make us use ioctl(SIOCGIFCONF) */
   struct ifconf ifc;
+  ifc.ifc_buf = NULL;
   int fd;
   smartlist_t *result = NULL;
 
-  /* This interface, AFAICT, only supports AF_INET addresses */
-  fd = socket(AF_INET, SOCK_DGRAM, 0);
+  /* This interface, AFAICT, only supports AF_INET addresses,
+   * except on AIX. For Solaris, we could use SIOCGLIFCONF. */
+
+  /* Bail out if family is neither AF_INET nor AF_UNSPEC since
+   * ioctl() technique supports non-IPv4 interface addresses on
+   * a small number of niche systems only. If family is AF_UNSPEC,
+   * fall back to getting AF_INET addresses only. */
+  if (family == AF_UNSPEC)
+    family = AF_INET;
+  else if (family != AF_INET)
+    return NULL;
+
+  fd = socket(family, SOCK_DGRAM, 0);
   if (fd < 0) {
     tor_log(severity, LD_NET, "socket failed: %s", strerror(errno));
     goto done;
   }
 
   int mult = 1;
-  ifc.ifc_buf = NULL;
   do {
     mult *= 2;
     ifc.ifc_len = mult * IFREQ_SIZE;
@@ -1505,21 +1575,23 @@ get_interface_addresses_ioctl(int severity)
 /** Try to ask our network interfaces what addresses they are bound to.
  * Return a new smartlist of tor_addr_t on success, and NULL on failure.
  * (An empty smartlist indicates that we successfully learned that we have no
- * addresses.)  Log failure messages at <b>severity</b>. */
+ * addresses.)  Log failure messages at <b>severity</b>. Only return the
+ * interface addresses of requested <b>family</b> and ignore the addresses
+ * of other address families. */
 MOCK_IMPL(smartlist_t *,
-get_interface_addresses_raw,(int severity))
+get_interface_addresses_raw,(int severity, sa_family_t family))
 {
   smartlist_t *result = NULL;
 #if defined(HAVE_IFADDRS_TO_SMARTLIST)
-  if ((result = get_interface_addresses_ifaddrs(severity)))
+  if ((result = get_interface_addresses_ifaddrs(severity, family)))
     return result;
 #endif
 #if defined(HAVE_IP_ADAPTER_TO_SMARTLIST)
-  if ((result = get_interface_addresses_win32(severity)))
+  if ((result = get_interface_addresses_win32(severity, family)))
     return result;
 #endif
 #if defined(HAVE_IFCONF_TO_SMARTLIST)
-  if ((result = get_interface_addresses_ioctl(severity)))
+  if ((result = get_interface_addresses_ioctl(severity, family)))
     return result;
 #endif
   (void) severity;
@@ -1527,7 +1599,7 @@ get_interface_addresses_raw,(int severity))
 }
 
 /** Return true iff <b>a</b> is a multicast address.  */
-STATIC int
+int
 tor_addr_is_multicast(const tor_addr_t *a)
 {
   sa_family_t family = tor_addr_family(a);
@@ -1544,8 +1616,9 @@ tor_addr_is_multicast(const tor_addr_t *a)
 }
 
 /** Attempt to retrieve IP address of current host by utilizing some
- * UDP socket trickery. Only look for address of given <b>family</b>.
- * Set result to *<b>addr</b>. Return 0 on success, -1 on failure.
+ * UDP socket trickery. Only look for address of given <b>family</b>
+ * (only AF_INET and AF_INET6 are supported). Set result to *<b>addr</b>.
+ * Return 0 on success, -1 on failure.
  */
 MOCK_IMPL(int,
 get_interface_address6_via_udp_socket_hack,(int severity,
@@ -1683,15 +1756,9 @@ MOCK_IMPL(smartlist_t *,get_interface_address6_list,(int severity,
   tor_addr_t addr;
 
   /* Try to do this the smart way if possible. */
-  if ((addrs = get_interface_addresses_raw(severity))) {
+  if ((addrs = get_interface_addresses_raw(severity, family))) {
     SMARTLIST_FOREACH_BEGIN(addrs, tor_addr_t *, a)
     {
-      if (family != AF_UNSPEC && family != tor_addr_family(a)) {
-        SMARTLIST_DEL_CURRENT(addrs, a);
-        tor_free(a);
-        continue;
-      }
-
       if (tor_addr_is_loopback(a) ||
           tor_addr_is_multicast(a)) {
         SMARTLIST_DEL_CURRENT(addrs, a);
@@ -1717,15 +1784,27 @@ MOCK_IMPL(smartlist_t *,get_interface_address6_list,(int severity,
   }
 
   /* Okay, the smart way is out. */
-  if (get_interface_address6_via_udp_socket_hack(severity,family,&addr))
-     return smartlist_new();
-  if (!include_internal && tor_addr_is_internal(&addr, 0)) {
-    return smartlist_new();
-  } else {
-    addrs = smartlist_new();
-    smartlist_add(addrs, tor_dup_addr(&addr));
-    return addrs;
+  addrs = smartlist_new();
+
+  if (family == AF_INET || family == AF_UNSPEC) {
+    if (get_interface_address6_via_udp_socket_hack(severity,AF_INET,
+                                                   &addr) == 0) {
+      if (include_internal || !tor_addr_is_internal(&addr, 0)) {
+        smartlist_add(addrs, tor_memdup(&addr, sizeof(addr)));
+      }
+    }
   }
+
+  if (family == AF_INET6 || family == AF_UNSPEC) {
+    if (get_interface_address6_via_udp_socket_hack(severity,AF_INET6,
+                                                   &addr) == 0) {
+      if (include_internal || !tor_addr_is_internal(&addr, 0)) {
+        smartlist_add(addrs, tor_memdup(&addr, sizeof(addr)));
+      }
+    }
+  }
+
+  return addrs;
 }
 
 /* ======
@@ -1781,7 +1860,7 @@ tor_addr_port_parse(int severity, const char *addrport,
 }
 
 /** Given an address of the form "host[:port]", try to divide it into its host
- * ane port portions, setting *<b>address_out</b> to a newly allocated string
+ * and port portions, setting *<b>address_out</b> to a newly allocated string
  * holding the address portion and *<b>port_out</b> to the port (or 0 if no
  * port is given).  Return 0 on success, -1 on failure. */
 int

@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -70,6 +70,13 @@ MOCK_DECL(networkstatus_t *,networkstatus_get_latest_consensus_by_flavor,
 networkstatus_t *networkstatus_get_live_consensus(time_t now);
 networkstatus_t *networkstatus_get_reasonably_live_consensus(time_t now,
                                                              int flavor);
+MOCK_DECL(int, networkstatus_consensus_is_bootstrapping,(time_t now));
+int networkstatus_consensus_can_use_multiple_directories(
+                                                const or_options_t *options);
+MOCK_DECL(int, networkstatus_consensus_can_use_extra_fallbacks,(
+                                                const or_options_t *options));
+int networkstatus_consensus_is_already_downloading(const char *resource);
+
 #define NSSET_FROM_CACHE 1
 #define NSSET_WAS_WAITING_FOR_CERTS 2
 #define NSSET_DONT_DOWNLOAD_CERTS 4
@@ -106,6 +113,10 @@ int networkstatus_get_weight_scale_param(networkstatus_t *ns);
 
 #ifdef NETWORKSTATUS_PRIVATE
 STATIC void vote_routerstatus_free(vote_routerstatus_t *rs);
+#ifdef TOR_UNIT_TESTS
+STATIC int networkstatus_set_current_consensus_from_ns(networkstatus_t *c,
+                                                const char *flavor);
+#endif // TOR_UNIT_TESTS
 #endif
 
 #endif

@@ -1,4 +1,4 @@
- /* Copyright (c) 2012-2015, The Tor Project, Inc. */
+ /* Copyright (c) 2012-2016, The Tor Project, Inc. */
  /* See LICENSE for licensing information */
 
 /*
@@ -23,7 +23,7 @@ replaycache_free(replaycache_t *r)
     return;
   }
 
-  if (r->digests_seen) digestmap_free(r->digests_seen, tor_free_);
+  if (r->digests_seen) digest256map_free(r->digests_seen, tor_free_);
 
   tor_free(r);
 }
@@ -54,7 +54,7 @@ replaycache_new(time_t horizon, time_t interval)
   r->scrub_interval = interval;
   r->scrubbed = 0;
   r->horizon = horizon;
-  r->digests_seen = digestmap_new();
+  r->digests_seen = digest256map_new();
 
  err:
   return r;
@@ -69,7 +69,7 @@ replaycache_add_and_test_internal(
     time_t *elapsed)
 {
   int rv = 0;
-  char digest[DIGEST_LEN];
+  uint8_t digest[DIGEST256_LEN];
   time_t *access_time;
 
   /* sanity check */
@@ -80,10 +80,10 @@ replaycache_add_and_test_internal(
   }
 
   /* compute digest */
-  crypto_digest(digest, (const char *)data, len);
+  crypto_digest256((char *)digest, (const char *)data, len, DIGEST_SHA256);
 
   /* check map */
-  access_time = digestmap_get(r->digests_seen, digest);
+  access_time = digest256map_get(r->digests_seen, digest);
 
   /* seen before? */
   if (access_time != NULL) {
@@ -114,7 +114,7 @@ replaycache_add_and_test_internal(
     /* No, so no hit and update the digest map with the current time */
     access_time = tor_malloc(sizeof(*access_time));
     *access_time = present;
-    digestmap_set(r->digests_seen, digest, access_time);
+    digest256map_set(r->digests_seen, digest, access_time);
   }
 
   /* now scrub the cache if it's time */
@@ -130,8 +130,8 @@ replaycache_add_and_test_internal(
 STATIC void
 replaycache_scrub_if_needed_internal(time_t present, replaycache_t *r)
 {
-  digestmap_iter_t *itr = NULL;
-  const char *digest;
+  digest256map_iter_t *itr = NULL;
+  const uint8_t *digest;
   void *valp;
   time_t *access_time;
 
@@ -149,19 +149,19 @@ replaycache_scrub_if_needed_internal(time_t present, replaycache_t *r)
   if (r->horizon == 0) return;
 
   /* okay, scrub time */
-  itr = digestmap_iter_init(r->digests_seen);
-  while (!digestmap_iter_done(itr)) {
-    digestmap_iter_get(itr, &digest, &valp);
+  itr = digest256map_iter_init(r->digests_seen);
+  while (!digest256map_iter_done(itr)) {
+    digest256map_iter_get(itr, &digest, &valp);
     access_time = (time_t *)valp;
     /* aged out yet? */
     if (*access_time < present - r->horizon) {
       /* Advance the iterator and remove this one */
-      itr = digestmap_iter_next_rmv(r->digests_seen, itr);
+      itr = digest256map_iter_next_rmv(r->digests_seen, itr);
       /* Free the value removed */
       tor_free(access_time);
     } else {
       /* Just advance the iterator */
-      itr = digestmap_iter_next(r->digests_seen, itr);
+      itr = digest256map_iter_next(r->digests_seen, itr);
     }
   }
 

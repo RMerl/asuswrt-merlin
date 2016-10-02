@@ -322,7 +322,7 @@ def kdf_vectors():
     """
     import binascii
     def kdf_vec(inp):
-        k = kdf(inp, T_KEY, M_EXPAND, 100)
+        k = kdf_rfc5869(inp, T_KEY, M_EXPAND, 100)
         print(repr(inp), "\n\""+ binascii.b2a_hex(k)+ "\"")
     kdf_vec("")
     kdf_vec("Tor")

@@ -65,6 +65,10 @@ ed25519/donna/*
     Andrew Moon's semi-portable ed25519-donna implementation of
     ed25519. Public domain.
 
+keccak-tiny/
+
+    David Leon Gil's portable Keccak implementation. CC0.
+
 readpassphrase.[ch]
 
     Portable readpassphrase implementation from OpenSSH portable, version

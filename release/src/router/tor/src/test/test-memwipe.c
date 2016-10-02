@@ -62,7 +62,7 @@ fill_a_buffer_nothing(void)
   return sum;
 }
 
-static INLINE int
+static inline int
 vmemeq(volatile char *a, const char *b, size_t n)
 {
   while (n--) {

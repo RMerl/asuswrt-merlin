@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -28,6 +28,7 @@
 #define ROUTER_PRIVATE
 #define CIRCUITSTATS_PRIVATE
 #define CIRCUITLIST_PRIVATE
+#define MAIN_PRIVATE
 #define STATEFILE_PRIVATE
 
 /*
@@ -47,8 +48,10 @@ double fabs(double x);
 #include "connection_edge.h"
 #include "geoip.h"
 #include "rendcommon.h"
+#include "rendcache.h"
 #include "test.h"
 #include "torgzip.h"
+#include "main.h"
 #include "memarea.h"
 #include "onion.h"
 #include "onion_ntor.h"
@@ -316,6 +319,9 @@ test_circuit_timeout(void *arg)
   int i, runs;
   double close_ms;
   (void)arg;
+
+  initialize_periodic_events();
+
   circuit_build_times_init(&initial);
   circuit_build_times_init(&estimate);
   circuit_build_times_init(&final);
@@ -455,6 +461,7 @@ test_circuit_timeout(void *arg)
   circuit_build_times_free_timeouts(&estimate);
   circuit_build_times_free_timeouts(&final);
   or_state_free(state);
+  teardown_periodic_events();
 }
 
 /** Test encoding and parsing of rendezvous service descriptors. */
@@ -493,6 +500,9 @@ test_rend_fns(void *arg)
   tt_assert(ONION_HOSTNAME == parse_extended_hostname(address6));
   tt_str_op(address6,OP_EQ, "abcdefghijklmnop");
   tt_assert(BAD_HOSTNAME == parse_extended_hostname(address7));
+
+  /* Initialize the service cache. */
+  rend_cache_init();
 
   pk1 = pk_generate(0);
   pk2 = pk_generate(1);
@@ -1105,8 +1115,8 @@ static struct testcase_t test_array[] = {
   { "bad_onion_handshake", test_bad_onion_handshake, 0, NULL, NULL },
   ENT(onion_queues),
   { "ntor_handshake", test_ntor_handshake, 0, NULL, NULL },
-  ENT(circuit_timeout),
-  ENT(rend_fns),
+  FORK(circuit_timeout),
+  FORK(rend_fns),
   ENT(geoip),
   FORK(geoip_with_pt),
   FORK(stats),
@@ -1125,12 +1135,15 @@ extern struct testcase_t channeltls_tests[];
 extern struct testcase_t checkdir_tests[];
 extern struct testcase_t circuitlist_tests[];
 extern struct testcase_t circuitmux_tests[];
+extern struct testcase_t compat_libevent_tests[];
 extern struct testcase_t config_tests[];
+extern struct testcase_t connection_tests[];
 extern struct testcase_t container_tests[];
 extern struct testcase_t controller_tests[];
 extern struct testcase_t controller_event_tests[];
 extern struct testcase_t crypto_tests[];
 extern struct testcase_t dir_tests[];
+extern struct testcase_t dir_handle_get_tests[];
 extern struct testcase_t entryconn_tests[];
 extern struct testcase_t entrynodes_tests[];
 extern struct testcase_t guardfraction_tests[];
@@ -1145,9 +1158,11 @@ extern struct testcase_t nodelist_tests[];
 extern struct testcase_t oom_tests[];
 extern struct testcase_t options_tests[];
 extern struct testcase_t policy_tests[];
+extern struct testcase_t procmon_tests[];
 extern struct testcase_t pt_tests[];
 extern struct testcase_t relay_tests[];
 extern struct testcase_t relaycell_tests[];
+extern struct testcase_t rend_cache_tests[];
 extern struct testcase_t replaycache_tests[];
 extern struct testcase_t router_tests[];
 extern struct testcase_t routerkeys_tests[];
@@ -1157,7 +1172,10 @@ extern struct testcase_t scheduler_tests[];
 extern struct testcase_t socks_tests[];
 extern struct testcase_t status_tests[];
 extern struct testcase_t thread_tests[];
+extern struct testcase_t tortls_tests[];
 extern struct testcase_t util_tests[];
+extern struct testcase_t util_format_tests[];
+extern struct testcase_t util_process_tests[];
 extern struct testcase_t dns_tests[];
 
 struct testgroup_t testgroups[] = {
@@ -1173,12 +1191,15 @@ struct testgroup_t testgroups[] = {
   { "checkdir/", checkdir_tests },
   { "circuitlist/", circuitlist_tests },
   { "circuitmux/", circuitmux_tests },
+  { "compat/libevent/", compat_libevent_tests },
   { "config/", config_tests },
+  { "connection/", connection_tests },
   { "container/", container_tests },
   { "control/", controller_tests },
   { "control/event/", controller_event_tests },
   { "crypto/", crypto_tests },
   { "dir/", dir_tests },
+  { "dir_handle_get/", dir_handle_get_tests },
   { "dir/md/", microdesc_tests },
   { "entryconn/", entryconn_tests },
   { "entrynodes/", entrynodes_tests },
@@ -1192,9 +1213,11 @@ struct testgroup_t testgroups[] = {
   { "oom/", oom_tests },
   { "options/", options_tests },
   { "policy/" , policy_tests },
+  { "procmon/", procmon_tests },
   { "pt/", pt_tests },
   { "relay/" , relay_tests },
   { "relaycell/", relaycell_tests },
+  { "rend_cache/", rend_cache_tests },
   { "replaycache/", replaycache_tests },
   { "routerkeys/", routerkeys_tests },
   { "routerlist/", routerlist_tests },
@@ -1202,8 +1225,11 @@ struct testgroup_t testgroups[] = {
   { "scheduler/", scheduler_tests },
   { "socks/", socks_tests },
   { "status/" , status_tests },
+  { "tortls/", tortls_tests },
   { "util/", util_tests },
+  { "util/format/", util_format_tests },
   { "util/logging/", logging_tests },
+  { "util/process/", util_process_tests },
   { "util/thread/", thread_tests },
   { "dns/", dns_tests },
   END_OF_GROUPS

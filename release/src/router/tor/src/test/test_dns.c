@@ -5,9 +5,14 @@
 
 #include "dns.h"
 #include "connection.h"
+#include "router.h"
+
+#define NS_MODULE dns
+
+#define NS_SUBMODULE clip_ttl
 
 static void
-test_dns_clip_ttl(void *arg)
+NS(test_main)(void *arg)
 {
   (void)arg;
 
@@ -21,8 +26,12 @@ test_dns_clip_ttl(void *arg)
   return;
 }
 
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE expiry_ttl
+
 static void
-test_dns_expiry_ttl(void *arg)
+NS(test_main)(void *arg)
 {
   (void)arg;
 
@@ -36,12 +45,21 @@ test_dns_expiry_ttl(void *arg)
   return;
 }
 
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE resolve
+
 static int resolve_retval = 0;
 static int resolve_made_conn_pending = 0;
 static char *resolved_name = NULL;
 static cached_resolve_t *cache_entry = NULL;
 
 static int n_fake_impl = 0;
+
+NS_DECL(int, dns_resolve_impl, (edge_connection_t *exitconn, int is_resolve,
+                                or_circuit_t *oncirc, char **hostname_out,
+                                int *made_connection_pending_out,
+                                cached_resolve_t **resolve_out));
 
 /** This will be our configurable substitute for <b>dns_resolve_impl</b> in
  * dns.c. It will return <b>resolve_retval</b>,
@@ -52,10 +70,10 @@ static int n_fake_impl = 0;
  * 1.
  */
 static int
-dns_resolve_fake_impl(edge_connection_t *exitconn, int is_resolve,
-                      or_circuit_t *oncirc, char **hostname_out,
-                      int *made_connection_pending_out,
-                      cached_resolve_t **resolve_out)
+NS(dns_resolve_impl)(edge_connection_t *exitconn, int is_resolve,
+                     or_circuit_t *oncirc, char **hostname_out,
+                     int *made_connection_pending_out,
+                     cached_resolve_t **resolve_out)
 {
   (void)oncirc;
   (void)exitconn;
@@ -82,8 +100,8 @@ static uint8_t last_answer_type = 0;
 static cached_resolve_t *last_resolved;
 
 static void
-send_resolved_cell_replacement(edge_connection_t *conn, uint8_t answer_type,
-                               const cached_resolve_t *resolved)
+NS(send_resolved_cell)(edge_connection_t *conn, uint8_t answer_type,
+                       const cached_resolve_t *resolved)
 {
   conn_for_resolved_cell = conn;
 
@@ -98,8 +116,8 @@ static int n_send_resolved_hostname_cell_replacement = 0;
 static char *last_resolved_hostname = NULL;
 
 static void
-send_resolved_hostname_cell_replacement(edge_connection_t *conn,
-                                        const char *hostname)
+NS(send_resolved_hostname_cell)(edge_connection_t *conn,
+                                const char *hostname)
 {
   conn_for_resolved_cell = conn;
 
@@ -112,7 +130,7 @@ send_resolved_hostname_cell_replacement(edge_connection_t *conn,
 static int n_dns_cancel_pending_resolve_replacement = 0;
 
 static void
-dns_cancel_pending_resolve_replacement(const char *address)
+NS(dns_cancel_pending_resolve)(const char *address)
 {
   (void) address;
   n_dns_cancel_pending_resolve_replacement++;
@@ -122,7 +140,7 @@ static int n_connection_free = 0;
 static connection_t *last_freed_conn = NULL;
 
 static void
-connection_free_replacement(connection_t *conn)
+NS(connection_free)(connection_t *conn)
 {
    n_connection_free++;
 
@@ -130,7 +148,7 @@ connection_free_replacement(connection_t *conn)
 }
 
 static void
-test_dns_resolve_outer(void *arg)
+NS(test_main)(void *arg)
 {
   (void) arg;
   int retval;
@@ -149,9 +167,9 @@ test_dns_resolve_outer(void *arg)
   memset(exitconn,0,sizeof(edge_connection_t));
   memset(nextconn,0,sizeof(edge_connection_t));
 
-  MOCK(dns_resolve_impl,dns_resolve_fake_impl);
-  MOCK(send_resolved_cell,send_resolved_cell_replacement);
-  MOCK(send_resolved_hostname_cell,send_resolved_hostname_cell_replacement);
+  NS_MOCK(dns_resolve_impl);
+  NS_MOCK(send_resolved_cell);
+  NS_MOCK(send_resolved_hostname_cell);
 
   /*
    * CASE 1: dns_resolve_impl returns 1 and sets a hostname. purpose is
@@ -264,8 +282,8 @@ test_dns_resolve_outer(void *arg)
    * on exitconn with type being RESOLVED_TYPE_ERROR.
    */
 
-  MOCK(dns_cancel_pending_resolve,dns_cancel_pending_resolve_replacement);
-  MOCK(connection_free,connection_free_replacement);
+  NS_MOCK(dns_cancel_pending_resolve);
+  NS_MOCK(connection_free);
 
   exitconn->on_circuit = &(on_circuit->base_);
   exitconn->base_.purpose = EXIT_PURPOSE_RESOLVE;
@@ -288,11 +306,11 @@ test_dns_resolve_outer(void *arg)
   tt_assert(last_freed_conn == TO_CONN(exitconn));
 
   done:
-  UNMOCK(dns_resolve_impl);
-  UNMOCK(send_resolved_cell);
-  UNMOCK(send_resolved_hostname_cell);
-  UNMOCK(dns_cancel_pending_resolve);
-  UNMOCK(connection_free);
+  NS_UNMOCK(dns_resolve_impl);
+  NS_UNMOCK(send_resolved_cell);
+  NS_UNMOCK(send_resolved_hostname_cell);
+  NS_UNMOCK(dns_cancel_pending_resolve);
+  NS_UNMOCK(connection_free);
   tor_free(on_circuit);
   tor_free(exitconn);
   tor_free(nextconn);
@@ -302,10 +320,446 @@ test_dns_resolve_outer(void *arg)
   return;
 }
 
+#undef NS_SUBMODULE
+
+/** Create an <b>edge_connection_t</b> instance that is considered a
+ * valid exit connection by asserts in dns_resolve_impl.
+ */
+static edge_connection_t *
+create_valid_exitconn(void)
+{
+  edge_connection_t *exitconn = tor_malloc_zero(sizeof(edge_connection_t));
+  TO_CONN(exitconn)->type = CONN_TYPE_EXIT;
+  TO_CONN(exitconn)->magic = EDGE_CONNECTION_MAGIC;
+  TO_CONN(exitconn)->purpose = EXIT_PURPOSE_RESOLVE;
+  TO_CONN(exitconn)->state = EXIT_CONN_STATE_RESOLVING;
+  exitconn->base_.s = TOR_INVALID_SOCKET;
+
+  return exitconn;
+}
+
+#define NS_SUBMODULE ASPECT(resolve_impl, addr_is_ip_no_need_to_resolve)
+
+/*
+ * Given that <b>exitconn->base_.address</b> is IP address string, we
+ * want dns_resolve_impl() to parse it and store in
+ * <b>exitconn->base_.addr</b>. We expect dns_resolve_impl to return 1.
+ * Lastly, we want it to set the TTL value to default one for DNS queries.
+ */
+
+static void
+NS(test_main)(void *arg)
+{
+  int retval;
+  int made_pending;
+  const tor_addr_t *resolved_addr;
+  tor_addr_t addr_to_compare;
+
+  (void)arg;
+
+  tor_addr_parse(&addr_to_compare, "8.8.8.8");
+
+  or_circuit_t *on_circ = tor_malloc_zero(sizeof(or_circuit_t));
+
+  edge_connection_t *exitconn = create_valid_exitconn();
+
+  TO_CONN(exitconn)->address = tor_strdup("8.8.8.8");
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            NULL);
+
+  resolved_addr = &(exitconn->base_.addr);
+
+  tt_int_op(retval,==,1);
+  tt_assert(tor_addr_eq(resolved_addr, (const tor_addr_t *)&addr_to_compare));
+  tt_int_op(exitconn->address_ttl,==,DEFAULT_DNS_TTL);
+
+  done:
+  tor_free(on_circ);
+  tor_free(TO_CONN(exitconn)->address);
+  tor_free(exitconn);
+  return;
+}
+
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE ASPECT(resolve_impl, non_exit)
+
+/** Given that Tor instance is not configured as an exit node, we want
+ * dns_resolve_impl() to fail with return value -1.
+ */
+static int
+NS(router_my_exit_policy_is_reject_star)(void)
+{
+  return 1;
+}
+
+static void
+NS(test_main)(void *arg)
+{
+  int retval;
+  int made_pending;
+
+  edge_connection_t *exitconn = create_valid_exitconn();
+  or_circuit_t *on_circ = tor_malloc_zero(sizeof(or_circuit_t));
+
+  (void)arg;
+
+  TO_CONN(exitconn)->address = tor_strdup("torproject.org");
+
+  NS_MOCK(router_my_exit_policy_is_reject_star);
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            NULL);
+
+  tt_int_op(retval,==,-1);
+
+  done:
+  tor_free(TO_CONN(exitconn)->address);
+  tor_free(exitconn);
+  tor_free(on_circ);
+  NS_UNMOCK(router_my_exit_policy_is_reject_star);
+  return;
+}
+
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE ASPECT(resolve_impl, addr_is_invalid_dest)
+
+/** Given that address is not a valid destination (as judged by
+ * address_is_invalid_destination() function), we want dns_resolve_impl()
+ * function to fail with return value -1.
+ */
+
+static int
+NS(router_my_exit_policy_is_reject_star)(void)
+{
+  return 0;
+}
+
+static void
+NS(test_main)(void *arg)
+{
+  int retval;
+  int made_pending;
+
+  edge_connection_t *exitconn = create_valid_exitconn();
+  or_circuit_t *on_circ = tor_malloc_zero(sizeof(or_circuit_t));
+
+  (void)arg;
+
+  NS_MOCK(router_my_exit_policy_is_reject_star);
+
+  TO_CONN(exitconn)->address = tor_strdup("invalid#@!.org");
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            NULL);
+
+  tt_int_op(retval,==,-1);
+
+  done:
+  NS_UNMOCK(router_my_exit_policy_is_reject_star);
+  tor_free(TO_CONN(exitconn)->address);
+  tor_free(exitconn);
+  tor_free(on_circ);
+  return;
+}
+
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE ASPECT(resolve_impl, malformed_ptr)
+
+/** Given that address is a malformed PTR name, we want dns_resolve_impl to
+ * fail.
+ */
+
+static int
+NS(router_my_exit_policy_is_reject_star)(void)
+{
+  return 0;
+}
+
+static void
+NS(test_main)(void *arg)
+{
+  int retval;
+  int made_pending;
+
+  edge_connection_t *exitconn = create_valid_exitconn();
+  or_circuit_t *on_circ = tor_malloc_zero(sizeof(or_circuit_t));
+
+  (void)arg;
+
+  TO_CONN(exitconn)->address = tor_strdup("1.0.0.127.in-addr.arpa");
+
+  NS_MOCK(router_my_exit_policy_is_reject_star);
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            NULL);
+
+  tt_int_op(retval,==,-1);
+
+  tor_free(TO_CONN(exitconn)->address);
+
+  TO_CONN(exitconn)->address =
+  tor_strdup("z01234567890123456789.in-addr.arpa");
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            NULL);
+
+  tt_int_op(retval,==,-1);
+
+  done:
+  NS_UNMOCK(router_my_exit_policy_is_reject_star);
+  tor_free(TO_CONN(exitconn)->address);
+  tor_free(exitconn);
+  tor_free(on_circ);
+  return;
+}
+
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE ASPECT(resolve_impl, cache_hit_pending)
+
+/* Given that there is already a pending resolve for the given address,
+ * we want dns_resolve_impl to append our exit connection to list
+ * of pending connections for the pending DNS request and return 0.
+ */
+
+static int
+NS(router_my_exit_policy_is_reject_star)(void)
+{
+  return 0;
+}
+
+static void
+NS(test_main)(void *arg)
+{
+  int retval;
+  int made_pending = 0;
+
+  pending_connection_t *pending_conn = NULL;
+
+  edge_connection_t *exitconn = create_valid_exitconn();
+  or_circuit_t *on_circ = tor_malloc_zero(sizeof(or_circuit_t));
+
+  cached_resolve_t *cache_entry = tor_malloc_zero(sizeof(cached_resolve_t));
+  cache_entry->magic = CACHED_RESOLVE_MAGIC;
+  cache_entry->state = CACHE_STATE_PENDING;
+  cache_entry->minheap_idx = -1;
+  cache_entry->expire = time(NULL) + 60 * 60;
+
+  (void)arg;
+
+  TO_CONN(exitconn)->address = tor_strdup("torproject.org");
+
+  strlcpy(cache_entry->address, TO_CONN(exitconn)->address,
+          sizeof(cache_entry->address));
+
+  NS_MOCK(router_my_exit_policy_is_reject_star);
+
+  dns_init();
+
+  dns_insert_cache_entry(cache_entry);
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            NULL);
+
+  tt_int_op(retval,==,0);
+  tt_int_op(made_pending,==,1);
+
+  pending_conn = cache_entry->pending_connections;
+
+  tt_assert(pending_conn != NULL);
+  tt_assert(pending_conn->conn == exitconn);
+
+  done:
+  NS_UNMOCK(router_my_exit_policy_is_reject_star);
+  tor_free(on_circ);
+  tor_free(TO_CONN(exitconn)->address);
+  tor_free(cache_entry->pending_connections);
+  tor_free(cache_entry);
+  tor_free(exitconn);
+  return;
+}
+
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE ASPECT(resolve_impl, cache_hit_cached)
+
+/* Given that a finished DNS resolve is available in our cache, we want
+ * dns_resolve_impl() return it to called via resolve_out and pass the
+ * handling to set_exitconn_info_from_resolve function.
+ */
+static int
+NS(router_my_exit_policy_is_reject_star)(void)
+{
+  return 0;
+}
+
+static edge_connection_t *last_exitconn = NULL;
+static cached_resolve_t *last_resolve = NULL;
+
+static int
+NS(set_exitconn_info_from_resolve)(edge_connection_t *exitconn,
+                                   const cached_resolve_t *resolve,
+                                   char **hostname_out)
+{
+  last_exitconn = exitconn;
+  last_resolve = (cached_resolve_t *)resolve;
+
+  (void)hostname_out;
+
+  return 0;
+}
+
+static void
+NS(test_main)(void *arg)
+{
+  int retval;
+  int made_pending = 0;
+
+  edge_connection_t *exitconn = create_valid_exitconn();
+  or_circuit_t *on_circ = tor_malloc_zero(sizeof(or_circuit_t));
+
+  cached_resolve_t *resolve_out = NULL;
+
+  cached_resolve_t *cache_entry = tor_malloc_zero(sizeof(cached_resolve_t));
+  cache_entry->magic = CACHED_RESOLVE_MAGIC;
+  cache_entry->state = CACHE_STATE_CACHED;
+  cache_entry->minheap_idx = -1;
+  cache_entry->expire = time(NULL) + 60 * 60;
+
+  (void)arg;
+
+  TO_CONN(exitconn)->address = tor_strdup("torproject.org");
+
+  strlcpy(cache_entry->address, TO_CONN(exitconn)->address,
+          sizeof(cache_entry->address));
+
+  NS_MOCK(router_my_exit_policy_is_reject_star);
+  NS_MOCK(set_exitconn_info_from_resolve);
+
+  dns_init();
+
+  dns_insert_cache_entry(cache_entry);
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            &resolve_out);
+
+  tt_int_op(retval,==,0);
+  tt_int_op(made_pending,==,0);
+  tt_assert(resolve_out == cache_entry);
+
+  tt_assert(last_exitconn == exitconn);
+  tt_assert(last_resolve == cache_entry);
+
+  done:
+  NS_UNMOCK(router_my_exit_policy_is_reject_star);
+  NS_UNMOCK(set_exitconn_info_from_resolve);
+  tor_free(on_circ);
+  tor_free(TO_CONN(exitconn)->address);
+  tor_free(cache_entry->pending_connections);
+  tor_free(cache_entry);
+  return;
+}
+
+#undef NS_SUBMODULE
+
+#define NS_SUBMODULE ASPECT(resolve_impl, cache_miss)
+
+/* Given that there are neither pending nor pre-cached resolve for a given
+ * address, we want dns_resolve_impl() to create a new cached_resolve_t
+ * object, mark it as pending, insert it into the cache, attach the exit
+ * connection to list of pending connections and call launch_resolve()
+ * with the cached_resolve_t object it created.
+ */
+static int
+NS(router_my_exit_policy_is_reject_star)(void)
+{
+  return 0;
+}
+
+static cached_resolve_t *last_launched_resolve = NULL;
+
+static int
+NS(launch_resolve)(cached_resolve_t *resolve)
+{
+  last_launched_resolve = resolve;
+
+  return 0;
+}
+
+static void
+NS(test_main)(void *arg)
+{
+  int retval;
+  int made_pending = 0;
+
+  pending_connection_t *pending_conn = NULL;
+
+  edge_connection_t *exitconn = create_valid_exitconn();
+  or_circuit_t *on_circ = tor_malloc_zero(sizeof(or_circuit_t));
+
+  cached_resolve_t *cache_entry = NULL;
+  cached_resolve_t query;
+
+  (void)arg;
+
+  TO_CONN(exitconn)->address = tor_strdup("torproject.org");
+
+  strlcpy(query.address, TO_CONN(exitconn)->address, sizeof(query.address));
+
+  NS_MOCK(router_my_exit_policy_is_reject_star);
+  NS_MOCK(launch_resolve);
+
+  dns_init();
+
+  retval = dns_resolve_impl(exitconn, 1, on_circ, NULL, &made_pending,
+                            NULL);
+
+  tt_int_op(retval,==,0);
+  tt_int_op(made_pending,==,1);
+
+  cache_entry = dns_get_cache_entry(&query);
+
+  tt_assert(cache_entry);
+
+  pending_conn = cache_entry->pending_connections;
+
+  tt_assert(pending_conn != NULL);
+  tt_assert(pending_conn->conn == exitconn);
+
+  tt_assert(last_launched_resolve == cache_entry);
+  tt_str_op(cache_entry->address,==,TO_CONN(exitconn)->address);
+
+  done:
+  NS_UNMOCK(router_my_exit_policy_is_reject_star);
+  NS_UNMOCK(launch_resolve);
+  tor_free(on_circ);
+  tor_free(TO_CONN(exitconn)->address);
+  if (cache_entry)
+    tor_free(cache_entry->pending_connections);
+  tor_free(cache_entry);
+  tor_free(exitconn);
+  return;
+}
+
+#undef NS_SUBMODULE
+
 struct testcase_t dns_tests[] = {
-   { "clip_ttl", test_dns_clip_ttl, 0, NULL, NULL },
-   { "expiry_ttl", test_dns_expiry_ttl, 0, NULL, NULL },
-   { "resolve_outer", test_dns_resolve_outer, TT_FORK, NULL, NULL },
+   TEST_CASE(clip_ttl),
+   TEST_CASE(expiry_ttl),
+   TEST_CASE(resolve),
+   TEST_CASE_ASPECT(resolve_impl, addr_is_ip_no_need_to_resolve),
+   TEST_CASE_ASPECT(resolve_impl, non_exit),
+   TEST_CASE_ASPECT(resolve_impl, addr_is_invalid_dest),
+   TEST_CASE_ASPECT(resolve_impl, malformed_ptr),
+   TEST_CASE_ASPECT(resolve_impl, cache_hit_pending),
+   TEST_CASE_ASPECT(resolve_impl, cache_hit_cached),
+   TEST_CASE_ASPECT(resolve_impl, cache_miss),
    END_OF_TESTCASES
 };
+
+#undef NS_MODULE
 

@@ -1,8 +1,15 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file circuitstats.c
+ *
+ * \brief Maintains and analyzes statistics about circuit built times, so we
+ * can tell how long we may need to wait for a fast circuit to be constructed.
+ */
 
 #define CIRCUITSTATS_PRIVATE
 

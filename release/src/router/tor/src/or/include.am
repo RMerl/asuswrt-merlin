@@ -63,6 +63,7 @@ LIBTOR_A_SOURCES = \
 	src/or/onion_fast.c				\
 	src/or/onion_tap.c				\
 	src/or/transports.c				\
+	src/or/periodic.c				\
 	src/or/policies.c				\
 	src/or/reasons.c				\
 	src/or/relay.c					\
@@ -92,7 +93,8 @@ src_or_libtor_testing_a_SOURCES = $(LIBTOR_A_SOURCES)
 src_or_tor_SOURCES = src/or/tor_main.c
 AM_CPPFLAGS += -I$(srcdir)/src/or -Isrc/or
 
-src/or/tor_main.o: micro-revision.i
+src/or/tor_main.$(OBJEXT) \
+  src/or/src_or_tor_cov-tor_main.$(OBJEXT): micro-revision.i
 
 AM_CPPFLAGS += -DSHARE_DATADIR="\"$(datadir)\""		\
 		-DLOCALSTATEDIR="\"$(localstatedir)\""	\
@@ -108,7 +110,7 @@ src_or_libtor_testing_a_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 
 src_or_tor_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
 src_or_tor_LDADD = src/or/libtor.a src/common/libor.a \
-	src/common/libor-crypto.a $(LIBDONNA) \
+	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	src/common/libor-event.a src/trunnel/libor-trunnel.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
 	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
@@ -119,13 +121,10 @@ src_or_tor_cov_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_CPPFLAGS)
 src_or_tor_cov_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 src_or_tor_cov_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
 src_or_tor_cov_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
-	src/common/libor-crypto-testing.a $(LIBDONNA) \
+	src/common/libor-crypto-testing.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	src/common/libor-event-testing.a src/trunnel/libor-trunnel-testing.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
 	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
-export TESTING_TOR_BINARY=$(top_builddir)/src/or/tor-cov
-else
-export TESTING_TOR_BINARY=$(top_builddir)/src/or/tor
 endif
 
 ORHEADERS = \
@@ -157,6 +156,7 @@ ORHEADERS = \
 	src/or/dnsserv.h				\
 	src/or/eventdns_tor.h				\
 	src/or/ext_orport.h				\
+	src/or/fallback_dirs.inc			\
 	src/or/fp_pair.h				\
 	src/or/geoip.h					\
 	src/or/entrynodes.h				\
@@ -173,6 +173,7 @@ ORHEADERS = \
 	src/or/onion_tap.h				\
 	src/or/or.h					\
 	src/or/transports.h				\
+	src/or/periodic.h				\
 	src/or/policies.h				\
 	src/or/reasons.h				\
 	src/or/relay.h					\

@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -10,7 +10,8 @@
 #include "crypto_s2k.h"
 #include "crypto_pwbox.h"
 
-#if defined(HAVE_LIBSCRYPT_H)
+#if defined(HAVE_LIBSCRYPT_H) && defined(HAVE_LIBSCRYPT_SCRYPT)
+#define HAVE_LIBSCRYPT
 #include <libscrypt.h>
 #endif
 
@@ -129,7 +130,7 @@ test_crypto_s2k_general(void *arg)
   }
 }
 
-#if defined(HAVE_LIBSCRYPT_H) && defined(HAVE_EVP_PBE_SCRYPT)
+#if defined(HAVE_LIBSCRYPT) && defined(HAVE_EVP_PBE_SCRYPT)
 static void
 test_libscrypt_eq_openssl(void *arg)
 {
@@ -276,7 +277,7 @@ test_crypto_s2k_errors(void *arg)
                                     buf, sizeof(buf), "ABC", 3));
 
   /* Truncated output */
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_new(buf, 50, &sz,
                                                  "ABC", 3, 0));
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_new(buf, 50, &sz,
@@ -287,7 +288,7 @@ test_crypto_s2k_errors(void *arg)
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_new(buf, 29, &sz,
                                               "ABC", 3, S2K_FLAG_NO_SCRYPT));
 
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_make_specifier(buf, 18, 0));
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_make_specifier(buf, 18,
                                                  S2K_FLAG_LOW_MEM));
@@ -308,7 +309,7 @@ test_crypto_s2k_errors(void *arg)
             secret_to_key_derivekey(buf2, sizeof(buf2),
                                     buf, 18, "ABC", 3));
 
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   /* It's a bad scrypt buffer if N would overflow uint64 */
   memset(buf, 0, sizeof(buf));
   buf[0] = 2; /* scrypt */
@@ -329,7 +330,7 @@ test_crypto_scrypt_vectors(void *arg)
   uint8_t spec[64], out[64];
 
   (void)arg;
-#ifndef HAVE_LIBSCRYPT_H
+#ifndef HAVE_LIBSCRYPT
   if (1)
     tt_skip();
 #endif
@@ -507,7 +508,7 @@ test_crypto_pwbox(void *arg)
 
 struct testcase_t slow_crypto_tests[] = {
   CRYPTO_LEGACY(s2k_rfc2440),
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   { "s2k_scrypt", test_crypto_s2k_general, 0, &passthrough_setup,
     (void*)"scrypt" },
   { "s2k_scrypt_low", test_crypto_s2k_general, 0, &passthrough_setup,

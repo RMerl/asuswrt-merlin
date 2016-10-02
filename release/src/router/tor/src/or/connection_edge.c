@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -11,6 +11,9 @@
 #define CONNECTION_EDGE_PRIVATE
 
 #include "or.h"
+
+#include "backtrace.h"
+
 #include "addressmap.h"
 #include "buffers.h"
 #include "channel.h"
@@ -503,6 +506,16 @@ connection_edge_finished_connecting(edge_connection_t *edge_conn)
   return connection_edge_process_inbuf(edge_conn, 1);
 }
 
+/** A list of all the entry_connection_t * objects that are not marked
+ * for close, and are in AP_CONN_STATE_CIRCUIT_WAIT.
+ *
+ * (Right now, we check in several places to make sure that this list is
+ * correct.  When it's incorrect, we'll fix it, and log a BUG message.)
+ */
+static smartlist_t *pending_entry_connections = NULL;
+
+static int untried_pending_connections = 0;
+
 /** Common code to connection_(ap|exit)_about_to_close. */
 static void
 connection_edge_about_to_close(edge_connection_t *edge_conn)
@@ -525,6 +538,8 @@ connection_ap_about_to_close(entry_connection_t *entry_conn)
   edge_connection_t *edge_conn = ENTRY_TO_EDGE_CONN(entry_conn);
   connection_t *conn = ENTRY_TO_CONN(entry_conn);
 
+  connection_edge_about_to_close(edge_conn);
+
   if (entry_conn->socks_request->has_finished == 0) {
     /* since conn gets removed right after this function finishes,
      * there's no point trying to send back a reply at this point. */
@@ -543,6 +558,20 @@ connection_ap_about_to_close(entry_connection_t *entry_conn)
              conn->marked_for_close_file, conn->marked_for_close);
     dnsserv_reject_request(entry_conn);
   }
+
+  if (TO_CONN(edge_conn)->state == AP_CONN_STATE_CIRCUIT_WAIT) {
+    smartlist_remove(pending_entry_connections, entry_conn);
+  }
+
+#if 1
+  /* Check to make sure that this isn't in pending_entry_connections if it
+   * didn't actually belong there. */
+  if (TO_CONN(edge_conn)->type == CONN_TYPE_AP) {
+    connection_ap_warn_and_unmark_if_pending_circ(entry_conn,
+                                                  "about_to_close");
+  }
+#endif
+
   control_event_stream_bandwidth(edge_conn);
   control_event_stream_status(entry_conn, STREAM_EVENT_CLOSED,
                               edge_conn->end_reason);
@@ -711,26 +740,181 @@ connection_ap_expire_beginning(void)
   } SMARTLIST_FOREACH_END(base_conn);
 }
 
-/** Tell any AP streams that are waiting for a new circuit to try again,
- * either attaching to an available circ or launching a new one.
+/**
+ * As connection_ap_attach_pending, but first scans the entire connection
+ * array to see if any elements are missing.
  */
 void
-connection_ap_attach_pending(void)
+connection_ap_rescan_and_attach_pending(void)
 {
   entry_connection_t *entry_conn;
   smartlist_t *conns = get_connection_array();
+
+  if (PREDICT_UNLIKELY(NULL == pending_entry_connections))
+    pending_entry_connections = smartlist_new();
+
   SMARTLIST_FOREACH_BEGIN(conns, connection_t *, conn) {
     if (conn->marked_for_close ||
         conn->type != CONN_TYPE_AP ||
         conn->state != AP_CONN_STATE_CIRCUIT_WAIT)
       continue;
+
     entry_conn = TO_ENTRY_CONN(conn);
+    tor_assert(entry_conn);
+    if (! smartlist_contains(pending_entry_connections, entry_conn)) {
+      log_warn(LD_BUG, "Found a connection %p that was supposed to be "
+               "in pending_entry_connections, but wasn't. No worries; "
+               "adding it.",
+               pending_entry_connections);
+      untried_pending_connections = 1;
+      connection_ap_mark_as_pending_circuit(entry_conn);
+    }
+
+  } SMARTLIST_FOREACH_END(conn);
+
+  connection_ap_attach_pending(1);
+}
+
+#ifdef DEBUGGING_17659
+#define UNMARK() do {                           \
+    entry_conn->marked_pending_circ_line = 0;   \
+    entry_conn->marked_pending_circ_file = 0;   \
+  } while (0)
+#else
+#define UNMARK() do { } while (0)
+#endif
+
+/** Tell any AP streams that are listed as waiting for a new circuit to try
+ * again, either attaching to an available circ or launching a new one.
+ *
+ * If <b>retry</b> is false, only check the list if it contains at least one
+ * streams that we have not yet tried to attach to a circuit.
+ */
+void
+connection_ap_attach_pending(int retry)
+{
+  if (PREDICT_UNLIKELY(!pending_entry_connections)) {
+    return;
+  }
+
+  if (untried_pending_connections == 0 && !retry)
+    return;
+
+  /* Don't allow modifications to pending_entry_connections while we are
+   * iterating over it. */
+  smartlist_t *pending = pending_entry_connections;
+  pending_entry_connections = smartlist_new();
+
+  SMARTLIST_FOREACH_BEGIN(pending,
+                          entry_connection_t *, entry_conn) {
+    connection_t *conn = ENTRY_TO_CONN(entry_conn);
+    tor_assert(conn && entry_conn);
+    if (conn->marked_for_close) {
+      UNMARK();
+      continue;
+    }
+    if (conn->magic != ENTRY_CONNECTION_MAGIC) {
+      log_warn(LD_BUG, "%p has impossible magic value %u.",
+               entry_conn, (unsigned)conn->magic);
+      UNMARK();
+      continue;
+    }
+    if (conn->state != AP_CONN_STATE_CIRCUIT_WAIT) {
+      log_warn(LD_BUG, "%p is no longer in circuit_wait. Its current state "
+               "is %s. Why is it on pending_entry_connections?",
+               entry_conn,
+               conn_state_to_string(conn->type, conn->state));
+      UNMARK();
+      continue;
+    }
+
     if (connection_ap_handshake_attach_circuit(entry_conn) < 0) {
       if (!conn->marked_for_close)
         connection_mark_unattached_ap(entry_conn,
                                       END_STREAM_REASON_CANT_ATTACH);
     }
-  } SMARTLIST_FOREACH_END(conn);
+
+    if (! conn->marked_for_close &&
+        conn->type == CONN_TYPE_AP &&
+        conn->state == AP_CONN_STATE_CIRCUIT_WAIT) {
+      if (!smartlist_contains(pending_entry_connections, entry_conn)) {
+        smartlist_add(pending_entry_connections, entry_conn);
+        continue;
+      }
+    }
+
+    UNMARK();
+  } SMARTLIST_FOREACH_END(entry_conn);
+
+  smartlist_free(pending);
+  untried_pending_connections = 0;
+}
+
+/** Mark <b>entry_conn</b> as needing to get attached to a circuit.
+ *
+ * And <b>entry_conn</b> must be in AP_CONN_STATE_CIRCUIT_WAIT,
+ * should not already be pending a circuit.  The circuit will get
+ * launched or the connection will get attached the next time we
+ * call connection_ap_attach_pending().
+ */
+void
+connection_ap_mark_as_pending_circuit_(entry_connection_t *entry_conn,
+                                       const char *fname, int lineno)
+{
+  connection_t *conn = ENTRY_TO_CONN(entry_conn);
+  tor_assert(conn->state == AP_CONN_STATE_CIRCUIT_WAIT);
+  tor_assert(conn->magic == ENTRY_CONNECTION_MAGIC);
+  if (conn->marked_for_close)
+    return;
+
+  if (PREDICT_UNLIKELY(NULL == pending_entry_connections))
+    pending_entry_connections = smartlist_new();
+
+  if (PREDICT_UNLIKELY(smartlist_contains(pending_entry_connections,
+                                          entry_conn))) {
+    log_warn(LD_BUG, "What?? pending_entry_connections already contains %p! "
+             "(Called from %s:%d.)",
+             entry_conn, fname, lineno);
+#ifdef DEBUGGING_17659
+    const char *f2 = entry_conn->marked_pending_circ_file;
+    log_warn(LD_BUG, "(Previously called from %s:%d.)\n",
+             f2 ? f2 : "<NULL>",
+             entry_conn->marked_pending_circ_line);
+#endif
+    log_backtrace(LOG_WARN, LD_BUG, "To debug, this may help");
+    return;
+  }
+
+#ifdef DEBUGGING_17659
+  entry_conn->marked_pending_circ_line = (uint16_t) lineno;
+  entry_conn->marked_pending_circ_file = fname;
+#endif
+
+  untried_pending_connections = 1;
+  smartlist_add(pending_entry_connections, entry_conn);
+}
+
+/** Mark <b>entry_conn</b> as no longer waiting for a circuit. */
+void
+connection_ap_mark_as_non_pending_circuit(entry_connection_t *entry_conn)
+{
+  if (PREDICT_UNLIKELY(NULL == pending_entry_connections))
+    return;
+  UNMARK();
+  smartlist_remove(pending_entry_connections, entry_conn);
+}
+
+/* DOCDOC */
+void
+connection_ap_warn_and_unmark_if_pending_circ(entry_connection_t *entry_conn,
+                                              const char *where)
+{
+  if (pending_entry_connections &&
+      smartlist_contains(pending_entry_connections, entry_conn)) {
+    log_warn(LD_BUG, "What was %p doing in pending_entry_connections in %s?",
+             entry_conn, where);
+    connection_ap_mark_as_non_pending_circuit(entry_conn);
+  }
 }
 
 /** Tell any AP streams that are waiting for a one-hop tunnel to
@@ -851,12 +1035,13 @@ connection_ap_detach_retriable(entry_connection_t *conn,
      * a tunneled directory connection, then just attach it. */
     ENTRY_TO_CONN(conn)->state = AP_CONN_STATE_CIRCUIT_WAIT;
     circuit_detach_stream(TO_CIRCUIT(circ),ENTRY_TO_EDGE_CONN(conn));
-    return connection_ap_handshake_attach_circuit(conn);
+    connection_ap_mark_as_pending_circuit(conn);
   } else {
+    CONNECTION_AP_EXPECT_NONPENDING(conn);
     ENTRY_TO_CONN(conn)->state = AP_CONN_STATE_CONTROLLER_WAIT;
     circuit_detach_stream(TO_CIRCUIT(circ),ENTRY_TO_EDGE_CONN(conn));
-    return 0;
   }
+  return 0;
 }
 
 /** Check if <b>conn</b> is using a dangerous port. Then warn and/or
@@ -905,6 +1090,7 @@ connection_ap_rewrite_and_attach_if_allowed(entry_connection_t *conn,
   const or_options_t *options = get_options();
 
   if (options->LeaveStreamsUnattached) {
+    CONNECTION_AP_EXPECT_NONPENDING(conn);
     ENTRY_TO_CONN(conn)->state = AP_CONN_STATE_CONTROLLER_WAIT;
     return 0;
   }
@@ -1454,10 +1640,12 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
     /* If we were given a circuit to attach to, try to attach. Otherwise,
      * try to find a good one and attach to that. */
     int rv;
-    if (circ)
-      rv =  connection_ap_handshake_attach_chosen_circuit(conn, circ, cpath);
-    else
-      rv = connection_ap_handshake_attach_circuit(conn);
+    if (circ) {
+      rv = connection_ap_handshake_attach_chosen_circuit(conn, circ, cpath);
+    } else {
+      connection_ap_mark_as_pending_circuit(conn);
+      rv = 0;
+    }
 
     /* If the above function returned 0 then we're waiting for a circuit.
      * if it returned 1, we're attached.  Both are okay.  But if it returned
@@ -1554,6 +1742,7 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
      * Also, a fetch could have been requested if the onion address was not
      * found in the cache previously. */
     if (refetch_desc || !rend_client_any_intro_points_usable(entry)) {
+      connection_ap_mark_as_non_pending_circuit(conn);
       base_conn->state = AP_CONN_STATE_RENDDESC_WAIT;
       log_info(LD_REND, "Unknown descriptor %s. Fetching.",
           safe_str_client(rend_data->onion_address));
@@ -1564,11 +1753,7 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
     /* We have the descriptor so launch a connection to the HS. */
     base_conn->state = AP_CONN_STATE_CIRCUIT_WAIT;
     log_info(LD_REND, "Descriptor is here. Great.");
-    if (connection_ap_handshake_attach_circuit(conn) < 0) {
-      if (!base_conn->marked_for_close)
-        connection_mark_unattached_ap(conn, END_STREAM_REASON_CANT_ATTACH);
-      return -1;
-    }
+    connection_ap_mark_as_pending_circuit(conn);
     return 0;
   }
 
@@ -2324,12 +2509,7 @@ connection_ap_make_link(connection_t *partner,
   control_event_stream_status(conn, STREAM_EVENT_NEW, 0);
 
   /* attaching to a dirty circuit is fine */
-  if (connection_ap_handshake_attach_circuit(conn) < 0) {
-    if (!base_conn->marked_for_close)
-      connection_mark_unattached_ap(conn, END_STREAM_REASON_CANT_ATTACH);
-    return NULL;
-  }
-
+  connection_ap_mark_as_pending_circuit(conn);
   log_info(LD_APP,"... application connection created and linked.");
   return conn;
 }
@@ -2771,8 +2951,8 @@ connection_exit_begin_conn(cell_t *cell, circuit_t *circ)
       return 0;
     }
     /* Make sure to get the 'real' address of the previous hop: the
-     * caller might want to know whether his IP address has changed, and
-     * we might already have corrected base_.addr[ess] for the relay's
+     * caller might want to know whether the remote IP address has changed,
+     * and we might already have corrected base_.addr[ess] for the relay's
      * canonical IP address. */
     if (or_circ && or_circ->p_chan)
       address = tor_strdup(channel_get_actual_remote_address(or_circ->p_chan));
@@ -3476,5 +3656,14 @@ circuit_clear_isolation(origin_circuit_t *circ)
     tor_free(circ->socks_password);
   }
   circ->socks_username_len = circ->socks_password_len = 0;
+}
+
+/** Free all storage held in module-scoped variables for connection_edge.c */
+void
+connection_edge_free_all(void)
+{
+  untried_pending_connections = 0;
+  smartlist_free(pending_entry_connections);
+  pending_entry_connections = NULL;
 }
 

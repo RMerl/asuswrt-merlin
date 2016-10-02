@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -146,12 +146,12 @@ static void connection_write_to_buf(const char *string, size_t len,
 /* DOCDOC connection_write_to_buf_zlib */
 static void connection_write_to_buf_zlib(const char *string, size_t len,
                                          dir_connection_t *conn, int done);
-static INLINE void
+static inline void
 connection_write_to_buf(const char *string, size_t len, connection_t *conn)
 {
   connection_write_to_buf_impl_(string, len, conn, 0);
 }
-static INLINE void
+static inline void
 connection_write_to_buf_zlib(const char *string, size_t len,
                              dir_connection_t *conn, int done)
 {
@@ -163,7 +163,7 @@ static size_t connection_get_inbuf_len(connection_t *conn);
 /* DOCDOC connection_get_outbuf_len */
 static size_t connection_get_outbuf_len(connection_t *conn);
 
-static INLINE size_t
+static inline size_t
 connection_get_inbuf_len(connection_t *conn)
 {
   IF_HAS_BUFFEREVENT(conn, {
@@ -173,7 +173,7 @@ connection_get_inbuf_len(connection_t *conn)
   }
 }
 
-static INLINE size_t
+static inline size_t
 connection_get_outbuf_len(connection_t *conn)
 {
   IF_HAS_BUFFEREVENT(conn, {
@@ -186,14 +186,57 @@ connection_get_outbuf_len(connection_t *conn)
 connection_t *connection_get_by_global_id(uint64_t id);
 
 connection_t *connection_get_by_type(int type);
-connection_t *connection_get_by_type_addr_port_purpose(int type,
-                                                   const tor_addr_t *addr,
-                                                   uint16_t port, int purpose);
+MOCK_DECL(connection_t *,connection_get_by_type_addr_port_purpose,(int type,
+                                                  const tor_addr_t *addr,
+                                                  uint16_t port, int purpose));
 connection_t *connection_get_by_type_state(int type, int state);
 connection_t *connection_get_by_type_state_rendquery(int type, int state,
                                                      const char *rendquery);
-dir_connection_t *connection_dir_get_by_purpose_and_resource(
-                                           int state, const char *resource);
+smartlist_t *connection_dir_list_by_purpose_and_resource(
+                                                  int purpose,
+                                                  const char *resource);
+smartlist_t *connection_dir_list_by_purpose_resource_and_state(
+                                                  int purpose,
+                                                  const char *resource,
+                                                  int state);
+
+#define CONN_LEN_AND_FREE_TEMPLATE(sl) \
+  STMT_BEGIN                           \
+    int len = smartlist_len(sl);       \
+    smartlist_free(sl);                \
+    return len;                        \
+  STMT_END
+
+/** Return a count of directory connections that are fetching the item
+ * described by <b>purpose</b>/<b>resource</b>. */
+static inline int
+connection_dir_count_by_purpose_and_resource(
+                                             int purpose,
+                                             const char *resource)
+{
+  smartlist_t *conns = connection_dir_list_by_purpose_and_resource(
+                                                                   purpose,
+                                                                   resource);
+  CONN_LEN_AND_FREE_TEMPLATE(conns);
+}
+
+/** Return a count of directory connections that are fetching the item
+ * described by <b>purpose</b>/<b>resource</b>/<b>state</b>. */
+static inline int
+connection_dir_count_by_purpose_resource_and_state(
+                                                   int purpose,
+                                                   const char *resource,
+                                                   int state)
+{
+  smartlist_t *conns =
+    connection_dir_list_by_purpose_resource_and_state(
+                                                      purpose,
+                                                      resource,
+                                                      state);
+  CONN_LEN_AND_FREE_TEMPLATE(conns);
+}
+
+#undef CONN_LEN_AND_FREE_TEMPLATE
 
 int any_other_active_or_conns(const or_connection_t *this_conn);
 
@@ -209,6 +252,10 @@ void assert_connection_ok(connection_t *conn, time_t now);
 int connection_or_nonopen_was_started_here(or_connection_t *conn);
 void connection_dump_buffer_mem_stats(int severity);
 void remove_file_if_very_old(const char *fname, time_t now);
+
+void clock_skew_warning(const connection_t *conn, long apparent_skew,
+                        int trusted, log_domain_mask_t domain,
+                        const char *received, const char *source);
 
 #ifdef USE_BUFFEREVENTS
 int connection_type_uses_bufferevent(connection_t *conn);
@@ -235,6 +282,13 @@ void connection_buckets_note_empty_ts(uint32_t *timestamp_var,
                                       int tokens_before,
                                       size_t tokens_removed,
                                       const struct timeval *tvnow);
+MOCK_DECL(STATIC int,connection_connect_sockaddr,
+                                            (connection_t *conn,
+                                             const struct sockaddr *sa,
+                                             socklen_t sa_len,
+                                             const struct sockaddr *bindaddr,
+                                             socklen_t bindaddr_len,
+                                             int *socket_error));
 #endif
 
 #endif

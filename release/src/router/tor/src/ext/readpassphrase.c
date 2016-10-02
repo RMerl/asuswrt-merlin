@@ -142,6 +142,7 @@ restart:
 		p = buf;
 		while ((nr = read(input, &ch, 1)) == 1 && ch != '\n' && ch != '\r') {
 			if (p < end) {
+#if 0
 				if ((flags & RPP_SEVENBIT))
 					ch &= 0x7f;
 				if (isalpha(ch)) {
@@ -150,6 +151,7 @@ restart:
 					if ((flags & RPP_FORCEUPPER))
 						ch = (char)toupper(ch);
 				}
+#endif
 				*p++ = ch;
 			}
 		}

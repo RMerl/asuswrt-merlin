@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2015, The Tor Project, Inc. */
+/* Copyright (c) 2014-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include <math.h>
@@ -461,11 +461,11 @@ test_scheduler_compare_channels(void *arg)
 
   /*
    * This is to test the different-policies case, which uses the policy
-   * cast to an intptr_t as an arbitrary but definite thing to compare.
+   * cast to an uintptr_t as an arbitrary but definite thing to compare.
    */
   mock_cgp_val_1 = tor_malloc_zero(16);
   mock_cgp_val_2 = tor_malloc_zero(16);
-  if ( ((intptr_t) mock_cgp_val_1) > ((intptr_t) mock_cgp_val_2) ) {
+  if ( ((uintptr_t) mock_cgp_val_1) > ((uintptr_t) mock_cgp_val_2) ) {
     void *tmp = mock_cgp_val_1;
     mock_cgp_val_1 = mock_cgp_val_2;
     mock_cgp_val_2 = tmp;

@@ -1,5 +1,13 @@
-/* Copyright (c) 2013-2015, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file fp_pair.c
+ *
+ * \brief Manages data structures for associating pairs of fingerprints. Used
+ * to handle combinations of identity/signing-key fingerprints for
+ * authorities.
+ **/
 
 #include "or.h"
 #include "fp_pair.h"
@@ -21,7 +29,7 @@ struct fp_pair_map_s {
  */
 
 /** Compare fp_pair_entry_t objects by key value. */
-static INLINE int
+static inline int
 fp_pair_map_entries_eq(const fp_pair_map_entry_t *a,
                        const fp_pair_map_entry_t *b)
 {
@@ -29,7 +37,7 @@ fp_pair_map_entries_eq(const fp_pair_map_entry_t *a,
 }
 
 /** Return a hash value for an fp_pair_entry_t. */
-static INLINE unsigned int
+static inline unsigned int
 fp_pair_map_entry_hash(const fp_pair_map_entry_t *a)
 {
   tor_assert(sizeof(a->key) == DIGEST_LEN*2);
