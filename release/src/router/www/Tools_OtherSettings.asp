@@ -75,6 +75,8 @@ var _layer_order = "";
 var FromObject = "0";
 var lastClickedObj = 0;
 var disk_flag=0;
+var machine_name = '<% get_machine_name(); %>';
+
 window.onresize = cal_panel_block;
 
 
@@ -104,8 +106,7 @@ function initial() {
 	if (document.form.usb_idle_exclude.value.indexOf("i") != -1)
 		document.form.usb_idle_exclude_i.checked = true;
 
-	if ((productid == "RT-AC56U") || (productid == "RT-AC68U") || (productid == "RT-AC87U") ||
-	    (productid == "RT-AC3200") || (productid == "RT-AC88U") || (productid == "RT-AC3100") || (productid == "RT-AC5300")) {
+	if (machine_name.search("arm") != -1) {
 		document.getElementById("ct_established_default").innerHTML = "Default: 2400";
 		showhide("memory_mgmt_tr" ,1);
 	}
@@ -148,14 +149,14 @@ function get_disk_tree(){
 }
 function get_layer_items(layer_order){
 	$.ajax({
-    		url: '/gettree.asp?layer_order='+layer_order,
-    		dataType: 'script',
-    		error: function(xhr){
-    			;
-    		},
-    		success: function(){
+		url: '/gettree.asp?layer_order='+layer_order,
+		dataType: 'script',
+		error: function(xhr){
+			;
+		},
+		success: function(){
 				get_tree_items(treeitems);
-  			}
+			}
 		});
 }
 function get_tree_items(treeitems){
@@ -206,9 +207,9 @@ function BuildTree(){
 		layer = get_layer(ItemBarCode.substring(1));
 		if(layer == 3){
 			if(ItemText.length > 21)
-		 		short_ItemText = ItemText.substring(0,30)+"...";
-		 	else
-		 		short_ItemText = ItemText;
+				short_ItemText = ItemText.substring(0,30)+"...";
+			else
+				short_ItemText = ItemText;
 		}
 		else
 			short_ItemText = ItemText;
