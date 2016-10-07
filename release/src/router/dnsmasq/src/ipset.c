@@ -100,7 +100,7 @@ void ipset_init(void)
   version = version * 256 + (split ? atoi(split) : 0);
   split = strtok(NULL, ".");
   version = version * 256 + (split ? atoi(split) : 0);
-  old_kernel = (version < KERNEL_VERSION(2,6,37));
+  old_kernel = (version < KERNEL_VERSION(2,6,32));
   
   if (old_kernel && (ipset_sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) != -1)
     return;
