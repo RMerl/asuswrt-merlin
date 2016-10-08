@@ -138,6 +138,10 @@ else
 	rm -f $(INSTALLDIR)/rom/etc/openssl.cnf
 endif
 
+ifneq ($(RTCONFIG_BCMARM),y)
+	rm -f $(INSTALLDIR)/rom/etc/modprobe.conf
+endif
+
 ifeq ($(RTCONFIG_RALINK_RT3883),y)
 	mkdir -p $(INSTALLDIR)/rom/wlan
 	cp -rf wlan/RT3092_PCIe_LNA_2T2R_ALC_V1_2.bin $(INSTALLDIR)/rom/wlan/
