@@ -15,8 +15,6 @@ pc_insert() {
 	sed -i "/$PATTERN/a$CONTENT" $3
 }
 
-
-
 # This function looks for a string, and replace it with a different string inside a given file
 # $1: the line to locate, $2: the line to replace with, $3: Config file where to insert
 pc_replace() {
@@ -29,4 +27,11 @@ pc_replace() {
 # $1 The line to append at the end, $2: Config file where to append
 pc_append() {
 	echo "$1" >> $2
+}
+
+# This function will delete a line containing a given string inside a given file
+# $1 The line to locate, $2: Config file where to delete
+pc_delete() {
+	PATTERN=$(_quote "$1")
+	sed -i "/$PATTERN/d" $2
 }
