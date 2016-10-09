@@ -33,3 +33,8 @@ ncurses/unctrl.c
 obj_s
 objects
 
+ncursesw6-config.1
+*.pc
+gen-pkgconfig
+misc/pc-files
+

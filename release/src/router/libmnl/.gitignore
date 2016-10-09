@@ -1,0 +1,12 @@
+Makefile
+autom4te.cache
+config.h
+doxygen.cfg
+.deps
+libmnl.pc
+libtool
+.libs
+*.lo
+*.la
+staged
+

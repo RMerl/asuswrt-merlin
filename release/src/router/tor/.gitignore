@@ -22,4 +22,6 @@ src/test/test-ntor-cl
 src/tools/tor-checkkey
 src/tools/tor-gencert
 src/tools/tor-resolve
-
+scripts/maint/checkOptionDocs.pl
+scripts/maint/updateVersions.pl
+src/config/torrc.minimal

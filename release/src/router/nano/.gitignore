@@ -7,3 +7,5 @@ doc/nanorc.sample
 src/.deps
 po/Makefile.in
 po/POTFILES
+autom4te.cache
+
