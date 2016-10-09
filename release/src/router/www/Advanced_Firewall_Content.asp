@@ -529,9 +529,9 @@ function updateDateTime(){
 	   					</tr>
 	  					</thead>		  
           					<tr>
-          						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,3);"><#FirewallConfig_LanWanSrcIP_itemname#></a></th>
+          					<th><a class="hintstyle"><#FirewallConfig_LanWanSrcIP_itemname#></a></th>
             					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
-            					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,3);"><#FirewallConfig_LanWanDstIP_itemname#></a></th>
+            					<th><a class="hintstyle"><#FirewallConfig_LanWanDstIP_itemname#></a></th>
             					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
             					<th><#IPConnection_VServerProto_itemname#></th>
             					<th><#list_add_delete#></th>
