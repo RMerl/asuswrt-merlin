@@ -15151,6 +15151,7 @@ struct ej_handler ej_handlers[] = {
 	{ "get_vserver_array", ej_get_vserver_array},
 	{ "get_upnp_array", ej_get_upnp_array},
 	{ "get_route_array", ej_get_route_array},
+	{ "get_tcclass_array", ej_tcclass_dump_array},
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif

@@ -665,3 +665,76 @@ ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 }
 #endif
 
+
+int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
+	FILE *fp;
+	int ret = 0;
+
+	if (nvram_get_int("qos_enable") == 0) {
+		ret += websWrite(wp, "var tcdata_br0_array = [[]];\nvar tcdata_eth0_array = [[]];\n");
+		return ret;
+	}
+
+	if (nvram_get_int("qos_type") == 1) {
+		system("tc -s class show dev br0 > /tmp/tcclass.txt");
+
+		ret += websWrite(wp, "var tcdata_br0_array = [\n");
+
+		fp = fopen("/tmp/tcclass.txt","r");
+		if (!fp) {
+			ret += websWrite(wp, "[]];\n");
+		} else {
+			ret += tcclass_dump(fp, wp);
+			fclose(fp);
+		}
+		unlink("/tmp/tcclass.txt");
+	}
+
+	if (nvram_get_int("qos_type") != 2) {	// Must not be BW Limiter
+	        system("tc -s class show dev eth0 > /tmp/tcclass.txt");
+
+	        ret += websWrite(wp, "var tcdata_eth0_array = [\n");
+
+	        fp = fopen("/tmp/tcclass.txt","r");
+	        if (!fp) {
+	                ret += websWrite(wp, "[]];\n");
+	        } else {
+	                ret += tcclass_dump(fp, wp);
+			fclose(fp);
+	        }
+		unlink("/tmp/tcclass.txt");
+	}
+	return ret;
+}
+
+
+int tcclass_dump(FILE *fp, webs_t wp) {
+	char buf[256];
+	int tcclass = 0;
+	unsigned long long traffic;
+	int ret = 0;
+
+	while(fgets(buf, 256, fp)) {
+		if (tcclass == 0) {
+			if (sscanf(buf, "class htb 1:%d %*s", &tcclass) == 1) {
+				if (tcclass < 10) {
+					tcclass = 0;
+					continue;
+				}
+				if ((nvram_get_int("qos_type") == 0) && (tcclass == 60)) {
+					tcclass = 0;	// Skip 1:60 in tQoS, it's BCM's download class
+					continue;
+				}
+
+				ret += websWrite(wp, "[\"%d\",", tcclass);
+			}
+		} else {
+			if (sscanf(buf, " Sent %llu bytes %*d pkt (dropped %*d, overlimits %*d requeues %*d)", &traffic) == 1) {
+				ret += websWrite(wp, " \"%llu\"],\n", traffic);
+				tcclass = 0;
+			}
+		}
+	}
+	ret += websWrite(wp, "[]];\n");
+	return ret;
+}
