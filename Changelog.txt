@@ -2,13 +2,15 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.63 (xx-xxx-xxxx)
+   - NEW: QoS Statistics page, showing the amount of traffic assigned to
+          each available classes.
    - CHANGED: Updated Tor to 0.2.8.8
    - CHANGED: Updated OUI database.
    - CHANGED: ipset was updated to version 6.29 on ARM models.
-              IMPORTANT: this means you will probably need to 
+              IMPORTANT: this means you will probably need to
               update your script to the new syntax.
               There has been no change to MIPS models, due to their
-              older kernel.  (original code by Shibby and Victek, 
+              older kernel.  (original code by Shibby and Victek,
               Asuswrt port by john9527)
 
 
