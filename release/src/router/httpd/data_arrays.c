@@ -709,30 +709,38 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 
 
 int tcclass_dump(FILE *fp, webs_t wp) {
-	char buf[256];
+	char buf[256], ratebps[16], ratepps[16];
 	int tcclass = 0;
+	int stage = 0;
 	unsigned long long traffic;
 	int ret = 0;
 
-	while(fgets(buf, 256, fp)) {
-		if (tcclass == 0) {
-			if (sscanf(buf, "class htb 1:%d %*s", &tcclass) == 1) {
-				if (tcclass < 10) {
-					tcclass = 0;
-					continue;
+	while (fgets(buf, 256, fp)) {
+		switch (stage) {
+			case 0:	// class
+				if (sscanf(buf, "class htb 1:%d %*s", &tcclass) == 1) {
+					// Skip roots 1:1 and 1:2, and skip 1:60 in tQoS since it's BCM's download class
+					if ( (tcclass < 10) || ((nvram_get_int("qos_type") == 0) && (tcclass == 60))) {
+						continue;
+					}
+					ret += websWrite(wp, "[\"%d\",", tcclass);
+					stage = 1;
 				}
-				if ((nvram_get_int("qos_type") == 0) && (tcclass == 60)) {
-					tcclass = 0;	// Skip 1:60 in tQoS, it's BCM's download class
-					continue;
+				break;
+			case 1: // Total data
+				if (sscanf(buf, " Sent %llu bytes %*d pkt %*s)", &traffic) == 1) {
+					ret += websWrite(wp, " \"%llu\",", traffic);
+					stage = 2;
 				}
-
-				ret += websWrite(wp, "[\"%d\",", tcclass);
-			}
-		} else {
-			if (sscanf(buf, " Sent %llu bytes %*d pkt (dropped %*d, overlimits %*d requeues %*d)", &traffic) == 1) {
-				ret += websWrite(wp, " \"%llu\"],\n", traffic);
-				tcclass = 0;
-			}
+				break;
+			case 2: // Rates
+				if (sscanf(buf, " rate %15s %15s backlog %*s", ratebps, ratepps) == 2) {
+					ret += websWrite(wp, " \"%s\", \"%s\"],\n", ratebps, ratepps);
+					stage = 0;
+				}
+				break;
+			default:
+				break;
 		}
 	}
 	ret += websWrite(wp, "[]];\n");

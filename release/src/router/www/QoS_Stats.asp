@@ -125,7 +125,7 @@ function initial(){
 }
 
 function setup_data(data_array, ctx) {
-	var code = '<table colspan="2">';
+	var code = '<table><thead style="text-align:left;"><tr><th style="padding-left:5px;">Class</th><th style="padding-left:5px;">Total</th><th style="padding-left:20px;">Rate</th><th style="padding-left:20px;">Packet rate</th></tr></thead>';
 	var values_array = [];
 	var labels_array = [];
 
@@ -168,7 +168,10 @@ function setup_data(data_array, ctx) {
 			unit = " GB";
 		}
 
-		code += '<tr><td style="word-wrap:break-word;padding-left:5px;padding-right:5px;background-color:'+color[i]+';margin-right:10px;line-height:20px;">' + label + '</td><td style="padding-left:5px;">' + value.toFixed(2) + unit + '</td></tr>';
+		code += '<tr><td style="word-wrap:break-word;padding-left:5px;padding-right:5px;background-color:'+color[i]+';margin-right:10px;line-height:20px;">' + label + '</td>';
+		code += '<td style="padding-left:5px;">' + value.toFixed(2) + unit + '</td>';
+		code += '<td style="padding-left:20px;">' + data_array[i][2].replace(/([0-9])([a-zA-Z])/g, '$1 $2') + '</td>';
+		code += '<td style="padding-left:20px;">' + data_array[i][3].replace(/([0-9])([a-zA-Z])/g, '$1 $2') + '</td></tr>';
 	}
 	code += '</table>';
 
@@ -219,7 +222,7 @@ function setup_data(data_array, ctx) {
       <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
         <tr>
           <td valign="top">
-            <table width="760px" border="0" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">
+            <table width="760px" border="0" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTitle" id="FormTitle">
                 <tbody>
                 <tr bgcolor="#4D595D">
                 <td valign="top">
@@ -228,17 +231,18 @@ function setup_data(data_array, ctx) {
 		        <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 			<div id="limiter_notice" style="display:none;font-size:125%;color:#FFCC00;">Statistics not available in Bandwidth Limiter mode.</div>
 			<div id="no_qos_notice" style="display:none;font-size:125%;color:#FFCC00;">QoS is not enabled.</div>
-			<table colspan="2">
+			<table>
 				<tr id="dl_tr">
-					<td style="padding-right:50px;"><div>Download</div><canvas id="pie_chart_dl" width="200" height="200"></canvas></td>
+					<td style="padding-right:50px;font-size:125%;color:#FFCC00;"><div>Download</div><canvas id="pie_chart_dl" width="200" height="200"></canvas></td>
 					<td><span id="legend_dl"></span></td>
 				</tr>
+				<tr style="height:50px;"><td colspan="2">&nbsp;</td></tr>
                                 <tr id="ul_tr">
-                                        <td style="padding-right:50px;"><div>Upload</div><canvas id="pie_chart_ul" width="200" height="200"></canvas></td>
+                                        <td style="padding-right:50px;font-size:125%;color:#FFCC00;"><div>Upload</div><canvas id="pie_chart_ul" width="200" height="200"></canvas></td>
                                         <td><span id="legend_ul"></span></td>
                                 </tr>
 			</table>
-			<div class="apply_gen" style="padding-top: 25px;"><input type="button" onClick="location.href=location.href" value="<#896#>" class="button_gen"></div>
+			<div class="apply_gen" style="padding-top: 25px;"><input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen"></div>
 		</td>
 		</tr>
 	        </tbody>
