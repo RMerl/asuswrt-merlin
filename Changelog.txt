@@ -3,7 +3,11 @@ Asuswrt-Merlin Changelog
 
 380.63 (xx-xxx-xxxx)
    - NEW: QoS Statistics page, showing the amount of traffic assigned to
-          each available classes.
+          each available classes, as well as the current throughput.
+   - NEW: Charts added to Traffic Monitor's monthly and daily pages.
+          Note that you can click on legend items to reveal/hide the
+          DL/UL data.  Howevering over a bar will display the exact
+          value for that bar.
    - CHANGED: Updated Tor to 0.2.8.8
    - CHANGED: Updated OUI database.
    - CHANGED: ipset was updated to version 6.29 on ARM models.
