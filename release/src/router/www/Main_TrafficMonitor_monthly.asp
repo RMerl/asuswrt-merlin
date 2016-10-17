@@ -185,13 +185,13 @@ function draw_chart(){
 		labels: barLabels,
 		datasets: [
 			{data: barDataDl,
-			label: "Monthly DL",
+			label: "Monthly Download (GB)",
 			borderWidth: 1,
 			backgroundColor: "#4C8FC0",
 			borderColor: "#000000"
 		},
 			{data: barDataUl,
-			label: "Monthly UL",
+			label: "Monthly Upload (GB)",
 			borderWidth: 1,
 			backgroundColor: "#2B6692",
 			borderColor: "#000000"
