@@ -12,6 +12,8 @@
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -33,6 +35,10 @@ if (typeof(monthly_history) == 'undefined') {
 	monthly_history = [];
 	rstats_busy = 1;
 }
+
+var barDataUl = [];
+var barDataDl = [];
+var barLabels = [];
 
 function save()
 {
@@ -84,6 +90,11 @@ function redraw()
 
 		grid += makeRow(((rows & 1) ? 'odd' : 'even'), ymText(yr, mo), rescale(h[1]), rescale(h[2]), rescale(h[1] + h[2]));
 		++rows;
+		var dl = h[1] / 1024 / 1024;
+		var ul = h[2] / 1024 / 1024;
+		barDataDl.unshift(dl.toFixed(2));
+		barDataUl.unshift(ul.toFixed(2));
+		barLabels.unshift(months[mo] + ' ' + yr);
 	}
 
 	if(rows == 0)
@@ -129,6 +140,7 @@ function init()
 	initDate('ym');
 	monthly_history.sort(cmpHist);
 	redraw();
+	draw_chart();
 }
 
 function switchPage(page){
@@ -147,6 +159,53 @@ function switchPage(page){
 	else
 		return false;
 }
+
+function draw_chart(){
+
+	if (barLabels.length == 0) return;
+
+	var ctx = document.getElementById("chart").getContext("2d");
+	Chart.defaults.global.defaultFontColor = "#CCC";
+
+	var barOptions = {
+		segmentShowStroke : false,
+		segmentStrokeColor : "#000",
+		animationEasing : "easeOutQuart",
+		animationSteps : 100,
+		animateScale : true,
+		tooltips: {
+			callbacks: {
+				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+				label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] + " GB"; },
+			}
+		},
+	};
+
+	var barDataset = {
+		labels: barLabels,
+		datasets: [
+			{data: barDataDl,
+			label: "Monthly DL",
+			borderWidth: 1,
+			backgroundColor: "#4C8FC0",
+			borderColor: "#000000"
+		},
+			{data: barDataUl,
+			label: "Monthly UL",
+			borderWidth: 1,
+			backgroundColor: "#2B6692",
+			borderColor: "#000000"
+		}]
+	};
+
+	var myBarChart = new Chart(ctx, {
+		type: 'bar',
+		options: barOptions,
+		data: barDataset
+	});
+
+}
+
 </script>
 </head>
 
@@ -226,10 +285,14 @@ function switchPage(page){
 							</td>
 	        				</tr>
 						</table></td></tr>
-
 	        				<tr>
 	          					<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
 	        				</tr>
+						<tr>
+							<td>
+								<div><canvas id="chart" height="120"></div>
+							</td>
+						</tr>
 						<tr>
 							<td>
 								<div id='bwm-monthly-grid' style='float:left'></div>
