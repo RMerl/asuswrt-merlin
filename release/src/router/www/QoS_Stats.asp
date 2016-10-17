@@ -36,7 +36,7 @@ if ("<% nvram_get("qos_enable"); %>" == 0) {	// QoS disabled
 
 
 if (qos_mode == 2) {
-	var category_title = ["unknown", "<#Adaptive_Game#>", "<#Adaptive_Stream#>","<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>", "Default"];
+	var category_title = ["Net Control Packets", "<#Adaptive_Game#>", "<#Adaptive_Stream#>","<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>", "Default"];
 	var cat_id_array = [[9,20], [8], [4], [0,5,6,15,17], [13,24], [1,3,14], [7,10,11,21,23], []];
 
 	var bwdpi_app_rulelist_row = bwdpi_app_rulelist.split("<");
