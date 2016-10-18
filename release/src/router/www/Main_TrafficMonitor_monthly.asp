@@ -41,37 +41,6 @@ var myBarChart = null;
 
 Chart.defaults.global.defaultFontColor = "#CCC";
 
-var barOptions = {
-	segmentShowStroke : false,
-	segmentStrokeColor : "#000",
-	animationEasing : "easeOutQuart",
-	animationSteps : 100,
-	animateScale : true,
-	tooltips: {
-		callbacks: {
-			title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
-			label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toFixed(2)) + " " + snames[scale]; },
-		}
-	},
-	scales: {
-		xAxes: [{
-			gridLines: { display: false }
-		}],
-		yAxes: [{
-			scaleLabel: {
-				display: true,
-				labelString: snames[scale]
-				},
-			ticks: {
-				callback: function(value, index, values) {
-					return comma(value);
-				}
-			}
-		}]
-	}
-};
-
-
 function save()
 {
 	cookie.set('monthly', scale, 31);
@@ -203,6 +172,37 @@ function draw_chart(){
 
 	var ctx = document.getElementById("chart").getContext("2d");
 
+	var barOptions = {
+		segmentShowStroke : false,
+		segmentStrokeColor : "#000",
+		animationEasing : "easeOutQuart",
+		animationSteps : 100,
+		animateScale : true,
+		tooltips: {
+			callbacks: {
+				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toFixed(2)) + " " + snames[scale]; },
+			}
+		},
+		scales: {
+			xAxes: [{
+				gridLines: { display: false }
+			}],
+			yAxes: [{
+				gridLines: { color: "#282828" },
+				scaleLabel: {
+					display: true,
+					labelString: snames[scale]
+					},
+				ticks: {
+					callback: function(value, index, values) {
+						return comma(value);
+					}
+				}
+			}]
+		}
+	};
+
 	var barDataset = {
 		labels: barLabels,
 		datasets: [
@@ -255,62 +255,83 @@ function draw_chart(){
 
 <!--=====Beginning of Main Menu=====-->
 	<td valign="top" width="202">
-	 	<div id="mainMenu"></div>
-	 	<div id="subMenu"></div>
+		<div id="mainMenu"></div>
+		<div id="subMenu"></div>
 	</td>
 
-    	<td valign="top">
+	<td valign="top">
 		<div id="tabMenu" class="submenuBlock"></div>
 <!--===================================Beginning of Main Content===========================================-->
-      	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-	 	<tr>
-         	<td align="left"  valign="top">
+	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+		<tr>
+		<td align="left"  valign="top">
 			<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 				<tbody>
 				<!--===================================Beginning of QoS Content===========================================-->
-	      		<tr>
-	      			<td bgcolor="#4D595D" valign="top">
-	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
+			<tr>
+				<td bgcolor="#4D595D" valign="top">
+					<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
 						<tr><td><table width="100%" >
-	        				<tr>
+						<tr>
 							<td  class="formfonttitle" align="left">
 								<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 							</td>
-		          				<td>
-     								<div align="right">
-			    						<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
-												<!--option><#switchpage#></option-->
-											<optgroup label="Global">
-												<option value="1"><#menu4_2_1#></option>
-												<option value="2"><#menu4_2_2#></option>
-												<option value="3"><#menu4_2_3#></option>
-												<option value="4" selected>Monthly</option>
-											</optgroup>
-											</select>&nbsp;&nbsp;&nbsp;
-
-										<select class="input_option" style="width:100px" onchange='changeDate(this, "ym")' id='dafm'>
-			    							<option value=0><#Date#>:</option>
-											<option value=0>yyyy-mm</option>
-											<option value=1>mm-yyyy</option>
-											<option value=2>mmm yyyy</option>
-											<option value=3>mm.yyyy</option>
-										</select>
-
-			    						<select style="width:80px" class="input_option" onchange='changeScale(this)' id='scale'>
-			    							<option value=0>KB</option>
-			    							<option value=1>MB</option>
-			    							<option value=2 selected>GB</option>
-			    						</select>
+							<td>
+								<div align="right">
+									<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
+										<!--option><#switchpage#></option-->
+										<optgroup label="Global">
+											<option value="1"><#menu4_2_1#></option>
+											<option value="2"><#menu4_2_2#></option>
+											<option value="3"><#menu4_2_3#></option>
+											<option value="4" selected>Monthly</option>
+										</optgroup>
+									</select>
 								</div>
 							</td>
-	        				</tr>
-						</table></td></tr>
-	        				<tr>
-	          					<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
-	        				</tr>
+						</tr>
+					</table></td></tr>
+
+					<tr>
+						<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
+					</tr>
+						<tr>
+							<td bgcolor="#4D595D">
+								<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+									<thead>
+										<tr>
+											<td colspan="2"><#t2BC#></td>
+										</tr>
+									</thead>
+									<tbody>
+										<tr class='even'>
+											<th width="40%"><#Date#></th>
+											<td>
+												<select class="input_option" style="width:130px" onchange='changeDate(this, "ymd")' id='dafm'>
+													<option value=0>yyyy-mm-dd</option>
+													<option value=1>mm-dd-yyyy</option>
+													<option value=2>mm, dd, yyyy</option>
+													<option value=3>dd.mm.yyyy</option>
+												</select>
+											</td>
+										</tr>
+										<tr class='even'>
+											<th width="40%"><#Scale#></th>
+											<td>
+												<select style="width:70px" class="input_option" onchange='changeScale(this)' id='scale'>
+													<option value=0>KB</option>
+													<option value=1>MB</option>
+													<option value=2 selected>GB</option>
+												</select>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
 						<tr>
 							<td>
-								<div><canvas id="chart" height="120"></div>
+								<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="120"></div>
 							</td>
 						</tr>
 						<tr>

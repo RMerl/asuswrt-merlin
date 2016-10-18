@@ -47,6 +47,7 @@ var barOptions = {
 			gridLines: { display: false }
 		}],
 		yAxes: [{
+			gridLines: { color: "#282828" },
 			scaleLabel: {
 				display: false,
 				labelString: snames[scale]
@@ -324,7 +325,7 @@ function draw_chart(){
 
 						<tr>
 							<td>
-								<div><canvas id="chart" height="140"></div>
+								<div style="background-color:#2f3e44;border-radius:10px;width:730px;"><canvas id="chart" height="140"></div>
 							</td>
 						</tr>
 						<tr>
