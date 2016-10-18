@@ -25,9 +25,40 @@ var daily_history = [];
 <% backup_nvram("wan_ifname,lan_ifname,rstats_enable,cstats_enable"); %>
 <% bandwidth("daily"); %>
 
-var barDataUl = [];
-var barDataDl = [];
-var barLabels = [];
+var barDataUl, barDataDl, barLabels;
+var myBarChart = null;
+
+Chart.defaults.global.defaultFontColor = "#CCC";
+
+var barOptions = {
+	segmentShowStroke : false,
+	segmentStrokeColor : "#000",
+	animationEasing : "easeOutQuart",
+	animationSteps : 100,
+	animateScale : true,
+	tooltips: {
+		callbacks: {
+			title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+			label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toFixed(2)) + " " + snames[scale]; },
+		}
+	},
+	scales: {
+		xAxes: [{
+			gridLines: { display: false }
+		}],
+		yAxes: [{
+			scaleLabel: {
+				display: false,
+				labelString: snames[scale]
+				},
+			ticks: {
+				callback: function(value, index, values) {
+					return comma(value);
+				}
+			}
+		}]
+	}
+};
 
 function redraw(){
 	var h;
@@ -40,6 +71,10 @@ function redraw(){
 	var getYMD = function(n){
 		return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];
 	}
+
+	barDataUl = [];
+	barDataDl = [];
+	barLabels = [];
 
 	if (daily_history.length > 0) {
 		ymd = getYMD(daily_history[0][0]);
@@ -71,11 +106,9 @@ function redraw(){
 			lastd += h[1];
 			lastu += h[2];
 		}
-               
-		var dl = h[1] / 1024;
-		var ul = h[2] / 1024;
-		barDataDl.unshift(dl.toFixed(2));
-		barDataUl.unshift(ul.toFixed(2));
+
+		barDataDl.unshift(h[1] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
+		barDataUl.unshift(h[2] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
 		barLabels.unshift(months[ymd[1]] + ' ' + ymd[2]);
 
 	}
@@ -87,6 +120,8 @@ function redraw(){
 	E('last-dn').innerHTML = rescale(lastd);
 	E('last-up').innerHTML = rescale(lastu);
 	E('last-total').innerHTML = rescale(lastu + lastd);
+
+	draw_chart();
 }
 
 function init(){
@@ -125,7 +160,6 @@ function init(){
 	initDate('ymd');
 	daily_history.sort(cmpHist);
 	redraw();
-	draw_chart();
 	if(bwdpi_support){
 		document.getElementById('content_title').innerHTML = "<#menu5_3_2#> - <#traffic_monitor#>";
 	}
@@ -155,41 +189,27 @@ function draw_chart(){
 	else
 		border = 1;
 
+	if (myBarChart != null) myBarChart.destroy();
 	var ctx = document.getElementById("chart").getContext("2d");
-	Chart.defaults.global.defaultFontColor = "#CCC";
-
-	var barOptions = {
-		segmentShowStroke : false,
-		segmentStrokeColor : "#000",
-		animationEasing : "easeOutQuart",
-		animationSteps : 100,
-		animateScale : true,
-		tooltips: {
-			callbacks: {
-				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
-				label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] + " MB"; },
-			}
-		},
-	};
 
 	var barDataset = {
 		labels: barLabels,
 		datasets: [
 			{data: barDataDl,
-			label: "Daily DL (MB)",
+			label: "Daily DL (" + snames[scale] + ")",
 			borderWidth: border,
 			backgroundColor: "#4C8FC0",
 			borderColor: "#000000"
 		},
 			{data: barDataUl,
-			label: "Daily UL (MB)",
+			label: "Daily UL (" + snames[scale] +")",
 			borderWidth: border,
 			backgroundColor: "#4CC08F",
 			borderColor: "#000000"
 		}]
 	};
 
-	var myBarChart = new Chart(ctx, {
+	myBarChart = new Chart(ctx, {
 		type: 'bar',
 		options: barOptions,
 		data: barDataset
@@ -267,11 +287,6 @@ function draw_chart(){
         			<tr>
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
-				<tr>
-					<td>
-						<div><canvas id="chart" height="140"></div>
-					</td>
-				</tr>
 						<tr>
 							<td bgcolor="#4D595D">
 								<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -307,6 +322,11 @@ function draw_chart(){
 							</td>
 						</tr>
 
+						<tr>
+							<td>
+								<div><canvas id="chart" height="140"></div>
+							</td>
+						</tr>
 						<tr>
 							<td>
 								<div id='bwm-daily-grid' style='float:left'></div>

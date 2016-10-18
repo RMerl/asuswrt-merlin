@@ -36,9 +36,41 @@ if (typeof(monthly_history) == 'undefined') {
 	rstats_busy = 1;
 }
 
-var barDataUl = [];
-var barDataDl = [];
-var barLabels = [];
+var barDataUl, barDataDl, barLabels;
+var myBarChart = null;
+
+Chart.defaults.global.defaultFontColor = "#CCC";
+
+var barOptions = {
+	segmentShowStroke : false,
+	segmentStrokeColor : "#000",
+	animationEasing : "easeOutQuart",
+	animationSteps : 100,
+	animateScale : true,
+	tooltips: {
+		callbacks: {
+			title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+			label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toFixed(2)) + " " + snames[scale]; },
+		}
+	},
+	scales: {
+		xAxes: [{
+			gridLines: { display: false }
+		}],
+		yAxes: [{
+			scaleLabel: {
+				display: true,
+				labelString: snames[scale]
+				},
+			ticks: {
+				callback: function(value, index, values) {
+					return comma(value);
+				}
+			}
+		}]
+	}
+};
+
 
 function save()
 {
@@ -77,6 +109,10 @@ function redraw()
 	block = '';
 	gn = 0;
 
+	barDataUl = [];
+	barDataDl = [];
+	barLabels = [];
+
 	grid = '<table width="730px" class="FormTable_NWM">';
 	grid += "<tr><th style=\"height:30px;\"><#Date#></th>";
 	grid += "<th><#tm_reception#></th>";
@@ -90,10 +126,9 @@ function redraw()
 
 		grid += makeRow(((rows & 1) ? 'odd' : 'even'), ymText(yr, mo), rescale(h[1]), rescale(h[2]), rescale(h[1] + h[2]));
 		++rows;
-		var dl = h[1] / 1024 / 1024;
-		var ul = h[2] / 1024 / 1024;
-		barDataDl.unshift(dl.toFixed(2));
-		barDataUl.unshift(ul.toFixed(2));
+
+		barDataDl.unshift(h[1] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
+		barDataUl.unshift(h[2] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
 		barLabels.unshift(months[mo] + ' ' + yr);
 	}
 
@@ -101,6 +136,8 @@ function redraw()
 		grid +='<tr><td style="color:#FFCC00;" colspan="4"><#IPConnection_VSList_Norule#></td></tr>';
 
 	E('bwm-monthly-grid').innerHTML = grid + '</table>';
+
+	draw_chart();
 }
 
 function init()
@@ -140,7 +177,6 @@ function init()
 	initDate('ym');
 	monthly_history.sort(cmpHist);
 	redraw();
-	draw_chart();
 }
 
 function switchPage(page){
@@ -161,49 +197,34 @@ function switchPage(page){
 }
 
 function draw_chart(){
-
 	if (barLabels.length == 0) return;
 
-	var ctx = document.getElementById("chart").getContext("2d");
-	Chart.defaults.global.defaultFontColor = "#CCC";
+	if (myBarChart != null) myBarChart.destroy();
 
-	var barOptions = {
-		segmentShowStroke : false,
-		segmentStrokeColor : "#000",
-		animationEasing : "easeOutQuart",
-		animationSteps : 100,
-		animateScale : true,
-		tooltips: {
-			callbacks: {
-				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
-				label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] + " GB"; },
-			}
-		},
-	};
+	var ctx = document.getElementById("chart").getContext("2d");
 
 	var barDataset = {
 		labels: barLabels,
 		datasets: [
 			{data: barDataDl,
-			label: "Monthly Download (GB)",
+			label: "Monthly DL (" + snames[scale] + ")",
 			borderWidth: 1,
 			backgroundColor: "#4C8FC0",
 			borderColor: "#000000"
 		},
 			{data: barDataUl,
-			label: "Monthly Upload (GB)",
+			label: "Monthly UL (" + snames[scale] +")",
 			borderWidth: 1,
 			backgroundColor: "#2B6692",
 			borderColor: "#000000"
 		}]
 	};
 
-	var myBarChart = new Chart(ctx, {
+	myBarChart = new Chart(ctx, {
 		type: 'bar',
 		options: barOptions,
 		data: barDataset
 	});
-
 }
 
 </script>
@@ -276,7 +297,6 @@ function draw_chart(){
 										</select>
 
 			    						<select style="width:80px" class="input_option" onchange='changeScale(this)' id='scale'>
-			    							<option value=0><#Scale#>:</option>
 			    							<option value=0>KB</option>
 			    							<option value=1>MB</option>
 			    							<option value=2 selected>GB</option>
