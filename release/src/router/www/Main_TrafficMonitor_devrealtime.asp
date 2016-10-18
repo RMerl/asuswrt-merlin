@@ -501,31 +501,30 @@ function switchPage(page){
 
 <!--=====Beginning of Main Menu=====-->
 	<td valign="top" width="202">
-	 	<div id="mainMenu"></div>
-	 	<div id="subMenu"></div>
+		<div id="mainMenu"></div>
+		<div id="subMenu"></div>
 	</td>
 
-    	<td valign="top">
+	<td valign="top">
 		<div id="tabMenu" class="submenuBlock"></div>
 <!--===================================Beginning of Main Content===========================================-->
-      	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-	 	<tr>
-         		<td align="left"  valign="top">
+	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+		<tr>
+			<td align="left"  valign="top">
 				<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 				<tbody>
-				<!--===================================Beginning of QoS Content===========================================-->
-	      		<tr>
-	      			<td bgcolor="#4D595D" valign="top">
-	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
-						<tr><td><table width="100%" >
-        			<tr>
+				<tr>
+					<td bgcolor="#4D595D" valign="top">
+						<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
+							<tr><td><table width="100%" >
+							<tr>
 
-						<td  class="formfonttitle" align="left">
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
-									</td>
-          				<td>
-     							<div align="right">
-			    					<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
+								<td  class="formfonttitle" align="left">
+									<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
+								</td>
+								<td>
+									<div align="right">
+										<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 											<optgroup label="Global">
 												<option value="1"><#menu4_2_1#></option>
 												<option value="2"><#menu4_2_2#></option>
@@ -533,13 +532,12 @@ function switchPage(page){
 												<option value="4">Monthly</option>
 											</optgroup>
 										</select>
-
 									</div>
 								</td>
-        			</tr>
-					</table></td></tr>
+							</tr>
+						</table></td></tr>
 
-					<tr>
+						<tr>
 						<td>
 							<div class="formfontdesc">
 								<p>Click on a column header to sort by that field.
@@ -547,9 +545,9 @@ function switchPage(page){
 							</div>
 						</td>
 					</tr>
-        			<tr>
-          				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
-        			</tr>
+					<tr>
+						<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
+					</tr>
 					<tr>
 						<td bgcolor="#4D595D">
 							<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -576,7 +574,7 @@ function switchPage(page){
 											<input type="radio" name="_f_show_options" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
 											<input type="radio" name="_f_show_options" class="input" checked value="0" onclick="update_visibility();"><#checkbox_No#>
 										</td>
-				 					</tr>
+									</tr>
 									<tr id="adv0">
 										<th>List of IPs to display (comma-separated):</th>
 										<td>
@@ -591,17 +589,17 @@ function switchPage(page){
 									</tr>
 									<tr id="adv2">
 										<th>Display hostnames</th>
-						        		<td>
+										<td>
 											<input type="radio" name="_f_show_hostnames" class="input" value="1" checked onclick="update_display('hostnames',1);"><#checkbox_Yes#>
 											<input type="radio" name="_f_show_hostnames" class="input" value="0" onclick="update_display('hostnames',0);"><#checkbox_No#>
-							   			</td>
+										</td>
 									</tr>
 									<tr id="adv3">
 										<th>Display IPs with no traffic</th>
-						        		<td>
+										<td>
 											<input type="radio" name="_f_show_zero" class="input" value="1" checked onclick="update_display('zero',1);"><#checkbox_Yes#>
 											<input type="radio" name="_f_show_zero" class="input" value="0" onclick="update_display('zero',0);"><#checkbox_No#>
-							   			</td>
+										</td>
 									</tr>
 								</tbody>
 							</table>
@@ -613,9 +611,9 @@ function switchPage(page){
 						</td>
 					</tr>
 
-     					</table>
-	     				</td>
-	     			</tr>
+					</table>
+					</td>
+				</tr>
 				</tbody>
 				</table>
 			</td>
@@ -623,7 +621,7 @@ function switchPage(page){
 		</table>
 		</div>
 	</td>
-    	<td width="10" align="center" valign="top">&nbsp;</td>
+	<td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
 
