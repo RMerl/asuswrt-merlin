@@ -49,6 +49,7 @@ if (qos_mode == 2) {
 }
 
 
+
 var color = ["#B3645B","#B98F53","#C6B36A","#849E75","#2B6692","#7C637A","#4C8FC0", "#6C604F"];
 
 <% get_tcclass_array(); %>;
@@ -86,6 +87,13 @@ var pieOptions = {
 		}
 	},
 
+}
+
+function comma(n){
+	n = '' + n;
+	var p = n;
+	while ((n = n.replace(/(\d+)(\d{3})/g, '$1,$2')) != p) p = n;
+	return n;
 }
 
 function initial(){
@@ -132,6 +140,7 @@ function setup_data(data_array, ctx) {
 	for (i=0; i < data_array.length-1; i++){
 		var value = parseInt(data_array[i][1]);
 		var tcclass = parseInt(data_array[i][0]);
+		var rate;
 
 		if (qos_mode == 2) {
 			var index = 0;
@@ -170,8 +179,10 @@ function setup_data(data_array, ctx) {
 
 		code += '<tr><td style="word-wrap:break-word;padding-left:5px;padding-right:5px;background-color:'+color[i]+';margin-right:10px;line-height:20px;">' + label + '</td>';
 		code += '<td style="padding-left:5px;">' + value.toFixed(2) + unit + '</td>';
-		code += '<td style="padding-left:20px;">' + data_array[i][2].replace(/([0-9])([a-zA-Z])/g, '$1 $2') + '</td>';
-		code += '<td style="padding-left:20px;">' + data_array[i][3].replace(/([0-9])([a-zA-Z])/g, '$1 $2') + '</td></tr>';
+		rate = comma(data_array[i][2]);
+		code += '<td style="padding-left:20px;">' + rate.replace(/([0-9,])([a-zA-Z])/g, '$1 $2') + '</td>';
+		rate = comma(data_array[i][3]);
+		code += '<td style="padding-left:20px;">' + rate.replace(/([0-9,])([a-zA-Z])/g, '$1 $2') + '</td></tr>';
 	}
 	code += '</table>';
 
