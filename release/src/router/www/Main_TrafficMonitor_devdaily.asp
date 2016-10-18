@@ -12,6 +12,8 @@
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -20,7 +22,6 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script type='text/javascript'>
 daily_history = [];
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
@@ -32,6 +33,41 @@ var filteripe_before = [];
 var dateFormat = 1;
 var scale = 1;
 
+var pie_obj_ul = null;
+var pie_obj_dl = null;
+var labels_array;
+var values_ul_array, values_dl_array;
+
+var color = ["#B3645B","#B98F53","#C6B36A","#849E75","#2B6692","#7C637A","#4C8FC0", "#6C604F",
+             "#683222","#644726","#833236","#425238","#163346","#524142","#384767", "#386040"];
+
+var pieOptions = {
+	segmentShowStroke : false,
+	segmentStrokeColor : "#000",
+	animationEasing : "easeOutQuart",
+	animationSteps : 100,
+	animateScale : true,
+	responsive: false,
+	legend : {
+		display : true,
+		position : "top",
+		labels : {
+			fontColor: "#CCC",
+			boxWidth: 12,
+		},
+	},
+	tooltips: {
+		callbacks: {
+			title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+			label: function (tooltipItem, data) {
+				var value = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+				var total = eval(data.datasets[tooltipItem.datasetIndex].data.join("+"));
+				return comma(value.toFixed(2)) + " " + snames[scale] + ' ( ' + parseFloat(value * 100 / total).toFixed(2) + '% )';
+			},
+		}
+	},
+
+}
 
 
 function redraw() {
@@ -44,6 +80,11 @@ function redraw() {
 
 	var style_open;
 	var style_close;
+
+	values_ul_array = [];
+	values_dl_array = [];
+	labels_array = [];
+	var valuesObj = new Object();
 
 	var getYMD = function(n){
 		return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];
@@ -131,11 +172,19 @@ function redraw() {
 				if (clientObj) {
 					clientName = (clientObj.nickName == "") ? clientObj.hostname : clientObj.nickName;
 					h = "<b>" + clientName.shorter(24) + '</b> <small>(' + b[1] + ')</small>';
+				} else {
+					clientName = b[1];	// fallback for chart labels
 				}
 			}
 
 			var ymd = getYMD(b[0]);
 			d = [ymdText(ymd[0], ymd[1], ymd[2]), h, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3])];
+
+			if (!valuesObj.hasOwnProperty(clientName)){
+				valuesObj[clientName] = [0,0];
+			}
+			valuesObj[clientName][0] += b[2];
+			valuesObj[clientName][1] += b[3];
 
 			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymdText(ymd[0], ymd[1], ymd[2]), style_open + h + style_close, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]), b[1]);
 			++rows;
@@ -150,6 +199,29 @@ function redraw() {
 		grid +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
 
 	E('bwm-daily-grid').innerHTML = grid + '</table>';
+
+	for (var property in valuesObj) {
+		if (valuesObj.hasOwnProperty(property)) {
+			labels_array.push(property);
+			values_dl_array.push(valuesObj[property][0] / Math.pow(1024, scale));
+			values_ul_array.push(valuesObj[property][1] / Math.pow(1024, scale));
+		}
+	}
+
+	var max = 16;
+	if (labels_array.length > max) {
+		for (var i = max; i < values_dl_array.length; i++) {
+			values_dl_array[max-1] += values_dl_array[i];
+			values_ul_array[max-1] += values_ul_array[i];
+		}
+		values_dl_array = values_dl_array.slice(0,max);
+		values_ul_array = values_ul_array.slice(0,max);
+		labels_array = labels_array.slice(0,max);
+		labels_array[max-1] = "Others";
+		document.getElementById("trunc_dl").style.display="";
+		document.getElementById("trunc_ul").style.display="";
+	}
+	draw_chart();
 }
 
 function update_display(option, value) {
@@ -408,11 +480,49 @@ function updateClientList(e){
 			if(isJsonChanged(originData, originDataTmp)){
 				redraw();
 			}
-
-			setTimeout("updateClientList();", 3000);
 		}
 	});
 }
+
+function draw_chart(){
+	if (labels_array.length == 0) return;
+
+	if (pie_obj_dl != null) pie_obj_dl.destroy();
+	if (pie_obj_ul != null) pie_obj_ul.destroy();
+	var ctx_dl = document.getElementById("pie_chart_dl").getContext("2d");
+	var ctx_ul = document.getElementById("pie_chart_ul").getContext("2d");
+
+	var pieData_dl = {labels: labels_array,
+		datasets: [
+			{data: values_dl_array,
+			backgroundColor: color,
+			hoverBackgroundColor: color,
+			borderColor: "#444",
+			borderWidth: "1"
+		}]
+	};
+	var pieData_ul = {labels: labels_array,
+		datasets: [
+			{data: values_ul_array,
+			backgroundColor: color,
+			hoverBackgroundColor: color,
+			borderColor: "#444",
+			borderWidth: "1"
+		}]
+	};
+
+	pie_obj_dl = new Chart(ctx_dl,{
+		type: 'pie',
+		data: pieData_dl,
+		options: pieOptions
+	});
+	pie_obj_ul = new Chart(ctx_ul,{
+		type: 'pie',
+		data: pieData_ul,
+		options: pieOptions
+	});
+}
+
 
 </script>
 </head>
@@ -454,19 +564,18 @@ function updateClientList(e){
          		<td align="left"  valign="top">
 				<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 				<tbody>
-				<!--===================================Beginning of QoS Content===========================================-->
-	      		<tr>
+				<tr>
 	      			<td bgcolor="#4D595D" valign="top">
 	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
 						<tr><td><table width="100%" >
-        				<tr>
+							<tr>
 
-							<td  class="formfonttitle" align="left">
-								<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
-							</td>
-          					<td>
-     							<div align="right">
-			    					<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
+								<td  class="formfonttitle" align="left">
+									<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
+								</td>
+          							<td>
+     									<div align="right">
+			    							<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 											<optgroup label="Global">
 												<option value="1"><#menu4_2_1#></option>
 												<option value="2"><#menu4_2_2#></option>
@@ -476,29 +585,29 @@ function updateClientList(e){
 										</select>
 									</div>
 								</td>
-        				</tr>
-					</table></td></tr>
+        						</tr>
+						</table></td></tr>
 
-					<tr>
-						<td>
-							<div class="formfontdesc">
-								<p>Click on a host to monitor that host's current activity.
-							</div>
-						</td>
-					</tr>
+						<tr>
+							<td>
+								<div class="formfontdesc">
+									<p>Click on a host to monitor that host's current activity.
+								</div>
+							</td>
+						</tr>
 
-        			<tr>
-          				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
-        			</tr>
-					<tr>
-						<td bgcolor="#4D595D">
-							<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-								<thead>
+        					<tr>
+          						<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
+        					</tr>
+						<tr>
+							<td bgcolor="#4D595D">
+								<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+									<thead>
 									<tr>
 										<td colspan="2">Display Options</td>
 									</tr>
-								</thead>
-								<tbody>
+									</thead>
+									<tbody>
 									<tr class='even'>
 										<th width="40%"><#Date#></th>
 										<td>
@@ -581,6 +690,23 @@ function updateClientList(e){
 						</tr>
 						<tr>
 							<td>
+								<table width="730"  border="0" align="left" cellpadding="4" cellspacing="0" class="FormTable">
+								<thead>
+									<tr>
+										<td colspan="2">Charts</td>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td style="padding-right:50px;color:#FFCC00;"><div><span style="font-size: 125%;">Download</span><span id="trunc_dl" style="padding-left:50px;display:none;">(Chart truncated to 15 items)</span></div><canvas id="pie_chart_dl" height="300"></canvas></td>
+										<td style="padding-right:50px;color:#FFCC00;"><div><span style="font-size: 125%;">Upload</span><span id="trunc_ul" style="padding-left:50px;display:none;">(Chart truncated to 15 items)</span></div><canvas id="pie_chart_ul" height="300"></canvas></td>
+									</tr>
+								</tbody>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<td bgcolor="#4D595D">
 								<div id='bwm-daily-grid' style='float:left'></div>
 							</td>
 						</tr>
