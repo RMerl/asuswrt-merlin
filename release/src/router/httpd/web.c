@@ -4411,6 +4411,11 @@ unsigned int getpeerip(webs_t wp){
 	socklen_t peerlen = sizeof(struct sockaddr);
 	struct sockaddr_in *sa;
 
+#ifdef RTCONFIG_HTTPS
+	if(do_ssl)
+		fd = ssl_stream_fd;
+	else
+#endif
 	fd = fileno((FILE *)wp);
 	ret = getpeername(fd, (struct sockaddr *)&peer, &peerlen);
 	sa = (struct sockaddr_in *)&peer;
@@ -4420,7 +4425,7 @@ unsigned int getpeerip(webs_t wp){
 		return (unsigned int)sa->sin_addr.s_addr;
 	}
 	else{
-		csprintf("error: %d %d \n", ret, errno);
+		printf("error: %d %d \n", ret, errno);
 		return 0;
 	}
 }
