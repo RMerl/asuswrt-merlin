@@ -37,7 +37,7 @@ if (typeof(monthly_history) == 'undefined') {
 }
 
 var barDataUl, barDataDl, barLabels;
-var myBarChart = null;
+var myBarChart;
 
 Chart.defaults.global.defaultFontColor = "#CCC";
 
@@ -168,7 +168,7 @@ function switchPage(page){
 function draw_chart(){
 	if (barLabels.length == 0) return;
 
-	if (myBarChart != null) myBarChart.destroy();
+	if (myBarChart != undefined) myBarChart.destroy();
 
 	var ctx = document.getElementById("chart").getContext("2d");
 

@@ -31,10 +31,8 @@ var filterip = [];
 var filteripe = [];
 var scale = 2;
 
-var pie_obj_ul = null;
-var pie_obj_dl = null;
-var labels_array;
-var values_ul_array, values_dl_array;
+var pie_obj_ul, pie_obj_dl;
+var labels_array, values_ul_array, values_dl_array;
 
 var color = ["#B3645B","#B98F53","#C6B36A","#849E75","#2B6692","#7C637A","#4C8FC0", "#6C604F",
              "#683222","#644726","#833236","#425238","#163346","#524142","#384767", "#386040"];
@@ -478,8 +476,8 @@ function updateClientList(e){
 function draw_chart(){
 	if (labels_array.length == 0) return;
 
-	if (pie_obj_dl != null) pie_obj_dl.destroy();
-	if (pie_obj_ul != null) pie_obj_ul.destroy();
+	if (pie_obj_dl != undefined) pie_obj_dl.destroy();
+	if (pie_obj_ul != undefined) pie_obj_ul.destroy();
 	var ctx_dl = document.getElementById("pie_chart_dl").getContext("2d");
 	var ctx_ul = document.getElementById("pie_chart_ul").getContext("2d");
 

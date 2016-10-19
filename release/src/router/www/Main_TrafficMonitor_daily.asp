@@ -26,7 +26,7 @@ var daily_history = [];
 <% bandwidth("daily"); %>
 
 var barDataUl, barDataDl, barLabels;
-var myBarChart = null;
+var myBarChart;
 
 Chart.defaults.global.defaultFontColor = "#CCC";
 
@@ -190,7 +190,7 @@ function draw_chart(){
 	else
 		border = 1;
 
-	if (myBarChart != null) myBarChart.destroy();
+	if (myBarChart != undefined) myBarChart.destroy();
 	var ctx = document.getElementById("chart").getContext("2d");
 
 	var barDataset = {
