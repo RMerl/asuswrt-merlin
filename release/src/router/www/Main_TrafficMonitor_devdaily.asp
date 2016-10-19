@@ -61,7 +61,10 @@ var pieOptions = {
 			label: function (tooltipItem, data) {
 				var value = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
 				var total = eval(data.datasets[tooltipItem.datasetIndex].data.join("+"));
-				return comma(value.toFixed(2)) + " " + snames[scale] + ' ( ' + parseFloat(value * 100 / total).toFixed(2) + '% )';
+				if (total == 3.14159)
+					return "N/A";
+				else
+					return comma(value.toFixed(2)) + " " + snames[scale] + ' ( ' + parseFloat(value * 100 / total).toFixed(2) + '% )';
 			},
 		}
 	},
@@ -484,12 +487,16 @@ function updateClientList(e){
 }
 
 function draw_chart(){
-	if (labels_array.length == 0) return;
-
 	if (pie_obj_dl != undefined) pie_obj_dl.destroy();
 	if (pie_obj_ul != undefined) pie_obj_ul.destroy();
 	var ctx_dl = document.getElementById("pie_chart_dl").getContext("2d");
 	var ctx_ul = document.getElementById("pie_chart_ul").getContext("2d");
+
+	if (labels_array.length == 0) {
+		values_dl_array = [3.14159];
+		values_ul_array = [3.14159];
+		labels_array = ["No Clients"];
+	}
 
 	var pieData_dl = {labels: labels_array,
 		datasets: [
