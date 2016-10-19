@@ -22,6 +22,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type='text/javascript'>
 monthly_history = [];
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
@@ -236,7 +237,7 @@ function _validate_iplist(o, event) {
 		update_filter();
 		return true;
 	} else {
-		return validate_iplist(o, event);
+		return validator.ipList(o, event);
 	}
 }
 

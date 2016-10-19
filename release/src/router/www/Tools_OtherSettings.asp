@@ -14,13 +14,14 @@
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/validator.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
-<script type="text/javascript" src="/js/jquery.js"></script>
-<script type="text/javascript" src="/disk_functions.js"></script>
+<script language="JavaSCript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/disk_functions.js"></script>
+
 <style type="text/css">
 /* folder tree */
 .mask_bg{
@@ -760,17 +761,17 @@ function done_validating(action){
 							<input type="radio" name="cstats_all" class="input" value="1" <% nvram_match_x("", "cstats_all", "1", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_Yes#>
 							<input type="radio" name="cstats_all" class="input" value="0" <% nvram_match_x("", "cstats_all", "0", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_No#>
 						</td>
-        				</tr>
+					</tr>
 					<tr id="cstats_inc_tr">
 						<th>List of IPs to monitor (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onKeyPress="return validate_iplist(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_include"); %>">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onKeyPress="return validator.ipList(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_include"); %>">
 						</td>
 					</tr>
 					<tr id="cstats_exc_tr">
 						<th>List of IPs to exclude (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onKeyPress="return validate_iplist(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_exclude"); %>">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onKeyPress="return validator.ipList(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_exclude"); %>">
 						</td>
 					</tr>
 
