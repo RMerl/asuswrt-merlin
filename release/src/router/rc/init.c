@@ -6317,6 +6317,7 @@ int init_main(int argc, char *argv[])
 #endif
 
 		run_custom_script("init-start", NULL);
+		setup_passwd();		// Re-apply now that jffs is up, in case of custom configs
 		use_custom_config("fstab", "/etc/fstab");
 		run_postconf("fstab", "/etc/fstab");
 		state = SIGUSR2;	/* START */
