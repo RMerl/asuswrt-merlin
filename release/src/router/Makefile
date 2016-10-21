@@ -4284,7 +4284,7 @@ ipset_arm/stamp-h1: libmnl
 	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	libmnl_CFLAGS="-I$(TOP)/libmnl/staged/usr/include" \
-	libmnl_LIBS="-L$(TOP)/libmnl/staged/usr/lib -lmnl" \
+	libmnl_LIBS="-L$(TOP)/libmnl/staged/usr/lib -l:libmnl.so" \
 	$(CONFIGURE) --prefix=/usr --with-kmod=no
 	touch ipset_arm/stamp-h1
 
