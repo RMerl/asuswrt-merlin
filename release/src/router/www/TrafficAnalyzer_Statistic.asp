@@ -1467,12 +1467,18 @@ function applyRule(){
 function setHover_css(){
 	$('#top_client_table tr').hover(
 		function(){		//onMouseOver
-			if(this.children[1].children[0])
-				this.children[1].children[0].style.backgroundColor = "#000";
+            if(this.children !== undefined) {
+                if(this.children[1].children[0]) {
+                    this.children[1].children[0].style.backgroundColor = "#000";
+                }
+            }
 		},
 		function(){		//onMouseOut
-			if(this.children[1].children[0])
-				this.children[1].children[0].style.backgroundColor = "#FFF";
+            if(this.children !== undefined) {
+                if(this.children[1].children[0]) {
+                    this.children[1].children[0].style.backgroundColor = "#FFF";
+                }
+            }
 		}
 	);
 }

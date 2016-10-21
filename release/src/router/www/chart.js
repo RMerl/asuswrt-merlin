@@ -905,7 +905,7 @@ var pie_flag;
 			if (ChartElements.length > 0){
 				// If we have multiple datasets, show a MultiTooltip for all of the data points at that index
 				//if (this.datasets && this.datasets.length > 1) {
-				if (this.datasets[0].bars) {
+				if (this.datasets !== undefined) {
 					var dataArray,
 						dataIndex;
 
@@ -2100,17 +2100,19 @@ var pie_flag;
 
 				helpers.each(dataset.data,function(dataPoint,index){
 					//Add a new point for each piece of data, passing any required data to draw.
-					datasetObject.bars.push(new this.BarClass({
-						value : dataPoint,
-						label : data.labels[index],
-						datasetLabel: dataset.label,
-						strokeColor : dataset.strokeColor,
-						fillColor : dataset.fillColor,
-						highlightFill : dataset.highlightFill || dataset.fillColor,
-						highlightStroke : dataset.highlightStroke || dataset.strokeColor,
-						unit : dataset.unit[index],
-						displayedValue: dataset.displayedValue[index]
-					}));
+					if (dataset.displayedValue !== undefined) {
+						datasetObject.bars.push(new this.BarClass({
+							value : dataPoint,
+							label : data.labels[index],
+							datasetLabel: dataset.label,
+							strokeColor : dataset.strokeColor,
+							fillColor : dataset.fillColor,
+							highlightFill : dataset.highlightFill || dataset.fillColor,
+							highlightStroke : dataset.highlightStroke || dataset.strokeColor,
+							unit : dataset.unit[index],
+							displayedValue: dataset.displayedValue[index]
+						}));
+					}
 				},this);
 
 			},this);
@@ -2567,7 +2569,7 @@ var pie_flag;
 			//Set up tooltip events on the chart
 			if (this.options.showTooltips){
 				helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
-				if(evt.type == "click"){console.log("123");};
+
 					var activePoints = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
 					this.eachPoints(function(point){
 						point.restore(['fillColor', 'strokeColor']);
