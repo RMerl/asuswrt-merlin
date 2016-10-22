@@ -195,9 +195,6 @@ function init()
 		document.getElementById("ctfLevelDesc").style.display = "none";
 	}
 	
-	if(bwdpi_support){
-		document.getElementById('content_title').innerHTML = "<#menu5_3_2#> - <#traffic_monitor#>";
-	}	
 }
 
 function switchPage(page){
@@ -264,7 +261,7 @@ function switchPage(page){
 							<table width="100%" >
 							<tr>
 							<td  class="formfonttitle" align="left">
-										<div id="content_title" style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
+										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 									</td>
 							<td>
      						<div align="right">
