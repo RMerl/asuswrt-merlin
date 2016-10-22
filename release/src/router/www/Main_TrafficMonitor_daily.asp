@@ -197,13 +197,13 @@ function draw_chart(){
 		labels: barLabels,
 		datasets: [
 			{data: barDataDl,
-			label: "Daily DL (" + snames[scale] + ")",
+			label: "<#tm_reception#> (" + snames[scale].trim() + ")",
 			borderWidth: border,
 			backgroundColor: "#4C8FC0",
 			borderColor: "#000000"
 		},
 			{data: barDataUl,
-			label: "Daily UL (" + snames[scale] +")",
+			label: "<#tm_transmission#> (" + snames[scale].trim() +")",
 			borderWidth: border,
 			backgroundColor: "#4CC08F",
 			borderColor: "#000000"
