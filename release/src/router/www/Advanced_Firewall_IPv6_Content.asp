@@ -441,7 +441,7 @@ function changeBgColor(obj, num){
           		<tr>
 				<th><#BM_UserList1#></th>
 				<th>Remote IP/CIDR</th>
-	            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>
+	            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#> or fixed Interface ID</a></th>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
 	            		<th><#IPConnection_VServerProto_itemname#></th>
 				<th><#list_add_delete#></th>

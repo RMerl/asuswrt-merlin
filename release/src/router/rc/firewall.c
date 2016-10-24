@@ -2746,6 +2746,11 @@ TRACE_PT("writing Parental Control\n");
                                         snprintf(dstiprule, sizeof(dstiprule), "-d %s", dstip);
                                 else
                                         dstiprule[0] = '\0';
+				if (dstip[0] == ':' && dstip[1] == ':') // dstip is EUI64 address
+					snprintf(dstiprule, sizeof(dstiprule), "-d %s/::ffff:ffff:ffff:ffff", dstip);
+				else
+					snprintf(dstiprule, sizeof(dstiprule), "-d %s", dstip);
+
 				portp = portv = strdup(port);
 				while (portv && (dstports = strsep(&portp, ",")) != NULL) {
 					if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
@@ -3698,6 +3703,11 @@ TRACE_PT("writing Parental Control\n");
 					snprintf(dstiprule, sizeof(dstiprule), "-d %s", dstip);
 				else
 					dstiprule[0] = '\0';
+				if (dstip[0] == ':' && dstip[1] == ':') // dstip is EUI64 address
+					snprintf(dstiprule, sizeof(dstiprule), "-d %s/::ffff:ffff:ffff:ffff", dstip);
+				else
+					snprintf(dstiprule, sizeof(dstiprule), "-d %s", dstip);
+
 				portp = portv = strdup(port);
 				while (portv && (dstports = strsep(&portp, ",")) != NULL) {
 					if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
