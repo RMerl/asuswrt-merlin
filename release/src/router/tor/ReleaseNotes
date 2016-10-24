@@ -2,6 +2,27 @@ This document summarizes new features and bugfixes in each stable release
 of Tor. If you want to see more detailed descriptions of the changes in
 each development snapshot, see the ChangeLog file.
 
+Changes in version 0.2.8.9 - 2016-10-17
+  Tor 0.2.8.9 backports a fix for a security hole in previous versions
+  of Tor that would allow a remote attacker to crash a Tor client,
+  hidden service, relay, or authority. All Tor users should upgrade to
+  this version, or to 0.2.9.4-alpha. Patches will be released for older
+  versions of Tor.
+
+  o Major features (security fixes, also in 0.2.9.4-alpha):
+    - Prevent a class of security bugs caused by treating the contents
+      of a buffer chunk as if they were a NUL-terminated string. At
+      least one such bug seems to be present in all currently used
+      versions of Tor, and would allow an attacker to remotely crash
+      most Tor instances, especially those compiled with extra compiler
+      hardening. With this defense in place, such bugs can't crash Tor,
+      though we should still fix them as they occur. Closes ticket
+      20384 (TROVE-2016-10-001).
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the October 4 2016 Maxmind GeoLite2
+      Country database.
+
 
 Changes in version 0.2.8.8 - 2016-09-23
   Tor 0.2.8.8 fixes two crash bugs present in previous versions of the
