@@ -269,7 +269,7 @@ function detect_httpd(){
 											</tr>
 											</thead>
 											<tr id="jffsbackup">
-												<th align="right">
+												<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,13);">
 													Backup JFFS partition
 												</th>
 												<td>

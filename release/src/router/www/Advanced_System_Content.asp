@@ -1166,7 +1166,7 @@ function paste_password(){
 				</tr>
 
 				<tr id="remote_forwarding_tr">
-					<th>Allow SSH Port Forwarding</th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,10);">Allow SSH Port Forwarding</a></th>
 					<td>
 						<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match("sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match("sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
@@ -1215,7 +1215,7 @@ function paste_password(){
 					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
 				</tr>
 				<tr>
-					<th>Default message log level</th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,11);">Default message log level</a></th>
 					<td>
 						<select name="message_loglevel" class="input_option">
 							<option value="0" <% nvram_match("message_loglevel", "0", "selected"); %>>emergency</option>
@@ -1230,7 +1230,7 @@ function paste_password(){
 					</td>
 				</tr>
 				<tr>
-					<th>Log only messages more urgent than</th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,12);">Log only messages more urgent than</a></th>
 					<td>
 						<select name="log_level" class="input_option">
 							<option value="1" <% nvram_match("log_level", "1", "selected"); %>>alert</option>

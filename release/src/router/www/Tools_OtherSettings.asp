@@ -929,14 +929,14 @@ function done_validating(action){
 						</td>
 	                                </tr>
 					<tr id="memory_mgmt_tr" style="display:none;">
-						<th>Memory Management: Regularly flush caches (default: Yes)</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,2);">Memory Management: Regularly flush caches (default: Yes)</a></th>
 						<td>
 							<input type="radio" name="drop_caches" class="input" value="1" <% nvram_match_x("", "drop_caches", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="drop_caches" class="input" value="0" <% nvram_match_x("", "drop_caches", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
 					<tr>
-						<th>Miniupnp: Enable secure mode (default: Yes)</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,3);">Miniupnp: Enable secure mode (default: Yes)</a></th>
 						<td>
 							<input type="radio" name="upnp_secure" class="input" value="1" <% nvram_match_x("", "upnp_secure", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="upnp_secure" class="input" value="0" <% nvram_match_x("", "upnp_secure", "0", "checked"); %>><#checkbox_No#>
@@ -950,7 +950,7 @@ function done_validating(action){
 						</td>
 					</tr>
 					<tr>
-						<th>Firewall: Drop IPv6 neighbour solicitation broadcasts (Comcast fix) (default: No)</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,4);">Firewall: Drop IPv6 neighbour solicitation broadcasts (default: No)</a></th>
 						<td>
 							<input type="radio" name="ipv6_ns_drop" class="input" value="1" <% nvram_match_x("", "ipv6_ns_drop", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="ipv6_ns_drop" class="input" value="0" <% nvram_match_x("", "ipv6_ns_drop", "0", "checked"); %>><#checkbox_No#>

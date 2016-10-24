@@ -1176,13 +1176,13 @@ function ppp_echo_control(){
 		</tr>
 
 		<tr>
-		<th>Manual clientid (Option 61)</th>
+		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,7);">Manual clientid (Option 61)</a></th>
 			<td><input type="text" name="wan_clientid" class="input_32_table" maxlength="128" value="<% nvram_get("wan_clientid"); %>" onkeypress="return is_string(this, event)"></td>
 		</tr>
-                <tr>
-                <th>Manual Vendor class (Option 60)</th>
-                        <td><input type="text" name="wan_vendorid" class="input_32_table" maxlength="128" value="<% nvram_get("wan_vendorid"); %>" onkeypress="return is_string(this, event)"></td>
-                </tr>
+		<tr>
+		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,8);">Manual Vendor class (Option 60)</a></th>
+			<td><input type="text" name="wan_vendorid" class="input_32_table" maxlength="128" value="<% nvram_get("wan_vendorid"); %>" onkeypress="return is_string(this, event)"></td>
+		</tr>
 
 		<tr style="display:none;">
 			<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#Extend_TTL_Value#></a></th>
