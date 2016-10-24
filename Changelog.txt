@@ -11,7 +11,7 @@ Asuswrt-Merlin Changelog
    - NEW: Added pc_delete() to the helper script (patch by john95287)
    - NEW: IPv6 firewall now supports fixed interface ID (EUI64) ipv6
           destination addresses (Patch by john9527)
-   - CHANGED: Updated Tor to 0.2.8.8
+   - CHANGED: Updated Tor to 0.2.8.9
    - CHANGED: Updated OUI database.
    - CHANGED: ipset was updated to version 6.29 on ARM models.
               IMPORTANT: this means you will probably need to
@@ -23,7 +23,8 @@ Asuswrt-Merlin Changelog
   - CHANGED: Added help popups to various settings that are unique to
              Asuswrt-Merlin.
   - FIXED: Custom group/shadow/passwd weren't applied at boot time.
-  - FIXED: CVE-2016-5195 vulnerability in ARM kernels. (Patch by blackfuel)
+  - FIXED: CVE-2016-5195 vulnerability in kernel. (Patches by blackfuel
+           and Joseph A. Yasi)
 
 
 
