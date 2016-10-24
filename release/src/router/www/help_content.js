@@ -319,3 +319,5 @@ helpcontent[29] = new Array("",
 helpcontent[30] = new Array("",
 							"Send alert before monthly alert is reached",/*untranslated*/
 							"Cut-off internet if monthly limit is reached");/*untranslated*/
+helpcontent[50] = new Array("",
+							"<#IPConnection_LocalIP_itemdesc#> or fixed Interface (Device) ID starting with ::<br/>A fixed Interface ID is commonly an EUI-64 address.");
