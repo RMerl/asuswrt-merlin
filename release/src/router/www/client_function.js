@@ -3224,7 +3224,7 @@ function oui_query_full_vendor(mac){
 				var overlibStrTmp = retOverLibStr(clientList[mac]);
 			else
 				var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
-			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
+			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#>:</p>";
 			overlibStrTmp += ouiClientListArray[manufacturer_id];  //transformManufacturerName(ouiClientListArray[manufacturer_id]);
 			return overlib(overlibStrTmp);
 		} else {
@@ -3250,7 +3250,7 @@ function oui_query_web(mac){
 				if(response.search("Sorry!") == -1) {
 					if(response.search(queryStr) != -1) {
 						var retData = response.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("</");
-						overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
+						overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#>:</p>";
 						overlibStrTmp += retData[0].slice(0,retData[0].indexOf("\n"))
 					}
 				}
