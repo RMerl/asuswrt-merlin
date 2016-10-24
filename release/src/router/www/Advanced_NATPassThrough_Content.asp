@@ -96,7 +96,7 @@ function applyRule(){
 									  </tr>
 
 						<tr>
-  	         					<th><#NAT_RTSP_Passthrough#></th>
+  	         					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,14);"><#NAT_RTSP_Passthrough#></a></th>
     	       					<td>
 												<select name="fw_pt_rtsp" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_rtsp", "0","selected"); %>><#btn_disable#></option>
@@ -107,7 +107,7 @@ function applyRule(){
            					</tr>
 
 						<tr>
-							<th><#NAT_H323_Passthrough#></th>
+							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,14);"><#NAT_H323_Passthrough#></a></th>
 						<td>
 												<select name="fw_pt_h323" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_h323", "0","selected"); %>><#btn_disable#></option>
@@ -118,7 +118,7 @@ function applyRule(){
 						</tr>
 
 						<tr>
-							<th><#NAT_SIP_Passthrough#></th>
+							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,14);"><#NAT_SIP_Passthrough#></a></th>
 						<td>
 												<select name="fw_pt_sip" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_sip", "0","selected"); %>><#btn_disable#></option>
