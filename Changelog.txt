@@ -4,10 +4,13 @@ Asuswrt-Merlin Changelog
 380.63 (xx-xxx-xxxx)
    - NEW: QoS Statistics page, showing the amount of traffic assigned to
           each available classes, as well as the current throughput.
-   - NEW: Charts added to Traffic Monitor's monthly and daily pages.
+   - NEW: Charts added to various Traffic Monitor pages.
           Note that you can click on legend items to reveal/hide the
           DL/UL data.  Howevering over a bar will display the exact
           value for that bar.
+   - NEW: Added pc_delete() to the helper script (patch by john95287)
+   - NEW: IPv6 firewall now supports fixed interface ID (EUI64) ipv6
+          destination addresses (Patch by john9527)
    - CHANGED: Updated Tor to 0.2.8.8
    - CHANGED: Updated OUI database.
    - CHANGED: ipset was updated to version 6.29 on ARM models.
@@ -16,6 +19,12 @@ Asuswrt-Merlin Changelog
               There has been no change to MIPS models, due to their
               older kernel.  (original code by Shibby and Victek,
               Asuswrt port by john9527)
+  - CHANGED: OpenVPN policy rules now start at prio 10000 instead of 1000
+  - CHANGED: Added help popups to various settings that are unique to
+             Asuswrt-Merlin.
+  - FIXED: Custom group/shadow/passwd weren't applied at boot time.
+  - FIXED: CVE-2016-5195 vulnerability in ARM kernels. (Patch by blackfuel)
+
 
 
 380.62_1 (29-Sept-2016)
