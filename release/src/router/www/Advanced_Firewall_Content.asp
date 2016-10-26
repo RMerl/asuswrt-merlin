@@ -134,7 +134,7 @@ function change_wizard(o, id){
 					if(wItem[i][2] == "TCP")
 						document.form.filter_lw_proto_x_0.options[0].selected = 1;
 					else if(wItem[i][2] == "UDP")
-						document.form.filter_lw_proto_x_0.options[8].selected = 1;
+						document.form.filter_lw_proto_x_0.options[7].selected = 1;
 					
 					document.form.filter_lw_srcport_x_0.value = wItem[i][1];
 				}
@@ -142,7 +142,7 @@ function change_wizard(o, id){
 					if(wItem[i][2] == "TCP")
 						document.form.filter_lw_proto_x_0.options[0].selected = 1;
 					else if(wItem[i][2] == "UDP")
-						document.form.filter_lw_proto_x_0.options[8].selected = 1;
+						document.form.filter_lw_proto_x_0.options[7].selected = 1;
 					
 					document.form.filter_lw_dstport_x_0.value = wItem[i][1];
 				}
@@ -243,7 +243,7 @@ function check_duplicate(){
 		for(i=0; i<rule_num; i++){
 			if(entry_cmp(document.getElementById('filter_lwlist_table').rows[i].cells[0].innerHTML, document.form.filter_lw_srcip_x_0.value, 15)==0 
 				&& entry_cmp(document.getElementById('filter_lwlist_table').rows[i].cells[2].innerHTML, document.form.filter_lw_dstip_x_0.value, 15)==0 
-				&& entry_cmp(document.getElementById('filter_lwlist_table').rows[i].cells[4].innerHTML.toLowerCase(), document.form.filter_lw_proto_x_0.value.toLowerCase(), 8)==0 ){
+				&& entry_cmp(document.getElementById('filter_lwlist_table').rows[i].cells[4].innerHTML.toLowerCase(), document.form.filter_lw_proto_x_0.value.toLowerCase(), 7)==0 ){
 
 						if(portrange_min(document.form.filter_lw_srcport_x_0.value, 11) > portrange_max(document.getElementById('filter_lwlist_table').rows[i].cells[1].innerHTML, 11) 
 							|| portrange_max(document.form.filter_lw_srcport_x_0.value, 11) < portrange_min(document.getElementById('filter_lwlist_table').rows[i].cells[1].innerHTML, 11)
@@ -544,7 +544,7 @@ function updateDateTime(){
             					<td width="15%">
 								<select name="filter_lw_proto_x_0" class="input_option">
 									<option value="TCP">TCP</option>
-									<option value="TCP ALL">TCP ALL</option>
+									<!-- <option value="TCP ALL">TCP ALL</option> -->
 									<option value="TCP SYN">TCP SYN</option>
 									<option value="TCP ACK">TCP ACK</option>
 									<option value="TCP FIN">TCP FIN</option>
