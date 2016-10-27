@@ -6,8 +6,8 @@ Asuswrt-Merlin Changelog
           each available classes, as well as the current throughput.
    - NEW: Charts added to various Traffic Monitor pages.
           Note that you can click on legend items to reveal/hide the
-          DL/UL data.  Howevering over a bar will display the exact
-          value for that bar.
+          DL/UL data.  Hovering over a bar or a pie slice will
+          display the exact value for that item.
    - NEW: Added pc_delete() to the helper script (patch by john95287)
    - NEW: IPv6 firewall now supports fixed interface ID (EUI64) ipv6
           destination addresses (Patch by john9527)
@@ -15,16 +15,20 @@ Asuswrt-Merlin Changelog
    - CHANGED: Updated OUI database.
    - CHANGED: ipset was updated to version 6.29 on ARM models.
               IMPORTANT: this means you will probably need to
-              update your script to the new syntax.
+              update your script to the new syntax.  You need to
+              load the xt_set.ko module at the start of your script.
               There has been no change to MIPS models, due to their
               older kernel.  (original code by Shibby and Victek,
-              Asuswrt port by john9527)
+              Asuswrt port by john9527) (ARM only)
   - CHANGED: OpenVPN policy rules now start at prio 10000 instead of 1000
   - CHANGED: Added help popups to various settings that are unique to
              Asuswrt-Merlin.
   - FIXED: Custom group/shadow/passwd weren't applied at boot time.
-  - FIXED: CVE-2016-5195 vulnerability in kernel. (Patches by blackfuel
-           and Joseph A. Yasi)
+  - FIXED: CVE-2016-5195 (Dirty COW) vulnerability in kernel
+           (patches by blackfuel and Joseph A. Yasi)
+  - FIXED: Network Service Filter rules would only apply to clients
+           under Parental Control if that was enabled (original
+           debugging by john9527) (Asus bug)
 
 
 
