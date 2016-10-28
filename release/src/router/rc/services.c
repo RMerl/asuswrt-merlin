@@ -8048,6 +8048,7 @@ int check_rsasign(char *fname)
     if ((fread(sig, 1, siglen, sigFileFP)) != siglen) {
         _dprintf("Unable to read %d bytes for signature\n",
             siglen);
+	free(sig);
         return 0;
     }
 	fclose(sigFileFP);
@@ -8056,12 +8057,14 @@ int check_rsasign(char *fname)
     if (!EVP_VerifyInit(&ctx, EVP_sha1())) {
         _dprintf("EVP_SignInit: failed.\n");
         EVP_PKEY_free(pkey);
+	free(sig);
         return 0;
     }
 
 	dataFileFP = fopen( fname, "r" );
     	if (dataFileFP == NULL){
     	    _dprintf( "Open dataFileFP failure\n" );
+	    free(sig);
     	    return 0;
     	}
 
@@ -8069,16 +8072,20 @@ int check_rsasign(char *fname)
         if (!EVP_VerifyUpdate(&ctx, buffer, len)) {
             _dprintf("EVP_SignUpdate: failed.\n");
             EVP_PKEY_free(pkey);
+	    fclose(dataFileFP);
+	    free(sig);
             return 0;
         }
     }
 
+    fclose(dataFileFP);
+
     if (ferror(dataFileFP)) {
         _dprintf("input file");
         EVP_PKEY_free(pkey);
+	free(sig);
         return 0;
     }
-	fclose(dataFileFP);
 
     if (!EVP_VerifyFinal(&ctx, sig, siglen, pkey)) {
         _dprintf("EVP_VerifyFinal: failed.\n");
