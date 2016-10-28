@@ -4680,6 +4680,7 @@ ej_dhcpLeaseMacList(int eid, webs_t wp, int argc, char_t **argv)
 	}
 	ret += websWrite(wp, "[\"\",\"\"]]");
 	fclose(fp);
+	free(buf);
 
 	return ret;
 }
