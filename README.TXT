@@ -54,7 +54,7 @@ Installation:
 
    ARM SDK7 (RT-AC3200)
       cd release/src-rt-7.x.main/src/
-      make rt-ac3200u
+      make rt-ac3200
 
    ARM SDK7.14 (RT-AC88U, RT-AC3100, RT-AC5300)
       cd release/src-rt-7.14.114.x/src/
