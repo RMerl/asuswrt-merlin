@@ -29,6 +29,7 @@ Asuswrt-Merlin Changelog
   - FIXED: Network Service Filter rules would only apply to clients
            under Parental Control if that was enabled (original
            debugging by john9527) (Asus bug)
+  - FIXED: A few memory leaks in httpd and rc services.
 
 
 

@@ -30,9 +30,9 @@ Supported Devices
 -----------------
 Supported devices are:
  * RT-N66U
- * RT-AC66U
+ * RT-AC66U (HW revision A1/A2 only)
  * RT-AC56U
- * RT-AC68U & RT-AC68P
+ * RT-AC68U & RT-AC68P (including HW revision C1)
  * RT-AC87U
  * RT-AC3200
  * RT-AC88U
@@ -91,7 +91,6 @@ Networking:
    - IPSec kernel support (N66/AC66 only)
    - DNS-based Filtering, can be applied globally or per client
    - Custom DDNS (through a user script)
-   - Advanced NAT loopback (as an alternative to the default one)
    - TOR support, individual client control (based on experimental code
      from Asus)
    - Policy routing for the OpenVPN client (based on source or
@@ -118,7 +117,6 @@ Web interface:
 A few features that first appeared in Asuswrt-Merlin have since been 
 integrated/enabled/re-implemented in the official firmware:
 
-- 64K NVRAM for the RT-N66U
 - HTTPS webui
 - Turning WPS button into a radio on/off toggle
 - Use shorter share names (folder name only)
@@ -126,8 +124,6 @@ integrated/enabled/re-implemented in the official firmware:
 - clickable MACs on the client list for lookup in the OUI database
 - Display active/tracked network connections
 - VPN client connection state report
-- DualWAN and Repeater mode (while it was still under development
-  by Asus)
 - OpenVPN client and server
 - Configurable IPv6 firewall
 - Persistent JFFS partition
@@ -196,7 +192,7 @@ IRC: #asuswrt on DALnet
 Download: https://asuswrt.lostrealm.ca/download
 
 Development news will be posted on Twitter.  You can also keep a closer 
-eye on development as it happens through the Github site.
+eye on development as it happens, through the Github site.
 
 For support questions, please use the SmallNetBuilder forums whenever 
 possible.  There's a dedicated Asuswrt-Merlin sub-forum there, under 
