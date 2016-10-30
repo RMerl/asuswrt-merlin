@@ -693,7 +693,7 @@ function draw_chart(){
 									<tr><th>Download</th><th>Upload</th></tr>
                                                                         <tr>
                                                                                 <td><div id="trunc_dl" style="color:#FFCC00;display:none;">(Chart truncated to 15 items)</div><canvas id="pie_chart_dl" height="300"></canvas></td>
-										<td><div id="trunc_dl" style="color:#FFCC00;display:none;">(Chart truncated to 15 items)</div><canvas id="pie_chart_ul" height="300"></canvas></td>
+										<td><div id="trunc_ul" style="color:#FFCC00;display:none;">(Chart truncated to 15 items)</div><canvas id="pie_chart_ul" height="300"></canvas></td>
 									</tr>
 									</tbody>
 									</table>
