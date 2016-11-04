@@ -669,16 +669,17 @@ ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	FILE *fp;
 	int ret = 0;
+	char tmp[64];
 
 	if (nvram_get_int("qos_enable") == 0) {
-		ret += websWrite(wp, "var tcdata_br0_array = [[]];\nvar tcdata_eth0_array = [[]];\n");
+		ret += websWrite(wp, "var tcdata_lan_array = [[]];\nvar tcdata_wan_array = [[]];\n");
 		return ret;
 	}
 
 	if (nvram_get_int("qos_type") == 1) {
 		system("tc -s class show dev br0 > /tmp/tcclass.txt");
 
-		ret += websWrite(wp, "var tcdata_br0_array = [\n");
+		ret += websWrite(wp, "var tcdata_lan_array = [\n");
 
 		fp = fopen("/tmp/tcclass.txt","r");
 		if (!fp) {
@@ -691,9 +692,10 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	}
 
 	if (nvram_get_int("qos_type") != 2) {	// Must not be BW Limiter
-	        system("tc -s class show dev eth0 > /tmp/tcclass.txt");
+		snprintf(tmp, sizeof(tmp), "tc -s class show dev %s > /tmp/tcclass.txt",get_wan_ifname(wan_primary_ifunit()));
+		system(tmp);
 
-	        ret += websWrite(wp, "var tcdata_eth0_array = [\n");
+	        ret += websWrite(wp, "var tcdata_wan_array = [\n");
 
 	        fp = fopen("/tmp/tcclass.txt","r");
 	        if (!fp) {

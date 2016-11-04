@@ -121,13 +121,13 @@ function initial(){
 	}
 	var ctx_ul = document.getElementById("pie_chart_ul").getContext("2d");
 
-	tcdata_eth0_array.sort(function(a,b) {return a[0]-b[0]} );
-	code = setup_data(tcdata_eth0_array, ctx_ul);
+	tcdata_wan_array.sort(function(a,b) {return a[0]-b[0]} );
+	code = setup_data(tcdata_wan_array, ctx_ul);
         document.getElementById('legend_ul').innerHTML = code;
 
 	if (qos_mode == 2) {
-		tcdata_br0_array.sort(function(a,b) {return a[0]-b[0]} );
-		code = setup_data(tcdata_br0_array, ctx_dl);
+		tcdata_lan_array.sort(function(a,b) {return a[0]-b[0]} );
+		code = setup_data(tcdata_lan_array, ctx_dl);
 		document.getElementById('legend_dl').innerHTML = code;
 	}
 }
