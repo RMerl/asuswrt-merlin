@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.63 (xx-xxx-xxxx)
+380.63 (6-Nov-2016)
    - NEW: QoS Statistics page, showing the amount of traffic assigned to
           each available classes, as well as the current throughput.
    - NEW: Charts added to various Traffic Monitor pages.
