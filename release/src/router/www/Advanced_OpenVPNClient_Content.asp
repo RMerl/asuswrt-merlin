@@ -1132,7 +1132,7 @@ function defaultSettings() {
 					<tr id="client_password">
 						<th>Password</th>
 						<td>
-							<input type="password" maxlength="255" class="input_25_table" name="vpn_client_password" value="<% nvram_get("vpn_client_password"); %>">
+							<input type="password" autocomplete="new-password" maxlength="255" class="input_25_table" name="vpn_client_password" value="<% nvram_get("vpn_client_password"); %>">
 							<input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.vpn_client_password)"><#QIS_show_pass#>
 						</td>
 					</tr>
