@@ -2780,12 +2780,14 @@ TRACE_PT("writing Parental Control\n");
 	// Rules for MAC Filter and LAN to WAN Filter
 	// Drop rules always before Accept
 	strcpy(chain, "NSFW");	// Less code changes by using a var like the original code did
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0) {
 #ifdef RTCONFIG_PARENTALCTRL
+	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0) {
 		fprintf(fp, "-A PControls -j %s\n", chain);
 #endif
 		fprintf(fp, "-A FORWARD -j %s\n", chain);
+#ifdef RTCONFIG_PARENTALCTRL
 	}
+#endif
 
 	if (nvram_match("fw_lw_enable_x", "1"))
 	{
@@ -3746,12 +3748,14 @@ TRACE_PT("writing Parental Control\n");
 	// Rules for MAC Filter and LAN to WAN Filter
 	// Drop rules always before Accept
 	strcpy(chain, "NSFW");  // Less code changes by using a var like the original code did
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0) {
 #ifdef RTCONFIG_PARENTALCTRL
+	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0) {
 		fprintf(fp, "-A PControls -j %s\n", chain);
 #endif
 		fprintf(fp, "-A FORWARD -j %s\n", chain);
+#ifdef RTCONFIG_PARENTALCTRL
 	}
+#endif
 
 	if (nvram_match("fw_lw_enable_x", "1"))
 	{
