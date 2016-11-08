@@ -594,7 +594,7 @@ void stop_usb(int f_force)
 #if defined (RTCONFIG_USB_XHCI)
 #if defined(RTN65U) || defined(RTCONFIG_QCA)
 	if (disabled) modprobe_r(USB30_MOD);
-#elif defined(RTCONFIG_XHCIMODE)
+#elif 0	//defined(RTCONFIG_XHCIMODE)
 	modprobe_r(USB30_MOD);
 #else
 	if (disabled || nvram_get_int("usb_usb3") != 1 || f_force) modprobe_r(USB30_MOD);
