@@ -154,7 +154,7 @@ function setup_data(data_array, ctx) {
 
 			var label = category_title[index];
 		} else {
-			tcclass = tcclass / 10;
+			tcclass = (tcclass / 10) - 1;
 			var label = category_title[tcclass];
 			if (label == undefined) {
 				label = "Class " + tcclass;
