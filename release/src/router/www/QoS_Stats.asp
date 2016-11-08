@@ -45,7 +45,7 @@ if (qos_mode == 2) {
 		bwdpi_app_rulelist_row = bwdpi_app_rulelist.split("<");
 	}
 } else {
-	var category_title = ["Highest", "High", "Medium", "Low", "Lowest"];
+	var category_title = ["", "Highest", "High", "Medium", "Low", "Lowest"];
 }
 
 
@@ -154,7 +154,7 @@ function setup_data(data_array, ctx) {
 
 			var label = category_title[index];
 		} else {
-			tcclass = (tcclass / 10) - 1;
+			tcclass = tcclass / 10;
 			var label = category_title[tcclass];
 			if (label == undefined) {
 				label = "Class " + tcclass;
