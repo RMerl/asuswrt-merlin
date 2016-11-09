@@ -684,11 +684,11 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 		ret += websWrite(wp, "var tcdata_lan_array = [\n");
 
 		fp = fopen("/tmp/tcclass.txt","r");
-		if (!fp) {
-			ret += websWrite(wp, "[]];\n");
-		} else {
+		if (fp) {
 			ret += tcclass_dump(fp, wp);
 			fclose(fp);
+		} else {
+			ret += websWrite(wp, "[]];\n");
 		}
 		unlink("/tmp/tcclass.txt");
 
@@ -717,11 +717,11 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	        ret += websWrite(wp, "var tcdata_wan_array = [\n");
 
 	        fp = fopen("/tmp/tcclass.txt","r");
-	        if (!fp) {
-	                ret += websWrite(wp, "[]];\n");
-	        } else {
+	        if (fp) {
 	                ret += tcclass_dump(fp, wp);
 			fclose(fp);
+		} else {
+			ret += websWrite(wp, "[]];\n");
 	        }
 		unlink("/tmp/tcclass.txt");
 	}
@@ -736,7 +736,7 @@ int tcclass_dump(FILE *fp, webs_t wp) {
 	unsigned long long traffic;
 	int ret = 0;
 
-	while (fgets(buf, 256, fp)) {
+	while (fgets(buf, sizeof(buf) , fp)) {
 		switch (stage) {
 			case 0:	// class
 				if (sscanf(buf, "class htb 1:%d %*s", &tcclass) == 1) {
