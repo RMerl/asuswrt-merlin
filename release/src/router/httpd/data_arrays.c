@@ -669,8 +669,9 @@ ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	FILE *fp;
 	int ret = 0;
+	int len = 0;
 	char tmp[64];
-	char *wan_ifname;
+	char wan_ifname[12];
 
 	if (nvram_get_int("qos_enable") == 0) {
 		ret += websWrite(wp, "var tcdata_lan_array = [[]];\nvar tcdata_wan_array = [[]];\n");
@@ -690,9 +691,23 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 			fclose(fp);
 		}
 		unlink("/tmp/tcclass.txt");
-		wan_ifname = nvram_safe_get("wan0_ifname");	// Hardcoded for now
+
+		fp = fopen("/sys/module/bw_forward/parameters/dev_wan", "r");
+		if (fp) {
+			if (fgets(tmp, sizeof(tmp), fp) != NULL) {
+				len = strlen(tmp);
+				if (len && tmp[len-1] == '\n')
+					tmp[len-1] = '\0';
+			}
+			fclose(fp);
+		}
+		if (len)
+			strncpy(wan_ifname, tmp, sizeof(wan_ifname));
+		else
+			strcpy(wan_ifname, "eth0");     // Default fallback
+
 	} else {
-		wan_ifname = get_wan_ifname(wan_primary_ifunit());
+		strncpy(wan_ifname, get_wan_ifname(wan_primary_ifunit()), sizeof (wan_ifname));
 	}
 
 	if (nvram_get_int("qos_type") != 2) {	// Must not be BW Limiter
