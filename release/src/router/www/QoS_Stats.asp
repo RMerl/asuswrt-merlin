@@ -101,35 +101,37 @@ function initial(){
 
 	show_menu();
 
-	if (qos_mode == 0) {	// Disabled
-		document.getElementById('dl_tr').style.display = "none";
-		document.getElementById('ul_tr').style.display = "none";
-		document.getElementById('no_qos_notice').style.display = "";
-		return;
-        }
-	if (qos_mode == 3) {	// Bandwith Limiter
-		document.getElementById('dl_tr').style.display = "none";
-		document.getElementById('ul_tr').style.display = "none";
-		document.getElementById('limiter_notice').style.display = "";
-		return;
+	switch (qos_mode) {
+		case 0:		// Disabled
+			document.getElementById('dl_tr').style.display = "none";
+			document.getElementById('ul_tr').style.display = "none";
+			document.getElementById('no_qos_notice').style.display = "";
+			return;
+
+		case 3:		// Bandwith Limiter
+			document.getElementById('dl_tr').style.display = "none";
+			document.getElementById('ul_tr').style.display = "none";
+			document.getElementById('limiter_notice').style.display = "";
+			return;
+
+		case 1:         // Traditional
+			document.getElementById('dl_tr').style.display = "none";
+			document.getElementById('tqos_notice').style.display = "";
+			break;
+
+		case 2:		// Adaptive
+			var ctx_dl = document.getElementById("pie_chart_dl").getContext("2d");
+			tcdata_lan_array.sort(function(a,b) {return a[0]-b[0]} );
+			code = setup_data(tcdata_lan_array, ctx_dl);
+			document.getElementById('legend_dl').innerHTML = code;
+			break;
 	}
 
-	if (qos_mode == 2) {
-		var ctx_dl = document.getElementById("pie_chart_dl").getContext("2d");
-	} else {
-		document.getElementById('dl_tr').style.display = "none";
-	}
 	var ctx_ul = document.getElementById("pie_chart_ul").getContext("2d");
-
 	tcdata_wan_array.sort(function(a,b) {return a[0]-b[0]} );
 	code = setup_data(tcdata_wan_array, ctx_ul);
         document.getElementById('legend_ul').innerHTML = code;
 
-	if (qos_mode == 2) {
-		tcdata_lan_array.sort(function(a,b) {return a[0]-b[0]} );
-		code = setup_data(tcdata_lan_array, ctx_dl);
-		document.getElementById('legend_dl').innerHTML = code;
-	}
 }
 
 function setup_data(data_array, ctx) {
@@ -242,6 +244,7 @@ function setup_data(data_array, ctx) {
 		        <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 			<div id="limiter_notice" style="display:none;font-size:125%;color:#FFCC00;">Statistics not available in Bandwidth Limiter mode.</div>
 			<div id="no_qos_notice" style="display:none;font-size:125%;color:#FFCC00;">QoS is not enabled.</div>
+			<div id="tqos_notice" style="display:none;font-size:125%;color:#FFCC00;">Note: Traditional QoS only classifies uploaded traffic.</div>
 			<table>
 				<tr id="dl_tr">
 					<td style="padding-right:50px;font-size:125%;color:#FFCC00;"><div>Download</div><canvas id="pie_chart_dl" width="200" height="200"></canvas></td>
