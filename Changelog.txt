@@ -1,6 +1,18 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.63_2 (xx-xxx-2016)
+   - CHANGED: Added detection for iPhone 7 models in networkmap
+              (patch by Andrei Coman).
+   - CHANGED: Enabled --dns-loop-detect support in dnsmasq
+   - FIXED: Traditional QoS labels were off by one on the Stats page.
+   - FIXED: Adaptive QoS upload stats couldn't be retrieved because
+            qosd seems to be hardcoded to always set up classes on eth0
+            rather than on the real WAN interface.
+   - FIXED: USB driver was removed too early at shutdown time on the
+            RT-AC56U and RT-AC87U (fix by john9527)
+
+
 380.63 (6-Nov-2016)
    - NEW: QoS Statistics page, showing the amount of traffic assigned to
           each available classes, as well as the current throughput.
