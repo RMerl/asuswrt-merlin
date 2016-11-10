@@ -669,7 +669,9 @@ ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	FILE *fp;
 	int ret = 0;
+#if 0
 	int len = 0;
+#endif
 	char tmp[64];
 	char wan_ifname[12];
 
@@ -692,6 +694,7 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 		}
 		unlink("/tmp/tcclass.txt");
 
+#if 0	// tc classes don't seem to use this interface as would be expected
 		fp = fopen("/sys/module/bw_forward/parameters/dev_wan", "r");
 		if (fp) {
 			if (fgets(tmp, sizeof(tmp), fp) != NULL) {
@@ -704,6 +707,7 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 		if (len)
 			strncpy(wan_ifname, tmp, sizeof(wan_ifname));
 		else
+#endif
 			strcpy(wan_ifname, "eth0");     // Default fallback
 
 	} else {
