@@ -1,10 +1,12 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.63_2 (xx-xxx-2016)
+380.63_2 (12-Nov-2016)
    - CHANGED: Added detection for iPhone 7 models in networkmap
               (patch by Andrei Coman).
    - CHANGED: Enabled --dns-loop-detect support in dnsmasq
+   - CHANGED: Move Dual WAN static routes to a lower priority, so VPN
+              policy rules will have priority over them
    - FIXED: Traditional QoS labels were off by one on the Stats page.
    - FIXED: Adaptive QoS upload stats couldn't be retrieved because
             qosd seems to be hardcoded to always set up classes on eth0
