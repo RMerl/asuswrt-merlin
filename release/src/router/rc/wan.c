@@ -216,10 +216,10 @@ int copy_routes(int table){
 
 /*
  * the priority of routing rules:
- * pref 100: user's routes.
- * pref 200: from wan's ip, from wan's DNS.
- * pref 300: ISP's routes.
- * pref 400: to wan's gateway, to wan's DNS.
+ * pref 20100: user's routes.
+ * pref 20200: from wan's ip, from wan's DNS.
+ * pref 20300: ISP's routes.
+ * pref 20400: to wan's gateway, to wan's DNS.
  */
 int add_multi_routes(void)
 {
@@ -306,19 +306,19 @@ int add_multi_routes(void)
 				table = WAN0_ROUTE_TABLE;
 
 			// set the rules of wan[X]'s ip and gateway for multi routing tables.
-			snprintf(cmd2, 2048, "ip rule del pref 200 from %s table %d 2>/dev/null", wan_multi_ip[unit], table);
+			snprintf(cmd2, 2048, "ip rule del pref 20200 from %s table %d 2>/dev/null", wan_multi_ip[unit], table);
 if(debug) printf("test 1. cmd2=%s.\n", cmd2);
 			system(cmd2);
 
-			snprintf(cmd2, 2048, "ip rule add pref 200 from %s table %d", wan_multi_ip[unit], table);
+			snprintf(cmd2, 2048, "ip rule add pref 20200 from %s table %d", wan_multi_ip[unit], table);
 if(debug) printf("test 2. cmd2=%s.\n", cmd2);
 			system(cmd2);
 
-			snprintf(cmd2, 2048, "ip rule del pref 400 to %s table %d 2>/dev/null", wan_multi_gate[unit], table);
+			snprintf(cmd2, 2048, "ip rule del pref 20400 to %s table %d 2>/dev/null", wan_multi_gate[unit], table);
 if(debug) printf("test 3. cmd2=%s.\n", cmd2);
 			system(cmd2);
 
-			snprintf(cmd2, 2048, "ip rule add pref 400 to %s table %d", wan_multi_gate[unit], table);
+			snprintf(cmd2, 2048, "ip rule add pref 20400 to %s table %d", wan_multi_gate[unit], table);
 if(debug) printf("test 4. cmd2=%s.\n", cmd2);
 			system(cmd2);
 
@@ -362,11 +362,11 @@ if(debug) printf("test 7. cmd2=%s.\n", cmd2);
 						continue;
 
 					if(rtable == table){
-						snprintf(cmd2, 2048, "ip rule del pref 100 from %s to %s table %d 2>/dev/null", rfrom, rto, rtable);
+						snprintf(cmd2, 2048, "ip rule del pref 20100 from %s to %s table %d 2>/dev/null", rfrom, rto, rtable);
 if(debug) printf("test 8. cmd2=%s.\n", cmd2);
 						system(cmd2);
 
-						snprintf(cmd2, 2048, "ip rule add pref 100 from %s to %s table %d", rfrom, rto, rtable);
+						snprintf(cmd2, 2048, "ip rule add pref 20100 from %s to %s table %d", rfrom, rto, rtable);
 if(debug) printf("test 9. cmd2=%s.\n", cmd2);
 						system(cmd2);
 					}
@@ -441,17 +441,17 @@ if(debug) printf("test 14. cmd2=%s.\n", cmd2);
 			if(strlen(wan_dns) > 0){
 				// set the rules for the DNS servers.
 				foreach(word, wan_dns, next) {
-					snprintf(cmd2, 2048, "ip rule del pref 200 from %s table %d 2>/dev/null", word, table);
+					snprintf(cmd2, 2048, "ip rule del pref 20200 from %s table %d 2>/dev/null", word, table);
 if(debug) printf("test 15. cmd2=%s.\n", cmd2);
 					system(cmd2);
-					snprintf(cmd2, 2048, "ip rule add pref 200 from %s table %d", word, table);
+					snprintf(cmd2, 2048, "ip rule add pref 20200 from %s table %d", word, table);
 if(debug) printf("test 16. cmd2=%s.\n", cmd2);
 					system(cmd2);
 
-					snprintf(cmd2, 2048, "ip rule del pref 400 to %s table %d 2>/dev/null", word, table);
+					snprintf(cmd2, 2048, "ip rule del pref 20400 to %s table %d 2>/dev/null", word, table);
 if(debug) printf("test 17. cmd2=%s.\n", cmd2);
 					system(cmd2);
-					snprintf(cmd2, 2048, "ip rule add pref 400 to %s table %d", word, table);
+					snprintf(cmd2, 2048, "ip rule add pref 20400 to %s table %d", word, table);
 if(debug) printf("test 18. cmd2=%s.\n", cmd2);
 					system(cmd2);
 				}
@@ -462,17 +462,17 @@ if(debug) printf("test 18. cmd2=%s.\n", cmd2);
 			if(strlen(wan_dns) > 0){
 				// set the rules for the DNS servers.
 				foreach(word, wan_dns, next) {
-					snprintf(cmd2, 2048, "ip rule del pref 200 from %s table %d 2>/dev/null", word, table);
+					snprintf(cmd2, 2048, "ip rule del pref 20200 from %s table %d 2>/dev/null", word, table);
 if(debug) printf("test 19. cmd2=%s.\n", cmd2);
 					system(cmd2);
-					snprintf(cmd2, 2048, "ip rule add pref 200 from %s table %d", word, table);
+					snprintf(cmd2, 2048, "ip rule add pref 20200 from %s table %d", word, table);
 if(debug) printf("test 20. cmd2=%s.\n", cmd2);
 					system(cmd2);
 
-					snprintf(cmd2, 2048, "ip rule del pref 400 to %s table %d 2>/dev/null", word, table);
+					snprintf(cmd2, 2048, "ip rule del pref 20400 to %s table %d 2>/dev/null", word, table);
 if(debug) printf("test 21. cmd2=%s.\n", cmd2);
 					system(cmd2);
-					snprintf(cmd2, 2048, "ip rule add pref 400 to %s table %d", word, table);
+					snprintf(cmd2, 2048, "ip rule add pref 20400 to %s table %d", word, table);
 if(debug) printf("test 22. cmd2=%s.\n", cmd2);
 					system(cmd2);
 				}
