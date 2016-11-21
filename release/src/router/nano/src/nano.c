@@ -395,7 +395,7 @@ void move_to_filestruct(filestruct **file_top, filestruct **file_bot,
     /* If the top of the edit window was inside the old partition, put
      * it in range of current. */
     if (edittop_inside) {
-	edit_update(STATIONARY);
+	adjust_viewport(STATIONARY);
 	refresh_needed = TRUE;
     }
 
@@ -797,13 +797,11 @@ void print_opt_full(const char *shortflag
 void usage(void)
 {
     printf(_("Usage: nano [OPTIONS] [[+LINE,COLUMN] FILE]...\n\n"));
-    printf(
 #ifdef HAVE_GETOPT_LONG
-	_("Option\t\tGNU long option\t\tMeaning\n")
+    printf(_("Option\t\tGNU long option\t\tMeaning\n"));
 #else
-	_("Option\t\tMeaning\n")
+    printf(_("Option\t\tMeaning\n"));
 #endif
-	);
     print_opt(_("+LINE,COLUMN"), "",
 	/* TRANSLATORS: The next forty or so strings are option descriptions
 	 * for the --help output.  Try to keep them at most 40 characters. */
@@ -884,6 +882,9 @@ void usage(void)
     print_opt("-i", "--autoindent", N_("Automatically indent new lines"));
     print_opt("-k", "--cut", N_("Cut from cursor to end of line"));
 #endif
+#ifdef ENABLE_LINENUMBERS
+    print_opt("-l", "--linenumbers", N_("Show line numbers in front of the text"));
+#endif
 #ifndef DISABLE_MOUSE
     print_opt("-m", "--mouse", N_("Enable the use of the mouse"));
 #endif
@@ -962,6 +963,9 @@ void version(void)
 #ifdef HAVE_LIBMAGIC
     printf(" --enable-libmagic");
 #endif
+#ifdef ENABLE_LINENUMBERS
+    printf(" --enable-linenumbers");
+#endif
 #ifndef DISABLE_MOUSE
     printf(" --enable-mouse");
 #endif
@@ -1007,6 +1011,9 @@ void version(void)
 #endif
 #ifndef HAVE_LIBMAGIC
     printf(" --disable-libmagic");
+#endif
+#ifndef ENABLE_LINENUMBERS
+    printf(" --disable-linenumbers");
 #endif
 #ifdef DISABLE_MOUSE
     printf(" --disable-mouse");
@@ -1178,9 +1185,9 @@ void stdin_pager(void)
 	tcsetattr(0, TCSANOW, &oldterm);
     fprintf(stderr, _("Reading from stdin, ^C to abort\n"));
 
+#ifndef NANO_TINY
     /* Enable interpretation of the special control keys so that
      * we get SIGINT when Ctrl-C is pressed. */
-#ifndef NANO_TINY
     enable_signals();
 #endif
 
@@ -1300,7 +1307,7 @@ RETSIGTYPE do_continue(int signal)
     /* Restore the terminal to its previous state. */
     terminal_init();
 
-    /* Redraw the contents of the windows that need it. */
+    /* Wipe statusbar; redraw titlebar and edit window (and help lines). */
     blank_statusbar();
     wnoutrefresh(bottomwin);
     total_refresh();
@@ -1340,6 +1347,7 @@ void regenerate_screen(void)
     COLS = win.ws_col;
     LINES = win.ws_row;
 #endif
+    editwincols = COLS - margin;
 
 #ifdef USE_SLANG
     /* Slang curses emulation brain damage, part 1: If we just do what
@@ -1414,8 +1422,11 @@ void do_toggle(int flag)
 #ifndef DISABLE_COLOR
 	case NO_COLOR_SYNTAX:
 #endif
+#ifdef ENABLE_LINENUMBERS
+	case LINE_NUMBERS:
+#endif
 	case SOFTWRAP:
-	    edit_refresh();
+	    refresh_needed = TRUE;
 	    break;
     }
 
@@ -1434,13 +1445,13 @@ void do_toggle(int flag)
     statusline(HUSH, "%s %s", _(flagtostr(flag)),
 		enabled ? _("enabled") : _("disabled"));
 }
-#endif /* !NANO_TINY */
 
 /* Bleh. */
 void do_toggle_void(void)
 {
     ;
 }
+#endif /* !NANO_TINY */
 
 /* Disable extended input and output processing in our terminal
  * settings. */
@@ -1542,7 +1553,7 @@ void terminal_init(void)
 #endif
 }
 
-#if !defined(NANO_TINY) && defined(HAVE_KEY_DEFINED)
+#ifdef HAVE_KEY_DEFINED
 /* Ask ncurses for a keycode, or assign a default one. */
 int get_keycode(const char *keyname, const int standard)
 {
@@ -1720,13 +1731,7 @@ int do_input(bool allow_funcs)
 	    if (f && !f->viewok)
 		reset_multis(openfile->current, FALSE);
 #endif
-	    if (refresh_needed) {
-#ifdef DEBUG
-		fprintf(stderr, "running edit_refresh() as refresh_needed is true\n");
-#endif
-		edit_refresh();
-		refresh_needed = FALSE;
-	    } else if (s->scfunc == do_delete || s->scfunc == do_backspace)
+	    if (!refresh_needed && (s->scfunc == do_delete || s->scfunc == do_backspace))
 		update_line(openfile->current, openfile->current_x);
 	}
     }
@@ -1885,8 +1890,11 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
 	    continue;
 
 	/* If we're adding to the magicline, create a new magicline. */
-	if (!ISSET(NO_NEWLINES) && openfile->filebot == openfile->current)
+	if (!ISSET(NO_NEWLINES) && openfile->filebot == openfile->current) {
 	    new_magicline();
+	    if (margin > 0)
+		refresh_needed = TRUE;
+	}
 
 	assert(openfile->current_x <= current_len);
 
@@ -1926,6 +1934,8 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
     }
 
 #ifndef NANO_TINY
+    ensure_line_is_visible();
+
     /* Well, we might also need a full refresh if we've changed the
      * line length to be a new multiple of COLS. */
     if (ISSET(SOFTWRAP) && refresh_needed == FALSE)
@@ -1941,10 +1951,7 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
     reset_multis(openfile->current, FALSE);
 #endif
 
-    if (refresh_needed == TRUE) {
-	edit_refresh();
-	refresh_needed = FALSE;
-    } else
+    if (!refresh_needed)
 	update_line(openfile->current, openfile->current_x);
 }
 
@@ -1989,7 +1996,13 @@ int main(int argc, char **argv)
 #endif
 	{"constantshow", 0, NULL, 'c'},
 	{"rebinddelete", 0, NULL, 'd'},
+#ifndef DISABLE_BROWSER
+	{"showcursor", 0, NULL, 'g'},
+#endif
 	{"help", 0, NULL, 'h'},
+#ifdef ENABLE_LINENUMBERS
+	{"linenumbers", 0, NULL, 'l'},
+#endif
 #ifndef DISABLE_MOUSE
 	{"mouse", 0, NULL, 'm'},
 #endif
@@ -2083,7 +2096,6 @@ int main(int argc, char **argv)
 	    case 'b':
 	    case 'e':
 	    case 'f':
-	    case 'g':
 	    case 'j':
 		/* Pico compatibility flags. */
 		break;
@@ -2192,6 +2204,9 @@ int main(int argc, char **argv)
 	    case 'd':
 		SET(REBIND_DELETE);
 		break;
+	    case 'g':
+		SET(SHOW_CURSOR);
+		break;
 #ifndef NANO_TINY
 	    case 'i':
 		SET(AUTOINDENT);
@@ -2267,6 +2282,11 @@ int main(int argc, char **argv)
 #ifndef NANO_TINY
 	    case '$':
 		SET(SOFTWRAP);
+		break;
+#endif
+#ifdef ENABLE_LINENUMBERS
+	    case 'l':
+		SET(LINE_NUMBERS);
 		break;
 #endif
 	    case 'h':
@@ -2527,7 +2547,7 @@ int main(int argc, char **argv)
     /* Set up the terminal state. */
     terminal_init();
 
-#if defined(__linux__) && !defined(NANO_TINY)
+#ifdef __linux__
     /* Check whether we're running on a Linux console. */
     console = (getenv("DISPLAY") == NULL);
 #endif
@@ -2539,6 +2559,8 @@ int main(int argc, char **argv)
     /* Initialize all the windows based on the current screen
      * dimensions. */
     window_init();
+
+    editwincols = COLS;
 
     /* Set up the signal handlers. */
     signal_init();
@@ -2552,17 +2574,20 @@ int main(int argc, char **argv)
     set_colorpairs();
 #else
     interface_color_pair[TITLE_BAR] = hilite_attribute;
+    interface_color_pair[LINE_NUMBER] = hilite_attribute;
     interface_color_pair[STATUS_BAR] = hilite_attribute;
     interface_color_pair[KEY_COMBO] = hilite_attribute;
     interface_color_pair[FUNCTION_TAG] = A_NORMAL;
 #endif
 
-#if !defined(NANO_TINY) && defined(HAVE_KEY_DEFINED)
+#ifdef HAVE_KEY_DEFINED
     /* Ask ncurses for the key codes for Control+Left/Right/Up/Down. */
     controlleft = get_keycode("kLFT5", CONTROL_LEFT);
     controlright = get_keycode("kRIT5", CONTROL_RIGHT);
     controlup = get_keycode("kUP5", CONTROL_UP);
     controldown = get_keycode("kDN5", CONTROL_DOWN);
+#endif
+#if !defined(NANO_TINY) && defined(HAVE_KEY_DEFINED)
     /* Ask for the codes for Shift+Control+Left/Right/Up/Down. */
     shiftcontrolleft = get_keycode("kLFT6", SHIFT_CONTROL_LEFT);
     shiftcontrolright = get_keycode("kRIT6", SHIFT_CONTROL_RIGHT);
@@ -2675,6 +2700,24 @@ int main(int argc, char **argv)
     display_buffer();
 
     while (TRUE) {
+#ifdef ENABLE_LINENUMBERS
+	int needed_margin = digits(openfile->filebot->lineno) + 1;
+
+	/* Only enable line numbers when there is enough room for them. */
+	if (ISSET(LINE_NUMBERS) && needed_margin < COLS - 3) {
+	    if (needed_margin != margin) {
+		margin = needed_margin;
+		editwincols = COLS - margin;
+		/* The margin has changed -- schedule a full refresh. */
+		refresh_needed = TRUE;
+	    }
+	} else
+#endif
+	{
+	    margin = 0;
+	    editwincols = COLS;
+	}
+
 	if (currmenu != MMAIN)
 	    display_main_list();
 
@@ -2690,10 +2733,14 @@ int main(int argc, char **argv)
 	/* Forget any earlier statusbar x position. */
 	reinit_statusbar_x();
 
-	/* Place the cursor in the edit window and make it visible. */
-	reset_cursor();
-	curs_set(1);
-	wnoutrefresh(edit);
+	/* Refresh either the entire edit window or just the cursor. */
+	if (refresh_needed)
+	    edit_refresh();
+	else {
+	    reset_cursor();
+	    curs_set(1);
+	    wnoutrefresh(edit);
+	}
 
 	/* Read in and interpret keystrokes. */
 	do_input(TRUE);

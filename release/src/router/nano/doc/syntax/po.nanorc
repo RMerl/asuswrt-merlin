@@ -7,7 +7,8 @@ comment "#"
 color green "^#.*$"
 color yellow "Copyright|\(C\)"
 # Header fields.
-color brightmagenta "\<(Project\-Id\-Version|Report\-Msgid\-Bugs\-To|Last\-Translator|Language(\-Team)?|X\-Generator|Plural\-Forms)\>"
+color brightred "^\"X-Bugs:.*\"$"
+color brightmagenta "\<(Project\-Id\-Version|Report\-Msgid\-Bugs\-To|Last\-Translator|Language(\-Team)?|X-Bugs|X-Generator|Plural\-Forms)\>"
 color cyan "\<(POT\-Creation\-Date|PO\-Revision\-Date|MIME\-Version|Content\-Type|Content\-Transfer\-Encoding)\>"
 # Encodings and numbers.
 color yellow "\<(UTF|ISO|Windows|Mac|IBM)\>\-[0-9]"

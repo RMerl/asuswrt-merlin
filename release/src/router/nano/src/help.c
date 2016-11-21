@@ -419,7 +419,11 @@ void help_init(void)
 		 * but allow it to spill into the second, for "M-Space". */
 		if (scsfound == 1) {
 		    sprintf(ptr, "%s              ", s->keystr);
-		    ptr += 6;
+		    /* Unicode arrows take three bytes instead of one. */
+		    if (s->keystr[1] == '\xE2')
+			ptr += 8;
+		    else
+			ptr += 6;
 		} else {
 		    ptr += sprintf(ptr, "(%s)\t", s->keystr);
 		    break;

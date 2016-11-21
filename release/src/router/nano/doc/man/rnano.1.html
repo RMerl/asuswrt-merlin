@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Sep  1 12:41:48 2016 -->
+<!-- CreationDate: Sat Oct 29 11:18:25 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -26,6 +26,7 @@
 <a href="#OPTIONS">OPTIONS</a><br>
 <a href="#BUGS">BUGS</a><br>
 <a href="#HOMEPAGE">HOMEPAGE</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
 <a href="#AUTHOR">AUTHOR</a><br>
 
 <hr>
@@ -36,9 +37,8 @@
 </h2>
 
 
-<p style="margin-left:11%; margin-top: 1em">rnano &minus;
-Restricted mode for Nano&rsquo;s ANOther editor, an enhanced
-free Pico clone</p>
+<p style="margin-left:11%; margin-top: 1em">rnano &minus; a
+restricted nano</p>
 
 <h2>SYNOPSIS
 <a name="SYNOPSIS"></a>
@@ -47,29 +47,21 @@ free Pico clone</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>rnano</b>
 [<i>options</i>]
-[[+<i>line</i>,<i>column</i>]&nbsp;<i>file</i>]...</p>
+[[+<i>line</i>[,<i>column</i>]]&nbsp;<i>file</i>]...</p>
 
 <h2>DESCRIPTION
 <a name="DESCRIPTION"></a>
 </h2>
 
 
-<p style="margin-left:11%; margin-top: 1em"><b>nano</b> is
-a small, free and friendly editor which aims to replace
-Pico, the default editor included in the non-free Pine
-package. On top of copying Pico&rsquo;s look and feel,
-<b>nano</b> also implements some missing (or disabled by
-default) features in Pico, such as &quot;search and
-replace&quot; and &quot;go to line and column
-number&quot;.</p>
-
-<p style="margin-left:11%; margin-top: 1em"><b>rnano</b> is
-a restricted version of <b>nano</b>, which only edits
-specific files and doesn&rsquo;t allow the user access to
-the filesystem or a command shell.</p>
+<p style="margin-left:11%; margin-top: 1em"><b>rnano</b>
+runs the <b>nano</b> editor in restricted mode. This allows
+editing only the specified file or files, and doesn&rsquo;t
+allow the user access to the filesystem nor to a command
+shell.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In restricted
-mode, <b>nano</b> will <i>not</i>:</p>
+mode, <b>nano</b> will:</p>
 
 <table width="100%" border="0" rules="none" frame="void"
        cellspacing="0" cellpadding="0">
@@ -83,7 +75,29 @@ mode, <b>nano</b> will <i>not</i>:</p>
 <td width="86%">
 
 
-<p>read or write to any file not specified on the command
+<p>not read any nanorc files;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="2%"></td>
+<td width="86%">
+
+
+<p>not allow suspending;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="2%"></td>
+<td width="86%">
+
+
+<p>not read nor write any file not specified on the command
 line;</p> </td></tr>
 <tr valign="top" align="left">
 <td width="11%"></td>
@@ -95,7 +109,7 @@ line;</p> </td></tr>
 <td width="86%">
 
 
-<p>read any nanorc files;</p></td></tr>
+<p>not allow saving a file under a different name;</p></td></tr>
 <tr valign="top" align="left">
 <td width="11%"></td>
 <td width="1%">
@@ -106,7 +120,7 @@ line;</p> </td></tr>
 <td width="86%">
 
 
-<p>allow suspending;</p></td></tr>
+<p>not allow appending or prepending to any file;</p></td></tr>
 <tr valign="top" align="left">
 <td width="11%"></td>
 <td width="1%">
@@ -117,19 +131,7 @@ line;</p> </td></tr>
 <td width="86%">
 
 
-<p>allow a file to be appended to, prepended to, or saved
-under a different name;</p></td></tr>
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="1%">
-
-
-<p>&bull;</p></td>
-<td width="2%"></td>
-<td width="86%">
-
-
-<p>use backup files or spell checking.</p></td></tr>
+<p>not make backup files nor do spell checking.</p></td></tr>
 </table>
 
 <h2>OPTIONS
@@ -144,30 +146,17 @@ under a different name;</p></td></tr>
 <p style="margin-left:22%;">Show a summary of command-line
 options and exit.</p>
 
-<p style="margin-left:11%;"><b>&minus;V</b>,
-<b>&minus;&minus;version</b></p>
-
-<p style="margin-left:22%;">Show the current version number
-and exit.</p>
-
 <p style="margin-left:11%; margin-top: 1em">See the
-<b>nano</b>(1) manpage for all of the possible options.</p>
+<b>nano</b>(1) manpage for all available options.</p>
 
 <h2>BUGS
 <a name="BUGS"></a>
 </h2>
 
 
-<p style="margin-left:11%; margin-top: 1em">Please send any
-comments or bug reports to <b>nano@nano-editor.org</b>.</p>
-
-<p style="margin-left:11%; margin-top: 1em">The <b>nano</b>
-mailing list is available from
-<b>nano-devel@gnu.org</b>.</p>
-
-<p style="margin-left:11%; margin-top: 1em">To subscribe,
-email to <b>nano-devel-request@gnu.org</b> with a subject of
-&quot;subscribe&quot;.</p>
+<p style="margin-left:11%; margin-top: 1em">Please report
+bugs via
+<i>https://savannah.gnu.org/bugs/?group=nano</i>.</p>
 
 <h2>HOMEPAGE
 <a name="HOMEPAGE"></a>
@@ -175,7 +164,15 @@ email to <b>nano-devel-request@gnu.org</b> with a subject of
 
 
 
-<p style="margin-left:11%; margin-top: 1em">http://www.nano-editor.org/</p>
+<p style="margin-left:11%; margin-top: 1em">https://nano-editor.org/</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b>(1)</p>
 
 <h2>AUTHOR
 <a name="AUTHOR"></a>
@@ -183,10 +180,10 @@ email to <b>nano-devel-request@gnu.org</b> with a subject of
 
 
 <p style="margin-left:11%; margin-top: 1em">Chris
-Allegretta &lt;chrisa@asty.org&gt;, et al (see the file
-AUTHORS for details). This manual page was originally
-written by Thijs Kinkhorst &lt;thijs@kinkhorst.com&gt;, for
-the Debian system (but may be used by others).</p>
+Allegretta and others (see the files <i>AUTHORS</i> and
+<i>THANKS</i> for details). This manual page was originally
+written by Thijs Kinkhorst for the Debian system (but may be
+used by others).</p>
 <hr>
 </body>
 </html>

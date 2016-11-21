@@ -20,6 +20,7 @@ VPATH = @srcdir@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@
 datadir = @datadir@
 localedir = $(datadir)/locale
 gettextsrcdir = $(datadir)/gettext/po

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Sep  1 12:41:50 2016 -->
+<!-- CreationDate: Sat Oct 29 11:18:26 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -38,7 +38,7 @@
 
 
 <p style="margin-left:11%; margin-top: 1em">nanorc &minus;
-GNU nano&rsquo;s rcfile</p>
+GNU nano&rsquo;s configuration file</p>
 
 <h2>DESCRIPTION
 <a name="DESCRIPTION"></a>
@@ -190,6 +190,11 @@ to use for the shortcut key combos in the two help lines at
 the bottom of the screen. See <b>set titlecolor</b> for more
 details.</p>
 
+<p style="margin-left:11%;"><b>set linenumbers</b></p>
+
+<p style="margin-left:15%;">Display line numbers to the
+left of the text area.</p>
+
 <p style="margin-left:11%;"><b>set locking</b></p>
 
 <p style="margin-left:15%;">Enable vim-style lock-files for
@@ -243,6 +248,13 @@ newline to the ends of files.</p>
 
 <p style="margin-left:15%;">Don&rsquo;t hard-wrap text at
 all.</p>
+
+<p style="margin-left:11%;"><b>set numbercolor</b>
+<i>fgcolor</i>,<i>bgcolor</i></p>
+
+<p style="margin-left:15%;">Specify the color combination
+to use for line numbers. See <b>set titlecolor</b> for more
+details.</p>
 
 <p style="margin-left:11%;"><b>set operatingdir</b>
 <i>directory</i></p>
@@ -320,6 +332,12 @@ won&rsquo;t work properly with this option enabled.</p>
 
 <p style="margin-left:15%;">Do extended regular expression
 searches by default.</p>
+
+<p style="margin-left:11%;"><b>set showcursor</b></p>
+
+<p style="margin-left:15%;">Put the cursor on the
+highlighted item in the file browser, to aid braille
+users.</p>
 
 <p style="margin-left:11%;"><b>set smarthome</b></p>
 
@@ -674,7 +692,8 @@ current list in the file browser.</p>
 <p style="margin-left:15%;"><b>searchagain</b></p>
 
 <p style="margin-left:18%;">Repeats the last search command
-without prompting.</p>
+without prompting. (The form &rsquo;research&rsquo; is
+deprecated.)</p>
 
 <p style="margin-left:15%;"><b>findprevious</b></p>
 
@@ -730,7 +749,8 @@ position till the end of the buffer.</p>
 <p style="margin-left:15%;"><b>curpos</b></p>
 
 <p style="margin-left:18%;">Shows the current cursor
-position: the line, column, and character positions.</p>
+position: the line, column, and character positions. (The
+form &rsquo;cursorpos&rsquo; is deprecated.)</p>
 
 <p style="margin-left:15%;"><b>wordcount</b></p>
 
@@ -944,7 +964,8 @@ searching (search/replace menus only).</p>
 
 <p style="margin-left:18%;">Toggles whether
 searching/replacing is based on literal strings or regular
-expressions.</p>
+expressions. (The form &rsquo;regex&rsquo; is
+deprecated.)</p>
 
 <p style="margin-left:15%;"><b>backwards</b></p>
 
@@ -964,7 +985,8 @@ the prompt menus (e.g. search).</p>
 <p style="margin-left:15%;"><b>flipreplace</b></p>
 
 <p style="margin-left:18%;">Toggles between searching for
-something and replacing something.</p>
+something and replacing something. (The form
+&rsquo;dontreplace&rsquo; is deprecated.)</p>
 
 <p style="margin-left:15%;"><b>flipexecute</b></p>
 
@@ -974,7 +996,8 @@ file and executing a command.</p>
 <p style="margin-left:15%;"><b>flipnewbuffer</b></p>
 
 <p style="margin-left:18%;">Toggles between inserting into
-the current buffer and into a new empty buffer.</p>
+the current buffer and into a new empty buffer. (The form
+&rsquo;newbuffer&rsquo; is deprecated.)</p>
 
 <p style="margin-left:15%;"><b>dosformat</b></p>
 
@@ -1140,8 +1163,8 @@ replace&rsquo; menu.</p>
 <p style="margin-left:15%;"><b>replacewith</b></p>
 
 <p style="margin-left:18%;">The &rsquo;replace with&rsquo;
-menu, which comes up after &rsquo;search to
-replace&rsquo;.</p>
+menu, which comes up after &rsquo;search to replace&rsquo;.
+(The form &rsquo;replace2&rsquo; is deprecated.)</p>
 
 <p style="margin-left:15%;"><b>gotoline</b></p>
 
@@ -1222,20 +1245,15 @@ file.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>nano</b>(1)</p>
 
-
-<p style="margin-left:11%; margin-top: 1em"><i>/usr/share/doc/nano/examples/nanorc.sample</i>
-(or equivalent on your system)</p>
-
 <h2>AUTHOR
 <a name="AUTHOR"></a>
 </h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">Chris
-Allegretta &lt;chrisa@asty.org&gt;, et al (see
-<i>AUTHORS</i> and <i>THANKS</i> for details). This manual
-page was originally written by Jordi Mallach
-&lt;jordi@gnu.org&gt;, for the Debian system (but may be
+Allegretta and others (see the files <i>AUTHORS</i> and
+<i>THANKS</i> for details). This manual page was originally
+written by Jordi Mallach for the Debian system (but may be
 used by others).</p>
 <hr>
 </body>

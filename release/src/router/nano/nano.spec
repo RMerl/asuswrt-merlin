@@ -1,5 +1,5 @@
 %define name	nano
-%define version	2.7.0
+%define version	2.7.1
 %define release	1
 
 Name		: %{name}

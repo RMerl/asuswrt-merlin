@@ -28,7 +28,7 @@
 /* Move to the first line of the file. */
 void do_first_line(void)
 {
-    openfile->current = openfile->edittop = openfile->fileage;
+    openfile->current = openfile->fileage;
     openfile->current_x = 0;
     openfile->placewewant = 0;
 
@@ -41,6 +41,8 @@ void do_last_line(void)
     openfile->current = openfile->filebot;
     openfile->current_x = strlen(openfile->filebot->data);
     openfile->placewewant = xplustabs();
+
+    /* Set the last line of the screen as the target for the cursor. */
     openfile->current_y = editwinrows - 1;
 
     refresh_needed = TRUE;
@@ -97,7 +99,7 @@ void do_page_up(void)
 #endif
 
     /* Scroll the edit window up a page. */
-    edit_update(STATIONARY);
+    adjust_viewport(STATIONARY);
     refresh_needed = TRUE;
 }
 
@@ -137,7 +139,7 @@ void do_page_down(void)
 					openfile->placewewant);
 
     /* Scroll the edit window down a page. */
-    edit_update(STATIONARY);
+    adjust_viewport(STATIONARY);
     refresh_needed = TRUE;
 }
 
@@ -147,7 +149,7 @@ void do_page_down(void)
  * afterwards. */
 void do_para_begin(bool allow_update)
 {
-    filestruct *current_save = openfile->current;
+    filestruct *was_current = openfile->current;
 
     if (openfile->current != openfile->fileage) {
 	do {
@@ -159,7 +161,7 @@ void do_para_begin(bool allow_update)
     openfile->current_x = 0;
 
     if (allow_update)
-	edit_redraw(current_save);
+	edit_redraw(was_current);
 }
 
 /* Move up to the beginning of the last beginning-of-paragraph line
@@ -177,7 +179,7 @@ void do_para_begin_void(void)
  * paragraph or isn't in a paragraph. */
 void do_para_end(bool allow_update)
 {
-    filestruct *const current_save = openfile->current;
+    filestruct *was_current = openfile->current;
 
     while (openfile->current != openfile->filebot &&
 		!inpar(openfile->current))
@@ -197,7 +199,7 @@ void do_para_end(bool allow_update)
 	openfile->current_x = strlen(openfile->current->data);
 
     if (allow_update)
-	edit_redraw(current_save);
+	edit_redraw(was_current);
 }
 
 /* Move down to the beginning of the last line of the current paragraph.
@@ -209,7 +211,6 @@ void do_para_end_void(void)
 }
 #endif /* !DISABLE_JUSTIFY */
 
-#ifndef NANO_TINY
 /* Move to the preceding block of text in the file. */
 void do_prev_block(void)
 {
@@ -255,7 +256,7 @@ void do_next_block(void)
  * screen afterwards. */
 void do_prev_word(bool allow_punct, bool allow_update)
 {
-    filestruct *current_save = openfile->current;
+    filestruct *was_current = openfile->current;
     bool seen_a_word = FALSE, step_forward = FALSE;
 
     assert(openfile->current != NULL && openfile->current->data != NULL);
@@ -295,7 +296,7 @@ void do_prev_word(bool allow_punct, bool allow_update)
     /* If allow_update is TRUE, update the screen. */
     if (allow_update) {
 	focusing = FALSE;
-	edit_redraw(current_save);
+	edit_redraw(was_current);
     }
 }
 
@@ -312,7 +313,7 @@ void do_prev_word_void(void)
  * otherwise. */
 bool do_next_word(bool allow_punct, bool allow_update)
 {
-    filestruct *current_save = openfile->current;
+    filestruct *was_current = openfile->current;
     bool started_on_word = is_word_mbchar(openfile->current->data +
 				openfile->current_x, allow_punct);
     bool seen_space = !started_on_word;
@@ -347,7 +348,7 @@ bool do_next_word(bool allow_punct, bool allow_update)
     /* If allow_update is TRUE, update the screen. */
     if (allow_update) {
 	focusing = FALSE;
-	edit_redraw(current_save);
+	edit_redraw(was_current);
     }
 
     /* Return whether we started on a word. */
@@ -360,7 +361,19 @@ void do_next_word_void(void)
 {
     do_next_word(ISSET(WORD_BOUNDS), TRUE);
 }
-#endif /* !NANO_TINY */
+
+/* Make sure that the current line, when it is partially scrolled off the
+ * screen in softwrap mode, is scrolled fully into view. */
+void ensure_line_is_visible(void)
+{
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP) && strlenpt(openfile->current->data) / editwincols +
+				openfile->current_y >= editwinrows) {
+	adjust_viewport(ISSET(SMOOTH_SCROLL) ? FLOWING : CENTERING);
+	refresh_needed = TRUE;
+    }
+#endif
+}
 
 /* Move to the beginning of the current line.  If the SMART_HOME flag is
  * set, move to the first non-whitespace character of the current line
@@ -399,6 +412,8 @@ void do_end(void)
 
     if (need_horizontal_scroll(was_column, openfile->placewewant))
 	update_line(openfile->current, openfile->current_x);
+
+    ensure_line_is_visible();
 }
 
 /* If scroll_only is FALSE, move up one line.  If scroll_only is TRUE,
@@ -423,21 +438,12 @@ void do_up(bool scroll_only)
     openfile->current_x = actual_x(openfile->current->data,
 					openfile->placewewant);
 
-    /* If scroll_only is FALSE and if we're on the first line of the
-     * edit window, scroll the edit window up one line if we're in
-     * smooth scrolling mode, or up half a page if we're not.  If
-     * scroll_only is TRUE, scroll the edit window up one line
-     * unconditionally. */
-    if (openfile->current_y == 0
-#ifndef NANO_TINY
-	|| (ISSET(SOFTWRAP) && openfile->edittop->lineno == openfile->current->next->lineno) || scroll_only
-#endif
-	)
-	edit_scroll(UPWARD,
-#ifndef NANO_TINY
-		(ISSET(SMOOTH_SCROLL) || scroll_only) ? 1 :
-#endif
-		editwinrows / 2 + 1);
+    /* When the cursor was on the first line of the edit window (or when just
+     * scrolling without moving the cursor), scroll the edit window up -- one
+     * line if we're in smooth scrolling mode, and half a page otherwise. */
+    if (openfile->current->next == openfile->edittop || scroll_only)
+	edit_scroll(UPWARD, (ISSET(SMOOTH_SCROLL) || scroll_only) ?
+				1 : editwinrows / 2 + 1);
 
     /* If the lines weren't already redrawn, see if they need to be. */
     if (openfile->current_y > 0) {
@@ -477,18 +483,20 @@ void do_down(bool scroll_only)
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
 	/* Compute the number of lines to scroll. */
-	amount = strlenpt(openfile->current->data) / COLS - xplustabs() / COLS +
-			strlenpt(openfile->current->next->data) / COLS +
+	amount = strlenpt(openfile->current->data) / editwincols -
+			xplustabs() / editwincols +
+			strlenpt(openfile->current->next->data) / editwincols +
 			openfile->current_y - editwinrows + 2;
 	topline = openfile->edittop;
 	/* Reduce the amount when there are overlong lines at the top. */
 	for (enough = 1; enough < amount; enough++) {
-	    amount -= strlenpt(topline->data) / COLS;
-	    if (amount <= 0) {
+	    amount -= strlenpt(topline->data) / editwincols;
+	    if (amount > 0)
+		topline = topline->next;
+	    if (amount < enough) {
 		amount = enough;
 		break;
 	    }
-	    topline = topline->next;
 	}
     }
 #endif
@@ -503,26 +511,23 @@ void do_down(bool scroll_only)
      * smooth scrolling mode, or down half a page if we're not.  If
      * scroll_only is TRUE, scroll the edit window down one line
      * unconditionally. */
-    if (openfile->current_y == editwinrows - 1
 #ifndef NANO_TINY
-	|| amount > 0 || scroll_only
-#endif
-	) {
-#ifndef NANO_TINY
+    if (openfile->current_y == editwinrows - 1 || amount > 0 || scroll_only) {
 	if (amount < 1 || scroll_only)
 	    amount = 1;
-#endif
-	edit_scroll(DOWNWARD,
-#ifndef NANO_TINY
-		(ISSET(SMOOTH_SCROLL) || scroll_only) ? amount :
-#endif
-		editwinrows / 2 + 1);
+
+	edit_scroll(DOWNWARD, (ISSET(SMOOTH_SCROLL) || scroll_only) ?
+				amount : editwinrows / 2 + 1);
 
 	if (ISSET(SOFTWRAP)) {
 	    refresh_needed = TRUE;
 	    return;
 	}
     }
+#else
+    if (openfile->current_y == editwinrows - 1)
+	edit_scroll(DOWNWARD, editwinrows / 2 + 1);
+#endif
 
     /* If the lines weren't already redrawn, see if they need to be. */
     if (openfile->current_y < editwinrows - 1) {
@@ -586,15 +591,19 @@ void do_right(void)
 						openfile->current_x);
     else if (openfile->current != openfile->filebot) {
 	openfile->current_x = 0;
-	openfile->placewewant = 0;
-	if (need_horizontal_scroll(was_column, 0))
-	    update_line(openfile->current, 0);
-	do_down_void();
-	return;
+#ifndef NANO_TINY
+	if (ISSET(SOFTWRAP))
+	    openfile->current_y -= strlenpt(openfile->current->data) / COLS;
+#endif
     }
 
     openfile->placewewant = xplustabs();
 
     if (need_horizontal_scroll(was_column, openfile->placewewant))
 	update_line(openfile->current, openfile->current_x);
+
+    if (openfile->current_x == 0)
+	do_down_void();
+    else
+	ensure_line_is_visible();
 }

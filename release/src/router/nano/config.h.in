@@ -50,6 +50,9 @@
 /* Define this to disable the comment/uncomment functionality. */
 #undef ENABLE_COMMENT
 
+/* Define this to enable line numbering. */
+#undef ENABLE_LINENUMBERS
+
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS

@@ -59,7 +59,6 @@ char *do_browser(char *path)
 
     /* Don't show a cursor in the file list. */
     curs_set(0);
-    blank_statusbar();
 
   read_directory_contents:
 	/* We come here when we refresh or select a new directory. */
@@ -503,6 +502,8 @@ void browser_refresh(void)
     size_t i;
     int line = 0, col = 0;
 	/* The current line and column while the list is getting displayed. */
+    int the_line = 0, the_column = 0;
+	/* The line and column of the selected item. */
     char *info;
 	/* The additional information that we'll display about a file. */
 
@@ -522,28 +523,27 @@ void browser_refresh(void)
 	size_t infolen;
 		/* The length of the file information in columns. */
 	int infomaxlen = 7;
-		/* The maximum length of the file information in
-		 * columns: seven for "--", "(dir)", or the file size,
-		 * and 12 for "(parent dir)". */
+		/* The maximum length of the file information in columns:
+		 * normally seven, but will be twelve for "(parent dir)". */
 	bool dots = (COLS >= 15 && namelen >= longest - infomaxlen);
-		/* Do we put an ellipsis before the filename?  Don't set
-		 * this to TRUE if we have fewer than 15 columns (i.e.
-		 * one column for padding, plus seven columns for a
-		 * filename other than ".."). */
-	char *disp = display_string(thename, dots ? namelen -
-		longest + infomaxlen + 4 : 0, longest, FALSE);
-		/* If we put an ellipsis before the filename, reserve
-		 * one column for padding, plus seven columns for "--",
-		 * "(dir)", or the file size, plus three columns for the
-		 * ellipsis. */
+		/* Whether to put an ellipsis before the filename?  We don't
+		 * waste space on dots when there are fewer than 15 columns. */
+	char *disp = display_string(thename, dots ?
+		namelen + infomaxlen + 4 - longest : 0, longest, FALSE);
+		/* The filename (or a fragment of it) in displayable format.
+		 * When a fragment, account for dots plus one space padding. */
 
-	/* Start highlighting the currently selected file or directory. */
-	if (i == selected)
+	/* If this is the selected item, start its highlighting, and
+	 * remember its location to be able to place the cursor on it. */
+	if (i == selected) {
 	    wattron(edit, hilite_attribute);
+	    the_line = line;
+	    the_column = col;
+	}
 
 	blank_line(edit, line, col, longest);
 
-	/* If dots is TRUE, we will display something like "...ename". */
+	/* If the name is too long, we display something like "...ename". */
 	if (dots)
 	    mvwaddstr(edit, line, col, "...");
 	mvwaddstr(edit, line, dots ? col + 3 : col, disp);
@@ -552,21 +552,16 @@ void browser_refresh(void)
 
 	col += longest;
 
-	/* Show information about the file.  We don't want to report
-	 * file sizes for links, so we use lstat(). */
+	/* Show information about the file: "--" for symlinks (except when
+	 * they point to a directory) and for files that have disappeared,
+	 * "(dir)" for directories, and the file size for normal files. */
 	if (lstat(filelist[i], &st) == -1 || S_ISLNK(st.st_mode)) {
-	    /* If the file doesn't exist (i.e. it's been deleted while
-	     * the file browser is open), or it's a symlink that doesn't
-	     * point to a directory, display "--". */
 	    if (stat(filelist[i], &st) == -1 || !S_ISDIR(st.st_mode))
 		info = mallocstrcpy(NULL, "--");
-	    /* If the file is a symlink that points to a directory,
-	     * display it as a directory. */
 	    else
 		/* TRANSLATORS: Try to keep this at most 7 characters. */
 		info = mallocstrcpy(NULL, _("(dir)"));
 	} else if (S_ISDIR(st.st_mode)) {
-	    /* If the file is a directory, display it as such. */
 	    if (strcmp(thename, "..") == 0) {
 		/* TRANSLATORS: Try to keep this at most 12 characters. */
 		info = mallocstrcpy(NULL, _("(parent dir)"));
@@ -579,6 +574,7 @@ void browser_refresh(void)
 
 	    info = charalloc(infomaxlen + 1);
 
+	    /* Massage the file size into a human-readable form. */
 	    if (st.st_size < (1 << 10))
 		modifier = ' ';  /* bytes */
 	    else if (st.st_size < (1 << 20)) {
@@ -592,8 +588,7 @@ void browser_refresh(void)
 		modifier = 'G';  /* gigabytes */
 	    }
 
-	    /* Show the size if less than a terabyte,
-	     * otherwise show "(huge)". */
+	    /* Show the size if less than a terabyte, else show "(huge)". */
 	    if (result < (1 << 10))
 		sprintf(info, "%4ju %cB", (intmax_t)result, modifier);
 	    else
@@ -611,7 +606,7 @@ void browser_refresh(void)
 
 	mvwaddstr(edit, line, col - infolen, info);
 
-	/* Finish highlighting the currently selected file or directory. */
+	/* If this is the selected item, finish its highlighting. */
 	if (i == selected)
 	    wattroff(edit, hilite_attribute);
 
@@ -626,8 +621,12 @@ void browser_refresh(void)
 	    line++;
 	    col = 0;
 	}
+    }
 
-	wmove(edit, line, col);
+    /* If requested, put the cursor on the selected item and switch it on. */
+    if (ISSET(SHOW_CURSOR)) {
+	wmove(edit, the_line, the_column);
+	curs_set(1);
     }
 
     wnoutrefresh(edit);

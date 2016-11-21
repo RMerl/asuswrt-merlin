@@ -17,11 +17,12 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANORC 5 "version 2.7.0" "September 2016"
+.TH NANORC 5 "version 2.7.1" "October 2016"
 .\" Please adjust this date whenever revising the manpage.
-.\"
+
 .SH NAME
-nanorc \- GNU nano's rcfile
+nanorc \- GNU nano's configuration file
+
 .SH DESCRIPTION
 The \fInanorc\fP file contains the default settings for \fBnano\fP, a
 small and friendly editor.  The file should be in Unix format, not in
@@ -116,6 +117,9 @@ Specify the color combination to use for the shortcut key combos
 in the two help lines at the bottom of the screen.
 See \fBset titlecolor\fR for more details.
 .TP
+.B set linenumbers
+Display line numbers to the left of the text area.
+.TP
 .B set locking
 Enable vim-style lock-files for when editing files.
 .TP
@@ -149,6 +153,10 @@ Don't automatically add a newline to the ends of files.
 .TP
 .B set nowrap
 Don't hard-wrap text at all.
+.TP
+.B set numbercolor \fIfgcolor\fR,\fIbgcolor\fR
+Specify the color combination to use for line numbers.
+See \fBset titlecolor\fR for more details.
 .TP
 .B set operatingdir "\fIdirectory\fP"
 \fBnano\fP will only read and write files inside \fIdirectory\fP and its
@@ -199,6 +207,10 @@ won't work properly with this option enabled.
 .TP
 .B set regexp
 Do extended regular expression searches by default.
+.TP
+.B set showcursor
+Put the cursor on the highlighted item in the file browser, to aid
+braille users.
 .TP
 .B set smarthome
 Make the Home key smarter.  When Home is pressed anywhere but at the
@@ -413,6 +425,7 @@ a string in the current list in the file browser.
 .TP
 .B searchagain
 Repeats the last search command without prompting.
+(The form 'research' is deprecated.)
 .TP
 .B findprevious
 As \fBsearchagain\fR, but always in the backward direction.
@@ -447,6 +460,7 @@ Cuts all text from the cursor position till the end of the buffer.
 .TP
 .B curpos
 Shows the current cursor position: the line, column, and character positions.
+(The form 'cursorpos' is deprecated.)
 .TP
 .B wordcount
 Counts the number of words, lines and characters in the current buffer.
@@ -579,6 +593,7 @@ Toggles case sensitivity in searching (search/replace menus only).
 .TP
 .B regexp
 Toggles whether searching/replacing is based on literal strings or regular expressions.
+(The form 'regex' is deprecated.)
 .TP
 .B backwards
 Toggles whether searching/replacing goes forward or backward.
@@ -591,6 +606,7 @@ Shows the next history entry in the prompt menus (e.g. search).
 .TP
 .B flipreplace
 Toggles between searching for something and replacing something.
+(The form 'dontreplace' is deprecated.)
 .TP
 .B flipexecute
 Toggles between inserting a file and executing a command.
@@ -598,6 +614,7 @@ Toggles between inserting a file and executing a command.
 .B flipnewbuffer
 Toggles between inserting into the current buffer and into a new
 empty buffer.
+(The form 'newbuffer' is deprecated.)
 .TP
 .B dosformat
 When writing a file, switches to writing a DOS format (CR/LF).
@@ -701,6 +718,7 @@ The 'search to replace' menu.
 .TP
 .B replacewith
 The 'replace with' menu, which comes up after 'search to replace'.
+(The form 'replace2' is deprecated.)
 .TP
 .B gotoline
 The 'goto line (and column)' menu.
@@ -745,14 +763,11 @@ System-wide configuration file.
 .TP
 .B ~/.nanorc
 Per-user configuration file.
+
 .SH SEE ALSO
-.TP
-\fBnano\fP(1)
-.PP
-\fI/usr/share/doc/nano/examples/nanorc.sample\fP (or equivalent on your
-system)
+.BR nano (1)
+
 .SH AUTHOR
-Chris Allegretta <chrisa@asty.org>, et al (see \fIAUTHORS\fP and
+Chris Allegretta and others (see the files \fIAUTHORS\fP and
 \fITHANKS\fP for details).  This manual page was originally written by
-Jordi Mallach <jordi@gnu.org>, for the Debian system (but may be used by
-others).
+Jordi Mallach for the Debian system (but may be used by others).

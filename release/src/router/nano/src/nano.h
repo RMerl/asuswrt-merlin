@@ -4,7 +4,7 @@
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
  *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
- *
+ *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
  *   it under the terms of the GNU General Public License as published    *
  *   by the Free Software Foundation, either version 3 of the License,    *
@@ -451,11 +451,13 @@ typedef struct sc {
 	/* Which menus this applies to. */
     void (*scfunc)(void);
 	/* The function we're going to run. */
+#ifndef NANO_TINY
     int toggle;
 	/* If a toggle, what we're toggling. */
     int ordinal;
 	/* The how-manieth toggle this is, in order to be able to
 	 * keep them in sequence. */
+#endif
     struct sc *next;
 	/* Next in the list. */
 } sc;
@@ -486,6 +488,7 @@ typedef struct subnfunc {
 enum
 {
     TITLE_BAR = 0,
+    LINE_NUMBER,
     STATUS_BAR,
     KEY_COMBO,
     FUNCTION_TAG,
@@ -533,7 +536,9 @@ enum
     LOCKING,
     NOREAD_MODE,
     MAKE_IT_UNIX,
-    JUSTIFY_TRIM
+    JUSTIFY_TRIM,
+    SHOW_CURSOR,
+    LINE_NUMBERS
 };
 
 /* Flags for the menus in which a given function should be present. */

@@ -52,6 +52,39 @@ void get_homedir(void)
     }
 }
 
+#ifdef ENABLE_LINENUMBERS
+/* Return the number of digits that the given integer n takes up. */
+int digits(int n)
+{
+    if (n < 100000) {
+        if (n < 1000) {
+            if (n < 100)
+                return 2;
+            else
+                return 3;
+        } else {
+            if (n < 10000)
+                return 4;
+            else
+                return 5;
+        }
+    } else {
+        if (n < 10000000) {
+            if (n < 1000000)
+                return 6;
+            else
+                return 7;
+        }
+        else {
+            if (n < 100000000)
+                return 8;
+            else
+                return 9;
+        }
+    }
+}
+#endif
+
 /* Read a ssize_t from str, and store it in *val (if val is not NULL).
  * On error, we return FALSE and don't change *val.  Otherwise, we
  * return TRUE. */
@@ -321,10 +354,9 @@ const char *strstrwrapper(const char *haystack, const char *needle,
 
 #ifdef HAVE_REGEX_H
     if (ISSET(USE_REGEXP)) {
-#ifndef NANO_TINY
 	if (ISSET(BACKWARDS_SEARCH)) {
-	    if (regexec(&search_regexp, haystack, 1, regmatches,
-		0) == 0 && haystack + regmatches[0].rm_so <= start) {
+	    if (regexec(&search_regexp, haystack, 1, regmatches, 0) == 0 &&
+			haystack + regmatches[0].rm_so <= start) {
 		const char *retval = haystack + regmatches[0].rm_so;
 
 		/* Search forward until there are no more matches. */
@@ -338,10 +370,8 @@ const char *strstrwrapper(const char *haystack, const char *needle,
 		regexec(&search_regexp, retval, 10, regmatches, 0);
 		return retval;
 	    }
-	} else
-#endif /* !NANO_TINY */
-	if (regexec(&search_regexp, start, 10, regmatches,
-		(start > haystack) ? REG_NOTBOL : 0) == 0) {
+	} else if (regexec(&search_regexp, start, 10, regmatches,
+			(start > haystack) ? REG_NOTBOL : 0) == 0) {
 	    const char *retval = start + regmatches[0].rm_so;
 
 	    regexec(&search_regexp, retval, 10, regmatches, 0);
@@ -350,20 +380,14 @@ const char *strstrwrapper(const char *haystack, const char *needle,
 	return NULL;
     }
 #endif /* HAVE_REGEX_H */
-#if !defined(NANO_TINY) || !defined(DISABLE_SPELLER)
     if (ISSET(CASE_SENSITIVE)) {
-#ifndef NANO_TINY
 	if (ISSET(BACKWARDS_SEARCH))
 	    return revstrstr(haystack, needle, start);
 	else
-#endif
 	    return strstr(start, needle);
-    }
-#endif /* !DISABLE_SPELLER || !NANO_TINY */
-#ifndef NANO_TINY
-    else if (ISSET(BACKWARDS_SEARCH))
+    } else if (ISSET(BACKWARDS_SEARCH))
 	return mbrevstrcasestr(haystack, needle, start);
-#endif
+
     return mbstrcasestr(start, needle);
 }
 
@@ -439,12 +463,12 @@ char *free_and_assign(char *dest, char *src)
  * get_page_start(column) < COLS). */
 size_t get_page_start(size_t column)
 {
-    if (column == 0 || column < COLS - 1)
+    if (column == 0 || column < editwincols - 1)
 	return 0;
-    else if (COLS > 8)
-	return column - 7 - (column - 7) % (COLS - 8);
+    else if (editwincols > 8)
+	return column - 7 - (column - 7) % (editwincols - 8);
     else
-	return column - (COLS - 2);
+	return column - (editwincols - 2);
 }
 
 /* Return the placewewant associated with current_x, i.e. the zero-based

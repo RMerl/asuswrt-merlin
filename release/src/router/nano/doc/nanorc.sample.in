@@ -63,6 +63,9 @@
 ## Make the justify command kill whitespace at the end of lines.
 # set justifytrim
 
+## Display line numbers to the left of the text.
+# set linenumbers
+
 ## Enable vim-style lock-files.  This is just to let a vim user know you
 ## are editing a file [s]he is trying to edit and vice versa. There are
 ## no plans to implement vim-style undo state in these files.
@@ -138,6 +141,10 @@
 ## Do extended regular expression searches by default.
 # set regexp
 
+## Put the cursor on the highlighted item in the file browser;
+## useful for people who use a braille display.
+# set showcursor
+
 ## Make the Home key smarter.  When Home is pressed anywhere but at the
 ## very beginning of non-whitespace characters on a line, the cursor
 ## will jump to that beginning (either forwards or backwards).  If the
@@ -189,8 +196,9 @@
 
 
 ## Paint the interface elements of nano.
-## This is an example; by default there are no colors.
+## These are examples; by default there are no colors.
 # set titlecolor brightwhite,blue
+# set numbercolor cyan
 # set statuscolor brightwhite,green
 # set keycolor green
 # set functioncolor yellow

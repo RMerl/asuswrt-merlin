@@ -35,6 +35,9 @@
 
 static const rcoption rcopts[] = {
     {"boldtext", BOLD_TEXT},
+#ifdef ENABLE_LINENUMBERS
+    {"linenumbers", LINE_NUMBERS},
+#endif
 #ifndef DISABLE_JUSTIFY
     {"brackets", 0},
 #endif
@@ -96,6 +99,7 @@ static const rcoption rcopts[] = {
     {"noconvert", NO_CONVERT},
     {"quickblank", QUICK_BLANK},
     {"quiet", QUIET},
+    {"showcursor", SHOW_CURSOR},
     {"smarthome", SMART_HOME},
     {"smooth", SMOOTH_SCROLL},
     {"softwrap", SOFTWRAP},
@@ -107,6 +111,7 @@ static const rcoption rcopts[] = {
 #endif
 #ifndef DISABLE_COLOR
     {"titlecolor", 0},
+    {"numbercolor", 0},
     {"statuscolor", 0},
     {"keycolor", 0},
     {"functioncolor", 0},
@@ -343,9 +348,7 @@ bool is_universal(void (*func))
 {
     if (func == do_left || func == do_right ||
 	func == do_home || func == do_end ||
-#ifndef NANO_TINY
 	func == do_prev_word_void || func == do_next_word_void ||
-#endif
 	func == do_verbatim_input || func == do_cut_text_void ||
 	func == do_delete || func == do_backspace ||
 	func == do_tab || func == do_enter)
@@ -400,7 +403,12 @@ void parse_binding(char *ptr, bool dobind)
     else if (keycopy[0] != '^' && keycopy[0] != 'M' && keycopy[0] != 'F') {
 	rcfile_error(N_("Key name must begin with \"^\", \"M\", or \"F\""));
 	goto free_copy;
-    } else if (keycopy[0] == '^' && (keycopy[1] < 64 || keycopy[1] > 127)) {
+    } else if ((keycopy[0] == 'M' && keycopy[1] != '-') ||
+		(keycopy[0] == '^' && ((keycopy[1] < 'A' || keycopy[1] > 'z') ||
+		keycopy[1] == '[' || keycopy[1] == '`' ||
+		(strlen(keycopy) > 2 && strcmp(keycopy, "^Space") != 0))) ||
+		(strlen(keycopy) > 3 && strcmp(keycopy, "^Space") != 0 &&
+		strcmp(keycopy, "M-Space") != 0)) {
 	rcfile_error(N_("Key name %s is invalid"), keycopy);
 	goto free_copy;
     }
@@ -455,9 +463,11 @@ void parse_binding(char *ptr, bool dobind)
 	    if (f->scfunc == newsc->scfunc)
 		mask = mask | f->menus;
 
+#ifndef NANO_TINY
 	/* Handle the special case of the toggles. */
 	if (newsc->scfunc == do_toggle_void)
 	    mask = MMAIN;
+#endif
 
 	/* Now limit the given menu to those where the function exists. */
 	if (is_universal(newsc->scfunc))
@@ -472,7 +482,7 @@ void parse_binding(char *ptr, bool dobind)
 	}
 
 	newsc->menus = menu;
-	assign_keyinfo(newsc, keycopy);
+	assign_keyinfo(newsc, keycopy, 0);
 
 	/* Do not allow rebinding a frequent escape-sequence starter: Esc [. */
 	if (newsc->meta && newsc->keycode == 91) {
@@ -497,6 +507,7 @@ void parse_binding(char *ptr, bool dobind)
     }
 
     if (dobind) {
+#ifndef NANO_TINY
 	/* If this is a toggle, copy its sequence number. */
 	if (newsc->scfunc == do_toggle_void) {
 	    for (s = sclist; s != NULL; s = s->next)
@@ -504,6 +515,7 @@ void parse_binding(char *ptr, bool dobind)
 		    newsc->ordinal = s->ordinal;
 	} else
 	    newsc->ordinal = 0;
+#endif
 	/* Add the new shortcut at the start of the list. */
 	newsc->next = sclist;
 	sclist = newsc;
@@ -1110,6 +1122,8 @@ void parse_rcfile(FILE *rcstream
 #ifndef DISABLE_COLOR
 	if (strcasecmp(rcopts[i].name, "titlecolor") == 0)
 	    specified_color_combo[TITLE_BAR] = option;
+	else if (strcasecmp(rcopts[i].name, "numbercolor") == 0)
+	    specified_color_combo[LINE_NUMBER] = option;
 	else if (strcasecmp(rcopts[i].name, "statuscolor") == 0)
 	    specified_color_combo[STATUS_BAR] = option;
 	else if (strcasecmp(rcopts[i].name, "keycolor") == 0)

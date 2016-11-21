@@ -1,3 +1,14 @@
+2016.10.29 - GNU nano 2.7.1 "Leuven" adds an often-asked-for feature: the
+		ability to display line numbers beside the text.  This can
+		be activated with -l or --linenumbers on the command line,
+		or with 'set linenumbers' in your nanorc, or toggled with
+		M-#.  The coloring of these numbers can be chosen via the
+		option 'set numbercolor'.  This release furthermore fixes
+		some bugs with scrolling in softwrap mode, is more strict
+		in the parsing of key rebindings, and marks a new buffer
+		as modified when the output of a command (^R ^X) has been
+		read into it.  Come and check it out!
+
 2016.09.01 - GNU nano 2.7.0 "Suni" adds a new feature: allowing text to be
 		selected by holding Shift together with the cursor keys.
 		Besides that, nano now works also when run in very tiny

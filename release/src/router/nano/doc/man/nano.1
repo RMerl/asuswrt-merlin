@@ -17,16 +17,15 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANO 1 "version 2.7.0" "September 2016"
+.TH NANO 1 "version 2.7.1" "October 2016"
 .\" Please adjust this date whenever revising the manpage.
-.\"
 
 .SH NAME
 nano \- Nano's ANOther editor, an enhanced free Pico clone
 
 .SH SYNOPSIS
 .B nano
-.RI [ options "] [[+" line , column "]\ " file "]..."
+.RI [ options "] [[+" line [, column "]]\ " file "]..."
 
 .SH DESCRIPTION
 \fBnano\fP is a small, free and friendly editor which aims to replace
@@ -38,7 +37,7 @@ replace" and "go to line and column number".
 .SH EDITING
 Entering text and moving around in a file is straightforward: typing the
 letters and using the normal cursor movement keys.  Commands are entered
-by using the Control (^) and the Alt or Meta (M-) keys.
+by using the Control (^) and the Alt or Meta (M\-) keys.
 Typing \fB^K\fR deletes the current line and puts it in the cutbuffer.
 Consecutive \fB^K\fRs will put all deleted lines together in the cutbuffer.
 Any cursor movement or executing any other command will cause the next
@@ -47,7 +46,7 @@ contents of the cutbuffer at the current cursor position.
 .PP
 When a more precise piece of text needs to be cut or copied, one can mark
 its start with \fB^6\fR, move the cursor to its end (the marked text will be
-highlighted), and then use \fB^K\fR to cut it, or \fBM-6\fR to copy it to the
+highlighted), and then use \fB^K\fR to cut it, or \fBM\-6\fR to copy it to the
 cutbuffer.  One can also save the marked text to a file with \fB^O\fR, or
 spell check it with \fB^T\fR.
 .PP
@@ -172,6 +171,10 @@ Interpret the Delete key differently so that both Backspace and Delete
 work properly.  You should only need to use this option if Backspace
 acts like Delete on your system.
 .TP
+.BR \-g ", " \-\-showcursor
+Make the cursor visible in the file browser, putting it on the
+highlighted item.  Useful for braille users.
+.TP
 .BR \-h ", " \-\-help
 Show a summary of the available command-line options and exit.
 .TP
@@ -180,8 +183,11 @@ Indent new lines to the previous line's indentation.  Useful when
 editing source code.
 .TP
 .BR \-k ", " \-\-cut
-Make the 'Cut Text' command (normally ^K) cut from the current cursor
+Make the 'Cut Text' command (normally \fB^K\fR) cut from the current cursor
 position to the end of the line, instead of cutting the entire line.
+.TP
+.BR \-l ", " \-\-linenumbers
+Display line numbers to the left of the text area.
 .TP
 .BR \-m ", " \-\-mouse
 Enable mouse support, if available for your system.  When enabled, mouse
@@ -214,15 +220,13 @@ Hard-wrap lines at column \fInumber\fP.  If this value is 0 or less, wrapping
 will occur at the width of the screen less \fInumber\fP columns, allowing
 the wrap point to vary along with the width of the screen if the screen
 is resized.  The default value is \-8.  This option conflicts with
-.B \-w
--- the last one given takes effect.
+\fB\-w\fR -- the last one given takes effect.
 .TP
 .BR \-s\ \fIprogram\fR ", " \-\-speller= \fIprogram
 Use this alternative spell checker command.
 .TP
 .BR \-t ", " \-\-tempfile
-Always save a changed buffer without prompting.  Same as Pico's \fB\-t\fP
-option.
+Save a changed buffer without prompting (when exiting with \fB^X\fR).
 .TP
 .BR \-u ", " \-\-unix
 Save a file by default in Unix format.  This overrides nano's
@@ -230,12 +234,11 @@ default behavior of saving a file in the format that it had.
 (This option has no effect when you also use \fB\-\-noconvert\fR.)
 .TP
 .BR \-v ", " \-\-view
-View-file (read-only) mode.
+Just view the file and disallow editing: read-only mode.
 .TP
 .BR \-w ", " \-\-nowrap
 Disable the hard-wrapping of long lines.  This option conflicts with
-.B \-r
--- the last one given takes effect.
+\fB\-r\fR -- the last one given takes effect.
 .TP
 .BR \-x ", " \-\-nohelp
 Don't show the two help lines at the bottom of the screen.
@@ -251,8 +254,16 @@ continuing it over multiple screen lines.  Since
 this option last when using other options (e.g.\& 'nano \-wS$') or pass it
 separately (e.g.\& 'nano \-wS \-$').
 .TP
-.BR \-a ", " \-b ", " \-e ", " \-f ", " \-g ", " \-j
+.BR \-a ", " \-b ", " \-e ", " \-f ", " \-j
 Ignored, for compatibility with Pico.
+
+.SH TOGGLES
+Several of the above options can be switched on and off also while
+\fBnano\fR is running.  For example, \fBM\-L\fR toggles the
+hard-wrapping of long lines, \fBM\-$\fR toggles soft-wrapping,
+\fBM\-#\fR toggles line numbers, \fBM\-M\fR toggles the mouse,
+\fBM\-I\fR auto-indentation, and \fBM\-X\fR the help lines.
+See at the end of the \fB^G\fR help text for a complete list.
 
 .SH INITIALIZATION FILE
 \fBnano\fP will read initialization files in the following order:
@@ -265,7 +276,7 @@ for more information on the possible contents of those files.
 If no alternative spell checker command is specified on the command
 line nor in one of the \fInanorc\fP files, \fBnano\fP will check the
 \fBSPELL\fP environment variable for one.
-
+.sp
 In some cases \fBnano\fP will try to dump the buffer into an emergency
 file.  This will happen mainly if \fBnano\fP receives a SIGHUP or
 SIGTERM or runs out of memory.  It will write the buffer into a file
@@ -277,27 +288,24 @@ it unique.  In multibuffer mode, \fBnano\fP will write all the open
 buffers to their respective emergency files.
 
 .SH BUGS
-Justifications (\fB^J\fR) and reindentations (\fBM-{\fR and \fBM-}\fR)
+Justifications (\fB^J\fR) and reindentations (\fBM\-{\fR and \fBM\-}\fR)
 are not yet covered by the general undo system.  So after a justification
 that is not immediately undone, or after any reindentation, earlier edits
 cannot be undone any more.  The workaround is, of course, to exit without
 saving.
 .sp
 Please report any other bugs that you encounter via
-https://savannah.gnu.org/bugs/?group=nano.
+\fIhttps://savannah.gnu.org/bugs/?group=nano\fR.
 
 .SH HOMEPAGE
 https://nano-editor.org/
 
 .SH SEE ALSO
-.PD 0
-.TP
-\fBnanorc\fP(5)
+.BR nanorc (5)
 .PP
 \fI/usr/share/doc/nano/\fP (or equivalent on your system)
 
 .SH AUTHOR
-Chris Allegretta <chrisa@asty.org>, et al (see the files \fIAUTHORS\fP and
+Chris Allegretta and others (see the files \fIAUTHORS\fR and
 \fITHANKS\fP for details).  This manual page was originally written by
-Jordi Mallach <jordi@gnu.org>, for the Debian system (but may be used by
-others).
+Jordi Mallach for the Debian system (but may be used by others).

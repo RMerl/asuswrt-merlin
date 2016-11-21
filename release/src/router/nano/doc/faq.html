@@ -84,24 +84,26 @@
 <h2><a name="1.5"></a>1.5. Why the name change from TIP?</h2>
 <blockquote><p>On January 10, 2000, TIP was officially renamed to nano because of a namespace conflict with another program called 'tip'. The original 'tip' program &quot;establishes a full duplex terminal connection to a remote host&quot;, and was included with many older Unix systems (and newer ones like Solaris). The conflict was not noticed at first because there is no 'tip' utility included with most GNU/Linux distributions (where nano was developed).</p></blockquote>
 <h2><a name="1.6"></a>1.6. What is the current version of nano?</h2>
-<blockquote><p>The current stable version of nano *should* be 2.4.2. Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
+<blockquote><p>The current version of nano *should* be 2.7.0.  Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
 <h2><a name="1.7"></a>1.7. I want to read the man page without having to download the program!</h2>
-<blockquote><p>Jeez, demanding, aren't we? Okay, look <a href="https://nano-editor.org/dist/v2.6/nano.1.html">here</a>.</p></blockquote>
+<blockquote><p>Jeez, demanding, aren't we? Okay, look <a href="https://nano-editor.org/dist/latest/nano.1.html">here</a>.</p></blockquote>
 <hr width="100%">
 <h1><a name="2"></a>2. Where to get GNU nano.</h1>
-<h2><a name="2.1"></a>2.1. FTP and WWW sites that carry nano.</h2>
-<blockquote><p>The nano distribution can be downloaded at the following web sites:</p>
+<h2><a name="2.1"></a>2.1. Web sites that carry nano.</h2>
+<blockquote><p>The nano source tarballs can be downloaded from the following web sites:</p>
   <ul>
     <li><a href="https://nano-editor.org/dist/">https://nano-editor.org/dist/</a></li>
+    <li><a href="https://ftp.gnu.org/gnu/nano/">https://ftp.gnu.org/gnu/nano/</a></li>
   </ul>
 </blockquote>
-<h2><a name="2.2"></a>2.2. RedHat and derivatives (.rpm) packages.</h2>
+<h2><a name="2.2"></a>2.2. RPM packages (RedHat, OpenSuse, and derivatives).</h2>
 <blockquote>
   <ul>
-    <li><a href="https://nano-editor.org/dist/v2.5/RPMS/">https://nano-editor.org/dist/v2.5/RPMS/</a></li>
+    <li><a href="https://kojipkgs.fedoraproject.org//packages/nano/">https://kojipkgs.fedoraproject.org//packages/nano/</a></li>
+    <li><a href="https://software.opensuse.org/package/nano">https://software.opensuse.org/package/nano</a></li>
   </ul>
 </blockquote>
-<h2><a name="2.3"></a>2.3. Debian (.deb) packages.</h2>
+<h2><a name="2.3"></a>2.3. Deb packages (Debian and derivatives):</h2>
 <blockquote><p>Debian users can check out the current nano packages for:</p>
   <ul>
     <li><a href="http://packages.debian.org/stable/editors/nano">stable</a></li>
@@ -185,7 +187,7 @@
 <h2><a name="4.6"></a>4.6. nano crashes when I type &lt;insert keystroke here&gt;!</h2>
 <blockquote><p>If you aren't trying some bizarre keystroke combination with some bizarre $TERM entry, chances are you have found a bug. You are welcome to submit it to the <a href="mailto:nano-devel@gnu.org">nano-devel</a> list or in the <a href="https://savannah.gnu.org/bugs/?group=nano">bug tracker</a> on Savannah.</p></blockquote>
 <h2><a name="4.7"></a>4.7. nano crashes when I resize my window. How can I fix that?</h2>
-<blockquote><p>Older versions of nano had this problem, please upgrade to a newer version (at least 0.9.9, but 2.4.2 is recommended).</p></blockquote>
+<blockquote><p>Older versions of nano had this problem.  Please upgrade to version 2.7.0 or newer.</p></blockquote>
 <h2><a name="4.8"></a>4.8. [version 1.3.12 and later] I'm using glibc 2.2.3, and nano crashes when I use color support or do regular expression searches. How can I fix that?</h2>
 <blockquote><p>It's a bug in glibc 2.2.3. You should upgrade to at least glibc 2.2.4.</p></blockquote>
 <h2><a name="4.9"></a>4.9. [version 1.1.12 and earlier] Why does nano show ^\ in the shortcut list instead of ^J?</h2>
@@ -214,10 +216,9 @@
 <h2><a name="4.14"></a>4.14. When I paste text into a document, each line gets indented further than the last. Why does nano do this, and how can I avoid it?</h2>
 <blockquote><p>You have the autoindent feature turned on. Hit Meta-I to turn it off, paste your text, and then hit Meta-I again to turn it back on.</p></blockquote>
 <h2><a name="4.15"></a>4.15. On startup I get a message that says "Detected a legacy nano history file".  Now older nano versions can't find my search history!</h2>
-<blockquote><p>In nano 2.3.0, cursor-position history was introduced, and both history files now reside under a .nano directory in your home.  nano was trying to move this file into the new location so it could continue to use it.  This means that if you try and use an earlier version of nano, it will be unable to see your current search history.  To fix this, run the following commands:<br>
-  <p><b>mv ~/.nano/search_history ~/.nano_history</b><br>
-  <b>ln -sf ~/.nano_history ~/.nano/search_history</b></p>
-</p></blockquote>
+<blockquote><p>In nano 2.3.0, cursor-position history was introduced, and both history files now reside in a .nano subdirectory in your home directory.  A newer nano will move an existing search-history file to this new location so it can continue to be used.  This means that if you then try and use an earlier version of nano, it will be unable to see your current search history.  To fix this, run the following command:<br>
+  <p><b>ln -sf ~/.nano/search_history ~/.nano_history</b></p>
+</p><p>The "migration service" (moving the search-history file to its new location) will be deleted from nano in early 2018.</p></blockquote>
 <hr width="100%">
 <h1><a name="5"></a>5. Internationalization</h1>
 <h2><a name="5.1"></a>5.1. There's no translation for my language!</h2>
@@ -247,7 +248,7 @@ Of course, due to the license change you can now use the <A HREF="http://www.was
   help-nano - <a href="http://mail.gnu.org/mailman/listinfo/help-nano/">http://mail.gnu.org/mailman/listinfo/help-nano/</a><br>
   nano-devel - <a href="http://mail.gnu.org/mailman/listinfo/nano-devel/">http://mail.gnu.org/mailman/listinfo/nano-devel/</a></p></blockquote>
 <h2><a name="7.2"></a>7.2. I want to send the development team a big load of cash (or just a thank you).</h2>
-<blockquote><p>That's fine. Send it <a href="mailto:nano-devel@gnu.org">our way</a>! Better yet, fix a <a href="https://savannah.gnu.org/bugs/?group=nano">bug</a> in the program or implement a <a href="https://nano-editor.org/dist/v2.6/TODO">cool feature</a> and send us that instead (though cash is fine too).</p></blockquote>
+<blockquote><p>That's fine. Send it <a href="mailto:nano-devel@gnu.org">our way</a>! Better yet, fix a <a href="https://savannah.gnu.org/bugs/?group=nano">bug</a> in the program or implement a <a href="https://nano-editor.org/dist/latest/TODO">cool feature</a> and send us that instead (though cash is fine too).</p></blockquote>
 <h2><a name="7.3"></a>7.3. How do I submit a bug report or patch?</h2>
 <blockquote>
 <p>The best place to submit bugs is to the <a href="https://savannah.gnu.org/bugs/?group=nano">Savannah bug tracker</a> as you can check whether the bug you are submitting has already been submitted.

@@ -50,6 +50,9 @@ Mahyar Abbaspour <mahyar.abaspour@gmail.com>
 Mike Scalora <mike@scalora.org>
 	* The comment/uncomment feature.
 
+Faissal Bensefia <faissaloo@gmail.com>
+	* Line numbers.
+
 Benno Schulenberg <bensberg@justemail.net>
 	* An array of small bug fixes, the cut-word and block-jump
 	  routines, text selection by holding Shift, and some extra

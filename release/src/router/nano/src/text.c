@@ -42,8 +42,10 @@ static bool prepend_wrap = FALSE;
 	/* Should we prepend wrapped text to the next line? */
 #endif
 #ifndef DISABLE_JUSTIFY
+static filestruct *jusbuffer = NULL;
+	/* The buffer where we store unjustified text. */
 static filestruct *jusbottom = NULL;
-	/* Pointer to the end of the justify buffer. */
+	/* A pointer to the end of the buffer with unjustified text. */
 #endif
 
 #ifndef NANO_TINY
@@ -169,6 +171,8 @@ void do_deletion(undo_type action)
 	return;
 
 #ifndef NANO_TINY
+    ensure_line_is_visible();
+
     if (ISSET(SOFTWRAP) && refresh_needed == FALSE)
 	if (strlenpt(openfile->current->data) / COLS != orig_lenpt / COLS)
 	    refresh_needed = TRUE;
@@ -435,7 +439,6 @@ void do_unindent(void)
 }
 #endif /* !NANO_TINY */
 
-#ifdef ENABLE_COMMENT
 /* Test whether the string is empty or consists of only blanks. */
 bool white_string(const char *s)
 {
@@ -445,6 +448,7 @@ bool white_string(const char *s)
     return !*s;
 }
 
+#ifdef ENABLE_COMMENT
 /* Comment or uncomment the current line or the marked lines. */
 void do_comment()
 {
@@ -2513,35 +2517,28 @@ void do_justify(bool full_justify)
 			|| func == do_undo
 #endif
 		) {
-	/* Splice the justify buffer back into the file, but only if we
-	 * actually justified something. */
+	/* If we actually justified something, then splice the preserved
+	 * unjustified text back into the file, */
 	if (first_par_line != NULL) {
-	    filestruct *top_save;
-
 	    /* Partition the filestruct so that it contains only the
 	     * text of the justified paragraph. */
 	    filepart = partition_filestruct(first_par_line, 0,
 				last_par_line, filebot_inpar ?
 				strlen(last_par_line->data) : 0);
 
-	    /* Remove the text of the justified paragraph, and
-	     * replace it with the text in the justify buffer. */
+	    /* Throw away the justified paragraph, and replace it with
+	     * the preserved unjustified text. */
 	    free_filestruct(openfile->fileage);
 	    openfile->fileage = jusbuffer;
 	    openfile->filebot = jusbottom;
 
-	    top_save = openfile->fileage;
-
-	    /* Unpartition the filestruct so that it contains all the
-	     * text again.  Note that the justified paragraph has been
-	     * replaced with the unjustified paragraph. */
+	    /* Unpartition the filestruct, to contain the entire text again. */
 	    unpartition_filestruct(&filepart);
 
-	    /* Renumber, starting with the beginning line of the old
-	     * partition. */
-	    renumber(top_save);
+	    /* Renumber, from the beginning of the unjustified part. */
+	    renumber(jusbuffer);
 
-	    /* Restore the justify we just did (ungrateful user!). */
+	    /* Restore the old position, the size, and the mark. */
 	    openfile->edittop = edittop_save;
 	    openfile->current = current_save;
 	    openfile->current_x = current_x_save;
@@ -2553,12 +2550,9 @@ void do_justify(bool full_justify)
 	    }
 #endif
 	    openfile->modified = modified_save;
-
-	    /* Clear the justify buffer. */
-	    jusbuffer = NULL;
-
 	    if (!openfile->modified)
 		titlebar(NULL);
+
 	    refresh_needed = TRUE;
 	}
     } else {
@@ -2574,10 +2568,12 @@ void do_justify(bool full_justify)
 	discard_until(NULL, openfile);
 	openfile->current_undo = NULL;
 #endif
-	/* Blow away the text in the justify buffer. */
+	/* Blow away the unjustified text. */
 	free_filestruct(jusbuffer);
-	jusbuffer = NULL;
     }
+
+    /* Mark the buffer for unjustified text as empty. */
+    jusbuffer = NULL;
 
     blank_statusbar();
 
@@ -2630,10 +2626,9 @@ bool do_int_spell_fix(const char *word)
     /* Make sure spell-check is case sensitive. */
     SET(CASE_SENSITIVE);
 
-#ifndef NANO_TINY
     /* Make sure spell-check goes forward only. */
     UNSET(BACKWARDS_SEARCH);
-#endif
+
 #ifdef HAVE_REGEX_H
     /* Make sure spell-check doesn't use regular expressions. */
     UNSET(USE_REGEXP);
@@ -2668,7 +2663,7 @@ bool do_int_spell_fix(const char *word)
     }
 
     /* Find the first whole occurrence of word. */
-    result = findnextstr(TRUE, NULL, 0, word, NULL);
+    result = findnextstr(word, TRUE, NULL, NULL, 0);
 
     /* If the word isn't found, alert the user; if it is, allow correction. */
     if (result == 0) {
@@ -2705,7 +2700,7 @@ bool do_int_spell_fix(const char *word)
 	    /* Replacements should happen only in the marked region. */
 	    openfile->mark_set = old_mark_set;
 #endif
-	    do_replace_loop(TRUE, current_save, &current_x_save, word);
+	    do_replace_loop(word, TRUE, current_save, &current_x_save);
 
 	    /* TRANSLATORS: Shown after fixing misspellings in one word. */
 	    statusbar(_("Next word..."));
@@ -3081,7 +3076,7 @@ const char *do_alt_speller(char *tempfile_name)
     goto_line_posx(lineno_save, current_x_save);
     openfile->current_y = current_y_save;
     openfile->placewewant = pww_save;
-    edit_update(STATIONARY);
+    adjust_viewport(STATIONARY);
 
     /* Stat the temporary file again, and mark the buffer as modified only
      * if this file was changed since it was written. */
@@ -3557,7 +3552,7 @@ void do_formatter(void)
 	goto_line_posx(lineno_save, current_x_save);
 	openfile->current_y = current_y_save;
 	openfile->placewewant = pww_save;
-	edit_update(STATIONARY);
+	adjust_viewport(STATIONARY);
 
 	set_modified();
 

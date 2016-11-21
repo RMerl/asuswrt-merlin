@@ -29,7 +29,7 @@
 extern volatile sig_atomic_t sigwinch_counter;
 #endif
 
-#if defined(__linux__) && !defined(NANO_TINY)
+#ifdef __linux__
 extern bool console;
 #endif
 
@@ -38,13 +38,20 @@ extern bool shift_held;
 
 extern bool focusing;
 
+extern int margin;
+extern int editwincols;
+#ifdef ENABLE_LINENUMBERS
+extern int last_drawn_line;
+extern int last_line_y;
+#endif
+
 extern message_type lastmessage;
 
-#ifndef NANO_TINY
 extern int controlleft;
 extern int controlright;
 extern int controlup;
 extern int controldown;
+#ifndef NANO_TINY
 extern int shiftcontrolleft;
 extern int shiftcontrolright;
 extern int shiftcontrolup;
@@ -73,9 +80,6 @@ extern int maxrows;
 
 extern filestruct *cutbuffer;
 extern filestruct *cutbottom;
-#ifndef DISABLE_JUSTIFY
-extern filestruct *jusbuffer;
-#endif
 extern partition *filepart;
 extern openfilestruct *openfile;
 
@@ -225,16 +229,12 @@ int mbstrncasecmp(const char *s1, const char *s2, size_t n);
 char *nstrcasestr(const char *haystack, const char *needle);
 #endif
 char *mbstrcasestr(const char *haystack, const char *needle);
-#if !defined(NANO_TINY) || !defined(DISABLE_TABCOMP)
 char *revstrstr(const char *haystack, const char *needle, const char
 	*rev_start);
-#endif
-#ifndef NANO_TINY
 char *revstrcasestr(const char *haystack, const char *needle, const char
 	*rev_start);
 char *mbrevstrcasestr(const char *haystack, const char *needle, const
 	char *rev_start);
-#endif
 size_t mbstrlen(const char *s);
 #ifndef HAVE_STRNLEN
 size_t nstrnlen(const char *s, size_t maxlen);
@@ -280,13 +280,7 @@ void cut_marked(void);
 void cut_to_eol(void);
 void cut_to_eof(void);
 #endif
-void do_cut_text(
-#ifndef NANO_TINY
-	bool copy_text, bool cut_till_eof
-#else
-	void
-#endif
-	);
+void do_cut_text(bool copy_text, bool cut_till_eof);
 void do_cut_text_void(void);
 #ifndef NANO_TINY
 void do_copy_text(void);
@@ -311,13 +305,6 @@ filestruct *read_line(char *buf, size_t buf_len, filestruct *prevnode);
 void read_file(FILE *f, int fd, const char *filename, bool undoable, bool checkwritable);
 int open_file(const char *filename, bool newfie, bool quiet, FILE **f);
 char *get_next_filename(const char *name, const char *suffix);
-void do_insertfile(
-#ifndef NANO_TINY
-	bool execute
-#else
-	void
-#endif
-	);
 void do_insertfile_void(void);
 char *get_full_path(const char *origpath);
 char *check_writable_directory(const char *path);
@@ -375,7 +362,7 @@ size_t length_of_list(int menu);
 const sc *first_sc_for(int menu, void (*func)(void));
 int sc_seq_or(void (*func)(void), int defaultval);
 functionptrtype func_from_key(int *kbinput);
-void assign_keyinfo(sc *s, const char *keystring);
+void assign_keyinfo(sc *s, const char *keystring, const int keycode);
 void print_sclist(void);
 void shortcut_init(void);
 #ifndef DISABLE_COLOR
@@ -410,14 +397,13 @@ void do_para_begin_void(void);
 void do_para_end(bool allow_update);
 void do_para_end_void(void);
 #endif
-#ifndef NANO_TINY
 void do_prev_block(void);
 void do_next_block(void);
 void do_prev_word(bool allow_punct, bool allow_update);
 void do_prev_word_void(void);
 bool do_next_word(bool allow_punct, bool allow_update);
 void do_next_word_void(void);
-#endif
+void ensure_line_is_visible(void);
 void do_home(void);
 void do_end(void);
 void do_up(bool scroll_only);
@@ -482,13 +468,7 @@ RETSIGTYPE handle_sigwinch(int signal);
 void regenerate_screen(void);
 void allow_sigwinch(bool allow);
 void do_toggle(int flag);
-#endif
 void do_toggle_void(void);
-void disable_extended_io(void);
-#ifdef USE_SLANG
-void disable_signals(void);
-#endif
-#ifndef NANO_TINY
 void enable_signals(void);
 #endif
 void disable_flow_control(void);
@@ -568,31 +548,21 @@ void regexp_cleanup(void);
 void not_found_msg(const char *str);
 void search_replace_abort(void);
 int search_init(bool replacing, bool use_answer);
-int findnextstr(
-#ifndef DISABLE_SPELLER
-	bool whole_word_only,
-#endif
-	const filestruct *begin, size_t begin_x,
-	const char *needle, size_t *match_len);
+int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
+	const filestruct *begin, size_t begin_x);
 void do_search(void);
 #ifndef NANO_TINY
 void do_findprevious(void);
 void do_findnext(void);
 #endif
-#if !defined(NANO_TINY) || !defined(DISABLE_BROWSER)
 void do_research(void);
-#endif
 void go_looking(void);
 #ifdef HAVE_REGEX_H
 int replace_regexp(char *string, bool create);
 #endif
 char *replace_line(const char *needle);
-ssize_t do_replace_loop(
-#ifndef DISABLE_SPELLER
-	bool whole_word_only,
-#endif
-	const filestruct *real_current, size_t *real_current_x,
-	const char *needle);
+ssize_t do_replace_loop(const char *needle, bool whole_word_only,
+	const filestruct *real_current, size_t *real_current_x);
 void do_replace(void);
 void goto_line_posx(ssize_t line, size_t pos_x);
 void do_gotolinecolumn(ssize_t line, ssize_t column, bool use_answer,
@@ -633,11 +603,11 @@ void do_tab(void);
 void do_indent(ssize_t cols);
 void do_indent_void(void);
 void do_unindent(void);
-bool white_string(const char *s);
 void do_undo(void);
 void do_redo(void);
 #endif
-#ifndef DISABLE_COMMENT
+bool white_string(const char *s);
+#ifdef ENABLE_COMMENT
 void do_comment(void);
 #endif
 void do_enter(void);
@@ -691,6 +661,7 @@ void do_verbatim_input(void);
 
 /* All functions in utils.c. */
 void get_homedir(void);
+int digits(int n);
 bool parse_num(const char *str, ssize_t *val);
 bool parse_line_column(const char *str, ssize_t *line, ssize_t *column);
 void align(char **str);
@@ -789,7 +760,7 @@ bool need_horizontal_scroll(const size_t old_column, const size_t new_column);
 void edit_scroll(scroll_dir direction, ssize_t nlines);
 void edit_redraw(filestruct *old_current);
 void edit_refresh(void);
-void edit_update(update_type location);
+void adjust_viewport(update_type location);
 void total_redraw(void);
 void total_refresh(void);
 void display_main_list(void);

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Sep  1 12:41:48 2016 -->
+<!-- CreationDate: Sat Oct 29 11:18:25 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -25,6 +25,7 @@
 <a href="#DESCRIPTION">DESCRIPTION</a><br>
 <a href="#EDITING">EDITING</a><br>
 <a href="#OPTIONS">OPTIONS</a><br>
+<a href="#TOGGLES">TOGGLES</a><br>
 <a href="#INITIALIZATION FILE">INITIALIZATION FILE</a><br>
 <a href="#NOTES">NOTES</a><br>
 <a href="#BUGS">BUGS</a><br>
@@ -50,7 +51,7 @@ Nano&rsquo;s ANOther editor, an enhanced free Pico clone</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>nano</b>
 [<i>options</i>]
-[[+<i>line</i>,<i>column</i>]&nbsp;<i>file</i>]...</p>
+[[+<i>line</i>[,<i>column</i>]]&nbsp;<i>file</i>]...</p>
 
 <h2>DESCRIPTION
 <a name="DESCRIPTION"></a>
@@ -75,9 +76,9 @@ number&quot;.</p>
 and moving around in a file is straightforward: typing the
 letters and using the normal cursor movement keys. Commands
 are entered by using the Control (^) and the Alt or Meta
-(M-) keys. Typing <b>^K</b> deletes the current line and
-puts it in the cutbuffer. Consecutive <b>^K</b>s will put
-all deleted lines together in the cutbuffer. Any cursor
+(M&minus;) keys. Typing <b>^K</b> deletes the current line
+and puts it in the cutbuffer. Consecutive <b>^K</b>s will
+put all deleted lines together in the cutbuffer. Any cursor
 movement or executing any other command will cause the next
 <b>^K</b> to overwrite the cutbuffer. A <b>^U</b> will paste
 the current contents of the cutbuffer at the current cursor
@@ -87,7 +88,7 @@ position.</p>
 precise piece of text needs to be cut or copied, one can
 mark its start with <b>^6</b>, move the cursor to its end
 (the marked text will be highlighted), and then use
-<b>^K</b> to cut it, or <b>M-6</b> to copy it to the
+<b>^K</b> to cut it, or <b>M&minus;6</b> to copy it to the
 cutbuffer. One can also save the marked text to a file with
 <b>^O</b>, or spell check it with <b>^T</b>.</p>
 
@@ -304,6 +305,13 @@ differently so that both Backspace and Delete work properly.
 You should only need to use this option if Backspace acts
 like Delete on your system.</p>
 
+<p style="margin-left:11%;"><b>&minus;g</b>,
+<b>&minus;&minus;showcursor</b></p>
+
+<p style="margin-left:22%;">Make the cursor visible in the
+file browser, putting it on the highlighted item. Useful for
+braille users.</p>
+
 <p style="margin-left:11%;"><b>&minus;h</b>,
 <b>&minus;&minus;help</b></p>
 
@@ -321,9 +329,15 @@ source code.</p>
 <b>&minus;&minus;cut</b></p>
 
 <p style="margin-left:22%;">Make the &rsquo;Cut Text&rsquo;
-command (normally ^K) cut from the current cursor position
-to the end of the line, instead of cutting the entire
-line.</p>
+command (normally <b>^K</b>) cut from the current cursor
+position to the end of the line, instead of cutting the
+entire line.</p>
+
+<p style="margin-left:11%;"><b>&minus;l</b>,
+<b>&minus;&minus;linenumbers</b></p>
+
+<p style="margin-left:22%;">Display line numbers to the
+left of the text area.</p>
 
 <p style="margin-left:11%;"><b>&minus;m</b>,
 <b>&minus;&minus;mouse</b></p>
@@ -391,9 +405,8 @@ checker command.</p>
 <p style="margin-left:11%;"><b>&minus;t</b>,
 <b>&minus;&minus;tempfile</b></p>
 
-<p style="margin-left:22%;">Always save a changed buffer
-without prompting. Same as Pico&rsquo;s <b>&minus;t</b>
-option.</p>
+<p style="margin-left:22%;">Save a changed buffer without
+prompting (when exiting with <b>^X</b>).</p>
 
 <p style="margin-left:11%;"><b>&minus;u</b>,
 <b>&minus;&minus;unix</b></p>
@@ -407,7 +420,8 @@ effect when you also use
 <p style="margin-left:11%;"><b>&minus;v</b>,
 <b>&minus;&minus;view</b></p>
 
-<p style="margin-left:22%;">View-file (read-only) mode.</p>
+<p style="margin-left:22%;">Just view the file and disallow
+editing: read-only mode.</p>
 
 <p style="margin-left:11%;"><b>&minus;w</b>,
 <b>&minus;&minus;nowrap</b></p>
@@ -442,10 +456,25 @@ last when using other options (e.g. &rsquo;nano
 
 <p style="margin-left:11%;"><b>&minus;a</b>,
 <b>&minus;b</b>, <b>&minus;e</b>, <b>&minus;f</b>,
-<b>&minus;g</b>, <b>&minus;j</b></p>
+<b>&minus;j</b></p>
 
 <p style="margin-left:22%;">Ignored, for compatibility with
 Pico.</p>
+
+<h2>TOGGLES
+<a name="TOGGLES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Several of the
+above options can be switched on and off also while
+<b>nano</b> is running. For example, <b>M&minus;L</b>
+toggles the hard-wrapping of long lines, <b>M&minus;$</b>
+toggles soft-wrapping, <b>M&minus;#</b> toggles line
+numbers, <b>M&minus;M</b> toggles the mouse,
+<b>M&minus;I</b> auto-indentation, and <b>M&minus;X</b> the
+help lines. See at the end of the <b>^G</b> help text for a
+complete list.</p>
 
 <h2>INITIALIZATION FILE
 <a name="INITIALIZATION FILE"></a>
@@ -490,15 +519,16 @@ files.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em">Justifications
-(<b>^J</b>) and reindentations (<b>M-{</b> and <b>M-}</b>)
-are not yet covered by the general undo system. So after a
-justification that is not immediately undone, or after any
-reindentation, earlier edits cannot be undone any more. The
-workaround is, of course, to exit without saving.</p>
+(<b>^J</b>) and reindentations (<b>M&minus;{</b> and
+<b>M&minus;}</b>) are not yet covered by the general undo
+system. So after a justification that is not immediately
+undone, or after any reindentation, earlier edits cannot be
+undone any more. The workaround is, of course, to exit
+without saving.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Please report
 any other bugs that you encounter via
-https://savannah.gnu.org/bugs/?group=nano.</p>
+<i>https://savannah.gnu.org/bugs/?group=nano</i>.</p>
 
 <h2>HOMEPAGE
 <a name="HOMEPAGE"></a>
@@ -514,9 +544,11 @@ https://savannah.gnu.org/bugs/?group=nano.</p>
 
 
 
-<p style="margin-left:11%; margin-top: 1em"><b>nanorc</b>(5)
-<i><br>
-/usr/share/doc/nano/</i> (or equivalent on your system)</p>
+<p style="margin-left:11%; margin-top: 1em"><b>nanorc</b>(5)</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>/usr/share/doc/nano/</i>
+(or equivalent on your system)</p>
 
 <h2>AUTHOR
 <a name="AUTHOR"></a>
@@ -524,10 +556,9 @@ https://savannah.gnu.org/bugs/?group=nano.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em">Chris
-Allegretta &lt;chrisa@asty.org&gt;, et al (see the files
-<i>AUTHORS</i> and <i>THANKS</i> for details). This manual
-page was originally written by Jordi Mallach
-&lt;jordi@gnu.org&gt;, for the Debian system (but may be
+Allegretta and others (see the files <i>AUTHORS</i> and
+<i>THANKS</i> for details). This manual page was originally
+written by Jordi Mallach for the Debian system (but may be
 used by others).</p>
 <hr>
 </body>

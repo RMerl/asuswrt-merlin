@@ -264,7 +264,7 @@ int write_lockfile(const char *lockfilename, const char *origfilename, bool modi
     wroteamt = fwrite(lockdata, sizeof(char), lockdatalen, filestream);
     if (wroteamt < lockdatalen) {
 	statusline(MILD, _("Error writing lock file %s: %s"),
-		lockfilename, ferror(filestream));
+			lockfilename, ferror(filestream));
 	goto free_the_data;
     }
 
@@ -274,7 +274,7 @@ int write_lockfile(const char *lockfilename, const char *origfilename, bool modi
 
     if (fclose(filestream) == EOF) {
 	statusline(MILD, _("Error writing lock file %s: %s"),
-		lockfilename, strerror(errno));
+			lockfilename, strerror(errno));
 	goto free_the_data;
     }
 
@@ -567,8 +567,7 @@ void display_buffer(void)
 	precalc_multicolorinfo();
 #endif
 
-    /* Update the edit window. */
-    edit_refresh();
+    refresh_needed = TRUE;
 }
 
 #ifndef DISABLE_MULTIBUFFER
@@ -912,39 +911,37 @@ void read_file(FILE *f, int fd, const char *filename, bool undoable, bool checkw
      * file we inserted. */
     openfile->placewewant = xplustabs();
 
-#ifndef NANO_TINY
-    if (undoable)
-	update_undo(INSERT);
-
     if (!writable)
 	statusline(ALERT, "File '%s' is unwritable", filename);
+#ifndef NANO_TINY
     else if (format == 3) {
-	    statusline(HUSH,
-	    /* TRANSLATORS: Keep the next four messages at most 76 characters. */
-		P_("Read %lu line (Converted from DOS and Mac format)",
-		"Read %lu lines (Converted from DOS and Mac format)",
-		(unsigned long)num_lines), (unsigned long)num_lines);
+	/* TRANSLATORS: Keep the next four messages at most 78 characters. */
+	statusline(HUSH, P_("Read %lu line (Converted from DOS and Mac format)",
+			"Read %lu lines (Converted from DOS and Mac format)",
+			(unsigned long)num_lines), (unsigned long)num_lines);
     } else if (format == 2) {
 	openfile->fmt = MAC_FILE;
-	    statusline(HUSH,
-		P_("Read %lu line (Converted from Mac format)",
-		"Read %lu lines (Converted from Mac format)",
-		(unsigned long)num_lines), (unsigned long)num_lines);
+	statusline(HUSH, P_("Read %lu line (Converted from Mac format)",
+			"Read %lu lines (Converted from Mac format)",
+			(unsigned long)num_lines), (unsigned long)num_lines);
     } else if (format == 1) {
 	openfile->fmt = DOS_FILE;
-	    statusline(HUSH,
-		P_("Read %lu line (Converted from DOS format)",
-		"Read %lu lines (Converted from DOS format)",
-		(unsigned long)num_lines), (unsigned long)num_lines);
-    } else
-#endif /* !NANO_TINY */
-	    statusline(HUSH, P_("Read %lu line", "Read %lu lines",
-		(unsigned long)num_lines), (unsigned long)num_lines);
+	statusline(HUSH, P_("Read %lu line (Converted from DOS format)",
+			"Read %lu lines (Converted from DOS format)",
+			(unsigned long)num_lines), (unsigned long)num_lines);
+    }
+#endif
+    else
+	statusline(HUSH, P_("Read %lu line", "Read %lu lines",
+			(unsigned long)num_lines), (unsigned long)num_lines);
 
     if (num_lines < editwinrows)
 	focusing = FALSE;
 
 #ifndef NANO_TINY
+    if (undoable)
+	update_undo(INSERT);
+
     if (ISSET(MAKE_IT_UNIX))
 	openfile->fmt = NIX_FILE;
 #endif
@@ -971,7 +968,7 @@ int open_file(const char *filename, bool newfie, bool quiet, FILE **f)
     /* Okay, if we can't stat the path due to a component's
      * permissions, just try the relative one. */
     if (full_filename == NULL || (stat(full_filename, &fileinfo) == -1 &&
-		stat(filename, &fileinfo2) != -1))
+					stat(filename, &fileinfo2) != -1))
 	full_filename = mallocstrcpy(full_filename, filename);
 
     if (stat(full_filename, &fileinfo) == -1) {
@@ -1061,28 +1058,16 @@ char *get_next_filename(const char *name, const char *suffix)
     return buf;
 }
 
-/* Insert a file into a new buffer if the MULTIBUFFER flag is set, or
- * into the current buffer if it isn't.  If execute is TRUE, insert the
- * output of an executed command instead of a file. */
-void do_insertfile(
-#ifndef NANO_TINY
-	bool execute
-#else
-	void
-#endif
-	)
+/* Insert a file into the current buffer, or into a new buffer when
+ * the MULTIBUFFER flag is set. */
+void do_insertfile(void)
 {
     int i;
     const char *msg;
     char *given = mallocstrcpy(NULL, "");
 	/* The last answer the user typed at the statusbar prompt. */
-    filestruct *edittop_save = openfile->edittop;
-    ssize_t was_current_lineno = openfile->current->lineno;
-    size_t was_current_x = openfile->current_x;
-    ssize_t was_current_y = openfile->current_y;
-    bool edittop_inside = FALSE;
 #ifndef NANO_TINY
-    bool right_side_up = FALSE, single_line = FALSE;
+    bool execute = FALSE, right_side_up = FALSE, single_line = FALSE;
 #endif
 
     while (TRUE) {
@@ -1129,14 +1114,15 @@ void do_insertfile(
 	 * blank, open a new buffer instead of canceling.  If the
 	 * filename or command begins with a newline (i.e. an encoded
 	 * null), treat it as though it's blank. */
-	if (i == -1 || ((i == -2 || *answer == '\n')
-#ifndef DISABLE_MULTIBUFFER
-		&& !ISSET(MULTIBUFFER)
-#endif
-		)) {
+	if (i == -1 || (!ISSET(MULTIBUFFER) && (i == -2 || *answer == '\n'))) {
 	    statusbar(_("Cancelled"));
 	    break;
 	} else {
+	    filestruct *edittop_save = openfile->edittop;
+	    ssize_t was_current_lineno = openfile->current->lineno;
+	    size_t was_current_x = openfile->current_x;
+	    ssize_t was_current_y = openfile->current_y;
+	    bool current_was_at_top = FALSE;
 	    size_t pww_save = openfile->placewewant;
 #if !defined(NANO_TINY) || !defined(DISABLE_BROWSER)
 	    functionptrtype func = func_from_key(&i);
@@ -1146,7 +1132,7 @@ void do_insertfile(
 #ifndef NANO_TINY
 #ifndef DISABLE_MULTIBUFFER
 	    if (func == new_buffer_void) {
-		/* Don't allow toggling if we're in view mode. */
+		/* Don't allow toggling when in view mode. */
 		if (!ISSET(VIEW_MODE))
 		    TOGGLE(MULTIBUFFER);
 		else
@@ -1164,21 +1150,17 @@ void do_insertfile(
 	    if (func == to_files_void) {
 		char *chosen = do_browse_from(answer);
 
+		/* If no file was chosen, go back to the prompt. */
 		if (chosen == NULL)
 		    continue;
 
-		/* We have a file now.  Indicate this. */
 		free(answer);
 		answer = chosen;
 		i = 0;
 	    }
 #endif
-	    /* If we don't have a file yet, go back to the statusbar prompt. */
-	    if (i != 0
-#ifndef DISABLE_MULTIBUFFER
-		&& (i != -2 || !ISSET(MULTIBUFFER))
-#endif
-		)
+	    /* If we don't have a file yet, go back to the prompt. */
+	    if (i != 0 && (!ISSET(MULTIBUFFER) || i != -2))
 		continue;
 
 #ifndef NANO_TINY
@@ -1194,19 +1176,14 @@ void do_insertfile(
 		single_line = (top == bot);
 	    }
 #endif
-
-#ifndef DISABLE_MULTIBUFFER
-	    if (!ISSET(MULTIBUFFER))
-#endif
-	    {
-		/* If we're not inserting into a new buffer, partition
-		 * the filestruct so that it contains no text and hence
-		 * looks like a new buffer, and keep track of whether
-		 * the top of the edit window is inside the partition. */
+	    /* When not inserting into a new buffer, partition the filestruct
+	     * so that it contains no text and hence looks like a new buffer,
+	     * and remember whether the current line is the first on screen. */
+	    if (!ISSET(MULTIBUFFER)) {
 		filepart = partition_filestruct(openfile->current,
 			openfile->current_x, openfile->current,
 			openfile->current_x);
-		edittop_inside = (openfile->edittop == openfile->fileage);
+		current_was_at_top = (openfile->edittop == openfile->fileage);
 	    }
 
 	    /* Convert newlines to nulls in the given filename. */
@@ -1216,21 +1193,21 @@ void do_insertfile(
 #ifndef NANO_TINY
 	    if (execute) {
 #ifndef DISABLE_MULTIBUFFER
+		/* When in multibuffer mode, first open a blank buffer. */
 		if (ISSET(MULTIBUFFER))
-		    /* Open a blank buffer. */
 		    open_buffer("", FALSE);
 #endif
-
 		/* Save the command's output in the current buffer. */
 		execute_command(answer);
 
 #ifndef DISABLE_MULTIBUFFER
+		/* If this is a new buffer, put the cursor at the top. */
 		if (ISSET(MULTIBUFFER)) {
-		    /* Move back to the beginning of the first line of
-		     * the buffer. */
 		    openfile->current = openfile->fileage;
 		    openfile->current_x = 0;
 		    openfile->placewewant = 0;
+
+		    set_modified();
 		}
 #endif
 	    } else
@@ -1256,17 +1233,16 @@ void do_insertfile(
 			do_gotolinecolumn(priorline, priorcol, FALSE, FALSE);
 		}
 #endif /* !DISABLE_HISTORIES */
-		/* Update the screen to account for the current buffer. */
+		/* Update stuff to account for the current buffer. */
 		display_buffer();
 	    } else
 #endif /* !DISABLE_MULTIBUFFER */
 	    {
 		filestruct *top_save = openfile->fileage;
 
-		/* If we were at the top of the edit window before, set
-		 * the saved value of edittop to the new top of the edit
-		 * window. */
-		if (edittop_inside)
+		/* If we were at the top of the edit window before, change the
+		 * saved value of edittop to the start of inserted stuff. */
+		if (current_was_at_top)
 		    edittop_save = openfile->fileage;
 
 		/* Update the current x-coordinate to account for the
@@ -1296,7 +1272,6 @@ void do_insertfile(
 		    }
 		}
 #endif
-
 		/* Update the current y-coordinate to account for the
 		 * number of lines inserted. */
 		openfile->current_y += was_current_y;
@@ -1322,8 +1297,7 @@ void do_insertfile(
 			openfile->current_x != was_current_x)
 		    set_modified();
 
-		/* Update the screen. */
-		edit_refresh();
+		refresh_needed = TRUE;
 	    }
 
 	    break;
@@ -1348,11 +1322,7 @@ void do_insertfile_void(void)
 	statusbar(_("Key invalid in non-multibuffer mode"));
     else
 #endif
-	do_insertfile(
-#ifndef NANO_TINY
-		FALSE
-#endif
-		);
+	do_insertfile();
 }
 
 /* When passed "[relative path]" or "[relative path][filename]" in
@@ -2940,8 +2910,8 @@ char *histfilename(void)
     return construct_filename("/.nano/search_history");
 }
 
-/* Construct the legacy history filename.
- * (Deprecate in 2.5, delete later.) */
+/* Construct the legacy history filename. */
+/* (To be removed in 2018.) */
 char *legacyhistfilename(void)
 {
     return construct_filename("/.nano_history");
@@ -3001,6 +2971,8 @@ void load_history(void)
     char *legacyhist = legacyhistfilename();
     struct stat hstat;
 
+    /* If there is an old history file, migrate it. */
+    /* (To be removed in 2018.) */
     if (stat(legacyhist, &hstat) != -1 && stat(nanohist, &hstat) == -1) {
 	if (rename(legacyhist, nanohist) == -1)
 	    history_error(N_("Detected a legacy nano history file (%s) which I tried to move\n"

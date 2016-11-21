@@ -1,4 +1,4 @@
-This is nano.info, produced by makeinfo version 6.1 from nano.texi.
+This is nano.info, produced by makeinfo version 6.3 from nano.texi.
 
 INFO-DIR-SECTION Editors
 START-INFO-DIR-ENTRY
@@ -215,6 +215,11 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
      Delete work properly.  You should only need to use this option if
      Backspace acts like Delete on your system.
 
+'-g'
+'--showcursor'
+     Make the cursor visible in the file browser, putting it on the
+     highlighted item.  Useful for braille users.
+
 '-h'
 '--help'
      Show a summary of command-line options and exit.
@@ -229,6 +234,10 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
      Make the 'Cut Text' command (normally ^K) cut from the current
      cursor position to the end of the line, instead of cutting the
      entire line.
+
+'-l'
+'--linenumbers'
+     Display line numbers to the left of the text area.
 
 '-m'
 '--mouse'
@@ -280,9 +289,9 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
 
 '-t'
 '--tempfile'
-     Don't ask whether or not to save the current contents of the file
-     when exiting, assume yes.  This is most useful when using 'nano' as
-     the composer of a mailer program.
+     Don't ask whether to save a modified buffer when exiting with ^X,
+     but assume yes.  This option is useful when 'nano' is used as the
+     composer of a mailer program.
 
 '-u'
 '--unix'
@@ -328,7 +337,6 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
 '-b'
 '-e'
 '-f'
-'-g'
 '-j'
      Ignored, for compatibility with Pico.
 
@@ -572,6 +580,9 @@ The following global toggles are available:
 'Soft Wrapping Toggle (Meta-$)'
      toggles the '-$' ('--softwrap') command-line option.
 
+'Line Numbers Toggle (Meta-#)'
+     toggles the '-l' ('--linenumbers') command-line option.
+
 
 File: nano.info,  Node: Nanorc Files,  Next: The File Browser,  Prev: Feature Toggles,  Up: Top
 
@@ -683,6 +694,9 @@ The supported settings in a nanorc file are:
      the two help lines at the bottom of the screen.  See 'set
      titlecolor' for more details.
 
+'set linenumbers'
+     Display line numbers to the left of the text area.
+
 'set locking'
      Enable vim-style lock-files for when editing files.
 
@@ -714,6 +728,10 @@ The supported settings in a nanorc file are:
 
 'set nowrap'
      Don't hard-wrap text at all.
+
+'set numbercolor FGCOLOR,BGCOLOR'
+     Specify the color combination to use for line numbers.  See 'set
+     titlecolor' for more details.
 
 'set operatingdir "directory"'
      'nano' will only read and write files inside "directory" and its
@@ -766,6 +784,10 @@ The supported settings in a nanorc file are:
 
 'set regexp'
      Do extended regular expression searches by default.
+
+'set showcursor'
+     Put the cursor on the highlighted item in the file browser, to aid
+     braille users.
 
 'set smarthome'
      Make the Home key smarter.  When Home is pressed anywhere but at
@@ -983,7 +1005,8 @@ file:
      matching a string in the current list in the file browser
 
 'searchagain'
-     Repeats the last search command without prompting.
+     Repeats the last search command without prompting.  (The form
+     'research' is deprecated.)
 
 'findprevious'
      As 'searchagain', but always in the backward direction.
@@ -1019,7 +1042,7 @@ file:
 
 'curpos'
      Shows the current cursor position: the line, column, and character
-     positions.
+     positions.  (The form 'cursorpos' is deprecated.)
 
 'wordcount'
      Counts the number of words, lines and characters in the current
@@ -1152,7 +1175,7 @@ file:
 
 'regexp'
      Toggles whether searching/replacing is based on literal strings or
-     regular expressions.
+     regular expressions.  (The form 'regex' is deprecated.)
 
 'backwards'
      Toggles whether searching/replacing goes forward or backward.
@@ -1165,13 +1188,14 @@ file:
 
 'flipreplace'
      Toggles between searching for something and replacing something.
+     (The form 'dontreplace' is deprecated.)
 
 'flipexecute'
      Toggles between inserting a file and executing a command.
 
 'flipnewbuffer'
      Toggles between inserting into the current buffer and into a new
-     empty buffer.
+     empty buffer.  (The form 'newbuffer' is deprecated.)
 
 'dosformat'
      When writing a file, switches to writing a DOS format (CR/LF).
@@ -1280,6 +1304,7 @@ file:
 
 'replacewith'
      The 'replace with' menu, which comes up after 'search to replace'.
+     (The form 'replace2' is deprecated.)
 
 'gotoline'
      The 'goto line (and column)' menu.
@@ -1513,25 +1538,25 @@ Node: Top199
 Node: Introduction560
 Node: Invoking1314
 Node: Command-line Options2107
-Ref: Expert Mode9586
-Node: Editor Basics10548
-Node: Entering Text10831
-Node: Commands11570
-Node: The Cutbuffer12355
-Node: The Mark13033
-Node: Screen Layout13771
-Node: Search and Replace14940
-Node: Using the Mouse15638
-Node: Limitation16254
-Node: Built-in Help16657
-Node: Feature Toggles17048
-Node: Nanorc Files19163
-Node: Settings20595
-Ref: Whitespace27875
-Node: Syntax Highlighting28415
-Node: Rebinding Keys33125
-Node: The File Browser42753
-Node: Pico Compatibility43575
-Node: Building and Configure Options45546
+Ref: Expert Mode9797
+Node: Editor Basics10754
+Node: Entering Text11037
+Node: Commands11776
+Node: The Cutbuffer12561
+Node: The Mark13239
+Node: Screen Layout13977
+Node: Search and Replace15146
+Node: Using the Mouse15844
+Node: Limitation16460
+Node: Built-in Help16863
+Node: Feature Toggles17254
+Node: Nanorc Files19462
+Node: Settings20894
+Ref: Whitespace28499
+Node: Syntax Highlighting29039
+Node: Rebinding Keys33749
+Node: The File Browser43620
+Node: Pico Compatibility44442
+Node: Building and Configure Options46413
 
 End Tag Table

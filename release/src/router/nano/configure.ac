@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 
-AC_INIT([GNU nano], [2.7.0], [nano-devel@gnu.org], [nano])
+AC_INIT([GNU nano], [2.7.1], [nano-devel@gnu.org], [nano])
 AC_CONFIG_SRCDIR([src/nano.c])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
@@ -124,6 +124,19 @@ fi
 
 AC_ARG_ENABLE(libmagic,
 AS_HELP_STRING([--disable-libmagic], [Disable detection of file types via libmagic]))
+
+AC_ARG_ENABLE(linenumbers,
+AS_HELP_STRING([--disable-linenumbers], [Disable line numbering]))
+if test "x$enable_tiny" = xyes; then
+    if test "x$enable_linenumbers" != xyes; then
+	enable_linenumbers=no
+    fi
+fi
+if test "x$disable_linenumbers" != xyes; then
+    if test "x$enable_linenumbers" != xno; then
+	AC_DEFINE(ENABLE_LINENUMBERS, 1, [Define this to enable line numbering.])
+    fi
+fi
 
 AC_ARG_ENABLE(mouse,
 AS_HELP_STRING([--disable-mouse], [Disable mouse support (and -m flag)]))

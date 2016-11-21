@@ -1,6 +1,9 @@
 Improvements in GNU nano
 ========================
 
+Since 2.7.0:
+  - The ability to display line numbers in front of the text.
+
 Since 2.6.0:
   - Shift plus the cursor keys can be used for selecting text.
   - Ctrl+Arrow should now work also on a Linux virtual console.
