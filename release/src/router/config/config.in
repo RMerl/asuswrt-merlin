@@ -402,6 +402,10 @@ config RTCONFIG_NANO
         bool "nano text editor"
         default n
 
+config RTCONFIG_MERLINUPDATE
+	bool "Check for new firmware version - Merlin-only"
+	default n
+
 config RTCONFIG_USB_EXTRAS
 	bool "Additional modules and utilities"
 	depends on RTCONFIG_USB

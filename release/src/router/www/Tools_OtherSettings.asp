@@ -819,6 +819,15 @@ function done_validating(action){
 							<input type="radio" name="led_disable" class="input" value="0" <% nvram_match_x("", "led_disable", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
+
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,15);">New firmware version check</a></th>
+						<td>
+							<input type="radio" name="firmware_check_enable" class="input" value="1" <% nvram_match("firmware_check_enable", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="firmware_check_enable" class="input" value="0" <% nvram_match("firmware_check_enable", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
+
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -827,7 +836,7 @@ function done_validating(action){
 							<td colspan="2">TCP/IP settings</td>
 						</tr>
 					</thead>
- 					<tr>
+					<tr>
 						<th>TCP connections limit</th>
 						<td>
 							<input type="text" maxlength="6" class="input_12_table" name="ct_max" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 256, 300000)" value="<% nvram_get("ct_max"); %>">

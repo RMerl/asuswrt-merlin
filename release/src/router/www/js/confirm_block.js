@@ -27,8 +27,8 @@
 	code += '<div class="confirm_contentA">' + content.contentA +'</div>';
 	
 	if(content.iframe.search("get_release_note") >= 0){
-		var webs_state_info_version = webs_state_info.splice(3,0,".").splice(2,0,".").splice(1,0,".");
-		var webs_state_info_version_beta = webs_state_info_beta.splice(3,0,".").splice(2,0,".").splice(1,0,".");
+		var webs_state_info_version = webs_state_info.slice(5).splice(3,0,".");
+		var webs_state_info_version_beta = webs_state_info_beta.slice(5).splice(3,0,".");
 		if(content.note_display_flag==0){
 			release_note_code += '<div style="display:table;width:93%" class="confirm_contentB">';
 			release_note_code += '<#General_x_FirmwareVersion_itemname#> <span style="font-weight:bold; color:#FC0;">'+webs_state_info_version+'</span>';

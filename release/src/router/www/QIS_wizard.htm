@@ -168,11 +168,6 @@ function add_options_x2(o, arr, varr, orig){
 }
 
 function detect_firmware(){
-        
-	// Disable FW check
-	liveUpdateFinish = true;
-	return;
-
 	$.ajax({
 		url: '/detect_firmware.asp',
 		dataType: 'script',

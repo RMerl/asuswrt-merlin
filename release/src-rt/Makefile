@@ -941,6 +941,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_NANO/d" $(1); \
 		echo "RTCONFIG_NANO=y" >>$(1); \
 	fi; \
+	if [ "$(MERLINUPDATE)" = "y" ]; then\
+		sed -i "/RTCONFIG_MERLINUPDATE/d" $(1); \
+		echo "RTCONFIG_MERLINUPDATE=y" >>$(1); \
+	fi; \
 	if [ "$(HTTPS)" = "y" ]; then \
 		sed -i "/RTCONFIG_HTTPS/d" $(1); \
 		echo "RTCONFIG_HTTPS=y" >>$(1); \

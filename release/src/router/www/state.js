@@ -183,6 +183,7 @@ var qos_enable_flag = ('<% nvram_get("qos_enable"); %>' == 1) ? true : false;
 var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");
 var qos_type_flag = "<% nvram_get("qos_type"); %>";
 var exist_firmver="<% nvram_get("firmver"); %>";
+var exist_extendno = '<% nvram_get("extendno"); %>';
 
 //territory_code sku
 function in_territory_code(_ptn){
@@ -293,7 +294,7 @@ var nfsd_support = isSupport("nfsd");
 var wifilogo_support = isSupport("WIFI_LOGO"); 
 var band2g_support = isSupport("2.4G"); 
 var band5g_support = isSupport("5G");
-var live_update_support = false;	// isSupport("update"); 
+var live_update_support = isSupport("update") && ("<% nvram_get("firmware_check_enable"); %>" == "1" ? true : false);
 var cooler_support = isSupport("fanctrl");
 var power_support = isSupport("pwrctrl");
 if(is_US_sku)
@@ -416,14 +417,14 @@ var sdk_7 = sdk_version_array[0] == 7 ? true : false;
 var bcm_mumimo_support = isSupport("mumimo");		//Broadcom MU-MIMOs
 
 if(live_update_support){
-	if(exist_firmver[0] == 9)
+	if((exist_extendno.indexOf("beta") != -1) || (exist_extendno.indexOf("alpha") != -1))
 		var current_firmware_path = 1;
 	else
-		var current_firmware_path = 0;	
-}	
+		var current_firmware_path = 0;
+}
 else{
 	var current_firmware_path = 0;
-}	
+}
 
 // Todo: Support repeater mode
 /*if(isMobile() && sw_mode != 2 && !dsl_support)
@@ -1841,15 +1842,15 @@ function show_menu(){
 		notification.clickCallBack[0] = "location.href = 'Advanced_System_Content.asp?af=http_passwd2';";	
 	}else
 		notification.acpw = 0;
-/*
-	if(isNewFW('<% nvram_get("webs_state_info"); %>', 0, current_firmware_path) && exist_firmver[0] != 9){	//case2		//beta FW to disable notification case 2
+
+	if(isNewFW('<% nvram_get("webs_state_info"); %>', 0, current_firmware_path) /*&& (current_firmware_path != 1)*/){	//case2		//beta FW to disable notification case 2
 		notification.array[1] = 'noti_upgrade';
 		notification.upgrade = 1;
 		notification.desc[1] = '<#ASUSGATE_note2#>';
 		notification.action_desc[1] = '<#ASUSGATE_act_update#>';
 		notification.clickCallBack[1] = "location.href = 'Advanced_FirmwareUpgrade_Content.asp?confirm_show=1';"
 	}else
-*/
+
 		notification.upgrade = 0;
 	
 	if(band2g_support && sw_mode != 4 && noti_auth_mode_2g == 'open'){ //case3-1
@@ -4356,24 +4357,24 @@ function decodeURIComponentSafe(_ascii){
 }
 
 var isNewFW = function(FWVer, check_path, current_path){	//path> 0:stable, 1:beta
-	if(check_path != current_path){
+/*
+	if((check_path == 0) && (current_path == 1)){	// If going from beta FW to latest stable
 		if(FWVer.length < 5)	//length should be longer than 17 (e.g. 3004_380_0-g123456) 
 			return false;
 		else
 			return true;	// suppose new fw on stable path if current_path is beta path.
 	}
 	else{
-			
+*/
 			var Latest_firmver = FWVer.split("_");			
 			// 3004_999_2262-g260cdd9
 			if(typeof Latest_firmver[0] !== "undefined" && typeof Latest_firmver[1] !== "undefined" && typeof Latest_firmver[2] !== "undefined"){
 				var Latest_firm = parseInt(Latest_firmver[0]);
 				var Latest_buildno = parseInt(Latest_firmver[1]);
-				var Latest_extendno = parseInt(Latest_firmver[2].split("-g")[0]);
-
+				var Latest_extendno = parseInt(Latest_firmver[2].split("-g")[0].replace(/^[0-9]$/,"10$&").replace(/alpha/gi,"1").replace(/beta/gi,"5"));
 				current_firm = parseInt('<% nvram_get("firmver"); %>'.replace(/[.]/gi,""));
-				current_buildno = parseInt('<% nvram_get("buildno"); %>');
-				current_extendno = parseInt('<% nvram_get("extendno"); %>'.split("-g")[0]);
+				current_buildno = parseInt('<% nvram_get("buildno"); %>'.replace(/[.]/gi,""));
+				current_extendno = parseInt('<% nvram_get("extendno"); %>'.split("-g")[0].replace(/^[0-9]$/,"10$&").replace(/alpha/gi,"1").replace(/beta/gi,"5"));
 				if((current_buildno < Latest_buildno) || 
 						(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
 						(current_extendno < Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
@@ -4381,9 +4382,8 @@ var isNewFW = function(FWVer, check_path, current_path){	//path> 0:stable, 1:bet
 					return true;
 				}
 			}
-		
 		return false;
-	}
+/*	}*/
 }
 
 function getBrowser_info(){

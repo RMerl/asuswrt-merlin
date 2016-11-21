@@ -1824,6 +1824,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "https_crt_cn", "" },
 	{ "webs_last_info", ""},
 	{ "firmware_path", "0"},
+/*	{ "firmware_server", "https://localhost/"}, */	// Disabled for now
+	{ "firmware_check_enable", "1"},
 #endif
 
 	{ "temp_lang", "" },

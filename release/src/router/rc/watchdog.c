@@ -2713,7 +2713,7 @@ static void auto_firmware_check()
 	struct tm *tm;
 	static int rand_hr, rand_min;
 
-	if (!nvram_get_int("ntp_ready"))
+	if (!nvram_get_int("ntp_ready") || !nvram_get_int("firmware_check_enable"))
 		return;
 
 #ifdef RTCONFIG_FORCE_AUTO_UPGRADE
@@ -2739,12 +2739,14 @@ static void auto_firmware_check()
 	}
 #endif
 
+#if 0
 #if defined(RTAC68U)
 	else if (After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1")) && !nvram_get_int("PA") && !nvram_match("cpurev", "c0"))
 	{
 		periodic_check = 1;
 		nvram_set_int("fw_check_period", 10);
 	}
+#endif
 #endif
 
 	if (bootup_check || periodic_check)
@@ -3507,7 +3509,7 @@ void watchdog(int sig)
 	modem_flow_check();
 #endif
 #endif
-//	auto_firmware_check();
+	auto_firmware_check();
 
 #ifdef RTCONFIG_BWDPI
 	auto_sig_check();	// libbwdpi.so
