@@ -2,6 +2,12 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.64 (xx-xxx-xxxx)
+   - NEW: New firmware availability notification.  The router will
+          notify you if a new firmware is available, and will also
+          let you view the changelog before sending you to the
+          download page (the update remains manual)
+   - CHANGED: Updated nano to 2.7.1.
+
 
 380.63_2 (12-Nov-2016)
    - CHANGED: Added detection for iPhone 7 models in networkmap
