@@ -15,7 +15,7 @@ help(void)
 {
 	printf(
 "MARK target v%s options:\n"
-"  --set-mark value                   Set nfmark value\n"
+"  --set-mark value[/mask]            Clear bits in mask and OR value into nfmark\n"
 "  --and-mark value                   Binary AND the nfmark with value\n"
 "  --or-mark  value                   Binary OR  the nfmark with value\n"
 "\n",
@@ -46,14 +46,22 @@ parse_v0(int c, char **argv, int invert, unsigned int *flags,
 		= (struct ipt_mark_target_info *)(*target)->data;
 
 	switch (c) {
+		char *end;
 	case '1':
 #ifdef KERNEL_64_USERSPACE_32
-		if (string_to_number_ll(optarg, 0, 0, 
-				     &markinfo->mark))
+		markinfo->mark = strtoull(optarg, &end, 0);
+		if (*end == '/') {
+			markinfo->mask = strtoull(end+1, &end, 0);
+		} else
+			markinfo->mask = 0xffffffffffffffffULL;
 #else
-		if (string_to_number_l(optarg, 0, 0, 
-				     &markinfo->mark))
+		markinfo->mark = strtoul(optarg, &end, 0);
+		if (*end == '/') {
+			markinfo->mask = strtoul(end+1, &end, 0);
+		} else
+			markinfo->mask = 0xffffffff;
 #endif
+		if (*end != '\0' || end == optarg)
 			exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
 		if (*flags)
 			exit_error(PARAMETER_PROBLEM,
@@ -93,25 +101,46 @@ parse_v1(int c, char **argv, int invert, unsigned int *flags,
 		= (struct ipt_mark_target_info_v1 *)(*target)->data;
 
 	switch (c) {
+		char *end;
 	case '1':
 	        markinfo->mode = IPT_MARK_SET;
+#ifdef KERNEL_64_USERSPACE_32
+		markinfo->mark = strtoull(optarg, &end, 0);
+		if (*end == '/') {
+			markinfo->mask = strtoull(end+1, &end, 0);
+		} else
+			markinfo->mask = 0xffffffffffffffffULL;
+#else
+		markinfo->mark = strtoul(optarg, &end, 0);
+		if (*end == '/') {
+			markinfo->mask = strtoul(end+1, &end, 0);
+		} else
+			markinfo->mask = 0xffffffff;
+#endif
+		if (*end != '\0' || end == optarg)
+			exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
 		break;
 	case '2':
 	        markinfo->mode = IPT_MARK_AND;
-		break;
-	case '3':
-	        markinfo->mode = IPT_MARK_OR;
-		break;
-	default:
-		return 0;
-	}
-
 #ifdef KERNEL_64_USERSPACE_32
 	if (string_to_number_ll(optarg, 0, 0,  &markinfo->mark))
 #else
 	if (string_to_number_l(optarg, 0, 0, &markinfo->mark))
 #endif
 		exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
+		break;
+	case '3':
+	        markinfo->mode = IPT_MARK_OR;
+#ifdef KERNEL_64_USERSPACE_32
+	if (string_to_number_ll(optarg, 0, 0,  &markinfo->mark))
+#else
+	if (string_to_number_l(optarg, 0, 0, &markinfo->mark))
+#endif
+		exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
+		break;
+	default:
+		return 0;
+	}
 
 	if (*flags)
 		exit_error(PARAMETER_PROBLEM,
@@ -123,15 +152,21 @@ parse_v1(int c, char **argv, int invert, unsigned int *flags,
 
 #ifdef KERNEL_64_USERSPACE_32
 static void
-print_mark(unsigned long long mark)
+print_mark(unsigned long long mark, unsigned long long mask, int numeric)
 {
-	printf("0x%llx ", mark);
+	if(mask != 0xffffffffffffffffULL)
+		printf("0x%llx/0x%llx ", mark, mask);
+	else
+		printf("0x%llx ", mark);
 }
 #else
 static void
-print_mark(unsigned long mark)
+print_mark(unsigned long mark, unsigned long mask, int numeric)
 {
-	printf("0x%lx ", mark);
+	if(mask != 0xffffffff)
+		printf("0x%lx/0x%lx ", mark, mask);
+	else
+		printf("0x%lx ", mark);
 }
 #endif
 
@@ -144,7 +179,7 @@ print_v0(const struct ipt_ip *ip,
 	const struct ipt_mark_target_info *markinfo =
 		(const struct ipt_mark_target_info *)target->data;
 	printf("MARK set ");
-	print_mark(markinfo->mark);
+	print_mark(markinfo->mark, markinfo->mask, numeric);
 }
 
 /* Saves the union ipt_targinfo in parsable form to stdout. */
@@ -155,7 +190,7 @@ save_v0(const struct ipt_ip *ip, const struct ipt_entry_target *target)
 		(const struct ipt_mark_target_info *)target->data;
 
 	printf("--set-mark ");
-	print_mark(markinfo->mark);
+	print_mark(markinfo->mark, markinfo->mask, 0);
 }
 
 /* Prints out the targinfo. */
@@ -170,15 +205,17 @@ print_v1(const struct ipt_ip *ip,
 	switch (markinfo->mode) {
 	case IPT_MARK_SET:
 		printf("MARK set ");
+		print_mark(markinfo->mark, markinfo->mask, numeric);
 		break;
 	case IPT_MARK_AND:
 		printf("MARK and ");
+		print_mark(markinfo->mark, 0xffffffff, numeric);
 		break;
 	case IPT_MARK_OR: 
 		printf("MARK or ");
+		print_mark(markinfo->mark, 0xffffffff, numeric);
 		break;
-	}
-	print_mark(markinfo->mark);
+	}	
 }
 
 /* Saves the union ipt_targinfo in parsable form to stdout. */
@@ -191,15 +228,17 @@ save_v1(const struct ipt_ip *ip, const struct ipt_entry_target *target)
 	switch (markinfo->mode) {
 	case IPT_MARK_SET:
 		printf("--set-mark ");
+		print_mark(markinfo->mark, markinfo->mask, 0);
 		break;
 	case IPT_MARK_AND:
 		printf("--and-mark ");
+		print_mark(markinfo->mark, 0xffffffff, 0);
 		break;
 	case IPT_MARK_OR: 
 		printf("--or-mark ");
+		print_mark(markinfo->mark, 0xffffffff, 0);
 		break;
 	}
-	print_mark(markinfo->mark);
 }
 
 static

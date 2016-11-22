@@ -34,7 +34,8 @@ target_v0(struct sk_buff **pskb,
 {
 	const struct xt_mark_target_info *markinfo = targinfo;
 
-	(*pskb)->mark = markinfo->mark;
+//	(*pskb)->mark = markinfo->mark;
+	(*pskb)->mark = ((*pskb)->mark & ~markinfo->mask) ^ markinfo->mark;
 	return XT_CONTINUE;
 }
 
@@ -51,7 +52,8 @@ target_v1(struct sk_buff **pskb,
 
 	switch (markinfo->mode) {
 	case XT_MARK_SET:
-		mark = markinfo->mark;
+//		mark = markinfo->mark;
+		mark = ((*pskb)->mark & ~markinfo->mask) ^ markinfo->mark;
 #ifdef  HNDCTF
 	{
 		enum ip_conntrack_info ctinfo;
@@ -89,6 +91,10 @@ checkentry_v0(const char *tablename,
 		printk(KERN_WARNING "MARK: Only supports 32bit wide mark\n");
 		return 0;
 	}
+	if (markinfo->mask > 0xffffffff) {
+		printk(KERN_WARNING "MARK: Only supports 32bit wide mask\n");
+		return 0;
+	}
 	return 1;
 }
 
@@ -112,12 +118,17 @@ checkentry_v1(const char *tablename,
 		printk(KERN_WARNING "MARK: Only supports 32bit wide mark\n");
 		return 0;
 	}
+	if (markinfo->mask > 0xffffffff) {
+		printk(KERN_WARNING "MARK: Only supports 32bit wide mask\n");
+		return 0;
+	}
 	return 1;
 }
 
 #ifdef CONFIG_COMPAT
 struct compat_xt_mark_target_info_v1 {
 	compat_ulong_t	mark;
+	compat_ulong_t  mask;
 	u_int8_t	mode;
 	u_int8_t	__pad1;
 	u_int16_t	__pad2;
@@ -128,6 +139,7 @@ static void compat_from_user_v1(void *dst, void *src)
 	struct compat_xt_mark_target_info_v1 *cm = src;
 	struct xt_mark_target_info_v1 m = {
 		.mark	= cm->mark,
+		.mask	= cm->mask,
 		.mode	= cm->mode,
 	};
 	memcpy(dst, &m, sizeof(m));
@@ -138,6 +150,7 @@ static int compat_to_user_v1(void __user *dst, void *src)
 	struct xt_mark_target_info_v1 *m = src;
 	struct compat_xt_mark_target_info_v1 cm = {
 		.mark	= m->mark,
+		.mask   = m->mask,
 		.mode	= m->mode,
 	};
 	return copy_to_user(dst, &cm, sizeof(cm)) ? -EFAULT : 0;
