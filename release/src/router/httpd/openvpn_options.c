@@ -387,6 +387,7 @@ add_option (char *p[], int line, int unit)
 	char buf[32] = {0};
 	FILE *fp;
 	char file_path[128] ={0};
+	char *data;
 
 	if  (streq (p[0], "dev") && p[1])
 	{
@@ -451,7 +452,7 @@ add_option (char *p[], int line, int unit)
 	{
 		sprintf(buf, "vpn_client%d_crypt", unit);
 		nvram_set(buf, "tls");
-		if (streq (p[1], INLINE_FILE_TAG) && p[2])
+		if (streq (p[1], INLINE_FILE_TAG) && p[2] && (data = strstr(p[2], "-----BEGIN")))
 		{
 			sprintf(buf, "vpn_crt_client%d_ca", unit);
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -459,12 +460,12 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
+				fprintf(fp, "%s", data);
 				fclose(fp);
 			}
 			else
 #endif
-			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, data);
 		}
 		else
 		{
@@ -473,7 +474,7 @@ add_option (char *p[], int line, int unit)
 	}
 	else if  (streq (p[0], "cert") && p[1])
 	{
-		if (streq (p[1], INLINE_FILE_TAG) && p[2])
+		if (streq (p[1], INLINE_FILE_TAG) && p[2] && (data = strstr(p[2], "-----BEGIN")))
 		{
 			sprintf(buf, "vpn_crt_client%d_crt", unit);
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -481,12 +482,12 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
+				fprintf(fp, "%s", data);
 				fclose(fp);
 			}
 			else
 #endif
-			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, data);
 		}
 		else
 		{
@@ -495,7 +496,7 @@ add_option (char *p[], int line, int unit)
 	}
 	else if  (streq (p[0], "key") && p[1])
 	{
-		if (streq (p[1], INLINE_FILE_TAG) && p[2])
+		if (streq (p[1], INLINE_FILE_TAG) && p[2] && (data = strstr(p[2], "-----BEGIN")))
 		{
 			sprintf(buf, "vpn_crt_client%d_key", unit);
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -503,12 +504,12 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
+				fprintf(fp, "%s", data);
 				fclose(fp);
 			}
 			else
 #endif
-			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, data);
 		}
 		else
 		{
@@ -517,7 +518,7 @@ add_option (char *p[], int line, int unit)
 	}
 	else if (streq (p[0], "tls-auth") && p[1])
 	{
-		if (streq (p[1], INLINE_FILE_TAG) && p[2])
+		if (streq (p[1], INLINE_FILE_TAG) && p[2] && (data = strstr(p[2], "-----BEGIN")))
 		{
 			sprintf(buf, "vpn_crt_client%d_static", unit);
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -525,12 +526,12 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
+				fprintf(fp, "%s", data);
 				fclose(fp);
 			}
 			else
 #endif
-			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, data);
 			//key-direction
 			sprintf(buf, "vpn_crt_client%d_hmac", unit);
 			if(nvram_match(buf, "-1"))	//default, disable
@@ -549,7 +550,7 @@ add_option (char *p[], int line, int unit)
 	{
 		sprintf(buf, "vpn_client%d_crypt", unit);
 		nvram_set(buf, "secret");
-		if (streq (p[1], INLINE_FILE_TAG) && p[2])
+		if (streq (p[1], INLINE_FILE_TAG) && p[2] && (data = strstr(p[2], "-----BEGIN")))
 		{
 			sprintf(buf, "vpn_crt_client%d_static", unit);
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -557,12 +558,12 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
+				fprintf(fp, "%s", data);
 				fclose(fp);
 			}
 			else
 #endif
-			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, data);
 		}
 		else
 		{
@@ -571,7 +572,7 @@ add_option (char *p[], int line, int unit)
 	}
 	else if (streq (p[0], "extra-certs") && p[1])
 	{
-		if (streq (p[1], INLINE_FILE_TAG) && p[2])
+		if (streq (p[1], INLINE_FILE_TAG) && p[2] && (data = strstr(p[2], "-----BEGIN")))
 		{
 			sprintf(buf, "vpn_crt_client%d_extra", unit);
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -579,12 +580,12 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
+				fprintf(fp, "%s", data);
 				fclose(fp);
 			}
 			else
 #endif
-			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, data);
 		}
 		else
 		{
