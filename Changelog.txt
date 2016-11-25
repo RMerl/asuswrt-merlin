@@ -6,7 +6,13 @@ Asuswrt-Merlin Changelog
           notify you if a new firmware is available, and will also
           let you view the changelog before sending you to the
           download page (the update remains manual)
+   - NEW: Added iptables MASK support on MIPS kernel (patch
+          by john9527)
+   - NEW: Webui warning shown in the notification area if running
+          low on free nvram.
    - CHANGED: Updated nano to 2.7.1.
+   - FIXED: Web server crash if importing an ovpn file with an
+            invalid key or certificate (Asus bug)
 
 
 380.63_2 (12-Nov-2016)
