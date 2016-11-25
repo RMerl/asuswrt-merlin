@@ -601,6 +601,11 @@ function ovpnFileChecker(){
 				if(vpn_upload_state == "init"){
 					setTimeout("ovpnFileChecker();",1000);
 				}
+				else if(vpn_upload_state > 0){
+					document.getElementById("importOvpnFile").innerHTML = "Failed!";
+					alert("Error " + vpn_upload_state +" while importing file - invalid key and/or certificate!\nFix your config file, then import it again.");
+					setTimeout("location.href='Advanced_OpenVPNClient_Content.asp';", 3000);
+				}
 				else{
 					setTimeout("location.href='Advanced_OpenVPNClient_Content.asp';", 3000);
 				}
