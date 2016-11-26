@@ -32,7 +32,7 @@ Supported devices are:
  * RT-N66U
  * RT-AC66U (HW revision A1/A2 only)
  * RT-AC56U
- * RT-AC68U & RT-AC68P (including HW revision C1)
+ * RT-AC68U & RT-AC68P (including HW revision C1 and E1)
  * RT-AC87U
  * RT-AC3200
  * RT-AC88U
@@ -238,8 +238,11 @@ of Good Will.
 
 Concerning privacy:
 
-This firmware does not contact me back in any way whatsoever. Not even through 
-any update checker - the only update code there is Asus's.
+The only call back made by this firmware to me is when it checks for the
+availability of a new version, which can be disabled if desired.  More info 
+on the Wiki:
+
+ https://github.com/RMerl/asuswrt-merlin/wiki/RMerl/asuswrt-merlin/wiki/Privacy-disclosure
 
 
 --- 
