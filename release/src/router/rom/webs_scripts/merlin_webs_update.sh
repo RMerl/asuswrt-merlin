@@ -174,7 +174,7 @@ if [ "$webs_state_flag" -eq "1" ]; then
 		nvram set webs_state_error=1
 	fi
 elif [ "$get_beta_release" == "1" ]; then
-	releasenote_file1_US=`nvram get webs_state_info_beta`_note.zip
+	releasenote_file1_US=`nvram get webs_state_info_beta`_note.txt
 	releasenote_path1="/tmp/release_note1.txt"
 	if [ "$forsq" == "1" ]; then
 		echo "---- download SQ beta release note $fwsite/test/$releasenote_file0 ----" >> /tmp/webs_upgrade.log
