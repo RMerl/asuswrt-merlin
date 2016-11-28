@@ -88,6 +88,16 @@ var webs_release_note= "";
 var varload = 0;
 var helplink = "";
 var dpi_engine_status = <%bwdpi_engine_status();%>;
+
+var download_srv = '<% nvram_get("firmware_server"); %>';
+if (download_srv == "") {
+	download_url = "https://asuswrt.lostrealm.ca/download";
+	download_url_alpha = download_url;
+} else {
+	download_url = download_srv + "/" + based_modelid;
+	download_url_alpha = download_srv + "/alpha";
+}
+
 function initial(){
 	show_menu();
 	if(bwdpi_support){
@@ -108,7 +118,7 @@ function initial(){
 		document.getElementById("linkpage_div").style.display = "";
 		document.getElementById("linkpage").style.display = "";
 		document.getElementById("beta_firmware_span").style.display = "none";
-		helplink = "https://asuswrt.lostrealm.ca/download";
+		helplink = download_url;
 		document.getElementById("linkpage").href = helplink;
 	} 
 	else{
@@ -234,7 +244,11 @@ function do_show_confirm(FWVer, CheckPath, CurrentPath){
          					left_button_args: {},
          					right_button: "Visit download site",
          					right_button_callback: function(){	
-							window.open('https://asuswrt.lostrealm.ca/download/');
+							if (webs_state_info_beta.indexOf("alpha") != -1) {
+								window.open(download_url_alpha);
+							} else {
+								window.open(download_url);
+							}
 									},
          					right_button_args: {},
          					iframe: "get_release_note1.asp",
@@ -252,7 +266,7 @@ function do_show_confirm(FWVer, CheckPath, CurrentPath){
          					left_button_args: {},
          					right_button: "Visit download site",
          					right_button_callback: function(){         						
-							window.open('https://asuswrt.lostrealm.ca/download/');
+							window.open(download_url);
 									},
          					right_button_args: {},
          					iframe: "get_release_note0.asp",
