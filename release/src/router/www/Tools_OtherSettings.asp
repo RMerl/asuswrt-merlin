@@ -107,6 +107,9 @@ function initial() {
 	if (document.form.usb_idle_exclude.value.indexOf("i") != -1)
 		document.form.usb_idle_exclude_i.checked = true;
 
+	if(!live_update_support)
+		document.getElementById("fwcheck").style.display="none";
+
 	if (machine_name.search("arm") != -1) {
 		document.getElementById("ct_established_default").innerHTML = "Default: 2400";
 		showhide("memory_mgmt_tr" ,1);
@@ -819,9 +822,8 @@ function done_validating(action){
 							<input type="radio" name="led_disable" class="input" value="0" <% nvram_match_x("", "led_disable", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
-
-					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,15);">New firmware version check</a></th>
+					<tr id="fwcheck">
+						<th><a name="fwcheck"></a><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,15);">New firmware version check</a></th>
 						<td>
 							<input type="radio" name="firmware_check_enable" class="input" value="1" <% nvram_match("firmware_check_enable", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="firmware_check_enable" class="input" value="0" <% nvram_match("firmware_check_enable", "0", "checked"); %>><#checkbox_No#>

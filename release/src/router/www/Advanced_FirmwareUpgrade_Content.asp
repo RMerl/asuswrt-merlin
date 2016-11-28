@@ -118,6 +118,7 @@ function initial(){
 		document.getElementById("linkpage_div").style.display = "";
 		document.getElementById("linkpage").style.display = "";
 		document.getElementById("beta_firmware_span").style.display = "none";
+		document.getElementById("fw_check_link").style.display = "none";
 		helplink = download_url;
 		document.getElementById("linkpage").href = helplink;
 	} 
@@ -688,6 +689,10 @@ function change_firmware_path(flag){
 				</td>
 			</tr>
 
+			<tr id="fw_check_link">
+				<th>Scheduled new firmware check</th>
+				<td>Click <a href="Tools_OtherSettings.asp#fwcheck" style="text-decoration:underline;color:#FFCC00;">here</a> to toggle new firmware notification.</td>
+			</tr>
 			<tr>
 				<th><#FW_item2#></th>
 				<td>
