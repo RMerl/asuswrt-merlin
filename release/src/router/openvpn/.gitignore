@@ -53,6 +53,8 @@ doc/openvpn.8.html
 distro/rpm/openvpn.spec
 tests/t_client.sh
 tests/t_client-*-20??????-??????/
+t_client.rc
+t_client_ips.rc
 src/openvpn/openvpn
 config-version.h
 nbproject
