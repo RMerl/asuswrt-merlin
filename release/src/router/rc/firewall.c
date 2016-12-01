@@ -190,6 +190,43 @@ int ipt_addr_compact(const char *s, int af, int strict)
 	return (r & af);
 }
 
+// address_checker function was stolen from  qos.c
+#define TYPE_IP 0
+#define TYPE_MAC 1
+#define TYPE_IPRANGE 2
+static void address_checker(int *addr_type, char *addr_old, char *addr_new, int len)
+{
+	char *second, *last_dot;
+	int len_to_minus, len_to_dot;
+
+	second = strchr(addr_old, '-');
+	if (second != NULL)
+	{
+		*addr_type = TYPE_IPRANGE;
+		if (strchr(second+1, '.') != NULL){
+			// long notation
+			strncpy(addr_new, addr_old, len);
+		}
+		else{
+			// short notation
+			last_dot = strrchr(addr_old, '.');
+			len_to_minus = second - addr_old;
+			len_to_dot = last_dot - addr_old;
+			strncpy(addr_new, addr_old, len_to_minus+1);
+			strncpy(addr_new + len_to_minus + 1, addr_new, len_to_dot+1);
+			strcpy(addr_new + len_to_minus + len_to_dot + 2, second+1);
+		}
+	}
+	else
+	{
+		if (strlen(addr_old) == 17)
+			*addr_type = TYPE_MAC;
+		else
+			*addr_type = TYPE_IP;
+		strncpy(addr_new, addr_old, len);
+	}
+}
+
 /*
 void nvram_unsets(char *name, int count)
 {
@@ -1166,7 +1203,11 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	char *nv, *nvp, *b;
 	char name[PATH_MAX];
 	int wan_unit;
-
+#ifdef RTCONFIG_TOR
+	char addr_new[32];
+	int addr_type;
+#endif
+	
 	sprintf(name, "%s_%s_%s", NAT_RULES, wan_if, wanx_if);
 	remove_slash(name + strlen(NAT_RULES));
 	if ((fp=fopen(name, "w"))==NULL) return;
@@ -1231,13 +1272,29 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		nv = strdup(nvram_safe_get("Tor_redir_list"));
 		if (strlen(nv) == 0) {
 		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
-		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
+		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -j REDIRECT --to-ports 123\n", lan_if); // requires an NTP server
+		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
 		}
 		else{
 			while ((b = strsep(&nv, "<")) != NULL) {
 				if (strlen(b)==0) continue;
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, b, nvram_safe_get("Tor_dnsport"));
-					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, b, nvram_safe_get("Tor_transport"));
+				memset(addr_new, 0, sizeof(addr_new));
+				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
+				if (addr_type == TYPE_IP){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -s %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -s %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -s %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
+				else if (addr_type == TYPE_MAC){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m mac --mac-source %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
+				else if (addr_type == TYPE_IPRANGE){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m iprange --src-range %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
 			}
 			free(nv);
 		}
@@ -1420,6 +1477,10 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char name[PATH_MAX];
 	int wan_max_unit = WAN_UNIT_MAX;
+#ifdef RTCONFIG_TOR
+	char addr_new[32];
+	int addr_type;
+#endif
 
 	ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 
@@ -1482,17 +1543,33 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
 
 #ifdef RTCONFIG_TOR
-	if(nvram_match("Tor_enable", "1")){
+	 if(nvram_match("Tor_enable", "1")){
 		nv = strdup(nvram_safe_get("Tor_redir_list"));
 		if (strlen(nv) == 0) {
 		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
-		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
+		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -j REDIRECT --to-ports 123\n", lan_if); // requires an NTP server
+		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
 		}
 		else{
 			while ((b = strsep(&nv, "<")) != NULL) {
 				if (strlen(b)==0) continue;
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, b, nvram_safe_get("Tor_dnsport"));
-					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, b, nvram_safe_get("Tor_transport"));
+				memset(addr_new, 0, sizeof(addr_new));
+				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
+				if (addr_type == TYPE_IP){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -s %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -s %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -s %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
+				else if (addr_type == TYPE_MAC){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m mac --mac-source %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
+				else if (addr_type == TYPE_IPRANGE){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m iprange --src-range %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
 			}
 			free(nv);
 		}
@@ -2245,6 +2322,11 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	char *wanx_if, *wanx_ip;
 #if defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_USB_MODEM)
 	int unit = get_wan_unit(wan_if);
+#endif
+
+#ifdef RTCONFIG_TOR
+	char addr_new[32];
+	int addr_type;
 #endif
 
 	if(wan_prefix(wan_if, prefix) < 0)
@@ -3123,6 +3205,34 @@ TRACE_PT("write url filter\n");
 
 	fprintf(fp, "-A FORWARD -i %s -j ACCEPT\n", lan_if);
 
+#ifdef RTCONFIG_TOR
+	 // for TOR users, block anything that cannot be routed through the TOR network (i.e. UDP and ICMP ping)
+	 // otherwise, it's a leak that could reveal your router's IP address
+	 if(nvram_match("Tor_enable", "1")){
+		nv = strdup(nvram_safe_get("Tor_redir_list"));
+		if (strlen(nv) == 0) {
+		fprintf(fp, "-I FORWARD -i %s -j DROP\n", lan_if);
+		}
+		else{
+			while ((b = strsep(&nv, "<")) != NULL) {
+				if (strlen(b)==0) continue;
+				memset(addr_new, 0, sizeof(addr_new));
+				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
+				if (addr_type == TYPE_IP){
+					fprintf(fp, "-I FORWARD -i %s -s %s -j DROP\n", lan_if, addr_new);
+				}
+				else if (addr_type == TYPE_MAC){
+					fprintf(fp, "-I FORWARD -i %s -m mac --mac-source %s -j DROP\n", lan_if, addr_new);
+				}
+				else if (addr_type == TYPE_IPRANGE){
+					fprintf(fp, "-I FORWARD -i %s -m iprange --src-range %s -j DROP\n", lan_if, addr_new);
+				}
+			}
+			free(nv);
+		}
+	}
+#endif	
+	
 	fprintf(fp, "COMMIT\n\n");
 	fclose(fp);
 
@@ -3186,6 +3296,11 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #endif
 	int v4v6_ok = IPT_V4;
 	int wan_max_unit = WAN_UNIT_MAX;
+
+#ifdef RTCONFIG_TOR
+	char addr_new[32];
+	int addr_type;
+#endif
 
 #ifdef RTCONFIG_MULTICAST_IPTV
 	if (nvram_get_int("switch_stb_x") > 6)
@@ -4176,6 +4291,34 @@ TRACE_PT("write url filter\n");
 #endif
 
 	fprintf(fp, "-A FORWARD -i %s -j ACCEPT\n", lan_if);
+
+#ifdef RTCONFIG_TOR
+	 // for TOR users, block anything that cannot be routed through the TOR network (i.e. UDP and ICMP ping)
+	 // otherwise, it's a leak that could reveal your router's IP address
+	 if(nvram_match("Tor_enable", "1")){
+		nv = strdup(nvram_safe_get("Tor_redir_list"));
+		if (strlen(nv) == 0) {
+		fprintf(fp, "-I FORWARD -i %s -j DROP\n", lan_if);
+		}
+		else{
+			while ((b = strsep(&nv, "<")) != NULL) {
+				if (strlen(b)==0) continue;
+				memset(addr_new, 0, sizeof(addr_new));
+				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
+				if (addr_type == TYPE_IP){
+					fprintf(fp, "-I FORWARD -i %s -s %s -j DROP\n", lan_if, addr_new);
+				}
+				else if (addr_type == TYPE_MAC){
+					fprintf(fp, "-I FORWARD -i %s -m mac --mac-source %s -j DROP\n", lan_if, addr_new);
+				}
+				else if (addr_type == TYPE_IPRANGE){
+					fprintf(fp, "-I FORWARD -i %s -m iprange --src-range %s -j DROP\n", lan_if, addr_new);
+				}
+			}
+			free(nv);
+		}
+	}
+#endif
 
 	fprintf(fp, "COMMIT\n\n");
 	fclose(fp);
