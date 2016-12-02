@@ -239,7 +239,7 @@ function do_show_confirm(FWVer, CheckPath, CurrentPath){
 								confirm_asus({
          					title: "Beta Firmware Available",
          					contentA: "There is a new beta firmware available.  These are pre-release test versions made available to obtain early user feedback, or to address issues fixed since the last official release.  Please note that beta firmware may introduce new issues or may not function as well as a stable release. Install only on devices that are not business critical.<br>",		/* untranslated */
-         					contentC: "<br><#ADSL_FW_note#> <#Main_alert_proceeding_desc5#>",
+         					contentC: "<br><#ADSL_FW_note#> Visit the download site to manually download and upgrade your router",
          					left_button: "<#CTL_Cancel#>",
          					left_button_callback: function(){confirm_cancel();},
          					left_button_args: {},
@@ -261,7 +261,7 @@ function do_show_confirm(FWVer, CheckPath, CurrentPath){
 							confirm_asus({
          					title: "New Firmware Available",
          					contentA: "There is a newer firmware available.  For security reasons it is usually recommended to update to the latest version available.  Please review the release notes below.<br>",
-         					contentC: "<br><#ADSL_FW_note#> <#Main_alert_proceeding_desc5#>",
+         					contentC: "<br><#ADSL_FW_note#> Visit the download site to manually download and upgrade your router",
          					left_button: "<#CTL_Cancel#>",
          					left_button_callback: function(){confirm_cancel();},
          					left_button_args: {},
