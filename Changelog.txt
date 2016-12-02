@@ -11,8 +11,14 @@ Asuswrt-Merlin Changelog
    - NEW: Webui warning shown in the notification area if running
           low on free nvram.
    - CHANGED: Updated nano to 2.7.1.
+   - CHANGED: Updated OpenVPN to 2.3.13.
+   - CHANGED: Tor clients will now route other TCP ports than just
+              80/443, and drop UDP and ICMP traffic (patch by
+              blackfuel)
    - FIXED: Web server crash if importing an ovpn file with an
             invalid key or certificate (Asus bug)
+   - FIXED: App icon at the top wouldn't work on Firefox, generating
+            a Javascript error.
 
 
 380.63_2 (12-Nov-2016)
