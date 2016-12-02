@@ -72,6 +72,36 @@ static void crc_done(void)
 
 // -----------------------------------------------------------------------------
 
+int skipbb = 0;		// Skip BB check if not supported by device
+
+/*
+ * Check for bad block on MTD device
+ * @param       fd      file descriptor for MTD device
+ * @param       offset  offset of block to check
+ * @return              >0 if bad block, 0 if block is ok, check failed, or not supported
+ */
+
+int mtd_block_is_bad(int fd, int offset)
+{
+	int r;
+
+	if (skipbb) return 0;   // Not supported
+
+	loff_t o = offset;
+	r = ioctl(fd, MEMGETBADBLOCK, &o);
+	if (r < 0) {
+		if (errno == EOPNOTSUPP) {
+			skipbb = 1;     // Not supported by this device
+			return 0;
+		} else {
+			perror("Failed to get erase block status!");
+			return 0;
+		}
+	}
+	return r;
+}
+
+
 #ifdef RTCONFIG_BCMARM
 static int mtd_open_old(const char *mtdname, mtd_info_t *mi)
 #else
@@ -101,13 +131,12 @@ static int _unlock_erase(const char *mtdname, int erase)
 	int mf;
 	mtd_info_t mi;
 	erase_info_t ei;
-	int r, ret, skipbb;
+	int r;
 
 	if (!wait_action_idle(5)) return 0;
 	set_action(ACT_ERASE_NVRAM);
 
 	r = 0;
-	skipbb = 0;
 
 #ifdef RTCONFIG_BCMARM
  	if ((mf = mtd_open_old(mtdname, &mi)) >= 0) {
@@ -121,22 +150,11 @@ static int _unlock_erase(const char *mtdname, int erase)
 				printf("%sing 0x%x - 0x%x\n", erase ? "Eras" : "Unlock", ei.start, (ei.start + ei.length) - 1);
 				fflush(stdout);
 
-				if (!skipbb) {
-					loff_t offset = ei.start;
-
-					if ((ret = ioctl(mf, MEMGETBADBLOCK, &offset)) > 0) {
-						printf("Skipping bad block at 0x%08x\n", ei.start);
-						continue;
-					} else if (ret < 0) {
-						if (errno == EOPNOTSUPP) {
-							skipbb = 1;	// Not supported by this device
-						} else {
-							perror("MEMGETBADBLOCK");
-							r = 0;
-							break;
-						}
-					}
+				if (mtd_block_is_bad(mf, ei.start)) {
+					printf("Skipping bad block at 0x%08x\n", ei.start);
+					continue;
 				}
+
 				if (ioctl(mf, MEMUNLOCK, &ei) != 0) {
 //					perror("MEMUNLOCK");
 //					r = 0;
@@ -413,6 +431,7 @@ ERROR:
 	return (error ? 1 : 0);
 }
 
+
 #ifdef RTCONFIG_BCMARM
 
 /*
@@ -479,15 +498,20 @@ mtd_erase(const char *mtd)
         for (erase_info.start = 0;
              erase_info.start < mtd_info.size;
              erase_info.start += mtd_info.erasesize) {
-                (void) ioctl(mtd_fd, MEMUNLOCK, &erase_info);
-                if (ioctl(mtd_fd, MEMERASE, &erase_info) != 0) {
-                        perror(mtd);
-                        close(mtd_fd);
+		if (mtd_block_is_bad(mtd_fd, erase_info.start)) {
+			printf("Skipping bad block at 0x%08x\n", erase_info.start);
+		}
+		else {
+			(void) ioctl(mtd_fd, MEMUNLOCK, &erase_info);
+			if (ioctl(mtd_fd, MEMERASE, &erase_info) != 0) {
+				perror(mtd);
+				close(mtd_fd);
 #ifdef RTAC87U
-						sprintf(erase_err, "logger -t ATE mtd_erase failed: [%d]", errno);
-						system(erase_err);
+				sprintf(erase_err, "logger -t ATE mtd_erase failed: [%d]", errno);
+				system(erase_err);
 #endif
-                        return errno;
+	                        return errno;
+			}
                 }
         }
 
@@ -746,12 +770,17 @@ mtd_write(const char *path, const char *mtd)
                         }
                 }
                 /* Do it */
-                (void) ioctl(mtd_fd, MEMUNLOCK, &erase_info);
-                if (ioctl(mtd_fd, MEMERASE, &erase_info) != 0 ||
-                    write(mtd_fd, buf, count) != count) {
-                        perror(mtd);
-                        goto fail;
-                }
+		if (mtd_block_is_bad(mtd_fd, erase_info.start)) {
+			printf("Skipping bad block at 0x%08x\n", erase_info.start);
+		} else {
+			(void) ioctl(mtd_fd, MEMUNLOCK, &erase_info);
+
+			if (ioctl(mtd_fd, MEMERASE, &erase_info) != 0 ||
+				write(mtd_fd, buf, count) != count) {
+				perror(mtd);
+				goto fail;
+			}
+		}
         }
 
 #ifdef PLC
