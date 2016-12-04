@@ -49,6 +49,9 @@ if (qos_mode == 2) {
 }
 
 
+var pie_obj_ul, pie_obj_dl;
+var refreshRate;
+var timedEvent = 0;
 
 var color = ["#B3645B","#B98F53","#C6B36A","#849E75","#2B6692","#7C637A","#4C8FC0", "#6C604F"];
 
@@ -97,9 +100,14 @@ function comma(n){
 }
 
 function initial(){
-	var code;
-
 	show_menu();
+	refreshRate = document.getElementById('refreshrate').value
+	get_data();
+}
+
+
+function redraw(){
+	var code;
 
 	switch (qos_mode) {
 		case 0:		// Disabled
@@ -120,21 +128,46 @@ function initial(){
 			break;
 
 		case 2:		// Adaptive
+			if (pie_obj_dl != undefined) pie_obj_dl.destroy();
 			var ctx_dl = document.getElementById("pie_chart_dl").getContext("2d");
 			tcdata_lan_array.sort(function(a,b) {return a[0]-b[0]} );
-			code = setup_data(tcdata_lan_array, ctx_dl);
+			code = draw_chart(tcdata_lan_array, ctx_dl, "dl");
 			document.getElementById('legend_dl').innerHTML = code;
 			break;
 	}
 
+	if (pie_obj_ul != undefined) pie_obj_ul.destroy();
 	var ctx_ul = document.getElementById("pie_chart_ul").getContext("2d");
 	tcdata_wan_array.sort(function(a,b) {return a[0]-b[0]} );
-	code = setup_data(tcdata_wan_array, ctx_ul);
-        document.getElementById('legend_ul').innerHTML = code;
+	code = draw_chart(tcdata_wan_array, ctx_ul, "ul");
+	document.getElementById('legend_ul').innerHTML = code;
 
+	pieOptions.animation = false;	// Only animate first time
 }
 
-function setup_data(data_array, ctx) {
+
+function get_data() {
+	if (timedEvent) {
+		clearTimeout(timedEvent);
+		timedEvent = 0;
+	}
+
+	$.ajax({
+		url: '/ajax_gettcdata.asp',
+		dataType: 'script',
+		error: function(xhr){
+			get_data();
+		},
+		success: function(response){
+			redraw();
+			if (refreshRate > 0)
+				timedEvent = setTimeout("get_data();", refreshRate * 1000);
+		}
+	});
+}
+
+
+function draw_chart(data_array, ctx, pie) {
 	var code = '<table><thead style="text-align:left;"><tr><th style="padding-left:5px;">Class</th><th style="padding-left:5px;">Total</th><th style="padding-left:20px;">Rate</th><th style="padding-left:20px;">Packet rate</th></tr></thead>';
 	var values_array = [];
 	var labels_array = [];
@@ -203,6 +236,12 @@ function setup_data(data_array, ctx) {
 	    data: pieData,
 	    options: pieOptions
 	});
+
+	if (pie == "ul")
+		pie_obj_ul = pie_obj;
+	else
+		pie_obj_dl = pie_obj;
+
 	return code;
 }
 
@@ -241,7 +280,23 @@ function setup_data(data_array, ctx) {
                 <td valign="top">
 	                <div>&nbsp;</div>
 		        <div class="formfonttitle">QoS - Traffic classification Statistics</div>
-		        <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+				<tr>
+					<th>Automatically refresh data every</th>
+					<td>
+						<select name="refreshrate" class="input_option" onchange="refreshRate = this.value; get_data();" id="refreshrate">
+							<option value="0">No refresh</option>
+							<option value="3" selected>3 seconds</option>
+							<option value="5">5 seconds</option>
+							<option value="10">10 seconds</option>
+						</select>
+					</td>
+				</tr>
+			</table>
+			<br>
+
 			<div id="limiter_notice" style="display:none;font-size:125%;color:#FFCC00;">Statistics not available in Bandwidth Limiter mode.</div>
 			<div id="no_qos_notice" style="display:none;font-size:125%;color:#FFCC00;">QoS is not enabled.</div>
 			<div id="tqos_notice" style="display:none;font-size:125%;color:#FFCC00;">Note: Traditional QoS only classifies uploaded traffic.</div>
