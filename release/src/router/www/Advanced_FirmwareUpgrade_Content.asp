@@ -93,9 +93,11 @@ var download_srv = '<% nvram_get("firmware_server"); %>';
 if (download_srv == "") {
 	download_url = "https://asuswrt.lostrealm.ca/download";
 	download_url_alpha = download_url;
+	download_url_beta = download_url;
 } else {
 	download_url = download_srv + "/" + based_modelid;
 	download_url_alpha = download_srv + "/alpha";
+	download_url_beta = download_url + "/beta";
 }
 
 function initial(){
@@ -247,6 +249,8 @@ function do_show_confirm(FWVer, CheckPath, CurrentPath){
          					right_button_callback: function(){	
 							if (webs_state_info_beta.indexOf("alpha") != -1) {
 								window.open(download_url_alpha);
+							} else if (webs_state_info_beta.indexOf("beta") != -1) {
+								window.open(download_url_beta);
 							} else {
 								window.open(download_url);
 							}
