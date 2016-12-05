@@ -73,7 +73,7 @@ function redraw() {
 	var h;
 	var grid;
 	var rows;
-	var i, b, d;
+	var i, b;
 	var fskip;
 	var filtered = 0;
 
@@ -160,7 +160,7 @@ function redraw() {
 				}
 			}
 
-			var h = b[1];
+			h = b[1];
 			var clientObj;
 			var clientName;
 
@@ -176,23 +176,24 @@ function redraw() {
 			}
 
 			var ymd = getYMD(b[0]);
-			d = [ymText(ymd[0], ymd[1]), h, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3])];
 
-			if (!valuesObj.hasOwnProperty(clientName)){
-				valuesObj[clientName] = [0,0];
+			if (b[1] != fixIP(ntoa(aton(nvram.lan_ipaddr) & aton(nvram.lan_netmask)))) {
+				if (!valuesObj.hasOwnProperty(clientName)){
+					valuesObj[clientName] = [0,0];
+				}
+				valuesObj[clientName][0] += b[2];
+				valuesObj[clientName][1] += b[3];
 			}
-			valuesObj[clientName][0] += b[2];
-			valuesObj[clientName][1] += b[3];
 
 			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymText(ymd[0], ymd[1]), style_open + h + style_close, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]), b[1]);
 			++rows;
 		}
 	}
 
-	if(filtered > 0)
+	if (filtered > 0)
 		grid +='<tr><td style="color:#FFCC00;" colspan="5">'+ filtered +' entries filtered out.</td></tr>';
 
-	if(rows == 0)
+	if (rows == 0)
 		grid +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
 
 	E('bwm-monthly-grid').innerHTML = grid + '</table>';
