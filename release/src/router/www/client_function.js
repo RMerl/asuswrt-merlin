@@ -3263,7 +3263,18 @@ function oui_query_web(mac){
 function clientFromIP(ip) {
 	for(var i=0; i<clientList.length;i++){
 		var clientObj = clientList[clientList[i]];
-		if(clientObj.ip == ip) return clientObj;
+		if(clientObj.ip == ip){
+			return clientObj;
+		}
+	}
+	staticList = originData.staticList;
+	for(var i=0; i<staticList.length; i++){
+		if(staticList[i] != ""){
+			data = staticList[i].split(">");
+			if(data[1] == ip){
+				return clientList[data[0]];
+			}
+		}
 	}
 	return 0;
 }
