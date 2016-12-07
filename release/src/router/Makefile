@@ -327,8 +327,8 @@ obj-$(RTCONFIG_BWDPI) += sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi
 obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi_bin
-#obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
-obj-y += curl-7.21.7
+#obj-$(RTCONFIG_SPEEDTEST) += curl
+obj-y += curl
 
 obj-$(RTCONFIG_TRAFFIC_LIMITER) += sqlite
 obj-$(RTCONFIG_TRAFFIC_LIMITER) += traffic_limiter
@@ -527,7 +527,7 @@ obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
 #add by gauss for cloudsync
 obj-$(RTCONFIG_CLOUDSYNC) += openssl
 obj-$(RTCONFIG_CLOUDSYNC) += libxml2
-obj-$(RTCONFIG_CLOUDSYNC) += curl-7.21.7
+obj-$(RTCONFIG_CLOUDSYNC) += curl
 obj-$(RTCONFIG_CLOUDSYNC) += asuswebstorage$(BCMEX)
 obj-$(RTCONFIG_CLOUDSYNC) += inotify
 
@@ -665,7 +665,7 @@ obj-$(RTCONFIG_IPERF) += iperf
 obj-$(RTCONFIG_PUSH_EMAIL) += zlib # for libxml2, curl.
 obj-$(RTCONFIG_PUSH_EMAIL) += openssl
 obj-$(RTCONFIG_PUSH_EMAIL) += libxml2
-obj-$(RTCONFIG_PUSH_EMAIL) += curl-7.21.7
+obj-$(RTCONFIG_PUSH_EMAIL) += curl
 obj-$(RTCONFIG_PUSH_EMAIL) += wb
 obj-$(RTCONFIG_PUSH_EMAIL) += email-3.1.3
 obj-$(RTCONFIG_PUSH_EMAIL) += push_log
@@ -720,7 +720,7 @@ obj-$(RTCONFIG_BONDING) += ifenslave
 
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
 
-obj-$(RTCONFIG_TRANSMISSION) += Transmission curl-7.21.7 libevent-2.0.21
+obj-$(RTCONFIG_TRANSMISSION) += Transmission curl libevent-2.0.21
 
 ifeq ($(RTCONFIG_TOR),y)
 obj-y += openssl
@@ -1573,7 +1573,7 @@ mssl:	openssl
 
 mdu:	shared mssl
 
-wb: openssl libxml2 curl-7.21.7
+wb: openssl libxml2 curl
 
 push_log: wb
 
@@ -3749,30 +3749,30 @@ webdav_client$(BCMEX)-clean:
 
 #add by gauss
 #add install libcurl
-curl-7.21.7: curl-7.21.7/Makefile
+curl: curl/Makefile
 	@$(MAKE) -C $@ $(PARALLEL_BUILD) && $(MAKE) $@-stage
 
-curl-7.21.7/Makefile: curl-7.21.7/configure
-	@cd curl-7.21.7 && $(CONFIGURE) CC=$(CC) \
+curl/Makefile: curl/configure
+	@cd curl && $(CONFIGURE) CC=$(CC) \
 		--prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
-		--enable-http --with-ssl=$(TOP)/openssl LDFLAGS="-ldl" \
+		--enable-http --with-ssl=$(TOP)/openssl/ssl LDFLAGS="-ldl" \
 		$(if $(RTCONFIG_IPV6),--enable-ipv6) \
 		--with-ca-bundle=/rom/ca-bundle.crt
 
-curl-7.21.7-install: curl-7.21.7
+curl-install: curl
 	@$(SEP)
-	install -D curl-7.21.7/lib/.libs/libcurl.so.4.2.0 $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
-	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
-	cd $(INSTALLDIR)/curl-7.21.7/usr/lib && ln -sf libcurl.so.4.2.0 libcurl.so && ln -sf libcurl.so.4.2.0 libcurl.so.4
+	install -D curl/lib/.libs/libcurl.so.4.4.0 $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.4.0
+	$(STRIP) $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.4.0
+	cd $(INSTALLDIR)/curl/usr/lib && ln -sf libcurl.so.4.4.0 libcurl.so && ln -sf libcurl.so.4.4.0 libcurl.so.4
 #ifeq ($(RTCONFIG_SPEEDTEST),y)
 	# for speedtest
-	install -D curl-7.21.7/src/.libs/curl $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
-	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
+	install -D curl/src/.libs/curl $(INSTALLDIR)/curl/usr/sbin/curl
+	$(STRIP) $(INSTALLDIR)/curl/usr/sbin/curl
 #endif
 
-curl-7.21.7-clean:
-	[ ! -f curl-7.21.7/Makefile ] || $(MAKE) -C curl-7.21.7 clean
-	@rm -f curl-7.21.7/Makefile
+curl-clean:
+	[ ! -f curl/Makefile ] || $(MAKE) -C curl clean
+	@rm -f curl/Makefile
 
 #snmp
 net-snmp-5.7.2/stamp-h1:
@@ -4447,7 +4447,7 @@ Transmission/Makefile: Transmission/configure
 		--disable-nls --disable-gtk \
 	)
 
-Transmission: curl-7.21.7 libevent-2.0.21 Transmission/Makefile
+Transmission: curl libevent-2.0.21 Transmission/Makefile
 	@$(SEP)
 	$(MAKE) -C $@
 
@@ -4535,7 +4535,7 @@ mastiff-clean:
 
 #aaews: wb
 
-#wb: shared nvram curl-7.21.7 openssl libxml2 asusnatnl 
+#wb: shared nvram curl openssl libxml2 asusnatnl 
 aaews: wb
 	cd aaews && \
         CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
