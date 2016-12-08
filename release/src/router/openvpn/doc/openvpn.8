@@ -4,7 +4,7 @@
 .\"             packet encryption, packet authentication, and
 .\"             packet compression.
 .\"
-.\"  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+.\"  Copyright (C) 2002-2016 OpenVPN Technologies, Inc. <sales@openvpn.net>
 .\"
 .\"  This program is free software; you can redistribute it and/or modify
 .\"  it under the terms of the GNU General Public License version 2
@@ -34,7 +34,7 @@
 .\" .ft -- normal face
 .\" .in +|-{n} -- indent
 .\"
-.TH openvpn 8 "17 November 2008"
+.TH openvpn 8 "25 August 2016"
 .\"*********************************************************
 .SH NAME
 openvpn - secure IP tunnel daemon.
@@ -1626,16 +1626,25 @@ and
 are mutually exclusive and cannot be used together.
 .\"*********************************************************
 .TP
-.B \-\-keepalive n m
+.B \-\-keepalive interval timeout
 A helper directive designed to simplify the expression of
 .B \-\-ping
 and
-.B \-\-ping\-restart
-in server mode configurations.
+.B \-\-ping\-restart.
 
-The server timeout is set twice the value of the second argument.
-This ensures that a timeout is detected on client side
-before the server side drops the connection.
+This option can be used on both client and server side, but it is
+in enough to add this on the server side as it will push appropriate
+.B \-\-ping
+and
+.B \-\-ping\-restart
+options to the client.  If used on both server and client,
+the values pushed from server will override the client local values.
+
+The
+.B timeout
+argument will be twice as long on the server side.  This ensures that
+a timeout is detected on client side before the server side drops
+the connection.
 
 For example,
 .B \-\-keepalive 10 60
@@ -1645,13 +1654,13 @@ expands as follows:
 .ft 3
 .in +4
  if mode server:
-   ping 10
-   ping-restart 120
-   push "ping 10"
-   push "ping-restart 60"
+   ping 10                    # Argument: interval
+   ping\-restart 120           # Argument: timeout*2
+   push "ping 10"             # Argument: interval
+   push "ping\-restart 60"     # Argument: timeout
  else
-   ping 10
-   ping-restart 60
+   ping 10                    # Argument: interval
+   ping\-restart 60            # Argument: timeout
 .in -4
 .ft
 .fi
@@ -2745,10 +2754,10 @@ expands as follows:
  if dev tap OR (dev tun AND topology == subnet):
    ifconfig 10.8.0.1 255.255.255.0
    if !nopool:
-     ifconfig-pool 10.8.0.2 10.8.0.254 255.255.255.0
-   push "route-gateway 10.8.0.1"
-   if route-gateway unset:
-     route-gateway 10.8.0.2
+     ifconfig\-pool 10.8.0.2 10.8.0.253 255.255.255.0
+   push "route\-gateway 10.8.0.1"
+   if route\-gateway unset:
+     route\-gateway 10.8.0.2
 
 .in -4
 .ft
@@ -2880,6 +2889,7 @@ This is a partial list of options which can currently be pushed:
 .B \-\-ip\-win32, \-\-dhcp\-option,
 .B \-\-inactive, \-\-ping, \-\-ping\-exit, \-\-ping\-restart,
 .B \-\-setenv,
+.B \-\-auth\-token,
 .B \-\-persist\-key, \-\-persist\-tun, \-\-echo,
 .B \-\-comp\-lzo,
 .B \-\-socket\-flags,
@@ -3796,6 +3806,10 @@ rather than waiting for a timeout.  The
 parameter (default=1) controls the maximum number of attempts that the client
 will try to resend the exit notification message.  OpenVPN will not send any exit
 notifications unless this option is enabled.
+.TP
+.B \-\-allow\-recursive\-routing
+When this option is set, OpenVPN will not drop incoming tun packets
+with same destination as host.
 .\"*********************************************************
 .SS Data Channel Encryption Options:
 These options are meaningful for both Static & TLS-negotiated key modes
@@ -4817,6 +4831,57 @@ This directive does not affect the
 username/password.  It is always cached.
 .\"*********************************************************
 .TP
+.B \-\-auth\-token token
+This is not an option to be used directly in any configuration files,
+but rather push this option from a
+.B \-\-client\-connect
+script or a
+.B \-\-plugin
+which hooks into the OPENVPN_PLUGIN_CLIENT_CONNECT or
+OPENVPN_PLUGIN_CLIENT_CONNECT_V2 calls.  This option provides
+a possibility to replace the clients password with an authentication
+token during the lifetime of the OpenVPN client.
+
+Whenever the connection is renegotiated and the
+.B \-\-auth\-user\-pass\-verify
+script or
+.B \-\-plugin
+making use of the OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY hook is
+triggered, it will pass over this token as the password
+instead of the password the user provided.  The authentication
+token can only be reset by a full reconnect where the server
+can push new options to the client.  The password the user entered
+is never preserved once an authentication token have been set.  If
+the OpenVPN server side rejects the authentication token, the
+client will receive an AUTH_FAIL and disconnect.
+
+The purpose of this is to enable two factor authentication
+methods, such as HOTP or TOTP, to be used without needing to
+retrieve a new OTP code each time the connection is renegotiated.
+Another use case is to cache authentication data on the client
+without needing to have the users password cached in memory
+during the life time of the session.
+
+To make use of this feature, the
+.B \-\-client\-connect
+script or
+.B \-\-plugin
+needs to put
+
+.nf
+.ft 3
+.in +4
+push "auth\-token UNIQUE_TOKEN_VALUE"
+.in -4
+.ft
+.fi
+
+into the file/buffer for dynamic configuration data.  This
+will then make the OpenVPN server to push this value to the
+client, which replaces the local password with the
+UNIQUE_TOKEN_VALUE.
+.\"*********************************************************
+.TP
 .B \-\-tls\-verify cmd
 Run command
 .B cmd
@@ -5297,7 +5362,7 @@ virtual DHCP server address.  In
 .B \-\-dev tun
 mode, OpenVPN will cause the DHCP server to masquerade as if it were
 coming from the remote endpoint.  The optional offset parameter is
-an integer which is > \-256 and < 256 and which defaults to 0.
+an integer which is > \-256 and < 256 and which defaults to -1.
 If offset is positive, the DHCP server will masquerade as the IP
 address at network address + offset.
 If offset is negative, the DHCP server will masquerade as the IP

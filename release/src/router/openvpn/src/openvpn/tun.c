@@ -625,7 +625,8 @@ void delete_route_connected_v6_net(struct tuntap * tt,
 }
 #endif
 
-#if defined(TARGET_FREEBSD)||defined(TARGET_DRAGONFLY)
+#if defined(TARGET_FREEBSD)||defined(TARGET_DRAGONFLY)||\
+    defined(TARGET_OPENBSD)
 /* we can't use true subnet mode on tun on all platforms, as that
  * conflicts with IPv6 (wants to use ND then, which we don't do),
  * but the OSes want "a remote address that is different from ours"
@@ -635,8 +636,8 @@ void delete_route_connected_v6_net(struct tuntap * tt,
  * is still point to point and no layer 2 resolution is done...
  */
 
-const char *
-create_arbitrary_remote( struct tuntap *tt, struct gc_arena * gc )
+in_addr_t
+create_arbitrary_remote( struct tuntap *tt )
 {
   in_addr_t remote;
 
@@ -644,7 +645,7 @@ create_arbitrary_remote( struct tuntap *tt, struct gc_arena * gc )
 
   if ( remote == tt->local ) remote ++;
 
-  return print_in_addr_t (remote, 0, gc);
+  return remote;
 }
 #endif
 
@@ -923,6 +924,8 @@ do_ifconfig (struct tuntap *tt,
 
 #elif defined(TARGET_OPENBSD)
 
+      in_addr_t remote_end;		/* for "virtual" subnet topology */
+
       /*
        * On OpenBSD, tun interfaces are persistent if created with
        * "ifconfig tunX create", and auto-destroyed if created by
@@ -942,12 +945,13 @@ do_ifconfig (struct tuntap *tt,
       else
 	if ( tt->topology == TOP_SUBNET )
 	{
+	    remote_end = create_arbitrary_remote( tt );
 	    argv_printf (&argv,
 			  "%s %s %s %s mtu %d netmask %s up -link0",
 			  IFCONFIG_PATH,
 			  actual,
 			  ifconfig_local,
-			  ifconfig_local,
+			  print_in_addr_t (remote_end, 0, &gc),
 			  tun_mtu,
 			  ifconfig_remote_netmask
 			  );
@@ -964,6 +968,19 @@ do_ifconfig (struct tuntap *tt,
 			  );
       argv_msg (M_INFO, &argv);
       openvpn_execve_check (&argv, es, S_FATAL, "OpenBSD ifconfig failed");
+
+      /* Add a network route for the local tun interface */
+      if (!tun && tt->topology == TOP_SUBNET)
+        {
+          struct route_ipv4 r;
+          CLEAR (r);
+          r.flags = RT_DEFINED;
+          r.network = tt->local & tt->remote_netmask;
+          r.netmask = tt->remote_netmask;
+          r.gateway = remote_end;
+          add_route (&r, tt, 0, NULL, es);
+        }
+
       if ( do_ipv6 )
 	{
 	  argv_printf (&argv,
@@ -1133,6 +1150,8 @@ do_ifconfig (struct tuntap *tt,
 
 #elif defined(TARGET_FREEBSD)||defined(TARGET_DRAGONFLY)
 
+      in_addr_t remote_end;		/* for "virtual" subnet topology */
+
       /* example: ifconfig tun2 10.2.0.2 10.2.0.1 mtu 1450 netmask 255.255.255.255 up */
       if (tun)
 	argv_printf (&argv,
@@ -1145,12 +1164,13 @@ do_ifconfig (struct tuntap *tt,
 			  );
       else if ( tt->topology == TOP_SUBNET )
 	{
+	    remote_end = create_arbitrary_remote( tt );
 	    argv_printf (&argv,
 			  "%s %s %s %s mtu %d netmask %s up",
 			  IFCONFIG_PATH,
 			  actual,
 			  ifconfig_local,
-			  create_arbitrary_remote( tt, &gc ),
+			  print_in_addr_t (remote_end, 0, &gc),
 			  tun_mtu,
 			  ifconfig_remote_netmask
 			  );
@@ -1177,7 +1197,7 @@ do_ifconfig (struct tuntap *tt,
           r.flags = RT_DEFINED;
           r.network = tt->local & tt->remote_netmask;
           r.netmask = tt->remote_netmask;
-          r.gateway = tt->local;
+          r.gateway = remote_end;
           add_route (&r, tt, 0, NULL, es);
         }
 
