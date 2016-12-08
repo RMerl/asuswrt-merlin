@@ -3757,6 +3757,7 @@ curl/Makefile: curl/configure
 		--prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 		--enable-http --with-ssl=$(TOP)/openssl/ssl LDFLAGS="-ldl" \
 		$(if $(RTCONFIG_IPV6),--enable-ipv6) \
+		--disable-gopher --disable-dict --disable-telnet \
 		--with-ca-bundle=/rom/ca-bundle.crt
 
 curl-install: curl
