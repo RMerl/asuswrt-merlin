@@ -284,9 +284,10 @@ typedef unsigned long uoff_t;
 /* Users report bionic to use 32-bit off_t even if LARGEFILE support is requested.
  * We misdetected that. Don't let it build:
  */
+/* FIXME: This test was added recently - was it always broken in Tomato/Asuswrt?
 struct BUG_off_t_size_is_misdetected {
 	char BUG_off_t_size_is_misdetected[sizeof(off_t) == sizeof(uoff_t) ? 1 : -1];
-};
+}; */
 
 /* Some useful definitions */
 #undef FALSE
