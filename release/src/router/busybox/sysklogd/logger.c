@@ -25,6 +25,7 @@
 //usage:#define logger_full_usage "\n\n"
 //usage:       "Write MESSAGE (or stdin) to syslog\n"
 //usage:     "\n	-s	Log to stderr as well as the system log"
+//usage:     "\n	-c	Log to console as well as the system log"
 //usage:     "\n	-t TAG	Log using the specified tag (defaults to user name)"
 //usage:     "\n	-p PRIO	Priority (numeric or facility.level pair)"
 //usage:
@@ -98,6 +99,7 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 	char *str_p, *str_t;
 	int opt;
 	int i = 0;
+	int fd = -1;
 
 	setup_common_bufsiz();
 
@@ -105,12 +107,17 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 	str_t = uid2uname_utoa(geteuid());
 
 	/* Parse any options */
-	opt = getopt32(argv, "p:st:", &str_p, &str_t);
+	opt = getopt32(argv, "p:st:c", &str_p, &str_t);
 
 	if (opt & 0x2) /* -s */
 		i |= LOG_PERROR;
 	//if (opt & 0x4) /* -t */
 	openlog(str_t, i, 0);
+	if (opt & 0x8) { /* -c */
+		fd = device_open(DEV_CONSOLE, O_WRONLY | O_NOCTTY | O_NONBLOCK);
+		if (fd < 0)
+			bb_error_msg("can't open console");
+	}
 	i = LOG_USER | LOG_WARNING;
 	if (opt & 0x1) /* -p */
 		i = pencode(str_p);
@@ -123,6 +130,10 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			) {
 				/* Neither "" nor "\n" */
 				syslog(i, "%s", strbuf);
+				if (fd >= 0) {
+					fdprintf(fd, "%s: %s%s", str_t, strbuf,
+						 strchr(strbuf, '\n') ? "" : "\n");
+				}
 			}
 		}
 	} else {
@@ -136,9 +147,15 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			pos = len;
 		} while (*++argv);
 		syslog(i, "%s", message + 1); /* skip leading " " */
+		if (fd >= 0 && len) {
+			fdprintf(fd, "%s:%s%s", str_t, message,
+				 message[len - 1] == '\n' ? "" : "\n");
+		}
 	}
 
 	closelog();
+	if (fd >= 0)
+		close(fd);
 	return EXIT_SUCCESS;
 }
 
