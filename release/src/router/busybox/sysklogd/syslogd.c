@@ -749,12 +749,22 @@ static void log_locally(time_t now, char *msg, logFile_t *log_file)
 			int i = strlen(log_file->path) + 3 + 1;
 			char oldFile[i];
 			char newFile[i];
+#if 1 /* ASUS legacy */
+			i = G.logFileRotate;
+#else
 			i = G.logFileRotate - 1;
+#endif 
 			/* rename: f.8 -> f.9; f.7 -> f.8; ... */
 			while (1) {
+#if 1 /* ASUS legacy */
+				sprintf(newFile, "%s-%d", log_file->path, i);
+				if (i == 1) break;
+				sprintf(oldFile, "%s-%d", log_file->path, --i);
+#else
 				sprintf(newFile, "%s.%d", log_file->path, i);
 				if (i == 0) break;
 				sprintf(oldFile, "%s.%d", log_file->path, --i);
+#endif
 				/* ignore errors - file might be missing */
 				rename(oldFile, newFile);
 			}
