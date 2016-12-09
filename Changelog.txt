@@ -6,6 +6,11 @@ Asuswrt-Merlin Changelog
           notify you if a new firmware is available, and will also
           let you view the changelog before sending you to the
           download page (the update remains manual)
+
+          Note that the automated check will only report new
+          final releases.  The Check button on the Firmware Upgrade
+          will immediately check for final releases or beta (if you
+          select that option), but not both at the same time.
    - NEW: Added iptables MASK support on MIPS kernel (patch
           by john9527)
    - NEW: Webui warning shown in the notification area if running
