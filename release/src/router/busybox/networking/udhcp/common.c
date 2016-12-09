@@ -64,7 +64,10 @@ const struct dhcp_optflag dhcp_optflags[] = {
 #endif
 	{ OPTION_STRING                           , 0xd1 }, /* DHCP_PXE_CONF_FILE */
 	{ OPTION_STRING                           , 0xd2 }, /* DHCP_PXE_PATH_PREFIX */
+#if ENABLE_FEATURE_UDHCP_RFC5969
 	{ OPTION_6RD                              , 0xd4 }, /* DHCP_6RD           */
+//	{ OPTION_6RD                              , 0x96 }, /* DHCP_COMCAST_6RD   */
+#endif
 	{ OPTION_STATIC_ROUTES | OPTION_LIST      , 0xf9 }, /* DHCP_MS_STATIC_ROUTES */
 	{ OPTION_STRING                           , 0xfc }, /* DHCP_WPAD          */
 
@@ -132,7 +135,10 @@ const char dhcp_option_strings[] ALIGN1 =
 #endif
 	"pxeconffile" "\0" /* DHCP_PXE_CONF_FILE  */
 	"pxepathprefix" "\0" /* DHCP_PXE_PATH_PREFIX  */
+#if ENABLE_FEATURE_UDHCP_RFC5969
 	"ip6rd" "\0"       /* DHCP_6RD            */
+//	"ip6rd" "\0"       /* DHCP_COMCAST_6RD    */
+#endif
 	"msstaticroutes""\0"/* DHCP_MS_STATIC_ROUTES */
 	"wpad" "\0"        /* DHCP_WPAD           */
 	;
@@ -162,6 +168,7 @@ const uint8_t dhcp_option_lengths[] ALIGN1 = {
 	[OPTION_S32] =     4,
 	/* Just like OPTION_STRING, we use minimum length here */
 	[OPTION_STATIC_ROUTES] = 5,
+#if ENABLE_FEATURE_UDHCP_RFC5969
 	[OPTION_6RD] =    12,  /* ignored by udhcp_str2optset */
 	/* The above value was chosen as follows:
 	 * len_of_option_as_string[] for this option is >60: it's a string of the form
@@ -174,6 +181,7 @@ const uint8_t dhcp_option_lengths[] ALIGN1 = {
 	 * This adds more than 60 bytes for every three ipv4 addresses - more than enough.
 	 * (Even 16 instead of 12 should work, but let's be paranoid).
 	 */
+#endif
 };
 
 

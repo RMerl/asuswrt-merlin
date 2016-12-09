@@ -115,6 +115,14 @@ config UDHCP_DEBUG
 	  Bigger values result in bigger code. Levels above 1
 	  are very verbose and useful for debugging only.
 
+config FEATURE_UDHCP_RFC5969
+	bool "Support for RFC5969 IPv6 Rapid Deployment (6RD)"
+	default y
+	depends on UDHCPC && FEATURE_IPV6
+	help
+	  If selected, client will support passing of 6rd delegated
+	  prefix via option 212, specified in RFC 5969.
+
 config FEATURE_UDHCP_RFC3397
 	bool "Support for RFC3397 domain search (experimental)"
 	default y
