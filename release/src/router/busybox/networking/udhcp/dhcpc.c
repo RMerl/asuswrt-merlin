@@ -607,7 +607,10 @@ static void add_client_options(struct dhcp_packet *packet)
 {
 	int i, end, len;
 
-	udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(IP_UDP_DHCP_SIZE));
+	len = sizeof(struct ip_udp_dhcp_packet);
+	if (client_config.client_mtu > 0)
+		len = MIN(client_config.client_mtu, len);
+	udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(len));
 
 	/* Add a "param req" option with the list of options we'd like to have
 	 * from stubborn DHCP servers. Pull the data from the struct in common.c.
@@ -1355,7 +1358,8 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 	if (udhcp_read_interface(client_config.interface,
 			&client_config.ifindex,
 			NULL,
-			client_config.client_mac)
+			client_config.client_mac,
+			&client_config.client_mtu)
 	) {
 		return 1;
 	}
@@ -1462,7 +1466,8 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 			if (udhcp_read_interface(client_config.interface,
 					&client_config.ifindex,
 					NULL,
-					client_config.client_mac)
+					client_config.client_mac,
+					&client_config.client_mtu)
 			) {
 				goto ret0; /* iface is gone? */
 			}
