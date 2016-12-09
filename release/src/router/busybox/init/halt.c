@@ -74,7 +74,7 @@
 
 static void write_wtmp(void)
 {
-	struct utmp utmp;
+	struct utmpx utmp;
 	struct utsname uts;
 	/* "man utmp" says wtmp file should *not* be created automagically */
 	/*if (access(bb_path_wtmp_file, R_OK|W_OK) == -1) {
@@ -88,7 +88,7 @@ static void write_wtmp(void)
 	utmp.ut_line[0] = '~'; utmp.ut_line[1] = '~'; /* = strcpy(utmp.ut_line, "~~"); */
 	uname(&uts);
 	safe_strncpy(utmp.ut_host, uts.release, sizeof(utmp.ut_host));
-	updwtmp(bb_path_wtmp_file, &utmp);
+	updwtmpx(bb_path_wtmp_file, &utmp);
 }
 #else
 #define write_wtmp() ((void)0)
@@ -135,7 +135,7 @@ int halt_main(int argc UNUSED_PARAM, char **argv)
 	if (!(flags & 4)) { /* no -f */
 //TODO: I tend to think that signalling linuxrc is wrong
 // pity original author didn't comment on it...
-		if (ENABLE_FEATURE_INITRD) {
+		if (ENABLE_LINUXRC) {
 			/* talk to linuxrc */
 			/* bbox init/linuxrc assumed */
 			pid_t *pidlist = find_pid_by_name("linuxrc");

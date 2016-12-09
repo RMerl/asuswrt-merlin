@@ -157,7 +157,7 @@ int pscan_main(int argc UNUSED_PARAM, char **argv)
 	}
 	if (ENABLE_FEATURE_CLEAN_UP) free(lsap);
 
-	printf("%d closed, %d open, %d timed out (or blocked) ports\n",
+	printf("%u closed, %u open, %u timed out (or blocked) ports\n",
 					closed_ports,
 					open_ports,
 					nports - (closed_ports + open_ports));

@@ -29,19 +29,19 @@
 int runlevel_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int runlevel_main(int argc UNUSED_PARAM, char **argv)
 {
-	struct utmp *ut;
+	struct utmpx *ut;
 	char prev;
 
-	if (argv[1]) utmpname(argv[1]);
+	if (argv[1]) utmpxname(argv[1]);
 
-	setutent();
-	while ((ut = getutent()) != NULL) {
+	setutxent();
+	while ((ut = getutxent()) != NULL) {
 		if (ut->ut_type == RUN_LVL) {
 			prev = ut->ut_pid / 256;
 			if (prev == 0) prev = 'N';
 			printf("%c %c\n", prev, ut->ut_pid % 256);
 			if (ENABLE_FEATURE_CLEAN_UP)
-				endutent();
+				endutxent();
 			return 0;
 		}
 	}
@@ -49,6 +49,6 @@ int runlevel_main(int argc UNUSED_PARAM, char **argv)
 	puts("unknown");
 
 	if (ENABLE_FEATURE_CLEAN_UP)
-		endutent();
+		endutxent();
 	return 1;
 }

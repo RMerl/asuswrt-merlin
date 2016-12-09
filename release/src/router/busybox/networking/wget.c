@@ -9,12 +9,102 @@
  * Kuhn's copyrights are licensed GPLv2-or-later.  File as a whole remains GPLv2.
  */
 
+//config:config WGET
+//config:	bool "wget"
+//config:	default y
+//config:	help
+//config:	  wget is a utility for non-interactive download of files from HTTP
+//config:	  and FTP servers.
+//config:
+//config:config FEATURE_WGET_STATUSBAR
+//config:	bool "Enable a nifty process meter (+2k)"
+//config:	default y
+//config:	depends on WGET
+//config:	help
+//config:	  Enable the transfer progress bar for wget transfers.
+//config:
+//config:config FEATURE_WGET_AUTHENTICATION
+//config:	bool "Enable HTTP authentication"
+//config:	default y
+//config:	depends on WGET
+//config:	help
+//config:	  Support authenticated HTTP transfers.
+//config:
+//config:config FEATURE_WGET_LONG_OPTIONS
+//config:	bool "Enable long options"
+//config:	default y
+//config:	depends on WGET && LONG_OPTS
+//config:	help
+//config:	  Support long options for the wget applet.
+//config:
+//config:config FEATURE_WGET_TIMEOUT
+//config:	bool "Enable timeout option -T SEC"
+//config:	default y
+//config:	depends on WGET
+//config:	help
+//config:	  Supports network read and connect timeouts for wget,
+//config:	  so that wget will give up and timeout, through the -T
+//config:	  command line option.
+//config:
+//config:	  Currently only connect and network data read timeout are
+//config:	  supported (i.e., timeout is not applied to the DNS query). When
+//config:	  FEATURE_WGET_LONG_OPTIONS is also enabled, the --timeout option
+//config:	  will work in addition to -T.
+//config:
+//config:config FEATURE_WGET_OPENSSL
+//config:	bool "Try to connect to HTTPS using openssl"
+//config:	default y
+//config:	depends on WGET
+//config:	help
+//config:	  Choose how wget establishes SSL connection for https:// URLs.
+//config:
+//config:	  Busybox itself contains no SSL code. wget will spawn
+//config:	  a helper program to talk over HTTPS.
+//config:
+//config:	  OpenSSL has a simple SSL client for debug purposes.
+//config:	  If you select "openssl" helper, wget will effectively call
+//config:	  "openssl s_client -quiet -connect IP:443 2>/dev/null"
+//config:	  and pipe its data through it.
+//config:	  Note inconvenient API: host resolution is done twice,
+//config:	  and there is no guarantee openssl's idea of IPv6 address
+//config:	  format is the same as ours.
+//config:	  Another problem is that s_client prints debug information
+//config:	  to stderr, and it needs to be suppressed. This means
+//config:	  all error messages get suppressed too.
+//config:	  openssl is also a big binary, often dynamically linked
+//config:	  against ~15 libraries.
+//config:
+//config:config FEATURE_WGET_SSL_HELPER
+//config:	bool "Try to connect to HTTPS using ssl_helper"
+//config:	default y
+//config:	depends on WGET
+//config:	help
+//config:	  Choose how wget establishes SSL connection for https:// URLs.
+//config:
+//config:	  Busybox itself contains no SSL code. wget will spawn
+//config:	  a helper program to talk over HTTPS.
+//config:
+//config:	  ssl_helper is a tool which can be built statically
+//config:	  from busybox sources against a small embedded SSL library.
+//config:	  Please see networking/ssl_helper/README.
+//config:	  It does not require double host resolution and emits
+//config:	  error messages to stderr.
+//config:
+//config:	  Precompiled static binary may be available at
+//config:	  http://busybox.net/downloads/binaries/
+
+//applet:IF_WGET(APPLET(wget, BB_DIR_USR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_WGET) += wget.o
+
 //usage:#define wget_trivial_usage
 //usage:	IF_FEATURE_WGET_LONG_OPTIONS(
 //usage:       "[-c|--continue] [-s|--spider] [-q|--quiet] [-O|--output-document FILE]\n"
 //usage:       "	[--header 'header: value'] [-Y|--proxy on/off] [-P DIR]\n"
-//usage:       "	[--no-check-certificate] [-U|--user-agent AGENT]"
-//usage:			IF_FEATURE_WGET_TIMEOUT(" [-T SEC]") " URL..."
+/* Since we ignore these opts, we don't show them in --help */
+/* //usage:    "	[--no-check-certificate] [--no-cache] [--passive-ftp] [-t TRIES]" */
+/* //usage:    "	[-nv] [-nc] [-nH] [-np]" */
+//usage:       "	[-U|--user-agent AGENT]" IF_FEATURE_WGET_TIMEOUT(" [-T SEC]") " URL..."
 //usage:	)
 //usage:	IF_NOT_FEATURE_WGET_LONG_OPTIONS(
 //usage:       "[-csq] [-O FILE] [-Y on/off] [-P DIR] [-U AGENT]"
@@ -35,19 +125,63 @@
 
 #include "libbb.h"
 
-//#define log_io(...) bb_error_msg(__VA_ARGS__)
-#define log_io(...) ((void)0)
+#if 0
+# define log_io(...) bb_error_msg(__VA_ARGS__)
+# define SENDFMT(fp, fmt, ...) \
+	do { \
+		log_io("> " fmt, ##__VA_ARGS__); \
+		fprintf(fp, fmt, ##__VA_ARGS__); \
+	} while (0);
+#else
+# define log_io(...) ((void)0)
+# define SENDFMT(fp, fmt, ...) fprintf(fp, fmt, ##__VA_ARGS__)
+#endif
 
 
 struct host_info {
 	char *allocated;
 	const char *path;
-	const char *user;
+	char       *user;
+	const char *protocol;
 	char       *host;
 	int         port;
-	smallint    is_ftp;
 };
+static const char P_FTP[] ALIGN1 = "ftp";
+static const char P_HTTP[] ALIGN1 = "http";
+#if ENABLE_FEATURE_WGET_OPENSSL || ENABLE_FEATURE_WGET_SSL_HELPER
+static const char P_HTTPS[] ALIGN1 = "https";
+#endif
 
+#if ENABLE_FEATURE_WGET_LONG_OPTIONS
+/* User-specified headers prevent using our corresponding built-in headers.  */
+enum {
+	HDR_HOST          = (1<<0),
+	HDR_USER_AGENT    = (1<<1),
+	HDR_RANGE         = (1<<2),
+	HDR_AUTH          = (1<<3) * ENABLE_FEATURE_WGET_AUTHENTICATION,
+	HDR_PROXY_AUTH    = (1<<4) * ENABLE_FEATURE_WGET_AUTHENTICATION,
+};
+static const char wget_user_headers[] ALIGN1 =
+	"Host:\0"
+	"User-Agent:\0"
+	"Range:\0"
+# if ENABLE_FEATURE_WGET_AUTHENTICATION
+	"Authorization:\0"
+	"Proxy-Authorization:\0"
+# endif
+	;
+# define USR_HEADER_HOST       (G.user_headers & HDR_HOST)
+# define USR_HEADER_USER_AGENT (G.user_headers & HDR_USER_AGENT)
+# define USR_HEADER_RANGE      (G.user_headers & HDR_RANGE)
+# define USR_HEADER_AUTH       (G.user_headers & HDR_AUTH)
+# define USR_HEADER_PROXY_AUTH (G.user_headers & HDR_PROXY_AUTH)
+#else /* No long options, no user-headers :( */
+# define USR_HEADER_HOST       0
+# define USR_HEADER_USER_AGENT 0
+# define USR_HEADER_RANGE      0
+# define USR_HEADER_AUTH       0
+# define USR_HEADER_PROXY_AUTH 0
+#endif
 
 /* Globals */
 struct globals {
@@ -58,16 +192,18 @@ struct globals {
 	const char *curfile;      /* Name of current file being transferred */
 	bb_progress_t pmt;
 #endif
-        char *dir_prefix;
+	char *dir_prefix;
 #if ENABLE_FEATURE_WGET_LONG_OPTIONS
-        char *post_data;
-        char *extra_headers;
+	char *post_data;
+	char *extra_headers;
+	unsigned char user_headers; /* Headers mentioned by the user */
 #endif
-        char *fname_out;        /* where to direct output (-O) */
-        const char *proxy_flag; /* Use proxies if env vars are set */
-        const char *user_agent; /* "User-Agent" header field */
+	char *fname_out;        /* where to direct output (-O) */
+	const char *proxy_flag; /* Use proxies if env vars are set */
+	const char *user_agent; /* "User-Agent" header field */
 #if ENABLE_FEATURE_WGET_TIMEOUT
 	unsigned timeout_seconds;
+	bool die_if_timed_out;
 #endif
 	int output_fd;
 	int o_flags;
@@ -82,8 +218,10 @@ struct globals {
 } FIX_ALIASING;
 #define G (*ptr_to_globals)
 #define INIT_G() do { \
-        SET_PTR_TO_GLOBALS(xzalloc(sizeof(G))); \
-	IF_FEATURE_WGET_TIMEOUT(G.timeout_seconds = 900;) \
+	SET_PTR_TO_GLOBALS(xzalloc(sizeof(G))); \
+} while (0)
+#define FINI_G() do { \
+	FREE_PTR_TO_GLOBALS(); \
 } while (0)
 
 
@@ -191,14 +329,39 @@ static char* sanitize_string(char *s)
 	return s;
 }
 
+#if ENABLE_FEATURE_WGET_TIMEOUT
+static void alarm_handler(int sig UNUSED_PARAM)
+{
+	/* This is theoretically unsafe (uses stdio and malloc in signal handler) */
+	if (G.die_if_timed_out)
+		bb_error_msg_and_die("download timed out");
+}
+static void set_alarm(void)
+{
+	if (G.timeout_seconds) {
+		alarm(G.timeout_seconds);
+		G.die_if_timed_out = 1;
+	}
+}
+# define clear_alarm() ((void)(G.die_if_timed_out = 0))
+#else
+# define set_alarm()   ((void)0)
+# define clear_alarm() ((void)0)
+#endif
+
 static FILE *open_socket(len_and_sockaddr *lsa)
 {
+	int fd;
 	FILE *fp;
+
+	set_alarm();
+	fd = xconnect_stream(lsa);
+	clear_alarm();
 
 	/* glibc 2.4 seems to try seeking on it - ??! */
 	/* hopefully it understands what ESPIPE means... */
-	fp = fdopen(xconnect_stream(lsa), "r+");
-	if (fp == NULL)
+	fp = fdopen(fd, "r+");
+	if (!fp)
 		bb_perror_msg_and_die(bb_msg_memory_exhausted);
 
 	return fp;
@@ -210,8 +373,10 @@ static char fgets_and_trim(FILE *fp)
 	char c;
 	char *buf_ptr;
 
+	set_alarm();
 	if (fgets(G.wget_buf, sizeof(G.wget_buf) - 1, fp) == NULL)
 		bb_perror_msg_and_die("error getting response");
+	clear_alarm();
 
 	buf_ptr = strchrnul(G.wget_buf, '\n');
 	c = *buf_ptr;
@@ -252,16 +417,33 @@ static void parse_url(const char *src_url, struct host_info *h)
 	free(h->allocated);
 	h->allocated = url = xstrdup(src_url);
 
-	if (strncmp(url, "http://", 7) == 0) {
-		h->port = bb_lookup_port("http", "tcp", 80);
-		h->host = url + 7;
-		h->is_ftp = 0;
-	} else if (strncmp(url, "ftp://", 6) == 0) {
-		h->port = bb_lookup_port("ftp", "tcp", 21);
-		h->host = url + 6;
-		h->is_ftp = 1;
-	} else
-		bb_error_msg_and_die("not an http or ftp url: %s", sanitize_string(url));
+	h->protocol = P_FTP;
+	p = strstr(url, "://");
+	if (p) {
+		*p = '\0';
+		h->host = p + 3;
+		if (strcmp(url, P_FTP) == 0) {
+			h->port = bb_lookup_port(P_FTP, "tcp", 21);
+		} else
+#if ENABLE_FEATURE_WGET_OPENSSL || ENABLE_FEATURE_WGET_SSL_HELPER
+		if (strcmp(url, P_HTTPS) == 0) {
+			h->port = bb_lookup_port(P_HTTPS, "tcp", 443);
+			h->protocol = P_HTTPS;
+		} else
+#endif
+		if (strcmp(url, P_HTTP) == 0) {
+ http:
+			h->port = bb_lookup_port(P_HTTP, "tcp", 80);
+			h->protocol = P_HTTP;
+		} else {
+			*p = ':';
+			bb_error_msg_and_die("not an http or ftp url: %s", sanitize_string(url));
+		}
+	} else {
+		// GNU wget is user-friendly and falls back to http://
+		h->host = url;
+		goto http;
+	}
 
 	// FYI:
 	// "Real" wget 'http://busybox.net?var=a/b' sends this request:
@@ -293,9 +475,6 @@ static void parse_url(const char *src_url, struct host_info *h)
 		h->path = sp;
 	}
 
-	// We used to set h->user to NULL here, but this interferes
-	// with handling of code 302 ("object was moved")
-
 	sp = strrchr(h->host, '@');
 	if (sp != NULL) {
 		// URL-decode "user:password" string before base64-encoding:
@@ -304,19 +483,19 @@ static void parse_url(const char *src_url, struct host_info *h)
 		// which decodes to "test:my pass".
 		// Standard wget and curl do this too.
 		*sp = '\0';
-		h->user = percent_decode_in_place(h->host, /*strict:*/ 0);
+		free(h->user);
+		h->user = xstrdup(percent_decode_in_place(h->host, /*strict:*/ 0));
 		h->host = sp + 1;
 	}
-
-	sp = h->host;
+	/* else: h->user remains NULL, or as set by original request
+	 * before redirect (if we are here after a redirect).
+	 */
 }
 
 static char *gethdr(FILE *fp)
 {
 	char *s, *hdrval;
 	int c;
-
-	/* *istrunc = 0; */
 
 	/* retrieve header line */
 	c = fgets_and_trim(fp);
@@ -326,8 +505,16 @@ static char *gethdr(FILE *fp)
 		return NULL;
 
 	/* convert the header name to lower case */
-	for (s = G.wget_buf; isalnum(*s) || *s == '-' || *s == '.'; ++s) {
-		/* tolower for "A-Z", no-op for "0-9a-z-." */
+	for (s = G.wget_buf; isalnum(*s) || *s == '-' || *s == '.' || *s == '_'; ++s) {
+		/*
+		 * No-op for 20-3f and 60-7f. "0-9a-z-." are in these ranges.
+		 * 40-5f range ("@A-Z[\]^_") maps to 60-7f.
+		 * "A-Z" maps to "a-z".
+		 * "@[\]" can't occur in header names.
+		 * "^_" maps to "~,DEL" (which is wrong).
+		 * "^" was never seen yet, "_" was seen from web.archive.org
+		 * (x-archive-orig-x_commoncrawl_Signature: HEXSTRING).
+		 */
 		*s |= 0x20;
 	}
 
@@ -438,6 +625,104 @@ static FILE* prepare_ftp_session(FILE **dfpp, struct host_info *target, len_and_
 	return sfp;
 }
 
+#if ENABLE_FEATURE_WGET_OPENSSL
+static int spawn_https_helper_openssl(const char *host, unsigned port)
+{
+	char *allocated = NULL;
+	int sp[2];
+	int pid;
+	IF_FEATURE_WGET_SSL_HELPER(volatile int child_failed = 0;)
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) != 0)
+		/* Kernel can have AF_UNIX support disabled */
+		bb_perror_msg_and_die("socketpair");
+
+	if (!strchr(host, ':'))
+		host = allocated = xasprintf("%s:%u", host, port);
+
+	fflush_all();
+	pid = xvfork();
+	if (pid == 0) {
+		/* Child */
+		char *argv[6];
+
+		close(sp[0]);
+		xmove_fd(sp[1], 0);
+		xdup2(0, 1);
+		/*
+		 * openssl s_client -quiet -connect www.kernel.org:443 2>/dev/null
+		 * It prints some debug stuff on stderr, don't know how to suppress it.
+		 * Work around by dev-nulling stderr. We lose all error messages :(
+		 */
+		xmove_fd(2, 3);
+		xopen("/dev/null", O_RDWR);
+		argv[0] = (char*)"openssl";
+		argv[1] = (char*)"s_client";
+		argv[2] = (char*)"-quiet";
+		argv[3] = (char*)"-connect";
+		argv[4] = (char*)host;
+		argv[5] = NULL;
+		BB_EXECVP(argv[0], argv);
+		xmove_fd(3, 2);
+# if ENABLE_FEATURE_WGET_SSL_HELPER
+		child_failed = 1;
+		xfunc_die();
+# else
+		bb_perror_msg_and_die("can't execute '%s'", argv[0]);
+# endif
+		/* notreached */
+	}
+
+	/* Parent */
+	free(allocated);
+	close(sp[1]);
+# if ENABLE_FEATURE_WGET_SSL_HELPER
+	if (child_failed) {
+		close(sp[0]);
+		return -1;
+	}
+# endif
+	return sp[0];
+}
+#endif
+
+/* See networking/ssl_helper/README how to build one */
+#if ENABLE_FEATURE_WGET_SSL_HELPER
+static void spawn_https_helper_small(int network_fd)
+{
+	int sp[2];
+	int pid;
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) != 0)
+		/* Kernel can have AF_UNIX support disabled */
+		bb_perror_msg_and_die("socketpair");
+
+	pid = BB_MMU ? xfork() : xvfork();
+	if (pid == 0) {
+		/* Child */
+		char *argv[3];
+
+		close(sp[0]);
+		xmove_fd(sp[1], 0);
+		xdup2(0, 1);
+		xmove_fd(network_fd, 3);
+		/*
+		 * A simple ssl/tls helper
+		 */
+		argv[0] = (char*)"ssl_helper";
+		argv[1] = (char*)"-d3";
+		argv[2] = NULL;
+		BB_EXECVP(argv[0], argv);
+		bb_perror_msg_and_die("can't execute '%s'", argv[0]);
+		/* notreached */
+	}
+
+	/* Parent */
+	close(sp[1]);
+	xmove_fd(sp[0], network_fd);
+}
+#endif
+
 static void NOINLINE retrieve_file_data(FILE *dfp)
 {
 #if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
@@ -506,7 +791,7 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 #if ENABLE_FEATURE_WGET_TIMEOUT
 				second_cnt = G.timeout_seconds;
 #endif
-				continue;
+				goto bump;
 			}
 
 			/* n <= 0.
@@ -539,11 +824,12 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 				 * to try reading anyway.
 				 */
 			}
+#endif
+ bump:
 			/* Need to do it _every_ second for "stalled" indicator
 			 * to be shown properly.
 			 */
 			progress_meter(PROGRESS_BUMP);
-#endif
 		} /* while (reading data) */
 
 #if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
@@ -610,7 +896,8 @@ static void download_one_url(const char *url)
 	/* Use the proxy if necessary */
 	use_proxy = (strcmp(G.proxy_flag, "off") != 0);
 	if (use_proxy) {
-		proxy = getenv(target.is_ftp ? "ftp_proxy" : "http_proxy");
+		proxy = getenv(target.protocol == P_FTP ? "ftp_proxy" : "http_proxy");
+//FIXME: what if protocol is https? Ok to use http_proxy?
 		use_proxy = (proxy && proxy[0]);
 		if (use_proxy)
 			parse_url(proxy, &server);
@@ -670,57 +957,88 @@ static void download_one_url(const char *url)
 	/*G.content_len = 0; - redundant, got_clen = 0 is enough */
 	G.got_clen = 0;
 	G.chunked = 0;
-	if (use_proxy || !target.is_ftp) {
+	if (use_proxy || target.protocol != P_FTP) {
 		/*
 		 *  HTTP session
 		 */
 		char *str;
 		int status;
 
-
-		/* Open socket to http server */
+		/* Open socket to http(s) server */
+#if ENABLE_FEATURE_WGET_OPENSSL
+		/* openssl (and maybe ssl_helper) support is configured */
+		if (target.protocol == P_HTTPS) {
+			/* openssl-based helper
+			 * Inconvenient API since we can't give it an open fd
+			 */
+			int fd = spawn_https_helper_openssl(server.host, server.port);
+# if ENABLE_FEATURE_WGET_SSL_HELPER
+			if (fd < 0) { /* no openssl? try ssl_helper */
+				sfp = open_socket(lsa);
+				spawn_https_helper_small(fileno(sfp));
+				goto socket_opened;
+			}
+# else
+			/* We don't check for exec("openssl") failure in this case */
+# endif
+			sfp = fdopen(fd, "r+");
+			if (!sfp)
+				bb_perror_msg_and_die(bb_msg_memory_exhausted);
+			goto socket_opened;
+		}
 		sfp = open_socket(lsa);
-
+ socket_opened:
+#elif ENABLE_FEATURE_WGET_SSL_HELPER
+		/* Only ssl_helper support is configured */
+		sfp = open_socket(lsa);
+		if (target.protocol == P_HTTPS)
+			spawn_https_helper_small(fileno(sfp));
+#else
+		/* ssl (https) support is not configured */
+		sfp = open_socket(lsa);
+#endif
 		/* Send HTTP request */
 		if (use_proxy) {
-			fprintf(sfp, "GET %stp://%s/%s HTTP/1.1\r\n",
-				target.is_ftp ? "f" : "ht", target.host,
+			SENDFMT(sfp, "GET %s://%s/%s HTTP/1.1\r\n",
+				target.protocol, target.host,
 				target.path);
 		} else {
-			if (option_mask32 & WGET_OPT_POST_DATA)
-				fprintf(sfp, "POST /%s HTTP/1.1\r\n", target.path);
-			else
-				fprintf(sfp, "GET /%s HTTP/1.1\r\n", target.path);
+			SENDFMT(sfp, "%s /%s HTTP/1.1\r\n",
+				(option_mask32 & WGET_OPT_POST_DATA) ? "POST" : "GET",
+				target.path);
 		}
-
-		fprintf(sfp, "Host: %s\r\nUser-Agent: %s\r\n",
-			target.host, G.user_agent);
+		if (!USR_HEADER_HOST)
+			SENDFMT(sfp, "Host: %s\r\n", target.host);
+		if (!USR_HEADER_USER_AGENT)
+			SENDFMT(sfp, "User-Agent: %s\r\n", G.user_agent);
 
 		/* Ask server to close the connection as soon as we are done
 		 * (IOW: we do not intend to send more requests)
 		 */
-		fprintf(sfp, "Connection: close\r\n");
+		SENDFMT(sfp, "Connection: close\r\n");
 
 #if ENABLE_FEATURE_WGET_AUTHENTICATION
-		if (target.user) {
-			fprintf(sfp, "Proxy-Authorization: Basic %s\r\n"+6,
+		if (target.user && !USR_HEADER_AUTH) {
+			SENDFMT(sfp, "Proxy-Authorization: Basic %s\r\n"+6,
 				base64enc(target.user));
 		}
-		if (use_proxy && server.user) {
-			fprintf(sfp, "Proxy-Authorization: Basic %s\r\n",
+		if (use_proxy && server.user && !USR_HEADER_PROXY_AUTH) {
+			SENDFMT(sfp, "Proxy-Authorization: Basic %s\r\n",
 				base64enc(server.user));
 		}
 #endif
 
-		if (G.beg_range != 0)
-			fprintf(sfp, "Range: bytes=%"OFF_FMT"u-\r\n", G.beg_range);
+		if (G.beg_range != 0 && !USR_HEADER_RANGE)
+			SENDFMT(sfp, "Range: bytes=%"OFF_FMT"u-\r\n", G.beg_range);
 
 #if ENABLE_FEATURE_WGET_LONG_OPTIONS
-		if (G.extra_headers)
+		if (G.extra_headers) {
+			log_io(G.extra_headers);
 			fputs(G.extra_headers, sfp);
+		}
 
 		if (option_mask32 & WGET_OPT_POST_DATA) {
-			fprintf(sfp,
+			SENDFMT(sfp,
 				"Content-Type: application/x-www-form-urlencoded\r\n"
 				"Content-Length: %u\r\n"
 				"\r\n"
@@ -730,7 +1048,7 @@ static void download_one_url(const char *url)
 		} else
 #endif
 		{
-			fprintf(sfp, "\r\n");
+			SENDFMT(sfp, "\r\n");
 		}
 
 		fflush(sfp);
@@ -845,6 +1163,7 @@ However, in real world it was observed that some web servers
 				} else {
 					parse_url(str, &target);
 					if (!use_proxy) {
+						/* server.user remains untouched */
 						free(server.allocated);
 						server.allocated = NULL;
 						server.host = target.host;
@@ -863,7 +1182,6 @@ However, in real world it was observed that some web servers
 
 		/* For HTTP, data is pumped over the same connection */
 		dfp = sfp;
-
 	} else {
 		/*
 		 *  FTP session
@@ -894,6 +1212,8 @@ However, in real world it was observed that some web servers
 
 	free(server.allocated);
 	free(target.allocated);
+	free(server.user);
+	free(target.user);
 	free(fname_out_alloc);
 	free(redirected_path);
 }
@@ -912,17 +1232,22 @@ int wget_main(int argc UNUSED_PARAM, char **argv)
 		"directory-prefix\0" Required_argument "P"
 		"proxy\0"            Required_argument "Y"
 		"user-agent\0"       Required_argument "U"
-#if ENABLE_FEATURE_WGET_TIMEOUT
-		"timeout\0"          Required_argument "T"
-#endif
+IF_FEATURE_WGET_TIMEOUT(
+		"timeout\0"          Required_argument "T")
 		/* Ignored: */
-		// "tries\0"            Required_argument "t"
+IF_DESKTOP(	"tries\0"            Required_argument "t")
+		"header\0"           Required_argument "\xff"
+		"post-data\0"        Required_argument "\xfe"
 		/* Ignored (we always use PASV): */
-		"passive-ftp\0"      No_argument       "\xff"
-		"header\0"           Required_argument "\xfe"
-		"post-data\0"        Required_argument "\xfd"
+IF_DESKTOP(	"passive-ftp\0"      No_argument       "\xf0")
 		/* Ignored (we don't do ssl) */
-		"no-check-certificate\0" No_argument   "\xfc"
+IF_DESKTOP(	"no-check-certificate\0" No_argument   "\xf0")
+		/* Ignored (we don't support caching) */
+IF_DESKTOP(	"no-cache\0"         No_argument       "\xf0")
+IF_DESKTOP(	"no-verbose\0"       No_argument       "\xf0")
+IF_DESKTOP(	"no-clobber\0"       No_argument       "\xf0")
+IF_DESKTOP(	"no-host-directories\0" No_argument    "\xf0")
+IF_DESKTOP(	"no-parent\0"        No_argument       "\xf0")
 		;
 #endif
 
@@ -932,19 +1257,35 @@ int wget_main(int argc UNUSED_PARAM, char **argv)
 
 	INIT_G();
 
-	IF_FEATURE_WGET_TIMEOUT(G.timeout_seconds = 900;)
+#if ENABLE_FEATURE_WGET_TIMEOUT
+	G.timeout_seconds = 900;
+	signal(SIGALRM, alarm_handler);
+#endif
 	G.proxy_flag = "on";   /* use proxies if env vars are set */
 	G.user_agent = "Wget"; /* "User-Agent" header field */
 
 #if ENABLE_FEATURE_WGET_LONG_OPTIONS
 	applet_long_options = wget_longopts;
 #endif
-	opt_complementary = "-1" IF_FEATURE_WGET_TIMEOUT(":T+") IF_FEATURE_WGET_LONG_OPTIONS(":\xfe::");
-	getopt32(argv, "csqO:P:Y:U:T:" /*ignored:*/ "t:",
-		&G.fname_out, &G.dir_prefix,
+	opt_complementary = "-1" /* at least one URL */
+		IF_FEATURE_WGET_TIMEOUT(":T+") /* -T NUM */
+		IF_FEATURE_WGET_LONG_OPTIONS(":\xff::"); /* --header is a list */
+	getopt32(argv, "csqO:P:Y:U:T:"
+		/*ignored:*/ "t:"
+		/*ignored:*/ "n::"
+		/* wget has exactly four -n<letter> opts, all of which we can ignore:
+		 * -nv --no-verbose: be moderately quiet (-q is full quiet)
+		 * -nc --no-clobber: abort if exists, neither download to FILE.n nor overwrite FILE
+		 * -nH --no-host-directories: wget -r http://host/ won't create host/
+		 * -np --no-parent
+		 * "n::" above says that we accept -n[ARG].
+		 * Specifying "n:" would be a bug: "-n ARG" would eat ARG!
+		 */
+		, &G.fname_out, &G.dir_prefix,
 		&G.proxy_flag, &G.user_agent,
 		IF_FEATURE_WGET_TIMEOUT(&G.timeout_seconds) IF_NOT_FEATURE_WGET_TIMEOUT(NULL),
-		NULL /* -t RETRIES */
+		NULL, /* -t RETRIES */
+		NULL  /* -n[ARG] */
 		IF_FEATURE_WGET_LONG_OPTIONS(, &headers_llist)
 		IF_FEATURE_WGET_LONG_OPTIONS(, &G.post_data)
 	);
@@ -952,16 +1293,32 @@ int wget_main(int argc UNUSED_PARAM, char **argv)
 
 #if ENABLE_FEATURE_WGET_LONG_OPTIONS
 	if (headers_llist) {
-		int size = 1;
-		char *cp;
+		int size = 0;
+		char *hdr;
 		llist_t *ll = headers_llist;
 		while (ll) {
 			size += strlen(ll->data) + 2;
 			ll = ll->link;
 		}
-		G.extra_headers = cp = xmalloc(size);
+		G.extra_headers = hdr = xmalloc(size + 1);
 		while (headers_llist) {
-			cp += sprintf(cp, "%s\r\n", (char*)llist_pop(&headers_llist));
+			int bit;
+			const char *words;
+
+			size = sprintf(hdr, "%s\r\n",
+					(char*)llist_pop(&headers_llist));
+			/* a bit like index_in_substrings but don't match full key */
+			bit = 1;
+			words = wget_user_headers;
+			while (*words) {
+				if (strstr(hdr, words) == hdr) {
+					G.user_headers |= bit;
+					break;
+				}
+				bit <<= 1;
+				words += strlen(words) + 1;
+			}
+			hdr += size;
 		}
 	}
 #endif
@@ -982,6 +1339,11 @@ int wget_main(int argc UNUSED_PARAM, char **argv)
 
 	if (G.output_fd >= 0)
 		xclose(G.output_fd);
+
+#if ENABLE_FEATURE_CLEAN_UP && ENABLE_FEATURE_WGET_LONG_OPTIONS
+	free(G.extra_headers);
+#endif
+	FINI_G();
 
 	return EXIT_SUCCESS;
 }

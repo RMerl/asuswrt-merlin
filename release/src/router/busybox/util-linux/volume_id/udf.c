@@ -18,6 +18,17 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+//kbuild:lib-$(CONFIG_FEATURE_VOLUMEID_UDF) += udf.o
+
+//config:
+//config:config FEATURE_VOLUMEID_UDF
+//config:	bool "udf filesystem"
+//config:	default y
+//config:	depends on VOLUMEID
+//config:	help
+//config:	  TODO
+//config:
+
 #include "volume_id_internal.h"
 
 struct volume_descriptor {
@@ -109,7 +120,7 @@ nsr:
 			return -1;
 
 		dbg("vsd: %c%c%c%c%c",
-		    vsd->id[0], vsd->id[1], vsd->id[2], vsd->id[3], vsd->id[4]);
+			vsd->id[0], vsd->id[1], vsd->id[2], vsd->id[3], vsd->id[4]);
 
 		if (vsd->id[0] == '\0')
 			return -1;

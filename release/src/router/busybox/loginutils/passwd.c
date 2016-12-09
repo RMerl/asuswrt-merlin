@@ -2,6 +2,30 @@
 /*
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+//config:config PASSWD
+//config:	bool "passwd"
+//config:	default y
+//config:	select FEATURE_SYSLOG
+//config:	help
+//config:	  passwd changes passwords for user and group accounts. A normal user
+//config:	  may only change the password for his/her own account, the super user
+//config:	  may change the password for any account. The administrator of a group
+//config:	  may change the password for the group.
+//config:
+//config:	  Note that Busybox binary must be setuid root for this applet to
+//config:	  work properly.
+//config:
+//config:config FEATURE_PASSWD_WEAK_CHECK
+//config:	bool "Check new passwords for weakness"
+//config:	default y
+//config:	depends on PASSWD
+//config:	help
+//config:	  With this option passwd will refuse new passwords which are "weak".
+
+//applet:/* Needs to be run by root or be suid root - needs to change /etc/{passwd,shadow}: */
+//applet:IF_PASSWD(APPLET(passwd, BB_DIR_USR_BIN, BB_SUID_REQUIRE))
+
+//kbuild:lib-$(CONFIG_PASSWD) += passwd.o
 
 //usage:#define passwd_trivial_usage
 //usage:       "[OPTIONS] [USER]"
@@ -15,11 +39,7 @@
 
 #include "libbb.h"
 #include <syslog.h>
-
-static void nuke_str(char *str)
-{
-	if (str) memset(str, 0, strlen(str));
-}
+#include <sys/resource.h> /* setrlimit */
 
 static char* new_password(const struct passwd *pw, uid_t myuid, const char *algo)
 {
@@ -210,7 +230,7 @@ int passwd_main(int argc UNUSED_PARAM, char **argv)
 	/* LOGMODE_BOTH */
 	if (rc < 0)
 		bb_error_msg_and_die("can't update password file %s", filename);
-	bb_info_msg("Password for %s changed by %s", name, myname);
+	bb_error_msg("password for %s changed by %s", name, myname);
 
 	/*if (ENABLE_FEATURE_CLEAN_UP) free(newp); - can't, it may be non-malloced */
  skip:

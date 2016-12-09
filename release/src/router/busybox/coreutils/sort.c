@@ -14,25 +14,25 @@
 
 //usage:#define sort_trivial_usage
 //usage:       "[-nru"
-//usage:	IF_FEATURE_SORT_BIG("gMcszbdfimSTokt] [-o FILE] [-k start[.offset][opts][,end[.offset][opts]] [-t CHAR")
+//usage:	IF_FEATURE_SORT_BIG("gMcszbdfiokt] [-o FILE] [-k start[.offset][opts][,end[.offset][opts]] [-t CHAR")
 //usage:       "] [FILE]..."
 //usage:#define sort_full_usage "\n\n"
 //usage:       "Sort lines of text\n"
 //usage:	IF_FEATURE_SORT_BIG(
-//usage:     "\n	-b	Ignore leading blanks"
+//usage:     "\n	-o FILE	Output to FILE"
 //usage:     "\n	-c	Check whether input is sorted"
-//usage:     "\n	-d	Dictionary order (blank or alphanumeric only)"
+//usage:     "\n	-b	Ignore leading blanks"
 //usage:     "\n	-f	Ignore case"
-//usage:     "\n	-g	General numerical sort"
 //usage:     "\n	-i	Ignore unprintable characters"
-//usage:     "\n	-k	Sort key"
+//usage:     "\n	-d	Dictionary order (blank or alphanumeric only)"
+//usage:     "\n	-g	General numerical sort"
 //usage:     "\n	-M	Sort month"
 //usage:	)
+//-h, --human-numeric-sort: compare human readable numbers (e.g., 2K 1G)
 //usage:     "\n	-n	Sort numbers"
 //usage:	IF_FEATURE_SORT_BIG(
-//usage:     "\n	-o	Output to file"
-//usage:     "\n	-k	Sort by key"
-//usage:     "\n	-t CHAR	Key separator"
+//usage:     "\n	-t CHAR	Field separator"
+//usage:     "\n	-k N[,M] Sort by Nth field"
 //usage:	)
 //usage:     "\n	-r	Reverse sort order"
 //usage:	IF_FEATURE_SORT_BIG(
@@ -41,7 +41,10 @@
 //usage:     "\n	-u	Suppress duplicate lines"
 //usage:	IF_FEATURE_SORT_BIG(
 //usage:     "\n	-z	Lines are terminated by NUL, not newline"
-//usage:     "\n	-mST	Ignored for GNU compatibility")
+////usage:     "\n	-m	Ignored for GNU compatibility"
+////usage:     "\n	-S BUFSZ Ignored for GNU compatibility"
+////usage:     "\n	-T TMPDIR Ignored for GNU compatibility"
+//usage:	)
 //usage:
 //usage:#define sort_example_usage
 //usage:       "$ echo -e \"e\\nf\\nb\\nd\\nc\\na\" | sort\n"
@@ -106,7 +109,9 @@ static struct sort_key {
 
 static char *get_key(char *str, struct sort_key *key, int flags)
 {
-	int start = 0, end = 0, len, j;
+	int start = start; /* for compiler */
+	int end;
+	int len, j;
 	unsigned i;
 
 	/* Special case whole string, so we don't have to make a copy */
@@ -123,12 +128,15 @@ static char *get_key(char *str, struct sort_key *key, int flags)
 			end = len;
 		/* Loop through fields */
 		else {
+			unsigned char ch = 0;
+
 			end = 0;
 			for (i = 1; i < key->range[2*j] + j; i++) {
 				if (key_separator) {
 					/* Skip body of key and separator */
-					while (str[end]) {
-						if (str[end++] == key_separator)
+					while ((ch = str[end]) != '\0') {
+							end++;
+						if (ch == key_separator)
 							break;
 					}
 				} else {
@@ -136,34 +144,44 @@ static char *get_key(char *str, struct sort_key *key, int flags)
 					while (isspace(str[end]))
 						end++;
 					/* Skip body of key */
-					while (str[end]) {
+					while (str[end] != '\0') {
 						if (isspace(str[end]))
 							break;
 						end++;
 					}
 				}
 			}
+			/* Remove last delim: "abc:def:" => "abc:def" */
+			if (j && ch) {
+				//if (str[end-1] != key_separator)
+				//  bb_error_msg(_and_die("BUG! "
+				//  "str[start:%d,end:%d]:'%.*s'",
+				//  start, end, (int)(end-start), &str[start]);
+				end--;
+			}
 		}
 		if (!j) start = end;
 	}
 	/* Strip leading whitespace if necessary */
-//XXX: skip_whitespace()
 	if (flags & FLAG_b)
+		/* not using skip_whitespace() for speed */
 		while (isspace(str[start])) start++;
 	/* Strip trailing whitespace if necessary */
 	if (flags & FLAG_bb)
 		while (end > start && isspace(str[end-1])) end--;
-	/* Handle offsets on start and end */
+	/* -kSTART,N.ENDCHAR: honor ENDCHAR (1-based) */
 	if (key->range[3]) {
-		end += key->range[3] - 1;
+		end = key->range[3];
 		if (end > len) end = len;
 	}
+	/* -kN.STARTCHAR[,...]: honor STARTCHAR (1-based) */
 	if (key->range[1]) {
 		start += key->range[1] - 1;
 		if (start > len) start = len;
 	}
 	/* Make the copy */
-	if (end < start) end = start;
+	if (end < start)
+		end = start;
 	str = xstrndup(str+start, end-start);
 	/* Handle -d */
 	if (flags & FLAG_d) {
@@ -219,13 +237,13 @@ static int compare_keys(const void *xarg, const void *yarg)
 		y = get_key(*(char **)yarg, key, flags);
 #else
 	/* This curly bracket serves no purpose but to match the nesting
-	   level of the for () loop we're not using */
+	 * level of the for () loop we're not using */
 	{
 		x = *(char **)xarg;
 		y = *(char **)yarg;
 #endif
 		/* Perform actual comparison */
-		switch (flags & 7) {
+		switch (flags & (FLAG_n | FLAG_M | FLAG_g)) {
 		default:
 			bb_error_msg_and_die("unknown sort type");
 			break;
@@ -277,7 +295,7 @@ static int compare_keys(const void *xarg, const void *yarg)
 			else if (!yy)
 				retval = 1;
 			else
-				retval = (dx == thyme.tm_mon) ? 0 : dx - thyme.tm_mon;
+				retval = dx - thyme.tm_mon;
 			break;
 		}
 		/* Full floating point version of -n */
@@ -302,10 +320,14 @@ static int compare_keys(const void *xarg, const void *yarg)
 	} /* for */
 
 	/* Perform fallback sort if necessary */
-	if (!retval && !(option_mask32 & FLAG_s))
+	if (!retval && !(option_mask32 & FLAG_s)) {
+		flags = option_mask32;
 		retval = strcmp(*(char **)xarg, *(char **)yarg);
+	}
 
-	if (flags & FLAG_r) return -retval;
+	if (flags & FLAG_r)
+		return -retval;
+
 	return retval;
 }
 
@@ -328,7 +350,7 @@ int sort_main(int argc UNUSED_PARAM, char **argv)
 	char *line, **lines;
 	char *str_ignored, *str_o, *str_t;
 	llist_t *lst_k = NULL;
-	int i, flag;
+	int i;
 	int linecount;
 	unsigned opts;
 
@@ -351,7 +373,7 @@ int sort_main(int argc UNUSED_PARAM, char **argv)
 	/* note: below this point we use option_mask32, not opts,
 	 * since that reduces register pressure and makes code smaller */
 
-	/* parse sort key */
+	/* Parse sort key */
 	while (lst_k) {
 		enum {
 			FLAG_allowed_for_k =
@@ -378,17 +400,18 @@ int sort_main(int argc UNUSED_PARAM, char **argv)
 				key->range[2*i+1] = str2u(&str_k);
 			}
 			while (*str_k) {
-				const char *temp2;
+				int flag;
+				const char *idx;
 
 				if (*str_k == ',' && !i++) {
 					str_k++;
 					break;
 				} /* no else needed: fall through to syntax error
 					because comma isn't in OPT_STR */
-				temp2 = strchr(OPT_STR, *str_k);
-				if (!temp2)
+				idx = strchr(OPT_STR, *str_k);
+				if (!idx)
 					bb_error_msg_and_die("unknown key option");
-				flag = 1 << (temp2 - OPT_STR);
+				flag = 1 << (idx - OPT_STR);
 				if (flag & ~FLAG_allowed_for_k)
 					bb_error_msg_and_die("unknown sort type");
 				/* b after ',' means strip _trailing_ space */
@@ -422,10 +445,10 @@ int sort_main(int argc UNUSED_PARAM, char **argv)
 	} while (*++argv);
 
 #if ENABLE_FEATURE_SORT_BIG
-	/* if no key, perform alphabetic sort */
+	/* If no key, perform alphabetic sort */
 	if (!key_list)
 		add_key()->range[0] = 1;
-	/* handle -c */
+	/* Handle -c */
 	if (option_mask32 & FLAG_c) {
 		int j = (option_mask32 & FLAG_u) ? -1 : 0;
 		for (i = 1; i < linecount; i++) {
@@ -439,20 +462,21 @@ int sort_main(int argc UNUSED_PARAM, char **argv)
 #endif
 	/* Perform the actual sort */
 	qsort(lines, linecount, sizeof(lines[0]), compare_keys);
-	/* handle -u */
+
+	/* Handle -u */
 	if (option_mask32 & FLAG_u) {
-		flag = 0;
+		int j = 0;
 		/* coreutils 6.3 drop lines for which only key is the same */
 		/* -- disabling last-resort compare... */
 		option_mask32 |= FLAG_s;
 		for (i = 1; i < linecount; i++) {
-			if (compare_keys(&lines[flag], &lines[i]) == 0)
+			if (compare_keys(&lines[j], &lines[i]) == 0)
 				free(lines[i]);
 			else
-				lines[++flag] = lines[i];
+				lines[++j] = lines[i];
 		}
 		if (linecount)
-			linecount = flag+1;
+			linecount = j+1;
 	}
 
 	/* Print it */
@@ -461,9 +485,11 @@ int sort_main(int argc UNUSED_PARAM, char **argv)
 	if (option_mask32 & FLAG_o)
 		xmove_fd(xopen(str_o, O_WRONLY|O_CREAT|O_TRUNC), STDOUT_FILENO);
 #endif
-	flag = (option_mask32 & FLAG_z) ? '\0' : '\n';
-	for (i = 0; i < linecount; i++)
-		printf("%s%c", lines[i], flag);
+	{
+		int ch = (option_mask32 & FLAG_z) ? '\0' : '\n';
+		for (i = 0; i < linecount; i++)
+			printf("%s%c", lines[i], ch);
+	}
 
 	fflush_stdout_and_exit(EXIT_SUCCESS);
 }

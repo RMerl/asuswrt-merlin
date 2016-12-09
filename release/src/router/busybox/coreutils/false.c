@@ -10,11 +10,9 @@
 /* BB_AUDIT SUSv3 compliant */
 /* http://www.opengroup.org/onlinepubs/000095399/utilities/false.html */
 
-//usage:#define false_trivial_usage
-//usage:       ""
-//usage:#define false_full_usage "\n\n"
-//usage:       "Return an exit code of FALSE (1)"
-//usage:
+/* "false --help" is special-cased to ignore --help */
+//usage:#define false_trivial_usage NOUSAGE_STR
+//usage:#define false_full_usage ""
 //usage:#define false_example_usage
 //usage:       "$ false\n"
 //usage:       "$ echo $?\n"

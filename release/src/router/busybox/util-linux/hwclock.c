@@ -69,7 +69,7 @@ static void show_clock(const char **pp_rtcname, int utc)
 	strftime(cp, sizeof(cp), "%c", ptm);
 #else
 	char *cp = ctime(&t);
-	strchrnul(cp, '\n')[0] = '\0';
+	chomp(cp);
 #endif
 
 #if !SHOW_HWCLOCK_DIFF
@@ -97,7 +97,11 @@ static void to_sys_clock(const char **pp_rtcname, int utc)
 	struct timeval tv;
 	struct timezone tz;
 
-	tz.tz_minuteswest = timezone/60 - 60*daylight;
+	tz.tz_minuteswest = timezone/60;
+	/* ^^^ used to also subtract 60*daylight, but it's wrong:
+	 * daylight!=0 means "this timezone has some DST
+	 * during the year", not "DST is in effect now".
+	 */
 	tz.tz_dsttime = 0;
 
 	tv.tv_sec = read_rtc(pp_rtcname, NULL, utc);
@@ -248,7 +252,7 @@ static void set_system_clock_timezone(int utc)
 	gettimeofday(&tv, NULL);
 	broken = localtime(&tv.tv_sec);
 	tz.tz_minuteswest = timezone / 60;
-	if (broken->tm_isdst)
+	if (broken->tm_isdst > 0)
 		tz.tz_minuteswest -= 60;
 	tz.tz_dsttime = 0;
 	gettimeofday(&tv, NULL);
@@ -305,6 +309,10 @@ int hwclock_main(int argc UNUSED_PARAM, char **argv)
 		;
 	applet_long_options = hwclock_longopts;
 #endif
+
+	/* Initialize "timezone" (libc global variable) */
+	tzset();
+
 	opt_complementary = "r--wst:w--rst:s--wrt:t--rsw:l--u:u--l";
 	opt = getopt32(argv, "lurswtf:", &rtcname);
 

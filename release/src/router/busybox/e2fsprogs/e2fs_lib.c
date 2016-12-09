@@ -149,14 +149,14 @@ const uint32_t e2attr_flags_value[] = {
 	EXT2_TOPDIR_FL
 };
 
-const char e2attr_flags_sname[] =
+const char e2attr_flags_sname[] ALIGN1 =
 #ifdef ENABLE_COMPRESSION
 	"BZXE"
 #endif
 	"I"
 	"suSDiadAcjtT";
 
-static const char e2attr_flags_lname[] =
+static const char e2attr_flags_lname[] ALIGN1 =
 #ifdef ENABLE_COMPRESSION
 	"Compressed_File" "\0"
 	"Compressed_Dirty_File" "\0"

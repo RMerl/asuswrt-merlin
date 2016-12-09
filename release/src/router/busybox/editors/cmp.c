@@ -10,6 +10,17 @@
 /* BB_AUDIT SUSv3 (virtually) compliant -- uses nicer GNU format for -l. */
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/cmp.html */
 
+//config:config CMP
+//config:	bool "cmp"
+//config:	default y
+//config:	help
+//config:	  cmp is used to compare two files and returns the result
+//config:	  to standard output.
+
+//kbuild:lib-$(CONFIG_CMP) += cmp.o
+
+//applet:IF_CMP(APPLET(cmp, BB_DIR_USR_BIN, BB_SUID_DROP))
+
 //usage:#define cmp_trivial_usage
 //usage:       "[-l] [-s] FILE1 [FILE2" IF_DESKTOP(" [SKIP1 [SKIP2]]") "]"
 //usage:#define cmp_full_usage "\n\n"

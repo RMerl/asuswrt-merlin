@@ -30,89 +30,36 @@ PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
  * so that function calls are directed to bb_internal_XXX replacements
  */
 #undef endgrent
-#define setgrent     bb_internal_setgrent
 #define endgrent     bb_internal_endgrent
-#define getgrent     bb_internal_getgrent
-#define fgetgrent    bb_internal_fgetgrent
-#define putgrent     bb_internal_putgrent
 #define getgrgid     bb_internal_getgrgid
 #define getgrnam     bb_internal_getgrnam
-#define getgrent_r   bb_internal_getgrent_r
-#define getgrgid_r   bb_internal_getgrgid_r
-#define getgrnam_r   bb_internal_getgrnam_r
-#define fgetgrent_r  bb_internal_fgetgrent_r
 #define getgrouplist bb_internal_getgrouplist
 #define initgroups   bb_internal_initgroups
-
 
 /* All function names below should be remapped by #defines above
  * in order to not collide with libc names. */
 
-
-/* Rewind the group-file stream.  */
-extern void setgrent(void);
-
 /* Close the group-file stream.  */
-extern void endgrent(void);
-
-#ifdef UNUSED_SINCE_WE_AVOID_STATIC_BUFS
-/* Read an entry from the group-file stream, opening it if necessary.  */
-extern struct group *getgrent(void);
-
-/* Read a group entry from STREAM.  */
-extern struct group *fgetgrent(FILE *__stream);
-
-/* Write the given entry onto the given stream.  */
-extern int putgrent(const struct group *__restrict __p,
-		     FILE *__restrict __f);
-#endif
+void FAST_FUNC endgrent(void);
 
 /* Search for an entry with a matching group ID.  */
-extern struct group *getgrgid(gid_t __gid);
+struct group* FAST_FUNC getgrgid(gid_t __gid);
 
 /* Search for an entry with a matching group name.  */
-extern struct group *getgrnam(const char *__name);
+struct group* FAST_FUNC getgrnam(const char *__name);
 
-/* Reentrant versions of some of the functions above.
-
-   PLEASE NOTE: the `getgrent_r' function is not (yet) standardized.
-   The interface may change in later versions of this library.  But
-   the interface is designed following the principals used for the
-   other reentrant functions so the chances are good this is what the
-   POSIX people would choose.  */
-
-extern int getgrent_r(struct group *__restrict __resultbuf,
-		       char *__restrict __buffer, size_t __buflen,
-		       struct group **__restrict __result);
-
-/* Search for an entry with a matching group ID.  */
-extern int getgrgid_r(gid_t __gid, struct group *__restrict __resultbuf,
-		       char *__restrict __buffer, size_t __buflen,
-		       struct group **__restrict __result);
-
-/* Search for an entry with a matching group name.  */
-extern int getgrnam_r(const char *__restrict __name,
-		       struct group *__restrict __resultbuf,
-		       char *__restrict __buffer, size_t __buflen,
-		       struct group **__restrict __result);
-
-/* Read a group entry from STREAM.  This function is not standardized
-   an probably never will.  */
-extern int fgetgrent_r(FILE *__restrict __stream,
-			struct group *__restrict __resultbuf,
-			char *__restrict __buffer, size_t __buflen,
-			struct group **__restrict __result);
+/* Reentrant versions of some of the functions above. */
 
 /* Store at most *NGROUPS members of the group set for USER into
    *GROUPS.  Also include GROUP.  The actual number of groups found is
    returned in *NGROUPS.  Return -1 if the if *NGROUPS is too small.  */
-extern int getgrouplist(const char *__user, gid_t __group,
-			 gid_t *__groups, int *__ngroups);
+int FAST_FUNC getgrouplist(const char *__user, gid_t __group,
+		gid_t *__groups, int *__ngroups);
 
 /* Initialize the group set for the current user
    by reading the group database and using all groups
    of which USER is a member.  Also include GROUP.  */
-extern int initgroups(const char *__user, gid_t __group);
+int FAST_FUNC initgroups(const char *__user, gid_t __group);
 
 POP_SAVED_FUNCTION_VISIBILITY
 

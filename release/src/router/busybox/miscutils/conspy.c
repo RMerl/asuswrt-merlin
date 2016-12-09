@@ -42,6 +42,7 @@
 //usage:     "\n	-y LINE	Starting line"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <sys/kd.h>
 
 #define ESC "\033"
@@ -363,7 +364,6 @@ int conspy_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int conspy_main(int argc UNUSED_PARAM, char **argv)
 {
 	char tty_name[sizeof(DEV_TTY "NN")];
-#define keybuf bb_common_bufsiz1
 	struct termios termbuf;
 	unsigned opts;
 	unsigned ttynum;
@@ -382,6 +382,9 @@ int conspy_main(int argc UNUSED_PARAM, char **argv)
 
 	applet_long_options = getopt_longopts;
 #endif
+#define keybuf bb_common_bufsiz1
+	setup_common_bufsiz();
+
 	INIT_G();
 	strcpy(G.vcsa_name, DEV_VCSA);
 
@@ -513,7 +516,7 @@ int conspy_main(int argc UNUSED_PARAM, char **argv)
 		default:
 			// Read the keys pressed
 			k = keybuf + G.key_count;
-			bytes_read = read(G.kbd_fd, k, sizeof(keybuf) - G.key_count);
+			bytes_read = read(G.kbd_fd, k, COMMON_BUFSIZE - G.key_count);
 			if (bytes_read < 0)
 				goto abort;
 

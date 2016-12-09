@@ -116,9 +116,21 @@ config FEATURE_COMPRESS_USAGE
 	  and have very little memory, this might not be a win. Otherwise,
 	  you probably want this.
 
+config BUSYBOX
+	bool "Include busybox applet"
+	default y
+	help
+	  The busybox applet provides general help regarding busybox and
+	  allows the included applets to be listed.  It's also required
+	  if applet links are to be installed at runtime.
+
+	  If you can live without these features disabling this will save
+	  some space.
+
 config FEATURE_INSTALLER
 	bool "Support --install [-s] to install applet links at runtime"
 	default y
+	depends on BUSYBOX
 	help
 	  Enable 'busybox --install [-s]' support. This will allow you to use
 	  busybox at runtime to create hard links or symlinks for all the
@@ -161,12 +173,13 @@ config UNICODE_USING_LOCALE
 	  Internal implementation is smaller.
 
 config FEATURE_CHECK_UNICODE_IN_ENV
-	bool "Check $LANG environment variable"
+	bool "Check $LC_ALL, $LC_CTYPE and $LANG environment variables"
 	default n
 	depends on UNICODE_SUPPORT && !UNICODE_USING_LOCALE
 	help
 	  With this option on, Unicode support is activated
-	  only if LANG variable has the value of the form "xxxx.utf8"
+	  only if locale-related variables have the value of the form
+	  "xxxx.utf8"
 
 	  Otherwise, Unicode support will be always enabled and active.
 
@@ -256,6 +269,26 @@ config UNICODE_PRESERVE_BROKEN
 	  at shell prompt will list file named 0xff (single char name
 	  with char value 255), not file named '?'.
 
+config PAM
+	bool "Support for PAM (Pluggable Authentication Modules)"
+	default n
+	help
+	  Use PAM in some busybox applets (currently login and httpd) instead
+	  of direct access to password database.
+
+config FEATURE_USE_SENDFILE
+	bool "Use sendfile system call"
+	default y
+	select PLATFORM_LINUX
+	help
+	  When enabled, busybox will use the kernel sendfile() function
+	  instead of read/write loops to copy data between file descriptors
+	  (for example, cp command does this a lot).
+	  If sendfile() doesn't work, copying code falls back to read/write
+	  loop. sendfile() was originally implemented for faster I/O
+	  from files to sockets, but since Linux 2.6.33 it was extended
+	  to work for many more file types.
+
 config LONG_OPTS
 	bool "Support for --long-options"
 	default y
@@ -310,7 +343,18 @@ config FEATURE_PIDFILE
 	default y
 	help
 	  This option makes some applets (e.g. crond, syslogd, inetd) write
-	  a pidfile in /var/run. Some applications rely on them.
+	  a pidfile at the configured PID_FILE_PATH.  It has no effect
+	  on applets which require pidfiles to run.
+
+config PID_FILE_PATH
+	string "Path to directory for pidfile"
+	default "/var/run"
+	depends on FEATURE_PIDFILE
+	help
+	  This is the default path where pidfiles are created.  Applets which
+	  allow you to set the pidfile path on the command line will override
+	  this value.  The option has no effect on applets that require you to
+	  specify a pidfile path.
 
 config FEATURE_SUID
 	bool "Support for SUID/SGID handling"
@@ -321,7 +365,7 @@ config FEATURE_SUID
 	  root-level operations even when run by ordinary users
 	  (for example, mounting of user mounts in fstab needs this).
 
-	  Busybox will automatically drop priviledges for applets
+	  Busybox will automatically drop privileges for applets
 	  that don't need root access.
 
 	  If you are really paranoid and don't want to do this, build two
@@ -404,10 +448,7 @@ config SELINUX
 	  the option of compiling in SELinux applets.
 
 	  If you do not have a complete SELinux userland installed, this stuff
-	  will not compile. Go visit
-		http://www.nsa.gov/selinux/index.html
-	  to download the necessary stuff to allow busybox to compile with
-	  this option enabled. Specifially, libselinux 1.28 or better is
+	  will not compile.  Specifially, libselinux 1.28 or better is
 	  directly required by busybox. If the installation is located in a
 	  non-standard directory, provide it by invoking make as follows:
 		CFLAGS=-I<libselinux-include-path> \
@@ -659,6 +700,24 @@ config DEBUG_PESSIMIZE
 	  in a much bigger executable that more closely matches the source
 	  code.
 
+config DEBUG_SANITIZE
+	bool "Enable runtime sanitizers (ASAN/LSAN/USAN/etc...)"
+	default n
+	help
+	  Say Y here if you want to enable runtime sanitizers. These help
+	  catch bad memory accesses (e.g. buffer overflows), but will make
+	  the executable larger and slow down runtime a bit.
+
+	  If you aren't developing/testing busybox, say N here.
+
+config UNIT_TEST
+	bool "Build unit tests"
+	default n
+	help
+	  Say Y here if you want to build unit tests (both the framework and
+	  test cases) as a Busybox applet. This results in bigger code, so you
+	  probably don't want this option in production builds.
+
 config WERROR
 	bool "Abort compilation on any warning"
 	default n
@@ -793,7 +852,7 @@ source editors/Config.in
 source findutils/Config.in
 source init/Config.in
 source loginutils/Config.in
-source e2fsprogs/old_e2fsprogs/Config.in
+source e2fsprogs/Config.in
 source modutils/Config.in
 source util-linux/Config.in
 source miscutils/Config.in

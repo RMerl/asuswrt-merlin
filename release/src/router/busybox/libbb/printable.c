@@ -32,3 +32,27 @@ void FAST_FUNC fputc_printable(int ch, FILE *file)
 	}
 	fputc(ch, file);
 }
+
+void FAST_FUNC visible(unsigned ch, char *buf, int flags)
+{
+	if (ch == '\t' && !(flags & VISIBLE_SHOW_TABS)) {
+		goto raw;
+	}
+	if (ch == '\n') {
+		if (flags & VISIBLE_ENDLINE)
+			*buf++ = '$';
+	} else {
+		if (ch >= 128) {
+			ch -= 128;
+			*buf++ = 'M';
+			*buf++ = '-';
+		}
+		if (ch < 32 || ch == 127) {
+			*buf++ = '^';
+			ch ^= 0x40;
+		}
+	}
+ raw:
+	*buf++ = ch;
+	*buf = '\0';
+}

@@ -1,4 +1,4 @@
-BUSYBOX=$(type -p busybox)
+BUSYBOX=$(command -v busybox)
 SAVED_PATH=$PATH
 unset PATH
 $BUSYBOX which ls

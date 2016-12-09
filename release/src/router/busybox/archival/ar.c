@@ -17,6 +17,39 @@
  * http://www.unix-systems.org/single_unix_specification_v2/xcu/ar.html
  */
 
+//config:config AR
+//config:	bool "ar"
+//config:	default n  # needs to be improved to be able to replace binutils ar
+//config:	help
+//config:	  ar is an archival utility program used to create, modify, and
+//config:	  extract contents from archives. In practice, it is used exclusively
+//config:	  for object module archives used by compilers.
+//config:
+//config:	  On an x86 system, the ar applet adds about 1K.
+//config:
+//config:	  Unless you have a specific application which requires ar, you should
+//config:	  probably say N here: most compilers come with their own ar utility.
+//config:
+//config:config FEATURE_AR_LONG_FILENAMES
+//config:	bool "Support for long filenames (not needed for debs)"
+//config:	default y
+//config:	depends on AR
+//config:	help
+//config:	  By default the ar format can only store the first 15 characters
+//config:	  of the filename, this option removes that limitation.
+//config:	  It supports the GNU ar long filename method which moves multiple long
+//config:	  filenames into a the data section of a new ar entry.
+//config:
+//config:config FEATURE_AR_CREATE
+//config:	bool "Support archive creation"
+//config:	default y
+//config:	depends on AR
+//config:	help
+//config:	  This enables archive creation (-c and -r) with busybox ar.
+
+//applet:IF_AR(APPLET(ar, BB_DIR_USR_BIN, BB_SUID_DROP))
+//kbuild:lib-$(CONFIG_AR) += ar.o
+
 //usage:#define ar_trivial_usage
 //usage:       "[-o] [-v] [-p] [-t] [-x] ARCHIVE FILES"
 //usage:#define ar_full_usage "\n\n"

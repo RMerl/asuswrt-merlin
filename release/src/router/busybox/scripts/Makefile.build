@@ -255,8 +255,9 @@ $(sort $(subdir-obj-y)): $(subdir-ym) ;
 ifdef builtin-target
 quiet_cmd_link_o_target = LD      $@
 # If the list of objects to link is empty, just create an empty built-in.o
+# -nostdlib is added to make "make LD=gcc ..." work (some people use that)
 cmd_link_o_target = $(if $(strip $(obj-y)),\
-		$(LD) $(ld_flags) -r -o $@ $(filter $(obj-y), $^),\
+		$(LD) -nostdlib $(ld_flags) -r -o $@ $(filter $(obj-y), $^),\
 		rm -f $@; $(AR) rcs $@)
 
 $(builtin-target): $(obj-y) FORCE

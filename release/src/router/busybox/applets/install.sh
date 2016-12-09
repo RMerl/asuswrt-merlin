@@ -5,19 +5,26 @@ export LC_CTYPE=POSIX
 
 prefix=$1
 if [ -z "$prefix" ]; then
-	echo "usage: applets/install.sh DESTINATION [--symlinks/--hardlinks/--scriptwrapper]"
+	echo "usage: applets/install.sh DESTINATION [--symlinks/--hardlinks/--binaries/--scriptwrapper]"
 	exit 1
 fi
 
+# Source the configuration
+. ./.config
+
 h=`sort busybox.links | uniq`
+
+sharedlib_dir="0_lib"
 
 linkopts=""
 scriptwrapper="n"
+binaries="n"
 cleanup="0"
 noclobber="0"
 case "$2" in
 	--hardlinks)     linkopts="-f";;
 	--symlinks)      linkopts="-fs";;
+	--binaries)      binaries="y";;
 	--scriptwrapper) scriptwrapper="y";swrapall="y";;
 	--sw-sh-hard)    scriptwrapper="y";linkopts="-f";;
 	--sw-sh-sym)     scriptwrapper="y";linkopts="-fs";;
@@ -40,8 +47,9 @@ if [ -n "$DO_INSTALL_LIBS" ] && [ "$DO_INSTALL_LIBS" != "n" ]; then
 	for i in $DO_INSTALL_LIBS; do
 		rm -f "$prefix/$libdir/$i" || exit 1
 		if [ -f "$i" ]; then
+			echo "   Installing $i to the target at $prefix/$libdir/"
 			cp -pPR "$i" "$prefix/$libdir/" || exit 1
-			chmod 0644 "$prefix/$libdir/$i" || exit 1
+			chmod 0644 "$prefix/$libdir/`basename $i`" || exit 1
 		fi
 	done
 fi
@@ -68,6 +76,7 @@ install -m 755 busybox "$prefix/bin/busybox" || exit 1
 
 for i in $h; do
 	appdir=`dirname "$i"`
+	app=`basename "$i"`
 	mkdir -p "$prefix/$appdir" || exit 1
 	if [ "$scriptwrapper" = "y" ]; then
 		if [ "$swrapall" != "y" ] && [ "$i" = "/bin/sh" ]; then
@@ -78,6 +87,19 @@ for i in $h; do
 			chmod +x "$prefix/$i"
 		fi
 		echo "	$prefix/$i"
+	elif [ "$binaries" = "y" ]; then
+		# Copy the binary over rather
+		if [ -e $sharedlib_dir/$app ]; then
+			if [ "$noclobber" = "0" ] || [ ! -e "$prefix/$i" ]; then
+				echo "   Copying $sharedlib_dir/$app to $prefix/$i"
+				cp -pPR $sharedlib_dir/$app $prefix/$i || exit 1
+			else
+				echo "  $prefix/$i already exists"
+			fi
+		else
+			echo "Error: Could not find $sharedlib_dir/$app"
+			exit 1
+		fi
 	else
 		if [ "$2" = "--hardlinks" ]; then
 			bb_path="$prefix/bin/busybox"

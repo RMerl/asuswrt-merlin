@@ -19,7 +19,7 @@
 /* Believe it or not, but some arches have more than 32 SIGs!
  * HPPA: SIGSTKFLT == 36. */
 
-static const char signals[][7] = {
+static const char signals[][7] ALIGN1 = {
 	// SUSv3 says kill must support these, and specifies the numerical values,
 	// http://www.opengroup.org/onlinepubs/009695399/utilities/kill.html
 	// {0, "EXIT"}, {1, "HUP"}, {2, "INT"}, {3, "QUIT"},

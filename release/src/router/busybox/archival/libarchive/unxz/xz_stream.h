@@ -25,15 +25,20 @@
 
 #define STREAM_HEADER_SIZE 12
 
-#define HEADER_MAGIC "\3757zXZ\0"
+#define HEADER_MAGIC "\3757zXZ"
 #define HEADER_MAGIC_SIZE 6
 
 #define FOOTER_MAGIC "YZ"
 #define FOOTER_MAGIC_SIZE 2
 
 /*
- * Variable-length integer can hold a 63-bit unsigned integer, or a special
- * value to indicate that the value is unknown.
+ * Variable-length integer can hold a 63-bit unsigned integer or a special
+ * value indicating that the value is unknown.
+ *
+ * Experimental: vli_type can be defined to uint32_t to save a few bytes
+ * in code size (no effect on speed). Doing so limits the uncompressed and
+ * compressed size of the file to less than 256 MiB and may also weaken
+ * error detection slightly.
  */
 typedef uint64_t vli_type;
 

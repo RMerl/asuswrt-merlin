@@ -7,6 +7,15 @@
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
+//config:config RPM2CPIO
+//config:	bool "rpm2cpio"
+//config:	default y
+//config:	help
+//config:	  Converts a RPM file into a CPIO archive.
+
+//applet:IF_RPM2CPIO(APPLET(rpm2cpio, BB_DIR_USR_BIN, BB_SUID_DROP))
+//kbuild:lib-$(CONFIG_RPM2CPIO) += rpm2cpio.o
+
 //usage:#define rpm2cpio_trivial_usage
 //usage:       "package.rpm"
 //usage:#define rpm2cpio_full_usage "\n\n"
@@ -71,7 +80,7 @@ int rpm2cpio_main(int argc UNUSED_PARAM, char **argv)
 	//	signal(SIGCHLD, check_errors_in_children);
 
 	/* This works, but doesn't report uncompress errors (they happen in child) */
-	setup_unzip_on_fd(rpm_fd, /*fail_if_not_detected:*/ 1);
+	setup_unzip_on_fd(rpm_fd, /*fail_if_not_compressed:*/ 1);
 	if (bb_copyfd_eof(rpm_fd, STDOUT_FILENO) < 0)
 		bb_error_msg_and_die("error unpacking");
 

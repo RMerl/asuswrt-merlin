@@ -49,9 +49,9 @@
  *	Copyright 1999-2003 Donald Becker and Scyld Computing Corporation.
  *
  *	The author may be reached as becker@scyld, or C/O
- *	 Scyld Computing Corporation
- *	 914 Bay Ridge Road, Suite 220
- *	 Annapolis MD 21403
+ *	Scyld Computing Corporation
+ *	914 Bay Ridge Road, Suite 220
+ *	Annapolis MD 21403
  *
  *   Notes:
  *   On some systems dropping root capability allows the process to be
@@ -62,17 +62,17 @@
  *   An alternative to needing 'root' is using a UDP broadcast socket, however
  *   doing so only works with adapters configured for unicast+broadcast Rx
  *   filter.  That configuration consumes more power.
-*/
+ */
 
 //usage:#define ether_wake_trivial_usage
-//usage:       "[-b] [-i iface] [-p aa:bb:cc:dd[:ee:ff]] MAC"
+//usage:       "[-b] [-i IFACE] [-p aa:bb:cc:dd[:ee:ff]/a.b.c.d] MAC"
 //usage:#define ether_wake_full_usage "\n\n"
 //usage:       "Send a magic packet to wake up sleeping machines.\n"
 //usage:       "MAC must be a station address (00:11:22:33:44:55) or\n"
 //usage:       "a hostname with a known 'ethers' entry.\n"
-//usage:     "\n	-b		Send wake-up packet to the broadcast address"
-//usage:     "\n	-i iface	Interface to use (default eth0)"
-//usage:     "\n	-p pass		Append four or six byte password PW to the packet"
+//usage:     "\n	-b		Broadcast the packet"
+//usage:     "\n	-i IFACE	Interface to use (default eth0)"
+//usage:     "\n	-p PASSWORD	Append four or six byte PASSWORD to the packet"
 
 #include "libbb.h"
 #include <netpacket/packet.h>
@@ -113,7 +113,7 @@ void bb_debug_dump_packet(unsigned char *outpack, int pktsize)
  *    Host name
  *    IP address string
  *    MAC address string
-*/
+ */
 static void get_dest_addr(const char *hostid, struct ether_addr *eaddr)
 {
 	struct ether_addr *eap;
@@ -121,10 +121,7 @@ static void get_dest_addr(const char *hostid, struct ether_addr *eaddr)
 	eap = ether_aton_r(hostid, eaddr);
 	if (eap) {
 		bb_debug_msg("The target station address is %s\n\n", ether_ntoa(eap));
-#if !defined(__UCLIBC_MAJOR__) \
- || __UCLIBC_MAJOR__ > 0 \
- || __UCLIBC_MINOR__ > 9 \
- || (__UCLIBC_MINOR__ == 9 && __UCLIBC_SUBLEVEL__ >= 30)
+#if !defined(__UCLIBC__) || UCLIBC_VERSION >= KERNEL_VERSION(0, 9, 30)
 	} else if (ether_hostton(hostid, eaddr) == 0) {
 		bb_debug_msg("Station address for hostname %s is %s\n\n", hostid, ether_ntoa(eaddr));
 #endif
@@ -133,7 +130,8 @@ static void get_dest_addr(const char *hostid, struct ether_addr *eaddr)
 	}
 }
 
-static int get_fill(unsigned char *pkt, struct ether_addr *eaddr, int broadcast)
+#define PKT_HEADER_SIZE (20 + 16*6)
+static int fill_pkt_header(unsigned char *pkt, struct ether_addr *eaddr, int broadcast)
 {
 	int i;
 	unsigned char *station_addr = eaddr->ether_addr_octet;
@@ -156,7 +154,7 @@ static int get_fill(unsigned char *pkt, struct ether_addr *eaddr, int broadcast)
 		memcpy(pkt, station_addr, 6); /* 20,26,32,... */
 	}
 
-	return 20 + 16*6; /* length of packet */
+	return PKT_HEADER_SIZE; /* length of packet */
 }
 
 static int get_wol_pw(const char *ethoptarg, unsigned char *wol_passwd)
@@ -198,7 +196,7 @@ int ether_wake_main(int argc UNUSED_PARAM, char **argv)
 	int wol_passwd_sz = 0;
 	int s;  /* Raw socket */
 	int pktsize;
-	unsigned char outpack[1000];
+	unsigned char outpack[PKT_HEADER_SIZE + 6 /* max passwd size */ + 16 /* paranoia */];
 
 	struct ether_addr eaddr;
 	struct whereto_t whereto;  /* who to wake up */
@@ -220,7 +218,7 @@ int ether_wake_main(int argc UNUSED_PARAM, char **argv)
 	get_dest_addr(argv[optind], &eaddr);
 
 	/* fill out the header of the packet */
-	pktsize = get_fill(outpack, &eaddr, flags /* & 1 OPT_BROADCAST */);
+	pktsize = fill_pkt_header(outpack, &eaddr, flags /* & 1 OPT_BROADCAST */);
 
 	bb_debug_dump_packet(outpack, pktsize);
 
@@ -238,9 +236,9 @@ int ether_wake_main(int argc UNUSED_PARAM, char **argv)
 		{
 			unsigned char *hwaddr = if_hwaddr.ifr_hwaddr.sa_data;
 			printf("The hardware address (SIOCGIFHWADDR) of %s is type %d  "
-				   "%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x\n\n", ifname,
-				   if_hwaddr.ifr_hwaddr.sa_family, hwaddr[0], hwaddr[1],
-				   hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
+				"%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x\n\n", ifname,
+				if_hwaddr.ifr_hwaddr.sa_family, hwaddr[0], hwaddr[1],
+				hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
 		}
 # endif
 	}

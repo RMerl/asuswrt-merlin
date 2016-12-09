@@ -4,6 +4,7 @@
  */
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <math.h>
 
 //usage:#define dc_trivial_usage
@@ -11,11 +12,11 @@
 //usage:
 //usage:#define dc_full_usage "\n\n"
 //usage:       "Tiny RPN calculator. Operations:\n"
-//usage:       "+, add, -, sub, *, mul, /, div, %, mod, "IF_FEATURE_DC_LIBM("**, exp, ")"and, or, not, eor,\n"
+//usage:       "+, add, -, sub, *, mul, /, div, %, mod, "IF_FEATURE_DC_LIBM("**, exp, ")"and, or, not, xor,\n"
 //usage:       "p - print top of the stack (without popping),\n"
 //usage:       "f - print entire stack,\n"
 //usage:       "o - pop the value and set output radix (must be 10, 16, 8 or 2).\n"
-//usage:       "Examples: 'dc 2 2 add p' -> 4, 'dc 8 8 * 2 2 + / p' -> 16"
+//usage:       "Examples: 'dc 2 2 add p' -> 4, 'dc 8 8 mul 2 2 + / p' -> 16"
 //usage:
 //usage:#define dc_example_usage
 //usage:       "$ dc 2 2 + p\n"
@@ -47,14 +48,21 @@ struct globals {
 	double stack[1];
 } FIX_ALIASING;
 enum { STACK_SIZE = (COMMON_BUFSIZE - offsetof(struct globals, stack)) / sizeof(double) };
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define pointer   (G.pointer   )
 #define base      (G.base      )
 #define stack     (G.stack     )
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	base = 10; \
 } while (0)
 
+
+static void check_under(void)
+{
+	if (pointer == 0)
+		bb_error_msg_and_die("stack underflow");
+}
 
 static void push(double a)
 {
@@ -65,8 +73,7 @@ static void push(double a)
 
 static double pop(void)
 {
-	if (pointer == 0)
-		bb_error_msg_and_die("stack underflow");
+	check_under();
 	return stack[--pointer];
 }
 
@@ -187,6 +194,7 @@ static void print_stack_no_pop(void)
 
 static void print_no_pop(void)
 {
+	check_under();
 	print_base(stack[pointer-1]);
 }
 
@@ -196,14 +204,6 @@ struct op {
 };
 
 static const struct op operators[] = {
-	{"+",   add},
-	{"add", add},
-	{"-",   sub},
-	{"sub", sub},
-	{"*",   mul},
-	{"mul", mul},
-	{"/",   divide},
-	{"div", divide},
 #if ENABLE_FEATURE_DC_LIBM
 	{"**",  power},
 	{"exp", power},
@@ -216,32 +216,51 @@ static const struct op operators[] = {
 	{"not", not},
 	{"eor", eor},
 	{"xor", eor},
+	{"+",   add},
+	{"add", add},
+	{"-",   sub},
+	{"sub", sub},
+	{"*",   mul},
+	{"mul", mul},
+	{"/",   divide},
+	{"div", divide},
 	{"p", print_no_pop},
 	{"f", print_stack_no_pop},
 	{"o", set_output_base},
-	{ "", NULL }
 };
 
+/* Feed the stack machine */
 static void stack_machine(const char *argument)
 {
-	char *endPointer;
-	double d;
-	const struct op *o = operators;
+	char *end;
+	double number;
+	const struct op *o;
 
-	d = strtod(argument, &endPointer);
-
-	if (endPointer != argument && *endPointer == '\0') {
-		push(d);
-		return;
+ next:
+	number = strtod(argument, &end);
+	if (end != argument) {
+		argument = end;
+		push(number);
+		goto next;
 	}
 
-	while (o->function) {
-		if (strcmp(o->name, argument) == 0) {
+	/* We might have matched a digit, eventually advance the argument */
+	argument = skip_whitespace(argument);
+
+	if (*argument == '\0')
+		return;
+
+	o = operators;
+	do {
+		char *after_name = is_prefixed_with(argument, o->name);
+		if (after_name) {
+			argument = after_name;
 			o->function();
-			return;
+			goto next;
 		}
 		o++;
-	}
+	} while (o != operators + ARRAY_SIZE(operators));
+
 	bb_error_msg_and_die("syntax error at '%s'", argument);
 }
 
@@ -254,25 +273,11 @@ int dc_main(int argc UNUSED_PARAM, char **argv)
 	if (!argv[0]) {
 		/* take stuff from stdin if no args are given */
 		char *line;
-		char *cursor;
-		char *token;
 		while ((line = xmalloc_fgetline(stdin)) != NULL) {
-			cursor = line;
-			while (1) {
-				token = skip_whitespace(cursor);
-				if (*token == '\0')
-					break;
-				cursor = skip_non_whitespace(token);
-				if (*cursor != '\0')
-					*cursor++ = '\0';
-				stack_machine(token);
-			}
+			stack_machine(line);
 			free(line);
 		}
 	} else {
-		// why? it breaks "dc -2 2 + p"
-		//if (argv[0][0] == '-')
-		//	bb_show_usage();
 		do {
 			stack_machine(*argv);
 		} while (*++argv);

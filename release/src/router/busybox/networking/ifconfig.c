@@ -56,7 +56,7 @@
 #endif
 
 #if ENABLE_FEATURE_IFCONFIG_SLIP
-# include <net/if_slip.h>
+# include <linux/if_slip.h>
 #endif
 
 /* I don't know if this is needed for busybox or not.  Anyone? */
@@ -174,10 +174,6 @@ struct in6_ifreq {
 #define ARG_ADD_DEL      (A_CAST_HOST_COPY_RESOLVE | A_SET_AFTER)
 
 
-/*
- * Set up the tables.  Warning!  They must have corresponding order!
- */
-
 struct arg1opt {
 	const char *name;
 	unsigned short selector;
@@ -197,6 +193,10 @@ struct options {
 };
 
 #define ifreq_offsetof(x)  offsetof(struct ifreq, x)
+
+/*
+ * Set up the tables.  Warning!  They must have corresponding order!
+ */
 
 static const struct arg1opt Arg1Opt[] = {
 	{ "SIFMETRIC",  SIOCSIFMETRIC,  ifreq_offsetof(ifr_metric) },
@@ -220,11 +220,11 @@ static const struct arg1opt Arg1Opt[] = {
 	{ "SIFMAP",     SIOCSIFMAP,     ifreq_offsetof(ifr_map.base_addr) },
 	{ "SIFMAP",     SIOCSIFMAP,     ifreq_offsetof(ifr_map.irq) },
 #endif
-	/* Last entry if for unmatched (possibly hostname) arg. */
 #if ENABLE_FEATURE_IPV6
 	{ "SIFADDR",    SIOCSIFADDR,    ifreq_offsetof(ifr_addr) }, /* IPv6 version ignores the offset */
 	{ "DIFADDR",    SIOCDIFADDR,    ifreq_offsetof(ifr_addr) }, /* IPv6 version ignores the offset */
 #endif
+	/* Last entry is for unmatched (assumed to be hostname/address) arg. */
 	{ "SIFADDR",    SIOCSIFADDR,    ifreq_offsetof(ifr_addr) },
 };
 
@@ -265,16 +265,6 @@ static const struct options OptArray[] = {
 	{ NULL,          0,             ARG_HOSTNAME,    (IFF_UP | IFF_RUNNING) }
 };
 
-/*
- * A couple of prototypes.
- */
-#if ENABLE_FEATURE_IFCONFIG_HW
-static int in_ether(const char *bufp, struct sockaddr *sap);
-#endif
-
-/*
- * Our main function.
- */
 int ifconfig_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 {
@@ -330,7 +320,7 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 	strncpy_IFNAMSIZ(ifr.ifr_name, *argv);
 
 	/* Process the remaining arguments. */
-	while (*++argv != (char *) NULL) {
+	while (*++argv != NULL) {
 		p = *argv;
 		mask = N_MASK;
 		if (*p == '-') {	/* If the arg starts with '-'... */
@@ -356,9 +346,9 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
  FOUND_ARG:
 		if (mask & ARG_MASK) {
 			mask = op->arg_flags;
-			a1op = Arg1Opt + (op - OptArray);
 			if (mask & A_NETMASK & did_flags)
 				bb_show_usage();
+			a1op = Arg1Opt + (op - OptArray);
 			if (*++argv == NULL) {
 				if (mask & A_ARG_REQ)
 					bb_show_usage();
@@ -371,19 +361,9 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 #if ENABLE_FEATURE_IFCONFIG_HW
 					if (mask & A_CAST_RESOLVE) {
 #endif
-#if ENABLE_FEATURE_IPV6
-						char *prefix;
-						int prefix_len = 0;
-#endif
-						/*safe_strncpy(host, *argv, (sizeof host));*/
 						host = *argv;
-#if ENABLE_FEATURE_IPV6
-						prefix = strchr(host, '/');
-						if (prefix) {
-							prefix_len = xatou_range(prefix + 1, 0, 128);
-							*prefix = '\0';
-						}
-#endif
+						if (strcmp(host, "inet") == 0)
+							continue; /* compat stuff */
 						sai.sin_family = AF_INET;
 						sai.sin_port = 0;
 						if (strcmp(host, "default") == 0) {
@@ -391,7 +371,8 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 							sai.sin_addr.s_addr = INADDR_ANY;
 						}
 #if ENABLE_FEATURE_IFCONFIG_BROADCAST_PLUS
-						else if ((host[0] == '+' && !host[1]) && (mask & A_BROADCAST)
+						else if ((host[0] == '+' && !host[1])
+						 && (mask & A_BROADCAST)
 						 && (did_flags & (A_NETMASK|A_HOSTNAME)) == (A_NETMASK|A_HOSTNAME)
 						) {
 							/* + is special, meaning broadcast is derived. */
@@ -400,23 +381,36 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 #endif
 						else {
 							len_and_sockaddr *lsa;
-							if (strcmp(host, "inet") == 0)
-								continue; /* compat stuff */
+#if ENABLE_FEATURE_IPV6
+							char *prefix;
+							int prefix_len = 0;
+							prefix = strchr(host, '/');
+							if (prefix) {
+								prefix_len = xatou_range(prefix + 1, 0, 128);
+								*prefix = '\0';
+							}
+ resolve:
+#endif
 							lsa = xhost2sockaddr(host, 0);
 #if ENABLE_FEATURE_IPV6
+							if (lsa->u.sa.sa_family != AF_INET6 && prefix) {
+/* TODO: we do not support "ifconfig eth0 up 1.2.3.4/17".
+ * For now, just make it fail instead of silently ignoring "/17" part:
+ */
+								*prefix = '/';
+								goto resolve;
+							}
 							if (lsa->u.sa.sa_family == AF_INET6) {
 								int sockfd6;
 								struct in6_ifreq ifr6;
 
-								memcpy((char *) &ifr6.ifr6_addr,
-										(char *) &(lsa->u.sin6.sin6_addr),
-										sizeof(struct in6_addr));
-
-								/* Create a channel to the NET kernel. */
 								sockfd6 = xsocket(AF_INET6, SOCK_DGRAM, 0);
-								xioctl(sockfd6, SIOGIFINDEX, &ifr);
+								xioctl(sockfd6, SIOCGIFINDEX, &ifr);
 								ifr6.ifr6_ifindex = ifr.ifr_ifindex;
 								ifr6.ifr6_prefixlen = prefix_len;
+								memcpy(&ifr6.ifr6_addr,
+										&lsa->u.sin6.sin6_addr,
+										sizeof(struct in6_addr));
 								ioctl_or_perror_and_die(sockfd6, a1op->selector, &ifr6, "SIOC%s", a1op->name);
 								if (ENABLE_FEATURE_CLEAN_UP)
 									free(lsa);
@@ -437,19 +431,18 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 #if ENABLE_FEATURE_IFCONFIG_HW
 					} else {	/* A_CAST_HOST_COPY_IN_ETHER */
 						/* This is the "hw" arg case. */
-						smalluint hw_class= index_in_substrings("ether\0"
+						smalluint hw_class = index_in_substrings("ether\0"
 								IF_FEATURE_HWIB("infiniband\0"), *argv) + 1;
 						if (!hw_class || !*++argv)
 							bb_show_usage();
-						/*safe_strncpy(host, *argv, sizeof(host));*/
 						host = *argv;
 						if (hw_class == 1 ? in_ether(host, &sa) : in_ib(host, &sa))
 							bb_error_msg_and_die("invalid hw-addr %s", host);
 						p = (char *) &sa;
 					}
 #endif
-					memcpy( (((char *)&ifr) + a1op->ifr_offset),
-						   p, sizeof(struct sockaddr));
+					memcpy( ((char *)&ifr) + a1op->ifr_offset,
+						p, sizeof(struct sockaddr));
 				} else {
 					/* FIXME: error check?? */
 					unsigned long i = strtoul(*argv, NULL, 0);
@@ -458,17 +451,17 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 					if (mask & A_MAP_TYPE) {
 						xioctl(sockfd, SIOCGIFMAP, &ifr);
 						if ((mask & A_MAP_UCHAR) == A_MAP_UCHAR)
-							*((unsigned char *) p) = i;
+							*(unsigned char *) p = i;
 						else if (mask & A_MAP_USHORT)
-							*((unsigned short *) p) = i;
+							*(unsigned short *) p = i;
 						else
-							*((unsigned long *) p) = i;
+							*(unsigned long *) p = i;
 					} else
 #endif
 					if (mask & A_CAST_CHAR_PTR)
-						*((caddr_t *) p) = (caddr_t) i;
+						*(caddr_t *) p = (caddr_t) i;
 					else	/* A_CAST_INT */
-						*((int *) p) = i;
+						*(int *) p = i;
 				}
 
 				ioctl_or_perror_and_die(sockfd, a1op->selector, &ifr, "SIOC%s", a1op->name);
@@ -494,7 +487,7 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 			if (!(mask & A_SET_AFTER))
 				continue;
 			mask = N_SET;
-		}
+		} /* if (mask & ARG_MASK) */
 
 		xioctl(sockfd, SIOCGIFFLAGS, &ifr);
 		selector = op->selector;
@@ -509,46 +502,3 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 		close(sockfd);
 	return 0;
 }
-
-#if ENABLE_FEATURE_IFCONFIG_HW
-/* Input an Ethernet address and convert to binary. */
-static int in_ether(const char *bufp, struct sockaddr *sap)
-{
-	char *ptr;
-	int i, j;
-	unsigned char val;
-	unsigned char c;
-
-	sap->sa_family = ARPHRD_ETHER;
-	ptr = (char *) sap->sa_data;
-
-	i = 0;
-	do {
-		j = val = 0;
-
-		/* We might get a semicolon here - not required. */
-		if (i && (*bufp == ':')) {
-			bufp++;
-		}
-
-		do {
-			c = *bufp;
-			if (((unsigned char)(c - '0')) <= 9) {
-				c -= '0';
-			} else if (((unsigned char)((c|0x20) - 'a')) <= 5) {
-				c = (c|0x20) - ('a'-10);
-			} else if (j && (c == ':' || c == 0)) {
-				break;
-			} else {
-				return -1;
-			}
-			++bufp;
-			val <<= 4;
-			val += c;
-		} while (++j < 2);
-		*ptr++ = val;
-	} while (++i < ETH_ALEN);
-
-	return *bufp; /* Error if we don't end at end of string. */
-}
-#endif

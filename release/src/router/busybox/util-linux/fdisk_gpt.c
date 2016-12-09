@@ -93,10 +93,7 @@ gpt_list_table(int xtra UNUSED_PARAM)
 	int i;
 	char numstr6[6];
 
-	numstr6[5] = '\0';
-
-	smart_ulltoa5((unsigned long long)total_number_of_sectors * sector_size,
-		numstr6, " KMGTPEZY");
+	smart_ulltoa5(total_number_of_sectors * sector_size, numstr6, " KMGTPEZY")[0] = '\0';
 	printf("Disk %s: %llu sectors, %s\n", disk_device,
 		(unsigned long long)total_number_of_sectors,
 		numstr6);
@@ -109,13 +106,12 @@ gpt_list_table(int xtra UNUSED_PARAM)
 		(unsigned long long)SWAP_LE64(gpt_hdr->first_usable_lba),
 		(unsigned long long)SWAP_LE64(gpt_hdr->last_usable_lba));
 
-	printf("Number  Start (sector)    End (sector)  Size       Code  Name\n");
+	puts("Number  Start (sector)    End (sector)  Size       Code  Name");
 	for (i = 0; i < n_parts; i++) {
 		gpt_partition *p = gpt_part(i);
 		if (p->lba_start) {
-			smart_ulltoa5((1 + SWAP_LE64(p->lba_end)
-				- SWAP_LE64(p->lba_start)) * sector_size,
-				numstr6, " KMGTPEZY");
+			smart_ulltoa5((1 + SWAP_LE64(p->lba_end) - SWAP_LE64(p->lba_start)) * sector_size,
+				numstr6, " KMGTPEZY")[0] = '\0';
 			printf("%4u %15llu %15llu %11s   %04x  ",
 				i + 1,
 				(unsigned long long)SWAP_LE64(p->lba_start),
@@ -123,7 +119,7 @@ gpt_list_table(int xtra UNUSED_PARAM)
 				numstr6,
 				0x0700 /* FIXME */);
 			gpt_print_wide(p->name, 18);
-			printf("\n");
+			bb_putchar('\n');
 		}
 	}
 }

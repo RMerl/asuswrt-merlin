@@ -42,6 +42,12 @@
 #include "libbb.h"
 #include "bb_archive.h"
 
+#if 0
+# define dbg(...) bb_error_msg(__VA_ARGS__)
+#else
+# define dbg(...) ((void)0)
+#endif
+
 /* Constants for Huffman coding */
 #define MAX_GROUPS          6
 #define GROUP_SIZE          50      /* 64 would have been more efficient */
@@ -52,13 +58,13 @@
 
 /* Status return values */
 #define RETVAL_OK                       0
-#define RETVAL_LAST_BLOCK               (-1)
-#define RETVAL_NOT_BZIP_DATA            (-2)
-#define RETVAL_UNEXPECTED_INPUT_EOF     (-3)
-#define RETVAL_SHORT_WRITE              (-4)
-#define RETVAL_DATA_ERROR               (-5)
-#define RETVAL_OUT_OF_MEMORY            (-6)
-#define RETVAL_OBSOLETE_INPUT           (-7)
+#define RETVAL_LAST_BLOCK               (dbg("%d", __LINE__), -1)
+#define RETVAL_NOT_BZIP_DATA            (dbg("%d", __LINE__), -2)
+#define RETVAL_UNEXPECTED_INPUT_EOF     (dbg("%d", __LINE__), -3)
+#define RETVAL_SHORT_WRITE              (dbg("%d", __LINE__), -4)
+#define RETVAL_DATA_ERROR               (dbg("%d", __LINE__), -5)
+#define RETVAL_OUT_OF_MEMORY            (dbg("%d", __LINE__), -6)
+#define RETVAL_OBSOLETE_INPUT           (dbg("%d", __LINE__), -7)
 
 /* Other housekeeping constants */
 #define IOBUF_SIZE          4096
@@ -440,7 +446,11 @@ static int get_next_block(bunzip_data *bd)
 		   literal used is the one at the head of the mtfSymbol array.) */
 		if (runPos != 0) {
 			uint8_t tmp_byte;
-			if (dbufCount + runCnt >= dbufSize) return RETVAL_DATA_ERROR;
+			if (dbufCount + runCnt > dbufSize) {
+				dbg("dbufCount:%d+runCnt:%d %d > dbufSize:%d RETVAL_DATA_ERROR",
+						dbufCount, runCnt, dbufCount + runCnt, dbufSize);
+				return RETVAL_DATA_ERROR;
+			}
 			tmp_byte = symToByte[mtfSymbol[0]];
 			byteCount[tmp_byte] += runCnt;
 			while (--runCnt >= 0) dbuf[dbufCount++] = (uint32_t)tmp_byte;
@@ -721,7 +731,7 @@ void FAST_FUNC dealloc_bunzip(bunzip_data *bd)
 
 /* Decompress src_fd to dst_fd.  Stops at end of bzip data, not end of file. */
 IF_DESKTOP(long long) int FAST_FUNC
-unpack_bz2_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
+unpack_bz2_stream(transformer_state_t *xstate)
 {
 	IF_DESKTOP(long long total_written = 0;)
 	bunzip_data *bd;
@@ -729,14 +739,14 @@ unpack_bz2_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
 	int i;
 	unsigned len;
 
-	if (check_signature16(aux, src_fd, BZIP2_MAGIC))
+	if (check_signature16(xstate, BZIP2_MAGIC))
 		return -1;
 
 	outbuf = xmalloc(IOBUF_SIZE);
 	len = 0;
 	while (1) { /* "Process one BZ... stream" loop */
 
-		i = start_bunzip(&bd, src_fd, outbuf + 2, len);
+		i = start_bunzip(&bd, xstate->src_fd, outbuf + 2, len);
 
 		if (i == 0) {
 			while (1) { /* "Produce some output bytes" loop */
@@ -746,8 +756,7 @@ unpack_bz2_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
 				i = IOBUF_SIZE - i; /* number of bytes produced */
 				if (i == 0) /* EOF? */
 					break;
-				if (i != full_write(dst_fd, outbuf, i)) {
-					bb_error_msg("short write");
+				if (i != transformer_write(xstate, outbuf, i)) {
 					i = RETVAL_SHORT_WRITE;
 					goto release_mem;
 				}
@@ -780,7 +789,7 @@ unpack_bz2_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
 		len = bd->inbufCount - bd->inbufPos;
 		memcpy(outbuf, &bd->inbuf[bd->inbufPos], len);
 		if (len < 2) {
-			if (safe_read(src_fd, outbuf + len, 2 - len) != 2 - len)
+			if (safe_read(xstate->src_fd, outbuf + len, 2 - len) != 2 - len)
 				break;
 			len = 2;
 		}
@@ -808,7 +817,6 @@ static char *const bunzip_errors[] = {
 /* Dumb little test thing, decompress stdin to stdout */
 int main(int argc, char **argv)
 {
-	int i;
 	char c;
 
 	int i = unpack_bz2_stream(0, 1);

@@ -212,7 +212,7 @@ int cut_main(int argc UNUSED_PARAM, char **argv)
 		if (opt & CUT_OPT_SUPPRESS_FLGS) {
 			bb_error_msg_and_die
 				("suppressing non-delimited lines makes sense%s",
-				 _op_on_field);
+				_op_on_field);
 		}
 		if (delim != '\t') {
 			bb_error_msg_and_die

@@ -22,10 +22,14 @@ then
 	done
 fi
 
-echo -n > $RESOLV_CONF
-[ -n "$domain" ] && echo domain $domain >> $RESOLV_CONF
-for i in $dns
-do
-	echo adding dns $i
-	echo nameserver $i >> $RESOLV_CONF
-done
+# Only replace resolv.conf is we have at least one DNS server
+if [ -n "$dns" ]
+then
+	echo -n > $RESOLV_CONF
+	[ -n "$domain" ] && echo domain $domain >> $RESOLV_CONF
+	for i in $dns
+	do
+		echo adding dns $i
+		echo nameserver $i >> $RESOLV_CONF
+	done
+fi

@@ -30,7 +30,7 @@
 /*
 static void die_at(int line)
 {
-        bb_error_msg_and_die("internal error at %d", line);
+	bb_error_msg_and_die("internal error at %d", line);
 }
 #define assert(v) if (!(v)) die_at(__LINE__)
 */

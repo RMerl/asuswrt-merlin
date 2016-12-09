@@ -66,7 +66,7 @@ static int run_pipe(const char *pager, char *man_filename, int man, int level)
 			goto ordinary_manpage;
 
 		line = xmalloc_open_zipped_read_close(man_filename, NULL);
-		if (!line || strncmp(line, ".so ", 4) != 0) {
+		if (!line || !is_prefixed_with(line, ".so ")) {
 			free(line);
 			goto ordinary_manpage;
 		}
@@ -102,11 +102,12 @@ static int run_pipe(const char *pager, char *man_filename, int man, int level)
 
  ordinary_manpage:
 	close(STDIN_FILENO);
-	open_zipped(man_filename); /* guaranteed to use fd 0 (STDIN_FILENO) */
+	open_zipped(man_filename, /*fail_if_not_compressed:*/ 0); /* guaranteed to use fd 0 (STDIN_FILENO) */
 	/* "2>&1" is added so that nroff errors are shown in pager too.
 	 * Otherwise it may show just empty screen */
 	cmd = xasprintf(
-		man ? "gtbl | nroff -Tlatin1 -mandoc 2>&1 | %s"
+		/* replaced -Tlatin1 with -Tascii for non-UTF8 displays */
+		man ? "gtbl | nroff -Tascii -mandoc 2>&1 | %s"
 		    : "%s",
 		pager);
 	system(cmd);
@@ -146,15 +147,51 @@ static int show_manpage(const char *pager, char *man_filename, int man, int leve
 	return run_pipe(pager, man_filename, man, level);
 }
 
+static char **add_MANPATH(char **man_path_list, int *count_mp, char *path)
+{
+	if (path) while (*path) {
+		char *next_path;
+		char **path_element;
+
+		next_path = strchr(path, ':');
+		if (next_path) {
+			if (next_path == path) /* "::"? */
+				goto next;
+			*next_path = '\0';
+		}
+		/* Do we already have path? */
+		path_element = man_path_list;
+		if (path_element) while (*path_element) {
+			if (strcmp(*path_element, path) == 0)
+				goto skip;
+			path_element++;
+		}
+		man_path_list = xrealloc_vector(man_path_list, 4, *count_mp);
+		man_path_list[*count_mp] = xstrdup(path);
+		(*count_mp)++;
+		/* man_path_list is NULL terminated */
+		/* man_path_list[*count_mp] = NULL; - xrealloc_vector did it */
+ skip:
+		if (!next_path)
+			break;
+		/* "path" may be a result of getenv(), be nice and don't mangle it */
+		*next_path = ':';
+ next:
+		path = next_path + 1;
+	}
+	return man_path_list;
+}
+
 int man_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int man_main(int argc UNUSED_PARAM, char **argv)
 {
 	parser_t *parser;
-	const char *pager;
-	char **man_path_list;
+	const char *pager = ENABLE_LESS ? "less" : "more";
 	char *sec_list;
 	char *cur_path, *cur_sect;
-	int count_mp, cur_mp;
+	char **man_path_list;
+	int count_mp;
+	int cur_mp;
 	int opt, not_found;
 	char *token[2];
 
@@ -162,20 +199,20 @@ int man_main(int argc UNUSED_PARAM, char **argv)
 	opt = getopt32(argv, "+aw");
 	argv += optind;
 
-	sec_list = xstrdup("1:2:3:4:5:6:7:8:9");
-	/* Last valid man_path_list[] is [0x10] */
+	sec_list = xstrdup("0p:1:1p:2:3:3p:4:5:6:7:8:9");
+
 	count_mp = 0;
-	man_path_list = xzalloc(0x11 * sizeof(man_path_list[0]));
-	man_path_list[0] = getenv("MANPATH");
-	if (!man_path_list[0]) /* default, may be overridden by /etc/man.conf */
+	man_path_list = add_MANPATH(NULL, &count_mp,
+			getenv("MANDATORY_MANPATH"+10) /* "MANPATH" */
+	);
+	if (!man_path_list) {
+		/* default, may be overridden by /etc/man.conf */
+		man_path_list = xzalloc(2 * sizeof(man_path_list[0]));
 		man_path_list[0] = (char*)"/usr/man";
-	else
-		count_mp++;
-	pager = getenv("MANPAGER");
-	if (!pager) {
-		pager = getenv("PAGER");
-		if (!pager)
-			pager = "more";
+		/* count_mp stays 0.
+		 * Thus, man.conf will overwrite man_path_list[0]
+		 * if a path is defined there.
+		 */
 	}
 
 	/* Parse man.conf[ig] or man_db.conf */
@@ -190,38 +227,15 @@ int man_main(int argc UNUSED_PARAM, char **argv)
 	while (config_read(parser, token, 2, 0, "# \t", PARSE_NORMAL)) {
 		if (!token[1])
 			continue;
+		if (strcmp("DEFINE", token[0]) == 0) {
+			if (is_prefixed_with("pager", token[1])) {
+				pager = xstrdup(skip_whitespace(token[1]) + 5);
+			}
+		} else
 		if (strcmp("MANDATORY_MANPATH"+10, token[0]) == 0 /* "MANPATH"? */
 		 || strcmp("MANDATORY_MANPATH", token[0]) == 0
 		) {
-			char *path = token[1];
-			while (*path) {
-				char *next_path;
-				char **path_element;
-
-				next_path = strchr(path, ':');
-				if (next_path) {
-					*next_path = '\0';
-					if (next_path++ == path) /* "::"? */
-						goto next;
-				}
-				/* Do we already have path? */
-				path_element = man_path_list;
-				while (*path_element) {
-					if (strcmp(*path_element, path) == 0)
-						goto skip;
-					path_element++;
-				}
-				man_path_list = xrealloc_vector(man_path_list, 4, count_mp);
-				man_path_list[count_mp] = xstrdup(path);
-				count_mp++;
-				/* man_path_list is NULL terminated */
-				/*man_path_list[count_mp] = NULL; - xrealloc_vector did it */
- skip:
-				if (!next_path)
-					break;
- next:
-				path = next_path;
-			}
+			man_path_list = add_MANPATH(man_path_list, &count_mp, token[1]);
 		}
 		if (strcmp("MANSECT", token[0]) == 0) {
 			free(sec_list);
@@ -229,6 +243,15 @@ int man_main(int argc UNUSED_PARAM, char **argv)
 		}
 	}
 	config_close(parser);
+
+	{
+		/* environment overrides setting from man.config */
+		char *env_pager = getenv("MANPAGER");
+		if (!env_pager)
+			env_pager = getenv("PAGER");
+		if (env_pager)
+			pager = env_pager;
+	}
 
 	not_found = 0;
 	do { /* for each argv[] */

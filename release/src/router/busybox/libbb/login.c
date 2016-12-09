@@ -16,7 +16,6 @@
 #define LOGIN " login: "
 
 static const char fmtstr_d[] ALIGN1 = "%A, %d %B %Y";
-static const char fmtstr_t[] ALIGN1 = "%H:%M:%S";
 
 void FAST_FUNC print_login_issue(const char *issue_file, const char *tty)
 {
@@ -73,7 +72,7 @@ void FAST_FUNC print_login_issue(const char *issue_file, const char *tty)
 				strftime(buf, sizeof(buf), fmtstr_d, localtime(&t));
 				break;
 			case 't':
-				strftime(buf, sizeof(buf), fmtstr_t, localtime(&t));
+				strftime_HHMMSS(buf, sizeof(buf), &t);
 				break;
 			case 'l':
 				outbuf = tty;

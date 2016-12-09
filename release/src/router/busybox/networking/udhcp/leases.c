@@ -17,7 +17,9 @@ static struct dyn_lease *oldest_expired_lease(void)
 	/* Unexpired leases have g_leases[i].expires >= current time
 	 * and therefore can't ever match */
 	for (i = 0; i < server_config.max_leases; i++) {
-		if (g_leases[i].expires < oldest_time) {
+		if (g_leases[i].expires == 0 /* empty entry */
+		 || g_leases[i].expires < oldest_time
+		) {
 			oldest_time = g_leases[i].expires;
 			oldest_lease = &g_leases[i];
 		}
@@ -131,7 +133,7 @@ static int nobody_responds_to_arp(uint32_t nip, const uint8_t *safe_mac, unsigne
 		return r;
 
 	temp.s_addr = nip;
-	bb_info_msg("%s belongs to someone, reserving it for %u seconds",
+	bb_error_msg("%s belongs to someone, reserving it for %u seconds",
 		inet_ntoa(temp), (unsigned)server_config.conflict_time);
 	add_lease(NULL, nip, server_config.conflict_time, NULL, 0);
 	return 0;

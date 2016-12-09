@@ -229,7 +229,7 @@ static void do_loadtable(int fd, unsigned char *inbuf, int tailsz, int fontsize,
 	}
 
 	/* Note: after PIO_UNIMAPCLR and before PIO_UNIMAP
-	   this printf did not work on many kernels */
+	 * this printf did not work on many kernels */
 
 	advice.advised_hashsize = 0;
 	advice.advised_hashstep = 0;

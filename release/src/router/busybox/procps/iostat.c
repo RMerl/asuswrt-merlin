@@ -109,11 +109,6 @@ enum {
 	OPT_m = 1 << 5,
 };
 
-static ALWAYS_INLINE unsigned get_user_hz(void)
-{
-	return sysconf(_SC_CLK_TCK);
-}
-
 static ALWAYS_INLINE int this_is_smp(void)
 {
 	return (G.total_cpus > 1);
@@ -147,7 +142,7 @@ static void print_timestamp(void)
 	/* %x: date representation for the current locale */
 	/* %X: time representation for the current locale */
 	strftime(buf, sizeof(buf), "%x %X", &G.tmtime);
-	printf("%s\n", buf);
+	puts(buf);
 }
 
 static cputime_t get_smp_uptime(void)
@@ -414,7 +409,7 @@ int iostat_main(int argc UNUSED_PARAM, char **argv)
 	memset(&stats_data, 0, sizeof(stats_data));
 
 	/* Get number of clock ticks per sec */
-	G.clk_tck = get_user_hz();
+	G.clk_tck = bb_clk_tck();
 
 	/* Determine number of CPUs */
 	G.total_cpus = get_cpu_count();

@@ -52,9 +52,18 @@ echo '# CONFIG_RFKILL is not set' >>.config
 if test x"$LIBC" = x"glibc"; then
 	cat .config \
 	| grep -v CONFIG_STATIC \
+	\
+	| grep -v CONFIG_FEATURE_2_4_MODULES \
+	| grep -v CONFIG_FEATURE_USE_BSS_TAIL \
+	| grep -v CONFIG_DEBUG_SANITIZE \
 	>.config.new
 	mv .config.new .config
 	echo '# CONFIG_STATIC is not set' >>.config
+	# newer glibc (at least 2.23) no longer supply query_module() ABI.
+	# People who target 2.4 kernels would likely use older glibc (and older bbox).
+	echo '# CONFIG_FEATURE_2_4_MODULES is not set' >>.config
+	echo '# CONFIG_FEATURE_USE_BSS_TAIL is not set' >>.config
+	echo '# CONFIG_DEBUG_SANITIZE is not set' >>.config
 fi
 
 # If uclibc, build static, and remove some things
@@ -66,12 +75,27 @@ if test x"$LIBC" = x"uclibc"; then
 	| grep -v CONFIG_PIE \
 	\
 	| grep -v CONFIG_FEATURE_2_4_MODULES \
+	| grep -v CONFIG_FEATURE_SYNC_FANCY \
+	| grep -v CONFIG_FEATURE_TOUCH_NODEREF \
+	| grep -v CONFIG_NANDWRITE \
+	| grep -v CONFIG_NANDDUMP \
+	| grep -v CONFIG_BLKDISCARD \
+	| grep -v CONFIG_NSENTER \
+	| grep -v CONFIG_UNSHARE \
 	>.config.new
 	mv .config.new .config
 	echo 'CONFIG_STATIC=y' >>.config
 	echo '# CONFIG_BUILD_LIBBUSYBOX is not set' >>.config
 	echo '# CONFIG_PIE is not set' >>.config
 	echo '# CONFIG_FEATURE_2_4_MODULES is not set' >>.config
+	echo '# CONFIG_FEATURE_SYNC_FANCY is not set' >>.config
+	echo '# CONFIG_FEATURE_TOUCH_NODEREF is not set' >>.config
+	# My uclibc installation does not support some needed APIs...
+	echo '# CONFIG_NANDWRITE is not set' >>.config
+	echo '# CONFIG_NANDDUMP is not set' >>.config
+	echo '# CONFIG_BLKDISCARD is not set' >>.config
+	echo '# CONFIG_NSENTER is not set' >>.config
+	echo '# CONFIG_UNSHARE is not set' >>.config
 fi
 
 # If STATIC, remove some things.
@@ -91,6 +115,8 @@ fi
 
 # Build!
 nice -n 10 make $MAKEOPTS 2>&1 | tee make.log
+grep 'Rerun make' make.log \
+&& nice -n 10 make $MAKEOPTS 2>&1 | tee -a make.log
 
 # Return exitcode 1 if busybox executable does not exist
 test -x busybox

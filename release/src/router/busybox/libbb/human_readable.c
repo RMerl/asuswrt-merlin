@@ -14,16 +14,11 @@
  *      representations (say, powers of 1024) and manipulating coefficients.
  *      The base ten "bytes" output could be handled similarly.
  *
- *   2) This routine always outputs a decimal point and a tenths digit when
- *      display_unit != 0.  Hence, it isn't uncommon for the returned string
+ *   2) This routine outputs a decimal point and a tenths digit when
+ *      display_unit == 0.  Hence, it isn't uncommon for the returned string
  *      to have a length of 5 or 6.
  *
- *      It might be nice to add a flag to indicate no decimal digits in
- *      that case.  This could be either an additional parameter, or a
- *      special value of display_unit.  Such a flag would also be nice for du.
- *
- *      Some code to omit the decimal point and tenths digit is sketched out
- *      and "#if 0"'d below.
+ *      If block_size is also 0, no decimal digits are printed.
  *
  * Licensed under GPLv2, see file LICENSE in this source tree.
  */
@@ -36,8 +31,6 @@ const char* FAST_FUNC make_human_readable_str(unsigned long long val,
 	static const char unit_chars[] ALIGN1 = {
 		'\0', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'
 	};
-
-	static char *str;
 
 	unsigned frac; /* 0..9 - the fractional digit */
 	const char *u;
@@ -81,12 +74,7 @@ const char* FAST_FUNC make_human_readable_str(unsigned long long val,
 #endif
 	}
 
-	if (!str) {
-		/* sufficient for any width of val */
-		str = xmalloc(sizeof(val)*3 + 2 + 3);
-	}
-	sprintf(str, fmt, val, frac, *u);
-	return str;
+	return auto_string(xasprintf(fmt, val, frac, *u));
 }
 
 
@@ -94,7 +82,7 @@ const char* FAST_FUNC make_human_readable_str(unsigned long long val,
 
 /* Convert unsigned long long value into compact 5-char representation.
  * String is not terminated (buf[5] is untouched) */
-void FAST_FUNC smart_ulltoa5(unsigned long long ul, char buf[5], const char *scale)
+char* FAST_FUNC smart_ulltoa5(unsigned long long ul, char buf[5], const char *scale)
 {
 	const char *fmt;
 	char c;
@@ -145,12 +133,13 @@ void FAST_FUNC smart_ulltoa5(unsigned long long ul, char buf[5], const char *sca
 		buf[3] = "0123456789"[v];
 		buf[4] = scale[idx]; /* typically scale = " kmgt..." */
 	}
+	return buf + 5;
 }
 
 /* Convert unsigned long long value into compact 4-char
  * representation. Examples: "1234", "1.2k", " 27M", "123T"
  * String is not terminated (buf[4] is untouched) */
-void FAST_FUNC smart_ulltoa4(unsigned long long ul, char buf[4], const char *scale)
+char* FAST_FUNC smart_ulltoa4(unsigned long long ul, char buf[4], const char *scale)
 {
 	const char *fmt;
 	char c;
@@ -194,4 +183,5 @@ void FAST_FUNC smart_ulltoa4(unsigned long long ul, char buf[4], const char *sca
 		buf[2] = "0123456789"[v];
 		buf[3] = scale[idx]; /* typically scale = " kmgt..." */
 	}
+	return buf + 4;
 }

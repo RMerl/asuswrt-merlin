@@ -25,20 +25,22 @@
 #include "libbb.h"
 
 /* Turn on nonblocking I/O on a fd */
-void FAST_FUNC ndelay_on(int fd)
+int FAST_FUNC ndelay_on(int fd)
 {
 	int flags = fcntl(fd, F_GETFL);
 	if (flags & O_NONBLOCK)
-		return;
+		return flags;
 	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	return flags;
 }
 
-void FAST_FUNC ndelay_off(int fd)
+int FAST_FUNC ndelay_off(int fd)
 {
 	int flags = fcntl(fd, F_GETFL);
 	if (!(flags & O_NONBLOCK))
-		return;
+		return flags;
 	fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+	return flags;
 }
 
 void FAST_FUNC close_on_exec_on(int fd)
@@ -205,7 +207,6 @@ off_t FAST_FUNC fdlength(int fd)
 			else bottom = pos;
 
 		// If we can't, it's smaller.
-
 		} else {
 			if (bottom == top) {
 				if (!top) return 0;
@@ -269,6 +270,12 @@ int FAST_FUNC get_terminal_width_height(int fd, unsigned *width, unsigned *heigh
 		*width = wh_helper(win.ws_col, 80, "COLUMNS", &err);
 	return err;
 }
+int FAST_FUNC get_terminal_width(int fd)
+{
+	unsigned width;
+	get_terminal_width_height(fd, &width, NULL);
+	return width;
+}
 
 int FAST_FUNC tcsetattr_stdin_TCSANOW(const struct termios *tp)
 {
@@ -309,48 +316,14 @@ int FAST_FUNC wait4pid(pid_t pid)
 	return 0;
 }
 
-char * FAST_FUNC unparse_uuid(const uint8_t *uu, char *out)
+// Useful when we do know that pid is valid, and we just want to wait
+// for it to exit. Not existing pid is fatal. waitpid() status is not returned.
+int FAST_FUNC wait_for_exitstatus(pid_t pid)
 {
-        char uuid_string[32];
+	int exit_status, n;
 
-        bin2hex(uuid_string, (char*)uu, 16);
-	/* f.e. UUID=dfd9c173-be52-4d27-99a5-c34c6c2ff55f */
-        sprintf(out, "%.8s-%.4s-%.4s-%.4s-%.12s",
-                uuid_string,
-                uuid_string+8,
-                uuid_string+8+4,
-                uuid_string+8+4+4,
-                uuid_string+8+4+4+4
-        );
-        return out;
+	n = safe_waitpid(pid, &exit_status, 0);
+	if (n < 0)
+		bb_perror_msg_and_die("waitpid");
+	return exit_status;
 }
-
-static unsigned char fromhex(char c)
-{
-        if (isdigit(c))
-                return (c - '0');
-        return ((c|0x20) - 'a' + 10);
-}
-
-/* Parse & verify UUID string */
-int FAST_FUNC parse_uuid(const char *s, uint8_t *uuid)
-{
-	int i;
-
-	if (strlen(s) != 36 || s[8] != '-' || s[13] != '-'
-	 || s[18] != '-' || s[23] != '-'
-	) {
-		return -1;
-	}
-	for (i = 0; i < 16; i++) {
-		if (*s == '-')
-			s++;
-		if (!isxdigit(s[0]) || !isxdigit(s[1]))
-			return -2;
-		uuid[i] = ((fromhex(s[0]) << 4) | fromhex(s[1]));
-		s += 2;
-	}
-
-	return 0;
-}
-

@@ -152,7 +152,7 @@ int readprofile_main(int argc UNUSED_PARAM, char **argv)
 
 	step = buf[0];
 	if (optInfo) {
-		printf("Sampling_step: %i\n", step);
+		printf("Sampling_step: %u\n", step);
 		return EXIT_SUCCESS;
 	}
 
@@ -163,7 +163,7 @@ int readprofile_main(int argc UNUSED_PARAM, char **argv)
 	while (fgets(mapline, S_LEN, map)) {
 		if (sscanf(mapline, "%llx %s %s", &fn_add, mode, fn_name) != 3)
 			bb_error_msg_and_die("%s(%i): wrong map line",
-					     mapFile, maplineno);
+					mapFile, maplineno);
 
 		if (!strcmp(fn_name, "_stext")) /* only elf works like this */ {
 			add0 = fn_add;
@@ -198,7 +198,7 @@ int readprofile_main(int argc UNUSED_PARAM, char **argv)
 
 		if (indx >= len / sizeof(*buf))
 			bb_error_msg_and_die("profile address out of range. "
-					     "Wrong map file?");
+					"Wrong map file?");
 
 		while (indx < (next_add-add0)/step) {
 			if (optBins && (buf[indx] || optAll)) {
@@ -219,11 +219,11 @@ int readprofile_main(int argc UNUSED_PARAM, char **argv)
 		        && (fn_len = next_add-fn_add) != 0
 		) {
 			if (optVerbose)
-				printf("%016llx %-40s %6i %8.4f\n", fn_add,
-				       fn_name, this, this/(double)fn_len);
+				printf("%016llx %-40s %6u %8.4f\n", fn_add,
+					fn_name, this, this/(double)fn_len);
 			else
-				printf("%6i %-40s %8.4f\n",
-				       this, fn_name, this/(double)fn_len);
+				printf("%6u %-40s %8.4f\n",
+					this, fn_name, this/(double)fn_len);
 			if (optSub) {
 				unsigned long long scan;
 
@@ -233,8 +233,8 @@ int readprofile_main(int argc UNUSED_PARAM, char **argv)
 
 					addr = (scan - 1)*step + add0;
 					printf("\t%#llx\t%s+%#llx\t%u\n",
-					       addr, fn_name, addr - fn_add,
-					       buf[scan]);
+						addr, fn_name, addr - fn_add,
+						buf[scan]);
 				}
 			}
 		}
@@ -246,15 +246,15 @@ int readprofile_main(int argc UNUSED_PARAM, char **argv)
 	}
 
 	/* clock ticks, out of kernel text - probably modules */
-	printf("%6i %s\n", buf[len/sizeof(*buf)-1], "*unknown*");
+	printf("%6u %s\n", buf[len/sizeof(*buf)-1], "*unknown*");
 
 	/* trailer */
 	if (optVerbose)
-		printf("%016x %-40s %6i %8.4f\n",
-		       0, "total", total, total/(double)(fn_add-add0));
+		printf("%016x %-40s %6u %8.4f\n",
+			0, "total", total, total/(double)(fn_add-add0));
 	else
-		printf("%6i %-40s %8.4f\n",
-		       total, "total", total/(double)(fn_add-add0));
+		printf("%6u %-40s %8.4f\n",
+			total, "total", total/(double)(fn_add-add0));
 
 	fclose(map);
 	free(buf);

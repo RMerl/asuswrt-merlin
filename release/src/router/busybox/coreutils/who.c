@@ -73,7 +73,7 @@ static void idle_string(char *str6, time_t t)
 int who_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int who_main(int argc UNUSED_PARAM, char **argv)
 {
-	struct utmp *ut;
+	struct utmpx *ut;
 	unsigned opt;
 	int do_users = (ENABLE_USERS && (!ENABLE_WHO || applet_name[0] == 'u'));
 	const char *fmt = "%s";
@@ -81,10 +81,10 @@ int who_main(int argc UNUSED_PARAM, char **argv)
 	opt_complementary = "=0";
 	opt = getopt32(argv, do_users ? "" : "aH");
 	if (opt & 2) // -H
-		printf("USER\t\tTTY\t\tIDLE\tTIME\t\t HOST\n");
+		puts("USER\t\tTTY\t\tIDLE\tTIME\t\t HOST");
 
-	setutent();
-	while ((ut = getutent()) != NULL) {
+	setutxent();
+	while ((ut = getutxent()) != NULL) {
 		if (ut->ut_user[0]
 		 && ((opt & 1) || ut->ut_type == USER_PROCESS)
 		) {
@@ -126,6 +126,6 @@ int who_main(int argc UNUSED_PARAM, char **argv)
 	if (do_users)
 		bb_putchar('\n');
 	if (ENABLE_FEATURE_CLEAN_UP)
-		endutent();
+		endutxent();
 	return EXIT_SUCCESS;
 }

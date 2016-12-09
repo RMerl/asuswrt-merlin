@@ -11,10 +11,11 @@
  */
 
 //usage:#define flash_eraseall_trivial_usage
-//usage:       "[-jq] MTD_DEVICE"
+//usage:       "[-jNq] MTD_DEVICE"
 //usage:#define flash_eraseall_full_usage "\n\n"
 //usage:       "Erase an MTD device\n"
 //usage:     "\n	-j	Format the device for jffs2"
+//usage:     "\n	-N	Don't skip bad blocks"
 //usage:     "\n	-q	Don't display progress messages"
 
 #include "libbb.h"
@@ -22,9 +23,9 @@
 #include <linux/jffs2.h>
 
 #define OPTION_J  (1 << 0)
-#define OPTION_Q  (1 << 1)
-#define IS_NAND   (1 << 2)
-#define BBTEST    (1 << 3)
+#define OPTION_N  (1 << 1)
+#define OPTION_Q  (1 << 2)
+#define IS_NAND   (1 << 3)
 
 /* mtd/jffs2-user.h used to have this atrocity:
 extern int target_endian;
@@ -71,7 +72,7 @@ int flash_eraseall_main(int argc UNUSED_PARAM, char **argv)
 	char *mtd_name;
 
 	opt_complementary = "=1";
-	flags = BBTEST | getopt32(argv, "jq");
+	flags = getopt32(argv, "jNq");
 
 	mtd_name = argv[optind];
 	fd = xopen(mtd_name, O_RDWR);
@@ -139,14 +140,14 @@ int flash_eraseall_main(int argc UNUSED_PARAM, char **argv)
 
 	for (erase.start = 0; erase.start < meminfo.size;
 	     erase.start += meminfo.erasesize) {
-		if (flags & BBTEST) {
+		if (!(flags & OPTION_N)) {
 			int ret;
 			loff_t offset = erase.start;
 
 			ret = ioctl(fd, MEMGETBADBLOCK, &offset);
 			if (ret > 0) {
 				if (!(flags & OPTION_Q))
-					bb_info_msg("\nSkipping bad block at 0x%08x", erase.start);
+					printf("\nSkipping bad block at 0x%08x\n", erase.start);
 				continue;
 			}
 			if (ret < 0) {
@@ -154,7 +155,7 @@ int flash_eraseall_main(int argc UNUSED_PARAM, char **argv)
 				 * types e.g. NOR
 				 */
 				if (errno == EOPNOTSUPP) {
-					flags &= ~BBTEST;
+					flags |= OPTION_N;
 					if (flags & IS_NAND)
 						bb_error_msg_and_die("bad block check not available");
 				} else {

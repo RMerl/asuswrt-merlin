@@ -39,14 +39,9 @@
 //config:	help
 //config:	  Enable 64-bit support in test.
 
-/* "test --help" does not print help (POSIX compat), only "[ --help" does.
- * We display "<applet> EXPRESSION ]" here (not "<applet> EXPRESSION")
- * Unfortunately, it screws up generated BusyBox.html. TODO. */
-//usage:#define test_trivial_usage
-//usage:       "EXPRESSION ]"
-//usage:#define test_full_usage "\n\n"
-//usage:       "Check file types, compare values etc. Return a 0/1 exit code\n"
-//usage:       "depending on logical value of EXPRESSION"
+/* "test --help" is special-cased to ignore --help */
+//usage:#define test_trivial_usage NOUSAGE_STR
+//usage:#define test_full_usage ""
 //usage:
 //usage:#define test_example_usage
 //usage:       "$ test 1 -eq 2\n"
@@ -610,7 +605,7 @@ static int test_eaccess(char *path, int mode)
 			return 0;
 
 		/* Root can execute any file that has any one of the execute
-		   bits set. */
+		 * bits set. */
 		if (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))
 			return 0;
 	}
@@ -826,7 +821,6 @@ int test_main(int argc, char **argv)
 {
 	int res;
 	const char *arg0;
-//	bool negate = 0;
 
 	arg0 = bb_basename(argv[0]);
 	if (arg0[0] == '[') {
@@ -844,6 +838,7 @@ int test_main(int argc, char **argv)
 		}
 		argv[argc] = NULL;
 	}
+	/* argc is unused after this point */
 
 	/* We must do DEINIT_S() prior to returning */
 	INIT_S();
@@ -862,43 +857,45 @@ int test_main(int argc, char **argv)
 	 */
 	/*ngroups = 0; - done by INIT_S() */
 
-	//argc--;
 	argv++;
+	args = argv;
 
-	/* Implement special cases from POSIX.2, section 4.62.4 */
-	if (!argv[0]) { /* "test" */
-		res = 1;
-		goto ret;
-	}
-#if 0
-// Now it's fixed in the parser and should not be needed
-	if (LONE_CHAR(argv[0], '!') && argv[1]) {
-		negate = 1;
-		//argc--;
-		argv++;
-	}
-	if (!argv[1]) { /* "test [!] arg" */
-		res = (*argv[0] == '\0');
-		goto ret;
-	}
-	if (argv[2] && !argv[3]) {
-		check_operator(argv[1]);
-		if (last_operator->op_type == BINOP) {
-			/* "test [!] arg1 <binary_op> arg2" */
-			args = argv;
-			res = (binop() == 0);
-			goto ret;
+	/* Implement special cases from POSIX.2, section 4.62.4.
+	 * Testcase: "test '(' = '('"
+	 * The general parser would misinterpret '(' as group start.
+	 */
+	if (1) {
+		int negate = 0;
+ again:
+		if (!argv[0]) {
+			/* "test" */
+			res = 1;
+			goto ret_special;
+		}
+		if (!argv[1]) {
+			/* "test [!] arg" */
+			res = (argv[0][0] == '\0');
+			goto ret_special;
+		}
+		if (argv[2] && !argv[3]) {
+			check_operator(argv[1]);
+			if (last_operator->op_type == BINOP) {
+				/* "test [!] arg1 <binary_op> arg2" */
+				args = argv;
+				res = (binop() == 0);
+ ret_special:
+				/* If there was leading "!" op... */
+				res ^= negate;
+				goto ret;
+			}
+		}
+		if (LONE_CHAR(argv[0], '!')) {
+			argv++;
+			negate ^= 1;
+			goto again;
 		}
 	}
 
-	/* Some complex expression. Undo '!' removal */
-	if (negate) {
-		negate = 0;
-		//argc++;
-		argv--;
-	}
-#endif
-	args = argv;
 	res = !oexpr(check_operator(*args));
 
 	if (*args != NULL && *++args != NULL) {
@@ -911,6 +908,5 @@ int test_main(int argc, char **argv)
 	}
  ret:
 	DEINIT_S();
-//	return negate ? !res : res;
 	return res;
 }

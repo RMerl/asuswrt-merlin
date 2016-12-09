@@ -434,94 +434,6 @@ config MORE
 	  you will probably find this utility very helpful. If you don't have
 	  any need to reading text files, you can leave this disabled.
 
-config MOUNT
-	bool "mount"
-	default y
-	select PLATFORM_LINUX
-	help
-	  All files and filesystems in Unix are arranged into one big directory
-	  tree. The 'mount' utility is used to graft a filesystem onto a
-	  particular part of the tree. A filesystem can either live on a block
-	  device, or it can be accessible over the network, as is the case with
-	  NFS filesystems. Most people using BusyBox will also want to enable
-	  the 'mount' utility.
-
-config FEATURE_MOUNT_FAKE
-	bool "Support option -f"
-	default y
-	depends on MOUNT
-	help
-	  Enable support for faking a file system mount.
-
-config FEATURE_MOUNT_VERBOSE
-	bool "Support option -v"
-	default y
-	depends on MOUNT
-	help
-	  Enable multi-level -v[vv...] verbose messages. Useful if you
-	  debug mount problems and want to see what is exactly passed
-	  to the kernel.
-
-config FEATURE_MOUNT_HELPERS
-	bool "Support mount helpers"
-	default n
-	depends on MOUNT
-	help
-	  Enable mounting of virtual file systems via external helpers.
-	  E.g. "mount obexfs#-b00.11.22.33.44.55 /mnt" will in effect call
-	  "obexfs -b00.11.22.33.44.55 /mnt"
-	  Also "mount -t sometype [-o opts] fs /mnt" will try
-	  "sometype [-o opts] fs /mnt" if simple mount syscall fails.
-	  The idea is to use such virtual filesystems in /etc/fstab.
-
-config FEATURE_MOUNT_LABEL
-	bool "Support specifying devices by label or UUID"
-	default y
-	depends on MOUNT
-	select VOLUMEID
-	help
-	  This allows for specifying a device by label or uuid, rather than by
-	  name. This feature utilizes the same functionality as blkid/findfs.
-	  This also enables label or uuid support for swapon.
-
-config FEATURE_MOUNT_NFS
-	bool "Support mounting NFS file systems on Linux < 2.6.23"
-	default n
-	depends on MOUNT
-	select FEATURE_HAVE_RPC
-	select FEATURE_SYSLOG
-	help
-	  Enable mounting of NFS file systems on Linux kernels prior
-	  to version 2.6.23. Note that in this case mounting of NFS
-	  over IPv6 will not be possible.
-
-	  Note that this option links in RPC support from libc,
-	  which is rather large (~10 kbytes on uclibc).
-
-config FEATURE_MOUNT_CIFS
-	bool "Support mounting CIFS/SMB file systems"
-	default y
-	depends on MOUNT
-	help
-	  Enable support for samba mounts.
-
-config FEATURE_MOUNT_FLAGS
-	depends on MOUNT
-	bool "Support lots of -o flags in mount"
-	default y
-	help
-	  Without this, mount only supports ro/rw/remount. With this, it
-	  supports nosuid, suid, dev, nodev, exec, noexec, sync, async, atime,
-	  noatime, diratime, nodiratime, loud, bind, move, shared, slave,
-	  private, unbindable, rshared, rslave, rprivate, and runbindable.
-
-config FEATURE_MOUNT_FSTAB
-	depends on MOUNT
-	bool "Support /etc/fstab and -a"
-	default y
-	help
-	  Support mount all and looking for files in /etc/fstab.
-
 config PIVOT_ROOT
 	bool "pivot_root"
 	default y
@@ -577,16 +489,6 @@ config SCRIPTREPLAY
 	  This program replays a typescript, using timing information
 	  given by script -t.
 
-config SETARCH
-	bool "setarch"
-	default y
-	select PLATFORM_LINUX
-	help
-	  The linux32 utility is used to create a 32bit environment for the
-	  specified program (usually a shell). It only makes sense to have
-	  this util on a system that supports both 64bit and 32bit userland
-	  (like amd64/x86, ppc64/ppc, sparc64/sparc, etc...).
-
 config SWAPONOFF
 	bool "swaponoff"
 	default y
@@ -598,6 +500,15 @@ config SWAPONOFF
 	  utility is used, typically at system shutdown, to disable any swap
 	  space. If you are not using any swap space, you can leave this
 	  option disabled.
+
+config FEATURE_SWAPON_DISCARD
+	bool "Support discard option -d"
+	default y
+	depends on SWAPONOFF
+	help
+	  Enable support for discarding swap area blocks at swapon and/or as
+	  the kernel frees them. This option enables both the -d option on
+	  'swapon' and the 'discard' option for swap entries in /etc/fstab.
 
 config FEATURE_SWAPON_PRI
 	bool "Support priority option -p"
@@ -699,233 +610,6 @@ config FEATURE_MTAB_SUPPORT
 	  About the only reason to use this is if you've removed /proc from
 	  your kernel.
 
-config VOLUMEID
-	bool #No description makes it a hidden option
-	default n
-
-menu "Filesystem/Volume identification"
-	depends on VOLUMEID
-
-config FEATURE_VOLUMEID_EXT
-	bool "Ext filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_BTRFS
-	bool "btrfs filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_REISERFS
-	bool "Reiser filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_FAT
-	bool "fat filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_EXFAT
-	bool "exFAT filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  exFAT (extended FAT) is a proprietary file system designed especially
-	  for flash drives. It has many features from NTFS, but with less
-	  overhead. exFAT is used on most SDXC cards for consumer electronics.
-
-config FEATURE_VOLUMEID_HFS
-	bool "hfs filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_JFS
-	bool "jfs filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-### config FEATURE_VOLUMEID_UFS
-###	bool "ufs filesystem"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-config FEATURE_VOLUMEID_XFS
-	bool "xfs filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_NTFS
-	bool "ntfs filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_ISO9660
-	bool "iso9660 filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_UDF
-	bool "udf filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_LUKS
-	bool "luks filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_LINUXSWAP
-	bool "linux swap filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-### config FEATURE_VOLUMEID_LVM
-###	bool "lvm"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-config FEATURE_VOLUMEID_CRAMFS
-	bool "cramfs filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-### config FEATURE_VOLUMEID_HPFS
-###	bool "hpfs filesystem"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-config FEATURE_VOLUMEID_ROMFS
-	bool "romfs filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-config FEATURE_VOLUMEID_SYSV
-	bool "sysv filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-### config FEATURE_VOLUMEID_MINIX
-###	bool "minix filesystem"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-### These only detect partition tables - not used (yet?)
-### config FEATURE_VOLUMEID_MAC
-###	bool "mac filesystem"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-###
-### config FEATURE_VOLUMEID_MSDOS
-###	bool "msdos filesystem"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-config FEATURE_VOLUMEID_OCFS2
-	bool "ocfs2 filesystem"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-### config FEATURE_VOLUMEID_HIGHPOINTRAID
-###	bool "highpoint raid"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-### config FEATURE_VOLUMEID_ISWRAID
-###	bool "intel raid"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-### config FEATURE_VOLUMEID_LSIRAID
-###	bool "lsi raid"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-### config FEATURE_VOLUMEID_VIARAID
-###	bool "via raid"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-### config FEATURE_VOLUMEID_SILICONRAID
-###	bool "silicon raid"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-### config FEATURE_VOLUMEID_NVIDIARAID
-###	bool "nvidia raid"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-### config FEATURE_VOLUMEID_PROMISERAID
-###	bool "promise raid"
-###	default y
-###	depends on VOLUMEID
-###	help
-###	  TODO
-
-config FEATURE_VOLUMEID_LINUXRAID
-	bool "linuxraid"
-	default y
-	depends on VOLUMEID
-	help
-	  TODO
-
-endmenu
+source util-linux/volume_id/Config.in
 
 endmenu

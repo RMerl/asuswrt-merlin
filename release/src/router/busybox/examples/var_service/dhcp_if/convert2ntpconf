@@ -29,6 +29,6 @@ test "$ip" || exit 1
 {
 for n in $ntpsrv; do
 	echo "let cfg=cfg+1"
-	echo "ntpip[\$cfg]='$n'";
+	echo "ntpip[\$cfg]='$n'"
 done
 } >"$1"

@@ -16,7 +16,7 @@ config PASSWORD_MINLEN
 
 config MD5_SMALL
 	int "MD5: Trade bytes for speed (0:fast, 3:slow)"
-	default 1
+	default 1  # all "fast or small" options default to small
 	range 0 3
 	help
 	  Trade binary size versus speed for the md5sum algorithm.
@@ -28,9 +28,19 @@ config MD5_SMALL
 	  2                   3.0                5088
 	  3 (smallest)        5.1                4912
 
+config SHA3_SMALL
+	int "SHA3: Trade bytes for speed (0:fast, 1:slow)"
+	default 1  # all "fast or small" options default to small
+	range 0 1
+	help
+	  Trade binary size versus speed for the sha3sum algorithm.
+	  SHA3_SMALL=0 compared to SHA3_SMALL=1 (approximate):
+	  64-bit x86: +270 bytes of code, 45% faster
+	  32-bit x86: +450 bytes of code, 75% faster
+
 config FEATURE_FAST_TOP
 	bool "Faster /proc scanning code (+100 bytes)"
-	default y
+	default n  # all "fast or small" options default to small
 	help
 	  This option makes top (and ps) ~20% faster (or 20% less CPU hungry),
 	  but code size is slightly bigger.
@@ -104,7 +114,7 @@ config FEATURE_EDITING_SAVE_ON_EXIT
 config FEATURE_REVERSE_SEARCH
 	bool "Reverse history search"
 	default y
-	depends on FEATURE_EDITING_SAVEHISTORY
+	depends on FEATURE_EDITING
 	help
 	  Enable readline-like Ctrl-R combination for reverse history search.
 	  Increases code by about 0.5k.
@@ -198,7 +208,7 @@ config FEATURE_SKIP_ROOTFS
 
 config MONOTONIC_SYSCALL
 	bool "Use clock_gettime(CLOCK_MONOTONIC) syscall"
-	default n
+	default y
 	select PLATFORM_LINUX
 	help
 	  Use clock_gettime(CLOCK_MONOTONIC) syscall for measuring

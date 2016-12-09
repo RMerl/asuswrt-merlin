@@ -30,7 +30,11 @@
 
 #include <mntent.h>
 #include <sys/mount.h>
+#ifndef MNT_DETACH
+# define MNT_DETACH 0x00000002
+#endif
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 #if defined(__dietlibc__)
 // TODO: This does not belong here.
@@ -81,8 +85,9 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 	argv += optind;
 
 	// MNT_FORCE and MNT_DETACH (from linux/fs.h) must match
-	// OPT_FORCE and OPT_LAZY, otherwise this trick won't work:
-	doForce = MAX((opt & OPT_FORCE), (opt & OPT_LAZY));
+	// OPT_FORCE and OPT_LAZY.
+	BUILD_BUG_ON(OPT_FORCE != MNT_FORCE || OPT_LAZY != MNT_DETACH);
+	doForce = opt & (OPT_FORCE|OPT_LAZY);
 
 	/* Get a list of mount points from mtab.  We read them all in now mostly
 	 * for umount -a (so we don't have to worry about the list changing while
@@ -98,7 +103,8 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 		if (opt & OPT_ALL)
 			bb_error_msg_and_die("can't open '%s'", bb_path_mtab_file);
 	} else {
-		while (getmntent_r(fp, &me, bb_common_bufsiz1, sizeof(bb_common_bufsiz1))) {
+		setup_common_bufsiz();
+		while (getmntent_r(fp, &me, bb_common_bufsiz1, COMMON_BUFSIZE)) {
 			/* Match fstype if passed */
 			if (!match_fstype(&me, fstype))
 				continue;
@@ -147,11 +153,18 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 		// umount the directory even if we were given the block device.
 		if (m) zapit = m->dir;
 
+// umount from util-linux 2.22.2 does not do this:
+// umount -f uses umount2(MNT_FORCE) immediately,
+// not trying umount() first.
+// (Strangely, umount -fl ignores -f: it is equivalent to umount -l.
+// We do pass both flags in this case)
+#if 0
 		// Let's ask the thing nicely to unmount.
 		curstat = umount(zapit);
 
-		// Force the unmount, if necessary.
+		// Unmount with force and/or lazy flags, if necessary.
 		if (curstat && doForce)
+#endif
 			curstat = umount2(zapit, doForce);
 
 		// If still can't umount, maybe remount read-only?
@@ -168,7 +181,7 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 				bb_error_msg(msg, m->device);
 			} else {
 				status = EXIT_FAILURE;
-				bb_perror_msg("can't %sumount %s", (doForce ? "forcibly " : ""), zapit);
+				bb_perror_msg("can't unmount %s", zapit);
 			}
 		} else {
 			// De-allocate the loop device.  This ioctl should be ignored on

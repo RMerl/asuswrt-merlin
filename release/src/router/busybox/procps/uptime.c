@@ -81,10 +81,10 @@ int uptime_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 
 #if ENABLE_FEATURE_UPTIME_UTMP_SUPPORT
 	{
-		struct utmp *ut;
+		struct utmpx *ut;
 		unsigned users = 0;
-		while ((ut = getutent()) != NULL) {
-			if ((ut->ut_type == USER_PROCESS) && (ut->ut_name[0] != '\0'))
+		while ((ut = getutxent()) != NULL) {
+			if ((ut->ut_type == USER_PROCESS) && (ut->ut_user[0] != '\0'))
 				users++;
 		}
 		printf(",  %u users", users);

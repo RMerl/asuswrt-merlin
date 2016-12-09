@@ -133,7 +133,7 @@ static void process_includes(const char *filename)
 		process_includes(include_directive);
 
 		/* Print everything after directive */
-	        if (end) {
+		if (end) {
 			fputs(end, stdout);
 			free(end);
 		}

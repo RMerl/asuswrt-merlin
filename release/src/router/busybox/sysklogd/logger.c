@@ -6,6 +6,19 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+//config:config LOGGER
+//config:	bool "logger"
+//config:	default y
+//config:	select FEATURE_SYSLOG
+//config:	help
+//config:	    The logger utility allows you to send arbitrary text
+//config:	    messages to the system log (i.e. the 'syslogd' utility) so
+//config:	    they can be logged. This is generally used to help locate
+//config:	    problems that occur within programs and scripts.
+
+//applet:IF_LOGGER(APPLET(logger, BB_DIR_USR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_LOGGER) += syslogd_and_logger.o
 
 //usage:#define logger_trivial_usage
 //usage:       "[OPTIONS] [MESSAGE]"
@@ -85,24 +98,20 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 	char *str_p, *str_t;
 	int opt;
 	int i = 0;
-	FILE *f = NULL;
+
+	setup_common_bufsiz();
 
 	/* Fill out the name string early (may be overwritten later) */
 	str_t = uid2uname_utoa(geteuid());
 
 	/* Parse any options */
-	opt = getopt32(argv, "p:st:c", &str_p, &str_t);
+	opt = getopt32(argv, "p:st:", &str_p, &str_t);
 
 	if (opt & 0x2) /* -s */
 		i |= LOG_PERROR;
-	if (opt & 0x8) { /* -c */
-		f = fopen_for_write(DEV_CONSOLE);
-		if (!f)
-			bb_error_msg("can't open console: %d %s\n", errno, strerror(errno));
-	}
 	//if (opt & 0x4) /* -t */
 	openlog(str_t, i, 0);
-	i = LOG_USER | LOG_WARNING;
+	i = LOG_USER | LOG_NOTICE;
 	if (opt & 0x1) /* -p */
 		i = pencode(str_p);
 
@@ -114,8 +123,6 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			) {
 				/* Neither "" nor "\n" */
 				syslog(i, "%s", strbuf);
-				if (f)
-					fprintf(f, "%s", strbuf);
 			}
 		}
 	} else {
@@ -129,13 +136,9 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			pos = len;
 		} while (*++argv);
 		syslog(i, "%s", message + 1); /* skip leading " " */
-		if (f)
-			fprintf(f, "%s", message + 1);
 	}
 
 	closelog();
-	if (f)
-		fclose(f);
 	return EXIT_SUCCESS;
 }
 

@@ -53,12 +53,20 @@
 //config:	  Support -0: input items are terminated by a NUL character
 //config:	  instead of whitespace, and the quotes and backslash
 //config:	  are not special.
+//config:
+//config:config FEATURE_XARGS_SUPPORT_REPL_STR
+//config:	bool "Enable -I STR: string to replace"
+//config:	default y
+//config:	depends on XARGS
+//config:	help
+//config:	  Support -I STR and -i[STR] options.
 
 //applet:IF_XARGS(APPLET_NOEXEC(xargs, xargs, BB_DIR_USR_BIN, BB_SUID_DROP, xargs))
 
 //kbuild:lib-$(CONFIG_XARGS) += xargs.o
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 /* This is a NOEXEC applet. Be very careful! */
 
@@ -85,19 +93,23 @@
 
 struct globals {
 	char **args;
+#if ENABLE_FEATURE_XARGS_SUPPORT_REPL_STR
+	char **argv;
+	const char *repl_str;
+	char eol_ch;
+#endif
 	const char *eof_str;
 	int idx;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	G.eof_str = NULL; /* need to clear by hand because we are NOEXEC applet */ \
+	IF_FEATURE_XARGS_SUPPORT_REPL_STR(G.repl_str = "{}";) \
+	IF_FEATURE_XARGS_SUPPORT_REPL_STR(G.eol_ch = '\n';) \
 } while (0)
 
 
-/*
- * This function has special algorithm.
- * Don't use fork and include to main!
- */
 static int xargs_exec(void)
 {
 	int status;
@@ -112,7 +124,7 @@ static int xargs_exec(void)
 		return 124;
 	}
 	if (status >= 0x180) {
-		bb_error_msg("%s: terminated by signal %d",
+		bb_error_msg("'%s' terminated by signal %d",
 			G.args[0], status - 0x180);
 		return 125;
 	}
@@ -141,7 +153,7 @@ static void store_param(char *s)
  * is seen, store the address of a new parameter to args[].
  * If reading discovers that last chars do not form the complete
  * parameter, the pointer to the first such "tail character" is returned.
- * (buf has extra byte at the end to accomodate terminating NUL
+ * (buf has extra byte at the end to accommodate terminating NUL
  * of "tail characters" string).
  * Otherwise, the returned pointer points to NUL byte.
  * On entry, buf[] may contain some "seed chars" which are to become
@@ -301,7 +313,7 @@ static char* FAST_FUNC process0_stdin(int n_max_chars, int n_max_arg, char *buf)
 			c = '\0';
 		}
 		*p++ = c;
-		if (c == '\0') {   /* word's delimiter or EOF detected */
+		if (c == '\0') {   /* NUL or EOF detected */
 			/* A full word is loaded */
 			store_param(s);
 			dbg_msg("args[]:'%s'", s);
@@ -323,10 +335,71 @@ static char* FAST_FUNC process0_stdin(int n_max_chars, int n_max_arg, char *buf)
 }
 #endif /* FEATURE_XARGS_SUPPORT_ZERO_TERM */
 
+#if ENABLE_FEATURE_XARGS_SUPPORT_REPL_STR
+/*
+ * Used if -I<repl> was specified.
+ * In this mode, words aren't appended to PROG ARGS.
+ * Instead, entire input line is read, then <repl> string
+ * in every PROG and ARG is replaced with the line:
+ *  echo -e "ho ho\nhi" | xargs -I_ cmd __ _
+ * results in "cmd 'ho hoho ho' 'ho ho'"; "cmd 'hihi' 'hi'".
+ * -n MAX_ARGS seems to be ignored.
+ * Tested with GNU findutils 4.5.10.
+ */
+//FIXME: n_max_chars is not handled the same way as in GNU findutils.
+//FIXME: quoting is not implemented.
+static char* FAST_FUNC process_stdin_with_replace(int n_max_chars, int n_max_arg UNUSED_PARAM, char *buf)
+{
+	int i;
+	char *end, *p;
+
+	/* Free strings from last invocation, if any */
+	for (i = 0; G.args && G.args[i]; i++)
+		if (G.args[i] != G.argv[i])
+			free(G.args[i]);
+
+	end = buf + n_max_chars;
+	p = buf;
+
+	while (1) {
+		int c = getchar();
+		if (c == EOF || c == G.eol_ch) {
+			if (p == buf)
+				goto ret; /* empty line */
+			c = '\0';
+		}
+		*p++ = c;
+		if (c == '\0') {   /* EOL or EOF detected */
+			i = 0;
+			while (G.argv[i]) {
+				char *arg = G.argv[i];
+				int count = count_strstr(arg, G.repl_str);
+				if (count != 0)
+					arg = xmalloc_substitute_string(arg, count, G.repl_str, buf);
+				store_param(arg);
+				dbg_msg("args[]:'%s'", arg);
+				i++;
+			}
+			p = buf;
+			goto ret;
+		}
+		if (p == end) {
+			goto ret;
+		}
+	}
+ ret:
+	*p = '\0';
+	/* store_param(NULL) - caller will do it */
+	dbg_msg("return:'%s'", buf);
+	return buf;
+}
+#endif
+
 #if ENABLE_FEATURE_XARGS_SUPPORT_CONFIRMATION
 /* Prompt the user for a response, and
-   if the user responds affirmatively, return true;
-   otherwise, return false. Uses "/dev/tty", not stdin. */
+ * if user responds affirmatively, return true;
+ * otherwise, return false. Uses "/dev/tty", not stdin.
+ */
 static int xargs_ask_confirmation(void)
 {
 	FILE *tty_stream;
@@ -360,6 +433,9 @@ static int xargs_ask_confirmation(void)
 //usage:     "\n	-e[STR]	STR stops input processing"
 //usage:     "\n	-n N	Pass no more than N args to PROG"
 //usage:     "\n	-s N	Pass command line of no more than N bytes"
+//usage:	IF_FEATURE_XARGS_SUPPORT_REPL_STR(
+//usage:     "\n	-I STR	Replace STR within PROG ARGS with input line"
+//usage:	)
 //usage:	IF_FEATURE_XARGS_SUPPORT_TERMOPT(
 //usage:     "\n	-x	Exit if size is exceeded"
 //usage:	)
@@ -378,6 +454,8 @@ enum {
 	IF_FEATURE_XARGS_SUPPORT_CONFIRMATION(OPTBIT_INTERACTIVE,)
 	IF_FEATURE_XARGS_SUPPORT_TERMOPT(     OPTBIT_TERMINATE  ,)
 	IF_FEATURE_XARGS_SUPPORT_ZERO_TERM(   OPTBIT_ZEROTERM   ,)
+	IF_FEATURE_XARGS_SUPPORT_REPL_STR(    OPTBIT_REPLSTR    ,)
+	IF_FEATURE_XARGS_SUPPORT_REPL_STR(    OPTBIT_REPLSTR1   ,)
 
 	OPT_VERBOSE     = 1 << OPTBIT_VERBOSE    ,
 	OPT_NO_EMPTY    = 1 << OPTBIT_NO_EMPTY   ,
@@ -388,11 +466,14 @@ enum {
 	OPT_INTERACTIVE = IF_FEATURE_XARGS_SUPPORT_CONFIRMATION((1 << OPTBIT_INTERACTIVE)) + 0,
 	OPT_TERMINATE   = IF_FEATURE_XARGS_SUPPORT_TERMOPT(     (1 << OPTBIT_TERMINATE  )) + 0,
 	OPT_ZEROTERM    = IF_FEATURE_XARGS_SUPPORT_ZERO_TERM(   (1 << OPTBIT_ZEROTERM   )) + 0,
+	OPT_REPLSTR     = IF_FEATURE_XARGS_SUPPORT_REPL_STR(    (1 << OPTBIT_REPLSTR    )) + 0,
+	OPT_REPLSTR1    = IF_FEATURE_XARGS_SUPPORT_REPL_STR(    (1 << OPTBIT_REPLSTR1   )) + 0,
 };
 #define OPTION_STR "+trn:s:e::E:" \
 	IF_FEATURE_XARGS_SUPPORT_CONFIRMATION("p") \
 	IF_FEATURE_XARGS_SUPPORT_TERMOPT(     "x") \
-	IF_FEATURE_XARGS_SUPPORT_ZERO_TERM(   "0")
+	IF_FEATURE_XARGS_SUPPORT_ZERO_TERM(   "0") \
+	IF_FEATURE_XARGS_SUPPORT_REPL_STR(    "I:i::")
 
 int xargs_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int xargs_main(int argc, char **argv)
@@ -405,7 +486,8 @@ int xargs_main(int argc, char **argv)
 	unsigned opt;
 	int n_max_chars;
 	int n_max_arg;
-#if ENABLE_FEATURE_XARGS_SUPPORT_ZERO_TERM
+#if ENABLE_FEATURE_XARGS_SUPPORT_ZERO_TERM \
+ || ENABLE_FEATURE_XARGS_SUPPORT_REPL_STR
 	char* FAST_FUNC (*read_args)(int, int, char*) = process_stdin;
 #else
 #define read_args process_stdin
@@ -419,7 +501,10 @@ int xargs_main(int argc, char **argv)
 		"no-run-if-empty\0" No_argument "r"
 		;
 #endif
-	opt = getopt32(argv, OPTION_STR, &max_args, &max_chars, &G.eof_str, &G.eof_str);
+	opt = getopt32(argv, OPTION_STR,
+		&max_args, &max_chars, &G.eof_str, &G.eof_str
+		IF_FEATURE_XARGS_SUPPORT_REPL_STR(, &G.repl_str, &G.repl_str)
+	);
 
 	/* -E ""? You may wonder why not just omit -E?
 	 * This is used for portability:
@@ -427,8 +512,10 @@ int xargs_main(int argc, char **argv)
 	if ((opt & OPT_EOF_STRING1) && G.eof_str[0] == '\0')
 		G.eof_str = NULL;
 
-	if (opt & OPT_ZEROTERM)
-		IF_FEATURE_XARGS_SUPPORT_ZERO_TERM(read_args = process0_stdin);
+	if (opt & OPT_ZEROTERM) {
+		IF_FEATURE_XARGS_SUPPORT_ZERO_TERM(read_args = process0_stdin;)
+		IF_FEATURE_XARGS_SUPPORT_REPL_STR(G.eol_ch = '\0';)
+	}
 
 	argv += optind;
 	argc -= optind;
@@ -438,12 +525,7 @@ int xargs_main(int argc, char **argv)
 		argc++;
 	}
 
-	/* -s NUM default. fileutils-4.4.2 uses 128k, but I heasitate
-	 * to use such a big value - first need to change code to use
-	 * growable buffer instead of fixed one.
-	 */
-	n_max_chars = 32 * 1024;
-	/* Make smaller if system does not allow our default value.
+	/*
 	 * The Open Group Base Specifications Issue 6:
 	 * "The xargs utility shall limit the command line length such that
 	 * when the command line is invoked, the combined argument
@@ -451,16 +533,15 @@ int xargs_main(int argc, char **argv)
 	 * in the System Interfaces volume of IEEE Std 1003.1-2001)
 	 * shall not exceed {ARG_MAX}-2048 bytes".
 	 */
-	{
-		long arg_max = 0;
-#if defined _SC_ARG_MAX
-		arg_max = sysconf(_SC_ARG_MAX) - 2048;
-#elif defined ARG_MAX
-		arg_max = ARG_MAX - 2048;
-#endif
-		if (arg_max > 0 && n_max_chars > arg_max)
-			n_max_chars = arg_max;
-	}
+	n_max_chars = bb_arg_max();
+	if (n_max_chars > 32 * 1024)
+		n_max_chars = 32 * 1024;
+	/*
+	 * POSIX suggests substracting 2048 bytes from sysconf(_SC_ARG_MAX)
+	 * so that the process may safely modify its environment.
+	 */
+	n_max_chars -= 2048;
+
 	if (opt & OPT_UPTO_SIZE) {
 		n_max_chars = xatou_range(max_chars, 1, INT_MAX);
 	}
@@ -486,20 +567,39 @@ int xargs_main(int argc, char **argv)
 		/* if (n_max_arg > n_max_chars) n_max_arg = n_max_chars */
 	}
 
-	/* Allocate pointers for execvp */
-	/* We can statically allocate (argc + n_max_arg + 1) elements
-	 * and do not bother with resizing args[], but on 64-bit machines
-	 * this results in args[] vector which is ~8 times bigger
-	 * than n_max_chars! That is, with n_max_chars == 20k,
-	 * args[] will take 160k (!), which will most likely be
-	 * almost entirely unused.
-	 */
-	/* See store_param() for matching 256-step growth logic */
-	G.args = xmalloc(sizeof(G.args[0]) * ((argc + 0xff) & ~0xff));
-
-	/* Store the command to be executed, part 1 */
-	for (i = 0; argv[i]; i++)
-		G.args[i] = argv[i];
+#if ENABLE_FEATURE_XARGS_SUPPORT_REPL_STR
+	if (opt & (OPT_REPLSTR | OPT_REPLSTR1)) {
+		/*
+		 * -I<str>:
+		 * Unmodified args are kept in G.argv[i],
+		 * G.args[i] receives malloced G.argv[i] with <str> replaced
+		 * with input line. Setting this up:
+		 */
+		G.args = NULL;
+		G.argv = argv;
+		argc = 0;
+		read_args = process_stdin_with_replace;
+		/* Make -I imply -r. GNU findutils seems to do the same: */
+		/* (otherwise "echo -n | xargs -I% echo %" would SEGV) */
+		opt |= OPT_NO_EMPTY;
+	} else
+#endif
+	{
+		/* Allocate pointers for execvp.
+		 * We can statically allocate (argc + n_max_arg + 1) elements
+		 * and do not bother with resizing args[], but on 64-bit machines
+		 * this results in args[] vector which is ~8 times bigger
+		 * than n_max_chars! That is, with n_max_chars == 20k,
+		 * args[] will take 160k (!), which will most likely be
+		 * almost entirely unused.
+		 *
+		 * See store_param() for matching 256-step growth logic
+		 */
+		G.args = xmalloc(sizeof(G.args[0]) * ((argc + 0xff) & ~0xff));
+		/* Store the command to be executed, part 1 */
+		for (i = 0; argv[i]; i++)
+			G.args[i] = argv[i];
+	}
 
 	while (1) {
 		char *rem;

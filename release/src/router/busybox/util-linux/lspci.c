@@ -74,11 +74,11 @@ static int FAST_FUNC fileAction(
 
 	if (option_mask32 & OPT_m) {
 		printf("%s \"Class %04x\" \"%04x\" \"%04x\" \"%04x\" \"%04x\"",
-		       pci_slot_name, pci_class, pci_vid, pci_did,
-		       pci_subsys_vid, pci_subsys_did);
+			pci_slot_name, pci_class, pci_vid, pci_did,
+			pci_subsys_vid, pci_subsys_did);
 	} else {
 		printf("%s Class %04x: %04x:%04x",
-		       pci_slot_name, pci_class, pci_vid, pci_did);
+			pci_slot_name, pci_class, pci_vid, pci_did);
 	}
 
 	if ((option_mask32 & OPT_k) && driver) {

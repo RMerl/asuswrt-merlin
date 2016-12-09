@@ -86,7 +86,7 @@ md5_crypt(char result[MD5_OUT_BUFSIZE], const unsigned char *pw, const unsigned 
 
 	/* Get the length of the salt including "$1$" */
 	sl = 3;
-	while (salt[sl] && salt[sl] != '$' && sl < (3 + 8))
+	while (sl < (3 + 8) && salt[sl] && salt[sl] != '$')
 		sl++;
 
 	/* Hash. the password first, since that is what is most unknown */

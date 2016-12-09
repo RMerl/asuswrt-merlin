@@ -27,7 +27,7 @@ int findfs_main(int argc UNUSED_PARAM, char **argv)
 	if (!dev)
 		bb_show_usage();
 
-	if (strncmp(dev, "/dev/", 5) == 0) {
+	if (is_prefixed_with(dev, "/dev/")) {
 		/* Just pass any /dev/xxx name right through.
 		 * This might aid in some scripts being able
 		 * to call this unconditionally */

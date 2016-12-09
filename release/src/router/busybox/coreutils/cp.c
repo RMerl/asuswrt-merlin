@@ -31,6 +31,7 @@
 //usage:     "\n	-f	Overwrite"
 //usage:     "\n	-i	Prompt before overwrite"
 //usage:     "\n	-l,-s	Create (sym)links"
+//usage:     "\n	-u	Copy only newer files"
 
 #include "libbb.h"
 #include "libcoreutils/coreutils.h"
@@ -49,12 +50,10 @@ int cp_main(int argc, char **argv)
 	int flags;
 	int status;
 	enum {
-		OPT_a = 1 << (sizeof(FILEUTILS_CP_OPTSTR)-1),
-		OPT_r = 1 << (sizeof(FILEUTILS_CP_OPTSTR)),
-		OPT_P = 1 << (sizeof(FILEUTILS_CP_OPTSTR)+1),
-		OPT_v = 1 << (sizeof(FILEUTILS_CP_OPTSTR)+2),
+		FILEUTILS_CP_OPTNUM = sizeof(FILEUTILS_CP_OPTSTR)-1,
 #if ENABLE_FEATURE_CP_LONG_OPTIONS
-		OPT_parents = 1 << (sizeof(FILEUTILS_CP_OPTSTR)+3),
+		/*OPT_rmdest  = FILEUTILS_RMDEST = 1 << FILEUTILS_CP_OPTNUM */
+		OPT_parents = 1 << (FILEUTILS_CP_OPTNUM+1),
 #endif
 	};
 
@@ -76,11 +75,12 @@ int cp_main(int argc, char **argv)
 		"recursive\0"      No_argument "R"
 		"symbolic-link\0"  No_argument "s"
 		"verbose\0"        No_argument "v"
-		"parents\0"        No_argument "\xff"
+		"update\0"         No_argument "u"
+		"remove-destination\0" No_argument "\xff"
+		"parents\0"        No_argument "\xfe"
 		;
 #endif
-	// -v (--verbose) is ignored
-	flags = getopt32(argv, FILEUTILS_CP_OPTSTR "arPv");
+	flags = getopt32(argv, FILEUTILS_CP_OPTSTR);
 	/* Options of cp from GNU coreutils 6.10:
 	 * -a, --archive
 	 * -f, --force
@@ -95,6 +95,11 @@ int cp_main(int argc, char **argv)
 	 * -d	same as --no-dereference --preserve=links
 	 * -p	same as --preserve=mode,ownership,timestamps
 	 * -c	same as --preserve=context
+	 * -u, --update
+	 *	copy only when the SOURCE file is newer than the destination
+	 *	file or when the destination file is missing
+	 * --remove-destination
+	 *	remove each existing destination file before attempting to open
 	 * --parents
 	 *	use full source file name under DIRECTORY
 	 * NOT SUPPORTED IN BBOX:
@@ -107,8 +112,6 @@ int cp_main(int argc, char **argv)
 	 *	preserve attributes (default: mode,ownership,timestamps),
 	 *	if possible additional attributes: security context,links,all
 	 * --no-preserve=ATTR_LIST
-	 * --remove-destination
-	 *	remove  each existing destination file before attempting to open
 	 * --sparse=WHEN
 	 *	control creation of sparse files
 	 * --strip-trailing-slashes
@@ -119,9 +122,6 @@ int cp_main(int argc, char **argv)
 	 *	copy all SOURCE arguments into DIRECTORY
 	 * -T, --no-target-directory
 	 *	treat DEST as a normal file
-	 * -u, --update
-	 *	copy only when the SOURCE file is newer than the destination
-	 *	file or when the destination file is missing
 	 * -x, --one-file-system
 	 *	stay on this file system
 	 * -Z, --context=CONTEXT
@@ -157,10 +157,15 @@ int cp_main(int argc, char **argv)
 			return EXIT_FAILURE;
 
 #if ENABLE_FEATURE_CP_LONG_OPTIONS
+		//bb_error_msg("flags:%x FILEUTILS_RMDEST:%x OPT_parents:%x",
+		//	flags, FILEUTILS_RMDEST, OPT_parents);
 		if (flags & OPT_parents) {
 			if (!(d_flags & 2)) {
 				bb_error_msg_and_die("with --parents, the destination must be a directory");
 			}
+		}
+		if (flags & FILEUTILS_RMDEST) {
+			flags |= FILEUTILS_FORCE;
 		}
 #endif
 

@@ -5,8 +5,33 @@
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
+//config:config DPKG_DEB
+//config:	bool "dpkg_deb"
+//config:	default n
+//config:	select FEATURE_SEAMLESS_GZ
+//config:	help
+//config:	  dpkg-deb unpacks and provides information about Debian archives.
+//config:
+//config:	  This implementation of dpkg-deb cannot pack archives.
+//config:
+//config:	  Unless you have a specific application which requires dpkg-deb,
+//config:	  say N here.
+//config:
+//config:config FEATURE_DPKG_DEB_EXTRACT_ONLY
+//config:	bool "Extract only (-x)"
+//config:	default n
+//config:	depends on DPKG_DEB
+//config:	help
+//config:	  This reduces dpkg-deb to the equivalent of
+//config:	  "ar -p <deb> data.tar.gz | tar -zx". However it saves space as none
+//config:	  of the extra dpkg-deb, ar or tar options are needed, they are linked
+//config:	  to internally.
+
+//applet:IF_DPKG_DEB(APPLET_ODDNAME(dpkg-deb, dpkg_deb, BB_DIR_USR_BIN, BB_SUID_DROP, dpkg_deb))
+//kbuild:lib-$(CONFIG_DPKG_DEB) += dpkg_deb.o
+
 //usage:#define dpkg_deb_trivial_usage
-//usage:       "[-cefxX] FILE [argument"
+//usage:       "[-cefxX] FILE [argument]"
 //usage:#define dpkg_deb_full_usage "\n\n"
 //usage:       "Perform actions on Debian packages (.debs)\n"
 //usage:     "\n	-c	List contents of filesystem tree"
@@ -45,6 +70,8 @@ int dpkg_deb_main(int argc, char **argv)
 	ar_archive->dpkg__sub_archive = tar_archive;
 	ar_archive->filter = filter_accept_list_reassign;
 
+	llist_add_to(&ar_archive->accept, (char*)"data.tar");
+	llist_add_to(&control_tar_llist, (char*)"control.tar");
 #if ENABLE_FEATURE_SEAMLESS_GZ
 	llist_add_to(&ar_archive->accept, (char*)"data.tar.gz");
 	llist_add_to(&control_tar_llist, (char*)"control.tar.gz");
@@ -56,6 +83,10 @@ int dpkg_deb_main(int argc, char **argv)
 #if ENABLE_FEATURE_SEAMLESS_LZMA
 	llist_add_to(&ar_archive->accept, (char*)"data.tar.lzma");
 	llist_add_to(&control_tar_llist, (char*)"control.tar.lzma");
+#endif
+#if ENABLE_FEATURE_SEAMLESS_XZ
+	llist_add_to(&ar_archive->accept, (char*)"data.tar.xz");
+	llist_add_to(&control_tar_llist, (char*)"control.tar.xz");
 #endif
 
 	opt_complementary = "c--efXx:e--cfXx:f--ceXx:X--cefx:x--cefX";

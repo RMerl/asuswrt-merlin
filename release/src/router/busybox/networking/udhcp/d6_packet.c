@@ -17,12 +17,12 @@ void FAST_FUNC d6_dump_packet(struct d6_packet *packet)
 	if (dhcp_verbose < 2)
 		return;
 
-	bb_info_msg(
-		" xid %x"
+	bb_error_msg(
+		"xid %x"
 		, packet->d6_xid32
 	);
 	//*bin2hex(buf, (void *) packet->chaddr, sizeof(packet->chaddr)) = '\0';
-	//bb_info_msg(" chaddr %s", buf);
+	//bb_error_msg(" chaddr %s", buf);
 }
 #endif
 
@@ -35,15 +35,15 @@ int FAST_FUNC d6_recv_kernel_packet(struct in6_addr *peer_ipv6
 	memset(packet, 0, sizeof(*packet));
 	bytes = safe_read(fd, packet, sizeof(*packet));
 	if (bytes < 0) {
-		log1("Packet read error, ignoring");
+		log1("packet read error, ignoring");
 		return bytes; /* returns -1 */
 	}
 
 	if (bytes < offsetof(struct d6_packet, d6_options)) {
-		bb_info_msg("Packet with bad magic, ignoring");
+		bb_error_msg("packet with bad magic, ignoring");
 		return -2;
 	}
-	log1("Received a packet");
+	log1("received %s", "a packet");
 	d6_dump_packet(packet);
 
 	return bytes;

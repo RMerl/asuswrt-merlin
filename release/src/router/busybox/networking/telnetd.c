@@ -44,6 +44,7 @@
 #define DEBUG 0
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <syslog.h>
 
 #if DEBUG
@@ -82,8 +83,9 @@ struct globals {
 	const char *issuefile;
 	int maxfd;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	G.loginpath = "/bin/login"; \
 	G.issuefile = "/etc/issue.net"; \
 } while (0)
@@ -125,6 +127,7 @@ remove_iacs(struct tsession *ts, int *pnum_totty)
 			/* We map \r\n ==> \r for pragmatic reasons.
 			 * Many client implementations send \r\n when
 			 * the user hits the CarriageReturn key.
+			 * See RFC 1123 3.3.1 Telnet End-of-Line Convention.
 			 */
 			if (c == '\r' && ptr < end && (*ptr == '\n' || *ptr == '\0'))
 				ptr++;
@@ -264,7 +267,7 @@ make_new_session(
 	close_on_exec_on(fd);
 
 	/* SO_KEEPALIVE by popular demand */
-	setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &const_int_1, sizeof(const_int_1));
+	setsockopt_keepalive(sock);
 #if ENABLE_FEATURE_TELNETD_STANDALONE
 	ts->sockfd_read = sock;
 	ndelay_on(sock);
@@ -330,7 +333,6 @@ make_new_session(
 
 	/* Restore default signal handling ASAP */
 	bb_signals((1 << SIGCHLD) + (1 << SIGPIPE), SIG_DFL);
-	signal(SIGINT, SIG_DFL);
 
 	pid = getpid();
 
@@ -462,15 +464,7 @@ static void handle_sigchld(int sig UNUSED_PARAM)
 		while (ts) {
 			if (ts->shell_pid == pid) {
 				ts->shell_pid = -1;
-// man utmp:
-// When init(8) finds that a process has exited, it locates its utmp entry
-// by ut_pid, sets ut_type to DEAD_PROCESS, and clears ut_user, ut_host
-// and ut_time with null bytes.
-// [same applies to other processes which maintain utmp entries, like telnetd]
-//
-// We do not bother actually clearing fields:
-// it might be interesting to know who was logged in and from where
-				update_utmp(pid, DEAD_PROCESS, /*tty_name:*/ NULL, /*username:*/ NULL, /*hostname:*/ NULL);
+				update_utmp_DEAD_PROCESS(pid);
 				break;
 			}
 			ts = ts->next;
@@ -739,7 +733,7 @@ int telnetd_main(int argc UNUSED_PARAM, char **argv)
 		continue;
  kill_session:
 		if (ts->shell_pid > 0)
-			update_utmp(ts->shell_pid, DEAD_PROCESS, /*tty_name:*/ NULL, /*username:*/ NULL, /*hostname:*/ NULL);
+			update_utmp_DEAD_PROCESS(ts->shell_pid);
 		free_session(ts);
 		ts = next;
 	}

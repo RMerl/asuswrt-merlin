@@ -30,13 +30,13 @@ result=`(
 n=0
 while test $n -le 999; do
 	echo "$text" | head -c $n | "$sum"
-	: $((n++))
+	n=$(($n+1))
 done | "$sum"
 )`
 
 if test x"$result" = x"$expected  -"; then
-    echo "PASS: $sum"
-    exit 0
+	echo "PASS: $sum"
+	exit 0
 fi
 
 echo "FAIL: $sum (r:$result exp:$expected)"

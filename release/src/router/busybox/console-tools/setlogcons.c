@@ -10,9 +10,9 @@
  */
 
 //usage:#define setlogcons_trivial_usage
-//usage:       "N"
+//usage:       "[N]"
 //usage:#define setlogcons_full_usage "\n\n"
-//usage:       "Redirect the kernel output to console N (0 for current)"
+//usage:       "Redirect the kernel output to console N. Default:0 (current console)"
 
 #include "libbb.h"
 
@@ -22,9 +22,10 @@ int setlogcons_main(int argc UNUSED_PARAM, char **argv)
 	struct {
 		char fn;
 		char subarg;
-	} arg = { 11, /* redirect kernel messages */
-			  0   /* to specified console (current as default) */
-			};
+	} arg = {
+		11, /* redirect kernel messages */
+		0   /* to specified console (current as default) */
+	};
 
 	if (argv[1])
 		arg.subarg = xatou_range(argv[1], 0, 63);

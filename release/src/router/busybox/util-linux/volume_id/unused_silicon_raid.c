@@ -18,6 +18,17 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+//kbuild:### lib-$(CONFIG_FEATURE_VOLUMEID_SILICONRAID) += silicon_raid.o
+
+//config:
+//config:### config FEATURE_VOLUMEID_SILICONRAID
+//config:###	bool "silicon raid"
+//config:###	default y
+//config:###	depends on VOLUMEID
+//config:###	help
+//config:###	  TODO
+//config:
+
 #include "volume_id_internal.h"
 
 struct silicon_meta {
@@ -62,7 +73,7 @@ int FAST_FUNC volume_id_probe_silicon_medley_raid(struct volume_id *id, uint64_t
 
 //	volume_id_set_usage(id, VOLUME_ID_RAID);
 //	snprintf(id->type_version, sizeof(id->type_version)-1, "%u.%u",
-//		 le16_to_cpu(sil->major_ver), le16_to_cpu(sil->minor_ver));
+//		le16_to_cpu(sil->major_ver), le16_to_cpu(sil->minor_ver));
 //	id->type = "silicon_medley_raid_member";
 
 	return 0;

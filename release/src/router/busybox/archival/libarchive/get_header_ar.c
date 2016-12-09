@@ -8,11 +8,19 @@
 #include "bb_archive.h"
 #include "ar.h"
 
-static unsigned read_num(const char *str, int base)
+/* WARNING: Clobbers str[len], so fields must be read in reverse order! */
+static unsigned read_num(char *str, int base, int len)
 {
+	int err;
+
+	/* ar fields are fixed length text strings (padded with spaces).
+	 * Ensure bb_strtou doesn't read past the field in case the full
+	 * width is used. */
+	str[len] = 0;
+
 	/* This code works because
 	 * on misformatted numbers bb_strtou returns all-ones */
-	int err = bb_strtou(str, NULL, base);
+	err = bb_strtou(str, NULL, base);
 	if (err == -1)
 		bb_error_msg_and_die("invalid ar header");
 	return err;
@@ -51,11 +59,13 @@ char FAST_FUNC get_header_ar(archive_handle_t *archive_handle)
 	if (ar.formatted.magic[0] != '`' || ar.formatted.magic[1] != '\n')
 		bb_error_msg_and_die("invalid ar header");
 
-	/* FIXME: more thorough routine would be in order here
-	 * (we have something like that in tar)
-	 * but for now we are lax. */
-	ar.formatted.magic[0] = '\0'; /* else 4G-2 file will have size="4294967294`\n..." */
-	typed->size = size = read_num(ar.formatted.size, 10);
+	/*
+	 * Note that the fields MUST be read in reverse order as
+	 * read_num() clobbers the next byte after the field!
+	 * Order is: name, date, uid, gid, mode, size, magic.
+	 */
+	typed->size = size = read_num(ar.formatted.size, 10,
+				      sizeof(ar.formatted.size));
 
 	/* special filenames have '/' as the first character */
 	if (ar.formatted.name[0] == '/') {
@@ -87,10 +97,10 @@ char FAST_FUNC get_header_ar(archive_handle_t *archive_handle)
 	 * long filename pseudo file. Thus we decode the rest
 	 * after dealing with long filename pseudo file.
 	 */
-	typed->mode = read_num(ar.formatted.mode, 8);
-	typed->mtime = read_num(ar.formatted.date, 10);
-	typed->uid = read_num(ar.formatted.uid, 10);
-	typed->gid = read_num(ar.formatted.gid, 10);
+	typed->mode = read_num(ar.formatted.mode, 8, sizeof(ar.formatted.mode));
+	typed->gid = read_num(ar.formatted.gid, 10, sizeof(ar.formatted.gid));
+	typed->uid = read_num(ar.formatted.uid, 10, sizeof(ar.formatted.uid));
+	typed->mtime = read_num(ar.formatted.date, 10, sizeof(ar.formatted.date));
 
 #if ENABLE_FEATURE_AR_LONG_FILENAMES
 	if (ar.formatted.name[0] == '/') {
@@ -98,7 +108,8 @@ char FAST_FUNC get_header_ar(archive_handle_t *archive_handle)
 
 		/* The number after the '/' indicates the offset in the ar data section
 		 * (saved in ar_long_names) that conatains the real filename */
-		long_offset = read_num(&ar.formatted.name[1], 10);
+		long_offset = read_num(&ar.formatted.name[1], 10,
+				       sizeof(ar.formatted.name) - 1);
 		if (long_offset >= ar_long_name_size) {
 			bb_error_msg_and_die("can't resolve long filename");
 		}

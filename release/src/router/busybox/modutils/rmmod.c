@@ -28,7 +28,7 @@
 int rmmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int rmmod_main(int argc UNUSED_PARAM, char **argv)
 {
-	int n;
+	int n, err;
 	unsigned flags = O_NONBLOCK | O_EXCL;
 
 	/* Parse command line. */
@@ -40,7 +40,8 @@ int rmmod_main(int argc UNUSED_PARAM, char **argv)
 		flags |= O_TRUNC;
 	if (n & 4) {
 		/* Unload _all_ unused modules via NULL delete_module() call */
-		if (bb_delete_module(NULL, flags) != 0 && errno != EFAULT)
+		err = bb_delete_module(NULL, flags);
+		if (err && err != EFAULT)
 			bb_perror_msg_and_die("rmmod");
 		return EXIT_SUCCESS;
 	}
@@ -58,9 +59,10 @@ int rmmod_main(int argc UNUSED_PARAM, char **argv)
 			safe_strncpy(modname, bname, MODULE_NAME_LEN);
 		else
 			filename2modname(bname, modname);
-		if (bb_delete_module(modname, flags))
-			bb_error_msg_and_die("can't unload '%s': %s",
-					     modname, moderror(errno));
+		err = bb_delete_module(modname, flags);
+		if (err)
+			bb_perror_msg_and_die("can't unload module '%s'",
+					modname);
 	}
 
 	return EXIT_SUCCESS;

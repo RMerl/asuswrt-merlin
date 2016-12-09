@@ -36,7 +36,8 @@ testing "mount -o remount,mand" \
 "mount -o loop mount.image1m $testdir "\
 "&& grep -Fc $testdir </proc/mounts "\
 "&& mount -o remount,mand $testdir "\
-"&& grep -F $testdir </proc/mounts | grep -c '[, ]mand[, ]'" \
+"&& grep -F $testdir </proc/mounts | grep -c '[, ]mand[, ]'"\
+"|| grep -F $testdir </proc/mounts" \
 	"1\n""1\n" \
 	"" ""
 
@@ -82,5 +83,29 @@ b
 " \
 	"" ""
 SKIP=
+
+
+testing "mount RO loop" "\
+exec 2>&1
+umount -d mount.dir 2>/dev/null
+rmdir mount.dir     2>/dev/null
+mkdir -p mount.dir
+(
+cd mount.dir                               || { echo 'cd error'; exit 1; }
+mkdir z1 z2                                || { echo 'mkdir error'; exit 1; }
+mount -t tmpfs tmpfs z1                    || { echo 'mount tmpfs error'; exit 1; }
+dd if=/dev/zero of=z1/e2img count=10 bs=1M 2>/dev/null || { echo 'dd error'; exit 1; }
+mke2fs -F z1/e2img                         2>/dev/null >&2 || { echo 'mke2fs error'; exit 1; }
+mount -r -o loop -t ext2 z1/e2img z2       || { echo 'mount -r -o loop error'; exit 1; }
+mount -o remount,ro z1                     || { echo 'mount -o remount,ro error'; exit 1; }
+)
+umount -d mount.dir/z2
+##losetup -d /dev/loop*
+umount -d mount.dir/z1
+rm -rf mount.dir
+echo DONE
+" \
+"DONE\n" "" ""
+
 
 exit $FAILCOUNT

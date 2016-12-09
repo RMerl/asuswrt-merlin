@@ -8,6 +8,9 @@ pwd="$PWD"
 
 if="${PWD##*/ifplugd_}"
 
+echo "* Upping iface $if"
+ip link set dev "$if" up
+
 echo "* Starting ifplugd on $if [$$]"
 exec \
 env - PATH="$PATH" \

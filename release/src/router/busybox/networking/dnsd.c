@@ -194,7 +194,7 @@ static char *table_lookup(struct dns_entry *d,
 		if ((len != 1 || d->name[1] != '*')
 		/* we assume (do not check) that query_string
 		 * ends in ".in-addr.arpa" */
-		 && strncmp(d->rip, query_string, strlen(d->rip)) == 0
+		 && is_prefixed_with(query_string, d->rip)
 		) {
 #if DEBUG
 			fprintf(stderr, "Found name:%s\n", d->name);

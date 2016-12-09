@@ -7,6 +7,22 @@
  * about bzip2 library code.
  */
 
+//config:config BZIP2
+//config:	bool "bzip2"
+//config:	default y
+//config:	help
+//config:	  bzip2 is a compression utility using the Burrows-Wheeler block
+//config:	  sorting text compression algorithm, and Huffman coding. Compression
+//config:	  is generally considerably better than that achieved by more
+//config:	  conventional LZ77/LZ78-based compressors, and approaches the
+//config:	  performance of the PPM family of statistical compressors.
+//config:
+//config:	  Unless you have a specific application which requires bzip2, you
+//config:	  should probably say N here.
+
+//applet:IF_BZIP2(APPLET(bzip2, BB_DIR_USR_BIN, BB_SUID_DROP))
+//kbuild:lib-$(CONFIG_BZIP2) += bzip2.o
+
 //usage:#define bzip2_trivial_usage
 //usage:       "[OPTIONS] [FILE]..."
 //usage:#define bzip2_full_usage "\n\n"
@@ -111,7 +127,7 @@ IF_DESKTOP(long long) int bz_write(bz_stream *strm, void* rbuf, ssize_t rlen, vo
 }
 
 static
-IF_DESKTOP(long long) int FAST_FUNC compressStream(transformer_aux_data_t *aux UNUSED_PARAM)
+IF_DESKTOP(long long) int FAST_FUNC compressStream(transformer_state_t *xstate UNUSED_PARAM)
 {
 	IF_DESKTOP(long long) int total;
 	ssize_t count;

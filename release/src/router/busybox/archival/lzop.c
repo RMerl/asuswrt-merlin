@@ -14,7 +14,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -24,6 +24,26 @@
 
    "Minimalized" for busybox by Alain Knaff
 */
+
+//config:config LZOP
+//config:	bool "lzop"
+//config:	default y
+//config:	help
+//config:	  Lzop compression/decompresion.
+//config:
+//config:config LZOP_COMPR_HIGH
+//config:	bool "lzop compression levels 7,8,9 (not very useful)"
+//config:	default n
+//config:	depends on LZOP
+//config:	help
+//config:	  High levels (7,8,9) of lzop compression. These levels
+//config:	  are actually slower than gzip at equivalent compression ratios
+//config:	  and take up 3.2K of code.
+
+//applet:IF_LZOP(APPLET(lzop, BB_DIR_BIN, BB_SUID_DROP))
+//applet:IF_LZOP(APPLET_ODDNAME(lzopcat, lzop, BB_DIR_USR_BIN, BB_SUID_DROP, lzopcat))
+//applet:IF_LZOP(APPLET_ODDNAME(unlzop, lzop, BB_DIR_USR_BIN, BB_SUID_DROP, unlzop))
+//kbuild:lib-$(CONFIG_LZOP) += lzop.o
 
 //usage:#define lzop_trivial_usage
 //usage:       "[-cfvd123456789CF] [FILE]..."
@@ -51,6 +71,7 @@
 //usage:     "\n	-F	Don't store or verify checksum"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include "bb_archive.h"
 #include "liblzo_interface.h"
 
@@ -116,7 +137,7 @@ static NOINLINE int lzo1x_optimize(uint8_t *in, unsigned in_len,
 	unsigned nl;
 	unsigned long o_m1_a = 0, o_m1_b = 0, o_m2 = 0, o_m3_a = 0, o_m3_b = 0;
 
-//	  LZO_UNUSED(wrkmem);
+//	LZO_UNUSED(wrkmem);
 
 	*out_len = 0;
 
@@ -346,11 +367,11 @@ static NOINLINE int lzo1x_optimize(uint8_t *in, unsigned in_len,
 	return LZO_E_EOF_NOT_FOUND;
 
  eof_found:
-//	  LZO_UNUSED(o_m1_a); LZO_UNUSED(o_m1_b); LZO_UNUSED(o_m2);
-//	  LZO_UNUSED(o_m3_a); LZO_UNUSED(o_m3_b);
+//	LZO_UNUSED(o_m1_a); LZO_UNUSED(o_m1_b); LZO_UNUSED(o_m2);
+//	LZO_UNUSED(o_m3_a); LZO_UNUSED(o_m3_b);
 	*out_len = pd(op, out);
 	return (ip == ip_end ? LZO_E_OK :
-		   (ip < ip_end	 ? LZO_E_INPUT_NOT_CONSUMED : LZO_E_INPUT_OVERRUN));
+		(ip < ip_end ? LZO_E_INPUT_NOT_CONSUMED : LZO_E_INPUT_OVERRUN));
 }
 
 /**********************************************************************/
@@ -423,8 +444,8 @@ struct globals {
 	chksum_t chksum_in;
 	chksum_t chksum_out;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
-#define INIT_G() do { } while (0)
+#define G (*(struct globals*)bb_common_bufsiz1)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 //#define G (*ptr_to_globals)
 //#define INIT_G() do {
 //	SET_PTR_TO_GLOBALS(xzalloc(sizeof(G)));
@@ -436,25 +457,27 @@ struct globals {
 //#define LZOP_VERSION_STRING     "1.01"
 //#define LZOP_VERSION_DATE       "Apr 27th 2003"
 
-#define OPTION_STRING "cfvdt123456789CF"
+#define OPTION_STRING "cfvqdt123456789CF"
 
+/* Note: must be kept in sync with archival/bbunzip.c */
 enum {
 	OPT_STDOUT      = (1 << 0),
 	OPT_FORCE       = (1 << 1),
 	OPT_VERBOSE     = (1 << 2),
-	OPT_DECOMPRESS  = (1 << 3),
-	OPT_TEST        = (1 << 4),
-	OPT_1           = (1 << 5),
-	OPT_2           = (1 << 6),
-	OPT_3           = (1 << 7),
-	OPT_4           = (1 << 8),
-	OPT_5           = (1 << 9),
-	OPT_6           = (1 << 10),
-	OPT_789         = (7 << 11),
-	OPT_7           = (1 << 11),
-	OPT_8           = (1 << 12),
-	OPT_C           = (1 << 14),
-	OPT_F           = (1 << 15),
+	OPT_QUIET       = (1 << 3),
+	OPT_DECOMPRESS  = (1 << 4),
+	OPT_TEST        = (1 << 5),
+	OPT_1           = (1 << 6),
+	OPT_2           = (1 << 7),
+	OPT_3           = (1 << 8),
+	OPT_4           = (1 << 9),
+	OPT_5           = (1 << 10),
+	OPT_6           = (1 << 11),
+	OPT_789         = (7 << 12),
+	OPT_7           = (1 << 13),
+	OPT_8           = (1 << 14),
+	OPT_C           = (1 << 15),
+	OPT_F           = (1 << 16),
 };
 
 /**********************************************************************/
@@ -618,7 +641,7 @@ static int lzo_get_method(header_t *h)
 /**********************************************************************/
 // compress a file
 /**********************************************************************/
-static NOINLINE smallint lzo_compress(const header_t *h)
+static NOINLINE int lzo_compress(const header_t *h)
 {
 	unsigned block_size = LZO_BLOCK_SIZE;
 	int r = 0; /* LZO_E_OK */
@@ -628,7 +651,6 @@ static NOINLINE smallint lzo_compress(const header_t *h)
 	uint32_t d_adler32 = ADLER32_INIT_VALUE;
 	uint32_t d_crc32 = CRC32_INIT_VALUE;
 	int l;
-	smallint ok = 1;
 	uint8_t *wrk_mem = NULL;
 
 	if (h->method == M_LZO1X_1)
@@ -710,7 +732,7 @@ static NOINLINE smallint lzo_compress(const header_t *h)
 	free(wrk_mem);
 	free(b1);
 	free(b2);
-	return ok;
+	return 1;
 }
 
 static FAST_FUNC void lzo_check(
@@ -731,7 +753,7 @@ static FAST_FUNC void lzo_check(
 /**********************************************************************/
 // decompress a file
 /**********************************************************************/
-static NOINLINE smallint lzo_decompress(const header_t *h)
+static NOINLINE int lzo_decompress(const header_t *h)
 {
 	unsigned block_size = LZO_BLOCK_SIZE;
 	int r;
@@ -739,7 +761,6 @@ static NOINLINE smallint lzo_decompress(const header_t *h)
 	uint32_t c_adler32 = ADLER32_INIT_VALUE;
 	uint32_t d_adler32 = ADLER32_INIT_VALUE;
 	uint32_t c_crc32 = CRC32_INIT_VALUE, d_crc32 = CRC32_INIT_VALUE;
-	smallint ok = 1;
 	uint8_t *b1;
 	uint32_t mcs_block_size = MAX_COMPRESSED_SIZE(block_size);
 	uint8_t *b2 = NULL;
@@ -843,7 +864,7 @@ static NOINLINE smallint lzo_decompress(const header_t *h)
 	}
 
 	free(b2);
-	return ok;
+	return 1;
 }
 
 /**********************************************************************/
@@ -875,7 +896,7 @@ static NOINLINE smallint lzo_decompress(const header_t *h)
  *                  chksum_out
  * The rest is identical.
 */
-static const unsigned char lzop_magic[9] = {
+static const unsigned char lzop_magic[9] ALIGN1 = {
 	0x89, 0x4c, 0x5a, 0x4f, 0x00, 0x0d, 0x0a, 0x1a, 0x0a
 };
 
@@ -1028,7 +1049,7 @@ static void lzo_set_method(header_t *h)
 	h->level = level;
 }
 
-static smallint do_lzo_compress(void)
+static int do_lzo_compress(void)
 {
 	header_t header;
 
@@ -1056,7 +1077,7 @@ static smallint do_lzo_compress(void)
 /**********************************************************************/
 // decompress
 /**********************************************************************/
-static smallint do_lzo_decompress(void)
+static int do_lzo_decompress(void)
 {
 	header_t header;
 
@@ -1077,7 +1098,7 @@ static char* FAST_FUNC make_new_name_lzop(char *filename, const char *expected_e
 	return xasprintf("%s.lzo", filename);
 }
 
-static IF_DESKTOP(long long) int FAST_FUNC pack_lzop(transformer_aux_data_t *aux UNUSED_PARAM)
+static IF_DESKTOP(long long) int FAST_FUNC pack_lzop(transformer_state_t *xstate UNUSED_PARAM)
 {
 	if (option_mask32 & OPT_DECOMPRESS)
 		return do_lzo_decompress();
@@ -1093,7 +1114,7 @@ int lzop_main(int argc UNUSED_PARAM, char **argv)
 	if (applet_name[4] == 'c')
 		option_mask32 |= (OPT_STDOUT | OPT_DECOMPRESS);
 	/* unlzop? */
-	if (applet_name[0] == 'u')
+	if (applet_name[4] == 'o')
 		option_mask32 |= OPT_DECOMPRESS;
 
 	global_crc32_table = crc32_filltable(NULL, 0);

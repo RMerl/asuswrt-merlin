@@ -94,19 +94,19 @@ int FAST_FUNC set_loop(char **device, const char *file, unsigned long long offse
 
 	/* Open the file.  Barf if this doesn't work.  */
 	mode = ro ? O_RDONLY : O_RDWR;
+ open_ffd:
 	ffd = open(file, mode);
 	if (ffd < 0) {
 		if (mode != O_RDONLY) {
 			mode = O_RDONLY;
-			ffd = open(file, mode);
+			goto open_ffd;
 		}
-		if (ffd < 0)
-			return -errno;
+		return -errno;
 	}
 
 	/* Find a loop device.  */
 	try = *device ? *device : dev;
-	/* 1048575 is a max possible minor number in Linux circa 2010 */
+	/* 1048575 (0xfffff) is a max possible minor number in Linux circa 2010 */
 	for (i = 0; rc && i < 1048576; i++) {
 		sprintf(dev, LOOP_FORMAT, i);
 
@@ -121,7 +121,7 @@ int FAST_FUNC set_loop(char **device, const char *file, unsigned long long offse
 					goto try_to_open;
 			}
 			/* Ran out of block devices, return failure.  */
-			rc = -ENOENT;
+			rc = -1;
 			break;
 		}
  try_to_open:
@@ -131,8 +131,14 @@ int FAST_FUNC set_loop(char **device, const char *file, unsigned long long offse
 			mode = O_RDONLY;
 			dfd = open(try, mode);
 		}
-		if (dfd < 0)
+		if (dfd < 0) {
+			if (errno == ENXIO) {
+				/* Happens if loop module is not loaded */
+				rc = -1;
+				break;
+			}
 			goto try_again;
+		}
 
 		rc = ioctl(dfd, BB_LOOP_GET_STATUS, &loopinfo);
 
@@ -148,16 +154,7 @@ int FAST_FUNC set_loop(char **device, const char *file, unsigned long long offse
 				else
 					ioctl(dfd, LOOP_CLR_FD, 0);
 			}
-
-		/* If this block device already set up right, re-use it.
-		   (Yes this is racy, but associating two loop devices with the same
-		   file isn't pretty either.  In general, mounting the same file twice
-		   without using losetup manually is problematic.)
-		 */
-		} else
-		if (strcmp(file, (char *)loopinfo.lo_file_name) != 0
-		 || offset != loopinfo.lo_offset
-		) {
+		} else {
 			rc = -1;
 		}
 		close(dfd);

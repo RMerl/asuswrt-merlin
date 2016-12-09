@@ -16,15 +16,10 @@ void FAST_FUNC
 socket_want_pktinfo(int fd UNUSED_PARAM)
 {
 #ifdef IP_PKTINFO
-	setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &const_int_1, sizeof(int));
+	setsockopt_1(fd, IPPROTO_IP, IP_PKTINFO);
 #endif
-#if ENABLE_FEATURE_IPV6
-# ifdef IPV6_RECVPKTINFO
-	setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &const_int_1, sizeof(int));
-	setsockopt(fd, IPPROTO_IPV6, IPV6_2292PKTINFO, &const_int_1, sizeof(int));
-# elif defined(IPV6_PKTINFO)
-	setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &const_int_1, sizeof(int));
-# endif
+#if ENABLE_FEATURE_IPV6 && defined(IPV6_PKTINFO)
+	setsockopt_1(fd, IPPROTO_IPV6, IPV6_PKTINFO);
 #endif
 }
 
@@ -167,11 +162,8 @@ recv_from_to(int fd, void *buf, size_t len, int flags,
 		}
 # if ENABLE_FEATURE_IPV6 && defined(IPV6_PKTINFO)
 		if (cmsgptr->cmsg_level == IPPROTO_IPV6
-		 && (cmsgptr->cmsg_type == IPV6_PKTINFO
-#if defined(IPV6_2292PKTINFO) && defined(IPV6_RECVPKTINFO)
-            		 || cmsgptr->cmsg_type == IPV6_2292PKTINFO
-#endif
-		)) {
+		 && cmsgptr->cmsg_type == IPV6_PKTINFO
+		) {
 			const int IPI6_ADDR_OFF = offsetof(struct in6_pktinfo, ipi6_addr);
 			to->sa_family = AF_INET6;
 			/*#  define pktinfo(cmsgptr) ( (struct in6_pktinfo*)(CMSG_DATA(cmsgptr)) )*/

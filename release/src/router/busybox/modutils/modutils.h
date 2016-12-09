@@ -16,6 +16,36 @@ PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 /* linux/include/linux/module.h has 64, but this is also used
  * internally for the maximum alias name length, which can be quite long */
 #define MODULE_NAME_LEN 256
+#define MODULE_HASH_SIZE 256
+
+typedef struct module_entry {
+	struct module_entry *next;
+	char *name, *modname;
+	llist_t *deps;
+	IF_MODPROBE(
+		llist_t *realnames;
+		unsigned flags;
+		const char *probed_name; /* verbatim as seen on cmdline */
+		char *options; /* options from config files */
+	)
+	IF_DEPMOD(
+		llist_t *aliases;
+		llist_t *symbols;
+		struct module_entry *dnext, *dprev;
+	)
+} module_entry;
+
+typedef struct module_db {
+	module_entry *buckets[MODULE_HASH_SIZE];
+} module_db;
+
+#define moddb_foreach_module(db, module, index) \
+	for ((index) = 0; (index) < MODULE_HASH_SIZE; (index)++) \
+		for (module = (db)->buckets[index]; module; module = module->next)
+
+module_entry *moddb_get(module_db *db, const char *s) FAST_FUNC;
+module_entry *moddb_get_or_create(module_db *db, const char *s) FAST_FUNC;
+void moddb_free(module_db *db) FAST_FUNC;
 
 void replace(char *s, char what, char with) FAST_FUNC;
 char *replace_underscores(char *s) FAST_FUNC;
@@ -68,11 +98,6 @@ const char *moderror(int err) FAST_FUNC;
 
 #if ENABLE_FEATURE_2_4_MODULES
 int FAST_FUNC bb_init_module_24(const char *module, const char *options);
-# if defined(USE_GOT_ENTRIES) || defined(USE_PLT_ENTRIES)
-# define PLTGOT_UNUSED_PARAM
-# else
-# define PLTGOT_UNUSED_PARAM	UNUSED_PARAM
-# endif
 #endif
 
 POP_SAVED_FUNCTION_VISIBILITY

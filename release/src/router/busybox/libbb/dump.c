@@ -333,7 +333,7 @@ static void do_skip(priv_dumper_t *dumper, const char *fname, int statok)
 			return;
 		}
 	}
-	if (fseek(stdin, dumper->pub.dump_skip, SEEK_SET)) {
+	if (fseeko(stdin, dumper->pub.dump_skip, SEEK_SET)) {
 		bb_simple_perror_msg_and_die(fname);
 	}
 	dumper->address += dumper->pub.dump_skip;

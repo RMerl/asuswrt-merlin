@@ -8,7 +8,6 @@
 *.s
 Kbuild
 Config.in
-+!/Config.in
 
 #
 # Never ignore these
@@ -19,6 +18,7 @@ Config.in
 # Normal output
 #
 /busybox
+/busybox_old
 /busybox_unstripped*
 
 #
@@ -36,14 +36,17 @@ core
 .gdb_history
 .gdbinit
 
-# asuswrt test
-applets/usage_pod
-busybox.links
-docs/busybox.net/
-include/NUM_APPLETS.h
-include/usage.h
-include/usage_compressed.h.*
-include/applets.h
-config_current
-config_rt*
+#
+# testing output
+#
+/busybox.links
+/runtest-tempdir-links
+/testsuite/echo-ne
 
+#
+# cscope output
+#
+cscope.files
+cscope.in.out
+cscope.out
+cscope.po.out

@@ -18,6 +18,19 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+//kbuild:lib-$(CONFIG_FEATURE_VOLUMEID_EXFAT) += exfat.o
+
+//config:
+//config:config FEATURE_VOLUMEID_EXFAT
+//config:	bool "exFAT filesystem"
+//config:	default y
+//config:	depends on VOLUMEID
+//config:	help
+//config:	  exFAT (extended FAT) is a proprietary file system designed especially
+//config:	  for flash drives. It has many features from NTFS, but with less
+//config:	  overhead. exFAT is used on most SDXC cards for consumer electronics.
+//config:
+
 #include "volume_id_internal.h"
 
 #define EXFAT_SB_OFFSET		0
@@ -100,7 +113,7 @@ int FAST_FUNC volume_id_probe_exfat(struct volume_id *id /*,uint64_t off*/)
 	// The Root Directory may hold an unlimited number of entries,
 	// so we do not want to check all. Usually label and GUID
 	// are in the beginning, but there are no guarantees.
-	need_lbl_guid = (1 << 0);	/* check Volume Label Directory Entry only. */
+	need_lbl_guid = (1 << 0) | (1 << 1);
 	for (count = 0; count < EXFAT_MAX_DIR_ENTRIES; count++) {
 		de = volume_id_get_buffer(id, root_dir_off + (count * EXFAT_DIR_ENTRY_SZ), EXFAT_DIR_ENTRY_SZ);
 		if (de == NULL)
@@ -125,6 +138,6 @@ int FAST_FUNC volume_id_probe_exfat(struct volume_id *id /*,uint64_t off*/)
 			break;
 	}
 
-	//IF_FEATURE_BLKID_TYPE(id->type = "exfat";)
+	IF_FEATURE_BLKID_TYPE(id->type = "exfat";)
 	return 0;
 }

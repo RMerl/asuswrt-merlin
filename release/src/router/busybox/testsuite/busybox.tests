@@ -6,6 +6,16 @@
 
 . ./testing.sh
 
+ln -s `which busybox` unknown
+
+testing "busybox as unknown name" "./unknown 2>&1" \
+	"unknown: applet not found\n" "" ""
+rm unknown
+
+# We need busybox --help to be enabled for the rest of tests
+test x"$CONFIG_BUSYBOX" = x"y" \
+|| { echo "SKIPPED: busybox --help"; exit 0; }
+
 HELPDUMP=`true | busybox 2>&1 | cat`
 
 # We need to test under calling the binary under other names.
@@ -37,11 +47,5 @@ do
 		"unknown: applet not found\n" "" ""
 done
 rm busybox-suffix
-
-ln -s `which busybox` unknown
-
-testing "busybox as unknown name" "./unknown 2>&1" \
-	"unknown: applet not found\n" "" ""
-rm unknown
 
 exit $FAILCOUNT

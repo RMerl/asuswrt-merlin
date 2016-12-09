@@ -57,48 +57,48 @@ struct spwd {
 
 #ifdef UNUSED_FOR_NOW
 /* Open database for reading */
-extern void setspent(void);
+void FAST_FUNC setspent(void);
 
 /* Close database */
-extern void endspent(void);
+void FAST_FUNC endspent(void);
 
 /* Get next entry from database, perhaps after opening the file */
-extern struct spwd *getspent(void);
+struct spwd* FAST_FUNC getspent(void);
 
 /* Get shadow entry matching NAME */
-extern struct spwd *getspnam(const char *__name);
+struct spwd* FAST_FUNC getspnam(const char *__name);
 
 /* Read shadow entry from STRING */
-extern struct spwd *sgetspent(const char *__string);
+struct spwd* FAST_FUNC sgetspent(const char *__string);
 
 /* Read next shadow entry from STREAM */
-extern struct spwd *fgetspent(FILE *__stream);
+struct spwd* FAST_FUNC fgetspent(FILE *__stream);
 
 /* Write line containing shadow password entry to stream */
-extern int putspent(const struct spwd *__p, FILE *__stream);
+int FAST_FUNC putspent(const struct spwd *__p, FILE *__stream);
 
 /* Reentrant versions of some of the functions above */
-extern int getspent_r(struct spwd *__result_buf, char *__buffer,
-		       size_t __buflen, struct spwd **__result);
+int FAST_FUNC getspent_r(struct spwd *__result_buf, char *__buffer,
+		size_t __buflen, struct spwd **__result);
 #endif
 
-extern int getspnam_r(const char *__name, struct spwd *__result_buf,
-		       char *__buffer, size_t __buflen,
-		       struct spwd **__result);
+int FAST_FUNC getspnam_r(const char *__name, struct spwd *__result_buf,
+		char *__buffer, size_t __buflen,
+		struct spwd **__result);
 
 #ifdef UNUSED_FOR_NOW
-extern int sgetspent_r(const char *__string, struct spwd *__result_buf,
-			char *__buffer, size_t __buflen,
-			struct spwd **__result);
+int FAST_FUNC sgetspent_r(const char *__string, struct spwd *__result_buf,
+		char *__buffer, size_t __buflen,
+		struct spwd **__result);
 
-extern int fgetspent_r(FILE *__stream, struct spwd *__result_buf,
-			char *__buffer, size_t __buflen,
-			struct spwd **__result);
+int FAST_FUNC fgetspent_r(FILE *__stream, struct spwd *__result_buf,
+		char *__buffer, size_t __buflen,
+		struct spwd **__result);
 /* Protect password file against multi writers */
-extern int lckpwdf(void);
+int FAST_FUNC lckpwdf(void);
 
 /* Unlock password file */
-extern int ulckpwdf(void);
+int FAST_FUNC ulckpwdf(void);
 #endif
 
 POP_SAVED_FUNCTION_VISIBILITY

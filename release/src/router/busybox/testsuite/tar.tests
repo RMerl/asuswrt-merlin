@@ -15,6 +15,53 @@ mkdir tar.tempdir && cd tar.tempdir || exit 1
 
 # testing "test name" "script" "expected result" "file input" "stdin"
 
+testing "Empty file is not a tarball" '\
+tar xvf - 2>&1; echo $?
+' "\
+tar: short read
+1
+" \
+"" ""
+SKIP=
+
+optional FEATURE_SEAMLESS_GZ GUNZIP
+# In NOMMU case, "invalid magic" message comes from gunzip child process.
+# Otherwise, it comes from tar.
+# Need to fix output up to avoid false positive.
+testing "Empty file is not a tarball.tar.gz" '\
+{ tar xvzf - 2>&1; echo $?; } | grep -Fv "invalid magic"
+' "\
+tar: short read
+1
+" \
+"" ""
+SKIP=
+
+testing "Two zeroed blocks is a ('truncated') empty tarball" '\
+dd if=/dev/zero bs=512 count=2 2>/dev/null | tar xvf - 2>&1; echo $?
+' "\
+0
+" \
+"" ""
+SKIP=
+
+testing "Twenty zeroed blocks is an empty tarball" '\
+dd if=/dev/zero bs=512 count=20 2>/dev/null | tar xvf - 2>&1; echo $?
+' "\
+0
+" \
+"" ""
+SKIP=
+
+# "tar cf test.tar input input_dir/ input_hard1 input_hard2 input_hard1 input_dir/ input":
+# GNU tar 1.26 records as hardlinks:
+#  input_hard2 -> input_hard1
+#  input_hard1 -> input_hard1 (!!!)
+#  input_dir/file -> input_dir/file
+#  input -> input
+# As of 1.24.0, we don't record last two: for them, nlink==1
+# and we check for "hardlink"ness only files with nlink!=1
+# We also don't use "hrw-r--r--" notation for hardlinks in "tar tv" listing.
 optional FEATURE_TAR_CREATE FEATURE_LS_SORTFILES
 testing "tar hardlinks and repeated files" '\
 rm -rf input_* test.tar 2>/dev/null
@@ -26,6 +73,7 @@ chmod -R 644 *
 chmod    755 input_dir
 tar cf test.tar input input_dir/ input_hard1 input_hard2 input_hard1 input_dir/ input
 tar tvf test.tar | sed "s/.*[0-9] input/input/"
+rm -rf input_dir
 tar xf test.tar 2>&1
 echo Ok: $?
 ls -l . input_dir/* | grep input_ | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
@@ -156,7 +204,7 @@ SKIP=
 
 # Had a bug where on extract autodetect first "switched off" -z
 # and then failed to recognize .tgz extension
-optional FEATURE_TAR_CREATE FEATURE_SEAMLESS_GZ
+optional FEATURE_TAR_CREATE FEATURE_SEAMLESS_GZ GUNZIP
 testing "tar extract tgz" "\
 dd count=1 bs=1M if=/dev/zero of=F0 2>/dev/null
 tar -czf F0.tgz F0
@@ -206,6 +254,49 @@ input_dir/file
 Ok
 " \
 "" ""
+SKIP=
+
+# attack.tar.bz2 has symlink pointing to a system file
+# followed by a regular file with the same name
+# containing "root::0:0::/root:/bin/sh":
+#  lrwxrwxrwx root/root passwd -> /tmp/passwd
+#  -rw-r--r-- root/root passwd
+# naive tar implementation may end up creating the symlink
+# and then writing into it.
+# The correct implementation unlinks target before
+# creating the second file.
+# We test that /tmp/passwd remains empty:
+optional UUDECODE FEATURE_TAR_AUTODETECT FEATURE_SEAMLESS_BZ2
+testing "tar does not extract into symlinks" "\
+>>/tmp/passwd && uudecode -o input && tar xf input 2>&1 && rm passwd; cat /tmp/passwd; echo \$?
+" "\
+0
+" \
+"" "\
+begin-base64 644 attack.tar.bz2
+QlpoOTFBWSZTWRVn/bIAAKt7hMqwAEBAAP2QAhB0Y96AAACACCAAlISgpqe0
+po0DIaDynqAkpDRP1ANAhiYNSPR8VchKhAz0AK59+DA6FcMKBggOARIJdVHL
+DGllrjs20ATUgR1HmccBX3EhoMnpMJaNyggmxgLDMz54lBnBTJO/1L1lbMS4
+l4/V8LDoe90yiWJhOJvIypgEfxdyRThQkBVn/bI=
+====
+"
+SKIP=
+# And same with -k
+optional UUDECODE FEATURE_TAR_AUTODETECT FEATURE_SEAMLESS_BZ2
+testing "tar -k does not extract into symlinks" "\
+>>/tmp/passwd && uudecode -o input && tar xf input -k 2>&1 && rm passwd; cat /tmp/passwd; echo \$?
+" "\
+tar: can't open 'passwd': File exists
+0
+" \
+"" "\
+begin-base64 644 attack.tar.bz2
+QlpoOTFBWSZTWRVn/bIAAKt7hMqwAEBAAP2QAhB0Y96AAACACCAAlISgpqe0
+po0DIaDynqAkpDRP1ANAhiYNSPR8VchKhAz0AK59+DA6FcMKBggOARIJdVHL
+DGllrjs20ATUgR1HmccBX3EhoMnpMJaNyggmxgLDMz54lBnBTJO/1L1lbMS4
+l4/V8LDoe90yiWJhOJvIypgEfxdyRThQkBVn/bI=
+====
+"
 SKIP=
 
 

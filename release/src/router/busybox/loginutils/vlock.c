@@ -13,7 +13,21 @@
  * minimalistic vlock.
  */
 /* Fixed by Erik Andersen to do passwords the tinylogin way...
- * It now works with md5, sha1, etc passwords. */
+ * It now works with md5, sha1, etc passwords.
+ */
+//config:config VLOCK
+//config:	bool "vlock"
+//config:	default y
+//config:	help
+//config:	  Build the "vlock" applet which allows you to lock (virtual) terminals.
+//config:
+//config:	  Note that Busybox binary must be setuid root for this applet to
+//config:	  work properly.
+
+//applet:/* Needs to be run by root or be suid root - needs to change uid and gid: */
+//applet:IF_VLOCK(APPLET(vlock, BB_DIR_USR_BIN, BB_SUID_REQUIRE))
+
+//kbuild:lib-$(CONFIG_VLOCK) += vlock.o
 
 //usage:#define vlock_trivial_usage
 //usage:       "[-a]"
@@ -104,7 +118,7 @@ int vlock_main(int argc UNUSED_PARAM, char **argv)
 				/* "s" if -a, else "": */ "s" + !option_mask32,
 				pw->pw_name
 		);
-		if (correct_password(pw)) {
+		if (ask_and_check_password(pw) > 0) {
 			break;
 		}
 		bb_do_delay(LOGIN_FAIL_DELAY);

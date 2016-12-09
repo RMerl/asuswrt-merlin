@@ -16,6 +16,7 @@
 //usage:     "\n	-v	Verbose"
 
 #include "libbb.h"
+#include <sys/resource.h> /* getrusage */
 
 /* Information on the resources used by a child process.  */
 typedef struct {
@@ -69,7 +70,7 @@ static void resuse_end(pid_t pid, resource_t *resp)
 	pid_t caught;
 
 	/* Ignore signals, but don't ignore the children.  When wait3
-	   returns the child process, set the time the command finished. */
+	 * returns the child process, set the time the command finished. */
 	while ((caught = wait3(&resp->waitstatus, 0, &resp->ru)) != pid) {
 		if (caught == -1 && errno != EINTR) {
 			bb_perror_msg("wait");

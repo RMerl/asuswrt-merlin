@@ -119,7 +119,7 @@ int ipcrm_main(int argc, char **argv)
 
 			if (remove_ids(what, &argv[2]))
 				fflush_stdout_and_exit(EXIT_FAILURE);
-			printf("resource(s) deleted\n");
+			puts("resource(s) deleted");
 			return 0;
 		}
 	}
@@ -160,7 +160,7 @@ int ipcrm_main(int argc, char **argv)
 
 			/* convert key to id */
 			id = ((c == 'q') ? msgget(key, 0) :
-				  (c == 'm') ? shmget(key, 0, 0) : semget(key, 0, 0));
+				(c == 'm') ? shmget(key, 0, 0) : semget(key, 0, 0));
 
 			if (id < 0) {
 				const char *errmsg;
@@ -189,8 +189,8 @@ int ipcrm_main(int argc, char **argv)
 		}
 
 		result = ((c == 'q') ? msgctl(id, IPC_RMID, NULL) :
-				  (c == 'm') ? shmctl(id, IPC_RMID, NULL) :
-				  semctl(id, 0, IPC_RMID, arg));
+				(c == 'm') ? shmctl(id, IPC_RMID, NULL) :
+				semctl(id, 0, IPC_RMID, arg));
 
 		if (result) {
 			const char *errmsg;

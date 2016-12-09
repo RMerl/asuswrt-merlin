@@ -4,6 +4,4 @@
 
 lib-y :=
 
-lib-$(CONFIG_LPD) += lpd.o
-lib-$(CONFIG_LPR) += lpr.o
-lib-$(CONFIG_LPQ) += lpr.o
+INSERT

@@ -26,6 +26,14 @@
 //config:	  touch is used to create or change the access and/or
 //config:	  modification timestamp of specified files.
 //config:
+//config:config FEATURE_TOUCH_NODEREF
+//config:	bool "Add support for -h"
+//config:	default y
+//config:	depends on TOUCH
+//config:	help
+//config:	  Enable touch to have the -h option.
+//config:	  This requires libc support for lutimes() function.
+//config:
 //config:config FEATURE_TOUCH_SUSV3
 //config:	bool "Add support for SUSV3 features (-d -t -r)"
 //config:	default y
@@ -42,6 +50,9 @@
 //usage:#define touch_full_usage "\n\n"
 //usage:       "Update the last-modified date on the given FILE[s]\n"
 //usage:     "\n	-c	Don't create files"
+//usage:	IF_FEATURE_TOUCH_NODEREF(
+//usage:     "\n	-h	Don't follow links"
+//usage:	)
 //usage:	IF_FEATURE_TOUCH_SUSV3(
 //usage:     "\n	-d DT	Date/time to use"
 //usage:     "\n	-t DT	Date/time to use"
@@ -65,6 +76,7 @@
  *      parse STRING and use it instead of current time
  * -f   (ignored, BSD compat)
  * -m   change only the modification time
+ * -h, --no-dereference
  * -r, --reference=FILE
  *      use this file's times instead of current time
  * -t STAMP
@@ -79,6 +91,13 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 	int fd;
 	int status = EXIT_SUCCESS;
 	int opts;
+	enum {
+		OPT_c = (1 << 0),
+		OPT_r = (1 << 1) * ENABLE_FEATURE_TOUCH_SUSV3,
+		OPT_d = (1 << 2) * ENABLE_FEATURE_TOUCH_SUSV3,
+		OPT_t = (1 << 3) * ENABLE_FEATURE_TOUCH_SUSV3,
+		OPT_h = (1 << 4) * ENABLE_FEATURE_TOUCH_NODEREF,
+	};
 #if ENABLE_FEATURE_TOUCH_SUSV3
 # if ENABLE_LONG_OPTS
 	static const char touch_longopts[] ALIGN1 =
@@ -86,6 +105,7 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 		"no-create\0"         No_argument       "c"
 		"reference\0"         Required_argument "r"
 		"date\0"              Required_argument "d"
+		IF_FEATURE_TOUCH_NODEREF("no-dereference\0" No_argument "h")
 	;
 # endif
 	char *reference_file = NULL;
@@ -105,13 +125,13 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 	 * accepted data format differs a bit between -d and -t.
 	 * We accept the same formats for both */
 	opts = getopt32(argv, "c" IF_FEATURE_TOUCH_SUSV3("r:d:t:")
+				IF_FEATURE_TOUCH_NODEREF("h")
 				/*ignored:*/ "fma"
 				IF_FEATURE_TOUCH_SUSV3(, &reference_file)
 				IF_FEATURE_TOUCH_SUSV3(, &date_str)
 				IF_FEATURE_TOUCH_SUSV3(, &date_str)
 	);
 
-	opts &= 1; /* only -c bit is left */
 	argv += optind;
 	if (!*argv) {
 		bb_show_usage();
@@ -121,6 +141,10 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 		struct stat stbuf;
 		xstat(reference_file, &stbuf);
 		timebuf[1].tv_sec = timebuf[0].tv_sec = stbuf.st_mtime;
+		/* Can use .st_mtim.tv_nsec
+		 * (or is it .st_mtimensec?? see date.c)
+		 * to set microseconds too.
+		 */
 	}
 
 	if (date_str) {
@@ -141,9 +165,16 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 	}
 
 	do {
-		if (utimes(*argv, (reference_file || date_str) ? timebuf : NULL) != 0) {
-			if (errno == ENOENT) { /* no such file */
-				if (opts) { /* creation is disabled, so ignore */
+		int result;
+		result = (
+#if ENABLE_FEATURE_TOUCH_NODEREF
+			(opts & OPT_h) ? lutimes :
+#endif
+			utimes)(*argv, (reference_file || date_str) ? timebuf : NULL);
+		if (result != 0) {
+			if (errno == ENOENT) { /* no such file? */
+				if (opts & OPT_c) {
+					/* Creation is disabled, so ignore */
 					continue;
 				}
 				/* Try to create the file */

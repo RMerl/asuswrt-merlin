@@ -206,7 +206,7 @@ because they're what all paths your process uses would be relative to.
 
 That's why the careful sequencing above: we cd into the new mount point before
 we do the mount --move.  Moving the mount point would otherwise make it
-totally inaccessible to is because cd-ing to the old path wouldn't give it to
+totally inaccessible to us because cd-ing to the old path wouldn't give it to
 us anymore, and cd "/" just gives us the cached dentry from when the process
 was created (in this case the old initramfs one).  But the "." symlink gives
 us the dentry of the filesystem we just moved, so we can then "chroot ." to

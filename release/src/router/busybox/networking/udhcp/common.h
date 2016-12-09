@@ -9,6 +9,7 @@
 #define UDHCP_COMMON_H 1
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <netinet/udp.h>
 #include <netinet/ip.h>
 
@@ -91,9 +92,7 @@ enum {
 	OPTION_S32,
 	OPTION_BIN,
 	OPTION_STATIC_ROUTES,
-#if ENABLE_FEATURE_IPV6
 	OPTION_6RD,
-#endif
 #if ENABLE_FEATURE_UDHCP_RFC3397
 	OPTION_DNS_STRING,  /* RFC1035 compressed domain name list */
 	OPTION_SIP_SERVERS,
@@ -155,8 +154,6 @@ enum {
 //#define DHCP_VLAN_PRIORITY    0x85 /* 802.1Q VLAN priority */
 //#define DHCP_PXE_CONF_FILE    0xd1 /* RFC 5071 Configuration File */
 //#define DHCP_PXE_PATH_PREFIX  0xd2 /* RFC 5071 Configuration File */
-//#define DHCP_6RD              0xd4 /* RFC 5969 6RD option */
-//#define DHCP_COMCAST_6RD      0x96 /* Comcast ISP RFC 5969 compatible 6RD option */
 //#define DHCP_MS_STATIC_ROUTES 0xf9 /* Microsoft's pre-RFC 3442 code for 0x79? */
 //#define DHCP_WPAD             0xfc /* MSIE's Web Proxy Autodiscovery Protocol */
 #define DHCP_END                0xff
@@ -202,7 +199,7 @@ uint8_t *udhcp_get_option(struct dhcp_packet *packet, int code) FAST_FUNC;
 int udhcp_end_option(uint8_t *optionptr) FAST_FUNC;
 void udhcp_add_binary_option(struct dhcp_packet *packet, uint8_t *addopt) FAST_FUNC;
 void udhcp_add_simple_option(struct dhcp_packet *packet, uint8_t code, uint32_t data) FAST_FUNC;
-#if ENABLE_FEATURE_UDHCP_RFC3397 || ENABLE_DHCP6RELAY
+#if ENABLE_FEATURE_UDHCP_RFC3397
 char *dname_dec(const uint8_t *cstr, int clen, const char *pre) FAST_FUNC;
 uint8_t *dname_enc(const uint8_t *cstr, int clen, const char *src, int *retlen) FAST_FUNC;
 #endif
@@ -260,16 +257,16 @@ struct option_set *udhcp_find_option(struct option_set *opt_list, uint8_t code) 
 #if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
 # define IF_UDHCP_VERBOSE(...) __VA_ARGS__
 extern unsigned dhcp_verbose;
-# define log1(...) do { if (dhcp_verbose >= 1) bb_info_msg(__VA_ARGS__); } while (0)
+# define log1(...) do { if (dhcp_verbose >= 1) bb_error_msg(__VA_ARGS__); } while (0)
 # if CONFIG_UDHCP_DEBUG >= 2
 void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
-#  define log2(...) do { if (dhcp_verbose >= 2) bb_info_msg(__VA_ARGS__); } while (0)
+#  define log2(...) do { if (dhcp_verbose >= 2) bb_error_msg(__VA_ARGS__); } while (0)
 # else
 #  define udhcp_dump_packet(...) ((void)0)
 #  define log2(...) ((void)0)
 # endif
 # if CONFIG_UDHCP_DEBUG >= 3
-#  define log3(...) do { if (dhcp_verbose >= 3) bb_info_msg(__VA_ARGS__); } while (0)
+#  define log3(...) do { if (dhcp_verbose >= 3) bb_error_msg(__VA_ARGS__); } while (0)
 # else
 #  define log3(...) ((void)0)
 # endif
@@ -283,8 +280,6 @@ void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
 
 
 /*** Other shared functions ***/
-
-int FAST_FUNC sprint_nip6(char *, const uint8_t *);
 
 /* 2nd param is "uint32_t*" */
 int FAST_FUNC udhcp_str2nip(const char *str, void *arg);
@@ -308,8 +303,7 @@ void udhcp_sp_setup(void) FAST_FUNC;
 int udhcp_sp_fd_set(fd_set *rfds, int extra_fd) FAST_FUNC;
 int udhcp_sp_read(const fd_set *rfds) FAST_FUNC;
 
-int udhcp_read_interface(const char *interface, int *ifindex,
-		uint32_t *nip, uint8_t *mac, uint16_t *mtu) FAST_FUNC;
+int udhcp_read_interface(const char *interface, int *ifindex, uint32_t *nip, uint8_t *mac) FAST_FUNC;
 
 int udhcp_listen_socket(/*uint32_t ip,*/ int port, const char *inf) FAST_FUNC;
 

@@ -11,9 +11,6 @@
 
 const char* FAST_FUNC printable_string(uni_stat_t *stats, const char *str)
 {
-	static char *saved[4];
-	static unsigned cur_saved; /* = 0 */
-
 	char *dst;
 	const char *s;
 
@@ -56,10 +53,5 @@ const char* FAST_FUNC printable_string(uni_stat_t *stats, const char *str)
 		}
 	}
 #endif
-
-	free(saved[cur_saved]);
-	saved[cur_saved] = dst;
-	cur_saved = (cur_saved + 1) & (ARRAY_SIZE(saved)-1);
-
-	return dst;
+	return auto_string(dst);
 }

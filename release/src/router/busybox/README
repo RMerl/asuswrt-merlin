@@ -185,7 +185,7 @@ Supported hardware:
   Under 2.4 Linux kernels, kernel module loading was implemented in a
   platform-specific manner.  Busybox's insmod utility has been reported to
   work under ARM, CRIS, H8/300, x86, ia64, x86_64, m68k, MIPS, PowerPC, S390,
-  SH3/4/5, Sparc, v850e, and x86_64.  Anything else probably won't work.
+  SH3/4/5, Sparc, and v850e.  Anything else probably won't work.
 
   The module loading mechanism for the 2.6 kernel is much more generic, and
   we believe 2.6.x kernel module loading support should work on all

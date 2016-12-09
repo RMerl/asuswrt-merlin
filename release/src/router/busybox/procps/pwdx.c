@@ -21,7 +21,7 @@
 //usage:#define pwdx_trivial_usage
 //usage:       "PID..."
 //usage:#define pwdx_full_usage "\n\n"
-//usage:       "Show current directory for PIDs\n"
+//usage:       "Show current directory for PIDs"
 
 #include "libbb.h"
 
@@ -41,7 +41,7 @@ int pwdx_main(int argc UNUSED_PARAM, char **argv)
 		// Allowed on the command line:
 		// /proc/NUM
 		// NUM
-		if (strncmp(arg, "/proc/", 6) == 0)
+		if (is_prefixed_with(arg, "/proc/"))
 			arg += 6;
 
 		pid = bb_strtou(arg, NULL, 10);

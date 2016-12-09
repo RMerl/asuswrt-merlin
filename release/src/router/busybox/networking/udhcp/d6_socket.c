@@ -13,7 +13,7 @@ int FAST_FUNC d6_listen_socket(int port, const char *inf)
 	int fd;
 	struct sockaddr_in6 addr;
 
-	log1("Opening listen socket on *:%d %s", port, inf);
+	log1("opening listen socket on *:%d %s", port, inf);
 	fd = xsocket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 
 	setsockopt_reuseaddr(fd);

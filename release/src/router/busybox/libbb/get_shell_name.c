@@ -8,7 +8,7 @@
 
 #include "libbb.h"
 
-const char *get_shell_name(void)
+const char* FAST_FUNC get_shell_name(void)
 {
 	struct passwd *pw;
 	char *shell;

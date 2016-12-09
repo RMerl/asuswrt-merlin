@@ -1,23 +1,47 @@
 #!/bin/sh
 
-delay=67
-
+# How often to test, seconds
+ping_time=67
+# "One ping, must have reply in 1 sec"
+ping_opts="-c1 -W1 -w1"
+# If ping failed, how soon to retry
+retry_time=5
+# Reinit after this many consecutive ping error
+max_fail=5
+# Interface whose DHCP data to use
 if=${PWD##*/dhcp_}
 if=${if%%_pinger}
+
+msg() {
+	echo "`date '+%Y-%m-%d %H:%M:%S'` $*" >>"$0.log"
+}
 
 if test -f "$0.log"; then
 	tail -999 "$0.log" >"$0.log.new"
 	mv "$0.log.new" "$0.log"
 fi
 
-test -f "/var/service/dhcp_$if/dhcp_$if.out" || exec env - sleep "$delay"
-. "/var/service/dhcp_$if/dhcp_$if.out"
-test x"$router" != x"" || exec env - sleep "$delay"
+test -f "/var/service/dhcp_$if/env.out" || exec env - sleep "$ping_time"
 
-#echo "`date '+%Y-%m-%d %H:%M:%S'` Testing ping -c3 $router" >>"$0.log"
-ping -c3 "$router" && exec env - sleep "$delay"
+. "/var/service/dhcp_$if/env.out"
+test x"$router" != x"" || exec env - sleep "$ping_time"
 
-echo "`date '+%Y-%m-%d %H:%M:%S'` Restarting /var/service/dhcp_$if" >>"$0.log"
-sv t "/var/service/dhcp_$if"
+#msg "Pinging $router"
+failcnt=0
+while true; do
+	ping $ping_opts "$router" && exec env - sleep "$ping_time"
+	: $((failcnt++))
+	msg "Failed to ping $router, fail count:$failcnt"
+	test $failcnt -ge $max_fail && break
+	env - sleep "$retry_time"
+done
 
-exec env - sleep "$delay"
+test -d "/var/service/dhcp_$if" && {
+	msg "Restarting /var/service/dhcp_$if"
+	sv t "/var/service/dhcp_$if"
+}
+test -d "/var/service/supplicant_$if" && {
+	msg "Restarting /var/service/supplicant_$if"
+	sv t "/var/service/supplicant_$if"
+}
+exec env - sleep "$ping_time"

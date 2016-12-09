@@ -7,11 +7,62 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+//config:config ADDUSER
+//config:	bool "adduser"
+//config:	default y
+//config:	help
+//config:	  Utility for creating a new user account.
+//config:
+//config:config FEATURE_ADDUSER_LONG_OPTIONS
+//config:	bool "Enable long options"
+//config:	default y
+//config:	depends on ADDUSER && LONG_OPTS
+//config:	help
+//config:	  Support long options for the adduser applet.
+//config:
+//config:config FEATURE_CHECK_NAMES
+//config:	bool "Enable sanity check on user/group names in adduser and addgroup"
+//config:	default n
+//config:	depends on ADDUSER || ADDGROUP
+//config:	help
+//config:	  Enable sanity check on user and group names in adduser and addgroup.
+//config:	  To avoid problems, the user or group name should consist only of
+//config:	  letters, digits, underscores, periods, at signs and dashes,
+//config:	  and not start with a dash (as defined by IEEE Std 1003.1-2001).
+//config:	  For compatibility with Samba machine accounts "$" is also supported
+//config:	  at the end of the user or group name.
+//config:
+//config:config LAST_ID
+//config:	int "Last valid uid or gid for adduser and addgroup"
+//config:	depends on ADDUSER || ADDGROUP
+//config:	default 60000
+//config:	help
+//config:	  Last valid uid or gid for adduser and addgroup
+//config:
+//config:config FIRST_SYSTEM_ID
+//config:	int "First valid system uid or gid for adduser and addgroup"
+//config:	depends on ADDUSER || ADDGROUP
+//config:	range 0 LAST_ID
+//config:	default 100
+//config:	help
+//config:	  First valid system uid or gid for adduser and addgroup
+//config:
+//config:config LAST_SYSTEM_ID
+//config:	int "Last valid system uid or gid for adduser and addgroup"
+//config:	depends on ADDUSER || ADDGROUP
+//config:	range FIRST_SYSTEM_ID LAST_ID
+//config:	default 999
+//config:	help
+//config:	  Last valid system uid or gid for adduser and addgroup
+
+//applet:IF_ADDUSER(APPLET(adduser, BB_DIR_USR_SBIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_ADDUSER) += adduser.o
 
 //usage:#define adduser_trivial_usage
-//usage:       "[OPTIONS] USER"
+//usage:       "[OPTIONS] USER [GROUP]"
 //usage:#define adduser_full_usage "\n\n"
-//usage:       "Add a user\n"
+//usage:       "Create new user, or add USER to GROUP\n"
 //usage:     "\n	-h DIR		Home directory"
 //usage:     "\n	-g GECOS	GECOS field"
 //usage:     "\n	-s SHELL	Login shell"
@@ -20,12 +71,17 @@
 //usage:     "\n	-D		Don't assign a password"
 //usage:     "\n	-H		Don't create home directory"
 //usage:     "\n	-u UID		User id"
+//usage:     "\n	-k SKEL		Skeleton directory (/etc/skel)"
 
 #include "libbb.h"
 
 #if CONFIG_LAST_SYSTEM_ID < CONFIG_FIRST_SYSTEM_ID
 #error Bad LAST_SYSTEM_ID or FIRST_SYSTEM_ID in .config
 #endif
+#if CONFIG_LAST_ID < CONFIG_LAST_SYSTEM_ID
+#error Bad LAST_ID or LAST_SYSTEM_ID in .config
+#endif
+
 
 /* #define OPT_HOME           (1 << 0) */ /* unused */
 /* #define OPT_GECOS          (1 << 1) */ /* unused */
@@ -35,13 +91,13 @@
 #define OPT_SYSTEM_ACCOUNT (1 << 5)
 #define OPT_DONT_MAKE_HOME (1 << 6)
 #define OPT_UID            (1 << 7)
+#define OPT_SKEL           (1 << 8)
 
-/* We assume UID_T_MAX == INT_MAX */
 /* remix */
 /* recoded such that the uid may be passed in *p */
 static void passwd_study(struct passwd *p)
 {
-	int max = UINT_MAX;
+	int max = CONFIG_LAST_ID;
 
 	if (getpwnam(p->pw_name)) {
 		bb_error_msg_and_die("%s '%s' in use", "user", p->pw_name);
@@ -54,7 +110,6 @@ static void passwd_study(struct passwd *p)
 			max = CONFIG_LAST_SYSTEM_ID;
 		} else {
 			p->pw_uid = CONFIG_LAST_SYSTEM_ID + 1;
-			max = 64999;
 		}
 	}
 	/* check for a free uid (and maybe gid) */
@@ -80,7 +135,7 @@ static void passwd_study(struct passwd *p)
 	}
 }
 
-static void addgroup_wrapper(struct passwd *p, const char *group_name)
+static int addgroup_wrapper(struct passwd *p, const char *group_name)
 {
 	char *argv[6];
 
@@ -110,7 +165,7 @@ static void addgroup_wrapper(struct passwd *p, const char *group_name)
 		argv[5] = NULL;
 	}
 
-	spawn_and_wait(argv);
+	return spawn_and_wait(argv);
 }
 
 static void passwd_wrapper(const char *login_name) NORETURN;
@@ -132,6 +187,7 @@ static const char adduser_longopts[] ALIGN1 =
 		"system\0"              No_argument       "S"
 		"no-create-home\0"      No_argument       "H"
 		"uid\0"                 Required_argument "u"
+		"skel\0"                Required_argument "k"
 		;
 #endif
 
@@ -147,6 +203,8 @@ int adduser_main(int argc UNUSED_PARAM, char **argv)
 	const char *usegroup = NULL;
 	char *p;
 	unsigned opts;
+	char *uid;
+	const char *skel = "/etc/skel";
 
 #if ENABLE_FEATURE_ADDUSER_LONG_OPTIONS
 	applet_long_options = adduser_longopts;
@@ -162,22 +220,24 @@ int adduser_main(int argc UNUSED_PARAM, char **argv)
 	pw.pw_shell = (char *)get_shell_name();
 	pw.pw_dir = NULL;
 
-	/* exactly one non-option arg */
+	/* at least one and at most two non-option args */
 	/* disable interactive passwd for system accounts */
-	opt_complementary = "=1:SD:u+";
-	if (sizeof(pw.pw_uid) == sizeof(int)) {
-		opts = getopt32(argv, "h:g:s:G:DSHu:", &pw.pw_dir, &pw.pw_gecos, &pw.pw_shell, &usegroup, &pw.pw_uid);
-	} else {
-		unsigned uid;
-		opts = getopt32(argv, "h:g:s:G:DSHu:", &pw.pw_dir, &pw.pw_gecos, &pw.pw_shell, &usegroup, &uid);
-		if (opts & OPT_UID) {
-			pw.pw_uid = uid;
-		}
-	}
+	opt_complementary = "-1:?2:SD";
+	opts = getopt32(argv, "h:g:s:G:DSHu:k:", &pw.pw_dir, &pw.pw_gecos, &pw.pw_shell, &usegroup, &uid, &skel);
+	if (opts & OPT_UID)
+		pw.pw_uid = xatou_range(uid, 0, CONFIG_LAST_ID);
+
 	argv += optind;
+	pw.pw_name = argv[0];
+
+	if (!opts && argv[1]) {
+		/* if called with two non-option arguments, adduser
+		 * will add an existing user to an existing group.
+		 */
+		return addgroup_wrapper(&pw, argv[1]);
+	}
 
 	/* fill in the passwd struct */
-	pw.pw_name = argv[0];
 	die_if_bad_username(pw.pw_name);
 	if (!pw.pw_dir) {
 		/* create string for $HOME if not specified already */
@@ -205,7 +265,6 @@ int adduser_main(int argc UNUSED_PARAM, char **argv)
 	}
 	if (ENABLE_FEATURE_CLEAN_UP)
 		free(p);
-
 #if ENABLE_FEATURE_SHADOWPASSWDS
 	/* /etc/shadow fields:
 	 * 1. username
@@ -246,8 +305,9 @@ int adduser_main(int argc UNUSED_PARAM, char **argv)
 				NULL
 			};
 			/* Be silent on any errors (like: no /etc/skel) */
-			logmode = LOGMODE_NONE;
-			copy_file("/etc/skel", pw.pw_dir, FILEUTILS_RECUR);
+			if (!(opts & OPT_SKEL))
+				logmode = LOGMODE_NONE;
+			copy_file(skel, pw.pw_dir, FILEUTILS_RECUR);
 			logmode = LOGMODE_STDIO;
 			chown_main(4, (char**)args);
 		}

@@ -61,6 +61,7 @@
 //usage:       "of characters matched or 0."
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include "xregex.h"
 
 #if ENABLE_EXPR_MATH_SUPPORT_64
@@ -99,8 +100,8 @@ typedef struct valinfo VALUE;
 struct globals {
 	char **args;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
-#define INIT_G() do { } while (0)
+#define G (*(struct globals*)bb_common_bufsiz1)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 
 /* forward declarations */
 static VALUE *eval(void);

@@ -188,8 +188,8 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 			unsigned src_last_line = 1;
 			unsigned dst_last_line = 1;
 
-			if ((sscanf(patch_line, "@@ -%d,%d +%d,%d", &src_beg_line, &src_last_line, &dst_beg_line, &dst_last_line) < 3)
-			 && (sscanf(patch_line, "@@ -%d +%d,%d", &src_beg_line, &dst_beg_line, &dst_last_line) < 2)
+			if ((sscanf(patch_line, "@@ -%u,%u +%u,%u", &src_beg_line, &src_last_line, &dst_beg_line, &dst_last_line) < 3)
+			 && (sscanf(patch_line, "@@ -%u +%u,%u", &src_beg_line, &dst_beg_line, &dst_last_line) < 2)
 			) {
 				/* No more hunks for this file */
 				break;

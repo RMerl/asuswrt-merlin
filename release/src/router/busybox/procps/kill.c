@@ -60,7 +60,7 @@
  * This is needed to avoid collision with kill -9 ... syntax
  */
 
-int kill_main(int argc, char **argv)
+int kill_main(int argc UNUSED_PARAM, char **argv)
 {
 	char *arg;
 	pid_t pid;
@@ -79,10 +79,9 @@ int kill_main(int argc, char **argv)
 #endif
 
 	/* Parse any options */
-	argc--;
 	arg = *++argv;
 
-	if (argc < 1 || arg[0] != '-') {
+	if (!arg || arg[0] != '-') {
 		goto do_it_now;
 	}
 
@@ -91,13 +90,14 @@ int kill_main(int argc, char **argv)
 	 * echo "Died of SIG`kill -l $?`"
 	 * We try to mimic what kill from coreutils-6.8 does */
 	if (arg[1] == 'l' && arg[2] == '\0') {
-		if (argc == 1) {
+		arg = *++argv;
+		if (!arg) {
 			/* Print the whole signal list */
 			print_signames();
 			return 0;
 		}
 		/* -l <sig list> */
-		while ((arg = *++argv)) {
+		do {
 			if (isdigit(arg[0])) {
 				signo = bb_strtou(arg, NULL, 10);
 				if (errno) {
@@ -118,8 +118,8 @@ int kill_main(int argc, char **argv)
 				}
 				printf("%d\n", signo);
 			}
-		}
-		/* If they specified -l, we are all done */
+			arg = *++argv;
+		} while (arg);
 		return EXIT_SUCCESS;
 	}
 
@@ -127,8 +127,7 @@ int kill_main(int argc, char **argv)
 	if (killall && arg[1] == 'q' && arg[2] == '\0') {
 		quiet = 1;
 		arg = *++argv;
-		argc--;
-		if (argc < 1)
+		if (!arg)
 			bb_show_usage();
 		if (arg[0] != '-')
 			goto do_it_now;
@@ -140,8 +139,7 @@ int kill_main(int argc, char **argv)
 	if (killall5 && arg[0] == 'o')
 		goto do_it_now;
 
-	if (argc > 1 && arg[0] == 's' && arg[1] == '\0') { /* -s SIG? */
-		argc--;
+	if (argv[1] && arg[0] == 's' && arg[1] == '\0') { /* -s SIG? */
 		arg = *++argv;
 	} /* else it must be -SIG */
 	signo = get_signum(arg);
@@ -150,7 +148,6 @@ int kill_main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	arg = *++argv;
-	argc--;
 
  do_it_now:
 	pid = getpid();
@@ -158,7 +155,8 @@ int kill_main(int argc, char **argv)
 	if (killall5) {
 		pid_t sid;
 		procps_status_t* p = NULL;
-		int ret = 0;
+		/* compat: exitcode 2 is "no one was signaled" */
+		int ret = 2;
 
 		/* Find out our session id */
 		sid = getsid(pid);
@@ -167,9 +165,10 @@ int kill_main(int argc, char **argv)
 			kill(-1, SIGSTOP);
 		/* Signal all processes except those in our session */
 		while ((p = procps_scan(p, PSSCAN_PID|PSSCAN_SID)) != NULL) {
-			int i;
+			char **args;
 
 			if (p->sid == (unsigned)sid
+			 || p->sid == 0 /* compat: kernel thread, don't signal it */
 			 || p->pid == (unsigned)pid
 			 || p->pid == 1
 			) {
@@ -178,18 +177,19 @@ int kill_main(int argc, char **argv)
 
 			/* All remaining args must be -o PID options.
 			 * Check p->pid against them. */
-			for (i = 0; i < argc; i++) {
+			args = argv;
+			while (*args) {
 				pid_t omit;
 
-				arg = argv[i];
+				arg = *args++;
 				if (arg[0] != '-' || arg[1] != 'o') {
 					bb_error_msg("bad option '%s'", arg);
 					ret = 1;
 					goto resume;
 				}
 				arg += 2;
-				if (!arg[0] && argv[++i])
-					arg = argv[i];
+				if (!arg[0] && *args)
+					arg = *args++;
 				omit = bb_strtoi(arg, NULL, 10);
 				if (errno) {
 					bb_error_msg("invalid number '%s'", arg);
@@ -200,6 +200,7 @@ int kill_main(int argc, char **argv)
 					goto dont_kill;
 			}
 			kill(p->pid, signo);
+			ret = 0;
  dont_kill: ;
 		}
  resume:
@@ -210,14 +211,14 @@ int kill_main(int argc, char **argv)
 	}
 
 	/* Pid or name is required for kill/killall */
-	if (argc < 1) {
+	if (!arg) {
 		bb_error_msg("you need to specify whom to kill");
 		return EXIT_FAILURE;
 	}
 
 	if (killall) {
 		/* Looks like they want to do a killall.  Do that */
-		while (arg) {
+		do {
 			pid_t* pidList;
 
 			pidList = find_pid_by_name(arg);
@@ -240,7 +241,7 @@ int kill_main(int argc, char **argv)
 			}
 			free(pidList);
 			arg = *++argv;
-		}
+		} while (arg);
 		return errors;
 	}
 

@@ -91,7 +91,6 @@ static void map(char *pvector,
  *   Character classes, e.g. [:upper:] ==> A...Z
  *   Equiv classess, e.g. [=A=] ==> A   (hmmmmmmm?)
  * not supported:
- *   \ooo-\ooo - octal ranges
  *   [x*N] - repeat char x N times
  *   [x*] - repeat char x until it fills STRING2:
  * # echo qwe123 | /usr/bin/tr 123456789 '[d]'
@@ -99,7 +98,7 @@ static void map(char *pvector,
  * # echo qwe123 | /usr/bin/tr 123456789 '[d*]'
  * qweddd
  */
-static unsigned expand(const char *arg, char **buffer_p)
+static unsigned expand(char *arg, char **buffer_p)
 {
 	char *buffer = *buffer_p;
 	unsigned pos = 0;
@@ -113,9 +112,17 @@ static unsigned expand(const char *arg, char **buffer_p)
 			*buffer_p = buffer = xrealloc(buffer, size);
 		}
 		if (*arg == '\\') {
+			const char *z;
 			arg++;
-			buffer[pos++] = bb_process_escape_sequence(&arg);
-			continue;
+			z = arg;
+			ac = bb_process_escape_sequence(&z);
+			arg = (char *)z;
+			arg--;
+			*arg = ac;
+			/*
+			 * fall through, there may be a range.
+			 * If not, current char will be treated anyway.
+			 */
 		}
 		if (arg[1] == '-') { /* "0-9..." */
 			ac = arg[2];
@@ -124,9 +131,15 @@ static unsigned expand(const char *arg, char **buffer_p)
 				continue; /* next iter will copy '-' and stop */
 			}
 			i = (unsigned char) *arg;
+			arg += 3; /* skip 0-9 or 0-\ */
+			if (ac == '\\') {
+				const char *z;
+				z = arg;
+				ac = bb_process_escape_sequence(&z);
+				arg = (char *)z;
+			}
 			while (i <= ac) /* ok: i is unsigned _int_ */
 				buffer[pos++] = i++;
-			arg += 3; /* skip 0-9 */
 			continue;
 		}
 		if ((ENABLE_FEATURE_TR_CLASSES || ENABLE_FEATURE_TR_EQUIV)

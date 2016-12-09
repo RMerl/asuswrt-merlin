@@ -24,11 +24,13 @@ char FAST_FUNC filter_accept_reject_list(archive_handle_t *archive_handle)
 	if (reject_entry) {
 		return EXIT_FAILURE;
 	}
-	accept_entry = find_list_entry2(archive_handle->accept, key);
 
 	/* Fail if an accept list was specified and the key wasnt in there */
-	if ((accept_entry == NULL) && archive_handle->accept) {
-		return EXIT_FAILURE;
+	if (archive_handle->accept) {
+		accept_entry = find_list_entry2(archive_handle->accept, key);
+		if (!accept_entry) {
+			return EXIT_FAILURE;
+		}
 	}
 
 	/* Accepted */

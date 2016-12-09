@@ -31,25 +31,29 @@ void volume_id_set_unicode16(char *str, size_t len, const uint8_t *buf, enum end
 			c = (buf[i+1] << 8) | buf[i];
 		else
 			c = (buf[i] << 8) | buf[i+1];
-		if (c == 0) {
-			str[j] = '\0';
+		if (c == 0)
 			break;
-		} else if (c < 0x80) {
-			if (j+1 >= len)
-				break;
-			str[j++] = (uint8_t) c;
-		} else if (c < 0x800) {
+		if (j+1 >= len)
+			break;
+		if (c < 0x80) {
+			/* 0xxxxxxx */
+		} else {
+			uint8_t topbits = 0xc0;
 			if (j+2 >= len)
 				break;
-			str[j++] = (uint8_t) (0xc0 | (c >> 6));
-			str[j++] = (uint8_t) (0x80 | (c & 0x3f));
-		} else {
-			if (j+3 >= len)
-				break;
-			str[j++] = (uint8_t) (0xe0 | (c >> 12));
-			str[j++] = (uint8_t) (0x80 | ((c >> 6) & 0x3f));
-			str[j++] = (uint8_t) (0x80 | (c & 0x3f));
+			if (c < 0x800) {
+				/* 110yyyxx 10xxxxxx */
+			} else {
+				if (j+3 >= len)
+					break;
+				/* 1110yyyy 10yyyyxx 10xxxxxx */
+				str[j++] = (uint8_t) (0xe0 | (c >> 12));
+				topbits = 0x80;
+			}
+			str[j++] = (uint8_t) (topbits | ((c >> 6) & 0x3f));
+			c = 0x80 | (c & 0x3f);
 		}
+		str[j++] = (uint8_t) c;
 	}
 	str[j] = '\0';
 }
@@ -125,30 +129,14 @@ void volume_id_set_label_string(struct volume_id *id, const uint8_t *buf, size_t
 
 void volume_id_set_label_unicode16(struct volume_id *id, const uint8_t *buf, enum endian endianess, size_t count)
 {
-	 volume_id_set_unicode16(id->label, sizeof(id->label), buf, endianess, count);
+	volume_id_set_unicode16(id->label, sizeof(id->label), buf, endianess, count);
 }
 
 void volume_id_set_uuid(struct volume_id *id, const uint8_t *buf, enum uuid_format format)
 {
 	unsigned i;
-	unsigned count = 0;
+	unsigned count = (format == UUID_DCE_STRING ? VOLUME_ID_UUID_SIZE : 4 << format);
 
-	switch (format) {
-	case UUID_DOS:
-		count = 4;
-		break;
-	case UUID_NTFS:
-	case UUID_HFS:
-		count = 8;
-		break;
-	case UUID_DCE:
-		count = 16;
-		break;
-	case UUID_DCE_STRING:
-		/* 36 is ok, id->uuid has one extra byte for NUL */
-		count = VOLUME_ID_UUID_SIZE;
-		break;
-	}
 //	memcpy(id->uuid_raw, buf, count);
 //	id->uuid_raw_len = count;
 
@@ -168,11 +156,6 @@ set:
 		sprintf(id->uuid, "%02X%02X%02X%02X%02X%02X%02X%02X",
 			buf[7], buf[6], buf[5], buf[4],
 			buf[3], buf[2], buf[1], buf[0]);
-		break;
-	case UUID_HFS:
-		sprintf(id->uuid, "%02X%02X%02X%02X%02X%02X%02X%02X",
-			buf[0], buf[1], buf[2], buf[3],
-			buf[4], buf[5], buf[6], buf[7]);
 		break;
 	case UUID_DCE:
 		sprintf(id->uuid,
@@ -228,6 +211,7 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 		return NULL;
 	}
 	dst = id->seekbuf;
+
 	/* check if we need to read */
 	if ((off >= id->seekbuf_off)
 	 && ((off + len) <= (id->seekbuf_off + id->seekbuf_len))

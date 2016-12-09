@@ -41,7 +41,7 @@ enum {
 	IOPRIO_CLASS_IDLE
 };
 
-static const char to_prio[] = "none\0realtime\0best-effort\0idle";
+static const char to_prio[] ALIGN1 = "none\0realtime\0best-effort\0idle";
 
 #define IOPRIO_CLASS_SHIFT      13
 

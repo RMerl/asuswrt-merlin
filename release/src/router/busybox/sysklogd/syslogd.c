@@ -12,6 +12,107 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+//config:config SYSLOGD
+//config:	bool "syslogd"
+//config:	default y
+//config:	help
+//config:	  The syslogd utility is used to record logs of all the
+//config:	  significant events that occur on a system. Every
+//config:	  message that is logged records the date and time of the
+//config:	  event, and will generally also record the name of the
+//config:	  application that generated the message. When used in
+//config:	  conjunction with klogd, messages from the Linux kernel
+//config:	  can also be recorded. This is terribly useful,
+//config:	  especially for finding what happened when something goes
+//config:	  wrong. And something almost always will go wrong if
+//config:	  you wait long enough....
+//config:
+//config:config FEATURE_ROTATE_LOGFILE
+//config:	bool "Rotate message files"
+//config:	default y
+//config:	depends on SYSLOGD
+//config:	help
+//config:	  This enables syslogd to rotate the message files
+//config:	  on his own. No need to use an external rotate script.
+//config:
+//config:config FEATURE_REMOTE_LOG
+//config:	bool "Remote Log support"
+//config:	default y
+//config:	depends on SYSLOGD
+//config:	help
+//config:	  When you enable this feature, the syslogd utility can
+//config:	  be used to send system log messages to another system
+//config:	  connected via a network. This allows the remote
+//config:	  machine to log all the system messages, which can be
+//config:	  terribly useful for reducing the number of serial
+//config:	  cables you use. It can also be a very good security
+//config:	  measure to prevent system logs from being tampered with
+//config:	  by an intruder.
+//config:
+//config:config FEATURE_SYSLOGD_DUP
+//config:	bool "Support -D (drop dups) option"
+//config:	default y
+//config:	depends on SYSLOGD
+//config:	help
+//config:	  Option -D instructs syslogd to drop consecutive messages
+//config:	  which are totally the same.
+//config:
+//config:config FEATURE_SYSLOGD_CFG
+//config:	bool "Support syslog.conf"
+//config:	default y
+//config:	depends on SYSLOGD
+//config:	help
+//config:	  Supports restricted syslogd config. See docs/syslog.conf.txt
+//config:
+//config:config FEATURE_SYSLOGD_READ_BUFFER_SIZE
+//config:	int "Read buffer size in bytes"
+//config:	default 256
+//config:	range 256 20000
+//config:	depends on SYSLOGD
+//config:	help
+//config:	  This option sets the size of the syslog read buffer.
+//config:	  Actual memory usage increases around five times the
+//config:	  change done here.
+//config:
+//config:config FEATURE_IPC_SYSLOG
+//config:	bool "Circular Buffer support"
+//config:	default y
+//config:	depends on SYSLOGD
+//config:	help
+//config:	  When you enable this feature, the syslogd utility will
+//config:	  use a circular buffer to record system log messages.
+//config:	  When the buffer is filled it will continue to overwrite
+//config:	  the oldest messages. This can be very useful for
+//config:	  systems with little or no permanent storage, since
+//config:	  otherwise system logs can eventually fill up your
+//config:	  entire filesystem, which may cause your system to
+//config:	  break badly.
+//config:
+//config:config FEATURE_IPC_SYSLOG_BUFFER_SIZE
+//config:	int "Circular buffer size in Kbytes (minimum 4KB)"
+//config:	default 16
+//config:	range 4 2147483647
+//config:	depends on FEATURE_IPC_SYSLOG
+//config:	help
+//config:	  This option sets the size of the circular buffer
+//config:	  used to record system log messages.
+//config:
+//config:config FEATURE_KMSG_SYSLOG
+//config:	bool "Linux kernel printk buffer support"
+//config:	default y
+//config:	depends on SYSLOGD
+//config:	select PLATFORM_LINUX
+//config:	help
+//config:	  When you enable this feature, the syslogd utility will
+//config:	  write system log message to the Linux kernel's printk buffer.
+//config:	  This can be used as a smaller alternative to the syslogd IPC
+//config:	  support, as klogd and logread aren't needed.
+//config:
+//config:	  NOTICE: Syslog facilities in log entries needs kernel 3.5+.
+
+//applet:IF_SYSLOGD(APPLET(syslogd, BB_DIR_SBIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_SYSLOGD) += syslogd_and_logger.o
 
 //usage:#define syslogd_trivial_usage
 //usage:       "[OPTIONS]"
@@ -21,23 +122,26 @@
 //usage:       "(this version of syslogd ignores /etc/syslog.conf)\n"
 //usage:	)
 //usage:     "\n	-n		Run in foreground"
-//usage:     "\n	-O FILE		Log to FILE (default:/var/log/messages)"
-//usage:     "\n	-l N		Log only messages more urgent than prio N (1-8)"
-//usage:     "\n	-S		Smaller output"
-//usage:	IF_FEATURE_ROTATE_LOGFILE(
-//usage:     "\n	-s SIZE		Max size (KB) before rotation (default:200KB, 0=off)"
-//usage:     "\n	-b N		N rotated logs to keep (default:1, max=99, 0=purge)"
-//usage:	)
 //usage:	IF_FEATURE_REMOTE_LOG(
-//usage:     "\n	-R HOST[:PORT]	Log to IP or hostname on PORT (default PORT=514/UDP)"
+//usage:     "\n	-R HOST[:PORT]	Log to HOST:PORT (default PORT:514)"
 //usage:     "\n	-L		Log locally and via network (default is network only if -R)"
-//usage:	)
-//usage:	IF_FEATURE_SYSLOGD_DUP(
-//usage:     "\n	-D		Drop duplicates"
 //usage:	)
 //usage:	IF_FEATURE_IPC_SYSLOG(
 /* NB: -Csize shouldn't have space (because size is optional) */
 //usage:     "\n	-C[size_kb]	Log to shared mem buffer (use logread to read it)"
+//usage:	)
+//usage:	IF_FEATURE_KMSG_SYSLOG(
+//usage:     "\n	-K		Log to kernel printk buffer (use dmesg to read it)"
+//usage:	)
+//usage:     "\n	-O FILE		Log to FILE (default: /var/log/messages, stdout if -)"
+//usage:	IF_FEATURE_ROTATE_LOGFILE(
+//usage:     "\n	-s SIZE		Max size (KB) before rotation (default:200KB, 0=off)"
+//usage:     "\n	-b N		N rotated logs to keep (default:1, max=99, 0=purge)"
+//usage:	)
+//usage:     "\n	-l N		Log only messages more urgent than prio N (1-8)"
+//usage:     "\n	-S		Smaller output"
+//usage:	IF_FEATURE_SYSLOGD_DUP(
+//usage:     "\n	-D		Drop duplicates"
 //usage:	)
 //usage:	IF_FEATURE_SYSLOGD_CFG(
 //usage:     "\n	-f FILE		Use FILE as config (default:/etc/syslog.conf)"
@@ -55,6 +159,9 @@
 #define SYSLOG_NAMES_CONST
 #include <syslog.h>
 */
+#ifndef _PATH_LOG
+#define _PATH_LOG	"/dev/log"
+#endif
 
 #include <sys/un.h>
 #include <sys/uio.h>
@@ -104,6 +211,7 @@ typedef struct {
 typedef struct logFile_t {
 	const char *path;
 	int fd;
+	time_t last_log_time;
 #if ENABLE_FEATURE_ROTATE_LOGFILE
 	unsigned size;
 	uint8_t isRegular;
@@ -140,6 +248,10 @@ IF_FEATURE_IPC_SYSLOG( \
 ) \
 IF_FEATURE_SYSLOGD_CFG( \
 	logRule_t *log_rules; \
+) \
+IF_FEATURE_KMSG_SYSLOG( \
+	int kmsgfd; \
+	int primask; \
 )
 
 struct init_globals {
@@ -155,7 +267,6 @@ struct globals {
 #if ENABLE_FEATURE_IPC_SYSLOG
 	struct shbuf_ds *shbuf;
 #endif
-	time_t last_log_time;
 	/* localhost's name. We print only first 64 chars */
 	char *hostname;
 
@@ -212,6 +323,7 @@ enum {
 	IF_FEATURE_IPC_SYSLOG(    OPTBIT_circularlog,)	// -C
 	IF_FEATURE_SYSLOGD_DUP(   OPTBIT_dup        ,)	// -D
 	IF_FEATURE_SYSLOGD_CFG(   OPTBIT_cfg        ,)	// -f
+	IF_FEATURE_KMSG_SYSLOG(   OPTBIT_kmsg       ,)	// -K
 
 	OPT_mark        = 1 << OPTBIT_mark    ,
 	OPT_nofork      = 1 << OPTBIT_nofork  ,
@@ -225,6 +337,7 @@ enum {
 	OPT_circularlog = IF_FEATURE_IPC_SYSLOG(    (1 << OPTBIT_circularlog)) + 0,
 	OPT_dup         = IF_FEATURE_SYSLOGD_DUP(   (1 << OPTBIT_dup        )) + 0,
 	OPT_cfg         = IF_FEATURE_SYSLOGD_CFG(   (1 << OPTBIT_cfg        )) + 0,
+	OPT_kmsg        = IF_FEATURE_KMSG_SYSLOG(   (1 << OPTBIT_kmsg       )) + 0,
 };
 #define OPTION_STR "m:nO:l:S" \
 	IF_FEATURE_ROTATE_LOGFILE("s:" ) \
@@ -233,7 +346,8 @@ enum {
 	IF_FEATURE_REMOTE_LOG(    "L"  ) \
 	IF_FEATURE_IPC_SYSLOG(    "C::") \
 	IF_FEATURE_SYSLOGD_DUP(   "D"  ) \
-	IF_FEATURE_SYSLOGD_CFG(   "f:"  )
+	IF_FEATURE_SYSLOGD_CFG(   "f:" ) \
+	IF_FEATURE_KMSG_SYSLOG(   "K"  )
 #define OPTION_DECL *opt_m, *opt_l \
 	IF_FEATURE_ROTATE_LOGFILE(,*opt_s) \
 	IF_FEATURE_ROTATE_LOGFILE(,*opt_b) \
@@ -242,7 +356,7 @@ enum {
 #define OPTION_PARAM &opt_m, &(G.logFile.path), &opt_l \
 	IF_FEATURE_ROTATE_LOGFILE(,&opt_s) \
 	IF_FEATURE_ROTATE_LOGFILE(,&opt_b) \
-	IF_FEATURE_REMOTE_LOG(	  ,&remoteAddrList) \
+	IF_FEATURE_REMOTE_LOG(    ,&remoteAddrList) \
 	IF_FEATURE_IPC_SYSLOG(    ,&opt_C) \
 	IF_FEATURE_SYSLOGD_CFG(   ,&opt_f)
 
@@ -418,7 +532,9 @@ static void parse_syslogdcfg(const char *file)
 	return;
 
  cfgerr:
-	bb_error_msg_and_die("error in '%s' at line %d", file, parser->lineno);
+	bb_error_msg_and_die("error in '%s' at line %d",
+			file ? file : "/etc/syslog.conf",
+			parser->lineno);
 }
 #endif
 
@@ -518,10 +634,48 @@ static void log_to_shmem(const char *msg)
 		printf("tail:%d\n", G.shbuf->tail);
 }
 #else
-void ipcsyslog_cleanup(void);
-void ipcsyslog_init(void);
+static void ipcsyslog_cleanup(void) {}
+static void ipcsyslog_init(void) {}
 void log_to_shmem(const char *msg);
 #endif /* FEATURE_IPC_SYSLOG */
+
+#if ENABLE_FEATURE_KMSG_SYSLOG
+static void kmsg_init(void)
+{
+	G.kmsgfd = xopen("/dev/kmsg", O_WRONLY);
+
+	/*
+	 * kernel < 3.5 expects single char printk KERN_* priority prefix,
+	 * from 3.5 onwards the full syslog facility/priority format is supported
+	 */
+	if (get_linux_version_code() < KERNEL_VERSION(3,5,0))
+		G.primask = LOG_PRIMASK;
+	else
+		G.primask = -1;
+}
+
+static void kmsg_cleanup(void)
+{
+	if (ENABLE_FEATURE_CLEAN_UP)
+		close(G.kmsgfd);
+}
+
+/* Write message to /dev/kmsg */
+static void log_to_kmsg(int pri, const char *msg)
+{
+	/*
+	 * kernel < 3.5 expects single char printk KERN_* priority prefix,
+	 * from 3.5 onwards the full syslog facility/priority format is supported
+	 */
+	pri &= G.primask;
+
+	full_write(G.kmsgfd, G.printbuf, sprintf(G.printbuf, "<%d>%s\n", pri, msg));
+}
+#else
+static void kmsg_init(void) {}
+static void kmsg_cleanup(void) {}
+static void log_to_kmsg(int pri UNUSED_PARAM, const char *msg UNUSED_PARAM) {}
+#endif /* FEATURE_KMSG_SYSLOG */
 
 /* Print a message to the log file. */
 static void log_locally(time_t now, char *msg, logFile_t *log_file)
@@ -531,42 +685,54 @@ static void log_locally(time_t now, char *msg, logFile_t *log_file)
 #endif
 	int len = strlen(msg);
 
-	if (log_file->fd >= 0) {
-		/* Reopen log file every second. This allows admin
-		 * to delete the file and not worry about restarting us.
+	/* fd can't be 0 (we connect fd 0 to /dev/log socket) */
+	/* fd is 1 if "-O -" is in use */
+	if (log_file->fd > 1) {
+		/* Reopen log files every second. This allows admin
+		 * to delete the files and not worry about restarting us.
 		 * This costs almost nothing since it happens
-		 * _at most_ once a second.
+		 * _at most_ once a second for each file, and happens
+		 * only when each file is actually written.
 		 */
 		if (!now)
 			now = time(NULL);
-		if (G.last_log_time != now) {
-			G.last_log_time = now;
+		if (log_file->last_log_time != now) {
+			log_file->last_log_time = now;
 			close(log_file->fd);
 			goto reopen;
 		}
-	} else {
+	}
+	else if (log_file->fd == 1) {
+		/* We are logging to stdout: do nothing */
+	}
+	else {
+		if (LONE_DASH(log_file->path)) {
+			log_file->fd = 1;
+			/* log_file->isRegular = 0; - already is */
+		} else {
  reopen:
-		log_file->fd = open(log_file->path, O_WRONLY | O_CREAT
+			log_file->fd = open(log_file->path, O_WRONLY | O_CREAT
 					| O_NOCTTY | O_APPEND | O_NONBLOCK,
 					0666);
-		if (log_file->fd < 0) {
-			/* cannot open logfile? - print to /dev/console then */
-			int fd = device_open(DEV_CONSOLE, O_WRONLY | O_NOCTTY | O_NONBLOCK);
-			if (fd < 0)
-				fd = 2; /* then stderr, dammit */
-			full_write(fd, msg, len);
-			if (fd != 2)
-				close(fd);
-			return;
-		}
+			if (log_file->fd < 0) {
+				/* cannot open logfile? - print to /dev/console then */
+				int fd = device_open(DEV_CONSOLE, O_WRONLY | O_NOCTTY | O_NONBLOCK);
+				if (fd < 0)
+					fd = 2; /* then stderr, dammit */
+				full_write(fd, msg, len);
+				if (fd != 2)
+					close(fd);
+				return;
+			}
 #if ENABLE_FEATURE_ROTATE_LOGFILE
-		{
-			struct stat statf;
-			log_file->isRegular = (fstat(log_file->fd, &statf) == 0 && S_ISREG(statf.st_mode));
-			/* bug (mostly harmless): can wrap around if file > 4gb */
-			log_file->size = statf.st_size;
-		}
+			{
+				struct stat statf;
+				log_file->isRegular = (fstat(log_file->fd, &statf) == 0 && S_ISREG(statf.st_mode));
+				/* bug (mostly harmless): can wrap around if file > 4gb */
+				log_file->size = statf.st_size;
+			}
 #endif
+		}
 	}
 
 #ifdef SYSLOGD_WRLOCK
@@ -579,26 +745,48 @@ static void log_locally(time_t now, char *msg, logFile_t *log_file)
 
 #if ENABLE_FEATURE_ROTATE_LOGFILE
 	if (G.logFileSize && log_file->isRegular && log_file->size > G.logFileSize) {
-		if (G.logFileRotate) { /* always 0..1 */
+		if (G.logFileRotate) { /* always 0..99 */
 			int i = strlen(log_file->path) + 3 + 1;
 			char oldFile[i];
-
-			sprintf(oldFile, "%s-1", log_file->path);
-			unlink(oldFile);
-			rename(log_file->path, oldFile);
-
-#ifdef SYSLOGD_WRLOCK
-			fl.l_type = F_UNLCK;
-			fcntl(log_file->fd, F_SETLKW, &fl);
-#endif
-			close(log_file->fd);
-			goto reopen;
+			char newFile[i];
+			i = G.logFileRotate - 1;
+			/* rename: f.8 -> f.9; f.7 -> f.8; ... */
+			while (1) {
+				sprintf(newFile, "%s.%d", log_file->path, i);
+				if (i == 0) break;
+				sprintf(oldFile, "%s.%d", log_file->path, --i);
+				/* ignore errors - file might be missing */
+				rename(oldFile, newFile);
+			}
+			/* newFile == "f.0" now */
+			rename(log_file->path, newFile);
 		}
-		ftruncate(log_file->fd, 0);
-	}
-	log_file->size +=
+
+		/* We may or may not have just renamed the file away;
+		 * if we didn't rename because we aren't keeping any backlog,
+		 * then it's time to clobber the file. If we did rename it...,
+		 * incredibly, if F and F.0 are hardlinks, POSIX _demands_
+		 * that rename returns 0 but does not remove F!!!
+		 * (hardlinked F/F.0 pair was observed after
+		 * power failure during rename()).
+		 * So ensure old file is gone in any case:
+		 */
+		unlink(log_file->path);
+#ifdef SYSLOGD_WRLOCK
+		fl.l_type = F_UNLCK;
+		fcntl(log_file->fd, F_SETLKW, &fl);
 #endif
-			full_write(log_file->fd, msg, len);
+		close(log_file->fd);
+		goto reopen;
+	}
+/* TODO: what to do on write errors ("disk full")? */
+	len = full_write(log_file->fd, msg, len);
+	if (len > 0)
+		log_file->size += len;
+#else
+	full_write(log_file->fd, msg, len);
+#endif
+
 #ifdef SYSLOGD_WRLOCK
 	fl.l_type = F_UNLCK;
 	fcntl(log_file->fd, F_SETLKW, &fl);
@@ -641,6 +829,11 @@ static void timestamp_and_log(int pri, char *msg, int len)
 		msg += 16;
 	}
 	timestamp[15] = '\0';
+
+	if (option_mask32 & OPT_kmsg) {
+		log_to_kmsg(pri, msg);
+		return;
+	}
 
 	if (option_mask32 & OPT_small)
 		sprintf(G.printbuf, "%s %s\n", timestamp, msg);
@@ -743,18 +936,13 @@ static NOINLINE int create_socket(void)
 	int sock_fd;
 	char *dev_log_name;
 
-#if ENABLE_FEATURE_SYSTEMD
-	if (sd_listen_fds() == 1)
-		return SD_LISTEN_FDS_START;
-#endif
-
 	memset(&sunx, 0, sizeof(sunx));
 	sunx.sun_family = AF_UNIX;
 
 	/* Unlink old /dev/log or object it points to. */
 	/* (if it exists, bind will fail) */
-	strcpy(sunx.sun_path, "/dev/log");
-	dev_log_name = xmalloc_follow_symlinks("/dev/log");
+	strcpy(sunx.sun_path, _PATH_LOG);
+	dev_log_name = xmalloc_follow_symlinks(_PATH_LOG);
 	if (dev_log_name) {
 		safe_strncpy(sunx.sun_path, dev_log_name, sizeof(sunx.sun_path));
 		free(dev_log_name);
@@ -763,7 +951,7 @@ static NOINLINE int create_socket(void)
 
 	sock_fd = xsocket(AF_UNIX, SOCK_DGRAM, 0);
 	xbind(sock_fd, (struct sockaddr *) &sunx, sizeof(sunx));
-	chmod("/dev/log", 0666);
+	chmod(_PATH_LOG, 0666);
 
 	return sock_fd;
 }
@@ -789,7 +977,6 @@ static int try_to_resolve_remote(remoteHost_t *rh)
 static void do_syslogd(void) NORETURN;
 static void do_syslogd(void)
 {
-	int sock_fd;
 #if ENABLE_FEATURE_REMOTE_LOG
 	llist_t *item;
 #endif
@@ -810,11 +997,13 @@ static void do_syslogd(void)
 	signal(SIGALRM, do_mark);
 	alarm(G.markInterval);
 #endif
-	sock_fd = create_socket();
+	xmove_fd(create_socket(), STDIN_FILENO);
 
-	if (ENABLE_FEATURE_IPC_SYSLOG && (option_mask32 & OPT_circularlog)) {
+	if (option_mask32 & OPT_circularlog)
 		ipcsyslog_init();
-	}
+
+	if (option_mask32 & OPT_kmsg)
+		kmsg_init();
 
 	timestamp_and_log_internal("syslogd started: BusyBox v" BB_VER);
 
@@ -829,10 +1018,10 @@ static void do_syslogd(void)
 			recvbuf = G.recvbuf;
 #endif
  read_again:
-		sz = read(sock_fd, recvbuf, MAX_READ - 1);
+		sz = read(STDIN_FILENO, recvbuf, MAX_READ - 1);
 		if (sz < 0) {
 			if (!bb_got_signal)
-				bb_perror_msg("read from /dev/log");
+				bb_perror_msg("read from %s", _PATH_LOG);
 			break;
 		}
 
@@ -900,9 +1089,10 @@ static void do_syslogd(void)
 	} /* while (!bb_got_signal) */
 
 	timestamp_and_log_internal("syslogd exiting");
-	puts("syslogd exiting");
-	if (ENABLE_FEATURE_IPC_SYSLOG)
-		ipcsyslog_cleanup();
+	remove_pidfile(CONFIG_PID_FILE_PATH "/syslogd.pid");
+	ipcsyslog_cleanup();
+	if (option_mask32 & OPT_kmsg)
+		kmsg_cleanup();
 	kill_myself_with_sig(bb_got_signal);
 #undef recvbuf
 }
@@ -939,13 +1129,12 @@ int syslogd_main(int argc UNUSED_PARAM, char **argv)
 	//if (opts & OPT_outfile) // -O
 	if (opts & OPT_loglevel) // -l
 		G.logLevel = xatou_range(opt_l, 1, 8);
-	if (opts & OPT_small) // -S
-		option_mask32 |= OPT_small;     // make syslog smaller.
+	//if (opts & OPT_small) // -S
 #if ENABLE_FEATURE_ROTATE_LOGFILE
 	if (opts & OPT_filesize) // -s
 		G.logFileSize = xatou_range(opt_s, 0, INT_MAX/1024) * 1024;
 	if (opts & OPT_rotatecnt) // -b
-		G.logFileRotate = xatou_range(opt_b, 0, 1);
+		G.logFileRotate = xatou_range(opt_b, 0, 99);
 #endif
 #if ENABLE_FEATURE_IPC_SYSLOG
 	if (opt_C) // -Cn
@@ -965,8 +1154,10 @@ int syslogd_main(int argc UNUSED_PARAM, char **argv)
 	if (!(opts & OPT_nofork)) {
 		bb_daemonize_or_rexec(DAEMON_CHDIR_ROOT, argv);
 	}
+
 	//umask(0); - why??
-	write_pidfile("/var/run/syslogd.pid");
+	write_pidfile(CONFIG_PID_FILE_PATH "/syslogd.pid");
+
 	do_syslogd();
 	/* return EXIT_SUCCESS; */
 }

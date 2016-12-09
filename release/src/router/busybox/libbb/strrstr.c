@@ -7,13 +7,7 @@
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
-#ifdef __DO_STRRSTR_TEST
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#else
 #include "libbb.h"
-#endif
 
 /*
  * The strrstr() function finds the last occurrence of the substring needle
@@ -34,8 +28,9 @@ char* FAST_FUNC strrstr(const char *haystack, const char *needle)
 	}
 }
 
-#ifdef __DO_STRRSTR_TEST
-int main(int argc, char **argv)
+#if ENABLE_UNIT_TEST
+
+BBUNIT_DEFINE_TEST(strrstr)
 {
 	static const struct {
 		const char *h, *n;
@@ -59,13 +54,13 @@ int main(int argc, char **argv)
 	i = 0;
 	while (i < sizeof(test_array) / sizeof(test_array[0])) {
 		const char *r = strrstr(test_array[i].h, test_array[i].n);
-		printf("'%s' vs. '%s': '%s' - ", test_array[i].h, test_array[i].n, r);
 		if (r == NULL)
 			r = test_array[i].h - 1;
-		printf("%s\n", r == test_array[i].h + test_array[i].pos ? "PASSED" : "FAILED");
+		BBUNIT_ASSERT_EQ(r, test_array[i].h + test_array[i].pos);
 		i++;
 	}
 
-	return 0;
+	BBUNIT_ENDTEST;
 }
-#endif
+
+#endif /* ENABLE_UNIT_TEST */

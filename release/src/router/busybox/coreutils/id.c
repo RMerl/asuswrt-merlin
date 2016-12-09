@@ -64,10 +64,8 @@
 /* This is a NOEXEC applet. Be very careful! */
 
 #if !ENABLE_USE_BB_PWD_GRP
-#if defined(__UCLIBC_MAJOR__) && (__UCLIBC_MAJOR__ == 0)
-#if (__UCLIBC_MINOR__ < 9) || (__UCLIBC_MINOR__ == 9 &&  __UCLIBC_SUBLEVEL__ < 30)
+#if defined(__UCLIBC__) && UCLIBC_VERSION < KERNEL_VERSION(0, 9, 30)
 #error "Sorry, you need at least uClibc version 0.9.30 for id applet to build"
-#endif
 #endif
 #endif
 
@@ -174,7 +172,7 @@ int id_main(int argc UNUSED_PARAM, char **argv)
 		/* Don't allow -n -r -nr -ug -rug -nug -rnug -uZ -gZ -GZ*/
 		/* Don't allow more than one username */
 		opt_complementary = "?1:u--g:g--u:G--u:u--G:g--G:G--g:r?ugG:n?ugG"
-			 IF_SELINUX(":u--Z:Z--u:g--Z:Z--g:G--Z:Z--G");
+			IF_SELINUX(":u--Z:Z--u:g--Z:Z--g:G--Z:Z--G");
 		opt = getopt32(argv, "rnugG" IF_SELINUX("Z"));
 	}
 

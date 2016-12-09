@@ -48,6 +48,7 @@ testing "sed accepts multiple -e" "sed -e 'i\' -e '1' -e 'a\' -e '3'" \
 
 # substitutions
 testing "sed -n" "sed -n -e s/foo/bar/ -e s/bar/baz/" "" "" "foo\n"
+testing "sed with empty match" "sed 's/z*//g'" "string\n" "" "string\n"
 testing "sed s//p" "sed -e s/foo/bar/p -e s/bar/baz/p" "bar\nbaz\nbaz\n" \
 	"" "foo\n"
 testing "sed -n s//p" "sed -ne s/abc/def/p" "def\n" "" "abc\n"
@@ -134,10 +135,12 @@ testing "sed empty file plus cat" "sed -e 's/nohit//' input -" "one\ntwo" \
 	"" "one\ntwo"
 testing "sed cat plus empty file" "sed -e 's/nohit//' input -" "one\ntwo" \
 	"one\ntwo" ""
-test x"$SKIP_KNOWN_BUGS" = x"" && {
 testing "sed append autoinserts newline" "sed -e '/woot/a woo' -" \
 	"woot\nwoo\n" "" "woot"
-}
+testing "sed append autoinserts newline 2" "sed -e '/oot/a woo' - input" \
+	"woot\nwoo\nboot\nwoo\n" "boot" "woot"
+testing "sed append autoinserts newline 3" "sed -e '/oot/a woo' -i input && cat input" \
+	"boot\nwoo\n" "boot" ""
 testing "sed insert doesn't autoinsert newline" "sed -e '/woot/i woo' -" \
 	"woo\nwoot" "" "woot"
 testing "sed print autoinsert newlines" "sed -e 'p' -" "one\none" "" "one"
@@ -153,11 +156,9 @@ testing "sed selective matches insert newline" \
 testing "sed selective matches noinsert newline" \
 	"sed -ne 's/woo/bang/p' input -" "a bang\nb bang" "a woo\nb woo" \
 	"c no\nd no"
-test x"$SKIP_KNOWN_BUGS" = x"" && {
 testing "sed clusternewline" \
 	"sed -e '/one/a 111' -e '/two/i 222' -e p input -" \
 	"one\none\n111\n222\ntwo\ntwo" "one" "two"
-}
 testing "sed subst+write" \
 	"sed -e 's/i/z/' -e 'woutputw' input -; $ECHO -n X; cat outputw" \
 	"thzngy\nagaznXthzngy\nagazn" "thingy" "again"
@@ -276,6 +277,24 @@ testing "sed a cmd ended by double backslash" \
 	| two \\
 '
 
+testing "sed a cmd understands \\n,\\t,\\r" \
+	"sed '/1/a\\\\t\\rzero\\none\\\\ntwo\\\\\\nthree'" \
+"\
+line1
+\t\rzero
+one\\\\ntwo\\
+three
+" "" "line1\n"
+
+testing "sed i cmd understands \\n,\\t,\\r" \
+	"sed '/1/i\\\\t\\rzero\\none\\\\ntwo\\\\\\nthree'" \
+"\
+\t\rzero
+one\\\\ntwo\\
+three
+line1
+" "" "line1\n"
+
 # first three lines are deleted; 4th line is matched and printed by "2,3" and by "4" ranges
 testing "sed with N skipping lines past ranges on next cmds" \
 	"sed -n '1{N;N;d};1p;2,3p;3p;4p'" \
@@ -308,6 +327,69 @@ testing "sed zero chars match/replace logic must not falsely trigger here 1" \
 testing "sed zero chars match/replace logic must not falsely trigger here 2" \
 	"sed 's/ *$/_/g'" \
 	"qwerty_\n" "" "qwerty\n"
+
+testing "sed /\$_in_regex/ should not match newlines, only end-of-line" \
+	"sed ': testcont; /\\\\$/{ =; N; b testcont }'" \
+	"\
+this is a regular line
+2
+line with \\
+continuation
+more regular lines
+5
+line with \\
+continuation
+" \
+	"" "\
+this is a regular line
+line with \\
+continuation
+more regular lines
+line with \\
+continuation
+"
+
+testing "sed s///NUM test" \
+	"sed -e 's/a/b/2; s/a/c/g'" \
+	"cb\n" "" "aa\n"
+
+testing "sed /regex/,N{...} addresses work" \
+	"sed /^2/,2{d}" \
+	"1\n3\n4\n5\n" \
+	"" \
+	"1\n2\n3\n4\n5\n"
+
+testing "sed /regex/,+N{...} addresses work" \
+	"sed /^2/,+2{d}" \
+	"1\n5\n" \
+	"" \
+	"1\n2\n3\n4\n5\n"
+
+testing "sed /regex/,+N{...} -i works" \
+	"cat - >input2; sed /^4/,+2{d} -i input input2; echo \$?; cat input input2; rm input2" \
+	"0\n""1\n2\n3\n7\n8\n""1\n2\n7\n8\n" \
+	"1\n2\n3\n4\n5\n6\n7\n8\n" \
+	"1\n2\n4\n5\n6\n7\n8\n" \
+
+# GNU sed 4.2.1 would also accept "/^4/,+{d}" with the same meaning, we don't
+testing "sed /regex/,+0{...} -i works" \
+	"cat - >input2; sed /^4/,+0{d} -i input input2; echo \$?; cat input input2; rm input2" \
+	"0\n""1\n2\n3\n5\n6\n7\n8\n""1\n2\n5\n6\n7\n8\n" \
+	"1\n2\n3\n4\n5\n6\n7\n8\n" \
+	"1\n2\n4\n5\n6\n7\n8\n" \
+
+# GNU sed 4.2.1 would also accept "/^4/,+d" with the same meaning, we don't
+testing "sed /regex/,+0<cmd> -i works" \
+	"cat - >input2; sed /^4/,+0d -i input input2; echo \$?; cat input input2; rm input2" \
+	"0\n""1\n2\n3\n5\n6\n7\n8\n""1\n2\n5\n6\n7\n8\n" \
+	"1\n2\n3\n4\n5\n6\n7\n8\n" \
+	"1\n2\n4\n5\n6\n7\n8\n" \
+
+testing "sed 's///w FILE'" \
+	"sed 's/qwe/ZZZ/wz'; cat z; rm z" \
+	"123\nZZZ\nasd\n""ZZZ\n" \
+	"" \
+	"123\nqwe\nasd\n"
 
 # testing "description" "commands" "result" "infile" "stdin"
 

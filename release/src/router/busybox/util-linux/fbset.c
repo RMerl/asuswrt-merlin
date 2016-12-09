@@ -164,6 +164,7 @@ static const struct cmdoptions_t {
 	const unsigned char code;
 } g_cmdoptions[] = {
 	/*"12345678" + NUL */
+//TODO: convert to index_in_strings()
 	{ "fb"      , 1, CMD_FB       },
 	{ "db"      , 1, CMD_DB       },
 	{ "a"       , 0, CMD_ALL      },
@@ -248,12 +249,12 @@ static int read_mode_db(struct fb_var_screeninfo *base, const char *fn,
 		if (!p)
 			continue;
 		s = p + strlen(mode);
-		//bb_info_msg("CHECK[%s][%s][%d]", mode, p-1, *s);
+		//bb_error_msg("CHECK[%s][%s][%d]", mode, p-1, *s);
 		/* exact match? */
 		if (((!*s || isspace(*s)) && '"' != s[-1]) /* end-of-token */
 		 || ('"' == *s && '"' == p[-1]) /* ends with " but starts with " too! */
 		) {
-			//bb_info_msg("FOUND[%s][%s][%s][%d]", token[1], p, mode, isspace(*s));
+			//bb_error_msg("FOUND[%s][%s][%s][%d]", token[1], p, mode, isspace(*s));
 			break;
 		}
 	}
@@ -264,14 +265,14 @@ static int read_mode_db(struct fb_var_screeninfo *base, const char *fn,
 	while (config_read(parser, token, 2, 1, "# \t", PARSE_NORMAL)) {
 		int i;
 
-//bb_info_msg("???[%s][%s]", token[0], token[1]);
+//bb_error_msg("???[%s][%s]", token[0], token[1]);
 		if (strcmp(token[0], "endmode") == 0) {
-//bb_info_msg("OK[%s]", mode);
+//bb_error_msg("OK[%s]", mode);
 			return 1;
 		}
 		p = token[1];
 		i = index_in_strings(
-			"geometry\0timings\0interlaced\0double\0vsync\0hsync\0csync\0extsync\0",
+			"geometry\0timings\0interlaced\0double\0vsync\0hsync\0csync\0extsync\0rgba\0",
 			token[0]);
 		switch (i) {
 		case 0:
@@ -294,7 +295,7 @@ static int read_mode_db(struct fb_var_screeninfo *base, const char *fn,
 				base->yres_virtual = base_yres_virtual;
 				base->bits_per_pixel = base_bits_per_pixel;
 			}
-//bb_info_msg("GEO[%s]", p);
+//bb_error_msg("GEO[%s]", p);
 			break;
 		case 1:
 			if (sizeof(int) == sizeof(base->xres)) {
@@ -321,13 +322,13 @@ static int read_mode_db(struct fb_var_screeninfo *base, const char *fn,
 				base->hsync_len = base_hsync_len;
 				base->vsync_len = base_vsync_len;
 			}
-//bb_info_msg("TIM[%s]", p);
+//bb_error_msg("TIM[%s]", p);
 			break;
 		case 2:
 		case 3: {
 			static const uint32_t syncs[] = {FB_VMODE_INTERLACED, FB_VMODE_DOUBLE};
 			ss(&base->vmode, syncs[i-2], p, "false");
-//bb_info_msg("VMODE[%s]", p);
+//bb_error_msg("VMODE[%s]", p);
 			break;
 		}
 		case 4:
@@ -335,13 +336,37 @@ static int read_mode_db(struct fb_var_screeninfo *base, const char *fn,
 		case 6: {
 			static const uint32_t syncs[] = {FB_SYNC_VERT_HIGH_ACT, FB_SYNC_HOR_HIGH_ACT, FB_SYNC_COMP_HIGH_ACT};
 			ss(&base->sync, syncs[i-4], p, "low");
-//bb_info_msg("SYNC[%s]", p);
+//bb_error_msg("SYNC[%s]", p);
 			break;
 		}
 		case 7:
 			ss(&base->sync, FB_SYNC_EXT, p, "false");
-//bb_info_msg("EXTSYNC[%s]", p);
+//bb_error_msg("EXTSYNC[%s]", p);
 			break;
+		case 8: {
+			int red_offset, red_length;
+			int green_offset, green_length;
+			int blue_offset, blue_length;
+			int transp_offset, transp_length;
+
+			sscanf(p, "%d/%d,%d/%d,%d/%d,%d/%d",
+				&red_length, &red_offset,
+				&green_length, &green_offset,
+				&blue_length, &blue_offset,
+				&transp_length, &transp_offset);
+			base->red.offset = red_offset;
+			base->red.length = red_length;
+			base->red.msb_right = 0;
+			base->green.offset = green_offset;
+			base->green.length = green_length;
+			base->green.msb_right = 0;
+			base->blue.offset = blue_offset;
+			base->blue.length = blue_length;
+			base->blue.msb_right = 0;
+			base->transp.offset = transp_offset;
+			base->transp.length = transp_length;
+			base->transp.msb_right = 0;
+		}
 		}
 	}
 	return 0;
@@ -392,7 +417,7 @@ int fbset_main(int argc, char **argv)
 	unsigned options = 0;
 
 	const char *fbdev = DEFAULTFBDEV;
-	const char *modefile = DEFAULTFBMODE;
+	IF_FEATURE_FBSET_READMODE(const char *modefile = DEFAULTFBMODE;)
 	char *thisarg;
 	char *mode = mode; /* for compiler */
 
@@ -420,7 +445,7 @@ int fbset_main(int argc, char **argv)
 				fbdev = argv[1];
 				break;
 			case CMD_DB:
-				modefile = argv[1];
+				IF_FEATURE_FBSET_READMODE(modefile = argv[1];)
 				break;
 			case CMD_ALL:
 				options |= OPT_ALL;

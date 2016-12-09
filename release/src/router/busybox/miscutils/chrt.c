@@ -23,9 +23,6 @@
 
 #include <sched.h>
 #include "libbb.h"
-#ifndef _POSIX_PRIORITY_SCHEDULING
-#warning your system may be foobared
-#endif
 
 static const struct {
 	int policy;

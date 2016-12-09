@@ -7,7 +7,7 @@ XZ Embedded
 
     XZ Embedded was written for use in the Linux kernel, but the code can
     be easily used in other environments too, including regular userspace
-    applications.
+    applications. See userspace/xzminidec.c for an example program.
 
     This README contains information that is useful only when the copy
     of XZ Embedded isn't part of the Linux kernel tree. You should also
@@ -55,7 +55,7 @@ Compiler requirements
     code is modified not to support large files, which needs some more
     care than just using 32-bit integer instead of 64-bit).
 
-    If you use GCC, try to use a recent version. For example, on x86,
+    If you use GCC, try to use a recent version. For example, on x86-32,
     xz_dec_lzma2.c compiled with GCC 3.3.6 is 15-25 % slower than when
     compiled with GCC 4.3.3.
 
@@ -93,7 +93,7 @@ BCJ filter support
     them always #defined doesn't hurt either.
 
         #define             Instruction set     BCJ filter endianness
-        XZ_DEC_X86          x86 or x86-64       Little endian only
+        XZ_DEC_X86          x86-32 or x86-64    Little endian only
         XZ_DEC_POWERPC      PowerPC             Big endian only
         XZ_DEC_IA64         Itanium (IA-64)     Big or little endian
         XZ_DEC_ARM          ARM                 Little endian only

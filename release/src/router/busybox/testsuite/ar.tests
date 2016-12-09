@@ -15,7 +15,7 @@ testing "ar creates archives" \
        "$(md5sum <README)\n" \
        "" \
        ""
-rm test.a
+rm test.a 2>/dev/null
 
 testing "ar replaces things in archives" \
        "echo 'blah!' >file1 && echo 'blast!' >file2 && ar cr test.a README file1 file2 && mv file2 file1 && ar cr test.a file1 && ar p test.a file1" \

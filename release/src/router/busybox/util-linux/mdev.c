@@ -80,7 +80,7 @@
 //usage:	IF_FEATURE_MDEV_CONF(
 //usage:       "\n"
 //usage:       "It uses /etc/mdev.conf with lines\n"
-//usage:       "	[-]DEVNAME UID:GID PERM"
+//usage:       "	[-][ENV=regex;]...DEVNAME UID:GID PERM"
 //usage:			IF_FEATURE_MDEV_RENAME(" [>|=PATH]|[!]")
 //usage:			IF_FEATURE_MDEV_EXEC(" [@|$|*PROG]")
 //usage:       "\n"
@@ -92,9 +92,12 @@
 //usage:       "\n"
 //usage:       "If /dev/mdev.seq file exists, mdev will wait for its value\n"
 //usage:       "to match $SEQNUM variable. This prevents plug/unplug races.\n"
-//usage:       "To activate this feature, create empty /dev/mdev.seq at boot."
+//usage:       "To activate this feature, create empty /dev/mdev.seq at boot.\n"
+//usage:       "\n"
+//usage:       "If /dev/mdev.log file exists, debug log will be appended to it."
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include "xregex.h"
 
 /* "mdev -s" scans /sys/class/xxx, looking for directories which have dev
@@ -139,10 +142,126 @@
  * This happens regardless of /sys/class/.../dev existence.
  */
 
+/* Kernel's hotplug environment constantly changes.
+ * Here are new cases I observed on 3.1.0:
+ *
+ * Case with $DEVNAME and $DEVICE, not just $DEVPATH:
+ * ACTION=add
+ * BUSNUM=001
+ * DEVICE=/proc/bus/usb/001/003
+ * DEVNAME=bus/usb/001/003
+ * DEVNUM=003
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5
+ * DEVTYPE=usb_device
+ * MAJOR=189
+ * MINOR=2
+ * PRODUCT=18d1/4e12/227
+ * SUBSYSTEM=usb
+ * TYPE=0/0/0
+ *
+ * Case with $DEVICE, but no $DEVNAME - apparenty, usb iface notification?
+ * "Please load me a module" thing?
+ * ACTION=add
+ * DEVICE=/proc/bus/usb/001/003
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0
+ * DEVTYPE=usb_interface
+ * INTERFACE=8/6/80
+ * MODALIAS=usb:v18D1p4E12d0227dc00dsc00dp00ic08isc06ip50
+ * PRODUCT=18d1/4e12/227
+ * SUBSYSTEM=usb
+ * TYPE=0/0/0
+ *
+ * ACTION=add
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0/host5
+ * DEVTYPE=scsi_host
+ * SUBSYSTEM=scsi
+ *
+ * ACTION=add
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0/host5/scsi_host/host5
+ * SUBSYSTEM=scsi_host
+ *
+ * ACTION=add
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0/host5/target5:0:0
+ * DEVTYPE=scsi_target
+ * SUBSYSTEM=scsi
+ *
+ * Case with strange $MODALIAS:
+ * ACTION=add
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0/host5/target5:0:0/5:0:0:0
+ * DEVTYPE=scsi_device
+ * MODALIAS=scsi:t-0x00
+ * SUBSYSTEM=scsi
+ *
+ * ACTION=add
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0/host5/target5:0:0/5:0:0:0/scsi_disk/5:0:0:0
+ * SUBSYSTEM=scsi_disk
+ *
+ * ACTION=add
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0/host5/target5:0:0/5:0:0:0/scsi_device/5:0:0:0
+ * SUBSYSTEM=scsi_device
+ *
+ * Case with explicit $MAJOR/$MINOR (no need to read /sys/$DEVPATH/dev?):
+ * ACTION=add
+ * DEVNAME=bsg/5:0:0:0
+ * DEVPATH=/devices/pci0000:00/0000:00:02.1/usb1/1-5/1-5:1.0/host5/target5:0:0/5:0:0:0/bsg/5:0:0:0
+ * MAJOR=253
+ * MINOR=1
+ * SUBSYSTEM=bsg
+ *
+ * ACTION=add
+ * DEVPATH=/devices/virtual/bdi/8:16
+ * SUBSYSTEM=bdi
+ *
+ * ACTION=add
+ * DEVNAME=sdb
+ * DEVPATH=/block/sdb
+ * DEVTYPE=disk
+ * MAJOR=8
+ * MINOR=16
+ * SUBSYSTEM=block
+ *
+ * Case with ACTION=change:
+ * ACTION=change
+ * DEVNAME=sdb
+ * DEVPATH=/block/sdb
+ * DEVTYPE=disk
+ * DISK_MEDIA_CHANGE=1
+ * MAJOR=8
+ * MINOR=16
+ * SUBSYSTEM=block
+ */
+
+#define DEBUG_LVL 2
+
+#if DEBUG_LVL >= 1
+# define dbg1(...) do { if (G.verbose) bb_error_msg(__VA_ARGS__); } while(0)
+#else
+# define dbg1(...) ((void)0)
+#endif
+#if DEBUG_LVL >= 2
+# define dbg2(...) do { if (G.verbose >= 2) bb_error_msg(__VA_ARGS__); } while(0)
+#else
+# define dbg2(...) ((void)0)
+#endif
+#if DEBUG_LVL >= 3
+# define dbg3(...) do { if (G.verbose >= 3) bb_error_msg(__VA_ARGS__); } while(0)
+#else
+# define dbg3(...) ((void)0)
+#endif
+
+
+static const char keywords[] ALIGN1 = "add\0remove\0"; // "change\0"
+enum { OP_add, OP_remove };
+
+struct envmatch {
+	struct envmatch *next;
+	char *envname;
+	regex_t match;
+};
+
 struct rule {
 	bool keep_matching;
 	bool regex_compiled;
-	bool regex_has_slash;
 	mode_t mode;
 	int maj, min0, min1;
 	struct bb_uidgid_t ugid;
@@ -150,11 +269,14 @@ struct rule {
 	char *ren_mov;
 	IF_FEATURE_MDEV_EXEC(char *r_cmd;)
 	regex_t match;
+	struct envmatch *envmatch;
 };
 
 struct globals {
 	int root_major, root_minor;
+	smallint verbose;
 	char *subsystem;
+	char *subsys_env; /* for putenv("SUBSYSTEM=subsystem") */
 #if ENABLE_FEATURE_MDEV_CONF
 	const char *filename;
 	parser_t *parser;
@@ -162,9 +284,11 @@ struct globals {
 	unsigned rule_idx;
 #endif
 	struct rule cur_rule;
+	char timestr[sizeof("HH:MM:SS.123456")];
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	IF_NOT_FEATURE_MDEV_CONF(G.cur_rule.maj = -1;) \
 	IF_NOT_FEATURE_MDEV_CONF(G.cur_rule.mode = 0660;) \
 } while (0)
@@ -173,15 +297,8 @@ struct globals {
 /* Prevent infinite loops in /sys symlinks */
 #define MAX_SYSFS_DEPTH 3
 
-/* We use additional 64+ bytes in make_device() */
-#define SCRATCH_SIZE 80
-
-#if 0
-# define dbg(...) bb_error_msg(__VA_ARGS__)
-#else
-# define dbg(...) ((void)0)
-#endif
-
+/* We use additional bytes in make_device() */
+#define SCRATCH_SIZE 128
 
 #if ENABLE_FEATURE_MDEV_CONF
 
@@ -194,12 +311,46 @@ static void make_default_cur_rule(void)
 
 static void clean_up_cur_rule(void)
 {
+	struct envmatch *e;
+
 	free(G.cur_rule.envvar);
+	free(G.cur_rule.ren_mov);
 	if (G.cur_rule.regex_compiled)
 		regfree(&G.cur_rule.match);
-	free(G.cur_rule.ren_mov);
 	IF_FEATURE_MDEV_EXEC(free(G.cur_rule.r_cmd);)
+	e = G.cur_rule.envmatch;
+	while (e) {
+		free(e->envname);
+		regfree(&e->match);
+		e = e->next;
+	}
 	make_default_cur_rule();
+}
+
+static char *parse_envmatch_pfx(char *val)
+{
+	struct envmatch **nextp = &G.cur_rule.envmatch;
+
+	for (;;) {
+		struct envmatch *e;
+		char *semicolon;
+		char *eq = strchr(val, '=');
+		if (!eq /* || eq == val? */)
+			return val;
+		if (endofname(val) != eq)
+			return val;
+		semicolon = strchr(eq, ';');
+		if (!semicolon)
+			return val;
+		/* ENVVAR=regex;... */
+		*nextp = e = xzalloc(sizeof(*e));
+		nextp = &e->next;
+		e->envname = xstrndup(val, eq - val);
+		*semicolon = '\0';
+		xregcomp(&e->match, eq + 1, REG_EXTENDED);
+		*semicolon = ';';
+		val = semicolon + 1;
+	}
 }
 
 static void parse_next_rule(void)
@@ -214,12 +365,13 @@ static void parse_next_rule(void)
 			break;
 
 		/* Fields: [-]regex uid:gid mode [alias] [cmd] */
-		dbg("token1:'%s'", tokens[1]);
+		dbg3("token1:'%s'", tokens[1]);
 
 		/* 1st field */
 		val = tokens[0];
 		G.cur_rule.keep_matching = ('-' == val[0]);
 		val += G.cur_rule.keep_matching; /* swallow leading dash */
+		val = parse_envmatch_pfx(val);
 		if (val[0] == '@') {
 			/* @major,minor[-minor2] */
 			/* (useful when name is ambiguous:
@@ -234,8 +386,10 @@ static void parse_next_rule(void)
 			if (sc == 2)
 				G.cur_rule.min1 = G.cur_rule.min0;
 		} else {
+			char *eq = strchr(val, '=');
 			if (val[0] == '$') {
-				char *eq = strchr(++val, '=');
+				/* $ENVVAR=regex ... */
+				val++;
 				if (!eq) {
 					bb_error_msg("bad $envvar=regex on line %d", G.parser->lineno);
 					goto next_rule;
@@ -245,17 +399,16 @@ static void parse_next_rule(void)
 			}
 			xregcomp(&G.cur_rule.match, val, REG_EXTENDED);
 			G.cur_rule.regex_compiled = 1;
-			G.cur_rule.regex_has_slash = (strchr(val, '/') != NULL);
 		}
 
 		/* 2nd field: uid:gid - device ownership */
-		if (get_uidgid(&G.cur_rule.ugid, tokens[1], /*allow_numeric:*/ 1) == 0) {
+		if (get_uidgid(&G.cur_rule.ugid, tokens[1]) == 0) {
 			bb_error_msg("unknown user/group '%s' on line %d", tokens[1], G.parser->lineno);
 			goto next_rule;
 		}
 
 		/* 3rd field: mode - device permissions */
-		bb_parse_mode(tokens[2], &G.cur_rule.mode);
+		G.cur_rule.mode = bb_parse_mode(tokens[2], G.cur_rule.mode);
 
 		/* 4th field (opt): ">|=alias" or "!" to not create the node */
 		val = tokens[3];
@@ -280,7 +433,7 @@ static void parse_next_rule(void)
 		clean_up_cur_rule();
 	} /* while (config_read) */
 
-	dbg("config_close(G.parser)");
+	dbg3("config_close(G.parser)");
 	config_close(G.parser);
 	G.parser = NULL;
 
@@ -297,7 +450,7 @@ static const struct rule *next_rule(void)
 
 	/* Open conf file if we didn't do it yet */
 	if (!G.parser && G.filename) {
-		dbg("config_open('%s')", G.filename);
+		dbg3("config_open('%s')", G.filename);
 		G.parser = config_open2(G.filename, fopen_for_read);
 		G.filename = NULL;
 	}
@@ -306,7 +459,7 @@ static const struct rule *next_rule(void)
 		/* mdev -s */
 		/* Do we have rule parsed already? */
 		if (G.rule_vec[G.rule_idx]) {
-			dbg("< G.rule_vec[G.rule_idx:%d]=%p", G.rule_idx, G.rule_vec[G.rule_idx]);
+			dbg3("< G.rule_vec[G.rule_idx:%d]=%p", G.rule_idx, G.rule_vec[G.rule_idx]);
 			return G.rule_vec[G.rule_idx++];
 		}
 		make_default_cur_rule();
@@ -320,14 +473,29 @@ static const struct rule *next_rule(void)
 	if (G.parser) {
 		parse_next_rule();
 		if (G.rule_vec) { /* mdev -s */
-			rule = memcpy(xmalloc(sizeof(G.cur_rule)), &G.cur_rule, sizeof(G.cur_rule));
+			rule = xmemdup(&G.cur_rule, sizeof(G.cur_rule));
 			G.rule_vec = xrealloc_vector(G.rule_vec, 4, G.rule_idx);
 			G.rule_vec[G.rule_idx++] = rule;
-			dbg("> G.rule_vec[G.rule_idx:%d]=%p", G.rule_idx, G.rule_vec[G.rule_idx]);
+			dbg3("> G.rule_vec[G.rule_idx:%d]=%p", G.rule_idx, G.rule_vec[G.rule_idx]);
 		}
 	}
 
 	return rule;
+}
+
+static int env_matches(struct envmatch *e)
+{
+	while (e) {
+		int r;
+		char *val = getenv(e->envname);
+		if (!val)
+			return 0;
+		r = regexec(&e->match, val, /*size*/ 0, /*range[]*/ NULL, /*eflags*/ 0);
+		if (r != 0) /* no match */
+			return 0;
+		e = e->next;
+	}
+	return 1;
 }
 
 #else
@@ -375,16 +543,17 @@ static char *build_alias(char *alias, const char *device_name)
 
 /* mknod in /dev based on a path like "/sys/block/hda/hda1"
  * NB1: path parameter needs to have SCRATCH_SIZE scratch bytes
- * after NUL, but we promise to not mangle (IOW: to restore if needed)
+ * after NUL, but we promise to not mangle (IOW: to restore NUL if needed)
  * path string.
  * NB2: "mdev -s" may call us many times, do not leak memory/fds!
+ *
+ * device_name = $DEVNAME (may be NULL)
+ * path        = /sys/$DEVPATH
  */
-static void make_device(char *path, int delete)
+static void make_device(char *device_name, char *path, int operation)
 {
-	char *device_name, *subsystem_slash_devname;
 	int major, minor, type, len;
-
-	dbg("%s('%s', delete:%d)", __func__, path, delete);
+	char *path_end = path + strlen(path);
 
 	/* Try to read major/minor string.  Note that the kernel puts \n after
 	 * the data, so we don't need to worry about null terminating the string
@@ -392,50 +561,59 @@ static void make_device(char *path, int delete)
 	 * We also depend on path having writeable space after it.
 	 */
 	major = -1;
-	if (!delete) {
-		char *dev_maj_min = path + strlen(path);
-
-		strcpy(dev_maj_min, "/dev");
-		len = open_read_close(path, dev_maj_min + 1, 64);
-		*dev_maj_min = '\0';
+	if (operation == OP_add) {
+		strcpy(path_end, "/dev");
+		len = open_read_close(path, path_end + 1, SCRATCH_SIZE - 1);
+		*path_end = '\0';
 		if (len < 1) {
 			if (!ENABLE_FEATURE_MDEV_EXEC)
 				return;
 			/* no "dev" file, but we can still run scripts
 			 * based on device name */
-		} else if (sscanf(++dev_maj_min, "%u:%u", &major, &minor) != 2) {
+		} else if (sscanf(path_end + 1, "%u:%u", &major, &minor) == 2) {
+			dbg1("dev %u,%u", major, minor);
+		} else {
 			major = -1;
 		}
 	}
 	/* else: for delete, -1 still deletes the node, but < -1 suppresses that */
 
-	/* Determine device name, type, major and minor */
-	device_name = (char*) bb_basename(path);
-	/* http://kernel.org/doc/pending/hotplug.txt says that only
+	/* Determine device name */
+	if (!device_name) {
+		/*
+		 * There was no $DEVNAME envvar (for example, mdev -s never has).
+		 * But it is very useful: it contains the *path*, not only basename,
+		 * Thankfully, uevent file has it.
+		 * Example of .../sound/card0/controlC0/uevent file on Linux-3.7.7:
+		 * MAJOR=116
+		 * MINOR=7
+		 * DEVNAME=snd/controlC0
+		 */
+		strcpy(path_end, "/uevent");
+		len = open_read_close(path, path_end + 1, SCRATCH_SIZE - 1);
+		if (len < 0)
+			len = 0;
+		*path_end = '\0';
+		path_end[1 + len] = '\0';
+		device_name = strstr(path_end + 1, "\nDEVNAME=");
+		if (device_name) {
+			device_name += sizeof("\nDEVNAME=")-1;
+			strchrnul(device_name, '\n')[0] = '\0';
+		} else {
+			/* Fall back to just basename */
+			device_name = (char*) bb_basename(path);
+		}
+	}
+	/* Determine device type */
+	/*
+	 * http://kernel.org/doc/pending/hotplug.txt says that only
 	 * "/sys/block/..." is for block devices. "/sys/bus" etc is not.
 	 * But since 2.6.25 block devices are also in /sys/class/block.
-	 * We use strstr("/block/") to forestall future surprises. */
+	 * We use strstr("/block/") to forestall future surprises.
+	 */
 	type = S_IFCHR;
-	if (strstr(path, "/block/") || (G.subsystem && strncmp(G.subsystem, "block", 5) == 0))
+	if (strstr(path, "/block/") || (G.subsystem && is_prefixed_with(G.subsystem, "block")))
 		type = S_IFBLK;
-
-	/* Make path point to "subsystem/device_name" */
-	subsystem_slash_devname = NULL;
-	/* Check for coldplug invocations first */
-	if (strncmp(path, "/sys/block/", 11) == 0) /* legacy case */
-		path += sizeof("/sys/") - 1;
-	else if (strncmp(path, "/sys/class/", 11) == 0)
-		path += sizeof("/sys/class/") - 1;
-	else {
-		/* Example of a hotplug invocation:
-		 * SUBSYSTEM="block"
-		 * DEVPATH="/sys" + "/devices/virtual/mtd/mtd3/mtdblock3"
-		 * ("/sys" is added by mdev_main)
-		 * - path does not contain subsystem
-		 */
-		subsystem_slash_devname = concat_path_file(G.subsystem, device_name);
-		path = subsystem_slash_devname;
-	}
 
 #if ENABLE_FEATURE_MDEV_CONF
 	G.rule_idx = 0; /* restart from the beginning (think mdev -s) */
@@ -446,14 +624,16 @@ static void make_device(char *path, int delete)
 		char *command;
 		char *alias;
 		char aliaslink = aliaslink; /* for compiler */
-		const char *node_name;
+		char *node_name;
 		const struct rule *rule;
 
-		str_to_match = "";
+		str_to_match = device_name;
 
 		rule = next_rule();
 
 #if ENABLE_FEATURE_MDEV_CONF
+		if (!env_matches(rule->envmatch))
+			continue;
 		if (rule->maj >= 0) {  /* @maj,min rule */
 			if (major != rule->maj)
 				continue;
@@ -464,17 +644,15 @@ static void make_device(char *path, int delete)
 		}
 		if (rule->envvar) { /* $envvar=regex rule */
 			str_to_match = getenv(rule->envvar);
-			dbg("getenv('%s'):'%s'", rule->envvar, str_to_match);
+			dbg3("getenv('%s'):'%s'", rule->envvar, str_to_match);
 			if (!str_to_match)
 				continue;
-		} else {
-			/* regex to match [subsystem/]device_name */
-			str_to_match = (rule->regex_has_slash ? path : device_name);
 		}
+		/* else: str_to_match = device_name */
 
 		if (rule->regex_compiled) {
 			int regex_match = regexec(&rule->match, str_to_match, ARRAY_SIZE(off), off, 0);
-			dbg("regex_match for '%s':%d", str_to_match, regex_match);
+			dbg3("regex_match for '%s':%d", str_to_match, regex_match);
 			//bb_error_msg("matches:");
 			//for (int i = 0; i < ARRAY_SIZE(off); i++) {
 			//	if (off[i].rm_so < 0) continue;
@@ -493,9 +671,8 @@ static void make_device(char *path, int delete)
 		}
 		/* else: it's final implicit "match-all" rule */
  rule_matches:
+		dbg2("rule matched, line %d", G.parser ? G.parser->lineno : -1);
 #endif
-		dbg("rule matched");
-
 		/* Build alias name */
 		alias = NULL;
 		if (ENABLE_FEATURE_MDEV_RENAME && rule->ren_mov) {
@@ -538,51 +715,64 @@ static void make_device(char *path, int delete)
 				}
 			}
 		}
-		dbg("alias:'%s'", alias);
+		dbg3("alias:'%s'", alias);
 
 		command = NULL;
 		IF_FEATURE_MDEV_EXEC(command = rule->r_cmd;)
 		if (command) {
-			const char *s = "$@*";
-			const char *s2 = strchr(s, command[0]);
-
 			/* Are we running this command now?
-			 * Run $cmd on delete, @cmd on create, *cmd on both
+			 * Run @cmd on create, $cmd on delete, *cmd on any
 			 */
-			if (s2 - s != delete) {
-				/* We are here if: '*',
-				 * or: '@' and delete = 0,
-				 * or: '$' and delete = 1
-				 */
+			if ((command[0] == '@' && operation == OP_add)
+			 || (command[0] == '$' && operation == OP_remove)
+			 || (command[0] == '*')
+			) {
 				command++;
 			} else {
 				command = NULL;
 			}
 		}
-		dbg("command:'%s'", command);
+		dbg3("command:'%s'", command);
 
 		/* "Execute" the line we found */
 		node_name = device_name;
 		if (ENABLE_FEATURE_MDEV_RENAME && alias) {
 			node_name = alias = build_alias(alias, device_name);
-			dbg("alias2:'%s'", alias);
+			dbg3("alias2:'%s'", alias);
 		}
 
-		if (!delete && major >= 0) {
-			dbg("mknod('%s',%o,(%d,%d))", node_name, rule->mode | type, major, minor);
+		if (operation == OP_add && major >= 0) {
+			char *slash = strrchr(node_name, '/');
+			if (slash) {
+				*slash = '\0';
+				mkdir_recursive(node_name);
+				*slash = '/';
+			}
+			if (ENABLE_FEATURE_MDEV_CONF) {
+				dbg1("mknod %s (%d,%d) %o"
+					" %u:%u",
+					node_name, major, minor, rule->mode | type,
+					rule->ugid.uid, rule->ugid.gid
+				);
+			} else {
+				dbg1("mknod %s (%d,%d) %o",
+					node_name, major, minor, rule->mode | type
+				);
+			}
 			if (mknod(node_name, rule->mode | type, makedev(major, minor)) && errno != EEXIST)
 				bb_perror_msg("can't create '%s'", node_name);
-			if (major == G.root_major && minor == G.root_minor)
-				symlink(node_name, "root");
 			if (ENABLE_FEATURE_MDEV_CONF) {
 				chmod(node_name, rule->mode);
 				chown(node_name, rule->ugid.uid, rule->ugid.gid);
 			}
+			if (major == G.root_major && minor == G.root_minor)
+				symlink(node_name, "root");
 			if (ENABLE_FEATURE_MDEV_RENAME && alias) {
 				if (aliaslink == '>') {
 //TODO: on devtmpfs, device_name already exists and symlink() fails.
 //End result is that instead of symlink, we have two nodes.
 //What should be done?
+					dbg1("symlink: %s", device_name);
 					symlink(node_name, device_name);
 				}
 			}
@@ -591,20 +781,21 @@ static void make_device(char *path, int delete)
 		if (ENABLE_FEATURE_MDEV_EXEC && command) {
 			/* setenv will leak memory, use putenv/unsetenv/free */
 			char *s = xasprintf("%s=%s", "MDEV", node_name);
-			char *s1 = xasprintf("%s=%s", "SUBSYSTEM", G.subsystem);
 			putenv(s);
-			putenv(s1);
+			dbg1("running: %s", command);
 			if (system(command) == -1)
 				bb_perror_msg("can't run '%s'", command);
-			bb_unsetenv_and_free(s1);
 			bb_unsetenv_and_free(s);
 		}
 
-		if (delete && major >= -1) {
+		if (operation == OP_remove && major >= -1) {
 			if (ENABLE_FEATURE_MDEV_RENAME && alias) {
-				if (aliaslink == '>')
+				if (aliaslink == '>') {
+					dbg1("unlink: %s", device_name);
 					unlink(device_name);
+				}
 			}
+			dbg1("unlink: %s", node_name);
 			unlink(node_name);
 		}
 
@@ -617,8 +808,6 @@ static void make_device(char *path, int delete)
 		if (!ENABLE_FEATURE_MDEV_CONF || !rule->keep_matching)
 			break;
 	} /* for (;;) */
-
-	free(subsystem_slash_devname);
 }
 
 /* File callback for /sys/ traversal */
@@ -636,7 +825,7 @@ static int FAST_FUNC fileAction(const char *fileName,
 
 	strcpy(scratch, fileName);
 	scratch[len] = '\0';
-	make_device(scratch, /*delete:*/ 0);
+	make_device(/*DEVNAME:*/ NULL, scratch, OP_add);
 
 	return TRUE;
 }
@@ -651,9 +840,16 @@ static int FAST_FUNC dirAction(const char *fileName UNUSED_PARAM,
 	 * under /sys/class/ */
 	if (1 == depth) {
 		free(G.subsystem);
+		if (G.subsys_env) {
+			bb_unsetenv_and_free(G.subsys_env);
+			G.subsys_env = NULL;
+		}
 		G.subsystem = strrchr(fileName, '/');
-		if (G.subsystem)
+		if (G.subsystem) {
 			G.subsystem = xstrdup(G.subsystem + 1);
+			G.subsys_env = xasprintf("%s=%s", "SUBSYSTEM", G.subsystem);
+			putenv(G.subsys_env);
+		}
 	}
 
 	return (depth >= MAX_SYSFS_DEPTH ? SKIP : TRUE);
@@ -708,7 +904,7 @@ static void load_firmware(const char *firmware, const char *sysfs_path)
 	}
 
 	/* Tell kernel result by "echo [0|-1] > /sys/$DEVPATH/loading"
-	 * Note: we emit -1 if firmware file wasn't found.
+	 * Note: we emit -1 also if firmware file wasn't found.
 	 * There are cases when otherwise kernel would wait for minutes
 	 * before timing out.
 	 */
@@ -718,9 +914,118 @@ static void load_firmware(const char *firmware, const char *sysfs_path)
 		full_write(loading_fd, "-1", 2);
 
  out:
+	xchdir("/dev");
 	if (ENABLE_FEATURE_CLEAN_UP) {
 		close(firmware_fd);
 		close(loading_fd);
+	}
+}
+
+static char *curtime(void)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	sprintf(
+		strftime_HHMMSS(G.timestr, sizeof(G.timestr), &tv.tv_sec),
+		".%06u",
+		(unsigned)tv.tv_usec
+	);
+	return G.timestr;
+}
+
+static void open_mdev_log(const char *seq, unsigned my_pid)
+{
+	int logfd = open("mdev.log", O_WRONLY | O_APPEND);
+	if (logfd >= 0) {
+		xmove_fd(logfd, STDERR_FILENO);
+		G.verbose = 2;
+		applet_name = xasprintf("%s[%s]", applet_name, seq ? seq : utoa(my_pid));
+	}
+}
+
+/* If it exists, does /dev/mdev.seq match $SEQNUM?
+ * If it does not match, earlier mdev is running
+ * in parallel, and we need to wait.
+ * Active mdev pokes us with SIGCHLD to check the new file.
+ */
+static int
+wait_for_seqfile(unsigned expected_seq)
+{
+	/* We time out after 2 sec */
+	static const struct timespec ts = { 0, 32*1000*1000 };
+	int timeout = 2000 / 32;
+	int seq_fd = -1;
+	int do_once = 1;
+	sigset_t set_CHLD;
+
+	sigemptyset(&set_CHLD);
+	sigaddset(&set_CHLD, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &set_CHLD, NULL);
+
+	for (;;) {
+		int seqlen;
+		char seqbuf[sizeof(long)*3 + 2];
+		unsigned seqbufnum;
+
+		if (seq_fd < 0) {
+			seq_fd = open("mdev.seq", O_RDWR);
+			if (seq_fd < 0)
+				break;
+			close_on_exec_on(seq_fd);
+		}
+		seqlen = pread(seq_fd, seqbuf, sizeof(seqbuf) - 1, 0);
+		if (seqlen < 0) {
+			close(seq_fd);
+			seq_fd = -1;
+			break;
+		}
+		seqbuf[seqlen] = '\0';
+		if (seqbuf[0] == '\n' || seqbuf[0] == '\0') {
+			/* seed file: write out seq ASAP */
+			xwrite_str(seq_fd, utoa(expected_seq));
+			xlseek(seq_fd, 0, SEEK_SET);
+			dbg2("first seq written");
+			break;
+		}
+		seqbufnum = atoll(seqbuf);
+		if (seqbufnum == expected_seq) {
+			/* correct idx */
+			break;
+		}
+		if (seqbufnum > expected_seq) {
+			/* a later mdev runs already (this was seen by users to happen) */
+			/* do not overwrite seqfile on exit */
+			close(seq_fd);
+			seq_fd = -1;
+			break;
+		}
+		if (do_once) {
+			dbg2("%s mdev.seq='%s', need '%u'", curtime(), seqbuf, expected_seq);
+			do_once = 0;
+		}
+		if (sigtimedwait(&set_CHLD, NULL, &ts) >= 0) {
+			dbg3("woken up");
+			continue; /* don't decrement timeout! */
+		}
+		if (--timeout == 0) {
+			dbg1("%s mdev.seq='%s'", "timed out", seqbuf);
+			break;
+		}
+	}
+	sigprocmask(SIG_UNBLOCK, &set_CHLD, NULL);
+	return seq_fd;
+}
+
+static void signal_mdevs(unsigned my_pid)
+{
+	procps_status_t* p = NULL;
+	while ((p = procps_scan(p, PSSCAN_ARGV0)) != NULL) {
+		if (p->pid != my_pid
+		 && p->argv0
+		 && strcmp(bb_basename(p->argv0), "mdev") == 0
+		) {
+			kill(p->pid, SIGCHLD);
+		}
 	}
 }
 
@@ -745,8 +1050,8 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
 	xchdir("/dev");
 
 	if (argv[1] && strcmp(argv[1], "-s") == 0) {
-		/* Scan:
-		 * mdev -s
+		/*
+		 * Scan: mdev -s
 		 */
 		struct stat st;
 
@@ -757,6 +1062,8 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
 		xstat("/", &st);
 		G.root_major = major(st.st_dev);
 		G.root_minor = minor(st.st_dev);
+
+		putenv((char*)"ACTION=add");
 
 		/* ACTION_FOLLOWLINKS is needed since in newer kernels
 		 * /sys/block/loop* (for example) are symlinks to dirs,
@@ -781,66 +1088,65 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
 		char *fw;
 		char *seq;
 		char *action;
-		char *env_path;
-		static const char keywords[] ALIGN1 = "remove\0add\0";
-		enum { OP_remove = 0, OP_add };
+		char *env_devname;
+		char *env_devpath;
+		unsigned my_pid;
+		unsigned seqnum = seqnum; /* for compiler */
+		int seq_fd;
 		smalluint op;
 
 		/* Hotplug:
 		 * env ACTION=... DEVPATH=... SUBSYSTEM=... [SEQNUM=...] mdev
-		 * ACTION can be "add" or "remove"
+		 * ACTION can be "add", "remove", "change"
 		 * DEVPATH is like "/block/sda" or "/class/input/mice"
 		 */
-		action = getenv("ACTION");
-		env_path = getenv("DEVPATH");
+		env_devname = getenv("DEVNAME"); /* can be NULL */
 		G.subsystem = getenv("SUBSYSTEM");
-		if (!action || !env_path /*|| !G.subsystem*/)
+		action = getenv("ACTION");
+		env_devpath = getenv("DEVPATH");
+		if (!action || !env_devpath /*|| !G.subsystem*/)
 			bb_show_usage();
 		fw = getenv("FIRMWARE");
-		op = index_in_strings(keywords, action);
-		/* If it exists, does /dev/mdev.seq match $SEQNUM?
-		 * If it does not match, earlier mdev is running
-		 * in parallel, and we need to wait */
 		seq = getenv("SEQNUM");
-		if (seq) {
-			int timeout = 2000 / 32; /* 2000 msec */
-			do {
-				int seqlen;
-				char seqbuf[sizeof(int)*3 + 2];
+		op = index_in_strings(keywords, action);
 
-				seqlen = open_read_close("mdev.seq", seqbuf, sizeof(seqbuf) - 1);
-				if (seqlen < 0) {
-					seq = NULL;
-					break;
-				}
-				seqbuf[seqlen] = '\0';
-				if (seqbuf[0] == '\n' /* seed file? */
-				 || strcmp(seq, seqbuf) == 0 /* correct idx? */
-				) {
-					break;
-				}
-				usleep(32*1000);
-			} while (--timeout);
+		my_pid = getpid();
+		open_mdev_log(seq, my_pid);
+
+		seq_fd = -1;
+		if (seq) {
+			seqnum = atoll(seq);
+			seq_fd = wait_for_seqfile(seqnum);
 		}
 
-		snprintf(temp, PATH_MAX, "/sys%s", env_path);
+		dbg1("%s "
+			"ACTION:%s SUBSYSTEM:%s DEVNAME:%s DEVPATH:%s"
+			"%s%s",
+			curtime(),
+			action, G.subsystem, env_devname, env_devpath,
+			fw ? " FW:" : "", fw ? fw : ""
+		);
+
+		snprintf(temp, PATH_MAX, "/sys%s", env_devpath);
 		if (op == OP_remove) {
 			/* Ignoring "remove firmware". It was reported
 			 * to happen and to cause erroneous deletion
 			 * of device nodes. */
 			if (!fw)
-				make_device(temp, /*delete:*/ 1);
+				make_device(env_devname, temp, op);
 		}
-		else if (op == OP_add) {
-			make_device(temp, /*delete:*/ 0);
+		else {
+			make_device(env_devname, temp, op);
 			if (ENABLE_FEATURE_MDEV_LOAD_FIRMWARE) {
-				if (fw)
+				if (op == OP_add && fw)
 					load_firmware(fw, temp);
 			}
 		}
 
-		if (seq) {
-			xopen_xwrite_close("mdev.seq", utoa(xatou(seq) + 1));
+		dbg1("%s exiting", curtime());
+		if (seq_fd >= 0) {
+			xwrite_str(seq_fd, utoa(seqnum + 1));
+			signal_mdevs(my_pid);
 		}
 	}
 

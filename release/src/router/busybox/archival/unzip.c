@@ -9,30 +9,47 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
-
 /* For reference see
  * http://www.pkware.com/company/standards/appnote/
  * http://www.info-zip.org/pub/infozip/doc/appnote-iz-latest.zip
- */
-
-/* TODO
+ *
+ * TODO
  * Zip64 + other methods
  */
 
+//config:config UNZIP
+//config:	bool "unzip"
+//config:	default y
+//config:	help
+//config:	  unzip will list or extract files from a ZIP archive,
+//config:	  commonly found on DOS/WIN systems. The default behavior
+//config:	  (with no options) is to extract the archive into the
+//config:	  current directory. Use the `-d' option to extract to a
+//config:	  directory of your choice.
+
+//applet:IF_UNZIP(APPLET(unzip, BB_DIR_USR_BIN, BB_SUID_DROP))
+//kbuild:lib-$(CONFIG_UNZIP) += unzip.o
+
 //usage:#define unzip_trivial_usage
-//usage:       "[-opts[modifiers]] FILE[.zip] [LIST] [-x XLIST] [-d DIR]"
+//usage:       "[-lnopq] FILE[.zip] [FILE]... [-x FILE...] [-d DIR]"
 //usage:#define unzip_full_usage "\n\n"
-//usage:       "Extract files from ZIP archives\n"
-//usage:     "\n	-l	List archive contents (with -q for short form)"
-//usage:     "\n	-n	Never overwrite files (default)"
+//usage:       "Extract FILEs from ZIP archive\n"
+//usage:     "\n	-l	List contents (with -q for short form)"
+//usage:     "\n	-n	Never overwrite files (default: ask)"
 //usage:     "\n	-o	Overwrite"
-//usage:     "\n	-p	Send output to stdout"
+//usage:     "\n	-p	Print to stdout"
 //usage:     "\n	-q	Quiet"
-//usage:     "\n	-x XLST	Exclude these files"
-//usage:     "\n	-d DIR	Extract files into DIR"
+//usage:     "\n	-x FILE	Exclude FILEs"
+//usage:     "\n	-d DIR	Extract into DIR"
 
 #include "libbb.h"
 #include "bb_archive.h"
+
+#if 0
+# define dbg(...) bb_error_msg(__VA_ARGS__)
+#else
+# define dbg(...) ((void)0)
+#endif
 
 enum {
 #if BB_BIG_ENDIAN
@@ -163,7 +180,17 @@ enum { zip_fd = 3 };
 
 #if ENABLE_DESKTOP
 
-#define PEEK_FROM_END 16384
+/* Seen in the wild:
+ * Self-extracting PRO2K3XP_32.exe contains 19078464 byte zip archive,
+ * where CDE was nearly 48 kbytes before EOF.
+ * (Surprisingly, it also apparently has *another* CDE structure
+ * closer to the end, with bogus cdf_offset).
+ * To make extraction work, bumped PEEK_FROM_END from 16k to 64k.
+ */
+#define PEEK_FROM_END (64*1024)
+
+/* This value means that we failed to find CDF */
+#define BAD_CDF_OFFSET ((uint32_t)0xffffffff)
 
 /* NB: does not preserve file position! */
 static uint32_t find_cdf_offset(void)
@@ -172,14 +199,17 @@ static uint32_t find_cdf_offset(void)
 	unsigned char *p;
 	off_t end;
 	unsigned char *buf = xzalloc(PEEK_FROM_END);
+	uint32_t found;
 
 	end = xlseek(zip_fd, 0, SEEK_END);
 	end -= PEEK_FROM_END;
 	if (end < 0)
 		end = 0;
-	xlseek(zip_fd, end, SEEK_SET);
+	dbg("Looking for cdf_offset starting from 0x%"OFF_FMT"x", end);
+ 	xlseek(zip_fd, end, SEEK_SET);
 	full_read(zip_fd, buf, PEEK_FROM_END);
 
+	found = BAD_CDF_OFFSET;
 	p = buf;
 	while (p <= buf + PEEK_FROM_END - CDE_HEADER_LEN - 4) {
 		if (*p != 'P') {
@@ -195,11 +225,28 @@ static uint32_t find_cdf_offset(void)
 		/* we found CDE! */
 		memcpy(cde_header.raw, p + 1, CDE_HEADER_LEN);
 		FIX_ENDIANNESS_CDE(cde_header);
-		free(buf);
-		return cde_header.formatted.cdf_offset;
+		/*
+		 * I've seen .ZIP files with seemingly valid CDEs
+		 * where cdf_offset points past EOF - ??
+		 * This check ignores such CDEs:
+		 */
+		if (cde_header.formatted.cdf_offset < end + (p - buf)) {
+			found = cde_header.formatted.cdf_offset;
+			dbg("Possible cdf_offset:0x%x at 0x%"OFF_FMT"x",
+				(unsigned)found, end + (p-3 - buf));
+			dbg("  cdf_offset+cdf_size:0x%x",
+				(unsigned)(found + SWAP_LE32(cde_header.formatted.cdf_size)));
+			/*
+			 * We do not "break" here because only the last CDE is valid.
+			 * I've seen a .zip archive which contained a .zip file,
+			 * uncompressed, and taking the first CDE was using
+			 * the CDE inside that file!
+			 */
+		}
 	}
-	//free(buf);
-	bb_error_msg_and_die("can't find file table");
+	free(buf);
+	dbg("Found cdf_offset:0x%x", (unsigned)found);
+	return found;
 };
 
 static uint32_t read_next_cdf(uint32_t cdf_offset, cdf_header_t *cdf_ptr)
@@ -211,14 +258,23 @@ static uint32_t read_next_cdf(uint32_t cdf_offset, cdf_header_t *cdf_ptr)
 	if (!cdf_offset)
 		cdf_offset = find_cdf_offset();
 
-	xlseek(zip_fd, cdf_offset + 4, SEEK_SET);
-	xread(zip_fd, cdf_ptr->raw, CDF_HEADER_LEN);
-	FIX_ENDIANNESS_CDF(*cdf_ptr);
-	cdf_offset += 4 + CDF_HEADER_LEN
-		+ cdf_ptr->formatted.file_name_length
-		+ cdf_ptr->formatted.extra_field_length
-		+ cdf_ptr->formatted.file_comment_length;
+	if (cdf_offset != BAD_CDF_OFFSET) {
+		dbg("Reading CDF at 0x%x", (unsigned)cdf_offset);
+		xlseek(zip_fd, cdf_offset + 4, SEEK_SET);
+		xread(zip_fd, cdf_ptr->raw, CDF_HEADER_LEN);
+		FIX_ENDIANNESS_CDF(*cdf_ptr);
+		dbg("  file_name_length:%u extra_field_length:%u file_comment_length:%u",
+			(unsigned)cdf_ptr->formatted.file_name_length,
+			(unsigned)cdf_ptr->formatted.extra_field_length,
+			(unsigned)cdf_ptr->formatted.file_comment_length
+		);
+		cdf_offset += 4 + CDF_HEADER_LEN
+			+ cdf_ptr->formatted.file_name_length
+			+ cdf_ptr->formatted.extra_field_length
+			+ cdf_ptr->formatted.file_comment_length;
+	}
 
+	dbg("Returning file position to 0x%"OFF_FMT"x", org);
 	xlseek(zip_fd, org, SEEK_SET);
 	return cdf_offset;
 };
@@ -226,8 +282,9 @@ static uint32_t read_next_cdf(uint32_t cdf_offset, cdf_header_t *cdf_ptr)
 
 static void unzip_skip(off_t skip)
 {
-	if (lseek(zip_fd, skip, SEEK_CUR) == (off_t)-1)
-		bb_copyfd_exact_size(zip_fd, -1, skip);
+	if (skip != 0)
+		if (lseek(zip_fd, skip, SEEK_CUR) == (off_t)-1)
+			bb_copyfd_exact_size(zip_fd, -1, skip);
 }
 
 static void unzip_create_leading_dirs(const char *fn)
@@ -249,21 +306,31 @@ static void unzip_extract(zip_header_t *zip_header, int dst_fd)
 			bb_copyfd_exact_size(zip_fd, dst_fd, size);
 	} else {
 		/* Method 8 - inflate */
-		transformer_aux_data_t aux;
-		init_transformer_aux_data(&aux);
-		aux.bytes_in = zip_header->formatted.cmpsize;
-		if (inflate_unzip(&aux, zip_fd, dst_fd) < 0)
+		transformer_state_t xstate;
+		init_transformer_state(&xstate);
+		xstate.bytes_in = zip_header->formatted.cmpsize;
+		xstate.src_fd = zip_fd;
+		xstate.dst_fd = dst_fd;
+		if (inflate_unzip(&xstate) < 0)
 			bb_error_msg_and_die("inflate error");
 		/* Validate decompression - crc */
-		if (zip_header->formatted.crc32 != (aux.crc32 ^ 0xffffffffL)) {
+		if (zip_header->formatted.crc32 != (xstate.crc32 ^ 0xffffffffL)) {
 			bb_error_msg_and_die("crc error");
 		}
 		/* Validate decompression - size */
-		if (zip_header->formatted.ucmpsize != aux.bytes_out) {
+		if (zip_header->formatted.ucmpsize != xstate.bytes_out) {
 			/* Don't die. Who knows, maybe len calculation
 			 * was botched somewhere. After all, crc matched! */
 			bb_error_msg("bad length");
 		}
+	}
+}
+
+static void my_fgets80(char *buf80)
+{
+	fflush_all();
+	if (!fgets(buf80, 80, stdin)) {
+		bb_perror_msg_and_die("can't read standard input");
 	}
 }
 
@@ -277,6 +344,7 @@ int unzip_main(int argc, char **argv)
 	IF_NOT_DESKTOP(const) smallint verbose = 0;
 	smallint listing = 0;
 	smallint overwrite = O_PROMPT;
+	smallint x_opt_seen;
 #if ENABLE_DESKTOP
 	uint32_t cdf_offset;
 #endif
@@ -290,8 +358,7 @@ int unzip_main(int argc, char **argv)
 	llist_t *zreject = NULL;
 	char *base_dir = NULL;
 	int i, opt;
-	int opt_range = 0;
-	char key_buf[80];
+	char key_buf[80]; /* must match size used by my_fgets80 */
 	struct stat stat_buf;
 
 /* -q, -l and -v: UnZip 5.52 of 28 February 2005, by Info-ZIP:
@@ -335,81 +402,81 @@ int unzip_main(int argc, char **argv)
  *    204372                   1 file
  */
 
+	x_opt_seen = 0;
 	/* '-' makes getopt return 1 for non-options */
 	while ((opt = getopt(argc, argv, "-d:lnopqxv")) != -1) {
-		switch (opt_range) {
-		case 0: /* Options */
-			switch (opt) {
-			case 'l': /* List */
-				listing = 1;
-				break;
+		switch (opt) {
+		case 'd':  /* Extract to base directory */
+			base_dir = optarg;
+			break;
 
-			case 'n': /* Never overwrite existing files */
-				overwrite = O_NEVER;
-				break;
+		case 'l': /* List */
+			listing = 1;
+			break;
 
-			case 'o': /* Always overwrite existing files */
-				overwrite = O_ALWAYS;
-				break;
+		case 'n': /* Never overwrite existing files */
+			overwrite = O_NEVER;
+			break;
 
-			case 'p': /* Extract files to stdout and fall through to set verbosity */
-				dst_fd = STDOUT_FILENO;
+		case 'o': /* Always overwrite existing files */
+			overwrite = O_ALWAYS;
+			break;
 
-			case 'q': /* Be quiet */
-				quiet++;
-				break;
+		case 'p': /* Extract files to stdout and fall through to set verbosity */
+			dst_fd = STDOUT_FILENO;
 
-			case 'v': /* Verbose list */
-				IF_DESKTOP(verbose++;)
-				listing = 1;
-				break;
+		case 'q': /* Be quiet */
+			quiet++;
+			break;
 
-			case 1: /* The zip file */
+		case 'v': /* Verbose list */
+			IF_DESKTOP(verbose++;)
+			listing = 1;
+			break;
+
+		case 'x':
+			x_opt_seen = 1;
+			break;
+
+		case 1:
+			if (!src_fn) {
+				/* The zip file */
 				/* +5: space for ".zip" and NUL */
 				src_fn = xmalloc(strlen(optarg) + 5);
 				strcpy(src_fn, optarg);
-				opt_range++;
-				break;
-
-			default:
-				bb_show_usage();
+			} else if (!x_opt_seen) {
+				/* Include files */
+				llist_add_to(&zaccept, optarg);
+			} else {
+				/* Exclude files */
+				llist_add_to(&zreject, optarg);
 			}
 			break;
-
-		case 1: /* Include files */
-			if (opt == 1) {
-				llist_add_to(&zaccept, optarg);
-				break;
-			}
-			if (opt == 'd') {
-				base_dir = optarg;
-				opt_range += 2;
-				break;
-			}
-			if (opt == 'x') {
-				opt_range++;
-				break;
-			}
-			bb_show_usage();
-
-		case 2 : /* Exclude files */
-			if (opt == 1) {
-				llist_add_to(&zreject, optarg);
-				break;
-			}
-			if (opt == 'd') { /* Extract to base directory */
-				base_dir = optarg;
-				opt_range++;
-				break;
-			}
-			/* fall through */
 
 		default:
 			bb_show_usage();
 		}
 	}
 
-	if (src_fn == NULL) {
+#ifndef __GLIBC__
+	/*
+	 * This code is needed for non-GNU getopt
+	 * which doesn't understand "-" in option string.
+	 * The -x option won't work properly in this case:
+	 * "unzip a.zip q -x w e" will be interpreted as
+	 * "unzip a.zip q w e -x" = "unzip a.zip q w e"
+	 */
+	argv += optind;
+	if (argv[0]) {
+		/* +5: space for ".zip" and NUL */
+		src_fn = xmalloc(strlen(argv[0]) + 5);
+		strcpy(src_fn, argv[0]);
+		while (*++argv)
+			llist_add_to(&zaccept, *argv);
+	}
+#endif
+
+	if (!src_fn) {
 		bb_show_usage();
 	}
 
@@ -420,17 +487,20 @@ int unzip_main(int argc, char **argv)
 		if (overwrite == O_PROMPT)
 			overwrite = O_NEVER;
 	} else {
-		static const char extn[][5] = {"", ".zip", ".ZIP"};
-		int orig_src_fn_len = strlen(src_fn);
-		int src_fd = -1;
+		static const char extn[][5] ALIGN1 = { ".zip", ".ZIP" };
+		char *ext = src_fn + strlen(src_fn);
+		int src_fd;
 
-		for (i = 0; (i < 3) && (src_fd == -1); i++) {
-			strcpy(src_fn + orig_src_fn_len, extn[i]);
+		i = 0;
+		for (;;) {
 			src_fd = open(src_fn, O_RDONLY);
-		}
-		if (src_fd == -1) {
-			src_fn[orig_src_fn_len] = '\0';
-			bb_error_msg_and_die("can't open %s, %s.zip, %s.ZIP", src_fn, src_fn, src_fn);
+			if (src_fd >= 0)
+				break;
+			if (++i > 2) {
+				*ext = '\0';
+				bb_error_msg_and_die("can't open %s[.zip]", src_fn);
+			}
+			strcpy(ext, extn[i - 1]);
 		}
 		xmove_fd(src_fd, zip_fd);
 	}
@@ -444,11 +514,11 @@ int unzip_main(int argc, char **argv)
 			printf("Archive:  %s\n", src_fn);
 		if (listing) {
 			puts(verbose ?
-				" Length   Method    Size  Ratio   Date   Time   CRC-32    Name\n"
-				"--------  ------  ------- -----   ----   ----   ------    ----"
+				" Length   Method    Size  Cmpr    Date    Time   CRC-32   Name\n"
+				"--------  ------  ------- ---- ---------- ----- --------  ----"
 				:
-				"  Length     Date   Time    Name\n"
-				" --------    ----   ----    ----"
+				"  Length      Date    Time    Name\n"
+				"---------  ---------- -----   ----"
 				);
 		}
 	}
@@ -488,11 +558,14 @@ int unzip_main(int argc, char **argv)
 		/* Check magic number */
 		xread(zip_fd, &magic, 4);
 		/* Central directory? It's at the end, so exit */
-		if (magic == ZIP_CDF_MAGIC)
+		if (magic == ZIP_CDF_MAGIC) {
+			dbg("got ZIP_CDF_MAGIC");
 			break;
+		}
 #if ENABLE_DESKTOP
 		/* Data descriptor? It was a streaming file, go on */
 		if (magic == ZIP_DD_MAGIC) {
+			dbg("got ZIP_DD_MAGIC");
 			/* skip over duplicate crc32, cmpsize and ucmpsize */
 			unzip_skip(3 * 4);
 			continue;
@@ -500,6 +573,7 @@ int unzip_main(int argc, char **argv)
 #endif
 		if (magic != ZIP_FILEHEADER_MAGIC)
 			bb_error_msg_and_die("invalid zip magic %08X", (int)magic);
+		dbg("got ZIP_FILEHEADER_MAGIC");
 
 		/* Read the file header */
 		xread(zip_fd, zip_header.raw, ZIP_HEADER_LEN);
@@ -517,22 +591,37 @@ int unzip_main(int argc, char **argv)
 			bb_error_msg_and_die("zip flag 1 (encryption) is not supported");
 		}
 
-		{
+		if (cdf_offset != BAD_CDF_OFFSET) {
 			cdf_header_t cdf_header;
 			cdf_offset = read_next_cdf(cdf_offset, &cdf_header);
+			/*
+			 * Note: cdf_offset can become BAD_CDF_OFFSET after the above call.
+			 */
 			if (zip_header.formatted.zip_flags & SWAP_LE16(0x0008)) {
 				/* 0x0008 - streaming. [u]cmpsize can be reliably gotten
-				 * only from Central Directory. See unzip_doc.txt */
+				 * only from Central Directory. See unzip_doc.txt
+				 */
 				zip_header.formatted.crc32    = cdf_header.formatted.crc32;
 				zip_header.formatted.cmpsize  = cdf_header.formatted.cmpsize;
 				zip_header.formatted.ucmpsize = cdf_header.formatted.ucmpsize;
 			}
 			if ((cdf_header.formatted.version_made_by >> 8) == 3) {
-				/* this archive is created on Unix */
+				/* This archive is created on Unix */
 				dir_mode = file_mode = (cdf_header.formatted.external_file_attributes >> 16);
 			}
 		}
+		if (cdf_offset == BAD_CDF_OFFSET
+		 && (zip_header.formatted.zip_flags & SWAP_LE16(0x0008))
+		) {
+			/* If it's a streaming zip, we _require_ CDF */
+			bb_error_msg_and_die("can't find file table");
+		}
 #endif
+		dbg("File cmpsize:0x%x extra_len:0x%x ucmpsize:0x%x",
+			(unsigned)zip_header.formatted.cmpsize,
+			(unsigned)zip_header.formatted.extra_len,
+			(unsigned)zip_header.formatted.ucmpsize
+		);
 
 		/* Read filename */
 		free(dst_fn);
@@ -542,52 +631,72 @@ int unzip_main(int argc, char **argv)
 		/* Skip extra header bytes */
 		unzip_skip(zip_header.formatted.extra_len);
 
+		/* Guard against "/abspath", "/../" and similar attacks */
+		overlapping_strcpy(dst_fn, strip_unsafe_prefix(dst_fn));
+
 		/* Filter zip entries */
 		if (find_list_entry(zreject, dst_fn)
 		 || (zaccept && !find_list_entry(zaccept, dst_fn))
 		) { /* Skip entry */
 			i = 'n';
-
-		} else { /* Extract entry */
-			if (listing) { /* List entry */
-				unsigned dostime = zip_header.formatted.modtime | (zip_header.formatted.moddate << 16);
+		} else {
+			if (listing) {
+				/* List entry */
+				char dtbuf[sizeof("mm-dd-yyyy hh:mm")];
+				sprintf(dtbuf, "%02u-%02u-%04u %02u:%02u",
+					(zip_header.formatted.moddate >> 5) & 0xf,  // mm: 0x01e0
+					(zip_header.formatted.moddate)      & 0x1f, // dd: 0x001f
+					(zip_header.formatted.moddate >> 9) + 1980, // yy: 0xfe00
+					(zip_header.formatted.modtime >> 11),       // hh: 0xf800
+					(zip_header.formatted.modtime >> 5) & 0x3f  // mm: 0x07e0
+					// seconds/2 are not shown, encoded in ----------- 0x001f
+				);
 				if (!verbose) {
-					//      "  Length     Date   Time    Name\n"
-					//      " --------    ----   ----    ----"
-					printf(       "%9u  %02u-%02u-%02u %02u:%02u   %s\n",
+					//      "  Length      Date    Time    Name\n"
+					//      "---------  ---------- -----   ----"
+					printf(       "%9u  " "%s   "         "%s\n",
 						(unsigned)zip_header.formatted.ucmpsize,
-						(dostime & 0x01e00000) >> 21,
-						(dostime & 0x001f0000) >> 16,
-						(((dostime & 0xfe000000) >> 25) + 1980) % 100,
-						(dostime & 0x0000f800) >> 11,
-						(dostime & 0x000007e0) >> 5,
+						dtbuf,
 						dst_fn);
-					total_usize += zip_header.formatted.ucmpsize;
 				} else {
 					unsigned long percents = zip_header.formatted.ucmpsize - zip_header.formatted.cmpsize;
+					if ((int32_t)percents < 0)
+						percents = 0; /* happens if ucmpsize < cmpsize */
 					percents = percents * 100;
 					if (zip_header.formatted.ucmpsize)
 						percents /= zip_header.formatted.ucmpsize;
-					//      " Length   Method    Size  Ratio   Date   Time   CRC-32    Name\n"
-					//      "--------  ------  ------- -----   ----   ----   ------    ----"
-					printf(      "%8u  Defl:N"    "%9u%4u%%  %02u-%02u-%02u %02u:%02u  %08x  %s\n",
+					//      " Length   Method    Size  Cmpr    Date    Time   CRC-32   Name\n"
+					//      "--------  ------  ------- ---- ---------- ----- --------  ----"
+					printf(      "%8u  %s"        "%9u%4u%% " "%s "         "%08x  "  "%s\n",
 						(unsigned)zip_header.formatted.ucmpsize,
+						zip_header.formatted.method == 0 ? "Stored" : "Defl:N", /* Defl is method 8 */
+/* TODO: show other methods?
+ *  1 - Shrunk
+ *  2 - Reduced with compression factor 1
+ *  3 - Reduced with compression factor 2
+ *  4 - Reduced with compression factor 3
+ *  5 - Reduced with compression factor 4
+ *  6 - Imploded
+ *  7 - Reserved for Tokenizing compression algorithm
+ *  9 - Deflate64
+ * 10 - PKWARE Data Compression Library Imploding
+ * 11 - Reserved by PKWARE
+ * 12 - BZIP2
+ */
 						(unsigned)zip_header.formatted.cmpsize,
 						(unsigned)percents,
-						(dostime & 0x01e00000) >> 21,
-						(dostime & 0x001f0000) >> 16,
-						(((dostime & 0xfe000000) >> 25) + 1980) % 100,
-						(dostime & 0x0000f800) >> 11,
-						(dostime & 0x000007e0) >> 5,
+						dtbuf,
 						zip_header.formatted.crc32,
 						dst_fn);
-					total_usize += zip_header.formatted.ucmpsize;
 					total_size += zip_header.formatted.cmpsize;
 				}
+				total_usize += zip_header.formatted.ucmpsize;
 				i = 'n';
-			} else if (dst_fd == STDOUT_FILENO) { /* Extracting to STDOUT */
+			} else if (dst_fd == STDOUT_FILENO) {
+				/* Extracting to STDOUT */
 				i = -1;
-			} else if (last_char_is(dst_fn, '/')) { /* Extract directory */
+			} else if (last_char_is(dst_fn, '/')) {
+				/* Extract directory */
 				if (stat(dst_fn, &stat_buf) == -1) {
 					if (errno != ENOENT) {
 						bb_perror_msg_and_die("can't stat '%s'", dst_fn);
@@ -596,39 +705,42 @@ int unzip_main(int argc, char **argv)
 						printf("   creating: %s\n", dst_fn);
 					}
 					unzip_create_leading_dirs(dst_fn);
-					if (bb_make_directory(dst_fn, dir_mode, 0)) {
+					if (bb_make_directory(dst_fn, dir_mode, FILEUTILS_IGNORE_CHMOD_ERR)) {
 						xfunc_die();
 					}
 				} else {
 					if (!S_ISDIR(stat_buf.st_mode)) {
-						bb_error_msg_and_die("'%s' exists but is not directory", dst_fn);
+						bb_error_msg_and_die("'%s' exists but is not a %s",
+							dst_fn, "directory");
 					}
 				}
 				i = 'n';
-
-			} else {  /* Extract file */
+			} else {
+				/* Extract file */
  check_file:
-				if (stat(dst_fn, &stat_buf) == -1) { /* File does not exist */
+				if (stat(dst_fn, &stat_buf) == -1) {
+					/* File does not exist */
 					if (errno != ENOENT) {
 						bb_perror_msg_and_die("can't stat '%s'", dst_fn);
 					}
 					i = 'y';
-				} else { /* File already exists */
+				} else {
+					/* File already exists */
 					if (overwrite == O_NEVER) {
 						i = 'n';
-					} else if (S_ISREG(stat_buf.st_mode)) { /* File is regular file */
+					} else if (S_ISREG(stat_buf.st_mode)) {
+						/* File is regular file */
 						if (overwrite == O_ALWAYS) {
 							i = 'y';
 						} else {
 							printf("replace %s? [y]es, [n]o, [A]ll, [N]one, [r]ename: ", dst_fn);
-							fflush_all();
-							if (!fgets(key_buf, sizeof(key_buf), stdin)) {
-								bb_perror_msg_and_die("can't read input");
-							}
+							my_fgets80(key_buf);
 							i = key_buf[0];
 						}
-					} else { /* File is not regular file */
-						bb_error_msg_and_die("'%s' exists but is not regular file", dst_fn);
+					} else {
+						/* File is not regular file */
+						bb_error_msg_and_die("'%s' exists but is not a %s",
+							dst_fn, "regular file");
 					}
 				}
 			}
@@ -665,9 +777,7 @@ int unzip_main(int argc, char **argv)
 		case 'r':
 			/* Prompt for new name */
 			printf("new name: ");
-			if (!fgets(key_buf, sizeof(key_buf), stdin)) {
-				bb_perror_msg_and_die("can't read input");
-			}
+			my_fgets80(key_buf);
 			free(dst_fn);
 			dst_fn = xstrdup(key_buf);
 			chomp(dst_fn);
@@ -683,21 +793,25 @@ int unzip_main(int argc, char **argv)
 
 	if (listing && quiet <= 1) {
 		if (!verbose) {
-			//      "  Length     Date   Time    Name\n"
-			//      " --------    ----   ----    ----"
-			printf( " --------                   -------\n"
-				"%9lu"   "                   %u files\n",
-				total_usize, total_entries);
+			//	"  Length      Date    Time    Name\n"
+			//	"---------  ---------- -----   ----"
+			printf( " --------%21s"               "-------\n"
+				     "%9lu%21s"               "%u files\n",
+				"",
+				total_usize, "", total_entries);
 		} else {
 			unsigned long percents = total_usize - total_size;
+			if ((long)percents < 0)
+				percents = 0; /* happens if usize < size */
 			percents = percents * 100;
 			if (total_usize)
 				percents /= total_usize;
-			//      " Length   Method    Size  Ratio   Date   Time   CRC-32    Name\n"
-			//      "--------  ------  ------- -----   ----   ----   ------    ----"
-			printf( "--------          -------  ---                            -------\n"
-				"%8lu"              "%17lu%4u%%                            %u files\n",
-				total_usize, total_size, (unsigned)percents,
+			//	" Length   Method    Size  Cmpr    Date    Time   CRC-32   Name\n"
+			//	"--------  ------  ------- ---- ---------- ----- --------  ----"
+			printf( "--------          ------- ----%28s"                      "----\n"
+				"%8lu"              "%17lu%4u%%%28s"                      "%u files\n",
+				"",
+				total_usize, total_size, (unsigned)percents, "",
 				total_entries);
 		}
 	}

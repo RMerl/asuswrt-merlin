@@ -72,7 +72,7 @@ int echo_main(int argc UNUSED_PARAM, char **argv)
 	unsigned buflen;
 #if !ENABLE_FEATURE_FANCY_ECHO
 	enum {
-		eflag = '\\',
+		eflag = 0,  /* 0 -- disable escape sequences */
 		nflag = 1,  /* 1 -- print '\n' */
 	};
 

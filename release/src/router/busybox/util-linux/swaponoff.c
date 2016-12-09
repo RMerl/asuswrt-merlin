@@ -8,10 +8,15 @@
  */
 
 //usage:#define swapon_trivial_usage
-//usage:       "[-a]" IF_FEATURE_SWAPON_PRI(" [-p PRI]") " [DEVICE]"
+//usage:       "[-a] [-e]" IF_FEATURE_SWAPON_DISCARD(" [-d[POL]]") IF_FEATURE_SWAPON_PRI(" [-p PRI]") " [DEVICE]"
 //usage:#define swapon_full_usage "\n\n"
 //usage:       "Start swapping on DEVICE\n"
 //usage:     "\n	-a	Start swapping on all swap devices"
+//usage:	IF_FEATURE_SWAPON_DISCARD(
+//usage:     "\n	-d[POL]	Discard blocks at swapon (POL=once),"
+//usage:     "\n		as freed (POL=pages), or both (POL omitted)"
+//usage:	)
+//usage:     "\n	-e	Silently skip devices that do not exist"
 //usage:	IF_FEATURE_SWAPON_PRI(
 //usage:     "\n	-p PRI	Set swap device priority"
 //usage:	)
@@ -23,6 +28,7 @@
 //usage:     "\n	-a	Stop swapping on all swap devices"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <mntent.h>
 #ifndef __BIONIC__
 # include <sys/swap.h>
@@ -38,67 +44,168 @@
 # define MNTTYPE_SWAP "swap"
 #endif
 
-#if ENABLE_FEATURE_SWAPON_PRI
+#if ENABLE_FEATURE_SWAPON_DISCARD
+#ifndef SWAP_FLAG_DISCARD
+#define SWAP_FLAG_DISCARD 0x10000
+#endif
+#ifndef SWAP_FLAG_DISCARD_ONCE
+#define SWAP_FLAG_DISCARD_ONCE 0x20000
+#endif
+#ifndef SWAP_FLAG_DISCARD_PAGES
+#define SWAP_FLAG_DISCARD_PAGES 0x40000
+#endif
+#define SWAP_FLAG_DISCARD_MASK \
+	(SWAP_FLAG_DISCARD | SWAP_FLAG_DISCARD_ONCE | SWAP_FLAG_DISCARD_PAGES)
+#endif
+
+
+#if ENABLE_FEATURE_SWAPON_DISCARD || ENABLE_FEATURE_SWAPON_PRI
 struct globals {
 	int flags;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define g_flags (G.flags)
+#define save_g_flags()    int save_g_flags = g_flags
+#define restore_g_flags() g_flags = save_g_flags
 #else
 #define g_flags 0
+#define save_g_flags()    ((void)0)
+#define restore_g_flags() ((void)0)
 #endif
-#define INIT_G() do { } while (0)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
+
+#define do_swapoff   (applet_name[5] == 'f')
+
+/* Command line options */
+enum {
+	OPTBIT_a,                              /* -a all      */
+	OPTBIT_e,                              /* -e ifexists */
+	IF_FEATURE_SWAPON_DISCARD( OPTBIT_d ,) /* -d discard  */
+	IF_FEATURE_SWAPON_PRI    ( OPTBIT_p ,) /* -p priority */
+	OPT_a = 1 << OPTBIT_a,
+	OPT_e = 1 << OPTBIT_e,
+	OPT_d = IF_FEATURE_SWAPON_DISCARD((1 << OPTBIT_d)) + 0,
+	OPT_p = IF_FEATURE_SWAPON_PRI    ((1 << OPTBIT_p)) + 0,
+};
+
+#define OPT_ALL      (option_mask32 & OPT_a)
+#define OPT_DISCARD  (option_mask32 & OPT_d)
+#define OPT_IFEXISTS (option_mask32 & OPT_e)
+#define OPT_PRIO     (option_mask32 & OPT_p)
 
 static int swap_enable_disable(char *device)
 {
-	int status;
-	struct stat st;
+	int err = 0;
+	int quiet = 0;
 
 	resolve_mount_spec(&device);
-	if (stat(device, &st)) {
-		bb_perror_msg("warning: can't stat '%s'", device);
-		return 1;
+
+	if (do_swapoff) {
+		err = swapoff(device);
+		/* Don't complain on OPT_ALL if not a swap device or if it doesn't exist */
+		quiet = (OPT_ALL && (errno == EINVAL || errno == ENOENT));
+	} else {
+		/* swapon */
+		struct stat st;
+		err = stat(device, &st);
+		if (!err) {
+			if (ENABLE_DESKTOP && S_ISREG(st.st_mode)) {
+				if (st.st_blocks * (off_t)512 < st.st_size) {
+					bb_error_msg("%s: file has holes", device);
+					return 1;
+				}
+			}
+			err = swapon(device, g_flags);
+			/* Don't complain on swapon -a if device is already in use */
+			quiet = (OPT_ALL && errno == EBUSY);
+		}
+		/* Don't complain if file does not exist with -e option */
+		if (err && OPT_IFEXISTS && errno == ENOENT)
+			err = 0;
 	}
 
-#if ENABLE_DESKTOP
-	/* test for holes */
-	if (S_ISREG(st.st_mode))
-		if (st.st_blocks * (off_t)512 < st.st_size)
-			bb_error_msg("warning: swap file has holes");
-#endif
-
-	if (applet_name[5] == 'n')
-		status = swapon(device, g_flags);
-	else
-		status = swapoff(device);
-
-	if (status != 0) {
+	if (err && !quiet) {
 		bb_simple_perror_msg(device);
 		return 1;
 	}
-
 	return 0;
 }
 
-static int do_em_all(void)
+#if ENABLE_FEATURE_SWAPON_DISCARD
+static void set_discard_flag(char *s)
+{
+	/* Unset the flag first to allow fstab options to override */
+	/* options set on the command line */
+	g_flags = (g_flags & ~SWAP_FLAG_DISCARD_MASK) | SWAP_FLAG_DISCARD;
+
+	if (!s) /* No optional policy value on the commandline */
+		return;
+	/* Skip prepended '=' */
+	if (*s == '=')
+		s++;
+	/* For fstab parsing: remove other appended options */
+	*strchrnul(s, ',') = '\0';
+
+	if (strcmp(s, "once") == 0)
+		g_flags |= SWAP_FLAG_DISCARD_ONCE;
+	if  (strcmp(s, "pages") == 0)
+		g_flags |= SWAP_FLAG_DISCARD_PAGES;
+}
+#else
+#define set_discard_flag(s) ((void)0)
+#endif
+
+#if ENABLE_FEATURE_SWAPON_PRI
+static void set_priority_flag(char *s)
+{
+	unsigned prio;
+
+	/* For fstab parsing: remove other appended options */
+	*strchrnul(s, ',') = '\0';
+	/* Max allowed 32767 (== SWAP_FLAG_PRIO_MASK) */
+	prio = bb_strtou(s, NULL, 10);
+	if (!errno) {
+		/* Unset the flag first to allow fstab options to override */
+		/* options set on the command line */
+		g_flags = (g_flags & ~SWAP_FLAG_PRIO_MASK) | SWAP_FLAG_PREFER |
+					MIN(prio, SWAP_FLAG_PRIO_MASK);
+	}
+}
+#else
+#define set_priority_flag(s) ((void)0)
+#endif
+
+static int do_em_all_in_fstab(void)
 {
 	struct mntent *m;
-	FILE *f;
-	int err;
+	int err = 0;
+	FILE *f = xfopen_for_read("/etc/fstab");
 
-	f = setmntent("/etc/fstab", "r");
-	if (f == NULL)
-		bb_perror_msg_and_die("/etc/fstab");
-
-	err = 0;
 	while ((m = getmntent(f)) != NULL) {
 		if (strcmp(m->mnt_type, MNTTYPE_SWAP) == 0) {
 			/* swapon -a should ignore entries with noauto,
-			 * but swapoff -a should process them */
-			if (applet_name[5] != 'n'
-			 || hasmntopt(m, MNTOPT_NOAUTO) == NULL
-			) {
-				err += swap_enable_disable(m->mnt_fsname);
+			 * but swapoff -a should process them
+			 */
+			if (do_swapoff || hasmntopt(m, MNTOPT_NOAUTO) == NULL) {
+				/* each swap space might have different flags */
+				/* save global flags for the next round */
+				save_g_flags();
+				if (ENABLE_FEATURE_SWAPON_DISCARD) {
+					char *p = hasmntopt(m, "discard");
+					if (p) {
+						/* move to '=' or to end of string */
+						p += 7;
+						set_discard_flag(p);
+					}
+				}
+				if (ENABLE_FEATURE_SWAPON_PRI) {
+					char *p = hasmntopt(m, "pri");
+					if (p) {
+						set_priority_flag(p + 4);
+					}
+				}
+				err |= swap_enable_disable(m->mnt_fsname);
+				restore_g_flags();
 			}
 		}
 	}
@@ -109,38 +216,68 @@ static int do_em_all(void)
 	return err;
 }
 
+static int do_all_in_proc_swaps(void)
+{
+	char *line;
+	int err = 0;
+	FILE *f = fopen_for_read("/proc/swaps");
+	/* Don't complain if missing */
+	if (f) {
+		while ((line = xmalloc_fgetline(f)) != NULL) {
+			if (line[0] == '/') {
+				*strchrnul(line, ' ') = '\0';
+				err |= swap_enable_disable(line);
+			}
+			free(line);
+		}
+		if (ENABLE_FEATURE_CLEAN_UP)
+			fclose(f);
+	}
+
+	return err;
+}
+
+#define OPTSTR_SWAPON "ae" \
+	IF_FEATURE_SWAPON_DISCARD("d::") \
+	IF_FEATURE_SWAPON_PRI("p:")
+
 int swap_on_off_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int swap_on_off_main(int argc UNUSED_PARAM, char **argv)
 {
-	int ret;
+	IF_FEATURE_SWAPON_PRI(char *prio;)
+	IF_FEATURE_SWAPON_DISCARD(char *discard = NULL;)
+	int ret = 0;
 
 	INIT_G();
 
-#if !ENABLE_FEATURE_SWAPON_PRI
-	ret = getopt32(argv, "a");
-#else
-	if (applet_name[5] == 'n')
-		opt_complementary = "p+";
-	ret = getopt32(argv, (applet_name[5] == 'n') ? "ap:" : "a", &g_flags);
-
-	if (ret & 2) { // -p
-		g_flags = SWAP_FLAG_PREFER |
-			((g_flags & SWAP_FLAG_PRIO_MASK) << SWAP_FLAG_PRIO_SHIFT);
-		ret &= 1;
-	}
-#endif
-
-	if (ret /* & 1: not needed */) // -a
-		return do_em_all();
+	getopt32(argv, do_swapoff ? "ae" : OPTSTR_SWAPON
+			IF_FEATURE_SWAPON_DISCARD(, &discard)
+			IF_FEATURE_SWAPON_PRI(, &prio)
+	);
 
 	argv += optind;
-	if (!*argv)
+
+	if (OPT_DISCARD) {
+		set_discard_flag(discard);
+	}
+	if (OPT_PRIO) {
+		set_priority_flag(prio);
+	}
+
+	if (OPT_ALL) {
+		/* swapoff -a does also /proc/swaps */
+		if (do_swapoff)
+			ret = do_all_in_proc_swaps();
+		ret |= do_em_all_in_fstab();
+	} else if (!*argv) {
+		/* if not -a we need at least one arg */
 		bb_show_usage();
-
-	/* ret = 0; redundant */
-	do {
-		ret += swap_enable_disable(*argv);
-	} while (*++argv);
-
+	}
+	/* Unset -a now to allow for more messages in swap_enable_disable */
+	option_mask32 = option_mask32 & ~OPT_a;
+	/* Now process devices on the commandline if any */
+	while (*argv) {
+		ret |= swap_enable_disable(*argv++);
+	}
 	return ret;
 }

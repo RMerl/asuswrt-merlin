@@ -46,19 +46,23 @@ try() {
 }
 
 check_cc() {
-    local tempname="/tmp/temp.$$.$RANDOM"
+    local tempname="$(mktemp)"
+    local r
+    echo "int main(int argc,char**argv){return argv?argc:0;}" >"$tempname".c
     # Can use "-o /dev/null", but older gcc tend to *unlink it* on failure! :(
-    # "-xc": C language. "/dev/null" is an empty source file.
-    if $CC $1 -shared -xc /dev/null -o "$tempname".o >/dev/null 2>&1; then
-	echo "$1";
-    else
-	echo "$2";
-    fi
-    rm "$tempname".o 2>/dev/null
+    # Was using "-xc /dev/null", but we need a valid C program.
+    # "eval" may be needed if CFLAGS can contain
+    # '... -D"BB_VER=KBUILD_STR(1.N.M)" ...'
+    # and we need shell to process quotes!
+    $CC $CFLAGS $LDFLAGS $1 "$tempname".c -o "$tempname" >/dev/null 2>&1
+    r=$?
+    rm -f "$tempname" "$tempname".c "$tempname".o
+    return $r
 }
 
 check_libc_is_glibc() {
-    local tempname="/tmp/temp.$$.$RANDOM"
+    local tempname="$(mktemp)"
+    local r
     echo "\
 	#include <stdlib.h>
 	/* Apparently uclibc defines __GLIBC__ (compat trick?). Oh well. */
@@ -66,12 +70,10 @@ check_libc_is_glibc() {
 	syntax error here
 	#endif
 	" >"$tempname".c
-    if $CC "$tempname".c -c -o "$tempname".o >/dev/null 2>&1; then
-	echo "$2";
-    else
-	echo "$1";
-    fi
-    rm "$tempname".c "$tempname".o 2>/dev/null
+    ! $CC $CFLAGS "$tempname".c -c -o "$tempname".o >/dev/null 2>&1
+    r=$?
+    rm -f "$tempname" "$tempname".c "$tempname".o
+    return $r
 }
 
 EXE="$1"
@@ -83,32 +85,41 @@ A_FILES="$6"
 LDLIBS="$7"
 
 # The --sort-section option is not supported by older versions of ld
-SORT_SECTION=`check_cc "-Wl,--sort-section,alignment" ""`
+SORT_SECTION="-Wl,--sort-section,alignment"
+if ! check_cc "-Wl,--sort-section,alignment"; then
+    echo "Your linker does not support --sort-section,alignment"
+    SORT_SECTION=""
+fi
 
 START_GROUP="-Wl,--start-group"
 END_GROUP="-Wl,--end-group"
 INFO_OPTS="-Wl,--warn-common -Wl,-Map,$EXE.map -Wl,--verbose"
 
 # gold may not support --sort-common (yet)
-SORT_COMMON=`check_cc "-Wl,--sort-common" ""`
+SORT_COMMON="-Wl,--sort-common"
+if ! check_cc "-Wl,--sort-common"; then
+    echo "Your linker does not support --sort-common"
+    SORT_COMMON=""
+fi
 
 # Static linking against glibc produces buggy executables
 # (glibc does not cope well with ld --gc-sections).
 # See sources.redhat.com/bugzilla/show_bug.cgi?id=3400
 # Note that glibc is unsuitable for static linking anyway.
 # We are removing -Wl,--gc-sections from link command line.
-GC_SECTIONS=`(
-. ./.config
-if test x"$CONFIG_STATIC" = x"y"; then
-    check_libc_is_glibc "" "-Wl,--gc-sections"
-else
-    echo "-Wl,--gc-sections"
+GC_SECTIONS="-Wl,--gc-sections"
+if (. ./.config && test x"$CONFIG_STATIC" = x"y") then
+    if check_libc_is_glibc; then
+	echo "Static linking against glibc, can't use --gc-sections"
+	GC_SECTIONS=""
+    fi
 fi
-)`
-
 # The --gc-sections option is not supported by older versions of ld
 if test -n "$GC_SECTIONS"; then
-    GC_SECTIONS=`check_cc "$GC_SECTIONS" ""`
+    if ! check_cc "$GC_SECTIONS"; then
+	echo "Your linker does not support $GC_SECTIONS"
+	GC_SECTIONS=""
+    fi
 fi
 
 # Sanitize lib list (dups, extra spaces etc)
@@ -117,7 +128,7 @@ LDLIBS=`echo "$LDLIBS" | xargs -n1 | sort | uniq | xargs`
 # First link with all libs. If it fails, bail out
 echo "Trying libraries: $LDLIBS"
 # "lib1 lib2 lib3" -> "-llib1 -llib2 -llib3"
-l_list=`echo "$LDLIBS" | sed -e 's/ / -l/g' -e 's/^/-l/' -e 's/^-l$//'`
+l_list=`echo " $LDLIBS " | sed -e 's: \([^- ][^ ]*\): -l\1:g'`
 test "x$l_list" != "x" && l_list="$START_GROUP $l_list $END_GROUP"
 try $CC $CFLAGS $LDFLAGS \
 	-o $EXE \
@@ -129,6 +140,8 @@ try $CC $CFLAGS $LDFLAGS \
 || {
     echo "Failed: $l_list"
     cat $EXE.out
+    echo 'Note: if build needs additional libraries, put them in CONFIG_EXTRA_LDLIBS.'
+    echo 'Example: CONFIG_EXTRA_LDLIBS="pthread dl tirpc audit pam"'
     exit 1
 }
 
@@ -141,7 +154,7 @@ while test "$LDLIBS"; do
     for one in $LDLIBS; do
 	without_one=`echo " $LDLIBS " | sed "s/ $one / /g" | xargs`
 	# "lib1 lib2 lib3" -> "-llib1 -llib2 -llib3"
-	l_list=`echo "$without_one" | sed -e 's/ / -l/g' -e 's/^/-l/' -e 's/^-l$//'`
+	l_list=`echo " $without_one " | sed -e 's: \([^- ][^ ]*\): -l\1:g'`
 	test x"$l_list" != x"" && l_list="$START_GROUP $l_list $END_GROUP"
 	$debug && echo "Trying -l options: '$l_list'"
 	try $CC $CFLAGS $LDFLAGS \
@@ -172,7 +185,7 @@ done
 
 # Make the binary with final, minimal list of libs
 echo "Final link with: ${LDLIBS:-<none>}"
-l_list=`echo "$LDLIBS" | sed -e 's/ / -l/g' -e 's/^/-l/' -e 's/^-l$//'`
+l_list=`echo " $LDLIBS " | sed -e 's: \([^- ][^ ]*\): -l\1:g'`
 test "x$l_list" != "x" && l_list="$START_GROUP $l_list $END_GROUP"
 # --verbose gives us gobs of info to stdout (e.g. linker script used)
 if ! test -f busybox_ldscript; then
@@ -196,6 +209,16 @@ else
     #  *(.bss SORT_BY_ALIGNMENT(.bss.*) .gnu.linkonce.b.*)
     # This will eliminate most of the padding (~3kb).
     # Hmm, "ld --sort-section alignment" should do it too.
+    #
+    # There is a ld hack which is meant to decrease disk usage
+    # at the cost of more RAM usage (??!!) in standard ld script:
+    #  /* Adjust the address for the data segment.  We want to adjust up to
+    #     the same address within the page on the next page up.  */
+    #  . = ALIGN (0x1000) - ((0x1000 - .) & (0x1000 - 1)); . = DATA_SEGMENT_ALIGN (0x1000, 0x1000);
+    # Replace it with:
+    #  . = ALIGN (0x1000); . = DATA_SEGMENT_ALIGN (0x1000, 0x1000);
+    # to unconditionally align .data to the next page boundary,
+    # instead of "next page, plus current offset in this page"
     try $CC $CFLAGS $LDFLAGS \
 	    -o $EXE \
 	    $SORT_COMMON \
@@ -268,9 +291,9 @@ fi
 
 if test "$CONFIG_FEATURE_INDIVIDUAL" = y; then
     echo "Linking individual applets against libbusybox (see $sharedlib_dir/*)"
-    gcc -DNAME_MAIN_CNAME -E -include include/autoconf.h include/applets.h \
+    gcc -DNAME_MAIN -E -include include/autoconf.h include/applets.h \
     | grep -v "^#" \
-    | grep -v "^$" \
+    | grep -v "^ *$" \
     > applet_lst.tmp
     while read name main junk; do
 
@@ -300,6 +323,8 @@ int main(int argc, char **argv)
 	}
 	rm -- "$sharedlib_dir/applet.c" $EXE.out
 	$STRIP -s --remove-section=.note --remove-section=.comment $EXE
+	# Let user see that we do something - list the names of created binaries:
+	echo "$EXE"
 
     done <applet_lst.tmp
 fi

@@ -17,7 +17,6 @@
 int FAST_FUNC match_fstype(const struct mntent *mt, const char *t_fstype)
 {
 	int match = 1;
-	int len;
 
 	if (!t_fstype)
 		return match;
@@ -27,10 +26,10 @@ int FAST_FUNC match_fstype(const struct mntent *mt, const char *t_fstype)
 		t_fstype += 2;
 	}
 
-	len = strlen(mt->mnt_type);
 	while (1) {
-		if (strncmp(mt->mnt_type, t_fstype, len) == 0
-		 && (t_fstype[len] == '\0' || t_fstype[len] == ',')
+		char *after_mnt_type = is_prefixed_with(t_fstype, mt->mnt_type);
+		if (after_mnt_type
+		 && (*after_mnt_type == '\0' || *after_mnt_type == ',')
 		) {
 			return match;
 		}

@@ -43,7 +43,7 @@ static const unsigned char days_in_month[] ALIGN1 = {
 };
 
 static const unsigned char sep1752[] ALIGN1 = {
-		 1,	2,	14,	15,	16,
+		1,	2,	14,	15,	16,
 	17,	18,	19,	20,	21,	22,	23,
 	24,	25,	26,	27,	28,	29,	30
 };
@@ -165,10 +165,10 @@ int cal_main(int argc UNUSED_PARAM, char **argv)
 		char lineout[30];
 
 		day_array(month, year, dp);
-		len = sprintf(lineout, "%s %d", month_names[month - 1], year);
+		len = sprintf(lineout, "%s %u", month_names[month - 1], year);
 		printf("%*s%s\n%s\n",
-			   ((7*julian + WEEK_LEN) - len) / 2, "",
-			   lineout, day_headings);
+				((7*julian + WEEK_LEN) - len) / 2, "",
+				lineout, day_headings);
 		for (row = 0; row < 6; row++) {
 			build_row(lineout, dp)[0] = '\0';
 			dp += 7;
@@ -181,10 +181,11 @@ int cal_main(int argc UNUSED_PARAM, char **argv)
 
 		sprintf(lineout, "%u", year);
 		center(lineout,
-			   (WEEK_LEN * 3 + HEAD_SEP * 2)
-			   + julian * (J_WEEK_LEN * 2 + HEAD_SEP
-						   - (WEEK_LEN * 3 + HEAD_SEP * 2)),
-			   0);
+				(WEEK_LEN * 3 + HEAD_SEP * 2)
+				+ julian * (J_WEEK_LEN * 2 + HEAD_SEP
+						- (WEEK_LEN * 3 + HEAD_SEP * 2)),
+				0
+		);
 		puts("\n");		/* two \n's */
 		for (i = 0; i < 12; i++) {
 			day_array(i + 1, year, days[i]);

@@ -31,7 +31,7 @@
 //usage:#define basename_trivial_usage
 //usage:       "FILE [SUFFIX]"
 //usage:#define basename_full_usage "\n\n"
-//usage:       "Strip directory path and .SUFFIX from FILE\n"
+//usage:       "Strip directory path and .SUFFIX from FILE"
 //usage:
 //usage:#define basename_example_usage
 //usage:       "$ basename /usr/local/bin/foo\n"

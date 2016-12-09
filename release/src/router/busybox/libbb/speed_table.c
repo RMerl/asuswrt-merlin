@@ -10,7 +10,12 @@
 #include "libbb.h"
 
 struct speed_map {
+#if defined __FreeBSD__
+	/* On FreeBSD, B<num> constants don't fit into a short */
+	unsigned speed;
+#else
 	unsigned short speed;
+#endif
 	unsigned short value;
 };
 

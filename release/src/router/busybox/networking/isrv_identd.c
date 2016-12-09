@@ -18,6 +18,7 @@
 //usage:     "\n	STRING	Ident answer string (default: nobody)"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <syslog.h>
 #include "isrv.h"
 
@@ -25,8 +26,7 @@ enum { TIMEOUT = 20 };
 
 typedef struct identd_buf_t {
 	int pos;
-	int fd_flag;
-	char buf[64 - 2*sizeof(int)];
+	char buf[64 - sizeof(int)];
 } identd_buf_t;
 
 #define bogouser bb_common_bufsiz1
@@ -42,7 +42,7 @@ static int new_peer(isrv_state_t *state, int fd)
 	if (isrv_register_fd(state, peer, fd) < 0)
 		return peer; /* failure, unregister peer */
 
-	buf->fd_flag = fcntl(fd, F_GETFL) | O_NONBLOCK;
+	ndelay_on(fd);
 	isrv_want_rd(state, fd);
 	return 0;
 }
@@ -51,19 +51,16 @@ static int do_rd(int fd, void **paramp)
 {
 	identd_buf_t *buf = *paramp;
 	char *cur, *p;
-	int retval = 0; /* session is ok (so far) */
 	int sz;
 
 	cur = buf->buf + buf->pos;
 
-	if (buf->fd_flag & O_NONBLOCK)
-		fcntl(fd, F_SETFL, buf->fd_flag);
-	sz = safe_read(fd, cur, sizeof(buf->buf) - buf->pos);
+	sz = safe_read(fd, cur, sizeof(buf->buf) - 1 - buf->pos);
 
 	if (sz < 0) {
 		if (errno != EAGAIN)
-			goto term; /* terminate this session if !EAGAIN */
-		goto ok;
+			goto term;
+		return 0; /* "session is ok" */
 	}
 
 	buf->pos += sz;
@@ -71,19 +68,22 @@ static int do_rd(int fd, void **paramp)
 	p = strpbrk(cur, "\r\n");
 	if (p)
 		*p = '\0';
-	if (!p && sz && buf->pos <= (int)sizeof(buf->buf))
-		goto ok;
+	if (!p && sz)
+		return 0;  /* "session is ok" */
+
 	/* Terminate session. If we are in server mode, then
 	 * fd is still in nonblocking mode - we never block here */
-	if (fd == 0) fd++; /* inetd mode? then write to fd 1 */
+	if (fd == 0)
+		fd++; /* inetd mode? then write to fd 1 */
 	fdprintf(fd, "%s : USERID : UNIX : %s\r\n", buf->buf, bogouser);
+	/*
+	 * Why bother if we are going to close fd now anyway?
+	 * if (server)
+	 *	ndelay_off(fd);
+	 */
  term:
 	free(buf);
-	retval = 1; /* terminate */
- ok:
-	if (buf->fd_flag & O_NONBLOCK)
-		fcntl(fd, F_SETFL, buf->fd_flag & ~O_NONBLOCK);
-	return retval;
+	return 1; /* "terminate" */
 }
 
 static int do_timeout(void **paramp UNUSED_PARAM)
@@ -95,10 +95,9 @@ static void inetd_mode(void)
 {
 	identd_buf_t *buf = xzalloc(sizeof(*buf));
 	/* buf->pos = 0; - xzalloc did it */
-	/* We do NOT want nonblocking I/O here! */
-	/* buf->fd_flag = 0; - xzalloc did it */
 	do
 		alarm(TIMEOUT);
+		/* Note: we do NOT want nonblocking I/O here! */
 	while (do_rd(0, (void*)&buf) == 0);
 }
 
@@ -117,10 +116,12 @@ int fakeidentd_main(int argc UNUSED_PARAM, char **argv)
 	unsigned opt;
 	int fd;
 
+	setup_common_bufsiz();
+
 	opt = getopt32(argv, "fiwb:", &bind_address);
 	strcpy(bogouser, "nobody");
 	if (argv[optind])
-		strncpy(bogouser, argv[optind], sizeof(bogouser));
+		strncpy(bogouser, argv[optind], COMMON_BUFSIZE - 1);
 
 	/* Daemonize if no -f and no -i and no -w */
 	if (!(opt & OPT_fiw))

@@ -25,7 +25,7 @@ FILTER_LS2="sed -e 's/,  */,/g' -e 's/  */ /g' | cut -d' ' -f 1-4,9-"
 rm -rf makedevs.testdir
 mkdir makedevs.testdir
 
-optional FEATURE_MAKEDEVS_TABLE FEATURE_FIND_NOT FEATURE_FIND_TYPE FEATURE_LS_RECURSIVE FEATURE_LS_SORTFILES
+optional FEATURE_MAKEDEVS_TABLE FEATURE_FIND_NOT FEATURE_FIND_TYPE FEATURE_LS_RECURSIVE FEATURE_LS_SORTFILES FEATURE_LS_TIMESTAMPS
 testing "makedevs -d ../makedevs.device_table.txt ." \
 	"(cd makedevs.testdir && makedevs -d ../makedevs.device_table.txt . 2>&1);
 	find makedevs.testdir ! -type d | sort | xargs ls -lnR | $FILTER_LS" \

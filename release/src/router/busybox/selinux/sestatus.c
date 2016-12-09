@@ -41,7 +41,7 @@ static void display_boolean(void)
 		if (pending < 0)
 			goto skip;
 		printf(COL_FMT "%s",
-		       bools[i], active == 0 ? "off" : "on");
+				bools[i], active == 0 ? "off" : "on");
 		if (active != pending)
 			printf(" (%sactivate pending)", pending == 0 ? "in" : "");
 		bb_putchar('\n');

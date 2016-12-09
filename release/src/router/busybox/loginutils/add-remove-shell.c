@@ -7,13 +7,6 @@
  * Licensed under GPLv2 or later, see the LICENSE file in this source tree
  * for details.
  */
-
-//applet:IF_ADD_SHELL(   APPLET_ODDNAME(add-shell   , add_remove_shell, BB_DIR_USR_BIN, BB_SUID_DROP, add_shell   ))
-//applet:IF_REMOVE_SHELL(APPLET_ODDNAME(remove-shell, add_remove_shell, BB_DIR_USR_BIN, BB_SUID_DROP, remove_shell))
-
-//kbuild:lib-$(CONFIG_ADD_SHELL)    += add-remove-shell.o
-//kbuild:lib-$(CONFIG_REMOVE_SHELL) += add-remove-shell.o
-
 //config:config ADD_SHELL
 //config:       bool "add-shell"
 //config:       default y if DESKTOP
@@ -25,6 +18,12 @@
 //config:       default y if DESKTOP
 //config:       help
 //config:         Remove shells from /etc/shells.
+
+//applet:IF_ADD_SHELL(   APPLET_ODDNAME(add-shell   , add_remove_shell, BB_DIR_USR_SBIN, BB_SUID_DROP, add_shell   ))
+//applet:IF_REMOVE_SHELL(APPLET_ODDNAME(remove-shell, add_remove_shell, BB_DIR_USR_SBIN, BB_SUID_DROP, remove_shell))
+
+//kbuild:lib-$(CONFIG_ADD_SHELL)    += add-remove-shell.o
+//kbuild:lib-$(CONFIG_REMOVE_SHELL) += add-remove-shell.o
 
 //usage:#define add_shell_trivial_usage
 //usage:       "SHELL..."
@@ -100,7 +99,7 @@ int add_remove_shell_main(int argc UNUSED_PARAM, char **argv)
 				cpp++;
 			}
 			/* copy shell name from old to new file */
-			printf("%s\n", line);
+			puts(line);
  next_line:
 			free(line);
 		}
@@ -112,7 +111,7 @@ int add_remove_shell_main(int argc UNUSED_PARAM, char **argv)
 		char **cpp = argv;
 		while (*cpp) {
 			if (*cpp != dont_add)
-				printf("%s\n", *cpp);
+				puts(*cpp);
 			cpp++;
 		}
 	}

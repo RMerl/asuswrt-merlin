@@ -4,12 +4,11 @@
 
 PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 
-/* buf is SPRINT_BSIZE big */
-extern const char* rtnl_rtprot_n2a(int id, char *buf) FAST_FUNC;
-extern const char* rtnl_rtscope_n2a(int id, char *buf) FAST_FUNC;
-extern const char* rtnl_rtrealm_n2a(int id, char *buf) FAST_FUNC;
-extern const char* rtnl_dsfield_n2a(int id, char *buf) FAST_FUNC;
-extern const char* rtnl_rttable_n2a(int id, char *buf) FAST_FUNC;
+extern const char* rtnl_rtprot_n2a(int id) FAST_FUNC;
+extern const char* rtnl_rtscope_n2a(int id) FAST_FUNC;
+extern const char* rtnl_rtrealm_n2a(int id) FAST_FUNC;
+extern const char* rtnl_dsfield_n2a(int id) FAST_FUNC;
+extern const char* rtnl_rttable_n2a(int id) FAST_FUNC;
 extern int rtnl_rtprot_a2n(uint32_t *id, char *arg) FAST_FUNC;
 extern int rtnl_rtscope_a2n(uint32_t *id, char *arg) FAST_FUNC;
 extern int rtnl_rtrealm_a2n(uint32_t *id, char *arg) FAST_FUNC;

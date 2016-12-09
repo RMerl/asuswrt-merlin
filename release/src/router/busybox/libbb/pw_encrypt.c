@@ -9,7 +9,7 @@
 
 #include "libbb.h"
 
-/* static const uint8_t ascii64[] =
+/* static const uint8_t ascii64[] ALIGN1 =
  * "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
  */
 
@@ -52,14 +52,18 @@ char* FAST_FUNC crypt_make_pw_salt(char salt[MAX_PW_SALT_LEN], const char *algo)
 {
 	int len = 2/2;
 	char *salt_ptr = salt;
-	if (algo[0] != 'd') { /* not des */
+
+	/* Standard chpasswd uses uppercase algos ("MD5", not "md5").
+	 * Need to be case-insensitive in the code below.
+	 */
+	if ((algo[0]|0x20) != 'd') { /* not des */
 		len = 8/2; /* so far assuming md5 */
 		*salt_ptr++ = '$';
 		*salt_ptr++ = '1';
 		*salt_ptr++ = '$';
 #if !ENABLE_USE_BB_CRYPT || ENABLE_USE_BB_CRYPT_SHA
-		if (algo[0] == 's') { /* sha */
-			salt[1] = '5' + (strcmp(algo, "sha512") == 0);
+		if ((algo[0]|0x20) == 's') { /* sha */
+			salt[1] = '5' + (strcasecmp(algo, "sha512") == 0);
 			len = 16/2;
 		}
 #endif
@@ -142,7 +146,14 @@ char* FAST_FUNC pw_encrypt(const char *clear, const char *salt, int cleanup)
 
 char* FAST_FUNC pw_encrypt(const char *clear, const char *salt, int cleanup)
 {
-	return xstrdup(crypt(clear, salt));
+	char *s;
+
+	s = crypt(clear, salt);
+	/*
+	 * glibc used to return "" on malformed salts (for example, ""),
+	 * but since 2.17 it returns NULL.
+	 */
+	return xstrdup(s ? s : "");
 }
 
 #endif

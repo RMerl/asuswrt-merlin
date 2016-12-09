@@ -18,6 +18,17 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+//kbuild:### lib-$(CONFIG_FEATURE_VOLUMEID_MSDOS) += msdos.o
+
+//config:
+//config:### config FEATURE_VOLUMEID_MSDOS
+//config:###	bool "msdos filesystem"
+//config:###	default y
+//config:###	depends on VOLUMEID
+//config:###	help
+//config:###	  TODO
+//config:
+
 #include "volume_id_internal.h"
 
 struct msdos_partition_entry {
@@ -109,7 +120,7 @@ int FAST_FUNC volume_id_probe_msdos_part_table(struct volume_id *id, uint64_t of
 				extended = off + poff;
 		} else {
 			dbg("found 0x%x data partition at 0x%llx, len 0x%llx",
-			    part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen);
+				part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen);
 
 //			if (is_raid(part[i].sys_ind))
 //				volume_id_set_usage_part(p, VOLUME_ID_RAID);
@@ -165,7 +176,7 @@ int FAST_FUNC volume_id_probe_msdos_part_table(struct volume_id *id, uint64_t of
 				if (id->partition_count < 4)
 					id->partition_count = 4;
 
-				p = &id->partitions[id->partition_count];
+//				p = &id->partitions[id->partition_count];
 
 //				if (is_raid(part[i].sys_ind))
 //					volume_id_set_usage_part(p, VOLUME_ID_RAID);

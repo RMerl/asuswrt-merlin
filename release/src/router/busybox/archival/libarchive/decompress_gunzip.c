@@ -293,8 +293,8 @@ static unsigned fill_bitbuffer(STATE_PARAM unsigned bitbuffer, unsigned *current
  * m:	maximum lookup bits, returns actual
  */
 static int huft_build(const unsigned *b, const unsigned n,
-			   const unsigned s, const unsigned short *d,
-			   const unsigned char *e, huft_t **t, unsigned *m)
+			const unsigned s, const unsigned short *d,
+			const unsigned char *e, huft_t **t, unsigned *m)
 {
 	unsigned a;             /* counter for codes of length k */
 	unsigned c[BMAX + 1];   /* bit length count table */
@@ -305,11 +305,11 @@ static int huft_build(const unsigned *b, const unsigned n,
 	unsigned i;             /* counter, current code */
 	unsigned j;             /* counter */
 	int k;                  /* number of bits in current code */
-	unsigned *p;            /* pointer into c[], b[], or v[] */
+	const unsigned *p;      /* pointer into c[], b[], or v[] */
 	huft_t *q;              /* points to current table */
 	huft_t r;               /* table entry for structure assignment */
 	huft_t *u[BMAX];        /* table stack */
-	unsigned v[N_MAX];      /* values in order of bit length */
+	unsigned v[N_MAX + 1];  /* values in order of bit length. last v[] is never used */
 	int ws[BMAX + 1];       /* bits decoded stack */
 	int w;                  /* bits decoded */
 	unsigned x[BMAX + 1];   /* bit offsets, then code stack */
@@ -324,7 +324,7 @@ static int huft_build(const unsigned *b, const unsigned n,
 
 	/* Generate counts for each bit length */
 	memset(c, 0, sizeof(c));
-	p = (unsigned *) b; /* cast allows us to reuse p for pointing to b */
+	p = b;
 	i = n;
 	do {
 		c[*p]++; /* assume all entries <= BMAX */
@@ -336,7 +336,7 @@ static int huft_build(const unsigned *b, const unsigned n,
 	}
 
 	/* Find minimum and maximum length, bound *m by those */
-	for (j = 1; (c[j] == 0) && (j <= BMAX); j++)
+	for (j = 1; (j <= BMAX) && (c[j] == 0); j++)
 		continue;
 	k = j; /* minimum code length */
 	for (i = BMAX; (c[i] == 0) && i; i--)
@@ -364,8 +364,12 @@ static int huft_build(const unsigned *b, const unsigned n,
 		*xp++ = j;
 	}
 
-	/* Make a table of values in order of bit lengths */
-	p = (unsigned *) b;
+	/* Make a table of values in order of bit lengths.
+	 * To detect bad input, unused v[i]'s are set to invalid value UINT_MAX.
+	 * In particular, last v[i] is never filled and must not be accessed.
+	 */
+	memset(v, 0xff, sizeof(v));
+	p = b;
 	i = 0;
 	do {
 		j = *p++;
@@ -432,7 +436,9 @@ static int huft_build(const unsigned *b, const unsigned n,
 
 			/* set up table entry in r */
 			r.b = (unsigned char) (k - w);
-			if (p >= v + n) {
+			if (/*p >= v + n || -- redundant, caught by the second check: */
+			    *p == UINT_MAX /* do we access uninited v[i]? (see memset(v))*/
+			) {
 				r.e = 99; /* out of values--invalid code */
 			} else if (*p < s) {
 				r.e = (unsigned char) (*p < 256 ? 16 : 15);	/* 256 is EOB code */
@@ -517,8 +523,9 @@ static NOINLINE int inflate_codes(STATE_PARAM_ONLY)
 		e = t->e;
 		if (e > 16)
 			do {
-				if (e == 99)
-					abort_unzip(PASS_STATE_ONLY);;
+				if (e == 99) {
+					abort_unzip(PASS_STATE_ONLY);
+				}
 				bb >>= t->b;
 				k -= t->b;
 				e -= 16;
@@ -554,8 +561,9 @@ static NOINLINE int inflate_codes(STATE_PARAM_ONLY)
 			e = t->e;
 			if (e > 16)
 				do {
-					if (e == 99)
+					if (e == 99) {
 						abort_unzip(PASS_STATE_ONLY);
+					}
 					bb >>= t->b;
 					k -= t->b;
 					e -= 16;
@@ -821,8 +829,9 @@ static int inflate_block(STATE_PARAM smallint *e)
 
 		b_dynamic >>= 4;
 		k_dynamic -= 4;
-		if (nl > 286 || nd > 30)
+		if (nl > 286 || nd > 30) {
 			abort_unzip(PASS_STATE_ONLY);	/* bad lengths */
+		}
 
 		/* read in bit-length-code lengths */
 		for (j = 0; j < nb; j++) {
@@ -903,12 +912,14 @@ static int inflate_block(STATE_PARAM smallint *e)
 		bl = lbits;
 
 		i = huft_build(ll, nl, 257, cplens, cplext, &inflate_codes_tl, &bl);
-		if (i != 0)
+		if (i != 0) {
 			abort_unzip(PASS_STATE_ONLY);
+		}
 		bd = dbits;
 		i = huft_build(ll + nl, nd, 0, cpdist, cpdext, &inflate_codes_td, &bd);
-		if (i != 0)
+		if (i != 0) {
 			abort_unzip(PASS_STATE_ONLY);
+		}
 
 		/* set up data for inflate_codes() */
 		inflate_codes_setup(PASS_STATE bl, bd);
@@ -971,7 +982,7 @@ static int inflate_get_next_window(STATE_PARAM_ONLY)
 
 /* Called from unpack_gz_stream() and inflate_unzip() */
 static IF_DESKTOP(long long) int
-inflate_unzip_internal(STATE_PARAM int in, int out)
+inflate_unzip_internal(STATE_PARAM transformer_state_t *xstate)
 {
 	IF_DESKTOP(long long) int n = 0;
 	ssize_t nwrote;
@@ -980,7 +991,7 @@ inflate_unzip_internal(STATE_PARAM int in, int out)
 	gunzip_window = xmalloc(GUNZIP_WSIZE);
 	gunzip_outbuf_count = 0;
 	gunzip_bytes_out = 0;
-	gunzip_src_fd = in;
+	gunzip_src_fd = xstate->src_fd;
 
 	/* (re) initialize state */
 	method = -1;
@@ -996,15 +1007,15 @@ inflate_unzip_internal(STATE_PARAM int in, int out)
 	error_msg = "corrupted data";
 	if (setjmp(error_jmp)) {
 		/* Error from deep inside zip machinery */
+		bb_error_msg(error_msg);
 		n = -1;
 		goto ret;
 	}
 
 	while (1) {
 		int r = inflate_get_next_window(PASS_STATE_ONLY);
-		nwrote = full_write(out, gunzip_window, gunzip_outbuf_count);
-		if (nwrote != (ssize_t)gunzip_outbuf_count) {
-			bb_perror_msg("write");
+		nwrote = transformer_write(xstate, gunzip_window, gunzip_outbuf_count);
+		if (nwrote == (ssize_t)-1) {
 			n = -1;
 			goto ret;
 		}
@@ -1034,22 +1045,22 @@ inflate_unzip_internal(STATE_PARAM int in, int out)
 /* For unzip */
 
 IF_DESKTOP(long long) int FAST_FUNC
-inflate_unzip(transformer_aux_data_t *aux, int in, int out)
+inflate_unzip(transformer_state_t *xstate)
 {
 	IF_DESKTOP(long long) int n;
 	DECLARE_STATE;
 
 	ALLOC_STATE;
 
-	to_read = aux->bytes_in;
+	to_read = xstate->bytes_in;
 //	bytebuffer_max = 0x8000;
 	bytebuffer_offset = 4;
 	bytebuffer = xmalloc(bytebuffer_max);
-	n = inflate_unzip_internal(PASS_STATE in, out);
+	n = inflate_unzip_internal(PASS_STATE xstate);
 	free(bytebuffer);
 
-	aux->crc32 = gunzip_crc;
-	aux->bytes_out = gunzip_bytes_out;
+	xstate->crc32 = gunzip_crc;
+	xstate->bytes_out = gunzip_bytes_out;
 	DEALLOC_STATE;
 	return n;
 }
@@ -1107,7 +1118,7 @@ static uint32_t buffer_read_le_u32(STATE_PARAM_ONLY)
 	return res;
 }
 
-static int check_header_gzip(STATE_PARAM transformer_aux_data_t *aux)
+static int check_header_gzip(STATE_PARAM transformer_state_t *xstate)
 {
 	union {
 		unsigned char raw[8];
@@ -1119,9 +1130,8 @@ static int check_header_gzip(STATE_PARAM transformer_aux_data_t *aux)
 			uint8_t os_flags_UNUSED;
 		} PACKED formatted;
 	} header;
-	struct BUG_header {
-		char BUG_header[sizeof(header) == 8 ? 1 : -1];
-	};
+
+	BUILD_BUG_ON(sizeof(header) != 8);
 
 	/*
 	 * Rewind bytebuffer. We use the beginning because the header has 8
@@ -1169,8 +1179,7 @@ static int check_header_gzip(STATE_PARAM transformer_aux_data_t *aux)
 		}
 	}
 
-	if (aux)
-		aux->mtime = SWAP_LE32(header.formatted.mtime);
+	xstate->mtime = SWAP_LE32(header.formatted.mtime);
 
 	/* Read the header checksum */
 	if (header.formatted.flags & 0x02) {
@@ -1182,27 +1191,27 @@ static int check_header_gzip(STATE_PARAM transformer_aux_data_t *aux)
 }
 
 IF_DESKTOP(long long) int FAST_FUNC
-unpack_gz_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
+unpack_gz_stream(transformer_state_t *xstate)
 {
 	uint32_t v32;
 	IF_DESKTOP(long long) int total, n;
 	DECLARE_STATE;
 
 #if !ENABLE_FEATURE_SEAMLESS_Z
-	if (check_signature16(aux, src_fd, GZIP_MAGIC))
+	if (check_signature16(xstate, GZIP_MAGIC))
 		return -1;
 #else
-	if (aux && aux->check_signature) {
+	if (!xstate->signature_skipped) {
 		uint16_t magic2;
 
-		if (full_read(src_fd, &magic2, 2) != 2) {
+		if (full_read(xstate->src_fd, &magic2, 2) != 2) {
  bad_magic:
 			bb_error_msg("invalid magic");
 			return -1;
 		}
 		if (magic2 == COMPRESS_MAGIC) {
-			aux->check_signature = 0;
-			return unpack_Z_stream(aux, src_fd, dst_fd);
+			xstate->signature_skipped = 2;
+			return unpack_Z_stream(xstate);
 		}
 		if (magic2 != GZIP_MAGIC)
 			goto bad_magic;
@@ -1215,16 +1224,16 @@ unpack_gz_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
 	to_read = -1;
 //	bytebuffer_max = 0x8000;
 	bytebuffer = xmalloc(bytebuffer_max);
-	gunzip_src_fd = src_fd;
+	gunzip_src_fd = xstate->src_fd;
 
  again:
-	if (!check_header_gzip(PASS_STATE aux)) {
+	if (!check_header_gzip(PASS_STATE xstate)) {
 		bb_error_msg("corrupted data");
 		total = -1;
 		goto ret;
 	}
 
-	n = inflate_unzip_internal(PASS_STATE src_fd, dst_fd);
+	n = inflate_unzip_internal(PASS_STATE xstate);
 	if (n < 0) {
 		total = -1;
 		goto ret;

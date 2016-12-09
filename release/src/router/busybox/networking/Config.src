@@ -82,12 +82,12 @@ config FEATURE_BRCTL_FANCY
 	  This adds about 600 bytes.
 
 config FEATURE_BRCTL_SHOW
-	bool "Support show, showmac and showstp"
+	bool "Support show"
 	default y
 	depends on BRCTL && FEATURE_BRCTL_FANCY
 	help
 	  Add support for option which prints the current config:
-	    showmacs, showstp, show
+	    show
 
 config DNSD
 	bool "dnsd"
@@ -134,6 +134,13 @@ config FEATURE_FTPD_ACCEPT_BROKEN_LIST
 	  it increases the code size by ~40 bytes.
 	  Most other ftp servers seem to behave similar to this.
 
+config FEATURE_FTP_AUTHENTICATION
+	bool "Enable authentication"
+	default y
+	depends on FTPD
+	help
+	  Enable basic system login as seen in telnet etc.
+
 config FTPGET
 	bool "ftpget"
 	default y
@@ -173,14 +180,6 @@ config FEATURE_HTTPD_RANGES
 	  Makes httpd emit "Accept-Ranges: bytes" header and understand
 	  "Range: bytes=NNN-[MMM]" header. Allows for resuming interrupted
 	  downloads, seeking in multimedia players etc.
-
-config FEATURE_HTTPD_USE_SENDFILE
-	bool "Use sendfile system call"
-	default y
-	depends on HTTPD
-	help
-	  When enabled, httpd will use the kernel sendfile() function
-	  instead of read/write loop.
 
 config FEATURE_HTTPD_SETUID
 	bool "Enable -u <user> option"
@@ -498,7 +497,7 @@ config FEATURE_INETD_SUPPORT_BUILTIN_CHARGEN
 
 config FEATURE_INETD_RPC
 	bool "Support RPC services"
-	default y
+	default n  # very rarely used, and needs Sun RPC support in libc
 	depends on INETD
 	select FEATURE_HAVE_RPC
 	help
@@ -534,6 +533,13 @@ config FEATURE_IP_ROUTE
 	help
 	  Add support for routing table management to "ip".
 
+config FEATURE_IP_ROUTE_DIR
+	string "ip route configuration directory"
+	default "/etc/iproute2"
+	depends on FEATURE_IP_ROUTE
+	help
+	  Location of the "ip" applet routing configuration.
+
 config FEATURE_IP_TUNNEL
 	bool "ip tunnel"
 	default y
@@ -548,6 +554,13 @@ config FEATURE_IP_RULE
 	help
 	  Add support for rule commands to "ip".
 
+config FEATURE_IP_NEIGH
+	bool "ip neighbor"
+	default y
+	depends on IP
+	help
+	  Add support for neighbor commands to "ip".
+
 config FEATURE_IP_SHORT_FORMS
 	bool "Support short forms of ip commands"
 	default y
@@ -559,6 +572,7 @@ config FEATURE_IP_SHORT_FORMS
 	  ip route  -> iproute
 	  ip tunnel -> iptunnel
 	  ip rule   -> iprule
+	  ip neigh  -> ipneigh
 
 	  Say N unless you desparately need the short form of the ip
 	  object commands.
@@ -597,6 +611,11 @@ config IPRULE
 	bool
 	default y
 	depends on FEATURE_IP_SHORT_FORMS && FEATURE_IP_RULE
+
+config IPNEIGH
+	bool
+	default y
+	depends on FEATURE_IP_SHORT_FORMS && FEATURE_IP_NEIGH
 
 config IPCALC
 	bool "ipcalc"
@@ -663,6 +682,14 @@ config FEATURE_NTPD_SERVER
 	help
 	  Make ntpd usable as a NTP server. If you disable this option
 	  ntpd will be usable only as a NTP client.
+
+config FEATURE_NTPD_CONF
+	bool "Make ntpd understand /etc/ntp.conf"
+	default y
+	depends on NTPD
+	help
+	  Make ntpd look in /etc/ntp.conf for peers. Only "server address"
+	  is supported.
 
 config PSCAN
 	bool "pscan"
@@ -743,8 +770,7 @@ config TELNETD
 
 	  Note that for busybox telnetd to work you need several things:
 	  First of all, your kernel needs:
-		  UNIX98_PTYS=y
-		  DEVPTS_FS=y
+		  CONFIG_UNIX98_PTYS=y
 
 	  Next, you need a /dev/pts directory on your root filesystem:
 
@@ -940,46 +966,6 @@ config VCONFIG
 	select PLATFORM_LINUX
 	help
 	  Creates, removes, and configures VLAN interfaces
-
-config WGET
-	bool "wget"
-	default y
-	help
-	  wget is a utility for non-interactive download of files from HTTP,
-	  HTTPS, and FTP servers.
-
-config FEATURE_WGET_STATUSBAR
-	bool "Enable a nifty process meter (+2k)"
-	default y
-	depends on WGET
-	help
-	  Enable the transfer progress bar for wget transfers.
-
-config FEATURE_WGET_AUTHENTICATION
-	bool "Enable HTTP authentication"
-	default y
-	depends on WGET
-	help
-	  Support authenticated HTTP transfers.
-
-config FEATURE_WGET_LONG_OPTIONS
-	bool "Enable long options"
-	default y
-	depends on WGET && LONG_OPTS
-	help
-	  Support long options for the wget applet.
-
-config FEATURE_WGET_TIMEOUT
-	bool "Enable read timeout option -T SEC"
-	default y
-	depends on WGET
-	help
-	  Supports network read timeout for wget, so that wget will give
-	  up and timeout when reading network data, through the -T command
-	  line option.  Currently only network data read timeout is
-	  supported (i.e., timeout is not applied to the DNS nor TCP
-	  connection initialization).  When FEATURE_WGET_LONG_OPTIONS is
-	  also enabled, the --timeout option will work in addition to -T.
 
 config ZCIP
 	bool "zcip"

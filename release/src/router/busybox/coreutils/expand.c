@@ -78,11 +78,7 @@ static void expand(FILE *file, unsigned tab_size, unsigned opt)
 				unsigned len;
 				*ptr = '\0';
 # if ENABLE_UNICODE_SUPPORT
-				{
-					uni_stat_t uni_stat;
-					printable_string(&uni_stat, ptr_strbeg);
-					len = uni_stat.unicode_width;
-				}
+				len = unicode_strwidth(ptr_strbeg);
 # else
 				len = ptr - ptr_strbeg;
 # endif
@@ -138,12 +134,9 @@ static void unexpand(FILE *file, unsigned tab_size, unsigned opt)
 			printf("%*s%.*s", len, "", n, ptr);
 # if ENABLE_UNICODE_SUPPORT
 			{
-				char c;
-				uni_stat_t uni_stat;
-				c = ptr[n];
+				char c = ptr[n];
 				ptr[n] = '\0';
-				printable_string(&uni_stat, ptr);
-				len = uni_stat.unicode_width;
+				len = unicode_strwidth(ptr);
 				ptr[n] = c;
 			}
 # else

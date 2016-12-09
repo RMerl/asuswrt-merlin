@@ -32,18 +32,18 @@
 //usage:     "\n	-l,--local	Clock is set to local time"
 //usage:     "\n	-u,--utc	Clock is set to UTC time"
 //usage:     "\n	-d,--device=DEV	Specify the RTC device"
-//usage:     "\n	-m,--mode=MODE	Set the sleep state (default: standby)"
-//usage:     "\n	-s,--seconds=SEC Set the timeout in SEC seconds from now"
-//usage:     "\n	-t,--time=TIME	Set the timeout to TIME seconds from epoch"
+//usage:     "\n	-m,--mode=MODE	Set sleep state (default: standby)"
+//usage:     "\n	-s,--seconds=SEC Set timeout in SEC seconds from now"
+//usage:     "\n	-t,--time=TIME	Set timeout to TIME seconds from epoch"
 //usage:	)
 //usage:	IF_NOT_LONG_OPTS(
 //usage:     "\n	-a	Read clock mode from adjtime"
 //usage:     "\n	-l	Clock is set to local time"
 //usage:     "\n	-u	Clock is set to UTC time"
 //usage:     "\n	-d DEV	Specify the RTC device"
-//usage:     "\n	-m MODE	Set the sleep state (default: standby)"
-//usage:     "\n	-s SEC	Set the timeout in SEC seconds from now"
-//usage:     "\n	-t TIME	Set the timeout to TIME seconds from epoch"
+//usage:     "\n	-m MODE	Set sleep state (default: standby)"
+//usage:     "\n	-s SEC	Set timeout in SEC seconds from now"
+//usage:     "\n	-t TIME	Set timeout to TIME seconds from epoch"
 //usage:	)
 
 #include "libbb.h"
@@ -51,7 +51,6 @@
 
 #define SYS_RTC_PATH   "/sys/class/rtc/%s/device/power/wakeup"
 #define SYS_POWER_PATH "/sys/power/state"
-#define DEFAULT_MODE   "standby"
 
 static NOINLINE bool may_wakeup(const char *rtcname)
 {
@@ -67,7 +66,7 @@ static NOINLINE bool may_wakeup(const char *rtcname)
 		return false;
 
 	/* wakeup events could be disabled or not supported */
-	return strncmp(buf, "enabled\n", 8) == 0;
+	return is_prefixed_with(buf, "enabled\n") != NULL;
 }
 
 static NOINLINE void setup_alarm(int fd, time_t *wakeup, time_t rtc_time)
@@ -122,17 +121,16 @@ static NOINLINE void setup_alarm(int fd, time_t *wakeup, time_t rtc_time)
 int rtcwake_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int rtcwake_main(int argc UNUSED_PARAM, char **argv)
 {
-	time_t rtc_time;
-
 	unsigned opt;
 	const char *rtcname = NULL;
-	const char *suspend;
+	const char *suspend = "standby";
 	const char *opt_seconds;
 	const char *opt_time;
 
+	time_t rtc_time;
 	time_t sys_time;
-	time_t alarm_time = 0;
-	unsigned seconds = 0;
+	time_t alarm_time = alarm_time;
+	unsigned seconds = seconds; /* for compiler */
 	int utc = -1;
 	int fd;
 
@@ -148,6 +146,8 @@ int rtcwake_main(int argc UNUSED_PARAM, char **argv)
 		;
 	applet_long_options = rtcwake_longopts;
 #endif
+	/* Must have -s or -t, exclusive */
+	opt_complementary = "s:t:s--t:t--s";
 	opt = getopt32(argv, "alud:m:s:t:", &rtcname, &suspend, &opt_seconds, &opt_time);
 
 	/* this is the default
@@ -156,17 +156,17 @@ int rtcwake_main(int argc UNUSED_PARAM, char **argv)
 	*/
 	if (opt & (RTCWAKE_OPT_UTC | RTCWAKE_OPT_LOCAL))
 		utc = opt & RTCWAKE_OPT_UTC;
-	if (!(opt & RTCWAKE_OPT_SUSPEND_MODE))
-		suspend = DEFAULT_MODE;
-	if (opt & RTCWAKE_OPT_SECONDS)
+	if (opt & RTCWAKE_OPT_SECONDS) {
 		/* alarm time, seconds-to-sleep (relative) */
-		seconds = xatoi(opt_seconds);
-	if (opt & RTCWAKE_OPT_TIME)
+		seconds = xatou(opt_seconds);
+	} else {
+		/* RTCWAKE_OPT_TIME */
 		/* alarm time, time_t (absolute, seconds since 1/1 1970 UTC) */
-		alarm_time = xatol(opt_time);
-
-	if (!alarm_time && !seconds)
-		bb_error_msg_and_die("must provide wake time");
+		if (sizeof(alarm_time) <= sizeof(long))
+			alarm_time = xatol(opt_time);
+		else
+			alarm_time = xatoll(opt_time);
+	}
 
 	if (utc == -1)
 		utc = rtc_adjtime_is_utc();
@@ -177,8 +177,9 @@ int rtcwake_main(int argc UNUSED_PARAM, char **argv)
 	/* this RTC must exist and (if we'll sleep) be wakeup-enabled */
 	fd = rtc_xopen(&rtcname, O_RDONLY);
 
-	if (strcmp(suspend, "on") && !may_wakeup(rtcname))
-		bb_error_msg_and_die("%s not enabled for wakeup events", rtcname);
+	if (strcmp(suspend, "on") != 0)
+		if (!may_wakeup(rtcname))
+			bb_error_msg_and_die("%s not enabled for wakeup events", rtcname);
 
 	/* relative or absolute alarm time, normalized to time_t */
 	sys_time = time(NULL);
@@ -188,21 +189,29 @@ int rtcwake_main(int argc UNUSED_PARAM, char **argv)
 		rtc_time = rtc_tm2time(&tm_time, utc);
 	}
 
-
-	if (alarm_time) {
-		if (alarm_time < sys_time)
+	if (opt & RTCWAKE_OPT_TIME) {
+		/* Correct for RTC<->system clock difference */
+		alarm_time += rtc_time - sys_time;
+		if (alarm_time < rtc_time)
+			/*
+			 * Compat message text.
+			 * I'd say "RTC time is already ahead of ..." instead.
+			 */
 			bb_error_msg_and_die("time doesn't go backward to %s", ctime(&alarm_time));
-		alarm_time += sys_time - rtc_time;
 	} else
 		alarm_time = rtc_time + seconds + 1;
-	setup_alarm(fd, &alarm_time, rtc_time);
 
+	setup_alarm(fd, &alarm_time, rtc_time);
 	sync();
+#if 0 /*debug*/
+	printf("sys_time: %s", ctime(&sys_time));
+	printf("rtc_time: %s", ctime(&rtc_time));
+#endif
 	printf("wakeup from \"%s\" at %s", suspend, ctime(&alarm_time));
 	fflush_all();
 	usleep(10 * 1000);
 
-	if (strcmp(suspend, "on"))
+	if (strcmp(suspend, "on") != 0)
 		xopen_xwrite_close(SYS_POWER_PATH, suspend);
 	else {
 		/* "fake" suspend ... we'll do the delay ourselves */

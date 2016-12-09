@@ -61,11 +61,11 @@ static void send_packet_to_client(struct dhcp_packet *dhcp_pkt, int force_broadc
 	 || (dhcp_pkt->flags & htons(BROADCAST_FLAG))
 	 || dhcp_pkt->ciaddr == 0
 	) {
-		log1("Broadcasting packet to client");
+		log1("broadcasting packet to client");
 		ciaddr = INADDR_BROADCAST;
 		chaddr = MAC_BCAST_ADDR;
 	} else {
-		log1("Unicasting packet to client ciaddr");
+		log1("unicasting packet to client ciaddr");
 		ciaddr = dhcp_pkt->ciaddr;
 		chaddr = dhcp_pkt->chaddr;
 	}
@@ -79,7 +79,7 @@ static void send_packet_to_client(struct dhcp_packet *dhcp_pkt, int force_broadc
 /* Send a packet to gateway_nip using the kernel ip stack */
 static void send_packet_to_relay(struct dhcp_packet *dhcp_pkt)
 {
-	log1("Forwarding packet to relay");
+	log1("forwarding packet to relay");
 
 	udhcp_send_kernel_packet(dhcp_pkt,
 			server_config.server_nip, SERVER_PORT,
@@ -214,7 +214,7 @@ static NOINLINE void send_offer(struct dhcp_packet *oldpacket,
 	add_server_options(&packet);
 
 	addr.s_addr = packet.yiaddr;
-	bb_info_msg("Sending OFFER of %s", inet_ntoa(addr));
+	bb_error_msg("sending OFFER of %s", inet_ntoa(addr));
 	/* send_packet emits error message itself if it detects failure */
 	send_packet(&packet, /*force_bcast:*/ 0);
 }
@@ -226,7 +226,7 @@ static NOINLINE void send_NAK(struct dhcp_packet *oldpacket)
 
 	init_packet(&packet, oldpacket, DHCPNAK);
 
-	log1("Sending NAK");
+	log1("sending %s", "NAK");
 	send_packet(&packet, /*force_bcast:*/ 1);
 }
 
@@ -247,7 +247,7 @@ static NOINLINE void send_ACK(struct dhcp_packet *oldpacket, uint32_t yiaddr)
 	add_server_options(&packet);
 
 	addr.s_addr = yiaddr;
-	bb_info_msg("Sending ACK to %s", inet_ntoa(addr));
+	bb_error_msg("sending ACK to %s", inet_ntoa(addr));
 	send_packet(&packet, /*force_bcast:*/ 0);
 
 	p_host_name = (const char*) udhcp_get_option(oldpacket, DHCP_HOST_NAME);
@@ -310,10 +310,10 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	unsigned arpping_ms;
 	IF_FEATURE_UDHCP_PORT(char *str_P;)
 
-#if ENABLE_FEATURE_UDHCP_PORT
-	SERVER_PORT = 67;
-	CLIENT_PORT = 68;
-#endif
+	setup_common_bufsiz();
+
+	IF_FEATURE_UDHCP_PORT(SERVER_PORT = 67;)
+	IF_FEATURE_UDHCP_PORT(CLIENT_PORT = 68;)
 
 #if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
 	opt_complementary = "vv";
@@ -361,7 +361,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	write_pidfile(server_config.pidfile);
 	/* if (!..) bb_perror_msg("can't create pidfile %s", pidfile); */
 
-	bb_info_msg("%s (v"BB_VER") started", applet_name);
+	bb_error_msg("started, v"BB_VER);
 
 	option = udhcp_find_option(server_config.options, DHCP_LEASE_TIME);
 	server_config.max_lease_sec = DEFAULT_LEASE_TIME;
@@ -384,8 +384,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	if (udhcp_read_interface(server_config.interface,
 			&server_config.ifindex,
 			(server_config.server_nip == 0 ? &server_config.server_nip : NULL),
-			server_config.server_mac,
-			NULL)
+			server_config.server_mac)
 	) {
 		retval = 1;
 		goto ret;
@@ -428,18 +427,18 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			goto continue_with_autotime;
 		}
 		if (retval < 0 && errno != EINTR) {
-			log1("Error on select");
+			log1("error on select");
 			continue;
 		}
 
 		switch (udhcp_sp_read(&rfds)) {
 		case SIGUSR1:
-			bb_info_msg("Received SIGUSR1");
+			bb_error_msg("received %s", "SIGUSR1");
 			write_leases();
 			/* why not just reset the timeout, eh */
 			goto continue_with_autotime;
 		case SIGTERM:
-			bb_info_msg("Received SIGTERM");
+			bb_error_msg("received %s", "SIGTERM");
 			write_leases();
 			goto ret0;
 		case 0: /* no signal: read a packet */
@@ -452,7 +451,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		if (bytes < 0) {
 			/* bytes can also be -2 ("bad packet data") */
 			if (bytes == -1 && errno != EINTR) {
-				log1("Read error: %s, reopening socket", strerror(errno));
+				log1("read error: %s, reopening socket", strerror(errno));
 				close(server_socket);
 				server_socket = -1;
 			}
@@ -487,7 +486,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		/* Look for a static/dynamic lease */
 		static_lease_nip = get_static_nip_by_mac(server_config.static_leases, &packet.chaddr);
 		if (static_lease_nip) {
-			bb_info_msg("Found static lease: %x", static_lease_nip);
+			bb_error_msg("found static lease: %x", static_lease_nip);
 			memcpy(&fake_lease.lease_mac, &packet.chaddr, 6);
 			fake_lease.lease_nip = static_lease_nip;
 			fake_lease.expires = 0;
@@ -505,13 +504,13 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		switch (state[0]) {
 
 		case DHCPDISCOVER:
-			log1("Received DISCOVER");
+			log1("received %s", "DISCOVER");
 
 			send_offer(&packet, static_lease_nip, lease, requested_ip_opt, arpping_ms);
 			break;
 
 		case DHCPREQUEST:
-			log1("Received REQUEST");
+			log1("received %s", "REQUEST");
 /* RFC 2131:
 
 o DHCPREQUEST generated during SELECTING state:
@@ -636,7 +635,7 @@ o DHCPREQUEST generated during REBINDING state:
 			 * chaddr must be filled in,
 			 * ciaddr must be 0 (we do not check this)
 			 */
-			log1("Received DECLINE");
+			log1("received %s", "DECLINE");
 			if (server_id_opt
 			 && requested_ip_opt
 			 && lease  /* chaddr matches this lease */
@@ -656,7 +655,7 @@ o DHCPREQUEST generated during REBINDING state:
 			 * chaddr must be filled in,
 			 * ciaddr must be filled in
 			 */
-			log1("Received RELEASE");
+			log1("received %s", "RELEASE");
 			if (server_id_opt
 			 && lease  /* chaddr matches this lease */
 			 && packet.ciaddr == lease->lease_nip
@@ -666,7 +665,7 @@ o DHCPREQUEST generated during REBINDING state:
 			break;
 
 		case DHCPINFORM:
-			log1("Received INFORM");
+			log1("received %s", "INFORM");
 			send_inform(&packet);
 			break;
 		}

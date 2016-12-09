@@ -93,6 +93,7 @@
 //usage:	)
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include "unicode.h"
 
 
@@ -260,7 +261,7 @@ enum {
 
 /* TODO: simple toggles may be stored as OPT_xxx bits instead */
 static const uint32_t opt_flags[] = {
-	STYLE_COLUMNAR,		     /* C */
+	STYLE_COLUMNAR,              /* C */
 	DISP_HIDDEN | DISP_DOT,      /* a */
 	DISP_NOLIST,                 /* d */
 	LIST_INO,                    /* i */
@@ -365,8 +366,9 @@ struct globals {
 	time_t current_time_t;
 #endif
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	/* we have to zero it out because of NOEXEC */ \
 	memset(&G, 0, sizeof(G)); \
 	IF_FEATURE_AUTOWIDTH(G_terminal_width = TERMINAL_WIDTH;) \
@@ -566,12 +568,12 @@ static NOINLINE unsigned display_single(const struct dnode *dn)
 #if ENABLE_FEATURE_LS_TIMESTAMPS
 	if (G.all_fmt & (LIST_FULLTIME|LIST_DATE_TIME)) {
 		char *filetime;
-		time_t ttime = dn->dn_mtime;
+		const time_t *ttime = &dn->dn_mtime;
 		if (G.all_fmt & TIME_ACCESS)
-			ttime = dn->dn_atime;
+			ttime = &dn->dn_atime;
 		if (G.all_fmt & TIME_CHANGE)
-			ttime = dn->dn_ctime;
-		filetime = ctime(&ttime);
+			ttime = &dn->dn_ctime;
+		filetime = ctime(ttime);
 		/* filetime's format: "Wed Jun 30 21:49:08 1993\n" */
 		if (G.all_fmt & LIST_FULLTIME) { /* -e */
 			/* Note: coreutils 8.4 ls --full-time prints:
@@ -580,13 +582,16 @@ static NOINLINE unsigned display_single(const struct dnode *dn)
 			column += printf("%.24s ", filetime);
 		} else { /* LIST_DATE_TIME */
 			/* G.current_time_t ~== time(NULL) */
-			time_t age = G.current_time_t - ttime;
-			printf("%.6s ", filetime + 4); /* "Jun 30" */
+			time_t age = G.current_time_t - *ttime;
 			if (age < 3600L * 24 * 365 / 2 && age > -15 * 60) {
-				/* hh:mm if less than 6 months old */
-				printf("%.5s ", filetime + 11);
-			} else { /* year. buggy if year > 9999 ;) */
-				printf(" %.4s ", filetime + 20);
+				/* less than 6 months old */
+				/* "mmm dd hh:mm " */
+				printf("%.12s ", filetime + 4);
+			} else {
+				/* "mmm dd  yyyy " */
+				/* "mmm dd yyyyy " after year 9999 :) */
+				strchr(filetime + 20, '\n')[0] = ' ';
+				printf("%.7s%6s", filetime + 4, filetime + 20);
 			}
 			column += 13;
 		}
@@ -665,7 +670,7 @@ static void display_files(struct dnode **dn, unsigned nfiles)
 			if (column_width < len)
 				column_width = len;
 		}
-		column_width += 1 +
+		column_width += 2 +
 			IF_SELINUX( ((G.all_fmt & LIST_CONTEXT) ? 33 : 0) + )
 				((G.all_fmt & LIST_INO) ? 8 : 0) +
 				((G.all_fmt & LIST_BLOCKS) ? 5 : 0);
@@ -693,8 +698,8 @@ static void display_files(struct dnode **dn, unsigned nfiles)
 			if (i < nfiles) {
 				if (column > 0) {
 					nexttab -= column;
-					printf("%*s ", nexttab, "");
-					column += nexttab + 1;
+					printf("%*s", nexttab, "");
+					column += nexttab;
 				}
 				nexttab = column + column_width;
 				column += display_single(dn[i]);
@@ -720,7 +725,7 @@ static struct dnode *my_stat(const char *fullname, const char *name, int force_f
 	if ((option_mask32 & OPT_L) || force_follow) {
 #if ENABLE_SELINUX
 		if (is_selinux_enabled())  {
-			 getfilecon(fullname, &cur->sid);
+			getfilecon(fullname, &cur->sid);
 		}
 #endif
 		if (stat(fullname, &statbuf)) {
@@ -1032,7 +1037,7 @@ static void scan_and_display_dirs_recur(struct dnode **dn, int first)
 		}
 		subdnp = scan_one_dir((*dn)->fullname, &nfiles);
 #if ENABLE_DESKTOP
-		if ((G.all_fmt & STYLE_MASK) == STYLE_LONG)
+		if ((G.all_fmt & STYLE_MASK) == STYLE_LONG || (G.all_fmt & LIST_BLOCKS))
 			printf("total %"OFF_FMT"u\n", calculate_blocks(subdnp));
 #endif
 		if (nfiles > 0) {
@@ -1102,7 +1107,7 @@ int ls_main(int argc UNUSED_PARAM, char **argv)
 
 #if ENABLE_FEATURE_AUTOWIDTH
 	/* obtain the terminal width */
-	get_terminal_width_height(STDIN_FILENO, &G_terminal_width, NULL);
+	G_terminal_width = get_terminal_width(STDIN_FILENO);
 	/* go one less... */
 	G_terminal_width--;
 #endif

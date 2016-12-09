@@ -132,6 +132,6 @@ int FAST_FUNC arpping(uint32_t test_nip,
 
  ret:
 	close(s);
-	log1("%srp reply received for this address", rv ? "No a" : "A");
+	log1("%srp reply received for this address", rv ? "no a" : "A");
 	return rv;
 }

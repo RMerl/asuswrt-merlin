@@ -28,7 +28,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "libbb.h"
 
 /* Always sets uid and gid */
-int FAST_FUNC get_uidgid(struct bb_uidgid_t *u, const char *ug, int numeric_ok)
+int FAST_FUNC get_uidgid(struct bb_uidgid_t *u, const char *ug)
 {
 	struct passwd *pwd;
 	struct group *gr;
@@ -43,18 +43,16 @@ int FAST_FUNC get_uidgid(struct bb_uidgid_t *u, const char *ug, int numeric_ok)
 		/* copies sz-1 bytes, stores terminating '\0' */
 		safe_strncpy(user, ug, sz);
 	}
-	if (numeric_ok) {
-		n = bb_strtou(user, NULL, 10);
-		if (!errno) {
-			u->uid = n;
-			pwd = getpwuid(n);
-			/* If we have e.g. "500" string without user */
-			/* with uid 500 in /etc/passwd, we set gid == uid */
-			u->gid = pwd ? pwd->pw_gid : n;
-			goto skip;
-		}
+	n = bb_strtou(user, NULL, 10);
+	if (!errno) {
+		u->uid = n;
+		pwd = getpwuid(n);
+		/* If we have e.g. "500" string without user */
+		/* with uid 500 in /etc/passwd, we set gid == uid */
+		u->gid = pwd ? pwd->pw_gid : n;
+		goto skip;
 	}
-	/* Either it is not numeric, or caller disallows numeric username */
+	/* it is not numeric */
 	pwd = getpwnam(user);
 	if (!pwd)
 		return 0;
@@ -63,12 +61,10 @@ int FAST_FUNC get_uidgid(struct bb_uidgid_t *u, const char *ug, int numeric_ok)
 
  skip:
 	if (group) {
-		if (numeric_ok) {
-			n = bb_strtou(group, NULL, 10);
-			if (!errno) {
-				u->gid = n;
-				return 1;
-			}
+		n = bb_strtou(group, NULL, 10);
+		if (!errno) {
+			u->gid = n;
+			return 1;
 		}
 		gr = getgrnam(group);
 		if (!gr)
@@ -79,7 +75,7 @@ int FAST_FUNC get_uidgid(struct bb_uidgid_t *u, const char *ug, int numeric_ok)
 }
 void FAST_FUNC xget_uidgid(struct bb_uidgid_t *u, const char *ug)
 {
-	if (!get_uidgid(u, ug, 1))
+	if (!get_uidgid(u, ug))
 		bb_error_msg_and_die("unknown user/group %s", ug);
 }
 
@@ -93,6 +89,8 @@ void FAST_FUNC xget_uidgid(struct bb_uidgid_t *u, const char *ug)
 void FAST_FUNC parse_chown_usergroup_or_die(struct bb_uidgid_t *u, char *user_group)
 {
 	char *group;
+
+	u->uid = u->gid = (gid_t)-1L;
 
 	/* Check if there is a group name */
 	group = strchr(user_group, '.'); /* deprecated? */
@@ -119,16 +117,16 @@ int main()
 {
 	unsigned u;
 	struct bb_uidgid_t ug;
-	u = get_uidgid(&ug, "apache", 0);
+	u = get_uidgid(&ug, "apache");
 	printf("%u = %u:%u\n", u, ug.uid, ug.gid);
 	ug.uid = ug.gid = 1111;
-	u = get_uidgid(&ug, "apache", 0);
+	u = get_uidgid(&ug, "apache");
 	printf("%u = %u:%u\n", u, ug.uid, ug.gid);
 	ug.uid = ug.gid = 1111;
-	u = get_uidgid(&ug, "apache:users", 0);
+	u = get_uidgid(&ug, "apache:users");
 	printf("%u = %u:%u\n", u, ug.uid, ug.gid);
 	ug.uid = ug.gid = 1111;
-	u = get_uidgid(&ug, "apache:users", 0);
+	u = get_uidgid(&ug, "apache:users");
 	printf("%u = %u:%u\n", u, ug.uid, ug.gid);
 	return 0;
 }

@@ -30,8 +30,9 @@
 /* This is a NOFORK applet. Be very careful! */
 
 
-#define PARENTS 0x01
-#define IGNORE_NON_EMPTY 0x02
+#define PARENTS          (1 << 0)
+#define VERBOSE          ((1 << 1) * ENABLE_FEATURE_VERBOSE)
+#define IGNORE_NON_EMPTY (1 << 2)
 
 int rmdir_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int rmdir_main(int argc UNUSED_PARAM, char **argv)
@@ -46,10 +47,13 @@ int rmdir_main(int argc UNUSED_PARAM, char **argv)
 		/* Debian etch: many packages fail to be purged or installed
 		 * because they desperately want this option: */
 		"ignore-fail-on-non-empty\0" No_argument "\xff"
+		IF_FEATURE_VERBOSE(
+		"verbose\0"                  No_argument "v"
+		)
 		;
 	applet_long_options = rmdir_longopts;
 #endif
-	flags = getopt32(argv, "p");
+	flags = getopt32(argv, "pv");
 	argv += optind;
 
 	if (!*argv) {
@@ -60,6 +64,10 @@ int rmdir_main(int argc UNUSED_PARAM, char **argv)
 		path = *argv;
 
 		while (1) {
+			if (flags & VERBOSE) {
+				printf("rmdir: removing directory, '%s'\n", path);
+			}
+
 			if (rmdir(path) < 0) {
 #if ENABLE_FEATURE_RMDIR_LONG_OPTIONS
 				if ((flags & IGNORE_NON_EMPTY) && errno == ENOTEMPTY)

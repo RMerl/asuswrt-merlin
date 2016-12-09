@@ -12,54 +12,83 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+//config:config STAT
+//config:	bool "stat"
+//config:	default y
+//config:	help
+//config:	  display file or filesystem status.
+//config:
+//config:config FEATURE_STAT_FORMAT
+//config:	bool "Enable custom formats (-c)"
+//config:	default y
+//config:	depends on STAT
+//config:	help
+//config:	  Without this, stat will not support the '-c format' option where
+//config:	  users can pass a custom format string for output. This adds about
+//config:	  7k to a nonstatic build on amd64.
+//config:
+//config:config FEATURE_STAT_FILESYSTEM
+//config:	bool "Enable display of filesystem status (-f)"
+//config:	default y
+//config:	depends on STAT
+//config:	select PLATFORM_LINUX # statfs()
+//config:	help
+//config:	  Without this, stat will not support the '-f' option to display
+//config:	  information about filesystem status.
+
 
 //usage:#define stat_trivial_usage
 //usage:       "[OPTIONS] FILE..."
 //usage:#define stat_full_usage "\n\n"
-//usage:       "Display file (default) or filesystem status\n"
+//usage:       "Display file"
+//usage:            IF_FEATURE_STAT_FILESYSTEM(" (default) or filesystem")
+//usage:            " status\n"
 //usage:	IF_FEATURE_STAT_FORMAT(
-//usage:     "\n	-c fmt	Use the specified format"
+//usage:     "\n	-c FMT	Use the specified format"
 //usage:	)
+//usage:	IF_FEATURE_STAT_FILESYSTEM(
 //usage:     "\n	-f	Display filesystem status"
+//usage:	)
 //usage:     "\n	-L	Follow links"
-//usage:     "\n	-t	Display info in terse form"
+//usage:     "\n	-t	Terse display"
 //usage:	IF_SELINUX(
 //usage:     "\n	-Z	Print security context"
 //usage:	)
 //usage:	IF_FEATURE_STAT_FORMAT(
-//usage:       "\n\nValid format sequences for files:\n"
+//usage:       "\n\nFMT sequences"IF_FEATURE_STAT_FILESYSTEM(" for files")":\n"
 //usage:       " %a	Access rights in octal\n"
 //usage:       " %A	Access rights in human readable form\n"
 //usage:       " %b	Number of blocks allocated (see %B)\n"
-//usage:       " %B	The size in bytes of each block reported by %b\n"
+//usage:       " %B	Size in bytes of each block reported by %b\n"
 //usage:       " %d	Device number in decimal\n"
 //usage:       " %D	Device number in hex\n"
 //usage:       " %f	Raw mode in hex\n"
 //usage:       " %F	File type\n"
-//usage:       " %g	Group ID of owner\n"
-//usage:       " %G	Group name of owner\n"
+//usage:       " %g	Group ID\n"
+//usage:       " %G	Group name\n"
 //usage:       " %h	Number of hard links\n"
 //usage:       " %i	Inode number\n"
 //usage:       " %n	File name\n"
 //usage:       " %N	File name, with -> TARGET if symlink\n"
 //usage:       " %o	I/O block size\n"
-//usage:       " %s	Total size, in bytes\n"
+//usage:       " %s	Total size in bytes\n"
 //usage:       " %t	Major device type in hex\n"
 //usage:       " %T	Minor device type in hex\n"
-//usage:       " %u	User ID of owner\n"
-//usage:       " %U	User name of owner\n"
+//usage:       " %u	User ID\n"
+//usage:       " %U	User name\n"
 //usage:       " %x	Time of last access\n"
 //usage:       " %X	Time of last access as seconds since Epoch\n"
 //usage:       " %y	Time of last modification\n"
 //usage:       " %Y	Time of last modification as seconds since Epoch\n"
 //usage:       " %z	Time of last change\n"
 //usage:       " %Z	Time of last change as seconds since Epoch\n"
-//usage:       "\nValid format sequences for file systems:\n"
+//usage:	IF_FEATURE_STAT_FILESYSTEM(
+//usage:       "\nFMT sequences for file systems:\n"
 //usage:       " %a	Free blocks available to non-superuser\n"
-//usage:       " %b	Total data blocks in file system\n"
-//usage:       " %c	Total file nodes in file system\n"
-//usage:       " %d	Free file nodes in file system\n"
-//usage:       " %f	Free blocks in file system\n"
+//usage:       " %b	Total data blocks\n"
+//usage:       " %c	Total file nodes\n"
+//usage:       " %d	Free file nodes\n"
+//usage:       " %f	Free blocks\n"
 //usage:	IF_SELINUX(
 //usage:       " %C	Security context in selinux\n"
 //usage:	)
@@ -71,13 +100,17 @@
 //usage:       " %t	Type in hex\n"
 //usage:       " %T	Type in human readable form"
 //usage:	)
+//usage:	)
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
-#define OPT_FILESYS     (1 << 0)
-#define OPT_TERSE       (1 << 1)
-#define OPT_DEREFERENCE (1 << 2)
-#define OPT_SELINUX     (1 << 3)
+enum {
+	OPT_TERSE       = (1 << 0),
+	OPT_DEREFERENCE = (1 << 1),
+	OPT_FILESYS     = (1 << 2) * ENABLE_FEATURE_STAT_FILESYSTEM,
+	OPT_SELINUX     = (1 << (2+ENABLE_FEATURE_STAT_FILESYSTEM)) * ENABLE_SELINUX,
+};
 
 #if ENABLE_FEATURE_STAT_FORMAT
 typedef bool (*statfunc_ptr)(const char *, const char *);
@@ -99,9 +132,15 @@ static const char *file_type(const struct stat *st)
 	if (S_ISFIFO(st->st_mode)) return "fifo";
 	if (S_ISLNK(st->st_mode))  return "symbolic link";
 	if (S_ISSOCK(st->st_mode)) return "socket";
+#ifdef S_TYPEISMQ
 	if (S_TYPEISMQ(st))        return "message queue";
+#endif
+#ifdef S_TYPEISSEM
 	if (S_TYPEISSEM(st))       return "semaphore";
+#endif
+#ifdef S_TYPEISSHM
 	if (S_TYPEISSHM(st))       return "shared memory object";
+#endif
 #ifdef S_TYPEISTMO
 	if (S_TYPEISTMO(st))       return "typed memory object";
 #endif
@@ -120,12 +159,13 @@ static const char *human_time(time_t t)
 
 	/*static char buf[sizeof("YYYY-MM-DD HH:MM:SS.000000000")] ALIGN1;*/
 #define buf bb_common_bufsiz1
-
-	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S.000000000", localtime(&t));
+	setup_common_bufsiz();
+	strcpy(strftime_YYYYMMDDHHMMSS(buf, COMMON_BUFSIZE, &t), ".000000000");
 	return buf;
 #undef buf
 }
 
+#if ENABLE_FEATURE_STAT_FILESYSTEM
 /* Return the type of the specified file system.
  * Some systems have statfvs.f_basetype[FSTYPSZ]. (AIX, HP-UX, and Solaris)
  * Others have statfs.f_fstypename[MFSNAMELEN]. (NetBSD 1.5.2)
@@ -196,6 +236,7 @@ static unsigned long long get_f_fsid(const struct statfs *statfsbuf)
 	while (--sz > 0);
 	return r;
 }
+#endif  /* FEATURE_STAT_FILESYSTEM */
 
 #if ENABLE_FEATURE_STAT_FORMAT
 static void strcatc(char *str, char c)
@@ -211,6 +252,7 @@ static void printfs(char *pformat, const char *msg)
 	printf(pformat, msg);
 }
 
+#if ENABLE_FEATURE_STAT_FILESYSTEM
 /* print statfs info */
 static void FAST_FUNC print_statfs(char *pformat, const char m,
 		const char *const filename, const void *data
@@ -257,6 +299,7 @@ static void FAST_FUNC print_statfs(char *pformat, const char m,
 		printf(pformat, m);
 	}
 }
+#endif
 
 /* print stat info */
 static void FAST_FUNC print_stat(char *pformat, const char m,
@@ -368,7 +411,7 @@ static void print_it(const char *masterformat,
 {
 	/* Create a working copy of the format string */
 	char *format = xstrdup(masterformat);
-	/* Add 2 to accomodate our conversion of the stat '%s' format string
+	/* Add 2 to accommodate our conversion of the stat '%s' format string
 	 * to the printf '%llu' one.  */
 	char *dest = xmalloc(strlen(format) + 2 + 1);
 	char *b;
@@ -417,6 +460,7 @@ static void print_it(const char *masterformat,
 }
 #endif  /* FEATURE_STAT_FORMAT */
 
+#if ENABLE_FEATURE_STAT_FILESYSTEM
 /* Stat the file system and print what we find.  */
 #if !ENABLE_FEATURE_STAT_FORMAT
 #define do_statfs(filename, format) do_statfs(filename)
@@ -436,7 +480,7 @@ static bool do_statfs(const char *filename, const char *format)
 		     : getfilecon(filename, &scontext)
 		    ) < 0
 		) {
-			bb_perror_msg(filename);
+			bb_simple_perror_msg(filename);
 			return 0;
 		}
 	}
@@ -532,6 +576,7 @@ static bool do_statfs(const char *filename, const char *format)
 #endif  /* FEATURE_STAT_FORMAT */
 	return 1;
 }
+#endif  /* FEATURE_STAT_FILESYSTEM */
 
 /* stat the file and print what we find */
 #if !ENABLE_FEATURE_STAT_FORMAT
@@ -549,7 +594,7 @@ static bool do_stat(const char *filename, const char *format)
 		     : getfilecon(filename, &scontext)
 		    ) < 0
 		) {
-			bb_perror_msg(filename);
+			bb_simple_perror_msg(filename);
 			return 0;
 		}
 	}
@@ -585,37 +630,43 @@ static bool do_stat(const char *filename, const char *format)
 # else
 		if (option_mask32 & OPT_TERSE) {
 			format = (option_mask32 & OPT_SELINUX ?
-				  "%n %s %b %f %u %g %D %i %h %t %T %X %Y %Z %o %C\n":
-				  "%n %s %b %f %u %g %D %i %h %t %T %X %Y %Z %o\n");
+				"%n %s %b %f %u %g %D %i %h %t %T %X %Y %Z %o %C\n"
+				:
+				"%n %s %b %f %u %g %D %i %h %t %T %X %Y %Z %o\n"
+				);
 		} else {
 			if (S_ISBLK(statbuf.st_mode) || S_ISCHR(statbuf.st_mode)) {
 				format = (option_mask32 & OPT_SELINUX ?
-					  "  File: %N\n"
-					  "  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
-					  "Device: %Dh/%dd\tInode: %-10i  Links: %-5h"
-					  " Device type: %t,%T\n"
-					  "Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
-					  "   S_Context: %C\n"
-					  "Access: %x\n" "Modify: %y\n" "Change: %z\n":
-					  "  File: %N\n"
-					  "  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
-					  "Device: %Dh/%dd\tInode: %-10i  Links: %-5h"
-					  " Device type: %t,%T\n"
-					  "Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
-					  "Access: %x\n" "Modify: %y\n" "Change: %z\n");
+					"  File: %N\n"
+					"  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
+					"Device: %Dh/%dd\tInode: %-10i  Links: %-5h"
+					" Device type: %t,%T\n"
+					"Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
+					"   S_Context: %C\n"
+					"Access: %x\n" "Modify: %y\n" "Change: %z\n"
+					:
+					"  File: %N\n"
+					"  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
+					"Device: %Dh/%dd\tInode: %-10i  Links: %-5h"
+					" Device type: %t,%T\n"
+					"Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
+					"Access: %x\n" "Modify: %y\n" "Change: %z\n"
+					);
 			} else {
 				format = (option_mask32 & OPT_SELINUX ?
-					  "  File: %N\n"
-					  "  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
-					  "Device: %Dh/%dd\tInode: %-10i  Links: %h\n"
-					  "Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
-					  "S_Context: %C\n"
-					  "Access: %x\n" "Modify: %y\n" "Change: %z\n":
-					  "  File: %N\n"
-					  "  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
-					  "Device: %Dh/%dd\tInode: %-10i  Links: %h\n"
-					  "Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
-					  "Access: %x\n" "Modify: %y\n" "Change: %z\n");
+					"  File: %N\n"
+					"  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
+					"Device: %Dh/%dd\tInode: %-10i  Links: %h\n"
+					"Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
+					"S_Context: %C\n"
+					"Access: %x\n" "Modify: %y\n" "Change: %z\n"
+					:
+					"  File: %N\n"
+					"  Size: %-10s\tBlocks: %-10b IO Block: %-6o %F\n"
+					"Device: %Dh/%dd\tInode: %-10i  Links: %h\n"
+					"Access: (%04a/%10.10A)  Uid: (%5u/%8U)   Gid: (%5g/%8G)\n"
+					"Access: %x\n" "Modify: %y\n" "Change: %z\n"
+					);
 			}
 		}
 # endif
@@ -643,7 +694,7 @@ static bool do_stat(const char *filename, const char *format)
 		);
 # if ENABLE_SELINUX
 		if (option_mask32 & OPT_SELINUX)
-			printf(" %lc\n", *scontext);
+			printf(" %s\n", scontext);
 		else
 			bb_putchar('\n');
 # endif
@@ -688,7 +739,8 @@ static bool do_stat(const char *filename, const char *format)
 		       (unsigned long) statbuf.st_gid,
 		       (gw_ent != NULL) ? gw_ent->gr_name : "UNKNOWN");
 # if ENABLE_SELINUX
-		printf("   S_Context: %lc\n", *scontext);
+		if (option_mask32 & OPT_SELINUX)
+			printf("   S_Context: %s\n", scontext);
 # endif
 		printf("Access: %s\n", human_time(statbuf.st_atime));
 		printf("Modify: %s\n", human_time(statbuf.st_mtime));
@@ -708,12 +760,15 @@ int stat_main(int argc UNUSED_PARAM, char **argv)
 	statfunc_ptr statfunc = do_stat;
 
 	opt_complementary = "-1"; /* min one arg */
-	opts = getopt32(argv, "ftL"
+	opts = getopt32(argv, "tL"
+		IF_FEATURE_STAT_FILESYSTEM("f")
 		IF_SELINUX("Z")
 		IF_FEATURE_STAT_FORMAT("c:", &format)
 	);
+#if ENABLE_FEATURE_STAT_FILESYSTEM
 	if (opts & OPT_FILESYS) /* -f */
 		statfunc = do_statfs;
+#endif
 #if ENABLE_SELINUX
 	if (opts & OPT_SELINUX) {
 		selinux_or_die();

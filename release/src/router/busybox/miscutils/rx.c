@@ -193,8 +193,8 @@ static int receive(/*int read_fd, */int file_fd)
 		}
 		if (cksum_or_crc != expected) {
 			bb_error_msg(do_crc ? "crc error, expected 0x%04x, got 0x%04x"
-			                   : "checksum error, expected 0x%02x, got 0x%02x",
-					expected, cksum_or_crc);
+					: "checksum error, expected 0x%02x, got 0x%02x",
+				expected, cksum_or_crc);
 			goto error;
 		}
 

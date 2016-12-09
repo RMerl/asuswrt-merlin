@@ -406,21 +406,21 @@ struct ext2_super_block {
 	 * Performance hints.  Directory preallocation should only
 	 * happen if the EXT2_FEATURE_COMPAT_DIR_PREALLOC flag is on.
 	 */
-	uint8_t	s_prealloc_blocks;	/* Nr of blocks to try to preallocate*/
-	uint8_t	s_prealloc_dir_blocks;	/* Nr to preallocate for dirs */
+	uint8_t		s_prealloc_blocks;	/* Nr of blocks to try to preallocate*/
+	uint8_t		s_prealloc_dir_blocks;	/* Nr to preallocate for dirs */
 	uint16_t	s_reserved_gdt_blocks;	/* Per group table for online growth */
 	/*
 	 * Journaling support valid if EXT2_FEATURE_COMPAT_HAS_JOURNAL set.
 	 */
-	uint8_t		s_journal_uuid[16];	/* uuid of journal superblock */
-	uint32_t	s_journal_inum;		/* inode number of journal file */
+/*D0*/	uint8_t		s_journal_uuid[16];	/* uuid of journal superblock */
+/*E0*/	uint32_t	s_journal_inum;		/* inode number of journal file */
 	uint32_t	s_journal_dev;		/* device number of journal file */
 	uint32_t	s_last_orphan;		/* start of list of inodes to delete */
 	uint32_t	s_hash_seed[4];		/* HTREE hash seed */
 	uint8_t		s_def_hash_version;	/* Default hash version to use */
 	uint8_t		s_jnl_backup_type;	/* Default type of journal backup */
 	uint16_t	s_reserved_word_pad;
-	uint32_t	s_default_mount_opts;
+/*100*/	uint32_t	s_default_mount_opts;
 	uint32_t	s_first_meta_bg;	/* First metablock group */
 	/* ext3 additions */
 	uint32_t	s_mkfs_time;		/* When the filesystem was created */
@@ -442,7 +442,7 @@ struct ext2_super_block {
 	uint32_t	s_reserved[162];	/* Padding to the end of the block */
 };
 struct BUG_ext2_super_block {
-        char bug[sizeof(struct ext2_super_block) == 1024 ? 1 : -1];
+	char bug[sizeof(struct ext2_super_block) == 1024 ? 1 : -1];
 };
 
 /*
@@ -481,6 +481,7 @@ struct BUG_ext2_super_block {
 #define EXT2_HAS_INCOMPAT_FEATURE(sb,mask)			\
 	( EXT2_SB(sb)->s_feature_incompat & (mask) )
 
+/* for s_feature_compat */
 #define EXT2_FEATURE_COMPAT_DIR_PREALLOC	0x0001
 #define EXT2_FEATURE_COMPAT_IMAGIC_INODES	0x0002
 #define EXT3_FEATURE_COMPAT_HAS_JOURNAL		0x0004
@@ -488,23 +489,45 @@ struct BUG_ext2_super_block {
 #define EXT2_FEATURE_COMPAT_RESIZE_INO		0x0010
 #define EXT2_FEATURE_COMPAT_DIR_INDEX		0x0020
 
+/* for s_feature_ro_compat */
 #define EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER	0x0001
 #define EXT2_FEATURE_RO_COMPAT_LARGE_FILE	0x0002
-/* #define EXT2_FEATURE_RO_COMPAT_BTREE_DIR	0x0004 not used */
+#define EXT2_FEATURE_RO_COMPAT_BTREE_DIR	0x0004 /* not used */
+#define EXT4_FEATURE_RO_COMPAT_HUGE_FILE	0x0008
+#define EXT4_FEATURE_RO_COMPAT_GDT_CSUM		0x0010
+#define EXT4_FEATURE_RO_COMPAT_DIR_NLINK	0x0020
+#define EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE	0x0040
 
+/* for s_feature_incompat */
 #define EXT2_FEATURE_INCOMPAT_COMPRESSION	0x0001
 #define EXT2_FEATURE_INCOMPAT_FILETYPE		0x0002
-#define EXT3_FEATURE_INCOMPAT_RECOVER		0x0004 /* Needs recovery */
-#define EXT3_FEATURE_INCOMPAT_JOURNAL_DEV	0x0008 /* Journal device */
+#define EXT3_FEATURE_INCOMPAT_RECOVER		0x0004
+#define EXT3_FEATURE_INCOMPAT_JOURNAL_DEV	0x0008
 #define EXT2_FEATURE_INCOMPAT_META_BG		0x0010
-#define EXT3_FEATURE_INCOMPAT_EXTENTS		0x0040
+#define EXT4_FEATURE_INCOMPAT_EXTENTS		0x0040
+#define EXT4_FEATURE_INCOMPAT_64BIT		0x0080
+#define EXT4_FEATURE_INCOMPAT_MMP		0x0100
+#define EXT4_FEATURE_INCOMPAT_FLEX_BG		0x0200
 
 
 #define EXT2_FEATURE_COMPAT_SUPP	0
-#define EXT2_FEATURE_INCOMPAT_SUPP	(EXT2_FEATURE_INCOMPAT_FILETYPE)
 #define EXT2_FEATURE_RO_COMPAT_SUPP	(EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER| \
 					 EXT2_FEATURE_RO_COMPAT_LARGE_FILE| \
 					 EXT2_FEATURE_RO_COMPAT_BTREE_DIR)
+#define EXT2_FEATURE_INCOMPAT_SUPP	(EXT2_FEATURE_INCOMPAT_FILETYPE| \
+					 EXT2_FEATURE_INCOMPAT_META_BG)
+#define EXT2_FEATURE_INCOMPAT_UNSUPPORTED	(~EXT2_FEATURE_INCOMPAT_SUPP)
+#define EXT2_FEATURE_RO_COMPAT_UNSUPPORTED	(~EXT2_FEATURE_RO_COMPAT_SUPP)
+
+#define EXT3_FEATURE_RO_COMPAT_SUPP	(EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER| \
+					 EXT2_FEATURE_RO_COMPAT_LARGE_FILE| \
+					 EXT2_FEATURE_RO_COMPAT_BTREE_DIR)
+#define EXT3_FEATURE_INCOMPAT_SUPP	(EXT2_FEATURE_INCOMPAT_FILETYPE| \
+					 EXT3_FEATURE_INCOMPAT_RECOVER| \
+					 EXT2_FEATURE_INCOMPAT_META_BG)
+#define EXT3_FEATURE_INCOMPAT_UNSUPPORTED	(~EXT3_FEATURE_INCOMPAT_SUPP)
+#define EXT3_FEATURE_RO_COMPAT_UNSUPPORTED	(~EXT3_FEATURE_RO_COMPAT_SUPP)
+
 
 /*
  * Default values for user and/or group using reserved blocks

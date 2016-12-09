@@ -4,9 +4,31 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+//config:config SU
+//config:	bool "su"
+//config:	default y
+//config:	select FEATURE_SYSLOG
+//config:	help
+//config:	  su is used to become another user during a login session.
+//config:	  Invoked without a username, su defaults to becoming the super user.
+//config:
+//config:	  Note that Busybox binary must be setuid root for this applet to
+//config:	  work properly.
+//config:
+//config:config FEATURE_SU_SYSLOG
+//config:	bool "Enable su to write to syslog"
+//config:	default y
+//config:	depends on SU
+//config:
+//config:config FEATURE_SU_CHECKS_SHELLS
+//config:	bool "Enable su to check user's shell to be listed in /etc/shells"
+//config:	depends on SU
+//config:	default y
 
-#include "libbb.h"
-#include <syslog.h>
+//applet:/* Needs to be run by root or be suid root - needs to change uid and gid: */
+//applet:IF_SU(APPLET(su, BB_DIR_BIN, BB_SUID_REQUIRE))
+
+//kbuild:lib-$(CONFIG_SU) += su.o
 
 //usage:#define su_trivial_usage
 //usage:       "[OPTIONS] [-] [USER]"
@@ -16,6 +38,9 @@
 //usage:     "\n	-p,-m	Do not set new $HOME, $SHELL, $USER, $LOGNAME"
 //usage:     "\n	-c CMD	Command to pass to 'sh -c'"
 //usage:     "\n	-s SH	Shell to use instead of user's default"
+
+#include "libbb.h"
+#include <syslog.h>
 
 #if ENABLE_FEATURE_SU_CHECKS_SHELLS
 /* Return 1 if SHELL is a restricted shell (one not returned by
@@ -93,7 +118,7 @@ int su_main(int argc UNUSED_PARAM, char **argv)
 
 	pw = xgetpwnam(opt_username);
 
-	if (cur_uid == 0 || correct_password(pw)) {
+	if (cur_uid == 0 || ask_and_check_password(pw) > 0) {
 		if (ENABLE_FEATURE_SU_SYSLOG)
 			syslog(LOG_NOTICE, "%c %s %s:%s",
 				'+', tty, old_user, opt_username);
@@ -101,6 +126,7 @@ int su_main(int argc UNUSED_PARAM, char **argv)
 		if (ENABLE_FEATURE_SU_SYSLOG)
 			syslog(LOG_NOTICE, "%c %s %s:%s",
 				'-', tty, old_user, opt_username);
+		bb_do_delay(LOGIN_FAIL_DELAY);
 		bb_error_msg_and_die("incorrect password");
 	}
 
@@ -131,7 +157,8 @@ int su_main(int argc UNUSED_PARAM, char **argv)
 	change_identity(pw);
 	setup_environment(opt_shell,
 			((flags & SU_OPT_l) / SU_OPT_l * SETUP_ENV_CLEARENV)
-			+ (!(flags & SU_OPT_mp) * SETUP_ENV_CHANGEENV),
+			+ (!(flags & SU_OPT_mp) * SETUP_ENV_CHANGEENV)
+			+ (!(flags & SU_OPT_l) * SETUP_ENV_NO_CHDIR),
 			pw);
 	IF_SELINUX(set_current_security_context(NULL);)
 
