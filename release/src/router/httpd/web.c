@@ -9517,7 +9517,7 @@ static char syslog_txt[] =
 ;
 
 static char cache_object[] =
-"Cache-Control: max-age=300"
+"Cache-Control: max-age=3600"
 ;
 
 #ifdef RTCONFIG_USB_MODEM
