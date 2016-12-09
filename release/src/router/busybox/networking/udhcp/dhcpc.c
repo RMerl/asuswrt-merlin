@@ -1198,6 +1198,7 @@ static void client_background(void)
 //usage:     "\n				-x lease:3600 - option 51 (lease time)"
 //usage:     "\n				-x 0x3d:0100BEEFC0FFEE - option 61 (client id)"
 //usage:     "\n	-F,--fqdn NAME		Ask server to update DNS mapping for NAME"
+//usage:     "\n	-H,-h,--hostname NAME	Send NAME as client hostname"
 //usage:     "\n	-V,--vendorclass VENDOR	Vendor identifier (default 'udhcp VERSION')"
 //usage:     "\n	-C,--clientid-none	Don't send MAC as client identifier"
 //usage:	IF_UDHCP_VERBOSE(
@@ -1235,6 +1236,7 @@ static void client_background(void)
 //usage:     "\n			-x lease:3600 - option 51 (lease time)"
 //usage:     "\n			-x 0x3d:0100BEEFC0FFEE - option 61 (client id)"
 //usage:     "\n	-F NAME		Ask server to update DNS mapping for NAME"
+//usage:     "\n	-H,-h NAME	Send NAME as client hostname"
 //usage:     "\n	-V VENDOR	Vendor identifier (default 'udhcp VERSION')"
 //usage:     "\n	-C		Don't send MAC as client identifier"
 //usage:	IF_UDHCP_VERBOSE(
@@ -1301,7 +1303,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 	);
 	if (opt & (OPT_h|OPT_H)) {
 		//msg added 2011-11
-		bb_error_msg("option -h NAME is deprecated, use -x hostname:NAME");
+	//ASUS:	bb_error_msg("option -h NAME is deprecated, use -x hostname:NAME");
 		client_config.hostname = alloc_dhcp_option(DHCP_HOST_NAME, str_h, 0);
 	}
 	if (opt & OPT_F) {
