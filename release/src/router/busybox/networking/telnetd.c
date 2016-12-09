@@ -332,7 +332,7 @@ make_new_session(
 	/* Careful - we are after vfork! */
 
 	/* Restore default signal handling ASAP */
-	bb_signals((1 << SIGCHLD) + (1 << SIGPIPE), SIG_DFL);
+	bb_signals((1 << SIGCHLD) + (1 << SIGPIPE) + (1 << SIGINT), SIG_DFL);
 
 	pid = getpid();
 
