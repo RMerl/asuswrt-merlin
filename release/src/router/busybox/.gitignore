@@ -50,3 +50,9 @@ cscope.files
 cscope.in.out
 cscope.out
 cscope.po.out
+
+#
+# asuswrt
+#
+/config_*
+/!config_base*
