@@ -154,7 +154,7 @@ uint32_t FAST_FUNC find_free_or_expired_nip(const uint8_t *safe_mac, unsigned ar
 	 */
 	hash = 0;
 	for (i = 0; i < 6; i++)
-		hash += safe_mac[i] + (hash << 6) + (hash << 16) - hash;
+		hash = safe_mac[i] + (hash << 6) + (hash << 16) - hash;
 
 	/* pick a seed based on hwaddr then iterate until we find a free address. */
 	addr = server_config.start_ip
