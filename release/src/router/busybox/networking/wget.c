@@ -1109,6 +1109,13 @@ However, in real world it was observed that some web servers
 		case 302:
 		case 303:
 			break;
+		case 416: /* Requested Range Not Satisfiable */
+			if (G.beg_range != 0) {
+				G.content_len = 0;
+				G.got_clen = 1;
+				goto skip_response;
+			}
+			/* fall through */
 		case 206: /* Partial Content */
 			if (G.beg_range != 0)
 				/* "Range:..." worked. Good. */
@@ -1180,6 +1187,7 @@ However, in real world it was observed that some web servers
 //		if (status >= 300)
 //			bb_error_msg_and_die("bad redirection (no Location: header from server)");
 
+ skip_response:
 		/* For HTTP, data is pumped over the same connection */
 		dfp = sfp;
 	} else {
