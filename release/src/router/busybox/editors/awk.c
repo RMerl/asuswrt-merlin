@@ -1886,7 +1886,9 @@ static void handle_special(var *v)
 		 *
 		 * So, split up current line before assignment to FS:
 		 */
+#if 0 /* ASUS still using non-posix scripts */
 		split_f0();
+#endif
 
 		mk_splitter(getvar_s(v), &fsplitter);
 	} else if (v == intvar[RS]) {
