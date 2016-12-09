@@ -31,6 +31,7 @@
 //usage:     "\n	-q		Quit after obtaining address"
 //usage:     "\n	-r 169.254.x.x	Request this address first"
 //usage:     "\n	-l x.x.0.0	Use this range instead of 169.254"
+//usage:     "\n	-p FILE		Create pidfile"
 //usage:     "\n	-v		Verbose"
 //usage:     "\n"
 //usage:     "\n$LOGGING=none		Suppress logging"
@@ -38,6 +39,9 @@
 //usage:     "\n"
 //usage:     "\nWith no -q, runs continuously monitoring for ARP conflicts,"
 //usage:     "\nexits only on I/O errors (link down etc)"
+
+/* Override ENABLE_FEATURE_PIDFILE */
+#define WANT_PIDFILE 1
 
 #include "libbb.h"
 #include "common_bufsiz.h"
@@ -90,6 +94,7 @@ struct globals {
 	struct sockaddr iface_sockaddr;
 	struct ether_addr our_ethaddr;
 	uint32_t localnet_ip;
+	char *pidfile;
 } FIX_ALIASING;
 #define G (*(struct globals*)bb_common_bufsiz1)
 #define INIT_G() do { setup_common_bufsiz(); } while (0)
@@ -197,6 +202,18 @@ static ALWAYS_INLINE unsigned random_delay_ms(unsigned secs)
 	return (unsigned)rand() % (secs * 1000);
 }
 
+static void cleanup(void)
+{
+	remove_pidfile(G.pidfile);
+}
+
+static void zcip_shutdown(int sig) NORETURN;
+static void zcip_shutdown(int sig)
+{
+	cleanup();
+	kill_myself_with_sig(sig);
+}
+
 /**
  * main program
  */
@@ -233,7 +250,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 	// Parse commandline: prog [options] ifname script
 	// exactly 2 args; -v accumulates and implies -f
 	opt_complementary = "=2:vv:vf";
-	opts = getopt32(argv, "fqr:l:v", &r_opt, &l_opt, &verbose);
+	opts = getopt32(argv, "fqr:l:p:v", &r_opt, &l_opt, &G.pidfile, &verbose);
 #if !BB_MMU
 	// on NOMMU reexec early (or else we will rerun things twice)
 	if (!FOREGROUND)
@@ -279,9 +296,12 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 
 	xsetenv("interface", argv_intf);
 
+	die_func = cleanup;
+	write_pidfile(G.pidfile);
+
 	// Initialize the interface (modprobe, ifup, etc)
 	if (run(argv, "init", 0))
-		return EXIT_FAILURE;
+		goto err;
 
 	// Initialize G.iface_sockaddr
 	// G.iface_sockaddr is: { u16 sa_family; u8 sa_data[14]; }
@@ -317,9 +337,13 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 	if (!FOREGROUND) {
 #if BB_MMU
 		bb_daemonize(0 /*was: DAEMON_CHDIR_ROOT*/);
+		/* rewrite pidfile, as our pid is different now */
+		write_pidfile(G.pidfile);
 #endif
 		bb_error_msg("start, interface %s", argv_intf);
 	}
+
+	bb_signals(BB_FATAL_SIGS, zcip_shutdown);
 
 	// Run the dynamic address negotiation protocol,
 	// restarting after address conflicts:
@@ -373,7 +397,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 		n = safe_poll(fds, 1, timeout_ms);
 		if (n < 0) {
 			//bb_perror_msg("poll"); - done in safe_poll
-			return EXIT_FAILURE;
+			goto err;
 		}
 		if (n == 0) { // timed out?
 			VDBG("state:%d\n", state);
@@ -411,7 +435,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 				run(argv, "config", chosen_nip);
 				// NOTE: all other exit paths should deconfig...
 				if (QUIT)
-					return EXIT_SUCCESS;
+					goto done;
 				// fall through: switch to MONITOR
 			default:
 			// case DEFEND:
@@ -445,7 +469,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 					// Only if we are in MONITOR or DEFEND
 					run(argv, "deconfig", chosen_nip);
 				}
-				return EXIT_FAILURE;
+				goto err;
 			}
 			continue;
 		}
@@ -524,5 +548,9 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 		// we expect _kernel_ to respond to that, because <chosen_nip>
 		// is (expected to be) configured on this iface.
 	} // while (1)
+done:
+	xfunc_error_retval = EXIT_SUCCESS;
+err:
+	xfunc_die();
 #undef argv_intf
 }
