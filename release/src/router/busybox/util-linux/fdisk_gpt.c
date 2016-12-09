@@ -93,7 +93,8 @@ gpt_list_table(int xtra UNUSED_PARAM)
 	int i;
 	char numstr6[6];
 
-	smart_ulltoa5(total_number_of_sectors * sector_size, numstr6, " KMGTPEZY")[0] = '\0';
+	smart_ulltoa5((unsigned long long)total_number_of_sectors * sector_size,
+		numstr6, " KMGTPEZY")[0] = '\0';
 	printf("Disk %s: %llu sectors, %s\n", disk_device,
 		(unsigned long long)total_number_of_sectors,
 		numstr6);
