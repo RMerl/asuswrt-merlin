@@ -111,6 +111,7 @@
 //usage:       "Send ICMP ECHO_REQUEST packets to network hosts\n"
 //usage:     "\n	-c CNT		Send only CNT pings"
 //usage:     "\n	-s SIZE		Send SIZE data bytes in packets (default:56)"
+//usage:     "\n	-t HL		Set Hop Limit"
 //usage:     "\n	-I IFACE/IP	Use interface or IP address as source"
 //usage:     "\n	-q		Quiet, only display output at start"
 //usage:     "\n			and when finished"
@@ -770,6 +771,11 @@ static void ping6(len_and_sockaddr *lsa)
 	sockopt = offsetof(struct icmp6_hdr, icmp6_cksum);
 	BUILD_BUG_ON(offsetof(struct icmp6_hdr, icmp6_cksum) != 2);
 	setsockopt_int(pingsock, SOL_RAW, IPV6_CHECKSUM, sockopt);
+
+	if (opt_ttl != 0) {
+		setsockopt_int(pingsock, IPPROTO_IPV6, IPV6_UNICAST_HOPS, opt_ttl);
+		setsockopt_int(pingsock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, opt_ttl);
+	}
 
 	/* request ttl info to be returned in ancillary data */
 	setsockopt_1(pingsock, SOL_IPV6, IPV6_HOPLIMIT);
