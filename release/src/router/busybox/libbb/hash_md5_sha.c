@@ -109,7 +109,9 @@ static void FAST_FUNC common64_end(md5_ctx_t *ctx, int swap_needed)
  */
 
 /* 0: fastest, 3: smallest */
-#if CONFIG_MD5_SMALL < 0
+#ifdef MD5_ONLY
+# define MD5_SMALL MD5_ONLY
+#elif CONFIG_MD5_SMALL < 0
 # define MD5_SMALL 0
 #elif CONFIG_MD5_SMALL > 3
 # define MD5_SMALL 3
@@ -473,6 +475,7 @@ void FAST_FUNC md5_end(md5_ctx_t *ctx, void *resbuf)
 }
 
 
+#ifndef MD5_ONLY
 /*
  * SHA1 part is:
  * Copyright 2007 Rob Landley <rob@landley.net>
@@ -1441,3 +1444,4 @@ void FAST_FUNC sha3_end(sha3_ctx_t *ctx, void *resbuf)
 	/* Output */
 	memcpy(resbuf, ctx->state, 64);
 }
+#endif
