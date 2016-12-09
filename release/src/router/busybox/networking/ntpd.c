@@ -42,7 +42,7 @@
  */
 
 //usage:#define ntpd_trivial_usage
-//usage:	"[-dnqNw"IF_FEATURE_NTPD_SERVER("l -I IFACE")"] [-S PROG] [-p PEER]..."
+//usage:	"[-dnqNwt"IF_FEATURE_NTPD_SERVER("l -I IFACE")"] [-S PROG] [-p PEER]..."
 //usage:#define ntpd_full_usage "\n\n"
 //usage:       "NTP client/server\n"
 //usage:     "\n	-d	Verbose"
@@ -50,6 +50,7 @@
 //usage:     "\n	-q	Quit after clock is set"
 //usage:     "\n	-N	Run at high priority"
 //usage:     "\n	-w	Do not set time (only query peers), implies -n"
+//usage:     "\n	-t	Trust network and server, no RFC-4330 cross-checks"
 //usage:     "\n	-S PROG	Run PROG after stepping time, stratum change, and every 11 mins"
 //usage:     "\n	-p PEER	Obtain time from PEER (may be repeated)"
 //usage:	IF_FEATURE_NTPD_CONF(
@@ -123,7 +124,7 @@
  *   datapoints after the step.
  */
 
-#define INITIAL_SAMPLES    4    /* how many samples do we want for init */
+#define INITIAL_SAMPLES    1    /* how many samples do we want for init */
 #define BAD_DELAY_GROWTH   4    /* drop packet if its delay grew by more than this */
 
 #define RETRY_INTERVAL    32    /* on send/recv error, retry in N secs (need to be power of 2) */
@@ -136,7 +137,7 @@
 /* Slew threshold (sec): adjtimex() won't accept offsets larger than this.
  * Using exact power of 2 (1/8) results in smaller code
  */
-#define SLEW_THRESHOLD 0.125
+#define SLEW_THRESHOLD 0.25
 /* Stepout threshold (sec). std ntpd uses 900 (11 mins (!)) */
 #define WATCH_THRESHOLD  128
 /* NB: set WATCH_THRESHOLD to ~60 when debugging to save time) */
@@ -151,13 +152,13 @@
 
 #define FREQ_TOLERANCE  0.000015 /* frequency tolerance (15 PPM) */
 #define BURSTPOLL       0       /* initial poll */
-#define MINPOLL         5       /* minimum poll interval. std ntpd uses 6 (6: 64 sec) */
+#define MINPOLL         6       /* minimum poll interval. std ntpd uses 6 (6: 64 sec) */
 /*
  * If offset > discipline_jitter * POLLADJ_GATE, and poll interval is > 2^BIGPOLL,
  * then it is decreased _at once_. (If <= 2^BIGPOLL, it will be decreased _eventually_).
  */
 #define BIGPOLL         9       /* 2^9 sec ~= 8.5 min */
-#define MAXPOLL         12      /* maximum poll interval (12: 1.1h, 17: 36.4h). std ntpd uses 17 */
+#define MAXPOLL         16      /* maximum poll interval (12: 1.1h, 17: 36.4h). std ntpd uses 17 */
 /*
  * Actively lower poll when we see such big offsets.
  * With SLEW_THRESHOLD = 0.125, it means we try to sync more aggressively
@@ -180,7 +181,7 @@
  * and when it goes below -POLLADJ_LIMIT, we poll_exp--.
  * (Bumped from 30 to 40 since otherwise I often see poll_exp going *2* steps down)
  */
-#define POLLADJ_LIMIT   40
+#define POLLADJ_LIMIT   36
 /* If offset < discipline_jitter * POLLADJ_GATE, then we decide to increase
  * poll interval (we think we can't improve timekeeping
  * by staying at smaller poll).
@@ -309,8 +310,9 @@ enum {
 	OPT_w = (1 << 4),
 	OPT_p = (1 << 5),
 	OPT_S = (1 << 6),
-	OPT_l = (1 << 7) * ENABLE_FEATURE_NTPD_SERVER,
-	OPT_I = (1 << 8) * ENABLE_FEATURE_NTPD_SERVER,
+	OPT_t = (1 << 7),
+	OPT_l = (1 << 8) * ENABLE_FEATURE_NTPD_SERVER,
+	OPT_I = (1 << 9) * ENABLE_FEATURE_NTPD_SERVER,
 	/* We hijack some bits for other purposes */
 	OPT_qq = (1 << 31),
 };
@@ -1087,6 +1089,9 @@ fit(peer_t *p, double rd)
 		VERB4 bb_error_msg("peer %s unfit for selection: unreachable", p->p_dotted);
 		return 0;
 	}
+	if (option_mask32 & OPT_t) /* RFC-4330 check disabled */
+		return 1;
+
 #if 0 /* we filter out such packets earlier */
 	if ((p->lastpkt_status & LI_ALARM) == LI_ALARM
 	 || p->lastpkt_stratum >= MAXSTRAT
@@ -1849,9 +1854,10 @@ recv_and_process_peer_pkt(peer_t *p)
 	close(p->p_fd);
 	p->p_fd = -1;
 
-	if ((msg.m_status & LI_ALARM) == LI_ALARM
+	if (!(option_mask32 & OPT_t) /* RFC-4330 check enabled by default */
+	 && ((msg.m_status & LI_ALARM) == LI_ALARM
 	 || msg.m_stratum == 0
-	 || msg.m_stratum > NTP_MAXSTRATUM
+	 || msg.m_stratum > NTP_MAXSTRATUM)
 	) {
 		bb_error_msg("reply from %s: peer is unsynced", p->p_dotted);
 		/*
@@ -2208,7 +2214,7 @@ static NOINLINE void ntp_init(char **argv)
 		IF_FEATURE_NTPD_SERVER(":Il"); /* -I implies -l */
 	opts = getopt32(argv,
 			"nqNx" /* compat */
-			"wp:S:"IF_FEATURE_NTPD_SERVER("l") /* NOT compat */
+			"wp:S:t"IF_FEATURE_NTPD_SERVER("l") /* NOT compat */
 			IF_FEATURE_NTPD_SERVER("I:") /* compat */
 			"d" /* compat */
 			"46aAbgL", /* compat, ignored */
