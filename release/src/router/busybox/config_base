@@ -678,6 +678,7 @@ CONFIG_CROND=y
 # CONFIG_FEATURE_CROND_D is not set
 # CONFIG_FEATURE_CROND_CALL_SENDMAIL is not set
 CONFIG_FEATURE_CROND_DIR="/var/spool/cron"
+# CONFIG_ETHREG is not set
 # CONFIG_I2CGET is not set
 # CONFIG_I2CSET is not set
 # CONFIG_I2CDUMP is not set
