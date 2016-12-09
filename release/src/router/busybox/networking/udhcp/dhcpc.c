@@ -1009,7 +1009,6 @@ static int udhcp_raw_socket(int ifindex)
 	sock.sll_ifindex = ifindex;
 	xbind(fd, (struct sockaddr *) &sock, sizeof(sock));
 
-#if 0 /* Several users reported breakage when BPF filter is used */
 	if (CLIENT_PORT == 68) {
 		/* Use only if standard port is in use */
 		/*
@@ -1060,7 +1059,6 @@ static int udhcp_raw_socket(int ifindex)
 				sizeof(filter_prog)) >= 0)
 			log1("attached filter to raw socket fd"); // log?
 	}
-#endif
 
 	if (setsockopt_1(fd, SOL_PACKET, PACKET_AUXDATA) != 0) {
 		if (errno != ENOPROTOOPT)
