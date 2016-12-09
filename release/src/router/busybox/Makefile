@@ -67,15 +67,6 @@ ifdef M
   endif
 endif
 
-
-ifeq ($(RTCONFIG_BCMARM), y)
-CFLAGS += -DBCMARM
-endif
-
-ifeq ($(RTCONFIG_QCA), y)
-CFLAGS += -DQCA
-endif
-
 # kbuild supports saving output files in a separate directory.
 # To locate output files in a separate directory two syntaxes are supported.
 # In both cases the working directory must be the root of the kernel src.

@@ -27,23 +27,12 @@ ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
-CFLAGS += -I$(TOP)/busybox/include
-CFLAGS += -I$(TOP)/busybox/util-linux/volume_id
-
-ID_OBJS = $(TOP)/busybox/util-linux/volume_id/util2.o
-ID_OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
-ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ext.o
-ID_OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
-ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
-ID_OBJS += $(TOP)/busybox/util-linux/volume_id/hfs.o
-#ID_OBJS += libbb_stub.o
-
 #SHARE_STATIC=y
 
 all: $(PROGS)
 
 #libdisk.so: $(OBJS) $(TOP)/shared/shutils.o
-libdisk.so: $(OBJS) $(ID_OBJS)
+libdisk.so: $(OBJS)
 	$(LD) $(LDFLAGS_SO) -shared -o $@ $^
 
 write_smb_conf: write_smb_conf.o libdisk.so
@@ -60,7 +49,7 @@ test_of_var_files: libdisk.so test_share
 test_disk1: test_disk1.o libdisk.so
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-test_disk2: test_disk2.o $(ID_OBJS)
+test_disk2: test_disk2.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 ifeq ($(SHARE_STATIC),y)

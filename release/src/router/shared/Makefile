@@ -118,12 +118,22 @@ endif
 
 ifeq ($(RTCONFIG_USB),y)
 OBJS += usb.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/ext.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/util2.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
-OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
+
+ID_CFLAGS += -I$(TOP)/busybox/include
+ID_CFLAGS += -I$(TOP)/busybox/util-linux/volume_id
+ID_CFLAGS += -include $(TOP)/busybox/include/autoconf.h
+ID_CFLAGS += -D_GNU_SOURCE -DNDEBUG -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+#ID_CFLAGS += -fdata-sections -ffunction-sections
+ID_OBJS  = $(TOP)/busybox/util-linux/volume_id/util.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ext.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
+ID_OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
+ID_OBJS += volume_id.o
+#OBJS += volume_id.lib.o
+OBJS += $(notdir $(ID_OBJS))
+
 ifeq ($(RTCONFIG_USB_MODEM),y)
 OBJS += at_cmd.o
 endif
@@ -200,6 +210,22 @@ clean:
 %.o: prebuild/%.o
 	@echo " [shared] cp $@"
 	@cp -f $< $@
+
+ifeq ($(RTCONFIG_USB),y)
+vpath %.c $(sort $(dir $(ID_OBJS)))
+
+$(notdir $(ID_OBJS)): %.o: %.c .%.depend
+	@echo " [shared] CC $@"
+	@$(CC) $(CFLAGS) $(ID_CFLAGS) -o $@ -c $<
+
+$(patsubst %.o,.%.depend,$(notdir $(ID_OBJS))): .%.depend: %.c
+	@$(CC) $(CFLAGS) $(ID_CFLAGS) -M $< > $@
+
+# ld -r --gc-sections is broken, so don't use it for now
+#volume_id.lib.o: $(notdir $(ID_OBJS))
+#	@echo " [shared] LD $@"
+#	@$(LD) -r -e find_label_or_uuid --gc-sections -o $@ $(notdir $(ID_OBJS))
+endif
 
 %.o: %.c .%.depend
 	@echo " [shared] CC $@"

@@ -20,17 +20,6 @@
 
 #include "volume_id_internal.h"
 
-#if !defined(BCMARM) && !defined(QCA)
-#define XMALLOC		xmalloc
-#define XREALLOC	xrealloc
-#define FULL_READ	full_read
-#else
-#define XMALLOC		malloc
-#define XREALLOC	realloc
-#define FULL_READ	read
-#endif
-
-#ifdef UTIL2
 void volume_id_set_unicode16(char *str, size_t len, const uint8_t *buf, enum endian endianess, size_t count)
 {
 	unsigned i, j;
@@ -64,9 +53,7 @@ void volume_id_set_unicode16(char *str, size_t len, const uint8_t *buf, enum end
 	}
 	str[j] = '\0';
 }
-#endif
 
-#ifndef UTIL2
 #ifdef UNUSED
 static const char *usage_to_string(enum volume_id_usage usage_id)
 {
@@ -120,9 +107,6 @@ static size_t strnlen(const char *s, size_t maxlen)
 	return i;
 }
 #endif
-
-#endif
-#ifdef UTIL2
 
 void volume_id_set_label_string(struct volume_id *id, const uint8_t *buf, size_t count)
 {
@@ -223,7 +207,7 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 	 /* && off <= SB_BUFFER_SIZE - want this paranoid overflow check? */
 	) {
 		if (id->sbbuf == NULL) {
-			id->sbbuf = XMALLOC(SB_BUFFER_SIZE);
+			id->sbbuf = xmalloc(SB_BUFFER_SIZE);
 		}
 		small_off = off;
 		dst = id->sbbuf;
@@ -254,7 +238,7 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 
 	id->seekbuf_off = off;
 	id->seekbuf_len = len;
-	id->seekbuf = XREALLOC(id->seekbuf, len);
+	id->seekbuf = xrealloc(id->seekbuf, len);
 	small_off = 0;
 	dst = id->seekbuf;
 	dbg("read seekbuf off:0x%llx len:0x%zx",
@@ -264,7 +248,7 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 		dbg("seek(0x%llx) failed", (unsigned long long) off);
 		goto err;
 	}
-	read_len = FULL_READ(id->fd, dst, len);
+	read_len = full_read(id->fd, dst, len);
 	if (read_len != len) {
 		dbg("requested 0x%x bytes, got 0x%x bytes",
 				(unsigned) len, (unsigned) read_len);
@@ -295,4 +279,3 @@ void volume_id_free_buffer(struct volume_id *id)
 	id->seekbuf_len = 0;
 	id->seekbuf_off = 0; /* paranoia */
 }
-#endif
