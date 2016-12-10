@@ -1123,16 +1123,26 @@ static void perform_release(uint32_t server_addr, uint32_t requested_ip)
 	struct in_addr temp_addr;
 
 	/* send release packet */
-	if (state == BOUND || state == RENEWING || state == REBINDING) {
+	if (state == BOUND
+	 || state == RENEWING
+	 || state == REBINDING
+	 || state == RENEW_REQUESTED
+	) {
 		temp_addr.s_addr = server_addr;
 		strcpy(buffer, inet_ntoa(temp_addr));
 		temp_addr.s_addr = requested_ip;
 		bb_error_msg("unicasting a release of %s to %s",
 				inet_ntoa(temp_addr), buffer);
 		send_release(server_addr, requested_ip); /* unicast */
-		udhcp_run_script(NULL, "deconfig");
 	}
 	bb_error_msg("entering released state");
+/*
+ * We can be here on: SIGUSR2,
+ * or on exit (SIGTERM) and -R "release on quit" is specified.
+ * Users requested to be notified in all cases, even if not in one
+ * of the states above.
+ */
+	udhcp_run_script(NULL, "deconfig");
 
 	change_listen_mode(LISTEN_NONE);
 	state = RELEASED;
@@ -1826,9 +1836,8 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 					temp = udhcp_get_option(&packet, DHCP_SERVER_ID);
 					if (!temp) {
  non_matching_svid:
-						log1("%s with wrong server ID, ignoring packet",
-							"Received DHCP NAK"
-						);
+						log1("received DHCP NAK with wrong"
+							" server ID, ignoring packet");
 						continue;
 					}
 					move_from_unaligned32(svid, temp);
