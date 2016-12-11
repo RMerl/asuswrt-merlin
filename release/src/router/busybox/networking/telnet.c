@@ -39,6 +39,7 @@
 #include <arpa/telnet.h>
 #include <netinet/in.h>
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 #ifdef __BIONIC__
 /* should be in arpa/telnet.h */
@@ -108,11 +109,10 @@ struct globals {
 	struct termios termios_def;
 	struct termios termios_raw;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define INIT_G() do { \
-	struct G_sizecheck { \
-		char G_sizecheck[sizeof(G) > COMMON_BUFSIZE ? -1 : 1]; \
-	}; \
+	setup_common_bufsiz(); \
+	BUILD_BUG_ON(sizeof(G) > COMMON_BUFSIZE); \
 } while (0)
 
 
@@ -125,11 +125,9 @@ static void subneg(byte c);
 
 static void iac_flush(void)
 {
-	write(netfd, G.iacbuf, G.iaclen);
+	full_write(netfd, G.iacbuf, G.iaclen);
 	G.iaclen = 0;
 }
-
-#define write_str(fd, str) write(fd, str, sizeof(str) - 1)
 
 static void doexit(int ev) NORETURN;
 static void doexit(int ev)
@@ -145,7 +143,7 @@ static void con_escape(void)
 	if (bb_got_signal) /* came from line mode... go raw */
 		rawmode();
 
-	write_str(1, "\r\nConsole escape. Commands are:\r\n\n"
+	full_write1_str("\r\nConsole escape. Commands are:\r\n\n"
 			" l	go to line mode\r\n"
 			" c	go to character mode\r\n"
 			" z	suspend telnet\r\n"
@@ -176,7 +174,7 @@ static void con_escape(void)
 		doexit(EXIT_SUCCESS);
 	}
 
-	write_str(1, "continuing...\r\n");
+	full_write1_str("continuing...\r\n");
 
 	if (bb_got_signal)
 		cookmode();
@@ -186,40 +184,35 @@ static void con_escape(void)
 
 static void handle_net_output(int len)
 {
-	/* here we could do smart tricks how to handle 0xFF:s in output
-	 * stream like writing twice every sequence of FF:s (thus doing
-	 * many write()s. But I think interactive telnet application does
-	 * not need to be 100% 8-bit clean, so changing every 0xff:s to
-	 * 0x7f:s
-	 *
-	 * 2002-mar-21, Przemyslaw Czerpak (druzus@polbox.com)
-	 * I don't agree.
-	 * first - I cannot use programs like sz/rz
-	 * second - the 0x0D is sent as one character and if the next
-	 *	char is 0x0A then it's eaten by a server side.
-	 * third - why do you have to make 'many write()s'?
-	 *	I don't understand.
-	 * So I implemented it. It's really useful for me. I hope that
-	 * other people will find it interesting too.
-	 */
 	byte outbuf[2 * DATABUFSIZE];
-	byte *p = (byte*)G.buf;
-	int j = 0;
+	byte *dst = outbuf;
+	byte *src = (byte*)G.buf;
+	byte *end = src + len;
 
-	for (; len > 0; len--, p++) {
-		byte c = *p;
+	while (src < end) {
+		byte c = *src++;
 		if (c == 0x1d) {
 			con_escape();
 			return;
 		}
-		outbuf[j++] = c;
+		*dst = c;
 		if (c == IAC)
-			outbuf[j++] = c; /* IAC -> IAC IAC */
-		else if (c == '\r')
-			outbuf[j++] = '\0'; /* CR -> CR NUL */
+			*++dst = c; /* IAC -> IAC IAC */
+		else
+		if (c == '\r' || c == '\n') {
+			/* Enter key sends '\r' in raw mode and '\n' in cooked one.
+			 *
+			 * See RFC 1123 3.3.1 Telnet End-of-Line Convention.
+			 * Using CR LF instead of other allowed possibilities
+			 * like CR NUL - easier to talk to HTTP/SMTP servers.
+			 */
+			*dst = '\r'; /* Enter -> CR LF */
+			*++dst = '\n';
+		}
+		dst++;
 	}
-	if (j > 0)
-		full_write(netfd, outbuf, j);
+	if (dst - outbuf != 0)
+		full_write(netfd, outbuf, dst - outbuf);
 }
 
 static void handle_net_input(int len)
@@ -388,30 +381,31 @@ static void put_iac_naws(byte c, int x, int y)
 	put_iac(SB);
 	put_iac(c);
 
-	put_iac((x >> 8) & 0xff);
-	put_iac(x & 0xff);
-	put_iac((y >> 8) & 0xff);
-	put_iac(y & 0xff);
+	/* "... & 0xff" implicitly done below */
+	put_iac(x >> 8);
+	put_iac(x);
+	put_iac(y >> 8);
+	put_iac(y);
 
 	put_iac(IAC);
 	put_iac(SE);
 }
 #endif
 
-static char const escapecharis[] ALIGN1 = "\r\nEscape character is ";
-
 static void setConMode(void)
 {
 	if (G.telflags & UF_ECHO) {
 		if (G.charmode == CHM_TRY) {
 			G.charmode = CHM_ON;
-			printf("\r\nEntering character mode%s'^]'.\r\n", escapecharis);
+			printf("\r\nEntering %s mode"
+				"\r\nEscape character is '^%c'.\r\n", "character", ']');
 			rawmode();
 		}
 	} else {
 		if (G.charmode != CHM_OFF) {
 			G.charmode = CHM_OFF;
-			printf("\r\nEntering line mode%s'^C'.\r\n", escapecharis);
+			printf("\r\nEntering %s mode"
+				"\r\nEscape character is '^%c'.\r\n", "line", 'C');
 			cookmode();
 		}
 	}
@@ -629,7 +623,7 @@ int telnet_main(int argc UNUSED_PARAM, char **argv)
 
 	xmove_fd(create_and_connect_stream_or_die(host, port), netfd);
 
-	setsockopt(netfd, SOL_SOCKET, SO_KEEPALIVE, &const_int_1, sizeof(const_int_1));
+	setsockopt_keepalive(netfd);
 
 	signal(SIGINT, record_signo);
 

@@ -67,6 +67,7 @@
 //usage:     "\n	-v		Verbose"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 /* Wants <limits.h> etc, thus included after libbb.h: */
 #ifdef __linux__
@@ -91,7 +92,7 @@ struct globals {
 	char **env_cur;
 	char *env_var[1]; /* actually bigger */
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define verbose      (G.verbose     )
 #define max_per_host (G.max_per_host)
 #define cur_per_host (G.cur_per_host)
@@ -100,6 +101,7 @@ struct globals {
 #define env_cur      (G.env_cur     )
 #define env_var      (G.env_var     )
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	cmax = 30; \
 	env_cur = &env_var[0]; \
 } while (0)

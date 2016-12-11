@@ -34,6 +34,7 @@
 //usage:     "\n			commands: 'NN' (% for progress bar) or 'exit'"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <linux/fb.h>
 
 /* If you want logging messages on /tmp/fbsplash.log... */
@@ -50,6 +51,10 @@ struct globals {
 	struct fb_var_screeninfo scr_var;
 	struct fb_fix_screeninfo scr_fix;
 	unsigned bytes_per_pixel;
+	// cached (8 - scr_var.COLOR.length):
+	unsigned red_shift;
+	unsigned green_shift;
+	unsigned blue_shift;
 };
 #define G (*ptr_to_globals)
 #define INIT_G() do { \
@@ -139,11 +144,14 @@ static void fb_open(const char *strfb_device)
 		break;
 	}
 
+	G.red_shift   = 8 - G.scr_var.red.length;
+	G.green_shift = 8 - G.scr_var.green.length;
+	G.blue_shift  = 8 - G.scr_var.blue.length;
 	G.bytes_per_pixel = (G.scr_var.bits_per_pixel + 7) >> 3;
 
 	// map the device in memory
 	G.addr = mmap(NULL,
-		        G.scr_var.yres * G.scr_fix.line_length,
+			(G.scr_var.yres_virtual ?: G.scr_var.yres) * G.scr_fix.line_length,
 			PROT_WRITE, MAP_SHARED, fbfd, 0);
 	if (G.addr == MAP_FAILED)
 		bb_perror_msg_and_die("mmap");
@@ -155,10 +163,13 @@ static void fb_open(const char *strfb_device)
 
 
 /**
- * Return pixel value of the passed RGB color
+ * Return pixel value of the passed RGB color.
+ * This is performance critical fn.
  */
 static unsigned fb_pixel_value(unsigned r, unsigned g, unsigned b)
 {
+	/* We assume that the r,g,b values are <= 255 */
+
 	if (G.bytes_per_pixel == 1) {
 		r = r        & 0xe0; // 3-bit red
 		g = (g >> 3) & 0x1c; // 3-bit green
@@ -166,10 +177,17 @@ static unsigned fb_pixel_value(unsigned r, unsigned g, unsigned b)
 		return r + g + b;
 	}
 	if (G.bytes_per_pixel == 2) {
-		r = (r & 0xf8) << 8; // 5-bit red
-		g = (g & 0xfc) << 3; // 6-bit green
-		b =  b >> 3;         // 5-bit blue
-		return r + g + b;
+		// ARM PL110 on Integrator/CP has RGBA5551 bit arrangement.
+		// We want to support bit locations like that.
+		//
+		// First shift out unused bits
+		r = r >> G.red_shift;
+		g = g >> G.green_shift;
+		b = b >> G.blue_shift;
+		// Then shift the remaining bits to their offset
+		return (r << G.scr_var.red.offset) +
+			(g << G.scr_var.green.offset) +
+			(b << G.scr_var.blue.offset);
 	}
 	// RGB 888
 	return b + (g << 8) + (r << 16);
@@ -295,8 +313,7 @@ static void fb_drawprogressbar(unsigned percent)
 
 	pos_x = left_x;
 	if (percent > 0) {
-		int y;
-		unsigned i;
+		int i, y;
 
 		// actual progress bar
 		pos_x += (unsigned)(width * percent) / 100;
@@ -308,7 +325,7 @@ static void fb_drawprogressbar(unsigned percent)
 		while (i >= 0) {
 			// draw one-line thick "rectangle"
 			// top line will have gray lvl 200, bottom one 100
-			unsigned gray_level = 100 + i*100 / height;
+			unsigned gray_level = 100 + (unsigned)i*100 / height;
 			fb_drawfullrectangle(
 					left_x, y, pos_x, y,
 					gray_level, gray_level, gray_level);
@@ -337,7 +354,7 @@ static void fb_drawimage(void)
 	if (LONE_DASH(G.image_filename)) {
 		theme_file = stdin;
 	} else {
-		int fd = open_zipped(G.image_filename);
+		int fd = open_zipped(G.image_filename, /*fail_if_not_compressed:*/ 0);
 		if (fd < 0)
 			bb_simple_perror_msg_and_die(G.image_filename);
 		theme_file = xfdopen_for_read(fd);
@@ -357,10 +374,12 @@ static void fb_drawimage(void)
 	 *   in pure binary by 1 or 2 bytes. (we support only 1 byte)
 	 */
 #define concat_buf bb_common_bufsiz1
+	setup_common_bufsiz();
+
 	read_ptr = concat_buf;
 	while (1) {
 		int w, h, max_color_val;
-		int rem = concat_buf + sizeof(concat_buf) - read_ptr;
+		int rem = concat_buf + COMMON_BUFSIZE - read_ptr;
 		if (rem < 2
 		 || fgets(read_ptr, rem, theme_file) == NULL
 		) {
@@ -500,7 +519,7 @@ int fbsplash_main(int argc UNUSED_PARAM, char **argv)
 	// handle a case when we have many buffered lines
 	// already in the pipe
 	while ((num_buf = xmalloc_fgetline(fp)) != NULL) {
-		if (strncmp(num_buf, "exit", 4) == 0) {
+		if (is_prefixed_with(num_buf, "exit")) {
 			DEBUG_MESSAGE("exit");
 			break;
 		}

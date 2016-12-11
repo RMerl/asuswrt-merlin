@@ -23,14 +23,16 @@ void FAST_FUNC parse_datestr(const char *date_str, struct tm *ptm)
 		if (sscanf(date_str, "%u:%u%c",
 					&ptm->tm_hour,
 					&ptm->tm_min,
-					&end) >= 2) {
+					&end) >= 2
+		) {
 			/* no adjustments needed */
 		} else
 		/* mm.dd-HH:MM */
 		if (sscanf(date_str, "%u.%u-%u:%u%c",
 					&ptm->tm_mon, &ptm->tm_mday,
 					&ptm->tm_hour, &ptm->tm_min,
-					&end) >= 4) {
+					&end) >= 4
+		) {
 			/* Adjust month from 1-12 to 0-11 */
 			ptm->tm_mon -= 1;
 		} else
@@ -38,15 +40,13 @@ void FAST_FUNC parse_datestr(const char *date_str, struct tm *ptm)
 		if (sscanf(date_str, "%u.%u.%u-%u:%u%c", &ptm->tm_year,
 					&ptm->tm_mon, &ptm->tm_mday,
 					&ptm->tm_hour, &ptm->tm_min,
-					&end) >= 5) {
-			ptm->tm_year -= 1900; /* Adjust years */
-			ptm->tm_mon -= 1; /* Adjust month from 1-12 to 0-11 */
-		} else
+					&end) >= 5
 		/* yyyy-mm-dd HH:MM */
-		if (sscanf(date_str, "%u-%u-%u %u:%u%c", &ptm->tm_year,
+		 || sscanf(date_str, "%u-%u-%u %u:%u%c", &ptm->tm_year,
 					&ptm->tm_mon, &ptm->tm_mday,
 					&ptm->tm_hour, &ptm->tm_min,
-					&end) >= 5) {
+					&end) >= 5
+		) {
 			ptm->tm_year -= 1900; /* Adjust years */
 			ptm->tm_mon -= 1; /* Adjust month from 1-12 to 0-11 */
 		} else
@@ -58,7 +58,6 @@ void FAST_FUNC parse_datestr(const char *date_str, struct tm *ptm)
 			return; /* don't fall through to end == ":" check */
 		} else
 #endif
-//TODO: coreutils 6.9 also accepts "yyyy-mm-dd HH" (no minutes)
 		{
 			bb_error_msg_and_die(bb_msg_invalid_date, date_str);
 		}
@@ -68,7 +67,29 @@ void FAST_FUNC parse_datestr(const char *date_str, struct tm *ptm)
 				end = '\0';
 			/* else end != NUL and we error out */
 		}
-	} else if (date_str[0] == '@') {
+	} else
+	if (strchr(date_str, '-')
+	    /* Why strchr('-') check?
+	     * sscanf below will trash ptm->tm_year, this breaks
+	     * if parse_str is "10101010" (iow, "MMddhhmm" form)
+	     * because we destroy year. Do these sscanf
+	     * only if we saw a dash in parse_str.
+	     */
+		/* yyyy-mm-dd HH */
+	 && (sscanf(date_str, "%u-%u-%u %u%c", &ptm->tm_year,
+				&ptm->tm_mon, &ptm->tm_mday,
+				&ptm->tm_hour,
+				&end) >= 4
+		/* yyyy-mm-dd */
+	     || sscanf(date_str, "%u-%u-%u%c", &ptm->tm_year,
+				&ptm->tm_mon, &ptm->tm_mday,
+				&end) >= 3
+	    )
+	) {
+		ptm->tm_year -= 1900; /* Adjust years */
+		ptm->tm_mon -= 1; /* Adjust month from 1-12 to 0-11 */
+	} else
+	if (date_str[0] == '@') {
 		time_t t = bb_strtol(date_str + 1, NULL, 10);
 		if (!errno) {
 			struct tm *lt = localtime(&t);
@@ -165,6 +186,7 @@ void FAST_FUNC parse_datestr(const char *date_str, struct tm *ptm)
 		} else {
 			bb_error_msg_and_die(bb_msg_invalid_date, date_str);
 		}
+		ptm->tm_sec = 0; /* assume zero if [.SS] is not given */
 		if (end == '.') {
 			/* xxx.SS */
 			if (sscanf(strchr(date_str, '.') + 1, "%u%c",
@@ -185,6 +207,27 @@ time_t FAST_FUNC validate_tm_time(const char *date_str, struct tm *ptm)
 		bb_error_msg_and_die(bb_msg_invalid_date, date_str);
 	}
 	return t;
+}
+
+static char* strftime_fmt(char *buf, unsigned len, time_t *tp, const char *fmt)
+{
+	time_t t;
+	if (!tp) {
+		tp = &t;
+		time(tp);
+	}
+	/* Returns pointer to NUL */
+	return buf + strftime(buf, len, fmt, localtime(tp));
+}
+
+char* FAST_FUNC strftime_HHMMSS(char *buf, unsigned len, time_t *tp)
+{
+	return strftime_fmt(buf, len, tp, "%H:%M:%S");
+}
+
+char* FAST_FUNC strftime_YYYYMMDDHHMMSS(char *buf, unsigned len, time_t *tp)
+{
+	return strftime_fmt(buf, len, tp, "%Y-%m-%d %H:%M:%S");
 }
 
 #if ENABLE_MONOTONIC_SYSCALL

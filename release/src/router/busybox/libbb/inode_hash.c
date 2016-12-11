@@ -11,14 +11,23 @@
 #include "libbb.h"
 
 typedef struct ino_dev_hash_bucket_struct {
-	struct ino_dev_hash_bucket_struct *next;
 	ino_t ino;
 	dev_t dev;
+	/*
+	 * Above fields can be 64-bit, while pointer may be 32-bit.
+	 * Putting "next" field here may reduce size of this struct:
+	 */
+	struct ino_dev_hash_bucket_struct *next;
+	/*
+	 * Reportedly, on cramfs a file and a dir can have same ino.
+	 * Need to also remember "file/dir" bit:
+	 */
+	char isdir; /* bool */
 	char name[1];
 } ino_dev_hashtable_bucket_t;
 
-#define HASH_SIZE      311   /* Should be prime */
-#define hash_inode(i)  ((i) % HASH_SIZE)
+#define HASH_SIZE      311u   /* Should be prime */
+#define hash_inode(i)  ((unsigned)(i) % HASH_SIZE)
 
 /* array of [HASH_SIZE] elements */
 static ino_dev_hashtable_bucket_t **ino_dev_hashtable;
@@ -38,6 +47,7 @@ char* FAST_FUNC is_in_ino_dev_hashtable(const struct stat *statbuf)
 	while (bucket != NULL) {
 		if ((bucket->ino == statbuf->st_ino)
 		 && (bucket->dev == statbuf->st_dev)
+		 && (bucket->isdir == !!S_ISDIR(statbuf->st_mode))
 		) {
 			return bucket->name;
 		}
@@ -52,17 +62,18 @@ void FAST_FUNC add_to_ino_dev_hashtable(const struct stat *statbuf, const char *
 	int i;
 	ino_dev_hashtable_bucket_t *bucket;
 
-	i = hash_inode(statbuf->st_ino);
 	if (!name)
 		name = "";
 	bucket = xmalloc(sizeof(ino_dev_hashtable_bucket_t) + strlen(name));
 	bucket->ino = statbuf->st_ino;
 	bucket->dev = statbuf->st_dev;
+	bucket->isdir = !!S_ISDIR(statbuf->st_mode);
 	strcpy(bucket->name, name);
 
 	if (!ino_dev_hashtable)
 		ino_dev_hashtable = xzalloc(HASH_SIZE * sizeof(*ino_dev_hashtable));
 
+	i = hash_inode(statbuf->st_ino);
 	bucket->next = ino_dev_hashtable[i];
 	ino_dev_hashtable[i] = bucket;
 }
@@ -72,13 +83,18 @@ void FAST_FUNC add_to_ino_dev_hashtable(const struct stat *statbuf, const char *
 void FAST_FUNC reset_ino_dev_hashtable(void)
 {
 	int i;
-	ino_dev_hashtable_bucket_t *bucket;
+	ino_dev_hashtable_bucket_t *bucket, *next;
 
-	for (i = 0; ino_dev_hashtable && i < HASH_SIZE; i++) {
-		while (ino_dev_hashtable[i] != NULL) {
-			bucket = ino_dev_hashtable[i]->next;
-			free(ino_dev_hashtable[i]);
-			ino_dev_hashtable[i] = bucket;
+	if (!ino_dev_hashtable)
+		return;
+
+	for (i = 0; i < HASH_SIZE; i++) {
+		bucket = ino_dev_hashtable[i];
+
+		while (bucket != NULL) {
+			next = bucket->next;
+			free(bucket);
+			bucket = next;
 		}
 	}
 	free(ino_dev_hashtable);

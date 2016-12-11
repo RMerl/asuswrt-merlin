@@ -134,7 +134,6 @@ static int parse(const char *boundary, char **argv)
 			if (strcasecmp(type + 10, "mixed") != 0)
 				bb_error_msg_and_die("no support of content type '%s'", type);
 			parse(xfind_token(tokens, "boundary"), argv);
-
 		} else {
 			/* No, process one non-multipart section */
 			char *end;

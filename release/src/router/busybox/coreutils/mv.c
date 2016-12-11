@@ -33,12 +33,17 @@ static const char mv_longopts[] ALIGN1 =
 	"interactive\0" No_argument "i"
 	"force\0"       No_argument "f"
 	"no-clobber\0"  No_argument "n"
+	IF_FEATURE_VERBOSE(
+	"verbose\0"     No_argument "v"
+	)
 	;
 #endif
 
-#define OPT_FILEUTILS_FORCE       1
-#define OPT_FILEUTILS_INTERACTIVE 2
-#define OPT_FILEUTILS_NOCLOBBER   4
+#define OPT_FORCE       (1 << 0)
+#define OPT_INTERACTIVE (1 << 1)
+#define OPT_NOCLOBBER   (1 << 2)
+#define OPT_VERBOSE     ((1 << 3) * ENABLE_FEATURE_VERBOSE)
+
 
 int mv_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int mv_main(int argc, char **argv)
@@ -56,9 +61,10 @@ int mv_main(int argc, char **argv)
 #endif
 	/* Need at least two arguments.
 	 * If more than one of -f, -i, -n is specified , only the final one
-	 * takes effect (it unsets previous options). */
+	 * takes effect (it unsets previous options).
+	 */
 	opt_complementary = "-2:f-in:i-fn:n-fi";
-	flags = getopt32(argv, "fin");
+	flags = getopt32(argv, "finv");
 	argc -= optind;
 	argv += optind;
 	last = argv[argc - 1];
@@ -84,11 +90,11 @@ int mv_main(int argc, char **argv)
 
  DO_MOVE:
 		if (dest_exists) {
-			if (flags & OPT_FILEUTILS_NOCLOBBER)
+			if (flags & OPT_NOCLOBBER)
 				goto RET_0;
-			if (!(flags & OPT_FILEUTILS_FORCE)
+			if (!(flags & OPT_FORCE)
 			 && ((access(dest, W_OK) < 0 && isatty(0))
-			    || (flags & OPT_FILEUTILS_INTERACTIVE))
+			    || (flags & OPT_INTERACTIVE))
 			) {
 				if (fprintf(stderr, "mv: overwrite '%s'? ", dest) < 0) {
 					goto RET_1;  /* Ouch! fprintf failed! */
@@ -145,6 +151,9 @@ int mv_main(int argc, char **argv)
 			status = 1;
 		}
  RET_0:
+		if (flags & OPT_VERBOSE) {
+			printf("'%s' -> '%s'\n", *argv, dest);
+		}
 		if (dest != last) {
 			free((void *) dest);
 		}

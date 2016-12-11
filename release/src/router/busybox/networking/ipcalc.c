@@ -13,7 +13,8 @@
  */
 
 //usage:#define ipcalc_trivial_usage
-//usage:       "[OPTIONS] ADDRESS[[/]NETMASK] [NETMASK]"
+//usage:       "[OPTIONS] ADDRESS"
+//usage:       IF_FEATURE_IPCALC_FANCY("[/PREFIX]") " [NETMASK]"
 //usage:#define ipcalc_full_usage "\n\n"
 //usage:       "Calculate IP network settings from a IP address\n"
 //usage:	IF_FEATURE_IPCALC_LONG_OPTIONS(

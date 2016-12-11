@@ -20,16 +20,16 @@
 int FAST_FUNC get_linux_version_code(void)
 {
 	struct utsname name;
-	char *s, *t;
+	char *t;
 	int i, r;
 
 	uname(&name); /* never fails */
-	s = name.release;
+	t = name.release;
 	r = 0;
 	for (i = 0; i < 3; i++) {
-		t = strtok(s, ".");
+		t = strtok(t, ".");
 		r = r * 256 + (t ? atoi(t) : 0);
-		s = NULL;
+		t = NULL;
 	}
 	return r;
 }

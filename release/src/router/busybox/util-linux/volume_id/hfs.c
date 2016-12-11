@@ -18,6 +18,17 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+//kbuild:lib-$(CONFIG_FEATURE_VOLUMEID_HFS) += hfs.o
+
+//config:
+//config:config FEATURE_VOLUMEID_HFS
+//config:	bool "hfs filesystem"
+//config:	default y
+//config:	depends on VOLUMEID
+//config:	help
+//config:	  TODO
+//config:
+
 #include "volume_id_internal.h"
 
 struct hfs_finder_info{
@@ -131,6 +142,27 @@ struct hfsplus_vol_header {
 #define HFS_NODE_LEAF			0xff
 #define HFSPLUS_POR_CNID		1
 
+static void FAST_FUNC hfs_set_uuid(struct volume_id *id, const uint8_t *hfs_id)
+{
+#define hfs_id_len 8
+	md5_ctx_t md5c;
+	uint8_t uuid[16];
+	unsigned i;
+
+	for (i = 0; i < hfs_id_len; i++)
+		if (hfs_id[i] != 0)
+			goto do_md5;
+	return;
+ do_md5:
+	md5_begin(&md5c);
+	md5_hash(&md5c, "\263\342\17\71\362\222\21\326\227\244\0\60\145\103\354\254", 16);
+	md5_hash(&md5c, hfs_id, hfs_id_len);
+	md5_end(&md5c, uuid);
+	uuid[6] = 0x30 | (uuid[6] & 0x0f);
+	uuid[8] = 0x80 | (uuid[8] & 0x3f);
+	volume_id_set_uuid(id, uuid, UUID_DCE);
+}
+
 int FAST_FUNC volume_id_probe_hfs_hfsplus(struct volume_id *id /*,uint64_t off*/)
 {
 	uint64_t off = 0;
@@ -193,7 +225,7 @@ int FAST_FUNC volume_id_probe_hfs_hfsplus(struct volume_id *id /*,uint64_t off*/
 		volume_id_set_label_string(id, hfs->label, hfs->label_len) ;
 	}
 
-	volume_id_set_uuid(id, hfs->finder_info.id, UUID_HFS);
+	hfs_set_uuid(id, hfs->finder_info.id);
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
 	IF_FEATURE_BLKID_TYPE(id->type = "hfs";)
 
@@ -207,7 +239,7 @@ int FAST_FUNC volume_id_probe_hfs_hfsplus(struct volume_id *id /*,uint64_t off*/
 	return -1;
 
  hfsplus:
-	volume_id_set_uuid(id, hfsplus->finder_info.id, UUID_HFS);
+	hfs_set_uuid(id, hfsplus->finder_info.id);
 
 	blocksize = be32_to_cpu(hfsplus->blocksize);
 	dbg("blocksize %u", blocksize);
@@ -286,7 +318,7 @@ int FAST_FUNC volume_id_probe_hfs_hfsplus(struct volume_id *id /*,uint64_t off*/
 
  found:
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//	id->type = "hfsplus";
+	IF_FEATURE_BLKID_TYPE(id->type = "hfsplus";)
 
 	return 0;
 }

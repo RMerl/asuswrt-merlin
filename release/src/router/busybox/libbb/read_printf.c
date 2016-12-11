@@ -45,20 +45,20 @@
  * which detects EAGAIN and uses poll() to wait on the fd.
  * Thankfully, poll() doesn't care about O_NONBLOCK flag.
  */
-ssize_t FAST_FUNC nonblock_immune_read(int fd, void *buf, size_t count, int loop_on_EINTR)
+ssize_t FAST_FUNC nonblock_immune_read(int fd, void *buf, size_t count)
 {
 	struct pollfd pfd[1];
 	ssize_t n;
 
 	while (1) {
-		n = loop_on_EINTR ? safe_read(fd, buf, count) : read(fd, buf, count);
+		n = safe_read(fd, buf, count);
 		if (n >= 0 || errno != EAGAIN)
 			return n;
 		/* fd is in O_NONBLOCK mode. Wait using poll and repeat */
 		pfd[0].fd = fd;
 		pfd[0].events = POLLIN;
 		/* note: safe_poll pulls in printf */
-		loop_on_EINTR ? safe_poll(pfd, 1, -1) : poll(pfd, 1, -1);
+		safe_poll(pfd, 1, -1);
 	}
 }
 
@@ -81,7 +81,7 @@ char* FAST_FUNC xmalloc_reads(int fd, size_t *maxsz_p)
 			p = buf + sz;
 			sz += 128;
 		}
-		if (nonblock_immune_read(fd, p, 1, /*loop_on_EINTR:*/ 1) != 1) {
+		if (nonblock_immune_read(fd, p, 1) != 1) {
 			/* EOF/error */
 			if (p == buf) { /* we read nothing */
 				free(buf);

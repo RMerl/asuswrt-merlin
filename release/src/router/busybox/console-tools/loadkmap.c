@@ -10,8 +10,9 @@
 //usage:#define loadkmap_trivial_usage
 //usage:       "< keymap"
 //usage:#define loadkmap_full_usage "\n\n"
-//usage:       "Load a binary keyboard translation table from stdin\n"
-/* //usage:     "\n	-C TTY	Affect TTY instead of /dev/tty" */
+//usage:       "Load a binary keyboard translation table from stdin"
+////usage:       "\n"
+////usage:       "\n	-C TTY	Affect TTY instead of /dev/tty"
 //usage:
 //usage:#define loadkmap_example_usage
 //usage:       "$ loadkmap < /etc/i18n/lang-keymap\n"
@@ -48,6 +49,7 @@ int loadkmap_main(int argc UNUSED_PARAM, char **argv)
 	if (argv[1])
 		bb_show_usage();
 /* bb_warn_ignoring_args(argv[1]); */
+
 	fd = get_console_fd_or_die();
 /* or maybe:
 	opt = getopt32(argv, "C:", &tty_name);
@@ -55,20 +57,30 @@ int loadkmap_main(int argc UNUSED_PARAM, char **argv)
 */
 
 	xread(STDIN_FILENO, flags, 7);
-	if (strncmp(flags, BINARY_KEYMAP_MAGIC, 7))
+	if (!is_prefixed_with(flags, BINARY_KEYMAP_MAGIC))
 		bb_error_msg_and_die("not a valid binary keymap");
 
 	xread(STDIN_FILENO, flags, MAX_NR_KEYMAPS);
 
 	for (i = 0; i < MAX_NR_KEYMAPS; i++) {
-		if (flags[i] == 1) {
-			xread(STDIN_FILENO, ibuff, NR_KEYS * sizeof(uint16_t));
-			for (j = 0; j < NR_KEYS; j++) {
-				ke.kb_index = j;
-				ke.kb_table = i;
-				ke.kb_value = ibuff[j];
-				ioctl(fd, KDSKBENT, &ke);
-			}
+		if (flags[i] != 1)
+			continue;
+		xread(STDIN_FILENO, ibuff, NR_KEYS * sizeof(uint16_t));
+		for (j = 0; j < NR_KEYS; j++) {
+			ke.kb_index = j;
+			ke.kb_table = i;
+			ke.kb_value = ibuff[j];
+			/*
+			 * Note: table[idx:0] can contain special value
+			 * K_ALLOCATED (marks allocated tables in kernel).
+			 * dumpkmap saves the value as-is; but attempts
+			 * to load it here fail, since it isn't a valid
+			 * key value: it is K(KT_SPEC,126) == 2<<8 + 126,
+			 * whereas last valid KT_SPEC is
+			 * K_BARENUMLOCK == K(KT_SPEC,19).
+			 * So far we just ignore these errors:
+			 */
+			ioctl(fd, KDSKBENT, &ke);
 		}
 	}
 

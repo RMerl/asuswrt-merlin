@@ -68,3 +68,31 @@ uint16_t FAST_FUNC xatou16(const char *numstr)
 {
 	return xatou_range(numstr, 0, 0xffff);
 }
+
+const struct suffix_mult bkm_suffixes[] = {
+	{ "b", 512 },
+	{ "k", 1024 },
+	{ "m", 1024*1024 },
+	{ "", 0 }
+};
+
+const struct suffix_mult cwbkMG_suffixes[] = {
+	{ "c", 1 },
+	{ "w", 2 },
+	{ "b", 512 },
+	{ "kB", 1000 },
+	{ "kD", 1000 },
+	{ "k", 1024 },
+	{ "KB", 1000 }, /* compat with coreutils dd */
+	{ "KD", 1000 }, /* compat with coreutils dd */
+	{ "K", 1024 },  /* compat with coreutils dd */
+	{ "MB", 1000000 },
+	{ "MD", 1000000 },
+	{ "M", 1024*1024 },
+	{ "GB", 1000000000 },
+	{ "GD", 1000000000 },
+	{ "G", 1024*1024*1024 },
+	/* "D" suffix for decimal is not in coreutils manpage, looks like it's deprecated */
+	/* coreutils also understands TPEZY suffixes for tera- and so on, with B suffix for decimal */
+	{ "", 0 }
+};

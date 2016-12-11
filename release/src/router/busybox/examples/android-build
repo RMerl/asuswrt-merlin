@@ -29,4 +29,6 @@ else
 	LDLIBS="dl m c gcc"
 fi
 
+# It's possible with newer version
+# you need to use CFLAGS_busybox instead of EXTRA_LDFLAGS below:
 make EXTRA_LDFLAGS="$LDFLAGS" LDLIBS="$LDLIBS" "$@"

@@ -32,21 +32,22 @@
 
 #if defined UT_LINESIZE \
 	&& ((UT_LINESIZE != 32) || (UT_NAMESIZE != 32) || (UT_HOSTSIZE != 256))
-#error struct utmp member char[] size(s) have changed!
+#error struct utmpx member char[] size(s) have changed!
 #elif defined __UT_LINESIZE \
-	&& ((__UT_LINESIZE != 32) || (__UT_NAMESIZE != 64) || (__UT_HOSTSIZE != 256))
-#error struct utmp member char[] size(s) have changed!
+	&& ((__UT_LINESIZE != 32) || (__UT_NAMESIZE != 32) || (__UT_HOSTSIZE != 256))
+/* __UT_NAMESIZE was checked with 64 above, but glibc-2.11 definitely uses 32! */
+#error struct utmpx member char[] size(s) have changed!
 #endif
 
 #if EMPTY != 0 || RUN_LVL != 1 || BOOT_TIME != 2 || NEW_TIME != 3 || \
 	OLD_TIME != 4
-#error Values for the ut_type field of struct utmp changed
+#error Values for the ut_type field of struct utmpx changed
 #endif
 
 int last_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int last_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 {
-	struct utmp ut;
+	struct utmpx ut;
 	int n, file = STDIN_FILENO;
 	time_t t_tmp;
 	off_t pos;
@@ -71,7 +72,7 @@ int last_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 	file = xopen(bb_path_wtmp_file, O_RDONLY);
 
 	printf("%-10s %-14s %-18s %-12.12s %s\n",
-	       "USER", "TTY", "HOST", "LOGIN", "TIME");
+		"USER", "TTY", "HOST", "LOGIN", "TIME");
 	/* yikes. We reverse over the file and that is a not too elegant way */
 	pos = xlseek(file, 0, SEEK_END);
 	pos = lseek(file, pos - sizeof(ut), SEEK_SET);
@@ -87,11 +88,11 @@ int last_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 			if (++n > 0)
 				ut.ut_type = n != 3 ? n : SHUTDOWN_TIME;
 #else
-			if (strncmp(ut.ut_user, "shutdown", 8) == 0)
+			if (is_prefixed_with(ut.ut_user, "shutdown"))
 				ut.ut_type = SHUTDOWN_TIME;
-			else if (strncmp(ut.ut_user, "reboot", 6) == 0)
+			else if (is_prefixed_with(ut.ut_user, "reboot"))
 				ut.ut_type = BOOT_TIME;
-			else if (strncmp(ut.ut_user, "runlevel", 8) == 0)
+			else if (is_prefixed_with(ut.ut_user, "runlevel"))
 				ut.ut_type = RUN_LVL;
 #endif
 		} else {
@@ -131,7 +132,7 @@ int last_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 		 * but some systems have it wrong */
 		t_tmp = (time_t)ut.ut_tv.tv_sec;
 		printf("%-10s %-14s %-18s %-12.12s\n",
-		       ut.ut_user, ut.ut_line, ut.ut_host, ctime(&t_tmp) + 4);
+			ut.ut_user, ut.ut_line, ut.ut_host, ctime(&t_tmp) + 4);
  next:
 		pos -= sizeof(ut);
 		if (pos <= 0)

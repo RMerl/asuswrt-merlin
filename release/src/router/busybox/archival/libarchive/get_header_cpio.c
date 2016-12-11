@@ -37,7 +37,7 @@ char FAST_FUNC get_header_cpio(archive_handle_t *archive_handle)
 	}
 	archive_handle->offset += 110;
 
-	if (strncmp(&cpio_header[0], "07070", 5) != 0
+	if (!is_prefixed_with(&cpio_header[0], "07070")
 	 || (cpio_header[5] != '1' && cpio_header[5] != '2')
 	) {
 		bb_error_msg_and_die("unsupported cpio format, use newc or crc");
@@ -52,6 +52,11 @@ char FAST_FUNC get_header_cpio(archive_handle_t *archive_handle)
 			&major, &minor, &namesize) != 10)
 		bb_error_msg_and_die("damaged cpio file");
 	file_header->mode = mode;
+	/* "cpio -R USER:GRP" support: */
+	if (archive_handle->cpio__owner.uid != (uid_t)-1L)
+		uid = archive_handle->cpio__owner.uid;
+	if (archive_handle->cpio__owner.gid != (gid_t)-1L)
+		gid = archive_handle->cpio__owner.gid;
 	file_header->uid = uid;
 	file_header->gid = gid;
 	file_header->mtime = mtime;
@@ -75,7 +80,7 @@ char FAST_FUNC get_header_cpio(archive_handle_t *archive_handle)
 	/* Update offset amount and skip padding before file contents */
 	data_align(archive_handle, 4);
 
-	if (strcmp(file_header->name, "TRAILER!!!") == 0) {
+	if (strcmp(file_header->name, cpio_TRAILER) == 0) {
 		/* Always round up. ">> 9" divides by 512 */
 		archive_handle->cpio__blocks = (uoff_t)(archive_handle->offset + 511) >> 9;
 		goto create_hardlinks;

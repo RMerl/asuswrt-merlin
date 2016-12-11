@@ -16,6 +16,7 @@
 //usage:     "\n	-c		Clear ring buffer after printing"
 //usage:     "\n	-n LEVEL	Set console logging level"
 //usage:     "\n	-s SIZE		Buffer size"
+//usage:     "\n	-r		Print raw message buffer"
 
 #include <sys/klog.h>
 #include "libbb.h"
@@ -29,11 +30,12 @@ int dmesg_main(int argc UNUSED_PARAM, char **argv)
 	enum {
 		OPT_c = 1 << 0,
 		OPT_s = 1 << 1,
-		OPT_n = 1 << 2
+		OPT_n = 1 << 2,
+		OPT_r = 1 << 3
 	};
 
 	opt_complementary = "s+:n+"; /* numeric */
-	opts = getopt32(argv, "cs:n:", &len, &level);
+	opts = getopt32(argv, "cs:n:r", &len, &level);
 	if (opts & OPT_n) {
 		if (klogctl(8, NULL, (long) level))
 			bb_perror_msg_and_die("klogctl");
@@ -55,20 +57,19 @@ int dmesg_main(int argc UNUSED_PARAM, char **argv)
 		return EXIT_SUCCESS;
 
 
-	if (ENABLE_FEATURE_DMESG_PRETTY) {
+	if (ENABLE_FEATURE_DMESG_PRETTY && !(opts & OPT_r)) {
 		int last = '\n';
 		int in = 0;
 
-		/* Skip <#> at the start of lines */
+		/* Skip <[0-9]+> at the start of lines */
 		while (1) {
 			if (last == '\n' && buf[in] == '<') {
-				in += 3;
-				if (in >= len)
-					break;
+				while (buf[in++] != '>' && in < len)
+					;
+			} else {
+				last = buf[in++];
+				putchar(last);
 			}
-			last = buf[in];
-			putchar(last);
-			in++;
 			if (in >= len)
 				break;
 		}

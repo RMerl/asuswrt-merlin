@@ -17,6 +17,23 @@
  *
  */ 
 
+//config:config ETHREG
+//config:	bool "Ethreg Utility"
+//config:	default n
+//config:	help
+//config:	  The ethreg utility can be used to read/write MAC and PHY registers
+//config:	  to change the duplex and speed setting for individual PHYS.
+
+//kbuild:lib-$(CONFIG_ETHREG) += ethreg.o
+
+//applet:IF_ETHREG(APPLET(ethreg, BB_DIR_USR_SBIN, BB_SUID_DROP))
+
+//usage:#define ethreg_trivial_usage
+//usage:	"......"
+//usage:#define ethreg_full_usage "\n"
+
+#include "libbb.h"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -29,7 +46,7 @@
 #include <string.h>
 #include <net/if.h>
 #include <fcntl.h>
-#include "busybox.h"
+
 #include "athrs_ctrl.h"
 #define MAX_SIZ 10
 
@@ -51,10 +68,10 @@ struct eth_cfg_params {
 
 };
 
-struct ifreq ifr;
-struct eth_cfg_params etd;
-int s,opt_force = 0,duplex = 1;
-const char *progname;
+static struct ifreq ifr;
+static struct eth_cfg_params etd;
+static int s,opt_force = 0,duplex = 1;
+static const char *progname;
 static void rx_stats(void)
 {
         //printf ("\n\n%s\n", __func__);
@@ -158,10 +175,7 @@ static void rx_mac_stats (void)
         printf ("\t%u\t: Rx overfl cntr\n",etd.rxmac.rxoverfl);
 
 }
-
-
-
-u_int32_t
+static u_int32_t
 regread(u_int32_t phy_reg,u_int16_t portno)
 {
 
@@ -445,8 +459,8 @@ static void usage(void)
 }
 
 
-int
-ethreg_main(int argc, char *argv[])
+int ethreg_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+int ethreg_main(int argc, char *argv[])
 {
 	const char *ifname = "eth0";
 	int c,portnum = 0x3f,cmd = 0,value = -1;
@@ -454,17 +468,8 @@ ethreg_main(int argc, char *argv[])
         int vlanid = 0;
         char *mac = NULL;
         int tos = -1;
-        char *opt = "xfhci:d:s:j:v:t:p:m:l:";
-
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s < 0)
-		err(1, "socket");
-
-        opt_force = 0;
-	progname = argv[0];
-        
-
-	struct option long_options[] =
+        const char *opt = "xfhci:d:s:j:v:t:p:m:l:";
+        const struct option long_options[] =
         {
             { "f_link", no_argument, 0, ATHR_FLOW_LINK_EN},
             { "txfctl", no_argument, 0, ATHR_PHY_TXFCTL},
@@ -483,9 +488,15 @@ ethreg_main(int argc, char *argv[])
             { "macfl" , no_argument, 0, ATHR_GMAC_FLOW_CTRL},
             { "swfl"  , no_argument, 0, ATHR_PHY_FLOW_CTRL},
             { 0,0,0,0}
-       	};
-          
-           
+        };
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s < 0)
+		err(1, "socket");
+
+        opt_force = 0;
+	progname = argv[0];
+
 	while ((c = getopt_long(argc, argv,
                     opt, long_options, &optionindex)) != -1) { 
 	switch (c) {
@@ -792,4 +803,3 @@ ethreg_main(int argc, char *argv[])
         }
         return 0;
 }
-

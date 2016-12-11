@@ -17,6 +17,7 @@
 //usage:	)
 //usage:     "\n	-d	Show which specification matched each file"
 //usage:     "\n	-l	Log changes in file labels to syslog"
+//TODO: log to syslog is not yet implemented, it goes to stdout only now
 //usage:     "\n	-n	Don't change any file labels"
 //usage:     "\n	-q	Suppress warnings"
 //usage:     "\n	-r DIR	Use an alternate root path"
@@ -76,9 +77,10 @@ struct globals {
 	int nerr;
 	struct edir excludeArray[MAX_EXCLUDES];
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 void BUG_setfiles_globals_too_big(void);
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	if (sizeof(G) > COMMON_BUFSIZE) \
 		BUG_setfiles_globals_too_big(); \
 	/* memset(&G, 0, sizeof(G)); - already is */ \
@@ -251,7 +253,6 @@ static int match(const char *name, struct stat *sb, char **con)
 			name = path;
 			if (excludeCtr > 0 && exclude(name))
 				goto err;
-
 		} else {
 			char *p;
 			p = realpath(name, path);
@@ -384,16 +385,16 @@ static int restore(const char *file)
 		 * the user has changed but the role and type are the
 		 * same.  For "-vv", emit everything. */
 		if (verbose > 1 || !user_only_changed) {
-			bb_info_msg("%s: reset %s context %s->%s",
+			printf("%s: reset %s context %s->%s\n",
 				applet_name, my_file, context ? context : "", newcon);
 		}
 	}
 
 	if (FLAG_l_take_log && !user_only_changed) {
 		if (context)
-			bb_info_msg("relabeling %s from %s to %s", my_file, context, newcon);
+			printf("relabeling %s from %s to %s\n", my_file, context, newcon);
 		else
-			bb_info_msg("labeling %s to %s", my_file, newcon);
+			printf("labeling %s to %s\n", my_file, newcon);
 	}
 
 	if (outfile && !user_only_changed)
@@ -498,10 +499,11 @@ static int process_one(char *name)
 
 	if (S_ISDIR(sb.st_mode) && recurse) {
 		if (recursive_action(name,
-				     ACTION_RECURSE,
-				     apply_spec,
-				     apply_spec,
-				     NULL, 0) != TRUE) {
+				ACTION_RECURSE,
+				apply_spec,
+				apply_spec,
+				NULL, 0) != TRUE
+		) {
 			bb_error_msg("error while labeling %s", name);
 			goto err;
 		}
@@ -584,7 +586,7 @@ int setfiles_main(int argc UNUSED_PARAM, char **argv)
 		flags = getopt32(argv, "de:f:ilnpqr:svo:FW"
 				IF_FEATURE_SETFILES_CHECK_OPTION("c:"),
 			&exclude_dir, &input_filename, &rootpath, &out_filename,
-				 IF_FEATURE_SETFILES_CHECK_OPTION(&policyfile,)
+				IF_FEATURE_SETFILES_CHECK_OPTION(&policyfile,)
 			&verbose);
 	}
 	argv += optind;
@@ -600,8 +602,8 @@ int setfiles_main(int argc UNUSED_PARAM, char **argv)
 		fclose(policystream);
 
 		/* Only process the specified file_contexts file, not
-		   any .homedirs or .local files, and do not perform
-		   context translations. */
+		 * any .homedirs or .local files, and do not perform
+		 * context translations. */
 		set_matchpathcon_flags(MATCHPATHCON_BASEONLY |
 				       MATCHPATHCON_NOTRANS |
 				       MATCHPATHCON_VALIDATE);
@@ -631,8 +633,8 @@ int setfiles_main(int argc UNUSED_PARAM, char **argv)
 
 	if (applet_name[0] == 's') { /* setfiles */
 		/* Use our own invalid context checking function so that
-		   we can support either checking against the active policy or
-		   checking against a binary policy file. */
+		 * we can support either checking against the active policy or
+		 * checking against a binary policy file. */
 		set_matchpathcon_canoncon(&canoncon);
 		if (!argv[0])
 			bb_show_usage();

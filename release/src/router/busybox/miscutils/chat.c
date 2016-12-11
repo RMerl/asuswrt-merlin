@@ -17,6 +17,7 @@
 //usage:       "chat '' ATZ OK ATD123456 CONNECT '' ogin: pppuser word: ppppass '~'"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 // default timeout: 45 sec
 #define DEFAULT_CHAT_TIMEOUT 45*1000
@@ -285,9 +286,10 @@ int chat_main(int argc UNUSED_PARAM, char **argv)
 			    && poll(&pfd, 1, timeout) > 0
 			    && (pfd.revents & POLLIN)
 			) {
-#define buf bb_common_bufsiz1
 				llist_t *l;
 				ssize_t delta;
+#define buf bb_common_bufsiz1
+				setup_common_bufsiz();
 
 				// read next char from device
 				if (safe_read(STDIN_FILENO, buf+buf_len, 1) > 0) {
@@ -296,7 +298,7 @@ int chat_main(int argc UNUSED_PARAM, char **argv)
 						full_write(record_fd, buf+buf_len, 1);
 					}
 					// dump device input if ECHO ON
-					if (echo > 0) {
+					if (echo) {
 //						if (buf[buf_len] < ' ') {
 //							full_write(STDERR_FILENO, "^", 1);
 //							buf[buf_len] += '@';

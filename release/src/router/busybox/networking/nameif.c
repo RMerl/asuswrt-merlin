@@ -161,19 +161,19 @@ static void nameif_parse_selector(ethtable_t *ch, char *selector)
 		if (*next)
 			*next++ = '\0';
 		/* Check for selectors, mac= is assumed */
-		if (strncmp(selector, "bus=", 4) == 0) {
+		if (is_prefixed_with(selector, "bus=")) {
 			ch->bus_info = xstrdup(selector + 4);
 			found_selector++;
-		} else if (strncmp(selector, "driver=", 7) == 0) {
+		} else if (is_prefixed_with(selector, "driver=")) {
 			ch->driver = xstrdup(selector + 7);
 			found_selector++;
-		} else if (strncmp(selector, "phyaddr=", 8) == 0) {
+		} else if (is_prefixed_with(selector, "phyaddr=")) {
 			ch->phy_address = xatoi_positive(selector + 8);
 			found_selector++;
 		} else {
 #endif
 			lmac = xmalloc(ETH_ALEN);
-			ch->mac = ether_aton_r(selector + (strncmp(selector, "mac=", 4) != 0 ? 0 : 4), lmac);
+			ch->mac = ether_aton_r(selector + (is_prefixed_with(selector, "mac=") ? 4 : 0), lmac);
 			if (ch->mac == NULL)
 				bb_error_msg_and_die("can't parse %s", selector);
 #if  ENABLE_FEATURE_NAMEIF_EXTENDED
@@ -292,12 +292,11 @@ int nameif_main(int argc UNUSED_PARAM, char **argv)
 			if (ch->mac && memcmp(ch->mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN) != 0)
 				continue;
 			/* if we came here, all selectors have matched */
-			break;
+			goto found;
 		}
 		/* Nothing found for current interface */
-		if (!ch)
-			continue;
-
+		continue;
+ found:
 		if (strcmp(ifr.ifr_name, ch->ifname) != 0) {
 			strcpy(ifr.ifr_newname, ch->ifname);
 			ioctl_or_perror_and_die(ctl_sk, SIOCSIFNAME, &ifr,
@@ -313,10 +312,14 @@ int nameif_main(int argc UNUSED_PARAM, char **argv)
 			ch->next->prev = ch->prev;
 		if (ENABLE_FEATURE_CLEAN_UP)
 			delete_eth_table(ch);
-	}
+	} /* while */
+
 	if (ENABLE_FEATURE_CLEAN_UP) {
-		for (ch = clist; ch; ch = ch->next)
+		ethtable_t *next;
+		for (ch = clist; ch; ch = next) {
+			next = ch->next;
 			delete_eth_table(ch);
+		}
 		config_close(parser);
 	};
 

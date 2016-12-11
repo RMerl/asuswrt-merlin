@@ -8,7 +8,7 @@
  * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
-//usage:#define mkfs_ext2_trivial_usage_NO
+//usage:#define mkfs_ext2_trivial_usage
 //usage:       "[-Fn] "
 /* //usage:    "[-c|-l filename] " */
 //usage:       "[-b BLK_SIZE] "
@@ -21,7 +21,7 @@
 //usage:       "[-L LABEL] "
 /* //usage:    "[-M last-mounted-directory] [-S] [-T filesystem-type] " */
 //usage:       "BLOCKDEV [KBYTES]"
-//usage:#define mkfs_ext2_full_usage_NO "\n\n"
+//usage:#define mkfs_ext2_full_usage "\n\n"
 //usage:       "	-b BLK_SIZE	Block size, bytes"
 /* //usage:  "\n	-c		Check device for bad blocks" */
 /* //usage:  "\n	-E opts		Set extended options" */
@@ -116,7 +116,7 @@ static void allocate(uint8_t *bitmap, uint32_t blocksize, uint32_t start, uint32
 {
 	uint32_t i;
 
-//bb_info_msg("ALLOC: [%u][%u][%u]: [%u-%u]:=[%x],[%x]", blocksize, start, end, start/8, blocksize - end/8 - 1, (1 << (start & 7)) - 1, (uint8_t)(0xFF00 >> (end & 7)));
+//bb_error_msg("ALLOC: [%u][%u][%u]: [%u-%u]:=[%x],[%x]", blocksize, start, end, start/8, blocksize - end/8 - 1, (1 << (start & 7)) - 1, (uint8_t)(0xFF00 >> (end & 7)));
 	memset(bitmap, 0, blocksize);
 	i = start / 8;
 	memset(bitmap, 0xFF, i);
@@ -151,7 +151,7 @@ static uint32_t has_super(uint32_t x)
 
 static void PUT(uint64_t off, void *buf, uint32_t size)
 {
-//	bb_info_msg("PUT[%llu]:[%u]", off, size);
+	//bb_error_msg("PUT[%llu]:[%u]", off, size);
 	xlseek(fd, off, SEEK_SET);
 	xwrite(fd, buf, size);
 }
@@ -412,7 +412,7 @@ int mkfs_ext2_main(int argc UNUSED_PARAM, char **argv)
 		// (a bit after 8M image size), but it works for two->three groups
 		// transition (at 16M).
 		if (remainder && (remainder < overhead + 50)) {
-//bb_info_msg("CHOP[%u]", remainder);
+//bb_error_msg("CHOP[%u]", remainder);
 			nblocks -= remainder;
 			goto retry;
 		}
@@ -568,7 +568,7 @@ int mkfs_ext2_main(int argc UNUSED_PARAM, char **argv)
 		free_blocks = (n < blocks_per_group ? n : blocks_per_group) - overhead;
 
 		// mark preallocated blocks as allocated
-//bb_info_msg("ALLOC: [%u][%u][%u]", blocksize, overhead, blocks_per_group - (free_blocks + overhead));
+//bb_error_msg("ALLOC: [%u][%u][%u]", blocksize, overhead, blocks_per_group - (free_blocks + overhead));
 		allocate(buf, blocksize,
 			// reserve "overhead" blocks
 			overhead,
@@ -647,7 +647,7 @@ int mkfs_ext2_main(int argc UNUSED_PARAM, char **argv)
 	n = FETCH_LE32(inode->i_block[0]) + 1;
 	for (i = 0; i < lost_and_found_blocks; ++i)
 		STORE_LE(inode->i_block[i], i + n); // use next block
-//bb_info_msg("LAST BLOCK USED[%u]", i + n);
+//bb_error_msg("LAST BLOCK USED[%u]", i + n);
 	PUT(((uint64_t)FETCH_LE32(gd[0].bg_inode_table) * blocksize) + (EXT2_GOOD_OLD_FIRST_INO-1) * inodesize,
 				buf, inodesize);
 

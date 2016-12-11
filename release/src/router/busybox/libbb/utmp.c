@@ -16,7 +16,7 @@ static void touch(const char *filename)
 
 void FAST_FUNC write_new_utmp(pid_t pid, int new_type, const char *tty_name, const char *username, const char *hostname)
 {
-	struct utmp utent;
+	struct utmpx utent;
 	char *id;
 	unsigned width;
 
@@ -45,17 +45,17 @@ void FAST_FUNC write_new_utmp(pid_t pid, int new_type, const char *tty_name, con
 		tty_name += 3;
 	strncpy(id, tty_name, width);
 
-	touch(_PATH_UTMP);
-	//utmpname(_PATH_UTMP);
-	setutent();
+	touch(_PATH_UTMPX);
+	//utmpxname(_PATH_UTMPX);
+	setutxent();
 	/* Append new one (hopefully, unless we collide on ut_id) */
-	pututline(&utent);
-	endutent();
+	pututxline(&utent);
+	endutxent();
 
 #if ENABLE_FEATURE_WTMP
 	/* "man utmp" says wtmp file should *not* be created automagically */
 	/*touch(bb_path_wtmp_file);*/
-	updwtmp(bb_path_wtmp_file, &utent);
+	updwtmpx(bb_path_wtmp_file, &utent);
 #endif
 }
 
@@ -64,17 +64,17 @@ void FAST_FUNC write_new_utmp(pid_t pid, int new_type, const char *tty_name, con
  */
 void FAST_FUNC update_utmp(pid_t pid, int new_type, const char *tty_name, const char *username, const char *hostname)
 {
-	struct utmp utent;
-	struct utmp *utp;
+	struct utmpx utent;
+	struct utmpx *utp;
 
-	touch(_PATH_UTMP);
-	//utmpname(_PATH_UTMP);
-	setutent();
+	touch(_PATH_UTMPX);
+	//utmpxname(_PATH_UTMPX);
+	setutxent();
 
 	/* Did init/getty/telnetd/sshd/... create an entry for us?
 	 * It should be (new_type-1), but we'd also reuse
 	 * any other potentially stale xxx_PROCESS entry */
-	while ((utp = getutent()) != NULL) {
+	while ((utp = getutxent()) != NULL) {
 		if (utp->ut_pid == pid
 		// && ut->ut_line[0]
 		 && utp->ut_id[0] /* must have nonzero id */
@@ -88,25 +88,25 @@ void FAST_FUNC update_utmp(pid_t pid, int new_type, const char *tty_name, const 
 				/* Stale record. Nuke hostname */
 				memset(utp->ut_host, 0, sizeof(utp->ut_host));
 			}
-			/* NB: pututline (see later) searches for matching utent
-			 * using getutid(utent) - we must not change ut_id
+			/* NB: pututxline (see later) searches for matching utxent
+			 * using getutxid(utent) - we must not change ut_id
 			 * if we want *exactly this* record to be overwritten!
 			 */
 			break;
 		}
 	}
-	//endutent(); - no need, pututline can deal with (and actually likes)
+	//endutxent(); - no need, pututxline can deal with (and actually likes)
 	//the situation when utmp file is positioned on found record
 
 	if (!utp) {
 		if (new_type != DEAD_PROCESS)
 			write_new_utmp(pid, new_type, tty_name, username, hostname);
 		else
-			endutent();
+			endutxent();
 		return;
 	}
 
-	/* Make a copy. We can't use *utp, pututline's internal getutid
+	/* Make a copy. We can't use *utp, pututxline's internal getutxid
 	 * will overwrite it before it is used! */
 	utent = *utp;
 
@@ -120,13 +120,27 @@ void FAST_FUNC update_utmp(pid_t pid, int new_type, const char *tty_name, const 
 	utent.ut_tv.tv_sec = time(NULL);
 
 	/* Update, or append new one */
-	//setutent();
-	pututline(&utent);
-	endutent();
+	//setutxent();
+	pututxline(&utent);
+	endutxent();
 
 #if ENABLE_FEATURE_WTMP
 	/* "man utmp" says wtmp file should *not* be created automagically */
 	/*touch(bb_path_wtmp_file);*/
-	updwtmp(bb_path_wtmp_file, &utent);
+	updwtmpx(bb_path_wtmp_file, &utent);
 #endif
+}
+
+/* man utmp:
+ * When init(8) finds that a process has exited, it locates its utmp entry
+ * by ut_pid, sets ut_type to DEAD_PROCESS, and clears ut_user, ut_host
+ * and ut_time with null bytes.
+ * [same applies to other processes which maintain utmp entries, like telnetd]
+ *
+ * We do not bother actually clearing fields:
+ * it might be interesting to know who was logged in and from where
+ */
+void FAST_FUNC update_utmp_DEAD_PROCESS(pid_t pid)
+{
+	update_utmp(pid, DEAD_PROCESS, NULL, NULL, NULL);
 }

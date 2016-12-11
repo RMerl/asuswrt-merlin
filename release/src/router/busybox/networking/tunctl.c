@@ -82,7 +82,7 @@ int tunctl_main(int argc UNUSED_PARAM, char **argv)
 	// delete?
 	if (opts & OPT_d) {
 		IOCTL(fd, TUNSETPERSIST, (void *)(uintptr_t)0);
-		bb_info_msg("Set '%s' %spersistent", ifr.ifr_name, "non");
+		printf("Set '%s' nonpersistent\n", ifr.ifr_name);
 		return EXIT_SUCCESS;
 	}
 

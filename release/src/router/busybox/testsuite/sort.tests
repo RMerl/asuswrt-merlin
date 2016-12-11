@@ -47,8 +47,6 @@ egg	1	2	papyrus
 999	3	0	algebra
 " "$data" ""
 
-test x"$SKIP_KNOWN_BUGS" = x"" && {
-# Busybox is definitely doing these wrong.  FIXME
 testing "sort key range with numeric option and global reverse" \
 "sort -k2,3n -r input" \
 "egg	1	2	papyrus
@@ -65,7 +63,6 @@ testing "sort key range with multiple options" "sort -k2,3rn input" \
 42	1	3	woot
 egg	1	2	papyrus
 " "$data" ""
-}
 
 testing "sort key range with two -k options" "sort -k 2,2n -k 1,1r input" "\
 d 2
@@ -99,6 +96,58 @@ testing "sort with non-default leading delim 3" "sort -n -k3 -t/ input" "\
 " "\
 //a/2
 //b/1
+" ""
+
+testing "sort with non-default leading delim 4" "sort -t: -k1,1 input" "\
+a:b
+a/a:a
+" "\
+a/a:a
+a:b
+" ""
+
+testing "sort with ENDCHAR" "sort -t. -k1,1.1 -k2 input" "\
+ab.1
+aa.2
+" "\
+aa.2
+ab.1
+" ""
+
+testing "glibc build sort" "sort -t. -k 1,1 -k 2n,2n -k 3 input" "\
+GLIBC_2.1
+GLIBC_2.1.1
+GLIBC_2.2
+GLIBC_2.2.1
+GLIBC_2.10
+GLIBC_2.20
+GLIBC_2.21
+" "\
+GLIBC_2.21
+GLIBC_2.1.1
+GLIBC_2.2.1
+GLIBC_2.2
+GLIBC_2.20
+GLIBC_2.10
+GLIBC_2.1
+" ""
+
+testing "glibc build sort unique" "sort -u -t. -k 1,1 -k 2n,2n -k 3 input" "\
+GLIBC_2.1
+GLIBC_2.1.1
+GLIBC_2.2
+GLIBC_2.2.1
+GLIBC_2.10
+GLIBC_2.20
+GLIBC_2.21
+" "\
+GLIBC_2.10
+GLIBC_2.2.1
+GLIBC_2.1.1
+GLIBC_2.20
+GLIBC_2.2
+GLIBC_2.1
+GLIBC_2.21
 " ""
 
 testing "sort -u should consider field only when discarding" "sort -u -k2 input" "\

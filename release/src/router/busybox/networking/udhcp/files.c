@@ -57,33 +57,35 @@ static int FAST_FUNC read_staticlease(const char *const_line, void *arg)
 struct config_keyword {
 	const char *keyword;
 	int (*handler)(const char *line, void *var) FAST_FUNC;
-	void *var;
+	unsigned ofs;
 	const char *def;
 };
 
+#define OFS(field) offsetof(struct server_config_t, field)
+
 static const struct config_keyword keywords[] = {
 	/* keyword        handler           variable address               default */
-	{"start"        , udhcp_str2nip   , &server_config.start_ip     , "192.168.0.20"},
-	{"end"          , udhcp_str2nip   , &server_config.end_ip       , "192.168.0.254"},
-	{"interface"    , read_str        , &server_config.interface    , "eth0"},
+	{"start"        , udhcp_str2nip   , OFS(start_ip     ), "192.168.0.20"},
+	{"end"          , udhcp_str2nip   , OFS(end_ip       ), "192.168.0.254"},
+	{"interface"    , read_str        , OFS(interface    ), "eth0"},
 	/* Avoid "max_leases value not sane" warning by setting default
 	 * to default_end_ip - default_start_ip + 1: */
-	{"max_leases"   , read_u32        , &server_config.max_leases   , "235"},
-	{"auto_time"    , read_u32        , &server_config.auto_time    , "7200"},
-	{"decline_time" , read_u32        , &server_config.decline_time , "3600"},
-	{"conflict_time", read_u32        , &server_config.conflict_time, "3600"},
-	{"offer_time"   , read_u32        , &server_config.offer_time   , "60"},
-	{"min_lease"    , read_u32        , &server_config.min_lease_sec, "60"},
-	{"lease_file"   , read_str        , &server_config.lease_file   , LEASES_FILE},
-	{"pidfile"      , read_str        , &server_config.pidfile      , "/var/run/udhcpd.pid"},
-	{"siaddr"       , udhcp_str2nip   , &server_config.siaddr_nip   , "0.0.0.0"},
+	{"max_leases"   , read_u32        , OFS(max_leases   ), "235"},
+	{"auto_time"    , read_u32        , OFS(auto_time    ), "7200"},
+	{"decline_time" , read_u32        , OFS(decline_time ), "3600"},
+	{"conflict_time", read_u32        , OFS(conflict_time), "3600"},
+	{"offer_time"   , read_u32        , OFS(offer_time   ), "60"},
+	{"min_lease"    , read_u32        , OFS(min_lease_sec), "60"},
+	{"lease_file"   , read_str        , OFS(lease_file   ), LEASES_FILE},
+	{"pidfile"      , read_str        , OFS(pidfile      ), "/var/run/udhcpd.pid"},
+	{"siaddr"       , udhcp_str2nip   , OFS(siaddr_nip   ), "0.0.0.0"},
 	/* keywords with no defaults must be last! */
-	{"option"       , udhcp_str2optset, &server_config.options      , ""},
-	{"opt"          , udhcp_str2optset, &server_config.options      , ""},
-	{"notify_file"  , read_str        , &server_config.notify_file  , NULL},
-	{"sname"        , read_str        , &server_config.sname        , NULL},
-	{"boot_file"    , read_str        , &server_config.boot_file    , NULL},
-	{"static_lease" , read_staticlease, &server_config.static_leases, ""},
+	{"option"       , udhcp_str2optset, OFS(options      ), ""},
+	{"opt"          , udhcp_str2optset, OFS(options      ), ""},
+	{"notify_file"  , read_str        , OFS(notify_file  ), NULL},
+	{"sname"        , read_str        , OFS(sname        ), NULL},
+	{"boot_file"    , read_str        , OFS(boot_file    ), NULL},
+	{"static_lease" , read_staticlease, OFS(static_leases), ""},
 };
 enum { KWS_WITH_DEFAULTS = ARRAY_SIZE(keywords) - 6 };
 
@@ -95,17 +97,17 @@ void FAST_FUNC read_config(const char *file)
 	char *token[2];
 
 	for (i = 0; i < KWS_WITH_DEFAULTS; i++)
-		keywords[i].handler(keywords[i].def, keywords[i].var);
+		keywords[i].handler(keywords[i].def, (char*)&server_config + keywords[i].ofs);
 
 	parser = config_open(file);
 	while (config_read(parser, token, 2, 2, "# \t", PARSE_NORMAL)) {
 		for (k = keywords, i = 0; i < ARRAY_SIZE(keywords); k++, i++) {
 			if (strcasecmp(token[0], k->keyword) == 0) {
-				if (!k->handler(token[1], k->var)) {
+				if (!k->handler(token[1], (char*)&server_config + k->ofs)) {
 					bb_error_msg("can't parse line %u in %s",
 							parser->lineno, file);
 					/* reset back to the default value */
-					k->handler(k->def, k->var);
+					k->handler(k->def, (char*)&server_config + k->ofs);
 				}
 				break;
 			}
@@ -195,7 +197,11 @@ void FAST_FUNC read_leases(const char *file)
 			uint32_t static_nip;
 
 			if (expires <= 0)
-				continue;
+				/* We keep expired leases: add_lease() will add
+				 * a lease with 0 seconds remaining.
+				 * Fewer IP address changes this way for mass reboot scenario.
+				 */
+				expires = 0;
 
 			/* Check if there is a different static lease for this IP or MAC */
 			static_nip = get_static_nip_by_mac(server_config.static_leases, lease.lease_mac);
@@ -222,7 +228,7 @@ void FAST_FUNC read_leases(const char *file)
 #endif
 		}
 	}
-	log1("Read %d leases", i);
+	log1("read %d leases", i);
  ret:
 	close(fd);
 }

@@ -140,60 +140,6 @@ config BB_SYSCTL
 	help
 	  Configure kernel parameters at runtime.
 
-config TOP
-	bool "top"
-	default y
-	help
-	  The top program provides a dynamic real-time view of a running
-	  system.
-
-config FEATURE_TOP_CPU_USAGE_PERCENTAGE
-	bool "Show CPU per-process usage percentage"
-	default y
-	depends on TOP
-	help
-	  Make top display CPU usage for each process.
-	  This adds about 2k.
-
-config FEATURE_TOP_CPU_GLOBAL_PERCENTS
-	bool "Show CPU global usage percentage"
-	default y
-	depends on FEATURE_TOP_CPU_USAGE_PERCENTAGE
-	help
-	  Makes top display "CPU: NN% usr NN% sys..." line.
-	  This adds about 0.5k.
-
-config FEATURE_TOP_SMP_CPU
-	bool "SMP CPU usage display ('c' key)"
-	default y
-	depends on FEATURE_TOP_CPU_GLOBAL_PERCENTS
-	help
-	  Allow 'c' key to switch between individual/cumulative CPU stats
-	  This adds about 0.5k.
-
-config FEATURE_TOP_DECIMALS
-	bool "Show 1/10th of a percent in CPU/mem statistics"
-	default y
-	depends on FEATURE_TOP_CPU_USAGE_PERCENTAGE
-	help
-	  Show 1/10th of a percent in CPU/mem statistics.
-	  This adds about 0.3k.
-
-config FEATURE_TOP_SMP_PROCESS
-	bool "Show CPU process runs on ('j' field)"
-	default y
-	depends on TOP
-	help
-	  Show CPU where process was last found running on.
-	  This is the 'j' field.
-
-config FEATURE_TOPMEM
-	bool "Topmem command ('s' key)"
-	default y
-	depends on TOP
-	help
-	  Enable 's' in top (gives lots of memory info).
-
 config FEATURE_SHOW_THREADS
 	bool "Support for showing threads in ps/pstree/top"
 	default y

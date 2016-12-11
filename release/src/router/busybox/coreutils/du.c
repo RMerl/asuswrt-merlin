@@ -58,6 +58,7 @@
 //usage:       "2417    .\n"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 enum {
 	OPT_a_files_too    = (1 << 0),
@@ -75,7 +76,7 @@ enum {
 
 struct globals {
 #if ENABLE_FEATURE_HUMAN_READABLE
-	unsigned long disp_hr;
+	unsigned long disp_unit;
 #else
 	unsigned disp_k;
 #endif
@@ -85,18 +86,31 @@ struct globals {
 	int du_depth;
 	dev_t dir_dev;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
-#define INIT_G() do { } while (0)
+#define G (*(struct globals*)bb_common_bufsiz1)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 
 
 static void print(unsigned long long size, const char *filename)
 {
 	/* TODO - May not want to defer error checking here. */
 #if ENABLE_FEATURE_HUMAN_READABLE
+# if ENABLE_DESKTOP
+	/* ~30 bytes of code for extra comtat:
+	 * coreutils' du rounds sizes up:
+	 * for example,  1025k file is shown as "2" by du -m.
+	 * We round to nearest if human-readable [too hard to fix],
+	 * else (fixed scale such as -m), we round up. To that end,
+	 * add yet another half of the unit before displaying:
+	 */
+	if (G.disp_unit)
+		size += (G.disp_unit-1) / (unsigned)(512 * 2);
+# endif
 	printf("%s\t%s\n",
-			/* size x 512 / G.disp_hr, show one fractional,
-			 * use suffixes if G.disp_hr == 0 */
-			make_human_readable_str(size, 512, G.disp_hr),
+			/* size x 512 / G.disp_unit.
+			 * If G.disp_unit == 0, show one fractional
+			 * and use suffixes
+			 */
+			make_human_readable_str(size, 512, G.disp_unit),
 			filename);
 #else
 	if (G.disp_k) {
@@ -195,10 +209,10 @@ int du_main(int argc UNUSED_PARAM, char **argv)
 	INIT_G();
 
 #if ENABLE_FEATURE_HUMAN_READABLE
-	IF_FEATURE_DU_DEFAULT_BLOCKSIZE_1K(G.disp_hr = 1024;)
-	IF_NOT_FEATURE_DU_DEFAULT_BLOCKSIZE_1K(G.disp_hr = 512;)
+	IF_FEATURE_DU_DEFAULT_BLOCKSIZE_1K(G.disp_unit = 1024;)
+	IF_NOT_FEATURE_DU_DEFAULT_BLOCKSIZE_1K(G.disp_unit = 512;)
 	if (getenv("POSIXLY_CORRECT"))  /* TODO - a new libbb function? */
-		G.disp_hr = 512;
+		G.disp_unit = 512;
 #else
 	IF_FEATURE_DU_DEFAULT_BLOCKSIZE_1K(G.disp_k = 1;)
 	/* IF_NOT_FEATURE_DU_DEFAULT_BLOCKSIZE_1K(G.disp_k = 0;) - G is pre-zeroed */
@@ -216,13 +230,13 @@ int du_main(int argc UNUSED_PARAM, char **argv)
 	opt = getopt32(argv, "aHkLsx" "d:" "lc" "hm", &G.max_print_depth);
 	argv += optind;
 	if (opt & OPT_h_for_humans) {
-		G.disp_hr = 0;
+		G.disp_unit = 0;
 	}
 	if (opt & OPT_m_mbytes) {
-		G.disp_hr = 1024*1024;
+		G.disp_unit = 1024*1024;
 	}
 	if (opt & OPT_k_kbytes) {
-		G.disp_hr = 1024;
+		G.disp_unit = 1024;
 	}
 #else
 	opt_complementary = "H-L:L-H:s-d:d-s:d+";

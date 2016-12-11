@@ -56,6 +56,34 @@ Misc options:
         -q,--quiet              Quiet
         -v,--verbose            Verbose
 */
+//config:config START_STOP_DAEMON
+//config:	bool "start-stop-daemon"
+//config:	default y
+//config:	help
+//config:	  start-stop-daemon is used to control the creation and
+//config:	  termination of system-level processes, usually the ones
+//config:	  started during the startup of the system.
+//config:
+//config:config FEATURE_START_STOP_DAEMON_FANCY
+//config:	bool "Support additional arguments"
+//config:	default y
+//config:	depends on START_STOP_DAEMON
+//config:	help
+//config:	  Support additional arguments.
+//config:	  -o|--oknodo ignored since we exit with 0 anyway
+//config:	  -v|--verbose
+//config:	  -N|--nicelevel N
+//config:
+//config:config FEATURE_START_STOP_DAEMON_LONG_OPTIONS
+//config:	bool "Enable long options"
+//config:	default y
+//config:	depends on START_STOP_DAEMON && LONG_OPTS
+//config:	help
+//config:	  Support long options for the start-stop-daemon applet.
+
+//applet:IF_START_STOP_DAEMON(APPLET_ODDNAME(start-stop-daemon, start_stop_daemon, BB_DIR_SBIN, BB_SUID_DROP, start_stop_daemon))
+
+//kbuild:lib-$(CONFIG_START_STOP_DAEMON) += start_stop_daemon.o
 
 //usage:#define start_stop_daemon_trivial_usage
 //usage:       "[OPTIONS] [-S|-K] ... [-- ARGS...]"
@@ -125,6 +153,7 @@ Misc options:
 /* Override ENABLE_FEATURE_PIDFILE */
 #define WANT_PIDFILE 1
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 struct pid_list {
 	struct pid_list *next;
@@ -163,7 +192,7 @@ struct globals {
 	int user_id;
 	smallint signal_nr;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define userspec          (G.userspec            )
 #define cmdname           (G.cmdname             )
 #define execname          (G.execname            )
@@ -171,6 +200,7 @@ struct globals {
 #define user_id           (G.user_id             )
 #define signal_nr         (G.signal_nr           )
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	user_id = -1; \
 	signal_nr = 15; \
 } while (0)
@@ -511,15 +541,15 @@ int start_stop_daemon_main(int argc UNUSED_PARAM, char **argv)
 		write_pidfile(pidfile);
 	}
 	if (opt & OPT_c) {
-		struct bb_uidgid_t ugid = { -1, -1 };
+		struct bb_uidgid_t ugid;
 		parse_chown_usergroup_or_die(&ugid, chuid);
-		if (ugid.uid != (uid_t) -1) {
+		if (ugid.uid != (uid_t) -1L) {
 			struct passwd *pw = xgetpwuid(ugid.uid);
-			if (ugid.gid != (gid_t) -1)
+			if (ugid.gid != (gid_t) -1L)
 				pw->pw_gid = ugid.gid;
 			/* initgroups, setgid, setuid: */
 			change_identity(pw);
-		} else if (ugid.gid != (gid_t) -1) {
+		} else if (ugid.gid != (gid_t) -1L) {
 			xsetgid(ugid.gid);
 			setgroups(1, &ugid.gid);
 		}

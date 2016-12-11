@@ -138,6 +138,9 @@ static void set_default_dns(const char *server)
 {
 	len_and_sockaddr *lsa;
 
+	if (!server)
+		return;
+
 	/* NB: this works even with, say, "[::1]:5353"! :) */
 	lsa = xhost2sockaddr(server, 53);
 
@@ -181,9 +184,17 @@ int nslookup_main(int argc, char **argv)
 	/* (but it also says "may be enabled in /etc/resolv.conf") */
 	/*_res.options |= RES_USE_INET6;*/
 
-	if (argv[2])
-		set_default_dns(argv[2]);
+	set_default_dns(argv[2]);
 
 	server_print();
+
+	/* getaddrinfo and friends are free to request a resolver
+	 * reinitialization. Just in case, set_default_dns() again
+	 * after getaddrinfo (in server_print). This reportedly helps
+	 * with bug 675 "nslookup does not properly use second argument"
+	 * at least on Debian Wheezy and Openwrt AA (eglibc based).
+	 */
+	set_default_dns(argv[2]);
+
 	return print_host(argv[1], "Name:");
 }

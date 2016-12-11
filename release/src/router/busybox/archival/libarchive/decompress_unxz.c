@@ -30,16 +30,17 @@ static uint32_t xz_crc32(const uint8_t *buf, size_t size, uint32_t crc)
 /* We use arch-optimized unaligned accessors */
 #define get_unaligned_le32(buf) ({ uint32_t v; move_from_unaligned32(v, buf); SWAP_LE32(v); })
 #define get_unaligned_be32(buf) ({ uint32_t v; move_from_unaligned32(v, buf); SWAP_BE32(v); })
-#define put_unaligned_le32(val, buf) move_to_unaligned16(buf, SWAP_LE32(val))
-#define put_unaligned_be32(val, buf) move_to_unaligned16(buf, SWAP_BE32(val))
+#define put_unaligned_le32(val, buf) move_to_unaligned32(buf, SWAP_LE32(val))
+#define put_unaligned_be32(val, buf) move_to_unaligned32(buf, SWAP_BE32(val))
 
 #include "unxz/xz_dec_bcj.c"
 #include "unxz/xz_dec_lzma2.c"
 #include "unxz/xz_dec_stream.c"
 
 IF_DESKTOP(long long) int FAST_FUNC
-unpack_xz_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
+unpack_xz_stream(transformer_state_t *xstate)
 {
+	enum xz_ret xz_result;
 	struct xz_buf iobuf;
 	struct xz_dec *state;
 	unsigned char *membuf;
@@ -54,7 +55,7 @@ unpack_xz_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
 	iobuf.out = membuf + BUFSIZ;
 	iobuf.out_size = BUFSIZ;
 
-	if (!aux || aux->check_signature == 0) {
+	if (!xstate || xstate->signature_skipped) {
 		/* Preload XZ file signature */
 		strcpy((char*)membuf, HEADER_MAGIC);
 		iobuf.in_size = HEADER_MAGIC_SIZE;
@@ -63,38 +64,66 @@ unpack_xz_stream(transformer_aux_data_t *aux, int src_fd, int dst_fd)
 	/* Limit memory usage to about 64 MiB. */
 	state = xz_dec_init(XZ_DYNALLOC, 64*1024*1024);
 
+	xz_result = X_OK;
 	while (1) {
-		enum xz_ret r;
-
 		if (iobuf.in_pos == iobuf.in_size) {
-			int rd = safe_read(src_fd, membuf, BUFSIZ);
+			int rd = safe_read(xstate->src_fd, membuf, BUFSIZ);
 			if (rd < 0) {
 				bb_error_msg(bb_msg_read_error);
 				total = -1;
 				break;
 			}
+			if (rd == 0 && xz_result == XZ_STREAM_END)
+				break;
 			iobuf.in_size = rd;
 			iobuf.in_pos = 0;
 		}
+		if (xz_result == XZ_STREAM_END) {
+			/*
+			 * Try to start decoding next concatenated stream.
+			 * Stream padding must always be a multiple of four
+			 * bytes to preserve four-byte alignment. To keep the
+			 * code slightly smaller, we aren't as strict here as
+			 * the .xz spec requires. We just skip all zero-bytes
+			 * without checking the alignment and thus can accept
+			 * files that aren't valid, e.g. the XZ utils test
+			 * files bad-0pad-empty.xz and bad-0catpad-empty.xz.
+			 */
+			do {
+				if (membuf[iobuf.in_pos] != 0) {
+					xz_dec_reset(state);
+					goto do_run;
+				}
+				iobuf.in_pos++;
+			} while (iobuf.in_pos < iobuf.in_size);
+		}
+ do_run:
 //		bb_error_msg(">in pos:%d size:%d out pos:%d size:%d",
 //				iobuf.in_pos, iobuf.in_size, iobuf.out_pos, iobuf.out_size);
-		r = xz_dec_run(state, &iobuf);
+		xz_result = xz_dec_run(state, &iobuf);
 //		bb_error_msg("<in pos:%d size:%d out pos:%d size:%d r:%d",
-//				iobuf.in_pos, iobuf.in_size, iobuf.out_pos, iobuf.out_size, r);
+//				iobuf.in_pos, iobuf.in_size, iobuf.out_pos, iobuf.out_size, xz_result);
 		if (iobuf.out_pos) {
-			xwrite(dst_fd, iobuf.out, iobuf.out_pos);
+			xtransformer_write(xstate, iobuf.out, iobuf.out_pos);
 			IF_DESKTOP(total += iobuf.out_pos;)
 			iobuf.out_pos = 0;
 		}
-		if (r == XZ_STREAM_END) {
-			break;
+		if (xz_result == XZ_STREAM_END) {
+			/*
+			 * Can just "break;" here, if not for concatenated
+			 * .xz streams.
+			 * Checking for padding may require buffer
+			 * replenishment. Can't do it here.
+			 */
+			continue;
 		}
-		if (r != XZ_OK && r != XZ_UNSUPPORTED_CHECK) {
+		if (xz_result != XZ_OK && xz_result != XZ_UNSUPPORTED_CHECK) {
 			bb_error_msg("corrupted data");
 			total = -1;
 			break;
 		}
 	}
+
 	xz_dec_end(state);
 	free(membuf);
 

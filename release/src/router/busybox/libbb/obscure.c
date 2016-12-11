@@ -76,7 +76,7 @@ static int string_checker(const char *p1, const char *p2)
 	ret |= string_checker_helper(p, p2);
 
 	/* clean up */
-	memset(p, 0, size);
+	nuke_str(p);
 	free(p);
 
 	return ret;
@@ -182,3 +182,41 @@ int FAST_FUNC obscure(const char *old, const char *newval, const struct passwd *
 	}
 	return 0;
 }
+
+#if ENABLE_UNIT_TEST
+
+/* Test obscure_msg() instead of obscure() in order not to print anything. */
+
+static const struct passwd pw = {
+	.pw_name = (char *)"johndoe",
+	.pw_gecos = (char *)"John Doe",
+};
+
+BBUNIT_DEFINE_TEST(obscure_weak_pass)
+{
+	/* Empty password */
+	BBUNIT_ASSERT_NOTNULL(obscure_msg("Ad4#21?'S|", "", &pw));
+	/* Pure numbers */
+	BBUNIT_ASSERT_NOTNULL(obscure_msg("Ad4#21?'S|", "23577315", &pw));
+	/* Similar to pw_name */
+	BBUNIT_ASSERT_NOTNULL(obscure_msg("Ad4#21?'S|", "johndoe123%", &pw));
+	/* Similar to pw_gecos, reversed */
+	BBUNIT_ASSERT_NOTNULL(obscure_msg("Ad4#21?'S|", "eoD nhoJ^44@", &pw));
+	/* Similar to the old password */
+	BBUNIT_ASSERT_NOTNULL(obscure_msg("Ad4#21?'S|", "d4#21?'S", &pw));
+	/* adjacent letters */
+	BBUNIT_ASSERT_NOTNULL(obscure_msg("Ad4#21?'S|", "qwerty123", &pw));
+	/* Many similar chars */
+	BBUNIT_ASSERT_NOTNULL(obscure_msg("Ad4#21?'S|", "^33Daaaaaa1", &pw));
+
+	BBUNIT_ENDTEST;
+}
+
+BBUNIT_DEFINE_TEST(obscure_strong_pass)
+{
+	BBUNIT_ASSERT_NULL(obscure_msg("Rt4##2&:'|", "}(^#rrSX3S*22", &pw));
+
+	BBUNIT_ENDTEST;
+}
+
+#endif /* ENABLE_UNIT_TEST */

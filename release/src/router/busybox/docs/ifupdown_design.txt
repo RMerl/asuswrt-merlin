@@ -21,7 +21,7 @@ static int dhcp_down(struct interface_defn_t *ifd, execfn *exec)
 #if ENABLE_FEATURE_IFUPDOWN_EXTERNAL_DHCP
 	int i ;
 	for (i = 0; i < ARRAY_SIZE(ext_dhcp_clients); i++) {
-		if (exists_execable(ext_dhcp_clients[i].name))
+		if (executable_exists(ext_dhcp_clients[i].name))
 			return execute(ext_dhcp_clients[i].stopcmd, ifd, exec);
 	}
 	bb_error_msg("no dhcp clients found, using static interface shutdown");

@@ -151,7 +151,25 @@ Exit Codes
 */
 
 /* Busyboxed by Denys Vlasenko <vda.linux@googlemail.com> */
-/* TODO: depends on runit_lib.c - review and reduce/eliminate */
+
+//config:config SV
+//config:	bool "sv"
+//config:	default y
+//config:	help
+//config:	  sv reports the current status and controls the state of services
+//config:	  monitored by the runsv supervisor.
+//config:
+//config:config SV_DEFAULT_SERVICE_DIR
+//config:	string "Default directory for services"
+//config:	default "/var/service"
+//config:	depends on SV
+//config:	help
+//config:	  Default directory for services.
+//config:	  Defaults to "/var/service"
+
+//applet:IF_SV(APPLET(sv, BB_DIR_USR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_SV) += sv.o
 
 //usage:#define sv_trivial_usage
 //usage:       "[-v] [-w SEC] CMD SERVICE_DIR..."
@@ -169,9 +187,9 @@ Exit Codes
 //usage:       "pause, cont, hup, alarm, interrupt, quit, 1, 2, term, kill: send\n"
 //usage:       "STOP, CONT, HUP, ALRM, INT, QUIT, USR1, USR2, TERM, KILL signal to service"
 
-#include <sys/poll.h>
 #include <sys/file.h>
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include "runit_lib.h"
 
 struct globals {
@@ -182,14 +200,14 @@ struct globals {
 	uint64_t tstart, tnow;
 	svstatus_t svstatus;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define acts         (G.acts        )
 #define service      (G.service     )
 #define rc           (G.rc          )
 #define tstart       (G.tstart      )
 #define tnow         (G.tnow        )
 #define svstatus     (G.svstatus    )
-#define INIT_G() do { } while (0)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 
 
 #define str_equal(s,t) (!strcmp((s), (t)))

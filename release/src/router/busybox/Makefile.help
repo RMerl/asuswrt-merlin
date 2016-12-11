@@ -21,10 +21,6 @@ help:
 	@echo '  defconfig		- set .config to largest generic configuration'
 	@echo '  menuconfig		- interactive curses-based configurator'
 	@echo '  oldconfig		- resolve any unresolved symbols in .config'
-	@echo '  hosttools  		- build sed for the host.'
-	@echo '  			  You can use these commands if the commands on the host'
-	@echo '  			  is unusable. Afterwards use it like:'
-	@echo '  			  make SED="$(objtree)/sed"'
 	@$(if $(boards), \
 		$(foreach b, $(boards), \
 		printf "  %-21s - Build for %s\\n" $(b) $(subst _defconfig,,$(b));) \

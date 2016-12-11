@@ -13,11 +13,11 @@
 //usage:     "\n	-f		Quit on first ARP reply"
 //usage:     "\n	-q		Quiet"
 //usage:     "\n	-b		Keep broadcasting, don't go unicast"
-//usage:     "\n	-D		Duplicated address detection mode"
+//usage:     "\n	-D		Exit with 1 if DST_IP replies"
 //usage:     "\n	-U		Unsolicited ARP mode, update your neighbors"
 //usage:     "\n	-A		ARP answer mode, update your neighbors"
 //usage:     "\n	-c N		Stop after sending N ARP requests"
-//usage:     "\n	-w TIMEOUT	Time to wait for ARP reply, seconds"
+//usage:     "\n	-w TIMEOUT	Seconds to wait for ARP reply"
 //usage:     "\n	-I IFACE	Interface to use (default eth0)"
 //usage:     "\n	-s SRC_IP	Sender IP address"
 //usage:     "\n	DST_IP		Target IP address"
@@ -28,6 +28,7 @@
 #include <netpacket/packet.h>
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 /* We don't expect to see 1000+ seconds delay, unsigned is enough */
 #define MONOTONIC_US() ((unsigned)monotonic_us())
@@ -60,7 +61,7 @@ struct globals {
 	unsigned brd_recv;
 	unsigned req_recv;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define src        (G.src       )
 #define dst        (G.dst       )
 #define me         (G.me        )
@@ -76,6 +77,7 @@ struct globals {
 #define brd_recv   (G.brd_recv  )
 #define req_recv   (G.req_recv  )
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	count = -1; \
 } while (0)
 
@@ -162,7 +164,7 @@ static void catcher(void)
 	alarm(1);
 }
 
-static bool recv_pack(unsigned char *buf, int len, struct sockaddr_ll *FROM)
+static void recv_pack(unsigned char *buf, int len, struct sockaddr_ll *FROM)
 {
 	struct arphdr *ah = (struct arphdr *) buf;
 	unsigned char *p = (unsigned char *) (ah + 1);
@@ -181,33 +183,33 @@ static bool recv_pack(unsigned char *buf, int len, struct sockaddr_ll *FROM)
 	if (FROM->sll_pkttype != PACKET_HOST
 	 && FROM->sll_pkttype != PACKET_BROADCAST
 	 && FROM->sll_pkttype != PACKET_MULTICAST)
-		return false;
+		return;
 
 	/* Only these types are recognized */
 	if (ah->ar_op != htons(ARPOP_REQUEST) && ah->ar_op != htons(ARPOP_REPLY))
-		return false;
+		return;
 
 	/* ARPHRD check and this darned FDDI hack here :-( */
 	if (ah->ar_hrd != htons(FROM->sll_hatype)
 	 && (FROM->sll_hatype != ARPHRD_FDDI || ah->ar_hrd != htons(ARPHRD_ETHER)))
-		return false;
+		return;
 
 	/* Protocol must be IP. */
 	if (ah->ar_pro != htons(ETH_P_IP)
 	 || (ah->ar_pln != 4)
 	 || (ah->ar_hln != me.sll_halen)
 	 || (len < (int)(sizeof(*ah) + 2 * (4 + ah->ar_hln))))
-		return false;
+		return;
 
 	move_from_unaligned32(src_ip.s_addr, p + ah->ar_hln);
 	move_from_unaligned32(dst_ip.s_addr, p + ah->ar_hln + 4 + ah->ar_hln);
 
 	if (dst.s_addr != src_ip.s_addr)
-		return false;
+		return;
 	if (!(option_mask32 & DAD)) {
 		if ((src.s_addr != dst_ip.s_addr)
-			|| (memcmp(p + ah->ar_hln + 4, &me.sll_addr, ah->ar_hln)))
-			return false;
+		 || (memcmp(p + ah->ar_hln + 4, &me.sll_addr, ah->ar_hln)))
+			return;
 	} else {
 		/* DAD packet was:
 		   src_ip = 0 (or some src)
@@ -224,32 +226,35 @@ static bool recv_pack(unsigned char *buf, int len, struct sockaddr_ll *FROM)
 		 */
 		if ((memcmp(p, &me.sll_addr, me.sll_halen) == 0)
 		 || (src.s_addr && src.s_addr != dst_ip.s_addr))
-			return false;
+			return;
 	}
 	if (!(option_mask32 & QUIET)) {
 		int s_printed = 0;
 
-		printf("%scast re%s from %s [%s]",
+		printf("%scast re%s from %s [%02x:%02x:%02x:%02x:%02x:%02x]",
 			FROM->sll_pkttype == PACKET_HOST ? "Uni" : "Broad",
 			ah->ar_op == htons(ARPOP_REPLY) ? "ply" : "quest",
 			inet_ntoa(src_ip),
-			ether_ntoa((struct ether_addr *) p));
+			p[0], p[1], p[2], p[3], p[4], p[5]
+		);
 		if (dst_ip.s_addr != src.s_addr) {
 			printf("for %s ", inet_ntoa(dst_ip));
 			s_printed = 1;
 		}
 		if (memcmp(p + ah->ar_hln + 4, me.sll_addr, ah->ar_hln)) {
+			unsigned char *pp = p + ah->ar_hln + 4;
 			if (!s_printed)
 				printf("for ");
-			printf("[%s]",
-				ether_ntoa((struct ether_addr *) p + ah->ar_hln + 4));
+			printf("[%02x:%02x:%02x:%02x:%02x:%02x]",
+				pp[0], pp[1], pp[2], pp[3], pp[4], pp[5]
+			);
 		}
 
 		if (last) {
 			unsigned diff = MONOTONIC_US() - last;
 			printf(" %u.%03ums\n", diff / 1000, diff % 1000);
 		} else {
-			printf(" UNSOLICITED?\n");
+			puts(" UNSOLICITED?");
 		}
 		fflush_all();
 	}
@@ -264,7 +269,6 @@ static bool recv_pack(unsigned char *buf, int len, struct sockaddr_ll *FROM)
 		memcpy(he.sll_addr, p, me.sll_halen);
 		option_mask32 |= UNICASTING;
 	}
-	return true;
 }
 
 int arping_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
@@ -284,7 +288,6 @@ int arping_main(int argc UNUSED_PARAM, char **argv)
 	// Need to remove SUID_NEVER from applets.h for this to work
 	//xsetuid(getuid());
 
-	err_str = xasprintf("interface %s %%s", device);
 	{
 		unsigned opt;
 		char *str_timeout;
@@ -302,7 +305,7 @@ int arping_main(int argc UNUSED_PARAM, char **argv)
 	}
 
 	target = argv[optind];
-
+	err_str = xasprintf("interface %s %%s", device);
 	xfunc_error_retval = 2;
 
 	{
@@ -359,8 +362,8 @@ int arping_main(int argc UNUSED_PARAM, char **argv)
 			saddr.sin_port = htons(1025);
 			saddr.sin_addr = dst;
 
-			if (setsockopt(probe_fd, SOL_SOCKET, SO_DONTROUTE, &const_int_1, sizeof(const_int_1)) == -1)
-				bb_perror_msg("setsockopt(SO_DONTROUTE)");
+			if (setsockopt_SOL_SOCKET_1(probe_fd, SO_DONTROUTE) != 0)
+				bb_perror_msg("setsockopt(%s)", "SO_DONTROUTE");
 			xconnect(probe_fd, (struct sockaddr *) &saddr, sizeof(saddr));
 			getsockname(probe_fd, (struct sockaddr *) &saddr, &alen);
 			//never happens:
