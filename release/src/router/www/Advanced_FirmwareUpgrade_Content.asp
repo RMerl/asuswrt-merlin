@@ -115,7 +115,7 @@ function initial(){
 			document.getElementById("sig_ver_word").innerHTML = sig_ver;
 	}
 
-	if(!live_update_support || !HTTPS_support){
+	if(!live_update_support || !HTTPS_support || ("<% nvram_get("firmware_check_enable"); %>" != "1")){
 		document.getElementById("update").style.display = "none";
 		document.getElementById("linkpage_div").style.display = "";
 		document.getElementById("linkpage").style.display = "";
@@ -134,7 +134,7 @@ function initial(){
 	}
 
 	/* Viz remarked 2016.06.17		
-	if(!live_update_support || !HTTPS_support || exist_firmver[0] == 9){
+	if(!live_update_support || !HTTPS_support || ("<% nvram_get("firmware_check_enable"); %>" != "1") || exist_firmver[0] == 9){
 		document.getElementById('auto_upgrade_setting').style.display = "none";
 	}
 	else{

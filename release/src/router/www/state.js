@@ -294,7 +294,7 @@ var nfsd_support = isSupport("nfsd");
 var wifilogo_support = isSupport("WIFI_LOGO"); 
 var band2g_support = isSupport("2.4G"); 
 var band5g_support = isSupport("5G");
-var live_update_support = isSupport("update") && ("<% nvram_get("firmware_check_enable"); %>" == "1" ? true : false);
+var live_update_support = isSupport("update");
 var cooler_support = isSupport("fanctrl");
 var power_support = isSupport("pwrctrl");
 if(is_US_sku)
