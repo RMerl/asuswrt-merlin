@@ -533,7 +533,7 @@ add_option (char *p[], int line, int unit)
 #endif
 			write_encoded_crt(buf, data);
 			//key-direction
-			sprintf(buf, "vpn_crt_client%d_hmac", unit);
+			sprintf(buf, "vpn_client%d_hmac", unit);
 			if(nvram_match(buf, "-1"))	//default, disable
 				nvram_set(buf, "2");	//openvpn default value: KEY_DIRECTION_BIDIRECTIONAL
 		}

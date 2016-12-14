@@ -119,6 +119,7 @@ static char auth_passwd[AUTH_MAX];
 static char auth_realm[AUTH_MAX];
 char host_name[64];
 char referer_host[64];
+char current_page_name[128];
 char user_agent[1024];
 char gen_token[32]={0};
 
@@ -245,6 +246,10 @@ int skip_auth = 0;
 char url[128];
 int http_port = SERVER_PORT;
 char *http_ifname = NULL;
+time_t login_dt=0;
+char login_url[128];
+int login_error_status = 0;
+char cloud_file[256];
 
 /* Added by Joey for handle one people at the same time */
 unsigned int login_ip=0; // the logined ip
@@ -364,24 +369,30 @@ void
 send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time)
 {
 	char inviteCode[256]={0};
-	char url_tmp[64]={0};
+	//char url_tmp[64]={0};
 	char *cp, *file_var=NULL;
 
 	if(url == NULL)
-		strncpy(url_tmp, "index.asp", sizeof(url_tmp));
+		strncpy(login_url, "index.asp", sizeof(login_url));
 	else
-		strlcpy(url_tmp, url, sizeof(url_tmp));
+		strncpy(login_url, url, sizeof(login_url));
+
+	login_dt = lock_time;
+
+	login_error_status = error_status;
 		
 	if(fromapp_flag == 0){
-		if(strncmp(url_tmp, "cloud_sync.asp", strlen(url_tmp))==0){
+		if(strncmp(login_url, "cloud_sync.asp", strlen(login_url))==0){
 			if(file != NULL){
 				cp = strstr(file,"flag=");
-				if(cp != (char*) 0)
+				if(cp != (char*) 0){
 					file_var = &cp[5];
+					memset(cloud_file, 0, sizeof(cloud_file));
+					strncpy(cloud_file, file_var, sizeof(cloud_file));
+				}
 			}
-			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s&file=%s&lock_time=%d';</script>",error_status, url_tmp, file_var, lock_time);
-		}else
-			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp?error_status=%d&page=%s&lock_time=%d';</script>",error_status, url_tmp, lock_time);
+		}
+		snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp';</script>");
 	}else{
 		snprintf(inviteCode, sizeof(inviteCode), "\"error_status\":\"%d\"", error_status);
 	}
@@ -402,6 +413,10 @@ referer_check(char* referer, int fromapp_flag)
 {
 	char *auth_referer=NULL;
 	char *cp1=NULL, *cp2=NULL, *location_cp=NULL, *location_cp1=NULL;
+	const int d_len = strlen(DUT_DOMAIN_NAME);
+	int port = 0;
+	int referer_from_https = 0;
+
 
 	if(fromapp_flag != 0)
 		return 0;
@@ -431,9 +446,18 @@ referer_check(char* referer, int fromapp_flag)
 		send_login_page(fromapp_flag, WEB_NOREFERER, NULL, NULL, 0);
 		return WEB_NOREFERER;
 	}
-	if(strncmp(DUT_DOMAIN_NAME, auth_referer, strlen(DUT_DOMAIN_NAME))==0){
-			strcpy(auth_referer, nvram_safe_get("lan_ipaddr"));
+
+	if (*(auth_referer + d_len) == ':' && (port = atoi(auth_referer + d_len + 1)) > 0 && port < 65536)
+		referer_from_https = 1;
+
+	if (((strlen(auth_referer) == d_len) || (*(auth_referer + d_len) == ':' && atoi(auth_referer + d_len + 1) > 0))
+	   && strncmp(DUT_DOMAIN_NAME, auth_referer, d_len)==0){
+		if(referer_from_https)
+			snprintf(auth_referer,sizeof(referer_host),"%s:%d",nvram_safe_get("lan_ipaddr"), port);
+		else
+			snprintf(auth_referer,sizeof(referer_host),"%s",nvram_safe_get("lan_ipaddr"));
 	}
+
 	/* form based referer info? */
 	if((strlen(auth_referer) == strlen(referer_host)) && strncmp( auth_referer, referer_host, strlen(referer_host) ) == 0){
 		//_dprintf("asus token referer_check: the right user and password\n");
@@ -575,6 +599,8 @@ send_headers( int status, char* title, char* extra_header, char* mime_type, int 
     char timebuf[100];
     (void) fprintf( conn_fp, "%s %d %s\r\n", PROTOCOL, status, title );
     (void) fprintf( conn_fp, "Server: %s\r\n", SERVER_NAME );
+    (void) fprintf( conn_fp, "x-frame-options: SAMEORIGIN\r\n");
+    (void) fprintf( conn_fp, "x-xss-protection: 1; mode=block\r\n");
     if (fromapp != 0){
 	(void) fprintf( conn_fp, "Cache-Control: no-store\r\n");	
 	(void) fprintf( conn_fp, "Pragma: no-cache\r\n");
@@ -788,6 +814,28 @@ void do_file(char *path, FILE *stream)
 }
 
 #endif
+
+void set_referer_host(void)
+{
+	const int d_len = strlen(DUT_DOMAIN_NAME);
+	int port = 0;
+	int referer_from_https = 0;
+
+	memset(referer_host, 0, sizeof(referer_host));
+	if (*(host_name + d_len) == ':' && (port = atoi(host_name + d_len + 1)) > 0 && port < 65536){
+		referer_from_https = 1;
+	}
+	if (((strlen(host_name) == d_len) || (*(host_name + d_len) == ':' && atoi(host_name + d_len + 1) > 0))
+	   && strncmp(DUT_DOMAIN_NAME, host_name, d_len)==0){
+		if(referer_from_https)
+			snprintf(referer_host,sizeof(referer_host),"%s:%d",nvram_safe_get("lan_ipaddr"), port);
+		else
+			snprintf(referer_host,sizeof(referer_host),"%s",nvram_safe_get("lan_ipaddr"));
+	}
+	else
+		snprintf(referer_host,sizeof(host_name),"%s",host_name);
+}
+
 int is_firsttime(void);
 
 time_t detect_timestamp, detect_timestamp_old, signal_timestamp;
@@ -1067,6 +1115,9 @@ handle_request(void)
 	}
 // 2007.11 James. }
 
+	memset(current_page_name, 0, sizeof(current_page_name));
+	strcpy(current_page_name, file);
+
 	if(strncmp(url, APPLYAPPSTR, strlen(APPLYAPPSTR))==0 
 #ifdef RTCONFIG_ROG
 		|| strncmp(url, APPLYROGSTR, strlen(APPLYROGSTR))==0
@@ -1095,17 +1146,17 @@ handle_request(void)
 
 	if(!fromapp) {
 		if(lock_flag == 1){
-			time_t dt_t;
 			login_timestamp_tmp = uptime();
-			dt_t = login_timestamp_tmp - last_login_timestamp;
-			if(last_login_timestamp != 0 && dt_t > 60){
+			login_dt = login_timestamp_tmp - last_login_timestamp;
+			if(last_login_timestamp != 0 && login_dt > 60){
 				login_try = 0;
 				last_login_timestamp = 0;
 				lock_flag = 0;
+				login_error_status = 0;
 			}else{
-				if(strncmp(file, "Main_Login.asp?error_status=7", 29)==0 || strstr(url, ".png")){
+				if((strncmp(file, "Main_Login.asp", 14)==0 && login_error_status == 7)|| strstr(url, ".png")){
 				}else{
-					send_login_page(fromapp, LOGINLOCK, url, NULL, dt_t);
+					send_login_page(fromapp, LOGINLOCK, url, NULL, login_dt);
 					return;
 				}
 			}
@@ -1148,7 +1199,7 @@ handle_request(void)
 			nvram_set("httpd_handle_request", url);
 			nvram_set_int("httpd_handle_request_fromapp", fromapp);
 			if(login_state==3 && !fromapp) { // few pages can be shown even someone else login
-				if(!(mime_exception&MIME_EXCEPTION_MAINPAGE || strncmp(file, "Main_Login.asp?error_status=9", 29)==0 || ((!handler->auth) && strncmp(file, "Main_Login.asp", 14) != 0))) {
+				if(!(mime_exception&MIME_EXCEPTION_MAINPAGE || (strncmp(file, "Main_Login.asp", 14)==0 && login_error_status == 9) || ((!handler->auth) && strncmp(file, "Main_Login.asp", 14) != 0))) {
 					if(strcasecmp(method, "post") == 0){
 						if (handler->input) {
 							handler->input(file, conn_fp, cl, boundary);
@@ -1248,12 +1299,8 @@ handle_request(void)
 				return;
 			} 
 			if(strncmp(url, "QIS_default.cgi", strlen(url))==0 && nvram_match("x_Setting", "0")){
-				memset(referer_host, 0, sizeof(referer_host));
-				if(strncmp(DUT_DOMAIN_NAME, host_name, strlen(DUT_DOMAIN_NAME))==0){
-					strcpy(referer_host, nvram_safe_get("lan_ipaddr"));
-				}else
-					snprintf(referer_host,sizeof(host_name),"%s",host_name);
 
+				if(!fromapp) set_referer_host();
 				send_token_headers( 200, "Ok", handler->extra_header, handler->mime_type, fromapp);
 
 			}else if(strncmp(url, "login.cgi", strlen(url))!=0){
@@ -1271,7 +1318,9 @@ handle_request(void)
 	if (!handler->pattern){
 		if(strlen(file) > 50 && !(strstr(file, "findasus")) && !(strstr(file, "acme-challenge"))){
 			char inviteCode[256];
-			snprintf(inviteCode, sizeof(inviteCode), "<script>location.href='/cloud_sync.asp?flag=%s';</script>", file);
+			memset(cloud_file, 0, sizeof(cloud_file));
+			strncpy(cloud_file, file, sizeof(cloud_file));
+			snprintf(inviteCode, sizeof(inviteCode), "<script>location.href='/cloud_sync.asp';</script>");
 			send_page( 200, "OK", (char*) 0, inviteCode, 0);
 		}
 		else
