@@ -134,7 +134,7 @@ endif	#autoliveupdate_zip
 endif	#merlinupdate
 
 #	Used by Curl
-	cp -f others/ca-bundle.crt $(INSTALLDIR)/rom/ca-bundle.crt
+	cp -f --preserve=timestamps others/ca-bundle.crt $(INSTALLDIR)/rom/ca-bundle.crt
 
 ifeq ($(RTCONFIG_OPENVPN),y)
 	cp -f others/dh2048.pem	 $(INSTALLDIR)/rom/dh2048.pem
