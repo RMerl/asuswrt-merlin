@@ -5,7 +5,7 @@ Asuswrt-Merlin Changelog
    - NEW: New firmware availability notification.  The router will
           notify you if a new firmware is available, and will also
           let you view the changelog before sending you to the
-          download page (the update remains manual)
+          download page (the update process remains manual).
 
           Note that the automated check will only report new
           final releases.  The Check button on the Firmware Upgrade
@@ -26,12 +26,26 @@ Asuswrt-Merlin Changelog
               3 seconds (user-configurable)
    - CHANGED: IPTraffic charts now show sorted slices, so the
               clients with the least traffic will get grouped
-              under "Others" if truncating the list of shown clients.
+              under "Others" if truncating the list of shown
+              clients.
    - CHANGED: Enabled IPv6 support in curl.
+   - CHANGED: Improved webui performance, by caching large static
+              Javascript files such as jquery, and increased cache
+              life from 5 mins to 1 hour.
+   - CHANGED: No longer include Download Master packages in the
+              firmware for those models that still included them,
+              reducing firmware size by a few megabytes.
+              Those were always outdated, the router will download
+              the latest versions from Asus's servers at install
+              time.
    - FIXED: Web server crash if importing an ovpn file with an
             invalid key or certificate (Asus bug)
-   - FIXED: App icon at the top wouldn't work on Firefox, generating
-            a Javascript error (Asus bug)
+   - FIXED: App icon at the top wouldn't work on Firefox,
+            generating a Javascript error (Asus bug)
+   - FIXED: Firefox would sometime fail to display the client
+            list, reporting a JSON parsing error in the console.
+   - FIXED: Potential security issues in httpd (backported from
+            380_4164).
 
 
 380.63_2 (12-Nov-2016)
