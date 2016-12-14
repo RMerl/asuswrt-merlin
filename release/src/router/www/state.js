@@ -817,10 +817,11 @@ function show_banner(L3){// L3 = The third Level of Menu
 }
 
 function show_app_table(evt){
+	
 	var target = document.getElementById("app_link_table");
-	var item = evt.target || evt.srcElement;
-
-	if(item.id == "app_icon" || item.id == "cancel_app"){
+        var evt_target = evt.target || evt.srcElement;  //evt.target for Firefox patched
+	
+	if(evt_target.id == "app_icon" || evt_target.id == "cancel_app"){
 		if(target.style.display == "none"){
 			target.style.display = "";		
 		}
@@ -828,13 +829,13 @@ function show_app_table(evt){
 			target.style.display = "none";
 		}				
 	}
-	else if(item.offsetParent == null){
+	else if(evt_target.offsetParent == null){
 		if(target.style.display == ""){
 			target.style.display = "none";
 		}			
 		
 	}
-	else if((item.id != "null" && item.id == "app_link_table") || (item.offsetParent.id != "null" && item.offsetParent.id) == "app_link_table"){	
+	else if((evt_target.id != "null" && evt_target.id == "app_link_table") || (evt_target.offsetParent.id != "null" && evt_target.offsetParent.id) == "app_link_table"){	
 		return true;
 	}
 	else{
