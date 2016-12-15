@@ -73,15 +73,15 @@ var pieOptions = {
 				var total = eval(data.datasets[tooltipItem.datasetIndex].data.join("+"));
 				var unit = " bytes";
 				if (value > 1024) {
-					value = Math.round(value / 1024 );
+					value = value / 1024;
 					unit = " KB";
 				}
 				if (value > 1024) {
-					value = Math.round(value / 1024 );
+					value = value / 1024;
 					unit = " MB";
 				}
 				if (value > 1024) {
-					value = Math.round(value / 1024 );
+					value = value / 1024;
 					unit = " GB";
 				}
 				return value.toFixed(2) + unit + ' ( ' + parseFloat(orivalue * 100 / total).toFixed(2) + '% )';
@@ -200,15 +200,15 @@ function draw_chart(data_array, ctx, pie) {
 
 		var unit = " Bytes";
 		if (value > 1024) {
-			value = Math.round(value / 1024 );
+			value = value / 1024;
 			unit = " KB";
 		}
 		if (value > 1024) {
-			value = Math.round(value / 1024 );
+			value = value / 1024;
 			unit = " MB";
 		}
 		if (value > 1024) {
-			value = Math.round(value / 1024 );
+			value = value / 1024;
 			unit = " GB";
 		}
 
