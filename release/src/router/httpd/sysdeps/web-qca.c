@@ -1028,8 +1028,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char *pt1,*pt2;
 	char a1[10],a2[10];
 	char ssid_str[256];
-	char ch[4] = "", ssid[33] = "", address[18] = "", enc[9] = "";
-	char auth[16] = "", sig[9] = "", wmode[8] = "";
+	char ch[4],ssid[33],address[18],enc[9],auth[16],sig[9],wmode[8];
 	int  lock;
 
 	dbg("Please wait...");
@@ -1133,9 +1132,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 		//sig
 	        pt1 = strstr(buf[3], "Quality=");	
-		pt2 = NULL;
-		if (pt1 != NULL)
-			pt2 = strstr(pt1,"/");
+		pt2 = strstr(pt1,"/");
 		if(pt1 && pt2)
 		{
 			memset(sig,0,sizeof(sig));

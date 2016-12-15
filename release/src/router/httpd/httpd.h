@@ -273,7 +273,6 @@ extern int get_token_list_length(void);
 extern asus_token_t* search_timeout_in_list(asus_token_t **prev, int fromapp_flag);
 extern asus_token_t* add_token_to_list(char *token, int add_to_end);
 extern asus_token_t* create_list(char *token);
-extern void set_referer_host(void);
 extern void get_ipv6_client_info(void);
 extern void get_ipv6_client_list(void);
 extern int inet_raddr6_pton(const char *src, void *dst, void *buf);
