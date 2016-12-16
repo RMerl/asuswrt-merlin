@@ -7,7 +7,7 @@ Asuswrt is the name of the common firmware Asus has developed
 for their various router models.  Originally forked from 
 Tomato, it has since grown into a very different product, removing 
 some more technical features that were part of Tomato, but 
-also adding new original features such as support for dual WANs.
+also adding a lot of new original features.
 
 Asuswrt-merlin is a customized version of Asus's firmware. The goal is 
 to provide bugfixes and minor enhancements to Asus's firmware, with also 
@@ -30,7 +30,7 @@ Supported Devices
 -----------------
 Supported devices are:
  * RT-N66U
- * RT-AC66U (HW revision A1/A2 only)
+ * RT-AC66U (excludes the RT-AC66U_B1 model)
  * RT-AC56U
  * RT-AC68U & RT-AC68P (including HW revision C1 and E1)
  * RT-AC87U
@@ -67,7 +67,7 @@ System:
    - Entware easy setup script (alternative to Optware - the two are 
      mutually exclusive)
    - SNMP support (based on experimental code from Asus)
-   - Nano text editor (for more user-friendly script edition)
+   - Nano text editor (for more user-friendly script editing)
 
 
 Disk sharing:
@@ -102,10 +102,10 @@ Networking:
 
 Web interface:
    - Optionally save traffic stats to disk (USB or JFFS partition)
-   - Enhanced traffic monitoring: added monthly, as well as per IP 
-     monitoring
+   - Enhanced traffic monitoring, reporting traffic per IP, and
+     displaying graphical reports of historical data
    - Hostname field on the DHCP reservation page
-   - System info summary page
+   - System information summary page
    - Wifi icon reports the state of both radios
    - Display the Ethernet port states
    - Wireless site survey
@@ -167,7 +167,8 @@ sure to create a new backup of your settings after reconfiguring.
 Documentation
 -------------
 For documentation on how to use the features that are specific to 
-Asuswrt-Merlin, please visit the Wiki:
+Asuswrt-Merlin, as well as additional guides, please consult the
+wiki:
 
 https://github.com/RMerl/asuswrt-merlin/wiki
 
@@ -175,7 +176,7 @@ https://github.com/RMerl/asuswrt-merlin/wiki
 
 Source code
 -----------
-The source code with all my modifications can be found on Github, at:
+The buildable source code can be found on Github, at:
 
 https://github.com/RMerl/asuswrt-merlin
 
@@ -192,19 +193,20 @@ IRC: #asuswrt on DALnet
 Download: https://asuswrt.lostrealm.ca/download
 
 Development news will be posted on Twitter.  You can also keep a closer 
-eye on development as it happens, through the Github site.
+eye on development as it happens, through the Github code repository.
 
 For support questions, please use the SmallNetBuilder forums whenever 
 possible.  There's a dedicated Asuswrt-Merlin sub-forum there, under 
-the Asus Wireless section.
+the Asus Wireless section.  The community there is the primary source 
+of technical support.
 
 I want to give my special thanks to Asus for showing an interest in 
 this project, and also providing me with support and development 
 devices when needed.  I also want to thank everyone that has 
 donated through Paypal.  Much appreciated!
 
-Finally, special thanks to r00t4rd3d for designing the Asuswrt-Merlin 
-logo.
+Finally, my special thanks to r00t4rd3d for designing the 
+Asuswrt-Merlin logo.
 
 
 
@@ -242,7 +244,7 @@ The only call back made by this firmware to me is when it checks for the
 availability of a new version, which can be disabled if desired.  More info 
 on the Wiki:
 
- https://github.com/RMerl/asuswrt-merlin/wiki/RMerl/asuswrt-merlin/wiki/Privacy-disclosure
+https://github.com/RMerl/asuswrt-merlin/wiki/RMerl/asuswrt-merlin/wiki/Privacy-disclosure
 
 
 --- 

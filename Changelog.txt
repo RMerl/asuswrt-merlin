@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.64 (xx-xxx-xxxx)
+380.64 (16-Dec-2016)
    - NEW: New firmware availability notification.  The router will
           notify you if a new firmware is available, and will also
           let you view the changelog before sending you to the
@@ -38,14 +38,17 @@ Asuswrt-Merlin Changelog
               Those were always outdated, the router will download
               the latest versions from Asus's servers at install
               time.
+   - CHANGED: Improved webui protection against CSS/XSS attacks
+              (backport from GPL 4164)
    - FIXED: Web server crash if importing an ovpn file with an
             invalid key or certificate (Asus bug)
    - FIXED: App icon at the top wouldn't work on Firefox,
             generating a Javascript error (Asus bug)
    - FIXED: Firefox would sometime fail to display the client
             list, reporting a JSON parsing error in the console.
-   - FIXED: Potential security issues in httpd (backported from
-            380_4164).
+   - FIXED: HMAC setting not properly set when importing an ovpn
+            file for a config based on TLS authentication mode.
+            (backport from GPL 4164)
 
 
 380.63_2 (12-Nov-2016)
