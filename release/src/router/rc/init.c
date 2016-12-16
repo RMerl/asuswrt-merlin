@@ -5788,6 +5788,7 @@ fa_mode_adjust()
 	if (nvram_get_int("sw_mode") == SW_MODE_ROUTER || nvram_get_int("sw_mode") == SW_MODE_AP) {
 		if (!nvram_match("ctf_disable_force", "1")
 			&& nvram_get_int("ctf_fa_cap")
+			&& !nvram_get_int("cstats_enable")
 			&& !nvram_match("gmac3_enable", "1")
  			&& !nvram_get_int("qos_enable")
 		) {
