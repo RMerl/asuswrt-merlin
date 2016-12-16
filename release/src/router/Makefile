@@ -3758,6 +3758,8 @@ curl/Makefile: curl/configure
 		--enable-http --with-ssl=$(TOP)/openssl/ssl LDFLAGS="-ldl" \
 		$(if $(RTCONFIG_IPV6),--enable-ipv6) \
 		--disable-gopher --disable-dict --disable-telnet \
+		CFLAGS='$(CFLAGS) -I$(TOP)/openssl/include' \
+		LDFLAGS='$(LDFLAGS) -L$(TOP)/openssl -lcrypto -lssl' \
 		--with-ca-bundle=/rom/ca-bundle.crt
 
 curl-install: curl
