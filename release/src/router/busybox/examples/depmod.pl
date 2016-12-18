@@ -118,7 +118,7 @@ warn "**** Finished locating modules\n" if $verbose;
 foreach my $obj ( @liblist ){
     # turn the input file name into a target tag name
     my ($tgtname) = $obj =~ m-(/lib/modules/.*)$-;
-    
+
     warn "\nMODULE = $tgtname\n" if $verbose;
 
     # get a list of symbols
@@ -205,7 +205,7 @@ foreach my $module ( keys %$mod ) {
     if($kseries eq '2.4') {
 	    print "$module:\t";
 	    my @sorted = sort bydep keys %{$mod->{$module}};
-	    print join(" ",@sorted);
+	    print join(" \\\n\t",@sorted);
 	    print "\n\n";
     } else {
 	    my $shortmod = $module;

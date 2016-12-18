@@ -178,6 +178,7 @@ dd POSIX options:
   conv=noerror    |  yes   |           |
   conv=notrunc    |  yes   |           |
   conv=sync       |  yes   |           |
+  iflag=skip_bytes|  yes   |           |
 dd Busybox specific options:
  conv=fsync
 

@@ -41,7 +41,7 @@ enum {
 static void convert(char *fn, int conv_type)
 {
 	FILE *in, *out;
-	int i;
+	int ch;
 	char *temp_fn = temp_fn; /* for compiler */
 	char *resolved_fn = resolved_fn;
 
@@ -49,28 +49,30 @@ static void convert(char *fn, int conv_type)
 	out = stdout;
 	if (fn != NULL) {
 		struct stat st;
+		int fd;
 
 		resolved_fn = xmalloc_follow_symlinks(fn);
 		if (resolved_fn == NULL)
 			bb_simple_perror_msg_and_die(fn);
 		in = xfopen_for_read(resolved_fn);
-		fstat(fileno(in), &st);
+		xfstat(fileno(in), &st, resolved_fn);
 
 		temp_fn = xasprintf("%sXXXXXX", resolved_fn);
-		i = xmkstemp(temp_fn);
-		if (fchmod(i, st.st_mode) == -1)
+		fd = xmkstemp(temp_fn);
+		if (fchmod(fd, st.st_mode) == -1)
 			bb_simple_perror_msg_and_die(temp_fn);
+		fchown(fd, st.st_uid, st.st_gid);
 
-		out = xfdopen_for_write(i);
+		out = xfdopen_for_write(fd);
 	}
 
-	while ((i = fgetc(in)) != EOF) {
-		if (i == '\r')
+	while ((ch = fgetc(in)) != EOF) {
+		if (ch == '\r')
 			continue;
-		if (i == '\n')
+		if (ch == '\n')
 			if (conv_type == CT_UNIX2DOS)
 				fputc('\r', out);
-		fputc(i, out);
+		fputc(ch, out);
 	}
 
 	if (fn != NULL) {

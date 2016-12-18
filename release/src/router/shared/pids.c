@@ -87,13 +87,6 @@ static int read_to_buf(const char *filename, void *buf)
 	return ret;
 }
 
-void* xzalloc(size_t size)
-{
-        void *ptr = malloc(size);
-        memset(ptr, 0, size);
-        return ptr;
-}
-
 typedef struct procps_status_t {
         DIR *dir;
         unsigned char shift_pages_to_bytes;
@@ -124,7 +117,7 @@ typedef struct procps_status_t {
 static procps_status_t* alloc_procps_scan(void)
 {
 	unsigned n = getpagesize();
-	procps_status_t* sp = xzalloc(sizeof(procps_status_t));
+	procps_status_t* sp = calloc(1, sizeof(procps_status_t));
 	sp->dir = opendir("/proc");
 	while (1) {
 		n >>= 1;
@@ -190,21 +183,13 @@ unsigned long long bb_strtoull(const char *arg, char **endp, int base)
         return handle_errors(v, endp, endptr);
 }
 
-void* xrealloc(void *ptr, size_t size)
-{
-        ptr = realloc(ptr, size);
-        if (ptr == NULL && size != 0)
-                perror("no memory");
-        return ptr;
-}
-
 void* xrealloc_vector_helper(void *vector, unsigned sizeof_and_shift, int idx)
 {
         int mask = 1 << (unsigned char)sizeof_and_shift;
 
         if (!(idx & (mask - 1))) {
                 sizeof_and_shift >>= 8; /* sizeof(vector[0]) */
-                vector = xrealloc(vector, sizeof_and_shift * (idx + mask + 1));
+                vector = realloc(vector, sizeof_and_shift * (idx + mask + 1));
                 memset((char*)vector + (sizeof_and_shift * idx), 0, sizeof_and_shift * (mask + 1));
         }
         return vector;
@@ -402,7 +387,7 @@ pid_t* find_pid_by_name(const char *procName)
 	int i = 0;
 	procps_status_t* p = NULL;
 
-	pidList = xzalloc(sizeof(*pidList));
+	pidList = calloc(1, sizeof(*pidList));
 	while ((p = procps_scan(p, PSSCAN_PID|PSSCAN_COMM|PSSCAN_ARGVN))) {
 		if (comm_match(p, procName)
 		/* or we require argv0 to match (essential for matching reexeced /proc/self/exe)*/

@@ -348,6 +348,7 @@ create_sunlabel(void)
 
 	set_all_unchanged();
 	set_changed(0);
+	check_sun_label();
 	get_boot(CREATE_EMPTY_SUN);
 }
 
@@ -497,11 +498,14 @@ add_sun_partition(int n, int sys)
 		else
 			first = read_int(scround(start), scround(stop)+1,
 					 scround(stop), 0, mesg);
-		if (display_in_cyl_units)
+		if (display_in_cyl_units) {
 			first *= units_per_sector;
-		else
+		} else {
 			/* Starting sector has to be properly aligned */
-			first = (first + g_heads * g_sectors - 1) / (g_heads * g_sectors);
+			first = (first + g_heads * g_sectors - 1) /
+				(g_heads * g_sectors);
+			first *= g_heads * g_sectors;
+		}
 		if (n == 2 && first != 0)
 			printf("\
 It is highly recommended that the third partition covers the whole disk\n\

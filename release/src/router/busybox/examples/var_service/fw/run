@@ -62,7 +62,7 @@ umask 077
 
 # Make sure rundir/ exists
 mkdir -p "$rundir" 2>/dev/null
-chown -R "$user:" "$rundir"
+chown -R "$user": "$rundir"
 chmod -R a=rX "$rundir"
 rm -rf rundir 2>/dev/null
 ln -s "$rundir" rundir

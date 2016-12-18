@@ -48,6 +48,9 @@ static const char mkdir_longopts[] ALIGN1 =
 #if ENABLE_SELINUX
 	"context\0" Required_argument "Z"
 #endif
+#if ENABLE_FEATURE_VERBOSE
+	"verbose\0" No_argument       "v"
+#endif
 	;
 #endif
 
@@ -66,18 +69,20 @@ int mkdir_main(int argc UNUSED_PARAM, char **argv)
 #if ENABLE_FEATURE_MKDIR_LONG_OPTIONS
 	applet_long_options = mkdir_longopts;
 #endif
-	opt = getopt32(argv, "m:p" IF_SELINUX("Z:"), &smode IF_SELINUX(,&scontext));
+	opt = getopt32(argv, "m:pv" IF_SELINUX("Z:"), &smode IF_SELINUX(,&scontext));
 	if (opt & 1) {
-		mode_t mmode = 0777;
-		if (!bb_parse_mode(smode, &mmode)) {
+		mode_t mmode = bb_parse_mode(smode, 0777);
+		if (mmode == (mode_t)-1) {
 			bb_error_msg_and_die("invalid mode '%s'", smode);
 		}
 		mode = mmode;
 	}
 	if (opt & 2)
 		flags |= FILEUTILS_RECUR;
+	if ((opt & 4) && FILEUTILS_VERBOSE)
+		flags |= FILEUTILS_VERBOSE;
 #if ENABLE_SELINUX
-	if (opt & 4) {
+	if (opt & 8) {
 		selinux_or_die();
 		setfscreatecon_or_die(scontext);
 	}

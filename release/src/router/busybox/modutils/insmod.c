@@ -10,9 +10,8 @@
 //applet:IF_INSMOD(APPLET(insmod, BB_DIR_SBIN, BB_SUID_DROP))
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include "modutils.h"
-#include <sys/utsname.h>
-#include <fnmatch.h>
 
 /* 2.6 style insmod has no options and required filename
  * (not module name - .ko can't be omitted) */
@@ -23,7 +22,7 @@
 //usage:	IF_NOT_FEATURE_2_4_MODULES("FILE ")
 //usage:	"[SYMBOL=VALUE]..."
 //usage:#define insmod_full_usage "\n\n"
-//usage:       "Load the specified kernel modules into the kernel"
+//usage:       "Load kernel module"
 //usage:	IF_FEATURE_2_4_MODULES( "\n"
 //usage:     "\n	-f	Force module to load into the wrong kernel version"
 //usage:     "\n	-k	Make module autoclean-able"
@@ -37,7 +36,13 @@
 //usage:	)
 //usage:#endif
 
-static char *m_filename;
+struct globals {
+	char *filename;
+} FIX_ALIASING;
+#define G (*(struct globals*)bb_common_bufsiz1)
+#define INIT_G() do { \
+	setup_common_bufsiz(); \
+} while (0)
 
 static int FAST_FUNC check_module_name_match(const char *filename,
 		struct stat *statbuf UNUSED_PARAM,
@@ -52,21 +57,19 @@ static int FAST_FUNC check_module_name_match(const char *filename,
 	tmp = bb_get_last_path_component_nostrip(filename);
 	if (strcmp(tmp, fullname) == 0) {
 		/* Stop searching if we find a match */
-		m_filename = xstrdup(filename);
+		G.filename = xstrdup(filename);
 		return FALSE;
 	}
 	return TRUE;
 }
 
-
 int insmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int insmod_main(int argc UNUSED_PARAM, char **argv)
 {
-	struct stat st;
-	char *filename;
-	FILE *fp = NULL;
-	int pos;
+	char *filename, *dot;
 	int rc;
+
+	INIT_G();
 
 	/* Compat note:
 	 * 2.6 style insmod has no options and required filename
@@ -85,45 +88,36 @@ int insmod_main(int argc UNUSED_PARAM, char **argv)
 	if (!filename)
 		bb_show_usage();
 
-	m_filename = NULL;
-
-	pos = strlen(filename) - 2;
-	if (get_linux_version_code() < KERNEL_VERSION(2,6,0)) {
-		if (pos < 0) pos = 0;
-		if (strncmp(&filename[pos], ".o", 2) !=0)
+	/* Check if we have a complete module name */
+	dot = strrchr(filename, '.');
+	if (ENABLE_FEATURE_2_4_MODULES
+	 && get_linux_version_code() < KERNEL_VERSION(2,6,0)) {
+		if (!dot || strcmp(dot, ".o") != 0)
 			filename = xasprintf("%s.o", filename);
 	} else {
-		if (--pos < 0) pos = 0;
-		if (strncmp(&filename[pos], ".ko", 3) !=0)
+		if (!dot || strcmp(dot, ".ko") != 0)
 			filename = xasprintf("%s.ko", filename);
 	}
 
-	/* Get a filedesc for the module.  Check if we have a complete path */
-	if (stat(filename, &st) < 0 || !S_ISREG(st.st_mode) ||
-		(fp = fopen_for_read(filename)) == NULL) {
+	/* Check if we have a complete path */
+	if (access(filename, R_OK) != 0) {
 		/* Hmm.  Could not open it. Search /lib/modules/ */
-		int r;
-		char *module_dir;
-
-		module_dir = xmalloc_readlink(CONFIG_DEFAULT_MODULES_DIR);
+		char *module_dir = xmalloc_readlink(CONFIG_DEFAULT_MODULES_DIR);
 		if (!module_dir)
 			module_dir = xstrdup(CONFIG_DEFAULT_MODULES_DIR);
-		r = recursive_action(module_dir, ACTION_RECURSE,
-			check_module_name_match, NULL, filename, 0);
+		rc = recursive_action(module_dir, ACTION_RECURSE,
+				check_module_name_match, NULL, filename, 0);
+		if (!rc && G.filename && access(G.filename, R_OK) == 0)
+			filename = G.filename;
 		free(module_dir);
-		if (r)
-			bb_error_msg_and_die("'%s': module not found", filename);
-		if (m_filename == NULL || ((fp = fopen_for_read(m_filename)) == NULL))
-			bb_error_msg_and_die("'%s': module not found", filename);
-		filename = m_filename;
 	}
-	if (fp != NULL)
-		fclose(fp);
 
 	rc = bb_init_module(filename, parse_cmdline_module_options(argv, /*quote_spaces:*/ 0));
 	if (rc)
 		bb_error_msg("can't insert '%s': %s", filename, moderror(rc));
 
-	free(m_filename);
+	if (ENABLE_FEATURE_CLEAN_UP)
+		free(G.filename);
+
 	return rc;
 }

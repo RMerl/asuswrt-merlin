@@ -31,9 +31,11 @@ dt=`busybox date -d '1999-1-2 3:4:5'`
 dt=`echo "$dt" | cut -b1-19`
 test x"$dt" = x"Sat Jan  2 03:04:05"
 
-dt=`busybox date -d 01231133`
-dt=`echo "$dt" | cut -b5-19`
-test x"$dt" = x"Jan 23 11:33:00"
+# date (GNU coreutils) 8.17 doesn't accept 01231133 either:
+# date: invalid date '01231133'
+#dt=`busybox date -d 01231133`
+#dt=`echo "$dt" | cut -b5-19`
+#test x"$dt" = x"Jan 23 11:33:00"
 
 dt=`busybox date -d 200001231133`
 dt=`echo "$dt" | cut -b1-19`

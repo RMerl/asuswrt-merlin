@@ -36,7 +36,7 @@ service=${PWD##*/}
 file_ipconf="$service.ipconf"
 file_ntpconf="$service.ntpconf"
 dir_ipconf="/var/run/service/fw"
-dir_ntpconf="/var/run/service/ntp"
+dir_ntpconf="/var/run/service/ntpd"
 
 exec >/dev/null
 #exec >>"$0.out"  #debug
@@ -47,7 +47,7 @@ echo "`date`: Params: $*"
 if test x"$1" != x"bound" && test x"$1" != x"renew" ; then
 	# Reconfigure network with this interface disabled
 	echo "Deconfiguring"
-	rm "$service.out"
+	rm "env.out"
 	rm "$file_ipconf"
 	rm "$file_ntpconf"
 	rm "$dir_ipconf/$file_ipconf"
@@ -57,7 +57,8 @@ if test x"$1" != x"bound" && test x"$1" != x"renew" ; then
 fi
 
 # Bound: we've got the lease
-#env >"$service.out"  # debug
+# Record information for e.g. dhcp_$IF_pinger service
+env >"env.out"
 
 ./convert2ipconf "$file_ipconf"
 # Reconfigure routing and firewall if needed
@@ -69,7 +70,7 @@ if test $? != 0; then
 	sv u /var/service/fw
 fi
 
-if test -d /var/service/ntp; then
+if test -d /var/service/ntpd; then
 	./convert2ntpconf "$file_ntpconf"
 	# Reconfigure ntp server addresses if needed
 	diff --brief "$file_ntpconf" "$dir_ntpconf/$file_ntpconf" >/dev/null 2>&1
@@ -77,7 +78,7 @@ if test -d /var/service/ntp; then
 		echo "Reconfiguring ntp"
 		mkdir -p "$dir_ntpconf" 2>/dev/null
 		cp "$file_ntpconf" "$dir_ntpconf/$file_ntpconf"
-		sv t /var/service/ntp
-		sv u /var/service/ntp
+		sv t /var/service/ntpd
+		sv u /var/service/ntpd
 	fi
 fi

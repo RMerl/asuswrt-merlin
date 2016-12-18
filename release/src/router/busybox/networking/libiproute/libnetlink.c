@@ -71,11 +71,15 @@ int FAST_FUNC rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, in
 	struct nlmsghdr nlh;
 	struct sockaddr_nl nladdr;
 	struct iovec iov[2] = { { &nlh, sizeof(nlh) }, { req, len } };
+	/* Use designated initializers, struct layout is non-portable */
 	struct msghdr msg = {
-		(void*)&nladdr, sizeof(nladdr),
-		iov,  2,
-		NULL, 0,
-		0
+		.msg_name = (void*)&nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = iov,
+		.msg_iovlen = 2,
+		.msg_control = NULL,
+		.msg_controllen = 0,
+		.msg_flags = 0
 	};
 
 	memset(&nladdr, 0, sizeof(nladdr));
@@ -104,12 +108,15 @@ static int rtnl_dump_filter(struct rtnl_handle *rth,
 	while (1) {
 		int status;
 		struct nlmsghdr *h;
-
+		/* Use designated initializers, struct layout is non-portable */
 		struct msghdr msg = {
-			(void*)&nladdr, sizeof(nladdr),
-			&iov, 1,
-			NULL, 0,
-			0
+			.msg_name = (void*)&nladdr,
+			.msg_namelen = sizeof(nladdr),
+			.msg_iov = &iov,
+			.msg_iovlen = 1,
+			.msg_control = NULL,
+			.msg_controllen = 0,
+			.msg_flags = 0
 		};
 
 		status = recvmsg(rth->fd, &msg, 0);
@@ -211,11 +218,15 @@ int FAST_FUNC rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	struct sockaddr_nl nladdr;
 	struct iovec iov = { (void*)n, n->nlmsg_len };
 	char   *buf = xmalloc(8*1024); /* avoid big stack buffer */
+	/* Use designated initializers, struct layout is non-portable */
 	struct msghdr msg = {
-		(void*)&nladdr, sizeof(nladdr),
-		&iov, 1,
-		NULL, 0,
-		0
+		.msg_name = (void*)&nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+		.msg_control = NULL,
+		.msg_controllen = 0,
+		.msg_flags = 0
 	};
 
 	memset(&nladdr, 0, sizeof(nladdr));

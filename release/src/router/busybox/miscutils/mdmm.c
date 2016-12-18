@@ -17,6 +17,27 @@
  *
  */ 
 
+//config:config MDMM
+//config:	bool "MDMM Utility"
+//config:	default n
+//config:	help
+//config:	  The md/mm utility can be used to read/write memory and memory
+//config:	  mapped registers.
+
+//kbuild:lib-$(CONFIG_MDMM) += mdmm.o
+
+//applet:IF_MDMM(APPLET(md, BB_DIR_USR_SBIN, BB_SUID_DROP))
+//applet:IF_MDMM(APPLET(mm, BB_DIR_USR_SBIN, BB_SUID_DROP))
+
+//usage:#define md_trivial_usage
+//usage:       "address [count]"
+//usage:#define md_full_usage "\n"
+//usage:#define mm_trivial_usage
+//usage:       "address value"
+//usage:#define mm_full_usage "\n"
+
+#include "libbb.h"
+
 /*
  * Simple Atheros-specific tool to inspect and monitor network traffic
  * statistics.
@@ -43,13 +64,12 @@
 #include <errno.h>
 #include <unistd.h>
 
-void usage(void);
-int opendev(int);
+static void usage(void);
+static int opendev(int);
 int md_main(int, char *[]);
 int mm_main(int, char *[]);
-int main(int, char *[]);
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "Usage:\n"
@@ -58,11 +78,10 @@ usage(void)
 	exit(1);
 }
 
-int
+static int
 opendev(int mode)
 {
 	int		fd;
-	extern int	errno;
 #define AR_MEM_DEV_NAME	"/dev/armem"
 	fd = open(AR_MEM_DEV_NAME, mode);
 
@@ -74,19 +93,18 @@ opendev(int mode)
 	return fd;
 }
 
-int
+static int
 closedev(int fd)
 {
 	return close(fd);
 }
 
-int
-md_main(int argc, char *argv[])
+int md_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+int md_main(int argc, char *argv[])
 {
 	int		i, fd, count;
 	unsigned	val;
 	loff_t		addr;
-	off_t	 	ret;
 
 	if (argc < 2 || argc > 3) {
 		usage();
@@ -119,8 +137,8 @@ md_main(int argc, char *argv[])
 	return 0;
 }
 
-int
-mm_main(int argc, char *argv[])
+int mm_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+int mm_main(int argc, char *argv[])
 {
 	int		fd;
 	unsigned	new;
@@ -148,4 +166,3 @@ mm_main(int argc, char *argv[])
 	closedev(fd);
 	return 0;
 }
-

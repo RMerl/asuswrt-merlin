@@ -76,11 +76,13 @@
 #    define TEST_IP             (ip < ip_end)
 #    define NEED_IP(x) \
             if ((unsigned)(ip_end - ip) < (unsigned)(x))  goto input_overrun
+#    define TEST_IV(x)          if ((x) > (unsigned)0 - (511)) goto input_overrun
 
 #    undef TEST_OP              /* don't need both of the tests here */
 #    define TEST_OP             1
 #    define NEED_OP(x) \
             if ((unsigned)(op_end - op) < (unsigned)(x))  goto output_overrun
+#    define TEST_OV(x)          if ((x) > (unsigned)0 - (511)) goto output_overrun
 
 #define HAVE_ANY_OP 1
 

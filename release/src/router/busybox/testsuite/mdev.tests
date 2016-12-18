@@ -168,7 +168,7 @@ SKIP=
 # continuing to use directory structure from prev test
 rm -rf mdev.testdir/dev/*
 echo "sda 0:0 644 @echo @echo TEST" >mdev.testdir/etc/mdev.conf
-optional STATIC FEATURE_MDEV_CONF FEATURE_MDEV_EXEC FEATURE_LS_RECURSIVE FEATURE_LS_TIMESTAMPS FEATURE_LS_USERNAME FEATURE_SH_IS_ASH
+optional STATIC FEATURE_MDEV_CONF FEATURE_MDEV_EXEC FEATURE_LS_RECURSIVE FEATURE_LS_TIMESTAMPS FEATURE_LS_USERNAME FEATURE_SH_IS_ASH ASH_BUILTIN_ECHO
 testing "mdev command" \
 	"env - PATH=$PATH ACTION=add DEVPATH=/block/sda chroot mdev.testdir /mdev 2>&1;
 	ls -lnR mdev.testdir/dev | $FILTER_LS" \

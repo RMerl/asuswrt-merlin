@@ -64,3 +64,11 @@ lib-$(CONFIG_FEATURE_IP_RULE) += \
 	iprule.o \
 	rt_names.o \
 	utils.o
+
+lib-$(CONFIG_FEATURE_IP_NEIGH) += \
+	ip_parse_common_args.o \
+	ipneigh.o \
+	libnetlink.o \
+	ll_map.o \
+	rt_names.o \
+	utils.o

@@ -12,21 +12,23 @@
  */
 
 //usage:#define sysctl_trivial_usage
-//usage:       "[OPTIONS] [VALUE]..."
+//usage:       "[OPTIONS] [KEY[=VALUE]]..."
 //usage:#define sysctl_full_usage "\n\n"
-//usage:       "Configure kernel parameters at runtime\n"
-//usage:     "\n	-n	Don't print key names"
+//usage:       "Show/set kernel parameters\n"
 //usage:     "\n	-e	Don't warn about unknown keys"
-//usage:     "\n	-w	Change sysctl setting"
-//usage:     "\n	-p FILE	Load sysctl settings from FILE (default /etc/sysctl.conf)"
-//usage:     "\n	-a	Display all values"
-//usage:     "\n	-A	Display all values in table form"
+//usage:     "\n	-n	Don't show key names"
+//usage:     "\n	-a	Show all values"
+/* Same as -a, no need to show it */
+/* //usage:     "\n	-A	Show all values in table form" */
+//usage:     "\n	-w	Set values"
+//usage:     "\n	-p FILE	Set values from FILE (default /etc/sysctl.conf)"
+//usage:     "\n	-q      Set values silently"
 //usage:
 //usage:#define sysctl_example_usage
 //usage:       "sysctl [-n] [-e] variable...\n"
-//usage:       "sysctl [-n] [-e] -w variable=value...\n"
+//usage:       "sysctl [-n] [-e] [-q] -w variable=value...\n"
 //usage:       "sysctl [-n] [-e] -a\n"
-//usage:       "sysctl [-n] [-e] -p file	(default /etc/sysctl.conf)\n"
+//usage:       "sysctl [-n] [-e] [-q] -p file	(default /etc/sysctl.conf)\n"
 //usage:       "sysctl [-n] [-e] -A\n"
 
 #include "libbb.h"
@@ -37,9 +39,11 @@ enum {
 	FLAG_TABLE_FORMAT    = 1 << 2, /* not implemented */
 	FLAG_SHOW_ALL        = 1 << 3,
 	FLAG_PRELOAD_FILE    = 1 << 4,
+/* TODO: procps 3.2.8 seems to not require -w for KEY=VAL to work: */
 	FLAG_WRITE           = 1 << 5,
+	FLAG_QUIET           = 1 << 6,
 };
-#define OPTION_STR "neAapw"
+#define OPTION_STR "neAapwq"
 
 static void sysctl_dots_to_slashes(char *name)
 {
@@ -125,6 +129,9 @@ static int sysctl_act_on_setting(char *setting)
 
 	if (fd < 0) {
 		switch (errno) {
+		case EACCES:
+			/* Happens for write-only settings, e.g. net.ipv6.route.flush */
+			goto end;
 		case ENOENT:
 			if (option_mask32 & FLAG_SHOW_KEY_ERRORS)
 				bb_error_msg("error: '%s' is an unknown key", outname);
@@ -144,9 +151,11 @@ static int sysctl_act_on_setting(char *setting)
 //TODO: procps 3.2.7 writes "value\n", note trailing "\n"
 		xwrite_str(fd, value);
 		close(fd);
-		if (option_mask32 & FLAG_SHOW_KEYS)
-			printf("%s = ", outname);
-		puts(value);
+		if (!(option_mask32 & FLAG_QUIET)) {
+			if (option_mask32 & FLAG_SHOW_KEYS)
+				printf("%s = ", outname);
+			puts(value);
+		}
 	} else {
 		char c;
 
@@ -199,7 +208,7 @@ static int sysctl_act_recursive(const char *path)
 				continue; /* d_name is "." or ".." */
 			/* if path was ".", drop "./" prefix: */
 			retval |= sysctl_act_recursive((next[0] == '.' && next[1] == '/') ?
-					    next + 2 : next);
+					next + 2 : next);
 			free(next);
 		}
 		closedir(dirp);

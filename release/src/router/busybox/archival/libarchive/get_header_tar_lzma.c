@@ -14,7 +14,7 @@ char FAST_FUNC get_header_tar_lzma(archive_handle_t *archive_handle)
 	/* Can't lseek over pipes */
 	archive_handle->seek = seek_by_read;
 
-	open_transformer_with_sig(archive_handle->src_fd, unpack_lzma_stream, "unlzma");
+	fork_transformer_with_sig(archive_handle->src_fd, unpack_lzma_stream, "unlzma");
 	archive_handle->offset = 0;
 	while (get_header_tar(archive_handle) == EXIT_SUCCESS)
 		continue;

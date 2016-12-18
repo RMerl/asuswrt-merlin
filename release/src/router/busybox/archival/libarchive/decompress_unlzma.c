@@ -45,16 +45,16 @@ typedef struct {
 #define RC_MODEL_TOTAL_BITS 11
 
 
-/* Called twice: once at startup (LZMA_FAST only) and once in rc_normalize() */
-static size_inline void rc_read(rc_t *rc)
+/* Called once in rc_do_normalize() */
+static void rc_read(rc_t *rc)
 {
 	int buffer_size = safe_read(rc->fd, RC_BUFFER, RC_BUFFER_SIZE);
 //TODO: return -1 instead
 //This will make unlzma delete broken unpacked file on unpack errors
 	if (buffer_size <= 0)
 		bb_error_msg_and_die("unexpected EOF");
-	rc->ptr = RC_BUFFER;
 	rc->buffer_end = RC_BUFFER + buffer_size;
+	rc->ptr = RC_BUFFER;
 }
 
 /* Called twice, but one callsite is in speed_inline'd rc_is_bit_1() */
@@ -64,6 +64,12 @@ static void rc_do_normalize(rc_t *rc)
 		rc_read(rc);
 	rc->range <<= 8;
 	rc->code = (rc->code << 8) | *rc->ptr++;
+}
+static ALWAYS_INLINE void rc_normalize(rc_t *rc)
+{
+	if (rc->range < (1 << RC_TOP_BITS)) {
+		rc_do_normalize(rc);
+	}
 }
 
 /* Called once */
@@ -78,15 +84,9 @@ static ALWAYS_INLINE rc_t* rc_init(int fd) /*, int buffer_size) */
 	/* rc->ptr = rc->buffer_end; */
 
 	for (i = 0; i < 5; i++) {
-#if ENABLE_FEATURE_LZMA_FAST
-		if (rc->ptr >= rc->buffer_end)
-			rc_read(rc);
-		rc->code = (rc->code << 8) | *rc->ptr++;
-#else
 		rc_do_normalize(rc);
-#endif
 	}
-	rc->range = 0xFFFFFFFF;
+	rc->range = 0xffffffff;
 	return rc;
 }
 
@@ -94,13 +94,6 @@ static ALWAYS_INLINE rc_t* rc_init(int fd) /*, int buffer_size) */
 static ALWAYS_INLINE void rc_free(rc_t *rc)
 {
 	free(rc);
-}
-
-static ALWAYS_INLINE void rc_normalize(rc_t *rc)
-{
-	if (rc->range < (1 << RC_TOP_BITS)) {
-		rc_do_normalize(rc);
-	}
 }
 
 /* rc_is_bit_1 is called 9 times */
@@ -120,7 +113,7 @@ static speed_inline int rc_is_bit_1(rc_t *rc, uint16_t *p)
 }
 
 /* Called 4 times in unlzma loop */
-static speed_inline int rc_get_bit(rc_t *rc, uint16_t *p, int *symbol)
+static ALWAYS_INLINE int rc_get_bit(rc_t *rc, uint16_t *p, int *symbol)
 {
 	int ret = rc_is_bit_1(rc, p);
 	*symbol = *symbol * 2 + ret;
@@ -213,7 +206,7 @@ enum {
 
 
 IF_DESKTOP(long long) int FAST_FUNC
-unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst_fd)
+unpack_lzma_stream(transformer_state_t *xstate)
 {
 	IF_DESKTOP(long long total_written = 0;)
 	lzma_header_t header;
@@ -221,8 +214,6 @@ unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst
 	uint32_t pos_state_mask;
 	uint32_t literal_pos_mask;
 	uint16_t *p;
-	int num_bits;
-	int num_probs;
 	rc_t *rc;
 	int i;
 	uint8_t *buffer;
@@ -232,7 +223,7 @@ unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst
 	int state = 0;
 	uint32_t rep0 = 1, rep1 = 1, rep2 = 1, rep3 = 1;
 
-	if (full_read(src_fd, &header, sizeof(header)) != sizeof(header)
+	if (full_read(xstate->src_fd, &header, sizeof(header)) != sizeof(header)
 	 || header.pos >= (9 * 5 * 5)
 	) {
 		bb_error_msg("bad lzma header");
@@ -246,6 +237,9 @@ unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst
 	pos_state_mask = (1 << pb) - 1;
 	literal_pos_mask = (1 << lp) - 1;
 
+	/* Example values from linux-3.3.4.tar.lzma:
+	 * dict_size: 64M, dst_size: 2^64-1
+	 */
 	header.dict_size = SWAP_LE32(header.dict_size);
 	header.dst_size = SWAP_LE64(header.dst_size);
 
@@ -254,13 +248,17 @@ unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst
 
 	buffer = xmalloc(MIN(header.dst_size, header.dict_size));
 
-	num_probs = LZMA_BASE_SIZE + (LZMA_LIT_SIZE << (lc + lp));
-	p = xmalloc(num_probs * sizeof(*p));
-	num_probs += LZMA_LITERAL - LZMA_BASE_SIZE;
-	for (i = 0; i < num_probs; i++)
-		p[i] = (1 << RC_MODEL_TOTAL_BITS) >> 1;
+	{
+		int num_probs;
 
-	rc = rc_init(src_fd); /*, RC_BUFFER_SIZE); */
+		num_probs = LZMA_BASE_SIZE + (LZMA_LIT_SIZE << (lc + lp));
+		p = xmalloc(num_probs * sizeof(*p));
+		num_probs += LZMA_LITERAL - LZMA_BASE_SIZE;
+		for (i = 0; i < num_probs; i++)
+			p[i] = (1 << RC_MODEL_TOTAL_BITS) >> 1;
+	}
+
+	rc = rc_init(xstate->src_fd); /*, RC_BUFFER_SIZE); */
 
 	while (global_pos + buffer_pos < header.dst_size) {
 		int pos_state = (buffer_pos + global_pos) & pos_state_mask;
@@ -308,7 +306,7 @@ unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst
 			if (buffer_pos == header.dict_size) {
 				buffer_pos = 0;
 				global_pos += header.dict_size;
-				if (full_write(dst_fd, buffer, header.dict_size) != (ssize_t)header.dict_size)
+				if (transformer_write(xstate, buffer, header.dict_size) != (ssize_t)header.dict_size)
 					goto bad;
 				IF_DESKTOP(total_written += header.dict_size;)
 			}
@@ -317,6 +315,7 @@ unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst
 			goto one_byte2;
 #endif
 		} else {
+			int num_bits;
 			int offset;
 			uint16_t *prob2;
 #define prob_len prob2
@@ -441,19 +440,22 @@ unpack_lzma_stream(transformer_aux_data_t *aux UNUSED_PARAM, int src_fd, int dst
 				if (buffer_pos == header.dict_size) {
 					buffer_pos = 0;
 					global_pos += header.dict_size;
-					if (full_write(dst_fd, buffer, header.dict_size) != (ssize_t)header.dict_size)
+					if (transformer_write(xstate, buffer, header.dict_size) != (ssize_t)header.dict_size)
 						goto bad;
 					IF_DESKTOP(total_written += header.dict_size;)
 				}
 				len--;
 			} while (len != 0 && buffer_pos < header.dst_size);
+			/* FIXME: ...........^^^^^
+			 * shouldn't it be "global_pos + buffer_pos < header.dst_size"?
+			 */
 		}
 	}
 
 	{
 		IF_NOT_DESKTOP(int total_written = 0; /* success */)
 		IF_DESKTOP(total_written += buffer_pos;)
-		if (full_write(dst_fd, buffer, buffer_pos) != (ssize_t)buffer_pos) {
+		if (transformer_write(xstate, buffer, buffer_pos) != (ssize_t)buffer_pos) {
  bad:
 			total_written = -1; /* failure */
 		}

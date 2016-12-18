@@ -9,11 +9,36 @@
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  */
+//config:config ADDGROUP
+//config:	bool "addgroup"
+//config:	default y
+//config:	help
+//config:	  Utility for creating a new group account.
+//config:
+//config:config FEATURE_ADDGROUP_LONG_OPTIONS
+//config:	bool "Enable long options"
+//config:	default y
+//config:	depends on ADDGROUP && LONG_OPTS
+//config:	help
+//config:	  Support long options for the addgroup applet.
+//config:
+//config:config FEATURE_ADDUSER_TO_GROUP
+//config:	bool "Support for adding users to groups"
+//config:	default y
+//config:	depends on ADDGROUP
+//config:	help
+//config:	  If  called  with two non-option arguments,
+//config:	  addgroup will add an existing user to an
+//config:	  existing group.
+
+//applet:IF_ADDGROUP(APPLET(addgroup, BB_DIR_USR_SBIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_ADDGROUP) += addgroup.o
 
 //usage:#define addgroup_trivial_usage
-//usage:       "[-g GID] " IF_FEATURE_ADDUSER_TO_GROUP("[USER] ") "GROUP"
+//usage:       "[-g GID] [-S] " IF_FEATURE_ADDUSER_TO_GROUP("[USER] ") "GROUP"
 //usage:#define addgroup_full_usage "\n\n"
-//usage:       "Add a group " IF_FEATURE_ADDUSER_TO_GROUP("or add a user to a group") "\n"
+//usage:       "Add a group" IF_FEATURE_ADDUSER_TO_GROUP(" or add a user to a group") "\n"
 //usage:     "\n	-g GID	Group id"
 //usage:     "\n	-S	Create a system group"
 
@@ -22,14 +47,16 @@
 #if CONFIG_LAST_SYSTEM_ID < CONFIG_FIRST_SYSTEM_ID
 #error Bad LAST_SYSTEM_ID or FIRST_SYSTEM_ID in .config
 #endif
+#if CONFIG_LAST_ID < CONFIG_LAST_SYSTEM_ID
+#error Bad LAST_ID or LAST_SYSTEM_ID in .config
+#endif
 
 #define OPT_GID                       (1 << 0)
 #define OPT_SYSTEM_ACCOUNT            (1 << 1)
 
-/* We assume GID_T_MAX == INT_MAX */
 static void xgroup_study(struct group *g)
 {
-	unsigned max = INT_MAX;
+	unsigned max = CONFIG_LAST_ID;
 
 	/* Make sure gr_name is unused */
 	if (getgrnam(g->gr_name)) {
@@ -46,7 +73,6 @@ static void xgroup_study(struct group *g)
 			max = CONFIG_LAST_SYSTEM_ID;
 		} else {
 			g->gr_gid = CONFIG_LAST_SYSTEM_ID + 1;
-			max = 64999;
 		}
 	}
 	/* Check if the desired gid is free
@@ -125,7 +151,7 @@ int addgroup_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int addgroup_main(int argc UNUSED_PARAM, char **argv)
 {
 	unsigned opts;
-	unsigned gid = 0;
+	const char *gid = "0";
 
 	/* need to be root */
 	if (geteuid()) {
@@ -139,7 +165,7 @@ int addgroup_main(int argc UNUSED_PARAM, char **argv)
 	 *  addgroup -g num group
 	 *  addgroup user group
 	 * Check for min, max and missing args */
-	opt_complementary = "-1:?2:g+";
+	opt_complementary = "-1:?2";
 	opts = getopt32(argv, "g:S", &gid);
 	/* move past the commandline options */
 	argv += optind;
@@ -175,7 +201,7 @@ int addgroup_main(int argc UNUSED_PARAM, char **argv)
 #endif /* ENABLE_FEATURE_ADDUSER_TO_GROUP */
 	{
 		die_if_bad_username(argv[0]);
-		new_group(argv[0], gid);
+		new_group(argv[0], xatou_range(gid, 0, CONFIG_LAST_ID));
 	}
 	/* Reached only on success */
 	return EXIT_SUCCESS;

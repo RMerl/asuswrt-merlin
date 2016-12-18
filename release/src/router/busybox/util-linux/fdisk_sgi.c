@@ -440,7 +440,7 @@ sgi_write_table(void)
 		(unsigned int*)sgilabel, sizeof(*sgilabel)) == 0);
 
 	write_sector(0, sgilabel);
-	if (!strncmp((char*)sgilabel->directory[0].vol_file_name, "sgilabel", 8)) {
+	if (is_prefixed_with((char*)sgilabel->directory[0].vol_file_name, "sgilabel")) {
 		/*
 		 * keep this habit of first writing the "sgilabel".
 		 * I never tested whether it works without (AN 981002).
@@ -504,17 +504,19 @@ verify_sgi(int verbose)
 	if (sgi_get_sysid(Index[0]) == SGI_ENTIRE_DISK) {
 		if ((Index[0] != 10) && verbose)
 			printf("IRIX likes when Partition 11 covers the entire disk\n");
-		if ((sgi_get_start_sector(Index[0]) != 0) && verbose)
+		if ((sgi_get_start_sector(Index[0]) != 0) && verbose) {
 			printf("The entire disk partition should start "
 				"at block 0,\n"
 				"not at diskblock %u\n",
 				sgi_get_start_sector(Index[0]));
-		if (SGI_DEBUG)      /* I do not understand how some disks fulfil it */
+		}
+		if (SGI_DEBUG) {     /* I do not understand how some disks fulfil it */
 			if ((sgi_get_num_sectors(Index[0]) != lastblock) && verbose)
 				printf("The entire disk partition is only %u diskblock large,\n"
 					"but the disk is %u diskblocks long\n",
 					sgi_get_num_sectors(Index[0]), lastblock);
 			lastblock = sgi_get_num_sectors(Index[0]);
+		}
 	} else {
 		if (verbose)
 			printf("One Partition (#11) should cover the entire disk\n");
@@ -669,16 +671,17 @@ sgi_set_volhdr(void)
 	int n;
 
 	for (n = 8; n < g_partitions; n++) {
-	if (!sgi_get_num_sectors(n)) {
-		/*
-		 * 5 cylinders is an arbitrary value I like
-		 * IRIX 5.3 stored files in the volume header
-		 * (like sash, symmon, fx, ide) with ca. 3200
-		 * sectors.
-		 */
-		if (g_heads * g_sectors * 5 < sgi_get_lastblock())
-			sgi_set_partition(n, 0, g_heads * g_sectors * 5, SGI_VOLHDR);
-			break;
+		if (!sgi_get_num_sectors(n)) {
+			/*
+			 * 5 cylinders is an arbitrary value I like
+			 * IRIX 5.3 stored files in the volume header
+			 * (like sash, symmon, fx, ide) with ca. 3200
+			 * sectors.
+			 */
+			if (g_heads * g_sectors * 5 < sgi_get_lastblock()) {
+				sgi_set_partition(n, 0, g_heads * g_sectors * 5, SGI_VOLHDR);
+				break;
+			}
 		}
 	}
 }

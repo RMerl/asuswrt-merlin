@@ -154,7 +154,7 @@ void FAST_FUNC encode_base64(char *fname, const char *text, const char *eol)
 		// encode the buffer we just read in
 		bb_uuencode(dst_buf, src_buf, size, bb_uuenc_tbl_base64);
 		if (fname) {
-			printf("%s\n", eol);
+			puts(eol);
 		} else {
 			src_buf += size;
 			len -= size;

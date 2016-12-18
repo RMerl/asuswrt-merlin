@@ -249,7 +249,7 @@ void generateMTFValues(EState* s)
 static NOINLINE
 void sendMTFValues(EState* s)
 {
-	int32_t v, t, i, j, gs, ge, totc, bt, bc, iter;
+	int32_t v, t, i, j, gs, ge, bt, bc, iter;
 	int32_t nSelectors, alphaSize, minLen, maxLen, selCtr;
 	int32_t nGroups;
 
@@ -345,7 +345,6 @@ void sendMTFValues(EState* s)
 		}
 #endif
 		nSelectors = 0;
-		totc = 0;
 		gs = 0;
 		while (1) {
 			/*--- Set group start & end marks. --*/
@@ -386,7 +385,6 @@ void sendMTFValues(EState* s)
 				cost[0] = cost01 & 0xffff; cost[1] = cost01 >> 16;
 				cost[2] = cost23 & 0xffff; cost[3] = cost23 >> 16;
 				cost[4] = cost45 & 0xffff; cost[5] = cost45 >> 16;
-
 			} else
 #endif
 			{
@@ -411,7 +409,6 @@ void sendMTFValues(EState* s)
 					bt = t;
 				}
 			}
-			totc += bc;
 			fave[bt]++;
 			s->selector[nSelectors] = bt;
 			nSelectors++;
@@ -501,14 +498,14 @@ void sendMTFValues(EState* s)
 		for (i = 0; i < 16; i++) {
 			if (sizeof(long) <= 4) {
 				inUse16 = inUse16*2 +
-					((*(uint32_t*)&(s->inUse[i * 16 + 0])
-					| *(uint32_t*)&(s->inUse[i * 16 + 4])
-					| *(uint32_t*)&(s->inUse[i * 16 + 8])
-					| *(uint32_t*)&(s->inUse[i * 16 + 12])) != 0);
+					((*(bb__aliased_uint32_t*)&(s->inUse[i * 16 + 0])
+					| *(bb__aliased_uint32_t*)&(s->inUse[i * 16 + 4])
+					| *(bb__aliased_uint32_t*)&(s->inUse[i * 16 + 8])
+					| *(bb__aliased_uint32_t*)&(s->inUse[i * 16 + 12])) != 0);
 			} else { /* Our CPU can do better */
 				inUse16 = inUse16*2 +
-					((*(uint64_t*)&(s->inUse[i * 16 + 0])
-					| *(uint64_t*)&(s->inUse[i * 16 + 8])) != 0);
+					((*(bb__aliased_uint64_t*)&(s->inUse[i * 16 + 0])
+					| *(bb__aliased_uint64_t*)&(s->inUse[i * 16 + 8])) != 0);
 			}
 		}
 

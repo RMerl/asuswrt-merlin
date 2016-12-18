@@ -113,7 +113,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <arpa/inet.h>
-#include <alloca.h>
+//bbox disabled: #include <alloca.h>
 
 /* bbox: not needed
 #define INT_CONF ntohl(0x434f4e46)

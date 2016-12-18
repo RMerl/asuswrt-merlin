@@ -15,23 +15,36 @@
  */
 
 //usage:#define setsid_trivial_usage
-//usage:       "PROG ARGS"
+//usage:       "[-c] PROG ARGS"
 //usage:#define setsid_full_usage "\n\n"
 //usage:       "Run PROG in a new session. PROG will have no controlling terminal\n"
-//usage:       "and will not be affected by keyboard signals (Ctrl-C etc).\n"
-//usage:       "See setsid(2) for details."
+//usage:       "and will not be affected by keyboard signals (^C etc).\n"
+//usage:     "\n	-c	Set controlling terminal to stdin"
 
 #include "libbb.h"
 
 int setsid_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int setsid_main(int argc UNUSED_PARAM, char **argv)
 {
-	if (!argv[1])
-		bb_show_usage();
+	unsigned opt;
+
+	opt_complementary = "-1"; /* at least one arg */
+	opt = getopt32(argv, "+c"); /* +: stop on first non-opt */
+	argv += optind;
 
 	/* setsid() is allowed only when we are not a process group leader.
 	 * Otherwise our PID serves as PGID of some existing process group
-	 * and cannot be used as PGID of a new process group. */
+	 * and cannot be used as PGID of a new process group.
+	 *
+	 * Example: setsid() below fails when run alone in interactive shell:
+	 *  $ setsid PROG
+	 * because shell's child (setsid) is put in a new process group.
+	 * But doesn't fail if shell is not interactive
+	 * (and therefore doesn't create process groups for pipes),
+	 * or if setsid is not the first process in the process group:
+	 *  $ true | setsid PROG
+	 * or if setsid is executed in backquotes (`setsid PROG`)...
+	 */
 	if (setsid() < 0) {
 		pid_t pid = fork_or_rexec(argv);
 		if (pid != 0) {
@@ -43,7 +56,7 @@ int setsid_main(int argc UNUSED_PARAM, char **argv)
 			 * However, the code is larger and upstream
 			 * does not do such trick.
 			 */
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 		}
 
 		/* child */
@@ -51,6 +64,10 @@ int setsid_main(int argc UNUSED_PARAM, char **argv)
 		setsid();
 	}
 
-	argv++;
+	if (opt) {
+		/* -c: set (with stealing) controlling tty */
+		ioctl(0, TIOCSCTTY, 1);
+	}
+
 	BB_EXECVP_or_die(argv);
 }

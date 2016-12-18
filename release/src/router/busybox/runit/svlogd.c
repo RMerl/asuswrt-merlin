@@ -26,7 +26,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* Busyboxed by Denys Vlasenko <vda.linux@googlemail.com> */
-/* TODO: depends on runit_lib.c - review and reduce/eliminate */
 
 /*
 Config files
@@ -125,6 +124,18 @@ log message, you can use a pattern like this instead
 -*: *: pid *
 */
 
+//config:config SVLOGD
+//config:	bool "svlogd"
+//config:	default y
+//config:	help
+//config:	  svlogd continuously reads log data from its standard input, optionally
+//config:	  filters log messages, and writes the data to one or more automatically
+//config:	  rotated logs.
+
+//applet:IF_SVLOGD(APPLET(svlogd, BB_DIR_USR_SBIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_SVLOGD) += svlogd.o
+
 //usage:#define svlogd_trivial_usage
 //usage:       "[-ttv] [-r C] [-R CHARS] [-l MATCHLEN] [-b BUFLEN] DIR..."
 //usage:#define svlogd_full_usage "\n\n"
@@ -142,9 +153,9 @@ log message, you can use a pattern like this instead
 //usage:   "\n""+,-PATTERN - (de)select line for logging"
 //usage:   "\n""E,ePATTERN - (de)select line for stderr"
 
-#include <sys/poll.h>
 #include <sys/file.h>
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include "runit_lib.h"
 
 #define LESS(a,b) ((int)((unsigned)(b) - (unsigned)(a)) > 0)
@@ -223,15 +234,15 @@ struct globals {
 #define blocked_sigset (G.blocked_sigset)
 #define fl_flag_0      (G.fl_flag_0     )
 #define dirn           (G.dirn          )
+#define line bb_common_bufsiz1
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	SET_PTR_TO_GLOBALS(xzalloc(sizeof(G))); \
 	linemax = 1000; \
 	/*buflen = 1024;*/ \
 	linecomplete = 1; \
 	replace = ""; \
 } while (0)
-
-#define line bb_common_bufsiz1
 
 
 #define FATAL "fatal: "
@@ -601,12 +612,12 @@ static int buffer_pwrite(int n, char *s, unsigned len)
 
 			while (fchdir(ld->fddir) == -1)
 				pause2cannot("change directory, want remove old logfile",
-							 ld->name);
+							ld->name);
 			oldest[0] = 'A';
 			oldest[1] = oldest[27] = '\0';
 			while (!(d = opendir(".")))
 				pause2cannot("open directory, want remove old logfile",
-							 ld->name);
+							ld->name);
 			errno = 0;
 			while ((f = readdir(d)))
 				if ((f->d_name[0] == '@') && (strlen(f->d_name) == 27)) {
@@ -745,11 +756,6 @@ static NOINLINE unsigned logdir_open(struct logdir *ld, const char *fn)
 				ld->inst = new;
 				break;
 			case 's': {
-				static const struct suffix_mult km_suffixes[] = {
-					{ "k", 1024 },
-					{ "m", 1024*1024 },
-					{ "", 0 }
-				};
 				ld->sizemax = xatou_sfx(&s[1], km_suffixes);
 				break;
 			}
@@ -1040,9 +1046,9 @@ int svlogd_main(int argc, char **argv)
 	}
 	if (opt & 2) if (!repl) repl = '_'; // -R
 	if (opt & 4) { // -l
-		linemax = xatou_range(l, 0, BUFSIZ-26);
+		linemax = xatou_range(l, 0, COMMON_BUFSIZE-26);
 		if (linemax == 0)
-			linemax = BUFSIZ-26;
+			linemax = COMMON_BUFSIZE-26;
 		if (linemax < 256)
 			linemax = 256;
 	}

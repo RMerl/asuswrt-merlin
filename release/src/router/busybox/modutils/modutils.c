@@ -16,6 +16,57 @@ extern int delete_module(const char *module, unsigned int flags);
 # define delete_module(mod, flags) syscall(__NR_delete_module, mod, flags)
 #endif
 
+static module_entry *helper_get_module(module_db *db, const char *module, int create)
+{
+	char modname[MODULE_NAME_LEN];
+	struct module_entry *e;
+	unsigned i, hash;
+
+	filename2modname(module, modname);
+
+	hash = 0;
+	for (i = 0; modname[i]; i++)
+		hash = ((hash << 5) + hash) + modname[i];
+	hash %= MODULE_HASH_SIZE;
+
+	for (e = db->buckets[hash]; e; e = e->next)
+		if (strcmp(e->modname, modname) == 0)
+			return e;
+	if (!create)
+		return NULL;
+
+	e = xzalloc(sizeof(*e));
+	e->modname = xstrdup(modname);
+	e->next = db->buckets[hash];
+	db->buckets[hash] = e;
+	IF_DEPMOD(e->dnext = e->dprev = e;)
+
+	return e;
+}
+module_entry* FAST_FUNC moddb_get(module_db *db, const char *module)
+{
+	return helper_get_module(db, module, 0);
+}
+module_entry* FAST_FUNC moddb_get_or_create(module_db *db, const char *module)
+{
+	return helper_get_module(db, module, 1);
+}
+
+void FAST_FUNC moddb_free(module_db *db)
+{
+	module_entry *e, *n;
+	unsigned i;
+
+	for (i = 0; i < MODULE_HASH_SIZE; i++) {
+		for (e = db->buckets[i]; e; e = n) {
+			n = e->next;
+			free(e->name);
+			free(e->modname);
+			free(e);
+		}
+	}
+}
+
 void FAST_FUNC replace(char *s, char what, char with)
 {
 	while (*s) {
@@ -47,17 +98,25 @@ int FAST_FUNC string_to_llist(char *string, llist_t **llist, const char *delim)
 
 char* FAST_FUNC filename2modname(const char *filename, char *modname)
 {
+	char local_modname[MODULE_NAME_LEN];
 	int i;
-	char *from;
+	const char *from;
 
 	if (filename == NULL)
 		return NULL;
 	if (modname == NULL)
-		modname = xmalloc(MODULE_NAME_LEN);
-	from = bb_get_last_path_component_nostrip(filename);
+		modname = local_modname;
+	// Disabled since otherwise "modprobe dir/name" would work
+	// as if it is "modprobe name". It is unclear why
+	// 'basenamization' was here in the first place.
+	//from = bb_get_last_path_component_nostrip(filename);
+	from = filename;
 	for (i = 0; i < (MODULE_NAME_LEN-1) && from[i] != '\0' && from[i] != '.'; i++)
 		modname[i] = (from[i] == '-') ? '_' : from[i];
 	modname[i] = '\0';
+
+	if (modname == local_modname)
+		return xstrdup(modname);
 
 	return modname;
 }
@@ -182,6 +241,11 @@ int FAST_FUNC bb_delete_module(const char *module, unsigned int flags)
 	return errno;
 }
 
+/* Note: not suitable for delete_module() errnos.
+ * For them, probably only EWOULDBLOCK needs explaining:
+ * "Other modules depend on us". So far we don't do such
+ * translation and don't use moderror() for removal errors.
+ */
 const char* FAST_FUNC moderror(int err)
 {
 	switch (err) {

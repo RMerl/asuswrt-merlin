@@ -10,20 +10,32 @@
 #include "libbb.h"
 #include "rt_names.h"
 
+#define CONFDIR          CONFIG_FEATURE_IP_ROUTE_DIR
+
 typedef struct rtnl_tab_t {
 	const char *cached_str;
 	unsigned cached_result;
-	const char *tab[256];
+	/* upstream version switched to a hash table and removed
+	 * id < 256 limit. For now bbox bumps this array size from 256
+	 * to 1024. If you plan to change this to a hash table,
+	 * consider merging several hash tables we have (for example,
+	 * awk has resizable one!
+	 */
+#define RT_TABLE_MAX 1023
+	const char *tab[RT_TABLE_MAX+1];
 } rtnl_tab_t;
 
 static void rtnl_tab_initialize(const char *file, const char **tab)
 {
 	char *token[2];
-	parser_t *parser = config_open2(file, fopen_for_read);
+	char fullname[sizeof(CONFDIR"/rt_dsfield") + 8];
+	parser_t *parser;
 
+	sprintf(fullname, CONFDIR"/rt_%s", file);
+	parser = config_open2(fullname, fopen_for_read);
 	while (config_read(parser, token, 2, 2, "# \t", PARSE_NORMAL)) {
 		unsigned id = bb_strtou(token[0], NULL, 0);
-		if (id > 256) {
+		if (id > RT_TABLE_MAX) {
 			bb_error_msg("database %s is corrupted at line %d",
 				file, parser->lineno);
 			break;
@@ -42,7 +54,7 @@ static int rtnl_a2n(rtnl_tab_t *tab, uint32_t *id, const char *arg, int base)
 		return 0;
 	}
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i <= RT_TABLE_MAX; i++) {
 		if (tab->tab[i]
 		 && strcmp(tab->tab[i], arg) == 0
 		) {
@@ -54,7 +66,7 @@ static int rtnl_a2n(rtnl_tab_t *tab, uint32_t *id, const char *arg, int base)
 	}
 
 	i = bb_strtou(arg, NULL, base);
-	if (i > 255)
+	if (i > RT_TABLE_MAX)
 		return -1;
 	*id = i;
 	return 0;
@@ -85,24 +97,23 @@ static void rtnl_rtprot_initialize(void)
 		return;
 	rtnl_rtprot_tab = xzalloc(sizeof(*rtnl_rtprot_tab));
 	memcpy(rtnl_rtprot_tab->tab, init_tab, sizeof(init_tab));
-	rtnl_tab_initialize("/etc/iproute2/rt_protos", rtnl_rtprot_tab->tab);
+	rtnl_tab_initialize("protos", rtnl_rtprot_tab->tab);
 }
 
-const char* FAST_FUNC rtnl_rtprot_n2a(int id, char *buf)
+#if 0 /* UNUSED */
+const char* FAST_FUNC rtnl_rtprot_n2a(int id)
 {
-	if (id < 0 || id >= 256) {
-		sprintf(buf, "%d", id);
-		return buf;
+	if (id < 0 || id > RT_TABLE_MAX) {
+		return itoa(id);
 	}
 
 	rtnl_rtprot_initialize();
 
 	if (rtnl_rtprot_tab->tab[id])
 		return rtnl_rtprot_tab->tab[id];
-	/* buf is SPRINT_BSIZE big */
-	sprintf(buf, "%d", id);
-	return buf;
+	return itoa(id);
 }
+#endif
 
 int FAST_FUNC rtnl_rtprot_a2n(uint32_t *id, char *arg)
 {
@@ -123,23 +134,20 @@ static void rtnl_rtscope_initialize(void)
 	rtnl_rtscope_tab->tab[254] = "host";
 	rtnl_rtscope_tab->tab[253] = "link";
 	rtnl_rtscope_tab->tab[200] = "site";
-	rtnl_tab_initialize("/etc/iproute2/rt_scopes", rtnl_rtscope_tab->tab);
+	rtnl_tab_initialize("scopes", rtnl_rtscope_tab->tab);
 }
 
-const char* FAST_FUNC rtnl_rtscope_n2a(int id, char *buf)
+const char* FAST_FUNC rtnl_rtscope_n2a(int id)
 {
-	if (id < 0 || id >= 256) {
-		sprintf(buf, "%d", id);
-		return buf;
+	if (id < 0 || id > RT_TABLE_MAX) {
+		return itoa(id);
 	}
 
 	rtnl_rtscope_initialize();
 
 	if (rtnl_rtscope_tab->tab[id])
 		return rtnl_rtscope_tab->tab[id];
-	/* buf is SPRINT_BSIZE big */
-	sprintf(buf, "%d", id);
-	return buf;
+	return itoa(id);
 }
 
 int FAST_FUNC rtnl_rtscope_a2n(uint32_t *id, char *arg)
@@ -156,7 +164,7 @@ static void rtnl_rtrealm_initialize(void)
 	if (rtnl_rtrealm_tab) return;
 	rtnl_rtrealm_tab = xzalloc(sizeof(*rtnl_rtrealm_tab));
 	rtnl_rtrealm_tab->tab[0] = "unknown";
-	rtnl_tab_initialize("/etc/iproute2/rt_realms", rtnl_rtrealm_tab->tab);
+	rtnl_tab_initialize("realms", rtnl_rtrealm_tab->tab);
 }
 
 int FAST_FUNC rtnl_rtrealm_a2n(uint32_t *id, char *arg)
@@ -166,20 +174,17 @@ int FAST_FUNC rtnl_rtrealm_a2n(uint32_t *id, char *arg)
 }
 
 #if ENABLE_FEATURE_IP_RULE
-const char* FAST_FUNC rtnl_rtrealm_n2a(int id, char *buf)
+const char* FAST_FUNC rtnl_rtrealm_n2a(int id)
 {
-	if (id < 0 || id >= 256) {
-		sprintf(buf, "%d", id);
-		return buf;
+	if (id < 0 || id > RT_TABLE_MAX) {
+		return itoa(id);
 	}
 
 	rtnl_rtrealm_initialize();
 
 	if (rtnl_rtrealm_tab->tab[id])
 		return rtnl_rtrealm_tab->tab[id];
-	/* buf is SPRINT_BSIZE big */
-	sprintf(buf, "%d", id);
-	return buf;
+	return itoa(id);
 }
 #endif
 
@@ -191,23 +196,20 @@ static void rtnl_rtdsfield_initialize(void)
 	if (rtnl_rtdsfield_tab) return;
 	rtnl_rtdsfield_tab = xzalloc(sizeof(*rtnl_rtdsfield_tab));
 	rtnl_rtdsfield_tab->tab[0] = "0";
-	rtnl_tab_initialize("/etc/iproute2/rt_dsfield", rtnl_rtdsfield_tab->tab);
+	rtnl_tab_initialize("dsfield", rtnl_rtdsfield_tab->tab);
 }
 
-const char* FAST_FUNC rtnl_dsfield_n2a(int id, char *buf)
+const char* FAST_FUNC rtnl_dsfield_n2a(int id)
 {
-	if (id < 0 || id >= 256) {
-		sprintf(buf, "%d", id);
-		return buf;
+	if (id < 0 || id > RT_TABLE_MAX) {
+		return itoa(id);
 	}
 
 	rtnl_rtdsfield_initialize();
 
 	if (rtnl_rtdsfield_tab->tab[id])
 		return rtnl_rtdsfield_tab->tab[id];
-	/* buf is SPRINT_BSIZE big */
-	sprintf(buf, "0x%02x", id);
-	return buf;
+	return itoa(id);
 }
 
 int FAST_FUNC rtnl_dsfield_a2n(uint32_t *id, char *arg)
@@ -222,29 +224,28 @@ static rtnl_tab_t *rtnl_rttable_tab;
 
 static void rtnl_rttable_initialize(void)
 {
-	if (rtnl_rtdsfield_tab) return;
+	if (rtnl_rttable_tab)
+		return;
+
 	rtnl_rttable_tab = xzalloc(sizeof(*rtnl_rttable_tab));
 	rtnl_rttable_tab->tab[0] = "unspec";
 	rtnl_rttable_tab->tab[255] = "local";
 	rtnl_rttable_tab->tab[254] = "main";
 	rtnl_rttable_tab->tab[253] = "default";
-	rtnl_tab_initialize("/etc/iproute2/rt_tables", rtnl_rttable_tab->tab);
+	rtnl_tab_initialize("tables", rtnl_rttable_tab->tab);
 }
 
-const char* FAST_FUNC rtnl_rttable_n2a(int id, char *buf)
+const char* FAST_FUNC rtnl_rttable_n2a(int id)
 {
-	if (id < 0 || id >= 256) {
-		sprintf(buf, "%d", id);
-		return buf;
+	if (id < 0 || id > RT_TABLE_MAX) {
+		return itoa(id);
 	}
 
 	rtnl_rttable_initialize();
 
 	if (rtnl_rttable_tab->tab[id])
 		return rtnl_rttable_tab->tab[id];
-	/* buf is SPRINT_BSIZE big */
-	sprintf(buf, "%d", id);
-	return buf;
+	return itoa(id);
 }
 
 int FAST_FUNC rtnl_rttable_a2n(uint32_t *id, char *arg)

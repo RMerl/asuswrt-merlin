@@ -578,7 +578,7 @@ int mkfs_vfat_main(int argc UNUSED_PARAM, char **argv)
 		start_data_sector = (reserved_sect + NUM_FATS * sect_per_fat) * (bytes_per_sect / SECTOR_SIZE);
 		start_data_block = (start_data_sector + SECTORS_PER_BLOCK - 1) / SECTORS_PER_BLOCK;
 
-		bb_info_msg("searching for bad blocks ");
+		bb_error_msg("searching for bad blocks");
 		currently_testing = 0;
 		try = TEST_BUFFER_BLOCKS;
 		while (currently_testing < volume_size_blocks) {
@@ -616,7 +616,7 @@ int mkfs_vfat_main(int argc UNUSED_PARAM, char **argv)
 		}
 		free(blkbuf);
 		if (badblocks)
-			bb_info_msg("%d bad block(s)", badblocks);
+			bb_error_msg("%d bad block(s)", badblocks);
 	}
 #endif
 
