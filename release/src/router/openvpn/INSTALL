@@ -12,14 +12,6 @@ QUICK START:
   Unix:
     ./configure && make && make-install
 
-  Cross-compile for Windows on Unix
-
-    See INSTALL-win32.txt
-
-  Compile OpenVPN with OpenSSL/LZO built from source tarballs
-
-    See INSTALL-nonstandard.txt
-
 *************************************************************************
 
 To download OpenVPN, go to:
@@ -34,9 +26,13 @@ To download easy-rsa go to:
 
     https://github.com/OpenVPN/easy-rsa
 
-To download tap-windows driver source code go to:
+To download tap-windows (NDIS 5) driver source code go to:
 
     https://github.com/OpenVPN/tap-windows
+
+To download tap-windows (NDIS 6) driver source code go to:
+
+    https://github.com/OpenVPN/tap-windows6
 
 To get the cross-compilation environment go to:
 
@@ -63,7 +59,8 @@ SUPPORTED PLATFORMS:
   (4) Mac OS X Darwin 10.5+
   (5) FreeBSD 7.4+
   (6) NetBSD 5.0+
-  (7) Windows (WinXP and higher)
+  (7) Windows Vista or later for OpenVPN 2.4
+  (8) Windows XP or later for OpenVPN 2.3
 
 SUPPORTED PROCESSOR ARCHITECTURES:
    In general, OpenVPN is word size and endian independent, so
@@ -75,26 +72,11 @@ REQUIRES:
       a virtual point-to-point IP or Ethernet device.  See
       TUN/TAP Driver Configuration section below for more info.
 
-  (2) PAM/PAM-Devel (Pluggable Authentication Modules).  In most
-      Linux distributions, these packages are usually listed as
-      the following (here is what they look like on Fedora):
-
-      pam-1.1.8-18.fc22.x86_64.rpm (64-bit package)
-      pam-devel-1.1.8-18.fc.22.x86_64.rpm (64-bit package)
-
 OPTIONAL (but recommended):
   (1) OpenSSL library, necessary for encryption, version 0.9.8 or higher
-      required, available from http://www.openssl.org/.  If you build
-      OpenSSL from source tarball, you will need to let OpenVPN-2.3.x
-      know where the libraries and header files were installed to:
-
-      If you configured OpenSSL with stock options, it will install
-      the headers (i.e. - .h files) in /usr/local/ssl/include and
-      the libraries (i.e. - .a or .so files) in /usr/local/ssl/lib/openssl
-
+      required, available from http://www.openssl.org/
   (2) PolarSSL library, an alternative for encryption, version 1.1 or higher
       required, available from https://polarssl.org/
-
   (3) LZO real-time compression library, required for link compression,
       available from http://www.oberhumer.com/opensource/lzo/
       OpenBSD users can use ports or packages to install lzo, but remember
@@ -106,6 +88,10 @@ OPTIONAL (for developers only):
       -- available from http://www.gnu.org/software/software.html
   (2) Dmalloc library
       -- available from http://dmalloc.com/
+  (3) If using t_client.sh test framework, fping/fping6 is needed
+      -- Available from http://www.fping.org/
+      Note: t_client.sh needs an external configured OpenVPN server.
+      See t_client.rc-sample for more info.
 
 *************************************************************************
 
@@ -225,14 +211,10 @@ ENVIRONMENT for ./configure:
   MAN2HTML    path to man2html utility
   GIT         path to git utility
   TAP_CFLAGS  C compiler flags for tap
-  OPENSSL_CRYPTO_CFLAGS
-              C compiler flags for OPENSSL_CRYPTO, overriding pkg-config
-  OPENSSL_CRYPTO_LIBS
-              linker flags for OPENSSL_CRYPTO, overriding pkg-config
-  OPENSSL_SSL_CFLAGS
-              C compiler flags for OPENSSL_SSL, overriding pkg-config
-  OPENSSL_SSL_LIBS
-              linker flags for OPENSSL_SSL, overriding pkg-config
+  OPENSSL_CFLAGS
+              C compiler flags for OpenSSL, overriding pkg-config
+  OPENSSL_LIBS
+              linker flags for OpenSSL, overriding pkg-config
   POLARSSL_CFLAGS
               C compiler flags for polarssl
   POLARSSL_LIBS
@@ -313,13 +295,13 @@ TUN/TAP Driver Configuration:
 
     http://www.whiteboard.ne.jp/~admin2/tuntap/
 
-* Windows XP/2003/Vista/7:
+* Windows
 
   OpenVPN on Windows needs a TUN/TAP kernel driver to work. OpenVPN installers
   include this driver, so installing it separately is not usually required.
-  The driver source code is available here:
-
-    https://github.com/OpenVPN/tap-windows
+  Windows XP/2003 must use the NDIS 5 (tap-windows) driver, whereas on more
+  recent Windows versions it is recommended to use the NDIS 6 driver
+  (tap-windows6) instead.
 
 *************************************************************************
 

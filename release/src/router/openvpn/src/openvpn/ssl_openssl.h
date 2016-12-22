@@ -35,14 +35,13 @@
 /**
  * SSL_OP_NO_TICKET tells OpenSSL to disable "stateless session resumption",
  * as this is something we do not want nor need, but could potentially be
- * used for a future attack.  For compatibility reasons, in the 2.3.x
- * series, we keep building if the OpenSSL version is too old to support
- * this.  2.4 requires it and will fail configure if not present.
+ * used for a future attack.  For compatibility reasons we keep building if the
+ * OpenSSL version is too old (pre-0.9.8f) to support stateless session
+ * resumption (and the accompanying SSL_OP_NO_TICKET flag).
  */
 #ifndef SSL_OP_NO_TICKET
-# define SSL_OP_NO_TICKET 0
+#define SSL_OP_NO_TICKET 0
 #endif
-
 
 /**
  * Structure that wraps the TLS context. Contents differ depending on the
@@ -50,13 +49,15 @@
  */
 struct tls_root_ctx {
     SSL_CTX *ctx;
+    struct timespec crl_last_mtime;
+    off_t crl_last_size;
 };
 
 struct key_state_ssl {
-    SSL *ssl;			/* SSL object -- new obj created for each new key */
-    BIO *ssl_bio;			/* read/write plaintext from here */
-    BIO *ct_in;			/* write ciphertext to here */
-    BIO *ct_out;			/* read ciphertext from here */
+    SSL *ssl;                   /* SSL object -- new obj created for each new key */
+    BIO *ssl_bio;                       /* read/write plaintext from here */
+    BIO *ct_in;                 /* write ciphertext to here */
+    BIO *ct_out;                        /* read ciphertext from here */
 };
 
 /**
@@ -65,6 +66,6 @@ struct key_state_ssl {
  */
 extern int mydata_index; /* GLOBAL */
 
-void openssl_set_mydata_index (void);
+void openssl_set_mydata_index(void);
 
 #endif /* SSL_OPENSSL_H_ */

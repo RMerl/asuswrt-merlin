@@ -105,7 +105,6 @@
 #define D_X509_ATTR          LOGLEV(4, 59, 0)        /* show x509-track attributes on connection */
 #define D_INIT_MEDIUM        LOGLEV(4, 60, 0)        /* show medium frequency init messages */
 #define D_MTU_INFO           LOGLEV(4, 61, 0)        /* show terse MTU info */
-#define D_SHOW_OCC_HASH      LOGLEV(4, 62, 0)        /* show MD5 hash of option compatibility string */
 #define D_PID_DEBUG_LOW      LOGLEV(4, 63, 0)        /* show low-freq packet-id debugging info */
 #define D_PID_DEBUG_MEDIUM   LOGLEV(4, 64, 0)        /* show medium-freq packet-id debugging info */
 
@@ -143,11 +142,12 @@
 #define D_PS_PROXY_DEBUG     LOGLEV(7, 70, M_DEBUG)  /* port share proxy debug */
 #define D_AUTO_USERID        LOGLEV(7, 70, M_DEBUG)  /* AUTO_USERID debugging */
 #define D_TLS_KEYSELECT      LOGLEV(7, 70, M_DEBUG)  /* show information on key selection for data channel */
-#define D_ARGV_PARSE_CMD     LOGLEV(7, 70, M_DEBUG)  /* show parse_line() errors in argv_printf %sc */
+#define D_ARGV_PARSE_CMD     LOGLEV(7, 70, M_DEBUG)  /* show parse_line() errors in argv_parse_cmd */
 #define D_CRYPTO_DEBUG       LOGLEV(7, 70, M_DEBUG)  /* show detailed info from crypto.c routines */
 #define D_PID_DEBUG          LOGLEV(7, 70, M_DEBUG)  /* show packet-id debugging info */
 #define D_PF_DROPPED_BCAST   LOGLEV(7, 71, M_DEBUG)  /* packet filter dropped a broadcast packet */
 #define D_PF_DEBUG           LOGLEV(7, 72, M_DEBUG)  /* packet filter debugging, must also define PF_DEBUG in pf.h */
+#define D_PUSH_DEBUG         LOGLEV(7, 73, M_DEBUG)  /* show push/pull debugging info */
 
 #define D_HANDSHAKE_VERBOSE  LOGLEV(8, 70, M_DEBUG)  /* show detailed description of each handshake */
 #define D_TLS_DEBUG_MED      LOGLEV(8, 70, M_DEBUG)  /* limited info from tls_session routines */
@@ -176,4 +176,4 @@
 
 /*#define D_THREAD_DEBUG       LOGLEV(4, 70, M_DEBUG)*/  /* show pthread debug information */
 
-#endif
+#endif /* ifndef ERRLEVEL_H */

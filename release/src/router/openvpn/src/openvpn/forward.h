@@ -41,7 +41,7 @@
 #define ANY_OUT(c)      (TUN_OUT(c) || LINK_OUT(c))
 
 #ifdef ENABLE_FRAGMENT
-#define TO_LINK_FRAG(c) ((c)->c2.fragment && fragment_outgoing_defined ((c)->c2.fragment))
+#define TO_LINK_FRAG(c) ((c)->c2.fragment && fragment_outgoing_defined((c)->c2.fragment))
 #else
 #define TO_LINK_FRAG(c) (false)
 #endif
@@ -62,11 +62,13 @@
 #define IOW_READ            (IOW_READ_TUN|IOW_READ_LINK)
 
 
-void pre_select (struct context *c);
-void process_io (struct context *c);
+void pre_select(struct context *c);
 
-const char *wait_status_string (struct context *c, struct gc_arena *gc);
-void show_wait_status (struct context *c);
+void process_io(struct context *c);
+
+const char *wait_status_string(struct context *c, struct gc_arena *gc);
+
+void show_wait_status(struct context *c);
 
 
 /**********************************************************************/
@@ -102,8 +104,9 @@ void show_wait_status (struct context *c);
  *     the packet then gets fragmented, this function will be called again
  *     once for each remaining fragment with this parameter set to false.
  */
-void encrypt_sign (struct context *c, bool comp_frag);
+void encrypt_sign(struct context *c, bool comp_frag);
 
+int get_server_poll_remaining_time(struct event_timeout *server_poll_timeout);
 
 /**********************************************************************/
 /**
@@ -125,14 +128,13 @@ void encrypt_sign (struct context *c, bool comp_frag);
  * @param c - The context structure which contains the external
  *     network socket from which to read incoming packets.
  */
-void read_incoming_link (struct context *c);
-
+void read_incoming_link(struct context *c);
 
 /**
- * Process a packet read from the external network interface.
+ * Starts processing a packet read from the external network interface.
  * @ingroup external_multiplexer
  *
- * This function controls the processing of a data channel packet which
+ * This function starts the processing of a data channel packet which
  * has come out of a VPN tunnel.  It's high-level structure is as follows:
  * - Verify that a nonzero length packet has been received from a valid
  *   source address for the given context \a c.
@@ -146,6 +148,25 @@ void read_incoming_link (struct context *c);
  * - Call \c openvpn_decrypt() of the \link data_crypto Data Channel
  *   Crypto module\endlink to authenticate and decrypt the packet using
  *   the security parameters loaded by \c tls_pre_decrypt() above.
+ *
+ * @param c - The context structure of the VPN tunnel associated with the
+ *     packet.
+ * @param lsi - link_socket_info obtained from context before processing.
+ * @param floated - Flag indicates that peer has floated.
+ *
+ * @return true if packet is authenticated, false otherwise.
+ */
+bool process_incoming_link_part1(struct context *c, struct link_socket_info *lsi, bool floated);
+
+/**
+ * Continues processing a packet read from the external network interface.
+ * @ingroup external_multiplexer
+ *
+ * This function continues the processing of a data channel packet which
+ * has come out of a VPN tunnel. It must be called after
+ * \c process_incoming_link_part1() function.
+ *
+ * It's high-level structure is as follows:
  * - Call \c fragment_incoming() of the \link fragmentation Data Channel
  *   Fragmentation module\endlink to reassemble the packet if it's
  *   fragmented.
@@ -158,9 +179,11 @@ void read_incoming_link (struct context *c);
  *
  * @param c - The context structure of the VPN tunnel associated with the
  *     packet.
+ * @param lsi - link_socket_info obtained from context before processing.
+ * @param orig_buf - Pointer to a buffer data.
+ *
  */
-void process_incoming_link (struct context *c);
-
+void process_incoming_link_part2(struct context *c, struct link_socket_info *lsi, const uint8_t *orig_buf);
 
 /**
  * Write a packet to the external network interface.
@@ -174,7 +197,7 @@ void process_incoming_link (struct context *c);
  * @param c - The context structure of the VPN tunnel associated with the
  *     packet.
  */
-void process_outgoing_link (struct context *c);
+void process_outgoing_link(struct context *c);
 
 
 /**************************************************************************/
@@ -190,7 +213,7 @@ void process_outgoing_link (struct context *c);
  * @param c - The context structure in which to store the received
  *     packet.
  */
-void read_incoming_tun (struct context *c);
+void read_incoming_tun(struct context *c);
 
 
 /**
@@ -205,7 +228,7 @@ void read_incoming_tun (struct context *c);
  * @param c - The context structure of the VPN tunnel associated with the
  *     packet.
  */
-void process_incoming_tun (struct context *c);
+void process_incoming_tun(struct context *c);
 
 
 /**
@@ -220,12 +243,12 @@ void process_incoming_tun (struct context *c);
  * @param c - The context structure of the VPN tunnel associated with
  *     the packet.
  */
-void process_outgoing_tun (struct context *c);
+void process_outgoing_tun(struct context *c);
 
 
 /**************************************************************************/
 
-bool send_control_channel_string (struct context *c, const char *str, int msglevel);
+bool send_control_channel_string(struct context *c, const char *str, int msglevel);
 
 #define PIPV4_PASSTOS         (1<<0)
 #define PIP_MSSFIX            (1<<1)         /* v4 and v6 */
@@ -233,10 +256,11 @@ bool send_control_channel_string (struct context *c, const char *str, int msglev
 #define PIPV4_EXTRACT_DHCP_ROUTER (1<<3)
 #define PIPV4_CLIENT_NAT      (1<<4)
 
-void process_ip_header (struct context *c, unsigned int flags, struct buffer *buf);
+void process_ip_header(struct context *c, unsigned int flags, struct buffer *buf);
 
 #if P2MP
-void schedule_exit (struct context *c, const int n_seconds, const int signal);
+void schedule_exit(struct context *c, const int n_seconds, const int signal);
+
 #endif
 
 #endif /* FORWARD_H */

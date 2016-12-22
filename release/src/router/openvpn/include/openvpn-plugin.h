@@ -1,3 +1,4 @@
+/* include/openvpn-plugin.h.  Generated from openvpn-plugin.h.in by configure.  */
 /*
  *  OpenVPN -- An application to securely tunnel IP networks
  *             over a single TCP/UDP port, with support for SSL/TLS-based
@@ -27,14 +28,14 @@
 
 #define OPENVPN_PLUGIN_VERSION 3
 
-#ifdef ENABLE_SSL
-#ifdef ENABLE_CRYPTO_POLARSSL
-#include <polarssl/x509_crt.h>
+#ifdef ENABLE_CRYPTO
+#ifdef ENABLE_CRYPTO_MBEDTLS
+#include <mbedtls/x509_crt.h>
 #ifndef __OPENVPN_X509_CERT_T_DECLARED
 #define __OPENVPN_X509_CERT_T_DECLARED
-typedef x509_crt openvpn_x509_cert_t;
+typedef mbedtls_x509_crt openvpn_x509_cert_t;
 #endif
-#else
+#else  /* ifdef ENABLE_CRYPTO_MBEDTLS */
 #include <openssl/x509.h>
 #ifndef __OPENVPN_X509_CERT_T_DECLARED
 #define __OPENVPN_X509_CERT_T_DECLARED
@@ -48,6 +49,13 @@ typedef X509 openvpn_x509_cert_t;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Provide some basic version information to plug-ins at OpenVPN compile time
+ * This is will not be the complete version
+ */
+#define OPENVPN_VERSION_MAJOR 2
+#define OPENVPN_VERSION_MINOR 4
+#define OPENVPN_VERSION_PATCH "_rc2"
 
 /*
  * Plug-in types.  These types correspond to the set of script callbacks
@@ -78,7 +86,7 @@ extern "C" {
  *
  * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_CLIENT_CONNECT_V2
  * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_LEARN_ADDRESS
- * 
+ *
  * [Client session ensues]
  *
  * For each "TLS soft reset", according to reneg-sec option (or similar):
@@ -89,7 +97,7 @@ extern "C" {
  *                                                     in the server chain)
  * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY
  * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_TLS_FINAL
- * 
+ *
  * [If OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY returned OPENVPN_PLUGIN_FUNC_DEFERRED,
  * we expect that authentication is verified via auth_control_file within
  * the number of seconds defined by the "hand-window" option.  Data channel traffic
@@ -147,10 +155,10 @@ typedef void *openvpn_plugin_handle_t;
 /*
  * For Windows (needs to be modified for MSVC)
  */
-#if defined(WIN32) && !defined(OPENVPN_PLUGIN_H)
-# define OPENVPN_EXPORT __declspec(dllexport)
+#if defined(_WIN32) && !defined(OPENVPN_PLUGIN_H)
+#define OPENVPN_EXPORT __declspec(dllexport)
 #else
-# define OPENVPN_EXPORT
+#define OPENVPN_EXPORT
 #endif
 
 /*
@@ -165,7 +173,7 @@ typedef void *openvpn_plugin_handle_t;
 #define OPENVPN_PLUGIN_DEF        typedef
 #define OPENVPN_PLUGIN_FUNC(name) (*name)
 
-#else
+#else  /* ifdef OPENVPN_PLUGIN_H */
 
 /*
  * We are compiling plugin.
@@ -184,9 +192,9 @@ typedef void *openvpn_plugin_handle_t;
  */
 struct openvpn_plugin_string_list
 {
-  struct openvpn_plugin_string_list *next;
-  char *name;
-  char *value;
+    struct openvpn_plugin_string_list *next;
+    char *name;
+    char *value;
 };
 
 
@@ -208,45 +216,48 @@ struct openvpn_plugin_string_list
  *           which identifies the SSL implementation OpenVPN is compiled
  *           against.
  *
+ *    3      Added ovpn_version, ovpn_version_major, ovpn_version_minor
+ *           and ovpn_version_patch to provide the runtime version of
+ *           OpenVPN to plug-ins.
  */
-#define OPENVPN_PLUGINv3_STRUCTVER 2
+#define OPENVPN_PLUGINv3_STRUCTVER 3
 
 /**
  * Definitions needed for the plug-in callback functions.
  */
 typedef enum
 {
-  PLOG_ERR    = (1 << 0),  /* Error condition message */
-  PLOG_WARN   = (1 << 1),  /* General warning message */
-  PLOG_NOTE   = (1 << 2),  /* Informational message */
-  PLOG_DEBUG  = (1 << 3),  /* Debug message, displayed if verb >= 7 */
+    PLOG_ERR    = (1 << 0),/* Error condition message */
+    PLOG_WARN   = (1 << 1),/* General warning message */
+    PLOG_NOTE   = (1 << 2),/* Informational message */
+    PLOG_DEBUG  = (1 << 3),/* Debug message, displayed if verb >= 7 */
 
-  PLOG_ERRNO  = (1 << 8),  /* Add error description to message */
-  PLOG_NOMUTE = (1 << 9),  /* Mute setting does not apply for message */
+    PLOG_ERRNO  = (1 << 8),/* Add error description to message */
+    PLOG_NOMUTE = (1 << 9), /* Mute setting does not apply for message */
 
 } openvpn_plugin_log_flags_t;
 
 
 #ifdef __GNUC__
 #if __USE_MINGW_ANSI_STDIO
-#  define _ovpn_chk_fmt(a, b) __attribute__ ((format(gnu_printf, (a), (b))))
+#define _ovpn_chk_fmt(a, b) __attribute__ ((format(gnu_printf, (a), (b))))
 #else
-#  define _ovpn_chk_fmt(a, b) __attribute__ ((format(__printf__, (a), (b))))
+#define _ovpn_chk_fmt(a, b) __attribute__ ((format(__printf__, (a), (b))))
 #endif
-#else
-#  define _ovpn_chk_fmt(a, b)
+#else  /* ifdef __GNUC__ */
+#define _ovpn_chk_fmt(a, b)
 #endif
 
-typedef void (*plugin_log_t) (openvpn_plugin_log_flags_t flags,
+typedef void (*plugin_log_t)(openvpn_plugin_log_flags_t flags,
+                             const char *plugin_name,
+                             const char *format, ...) _ovpn_chk_fmt (3, 4);
+
+typedef void (*plugin_vlog_t)(openvpn_plugin_log_flags_t flags,
                               const char *plugin_name,
-                              const char *format, ...) _ovpn_chk_fmt(3, 4);
+                              const char *format,
+                              va_list arglist) _ovpn_chk_fmt (3, 0);
 
-typedef void (*plugin_vlog_t) (openvpn_plugin_log_flags_t flags,
-                               const char *plugin_name,
-                               const char *format,
-                               va_list arglist) _ovpn_chk_fmt(3, 0);
-
-#undef _ovpn_chk_fmt
+/* #undef _ovpn_chk_fmt */
 
 /**
  * Used by the openvpn_plugin_open_v3() function to pass callback
@@ -260,20 +271,20 @@ typedef void (*plugin_vlog_t) (openvpn_plugin_log_flags_t flags,
  */
 struct openvpn_plugin_callbacks
 {
-  plugin_log_t    plugin_log;
-  plugin_vlog_t   plugin_vlog;
+    plugin_log_t plugin_log;
+    plugin_vlog_t plugin_vlog;
 };
 
 /**
  * Used by the openvpn_plugin_open_v3() function to indicate to the
  * plug-in what kind of SSL implementation OpenVPN uses.  This is
- * to avoid SEGV issues when OpenVPN is complied against PolarSSL
+ * to avoid SEGV issues when OpenVPN is complied against mbed TLS
  * and the plug-in against OpenSSL.
  */
 typedef enum {
-  SSLAPI_NONE,
-  SSLAPI_OPENSSL,
-  SSLAPI_POLARSSL
+    SSLAPI_NONE,
+    SSLAPI_OPENSSL,
+    SSLAPI_MBEDTLS
 } ovpnSSLAPI;
 
 /**
@@ -299,11 +310,15 @@ typedef enum {
  */
 struct openvpn_plugin_args_open_in
 {
-  const int type_mask;
-  const char ** const argv;
-  const char ** const envp;
-  struct openvpn_plugin_callbacks *callbacks;
-  const ovpnSSLAPI ssl_api;
+    const int type_mask;
+    const char **const argv;
+    const char **const envp;
+    struct openvpn_plugin_callbacks *callbacks;
+    const ovpnSSLAPI ssl_api;
+    const char *ovpn_version;
+    const unsigned int ovpn_version_major;
+    const unsigned int ovpn_version_minor;
+    const char *const ovpn_version_patch;
 };
 
 
@@ -330,9 +345,9 @@ struct openvpn_plugin_args_open_in
  */
 struct openvpn_plugin_args_open_return
 {
-  int  type_mask;
-  openvpn_plugin_handle_t *handle;
-  struct openvpn_plugin_string_list **return_list;
+    int type_mask;
+    openvpn_plugin_handle_t *handle;
+    struct openvpn_plugin_string_list **return_list;
 };
 
 /**
@@ -358,24 +373,24 @@ struct openvpn_plugin_args_open_return
  * *per_client_context : the per-client context pointer which was returned by
  *        openvpn_plugin_client_constructor_v1, if defined.
  *
- * current_cert_depth : Certificate depth of the certificate being passed over (only if compiled with ENABLE_SSL defined)
+ * current_cert_depth : Certificate depth of the certificate being passed over (only if compiled with ENABLE_CRYPTO defined)
  *
- * *current_cert : X509 Certificate object received from the client (only if compiled with ENABLE_SSL defined)
+ * *current_cert : X509 Certificate object received from the client (only if compiled with ENABLE_CRYPTO defined)
  *
  */
 struct openvpn_plugin_args_func_in
 {
-  const int type;
-  const char ** const argv;
-  const char ** const envp;
-  openvpn_plugin_handle_t handle;
-  void *per_client_context;
-#ifdef ENABLE_SSL
-  int current_cert_depth;
-  openvpn_x509_cert_t *current_cert;
+    const int type;
+    const char **const argv;
+    const char **const envp;
+    openvpn_plugin_handle_t handle;
+    void *per_client_context;
+#ifdef ENABLE_CRYPTO
+    int current_cert_depth;
+    openvpn_x509_cert_t *current_cert;
 #else
-  int __current_cert_depth_disabled; /* Unused, for compatibility purposes only */
-  void *__current_cert_disabled; /* Unused, for compatibility purposes only */
+    int __current_cert_depth_disabled; /* Unused, for compatibility purposes only */
+    void *__current_cert_disabled; /* Unused, for compatibility purposes only */
 #endif
 };
 
@@ -393,7 +408,7 @@ struct openvpn_plugin_args_func_in
  */
 struct openvpn_plugin_args_func_return
 {
-  struct openvpn_plugin_string_list **return_list;
+    struct openvpn_plugin_string_list **return_list;
 };
 
 /*
@@ -427,7 +442,7 @@ struct openvpn_plugin_args_func_return
  * FUNCTION: openvpn_plugin_open_v2
  *
  * REQUIRED: YES
- * 
+ *
  * Called on initial plug-in load.  OpenVPN will preserve plug-in state
  * across SIGUSR1 restarts but not across SIGHUP restarts.  A SIGHUP reset
  * will cause the plugin to be closed and reopened.
@@ -459,10 +474,10 @@ struct openvpn_plugin_args_func_return
  * An openvpn_plugin_handle_t value on success, NULL on failure
  */
 OPENVPN_PLUGIN_DEF openvpn_plugin_handle_t OPENVPN_PLUGIN_FUNC(openvpn_plugin_open_v2)
-     (unsigned int *type_mask,
-      const char *argv[],
-      const char *envp[],
-      struct openvpn_plugin_string_list **return_list);
+    (unsigned int *type_mask,
+    const char *argv[],
+    const char *envp[],
+    struct openvpn_plugin_string_list **return_list);
 
 /*
  * FUNCTION: openvpn_plugin_func_v2
@@ -470,7 +485,7 @@ OPENVPN_PLUGIN_DEF openvpn_plugin_handle_t OPENVPN_PLUGIN_FUNC(openvpn_plugin_op
  * Called to perform the work of a given script type.
  *
  * REQUIRED: YES
- * 
+ *
  * ARGUMENTS
  *
  * handle : the openvpn_plugin_handle_t value which was returned by
@@ -555,12 +570,12 @@ OPENVPN_PLUGIN_DEF openvpn_plugin_handle_t OPENVPN_PLUGIN_FUNC(openvpn_plugin_op
  * authentication and client-specific packet filtering.
  */
 OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_func_v2)
-     (openvpn_plugin_handle_t handle,
-      const int type,
-      const char *argv[],
-      const char *envp[],
-      void *per_client_context,
-      struct openvpn_plugin_string_list **return_list);
+    (openvpn_plugin_handle_t handle,
+    const int type,
+    const char *argv[],
+    const char *envp[],
+    void *per_client_context,
+    struct openvpn_plugin_string_list **return_list);
 
 
 /*
@@ -575,8 +590,8 @@ OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_func_v2)
  * ARGUMENTS
  *
  * version : fixed value, defines the API version of the OpenVPN plug-in API.  The plug-in
- *	     should validate that this value is matching the OPENVPN_PLUGINv3_STRUCTVER
- *	     value.
+ *           should validate that this value is matching the OPENVPN_PLUGINv3_STRUCTVER
+ *           value.
  *
  * arguments : Structure with all arguments available to the plug-in.
  *
@@ -587,9 +602,9 @@ OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_func_v2)
  * OPENVPN_PLUGIN_FUNC_SUCCESS on success, OPENVPN_PLUGIN_FUNC_ERROR on failure
  */
 OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_open_v3)
-     (const int version,
-      struct openvpn_plugin_args_open_in const *arguments,
-      struct openvpn_plugin_args_open_return *retptr);
+    (const int version,
+    struct openvpn_plugin_args_open_in const *arguments,
+    struct openvpn_plugin_args_open_return *retptr);
 
 /*
  * FUNCTION: openvpn_plugin_func_v3
@@ -671,15 +686,15 @@ OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_open_v3)
  * authentication and client-specific packet filtering.
  */
 OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_func_v3)
-     (const int version,
-      struct openvpn_plugin_args_func_in const *arguments,
-      struct openvpn_plugin_args_func_return *retptr);
+    (const int version,
+    struct openvpn_plugin_args_func_in const *arguments,
+    struct openvpn_plugin_args_func_return *retptr);
 
 /*
  * FUNCTION: openvpn_plugin_close_v1
  *
  * REQUIRED: YES
- * 
+ *
  * ARGUMENTS
  *
  * handle : the openvpn_plugin_handle_t value which was returned by
@@ -688,13 +703,13 @@ OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_func_v3)
  * Called immediately prior to plug-in unload.
  */
 OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_close_v1)
-     (openvpn_plugin_handle_t handle);
+    (openvpn_plugin_handle_t handle);
 
 /*
  * FUNCTION: openvpn_plugin_abort_v1
  *
  * REQUIRED: NO
- * 
+ *
  * ARGUMENTS
  *
  * handle : the openvpn_plugin_handle_t value which was returned by
@@ -705,7 +720,7 @@ OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_close_v1)
  * openvpn_plugin_open callback.
  */
 OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_abort_v1)
-     (openvpn_plugin_handle_t handle);
+    (openvpn_plugin_handle_t handle);
 
 /*
  * FUNCTION: openvpn_plugin_client_constructor_v1
@@ -722,7 +737,7 @@ OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_abort_v1)
  * return a void * to this memory region.
  *
  * REQUIRED: NO
- * 
+ *
  * ARGUMENTS
  *
  * handle : the openvpn_plugin_handle_t value which was returned by
@@ -733,8 +748,8 @@ OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_abort_v1)
  * void * pointer to plugin's private per-client memory region, or NULL
  * if no memory region is required.
  */
-OPENVPN_PLUGIN_DEF void * OPENVPN_PLUGIN_FUNC(openvpn_plugin_client_constructor_v1)
-     (openvpn_plugin_handle_t handle);
+OPENVPN_PLUGIN_DEF void *OPENVPN_PLUGIN_FUNC(openvpn_plugin_client_constructor_v1)
+    (openvpn_plugin_handle_t handle);
 
 /*
  * FUNCTION: openvpn_plugin_client_destructor_v1
@@ -742,7 +757,7 @@ OPENVPN_PLUGIN_DEF void * OPENVPN_PLUGIN_FUNC(openvpn_plugin_client_constructor_
  * This function is called on client instance object destruction.
  *
  * REQUIRED: NO
- * 
+ *
  * ARGUMENTS
  *
  * handle : the openvpn_plugin_handle_t value which was returned by
@@ -752,7 +767,7 @@ OPENVPN_PLUGIN_DEF void * OPENVPN_PLUGIN_FUNC(openvpn_plugin_client_constructor_
  *        openvpn_plugin_client_constructor_v1, if defined.
  */
 OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_client_destructor_v1)
-     (openvpn_plugin_handle_t handle, void *per_client_context);
+    (openvpn_plugin_handle_t handle, void *per_client_context);
 
 /*
  * FUNCTION: openvpn_plugin_select_initialization_point_v1
@@ -765,7 +780,7 @@ OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_client_destructor_v1)
  * OPENVPN_PLUGIN_INIT_PRE_CONFIG_PARSE.
  *
  * REQUIRED: NO
- * 
+ *
  * RETURN VALUE:
  *
  * An OPENVPN_PLUGIN_INIT_x value.
@@ -776,35 +791,35 @@ OPENVPN_PLUGIN_DEF void OPENVPN_PLUGIN_FUNC(openvpn_plugin_client_destructor_v1)
 #define OPENVPN_PLUGIN_INIT_POST_UID_CHANGE  4
 
 OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_select_initialization_point_v1)
-     (void);
+    (void);
 
 /*
  * FUNCTION: openvpn_plugin_min_version_required_v1
  *
  * This function is called by OpenVPN to query the minimum
-   plugin interface version number required by the plugin.
+ * plugin interface version number required by the plugin.
  *
  * REQUIRED: NO
- * 
+ *
  * RETURN VALUE
  *
  * The minimum OpenVPN plugin interface version number necessary to support
  * this plugin.
  */
 OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_min_version_required_v1)
-     (void);
+    (void);
 
 /*
  * Deprecated functions which are still supported for backward compatibility.
  */
 
 OPENVPN_PLUGIN_DEF openvpn_plugin_handle_t OPENVPN_PLUGIN_FUNC(openvpn_plugin_open_v1)
-     (unsigned int *type_mask,
-      const char *argv[],
-      const char *envp[]);
+    (unsigned int *type_mask,
+    const char *argv[],
+    const char *envp[]);
 
 OPENVPN_PLUGIN_DEF int OPENVPN_PLUGIN_FUNC(openvpn_plugin_func_v1)
-     (openvpn_plugin_handle_t handle, const int type, const char *argv[], const char *envp[]);
+    (openvpn_plugin_handle_t handle, const int type, const char *argv[], const char *envp[]);
 
 #ifdef __cplusplus
 }
