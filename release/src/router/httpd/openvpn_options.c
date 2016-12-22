@@ -429,10 +429,38 @@ add_option (char *p[], int line, int unit)
 		else
 			nvram_set(buf, "adaptive");
 	}
+	else if (streq (p[0], "compress"))
+	{
+		sprintf(buf, "vpn_client%d_comp", unit);
+		if (p[1]) {
+			if (streq (p[1], "lzo"))
+				nvram_set(buf, "yes");
+			else if (streq (p[1], "lz4"))
+				nvram_set(buf, "lz4");
+		} else {
+			nvram_set(buf, "no");
+		}
+	}
 	else if (streq (p[0], "cipher") && p[1])
 	{
 		sprintf(buf, "vpn_client%d_cipher", unit);
 		nvram_set(buf, p[1]);
+                sprintf(buf, "vpn_client%d_ncp_enable", unit);
+		if (nvram_get_int(buf) == 2)
+	                nvram_set(buf, "1");	// Ensure legacy cipher is allowed
+	}
+	else if (streq (p[0], "ncp-ciphers") && p[1])
+	{
+		sprintf(buf, "vpn_client%d_ncp_ciphers", unit);
+		nvram_set(buf, p[1]);
+		sprintf(buf, "vpn_client%d_ncp_enable", unit);
+		if (nvram_get_int(buf) == 0)
+			nvram_set(buf, "1");    // Ensure ncp is not disabled
+	}
+	else if (streq (p[0], "ncp-disable"))
+	{
+		sprintf(buf, "vpn_client%d_ncp_enable", unit);
+		nvram_set(buf, "0");
 	}
 	else if (streq (p[0], "auth") && p[1])
 	{

@@ -260,17 +260,27 @@ function parseStatus(text, block){
 /*** Clients ***/
 
 	if (clientPtr > 0) {
-		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="' + (clientTableHeaders.length-1) + '">Clients</td></tr></thead><tr>';
+		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="6">Clients</td></tr></thead><tr>';
 
 // Headers
 		for (i = 0; i < (clientTableHeaders.length - 2); ++i)
 		{
-			if (i == 0) {
-				code +='<th style="text-align:left;">' + clientTableHeaders[i] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-2] + '</span></th>';
-			} else if (clientTableHeaders[i].search("Bytes") != -1 ) {
-				code +='<th style="text-align:left;">' + clientTableHeaders[i].replace("Bytes","MBytes") + '</th>';
-			} else {
-				code +='<th style="text-align:left;">' + clientTableHeaders[i] + '</th>';
+			switch (i) {
+				case 0: // CN, merge with user
+					code +='<th style="text-align:left;">' + clientTableHeaders[0] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-2] + '</span></th>';
+					break;
+				case 2: // Virtual IPv4, merge with IPv6
+					code +='<th style="text-align:left;">' + clientTableHeaders[2] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[3] + '</span></th>';
+					break;
+				case 3: // IPv6, merged with IPv4 field
+				case 7: // Connected since time_t
+					break;
+				case 4: // dl/up amount
+				case 5:
+					code +='<th style="text-align:left;">' + clientTableHeaders[i].replace("Bytes","MBytes") + '</th>';
+					break;
+				default:
+					code +='<th style="text-align:left;">' + clientTableHeaders[i] + '</th>';
 			}
 		}
 
@@ -282,12 +292,25 @@ function parseStatus(text, block){
 			code += '<tr>';
 			for (j = 0; j < (clientTableEntries[i].length-2); ++j)
 			{
-				if (j == 0) {
-					code += '<td style="white-space:nowrap; text-align:left;">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-2] +'</span></td>';
-				} else if ((j == 3) || (j == 4)) {
-					code += '<td style="vertical-align:top; text-align:left;">' + Number(clientTableEntries[i][j]/1024/1024).toFixed(2).toLocaleString() + '</td>';
-				} else {
-					code += '<td style="vertical-align:top; text-align:left;">' + clientTableEntries[i][j] + '</td>';
+				switch (j) {
+					case 0:	// CN, merge with user
+						if (clientTableEntries[i][8] == "UNDEF") {
+							clientTableEntries[i][8] = "";
+						}
+						code += '<td style="vertical-align:top; white-space:nowrap; text-align:left;">' + clientTableEntries[i][0] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][8] +'</span></td>';
+						break;
+					case 2:	// virtual IPv4, merge with IPv6
+						code += '<td style="vertical-align:top; text-align:left;">' + clientTableEntries[i][2] + '<br><span style=""color: cyan; background: transparent;">' + clientTableEntries[i][3] +'</span></td>';
+						break;
+					case 3:	// IPv6, merged with IPv4 field
+					case 7: // connected since time_t
+						break;
+					case 4:
+					case 5: // dl/up amount
+						code += '<td style="vertical-align:top; text-align:left;">' + Number(clientTableEntries[i][j]/1024/1024).toFixed(2).toLocaleString() + '</td>';
+						break;
+					default:
+						code += '<td style="vertical-align:top; text-align:left;">' + clientTableEntries[i][j] + '</td>';
 				}
 			}
 			code += '</tr>';

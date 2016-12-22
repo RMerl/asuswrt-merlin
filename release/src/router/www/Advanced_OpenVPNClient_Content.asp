@@ -348,6 +348,7 @@ function update_visibility(){
 	tlsremote = getRadioValue(document.form.vpn_client_tlsremote);
 	userauth = (getRadioValue(document.form.vpn_client_userauth) == 1) && (auth == 'tls') ? 1 : 0;
 	useronly = userauth && getRadioValue(document.form.vpn_client_useronly);
+	ncp = document.form.vpn_client_ncp_enable.value;
 
 	showhide("client_userauth", (auth == "tls"));
 	showhide("client_hmac", (auth == "tls"));
@@ -380,6 +381,9 @@ function update_visibility(){
 	showhide("selectiveTable", (rgw == 2));
 	showhide("client_enforce", (rgw == 2));
 
+	showhide("client_cipher", (ncp != 2));
+	showhide("ncp_enable", (auth == "tls"));
+	showhide("ncp_ciphers", ((ncp > 0) && (auth == "tls")));
 }
 
 
@@ -1240,8 +1244,26 @@ function defaultSettings() {
 						</td>
 					</tr>
 
-					<tr>
-						<th><#vpn_openvpn_Encrypt#></th>
+					<tr id="ncp_enable">
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,16);">Cipher Negotiation</a></th>
+						<td>
+							<select name="vpn_client_ncp_enable" onclick="update_visibility();" class="input_option">
+								<option value="0" <% nvram_match("vpn_client_ncp_enable","0","selected"); %> >Disabled</option>
+								<option value="1" <% nvram_match("vpn_client_ncp_enable","1","selected"); %> >Enable (with fallback)</option>
+								<option value="2" <% nvram_match("vpn_client_ncp_enable","2","selected"); %> >Enable</option>
+							</select>
+						</td>
+					</tr>
+
+					<tr id="ncp_ciphers">
+						<th>Negotiable ciphers</th>
+						<td>
+							<input type="text" maxlength="255" class="input_32_table" name="vpn_client_ncp_ciphers" value="<% nvram_get("vpn_client_ncp_ciphers"); %>" >
+						</td>
+					</tr>
+
+					<tr id="client_cipher">
+						<th>Legacy/fallback cipher</th>
 						<td>
 							<select name="vpn_client_cipher" class="input_option">
 								<option value="<% nvram_get("vpn_client_cipher"); %>" selected><% nvram_get("vpn_client_cipher"); %></option>
@@ -1255,8 +1277,9 @@ function defaultSettings() {
 							<select name="vpn_client_comp" class="input_option">
 								<option value="-1" <% nvram_match("vpn_client_comp","-1","selected"); %> >Disabled</option>
 								<option value="no" <% nvram_match("vpn_client_comp","no","selected"); %> >None</option>
-								<option value="yes" <% nvram_match("vpn_client_comp","yes","selected"); %> >Enabled</option>
-								<option value="adaptive" <% nvram_match("vpn_client_comp","adaptive","selected"); %> >Adaptive</option>
+								<option value="yes" <% nvram_match("vpn_client_comp","yes","selected"); %> >LZO</option>
+								<option value="adaptive" <% nvram_match("vpn_client_comp","adaptive","selected"); %> > LZO Adaptive</option>
+								<option value="lz4" <% nvram_match("vpn_client_comp","lz4","selected"); %> >LZ4</option>
 							</select>
 						</td>
 					</tr>
