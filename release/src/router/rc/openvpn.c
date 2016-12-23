@@ -1423,6 +1423,10 @@ void start_vpnserver(int serverNum)
 	fprintf(fp_client, "resolv-retry infinite\n");
 	fprintf(fp_client, "nobind\n");
 	fclose(fp_client);
+
+	// Format client file so Windows Notepad can edit it
+	sprintf(&buffer[0], "/etc/openvpn/server%d/client.ovpn", serverNum);
+	eval("/usr/bin/unix2dos", &buffer[0]);
 	vpnlog(VPN_LOG_EXTRA,"Done writing client config file");
 
 	// Run postconf custom script on it if it exists
