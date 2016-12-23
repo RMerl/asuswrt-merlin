@@ -1,6 +1,35 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.65 alpha 2 (xx-xxx-xxxxx)
+   - CHANGED: Upgraded to OpenVPN 2.4.0 RC2.  This new version
+              includes support for GCM ciphers and LZ4
+              compression, as well as cipher negotiation.
+              All of these are fully supported implemented.
+              Please refer to the OpenVPN 2.4 documentation for
+              more info on how NCP works, also adjust your
+              configuration as needed.
+              Exported client config currently require OpenVPN
+              2.4 on your client, unless you disable NCP (enabled
+              by default).
+              Existing client configuration are fully compatible,
+              OpenVPN 2.4 can handle mixed 2.3 and 2.4 environments.
+
+   - CHANGED: hosts file will now give a higher priority to the
+              user-configured hostname for the router ahead of
+              hardcoded ones (like router.asus.com).
+   - FIXED: Exported OpenVPN client config didn't work when
+            using static key authentication.
+   - FIXED: Exported OpenVPN client config wasn't editable with
+            Notepad, the default editor used by Windows's
+            OpenVPN GUI.
+
+
+380.65 alpha 1 (xx-xxx-xxxxx)
+   - NEW: Added xargs busybox applet.
+   - CHANGED: Upgraded busybox to 1.25.1 (patch by theMIROn)
+
+
 380.64 (16-Dec-2016)
    - NEW: New firmware availability notification.  The router will
           notify you if a new firmware is available, and will also
