@@ -5,7 +5,7 @@ Asuswrt-Merlin Changelog
    - CHANGED: Upgraded to OpenVPN 2.4.0 RC2.  This new version
               includes support for GCM ciphers and LZ4
               compression, as well as cipher negotiation.
-              All of these are fully supported implemented.
+              All of these are fully implemented in the webui.
               Please refer to the OpenVPN 2.4 documentation for
               more info on how NCP works, also adjust your
               configuration as needed.
@@ -23,6 +23,11 @@ Asuswrt-Merlin Changelog
    - FIXED: Exported OpenVPN client config wasn't editable with
             Notepad, the default editor used by Windows's
             OpenVPN GUI.
+   - FIXED: OpenVPN was killed too quickly on disconnection,
+            causing issues when using explicit-exit-notify
+            (patch by john9527)
+   - FIXED: OpenVPN client/server instances weren't properly
+            restarted on a WAN restart (patch by john9527)
 
 
 380.65 alpha 1 (xx-xxx-xxxxx)
