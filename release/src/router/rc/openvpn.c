@@ -1711,6 +1711,37 @@ void stop_vpn_eas()
 	}
 }
 
+void stop_vpn_all()
+{
+	char buffer[16], *cur;
+	int i;
+
+	// stop servers
+	for( i = 1; i <= 4; i++ )
+	{
+		sprintf(&buffer[0], "vpnserver%d", i);
+		if ( pidof(&buffer[0]) >= 0 )
+		{
+			vpnlog(VPN_LOG_INFO, "Stopping OpenVPN server %d", i);
+			stop_vpnserver(i);
+		}
+	}
+
+	// stop clients
+	for( i = 0; i <= 4; i++ )
+	{
+		sprintf(&buffer[0], "vpnclient%d", i);
+		if ( pidof(&buffer[0]) >= 0 )
+		{
+			vpnlog(VPN_LOG_INFO, "Stopping OpenVPN client %d", i);
+			stop_vpnclient(i);
+		}
+	}
+
+	// Remove tunnel interface module
+	modprobe_r("tun");
+}
+
 void run_vpn_firewall_scripts()
 {
 	DIR *dir;

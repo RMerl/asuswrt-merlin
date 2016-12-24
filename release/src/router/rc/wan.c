@@ -2785,7 +2785,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #endif
 
 #ifdef RTCONFIG_OPENVPN
-	stop_vpn_eas();
+	stop_vpn_all();
 #endif
 
 #if 0 // unsure changes
