@@ -37,7 +37,7 @@ static int ovpn_waitfor(const char *name)
 {
 	int pid, n = 5;
 
-	killall_tk(name);
+	killall_tk_period_wait(name, 10); //wait time in seconds
 	while ( (pid = pidof(name)) >= 0 && (n-- > 0) )
 	{
 		// Reap the zombie if it has terminated
@@ -570,22 +570,6 @@ void stop_vpnclient(int clientNum)
 	_eval(argv, NULL, 0, NULL);
 	vpnlog(VPN_LOG_EXTRA,"Done removing cron job");
 
-	// Remove firewall rules
-	vpnlog(VPN_LOG_EXTRA,"Removing firewall rules.");
-	sprintf(&buffer[0], "/etc/openvpn/fw/client%d-fw.sh", clientNum);
-	argv[0] = "sed";
-	argv[1] = "-i";
-	argv[2] = "s/-A/-D/g;s/-I/-D/g;s/FORWARD\\ [0-9]\\ /FORWARD\\ /g";
-	argv[3] = &buffer[0];
-	argv[4] = NULL;
-	if (!_eval(argv, NULL, 0, NULL))
-	{
-		argv[0] = &buffer[0];
-		argv[1] = NULL;
-		_eval(argv, NULL, 0, NULL);
-	}
-	vpnlog(VPN_LOG_EXTRA,"Done removing firewall rules.");
-
 	// Stop the VPN client
 	vpnlog(VPN_LOG_EXTRA,"Stopping OpenVPN client.");
 	sprintf(&buffer[0], "vpnclient%d", clientNum);
@@ -603,7 +587,24 @@ void stop_vpnclient(int clientNum)
 	_eval(argv, NULL, 0, NULL);
 	vpnlog(VPN_LOG_EXTRA,"VPN device removed.");
 
-	modprobe_r("tun");
+	// Don't remove tunnel interface in case of multiple servers/clients
+	//modprobe_r("tun");
+
+	// Remove firewall rules after VPN exit
+	vpnlog(VPN_LOG_EXTRA,"Removing firewall rules.");
+	sprintf(&buffer[0], "/etc/openvpn/fw/client%d-fw.sh", clientNum);
+	argv[0] = "sed";
+	argv[1] = "-i";
+	argv[2] = "s/-A/-D/g;s/-I/-D/g;s/FORWARD\\ [0-9]\\ /FORWARD\\ /g";
+	argv[3] = &buffer[0];
+	argv[4] = NULL;
+	if (!_eval(argv, NULL, 0, NULL))
+	{
+		argv[0] = &buffer[0];
+		argv[1] = NULL;
+		_eval(argv, NULL, 0, NULL);
+	}
+	vpnlog(VPN_LOG_EXTRA,"Done removing firewall rules.");
 
 	if ( nvram_get_int("vpn_debug") <= VPN_LOG_EXTRA )
 	{
@@ -1551,22 +1552,6 @@ void stop_vpnserver(int serverNum)
 	_eval(argv, NULL, 0, NULL);
 	vpnlog(VPN_LOG_EXTRA,"Done removing cron job");
 
-	// Remove firewall rules
-	vpnlog(VPN_LOG_EXTRA,"Removing firewall rules.");
-	sprintf(&buffer[0], "/etc/openvpn/fw/server%d-fw.sh", serverNum);
-	argv[0] = "sed";
-	argv[1] = "-i";
-	argv[2] = "s/-A/-D/g;s/-I/-D/g;s/FORWARD\\ [0-9]\\ /FORWARD\\ /g";
-	argv[3] = &buffer[0];
-	argv[4] = NULL;
-	if (!_eval(argv, NULL, 0, NULL))
-	{
-		argv[0] = &buffer[0];
-		argv[1] = NULL;
-		_eval(argv, NULL, 0, NULL);
-	}
-	vpnlog(VPN_LOG_EXTRA,"Done removing firewall rules.");
-
 	// Stop the VPN server
 	vpnlog(VPN_LOG_EXTRA,"Stopping OpenVPN server.");
 	sprintf(&buffer[0], "vpnserver%d", serverNum);
@@ -1584,7 +1569,24 @@ void stop_vpnserver(int serverNum)
 	_eval(argv, NULL, 0, NULL);
 	vpnlog(VPN_LOG_EXTRA,"VPN device removed.");
 
-	modprobe_r("tun");
+	// Don't remove tunnel interface in case of multiple servers/clients
+	//modprobe_r("tun");
+
+	// Remove firewall rules after VPN exit
+	vpnlog(VPN_LOG_EXTRA,"Removing firewall rules.");
+	sprintf(&buffer[0], "/etc/openvpn/fw/server%d-fw.sh", serverNum);
+	argv[0] = "sed";
+	argv[1] = "-i";
+	argv[2] = "s/-A/-D/g;s/-I/-D/g;s/FORWARD\\ [0-9]\\ /FORWARD\\ /g";
+	argv[3] = &buffer[0];
+	argv[4] = NULL;
+	if (!_eval(argv, NULL, 0, NULL))
+	{
+		argv[0] = &buffer[0];
+		argv[1] = NULL;
+		_eval(argv, NULL, 0, NULL);
+	}
+	vpnlog(VPN_LOG_EXTRA,"Done removing firewall rules.");
 
 	if ( nvram_get_int("vpn_debug") <= VPN_LOG_EXTRA )
 	{
