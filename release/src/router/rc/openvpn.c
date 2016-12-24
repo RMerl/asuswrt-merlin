@@ -633,7 +633,6 @@ void stop_vpnclient(int clientNum)
 	nvram_set(&buffer[0], "0");
 
 	update_resolvconf();
-	start_dnsmasq();
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend stopped.");
 }
