@@ -39,6 +39,12 @@
 #include "syshead.h"
 
 #include "tun.h"
+#ifndef TUNSETOWNER
+#define TUNSETOWNER     _IOW('T', 204, int)
+#endif
+#ifndef TUNSETGROUP
+#define TUNSETGROUP     _IOW('T', 206, int)
+#endif
 #include "fdmisc.h"
 #include "common.h"
 #include "misc.h"
