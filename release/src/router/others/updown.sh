@@ -96,8 +96,8 @@ then
 		service updateresolv
 	elif [ $script_type == 'down' ]; then
 		rm $dnsscript
-		service updateresolv
-		service restart_dnsmasq
+		service updateresolv # also restarts or reloads dnsmasq as necessary
+#		service restart_dnsmasq
 	fi
 fi
 
