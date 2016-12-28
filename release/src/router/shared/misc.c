@@ -1639,6 +1639,7 @@ int psta_exist_except(int unit)
 	char word[256], *next;
 	int idx = 0;
 
+	if (unit < 0) return 0;
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		if (idx == unit) goto END;
 		if (is_psta(idx)) return 1;
@@ -1667,6 +1668,7 @@ int psr_exist_except(int unit)
 	char word[256], *next;
 	int idx = 0;
 
+	if (unit < 0) return 0;
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		if (idx == unit) goto END;
 		if (is_psr(idx)) return 1;
