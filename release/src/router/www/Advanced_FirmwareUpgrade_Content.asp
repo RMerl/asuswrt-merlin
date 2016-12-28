@@ -124,7 +124,6 @@ function initial(){
 		document.getElementById("beta_firmware_path_span").style.display = "none";
 		document.getElementById("linkpage_div").style.display = "";
 		document.getElementById("linkpage").style.display = "";
-		document.getElementById("beta_firmware_span").style.display = "none";
 		document.getElementById("fw_check_link").style.display = "none";
 		helplink = download_url;
 		document.getElementById("linkpage").href = helplink;
@@ -710,7 +709,7 @@ function change_firmware_path(flag){
 				<th><#FW_item2#></th>
 				<td>
 					<input type="text" name="firmver_table" id="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1" autocorrect="off" autocapitalize="off">&nbsp&nbsp&nbsp<!--/td-->
-					<span id="beta_firmware_span" style="color:#FFF;"><input type="checkbox" name="beta_firmware_path" id="beta_firmware_path" onclick="change_firmware_path(this.checked==true);"  <% nvram_match("firmware_path", "1", "checked"); %>>Get Beta Firmware</input></span>
+					<span id="beta_firmware_path_span" style="color:#FFF;"><input type="checkbox" name="beta_firmware_path" id="beta_firmware_path" onclick="change_firmware_path(this.checked==true);"  <% nvram_match("firmware_path", "1", "checked"); %>>Get Beta Firmware</input></span>
 					<input type="button" id="update" name="update" style="margin-left:330px;margin-top:-25px;display:none;" class="button_gen" style="display:none;" onclick="detect_update(document.start_update.firmware_path.value);" value="<#liveupdate#>" />
 					<div id="linkpage_div" class="button_helplink" style="margin-left:330px;margin-top:-25px;display:none;"><a id="linkpage" target="_blank"><div style="padding-top:5px;"><#liveupdate#></div></a></div>
 					<div id="check_states">
