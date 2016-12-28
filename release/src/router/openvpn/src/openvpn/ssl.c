@@ -5,8 +5,8 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
- *  Copyright (C) 2010 Fox Crypto B.V. <openvpn@fox-it.com>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2010-2017 Fox Crypto B.V. <openvpn@fox-it.com>
  *  Copyright (C) 2008-2013 David Sommerseth <dazo@users.sourceforge.net>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -2269,9 +2269,6 @@ push_peer_info(struct buffer *buf, struct tls_session *session)
 #ifdef USE_COMP
         comp_generate_peer_info_string(&session->opt->comp_options, &out);
 #endif
-
-        /* support for redirecting IPv6 gateway */
-        buf_printf(&out, "IV_RGI6=1\n");
 
         if (session->opt->push_peer_info_detail >= 2)
         {

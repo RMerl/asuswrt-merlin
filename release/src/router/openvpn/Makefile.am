@@ -5,7 +5,7 @@
 #             packet encryption, packet authentication, and
 #             packet compression.
 #
-#  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+#  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
 #  Copyright (C) 2010      David Sommerseth <dazo@users.sourceforge.net>
 #  Copyright (C) 2006-2012 Alon Bar-Lev <alon.barlev@gmail.com>
 #
@@ -60,6 +60,7 @@ dist_doc_DATA = \
 	README \
 	README.IPv6 \
 	README.polarssl \
+	Changes.rst \
 	COPYRIGHT.GPL \
 	COPYING
 

@@ -4,7 +4,7 @@
 .\"             packet encryption, packet authentication, and
 .\"             packet compression.
 .\"
-.\"  Copyright (C) 2002-2016 OpenVPN Technologies, Inc. <sales@openvpn.net>
+.\"  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
 .\"
 .\"  This program is free software; you can redistribute it and/or modify
 .\"  it under the terms of the GNU General Public License version 2
@@ -2989,10 +2989,6 @@ IV_LZO_STUB=1 -- if client was built with LZO stub capability
 
 IV_LZ4=1 -- if the client supports LZ4 compressions.
 
-IV_RGI6=1 -- if the client supports
-.B \-\-redirect\-gateway
-for ipv6
-
 IV_PROTO=2 -- if the client supports peer-id floating mechansim
 
 IV_NCP=2 -- negotiable ciphers, client supports
@@ -4876,11 +4872,18 @@ such as TCP expect this role to be left to them.
 .B \-\-reneg\-bytes n
 Renegotiate data channel key after
 .B n
-bytes sent or received (disabled by default).
+bytes sent or received (disabled by default with an exception, see below).
 OpenVPN allows the lifetime of a key
-to be expressed as a number of bytes encrypted/decrypted, a number of packets, or
-a number of seconds.  A key renegotiation will be forced
+to be expressed as a number of bytes encrypted/decrypted, a number of packets,
+or a number of seconds.  A key renegotiation will be forced
 if any of these three criteria are met by either peer.
+
+If using ciphers with cipher block sizes less than 128-bits, \-\-reneg\-bytes is
+set to 64MB by default, unless it is explicitly disabled by setting the value to
+0, but this is
+.B HIGHLY DISCOURAGED
+as this is designed to add some protection against the SWEET32 attack vector.
+For more information see the \-\-cipher option.
 .\"*********************************************************
 .TP
 .B \-\-reneg\-pkts n
@@ -5029,6 +5032,11 @@ key file used with
 .B \-\-tls\-auth
 gives a peer nothing more than the power to initiate a TLS
 handshake.  It is not used to encrypt or authenticate any tunnel data.
+
+Use
+.B \-\-tls\-crypt
+instead if you want to use the key file to not only authenticate, but also
+encrypt the TLS control channel.
 .\"*********************************************************
 .TP
 .B \-\-tls\-crypt keyfile
