@@ -93,7 +93,7 @@ function checkCmdRet(){
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-<form method="GET" name="form" action="/apply.cgi" target="hidden_frame"> 
+<form method="POST" name="form" action="/apply.cgi" target="hidden_frame"> 
 <input type="hidden" name="current_page" value="Main_ConnStatus_Content.asp">
 <input type="hidden" name="next_page" value="Main_ConnStatus_Content.asp">
 <input type="hidden" name="group_id" value="">
