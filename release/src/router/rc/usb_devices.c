@@ -4241,8 +4241,10 @@ int asus_usb_interface(const char *device_name, const char *action){
 	int isLock;
 	char device_type[16];
 	char nvram_usb_path[32];
-	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
-	char conf_file[32];
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_";
+#ifdef RTCONFIG_USB_MODEM
+	char conf_file[32], tmp[100];
+#endif
 	char port_path[8];
 	int port_num;
 	int turn_on_led = 1;

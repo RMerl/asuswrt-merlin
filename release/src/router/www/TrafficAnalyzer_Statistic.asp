@@ -1099,7 +1099,7 @@ function draw_pie_chart(list_info, top5_info, type){
 			id: "0"
 		}];
 		
-		code = '<div style="width:100px;word-wrap:break-word;padding-left:5px;background-color:#B3645B;margin-right:-10px;border-top-left-radius:10px;border-bottom-left-radius:10px;">No Client</div>';		
+		code = '<div style="width:110px;word-wrap:break-word;padding-left:5px;background-color:#B3645B;margin-right:-10px;border-top-left-radius:10px;border-bottom-left-radius:10px;">No Client</div>';		
 	}
 	else{
 		for(i=0;i<top5_info.length && i<6;i++){		

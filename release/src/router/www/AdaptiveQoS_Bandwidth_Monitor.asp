@@ -54,29 +54,19 @@
 	border-spacing: 0px;
 }
 .qosLevel, .qosLevel3{
-	border-style: double;
-	border-width: 2px;
-	border-color: #7A797A;
+	box-shadow: 0px 0px 0px 2px #7A797A;
 }
 .qosLevel0{
-	border-style: double;
-	border-width: 2px;
-	border-color: #F01F09;
+	box-shadow: 0px 0px 0px 2px #F01F09;
 }
 .qosLevel1{
-	border-style: double;
-	border-width: 2px;
-	border-color: #F08C09;
+	box-shadow: 0px 0px 0px 2px #F08C09;
 }
 .qosLevel2{
-	border-style: double;
-	border-width: 2px;
-	border-color: #F3DD09;
+	box-shadow: 0px 0px 0px 2px #F3DD09;
 }
 .qosLevel4{
-	border-style: double;
-	border-width: 2px;
-	border-color: #58CCED;
+	box-shadow: 0px 0px 0px 2px #58CCED;
 }
 
 #indicator_upload, #indicator_download{
@@ -89,12 +79,11 @@
 .divUserIcon{
 	cursor: pointer;
 	margin: 0 auto;
-	width:52px;
-	height:52px;
+	width: 50px;
+	height: 50px;
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
 	border-radius: 10px;
-	border-radius:10px;
 }
 .traffic_bar{
 	width: 0%;
@@ -167,9 +156,7 @@ function register_event(){
 				this.style.color = "";
 				this.style.backgroundColor = "";
 				this.style.fontWeight = "";
-				this.children[0].children[0].style.borderColor = color_array[ui.draggable[0].id];
-				this.children[0].children[0].style.borderStyle = "solid";
-				this.children[0].children[0].style.borderWidth = "2px";
+				this.children[0].children[0].style.boxShadow = "0px 0px 0px 2px " + color_array[ui.draggable[0].id] + "";
 				regen_qos_rule(this.children[0].children[0], ui.draggable[0].id);				
 			}
 		});
@@ -416,12 +403,22 @@ function show_clients(priority_type){
 			userIconBase64 = getUploadIcon(clientMac);
 		}
 		if(userIconBase64 != "NoIcon") {
-			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed qosLevel' + clientObj.qosLevel + ' divUserIcon" ';
+			if(top.isIE8){
+				code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed qosLevel' + clientObj.qosLevel + ' clientIconIE8HACK" ';
+			}
+			else{
+				code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed qosLevel' + clientObj.qosLevel + ' divUserIcon" ';		
+			}
 			code += 'style="background-image:url('+userIconBase64+');background-size:50px;">';
 			code += '</div>';
 		}
 		else if(clientObj.type != "0" || clientObj.vendor == "") {
-			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed clientIcon type' + clientObj.type + ' qosLevel' + clientObj.qosLevel + '"></div>';
+			if(top.isIE8){
+				code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed clientIconIE8HACK' + ' qosLevel' + clientObj.qosLevel + '"></div>';
+			}
+			else{
+				code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed clientIcon type' + clientObj.type + ' qosLevel' + clientObj.qosLevel + '"></div>';
+			}
 		}
 		else if(clientObj.vendor != "") {
 			var clientListCSS = "";
@@ -432,7 +429,13 @@ function show_clients(priority_type){
 			else {
 				clientListCSS = "clientIcon type" + clientObj.type;
 			}
-			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed ' + clientListCSS + ' qosLevel' + clientObj.qosLevel + '"></div>';
+
+			if(top.isIE8){
+				code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed clientIconIE8HACK qosLevel' + clientObj.qosLevel + '"></div>';
+			}
+			else{
+				code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed ' + clientListCSS + ' qosLevel' + clientObj.qosLevel + '"></div>';
+			}
 		}
 		
 		if(clientObj.wtfast && wtfast_support) {

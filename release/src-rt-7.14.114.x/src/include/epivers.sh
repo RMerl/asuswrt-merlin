@@ -4,7 +4,7 @@
 #
 # Epivers.h version support svn/sparse/gclient workspaces
 #
-# $Id: epivers.sh 389103 2013-03-05 17:24:49Z $
+# $Id: epivers.sh 640158 2016-05-26 10:53:37Z $
 #
 # Version generation works off of svn property HeadURL, if
 # not set it keys its versions from current svn workspace or
@@ -57,7 +57,7 @@ else # epivers.h doesn't exist
 	fi
 
 	# Following SVNURL should be expanded on checkout
-	SVNURL='$HeadURL: http://svn.sj.broadcom.com/svn/wlansvn/proj/tags/BISON04T/BISON04T_REL_7_14_131_4402/src/include/epivers.sh $'
+	SVNURL='$HeadURL: svn://wlan-sj1-svn01.sj.broadcom.com/svn/wlansvn/proj/branches/BISON04T_TWIG_7_14_131/src/include/epivers.sh $'
 
 	# .gclient_info is created by gclient checkout/sync steps
 	# and contains "DEPS='<deps-url1> <deps-url2> ..." entry
@@ -86,7 +86,7 @@ else # epivers.h doesn't exist
 	fi
 
 	# If SVNURL isn't expanded, extract it from svn info
-	if echo "$SVNURL" | egrep -vq 'HeadURL.*epivers.sh.*|http://.*/DEPS'; then
+	if echo "$SVNURL" | egrep -vq 'HeadURL.*epivers.sh.*|^[a-z+]+://.*/DEPS'; then
 		[ -n "$VERBOSE" ] && \
 			echo "DBG: SVN URL ($SVNURL) wasn't expanded. Getting it from svn info"
 		SVNURL=$($SVNCMD info epivers.sh 2> $NULL | egrep "^URL:")

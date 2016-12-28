@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title></title>
+<script type='text/javascript' src='jquery-1.7.1.min.js'></script>
+<script type="text/javascript">
+/*
+# possible Cases:       
+# attempt to login                          login=login
+# 1: Login successful                       res=success
+# 2: Login failed                           res=failed
+# 3: Logged out                             res=logoff
+# 4: Tried to login while already logged in res=already
+# 5: Not logged in yet                      res=notyet
+*/
+var username = getUrlVars()["username"];
+var password = getUrlVars()["password"];
+var chal = getUrlVars()["chal"];
+var login = getUrlVars()["login"];
+var logout = getUrlVars()["logout"];
+var prelogin = getUrlVars()["prelogin"];
+var res = getUrlVars()["res"];
+var uamip = getUrlVars()["uamip"];
+var uamport = getUrlVars()["uamport"];
+var timeleft = getUrlVars()["timeleft"];
+var userurl = getUrlVars()["userurl"];
+var challenge = getUrlVars()["challenge"];
+
+function getUrlVars(){
+	var vars = [], hash;
+	var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+	for(var i = 0; i < hashes.length; i++){
+		hash = hashes[i].split('=');
+    		vars.push(hash[0]);
+ 	   	vars[hash[0]] = hash[1];
+	}
+	return vars;
+}
+
+$("document").ready(function() {	
+	//alert("res=" + res + ", username=" + username + ", password=" + password);
+	if (res == "notyet") {
+		document.getElementsByTagName('title')[0].innerHTML = "Captive Portal Login";
+		document.getElementById("header").innerHTML = "Captive Portal Login";
+		document.getElementById('chal').value = challenge;
+		document.getElementById('uamip').value = uamip;
+		document.getElementById('uamport').value = uamport;
+		document.getElementById('userurl').value = userurl;
+		document.getElementById('login_section').style.display = "block";
+	}
+	else if (res == "success") {
+		if (userurl != null && userurl != undefined && userurl != '') {
+			window.location = userurl;
+		}
+		else
+		{
+			document.getElementsByTagName('title')[0].innerHTML = "Logged in to Captive Portal";
+			document.getElementById("header").innerHTML = "Logged in to Captive Portal";
+			document.getElementById("logoff_a").href = "http://" + uamip + ":" + uamport + "/logoff";
+			document.getElementById('success_section').style.display = "block";
+		}
+	}
+	else if (res == "failed") {
+		document.getElementsByTagName('title')[0].innerHTML = "Captive Portal Login Failed";
+		document.getElementById("header").innerHTML = "Captive Portal Login Failed";
+		document.getElementById('chal').value = challenge;
+		document.getElementById('uamip').value = uamip;
+		document.getElementById('uamport').value = uamport;
+		document.getElementById('userurl').value = userurl;
+		document.getElementById('login_section').style.display = "block";
+	}
+	else if (res == "logoff") {
+		document.getElementsByTagName('title')[0].innerHTML = "Logged out from Captive Portal";
+		document.getElementById("header").innerHTML = "Logged out from Captive Portal";
+		document.getElementById("prelogin_a").href = "http://" + uamip + ":" + uamport + "/prelogin";
+		document.getElementById('logoff_section').style.display = "block";
+	}
+	else if (res == "already") {
+		document.getElementsByTagName('title')[0].innerHTML = "Already logged in to Captive Portal";
+		document.getElementById("header").innerHTML = "Already logged in to Captive Portal";
+		document.getElementById("logoff_a").href = "http://" + uamip + ":" + uamport + "/logoff";
+		document.getElementById('success_section').style.display = "block";
+	}
+});
+
+function formSubmit(auth)
+{
+	var param = {};
+	param.chal = document.getElementById('chal').value;
+	param.uamip = document.getElementById('uamip').value;
+	param.uamport = document.getElementById('uamport').value;
+	param.userurl = document.getElementById('userurl').value;
+	if (auth == 1) {
+		param.UserName = document.getElementById('UserName').value;
+		param.Password = document.getElementById('Password').value;
+	}
+	param.login = "login";
+
+	$.ajax({
+	    	url: '',
+	  	data: param,
+	      	type: 'GET',
+	      	dataType: 'text',
+		timeout: 20000,
+		error: function(){
+		      alert('fail');
+		},
+		success: function(data){
+		      //- success
+			window.location = data;
+		}
+	});
+
+}
+
+</script>
+</head>
+<body id='main' width='100%' height='100%' style='margin:0px;padding:0px'>
+<h1 id="header" style="text-align: center;"></h1>
+<div id="login_section" style="display: none;">
+<form name="form" method="get" action="/Uam">
+	<input type="hidden" name="chal" id="chal" value="">
+	<input type="hidden" name="uamip" id="uamip" value="">
+	<input type="hidden" name="uamport" id="uamport" value="">
+	<input type="hidden" name="userurl" id="userurl" value="">
+	<center>
+	<table border="0" cellpadding="5" cellspacing="0" style="width: 217px;">
+          <tbody>
+            <tr>
+              <td align="right">Login:</td>
+              <td><input type="text" name="UserName" id="UserName" size="20" maxlength="255"></td>
+            </tr>
+            <tr>
+              <td align="right">Password:</td>
+              <td><input type="password" name="Password" id="Password" size="20" maxlength="255"></td>
+            </tr>
+            <tr>
+              <td align="center" colspan="2" height="23"><input type="button" onclick="formSubmit(1)" value="Submit"><!--<input type="submit" name="login" value="login">--></td>
+            </tr>
+            <tr>
+              <td align="center" colspan="2" height="23"><input type="button" onclick="formSubmit(0)" value="OK"></td>
+            </tr>
+        </tbody>
+        </table>
+        </center>
+      </form>
+</div>
+
+<div id="success_section" style="display: none;">
+<center><a href="" id="logoff_a">Logout</a></center>
+</div>
+
+<div id="logoff_section" style="display: none;">
+<center><a href="" id="prelogin_a">Login</a></center>
+</div>
+
+</body>
+</html>

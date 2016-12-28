@@ -153,7 +153,7 @@ extern int ej_wl_stainfo_list_5g_2(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 #endif
 extern int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv);
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_QCA)
 extern int ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_extent_channel(int eid, webs_t wp, int argc, char_t **argv);
 #endif
@@ -283,6 +283,7 @@ extern int skip_auth;
 extern int lock_flag;
 extern char host_name[64];
 extern char referer_host[64];
+extern char current_page_name[128];
 extern unsigned int login_ip_tmp;
 
 extern time_t login_timestamp; // the timestamp of the logined ip
@@ -290,6 +291,11 @@ extern time_t login_timestamp_tmp; // the timestamp of the current session.
 extern time_t last_login_timestamp; // the timestamp of the current session.
 extern unsigned int login_try;
 extern unsigned int MAX_login;
+
+extern time_t login_dt;
+extern char login_url[128];
+extern int login_error_status;
+extern char cloud_file[256];
 
 #ifdef RTCONFIG_JFFS2USERICON
 #define JFFS_USERICON		"/jffs/usericon/"
@@ -2148,7 +2154,10 @@ static int validate_apply(webs_t wp, json_object *root) {
 
 		value = get_cgi_json(name, root);
 
-		if(!value || (!strncmp(name, "wan", 3) && nvram_match("switch_wantag", "movistar"))) {
+		if(!value || 
+			(!strncmp(name, "wan10_", 6) && nvram_match("switch_wantag", "movistar")) ||
+			(!strncmp(name, "wan11_", 6) && nvram_match("switch_wantag", "movistar"))
+		) {
 			if((ret=validate_instance(wp, name,root))) {
 				if(ret&NVRAM_MODIFIED_BIT) nvram_modified = 1;
 				if(ret&NVRAM_MODIFIED_WL_BIT) nvram_modified_wl = 1;
@@ -3612,9 +3621,11 @@ static int wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 		status = 0;
 	}
 #endif
+/*
 	else if(wan_auxstate == WAN_AUXSTATE_NO_INTERNET_ACTIVITY&&(nvram_get_int("web_redirect")&WEBREDIRECT_FLAG_NOINTERNET)) {
 		status = 0;
 	}
+*/
 	else if(!strcmp(wan_proto, "pppoe")
 			|| !strcmp(wan_proto, "pptp")
 			|| !strcmp(wan_proto, "l2tp")
@@ -3803,9 +3814,11 @@ static int first_wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 		status = 0;
 	}
 #endif
+/*
 	else if(wan_auxstate == WAN_AUXSTATE_NO_INTERNET_ACTIVITY&&(nvram_get_int("web_redirect")&WEBREDIRECT_FLAG_NOINTERNET)) {
 		status = 0;
 	}
+*/
 	else if(!strcmp(wan_proto, "pppoe")
 			|| !strcmp(wan_proto, "pptp")
 			|| !strcmp(wan_proto, "l2tp")
@@ -3958,9 +3971,11 @@ static int secondary_wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 		status = 0;
 	}
 #endif
+/*
 	else if(wan_auxstate == WAN_AUXSTATE_NO_INTERNET_ACTIVITY&&(nvram_get_int("web_redirect")&WEBREDIRECT_FLAG_NOINTERNET)) {
 		status = 0;
 	}
+*/
 	else if(!strcmp(wan_proto, "pppoe")
 			|| !strcmp(wan_proto, "pptp")
 			|| !strcmp(wan_proto, "l2tp")
@@ -4193,9 +4208,11 @@ static int wanlink_state_hook(int eid, webs_t wp, int argc, char_t **argv){
 		status = 0;
 	}
 #endif
+/*
 	else if(wan_auxstate == WAN_AUXSTATE_NO_INTERNET_ACTIVITY&&(nvram_get_int("web_redirect")&WEBREDIRECT_FLAG_NOINTERNET)) {
 		status = 0;
 	}
+*/
 	else if(!strcmp(wan_proto, "pppoe")
 			|| !strcmp(wan_proto, "pptp")
 			|| !strcmp(wan_proto, "l2tp")
@@ -9917,7 +9934,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char asus_token[32];
 	char *next_page=NULL;
 	int fromapp_flag = 0;
-	char *cloud_file=NULL;
+	int authpass_fail = 0;
 	char filename[128];
 	memset(filename, 0, 128);
 
@@ -9932,16 +9949,15 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 
 	authpass = strchr( authinfo, ':' );
 	if ( authpass == (char*) 0 ) {
-		websRedirect(wp, "Main_Login.asp");
-		return 0;
-	}
-	*authpass++ = '\0';
+		authpass_fail = 1;
+	}else
+		*authpass++ = '\0';
 
 	time_t now;
+	time_t dt;
 	char timebuf[100];
 	now = time( (time_t*) 0 );
 
-	time_t dt;
 	struct in_addr temp_ip_addr;
 	char *temp_ip_str;
 
@@ -9951,6 +9967,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		login_try = 0;
 		last_login_timestamp = 0;
 		lock_flag = 0;
+		login_error_status = 0;
 	}
 	if (MAX_login <= DEFAULT_LOGIN_MAX_NUM){
 		MAX_login = DEFAULT_LOGIN_MAX_NUM;
@@ -9963,7 +9980,6 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		if(login_try%MAX_login == 0){
 			logmessage("httpd login lock", "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
 		}
-
 		__send_login_page(fromapp_flag, LOGINLOCK, NULL, dt);
 		return LOGINLOCK;
 	}
@@ -9990,19 +10006,14 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	}
 
 	/* Is this the right user and password? */
-	if ( strcmp( nvram_safe_get("http_username"), authinfo ) == 0 && strcmp( nvram_safe_get("http_passwd"), authpass ) == 0)
+	if (!authpass_fail && strcmp( nvram_safe_get("http_username"), authinfo ) == 0 && strcmp( nvram_safe_get("http_passwd"), authpass ) == 0)
 	{
 		if (fromapp_flag == 0){
 			login_try = 0;
 			last_login_timestamp = 0;
-			memset(referer_host, 0, sizeof(referer_host));
-			if(strncmp(DUT_DOMAIN_NAME, host_name, strlen(DUT_DOMAIN_NAME))==0){
-				strcpy(referer_host, nvram_safe_get("lan_ipaddr"));
-			}else
-				snprintf(referer_host,sizeof(host_name),"%s",host_name);
+			set_referer_host();
 		}
-
-		strlcpy(asus_token, generate_token(), sizeof(asus_token));
+		strncpy(asus_token, generate_token(), sizeof(asus_token));
 		add_asus_token(asus_token);
 
 		websWrite(wp,"Set-Cookie: asus_token=%s; HttpOnly;\r\n",asus_token);
@@ -10018,10 +10029,9 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			else if(next_page == NULL || strcmp(next_page, "") == 0 || strstr(next_page, "http") != NULL || strstr(next_page, "//") != NULL || (!check_if_file_exist(filename)))
 				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=index.asp\">\r\n"));
 			else{
-				if(strncmp(next_page, "cloud_sync.asp", 14)==0){
-					cloud_file = websGetVar(wp, "cloud_file", "");
+				if(strncmp(next_page, "cloud_sync.asp", 14)==0)
 					websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=%s?flag=%s\">\r\n"), next_page, cloud_file);
-				}else
+				else
 					websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=%s\">\r\n"), next_page);
 			}
 
@@ -10040,6 +10050,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		}else{
 			login_try++;
 			last_login_timestamp = login_timestamp_tmp;
+			strncpy(login_url, "index.asp", sizeof(login_url));
 			websWrite(wp,"<HTML><HEAD>\n" );
 			if(login_try >= MAX_login){
 				lock_flag = 1;
@@ -10052,9 +10063,12 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				send_trigger_event(e);
 				nt_event_free(e);
 #endif
-				websWrite(wp,"<script>parent.location.href='/Main_Login.asp?error_status=%d&lock_time=%ld';</script>\n",LOGINLOCK, dt);
-			}else
-				websWrite(wp,"<script>parent.location.href='/Main_Login.asp?error_status=%d';</script>\n",ACCOUNTFAIL);
+				login_error_status = LOGINLOCK;
+				websWrite(wp,"<script>parent.location.href='/Main_Login.asp';</script>\n");
+			}else{
+				login_error_status = ACCOUNTFAIL;
+				websWrite(wp,"<script>parent.location.href='/Main_Login.asp';</script>\n");
+			}
 			websWrite(wp,"</HEAD></HTML>\n" );
 		}
 		return 0;
@@ -10276,6 +10290,10 @@ struct mime_handler mime_handlers[] = {
 	{ "upnpc_xml.log", "application/force-download", NULL, NULL, do_upnpc_xml_file, do_auth },
 	{ "mDNSNetMonitor.log", "application/force-download", NULL, NULL, do_dnsnet_file, do_auth },
 	{ "ftpServerTree.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_ftpServerTree_cgi, do_auth },//andi
+	{ "aidisk/create_account.asp", CHECK_REFERER},
+#if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_CONCURRENTREPEATER)
+	{ "apscan.asp", CHECK_REFERER},
+#endif
 	{ "**.ovpn", "application/force-download", NULL, NULL, do_prf_ovpn_file, do_auth },
 	{ "QIS_default.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_qis_default, do_auth },
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
@@ -10599,15 +10617,27 @@ int stor_dev_busy(const char *devname)
 	unsigned long rio, rmerge, wio, wmerge;
 	unsigned long long rsect, wsect;
 	unsigned int ruse, wuse, running, use, aveq;
+	int count = 2;
+	unsigned int aveq_old = 0;
 
 	if (fp) {
+LOOP_AGAIN:
+		fseek(fp, 0, SEEK_SET);
 		while (fgets(buf, sizeof(buf), fp) != NULL) {
 			if (sscanf(buf, "%4d %7d %s %lu %lu %llu %u %lu %lu %llu %u %u %u %u\n", &major, &minor, name, &rio, &rmerge, &rsect, &ruse, &wio, &wmerge, &wsect, &wuse, &running, &use, &aveq) != 14)
 				break;
 
-			if (!strcmp(devname, name) && running) {
-				busy = 1;
-				break;
+			if (!strcmp(devname, name)) {
+				if (running) {
+					busy = 1;
+					break;
+				} else if (--count > 0) {
+					aveq_old = aveq;
+					goto LOOP_AGAIN;
+				} else if (aveq_old != aveq) {
+					busy = 1;
+					break;
+				}
 			}
 		}
 
@@ -14911,6 +14941,152 @@ ej_httpd_check(int eid, webs_t wp, int argc, char **argv)
 	return 0;
 }
 
+#ifdef RTCONFIG_CONCURRENTREPEATER
+static int
+ej_get_default_ssid(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int band_num = 0, unit = 0;
+	char word[256], *next;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		band_num++;
+	}
+
+	websWrite(wp, "[");
+#ifdef RTCONFIG_NEWSSID_REV2
+	while (unit < band_num){
+		if(unit != 0) websWrite(wp, ", ");
+		websWrite(wp, "'%s'", (char *) get_default_ssid(unit, band_num));
+		unit++;
+	}
+#endif
+	websWrite(wp, "]");
+
+	return 0;
+}
+#endif
+
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+static int
+ej_get_nt_db(int eid, webs_t wp, int argc, char **argv)
+{
+	struct list *event_list = NULL;
+	int from_app = 0, first_row = 0;
+	int type = 0;
+
+	/* initial */
+	NOTIFY_DATABASE_T *input = initial_db_input();
+
+	from_app = check_user_agent(user_agent);
+
+	/* initial linked list */
+	event_list = list_new();
+
+	/* database API */
+	NT_DBAction(event_list, "read", input);
+
+	/* free input*/
+	db_input_free(input);
+
+	/* print all linked list */
+	NOTIFY_DATABASE_T *listevent;
+	struct listnode *ln;
+
+	websWrite(wp, "[");
+	LIST_LOOP(event_list, listevent, ln)
+	{
+		if(first_row == 0)
+			first_row = 1;
+		else
+			websWrite(wp,",");
+
+		if(listevent->event != 0)
+			type = ((listevent->event) >> TYPE_SHIFT);
+
+		websWrite(wp, "{\"tstamp\":\"%ld\", \"event_id\":\"%8x\", \"group_type\":\"%x\", \"msg\":\"%s\", \"eName\":\"%s\", \"status\":\"%d\", \"event_type\":\"%d\"}\n", listevent->tstamp, listevent->event, type, listevent->msg, eInfo_get_eName(listevent->event), listevent->status, eInfo_get_eType(listevent->event));
+	}
+	websWrite(wp, "]");
+
+	/* free memory */
+	NT_DBFree(event_list);
+	return 0;
+}
+#endif
+
+#ifdef RTCONFIG_GETREALIP
+static int
+ej_get_realip(int eid, webs_t wp, int argc, char **argv)
+{
+	return eval("/usr/sbin/getrealip.sh");
+}
+#endif
+
+static int
+ej_get_header_info(int eid, webs_t wp, int argc, char **argv)
+{
+	struct json_object *item = json_object_new_object();
+
+	char filename[128];
+	char host_name_temp[64];
+	char current_page_name_temp[128];
+
+	memset(filename, 0, sizeof(filename));
+	memset(host_name_temp, 0, sizeof(host_name_temp));
+	memset(current_page_name_temp, 0, sizeof(current_page_name_temp));
+
+	snprintf(filename, sizeof(filename), "/www/%s", current_page_name);
+
+	if(strncmp(DUT_DOMAIN_NAME, host_name, strlen(DUT_DOMAIN_NAME)) == 0) {
+		strcpy(host_name_temp, DUT_DOMAIN_NAME);
+	}
+	else {
+		snprintf(host_name_temp, sizeof(host_name), "%s", host_name);
+	}
+
+	if((current_page_name != NULL && strcmp(current_page_name, "") == 0) || !check_if_file_exist(filename)) {
+		strcpy(current_page_name_temp, "index.asp");
+	}
+	else {
+		snprintf(current_page_name_temp, sizeof(current_page_name_temp), "%s", current_page_name);
+	}
+
+	json_object_object_add(item,"host", json_object_new_string(host_name_temp));
+	json_object_object_add(item,"current_page", json_object_new_string(current_page_name_temp));
+
+	websWrite(wp, "%s", json_object_to_json_string(item));
+
+	json_object_put(item);
+
+	return 0;
+}
+
+static int
+ej_login_error_info(int eid, webs_t wp, int argc, char **argv)
+{
+	struct json_object *item = json_object_new_object();
+
+	char filename[128];
+	memset(filename, 0, sizeof(filename));
+	snprintf(filename, sizeof(filename), "/www/%s", login_url);
+
+	/* lock time */
+	json_object_object_add(item,"lock_time", json_object_new_int(login_dt));
+
+	/* error status */
+	json_object_object_add(item,"error_status", json_object_new_int(login_error_status));
+
+	/* url */
+	if(login_url == NULL || !check_if_file_exist(filename)){
+		json_object_object_add(item,"page", json_object_new_string("index.asp"));
+	}else{
+		json_object_object_add(item,"page", json_object_new_string(login_url));
+	}
+	websWrite(wp, "%s", json_object_to_json_string(item));
+	json_object_put(item);
+	login_error_status = 0;	//reset error status
+	return 0;
+}
+
 struct ej_handler ej_handlers[] = {
 	{ "nvram_get", ej_nvram_get},
 	{ "nvram_default_get", ej_nvram_default_get},
@@ -15100,7 +15276,7 @@ struct ej_handler ej_handlers[] = {
 #endif
 #endif
 	{ "wl_auth_list", ej_wl_auth_list},
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_QCA)
 	{ "wl_control_channel", ej_wl_control_channel},
 	{ "wl_extent_channel", ej_wl_extent_channel},
 #endif
@@ -15212,6 +15388,14 @@ struct ej_handler ej_handlers[] = {
 	{ "generate_region", ej_generate_region},
 	{ "get_next_lanip", ej_get_next_lanip},
 	{ "httpd_check", ej_httpd_check},
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+	{ "get_nt_db", ej_get_nt_db},
+#endif
+#ifdef RTCONFIG_GETREALIP
+	{ "get_realip", ej_get_realip},
+#endif
+	{ "get_header_info", ej_get_header_info},
+	{ "login_error_info", ej_login_error_info},
 	{ NULL, NULL }
 };
 

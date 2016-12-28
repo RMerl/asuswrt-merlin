@@ -220,8 +220,7 @@ var flag = '<% get_parameter("flag"); %>';
 var block_info = '<% bwdpi_redirect_info(); %>';
 if(block_info != "")
 	block_info = JSON.parse(block_info);
-var client_list_array = '<% get_client_detail_info(); %>';
-var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
+
 var category_info = [["Parental Controls", "1", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites with profane or vulgar content generally considered inappropriate for minors; includes sites that offer erotic content or ads for sexual services, but excludes sites with sexually explicit images."],
 				     ["Parental Controls", "2", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites that provide information about or software for sharing and transferring files related to child pornography."],
 				     ["Parental Controls", "3", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites with sexually explicit imagery designed for sexual arousal, including sites that offer sexual services."],
@@ -284,10 +283,11 @@ function initial(){
 }
 
 function get_target_info(){
+/*
 	var client_list_row = client_list_array.split('<');
 	var custom_name_row = custom_name.split('<');
 	var match_flag = 0;
-	
+
 	for(i=1;i<custom_name_row.length;i++){
 		var custom_name_col = custom_name_row[i].split('>');
 		if(custom_name_col[1] == block_info[0] || custom_name_col[1] == mac_parameter){
@@ -304,8 +304,9 @@ function get_target_info(){
 			}
 		}
 	}
-
+*/
 	if(casenum != ""){		//for AiProtection
+		target_info.name = block_info[0];
 		target_info.mac = block_info[0];
 		target_info.url = block_info[1];
 		target_info.category_id = block_info[2];

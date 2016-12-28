@@ -218,6 +218,7 @@ struct ctf_conn_tuple {
 	uint32	sip[IPADDR_U32_SZ], dip[IPADDR_U32_SZ];
 	uint16	sp, dp;
 	uint8	proto;
+	uint16	sid;
 };
 
 typedef struct ctf_nat {

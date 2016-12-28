@@ -162,7 +162,7 @@ function tabclickhandler(wl_unit){
 		else
 			document.form.wl_subunit.value = -1;
 
-		if(parent.wlc_express != '0')
+		if(parent.wlc_express != '0' && parent.wlc_express != '')
 			document.form.wl_subunit.value = 1;
 
 		document.form.wl_unit.value = wl_unit;

@@ -226,3 +226,10 @@ function dr_advise(){
 	document.getElementById("hiddenMask").style.height = winH+"px";	
 	document.getElementById("hiddenMask").style.visibility = "visible";
 }
+
+function cancel_dr_advise(){	
+	parent.document.getElementById("hiddenMask").style.visibility = "hidden";
+	htmlbodyforIE = parent.document.getElementsByTagName("html");  //this both for IE&FF, use "html" but not "body" because <!DOCTYPE html PUBLIC.......>
+	htmlbodyforIE[0].style.overflow = "scroll";	  //hidden the Y-scrollbar for preventing from user scroll it.	
+	window.scrollTo(0, 0);	//x-axis , y-axis	
+}

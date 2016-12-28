@@ -44,8 +44,7 @@ function initial(){
 
 	genBWTable(wl_unit);	
 
-	if(((sw_mode == 2 || sw_mode == 4) && wl_unit == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1') ||
-	  ('<% nvram_get("wl_subunit"); %>' != '-1')){
+	if((sw_mode == 2 || sw_mode == 4) && wl_unit == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
 		_change_wl_unit(wl_unit);
 	}
 
@@ -115,7 +114,12 @@ function initial(){
 		document.form.wl_subunit.value = (wl_unit == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
 				
 	change_wl_nmode(document.form.wl_nmode_x);
-	if(country == "EU"){		//display checkbox of DFS channel under 5GHz
+	if(is_UA_sku && !Qcawifi_support && !Rawifi_support && !sdk_5){
+		if(document.form.wl_channel.value  == '0' && wl_unit == '1'){
+			document.getElementById('acs_band3_checkbox').style.display = "";
+		}		
+	}
+	else if(country == "EU"){		//display checkbox of DFS channel under 5GHz
 		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" || based_modelid == "DSL-AC68U"
 		|| based_modelid == "RT-AC87U"
 		|| based_modelid == "RT-AC3200"
@@ -138,10 +142,16 @@ function initial(){
 				document.getElementById('acs_band1_checkbox').style.display = "";					
 		}
 	}
-
+	else if(odmpid == "RT-AC66U_B1" && country == "AU"){
+		if(document.form.wl_channel.value  == '0' && wl_unit == '1'){
+			document.getElementById('dfs_checkbox').style.display = "";
+			check_DFS_support(document.form.acs_dfs_checkbox);
+		}
+	}
+	
 	if(country == "EU" || country == "JP" || country == "SG" || country == "CN" || country == "UA" || country == "KR"){
 		if(!Qcawifi_support && !Rawifi_support){
-			if(document.form.wl_channel.value  == '0' && wl_unit == '0')
+			if(document.form.wl_channel.value  == '0' && wl_unit == '0' && document.form.wl_channel.length == '14')
 				document.getElementById('acs_ch13_checkbox').style.display = "";				
 		}
 	}
@@ -615,6 +625,13 @@ function check_acs_band1_support(obj){
 		document.form.acs_band1.value = 0;
 }
 
+function check_acs_band3_support(obj){
+	if(obj.checked)
+		document.form.acs_band3.value = 1;
+	else
+		document.form.acs_band3.value = 0;
+}
+
 function check_acs_ch13_support(obj){
 	if(obj.checked)
 		document.form.acs_ch13.value = 1;
@@ -787,6 +804,7 @@ function regen_auto_option(obj){
 <input type="hidden" name="wl_subunit" value='-1'>
 <input type="hidden" name="acs_dfs" value='<% nvram_get("acs_dfs"); %>'>
 <input type="hidden" name="acs_band1" value='<% nvram_get("acs_band1"); %>'>
+<input type="hidden" name="acs_band3" value='<% nvram_get("acs_band3"); %>'>
 <input type="hidden" name="acs_ch13" value='<% nvram_get("acs_ch13"); %>'>
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
 <input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>">
@@ -943,6 +961,7 @@ function regen_auto_option(obj){
 						<span id="auto_channel" style="display:none;margin-left:10px;"></span><br>
 						<span id="dfs_checkbox" style="display:none"><input type="checkbox" onClick="check_DFS_support(this);" name="acs_dfs_checkbox" <% nvram_match("acs_dfs", "1", "checked"); %>><#WLANConfig11b_EChannel_dfs#></input></span>
 						<span id="acs_band1_checkbox" style="display:none;"><input type="checkbox" onClick="check_acs_band1_support(this);" <% nvram_match("acs_band1", "1", "checked"); %>><#WLANConfig11b_EChannel_band1#></input></span>
+						<span id="acs_band3_checkbox" style="display:none;"><input type="checkbox" onClick="check_acs_band3_support(this);" <% nvram_match("acs_band3", "1", "checked"); %>><#WLANConfig11b_EChannel_band3#></input></span>
 						<span id="acs_ch13_checkbox" style="display:none;"><input type="checkbox" onClick="check_acs_ch13_support(this);" <% nvram_match("acs_ch13", "1", "checked"); %>>Auto select channel including channel 12, 13</input></span>
 					</td>
 			  </tr> 
@@ -987,7 +1006,7 @@ function regen_auto_option(obj){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 7);"><#WLANConfig11b_x_PSKKey_itemname#></a></th>
 					<td>
-				  		<input name="wl_wpa_psk" maxlength="64" class="input_32_table" value="<% nvram_get("wl_wpa_psk"); %>" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" autocomplete="new-password" autocorrect="off" autocapitalize="off">
+						<input name="wl_wpa_psk" maxlength="64" class="input_32_table" value="<% nvram_get("wl_wpa_psk"); %>" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" autocomplete="new-password" autocorrect="off" autocapitalize="off">
 					</td>
 			  	</tr>
 			  		  

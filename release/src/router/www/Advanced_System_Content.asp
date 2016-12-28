@@ -26,11 +26,6 @@ time_mon = uptimeStr.substring(9,12);
 time_time = uptimeStr.substring(18,20);
 dstoffset = '<% nvram_get("time_zone_dstoff"); %>';
 
-var isFromHTTPS = false;
-if((location.href.search('https://') >= 0) || (location.href.search('HTTPS://') >= 0)){
-        isFromHTTPS = true;
-}
-
 var orig_http_clientlist = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
 var http_clientlist_array = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
 var accounts = [<% get_all_accounts(); %>];
@@ -175,10 +170,24 @@ var time_zone_withdst="";
 
 function applyRule(){
 	if(validForm()){
+		var isFromHTTPS = (function(){
+			if(location.protocol.toLowerCase() == "https:") return true;
+			else return false;
+		})();
+
+		var isFromWAN = (function(){
+			var lanIpAddr = '<% nvram_get("lan_ipaddr"); %>';
+			if(location.hostname == lanIpAddr) return false;
+			else if(location.hostname == "router.asus.com") return false;
+			else if(location.hostname == "repeater.asus.com") return false;
+			else if(location.hostname == "cellspot.asus.com") return false;
+			else return true;
+		})();
+	
 		var rule_num = document.getElementById('http_clientlist_table').rows.length;
 		var item_num = document.getElementById('http_clientlist_table').rows[0].cells.length;
 		var tmp_value = "";
-	
+
 		for(i=0; i<rule_num; i++){
 			tmp_value += "<"		
 			for(j=0; j<item_num-1; j++){	
@@ -553,6 +562,7 @@ var timezones = [
 	["UTC-3_4",	"(GMT+03:00) <#TZ44#>"],
 	["UTC-3_5",	"(GMT+03:00) <#TZ45#>"],
 	["IST-3",	"(GMT+03:00) <#TZ48#>"],
+	["UTC-3_6",	"(GMT+03:00) <#TZ48_1#>"],
 	["UTC-3.30DST",	"(GMT+03:30) <#TZ49#>"],	
 	["UTC-4_1",	"(GMT+04:00) <#TZ50#>"],
 	["UTC-4_5",	"(GMT+04:00) <#TZ50_2#>"],
@@ -1136,15 +1146,15 @@ function paste_password(){
 				<tr>
 					<th>Format JFFS partition at next boot</th>
 					<td>
-						<input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="jffs2_format" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_format" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 				<tr>
 					<th>Enable JFFS custom scripts and configs</th>
 					<td>
-						<input type="radio" name="jffs2_scripts" class="input" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_scripts" class="input" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="jffs2_scripts" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_scripts" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>
@@ -1168,8 +1178,8 @@ function paste_password(){
 				<tr id="remote_forwarding_tr">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,10);">Allow SSH Port Forwarding</a></th>
 					<td>
-						<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match("sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match("sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="sshd_forwarding" value="1" <% nvram_match("sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_forwarding" value="0" <% nvram_match("sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 
@@ -1183,15 +1193,15 @@ function paste_password(){
 				<tr id="sshd_password_tr">
 					<th>Allow SSH password login</th>
 					<td>
-						<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match("sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match("sshd_pass", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="sshd_pass" value="1" <% nvram_match("sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_pass" value="0" <% nvram_match("sshd_pass", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 				<tr id="sshd_bfp_field">
 					<th>Enable SSH Brute Force Protection</th>
 					<td>
-						<input type="radio" name="sshd_bfp" class="input" value="1" <% nvram_match("sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_bfp" class="input" value="0" <% nvram_match("sshd_bfp", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="sshd_bfp" value="1" <% nvram_match("sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_bfp" value="0" <% nvram_match("sshd_bfp", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 
@@ -1255,9 +1265,9 @@ function paste_password(){
 				<tr id="btn_ez_radiotoggle_tr">
 					<th><#WPS_btn_behavior#></th>
 					<td>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_WPS" class="input" style="display:none;" value="0"><label for="turn_WPS"><#WPS_btn_actWPS#></label>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_WiFi" class="input" style="display:none;" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><label for="turn_WiFi" id="turn_WiFi_str"><#WPS_btn_toggle#></label>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_LED" class="input" style="display:none;" value="0" <% nvram_match_x("", "btn_ez_mode", "1", "checked"); %>><label for="turn_LED" id="turn_LED_str">Turn LED On/Off</label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_WPS" style="display:none;" value="0"><label for="turn_WPS"><#WPS_btn_actWPS#></label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_WiFi" style="display:none;" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><label for="turn_WiFi" id="turn_WiFi_str"><#WPS_btn_toggle#></label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_LED" style="display:none;" value="0" <% nvram_match_x("", "btn_ez_mode", "1", "checked"); %>><label for="turn_LED" id="turn_LED_str">Turn LED On/Off</label>
 					</td>
 				</tr>				
 				<tr id="reboot_schedule_enable_tr">
@@ -1270,13 +1280,13 @@ function paste_password(){
 				<tr id="reboot_schedule_date_tr">
 					<th>Date to Reboot</th>	<!-- untranslated -->
 					<td>
-						<input type="checkbox" name="reboot_date_x_Sun" class="input" onclick="check_Timefield_checkbox();"><#date_Sun_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Mon" class="input" onclick="check_Timefield_checkbox();"><#date_Mon_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Tue" class="input" onclick="check_Timefield_checkbox();"><#date_Tue_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Wed" class="input" onclick="check_Timefield_checkbox();"><#date_Wed_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Thu" class="input" onclick="check_Timefield_checkbox();"><#date_Thu_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Fri" class="input" onclick="check_Timefield_checkbox();"><#date_Fri_itemdesc#>
-            <input type="checkbox" name="reboot_date_x_Sat" class="input" onclick="check_Timefield_checkbox();"><#date_Sat_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Sun" onclick="check_Timefield_checkbox();"><#date_Sun_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Mon" onclick="check_Timefield_checkbox();"><#date_Mon_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Tue" onclick="check_Timefield_checkbox();"><#date_Tue_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Wed" onclick="check_Timefield_checkbox();"><#date_Wed_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Thu" onclick="check_Timefield_checkbox();"><#date_Thu_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Fri" onclick="check_Timefield_checkbox();"><#date_Fri_itemdesc#>
+            <input type="checkbox" name="reboot_date_x_Sat" onclick="check_Timefield_checkbox();"><#date_Sat_itemdesc#>
 					</td>
 				</tr>
 				<tr id="reboot_schedule_time_tr">
@@ -1332,8 +1342,8 @@ function paste_password(){
 				<tr id="telnet_tr">
 					<th><#Enable_Telnet#></th>
 					<td>
-						<input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match("telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match("telnetd_enable", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="telnetd_enable" value="1" <% nvram_match("telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="telnetd_enable" value="0" <% nvram_match("telnetd_enable", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>
@@ -1367,8 +1377,8 @@ function paste_password(){
 				<tr id="misc_http_x_tr">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
 					<td>
-						<input type="radio" value="1" name="misc_http_x" class="input" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" value="0" name="misc_http_x" class="input" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#><br>
+						<input type="radio" value="1" name="misc_http_x" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" value="0" name="misc_http_x" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#><br>
 						<div class="formfontdesc" id="NSlookup_help_for_WAN_access" style="color:#FFCC00;display:none;"><#NSlookup_help#></div>		
 					</td>
 				</tr>   					
@@ -1392,24 +1402,24 @@ function paste_password(){
 				<tr>
 					<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,6);"><#Enable_redirect_notice#></a></th>
 					<td>
-						<input type="radio" name="nat_redirect_enable" class="input" value="1" <% nvram_match_x("","nat_redirect_enable","1", "checked"); %> ><#checkbox_Yes#>
-						<input type="radio" name="nat_redirect_enable" class="input" value="0" <% nvram_match_x("","nat_redirect_enable","0", "checked"); %> ><#checkbox_No#>
+						<input type="radio" name="nat_redirect_enable" value="1" <% nvram_match_x("","nat_redirect_enable","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="nat_redirect_enable"  value="0" <% nvram_match_x("","nat_redirect_enable","0", "checked"); %> ><#checkbox_No#>
 					</td>
 				</tr>
 
 				<tr>
 					<th>Redirect webui access to router.asus.com</th>
 					<td>
-						<input type="radio" name="http_dut_redir" class="input" value="1" <% nvram_match_x("","http_dut_redir","1", "checked"); %> ><#checkbox_Yes#>
-						<input type="radio" name="http_dut_redir" class="input" value="0" <% nvram_match_x("","http_dut_redir","0", "checked"); %> ><#checkbox_No#>
+						<input type="radio" name="http_dut_redir" value="1" <% nvram_match_x("","http_dut_redir","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="http_dut_redir" value="0" <% nvram_match_x("","http_dut_redir","0", "checked"); %> ><#checkbox_No#>
 					</td>
 				</tr>
 
 				<tr>
 					<th><#System_login_specified_IP#></th>
 					<td>
-						<input type="radio" name="http_client" class="input" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="http_client" class="input" value="0" onclick="display_spec_IP(0);" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="http_client" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="http_client" value="0" onclick="display_spec_IP(0);" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>

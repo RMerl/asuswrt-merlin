@@ -116,6 +116,60 @@ void add_EbtablesRules(void)
 		}
 	}
 
+#ifdef RTCONFIG_FBWIFI
+	{
+#if 0
+		char *if_wifi_on;
+		char fbwifi[32];
+		char if_name[32];
+	
+		int i=1;
+		while(i<4)
+		{
+			sprintf(fbwifi,"wl0.%d_fbwifi",i);
+			if_wifi_on = nvram_safe_get(fbwifi);
+			fprintf(stderr,"if_wifi_on:%s\n",if_wifi_on);
+	
+			sprintf(if_name,"wl0.%d_ifname",i);
+	
+			if(strcmp(if_wifi_on,"on") ==0)
+			{
+				eval("ebtables","-A","INPUT","-i",nvram_safe_get(if_name),"-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+				break;
+			}
+			i++;
+		}
+#else
+	if(nvram_match("fbwifi_enable","on"))
+	{
+		if(!nvram_match("fbwifi_2g","off"))
+		{
+			eval("ebtables","-D","INPUT","-i","wl0.1","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-D","INPUT","-i","wl0.2","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-D","INPUT","-i","wl0.3","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-A","INPUT","-i",nvram_safe_get("fbwifi_2g"),"-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+		}
+		if(!nvram_match("fbwifi_5g","off"))
+		{
+			eval("ebtables","-D","INPUT","-i","wl1.1","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-D","INPUT","-i","wl1.2","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-D","INPUT","-i","wl1.3","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-A","INPUT","-i",nvram_safe_get("fbwifi_5g"),"-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+		}
+#ifdef RTAC3200
+		if(!nvram_match("fbwifi_5g_2","off"))
+		{
+			eval("ebtables","-D","INPUT","-i","wl2.1","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-D","INPUT","-i","wl2.2","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-D","INPUT","-i","wl2.3","-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+			eval("ebtables","-A","INPUT","-i",nvram_safe_get("fbwifi_5g_2"),"-j","mark","--set-mark","1","--mark-target", "ACCEPT");
+		}
+#endif
+	}
+#endif
+	}
+#endif
+
 	etable_flag = 1;
 }
 #endif

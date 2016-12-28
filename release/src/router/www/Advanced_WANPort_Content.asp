@@ -107,7 +107,7 @@ country_n_isp[1] = new Array("edu","telecom","mobile","unicom");
 
 function initial(){
 	show_menu();
-	wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+	wans_flag = (wans_dualwan_orig.search("none") != -1 || !parent.dualWAN_support) ? 0 : 1;
 	wans_caps_primary = wans_caps;
 	wans_caps_secondary = wans_caps;
 	

@@ -106,11 +106,8 @@ function gotoDM(){
 		dm_http_port = "8081";
 
 	var dm_url = "";
-	if(parent.location.host.split(":").length > 1)
-		dm_url = "http://" + parent.location.host.split(":")[0] + ":" + dm_http_port;
-	else
-		dm_url = "http://" + parent.location.host + ":" + dm_http_port;
-
+	var header_info = [<% get_header_info(); %>];
+	dm_url = "http://" + header_info[0].host + ":" + dm_http_port;
 	window.open(dm_url);
 }
 

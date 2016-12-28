@@ -1199,7 +1199,7 @@ function checkDDNSReturnCode(){
 										<th width="25%"><#LANHostConfig_x_DDNSHostNames_itemname#></th>
 										<td>
 											<select id="protocol_type" class="input_option" style="height:27px;">
-												<option value="0">Http</option>
+												<!--<option value="0">Http</option>-->
 												<option value="1">Https</option>
 											</select>
 											<input id="host_name" type="text" maxlength="32"  class="input_32_table" style="height:25px;font-size:13px;"  onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">&nbsp:

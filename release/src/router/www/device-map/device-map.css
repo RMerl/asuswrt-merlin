@@ -25,20 +25,18 @@ body {
 .tbg1a{font-family :Verdana;font-size : 10px;text-align:center;color:#23344d;font-weight:normal;background-color:#9fccdd}
 
 .clientIconIE8HACK{
-	margin: 0 auto;
-	width: 50px;
-	height: 50px;
-	background-color: #798D94;
-	-webkit-border-radius: 10px;
-	-moz-border-radius: 10px;
-	border-radius: 10px;
-	border-width: 1px;
-	border-style: double;
-	border-color: #3E4243;
-	background-image: url('/images/New_ui/networkmap/client.png');
-	background-position: 52% 1%;
-	background-repeat:no-repeat;
-	cursor:pointer;
+	margin: 0 auto \9;
+	width: 50px \9;
+	height: 50px \9;
+	background-color: #798D94 \9;
+	-webkit-border-radius: 10px \9;
+	-moz-border-radius: 10px \9;
+	border-radius: 10px \9;
+	box-shadow: 0px 0px 0px 1px #3E4243 \9;
+	background-image: url('/images/New_ui/networkmap/client.png') \9;
+	background-position: 52% 1% \9;
+	background-repeat:no-repeat \9;
+	cursor:pointer \9;
 }
 .clientIcon{
 	margin: 0 auto;
@@ -48,9 +46,7 @@ body {
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
 	border-radius: 10px;
-	border-width: 1px;
-	border-style: double;
-	border-color: #3E4243;
+	box-shadow: 0px 0px 0px 1px #3E4243;
 	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
 	cursor:pointer;
@@ -69,9 +65,7 @@ body {
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
 	border-radius: 10px;
-	border-width: 1px;
-	border-style: double;
-	border-color: #3E4243;
+	box-shadow: 0px 0px 0px 1px #3E4243;
 	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
 	cursor:pointer;
@@ -85,9 +79,7 @@ body {
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
 	border-radius: 10px;
-	border-width: 1px;
-	border-style: double;
-	border-color: #3E4243;
+	box-shadow: 0px 0px 0px 1px #3E4243;
 	background-image:url('/images/New_ui/networkmap/client-list.svg');
 	background-repeat:no-repeat;
 	cursor:pointer;

@@ -394,7 +394,7 @@ function overHint(itemNum){
 
 	// wifi hw switch
 	if(itemNum == 8){
-		statusmenu = "<div class='StatusHint'>Wi-Fi:</div>";
+		statusmenu = "<div class='StatusHint'>Wi-Fi :</div>";
 		wifiDesc = "<b>&nbsp;2.4G:</b> ";
 		if ( wlan0_radio_flag == 1) {
 			if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined) || (extent_chan_arr[0] == control_chan_arr[0]))

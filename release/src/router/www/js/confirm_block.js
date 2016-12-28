@@ -31,24 +31,23 @@
 		var webs_state_info_version_beta = webs_state_info_beta.slice(5).splice(3,0,".");
 		if(content.note_display_flag==0){
 			release_note_code += '<div style="display:table;width:93%" class="confirm_contentB">';
-			release_note_code += '<#General_x_FirmwareVersion_itemname#> <span style="font-weight:bold; color:#FC0;">'+webs_state_info_version+'</span>';
-			release_note_code += '<div style="text-decoration:underline;">Release note</div>';
 			release_note_code += '<iframe id="status_iframe" src="'+ content.iframe +'" width="100%" marginwidth="0" marginheight="0" scrolling="no" align="center"></iframe>';
 			release_note_code += '</div>';
 		}
 		else if(content.note_display_flag==1){
 			release_note_code += '<div style="display:table;width:93%" class="confirm_contentB">';
-			release_note_code += '<#General_x_FirmwareVersion_itemname#> <span style="font-weight:bold; color:#FC0;">'+webs_state_info_version_beta+'</span>';
-			release_note_code += '<div style="text-decoration:underline;">Release note</div>';
 			release_note_code += '<iframe id="status_iframe" src="'+ content.iframe +'" width="100%" marginwidth="0" marginheight="0" scrolling="no" align="center"></iframe>';
 			release_note_code += '</div>';
 		}
 		code += release_note_code;
 		code += '<div class="confirm_contentC">' + content.contentC +'</div>';
 	}
-	code += '<div style="display:table;width:100%">';
-	code += '<div class="confirm_button_gen_long_left">' + content.left_button + '</div>';	//confirm_button confirm_button_left
-	code += '<div class="confirm_button_gen_long_right">' + content.right_button + '</div>';	//confirm_button confirm_button_right
+	
+	code += '<div style="display:table;width:100%;margin-top:45px">';
+	if(content.left_button)
+		code += '<div class="confirm_button_gen_long_left">' + content.left_button + '</div>';	//confirm_button confirm_button_left
+	if(content.right_button)	
+		code += '<div class="confirm_button_gen_long_right">' + content.right_button + '</div>';	//confirm_button confirm_button_right
 	code += '</div>';		
 	code += '</div></div>';
 	

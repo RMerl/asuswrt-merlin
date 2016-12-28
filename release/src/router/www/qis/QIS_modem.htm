@@ -88,17 +88,18 @@ function QKInternet_load_body(){
 	gen_country_list();
 	reloadProfile();
 
-  if(!wimax_support){
-  	for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {
+	if(!wimax_support){
+		for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {
 			if (document.form.modem_enable_option.options[i].value == "4") {
 				document.form.modem_enable_option.options.remove(i);
 				break;
 			}
 		}
-  }
+	}
 
-	if(!dualWAN_support)
+	if(!parent.dualWAN_support){
 		document.form.wans_dualwan.disabled = true;
+	}
 
 	for(var i = 0; i < wans_dualwan.length; i++){//check whether wans_dualwan is set or not.
 		if (wans_dualwan[i] == 'none'){
@@ -136,6 +137,8 @@ function check_dongle_status(){
 }
 
 function submitForm(){
+	parent.isModem = true;
+
 	//check pin code
 	if(pin_opt && document.form.modem_pincode.value != ""){
 		if(document.form.modem_pincode.value.search(/^\d{4,8}$/)==-1) {
@@ -841,7 +844,7 @@ function inet_ntoa(ip_num){
 	</table>
 
 	<div id="applyBtn" class="apply_gen" style="margin-top:20px">
-		<input type="button" id="skipButton" value="<#CTL_Skip#>" class="button_gen" tabindex="13" onclick="goWireless();">
+		<input type="button" id="skipButton" value="<#CTL_Skip#>" class="button_gen" tabindex="13" onclick="parent.isModem=false;goWireless();">
 		<input type="button" id="nextButton" value="<#CTL_next#>" tabindex="12" class="button_gen" onclick="submitForm();">
 		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 		<span id="loadingNote" style="display:none;"><#Modem_connect_waiting#></span>

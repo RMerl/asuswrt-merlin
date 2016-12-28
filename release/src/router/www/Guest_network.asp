@@ -25,8 +25,11 @@
 <style>
 </style>
 <script>
-var radio_2 = '<% nvram_get("wl0_radio"); %>';
-var radio_5 = '<% nvram_get("wl1_radio"); %>';
+if(!Qcawifi_support)
+{
+	var radio_2 = '<% nvram_get("wl0_radio"); %>';
+	var radio_5 = '<% nvram_get("wl1_radio"); %>';
+}
 <% radio_status(); %>
 
 var wl1_nmode_x = '<% nvram_get("wl1_nmode_x"); %>';
@@ -55,6 +58,13 @@ Object.prototype.getKey = function(value) {
 
 function initial(){
 	show_menu();	
+
+	if(Qcawifi_support)
+	{
+		radio_2 = '<% nvram_get("wl0_radio"); %>';
+		radio_5 = '<% nvram_get("wl1_radio"); %>';
+	}
+	
 	//insertExtChannelOption();		
 	if(downsize_4m_support || downsize_8m_support)
 		document.getElementById("guest_image").parentNode.parentNode.removeChild(document.getElementById("guest_image").parentNode);
@@ -97,6 +107,10 @@ function initial(){
 	}
 
 	setTimeout("showDropdownClientList('setClientmac', 'mac', 'wl', 'WL_MAC_List_Block', 'pull_arrow', 'all');", 1000);	
+
+	if(!fbwifi_support) {
+		document.getElementById("guest_tableFBWiFi").style.display = "none";
+	}
 }
 
 function change_wl_expire_radio(){
@@ -187,8 +201,37 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 	for(var i=0; i<gn_array_length; i++){			
 			var subunit = i+1+slicesb*4;
 			var show_str;
+
+			//check which guest idx used by fbwifi
+			var fbwifi_used = false;
+			if(fbwifi_support) {
+				var fbwifi_used_index = "";
+				var fbwifi_2g_index = '<% nvram_get("fbwifi_2g"); %>';
+				var fbwifi_5g_index = '<% nvram_get("fbwifi_5g"); %>';
+				var fbwifi_5g_2_index = '<% nvram_get("fbwifi_5g_2"); %>';
+				if(unit == 0 && fbwifi_2g_index != "off") {
+					fbwifi_used_index = fbwifi_2g_index.split(".")[1];
+					if((i + 1) == fbwifi_used_index) {
+						fbwifi_used = true;
+					}
+				}
+				else if(unit == 1 && fbwifi_5g_index != "off") {
+					fbwifi_used_index = fbwifi_5g_index.split(".")[1];
+					if((i + 1) == fbwifi_used_index) {
+						fbwifi_used = true;
+					}
+				}
+				else if(unit == 2 && fbwifi_5g_2_index != "off") {
+					fbwifi_used_index = fbwifi_5g_2_index.split(".")[1];
+					if((i + 1) == fbwifi_used_index) {
+						fbwifi_used = true;
+					}
+				}
+			}
+
 			htmlcode += '<td><table id="GNW_'+GN_band+'G'+i+'" class="gninfo_table" align="center" style="margin:auto;border-collapse:collapse;">';			
 			if(gn_array[i][0] == "1"){
+				if(!fbwifi_used) {
 					htmlcode += '<tr><td align="center" class="gninfo_table_top"></td></tr>';
 					show_str = decodeURIComponent(gn_array[i][1]);
 					if(show_str.length >= 21)
@@ -232,17 +275,20 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 									else
 											htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_min_'+i+'">< 1</b> <#Minute#></td></tr>';
 							}				
-					}					
-					
+					}
+				}
+				else {
+					htmlcode += '<tfoot><tr rowspan="3"><td align="center"><span style="color:#FFCC00;">Used by Facebook WiFi</span></td></tr></tfoot>';
+				}			
 			}else{					
 					htmlcode += '<tfoot><tr rowspan="3"><td align="center"><input type="button" class="button_gen" value="<#WLANConfig11b_WirelessCtrl_button1name#>" onclick="create_guest_unit('+ unit +','+ subunit +');"></td></tr></tfoot>';
 			}														
 			
 			if(sw_mode != "3"){
-					if(gn_array[i][0] == "1") htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][12] +'</td></tr>';
+					if(gn_array[i][0] == "1" && !fbwifi_used) htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][12] +'</td></tr>';
 			}
 										
-			if(gn_array[i][0] == "1"){
+			if(gn_array[i][0] == "1" && !fbwifi_used){
 					htmlcode += '<tr><td align="center" class="gninfo_table_bottom"></td></tr>';
 					htmlcode += '<tfoot><tr><td align="center"><input type="button" class="button_gen" value="<#btn_remove#>" onclick="close_guest_unit('+ unit +','+ subunit +');"></td></tr></tfoot>';
 			}
@@ -450,6 +496,10 @@ function guest_divctrl(flag){
 		if(wl_info.band5g_2_support)
 			document.getElementById("guest_table5_2").style.display = "none";
 		
+		if(fbwifi_support) {
+			document.getElementById("guest_tableFBWiFi").style.display = "none";
+		}
+
 		document.getElementById("gnset_table").style.display = "";
 		if(sw_mode == "3")
 			inputCtrl(document.form.wl_lanaccess, 0);
@@ -469,6 +519,13 @@ function guest_divctrl(flag){
 		
 		if(wl_info.band5g_2_support)
 			document.getElementById("guest_table5_2").style.display = "";
+
+		if(!fbwifi_support) {
+			document.getElementById("guest_tableFBWiFi").style.display = "none";
+		}
+		else {
+			document.getElementById("guest_tableFBWiFi").style.display = "";
+		}
 		
 		document.getElementById("gnset_table").style.display = "none";
 		document.getElementById("applyButton").style.display = "none";
@@ -491,6 +548,9 @@ function mbss_display_ctrl(){
 			document.getElementById("guest_table5").style.display = "none";
 		if(wl_info.band5g_2_support)
 			document.getElementById("guest_table5_2").style.display = "none";
+		if(fbwifi_support) {
+			document.getElementById("guest_tableFBWiFi").style.display = "none";
+		}
 		
 		document.getElementById("applyButton").style.display = "none";
 		document.getElementById("applyButton").innerHTML = "Not support!";
@@ -912,6 +972,24 @@ function setClientmac(macaddr){
 						<div id="guest_table2"></div>			
 						<div id="guest_table5"></div>
 						<div id="guest_table5_2"></div>
+						<div id="guest_tableFBWiFi">
+							<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_FBWiFi">
+								<tr id="FBWiFi_title">
+									<td align="left" style="color:#5AD; font-size:16px; border-bottom:1px dashed #AAA;" colspan="2">
+										<span>Facebook WiFi</span>
+									</td>
+								</tr>
+								<tr>
+									<td width="70%">
+										<span style="line-height: 20px;" >Facebook Wi-Fi kets customers check in to participating businesses on Facebok for free Wi-Fi access. When people check int to your Page, you can share offers and other announcements with them.
+										</span>
+									</td>
+									<td width="30%" style="text-align:center;">
+										<input name="button" type="button" class="button_gen_short" onclick="location.href='/Guest_network_fbwifi.asp'" value="<#btn_go#>"/>
+									</td>
+								</tr>
+							</table>
+						</div>
 					<!-- setting table -->
 						<table width="80%" border="1" align="center" style="margin-top:10px;display:none" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">
 							<tr id="wl_unit_field" style="display:none">

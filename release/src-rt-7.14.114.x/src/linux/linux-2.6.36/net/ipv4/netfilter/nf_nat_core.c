@@ -404,52 +404,56 @@ manip_pkt(u_int16_t proto,
 
 /* Do packet manipulations according to nf_nat_setup_info. */
 unsigned int nf_nat_packet(struct nf_conn *ct,
-                           enum ip_conntrack_info ctinfo,
-                           unsigned int hooknum,
-                           struct sk_buff *skb)
+			   enum ip_conntrack_info ctinfo,
+			   unsigned int hooknum,
+			   struct sk_buff *skb)
 {
-        enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
-        unsigned long statusbit;
-        enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);
-        unsigned int do_nat=0;
+	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	unsigned long statusbit;
+	enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);
+	unsigned int do_nat=0;
 
-        if (mtype == IP_NAT_MANIP_SRC)
-                statusbit = IPS_SRC_NAT;
-        else
-                statusbit = IPS_DST_NAT;
+	if (mtype == IP_NAT_MANIP_SRC)
+		statusbit = IPS_SRC_NAT;
+	else
+		statusbit = IPS_DST_NAT;
 
-        /* Invert if this is reply dir. */
-        if (dir == IP_CT_DIR_REPLY)
-                statusbit ^= IPS_NAT_MASK;
+	/* Invert if this is reply dir. */
+	if (dir == IP_CT_DIR_REPLY)
+		statusbit ^= IPS_NAT_MASK;
 
-
-        /* Non-atomic: these bits don't change. */
-        if (ct->status & statusbit) do_nat = 1;
+	/* Non-atomic: these bits don't change. */
+	if (ct->status & statusbit) do_nat = 1;
 
 #if (defined HNDCTF)
-        else {
-          struct iphdr *iph = (struct iphdr *)((skb)->data + 0 /*iphdroff*/ );
+	else {
+		struct iphdr *iph = (struct iphdr *)((skb)->data + 0 /*iphdroff*/ );
 
-          if ((skb->dev!=0) && (skb->dev->flags & IFF_POINTOPOINT) ) {
-            if ((iph->protocol == IPPROTO_UDP) || (iph->protocol == IPPROTO_TCP)) {
-               do_nat=1;
-            }
-          }
-        } /* else */
+		if ((skb->dev!=0) && (skb->dev->flags & IFF_POINTOPOINT) ) {
+			if ((iph->protocol == IPPROTO_UDP) || (iph->protocol == IPPROTO_TCP)) {
+				do_nat=1;
+			}
+		}
+	} /* else */
 #endif /* HNDCTF */
 
-        if (do_nat ==1) {
-                struct nf_conntrack_tuple target;
+	if (do_nat ==1) {
+		struct nf_conntrack_tuple target;
 
-                /* We are aiming to look like inverse of other direction. */
-                nf_ct_invert_tuplepr(&target, &ct->tuplehash[!dir].tuple);
+		/* We are aiming to look like inverse of other direction. */
+		nf_ct_invert_tuplepr(&target, &ct->tuplehash[!dir].tuple);
 #ifdef HNDCTF
-                ip_conntrack_ipct_add(skb, hooknum, ct, ctinfo, &target);
+		ip_conntrack_ipct_add(skb, hooknum, ct, ctinfo, &target);
 #endif /* HNDCTF */
-                if (!manip_pkt(target.dst.protonum, skb, 0, &target, mtype))
-                        return NF_DROP;
-        }
-        return NF_ACCEPT;
+		if (!manip_pkt(target.dst.protonum, skb, 0, &target, mtype))
+			return NF_DROP;
+	} else {
+#ifdef HNDCTF
+		ip_conntrack_ipct_add(skb, hooknum, ct, ctinfo, NULL);
+#endif /* HNDCTF */
+	}
+
+	return NF_ACCEPT;
 }
 EXPORT_SYMBOL_GPL(nf_nat_packet);
 
@@ -487,6 +491,7 @@ unsigned int nf_nat_packet(struct nf_conn *ct,
 			return NF_DROP;
 	} else {
 #ifdef HNDCTF
+		ip_conntrack_ipct_add(skb, hooknum, ct, ctinfo, NULL);
 #endif /* HNDCTF */
 	}
 

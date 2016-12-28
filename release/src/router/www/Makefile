@@ -134,7 +134,14 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/login_bg.png
+	rm -rf $(INSTALLDIR)/www/images/backtohome.png
+	rm -rf $(INSTALLDIR)/www/images/backtohomeclick.png
+	rm -rf $(INSTALLDIR)/www/images/wifi_hw_sw.png
+	rm -rf $(INSTALLDIR)/www/images/qis/security_key.png
+	rm -rf $(INSTALLDIR)/www/images/qis/select_wireless.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/vender-listover.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/Bandwidth_Limiter.png
+	cd $(INSTALLDIR)/www/images/New_ui/networkmap && ln -sf vender-list.png vender-listover.png && cd $(TOP)/www
 endif
 ifneq ($(RTCONFIG_PROXYSTA),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
@@ -471,4 +478,15 @@ endif
 
 ifneq ($(RTCONFIG_IFTTT), y)
 	rm -rf $(INSTALLDIR)/www/Advanced_IFTTT_Pincode.asp
+endif
+
+ifneq ($(RTCONFIG_PORT_BASED_VLAN), y)
+	rm -rf $(INSTALLDIR)/www/Advanced_VLAN_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_VLAN_DHCP_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_VLAN_Group_Content.asp
+endif
+ifneq ($(RTCONFIG_FBWIFI), y)
+	rm -rf $(INSTALLDIR)/www/Guest_network_fbwifi.asp
+	rm -rf $(INSTALLDIR)/www/ajax_fbwifi.asp
+	rm -rf $(INSTALLDIR)/www/fbwifi
 endif

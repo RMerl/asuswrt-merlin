@@ -214,6 +214,10 @@ function check_wan_state(){
 				if(!parent.flag_manual)
 					parent.pppoe_failed_flag = true;
 			}
+			else if(wanstate == 4 && wansbstate == 4 && wanauxstate == 0){
+				parent.pppoe_failed_flag = false;
+				parent.changeSubnet = true;
+			}
 			else{	
 				if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
 					parent.pppoe_failed_flag = false;
@@ -779,9 +783,14 @@ function submitForm(){
 
 	document.form.submit();
 	if((document.form.sw_mode.value == "1" || document.form.sw_mode.value == "3") && !parent.pppoe_failed_flag){
-		setTimeout(function(){
-			location.href = "/qis/QIS_finish.htm";
-		}, 500)
+		if(parent.based_modelid == "RT-AC42U" || parent.based_modelid == "RT-AC58U")
+			setTimeout(function(){
+				location.href = "/qis/QIS_finish.htm";
+			}, 3500)
+		else
+			setTimeout(function(){
+				location.href = "/qis/QIS_finish.htm";
+			}, 500)
 	}
 }
 

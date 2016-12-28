@@ -10,6 +10,7 @@
   <wan>wan_line_state=<% nvram_get("dsltmp_adslsyncsts"); %></wan>
   <wan>wlan0_radio_flag=<% nvram_get("wl0_radio"); %></wan>
   <wan>wlan1_radio_flag=<% nvram_get("wl1_radio"); %></wan>
+  <wan>wlan2_radio_flag=<% nvram_get("wl2_radio"); %></wan>
   <wan>data_rate_info_2g=<% wl_rate_2g(); %></wan>  
   <wan>data_rate_info_5g=<% wl_rate_5g(); %></wan>  
   <wan>data_rate_info_5g_2=<% wl_rate_5g_2(); %></wan>

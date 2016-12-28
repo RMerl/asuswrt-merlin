@@ -163,7 +163,7 @@ define(function(){
 					return v;
 				}
 				else if(lang == "TR"){
-					if(v == "UTC-2DST") return "UTC-2DST_2";
+					if(v == "UTC-3_1") return "UTC-3_6";
 				}
 				else if(lang == "TW"){
 					return v;

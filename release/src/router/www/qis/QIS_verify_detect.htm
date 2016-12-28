@@ -83,6 +83,19 @@ function getDualWANState(){
 	}
 }
 
+function restart_autodet(){
+	$.ajax({
+		url: '/start_autodet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			restart_autodet();
+		},
+		success: function(response){
+			getWANStatus();
+		}
+	});
+}
+
 function getWANStatus(){
 
 	$.ajax({
@@ -102,6 +115,22 @@ function getWANStatus(){
 			RetryCountDown_fail = 5;
 			if(based_modelid == "4G-AC55U"){
 				getDualWANState();			
+			}
+
+			if(RetryCountDown < 1){
+					RetryCountDown = 10;
+					restart_autodet();
+					return true;
+			}
+			if(autodet_state == ""){
+				--RetryCountDown;
+				setTimeout('getWANStatus();', 500);
+				return true;
+			}
+
+			if(autodet_state == "" || autodet_state == "0" || autodet_state == "1"){
+				setTimeout('getWANStatus();', 500);
+				return true;
 			}
 
 			if(wanstate == 6){

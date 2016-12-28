@@ -85,10 +85,11 @@
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
 var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
-var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
+var header_info = [<% get_header_info(); %>];
+var ROUTERHOSTNAME = header_info[0].host;
 var iAmAlive = function(ret){if(ret.isdomain) top.location.href="http://" + ROUTERHOSTNAME + "/QIS_default.cgi?flag=welcome";};
 (function(){
-	var locationOrigin = window.location.protocol + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
+	var locationOrigin = get_protocol() + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
 	if(location.hostname !== ROUTERHOSTNAME && ROUTERHOSTNAME != "" && isFirst){
 		setTimeout(function(){
 			var s=document.createElement("script");s.type="text/javascript";s.src=locationOrigin+"/httpd_check.json?hostname="+location.hostname;var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
@@ -146,6 +147,7 @@ var new_FW = false;
 var retry = 0;
 var isStatic = false;
 var staticIP = false;
+var isModem = false;
 
 var changeSubnet = false;
 var restartTime = false;
@@ -185,28 +187,7 @@ function detect_firmware(){
 			}
 			else{
 				if(webs_state_error == 0){
-					/*var Latest_firmver = webs_state_info.split("_");
-					var Latest_firm = parseInt(Latest_firmver[0]);
-					var Latest_buildno = parseInt(Latest_firmver[1]);
-					var Latest_extendno = Latest_firmver[2];
-					var Latest_extendno_split = Latest_extendno.split("-g");
-	      			var Latest_extendno_comp = parseInt(Latest_extendno_split[0]);
-
-					if(Latest_firm && Latest_buildno && Latest_extendno){	//match model FW
-						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
-      					current_buildno = parseInt("<% nvram_get("buildno"); %>");
-      					current_extendno = "<% nvram_get("extendno"); %>";
-      					current_extendno_split = current_extendno.split("-g");
-      					current_extendno_comp = parseInt(current_extendno_split[0]);
-
-						if((current_buildno < Latest_buildno) || 
-      					(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
-      					(current_extendno_comp < Latest_extendno_comp && current_buildno == Latest_buildno && current_firm == Latest_firm))
-      			{
-							new_FW = true;
-						}
-					}*/
-					if(isNewFW(webs_state_info, 0, current_firmware_path) && exist_firmver[0] != 9){
+					if(isNewFW(webs_state_info, current_firmware_path, current_firmware_path) && exist_firmver[0] != 9){
 						new_FW = true;
 					}
 				}
@@ -611,7 +592,29 @@ function detect_httpd(){
 		</td>
 
 		<td>
-      <div class="_contentM_qis"><iframe name="contentM" style="background-color:#4D595D;" id="contentM" class="contentM_qis" scrolling="auto" width="99%" height="540" frameborder="0"></iframe></div>
+		<div class="_contentM_qis">
+			<iframe name="contentM" style="" id="contentM" class="contentM_qis" scrolling="auto" width="100%" height="540px" frameborder="0"></iframe> 
+		</div>
+		<script>
+			(function(){
+				var $iframe = $("#contentM");
+				$iframe.on("load", function(){
+					$iframe.fadeIn(100);
+					document.getElementById("contentM").contentWindow.onbeforeunload = function(){
+						$iframe.css("display", "none");
+
+						if(wl_info.band5g_2_support && document.getElementById("contentM").contentWindow.location.pathname.search("QIS_wireless.htm") != -1){
+							$iframe.css("height", "650px");
+							$("._contentM_qis").css("height", "650px");
+						}
+						else{
+							$iframe.css("height", "540px");
+							$("._contentM_qis").css("height", "540px");
+						}
+					};
+				});
+			})()
+		</script>
     </td>
     <td width="8" height="365" valign="top"></td>
   </tr>

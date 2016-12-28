@@ -103,7 +103,8 @@ var timezones = {
 	"EET-2DST":	"(GMT+02:00)",
 	"UTC-3_1":	"(GMT+03:00)",
 	"UTC-3_2":	"(GMT+03:00)",
-	"IST-3DST":	"(GMT+03:00)",
+	"IST-3":	"(GMT+03:00)",
+	"UTC-3_6":	"(GMT+03:00)",
 	"UTC-3.30DST":	"(GMT+03:30)",
 	"UTC-4_2":	"(GMT+04:00)",
 	"UTC-4_3":	"(GMT+04:00)",
@@ -150,6 +151,18 @@ if(parent.yadns_support){
 }
 
 var wans_mode = '<% nvram_get("wans_mode"); %>';
+
+var get_protocol = function() {
+	var protocol = "http:";
+	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
+		protocol = window.location.protocol;
+		return protocol;
+	}
+
+	return protocol;
+};
+var header_info = [<% get_header_info(); %>];
+var location_org = get_protocol() + "//" + header_info[0].host;
 
 function yadns_apply(){
 	var enable = document.getElementById("yadns_enable").checked;
@@ -1010,7 +1023,7 @@ function QKfinish_load_body(){
 				
 				var startQuery = function(){
 					$.ajax({ 
-						url: location.origin.replace(location.hostname, parent.staticIP) + "/httpd_check.json",
+						url: location_org.replace(header_info[0].host, parent.staticIP) + "/httpd_check.json",
 						dataType: 'jsonp',
 						timeout: 2000,
 

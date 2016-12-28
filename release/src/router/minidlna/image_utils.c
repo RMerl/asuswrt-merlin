@@ -190,7 +190,7 @@ jpeg_memory_src(j_decompress_ptr cinfo, const unsigned char * buffer, size_t buf
 	src->pub.bytes_in_buffer = bufsize;
 }
 
-jmp_buf setjmp_buffer;
+static jmp_buf setjmp_buffer;
 /* Don't exit on error like libjpeg likes to do */
 static void
 libjpeg_error_handler(j_common_ptr cinfo)

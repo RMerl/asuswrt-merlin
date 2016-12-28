@@ -190,6 +190,9 @@ function initial(){
 			}
 		}
 
+		if(!Rawifi_support){
+			document.getElementById("DLSCapable").style.display = "none";
+		}
 		// enable_wme_check(document.form.wl_wme);
 		return false;
 	}
@@ -1302,7 +1305,7 @@ function handle_beamforming(value){
 
 					<!-- 2.4GHz Bluetooth Coexisistence mode, only for Broadcom platform -->
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,34);">Bluetooth Coexistance</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,34);">Bluetooth Coexistence</a></th>
 						<td>
 							<select name="wl_btc_mode" class="input_option">
 									<option value="0" <% nvram_match("wl_btc_mode", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -1434,7 +1437,7 @@ function handle_beamforming(value){
 					</tr>					
 					<!-- WMM setting end  -->
 
-					<tr id="DLSCapable"> <!-- RaLink Only  -->
+					<tr id="DLSCapable" class="rept"> <!-- RaLink Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,18);"><#WLANConfig11b_x_DLS_itemname#></a></th>
 						<td>
 							<select name="wl_DLSCapable" class="input_option">

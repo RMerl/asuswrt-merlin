@@ -270,7 +270,7 @@ deconfig(int zcip)
 	expires(wan_ifname, 0);
 	wan_down(wan_ifname);
 
-#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_DATALIMIT)
 		end_wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
 #endif

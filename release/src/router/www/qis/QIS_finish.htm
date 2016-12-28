@@ -26,25 +26,48 @@ span{
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-
 <script>
-<% wanlink(); %>
-<% first_wanlink(); %>
-<% secondary_wanlink(); %>
+/*
+	# restart needed service after loading this page immediately by restartService();
+		- restart_wirelss
+		- restart_time
+
+	# check if new FW is available before finishing QIS by checkIsNewFirmware()
+		- execute restart_subnet if needed
+		- reboot device if needed
+		- redirect to index.asp
+
+	# apply Yandex's configuration and execute restart_yadns by yadns_change()
+
+	# execute live update by doLiveUpdate()
+*/
 
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
+
+<% wanlink(); %>
+<% first_wanlink(); %>
+<% secondary_wanlink(); %>
+
+var wans_mode = '<% nvram_get("wans_mode"); %>';
+var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var wan_primary = "";
 var wan0_primary = '<% nvram_get("wan0_primary"); %>';
 var wan1_primary = '<% nvram_get("wan1_primary"); %>';
-
 if(wan0_primary == 1)
 	wan_primary = "wan0";
 else if(wan1_primary == 1)
 	wan_primary = "wan1";
+
+if(parent.tmo_support)
+	var theUrl = "cellspot.router"; 
+else
+	var theUrl = "router.asus.com";
+
+var reIP = (parent.changeSubnet) ? [<% get_next_lanip(); %>][0].next_lanip : '<% nvram_get("lan_ipaddr"); %>';
 
 var auth_mode2 = '<% nvram_get("wl0_auth_mode_x"); %>';
 var wep_x2 = '<% nvram_get("wl0_wep_x"); %>';
@@ -54,26 +77,26 @@ var auth_mode = '<% nvram_get("wl1_auth_mode_x"); %>';
 var wep_x = '<% nvram_get("wl1_wep_x"); %>';
 var key_x = '<% nvram_get("wl1_key"); %>';
 var wpa_mode = '<% nvram_get("wl1_wpa_mode"); %>';
-var reIP = (parent.changeSubnet) ? [<% get_next_lanip(); %>][0].next_lanip : '<% nvram_get("lan_ipaddr"); %>';
-var JS_timeObj = new Date();
-var uptimeStr = "<% uptime(); %>";
-var newformat_systime = uptimeStr.substring(8,11) + " " + uptimeStr.substring(5,7) + " " + uptimeStr.substring(17,25) + " " + uptimeStr.substring(12,16);  //Ex format: Jun 23 10:33:31 2008
-var systime_millsec = Date.parse(newformat_systime); // millsec from system
-var webs_state_update = '<% nvram_get("webs_state_update"); %>';
-var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
-var webs_state_error = '<% nvram_get("webs_state_error"); %>';
-var webs_state_info = '<% nvram_get("webs_state_info"); %>';
-
 var auth_mode_5_2 = '<% nvram_get("wl2_auth_mode_x"); %>';
 var wep_x_5_2 = '<% nvram_get("wl2_wep_x"); %>';
 var key_x_5_2 = '<% nvram_get("wl2_key"); %>';
 var wpa_mode_5_2 = '<% nvram_get("wl2_wpa_mode"); %>';
+
+var webs_state_update = '<% nvram_get("webs_state_update"); %>';
+var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
+var webs_state_error = '<% nvram_get("webs_state_error"); %>';
+var webs_state_info = '<% nvram_get("webs_state_info"); %>';
+var PPPOEFAILREASON = "<#qis_fail_desc9#>";
 
 if(parent.tmo_support)
         var theUrl = "cellspot.router"; 
 else
         var theUrl = "router.asus.com";
 
+var JS_timeObj = new Date();
+var uptimeStr = "<% uptime(); %>";
+var newformat_systime = uptimeStr.substring(8,11) + " " + uptimeStr.substring(5,7) + " " + uptimeStr.substring(17,25) + " " + uptimeStr.substring(12,16);  //Ex format: Jun 23 10:33:31 2008
+var systime_millsec = Date.parse(newformat_systime); // millsec from system
 var timezones = {
 	"UTC12":	"(GMT-12:00)",
 	"UTC11":	"(GMT-11:00)",
@@ -123,7 +146,8 @@ var timezones = {
 	"EET-2DST":	"(GMT+02:00)",
 	"UTC-3_1":	"(GMT+03:00)",
 	"UTC-3_2":	"(GMT+03:00)",
-	"IST-3DST":	"(GMT+03:00)",
+	"IST-3":	"(GMT+03:00)",
+	"UTC-3_6":	"(GMT+03:00)",
 	"UTC-3.30DST":	"(GMT+03:30)",
 	"UTC-4_2":	"(GMT+04:00)",
 	"UTC-4_3":	"(GMT+04:00)",
@@ -164,31 +188,36 @@ var timezones = {
 	"UTC-13":	"(GMT+13:00)"
 	};
 
+/* Yandex */
 if(parent.yadns_support){
 	var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
 	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
 }
 
-var wans_mode = '<% nvram_get("wans_mode"); %>';
+var get_protocol = function() {
+	var protocol = "http:";
+	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
+		protocol = window.location.protocol;
+		return protocol;
+	}
 
-function yadns_apply(){
+	return protocol;
+};
+var header_info = [<% get_header_info(); %>];
+var location_org = get_protocol() + "//" + header_info[0].host;
+
+function yadns_change(need_apply){
 	var enable = document.getElementById("yadns_enable").checked;
 	var defmode = document.getElementById("yadns_defmode").checked;
 	var yadns_update = document.getElementsByName("yadns_update")[0];
 
-	document.getElementById('loadingIcon').style.display='';
+	document.getElementById("yadns_defmode").disabled = !enable;
 	yadns_update.yadns_enable_x.value = enable ? "1" : "0";
 	yadns_update.yadns_mode.value = (enable && defmode) ? "1" : yadns_mode;
 	yadns_update.submit();
 }
 
-function yadns_change(need_apply){
-	var enable = document.getElementById("yadns_enable").checked;
-
-	parent.yadns_stage = need_apply ? 1 : 0;
-	document.getElementById("yadns_defmode").disabled = !enable;
-}
-
+/* Live update */
 function doLiveUpdate(_do){
 	if(_do){
 		document.getElementById("newFWDetected").style.display = "none";
@@ -199,7 +228,6 @@ function doLiveUpdate(_do){
 		document.start_update.submit();
 	}
 	else{
-		goto_index();
 		setTimeout("parent.location.href='/index.asp'", 3000);
 	}
 }
@@ -285,7 +313,80 @@ function showLoadingUpdate(){
 	progressBar++;	
 }
 
+/* Find device (callback) */
+function iAmAlive(){
+	top.location.href = "http://" + parent.staticIP;
+}
+
+/* Restart service (run automatically) */
+function restartService(){
+	document.restartForm.force_change.value++;
+	document.restartForm.action_wait.value = 0;
+
+	if(parent.based_modelid == "4G-AC55U" && parent.wan_autodet_state == "4" && parent.usb_connected == 1 && wans_dualwan_orig == "wan usb"){
+		document.restartForm.wans_dualwan.disabled = false;
+		document.restartForm.wans_dualwan.value = "usb wan";
+		parent.sysReboot = true;
+	}
+
+	if(parent.isModem){
+		document.restartForm.wans_dualwan.disabled = false;
+		document.restartForm.wans_dualwan.value = parent.QKform.wans_dualwan.value;
+		document.restartForm.modem_enable.disabled = false;
+		document.restartForm.modem_enable.value = parent.QKform.modem_enable.value;
+		document.restartForm.modem_country.disabled = false;
+		document.restartForm.modem_country.value = parent.QKform.modem_country.value;
+		document.restartForm.modem_isp.disabled = false;
+		document.restartForm.modem_isp.value = parent.QKform.modem_isp.value;
+		document.restartForm.modem_apn.disabled = false;
+		document.restartForm.modem_apn.value = parent.QKform.modem_apn.value;
+		document.restartForm.modem_dialnum.disabled = false;
+		document.restartForm.modem_dialnum.value = parent.QKform.modem_dialnum.value;
+		document.restartForm.modem_pincode.disabled = false;
+		document.restartForm.modem_pincode.value = parent.QKform.modem_pincode.value;
+		document.restartForm.modem_user.disabled = false;
+		document.restartForm.modem_user.value = parent.QKform.modem_user.value;
+		document.restartForm.modem_pass.disabled = false;
+		document.restartForm.modem_pass.value = parent.QKform.modem_pass.value;
+		document.restartForm.modem_ttlsid.disabled = false;
+		document.restartForm.modem_ttlsid.value = parent.QKform.modem_ttlsid.value;
+		document.restartForm.Dev3G.disabled = false;
+		document.restartForm.Dev3G.value = parent.QKform.Dev3G.value;
+	}
+
+	if(parent.sysReboot){
+		document.restartForm.action_wait.value = parent.rebootTime;
+		document.restartForm.action_script.value = "reboot";
+		document.getElementById('loadingIcon').style.display = '';
+	}
+	else{
+		var actionScriptArray = [];
+
+		if(parent.restartWireless){
+			actionScriptArray.push("restart_wireless");
+			document.restartForm.action_wait.value = 6;
+		}
+		if(parent.restartTime){
+			actionScriptArray.push("restart_time");
+			document.restartForm.action_wait.value = 6;
+		}
+
+		document.restartForm.action_script.value = actionScriptArray.join(";");
+	}	
+
+	if(parent.based_modelid == "4G-AC55U" && wans_mode == "lb"){
+		document.restartForm.wans_mode.disabled = false;
+	}
+
+	document.restartForm.submit();
+}
+
+/* Finish QIS (exit button click event) */
 function checkIsNewFirmware(){
+	parent.document.getElementById("btn_gotoindex").onclick = "";
+	parent.document.getElementById("btn_gotoindex").style.cursor = "";
+	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";
+
 	if(parent.new_FW){
 		$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
 		$("#latestFW")[0].innerHTML = "" 
@@ -309,20 +410,140 @@ function checkIsNewFirmware(){
 		}
 	}
 	else{
-		goto_index();
+		if(parent.based_modelid == "4G-AC55U" && parent.wan_autodet_state == "4" && parent.usb_connected == 1 && wans_dualwan_orig == "wan usb"){
+			document.restartForm.wans_dualwan.disabled = false;
+			document.restartForm.wans_dualwan.value = "usb wan";
+			parent.sysReboot = true;
+		}
+
+		if(parent.sysReboot){
+			document.getElementById('loadingIcon').style.display = '';
+			restartService();
+		}
+		else if(parent.changeSubnet){
+			document.restartForm.action_wait.value = 10;
+			document.restartForm.action_script.value = "restart_subnet";
+			document.getElementById('loadingIcon').style.display = '';
+			document.restartForm.submit();
+		}
+		else{
+			var delayTimeout = (parent.based_modelid == "RT-AC42U" || parent.based_modelid == "RT-AC58U") ? 10000 : 1;
+
+			setTimeout(function(){
+				parent.location.href = '/index.asp';
+			}, delayTimeout);
+		}
 	}
 }
 
-var timer;
-function QKfinish_load_body(){
-	parent.detect_firmware();
+/* Time Zone */
+function set_timezone(){
+	var systime = new Date();
+	Date.prototype.stdTimezoneOffset_north = function() {
+		var jan = new Date(this.getFullYear(), 0, 1);
+		var jul = new Date(this.getFullYear(), 6, 1);
+		return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+	}
 
-	var shown_str;
-	if(parent.yadns_support && parent.yadns_stage == 2) {
-		parent.yadns_stage++;
+	Date.prototype.stdTimezoneOffset_south = function() {
+		var jan = new Date(this.getFullYear(), 0, 1);
+		var jul = new Date(this.getFullYear(), 6, 1);
+		return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+	}
+
+	Date.prototype.dst = function() {
+		return (this.getTimezoneOffset() < this.stdTimezoneOffset_north() || this.getTimezoneOffset() > this.stdTimezoneOffset_south());
+	}	
+	
+	var system_timezone_dut = document.form.time_zone.value;
+	var system_timezone = parseInt(document.form.time_zone_x.value.substring(3));
+	var client_timezone = systime.getTimezoneOffset();
+
+	if(parent.isFirst && (system_timezone*60 != client_timezone)){		//Tune DUT time while x_Setting=0
+			systime_millsec += (-client_timezone*60000);
+	}
+	
+	if(typeof timezones[system_timezone_dut] != "undefined")
+		document.getElementById('change_tz').innerHTML = timezones[system_timezone_dut];
+
+	if(system_timezone_dut.search("DST") >= 0){
+		document.getElementById('dstzone').style.display = "";
+		document.getElementById('dstzone').innerHTML = "<#General_x_SystemTime_dst#>";
+	}
+
+	showclock();
+}
+
+function showclock(){
+	JS_timeObj.setTime(systime_millsec);
+	systime_millsec += 1000;
+	JS_timeObj2 = JS_timeObj.toString();	
+	JS_timeObj2 = JS_timeObj2.substring(0,3) + ", " +
+	              JS_timeObj2.substring(4,10) + "  " +
+				  parent.checkTime(JS_timeObj.getHours()) + ":" +
+				  parent.checkTime(JS_timeObj.getMinutes()) + ":" +
+				  parent.checkTime(JS_timeObj.getSeconds()) + "  " +
+				  JS_timeObj.getFullYear();
+	$("#system_time")[0].innerHTML = JS_timeObj2;
+	setTimeout(showclock, 1000);
+}
+
+/* Repeater */
+function chkRepeaterConState(){
+	$.ajax({
+		url: '/apscan.asp',
+		dataType: 'script',
+		timeout: 2000,
+		error: function(xhr){
+			setTimeout("chkRepeaterConState();", 1000);
+		},
+		success: function(response){
+			if(wlc_state == 2) {
+				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
+			}
+			else{
+				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey_rep\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+			}
+		}
+	});
+}
+
+/* Media Bridge */
+function chkMBConState(){
+	$.ajax({
+		url: '/ajax_wlc_state.asp',
+		dataType: 'script',
+		timeout: 2000,
+		error: function(xhr){
+			setTimeout("chkMBConState();", 1000);
+		},
+		success: function(response){
+			if(wlc_state == 1) {
+				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
+			}
+			else{
+				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey_mb\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+			}
+		}
+	});
+}
+
+/* Bind keyboard event */
+function submitenter(myfield,event){
+	var keyPressed;
+	keyPressed = event.keyCode ? event.keyCode : event.which;
+	if (keyPressed == 13){
 		checkIsNewFirmware();
 	}
+	else
+		return true;
+}
+
+/* Bind onload event */
+function QKfinish_load_body(){
+	var shown_str;
 		
+	parent.detect_firmware();
 	document.getElementById("QISmain").style.display = "";
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
 
@@ -337,7 +558,7 @@ function QKfinish_load_body(){
 		$("#security5_block")[0].style.display = "none";	
 
 		if(parent.wl_info.band5g_2_support){
-			parent.document.getElementById("contentM").style.height = "630px";
+			parent.document.getElementById("contentM").style.height = "640px";
 			$("#band5g_desc")[0].innerHTML = "(5GHz-1)";
 			$("#ssid_5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
 			$("#ssid_5_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'));
@@ -820,7 +1041,7 @@ function QKfinish_load_body(){
 		$("#security5_2_block")[0].style.display = "none";
 	}
 	else{
-		parent.document.getElementById("contentM").style.height = "630px";
+		parent.document.getElementById("contentM").style.height = "640px";
 		$("#band5g_desc")[0].innerHTML = "(5GHz-1)";
 		$("#ssid_5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
 		$("#ssid_5_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'));
@@ -894,13 +1115,13 @@ function QKfinish_load_body(){
 	if(parent.dualWAN_support){
 		if(first_wanlink_type() == "dhcp")
 			var wanlink_type_conv = "<#BOP_ctype_title1#>";
-		else 	if(first_wanlink_type() == "pppoe" || first_wanlink_type() == "PPPOE" )
-			var wanlink_type_conv = "PPPoE";
-		else 	if(first_wanlink_type() == "static")
+		else if(first_wanlink_type() == "pppoe" || first_wanlink_type() == "PPPOE" )
+			var wanlink_type_conv = parent.pppoe_failed_flag ? PPPOEFAILREASON : "PPPoE" ;
+		else if(first_wanlink_type() == "static")
 			var wanlink_type_conv = "<#BOP_ctype_title5#>";
-		else 	if(first_wanlink_type() == "pptp")
+		else if(first_wanlink_type() == "pptp")
 			var wanlink_type_conv = "PPTP";
-		else 	if(first_wanlink_type() == "l2tp")
+		else if(first_wanlink_type() == "l2tp")
 			var wanlink_type_conv = "L2TP";
 		else
 			var wanlink_type_conv = first_wanlink_type();
@@ -908,7 +1129,7 @@ function QKfinish_load_body(){
 			if(secondary_wanlink_type() == "dhcp")
 				var secondary_wanlink_type_conv = "<#BOP_ctype_title1#>";
 			else 	if(secondary_wanlink_type() == "pppoe" || secondary_wanlink_type() == "PPPOE" )
-				var secondary_wanlink_type_conv = "PPPoE";
+				var secondary_wanlink_type_conv = parent.pppoe_failed_flag ? PPPOEFAILREASON : "PPPoE";
 			else 	if(secondary_wanlink_type() == "static")
 				var secondary_wanlink_type_conv = "<#BOP_ctype_title5#>";
 			else 	if(secondary_wanlink_type() == "pptp")
@@ -923,7 +1144,7 @@ function QKfinish_load_body(){
 		if(wanlink_type() == "dhcp")
 			var wanlink_type_conv = "<#BOP_ctype_title1#>";
 		else 	if(wanlink_type() == "pppoe" || wanlink_type() == "PPPOE" )
-			var wanlink_type_conv = "PPPoE";
+			var wanlink_type_conv = parent.pppoe_failed_flag ? PPPOEFAILREASON : "PPPoE";
 		else 	if(wanlink_type() == "static")
 			var wanlink_type_conv = "<#BOP_ctype_title5#>";
 		else 	if(wanlink_type() == "pptp")
@@ -960,6 +1181,9 @@ function QKfinish_load_body(){
 					$("#wantype")[0].innerHTML = secondary_wanlink_type_conv;
 			}
 		}
+	}
+	else if(parent.isModem){
+		$("#wantype")[0].innerHTML = "USB Modem";
 	}
 	else
 		$("#wantype")[0].innerHTML = wanlink_type_conv;
@@ -1050,9 +1274,7 @@ function QKfinish_load_body(){
 		if(parent.yadns_support && sw_mode==1 ){
 			$("#yadns_enable").checked = (yadns_enable != 0) ? true : false;
 			$("#yadns_defmode").checked = (yadns_mode == 1) ? true : false;
-			if(!parent.yadns_hideqis || yadns_enable != 0)
-				$(".yadnsItem").css("display", "");
-			yadns_change(false);
+			if(!parent.yadns_hideqis || yadns_enable != 0) $(".yadnsItem").css("display", "");
 		}
 
 		if(sw_mode == "3") {
@@ -1065,7 +1287,7 @@ function QKfinish_load_body(){
 				
 				var startQuery = function(){
 					$.ajax({ 
-						url: location.origin.replace(location.hostname, parent.staticIP) + "/httpd_check.json",
+						url: location_org.replace(header_info[0].host, parent.staticIP) + "/httpd_check.json",
 						dataType: 'jsonp',
 						timeout: 2000,
 
@@ -1132,263 +1354,9 @@ function QKfinish_load_body(){
 		parent.document.getElementById("LoadingBar").style.visibility = 'hidden';
 	}
 	
-	if(!parent.sysReboot) setTimeout("check_firmware();", 1000);
-}
-
-function check_firmware(){
-	if(!parent.new_FW){
-		gotoNext();
-	}
-}
-
-function iAmAlive(){
-	top.location.href = "http://" + parent.staticIP;
-}
-
-function gotoASUS(){
-	parent.location.href = "http://www.asus.com/support/";
-}
-
-var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
-function goto_index(){
-	document.restartForm.force_change.value++;
-	document.restartForm.action_wait.value = 0;
-
-	if(parent.based_modelid == "4G-AC55U" && parent.wan_autodet_state == "4" && parent.usb_connected == 1 && wans_dualwan_orig == "wan usb"){
-		document.restartForm.wans_dualwan.disabled = false;
-		document.restartForm.wans_dualwan.value = "usb wan";
-		parent.sysReboot = true;
-	}
-
-	if(parent.QKform.wans_dualwan.disabled == false){
-		document.restartForm.wans_dualwan.disabled = false;
-		document.restartForm.wans_dualwan.value = parent.QKform.wans_dualwan.value;
-		document.restartForm.modem_enable.disabled = false;
-		document.restartForm.modem_enable.value = parent.QKform.modem_enable.value;
-		document.restartForm.modem_country.disabled = false;
-		document.restartForm.modem_country.value = parent.QKform.modem_country.value;
-		document.restartForm.modem_isp.disabled = false;
-		document.restartForm.modem_isp.value = parent.QKform.modem_isp.value;
-		document.restartForm.modem_apn.disabled = false;
-		document.restartForm.modem_apn.value = parent.QKform.modem_apn.value;
-		document.restartForm.modem_dialnum.disabled = false;
-		document.restartForm.modem_dialnum.value = parent.QKform.modem_dialnum.value;
-		document.restartForm.modem_pincode.disabled = false;
-		document.restartForm.modem_pincode.value = parent.QKform.modem_pincode.value;
-		document.restartForm.modem_user.disabled = false;
-		document.restartForm.modem_user.value = parent.QKform.modem_user.value;
-		document.restartForm.modem_pass.disabled = false;
-		document.restartForm.modem_pass.value = parent.QKform.modem_pass.value;
-		document.restartForm.modem_ttlsid.disabled = false;
-		document.restartForm.modem_ttlsid.value = parent.QKform.modem_ttlsid.value;
-		document.restartForm.Dev3G.disabled = false;
-		document.restartForm.Dev3G.value = parent.QKform.Dev3G.value;
-	}
-
-	if(parent.sysReboot){
-		document.restartForm.action_wait.value = parent.rebootTime;
-		document.restartForm.action_script.value = "reboot";
-		document.getElementById('loadingIcon').style.display = '';
-	}
-	else{
-		var actionScriptArray = [];
-
-		if(parent.changeSubnet){
-			actionScriptArray.push("restart_subnet");
-			document.restartForm.action_wait.value = 10;
-		}
-		else if(parent.restartWireless){
-			actionScriptArray.push("restart_wireless");
-			document.restartForm.action_wait.value = 6;
-		}
-		if(parent.restartTime){
-			actionScriptArray.push("restart_time");
-			document.restartForm.action_wait.value = 6;
-		}
-
-		document.restartForm.action_script.value = actionScriptArray.join(";");
-	}	
-
-	if(parent.based_modelid == "4G-AC55U" && wans_mode == "lb"){
-		document.restartForm.wans_mode.disabled = false;
-	}
-
-	document.restartForm.submit();
-}
-
-function gotoAdvSetting(){
-	parent.location = "/Advanced_Wireless_Content.asp";
-}
-
-function startLiveDetect(){
-	document.getElementById('loadingIcon').style.display = '';
-	parent.detect_update();
-}
-
-function redirect_index(){
-	if(parent.changeSubnet){
-		document.getElementById('loadingIcon').style.display = "";
-		return false;
-	}
-
-	parent.document.getElementById("btn_gotoindex").onclick = "";
-	parent.document.getElementById("btn_gotoindex").style.cursor = "";
-	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";
-
-	if(parent.yadns_support && parent.yadns_stage == 1) {
-		parent.yadns_stage++;
-		return yadns_apply();
-	}
-
-	if(parent.new_FW){
-		return checkIsNewFirmware();
-	}
-	else if(parent.sysReboot){
-		return gotoNext();
-	}
-	else{
-		parent.location.href = "/index.asp";
-	}
-}
-
-function gotoNext(){
-	if(parent.yadns_support && parent.yadns_stage == 1) {
-		parent.yadns_stage++;
-		return yadns_apply();
-	}
-	return checkIsNewFirmware();
-}
-
-function addBookmarkForBrowser(sTitle){
-	 sTitle = sTitle+" - "+reIP;
-	 
-   if(document.all)
-      window.external.addFavorite('http://'+reIP, sTitle);
-   else if(window.sidebar && window.sidebar.addPanel)
-      window.sidebar.addPanel(sTitle, 'http://'+reIP, "");
-   else{
-			addBookmarkForBrowser = function(){
-				alert("<#Browser_action_not_support_addfavorite#>");
-			}
-   }
-}
-
-function translate_auth(flag){
-	if(flag == "open")
-		return "Open System";
-	else if(flag == "shared")
-		return "Shared Key";
-	else if(flag == "psk")
-		return "WPA-Personal";
-	else if(flag == "psk2")
- 		return "WPA2-Personal";
-	else if(flag == "pskpsk2")
-		return "WPA-Auto-Personal";
-	else
-		return "unknown Auth";
-}
-
-function redirect_page(redirect_flag){
-	document.redirectForm.action = "/qis/QIS_"+redirect_flag+".htm";
-	document.redirectForm.submit();
-}
-
-function submitenter(myfield,event){
-	var keyPressed;
-	keyPressed = event.keyCode ? event.keyCode : event.which;
-	if (keyPressed == 13){
-		gotoNext();
-	}
-	else
-		return true;
-}
-
-function set_timezone(){
-	var systime = new Date();
-	Date.prototype.stdTimezoneOffset_north = function() {
-		var jan = new Date(this.getFullYear(), 0, 1);
-		var jul = new Date(this.getFullYear(), 6, 1);
-		return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-	}
-
-	Date.prototype.stdTimezoneOffset_south = function() {
-		var jan = new Date(this.getFullYear(), 0, 1);
-		var jul = new Date(this.getFullYear(), 6, 1);
-		return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-	}
-
-	Date.prototype.dst = function() {
-		return (this.getTimezoneOffset() < this.stdTimezoneOffset_north() || this.getTimezoneOffset() > this.stdTimezoneOffset_south());
-	}	
-	
-	var system_timezone_dut = document.form.time_zone.value;
-	var system_timezone = parseInt(document.form.time_zone_x.value.substring(3));
-	var client_timezone = systime.getTimezoneOffset();
-
-	if(parent.isFirst && (system_timezone*60 != client_timezone)){		//Tune DUT time while x_Setting=0
-			systime_millsec += (-client_timezone*60000);
-	}
-	
-	if(typeof timezones[system_timezone_dut] != "undefined")
-		document.getElementById('change_tz').innerHTML = timezones[system_timezone_dut];
-
-	if(system_timezone_dut.search("DST") >= 0){
-		document.getElementById('dstzone').style.display = "";
-		document.getElementById('dstzone').innerHTML = "<#General_x_SystemTime_dst#>";
-	}
-
-	showclock();
-}
-
-function showclock(){
-	JS_timeObj.setTime(systime_millsec);
-	systime_millsec += 1000;
-	JS_timeObj2 = JS_timeObj.toString();	
-	JS_timeObj2 = JS_timeObj2.substring(0,3) + ", " +
-	              JS_timeObj2.substring(4,10) + "  " +
-				  parent.checkTime(JS_timeObj.getHours()) + ":" +
-				  parent.checkTime(JS_timeObj.getMinutes()) + ":" +
-				  parent.checkTime(JS_timeObj.getSeconds()) + "  " +
-				  JS_timeObj.getFullYear();
-	$("#system_time")[0].innerHTML = JS_timeObj2;
-	setTimeout("showclock()", 1000);
-}
-
-function chkRepeaterConState(){
-	$.ajax({
-		url: '/apscan.asp',
-		dataType: 'script',
-		timeout: 2000,
-		error: function(xhr){
-			setTimeout("chkRepeaterConState();", 1000);
-		},
-		success: function(response){
-			if(wlc_state == 2) {
-				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
-			}
-			else{
-				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey_rep\';\"><#APSurvey_action_ConnectingStatus0#></span>";
-			}
-		}
-	});
-}
-function chkMBConState(){
-	$.ajax({
-		url: '/ajax_wlc_state.asp',
-		dataType: 'script',
-		timeout: 2000,
-		error: function(xhr){
-			setTimeout("chkMBConState();", 1000);
-		},
-		success: function(response){
-			if(wlc_state == 1) {
-				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
-			}
-			else{
-				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey_mb\';\"><#APSurvey_action_ConnectingStatus0#></span>";
-			}
-		}
-	});
+	if(!parent.sysReboot) setTimeout(function(){
+		restartService();
+	}, 1000);
 }
 </script>
 </head>
@@ -1403,7 +1371,7 @@ function chkMBConState(){
 <input type="hidden" name="action_wait" value="">
 </form>
 
-<form method="post" name="form" action="" target="hidden_frame" onsubmit="goto_index();">
+<form method="post" name="form" action="" target="hidden_frame" onsubmit="restartService();">
 <input type="hidden" name="wl0_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>">
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
 <input type="hidden" name="wl0_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>">
@@ -1413,19 +1381,19 @@ function chkMBConState(){
 <input type="hidden" name="time_zone_x" value="<% nvram_get("time_zone_x"); %>" disabled>
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>" disabled>
 <div class="QISmain" id="QISmain" style="display:none">
-		<div id="descTltle">
-			<table width="100%">
-				<tr>
-					<td align="left">
-						<div class="description_down"><#qis_finish_title1#></div>
-					</td>
-					<td align="right">
-						<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
-					</td>
-				</tr>
-			</table>
-		</div>
-		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<div id="descTltle">
+		<table width="100%">
+			<tr>
+				<td align="left">
+					<div class="description_down"><#qis_finish_title1#></div>
+				</td>
+				<td align="right">
+					<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 <br/>
 
 <p id="timeObject" class="QISGeneralFont" style="margin-top:-5px;"><#General_x_SystemTime_itemname#>: <span id="system_time" size="40" class="devicepin" style="font-size:12px;"></span>&nbsp&nbsp<span id="change_tz" style="font-family:Lucida Console;"></span>&nbsp<span id="dstzone" style="display:none;"></span></p>
@@ -1649,19 +1617,21 @@ function chkMBConState(){
 	<br />
 	<fieldset>
 		<div class="row_end"><a class="iuiA" onclick="parent.location.href='/Logout.asp';"><#t1Logout#></a></div>
-	</fieldset>
-
-	<!-- support Live update -->
-	<!--fieldset class="theFieldset">
-		<div class="row_end"><a class="iuiA" onclick="">check FW</a></div>
-	</fieldset-->
+	</fieldset>	
 </div>
 
 <div id="applyBtn" class="apply_gen" style="margin-top:30px">
-	<!--input type="button" id="nextButton" value="<#CTL_finish#>" onclick="gotoNext();" class="button_gen"-->
-	<input type="button" id="nextButton" value="<#Main_alert_proceeding_desc3#>" onclick="redirect_index();" class="button_gen">
+	<input type="button" id="nextButton" value="<#Main_alert_proceeding_desc3#>" onclick="checkIsNewFirmware();" class="button_gen">
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
+
+<div id="AreaHint" style="margin-top:10px; margin-left:5px;">
+	<div><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<div id="main_manual" style="padding-left:20px;margin-top:10px">
+		<span><#ASUS_Registration#></span>
+	</div>	
+</div>
+
 </div>
 <div id="liveUpdate_div" style="display:none">
 	<div id="liveUpdateTitle">
@@ -1809,7 +1779,7 @@ function chkMBConState(){
 
 <form method="post" name="yadns_update" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-<input type="hidden" name="flag" value="next">
+<input type="hidden" name="flag" value="background">
 <input type="hidden" name="current_page" value="">
 <input type="hidden" name="next_page" value="">
 <input type="hidden" name="action_mode" value="apply">

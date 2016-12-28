@@ -104,74 +104,6 @@ extern int check_file_integrity(const char *const file_name){
 	return 1;
 }
 
-// Success: return value is account number. Fail: return value is -1.
-int get_account_list(int *acc_num, char ***account_list)
-{
-	char **tmp_account_list = NULL, **tmp_account;
-	int len, i, j;
-	char *nv, *nvp, *b;
-	char *tmp_ascii_user, *tmp_ascii_passwd;
-	char char_user[64];
-
-	*acc_num = nvram_get_int("acc_num");
-	if(*acc_num <= 0)
-		return 0;
-
-	nv = nvp = strdup(nvram_safe_get("acc_list"));
-	i = 0;
-	if(nv && strlen(nv) > 0){
-		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &tmp_ascii_user, &tmp_ascii_passwd) != 2)
-				continue;
-
-			tmp_account = (char **)malloc(sizeof(char *)*(i+1));
-			if(tmp_account == NULL){
-				usb_dbg("Can't malloc \"tmp_account\".\n");
-				free(nv);
-				return -1;
-			}
-
-			memset(char_user, 0, 64);
-			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
-
-			len = strlen(char_user);
-			tmp_account[i] = (char *)malloc(sizeof(char)*(len+1));
-			if(tmp_account[i] == NULL){
-				usb_dbg("Can't malloc \"tmp_account[%d]\".\n", i);
-				free(tmp_account);
-				free(nv);
-				return -1;
-			}
-			strcpy(tmp_account[i], char_user);
-			tmp_account[i][len] = 0;
-
-			if(i != 0){
-				for(j = 0; j < i; ++j)
-					tmp_account[j] = tmp_account_list[j];
-
-				free(tmp_account_list);
-				tmp_account_list = tmp_account;
-			}
-			else
-				tmp_account_list = tmp_account;
-
-			if(++i >= *acc_num)
-				break;
-		}
-		free(nv);
-
-		*account_list = tmp_account_list;
-		*acc_num = i;
-
-		return *acc_num;
-	}
-
-	if(nv)
-		free(nv);
-
-	return 0;
-}
-
 extern int get_folder_list(const char *const mount_path, int *sh_num, char ***folder_list) {
 	char **tmp_folder_list, target[16];
 	int len, i;
@@ -220,6 +152,7 @@ extern int get_folder_list(const char *const mount_path, int *sh_num, char ***fo
 	follow_info = strstr(list_info, "sh_num=");
 	if (follow_info == NULL) {
 		usb_dbg("No sh_num in %s is wrong.\n", list_file);
+		free(list_file);
 		free(list_info);
 		return -1;
 	}
@@ -230,6 +163,7 @@ extern int get_folder_list(const char *const mount_path, int *sh_num, char ***fo
 		++follow_info_end;
 	if (*follow_info_end == 0) {
 		usb_dbg("The content in %s is wrong.\n", list_file);
+		free(list_file);
 		free(list_info);
 		return -1;
 	}
@@ -243,6 +177,7 @@ extern int get_folder_list(const char *const mount_path, int *sh_num, char ***fo
 
 	if (*sh_num <= 0){
 		usb_dbg("There is no folder in %s.\n", mount_path);
+		free(list_info);
 		return 0;
 	}
 	
@@ -293,7 +228,8 @@ extern int get_folder_list(const char *const mount_path, int *sh_num, char ***fo
 		
 		*follow_info_end = backup;
 	}
-	
+	free(list_info);
+
 	*folder_list = tmp_folder_list;
 	
 	return *sh_num;
@@ -337,6 +273,7 @@ extern int get_all_folder(const char *const mount_path, int *sh_num, char ***fol
 		tmp_folder = (char **)malloc(sizeof(char *)*(*sh_num+1));
 		if (tmp_folder == NULL) {
 			usb_dbg("Can't malloc \"tmp_folder\".\n");
+			closedir(pool_to_open);
 			return -1;
 		}
 		
@@ -344,6 +281,7 @@ extern int get_all_folder(const char *const mount_path, int *sh_num, char ***fol
 		tmp_folder[*sh_num] = (char *)malloc(sizeof(char)*(len+1));
 		if (tmp_folder[*sh_num] == NULL) {
 			usb_dbg("Can't malloc \"tmp_folder[%d]\".\n", *sh_num);
+			closedir(pool_to_open);
 			free(tmp_folder);
 			return -1;
 		}
@@ -942,7 +880,6 @@ extern int set_permission(const char *const account,
 		usb_dbg("Can't allocate \"target\".\n");
 		free(var_file);
 		free(var_info);
-		
 		return -1;
 	}
 	if(folder == NULL)
@@ -964,6 +901,7 @@ extern int set_permission(const char *const account,
 		if (fp == NULL) {
 			usb_dbg("1. Can't rewrite the file, \"%s\".\n", var_file);
 			free(var_file);
+			free(target);
 			return -1;
 		}
 		free(var_file);
@@ -1049,8 +987,675 @@ extern int set_permission(const char *const account,
 	}
 	fprintf(fp, "%s", var_info);
 	fclose(fp);
+	free(var_file);
 	free(var_info);
 	
+	return 0;
+}
+
+extern int add_folder(const char *const account, const char *const mount_path, const char *const folder) {
+	int result, i, len;
+	int acc_num;
+	char **account_list;
+	char *var_file, *var_info;
+	char *target;
+	FILE *fp;
+	int samba_right, ftp_right, dms_right;
+#ifdef RTCONFIG_WEBDAV_OLD
+	int webdav_right;
+#endif
+	char *full_path;
+	
+	if (mount_path == NULL || strlen(mount_path) <= 0) {
+		usb_dbg("No input, \"mount_path\".\n");
+		
+		return -1;
+	}
+	if (folder == NULL || strlen(folder) <= 0) {
+		usb_dbg("No input, \"folder\".\n");
+		
+		return -1;
+	}
+	
+	// 1. test if creatting the folder
+	result = test_if_exist_share(mount_path, folder);
+	if (result != 0) {
+		usb_dbg("\"%s\" is already created in %s.\n", folder, mount_path);
+		
+		return -1;
+	}
+	
+	// 2. create the folder
+	len = strlen(mount_path)+strlen("/")+strlen(folder);
+	full_path = (char *)malloc(sizeof(char)*(len+1));
+	if (full_path == NULL) {
+		usb_dbg("Can't malloc \"full_path\".\n");
+		
+		return -1;
+	}
+	sprintf(full_path, "%s/%s", mount_path, folder);
+	full_path[len] = 0;
+	
+	umask(0000);
+	result = mkdir(full_path, 0777);
+	free(full_path);
+	if (result != 0) {
+		usb_dbg("To create \"%s\" is failed!\n", folder);
+		
+		return -1;
+	}
+	
+	// 3. add folder's right to every var file
+	result = get_account_list(&acc_num, &account_list);
+	if (result < 0) {
+		usb_dbg("Can't get the account list\n");
+		free_2_dimension_list(&acc_num, &account_list);
+		
+		return -1;
+	}
+	
+	len = strlen("*")+strlen(folder)+strlen("=");
+	target = (char *)malloc(sizeof(char)*(len+1));
+	if (target == NULL) {
+		usb_dbg("Can't allocate \"target\".\n");
+		free_2_dimension_list(&acc_num, &account_list);
+		
+		return -1;
+	}
+	sprintf(target, "*%s=", folder);
+	target[len] = 0;
+	
+	for (i = -1; i < acc_num; ++i) {
+		// 4. get the var file
+		if(i == -1) // share mode.
+			result = get_var_file_name(NULL, mount_path, &var_file);
+		else
+			result = get_var_file_name(account_list[i], mount_path, &var_file);
+		if(result){
+			usb_dbg("Can't malloc \"var_file\".\n");
+			free_2_dimension_list(&acc_num, &account_list);
+			free(target);
+			return -1;
+		}
+
+		// 5. check the file integrity.
+		if(!check_file_integrity(var_file)){
+			usb_dbg("Fail to check the file: %s.\n", var_file);
+			if(i == -1) // share mode.
+				result = initial_var_file(NULL, mount_path);
+			else
+				result = initial_var_file(account_list[i], mount_path);
+			if(result != 0){
+				usb_dbg("Can't initial the file in %s.\n", mount_path);
+				free(var_file);
+				free_2_dimension_list(&acc_num, &account_list);
+				free(target);
+				return -1;
+			}
+		}
+
+		// 6. check if the created target is exist in the var file
+		var_info = read_whole_file(var_file);
+		if (var_info == NULL) {
+			usb_dbg("add_folder: \"%s\" isn't existed or there's no content.\n", var_file);
+		}
+		else if (upper_strstr(var_info, target) != NULL) {
+			free(var_file);
+			free(var_info);
+			continue;
+		}
+		free(var_info);
+		
+		// 7. add the folder's info in the var file
+		fp = fopen(var_file, "a+");
+		if (fp == NULL) {
+			usb_dbg("Can't write \"%s\".\n", var_file);
+			free_2_dimension_list(&acc_num, &account_list);
+			free(target);
+			free(var_file);
+			return -1;
+		}
+		
+		// 8. get the default permission of all protocol.
+		if(i == -1 // share mode.
+				|| !strcmp(account_list[i], nvram_safe_get("http_username"))
+				){
+			samba_right = DEFAULT_SAMBA_RIGHT;
+			ftp_right = DEFAULT_FTP_RIGHT;
+			dms_right = DEFAULT_DMS_RIGHT;
+#ifdef RTCONFIG_WEBDAV_OLD
+			webdav_right = DEFAULT_WEBDAV_RIGHT;
+#endif
+		}
+		else if(account != NULL && !strcmp(account_list[i], account)){
+			samba_right = DEFAULT_SAMBA_RIGHT;
+			ftp_right = DEFAULT_FTP_RIGHT;
+			dms_right = DEFAULT_DMS_RIGHT;
+#ifdef RTCONFIG_WEBDAV_OLD
+			webdav_right = DEFAULT_WEBDAV_RIGHT;
+#endif
+		}
+		else{
+			samba_right = 0;
+			ftp_right = 0;
+			dms_right = 0;
+#ifdef RTCONFIG_WEBDAV_OLD
+			webdav_right = 0;
+#endif
+		}
+		
+#ifdef RTCONFIG_WEBDAV_OLD
+		fprintf(fp, "%s%d%d%d%d\n", target, samba_right, ftp_right, dms_right, webdav_right);
+#else
+		fprintf(fp, "%s%d%d%d\n", target, samba_right, ftp_right, dms_right);
+#endif
+		fclose(fp);
+		
+		// 9. set the check target of file.
+		set_file_integrity(var_file);
+		free(var_file);
+	}
+	free_2_dimension_list(&acc_num, &account_list);
+	free(target);
+	
+	// 10. add the folder's info in the folder list
+	initial_folder_list(mount_path);
+	
+	return 0;
+}
+
+extern int del_folder(const char *const mount_path, const char *const folder) {
+	int result, i, len;
+	int acc_num;
+	char **account_list;
+	char *var_file, *var_info;
+	char *follow_info, backup;
+	char *target;
+	FILE *fp;
+	char *full_path;
+	
+	if (mount_path == NULL || strlen(mount_path) <= 0) {
+		usb_dbg("No input, \"mount_path\".\n");
+		return -1;
+	}
+	if (folder == NULL || strlen(folder) <= 0) {
+		usb_dbg("No input, \"folder\".\n");
+		return -1;
+	}
+	
+	// 1. test if deleting the folder
+	len = strlen(mount_path)+strlen("/")+strlen(folder);
+	full_path = (char *)malloc(sizeof(char)*(len+1));
+	if (full_path == NULL) {
+		usb_dbg("Can't malloc \"full_path\".\n");
+		
+		return -1;
+	}
+	sprintf(full_path, "%s/%s", mount_path, folder);
+	full_path[len] = 0;
+	
+	result = test_if_exist_share(mount_path, folder);
+	if (result == 0) {
+		result = check_if_dir_exist(full_path);
+		
+		if (result != 1) {
+			usb_dbg("\"%s\" isn't already existed in %s.\n", folder, mount_path);
+			free(full_path);
+			
+			return -1;
+		}
+	}
+	
+	// 2. delete the folder
+	result = delete_file_or_dir(full_path);
+	free(full_path);
+	if (result != 0) {
+		usb_dbg("To delete \"%s\" is failed!\n", folder);
+		
+		return -1;
+	}
+	
+	// 3. get the target which is deleted in every var file
+	len = strlen("*")+strlen(folder)+strlen("=");
+	target = (char *)malloc(sizeof(char)*(len+1));
+	if (target == NULL) {
+		usb_dbg("Can't allocate \"target\".\n");
+		
+		return -1;
+	}
+	sprintf(target, "*%s=", folder);
+	target[len] = 0;
+	
+	// 4. del folder's right to every var file
+	result = get_account_list(&acc_num, &account_list);
+	if (result < 0) {
+		usb_dbg("Can't get the account list\n");
+		free_2_dimension_list(&acc_num, &account_list);
+		free(target);
+		return -1;
+	}
+	
+	for (i = -1; i < acc_num; ++i) {
+		// 5. get the var file
+		if(i == -1) // share mode.
+			result = get_var_file_name(NULL, mount_path, &var_file);
+		else
+			result = get_var_file_name(account_list[i], mount_path, &var_file);
+		if(result){
+			usb_dbg("Can't malloc \"var_file\".\n");
+			free_2_dimension_list(&acc_num, &account_list);
+			free(target);
+			return -1;
+		}
+		
+		// 6. check the file integrity.
+		if(!check_file_integrity(var_file)){
+			usb_dbg("Fail to check the file: %s.\n", var_file);
+			if(i == -1) // share mode.
+				result = initial_var_file(NULL, mount_path);
+			else
+				result = initial_var_file(account_list[i], mount_path);
+			if(result != 0){
+				usb_dbg("Can't initial the file in %s.\n", mount_path);
+				free(var_file);
+				free_2_dimension_list(&acc_num, &account_list);
+				free(target);
+				return -1;
+			}
+		}
+		
+		// 7. delete the content about the folder
+		var_info = read_whole_file(var_file);
+		if (var_info == NULL) {
+			usb_dbg("del_folder: \"%s\" isn't existed or there's no content.\n", var_file);
+			free(var_file);
+			continue;
+		}
+		
+		follow_info = upper_strstr(var_info, target);
+		if (follow_info == NULL) {
+			if(i == -1)
+				usb_dbg("No right about \"%s\" of the share mode.\n", folder);
+			else
+				usb_dbg("No right about \"%s\" with \"%s\".\n", folder, account_list[i]);
+			free(var_file);
+			free(var_info);
+			continue;
+		}
+		backup = *follow_info;
+		*follow_info = 0;
+		
+		fp = fopen(var_file, "w");
+		if (fp == NULL) {
+			usb_dbg("Can't write \"%s\".\n", var_file);
+			*follow_info = backup;
+			free(var_file);
+			free(var_info);
+			continue;
+		}
+		fprintf(fp, "%s", var_info);
+		
+		*follow_info = backup;
+		while (*follow_info != 0 && *follow_info != '\n')
+			++follow_info;
+		if (*follow_info != 0 && *(follow_info+1) != 0) {
+			++follow_info;
+			fprintf(fp, "%s", follow_info);
+		}
+		fclose(fp);
+		free(var_info);
+		
+		// 8. set the check target of file.
+		set_file_integrity(var_file);
+		free(var_file);
+	}
+	free_2_dimension_list(&acc_num, &account_list);
+	free(target);
+	
+	// 9. modify the folder's info in the folder list
+	initial_folder_list(mount_path);
+	
+	return 0;
+}
+
+extern int mod_folder(const char *const mount_path, const char *const folder, const char *const new_folder) {
+	int result, i, len;
+	int acc_num;
+	char **account_list;
+	char *var_file, *var_info;
+	char *target, *new_target;
+	FILE *fp;
+	char *follow_info, backup;
+	char *full_path, *new_full_path;
+	
+	if (mount_path == NULL || strlen(mount_path) <= 0) {
+		usb_dbg("No input, \"mount_path\".\n");
+		return -1;
+	}
+	if (folder == NULL || strlen(folder) <= 0) {
+		usb_dbg("No input, \"folder\".\n");
+		return -1;
+	}
+	if (new_folder == NULL || strlen(new_folder) <= 0) {
+		usb_dbg("No input, \"new_folder\".\n");
+		return -1;
+	}
+	
+	// 1. test if modifying the folder
+	len = strlen(mount_path)+strlen("/")+strlen(folder);
+	full_path = (char *)malloc(sizeof(char)*(len+1));
+	if (full_path == NULL) {
+		usb_dbg("Can't malloc \"full_path\".\n");
+		
+		return -1;
+	}
+	sprintf(full_path, "%s/%s", mount_path, folder);
+	full_path[len] = 0;
+	
+	len = strlen(mount_path)+strlen("/")+strlen(new_folder);
+	new_full_path = (char *)malloc(sizeof(char)*(len+1));
+	if (new_full_path == NULL) {
+		usb_dbg("Can't malloc \"new_full_path\".\n");
+		free(full_path);
+		return -1;
+	}
+	sprintf(new_full_path, "%s/%s", mount_path, new_folder);
+	new_full_path[len] = 0;
+	
+	result = test_if_exist_share(mount_path, folder);
+	if (result == 0) {
+		result = check_if_dir_exist(full_path);
+		
+		if (result != 1) {
+			usb_dbg("\"%s\" isn't already existed in %s.\n", folder, mount_path);
+			free(full_path);
+			free(new_full_path);
+			return -1;
+		}
+		
+		// the folder is existed but not in .__folder_list.txt
+		add_folder(NULL, mount_path, folder);
+	}
+	
+	// 2. modify the folder
+	result = rename(full_path, new_full_path);
+	free(full_path);
+	free(new_full_path);
+	if (result != 0) {
+		usb_dbg("To delete \"%s\" is failed!\n", folder);
+		
+		return -1;
+	}
+	
+	// 3. add folder's right to every var file
+	result = get_account_list(&acc_num, &account_list);
+	if (result < 0) {
+		usb_dbg("Can't get the account list\n");
+		free_2_dimension_list(&acc_num, &account_list);
+		
+		return -1;
+	}
+	
+	len = strlen("*")+strlen(folder)+strlen("=");
+	target = (char *)malloc(sizeof(char)*(len+1));
+	if (target == NULL) {
+		usb_dbg("Can't allocate \"target\".\n");
+		free_2_dimension_list(&acc_num, &account_list);
+		
+		return -1;
+	}
+	sprintf(target, "*%s=", folder);
+	target[len] = 0;
+	
+	len = strlen("*")+strlen(new_folder)+strlen("=");
+	new_target = (char *)malloc(sizeof(char)*(len+1));
+	if (new_target == NULL) {
+		usb_dbg("Can't allocate \"new_target\".\n");
+		free_2_dimension_list(&acc_num, &account_list);
+		free(target);
+		return -1;
+	}
+	sprintf(new_target, "*%s=", new_folder);
+	new_target[len] = 0;
+	
+	for (i = -1; i < acc_num; ++i) {
+		// 5. get the var file
+		if(i == -1) // share mode.
+			result = get_var_file_name(NULL, mount_path, &var_file);
+		else
+			result = get_var_file_name(account_list[i], mount_path, &var_file);
+		if(result){
+			usb_dbg("Can't malloc \"var_file\".\n");
+			free_2_dimension_list(&acc_num, &account_list);
+			free(target);
+			free(new_target);
+			return -1;
+		}
+		
+		// 6. check the file integrity.
+		if(!check_file_integrity(var_file)){
+			usb_dbg("Fail to check the file: %s.\n", var_file);
+			if(i == -1) // share mode.
+				result = initial_var_file(NULL, mount_path);
+			else
+				result = initial_var_file(account_list[i], mount_path);
+			if(result != 0){
+				usb_dbg("Can't initial the file in %s.\n", mount_path);
+				free(var_file);
+				free_2_dimension_list(&acc_num, &account_list);
+				free(target);
+				free(new_target);
+				return -1;
+			}
+		}
+		
+		// 7. check if the created target is exist in the var file
+		var_info = read_whole_file(var_file);
+		if (var_info == NULL) {
+			usb_dbg("mod_folder: \"%s\" isn't existed or there's no content.\n", var_file);
+			free_2_dimension_list(&acc_num, &account_list);
+			free(target);
+			free(new_target);
+			free(var_file);
+			return -1;
+		}
+		
+		if ((follow_info = upper_strstr(var_info, target)) == NULL) {
+			usb_dbg("1. No \"%s\" in \"%s\"..\n", folder, var_file);
+			free_2_dimension_list(&acc_num, &account_list);
+			free(target);
+			free(new_target);
+			free(var_file);
+			free(var_info);
+			return -1;
+		}
+		
+		// 8. modify the folder's info in the var file
+		fp = fopen(var_file, "w");
+		if (fp == NULL) {
+			usb_dbg("Can't write \"%s\".\n", var_file);
+			free_2_dimension_list(&acc_num, &account_list);
+			free(target);
+			free(new_target);
+			free(var_file);
+			free(var_info);
+			return -1;
+		}
+		
+		// write the info before target
+		backup = *follow_info;
+		*follow_info = 0;
+		fprintf(fp, "%s", var_info);
+		*follow_info = backup;
+		
+		// write the info before new_target
+		fprintf(fp, "%s", new_target);
+		
+		// write the info after target
+		follow_info += strlen(target);
+		fprintf(fp, "%s", follow_info);
+		
+		fclose(fp);
+		free(var_info);
+		
+		// 9. set the check target of file.
+		set_file_integrity(var_file);
+		free(var_file);
+	}
+	free_2_dimension_list(&acc_num, &account_list);
+	free(target);
+	free(new_target);
+	
+	// 10. modify the folder's info in the folder list
+	initial_folder_list(mount_path);
+	
+	return 0;
+}
+
+extern int test_if_exist_share(const char *const mount_path, const char *const folder) {
+	int sh_num;
+	char **folder_list;
+	int result, i;
+	
+	result = get_folder_list(mount_path, &sh_num, &folder_list);
+	if (result < 0) {
+		usb_dbg("Can't read the folder list in %s.\n", mount_path);
+		free_2_dimension_list(&sh_num, &folder_list);
+		return 0;
+	}
+	
+	result = 0;
+	for (i = 0; i < sh_num; ++i)
+		if (!upper_strcmp(folder, folder_list[i])) {
+			result = 1;
+			break;
+		}
+	free_2_dimension_list(&sh_num, &folder_list);
+	
+	return result;
+}
+
+// for FTP: root dir is POOL_MOUNT_ROOT.
+extern int how_many_layer(const char *basedir, char **mount_path, char **share) {
+	char *follow_info, *follow_info_end;
+	int layer = 0, len = 0;
+	
+	*mount_path = NULL;
+	*share = NULL;
+	
+	if (!strcmp(basedir, "/"))
+		return layer;
+	
+	len = strlen(basedir);
+	if (len > 1)
+		layer = 1;
+	
+	//if (basedir[len-1] == '/')
+	//	--layer;
+	
+	follow_info = (char *)basedir;
+	while (*follow_info != 0 && (follow_info = index(follow_info+1, '/')) != NULL)
+		++layer;
+	
+	if (layer >= MOUNT_LAYER) {
+		follow_info = (char *)(basedir+strlen(POOL_MOUNT_ROOT));
+		follow_info = index(follow_info+1, '/');
+		
+		if(mount_path != NULL){
+			if (follow_info == NULL)
+				len = strlen(basedir);
+			else
+				len = strlen(basedir)-strlen(follow_info);
+			*mount_path = (char *)malloc(sizeof(char)*(len+1));
+			if (*mount_path == NULL)
+				return -1;
+			strncpy(*mount_path, basedir, len);
+			(*mount_path)[len] = 0;
+		}
+	}
+	
+	if (layer >= SHARE_LAYER && share != NULL) {
+		++follow_info;
+		follow_info_end = index(follow_info, '/');
+		if (follow_info_end == NULL)
+			len = strlen(follow_info);
+		else
+			len = strlen(follow_info)-strlen(follow_info_end);
+		*share = (char *)malloc(sizeof(char)*(len+1));
+		if (*share == NULL)
+			return -1;
+		strncpy(*share, follow_info, len);
+		(*share)[len] = 0;
+	}
+	
+	return layer;
+}
+
+// Success: return value is account number. Fail: return value is -1.
+extern int get_account_list(int *acc_num, char ***account_list)
+{
+	char **tmp_account_list = NULL, **tmp_account;
+	int len, i, j;
+	char *nv, *nvp, *b;
+	char *tmp_ascii_user, *tmp_ascii_passwd;
+	char char_user[64];
+
+	*acc_num = nvram_get_int("acc_num");
+	if(*acc_num <= 0)
+		return 0;
+
+	nv = nvp = strdup(nvram_safe_get("acc_list"));
+	i = 0;
+	if(nv && strlen(nv) > 0){
+		while((b = strsep(&nvp, "<")) != NULL){
+			if(vstrsep(b, ">", &tmp_ascii_user, &tmp_ascii_passwd) != 2)
+				continue;
+
+			tmp_account = (char **)malloc(sizeof(char *)*(i+1));
+			if(tmp_account == NULL){
+				usb_dbg("Can't malloc \"tmp_account\".\n");
+				free(nv);
+				return -1;
+			}
+
+			memset(char_user, 0, 64);
+			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
+
+			len = strlen(char_user);
+			tmp_account[i] = (char *)malloc(sizeof(char)*(len+1));
+			if(tmp_account[i] == NULL){
+				usb_dbg("Can't malloc \"tmp_account[%d]\".\n", i);
+				free(tmp_account);
+				free(nv);
+				return -1;
+			}
+			strcpy(tmp_account[i], char_user);
+			tmp_account[i][len] = 0;
+
+			if(i != 0){
+				for(j = 0; j < i; ++j)
+					tmp_account[j] = tmp_account_list[j];
+
+				free(tmp_account_list);
+				tmp_account_list = tmp_account;
+			}
+			else
+				tmp_account_list = tmp_account;
+
+			if(++i >= *acc_num)
+				break;
+		}
+		free(nv);
+
+		*account_list = tmp_account_list;
+		*acc_num = i;
+
+		return *acc_num;
+	}
+
+	if(nv)
+		free(nv);
+
 	return 0;
 }
 
@@ -1388,9 +1993,9 @@ extern int mod_account(const char *const account, const char *const new_account,
 				usb_dbg("Fail to check the file: %s.\n", var_file);
 				if(initial_var_file(new_account, follow_partition->mount_point) != 0){
 					usb_dbg("Can't initial \"%s\"'s file in %s.\n", new_account, follow_partition->mount_point);
+					free_disk_data(&disk_list);
 					free(var_file);
 					free(new_var_file);
-					free_disk_data(&disk_list);
 					return -1;
 				}
 			}
@@ -1400,6 +2005,9 @@ extern int mod_account(const char *const account, const char *const new_account,
 
 				if((file_size = f_size(new_var_file)) == -1){
 					usb_dbg("Fail to get the size of the file.\n");
+					free_disk_data(&disk_list);
+					free(var_file);
+					free(new_var_file);
 					return -1;
 				}
 
@@ -1446,614 +2054,4 @@ extern int test_if_exist_account(const char *const account) {
 	free_2_dimension_list(&acc_num, &account_list);
 	
 	return result;
-}
-
-extern int add_folder(const char *const account, const char *const mount_path, const char *const folder) {
-	int result, i, len;
-	int acc_num;
-	char **account_list;
-	char *var_file, *var_info;
-	char *target;
-	FILE *fp;
-	int samba_right, ftp_right, dms_right;
-#ifdef RTCONFIG_WEBDAV_OLD
-	int webdav_right;
-#endif
-	char *full_path;
-	
-	if (mount_path == NULL || strlen(mount_path) <= 0) {
-		usb_dbg("No input, \"mount_path\".\n");
-		
-		return -1;
-	}
-	if (folder == NULL || strlen(folder) <= 0) {
-		usb_dbg("No input, \"folder\".\n");
-		
-		return -1;
-	}
-	
-	// 1. test if creatting the folder
-	result = test_if_exist_share(mount_path, folder);
-	if (result != 0) {
-		usb_dbg("\"%s\" is already created in %s.\n", folder, mount_path);
-		
-		return -1;
-	}
-	
-	// 2. create the folder
-	len = strlen(mount_path)+strlen("/")+strlen(folder);
-	full_path = (char *)malloc(sizeof(char)*(len+1));
-	if (full_path == NULL) {
-		usb_dbg("Can't malloc \"full_path\".\n");
-		
-		return -1;
-	}
-	sprintf(full_path, "%s/%s", mount_path, folder);
-	full_path[len] = 0;
-	
-	umask(0000);
-	result = mkdir(full_path, 0777);
-	free(full_path);
-	if (result != 0) {
-		usb_dbg("To create \"%s\" is failed!\n", folder);
-		
-		return -1;
-	}
-	
-	// 3. add folder's right to every var file
-	result = get_account_list(&acc_num, &account_list);
-	if (result < 0) {
-		usb_dbg("Can't get the account list\n");
-		free_2_dimension_list(&acc_num, &account_list);
-		
-		return -1;
-	}
-	
-	len = strlen("*")+strlen(folder)+strlen("=");
-	target = (char *)malloc(sizeof(char)*(len+1));
-	if (target == NULL) {
-		usb_dbg("Can't allocate \"target\".\n");
-		free_2_dimension_list(&acc_num, &account_list);
-		
-		return -1;
-	}
-	sprintf(target, "*%s=", folder);
-	target[len] = 0;
-	
-	for (i = -1; i < acc_num; ++i) {
-		// 4. get the var file
-		if(i == -1) // share mode.
-			result = get_var_file_name(NULL, mount_path, &var_file);
-		else
-			result = get_var_file_name(account_list[i], mount_path, &var_file);
-		if(result){
-			usb_dbg("Can't malloc \"var_file\".\n");
-			free_2_dimension_list(&acc_num, &account_list);
-			free(target);
-			return -1;
-		}
-
-		// 5. check the file integrity.
-		if(!check_file_integrity(var_file)){
-			usb_dbg("Fail to check the file: %s.\n", var_file);
-			if(i == -1) // share mode.
-				result = initial_var_file(NULL, mount_path);
-			else
-				result = initial_var_file(account_list[i], mount_path);
-			if(result != 0){
-				usb_dbg("Can't initial the file in %s.\n", mount_path);
-				free(var_file);
-				free_2_dimension_list(&acc_num, &account_list);
-				free(target);
-				return -1;
-			}
-		}
-
-		// 6. check if the created target is exist in the var file
-		var_info = read_whole_file(var_file);
-		if (var_info == NULL) {
-			usb_dbg("add_folder: \"%s\" isn't existed or there's no content.\n", var_file);
-		}
-		else if (upper_strstr(var_info, target) != NULL) {
-			free(var_file);
-			free(var_info);
-			
-			continue;
-		}
-		else
-			free(var_info);
-		
-		// 7. add the folder's info in the var file
-		fp = fopen(var_file, "a+");
-		if (fp == NULL) {
-			usb_dbg("Can't write \"%s\".\n", var_file);
-			free_2_dimension_list(&acc_num, &account_list);
-			free(target);
-			free(var_file);
-			
-			return -1;
-		}
-		
-		// 8. get the default permission of all protocol.
-		if(i == -1 // share mode.
-				|| !strcmp(account_list[i], nvram_safe_get("http_username"))
-				){
-			samba_right = DEFAULT_SAMBA_RIGHT;
-			ftp_right = DEFAULT_FTP_RIGHT;
-			dms_right = DEFAULT_DMS_RIGHT;
-#ifdef RTCONFIG_WEBDAV_OLD
-			webdav_right = DEFAULT_WEBDAV_RIGHT;
-#endif
-		}
-		else if(account != NULL && !strcmp(account_list[i], account)){
-			samba_right = DEFAULT_SAMBA_RIGHT;
-			ftp_right = DEFAULT_FTP_RIGHT;
-			dms_right = DEFAULT_DMS_RIGHT;
-#ifdef RTCONFIG_WEBDAV_OLD
-			webdav_right = DEFAULT_WEBDAV_RIGHT;
-#endif
-		}
-		else{
-			samba_right = 0;
-			ftp_right = 0;
-			dms_right = 0;
-#ifdef RTCONFIG_WEBDAV_OLD
-			webdav_right = 0;
-#endif
-		}
-		
-#ifdef RTCONFIG_WEBDAV_OLD
-		fprintf(fp, "%s%d%d%d%d\n", target, samba_right, ftp_right, dms_right, webdav_right);
-#else
-		fprintf(fp, "%s%d%d%d\n", target, samba_right, ftp_right, dms_right);
-#endif
-		fclose(fp);
-		
-		// 9. set the check target of file.
-		set_file_integrity(var_file);
-		free(var_file);
-	}
-	free_2_dimension_list(&acc_num, &account_list);
-	
-	// 10. add the folder's info in the folder list
-	initial_folder_list(mount_path);
-	
-	free(target);
-	
-	return 0;
-}
-
-extern int del_folder(const char *const mount_path, const char *const folder) {
-	int result, i, len;
-	int acc_num;
-	char **account_list;
-	char *var_file, *var_info;
-	char *follow_info, backup;
-	char *target;
-	FILE *fp;
-	char *full_path;
-	
-	if (mount_path == NULL || strlen(mount_path) <= 0) {
-		usb_dbg("No input, \"mount_path\".\n");
-		return -1;
-	}
-	if (folder == NULL || strlen(folder) <= 0) {
-		usb_dbg("No input, \"folder\".\n");
-		return -1;
-	}
-	
-	// 1. test if deleting the folder
-	len = strlen(mount_path)+strlen("/")+strlen(folder);
-	full_path = (char *)malloc(sizeof(char)*(len+1));
-	if (full_path == NULL) {
-		usb_dbg("Can't malloc \"full_path\".\n");
-		
-		return -1;
-	}
-	sprintf(full_path, "%s/%s", mount_path, folder);
-	full_path[len] = 0;
-	
-	result = test_if_exist_share(mount_path, folder);
-	if (result == 0) {
-		result = check_if_dir_exist(full_path);
-		
-		if (result != 1) {
-			usb_dbg("\"%s\" isn't already existed in %s.\n", folder, mount_path);
-			free(full_path);
-			
-			return -1;
-		}
-	}
-	
-	// 2. delete the folder
-	result = delete_file_or_dir(full_path);
-	free(full_path);
-	if (result != 0) {
-		usb_dbg("To delete \"%s\" is failed!\n", folder);
-		
-		return -1;
-	}
-	
-	// 3. get the target which is deleted in every var file
-	len = strlen("*")+strlen(folder)+strlen("=");
-	target = (char *)malloc(sizeof(char)*(len+1));
-	if (target == NULL) {
-		usb_dbg("Can't allocate \"target\".\n");
-		
-		return -1;
-	}
-	sprintf(target, "*%s=", folder);
-	target[len] = 0;
-	
-	// 4. del folder's right to every var file
-	result = get_account_list(&acc_num, &account_list);
-	if (result < 0) {
-		usb_dbg("Can't get the account list\n");
-		free_2_dimension_list(&acc_num, &account_list);
-		free(target);
-		return -1;
-	}
-	
-	for (i = -1; i < acc_num; ++i) {
-		// 5. get the var file
-		if(i == -1) // share mode.
-			result = get_var_file_name(NULL, mount_path, &var_file);
-		else
-			result = get_var_file_name(account_list[i], mount_path, &var_file);
-		if(result){
-			usb_dbg("Can't malloc \"var_file\".\n");
-			free_2_dimension_list(&acc_num, &account_list);
-			free(target);
-			return -1;
-		}
-		
-		// 6. check the file integrity.
-		if(!check_file_integrity(var_file)){
-			usb_dbg("Fail to check the file: %s.\n", var_file);
-			if(i == -1) // share mode.
-				result = initial_var_file(NULL, mount_path);
-			else
-				result = initial_var_file(account_list[i], mount_path);
-			if(result != 0){
-				usb_dbg("Can't initial the file in %s.\n", mount_path);
-				free(var_file);
-				free_2_dimension_list(&acc_num, &account_list);
-				free(target);
-				return -1;
-			}
-		}
-		
-		// 7. delete the content about the folder
-		var_info = read_whole_file(var_file);
-		if (var_info == NULL) {
-			usb_dbg("del_folder: \"%s\" isn't existed or there's no content.\n", var_file);
-			free(var_file);
-			continue;
-		}
-		
-		follow_info = upper_strstr(var_info, target);
-		if (follow_info == NULL) {
-			if(i == -1)
-				usb_dbg("No right about \"%s\" of the share mode.\n", folder);
-			else
-				usb_dbg("No right about \"%s\" with \"%s\".\n", folder, account_list[i]);
-			free(var_file);
-			free(var_info);
-			continue;
-		}
-		backup = *follow_info;
-		*follow_info = 0;
-		
-		fp = fopen(var_file, "w");
-		if (fp == NULL) {
-			usb_dbg("Can't write \"%s\".\n", var_file);
-			*follow_info = backup;
-			free(var_file);
-			free(var_info);
-			continue;
-		}
-		fprintf(fp, "%s", var_info);
-		
-		*follow_info = backup;
-		while (*follow_info != 0 && *follow_info != '\n')
-			++follow_info;
-		if (*follow_info != 0 && *(follow_info+1) != 0) {
-			++follow_info;
-			fprintf(fp, "%s", follow_info);
-		}
-		fclose(fp);
-		free(var_info);
-		
-		// 8. set the check target of file.
-		set_file_integrity(var_file);
-		free(var_file);
-	}
-	free_2_dimension_list(&acc_num, &account_list);
-	
-	// 9. modify the folder's info in the folder list
-	initial_folder_list(mount_path);
-	
-	free_2_dimension_list(&acc_num, &account_list);
-	free(target);
-	
-	return 0;
-}
-
-extern int mod_folder(const char *const mount_path, const char *const folder, const char *const new_folder) {
-	int result, i, len;
-	int acc_num;
-	char **account_list;
-	char *var_file, *var_info;
-	char *target, *new_target;
-	FILE *fp;
-	char *follow_info, backup;
-	char *full_path, *new_full_path;
-	
-	if (mount_path == NULL || strlen(mount_path) <= 0) {
-		usb_dbg("No input, \"mount_path\".\n");
-		return -1;
-	}
-	if (folder == NULL || strlen(folder) <= 0) {
-		usb_dbg("No input, \"folder\".\n");
-		return -1;
-	}
-	if (new_folder == NULL || strlen(new_folder) <= 0) {
-		usb_dbg("No input, \"new_folder\".\n");
-		return -1;
-	}
-	
-	// 1. test if modifying the folder
-	len = strlen(mount_path)+strlen("/")+strlen(folder);
-	full_path = (char *)malloc(sizeof(char)*(len+1));
-	if (full_path == NULL) {
-		usb_dbg("Can't malloc \"full_path\".\n");
-		
-		return -1;
-	}
-	sprintf(full_path, "%s/%s", mount_path, folder);
-	full_path[len] = 0;
-	
-	len = strlen(mount_path)+strlen("/")+strlen(new_folder);
-	new_full_path = (char *)malloc(sizeof(char)*(len+1));
-	if (new_full_path == NULL) {
-		usb_dbg("Can't malloc \"new_full_path\".\n");
-		
-		return -1;
-	}
-	sprintf(new_full_path, "%s/%s", mount_path, new_folder);
-	new_full_path[len] = 0;
-	
-	result = test_if_exist_share(mount_path, folder);
-	if (result == 0) {
-		result = check_if_dir_exist(full_path);
-		
-		if (result != 1) {
-			usb_dbg("\"%s\" isn't already existed in %s.\n", folder, mount_path);
-			free(full_path);
-			free(new_full_path);
-			
-			return -1;
-		}
-		
-		// the folder is existed but not in .__folder_list.txt
-		add_folder(NULL, mount_path, folder);
-	}
-	
-	// 2. modify the folder
-	result = rename(full_path, new_full_path);
-	free(full_path);
-	free(new_full_path);
-	if (result != 0) {
-		usb_dbg("To delete \"%s\" is failed!\n", folder);
-		
-		return -1;
-	}
-	
-	// 3. add folder's right to every var file
-	result = get_account_list(&acc_num, &account_list);
-	if (result < 0) {
-		usb_dbg("Can't get the account list\n");
-		free_2_dimension_list(&acc_num, &account_list);
-		
-		return -1;
-	}
-	
-	len = strlen("*")+strlen(folder)+strlen("=");
-	target = (char *)malloc(sizeof(char)*(len+1));
-	if (target == NULL) {
-		usb_dbg("Can't allocate \"target\".\n");
-		free_2_dimension_list(&acc_num, &account_list);
-		
-		return -1;
-	}
-	sprintf(target, "*%s=", folder);
-	target[len] = 0;
-	
-	len = strlen("*")+strlen(new_folder)+strlen("=");
-	new_target = (char *)malloc(sizeof(char)*(len+1));
-	if (new_target == NULL) {
-		usb_dbg("Can't allocate \"new_target\".\n");
-		free_2_dimension_list(&acc_num, &account_list);
-		free(target);
-		
-		return -1;
-	}
-	sprintf(new_target, "*%s=", new_folder);
-	new_target[len] = 0;
-	
-	for (i = -1; i < acc_num; ++i) {
-		// 5. get the var file
-		if(i == -1) // share mode.
-			result = get_var_file_name(NULL, mount_path, &var_file);
-		else
-			result = get_var_file_name(account_list[i], mount_path, &var_file);
-		if(result){
-			usb_dbg("Can't malloc \"var_file\".\n");
-			free_2_dimension_list(&acc_num, &account_list);
-			free(target);
-			free(new_target);
-			return -1;
-		}
-		
-		// 6. check the file integrity.
-		if(!check_file_integrity(var_file)){
-			usb_dbg("Fail to check the file: %s.\n", var_file);
-			if(i == -1) // share mode.
-				result = initial_var_file(NULL, mount_path);
-			else
-				result = initial_var_file(account_list[i], mount_path);
-			if(result != 0){
-				usb_dbg("Can't initial the file in %s.\n", mount_path);
-				free(var_file);
-				free_2_dimension_list(&acc_num, &account_list);
-				free(target);
-				free(new_target);
-				return -1;
-			}
-		}
-		
-		// 7. check if the created target is exist in the var file
-		var_info = read_whole_file(var_file);
-		if (var_info == NULL) {
-			usb_dbg("mod_folder: \"%s\" isn't existed or there's no content.\n", var_file);
-			free_2_dimension_list(&acc_num, &account_list);
-			free(target);
-			free(new_target);
-			free(var_file);
-			
-			return -1;
-		}
-		
-		if ((follow_info = upper_strstr(var_info, target)) == NULL) {
-			usb_dbg("1. No \"%s\" in \"%s\"..\n", folder, var_file);
-			free_2_dimension_list(&acc_num, &account_list);
-			free(target);
-			free(new_target);
-			free(var_file);
-			free(var_info);
-			
-			return -1;
-		}
-		
-		// 8. modify the folder's info in the var file
-		fp = fopen(var_file, "w");
-		if (fp == NULL) {
-			usb_dbg("Can't write \"%s\".\n", var_file);
-			free_2_dimension_list(&acc_num, &account_list);
-			free(target);
-			free(new_target);
-			free(var_file);
-			free(var_info);
-			
-			return -1;
-		}
-		
-		// write the info before target
-		backup = *follow_info;
-		*follow_info = 0;
-		fprintf(fp, "%s", var_info);
-		*follow_info = backup;
-		
-		// write the info before new_target
-		fprintf(fp, "%s", new_target);
-		
-		// write the info after target
-		follow_info += strlen(target);
-		fprintf(fp, "%s", follow_info);
-		
-		fclose(fp);
-		free(var_info);
-		
-		// 9. set the check target of file.
-		set_file_integrity(var_file);
-		free(var_file);
-	}
-	
-	// 10. modify the folder's info in the folder list
-	initial_folder_list(mount_path);
-	
-	free_2_dimension_list(&acc_num, &account_list);
-	free(target);
-	free(new_target);
-	
-	return 0;
-}
-
-extern int test_if_exist_share(const char *const mount_path, const char *const folder) {
-	int sh_num;
-	char **folder_list;
-	int result, i;
-	
-	result = get_folder_list(mount_path, &sh_num, &folder_list);
-	if (result < 0) {
-		usb_dbg("Can't read the folder list in %s.\n", mount_path);
-		free_2_dimension_list(&sh_num, &folder_list);
-		return 0;
-	}
-	
-	result = 0;
-	for (i = 0; i < sh_num; ++i)
-		if (!upper_strcmp(folder, folder_list[i])) {
-			result = 1;
-			break;
-		}
-	free_2_dimension_list(&sh_num, &folder_list);
-	
-	return result;
-}
-
-// for FTP: root dir is POOL_MOUNT_ROOT.
-extern int how_many_layer(const char *basedir, char **mount_path, char **share) {
-	char *follow_info, *follow_info_end;
-	int layer = 0, len = 0;
-	
-	*mount_path = NULL;
-	*share = NULL;
-	
-	if (!strcmp(basedir, "/"))
-		return layer;
-	
-	len = strlen(basedir);
-	if (len > 1)
-		layer = 1;
-	
-	//if (basedir[len-1] == '/')
-	//	--layer;
-	
-	follow_info = (char *)basedir;
-	while (*follow_info != 0 && (follow_info = index(follow_info+1, '/')) != NULL)
-		++layer;
-	
-	if (layer >= MOUNT_LAYER) {
-		follow_info = (char *)(basedir+strlen(POOL_MOUNT_ROOT));
-		follow_info = index(follow_info+1, '/');
-		
-		if(mount_path != NULL){
-			if (follow_info == NULL)
-				len = strlen(basedir);
-			else
-				len = strlen(basedir)-strlen(follow_info);
-			*mount_path = (char *)malloc(sizeof(char)*(len+1));
-			if (*mount_path == NULL)
-				return -1;
-			strncpy(*mount_path, basedir, len);
-			(*mount_path)[len] = 0;
-		}
-	}
-	
-	if (layer >= SHARE_LAYER && share != NULL) {
-		++follow_info;
-		follow_info_end = index(follow_info, '/');
-		if (follow_info_end == NULL)
-			len = strlen(follow_info);
-		else
-			len = strlen(follow_info)-strlen(follow_info_end);
-		*share = (char *)malloc(sizeof(char)*(len+1));
-		if (*share == NULL)
-			return -1;
-		strncpy(*share, follow_info, len);
-		(*share)[len] = 0;
-	}
-	
-	return layer;
 }

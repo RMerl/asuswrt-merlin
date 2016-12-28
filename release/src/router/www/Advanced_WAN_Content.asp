@@ -571,8 +571,7 @@ function change_wan_type(wan_type, flag){
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "none";
 		inputCtrl(document.form.wan_ppp_echo, 0);
-		inputCtrl(document.form.wan_ppp_echo_interval, 0);
-		inputCtrl(document.form.wan_ppp_echo_failure, 0);
+		ppp_echo_control(0);
 	}
 	else{	// Automatic IP or 802.11 MD or ""		
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
@@ -597,8 +596,7 @@ function change_wan_type(wan_type, flag){
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "none";
 		inputCtrl(document.form.wan_ppp_echo, 0);
-		inputCtrl(document.form.wan_ppp_echo_interval, 0);
-		inputCtrl(document.form.wan_ppp_echo_failure, 0);
+		ppp_echo_control(0);
 	}
 }
 
@@ -806,10 +804,15 @@ function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
-function ppp_echo_control(){
-	var enable = (document.form.wan_ppp_echo.value == 1) ? 1 : 0;
+function ppp_echo_control(flag){
+	if (typeof(flag) == 'undefined')
+		flag = document.form.wan_ppp_echo.value;
+	var enable = (flag == 1) ? 1 : 0;
 	inputCtrl(document.form.wan_ppp_echo_interval, enable);
 	inputCtrl(document.form.wan_ppp_echo_failure, enable);
+	var enable = (flag == 2) ? 1 : 0;
+	//inputCtrl(document.form.dns_probe_timeout, enable);
+	inputCtrl(document.form.dns_delay_round, enable);
 }
 
 </script>
@@ -1108,7 +1111,7 @@ function ppp_echo_control(){
 		<tr>
 			<th><a class="hintstyle" href="javascript:void(0);">Internet Detection</a></th><!--untranslated-->
 			<td>
-				<select name="wan_ppp_echo" class="input_option">
+				<select name="wan_ppp_echo" class="input_option" onChange="ppp_echo_control();">
 				<option value="0" <% nvram_match("wan_ppp_echo", "0","selected"); %>><#btn_disable#></option>
 				<option value="1" <% nvram_match("wan_ppp_echo", "1","selected"); %>>PPP Echo</option>
 				<option value="2" <% nvram_match("wan_ppp_echo", "2","selected"); %>>DNS Probe</option>
@@ -1122,6 +1125,14 @@ function ppp_echo_control(){
 		<tr>
 			<th><a class="hintstyle" href="javascript:void(0);">PPP Echo Max Failures</a></th><!--untranslated-->
 			<td><input type="text" maxlength="6" class="input_6_table" name="wan_ppp_echo_failure" value="<% nvram_get("wan_ppp_echo_failure"); %>" onkeypress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"/></td>
+		</tr>
+		<!--tr>
+			<th><a class="hintstyle" href="javascript:void(0);">DNS Probe Timeout</a></th><!--untranslated--\>
+			<td><input type="text" maxlength="6" class="input_6_table" name="dns_probe_timeout" value="<% nvram_get("dns_probe_timeout"); %>" onkeypress="return validator.isNumber(this, event)" autocorrect="off" autocapitalize="off"/></td>
+		</tr-->
+		<tr>
+			<th><a class="hintstyle" href="javascript:void(0);">DNS Probe Max Failures</a></th><!--untranslated-->
+			<td><input type="text" maxlength="6" class="input_6_table" name="dns_delay_round" value="<% nvram_get("dns_delay_round"); %>" onkeypress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"/></td>
 		</tr>
 		<tr>
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,18);"><#PPPConnection_x_AdditionalOptions_itemname#></a></th>

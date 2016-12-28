@@ -291,6 +291,7 @@ function submitForm(){
 				document.form.action = "/qis/QIS_wireless.htm";
 			}
 			else{
+				parent.changeSubnet = false;
 				parent.document.QKform.wan_proto.value = "pppoe";
 				document.form.action = "/qis/QIS_internet_account.htm";
 			}
@@ -299,6 +300,7 @@ function submitForm(){
 			document.form.action = "/qis/QIS_wireless.htm";
 		}
 		else if(wanstate == 4 && wansbstate == 4 && wanauxstate == 0){
+			parent.changeSubnet = true;
 			document.form.action = "/qis/QIS_wireless.htm";
 		}
 		else{

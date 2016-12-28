@@ -313,7 +313,7 @@ helpcontent[28] = new Array("",
 //Switch Control
 helpcontent[29] = new Array("",
 							"This item had various names: Port Trunking/ Bonding/ Teaming/ Link Aggregation/ 802.3ad.",	/*untranslated*/
-							"When NAT Acceleration enabled, switch can handle the network packets by itself and bypass CPU. It can increases NAT throughput but some applications may not work precisely, such as time scheduling."	/*untranslated*/
+							"When NAT Acceleration enabled, switch can handle the network packets by itself and bypass CPU. It can increases NAT throughput but some features may not work precisely, such as time scheduling, traditional QoS and bandwidth limiter on guest network, etc. If you set NAT acceleration as auto, it will be disable automatically once these features are enabled."	/*untranslated*/
 							);
 
 helpcontent[30] = new Array("",

@@ -1441,14 +1441,6 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 	formObj.action = "/start_apply2.htm";
 	formObj.target = "hidden_frame";
 
-	var currentURL = "";
-	if(location.pathname == "/")
-		currentURL = "index.asp";
-	else
-		currentURL = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-
-	formHTML += '<input type="hidden" name="current_page" value=' + currentURL + '>';
-	formHTML += '<input type="hidden" name="next_page" value=' + currentURL + '>';
 	formHTML += '<input type="hidden" name="modified" value="0">';
 	formHTML += '<input type="hidden" name="flag" value="background">';
 	formHTML += '<input type="hidden" name="action_mode" value="apply">';
@@ -2487,7 +2479,9 @@ function create_clientlist_listview() {
 			break;
 	}
 
-	code += "<div style='text-align:center;margin-top:15px;'><input  type='button' class='button_gen' onclick='exportClientListLog();' value='<#btn_Export#>'></div>";
+	if(!top.isIE8)
+		code += "<div style='text-align:center;margin-top:15px;'><input  type='button' class='button_gen' onclick='exportClientListLog();' value='<#btn_Export#>'></div>";
+	
 	code += "</td></tr></tbody>";
 	code += "</table>";
 
@@ -2978,14 +2972,6 @@ function removeClient(_mac, _controlObj, _controlPanel) {
 	formObj.action = "/deleteOfflineClient.cgi";
 	formObj.target = "hidden_frame";
 
-	var currentURL = "";
-	if(location.pathname == "/")
-		currentURL = "index.asp";
-	else
-		currentURL = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-
-	formHTML += '<input type="hidden" name="current_page" value=' + currentURL + '>';
-	formHTML += '<input type="hidden" name="next_page" value=' + currentURL + '>';
 	formHTML += '<input type="hidden" name="modified" value="0">';
 	formHTML += '<input type="hidden" name="flag" value="">';
 	formHTML += '<input type="hidden" name="action_mode" value="">';

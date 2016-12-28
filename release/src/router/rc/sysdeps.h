@@ -19,7 +19,11 @@ extern char *get_vphyifname(int band);
 extern void fini_wl(void);
 extern void init_syspara(void);
 extern void post_syspara(void);
+#ifndef CONFIG_BCMWL5
 extern void generate_wl_para(int unit, int subunit);
+#else
+extern void generate_wl_para(char *ifname, int unit, int subunit);
+#endif
 #if defined(RTCONFIG_RALINK)
 extern void reinit_hwnat(int unit);
 #elif defined(RTCONFIG_QCA)

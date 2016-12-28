@@ -63,10 +63,14 @@ endif
 
 export BRANCH := $(shell git branch)
 
-#ifneq ($(BRANCH),) 
+#ifeq ($(BRANCH),) 
 #include ./router/extendno.conf
 #else
+#ifeq ($(EXTENDTYPE),)
 #export EXTENDNO := $(shell git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)..HEAD | wc -l)-g$(shell git log --pretty=format:'%h' -n 1)
+#else
+#export EXTENDNO := $(shell git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)..HEAD | wc -l)-g$(shell git log --pretty=format:'%h' -n 1)-$(EXTENDTYPE)
+#endif
 #endif
 
 #ifeq ($(EXTENDNO),)
@@ -144,7 +148,8 @@ export IMGNAME := $(BUILD_NAME)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(BUILDREV)
 endif
 
 ifeq ($(BUILD_NAME),DSL-AC68U)
-DSLIMGNAME=$(IMGNAME)_DSL
+TCFWVER := $(shell cat ./tc_fw/fwver.conf)
+DSLIMGNAME=$(IMGNAME)_DSL_$(TCFWVER)
 else ifeq ($(BUILD_NAME),DSL-N55U)
 DSLIMGNAME=$(IMGNAME)_Annex_A
 else ifeq ($(BUILD_NAME),DSL-N55U-B)
@@ -714,9 +719,9 @@ define RouterOptions
 		sed -i "/RTCONFIG_WPS_ALLLED_BTN/d" $(1); \
 		echo "RTCONFIG_WPS_ALLLED_BTN=y" >>$(1); \
 	fi; \
-	if [ "$(TURBO)" = "y" ]; then \
-		sed -i "/RTCONFIG_TURBO/d" $(1); \
-		echo "RTCONFIG_TURBO=y" >>$(1); \
+	if [ "$(LOGO_LED)" = "y" ]; then \
+		sed -i "/RTCONFIG_LOGO_LED/d" $(1); \
+		echo "RTCONFIG_LOGO_LED=y" >>$(1); \
 	fi; \
 	if [ "$(LED_BTN)" = "y" ]; then \
 		sed -i "/RTCONFIG_LED_BTN/d" $(1); \
@@ -959,10 +964,6 @@ define RouterOptions
 	if [ "$(WIFIPWR)" = "y" ]; then \
 		sed -i "/RTCONFIG_WIFIPWR/d" $(1); \
 		echo "RTCONFIG_WIFIPWR=y" >>$(1); \
-	fi; \
-	if [ "$(LEDARRAY)" = "y" ]; then \
-		sed -i "/RTCONFIG_LEDARRAY/d" $(1); \
-		echo "RTCONFIG_LEDARRAY=y" >>$(1); \
 	fi; \
 	if [ "$(XHCIMODE)" = "y" ]; then \
 		sed -i "/RTCONFIG_XHCIMODE/d" $(1); \
@@ -1465,6 +1466,10 @@ define RouterOptions
 	if [ "$(WTFAST)" = "y" ]; then \
 		sed -i "/RTCONFIG_WTFAST/d" $(1); \
 		echo "RTCONFIG_WTFAST=y" >>$(1); \
+	fi; \
+	if [ "$(FBWIFI)" = "y" ]; then \
+		sed -i "/RTCONFIG_FBWIFI/d" $(1); \
+		echo "RTCONFIG_FBWIFI=y" >>$(1); \
 	fi; \
 	if [ "$(IFTTT)" = "y" ]; then \
 		sed -i "/RTCONFIG_IFTTT/d" $(1); \

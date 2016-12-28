@@ -77,11 +77,16 @@ function QKaccount_load_body(){
 		else if(isSku("EU") || isSku("SG") || isSku("AA")){
 			document.getElementById("specialISP_tr").style.display = "";
 		}
+
+		if(parent.flag_manual == 1){
+			document.getElementById("vpn_field").style.display = "";
+			document.getElementById("specialISP_tr").style.display = "";
+		}
 		
 		if(now_flag != "auto_way_pppoe")
 			show_prev_button();		
 			
-		document.getElementById("nextButton").focus();
+		// document.getElementById("nextButton").focus();
 	}
 	
 	get_value_from_parent();
@@ -130,11 +135,11 @@ function QKaccount_load_body(){
 	
 	
 	if(parent.pppoe_failed_flag){
-		check_pppoe_state();
 		document.getElementById("pppoe_fail_desc").style.display = "";
 	}
 }
 
+var retryCounter = 0;
 function check_pppoe_state(){
 	$.ajax({
 		url: '/result_of_get_changed_status_QIS.asp',
@@ -144,21 +149,27 @@ function check_pppoe_state(){
 		},
 		success: function(response){
 			setTimeout("check_pppoe_state();", 1000);
-			if((wanstate  == 1 && wansbstate == 0 && wanauxstate == 0) || (wanstate  == 1 && wansbstate == 0 && wanauxstate == 1) || (wanstate  == 6 && wansbstate == 0 && wanauxstate == 0) || (wanstate  == 4 && wansbstate == 2 && wanauxstate == 0)){
-				if(!parent.flag_manual)
-					parent.pppoe_failed_flag = true;
-				
-				document.getElementById("loadingIcon").style.display = "";
-				document.getElementById("pppoe_fail_desc").style.display = "none";
-				if(wanstate  == 4 && wansbstate == 2 && wanauxstate == 0){
-					document.getElementById("loadingIcon").style.display = "none";
-					document.getElementById("pppoe_fail_desc").style.display = "";
-				}	
-			}
-			else if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
+
+			if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
 				parent.pppoe_failed_flag = false;
 				location.href = "/qis/QIS_finish.htm";
 			}	
+			if(wanstate  == 4 && wansbstate == 2 && wanauxstate == 0){
+				parent.pppoe_failed_flag = true;
+				document.getElementById("loadingIcon").style.display = "none";
+				document.getElementById("pppoe_fail_desc").style.display = "";
+			}	
+			else{
+				if(retryCounter > 5){
+					parent.pppoe_failed_flag = false;
+					location.href = "/qis/QIS_finish.htm";
+				}
+				else{
+					retryCounter++;
+					document.getElementById("loadingIcon").style.display = "";
+					document.getElementById("pppoe_fail_desc").style.display = "none";
+				}
+			}
 		}
 	});	
 }

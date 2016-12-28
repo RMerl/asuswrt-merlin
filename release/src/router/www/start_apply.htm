@@ -429,10 +429,7 @@ function initial(){
 		return false;
 	}
 	else if(getflag == "set_language"){
-		if(navigator.appName.indexOf("Microsoft") != -1)
-			parent.parent.location.reload();
-		else
-			parent.parent.location.href = parent.parent.location.href.split('#')[0];
+		top.location.reload();
 	}
 	else if(next_page.indexOf("MobileQIS_Login") != -1){
 	}

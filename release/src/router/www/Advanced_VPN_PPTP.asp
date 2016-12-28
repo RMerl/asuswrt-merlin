@@ -65,8 +65,9 @@ else{
 	max_shift = parseInt("9");
 }
 
+var wans_mode ='<% nvram_get("wans_mode"); %>';
+
 function initial(){
-	var dualwan_mode = '<% nvram_get("wans_mode"); %>';
 	var pptpd_dns1_orig = '<% nvram_get("pptpd_dns1"); %>';
 	var pptpd_dns2_orig = '<% nvram_get("pptpd_dns2"); %>';
 	var pptpd_wins1_orig = '<% nvram_get("pptpd_wins1"); %>';
@@ -77,7 +78,7 @@ function initial(){
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
 	
 	formShowAndHide(document.form.pptpd_enable.value, document.form.VPNServer_mode.value);	
-	if(dualwan_mode == "lb"){
+	if(wans_mode == "lb"){
 		var wan0_ipaddr = wanlink_ipaddr();
 		var wan1_ipaddr = secondary_wanlink_ipaddr();		document.getElementById("wan_ctrl").style.display = "none";
 		document.getElementById("dualwan_ctrl").style.display = "";	
@@ -88,25 +89,15 @@ function initial(){
 		}
 	}
 	else {
-		var wan_primary = '<% nvram_get("wan_primary"); %>';
-		var wan_ipaddr = "";
-		if(wan_primary == 0) {	//primary
-			wan_ipaddr = wanlink_ipaddr();
-		}
-		else {	//secondary
-			wan_ipaddr = secondary_wanlink_ipaddr();
-		}
+		
+		var wan_ipaddr = wanlink_ipaddr();
+
 		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#>" +  wan_ipaddr;
+
 		//check DUT is belong to private IP.
-		if(realip_support){
-			if(!external_ip)
-				document.getElementById("privateIP_notes").style.display = "";
-		}
-		else if(validator.isPrivateIP(wan_ipaddr)){
-			document.getElementById("privateIP_notes").style.display = "";
-		}
+		setTimeout("show_warning_message();", 100);
 	}
-	//setting pptpd_ms_network_option and pptpd_broadcast_option	
+	//setting pptpd_ms_network_option and pptpd_broadcast_option
 	if(document.form.pptpd_ms_network.value == "1") {
 		document.form.pptpd_ms_network_option[0].checked = true;
 		document.form.pptpd_broadcast_option[0].checked = true;
@@ -169,12 +160,49 @@ function initial(){
 	/* Advanced Setting end */
 }
 
+var MAX_RETRY_NUM = 5;
+var external_ip_retry_cnt = MAX_RETRY_NUM;
+function show_warning_message(){
+	if(realip_support && wans_mode != "lb"){
+		if(realip_state != "2" && external_ip_retry_cnt > 0){
+			if( external_ip_retry_cnt == MAX_RETRY_NUM )
+				get_real_ip();
+			else
+				setTimeout("get_real_ip();", 3000);
+		}
+		else if(realip_state != "2"){
+			if(validator.isPrivateIP(wanlink_ipaddr()))
+				document.getElementById("privateIP_notes").style.display = "";
+		}
+		else{
+			if(!external_ip)
+				document.getElementById("privateIP_notes").style.display = "";
+		}
+	}
+	else if(validator.isPrivateIP(wanlink_ipaddr()))
+		document.getElementById("privateIP_notes").style.display = "";
+}
+
+function get_real_ip(){
+	$.ajax({
+		url: 'get_real_ip.asp',
+		dataType: 'script',
+		error: function(xhr){
+			get_real_ip();
+		},
+		success: function(response){
+			external_ip_retry_cnt--;
+			show_warning_message();
+		}
+	});
+}
+
 function formShowAndHide(server_enable, server_type) {
 	if(server_enable == "1"){
 		document.getElementById("trVPNServerMode").style.display = "";
 		document.getElementById('pptp_samba').style.display = "";
 		document.getElementById('PPTP_setting').style.display = "";
-		document.getElementById("tbAdvanced").style.display = "none";	
+		document.getElementById("tbAdvanced").style.display = "none";
 		showpptpd_clientlist();
 		parsePPTPClients();
 		pptpd_connected_status();
@@ -193,12 +221,12 @@ function formShowAndHide(server_enable, server_type) {
 
 function pptpd_connected_status(){
 	var rule_num = document.getElementById('pptpd_clientlist_table').rows.length;
-	var username_status = "";	
+	var username_status = "";
 	for(var x=0; x < rule_num; x++){
 		var ind = x+1;
 		username_status = "status"+ind;
 		if(pptpd_connected_clients.length >0){
-			for(var y=0; y<pptpd_connected_clients.length; y++) {								
+			for(var y=0; y<pptpd_connected_clients.length; y++) {
 				if(document.getElementById('pptpd_clientlist_table').rows[x].cells[1].title == pptpd_connected_clients[y].username){
 					document.getElementById(username_status).innerHTML = '<a class="hintstyle2" href="javascript:void(0);" onClick="showPPTPClients(\''+pptpd_connected_clients[y].username+'\');"><#Connected#></a>';
 					break;

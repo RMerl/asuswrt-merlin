@@ -178,6 +178,16 @@ _get_pdp_str(){
 	echo "$str"
 }
 
+_is_Docomo_modem(){
+	if [ "$modem_vid" == "4100" -a "$modem_pid" == "25446" ]; then # Docomo L03F.
+		echo -n "1"
+	elif [ "$modem_vid" == "4100" -a "$modem_pid" == "25382" ]; then # Docomo L-03D
+		echo -n "1"
+	fi
+
+	echo -n "0"
+}
+
 
 if [ "$modem_type" == "" ]; then
 	/usr/sbin/find_modem_type.sh
@@ -337,7 +347,9 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 	fi
 
-	/usr/sbin/modem_status.sh imsi
+	if [ "$modem_enable" != "2" ]; then # Don't get IMSI with CDMA200.
+		/usr/sbin/modem_status.sh imsi
+	fi
 	/usr/sbin/modem_status.sh iccid
 
 	# Auto-APN
@@ -465,7 +477,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 
 		echo "Gobi: Successfull to set the ISP profile."
-	else
+	elif [ -n "$modem_apn" ]; then
 		echo "$modem_type: set the ISP profile."
 		pdp_str=`_get_pdp_str`
 		echo "$modem_type: set the PDP be $pdp_str."
@@ -474,87 +486,99 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			echo "$modem_type: Fail to set the profile."
 			exit 0
 		fi
+	else
+		echo "$modem_type: skip to set the ISP profile."
 	fi
 
 	# set COPS.
-	at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS?' |grep "OK" 2>/dev/null`
-	if [ "$Dev3G" == "Docomo_dongles" ] || [ "$modem_vid" == "4100" -a "$modem_pid" == "25446" ]; then # Docomo L03F.
+	is_Docomo=`_is_Docomo_modem`
+	if [ "$Dev3G" == "Docomo_dongles" ] || [ "$is_Docomo" -eq "1" ]; then
 		echo "COPS: Docomo dongles cannot COPS=0, so skip it."
 	elif [ "$modem_vid" == "6797" -a "$modem_pid" == "4098" ]; then # BandLuxe C120.
 		echo "COPS: BandLuxe C120 start with CFUN=0, so don't need to unregister the network."
 	elif [ "$modem_vid" == "4817" -a "$modem_pid" == "5382" ]; then # Huawei E3276.
 		echo "COPS: Huawei E3276 cannot COPS=2/COPS=?, so skip it."
-	elif [ "$at_ret" == "OK" ]; then
-		echo "COPS: Can execute +COPS..."
+	elif [ "$modem_vid" == "4204" -a "$modem_pid" == "14104" ]; then # Pantech UML290VW: VID=0x106c, PID=0x3718
+		echo "COPS: Pantech UML290VW cannot COPS?, so skip it."
+	else
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS?' |grep "OK" 2>/dev/null`
+		if [ "$at_ret" == "OK" ]; then
+			echo "COPS: Can execute +COPS..."
 
-		at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
-		if [ "$at_ret" != "OK" ]; then
-			echo "Can't deregister from network."
-			exit 6
-		fi
-
-		# Home service.
-		if [ "$modem_roaming" != "1" ]; then
-			echo "COPS: set +COPS=0."
-			at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
+			at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
 			if [ "$at_ret" != "OK" ]; then
-				echo "COPS: Fail to set +COPS=0."
+				echo "Can't deregister from network."
 				exit 6
 			fi
-		elif [ "$modem_roaming_mode" == "1" ]; then
-			# roaming manually...
-			echo "roaming manually..."
-			if [ -n "$modem_roaming_isp" ]; then
-				/usr/sbin/modem_status.sh station "$modem_roaming_isp"
-			fi
-			# Don't need to change the modem settings.
-			#/usr/sbin/modem_autoapn.sh set $modem_roaming_imsi
 
-			#modem_isp=`nvram get modem_isp`
-			#modem_spn=`nvram get modem_spn`
-			#modem_apn=`nvram get modem_apn`
-			#modem_user=`nvram get modem_user`
-			#modem_pass=`nvram get modem_pass`
-		else
-			# roaming automatically...
-			echo "roaming automatically..."
-			at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
-			if [ "$at_ret" != "OK" ]; then
-				echo "COPS: Fail to set +COPS=0 to roam automatically."
-				exit 6
+			# Home service.
+			if [ "$modem_roaming" != "1" ]; then
+				echo "COPS: set +COPS=0."
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
+				if [ "$at_ret" != "OK" ]; then
+					echo "COPS: Fail to set +COPS=0."
+					exit 6
+				fi
+			elif [ "$modem_roaming_mode" == "1" ]; then
+				# roaming manually...
+				echo "roaming manually..."
+				if [ -n "$modem_roaming_isp" ]; then
+					/usr/sbin/modem_status.sh station "$modem_roaming_isp"
+				fi
+				# Don't need to change the modem settings.
+				#/usr/sbin/modem_autoapn.sh set $modem_roaming_imsi
+
+				#modem_isp=`nvram get modem_isp`
+				#modem_spn=`nvram get modem_spn`
+				#modem_apn=`nvram get modem_apn`
+				#modem_user=`nvram get modem_user`
+				#modem_pass=`nvram get modem_pass`
+			else
+				# roaming automatically...
+				echo "roaming automatically..."
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '+COPS=0' "$modem_reg_time" |grep "OK" 2>/dev/null`
+				if [ "$at_ret" != "OK" ]; then
+					echo "COPS: Fail to set +COPS=0 to roam automatically."
+					exit 6
+				fi
 			fi
+		else # the result from CDMA2000 can be "COMMAND NOT SUPPORT", "ERROR".
+			echo "COPS: Don't support +COPS."
 		fi
-	else # the result from CDMA2000 can be "COMMAND NOT SUPPORT", "ERROR".
-		echo "COPS: Don't support +COPS."
 	fi
 
 	/usr/sbin/modem_status.sh setmode $modem_mode
 
 	# check the register state after set COPS.
-	echo "CGATT: 1. Check the register state..."
-	at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' 2>/dev/null`
-	ret=`echo -n "$at_ret" |grep "OK"`
-	if [ "$Dev3G" == "Docomo_dongles" ] || [ "$modem_vid" == "4100" -a "$modem_pid" == "25446" ]; then # Docomo L03F.
+	if [ "$Dev3G" == "Docomo_dongles" ] || [ "$is_Docomo" -eq "1" ]; then
 		echo "COPS: Docomo dongles cannot CGATT=1, so skip it."
-	elif [ "$ret" == "OK" ]; then
-		tries=1
-		at_ret=`echo -n "$at_ret" |grep "+CGATT: 1"`
-		while [ $tries -le 30 -a "$at_ret" == "" ]; do
-			echo "CGATT: wait for network registered...$tries"
-			sleep 1
+	elif [ "$modem_vid" == "4204" -a "$modem_pid" == "14104" ]; then # Pantech UML290VW: VID=0x106c, PID=0x3718
+		echo "COPS: Pantech UML290VW cannot CGATT?, so skip it."
+	else
+		at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' 2>/dev/null`
+		ret=`echo -n "$at_ret" |grep "OK"`
+		if [ "$ret" == "OK" ]; then
+			echo "CGATT: 1. Check the register state..."
 
-			at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
-			tries=$((tries+1))
-		done
+			tries=1
+			at_ret=`echo -n "$at_ret" |grep "+CGATT: 1"`
+			while [ $tries -le 30 -a "$at_ret" == "" ]; do
+				echo "CGATT: wait for network registered...$tries"
+				sleep 1
 
-		if [ "$at_ret" == "" ]; then
-			echo "CGATT: Fail to register network, please check."
-			exit 7
-		else
-			echo "CGATT: Successfull to register network."
+				at_ret=`$at_lock /usr/sbin/modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
+				tries=$((tries+1))
+			done
+
+			if [ "$at_ret" == "" ]; then
+				echo "CGATT: Fail to register network, please check."
+				exit 7
+			else
+				echo "CGATT: Successfull to register network."
+			fi
+		else # the result from CDMA2000 can be "COMMAND NOT SUPPORT", "ERROR".
+			echo "CGATT: Don't support +CGATT."
 		fi
-	else # the result from CDMA2000 can be "COMMAND NOT SUPPORT", "ERROR".
-		echo "CGATT: Don't support +CGATT."
 	fi
 
 	if [ "$modem_vid" == "8193" ];then

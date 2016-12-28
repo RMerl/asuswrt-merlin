@@ -251,6 +251,18 @@ if(wans_dualwan_orig.search(" ") == -1)
 
 var new_lan_ip = [<% get_next_lanip(); %>][0].next_lanip;
 
+var get_protocol = function() {
+	var protocol = "http:";
+	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
+		protocol = window.location.protocol;
+		return protocol;
+	}
+
+	return protocol;
+};
+var header_info = [<% get_header_info(); %>];
+var location_org = get_protocol() + "//" + header_info[0].host;
+
 function initial(){
 	<% login_state_hook(); %>
 	var LoginIP = login_ip_str();
@@ -483,14 +495,14 @@ function change_lan_subnet(){
 }
 
 function iAmAlive(json){
-	top.location.href = location.origin.replace(location.hostname, new_lan_ip) 
+	top.location.href = location_org.replace(header_info[0].host, new_lan_ip) 
 		+ "/QIS_wizard.htm?flag=" 
 		+ (function(){return (('<% nvram_get("x_Setting"); %>' === '0')?"welcome":"detect")})();
 }
 
 function detect_router(){
 	$.ajax({
-		url: location.origin.replace(location.hostname, new_lan_ip) + "/httpd_check.json",
+		url: location_org.replace(header_info[0].host, new_lan_ip) + "/httpd_check.json",
 		dataType: 'jsonp',
 		timeout: 2000,
 		error: function(xhr){
@@ -535,7 +547,7 @@ function detect_ppp_connect(){
 		success: function(response){
 			if( wanstate == "2"  && wansbstate == "0" && wanauxstate == "0"){
 				//history.go(-1);
-				top.location.href = document.referrer;
+				top.location.href = "/index.asp";
 			}
 			else{
 				setTimeout(detect_ppp_connect, 1000);

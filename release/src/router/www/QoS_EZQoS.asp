@@ -245,7 +245,7 @@
 <% wanlink(); %>
 <% first_wanlink(); %>
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
-var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+var wans_flag = (wans_dualwan_orig.search("none") != -1 || !parent.dualWAN_support) ? 0 : 1;
 var dsllink_statusstr = "";
 if(wans_flag == 1)	//dual_wan enabled
 	dsllink_statusstr = first_wanlink_statusstr();
@@ -968,7 +968,7 @@ function genMain_table(){
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;text-align:right;"><input type="text" id="download_rate" class="input_6_table" maxlength="6" onkeypress="return bandwidth_code(this, event);" onkeyup="check_field();"><span style="margin: 0 5px;color:#FFF;">Mb/s</span></td>';
 	code += '<td style="border-bottom:2px solid #000;text-align:right;"><input type="text" id="upload_rate" class="input_6_table" maxlength="6" onkeypress="return bandwidth_code(this, event);" onkeyup="check_field();"><span style="margin: 0 5px;color:#FFF;">Mb/s</span></td>';
-	code += '<td style="border-bottom:2px solid #000;"><div id="add_delete" class="add_disable" style="width:23px;height:23px;margin:0 auto" onclick="addRow_main(this, 32)"></div></td>';
+	code += '<td style="border-bottom:2px solid #000;"><div id="add_delete" class="add_disable" style="margin:0 auto" onclick="addRow_main(this, 32)"></div></td>';
 	code += '</tr>';
 	
 	if(qos_bw_rulelist == ""){
@@ -1006,7 +1006,7 @@ function genMain_table(){
 			
 			code += '<td style="text-align:center;">'+qos_bw_rulelist_col[2]/1024+' Mb/s</td>';
 			code += '<td style="text-align:center;">'+qos_bw_rulelist_col[3]/1024+' Mb/s</td>';
-			code += '<td><div class="remove" style="width:23px;height:23px;margin:0 auto" onclick="deleteRow_main(this);"></td>';
+			code += '<td><div class="remove" style="margin:0 auto" onclick="deleteRow_main(this);"></td>';
 			code += '</tr>';
 
 		}

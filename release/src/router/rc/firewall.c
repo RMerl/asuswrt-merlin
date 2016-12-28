@@ -1355,6 +1355,13 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				else
 					snprintf(dstips, sizeof(dstips), "--to %s", dstip);
 
+#ifdef CONFIG_BCMWL5
+				//work around: mark l2tp/ipsec(port:500 and port:4500) vpn traffic to bypass ctf
+				if(!strcmp(c, "500"))
+					nvram_set("markIPsec1", "1");
+				if(!strcmp(c, "4500"))
+					nvram_set("markIPsec2", "1");
+#endif
 				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0){
 					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
 
@@ -1446,6 +1453,12 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 			fprintf(fp, "-A POSTROUTING %s -o %s -s %s -d %s -j MASQUERADE\n", p, lan_if, lan_class, lan_class);
 		}
 	}
+
+#ifdef RTCONFIG_FBWIFI
+	{
+		fbwifi_nat(fp);
+	}
+#endif
 
 	fprintf(fp, "COMMIT\n");
 	fclose(fp);
@@ -1656,6 +1669,13 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				else
 					snprintf(dstips, sizeof(dstips), "--to %s", dstip);
 
+#ifdef CONFIG_BCMWL5
+				//work around: mark l2tp/ipsec(port:500 and port:4500) vpn traffic to bypass ctf
+				if(!strcmp(c, "500"))
+					nvram_set("markIPsec1", "1");
+				if(!strcmp(c, "4500"))
+					nvram_set("markIPsec2", "1");
+#endif
 				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0){
 					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
 
@@ -2455,9 +2475,8 @@ TRACE_PT("writing Parental Control\n");
 		 * from addresses other than used for query, this could lead to lower level
 		 * of security, but it does not work otherwise (conntrack does not work) :-(
 		 */
-		if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "bigpond") ||
-		    nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp)))
-		{
+		if (strcmp(wan_proto, "dhcp") == 0 /* || strcmp(wan_ipaddr, "0.0.0.0") == 0 */ ||
+		    nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp))) {
 			fprintf(fp, "-A INPUT -p udp --sport 67 --dport 68 -j %s\n", logaccept);
 		}
 		// Firewall between WAN and Local
@@ -3460,10 +3479,9 @@ TRACE_PT("writing Parental Control\n");
 			wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 			wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 
-			if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "bigpond") ||
-			    nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp)))
-			{
-					fprintf(fp, "-A INPUT -p udp --sport 67 --dport 68 -j %s\n", logaccept);
+			if (strcmp(wan_proto, "dhcp") == 0 /*|| strcmp(wan_ip, "0.0.0.0") == 0*/ || 
+			    nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp))) {
+				fprintf(fp, "-A INPUT -p udp --sport 67 --dport 68 -j %s\n", logaccept);
 			}
 			break; // set one time.
 		}
@@ -3679,7 +3697,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 		if (
 #if defined(RTCONFIG_USB_MODEM)
-		    dualwan_unit__nonusbif(wan_primary_ifunit()) &&
+		    dualwan_unit__nonusbif(wan_primary_ifunit_ipv6()) &&
 #endif
 		    !(strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
 		      nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp")))
@@ -4154,7 +4172,7 @@ TRACE_PT("write wl filter\n");
 
 
 #ifdef RTCONFIG_IPV6
-		if ((unit == wan_primary_ifunit()) &&
+		if ((unit == wan_primary_ifunit_ipv6()) &&
 			ipv6_enabled() && *wan6face)
 			fprintf(fp_ipv6, "-A FORWARD -i %s -o %s -j %s\n", wan6face, lan_if, nvram_match("filter_wl_default_x", "DROP") ? logdrop : logaccept);
 #endif
@@ -4428,6 +4446,26 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	}
 #endif
 
+#ifdef RTCONFIG_FBWIFI
+	{
+		fbwifi_mangle();
+	}
+#endif
+
+#ifdef CONFIG_BCMWL5
+	//work around: mark l2tp/ipsec(port:500 and port:4500) vpn traffic to bypass ctf
+	if(nvram_match("markIPsec1", "1")) {
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-p", "udp", "-m", "udp", 
+			"--dport", "500", "-j", "MARK", "--set-mark", "0x7");
+		nvram_unset("markIPsec1");
+	}
+	if(nvram_match("markIPsec2", "1")) {
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-p", "udp", "-m", "udp", 
+			"--dport", "4500", "-j", "MARK", "--set-mark", "0x7");
+		nvram_unset("markIPsec2");
+	}
+#endif
+
 #ifdef RTCONFIG_YANDEXDNS
 #ifdef RTCONFIG_IPV6
 	if (nvram_get_int("yadns_enable_x") && ipv6_enabled()) {
@@ -4663,6 +4701,20 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 			eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "icmpv6", "--icmpv6-type", "neighbor-solicitation",
 			     "-i", get_wan_ifname(unit), "-d", "ff02::1:ff00:0/104", "-j", "DROP");
 		}
+	}
+#endif
+
+#ifdef CONFIG_BCMWL5
+	//work around: mark l2tp/ipsec(port:500 and port:4500) vpn traffic to bypass ctf
+	if(nvram_match("markIPsec1", "1")) {
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-p", "udp", "-m", "udp", 
+			"--dport", "500", "-j", "MARK", "--set-mark", "0x7");
+		nvram_unset("markIPsec1");
+	}
+	if(nvram_match("markIPsec2", "1")) {
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-p", "udp", "-m", "udp", 
+			"--dport", "4500", "-j", "MARK", "--set-mark", "0x7");
+		nvram_unset("markIPsec2");
 	}
 #endif
 
@@ -4902,6 +4954,7 @@ int start_firewall(int wanunit, int lanunit)
 	char wan_if[IFNAMSIZ+1], wan_ip[32], lan_if[IFNAMSIZ+1], lan_ip[32];
 	char wanx_if[IFNAMSIZ+1], wanx_ip[32], wan_proto[16];
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
+	int restart_upnp = 0;
 
 	if (getpid() != 1) {
 		notify_rc("start_firewall");
@@ -4910,6 +4963,11 @@ int start_firewall(int wanunit, int lanunit)
 
 	if (!is_routing_enabled())
 		return -1;
+
+	if (pidof("miniupnpd") != -1) {
+		stop_upnp();
+		restart_upnp = 1;
+	}
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", wanunit);
 
@@ -5241,6 +5299,8 @@ int start_firewall(int wanunit, int lanunit)
 		modprobe_r("xt_HL");
 		modprobe_r("xt_hl");
 	}
+
+	if (restart_upnp) start_upnp();
 
 	run_custom_script("firewall-start", wan_if);
 

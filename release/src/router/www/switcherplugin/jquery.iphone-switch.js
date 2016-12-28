@@ -41,7 +41,7 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 		// click handling
 		jQuery(this).unbind("click"); // initial click event
 		jQuery(this).click(function() {
-			if((this.id == "radio_clouddisk_enable" || this.id == "radio_web_restrict_enable" || this.id == "apps_analysis_enable" || this.id == "radio_wps_enable" || this.id == "nm_radio_dualwan_enable" || this.id == "simdetect_switch" || this.id == "dns_switch") && typeof(curState))
+			if((this.id == "radio_clouddisk_enable" || this.id == "radio_web_restrict_enable" || this.id == "apps_analysis_enable" || this.id == "radio_wps_enable" || this.id == "nm_radio_dualwan_enable" || this.id == "simdetect_switch" || this.id == "dns_switch" || this.id == "radio_fbwifi_enable") && typeof(curState))
 				state = curState;
 			else if(this.id.length > 18 && this.id.substr(0, 18) == "wtfast_rule_enable"){
 				var index = (this.id).substr(18);

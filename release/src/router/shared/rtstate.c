@@ -32,15 +32,36 @@ void add_rc_support(char *feature)
 		nvram_set("rc_support", feature);
 }
 
+int get_wan_state(int unit){
+	char tmp[100], prefix[16];
+
+	snprintf(prefix, 16, "wan%d_", unit);
+
+	return nvram_get_int(strcat_r(prefix, "state_t", tmp));
+}
+
+int get_wan_sbstate(int unit){
+	char tmp[100], prefix[16];
+
+	snprintf(prefix, 16, "wan%d_", unit);
+
+	return nvram_get_int(strcat_r(prefix, "sbstate_t", tmp));
+}
+
+int get_wan_auxstate(int unit){
+	char tmp[100], prefix[16];
+
+	snprintf(prefix, 16, "wan%d_", unit);
+
+	return nvram_get_int(strcat_r(prefix, "auxstate_t", tmp));
+}
+
 int is_wan_connect(int unit){
-	char tmp[100], prefix[]="wanXXXXXX_";
 	int wan_state, wan_sbstate, wan_auxstate;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-
-	wan_state = nvram_get_int(strcat_r(prefix, "state_t", tmp));
-	wan_sbstate = nvram_get_int(strcat_r(prefix, "sbstate_t", tmp));
-	wan_auxstate = nvram_get_int(strcat_r(prefix, "auxstate_t", tmp));
+	wan_state = get_wan_state(unit);
+	wan_sbstate = get_wan_sbstate(unit);
+	wan_auxstate = get_wan_auxstate(unit);
 
 	if(wan_state == 2 && wan_sbstate == 0 &&
 			(wan_auxstate == 0 || wan_auxstate == 2)
@@ -51,12 +72,9 @@ int is_wan_connect(int unit){
 }
 
 int is_phy_connect(int unit){
-	char tmp[100], prefix[]="wanXXXXXX_";
 	int wan_auxstate;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-
-	wan_auxstate = nvram_get_int(strcat_r(prefix, "auxstate_t", tmp));
+	wan_auxstate = get_wan_auxstate(unit);
 
 	if(wan_auxstate == 0 || wan_auxstate == 2)
 		return 1;
@@ -64,13 +82,16 @@ int is_phy_connect(int unit){
 		return 0;
 }
 
-int get_wan_state(int unit)
-{
-	char tmp[100], prefix[]="wanXXXXXX_";
+int is_ip_conflict(int unit){
+	int wan_state, wan_sbstate;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	wan_state = get_wan_state(unit);
+	wan_sbstate = get_wan_sbstate(unit);
 
-	return nvram_get_int(strcat_r(prefix, "state_t", tmp));
+	if(wan_state == 4 && wan_sbstate == 4)
+		return 1;
+	else
+		return 0;
 }
 
 // get wan_unit from device ifname or hw device ifname
@@ -317,6 +338,30 @@ wan_primary_ifunit(void)
 	}
 
 	return 0;
+}
+
+int
+wan_primary_ifunit_ipv6(void)
+{
+#ifdef RTCONFIG_DUALWAN
+#if 0
+	int unit = wan_primary_ifunit();
+
+	if (!strstr(nvram_safe_get("wans_dualwan"), "none")
+	    && !strcmp(nvram_safe_get("wans_mode"), "lb")
+#ifdef RTCONFIG_IPV6
+	    && get_ipv6_service_by_unit(unit) == IPV6_DISABLED
+#endif
+	)
+		return (1 - unit);
+
+	return unit;
+#else
+	return 0;
+#endif
+#else
+	return wan_primary_ifunit();
+#endif
 }
 
 #ifdef RTCONFIG_MEDIA_SERVER

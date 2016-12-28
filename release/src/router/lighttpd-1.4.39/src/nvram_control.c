@@ -21,6 +21,11 @@
 #endif
 
 #ifdef USE_TCAPI
+#if (defined APP_IPKG) && (defined I686)
+#define SECOND_SYSTEM	"Second_System"
+#define FIRST_SYSTEM	"First_System"
+#define LAN_IP_S	"lan_ipaddr"
+#endif
 #define WEBDAV	"AiCloud_Entry"
 #define APPS	"Apps_Entry"
 #define DDNS	"Ddns_Entry"
@@ -31,6 +36,7 @@
 #define DEVICEINFO "DeviceInfo"
 #define TIMEZONE "Timezone_Entry"
 #define FIREWALL "Firewall_Entry"
+#define WANDUCK	"Wanduck_Common"
 #define DDNS_ENANBLE_X	"Active"	// #define DDNS_ENANBLE_X	"ddns_enable_x"
 #define DDNS_SERVER_X	"SERVERNAME"	// #define DDNS_SERVER_X	"ddns_server_x"
 #define DDNS_HOST_NAME_X	"MYHOST"	// #define DDNS_HOST_NAME_X	"ddns_hostname_x"
@@ -79,6 +85,11 @@
 #define ODMPID "odmpid"
 #define APPS_SQ "apps_sq"
 #else
+#if (defined APP_IPKG) && (defined I686)
+#define SECOND_SYSTEM	"Second_System"
+#define FIRST_SYSTEM	"First_System"
+#define LAN_IP_S	"lan_ipaddr"
+#endif
 #define DDNS_ENANBLE_X	"ddns_enable_x"
 #define DDNS_SERVER_X	"ddns_server_x"
 #define DDNS_HOST_NAME_X	"ddns_hostname_x"
@@ -346,6 +357,10 @@ err:
         perror(PATH_DEV_NVRAM);
         return errno;
 }
+
+#if defined I686
+
+#else
 char *nvram_get_original(char *name);
 char *nvram_get(char *name)
 {
@@ -391,8 +406,13 @@ char *nvram_get(char *name)
          return out;
 }
 //end test}
+#endif
 
-char *nvram_get_original(char *name)
+#if defined I686
+	char *nvram_get(char *name)
+#else
+	char *nvram_get_original(char *name)
+#endif
 //char *nvram_get(char *name)
 {
     fprintf(stderr,"name = %s\n",name);
@@ -1104,6 +1124,30 @@ char* nvram_get_webdav_https_port(void)
 #endif
 }
 
+#if (defined APP_IPKG) && (defined I686)
+char* nvram_get_second_system(void)
+{
+    return nvram_get(SECOND_SYSTEM);
+}
+char* nvram_get_first_system(void)
+{
+    return nvram_get(FIRST_SYSTEM);
+}
+char* nvram_get_lan_ip(void)
+{
+    char lan_ip[20];
+    memset(lan_ip,0,sizeof(lan_ip));
+    char *first_system = nvram_get(FIRST_SYSTEM);
+    sprintf(lan_ip,"%slan_ipaddr",first_system);
+    free(first_system);
+    return nvram_get(lan_ip);
+}
+char* nvram_get_lan_ip_s(void)
+{
+    return nvram_get(LAN_IP_S);
+}
+#endif
+
 char* nvram_get_http_enable(void)
 {
 	// 0 --> http
@@ -1320,7 +1364,7 @@ int nvram_wan_primary_ifunit(void)
 #ifdef USE_TCAPI
 	char tmp[4], prefix[16] = {0};
 	int unit;	
-	for (unit = 0; unit < 12; unit ++) {		
+	for (unit = 0; unit < 13; unit ++) {		
 		if( unit > 0 && unit < 8 )	//ignore nas1~7 which should be bridge mode for ADSL
 			continue;	
 		snprintf(prefix, sizeof(prefix), "Wan_PVC%d", unit);
@@ -1347,8 +1391,8 @@ char* nvram_get_wan_ip(void)
 	static char wan_ip[16]= {0};
 	char prefix[32] = {0};
 	int unit = nvram_wan_primary_ifunit();
-	snprintf(prefix, sizeof(prefix), "%s_PVC%d", DEVICEINFO, unit);
-	tcapi_get(prefix, "WanIP", wan_ip);
+	snprintf(prefix, sizeof(prefix), "wan%d_ipaddr", unit);
+	tcapi_get(WANDUCK, prefix, wan_ip);
 	return wan_ip;
 #else
 	char *wan_ip;
@@ -1538,4 +1582,18 @@ char* nvram_get_value(const char* key){
 #endif
 }
 
+
+/* for hostspot module */
+char* nvram_get_uamsecret(const char *str)
+{
+#ifdef USE_TCAPI
+        //Todo
+#else
+        if(!strncmp(str, nvram_get("chilli_net"), 11)){
+           return nvram_get("chilli_uamsecret");
+        }else{
+           return nvram_get("cp_uamsecret");
+        }
+#endif
+}
 #endif

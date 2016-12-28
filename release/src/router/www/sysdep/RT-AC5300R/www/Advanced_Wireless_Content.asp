@@ -1,1 +1,0 @@
-../../RT-AC66U/www/Advanced_Wireless_Content.asp

@@ -200,19 +200,44 @@ if(typeof Array.prototype.forEach != 'function'){
 	};
 }
 
+function tryParseJSON (jsonString){
+    try {
+        var o = JSON.parse(jsonString);
+
+        if (o && typeof o === "object") {
+            return o;
+        }
+    }
+    catch (e) { }
+
+    return false;
+};
+
+var login_info =  tryParseJSON('<% login_error_info(); %>');
 var isIE8 = navigator.userAgent.search("MSIE 8") > -1; 
 var isIE9 = navigator.userAgent.search("MSIE 9") > -1; 
-var lock_time = '<% get_parameter("lock_time"); %>';
-var remaining_time = 60 - lock_time;
+var remaining_time = 60 - login_info.lock_time;
 var countdownid, rtime_obj;
-var redirect_page = '<% get_parameter("page"); %>';
+var redirect_page = login_info.page;
 var cloud_file = '<% get_parameter("file"); %>';
 if ('<% nvram_get("http_dut_redir"); %>' == '1') {
 var isRouterMode = ('<% nvram_get("sw_mode"); %>' == '1') ? true : false;
-var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
+
+var header_info = [<% get_header_info(); %>];
+var ROUTERHOSTNAME = header_info[0].host;
+var get_protocol = function() {
+	var protocol = "http:";
+	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
+		protocol = window.location.protocol;
+		return protocol;
+	}
+
+	return protocol;
+};
+
 var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.href.replace(location.hostname, ROUTERHOSTNAME)};
 (function(){
-	var locationOrigin = window.location.protocol + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
+	var locationOrigin = get_protocol() + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
 	if(location.hostname !== ROUTERHOSTNAME && ROUTERHOSTNAME != "" && isRouterMode){
 		setTimeout(function(){
 			var s=document.createElement("script");s.type="text/javascript";s.src=locationOrigin+"/httpd_check.json?hostname="+location.hostname;;var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
@@ -224,7 +249,7 @@ var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.hre
 <% login_state_hook(); %>
 
 function initial(){
-	var flag = '<% get_parameter("error_status"); %>';
+	var flag = login_info.error_status;
 	if(isIE8 || isIE9){
 		document.getElementById("name_title_ie").style.display ="";
 		document.getElementById("password_title_ie").style.display ="";
@@ -394,6 +419,8 @@ function login(){
 			|| redirect_page == "Logout.asp" 
 			|| redirect_page == "Main_Login.asp" 
 			|| redirect_page.indexOf(" ") != -1 
+			|| redirect_page.indexOf("//") != -1 
+			|| redirect_page.indexOf("http") != -1
 			|| (redirect_page.indexOf(".asp") == -1 && redirect_page.indexOf(".htm") == -1)
 		){
 			document.form.next_page.value = "index.asp";

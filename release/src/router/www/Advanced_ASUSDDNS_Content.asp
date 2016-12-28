@@ -27,21 +27,7 @@ var no_phddns = isSupport("no_phddns");
 
 function init(){
 	show_menu();
-	if(realip_support){
-		if(!external_ip)
-	    	showhide("wan_ip_hide2", 1);
-	    else
-	    	showhide("wan_ip_hide2", 0);
-
-	    showhide("wan_ip_hide3", 0);		
-	}
-	else
-    	valid_wan_ip();
-
     ddns_load_body();
-
-	//if(dualWAN_support && wans_mode == "lb")
-	//	document.getElementById("lb_note").style.display = "";
 
 	if(no_phddns){
 		for(var i = 0; i < document.form.ddns_server_x.length; i++){
@@ -51,6 +37,45 @@ function init(){
 			}
 		}
 	}
+
+	setTimeout("show_warning_message();", 100);
+}
+
+var MAX_RETRY_NUM = 5;
+var external_ip_retry_cnt = MAX_RETRY_NUM;
+function show_warning_message(){
+	if(realip_support && wans_mode != "lb"){
+		if(realip_state != "2" && external_ip_retry_cnt > 0){
+			if( external_ip_retry_cnt == MAX_RETRY_NUM )
+				get_real_ip();
+			else
+				setTimeout("get_real_ip();", 3000);
+		}
+		else if(realip_state != "2")
+			valid_wan_ip();
+		else{
+			if(!external_ip)
+		    	showhide("wan_ip_hide2", 1);
+		    else
+		    	showhide("wan_ip_hide2", 0);
+		}
+	}
+	else
+    	valid_wan_ip();
+}
+
+function get_real_ip(){
+	$.ajax({
+		url: 'get_real_ip.asp',
+		dataType: 'script',
+		error: function(xhr){
+			get_real_ip();
+		},
+		success: function(response){
+			external_ip_retry_cnt--;
+			show_warning_message();
+		}
+	});
 }
 
 function check_update(){
@@ -74,7 +99,7 @@ function force_update() {
 		return false
 		
 	document.form.submit();
-	showLoading();	
+	showLoading();
 }
 
 function valid_wan_ip() {
@@ -97,12 +122,10 @@ function valid_wan_ip() {
         ip_class = 'C';
     else if(ip_num != 0){
         showhide("wan_ip_hide2", 0);
-        showhide("wan_ip_hide3", 0);
         return;
     }
 		
     showhide("wan_ip_hide2", 1);
-    showhide("wan_ip_hide3", 0);
     return;
 }
 
@@ -363,8 +386,8 @@ function onSubmitApply(s){
 		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		 		<div class="formfontdesc"><#LANHostConfig_x_DDNSEnable_sectiondesc#></div>
 		 		<div class="formfontdesc" style="margin-top:-8px;"><#NSlookup_help#></div>
-				<div class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc2#></div>
-				<div class="formfontdesc" id="wan_ip_hide3" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc3#></div>
+				<div class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00; display:none;"><#LANHostConfig_x_DDNSEnable_sectiondesc2#></div>
+				<div class="formfontdesc" id="wan_ip_hide3" style="color:#FFCC00; display:none;"><#LANHostConfig_x_DDNSEnable_sectiondesc3#></div>
 				<div class="formfontdesc" id="lb_note" style="color:#FFCC00; display:none;"><#lb_note_ddns#></div>
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 				<input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>">
@@ -380,7 +403,7 @@ function onSubmitApply(s){
 				<td>
                   		<select name="ddns_server_x"class="input_option" onchange="change_ddns_setting(this.value)">
                     			<option value="WWW.ASUS.COM" <% nvram_match("ddns_server_x", "WWW.ASUS.COM","selected"); %>>WWW.ASUS.COM</option>
-					<option value="WWW.GOOGLE-DDNS.COM" <% nvram_match("ddns_server_x", "WWW.GOOGLE-DDNS.COM","selected"); %>>WWW.GOOGLE-DDNS.COM</option>
+								<option value="DOMAINS.GOOGLE.COM" <% nvram_match("ddns_server_x", "DOMAINS.GOOGLE.COM","selected"); %>>DOMAINS.GOOGLE.COM</option>
                     			<option value="WWW.DYNDNS.ORG" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG","selected"); %>>WWW.DYNDNS.ORG</option>
                     			<option value="WWW.DYNDNS.ORG(CUSTOM)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(CUSTOM)","selected"); %>>WWW.DYNDNS.ORG(CUSTOM)</option>
                     			<option value="WWW.DYNDNS.ORG(STATIC)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(STATIC)","selected"); %>>WWW.DYNDNS.ORG(STATIC)</option>

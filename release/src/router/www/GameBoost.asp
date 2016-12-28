@@ -46,7 +46,8 @@ body{
 	width:50px;
 	height:40px;
 	position:absolute;
-	left:0px;
+	left: 0;
+	top: 0;
 	border-top-left-radius:5px;
 	border-bottom-left-radius:5px;
 }
@@ -55,7 +56,7 @@ body{
 		top:0;
 	}
 }
-@supports (-ms-accelerator:true) {		/*Edge Browser Hack*/
+@supports (-ms-accelerator:true) {		/*Edge Browser Hack, not work on Edge 38*/
   	.container::after{
 		top:0;
 	}
@@ -71,8 +72,7 @@ body{
 }
 @media all and (-ms-high-contrast:none)
 {
-    .container::after { margin-top:-26px} /* IE10 */
-    *::-ms-backdrop, .container::after { margin-top:-26px} /* IE11 */
+    *::-ms-backdrop, .container::after { margin-top: 0px} /* IE11 */
 }
 .btn{
 	background-color: #990000;

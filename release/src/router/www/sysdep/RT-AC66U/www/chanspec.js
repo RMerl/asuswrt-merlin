@@ -66,8 +66,17 @@ function wl_chanspec_list_change(){
 												else if(document.form.wl_nmode_x.value ==1){
 													wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}
-												else{	
-													wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";												
+												else{
+													if((country == "AU" && odmpid == "RT-AC66U_B1") && (parseInt(wl_channel_list_5g[i]) == 116)){
+														wl_channel_list_5g[i] = wl_channel_list_5g[i];
+
+													}
+													else if((country == "AU" && odmpid == "RT-AC66U_B1") && (parseInt(wl_channel_list_5g[i]) > 116 && parseInt(wl_channel_list_5g[i]) < 140)){
+														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
+													}
+													else{
+														wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";												
+													}
 												}		
 										}
 										else{		// for 802.11n, RT-N66U
@@ -77,42 +86,59 @@ function wl_chanspec_list_change(){
 						}
 						else if(bw_cap == "3"){	// [80 MHz]
 							document.getElementById('wl_nctrlsb_field').style.display = "";
-								for(var i=wl_channel_list_5g.length-1;i>=0;i--){									
-																
-											if((country == "EU" || country == "E0") && parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140){	// rm 80MHz invalid channel
-												wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
-											}
-											else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// rm 80MHz invalid channel														
-												wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
-											}
-											else if(country == "JP" && parseInt(wl_channel_list_5g[i]) >= 132 && parseInt(wl_channel_list_5g[i]) <= 140 ){
-												wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
-											}
-											else{																																																										
-												wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";
-											}		
-								}										
+							for(var i=wl_channel_list_5g.length-1;i>=0;i--){																
+								if((country == "EU" || country == "E0") && parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140){	// rm 80MHz invalid channel
+									wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
+								}
+								else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// rm 80MHz invalid channel														
+									wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
+								}
+								else if(country == "JP" && parseInt(wl_channel_list_5g[i]) >= 132 && parseInt(wl_channel_list_5g[i]) <= 140 ){
+									wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
+								}
+								else{
+									if((country == "AU" && odmpid == "RT-AC66U_B1") && (parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140)){
+										wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
+									}
+									else{
+										wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";
+									}
+								}		
+							}										
 						}
 						else if(bw_cap == "2"){		// 40MHz
 							document.getElementById('wl_nctrlsb_field').style.display = "";
-								if(country == "TW" && wl_channel_list_5g.indexOf("56") != -1){			//remove channel 56, only for country code TW
-									var index = wl_channel_list_5g.indexOf("56");
-									wl_channel_list_5g.splice(index, 1);
+							if(country == "TW" && wl_channel_list_5g.indexOf("56") != -1){			//remove channel 56, only for country code TW
+								var index = wl_channel_list_5g.indexOf("56");
+								wl_channel_list_5g.splice(index, 1);
+							}
+
+							if((country == "EU" || country == "E0") && wl_channel_list_5g.indexOf("116") != -1){			// remove channel 116, 
+								var index = wl_channel_list_5g.indexOf("116");
+								wl_channel_list_5g.splice(index, 1);
+							}
+		
+							if((country == "EU" || country == "E0" || country == "JP") && wl_channel_list_5g.indexOf("140") != -1){			// remove channel 140
+								index = wl_channel_list_5g.indexOf("140");
+								wl_channel_list_5g.splice(index, 1);
+							}
+
+							if(country == "AU" && odmpid == "RT-AC66U_B1"){
+								if(wl_channel_list_5g.indexOf("116") != -1){
+									var index = wl_channel_list_5g.indexOf("116");
+									wl_channel_list_5g.splice(index, 1);									
 								}
 
-								if((country == "EU" || country == "E0") && wl_channel_list_5g.indexOf("116") != -1){			// remove channel 116, 
-									var index = wl_channel_list_5g.indexOf("116");
-									wl_channel_list_5g.splice(index, 1);
-								}
-		
-								if((country == "EU" || country == "E0" || country == "JP") && wl_channel_list_5g.indexOf("140") != -1){			// remove channel 140
+								if(wl_channel_list_5g.indexOf("140") != -1){
 									index = wl_channel_list_5g.indexOf("140");
 									wl_channel_list_5g.splice(index, 1);
 								}
-								
-								for(var i=0;i<wl_channel_list_5g.length;i++){			
-									wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);	
-								}		
+							}
+							
+
+							for(var i=0;i<wl_channel_list_5g.length;i++){			
+								wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);	
+							}		
 						}
 						else{		//20MHz
 							document.getElementById('wl_nctrlsb_field').style.display = "none";

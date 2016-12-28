@@ -23,7 +23,7 @@
 <% wan_get_parameter(); %>
 
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
-var wans_flag = (wans_dualwan_orig.search("none") == -1) ? true:false;
+var wans_flag =  (wans_dualwan_orig.search("none") != -1 || !parent.dualWAN_support) ? false : true;
 if(wans_flag)
 	var wan_proto_orig = '<% nvram_get("wan0_proto"); %>';
 else

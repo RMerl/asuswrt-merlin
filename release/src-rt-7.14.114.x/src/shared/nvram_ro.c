@@ -1,13 +1,13 @@
 /*
  * Read-only support for NVRAM on flash and otp.
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  * $Id: nvram_ro.c 377962 2013-01-09 19:38:48Z $
  */
@@ -63,6 +63,27 @@ static char *findvar(char *vars_arg, char *lim, const char *name);
 extern void nvram_get_global_vars(char **varlst, uint *varsz);
 static char *nvram_get_internal(const char *name);
 static int nvram_getall_internal(char *buf, int count);
+
+#ifdef NVRAM_FILE
+#define CHIP_4360_CHIPREV_B1    3
+#define CHIP_43217_CHIPREV_A0   0
+#define CHIPID_NONE            -1
+
+#define NVRAM_FILE_INIT_PATH	"/lib/firmware/brcm/"
+
+struct chip_nvfile_map {
+	uint32 chipid;
+	uint32 chiprev;
+	char *chip_name;
+	char *nv_name;
+} static chip_nvfile_map_table [] __initdata  =
+{
+	{BCM4360_CHIP_ID, CHIP_4360_CHIPREV_B1, "bcm4360b", "bcm4360b.nvm"},
+	{BCM43217_CHIP_ID, CHIP_43217_CHIPREV_A0, "bcm43217a0", "bcm43217a0.nvm"},
+	/* {for a given chipid, chiprev, what is the index (the above enum) */
+	{CHIPID_NONE, 0, 0, 0} /* CHIPID_NONE is -1, used to mark end of list */
+};
+#endif /* NVRAM_FILE */
 
 static void
 #if defined(WLTEST) || !defined(WLC_HIGH)
@@ -404,10 +425,60 @@ initvars_file(si_t *sih, osl_t *osh, char **nvramp, int *nvraml)
 #if defined(BCMDRIVER)
 	/* Init nvram from nvram file if they exist */
 	char *nvram_buf = *nvramp;
-	void	*nvram_fp = NULL;
+	void *nvram_fp = NULL;
+	char nv_path[64];				/* path to nvram vars file */
+	uint32 chipid, chiprev;
+	struct chip_nvfile_map *p_nvfile_index;
 	int nv_len = 0, ret = 0, i = 0, len = 0;
 
-	nvram_fp = (void*)osl_os_open_image("nvram.txt");
+	chipid = 0;
+	p_nvfile_index = &chip_nvfile_map_table[0];
+	while (chipid != CHIPID_NONE) {
+		chipid = p_nvfile_index->chipid;
+		chiprev = p_nvfile_index->chiprev;
+
+		if ((chipid == CHIPID(sih->chip)) && (chiprev == sih->chiprev)) {
+			break;
+		}
+		p_nvfile_index++;
+	}
+
+	if (chipid != CHIPID_NONE) {
+		/* load chiprev nvram file */
+		snprintf(nv_path, sizeof(nv_path), "%s%s",
+			NVRAM_FILE_INIT_PATH, p_nvfile_index->nv_name);
+		nvram_fp = (void*)osl_os_open_image(nv_path);
+		if (nvram_fp == NULL) {
+			uint boardtype = sih->boardtype;
+			uint boardrev = sih->boardrev;
+			char *ptr, dev_name[64] = { 0 };
+
+			/* chiprev nvram file missing - load the board specific nvram file */
+			sprintf(dev_name, "%s", osl_pci_name(osh));
+			/* remove special character for pci device name */
+			for (ptr = dev_name; *ptr != '\0'; ptr++) {
+				if ((*ptr == ':') || (*ptr == '.')) {
+					*ptr = '_';
+					continue;
+				}
+			}
+			snprintf(nv_path, sizeof(nv_path), "%s%s-%02x-%02x-%s.nvm",
+				NVRAM_FILE_INIT_PATH, p_nvfile_index->chip_name,
+				boardtype, boardrev, dev_name);
+			nvram_fp = (void*)osl_os_open_image(nv_path);
+			if (nvram_fp == NULL) {
+				/* load generic nvram file */
+				nvram_fp = (void*)osl_os_open_image("nvram.txt");
+			}
+		}
+	} else {
+		NVR_MSG(("####################################################################\n"
+			"# %s: nvfile not available for chipid = 0x%x chiprev = %d\n"
+			"####################################################################\n",
+			__FUNCTION__, CHIPID(sih->chip), sih->chiprev));
+		/* load generic nvram file */
+		nvram_fp = (void*)osl_os_open_image("nvram.txt");
+	}
 	if (nvram_fp != NULL) {
 		while ((nv_len = osl_os_get_image_block(nvram_buf, MAXSZ_NVRAM_VARS, nvram_fp)))
 			len = nv_len;

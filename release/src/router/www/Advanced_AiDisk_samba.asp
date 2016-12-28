@@ -196,12 +196,12 @@ function showAccountMenu(){
 			account_menu_code += '<div class="userIcon" id="';
 			account_menu_code += "account"+i;		
 			if(decodeURIComponent(this.accounts[i]).length > 18){
-				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;" title="'+decodeURIComponent(this.accounts[i])+'">'
-				account_menu_code += decodeURIComponent(this.accounts[i]).substring(0,15) + '...';
+				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;" title="'+htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i]))+'">'
+				account_menu_code += htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i])).substring(0,15) + '...';
 			}	
 			else{
 				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;">'
-				account_menu_code += decodeURIComponent(this.accounts[i]);		
+				account_menu_code += htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i]));
 			}
 			
 			account_menu_code += '</div>\n';	

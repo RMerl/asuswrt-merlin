@@ -43,9 +43,6 @@ int btn_wifi_sw = 0xff;
 #ifdef RTCONFIG_WIFI_TOG_BTN
 int btn_wltog_gpio = 0xff; 
 #endif
-#ifdef RTCONFIG_TURBO
-int btn_turbo_gpio = 0xff;
-#endif
 #ifdef RTCONFIG_LED_BTN
 int btn_led_gpio = 0xff;
 #endif
@@ -91,9 +88,6 @@ int init_gpio(void)
 		, "btn_swmode1_gpio", "btn_swmode2_gpio", "btn_swmode3_gpio"
 #endif	/* Mode */
 #endif	/* RTCONFIG_SWMODE_SWITCH */
-#ifdef RTCONFIG_TURBO
-		, "btn_turbo_gpio"
-#endif
 #ifdef RTCONFIG_LED_BTN
 		, "btn_led_gpio"
 #endif
@@ -101,7 +95,10 @@ int init_gpio(void)
 		, "btn_lte_gpio"
 #endif
 	};
-	char *led_list[] = { "led_turbo_gpio", "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio" 
+	char *led_list[] = { "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio"
+#ifdef RTCONFIG_LOGO_LED
+		, "led_logo_gpio"
+#endif
 #ifdef RTCONFIG_LAN4WAN_LED
 		, "led_lan1_gpio", "led_lan2_gpio", "led_lan3_gpio", "led_lan4_gpio"
 #endif  /* LAN4WAN_LED */
@@ -322,7 +319,9 @@ void get_gpio_values_once(int force)
 #ifdef RTCONFIG_LED_ALL
 	led_gpio_table[LED_ALL] = __get_gpio("led_all_gpio");
 #endif
-	led_gpio_table[LED_TURBO] = __get_gpio("led_turbo_gpio");
+#ifdef RTCONFIG_LOGO_LED
+	led_gpio_table[LED_LOGO] = __get_gpio("led_logo_gpio");
+#endif
 	led_gpio_table[LED_WAN_RED] = __get_gpio("led_wan_red_gpio");
 #ifdef RTCONFIG_QTN
 	led_gpio_table[BTN_QTN_RESET] = __get_gpio("reset_qtn_gpio");
@@ -368,9 +367,6 @@ void get_gpio_values_once(int force)
 #endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
 	btn_wltog_gpio = __get_gpio("btn_wltog_gpio");
-#endif
-#ifdef RTCONFIG_TURBO
-	btn_turbo_gpio = __get_gpio("btn_turbo_gpio");
 #endif
 #ifdef RTCONFIG_LED_BTN
 	btn_led_gpio = __get_gpio("btn_led_gpio");
@@ -429,11 +425,6 @@ int button_pressed(int which)
 			use_gpio = btn_wltog_gpio;
 			break;
 #endif
-#ifdef RTCONFIG_TURBO
-		case BTN_TURBO:
-			use_gpio = btn_turbo_gpio;
-			break;
-#endif
 #ifdef RTCONFIG_LED_BTN
 		case BTN_LED:
 			use_gpio = btn_led_gpio;
@@ -487,7 +478,7 @@ int do_led_control(int which, int mode)
 	int v = (mode == LED_OFF)? 0:1;
 
 	// Did the user disable the leds?
-	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1) && (which != LED_TURBO)
+	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1)
 #ifdef RTCONFIG_QTN
 		&& (which != BTN_QTN_RESET)
 #endif

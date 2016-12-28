@@ -384,13 +384,23 @@ legend {
 }
 
 .contentM_qis{
-	margin-top:-160px;
 	position:relative;
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
 	*width:105%;
 	*margin-left:-45px;
+	background-color:#4D595D;
+}
+
+._contentM_qis{
+	margin-top: -160px;
+	width: 99%;
+	height: 540px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	background-color:#4D595D;
 }
 
 .QIS_survey{

@@ -159,10 +159,8 @@ if(gobi_support) {
 	var dualwan_first_if = wans_dualwan_array[0];
 	var dualwan_second_if = wans_dualwan_array[1];
 }
-if(wans_dualwan_orig.search(" ") == -1)
-	var wans_flag = 0;
-else
-	var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+
+var wans_flag = (wans_dualwan_orig.search("none") != -1 || !parent.dualWAN_support) ? 0 : 1;
 
 // USB function
 var currentUsbPort = new Number();
@@ -1257,6 +1255,7 @@ function select_image(type){
 
 	document.getElementById('client_image').style.backgroundSize = "";
 	document.getElementById('client_image').className = "clientIcon_no_hover " + icon_type;
+
 	if(verderIcon != "" && type == "type0") {
 		var venderIconClassName = getVenderIconClassName(verderIcon.toLowerCase());
 		if(venderIconClassName != "" && !downsize_4m_support) {
@@ -1673,8 +1672,9 @@ function popupEditBlock(clientObj){
 		}
 	});
 
-	if(isIE8){
+	if(top.isIE8){
 		document.getElementById('client_image').style.backgroundPosition = "50% -15% !important";
+		document.getElementById('client_image').className = "clientIconIE8HACK";
 	}
 }
 
