@@ -1631,7 +1631,7 @@ function show_menu(){
 
 	// tools
 	if(current_url.indexOf("Tools_") == 0) {
-		traffic_L2_dx = 16;
+		traffic_L2_dx = 17;
 		L1 = tools_L1;
 		L2 = traffic_L2_dx;
 	}
