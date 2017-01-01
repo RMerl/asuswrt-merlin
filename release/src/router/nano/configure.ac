@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 
-AC_INIT([GNU nano], [2.7.1], [nano-devel@gnu.org], [nano])
+AC_INIT([GNU nano], [2.7.3], [nano-devel@gnu.org], [nano])
 AC_CONFIG_SRCDIR([src/nano.c])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
@@ -88,13 +88,12 @@ if test "x$enable_tiny" = xyes; then
     if test "x$enable_comment" = xyes; then
 	AC_MSG_ERROR([--enable-comment cannot work with --enable-tiny])
     else
-	# Disabling nanorc silently disables comment support.
 	enable_comment=no
     fi
 fi
 if test "x$disable_comment" != xyes; then
     if test "x$enable_comment" != xno; then
-	AC_DEFINE(ENABLE_COMMENT, 1, [Define this to disable the comment/uncomment functionality.])
+	AC_DEFINE(ENABLE_COMMENT, 1, [Define this to enable the comment/uncomment function.])
     fi
 fi
 
@@ -173,7 +172,22 @@ fi
 AC_ARG_ENABLE(tabcomp,
 AS_HELP_STRING([--disable-tabcomp], [Disable tab completion functions]))
 if test "x$enable_tabcomp" = xno; then
-    AC_DEFINE(DISABLE_TABCOMP, 1, [Define this to disable the tab completion functions for files and search strings.])
+    AC_DEFINE(DISABLE_TABCOMP, 1, [Define this to disable the tab completion functions for filenames and search strings.])
+fi
+
+AC_ARG_ENABLE(wordcomp,
+AS_HELP_STRING([--disable-wordcomp], [Disable the word completion function]))
+if test "x$enable_tiny" = xyes; then
+    if test "x$enable_wordcomp" = xyes; then
+	AC_MSG_ERROR([--enable-wordcomp cannot work with --enable-tiny])
+    else
+	enable_wordcomp=no
+    fi
+fi
+if test "x$disable_wordcomp" != xyes; then
+    if test "x$enable_wordcomp" != xno; then
+	AC_DEFINE(ENABLE_WORDCOMPLETION, 1, [Define this to enable the word completion function.])
+    fi
 fi
 
 AC_ARG_ENABLE(wrapping,
@@ -551,8 +565,12 @@ else
     AC_MSG_RESULT([Using $CURSES_LIB_NAME as the curses library])
 fi
 
-AC_CHECK_LIB([$CURSES_LIB_NAME], use_default_colors, AC_DEFINE(HAVE_USE_DEFAULT_COLORS, 1, [Define this if your curses library has the use_default_colors() command.]))
-AC_CHECK_LIB([$CURSES_LIB_NAME], key_defined, AC_DEFINE(HAVE_KEY_DEFINED, 1, [Define this if your curses library has the key_defined() command.]))
+AC_CHECK_LIB([$CURSES_LIB_NAME], [use_default_colors],
+	     [AC_DEFINE(HAVE_USE_DEFAULT_COLORS, 1, [Define this if your curses library has the use_default_colors() command.])],
+	     [], [$CURSES_LIB])
+AC_CHECK_LIB([$CURSES_LIB_NAME], [key_defined],
+	     [AC_DEFINE(HAVE_KEY_DEFINED, 1, [Define this if your curses library has the key_defined() command.])],
+	     [], [$CURSES_LIB])
 
 dnl Parse any configure options.
 

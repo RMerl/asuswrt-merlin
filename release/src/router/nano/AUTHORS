@@ -53,6 +53,9 @@ Mike Scalora <mike@scalora.org>
 Faissal Bensefia <faissaloo@gmail.com>
 	* Line numbers.
 
+Sumedh Pendurkar <sumedh.pendurkar@gmail.com>
+	* The word-completion feature.
+
 Benno Schulenberg <bensberg@justemail.net>
 	* An array of small bug fixes, the cut-word and block-jump
 	  routines, text selection by holding Shift, and some extra

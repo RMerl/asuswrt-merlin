@@ -484,6 +484,13 @@ typedef struct subnfunc {
 	/* Next item in the list. */
 } subnfunc;
 
+#ifdef ENABLE_WORDCOMPLETION
+typedef struct completion_word {
+    char *word;
+    struct completion_word *next;
+} completion_word;
+#endif
+
 /* The elements of the interface that can be colored differently. */
 enum
 {

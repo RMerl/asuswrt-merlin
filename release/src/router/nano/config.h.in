@@ -47,7 +47,7 @@
 /* Define this to disable all text wrapping. */
 #undef DISABLE_WRAPPING
 
-/* Define this to disable the comment/uncomment functionality. */
+/* Define this to enable the comment/uncomment function. */
 #undef ENABLE_COMMENT
 
 /* Define this to enable line numbering. */
@@ -61,6 +61,9 @@
    library, iswalnum(), iswpunct(), iswblank() or iswspace(), nl_langinfo,
    mblen(), mbstowcs(), mbtowc(), wctomb(), and wcwidth()). */
 #undef ENABLE_UTF8
+
+/* Define this to enable the word completion function. */
+#undef ENABLE_WORDCOMPLETION
 
 /* Define this if the system supports GNU-style word boundaries in regexes. */
 #undef GNU_WORDBOUNDS

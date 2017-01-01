@@ -54,7 +54,7 @@ void get_homedir(void)
 
 #ifdef ENABLE_LINENUMBERS
 /* Return the number of digits that the given integer n takes up. */
-int digits(int n)
+int digits(ssize_t n)
 {
     if (n < 100000) {
         if (n < 1000) {
@@ -93,8 +93,6 @@ bool parse_num(const char *str, ssize_t *val)
     char *first_error;
     ssize_t j;
 
-    assert(str != NULL);
-
     /* The manual page for strtol() says this is required, and
      * it looks like it is! */
     errno = 0;
@@ -126,26 +124,24 @@ bool parse_line_column(const char *str, ssize_t *line, ssize_t *column)
     if (comma == NULL)
 	return parse_num(str, line);
 
-    if (!parse_num(comma + 1, column))
-	return FALSE;
+    retval = parse_num(comma + 1, column);
 
     if (comma == str)
-	return TRUE;
+	return retval;
 
     firstpart = mallocstrcpy(NULL, str);
     firstpart[comma - str] = '\0';
 
     retval = parse_num(firstpart, line);
+
     free(firstpart);
 
     return retval;
 }
 
-/* Fix the memory allocation for a string. */
-void align(char **str)
+/* Reduce the memory allocation of a string to what is needed. */
+void snuggly_fit(char **str)
 {
-    assert(str != NULL);
-
     if (*str != NULL)
 	*str = charealloc(*str, strlen(*str) + 1);
 }
@@ -153,8 +149,6 @@ void align(char **str)
 /* Null a string at a certain index and align it. */
 void null_at(char **data, size_t index)
 {
-    assert(data != NULL);
-
     *data = charealloc(*data, index + 1);
     (*data)[index] = '\0';
 }
@@ -163,8 +157,6 @@ void null_at(char **data, size_t index)
  * normally have newlines in it, so encode its nulls as newlines. */
 void unsunder(char *str, size_t true_len)
 {
-    assert(str != NULL);
-
     for (; true_len > 0; true_len--, str++) {
 	if (*str == '\0')
 	    *str = '\n';
@@ -175,8 +167,6 @@ void unsunder(char *str, size_t true_len)
  * normally have newlines in it, so decode its newlines as nulls. */
 void sunder(char *str)
 {
-    assert(str != NULL);
-
     for (; *str != '\0'; str++) {
 	if (*str == '\n')
 	    *str = '\0';
@@ -313,11 +303,8 @@ const char *fixbounds(const char *r)
  * a separate word?  That is: is it not part of a longer word?*/
 bool is_separate_word(size_t position, size_t length, const char *buf)
 {
-    char *before = charalloc(mb_cur_max()), *after = charalloc(mb_cur_max());
+    char before[mb_cur_max()], after[mb_cur_max()];
     size_t word_end = position + length;
-    bool retval;
-
-    assert(buf != NULL && position < strlen(buf) && position + length <= strlen(buf));
 
     /* Get the characters before and after the word, if any. */
     parse_mbchar(buf + move_mbleft(buf, position), before, NULL);
@@ -326,13 +313,8 @@ bool is_separate_word(size_t position, size_t length, const char *buf)
     /* If the word starts at the beginning of the line OR the character before
      * the word isn't a letter, and if the word ends at the end of the line OR
      * the character after the word isn't a letter, we have a whole word. */
-    retval = (position == 0 || !is_alpha_mbchar(before)) &&
-		(word_end == strlen(buf) || !is_alpha_mbchar(after));
-
-    free(before);
-    free(after);
-
-    return retval;
+    return ((position == 0 || !is_alpha_mbchar(before)) &&
+		(buf[word_end] == '\0' || !is_alpha_mbchar(after)));
 }
 #endif /* !DISABLE_SPELLER */
 
@@ -349,8 +331,6 @@ const char *strstrwrapper(const char *haystack, const char *needle,
      * line.  In either case, we just say no match was found. */
     if ((start > haystack && *(start - 1) == '\0') || start < haystack)
 	return NULL;
-
-    assert(haystack != NULL && needle != NULL && start != NULL);
 
 #ifdef HAVE_REGEX_H
     if (ISSET(USE_REGEXP)) {
@@ -475,8 +455,6 @@ size_t get_page_start(size_t column)
  * column position of the cursor. */
 size_t xplustabs(void)
 {
-    assert(openfile->current != NULL);
-
     return strnlenpt(openfile->current->data, openfile->current_x);
 }
 
@@ -488,8 +466,6 @@ size_t actual_x(const char *text, size_t column)
 	/* The index in text, returned. */
     size_t width = 0;
 	/* The screen display width to text[index], in columns. */
-
-    assert(text != NULL);
 
     while (*text != '\0') {
 	int charlen = parse_mbchar(text, NULL, &width);
@@ -513,8 +489,6 @@ size_t strnlenpt(const char *text, size_t maxlen)
 
     if (maxlen == 0)
 	return 0;
-
-    assert(text != NULL);
 
     while (*text != '\0') {
 	int charlen = parse_mbchar(text, NULL, &width);
@@ -559,9 +533,6 @@ void remove_magicline(void)
 {
     if (openfile->filebot->data[0] == '\0' &&
 		openfile->filebot != openfile->fileage) {
-	assert(openfile->filebot != openfile->edittop &&
-		openfile->filebot != openfile->current);
-
 	openfile->filebot = openfile->filebot->prev;
 	free_filestruct(openfile->filebot->next);
 	openfile->filebot->next = NULL;
@@ -577,8 +548,6 @@ void remove_magicline(void)
 void mark_order(const filestruct **top, size_t *top_x, const filestruct
 	**bot, size_t *bot_x, bool *right_side_up)
 {
-    assert(top != NULL && top_x != NULL && bot != NULL && bot_x != NULL);
-
     if ((openfile->current->lineno == openfile->mark_begin->lineno &&
 		openfile->current_x > openfile->mark_begin_x) ||
 		openfile->current->lineno > openfile->mark_begin->lineno) {
@@ -597,37 +566,6 @@ void mark_order(const filestruct **top, size_t *top_x, const filestruct
 	    *right_side_up = FALSE;
     }
 }
-#endif /* !NANO_TINY */
-
-/* Calculate the number of characters between begin and end, and return
- * it. */
-size_t get_totsize(const filestruct *begin, const filestruct *end)
-{
-    size_t totsize = 0;
-    const filestruct *f;
-
-    /* Go through the lines from begin to end->prev, if we can. */
-    for (f = begin; f != end && f != NULL; f = f->next) {
-	/* Count the number of characters on this line. */
-	totsize += mbstrlen(f->data);
-
-	/* Count the newline if we have one. */
-	if (f->next != NULL)
-	    totsize++;
-    }
-
-    /* Go through the line at end, if we can. */
-    if (f != NULL) {
-	/* Count the number of characters on this line. */
-	totsize += mbstrlen(f->data);
-
-	/* Count the newline if we have one. */
-	if (f->next != NULL)
-	    totsize++;
-    }
-
-    return totsize;
-}
 
 /* Given a line number, return a pointer to the corresponding struct. */
 filestruct *fsfromline(ssize_t lineno)
@@ -642,12 +580,31 @@ filestruct *fsfromline(ssize_t lineno)
 	    f = f->next;
 
     if (f->lineno != lineno) {
-	statusline(ALERT, _("Internal error: can't match line %d.  "
-			"Please save your work."), lineno);
+	statusline(ALERT, _("Internal error: can't match line %ld.  "
+			"Please save your work."), (long)lineno);
 	return NULL;
     }
 
     return f;
+}
+#endif /* !NANO_TINY */
+
+/* Count the number of characters from begin to end, and return it. */
+size_t get_totsize(const filestruct *begin, const filestruct *end)
+{
+    const filestruct *line;
+    size_t totsize = 0;
+
+    /* Sum the number of characters (plus a newline) in each line. */
+    for (line = begin; line != end->next; line = line->next)
+	totsize += mbstrlen(line->data) + 1;
+
+    /* The last line of a file doesn't have a newline -- otherwise it
+     * wouldn't be the last line -- so subtract 1 when at EOF. */
+    if (line == NULL)
+	totsize--;
+
+    return totsize;
 }
 
 #ifdef DEBUG

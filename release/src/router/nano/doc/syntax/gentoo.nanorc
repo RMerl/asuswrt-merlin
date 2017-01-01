@@ -49,19 +49,19 @@ color ,green "[[:space:]]+$"
 syntax "/etc/portage" "\.(accept_keywords|env|keywords|mask|unmask|use)(/.+)?$"
 ## Base text:
 color green "^.+$"
-## Use flags:
-color brightred "[[:space:]]+\+?[a-zA-Z0-9_-]+"
-color brightblue "[[:space:]]+-[a-zA-Z0-9_-]+"
 ## Likely version and slot numbers:
-color magenta "-[[:digit:]].*([[:space:]]|$)"
+color magenta "-[[:digit:].]+(_(alpha|beta|pre|rc|p)[[:digit:]]*)*(-r[[:digit:]]+)?([:[:space:]]|$)"
 color magenta ":[^[:space:]]+([[:space:]]|$)"
+## Use flags (must come after version/slot):
+color brightred "[[:space:]]+\+?[A-Za-z0-9+_@-]+"
+color brightblue "[[:space:]]+-[A-Za-z0-9+_@-]+"
 ## Accepted arches:
-color white "[~-]?\<(alpha|amd64|arm|hppa|ia64|mips|ppc|ppc64|s390|sh|sparc(-fbsd)?|x86(-fbsd)?)\>"
+color white "[~-]?\<(alpha|amd64|arm(64)?|hppa|ia64|m68k|mips|nios2|ppc(64)?|riscv|s390|sh|sparc|x86)(-(aix|(f|free|net|open)bsd|cygwin|hpux|interix|linux|macos|mint|solaris|winnt))?\>"
 color white "[[:space:]][*~-]?\*"
 ## Categories:
-color cyan "^[[:space:]]*.*/"
+color cyan "^[[:space:]]*[^/]*/"
 ## Masking regulators:
-color brightmagenta "^[[:space:]]*(=|~|<|<=|=<|>|>=|=>)"
+color brightmagenta "^[[:space:]]*(=|~|<|<=|>|>=)"
 ## Comments:
 color yellow "#.*$"
 ## Trailing space is bad!

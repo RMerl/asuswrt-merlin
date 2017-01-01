@@ -10,7 +10,7 @@ color green "\<(define|include)\>"
 color red "\<(add|delete|flush|insert|remove|replace)\>"
 
 # Families
-color yellow "\<(arp|bridge|inet|ip6?)\>"
+color yellow "\<(arp|bridge|inet|ingress|ip6?|netdev)\>"
 
 # Terminal statements
 color red "\<(drop|reject)\>"
@@ -27,4 +27,4 @@ color yellow ""(\\.|[^"])*"" "'(\\.|[^'])*'"
 color green "[{}():;|`$<>!=&\\]" "(\]|\[)"
 
 # Basic variable names
-color brightred "\$[[:alpha:]_][[:alnum:]_.]*"
+color brightred "(\$|@)[[:alpha:]_-][[:alnum:]_.-]*"

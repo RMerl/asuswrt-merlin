@@ -55,21 +55,6 @@ static bool seen_wide = FALSE;
 	/* Whether we've seen a multicolumn character in the current line. */
 #endif
 
-#ifndef NANO_TINY
-static sig_atomic_t last_sigwinch_counter = 0;
-
-/* Did we receive a SIGWINCH since we were last called? */
-bool the_window_resized(void)
-{
-    if (sigwinch_counter == last_sigwinch_counter)
-	return FALSE;
-
-    last_sigwinch_counter = sigwinch_counter;
-    regenerate_screen();
-    return TRUE;
-}
-#endif
-
 /* Control character compatibility:
  *
  * - Ctrl-H is Backspace under ASCII, ANSI, VT100, and VT220.
@@ -144,8 +129,9 @@ void get_key_buffer(WINDOW *win)
     input = wgetch(win);
 
 #ifndef NANO_TINY
-    if (the_window_resized()) {
+    if (the_window_resized) {
 	ungetch(input);
+	regenerate_screen();
 	input = KEY_WINCH;
     }
 #endif
@@ -162,7 +148,8 @@ void get_key_buffer(WINDOW *win)
 	    handle_hupterm(0);
 
 #ifndef NANO_TINY
-	if (the_window_resized()) {
+	if (the_window_resized) {
+	    regenerate_screen();
 	    input = KEY_WINCH;
 	    break;
 	}
@@ -391,7 +378,8 @@ int parse_kbinput(WINDOW *win)
 	    break;
 	case 2:
 	    if (double_esc) {
-		/* An "ESC ESC [ X" sequence from Option+arrow. */
+		/* An "ESC ESC [ X" sequence from Option+arrow, or
+		 * an "ESC ESC [ x" sequence from Shift+Alt+arrow. */
 		switch (keycode) {
 		    case 'A':
 			retval = KEY_HOME;
@@ -400,11 +388,25 @@ int parse_kbinput(WINDOW *win)
 			retval = KEY_END;
 			break;
 		    case 'C':
-			retval = controlright;
+			retval = CONTROL_RIGHT;
 			break;
 		    case 'D':
-			retval = controlleft;
+			retval = CONTROL_LEFT;
 			break;
+#ifndef NANO_TINY
+		    case 'a':
+			retval = shiftaltup;
+			break;
+		    case 'b':
+			retval = shiftaltdown;
+			break;
+		    case 'c':
+			retval = shiftaltright;
+			break;
+		    case 'd':
+			retval = shiftaltleft;
+			break;
+#endif
 		}
 		double_esc = FALSE;
 		escapes = 0;
@@ -464,8 +466,9 @@ int parse_kbinput(WINDOW *win)
 		    escapes = 0;
 		}
 	    } else if (keycode == '[' && key_buffer_len > 0 &&
-			'A' <= *key_buffer && *key_buffer <= 'D') {
-		/* This is an iTerm2 sequence: ^[ ^[ [ X. */
+			(('A' <= *key_buffer && *key_buffer <= 'D') ||
+			('a' <= *key_buffer && *key_buffer <= 'd'))) {
+		/* An iTerm2/Eterm/rxvt sequence: ^[ ^[ [ X. */
 		double_esc = TRUE;
 	    } else {
 		/* Two escapes followed by a non-escape, and there are more
@@ -505,28 +508,28 @@ int parse_kbinput(WINDOW *win)
 #ifndef NANO_TINY
     else if (retval == shiftcontrolleft) {
 	shift_held = TRUE;
-	return sc_seq_or(do_prev_word_void, shiftcontrolleft);
+	return CONTROL_LEFT;
     } else if (retval == shiftcontrolright) {
 	shift_held = TRUE;
-	return sc_seq_or(do_next_word_void, shiftcontrolright);
+	return CONTROL_RIGHT;
     } else if (retval == shiftcontrolup) {
 	shift_held = TRUE;
-	return sc_seq_or(do_prev_block, shiftcontrolup);
+	return CONTROL_UP;
     } else if (retval == shiftcontroldown) {
 	shift_held = TRUE;
-	return sc_seq_or(do_next_block, shiftcontroldown);
+	return CONTROL_DOWN;
     } else if (retval == shiftaltleft) {
 	shift_held = TRUE;
-	return sc_seq_or(do_home, shiftaltleft);
+	return KEY_HOME;
     } else if (retval == shiftaltright) {
 	shift_held = TRUE;
-	return sc_seq_or(do_end, shiftaltright);
+	return KEY_END;
     } else if (retval == shiftaltup) {
 	shift_held = TRUE;
-	return sc_seq_or(do_page_up, shiftaltup);
+	return KEY_PPAGE;
     } else if (retval == shiftaltdown) {
 	shift_held = TRUE;
-	return sc_seq_or(do_page_down, shiftaltdown);
+	return KEY_NPAGE;
     }
 #endif
 
@@ -536,33 +539,33 @@ int parse_kbinput(WINDOW *win)
     unsigned char modifiers = 6;
 
     if (console && ioctl(0, TIOCLINUX, &modifiers) >= 0) {
-	/* Is Ctrl being held? */
-	if (modifiers & 0x04) {
-	    if (retval == KEY_UP)
-		return sc_seq_or(do_prev_block, controlup);
-	    else if (retval == KEY_DOWN)
-		return sc_seq_or(do_next_block, controldown);
-	    else if (retval == KEY_LEFT)
-		return sc_seq_or(do_prev_word_void, controlleft);
-	    else if (retval == KEY_RIGHT)
-		return sc_seq_or(do_next_word_void, controlright);
-	}
-
 #ifndef NANO_TINY
 	/* Is Shift being held? */
 	if (modifiers & 0x01)
-	    shift_held =TRUE;
-
+	    shift_held = TRUE;
+#endif
+	/* Is Ctrl being held? */
+	if (modifiers & 0x04) {
+	    if (retval == KEY_UP)
+		return CONTROL_UP;
+	    else if (retval == KEY_DOWN)
+		return CONTROL_DOWN;
+	    else if (retval == KEY_LEFT)
+		return CONTROL_LEFT;
+	    else if (retval == KEY_RIGHT)
+		return CONTROL_RIGHT;
+	}
+#ifndef NANO_TINY
 	/* Are both Shift and Alt being held? */
 	if ((modifiers & 0x09) == 0x09) {
 	    if (retval == KEY_UP)
-		return sc_seq_or(do_page_up, shiftaltup);
+		return KEY_PPAGE;
 	    else if (retval == KEY_DOWN)
-		return sc_seq_or(do_page_down, shiftaltdown);
+		return KEY_NPAGE;
 	    else if (retval == KEY_LEFT)
-		return sc_seq_or(do_home, shiftaltleft);
+		return KEY_HOME;
 	    else if (retval == KEY_RIGHT)
-		return sc_seq_or(do_end, shiftaltright);
+		return KEY_END;
 	}
 #endif
     }
@@ -616,12 +619,18 @@ int parse_kbinput(WINDOW *win)
 	case KEY_C1:	/* End (1) on keypad with NumLock off. */
 	    return KEY_END;
 #ifndef NANO_TINY
-	case SHIFT_PAGEUP:		/* Fake key, from Shift+Alt+Up. */
+#ifdef KEY_SPREVIOUS
+	case KEY_SPREVIOUS:
+#endif
+	case SHIFT_PAGEUP:	/* Fake key, from Shift+Alt+Up. */
 	    shift_held = TRUE;
 #endif
 	case KEY_A3:	/* PageUp (9) on keypad with NumLock off. */
 	    return KEY_PPAGE;
 #ifndef NANO_TINY
+#ifdef KEY_SNEXT
+	case KEY_SNEXT:
+#endif
 	case SHIFT_PAGEDOWN:	/* Fake key, from Shift+Alt+Down. */
 	    shift_held = TRUE;
 #endif
@@ -633,13 +642,13 @@ int parse_kbinput(WINDOW *win)
 #endif
 	case DEL_CODE:
 	    if (ISSET(REBIND_DELETE))
-		return sc_seq_or(do_delete, KEY_DC);
+		return the_code_for(do_delete, KEY_DC);
 	    else
 		return KEY_BACKSPACE;
 #ifdef KEY_SIC
 	/* Slang doesn't support KEY_SIC. */
 	case KEY_SIC:
-	    return sc_seq_or(do_insertfile_void, KEY_IC);
+	    return the_code_for(do_insertfile_void, KEY_IC);
 #endif
 #ifdef KEY_SBEG
 	/* Slang doesn't support KEY_SBEG. */
@@ -658,7 +667,7 @@ int parse_kbinput(WINDOW *win)
 #endif
 	/* Slang doesn't support KEY_CANCEL. */
 	case KEY_CANCEL:
-	    return first_sc_for(currmenu, do_cancel)->keycode;
+	    return the_code_for(do_cancel, 0x03);
 #endif
 #ifdef KEY_SUSPEND
 #ifdef KEY_SSUSPEND
@@ -667,7 +676,7 @@ int parse_kbinput(WINDOW *win)
 #endif
 	/* Slang doesn't support KEY_SUSPEND. */
 	case KEY_SUSPEND:
-	    return sc_seq_or(do_suspend_void, KEY_SUSPEND);
+	    return the_code_for(do_suspend_void, KEY_SUSPEND);
 #endif
 #ifdef PDCURSES
 	case KEY_SHIFT_L:
@@ -1001,22 +1010,40 @@ int convert_sequence(const int *seq, size_t seq_len)
 			break;
 		    case '3': /* Esc [ 3 ~ == Delete on VT220/VT320/
 			       * Linux console/xterm/Terminal. */
-			return KEY_DC;
+			if (seq_len > 2 && seq[2] == '~')
+			    return KEY_DC;
+			break;
 		    case '4': /* Esc [ 4 ~ == End on VT220/VT320/Linux
 			       * console/xterm. */
-			return KEY_END;
+			if (seq_len > 2 && seq[2] == '~')
+			    return KEY_END;
+			break;
 		    case '5': /* Esc [ 5 ~ == PageUp on VT220/VT320/
 			       * Linux console/xterm/Terminal;
 			       * Esc [ 5 ^ == PageUp on Eterm. */
-			return KEY_PPAGE;
+			if (seq_len > 2 && (seq[2] == '~' || seq[2] == '^'))
+			    return KEY_PPAGE;
+			break;
 		    case '6': /* Esc [ 6 ~ == PageDown on VT220/VT320/
 			       * Linux console/xterm/Terminal;
 			       * Esc [ 6 ^ == PageDown on Eterm. */
-			return KEY_NPAGE;
-		    case '7': /* Esc [ 7 ~ == Home on rxvt. */
-			return KEY_HOME;
-		    case '8': /* Esc [ 8 ~ == End on rxvt. */
-			return KEY_END;
+			if (seq_len > 2 && (seq[2] == '~' || seq[2] == '^'))
+			    return KEY_NPAGE;
+			break;
+		    case '7': /* Esc [ 7 ~ == Home on Eterm/rxvt,
+			       * Esc [ 7 $ == Shift-Home on Eterm/rxvt. */
+			if (seq_len > 2 && seq[2] == '~')
+			    return KEY_HOME;
+			else if (seq_len > 2 && seq[2] == '$')
+			    return SHIFT_HOME;
+			break;
+		    case '8': /* Esc [ 8 ~ == End on Eterm/rxvt.
+			       * Esc [ 8 $ == Shift-End on Eterm/rxvt. */
+			if (seq_len > 2 && seq[2] == '~')
+			    return KEY_END;
+			else if (seq_len > 2 && seq[2] == '$')
+			    return SHIFT_END;
+			break;
 		    case '9': /* Esc [ 9 == Delete on Mach console. */
 			return KEY_DC;
 		    case '@': /* Esc [ @ == Insert on Mach console. */
@@ -1415,8 +1442,14 @@ int *get_verbatim_kbinput(WINDOW *win, size_t *kbinput_len)
     if (!ISSET(REBIND_KEYPAD))
 	keypad(win, FALSE);
 
-    /* Read in a stream of characters and interpret it if possible. */
+    /* Read in one keycode, or one or two escapes. */
     retval = parse_verbatim_kbinput(win, kbinput_len);
+
+    /* If the code is invalid in the current mode, discard it. */
+    if ((*retval == '\n' && as_an_at) || (*retval == '\0' && !as_an_at)) {
+	*kbinput_len = 0;
+	beep();
+    }
 
     /* Turn flow control characters back on if necessary and turn the
      * keypad back on if necessary now that we're done. */
@@ -1432,10 +1465,10 @@ int *get_verbatim_kbinput(WINDOW *win, size_t *kbinput_len)
     return retval;
 }
 
-/* Read in one control character (or an iTerm double Escape), or convert a
- * series of six digits into a Unicode codepoint.  Return in count either 1
- * (for a control character or the first byte of a multibyte sequence), or 2
- * (for an iTerm double Escape). */
+/* Read in one control character (or an iTerm/Eterm/rxvt double Escape),
+ * or convert a series of six digits into a Unicode codepoint.  Return
+ * in count either 1 (for a control character or the first byte of a
+ * multibyte sequence), or 2 (for an iTerm/Eterm/rxvt double Escape). */
 int *parse_verbatim_kbinput(WINDOW *win, size_t *count)
 {
     int *kbinput;
@@ -1497,7 +1530,7 @@ int *parse_verbatim_kbinput(WINDOW *win, size_t *count)
 
     *count = 1;
 
-    /* If this is an iTerm double escape, take both Escapes. */
+    /* If this is an iTerm/Eterm/rxvt double escape, take both Escapes. */
     if (key_buffer_len > 3 && *key_buffer == ESC_CODE &&
 		key_buffer[1] == ESC_CODE && key_buffer[2] == '[')
 	*count = 2;
@@ -1763,11 +1796,11 @@ void check_statusblank(void)
  * caller wants to display buf starting with column start_col, and
  * extending for at most span columns.  start_col is zero-based.  span
  * is one-based, so span == 0 means you get "" returned.  The returned
- * string is dynamically allocated, and should be freed.  If dollars is
+ * string is dynamically allocated, and should be freed.  If isdata is
  * TRUE, the caller might put "$" at the beginning or end of the line if
  * it's too long. */
 char *display_string(const char *buf, size_t start_col, size_t span,
-	bool dollars)
+	bool isdata)
 {
     size_t start_index;
 	/* Index in buf of the first character shown. */
@@ -1778,9 +1811,8 @@ char *display_string(const char *buf, size_t start_col, size_t span,
     size_t index;
 	/* Current position in converted. */
 
-    /* If dollars is TRUE, make room for the "$" at the end of the
-     * line. */
-    if (dollars && span > 0 && strlenpt(buf) > start_col + span)
+    /* If this is data, make room for the "$" at the end of the line. */
+    if (isdata && !ISSET(SOFTWRAP) && strlenpt(buf) > start_col + span)
 	span--;
 
     if (span == 0)
@@ -1801,12 +1833,12 @@ char *display_string(const char *buf, size_t start_col, size_t span,
     buf += start_index;
 
     if (*buf != '\0' && *buf != '\t' &&
-	(column < start_col || (dollars && column > 0))) {
+	(column < start_col || (isdata && column > 0))) {
 	/* We don't display the complete first character as it starts to
 	 * the left of the screen. */
 	if (is_cntrl_mbchar(buf)) {
 	    if (column < start_col) {
-		converted[index++] = control_mbrep(buf);
+		converted[index++] = control_mbrep(buf, isdata);
 		start_col++;
 		buf += parse_mbchar(buf, NULL, NULL);
 	    }
@@ -1869,7 +1901,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	/* If buf contains a control character, represent it. */
 	if (is_cntrl_mbchar(buf)) {
 	    converted[index++] = '^';
-	    converted[index++] = control_mbrep(buf);
+	    converted[index++] = control_mbrep(buf, isdata);
 	    start_col += 2;
 	    buf += charlength;
 	    continue;
@@ -1929,8 +1961,8 @@ void titlebar(const char *path)
 	/* What is shown before the path -- "File:", "DIR:", or "". */
     const char *state = "";
 	/* The state of the current buffer -- "Modified", "View", or "". */
-    char *fragment;
-	/* The tail part of the pathname when dottified. */
+    char *caption;
+	/* The presentable form of the pathname. */
 
     /* If the screen is too small, there is no titlebar. */
     if (topwin == NULL)
@@ -1941,6 +1973,7 @@ void titlebar(const char *path)
     wattron(topwin, interface_color_pair[TITLE_BAR]);
 
     blank_titlebar();
+    as_an_at = FALSE;
 
     /* Do as Pico: if there is not enough width available for all items,
      * first sacrifice the version string, then eat up the side spaces,
@@ -2009,14 +2042,16 @@ void titlebar(const char *path)
 	wmove(topwin, 0, offset);
 
     /* Print the full path if there's room; otherwise, dottify it. */
-    if (pathlen + pluglen + statelen <= COLS)
-	waddstr(topwin, path);
-    else if (5 + statelen <= COLS) {
+    if (pathlen + pluglen + statelen <= COLS) {
+	caption = display_string(path, 0, pathlen, FALSE);
+	waddstr(topwin, caption);
+	free(caption);
+    } else if (5 + statelen <= COLS) {
 	waddstr(topwin, "...");
-	fragment = display_string(path, 3 + pathlen - COLS + statelen,
+	caption = display_string(path, 3 + pathlen - COLS + statelen,
 					COLS - statelen, FALSE);
-	waddstr(topwin, fragment);
-	free(fragment);
+	waddstr(topwin, caption);
+	free(caption);
     }
 
     /* Right-align the state if there's room; otherwise, trim it. */
@@ -2036,6 +2071,15 @@ void titlebar(const char *path)
 void statusbar(const char *msg)
 {
     statusline(HUSH, msg);
+}
+
+/* Warn the user on the statusbar and pause for a moment, so that the
+ * message can be noticed and read. */
+void warn_and_shortly_pause(const char *msg)
+{
+    statusbar(msg);
+    beep();
+    napms(1800);
 }
 
 /* Display a message on the statusbar, and set suppress_cursorpos to
@@ -2273,10 +2317,12 @@ void edit_draw(filestruct *fileptr, const char *converted, int
      * the text -- but only for the parts that are not softwrapped. */
     if (margin > 0) {
 	wattron(edit, interface_color_pair[LINE_NUMBER]);
-	if (last_drawn_line != fileptr->lineno || last_line_y >= line)
-	    mvwprintw(edit, line, 0, "%*i", margin - 1, fileptr->lineno);
-	else
+#ifndef NANO_TINY
+	if (ISSET(SOFTWRAP) && startpos >= editwincols)
 	    mvwprintw(edit, line, 0, "%*s", margin - 1, " ");
+	else
+#endif
+	    mvwprintw(edit, line, 0, "%*ld", margin - 1, (long)fileptr->lineno);
 	wattroff(edit, interface_color_pair[LINE_NUMBER]);
     }
 #endif
@@ -2644,10 +2690,6 @@ void edit_draw(filestruct *fileptr, const char *converted, int
 	}
     }
 #endif /* !NANO_TINY */
-#ifdef ENABLE_LINENUMBERS
-    last_drawn_line = fileptr->lineno;
-    last_line_y = line;
-#endif
 }
 
 /* Just update one line in the edit buffer.  This is basically a wrapper
@@ -2694,15 +2736,11 @@ int update_line(filestruct *fileptr, size_t index)
 
     /* Expand the line, replacing tabs with spaces, and control
      * characters with their displayed forms. */
-#ifdef NANO_TINY
     converted = display_string(fileptr->data, page_start, editwincols, TRUE);
-#else
-    converted = display_string(fileptr->data, page_start, editwincols, !ISSET(SOFTWRAP));
 #ifdef DEBUG
     if (ISSET(SOFTWRAP) && strlen(converted) >= editwincols - 2)
 	fprintf(stderr, "update_line(): converted(1) line = %s\n", converted);
 #endif
-#endif /* !NANO_TINY */
 
     /* Paint the line. */
     edit_draw(fileptr, converted, line, page_start);
@@ -2727,7 +2765,7 @@ int update_line(filestruct *fileptr, size_t index)
 
 	    /* Expand the line, replacing tabs with spaces, and control
 	     * characters with their displayed forms. */
-	    converted = display_string(fileptr->data, index, editwincols, !ISSET(SOFTWRAP));
+	    converted = display_string(fileptr->data, index, editwincols, TRUE);
 #ifdef DEBUG
 	    if (ISSET(SOFTWRAP) && strlen(converted) >= editwincols - 2)
 		fprintf(stderr, "update_line(): converted(2) line = %s\n", converted);
@@ -2755,31 +2793,32 @@ bool need_horizontal_scroll(const size_t old_column, const size_t new_column)
 	return (get_page_start(old_column) != get_page_start(new_column));
 }
 
-/* When edittop changes, try and figure out how many lines
- * we really have to work with (i.e. set maxrows). */
+/* When edittop changes, try and figure out how many lines we really
+ * have to work with, accounting for softwrap mode. */
 void compute_maxrows(void)
 {
-    int n;
-    filestruct *foo = openfile->edittop;
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP)) {
+	int screenrow;
+	filestruct *line = openfile->edittop;
 
-    if (!ISSET(SOFTWRAP)) {
-	maxrows = editwinrows;
-	return;
-    }
+	maxrows = 0;
 
-    maxrows = 0;
-    for (n = 0; n < editwinrows && foo; n++) {
-	maxrows++;
-	n += strlenpt(foo->data) / editwincols;
-	foo = foo->next;
-    }
+	for (screenrow = 0; screenrow < editwinrows && line != NULL; screenrow++) {
+	    screenrow += strlenpt(line->data) / editwincols;
+	    line = line->next;
+	    maxrows++;
+	}
 
-    if (n < editwinrows)
-	maxrows += editwinrows - n;
+	if (screenrow < editwinrows)
+	    maxrows += editwinrows - screenrow;
 
 #ifdef DEBUG
-    fprintf(stderr, "compute_maxrows(): maxrows = %d\n", maxrows);
+	fprintf(stderr, "recomputed: maxrows = %d\n", maxrows);
 #endif
+    } else
+#endif /* !NANO_TINY */
+	maxrows = editwinrows;
 }
 
 /* Scroll the edit window in the given direction and the given number
@@ -2934,8 +2973,8 @@ void edit_redraw(filestruct *old_current)
  * if we've moved and changed text. */
 void edit_refresh(void)
 {
-    filestruct *foo;
-    int nlines;
+    filestruct *line;
+    int row = 0;
 
     /* Figure out what maxrows should really be. */
     compute_maxrows();
@@ -2944,29 +2983,30 @@ void edit_refresh(void)
     if (openfile->current->lineno < openfile->edittop->lineno ||
 		openfile->current->lineno >= openfile->edittop->lineno + maxrows) {
 #ifdef DEBUG
-	fprintf(stderr, "edit_refresh(): line = %ld, edittop %ld + maxrows %d\n",
+	fprintf(stderr, "edit-refresh: line = %ld, edittop = %ld and maxrows = %d\n",
 		(long)openfile->current->lineno, (long)openfile->edittop->lineno, maxrows);
 #endif
 	adjust_viewport((focusing || !ISSET(SMOOTH_SCROLL)) ? CENTERING : STATIONARY);
     }
 
-    foo = openfile->edittop;
-
 #ifdef DEBUG
-    fprintf(stderr, "edit_refresh(): edittop->lineno = %ld\n", (long)openfile->edittop->lineno);
+    fprintf(stderr, "edit-refresh: now edittop = %ld\n", (long)openfile->edittop->lineno);
 #endif
 
-    for (nlines = 0; nlines < editwinrows && foo != NULL; nlines++) {
-	nlines += update_line(foo, (foo == openfile->current) ?
-					openfile->current_x : 0);
-	foo = foo->next;
+    line = openfile->edittop;
+
+    while (row < editwinrows && line != NULL) {
+	if (line == openfile->current)
+	    row += update_line(line, openfile->current_x) + 1;
+	else
+	    row += update_line(line, 0) + 1;
+	line = line->next;
     }
 
-    for (; nlines < editwinrows; nlines++)
-	blank_line(edit, nlines, 0, COLS);
+    while (row < editwinrows)
+	blank_line(edit, row++, 0, COLS);
 
     reset_cursor();
-    curs_set(1);
     wnoutrefresh(edit);
 
     refresh_needed = FALSE;
@@ -3070,25 +3110,24 @@ void display_main_list(void)
  * position always.  In any case we reset suppress_cursorpos to FALSE. */
 void do_cursorpos(bool constant)
 {
-    filestruct *f;
-    char c;
-    size_t i, cur_xpt = xplustabs() + 1;
+    char saved_byte;
+    size_t sum, cur_xpt = xplustabs() + 1;
     size_t cur_lenpt = strlenpt(openfile->current->data) + 1;
     int linepct, colpct, charpct;
 
     assert(openfile->fileage != NULL && openfile->current != NULL);
 
     /* Determine the size of the file up to the cursor. */
-    f = openfile->current->next;
-    c = openfile->current->data[openfile->current_x];
-
-    openfile->current->next = NULL;
+    saved_byte = openfile->current->data[openfile->current_x];
     openfile->current->data[openfile->current_x] = '\0';
 
-    i = get_totsize(openfile->fileage, openfile->current);
+    sum = get_totsize(openfile->fileage, openfile->current);
 
-    openfile->current->data[openfile->current_x] = c;
-    openfile->current->next = f;
+    openfile->current->data[openfile->current_x] = saved_byte;
+
+    /* When not at EOF, subtract 1 for an overcounted newline. */
+    if (openfile->current != openfile->filebot)
+	sum--;
 
     /* If the position needs to be suppressed, don't suppress it next time. */
     if (suppress_cursorpos && constant) {
@@ -3099,14 +3138,14 @@ void do_cursorpos(bool constant)
     /* Display the current cursor position on the statusbar. */
     linepct = 100 * openfile->current->lineno / openfile->filebot->lineno;
     colpct = 100 * cur_xpt / cur_lenpt;
-    charpct = (openfile->totsize == 0) ? 0 : 100 * i / openfile->totsize;
+    charpct = (openfile->totsize == 0) ? 0 : 100 * sum / openfile->totsize;
 
     statusline(HUSH,
 	_("line %ld/%ld (%d%%), col %lu/%lu (%d%%), char %lu/%lu (%d%%)"),
 	(long)openfile->current->lineno,
 	(long)openfile->filebot->lineno, linepct,
 	(unsigned long)cur_xpt, (unsigned long)cur_lenpt, colpct,
-	(unsigned long)i, (unsigned long)openfile->totsize, charpct);
+	(unsigned long)sum, (unsigned long)openfile->totsize, charpct);
 
     /* Displaying the cursor position should not suppress it next time. */
     suppress_cursorpos = FALSE;
@@ -3145,7 +3184,6 @@ void spotlight(bool active, const char *word)
 	room--;
 
     reset_cursor();
-    wnoutrefresh(edit);
 
     if (active)
 	wattron(edit, hilite_attribute);
@@ -3161,6 +3199,8 @@ void spotlight(bool active, const char *word)
 
     if (active)
 	wattroff(edit, hilite_attribute);
+
+    wnoutrefresh(edit);
 }
 
 #ifndef DISABLE_EXTRA

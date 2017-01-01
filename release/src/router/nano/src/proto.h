@@ -26,7 +26,7 @@
 
 /* All external variables.  See global.c for their descriptions. */
 #ifndef NANO_TINY
-extern volatile sig_atomic_t sigwinch_counter;
+extern volatile sig_atomic_t the_window_resized;
 #endif
 
 #ifdef __linux__
@@ -38,14 +38,14 @@ extern bool shift_held;
 
 extern bool focusing;
 
+extern bool as_an_at;
+
 extern int margin;
 extern int editwincols;
-#ifdef ENABLE_LINENUMBERS
-extern int last_drawn_line;
-extern int last_line_y;
-#endif
 
 extern message_type lastmessage;
+
+extern filestruct *pletion_line;
 
 extern int controlleft;
 extern int controlright;
@@ -209,7 +209,7 @@ bool is_cntrl_mbchar(const char *c);
 bool is_punct_mbchar(const char *c);
 bool is_word_mbchar(const char *c, bool allow_punct);
 char control_rep(const signed char c);
-char control_mbrep(const char *c);
+char control_mbrep(const char *c, bool isdata);
 int length_of_char(const char *c, int *width);
 int mbwidth(const char *c);
 int mb_cur_max(void);
@@ -229,8 +229,8 @@ int mbstrncasecmp(const char *s1, const char *s2, size_t n);
 char *nstrcasestr(const char *haystack, const char *needle);
 #endif
 char *mbstrcasestr(const char *haystack, const char *needle);
-char *revstrstr(const char *haystack, const char *needle, const char
-	*rev_start);
+char *revstrstr(const char *haystack, const char *needle,
+	const char *pointer);
 char *revstrcasestr(const char *haystack, const char *needle, const char
 	*rev_start);
 char *mbrevstrcasestr(const char *haystack, const char *needle, const
@@ -348,19 +348,19 @@ const char *tail(const char *path);
 #ifndef DISABLE_HISTORIES
 char *histfilename(void);
 void load_history(void);
-bool writehist(FILE *hist, filestruct *histhead);
+bool writehist(FILE *hist, const filestruct *histhead);
 void save_history(void);
 int check_dotnano(void);
 void load_poshistory(void);
 void save_poshistory(void);
 void update_poshistory(char *filename, ssize_t lineno, ssize_t xpos);
-int check_poshistory(const char *file, ssize_t *line, ssize_t *column);
+bool has_old_position(const char *file, ssize_t *line, ssize_t *column);
 #endif
 
 /* Some functions in global.c. */
 size_t length_of_list(int menu);
 const sc *first_sc_for(int menu, void (*func)(void));
-int sc_seq_or(void (*func)(void), int defaultval);
+int the_code_for(void (*func)(void), int defaultval);
 functionptrtype func_from_key(int *kbinput);
 void assign_keyinfo(sc *s, const char *keystring, const int keycode);
 void print_sclist(void);
@@ -456,7 +456,6 @@ void print_opt_full(const char *shortflag
 	, const char *desc);
 void usage(void);
 void version(void);
-void no_current_file_name_warning(void);
 void do_exit(void);
 void close_and_go(void);
 void signal_init(void);
@@ -481,14 +480,12 @@ int do_mouse(void);
 #endif
 void do_output(char *output, size_t output_len, bool allow_cntrls);
 
-/* All functions in prompt.c. */
-int do_statusbar_input(bool *ran_func, bool *finished,
-	void (*refresh_func)(void));
+/* Most functions in prompt.c. */
 #ifndef DISABLE_MOUSE
 int do_statusbar_mouse(void);
 #endif
 void do_statusbar_output(int *the_input, size_t input_len,
-	bool filtering, bool *got_newline);
+	bool filtering);
 void do_statusbar_home(void);
 void do_statusbar_end(void);
 void do_statusbar_left(void);
@@ -500,7 +497,7 @@ void do_statusbar_cut_text(void);
 void do_statusbar_prev_word(void);
 void do_statusbar_next_word(void);
 #endif
-void do_statusbar_verbatim_input(bool *got_newline);
+void do_statusbar_verbatim_input(void);
 size_t statusbar_xplustabs(void);
 size_t get_statusbar_page_start(size_t start_col, size_t column);
 void reinit_statusbar_x(void);
@@ -522,22 +519,12 @@ int do_yesno_prompt(bool all, const char *msg);
 char *parse_next_word(char *ptr);
 #endif
 #ifndef DISABLE_NANORC
-void rcfile_error(const char *msg, ...);
-char *parse_argument(char *ptr);
 #ifndef DISABLE_COLOR
-char *parse_next_regex(char *ptr);
-void parse_syntax(char *ptr);
-void parse_includes(char *ptr);
-short color_to_short(const char *colorname, bool *bright);
 bool parse_color_names(char *combostr, short *fg, short *bg, bool *bright);
 void grab_and_store(const char *kind, char *ptr, regexlisttype **storage);
 #endif
-void parse_rcfile(FILE *rcstream
-#ifndef DISABLE_COLOR
-	, bool syntax_only
-#endif
-	);
-void do_rcfile(void);
+void parse_rcfile(FILE *rcstream, bool syntax_only);
+void do_rcfiles(void);
 #endif /* !DISABLE_NANORC */
 
 /* All functions in search.c. */
@@ -603,18 +590,25 @@ void do_tab(void);
 void do_indent(ssize_t cols);
 void do_indent_void(void);
 void do_unindent(void);
-void do_undo(void);
-void do_redo(void);
 #endif
 bool white_string(const char *s);
 #ifdef ENABLE_COMMENT
 void do_comment(void);
+bool comment_line(undo_type action, filestruct *f, const char *comment_seq);
 #endif
+void do_undo(void);
+void do_redo(void);
 void do_enter(void);
 #ifndef NANO_TINY
 RETSIGTYPE cancel_command(int signal);
 bool execute_command(const char *command);
+void discard_until(const undo *thisitem, openfilestruct *thefile);
+void add_undo(undo_type action);
+#ifndef DISABLE_COMMENT
+void update_comment_undo(ssize_t lineno);
 #endif
+void update_undo(undo_type action);
+#endif /* !NANO_TINY */
 #ifndef DISABLE_WRAPPING
 void wrap_reset(void);
 bool do_wrap(filestruct *line);
@@ -658,13 +652,16 @@ void do_formatter(void);
 void do_wordlinechar_count(void);
 #endif
 void do_verbatim_input(void);
+void complete_a_word(void);
 
 /* All functions in utils.c. */
 void get_homedir(void);
-int digits(int n);
+#ifdef ENABLE_LINENUMBERS
+int digits(ssize_t n);
+#endif
 bool parse_num(const char *str, ssize_t *val);
 bool parse_line_column(const char *str, ssize_t *line, ssize_t *column);
-void align(char **str);
+void snuggly_fit(char **str);
 void null_at(char **data, size_t index);
 void unsunder(char *str, size_t true_len);
 void sunder(char *str);
@@ -700,16 +697,11 @@ void new_magicline(void);
 void remove_magicline(void);
 void mark_order(const filestruct **top, size_t *top_x, const filestruct
 	**bot, size_t *bot_x, bool *right_side_up);
-void discard_until(const undo *thisitem, openfilestruct *thefile);
-void add_undo(undo_type action);
-void update_undo(undo_type action);
-#ifndef DISABLE_COMMENT
-void update_comment_undo(ssize_t lineno);
-bool comment_line(undo_type action, filestruct *f, const char *comment_seq);
-#endif
 #endif
 size_t get_totsize(const filestruct *begin, const filestruct *end);
+#ifndef NANO_TINY
 filestruct *fsfromline(ssize_t lineno);
+#endif
 #ifdef DEBUG
 void dump_filestruct(const filestruct *inptr);
 void dump_filestruct_reverse(void);
@@ -749,6 +741,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 void titlebar(const char *path);
 extern void set_modified(void);
 void statusbar(const char *msg);
+void warn_and_shortly_pause(const char *msg);
 void statusline(message_type importance, const char *msg, ...);
 void bottombars(int menu);
 void onekey(const char *keystroke, const char *desc, int length);

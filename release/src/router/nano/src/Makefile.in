@@ -296,6 +296,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\" -DSYSCONFDIR=\"$(sysconfdir)\"
+CLEANFILES = revision.h
 @BUILDING_FROM_GIT_FALSE@SOMETHING = "NOTHING \"from tarball\""
 @BUILDING_FROM_GIT_TRUE@SOMETHING = "REVISION \"$(shell git describe --tags 2>/dev/null)\""
 nano_SOURCES = browser.c \
@@ -544,6 +545,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)

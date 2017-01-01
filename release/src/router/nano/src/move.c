@@ -56,10 +56,7 @@ void do_page_up(void)
 
     /* If the cursor is less than a page away from the top of the file,
      * put it at the beginning of the first line. */
-    if (openfile->current->lineno == 1 || (
-#ifndef NANO_TINY
-		!ISSET(SOFTWRAP) &&
-#endif
+    if (openfile->current->lineno == 1 || (!ISSET(SOFTWRAP) &&
 		openfile->current->lineno <= editwinrows - 2)) {
 	do_first_line();
 	return;
@@ -67,10 +64,7 @@ void do_page_up(void)
 
     /* If we're not in smooth scrolling mode, put the cursor at the
      * beginning of the top line of the edit window, as Pico does. */
-#ifndef NANO_TINY
-    if (!ISSET(SMOOTH_SCROLL))
-#endif
-    {
+    if (!ISSET(SMOOTH_SCROLL)) {
 	openfile->current = openfile->edittop;
 	openfile->placewewant = openfile->current_y = 0;
     }
@@ -81,9 +75,9 @@ void do_page_up(void)
 	openfile->current = openfile->current->prev;
 #ifndef NANO_TINY
 	if (ISSET(SOFTWRAP) && openfile->current) {
-	    skipped += strlenpt(openfile->current->data) / COLS;
+	    skipped += strlenpt(openfile->current->data) / editwincols;
 #ifdef DEBUG
-	    fprintf(stderr, "do_page_up: i = %d, skipped = %d based on line %ld len %lu\n",
+	    fprintf(stderr, "paging up: i = %d, skipped = %d based on line %ld len %lu\n",
 			i, skipped, (long)openfile->current->lineno, (unsigned long)strlenpt(openfile->current->data));
 #endif
 	}
@@ -92,11 +86,6 @@ void do_page_up(void)
 
     openfile->current_x = actual_x(openfile->current->data,
 					openfile->placewewant);
-
-#ifdef DEBUG
-    fprintf(stderr, "do_page_up: openfile->current->lineno = %lu, skipped = %d\n",
-			(unsigned long)openfile->current->lineno, skipped);
-#endif
 
     /* Scroll the edit window up a page. */
     adjust_viewport(STATIONARY);
@@ -117,10 +106,7 @@ void do_page_down(void)
 
     /* If we're not in smooth scrolling mode, put the cursor at the
      * beginning of the top line of the edit window, as Pico does. */
-#ifndef NANO_TINY
-    if (!ISSET(SMOOTH_SCROLL))
-#endif
-    {
+    if (!ISSET(SMOOTH_SCROLL)) {
 	openfile->current = openfile->edittop;
 	openfile->placewewant = openfile->current_y = 0;
     }
@@ -130,7 +116,7 @@ void do_page_down(void)
     for (i = mustmove; i > 0 && openfile->current != openfile->filebot; i--) {
 	openfile->current = openfile->current->next;
 #ifdef DEBUG
-	fprintf(stderr, "do_page_down: moving to line %lu\n", (unsigned long)openfile->current->lineno);
+	fprintf(stderr, "paging down: moving to line %lu\n", (unsigned long)openfile->current->lineno);
 #endif
 
     }
@@ -424,11 +410,8 @@ void do_up(bool scroll_only)
 
     /* If we're at the top of the file, or if scroll_only is TRUE and
      * the top of the file is onscreen, get out. */
-    if (openfile->current == openfile->fileage
-#ifndef NANO_TINY
-	|| (scroll_only && openfile->edittop == openfile->fileage)
-#endif
-	)
+    if (openfile->current == openfile->fileage ||
+		(scroll_only && openfile->edittop == openfile->fileage))
 	return;
 
     assert(ISSET(SOFTWRAP) || openfile->current_y == openfile->current->lineno - openfile->edittop->lineno);
@@ -593,7 +576,7 @@ void do_right(void)
 	openfile->current_x = 0;
 #ifndef NANO_TINY
 	if (ISSET(SOFTWRAP))
-	    openfile->current_y -= strlenpt(openfile->current->data) / COLS;
+	    openfile->current_y -= strlenpt(openfile->current->data) / editwincols;
 #endif
     }
 

@@ -69,7 +69,7 @@ char *do_browser(char *path)
 	dir = opendir(path);
 
     if (path == NULL || dir == NULL) {
-	statusline(ALERT, "Cannot open directory: %s", strerror(errno));
+	statusline(ALERT, _("Cannot open directory: %s"), strerror(errno));
 	/* If we don't have a file list yet, there is nothing to show. */
 	if (filelist == NULL) {
 	    napms(1200);
@@ -147,7 +147,7 @@ char *do_browser(char *path)
 		/* If we selected the same filename as last time, fake a
 		 * press of the Enter key so that the file is read in. */
 		if (old_selected == selected)
-		    unget_kbinput(sc_seq_or(do_enter, 0), FALSE);
+		    unget_kbinput(KEY_ENTER, FALSE);
 	    }
 
 	    continue;
@@ -230,16 +230,10 @@ char *do_browser(char *path)
 			/* TRANSLATORS: This is a prompt. */
 			browser_refresh, _("Go To Directory"));
 
-	    /* If the directory begins with a newline (i.e. an
-	     * encoded null), treat it as though it's blank. */
-	    if (i < 0 || *answer == '\n') {
+	    if (i < 0) {
 		statusbar(_("Cancelled"));
 		continue;
 	    }
-
-	    /* Convert newlines to nulls in the directory name. */
-	    sunder(answer);
-	    align(&answer);
 
 	    path = free_and_assign(path, real_dir_from_tilde(answer));
 
@@ -375,12 +369,11 @@ char *do_browse_from(const char *inpath)
 
 	    if (path == NULL) {
 		free(currentdir);
-		statusline(MILD, "The working directory has disappeared");
+		statusline(MILD, _("The working directory has disappeared"));
 		beep();
 		napms(1200);
 		return NULL;
-	    } else
-		align(&path);
+	    }
 	}
     }
 
@@ -714,7 +707,7 @@ void findnextfile(const char *needle)
     /* Save the settings of all flags. */
     memcpy(stash, flags, sizeof(flags));
 
-    /* Search forward, case insensitive and without regexes. */
+    /* Search forward, case insensitive, and without regexes. */
     UNSET(BACKWARDS_SEARCH);
     UNSET(CASE_SENSITIVE);
     UNSET(USE_REGEXP);

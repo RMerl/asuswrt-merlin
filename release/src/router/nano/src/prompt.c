@@ -34,10 +34,8 @@ static size_t statusbar_x = HIGHEST_POSITIVE;
 /* Read in a keystroke, interpret it if it is a shortcut or toggle, and
  * return it.  Set ran_func to TRUE if we ran a function associated with
  * a shortcut key, and set finished to TRUE if we're done after running
- * or trying to run a function associated with a shortcut key.
- * refresh_func is the function we will call to refresh the edit window. */
-int do_statusbar_input(bool *ran_func, bool *finished,
-	void (*refresh_func)(void))
+ * or trying to run a function associated with a shortcut key. */
+int do_statusbar_input(bool *ran_func, bool *finished)
 {
     int input;
 	/* The character we read in. */
@@ -106,7 +104,7 @@ int do_statusbar_input(bool *ran_func, bool *finished,
     if ((have_shortcut || get_key_buffer_len() == 0) && kbinput != NULL) {
 	/* Inject all characters in the input buffer at once, filtering out
 	 * control characters. */
-	do_statusbar_output(kbinput, kbinput_len, TRUE, NULL);
+	do_statusbar_output(kbinput, kbinput_len, TRUE);
 
 	/* Empty the input buffer. */
 	kbinput_len = 0;
@@ -117,10 +115,7 @@ int do_statusbar_input(bool *ran_func, bool *finished,
     if (have_shortcut) {
 	if (s->scfunc == do_tab || s->scfunc == do_enter)
 	    ;
-	else if (s->scfunc == total_refresh) {
-	    total_redraw();
-	    refresh_func();
-	} else if (s->scfunc == do_left)
+	else if (s->scfunc == do_left)
 	    do_statusbar_left();
 	else if (s->scfunc == do_right)
 	    do_statusbar_right();
@@ -144,18 +139,7 @@ int do_statusbar_input(bool *ran_func, bool *finished,
 				s->scfunc == do_backspace))
 	    ;
 	else if (s->scfunc == do_verbatim_input) {
-	    bool got_newline = FALSE;
-		/* Whether we got a verbatim ^J. */
-
-	    do_statusbar_verbatim_input(&got_newline);
-
-	    /* If we got a verbatim ^J, remove it from the input buffer,
-	     * fake a press of Enter, and indicate that we're done. */
-	    if (got_newline) {
-		get_input(NULL, 1);
-		input = sc_seq_or(do_enter, 0);
-		*finished = TRUE;
-	    }
+	    do_statusbar_verbatim_input();
 	} else if (s->scfunc == do_cut_text_void)
 	    do_statusbar_cut_text();
 	else if (s->scfunc == do_delete)
@@ -207,11 +191,10 @@ int do_statusbar_mouse(void)
 }
 #endif
 
-/* The user typed input_len multibyte characters.  Add them to the
- * statusbar prompt, setting got_newline to TRUE if we got a verbatim ^J,
- * and filtering out ASCII control characters if filtering is TRUE. */
+/* The user typed input_len multibyte characters.  Add them to the answer,
+ * filtering out ASCII control characters if filtering is TRUE. */
 void do_statusbar_output(int *the_input, size_t input_len,
-	bool filtering, bool *got_newline)
+	bool filtering)
 {
     char *output = charalloc(input_len + 1);
     char *char_buf = charalloc(mb_cur_max());
@@ -225,18 +208,9 @@ void do_statusbar_output(int *the_input, size_t input_len,
     i = 0;
 
     while (i < input_len) {
-	/* When not filtering, convert nulls and stop at a newline. */
-	if (!filtering) {
-	    if (output[i] == '\0')
-		output[i] = '\n';
-	    else if (output[i] == '\n') {
-		/* Put back the rest of the characters for reparsing,
-		 * indicate that we got a ^J and get out. */
-		unparse_kbinput(output + i, input_len - i);
-		*got_newline = TRUE;
-		return;
-	    }
-	}
+	/* Encode any NUL byte as 0x0A. */
+	if (output[i] == '\0')
+	    output[i] = '\n';
 
 	/* Interpret the next multibyte character. */
 	char_len = parse_mbchar(output + i, char_buf, NULL);
@@ -311,7 +285,6 @@ void do_statusbar_delete(void)
 
 	charmove(answer + statusbar_x, answer + statusbar_x + char_len,
 			strlen(answer) - statusbar_x - char_len + 1);
-	align(&answer);
 
 	update_the_statusbar();
     }
@@ -375,19 +348,15 @@ void do_statusbar_prev_word(void)
 }
 #endif /* !NANO_TINY */
 
-/* Get verbatim input, setting got_newline to TRUE if we get a ^J as
- * part of the verbatim input. */
-void do_statusbar_verbatim_input(bool *got_newline)
+/* Get verbatim input and inject it into the answer, without filtering. */
+void do_statusbar_verbatim_input(void)
 {
     int *kbinput;
     size_t kbinput_len;
 
-    /* Read in all the verbatim characters. */
     kbinput = get_verbatim_kbinput(bottomwin, &kbinput_len);
 
-    /* Display all the verbatim characters at once, not filtering out
-     * control characters. */
-    do_statusbar_output(kbinput, kbinput_len, FALSE, got_newline);
+    do_statusbar_output(kbinput, kbinput_len, FALSE);
 }
 
 /* Return the zero-based column position of the cursor in the answer. */
@@ -511,7 +480,7 @@ functionptrtype acquire_an_answer(int *actual, bool allow_tabs,
 	/* Ensure the cursor is shown when waiting for input. */
 	curs_set(1);
 
-	kbinput = do_statusbar_input(&ran_func, &finished, refresh_func);
+	kbinput = do_statusbar_input(&ran_func, &finished);
 
 #ifndef NANO_TINY
 	/* If the window size changed, go reformat the prompt string. */
@@ -537,7 +506,7 @@ functionptrtype acquire_an_answer(int *actual, bool allow_tabs,
 	if (func == do_tab) {
 #ifndef DISABLE_HISTORIES
 	    if (history_list != NULL) {
-		if (last_kbinput != sc_seq_or(do_tab, TAB_CODE))
+		if (last_kbinput != the_code_for(do_tab, TAB_CODE))
 		    complete_len = strlen(answer);
 
 		if (complete_len > 0) {
@@ -729,30 +698,22 @@ int do_prompt(bool allow_tabs,
 int do_yesno_prompt(bool all, const char *msg)
 {
     int response = -2, width = 16;
-    const char *yesstr;		/* String of Yes characters accepted. */
-    const char *nostr;		/* Same for No. */
-    const char *allstr;		/* And All, surprise! */
-    int oldmenu = currmenu;
+    char *message = display_string(msg, 0, COLS, FALSE);
 
-    assert(msg != NULL);
-
-    /* yesstr, nostr, and allstr are strings of any length.  Each string
-     * consists of all single-byte characters accepted as valid
-     * characters for that value.  The first value will be the one
-     * displayed in the shortcuts. */
     /* TRANSLATORS: For the next three strings, if possible, specify
      * the single-byte shortcuts for both your language and English.
-     * For example, in French: "OoYy" for "Oui". */
-    yesstr = _("Yy");
-    nostr = _("Nn");
-    allstr = _("Aa");
+     * For example, in French: "OoYy", for both "Oui" and "Yes". */
+    const char *yesstr = _("Yy");
+    const char *nostr = _("Nn");
+    const char *allstr = _("Aa");
 
-    do {
+    /* The above three variables consist of all the single-byte characters
+     * that are accepted for the corresponding answer.  Of each variable,
+     * the first character is displayed in the help lines. */
+
+    while (response == -2) {
 	int kbinput;
 	functionptrtype func;
-#ifndef DISABLE_MOUSE
-	int mouse_x, mouse_y;
-#endif
 
 	if (!ISSET(NO_HELP)) {
 	    char shortstr[3];
@@ -783,24 +744,20 @@ int do_yesno_prompt(bool all, const char *msg)
 	    onekey("^C", _("Cancel"), width);
 	}
 
+	/* Color the statusbar over its full width and display the question. */
 	wattron(bottomwin, interface_color_pair[TITLE_BAR]);
-
 	blank_statusbar();
-	mvwaddnstr(bottomwin, 0, 0, msg, actual_x(msg, COLS - 1));
-
+	mvwaddnstr(bottomwin, 0, 0, message, actual_x(message, COLS - 1));
 	wattroff(bottomwin, interface_color_pair[TITLE_BAR]);
 
-	/* Refresh edit window and statusbar before getting input. */
-	wnoutrefresh(edit);
 	wnoutrefresh(bottomwin);
+
+	/* When not replacing, show the cursor. */
+	if (!all)
+	    curs_set(1);
 
 	currmenu = MYESNO;
 	kbinput = get_kbinput(bottomwin);
-
-#ifndef NANO_TINY
-	if (kbinput == KEY_WINCH)
-	    continue;
-#endif
 
 	func = func_from_key(&kbinput);
 
@@ -808,6 +765,7 @@ int do_yesno_prompt(bool all, const char *msg)
 	    response = -1;
 #ifndef DISABLE_MOUSE
 	else if (kbinput == KEY_MOUSE) {
+	    int mouse_x, mouse_y;
 	    /* We can click on the Yes/No/All shortcuts to select an answer. */
 	    if (get_mouseinput(&mouse_x, &mouse_y, FALSE) == 0 &&
 			wmouse_trafo(bottomwin, &mouse_y, &mouse_x, FALSE) &&
@@ -828,10 +786,7 @@ int do_yesno_prompt(bool all, const char *msg)
 	    }
 	}
 #endif /* !DISABLE_MOUSE */
-	else if (func == total_refresh) {
-	    total_redraw();
-	    continue;
-	} else {
+	else {
 	    /* Look for the kbinput in the Yes, No (and All) strings. */
 	    if (strchr(yesstr, kbinput) != NULL)
 		response = 1;
@@ -840,10 +795,9 @@ int do_yesno_prompt(bool all, const char *msg)
 	    else if (all && strchr(allstr, kbinput) != NULL)
 		response = 2;
 	}
-    } while (response == -2);
+    }
 
-    /* Restore the previously active menu. */
-    bottombars(oldmenu);
+    free(message);
 
     return response;
 }

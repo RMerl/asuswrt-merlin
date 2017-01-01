@@ -17,7 +17,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANORC 5 "version 2.7.1" "October 2016"
+.TH NANORC 5 "version 2.7.3" "December 2016"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -248,8 +248,9 @@ Save automatically on exit, don't prompt.
 .TP
 .B set titlecolor \fIfgcolor\fR,\fIbgcolor\fR
 Specify the color combination to use for the titlebar.
-Valid color names for foreground and background are:
-.BR white , \ black , \ red , \ blue , \ green , \ yellow , \ magenta ", and " cyan .
+Valid names for the foreground and background colors are:
+.BR white ", " black ", " blue ", " green ", " red ", " cyan ", " yellow ",  and " magenta .
+The name of the foreground color may be prefixed with \fBbright\fR.
 And either "\fIfgcolor\fR" or ",\fIbgcolor\fR" may be left out.
 .TP
 .B set unix
@@ -487,6 +488,10 @@ Unindents (shifts to the left) the currently marked text.
 .B comment
 Comments or uncomments the current line or marked lines, using the comment
 style specified in the active syntax.
+.TP
+.B complete
+Completes the fragment before the cursor to a full word found elsewhere
+in the current buffer.
 .TP
 .B left
 Goes left one position (in the editor or browser).

@@ -14,10 +14,13 @@ color brightblue "^ .*"
 # Deleted lines.
 color brightred "^-.*"
 
+# Header lines.
+color magenta "^(Index:|diff)[[:blank:]].*"
 # File names and dates.
 color red "^---.*"
 color green "^\+\+\+.*"
 # Line numbers.
 color brightyellow "^@@.*"
-# Header lines.
-color magenta "^diff.*"
+
+# Statistics.
+color cyan start="^---$" end="^$"

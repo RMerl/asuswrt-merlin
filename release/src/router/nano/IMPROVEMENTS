@@ -2,7 +2,8 @@ Improvements in GNU nano
 ========================
 
 Since 2.7.0:
-  - The ability to display line numbers in front of the text.
+  - The keystroke ^] to complete a fragment to an existing full word.
+  - The ability to display line numbers in front of the text (M-#).
 
 Since 2.6.0:
   - Shift plus the cursor keys can be used for selecting text.

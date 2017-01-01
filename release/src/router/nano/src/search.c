@@ -103,7 +103,7 @@ void search_replace_abort(void)
 {
 #ifndef NANO_TINY
     if (openfile->mark_set)
-	edit_refresh();
+	refresh_needed = TRUE;
 #endif
 #ifdef HAVE_REGEX_H
     regexp_cleanup();
@@ -664,18 +664,17 @@ ssize_t do_replace_loop(const char *needle, bool whole_word_only,
 
 	    if (i == -1)  /* The replacing was cancelled. */
 		break;
+	    else if (i == 2)
+		replaceall = TRUE;
 	}
 
-	if (i > 0 || replaceall) {	/* Yes, replace it!!!! */
+	if (i == 1 || replaceall) {  /* Yes, replace it. */
 	    char *copy;
 	    size_t length_change;
 
 #ifndef NANO_TINY
 	    add_undo(REPLACE);
 #endif
-	    if (i == 2)
-		replaceall = TRUE;
-
 	    copy = replace_line(needle);
 
 	    length_change = strlen(copy) - strlen(openfile->current->data);
@@ -734,8 +733,8 @@ ssize_t do_replace_loop(const char *needle, bool whole_word_only,
 
 	    if (!replaceall) {
 #ifndef DISABLE_COLOR
-		/* If color syntaxes are available and turned on, we
-		 * need to call edit_refresh(). */
+		/* When doing syntax coloring, the replacement might require
+		 * a change of colors, so refresh the whole edit window. */
 		if (openfile->colorstrings != NULL && !ISSET(NO_COLOR_SYNTAX))
 		    edit_refresh();
 		else
@@ -744,6 +743,7 @@ ssize_t do_replace_loop(const char *needle, bool whole_word_only,
 	    }
 
 	    set_modified();
+	    as_an_at = TRUE;
 	    numreplaced++;
 	}
     }
@@ -774,7 +774,6 @@ void do_replace(void)
 
     if (ISSET(VIEW_MODE)) {
 	print_view_warning();
-	search_replace_abort();
 	return;
     }
 
@@ -826,8 +825,7 @@ void do_replace(void)
     openfile->edittop = edittop_save;
     openfile->current = begin;
     openfile->current_x = begin_x;
-
-    edit_refresh();
+    refresh_needed = TRUE;
 
     if (numreplaced >= 0)
 	statusline(HUSH, P_("Replaced %lu occurrence",
@@ -1205,10 +1203,10 @@ void update_history(filestruct **h, const char *s)
     /* If the history is full, delete the oldest item (the one at the
      * head of the list), to make room for a new item at the end. */
     if ((*hbot)->lineno == MAX_SEARCH_HISTORY + 1) {
-	filestruct *foo = *hage;
+	filestruct *oldest = *hage;
 
 	*hage = (*hage)->next;
-	unlink_node(foo);
+	unlink_node(oldest);
 	renumber(*hage);
     }
 

@@ -371,11 +371,15 @@ edited.
 
    * For characters with a single-byte code, pressing the Esc key twice
      and then typing a three-digit decimal number (from 000 to 255) will
-     enter the character with the corresponding value.
+     make 'nano' behave as if you typed the key with that value.
 
    * For any possible character, pressing M-V (Alt+V) and then typing a
      six-digit hexadecimal number (starting with 0 or 1) will enter the
-     character with the corresponding Unicode value.
+     corresponding Unicode character into the buffer.
+
+   For example, typing "Esc Esc 2 3 4" will enter the character "ê" --
+useful when going to a French party.  Typing "M-V 0 0 2 5 c 6" will
+enter the symbol "◆", a little black diamond.
 
 
 File: nano.info,  Node: Commands,  Next: The Cutbuffer,  Prev: Entering Text,  Up: Editor Basics
@@ -825,9 +829,10 @@ The supported settings in a nanorc file are:
 
 'set titlecolor FGCOLOR,BGCOLOR'
      Specify the color combination to use for the titlebar.  Valid color
-     names for foreground and background are: white, black, red, blue,
-     green, yellow, magenta, and cyan.  And either FGCOLOR or ,BGCOLOR
-     may be left out.
+     names for foreground and background are: white, black, blue, green,
+     red, cyan, yellow, and magenta.  The name of the foreground color
+     may be prefixed with 'bright'.  And either FGCOLOR or ,BGCOLOR may
+     be left out.
 
 'set unix'
      Save a file by default in Unix format.  This overrides nano's
@@ -1067,6 +1072,10 @@ file:
 'comment'
      Comments or uncomments the current line or marked lines, using the
      comment style specified in the active syntax.
+
+'complete'
+     Completes the fragment before the cursor to a full word found
+     elsewhere in the current buffer.
 
 'left'
      Goes left one position (in the editor or browser).
@@ -1486,18 +1495,24 @@ familiar with compiling programs with autoconf support:
      checker.
 
 '--disable-tabcomp'
-     Disable the tab completion code when reading or writing files.
+     Disable tab completion (when nano asks for a filename or a search
+     string).
+
+'--disable-wordcomp'
+     Disable word completion.
 
 '--disable-wrapping'
-     Disable hard-wrapping of overlong lines.  This also eliminates the
-     '-w' command-line option, which enables long-line wrapping.
+     Disable all hard-wrapping of overlong lines.  This also eliminates
+     the '-w' command-line option, which switches long-line wrapping
+     off.
 
 '--enable-tiny'
-     This option disables all the above.  It also disables some of the
-     larger internals of the editor, like the marking code and the
-     cut-to-end-of-line code.  It also disables the function toggles.
-     By using the enabling counterpart of the above options together
-     with '--enable-tiny', specific features can be switched back on.
+     This option implies all of the above.  It also disables some other
+     internals of the editor, like the marking code, the
+     cut-to-end-of-line code, and the function toggles.  By using the
+     enabling counterpart of the above options together with
+     '--enable-tiny', specific features can be switched back on -- but a
+     few cannot.
 
 '--enable-debug'
      Enable support for runtime debug output.  This can get pretty
@@ -1541,22 +1556,22 @@ Node: Command-line Options2107
 Ref: Expert Mode9797
 Node: Editor Basics10754
 Node: Entering Text11037
-Node: Commands11776
-Node: The Cutbuffer12561
-Node: The Mark13239
-Node: Screen Layout13977
-Node: Search and Replace15146
-Node: Using the Mouse15844
-Node: Limitation16460
-Node: Built-in Help16863
-Node: Feature Toggles17254
-Node: Nanorc Files19462
-Node: Settings20894
-Ref: Whitespace28499
-Node: Syntax Highlighting29039
-Node: Rebinding Keys33749
-Node: The File Browser43620
-Node: Pico Compatibility44442
-Node: Building and Configure Options46413
+Node: Commands11976
+Node: The Cutbuffer12761
+Node: The Mark13439
+Node: Screen Layout14177
+Node: Search and Replace15346
+Node: Using the Mouse16044
+Node: Limitation16660
+Node: Built-in Help17063
+Node: Feature Toggles17454
+Node: Nanorc Files19662
+Node: Settings21094
+Ref: Whitespace28769
+Node: Syntax Highlighting29309
+Node: Rebinding Keys34019
+Node: The File Browser44007
+Node: Pico Compatibility44829
+Node: Building and Configure Options46800
 
 End Tag Table

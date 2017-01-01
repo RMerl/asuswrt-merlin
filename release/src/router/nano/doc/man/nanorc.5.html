@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sat Oct 29 11:18:26 2016 -->
+<!-- CreationDate: Wed Dec 28 12:54:52 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -398,10 +398,12 @@ don&rsquo;t prompt.</p>
 <i>fgcolor</i>,<i>bgcolor</i></p>
 
 <p style="margin-left:15%;">Specify the color combination
-to use for the titlebar. Valid color names for foreground
-and background are:
-<b>white</b>,&nbsp;<b>black</b>,&nbsp;<b>red</b>,&nbsp;<b>blue</b>,&nbsp;<b>green</b>,&nbsp;<b>yellow</b>,&nbsp;<b>magenta</b>,
-and <b>cyan</b>. And either &quot;<i>fgcolor</i>&quot; or
+to use for the titlebar. Valid names for the foreground and
+background colors are: <b>white</b>, <b>black</b>,
+<b>blue</b>, <b>green</b>, <b>red</b>, <b>cyan</b>,
+<b>yellow</b>, and <b>magenta</b>. The name of the
+foreground color may be prefixed with <b>bright</b>. And
+either &quot;<i>fgcolor</i>&quot; or
 &quot;,<i>bgcolor</i>&quot; may be left out.</p>
 
 <p style="margin-left:11%;"><b>set unix</b></p>
@@ -793,6 +795,12 @@ the currently marked text.</p>
 <p style="margin-left:18%;">Comments or uncomments the
 current line or marked lines, using the comment style
 specified in the active syntax.</p>
+
+<p style="margin-left:15%;"><b>complete</b></p>
+
+<p style="margin-left:18%;">Completes the fragment before
+the cursor to a full word found elsewhere in the current
+buffer.</p>
 
 <p style="margin-left:15%;"><b>left</b></p>
 
