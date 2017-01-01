@@ -1086,7 +1086,7 @@ void start_vpnserver(int serverNum)
 			//That way, existing configuration (pre-Asus OVPN)
 			//will remain unchanged.
 			if ( useronly ) {
-				fprintf(fp, "client-cert-not-required\n");
+				fprintf(fp, "verify-client-cert none\n");
 				fprintf(fp, "username-as-common-name\n");
 			}
 		}
