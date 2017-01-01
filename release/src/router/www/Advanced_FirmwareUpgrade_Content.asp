@@ -121,7 +121,7 @@ function initial(){
 
 	if(!live_update_support || !HTTPS_support || ("<% nvram_get("firmware_check_enable"); %>" != "1")){
 		document.getElementById("update").style.display = "none";
-		document.getElementById("beta_firmware_path_span").style.display = "none";
+		document.getElementById("beta_firmware_span").style.display = "none";
 		document.getElementById("linkpage_div").style.display = "";
 		document.getElementById("linkpage").style.display = "";
 		document.getElementById("fw_check_link").style.display = "none";
@@ -130,7 +130,7 @@ function initial(){
 	} 
 	else{
 		document.getElementById("update").style.display = "";
-		document.getElementById("beta_firmware_path_span").style.display = "";
+		document.getElementById("beta_firmware_span").style.display = "";
 		document.getElementById("linkpage_div").style.display = "none";
 		change_firmware_path(document.getElementById("beta_firmware_path").checked==true);
 		if(confirm_show.length > 0 && confirm_show == 1){
@@ -693,7 +693,7 @@ function change_firmware_path(flag){
 				<td >
 					<div id="sig_ver_word" style="padding-top:5px;"></div>
 					<div>
-						<div id="sig_check" class="button_helplink" style="margin-left:330px;margin-top:-25px;" onclick="sig_version_check();"><a target="_blank"><div style="padding-top:5px;"><#liveupdate#></div></a></div>
+						<div id="sig_check" class="button_helplink" style="margin-left:200px;margin-top:-25px;" onclick="sig_version_check();"><a target="_blank"><div style="padding-top:5px;"><#liveupdate#></div></a></div>
 						<div>
 							<span id="sig_status" style="display:none"></span>
 						</div>
@@ -708,10 +708,10 @@ function change_firmware_path(flag){
 			<tr>
 				<th><#FW_item2#></th>
 				<td>
-					<input type="text" name="firmver_table" id="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1" autocorrect="off" autocapitalize="off">&nbsp&nbsp&nbsp<!--/td-->
-					<span id="beta_firmware_path_span" style="color:#FFF;"><input type="checkbox" name="beta_firmware_path" id="beta_firmware_path" onclick="change_firmware_path(this.checked==true);"  <% nvram_match("firmware_path", "1", "checked"); %>>Get Beta Firmware</input></span>
-					<input type="button" id="update" name="update" style="margin-left:330px;margin-top:-25px;display:none;" class="button_gen" style="display:none;" onclick="detect_update(document.start_update.firmware_path.value);" value="<#liveupdate#>" />
-					<div id="linkpage_div" class="button_helplink" style="margin-left:330px;margin-top:-25px;display:none;"><a id="linkpage" target="_blank"><div style="padding-top:5px;"><#liveupdate#></div></a></div>
+					<input type="text" name="firmver_table" id="firmver_table" class="input_20_table" value="<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;&nbsp;
+					<input type="button" id="update" name="update" style="display:none;" class="button_gen" onclick="detect_update(document.start_update.firmware_path.value);" value="<#liveupdate#>" />
+					<div id="linkpage_div" class="button_helplink" style="margin-left:200px;margin-top:-25px;display:none;"><a id="linkpage" target="_blank"><div style="padding-top:5px;"><#liveupdate#></div></a></div>
+					<span id="beta_firmware_span"><input type="checkbox" name="beta_firmware_path" id="beta_firmware_path" onclick="change_firmware_path(this.checked==true);"  <% nvram_match("firmware_path", "1", "checked"); %>>Get Beta Firmware</input></span>
 					<div id="check_states">
 						<span id="update_states"></span>
 						<img id="update_scan" style="display:none;" src="images/InternetScan.gif" />
@@ -721,7 +721,7 @@ function change_firmware_path(flag){
 			<tr>
 				<th><#FW_item5#></th>
 				<td>
-					<input type="file" name="file" class="input" style="color:#FFCC00;*color:#000;width: 324px;">
+					<input type="file" name="file" class="input" style="color:#FFCC00;*color:#000;width: 194px;">
 					<input type="button" name="upload" class="button_gen" onclick="submitForm()" value="<#CTL_upload#>" />
 				</td>
 			</tr>			
