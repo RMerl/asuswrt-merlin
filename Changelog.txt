@@ -1,7 +1,30 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.65 alpha 2 (xx-xxx-xxxxx)
+380.65 alpha 4 (xx-xxx-xxxx)
+  - CHANGED: Updated nano to 2.7.3.
+  - CHANGED: Removed support for all RC ciphers on OpenVPN.
+             DES is staying for now, but should still be avoided
+             whenever possible.
+
+
+380.65 alpha 3 (xx-xxx-xxxx)
+   - NEW: Merged with Asus GPL 380_4180.  At this time, the
+          following models are experimental, due to missing
+          GPL releases: RT-N66U, RT-AC66U, RT-AC56U, RT-AC3200.
+  - NEW: Added the following Busybox applets: ntpd, time, uniq
+         and getopt
+  - CHANGED: Updated to OpenVPN 2.4.0 final.
+  - CHANGED: Updated nano to 2.7.3.
+  - CHANGED: Removed support for all RC ciphers on OpenVPN.
+             DES is staying for now, but should still be avoided
+             whenever possible.
+  - FIXED: Sorting clients by connection time would incorrectly
+           treat 10 hours as longer than 9 hours, as it was
+           handling it as a string (Asus bug)
+
+
+380.65 alpha 2 (xx-xxx-xxxx)
    - CHANGED: Upgraded to OpenVPN 2.4.0 RC2.  This new version
               includes support for GCM ciphers and LZ4
               compression, as well as cipher negotiation.
