@@ -103,10 +103,6 @@ var ciphersarray = [
 		["DES-EDE3-CBC"],
 		["DESX-CBC"],
 		["IDEA-CBC"],
-		["RC2-40-CBC"],
-		["RC2-64-CBC"],
-		["RC2-CBC"],
-		["RC5-CBC"],
 		["SEED-CBC"]
 ];
 

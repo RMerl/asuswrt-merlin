@@ -187,17 +187,7 @@ ciphersarray = [
 		["DESX-CBC"],
 		["IDEA-CBC"],
 		["IDEA-CFB"],
-		["IDEA-OFB"],
-		["RC2-40-CBC"],
-		["RC2-64-CBC"],
-		["RC2-CBC"],
-		["RC2-CFB"],
-		["RC2-OFB"],
-		["RC5-CBC"],
-		["RC5-CBC"],
-		["RC5-CFB"],
-		["RC5-CFB"],
-		["RC5-OF"]
+		["IDEA-OFB"]
 ];
 
 var digestsarray = [
