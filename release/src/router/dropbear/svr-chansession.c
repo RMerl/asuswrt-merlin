@@ -634,7 +634,7 @@ static void make_connection_string(struct ChanSess *chansess) {
 static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
 		int iscmd, int issubsys) {
 
-	unsigned int cmdlen;
+	unsigned int cmdlen = 0;
 	int ret;
 
 	TRACE(("enter sessioncommand"))
