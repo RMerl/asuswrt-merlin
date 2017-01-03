@@ -234,7 +234,7 @@ static int newtcpforwarded(struct Channel * channel) {
 	char *origaddr = NULL;
 	unsigned int origport;
 	m_list_elem * iter = NULL;
-	struct TCPFwdEntry *fwd;
+	struct TCPFwdEntry *fwd = NULL;
 	char portstring[NI_MAXSERV];
 	int err = SSH_OPEN_ADMINISTRATIVELY_PROHIBITED;
 
@@ -265,7 +265,7 @@ static int newtcpforwarded(struct Channel * channel) {
 	}
 
 
-	if (iter == NULL) {
+	if (iter == NULL || fwd == NULL) {
 		/* We didn't request forwarding on that port */
 		cleantext(origaddr);
 		dropbear_log(LOG_INFO, "Server sent unrequested forward from \"%s:%d\"", 
