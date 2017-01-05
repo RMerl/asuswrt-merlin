@@ -53,7 +53,7 @@ int start_sshd(void)
 		NULL, NULL,	/* -W receive_window_buffer */
 		NULL, NULL,	/* -a or -j -k */
 		NULL };
-	int index = 4;
+	int index = 3;
 
 	if (!nvram_get_int("sshd_enable"))
 		return 0;
