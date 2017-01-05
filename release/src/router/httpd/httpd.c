@@ -1117,7 +1117,7 @@ handle_request(void)
 // 2007.11 James. }
 
 	memset(current_page_name, 0, sizeof(current_page_name));
-	strcpy(current_page_name, file);
+	strlcpy(current_page_name, file, sizeof(current_page_name));
 
 	if(strncmp(url, APPLYAPPSTR, strlen(APPLYAPPSTR))==0 
 #ifdef RTCONFIG_ROG
