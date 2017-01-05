@@ -49,7 +49,6 @@ int start_sshd(void)
 	char buf[3500], *port;
 	char *dropbear_argv[] = { "dropbear",
 		"-p", buf,	/* -p [address:]port */
-		"-a",
 		NULL,		/* -s */
 		NULL, NULL,	/* -W receive_window_buffer */
 		NULL, NULL,	/* -a or -j -k */
