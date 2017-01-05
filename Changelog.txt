@@ -6,6 +6,8 @@ Asuswrt-Merlin Changelog
   - CHANGED: Removed support for all RC ciphers on OpenVPN.
              DES is staying for now, but should still be avoided
              whenever possible.
+  - FIXED: Buffer overrun in httpd, could cause a malicious
+           URL to crash it.
 
 
 380.65 alpha 3 (xx-xxx-xxxx)
@@ -15,10 +17,6 @@ Asuswrt-Merlin Changelog
   - NEW: Added the following Busybox applets: ntpd, time, uniq
          and getopt
   - CHANGED: Updated to OpenVPN 2.4.0 final.
-  - CHANGED: Updated nano to 2.7.3.
-  - CHANGED: Removed support for all RC ciphers on OpenVPN.
-             DES is staying for now, but should still be avoided
-             whenever possible.
   - FIXED: Sorting clients by connection time would incorrectly
            treat 10 hours as longer than 9 hours, as it was
            handling it as a string (Asus bug)
