@@ -5000,7 +5000,7 @@ static void find_hostname_by_mac(char *mac, char *hostname)
 
 		if (strncasecmp(macaddr, mac, 17) == 0) {
 			fclose(fp);
-			strlcpy(hostname, host_name, sizeof(hostname));
+			strlcpy(hostname, host_name, 64);
 			return;
 		}
 
