@@ -276,6 +276,7 @@ extern asus_token_t* create_list(char *token);
 extern void get_ipv6_client_info(void);
 extern void get_ipv6_client_list(void);
 extern int inet_raddr6_pton(const char *src, void *dst, void *buf);
+extern void set_referer_host(void);
 
 /* web-*.c */
 extern int ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
