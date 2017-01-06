@@ -1,6 +1,11 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.64_1 (6-Jan-2017)
+   - FIXED: Security issues in httpd (backport from GPL 4180 + 
+            additional fixes of my own)
+
+
 380.64 (16-Dec-2016)
    - NEW: New firmware availability notification.  The router will
           notify you if a new firmware is available, and will also
