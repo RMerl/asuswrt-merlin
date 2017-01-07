@@ -420,7 +420,7 @@ void sys_script(char *name)
 
      char scmd[64];
 
-     sprintf(scmd, "/tmp/%s", name);
+     snprintf(scmd, sizeof(scmd), "/tmp/%s", name);
      //printf("run %s %d %s\n", name, strlen(name), scmd);	// tmp test
 
      //handle special scirpt first
@@ -1799,9 +1799,9 @@ static void do_html_post_and_get(char *url, FILE *stream, int len, char *boundar
 
 	if (query && strlen(query) > 0){
 		if (strlen(post_buf) > 0)
-			sprintf(post_buf_backup, "?%s&%s", post_buf, query);
+			snprintf(post_buf_backup, sizeof(post_buf_backup), "?%s&%s", post_buf, query);
 		else
-			sprintf(post_buf_backup, "?%s", query);
+			snprintf(post_buf_backup, sizeof(post_buf_backup), "?%s", query);
 		sprintf(post_buf, "%s", post_buf_backup+1);
 	}
 	else if (strlen(post_buf) > 0)
@@ -7223,7 +7223,7 @@ send_action(char *ftp_url,int port)
 		close(my_fd);
 		return NULL;
 	}
-	sprintf(str,"refresh@%s",ftp_url);
+	snprintf(str,sizeof(str),"refresh@%s",ftp_url);
 	_dprintf("socket:%s\n",str);
 	if (send(my_fd, str, strlen(str), 0) == -1) {
 		perror("send");
@@ -7576,7 +7576,7 @@ wps_finish:
 	{
 		action_para = get_cgi_json("module_prefix",root);
 		if(action_para) {
-			sprintf(command, "restore %s", action_para);
+			snprintf(command, sizeof(command),"restore %s", action_para);
 			notify_rc(command);
 		}
 		websRedirect(wp, current_url);
@@ -7741,7 +7741,7 @@ wps_finish:
 			return 0;
 		}
 
-		sprintf(command, "%s %s", action_mode, pincode);
+		snprintf(command, sizeof(command),"%s %s", action_mode, pincode);
 		notify_rc(command);
 	}
 	else if (!strcmp(action_mode, "start_pwdpin"))
@@ -7758,7 +7758,7 @@ wps_finish:
 			return 0;
 		}
 
-		sprintf(command, "%s %s %s", action_mode, pincode, newpin);
+		snprintf(command, sizeof(command), "%s %s %s", action_mode, pincode, newpin);
 		notify_rc(command);
 	}
 	else if (!strcmp(action_mode, "start_simpin"))
@@ -7789,7 +7789,7 @@ wps_finish:
 			save_nvram = 1;
 		}
 
-		sprintf(command, "%s %s", action_mode, pincode);
+		snprintf(command, sizeof(command), "%s %s", action_mode, pincode);
 		notify_rc(command);
 
 		if(save_nvram)
@@ -7813,7 +7813,7 @@ wps_finish:
 
 		nvram_set("g3err_pin", g3err_pin);
 
-		sprintf(command, "%s %s %s", action_mode, puk, newpin);
+		snprintf(command, sizeof(command), "%s %s %s", action_mode, puk, newpin);
 		notify_rc(command);
 	}
 	else if (!strcmp(action_mode, "restart_simauth"))
@@ -7833,7 +7833,7 @@ wps_finish:
 		char *simdetect;
 
 		simdetect = get_cgi_json("simdetect", root);
-		sprintf(command, "%s %s", action_mode, simdetect);
+		snprintf(command, sizeof(command), "%s %s", action_mode, simdetect);
 		notify_rc(command);
 		websApply(wp, "Restarting.asp");
 		nvram_set("freeze_duck", "15");
@@ -7856,7 +7856,7 @@ wps_finish:
 
 		sim_order = get_cgi_json("sim_order", root);
 
-		sprintf(command, "%s %s", action_mode, sim_order);
+		snprintf(command, sizeof(command), "%s %s", action_mode, sim_order);
 		notify_rc(command);
 	}
 #endif
