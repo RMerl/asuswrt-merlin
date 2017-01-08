@@ -1,8 +1,14 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.64_2 (8-Jan-2017)
+   - FIXED: IPv6 client list failing to properly show hostnames
+            (regression in 64_1)
+   - FIXED: A few potential buffer overruns in httpd
+
+
 380.64_1 (6-Jan-2017)
-   - FIXED: Security issues in httpd (backport from GPL 4180 + 
+   - FIXED: Security issues in httpd (backport from GPL 4180 +
             additional fixes of my own)
 
 
