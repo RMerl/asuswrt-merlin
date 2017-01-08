@@ -913,13 +913,13 @@ void start_vpnserver(int serverNum)
 			fprintf(fp_client, "compress lz4\n");
 		} else if (!strcmp(buffer2, "yes")) {
 			fprintf(fp, "compress lzo\n");
-			fprintf(fp_client, "compress lzo\n");
+			fprintf(fp_client, "comp-lzo yes\n");
 		} else if (!strcmp(buffer2, "adaptive")) {
 			fprintf(fp, "comp-lzo adaptive\n");
 			fprintf(fp_client, "comp-lzo adaptive\n");
 		} else if (!strcmp(buffer2, "no")) {
 			fprintf(fp, "compress\n");	// Disable, but client can override if desired
-			fprintf(fp_client, "compress\n");
+			fprintf(fp_client, "comp-lzo no\n");
 		}
 	}
 
