@@ -574,6 +574,34 @@ add_option (char *p[], int line, int unit)
 			return VPN_UPLOAD_NEED_STATIC;
 		}
 	}
+	else if (streq (p[0], "tls-crypt") && p[1])
+	{
+		if (streq (p[1], INLINE_FILE_TAG) && p[2] && (data = strstr(p[2], "-----BEGIN")))
+		{
+			sprintf(buf, "vpn_crt_client%d_static", unit);
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, buf);
+			fp = fopen(file_path, "w");
+			if(fp) {
+				chmod(file_path, S_IRUSR|S_IWUSR);
+				fprintf(fp, "%s", data);
+				fclose(fp);
+			}
+			else
+#endif
+			write_encoded_crt(buf, data);
+			sprintf(buf, "vpn_client%d_hmac", unit);
+			nvram_set(buf, "3");	//Enable tls-crypt
+		}
+		else
+		{
+			if(p[2]) {
+				sprintf(buf, "vpn_client%d_hmac", unit);
+				nvram_set(buf, p[2]);
+			}
+			return VPN_UPLOAD_NEED_STATIC;
+		}
+	}
 	else if (streq (p[0], "secret") && p[1])
 	{
 		sprintf(buf, "vpn_client%d_crypt", unit);

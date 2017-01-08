@@ -316,7 +316,11 @@ void start_vpnclient(int clientNum)
 		sprintf(&buffer[0], "vpn_crt_client%d_static", clientNum);
 		if ( !ovpn_crt_is_empty(&buffer[0]) && nvi >= 0 )
 		{
-			fprintf(fp, "tls-auth static.key");
+			if (nvi == 3)
+				fprintf(fp, "tls-crypt static.key");
+			else
+				fprintf(fp, "tls-auth static.key");
+
 			if ( nvi < 2 )
 				fprintf(fp, " %d", nvi);
 			fprintf(fp, "\n");
@@ -1065,7 +1069,11 @@ void start_vpnserver(int serverNum)
 		//if ( !ovpn_crt_is_empty(&buffer[0]) && nvi >= 0 )
 		if ( nvi >= 0 )
 		{
-			fprintf(fp, "tls-auth static.key");
+			if (nvi == 3)
+				fprintf(fp, "tls-crypt static.key");
+			else
+				fprintf(fp, "tls-auth static.key");
+
 			if ( nvi < 2 )
 				fprintf(fp, " %d", nvi);
 			fprintf(fp, "\n");
@@ -1400,17 +1408,24 @@ void start_vpnserver(int serverNum)
 			}
 		}
 
+		sprintf(&buffer[0], "vpn_server%d_hmac", serverNum);
+		nvi = nvram_get_int(&buffer[0]);
 		sprintf(&buffer[0], "vpn_crt_server%d_static", serverNum);
 		if(cryptMode == TLS)
-			fprintf(fp_client, "<tls-auth>\n");
+			if (nvi == 3)
+				fprintf(fp_client, "<tls-crypt>\n");
+			else
+				fprintf(fp_client, "<tls-auth>\n");
 		else if(cryptMode == SECRET)
 			fprintf(fp_client, "<secret>\n");
 		fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
 		if (buffer2[strlen(buffer2)-1] != '\n') fprintf(fp_client, "\n");  // Append newline if missing
 		if(cryptMode == TLS) {
-			fprintf(fp_client, "</tls-auth>\n");
-			sprintf(&buffer[0], "vpn_server%d_hmac", serverNum);
-			nvi = nvram_get_int(&buffer[0]);
+			if (nvi == 3)
+				fprintf(fp_client, "</tls-crypt>\n");
+			else
+				fprintf(fp_client, "</tls-auth>\n");
+
 			if(nvi == 1)
 				fprintf(fp_client, "key-direction 0\n");
 			else if(nvi == 0)

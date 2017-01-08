@@ -1145,13 +1145,14 @@ function defaultSettings() {
 					</tr>
 
 					<tr id="client_hmac">
-						<th><#vpn_openvpn_AuthHMAC#><br><i>(tls-auth)</i></th>
+						<th>TLS control channel security<br><i>(tls-auth / tls-crypt)</i></th>
 						<td>
 							<select name="vpn_client_hmac" class="input_option">
 								<option value="-1" <% nvram_match("vpn_client_hmac","-1","selected"); %> >Disabled</option>
-								<option value="2" <% nvram_match("vpn_client_hmac","2","selected"); %> >Bi-directional</option>
-								<option value="0" <% nvram_match("vpn_client_hmac","0","selected"); %> >Incoming (0)</option>
-								<option value="1" <% nvram_match("vpn_client_hmac","1","selected"); %> >Outgoing (1)</option>
+								<option value="2" <% nvram_match("vpn_client_hmac","2","selected"); %> >Bi-directional Auth</option>
+								<option value="0" <% nvram_match("vpn_client_hmac","0","selected"); %> >Incoming Auth (0)</option>
+								<option value="1" <% nvram_match("vpn_client_hmac","1","selected"); %> >Outgoing Auth (1)</option>
+								<option value="3" <% nvram_match("vpn_client_hmac","3","selected"); %>Encrypt Channel</option>
 							</select>
 						</td>
 					</tr>
