@@ -2701,6 +2701,7 @@ static void auto_firmware_check()
 	time_t now;
 	struct tm *tm;
 	static int rand_hr, rand_min;
+	int initial_state;
 
 	if (!nvram_get_int("ntp_ready") || !nvram_get_int("firmware_check_enable"))
 		return;
@@ -2755,6 +2756,7 @@ static void auto_firmware_check()
 			rand_hr = rand_seed_by_time() % 4;
 			rand_min = rand_seed_by_time() % 60;
 		}
+		initial_state = nvram_get_int("webs_state_update");
 
 		eval("/usr/sbin/webs_update.sh");
 #ifdef RTCONFIG_DSL
@@ -2766,6 +2768,11 @@ static void auto_firmware_check()
 		    strlen(nvram_safe_get("webs_state_info")))
 		{
 			dbg("retrieve firmware information\n");
+
+			if (initial_state == 0)		// New update
+			{
+				run_custom_script("update-notification", NULL);
+			}
 
 #if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
 #if defined(RTAC68U) && !defined(RTAC68A)
