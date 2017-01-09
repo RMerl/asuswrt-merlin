@@ -102,6 +102,13 @@ apps: .conf
 		--with-included-popt=no \
 		--with-krb5=no \
 		--with-shared-modules=MODULES \
+		--with-included-iniparser \
+		--with-logfilebase=/var/log \
+		--with-nmbdsocketdir=/var/nmbd \
+		--with-sendfile-support \
+		--disable-avahi \
+		--disable-swat \
+		--disable-shared-libs \
 		--disable-static \
 		--disable-cups \
 		--disable-iprint \
@@ -111,7 +118,13 @@ apps: .conf
 		--disable-krb5developer \
 		--disable-developer \
 		--disable-debug \
+		--enable-largefile \
 		--without-ads \
+		--without-krb5 \
+		--without-pam \
+		--without-libtdb \
+		--without-libnetapi \
+		--without-libsmbsharemodes \
 		--without-acl-support \
 		--without-ldap \
 		--without-cluster-support \

@@ -280,6 +280,12 @@ int main(int argc, char *argv[])
 	fprintf(fp, "passdb backend = smbpasswd\n");
 	fprintf(fp, "smb encrypt = disabled\n");
 	fprintf(fp, "smb passwd file = /etc/samba/smbpasswd\n");
+
+        fprintf(fp, "enable core files = no\n");
+        fprintf(fp, "deadtime = 30\n");
+        fprintf(fp, "load printers = no\n");
+        fprintf(fp, "min receivefile size = 16384\n");
+
 #endif
 #if 0
 #ifdef RTCONFIG_RECVFILE
