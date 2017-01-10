@@ -2756,7 +2756,7 @@ static void auto_firmware_check()
 			rand_hr = rand_seed_by_time() % 4;
 			rand_min = rand_seed_by_time() % 60;
 		}
-		initial_state = nvram_get_int("webs_state_update");
+		initial_state = nvram_get_int("webs_state_flag");
 
 		eval("/usr/sbin/webs_update.sh");
 #ifdef RTCONFIG_DSL
@@ -2769,7 +2769,7 @@ static void auto_firmware_check()
 		{
 			dbg("retrieve firmware information\n");
 
-			if (initial_state == 0)		// New update
+			if ((initial_state == 0) && (nvram_get_int("webs_state_flag") == 1))		// New update
 			{
 				run_custom_script("update-notification", NULL);
 			}
