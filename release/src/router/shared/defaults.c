@@ -1805,6 +1805,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dms_dir_type_x", "<AVP" },
 	{ "dms_dir_manual", "0"	},
 	{ "dms_friendly_name","" },
+	{ "dms_web","0" },
 	{ "daapd_enable", "0" 	},
 	{ "daapd_friendly_name","" },
 #endif

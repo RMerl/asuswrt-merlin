@@ -963,6 +963,21 @@ function set_dms_dir(obj){
         	<td><span id="dmsStatus" style="margin-left:15px">Idle</span>
         	</td>
        	</tr>
+	<tr>
+		<th>Rebuild entire database at start</th>
+		<td>
+			<input type="radio" name="dms_rebuild" class="input" value="1" <% nvram_match_x("", "dms_rebuild", "1", "checked"); %>><#checkbox_Yes#>
+			<input type="radio" name="dms_rebuild" class="input" value="0" <% nvram_match_x("", "dms_rebuild", "0", "checked"); %>><#checkbox_No#>
+		</td>
+	</tr>
+	<tr>
+		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,17);">Enable status webpage</a</th>
+		<td>
+			<input type="radio" name="dms_web" class="input" value="1" <% nvram_match_x("", "dms_web", "1", "checked"); %>><#checkbox_Yes#>
+			<input type="radio" name="dms_web" class="input" value="0" <% nvram_match_x("", "dms_web", "0", "checked"); %>><#checkbox_No#>
+		</td>
+	</tr>
+
    			<tr>
         	<th><#DLNA_path_setting#></th>
         	<td>
