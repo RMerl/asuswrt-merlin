@@ -2546,8 +2546,8 @@ function browser_compatibility(){
 
 	if((isFirefox || isOpera) && document.getElementById("FormTitle")){
 		document.getElementById("FormTitle").className = "FormTitle_firefox";
-		if(current_url.indexOf("Guest_network") == 0)
-			document.getElementById("FormTitle").style.marginTop = "-140px";
+//		if(current_url.indexOf("Guest_network") == 0)
+//			document.getElementById("FormTitle").style.marginTop = "-140px";
 		if(current_url.indexOf("QoS_EZQoS.asp") == 0)
 			document.getElementById("FormTitle").style.marginTop = "0px"
 		/*if(current_url.indexOf("ParentalControl.asp") == 0 && !yadns_support)			//mark temporary, need to check 4M flash model. Jieming added at 2014/05/09
