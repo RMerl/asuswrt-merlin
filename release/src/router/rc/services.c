@@ -8347,10 +8347,8 @@ void start_Tor_proxy(void)
 	fprintf(fp, "Log notice file /tmp/torlog\n");
 	fprintf(fp, "VirtualAddrNetwork 10.192.0.0/10\n");
 	fprintf(fp, "AutomapHostsOnResolve 1\n");
-	fprintf(fp, "TransPort %s\n", Transport);
-	fprintf(fp, "TransListenAddress %s\n", nvram_safe_get( "lan_ipaddr" ));
-	fprintf(fp, "DNSPort %s\n", Dnsport);
-	fprintf(fp, "DNSListenAddress %s\n", nvram_safe_get( "lan_ipaddr" ));
+	fprintf(fp, "TransPort %s:%s\n", nvram_safe_get( "lan_ipaddr" ), Transport);
+	fprintf(fp, "DNSPort %s:%s\n", nvram_safe_get( "lan_ipaddr" ), Dnsport);
 	fprintf(fp, "RunAsDaemon 1\n");
 	fprintf(fp, "DataDirectory /tmp/.tordb\n");
 	fprintf(fp, "AvoidDiskWrites 1\n");
