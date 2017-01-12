@@ -1,0 +1,28 @@
+## Here is an example for HTML.
+
+syntax "html" "\.html?$"
+magic "HTML document text"
+comment "<!--|-->"
+
+# Tags:
+color cyan start="<[[:alpha:]/!?]" end=">"
+# Bold, italic, and underlined:
+color brightmagenta "</?[biu]>"
+
+# Named character references:
+color red "&[^;[:space:]]*;"
+# Strings:
+color green ""(\\.|[^"])*""
+
+# Attributes:
+color red "(abbr|accept(-charset)?|accesskey|action|alink|align|alt|archive|axis|background|bgcolor|border)="
+color red "(cell(padding|spacing)|char(off|set)?|checked|cite|class(id)?|compact|code(base|tag)?|cols(pan)?)="
+color red "(content(editable)?|contextmenu|coords|data|datetime|declare|defer|dir|disabled|enctype)="
+color red "(for|frame(border)?|headers|height|hidden|href(lang)?|hspace|http-equiv|id|ismap)="
+color red "(label|lang|link|longdesc|margin(height|width)|maxlength|media|method|multiple)="
+color red "(name|nohref|noresize|noshade|object|onclick|onfocus|onload|onmouseover|profile|readonly|rel|rev)="
+color red "(rows(pan)?|rules|scheme|scope|scrolling|selected|shape|size|span|src|standby|start|style|summary)="
+color red "(tabindex|target|text|title|type|usemap|valign|value(type)?|vlink|vspace|width|xmlns|xml:space)="
+
+# Comments:
+color yellow start="<!--" end="-->"

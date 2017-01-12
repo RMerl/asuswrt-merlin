@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 
-AC_INIT([GNU nano], [2.7.3], [nano-devel@gnu.org], [nano])
+AC_INIT([GNU nano], [2.7.4], [nano-devel@gnu.org], [nano])
 AC_CONFIG_SRCDIR([src/nano.c])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
@@ -628,12 +628,10 @@ AC_CACHE_CHECK([for enhanced regular expression flag], nano_cv_flag_reg_extended
 AC_DEFINE_UNQUOTED(NANO_REG_EXTENDED, $nano_cv_flag_reg_extended,
 		   [Flag(s) to use to get the full range of extended regular expressions])
 
-if test x$color_support = xyes; then
-	# Now check for the end-of-word boundary support (/< and />).
-	AC_MSG_CHECKING([for GNU-style word boundary regex support])
-
-	AC_ARG_WITH(wordbounds,
-        AS_HELP_STRING([--with-wordbounds], [Use GNU-style word boundary delimiters]),
+# Check for word-boundary support (/< and />).
+AC_MSG_CHECKING([for GNU-style word boundary regex support])
+AC_ARG_WITH(wordbounds,
+AS_HELP_STRING([--with-wordbounds], [Use GNU-style word boundary delimiters]),
 	[ case "$with_wordbounds" in
 	    no)
 		AC_MSG_RESULT(no)
@@ -670,6 +668,7 @@ int main(void)
 	)
 ])
 
+if test x$color_support = xyes; then
 #    if test x$CURSES_LIB_NAME = xcurses; then
 	AC_MSG_CHECKING([whether _XOPEN_SOURCE_EXTENDED is needed])
 	AC_TRY_RUN([
@@ -733,10 +732,6 @@ else
 fi
 AM_CONDITIONAL(GROFF_HTML, test x$groff_html_support = xyes)
 
-# Check for the availability of makeinfo.
-AC_CHECK_PROG(haveit, makeinfo, yes, no)
-AM_CONDITIONAL(HAVE_MAKEINFO, test x$haveit = xyes)
-
 # Check whether this is a git repository.
 AC_MSG_CHECKING([whether building from git])
 if test -d .git ; then
@@ -751,14 +746,11 @@ AM_CONDITIONAL(BUILDING_FROM_GIT, test x$from_git = xyes)
 AC_CONFIG_FILES([
 Makefile
 doc/Makefile
-doc/nanorc.sample
-doc/man/Makefile
-doc/man/fr/Makefile
-doc/syntax/Makefile
-doc/texinfo/Makefile
+doc/sample.nanorc
 m4/Makefile
 po/Makefile.in
 src/Makefile
+syntax/Makefile
 nano.spec
 ])
 

@@ -2089,7 +2089,7 @@ void statusline(message_type importance, const char *msg, ...)
 {
     va_list ap;
     char *compound, *message;
-    size_t start_x;
+    size_t start_col;
     bool bracketed;
 #ifndef NANO_TINY
     bool old_whitespace = ISSET(WHITESPACE_DISPLAY);
@@ -2133,10 +2133,10 @@ void statusline(message_type importance, const char *msg, ...)
     message = display_string(compound, 0, COLS, FALSE);
     free(compound);
 
-    start_x = (COLS - strlenpt(message)) / 2;
-    bracketed = (start_x > 1);
+    start_col = (COLS - strlenpt(message)) / 2;
+    bracketed = (start_col > 1);
 
-    wmove(bottomwin, 0, (bracketed ? start_x - 2 : start_x));
+    wmove(bottomwin, 0, (bracketed ? start_col - 2 : start_col));
     wattron(bottomwin, interface_color_pair[STATUS_BAR]);
     if (bracketed)
 	waddstr(bottomwin, "[ ");
@@ -2290,35 +2290,33 @@ void reset_cursor(void)
  * the edit window.  fileptr is the line to be painted, at row line of
  * the window.  converted is the actual string to be written to the
  * window, with tabs and control characters replaced by strings of
- * regular characters.  start is the column number of the first
+ * regular characters.  from_col is the column number of the first
  * character of this page.  That is, the first character of converted
- * corresponds to character number actual_x(fileptr->data, start) of the
+ * corresponds to character number actual_x(fileptr->data, from_col) of the
  * line. */
-void edit_draw(filestruct *fileptr, const char *converted, int
-	line, size_t start)
+void edit_draw(filestruct *fileptr, const char *converted,
+	int line, size_t from_col)
 {
 #if !defined(NANO_TINY) || !defined(DISABLE_COLOR)
-    size_t startpos = actual_x(fileptr->data, start);
+    size_t from_x = actual_x(fileptr->data, from_col);
 	/* The position in fileptr->data of the leftmost character
 	 * that displays at least partially on the window. */
-    size_t endpos = actual_x(fileptr->data, start + editwincols - 1) + 1;
+    size_t till_x = actual_x(fileptr->data, from_col + editwincols - 1) + 1;
 	/* The position in fileptr->data of the first character that is
-	 * completely off the window to the right.
-	 *
-	 * Note that endpos might be beyond the null terminator of the
-	 * string. */
+	 * completely off the window to the right.  Note that till_x
+	 * might be beyond the null terminator of the string. */
 #endif
 
     assert(openfile != NULL && fileptr != NULL && converted != NULL);
     assert(strlenpt(converted) <= editwincols);
 
 #ifdef ENABLE_LINENUMBERS
-    /* If line numbering is switched on, show a line number in front of
+    /* If line numbering is switched on, put a line number in front of
      * the text -- but only for the parts that are not softwrapped. */
     if (margin > 0) {
 	wattron(edit, interface_color_pair[LINE_NUMBER]);
 #ifndef NANO_TINY
-	if (ISSET(SOFTWRAP) && startpos >= editwincols)
+	if (ISSET(SOFTWRAP) && from_x != 0)
 	    mvwprintw(edit, line, 0, "%*s", margin - 1, " ");
 	else
 #endif
@@ -2327,7 +2325,7 @@ void edit_draw(filestruct *fileptr, const char *converted, int
     }
 #endif
 
-    /* First simply paint the line -- then we'll add colors or the
+    /* First simply write the line -- afterward we'll add colors and the
      * marking highlight on just the pieces that need it. */
     mvwaddstr(edit, line, margin, converted);
 
@@ -2340,8 +2338,7 @@ void edit_draw(filestruct *fileptr, const char *converted, int
 #endif
 
 #ifndef DISABLE_COLOR
-    /* If color syntaxes are available and turned on, we need to display
-     * them. */
+    /* If color syntaxes are available and turned on, apply them. */
     if (openfile->colorstrings != NULL && !ISSET(NO_COLOR_SYNTAX)) {
 	const colortype *varnish = openfile->colorstrings;
 
@@ -2349,274 +2346,260 @@ void edit_draw(filestruct *fileptr, const char *converted, int
 	if (openfile->syntax->nmultis > 0)
 	    alloc_multidata_if_needed(fileptr);
 
+	/* Iterate through all the coloring regexes. */
 	for (; varnish != NULL; varnish = varnish->next) {
-	    int x_start;
-		/* Starting column for mvwaddnstr.  Zero-based. */
+	    size_t index = 0;
+		/* Where in the line we currently begin looking for a match. */
+	    int start_col;
+		/* The starting column of a piece to paint.  Zero-based. */
 	    int paintlen = 0;
-		/* Number of chars to paint on this line.  There are
-		 * COLS characters on a whole line. */
-	    size_t index;
-		/* Index in converted where we paint. */
-	    regmatch_t startmatch;
-		/* Match position for start_regex. */
-	    regmatch_t endmatch;
-		/* Match position for end_regex. */
+		/* The number of characters to paint. */
+	    const char *thetext;
+		/* The place in converted from where painting starts. */
+	    regmatch_t startmatch, endmatch;
+		/* Match positions of the start and end regexes. */
 
-	    wattron(edit, varnish->attributes);
 	    /* Two notes about regexec().  A return value of zero means
 	     * that there is a match.  Also, rm_eo is the first
 	     * non-matching character after the match. */
 
+	    wattron(edit, varnish->attributes);
+
 	    /* First case: varnish is a single-line expression. */
 	    if (varnish->end == NULL) {
-		size_t k = 0;
-
-		/* We increment k by rm_eo, to move past the end of the
+		/* We increment index by rm_eo, to move past the end of the
 		 * last match.  Even though two matches may overlap, we
 		 * want to ignore them, so that we can highlight e.g. C
 		 * strings correctly. */
-		while (k < endpos) {
+		while (index < till_x) {
 		    /* Note the fifth parameter to regexec().  It says
 		     * not to match the beginning-of-line character
-		     * unless k is zero.  If regexec() returns
+		     * unless index is zero.  If regexec() returns
 		     * REG_NOMATCH, there are no more matches in the
 		     * line. */
-		    if (regexec(varnish->start, &fileptr->data[k], 1,
-			&startmatch, (k == 0) ? 0 : REG_NOTBOL) ==
-			REG_NOMATCH)
+		    if (regexec(varnish->start, &fileptr->data[index], 1,
+				&startmatch, (index == 0) ? 0 : REG_NOTBOL) ==
+				REG_NOMATCH)
 			break;
-		    /* Translate the match to the beginning of the
-		     * line. */
-		    startmatch.rm_so += k;
-		    startmatch.rm_eo += k;
 
 		    /* Skip over a zero-length regex match. */
-		    if (startmatch.rm_so == startmatch.rm_eo)
-			startmatch.rm_eo++;
-		    else if (startmatch.rm_so < endpos &&
-			startmatch.rm_eo > startpos) {
-			x_start = (startmatch.rm_so <= startpos) ? 0 :
-				strnlenpt(fileptr->data,
-				startmatch.rm_so) - start;
-
-			index = actual_x(converted, x_start);
-
-			paintlen = actual_x(converted + index,
-				strnlenpt(fileptr->data,
-				startmatch.rm_eo) - start - x_start);
-
-			assert(0 <= x_start && 0 <= paintlen);
-
-			mvwaddnstr(edit, line, x_start + margin, converted +
-				index, paintlen);
+		    if (startmatch.rm_so == startmatch.rm_eo) {
+			index += startmatch.rm_eo + 1;
+			continue;
 		    }
-		    k = startmatch.rm_eo;
+
+		    /* Translate the match to the beginning of the line. */
+		    startmatch.rm_so += index;
+		    startmatch.rm_eo += index;
+		    index = startmatch.rm_eo;
+
+		    /* If the matching piece is not visible, skip it. */
+		    if (startmatch.rm_so >= till_x ||
+					startmatch.rm_eo <= from_x)
+			continue;
+
+		    start_col = (startmatch.rm_so <= from_x) ?
+				0 : strnlenpt(fileptr->data,
+				startmatch.rm_so) - from_col;
+
+		    thetext = converted + actual_x(converted, start_col);
+
+		    paintlen = actual_x(thetext, strnlenpt(fileptr->data,
+				startmatch.rm_eo) - from_col - start_col);
+
+		    mvwaddnstr(edit, line, margin + start_col,
+						thetext, paintlen);
 		}
-	    } else {	/* Second case: varnish is a multiline expression. */
-		const filestruct *start_line = fileptr->prev;
-		    /* The first line before fileptr that matches 'start'. */
-		size_t start_col;
-		    /* Where the match starts in that line. */
-		const filestruct *end_line;
-		    /* The line that matches 'end'. */
+		goto tail_of_loop;
+	    }
 
-		/* First see if the multidata was maybe already calculated. */
-		if (fileptr->multidata[varnish->id] == CNONE)
+	    /* Second case: varnish is a multiline expression. */
+	    const filestruct *start_line = fileptr->prev;
+		/* The first line before fileptr that matches 'start'. */
+	    const filestruct *end_line = fileptr;
+		/* The line that matches 'end'. */
+
+	    /* First see if the multidata was maybe already calculated. */
+	    if (fileptr->multidata[varnish->id] == CNONE)
+		goto tail_of_loop;
+	    else if (fileptr->multidata[varnish->id] == CWHOLELINE) {
+		mvwaddnstr(edit, line, margin, converted, -1);
+		goto tail_of_loop;
+	    } else if (fileptr->multidata[varnish->id] == CBEGINBEFORE) {
+		regexec(varnish->end, fileptr->data, 1, &endmatch, 0);
+		/* If the coloured part is scrolled off, skip it. */
+		if (endmatch.rm_eo <= from_x)
 		    goto tail_of_loop;
-		else if (fileptr->multidata[varnish->id] == CWHOLELINE) {
-		    mvwaddnstr(edit, line, margin, converted, -1);
-		    goto tail_of_loop;
-		} else if (fileptr->multidata[varnish->id] == CBEGINBEFORE) {
-		    regexec(varnish->end, fileptr->data, 1, &endmatch, 0);
-		    /* If the coloured part is scrolled off, skip it. */
-		    if (endmatch.rm_eo <= startpos)
-			goto tail_of_loop;
-		    paintlen = actual_x(converted, strnlenpt(fileptr->data,
-			endmatch.rm_eo) - start);
-		    mvwaddnstr(edit, line, margin, converted, paintlen);
-		    goto tail_of_loop;
-		} if (fileptr->multidata[varnish->id] == -1)
-		    /* Assume this until proven otherwise below. */
-		    fileptr->multidata[varnish->id] = CNONE;
+		paintlen = actual_x(converted, strnlenpt(fileptr->data,
+						endmatch.rm_eo) - from_col);
+		mvwaddnstr(edit, line, margin, converted, paintlen);
+		goto tail_of_loop;
+	    }
 
-		/* There is no precalculated multidata, so find it out now.
-		 * First check if the beginning of the line is colored by a
-		 * start on an earlier line, and an end on this line or later.
-		 *
-		 * So: find the first line before fileptr matching the start.
-		 * If every match on that line is followed by an end, then go
-		 * to step two.  Otherwise, find a line after start_line that
-		 * matches the end.  If that line is not before fileptr, then
-		 * paint the beginning of this line. */
+	    /* There is no precalculated multidata, or it is CENDAFTER or
+	     * CSTARTENDHERE.  In all cases, find out what to paint. */
 
-		while (start_line != NULL && regexec(varnish->start,
-			start_line->data, 1, &startmatch, 0) == REG_NOMATCH) {
-		    /* There is no start; but if there is an end on this line,
-		     * there is no need to look for starts on earlier lines. */
-		    if (regexec(varnish->end, start_line->data, 0, NULL, 0) == 0)
-			goto step_two;
-		    start_line = start_line->prev;
-		}
+	    /* When the multidata is unitialized, assume CNONE until one
+	     * of the steps below concludes otherwise. */
+	    if (fileptr->multidata[varnish->id] == -1)
+		fileptr->multidata[varnish->id] = CNONE;
 
-		/* If no start was found, skip to the next step. */
-		if (start_line == NULL)
+	    /* First check if the beginning of the line is colored by a
+	     * start on an earlier line, and an end on this line or later.
+	     *
+	     * So: find the first line before fileptr matching the start.
+	     * If every match on that line is followed by an end, then go
+	     * to step two.  Otherwise, find a line after start_line that
+	     * matches the end.  If that line is not before fileptr, then
+	     * paint the beginning of this line. */
+
+	    while (start_line != NULL && regexec(varnish->start,
+		    start_line->data, 1, &startmatch, 0) == REG_NOMATCH) {
+		/* There is no start; but if there is an end on this line,
+		 * there is no need to look for starts on earlier lines. */
+		if (regexec(varnish->end, start_line->data, 0, NULL, 0) == 0)
 		    goto step_two;
+		start_line = start_line->prev;
+	    }
 
-		/* If a found start has been qualified as an end earlier,
-		 * believe it and skip to the next step. */
-		if (start_line->multidata != NULL &&
+	    /* If no start was found, skip to the next step. */
+	    if (start_line == NULL)
+		goto step_two;
+
+	    /* If a found start has been qualified as an end earlier,
+	     * believe it and skip to the next step. */
+	    if (start_line->multidata != NULL &&
 			(start_line->multidata[varnish->id] == CBEGINBEFORE ||
 			start_line->multidata[varnish->id] == CSTARTENDHERE))
-		    goto step_two;
+		goto step_two;
 
-		/* Skip over a zero-length regex match. */
-		if (startmatch.rm_so == startmatch.rm_eo)
-		    goto tail_of_loop;
+	    /* Skip over a zero-length regex match. */
+	    if (startmatch.rm_so == startmatch.rm_eo)
+		goto tail_of_loop;
 
-		/* Now start_line is the first line before fileptr containing
-		 * a start match.  Is there a start on that line not followed
-		 * by an end on that line? */
-		start_col = 0;
-		while (TRUE) {
-		    start_col += startmatch.rm_so;
-		    startmatch.rm_eo -= startmatch.rm_so;
-		    if (regexec(varnish->end, start_line->data +
-				start_col + startmatch.rm_eo, 0, NULL,
-				(start_col + startmatch.rm_eo == 0) ?
+	    /* Now start_line is the first line before fileptr containing
+	     * a start match.  Is there a start on that line not followed
+	     * by an end on that line? */
+	    while (TRUE) {
+		index += startmatch.rm_so;
+		startmatch.rm_eo -= startmatch.rm_so;
+		if (regexec(varnish->end, start_line->data + index +
+				startmatch.rm_eo, 0, NULL,
+				(index + startmatch.rm_eo == 0) ?
 				0 : REG_NOTBOL) == REG_NOMATCH)
-			/* No end found after this start. */
-			break;
-		    start_col++;
-		    if (regexec(varnish->start, start_line->data + start_col,
+		    /* No end found after this start. */
+		    break;
+		index++;
+		if (regexec(varnish->start, start_line->data + index,
 				1, &startmatch, REG_NOTBOL) == REG_NOMATCH)
-			/* No later start on this line. */
-			goto step_two;
-		}
-		/* Indeed, there is a start without an end on that line. */
-
-		/* We've already checked that there is no end before fileptr
-		 * and after the start.  But is there an end after the start
-		 * at all?  We don't paint unterminated starts. */
-		end_line = fileptr;
-		while (end_line != NULL && regexec(varnish->end,
-			end_line->data, 1, &endmatch, 0) == REG_NOMATCH)
-		    end_line = end_line->next;
-
-		/* If no end was found, or it is too early, next step. */
-		if (end_line == NULL)
+		    /* No later start on this line. */
 		    goto step_two;
-		if (end_line == fileptr && endmatch.rm_eo <= startpos) {
-		    fileptr->multidata[varnish->id] = CBEGINBEFORE;
-		    goto step_two;
-		}
+	    }
+	    /* Indeed, there is a start without an end on that line. */
 
-		/* Now paint the start of fileptr.  If the start of fileptr
-		 * is on a different line from the end, paintlen is -1, which
-		 * means that everything on the line gets painted.  Otherwise,
-		 * paintlen is the expanded location of the end of the match
-		 * minus the expanded location of the beginning of the page. */
-		if (end_line != fileptr) {
-		    paintlen = -1;
-		    fileptr->multidata[varnish->id] = CWHOLELINE;
+	    /* We've already checked that there is no end between the start
+	     * and the current line.  But is there an end after the start
+	     * at all?  We don't paint unterminated starts. */
+	    while (end_line != NULL && regexec(varnish->end, end_line->data,
+				 1, &endmatch, 0) == REG_NOMATCH)
+		end_line = end_line->next;
+
+	    /* If there is no end, there is nothing to paint. */
+	    if (end_line == NULL)
+		goto tail_of_loop;
+	    /* If the end is scrolled off to the left, next step. */
+	    if (end_line == fileptr && endmatch.rm_eo <= from_x) {
+		fileptr->multidata[varnish->id] = CBEGINBEFORE;
+		goto step_two;
+	    }
+
+	    /* Now paint the start of the line.  However, if the end match
+	     * is on a different line, paint the whole line, and go on. */
+	    if (end_line != fileptr) {
+		mvwaddnstr(edit, line, margin, converted, -1);
+		fileptr->multidata[varnish->id] = CWHOLELINE;
 #ifdef DEBUG
     fprintf(stderr, "  Marking for id %i  line %i as CWHOLELINE\n", varnish->id, line);
 #endif
-		} else {
-		    paintlen = actual_x(converted, strnlenpt(fileptr->data,
-						endmatch.rm_eo) - start);
-		    fileptr->multidata[varnish->id] = CBEGINBEFORE;
+		/* Don't bother looking for any more starts. */
+		goto tail_of_loop;
+	    } else {
+		paintlen = actual_x(converted, strnlenpt(fileptr->data,
+						endmatch.rm_eo) - from_col);
+		mvwaddnstr(edit, line, margin, converted, paintlen);
+		fileptr->multidata[varnish->id] = CBEGINBEFORE;
 #ifdef DEBUG
     fprintf(stderr, "  Marking for id %i  line %i as CBEGINBEFORE\n", varnish->id, line);
 #endif
-		}
-		mvwaddnstr(edit, line, margin, converted, paintlen);
-		/* If the whole line has been painted, don't bother looking
-		 * for any more starts. */
-		if (paintlen < 0)
-		    goto tail_of_loop;
+	    }
   step_two:
-		/* Second step: look for starts on this line, but start
-		 * looking only after an end match, if there is one. */
-		start_col = (paintlen == 0) ? 0 : endmatch.rm_eo;
+	    /* Second step: look for starts on this line, but begin
+	     * looking only after an end match, if there is one. */
+	    index = (paintlen == 0) ? 0 : endmatch.rm_eo;
 
-		while (start_col < endpos) {
-		    if (regexec(varnish->start, fileptr->data + start_col,
-				1, &startmatch, (start_col == 0) ?
-				0 : REG_NOTBOL) == REG_NOMATCH ||
-				start_col + startmatch.rm_so >= endpos)
-			/* No more starts on this line. */
-			break;
-
-		    /* Translate the match to be relative to the
-		     * beginning of the line. */
-		    startmatch.rm_so += start_col;
-		    startmatch.rm_eo += start_col;
-
-		    x_start = (startmatch.rm_so <= startpos) ?
-				0 : strnlenpt(fileptr->data,
-				startmatch.rm_so) - start;
-
-		    index = actual_x(converted, x_start);
-
-		    if (regexec(varnish->end, fileptr->data +
-				startmatch.rm_eo, 1, &endmatch,
-				(startmatch.rm_eo == 0) ?
+	    while (regexec(varnish->start, fileptr->data + index,
+				1, &startmatch, (index == 0) ?
 				0 : REG_NOTBOL) == 0) {
-			/* Translate the end match to be relative to
-			 * the beginning of the line. */
-			endmatch.rm_so += startmatch.rm_eo;
-			endmatch.rm_eo += startmatch.rm_eo;
-			/* There is an end on this line.  But does
-			 * it appear on this page, and is the match
-			 * more than zero characters long? */
-			if (endmatch.rm_eo > startpos &&
-				endmatch.rm_eo > startmatch.rm_so) {
-			    paintlen = actual_x(converted + index,
-					strnlenpt(fileptr->data,
-					endmatch.rm_eo) - start - x_start);
+		/* Translate the match to be relative to the
+		 * beginning of the line. */
+		startmatch.rm_so += index;
+		startmatch.rm_eo += index;
 
-			    assert(0 <= x_start && x_start < editwincols);
+		start_col = (startmatch.rm_so <= from_x) ?
+				0 : strnlenpt(fileptr->data,
+				startmatch.rm_so) - from_col;
 
-			    mvwaddnstr(edit, line, x_start + margin,
-					converted + index, paintlen);
-			    if (paintlen > 0) {
-				fileptr->multidata[varnish->id] = CSTARTENDHERE;
+		thetext = converted + actual_x(converted, start_col);
+
+		if (regexec(varnish->end, fileptr->data + startmatch.rm_eo,
+				1, &endmatch, (startmatch.rm_eo == 0) ?
+				0 : REG_NOTBOL) == 0) {
+		    /* Translate the end match to be relative to
+		     * the beginning of the line. */
+		    endmatch.rm_so += startmatch.rm_eo;
+		    endmatch.rm_eo += startmatch.rm_eo;
+		    /* Only paint the match if it is visible on screen and
+		     * it is more than zero characters long. */
+		    if (endmatch.rm_eo > from_x &&
+					endmatch.rm_eo > startmatch.rm_so) {
+			paintlen = actual_x(thetext, strnlenpt(fileptr->data,
+					endmatch.rm_eo) - from_col - start_col);
+
+			mvwaddnstr(edit, line, margin + start_col,
+						thetext, paintlen);
+
+			fileptr->multidata[varnish->id] = CSTARTENDHERE;
 #ifdef DEBUG
     fprintf(stderr, "  Marking for id %i  line %i as CSTARTENDHERE\n", varnish->id, line);
 #endif
-			    }
-			}
-			start_col = endmatch.rm_eo;
-			/* Skip over a zero-length match. */
-			if (endmatch.rm_so == endmatch.rm_eo)
-			    start_col += 1;
-		    } else {
-			/* There is no end on this line.  But we haven't yet
-			 * looked for one on later lines. */
-			end_line = fileptr->next;
+		    }
+		    index = endmatch.rm_eo;
+		    /* Skip over a zero-length match. */
+		    if (endmatch.rm_so == endmatch.rm_eo)
+			index += 1;
+		    continue;
+		}
 
-			while (end_line != NULL &&
-				regexec(varnish->end, end_line->data,
-				0, NULL, 0) == REG_NOMATCH)
-			    end_line = end_line->next;
+		/* There is no end on this line.  But maybe on later lines? */
+		end_line = fileptr->next;
 
-			/* If there is no end, we're done on this line. */
-			if (end_line == NULL)
-			    break;
+		while (end_line != NULL && regexec(varnish->end, end_line->data,
+					0, NULL, 0) == REG_NOMATCH)
+		    end_line = end_line->next;
 
-			assert(0 <= x_start && x_start < editwincols);
+		/* If there is no end, we're done with this regex. */
+		if (end_line == NULL)
+		    break;
 
-			/* Paint the rest of the line. */
-			mvwaddnstr(edit, line, x_start + margin, converted + index, -1);
-			fileptr->multidata[varnish->id] = CENDAFTER;
+		/* Paint the rest of the line. */
+		mvwaddnstr(edit, line, margin + start_col, thetext, -1);
+		fileptr->multidata[varnish->id] = CENDAFTER;
 #ifdef DEBUG
     fprintf(stderr, "  Marking for id %i  line %i as CENDAFTER\n", varnish->id, line);
 #endif
-			/* We've painted to the end of the line, so don't
-			 * bother checking for any more starts. */
-			break;
-		    }
-		}
+		/* We've painted to the end of the line, so don't
+		 * bother checking for any more starts. */
+		break;
 	    }
   tail_of_loop:
 	    wattroff(edit, varnish->attributes);
@@ -2636,56 +2619,36 @@ void edit_draw(filestruct *fileptr, const char *converted, int
 	    /* The lines where the marked region begins and ends. */
 	size_t top_x, bot_x;
 	    /* The x positions where the marked region begins and ends. */
-	int x_start;
-	    /* The starting column for mvwaddnstr().  Zero-based. */
-	int paintlen;
-	    /* Number of characters to paint on this line.  There are
-	     * COLS characters on a whole line. */
-	size_t index;
-	    /* Index in converted where we paint. */
+	int start_col;
+	    /* The column where painting starts.  Zero-based. */
+	const char *thetext;
+	    /* The place in converted from where painting starts. */
+	int paintlen = -1;
+	    /* The number of characters to paint.  Negative means "all". */
 
 	mark_order(&top, &top_x, &bot, &bot_x, NULL);
 
-	if (top->lineno < fileptr->lineno || top_x < startpos)
-	    top_x = startpos;
-	if (bot->lineno > fileptr->lineno || bot_x > endpos)
-	    bot_x = endpos;
+	if (top->lineno < fileptr->lineno || top_x < from_x)
+	    top_x = from_x;
+	if (bot->lineno > fileptr->lineno || bot_x > till_x)
+	    bot_x = till_x;
 
-	/* Only paint if the marked bit of fileptr is on this page. */
-	if (top_x < endpos && bot_x > startpos) {
-	    assert(startpos <= top_x);
+	/* Only paint if the marked part of the line is on this page. */
+	if (top_x < till_x && bot_x > from_x) {
+	    /* Compute on which screen column to start painting. */
+	    start_col = strnlenpt(fileptr->data, top_x) - from_col;
 
-	    /* x_start is the expanded location of the beginning of the
-	     * mark minus the beginning of the page. */
-	    x_start = strnlenpt(fileptr->data, top_x) - start;
+	    thetext = converted + actual_x(converted, start_col);
 
-	    /* If the end of the mark is off the page, paintlen is -1,
-	     * meaning that everything on the line gets painted.
-	     * Otherwise, paintlen is the expanded location of the end
-	     * of the mark minus the expanded location of the beginning
-	     * of the mark. */
-	    if (bot_x >= endpos)
-		paintlen = -1;
-	    else
-		paintlen = strnlenpt(fileptr->data, bot_x) - (x_start + start);
-
-	    /* If x_start is before the beginning of the page, shift
-	     * paintlen x_start characters to compensate, and put
-	     * x_start at the beginning of the page. */
-	    if (x_start < 0) {
-		paintlen += x_start;
-		x_start = 0;
+	    /* If the end of the mark is onscreen, compute how many
+	     * characters to paint.  Otherwise, just paint all. */
+	    if (bot_x < till_x) {
+		size_t end_col = strnlenpt(fileptr->data, bot_x) - from_col;
+		paintlen = actual_x(thetext, end_col - start_col);
 	    }
 
-	    assert(x_start >= 0 && x_start <= strlen(converted));
-
-	    index = actual_x(converted, x_start);
-
-	    if (paintlen > 0)
-		paintlen = actual_x(converted + index, paintlen);
-
 	    wattron(edit, hilite_attribute);
-	    mvwaddnstr(edit, line, x_start + margin, converted + index, paintlen);
+	    mvwaddnstr(edit, line, margin + start_col, thetext, paintlen);
 	    wattroff(edit, hilite_attribute);
 	}
     }
@@ -2699,14 +2662,11 @@ void edit_draw(filestruct *fileptr, const char *converted, int
 int update_line(filestruct *fileptr, size_t index)
 {
     int line = 0;
-	/* The line in the edit window that we want to update. */
+	/* The row in the edit window we will be updating. */
     int extralinesused = 0;
     char *converted;
-	/* fileptr->data converted to have tabs and control characters
-	 * expanded. */
+	/* The data of the line with tabs and control characters expanded. */
     size_t page_start;
-
-    assert(fileptr != NULL);
 
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
@@ -2832,8 +2792,6 @@ void edit_scroll(scroll_dir direction, ssize_t nlines)
     ssize_t i;
     filestruct *foo;
 
-    assert(nlines > 0);
-
     /* Part 1: nlines is the number of lines we're going to scroll the
      * text of the edit window. */
 
@@ -2893,12 +2851,10 @@ void edit_scroll(scroll_dir direction, ssize_t nlines)
     if (nlines > editwinrows)
 	nlines = editwinrows;
 
-    /* If we scrolled up, we're on the line before the scrolled
-     * region. */
+    /* If we scrolled up, we're on the line before the scrolled region. */
     foo = openfile->edittop;
 
-    /* If we scrolled down, move down to the line before the scrolled
-     * region. */
+    /* If we scrolled down, move down to the line before the scrolled region. */
     if (direction == DOWNWARD) {
 	for (i = editwinrows - nlines; i > 0 && foo != NULL; i--)
 	    foo = foo->next;
@@ -2910,8 +2866,8 @@ void edit_scroll(scroll_dir direction, ssize_t nlines)
      * blank, so we don't need to draw it unless the mark is on or we're
      * not on the first page. */
     for (i = nlines; i > 0 && foo != NULL; i--) {
-	if ((i == nlines && direction == DOWNWARD) || (i == 1 &&
-		direction == UPWARD)) {
+	if ((i == nlines && direction == DOWNWARD) ||
+			(i == 1 && direction == UPWARD)) {
 	    if (need_horizontal_scroll(openfile->placewewant, 0))
 		update_line(foo, (foo == openfile->current) ?
 			openfile->current_x : 0);
@@ -2920,6 +2876,7 @@ void edit_scroll(scroll_dir direction, ssize_t nlines)
 		openfile->current_x : 0);
 	foo = foo->next;
     }
+
     compute_maxrows();
 }
 
@@ -3307,7 +3264,7 @@ void do_credits(void)
 
 	if (crpos < CREDIT_LEN) {
 	    const char *what;
-	    size_t start_x;
+	    size_t start_col;
 
 	    if (credits[crpos] == NULL) {
 		assert(0 <= xlpos && xlpos < XLCREDIT_LEN);
@@ -3317,9 +3274,9 @@ void do_credits(void)
 	    } else
 		what = credits[crpos];
 
-	    start_x = COLS / 2 - strlenpt(what) / 2 - 1;
+	    start_col = COLS / 2 - strlenpt(what) / 2 - 1;
 	    mvwaddstr(edit, editwinrows - 1 - (editwinrows % 2),
-		start_x, what);
+						start_col, what);
 	}
 
 	wrefresh(edit);

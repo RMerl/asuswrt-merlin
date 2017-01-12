@@ -108,8 +108,6 @@ void color_init(void)
     bool using_defaults = FALSE;
     short foreground, background;
 
-    assert(openfile != NULL);
-
     /* If the terminal is not capable of colors, forget it. */
     if (!has_colors())
 	return;
@@ -163,8 +161,6 @@ void color_update(void)
 {
     syntaxtype *sint = NULL;
     colortype *ink;
-
-    assert(openfile != NULL);
 
     /* If the rcfiles were not read, or contained no syntaxes, get out. */
     if (syntaxes == NULL)

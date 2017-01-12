@@ -798,7 +798,7 @@ void do_undo(void)
 	openfile->mark_begin_x = u->mark_begin_x;
 	openfile->mark_set = TRUE;
 	goto_line_posx(u->lineno, u->begin);
-	cut_marked();
+	cut_marked(NULL);
 	free_filestruct(u->cutbuffer);
 	u->cutbuffer = cutbuffer;
 	u->cutbottom = cutbottom;
@@ -823,10 +823,12 @@ void do_undo(void)
 	statusline(HUSH, _("Undid action (%s)"), undidmsg);
 
     renumber(f);
+
     openfile->current_undo = openfile->current_undo->next;
     openfile->last_action = OTHER;
     openfile->mark_set = FALSE;
     openfile->placewewant = xplustabs();
+
     openfile->totsize = u->wassize;
     set_modified();
 }
@@ -974,6 +976,7 @@ void do_redo(void)
     openfile->last_action = OTHER;
     openfile->mark_set = FALSE;
     openfile->placewewant = xplustabs();
+
     openfile->totsize = u->newsize;
     set_modified();
 }
@@ -1368,15 +1371,21 @@ fprintf(stderr, "  >> Updating... action = %d, openfile->last_action = %d, openf
     }
     case BACK:
     case DEL: {
-	/* Add the removed character after or before earlier removed stuff. */
 	char *char_buf = charalloc(mb_cur_max());
 	int char_len = parse_mbchar(&openfile->current->data[openfile->current_x], char_buf, NULL);
-	if (action == DEL) {
+	if (openfile->current_x == u->begin) {
+	    /* They deleted more: add removed character after earlier stuff. */
 	    u->strdata = addstrings(u->strdata, strlen(u->strdata), char_buf, char_len);
 	    u->mark_begin_x = openfile->current_x;
-	} else {
+	} else if (openfile->current_x == u->begin - char_len) {
+	    /* They backspaced further: add removed character before earlier. */
 	    u->strdata = addstrings(char_buf, char_len, u->strdata, strlen(u->strdata));
 	    u->begin = openfile->current_x;
+	} else {
+	    /* They deleted *elsewhere* on the line: start a new undo item. */
+	    free(char_buf);
+	    add_undo(u->type);
+	    return;
 	}
 #ifdef DEBUG
 	fprintf(stderr, "  >> current undo data is \"%s\"\nu->begin = %lu\n", u->strdata, (unsigned long)u->begin);
@@ -2117,9 +2126,6 @@ bool find_paragraph(size_t *const quote, size_t *const par)
 	/* Number of lines in the paragraph we search for. */
     filestruct *current_save;
 	/* The line at the beginning of the paragraph we search for. */
-    ssize_t current_y_save;
-	/* The y-coordinate at the beginning of the paragraph we search
-	 * for. */
 
 #ifdef HAVE_REGEX_H
     if (quoterc != 0) {
@@ -2168,7 +2174,6 @@ bool find_paragraph(size_t *const quote, size_t *const par)
      * of lines in this paragraph. */
     quote_len = quote_length(openfile->current->data);
     current_save = openfile->current;
-    current_y_save = openfile->current_y;
     do_para_end(FALSE);
     par_len = openfile->current->lineno - current_save->lineno;
 
@@ -2179,7 +2184,6 @@ bool find_paragraph(size_t *const quote, size_t *const par)
     if (openfile->current_x > 0)
 	par_len++;
     openfile->current = current_save;
-    openfile->current_y = current_y_save;
 
     /* Save the values of quote_len and par_len. */
     assert(quote != NULL && par != NULL);
@@ -2451,7 +2455,6 @@ void do_justify(bool full_justify)
 
 	    /* Go to the next line. */
 	    par_len--;
-	    openfile->current_y++;
 	    openfile->current = openfile->current->next;
 	}
 
@@ -2462,7 +2465,6 @@ void do_justify(bool full_justify)
 	/* Go to the next line, if possible.  If there is no next line,
 	 * move to the end of the current line. */
 	if (openfile->current != openfile->filebot) {
-	    openfile->current_y++;
 	    openfile->current = openfile->current->next;
 	} else
 	    openfile->current_x = strlen(openfile->current->data);
@@ -2480,9 +2482,8 @@ void do_justify(bool full_justify)
     }
 
     /* We are now done justifying the paragraph or the file, so clean
-     * up.  current_y and totsize have been maintained above.  If we
-     * actually justified something, set last_par_line to the new end of
-     * the paragraph. */
+     * up.  totsize has been maintained above.  If we actually justified
+     * something, set last_par_line to the new end of the paragraph. */
     if (first_par_line != NULL)
 	last_par_line = openfile->current;
 
@@ -2672,11 +2673,7 @@ bool do_int_spell_fix(const char *word)
 	spotlight(TRUE, exp_word);
 
 	/* Let the user supply a correctly spelled alternative. */
-	proceed = (do_prompt(FALSE,
-#ifndef DISABLE_TABCOMP
-				TRUE,
-#endif
-				MSPELL, word,
+	proceed = (do_prompt(FALSE, FALSE, MSPELL, word,
 #ifndef DISABLE_HISTORIES
 				NULL,
 #endif
@@ -2920,7 +2917,6 @@ const char *do_alt_speller(char *tempfile_name)
     int alt_spell_status;
     size_t current_x_save = openfile->current_x;
     size_t pww_save = openfile->placewewant;
-    ssize_t current_y_save = openfile->current_y;
     ssize_t lineno_save = openfile->current->lineno;
     struct stat spellfileinfo;
     time_t timestamp;
@@ -3070,7 +3066,6 @@ const char *do_alt_speller(char *tempfile_name)
     goto_line_posx(lineno_save, current_x_save);
     if (openfile->current_x > strlen(openfile->current->data))
 	openfile->current_x = strlen(openfile->current->data);
-    openfile->current_y = current_y_save;
     openfile->placewewant = pww_save;
     adjust_viewport(STATIONARY);
 
@@ -3079,9 +3074,11 @@ const char *do_alt_speller(char *tempfile_name)
     stat(tempfile_name, &spellfileinfo);
     if (spellfileinfo.st_mtime != timestamp) {
 	set_modified();
+#ifndef NANO_TINY
 	/* Flush the undo stack, to avoid making a mess when the user
 	 * tries to undo things in spell-corrected lines. */
 	discard_until(NULL, openfile);
+#endif
     }
 #ifndef NANO_TINY
     /* Unblock SIGWINCHes again. */
@@ -3467,7 +3464,6 @@ void do_formatter(void)
     FILE *temp_file;
     int format_status;
     ssize_t lineno_save = openfile->current->lineno;
-    ssize_t current_y_save = openfile->current_y;
     size_t current_x_save = openfile->current_x;
     size_t pww_save = openfile->placewewant;
     pid_t pid_format;
@@ -3549,7 +3545,6 @@ void do_formatter(void)
 	goto_line_posx(lineno_save, current_x_save);
 	if (openfile->current_x > strlen(openfile->current->data))
 	    openfile->current_x = strlen(openfile->current->data);
-	openfile->current_y = current_y_save;
 	openfile->placewewant = pww_save;
 	adjust_viewport(STATIONARY);
 
@@ -3722,7 +3717,9 @@ void complete_a_word(void)
     int start_of_shard, shard_length = 0;
     int i = 0, j = 0;
     completion_word *some_word;
+#ifndef DISABLE_WRAPPING
     bool was_set_wrapping = !ISSET(NO_WRAP);
+#endif
 
     /* If this is a fresh completion attempt... */
     if (pletion_line == NULL) {
@@ -3825,19 +3822,20 @@ void complete_a_word(void)
 	    some_word->next = list_of_completions;
 	    list_of_completions = some_word;
 
+#ifndef DISABLE_WRAPPING
 	    /* Temporarily disable wrapping so only one undo item is added. */
 	    SET(NO_WRAP);
-
+#endif
 	    /* Inject the completion into the buffer. */
 	    do_output(&completion[shard_length],
 			strlen(completion) - shard_length, FALSE);
-
+#ifndef DISABLE_WRAPPING
 	    /* If needed, reenable wrapping and wrap the current line. */
 	    if (was_set_wrapping) {
 		UNSET(NO_WRAP);
 		do_wrap(openfile->current);
 	    }
-
+#endif
 	    /* Set the position for a possible next search attempt. */
 	    pletion_x = ++i;
 

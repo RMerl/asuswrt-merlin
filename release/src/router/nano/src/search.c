@@ -38,23 +38,22 @@ static bool history_changed = FALSE;
 #ifdef HAVE_REGEX_H
 static bool regexp_compiled = FALSE;
 	/* Have we compiled any regular expressions? */
+static bool bow_anchored = FALSE;
+	/* Whether a regex starts with a beginning-of-word anchor. */
 
-/* Compile the regular expression regexp to see if it's valid.  Return
- * TRUE if it is, or FALSE otherwise. */
+/* Compile the given regular expression and store it in search_regexp.
+ * Return TRUE if the expression is valid, and FALSE otherwise. */
 bool regexp_init(const char *regexp)
 {
-    int rc;
-
-    assert(!regexp_compiled);
-
-    rc = regcomp(&search_regexp, fixbounds(regexp),
+    int value = regcomp(&search_regexp, fixbounds(regexp),
 		NANO_REG_EXTENDED | (ISSET(CASE_SENSITIVE) ? 0 : REG_ICASE));
 
-    if (rc != 0) {
-	size_t len = regerror(rc, &search_regexp, NULL, 0);
+    /* If regex compilation failed, show the error message. */
+    if (value != 0) {
+	size_t len = regerror(value, &search_regexp, NULL, 0);
 	char *str = charalloc(len);
 
-	regerror(rc, &search_regexp, str, len);
+	regerror(value, &search_regexp, str, len);
 	statusline(ALERT, _("Bad regex \"%s\": %s"), regexp, str);
 	free(str);
 
@@ -62,6 +61,10 @@ bool regexp_init(const char *regexp)
     }
 
     regexp_compiled = TRUE;
+
+    /* Remember whether the regex starts with a beginning-of-word anchor. */
+    bow_anchored = (strncmp(regexp, "\\<", 2) == 0 ||
+			strncmp(regexp, "\\b", 2) == 0);
 
     return TRUE;
 }
@@ -150,10 +153,7 @@ int search_init(bool replacing, bool use_answer)
 	buf = mallocstrcpy(NULL, "");
 
     /* This is now one simple call.  It just does a lot. */
-    i = do_prompt(FALSE,
-#ifndef DISABLE_TABCOMP
-		TRUE,
-#endif
+    i = do_prompt(FALSE, FALSE,
 		replacing ? MREPLACE : MWHEREIS, backupstring,
 #ifndef DISABLE_HISTORIES
 		&search_history,
@@ -240,28 +240,28 @@ int search_init(bool replacing, bool use_answer)
 int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
 	const filestruct *begin, size_t begin_x)
 {
-    size_t found_len;
-	/* The length of the match we find. */
+    size_t found_len = strlen(needle);
+	/* The length of a match -- will be recomputed for a regex. */
     int feedback = 0;
 	/* When bigger than zero, show and wipe the "Searching..." message. */
-    filestruct *fileptr = openfile->current;
-    const char *rev_start = fileptr->data, *found = NULL;
+    filestruct *line = openfile->current;
+    const char *from = line->data, *found = NULL;
     size_t found_x;
 	/* The x coordinate of a found occurrence. */
     time_t lastkbcheck = time(NULL);
 
-    /* rev_start might end up 1 character before the start or after the
-     * end of the line.  This won't be a problem because strstrwrapper()
+    /* 'from' might end up 1 character before the start or after the end
+     * of the line.  This is fine because in that case strstrwrapper()
      * will return immediately and say that no match was found, and
-     * rev_start will be properly set when the search continues on the
+     * 'from' will be properly set when the search continues on the
      * previous or next line. */
     if (ISSET(BACKWARDS_SEARCH)) {
 	if (openfile->current_x == 0)
-	    rev_start += -1;
+	    from += -1;
 	else
-	    rev_start += move_mbleft(fileptr->data, openfile->current_x);
+	    from += move_mbleft(line->data, openfile->current_x);
     } else
-	rev_start += move_mbright(fileptr->data, openfile->current_x);
+	from += move_mbright(line->data, openfile->current_x);
 
     enable_nodelay();
 
@@ -293,32 +293,41 @@ int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
 	}
 
 	/* Search for the needle in the current line. */
-	found = strstrwrapper(fileptr->data, needle, rev_start);
+	found = strstrwrapper(line->data, needle, from);
 
 	if (found != NULL) {
-	    /* Remember the length of the potential match. */
-	    found_len =
 #ifdef HAVE_REGEX_H
-		ISSET(USE_REGEXP) ?
-		regmatches[0].rm_eo - regmatches[0].rm_so :
-#endif
-		strlen(needle);
+	    /* When doing a regex search, compute the length of the match. */
+	    if (ISSET(USE_REGEXP)) {
+		found_len = regmatches[0].rm_eo - regmatches[0].rm_so;
 
-#ifndef DISABLE_SPELLER
-	    /* When we're spell checking, a match is only a true match when
-	     * it is a separate word. */
-	    if (whole_word_only) {
-		if (is_separate_word(found - fileptr->data, found_len,
-					fileptr->data))
-		    break;
-		else {
-		    /* Maybe there is a whole word in the rest of the line. */
-		    rev_start = found + 1;
-		    continue;
+		/* If the regex starts with a BOW anchor, check that the found
+		 * match actually is the start of a word.  If not, continue. */
+		if (bow_anchored && found != line->data) {
+		    size_t before = move_mbleft(line->data, found - line->data);
+
+		    /* If a word char is before the match, skip this match. */
+		    if (is_word_mbchar(line->data + before, FALSE)) {
+			if (ISSET(BACKWARDS_SEARCH))
+			    from = line->data + before;
+			else
+			    from = found + move_mbright(found, 0);
+			continue;
+		    }
 		}
-	    } else
+	    }
 #endif
-		break;
+#ifndef DISABLE_SPELLER
+	    /* When we're spell checking, a match should be a separate word;
+	     * if it's not, continue looking in the rest of the line. */
+	    if (whole_word_only && !is_separate_word(found - line->data,
+						found_len, line->data)) {
+		from = found + move_mbright(found, 0);
+		continue;
+	    }
+#endif
+	    /* The match is valid. */
+	    break;
 	}
 
 	/* If we're back at the beginning, then there is no needle. */
@@ -330,12 +339,12 @@ int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
 
 	/* Move to the previous or next line in the file. */
 	if (ISSET(BACKWARDS_SEARCH))
-	    fileptr = fileptr->prev;
+	    line = line->prev;
 	else
-	    fileptr = fileptr->next;
+	    line = line->next;
 
 	/* If we've reached the start or end of the buffer, wrap around. */
-	if (fileptr == NULL) {
+	if (line == NULL) {
 #ifndef DISABLE_SPELLER
 	    /* When we're spell-checking, end-of-buffer means we're done. */
 	    if (whole_word_only) {
@@ -344,9 +353,9 @@ int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
 	    }
 #endif
 	    if (ISSET(BACKWARDS_SEARCH))
-		fileptr = openfile->filebot;
+		line = openfile->filebot;
 	    else
-		fileptr = openfile->fileage;
+		line = openfile->fileage;
 
 	    statusbar(_("Search Wrapped"));
 	    /* Delay the "Searching..." message for at least two seconds. */
@@ -354,16 +363,16 @@ int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
 	}
 
 	/* If we've reached the original starting line, take note. */
-	if (fileptr == begin)
+	if (line == begin)
 	    came_full_circle = TRUE;
 
 	/* Set the starting x to the start or end of the line. */
-	rev_start = fileptr->data;
+	from = line->data;
 	if (ISSET(BACKWARDS_SEARCH))
-	    rev_start += strlen(fileptr->data);
+	    from += strlen(line->data);
     }
 
-    found_x = found - fileptr->data;
+    found_x = found - line->data;
 
     /* Ensure that the found occurrence is not beyond the starting x. */
     if (came_full_circle && ((!ISSET(BACKWARDS_SEARCH) && found_x > begin_x) ||
@@ -376,9 +385,8 @@ int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
     disable_nodelay();
 
     /* Set the current position to point at what we found. */
-    openfile->current = fileptr;
+    openfile->current = line;
     openfile->current_x = found_x;
-    openfile->current_y = fileptr->lineno - openfile->edittop->lineno;
 
     /* When requested, pass back the length of the match. */
     if (match_len != NULL)
@@ -789,11 +797,7 @@ void do_replace(void)
     if (i != 0)
 	return;
 
-    i = do_prompt(FALSE,
-#ifndef DISABLE_TABCOMP
-		TRUE,
-#endif
-		MREPLACEWITH, NULL,
+    i = do_prompt(FALSE, FALSE, MREPLACEWITH, NULL,
 #ifndef DISABLE_HISTORIES
 		&replace_history,
 #endif
@@ -858,11 +862,8 @@ void do_gotolinecolumn(ssize_t line, ssize_t column, bool use_answer,
 	functionptrtype func;
 
 	/* Ask for the line and column. */
-	int i = do_prompt(FALSE,
-#ifndef DISABLE_TABCOMP
-		TRUE,
-#endif
-		MGOTOLINE, use_answer ? answer : NULL,
+	int i = do_prompt(FALSE, FALSE, MGOTOLINE,
+		use_answer ? answer : NULL,
 #ifndef DISABLE_HISTORIES
 		NULL,
 #endif
@@ -999,7 +1000,6 @@ bool find_bracket_match(bool reverse, const char *bracket_set)
     /* Set the current position to the found matching bracket. */
     openfile->current = fileptr;
     openfile->current_x = found - fileptr->data;
-    openfile->current_y = fileptr->lineno - openfile->edittop->lineno;
 
     return TRUE;
 }

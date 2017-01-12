@@ -906,8 +906,7 @@ void read_file(FILE *f, int fd, const char *filename, bool undoable, bool checkw
 	openfile->current_x = 0;
     }
 
-    /* Set the current place we want to the end of the last line of the
-     * file we inserted. */
+    /* Set the desired x position at the end of what was inserted. */
     openfile->placewewant = xplustabs();
 
     if (!writable)
@@ -1087,10 +1086,7 @@ void do_insertfile(void)
 
 	present_path = mallocstrcpy(present_path, "./");
 
-	i = do_prompt(TRUE,
-#ifndef DISABLE_TABCOMP
-		TRUE,
-#endif
+	i = do_prompt(TRUE, TRUE,
 #ifndef NANO_TINY
 		execute ? MEXTCMD :
 #endif
@@ -1114,9 +1110,7 @@ void do_insertfile(void)
 	    filestruct *edittop_save = openfile->edittop;
 	    ssize_t was_current_lineno = openfile->current->lineno;
 	    size_t was_current_x = openfile->current_x;
-	    ssize_t was_current_y = openfile->current_y;
 	    bool current_was_at_top = FALSE;
-	    size_t pww_save = openfile->placewewant;
 #if !defined(NANO_TINY) || !defined(DISABLE_BROWSER)
 	    functionptrtype func = func_from_key(&i);
 #endif
@@ -1261,9 +1255,6 @@ void do_insertfile(void)
 		    }
 		}
 #endif
-		/* Update the current y-coordinate to account for the
-		 * number of lines inserted. */
-		openfile->current_y += was_current_y;
 
 		/* Unpartition the filestruct so that it contains all
 		 * the text again.  Note that we've replaced the
@@ -1278,13 +1269,18 @@ void do_insertfile(void)
 		/* Restore the old edittop. */
 		openfile->edittop = edittop_save;
 
-		/* Restore the old place we want. */
-		openfile->placewewant = pww_save;
+		/* Set the desired x position to the current one. */
+		openfile->placewewant = xplustabs();
 
 		/* Mark the file as modified if it changed. */
 		if (openfile->current->lineno != was_current_lineno ||
 			openfile->current_x != was_current_x)
 		    set_modified();
+
+		/* Update the cursor position to account for inserted lines. */
+		reset_cursor();
+
+		ensure_line_is_visible();
 
 		refresh_needed = TRUE;
 	    }
@@ -1296,21 +1292,16 @@ void do_insertfile(void)
     free(given);
 }
 
-/* Insert a file into a new buffer or the current buffer, depending on
- * whether the MULTIBUFFER flag is set.  If we're in view mode, only
- * allow inserting a file into a new buffer. */
+/* If the current mode of operation allows it, go insert a file. */
 void do_insertfile_void(void)
 {
-    if (ISSET(RESTRICTED)) {
+    if (ISSET(RESTRICTED))
 	show_restricted_warning();
-	return;
-    }
-
 #ifndef DISABLE_MULTIBUFFER
-    if (ISSET(VIEW_MODE) && !ISSET(MULTIBUFFER))
+    else if (ISSET(VIEW_MODE) && !ISSET(MULTIBUFFER))
 	statusbar(_("Key invalid in non-multibuffer mode"));
-    else
 #endif
+    else
 	do_insertfile();
 }
 
@@ -2230,10 +2221,7 @@ int do_writeout(bool exiting)
 	/* If we're using restricted mode, and the filename isn't blank,
 	 * disable tab completion. */
 	i = do_prompt(!ISSET(RESTRICTED) || openfile->filename[0] == '\0',
-#ifndef DISABLE_TABCOMP
-		TRUE,
-#endif
-		MWRITEFILE, given,
+		TRUE, MWRITEFILE, given,
 #ifndef DISABLE_HISTORIES
 		NULL,
 #endif
@@ -2989,7 +2977,7 @@ bool writehist(FILE *hist, const filestruct *head)
 {
     const filestruct *item;
 
-    /* Write a history list from the oldest entry to the newest. */
+    /* Write a history list, from the oldest item to the newest. */
     for (item = head; item != NULL; item = item->next) {
 	size_t length = strlen(item->data);
 

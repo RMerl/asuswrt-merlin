@@ -44,6 +44,7 @@ void do_last_line(void)
 
     /* Set the last line of the screen as the target for the cursor. */
     openfile->current_y = editwinrows - 1;
+    ensure_line_is_visible();
 
     refresh_needed = TRUE;
     focusing = FALSE;
@@ -138,10 +139,9 @@ void do_para_begin(bool allow_update)
     filestruct *was_current = openfile->current;
 
     if (openfile->current != openfile->fileage) {
-	do {
+	do
 	    openfile->current = openfile->current->prev;
-	    openfile->current_y--;
-	} while (!begpar(openfile->current));
+	while (!begpar(openfile->current));
     }
 
     openfile->current_x = 0;
@@ -175,7 +175,6 @@ void do_para_end(bool allow_update)
 		inpar(openfile->current->next) &&
 		!begpar(openfile->current->next)) {
 	openfile->current = openfile->current->next;
-	openfile->current_y++;
     }
 
     if (openfile->current != openfile->filebot) {

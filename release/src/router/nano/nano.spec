@@ -1,5 +1,5 @@
 %define name	nano
-%define version	2.7.3
+%define version	2.7.4
 %define release	1
 
 Name		: %{name}
@@ -43,7 +43,7 @@ fi
 
 %files
 %defattr(-,root,root)
-%doc AUTHORS COPYING ChangeLog INSTALL NEWS README THANKS TODO doc/faq.html doc/nanorc.sample
+%doc AUTHORS COPYING ChangeLog INSTALL NEWS README THANKS TODO doc/faq.html doc/sample.nanorc
 %{_bindir}/*
 %{_docdir}/nano/*
 %{_mandir}/man*/*

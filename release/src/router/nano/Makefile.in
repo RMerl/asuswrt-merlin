@@ -87,6 +87,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@USE_COLOR_TRUE@am__append_1 = syntax
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
@@ -164,7 +165,7 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = doc m4 po src syntax
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(srcdir)/nano.spec.in ABOUT-NLS AUTHORS COPYING COPYING.DOC \
 	ChangeLog INSTALL NEWS README THANKS TODO compile config.guess \
@@ -307,7 +308,6 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-haveit = @haveit@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -337,8 +337,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = gnu no-dependencies
-SUBDIRS = doc m4 po src
-EXTRA_DIST = ChangeLog.pre-2.1 IMPROVEMENTS README.GIT nano.spec
+SUBDIRS = doc m4 po src $(am__append_1)
+EXTRA_DIST = ChangeLog.1999-2006 ChangeLog.2007-2015 \
+		IMPROVEMENTS README.GIT nano.spec
+
 ACLOCAL_AMFLAGS = -I m4
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive

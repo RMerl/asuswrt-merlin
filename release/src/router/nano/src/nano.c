@@ -469,11 +469,6 @@ void copy_from_filestruct(filestruct *somebuffer)
     /* Add the number of characters in the copied text to the file size. */
     openfile->totsize += get_totsize(openfile->fileage, openfile->filebot);
 
-    /* Update the current y-coordinate to account for the number of
-     * lines the copied text has, less one since the first line will be
-     * tacked onto the current line. */
-    openfile->current_y += openfile->filebot->lineno - 1;
-
     /* If we pasted onto the first line of the edit window, the corresponding
      * struct has been freed, so... point at the start of the copied text. */
     if (edittop_inside)
@@ -1732,21 +1727,18 @@ int do_mouse(void)
     int mouse_x, mouse_y;
     int retval = get_mouseinput(&mouse_x, &mouse_y, TRUE);
 
+    /* If the click is wrong or already handled, we're done. */
     if (retval != 0)
-	/* The click is wrong or already handled. */
 	return retval;
 
-    /* We can click on the edit window to move the cursor. */
+    /* If the click was in the edit window, put the cursor in that spot. */
     if (wmouse_trafo(edit, &mouse_y, &mouse_x, FALSE)) {
-	bool sameline;
-	    /* Did they click on the line with the cursor?  If they
-	     * clicked on the cursor, we set the mark. */
+	bool sameline = (mouse_y == openfile->current_y);
+	    /* Whether the click was on the line where the cursor is. */
 	filestruct *current_save = openfile->current;
 #ifndef NANO_TINY
 	size_t current_x_save = openfile->current_x;
 #endif
-
-	sameline = (mouse_y == openfile->current_y);
 
 #ifdef DEBUG
 	fprintf(stderr, "mouse_y = %d, current_y = %ld\n", mouse_y, (long)openfile->current_y);
@@ -1754,41 +1746,48 @@ int do_mouse(void)
 
 #ifndef NANO_TINY
 	if (ISSET(SOFTWRAP)) {
-	    size_t i = 0;
+	    ssize_t current_row = 0;
 
 	    openfile->current = openfile->edittop;
 
-	    while (openfile->current->next != NULL && i < mouse_y) {
-		openfile->current_y = i;
-		i += strlenpt(openfile->current->data) / editwincols + 1;
+	    while (openfile->current->next != NULL && current_row < mouse_y) {
+		current_row += strlenpt(openfile->current->data) / editwincols + 1;
 		openfile->current = openfile->current->next;
 	    }
 
-	    if (i > mouse_y) {
+	    if (current_row > mouse_y) {
 		openfile->current = openfile->current->prev;
+		current_row -= strlenpt(openfile->current->data) / editwincols + 1;
 		openfile->current_x = actual_x(openfile->current->data,
-			mouse_x + (mouse_y - openfile->current_y) * editwincols);
+				((mouse_y - current_row) * editwincols) + mouse_x);
 	    } else
 		openfile->current_x = actual_x(openfile->current->data, mouse_x);
+
+	    openfile->current_y = current_row;
+	    ensure_line_is_visible();
+	    refresh_needed = TRUE;
 	} else
 #endif /* NANO_TINY */
 	{
+	    ssize_t current_row = openfile->current_y;
+
 	    /* Move to where the click occurred. */
-	    for (; openfile->current_y < mouse_y && openfile->current !=
-			openfile->filebot; openfile->current_y++)
+	    while (current_row < mouse_y && openfile->current->next != NULL) {
 		openfile->current = openfile->current->next;
-	    for (; openfile->current_y > mouse_y && openfile->current !=
-			openfile->fileage; openfile->current_y--)
+		current_row++;
+	    }
+	    while (current_row > mouse_y && openfile->current->prev != NULL) {
 		openfile->current = openfile->current->prev;
+		current_row--;
+	    }
 
 	    openfile->current_x = actual_x(openfile->current->data,
-		get_page_start(xplustabs()) + mouse_x);
+					get_page_start(xplustabs()) + mouse_x);
 	}
 
 #ifndef NANO_TINY
-	/* Clicking where the cursor is toggles the mark, as does
-	 * clicking beyond the line length with the cursor at the end of
-	 * the line. */
+	/* Clicking where the cursor is toggles the mark, as does clicking
+	 * beyond the line length with the cursor at the end of the line. */
 	if (sameline && openfile->current_x == current_x_save)
 	    do_mark();
 	else
@@ -1796,7 +1795,8 @@ int do_mouse(void)
 	    /* The cursor moved; clean the cutbuffer on the next cut. */
 	    cutbuffer_reset();
 
-	edit_redraw(current_save);
+	if (!ISSET(SOFTWRAP))
+	    edit_redraw(current_save);
     }
 
     /* No more handling is needed. */

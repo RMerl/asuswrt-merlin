@@ -219,11 +219,7 @@ char *do_browser(char *path)
 	    selected = filelist_len - 1;
 	} else if (func == goto_dir_void) {
 	    /* Ask for the directory to go to. */
-	    int i = do_prompt(TRUE,
-#ifndef DISABLE_TABCOMP
-			FALSE,
-#endif
-			MGOTODIR, NULL,
+	    int i = do_prompt(TRUE, FALSE, MGOTODIR, NULL,
 #ifndef DISABLE_HISTORIES
 			NULL,
 #endif
@@ -347,8 +343,6 @@ char *do_browse_from(const char *inpath)
     struct stat st;
     char *path;
 	/* This holds the tilde-expanded version of inpath. */
-
-    assert(inpath != NULL);
 
     path = real_dir_from_tilde(inpath);
 
@@ -670,11 +664,7 @@ int filesearch_init(void)
 	buf = mallocstrcpy(NULL, "");
 
     /* This is now one simple call.  It just does a lot. */
-    input = do_prompt(FALSE,
-#ifndef DISABLE_TABCOMP
-		TRUE,
-#endif
-		MWHEREISFILE, NULL,
+    input = do_prompt(FALSE, FALSE, MWHEREISFILE, NULL,
 #ifndef DISABLE_HISTORIES
 		&search_history,
 #endif
@@ -797,8 +787,6 @@ void do_last_file(void)
 char *striponedir(const char *path)
 {
     char *retval, *tmp;
-
-    assert(path != NULL);
 
     retval = mallocstrcpy(NULL, path);
 

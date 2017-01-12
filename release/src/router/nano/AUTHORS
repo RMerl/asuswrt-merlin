@@ -39,7 +39,7 @@ Mike Frysinger <vapier@gentoo.org>
 	* Gentoo package maintainer.  Whitespace display mode,
 	  --enable-utf8/--disable-utf8 configure options for ncurses,
 	  many new color regexes and improvements to existing color
-	  regexes for nanorc.sample, and miscellaneous bug fixes.
+	  regexes in syntax/*.nanorc, and miscellaneous bug fixes.
 
 Mark Majeres <mark@engine12.com>
 	* A functional undo/redo system, and coloring nano's interface.

@@ -433,9 +433,7 @@ void update_the_statusbar(void)
 
 /* Get a string of input at the statusbar prompt. */
 functionptrtype acquire_an_answer(int *actual, bool allow_tabs,
-#ifndef DISABLE_TABCOMP
 	bool allow_files, bool *listed,
-#endif
 #ifndef DISABLE_HISTORIES
 	filestruct **history_list,
 #endif
@@ -613,10 +611,7 @@ functionptrtype acquire_an_answer(int *actual, bool allow_tabs,
  * The allow_tabs parameter indicates whether we should allow tabs to be
  * interpreted.  The allow_files parameter indicates whether we should
  * allow all files (as opposed to just directories) to be tab completed. */
-int do_prompt(bool allow_tabs,
-#ifndef DISABLE_TABCOMP
-	bool allow_files,
-#endif
+int do_prompt(bool allow_tabs, bool allow_files,
 	int menu, const char *curranswer,
 #ifndef DISABLE_HISTORIES
 	filestruct **history_list,
@@ -626,9 +621,7 @@ int do_prompt(bool allow_tabs,
     va_list ap;
     int retval;
     functionptrtype func = NULL;
-#ifndef DISABLE_TABCOMP
     bool listed = FALSE;
-#endif
     /* Save a possible current statusbar x position. */
     size_t was_statusbar_x = statusbar_x;
 
@@ -646,10 +639,7 @@ int do_prompt(bool allow_tabs,
     /* Reserve five columns for colon plus angles plus answer, ":<aa>". */
     null_at(&prompt, actual_x(prompt, (COLS < 5) ? 0 : COLS - 5));
 
-    func = acquire_an_answer(&retval, allow_tabs,
-#ifndef DISABLE_TABCOMP
-			allow_files, &listed,
-#endif
+    func = acquire_an_answer(&retval, allow_tabs, allow_files, &listed,
 #ifndef DISABLE_HISTORIES
 			history_list,
 #endif

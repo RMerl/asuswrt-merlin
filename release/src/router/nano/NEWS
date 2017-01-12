@@ -1,3 +1,11 @@
+2017.01.10 - GNU nano 2.7.4 "Red dress" undoes deletions in an orderly
+		manner again (bug was introduced in previous version),
+		sets the preferred x position for vertical movements
+		more consistently, avoids some scrolling problems in
+		softwrap mode, installs the Info manual also when your
+		system lacks 'makeinfo', and corrects the behavior of
+		the beginning-of-word anchor (\<) in regex searches.
+
 2016.12.28 - GNU nano 2.7.3 "Ontbijtkoek" wipes away a handful of bugs:
 		your editor is now able to handle filenames that contain
 		newlines, avoids a brief flash of color when switching

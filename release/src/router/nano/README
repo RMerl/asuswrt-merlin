@@ -34,7 +34,7 @@ How to compile and install nano
 	default installation directory of /usr/local.
 
 	If you haven't configured with the --disable-nanorc option, after
-	installation you may want to copy the doc/nanorc.sample file to
+	installation you may want to copy the doc/sample.nanorc file to
 	your home directory, rename it to ".nanorc", and then edit it
 	according to your taste.
 

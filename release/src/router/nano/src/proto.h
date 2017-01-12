@@ -276,7 +276,7 @@ void cutbuffer_reset(void);
 bool keeping_cutbuffer(void);
 void cut_line(void);
 #ifndef NANO_TINY
-void cut_marked(void);
+void cut_marked(bool *right_side_up);
 void cut_to_eol(void);
 void cut_to_eof(void);
 #endif
@@ -348,7 +348,7 @@ const char *tail(const char *path);
 #ifndef DISABLE_HISTORIES
 char *histfilename(void);
 void load_history(void);
-bool writehist(FILE *hist, const filestruct *histhead);
+bool writehist(FILE *hist, const filestruct *head);
 void save_history(void);
 int check_dotnano(void);
 void load_poshistory(void);
@@ -503,10 +503,7 @@ size_t get_statusbar_page_start(size_t start_col, size_t column);
 void reinit_statusbar_x(void);
 void reset_statusbar_cursor(void);
 void update_the_statusbar(void);
-int do_prompt(bool allow_tabs,
-#ifndef DISABLE_TABCOMP
-	bool allow_files,
-#endif
+int do_prompt(bool allow_tabs, bool allow_files,
 	int menu, const char *curranswer,
 #ifndef DISABLE_HISTORIES
 	filestruct **history_list,
@@ -746,8 +743,8 @@ void statusline(message_type importance, const char *msg, ...);
 void bottombars(int menu);
 void onekey(const char *keystroke, const char *desc, int length);
 void reset_cursor(void);
-void edit_draw(filestruct *fileptr, const char *converted, int
-	line, size_t start);
+void edit_draw(filestruct *fileptr, const char *converted,
+	int line, size_t from_col);
 int update_line(filestruct *fileptr, size_t index);
 bool need_horizontal_scroll(const size_t old_column, const size_t new_column);
 void edit_scroll(scroll_dir direction, ssize_t nlines);
