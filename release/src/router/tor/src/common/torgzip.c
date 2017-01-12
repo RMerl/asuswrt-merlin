@@ -46,33 +46,15 @@
 
 #include <zlib.h>
 
+#if defined ZLIB_VERNUM && ZLIB_VERNUM < 0x1200
+#error "We require zlib version 1.2 or later."
+#endif
+
 static size_t tor_zlib_state_size_precalc(int inflate,
                                           int windowbits, int memlevel);
 
 /** Total number of bytes allocated for zlib state */
 static size_t total_zlib_allocation = 0;
-
-/** Set to 1 if zlib is a version that supports gzip; set to 0 if it doesn't;
- * set to -1 if we haven't checked yet. */
-static int gzip_is_supported = -1;
-
-/** Return true iff we support gzip-based compression.  Otherwise, we need to
- * use zlib. */
-int
-is_gzip_supported(void)
-{
-  if (gzip_is_supported >= 0)
-    return gzip_is_supported;
-
-  if (!strcmpstart(ZLIB_VERSION, "0.") ||
-      !strcmpstart(ZLIB_VERSION, "1.0") ||
-      !strcmpstart(ZLIB_VERSION, "1.1"))
-    gzip_is_supported = 0;
-  else
-    gzip_is_supported = 1;
-
-  return gzip_is_supported;
-}
 
 /** Return a string representation of the version of the currently running
  * version of zlib. */
@@ -165,12 +147,6 @@ tor_gzip_compress(char **out, size_t *out_len,
 
   *out = NULL;
 
-  if (method == GZIP_METHOD && !is_gzip_supported()) {
-    /* Old zlib version don't support gzip in deflateInit2 */
-    log_warn(LD_BUG, "Gzip not supported with zlib %s", ZLIB_VERSION);
-    goto err;
-  }
-
   stream = tor_malloc_zero(sizeof(struct z_stream_s));
   stream->zalloc = Z_NULL;
   stream->zfree = Z_NULL;
@@ -182,9 +158,11 @@ tor_gzip_compress(char **out, size_t *out_len,
                    method_bits(method, HIGH_COMPRESSION),
                    get_memlevel(HIGH_COMPRESSION),
                    Z_DEFAULT_STRATEGY) != Z_OK) {
+    //LCOV_EXCL_START -- we can only provoke failure by giving junk arguments.
     log_warn(LD_GENERAL, "Error from deflateInit2: %s",
              stream->msg?stream->msg:"<no message>");
     goto err;
+    //LCOV_EXCL_STOP
   }
 
   /* Guess 50% compression. */
@@ -237,13 +215,12 @@ tor_gzip_compress(char **out, size_t *out_len,
    *    the newly unsigned field isn't negative." */
   tor_assert(stream->total_out >= 0);
 #endif
-  if (((size_t)stream->total_out) > out_size + 4097) {
-    /* If we're wasting more than 4k, don't. */
-    *out = tor_realloc(*out, stream->total_out + 1);
-  }
   if (deflateEnd(stream)!=Z_OK) {
+    // LCOV_EXCL_START -- unreachable if we handled the zlib structure right
+    tor_assert_nonfatal_unreached();
     log_warn(LD_BUG, "Error freeing gzip structures");
     goto err;
+    // LCOV_EXCL_STOP
   }
   tor_free(stream);
 
@@ -291,12 +268,6 @@ tor_gzip_uncompress(char **out, size_t *out_len,
   tor_assert(in);
   tor_assert(in_len < UINT_MAX);
 
-  if (method == GZIP_METHOD && !is_gzip_supported()) {
-    /* Old zlib version don't support gzip in inflateInit2 */
-    log_warn(LD_BUG, "Gzip not supported with zlib %s", ZLIB_VERSION);
-    return -1;
-  }
-
   *out = NULL;
 
   stream = tor_malloc_zero(sizeof(struct z_stream_s));
@@ -308,9 +279,11 @@ tor_gzip_uncompress(char **out, size_t *out_len,
 
   if (inflateInit2(stream,
                    method_bits(method, HIGH_COMPRESSION)) != Z_OK) {
+    // LCOV_EXCL_START -- can only hit this if we give bad inputs.
     log_warn(LD_GENERAL, "Error from inflateInit2: %s",
              stream->msg?stream->msg:"<no message>");
     goto err;
+    // LCOV_EXCL_STOP
   }
 
   out_size = in_len * 2;  /* guess 50% compression. */
@@ -445,19 +418,13 @@ struct tor_zlib_state_t {
  * <b>compress</b>, it's for compression; otherwise it's for
  * decompression. */
 tor_zlib_state_t *
-tor_zlib_new(int compress, compress_method_t method,
+tor_zlib_new(int compress_, compress_method_t method,
              zlib_compression_level_t compression_level)
 {
   tor_zlib_state_t *out;
   int bits, memlevel;
 
-  if (method == GZIP_METHOD && !is_gzip_supported()) {
-    /* Old zlib version don't support gzip in inflateInit2 */
-    log_warn(LD_BUG, "Gzip not supported with zlib %s", ZLIB_VERSION);
-    return NULL;
- }
-
- if (! compress) {
+ if (! compress_) {
    /* use this setting for decompression, since we might have the
     * max number of window bits */
    compression_level = HIGH_COMPRESSION;
@@ -467,19 +434,19 @@ tor_zlib_new(int compress, compress_method_t method,
  out->stream.zalloc = Z_NULL;
  out->stream.zfree = Z_NULL;
  out->stream.opaque = NULL;
- out->compress = compress;
+ out->compress = compress_;
  bits = method_bits(method, compression_level);
  memlevel = get_memlevel(compression_level);
- if (compress) {
+ if (compress_) {
    if (deflateInit2(&out->stream, Z_BEST_COMPRESSION, Z_DEFLATED,
                     bits, memlevel,
                     Z_DEFAULT_STRATEGY) != Z_OK)
-     goto err;
+     goto err; // LCOV_EXCL_LINE
  } else {
    if (inflateInit2(&out->stream, bits) != Z_OK)
-     goto err;
+     goto err; // LCOV_EXCL_LINE
  }
- out->allocation = tor_zlib_state_size_precalc(!compress, bits, memlevel);
+ out->allocation = tor_zlib_state_size_precalc(!compress_, bits, memlevel);
 
  total_zlib_allocation += out->allocation;
 
@@ -573,13 +540,13 @@ tor_zlib_free(tor_zlib_state_t *state)
 /** Return an approximate number of bytes used in RAM to hold a state with
  * window bits <b>windowBits</b> and compression level 'memlevel' */
 static size_t
-tor_zlib_state_size_precalc(int inflate, int windowbits, int memlevel)
+tor_zlib_state_size_precalc(int inflate_, int windowbits, int memlevel)
 {
   windowbits &= 15;
 
 #define A_FEW_KILOBYTES 2048
 
-  if (inflate) {
+  if (inflate_) {
     /* From zconf.h:
 
        "The memory requirements for inflate are (in bytes) 1 << windowBits

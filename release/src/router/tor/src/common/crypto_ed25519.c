@@ -5,6 +5,14 @@
  * \file crypto_ed25519.c
  *
  * \brief Wrapper code for an ed25519 implementation.
+ *
+ * Ed25519 is a Schnorr signature on a Twisted Edwards curve, defined
+ * by Dan Bernstein. For more information, see https://ed25519.cr.yp.to/
+ *
+ * This module wraps our choice of Ed25519 backend, and provides a few
+ * convenience functions for checking and generating signatures.  It also
+ * provides Tor-specific tools for key blinding and for converting Ed25519
+ * keys to and from the corresponding Curve25519 keys.
  */
 
 #include "orconfig.h"
@@ -28,7 +36,7 @@
 static void pick_ed25519_impl(void);
 static int ed25519_impl_spot_check(void);
 
-/** An Ed25519 implementation */
+/** An Ed25519 implementation, as a set of function pointers. */
 typedef struct {
   int (*selftest)(void);
 
@@ -53,6 +61,8 @@ typedef struct {
                                        int);
 } ed25519_impl_t;
 
+/** The Ref10 Ed25519 implementation. This one is pure C and lightly
+ * optimized. */
 static const ed25519_impl_t impl_ref10 = {
   NULL,
 
@@ -71,6 +81,8 @@ static const ed25519_impl_t impl_ref10 = {
   ed25519_ref10_pubkey_from_curve25519_pubkey,
 };
 
+/** The Ref10 Ed25519 implementation. This one is heavily optimized, but still
+ * mostly C. The C still tends to be heavily platform-specific. */
 static const ed25519_impl_t impl_donna = {
   ed25519_donna_selftest,
 
@@ -89,19 +101,31 @@ static const ed25519_impl_t impl_donna = {
   ed25519_donna_pubkey_from_curve25519_pubkey,
 };
 
+/** Which Ed25519 implementation are we using?  NULL if we haven't decided
+ * yet. */
 static const ed25519_impl_t *ed25519_impl = NULL;
 
+/** Helper: Return our chosen Ed25519 implementation.
+ *
+ * This should only be called after we've picked an implementation, but
+ * it _does_ recover if you forget this.
+ **/
 static inline const ed25519_impl_t *
 get_ed_impl(void)
 {
-  if (PREDICT_UNLIKELY(ed25519_impl == NULL)) {
-    pick_ed25519_impl();
+  if (BUG(ed25519_impl == NULL)) {
+    pick_ed25519_impl(); // LCOV_EXCL_LINE - We always call ed25519_init().
   }
   return ed25519_impl;
 }
 
 #ifdef TOR_UNIT_TESTS
+/** For testing: used to remember our actual choice of Ed25519
+ * implementation */
 static const ed25519_impl_t *saved_ed25519_impl = NULL;
+/** For testing: Use the Ed25519 implementation called <b>name</b> until
+ * crypto_ed25519_testing_restore_impl is called.  Recognized names are
+ * "donna" and "ref10". */
 void
 crypto_ed25519_testing_force_impl(const char *name)
 {
@@ -114,6 +138,9 @@ crypto_ed25519_testing_force_impl(const char *name)
     ed25519_impl = &impl_ref10;
   }
 }
+/** For testing: go back to whatever Ed25519 implementation we had picked
+ * before crypto_ed25519_testing_force_impl was called.
+ */
 void
 crypto_ed25519_testing_restore_impl(void)
 {
@@ -184,9 +211,43 @@ ed25519_keypair_generate(ed25519_keypair_t *keypair_out, int extra_strong)
   return 0;
 }
 
+/* Return a heap-allocated array that contains <b>msg</b> prefixed by the
+ * string <b>prefix_str</b>. Set <b>final_msg_len_out</b> to the size of the
+ * final array. If an error occured, return NULL. It's the resonsibility of the
+ * caller to free the returned array. */
+static uint8_t *
+get_prefixed_msg(const uint8_t *msg, size_t msg_len,
+                 const char *prefix_str,
+                 size_t *final_msg_len_out)
+{
+  size_t prefixed_msg_len, prefix_len;
+  uint8_t *prefixed_msg;
+
+  tor_assert(prefix_str);
+  tor_assert(final_msg_len_out);
+
+  prefix_len = strlen(prefix_str);
+
+  /* msg_len + strlen(prefix_str) must not overflow. */
+  if (msg_len > SIZE_T_CEILING - prefix_len) {
+    return NULL;
+  }
+
+  prefixed_msg_len = msg_len + prefix_len;
+  prefixed_msg = tor_malloc_zero(prefixed_msg_len);
+
+  memcpy(prefixed_msg, prefix_str, prefix_len);
+  memcpy(prefixed_msg + prefix_len, msg, msg_len);
+
+  *final_msg_len_out = prefixed_msg_len;
+  return prefixed_msg;
+}
+
 /**
  * Set <b>signature_out</b> to a signature of the <b>len</b>-byte message
  * <b>msg</b>, using the secret and public key in <b>keypair</b>.
+ *
+ * Return 0 if we successfuly signed the message, otherwise return -1.
  */
 int
 ed25519_sign(ed25519_signature_t *signature_out,
@@ -203,6 +264,37 @@ ed25519_sign(ed25519_signature_t *signature_out,
 }
 
 /**
+ * Like ed25519_sign(), but also prefix <b>msg</b> with <b>prefix_str</b>
+ * before signing. <b>prefix_str</b> must be a NUL-terminated string.
+ */
+int
+ed25519_sign_prefixed(ed25519_signature_t *signature_out,
+                      const uint8_t *msg, size_t msg_len,
+                      const char *prefix_str,
+                      const ed25519_keypair_t *keypair)
+{
+  int retval;
+  size_t prefixed_msg_len;
+  uint8_t *prefixed_msg;
+
+  tor_assert(prefix_str);
+
+  prefixed_msg = get_prefixed_msg(msg, msg_len, prefix_str,
+                                  &prefixed_msg_len);
+  if (!prefixed_msg) {
+    log_warn(LD_GENERAL, "Failed to get prefixed msg.");
+    return -1;
+  }
+
+  retval = ed25519_sign(signature_out,
+                        prefixed_msg, prefixed_msg_len,
+                        keypair);
+  tor_free(prefixed_msg);
+
+  return retval;
+}
+
+/**
  * Check whether if <b>signature</b> is a valid signature for the
  * <b>len</b>-byte message in <b>msg</b> made with the key <b>pubkey</b>.
  *
@@ -215,6 +307,36 @@ ed25519_checksig(const ed25519_signature_t *signature,
 {
   return
     get_ed_impl()->open(signature->sig, msg, len, pubkey->pubkey) < 0 ? -1 : 0;
+}
+
+/**
+ * Like ed2519_checksig(), but also prefix <b>msg</b> with <b>prefix_str</b>
+ * before verifying signature. <b>prefix_str</b> must be a NUL-terminated
+ * string.
+ */
+int
+ed25519_checksig_prefixed(const ed25519_signature_t *signature,
+                          const uint8_t *msg, size_t msg_len,
+                          const char *prefix_str,
+                          const ed25519_public_key_t *pubkey)
+{
+  int retval;
+  size_t prefixed_msg_len;
+  uint8_t *prefixed_msg;
+
+  prefixed_msg = get_prefixed_msg(msg, msg_len, prefix_str,
+                                  &prefixed_msg_len);
+  if (!prefixed_msg) {
+    log_warn(LD_GENERAL, "Failed to get prefixed msg.");
+    return -1;
+  }
+
+  retval = ed25519_checksig(signature,
+                            prefixed_msg, prefixed_msg_len,
+                            pubkey);
+  tor_free(prefixed_msg);
+
+  return retval;
 }
 
 /** Validate every signature among those in <b>checkable</b>, which contains
@@ -259,11 +381,11 @@ ed25519_checksig_batch(int *okay_out,
     int *oks;
     int all_ok;
 
-    ms = tor_malloc(sizeof(uint8_t*)*n_checkable);
-    lens = tor_malloc(sizeof(size_t)*n_checkable);
-    pks = tor_malloc(sizeof(uint8_t*)*n_checkable);
-    sigs = tor_malloc(sizeof(uint8_t*)*n_checkable);
-    oks = okay_out ? okay_out : tor_malloc(sizeof(int)*n_checkable);
+    ms = tor_calloc(n_checkable, sizeof(uint8_t*));
+    lens = tor_calloc(n_checkable, sizeof(size_t));
+    pks = tor_calloc(n_checkable, sizeof(uint8_t*));
+    sigs = tor_calloc(n_checkable, sizeof(uint8_t*));
+    oks = okay_out ? okay_out : tor_calloc(n_checkable, sizeof(int));
 
     for (i = 0; i < n_checkable; ++i) {
       ms[i] = checkable[i].msg;
@@ -433,6 +555,7 @@ ed25519_seckey_read_from_file(ed25519_secret_key_t *seckey_out,
     errno = EINVAL;
   }
 
+  tor_free(*tag_out);
   return -1;
 }
 
@@ -472,6 +595,7 @@ ed25519_pubkey_read_from_file(ed25519_public_key_t *pubkey_out,
     errno = EINVAL;
   }
 
+  tor_free(*tag_out);
   return -1;
 }
 
@@ -594,9 +718,12 @@ pick_ed25519_impl(void)
   if (ed25519_impl_spot_check() == 0)
     return;
 
+  /* LCOV_EXCL_START
+   * unreachable unless ed25519_donna is broken */
   log_warn(LD_CRYPTO, "The Ed25519-donna implementation seems broken; using "
            "the ref10 implementation.");
   ed25519_impl = &impl_ref10;
+  /* LCOV_EXCL_STOP */
 }
 
 /* Initialize the Ed25519 implementation. This is neccessary if you're

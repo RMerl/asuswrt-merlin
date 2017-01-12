@@ -526,7 +526,7 @@ void* strmap_remove_lc(strmap_t *map, const char *key);
     return (valtype*)digestmap_remove((digestmap_t*)map, key);          \
   }                                                                     \
   ATTR_UNUSED static inline void                                        \
-  prefix##free(maptype *map, void (*free_val)(void*))                   \
+  prefix##f##ree(maptype *map, void (*free_val)(void*))                 \
   {                                                                     \
     digestmap_free((digestmap_t*)map, free_val);                        \
   }                                                                     \

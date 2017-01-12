@@ -132,7 +132,7 @@ test_container_smartlist_strings(void *arg)
   tt_str_op("def",OP_EQ, smartlist_get(sl, 5));
   tt_str_op("  ",OP_EQ, smartlist_get(sl, 6));
   tt_str_op("ghijk",OP_EQ, smartlist_get(sl, 7));
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_clear(sl);
 
   smartlist_split_string(sl, "a,bbd,cdef", ",", SPLIT_SKIP_SPACE, 0);
@@ -149,7 +149,7 @@ test_container_smartlist_strings(void *arg)
   tt_str_op("bnud",OP_EQ, smartlist_get(sl,6));
   tt_str_op("",OP_EQ, smartlist_get(sl,7));
 
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_clear(sl);
 
   smartlist_split_string(sl, " ab\tc \td ef  ", NULL,
@@ -165,7 +165,7 @@ test_container_smartlist_strings(void *arg)
   tt_str_op("ghi",OP_EQ, smartlist_get(sl,4));
   tt_str_op("j",OP_EQ, smartlist_get(sl,5));
 
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_clear(sl);
 
   cp_alloc = smartlist_join_strings(sl, "XY", 0, NULL);
@@ -186,7 +186,7 @@ test_container_smartlist_strings(void *arg)
   tt_int_op(5,OP_EQ, smartlist_len(sl));
   tt_str_op("z",OP_EQ, smartlist_get(sl, 3));
   tt_str_op("zhasd <>  <> bnud<>",OP_EQ, smartlist_get(sl, 4));
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_clear(sl);
 
   smartlist_split_string(sl, "abcd\n", "\n",
@@ -198,7 +198,7 @@ test_container_smartlist_strings(void *arg)
   tt_int_op(2,OP_EQ, smartlist_len(sl));
   tt_str_op("efgh",OP_EQ, smartlist_get(sl, 1));
 
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_clear(sl);
 
   /* Test swapping, shuffling, and sorting. */
@@ -286,7 +286,7 @@ test_container_smartlist_strings(void *arg)
   tt_str_op(cp_alloc,OP_EQ, "and");
   tor_free(cp_alloc);
   tt_int_op(smartlist_len(sl),OP_EQ, 6);
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_clear(sl);
   cp_alloc = smartlist_pop_last(sl);
   tt_ptr_op(cp_alloc,OP_EQ, NULL);
@@ -326,7 +326,7 @@ test_container_smartlist_strings(void *arg)
     tt_assert(!allsame);
     tt_assert(allin);
   }
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_clear(sl);
 
   /* Test string_remove and remove and join_strings2 */
@@ -348,7 +348,7 @@ test_container_smartlist_strings(void *arg)
 
  done:
 
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_free(sl);
   tor_free(cp_alloc);
 }
@@ -437,7 +437,7 @@ test_container_smartlist_digests(void *arg)
   tt_mem_op(smartlist_get(sl, 1),OP_EQ, "AAAAAAAAAAAAAAAAAAAA", DIGEST_LEN);
 
  done:
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_free(sl);
 }
 
@@ -490,7 +490,7 @@ test_container_smartlist_join(void *arg)
   smartlist_free(sl3);
   SMARTLIST_FOREACH(sl2, char *, cp, tor_free(cp));
   smartlist_free(sl2);
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_free(sl);
   tor_free(joined);
 }
@@ -528,7 +528,7 @@ test_container_smartlist_pos(void *arg)
   tt_int_op(smartlist_pos(sl, smartlist_get(sl,6)), ==, 6);
 
  done:
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_free(sl);
 }
 
@@ -1140,7 +1140,7 @@ test_container_smartlist_most_frequent(void *arg)
   tt_str_op(cp, ==, "def"); /* No tie */
 
  done:
-  SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
   smartlist_free(sl);
 }
 

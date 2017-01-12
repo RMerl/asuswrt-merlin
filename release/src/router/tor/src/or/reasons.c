@@ -6,6 +6,12 @@
  * \file reasons.c
  * \brief Convert circuit, stream, and orconn error reasons to and/or from
  * strings and errno values.
+ *
+ * This module is just a bunch of functions full of case statements that
+ * convert from one representation of our error codes to another. These are
+ * mainly used in generating log messages, in sending messages to the
+ * controller in control.c, and in converting errors from one protocol layer
+ * to another.
  **/
 
 #include "or.h"

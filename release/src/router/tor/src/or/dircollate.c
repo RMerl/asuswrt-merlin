@@ -8,6 +8,17 @@
  *
  * \brief Collation code for figuring out which identities to vote for in
  *   the directory voting process.
+ *
+ * During the consensus calculation, when an authority is looking at the vote
+ * documents from all the authorities, it needs to compute the consensus for
+ * each relay listed by at least one authority.  But the notion of "each
+ * relay" can be tricky: some relays have Ed25519 keys, and others don't.
+ *
+ * Moreover, older consensus methods did RSA-based ID collation alone, and
+ * ignored Ed25519 keys.  We need to support those too until we're completely
+ * sure that authorities will never downgrade.
+ *
+ * This module is invoked exclusively from dirvote.c.
  */
 
 #define DIRCOLLATE_PRIVATE
@@ -21,6 +32,9 @@ static void dircollator_collate_by_ed25519(dircollator_t *dc);
  * RSA SHA1 digest) to an array of vote_routerstatus_t. */
 typedef struct ddmap_entry_s {
   HT_ENTRY(ddmap_entry_s) node;
+  /** A SHA1-RSA1024 identity digest and Ed25519 identity key,
+   * concatenated.  (If there is no ed25519 identity key, there is no
+   * entry in this table.) */
   uint8_t d[DIGEST_LEN + DIGEST256_LEN];
   /* The nth member of this array corresponds to the vote_routerstatus_t (if
    * any) received for this digest pair from the nth voter. */
@@ -43,12 +57,16 @@ ddmap_entry_new(int n_votes)
                          sizeof(vote_routerstatus_t *) * n_votes);
 }
 
+/** Helper: compute a hash of a single ddmap_entry_t's identity (or
+ * identities) */
 static unsigned
 ddmap_entry_hash(const ddmap_entry_t *ent)
 {
   return (unsigned) siphash24g(ent->d, sizeof(ent->d));
 }
 
+/** Helper: return true if <b>a</b> and <b>b</b> have the same
+ * identity/identities. */
 static unsigned
 ddmap_entry_eq(const ddmap_entry_t *a, const ddmap_entry_t *b)
 {
@@ -56,7 +74,7 @@ ddmap_entry_eq(const ddmap_entry_t *a, const ddmap_entry_t *b)
 }
 
 /** Record the RSA identity of <b>ent</b> as <b>rsa_sha1</b>, and the
- * ed25519 identity as <b>ed25519</b>. */
+ * ed25519 identity as <b>ed25519</b>.  Both must be provided. */
 static void
 ddmap_entry_set_digests(ddmap_entry_t *ent,
                         const uint8_t *rsa_sha1,
@@ -67,13 +85,17 @@ ddmap_entry_set_digests(ddmap_entry_t *ent,
 }
 
 HT_PROTOTYPE(double_digest_map, ddmap_entry_s, node, ddmap_entry_hash,
-             ddmap_entry_eq);
+             ddmap_entry_eq)
 HT_GENERATE2(double_digest_map, ddmap_entry_s, node, ddmap_entry_hash,
-             ddmap_entry_eq, 0.6, tor_reallocarray, tor_free_);
+             ddmap_entry_eq, 0.6, tor_reallocarray, tor_free_)
 
 /** Helper: add a single vote_routerstatus_t <b>vrs</b> to the collator
- * <b>dc</b>, indexing it by its RSA key digest, and by the 2-tuple of
- * its RSA key digest and Ed25519 key.  */
+ * <b>dc</b>, indexing it by its RSA key digest, and by the 2-tuple of its RSA
+ * key digest and Ed25519 key.   It must come from the <b>vote_num</b>th
+ * vote.
+ *
+ * Requires that the vote is well-formed -- that is, that it has no duplicate
+ * routerstatus entries.  We already checked for that when parsing the vote. */
 static void
 dircollator_add_routerstatus(dircollator_t *dc,
                              int vote_num,
@@ -82,12 +104,15 @@ dircollator_add_routerstatus(dircollator_t *dc,
 {
   const char *id = vrs->status.identity_digest;
 
+  /* Clear this flag; we might set it later during the voting process */
   vrs->ed25519_reflects_consensus = 0;
 
-  (void) vote;
+  (void) vote; // We don't currently need this.
+
+  /* First, add this item to the appropriate RSA-SHA-Id array. */
   vote_routerstatus_t **vrs_lst = digestmap_get(dc->by_rsa_sha1, id);
   if (NULL == vrs_lst) {
-    vrs_lst = tor_calloc(sizeof(vote_routerstatus_t *), dc->n_votes);
+    vrs_lst = tor_calloc(dc->n_votes, sizeof(vote_routerstatus_t *));
     digestmap_set(dc->by_rsa_sha1, id, vrs_lst);
   }
   tor_assert(vrs_lst[vote_num] == NULL);
@@ -98,6 +123,7 @@ dircollator_add_routerstatus(dircollator_t *dc,
   if (! vrs->has_ed25519_listing)
     return;
 
+  /* Now add it to the appropriate <Ed,RSA-SHA-Id> array. */
   ddmap_entry_t search, *found;
   memset(&search, 0, sizeof(search));
   ddmap_entry_set_digests(&search, (const uint8_t *)id, ed);

@@ -112,5 +112,12 @@ void rep_hist_note_negotiated_link_proto(unsigned link_proto,
                                          int started_here);
 void rep_hist_log_link_protocol_counts(void);
 
+extern uint64_t rephist_total_alloc;
+extern uint32_t rephist_total_num;
+#ifdef TOR_UNIT_TESTS
+extern int onion_handshakes_requested[MAX_ONION_HANDSHAKE_TYPE+1];
+extern int onion_handshakes_assigned[MAX_ONION_HANDSHAKE_TYPE+1];
+#endif
+
 #endif
 

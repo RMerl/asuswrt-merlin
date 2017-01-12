@@ -1,4 +1,4 @@
-const char* VOTE_BODY_V3 = 
+static const char* VOTE_BODY_V3 =
 "network-status-version 3\n"
 "vote-status vote\n"
 "consensus-methods 13 14 15 16 17 18 19 20 21\n"

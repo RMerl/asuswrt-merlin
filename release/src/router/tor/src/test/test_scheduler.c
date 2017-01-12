@@ -1,16 +1,10 @@
 /* Copyright (c) 2014-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-#include <math.h>
-
 #include "orconfig.h"
 
-/* Libevent stuff */
-#ifdef HAVE_EVENT2_EVENT_H
+#include <math.h>
 #include <event2/event.h>
-#else
-#include <event.h>
-#endif
 
 #define TOR_CHANNEL_INTERNAL_
 #define CHANNEL_PRIVATE_
@@ -23,12 +17,6 @@
 /* Test suite stuff */
 #include "test.h"
 #include "fakechans.h"
-
-/* Statics in scheduler.c exposed to the test suite */
-extern smartlist_t *channels_pending;
-extern struct event *run_sched_ev;
-extern uint64_t queue_heuristic;
-extern time_t queue_heuristic_timestamp;
 
 /* Event base for scheduelr tests */
 static struct event_base *mock_event_base = NULL;
@@ -96,9 +84,7 @@ mock_event_free_all(void)
 static void
 mock_event_init(void)
 {
-#ifdef HAVE_EVENT2_EVENT_H
   struct event_config *cfg = NULL;
-#endif
 
   tt_ptr_op(mock_event_base, ==, NULL);
 
@@ -108,7 +94,6 @@ mock_event_init(void)
    */
 
   if (!mock_event_base) {
-#ifdef HAVE_EVENT2_EVENT_H
     cfg = event_config_new();
 #if LIBEVENT_VERSION_NUMBER >= V(2,0,9)
     /* We can enable changelist support with epoll, since we don't give
@@ -117,9 +102,6 @@ mock_event_init(void)
 #endif
     mock_event_base = event_base_new_with_config(cfg);
     event_config_free(cfg);
-#else
-    mock_event_base = event_init();
-#endif
   }
 
   tt_assert(mock_event_base != NULL);
@@ -156,7 +138,7 @@ channel_flush_some_cells_mock_free_all(void)
 static void
 channel_flush_some_cells_mock_set(channel_t *chan, ssize_t num_cells)
 {
-  flush_mock_channel_t *flush_mock_ch = NULL;
+  int found = 0;
 
   if (!chan) return;
   if (num_cells <= 0) return;
@@ -172,6 +154,7 @@ channel_flush_some_cells_mock_set(channel_t *chan, ssize_t num_cells)
       if (flush_mock_ch->chan == chan) {
         /* Found it */
         flush_mock_ch->cells = num_cells;
+        found = 1;
         break;
       }
     } else {
@@ -181,8 +164,9 @@ channel_flush_some_cells_mock_set(channel_t *chan, ssize_t num_cells)
     }
   } SMARTLIST_FOREACH_END(flush_mock_ch);
 
-  if (!flush_mock_ch) {
+  if (! found) {
     /* The loop didn't find it */
+    flush_mock_channel_t *flush_mock_ch;
     flush_mock_ch = tor_malloc_zero(sizeof(*flush_mock_ch));
     flush_mock_ch->chan = chan;
     flush_mock_ch->cells = num_cells;

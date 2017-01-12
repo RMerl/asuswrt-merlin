@@ -12,18 +12,14 @@
 #include "config.h"
 #include <openssl/rsa.h>
 #include "rend_test_helpers.h"
+#include "log_test_helpers.h"
 
 #define NS_MODULE rend_cache
 
 static const int RECENT_TIME = -10;
 static const int TIME_IN_THE_PAST = -(REND_CACHE_MAX_AGE + \
-                                      REND_CACHE_MAX_SKEW + 10);
-static const int TIME_IN_THE_FUTURE = REND_CACHE_MAX_SKEW + 10;
-
-extern strmap_t *rend_cache;
-extern digestmap_t *rend_cache_v2_dir;
-extern strmap_t *rend_cache_failure;
-extern size_t rend_cache_total_allocation;
+                                      REND_CACHE_MAX_SKEW + 60);
+static const int TIME_IN_THE_FUTURE = REND_CACHE_MAX_SKEW + 60;
 
 static rend_data_t *
 mock_rend_data(const char *onion_address)
@@ -660,15 +656,19 @@ test_rend_cache_decrement_allocation(void *data)
 
   // Test when there are not enough allocations
   rend_cache_total_allocation = 1;
+  setup_full_capture_of_logs(LOG_WARN);
   rend_cache_decrement_allocation(2);
   tt_int_op(rend_cache_total_allocation, OP_EQ, 0);
+  expect_single_log_msg_containing(
+                    "Underflow in rend_cache_decrement_allocation");
+  teardown_capture_of_logs();
 
   // And again
   rend_cache_decrement_allocation(2);
   tt_int_op(rend_cache_total_allocation, OP_EQ, 0);
 
  done:
-  (void)0;
+  teardown_capture_of_logs();
 }
 
 static void
@@ -683,15 +683,19 @@ test_rend_cache_increment_allocation(void *data)
 
   // Test when there are too many allocations
   rend_cache_total_allocation = SIZE_MAX-1;
+  setup_full_capture_of_logs(LOG_WARN);
   rend_cache_increment_allocation(2);
   tt_u64_op(rend_cache_total_allocation, OP_EQ, SIZE_MAX);
+  expect_single_log_msg_containing(
+                    "Overflow in rend_cache_increment_allocation");
+  teardown_capture_of_logs();
 
   // And again
   rend_cache_increment_allocation(2);
   tt_u64_op(rend_cache_total_allocation, OP_EQ, SIZE_MAX);
 
  done:
-  (void)0;
+  teardown_capture_of_logs();
 }
 
 static void
@@ -976,7 +980,7 @@ test_rend_cache_entry_free(void *data)
 
   // Handles non-NULL descriptor correctly
   e = tor_malloc_zero(sizeof(rend_cache_entry_t));
-  e->desc = (char *)malloc(10);
+  e->desc = tor_malloc(10);
   rend_cache_entry_free(e);
 
  /* done: */

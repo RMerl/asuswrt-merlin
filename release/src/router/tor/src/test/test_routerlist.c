@@ -19,19 +19,23 @@
 #include "networkstatus.h"
 #include "nodelist.h"
 #include "policies.h"
+#include "router.h"
 #include "routerlist.h"
 #include "routerparse.h"
+#include "shared_random.h"
 #include "test.h"
 #include "test_dir_common.h"
 
-extern const char AUTHORITY_CERT_1[];
-extern const char AUTHORITY_SIGNKEY_1[];
-extern const char AUTHORITY_CERT_2[];
-extern const char AUTHORITY_SIGNKEY_2[];
-extern const char AUTHORITY_CERT_3[];
-extern const char AUTHORITY_SIGNKEY_3[];
-
 void construct_consensus(char **consensus_text_md);
+
+static authority_cert_t *mock_cert;
+
+static authority_cert_t *
+get_my_v3_authority_cert_m(void)
+{
+  tor_assert(mock_cert);
+  return mock_cert;
+}
 
 /* 4 digests + 3 sep + pre + post + NULL */
 static char output[4*BASE64_DIGEST256_LEN+3+2+2+1];
@@ -234,6 +238,12 @@ test_router_pick_directory_server_impl(void *arg)
   tt_assert(networkstatus_consensus_is_bootstrapping(now + 2*24*60*60));
   tt_assert(networkstatus_consensus_is_bootstrapping(now - 2*24*60*60));
 
+  /* Init SR subsystem. */
+  MOCK(get_my_v3_authority_cert, get_my_v3_authority_cert_m);
+  mock_cert = authority_cert_parse_from_string(AUTHORITY_CERT_1, NULL);
+  sr_init(0);
+  UNMOCK(get_my_v3_authority_cert);
+
   /* No consensus available, fail early */
   rs = router_pick_directory_server_impl(V3_DIRINFO, (const int) 0, NULL);
   tt_assert(rs == NULL);
@@ -423,7 +433,7 @@ test_router_pick_directory_server_impl(void *arg)
   networkstatus_vote_free(con_md);
 }
 
-connection_t *mocked_connection = NULL;
+static connection_t *mocked_connection = NULL;
 
 /* Mock connection_get_by_type_addr_port_purpose by returning
  * mocked_connection. */

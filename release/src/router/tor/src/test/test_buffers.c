@@ -178,10 +178,10 @@ test_buffers_basic(void *arg)
 
   /* Try adding a string too long for any freelist. */
   {
-    char *cp = tor_malloc_zero(65536);
+    char *mem = tor_malloc_zero(65536);
     buf = buf_new();
-    write_to_buf(cp, 65536, buf);
-    tor_free(cp);
+    write_to_buf(mem, 65536, buf);
+    tor_free(mem);
 
     tt_int_op(buf_datalen(buf), OP_EQ, 65536);
     buf_free(buf);
@@ -303,42 +303,42 @@ test_buffer_pullup(void *arg)
 static void
 test_buffer_copy(void *arg)
 {
-  generic_buffer_t *buf=NULL, *buf2=NULL;
+  buf_t *buf=NULL, *buf2=NULL;
   const char *s;
   size_t len;
   char b[256];
   int i;
   (void)arg;
 
-  buf = generic_buffer_new();
+  buf = buf_new();
   tt_assert(buf);
 
   /* Copy an empty buffer. */
-  tt_int_op(0, OP_EQ, generic_buffer_set_to_copy(&buf2, buf));
+  tt_int_op(0, OP_EQ, buf_set_to_copy(&buf2, buf));
   tt_assert(buf2);
-  tt_int_op(0, OP_EQ, generic_buffer_len(buf2));
+  tt_int_op(0, OP_EQ, buf_datalen(buf2));
 
   /* Now try with a short buffer. */
   s = "And now comes an act of enormous enormance!";
   len = strlen(s);
-  generic_buffer_add(buf, s, len);
-  tt_int_op(len, OP_EQ, generic_buffer_len(buf));
+  write_to_buf(s, len, buf);
+  tt_int_op(len, OP_EQ, buf_datalen(buf));
   /* Add junk to buf2 so we can test replacing.*/
-  generic_buffer_add(buf2, "BLARG", 5);
-  tt_int_op(0, OP_EQ, generic_buffer_set_to_copy(&buf2, buf));
-  tt_int_op(len, OP_EQ, generic_buffer_len(buf2));
-  generic_buffer_get(buf2, b, len);
+  write_to_buf("BLARG", 5, buf2);
+  tt_int_op(0, OP_EQ, buf_set_to_copy(&buf2, buf));
+  tt_int_op(len, OP_EQ, buf_datalen(buf2));
+  fetch_from_buf(b, len, buf2);
   tt_mem_op(b, OP_EQ, s, len);
   /* Now free buf2 and retry so we can test allocating */
-  generic_buffer_free(buf2);
+  buf_free(buf2);
   buf2 = NULL;
-  tt_int_op(0, OP_EQ, generic_buffer_set_to_copy(&buf2, buf));
-  tt_int_op(len, OP_EQ, generic_buffer_len(buf2));
-  generic_buffer_get(buf2, b, len);
+  tt_int_op(0, OP_EQ, buf_set_to_copy(&buf2, buf));
+  tt_int_op(len, OP_EQ, buf_datalen(buf2));
+  fetch_from_buf(b, len, buf2);
   tt_mem_op(b, OP_EQ, s, len);
   /* Clear buf for next test */
-  generic_buffer_get(buf, b, len);
-  tt_int_op(generic_buffer_len(buf),OP_EQ,0);
+  fetch_from_buf(b, len, buf);
+  tt_int_op(buf_datalen(buf),OP_EQ,0);
 
   /* Okay, now let's try a bigger buffer. */
   s = "Quis autem vel eum iure reprehenderit qui in ea voluptate velit "
@@ -347,95 +347,94 @@ test_buffer_copy(void *arg)
   len = strlen(s);
   for (i = 0; i < 256; ++i) {
     b[0]=i;
-    generic_buffer_add(buf, b, 1);
-    generic_buffer_add(buf, s, len);
+    write_to_buf(b, 1, buf);
+    write_to_buf(s, len, buf);
   }
-  tt_int_op(0, OP_EQ, generic_buffer_set_to_copy(&buf2, buf));
-  tt_int_op(generic_buffer_len(buf2), OP_EQ, generic_buffer_len(buf));
+  tt_int_op(0, OP_EQ, buf_set_to_copy(&buf2, buf));
+  tt_int_op(buf_datalen(buf2), OP_EQ, buf_datalen(buf));
   for (i = 0; i < 256; ++i) {
-    generic_buffer_get(buf2, b, len+1);
+    fetch_from_buf(b, len+1, buf2);
     tt_int_op((unsigned char)b[0],OP_EQ,i);
     tt_mem_op(b+1, OP_EQ, s, len);
   }
 
  done:
   if (buf)
-    generic_buffer_free(buf);
+    buf_free(buf);
   if (buf2)
-    generic_buffer_free(buf2);
+    buf_free(buf2);
 }
 
 static void
 test_buffer_ext_or_cmd(void *arg)
 {
   ext_or_cmd_t *cmd = NULL;
-  generic_buffer_t *buf = generic_buffer_new();
+  buf_t *buf = buf_new();
   char *tmp = NULL;
   (void) arg;
 
   /* Empty -- should give "not there. */
-  tt_int_op(0, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  tt_int_op(0, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tt_ptr_op(NULL, OP_EQ, cmd);
 
   /* Three bytes: shouldn't work. */
-  generic_buffer_add(buf, "\x00\x20\x00", 3);
-  tt_int_op(0, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  write_to_buf("\x00\x20\x00", 3, buf);
+  tt_int_op(0, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tt_ptr_op(NULL, OP_EQ, cmd);
-  tt_int_op(3, OP_EQ, generic_buffer_len(buf));
+  tt_int_op(3, OP_EQ, buf_datalen(buf));
 
   /* 0020 0000: That's a nil command. It should work. */
-  generic_buffer_add(buf, "\x00", 1);
-  tt_int_op(1, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  write_to_buf("\x00", 1, buf);
+  tt_int_op(1, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tt_ptr_op(NULL, OP_NE, cmd);
   tt_int_op(0x20, OP_EQ, cmd->cmd);
   tt_int_op(0, OP_EQ, cmd->len);
-  tt_int_op(0, OP_EQ, generic_buffer_len(buf));
+  tt_int_op(0, OP_EQ, buf_datalen(buf));
   ext_or_cmd_free(cmd);
   cmd = NULL;
 
   /* Now try a length-6 command with one byte missing. */
-  generic_buffer_add(buf, "\x10\x21\x00\x06""abcde", 9);
-  tt_int_op(0, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  write_to_buf("\x10\x21\x00\x06""abcde", 9, buf);
+  tt_int_op(0, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tt_ptr_op(NULL, OP_EQ, cmd);
-  generic_buffer_add(buf, "f", 1);
-  tt_int_op(1, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  write_to_buf("f", 1, buf);
+  tt_int_op(1, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tt_ptr_op(NULL, OP_NE, cmd);
   tt_int_op(0x1021, OP_EQ, cmd->cmd);
   tt_int_op(6, OP_EQ, cmd->len);
   tt_mem_op("abcdef", OP_EQ, cmd->body, 6);
-  tt_int_op(0, OP_EQ, generic_buffer_len(buf));
+  tt_int_op(0, OP_EQ, buf_datalen(buf));
   ext_or_cmd_free(cmd);
   cmd = NULL;
 
   /* Now try a length-10 command with 4 extra bytes. */
-  generic_buffer_add(buf, "\xff\xff\x00\x0a"
-                     "loremipsum\x10\x00\xff\xff", 18);
-  tt_int_op(1, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  write_to_buf("\xff\xff\x00\x0aloremipsum\x10\x00\xff\xff", 18, buf);
+  tt_int_op(1, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tt_ptr_op(NULL, OP_NE, cmd);
   tt_int_op(0xffff, OP_EQ, cmd->cmd);
   tt_int_op(10, OP_EQ, cmd->len);
   tt_mem_op("loremipsum", OP_EQ, cmd->body, 10);
-  tt_int_op(4, OP_EQ, generic_buffer_len(buf));
+  tt_int_op(4, OP_EQ, buf_datalen(buf));
   ext_or_cmd_free(cmd);
   cmd = NULL;
 
   /* Finally, let's try a maximum-length command. We already have the header
    * waiting. */
-  tt_int_op(0, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  tt_int_op(0, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tmp = tor_malloc_zero(65535);
-  generic_buffer_add(buf, tmp, 65535);
-  tt_int_op(1, OP_EQ, generic_buffer_fetch_ext_or_cmd(buf, &cmd));
+  write_to_buf(tmp, 65535, buf);
+  tt_int_op(1, OP_EQ, fetch_ext_or_command_from_buf(buf, &cmd));
   tt_ptr_op(NULL, OP_NE, cmd);
   tt_int_op(0x1000, OP_EQ, cmd->cmd);
   tt_int_op(0xffff, OP_EQ, cmd->len);
   tt_mem_op(tmp, OP_EQ, cmd->body, 65535);
-  tt_int_op(0, OP_EQ, generic_buffer_len(buf));
+  tt_int_op(0, OP_EQ, buf_datalen(buf));
   ext_or_cmd_free(cmd);
   cmd = NULL;
 
  done:
   ext_or_cmd_free(cmd);
-  generic_buffer_free(buf);
+  buf_free(buf);
   tor_free(tmp);
 }
 
@@ -511,26 +510,26 @@ static void
 test_buffer_time_tracking(void *arg)
 {
   buf_t *buf=NULL, *buf2=NULL;
-  struct timeval tv0;
   const time_t START = 1389288246;
-  const uint32_t START_MSEC = (uint32_t) ((uint64_t)START * 1000);
+  const uint64_t START_NSEC = ((uint64_t)START) * 1000000000;
   int i;
   char tmp[4096];
   (void)arg;
 
   crypto_rand(tmp, sizeof(tmp));
 
-  tv0.tv_sec = START;
-  tv0.tv_usec = 0;
+  monotime_enable_test_mocking();
 
   buf = buf_new_with_capacity(3000); /* rounds up to next power of 2. */
   tt_assert(buf);
+
+  monotime_coarse_set_mock_time_nsec(START_NSEC);
+  const uint32_t START_MSEC = (uint32_t)monotime_coarse_absolute_msec();
 
   /* Empty buffer means the timestamp is 0. */
   tt_int_op(0, OP_EQ, buf_get_oldest_chunk_timestamp(buf, START_MSEC));
   tt_int_op(0, OP_EQ, buf_get_oldest_chunk_timestamp(buf, START_MSEC+1000));
 
-  tor_gettimeofday_cache_set(&tv0);
   write_to_buf("ABCDEFG", 7, buf);
   tt_int_op(1000, OP_EQ, buf_get_oldest_chunk_timestamp(buf, START_MSEC+1000));
 
@@ -540,8 +539,7 @@ test_buffer_time_tracking(void *arg)
             buf_get_oldest_chunk_timestamp(buf2, START_MSEC+1234));
 
   /* Now add more bytes; enough to overflow the first chunk. */
-  tv0.tv_usec += 123 * 1000;
-  tor_gettimeofday_cache_set(&tv0);
+  monotime_coarse_set_mock_time_nsec(START_NSEC + 123 * (uint64_t)1000000);
   for (i = 0; i < 600; ++i)
     write_to_buf("ABCDEFG", 7, buf);
   tt_int_op(4207, OP_EQ, buf_datalen(buf));
@@ -562,9 +560,7 @@ test_buffer_time_tracking(void *arg)
 
   /* This time we'll be grabbing a chunk from the freelist, and making sure
      its time gets updated */
-  tv0.tv_sec += 5;
-  tv0.tv_usec = 617*1000;
-  tor_gettimeofday_cache_set(&tv0);
+  monotime_coarse_set_mock_time_nsec(START_NSEC + 5617 * (uint64_t)1000000);
   for (i = 0; i < 600; ++i)
     write_to_buf("ABCDEFG", 7, buf);
   tt_int_op(4307, OP_EQ, buf_datalen(buf));
@@ -578,6 +574,7 @@ test_buffer_time_tracking(void *arg)
  done:
   buf_free(buf);
   buf_free(buf2);
+  monotime_disable_test_mocking();
 }
 
 static void
@@ -695,9 +692,9 @@ test_buffers_zlib_fin_at_chunk_end(void *arg)
   tor_free(msg);
 }
 
-const uint8_t *tls_read_ptr;
-int n_remaining;
-int next_reply_val[16];
+static const uint8_t *tls_read_ptr;
+static int n_remaining;
+static int next_reply_val[16];
 
 static int
 mock_tls_read(tor_tls_t *tls, char *cp, size_t len)
@@ -747,6 +744,27 @@ test_buffers_tls_read_mocked(void *arg)
   buf_free(buf);
 }
 
+static void
+test_buffers_chunk_size(void *arg)
+{
+  (void)arg;
+  const int min = 256;
+  const int max = 65536;
+  tt_uint_op(preferred_chunk_size(3), OP_EQ, min);
+  tt_uint_op(preferred_chunk_size(25), OP_EQ, min);
+  tt_uint_op(preferred_chunk_size(0), OP_EQ, min);
+  tt_uint_op(preferred_chunk_size(256), OP_EQ, 512);
+  tt_uint_op(preferred_chunk_size(65400), OP_EQ, max);
+  /* Here, we're implicitly saying that the chunk header overhead is
+   * between 1 and 100 bytes. 24..48 would probably be more accurate. */
+  tt_uint_op(preferred_chunk_size(65536), OP_GT, 65536);
+  tt_uint_op(preferred_chunk_size(65536), OP_LT, 65536+100);
+  tt_uint_op(preferred_chunk_size(165536), OP_GT, 165536);
+  tt_uint_op(preferred_chunk_size(165536), OP_LT, 165536+100);
+ done:
+  ;
+}
+
 struct testcase_t buffer_tests[] = {
   { "basic", test_buffers_basic, TT_FORK, NULL, NULL },
   { "copy", test_buffer_copy, TT_FORK, NULL, NULL },
@@ -761,6 +779,7 @@ struct testcase_t buffer_tests[] = {
     NULL, NULL},
   { "tls_read_mocked", test_buffers_tls_read_mocked, 0,
     NULL, NULL },
+  { "chunk_size", test_buffers_chunk_size, 0, NULL, NULL },
   END_OF_TESTCASES
 };
 

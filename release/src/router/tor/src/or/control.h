@@ -259,6 +259,33 @@ STATIC crypto_pk_t *add_onion_helper_keyarg(const char *arg, int discard_pk,
                                             const char **key_new_alg_out,
                                             char **key_new_blob_out,
                                             char **err_msg_out);
+STATIC rend_authorized_client_t *
+add_onion_helper_clientauth(const char *arg, int *created, char **err_msg_out);
+
+STATIC void getinfo_helper_downloads_networkstatus(
+    const char *flavor,
+    download_status_t **dl_to_emit,
+    const char **errmsg);
+STATIC void getinfo_helper_downloads_cert(
+    const char *fp_sk_req,
+    download_status_t **dl_to_emit,
+    smartlist_t **digest_list,
+    const char **errmsg);
+STATIC void getinfo_helper_downloads_desc(
+    const char *desc_req,
+    download_status_t **dl_to_emit,
+    smartlist_t **digest_list,
+    const char **errmsg);
+STATIC void getinfo_helper_downloads_bridge(
+    const char *bridge_req,
+    download_status_t **dl_to_emit,
+    smartlist_t **digest_list,
+    const char **errmsg);
+STATIC int getinfo_helper_downloads(
+    control_connection_t *control_conn,
+    const char *question, char **answer,
+    const char **errmsg);
+
 #endif
 
 #endif

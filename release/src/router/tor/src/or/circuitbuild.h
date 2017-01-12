@@ -54,6 +54,11 @@ extend_info_t *extend_info_from_node(const node_t *r, int for_direct_connect);
 extend_info_t *extend_info_dup(extend_info_t *info);
 void extend_info_free(extend_info_t *info);
 int extend_info_addr_is_allowed(const tor_addr_t *addr);
+int extend_info_supports_tap(const extend_info_t* ei);
+int extend_info_supports_ntor(const extend_info_t* ei);
+int circuit_can_use_tap(const origin_circuit_t *circ);
+int circuit_has_usable_onion_key(const origin_circuit_t *circ);
+int extend_info_has_preferred_onion_key(const extend_info_t* ei);
 const node_t *build_state_get_exit_node(cpath_build_state_t *state);
 const char *build_state_get_exit_nickname(cpath_build_state_t *state);
 

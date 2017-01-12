@@ -109,7 +109,7 @@ HT_GENERATE2(chan_circid_map, chan_circid_circuit_map_t, node,
  * used to improve performance when many cells arrive in a row from the
  * same circuit.
  */
-chan_circid_circuit_map_t *_last_circid_chan_ent = NULL;
+static chan_circid_circuit_map_t *_last_circid_chan_ent = NULL;
 
 /** Implementation helper for circuit_set_{p,n}_circid_channel: A circuit ID
  * and/or channel for circ has just changed from <b>old_chan, old_id</b>
@@ -1613,7 +1613,8 @@ circuit_find_to_cannibalize(uint8_t purpose, extend_info_t *info,
   return best;
 }
 
-/** Return the number of hops in circuit's path. */
+/** Return the number of hops in circuit's path. If circ has no entries,
+ * or is NULL, returns 0. */
 int
 circuit_get_cpath_len(origin_circuit_t *circ)
 {
@@ -1629,7 +1630,8 @@ circuit_get_cpath_len(origin_circuit_t *circ)
 }
 
 /** Return the <b>hopnum</b>th hop in <b>circ</b>->cpath, or NULL if there
- * aren't that many hops in the list. */
+ * aren't that many hops in the list. <b>hopnum</b> starts at 1.
+ * Returns NULL if <b>hopnum</b> is 0 or negative. */
 crypt_path_t *
 circuit_get_cpath_hop(origin_circuit_t *circ, int hopnum)
 {
@@ -2021,7 +2023,7 @@ circuit_max_queued_cell_age(const circuit_t *c, uint32_t now)
 
 /** Return the age in milliseconds of the oldest buffer chunk on <b>conn</b>,
  * where age is taken in milliseconds before the time <b>now</b> (in truncated
- * milliseconds since the epoch).  If the connection has no data, treat
+ * absolute monotonic msec).  If the connection has no data, treat
  * it as having age zero.
  **/
 static uint32_t
@@ -2144,7 +2146,6 @@ circuits_handle_oom(size_t current_allocation)
   size_t mem_recovered=0;
   int n_circuits_killed=0;
   int n_dirconns_killed=0;
-  struct timeval now;
   uint32_t now_ms;
   log_notice(LD_GENERAL, "We're low on memory.  Killing circuits with "
              "over-long queues. (This behavior is controlled by "
@@ -2158,8 +2159,7 @@ circuits_handle_oom(size_t current_allocation)
     mem_to_recover = current_allocation - mem_target;
   }
 
-  tor_gettimeofday_cached_monotonic(&now);
-  now_ms = (uint32_t)tv_to_msec(&now);
+  now_ms = (uint32_t)monotime_coarse_absolute_msec();
 
   circlist = circuit_get_global_list();
   SMARTLIST_FOREACH_BEGIN(circlist, circuit_t *, circ) {

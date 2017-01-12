@@ -39,12 +39,6 @@ typedef struct sandbox_cfg_elem sandbox_cfg_t;
  */
 #ifdef USE_LIBSECCOMP
 
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <sys/ucontext.h>
 #include <seccomp.h>
 #include <netdb.h>

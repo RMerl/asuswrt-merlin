@@ -85,7 +85,6 @@ pathbias_get_notice_rate(const or_options_t *options)
                                    DFLT_PATH_BIAS_NOTICE_PCT, 0, 100)/100.0;
 }
 
-/* XXXX024 I'd like to have this be static again, but entrynodes.c needs it. */
 /** The circuit success rate below which we issue a warn */
 static double
 pathbias_get_warn_rate(const or_options_t *options)
@@ -98,7 +97,7 @@ pathbias_get_warn_rate(const or_options_t *options)
                                    DFLT_PATH_BIAS_WARN_PCT, 0, 100)/100.0;
 }
 
-/* XXXX024 I'd like to have this be static again, but entrynodes.c needs it. */
+/* XXXX I'd like to have this be static again, but entrynodes.c needs it. */
 /**
  * The extreme rate is the rate at which we would drop the guard,
  * if pb_dropguard is also set. Otherwise we just warn.
@@ -114,7 +113,7 @@ pathbias_get_extreme_rate(const or_options_t *options)
                                    DFLT_PATH_BIAS_EXTREME_PCT, 0, 100)/100.0;
 }
 
-/* XXXX024 I'd like to have this be static again, but entrynodes.c needs it. */
+/* XXXX I'd like to have this be static again, but entrynodes.c needs it. */
 /**
  * If 1, we actually disable use of guards that fall below
  * the extreme_pct.

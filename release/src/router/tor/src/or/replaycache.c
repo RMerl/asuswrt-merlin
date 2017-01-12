@@ -1,10 +1,22 @@
  /* Copyright (c) 2012-2016, The Tor Project, Inc. */
  /* See LICENSE for licensing information */
 
-/*
+/**
  * \file replaycache.c
  *
  * \brief Self-scrubbing replay cache for rendservice.c
+ *
+ * To prevent replay attacks, hidden services need to recognize INTRODUCE2
+ * cells that they've already seen, and drop them.  If they didn't, then
+ * sending the same INTRODUCE2 cell over and over would force the hidden
+ * service to make a huge number of circuits to the same rendezvous
+ * point, aiding traffic analysis.
+ *
+ * (It's not that simple, actually.  We only check for replays in the
+ * RSA-encrypted portion of the handshake, since the rest of the handshake is
+ * malleable.)
+ *
+ * This module is used from rendservice.c.
  */
 
 #define REPLAYCACHE_PRIVATE

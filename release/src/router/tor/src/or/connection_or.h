@@ -64,7 +64,7 @@ void connection_or_init_conn_from_address(or_connection_t *conn,
 int connection_or_client_learned_peer_id(or_connection_t *conn,
                                          const uint8_t *peer_id);
 time_t connection_or_client_used(or_connection_t *conn);
-int connection_or_get_num_circuits(or_connection_t *conn);
+MOCK_DECL(int, connection_or_get_num_circuits, (or_connection_t *conn));
 void or_handshake_state_free(or_handshake_state_t *state);
 void or_handshake_state_record_cell(or_connection_t *conn,
                                     or_handshake_state_t *state,

@@ -6,7 +6,15 @@
 /**
  * \file ntmain.c
  *
- * \brief Entry points for running/configuring Tor as Windows Service.
+ * \brief Entry points for running/configuring Tor as a Windows Service.
+ *
+ * Windows Services expect to be registered with the operating system, and to
+ * have entry points for starting, stopping, and monitoring them.  This module
+ * implements those entry points so that a tor relay or client or hidden
+ * service can run as a Windows service.  Therefore, this module
+ * is only compiled when building for Windows.
+ *
+ * Warning: this module is not very well tested or very well maintained.
  */
 
 #ifdef _WIN32
@@ -16,11 +24,7 @@
 #include "main.h"
 #include "ntmain.h"
 
-#ifdef HAVE_EVENT2_EVENT_H
 #include <event2/event.h>
-#else
-#include <event.h>
-#endif
 
 #include <windows.h>
 #define GENSRV_SERVICENAME  "tor"

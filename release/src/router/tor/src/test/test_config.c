@@ -3480,10 +3480,12 @@ test_config_default_dir_servers(void *arg)
 static int mock_router_pick_published_address_result = 0;
 
 static int
-mock_router_pick_published_address(const or_options_t *options, uint32_t *addr)
+mock_router_pick_published_address(const or_options_t *options,
+                                   uint32_t *addr, int cache_only)
 {
   (void)options;
   (void)addr;
+  (void)cache_only;
   return mock_router_pick_published_address_result;
 }
 
@@ -3710,6 +3712,144 @@ test_config_default_fallback_dirs(void *arg)
   clear_dir_servers();
 }
 
+static void
+test_config_port_cfg_line_extract_addrport(void *arg)
+{
+  (void)arg;
+  int unixy = 0;
+  const char *rest = NULL;
+  char *a = NULL;
+
+  tt_int_op(port_cfg_line_extract_addrport("", &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, "");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("hello", &a, &unixy, &rest),
+            OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, "hello");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport(" flipperwalt gersplut",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, "flipperwalt");;
+  tt_str_op(rest, OP_EQ, "gersplut");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport(" flipperwalt \t gersplut",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, "flipperwalt");;
+  tt_str_op(rest, OP_EQ, "gersplut");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("flipperwalt \t gersplut",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, "flipperwalt");;
+  tt_str_op(rest, OP_EQ, "gersplut");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:flipperwalt \t gersplut",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "flipperwalt");;
+  tt_str_op(rest, OP_EQ, "gersplut");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("lolol",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, "lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:lolol",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:lolol ",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport(" unix:lolol",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("foobar:lolol",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, "foobar:lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport(":lolol",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 0);
+  tt_str_op(a, OP_EQ, ":lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:\"lolol\"",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:\"lolol\" ",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lolol");;
+  tt_str_op(rest, OP_EQ, "");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:\"lolol\" foo ",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lolol");;
+  tt_str_op(rest, OP_EQ, "foo ");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:\"lol ol\" foo ",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lol ol");;
+  tt_str_op(rest, OP_EQ, "foo ");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:\"lol\\\" ol\" foo ",
+                                           &a, &unixy, &rest), OP_EQ, 0);
+  tt_int_op(unixy, OP_EQ, 1);
+  tt_str_op(a, OP_EQ, "lol\" ol");;
+  tt_str_op(rest, OP_EQ, "foo ");
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:\"lol\\\" ol foo ",
+                                           &a, &unixy, &rest), OP_EQ, -1);
+  tor_free(a);
+
+  tt_int_op(port_cfg_line_extract_addrport("unix:\"lol\\0\" ol foo ",
+                                           &a, &unixy, &rest), OP_EQ, -1);
+  tor_free(a);
+
+ done:
+  tor_free(a);
+}
+
 static config_line_t *
 mock_config_line(const char *key, const char *val)
 {
@@ -3832,6 +3972,8 @@ test_config_parse_port_config__listenaddress(void *data)
   tt_int_op(ret, OP_EQ, 0);
 
   // Test warning nonlocal other
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
   ret = parse_port_config(slout, config_port2, config_listen_address, "DNS",
                           0, NULL, 0, CL_PORT_WARN_NONLOCAL);
   tt_int_op(ret, OP_EQ, 0);
@@ -3952,7 +4094,7 @@ test_config_parse_port_config__ports__ports_given(void *data)
   tt_int_op(ret, OP_EQ, -1);
 
   // Test error when encounters a unix domain specification but the listener
-  // doesnt support domain sockets
+  // doesn't support domain sockets
   config_port_valid = mock_config_line("DNSPort", "unix:/tmp/foo/bar");
   ret = parse_port_config(NULL, config_port_valid, NULL, "DNS",
                           CONN_TYPE_AP_DNS_LISTENER, NULL, 0, 0);
@@ -3961,7 +4103,7 @@ test_config_parse_port_config__ports__ports_given(void *data)
   // Test valid unix domain
   SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
   smartlist_clear(slout);
-  ret = parse_port_config(slout, config_port_valid, NULL, "DNS",
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
                           CONN_TYPE_AP_LISTENER, NULL, 0, 0);
 #ifdef _WIN32
   tt_int_op(ret, OP_EQ, -1);
@@ -3972,26 +4114,153 @@ test_config_parse_port_config__ports__ports_given(void *data)
   tt_int_op(port_cfg->port, OP_EQ, 0);
   tt_int_op(port_cfg->is_unix_addr, OP_EQ, 1);
   tt_str_op(port_cfg->unix_addr, OP_EQ, "/tmp/foo/bar");
+  /* Test entry port defaults as initialised in parse_port_config */
+  tt_int_op(port_cfg->entry_cfg.dns_request, OP_EQ, 1);
+  tt_int_op(port_cfg->entry_cfg.ipv4_traffic, OP_EQ, 1);
+  tt_int_op(port_cfg->entry_cfg.onion_traffic, OP_EQ, 1);
+  tt_int_op(port_cfg->entry_cfg.cache_ipv4_answers, OP_EQ, 1);
+  tt_int_op(port_cfg->entry_cfg.prefer_ipv6_virtaddr, OP_EQ, 1);
 #endif
 
-  // Test failure if we have no ipv4 and no ipv6 (for unix domain sockets,
-  // this makes no sense - it should be fixed)
+  // Test failure if we have no ipv4 and no ipv6 and no onion (DNS only)
   config_free_lines(config_port_invalid); config_port_invalid = NULL;
-  config_port_invalid = mock_config_line("DNSPort",
-                                         "unix:/tmp/foo/bar NoIPv4Traffic");
-  ret = parse_port_config(NULL, config_port_invalid, NULL, "DNS",
+  config_port_invalid = mock_config_line("SOCKSPort",
+                                         "unix:/tmp/foo/bar NoIPv4Traffic "
+                                         "NoOnionTraffic");
+  ret = parse_port_config(NULL, config_port_invalid, NULL, "SOCKS",
                           CONN_TYPE_AP_LISTENER, NULL, 0,
                           CL_PORT_TAKES_HOSTNAMES);
   tt_int_op(ret, OP_EQ, -1);
 
-  // Test success with no ipv4 but take ipv6 (for unix domain sockets, this
-  // makes no sense - it should be fixed)
+  // Test failure if we have no DNS and we're a DNSPort
+  config_free_lines(config_port_invalid); config_port_invalid = NULL;
+  config_port_invalid = mock_config_line("DNSPort",
+                                         "127.0.0.1:80 NoDNSRequest");
+  ret = parse_port_config(NULL, config_port_invalid, NULL, "DNS",
+                          CONN_TYPE_AP_DNS_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+  tt_int_op(ret, OP_EQ, -1);
+
+  // If we're a DNSPort, DNS only is ok
+  // Use a port because DNSPort doesn't support sockets
   config_free_lines(config_port_valid); config_port_valid = NULL;
   SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
   smartlist_clear(slout);
-  config_port_valid = mock_config_line("DNSPort", "unix:/tmp/foo/bar "
-                                       "NoIPv4Traffic IPv6Traffic");
+  config_port_valid = mock_config_line("DNSPort", "127.0.0.1:80 "
+                                       "NoIPv4Traffic NoOnionTraffic");
   ret = parse_port_config(slout, config_port_valid, NULL, "DNS",
+                          CONN_TYPE_AP_DNS_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+  tt_int_op(ret, OP_EQ, 0);
+  tt_int_op(smartlist_len(slout), OP_EQ, 1);
+  port_cfg = (port_cfg_t *)smartlist_get(slout, 0);
+  tt_int_op(port_cfg->entry_cfg.dns_request, OP_EQ, 1);
+  tt_int_op(port_cfg->entry_cfg.ipv4_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.ipv6_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.onion_traffic, OP_EQ, 0);
+
+  // Test failure if we have DNS but no ipv4 and no ipv6
+  config_free_lines(config_port_invalid); config_port_invalid = NULL;
+  config_port_invalid = mock_config_line("SOCKSPort",
+                                         "unix:/tmp/foo/bar NoIPv4Traffic");
+  ret = parse_port_config(NULL, config_port_invalid, NULL, "SOCKS",
+                          CONN_TYPE_AP_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+  tt_int_op(ret, OP_EQ, -1);
+
+  // Test success with no DNS, no ipv4, no ipv6 (only onion, using separate
+  // options)
+  config_free_lines(config_port_valid); config_port_valid = NULL;
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
+  config_port_valid = mock_config_line("SOCKSPort", "unix:/tmp/foo/bar "
+                                       "NoDNSRequest NoIPv4Traffic");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
+                          CONN_TYPE_AP_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+#ifdef _WIN32
+  tt_int_op(ret, OP_EQ, -1);
+#else
+  tt_int_op(ret, OP_EQ, 0);
+  tt_int_op(smartlist_len(slout), OP_EQ, 1);
+  port_cfg = (port_cfg_t *)smartlist_get(slout, 0);
+  tt_int_op(port_cfg->entry_cfg.dns_request, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.ipv4_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.ipv6_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.onion_traffic, OP_EQ, 1);
+#endif
+
+  // Test success with quoted unix: address.
+  config_free_lines(config_port_valid); config_port_valid = NULL;
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
+  config_port_valid = mock_config_line("SOCKSPort", "unix:\"/tmp/foo/ bar\" "
+                                       "NoDNSRequest NoIPv4Traffic");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
+                          CONN_TYPE_AP_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+#ifdef _WIN32
+  tt_int_op(ret, OP_EQ, -1);
+#else
+  tt_int_op(ret, OP_EQ, 0);
+  tt_int_op(smartlist_len(slout), OP_EQ, 1);
+  port_cfg = (port_cfg_t *)smartlist_get(slout, 0);
+  tt_int_op(port_cfg->entry_cfg.dns_request, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.ipv4_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.ipv6_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.onion_traffic, OP_EQ, 1);
+#endif
+
+  // Test failure with broken quoted unix: address.
+  config_free_lines(config_port_valid); config_port_valid = NULL;
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
+  config_port_valid = mock_config_line("SOCKSPort", "unix:\"/tmp/foo/ bar "
+                                       "NoDNSRequest NoIPv4Traffic");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
+                          CONN_TYPE_AP_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+  tt_int_op(ret, OP_EQ, -1);
+
+  // Test failure with empty quoted unix: address.
+  config_free_lines(config_port_valid); config_port_valid = NULL;
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
+  config_port_valid = mock_config_line("SOCKSPort", "unix:\"\" "
+                                       "NoDNSRequest NoIPv4Traffic");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
+                          CONN_TYPE_AP_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+  tt_int_op(ret, OP_EQ, -1);
+
+  // Test success with OnionTrafficOnly (no DNS, no ipv4, no ipv6)
+  config_free_lines(config_port_valid); config_port_valid = NULL;
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
+  config_port_valid = mock_config_line("SOCKSPort", "unix:/tmp/foo/bar "
+                                       "OnionTrafficOnly");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
+                          CONN_TYPE_AP_LISTENER, NULL, 0,
+                          CL_PORT_TAKES_HOSTNAMES);
+#ifdef _WIN32
+  tt_int_op(ret, OP_EQ, -1);
+#else
+  tt_int_op(ret, OP_EQ, 0);
+  tt_int_op(smartlist_len(slout), OP_EQ, 1);
+  port_cfg = (port_cfg_t *)smartlist_get(slout, 0);
+  tt_int_op(port_cfg->entry_cfg.dns_request, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.ipv4_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.ipv6_traffic, OP_EQ, 0);
+  tt_int_op(port_cfg->entry_cfg.onion_traffic, OP_EQ, 1);
+#endif
+
+  // Test success with no ipv4 but take ipv6
+  config_free_lines(config_port_valid); config_port_valid = NULL;
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
+  config_port_valid = mock_config_line("SOCKSPort", "unix:/tmp/foo/bar "
+                                       "NoIPv4Traffic IPv6Traffic");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
                           CONN_TYPE_AP_LISTENER, NULL, 0,
                           CL_PORT_TAKES_HOSTNAMES);
 #ifdef _WIN32
@@ -4004,14 +4273,13 @@ test_config_parse_port_config__ports__ports_given(void *data)
   tt_int_op(port_cfg->entry_cfg.ipv6_traffic, OP_EQ, 1);
 #endif
 
-  // Test success with both ipv4 and ipv6 (for unix domain sockets,
-  // this makes no sense - it should be fixed)
+  // Test success with both ipv4 and ipv6
   config_free_lines(config_port_valid); config_port_valid = NULL;
   SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
   smartlist_clear(slout);
-  config_port_valid = mock_config_line("DNSPort", "unix:/tmp/foo/bar "
+  config_port_valid = mock_config_line("SOCKSPort", "unix:/tmp/foo/bar "
                                        "IPv4Traffic IPv6Traffic");
-  ret = parse_port_config(slout, config_port_valid, NULL, "DNS",
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
                           CONN_TYPE_AP_LISTENER, NULL, 0,
                           CL_PORT_TAKES_HOSTNAMES);
 #ifdef _WIN32
@@ -4153,8 +4421,9 @@ test_config_parse_port_config__ports__ports_given(void *data)
   config_free_lines(config_port_valid); config_port_valid = NULL;
   SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
   smartlist_clear(slout);
-  config_port_valid = mock_config_line("DNSPort", "42 IPv6Traffic PreferIPv6");
-  ret = parse_port_config(slout, config_port_valid, NULL, "DNS",
+  config_port_valid = mock_config_line("SOCKSPort",
+                                       "42 IPv6Traffic PreferIPv6");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
                           CONN_TYPE_AP_LISTENER, "127.0.0.42", 0,
                           CL_PORT_TAKES_HOSTNAMES);
   tt_int_op(ret, OP_EQ, 0);
@@ -4292,7 +4561,7 @@ test_config_parse_port_config__ports__ports_given(void *data)
   // Test success with warn non-local control
   SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
   smartlist_clear(slout);
-  ret = parse_port_config(slout, config_port_valid, NULL, "DNS",
+  ret = parse_port_config(slout, config_port_valid, NULL, "Control",
                           CONN_TYPE_CONTROL_LISTENER, "127.0.0.42", 0,
                           CL_PORT_WARN_NONLOCAL);
   tt_int_op(ret, OP_EQ, 0);
@@ -4300,7 +4569,7 @@ test_config_parse_port_config__ports__ports_given(void *data)
   // Test success with warn non-local listener
   SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
   smartlist_clear(slout);
-  ret = parse_port_config(slout, config_port_valid, NULL, "DNS",
+  ret = parse_port_config(slout, config_port_valid, NULL, "ExtOR",
                           CONN_TYPE_EXT_OR_LISTENER, "127.0.0.42", 0,
                           CL_PORT_WARN_NONLOCAL);
   tt_int_op(ret, OP_EQ, 0);
@@ -4472,8 +4741,8 @@ test_config_parse_port_config__ports__ports_given(void *data)
   config_free_lines(config_port_valid); config_port_valid = NULL;
   SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
   smartlist_clear(slout);
-  config_port_valid = mock_config_line("DNSPort", "unix:/tmp/somewhere");
-  ret = parse_port_config(slout, config_port_valid, NULL, "DNS",
+  config_port_valid = mock_config_line("SOCKSPort", "unix:/tmp/somewhere");
+  ret = parse_port_config(slout, config_port_valid, NULL, "SOCKS",
                           CONN_TYPE_AP_LISTENER, "127.0.0.46", 0,
                           CL_PORT_DFLT_GROUP_WRITABLE);
 #ifdef _WIN32
@@ -4604,6 +4873,15 @@ test_config_parse_port_config__ports__server_options(void *data)
                           0, CL_PORT_SERVER_OPTIONS);
   tt_int_op(ret, OP_EQ, -1);
 
+  // Check for failure with empty unix: address.
+  config_free_lines(config_port_invalid); config_port_invalid = NULL;
+  SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
+  smartlist_clear(slout);
+  config_port_invalid = mock_config_line("ORPort", "unix:\"\"");
+  ret = parse_port_config(slout, config_port_invalid, NULL, "ORPort", 0, NULL,
+                          0, CL_PORT_SERVER_OPTIONS);
+  tt_int_op(ret, OP_EQ, -1);
+
  done:
   if (slout)
     SMARTLIST_FOREACH(slout,port_cfg_t *,pf,port_cfg_free(pf));
@@ -4633,6 +4911,7 @@ struct testcase_t config_tests[] = {
   CONFIG_TEST(write_to_data_subdir, TT_FORK),
   CONFIG_TEST(fix_my_family, 0),
   CONFIG_TEST(directory_fetch, 0),
+  CONFIG_TEST(port_cfg_line_extract_addrport, 0),
   CONFIG_TEST(parse_port_config__listenaddress, 0),
   CONFIG_TEST(parse_port_config__ports__no_ports_given, 0),
   CONFIG_TEST(parse_port_config__ports__server_options, 0),

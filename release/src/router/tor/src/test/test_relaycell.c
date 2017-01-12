@@ -95,7 +95,7 @@ test_relaycell_resolved(void *arg)
     tt_int_op(srm_ncalls, OP_EQ, 1);                                 \
     tt_ptr_op(srm_conn, OP_EQ, entryconn);                           \
     tt_int_op(srm_atype, OP_EQ, (atype));                            \
-    if (answer) {                                                 \
+    if ((answer) != NULL) {                                          \
       tt_int_op(srm_alen, OP_EQ, sizeof(answer)-1);                  \
       tt_int_op(srm_alen, OP_LT, 512);                                \
       tt_int_op(srm_answer_is_set, OP_EQ, 1);                        \

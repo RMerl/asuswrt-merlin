@@ -1,0 +1,40 @@
+# convert to absolute paths
+top_srcdir="$(cd "${top_srcdir}" && pwd -L)"
+top_builddir="$(cd "${top_builddir}" && pwd -L)"
+
+# Paths for Lua modules (benchmarks and installed modules)
+export LUA_CPATH="${top_builddir}/lua/5.1/?.so;${top_builddir}/bench/?.so;;"
+export LUA_PATH="${top_srcdir}/lua/?.lua;${top_srcdir}/bench/?.lua;;"
+export LUA_CPATH_5_2="${top_builddir}/lua/5.2/?.so;${top_builddir}/bench/?.so;;"
+export LUA_PATH_5_2="${top_srcdir}/lua/?.lua;${top_srcdir}/bench/?.lua;;"
+export LUA_CPATH_5_3="${top_builddir}/lua/5.3/?.so;${top_builddir}/bench/?.so;;"
+export LUA_PATH_5_3="${top_srcdir}/lua/?.lua;${top_srcdir}/bench/?.lua;;"
+
+# preserve stdout so we can print commands to terminal
+exec 9>&1;
+echo_cmd() {
+	printf "%s\n" "$*" >&9;
+	"$@";
+}
+
+auto_soflags() {
+	case "$(uname -s)" in
+	Darwin)
+		printf -- "-bundle -undefined dynamic_lookup"
+		;;
+	*)
+		printf -- "-fPIC -shared"
+		;;
+	esac
+}
+
+auto_libs() {
+	case "$(uname -s)" in
+	Linux)
+		printf -- "-lrt"
+		;;
+	*)
+		;;
+	esac
+}
+

@@ -47,6 +47,8 @@
 #define TRUNCATED_STR_LEN 14
 /** @} */
 
+#define raw_assert(x) assert(x) // assert OK
+
 /** Information for a single logfile; only used in log.c */
 typedef struct logfile_t {
   struct logfile_t *next; /**< Next logfile_t in the linked list. */
@@ -75,7 +77,7 @@ sev_to_string(int severity)
     case LOG_ERR:     return "err";
     default:          /* Call assert, not tor_assert, since tor_assert
                        * calls log on failure. */
-                      assert(0); return "UNKNOWN";
+                      raw_assert(0); return "UNKNOWN"; // LCOV_EXCL_LINE
   }
 }
 
@@ -95,7 +97,7 @@ should_log_function_name(log_domain_mask_t domain, int severity)
       return (domain & (LD_BUG|LD_NOFUNCNAME)) == LD_BUG;
     default:
       /* Call assert, not tor_assert, since tor_assert calls log on failure. */
-      assert(0); return 0;
+      raw_assert(0); return 0; // LCOV_EXCL_LINE
   }
 }
 
@@ -270,7 +272,7 @@ log_tor_version(logfile_t *lf, int reset)
   return 0;
 }
 
-const char bug_suffix[] = " (on Tor " VERSION
+static const char bug_suffix[] = " (on Tor " VERSION
 #ifndef _MSC_VER
   " "
 #include "micro-revision.i"
@@ -293,7 +295,7 @@ format_msg(char *buf, size_t buf_len,
   char *end_of_prefix;
   char *buf_end;
 
-  assert(buf_len >= 16); /* prevent integer underflow and general stupidity */
+  raw_assert(buf_len >= 16); /* prevent integer underflow and stupidity */
   buf_len -= 2; /* subtract 2 characters so we have room for \n\0 */
   buf_end = buf+buf_len; /* point *after* the last char we can write to */
 
@@ -482,12 +484,12 @@ logv,(int severity, log_domain_mask_t domain, const char *funcname,
   int callbacks_deferred = 0;
 
   /* Call assert, not tor_assert, since tor_assert calls log on failure. */
-  assert(format);
+  raw_assert(format);
   /* check that severity is sane.  Overrunning the masks array leads to
    * interesting and hard to diagnose effects */
-  assert(severity >= LOG_ERR && severity <= LOG_DEBUG);
+  raw_assert(severity >= LOG_ERR && severity <= LOG_DEBUG);
   /* check that we've initialised the log mutex before we try to lock it */
-  assert(log_mutex_initialized);
+  raw_assert(log_mutex_initialized);
   LOCK_LOGS();
 
   if ((! (domain & LD_NOCB)) && pending_cb_messages
@@ -534,6 +536,11 @@ tor_log(int severity, log_domain_mask_t domain, const char *format, ...)
   if (severity > log_global_min_severity_)
     return;
   va_start(ap,format);
+#ifdef TOR_UNIT_TESTS
+  if (domain & LD_NO_MOCK)
+    logv__real(severity, domain, NULL, NULL, format, ap);
+  else
+#endif
   logv(severity, domain, NULL, NULL, format, ap);
   va_end(ap);
 }
@@ -653,7 +660,7 @@ tor_log_update_sigsafe_err_fds(void)
   if (!found_real_stderr &&
       int_array_contains(sigsafe_log_fds, n_sigsafe_log_fds, STDOUT_FILENO)) {
     /* Don't use a virtual stderr when we're also logging to stdout. */
-    assert(n_sigsafe_log_fds >= 2); /* Don't use assert inside log functions*/
+    raw_assert(n_sigsafe_log_fds >= 2); /* Don't tor_assert inside log fns */
     sigsafe_log_fds[0] = sigsafe_log_fds[--n_sigsafe_log_fds];
   }
 
@@ -1071,13 +1078,13 @@ mark_logs_temp(void)
  */
 int
 add_file_log(const log_severity_list_t *severity, const char *filename,
-             const int truncate)
+             const int truncate_log)
 {
   int fd;
   logfile_t *lf;
 
   int open_flags = O_WRONLY|O_CREAT;
-  open_flags |= truncate ? O_TRUNC : O_APPEND;
+  open_flags |= truncate_log ? O_TRUNC : O_APPEND;
 
   fd = tor_open_cloexec(filename, open_flags, 0644);
   if (fd<0)

@@ -34,7 +34,7 @@ socks_test_cleanup(const struct testcase_t *testcase, void *ptr)
   return 1;
 }
 
-const struct testcase_setup_t socks_setup = {
+static const struct testcase_setup_t socks_setup = {
   socks_test_setup, socks_test_cleanup
 };
 

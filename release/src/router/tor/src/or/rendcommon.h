@@ -45,6 +45,7 @@ void rend_intro_point_free(rend_intro_point_t *intro);
 
 int rend_valid_service_id(const char *query);
 int rend_valid_descriptor_id(const char *query);
+int rend_valid_client_name(const char *client_name);
 int rend_encode_v2_descriptors(smartlist_t *descs_out,
                                rend_service_descriptor_t *desc, time_t now,
                                uint8_t period, rend_auth_type_t auth_type,
@@ -68,5 +69,19 @@ rend_data_t *rend_data_service_create(const char *onion_address,
                                       const char *pk_digest,
                                       const uint8_t *cookie,
                                       rend_auth_type_t auth_type);
+
+char *rend_auth_encode_cookie(const uint8_t *cookie_in,
+                              rend_auth_type_t auth_type);
+int rend_auth_decode_cookie(const char *cookie_in,
+                            uint8_t *cookie_out,
+                            rend_auth_type_t *auth_type_out,
+                            char **err_msg_out);
+
+int rend_allow_non_anonymous_connection(const or_options_t* options);
+int rend_non_anonymous_mode_enabled(const or_options_t *options);
+
+void assert_circ_anonymity_ok(origin_circuit_t *circ,
+                              const or_options_t *options);
+
 #endif
 

@@ -3,7 +3,13 @@
 
 /**
  * \file status.c
- * \brief Keep status information and log the heartbeat messages.
+ * \brief Collect status information and log heartbeat messages.
+ *
+ * This module is responsible for implementing the heartbeat log messages,
+ * which periodically inform users and operators about basic facts to
+ * do with their Tor instance.  The log_heartbeat() function, invoked from
+ * main.c, is the principle entry point.  It collects data from elsewhere
+ * in Tor, and logs it in a human-readable format.
  **/
 
 #define STATUS_PRIVATE

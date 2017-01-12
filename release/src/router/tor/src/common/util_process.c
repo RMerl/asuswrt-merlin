@@ -61,9 +61,9 @@ process_map_entries_eq_(const waitpid_callback_t *a,
 static HT_HEAD(process_map, waitpid_callback_t) process_map = HT_INITIALIZER();
 
 HT_PROTOTYPE(process_map, waitpid_callback_t, node, process_map_entry_hash_,
-             process_map_entries_eq_);
+             process_map_entries_eq_)
 HT_GENERATE2(process_map, waitpid_callback_t, node, process_map_entry_hash_,
-             process_map_entries_eq_, 0.6, tor_reallocarray_, tor_free_);
+             process_map_entries_eq_, 0.6, tor_reallocarray_, tor_free_)
 
 /**
  * Begin monitoring the child pid <b>pid</b> to see if we get a SIGCHLD for

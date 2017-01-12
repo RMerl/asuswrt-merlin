@@ -127,9 +127,47 @@ test_sigsafe_err(void *arg)
   smartlist_free(lines);
 }
 
+static void
+test_ratelim(void *arg)
+{
+  (void) arg;
+  ratelim_t ten_min = RATELIM_INIT(10*60);
+
+  const time_t start = 1466091600;
+  time_t now = start;
+  /* Initially, we're ready. */
+
+  char *msg = NULL;
+
+  msg = rate_limit_log(&ten_min, now);
+  tt_assert(msg != NULL);
+  tt_str_op(msg, OP_EQ, ""); /* nothing was suppressed. */
+
+  tt_int_op(ten_min.last_allowed, OP_EQ, now);
+  tor_free(msg);
+
+  int i;
+  for (i = 0; i < 9; ++i) {
+    now += 60; /* one minute has passed. */
+    msg = rate_limit_log(&ten_min, now);
+    tt_assert(msg == NULL);
+    tt_int_op(ten_min.last_allowed, OP_EQ, start);
+    tt_int_op(ten_min.n_calls_since_last_time, OP_EQ, i + 1);
+  }
+
+  now += 240; /* Okay, we can be done. */
+  msg = rate_limit_log(&ten_min, now);
+  tt_assert(msg != NULL);
+  tt_str_op(msg, OP_EQ,
+            " [9 similar message(s) suppressed in last 600 seconds]");
+ done:
+  tor_free(msg);
+}
+
 struct testcase_t logging_tests[] = {
   { "sigsafe_err_fds", test_get_sigsafe_err_fds, TT_FORK, NULL, NULL },
   { "sigsafe_err", test_sigsafe_err, TT_FORK, NULL, NULL },
+  { "ratelim", test_ratelim, 0, NULL, NULL },
   END_OF_TESTCASES
 };
 

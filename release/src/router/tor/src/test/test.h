@@ -73,7 +73,8 @@
     {print_ = (I64_PRINTF_TYPE) value_;}, {}, TT_EXIT_TEST_FUNCTION)
 
 const char *get_fname(const char *name);
-crypto_pk_t *pk_generate(int idx);
+const char *get_fname_rnd(const char *name);
+struct crypto_pk_t *pk_generate(int idx);
 
 #define US2_CONCAT_2__(a, b) a ## __ ## b
 #define US_CONCAT_2__(a, b) a ## _ ## b
@@ -163,11 +164,90 @@ crypto_pk_t *pk_generate(int idx);
 
 #define CALLED(mock_name) US_CONCAT_2_(NS(mock_name), called)
 #define NS_DECL(retval, mock_fn, args) \
+    extern int CALLED(mock_fn);        \
     static retval NS(mock_fn) args; int CALLED(mock_fn) = 0
 #define NS_MOCK(name) MOCK(name, NS(name))
 #define NS_UNMOCK(name) UNMOCK(name)
 
 extern const struct testcase_setup_t passthrough_setup;
+extern const struct testcase_setup_t ed25519_test_setup;
+
+extern struct testcase_t accounting_tests[];
+extern struct testcase_t addr_tests[];
+extern struct testcase_t address_tests[];
+extern struct testcase_t buffer_tests[];
+extern struct testcase_t cell_format_tests[];
+extern struct testcase_t cell_queue_tests[];
+extern struct testcase_t channel_tests[];
+extern struct testcase_t channeltls_tests[];
+extern struct testcase_t checkdir_tests[];
+extern struct testcase_t circuitlist_tests[];
+extern struct testcase_t circuitmux_tests[];
+extern struct testcase_t compat_libevent_tests[];
+extern struct testcase_t config_tests[];
+extern struct testcase_t connection_tests[];
+extern struct testcase_t container_tests[];
+extern struct testcase_t controller_tests[];
+extern struct testcase_t controller_event_tests[];
+extern struct testcase_t crypto_tests[];
+extern struct testcase_t dir_tests[];
+extern struct testcase_t dir_handle_get_tests[];
+extern struct testcase_t entryconn_tests[];
+extern struct testcase_t entrynodes_tests[];
+extern struct testcase_t guardfraction_tests[];
+extern struct testcase_t extorport_tests[];
+extern struct testcase_t hs_tests[];
+extern struct testcase_t introduce_tests[];
+extern struct testcase_t keypin_tests[];
+extern struct testcase_t link_handshake_tests[];
+extern struct testcase_t logging_tests[];
+extern struct testcase_t microdesc_tests[];
+extern struct testcase_t nodelist_tests[];
+extern struct testcase_t oom_tests[];
+extern struct testcase_t oos_tests[];
+extern struct testcase_t options_tests[];
+extern struct testcase_t policy_tests[];
+extern struct testcase_t procmon_tests[];
+extern struct testcase_t protover_tests[];
+extern struct testcase_t pubsub_tests[];
+extern struct testcase_t pt_tests[];
+extern struct testcase_t relay_tests[];
+extern struct testcase_t relaycell_tests[];
+extern struct testcase_t rend_cache_tests[];
+extern struct testcase_t replaycache_tests[];
+extern struct testcase_t router_tests[];
+extern struct testcase_t routerkeys_tests[];
+extern struct testcase_t routerlist_tests[];
+extern struct testcase_t routerset_tests[];
+extern struct testcase_t scheduler_tests[];
+extern struct testcase_t socks_tests[];
+extern struct testcase_t status_tests[];
+extern struct testcase_t thread_tests[];
+extern struct testcase_t tortls_tests[];
+extern struct testcase_t util_tests[];
+extern struct testcase_t util_format_tests[];
+extern struct testcase_t util_process_tests[];
+extern struct testcase_t dns_tests[];
+extern struct testcase_t handle_tests[];
+extern struct testcase_t sr_tests[];
+
+extern struct testcase_t slow_crypto_tests[];
+extern struct testcase_t slow_util_tests[];
+
+extern struct testgroup_t testgroups[];
+
+extern const char AUTHORITY_CERT_1[];
+extern const char AUTHORITY_SIGNKEY_1[];
+extern const char AUTHORITY_SIGNKEY_A_DIGEST[];
+extern const char AUTHORITY_SIGNKEY_A_DIGEST256[];
+extern const char AUTHORITY_CERT_2[];
+extern const char AUTHORITY_SIGNKEY_2[];
+extern const char AUTHORITY_SIGNKEY_B_DIGEST[];
+extern const char AUTHORITY_SIGNKEY_B_DIGEST256[];
+extern const char AUTHORITY_CERT_3[];
+extern const char AUTHORITY_SIGNKEY_3[];
+extern const char AUTHORITY_SIGNKEY_C_DIGEST[];
+extern const char AUTHORITY_SIGNKEY_C_DIGEST256[];
 
 #endif
 

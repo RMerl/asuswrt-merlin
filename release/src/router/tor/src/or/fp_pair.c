@@ -7,6 +7,14 @@
  * \brief Manages data structures for associating pairs of fingerprints. Used
  * to handle combinations of identity/signing-key fingerprints for
  * authorities.
+ *
+ * This is a nice, simple, compact data structure module that handles a map
+ * from (signing key fingerprint, identity key fingerprint) to void *.  The
+ * fingerprints here are SHA1 digests of RSA keys.
+ *
+ * This structure is used in directory.c and in routerlist.c for handling
+ * handling authority certificates, since we never want more than a single
+ * certificate for any (ID key, signing key) pair.
  **/
 
 #include "or.h"

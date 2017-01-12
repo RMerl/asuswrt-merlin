@@ -3,6 +3,8 @@
 #define LOG_PRIVATE
 #define REPHIST_PRIVATE
 
+#include "orconfig.h"
+
 #include <float.h>
 #include <math.h>
 
@@ -310,8 +312,6 @@ NS_DECL(void, logv, (int severity, log_domain_mask_t domain,
 NS_DECL(int, server_mode, (const or_options_t *options));
 
 static routerinfo_t *mock_routerinfo;
-extern int onion_handshakes_requested[MAX_ONION_HANDSHAKE_TYPE+1];
-extern int onion_handshakes_assigned[MAX_ONION_HANDSHAKE_TYPE+1];
 
 static void
 NS(test_main)(void *arg)

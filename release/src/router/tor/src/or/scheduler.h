@@ -44,6 +44,13 @@ MOCK_DECL(STATIC int, scheduler_compare_channels,
           (const void *c1_v, const void *c2_v));
 STATIC uint64_t scheduler_get_queue_heuristic(void);
 STATIC void scheduler_update_queue_heuristic(time_t now);
+
+#ifdef TOR_UNIT_TESTS
+extern smartlist_t *channels_pending;
+extern struct event *run_sched_ev;
+extern uint64_t queue_heuristic;
+extern time_t queue_heuristic_timestamp;
+#endif
 #endif
 
 #endif /* !defined(TOR_SCHEDULER_H) */

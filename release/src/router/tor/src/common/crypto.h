@@ -13,6 +13,8 @@
 #ifndef TOR_CRYPTO_H
 #define TOR_CRYPTO_H
 
+#include "orconfig.h"
+
 #include <stdio.h>
 #include "torint.h"
 #include "testsupport.h"
@@ -115,7 +117,7 @@ typedef struct {
 } common_digests_t;
 
 typedef struct crypto_pk_t crypto_pk_t;
-typedef struct crypto_cipher_t crypto_cipher_t;
+typedef struct aes_cnt_cipher crypto_cipher_t;
 typedef struct crypto_digest_t crypto_digest_t;
 typedef struct crypto_xof_t crypto_xof_t;
 typedef struct crypto_dh_t crypto_dh_t;
@@ -136,7 +138,11 @@ void crypto_pk_free(crypto_pk_t *env);
 
 void crypto_set_tls_dh_prime(void);
 crypto_cipher_t *crypto_cipher_new(const char *key);
+crypto_cipher_t *crypto_cipher_new_with_bits(const char *key, int bits);
 crypto_cipher_t *crypto_cipher_new_with_iv(const char *key, const char *iv);
+crypto_cipher_t *crypto_cipher_new_with_iv_and_bits(const uint8_t *key,
+                                                    const uint8_t *iv,
+                                                    int bits);
 void crypto_cipher_free(crypto_cipher_t *env);
 
 /* public key crypto */
@@ -233,6 +239,7 @@ void crypto_digest_smartlist(char *digest_out, size_t len_out,
                              const struct smartlist_t *lst, const char *append,
                              digest_algorithm_t alg);
 const char *crypto_digest_algorithm_get_name(digest_algorithm_t alg);
+size_t crypto_digest_algorithm_get_length(digest_algorithm_t alg);
 int crypto_digest_algorithm_parse_name(const char *name);
 crypto_digest_t *crypto_digest_new(void);
 crypto_digest_t *crypto_digest256_new(digest_algorithm_t algorithm);
@@ -317,6 +324,16 @@ void crypto_add_spaces_to_fp(char *out, size_t outlen, const char *in);
 
 #ifdef CRYPTO_PRIVATE
 STATIC int crypto_force_rand_ssleay(void);
+STATIC int crypto_strongest_rand_raw(uint8_t *out, size_t out_len);
+
+#ifdef TOR_UNIT_TESTS
+extern int break_strongest_rng_syscall;
+extern int break_strongest_rng_fallback;
+#endif
+#endif
+
+#ifdef TOR_UNIT_TESTS
+void crypto_pk_assign_(crypto_pk_t *dest, const crypto_pk_t *src);
 #endif
 
 #endif

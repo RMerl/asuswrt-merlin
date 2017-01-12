@@ -3,6 +3,8 @@
  * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
+extern const char tor_git_revision[];
+
 /* Ordinarily defined in tor_main.c; this bit is just here to provide one
  * since we're not linking to tor_main.c */
 const char tor_git_revision[] = "";
@@ -100,16 +102,39 @@ setup_directory(void)
   temp_dir_setup_in_pid = getpid();
 }
 
-/** Return a filename relative to our testing temporary directory */
-const char *
-get_fname(const char *name)
+/** Return a filename relative to our testing temporary directory, based on
+ * name and suffix. If name is NULL, return the name of the testing temporary
+ * directory. */
+static const char *
+get_fname_suffix(const char *name, const char *suffix)
 {
   static char buf[1024];
   setup_directory();
   if (!name)
     return temp_dir;
-  tor_snprintf(buf,sizeof(buf),"%s/%s",temp_dir,name);
+  tor_snprintf(buf,sizeof(buf),"%s/%s%s%s",temp_dir,name,suffix ? "_" : "",
+               suffix ? suffix : "");
   return buf;
+}
+
+/** Return a filename relative to our testing temporary directory. If name is
+ * NULL, return the name of the testing temporary directory. */
+const char *
+get_fname(const char *name)
+{
+  return get_fname_suffix(name, NULL);
+}
+
+/** Return a filename with a random suffix, relative to our testing temporary
+ * directory. If name is NULL, return the name of the testing temporary
+ * directory, without any suffix. */
+const char *
+get_fname_rnd(const char *name)
+{
+  char rnd[256], rnd32[256];
+  crypto_rand(rnd, RAND_PATH_BYTES);
+  base32_encode(rnd32, sizeof(rnd32), rnd, RAND_PATH_BYTES);
+  return get_fname_suffix(name, rnd32);
 }
 
 /* Remove a directory and all of its subdirectories */
@@ -154,36 +179,50 @@ remove_directory(void)
 }
 
 /** Define this if unit tests spend too much time generating public keys*/
-#undef CACHE_GENERATED_KEYS
+#define CACHE_GENERATED_KEYS
 
-static crypto_pk_t *pregen_keys[5] = {NULL, NULL, NULL, NULL, NULL};
-#define N_PREGEN_KEYS ARRAY_LENGTH(pregen_keys)
+#define N_PREGEN_KEYS 11
+static crypto_pk_t *pregen_keys[N_PREGEN_KEYS];
+static int next_key_idx;
 
 /** Generate and return a new keypair for use in unit tests.  If we're using
- * the key cache optimization, we might reuse keys: we only guarantee that
- * keys made with distinct values for <b>idx</b> are different.  The value of
- * <b>idx</b> must be at least 0, and less than N_PREGEN_KEYS. */
+ * the key cache optimization, we might reuse keys. "idx" is ignored.
+ * Our only guarantee is that we won't reuse a key till this function has been
+ * called several times. The order in which keys are returned is slightly
+ * randomized, so that tests that depend on a particular order will not be
+ * reliable. */
 crypto_pk_t *
 pk_generate(int idx)
 {
-  int res;
+  (void) idx;
 #ifdef CACHE_GENERATED_KEYS
-  tor_assert(idx < N_PREGEN_KEYS);
-  if (! pregen_keys[idx]) {
-    pregen_keys[idx] = crypto_pk_new();
-    res = crypto_pk_generate_key(pregen_keys[idx]);
-    tor_assert(!res);
-  }
-  return crypto_pk_dup_key(pregen_keys[idx]);
+  /* Either skip 1 or 2 keys. */
+  next_key_idx += crypto_rand_int_range(1,3);
+  next_key_idx %= N_PREGEN_KEYS;
+  return crypto_pk_dup_key(pregen_keys[next_key_idx]);
 #else
   crypto_pk_t *result;
-  (void) idx;
+  int res;
   result = crypto_pk_new();
-  res = crypto_pk_generate_key(result);
+  res = crypto_pk_generate_key__real(result);
   tor_assert(!res);
   return result;
 #endif
 }
+
+#ifdef CACHE_GENERATED_KEYS
+static int
+crypto_pk_generate_key_with_bits__get_cached(crypto_pk_t *env, int bits)
+{
+  if (bits != 1024)
+    return crypto_pk_generate_key_with_bits__real(env, bits);
+
+  crypto_pk_t *newkey = pk_generate(0);
+  crypto_pk_assign_(env, newkey);
+  crypto_pk_free(newkey);
+  return 0;
+}
+#endif
 
 /** Free all storage used for the cached key optimization. */
 static void
@@ -201,6 +240,9 @@ free_pregenerated_keys(void)
 static void *
 passthrough_test_setup(const struct testcase_t *testcase)
 {
+  /* Make sure the passthrough doesn't unintentionally fail or skip tests */
+  tor_assert(testcase->setup_data);
+  tor_assert(testcase->setup_data != (void*)TT_SKIP);
   return testcase->setup_data;
 }
 static int
@@ -211,11 +253,33 @@ passthrough_test_cleanup(const struct testcase_t *testcase, void *ptr)
   return 1;
 }
 
+static void *
+ed25519_testcase_setup(const struct testcase_t *testcase)
+{
+  crypto_ed25519_testing_force_impl(testcase->setup_data);
+  return testcase->setup_data;
+}
+static int
+ed25519_testcase_cleanup(const struct testcase_t *testcase, void *ptr)
+{
+  (void)testcase;
+  (void)ptr;
+  crypto_ed25519_testing_restore_impl();
+  return 1;
+}
+const struct testcase_setup_t ed25519_test_setup = {
+  ed25519_testcase_setup, ed25519_testcase_cleanup
+};
+
 const struct testcase_setup_t passthrough_setup = {
   passthrough_test_setup, passthrough_test_cleanup
 };
 
-extern struct testgroup_t testgroups[];
+static void
+an_assertion_failed(void)
+{
+  tinytest_set_test_failed_();
+}
 
 /** Main entry point for unit test code: parse the command line, and run
  * some unit tests. */
@@ -243,6 +307,8 @@ main(int c, const char **v)
   tor_threads_init();
 
   network_init();
+
+  monotime_init();
 
   struct tor_libevent_cfg cfg;
   memset(&cfg, 0, sizeof(cfg));
@@ -272,6 +338,8 @@ main(int c, const char **v)
     log_severity_list_t s;
     memset(&s, 0, sizeof(s));
     set_log_severity_config(loglevel, LOG_ERR, &s);
+    /* ALWAYS log bug warnings. */
+    s.masks[LOG_WARN-LOG_ERR] |= LD_BUG;
     add_stream_log(&s, "", fileno(stdout));
   }
 
@@ -295,6 +363,17 @@ main(int c, const char **v)
     tor_free(errmsg);
     return 1;
   }
+  tor_set_failed_assertion_callback(an_assertion_failed);
+
+#ifdef CACHE_GENERATED_KEYS
+  for (i = 0; i < N_PREGEN_KEYS; ++i) {
+    pregen_keys[i] = crypto_pk_new();
+    int r = crypto_pk_generate_key(pregen_keys[i]);
+    tor_assert(r == 0);
+  }
+  MOCK(crypto_pk_generate_key_with_bits,
+       crypto_pk_generate_key_with_bits__get_cached);
+#endif
 
   atexit(remove_directory);
 

@@ -29,18 +29,7 @@
 #include "crypto_ed25519.h"
 #include "crypto_format.h"
 
-#ifdef __GNUC__
-#define GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
-#endif
-
-#if __GNUC__ && GCC_VERSION >= 402
-#if GCC_VERSION >= 406
-#pragma GCC diagnostic push
-#endif
-/* Some versions of OpenSSL declare X509_STORE_CTX_set_verify_cb twice.
- * Suppress the GCC warning so we can build with -Wredundant-decl. */
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#endif
+DISABLE_GCC_WARNING(redundant-decls)
 
 #include <openssl/err.h>
 #include <openssl/rsa.h>
@@ -52,6 +41,8 @@
 #include <openssl/dh.h>
 #include <openssl/conf.h>
 #include <openssl/hmac.h>
+
+ENABLE_GCC_WARNING(redundant-decls)
 
 #if __GNUC__ && GCC_VERSION >= 402
 #if GCC_VERSION >= 406
@@ -65,7 +56,6 @@
 #include <ctype.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#define _GNU_SOURCE
 #include <unistd.h>
 #endif
 #ifdef HAVE_FCNTL_H
@@ -77,8 +67,12 @@
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
 #endif
+#ifdef HAVE_SYS_RANDOM_H
+#include <sys/random.h>
+#endif
 
 #include "torlog.h"
+#include "torint.h"
 #include "aes.h"
 #include "util.h"
 #include "container.h"
@@ -129,15 +123,6 @@ struct crypto_pk_t
   RSA *key; /**< The key itself */
 };
 
-/** Key and stream information for a stream cipher. */
-struct crypto_cipher_t
-{
-  char key[CIPHER_KEY_LEN]; /**< The raw key. */
-  char iv[CIPHER_IV_LEN]; /**< The initial IV. */
-  aes_cnt_cipher_t *cipher; /**< The key in format usable for counter-mode AES
-                             * encryption */
-};
-
 /** A structure to hold the first half (x, g^x) of a Diffie-Hellman handshake
  * while we're waiting for the second.*/
 struct crypto_dh_t {
@@ -155,7 +140,7 @@ crypto_get_rsa_padding_overhead(int padding)
   switch (padding)
     {
     case RSA_PKCS1_OAEP_PADDING: return PKCS1_OAEP_PADDING_OVERHEAD;
-    default: tor_assert(0); return -1;
+    default: tor_assert(0); return -1; // LCOV_EXCL_LINE
     }
 }
 
@@ -167,7 +152,7 @@ crypto_get_rsa_padding(int padding)
   switch (padding)
     {
     case PK_PKCS1_OAEP_PADDING: return RSA_PKCS1_OAEP_PADDING;
-    default: tor_assert(0); return -1;
+    default: tor_assert(0); return -1; // LCOV_EXCL_LINE
     }
 }
 
@@ -192,13 +177,9 @@ crypto_log_errors(int severity, const char *doing)
     if (!msg) msg = "(null)";
     if (!lib) lib = "(null)";
     if (!func) func = "(null)";
-    if (doing) {
-      tor_log(severity, LD_CRYPTO, "crypto error while %s: %s (in %s:%s)",
+    if (BUG(!doing)) doing = "(null)";
+    tor_log(severity, LD_CRYPTO, "crypto error while %s: %s (in %s:%s)",
               doing, msg, lib, func);
-    } else {
-      tor_log(severity, LD_CRYPTO, "crypto error: %s (in %s:%s)",
-              msg, lib, func);
-    }
   }
 }
 
@@ -564,38 +545,48 @@ crypto_pk_free(crypto_pk_t *env)
 }
 
 /** Allocate and return a new symmetric cipher using the provided key and iv.
- * The key is CIPHER_KEY_LEN bytes; the IV is CIPHER_IV_LEN bytes.  If you
- * provide NULL in place of either one, it is generated at random.
+ * The key is <b>bits</b> bits long; the IV is CIPHER_IV_LEN bytes.  Both
+ * must be provided. Key length must be 128, 192, or 256 */
+crypto_cipher_t *
+crypto_cipher_new_with_iv_and_bits(const uint8_t *key,
+                                   const uint8_t *iv,
+                                   int bits)
+{
+  tor_assert(key);
+  tor_assert(iv);
+
+  return aes_new_cipher((const uint8_t*)key, (const uint8_t*)iv, bits);
+}
+
+/** Allocate and return a new symmetric cipher using the provided key and iv.
+ * The key is CIPHER_KEY_LEN bytes; the IV is CIPHER_IV_LEN bytes.  Both
+ * must be provided.
  */
 crypto_cipher_t *
 crypto_cipher_new_with_iv(const char *key, const char *iv)
 {
-  crypto_cipher_t *env;
-
-  env = tor_malloc_zero(sizeof(crypto_cipher_t));
-
-  if (key == NULL)
-    crypto_rand(env->key, CIPHER_KEY_LEN);
-  else
-    memcpy(env->key, key, CIPHER_KEY_LEN);
-  if (iv == NULL)
-    crypto_rand(env->iv, CIPHER_IV_LEN);
-  else
-    memcpy(env->iv, iv, CIPHER_IV_LEN);
-
-  env->cipher = aes_new_cipher(env->key, env->iv);
-
-  return env;
+  return crypto_cipher_new_with_iv_and_bits((uint8_t*)key, (uint8_t*)iv,
+                                            128);
 }
 
 /** Return a new crypto_cipher_t with the provided <b>key</b> and an IV of all
- * zero bytes.  */
+ * zero bytes and key length <b>bits</b>.  Key length must be 128, 192, or
+ * 256. */
 crypto_cipher_t *
-crypto_cipher_new(const char *key)
+crypto_cipher_new_with_bits(const char *key, int bits)
 {
   char zeroiv[CIPHER_IV_LEN];
   memset(zeroiv, 0, sizeof(zeroiv));
-  return crypto_cipher_new_with_iv(key, zeroiv);
+  return crypto_cipher_new_with_iv_and_bits((uint8_t*)key, (uint8_t*)zeroiv,
+                                            bits);
+}
+
+/** Return a new crypto_cipher_t with the provided <b>key</b> (of
+ * CIPHER_KEY_LEN bytes) and an IV of all zero bytes.  */
+crypto_cipher_t *
+crypto_cipher_new(const char *key)
+{
+  return crypto_cipher_new_with_bits(key, 128);
 }
 
 /** Free a symmetric cipher.
@@ -606,10 +597,7 @@ crypto_cipher_free(crypto_cipher_t *env)
   if (!env)
     return;
 
-  tor_assert(env->cipher);
-  aes_cipher_free(env->cipher);
-  memwipe(env, 0, sizeof(crypto_cipher_t));
-  tor_free(env);
+  aes_cipher_free(env);
 }
 
 /* public key crypto */
@@ -755,14 +743,13 @@ crypto_pk_write_key_to_string_impl(crypto_pk_t *env, char **dest,
   }
 
   BIO_get_mem_ptr(b, &buf);
-  (void)BIO_set_close(b, BIO_NOCLOSE); /* so BIO_free doesn't free buf */
-  BIO_free(b);
 
   *dest = tor_malloc(buf->length+1);
   memcpy(*dest, buf->data, buf->length);
   (*dest)[buf->length] = 0; /* nul terminate it */
   *len = buf->length;
-  BUF_MEM_free(buf);
+
+  BIO_free(b);
 
   return 0;
 }
@@ -998,6 +985,20 @@ crypto_pk_dup_key(crypto_pk_t *env)
   return env;
 }
 
+#ifdef TOR_UNIT_TESTS
+/** For testing: replace dest with src.  (Dest must have a refcount
+ * of 1) */
+void
+crypto_pk_assign_(crypto_pk_t *dest, const crypto_pk_t *src)
+{
+  tor_assert(dest);
+  tor_assert(dest->refs == 1);
+  tor_assert(src);
+  RSA_free(dest->key);
+  dest->key = RSAPrivateKey_dup(src->key);
+}
+#endif
+
 /** Make a real honest-to-goodness copy of <b>env</b>, and return it.
  * Returns NULL on failure. */
 crypto_pk_t *
@@ -1015,6 +1016,10 @@ crypto_pk_copy_full(crypto_pk_t *env)
     new_key = RSAPublicKey_dup(env->key);
   }
   if (!new_key) {
+    /* LCOV_EXCL_START
+     *
+     * We can't cause RSA*Key_dup() to fail, so we can't really test this.
+     */
     log_err(LD_CRYPTO, "Unable to duplicate a %s key: openssl failed.",
             privatekey?"private":"public");
     crypto_log_errors(LOG_ERR,
@@ -1022,6 +1027,7 @@ crypto_pk_copy_full(crypto_pk_t *env)
                       "Duplicating a public key");
     tor_fragile_assert();
     return NULL;
+    /* LCOV_EXCL_STOP */
   }
 
   return crypto_new_pk_from_rsa_(new_key);
@@ -1261,10 +1267,12 @@ crypto_pk_public_hybrid_encrypt(crypto_pk_t *env,
   tor_assert(tolen >= fromlen + overhead + CIPHER_KEY_LEN);
   tor_assert(tolen >= pkeylen);
 
-  cipher = crypto_cipher_new(NULL); /* generate a new key. */
+  char key[CIPHER_KEY_LEN];
+  crypto_rand(key, sizeof(key)); /* generate a new key. */
+  cipher = crypto_cipher_new(key);
 
   buf = tor_malloc(pkeylen+1);
-  memcpy(buf, cipher->key, CIPHER_KEY_LEN);
+  memcpy(buf, key, CIPHER_KEY_LEN);
   memcpy(buf+CIPHER_KEY_LEN, from, pkeylen-overhead-CIPHER_KEY_LEN);
 
   /* Length of symmetrically encrypted data. */
@@ -1279,6 +1287,7 @@ crypto_pk_public_hybrid_encrypt(crypto_pk_t *env,
 
   if (r<0) goto err;
   memwipe(buf, 0, pkeylen);
+  memwipe(key, 0, sizeof(key));
   tor_free(buf);
   crypto_cipher_free(cipher);
   tor_assert(outlen+symlen < INT_MAX);
@@ -1286,6 +1295,7 @@ crypto_pk_public_hybrid_encrypt(crypto_pk_t *env,
  err:
 
   memwipe(buf, 0, pkeylen);
+  memwipe(key, 0, sizeof(key));
   tor_free(buf);
   crypto_cipher_free(cipher);
   return -1;
@@ -1577,14 +1587,6 @@ crypto_pk_base64_decode(const char *str, size_t len)
 
 /* symmetric crypto */
 
-/** Return a pointer to the key set for the cipher in <b>env</b>.
- */
-const char *
-crypto_cipher_get_key(crypto_cipher_t *env)
-{
-  return env->key;
-}
-
 /** Encrypt <b>fromlen</b> bytes from <b>from</b> using the cipher
  * <b>env</b>; on success, store the result to <b>to</b> and return 0.
  * Does not check for failure.
@@ -1594,14 +1596,14 @@ crypto_cipher_encrypt(crypto_cipher_t *env, char *to,
                       const char *from, size_t fromlen)
 {
   tor_assert(env);
-  tor_assert(env->cipher);
+  tor_assert(env);
   tor_assert(from);
   tor_assert(fromlen);
   tor_assert(to);
   tor_assert(fromlen < SIZE_T_CEILING);
 
   memcpy(to, from, fromlen);
-  aes_crypt_inplace(env->cipher, to, fromlen);
+  aes_crypt_inplace(env, to, fromlen);
   return 0;
 }
 
@@ -1619,7 +1621,7 @@ crypto_cipher_decrypt(crypto_cipher_t *env, char *to,
   tor_assert(fromlen < SIZE_T_CEILING);
 
   memcpy(to, from, fromlen);
-  aes_crypt_inplace(env->cipher, to, fromlen);
+  aes_crypt_inplace(env, to, fromlen);
   return 0;
 }
 
@@ -1630,7 +1632,7 @@ void
 crypto_cipher_crypt_inplace(crypto_cipher_t *env, char *buf, size_t len)
 {
   tor_assert(len < SIZE_T_CEILING);
-  aes_crypt_inplace(env->cipher, buf, len);
+  aes_crypt_inplace(env, buf, len);
 }
 
 /** Encrypt <b>fromlen</b> bytes (at least 1) from <b>from</b> with the key in
@@ -1654,11 +1656,14 @@ crypto_cipher_encrypt_with_iv(const char *key,
   if (tolen < fromlen + CIPHER_IV_LEN)
     return -1;
 
-  cipher = crypto_cipher_new_with_iv(key, NULL);
+  char iv[CIPHER_IV_LEN];
+  crypto_rand(iv, sizeof(iv));
+  cipher = crypto_cipher_new_with_iv(key, iv);
 
-  memcpy(to, cipher->iv, CIPHER_IV_LEN);
+  memcpy(to, iv, CIPHER_IV_LEN);
   crypto_cipher_encrypt(cipher, to+CIPHER_IV_LEN, from, fromlen);
   crypto_cipher_free(cipher);
+  memwipe(iv, 0, sizeof(iv));
   return (int)(fromlen + CIPHER_IV_LEN);
 }
 
@@ -1772,8 +1777,10 @@ crypto_digest_algorithm_get_name(digest_algorithm_t alg)
     case DIGEST_SHA3_512:
       return "sha3-512";
     default:
+      // LCOV_EXCL_START
       tor_fragile_assert();
       return "??unknown_digest??";
+      // LCOV_EXCL_STOP
   }
 }
 
@@ -1797,7 +1804,7 @@ crypto_digest_algorithm_parse_name(const char *name)
 }
 
 /** Given an algorithm, return the digest length in bytes. */
-static inline size_t
+size_t
 crypto_digest_algorithm_get_length(digest_algorithm_t alg)
 {
   switch (alg) {
@@ -1812,8 +1819,8 @@ crypto_digest_algorithm_get_length(digest_algorithm_t alg)
     case DIGEST_SHA3_512:
       return DIGEST512_LEN;
     default:
-      tor_assert(0);
-      return 0; /* Unreachable */
+      tor_assert(0);              // LCOV_EXCL_LINE
+      return 0; /* Unreachable */ // LCOV_EXCL_LINE
   }
 }
 
@@ -1856,11 +1863,45 @@ crypto_digest_alloc_bytes(digest_algorithm_t alg)
     case DIGEST_SHA3_512:
       return END_OF_FIELD(d.sha3);
     default:
-      tor_assert(0);
-      return 0;
+      tor_assert(0); // LCOV_EXCL_LINE
+      return 0;      // LCOV_EXCL_LINE
   }
 #undef END_OF_FIELD
 #undef STRUCT_FIELD_SIZE
+}
+
+/**
+ * Internal function: create and return a new digest object for 'algorithm'.
+ * Does not typecheck the algorithm.
+ */
+static crypto_digest_t *
+crypto_digest_new_internal(digest_algorithm_t algorithm)
+{
+  crypto_digest_t *r = tor_malloc(crypto_digest_alloc_bytes(algorithm));
+  r->algorithm = algorithm;
+
+  switch (algorithm)
+    {
+    case DIGEST_SHA1:
+      SHA1_Init(&r->d.sha1);
+      break;
+    case DIGEST_SHA256:
+      SHA256_Init(&r->d.sha2);
+      break;
+    case DIGEST_SHA512:
+      SHA512_Init(&r->d.sha512);
+      break;
+    case DIGEST_SHA3_256:
+      keccak_digest_init(&r->d.sha3, 256);
+      break;
+    case DIGEST_SHA3_512:
+      keccak_digest_init(&r->d.sha3, 512);
+      break;
+    default:
+      tor_assert_unreached();
+    }
+
+  return r;
 }
 
 /** Allocate and return a new digest object to compute SHA1 digests.
@@ -1868,11 +1909,7 @@ crypto_digest_alloc_bytes(digest_algorithm_t alg)
 crypto_digest_t *
 crypto_digest_new(void)
 {
-  crypto_digest_t *r;
-  r = tor_malloc(crypto_digest_alloc_bytes(DIGEST_SHA1));
-  SHA1_Init(&r->d.sha1);
-  r->algorithm = DIGEST_SHA1;
-  return r;
+  return crypto_digest_new_internal(DIGEST_SHA1);
 }
 
 /** Allocate and return a new digest object to compute 256-bit digests
@@ -1880,15 +1917,8 @@ crypto_digest_new(void)
 crypto_digest_t *
 crypto_digest256_new(digest_algorithm_t algorithm)
 {
-  crypto_digest_t *r;
   tor_assert(algorithm == DIGEST_SHA256 || algorithm == DIGEST_SHA3_256);
-  r = tor_malloc(crypto_digest_alloc_bytes(algorithm));
-  if (algorithm == DIGEST_SHA256)
-    SHA256_Init(&r->d.sha2);
-  else
-    keccak_digest_init(&r->d.sha3, 256);
-  r->algorithm = algorithm;
-  return r;
+  return crypto_digest_new_internal(algorithm);
 }
 
 /** Allocate and return a new digest object to compute 512-bit digests
@@ -1896,15 +1926,8 @@ crypto_digest256_new(digest_algorithm_t algorithm)
 crypto_digest_t *
 crypto_digest512_new(digest_algorithm_t algorithm)
 {
-  crypto_digest_t *r;
   tor_assert(algorithm == DIGEST_SHA512 || algorithm == DIGEST_SHA3_512);
-  r = tor_malloc(crypto_digest_alloc_bytes(algorithm));
-  if (algorithm == DIGEST_SHA512)
-    SHA512_Init(&r->d.sha512);
-  else
-    keccak_digest_init(&r->d.sha3, 512);
-  r->algorithm = algorithm;
-  return r;
+  return crypto_digest_new_internal(algorithm);
 }
 
 /** Deallocate a digest object.
@@ -1947,8 +1970,10 @@ crypto_digest_add_bytes(crypto_digest_t *digest, const char *data,
       keccak_digest_update(&digest->d.sha3, (const uint8_t *)data, len);
       break;
     default:
+      /* LCOV_EXCL_START */
       tor_fragile_assert();
       break;
+      /* LCOV_EXCL_STOP */
   }
 }
 
@@ -1987,13 +2012,15 @@ crypto_digest_get_digest(crypto_digest_t *digest,
     case DIGEST_SHA512:
       SHA512_Final(r, &tmpenv.d.sha512);
       break;
+//LCOV_EXCL_START
     case DIGEST_SHA3_256: /* FALLSTHROUGH */
     case DIGEST_SHA3_512:
-      log_warn(LD_BUG, "Handling unexpected algorithm %d", digest->algorithm);
-      tor_assert(0); /* This is fatal, because it should never happen. */
     default:
-      tor_assert(0); /* Unreachable. */
+      log_warn(LD_BUG, "Handling unexpected algorithm %d", digest->algorithm);
+      /* This is fatal, because it should never happen. */
+      tor_assert_unreached();
       break;
+//LCOV_EXCL_STOP
   }
   memcpy(out, r, out_len);
   memwipe(r, 0, sizeof(r));
@@ -2052,27 +2079,7 @@ crypto_digest_smartlist_prefix(char *digest_out, size_t len_out,
                         const char *append,
                         digest_algorithm_t alg)
 {
-  crypto_digest_t *d = NULL;
-  switch (alg) {
-    case DIGEST_SHA1:
-      d = crypto_digest_new();
-      break;
-    case DIGEST_SHA256: /* FALLSTHROUGH */
-    case DIGEST_SHA3_256:
-      d = crypto_digest256_new(alg);
-      break;
-    case DIGEST_SHA512: /* FALLSTHROUGH */
-    case DIGEST_SHA3_512:
-      d = crypto_digest512_new(alg);
-      break;
-    default:
-      log_warn(LD_BUG, "Called with unknown algorithm %d", alg);
-      /* If fragile_assert is not enabled, wipe output and return
-       * without running any calculations */
-      memwipe(digest_out, 0xff, len_out);
-      tor_fragile_assert();
-      goto free;
-  }
+  crypto_digest_t *d = crypto_digest_new_internal(alg);
   if (prepend)
     crypto_digest_add_bytes(d, prepend, strlen(prepend));
   SMARTLIST_FOREACH(lst, const char *, cp,
@@ -2080,8 +2087,6 @@ crypto_digest_smartlist_prefix(char *digest_out, size_t len_out,
   if (append)
     crypto_digest_add_bytes(d, append, strlen(append));
   crypto_digest_get_digest(d, digest_out, len_out);
-
- free:
   crypto_digest_free(d);
 }
 
@@ -2250,9 +2255,14 @@ crypto_set_tls_dh_prime(void)
   int r;
 
   /* If the space is occupied, free the previous TLS DH prime */
-  if (dh_param_p_tls) {
+  if (BUG(dh_param_p_tls)) {
+    /* LCOV_EXCL_START
+     *
+     * We shouldn't be calling this twice.
+     */
     BN_clear_free(dh_param_p_tls);
     dh_param_p_tls = NULL;
+    /* LCOV_EXCL_STOP */
   }
 
   tls_prime = BN_new();
@@ -2284,8 +2294,8 @@ init_dh_param(void)
 {
   BIGNUM *circuit_dh_prime;
   int r;
-  if (dh_param_p && dh_param_g)
-    return;
+  if (BUG(dh_param_p && dh_param_g))
+    return; // LCOV_EXCL_LINE This function isn't supposed to be called twice.
 
   circuit_dh_prime = BN_new();
   tor_assert(circuit_dh_prime);
@@ -2375,10 +2385,13 @@ crypto_dh_new(int dh_type)
 
   return res;
  err:
+  /* LCOV_EXCL_START
+   * This error condition is only reached when an allocation fails */
   crypto_log_errors(LOG_WARN, "creating DH object");
   if (res->dh) DH_free(res->dh); /* frees p and g too */
   tor_free(res);
   return NULL;
+  /* LCOV_EXCL_STOP */
 }
 
 /** Return a copy of <b>dh</b>, sharing its internal state. */
@@ -2412,8 +2425,11 @@ crypto_dh_generate_public(crypto_dh_t *dh)
  again:
 #endif
   if (!DH_generate_key(dh->dh)) {
+    /* LCOV_EXCL_START
+     * To test this we would need some way to tell openssl to break DH. */
     crypto_log_errors(LOG_WARN, "generating DH key");
     return -1;
+    /* LCOV_EXCL_STOP */
   }
 #ifdef OPENSSL_1_1_API
   /* OpenSSL 1.1.x doesn't appear to let you regenerate a DH key, without
@@ -2429,6 +2445,8 @@ crypto_dh_generate_public(crypto_dh_t *dh)
   }
 #else
   if (tor_check_dh_key(LOG_WARN, dh->dh->pub_key)<0) {
+    /* LCOV_EXCL_START
+     * If this happens, then openssl's DH implementation is busted. */
     log_warn(LD_CRYPTO, "Weird! Our own DH key was invalid.  I guess once-in-"
              "the-universe chances really do happen.  Trying again.");
     /* Free and clear the keys, so OpenSSL will actually try again. */
@@ -2436,6 +2454,7 @@ crypto_dh_generate_public(crypto_dh_t *dh)
     BN_clear_free(dh->dh->priv_key);
     dh->dh->pub_key = dh->dh->priv_key = NULL;
     goto again;
+    /* LCOV_EXCL_STOP */
   }
 #endif
   return 0;
@@ -2500,8 +2519,8 @@ tor_check_dh_key(int severity, const BIGNUM *bn)
   tor_assert(bn);
   x = BN_new();
   tor_assert(x);
-  if (!dh_param_p)
-    init_dh_param();
+  if (BUG(!dh_param_p))
+    init_dh_param(); //LCOV_EXCL_LINE we already checked whether we did this.
   BN_set_word(x, 1);
   if (BN_cmp(bn,x)<=0) {
     log_fn(severity, LD_CRYPTO, "DH key must be at least 2.");
@@ -2523,8 +2542,6 @@ tor_check_dh_key(int severity, const BIGNUM *bn)
   return -1;
 }
 
-#undef MIN
-#define MIN(a,b) ((a)<(b)?(a):(b))
 /** Given a DH key exchange object, and our peer's value of g^y (as a
  * <b>pubkey_len</b>-byte value in <b>pubkey</b>) generate
  * <b>secret_bytes_out</b> bytes of shared key material and write them
@@ -2712,6 +2729,11 @@ crypto_seed_weak_rng(tor_weak_rng_t *rng)
   tor_init_weak_random(rng, seed);
 }
 
+#ifdef TOR_UNIT_TESTS
+int break_strongest_rng_syscall = 0;
+int break_strongest_rng_fallback = 0;
+#endif
+
 /** Try to get <b>out_len</b> bytes of the strongest entropy we can generate,
  * via system calls, storing it into <b>out</b>. Return 0 on success, -1 on
  * failure.  A maximum request size of 256 bytes is imposed.
@@ -2720,6 +2742,11 @@ static int
 crypto_strongest_rand_syscall(uint8_t *out, size_t out_len)
 {
   tor_assert(out_len <= MAX_STRONGEST_RAND_SIZE);
+
+#ifdef TOR_UNIT_TESTS
+  if (break_strongest_rng_syscall)
+    return -1;
+#endif
 
 #if defined(_WIN32)
   static int provider_set = 0;
@@ -2770,6 +2797,7 @@ crypto_strongest_rand_syscall(uint8_t *out, size_t out_len)
     } while (ret == -1 && ((errno == EINTR) ||(errno == EAGAIN)));
 
     if (PREDICT_UNLIKELY(ret == -1)) {
+      /* LCOV_EXCL_START we can't actually make the syscall fail in testing. */
       tor_assert(errno != EAGAIN);
       tor_assert(errno != EINTR);
 
@@ -2777,6 +2805,7 @@ crypto_strongest_rand_syscall(uint8_t *out, size_t out_len)
       log_warn(LD_CRYPTO, "Can't get entropy from getrandom().");
       getrandom_works = 0; /* Don't bother trying again. */
       return -1;
+      /* LCOV_EXCL_STOP */
     }
 
     tor_assert(ret == (long)out_len);
@@ -2805,6 +2834,11 @@ crypto_strongest_rand_syscall(uint8_t *out, size_t out_len)
 static int
 crypto_strongest_rand_fallback(uint8_t *out, size_t out_len)
 {
+#ifdef TOR_UNIT_TESTS
+  if (break_strongest_rng_fallback)
+    return -1;
+#endif
+
 #ifdef _WIN32
   /* Windows exclusively uses crypto_strongest_rand_syscall(). */
   (void)out;
@@ -2825,10 +2859,13 @@ crypto_strongest_rand_fallback(uint8_t *out, size_t out_len)
     n = read_all(fd, (char*)out, out_len, 0);
     close(fd);
     if (n != out_len) {
+      /* LCOV_EXCL_START
+       * We can't make /dev/foorandom actually fail. */
       log_warn(LD_CRYPTO,
                "Error reading from entropy source (read only %lu bytes).",
                (unsigned long)n);
       return -1;
+      /* LCOV_EXCL_STOP */
     }
 
     return 0;
@@ -2842,7 +2879,7 @@ crypto_strongest_rand_fallback(uint8_t *out, size_t out_len)
  * storing it into <b>out</b>. Return 0 on success, -1 on failure.  A maximum
  * request size of 256 bytes is imposed.
  */
-static int
+STATIC int
 crypto_strongest_rand_raw(uint8_t *out, size_t out_len)
 {
   static const size_t sanity_min_size = 16;
@@ -2876,13 +2913,17 @@ crypto_strongest_rand_raw(uint8_t *out, size_t out_len)
       return 0;
   }
 
-  /* We tried max_attempts times to fill a buffer >= 128 bits long,
+  /* LCOV_EXCL_START
+   *
+   * We tried max_attempts times to fill a buffer >= 128 bits long,
    * and each time it returned all '0's.  Either the system entropy
    * source is busted, or the user should go out and buy a ticket to
    * every lottery on the planet.
    */
   log_warn(LD_CRYPTO, "Strong OS entropy returned all zero buffer.");
+
   return -1;
+  /* LCOV_EXCL_STOP */
 }
 
 /** Try to get <b>out_len</b> bytes of the strongest entropy we can generate,
@@ -2901,10 +2942,12 @@ crypto_strongest_rand(uint8_t *out, size_t out_len)
   while (out_len) {
     crypto_rand((char*) inp, DLEN);
     if (crypto_strongest_rand_raw(inp+DLEN, DLEN) < 0) {
+      // LCOV_EXCL_START
       log_err(LD_CRYPTO, "Failed to load strong entropy when generating an "
               "important key. Exiting.");
       /* Die with an assertion so we get a stack trace. */
       tor_assert(0);
+      // LCOV_EXCL_STOP
     }
     if (out_len >= DLEN) {
       SHA512(inp, sizeof(inp), out);
@@ -2935,7 +2978,7 @@ crypto_seed_rng(void)
    * functions.  If one succeeds, we'll accept the RNG as seeded. */
   rand_poll_ok = RAND_poll();
   if (rand_poll_ok == 0)
-    log_warn(LD_CRYPTO, "RAND_poll() failed.");
+    log_warn(LD_CRYPTO, "RAND_poll() failed."); // LCOV_EXCL_LINE
 
   load_entropy_ok = !crypto_strongest_rand_raw(buf, sizeof(buf));
   if (load_entropy_ok) {
@@ -3070,8 +3113,8 @@ crypto_rand_double(void)
 {
   /* We just use an unsigned int here; we don't really care about getting
    * more than 32 bits of resolution */
-  unsigned int uint;
-  crypto_rand((char*)&uint, sizeof(uint));
+  unsigned int u;
+  crypto_rand((char*)&u, sizeof(u));
 #if SIZEOF_INT == 4
 #define UINT_MAX_AS_DOUBLE 4294967296.0
 #elif SIZEOF_INT == 8
@@ -3079,7 +3122,7 @@ crypto_rand_double(void)
 #else
 #error SIZEOF_INT is neither 4 nor 8
 #endif
-  return ((double)uint) / UINT_MAX_AS_DOUBLE;
+  return ((double)u) / UINT_MAX_AS_DOUBLE;
 }
 
 /** Generate and return a new random hostname starting with <b>prefix</b>,

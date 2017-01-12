@@ -30,6 +30,7 @@
 #include "routerlist.h"
 #include "routerparse.h"
 #include "routerset.h"
+#include "shared_random.h"
 
 #if defined(EXPORTMALLINFO) && defined(HAVE_MALLOC_H) && defined(HAVE_MALLINFO)
 #ifndef OPENBSD
@@ -80,7 +81,6 @@ static void dir_routerdesc_download_failed(smartlist_t *failed,
                                            int was_descriptor_digests);
 static void dir_microdesc_download_failed(smartlist_t *failed,
                                           int status_code);
-static void note_client_request(int purpose, int compressed, size_t bytes);
 static int client_likes_consensus(networkstatus_t *v, const char *want_url);
 
 static void directory_initiate_command_rend(
@@ -123,7 +123,7 @@ static void connection_dir_close_consensus_fetches(
 /** Return true iff the directory purpose <b>dir_purpose</b> (and if it's
  * fetching descriptors, it's fetching them for <b>router_purpose</b>)
  * must use an anonymous connection to a directory. */
-STATIC int
+int
 purpose_needs_anonymity(uint8_t dir_purpose, uint8_t router_purpose)
 {
   if (get_options()->AllDirActionsPrivate)
@@ -495,8 +495,6 @@ MOCK_IMPL(void, directory_get_from_dirserver, (
        * sort of dir fetch we'll be doing, so it won't return a bridge
        * that can't answer our question.
        */
-      /* XXX024 Not all bridges handle conditional consensus downloading,
-       * so, for now, never assume the server supports that. -PP */
       const node_t *node = choose_random_dirguard(type);
       if (node && node->ri) {
         /* every bridge has a routerinfo. */
@@ -727,6 +725,10 @@ directory_initiate_command_routerstatus_rend(const routerstatus_t *status,
 
   node = node_get_by_id(status->identity_digest);
 
+  /* XXX The below check is wrong: !node means it's not in the consensus,
+   * but we haven't checked if we have a descriptor for it -- and also,
+   * we only care about the descriptor if it's a begindir-style anonymized
+   * connection. */
   if (!node && anonymized_connection) {
     log_info(LD_DIR, "Not sending anonymized request to directory '%s'; we "
              "don't have its router descriptor.",
@@ -744,7 +746,7 @@ directory_initiate_command_routerstatus_rend(const routerstatus_t *status,
     return;
   }
 
-  /* At this point, if we are a clients making a direct connection to a
+  /* At this point, if we are a client making a direct connection to a
    * directory server, we have selected a server that has at least one address
    * allowed by ClientUseIPv4/6 and Reachable{"",OR,Dir}Addresses. This
    * selection uses the preference in ClientPreferIPv6{OR,Dir}Port, if
@@ -869,7 +871,7 @@ connection_dir_retry_bridges(smartlist_t *descs)
   char digest[DIGEST_LEN];
   SMARTLIST_FOREACH(descs, const char *, cp,
   {
-    if (base16_decode(digest, DIGEST_LEN, cp, strlen(cp))<0) {
+    if (base16_decode(digest, DIGEST_LEN, cp, strlen(cp)) != DIGEST_LEN) {
       log_warn(LD_BUG, "Malformed fingerprint in list: %s",
               escaped(cp));
       continue;
@@ -1080,7 +1082,7 @@ directory_initiate_command(const tor_addr_t *or_addr, uint16_t or_port,
  * <b>dir_purpose</b> reveals sensitive information about a Tor
  * instance's client activities.  (Such connections must be performed
  * through normal three-hop Tor circuits.) */
-static int
+int
 is_sensitive_dir_purpose(uint8_t dir_purpose)
 {
   return ((dir_purpose == DIR_PURPOSE_HAS_FETCHED_RENDDESC_V2) ||
@@ -1135,12 +1137,10 @@ directory_initiate_command_rend(const tor_addr_port_t *or_addr_port,
 
   log_debug(LD_DIR, "Initiating %s", dir_conn_purpose_to_string(dir_purpose));
 
-#ifndef NON_ANONYMOUS_MODE_ENABLED
-  tor_assert(!(is_sensitive_dir_purpose(dir_purpose) &&
-               !anonymized_connection));
-#else
-  (void)is_sensitive_dir_purpose;
-#endif
+  if (is_sensitive_dir_purpose(dir_purpose)) {
+    tor_assert(anonymized_connection ||
+               rend_non_anonymous_mode_enabled(options));
+  }
 
   /* use encrypted begindir connections for everything except relays
    * this provides better protection for directory fetches */
@@ -1178,7 +1178,7 @@ directory_initiate_command_rend(const tor_addr_port_t *or_addr_port,
   /* set up conn so it's got all the data we need to remember */
   tor_addr_copy(&conn->base_.addr, &addr);
   conn->base_.port = port;
-  conn->base_.address = tor_dup_addr(&addr);
+  conn->base_.address = tor_addr_to_str_dup(&addr);
   memcpy(conn->identity_digest, digest, DIGEST_LEN);
 
   conn->base_.purpose = dir_purpose;
@@ -1267,11 +1267,7 @@ directory_initiate_command_rend(const tor_addr_port_t *or_addr_port,
                            if_modified_since);
 
     connection_watch_events(TO_CONN(conn), READ_EVENT|WRITE_EVENT);
-    IF_HAS_BUFFEREVENT(ENTRY_TO_CONN(linked_conn), {
-      connection_watch_events(ENTRY_TO_CONN(linked_conn),
-                              READ_EVENT|WRITE_EVENT);
-    }) ELSE_IF_NO_BUFFEREVENT
-      connection_start_reading(ENTRY_TO_CONN(linked_conn));
+    connection_start_reading(ENTRY_TO_CONN(linked_conn));
   }
 }
 
@@ -1306,9 +1302,9 @@ compare_strs_(const void **a, const void **b)
 
 /** Return the URL we should use for a consensus download.
  *
- * This url depends on whether or not the server we go to
- * is sufficiently new to support conditional consensus downloading,
- * i.e. GET .../consensus/<b>fpr</b>+<b>fpr</b>+<b>fpr</b>
+ * Use the "conditional consensus downloading" feature described in
+ * dir-spec.txt, i.e.
+ * GET .../consensus/<b>fpr</b>+<b>fpr</b>+<b>fpr</b>
  *
  * If 'resource' is provided, it is the name of a consensus flavor to request.
  */
@@ -1839,7 +1835,7 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
   char *body;
   char *headers;
   char *reason = NULL;
-  size_t body_len = 0, orig_len = 0;
+  size_t body_len = 0;
   int status_code;
   time_t date_header = 0;
   long apparent_skew;
@@ -1849,7 +1845,6 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
   int allow_partial = (conn->base_.purpose == DIR_PURPOSE_FETCH_SERVERDESC ||
                        conn->base_.purpose == DIR_PURPOSE_FETCH_EXTRAINFO ||
                        conn->base_.purpose == DIR_PURPOSE_FETCH_MICRODESC);
-  int was_compressed = 0;
   time_t now = time(NULL);
   int src_code;
 
@@ -1868,7 +1863,6 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
       return -1;
     /* case 1, fall through */
   }
-  orig_len = body_len;
 
   if (parse_http_response(headers, &status_code, &date_header,
                           &compression, &reason) < 0) {
@@ -1986,7 +1980,6 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
       tor_free(body);
       body = new_body;
       body_len = new_len;
-      was_compressed = 1;
     }
   }
 
@@ -2006,7 +1999,8 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
     }
     log_info(LD_DIR,"Received consensus directory (size %d) from server "
              "'%s:%d'", (int)body_len, conn->base_.address, conn->base_.port);
-    if ((r=networkstatus_set_current_consensus(body, flavname, 0))<0) {
+    if ((r=networkstatus_set_current_consensus(body, flavname, 0,
+                                               conn->identity_digest))<0) {
       log_fn(r<-1?LOG_WARN:LOG_INFO, LD_DIR,
              "Unable to load %s consensus directory downloaded from "
              "server '%s:%d'. I'll try again soon.",
@@ -2024,6 +2018,10 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
     update_microdescs_from_networkstatus(now);
     update_microdesc_downloads(now);
     directory_info_has_arrived(now, 0, 0);
+    if (authdir_mode_v3(get_options())) {
+      sr_act_post_consensus(
+                   networkstatus_get_latest_consensus_by_flavor(FLAV_NS));
+    }
     log_info(LD_DIR, "Successfully loaded consensus.");
   }
 
@@ -2053,7 +2051,8 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
     }
 
     if (src_code != -1) {
-      if (trusted_dirs_load_certs_from_string(body, src_code, 1)<0) {
+      if (trusted_dirs_load_certs_from_string(body, src_code, 1,
+                                              conn->identity_digest)<0) {
         log_warn(LD_DIR, "Unable to parse fetched certificates");
         /* if we fetched more than one and only some failed, the successful
          * ones got flushed to disk so it's safe to call this on them */
@@ -2249,7 +2248,7 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
                        ds->nickname);
               /* XXXX use this information; be sure to upload next one
                * sooner. -NM */
-              /* XXXX023 On further thought, the task above implies that we're
+              /* XXXX++ On further thought, the task above implies that we're
                * basing our regenerate-descriptor time on when we uploaded the
                * last descriptor, not on the published time of the last
                * descriptor.  If those are different, that's a bad thing to
@@ -2450,7 +2449,6 @@ connection_dir_client_reached_eof(dir_connection_t *conn)
         break;
     }
   }
-  note_client_request(conn->base_.purpose, was_compressed, orig_len);
   tor_free(body); tor_free(headers); tor_free(reason);
   return 0;
 }
@@ -2651,129 +2649,6 @@ write_http_response_header(dir_connection_t *conn, ssize_t length,
                              cache_lifetime);
 }
 
-#if defined(INSTRUMENT_DOWNLOADS) || defined(RUNNING_DOXYGEN)
-/* DOCDOC */
-typedef struct request_t {
-  uint64_t bytes; /**< How many bytes have we transferred? */
-  uint64_t count; /**< How many requests have we made? */
-} request_t;
-
-/** Map used to keep track of how much data we've up/downloaded in what kind
- * of request.  Maps from request type to pointer to request_t. */
-static strmap_t *request_map = NULL;
-
-/** Record that a client request of <b>purpose</b> was made, and that
- * <b>bytes</b> bytes of possibly <b>compressed</b> data were sent/received.
- * Used to keep track of how much we've up/downloaded in what kind of
- * request. */
-static void
-note_client_request(int purpose, int compressed, size_t bytes)
-{
-  char *key;
-  const char *kind = NULL;
-  switch (purpose) {
-    case DIR_PURPOSE_FETCH_CONSENSUS:     kind = "dl/consensus"; break;
-    case DIR_PURPOSE_FETCH_CERTIFICATE:   kind = "dl/cert"; break;
-    case DIR_PURPOSE_FETCH_STATUS_VOTE:   kind = "dl/vote"; break;
-    case DIR_PURPOSE_FETCH_DETACHED_SIGNATURES: kind = "dl/detached_sig";
-         break;
-    case DIR_PURPOSE_FETCH_SERVERDESC:    kind = "dl/server"; break;
-    case DIR_PURPOSE_FETCH_EXTRAINFO:     kind = "dl/extra"; break;
-    case DIR_PURPOSE_UPLOAD_DIR:          kind = "dl/ul-dir"; break;
-    case DIR_PURPOSE_UPLOAD_VOTE:         kind = "dl/ul-vote"; break;
-    case DIR_PURPOSE_UPLOAD_SIGNATURES:   kind = "dl/ul-sig"; break;
-    case DIR_PURPOSE_FETCH_RENDDESC_V2:   kind = "dl/rend2"; break;
-    case DIR_PURPOSE_UPLOAD_RENDDESC_V2:  kind = "dl/ul-rend2"; break;
-  }
-  if (kind) {
-    tor_asprintf(&key, "%s%s", kind, compressed?".z":"");
-  } else {
-    tor_asprintf(&key, "unknown purpose (%d)%s",
-                 purpose, compressed?".z":"");
-  }
-  note_request(key, bytes);
-  tor_free(key);
-}
-
-/** Helper: initialize the request map to instrument downloads. */
-static void
-ensure_request_map_initialized(void)
-{
-  if (!request_map)
-    request_map = strmap_new();
-}
-
-/** Called when we just transmitted or received <b>bytes</b> worth of data
- * because of a request of type <b>key</b> (an arbitrary identifier): adds
- * <b>bytes</b> to the total associated with key. */
-void
-note_request(const char *key, size_t bytes)
-{
-  request_t *r;
-  ensure_request_map_initialized();
-
-  r = strmap_get(request_map, key);
-  if (!r) {
-    r = tor_malloc_zero(sizeof(request_t));
-    strmap_set(request_map, key, r);
-  }
-  r->bytes += bytes;
-  r->count++;
-}
-
-/** Return a newly allocated string holding a summary of bytes used per
- * request type. */
-char *
-directory_dump_request_log(void)
-{
-  smartlist_t *lines;
-  char *result;
-  strmap_iter_t *iter;
-
-  ensure_request_map_initialized();
-
-  lines = smartlist_new();
-
-  for (iter = strmap_iter_init(request_map);
-       !strmap_iter_done(iter);
-       iter = strmap_iter_next(request_map, iter)) {
-    const char *key;
-    void *val;
-    request_t *r;
-    strmap_iter_get(iter, &key, &val);
-    r = val;
-    smartlist_add_asprintf(lines, "%s  "U64_FORMAT"  "U64_FORMAT"\n",
-                 key, U64_PRINTF_ARG(r->bytes), U64_PRINTF_ARG(r->count));
-  }
-  smartlist_sort_strings(lines);
-  result = smartlist_join_strings(lines, "", 0, NULL);
-  SMARTLIST_FOREACH(lines, char *, cp, tor_free(cp));
-  smartlist_free(lines);
-  return result;
-}
-#else
-static void
-note_client_request(int purpose, int compressed, size_t bytes)
-{
-  (void)purpose;
-  (void)compressed;
-  (void)bytes;
-}
-
-void
-note_request(const char *key, size_t bytes)
-{
-  (void)key;
-  (void)bytes;
-}
-
-char *
-directory_dump_request_log(void)
-{
-  return tor_strdup("Not supported.");
-}
-#endif
-
 /** Decide whether a client would accept the consensus we have.
  *
  * Clients can say they only want a consensus if it's signed by more
@@ -2803,7 +2678,8 @@ client_likes_consensus(networkstatus_t *v, const char *want_url)
     if (want_len > DIGEST_LEN)
       want_len = DIGEST_LEN;
 
-    if (base16_decode(want_digest, DIGEST_LEN, d, want_len*2) < 0) {
+    if (base16_decode(want_digest, DIGEST_LEN, d, want_len*2)
+                      != (int) want_len) {
       log_fn(LOG_PROTOCOL_WARN, LD_DIR,
              "Failed to decode requested authority digest %s.", escaped(d));
       continue;
@@ -2845,18 +2721,81 @@ choose_compression_level(ssize_t n_bytes)
   }
 }
 
+/** Information passed to handle a GET request. */
+typedef struct get_handler_args_t {
+  /** True if the client asked for compressed data. */
+  int compressed;
+  /** If nonzero, the time included an if-modified-since header with this
+   * value. */
+  time_t if_modified_since;
+  /** String containing the requested URL or resource. */
+  const char *url;
+  /** String containing the HTTP headers */
+  const char *headers;
+} get_handler_args_t;
+
+/** Entry for handling an HTTP GET request.
+ *
+ * This entry matches a request if "string" is equal to the requested
+ * resource, or if "is_prefix" is true and "string" is a prefix of the
+ * requested resource.
+ *
+ * The 'handler' function is called to handle the request.  It receives
+ * an arguments structure, and must return 0 on success or -1 if we should
+ * close the connection.
+ **/
+typedef struct url_table_ent_s {
+  const char *string;
+  int is_prefix;
+  int (*handler)(dir_connection_t *conn, const get_handler_args_t *args);
+} url_table_ent_t;
+
+static int handle_get_frontpage(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_current_consensus(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_status_vote(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_microdesc(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_descriptor(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_keys(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_rendezvous2(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_robots(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+static int handle_get_networkstatus_bridges(dir_connection_t *conn,
+                                const get_handler_args_t *args);
+
+/** Table for handling GET requests. */
+static const url_table_ent_t url_table[] = {
+  { "/tor/", 0, handle_get_frontpage },
+  { "/tor/status-vote/current/consensus", 1, handle_get_current_consensus },
+  { "/tor/status-vote/current/", 1, handle_get_status_vote },
+  { "/tor/status-vote/next/", 1, handle_get_status_vote },
+  { "/tor/micro/d/", 1, handle_get_microdesc },
+  { "/tor/server/", 1, handle_get_descriptor },
+  { "/tor/extra/", 1, handle_get_descriptor },
+  { "/tor/keys/", 1, handle_get_keys },
+  { "/tor/rendezvous2/", 1, handle_get_rendezvous2 },
+  { "/tor/robots.txt", 0, handle_get_robots },
+  { "/tor/networkstatus-bridges", 0, handle_get_networkstatus_bridges },
+  { NULL, 0, NULL },
+};
+
 /** Helper function: called when a dirserver gets a complete HTTP GET
  * request.  Look for a request for a directory or for a rendezvous
  * service descriptor.  On finding one, write a response into
- * conn-\>outbuf.  If the request is unrecognized, send a 400.
- * Always return 0. */
+ * conn-\>outbuf.  If the request is unrecognized, send a 404.
+ * Return 0 if we handled this successfully, or -1 if we need to close
+ * the connection. */
 STATIC int
 directory_handle_command_get(dir_connection_t *conn, const char *headers,
                              const char *req_body, size_t req_body_len)
 {
-  size_t dlen;
   char *url, *url_mem, *header;
-  const or_options_t *options = get_options();
   time_t if_modified_since = 0;
   int compressed;
   size_t url_len;
@@ -2896,29 +2835,73 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     url_len -= 2;
   }
 
-  if (!strcmp(url,"/tor/")) {
-    const char *frontpage = get_dirportfrontpage();
+  get_handler_args_t args;
+  args.url = url;
+  args.headers = headers;
+  args.if_modified_since = if_modified_since;
+  args.compressed = compressed;
 
-    if (frontpage) {
-      dlen = strlen(frontpage);
-      /* Let's return a disclaimer page (users shouldn't use V1 anymore,
-         and caches don't fetch '/', so this is safe). */
-
-      /* [We don't check for write_bucket_low here, since we want to serve
-       *  this page no matter what.] */
-      note_request(url, dlen);
-      write_http_response_header_impl(conn, dlen, "text/html", "identity",
-                                      NULL, DIRPORTFRONTPAGE_CACHE_LIFETIME);
-      connection_write_to_buf(frontpage, dlen, TO_CONN(conn));
+  int i, result = -1;
+  for (i = 0; url_table[i].string; ++i) {
+    int match;
+    if (url_table[i].is_prefix) {
+      match = !strcmpstart(url, url_table[i].string);
+    } else {
+      match = !strcmp(url, url_table[i].string);
+    }
+    if (match) {
+      result = url_table[i].handler(conn, &args);
       goto done;
     }
-    /* if no disclaimer file, fall through and continue */
   }
 
-  if (!strcmpstart(url, "/tor/status-vote/current/consensus")) {
+  /* we didn't recognize the url */
+  write_http_status_line(conn, 404, "Not found");
+  result = 0;
+
+ done:
+  tor_free(url_mem);
+  return result;
+}
+
+/** Helper function for GET / or GET /tor/
+ */
+static int
+handle_get_frontpage(dir_connection_t *conn, const get_handler_args_t *args)
+{
+  (void) args; /* unused */
+  const char *frontpage = get_dirportfrontpage();
+
+  if (frontpage) {
+    size_t dlen;
+    dlen = strlen(frontpage);
+    /* Let's return a disclaimer page (users shouldn't use V1 anymore,
+       and caches don't fetch '/', so this is safe). */
+
+    /* [We don't check for write_bucket_low here, since we want to serve
+     *  this page no matter what.] */
+    write_http_response_header_impl(conn, dlen, "text/html", "identity",
+                                    NULL, DIRPORTFRONTPAGE_CACHE_LIFETIME);
+    connection_write_to_buf(frontpage, dlen, TO_CONN(conn));
+  } else {
+    write_http_status_line(conn, 404, "Not found");
+  }
+  return 0;
+}
+
+/** Helper function for GET /tor/status-vote/current/consensus
+ */
+static int
+handle_get_current_consensus(dir_connection_t *conn,
+                             const get_handler_args_t *args)
+{
+  const char *url = args->url;
+  const int compressed = args->compressed;
+  const time_t if_modified_since = args->if_modified_since;
+
+  {
     /* v3 network status fetch. */
     smartlist_t *dir_fps = smartlist_new();
-    const char *request_type = NULL;
     long lifetime = NETWORKSTATUS_CACHE_LIFETIME;
 
     if (1) {
@@ -2967,7 +2950,6 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
         tor_free(flavor);
         smartlist_add(dir_fps, fp);
       }
-      request_type = compressed?"v3.z":"v3";
       lifetime = (v && v->fresh_until > now) ? v->fresh_until - now : 0;
     }
 
@@ -2992,7 +2974,7 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
       goto done;
     }
 
-    dlen = dirserv_estimate_data_size(dir_fps, 0, compressed);
+    size_t dlen = dirserv_estimate_data_size(dir_fps, 0, compressed);
     if (global_write_bucket_low(TO_CONN(conn), dlen, 2)) {
       log_debug(LD_DIRSERV,
                "Client asked for network status lists, but we've been "
@@ -3022,8 +3004,6 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
       }
     }
 
-    // note_request(request_type,dlen);
-    (void) request_type;
     write_http_response_header(conn, -1, compressed,
                                smartlist_len(dir_fps) == 1 ? lifetime : 0);
     conn->fingerprint_stack = dir_fps;
@@ -3036,17 +3016,24 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     goto done;
   }
 
-  if (!strcmpstart(url,"/tor/status-vote/current/") ||
-      !strcmpstart(url,"/tor/status-vote/next/")) {
-    /* XXXX If-modified-since is only implemented for the current
-     * consensus: that's probably fine, since it's the only vote document
-     * people fetch much. */
+ done:
+  return 0;
+}
+
+/** Helper function for GET /tor/status-vote/{current,next}/...
+ */
+static int
+handle_get_status_vote(dir_connection_t *conn, const get_handler_args_t *args)
+{
+  const char *url = args->url;
+  const int compressed = args->compressed;
+  {
     int current;
     ssize_t body_len = 0;
     ssize_t estimated_len = 0;
     smartlist_t *items = smartlist_new();
     smartlist_t *dir_items = smartlist_new();
-    int lifetime = 60; /* XXXX023 should actually use vote intervals. */
+    int lifetime = 60; /* XXXX?? should actually use vote intervals. */
     url += strlen("/tor/status-vote/");
     current = !strcmpstart(url, "current/");
     url = strchr(url, '/');
@@ -3136,8 +3123,18 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     smartlist_free(dir_items);
     goto done;
   }
+ done:
+  return 0;
+}
 
-  if (!strcmpstart(url, "/tor/micro/d/")) {
+/** Helper function for GET /tor/micro/d/...
+ */
+static int
+handle_get_microdesc(dir_connection_t *conn, const get_handler_args_t *args)
+{
+  const char *url = args->url;
+  const int compressed = args->compressed;
+  {
     smartlist_t *fps = smartlist_new();
 
     dir_split_resource_into_fingerprints(url+strlen("/tor/micro/d/"),
@@ -3150,7 +3147,7 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
       smartlist_free(fps);
       goto done;
     }
-    dlen = dirserv_estimate_microdesc_size(fps, compressed);
+    size_t dlen = dirserv_estimate_microdesc_size(fps, compressed);
     if (global_write_bucket_low(TO_CONN(conn), dlen, 2)) {
       log_info(LD_DIRSERV,
                "Client asked for server descriptors, but we've been "
@@ -3173,12 +3170,24 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     goto done;
   }
 
+ done:
+  return 0;
+}
+
+/** Helper function for GET /tor/{server,extra}/...
+ */
+static int
+handle_get_descriptor(dir_connection_t *conn, const get_handler_args_t *args)
+{
+  const char *url = args->url;
+  const int compressed = args->compressed;
+  const or_options_t *options = get_options();
   if (!strcmpstart(url,"/tor/server/") ||
       (!options->BridgeAuthoritativeDir &&
        !options->BridgeRelay && !strcmpstart(url,"/tor/extra/"))) {
+    size_t dlen;
     int res;
     const char *msg;
-    const char *request_type = NULL;
     int cache_lifetime = 0;
     int is_extra = !strcmpstart(url,"/tor/extra/");
     url += is_extra ? strlen("/tor/extra/") : strlen("/tor/server/");
@@ -3189,24 +3198,16 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
                                           is_extra);
 
     if (!strcmpstart(url, "fp/")) {
-      request_type = compressed?"/tor/server/fp.z":"/tor/server/fp";
       if (smartlist_len(conn->fingerprint_stack) == 1)
         cache_lifetime = ROUTERDESC_CACHE_LIFETIME;
     } else if (!strcmpstart(url, "authority")) {
-      request_type = compressed?"/tor/server/authority.z":
-        "/tor/server/authority";
       cache_lifetime = ROUTERDESC_CACHE_LIFETIME;
     } else if (!strcmpstart(url, "all")) {
-      request_type = compressed?"/tor/server/all.z":"/tor/server/all";
       cache_lifetime = FULL_DIR_CACHE_LIFETIME;
     } else if (!strcmpstart(url, "d/")) {
-      request_type = compressed?"/tor/server/d.z":"/tor/server/d";
       if (smartlist_len(conn->fingerprint_stack) == 1)
         cache_lifetime = ROUTERDESC_BY_DIGEST_CACHE_LIFETIME;
-    } else {
-      request_type = "/tor/server/?";
     }
-    (void) request_type; /* usable for note_request. */
     if (!strcmpstart(url, "d/"))
       conn->dir_spool_src =
         is_extra ? DIR_SPOOL_EXTRA_BY_DIGEST : DIR_SPOOL_SERVER_BY_DIGEST;
@@ -3242,8 +3243,19 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     }
     goto done;
   }
+ done:
+ return 0;
+}
 
-  if (!strcmpstart(url,"/tor/keys/")) {
+/** Helper function for GET /tor/keys/...
+ */
+static int
+handle_get_keys(dir_connection_t *conn, const get_handler_args_t *args)
+{
+  const char *url = args->url;
+  const int compressed = args->compressed;
+  const time_t if_modified_since = args->if_modified_since;
+  {
     smartlist_t *certs = smartlist_new();
     ssize_t len = -1;
     if (!strcmp(url, "/tor/keys/all")) {
@@ -3328,9 +3340,17 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
     smartlist_free(certs);
     goto done;
   }
+ done:
+  return 0;
+}
 
-  if (connection_dir_is_encrypted(conn) &&
-       !strcmpstart(url,"/tor/rendezvous2/")) {
+/** Helper function for GET /tor/rendezvous2/
+ */
+static int
+handle_get_rendezvous2(dir_connection_t *conn, const get_handler_args_t *args)
+{
+  const char *url = args->url;
+  if (connection_dir_is_encrypted(conn)) {
     /* Handle v2 rendezvous descriptor fetch request. */
     const char *descp;
     const char *query = url + strlen("/tor/rendezvous2/");
@@ -3353,16 +3373,30 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
       write_http_status_line(conn, 400, "Bad request");
     }
     goto done;
+  } else {
+    /* Not encrypted! */
+    write_http_status_line(conn, 404, "Not found");
   }
+ done:
+  return 0;
+}
 
+/** Helper function for GET /tor/networkstatus-bridges
+ */
+static int
+handle_get_networkstatus_bridges(dir_connection_t *conn,
+                                 const get_handler_args_t *args)
+{
+  const char *headers = args->headers;
+
+  const or_options_t *options = get_options();
   if (options->BridgeAuthoritativeDir &&
       options->BridgePassword_AuthDigest_ &&
-      connection_dir_is_encrypted(conn) &&
-      !strcmp(url,"/tor/networkstatus-bridges")) {
+      connection_dir_is_encrypted(conn)) {
     char *status;
     char digest[DIGEST256_LEN];
 
-    header = http_get_header(headers, "Authorization: Basic ");
+    char *header = http_get_header(headers, "Authorization: Basic ");
     if (header)
       crypto_digest256(digest, header, strlen(header), DIGEST_SHA256);
 
@@ -3378,75 +3412,27 @@ directory_handle_command_get(dir_connection_t *conn, const char *headers,
 
     /* all happy now. send an answer. */
     status = networkstatus_getinfo_by_purpose("bridge", time(NULL));
-    dlen = strlen(status);
+    size_t dlen = strlen(status);
     write_http_response_header(conn, dlen, 0, 0);
     connection_write_to_buf(status, dlen, TO_CONN(conn));
     tor_free(status);
     goto done;
   }
+ done:
+  return 0;
+}
 
-  if (!strcmpstart(url,"/tor/bytes.txt")) {
-    char *bytes = directory_dump_request_log();
-    size_t len = strlen(bytes);
-    write_http_response_header(conn, len, 0, 0);
-    connection_write_to_buf(bytes, len, TO_CONN(conn));
-    tor_free(bytes);
-    goto done;
-  }
-
-  if (!strcmp(url,"/tor/robots.txt")) { /* /robots.txt will have been
-                                           rewritten to /tor/robots.txt */
-    char robots[] = "User-agent: *\r\nDisallow: /\r\n";
+/** Helper function for GET robots.txt or /tor/robots.txt */
+static int
+handle_get_robots(dir_connection_t *conn, const get_handler_args_t *args)
+{
+  (void)args;
+  {
+    const char robots[] = "User-agent: *\r\nDisallow: /\r\n";
     size_t len = strlen(robots);
     write_http_response_header(conn, len, 0, ROBOTS_CACHE_LIFETIME);
     connection_write_to_buf(robots, len, TO_CONN(conn));
-    goto done;
   }
-
-#if defined(EXPORTMALLINFO) && defined(HAVE_MALLOC_H) && defined(HAVE_MALLINFO)
-#define ADD_MALLINFO_LINE(x) do {                               \
-    smartlist_add_asprintf(lines, "%s %d\n", #x, mi.x);        \
-  }while(0);
-
-  if (!strcmp(url,"/tor/mallinfo.txt") &&
-      (tor_addr_eq_ipv4h(&conn->base_.addr, 0x7f000001ul))) {
-    char *result;
-    size_t len;
-    struct mallinfo mi;
-    smartlist_t *lines;
-
-    memset(&mi, 0, sizeof(mi));
-    mi = mallinfo();
-    lines = smartlist_new();
-
-    ADD_MALLINFO_LINE(arena)
-    ADD_MALLINFO_LINE(ordblks)
-    ADD_MALLINFO_LINE(smblks)
-    ADD_MALLINFO_LINE(hblks)
-    ADD_MALLINFO_LINE(hblkhd)
-    ADD_MALLINFO_LINE(usmblks)
-    ADD_MALLINFO_LINE(fsmblks)
-    ADD_MALLINFO_LINE(uordblks)
-    ADD_MALLINFO_LINE(fordblks)
-    ADD_MALLINFO_LINE(keepcost)
-
-    result = smartlist_join_strings(lines, "", 0, NULL);
-    SMARTLIST_FOREACH(lines, char *, cp, tor_free(cp));
-    smartlist_free(lines);
-
-    len = strlen(result);
-    write_http_response_header(conn, len, 0, 0);
-    connection_write_to_buf(result, len, TO_CONN(conn));
-    tor_free(result);
-    goto done;
-  }
-#endif
-
-  /* we didn't recognize the url */
-  write_http_status_line(conn, 404, "Not found");
-
- done:
-  tor_free(url_mem);
   return 0;
 }
 
@@ -3646,16 +3632,8 @@ connection_dir_finished_flushing(dir_connection_t *conn)
       return 0;
     case DIR_CONN_STATE_SERVER_WRITING:
       if (conn->dir_spool_src != DIR_SPOOL_NONE) {
-#ifdef USE_BUFFEREVENTS
-        /* This can happen with paired bufferevents, since a paired connection
-         * can flush immediately when you write to it, making the subsequent
-         * check in connection_handle_write_cb() decide that the connection
-         * is flushed. */
-        log_debug(LD_DIRSERV, "Emptied a dirserv buffer, but still spooling.");
-#else
         log_warn(LD_BUG, "Emptied a dirserv buffer, but it's still spooling!");
         connection_mark_for_close(TO_CONN(conn));
-#endif
       } else {
         log_debug(LD_DIRSERV, "Finished writing server response. Closing.");
         connection_mark_for_close(TO_CONN(conn));
@@ -3773,17 +3751,100 @@ find_dl_schedule(download_status_t *dls, const or_options_t *options)
   return NULL;
 }
 
-/* Find the current delay for dls based on schedule.
- * Set dls->next_attempt_at based on now, and return the delay.
+/** Decide which minimum and maximum delay step we want to use based on
+ * descriptor type in <b>dls</b> and <b>options</b>.
+ * Helper function for download_status_schedule_get_delay(). */
+STATIC void
+find_dl_min_and_max_delay(download_status_t *dls, const or_options_t *options,
+                          int *min, int *max)
+{
+  tor_assert(dls);
+  tor_assert(options);
+  tor_assert(min);
+  tor_assert(max);
+
+  /*
+   * For now, just use the existing schedule config stuff and pick the
+   * first/last entries off to get min/max delay for backoff purposes
+   */
+  const smartlist_t *schedule = find_dl_schedule(dls, options);
+  tor_assert(schedule != NULL && smartlist_len(schedule) >= 2);
+  *min = *((int *)(smartlist_get(schedule, 0)));
+  if (dls->backoff == DL_SCHED_DETERMINISTIC)
+    *max = *((int *)((smartlist_get(schedule, smartlist_len(schedule) - 1))));
+  else
+    *max = INT_MAX;
+}
+
+/** Advance one delay step.  The algorithm is to use the previous delay to
+ * compute an increment, we construct a value uniformly at random between
+ * delay and MAX(delay*2,delay+1).  We then clamp that value to be no larger
+ * than max_delay, and return it.
+ *
+ * Requires that delay is less than INT_MAX, and delay is in [0,max_delay].
+ */
+STATIC int
+next_random_exponential_delay(int delay, int max_delay)
+{
+  /* Check preconditions */
+  if (BUG(max_delay < 0))
+    max_delay = 0;
+  if (BUG(delay > max_delay))
+    delay = max_delay;
+  if (delay == INT_MAX)
+    return INT_MAX; /* prevent overflow */
+  if (BUG(delay < 0))
+    delay = 0;
+
+  /* How much are we willing to add to the delay? */
+  int max_increment;
+  int multiplier = 3; /* no more than quadruple the previous delay */
+  if (get_options()->TestingTorNetwork) {
+    /* Decrease the multiplier in testing networks. This reduces the variance,
+     * so that bootstrap is more reliable. */
+    multiplier = 2; /* no more than triple the previous delay */
+  }
+
+  if (delay && delay < (INT_MAX-1) / multiplier) {
+    max_increment = delay * multiplier;
+  } else if (delay) {
+    max_increment = INT_MAX-1;
+  } else {
+    max_increment = 1;
+  }
+
+  if (BUG(max_increment < 1))
+    max_increment = 1;
+
+  /* the + 1 here is so that we always wait longer than last time. */
+  int increment = crypto_rand_int(max_increment)+1;
+
+  if (increment < max_delay - delay)
+    return delay + increment;
+  else
+    return max_delay;
+}
+
+/** Find the current delay for dls based on schedule or min_delay/
+ * max_delay if we're using exponential backoff.  If dls->backoff is
+ * DL_SCHED_RANDOM_EXPONENTIAL, we must have 0 <= min_delay <= max_delay <=
+ * INT_MAX, but schedule may be set to NULL; otherwise schedule is required.
+ * This function sets dls->next_attempt_at based on now, and returns the delay.
  * Helper for download_status_increment_failure and
  * download_status_increment_attempt. */
 STATIC int
 download_status_schedule_get_delay(download_status_t *dls,
                                    const smartlist_t *schedule,
+                                   int min_delay, int max_delay,
                                    time_t now)
 {
   tor_assert(dls);
-  tor_assert(schedule);
+  /* We don't need a schedule if we're using random exponential backoff */
+  tor_assert(dls->backoff == DL_SCHED_RANDOM_EXPONENTIAL ||
+             schedule != NULL);
+  /* If we're using random exponential backoff, we do need min/max delay */
+  tor_assert(dls->backoff != DL_SCHED_RANDOM_EXPONENTIAL ||
+             (min_delay >= 0 && max_delay >= min_delay));
 
   int delay = INT_MAX;
   uint8_t dls_schedule_position = (dls->increment_on
@@ -3791,20 +3852,50 @@ download_status_schedule_get_delay(download_status_t *dls,
                                    ? dls->n_download_attempts
                                    : dls->n_download_failures);
 
-  if (dls_schedule_position < smartlist_len(schedule))
-    delay = *(int *)smartlist_get(schedule, dls_schedule_position);
-  else if (dls_schedule_position == IMPOSSIBLE_TO_DOWNLOAD)
-    delay = INT_MAX;
-  else
-    delay = *(int *)smartlist_get(schedule, smartlist_len(schedule) - 1);
+  if (dls->backoff == DL_SCHED_DETERMINISTIC) {
+    if (dls_schedule_position < smartlist_len(schedule))
+      delay = *(int *)smartlist_get(schedule, dls_schedule_position);
+    else if (dls_schedule_position == IMPOSSIBLE_TO_DOWNLOAD)
+      delay = INT_MAX;
+    else
+      delay = *(int *)smartlist_get(schedule, smartlist_len(schedule) - 1);
+  } else if (dls->backoff == DL_SCHED_RANDOM_EXPONENTIAL) {
+    /* Check if we missed a reset somehow */
+    if (dls->last_backoff_position > dls_schedule_position) {
+      dls->last_backoff_position = 0;
+      dls->last_delay_used = 0;
+    }
+
+    if (dls_schedule_position > 0) {
+      delay = dls->last_delay_used;
+
+      while (dls->last_backoff_position < dls_schedule_position) {
+        /* Do one increment step */
+        delay = next_random_exponential_delay(delay, max_delay);
+        /* Update our position */
+        ++(dls->last_backoff_position);
+      }
+    } else {
+      /* If we're just starting out, use the minimum delay */
+      delay = min_delay;
+    }
+
+    /* Clamp it within min/max if we have them */
+    if (min_delay >= 0 && delay < min_delay) delay = min_delay;
+    if (max_delay != INT_MAX && delay > max_delay) delay = max_delay;
+
+    /* Store it for next time */
+    dls->last_backoff_position = dls_schedule_position;
+    dls->last_delay_used = delay;
+  }
 
   /* A negative delay makes no sense. Knowing that delay is
    * non-negative allows us to safely do the wrapping check below. */
   tor_assert(delay >= 0);
 
-  /* Avoid now+delay overflowing INT_MAX, by comparing with a subtraction
+  /* Avoid now+delay overflowing TIME_MAX, by comparing with a subtraction
    * that won't overflow (since delay is non-negative). */
-  if (delay < INT_MAX && now <= INT_MAX - delay) {
+  if (delay < INT_MAX && now <= TIME_MAX - delay) {
     dls->next_attempt_at = now+delay;
   } else {
     dls->next_attempt_at = TIME_MAX;
@@ -3856,13 +3947,16 @@ time_t
 download_status_increment_failure(download_status_t *dls, int status_code,
                                   const char *item, int server, time_t now)
 {
+  (void) status_code; // XXXX no longer used.
+  (void) server; // XXXX no longer used.
   int increment = -1;
+  int min_delay = 0, max_delay = INT_MAX;
+
   tor_assert(dls);
 
-  /* only count the failure if it's permanent, or we're a server */
-  if (status_code != 503 || server) {
-    if (dls->n_download_failures < IMPOSSIBLE_TO_DOWNLOAD-1)
-      ++dls->n_download_failures;
+  /* count the failure */
+  if (dls->n_download_failures < IMPOSSIBLE_TO_DOWNLOAD-1) {
+    ++dls->n_download_failures;
   }
 
   if (dls->increment_on == DL_SCHED_INCREMENT_FAILURE) {
@@ -3877,7 +3971,9 @@ download_status_increment_failure(download_status_t *dls, int status_code,
     /* only return a failure retry time if this schedule increments on failures
      */
     const smartlist_t *schedule = find_dl_schedule(dls, get_options());
-    increment = download_status_schedule_get_delay(dls, schedule, now);
+    find_dl_min_and_max_delay(dls, get_options(), &min_delay, &max_delay);
+    increment = download_status_schedule_get_delay(dls, schedule,
+                                                   min_delay, max_delay, now);
   }
 
   download_status_log_helper(item, !dls->increment_on, "failed",
@@ -3906,12 +4002,14 @@ download_status_increment_attempt(download_status_t *dls, const char *item,
                                   time_t now)
 {
   int delay = -1;
+  int min_delay = 0, max_delay = INT_MAX;
+
   tor_assert(dls);
 
   if (dls->increment_on == DL_SCHED_INCREMENT_FAILURE) {
     /* this schedule should retry on failure, and not launch any concurrent
      attempts */
-    log_info(LD_BUG, "Tried to launch an attempt-based connection on a "
+    log_warn(LD_BUG, "Tried to launch an attempt-based connection on a "
              "failure-based schedule.");
     return TIME_MAX;
   }
@@ -3920,7 +4018,9 @@ download_status_increment_attempt(download_status_t *dls, const char *item,
     ++dls->n_download_attempts;
 
   const smartlist_t *schedule = find_dl_schedule(dls, get_options());
-  delay = download_status_schedule_get_delay(dls, schedule, now);
+  find_dl_min_and_max_delay(dls, get_options(), &min_delay, &max_delay);
+  delay = download_status_schedule_get_delay(dls, schedule,
+                                             min_delay, max_delay, now);
 
   download_status_log_helper(item, dls->increment_on, "attempted",
                              "on failure", dls->n_download_attempts,
@@ -3952,6 +4052,8 @@ download_status_reset(download_status_t *dls)
   dls->n_download_failures = 0;
   dls->n_download_attempts = 0;
   dls->next_attempt_at = time(NULL) + *(int *)smartlist_get(schedule, 0);
+  dls->last_backoff_position = 0;
+  dls->last_delay_used = 0;
   /* Don't reset dls->want_authority or dls->increment_on */
 }
 
@@ -4001,7 +4103,7 @@ dir_routerdesc_download_failed(smartlist_t *failed, int status_code,
   }
   SMARTLIST_FOREACH_BEGIN(failed, const char *, cp) {
     download_status_t *dls = NULL;
-    if (base16_decode(digest, DIGEST_LEN, cp, strlen(cp)) < 0) {
+    if (base16_decode(digest, DIGEST_LEN, cp, strlen(cp)) != DIGEST_LEN) {
       log_warn(LD_BUG, "Malformed fingerprint in list: %s", escaped(cp));
       continue;
     }
@@ -4098,9 +4200,10 @@ dir_split_resource_into_fingerprint_pairs(const char *res,
              "Skipping digest pair %s with missing dash.", escaped(cp));
     } else {
       fp_pair_t pair;
-      if (base16_decode(pair.first, DIGEST_LEN, cp, HEX_DIGEST_LEN)<0 ||
-          base16_decode(pair.second,
-                        DIGEST_LEN, cp+HEX_DIGEST_LEN+1, HEX_DIGEST_LEN)<0) {
+      if (base16_decode(pair.first, DIGEST_LEN,
+                        cp, HEX_DIGEST_LEN) != DIGEST_LEN ||
+          base16_decode(pair.second,DIGEST_LEN,
+                        cp+HEX_DIGEST_LEN+1, HEX_DIGEST_LEN) != DIGEST_LEN) {
         log_info(LD_DIR, "Skipping non-decodable digest pair %s", escaped(cp));
       } else {
         smartlist_add(pairs_result, tor_memdup(&pair, sizeof(pair)));
@@ -4178,8 +4281,9 @@ dir_split_resource_into_fingerprints(const char *resource,
       }
       d = tor_malloc_zero(digest_len);
       if (decode_hex ?
-          (base16_decode(d, digest_len, cp, hex_digest_len)<0) :
-          (base64_decode(d, digest_len, cp, base64_digest_len)<0)) {
+          (base16_decode(d, digest_len, cp, hex_digest_len) != digest_len) :
+          (base64_decode(d, digest_len, cp, base64_digest_len)
+                         != digest_len)) {
           log_info(LD_DIR, "Skipping non-decodable digest %s", escaped(cp));
           smartlist_del_keeporder(fp_tmp, i--);
           goto again;

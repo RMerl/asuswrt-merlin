@@ -544,7 +544,7 @@ smartlist_sort(smartlist_t *sl, int (*compare)(const void **a, const void **b))
 /** Given a smartlist <b>sl</b> sorted with the function <b>compare</b>,
  * return the most frequent member in the list.  Break ties in favor of
  * later elements.  If the list is empty, return NULL.  If count_out is
- * non-null, set it to the most frequent member.
+ * non-null, set it to the count of the most frequent member.
  */
 void *
 smartlist_get_most_frequent_(const smartlist_t *sl,

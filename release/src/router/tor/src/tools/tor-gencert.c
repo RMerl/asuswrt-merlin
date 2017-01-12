@@ -13,19 +13,12 @@
 #include <unistd.h>
 #endif
 
-#ifdef __GNUC__
-#define GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
-#endif
+#include "compat.h"
 
-#if __GNUC__ && GCC_VERSION >= 402
-#if GCC_VERSION >= 406
-#pragma GCC diagnostic push
-#endif
 /* Some versions of OpenSSL declare X509_STORE_CTX_set_verify_cb twice in
  * x509.h and x509_vfy.h. Suppress the GCC warning so we can build with
  * -Wredundant-decl. */
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#endif
+DISABLE_GCC_WARNING(redundant-decls)
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -34,13 +27,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/err.h>
 
-#if __GNUC__ && GCC_VERSION >= 402
-#if GCC_VERSION >= 406
-#pragma GCC diagnostic pop
-#else
-#pragma GCC diagnostic warning "-Wredundant-decls"
-#endif
-#endif
+ENABLE_GCC_WARNING(redundant-decls)
 
 #include <errno.h>
 #if 0
@@ -61,21 +48,21 @@
 #define DEFAULT_LIFETIME 12
 
 /* These globals are set via command line options. */
-char *identity_key_file = NULL;
-char *signing_key_file = NULL;
-char *certificate_file = NULL;
-int reuse_signing_key = 0;
-int verbose = 0;
-int make_new_id = 0;
-int months_lifetime = DEFAULT_LIFETIME;
-int passphrase_fd = -1;
-char *address = NULL;
+static char *identity_key_file = NULL;
+static char *signing_key_file = NULL;
+static char *certificate_file = NULL;
+static int reuse_signing_key = 0;
+static int verbose = 0;
+static int make_new_id = 0;
+static int months_lifetime = DEFAULT_LIFETIME;
+static int passphrase_fd = -1;
+static char *address = NULL;
 
-char *passphrase = NULL;
-size_t passphrase_len = 0;
+static char *passphrase = NULL;
+static size_t passphrase_len = 0;
 
-EVP_PKEY *identity_key = NULL;
-EVP_PKEY *signing_key = NULL;
+static EVP_PKEY *identity_key = NULL;
+static EVP_PKEY *signing_key = NULL;
 
 /** Write a usage message for tor-gencert to stderr. */
 static void
@@ -429,12 +416,11 @@ key_to_string(EVP_PKEY *key)
   }
 
   BIO_get_mem_ptr(b, &buf);
-  (void) BIO_set_close(b, BIO_NOCLOSE);
-  BIO_free(b);
   result = tor_malloc(buf->length + 1);
   memcpy(result, buf->data, buf->length);
   result[buf->length] = 0;
-  BUF_MEM_free(buf);
+
+  BIO_free(b);
 
   RSA_free(rsa);
   return result;

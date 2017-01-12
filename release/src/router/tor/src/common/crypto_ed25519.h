@@ -55,6 +55,17 @@ int ed25519_checksig(const ed25519_signature_t *signature,
                      const uint8_t *msg, size_t len,
                      const ed25519_public_key_t *pubkey);
 
+int
+ed25519_sign_prefixed(ed25519_signature_t *signature_out,
+                      const uint8_t *msg, size_t len,
+                      const char *prefix_str,
+                      const ed25519_keypair_t *keypair);
+int
+ed25519_checksig_prefixed(const ed25519_signature_t *signature,
+                          const uint8_t *msg, size_t len,
+                          const char *prefix_str,
+                          const ed25519_public_key_t *pubkey);
+
 /**
  * A collection of information necessary to check an Ed25519 signature. Used
  * for batch verification.

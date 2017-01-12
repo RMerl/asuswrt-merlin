@@ -5,6 +5,14 @@
  * \file crypto_curve25519.c
  *
  * \brief Wrapper code for a curve25519 implementation.
+ *
+ * Curve25519 is an Elliptic-Curve Diffie Hellman handshake, designed by
+ * Dan Bernstein.  For more information, see https://cr.yp.to/ecdh.html
+ *
+ * Tor uses Curve25519 as the basis of its "ntor" circuit extension
+ * handshake, and in related code.  The functions in this module are
+ * used to find the most suitable available Curve25519 implementation,
+ * to provide wrappers around it, and so on.
  */
 
 #define CRYPTO_CURVE25519_PRIVATE
@@ -39,15 +47,23 @@ int curve25519_donna(uint8_t *mypublic,
 
 static void pick_curve25519_basepoint_impl(void);
 
+/** This is set to 1 if we have an optimized Ed25519-based
+ * implementation for multiplying a value by the basepoint; to 0 if we
+ * don't, and to -1 if we haven't checked. */
 static int curve25519_use_ed = -1;
 
+/**
+ * Helper function: call the most appropriate backend to compute the
+ * scalar "secret" times the point "point".  Store the result in
+ * "output".  Return 0 on success, negative on failure.
+ **/
 STATIC int
 curve25519_impl(uint8_t *output, const uint8_t *secret,
-                const uint8_t *basepoint)
+                const uint8_t *point)
 {
   uint8_t bp[CURVE25519_PUBKEY_LEN];
   int r;
-  memcpy(bp, basepoint, CURVE25519_PUBKEY_LEN);
+  memcpy(bp, point, CURVE25519_PUBKEY_LEN);
   /* Clear the high bit, in case our backend foolishly looks at it. */
   bp[31] &= 0x7f;
 #ifdef USE_CURVE25519_DONNA
@@ -61,12 +77,19 @@ curve25519_impl(uint8_t *output, const uint8_t *secret,
   return r;
 }
 
+/**
+ * Helper function: Multiply the scalar "secret" by the Curve25519
+ * basepoint (X=9), and store the result in "output".  Return 0 on
+ * success, -1 on false.
+ */
 STATIC int
 curve25519_basepoint_impl(uint8_t *output, const uint8_t *secret)
 {
   int r = 0;
-  if (PREDICT_UNLIKELY(curve25519_use_ed == -1)) {
+  if (BUG(curve25519_use_ed == -1)) {
+    /* LCOV_EXCL_START - Only reached if we forgot to call curve25519_init() */
     pick_curve25519_basepoint_impl();
+    /* LCOV_EXCL_STOP */
   }
 
   /* TODO: Someone should benchmark curved25519_scalarmult_basepoint versus
@@ -83,6 +106,10 @@ curve25519_basepoint_impl(uint8_t *output, const uint8_t *secret)
   return r;
 }
 
+/**
+ * Override the decision of whether to use the Ed25519-based basepoint
+ * multiply function.  Used for testing.
+ */
 void
 curve25519_set_impl_params(int use_ed)
 {
@@ -140,6 +167,10 @@ curve25519_secret_key_generate(curve25519_secret_key_t *key_out,
   return 0;
 }
 
+/**
+ * Given a secret key in <b>seckey</b>, create the corresponding public
+ * key in <b>key_out</b>.
+ */
 void
 curve25519_public_key_generate(curve25519_public_key_t *key_out,
                                const curve25519_secret_key_t *seckey)
@@ -147,6 +178,10 @@ curve25519_public_key_generate(curve25519_public_key_t *key_out,
   curve25519_basepoint_impl(key_out->public_key, seckey->secret_key);
 }
 
+/**
+ * Construct a new keypair in *<b>keypair_out</b>. If <b>extra_strong</b>
+ * is true, this key is possibly going to get used more than once, so
+ * use a better-than-usual RNG. Return 0 on success, -1 on failure. */
 int
 curve25519_keypair_generate(curve25519_keypair_t *keypair_out,
                             int extra_strong)
@@ -157,7 +192,13 @@ curve25519_keypair_generate(curve25519_keypair_t *keypair_out,
   return 0;
 }
 
-/* DOCDOC */
+/** Store the keypair <b>keypair</b>, including its secret and public
+ * parts, to the file <b>fname</b>.  Use the string tag <b>tag</b> to
+ * distinguish this from other Curve25519 keypairs. Return 0 on success,
+ * -1 on failure.
+ *
+ * See crypto_write_tagged_contents_to_file() for more information on
+ * the metaformat used for these keys.*/
 int
 curve25519_keypair_write_to_file(const curve25519_keypair_t *keypair,
                                  const char *fname,
@@ -180,7 +221,10 @@ curve25519_keypair_write_to_file(const curve25519_keypair_t *keypair,
   return r;
 }
 
-/* DOCDOC */
+/** Read a curve25519 keypair from a file named <b>fname</b> created by
+ * curve25519_keypair_write_to_file(). Store the keypair in
+ * <b>keypair_out</b>, and the associated tag string in <b>tag_out</b>.
+ * Return 0 on success, and -1 on failure. */
 int
 curve25519_keypair_read_from_file(curve25519_keypair_t *keypair_out,
                                   char **tag_out,
@@ -195,6 +239,7 @@ curve25519_keypair_read_from_file(curve25519_keypair_t *keypair_out,
   if (len != sizeof(content))
     goto end;
 
+  /* Make sure that the public key matches the secret key */
   memcpy(keypair_out->seckey.secret_key, content, CURVE25519_SECKEY_LEN);
   curve25519_public_key_generate(&keypair_out->pubkey, &keypair_out->seckey);
   if (tor_memneq(keypair_out->pubkey.public_key,
@@ -290,10 +335,13 @@ pick_curve25519_basepoint_impl(void)
   if (curve25519_basepoint_spot_check() == 0)
     return;
 
-  log_warn(LD_CRYPTO, "The ed25519-based curve25519 basepoint "
+  /* LCOV_EXCL_START
+   * only reachable if our basepoint implementation broken */
+  log_warn(LD_BUG|LD_CRYPTO, "The ed25519-based curve25519 basepoint "
            "multiplication seems broken; using the curve25519 "
            "implementation.");
   curve25519_use_ed = 0;
+  /* LCOV_EXCL_STOP */
 }
 
 /** Initialize the curve25519 implementations. This is necessary if you're

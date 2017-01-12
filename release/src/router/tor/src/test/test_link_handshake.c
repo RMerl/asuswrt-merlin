@@ -15,8 +15,9 @@
 #include "scheduler.h"
 
 #include "test.h"
+#include "log_test_helpers.h"
 
-var_cell_t *mock_got_var_cell = NULL;
+static var_cell_t *mock_got_var_cell = NULL;
 
 static void
 mock_write_var_cell(const var_cell_t *vc, or_connection_t *conn)
@@ -173,6 +174,8 @@ test_link_handshake_certs_ok(void *arg)
   UNMOCK(tor_tls_cert_matches_key);
   UNMOCK(connection_or_write_var_cell_to_buf);
   UNMOCK(connection_or_send_netinfo);
+  memset(c1->identity_digest, 0, sizeof(c1->identity_digest));
+  memset(c2->identity_digest, 0, sizeof(c2->identity_digest));
   connection_free_(TO_CONN(c1));
   connection_free_(TO_CONN(c2));
   tor_free(cell1);
@@ -209,6 +212,7 @@ recv_certs_cleanup(const struct testcase_t *test, void *obj)
   if (d) {
     tor_free(d->cell);
     certs_cell_free(d->ccell);
+    connection_or_remove_from_identity_map(d->c);
     connection_free_(TO_CONN(d->c));
     circuitmux_free(d->chan->base_.cmux);
     tor_free(d->chan);
@@ -332,30 +336,50 @@ test_link_handshake_recv_certs_ok_server(void *arg)
   test_link_handshake_recv_certs_ ## name(void *arg)                    \
   {                                                                     \
     certs_data_t *d = arg;                                              \
+    const char *require_failure_message = NULL;                         \
+    setup_capture_of_logs(LOG_INFO);                                    \
     { code ; }                                                          \
     channel_tls_process_certs_cell(d->cell, d->chan);                   \
     tt_int_op(1, ==, mock_close_called);                                \
     tt_int_op(0, ==, mock_send_authenticate_called);                    \
     tt_int_op(0, ==, mock_send_netinfo_called);                         \
+    if (require_failure_message) {                                      \
+      expect_log_msg_containing(require_failure_message);               \
+    }                                                                   \
   done:                                                                 \
-    ;                                                                   \
+    teardown_capture_of_logs();                               \
   }
 
-CERTS_FAIL(badstate, d->c->base_.state = OR_CONN_STATE_CONNECTING)
-CERTS_FAIL(badproto, d->c->link_proto = 2)
-CERTS_FAIL(duplicate, d->c->handshake_state->received_certs_cell = 1)
+CERTS_FAIL(badstate,
+           require_failure_message = "We're not doing a v3 handshake!";
+           d->c->base_.state = OR_CONN_STATE_CONNECTING;)
+CERTS_FAIL(badproto,
+           require_failure_message = "not using link protocol >= 3";
+           d->c->link_proto = 2)
+CERTS_FAIL(duplicate,
+           require_failure_message = "We already got one";
+           d->c->handshake_state->received_certs_cell = 1)
 CERTS_FAIL(already_authenticated,
+           require_failure_message = "We're already authenticated!";
            d->c->handshake_state->authenticated = 1)
-CERTS_FAIL(empty, d->cell->payload_len = 0)
-CERTS_FAIL(bad_circid, d->cell->circ_id = 1)
-CERTS_FAIL(truncated_1, d->cell->payload[0] = 5)
+CERTS_FAIL(empty,
+           require_failure_message = "It had no body";
+           d->cell->payload_len = 0)
+CERTS_FAIL(bad_circid,
+           require_failure_message = "It had a nonzero circuit ID";
+           d->cell->circ_id = 1)
+CERTS_FAIL(truncated_1,
+           require_failure_message = "It couldn't be parsed";
+           d->cell->payload[0] = 5)
 CERTS_FAIL(truncated_2,
            {
+             require_failure_message = "It couldn't be parsed";
              d->cell->payload_len = 4;
              memcpy(d->cell->payload, "\x01\x01\x00\x05", 4);
            })
 CERTS_FAIL(truncated_3,
            {
+             require_failure_message = "It couldn't be parsed";
              d->cell->payload_len = 7;
              memcpy(d->cell->payload, "\x01\x01\x00\x05""abc", 7);
            })
@@ -367,30 +391,35 @@ CERTS_FAIL(truncated_3,
 
 CERTS_FAIL(not_x509,
   {
+    require_failure_message = "Received undecodable certificate";
     certs_cell_cert_setlen_body(certs_cell_get_certs(d->ccell, 0), 3);
     certs_cell_get_certs(d->ccell, 0)->cert_len = 3;
     REENCODE();
   })
 CERTS_FAIL(both_link,
   {
+    require_failure_message = "Duplicate x509 certificate";
     certs_cell_get_certs(d->ccell, 0)->cert_type = 1;
     certs_cell_get_certs(d->ccell, 1)->cert_type = 1;
     REENCODE();
   })
 CERTS_FAIL(both_id_rsa,
   {
+    require_failure_message = "Duplicate x509 certificate";
     certs_cell_get_certs(d->ccell, 0)->cert_type = 2;
     certs_cell_get_certs(d->ccell, 1)->cert_type = 2;
     REENCODE();
   })
 CERTS_FAIL(both_auth,
   {
+    require_failure_message = "Duplicate x509 certificate";
     certs_cell_get_certs(d->ccell, 0)->cert_type = 3;
     certs_cell_get_certs(d->ccell, 1)->cert_type = 3;
     REENCODE();
   })
 CERTS_FAIL(wrong_labels_1,
   {
+    require_failure_message = "The link certificate was not valid";
     certs_cell_get_certs(d->ccell, 0)->cert_type = 2;
     certs_cell_get_certs(d->ccell, 1)->cert_type = 1;
     REENCODE();
@@ -401,6 +430,7 @@ CERTS_FAIL(wrong_labels_2,
     const tor_x509_cert_t *b;
     const uint8_t *enca;
     size_t lena;
+    require_failure_message = "The link certificate was not valid";
     tor_tls_get_my_certs(1, &a, &b);
     tor_x509_cert_get_der(a, &enca, &lena);
     certs_cell_cert_setlen_body(certs_cell_get_certs(d->ccell, 1), lena);
@@ -411,16 +441,20 @@ CERTS_FAIL(wrong_labels_2,
   })
 CERTS_FAIL(wrong_labels_3,
            {
+             require_failure_message = "The certs we wanted were missing";
              certs_cell_get_certs(d->ccell, 0)->cert_type = 2;
              certs_cell_get_certs(d->ccell, 1)->cert_type = 3;
              REENCODE();
            })
 CERTS_FAIL(server_missing_certs,
            {
+             require_failure_message = "The certs we wanted were missing";
              d->c->handshake_state->started_here = 0;
            })
 CERTS_FAIL(server_wrong_labels_1,
            {
+             require_failure_message =
+               "The authentication certificate was not valid";
              d->c->handshake_state->started_here = 0;
              certs_cell_get_certs(d->ccell, 0)->cert_type = 2;
              certs_cell_get_certs(d->ccell, 1)->cert_type = 3;
@@ -579,30 +613,46 @@ test_link_handshake_recv_authchallenge_ok_unrecognized(void *arg)
   test_link_handshake_recv_authchallenge_ ## name(void *arg)            \
   {                                                                     \
     authchallenge_data_t *d = arg;                                      \
+    const char *require_failure_message = NULL;                         \
+    setup_capture_of_logs(LOG_INFO);                                    \
     { code ; }                                                          \
     channel_tls_process_auth_challenge_cell(d->cell, d->chan);          \
     tt_int_op(1, ==, mock_close_called);                                \
     tt_int_op(0, ==, mock_send_authenticate_called);                    \
     tt_int_op(0, ==, mock_send_netinfo_called);                         \
+    if (require_failure_message) {                                      \
+      expect_log_msg_containing(require_failure_message);               \
+    }                                                                   \
   done:                                                                 \
-    ;                                                                   \
+    teardown_capture_of_logs();                               \
   }
 
 AUTHCHALLENGE_FAIL(badstate,
+                   require_failure_message = "We're not currently doing a "
+                     "v3 handshake";
                    d->c->base_.state = OR_CONN_STATE_CONNECTING)
 AUTHCHALLENGE_FAIL(badproto,
+                   require_failure_message = "not using link protocol >= 3";
                    d->c->link_proto = 2)
 AUTHCHALLENGE_FAIL(as_server,
+                   require_failure_message = "We didn't originate this "
+                     "connection";
                    d->c->handshake_state->started_here = 0;)
 AUTHCHALLENGE_FAIL(duplicate,
+                   require_failure_message = "We already received one";
                    d->c->handshake_state->received_auth_challenge = 1)
 AUTHCHALLENGE_FAIL(nocerts,
+                   require_failure_message = "We haven't gotten a CERTS "
+                     "cell yet";
                    d->c->handshake_state->received_certs_cell = 0)
 AUTHCHALLENGE_FAIL(tooshort,
+                   require_failure_message = "It was not well-formed";
                    d->cell->payload_len = 33)
 AUTHCHALLENGE_FAIL(truncated,
+                   require_failure_message = "It was not well-formed";
                    d->cell->payload_len = 34)
 AUTHCHALLENGE_FAIL(nonzero_circid,
+                   require_failure_message = "It had a nonzero circuit ID";
                    d->cell->circ_id = 1337)
 
 static tor_x509_cert_t *mock_peer_cert = NULL;
@@ -650,6 +700,8 @@ authenticate_data_cleanup(const struct testcase_t *test, void *arg)
   authenticate_data_t *d = arg;
   if (d) {
     tor_free(d->cell);
+    connection_or_remove_from_identity_map(d->c1);
+    connection_or_remove_from_identity_map(d->c2);
     connection_free_(TO_CONN(d->c1));
     connection_free_(TO_CONN(d->c2));
     circuitmux_free(d->chan2->base_.cmux);
@@ -677,6 +729,8 @@ authenticate_data_setup(const struct testcase_t *test)
   MOCK(channel_set_circid_type, mock_set_circid_type);
   d->c1 = or_connection_new(CONN_TYPE_OR, AF_INET);
   d->c2 = or_connection_new(CONN_TYPE_OR, AF_INET);
+  tor_addr_from_ipv4h(&d->c1->base_.addr, 0x01020304);
+  tor_addr_from_ipv4h(&d->c2->base_.addr, 0x05060708);
 
   d->key1 = pk_generate(2);
   d->key2 = pk_generate(3);
@@ -798,57 +852,83 @@ test_link_handshake_auth_cell(void *arg)
   test_link_handshake_auth_ ## name(void *arg)                  \
   {                                                             \
     authenticate_data_t *d = arg;                               \
+    const char *require_failure_message = NULL;                 \
+    setup_capture_of_logs(LOG_INFO);                            \
     { code ; }                                                  \
     tt_int_op(d->c2->handshake_state->authenticated, ==, 0);    \
     channel_tls_process_authenticate_cell(d->cell, d->chan2);   \
     tt_int_op(mock_close_called, ==, 1);                        \
     tt_int_op(d->c2->handshake_state->authenticated, ==, 0);    \
-   done:                                                        \
-   ;                                                            \
+    if (require_failure_message) {                              \
+      expect_log_msg_containing(require_failure_message);       \
+    }                                                           \
+  done:                                                         \
+    teardown_capture_of_logs();                       \
   }
 
 AUTHENTICATE_FAIL(badstate,
+                  require_failure_message = "We're not doing a v3 handshake";
                   d->c2->base_.state = OR_CONN_STATE_CONNECTING)
 AUTHENTICATE_FAIL(badproto,
+                  require_failure_message = "not using link protocol >= 3";
                   d->c2->link_proto = 2)
 AUTHENTICATE_FAIL(atclient,
+                  require_failure_message = "We originated this connection";
                   d->c2->handshake_state->started_here = 1)
 AUTHENTICATE_FAIL(duplicate,
+                  require_failure_message = "We already got one";
                   d->c2->handshake_state->received_authenticate = 1)
 static void
 test_link_handshake_auth_already_authenticated(void *arg)
 {
   authenticate_data_t *d = arg;
+  setup_capture_of_logs(LOG_INFO);
   d->c2->handshake_state->authenticated = 1;
   channel_tls_process_authenticate_cell(d->cell, d->chan2);
   tt_int_op(mock_close_called, ==, 1);
   tt_int_op(d->c2->handshake_state->authenticated, ==, 1);
+  expect_log_msg_containing("The peer is already authenticated");
  done:
-  ;
+  teardown_capture_of_logs();
 }
+
 AUTHENTICATE_FAIL(nocerts,
+                  require_failure_message = "We never got a certs cell";
                   d->c2->handshake_state->received_certs_cell = 0)
 AUTHENTICATE_FAIL(noidcert,
+                  require_failure_message = "We never got an identity "
+                    "certificate";
                   tor_x509_cert_free(d->c2->handshake_state->id_cert);
                   d->c2->handshake_state->id_cert = NULL)
 AUTHENTICATE_FAIL(noauthcert,
+                  require_failure_message = "We never got an authentication "
+                    "certificate";
                   tor_x509_cert_free(d->c2->handshake_state->auth_cert);
                   d->c2->handshake_state->auth_cert = NULL)
 AUTHENTICATE_FAIL(tooshort,
+                  require_failure_message = "Cell was way too short";
                   d->cell->payload_len = 3)
 AUTHENTICATE_FAIL(badtype,
+                  require_failure_message = "Authenticator type was not "
+                    "recognized";
                   d->cell->payload[0] = 0xff)
 AUTHENTICATE_FAIL(truncated_1,
+                  require_failure_message = "Authenticator was truncated";
                   d->cell->payload[2]++)
 AUTHENTICATE_FAIL(truncated_2,
+                  require_failure_message = "Authenticator was truncated";
                   d->cell->payload[3]++)
 AUTHENTICATE_FAIL(tooshort_1,
+                  require_failure_message = "Authenticator was too short";
                   tt_int_op(d->cell->payload_len, >=, 260);
                   d->cell->payload[2] -= 1;
                   d->cell->payload_len -= 256;)
 AUTHENTICATE_FAIL(badcontent,
+                  require_failure_message = "Some field in the AUTHENTICATE "
+                    "cell body was not as expected";
                   d->cell->payload[10] ^= 0xff)
 AUTHENTICATE_FAIL(badsig_1,
+                  require_failure_message = "Signature wasn't valid";
                   d->cell->payload[d->cell->payload_len - 5] ^= 0xff)
 
 #define TEST(name, flags)                                       \

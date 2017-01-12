@@ -95,6 +95,13 @@ mock_connection_connect_sockaddr(connection_t *conn,
   return 1;
 }
 
+static int
+fake_close_socket(evutil_socket_t sock)
+{
+  (void)sock;
+  return 0;
+}
+
 static void
 test_conn_lookup_addr_helper(const char *address, int family, tor_addr_t *addr)
 {
@@ -124,6 +131,7 @@ test_conn_get_connection(uint8_t state, uint8_t type, uint8_t purpose)
 
   MOCK(connection_connect_sockaddr,
        mock_connection_connect_sockaddr);
+  MOCK(tor_close_socket, fake_close_socket);
 
   init_connection_lists();
 
@@ -148,12 +156,13 @@ test_conn_get_connection(uint8_t state, uint8_t type, uint8_t purpose)
   assert_connection_ok(conn, time(NULL));
 
   UNMOCK(connection_connect_sockaddr);
-
+  UNMOCK(tor_close_socket);
   return conn;
 
   /* On failure */
  done:
   UNMOCK(connection_connect_sockaddr);
+  UNMOCK(tor_close_socket);
   return NULL;
 }
 
@@ -192,6 +201,15 @@ test_conn_get_basic_teardown(const struct testcase_t *tc, void *arg)
 
     if (!conn->linked_conn->marked_for_close) {
       connection_close_immediate(conn->linked_conn);
+      if (CONN_IS_EDGE(conn->linked_conn)) {
+        /* Suppress warnings about all the stuff we didn't do */
+        TO_EDGE_CONN(conn->linked_conn)->edge_has_sent_end = 1;
+        TO_EDGE_CONN(conn->linked_conn)->end_reason =
+          END_STREAM_REASON_INTERNAL;
+        if (conn->linked_conn->type == CONN_TYPE_AP) {
+          TO_ENTRY_CONN(conn->linked_conn)->socks_request->has_finished = 1;
+        }
+      }
       connection_mark_for_close(conn->linked_conn);
     }
 
@@ -212,6 +230,14 @@ test_conn_get_basic_teardown(const struct testcase_t *tc, void *arg)
 
   if (!conn->marked_for_close) {
     connection_close_immediate(conn);
+    if (CONN_IS_EDGE(conn)) {
+      /* Suppress warnings about all the stuff we didn't do */
+      TO_EDGE_CONN(conn)->edge_has_sent_end = 1;
+      TO_EDGE_CONN(conn)->end_reason = END_STREAM_REASON_INTERNAL;
+      if (conn->type == CONN_TYPE_AP) {
+        TO_ENTRY_CONN(conn)->socks_request->has_finished = 1;
+      }
+    }
     connection_mark_for_close(conn);
   }
 
@@ -340,10 +366,7 @@ test_conn_get_rsrc_teardown(const struct testcase_t *tc, void *arg)
 static void *
 test_conn_download_status_setup(const struct testcase_t *tc)
 {
-  (void)tc;
-
-  /* Don't return NULL, that causes the test to fail */
-  return (void*)"ok";
+  return (void*)tc;
 }
 
 static int
@@ -655,7 +678,8 @@ test_conn_download_status(void *arg)
   dir_connection_t *conn4 = NULL;
   connection_t *ap_conn = NULL;
 
-  consensus_flavor_t usable_flavor = (consensus_flavor_t)arg;
+  const struct testcase_t *tc = arg;
+  consensus_flavor_t usable_flavor = (consensus_flavor_t)tc->setup_data;
 
   /* The "other flavor" trick only works if there are two flavors */
   tor_assert(N_CONSENSUS_FLAVORS == 2);

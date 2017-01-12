@@ -6,10 +6,22 @@
 
 /**
  * \file buffers.c
- * \brief Implements a generic interface buffer.  Buffers are
- * fairly opaque string holders that can read to or flush from:
- * memory, file descriptors, or TLS connections.  Buffers are implemented
- * as linked lists of memory chunks.
+ * \brief Implements a generic buffer interface.
+ *
+ * A buf_t is a (fairly) opaque byte-oriented FIFO that can read to or flush
+ * from memory, sockets, file descriptors, TLS connections, or another buf_t.
+ * Buffers are implemented as linked lists of memory chunks.
+ *
+ * All socket-backed and TLS-based connection_t objects have a pair of
+ * buffers: one for incoming data, and one for outcoming data.  These are fed
+ * and drained from functions in connection.c, trigged by events that are
+ * monitored in main.c.
+ *
+ * This module has basic support for reading and writing on buf_t objects. It
+ * also contains specialized functions for handling particular protocols
+ * on a buf_t backend, including SOCKS (used in connection_edge.c), Tor cells
+ * (used in connection_or.c and channeltls.c), HTTP (used in directory.c), and
+ * line-oriented communication (used in control.c).
  **/
 #define BUFFERS_PRIVATE
 #include "or.h"
@@ -128,7 +140,7 @@ chunk_repack(chunk_t *chunk)
 /** Keep track of total size of allocated chunks for consistency asserts */
 static size_t total_bytes_allocated_in_chunks = 0;
 static void
-chunk_free_unchecked(chunk_t *chunk)
+buf_chunk_free_unchecked(chunk_t *chunk)
 {
   if (!chunk)
     return;
@@ -190,9 +202,12 @@ chunk_grow(chunk_t *chunk, size_t sz)
 
 /** Return the allocation size we'd like to use to hold <b>target</b>
  * bytes. */
-static inline size_t
+STATIC size_t
 preferred_chunk_size(size_t target)
 {
+  tor_assert(target <= SIZE_T_CEILING - CHUNK_OVERHEAD);
+  if (CHUNK_ALLOC_SIZE(target) >= MAX_CHUNK_ALLOC)
+    return CHUNK_ALLOC_SIZE(target);
   size_t sz = MIN_CHUNK_ALLOC;
   while (CHUNK_SIZE_WITH_ALLOC(sz) < target) {
     sz <<= 1;
@@ -252,7 +267,7 @@ buf_pullup(buf_t *buf, size_t bytes)
       dest->next = src->next;
       if (buf->tail == src)
         buf->tail = dest;
-      chunk_free_unchecked(src);
+      buf_chunk_free_unchecked(src);
     } else {
       memcpy(CHUNK_WRITE_PTR(dest), src->data, n);
       dest->datalen += n;
@@ -298,7 +313,7 @@ buf_remove_from_front(buf_t *buf, size_t n)
       buf->head = victim->next;
       if (buf->tail == victim)
         buf->tail = NULL;
-      chunk_free_unchecked(victim);
+      buf_chunk_free_unchecked(victim);
     }
   }
   check();
@@ -338,7 +353,7 @@ buf_clear(buf_t *buf)
   buf->datalen = 0;
   for (chunk = buf->head; chunk; chunk = next) {
     next = chunk->next;
-    chunk_free_unchecked(chunk);
+    buf_chunk_free_unchecked(chunk);
   }
   buf->head = buf->tail = NULL;
 }
@@ -429,7 +444,7 @@ static chunk_t *
 buf_add_chunk_with_capacity(buf_t *buf, size_t capacity, int capped)
 {
   chunk_t *chunk;
-  struct timeval now;
+
   if (CHUNK_ALLOC_SIZE(capacity) < buf->default_chunk_size) {
     chunk = chunk_new_with_alloc_size(buf->default_chunk_size);
   } else if (capped && CHUNK_ALLOC_SIZE(capacity) > MAX_CHUNK_ALLOC) {
@@ -438,8 +453,7 @@ buf_add_chunk_with_capacity(buf_t *buf, size_t capacity, int capped)
     chunk = chunk_new_with_alloc_size(preferred_chunk_size(capacity));
   }
 
-  tor_gettimeofday_cached_monotonic(&now);
-  chunk->inserted_time = (uint32_t)tv_to_msec(&now);
+  chunk->inserted_time = (uint32_t)monotime_coarse_absolute_msec();
 
   if (buf->tail) {
     tor_assert(buf->head);
@@ -454,8 +468,8 @@ buf_add_chunk_with_capacity(buf_t *buf, size_t capacity, int capped)
 }
 
 /** Return the age of the oldest chunk in the buffer <b>buf</b>, in
- * milliseconds.  Requires the current time, in truncated milliseconds since
- * the epoch, as its input <b>now</b>.
+ * milliseconds.  Requires the current monotonic time, in truncated msec,
+ * as its input <b>now</b>.
  */
 uint32_t
 buf_get_oldest_chunk_timestamp(const buf_t *buf, uint32_t now)
@@ -533,12 +547,12 @@ read_to_chunk_tls(buf_t *buf, chunk_t *chunk, tor_tls_t *tls,
  * (because of EOF), set *<b>reached_eof</b> to 1 and return 0. Return -1 on
  * error; else return the number of bytes read.
  */
-/* XXXX024 indicate "read blocked" somehow? */
+/* XXXX indicate "read blocked" somehow? */
 int
 read_to_buf(tor_socket_t s, size_t at_most, buf_t *buf, int *reached_eof,
             int *socket_error)
 {
-  /* XXXX024 It's stupid to overload the return values for these functions:
+  /* XXXX It's stupid to overload the return values for these functions:
    * "error status" and "number of bytes read" are not mutually exclusive.
    */
   int r = 0;
@@ -711,7 +725,7 @@ flush_chunk_tls(tor_tls_t *tls, buf_t *buf, chunk_t *chunk,
 int
 flush_buf(tor_socket_t s, buf_t *buf, size_t sz, size_t *buf_flushlen)
 {
-  /* XXXX024 It's stupid to overload the return values for these functions:
+  /* XXXX It's stupid to overload the return values for these functions:
    * "error status" and "number of bytes flushed" are not mutually exclusive.
    */
   int r;
@@ -937,97 +951,6 @@ fetch_var_cell_from_buf(buf_t *buf, var_cell_t **out, int linkproto)
   *out = result;
   return 1;
 }
-
-#ifdef USE_BUFFEREVENTS
-/** Try to read <b>n</b> bytes from <b>buf</b> at <b>pos</b> (which may be
- * NULL for the start of the buffer), copying the data only if necessary.  Set
- * *<b>data_out</b> to a pointer to the desired bytes.  Set <b>free_out</b>
- * to 1 if we needed to malloc *<b>data</b> because the original bytes were
- * noncontiguous; 0 otherwise.  Return the number of bytes actually available
- * at *<b>data_out</b>.
- */
-static ssize_t
-inspect_evbuffer(struct evbuffer *buf, char **data_out, size_t n,
-                 int *free_out, struct evbuffer_ptr *pos)
-{
-  int n_vecs, i;
-
-  if (evbuffer_get_length(buf) < n)
-    n = evbuffer_get_length(buf);
-  if (n == 0)
-    return 0;
-  n_vecs = evbuffer_peek(buf, n, pos, NULL, 0);
-  tor_assert(n_vecs > 0);
-  if (n_vecs == 1) {
-    struct evbuffer_iovec v;
-    i = evbuffer_peek(buf, n, pos, &v, 1);
-    tor_assert(i == 1);
-    *data_out = v.iov_base;
-    *free_out = 0;
-    return v.iov_len;
-  } else {
-    ev_ssize_t copied;
-    *data_out = tor_malloc(n);
-    *free_out = 1;
-    copied = evbuffer_copyout(buf, *data_out, n);
-    tor_assert(copied >= 0 && (size_t)copied == n);
-    return copied;
-  }
-}
-
-/** As fetch_var_cell_from_buf, buf works on an evbuffer. */
-int
-fetch_var_cell_from_evbuffer(struct evbuffer *buf, var_cell_t **out,
-                             int linkproto)
-{
-  char *hdr = NULL;
-  int free_hdr = 0;
-  size_t n;
-  size_t buf_len;
-  uint8_t command;
-  uint16_t cell_length;
-  var_cell_t *cell;
-  int result = 0;
-  const int wide_circ_ids = linkproto >= MIN_LINK_PROTO_FOR_WIDE_CIRC_IDS;
-  const int circ_id_len = get_circ_id_size(wide_circ_ids);
-  const unsigned header_len = get_var_cell_header_size(wide_circ_ids);
-
-  *out = NULL;
-  buf_len = evbuffer_get_length(buf);
-  if (buf_len < header_len)
-    return 0;
-
-  n = inspect_evbuffer(buf, &hdr, header_len, &free_hdr, NULL);
-  tor_assert(n >= header_len);
-
-  command = get_uint8(hdr + circ_id_len);
-  if (!(cell_command_is_var_length(command, linkproto))) {
-    goto done;
-  }
-
-  cell_length = ntohs(get_uint16(hdr + circ_id_len + 1));
-  if (buf_len < (size_t)(header_len+cell_length)) {
-    result = 1; /* Not all here yet. */
-    goto done;
-  }
-
-  cell = var_cell_new(cell_length);
-  cell->command = command;
-  if (wide_circ_ids)
-    cell->circ_id = ntohl(get_uint32(hdr));
-  else
-    cell->circ_id = ntohs(get_uint16(hdr));
-  evbuffer_drain(buf, header_len);
-  evbuffer_remove(buf, cell->payload, cell_length);
-  *out = cell;
-  result = 1;
-
- done:
-  if (free_hdr && hdr)
-    tor_free(hdr);
-  return result;
-}
-#endif
 
 /** Move up to *<b>buf_flushlen</b> bytes from <b>buf_in</b> to
  * <b>buf_out</b>, and modify *<b>buf_flushlen</b> appropriately.
@@ -1271,94 +1194,6 @@ fetch_from_buf_http(buf_t *buf,
   return 1;
 }
 
-#ifdef USE_BUFFEREVENTS
-/** As fetch_from_buf_http, buf works on an evbuffer. */
-int
-fetch_from_evbuffer_http(struct evbuffer *buf,
-                    char **headers_out, size_t max_headerlen,
-                    char **body_out, size_t *body_used, size_t max_bodylen,
-                    int force_complete)
-{
-  struct evbuffer_ptr crlf, content_length;
-  size_t headerlen, bodylen, contentlen;
-
-  /* Find the first \r\n\r\n in the buffer */
-  crlf = evbuffer_search(buf, "\r\n\r\n", 4, NULL);
-  if (crlf.pos < 0) {
-    /* We didn't find one. */
-    if (evbuffer_get_length(buf) > max_headerlen)
-      return -1; /* Headers too long. */
-    return 0; /* Headers not here yet. */
-  } else if (crlf.pos > (int)max_headerlen) {
-    return -1; /* Headers too long. */
-  }
-
-  headerlen = crlf.pos + 4;  /* Skip over the \r\n\r\n */
-  bodylen = evbuffer_get_length(buf) - headerlen;
-  if (bodylen > max_bodylen)
-    return -1; /* body too long */
-
-  /* Look for the first occurrence of CONTENT_LENGTH insize buf before the
-   * crlfcrlf */
-  content_length = evbuffer_search_range(buf, CONTENT_LENGTH,
-                                         strlen(CONTENT_LENGTH), NULL, &crlf);
-
-  if (content_length.pos >= 0) {
-    /* We found a content_length: parse it and figure out if the body is here
-     * yet. */
-    struct evbuffer_ptr eol;
-    char *data = NULL;
-    int free_data = 0;
-    int n, i;
-    n = evbuffer_ptr_set(buf, &content_length, strlen(CONTENT_LENGTH),
-                         EVBUFFER_PTR_ADD);
-    tor_assert(n == 0);
-    eol = evbuffer_search_eol(buf, &content_length, NULL, EVBUFFER_EOL_CRLF);
-    tor_assert(eol.pos > content_length.pos);
-    tor_assert(eol.pos <= crlf.pos);
-    inspect_evbuffer(buf, &data, eol.pos - content_length.pos, &free_data,
-                         &content_length);
-
-    i = atoi(data);
-    if (free_data)
-      tor_free(data);
-    if (i < 0) {
-      log_warn(LD_PROTOCOL, "Content-Length is less than zero; it looks like "
-               "someone is trying to crash us.");
-      return -1;
-    }
-    contentlen = i;
-    /* if content-length is malformed, then our body length is 0. fine. */
-    log_debug(LD_HTTP,"Got a contentlen of %d.",(int)contentlen);
-    if (bodylen < contentlen) {
-      if (!force_complete) {
-        log_debug(LD_HTTP,"body not all here yet.");
-        return 0; /* not all there yet */
-      }
-    }
-    if (bodylen > contentlen) {
-      bodylen = contentlen;
-      log_debug(LD_HTTP,"bodylen reduced to %d.",(int)bodylen);
-    }
-  }
-
-  if (headers_out) {
-    *headers_out = tor_malloc(headerlen+1);
-    evbuffer_remove(buf, *headers_out, headerlen);
-    (*headers_out)[headerlen] = '\0';
-  }
-  if (body_out) {
-    tor_assert(headers_out);
-    tor_assert(body_used);
-    *body_used = bodylen;
-    *body_out = tor_malloc(bodylen+1);
-    evbuffer_remove(buf, *body_out, bodylen);
-    (*body_out)[bodylen] = '\0';
-  }
-  return 1;
-}
-#endif
-
 /**
  * Wait this many seconds before warning the user about using SOCKS unsafely
  * again (requires that WarnUnsafeSocks is turned on). */
@@ -1478,86 +1313,6 @@ fetch_from_buf_socks(buf_t *buf, socks_request_t *req,
   return res;
 }
 
-#ifdef USE_BUFFEREVENTS
-/* As fetch_from_buf_socks(), but targets an evbuffer instead. */
-int
-fetch_from_evbuffer_socks(struct evbuffer *buf, socks_request_t *req,
-                          int log_sockstype, int safe_socks)
-{
-  char *data;
-  ssize_t n_drain;
-  size_t datalen, buflen, want_length;
-  int res;
-
-  buflen = evbuffer_get_length(buf);
-  if (buflen < 2)
-    return 0;
-
-  {
-    /* See if we can find the socks request in the first chunk of the buffer.
-     */
-    struct evbuffer_iovec v;
-    int i;
-    n_drain = 0;
-    i = evbuffer_peek(buf, -1, NULL, &v, 1);
-    tor_assert(i == 1);
-    data = v.iov_base;
-    datalen = v.iov_len;
-    want_length = 0;
-
-    res = parse_socks(data, datalen, req, log_sockstype,
-                      safe_socks, &n_drain, &want_length);
-
-    if (n_drain < 0)
-      evbuffer_drain(buf, evbuffer_get_length(buf));
-    else if (n_drain > 0)
-      evbuffer_drain(buf, n_drain);
-
-    if (res)
-      return res;
-  }
-
-  /* Okay, the first chunk of the buffer didn't have a complete socks request.
-   * That means that either we don't have a whole socks request at all, or
-   * it's gotten split up.  We're going to try passing parse_socks() bigger
-   * and bigger chunks until either it says "Okay, I got it", or it says it
-   * will need more data than we currently have. */
-
-  /* Loop while we have more data that we haven't given parse_socks() yet. */
-  do {
-    int free_data = 0;
-    const size_t last_wanted = want_length;
-    n_drain = 0;
-    data = NULL;
-    datalen = inspect_evbuffer(buf, &data, want_length, &free_data, NULL);
-
-    want_length = 0;
-    res = parse_socks(data, datalen, req, log_sockstype,
-                      safe_socks, &n_drain, &want_length);
-
-    if (free_data)
-      tor_free(data);
-
-    if (n_drain < 0)
-      evbuffer_drain(buf, evbuffer_get_length(buf));
-    else if (n_drain > 0)
-      evbuffer_drain(buf, n_drain);
-
-    if (res == 0 && n_drain == 0 && want_length <= last_wanted) {
-      /* If we drained nothing, and we didn't ask for more than last time,
-       * then we probably wanted more data than the buffer actually had,
-       * and we're finding out that we're not satisified with it. It's
-       * time to break until we have more data. */
-      break;
-    }
-
-    buflen = evbuffer_get_length(buf);
-  } while (res == 0 && want_length <= buflen && buflen >= 2);
-
-  return res;
-}
-#endif
-
 /** The size of the header of an Extended ORPort message: 2 bytes for
  *  COMMAND, 2 bytes for BODYLEN */
 #define EXT_OR_CMD_HEADER_SIZE 4
@@ -1587,34 +1342,6 @@ fetch_ext_or_command_from_buf(buf_t *buf, ext_or_cmd_t **out)
   fetch_from_buf((*out)->body, len, buf);
   return 1;
 }
-
-#ifdef USE_BUFFEREVENTS
-/** Read <b>buf</b>, which should contain an Extended ORPort message
- *  from a transport proxy. If well-formed, create and populate
- *  <b>out</b> with the Extended ORport message. Return 0 if the
- *  buffer was incomplete, 1 if it was well-formed and -1 if we
- *  encountered an error while parsing it.  */
-int
-fetch_ext_or_command_from_evbuffer(struct evbuffer *buf, ext_or_cmd_t **out)
-{
-  char hdr[EXT_OR_CMD_HEADER_SIZE];
-  uint16_t len;
-  size_t buf_len = evbuffer_get_length(buf);
-
-  if (buf_len < EXT_OR_CMD_HEADER_SIZE)
-    return 0;
-  evbuffer_copyout(buf, hdr, EXT_OR_CMD_HEADER_SIZE);
-  len = ntohs(get_uint16(hdr+2));
-  if (buf_len < (unsigned)len + EXT_OR_CMD_HEADER_SIZE)
-    return 0;
-  *out = ext_or_cmd_new(len);
-  (*out)->cmd = ntohs(get_uint16(hdr));
-  (*out)->len = len;
-  evbuffer_drain(buf, EXT_OR_CMD_HEADER_SIZE);
-  evbuffer_remove(buf, (*out)->body, len);
-  return 1;
-}
-#endif
 
 /** Create a SOCKS5 reply message with <b>reason</b> in its REP field and
  * have Tor send it as error response to <b>req</b>.
@@ -2060,34 +1787,6 @@ fetch_from_buf_socks_client(buf_t *buf, int state, char **reason)
   return r;
 }
 
-#ifdef USE_BUFFEREVENTS
-/** As fetch_from_buf_socks_client, buf works on an evbuffer */
-int
-fetch_from_evbuffer_socks_client(struct evbuffer *buf, int state,
-                                 char **reason)
-{
-  ssize_t drain = 0;
-  uint8_t *data;
-  size_t datalen;
-  int r;
-
-  /* Linearize the SOCKS response in the buffer, up to 128 bytes.
-   * (parse_socks_client shouldn't need to see anything beyond that.) */
-  datalen = evbuffer_get_length(buf);
-  if (datalen > MAX_SOCKS_MESSAGE_LEN)
-    datalen = MAX_SOCKS_MESSAGE_LEN;
-  data = evbuffer_pullup(buf, datalen);
-
-  r = parse_socks_client(data, datalen, state, reason, &drain);
-  if (drain > 0)
-    evbuffer_drain(buf, drain);
-  else if (drain < 0)
-    evbuffer_drain(buf, evbuffer_get_length(buf));
-
-  return r;
-}
-#endif
-
 /** Implementation logic for fetch_from_*_socks_client. */
 static int
 parse_socks_client(const uint8_t *data, size_t datalen,
@@ -2218,27 +1917,6 @@ peek_buf_has_control0_command(buf_t *buf)
   return 0;
 }
 
-#ifdef USE_BUFFEREVENTS
-int
-peek_evbuffer_has_control0_command(struct evbuffer *buf)
-{
-  int result = 0;
-  if (evbuffer_get_length(buf) >= 4) {
-    int free_out = 0;
-    char *data = NULL;
-    size_t n = inspect_evbuffer(buf, &data, 4, &free_out, NULL);
-    uint16_t cmd;
-    tor_assert(n >= 4);
-    cmd = ntohs(get_uint16(data+2));
-    if (cmd <= 0x14)
-      result = 1;
-    if (free_out)
-      tor_free(data);
-  }
-  return result;
-}
-#endif
-
 /** Return the index within <b>buf</b> at which <b>ch</b> first appears,
  * or -1 if <b>ch</b> does not appear on buf. */
 static off_t
@@ -2336,93 +2014,14 @@ write_to_buf_zlib(buf_t *buf, tor_zlib_state_t *state,
   return 0;
 }
 
-#ifdef USE_BUFFEREVENTS
-int
-write_to_evbuffer_zlib(struct evbuffer *buf, tor_zlib_state_t *state,
-                       const char *data, size_t data_len,
-                       int done)
-{
-  char *next;
-  size_t old_avail, avail;
-  int over = 0, n;
-  struct evbuffer_iovec vec[1];
-  do {
-    {
-      size_t cap = data_len / 4;
-      if (cap < 128)
-        cap = 128;
-      /* XXXX NM this strategy is fragmentation-prone. We should really have
-       * two iovecs, and write first into the one, and then into the
-       * second if the first gets full. */
-      n = evbuffer_reserve_space(buf, cap, vec, 1);
-      tor_assert(n == 1);
-    }
-
-    next = vec[0].iov_base;
-    avail = old_avail = vec[0].iov_len;
-
-    switch (tor_zlib_process(state, &next, &avail, &data, &data_len, done)) {
-      case TOR_ZLIB_DONE:
-        over = 1;
-        break;
-      case TOR_ZLIB_ERR:
-        return -1;
-      case TOR_ZLIB_OK:
-        if (data_len == 0)
-          over = 1;
-        break;
-      case TOR_ZLIB_BUF_FULL:
-        if (avail) {
-          /* Zlib says we need more room (ZLIB_BUF_FULL).  Start a new chunk
-           * automatically, whether were going to or not. */
-        }
-        break;
-    }
-
-    /* XXXX possible infinite loop on BUF_FULL. */
-    vec[0].iov_len = old_avail - avail;
-    evbuffer_commit_space(buf, vec, 1);
-
-  } while (!over);
-  check();
-  return 0;
-}
-#endif
-
 /** Set *<b>output</b> to contain a copy of the data in *<b>input</b> */
 int
-generic_buffer_set_to_copy(generic_buffer_t **output,
-                           const generic_buffer_t *input)
+buf_set_to_copy(buf_t **output,
+                const buf_t *input)
 {
-#ifdef USE_BUFFEREVENTS
-  struct evbuffer_ptr ptr;
-  size_t remaining = evbuffer_get_length(input);
-  if (*output) {
-    evbuffer_drain(*output, evbuffer_get_length(*output));
-  } else {
-    if (!(*output = evbuffer_new()))
-      return -1;
-  }
-  evbuffer_ptr_set((struct evbuffer*)input, &ptr, 0, EVBUFFER_PTR_SET);
-  while (remaining) {
-    struct evbuffer_iovec v[4];
-    int n_used, i;
-    n_used = evbuffer_peek((struct evbuffer*)input, -1, &ptr, v, 4);
-    if (n_used < 0)
-      return -1;
-    for (i=0;i<n_used;++i) {
-      evbuffer_add(*output, v[i].iov_base, v[i].iov_len);
-      tor_assert(v[i].iov_len <= remaining);
-      remaining -= v[i].iov_len;
-      evbuffer_ptr_set((struct evbuffer*)input,
-                       &ptr, v[i].iov_len, EVBUFFER_PTR_ADD);
-    }
-  }
-#else
   if (*output)
     buf_free(*output);
   *output = buf_copy(input);
-#endif
   return 0;
 }
 

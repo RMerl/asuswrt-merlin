@@ -103,7 +103,7 @@ policy_expand_private(smartlist_t **policy)
        if (tor_addr_parse_mask_ports(private_nets[i], 0,
                                &newpolicy.addr,
                                &newpolicy.maskbits, &port_min, &port_max)<0) {
-         tor_assert(0);
+         tor_assert_unreached();
        }
        smartlist_add(tmp, addr_policy_get_canonical_entry(&newpolicy));
      }
@@ -274,28 +274,22 @@ parse_reachable_addresses(void)
 
   /* We ignore ReachableAddresses for relays */
   if (!server_mode(options)) {
-    if ((reachable_or_addr_policy
-         && policy_is_reject_star(reachable_or_addr_policy, AF_UNSPEC))
-        || (reachable_dir_addr_policy
-            && policy_is_reject_star(reachable_dir_addr_policy, AF_UNSPEC))) {
+    if (policy_is_reject_star(reachable_or_addr_policy, AF_UNSPEC, 0)
+        || policy_is_reject_star(reachable_dir_addr_policy, AF_UNSPEC,0)) {
       log_warn(LD_CONFIG, "Tor cannot connect to the Internet if "
                "ReachableAddresses, ReachableORAddresses, or "
                "ReachableDirAddresses reject all addresses. Please accept "
                "some addresses in these options.");
     } else if (options->ClientUseIPv4 == 1
-       && ((reachable_or_addr_policy
-            && policy_is_reject_star(reachable_or_addr_policy, AF_INET))
-        || (reachable_dir_addr_policy
-            && policy_is_reject_star(reachable_dir_addr_policy, AF_INET)))) {
+       && (policy_is_reject_star(reachable_or_addr_policy, AF_INET, 0)
+           || policy_is_reject_star(reachable_dir_addr_policy, AF_INET, 0))) {
           log_warn(LD_CONFIG, "You have set ClientUseIPv4 1, but "
                    "ReachableAddresses, ReachableORAddresses, or "
                    "ReachableDirAddresses reject all IPv4 addresses. "
                    "Tor will not connect using IPv4.");
     } else if (fascist_firewall_use_ipv6(options)
-       && ((reachable_or_addr_policy
-            && policy_is_reject_star(reachable_or_addr_policy, AF_INET6))
-        || (reachable_dir_addr_policy
-            && policy_is_reject_star(reachable_dir_addr_policy, AF_INET6)))) {
+       && (policy_is_reject_star(reachable_or_addr_policy, AF_INET6, 0)
+         || policy_is_reject_star(reachable_dir_addr_policy, AF_INET6, 0))) {
           log_warn(LD_CONFIG, "You have configured tor to use IPv6 "
                    "(ClientUseIPv6 1 or UseBridges 1), but "
                    "ReachableAddresses, ReachableORAddresses, or "
@@ -1084,8 +1078,8 @@ validate_addr_policies(const or_options_t *options, char **msg)
 
   const int exitrelay_setting_is_auto = options->ExitRelay == -1;
   const int policy_accepts_something =
-    ! (policy_is_reject_star(addr_policy, AF_INET) &&
-       policy_is_reject_star(addr_policy, AF_INET6));
+    ! (policy_is_reject_star(addr_policy, AF_INET, 1) &&
+       policy_is_reject_star(addr_policy, AF_INET6, 1));
 
   if (server_mode(options) &&
       ! warned_about_exitrelay &&
@@ -1837,10 +1831,18 @@ policies_log_first_redundant_entry(const smartlist_t *policy)
  *
  * If <b>ipv6_exit</b> is false, prepend "reject *6:*" to the policy.
  *
+ * If <b>configured_addresses</b> contains addresses:
+ *   - prepend entries that reject the addresses in this list. These may be the
+ *     advertised relay addresses and/or the outbound bind addresses,
+ *     depending on the ExitPolicyRejectPrivate and
+ *     ExitPolicyRejectLocalInterfaces settings.
  * If <b>rejectprivate</b> is true:
  *   - prepend "reject private:*" to the policy.
- *   - prepend entries that reject publicly routable addresses on this exit
- *     relay by calling policies_parse_exit_policy_reject_private
+ * If <b>reject_interface_addresses</b> is true:
+ *   - prepend entries that reject publicly routable interface addresses on
+ *     this exit relay by calling policies_parse_exit_policy_reject_private
+ * If <b>reject_configured_port_addresses</b> is true:
+ *   - prepend entries that reject all configured port addresses
  *
  * If cfg doesn't end in an absolute accept or reject and if
  * <b>add_default_policy</b> is true, add the default exit
@@ -1868,13 +1870,16 @@ policies_parse_exit_policy_internal(config_line_t *cfg,
   if (rejectprivate) {
     /* Reject IPv4 and IPv6 reserved private netblocks */
     append_exit_policy_string(dest, "reject private:*");
-    /* Reject IPv4 and IPv6 publicly routable addresses on this exit relay */
-    policies_parse_exit_policy_reject_private(
-                                            dest, ipv6_exit,
+  }
+
+  /* Consider rejecting IPv4 and IPv6 advertised relay addresses, outbound bind
+   * addresses, publicly routable addresses, and configured port addresses
+   * on this exit relay */
+  policies_parse_exit_policy_reject_private(dest, ipv6_exit,
                                             configured_addresses,
                                             reject_interface_addresses,
                                             reject_configured_port_addresses);
-  }
+
   if (parse_addr_policy(cfg, dest, -1))
     return -1;
 
@@ -1902,8 +1907,14 @@ policies_parse_exit_policy_internal(config_line_t *cfg,
  * If <b>EXIT_POLICY_REJECT_PRIVATE</b> bit is set in <b>options</b>:
  *   - prepend an entry that rejects all destinations in all netblocks
  *     reserved for private use.
+ *   - prepend entries that reject the advertised relay addresses in
+ *     configured_addresses
+ * If <b>EXIT_POLICY_REJECT_LOCAL_INTERFACES</b> bit is set in <b>options</b>:
  *   - prepend entries that reject publicly routable addresses on this exit
  *     relay by calling policies_parse_exit_policy_internal
+ *   - prepend entries that reject the outbound bind addresses in
+ *     configured_addresses
+ *   - prepend entries that reject all configured port addresses
  *
  * If <b>EXIT_POLICY_ADD_DEFAULT</b> bit is set in <b>options</b>, append
  * default exit policy entries to <b>result</b> smartlist.
@@ -1916,12 +1927,14 @@ policies_parse_exit_policy(config_line_t *cfg, smartlist_t **dest,
   int ipv6_enabled = (options & EXIT_POLICY_IPV6_ENABLED) ? 1 : 0;
   int reject_private = (options & EXIT_POLICY_REJECT_PRIVATE) ? 1 : 0;
   int add_default = (options & EXIT_POLICY_ADD_DEFAULT) ? 1 : 0;
+  int reject_local_interfaces = (options &
+                                 EXIT_POLICY_REJECT_LOCAL_INTERFACES) ? 1 : 0;
 
   return policies_parse_exit_policy_internal(cfg,dest,ipv6_enabled,
                                              reject_private,
                                              configured_addresses,
-                                             reject_private,
-                                             reject_private,
+                                             reject_local_interfaces,
+                                             reject_local_interfaces,
                                              add_default);
 }
 
@@ -1987,6 +2000,7 @@ policies_copy_outbound_addresses_to_smartlist(smartlist_t *addr_list,
  *    add it to the list of configured addresses.
  *  - if ipv6_local_address is non-NULL, and not the null tor_addr_t, add it
  *    to the list of configured addresses.
+ * If <b>or_options->ExitPolicyRejectLocalInterfaces</b> is true:
  *  - if or_options->OutboundBindAddressIPv4_ is not the null tor_addr_t, add
  *    it to the list of configured addresses.
  *  - if or_options->OutboundBindAddressIPv6_ is not the null tor_addr_t, add
@@ -2030,11 +2044,20 @@ policies_parse_exit_policy_from_options(const or_options_t *or_options,
     parser_cfg |= EXIT_POLICY_ADD_DEFAULT;
   }
 
+  if (or_options->ExitPolicyRejectLocalInterfaces) {
+    parser_cfg |= EXIT_POLICY_REJECT_LOCAL_INTERFACES;
+  }
+
   /* Copy the configured addresses into the tor_addr_t* list */
-  policies_copy_ipv4h_to_smartlist(configured_addresses, local_address);
-  policies_copy_addr_to_smartlist(configured_addresses, ipv6_local_address);
-  policies_copy_outbound_addresses_to_smartlist(configured_addresses,
-                                                or_options);
+  if (or_options->ExitPolicyRejectPrivate) {
+    policies_copy_ipv4h_to_smartlist(configured_addresses, local_address);
+    policies_copy_addr_to_smartlist(configured_addresses, ipv6_local_address);
+  }
+
+  if (or_options->ExitPolicyRejectLocalInterfaces) {
+    policies_copy_outbound_addresses_to_smartlist(configured_addresses,
+                                                  or_options);
+  }
 
   rv = policies_parse_exit_policy(or_options->ExitPolicy, result, parser_cfg,
                                   configured_addresses);
@@ -2090,8 +2113,10 @@ exit_policy_is_general_exit_helper(smartlist_t *policy, int port)
       if (subnet_status[i] != 0)
         continue; /* We already reject some part of this /8 */
       tor_addr_from_ipv4h(&addr, i<<24);
-      if (tor_addr_is_internal(&addr, 0))
+      if (tor_addr_is_internal(&addr, 0) &&
+          !get_options()->DirAllowPrivateAddresses) {
         continue; /* Local or non-routable addresses */
+      }
       if (p->policy_type == ADDR_POLICY_ACCEPT) {
         if (p->maskbits > 8)
           continue; /* Narrower than a /8. */
@@ -2125,13 +2150,16 @@ exit_policy_is_general_exit(smartlist_t *policy)
 }
 
 /** Return false if <b>policy</b> might permit access to some addr:port;
- * otherwise if we are certain it rejects everything, return true. */
+ * otherwise if we are certain it rejects everything, return true. If no
+ * part of <b>policy</b> matches, return <b>default_reject</b>.
+ * NULL policies are allowed, and treated as empty. */
 int
-policy_is_reject_star(const smartlist_t *policy, sa_family_t family)
+policy_is_reject_star(const smartlist_t *policy, sa_family_t family,
+                      int default_reject)
 {
-  if (!policy) /*XXXX disallow NULL policies? */
-    return 1;
-  SMARTLIST_FOREACH_BEGIN(policy, addr_policy_t *, p) {
+  if (!policy)
+    return default_reject;
+  SMARTLIST_FOREACH_BEGIN(policy, const addr_policy_t *, p) {
     if (p->policy_type == ADDR_POLICY_ACCEPT &&
         (tor_addr_family(&p->addr) == family ||
          tor_addr_family(&p->addr) == AF_UNSPEC)) {
@@ -2144,7 +2172,7 @@ policy_is_reject_star(const smartlist_t *policy, sa_family_t family)
       return 1;
     }
   } SMARTLIST_FOREACH_END(p);
-  return 1;
+  return default_reject;
 }
 
 /** Write a single address policy to the buf_len byte buffer at buf.  Return
@@ -2339,11 +2367,13 @@ policy_summary_reject(smartlist_t *summary,
 }
 
 /** Add a single exit policy item to our summary:
- *  If it is an accept ignore it unless it is for all IP addresses
- *  ("*"), i.e. it's prefixlen/maskbits is 0, else call
+ *
+ *  If it is an accept, ignore it unless it is for all IP addresses
+ *  ("*", i.e. its prefixlen/maskbits is 0). Otherwise call
  *  policy_summary_accept().
- *  If it's a reject ignore it if it is about one of the private
- *  networks, else call policy_summary_reject().
+ *
+ *  If it is a reject, ignore it if it is about one of the private
+ *  networks. Otherwise call policy_summary_reject().
  */
 static void
 policy_summary_add_item(smartlist_t *summary, addr_policy_t *p)
@@ -2638,7 +2668,7 @@ compare_tor_addr_to_short_policy(const tor_addr_t *addr, uint16_t port,
 {
   int i;
   int found_match = 0;
-  int accept;
+  int accept_;
 
   tor_assert(port != 0);
 
@@ -2658,9 +2688,9 @@ compare_tor_addr_to_short_policy(const tor_addr_t *addr, uint16_t port,
   }
 
   if (found_match)
-    accept = policy->is_accept;
+    accept_ = policy->is_accept;
   else
-    accept = ! policy->is_accept;
+    accept_ = ! policy->is_accept;
 
   /* ???? are these right? -NM */
   /* We should be sure not to return ADDR_POLICY_ACCEPTED in the accept
@@ -2673,7 +2703,7 @@ compare_tor_addr_to_short_policy(const tor_addr_t *addr, uint16_t port,
    *
    * Once microdescriptors can handle addresses in special cases (e.g. if
    * we ever solve ticket 1774), we can provide certainty here. -RD */
-  if (accept)
+  if (accept_)
     return ADDR_POLICY_PROBABLY_ACCEPTED;
   else
     return ADDR_POLICY_REJECTED;
@@ -2814,7 +2844,8 @@ getinfo_helper_policies(control_connection_t *conn,
       return -1;
     }
 
-    if (!options->ExitPolicyRejectPrivate) {
+    if (!options->ExitPolicyRejectPrivate &&
+        !options->ExitPolicyRejectLocalInterfaces) {
       *answer = tor_strdup("");
       return 0;
     }
@@ -2823,16 +2854,22 @@ getinfo_helper_policies(control_connection_t *conn,
     smartlist_t *configured_addresses = smartlist_new();
 
     /* Copy the configured addresses into the tor_addr_t* list */
-    policies_copy_ipv4h_to_smartlist(configured_addresses, me->addr);
-    policies_copy_addr_to_smartlist(configured_addresses, &me->ipv6_addr);
-    policies_copy_outbound_addresses_to_smartlist(configured_addresses,
-                                                  options);
+    if (options->ExitPolicyRejectPrivate) {
+      policies_copy_ipv4h_to_smartlist(configured_addresses, me->addr);
+      policies_copy_addr_to_smartlist(configured_addresses, &me->ipv6_addr);
+    }
+
+    if (options->ExitPolicyRejectLocalInterfaces) {
+      policies_copy_outbound_addresses_to_smartlist(configured_addresses,
+                                                    options);
+    }
 
     policies_parse_exit_policy_reject_private(
-                                            &private_policy_list,
-                                            options->IPv6Exit,
-                                            configured_addresses,
-                                            1, 1);
+      &private_policy_list,
+      options->IPv6Exit,
+      configured_addresses,
+      options->ExitPolicyRejectLocalInterfaces,
+      options->ExitPolicyRejectLocalInterfaces);
     *answer = policy_dump_to_string(private_policy_list, 1, 1);
 
     addr_policy_list_free(private_policy_list);

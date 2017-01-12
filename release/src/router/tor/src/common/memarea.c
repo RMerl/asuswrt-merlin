@@ -131,7 +131,7 @@ alloc_chunk(size_t sz)
 
 /** Release <b>chunk</b> from a memarea. */
 static void
-chunk_free_unchecked(memarea_chunk_t *chunk)
+memarea_chunk_free_unchecked(memarea_chunk_t *chunk)
 {
   CHECK_SENTINEL(chunk);
   tor_free(chunk);
@@ -154,7 +154,7 @@ memarea_drop_all(memarea_t *area)
   memarea_chunk_t *chunk, *next;
   for (chunk = area->first; chunk; chunk = next) {
     next = chunk->next_chunk;
-    chunk_free_unchecked(chunk);
+    memarea_chunk_free_unchecked(chunk);
   }
   area->first = NULL; /*fail fast on */
   tor_free(area);
@@ -170,7 +170,7 @@ memarea_clear(memarea_t *area)
   if (area->first->next_chunk) {
     for (chunk = area->first->next_chunk; chunk; chunk = next) {
       next = chunk->next_chunk;
-      chunk_free_unchecked(chunk);
+      memarea_chunk_free_unchecked(chunk);
     }
     area->first->next_chunk = NULL;
   }

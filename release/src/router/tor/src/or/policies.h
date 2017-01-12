@@ -18,9 +18,10 @@
  */
 #define POLICY_BUF_LEN 72
 
-#define EXIT_POLICY_IPV6_ENABLED   (1 << 0)
-#define EXIT_POLICY_REJECT_PRIVATE (1 << 1)
-#define EXIT_POLICY_ADD_DEFAULT    (1 << 2)
+#define EXIT_POLICY_IPV6_ENABLED             (1 << 0)
+#define EXIT_POLICY_REJECT_PRIVATE           (1 << 1)
+#define EXIT_POLICY_ADD_DEFAULT              (1 << 2)
+#define EXIT_POLICY_REJECT_LOCAL_INTERFACES  (1 << 3)
 
 typedef enum firewall_connection_t {
   FIREWALL_OR_CONNECTION      = 0,
@@ -99,7 +100,8 @@ void addr_policy_append_reject_addr_list(smartlist_t **dest,
                                          const smartlist_t *addrs);
 void policies_set_node_exitpolicy_to_reject_all(node_t *exitrouter);
 int exit_policy_is_general_exit(smartlist_t *policy);
-int policy_is_reject_star(const smartlist_t *policy, sa_family_t family);
+int policy_is_reject_star(const smartlist_t *policy, sa_family_t family,
+                          int reject_by_default);
 char * policy_dump_to_string(const smartlist_t *policy_list,
                              int include_ipv4,
                              int include_ipv6);

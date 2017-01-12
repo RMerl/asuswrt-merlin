@@ -8,6 +8,17 @@
  * \file connection_or.c
  * \brief Functions to handle OR connections, TLS handshaking, and
  * cells on the network.
+ *
+ * An or_connection_t is a subtype of connection_t (as implemented in
+ * connection.c) that uses a TLS connection to send and receive cells on the
+ * Tor network. (By sending and receiving cells connection_or.c, it cooperates
+ * with channeltls.c to implement a the channel interface of channel.c.)
+ *
+ * Every OR connection has an underlying tortls_t object (as implemented in
+ * tortls.c) which it uses as its TLS stream.  It is responsible for
+ * sending and receiving cells over that TLS.
+ *
+ * This module also implements the client side of the v3 Tor link handshake,
  **/
 #include "or.h"
 #include "buffers.h"
@@ -42,10 +53,6 @@
 #include "ext_orport.h"
 #include "scheduler.h"
 
-#ifdef USE_BUFFEREVENTS
-#include <event2/bufferevent_ssl.h>
-#endif
-
 static int connection_tls_finish_handshake(or_connection_t *conn);
 static int connection_or_launch_v3_or_handshake(or_connection_t *conn);
 static int connection_or_process_cells_from_inbuf(or_connection_t *conn);
@@ -65,12 +72,6 @@ static void connection_or_mark_bad_for_new_circs(or_connection_t *or_conn);
  */
 
 static void connection_or_change_state(or_connection_t *conn, uint8_t state);
-
-#ifdef USE_BUFFEREVENTS
-static void connection_or_handle_event_cb(struct bufferevent *bufev,
-                                          short event, void *arg);
-#include <event2/buffer.h>/*XXXX REMOVE */
-#endif
 
 /**************************************************************/
 
@@ -404,8 +405,8 @@ connection_or_change_state(or_connection_t *conn, uint8_t state)
  * be an or_connection_t field, but it got moved to channel_t and we
  * shouldn't maintain two copies. */
 
-int
-connection_or_get_num_circuits(or_connection_t *conn)
+MOCK_IMPL(int,
+connection_or_get_num_circuits, (or_connection_t *conn))
 {
   tor_assert(conn);
 
@@ -565,13 +566,6 @@ connection_or_process_inbuf(or_connection_t *conn)
 
       return ret;
     case OR_CONN_STATE_TLS_SERVER_RENEGOTIATING:
-#ifdef USE_BUFFEREVENTS
-      if (tor_tls_server_got_renegotiate(conn->tls))
-        connection_or_tls_renegotiated_cb(conn->tls, conn);
-      if (conn->base_.marked_for_close)
-        return 0;
-      /* fall through. */
-#endif
     case OR_CONN_STATE_OPEN:
     case OR_CONN_STATE_OR_HANDSHAKING_V2:
     case OR_CONN_STATE_OR_HANDSHAKING_V3:
@@ -584,7 +578,7 @@ connection_or_process_inbuf(or_connection_t *conn)
    * check would otherwise just let data accumulate.  It serves no purpose
    * in 0.2.3.
    *
-   * XXX024 Remove this check once we verify that the above paragraph is
+   * XXXX Remove this check once we verify that the above paragraph is
    * 100% true. */
   if (buf_datalen(conn->base_.inbuf) > MAX_OR_INBUF_WHEN_NONOPEN) {
     log_fn(LOG_PROTOCOL_WARN, LD_NET, "Accumulated too much data (%d bytes) "
@@ -807,27 +801,6 @@ connection_or_update_token_buckets_helper(or_connection_t *conn, int reset,
 
   conn->bandwidthrate = rate;
   conn->bandwidthburst = burst;
-#ifdef USE_BUFFEREVENTS
-  {
-    const struct timeval *tick = tor_libevent_get_one_tick_timeout();
-    struct ev_token_bucket_cfg *cfg, *old_cfg;
-    int64_t rate64 = (((int64_t)rate) * options->TokenBucketRefillInterval)
-      / 1000;
-    /* This can't overflow, since TokenBucketRefillInterval <= 1000,
-     * and rate started out less than INT_MAX. */
-    int rate_per_tick = (int) rate64;
-
-    cfg = ev_token_bucket_cfg_new(rate_per_tick, burst, rate_per_tick,
-                                  burst, tick);
-    old_cfg = conn->bucket_cfg;
-    if (conn->base_.bufev)
-      tor_set_bufferevent_rate_limit(conn->base_.bufev, cfg);
-    if (old_cfg)
-      ev_token_bucket_cfg_free(old_cfg);
-    conn->bucket_cfg = cfg;
-    (void) reset; /* No way to do this with libevent yet. */
-  }
-#else
   if (reset) { /* set up the token buckets to be full */
     conn->read_bucket = conn->write_bucket = burst;
     return;
@@ -838,7 +811,6 @@ connection_or_update_token_buckets_helper(or_connection_t *conn, int reset,
     conn->read_bucket = burst;
   if (conn->write_bucket > burst)
     conn->write_bucket = burst;
-#endif
 }
 
 /** Either our set of relays or our per-conn rate limits have changed.
@@ -935,7 +907,7 @@ connection_or_init_conn_from_address(or_connection_t *conn,
     }
     conn->nickname = tor_strdup(node_get_nickname(r));
     tor_free(conn->base_.address);
-    conn->base_.address = tor_dup_addr(&node_ap.addr);
+    conn->base_.address = tor_addr_to_str_dup(&node_ap.addr);
   } else {
     conn->nickname = tor_malloc(HEX_DIGEST_LEN+2);
     conn->nickname[0] = '$';
@@ -943,7 +915,7 @@ connection_or_init_conn_from_address(or_connection_t *conn,
                   conn->identity_digest, DIGEST_LEN);
 
     tor_free(conn->base_.address);
-    conn->base_.address = tor_dup_addr(addr);
+    conn->base_.address = tor_addr_to_str_dup(addr);
   }
 
   /*
@@ -1282,11 +1254,9 @@ connection_or_connect, (const tor_addr_t *_addr, uint16_t port,
   switch (connection_connect(TO_CONN(conn), conn->base_.address,
                              &addr, port, &socket_error)) {
     case -1:
-      /* If the connection failed immediately, and we're using
-       * a proxy, our proxy is down. Don't blame the Tor server. */
-      if (conn->base_.proxy_state == PROXY_INFANT)
-        entry_guard_register_connect_status(conn->identity_digest,
-                                            0, 1, time(NULL));
+      /* We failed to establish a connection probably because of a local
+       * error. No need to blame the guard in this case. Notify the networking
+       * system of this failure. */
       connection_or_connect_failed(conn,
                                    errno_to_orconn_end_reason(socket_error),
                                    tor_socket_strerror(socket_error));
@@ -1397,40 +1367,14 @@ connection_tls_start_handshake,(or_connection_t *conn, int receiving))
   tor_tls_set_logged_address(conn->tls, // XXX client and relay?
       escaped_safe_str(conn->base_.address));
 
-#ifdef USE_BUFFEREVENTS
-  if (connection_type_uses_bufferevent(TO_CONN(conn))) {
-    const int filtering = get_options()->UseFilteringSSLBufferevents;
-    struct bufferevent *b =
-      tor_tls_init_bufferevent(conn->tls, conn->base_.bufev, conn->base_.s,
-                               receiving, filtering);
-    if (!b) {
-      log_warn(LD_BUG,"tor_tls_init_bufferevent failed. Closing.");
-      return -1;
-    }
-    conn->base_.bufev = b;
-    if (conn->bucket_cfg)
-      tor_set_bufferevent_rate_limit(conn->base_.bufev, conn->bucket_cfg);
-    connection_enable_rate_limiting(TO_CONN(conn));
-
-    connection_configure_bufferevent_callbacks(TO_CONN(conn));
-    bufferevent_setcb(b,
-                      connection_handle_read_cb,
-                      connection_handle_write_cb,
-                      connection_or_handle_event_cb,/* overriding this one*/
-                      TO_CONN(conn));
-  }
-#endif
   connection_start_reading(TO_CONN(conn));
   log_debug(LD_HANDSHAKE,"starting TLS handshake on fd "TOR_SOCKET_T_FORMAT,
             conn->base_.s);
   note_crypto_pk_op(receiving ? TLS_HANDSHAKE_S : TLS_HANDSHAKE_C);
 
-  IF_HAS_BUFFEREVENT(TO_CONN(conn), {
-    /* ???? */;
-  }) ELSE_IF_NO_BUFFEREVENT {
-    if (connection_tls_continue_handshake(conn) < 0)
-      return -1;
-  }
+  if (connection_tls_continue_handshake(conn) < 0)
+    return -1;
+
   return 0;
 }
 
@@ -1518,75 +1462,6 @@ connection_tls_continue_handshake(or_connection_t *conn)
   }
   return 0;
 }
-
-#ifdef USE_BUFFEREVENTS
-static void
-connection_or_handle_event_cb(struct bufferevent *bufev, short event,
-                              void *arg)
-{
-  struct or_connection_t *conn = TO_OR_CONN(arg);
-
-  /* XXXX cut-and-paste code; should become a function. */
-  if (event & BEV_EVENT_CONNECTED) {
-    if (conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING) {
-      if (tor_tls_finish_handshake(conn->tls) < 0) {
-        log_warn(LD_OR, "Problem finishing handshake");
-        connection_or_close_for_error(conn, 0);
-        return;
-      }
-    }
-
-    if (! tor_tls_used_v1_handshake(conn->tls)) {
-      if (!tor_tls_is_server(conn->tls)) {
-        if (conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING) {
-          if (connection_or_launch_v3_or_handshake(conn) < 0)
-            connection_or_close_for_error(conn, 0);
-        }
-      } else {
-        const int handshakes = tor_tls_get_num_server_handshakes(conn->tls);
-
-        if (handshakes == 1) {
-          /* v2 or v3 handshake, as a server. Only got one handshake, so
-           * wait for the next one. */
-          tor_tls_set_renegotiate_callback(conn->tls,
-                                           connection_or_tls_renegotiated_cb,
-                                           conn);
-          connection_or_change_state(conn,
-              OR_CONN_STATE_TLS_SERVER_RENEGOTIATING);
-        } else if (handshakes == 2) {
-          /* v2 handshake, as a server.  Two handshakes happened already,
-           * so we treat renegotiation as done.
-           */
-          connection_or_tls_renegotiated_cb(conn->tls, conn);
-        } else if (handshakes > 2) {
-          log_warn(LD_OR, "More than two handshakes done on connection. "
-                   "Closing.");
-          connection_or_close_for_error(conn, 0);
-        } else {
-          log_warn(LD_BUG, "We were unexpectedly told that a connection "
-                   "got %d handshakes. Closing.", handshakes);
-          connection_or_close_for_error(conn, 0);
-        }
-        return;
-      }
-    }
-    connection_watch_events(TO_CONN(conn), READ_EVENT|WRITE_EVENT);
-    if (connection_tls_finish_handshake(conn) < 0)
-      connection_or_close_for_error(conn, 0); /* ???? */
-    return;
-  }
-
-  if (event & BEV_EVENT_ERROR) {
-    unsigned long err;
-    while ((err = bufferevent_get_openssl_error(bufev))) {
-      tor_tls_log_one_error(conn->tls, err, LOG_WARN, LD_OR,
-                            "handshaking (with bufferevent)");
-    }
-  }
-
-  connection_handle_event_cb(bufev, event, arg);
-}
-#endif
 
 /** Return 1 if we initiated this connection, or 0 if it started
  * out as an incoming connection.
@@ -2005,11 +1880,7 @@ connection_or_set_state_open(or_connection_t *conn)
 
   or_handshake_state_free(conn->handshake_state);
   conn->handshake_state = NULL;
-  IF_HAS_BUFFEREVENT(TO_CONN(conn), {
-    connection_watch_events(TO_CONN(conn), READ_EVENT|WRITE_EVENT);
-  }) ELSE_IF_NO_BUFFEREVENT {
-    connection_start_reading(TO_CONN(conn));
-  }
+  connection_start_reading(TO_CONN(conn));
 
   return 0;
 }
@@ -2069,12 +1940,7 @@ static int
 connection_fetch_var_cell_from_buf(or_connection_t *or_conn, var_cell_t **out)
 {
   connection_t *conn = TO_CONN(or_conn);
-  IF_HAS_BUFFEREVENT(conn, {
-    struct evbuffer *input = bufferevent_get_input(conn->bufev);
-    return fetch_var_cell_from_evbuffer(input, out, or_conn->link_proto);
-  }) ELSE_IF_NO_BUFFEREVENT {
-    return fetch_var_cell_from_buf(conn->inbuf, out, or_conn->link_proto);
-  }
+  return fetch_var_cell_from_buf(conn->inbuf, out, or_conn->link_proto);
 }
 
 /** Process cells from <b>conn</b>'s inbuf.
@@ -2277,14 +2143,13 @@ connection_or_send_certs_cell(or_connection_t *conn)
   var_cell_t *cell;
   size_t cell_len;
   ssize_t pos;
-  int server_mode;
 
   tor_assert(conn->base_.state == OR_CONN_STATE_OR_HANDSHAKING_V3);
 
   if (! conn->handshake_state)
     return -1;
-  server_mode = ! conn->handshake_state->started_here;
-  if (tor_tls_get_my_certs(server_mode, &link_cert, &id_cert) < 0)
+  const int conn_in_server_mode = ! conn->handshake_state->started_here;
+  if (tor_tls_get_my_certs(conn_in_server_mode, &link_cert, &id_cert) < 0)
     return -1;
   tor_x509_cert_get_der(link_cert, &link_encoded, &link_len);
   tor_x509_cert_get_der(id_cert, &id_encoded, &id_len);
@@ -2297,7 +2162,7 @@ connection_or_send_certs_cell(or_connection_t *conn)
   cell->payload[0] = 2;
   pos = 1;
 
-  if (server_mode)
+  if (conn_in_server_mode)
     cell->payload[pos] = OR_CERT_TYPE_TLS_LINK; /* Link cert  */
   else
     cell->payload[pos] = OR_CERT_TYPE_AUTH_1024; /* client authentication */

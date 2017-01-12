@@ -76,6 +76,14 @@ static const node_t *choose_random_entry_impl(cpath_build_state_t *state,
                                               int *n_options_out);
 static int num_bridges_usable(void);
 
+/* Default number of entry guards in the case where the NumEntryGuards
+ * consensus parameter is not set */
+#define DEFAULT_N_GUARDS 1
+/* Minimum and maximum number of entry guards (in case the NumEntryGuards
+ * consensus parameter is set). */
+#define MIN_N_GUARDS 1
+#define MAX_N_GUARDS 10
+
 /** Return the list of entry guards, creating it if necessary. */
 const smartlist_t *
 get_entry_guards(void)
@@ -488,7 +496,8 @@ decide_num_guards(const or_options_t *options, int for_directory)
     return options->NumEntryGuards;
 
   /* Use the value from the consensus, or 3 if no guidance. */
-  return networkstatus_get_param(NULL, "NumEntryGuards", 3, 1, 10);
+  return networkstatus_get_param(NULL, "NumEntryGuards", DEFAULT_N_GUARDS,
+                                 MIN_N_GUARDS, MAX_N_GUARDS);
 }
 
 /** If the use of entry guards is configured, choose more entry guards
@@ -722,8 +731,9 @@ entry_guards_compute_status(const or_options_t *options, time_t now)
  *
  * If <b>mark_relay_status</b>, also call router_set_status() on this
  * relay.
- *
- * XXX024 change succeeded and mark_relay_status into 'int flags'.
+ */
+/* XXX We could change succeeded and mark_relay_status into 'int flags'.
+ * Too many boolean arguments is a recipe for confusion.
  */
 int
 entry_guard_register_connect_status(const char *digest, int succeeded,
@@ -1243,7 +1253,7 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
       } else {
         strlcpy(node->nickname, smartlist_get(args,0), MAX_NICKNAME_LEN+1);
         if (base16_decode(node->identity, DIGEST_LEN, smartlist_get(args,1),
-                          strlen(smartlist_get(args,1)))<0) {
+                          strlen(smartlist_get(args,1))) != DIGEST_LEN) {
           *msg = tor_strdup("Unable to parse entry nodes: "
                             "Bad hex digest for EntryGuard");
         }
@@ -1299,8 +1309,9 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
         log_warn(LD_BUG, "EntryGuardAddedBy line is not long enough.");
         continue;
       }
-      if (base16_decode(d, sizeof(d), line->value, HEX_DIGEST_LEN)<0 ||
-          line->value[HEX_DIGEST_LEN] != ' ') {
+      if (base16_decode(d, sizeof(d),
+                        line->value, HEX_DIGEST_LEN) != sizeof(d) ||
+                        line->value[HEX_DIGEST_LEN] != ' ') {
         log_warn(LD_BUG, "EntryGuardAddedBy line %s does not begin with "
                  "hex digest", escaped(line->value));
         continue;
@@ -1444,7 +1455,6 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
        }
      } else {
        if (state_version) {
-         time_t now = time(NULL);
          e->chosen_on_date = crypto_rand_time_range(now - 3600*24*30, now);
          e->chosen_by_version = tor_strdup(state_version);
        }
@@ -1466,7 +1476,7 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
     }
     entry_guards = new_entry_guards;
     entry_guards_dirty = 0;
-    /* XXX024 hand new_entry_guards to this func, and move it up a
+    /* XXX hand new_entry_guards to this func, and move it up a
      * few lines, so we don't have to re-dirty it */
     if (remove_obsolete_entry_guards(now))
       entry_guards_dirty = 1;
@@ -2022,6 +2032,7 @@ bridge_add_from_config(bridge_line_t *bridge_line)
   if (bridge_line->transport_name)
     b->transport_name = bridge_line->transport_name;
   b->fetch_status.schedule = DL_SCHED_BRIDGE;
+  b->fetch_status.backoff = DL_SCHED_RANDOM_EXPONENTIAL;
   b->socks_args = bridge_line->socks_args;
   if (!bridge_list)
     bridge_list = smartlist_new();
@@ -2410,6 +2421,44 @@ num_bridges_usable(void)
   tor_assert(get_options()->UseBridges);
   (void) choose_random_entry_impl(NULL, 0, 0, &n_options);
   return n_options;
+}
+
+/** Return a smartlist containing all bridge identity digests */
+MOCK_IMPL(smartlist_t *,
+list_bridge_identities, (void))
+{
+  smartlist_t *result = NULL;
+  char *digest_tmp;
+
+  if (get_options()->UseBridges && bridge_list) {
+    result = smartlist_new();
+
+    SMARTLIST_FOREACH_BEGIN(bridge_list, bridge_info_t *, b) {
+      digest_tmp = tor_malloc(DIGEST_LEN);
+      memcpy(digest_tmp, b->identity, DIGEST_LEN);
+      smartlist_add(result, digest_tmp);
+    } SMARTLIST_FOREACH_END(b);
+  }
+
+  return result;
+}
+
+/** Get the download status for a bridge descriptor given its identity */
+MOCK_IMPL(download_status_t *,
+get_bridge_dl_status_by_id, (const char *digest))
+{
+  download_status_t *dl = NULL;
+
+  if (digest && get_options()->UseBridges && bridge_list) {
+    SMARTLIST_FOREACH_BEGIN(bridge_list, bridge_info_t *, b) {
+      if (tor_memeq(digest, b->identity, DIGEST_LEN)) {
+        dl = &(b->fetch_status);
+        break;
+      }
+    } SMARTLIST_FOREACH_END(b);
+  }
+
+  return dl;
 }
 
 /** Return 1 if we have at least one descriptor for an entry guard

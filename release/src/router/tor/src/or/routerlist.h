@@ -29,7 +29,7 @@ int trusted_dirs_reload_certs(void);
 #define TRUSTED_DIRS_CERTS_SRC_FROM_VOTE 4
 
 int trusted_dirs_load_certs_from_string(const char *contents, int source,
-                                        int flush);
+                                        int flush, const char *source_dir);
 void trusted_dirs_flush_certs_to_disk(void);
 authority_cert_t *authority_cert_get_newest_by_id(const char *id_digest);
 authority_cert_t *authority_cert_get_by_sk_digest(const char *sk_digest);
@@ -38,7 +38,8 @@ authority_cert_t *authority_cert_get_by_digests(const char *id_digest,
 void authority_cert_get_all(smartlist_t *certs_out);
 void authority_cert_dl_failed(const char *id_digest,
                               const char *signing_key_digest, int status);
-void authority_certs_fetch_missing(networkstatus_t *status, time_t now);
+void authority_certs_fetch_missing(networkstatus_t *status, time_t now,
+                                   const char *dir_hint);
 int router_reload_router_list(void);
 int authority_cert_dl_looks_uncertain(const char *id_digest);
 const smartlist_t *router_get_trusted_dir_servers(void);
@@ -51,11 +52,13 @@ dir_server_t *router_get_trusteddirserver_by_digest(const char *d);
 dir_server_t *router_get_fallback_dirserver_by_digest(
                                                    const char *digest);
 int router_digest_is_fallback_dir(const char *digest);
-dir_server_t *trusteddirserver_get_by_v3_auth_digest(const char *d);
+MOCK_DECL(dir_server_t *, trusteddirserver_get_by_v3_auth_digest,
+          (const char *d));
 const routerstatus_t *router_pick_trusteddirserver(dirinfo_type_t type,
                                                    int flags);
 const routerstatus_t *router_pick_fallback_dirserver(dirinfo_type_t type,
                                                      int flags);
+int router_skip_or_reachability(const or_options_t *options, int try_ip_pref);
 int router_get_my_share_of_directory_requests(double *v3_share_out);
 void router_reset_status_download_failures(void);
 int routers_have_same_or_addrs(const routerinfo_t *r1, const routerinfo_t *r2);
@@ -102,6 +105,14 @@ void routerlist_remove(routerlist_t *rl, routerinfo_t *ri, int make_old,
                        time_t now);
 void routerlist_free_all(void);
 void routerlist_reset_warnings(void);
+
+MOCK_DECL(smartlist_t *, list_authority_ids_with_downloads, (void));
+MOCK_DECL(download_status_t *, id_only_download_status_for_authority_id,
+          (const char *digest));
+MOCK_DECL(smartlist_t *, list_sk_digests_for_authority_id,
+          (const char *digest));
+MOCK_DECL(download_status_t *, download_status_for_authority_id_and_sk,
+    (const char *id_digest, const char *sk_digest));
 
 static int WRA_WAS_ADDED(was_router_added_t s);
 static int WRA_WAS_OUTDATED(was_router_added_t s);
@@ -195,6 +206,9 @@ int routerinfo_incompatible_with_extrainfo(const crypto_pk_t *ri,
                                            extrainfo_t *ei,
                                            signed_descriptor_t *sd,
                                            const char **msg);
+int routerinfo_has_curve25519_onion_key(const routerinfo_t *ri);
+int routerstatus_version_supports_extend2_cells(const routerstatus_t *rs,
+                                                int allow_unknown_versions);
 
 void routerlist_assert_ok(const routerlist_t *rl);
 const char *esc_router_info(const routerinfo_t *router);
@@ -217,17 +231,11 @@ int hex_digest_nickname_matches(const char *hexdigest,
                                 const char *nickname, int is_named);
 
 #ifdef ROUTERLIST_PRIVATE
-/** Helper type for choosing routers by bandwidth: contains a union of
- * double and uint64_t. Before we call scale_array_elements_to_u64, it holds
- * a double; after, it holds a uint64_t. */
-typedef union u64_dbl_t {
-  uint64_t u64;
-  double dbl;
-} u64_dbl_t;
-
-STATIC int choose_array_element_by_weight(const u64_dbl_t *entries,
+STATIC int choose_array_element_by_weight(const uint64_t *entries,
                                           int n_entries);
-STATIC void scale_array_elements_to_u64(u64_dbl_t *entries, int n_entries,
+STATIC void scale_array_elements_to_u64(uint64_t *entries_out,
+                                        const double *entries_in,
+                                        int n_entries,
                                         uint64_t *total_out);
 STATIC const routerstatus_t *router_pick_directory_server_impl(
                                            dirinfo_type_t auth, int flags,

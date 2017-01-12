@@ -79,24 +79,21 @@ AC_DEFUN([AC_PC_FROM_UCONTEXT],
      if ! $pc_field_found; then
        # Prefer sys/ucontext.h to ucontext.h, for OS X's sake.
        if test "x$ac_cv_header_cygwin_signal_h" = xyes; then
-         AC_TRY_COMPILE([#define _GNU_SOURCE 1
-                         #include <cygwin/signal.h>],
+         AC_TRY_COMPILE([#include <cygwin/signal.h>],
                         [ucontext_t u; return u.$pc_field == 0;],
                         AC_DEFINE_UNQUOTED(PC_FROM_UCONTEXT, $pc_field,
                                            How to access the PC from a struct ucontext)
                         AC_MSG_RESULT([$pc_field])
                         pc_field_found=true)
        elif test "x$ac_cv_header_sys_ucontext_h" = xyes; then
-         AC_TRY_COMPILE([#define _GNU_SOURCE 1
-                         #include <sys/ucontext.h>],
+         AC_TRY_COMPILE([#include <sys/ucontext.h>],
                         [ucontext_t u; return u.$pc_field == 0;],
                         AC_DEFINE_UNQUOTED(PC_FROM_UCONTEXT, $pc_field,
                                            How to access the PC from a struct ucontext)
                         AC_MSG_RESULT([$pc_field])
                         pc_field_found=true)
        elif test "x$ac_cv_header_ucontext_h" = xyes; then
-         AC_TRY_COMPILE([#define _GNU_SOURCE 1
-                         #include <ucontext.h>],
+         AC_TRY_COMPILE([#include <ucontext.h>],
                         [ucontext_t u; return u.$pc_field == 0;],
                         AC_DEFINE_UNQUOTED(PC_FROM_UCONTEXT, $pc_field,
                                            How to access the PC from a struct ucontext)

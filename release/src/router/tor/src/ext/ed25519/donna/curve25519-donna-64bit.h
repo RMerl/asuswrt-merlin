@@ -8,9 +8,9 @@
 
 typedef uint64_t bignum25519[5];
 
-static const uint64_t reduce_mask_40 = ((uint64_t)1 << 40) - 1;
+//static const uint64_t reduce_mask_40 = ((uint64_t)1 << 40) - 1;
 static const uint64_t reduce_mask_51 = ((uint64_t)1 << 51) - 1;
-static const uint64_t reduce_mask_56 = ((uint64_t)1 << 56) - 1;
+//static const uint64_t reduce_mask_56 = ((uint64_t)1 << 56) - 1;
 
 /* out = in */
 DONNA_INLINE static void

@@ -10,6 +10,16 @@
 
 
 #include "ed25519-donna-portable.h"
+#include "orconfig.h"
+
+#ifdef HAVE_CFLAG_WOVERLENGTH_STRINGS
+/* Some of the ASM here is very long strings. */
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#else
+#pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+#endif
 
 #if defined(ED25519_SSE2)
 #else

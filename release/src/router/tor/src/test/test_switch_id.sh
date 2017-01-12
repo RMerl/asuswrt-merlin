@@ -10,6 +10,10 @@ if test "`id -u nobody`" = ""; then
     exit 1
 fi
 
+if test "$OVERRIDE_GCDA_PERMISSIONS_HACK" = "yes"; then
+  find src -type f -name '*gcda' -print0 | xargs -0 chmod 0666
+fi
+
 "${builddir:-.}/src/test/test-switch-id" nobody setuid          || exit 1
 "${builddir:-.}/src/test/test-switch-id" nobody root-bind-low   || exit 1
 "${builddir:-.}/src/test/test-switch-id" nobody setuid-strict   || exit 1
@@ -19,6 +23,9 @@ fi
 "${builddir:-.}/src/test/test-switch-id" nobody have-caps       || exit 1
 "${builddir:-.}/src/test/test-switch-id" nobody setuid-keepcaps || exit 1
 
+if test "$OVERRIDE_GCDA_PERMISSIONS_HACK" = "yes"; then
+    find src -type f -name '*gcda' -print0 | xargs -0 chmod 0644
+fi
 
 echo "All okay"
 

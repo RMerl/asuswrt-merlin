@@ -22,6 +22,7 @@
 /* for the correct alias to struct stat */
 #include <sys/stat.h>
 #endif
+#include "util_bug.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -32,41 +33,6 @@
 #ifndef O_NOFOLLOW
 #define O_NOFOLLOW 0
 #endif
-
-/* Replace assert() with a variant that sends failures to the log before
- * calling assert() normally.
- */
-#ifdef NDEBUG
-/* Nobody should ever want to build with NDEBUG set.  99% of our asserts will
- * be outside the critical path anyway, so it's silly to disable bug-checking
- * throughout the entire program just because a few asserts are slowing you
- * down.  Profile, optimize the critical path, and keep debugging on.
- *
- * And I'm not just saying that because some of our asserts check
- * security-critical properties.
- */
-#error "Sorry; we don't support building with NDEBUG."
-#endif
-
-/* Sometimes we don't want to use assertions during branch coverage tests; it
- * leads to tons of unreached branches which in reality are only assertions we
- * didn't hit. */
-#if defined(TOR_UNIT_TESTS) && defined(DISABLE_ASSERTS_IN_UNIT_TESTS)
-#define tor_assert(a) STMT_BEGIN                                        \
-  (void)(a);                                                            \
-  STMT_END
-#else
-/** Like assert(3), but send assertion failures to the log as well as to
- * stderr. */
-#define tor_assert(expr) STMT_BEGIN                                     \
-  if (PREDICT_UNLIKELY(!(expr))) {                                      \
-    tor_assertion_failed_(SHORT_FILE__, __LINE__, __func__, #expr);     \
-    abort();                                                            \
-  } STMT_END
-#endif
-
-void tor_assertion_failed_(const char *fname, unsigned int line,
-                           const char *func, const char *expr);
 
 /* If we're building with dmalloc, we want all of our memory allocation
  * functions to take an extra file/line pair of arguments.  If not, not.
@@ -80,11 +46,6 @@ void tor_assertion_failed_(const char *fname, unsigned int line,
 #define DMALLOC_PARAMS
 #define DMALLOC_ARGS
 #endif
-
-/** Define this if you want Tor to crash when any problem comes up,
- * so you can get a coredump and track things down. */
-// #define tor_fragile_assert() tor_assert(0)
-#define tor_fragile_assert()
 
 /* Memory management */
 void *tor_malloc_(size_t size DMALLOC_PARAMS) ATTR_MALLOC;
@@ -100,6 +61,8 @@ void *tor_memdup_(const void *mem, size_t len DMALLOC_PARAMS)
 void *tor_memdup_nulterm_(const void *mem, size_t len DMALLOC_PARAMS)
   ATTR_MALLOC ATTR_NONNULL((1));
 void tor_free_(void *mem);
+uint64_t tor_htonll(uint64_t a);
+uint64_t tor_ntohll(uint64_t a);
 #ifdef USE_DMALLOC
 extern int dmalloc_free(const char *file, const int line, void *pnt,
                         const int func_id);
@@ -119,7 +82,7 @@ extern int dmalloc_free(const char *file, const int line, void *pnt,
  */
 #define tor_free(p) STMT_BEGIN                                 \
     if (PREDICT_LIKELY((p)!=NULL)) {                           \
-      free(p);                                                 \
+      raw_free(p);                                             \
       (p)=NULL;                                                \
     }                                                          \
   STMT_END
@@ -135,6 +98,14 @@ extern int dmalloc_free(const char *file, const int line, void *pnt,
 #define tor_strndup(s, n)      tor_strndup_(s, n DMALLOC_ARGS)
 #define tor_memdup(s, n)       tor_memdup_(s, n DMALLOC_ARGS)
 #define tor_memdup_nulterm(s, n)       tor_memdup_nulterm_(s, n DMALLOC_ARGS)
+
+/* Aliases for the underlying system malloc/realloc/free. Only use
+ * them to indicate "I really want the underlying system function, I know
+ * what I'm doing." */
+#define raw_malloc  malloc
+#define raw_realloc realloc
+#define raw_free    free
+#define raw_strdup  strdup
 
 void tor_log_mallinfo(int severity);
 
@@ -184,12 +155,12 @@ uint64_t round_to_power_of_2(uint64_t u64);
 unsigned round_to_next_multiple_of(unsigned number, unsigned divisor);
 uint32_t round_uint32_to_next_multiple_of(uint32_t number, uint32_t divisor);
 uint64_t round_uint64_to_next_multiple_of(uint64_t number, uint64_t divisor);
-int64_t round_int64_to_next_multiple_of(int64_t number, int64_t divisor);
 int64_t sample_laplace_distribution(double mu, double b, double p);
 int64_t add_laplace_noise(int64_t signal, double random, double delta_f,
                           double epsilon);
 int n_bits_set_u8(uint8_t v);
 int64_t clamp_double_to_int64(double number);
+void simplify_fraction64(uint64_t *numer, uint64_t *denom);
 
 /* Compute the CEIL of <b>a</b> divided by <b>b</b>, for nonnegative <b>a</b>
  * and positive <b>b</b>.  Works on integer types only. Not defined if a+b can
@@ -330,6 +301,7 @@ typedef struct ratelim_t {
 } ratelim_t;
 
 #define RATELIM_INIT(r) { (r), 0, 0 }
+#define RATELIM_TOOMANY (16*1000*1000)
 
 char *rate_limit_log(ratelim_t *lim, time_t now);
 
@@ -349,6 +321,8 @@ const char *stream_status_to_string(enum stream_status stream_status);
 
 enum stream_status get_string_from_pipe(FILE *stream, char *buf, size_t count);
 
+MOCK_DECL(int,tor_unlink,(const char *pathname));
+
 /** Return values from file_status(); see that function's documentation
  * for details. */
 typedef enum { FN_ERROR, FN_NOENT, FN_FILE, FN_DIR, FN_EMPTY } file_status_t;
@@ -364,8 +338,9 @@ typedef unsigned int cpd_check_t;
 #define CPD_GROUP_READ           (1u << 3)
 #define CPD_CHECK_MODE_ONLY      (1u << 4)
 #define CPD_RELAX_DIRMODE_CHECK  (1u << 5)
-int check_private_dir(const char *dirname, cpd_check_t check,
-                      const char *effective_user);
+MOCK_DECL(int, check_private_dir,
+    (const char *dirname, cpd_check_t check,
+     const char *effective_user));
 
 #define OPEN_FLAGS_REPLACE (O_WRONLY|O_CREAT|O_TRUNC)
 #define OPEN_FLAGS_APPEND (O_WRONLY|O_CREAT|O_APPEND)
@@ -378,7 +353,8 @@ FILE *start_writing_to_stdio_file(const char *fname, int open_flags, int mode,
 FILE *fdopen_file(open_file_t *file_data);
 int finish_writing_to_file(open_file_t *file_data);
 int abort_writing_to_file(open_file_t *file_data);
-int write_str_to_file(const char *fname, const char *str, int bin);
+MOCK_DECL(int,
+write_str_to_file,(const char *fname, const char *str, int bin));
 MOCK_DECL(int,
 write_bytes_to_file,(const char *fname, const char *str, size_t len,
                      int bin));
@@ -403,18 +379,18 @@ int write_bytes_to_new_file(const char *fname, const char *str, size_t len,
 #ifndef _WIN32
 struct stat;
 #endif
-char *read_file_to_str(const char *filename, int flags, struct stat *stat_out)
-  ATTR_MALLOC;
+MOCK_DECL_ATTR(char *, read_file_to_str,
+               (const char *filename, int flags, struct stat *stat_out),
+               ATTR_MALLOC);
 char *read_file_to_str_until_eof(int fd, size_t max_bytes_to_read,
                                  size_t *sz_out)
   ATTR_MALLOC;
+const char *unescape_string(const char *s, char **result, size_t *size_out);
 const char *parse_config_line_from_str_verbose(const char *line,
                                        char **key_out, char **value_out,
                                        const char **err_out);
-#define parse_config_line_from_str(line,key_out,value_out) \
-  parse_config_line_from_str_verbose((line),(key_out),(value_out),NULL)
 char *expand_filename(const char *filename);
-struct smartlist_t *tor_listdir(const char *dirname);
+MOCK_DECL(struct smartlist_t *, tor_listdir, (const char *dirname));
 int path_is_relative(const char *filename);
 
 /* Process helpers */
@@ -573,6 +549,10 @@ STATIC int format_helper_exit_status(unsigned char child_state,
                         1 + sizeof(int) * 2 + 1)
 #endif
 
+#endif
+
+#ifdef TOR_UNIT_TESTS
+int size_mul_check__(const size_t x, const size_t y);
 #endif
 
 #define ARRAY_LENGTH(x) ((sizeof(x)) / sizeof(x[0]))

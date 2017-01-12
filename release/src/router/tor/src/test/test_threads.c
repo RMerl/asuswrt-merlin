@@ -87,11 +87,6 @@ test_threads_basic(void *arg)
   char *s1 = NULL, *s2 = NULL;
   int done = 0, timedout = 0;
   time_t started;
-#ifndef _WIN32
-  struct timeval tv;
-  tv.tv_sec=0;
-  tv.tv_usec=100*1000;
-#endif
   (void) arg;
   tt_int_op(tor_threadlocal_init(&count), OP_EQ, 0);
 
@@ -120,10 +115,8 @@ test_threads_basic(void *arg)
       timedout = done = 1;
     }
     tor_mutex_release(thread_test_mutex_);
-#ifndef _WIN32
     /* Prevent the main thread from starving the worker threads. */
-    select(0, NULL, NULL, NULL, &tv);
-#endif
+    tor_sleep_msec(10);
   }
   tor_mutex_acquire(thread_test_start1_);
   tor_mutex_release(thread_test_start1_);
@@ -286,16 +279,7 @@ test_threads_conditionvar(void *arg)
   if (!timeout) {
     tt_int_op(ti->n_shutdown, ==, 4);
   } else {
-#ifdef _WIN32
-    Sleep(500); /* msec */
-#elif defined(HAVE_USLEEP)
-    usleep(500*1000); /* usec */
-#else
-    {
-      struct tv = { 0, 500*1000 };
-      select(0, NULL, NULL, NULL, &tv);
-    }
-#endif
+    tor_sleep_msec(200);
     tor_mutex_acquire(ti->mutex);
     tt_int_op(ti->n_shutdown, ==, 2);
     tt_int_op(ti->n_timeouts, ==, 2);

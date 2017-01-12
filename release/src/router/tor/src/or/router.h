@@ -91,7 +91,8 @@ const uint8_t *router_get_my_id_digest(void);
 int router_extrainfo_digest_is_me(const char *digest);
 int router_is_me(const routerinfo_t *router);
 MOCK_DECL(int,router_pick_published_address,(const or_options_t *options,
-                                             uint32_t *addr));
+                                             uint32_t *addr,
+                                             int cache_only));
 int router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e);
 int router_rebuild_descriptor(int force);
 char *router_dump_router_to_string(routerinfo_t *router,

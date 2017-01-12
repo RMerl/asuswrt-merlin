@@ -69,15 +69,16 @@ static int n_skipped = 0; /**< Number of tests that have been skipped. */
 static int opt_forked = 0; /**< True iff we're called from inside a win32 fork*/
 static int opt_nofork = 0; /**< Suppress calls to fork() for debugging. */
 static int opt_verbosity = 1; /**< -==quiet,0==terse,1==normal,2==verbose */
-const char *verbosity_flag = "";
+static const char *verbosity_flag = "";
 
-const struct testlist_alias_t *cfg_aliases=NULL;
+static const struct testlist_alias_t *cfg_aliases=NULL;
 
 enum outcome { SKIP=2, OK=1, FAIL=0 };
 static enum outcome cur_test_outcome = 0;
-const char *cur_test_prefix = NULL; /**< prefix of the current test group */
+/** prefix of the current test group */
+static const char *cur_test_prefix = NULL;
 /** Name of the current test, if we haven't logged is yet. Used for --quiet */
-const char *cur_test_name = NULL;
+static const char *cur_test_name = NULL;
 
 #ifdef _WIN32
 /* Copy of argv[0] for win32. */

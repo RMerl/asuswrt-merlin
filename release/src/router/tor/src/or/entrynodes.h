@@ -179,5 +179,9 @@ guard_get_guardfraction_bandwidth(guardfraction_bandwidth_t *guardfraction_bw,
                                   int orig_bandwidth,
                                   uint32_t guardfraction_percentage);
 
+MOCK_DECL(smartlist_t *, list_bridge_identities, (void));
+MOCK_DECL(download_status_t *, get_bridge_dl_status_by_id,
+          (const char *digest));
+
 #endif
 

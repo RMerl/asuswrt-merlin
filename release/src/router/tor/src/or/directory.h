@@ -114,9 +114,15 @@ static inline int
 download_status_is_ready(download_status_t *dls, time_t now,
                          int max_failures)
 {
-  int under_failure_limit = (dls->n_download_failures <= max_failures
-                             && dls->n_download_attempts <= max_failures);
-  return (under_failure_limit && dls->next_attempt_at <= now);
+  if (dls->backoff == DL_SCHED_DETERMINISTIC) {
+    /* Deterministic schedules can hit an endpoint; exponential backoff
+     * schedules just wait longer and longer. */
+    int under_failure_limit = (dls->n_download_failures <= max_failures
+                               && dls->n_download_attempts <= max_failures);
+    if (!under_failure_limit)
+      return 0;
+  }
+  return dls->next_attempt_at <= now;
 }
 
 static void download_status_mark_impossible(download_status_t *dl);
@@ -132,12 +138,15 @@ int download_status_get_n_failures(const download_status_t *dls);
 int download_status_get_n_attempts(const download_status_t *dls);
 time_t download_status_get_next_attempt_at(const download_status_t *dls);
 
+/* Yes, these two functions are confusingly similar.
+ * Let's sort that out in #20077. */
+int purpose_needs_anonymity(uint8_t dir_purpose, uint8_t router_purpose);
+int is_sensitive_dir_purpose(uint8_t dir_purpose);
+
 #ifdef TOR_UNIT_TESTS
 /* Used only by directory.c and test_dir.c */
 
 STATIC int parse_http_url(const char *headers, char **url);
-STATIC int purpose_needs_anonymity(uint8_t dir_purpose,
-                                   uint8_t router_purpose);
 STATIC dirinfo_type_t dir_fetch_type(int dir_purpose, int router_purpose,
                                      const char *resource);
 STATIC int directory_handle_command_get(dir_connection_t *conn,
@@ -146,6 +155,7 @@ STATIC int directory_handle_command_get(dir_connection_t *conn,
                                         size_t req_body_len);
 STATIC int download_status_schedule_get_delay(download_status_t *dls,
                                               const smartlist_t *schedule,
+                                              int min_delay, int max_delay,
                                               time_t now);
 
 STATIC char* authdir_type_to_string(dirinfo_type_t auth);
@@ -154,6 +164,11 @@ STATIC int should_use_directory_guards(const or_options_t *options);
 STATIC zlib_compression_level_t choose_compression_level(ssize_t n_bytes);
 STATIC const smartlist_t *find_dl_schedule(download_status_t *dls,
                                            const or_options_t *options);
+STATIC void find_dl_min_and_max_delay(download_status_t *dls,
+                                      const or_options_t *options,
+                                      int *min, int *max);
+STATIC int next_random_exponential_delay(int delay, int max_delay);
+
 #endif
 
 #endif

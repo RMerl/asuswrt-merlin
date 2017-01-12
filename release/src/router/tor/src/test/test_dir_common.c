@@ -21,13 +21,6 @@ networkstatus_t * dir_common_add_rs_and_parse(networkstatus_t *vote,
                             crypto_pk_t *sign_skey, int *n_vrs,
                             time_t now, int clear_rl);
 
-extern const char AUTHORITY_CERT_1[];
-extern const char AUTHORITY_SIGNKEY_1[];
-extern const char AUTHORITY_CERT_2[];
-extern const char AUTHORITY_SIGNKEY_2[];
-extern const char AUTHORITY_CERT_3[];
-extern const char AUTHORITY_SIGNKEY_3[];
-
 /** Initialize and set auth certs and keys
  * Returns 0 on success, -1 on failure. Clean up handled by caller.
  */
@@ -96,6 +89,7 @@ dir_common_gen_routerstatus_for_v3ns(int idx, time_t now)
       /* all flags but running and v2dir cleared */
       rs->is_flagged_running = 1;
       rs->is_v2_dir = 1;
+      rs->is_valid = 1; /* xxxxx */
       break;
     case 1:
       /* Generate the second routerstatus. */

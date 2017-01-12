@@ -188,7 +188,7 @@ ge25519_multi_scalarmult_vartime(ge25519 *r, batch_heap *heap, size_t count) {
 }
 
 /* not actually used for anything other than testing */
-unsigned char batch_point_buffer[3][32];
+static unsigned char batch_point_buffer[3][32];
 
 static int
 ge25519_is_neutral_vartime(const ge25519 *p) {

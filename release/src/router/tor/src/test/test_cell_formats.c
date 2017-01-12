@@ -882,8 +882,8 @@ test_cfmt_resolved_cells(void *arg)
     memset(&rh, 0, sizeof(rh));                 \
   } while (0)
 #define CLEAR_ADDRS() do {                              \
-    SMARTLIST_FOREACH(addrs, address_ttl_t *, a,        \
-                      address_ttl_free(a); );           \
+    SMARTLIST_FOREACH(addrs, address_ttl_t *, aa_,      \
+                      address_ttl_free(aa_); );         \
     smartlist_clear(addrs);                             \
   } while (0)
 #define SET_CELL(s) do {                                                \

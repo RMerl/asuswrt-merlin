@@ -48,7 +48,7 @@ do_getpass(const char *prompt, char *buf, size_t buflen,
     size_t p2len = strlen(prompt) + 1;
     if (p2len < sizeof(msg))
       p2len = sizeof(msg);
-    prompt2 = tor_malloc(strlen(prompt)+1);
+    prompt2 = tor_malloc(p2len);
     memset(prompt2, ' ', p2len);
     memcpy(prompt2 + p2len - sizeof(msg), msg, sizeof(msg));
 
@@ -115,20 +115,20 @@ read_encrypted_secret_key(ed25519_secret_key_t *out,
 
   while (1) {
     ssize_t pwlen =
-      do_getpass("Enter pasphrase for master key:", pwbuf, sizeof(pwbuf), 0,
+      do_getpass("Enter passphrase for master key:", pwbuf, sizeof(pwbuf), 0,
                  get_options());
     if (pwlen < 0) {
       saved_errno = EINVAL;
       goto done;
     }
-    const int r = crypto_unpwbox(&secret, &secret_len,
-                                 encrypted_key, encrypted_len,
-                                 pwbuf, pwlen);
-    if (r == UNPWBOX_CORRUPTED) {
+    const int r_unbox = crypto_unpwbox(&secret, &secret_len,
+                                       encrypted_key, encrypted_len,
+                                       pwbuf, pwlen);
+    if (r_unbox == UNPWBOX_CORRUPTED) {
       log_err(LD_OR, "%s is corrupted.", fname);
       saved_errno = EINVAL;
       goto done;
-    } else if (r == UNPWBOX_OKAY) {
+    } else if (r_unbox == UNPWBOX_OKAY) {
       break;
     }
 
@@ -931,15 +931,15 @@ load_ed_keys(const or_options_t *options, time_t now)
 int
 generate_ed_link_cert(const or_options_t *options, time_t now)
 {
-  const tor_x509_cert_t *link = NULL, *id = NULL;
+  const tor_x509_cert_t *link_ = NULL, *id = NULL;
   tor_cert_t *link_cert = NULL;
 
-  if (tor_tls_get_my_certs(1, &link, &id) < 0 || link == NULL) {
+  if (tor_tls_get_my_certs(1, &link_, &id) < 0 || link_ == NULL) {
     log_warn(LD_OR, "Can't get my x509 link cert.");
     return -1;
   }
 
-  const common_digests_t *digests = tor_x509_cert_get_cert_digests(link);
+  const common_digests_t *digests = tor_x509_cert_get_cert_digests(link_);
 
   if (link_cert_cert &&
       ! EXPIRES_SOON(link_cert_cert, options->TestingLinkKeySlop) &&
@@ -979,12 +979,12 @@ should_make_new_ed_keys(const or_options_t *options, const time_t now)
       EXPIRES_SOON(link_cert_cert, options->TestingLinkKeySlop))
     return 1;
 
-  const tor_x509_cert_t *link = NULL, *id = NULL;
+  const tor_x509_cert_t *link_ = NULL, *id = NULL;
 
-  if (tor_tls_get_my_certs(1, &link, &id) < 0 || link == NULL)
+  if (tor_tls_get_my_certs(1, &link_, &id) < 0 || link_ == NULL)
     return 1;
 
-  const common_digests_t *digests = tor_x509_cert_get_cert_digests(link);
+  const common_digests_t *digests = tor_x509_cert_get_cert_digests(link_);
 
   if (!fast_memeq(digests->d[DIGEST_SHA256],
                   link_cert_cert->signed_key.pubkey,

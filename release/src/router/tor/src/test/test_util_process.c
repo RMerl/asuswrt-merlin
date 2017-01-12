@@ -26,7 +26,7 @@ test_util_process_set_waitpid_callback(void *ignored)
 {
   (void)ignored;
   waitpid_callback_t *res1 = NULL, *res2 = NULL;
-  int previous_log = setup_capture_of_logs(LOG_WARN);
+  setup_full_capture_of_logs(LOG_WARN);
   pid_t pid = (pid_t)42;
 
   res1 = set_waitpid_callback(pid, temp_callback, NULL);
@@ -34,11 +34,12 @@ test_util_process_set_waitpid_callback(void *ignored)
 
   res2 = set_waitpid_callback(pid, temp_callback, NULL);
   tt_assert(res2);
-  expect_log_msg("Replaced a waitpid monitor on pid 42. That should be "
+  expect_single_log_msg(
+            "Replaced a waitpid monitor on pid 42. That should be "
             "impossible.\n");
 
  done:
-  teardown_capture_of_logs(previous_log);
+  teardown_capture_of_logs();
   clear_waitpid_callback(res1);
   clear_waitpid_callback(res2);
 }
@@ -48,7 +49,7 @@ test_util_process_clear_waitpid_callback(void *ignored)
 {
   (void)ignored;
   waitpid_callback_t *res;
-  int previous_log = setup_capture_of_logs(LOG_WARN);
+  setup_capture_of_logs(LOG_WARN);
   pid_t pid = (pid_t)43;
 
   clear_waitpid_callback(NULL);
@@ -64,7 +65,7 @@ test_util_process_clear_waitpid_callback(void *ignored)
 #endif
 
  done:
-  teardown_capture_of_logs(previous_log);
+  teardown_capture_of_logs();
 }
 #endif /* _WIN32 */
 

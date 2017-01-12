@@ -48,6 +48,11 @@ typedef struct config_abbrev_t {
   int warn;
 } config_abbrev_t;
 
+typedef struct config_deprecation_t {
+  const char *name;
+  const char *why_deprecated;
+} config_deprecation_t;
+
 /* Handy macro for declaring "In the config file or on the command line,
  * you can abbreviate <b>tok</b>s as <b>tok</b>". */
 #define PLURAL(tok) { #tok, #tok "s", 0, 0 }
@@ -60,13 +65,6 @@ typedef struct config_var_t {
   off_t var_offset; /**< Offset of the corresponding member of or_options_t. */
   const char *initvalue; /**< String (or null) describing initial value. */
 } config_var_t;
-
-/** Represents an English description of a configuration variable; used when
- * generating configuration file comments. */
-typedef struct config_var_description_t {
-  const char *name;
-  const char *description;
-} config_var_description_t;
 
 /** Type of a callback to validate whether a given configuration is
  * well-formed and consistent. See options_trial_assign() for documentation
@@ -83,6 +81,7 @@ typedef struct config_format_t {
   off_t magic_offset; /**< Offset of the magic value within the struct. */
   config_abbrev_t *abbrevs; /**< List of abbreviations that we expand when
                              * parsing this format. */
+  const config_deprecation_t *deprecations; /** List of deprecated options */
   config_var_t *vars; /**< List of variables we recognize, their default
                        * values, and where we stick them in the structure. */
   validate_fn_t validate_fn; /**< Function to validate config. */
@@ -98,6 +97,10 @@ typedef struct config_format_t {
     tor_assert((fmt)->magic ==                                          \
                *(uint32_t*)STRUCT_VAR_P(cfg,fmt->magic_offset));        \
   STMT_END
+
+#define CAL_USE_DEFAULTS      (1u<<0)
+#define CAL_CLEAR_FIRST       (1u<<1)
+#define CAL_WARN_DEPRECATIONS (1u<<2)
 
 void *config_new(const config_format_t *fmt);
 void config_line_append(config_line_t **lst,
@@ -121,9 +124,11 @@ char *config_dump(const config_format_t *fmt, const void *default_options,
                   int comment_defaults);
 int config_assign(const config_format_t *fmt, void *options,
                   config_line_t *list,
-                  int use_defaults, int clear_first, char **msg);
+                  unsigned flags, char **msg);
 config_var_t *config_find_option_mutable(config_format_t *fmt,
                                          const char *key);
+const char *config_find_deprecation(const config_format_t *fmt,
+                                     const char *key);
 const config_var_t *config_find_option(const config_format_t *fmt,
                                        const char *key);
 
@@ -132,6 +137,7 @@ void config_free_lines(config_line_t *front);
 const char *config_expand_abbrev(const config_format_t *fmt,
                                  const char *option,
                                  int command_line, int warn_obsolete);
+void warn_deprecated_option(const char *what, const char *why);
 
 #endif
 

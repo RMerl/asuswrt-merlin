@@ -84,6 +84,10 @@ COMMAND-LINE OPTIONS
 [[opt-list-torrc-options]] **--list-torrc-options**::
     List all valid options.
 
+[[opt-list-deprecated-options]] **--list-deprecated-options**::
+    List all valid options that are scheduled to become obsolete in a
+    future version. (This is a warning, not a promise.)
+
 [[opt-version]] **--version**::
     Display Tor version and exit.
 
@@ -117,6 +121,13 @@ COMMAND-LINE OPTIONS
    To use the generated files, you must copy them to the DataDirectory/keys
    directory of your Tor daemon, and make sure that they are owned by the
    user actually running the Tor daemon on your system.
+
+**--passphrase-fd** __FILEDES__::
+    Filedescriptor to read the passphrase from.  Note that unlike with the
+    tor-gencert program, the entire file contents are read and used as
+    the passphrase, including any trailing newlines.
+    Default: read from the terminal.
+
 
 Other options can be specified on the command-line in the format "--option
 value", in the format "option value", or in a configuration file.  For
@@ -310,8 +321,10 @@ GENERAL OPTIONS
     specify one or more of **HashedControlPassword** or
     **CookieAuthentication**, setting this option will cause Tor to allow
     any process on the local host to control it. (Setting both authentication
-    methods means eithermethod is sufficient to authenticate to Tor.) This
+    methods means either method is sufficient to authenticate to Tor.) This
     option is required for many Tor controllers; most use the value of 9051.
+    If a unix domain socket is used, you may quote the path using standard
+    C escape sequences.
     Set it to "auto" to have Tor pick a port for you. (Default: 0) +
  +
     Recognized flags are...
@@ -595,6 +608,13 @@ GENERAL OPTIONS
     message currently has at least one domain; most currently have exactly
     one.  This doesn't affect controller log messages. (Default: 0)
 
+[[MaxUnparseableDescSizeToLog]] **MaxUnparseableDescSizeToLog** __N__ **bytes**|**KBytes**|**MBytes**|**GBytes**::
+    Unparseable descriptors (e.g. for votes, consensuses, routers) are logged
+    in separate files by hash, up to the specified size in total.  Note that
+    only files logged during the lifetime of this Tor process count toward the
+    total; this is intended to be used to debug problems without opening live
+    servers to resource exhaustion attacks. (Default: 10 MB)
+
 [[OutboundBindAddress]] **OutboundBindAddress** __IP__::
     Make all outbound connections originate from the IP address specified. This
     is only useful when you have multiple network interfaces, and you want all
@@ -650,7 +670,7 @@ GENERAL OPTIONS
     relay, all log messages generated when acting as a relay are sanitized, but
     all messages generated when acting as a client are not. (Default: 1)
 
-[[User]] **User** __UID__::
+[[User]] **User** __Username__::
     On startup, setuid to this user and setgid to their primary group.
 
 [[KeepBindCapabilities]] **KeepBindCapabilities** **0**|**1**|**auto**::
@@ -690,26 +710,6 @@ GENERAL OPTIONS
     all, we use the behavior recommended in the current consensus
     networkstatus. This is an advanced option; you generally shouldn't have
     to mess with it. (Default: not set)
-
-[[DisableIOCP]] **DisableIOCP** **0**|**1**::
-    If Tor was built to use the Libevent's "bufferevents" networking code
-    and you're running on Windows, setting this option to 1 will tell Libevent
-    not to use the Windows IOCP networking API.  (Default: 1)
-
-[[UserspaceIOCPBuffers]] **UserspaceIOCPBuffers** **0**|**1**::
-    If IOCP is enabled (see DisableIOCP above), setting this option to 1
-    will tell Tor to disable kernel-space TCP buffers, in order to avoid
-    needless copy operations and try not to run out of non-paged RAM.
-    This feature is experimental; don't use it yet unless you're eager to
-    help tracking down bugs. (Default: 0)
-
-[[UseFilteringSSLBufferevents]] **UseFilteringSSLBufferevents** **0**|**1**::
-    Tells Tor to do its SSL communication using a chain of
-    bufferevents: one for SSL and one for networking.  This option has no
-    effect if bufferevents are disabled (in which case it can't turn on), or
-    if IOCP bufferevents are enabled (in which case it can't turn off).  This
-    option is useful for debugging only; most users shouldn't touch it.
-    (Default: 0)
 
 [[CountPrivateBandwidth]] **CountPrivateBandwidth** **0**|**1**::
     If this option is set, then Tor's rate-limiting applies not only to
@@ -1034,7 +1034,9 @@ The following options are useful only for clients (that is, if
     applications. Set this to 0 if you don't want to allow application
     connections via SOCKS. Set it to "auto" to have Tor pick a port for
     you. This directive can be specified multiple times to bind
-    to multiple addresses/ports. (Default: 9050) +
+    to multiple addresses/ports. If a unix domain socket is used, you may
+    quote the path using standard C escape sequences.
+    (Default: 9050) +
  +
         NOTE: Although this option allows you to specify an IP address
         other than localhost, you should do so only with extreme caution.
@@ -1048,8 +1050,9 @@ The following options are useful only for clients (that is, if
     another.  Recognized isolation flags are:
     **IsolateClientAddr**;;
         Don't share circuits with streams from a different
-        client address.  (On by default and strongly recommended;
-        you can disable it with **NoIsolateClientAddr**.)
+        client address.  (On by default and strongly recommended when
+        supported; you can disable it with **NoIsolateClientAddr**.
+        Unsupported and force-disabled when using Unix domain sockets.)
     **IsolateSOCKSAuth**;;
         Don't share circuits with streams for which different
         SOCKS authentication was provided. (On by default;
@@ -1085,7 +1088,18 @@ The following options are useful only for clients (that is, if
         IPv6.)
     **PreferIPv6**;;
         Tells exits that, if a host has both an IPv4 and an IPv6 address,
-        we would prefer to connect to it via IPv6. (IPv4 is the default.) +
+        we would prefer to connect to it via IPv6. (IPv4 is the default.)
+    **NoDNSRequest**;;
+        Do not ask exits to resolve DNS addresses in SOCKS5 requests. Tor will
+        connect to IPv4 addresses, IPv6 addresses (if IPv6Traffic is set) and
+        .onion addresses.
+    **NoOnionTraffic**;;
+        Do not connect to .onion addresses in SOCKS5 requests.
+    **OnionTrafficOnly**;;
+        Tell the tor client to only connect to .onion addresses in response to
+        SOCKS5 requests on this connection. This is equivalent to NoDNSRequest,
+        NoIPv4Traffic, NoIPv6Traffic. The corresponding NoOnionTrafficOnly
+        flag is not supported.
     **CacheIPv4DNS**;;
         Tells the client to remember IPv4 DNS answers we receive from exit
         nodes via this connection. (On by default.)
@@ -1126,6 +1140,10 @@ The following options are useful only for clients (that is, if
         one. You can disable this behavior, so that Tor will select "No
         authentication" when IsolateSOCKSAuth is disabled, or when this
         option is set.
+
+    Flags are processed left to right. If flags conflict, the last flag on the
+    line is used, and all earlier flags are ignored. No error is issued for
+    conflicting flags.
 
 [[SocksListenAddress]] **SocksListenAddress** __IP__[:__PORT__]::
     Bind to this address to listen for connections from Socks-speaking
@@ -1186,7 +1204,9 @@ The following options are useful only for clients (that is, if
     If this option is set to 1, we pick a few long-term entry servers, and try
     to stick with them. This is desirable because constantly changing servers
     increases the odds that an adversary who owns some servers will observe a
-    fraction of your paths. (Default: 1)
+    fraction of your paths. Entry Guards can not be used by Directory
+    Authorities, Single Onion Services, and Tor2web clients. In these cases,
+    the this option is ignored. (Default: 1)
 
 [[UseEntryGuardsAsDirGuards]] **UseEntryGuardsAsDirGuards** **0**|**1**::
     If this option is set to 1, and UseEntryGuards is also set to 1,
@@ -1257,11 +1277,14 @@ The following options are useful only for clients (that is, if
  +
     When providing proxy server service to a network of computers using a tool
     like dns-proxy-tor, change the IPv4 network to "10.192.0.0/10" or
-    "172.16.0.0/12" and change the IPv6 network to "[FC00]/7".
+    "172.16.0.0/12" and change the IPv6 network to "[FC00::]/7".
     The default **VirtualAddrNetwork** address ranges on a
     properly configured machine will route to the loopback or link-local
-    interface. For
-    local use, no change to the default VirtualAddrNetwork setting is needed.
+    interface. The maximum number of bits for the network prefix is set to 104
+    for IPv6 and 16 for IPv4. However, a wider network - smaller prefix length
+    - is preferable since it reduces the chances for an attacker to guess the
+    used IP. For local use, no change to the default VirtualAddrNetwork setting
+    is needed.
 
 [[AllowNonRFC953Hostnames]] **AllowNonRFC953Hostnames** **0**|**1**::
     When this option is disabled, Tor blocks hostnames containing illegal
@@ -1426,8 +1449,10 @@ The following options are useful only for clients (that is, if
     **non-anonymously**.  This option also disables client connections to
     non-hidden-service hostnames through Tor. It **must only** be used when
     running a tor2web Hidden Service web proxy.
-    To enable this option the compile time flag --enable-tor2webmode must be
-    specified. (Default: 0)
+    To enable this option the compile time flag --enable-tor2web-mode must be
+    specified. Since Tor2webMode is non-anonymous, you can not run an
+    anonymous Hidden Service on a tor version compiled with Tor2webMode.
+    (Default: 0)
 
 [[Tor2webRendezvousPoints]] **Tor2webRendezvousPoints** __node__,__node__,__...__::
     A list of identity fingerprints, nicknames, country codes and
@@ -1453,16 +1478,6 @@ The following options are useful only for clients (that is, if
     option doesn't save any bandwidth for them.  If this option is set to
     "auto" (recommended) then it is on for all clients that do not set
     FetchUselessDescriptors. (Default: auto)
-
-[[UseNTorHandshake]] **UseNTorHandshake** **0**|**1**|**auto**::
-    The "ntor" circuit-creation handshake is faster and (we think) more
-    secure than the original ("TAP") circuit handshake, but starting to use
-    it too early might make your client stand out. If this option is 0, your
-    Tor client won't use the ntor handshake. If it's 1, your Tor client
-    will use the ntor handshake to extend circuits through servers that
-    support it. If this option is "auto", then your client
-    will use the ntor handshake once enough directory authorities recommend
-    it. (Default: 1)
 
 [[PathBiasCircThreshold]] **PathBiasCircThreshold** __NUM__ +
 
@@ -1555,8 +1570,9 @@ The following options are useful only for clients (that is, if
     that fraction of possible paths. Note that setting this option too low
     can make your Tor client less anonymous, and setting it too high can
     prevent your Tor client from bootstrapping.  If this option is negative,
-    Tor will use a default value chosen by the directory
-    authorities. (Default: -1.)
+    Tor will use a default value chosen by the directory authorities. If the
+    directory authorities do not choose a value, Tor will default to 0.6.
+    (Default: -1.)
 
 [[ClientBootstrapConsensusAuthorityDownloadSchedule]] **ClientBootstrapConsensusAuthorityDownloadSchedule** __N__,__N__,__...__::
     Schedule for when clients should download consensuses from authorities
@@ -1687,15 +1703,16 @@ is non-zero):
     used with accept6/reject6.) +
  +
     Private addresses are rejected by default (at the beginning of your exit
-    policy), along with any configured primary public IPv4 and IPv6 addresses,
-    and any public IPv4 and IPv6 addresses on any interface on the relay.
+    policy), along with any configured primary public IPv4 and IPv6 addresses.
     These private addresses are rejected unless you set the
     ExitPolicyRejectPrivate config option to 0. For example, once you've done
     that, you could allow HTTP to 127.0.0.1 and block all other connections to
     internal networks with "accept 127.0.0.1:80,reject private:\*", though that
     may also allow connections to your own computer that are addressed to its
     public (external) IP address. See RFC 1918 and RFC 3330 for more details
-    about internal and reserved IP address space. +
+    about internal and reserved IP address space. See
+    ExitPolicyRejectLocalInterfaces if you want to block every address on the
+    relay, even those that aren't advertised in the descriptor. +
  +
     This directive can be specified multiple times so you don't have to put it
     all on one line. +
@@ -1725,15 +1742,22 @@ is non-zero):
     IPv4 and IPv6 addresses.
 
 [[ExitPolicyRejectPrivate]] **ExitPolicyRejectPrivate** **0**|**1**::
-    Reject all private (local) networks, along with any configured public
-    IPv4 and IPv6 addresses, at the beginning of your exit policy. (This
-    includes the IPv4 and IPv6 addresses advertised by the relay, any
-    OutboundBindAddress, and the bind addresses of any port options, such as
-    ORPort and DirPort.) This also rejects any public IPv4 and IPv6 addresses
-    on any interface on the relay. (If IPv6Exit is not set, all IPv6 addresses
-    will be rejected anyway.)
+    Reject all private (local) networks, along with the relay's advertised
+    public IPv4 and IPv6 addresses, at the beginning of your exit policy.
     See above entry on ExitPolicy.
     (Default: 1)
+
+[[ExitPolicyRejectLocalInterfaces]] **ExitPolicyRejectLocalInterfaces** **0**|**1**::
+    Reject all IPv4 and IPv6 addresses that the relay knows about, at the
+    beginning of your exit policy. This includes any OutboundBindAddress, the
+    bind addresses of any port options, such as ControlPort or DNSPort, and any
+    public IPv4 and IPv6 addresses on any interface on the relay. (If IPv6Exit
+    is not set, all IPv6 addresses will be rejected anyway.)
+    See above entry on ExitPolicy.
+    This option is off by default, because it lists all public relay IP
+    addresses in the ExitPolicy, even those relay operators might prefer not
+    to disclose.
+    (Default: 0)
 
 [[IPv6Exit]] **IPv6Exit** **0**|**1**::
     If set, and we are an exit node, allow clients to use us for IPv6
@@ -2035,6 +2059,12 @@ is non-zero):
     this.  If this option is set to 0, Tor will try to pick a reasonable
     default based on your system's physical memory.  (Default: 0)
 
+[[DisableOOSCheck]] **DisableOOSCheck** **0**|**1**::
+    This option disables the code that closes connections when Tor notices
+    that it is running low on sockets. Right now, it is on by default,
+    since the existing out-of-sockets mechanism tends to kill OR connections
+    more than it should. (Default: 1)
+
 [[SigningKeyLifetime]] **SigningKeyLifetime** __N__ **days**|**weeks**|**months**::
     For how long should each Ed25519 signing key be valid?  Tor uses a
     permanent master identity key that can be kept offline, and periodically
@@ -2103,14 +2133,13 @@ on the public Tor network.
     server. Instead of caching the directory, it generates its own list of
     good servers, signs it, and sends that to the clients. Unless the clients
     already have you listed as a trusted directory, you probably do not want
-    to set this option. Please coordinate with the other admins at
-    tor-ops@torproject.org if you think you should be a directory.
+    to set this option.
 
 [[V3AuthoritativeDirectory]] **V3AuthoritativeDirectory** **0**|**1**::
     When this option is set in addition to **AuthoritativeDirectory**, Tor
     generates version 3 network statuses and serves descriptors, etc as
     described in dir-spec.txt file of https://spec.torproject.org/[torspec]
-    (for Tor clients and servers running atleast 0.2.0.x).
+    (for Tor clients and servers running at least 0.2.0.x).
 
 [[VersioningAuthoritativeDirectory]] **VersioningAuthoritativeDirectory** **0**|**1**::
     When this option is set to 1, Tor adds information on which versions of
@@ -2162,7 +2191,9 @@ on the public Tor network.
 [[DirAllowPrivateAddresses]] **DirAllowPrivateAddresses** **0**|**1**::
     If set to 1, Tor will accept server descriptors with arbitrary "Address"
     elements. Otherwise, if the address is not an IP address or is a private IP
-    address, it will reject the server descriptor. (Default: 0)
+    address, it will reject the server descriptor. Additionally, Tor
+    will allow exit policies for private networks to fulfill Exit flag
+    requirements. (Default: 0)
 
 [[AuthDirBadExit]] **AuthDirBadExit** __AddressPattern...__::
     Authoritative directories only. A set of address patterns for servers that
@@ -2225,6 +2256,12 @@ on the public Tor network.
     identity keypair. In all cases, Tor records every keypair it accepts
     in a journal if it is new, or if it differs from the most recently
     accepted pinning for one of the keys it contains. (Default: 0)
+
+[[AuthDirSharedRandomness]] **AuthDirSharedRandomness** **0**|**1**::
+    Authoritative directories only. Switch for the shared random protocol.
+    If zero, the authority won't participate in the protocol. If non-zero
+    (default), the flag "shared-rand-participate" is added to the authority
+    vote indicating participation in the protocol. (Default: 1)
 
 [[BridgePassword]] **BridgePassword** __Password__::
     If set, contains an HTTP authenticator that tells a bridge authority to
@@ -2310,7 +2347,8 @@ The following options are used to configure a hidden service.
     recent HiddenServiceDir. By default, this option maps the virtual port to
     the same port on 127.0.0.1 over TCP. You may override the target port,
     address, or both by specifying a target of addr, port, addr:port, or
-    **unix:**__path__.  (You can specify an IPv6 target as [addr]:port.)
+    **unix:**__path__.  (You can specify an IPv6 target as [addr]:port. Unix
+    paths may be quoted, and may use standard C escapes.)
     You may also have multiple lines with  the same VIRTPORT: when a user
     connects to that VIRTPORT, one of the TARGETs from those lines will be
     chosen at random.
@@ -2367,6 +2405,40 @@ The following options are used to configure a hidden service.
 [[HiddenServiceNumIntroductionPoints]] **HiddenServiceNumIntroductionPoints** __NUM__::
     Number of introduction points the hidden service will have. You can't
     have more than 10. (Default: 3)
+
+[[HiddenServiceSingleHopMode]] **HiddenServiceSingleHopMode** **0**|**1**::
+    **Experimental - Non Anonymous** Hidden Services on a tor instance in
+    HiddenServiceSingleHopMode make one-hop (direct) circuits between the onion
+    service server, and the introduction and rendezvous points. (Onion service
+    descriptors are still posted using 3-hop paths, to avoid onion service
+    directories blocking the service.)
+    This option makes every hidden service instance hosted by a tor instance a
+    Single Onion Service. One-hop circuits make Single Onion servers easily
+    locatable, but clients remain location-anonymous. However, the fact that a
+    client is accessing a Single Onion rather than a Hidden Service may be
+    statistically distinguishable.
+
+    **WARNING:** Once a hidden service directory has been used by a tor
+    instance in HiddenServiceSingleHopMode, it can **NEVER** be used again for
+    a hidden service. It is best practice to create a new hidden service
+    directory, key, and address for each new Single Onion Service and Hidden
+    Service. It is not possible to run Single Onion Services and Hidden
+    Services from the same tor instance: they should be run on different
+    servers with different IP addresses.
+
+    HiddenServiceSingleHopMode requires HiddenServiceNonAnonymousMode to be set
+    to 1. Since a Single Onion service is non-anonymous, you can not configure
+    a SOCKSPort on a tor instance that is running in
+    **HiddenServiceSingleHopMode**.
+    (Default: 0)
+
+[[HiddenServiceNonAnonymousMode]] **HiddenServiceNonAnonymousMode** **0**|**1**::
+    Makes hidden services non-anonymous on this tor instance. Allows the
+    non-anonymous HiddenServiceSingleHopMode. Enables direct connections in the
+    server-side hidden service protocol.  If you are using this option,
+    you need to disable all client-side services on your Tor instance,
+    including setting SOCKSPort to "0".
+    (Default: 0)
 
 TESTING NETWORK OPTIONS
 -----------------------
@@ -2826,6 +2898,10 @@ __HiddenServiceDirectory__**/private_key**::
 __HiddenServiceDirectory__**/client_keys**::
     Authorization data for a hidden service that is only accessible by
     authorized clients.
+
+__HiddenServiceDirectory__**/onion_service_non_anonymous**::
+    This file is present if a hidden service key was created in
+    **HiddenServiceNonAnonymousMode**.
 
 SEE ALSO
 --------

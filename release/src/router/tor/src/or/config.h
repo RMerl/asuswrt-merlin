@@ -29,8 +29,8 @@ const char *escaped_safe_str_client(const char *address);
 const char *escaped_safe_str(const char *address);
 const char *get_version(void);
 const char *get_short_version(void);
-setopt_err_t options_trial_assign(config_line_t *list, int use_defaults,
-                                  int clear_first, char **msg);
+setopt_err_t options_trial_assign(config_line_t *list, unsigned flags,
+                                  char **msg);
 
 uint32_t get_last_resolved_addr(void);
 void reset_last_resolved_addr(void);
@@ -53,9 +53,11 @@ config_line_t *option_get_assignment(const or_options_t *options,
                                      const char *key);
 int options_save_current(void);
 const char *get_torrc_fname(int defaults_fname);
-char *options_get_datadir_fname2_suffix(const or_options_t *options,
-                                        const char *sub1, const char *sub2,
-                                        const char *suffix);
+MOCK_DECL(char *,
+          options_get_datadir_fname2_suffix,
+          (const or_options_t *options,
+           const char *sub1, const char *sub2,
+           const char *suffix));
 #define get_datadir_fname2_suffix(sub1, sub2, suffix) \
   options_get_datadir_fname2_suffix(get_options(), (sub1), (sub2), (suffix))
 /** Return a newly allocated string containing datadir/sub1.  See
@@ -74,6 +76,8 @@ char *options_get_datadir_fname2_suffix(const or_options_t *options,
 #define get_datadir_fname_suffix(sub1, suffix) \
   get_datadir_fname2_suffix((sub1), NULL, (suffix))
 
+int using_default_dir_authorities(const or_options_t *options);
+
 int check_or_create_data_subdir(const char *subdir);
 int write_to_data_subdir(const char* subdir, const char* fname,
                          const char* str, const char* descr);
@@ -87,6 +91,12 @@ int get_first_advertised_port_by_type_af(int listener_type,
   (get_first_advertised_port_by_type_af(CONN_TYPE_OR_LISTENER, AF_INET))
 #define get_primary_dir_port() \
   (get_first_advertised_port_by_type_af(CONN_TYPE_DIR_LISTENER, AF_INET))
+const tor_addr_t *get_first_advertised_addr_by_type_af(int listener_type,
+                                                       int address_family);
+int port_exists_by_type_addr_port(int listener_type, const tor_addr_t *addr,
+                                  int port, int check_wildcard);
+int port_exists_by_type_addr32h_port(int listener_type, uint32_t addr_ipv4h,
+                                     int port, int check_wildcard);
 
 char *get_first_listener_addrport_string(int listener_type);
 
@@ -115,12 +125,16 @@ int config_parse_commandline(int argc, char **argv, int ignore_errors,
                              config_line_t **cmdline_result);
 
 void config_register_addressmaps(const or_options_t *options);
-/* XXXX024 move to connection_edge.h */
+/* XXXX move to connection_edge.h */
 int addressmap_register_auto(const char *from, const char *to,
                              time_t expires,
                              addressmap_entry_source_t addrmap_source,
                              const char **msg);
-int config_parse_unix_port(const char *addrport, char **path_out);
+
+int port_cfg_line_extract_addrport(const char *line,
+                                   char **addrport_out,
+                                   int *is_unix_out,
+                                   const char **rest_out);
 
 /** Represents the information stored in a torrc Bridge line. */
 typedef struct bridge_line_t {
@@ -158,6 +172,8 @@ extern struct config_format_t options_format;
 STATIC port_cfg_t *port_cfg_new(size_t namelen);
 STATIC void port_cfg_free(port_cfg_t *port);
 STATIC void or_options_free(or_options_t *options);
+STATIC int options_validate_single_onion(or_options_t *options,
+                                         char **msg);
 STATIC int options_validate(or_options_t *old_options,
                             or_options_t *options,
                             or_options_t *default_options,

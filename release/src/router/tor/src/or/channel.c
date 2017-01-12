@@ -8,6 +8,32 @@
  * transfer cells from Tor instance to Tor instance.
  * Currently, there is only one implementation of the channel abstraction: in
  * channeltls.c.
+ *
+ * Channels are a higher-level abstraction than or_connection_t: In general,
+ * any means that two Tor relays use to exchange cells, or any means that a
+ * relay and a client use to exchange cells, is a channel.
+ *
+ * Channels differ from pluggable transports in that they do not wrap an
+ * underlying protocol over which cells are transmitted: they <em>are</em> the
+ * underlying protocol.
+ *
+ * This module defines the generic parts of the channel_t interface, and
+ * provides the machinery necessary for specialized implementations to be
+ * created.  At present, there is one specialized implementation in
+ * channeltls.c, which uses connection_or.c to send cells over a TLS
+ * connection.
+ *
+ * Every channel implementation is responsible for being able to transmit
+ * cells that are added to it with channel_write_cell() and related functions,
+ * and to receive incoming cells with the channel_queue_cell() and related
+ * functions.  See the channel_t documentation for more information.
+ *
+ * When new cells arrive on a channel, they are passed to cell handler
+ * functions, which can be set by channel_set_cell_handlers()
+ * functions. (Tor's cell handlers are in command.c.)
+ *
+ * Tor flushes cells to channels from relay.c in
+ * channel_flush_from_first_active_circuit().
  **/
 
 /*
@@ -122,7 +148,7 @@ STATIC uint64_t estimated_total_queue_size = 0;
  * If more than one channel exists, follow the next_with_same_id pointer
  * as a linked list.
  */
-HT_HEAD(channel_idmap, channel_idmap_entry_s) channel_identity_map =
+static HT_HEAD(channel_idmap, channel_idmap_entry_s) channel_identity_map =
   HT_INITIALIZER();
 
 typedef struct channel_idmap_entry_s {
@@ -145,9 +171,9 @@ channel_idmap_eq(const channel_idmap_entry_t *a,
 }
 
 HT_PROTOTYPE(channel_idmap, channel_idmap_entry_s, node, channel_idmap_hash,
-             channel_idmap_eq);
+             channel_idmap_eq)
 HT_GENERATE2(channel_idmap, channel_idmap_entry_s, node, channel_idmap_hash,
-             channel_idmap_eq, 0.5,  tor_reallocarray_, tor_free_);
+             channel_idmap_eq, 0.5,  tor_reallocarray_, tor_free_)
 
 static cell_queue_entry_t * cell_queue_entry_dup(cell_queue_entry_t *q);
 #if 0
@@ -838,7 +864,7 @@ channel_free(channel_t *chan)
   }
 
   /* Call a free method if there is one */
-  if (chan->free) chan->free(chan);
+  if (chan->free_fn) chan->free_fn(chan);
 
   channel_clear_remote_end(chan);
 
@@ -878,7 +904,7 @@ channel_listener_free(channel_listener_t *chan_l)
   tor_assert(!(chan_l->registered));
 
   /* Call a free method if there is one */
-  if (chan_l->free) chan_l->free(chan_l);
+  if (chan_l->free_fn) chan_l->free_fn(chan_l);
 
   /*
    * We're in CLOSED or ERROR, so the incoming channel queue is already
@@ -916,7 +942,7 @@ channel_force_free(channel_t *chan)
   }
 
   /* Call a free method if there is one */
-  if (chan->free) chan->free(chan);
+  if (chan->free_fn) chan->free_fn(chan);
 
   channel_clear_remote_end(chan);
 
@@ -958,7 +984,7 @@ channel_listener_force_free(channel_listener_t *chan_l)
             chan_l);
 
   /* Call a free method if there is one */
-  if (chan_l->free) chan_l->free(chan_l);
+  if (chan_l->free_fn) chan_l->free_fn(chan_l);
 
   /*
    * The incoming list just gets emptied and freed; we request close on
@@ -3510,7 +3536,7 @@ channel_dump_statistics, (channel_t *chan, int severity))
   have_remote_addr = channel_get_addr_if_possible(chan, &remote_addr);
   if (have_remote_addr) {
     char *actual = tor_strdup(channel_get_actual_remote_descr(chan));
-    remote_addr_str = tor_dup_addr(&remote_addr);
+    remote_addr_str = tor_addr_to_str_dup(&remote_addr);
     tor_log(severity, LD_GENERAL,
         " * Channel " U64_FORMAT " says its remote address"
         " is %s, and gives a canonical description of \"%s\" and an "
@@ -4524,8 +4550,8 @@ channel_update_xmit_queue_size(channel_t *chan)
   /* Next, adjust by the overhead factor, if any is available */
   if (chan->get_overhead_estimate) {
     overhead = chan->get_overhead_estimate(chan);
-    if (overhead >= 1.0f) {
-      queued *= overhead;
+    if (overhead >= 1.0) {
+      queued = (uint64_t)(queued * overhead);
     } else {
       /* Ignore silly overhead factors */
       log_notice(LD_CHANNEL, "Ignoring silly overhead factor %f", overhead);

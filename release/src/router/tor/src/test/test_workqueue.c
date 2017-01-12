@@ -12,11 +12,7 @@
 #include "compat_libevent.h"
 
 #include <stdio.h>
-#ifdef HAVE_EVENT2_EVENT_H
 #include <event2/event.h>
-#else
-#include <event.h>
-#endif
 
 #define MAX_INFLIGHT (1<<16)
 
@@ -400,6 +396,9 @@ main(int argc, char **argv)
   }
 
   rq = replyqueue_new(as_flags);
+  if (as_flags && rq == NULL)
+    return 77; // 77 means "skipped".
+
   tor_assert(rq);
   tp = threadpool_new(opt_n_threads,
                       rq, new_state, free_state, NULL);

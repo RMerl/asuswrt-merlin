@@ -14,30 +14,11 @@
 
 #include "test.h"
 
-#ifdef __GNUC__
-#define GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
-#endif
-
-#if __GNUC__ && GCC_VERSION >= 402
-#if GCC_VERSION >= 406
-#pragma GCC diagnostic push
-#endif
-/* Some versions of OpenSSL declare X509_STORE_CTX_set_verify_cb twice.
- * Suppress the GCC warning so we can build with -Wredundant-decl. */
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#endif
-
+DISABLE_GCC_WARNING(redundant-decls)
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/pem.h>
-
-#if __GNUC__ && GCC_VERSION >= 402
-#if GCC_VERSION >= 406
-#pragma GCC diagnostic pop
-#else
-#pragma GCC diagnostic warning "-Wredundant-decls"
-#endif
-#endif
+ENABLE_GCC_WARNING(redundant-decls)
 
 #ifdef _WIN32
 /* For mkdir() */
@@ -511,6 +492,11 @@ test_md_generate(void *arg)
   routerinfo_free(ri);
 }
 
+#ifdef HAVE_CFLAG_WOVERLENGTH_STRINGS
+DISABLE_GCC_WARNING(overlength-strings)
+/* We allow huge string constants in the unit tests, but not in the code
+ * at large. */
+#endif
 /* Taken at random from my ~/.tor/cached-microdescs file and then
  * hand-munged */
 static const char MD_PARSE_TEST_DATA[] =
@@ -666,6 +652,9 @@ static const char MD_PARSE_TEST_DATA[] =
   "id rsa1024 2A8wYpHxnkKJ92orocvIQBzeHlE\n"
   "p6 allow 80\n"
   ;
+#ifdef HAVE_CFLAG_WOVERLENGTH_STRINGS
+ENABLE_GCC_WARNING(overlength-strings)
+#endif
 
 /** More tests for parsing different kinds of microdescriptors, and getting
  * invalid digests trackd from them. */
@@ -727,7 +716,7 @@ test_md_parse(void *arg)
   tt_int_op(md->ipv6_orport, OP_EQ, 9090);
 
  done:
-  SMARTLIST_FOREACH(mds, microdesc_t *, md, microdesc_free(md));
+  SMARTLIST_FOREACH(mds, microdesc_t *, mdsc, microdesc_free(mdsc));
   smartlist_free(mds);
   SMARTLIST_FOREACH(invalid, char *, cp, tor_free(cp));
   smartlist_free(invalid);
@@ -794,7 +783,8 @@ test_md_reject_cache(void *arg)
   mc = get_microdesc_cache();
 #define ADD(hex)                                                        \
   do {                                                                  \
-    tt_int_op(0,OP_EQ,base16_decode(buf,sizeof(buf),hex,strlen(hex)));     \
+    tt_int_op(sizeof(buf),OP_EQ,base16_decode(buf,sizeof(buf),          \
+                hex,strlen(hex)));\
     smartlist_add(wanted, tor_memdup(buf, DIGEST256_LEN));              \
   } while (0)
 

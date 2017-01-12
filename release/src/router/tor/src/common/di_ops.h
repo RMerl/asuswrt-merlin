@@ -42,6 +42,9 @@ void dimap_add_entry(di_digest256_map_t **map,
                      const uint8_t *key, void *val);
 void *dimap_search(const di_digest256_map_t *map, const uint8_t *key,
                    void *dflt_val);
+int select_array_member_cumulative_timei(const uint64_t *entries,
+                                         int n_entries,
+                                         uint64_t total, uint64_t rand_val);
 
 #endif
 

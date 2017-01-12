@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
+extern const char tor_git_revision[];
 /* Ordinarily defined in tor_main.c; this bit is just here to provide one
  * since we're not linking to tor_main.c */
 const char tor_git_revision[] = "";
@@ -89,7 +90,9 @@ bench_aes(void)
   uint64_t start, end;
   const int bytes_per_iter = (1<<24);
   reset_perftime();
-  c = crypto_cipher_new(NULL);
+  char key[CIPHER_KEY_LEN];
+  crypto_rand(key, sizeof(key));
+  c = crypto_cipher_new(key);
 
   for (len = 1; len <= 8192; len *= 2) {
     int iters = bytes_per_iter / len;
@@ -327,8 +330,9 @@ bench_cell_aes(void)
   char *b = tor_malloc(len+max_misalign);
   crypto_cipher_t *c;
   int i, misalign;
-
-  c = crypto_cipher_new(NULL);
+  char key[CIPHER_KEY_LEN];
+  crypto_rand(key, sizeof(key));
+  c = crypto_cipher_new(key);
 
   reset_perftime();
   for (misalign = 0; misalign <= max_misalign; ++misalign) {
@@ -500,8 +504,11 @@ bench_cell_ops(void)
   or_circ->base_.purpose = CIRCUIT_PURPOSE_OR;
 
   /* Initialize crypto */
-  or_circ->p_crypto = crypto_cipher_new(NULL);
-  or_circ->n_crypto = crypto_cipher_new(NULL);
+  char key1[CIPHER_KEY_LEN], key2[CIPHER_KEY_LEN];
+  crypto_rand(key1, sizeof(key1));
+  crypto_rand(key2, sizeof(key2));
+  or_circ->p_crypto = crypto_cipher_new(key1);
+  or_circ->n_crypto = crypto_cipher_new(key2);
   or_circ->p_digest = crypto_digest_new();
   or_circ->n_digest = crypto_digest_new();
 
@@ -556,7 +563,7 @@ bench_dh(void)
                                       dh_b, dh_pubkey_a, sizeof(dh_pubkey_a),
                                       secret_b, sizeof(secret_b));
     tor_assert(slen_a == slen_b);
-    tor_assert(!memcmp(secret_a, secret_b, slen_a));
+    tor_assert(fast_memeq(secret_a, secret_b, slen_a));
     crypto_dh_free(dh_a);
     crypto_dh_free(dh_b);
   }
@@ -594,7 +601,7 @@ bench_ecdh_impl(int nid, const char *name)
                               NULL);
 
     tor_assert(slen_a == slen_b);
-    tor_assert(!memcmp(secret_a, secret_b, slen_a));
+    tor_assert(fast_memeq(secret_a, secret_b, slen_a));
     EC_KEY_free(dh_a);
     EC_KEY_free(dh_b);
   }
@@ -661,7 +668,6 @@ main(int argc, const char **argv)
 {
   int i;
   int list=0, n_enabled=0;
-  benchmark_t *b;
   char *errmsg;
   or_options_t *options;
 
@@ -671,10 +677,10 @@ main(int argc, const char **argv)
     if (!strcmp(argv[i], "--list")) {
       list = 1;
     } else {
-      benchmark_t *b = find_benchmark(argv[i]);
+      benchmark_t *benchmark = find_benchmark(argv[i]);
       ++n_enabled;
-      if (b) {
-        b->enabled = 1;
+      if (benchmark) {
+        benchmark->enabled = 1;
       } else {
         printf("No such benchmark as %s\n", argv[i]);
       }
@@ -699,7 +705,7 @@ main(int argc, const char **argv)
     return 1;
   }
 
-  for (b = benchmarks; b->name; ++b) {
+  for (benchmark_t *b = benchmarks; b->name; ++b) {
     if (b->enabled || n_enabled == 0) {
       printf("===== %s =====\n", b->name);
       if (!list)

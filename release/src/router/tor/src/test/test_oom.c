@@ -77,14 +77,14 @@ dummy_origin_circuit_new(int n_cells)
 }
 
 static void
-add_bytes_to_buf(generic_buffer_t *buf, size_t n_bytes)
+add_bytes_to_buf(buf_t *buf, size_t n_bytes)
 {
   char b[3000];
 
   while (n_bytes) {
     size_t this_add = n_bytes > sizeof(b) ? sizeof(b) : n_bytes;
     crypto_rand(b, this_add);
-    generic_buffer_add(buf, b, this_add);
+    write_to_buf(b, this_add, buf);
     n_bytes -= this_add;
   }
 }
@@ -94,20 +94,15 @@ dummy_edge_conn_new(circuit_t *circ,
                     int type, size_t in_bytes, size_t out_bytes)
 {
   edge_connection_t *conn;
-  generic_buffer_t *inbuf, *outbuf;
+  buf_t *inbuf, *outbuf;
 
   if (type == CONN_TYPE_EXIT)
     conn = edge_connection_new(type, AF_INET);
   else
     conn = ENTRY_TO_EDGE_CONN(entry_connection_new(type, AF_INET));
 
-#ifdef USE_BUFFEREVENTS
-  inbuf = bufferevent_get_input(TO_CONN(conn)->bufev);
-  outbuf = bufferevent_get_output(TO_CONN(conn)->bufev);
-#else
   inbuf = TO_CONN(conn)->inbuf;
   outbuf = TO_CONN(conn)->outbuf;
-#endif
 
   /* We add these bytes directly to the buffers, to avoid all the
    * edge connection read/write machinery. */
@@ -134,10 +129,12 @@ test_oom_circbuf(void *arg)
 {
   or_options_t *options = get_options_mutable();
   circuit_t *c1 = NULL, *c2 = NULL, *c3 = NULL, *c4 = NULL;
-  struct timeval tv = { 1389631048, 0 };
+  uint64_t now_ns = 1389631048 * (uint64_t)1000000000;
+  const uint64_t start_ns = now_ns;
 
   (void) arg;
 
+  monotime_enable_test_mocking();
   MOCK(circuit_mark_for_close_, circuit_mark_for_close_dummy_);
 
   /* Far too low for real life. */
@@ -150,11 +147,11 @@ test_oom_circbuf(void *arg)
 
   /* Now we're going to fake up some circuits and get them added to the global
      circuit list. */
-  tv.tv_usec = 0;
-  tor_gettimeofday_cache_set(&tv);
+  monotime_coarse_set_mock_time_nsec(now_ns);
   c1 = dummy_origin_circuit_new(30);
-  tv.tv_usec = 10*1000;
-  tor_gettimeofday_cache_set(&tv);
+
+  now_ns += 10 * 1000000;
+  monotime_coarse_set_mock_time_nsec(now_ns);
   c2 = dummy_or_circuit_new(20, 20);
 
   tt_int_op(packed_cell_mem_cost(), OP_EQ,
@@ -163,15 +160,15 @@ test_oom_circbuf(void *arg)
             packed_cell_mem_cost() * 70);
   tt_int_op(cell_queues_check_size(), OP_EQ, 0); /* We are still not OOM */
 
-  tv.tv_usec = 20*1000;
-  tor_gettimeofday_cache_set(&tv);
+  now_ns += 10 * 1000000;
+  monotime_coarse_set_mock_time_nsec(now_ns);
   c3 = dummy_or_circuit_new(100, 85);
   tt_int_op(cell_queues_check_size(), OP_EQ, 0); /* We are still not OOM */
   tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 255);
 
-  tv.tv_usec = 30*1000;
-  tor_gettimeofday_cache_set(&tv);
+  now_ns += 10 * 1000000;
+  monotime_coarse_set_mock_time_nsec(now_ns);
   /* Adding this cell will trigger our OOM handler. */
   c4 = dummy_or_circuit_new(2, 0);
 
@@ -189,12 +186,12 @@ test_oom_circbuf(void *arg)
             packed_cell_mem_cost() * (257 - 30));
 
   circuit_free(c1);
-  tv.tv_usec = 0;
-  tor_gettimeofday_cache_set(&tv); /* go back in time */
+
+  monotime_coarse_set_mock_time_nsec(start_ns); /* go back in time */
   c1 = dummy_or_circuit_new(90, 0);
 
-  tv.tv_usec = 40*1000; /* go back to the future */
-  tor_gettimeofday_cache_set(&tv);
+  now_ns += 10 * 1000000;
+  monotime_coarse_set_mock_time_nsec(now_ns);
 
   tt_int_op(cell_queues_check_size(), OP_EQ, 1); /* We are now OOM */
 
@@ -213,6 +210,7 @@ test_oom_circbuf(void *arg)
   circuit_free(c4);
 
   UNMOCK(circuit_mark_for_close_);
+  monotime_disable_test_mocking();
 }
 
 /** Run unit tests for buffers.c */
@@ -221,12 +219,14 @@ test_oom_streambuf(void *arg)
 {
   or_options_t *options = get_options_mutable();
   circuit_t *c1 = NULL, *c2 = NULL, *c3 = NULL, *c4 = NULL, *c5 = NULL;
-  struct timeval tv = { 1389641159, 0 };
   uint32_t tvms;
   int i;
   smartlist_t *edgeconns = smartlist_new();
+  const uint64_t start_ns = 1389641159 * (uint64_t)1000000000;
+  uint64_t now_ns = start_ns;
 
   (void) arg;
+  monotime_enable_test_mocking();
 
   MOCK(circuit_mark_for_close_, circuit_mark_for_close_dummy_);
 
@@ -238,54 +238,56 @@ test_oom_streambuf(void *arg)
   tt_int_op(cell_queues_get_total_allocation(), OP_EQ, 0);
   tt_int_op(buf_get_total_allocation(), OP_EQ, 0);
 
+  monotime_coarse_set_mock_time_nsec(start_ns);
+
   /* Start all circuits with a bit of data queued in cells */
-  tv.tv_usec = 500*1000; /* go halfway into the second. */
-  tor_gettimeofday_cache_set(&tv);
+
+  /* go halfway into the second. */
+  monotime_coarse_set_mock_time_nsec(start_ns + 500 * 1000000);
   c1 = dummy_or_circuit_new(10,10);
-  tv.tv_usec = 510*1000;
-  tor_gettimeofday_cache_set(&tv);
+
+  monotime_coarse_set_mock_time_nsec(start_ns + 510 * 1000000);
   c2 = dummy_origin_circuit_new(20);
-  tv.tv_usec = 520*1000;
-  tor_gettimeofday_cache_set(&tv);
+  monotime_coarse_set_mock_time_nsec(start_ns + 520 * 1000000);
   c3 = dummy_or_circuit_new(20,20);
-  tv.tv_usec = 530*1000;
-  tor_gettimeofday_cache_set(&tv);
+  monotime_coarse_set_mock_time_nsec(start_ns + 530 * 1000000);
   c4 = dummy_or_circuit_new(0,0);
   tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
             packed_cell_mem_cost() * 80);
 
-  tv.tv_usec = 600*1000;
-  tor_gettimeofday_cache_set(&tv);
+  now_ns = start_ns + 600 * 1000000;
+  monotime_coarse_set_mock_time_nsec(now_ns);
 
   /* Add some connections to c1...c4. */
   for (i = 0; i < 4; ++i) {
     edge_connection_t *ec;
     /* link it to a circuit */
-    tv.tv_usec += 10*1000;
-    tor_gettimeofday_cache_set(&tv);
+    now_ns += 10 * 1000000;
+    monotime_coarse_set_mock_time_nsec(now_ns);
     ec = dummy_edge_conn_new(c1, CONN_TYPE_EXIT, 1000, 1000);
     tt_assert(ec);
     smartlist_add(edgeconns, ec);
-    tv.tv_usec += 10*1000;
-    tor_gettimeofday_cache_set(&tv);
+    now_ns += 10 * 1000000;
+    monotime_coarse_set_mock_time_nsec(now_ns);
     ec = dummy_edge_conn_new(c2, CONN_TYPE_AP, 1000, 1000);
     tt_assert(ec);
     smartlist_add(edgeconns, ec);
-    tv.tv_usec += 10*1000;
-    tor_gettimeofday_cache_set(&tv);
+    now_ns += 10 * 1000000;
+    monotime_coarse_set_mock_time_nsec(now_ns);
     ec = dummy_edge_conn_new(c4, CONN_TYPE_EXIT, 1000, 1000); /* Yes, 4 twice*/
     tt_assert(ec);
     smartlist_add(edgeconns, ec);
-    tv.tv_usec += 10*1000;
-    tor_gettimeofday_cache_set(&tv);
+    now_ns += 10 * 1000000;
+    monotime_coarse_set_mock_time_nsec(now_ns);
     ec = dummy_edge_conn_new(c4, CONN_TYPE_EXIT, 1000, 1000);
     smartlist_add(edgeconns, ec);
     tt_assert(ec);
   }
 
-  tv.tv_sec += 1;
-  tv.tv_usec = 0;
-  tvms = (uint32_t) tv_to_msec(&tv);
+  now_ns -= now_ns % 1000000000;
+  now_ns += 1000000000;
+  monotime_coarse_set_mock_time_nsec(now_ns);
+  tvms = (uint32_t) monotime_coarse_absolute_msec();
 
   tt_int_op(circuit_max_queued_cell_age(c1, tvms), OP_EQ, 500);
   tt_int_op(circuit_max_queued_cell_age(c2, tvms), OP_EQ, 490);
@@ -309,9 +311,8 @@ test_oom_streambuf(void *arg)
   /* Now give c4 a very old buffer of modest size */
   {
     edge_connection_t *ec;
-    tv.tv_sec -= 1;
-    tv.tv_usec = 0;
-    tor_gettimeofday_cache_set(&tv);
+    now_ns -= 1000000000;
+    monotime_coarse_set_mock_time_nsec(now_ns);
     ec = dummy_edge_conn_new(c4, CONN_TYPE_EXIT, 1000, 1000);
     tt_assert(ec);
     smartlist_add(edgeconns, ec);
@@ -322,8 +323,8 @@ test_oom_streambuf(void *arg)
   tt_int_op(cell_queues_check_size(), OP_EQ, 0);
 
   /* And run over the limit. */
-  tv.tv_usec = 800*1000;
-  tor_gettimeofday_cache_set(&tv);
+  now_ns += 800*1000000;
+  monotime_coarse_set_mock_time_nsec(now_ns);
   c5 = dummy_or_circuit_new(0,5);
 
   tt_int_op(cell_queues_get_total_allocation(), OP_EQ,
@@ -355,6 +356,7 @@ test_oom_streambuf(void *arg)
   smartlist_free(edgeconns);
 
   UNMOCK(circuit_mark_for_close_);
+  monotime_disable_test_mocking();
 }
 
 struct testcase_t oom_tests[] = {

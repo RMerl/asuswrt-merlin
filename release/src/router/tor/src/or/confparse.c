@@ -181,6 +181,26 @@ config_free_lines(config_line_t *front)
   }
 }
 
+/** If <b>key</b> is a deprecated configuration option, return the message
+ * explaining why it is deprecated (which may be an empty string). Return NULL
+ * if it is not deprecated. The <b>key</b> field must be fully expanded. */
+const char *
+config_find_deprecation(const config_format_t *fmt, const char *key)
+{
+  if (BUG(fmt == NULL) || BUG(key == NULL))
+    return NULL;
+  if (fmt->deprecations == NULL)
+    return NULL;
+
+  const config_deprecation_t *d;
+  for (d = fmt->deprecations; d->name; ++d) {
+    if (!strcasecmp(d->name, key)) {
+      return d->why_deprecated ? d->why_deprecated : "";
+    }
+  }
+  return NULL;
+}
+
 /** As config_find_option, but return a non-const pointer. */
 config_var_t *
 config_find_option_mutable(config_format_t *fmt, const char *key)
@@ -463,6 +483,16 @@ config_mark_lists_fragile(const config_format_t *fmt, void *options)
   }
 }
 
+void
+warn_deprecated_option(const char *what, const char *why)
+{
+  const char *space = (why && strlen(why)) ? " " : "";
+  log_warn(LD_CONFIG, "The %s option is deprecated, and will most likely "
+           "be removed in a future version of Tor.%s%s (If you think this is "
+           "a mistake, please let us know!)",
+           what, space, why);
+}
+
 /** If <b>c</b> is a syntactically valid configuration line, update
  * <b>options</b> with its value and return 0.  Otherwise return -1 for bad
  * key, -2 for bad value.
@@ -474,9 +504,12 @@ config_mark_lists_fragile(const config_format_t *fmt, void *options)
  */
 static int
 config_assign_line(const config_format_t *fmt, void *options,
-                   config_line_t *c, int use_defaults,
-                   int clear_first, bitarray_t *options_seen, char **msg)
+                   config_line_t *c, unsigned flags,
+                   bitarray_t *options_seen, char **msg)
 {
+  const unsigned use_defaults = flags & CAL_USE_DEFAULTS;
+  const unsigned clear_first = flags & CAL_CLEAR_FIRST;
+  const unsigned warn_deprecations = flags & CAL_WARN_DEPRECATIONS;
   const config_var_t *var;
 
   CONFIG_CHECK(fmt, options);
@@ -500,6 +533,12 @@ config_assign_line(const config_format_t *fmt, void *options,
   if (strcmp(var->name, c->key)) {
     tor_free(c->key);
     c->key = tor_strdup(var->name);
+  }
+
+  const char *deprecation_msg;
+  if (warn_deprecations &&
+      (deprecation_msg = config_find_deprecation(fmt, var->name))) {
+    warn_deprecated_option(var->name, deprecation_msg);
   }
 
   if (!strlen(c->value)) {
@@ -604,7 +643,7 @@ config_lines_dup(const config_line_t *inp)
  * escape that value. Return NULL if no such key exists. */
 config_line_t *
 config_get_assigned_option(const config_format_t *fmt, const void *options,
-                             const char *key, int escape_val)
+                           const char *key, int escape_val)
 {
   const config_var_t *var;
   const void *value;
@@ -804,11 +843,13 @@ options_trial_assign() calls config_assign(1, 1)
 */
 int
 config_assign(const config_format_t *fmt, void *options, config_line_t *list,
-              int use_defaults, int clear_first, char **msg)
+              unsigned config_assign_flags, char **msg)
 {
   config_line_t *p;
   bitarray_t *options_seen;
   const int n_options = config_count_options(fmt);
+  const unsigned clear_first = config_assign_flags & CAL_CLEAR_FIRST;
+  const unsigned use_defaults = config_assign_flags & CAL_USE_DEFAULTS;
 
   CONFIG_CHECK(fmt, options);
 
@@ -832,8 +873,8 @@ config_assign(const config_format_t *fmt, void *options, config_line_t *list,
   /* pass 3: assign. */
   while (list) {
     int r;
-    if ((r=config_assign_line(fmt, options, list, use_defaults,
-                              clear_first, options_seen, msg))) {
+    if ((r=config_assign_line(fmt, options, list, config_assign_flags,
+                              options_seen, msg))) {
       bitarray_free(options_seen);
       return r;
     }
@@ -1029,7 +1070,7 @@ config_dup(const config_format_t *fmt, const void *old)
     line = config_get_assigned_option(fmt, old, fmt->vars[i].name, 0);
     if (line) {
       char *msg = NULL;
-      if (config_assign(fmt, newopts, line, 0, 0, &msg) < 0) {
+      if (config_assign(fmt, newopts, line, 0, &msg) < 0) {
         log_err(LD_BUG, "config_get_assigned_option() generated "
                 "something we couldn't config_assign(): %s", msg);
         tor_free(msg);
@@ -1238,7 +1279,7 @@ config_parse_units(const char *val, struct unit_table_t *u, int *ok)
 
   v = tor_parse_uint64(val, 10, 0, UINT64_MAX, ok, &cp);
   if (!*ok || (cp && *cp == '.')) {
-    d = tor_parse_double(val, 0, UINT64_MAX, ok, &cp);
+    d = tor_parse_double(val, 0, (double)UINT64_MAX, ok, &cp);
     if (!*ok)
       goto done;
     use_float = 1;
@@ -1255,7 +1296,7 @@ config_parse_units(const char *val, struct unit_table_t *u, int *ok)
   for ( ;u->unit;++u) {
     if (!strcasecmp(u->unit, cp)) {
       if (use_float)
-        v = u->multiplier * d;
+        v = (uint64_t)(u->multiplier * d);
       else
         v *= u->multiplier;
       *ok = 1;

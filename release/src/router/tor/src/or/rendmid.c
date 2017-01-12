@@ -309,7 +309,7 @@ rend_mid_rendezvous(or_circuit_t *circ, const uint8_t *request,
     goto err;
   }
 
-  if (request_len != REND_COOKIE_LEN+DH_KEY_LEN+DIGEST_LEN) {
+  if (request_len < REND_COOKIE_LEN) {
     log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
          "Rejecting RENDEZVOUS1 cell with bad length (%d) on circuit %u.",
          (int)request_len, (unsigned)circ->p_circ_id);

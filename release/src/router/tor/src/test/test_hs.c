@@ -8,12 +8,14 @@
 
 #define CONTROL_PRIVATE
 #define CIRCUITBUILD_PRIVATE
+#define RENDSERVICE_PRIVATE
 
 #include "or.h"
 #include "test.h"
 #include "control.h"
 #include "config.h"
 #include "rendcommon.h"
+#include "rendservice.h"
 #include "routerset.h"
 #include "circuitbuild.h"
 #include "test_helpers.h"
@@ -435,6 +437,347 @@ test_hs_rend_data(void *arg)
   rend_data_free(client_dup);
 }
 
+/* Test encoding and decoding service authorization cookies */
+static void
+test_hs_auth_cookies(void *arg)
+{
+#define TEST_COOKIE_RAW ((const uint8_t *) "abcdefghijklmnop")
+#define TEST_COOKIE_ENCODED "YWJjZGVmZ2hpamtsbW5vcA"
+#define TEST_COOKIE_ENCODED_STEALTH "YWJjZGVmZ2hpamtsbW5vcB"
+#define TEST_COOKIE_ENCODED_INVALID "YWJjZGVmZ2hpamtsbW5vcD"
+
+  char *encoded_cookie;
+  uint8_t raw_cookie[REND_DESC_COOKIE_LEN];
+  rend_auth_type_t auth_type;
+  char *err_msg;
+  int re;
+
+  (void)arg;
+
+  /* Test that encoding gives the expected result */
+  encoded_cookie = rend_auth_encode_cookie(TEST_COOKIE_RAW, REND_BASIC_AUTH);
+  tt_str_op(encoded_cookie, OP_EQ, TEST_COOKIE_ENCODED);
+  tor_free(encoded_cookie);
+
+  encoded_cookie = rend_auth_encode_cookie(TEST_COOKIE_RAW, REND_STEALTH_AUTH);
+  tt_str_op(encoded_cookie, OP_EQ, TEST_COOKIE_ENCODED_STEALTH);
+  tor_free(encoded_cookie);
+
+  /* Decoding should give the original value */
+  re = rend_auth_decode_cookie(TEST_COOKIE_ENCODED, raw_cookie, &auth_type,
+                               &err_msg);
+  tt_assert(!re);
+  tt_assert(!err_msg);
+  tt_mem_op(raw_cookie, OP_EQ, TEST_COOKIE_RAW, REND_DESC_COOKIE_LEN);
+  tt_int_op(auth_type, OP_EQ, REND_BASIC_AUTH);
+  memset(raw_cookie, 0, sizeof(raw_cookie));
+
+  re = rend_auth_decode_cookie(TEST_COOKIE_ENCODED_STEALTH, raw_cookie,
+                               &auth_type, &err_msg);
+  tt_assert(!re);
+  tt_assert(!err_msg);
+  tt_mem_op(raw_cookie, OP_EQ, TEST_COOKIE_RAW, REND_DESC_COOKIE_LEN);
+  tt_int_op(auth_type, OP_EQ, REND_STEALTH_AUTH);
+  memset(raw_cookie, 0, sizeof(raw_cookie));
+
+  /* Decoding with padding characters should also work */
+  re = rend_auth_decode_cookie(TEST_COOKIE_ENCODED "==", raw_cookie, NULL,
+                               &err_msg);
+  tt_assert(!re);
+  tt_assert(!err_msg);
+  tt_mem_op(raw_cookie, OP_EQ, TEST_COOKIE_RAW, REND_DESC_COOKIE_LEN);
+
+  /* Decoding with an unknown type should fail */
+  re = rend_auth_decode_cookie(TEST_COOKIE_ENCODED_INVALID, raw_cookie,
+                               &auth_type, &err_msg);
+  tt_int_op(re, OP_LT, 0);
+  tt_assert(err_msg);
+  tor_free(err_msg);
+
+ done:
+  return;
+}
+
+static int mock_get_options_calls = 0;
+static or_options_t *mock_options = NULL;
+
+static void
+reset_options(or_options_t *options, int *get_options_calls)
+{
+  memset(options, 0, sizeof(or_options_t));
+  options->TestingTorNetwork = 1;
+
+  *get_options_calls = 0;
+}
+
+static const or_options_t *
+mock_get_options(void)
+{
+  ++mock_get_options_calls;
+  tor_assert(mock_options);
+  return mock_options;
+}
+
+/* arg can't be 0 (the test fails) or 2 (the test is skipped) */
+#define CREATE_HS_DIR_NONE ((intptr_t)0x04)
+#define CREATE_HS_DIR1     ((intptr_t)0x08)
+#define CREATE_HS_DIR2     ((intptr_t)0x10)
+
+/* Test that single onion poisoning works. */
+static void
+test_single_onion_poisoning(void *arg)
+{
+  or_options_t opt;
+  mock_options = &opt;
+  reset_options(mock_options, &mock_get_options_calls);
+  MOCK(get_options, mock_get_options);
+
+  int ret = -1;
+  intptr_t create_dir_mask = (intptr_t)arg;
+  /* Get directories with a random suffix so we can repeat the tests */
+  mock_options->DataDirectory = tor_strdup(get_fname_rnd("test_data_dir"));
+  rend_service_t *service_1 = tor_malloc_zero(sizeof(rend_service_t));
+  char *dir1 = tor_strdup(get_fname_rnd("test_hs_dir1"));
+  rend_service_t *service_2 = tor_malloc_zero(sizeof(rend_service_t));
+  char *dir2 = tor_strdup(get_fname_rnd("test_hs_dir2"));
+  smartlist_t *services = smartlist_new();
+  char *poison_path = NULL;
+
+  /* No services, no service to verify, no problem! */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_config_services(mock_options, 1);
+  tt_assert(ret == 0);
+
+  /* Either way, no problem. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_config_services(mock_options, 1);
+  tt_assert(ret == 0);
+
+  /* Create the data directory, and, if the correct bit in arg is set,
+   * create a directory for that service.
+   * The data directory is required for the lockfile, which is used when
+   * loading keys. */
+  ret = check_private_dir(mock_options->DataDirectory, CPD_CREATE, NULL);
+  tt_assert(ret == 0);
+  if (create_dir_mask & CREATE_HS_DIR1) {
+    ret = check_private_dir(dir1, CPD_CREATE, NULL);
+    tt_assert(ret == 0);
+  }
+  if (create_dir_mask & CREATE_HS_DIR2) {
+    ret = check_private_dir(dir2, CPD_CREATE, NULL);
+    tt_assert(ret == 0);
+  }
+
+  service_1->directory = dir1;
+  service_2->directory = dir2;
+  /* The services own the directory pointers now */
+  dir1 = dir2 = NULL;
+  /* Add port to service 1 */
+  service_1->ports = smartlist_new();
+  service_2->ports = smartlist_new();
+  char *err_msg = NULL;
+  rend_service_port_config_t *port1 = rend_service_parse_port_config("80", " ",
+                                                                     &err_msg);
+  tt_assert(port1);
+  tt_assert(!err_msg);
+  smartlist_add(service_1->ports, port1);
+
+  rend_service_port_config_t *port2 = rend_service_parse_port_config("90", " ",
+                                                                     &err_msg);
+  /* Add port to service 2 */
+  tt_assert(port2);
+  tt_assert(!err_msg);
+  smartlist_add(service_2->ports, port2);
+
+  /* No services, a service to verify, no problem! */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Either way, no problem. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Add the first service */
+  ret = rend_service_check_dir_and_add(services, mock_options, service_1, 0);
+  tt_assert(ret == 0);
+  /* But don't add the second service yet. */
+
+  /* Service directories, but no previous keys, no problem! */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Either way, no problem. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Poison! Poison! Poison!
+   * This can only be done in HiddenServiceSingleHopMode. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_poison_new_single_onion_dir(service_1, mock_options);
+  tt_assert(ret == 0);
+  /* Poisoning twice is a no-op. */
+  ret = rend_service_poison_new_single_onion_dir(service_1, mock_options);
+  tt_assert(ret == 0);
+
+  /* Poisoned service directories, but no previous keys, no problem! */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Either way, no problem. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Now add some keys, and we'll have a problem. */
+  ret = rend_service_load_all_keys(services);
+  tt_assert(ret == 0);
+
+  /* Poisoned service directories with previous keys are not allowed. */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret < 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* But they are allowed if we're in non-anonymous mode. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Re-poisoning directories with existing keys is a no-op, because
+   * directories with existing keys are ignored. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_poison_new_single_onion_dir(service_1, mock_options);
+  tt_assert(ret == 0);
+  /* And it keeps the poison. */
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Now add the second service: it has no key and no poison file */
+  ret = rend_service_check_dir_and_add(services, mock_options, service_2, 0);
+  tt_assert(ret == 0);
+
+  /* A new service, and an existing poisoned service. Not ok. */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret < 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* But ok to add in non-anonymous mode. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Now remove the poisoning from the first service, and we have the opposite
+   * problem. */
+  poison_path = rend_service_sos_poison_path(service_1);
+  tt_assert(poison_path);
+  ret = unlink(poison_path);
+  tt_assert(ret == 0);
+
+  /* Unpoisoned service directories with previous keys are ok, as are empty
+   * directories. */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* But the existing unpoisoned key is not ok in non-anonymous mode, even if
+   * there is an empty service. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret < 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Poisoning directories with existing keys is a no-op, because directories
+   * with existing keys are ignored. But the new directory should poison. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_poison_new_single_onion_dir(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_poison_new_single_onion_dir(service_2, mock_options);
+  tt_assert(ret == 0);
+  /* And the old directory remains unpoisoned. */
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret < 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* And the new directory should be ignored, because it has no key. */
+  mock_options->HiddenServiceSingleHopMode = 0;
+  mock_options->HiddenServiceNonAnonymousMode = 0;
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+  /* Re-poisoning directories without existing keys is a no-op. */
+  mock_options->HiddenServiceSingleHopMode = 1;
+  mock_options->HiddenServiceNonAnonymousMode = 1;
+  ret = rend_service_poison_new_single_onion_dir(service_1, mock_options);
+  tt_assert(ret == 0);
+  ret = rend_service_poison_new_single_onion_dir(service_2, mock_options);
+  tt_assert(ret == 0);
+  /* And the old directory remains unpoisoned. */
+  ret = rend_service_verify_single_onion_poison(service_1, mock_options);
+  tt_assert(ret < 0);
+  ret = rend_service_verify_single_onion_poison(service_2, mock_options);
+  tt_assert(ret == 0);
+
+ done:
+  /* The test harness deletes the directories at exit */
+  tor_free(poison_path);
+  tor_free(dir1);
+  tor_free(dir2);
+  smartlist_free(services);
+  rend_service_free(service_1);
+  rend_service_free(service_2);
+  UNMOCK(get_options);
+  tor_free(mock_options->DataDirectory);
+}
+
 struct testcase_t hs_tests[] = {
   { "hs_rend_data", test_hs_rend_data, TT_FORK,
     NULL, NULL },
@@ -445,6 +788,16 @@ struct testcase_t hs_tests[] = {
   { "pick_bad_tor2web_rendezvous_node",
     test_pick_bad_tor2web_rendezvous_node, TT_FORK,
     NULL, NULL },
+  { "hs_auth_cookies", test_hs_auth_cookies, TT_FORK,
+    NULL, NULL },
+  { "single_onion_poisoning_create_dir_none", test_single_onion_poisoning,
+    TT_FORK, &passthrough_setup, (void*)(CREATE_HS_DIR_NONE) },
+  { "single_onion_poisoning_create_dir1", test_single_onion_poisoning,
+    TT_FORK, &passthrough_setup, (void*)(CREATE_HS_DIR1) },
+  { "single_onion_poisoning_create_dir2", test_single_onion_poisoning,
+    TT_FORK, &passthrough_setup, (void*)(CREATE_HS_DIR2) },
+  { "single_onion_poisoning_create_dir_both", test_single_onion_poisoning,
+    TT_FORK, &passthrough_setup, (void*)(CREATE_HS_DIR1 | CREATE_HS_DIR2) },
   END_OF_TESTCASES
 };
 

@@ -47,8 +47,6 @@ enum was_router_added_t dirserv_add_descriptor(routerinfo_t *ri,
 void dirserv_set_router_is_running(routerinfo_t *router, time_t now);
 int list_server_status_v1(smartlist_t *routers, char **router_status_out,
                           int for_controller);
-int dirserv_dump_directory_to_string(char **dir_out,
-                                     crypto_pk_t *private_key);
 char *dirserv_get_flag_thresholds_line(void);
 void dirserv_compute_bridge_flag_thresholds(void);
 
@@ -98,7 +96,9 @@ size_t dirserv_estimate_data_size(smartlist_t *fps, int is_serverdescs,
 size_t dirserv_estimate_microdesc_size(const smartlist_t *fps, int compressed);
 
 char *routerstatus_format_entry(
-                              const routerstatus_t *rs, const char *platform,
+                              const routerstatus_t *rs,
+                              const char *version,
+                              const char *protocols,
                               routerstatus_format_type_t format,
                               const vote_routerstatus_t *vrs);
 void dirserv_free_all(void);

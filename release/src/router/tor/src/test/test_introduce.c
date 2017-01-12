@@ -9,8 +9,6 @@
 #define RENDSERVICE_PRIVATE
 #include "rendservice.h"
 
-extern const char AUTHORITY_SIGNKEY_1[];
-
 static uint8_t v0_test_plaintext[] =
     /* 20 bytes of rendezvous point nickname */
   { 0x4e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d, 0x65,

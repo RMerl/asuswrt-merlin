@@ -9,6 +9,20 @@
  *
  * \brief Functions and structures to handle set-type selection of routers
  *  by name, ID, address, etc.
+ *
+ * This module implements the routerset_t data structure, whose purpose
+ * is to specify a set of relays based on a list of their identities or
+ * properties.  Routersets can restrict relays by IP address mask,
+ * identity fingerprint, country codes, and nicknames (deprecated).
+ *
+ * Routersets are typically used for user-specified restrictions, and
+ * are created by invoking routerset_new and routerset_parse from
+ * config.c and confparse.c.  To use a routerset, invoke one of
+ * routerset_contains_...() functions , or use
+ * routerstatus_get_all_nodes() / routerstatus_subtract_nodes() to
+ * manipulate a smartlist of node_t pointers.
+ *
+ * Country-code restrictions are implemented in geoip.c.
  */
 
 #define ROUTERSET_PRIVATE

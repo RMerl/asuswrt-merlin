@@ -107,12 +107,12 @@ test_pt_parsing(void *arg)
   tt_assert(parse_smethod_line(line, mp) == 0);
   tt_int_op(1, OP_EQ, smartlist_len(mp->transports));
   {
-    const transport_t *transport = smartlist_get(mp->transports, 0);
-    tt_assert(transport);
-    tt_str_op(transport->name, OP_EQ, "trebuchet");
-    tt_int_op(transport->port, OP_EQ, 9999);
-    tt_str_op(fmt_addr(&transport->addr), OP_EQ, "127.0.0.1");
-    tt_str_op(transport->extra_info_args, OP_EQ,
+    const transport_t *transport_ = smartlist_get(mp->transports, 0);
+    tt_assert(transport_);
+    tt_str_op(transport_->name, OP_EQ, "trebuchet");
+    tt_int_op(transport_->port, OP_EQ, 9999);
+    tt_str_op(fmt_addr(&transport_->addr), OP_EQ, "127.0.0.1");
+    tt_str_op(transport_->extra_info_args, OP_EQ,
               "counterweight=3,sling=snappy");
   }
   reset_mp(mp);

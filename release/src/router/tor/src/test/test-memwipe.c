@@ -1,3 +1,4 @@
+#include "orconfig.h"
 #include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -5,9 +6,7 @@
 
 #include "crypto.h"
 #include "compat.h"
-
-#undef MIN
-#define MIN(a,b) ( ((a)<(b)) ? (a) : (b) )
+#include "util.h"
 
 static unsigned fill_a_buffer_memset(void) __attribute__((noinline));
 static unsigned fill_a_buffer_memwipe(void) __attribute__((noinline));
@@ -17,6 +16,7 @@ static unsigned fill_heap_buffer_memwipe(void) __attribute__((noinline));
 static unsigned fill_heap_buffer_nothing(void) __attribute__((noinline));
 static unsigned check_a_buffer(void) __attribute__((noinline));
 
+extern const char *s; /* Make the linkage global */
 const char *s = NULL;
 
 #define BUF_LEN 2048
@@ -35,6 +35,12 @@ const char *s = NULL;
   for (i = 0; i < BUF_LEN; ++i) {                                       \
     sum += (unsigned char)buf[i];                                       \
   }
+
+#ifdef __OpenBSD__
+/* Disable some of OpenBSD's malloc protections for this test. This helps
+ * us do bad things, such as access freed buffers, without crashing. */
+const char *malloc_options="sufjj";
+#endif
 
 static unsigned
 fill_a_buffer_memset(void)
@@ -100,29 +106,29 @@ static char *heap_buf = NULL;
 static unsigned
 fill_heap_buffer_memset(void)
 {
-  char *buf = heap_buf = malloc(BUF_LEN);
+  char *buf = heap_buf = raw_malloc(BUF_LEN);
   FILL_BUFFER_IMPL()
   memset(buf, 0, BUF_LEN);
-  free(buf);
+  raw_free(buf);
   return sum;
 }
 
 static unsigned
 fill_heap_buffer_memwipe(void)
 {
-  char *buf = heap_buf = malloc(BUF_LEN);
+  char *buf = heap_buf = raw_malloc(BUF_LEN);
   FILL_BUFFER_IMPL()
   memwipe(buf, 0, BUF_LEN);
-  free(buf);
+  raw_free(buf);
   return sum;
 }
 
 static unsigned
 fill_heap_buffer_nothing(void)
 {
-  char *buf = heap_buf = malloc(BUF_LEN);
+  char *buf = heap_buf = raw_malloc(BUF_LEN);
   FILL_BUFFER_IMPL()
-  free(buf);
+  raw_free(buf);
   return sum;
 }
 

@@ -21,7 +21,7 @@
   } STMT_END
 #define BASE16(idx, var, n) STMT_BEGIN {                                \
     const char *s = argv[(idx)];                                        \
-    if (base16_decode((char*)var, n, s, strlen(s)) < 0 ) {              \
+    if (base16_decode((char*)var, n, s, strlen(s)) < (int)n ) {              \
       fprintf(stderr, "couldn't decode argument %d (%s)\n",idx,s);      \
       return 1;                                                         \
     }                                                                   \
@@ -153,7 +153,10 @@ main(int argc, char **argv)
   if (argc < 2) {
     fprintf(stderr, "I need arguments. Read source for more info.\n");
     return 1;
-  } else if (!strcmp(argv[1], "client1")) {
+  }
+
+  curve25519_init();
+  if (!strcmp(argv[1], "client1")) {
     return client1(argc, argv);
   } else if (!strcmp(argv[1], "server1")) {
     return server1(argc, argv);

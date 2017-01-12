@@ -4,6 +4,69 @@
 /**
  * \file circuitmux.c
  * \brief Circuit mux/cell selection abstraction
+ *
+ * A circuitmux is responsible for <b>MU</b>ltiple<b>X</b>ing all of the
+ * circuits that are writing on a single channel. It keeps track of which of
+ * these circuits has something to write (aka, "active" circuits), and which
+ * one should write next.  A circuitmux corresponds 1:1 with a channel.
+ *
+ * There can be different implementations of the circuitmux's rules (which
+ * decide which circuit is next to write).
+ *
+ * A circuitmux exposes three distinct
+ * interfaces to other components:
+ *
+ * To channels, which each have a circuitmux_t, the supported operations
+ * (invoked from relay.c) are:
+ *
+ *   circuitmux_get_first_active_circuit():
+ *
+ *     Pick one of the circuitmux's active circuits to send cells from.
+ *
+ *   circuitmux_notify_xmit_cells():
+ *
+ *     Notify the circuitmux that cells have been sent on a circuit.
+ *
+ * To circuits, the exposed operations are:
+ *
+ *   circuitmux_attach_circuit():
+ *
+ *     Attach a circuit to the circuitmux; this will allocate any policy-
+ *     specific data wanted for this circuit and add it to the active
+ *     circuits list if it has queued cells.
+ *
+ *   circuitmux_detach_circuit():
+ *
+ *     Detach a circuit from the circuitmux, freeing associated structures.
+ *
+ *   circuitmux_clear_num_cells():
+ *
+ *     Clear the circuitmux's cell counter for this circuit.
+ *
+ *   circuitmux_set_num_cells():
+ *
+ *     Set the circuitmux's cell counter for this circuit. One of
+ *     circuitmuc_clear_num_cells() or circuitmux_set_num_cells() MUST be
+ *     called when the number of cells queued on a circuit changes.
+ *
+ * See circuitmux.h for the circuitmux_policy_t data structure, which contains
+ * a table of function pointers implementing a circuit selection policy, and
+ * circuitmux_ewma.c for an example of a circuitmux policy.  Circuitmux
+ * policies can be manipulated with:
+ *
+ *   circuitmux_get_policy():
+ *
+ *     Return the current policy for a circuitmux_t, if any.
+ *
+ *   circuitmux_clear_policy():
+ *
+ *     Remove a policy installed on a circuitmux_t, freeing all associated
+ *     data.  The circuitmux will revert to the built-in round-robin behavior.
+ *
+ *   circuitmux_set_policy():
+ *
+ *     Install a policy on a circuitmux_t; the appropriate callbacks will be
+ *     made to attach all existing circuits to the new policy.
  **/
 
 #include "or.h"
@@ -37,64 +100,6 @@ typedef struct circuit_muxinfo_s circuit_muxinfo_t;
 
 /*
  * Structures for circuitmux.c
- */
-
-/*
- * A circuitmux is a collection of circuits; it tracks which subset
- * of the attached circuits are 'active' (i.e., have cells available
- * to transmit) and how many cells on each.  It expoes three distinct
- * interfaces to other components:
- *
- * To channels, which each have a circuitmux_t, the supported operations
- * are:
- *
- *   circuitmux_get_first_active_circuit():
- *
- *     Pick one of the circuitmux's active circuits to send cells from.
- *
- *   circuitmux_notify_xmit_cells():
- *
- *     Notify the circuitmux that cells have been sent on a circuit.
- *
- * To circuits, the exposed operations are:
- *
- *   circuitmux_attach_circuit():
- *
- *     Attach a circuit to the circuitmux; this will allocate any policy-
- *     specific data wanted for this circuit and add it to the active
- *     circuits list if it has queued cells.
- *
- *   circuitmux_detach_circuit():
- *
- *     Detach a circuit from the circuitmux, freeing associated structures.
- *
- *   circuitmux_clear_num_cells():
- *
- *     Clear the circuitmux's cell counter for this circuit.
- *
- *   circuitmux_set_num_cells():
- *
- *     Set the circuitmux's cell counter for this circuit.
- *
- * See circuitmux.h for the circuitmux_policy_t data structure, which contains
- * a table of function pointers implementing a circuit selection policy, and
- * circuitmux_ewma.c for an example of a circuitmux policy.  Circuitmux
- * policies can be manipulated with:
- *
- *   circuitmux_get_policy():
- *
- *     Return the current policy for a circuitmux_t, if any.
- *
- *   circuitmux_clear_policy():
- *
- *     Remove a policy installed on a circuitmux_t, freeing all associated
- *     data.  The circuitmux will revert to the built-in round-robin behavior.
- *
- *   circuitmux_set_policy():
- *
- *     Install a policy on a circuitmux_t; the appropriate callbacks will be
- *     made to attach all existing circuits to the new policy.
- *
  */
 
 struct circuitmux_s {
@@ -362,7 +367,7 @@ HT_HEAD(chanid_circid_muxinfo_map, chanid_circid_muxinfo_t);
 
 /* Emit a bunch of hash table stuff */
 HT_PROTOTYPE(chanid_circid_muxinfo_map, chanid_circid_muxinfo_t, node,
-             chanid_circid_entry_hash, chanid_circid_entries_eq);
+             chanid_circid_entry_hash, chanid_circid_entries_eq)
 HT_GENERATE2(chanid_circid_muxinfo_map, chanid_circid_muxinfo_t, node,
              chanid_circid_entry_hash, chanid_circid_entries_eq, 0.6,
              tor_reallocarray_, tor_free_)

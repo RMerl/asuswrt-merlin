@@ -63,11 +63,77 @@ struct rend_intro_cell_s {
   uint8_t dh[DH_KEY_LEN];
 };
 
+/** Represents a single hidden service running at this OP. */
+typedef struct rend_service_t {
+  /* Fields specified in config file */
+  char *directory; /**< where in the filesystem it stores it. Will be NULL if
+                    * this service is ephemeral. */
+  int dir_group_readable; /**< if 1, allow group read
+                             permissions on directory */
+  smartlist_t *ports; /**< List of rend_service_port_config_t */
+  rend_auth_type_t auth_type; /**< Client authorization type or 0 if no client
+                               * authorization is performed. */
+  smartlist_t *clients; /**< List of rend_authorized_client_t's of
+                         * clients that may access our service. Can be NULL
+                         * if no client authorization is performed. */
+  /* Other fields */
+  crypto_pk_t *private_key; /**< Permanent hidden-service key. */
+  char service_id[REND_SERVICE_ID_LEN_BASE32+1]; /**< Onion address without
+                                                  * '.onion' */
+  char pk_digest[DIGEST_LEN]; /**< Hash of permanent hidden-service key. */
+  smartlist_t *intro_nodes; /**< List of rend_intro_point_t's we have,
+                             * or are trying to establish. */
+  /** List of rend_intro_point_t that are expiring. They are removed once
+   * the new descriptor is successfully uploaded. A node in this list CAN
+   * NOT appear in the intro_nodes list. */
+  smartlist_t *expiring_nodes;
+  time_t intro_period_started; /**< Start of the current period to build
+                                * introduction points. */
+  int n_intro_circuits_launched; /**< Count of intro circuits we have
+                                  * established in this period. */
+  unsigned int n_intro_points_wanted; /**< Number of intro points this
+                                       * service wants to have open. */
+  rend_service_descriptor_t *desc; /**< Current hidden service descriptor. */
+  time_t desc_is_dirty; /**< Time at which changes to the hidden service
+                         * descriptor content occurred, or 0 if it's
+                         * up-to-date. */
+  time_t next_upload_time; /**< Scheduled next hidden service descriptor
+                            * upload time. */
+  /** Replay cache for Diffie-Hellman values of INTRODUCE2 cells, to
+   * detect repeats.  Clients may send INTRODUCE1 cells for the same
+   * rendezvous point through two or more different introduction points;
+   * when they do, this keeps us from launching multiple simultaneous attempts
+   * to connect to the same rend point. */
+  replaycache_t *accepted_intro_dh_parts;
+  /** If true, we don't close circuits for making requests to unsupported
+   * ports. */
+  int allow_unknown_ports;
+  /** The maximum number of simultanious streams-per-circuit that are allowed
+   * to be established, or 0 if no limit is set.
+   */
+  int max_streams_per_circuit;
+  /** If true, we close circuits that exceed the max_streams_per_circuit
+   * limit.  */
+  int max_streams_close_circuit;
+} rend_service_t;
+
+STATIC void rend_service_free(rend_service_t *service);
+STATIC char *rend_service_sos_poison_path(const rend_service_t *service);
+STATIC int rend_service_check_dir_and_add(smartlist_t *service_list,
+                                          const or_options_t *options,
+                                          rend_service_t *service,
+                                          int validate_only);
+STATIC int rend_service_verify_single_onion_poison(
+                                                  const rend_service_t *s,
+                                                  const or_options_t *options);
+STATIC int rend_service_poison_new_single_onion_dir(
+                                                  const rend_service_t *s,
+                                                  const or_options_t* options);
 #endif
 
 int num_rend_services(void);
 int rend_config_services(const or_options_t *options, int validate_only);
-int rend_service_load_all_keys(void);
+int rend_service_load_all_keys(const smartlist_t *service_list);
 void rend_services_add_filenames_to_lists(smartlist_t *open_lst,
                                           smartlist_t *stat_lst);
 void rend_consider_services_intro_points(void);
@@ -106,8 +172,11 @@ rend_service_port_config_t *rend_service_parse_port_config(const char *string,
                                                            char **err_msg_out);
 void rend_service_port_config_free(rend_service_port_config_t *p);
 
+void rend_authorized_client_free(rend_authorized_client_t *client);
+
 /** Return value from rend_service_add_ephemeral. */
 typedef enum {
+  RSAE_BADAUTH = -5, /**< Invalid auth_type/auth_clients */
   RSAE_BADVIRTPORT = -4, /**< Invalid VIRTPORT/TARGET(s) */
   RSAE_ADDREXISTS = -3, /**< Onion address collision */
   RSAE_BADPRIVKEY = -2, /**< Invalid public key */
@@ -118,6 +187,8 @@ rend_service_add_ephemeral_status_t rend_service_add_ephemeral(crypto_pk_t *pk,
                                smartlist_t *ports,
                                int max_streams_per_circuit,
                                int max_streams_close_circuit,
+                               rend_auth_type_t auth_type,
+                               smartlist_t *auth_clients,
                                char **service_id_out);
 int rend_service_del_ephemeral(const char *service_id);
 
@@ -125,6 +196,10 @@ void directory_post_to_hs_dir(rend_service_descriptor_t *renddesc,
                               smartlist_t *descs, smartlist_t *hs_dirs,
                               const char *service_id, int seconds_valid);
 void rend_service_desc_has_uploaded(const rend_data_t *rend_data);
+
+int rend_service_allow_non_anonymous_connection(const or_options_t *options);
+int rend_service_reveal_startup_time(const or_options_t *options);
+int rend_service_non_anonymous_mode_enabled(const or_options_t *options);
 
 #endif
 

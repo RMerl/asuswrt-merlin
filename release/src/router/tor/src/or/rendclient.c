@@ -134,6 +134,7 @@ int
 rend_client_send_introduction(origin_circuit_t *introcirc,
                               origin_circuit_t *rendcirc)
 {
+  const or_options_t *options = get_options();
   size_t payload_len;
   int r, v3_shift = 0;
   char payload[RELAY_PAYLOAD_SIZE];
@@ -150,10 +151,8 @@ rend_client_send_introduction(origin_circuit_t *introcirc,
   tor_assert(rendcirc->rend_data);
   tor_assert(!rend_cmp_service_ids(introcirc->rend_data->onion_address,
                                    rendcirc->rend_data->onion_address));
-#ifndef NON_ANONYMOUS_MODE_ENABLED
-  tor_assert(!(introcirc->build_state->onehop_tunnel));
-  tor_assert(!(rendcirc->build_state->onehop_tunnel));
-#endif
+  assert_circ_anonymity_ok(introcirc, options);
+  assert_circ_anonymity_ok(rendcirc, options);
 
   r = rend_cache_lookup_entry(introcirc->rend_data->onion_address, -1,
                               &entry);
@@ -387,6 +386,7 @@ int
 rend_client_introduction_acked(origin_circuit_t *circ,
                                const uint8_t *request, size_t request_len)
 {
+  const or_options_t *options = get_options();
   origin_circuit_t *rendcirc;
   (void) request; // XXXX Use this.
 
@@ -398,10 +398,9 @@ rend_client_introduction_acked(origin_circuit_t *circ,
     return -1;
   }
 
+  tor_assert(circ->build_state);
   tor_assert(circ->build_state->chosen_exit);
-#ifndef NON_ANONYMOUS_MODE_ENABLED
-  tor_assert(!(circ->build_state->onehop_tunnel));
-#endif
+  assert_circ_anonymity_ok(circ, options);
   tor_assert(circ->rend_data);
 
   /* For path bias: This circuit was used successfully. Valid
@@ -416,9 +415,7 @@ rend_client_introduction_acked(origin_circuit_t *circ,
     log_info(LD_REND,"Received ack. Telling rend circ...");
     rendcirc = circuit_get_ready_rend_circ_by_rend_data(circ->rend_data);
     if (rendcirc) { /* remember the ack */
-#ifndef NON_ANONYMOUS_MODE_ENABLED
-      tor_assert(!(rendcirc->build_state->onehop_tunnel));
-#endif
+      assert_circ_anonymity_ok(rendcirc, options);
       circuit_change_purpose(TO_CIRCUIT(rendcirc),
                              CIRCUIT_PURPOSE_C_REND_READY_INTRO_ACKED);
       /* Set timestamp_dirty, because circuit_expire_building expects
@@ -469,6 +466,23 @@ rend_client_introduction_acked(origin_circuit_t *circ,
 /** The period for which a hidden service directory cannot be queried for
  * the same descriptor ID again. */
 #define REND_HID_SERV_DIR_REQUERY_PERIOD (15 * 60)
+/** Test networks generate a new consensus every 5 or 10 seconds.
+ * So allow them to requery HSDirs much faster. */
+#define REND_HID_SERV_DIR_REQUERY_PERIOD_TESTING (5)
+
+/** Return the period for which a hidden service directory cannot be queried
+ * for the same descriptor ID again, taking TestingTorNetwork into account. */
+static time_t
+hsdir_requery_period(const or_options_t *options)
+{
+  tor_assert(options);
+
+  if (options->TestingTorNetwork) {
+    return REND_HID_SERV_DIR_REQUERY_PERIOD_TESTING;
+  } else {
+    return REND_HID_SERV_DIR_REQUERY_PERIOD;
+  }
+}
 
 /** Contains the last request times to hidden service directories for
  * certain queries; each key is a string consisting of the
@@ -510,7 +524,7 @@ lookup_last_hid_serv_request(routerstatus_t *hs_dir,
   tor_snprintf(hsdir_desc_comb_id, sizeof(hsdir_desc_comb_id), "%s%s",
                hsdir_id_base32,
                desc_id_base32);
-  /* XXX023 tor_assert(strlen(hsdir_desc_comb_id) ==
+  /* XXX++?? tor_assert(strlen(hsdir_desc_comb_id) ==
                        LAST_HID_SERV_REQUEST_KEY_LEN); */
   if (set) {
     time_t *oldptr;
@@ -532,7 +546,7 @@ static void
 directory_clean_last_hid_serv_requests(time_t now)
 {
   strmap_iter_t *iter;
-  time_t cutoff = now - REND_HID_SERV_DIR_REQUERY_PERIOD;
+  time_t cutoff = now - hsdir_requery_period(get_options());
   strmap_t *last_hid_serv_requests = get_last_hid_serv_requests();
   for (iter = strmap_iter_init(last_hid_serv_requests);
        !strmap_iter_done(iter); ) {
@@ -572,7 +586,7 @@ purge_hid_serv_from_last_hid_serv_requests(const char *desc_id)
     const char *key;
     void *val;
     strmap_iter_get(iter, &key, &val);
-    /* XXX023 tor_assert(strlen(key) == LAST_HID_SERV_REQUEST_KEY_LEN); */
+    /* XXX++?? tor_assert(strlen(key) == LAST_HID_SERV_REQUEST_KEY_LEN); */
     if (tor_memeq(key + LAST_HID_SERV_REQUEST_KEY_LEN -
                   REND_DESC_ID_V2_LEN_BASE32,
                   desc_id_base32,
@@ -635,7 +649,7 @@ pick_hsdir(const char *desc_id, const char *desc_id_base32)
     time_t last = lookup_last_hid_serv_request(dir, desc_id_base32,
                                                0, 0);
     const node_t *node = node_get_by_id(dir->identity_digest);
-    if (last + REND_HID_SERV_DIR_REQUERY_PERIOD >= now ||
+    if (last + hsdir_requery_period(options) >= now ||
         !node || !node_has_descriptor(node)) {
       SMARTLIST_DEL_CURRENT(responsible_dirs, dir);
       continue;
@@ -813,9 +827,9 @@ fetch_v2_desc_by_addr(rend_data_t *query, smartlist_t *hsdirs)
 
   tries_left = REND_NUMBER_OF_NON_CONSECUTIVE_REPLICAS;
   while (tries_left > 0) {
-    int rand = crypto_rand_int(tries_left);
-    int chosen_replica = replicas_left_to_try[rand];
-    replicas_left_to_try[rand] = replicas_left_to_try[--tries_left];
+    int rand_val = crypto_rand_int(tries_left);
+    int chosen_replica = replicas_left_to_try[rand_val];
+    replicas_left_to_try[rand_val] = replicas_left_to_try[--tries_left];
 
     ret = rend_compute_v2_desc_id(descriptor_id, query->onion_address,
                                   query->auth_type == REND_STEALTH_AUTH ?
@@ -895,17 +909,17 @@ rend_client_refetch_v2_renddesc(rend_data_t *rend_query)
   rend_cache_entry_t *e = NULL;
 
   tor_assert(rend_query);
-  /* Are we configured to fetch descriptors? */
-  if (!get_options()->FetchHidServDescriptors) {
-    log_warn(LD_REND, "We received an onion address for a v2 rendezvous "
-        "service descriptor, but are not fetching service descriptors.");
-    return;
-  }
   /* Before fetching, check if we already have a usable descriptor here. */
   if (rend_cache_lookup_entry(rend_query->onion_address, -1, &e) == 0 &&
       rend_client_any_intro_points_usable(e)) {
     log_info(LD_REND, "We would fetch a v2 rendezvous descriptor, but we "
                       "already have a usable descriptor here. Not fetching.");
+    return;
+  }
+  /* Are we configured to fetch descriptors? */
+  if (!get_options()->FetchHidServDescriptors) {
+    log_warn(LD_REND, "We received an onion address for a v2 rendezvous "
+        "service descriptor, but are not fetching service descriptors.");
     return;
   }
   log_debug(LD_REND, "Fetching v2 rendezvous descriptor for service %s",
@@ -1099,7 +1113,7 @@ rend_client_rendezvous_acked(origin_circuit_t *circ, const uint8_t *request,
    * service and never reply to the client's rend requests */
   pathbias_mark_use_success(circ);
 
-  /* XXXX This is a pretty brute-force approach. It'd be better to
+  /* XXXX++ This is a pretty brute-force approach. It'd be better to
    * attach only the connections that are waiting on this circuit, rather
    * than trying to attach them all. See comments bug 743. */
   /* If we already have the introduction circuit built, make sure we send
@@ -1351,40 +1365,20 @@ rend_client_get_random_intro_impl(const rend_cache_entry_t *entry,
 
   i = crypto_rand_int(smartlist_len(usable_nodes));
   intro = smartlist_get(usable_nodes, i);
-  /* Do we need to look up the router or is the extend info complete? */
-  if (!intro->extend_info->onion_key) {
-    const node_t *node;
-    extend_info_t *new_extend_info;
-    if (tor_digest_is_zero(intro->extend_info->identity_digest))
-      node = node_get_by_hex_id(intro->extend_info->nickname);
-    else
-      node = node_get_by_id(intro->extend_info->identity_digest);
-    if (!node) {
-      log_info(LD_REND, "Unknown router with nickname '%s'; trying another.",
-               intro->extend_info->nickname);
-      smartlist_del(usable_nodes, i);
-      goto again;
-    }
-#ifdef ENABLE_TOR2WEB_MODE
-    new_extend_info = extend_info_from_node(node, options->Tor2webMode);
-#else
-    new_extend_info = extend_info_from_node(node, 0);
-#endif
-    if (!new_extend_info) {
-      const char *alternate_reason = "";
-#ifdef ENABLE_TOR2WEB_MODE
-      alternate_reason = ", or we cannot connect directly to it";
-#endif
-      log_info(LD_REND, "We don't have a descriptor for the intro-point relay "
-               "'%s'%s; trying another.",
-               extend_info_describe(intro->extend_info), alternate_reason);
-      smartlist_del(usable_nodes, i);
-      goto again;
-    } else {
-      extend_info_free(intro->extend_info);
-      intro->extend_info = new_extend_info;
-    }
-    tor_assert(intro->extend_info != NULL);
+  if (BUG(!intro->extend_info)) {
+    /* This should never happen, but it isn't fatal, just try another */
+    smartlist_del(usable_nodes, i);
+    goto again;
+  }
+  /* All version 2 HS descriptors come with a TAP onion key.
+   * Clients used to try to get the TAP onion key from the consensus, but this
+   * meant that hidden services could discover which consensus clients have. */
+  if (!extend_info_supports_tap(intro->extend_info)) {
+    log_info(LD_REND, "The HS descriptor is missing a TAP onion key for the "
+             "intro-point relay '%s'; trying another.",
+             safe_str_client(extend_info_describe(intro->extend_info)));
+    smartlist_del(usable_nodes, i);
+    goto again;
   }
   /* Check if we should refuse to talk to this router. */
   if (strict &&
@@ -1466,12 +1460,10 @@ rend_parse_service_authorization(const or_options_t *options,
   strmap_t *parsed = strmap_new();
   smartlist_t *sl = smartlist_new();
   rend_service_authorization_t *auth = NULL;
-  char descriptor_cookie_tmp[REND_DESC_COOKIE_LEN+2];
-  char descriptor_cookie_base64ext[REND_DESC_COOKIE_LEN_BASE64+2+1];
+  char *err_msg = NULL;
 
   for (line = options->HidServAuth; line; line = line->next) {
     char *onion_address, *descriptor_cookie;
-    int auth_type_val = 0;
     auth = NULL;
     SMARTLIST_FOREACH(sl, char *, c, tor_free(c););
     smartlist_clear(sl);
@@ -1500,31 +1492,13 @@ rend_parse_service_authorization(const or_options_t *options,
     }
     /* Parse descriptor cookie. */
     descriptor_cookie = smartlist_get(sl, 1);
-    if (strlen(descriptor_cookie) != REND_DESC_COOKIE_LEN_BASE64) {
-      log_warn(LD_CONFIG, "Authorization cookie has wrong length: '%s'",
-               descriptor_cookie);
+    if (rend_auth_decode_cookie(descriptor_cookie, auth->descriptor_cookie,
+                                &auth->auth_type, &err_msg) < 0) {
+      tor_assert(err_msg);
+      log_warn(LD_CONFIG, "%s", err_msg);
+      tor_free(err_msg);
       goto err;
     }
-    /* Add trailing zero bytes (AA) to make base64-decoding happy. */
-    tor_snprintf(descriptor_cookie_base64ext,
-                 REND_DESC_COOKIE_LEN_BASE64+2+1,
-                 "%sAA", descriptor_cookie);
-    if (base64_decode(descriptor_cookie_tmp, sizeof(descriptor_cookie_tmp),
-                      descriptor_cookie_base64ext,
-                      strlen(descriptor_cookie_base64ext)) < 0) {
-      log_warn(LD_CONFIG, "Decoding authorization cookie failed: '%s'",
-               descriptor_cookie);
-      goto err;
-    }
-    auth_type_val = (((uint8_t)descriptor_cookie_tmp[16]) >> 4) + 1;
-    if (auth_type_val < 1 || auth_type_val > 2) {
-      log_warn(LD_CONFIG, "Authorization cookie has unknown authorization "
-                          "type encoded.");
-      goto err;
-    }
-    auth->auth_type = auth_type_val == 1 ? REND_BASIC_AUTH : REND_STEALTH_AUTH;
-    memcpy(auth->descriptor_cookie, descriptor_cookie_tmp,
-           REND_DESC_COOKIE_LEN);
     if (strmap_get(parsed, auth->onion_address)) {
       log_warn(LD_CONFIG, "Duplicate authorization for the same hidden "
                           "service.");
@@ -1547,8 +1521,38 @@ rend_parse_service_authorization(const or_options_t *options,
   } else {
     strmap_free(parsed, rend_service_authorization_strmap_item_free);
   }
-  memwipe(descriptor_cookie_tmp, 0, sizeof(descriptor_cookie_tmp));
-  memwipe(descriptor_cookie_base64ext, 0, sizeof(descriptor_cookie_base64ext));
   return res;
+}
+
+/* Can Tor client code make direct (non-anonymous) connections to introduction
+ * or rendezvous points?
+ * Returns true if tor was compiled with NON_ANONYMOUS_MODE_ENABLED, and is
+ * configured in Tor2web mode. */
+int
+rend_client_allow_non_anonymous_connection(const or_options_t *options)
+{
+  /* Tor2web support needs to be compiled in to a tor binary. */
+#ifdef NON_ANONYMOUS_MODE_ENABLED
+  /* Tor2web */
+  return options->Tor2webMode ? 1 : 0;
+#else
+  (void)options;
+  return 0;
+#endif
+}
+
+/* At compile-time, was non-anonymous mode enabled via
+ * NON_ANONYMOUS_MODE_ENABLED ? */
+int
+rend_client_non_anonymous_mode_enabled(const or_options_t *options)
+{
+  (void)options;
+  /* Tor2web support needs to be compiled in to a tor binary. */
+#ifdef NON_ANONYMOUS_MODE_ENABLED
+  /* Tor2web */
+  return 1;
+#else
+  return 0;
+#endif
 }
 

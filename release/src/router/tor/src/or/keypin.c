@@ -39,16 +39,28 @@
  * @brief Key-pinning for RSA and Ed25519 identity keys at directory
  *  authorities.
  *
+ * Many older clients, and many internal interfaces, still refer to relays by
+ * their RSA1024 identity keys.  We can make this more secure, however:
+ * authorities use this module to track which RSA keys have been used along
+ * with which Ed25519 keys, and force such associations to be permanent.
+ *
  * This module implements a key-pinning mechanism to ensure that it's safe
  * to use RSA keys as identitifers even as we migrate to Ed25519 keys.  It
  * remembers, for every Ed25519 key we've seen, what the associated Ed25519
  * key is.  This way, if we see a different Ed25519 key with that RSA key,
  * we'll know that there's a mismatch.
  *
+ * (As of this writing, these key associations are advisory only, mostly
+ * because some relay operators kept mishandling their Ed25519 keys during
+ * the initial Ed25519 rollout.  We should fix this problem, and then toggle
+ * the AuthDirPinKeys option.)
+ *
  * We persist these entries to disk using a simple format, where each line
  * has a base64-encoded RSA SHA1 hash, then a base64-endoded Ed25519 key.
  * Empty lines, misformed lines, and lines beginning with # are
  * ignored. Lines beginning with @ are reserved for future extensions.
+ *
+ * The dirserv.c module is the main user of these functions.
  */
 
 static int keypin_journal_append_entry(const uint8_t *rsa_id_digest,
@@ -93,14 +105,14 @@ return (unsigned) siphash24g(a->ed25519_key, sizeof(a->ed25519_key));
 }
 
 HT_PROTOTYPE(rsamap, keypin_ent_st, rsamap_node, keypin_ent_hash_rsa,
-               keypin_ents_eq_rsa);
+               keypin_ents_eq_rsa)
 HT_GENERATE2(rsamap, keypin_ent_st, rsamap_node, keypin_ent_hash_rsa,
-               keypin_ents_eq_rsa, 0.6, tor_reallocarray, tor_free_);
+               keypin_ents_eq_rsa, 0.6, tor_reallocarray, tor_free_)
 
 HT_PROTOTYPE(edmap, keypin_ent_st, edmap_node, keypin_ent_hash_ed,
-               keypin_ents_eq_ed);
+               keypin_ents_eq_ed)
 HT_GENERATE2(edmap, keypin_ent_st, edmap_node, keypin_ent_hash_ed,
-               keypin_ents_eq_ed, 0.6, tor_reallocarray, tor_free_);
+               keypin_ents_eq_ed, 0.6, tor_reallocarray, tor_free_)
 
 /**
  * Check whether we already have an entry in the key pinning table for a
@@ -479,7 +491,7 @@ keypin_clear(void)
   HT_CLEAR(rsamap,&the_rsa_map);
 
   if (bad_entries) {
-    log_warn(LD_BUG, "Found %d discrepencies in the the keypin database.",
+    log_warn(LD_BUG, "Found %d discrepencies in the keypin database.",
              bad_entries);
   }
 }

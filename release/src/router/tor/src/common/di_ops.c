@@ -226,3 +226,49 @@ safe_mem_is_zero(const void *mem, size_t sz)
   return 1 & ((total - 1) >> 8);
 }
 
+/** Time-invariant 64-bit greater-than; works on two integers in the range
+ * (0,INT64_MAX). */
+#if SIZEOF_VOID_P == 8
+#define gt_i64_timei(a,b) ((a) > (b))
+#else
+static inline int
+gt_i64_timei(uint64_t a, uint64_t b)
+{
+  int64_t diff = (int64_t) (b - a);
+  int res = diff >> 63;
+  return res & 1;
+}
+#endif
+
+/**
+ * Given an array of list of <b>n_entries</b> uint64_t values, whose sum is
+ * <b>total</b>, find the first i such that the total of all elements 0...i is
+ * greater than rand_val.
+ *
+ * Try to perform this operation in a constant-time way.
+ */
+int
+select_array_member_cumulative_timei(const uint64_t *entries, int n_entries,
+                                     uint64_t total, uint64_t rand_val)
+{
+  int i, i_chosen=-1, n_chosen=0;
+  uint64_t total_so_far = 0;
+
+  for (i = 0; i < n_entries; ++i) {
+    total_so_far += entries[i];
+    if (gt_i64_timei(total_so_far, rand_val)) {
+      i_chosen = i;
+      n_chosen++;
+      /* Set rand_val to INT64_MAX rather than stopping the loop. This way,
+       * the time we spend in the loop does not leak which element we chose. */
+      rand_val = INT64_MAX;
+    }
+  }
+  tor_assert(total_so_far == total);
+  tor_assert(n_chosen == 1);
+  tor_assert(i_chosen >= 0);
+  tor_assert(i_chosen < n_entries);
+
+  return i_chosen;
+}
+

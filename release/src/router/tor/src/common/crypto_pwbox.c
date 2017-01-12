@@ -61,7 +61,7 @@ crypto_pwbox(uint8_t **out, size_t *outlen_out,
                                       pwbox_encoded_getarray_skey_header(enc),
                                       S2K_MAXLEN,
                                       s2k_flags);
-  if (spec_len < 0 || spec_len > S2K_MAXLEN)
+  if (BUG(spec_len < 0 || spec_len > S2K_MAXLEN))
     goto err;
   pwbox_encoded_setlen_skey_header(enc, spec_len);
   enc->header_len = spec_len;
@@ -76,10 +76,11 @@ crypto_pwbox(uint8_t **out, size_t *outlen_out,
 
   /* Now that all the data is in position, derive some keys, encrypt, and
    * digest */
-  if (secret_to_key_derivekey(keys, sizeof(keys),
+  const int s2k_rv = secret_to_key_derivekey(keys, sizeof(keys),
                               pwbox_encoded_getarray_skey_header(enc),
                               spec_len,
-                              secret, secret_len) < 0)
+                              secret, secret_len);
+  if (BUG(s2k_rv < 0))
     goto err;
 
   cipher = crypto_cipher_new_with_iv((char*)keys, (char*)enc->iv);
@@ -87,11 +88,11 @@ crypto_pwbox(uint8_t **out, size_t *outlen_out,
   crypto_cipher_free(cipher);
 
   result_len = pwbox_encoded_encoded_len(enc);
-  if (result_len < 0)
+  if (BUG(result_len < 0))
     goto err;
   result = tor_malloc(result_len);
   enc_len = pwbox_encoded_encode(result, result_len, enc);
-  if (enc_len < 0)
+  if (BUG(enc_len < 0))
     goto err;
   tor_assert(enc_len == result_len);
 
@@ -107,9 +108,24 @@ crypto_pwbox(uint8_t **out, size_t *outlen_out,
   goto out;
 
  err:
+  /* LCOV_EXCL_START
+
+     This error case is often unreachable if we're correctly coded, unless
+     somebody adds a new error case somewhere, or unless you're building
+     without scrypto support.
+
+       - make_specifier can't fail, unless S2K_MAX_LEN is too short.
+       - secret_to_key_derivekey can't really fail unless we're missing
+         scrypt, or the underlying function fails, or we pass it a bogus
+         algorithm or parameters.
+       - pwbox_encoded_encoded_len can't fail unless we're using trunnel
+         incorrectly.
+       - pwbox_encoded_encode can't fail unless we're using trunnel wrong,
+         or it's buggy.
+   */
   tor_free(result);
   rv = -1;
-
+  /* LCOV_EXCL_STOP */
  out:
   pwbox_encoded_free(enc);
   memwipe(keys, 0, sizeof(keys));

@@ -4,9 +4,33 @@
 /**
  * \file circuitmux_ewma.c
  * \brief EWMA circuit selection as a circuitmux_t policy
+ *
+ * The "EWMA" in this module stands for the "exponentially weighted moving
+ * average" of the number of cells sent on each circuit.  The goal is to
+ * prioritize cells on circuits that have been quiet recently, by looking at
+ * those that have sent few cells over time, prioritizing recent times
+ * more than older ones.
+ *
+ * Specifically, a cell sent at time "now" has weight 1, but a time X ticks
+ * before now has weight ewma_scale_factor ^ X , where ewma_scale_factor is
+ * between 0.0 and 1.0.
+ *
+ * For efficiency, we do not re-scale these averages every time we send a
+ * cell: that would be horribly inefficient.  Instead, we we keep the cell
+ * count on all circuits on the same circuitmux scaled relative to a single
+ * tick.  When we add a new cell, we scale its weight depending on the time
+ * that has elapsed since the tick.  We do re-scale the circuits on the
+ * circuitmux periodically, so that we don't overflow double.
+ *
+ *
+ * This module should be used through the interfaces in circuitmux.c, which it
+ * implements.
+ *
  **/
 
 #define TOR_CIRCUITMUX_EWMA_C_
+
+#include "orconfig.h"
 
 #include <math.h>
 
@@ -26,9 +50,10 @@
 
 /*** Some useful constant #defines ***/
 
-/*DOCDOC*/
+/** Any halflife smaller than this number of seconds is considered to be
+ * "disabled". */
 #define EPSILON 0.00001
-/*DOCDOC*/
+/** The natural logarithm of 0.5. */
 #define LOG_ONEHALF -0.69314718055994529
 
 /*** EWMA structures ***/

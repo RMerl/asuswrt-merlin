@@ -11,8 +11,6 @@
  *  modules.)
  */
 
-#define _GNU_SOURCE
-
 #include "orconfig.h"
 #include <stdlib.h>
 #include "compat.h"
@@ -63,8 +61,8 @@ tor_cond_t *
 tor_cond_new(void)
 {
   tor_cond_t *cond = tor_malloc(sizeof(tor_cond_t));
-  if (tor_cond_init(cond)<0)
-    tor_free(cond);
+  if (BUG(tor_cond_init(cond)<0))
+    tor_free(cond); // LCOV_EXCL_LINE
   return cond;
 }
 
@@ -242,8 +240,11 @@ alert_sockets_create(alert_sockets_t *socks_out, uint32_t flags)
     if (socks[0] >= 0) {
       if (fcntl(socks[0], F_SETFD, FD_CLOEXEC) < 0 ||
           set_socket_nonblocking(socks[0]) < 0) {
+        // LCOV_EXCL_START -- if eventfd succeeds, fcntl will.
+        tor_assert_nonfatal_unreached();
         close(socks[0]);
         return -1;
+        // LCOV_EXCL_STOP
       }
     }
   }
@@ -277,9 +278,12 @@ alert_sockets_create(alert_sockets_t *socks_out, uint32_t flags)
         fcntl(socks[1], F_SETFD, FD_CLOEXEC) < 0 ||
         set_socket_nonblocking(socks[0]) < 0 ||
         set_socket_nonblocking(socks[1]) < 0) {
+      // LCOV_EXCL_START -- if pipe succeeds, you can fcntl the output
+      tor_assert_nonfatal_unreached();
       close(socks[0]);
       close(socks[1]);
       return -1;
+      // LCOV_EXCL_STOP
     }
     socks_out->read_fd = socks[0];
     socks_out->write_fd = socks[1];
@@ -294,9 +298,12 @@ alert_sockets_create(alert_sockets_t *socks_out, uint32_t flags)
       tor_socketpair(AF_UNIX, SOCK_STREAM, 0, socks) == 0) {
     if (set_socket_nonblocking(socks[0]) < 0 ||
         set_socket_nonblocking(socks[1])) {
+      // LCOV_EXCL_START -- if socketpair worked, you can make it nonblocking.
+      tor_assert_nonfatal_unreached();
       tor_close_socket(socks[0]);
       tor_close_socket(socks[1]);
       return -1;
+      // LCOV_EXCL_STOP
     }
     socks_out->read_fd = socks[0];
     socks_out->write_fd = socks[1];

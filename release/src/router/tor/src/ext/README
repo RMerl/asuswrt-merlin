@@ -11,13 +11,6 @@ strlcpy.c
     for strcat and strcpy.  These are nonstandard, and some libc
     implementations refuse to add them for religious reasons.
 
-eventdns.[ch]
-
-    A fork of Libevent's DNS implementation, used by Tor when Libevent
-    2.0 or later is not available.  Once Libevent 2.0 is required, we
-    should throw this away; it has diverged from evdns.[ch], and is
-    no longer easily mergeable.
-
 ht.h
 
     An implementation of a hash table in the style of Niels Provos's
@@ -73,3 +66,14 @@ readpassphrase.[ch]
 
     Portable readpassphrase implementation from OpenSSH portable, version
     6.8p1.
+
+timeouts/
+
+    William Ahern's hierarchical timer-wheel implementation. MIT license.
+
+mulodi/
+
+    Contains an overflow-checking 64-bit signed integer multiply
+    from LLVM's compiler_rt.  For some reason, this is missing from
+    32-bit libclang in many places. Dual licensed MIT-license and
+    BSD-like license; see mulodi/LICENSE.TXT.

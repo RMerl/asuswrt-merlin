@@ -5,6 +5,17 @@
  * \file onion_ntor.c
  *
  * \brief Implementation for the ntor handshake.
+ *
+ * The ntor circuit-extension handshake was developed as a replacement
+ * for the old TAP handshake.  It uses Elliptic-curve Diffie-Hellman and
+ * a hash function in order to perform a one-way authenticated key
+ * exchange.  The ntor handshake is meant to replace the old "TAP"
+ * handshake.
+ *
+ * We instantiate ntor with curve25519, HMAC-SHA256, and HKDF.
+ *
+ * This handshake, like the other circuit-extension handshakes, is
+ * invoked from onion.c.
  */
 
 #include "orconfig.h"
@@ -47,7 +58,7 @@ typedef struct tweakset_t {
 } tweakset_t;
 
 /** The tweaks to be used with our handshake. */
-const tweakset_t proto1_tweaks = {
+static const tweakset_t proto1_tweaks = {
 #define PROTOID "ntor-curve25519-sha256-1"
 #define PROTOID_LEN 24
   PROTOID ":mac",
@@ -85,8 +96,13 @@ onion_skin_ntor_create(const uint8_t *router_id,
   memcpy(state->router_id, router_id, DIGEST_LEN);
   memcpy(&state->pubkey_B, router_key, sizeof(curve25519_public_key_t));
   if (curve25519_secret_key_generate(&state->seckey_x, 0) < 0) {
+    /* LCOV_EXCL_START
+     * Secret key generation should be unable to fail when the key isn't
+     * marked as "extra-strong" */
+    tor_assert_nonfatal_unreached();
     tor_free(state);
     return -1;
+    /* LCOV_EXCL_STOP */
   }
   curve25519_public_key_generate(&state->pubkey_X, &state->seckey_x);
 

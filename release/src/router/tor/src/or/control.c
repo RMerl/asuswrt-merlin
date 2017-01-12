@@ -5,7 +5,31 @@
 /**
  * \file control.c
  * \brief Implementation for Tor's control-socket interface.
- *   See doc/spec/control-spec.txt for full details on protocol.
+ *
+ * A "controller" is an external program that monitors and controls a Tor
+ * instance via a text-based protocol. It connects to Tor via a connection
+ * to a local socket.
+ *
+ * The protocol is line-driven.  The controller sends commands terminated by a
+ * CRLF.  Tor sends lines that are either <em>replies</em> to what the
+ * controller has said, or <em>events</em> that Tor sends to the controller
+ * asynchronously based on occurrences in the Tor network model.
+ *
+ * See the control-spec.txt file in the torspec.git repository for full
+ * details on protocol.
+ *
+ * This module generally has two kinds of entry points: those based on having
+ * received a command on a controller socket, which are handled in
+ * connection_control_process_inbuf(), and dispatched to individual functions
+ * with names like control_handle_COMMANDNAME(); and those based on events
+ * that occur elsewhere in Tor, which are handled by functions with names like
+ * control_event_EVENTTYPE().
+ *
+ * Controller events are not sent immediately; rather, they are inserted into
+ * the queued_control_events array, and flushed later from
+ * flush_queued_events_cb().  Doing this simplifies our callgraph greatly,
+ * by limiting the number of places in Tor that can call back into the network
+ * stack.
  **/
 
 #define CONTROL_PRIVATE
@@ -51,11 +75,7 @@
 #include <sys/resource.h>
 #endif
 
-#ifdef HAVE_EVENT2_EVENT_H
 #include <event2/event.h>
-#else
-#include <event.h>
-#endif
 
 #include "crypto_s2k.h"
 #include "procmon.h"
@@ -189,6 +209,8 @@ static int get_cached_network_liveness(void);
 static void set_cached_network_liveness(int liveness);
 
 static void flush_queued_events_cb(evutil_socket_t fd, short what, void *arg);
+
+static char * download_status_to_string(const download_status_t *dl);
 
 /** Given a control event code for a message event, return the corresponding
  * log severity. */
@@ -596,7 +618,7 @@ typedef struct queued_event_s {
 
 /** Pointer to int. If this is greater than 0, we don't allow new events to be
  * queued. */
-static tor_threadlocal_t block_event_queue;
+static tor_threadlocal_t block_event_queue_flag;
 
 /** Holds a smartlist of queued_event_t objects that may need to be sent
  * to one or more controllers */
@@ -631,17 +653,17 @@ control_initialize_event_queue(void)
 
   if (queued_control_events_lock == NULL) {
     queued_control_events_lock = tor_mutex_new();
-    tor_threadlocal_init(&block_event_queue);
+    tor_threadlocal_init(&block_event_queue_flag);
   }
 }
 
 static int *
 get_block_event_queue(void)
 {
-  int *val = tor_threadlocal_get(&block_event_queue);
+  int *val = tor_threadlocal_get(&block_event_queue_flag);
   if (PREDICT_UNLIKELY(val == NULL)) {
     val = tor_malloc_zero(sizeof(int));
-    tor_threadlocal_set(&block_event_queue, val);
+    tor_threadlocal_set(&block_event_queue_flag, val);
   }
   return val;
 }
@@ -873,7 +895,8 @@ control_setconf_helper(control_connection_t *conn, uint32_t len, char *body,
   config_line_t *lines=NULL;
   char *start = body;
   char *errstring = NULL;
-  const int clear_first = 1;
+  const unsigned flags =
+    CAL_CLEAR_FIRST | (use_defaults ? CAL_USE_DEFAULTS : 0);
 
   char *config;
   smartlist_t *entries = smartlist_new();
@@ -933,7 +956,7 @@ control_setconf_helper(control_connection_t *conn, uint32_t len, char *body,
   }
   tor_free(config);
 
-  opt_err = options_trial_assign(lines, use_defaults, clear_first, &errstring);
+  opt_err = options_trial_assign(lines, flags, &errstring);
   {
     const char *msg;
     switch (opt_err) {
@@ -1211,7 +1234,8 @@ decode_hashed_passwords(config_line_t *passwords)
     const char *hashed = cl->value;
 
     if (!strcmpstart(hashed, "16:")) {
-      if (base16_decode(decoded, sizeof(decoded), hashed+3, strlen(hashed+3))<0
+      if (base16_decode(decoded, sizeof(decoded), hashed+3, strlen(hashed+3))
+                        != S2K_RFC2440_SPECIFIER_LEN + DIGEST_LEN
           || strlen(hashed+3) != (S2K_RFC2440_SPECIFIER_LEN+DIGEST_LEN)*2) {
         goto err;
       }
@@ -1262,7 +1286,8 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
     tor_assert(i>0);
     password_len = i/2;
     password = tor_malloc(password_len + 1);
-    if (base16_decode(password, password_len+1, body, i)<0) {
+    if (base16_decode(password, password_len+1, body, i)
+                      != (int) password_len) {
       connection_write_str_to_buf(
             "551 Invalid hexadecimal encoding.  Maybe you tried a plain text "
             "password?  If so, the standard requires that you put it in "
@@ -1370,7 +1395,7 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
         goto err;
       }
       bad_password = 1;
-      SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+      SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
       smartlist_free(sl);
       sl = NULL;
     } else {
@@ -1382,7 +1407,7 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
                       received, DIGEST_LEN))
           goto ok;
       });
-      SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+      SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
       smartlist_free(sl);
       sl = NULL;
 
@@ -1410,7 +1435,7 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
   connection_printf_to_buf(conn, "515 Authentication failed: %s\r\n", errstr);
   connection_mark_for_close(TO_CONN(conn));
   if (sl) { /* clean up */
-    SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+    SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
     smartlist_free(sl);
   }
   return 0;
@@ -1421,7 +1446,7 @@ handle_control_authenticate(control_connection_t *conn, uint32_t len,
   conn->base_.state = CONTROL_CONN_STATE_OPEN;
   tor_free(password);
   if (sl) { /* clean up */
-    SMARTLIST_FOREACH(sl, char *, cp, tor_free(cp));
+    SMARTLIST_FOREACH(sl, char *, str, tor_free(str));
     smartlist_free(sl);
   }
   return 0;
@@ -1679,7 +1704,7 @@ getinfo_helper_misc(control_connection_t *conn, const char *question,
     *answer = tor_strdup("VERBOSE_NAMES EXTENDED_EVENTS");
   } else if (!strcmp(question, "address")) {
     uint32_t addr;
-    if (router_pick_published_address(get_options(), &addr) < 0) {
+    if (router_pick_published_address(get_options(), &addr, 0) < 0) {
       *errmsg = "Address unknown";
       return -1;
     }
@@ -1724,8 +1749,6 @@ getinfo_helper_misc(control_connection_t *conn, const char *question,
   } else if (!strcmp(question, "limits/max-mem-in-queues")) {
     tor_asprintf(answer, U64_FORMAT,
                  U64_PRINTF_ARG(get_options()->MaxMemInQueues));
-  } else if (!strcmp(question, "dir-usage")) {
-    *answer = directory_dump_request_log();
   } else if (!strcmp(question, "fingerprint")) {
     crypto_pk_t *server_key;
     if (!server_mode(get_options())) {
@@ -1852,11 +1875,10 @@ getinfo_helper_dir(control_connection_t *control_conn,
                    const char *question, char **answer,
                    const char **errmsg)
 {
-  const node_t *node;
-  const routerinfo_t *ri = NULL;
   (void) control_conn;
   if (!strcmpstart(question, "desc/id/")) {
-    node = node_get_by_hex_id(question+strlen("desc/id/"));
+    const routerinfo_t *ri = NULL;
+    const node_t *node = node_get_by_hex_id(question+strlen("desc/id/"));
     if (node)
       ri = node->ri;
     if (ri) {
@@ -1865,9 +1887,11 @@ getinfo_helper_dir(control_connection_t *control_conn,
         *answer = tor_strndup(body, ri->cache_info.signed_descriptor_len);
     }
   } else if (!strcmpstart(question, "desc/name/")) {
-    /* XXX023 Setting 'warn_if_unnamed' here is a bit silly -- the
+    const routerinfo_t *ri = NULL;
+    /* XXX Setting 'warn_if_unnamed' here is a bit silly -- the
      * warning goes to the user, not to the controller. */
-    node = node_get_by_nickname(question+strlen("desc/name/"), 1);
+    const node_t *node =
+      node_get_by_nickname(question+strlen("desc/name/"), 1);
     if (node)
       ri = node->ri;
     if (ri) {
@@ -1951,7 +1975,7 @@ getinfo_helper_dir(control_connection_t *control_conn,
       *answer = tor_strndup(md->body, md->bodylen);
     }
   } else if (!strcmpstart(question, "md/name/")) {
-    /* XXX023 Setting 'warn_if_unnamed' here is a bit silly -- the
+    /* XXX Setting 'warn_if_unnamed' here is a bit silly -- the
      * warning goes to the user, not to the controller. */
     const node_t *node = node_get_by_nickname(question+strlen("md/name/"), 1);
     /* XXXX duplicated code */
@@ -1961,7 +1985,9 @@ getinfo_helper_dir(control_connection_t *control_conn,
       *answer = tor_strndup(md->body, md->bodylen);
     }
   } else if (!strcmpstart(question, "desc-annotations/id/")) {
-    node = node_get_by_hex_id(question+strlen("desc-annotations/id/"));
+    const routerinfo_t *ri = NULL;
+    const node_t *node =
+      node_get_by_hex_id(question+strlen("desc-annotations/id/"));
     if (node)
       ri = node->ri;
     if (ri) {
@@ -2028,7 +2054,8 @@ getinfo_helper_dir(control_connection_t *control_conn,
     if (strlen(question) == HEX_DIGEST_LEN) {
       char d[DIGEST_LEN];
       signed_descriptor_t *sd = NULL;
-      if (base16_decode(d, sizeof(d), question, strlen(question))==0) {
+      if (base16_decode(d, sizeof(d), question, strlen(question))
+                        != sizeof(d)) {
         /* XXXX this test should move into extrainfo_get_by_descriptor_digest,
          * but I don't want to risk affecting other parts of the code,
          * especially since the rules for using our own extrainfo (including
@@ -2048,6 +2075,411 @@ getinfo_helper_dir(control_connection_t *control_conn,
   }
 
   return 0;
+}
+
+/** Given a smartlist of 20-byte digests, return a newly allocated string
+ * containing each of those digests in order, formatted in HEX, and terminated
+ * with a newline. */
+static char *
+digest_list_to_string(const smartlist_t *sl)
+{
+  int len;
+  char *result, *s;
+
+  /* Allow for newlines, and a \0 at the end */
+  len = smartlist_len(sl) * (HEX_DIGEST_LEN + 1) + 1;
+  result = tor_malloc_zero(len);
+
+  s = result;
+  SMARTLIST_FOREACH_BEGIN(sl, const char *, digest) {
+    base16_encode(s, HEX_DIGEST_LEN + 1, digest, DIGEST_LEN);
+    s[HEX_DIGEST_LEN] = '\n';
+    s += HEX_DIGEST_LEN + 1;
+  } SMARTLIST_FOREACH_END(digest);
+  *s = '\0';
+
+  return result;
+}
+
+/** Turn a download_status_t into a human-readable description in a newly
+ * allocated string.  The format is specified in control-spec.txt, under
+ * the documentation for "GETINFO download/..." .  */
+static char *
+download_status_to_string(const download_status_t *dl)
+{
+  char *rv = NULL, *tmp;
+  char tbuf[ISO_TIME_LEN+1];
+  const char *schedule_str, *want_authority_str;
+  const char *increment_on_str, *backoff_str;
+
+  if (dl) {
+    /* Get some substrings of the eventual output ready */
+    format_iso_time(tbuf, dl->next_attempt_at);
+
+    switch (dl->schedule) {
+      case DL_SCHED_GENERIC:
+        schedule_str = "DL_SCHED_GENERIC";
+        break;
+      case DL_SCHED_CONSENSUS:
+        schedule_str = "DL_SCHED_CONSENSUS";
+        break;
+      case DL_SCHED_BRIDGE:
+        schedule_str = "DL_SCHED_BRIDGE";
+        break;
+      default:
+        schedule_str = "unknown";
+        break;
+    }
+
+    switch (dl->want_authority) {
+      case DL_WANT_ANY_DIRSERVER:
+        want_authority_str = "DL_WANT_ANY_DIRSERVER";
+        break;
+      case DL_WANT_AUTHORITY:
+        want_authority_str = "DL_WANT_AUTHORITY";
+        break;
+      default:
+        want_authority_str = "unknown";
+        break;
+    }
+
+    switch (dl->increment_on) {
+      case DL_SCHED_INCREMENT_FAILURE:
+        increment_on_str = "DL_SCHED_INCREMENT_FAILURE";
+        break;
+      case DL_SCHED_INCREMENT_ATTEMPT:
+        increment_on_str = "DL_SCHED_INCREMENT_ATTEMPT";
+        break;
+      default:
+        increment_on_str = "unknown";
+        break;
+    }
+
+    switch (dl->backoff) {
+      case DL_SCHED_DETERMINISTIC:
+        backoff_str = "DL_SCHED_DETERMINISTIC";
+        break;
+      case DL_SCHED_RANDOM_EXPONENTIAL:
+        backoff_str = "DL_SCHED_RANDOM_EXPONENTIAL";
+        break;
+      default:
+        backoff_str = "unknown";
+        break;
+    }
+
+    /* Now assemble them */
+    tor_asprintf(&tmp,
+                 "next-attempt-at %s\n"
+                 "n-download-failures %u\n"
+                 "n-download-attempts %u\n"
+                 "schedule %s\n"
+                 "want-authority %s\n"
+                 "increment-on %s\n"
+                 "backoff %s\n",
+                 tbuf,
+                 dl->n_download_failures,
+                 dl->n_download_attempts,
+                 schedule_str,
+                 want_authority_str,
+                 increment_on_str,
+                 backoff_str);
+
+    if (dl->backoff == DL_SCHED_RANDOM_EXPONENTIAL) {
+      /* Additional fields become relevant in random-exponential mode */
+      tor_asprintf(&rv,
+                   "%s"
+                   "last-backoff-position %u\n"
+                   "last-delay-used %d\n",
+                   tmp,
+                   dl->last_backoff_position,
+                   dl->last_delay_used);
+      tor_free(tmp);
+    } else {
+      /* That was it */
+      rv = tmp;
+    }
+  }
+
+  return rv;
+}
+
+/** Handle the consensus download cases for getinfo_helper_downloads() */
+STATIC void
+getinfo_helper_downloads_networkstatus(const char *flavor,
+                                       download_status_t **dl_to_emit,
+                                       const char **errmsg)
+{
+  /*
+   * We get the one for the current bootstrapped status by default, or
+   * take an extra /bootstrap or /running suffix
+   */
+  if (strcmp(flavor, "ns") == 0) {
+    *dl_to_emit = networkstatus_get_dl_status_by_flavor(FLAV_NS);
+  } else if (strcmp(flavor, "ns/bootstrap") == 0) {
+    *dl_to_emit = networkstatus_get_dl_status_by_flavor_bootstrap(FLAV_NS);
+  } else if (strcmp(flavor, "ns/running") == 0 ) {
+    *dl_to_emit = networkstatus_get_dl_status_by_flavor_running(FLAV_NS);
+  } else if (strcmp(flavor, "microdesc") == 0) {
+    *dl_to_emit = networkstatus_get_dl_status_by_flavor(FLAV_MICRODESC);
+  } else if (strcmp(flavor, "microdesc/bootstrap") == 0) {
+    *dl_to_emit =
+      networkstatus_get_dl_status_by_flavor_bootstrap(FLAV_MICRODESC);
+  } else if (strcmp(flavor, "microdesc/running") == 0) {
+    *dl_to_emit =
+      networkstatus_get_dl_status_by_flavor_running(FLAV_MICRODESC);
+  } else {
+    *errmsg = "Unknown flavor";
+  }
+}
+
+/** Handle the cert download cases for getinfo_helper_downloads() */
+STATIC void
+getinfo_helper_downloads_cert(const char *fp_sk_req,
+                              download_status_t **dl_to_emit,
+                              smartlist_t **digest_list,
+                              const char **errmsg)
+{
+  const char *sk_req;
+  char id_digest[DIGEST_LEN];
+  char sk_digest[DIGEST_LEN];
+
+  /*
+   * We have to handle four cases; fp_sk_req is the request with
+   * a prefix of "downloads/cert/" snipped off.
+   *
+   * Case 1: fp_sk_req = "fps"
+   *  - We should emit a digest_list with a list of all the identity
+   *    fingerprints that can be queried for certificate download status;
+   *    get it by calling list_authority_ids_with_downloads().
+   *
+   * Case 2: fp_sk_req = "fp/<fp>" for some fingerprint fp
+   *  - We want the default certificate for this identity fingerprint's
+   *    download status; this is the download we get from URLs starting
+   *    in /fp/ on the directory server.  We can get it with
+   *    id_only_download_status_for_authority_id().
+   *
+   * Case 3: fp_sk_req = "fp/<fp>/sks" for some fingerprint fp
+   *  - We want a list of all signing key digests for this identity
+   *    fingerprint which can be queried for certificate download status.
+   *    Get it with list_sk_digests_for_authority_id().
+   *
+   * Case 4: fp_sk_req = "fp/<fp>/<sk>" for some fingerprint fp and
+   *         signing key digest sk
+   *   - We want the download status for the certificate for this specific
+   *     signing key and fingerprint.  These correspond to the ones we get
+   *     from URLs starting in /fp-sk/ on the directory server.  Get it with
+   *     list_sk_digests_for_authority_id().
+   */
+
+  if (strcmp(fp_sk_req, "fps") == 0) {
+    *digest_list = list_authority_ids_with_downloads();
+    if (!(*digest_list)) {
+      *errmsg = "Failed to get list of authority identity digests (!)";
+    }
+  } else if (!strcmpstart(fp_sk_req, "fp/")) {
+    fp_sk_req += strlen("fp/");
+    /* Okay, look for another / to tell the fp from fp-sk cases */
+    sk_req = strchr(fp_sk_req, '/');
+    if (sk_req) {
+      /* okay, split it here and try to parse <fp> */
+      if (base16_decode(id_digest, DIGEST_LEN,
+                        fp_sk_req, sk_req - fp_sk_req) == DIGEST_LEN) {
+        /* Skip past the '/' */
+        ++sk_req;
+        if (strcmp(sk_req, "sks") == 0) {
+          /* We're asking for the list of signing key fingerprints */
+          *digest_list = list_sk_digests_for_authority_id(id_digest);
+          if (!(*digest_list)) {
+            *errmsg = "Failed to get list of signing key digests for this "
+                      "authority identity digest";
+          }
+        } else {
+          /* We've got a signing key digest */
+          if (base16_decode(sk_digest, DIGEST_LEN,
+                            sk_req, strlen(sk_req)) == DIGEST_LEN) {
+            *dl_to_emit =
+              download_status_for_authority_id_and_sk(id_digest, sk_digest);
+            if (!(*dl_to_emit)) {
+              *errmsg = "Failed to get download status for this identity/"
+                        "signing key digest pair";
+            }
+          } else {
+            *errmsg = "That didn't look like a signing key digest";
+          }
+        }
+      } else {
+        *errmsg = "That didn't look like an identity digest";
+      }
+    } else {
+      /* We're either in downloads/certs/fp/<fp>, or we can't parse <fp> */
+      if (strlen(fp_sk_req) == HEX_DIGEST_LEN) {
+        if (base16_decode(id_digest, DIGEST_LEN,
+                          fp_sk_req, strlen(fp_sk_req)) == DIGEST_LEN) {
+          *dl_to_emit = id_only_download_status_for_authority_id(id_digest);
+          if (!(*dl_to_emit)) {
+            *errmsg = "Failed to get download status for this authority "
+                      "identity digest";
+          }
+        } else {
+          *errmsg = "That didn't look like a digest";
+        }
+      } else {
+        *errmsg = "That didn't look like a digest";
+      }
+    }
+  } else {
+    *errmsg = "Unknown certificate download status query";
+  }
+}
+
+/** Handle the routerdesc download cases for getinfo_helper_downloads() */
+STATIC void
+getinfo_helper_downloads_desc(const char *desc_req,
+                              download_status_t **dl_to_emit,
+                              smartlist_t **digest_list,
+                              const char **errmsg)
+{
+  char desc_digest[DIGEST_LEN];
+  /*
+   * Two cases to handle here:
+   *
+   * Case 1: desc_req = "descs"
+   *   - Emit a list of all router descriptor digests, which we get by
+   *     calling router_get_descriptor_digests(); this can return NULL
+   *     if we have no current ns-flavor consensus.
+   *
+   * Case 2: desc_req = <fp>
+   *   - Check on the specified fingerprint and emit its download_status_t
+   *     using router_get_dl_status_by_descriptor_digest().
+   */
+
+  if (strcmp(desc_req, "descs") == 0) {
+    *digest_list = router_get_descriptor_digests();
+    if (!(*digest_list)) {
+      *errmsg = "We don't seem to have a networkstatus-flavored consensus";
+    }
+    /*
+     * Microdescs don't use the download_status_t mechanism, so we don't
+     * answer queries about their downloads here; see microdesc.c.
+     */
+  } else if (strlen(desc_req) == HEX_DIGEST_LEN) {
+    if (base16_decode(desc_digest, DIGEST_LEN,
+                      desc_req, strlen(desc_req)) == DIGEST_LEN) {
+      /* Okay we got a digest-shaped thing; try asking for it */
+      *dl_to_emit = router_get_dl_status_by_descriptor_digest(desc_digest);
+      if (!(*dl_to_emit)) {
+        *errmsg = "No such descriptor digest found";
+      }
+    } else {
+      *errmsg = "That didn't look like a digest";
+    }
+  } else {
+    *errmsg = "Unknown router descriptor download status query";
+  }
+}
+
+/** Handle the bridge download cases for getinfo_helper_downloads() */
+STATIC void
+getinfo_helper_downloads_bridge(const char *bridge_req,
+                                download_status_t **dl_to_emit,
+                                smartlist_t **digest_list,
+                                const char **errmsg)
+{
+  char bridge_digest[DIGEST_LEN];
+  /*
+   * Two cases to handle here:
+   *
+   * Case 1: bridge_req = "bridges"
+   *   - Emit a list of all bridge identity digests, which we get by
+   *     calling list_bridge_identities(); this can return NULL if we are
+   *     not using bridges.
+   *
+   * Case 2: bridge_req = <fp>
+   *   - Check on the specified fingerprint and emit its download_status_t
+   *     using get_bridge_dl_status_by_id().
+   */
+
+  if (strcmp(bridge_req, "bridges") == 0) {
+    *digest_list = list_bridge_identities();
+    if (!(*digest_list)) {
+      *errmsg = "We don't seem to be using bridges";
+    }
+  } else if (strlen(bridge_req) == HEX_DIGEST_LEN) {
+    if (base16_decode(bridge_digest, DIGEST_LEN,
+                      bridge_req, strlen(bridge_req)) == DIGEST_LEN) {
+      /* Okay we got a digest-shaped thing; try asking for it */
+      *dl_to_emit = get_bridge_dl_status_by_id(bridge_digest);
+      if (!(*dl_to_emit)) {
+        *errmsg = "No such bridge identity digest found";
+      }
+    } else {
+      *errmsg = "That didn't look like a digest";
+    }
+  } else {
+    *errmsg = "Unknown bridge descriptor download status query";
+  }
+}
+
+/** Implementation helper for GETINFO: knows the answers for questions about
+ * download status information. */
+STATIC int
+getinfo_helper_downloads(control_connection_t *control_conn,
+                   const char *question, char **answer,
+                   const char **errmsg)
+{
+  download_status_t *dl_to_emit = NULL;
+  smartlist_t *digest_list = NULL;
+
+  /* Assert args are sane */
+  tor_assert(control_conn != NULL);
+  tor_assert(question != NULL);
+  tor_assert(answer != NULL);
+  tor_assert(errmsg != NULL);
+
+  /* We check for this later to see if we should supply a default */
+  *errmsg = NULL;
+
+  /* Are we after networkstatus downloads? */
+  if (!strcmpstart(question, "downloads/networkstatus/")) {
+    getinfo_helper_downloads_networkstatus(
+        question + strlen("downloads/networkstatus/"),
+        &dl_to_emit, errmsg);
+  /* Certificates? */
+  } else if (!strcmpstart(question, "downloads/cert/")) {
+    getinfo_helper_downloads_cert(
+        question + strlen("downloads/cert/"),
+        &dl_to_emit, &digest_list, errmsg);
+  /* Router descriptors? */
+  } else if (!strcmpstart(question, "downloads/desc/")) {
+    getinfo_helper_downloads_desc(
+        question + strlen("downloads/desc/"),
+        &dl_to_emit, &digest_list, errmsg);
+  /* Bridge descriptors? */
+  } else if (!strcmpstart(question, "downloads/bridge/")) {
+    getinfo_helper_downloads_bridge(
+        question + strlen("downloads/bridge/"),
+        &dl_to_emit, &digest_list, errmsg);
+  } else {
+    *errmsg = "Unknown download status query";
+  }
+
+  if (dl_to_emit) {
+    *answer = download_status_to_string(dl_to_emit);
+
+    return 0;
+  } else if (digest_list) {
+    *answer = digest_list_to_string(digest_list);
+    SMARTLIST_FOREACH(digest_list, void *, s, tor_free(s));
+    smartlist_free(digest_list);
+
+    return 0;
+  } else {
+    if (!(*errmsg)) {
+      *errmsg = "Unknown error";
+    }
+
+    return -1;
+  }
 }
 
 /** Allocate and return a description of <b>circ</b>'s current status,
@@ -2489,6 +2921,49 @@ static const getinfo_item_t getinfo_items[] = {
   DOC("config/defaults",
       "List of default values for configuration options. "
       "See also config/names"),
+  PREFIX("downloads/networkstatus/", downloads,
+         "Download statuses for networkstatus objects"),
+  DOC("downloads/networkstatus/ns",
+      "Download status for current-mode networkstatus download"),
+  DOC("downloads/networkstatus/ns/bootstrap",
+      "Download status for bootstrap-time networkstatus download"),
+  DOC("downloads/networkstatus/ns/running",
+      "Download status for run-time networkstatus download"),
+  DOC("downloads/networkstatus/microdesc",
+      "Download status for current-mode microdesc download"),
+  DOC("downloads/networkstatus/microdesc/bootstrap",
+      "Download status for bootstrap-time microdesc download"),
+  DOC("downloads/networkstatus/microdesc/running",
+      "Download status for run-time microdesc download"),
+  PREFIX("downloads/cert/", downloads,
+         "Download statuses for certificates, by id fingerprint and "
+         "signing key"),
+  DOC("downloads/cert/fps",
+      "List of authority fingerprints for which any download statuses "
+      "exist"),
+  DOC("downloads/cert/fp/<fp>",
+      "Download status for <fp> with the default signing key; corresponds "
+      "to /fp/ URLs on directory server."),
+  DOC("downloads/cert/fp/<fp>/sks",
+      "List of signing keys for which specific download statuses are "
+      "available for this id fingerprint"),
+  DOC("downloads/cert/fp/<fp>/<sk>",
+      "Download status for <fp> with signing key <sk>; corresponds "
+      "to /fp-sk/ URLs on directory server."),
+  PREFIX("downloads/desc/", downloads,
+         "Download statuses for router descriptors, by descriptor digest"),
+  DOC("downloads/desc/descs",
+      "Return a list of known router descriptor digests"),
+  DOC("downloads/desc/<desc>",
+      "Return a download status for a given descriptor digest"),
+  PREFIX("downloads/bridge/", downloads,
+         "Download statuses for bridge descriptors, by bridge identity "
+         "digest"),
+  DOC("downloads/bridge/bridges",
+      "Return a list of configured bridge identity digests with download "
+      "statuses"),
+  DOC("downloads/bridge/<desc>",
+      "Return a download status for a given bridge identity digest"),
   ITEM("info/names", misc,
        "List of GETINFO options, types, and documentation."),
   ITEM("events/names", misc,
@@ -2561,7 +3036,6 @@ static const getinfo_item_t getinfo_items[] = {
        "Username under which the tor process is running."),
   ITEM("process/descriptor-limit", misc, "File descriptor limit."),
   ITEM("limits/max-mem-in-queues", misc, "Actual limit on memory in queues"),
-  ITEM("dir-usage", misc, "Breakdown of bytes transferred over DirPort."),
   PREFIX("desc-annotations/id/", dir, "Router annotations by hexdigest."),
   PREFIX("dir/server/", dir,"Router descriptors as retrieved from a DirPort."),
   PREFIX("dir/status/", dir,
@@ -2575,7 +3049,7 @@ static const getinfo_item_t getinfo_items[] = {
        " ExitPolicyRejectPrivate."),
   ITEM("exit-policy/reject-private/relay", policies,
        "The relay-specific rules appended to the configured exit policy by"
-       " ExitPolicyRejectPrivate."),
+       " ExitPolicyRejectPrivate and/or ExitPolicyRejectLocalInterfaces."),
   ITEM("exit-policy/full", policies, "The entire exit policy of onion router"),
   ITEM("exit-policy/ipv4", policies, "IPv4 parts of exit policy"),
   ITEM("exit-policy/ipv6", policies, "IPv6 parts of exit policy"),
@@ -3445,7 +3919,8 @@ handle_control_authchallenge(control_connection_t *conn, uint32_t len,
     client_nonce = tor_malloc_zero(client_nonce_len);
 
     if (base16_decode(client_nonce, client_nonce_len,
-                      cp, client_nonce_encoded_len) < 0) {
+                      cp, client_nonce_encoded_len)
+                      != (int) client_nonce_len) {
       connection_write_str_to_buf("513 Invalid base16 client nonce\r\n",
                                   conn);
       connection_mark_for_close(TO_CONN(conn));
@@ -3791,14 +4266,20 @@ handle_control_add_onion(control_connection_t *conn,
    * the other arguments are malformed.
    */
   smartlist_t *port_cfgs = smartlist_new();
+  smartlist_t *auth_clients = NULL;
+  smartlist_t *auth_created_clients = NULL;
   int discard_pk = 0;
   int detach = 0;
   int max_streams = 0;
   int max_streams_close_circuit = 0;
+  rend_auth_type_t auth_type = REND_NO_AUTH;
+  /* Default to adding an anonymous hidden service if no flag is given */
+  int non_anonymous = 0;
   for (size_t i = 1; i < arg_len; i++) {
     static const char *port_prefix = "Port=";
     static const char *flags_prefix = "Flags=";
     static const char *max_s_prefix = "MaxStreams=";
+    static const char *auth_prefix = "ClientAuth=";
 
     const char *arg = smartlist_get(args, i);
     if (!strcasecmpstart(arg, port_prefix)) {
@@ -3829,10 +4310,17 @@ handle_control_add_onion(control_connection_t *conn,
        *                connection.
        *   * 'MaxStreamsCloseCircuit' - Close the circuit if MaxStreams is
        *                                exceeded.
+       *   * 'BasicAuth' - Client authorization using the 'basic' method.
+       *   * 'NonAnonymous' - Add a non-anonymous Single Onion Service. If this
+       *                      flag is present, tor must be in non-anonymous
+       *                      hidden service mode. If this flag is absent,
+       *                      tor must be in anonymous hidden service mode.
        */
       static const char *discard_flag = "DiscardPK";
       static const char *detach_flag = "Detach";
       static const char *max_s_close_flag = "MaxStreamsCloseCircuit";
+      static const char *basicauth_flag = "BasicAuth";
+      static const char *non_anonymous_flag = "NonAnonymous";
 
       smartlist_t *flags = smartlist_new();
       int bad = 0;
@@ -3851,6 +4339,10 @@ handle_control_add_onion(control_connection_t *conn,
           detach = 1;
         } else if (!strcasecmp(flag, max_s_close_flag)) {
           max_streams_close_circuit = 1;
+        } else if (!strcasecmp(flag, basicauth_flag)) {
+          auth_type = REND_BASIC_AUTH;
+        } else if (!strcasecmp(flag, non_anonymous_flag)) {
+          non_anonymous = 1;
         } else {
           connection_printf_to_buf(conn,
                                    "512 Invalid 'Flags' argument: %s\r\n",
@@ -3863,6 +4355,42 @@ handle_control_add_onion(control_connection_t *conn,
       smartlist_free(flags);
       if (bad)
         goto out;
+    } else if (!strcasecmpstart(arg, auth_prefix)) {
+      char *err_msg = NULL;
+      int created = 0;
+      rend_authorized_client_t *client =
+        add_onion_helper_clientauth(arg + strlen(auth_prefix),
+                                    &created, &err_msg);
+      if (!client) {
+        if (err_msg) {
+          connection_write_str_to_buf(err_msg, conn);
+          tor_free(err_msg);
+        }
+        goto out;
+      }
+
+      if (auth_clients != NULL) {
+        int bad = 0;
+        SMARTLIST_FOREACH_BEGIN(auth_clients, rend_authorized_client_t *, ac) {
+          if (strcmp(ac->client_name, client->client_name) == 0) {
+            bad = 1;
+            break;
+          }
+        } SMARTLIST_FOREACH_END(ac);
+        if (bad) {
+          connection_printf_to_buf(conn,
+                                   "512 Duplicate name in ClientAuth\r\n");
+          rend_authorized_client_free(client);
+          goto out;
+        }
+      } else {
+        auth_clients = smartlist_new();
+        auth_created_clients = smartlist_new();
+      }
+      smartlist_add(auth_clients, client);
+      if (created) {
+        smartlist_add(auth_created_clients, client);
+      }
     } else {
       connection_printf_to_buf(conn, "513 Invalid argument\r\n");
       goto out;
@@ -3870,6 +4398,31 @@ handle_control_add_onion(control_connection_t *conn,
   }
   if (smartlist_len(port_cfgs) == 0) {
     connection_printf_to_buf(conn, "512 Missing 'Port' argument\r\n");
+    goto out;
+  } else if (auth_type == REND_NO_AUTH && auth_clients != NULL) {
+    connection_printf_to_buf(conn, "512 No auth type specified\r\n");
+    goto out;
+  } else if (auth_type != REND_NO_AUTH && auth_clients == NULL) {
+    connection_printf_to_buf(conn, "512 No auth clients specified\r\n");
+    goto out;
+  } else if ((auth_type == REND_BASIC_AUTH &&
+              smartlist_len(auth_clients) > 512) ||
+             (auth_type == REND_STEALTH_AUTH &&
+              smartlist_len(auth_clients) > 16)) {
+    connection_printf_to_buf(conn, "512 Too many auth clients\r\n");
+    goto out;
+  } else if (non_anonymous != rend_service_non_anonymous_mode_enabled(
+                                                              get_options())) {
+    /* If we failed, and the non-anonymous flag is set, Tor must be in
+     * anonymous hidden service mode.
+     * The error message changes based on the current Tor config:
+     * 512 Tor is in anonymous hidden service mode
+     * 512 Tor is in non-anonymous hidden service mode
+     * (I've deliberately written them out in full here to aid searchability.)
+     */
+    connection_printf_to_buf(conn, "512 Tor is in %sanonymous hidden service "
+                             "mode\r\n",
+                             non_anonymous ? "" : "non-");
     goto out;
   }
 
@@ -3891,35 +4444,21 @@ handle_control_add_onion(control_connection_t *conn,
   }
   tor_assert(!err_msg);
 
-  /* Create the HS, using private key pk, and port config port_cfg.
+  /* Create the HS, using private key pk, client authentication auth_type,
+   * the list of auth_clients, and port config port_cfg.
    * rend_service_add_ephemeral() will take ownership of pk and port_cfg,
    * regardless of success/failure.
    */
   char *service_id = NULL;
   int ret = rend_service_add_ephemeral(pk, port_cfgs, max_streams,
                                        max_streams_close_circuit,
+                                       auth_type, auth_clients,
                                        &service_id);
   port_cfgs = NULL; /* port_cfgs is now owned by the rendservice code. */
+  auth_clients = NULL; /* so is auth_clients */
   switch (ret) {
   case RSAE_OKAY:
   {
-    char *buf = NULL;
-    tor_assert(service_id);
-    if (key_new_alg) {
-      tor_assert(key_new_blob);
-      tor_asprintf(&buf,
-                   "250-ServiceID=%s\r\n"
-                   "250-PrivateKey=%s:%s\r\n"
-                   "250 OK\r\n",
-                   service_id,
-                   key_new_alg,
-                   key_new_blob);
-    } else {
-      tor_asprintf(&buf,
-                   "250-ServiceID=%s\r\n"
-                   "250 OK\r\n",
-                   service_id);
-    }
     if (detach) {
       if (!detached_onion_services)
         detached_onion_services = smartlist_new();
@@ -3930,9 +4469,26 @@ handle_control_add_onion(control_connection_t *conn,
       smartlist_add(conn->ephemeral_onion_services, service_id);
     }
 
-    connection_write_str_to_buf(buf, conn);
-    memwipe(buf, 0, strlen(buf));
-    tor_free(buf);
+    tor_assert(service_id);
+    connection_printf_to_buf(conn, "250-ServiceID=%s\r\n", service_id);
+    if (key_new_alg) {
+      tor_assert(key_new_blob);
+      connection_printf_to_buf(conn, "250-PrivateKey=%s:%s\r\n",
+                               key_new_alg, key_new_blob);
+    }
+    if (auth_created_clients) {
+      SMARTLIST_FOREACH(auth_created_clients, rend_authorized_client_t *, ac, {
+        char *encoded = rend_auth_encode_cookie(ac->descriptor_cookie,
+                                                auth_type);
+        tor_assert(encoded);
+        connection_printf_to_buf(conn, "250-ClientAuth=%s:%s\r\n",
+                                 ac->client_name, encoded);
+        memwipe(encoded, 0, strlen(encoded));
+        tor_free(encoded);
+      });
+    }
+
+    connection_printf_to_buf(conn, "250 OK\r\n");
     break;
   }
   case RSAE_BADPRIVKEY:
@@ -3943,6 +4499,9 @@ handle_control_add_onion(control_connection_t *conn,
     break;
   case RSAE_BADVIRTPORT:
     connection_printf_to_buf(conn, "512 Invalid VIRTPORT/TARGET\r\n");
+    break;
+  case RSAE_BADAUTH:
+    connection_printf_to_buf(conn, "512 Invalid client authorization\r\n");
     break;
   case RSAE_INTERNAL: /* FALLSTHROUGH */
   default:
@@ -3958,6 +4517,16 @@ handle_control_add_onion(control_connection_t *conn,
     SMARTLIST_FOREACH(port_cfgs, rend_service_port_config_t*, p,
                       rend_service_port_config_free(p));
     smartlist_free(port_cfgs);
+  }
+
+  if (auth_clients) {
+    SMARTLIST_FOREACH(auth_clients, rend_authorized_client_t *, ac,
+                      rend_authorized_client_free(ac));
+    smartlist_free(auth_clients);
+  }
+  if (auth_created_clients) {
+    // Do not free entries; they are the same as auth_clients
+    smartlist_free(auth_created_clients);
   }
 
   SMARTLIST_FOREACH(args, char *, cp, {
@@ -4066,6 +4635,65 @@ add_onion_helper_keyarg(const char *arg, int discard_pk,
   *key_new_blob_out = key_new_blob;
 
   return pk;
+}
+
+/** Helper function to handle parsing a ClientAuth argument to the
+ * ADD_ONION command.  Return a new rend_authorized_client_t, or NULL
+ * and an optional control protocol error message on failure.  The
+ * caller is responsible for freeing the returned auth_client and err_msg.
+ *
+ * If 'created' is specified, it will be set to 1 when a new cookie has
+ * been generated.
+ */
+STATIC rend_authorized_client_t *
+add_onion_helper_clientauth(const char *arg, int *created, char **err_msg)
+{
+  int ok = 0;
+
+  tor_assert(arg);
+  tor_assert(created);
+  tor_assert(err_msg);
+  *err_msg = NULL;
+
+  smartlist_t *auth_args = smartlist_new();
+  rend_authorized_client_t *client =
+    tor_malloc_zero(sizeof(rend_authorized_client_t));
+  smartlist_split_string(auth_args, arg, ":", 0, 0);
+  if (smartlist_len(auth_args) < 1 || smartlist_len(auth_args) > 2) {
+    *err_msg = tor_strdup("512 Invalid ClientAuth syntax\r\n");
+    goto err;
+  }
+  client->client_name = tor_strdup(smartlist_get(auth_args, 0));
+  if (smartlist_len(auth_args) == 2) {
+    char *decode_err_msg = NULL;
+    if (rend_auth_decode_cookie(smartlist_get(auth_args, 1),
+                                client->descriptor_cookie,
+                                NULL, &decode_err_msg) < 0) {
+      tor_assert(decode_err_msg);
+      tor_asprintf(err_msg, "512 %s\r\n", decode_err_msg);
+      tor_free(decode_err_msg);
+      goto err;
+    }
+    *created = 0;
+  } else {
+    crypto_rand((char *) client->descriptor_cookie, REND_DESC_COOKIE_LEN);
+    *created = 1;
+  }
+
+  if (!rend_valid_client_name(client->client_name)) {
+    *err_msg = tor_strdup("512 Invalid name in ClientAuth\r\n");
+    goto err;
+  }
+
+  ok = 1;
+ err:
+  SMARTLIST_FOREACH(auth_args, char *, item, tor_free(item));
+  smartlist_free(auth_args);
+  if (!ok) {
+    rend_authorized_client_free(client);
+    client = NULL;
+  }
+  return client;
 }
 
 /** Called when we get a DEL_ONION command; parse the body, and remove
@@ -4213,19 +4841,14 @@ is_valid_initial_command(control_connection_t *conn, const char *cmd)
  * interfaces is broken. */
 #define MAX_COMMAND_LINE_LENGTH (1024*1024)
 
-/** Wrapper around peek_(evbuffer|buf)_has_control0 command: presents the same
- * interface as those underlying functions, but takes a connection_t intead of
- * an evbuffer or a buf_t.
+/** Wrapper around peek_buf_has_control0 command: presents the same
+ * interface as that underlying functions, but takes a connection_t intead of
+ * a buf_t.
  */
 static int
 peek_connection_has_control0_command(connection_t *conn)
 {
-  IF_HAS_BUFFEREVENT(conn, {
-    struct evbuffer *input = bufferevent_get_input(conn->bufev);
-    return peek_evbuffer_has_control0_command(input);
-  }) ELSE_IF_NO_BUFFEREVENT {
-    return peek_buf_has_control0_command(conn->inbuf);
-  }
+  return peek_buf_has_control0_command(conn->inbuf);
 }
 
 /** Called when data has arrived on a v1 control connection: Try to fetch
@@ -5504,14 +6127,14 @@ control_event_buildtimeout_set(buildtimeout_set_event_t type,
 
 /** Called when a signal has been processed from signal_callback */
 int
-control_event_signal(uintptr_t signal)
+control_event_signal(uintptr_t signal_num)
 {
   const char *signal_string = NULL;
 
   if (!control_event_is_interesting(EVENT_GOT_SIGNAL))
     return 0;
 
-  switch (signal) {
+  switch (signal_num) {
     case SIGHUP:
       signal_string = "RELOAD";
       break;
@@ -5532,7 +6155,7 @@ control_event_signal(uintptr_t signal)
       break;
     default:
       log_warn(LD_BUG, "Unrecognized signal %lu in control_event_signal",
-               (unsigned long)signal);
+               (unsigned long)signal_num);
       return -1;
   }
 

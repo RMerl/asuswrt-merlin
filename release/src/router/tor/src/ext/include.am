@@ -5,18 +5,22 @@ EXTRA_DIST += src/ext/README
 
 EXTHEADERS = \
   src/ext/ht.h		\
-  src/ext/eventdns.h	\
   src/ext/tinytest.h	\
   src/ext/tor_readpassphrase.h \
   src/ext/strlcat.c	\
   src/ext/strlcpy.c	\
   src/ext/tinytest_macros.h \
   src/ext/tor_queue.h	\
-  src/ext/siphash.h
+  src/ext/siphash.h \
+  src/ext/timeouts/timeout.h \
+  src/ext/timeouts/timeout-debug.h \
+  src/ext/timeouts/timeout-bitops.c \
+  src/ext/timeouts/timeout.c
 
 noinst_HEADERS+= $(EXTHEADERS)
 
-src_ext_ed25519_ref10_libed25519_ref10_a_CFLAGS=
+src_ext_ed25519_ref10_libed25519_ref10_a_CFLAGS=\
+  @CFLAGS_CONSTTIME@
 
 src_ext_ed25519_ref10_libed25519_ref10_a_SOURCES= \
 	src/ext/ed25519/ref10/fe_0.c \
@@ -93,7 +97,8 @@ noinst_HEADERS += $(ED25519_REF10_HDRS)
 LIBED25519_REF10=src/ext/ed25519/ref10/libed25519_ref10.a
 noinst_LIBRARIES += $(LIBED25519_REF10)
 
-src_ext_ed25519_donna_libed25519_donna_a_CFLAGS= \
+src_ext_ed25519_donna_libed25519_donna_a_CFLAGS=\
+  @CFLAGS_CONSTTIME@ \
   -DED25519_CUSTOMRANDOM \
   -DED25519_SUFFIX=_donna
 
@@ -135,7 +140,8 @@ noinst_HEADERS += $(ED25519_DONNA_HDRS)
 LIBED25519_DONNA=src/ext/ed25519/donna/libed25519_donna.a
 noinst_LIBRARIES += $(LIBED25519_DONNA)
 
-src_ext_keccak_tiny_libkeccak_tiny_a_CFLAGS=
+src_ext_keccak_tiny_libkeccak_tiny_a_CFLAGS=\
+  @CFLAGS_CONSTTIME@
 
 src_ext_keccak_tiny_libkeccak_tiny_a_SOURCES= \
 	src/ext/keccak-tiny/keccak-tiny-unrolled.c
@@ -147,4 +153,22 @@ noinst_HEADERS += $(LIBKECCAK_TINY_HDRS)
 
 LIBKECCAK_TINY=src/ext/keccak-tiny/libkeccak-tiny.a
 noinst_LIBRARIES += $(LIBKECCAK_TINY)
+
+EXTRA_DIST += \
+	src/ext/timeouts/bench/bench-add.lua 		\
+	src/ext/timeouts/bench/bench-aux.lua		\
+	src/ext/timeouts/bench/bench.c			\
+	src/ext/timeouts/bench/bench-del.lua		\
+	src/ext/timeouts/bench/bench-expire.lua		\
+	src/ext/timeouts/bench/bench.h			\
+	src/ext/timeouts/bench/bench-heap.c		\
+	src/ext/timeouts/bench/bench-llrb.c		\
+	src/ext/timeouts/bench/bench.plt		\
+	src/ext/timeouts/bench/bench-wheel.c		\
+	src/ext/timeouts/bench/Rules.mk			\
+	src/ext/timeouts/lua/Rules.mk			\
+	src/ext/timeouts/lua/timeout-lua.c		\
+	src/ext/timeouts/Makefile			\
+	src/ext/timeouts/Rules.shrc			\
+	src/ext/timeouts/test-timeout.c
 

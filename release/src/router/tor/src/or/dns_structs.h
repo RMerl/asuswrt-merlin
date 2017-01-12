@@ -1,3 +1,15 @@
+/* Copyright (c) 2003-2004, Roger Dingledine.
+ * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
+/* See LICENSE for licensing information */
+
+/**
+ * \file dns_structs.h
+ *
+ * \brief Structures used in dns.c. Exposed to dns.c, and to the unit tests
+ * that declare DNS_PRIVATE.
+ */
+
 #ifndef TOR_DNS_STRUCTS_H
 #define TOR_DNS_STRUCTS_H
 

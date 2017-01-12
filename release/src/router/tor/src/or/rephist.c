@@ -4,10 +4,74 @@
 
 /**
  * \file rephist.c
- * \brief Basic history and "reputation" functionality to remember
+ * \brief Basic history and performance-tracking functionality.
+ *
+ * Basic history and performance-tracking functionality to remember
  *    which servers have worked in the past, how much bandwidth we've
  *    been using, which ports we tend to want, and so on; further,
  *    exit port statistics, cell statistics, and connection statistics.
+ *
+ * The history and information tracked in this module could sensibly be
+ * divided into several categories:
+ *
+ * <ul><li>Statistics used by authorities to remember the uptime and
+ * stability information about various relays, including "uptime",
+ * "weighted fractional uptime" and "mean time between failures".
+ *
+ * <li>Bandwidth usage history, used by relays to self-report how much
+ * bandwidth they've used for different purposes over last day or so,
+ * in order to generate the {dirreq-,}{read,write}-history lines in
+ * that they publish.
+ *
+ * <li>Predicted ports, used by clients to remember how long it's been
+ * since they opened an exit connection to each given target
+ * port. Clients use this information in order to try to keep circuits
+ * open to exit nodes that can connect to the ports that they care
+ * about.  (The predicted ports mechanism also handles predicted circuit
+ * usage that _isn't_ port-specific, such as resolves, internal circuits,
+ * and so on.)
+ *
+ * <li>Public key operation counters, for tracking how many times we've
+ * done each public key operation.  (This is unmaintained and we should
+ * remove it.)
+ *
+ * <li>Exit statistics by port, used by exits to keep track of the
+ * number of streams and bytes they've served at each exit port, so they
+ * can generate their exit-kibibytes-{read,written} and
+ * exit-streams-opened statistics.
+ *
+ * <li>Circuit stats, used by relays instances to tract circuit
+ * queue fullness and delay over time, and generate cell-processed-cells,
+ * cell-queued-cells, cell-time-in-queue, and cell-circuits-per-decile
+ * statistics.
+ *
+ * <li>Descriptor serving statistics, used by directory caches to track
+ * how many descriptors they've served.
+ *
+ * <li>Connection statistics, used by relays to track one-way and
+ * bidirectional connections.
+ *
+ * <li>Onion handshake statistics, used by relays to count how many
+ * TAP and ntor handshakes they've handled.
+ *
+ * <li>Hidden service statistics, used by relays to count rendezvous
+ * traffic and HSDir-stored descriptors.
+ *
+ * <li>Link protocol statistics, used by relays to count how many times
+ * each link protocol has been used.
+ *
+ * </ul>
+ *
+ * The entry points for this module are scattered throughout the
+ * codebase.  Sending data, receiving data, connecting to a relay,
+ * losing a connection to a relay, and so on can all trigger a change in
+ * our current stats.  Relays also invoke this module in order to
+ * extract their statistics when building routerinfo and extrainfo
+ * objects in router.c.
+ *
+ * TODO: This module should be broken up.
+ *
+ * (The "rephist" name originally stood for "reputation and history". )
  **/
 
 #include "or.h"
@@ -604,7 +668,7 @@ rep_hist_get_weighted_time_known(const char *id, time_t when)
 int
 rep_hist_have_measured_enough_stability(void)
 {
-  /* XXXX023 This doesn't do so well when we change our opinion
+  /* XXXX++ This doesn't do so well when we change our opinion
    * as to whether we're tracking router stability. */
   return started_tracking_stability < time(NULL) - 4*60*60;
 }
@@ -743,14 +807,15 @@ rep_history_clean(time_t before)
 
   orhist_it = digestmap_iter_init(history_map);
   while (!digestmap_iter_done(orhist_it)) {
-    int remove;
+    int should_remove;
     digestmap_iter_get(orhist_it, &d1, &or_history_p);
     or_history = or_history_p;
 
-    remove = authority ? (or_history->total_run_weights < STABILITY_EPSILON &&
+    should_remove = authority ?
+                       (or_history->total_run_weights < STABILITY_EPSILON &&
                           !or_history->start_of_run)
                        : (or_history->changed < before);
-    if (remove) {
+    if (should_remove) {
       orhist_it = digestmap_iter_next_rmv(history_map, orhist_it);
       free_or_history(or_history);
       continue;
@@ -1074,7 +1139,8 @@ rep_hist_load_mtbf_data(time_t now)
       if (mtbf_idx > i)
         i = mtbf_idx;
     }
-    if (base16_decode(digest, DIGEST_LEN, hexbuf, HEX_DIGEST_LEN) < 0) {
+    if (base16_decode(digest, DIGEST_LEN,
+                      hexbuf, HEX_DIGEST_LEN) != DIGEST_LEN) {
       log_warn(LD_HIST, "Couldn't hex string %s", escaped(hexbuf));
       continue;
     }
@@ -2293,16 +2359,16 @@ void
 rep_hist_add_buffer_stats(double mean_num_cells_in_queue,
     double mean_time_cells_in_queue, uint32_t processed_cells)
 {
-  circ_buffer_stats_t *stat;
+  circ_buffer_stats_t *stats;
   if (!start_of_buffer_stats_interval)
     return; /* Not initialized. */
-  stat = tor_malloc_zero(sizeof(circ_buffer_stats_t));
-  stat->mean_num_cells_in_queue = mean_num_cells_in_queue;
-  stat->mean_time_cells_in_queue = mean_time_cells_in_queue;
-  stat->processed_cells = processed_cells;
+  stats = tor_malloc_zero(sizeof(circ_buffer_stats_t));
+  stats->mean_num_cells_in_queue = mean_num_cells_in_queue;
+  stats->mean_time_cells_in_queue = mean_time_cells_in_queue;
+  stats->processed_cells = processed_cells;
   if (!circuits_for_buffer_stats)
     circuits_for_buffer_stats = smartlist_new();
-  smartlist_add(circuits_for_buffer_stats, stat);
+  smartlist_add(circuits_for_buffer_stats, stats);
 }
 
 /** Remember cell statistics for circuit <b>circ</b> at time
@@ -2372,7 +2438,7 @@ rep_hist_reset_buffer_stats(time_t now)
   if (!circuits_for_buffer_stats)
     circuits_for_buffer_stats = smartlist_new();
   SMARTLIST_FOREACH(circuits_for_buffer_stats, circ_buffer_stats_t *,
-      stat, tor_free(stat));
+      stats, tor_free(stats));
   smartlist_clear(circuits_for_buffer_stats);
   start_of_buffer_stats_interval = now;
 }
@@ -2413,15 +2479,15 @@ rep_hist_format_buffer_stats(time_t now)
                    buffer_stats_compare_entries_);
     i = 0;
     SMARTLIST_FOREACH_BEGIN(circuits_for_buffer_stats,
-                            circ_buffer_stats_t *, stat)
+                            circ_buffer_stats_t *, stats)
     {
       int share = i++ * SHARES / number_of_circuits;
-      processed_cells[share] += stat->processed_cells;
-      queued_cells[share] += stat->mean_num_cells_in_queue;
-      time_in_queue[share] += stat->mean_time_cells_in_queue;
+      processed_cells[share] += stats->processed_cells;
+      queued_cells[share] += stats->mean_num_cells_in_queue;
+      time_in_queue[share] += stats->mean_time_cells_in_queue;
       circs_in_share[share]++;
     }
-    SMARTLIST_FOREACH_END(stat);
+    SMARTLIST_FOREACH_END(stats);
   }
 
   /* Write deciles to strings. */
@@ -2648,7 +2714,9 @@ rep_hist_desc_stats_write(time_t now)
   return start_of_served_descs_stats_interval + WRITE_STATS_INTERVAL;
 }
 
-/* DOCDOC rep_hist_note_desc_served */
+/** Called to note that we've served a given descriptor (by
+ * digest). Incrememnts the count of descriptors served, and the number
+ * of times we've served this descriptor. */
 void
 rep_hist_note_desc_served(const char * desc)
 {
@@ -2738,7 +2806,7 @@ bidi_map_ent_hash(const bidi_map_entry_t *entry)
 }
 
 HT_PROTOTYPE(bidimap, bidi_map_entry_t, node, bidi_map_ent_hash,
-             bidi_map_ent_eq);
+             bidi_map_ent_eq)
 HT_GENERATE2(bidimap, bidi_map_entry_t, node, bidi_map_ent_hash,
              bidi_map_ent_eq, 0.6, tor_reallocarray_, tor_free_)
 
@@ -2933,7 +3001,7 @@ static time_t start_of_hs_stats_interval;
  *  information needed. */
 typedef struct hs_stats_t {
   /** How many relay cells have we seen as rendezvous points? */
-  int64_t rp_relay_cells_seen;
+  uint64_t rp_relay_cells_seen;
 
   /** Set of unique public key digests we've seen this stat period
    * (could also be implemented as sorted smartlist). */
@@ -2947,22 +3015,22 @@ static hs_stats_t *hs_stats = NULL;
 static hs_stats_t *
 hs_stats_new(void)
 {
-  hs_stats_t * hs_stats = tor_malloc_zero(sizeof(hs_stats_t));
-  hs_stats->onions_seen_this_period = digestmap_new();
+  hs_stats_t *new_hs_stats = tor_malloc_zero(sizeof(hs_stats_t));
+  new_hs_stats->onions_seen_this_period = digestmap_new();
 
-  return hs_stats;
+  return new_hs_stats;
 }
 
 /** Free an hs_stats_t structure. */
 static void
-hs_stats_free(hs_stats_t *hs_stats)
+hs_stats_free(hs_stats_t *victim_hs_stats)
 {
-  if (!hs_stats) {
+  if (!victim_hs_stats) {
     return;
   }
 
-  digestmap_free(hs_stats->onions_seen_this_period, NULL);
-  tor_free(hs_stats);
+  digestmap_free(victim_hs_stats->onions_seen_this_period, NULL);
+  tor_free(victim_hs_stats);
 }
 
 /** Initialize hidden service statistics. */
@@ -3074,16 +3142,20 @@ rep_hist_format_hs_stats(time_t now)
   int64_t obfuscated_cells_seen;
   int64_t obfuscated_onions_seen;
 
-  obfuscated_cells_seen = round_int64_to_next_multiple_of(
-                          hs_stats->rp_relay_cells_seen,
-                          REND_CELLS_BIN_SIZE);
-  obfuscated_cells_seen = add_laplace_noise(obfuscated_cells_seen,
+  uint64_t rounded_cells_seen
+    = round_uint64_to_next_multiple_of(hs_stats->rp_relay_cells_seen,
+                                       REND_CELLS_BIN_SIZE);
+  rounded_cells_seen = MIN(rounded_cells_seen, INT64_MAX);
+  obfuscated_cells_seen = add_laplace_noise((int64_t)rounded_cells_seen,
                           crypto_rand_double(),
                           REND_CELLS_DELTA_F, REND_CELLS_EPSILON);
-  obfuscated_onions_seen = round_int64_to_next_multiple_of(digestmap_size(
-                           hs_stats->onions_seen_this_period),
-                           ONIONS_SEEN_BIN_SIZE);
-  obfuscated_onions_seen = add_laplace_noise(obfuscated_onions_seen,
+
+  uint64_t rounded_onions_seen =
+    round_uint64_to_next_multiple_of((size_t)digestmap_size(
+                                        hs_stats->onions_seen_this_period),
+                                     ONIONS_SEEN_BIN_SIZE);
+  rounded_onions_seen = MIN(rounded_onions_seen, INT64_MAX);
+  obfuscated_onions_seen = add_laplace_noise((int64_t)rounded_onions_seen,
                            crypto_rand_double(), ONIONS_SEEN_DELTA_F,
                            ONIONS_SEEN_EPSILON);
 
@@ -3217,7 +3289,7 @@ rep_hist_free_all(void)
   rep_hist_desc_stats_term();
   total_descriptor_downloads = 0;
 
-  tor_assert(rephist_total_alloc == 0);
-  tor_assert(rephist_total_num == 0);
+  tor_assert_nonfatal(rephist_total_alloc == 0);
+  tor_assert_nonfatal_once(rephist_total_num == 0);
 }
 

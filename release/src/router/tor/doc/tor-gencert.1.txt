@@ -68,7 +68,7 @@ OPTIONS
     Number of months that the certificate should be valid. Default: 12.
 
 **--passphrase-fd** __FILEDES__::
-    Filedescriptor to read the file descriptor from. Ends at the first NUL or
+    Filedescriptor to read the passphrase from. Ends at the first NUL or
     newline. Default: read from the terminal.
 
 **-a** __address__:__port__::

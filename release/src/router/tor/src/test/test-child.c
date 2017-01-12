@@ -1,8 +1,8 @@
 /* Copyright (c) 2011-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-#include <stdio.h>
 #include "orconfig.h"
+#include <stdio.h>
 #ifdef _WIN32
 #define WINDOWS_LEAN_AND_MEAN
 #include <windows.h>

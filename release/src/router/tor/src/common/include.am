@@ -1,12 +1,14 @@
 
 noinst_LIBRARIES += \
 	src/common/libor.a \
+	src/common/libor-ctime.a \
 	src/common/libor-crypto.a \
 	src/common/libor-event.a
 
 if UNITTESTS_ENABLED
 noinst_LIBRARIES += \
 	src/common/libor-testing.a \
+	src/common/libor-ctime-testing.a \
 	src/common/libor-crypto-testing.a \
 	src/common/libor-event-testing.a
 endif
@@ -27,12 +29,14 @@ src_common_libcurve25519_donna_a_CFLAGS=
 if BUILD_CURVE25519_DONNA
 src_common_libcurve25519_donna_a_SOURCES=\
 	src/ext/curve25519_donna/curve25519-donna.c
+# See bug 13538 -- this code is known to have signed overflow issues.
 src_common_libcurve25519_donna_a_CFLAGS+=\
-	@F_OMIT_FRAME_POINTER@
+	@F_OMIT_FRAME_POINTER@ @CFLAGS_CONSTTIME@
 noinst_LIBRARIES+=src/common/libcurve25519_donna.a
 LIBDONNA=src/common/libcurve25519_donna.a
 else
 if BUILD_CURVE25519_DONNA_C64
+src_common_libcurve25519_donna_a_CFLAGS+=@CFLAGS_CONSTTIME@
 src_common_libcurve25519_donna_a_SOURCES=\
 	src/ext/curve25519_donna/curve25519-donna-c64.c
 noinst_LIBRARIES+=src/common/libcurve25519_donna.a
@@ -58,22 +62,38 @@ else
 readpassphrase_source=
 endif
 
-LIBOR_A_SOURCES = \
+if ADD_MULODI4
+mulodi4_source=src/ext/mulodi/mulodi4.c
+else
+mulodi4_source=
+endif
+
+LIBOR_CTIME_A_SRC = \
+   $(mulodi4_source) \
+   src/ext/csiphash.c   \
+   src/common/di_ops.c
+
+src_common_libor_ctime_a_SOURCES = $(LIBOR_CTIME_A_SRC)
+src_common_libor_ctime_testing_a_SOURCES = $(LIBOR_CTIME_A_SRC)
+src_common_libor_ctime_a_CFLAGS = @CFLAGS_CONSTTIME@
+src_common_libor_ctime_testing_a_CFLAGS = @CFLAGS_CONSTTIME@ $(TEST_CFLAGS)
+
+LIBOR_A_SRC = \
   src/common/address.c					\
   src/common/backtrace.c				\
   src/common/compat.c					\
   src/common/compat_threads.c				\
+  src/common/compat_time.c				\
   src/common/container.c				\
-  src/common/di_ops.c					\
   src/common/log.c					\
   src/common/memarea.c					\
+  src/common/pubsub.c					\
   src/common/util.c					\
+  src/common/util_bug.c					\
   src/common/util_format.c				\
   src/common/util_process.c				\
   src/common/sandbox.c					\
   src/common/workqueue.c				\
-  src/ext/csiphash.c					\
-  src/ext/trunnel/trunnel.c				\
   $(libor_extra_source)					\
   $(threads_impl_source)				\
   $(readpassphrase_source)
@@ -81,7 +101,7 @@ LIBOR_A_SOURCES = \
 src/common/src_common_libor_testing_a-log.$(OBJEXT) \
   src/common/log.$(OBJEXT): micro-revision.i
 
-LIBOR_CRYPTO_A_SOURCES = \
+LIBOR_CRYPTO_A_SRC = \
   src/common/aes.c		\
   src/common/crypto.c		\
   src/common/crypto_pwbox.c     \
@@ -89,21 +109,22 @@ LIBOR_CRYPTO_A_SOURCES = \
   src/common/crypto_format.c	\
   src/common/torgzip.c		\
   src/common/tortls.c		\
-  src/trunnel/pwbox.c		\
   src/common/crypto_curve25519.c \
   src/common/crypto_ed25519.c
 
-LIBOR_EVENT_A_SOURCES = \
+LIBOR_EVENT_A_SRC = \
 	src/common/compat_libevent.c \
-	src/common/procmon.c
+	src/common/procmon.c         \
+	src/common/timers.c          \
+	src/ext/timeouts/timeout.c
 
-src_common_libor_a_SOURCES = $(LIBOR_A_SOURCES)
-src_common_libor_crypto_a_SOURCES = $(LIBOR_CRYPTO_A_SOURCES)
-src_common_libor_event_a_SOURCES = $(LIBOR_EVENT_A_SOURCES)
+src_common_libor_a_SOURCES = $(LIBOR_A_SRC)
+src_common_libor_crypto_a_SOURCES = $(LIBOR_CRYPTO_A_SRC)
+src_common_libor_event_a_SOURCES = $(LIBOR_EVENT_A_SRC)
 
-src_common_libor_testing_a_SOURCES = $(LIBOR_A_SOURCES)
-src_common_libor_crypto_testing_a_SOURCES = $(LIBOR_CRYPTO_A_SOURCES)
-src_common_libor_event_testing_a_SOURCES = $(LIBOR_EVENT_A_SOURCES)
+src_common_libor_testing_a_SOURCES = $(LIBOR_A_SRC)
+src_common_libor_crypto_testing_a_SOURCES = $(LIBOR_CRYPTO_A_SRC)
+src_common_libor_event_testing_a_SOURCES = $(LIBOR_EVENT_A_SRC)
 
 src_common_libor_testing_a_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_CPPFLAGS)
 src_common_libor_crypto_testing_a_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_CPPFLAGS)
@@ -121,6 +142,7 @@ COMMONHEADERS = \
   src/common/compat_libevent.h			\
   src/common/compat_openssl.h			\
   src/common/compat_threads.h			\
+  src/common/compat_time.h			\
   src/common/container.h			\
   src/common/crypto.h				\
   src/common/crypto_curve25519.h		\
@@ -129,16 +151,20 @@ COMMONHEADERS = \
   src/common/crypto_pwbox.h			\
   src/common/crypto_s2k.h			\
   src/common/di_ops.h				\
+  src/common/handles.h				\
   src/common/memarea.h				\
   src/common/linux_syscalls.inc			\
   src/common/procmon.h				\
+  src/common/pubsub.h				\
   src/common/sandbox.h				\
   src/common/testsupport.h			\
+  src/common/timers.h				\
   src/common/torgzip.h				\
   src/common/torint.h				\
   src/common/torlog.h				\
   src/common/tortls.h				\
   src/common/util.h				\
+  src/common/util_bug.h				\
   src/common/util_format.h			\
   src/common/util_process.h			\
   src/common/workqueue.h

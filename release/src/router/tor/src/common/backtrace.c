@@ -13,9 +13,6 @@
  * detect crashes.
  */
 
-#define __USE_GNU
-#define _GNU_SOURCE 1
-
 #include "orconfig.h"
 #include "compat.h"
 #include "util.h"
@@ -112,13 +109,15 @@ log_backtrace(int severity, int domain, const char *msg)
 
   tor_log(severity, domain, "%s. Stack trace:", msg);
   if (!symbols) {
+    /* LCOV_EXCL_START -- we can't provoke this. */
     tor_log(severity, domain, "    Unable to generate backtrace.");
     goto done;
+    /* LCOV_EXCL_STOP */
   }
   for (i=0; i < depth; ++i) {
     tor_log(severity, domain, "    %s", symbols[i]);
   }
-  free(symbols);
+  raw_free(symbols);
 
  done:
   tor_mutex_release(&cb_buf_mutex);
@@ -176,8 +175,10 @@ install_bt_handler(void)
 
   for (i = 0; trap_signals[i] >= 0; ++i) {
     if (sigaction(trap_signals[i], &sa, NULL) == -1) {
+      /* LCOV_EXCL_START */
       log_warn(LD_BUG, "Sigaction failed: %s", strerror(errno));
       rv = -1;
+      /* LCOV_EXCL_STOP */
     }
   }
 
@@ -189,7 +190,7 @@ install_bt_handler(void)
     size_t depth = backtrace(cb_buf, MAX_DEPTH);
     symbols = backtrace_symbols(cb_buf, (int) depth);
     if (symbols)
-      free(symbols);
+      raw_free(symbols);
   }
 
   return rv;

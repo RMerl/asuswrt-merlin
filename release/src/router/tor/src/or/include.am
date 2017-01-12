@@ -17,12 +17,6 @@ endif
 
 EXTRA_DIST+= src/or/ntmain.c src/or/Makefile.nmake
 
-if USE_EXTERNAL_EVDNS
-evdns_source=
-else
-evdns_source=src/ext/eventdns.c
-endif
-
 LIBTOR_A_SOURCES = \
 	src/or/addressmap.c				\
 	src/or/buffers.c				\
@@ -62,8 +56,11 @@ LIBTOR_A_SOURCES = \
 	src/or/onion.c					\
 	src/or/onion_fast.c				\
 	src/or/onion_tap.c				\
+	src/or/shared_random.c			\
+	src/or/shared_random_state.c		\
 	src/or/transports.c				\
 	src/or/periodic.c				\
+	src/or/protover.c				\
 	src/or/policies.c				\
 	src/or/reasons.c				\
 	src/or/relay.c					\
@@ -84,7 +81,6 @@ LIBTOR_A_SOURCES = \
 	src/or/status.c					\
 	src/or/torcert.c				\
 	src/or/onion_ntor.c				\
-	$(evdns_source)					\
 	$(tor_platform_source)
 
 src_or_libtor_a_SOURCES = $(LIBTOR_A_SOURCES)
@@ -109,7 +105,7 @@ src_or_libtor_testing_a_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 
 
 src_or_tor_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
-src_or_tor_LDADD = src/or/libtor.a src/common/libor.a \
+src_or_tor_LDADD = src/or/libtor.a src/common/libor.a src/common/libor-ctime.a \
 	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	src/common/libor-event.a src/trunnel/libor-trunnel.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
@@ -121,6 +117,7 @@ src_or_tor_cov_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_CPPFLAGS)
 src_or_tor_cov_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 src_or_tor_cov_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libevent@
 src_or_tor_cov_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
+	src/common/libor-ctime-testing.a \
 	src/common/libor-crypto-testing.a $(LIBKECCAK_TINY) $(LIBDONNA) \
 	src/common/libor-event-testing.a src/trunnel/libor-trunnel-testing.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
@@ -154,7 +151,6 @@ ORHEADERS = \
 	src/or/dns.h					\
 	src/or/dns_structs.h				\
 	src/or/dnsserv.h				\
-	src/or/eventdns_tor.h				\
 	src/or/ext_orport.h				\
 	src/or/fallback_dirs.inc			\
 	src/or/fp_pair.h				\
@@ -172,9 +168,12 @@ ORHEADERS = \
 	src/or/onion_ntor.h				\
 	src/or/onion_tap.h				\
 	src/or/or.h					\
+	src/or/shared_random.h			\
+	src/or/shared_random_state.h		\
 	src/or/transports.h				\
 	src/or/periodic.h				\
 	src/or/policies.h				\
+	src/or/protover.h				\
 	src/or/reasons.h				\
 	src/or/relay.h					\
 	src/or/rendcache.h				\
@@ -199,7 +198,7 @@ noinst_HEADERS+= $(ORHEADERS) micro-revision.i
 
 micro-revision.i: FORCE
 	$(AM_V_at)rm -f micro-revision.tmp; \
-	if test -d "$(top_srcdir)/.git" && \
+	if test -r "$(top_srcdir)/.git" && \
 			test -x "`which git 2>&1;true`"; then \
 		HASH="`cd "$(top_srcdir)" && git rev-parse --short=16 HEAD`"; \
 		echo \"$$HASH\" > micro-revision.tmp; \

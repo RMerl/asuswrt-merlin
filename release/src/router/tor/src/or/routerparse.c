@@ -6,7 +6,51 @@
 
 /**
  * \file routerparse.c
- * \brief Code to parse and validate router descriptors and directories.
+ * \brief Code to parse and validate router descriptors, consenus directories,
+ *   and similar objects.
+ *
+ * The objects parsed by this module use a common text-based metaformat,
+ * documented in dir-spec.txt in torspec.git.  This module is itself divided
+ * into two major kinds of function: code to handle the metaformat, and code
+ * to convert from particular instances of the metaformat into the
+ * objects that Tor uses.
+ *
+ * The generic parsing code works by calling a table-based tokenizer on the
+ * input string.  Each token corresponds to a single line with a token, plus
+ * optional arguments on that line, plus an optional base-64 encoded object
+ * after that line.  Each token has a definition in a table of token_rule_t
+ * entries that describes how many arguments it can take, whether it takes an
+ * object, how many times it may appear, whether it must appear first, and so
+ * on.
+ *
+ * The tokenizer function tokenize_string() converts its string input into a
+ * smartlist full of instances of directory_token_t, according to a provided
+ * table of token_rule_t.
+ *
+ * The generic parts of this module additionally include functions for
+ * finding the start and end of signed information inside a signed object, and
+ * computing the digest that will be signed.
+ *
+ * There are also functions for saving objects to disk that have caused
+ * parsing to fail.
+ *
+ * The specific parts of this module describe conversions between
+ * particular lists of directory_token_t and particular objects.  The
+ * kinds of objects that can be parsed here are:
+ *  <ul>
+ *  <li>router descriptors (managed from routerlist.c)
+ *  <li>extra-info documents (managed from routerlist.c)
+ *  <li>microdescriptors (managed from microdesc.c)
+ *  <li>vote and consensus networkstatus documents, and the routerstatus_t
+ *    objects that they comprise (managed from networkstatus.c)
+ *  <li>detached-signature objects used by authorities for gathering
+ *    signatures on the networkstatus consensus (managed from dirvote.c)
+ *  <li>authority key certificates (managed from routerlist.c)
+ *  <li>hidden service descriptors (managed from rendcommon.c and rendcache.c)
+ * </ul>
+ *
+ * For no terribly good reason, the functions to <i>generate</i> signatures on
+ * the above directory objects are also in this module.
  **/
 
 #define ROUTERPARSE_PRIVATE
@@ -17,6 +61,7 @@
 #include "dirserv.h"
 #include "dirvote.h"
 #include "policies.h"
+#include "protover.h"
 #include "rendcommon.h"
 #include "router.h"
 #include "routerlist.h"
@@ -28,6 +73,8 @@
 #include "routerparse.h"
 #include "entrynodes.h"
 #include "torcert.h"
+#include "sandbox.h"
+#include "shared_random.h"
 
 #undef log
 #include <math.h>
@@ -56,6 +103,7 @@ typedef enum {
   K_RUNNING_ROUTERS,
   K_ROUTER_STATUS,
   K_PLATFORM,
+  K_PROTO,
   K_OPT,
   K_BANDWIDTH,
   K_CONTACT,
@@ -72,6 +120,10 @@ typedef enum {
   K_DIR_OPTIONS,
   K_CLIENT_VERSIONS,
   K_SERVER_VERSIONS,
+  K_RECOMMENDED_CLIENT_PROTOCOLS,
+  K_RECOMMENDED_RELAY_PROTOCOLS,
+  K_REQUIRED_CLIENT_PROTOCOLS,
+  K_REQUIRED_RELAY_PROTOCOLS,
   K_OR_ADDRESS,
   K_ID,
   K_P,
@@ -145,6 +197,11 @@ typedef enum {
   K_CONSENSUS_METHOD,
   K_LEGACY_DIR_KEY,
   K_DIRECTORY_FOOTER,
+  K_SIGNING_CERT_ED,
+  K_SR_FLAG,
+  K_COMMIT,
+  K_PREVIOUS_SRV,
+  K_CURRENT_SRV,
   K_PACKAGE,
 
   A_PURPOSE,
@@ -245,12 +302,14 @@ typedef struct token_rule_t {
   int is_annotation;
 } token_rule_t;
 
-/*
+/**
+ * @name macros for defining token rules
+ *
  * Helper macros to define token tables.  's' is a string, 't' is a
  * directory_keyword, 'a' is a trio of argument multiplicities, and 'o' is an
  * object syntax.
- *
  */
+/**@{*/
 
 /** Appears to indicate the end of a table. */
 #define END_OF_TABLE { NULL, NIL_, 0,0,0, NO_OBJ, 0, INT_MAX, 0, 0 }
@@ -271,16 +330,17 @@ typedef struct token_rule_t {
 /** An annotation that must appear no more than once */
 #define A01(s,t,a,o)  { s, t, a, o, 0, 1, 0, 1 }
 
-/* Argument multiplicity: any number of arguments. */
+/** Argument multiplicity: any number of arguments. */
 #define ARGS        0,INT_MAX,0
-/* Argument multiplicity: no arguments. */
+/** Argument multiplicity: no arguments. */
 #define NO_ARGS     0,0,0
-/* Argument multiplicity: concatenate all arguments. */
+/** Argument multiplicity: concatenate all arguments. */
 #define CONCAT_ARGS 1,1,1
-/* Argument multiplicity: at least <b>n</b> arguments. */
+/** Argument multiplicity: at least <b>n</b> arguments. */
 #define GE(n)       n,INT_MAX,0
-/* Argument multiplicity: exactly <b>n</b> arguments. */
+/** Argument multiplicity: exactly <b>n</b> arguments. */
 #define EQ(n)       n,n,0
+/**@}*/
 
 /** List of tokens recognized in router descriptors */
 static token_rule_t routerdesc_token_table[] = {
@@ -299,6 +359,7 @@ static token_rule_t routerdesc_token_table[] = {
   T01("fingerprint",         K_FINGERPRINT,     CONCAT_ARGS, NO_OBJ ),
   T01("hibernating",         K_HIBERNATING,         GE(1),   NO_OBJ ),
   T01("platform",            K_PLATFORM,        CONCAT_ARGS, NO_OBJ ),
+  T01("proto",               K_PROTO,           CONCAT_ARGS, NO_OBJ ),
   T01("contact",             K_CONTACT,         CONCAT_ARGS, NO_OBJ ),
   T01("read-history",        K_READ_HISTORY,        ARGS,    NO_OBJ ),
   T01("write-history",       K_WRITE_HISTORY,       ARGS,    NO_OBJ ),
@@ -375,6 +436,7 @@ static token_rule_t rtrstatus_token_table[] = {
   T01("w",                   K_W,                   ARGS,    NO_OBJ ),
   T0N("m",                   K_M,               CONCAT_ARGS, NO_OBJ ),
   T0N("id",                  K_ID,                  GE(2),   NO_OBJ ),
+  T01("pr",                  K_PROTO,           CONCAT_ARGS, NO_OBJ ),
   T0N("opt",                 K_OPT,             CONCAT_ARGS, OBJ_OK ),
   END_OF_TABLE
 };
@@ -446,7 +508,20 @@ static token_rule_t networkstatus_token_table[] = {
   T1("known-flags",            K_KNOWN_FLAGS,      ARGS,        NO_OBJ ),
   T01("params",                K_PARAMS,           ARGS,        NO_OBJ ),
   T( "fingerprint",            K_FINGERPRINT,      CONCAT_ARGS, NO_OBJ ),
+  T01("signing-ed25519",       K_SIGNING_CERT_ED,  NO_ARGS ,    NEED_OBJ ),
+  T01("shared-rand-participate",K_SR_FLAG,         NO_ARGS,     NO_OBJ ),
+  T0N("shared-rand-commit",    K_COMMIT,           GE(3),       NO_OBJ ),
+  T01("shared-rand-previous-value", K_PREVIOUS_SRV,EQ(2),       NO_OBJ ),
+  T01("shared-rand-current-value",  K_CURRENT_SRV, EQ(2),       NO_OBJ ),
   T0N("package",               K_PACKAGE,          CONCAT_ARGS, NO_OBJ ),
+  T01("recommended-client-protocols", K_RECOMMENDED_CLIENT_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
+  T01("recommended-relay-protocols", K_RECOMMENDED_RELAY_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
+  T01("required-client-protocols",    K_REQUIRED_CLIENT_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
+  T01("required-relay-protocols",    K_REQUIRED_RELAY_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
 
   CERTIFICATE_MEMBERS
 
@@ -484,6 +559,18 @@ static token_rule_t networkstatus_consensus_token_table[] = {
   T01("server-versions",     K_SERVER_VERSIONS, CONCAT_ARGS, NO_OBJ ),
   T01("consensus-method",    K_CONSENSUS_METHOD,    EQ(1),   NO_OBJ),
   T01("params",                K_PARAMS,           ARGS,        NO_OBJ ),
+
+  T01("shared-rand-previous-value", K_PREVIOUS_SRV, EQ(2),   NO_OBJ ),
+  T01("shared-rand-current-value",  K_CURRENT_SRV,  EQ(2),   NO_OBJ ),
+
+  T01("recommended-client-protocols", K_RECOMMENDED_CLIENT_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
+  T01("recommended-relay-protocols", K_RECOMMENDED_RELAY_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
+  T01("required-client-protocols",    K_REQUIRED_CLIENT_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
+  T01("required-relay-protocols",    K_REQUIRED_RELAY_PROTOCOLS,
+      CONCAT_ARGS, NO_OBJ ),
 
   END_OF_TABLE
 };
@@ -585,32 +672,579 @@ static int check_signature_token(const char *digest,
 #define DUMP_AREA(a,name) STMT_NIL
 #endif
 
-/** Last time we dumped a descriptor to disk. */
-static time_t last_desc_dumped = 0;
+/* Dump mechanism for unparseable descriptors */
+
+/** List of dumped descriptors for FIFO cleanup purposes */
+STATIC smartlist_t *descs_dumped = NULL;
+/** Total size of dumped descriptors for FIFO cleanup */
+STATIC uint64_t len_descs_dumped = 0;
+/** Directory to stash dumps in */
+static int have_dump_desc_dir = 0;
+static int problem_with_dump_desc_dir = 0;
+
+#define DESC_DUMP_DATADIR_SUBDIR "unparseable-descs"
+#define DESC_DUMP_BASE_FILENAME "unparseable-desc"
+
+/** Find the dump directory and check if we'll be able to create it */
+static void
+dump_desc_init(void)
+{
+  char *dump_desc_dir;
+
+  dump_desc_dir = get_datadir_fname(DESC_DUMP_DATADIR_SUBDIR);
+
+  /*
+   * We just check for it, don't create it at this point; we'll
+   * create it when we need it if it isn't already there.
+   */
+  if (check_private_dir(dump_desc_dir, CPD_CHECK, get_options()->User) < 0) {
+    /* Error, log and flag it as having a problem */
+    log_notice(LD_DIR,
+               "Doesn't look like we'll be able to create descriptor dump "
+               "directory %s; dumps will be disabled.",
+               dump_desc_dir);
+    problem_with_dump_desc_dir = 1;
+    tor_free(dump_desc_dir);
+    return;
+  }
+
+  /* Check if it exists */
+  switch (file_status(dump_desc_dir)) {
+    case FN_DIR:
+      /* We already have a directory */
+      have_dump_desc_dir = 1;
+      break;
+    case FN_NOENT:
+      /* Nothing, we'll need to create it later */
+      have_dump_desc_dir = 0;
+      break;
+    case FN_ERROR:
+      /* Log and flag having a problem */
+      log_notice(LD_DIR,
+                 "Couldn't check whether descriptor dump directory %s already"
+                 " exists: %s",
+                 dump_desc_dir, strerror(errno));
+      problem_with_dump_desc_dir = 1;
+      break;
+    case FN_FILE:
+    case FN_EMPTY:
+    default:
+      /* Something else was here! */
+      log_notice(LD_DIR,
+                 "Descriptor dump directory %s already exists and isn't a "
+                 "directory",
+                 dump_desc_dir);
+      problem_with_dump_desc_dir = 1;
+  }
+
+  if (have_dump_desc_dir && !problem_with_dump_desc_dir) {
+    dump_desc_populate_fifo_from_directory(dump_desc_dir);
+  }
+
+  tor_free(dump_desc_dir);
+}
+
+/** Create the dump directory if needed and possible */
+static void
+dump_desc_create_dir(void)
+{
+  char *dump_desc_dir;
+
+  /* If the problem flag is set, skip it */
+  if (problem_with_dump_desc_dir) return;
+
+  /* Do we need it? */
+  if (!have_dump_desc_dir) {
+    dump_desc_dir = get_datadir_fname(DESC_DUMP_DATADIR_SUBDIR);
+
+    if (check_private_dir(dump_desc_dir, CPD_CREATE,
+                          get_options()->User) < 0) {
+      log_notice(LD_DIR,
+                 "Failed to create descriptor dump directory %s",
+                 dump_desc_dir);
+      problem_with_dump_desc_dir = 1;
+    }
+
+    /* Okay, we created it */
+    have_dump_desc_dir = 1;
+
+    tor_free(dump_desc_dir);
+  }
+}
+
+/** Dump desc FIFO/cleanup; take ownership of the given filename, add it to
+ * the FIFO, and clean up the oldest entries to the extent they exceed the
+ * configured cap.  If any old entries with a matching hash existed, they
+ * just got overwritten right before this was called and we should adjust
+ * the total size counter without deleting them.
+ */
+static void
+dump_desc_fifo_add_and_clean(char *filename, const uint8_t *digest_sha256,
+                             size_t len)
+{
+  dumped_desc_t *ent = NULL, *tmp;
+  uint64_t max_len;
+
+  tor_assert(filename != NULL);
+  tor_assert(digest_sha256 != NULL);
+
+  if (descs_dumped == NULL) {
+    /* We better have no length, then */
+    tor_assert(len_descs_dumped == 0);
+    /* Make a smartlist */
+    descs_dumped = smartlist_new();
+  }
+
+  /* Make a new entry to put this one in */
+  ent = tor_malloc_zero(sizeof(*ent));
+  ent->filename = filename;
+  ent->len = len;
+  ent->when = time(NULL);
+  memcpy(ent->digest_sha256, digest_sha256, DIGEST256_LEN);
+
+  /* Do we need to do some cleanup? */
+  max_len = get_options()->MaxUnparseableDescSizeToLog;
+  /* Iterate over the list until we've freed enough space */
+  while (len > max_len - len_descs_dumped &&
+         smartlist_len(descs_dumped) > 0) {
+    /* Get the oldest thing on the list */
+    tmp = (dumped_desc_t *)(smartlist_get(descs_dumped, 0));
+
+    /*
+     * Check if it matches the filename we just added, so we don't delete
+     * something we just emitted if we get repeated identical descriptors.
+     */
+    if (strcmp(tmp->filename, filename) != 0) {
+      /* Delete it and adjust the length counter */
+      tor_unlink(tmp->filename);
+      tor_assert(len_descs_dumped >= tmp->len);
+      len_descs_dumped -= tmp->len;
+      log_info(LD_DIR,
+               "Deleting old unparseable descriptor dump %s due to "
+               "space limits",
+               tmp->filename);
+    } else {
+      /*
+       * Don't delete, but do adjust the counter since we will bump it
+       * later
+       */
+      tor_assert(len_descs_dumped >= tmp->len);
+      len_descs_dumped -= tmp->len;
+      log_info(LD_DIR,
+               "Replacing old descriptor dump %s with new identical one",
+               tmp->filename);
+    }
+
+    /* Free it and remove it from the list */
+    smartlist_del_keeporder(descs_dumped, 0);
+    tor_free(tmp->filename);
+    tor_free(tmp);
+  }
+
+  /* Append our entry to the end of the list and bump the counter */
+  smartlist_add(descs_dumped, ent);
+  len_descs_dumped += len;
+}
+
+/** Check if we already have a descriptor for this hash and move it to the
+ * head of the queue if so.  Return 1 if one existed and 0 otherwise.
+ */
+static int
+dump_desc_fifo_bump_hash(const uint8_t *digest_sha256)
+{
+  dumped_desc_t *match = NULL;
+
+  tor_assert(digest_sha256);
+
+  if (descs_dumped) {
+    /* Find a match if one exists */
+    SMARTLIST_FOREACH_BEGIN(descs_dumped, dumped_desc_t *, ent) {
+      if (ent &&
+          tor_memeq(ent->digest_sha256, digest_sha256, DIGEST256_LEN)) {
+        /*
+         * Save a pointer to the match and remove it from its current
+         * position.
+         */
+        match = ent;
+        SMARTLIST_DEL_CURRENT_KEEPORDER(descs_dumped, ent);
+        break;
+      }
+    } SMARTLIST_FOREACH_END(ent);
+
+    if (match) {
+      /* Update the timestamp */
+      match->when = time(NULL);
+      /* Add it back at the end of the list */
+      smartlist_add(descs_dumped, match);
+
+      /* Indicate we found one */
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+/** Clean up on exit; just memory, leave the dumps behind
+ */
+STATIC void
+dump_desc_fifo_cleanup(void)
+{
+  if (descs_dumped) {
+    /* Free each descriptor */
+    SMARTLIST_FOREACH_BEGIN(descs_dumped, dumped_desc_t *, ent) {
+      tor_assert(ent);
+      tor_free(ent->filename);
+      tor_free(ent);
+    } SMARTLIST_FOREACH_END(ent);
+    /* Free the list */
+    smartlist_free(descs_dumped);
+    descs_dumped = NULL;
+    len_descs_dumped = 0;
+  }
+}
+
+/** Handle one file for dump_desc_populate_fifo_from_directory(); make sure
+ * the filename is sensibly formed and matches the file content, and either
+ * return a dumped_desc_t for it or remove the file and return NULL.
+ */
+MOCK_IMPL(STATIC dumped_desc_t *,
+dump_desc_populate_one_file, (const char *dirname, const char *f))
+{
+  dumped_desc_t *ent = NULL;
+  char *path = NULL, *desc = NULL;
+  const char *digest_str;
+  char digest[DIGEST256_LEN], content_digest[DIGEST256_LEN];
+  /* Expected prefix before digest in filenames */
+  const char *f_pfx = DESC_DUMP_BASE_FILENAME ".";
+  /*
+   * Stat while reading; this is important in case the file
+   * contains a NUL character.
+   */
+  struct stat st;
+
+  /* Sanity-check args */
+  tor_assert(dirname != NULL);
+  tor_assert(f != NULL);
+
+  /* Form the full path */
+  tor_asprintf(&path, "%s" PATH_SEPARATOR "%s", dirname, f);
+
+  /* Check that f has the form DESC_DUMP_BASE_FILENAME.<digest256> */
+
+  if (!strcmpstart(f, f_pfx)) {
+    /* It matches the form, but is the digest parseable as such? */
+    digest_str = f + strlen(f_pfx);
+    if (base16_decode(digest, DIGEST256_LEN,
+                      digest_str, strlen(digest_str)) != DIGEST256_LEN) {
+      /* We failed to decode it */
+      digest_str = NULL;
+    }
+  } else {
+    /* No match */
+    digest_str = NULL;
+  }
+
+  if (!digest_str) {
+    /* We couldn't get a sensible digest */
+    log_notice(LD_DIR,
+               "Removing unrecognized filename %s from unparseable "
+               "descriptors directory", f);
+    tor_unlink(path);
+    /* We're done */
+    goto done;
+  }
+
+  /*
+   * The filename has the form DESC_DUMP_BASE_FILENAME "." <digest256> and
+   * we've decoded the digest.  Next, check that we can read it and the
+   * content matches this digest.  We are relying on the fact that if the
+   * file contains a '\0', read_file_to_str() will allocate space for and
+   * read the entire file and return the correct size in st.
+   */
+  desc = read_file_to_str(path, RFTS_IGNORE_MISSING|RFTS_BIN, &st);
+  if (!desc) {
+    /* We couldn't read it */
+    log_notice(LD_DIR,
+               "Failed to read %s from unparseable descriptors directory; "
+               "attempting to remove it.", f);
+    tor_unlink(path);
+    /* We're done */
+    goto done;
+  }
+
+#if SIZE_MAX > UINT64_MAX
+  if (BUG((uint64_t)st.st_size > (uint64_t)SIZE_MAX)) {
+    /* LCOV_EXCL_START
+     * Should be impossible since RFTS above should have failed to read the
+     * huge file into RAM. */
+    goto done;
+    /* LCOV_EXCL_STOP */
+  }
+#endif
+  if (BUG(st.st_size < 0)) {
+    /* LCOV_EXCL_START
+     * Should be impossible, since the OS isn't supposed to be b0rken. */
+    goto done;
+    /* LCOV_EXCL_STOP */
+  }
+  /* (Now we can be sure that st.st_size is safe to cast to a size_t.) */
+
+  /*
+   * We got one; now compute its digest and check that it matches the
+   * filename.
+   */
+  if (crypto_digest256((char *)content_digest, desc, (size_t) st.st_size,
+                       DIGEST_SHA256) != 0) {
+    /* Weird, but okay */
+    log_info(LD_DIR,
+             "Unable to hash content of %s from unparseable descriptors "
+             "directory", f);
+    tor_unlink(path);
+    /* We're done */
+    goto done;
+  }
+
+  /* Compare the digests */
+  if (tor_memneq(digest, content_digest, DIGEST256_LEN)) {
+    /* No match */
+    log_info(LD_DIR,
+             "Hash of %s from unparseable descriptors directory didn't "
+             "match its filename; removing it", f);
+    tor_unlink(path);
+    /* We're done */
+    goto done;
+  }
+
+  /* Okay, it's a match, we should prepare ent */
+  ent = tor_malloc_zero(sizeof(dumped_desc_t));
+  ent->filename = path;
+  memcpy(ent->digest_sha256, digest, DIGEST256_LEN);
+  ent->len = (size_t) st.st_size;
+  ent->when = st.st_mtime;
+  /* Null out path so we don't free it out from under ent */
+  path = NULL;
+
+ done:
+  /* Free allocations if we had them */
+  tor_free(desc);
+  tor_free(path);
+
+  return ent;
+}
+
+/** Sort helper for dump_desc_populate_fifo_from_directory(); compares
+ * the when field of dumped_desc_ts in a smartlist to put the FIFO in
+ * the correct order after reconstructing it from the directory.
+ */
+static int
+dump_desc_compare_fifo_entries(const void **a_v, const void **b_v)
+{
+  const dumped_desc_t **a = (const dumped_desc_t **)a_v;
+  const dumped_desc_t **b = (const dumped_desc_t **)b_v;
+
+  if ((a != NULL) && (*a != NULL)) {
+    if ((b != NULL) && (*b != NULL)) {
+      /* We have sensible dumped_desc_ts to compare */
+      if ((*a)->when < (*b)->when) {
+        return -1;
+      } else if ((*a)->when == (*b)->when) {
+        return 0;
+      } else {
+        return 1;
+      }
+    } else {
+      /*
+       * We shouldn't see this, but what the hell, NULLs precede everythin
+       * else
+       */
+      return 1;
+    }
+  } else {
+    return -1;
+  }
+}
+
+/** Scan the contents of the directory, and update FIFO/counters; this will
+ * consistency-check descriptor dump filenames against hashes of descriptor
+ * dump file content, and remove any inconsistent/unreadable dumps, and then
+ * reconstruct the dump FIFO as closely as possible for the last time the
+ * tor process shut down.  If a previous dump was repeated more than once and
+ * moved ahead in the FIFO, the mtime will not have been updated and the
+ * reconstructed order will be wrong, but will always be a permutation of
+ * the original.
+ */
+STATIC void
+dump_desc_populate_fifo_from_directory(const char *dirname)
+{
+  smartlist_t *files = NULL;
+  dumped_desc_t *ent = NULL;
+
+  tor_assert(dirname != NULL);
+
+  /* Get a list of files */
+  files = tor_listdir(dirname);
+  if (!files) {
+    log_notice(LD_DIR,
+               "Unable to get contents of unparseable descriptor dump "
+               "directory %s",
+               dirname);
+    return;
+  }
+
+  /*
+   * Iterate through the list and decide which files should go in the
+   * FIFO and which should be purged.
+   */
+
+  SMARTLIST_FOREACH_BEGIN(files, char *, f) {
+    /* Try to get a FIFO entry */
+    ent = dump_desc_populate_one_file(dirname, f);
+    if (ent) {
+      /*
+       * We got one; add it to the FIFO.  No need for duplicate checking
+       * here since we just verified the name and digest match.
+       */
+
+      /* Make sure we have a list to add it to */
+      if (!descs_dumped) {
+        descs_dumped = smartlist_new();
+        len_descs_dumped = 0;
+      }
+
+      /* Add it and adjust the counter */
+      smartlist_add(descs_dumped, ent);
+      len_descs_dumped += ent->len;
+    }
+    /*
+     * If we didn't, we will have unlinked the file if necessary and
+     * possible, and emitted a log message about it, so just go on to
+     * the next.
+     */
+  } SMARTLIST_FOREACH_END(f);
+
+  /* Did we get anything? */
+  if (descs_dumped != NULL) {
+    /* Sort the FIFO in order of increasing timestamp */
+    smartlist_sort(descs_dumped, dump_desc_compare_fifo_entries);
+
+    /* Log some stats */
+    log_info(LD_DIR,
+             "Reloaded unparseable descriptor dump FIFO with %d dump(s) "
+             "totaling " U64_FORMAT " bytes",
+             smartlist_len(descs_dumped), U64_PRINTF_ARG(len_descs_dumped));
+  }
+
+  /* Free the original list */
+  SMARTLIST_FOREACH(files, char *, f, tor_free(f));
+  smartlist_free(files);
+}
 
 /** For debugging purposes, dump unparseable descriptor *<b>desc</b> of
  * type *<b>type</b> to file $DATADIR/unparseable-desc. Do not write more
  * than one descriptor to disk per minute. If there is already such a
  * file in the data directory, overwrite it. */
-static void
+STATIC void
 dump_desc(const char *desc, const char *type)
 {
-  time_t now = time(NULL);
   tor_assert(desc);
   tor_assert(type);
-  if (!last_desc_dumped || last_desc_dumped + 60 < now) {
-    char *debugfile = get_datadir_fname("unparseable-desc");
-    size_t filelen = 50 + strlen(type) + strlen(desc);
-    char *content = tor_malloc_zero(filelen);
-    tor_snprintf(content, filelen, "Unable to parse descriptor of type "
-                 "%s:\n%s", type, desc);
-    write_str_to_file(debugfile, content, 1);
-    log_info(LD_DIR, "Unable to parse descriptor of type %s. See file "
-             "unparseable-desc in data directory for details.", type);
-    tor_free(content);
-    tor_free(debugfile);
-    last_desc_dumped = now;
+  size_t len;
+  /* The SHA256 of the string */
+  uint8_t digest_sha256[DIGEST256_LEN];
+  char digest_sha256_hex[HEX_DIGEST256_LEN+1];
+  /* Filename to log it to */
+  char *debugfile, *debugfile_base;
+
+  /* Get the hash for logging purposes anyway */
+  len = strlen(desc);
+  if (crypto_digest256((char *)digest_sha256, desc, len,
+                       DIGEST_SHA256) != 0) {
+    log_info(LD_DIR,
+             "Unable to parse descriptor of type %s, and unable to even hash"
+             " it!", type);
+    goto err;
   }
+
+  base16_encode(digest_sha256_hex, sizeof(digest_sha256_hex),
+                (const char *)digest_sha256, sizeof(digest_sha256));
+
+  /*
+   * We mention type and hash in the main log; don't clutter up the files
+   * with anything but the exact dump.
+   */
+  tor_asprintf(&debugfile_base,
+               DESC_DUMP_BASE_FILENAME ".%s", digest_sha256_hex);
+  debugfile = get_datadir_fname2(DESC_DUMP_DATADIR_SUBDIR, debugfile_base);
+
+  /*
+   * Check if the sandbox is active or will become active; see comment
+   * below at the log message for why.
+   */
+  if (!(sandbox_is_active() || get_options()->Sandbox)) {
+    if (len <= get_options()->MaxUnparseableDescSizeToLog) {
+      if (!dump_desc_fifo_bump_hash(digest_sha256)) {
+        /* Create the directory if needed */
+        dump_desc_create_dir();
+        /* Make sure we've got it */
+        if (have_dump_desc_dir && !problem_with_dump_desc_dir) {
+          /* Write it, and tell the main log about it */
+          write_str_to_file(debugfile, desc, 1);
+          log_info(LD_DIR,
+                   "Unable to parse descriptor of type %s with hash %s and "
+                   "length %lu. See file %s in data directory for details.",
+                   type, digest_sha256_hex, (unsigned long)len,
+                   debugfile_base);
+          dump_desc_fifo_add_and_clean(debugfile, digest_sha256, len);
+          /* Since we handed ownership over, don't free debugfile later */
+          debugfile = NULL;
+        } else {
+          /* Problem with the subdirectory */
+          log_info(LD_DIR,
+                   "Unable to parse descriptor of type %s with hash %s and "
+                   "length %lu. Descriptor not dumped because we had a "
+                   "problem creating the " DESC_DUMP_DATADIR_SUBDIR
+                   " subdirectory",
+                   type, digest_sha256_hex, (unsigned long)len);
+          /* We do have to free debugfile in this case */
+        }
+      } else {
+        /* We already had one with this hash dumped */
+        log_info(LD_DIR,
+                 "Unable to parse descriptor of type %s with hash %s and "
+                 "length %lu. Descriptor not dumped because one with that "
+                 "hash has already been dumped.",
+                 type, digest_sha256_hex, (unsigned long)len);
+        /* We do have to free debugfile in this case */
+      }
+    } else {
+      /* Just log that it happened without dumping */
+      log_info(LD_DIR,
+               "Unable to parse descriptor of type %s with hash %s and "
+               "length %lu. Descriptor not dumped because it exceeds maximum"
+               " log size all by itself.",
+               type, digest_sha256_hex, (unsigned long)len);
+      /* We do have to free debugfile in this case */
+    }
+  } else {
+    /*
+     * Not logging because the sandbox is active and seccomp2 apparently
+     * doesn't have a sensible way to allow filenames according to a pattern
+     * match.  (If we ever figure out how to say "allow writes to /regex/",
+     * remove this checK).
+     */
+    log_info(LD_DIR,
+             "Unable to parse descriptor of type %s with hash %s and "
+             "length %lu. Descriptor not dumped because the sandbox is "
+             "configured",
+             type, digest_sha256_hex, (unsigned long)len);
+  }
+
+  tor_free(debugfile_base);
+  tor_free(debugfile);
+
+ err:
+  return;
 }
 
 /** Set <b>digest</b> to the SHA-1 digest of the hash of the directory in
@@ -1217,11 +1851,11 @@ router_parse_entry_from_string(const char *s, const char *end,
   if (cache_copy) {
     size_t len = router->cache_info.signed_descriptor_len +
                  router->cache_info.annotations_len;
-    char *cp =
+    char *signed_body =
       router->cache_info.signed_descriptor_body = tor_malloc(len+1);
     if (prepend_annotations) {
-      memcpy(cp, prepend_annotations, prepend_len);
-      cp += prepend_len;
+      memcpy(signed_body, prepend_annotations, prepend_len);
+      signed_body += prepend_len;
     }
     /* This assertion will always succeed.
      * len == signed_desc_len + annotations_len
@@ -1229,9 +1863,9 @@ router_parse_entry_from_string(const char *s, const char *end,
      *     == end-start_of_annotations + prepend_len
      * We already wrote prepend_len bytes into the buffer; now we're
      * writing end-start_of_annotations -NM. */
-    tor_assert(cp+(end-start_of_annotations) ==
+    tor_assert(signed_body+(end-start_of_annotations) ==
                router->cache_info.signed_descriptor_body+len);
-    memcpy(cp, start_of_annotations, end-start_of_annotations);
+    memcpy(signed_body, start_of_annotations, end-start_of_annotations);
     router->cache_info.signed_descriptor_body[len] = '\0';
     tor_assert(strlen(router->cache_info.signed_descriptor_body) == len);
   }
@@ -1513,7 +2147,8 @@ router_parse_entry_from_string(const char *s, const char *end,
     char d[DIGEST_LEN];
     tor_assert(tok->n_args == 1);
     tor_strstrip(tok->args[0], " ");
-    if (base16_decode(d, DIGEST_LEN, tok->args[0], strlen(tok->args[0]))) {
+    if (base16_decode(d, DIGEST_LEN,
+                      tok->args[0], strlen(tok->args[0])) != DIGEST_LEN) {
       log_warn(LD_DIR, "Couldn't decode router fingerprint %s",
                escaped(tok->args[0]));
       goto err;
@@ -1527,6 +2162,10 @@ router_parse_entry_from_string(const char *s, const char *end,
 
   if ((tok = find_opt_by_keyword(tokens, K_PLATFORM))) {
     router->platform = tor_strdup(tok->args[0]);
+  }
+
+  if ((tok = find_opt_by_keyword(tokens, K_PROTO))) {
+    router->protocol_list = tor_strdup(tok->args[0]);
   }
 
   if ((tok = find_opt_by_keyword(tokens, K_CONTACT))) {
@@ -1567,7 +2206,7 @@ router_parse_entry_from_string(const char *s, const char *end,
     }
   }
 
-  if (policy_is_reject_star(router->exit_policy, AF_INET) &&
+  if (policy_is_reject_star(router->exit_policy, AF_INET, 1) &&
       (!router->ipv6_exit_policy ||
        short_policy_is_reject_star(router->ipv6_exit_policy)))
     router->policy_is_reject_star = 1;
@@ -1594,8 +2233,10 @@ router_parse_entry_from_string(const char *s, const char *end,
   if ((tok = find_opt_by_keyword(tokens, K_EXTRA_INFO_DIGEST))) {
     tor_assert(tok->n_args >= 1);
     if (strlen(tok->args[0]) == HEX_DIGEST_LEN) {
-      base16_decode(router->cache_info.extra_info_digest,
-                    DIGEST_LEN, tok->args[0], HEX_DIGEST_LEN);
+      if (base16_decode(router->cache_info.extra_info_digest, DIGEST_LEN,
+                        tok->args[0], HEX_DIGEST_LEN) != DIGEST_LEN) {
+          log_warn(LD_DIR,"Invalid extra info digest");
+      }
     } else {
       log_warn(LD_DIR, "Invalid extra info digest %s", escaped(tok->args[0]));
     }
@@ -1738,7 +2379,7 @@ extrainfo_parse_entry_from_string(const char *s, const char *end,
   strlcpy(extrainfo->nickname, tok->args[0], sizeof(extrainfo->nickname));
   if (strlen(tok->args[1]) != HEX_DIGEST_LEN ||
       base16_decode(extrainfo->cache_info.identity_digest, DIGEST_LEN,
-                    tok->args[1], HEX_DIGEST_LEN)) {
+                    tok->args[1], HEX_DIGEST_LEN) != DIGEST_LEN) {
     log_warn(LD_DIR,"Invalid fingerprint %s on \"extra-info\"",
              escaped(tok->args[1]));
     goto err;
@@ -1960,7 +2601,7 @@ authority_cert_parse_from_string(const char *s, const char **end_of_string)
   tok = find_by_keyword(tokens, K_FINGERPRINT);
   tor_assert(tok->n_args);
   if (base16_decode(fp_declared, DIGEST_LEN, tok->args[0],
-                    strlen(tok->args[0]))) {
+                    strlen(tok->args[0])) != DIGEST_LEN) {
     log_warn(LD_DIR, "Couldn't decode key certificate fingerprint %s",
              escaped(tok->args[0]));
     goto err;
@@ -1981,7 +2622,7 @@ authority_cert_parse_from_string(const char *s, const char **end_of_string)
     struct in_addr in;
     char *address = NULL;
     tor_assert(tok->n_args);
-    /* XXX024 use some tor_addr parse function below instead. -RD */
+    /* XXX++ use some tor_addr parse function below instead. -RD */
     if (tor_addr_port_split(LOG_WARN, tok->args[0], &address,
                             &cert->dir_port) < 0 ||
         tor_inet_aton(address, &in) == 0) {
@@ -2166,7 +2807,7 @@ routerstatus_parse_guardfraction(const char *guardfraction_str,
  *
  * Parse according to the syntax used by the consensus flavor <b>flav</b>.
  **/
-static routerstatus_t *
+STATIC routerstatus_t *
 routerstatus_parse_entry_from_string(memarea_t *area,
                                      const char **s, smartlist_t *tokens,
                                      networkstatus_t *vote,
@@ -2280,6 +2921,7 @@ routerstatus_parse_entry_from_string(memarea_t *area,
       }
     }
   } else if (tok) {
+    /* This is a consensus, not a vote. */
     int i;
     for (i=0; i < tok->n_args; ++i) {
       if (!strcmp(tok->args[i], "Exit"))
@@ -2310,14 +2952,28 @@ routerstatus_parse_entry_from_string(memarea_t *area,
         rs->is_v2_dir = 1;
       }
     }
+    /* These are implied true by having been included in a consensus made
+     * with a given method */
+    rs->is_flagged_running = 1; /* Starting with consensus method 4. */
+    if (consensus_method >= MIN_METHOD_FOR_EXCLUDING_INVALID_NODES)
+      rs->is_valid = 1;
+  }
+  int found_protocol_list = 0;
+  if ((tok = find_opt_by_keyword(tokens, K_PROTO))) {
+    found_protocol_list = 1;
+    rs->protocols_known = 1;
+    rs->supports_extend2_cells =
+      protocol_list_supports_protocol(tok->args[0], PRT_RELAY, 2);
   }
   if ((tok = find_opt_by_keyword(tokens, K_V))) {
     tor_assert(tok->n_args == 1);
-    rs->version_known = 1;
-    if (strcmpstart(tok->args[0], "Tor ")) {
-    } else {
-      rs->version_supports_extend2_cells =
+    if (!strcmpstart(tok->args[0], "Tor ") && !found_protocol_list) {
+      /* We only do version checks like this in the case where
+       * the version is a "Tor" version, and where there is no
+       * list of protocol versions that we should be looking at instead. */
+      rs->supports_extend2_cells =
         tor_version_as_new_as(tok->args[0], "0.2.4.8-alpha");
+      rs->protocols_known = 1;
     }
     if (vote_rs) {
       vote_rs->version = tor_strdup(tok->args[0]);
@@ -2399,6 +3055,10 @@ routerstatus_parse_entry_from_string(memarea_t *area,
             goto err;
           }
         }
+      }
+      if (t->tp == K_PROTO) {
+        tor_assert(t->n_args == 1);
+        vote_rs->protocols = tor_strdup(t->args[0]);
       }
     } SMARTLIST_FOREACH_END(t);
   } else if (flav == FLAV_MICRODESC) {
@@ -2840,6 +3500,134 @@ networkstatus_verify_bw_weights(networkstatus_t *ns, int consensus_method)
   return valid;
 }
 
+/** Parse and extract all SR commits from <b>tokens</b> and place them in
+ *  <b>ns</b>. */
+static void
+extract_shared_random_commits(networkstatus_t *ns, smartlist_t *tokens)
+{
+  smartlist_t *chunks = NULL;
+
+  tor_assert(ns);
+  tor_assert(tokens);
+  /* Commits are only present in a vote. */
+  tor_assert(ns->type == NS_TYPE_VOTE);
+
+  ns->sr_info.commits = smartlist_new();
+
+  smartlist_t *commits = find_all_by_keyword(tokens, K_COMMIT);
+  /* It's normal that a vote might contain no commits even if it participates
+   * in the SR protocol. Don't treat it as an error. */
+  if (commits == NULL) {
+    goto end;
+  }
+
+  /* Parse the commit. We do NO validation of number of arguments or ordering
+   * for forward compatibility, it's the parse commit job to inform us if it's
+   * supported or not. */
+  chunks = smartlist_new();
+  SMARTLIST_FOREACH_BEGIN(commits, directory_token_t *, tok) {
+    /* Extract all arguments and put them in the chunks list. */
+    for (int i = 0; i < tok->n_args; i++) {
+      smartlist_add(chunks, tok->args[i]);
+    }
+    sr_commit_t *commit = sr_parse_commit(chunks);
+    smartlist_clear(chunks);
+    if (commit == NULL) {
+      /* Get voter identity so we can warn that this dirauth vote contains
+       * commit we can't parse. */
+      networkstatus_voter_info_t *voter = smartlist_get(ns->voters, 0);
+      tor_assert(voter);
+      log_warn(LD_DIR, "SR: Unable to parse commit %s from vote of voter %s.",
+               escaped(tok->object_body),
+               hex_str(voter->identity_digest,
+                       sizeof(voter->identity_digest)));
+      /* Commitment couldn't be parsed. Continue onto the next commit because
+       * this one could be unsupported for instance. */
+      continue;
+    }
+    /* Add newly created commit object to the vote. */
+    smartlist_add(ns->sr_info.commits, commit);
+  } SMARTLIST_FOREACH_END(tok);
+
+ end:
+  smartlist_free(chunks);
+  smartlist_free(commits);
+}
+
+/** Check if a shared random value of type <b>srv_type</b> is in
+ *  <b>tokens</b>. If there is, parse it and set it to <b>srv_out</b>. Return
+ *  -1 on failure, 0 on success. The resulting srv is allocated on the heap and
+ *  it's the responsibility of the caller to free it. */
+static int
+extract_one_srv(smartlist_t *tokens, directory_keyword srv_type,
+                sr_srv_t **srv_out)
+{
+  int ret = -1;
+  directory_token_t *tok;
+  sr_srv_t *srv = NULL;
+  smartlist_t *chunks;
+
+  tor_assert(tokens);
+
+  chunks = smartlist_new();
+  tok = find_opt_by_keyword(tokens, srv_type);
+  if (!tok) {
+    /* That's fine, no SRV is allowed. */
+    ret = 0;
+    goto end;
+  }
+  for (int i = 0; i < tok->n_args; i++) {
+    smartlist_add(chunks, tok->args[i]);
+  }
+  srv = sr_parse_srv(chunks);
+  if (srv == NULL) {
+    log_warn(LD_DIR, "SR: Unparseable SRV %s", escaped(tok->object_body));
+    goto end;
+  }
+  /* All is good. */
+  *srv_out = srv;
+  ret = 0;
+ end:
+  smartlist_free(chunks);
+  return ret;
+}
+
+/** Extract any shared random values found in <b>tokens</b> and place them in
+ *  the networkstatus <b>ns</b>. */
+static void
+extract_shared_random_srvs(networkstatus_t *ns, smartlist_t *tokens)
+{
+  const char *voter_identity;
+  networkstatus_voter_info_t *voter;
+
+  tor_assert(ns);
+  tor_assert(tokens);
+  /* Can be only one of them else code flow. */
+  tor_assert(ns->type == NS_TYPE_VOTE || ns->type == NS_TYPE_CONSENSUS);
+
+  if (ns->type == NS_TYPE_VOTE) {
+    voter = smartlist_get(ns->voters, 0);
+    tor_assert(voter);
+    voter_identity = hex_str(voter->identity_digest,
+                             sizeof(voter->identity_digest));
+  } else {
+    /* Consensus has multiple voters so no specific voter. */
+    voter_identity = "consensus";
+  }
+
+  /* We extract both and on error, everything is stopped because it means
+   * the votes is malformed for the shared random value(s). */
+  if (extract_one_srv(tokens, K_PREVIOUS_SRV, &ns->sr_info.previous_srv) < 0) {
+    log_warn(LD_DIR, "SR: Unable to parse previous SRV from %s",
+             voter_identity);
+    /* Maybe we have a chance with the current SRV so let's try it anyway. */
+  }
+  if (extract_one_srv(tokens, K_CURRENT_SRV, &ns->sr_info.current_srv) < 0) {
+    log_warn(LD_DIR, "SR: Unable to parse current SRV from %s",
+             voter_identity);
+  }
+}
+
 /** Parse a v3 networkstatus vote, opinion, or consensus (depending on
  * ns_type), from <b>s</b>, and return the result.  Return NULL on failure. */
 networkstatus_t *
@@ -2853,7 +3641,6 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
   common_digests_t ns_digests;
   const char *cert, *end_of_header, *end_of_footer, *s_dup = s;
   directory_token_t *tok;
-  int ok;
   struct in_addr in;
   int i, inorder, n_signatures = 0;
   memarea_t *area = NULL, *rs_area = NULL;
@@ -2943,14 +3730,24 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
   } else {
     tok = find_opt_by_keyword(tokens, K_CONSENSUS_METHOD);
     if (tok) {
+      int num_ok;
       ns->consensus_method = (int)tor_parse_long(tok->args[0], 10, 1, INT_MAX,
-                                                 &ok, NULL);
-      if (!ok)
+                                                 &num_ok, NULL);
+      if (!num_ok)
         goto err;
     } else {
       ns->consensus_method = 1;
     }
   }
+
+  if ((tok = find_opt_by_keyword(tokens, K_RECOMMENDED_CLIENT_PROTOCOLS)))
+    ns->recommended_client_protocols = tor_strdup(tok->args[0]);
+  if ((tok = find_opt_by_keyword(tokens, K_RECOMMENDED_RELAY_PROTOCOLS)))
+    ns->recommended_relay_protocols = tor_strdup(tok->args[0]);
+  if ((tok = find_opt_by_keyword(tokens, K_REQUIRED_CLIENT_PROTOCOLS)))
+    ns->required_client_protocols = tor_strdup(tok->args[0]);
+  if ((tok = find_opt_by_keyword(tokens, K_REQUIRED_RELAY_PROTOCOLS)))
+    ns->required_relay_protocols = tor_strdup(tok->args[0]);
 
   tok = find_by_keyword(tokens, K_VALID_AFTER);
   if (parse_iso_time(tok->args[0], &ns->valid_after))
@@ -2966,14 +3763,17 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
 
   tok = find_by_keyword(tokens, K_VOTING_DELAY);
   tor_assert(tok->n_args >= 2);
-  ns->vote_seconds =
-    (int) tor_parse_long(tok->args[0], 10, 0, INT_MAX, &ok, NULL);
-  if (!ok)
-    goto err;
-  ns->dist_seconds =
-    (int) tor_parse_long(tok->args[1], 10, 0, INT_MAX, &ok, NULL);
-  if (!ok)
-    goto err;
+  {
+    int ok;
+    ns->vote_seconds =
+      (int) tor_parse_long(tok->args[0], 10, 0, INT_MAX, &ok, NULL);
+    if (!ok)
+      goto err;
+    ns->dist_seconds =
+      (int) tor_parse_long(tok->args[1], 10, 0, INT_MAX, &ok, NULL);
+    if (!ok)
+      goto err;
+  }
   if (ns->valid_after +
       (get_options()->TestingTorNetwork ?
        MIN_VOTE_INTERVAL_TESTING : MIN_VOTE_INTERVAL) > ns->fresh_until) {
@@ -3097,7 +3897,8 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
       voter->nickname = tor_strdup(tok->args[0]);
       if (strlen(tok->args[1]) != HEX_DIGEST_LEN ||
           base16_decode(voter->identity_digest, sizeof(voter->identity_digest),
-                        tok->args[1], HEX_DIGEST_LEN) < 0) {
+                        tok->args[1], HEX_DIGEST_LEN)
+                        != sizeof(voter->identity_digest)) {
         log_warn(LD_DIR, "Error decoding identity digest %s in "
                  "network-status document.", escaped(tok->args[1]));
         goto err;
@@ -3123,6 +3924,7 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
         goto err;
       }
       voter->addr = ntohl(in.s_addr);
+      int ok;
       voter->dir_port = (uint16_t)
         tor_parse_long(tok->args[4], 10, 0, 65535, &ok, NULL);
       if (!ok)
@@ -3146,7 +3948,8 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
       }
       if (strlen(tok->args[0]) != HEX_DIGEST_LEN ||
         base16_decode(voter->vote_digest, sizeof(voter->vote_digest),
-                      tok->args[0], HEX_DIGEST_LEN) < 0) {
+                      tok->args[0], HEX_DIGEST_LEN)
+                      != sizeof(voter->vote_digest)) {
         log_warn(LD_DIR, "Error decoding vote digest %s in "
                  "network-status consensus.", escaped(tok->args[0]));
         goto err;
@@ -3169,9 +3972,9 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
       (tok = find_opt_by_keyword(tokens, K_LEGACY_DIR_KEY))) {
     int bad = 1;
     if (strlen(tok->args[0]) == HEX_DIGEST_LEN) {
-      networkstatus_voter_info_t *voter = smartlist_get(ns->voters, 0);
-      if (base16_decode(voter->legacy_id_digest, DIGEST_LEN,
-                        tok->args[0], HEX_DIGEST_LEN)<0)
+      networkstatus_voter_info_t *voter_0 = smartlist_get(ns->voters, 0);
+      if (base16_decode(voter_0->legacy_id_digest, DIGEST_LEN,
+                        tok->args[0], HEX_DIGEST_LEN) != DIGEST_LEN)
         bad = 1;
       else
         bad = 0;
@@ -3180,6 +3983,22 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
       log_warn(LD_DIR, "Invalid legacy key digest %s on vote.",
                escaped(tok->args[0]));
     }
+  }
+
+  /* If this is a vote document, check if information about the shared
+     randomness protocol is included, and extract it. */
+  if (ns->type == NS_TYPE_VOTE) {
+    /* Does this authority participates in the SR protocol? */
+    tok = find_opt_by_keyword(tokens, K_SR_FLAG);
+    if (tok) {
+      ns->sr_info.participate = 1;
+      /* Get the SR commitments and reveals from the vote. */
+      extract_shared_random_commits(ns, tokens);
+    }
+  }
+  /* For both a vote and consensus, extract the shared random values. */
+  if (ns->type == NS_TYPE_VOTE || ns->type == NS_TYPE_CONSENSUS) {
+    extract_shared_random_srvs(ns, tokens);
   }
 
   /* Parse routerstatus lines. */
@@ -3203,8 +4022,11 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
       if ((rs = routerstatus_parse_entry_from_string(rs_area, &s, rs_tokens,
                                                      NULL, NULL,
                                                      ns->consensus_method,
-                                                     flav)))
+                                                     flav))) {
+        /* Use exponential-backoff scheduling when downloading microdescs */
+        rs->dl_status.backoff = DL_SCHED_RANDOM_EXPONENTIAL;
         smartlist_add(ns->routerstatus_list, rs);
+      }
     }
   }
   for (i = 1; i < smartlist_len(ns->routerstatus_list); ++i) {
@@ -3330,7 +4152,8 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
 
     if (strlen(id_hexdigest) != HEX_DIGEST_LEN ||
         base16_decode(declared_identity, sizeof(declared_identity),
-                      id_hexdigest, HEX_DIGEST_LEN) < 0) {
+                      id_hexdigest, HEX_DIGEST_LEN)
+                      != sizeof(declared_identity)) {
       log_warn(LD_DIR, "Error decoding declared identity %s in "
                "network-status document.", escaped(id_hexdigest));
       goto err;
@@ -3345,7 +4168,8 @@ networkstatus_parse_vote_from_string(const char *s, const char **eos_out,
     sig->alg = alg;
     if (strlen(sk_hexdigest) != HEX_DIGEST_LEN ||
         base16_decode(sig->signing_key_digest, sizeof(sig->signing_key_digest),
-                      sk_hexdigest, HEX_DIGEST_LEN) < 0) {
+                      sk_hexdigest, HEX_DIGEST_LEN)
+                      != sizeof(sig->signing_key_digest)) {
       log_warn(LD_DIR, "Error decoding declared signing key digest %s in "
                "network-status document.", escaped(sk_hexdigest));
       tor_free(sig);
@@ -3508,7 +4332,7 @@ networkstatus_parse_detached_signatures(const char *s, const char *eos)
     digest_algorithm_t alg;
     const char *flavor;
     const char *hexdigest;
-    size_t expected_length;
+    size_t expected_length, digest_length;
 
     tok = _tok;
 
@@ -3531,8 +4355,8 @@ networkstatus_parse_detached_signatures(const char *s, const char *eos)
       continue;
     }
 
-    expected_length =
-      (alg == DIGEST_SHA1) ? HEX_DIGEST_LEN : HEX_DIGEST256_LEN;
+    digest_length = crypto_digest_algorithm_get_length(alg);
+    expected_length = digest_length * 2; /* hex encoding */
 
     if (strlen(hexdigest) != expected_length) {
       log_warn(LD_DIR, "Wrong length on consensus-digest in detached "
@@ -3541,13 +4365,13 @@ networkstatus_parse_detached_signatures(const char *s, const char *eos)
     }
     digests = detached_get_digests(sigs, flavor);
     tor_assert(digests);
-    if (!tor_mem_is_zero(digests->d[alg], DIGEST256_LEN)) {
+    if (!tor_mem_is_zero(digests->d[alg], digest_length)) {
       log_warn(LD_DIR, "Multiple digests for %s with %s on detached "
                "signatures document", flavor, algname);
       continue;
     }
-    if (base16_decode(digests->d[alg], DIGEST256_LEN,
-                      hexdigest, strlen(hexdigest)) < 0) {
+    if (base16_decode(digests->d[alg], digest_length,
+                      hexdigest, strlen(hexdigest)) != (int) digest_length) {
       log_warn(LD_DIR, "Bad encoding on consensus-digest in detached "
                "networkstatus signatures");
       goto err;
@@ -3620,14 +4444,14 @@ networkstatus_parse_detached_signatures(const char *s, const char *eos)
 
     if (strlen(id_hexdigest) != HEX_DIGEST_LEN ||
         base16_decode(id_digest, sizeof(id_digest),
-                      id_hexdigest, HEX_DIGEST_LEN) < 0) {
+                      id_hexdigest, HEX_DIGEST_LEN) != sizeof(id_digest)) {
       log_warn(LD_DIR, "Error decoding declared identity %s in "
                "network-status vote.", escaped(id_hexdigest));
       goto err;
     }
     if (strlen(sk_hexdigest) != HEX_DIGEST_LEN ||
         base16_decode(sk_digest, sizeof(sk_digest),
-                      sk_hexdigest, HEX_DIGEST_LEN) < 0) {
+                      sk_hexdigest, HEX_DIGEST_LEN) != sizeof(sk_digest)) {
       log_warn(LD_DIR, "Error decoding declared signing key digest %s in "
                "network-status vote.", escaped(sk_hexdigest));
       goto err;
@@ -4122,7 +4946,7 @@ get_next_token(memarea_t *area,
 
   if (tok->tp == ERR_) {
     /* No keyword matched; call it an "K_opt" or "A_unrecognized" */
-    if (**s == '@')
+    if (*s < eol && **s == '@')
       tok->tp = A_UNKNOWN_;
     else
       tok->tp = K_OPT;
@@ -4829,7 +5653,7 @@ tor_version_parse(const char *s, tor_version_t *out)
     memwipe(digest, 0, sizeof(digest));
     if ( hexlen == 0 || (hexlen % 2) == 1)
       return -1;
-    if (base16_decode(digest, hexlen/2, cp, hexlen))
+    if (base16_decode(digest, hexlen/2, cp, hexlen) != hexlen/2)
       return -1;
     memcpy(out->git_tag, digest, hexlen/2);
     out->git_tag_len = hexlen/2;
@@ -4974,7 +5798,7 @@ rend_parse_v2_service_descriptor(rend_service_descriptor_t **parsed_out,
     eos = eos + 1;
   /* Check length. */
   if (eos-desc > REND_DESC_MAX_SIZE) {
-    /* XXX023 If we are parsing this descriptor as a server, this
+    /* XXXX+ If we are parsing this descriptor as a server, this
      * should be a protocol warning. */
     log_warn(LD_REND, "Descriptor length is %d which exceeds "
              "maximum rendezvous descriptor size of %d bytes.",
@@ -5171,7 +5995,7 @@ rend_decrypt_introduction_points(char **ipos_decrypted,
         crypto_cipher_free(cipher);
 
         len = ipos_encrypted_size - 2 - client_entries_len - CIPHER_IV_LEN;
-        dec = tor_malloc(len);
+        dec = tor_malloc_zero(len + 1);
         declen = crypto_cipher_decrypt_with_iv(session_key, dec, len,
             ipos_encrypted + 2 + client_entries_len,
             ipos_encrypted_size - 2 - client_entries_len);
@@ -5203,7 +6027,7 @@ rend_decrypt_introduction_points(char **ipos_decrypted,
                         "small.");
       return -1;
     }
-    dec = tor_malloc_zero(ipos_encrypted_size - CIPHER_IV_LEN - 1);
+    dec = tor_malloc_zero(ipos_encrypted_size - CIPHER_IV_LEN - 1 + 1);
 
     declen = crypto_cipher_decrypt_with_iv(descriptor_cookie, dec,
                                            ipos_encrypted_size -
@@ -5374,6 +6198,7 @@ rend_parse_client_keys(strmap_t *parsed_clients, const char *ckstr)
   directory_token_t *tok;
   const char *current_entry = NULL;
   memarea_t *area = NULL;
+  char *err_msg = NULL;
   if (!ckstr || strlen(ckstr) == 0)
     return -1;
   tokens = smartlist_new();
@@ -5383,8 +6208,6 @@ rend_parse_client_keys(strmap_t *parsed_clients, const char *ckstr)
   current_entry = eat_whitespace(ckstr);
   while (!strcmpstart(current_entry, "client-name ")) {
     rend_authorized_client_t *parsed_entry;
-    size_t len;
-    char descriptor_cookie_tmp[REND_DESC_COOKIE_LEN+2];
     /* Determine end of string. */
     const char *eos = strstr(current_entry, "\nclient-name ");
     if (!eos)
@@ -5413,12 +6236,10 @@ rend_parse_client_keys(strmap_t *parsed_clients, const char *ckstr)
     tor_assert(tok == smartlist_get(tokens, 0));
     tor_assert(tok->n_args == 1);
 
-    len = strlen(tok->args[0]);
-    if (len < 1 || len > 19 ||
-      strspn(tok->args[0], REND_LEGAL_CLIENTNAME_CHARACTERS) != len) {
+    if (!rend_valid_client_name(tok->args[0])) {
       log_warn(LD_CONFIG, "Illegal client name: %s. (Length must be "
-               "between 1 and 19, and valid characters are "
-               "[A-Za-z0-9+-_].)", tok->args[0]);
+               "between 1 and %d, and valid characters are "
+               "[A-Za-z0-9+-_].)", tok->args[0], REND_CLIENTNAME_MAX_LEN);
       goto err;
     }
     /* Check if client name is duplicate. */
@@ -5440,23 +6261,13 @@ rend_parse_client_keys(strmap_t *parsed_clients, const char *ckstr)
     /* Parse descriptor cookie. */
     tok = find_by_keyword(tokens, C_DESCRIPTOR_COOKIE);
     tor_assert(tok->n_args == 1);
-    if (strlen(tok->args[0]) != REND_DESC_COOKIE_LEN_BASE64 + 2) {
-      log_warn(LD_REND, "Descriptor cookie has illegal length: %s",
-               escaped(tok->args[0]));
+    if (rend_auth_decode_cookie(tok->args[0], parsed_entry->descriptor_cookie,
+                                NULL, &err_msg) < 0) {
+      tor_assert(err_msg);
+      log_warn(LD_REND, "%s", err_msg);
+      tor_free(err_msg);
       goto err;
     }
-    /* The size of descriptor_cookie_tmp needs to be REND_DESC_COOKIE_LEN+2,
-     * because a base64 encoding of length 24 does not fit into 16 bytes in all
-     * cases. */
-    if (base64_decode(descriptor_cookie_tmp, sizeof(descriptor_cookie_tmp),
-                      tok->args[0], strlen(tok->args[0]))
-        != REND_DESC_COOKIE_LEN) {
-      log_warn(LD_REND, "Descriptor cookie contains illegal characters: "
-               "%s", escaped(tok->args[0]));
-      goto err;
-    }
-    memcpy(parsed_entry->descriptor_cookie, descriptor_cookie_tmp,
-           REND_DESC_COOKIE_LEN);
   }
   result = strmap_size(parsed_clients);
   goto done;
@@ -5469,5 +6280,29 @@ rend_parse_client_keys(strmap_t *parsed_clients, const char *ckstr)
   if (area)
     memarea_drop_all(area);
   return result;
+}
+
+/** Called on startup; right now we just handle scanning the unparseable
+ * descriptor dumps, but hang anything else we might need to do in the
+ * future here as well.
+ */
+void
+routerparse_init(void)
+{
+  /*
+   * Check both if the sandbox is active and whether it's configured; no
+   * point in loading all that if we won't be able to use it after the
+   * sandbox becomes active.
+   */
+  if (!(sandbox_is_active() || get_options()->Sandbox)) {
+    dump_desc_init();
+  }
+}
+
+/** Clean up all data structures used by routerparse.c at exit */
+void
+routerparse_free_all(void)
+{
+  dump_desc_fifo_cleanup();
 }
 

@@ -7,6 +7,26 @@
 /**
  * \file command.c
  * \brief Functions for processing incoming cells.
+ *
+ * When we receive a cell from a client or a relay, it arrives on some
+ * channel, and tells us what to do with it. In this module, we dispatch based
+ * on the cell type using the functions command_process_cell() and
+ * command_process_var_cell(), and deal with the cell accordingly.  (These
+ * handlers are installed on a channel with the command_setup_channel()
+ * function.)
+ *
+ * Channels have a chance to handle some cell types on their own before they
+ * are ever passed here --- typically, they do this for cells that are
+ * specific to a given channel type.  For example, in channeltls.c, the cells
+ * for the initial connection handshake are handled before we get here.  (Of
+ * course, the fact that there _is_ only one channel type for now means that
+ * we may have gotten the factoring wrong here.)
+ *
+ * Handling other cell types is mainly farmed off to other modules, after
+ * initial sanity-checking.  CREATE* cells are handled ultimately in onion.c,
+ * CREATED* cells trigger circuit creation in circuitbuild.c, DESTROY cells
+ * are handled here (since they're simple), and RELAY cells, in all their
+ * complexity, are passed off to relay.c.
  **/
 
 /* In-points to command.c:

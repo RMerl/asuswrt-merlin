@@ -15,11 +15,7 @@
 #define SCHEDULER_PRIVATE_
 #include "scheduler.h"
 
-#ifdef HAVE_EVENT2_EVENT_H
 #include <event2/event.h>
-#else
-#include <event.h>
-#endif
 
 /*
  * Scheduler high/low watermarks
@@ -500,13 +496,13 @@ scheduler_run, (void))
 
     /* Readd any channels we need to */
     if (to_readd) {
-      SMARTLIST_FOREACH_BEGIN(to_readd, channel_t *, chan) {
-        chan->scheduler_state = SCHED_CHAN_PENDING;
+      SMARTLIST_FOREACH_BEGIN(to_readd, channel_t *, readd_chan) {
+        readd_chan->scheduler_state = SCHED_CHAN_PENDING;
         smartlist_pqueue_add(channels_pending,
                              scheduler_compare_channels,
                              STRUCT_OFFSET(channel_t, sched_heap_idx),
-                             chan);
-      } SMARTLIST_FOREACH_END(chan);
+                             readd_chan);
+      } SMARTLIST_FOREACH_END(readd_chan);
       smartlist_free(to_readd);
     }
 

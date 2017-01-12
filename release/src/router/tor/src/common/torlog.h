@@ -109,6 +109,11 @@
  * would. Used as a flag, not a log domain. */
 #define LD_NOFUNCNAME (1u<<30)
 
+#ifdef TOR_UNIT_TESTS
+/** This log message should not be intercepted by mock_saving_logv */
+#define LD_NO_MOCK (1u<<29)
+#endif
+
 /** Mask of zero or more log domains, OR'd together. */
 typedef uint32_t log_domain_mask_t;
 
@@ -176,7 +181,7 @@ void log_fn_ratelim_(struct ratelim_t *ratelim, int severity,
                      const char *format, ...)
   CHECK_PRINTF(5,6);
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && __GNUC__ <= 3
 
 /* These are the GCC varidaic macros, so that older versions of GCC don't
  * break. */

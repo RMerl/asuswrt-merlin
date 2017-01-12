@@ -2,6 +2,11 @@
 
 #define HAVE_GE25519_SCALARMULT_BASE_CHOOSE_NIELS
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#endif
+
 DONNA_NOINLINE static void
 ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][96], uint32_t pos, signed char b) {
 	int64_t breg = (int64_t)b;
@@ -346,6 +351,10 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 			"cc", "memory"
 	);
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #endif /* defined(ED25519_GCC_64BIT_X86_CHOOSE) */
 

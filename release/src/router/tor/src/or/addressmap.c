@@ -264,18 +264,18 @@ addressmap_clear_invalid_automaps(const or_options_t *options)
     clear_all = 1; /* This should be impossible, but let's be sure. */
 
   STRMAP_FOREACH_MODIFY(addressmap, src_address, addressmap_entry_t *, ent) {
-    int remove = clear_all;
+    int remove_this = clear_all;
     if (ent->source != ADDRMAPSRC_AUTOMAP)
       continue; /* not an automap mapping. */
 
-    if (!remove) {
-      remove = ! addressmap_address_should_automap(src_address, options);
+    if (!remove_this) {
+      remove_this = ! addressmap_address_should_automap(src_address, options);
     }
 
-    if (!remove && ! address_is_in_virtual_range(ent->new_address))
-      remove = 1;
+    if (!remove_this && ! address_is_in_virtual_range(ent->new_address))
+      remove_this = 1;
 
-    if (remove) {
+    if (remove_this) {
       addressmap_ent_remove(src_address, ent);
       MAP_DEL_CURRENT(src_address);
     }
@@ -774,7 +774,7 @@ parse_virtual_addr_network(const char *val, sa_family_t family,
   const int ipv6 = (family == AF_INET6);
   tor_addr_t addr;
   maskbits_t bits;
-  const int max_bits = ipv6 ? 40 : 16;
+  const int max_prefix_bits = ipv6 ? 104 : 16;
   virtual_addr_conf_t *conf = ipv6 ? &virtaddr_conf_ipv6 : &virtaddr_conf_ipv4;
 
   if (!val || val[0] == '\0') {
@@ -804,10 +804,10 @@ parse_virtual_addr_network(const char *val, sa_family_t family,
   }
 #endif
 
-  if (bits > max_bits) {
+  if (bits > max_prefix_bits) {
     if (msg)
       tor_asprintf(msg, "VirtualAddressNetwork%s expects a /%d "
-                   "network or larger",ipv6?"IPv6":"", max_bits);
+                   "network or larger",ipv6?"IPv6":"", max_prefix_bits);
     return -1;
   }
 
@@ -896,10 +896,10 @@ addressmap_get_virtual_address(int type)
   tor_assert(addressmap);
 
   if (type == RESOLVED_TYPE_HOSTNAME) {
-    char rand[10];
+    char rand_bytes[10];
     do {
-      crypto_rand(rand, sizeof(rand));
-      base32_encode(buf,sizeof(buf),rand,sizeof(rand));
+      crypto_rand(rand_bytes, sizeof(rand_bytes));
+      base32_encode(buf,sizeof(buf),rand_bytes,sizeof(rand_bytes));
       strlcat(buf, ".virtual", sizeof(buf));
     } while (strmap_get(addressmap, buf));
     return tor_strdup(buf);
@@ -1107,11 +1107,11 @@ addressmap_get_mappings(smartlist_t *sl, time_t min_expires,
              smartlist_add_asprintf(sl, "%s%s %s%s NEVER",
                                     src_wc, key, dst_wc, val->new_address);
            else {
-             char time[ISO_TIME_LEN+1];
-             format_iso_time(time, val->expires);
+             char isotime[ISO_TIME_LEN+1];
+             format_iso_time(isotime, val->expires);
              smartlist_add_asprintf(sl, "%s%s %s%s \"%s\"",
                                     src_wc, key, dst_wc, val->new_address,
-                                    time);
+                                    isotime);
            }
          } else {
            smartlist_add_asprintf(sl, "%s%s %s%s",

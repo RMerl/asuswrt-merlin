@@ -432,7 +432,7 @@ NS(test_main)(void *arg)
 NS_DECL(addr_policy_t *, router_parse_addr_policy_item_from_string,
     (const char *s, int assume_action, int *malformed_list));
 
-addr_policy_t *NS(mock_addr_policy);
+static addr_policy_t *NS(mock_addr_policy);
 
 static void
 NS(test_main)(void *arg)
@@ -480,7 +480,7 @@ NS(router_parse_addr_policy_item_from_string)(const char *s,
 NS_DECL(addr_policy_t *, router_parse_addr_policy_item_from_string,
         (const char *s, int assume_action, int *bogus));
 
-addr_policy_t *NS(mock_addr_policy);
+static addr_policy_t *NS(mock_addr_policy);
 
 static void
 NS(test_main)(void *arg)
@@ -527,7 +527,7 @@ NS(router_parse_addr_policy_item_from_string)(const char *s, int assume_action,
 NS_DECL(addr_policy_t *, router_parse_addr_policy_item_from_string,
         (const char *s, int assume_action, int *bad));
 
-addr_policy_t *NS(mock_addr_policy);
+static addr_policy_t *NS(mock_addr_policy);
 
 static void
 NS(test_main)(void *arg)
@@ -1477,7 +1477,7 @@ NS(test_main)(void *arg)
  * routerset or routerinfo.
  */
 
-node_t NS(mock_node);
+static node_t NS(mock_node);
 
 static void
 NS(test_main)(void *arg)
@@ -1504,7 +1504,7 @@ NS(test_main)(void *arg)
  * routerset and no routerinfo.
  */
 
-node_t NS(mock_node);
+static node_t NS(mock_node);
 
 static void
 NS(test_main)(void *arg)
@@ -1603,7 +1603,7 @@ NS(test_main)(void *arg)
 
 NS_DECL(const node_t *, node_get_by_nickname,
     (const char *nickname, int warn_if_unused));
-const char *NS(mock_nickname);
+static const char *NS(mock_nickname);
 
 static void
 NS(test_main)(void *arg)
@@ -1652,8 +1652,8 @@ NS(node_get_by_nickname)(const char *nickname, int warn_if_unused)
 
 NS_DECL(const node_t *, node_get_by_nickname,
     (const char *nickname, int warn_if_unused));
-const char *NS(mock_nickname);
-node_t NS(mock_node);
+static const char *NS(mock_nickname);
+static node_t NS(mock_node);
 
 static void
 NS(test_main)(void *arg)
@@ -1702,8 +1702,8 @@ NS(node_get_by_nickname)(const char *nickname, int warn_if_unused)
 
 NS_DECL(const node_t *, node_get_by_nickname,
     (const char *nickname, int warn_if_unused));
-char *NS(mock_nickname);
-node_t NS(mock_node);
+static char *NS(mock_nickname);
+static node_t NS(mock_node);
 
 static void
 NS(test_main)(void *arg)
@@ -1754,7 +1754,7 @@ NS(node_get_by_nickname)(const char *nickname, int warn_if_unused)
 
 NS_DECL(smartlist_t *, nodelist_get_list, (void));
 
-smartlist_t *NS(mock_smartlist);
+static smartlist_t *NS(mock_smartlist);
 
 static void
 NS(test_main)(void *arg)
@@ -1800,8 +1800,8 @@ NS(nodelist_get_list)(void)
 
 NS_DECL(smartlist_t *, nodelist_get_list, (void));
 
-smartlist_t *NS(mock_smartlist);
-node_t NS(mock_node);
+static smartlist_t *NS(mock_smartlist);
+static node_t NS(mock_node);
 
 static void
 NS(test_main)(void *arg)

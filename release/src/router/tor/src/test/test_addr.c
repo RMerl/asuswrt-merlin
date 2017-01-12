@@ -81,14 +81,14 @@ test_addr_basic(void *arg)
 #define test_op_ip6_(a,op,b,e1,e2)                               \
   STMT_BEGIN                                                     \
   tt_assert_test_fmt_type(a,b,e1" "#op" "e2,struct in6_addr*,    \
-    (memcmp(val1_->s6_addr, val2_->s6_addr, 16) op 0),           \
+    (fast_memcmp(val1_->s6_addr, val2_->s6_addr, 16) op 0),      \
     char *, "%s",                                                \
-    { int i; char *cp;                                           \
+    { char *cp;                                                  \
       cp = print_ = tor_malloc(64);                              \
-      for (i=0;i<16;++i) {                                       \
-        tor_snprintf(cp, 3,"%02x", (unsigned)value_->s6_addr[i]);\
+      for (int ii_=0;ii_<16;++ii_) {                             \
+        tor_snprintf(cp, 3,"%02x", (unsigned)value_->s6_addr[ii_]);     \
         cp += 2;                                                 \
-        if (i != 15) *cp++ = ':';                                \
+        if (ii_ != 15) *cp++ = ':';                              \
       }                                                          \
     },                                                           \
     { tor_free(print_); },                                       \
@@ -1037,17 +1037,17 @@ test_addr_make_null(void *data)
   (void) data;
   /* Ensure that before tor_addr_make_null, addr != 0's */
   memset(addr, 1, sizeof(*addr));
-  tt_int_op(memcmp(addr, zeros, sizeof(*addr)), OP_NE, 0);
+  tt_int_op(fast_memcmp(addr, zeros, sizeof(*addr)), OP_NE, 0);
   /* Test with AF == AF_INET */
   zeros->family = AF_INET;
   tor_addr_make_null(addr, AF_INET);
-  tt_int_op(memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
+  tt_int_op(fast_memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
   tt_str_op(tor_addr_to_str(buf, addr, sizeof(buf), 0), OP_EQ, "0.0.0.0");
   /* Test with AF == AF_INET6 */
   memset(addr, 1, sizeof(*addr));
   zeros->family = AF_INET6;
   tor_addr_make_null(addr, AF_INET6);
-  tt_int_op(memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
+  tt_int_op(fast_memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
   tt_str_op(tor_addr_to_str(buf, addr, sizeof(buf), 0), OP_EQ, "::");
  done:
   tor_free(addr);

@@ -56,46 +56,8 @@ int peek_buf_has_control0_command(buf_t *buf);
 
 int fetch_ext_or_command_from_buf(buf_t *buf, ext_or_cmd_t **out);
 
-#ifdef USE_BUFFEREVENTS
-int fetch_var_cell_from_evbuffer(struct evbuffer *buf, var_cell_t **out,
-                                 int linkproto);
-int fetch_from_evbuffer_socks(struct evbuffer *buf, socks_request_t *req,
-                              int log_sockstype, int safe_socks);
-int fetch_from_evbuffer_socks_client(struct evbuffer *buf, int state,
-                                     char **reason);
-int fetch_from_evbuffer_http(struct evbuffer *buf,
-                        char **headers_out, size_t max_headerlen,
-                        char **body_out, size_t *body_used, size_t max_bodylen,
-                        int force_complete);
-int peek_evbuffer_has_control0_command(struct evbuffer *buf);
-int write_to_evbuffer_zlib(struct evbuffer *buf, tor_zlib_state_t *state,
-                           const char *data, size_t data_len,
-                           int done);
-int fetch_ext_or_command_from_evbuffer(struct evbuffer *buf,
-                                       ext_or_cmd_t **out);
-#endif
-
-#ifdef USE_BUFFEREVENTS
-#define generic_buffer_new() evbuffer_new()
-#define generic_buffer_len(b) evbuffer_get_length((b))
-#define generic_buffer_add(b,dat,len) evbuffer_add((b),(dat),(len))
-#define generic_buffer_get(b,buf,buflen) evbuffer_remove((b),(buf),(buflen))
-#define generic_buffer_clear(b) evbuffer_drain((b), evbuffer_get_length((b)))
-#define generic_buffer_free(b) evbuffer_free((b))
-#define generic_buffer_fetch_ext_or_cmd(b, out) \
-  fetch_ext_or_command_from_evbuffer((b), (out))
-#else
-#define generic_buffer_new() buf_new()
-#define generic_buffer_len(b) buf_datalen((b))
-#define generic_buffer_add(b,dat,len) write_to_buf((dat),(len),(b))
-#define generic_buffer_get(b,buf,buflen) fetch_from_buf((buf),(buflen),(b))
-#define generic_buffer_clear(b) buf_clear((b))
-#define generic_buffer_free(b) buf_free((b))
-#define generic_buffer_fetch_ext_or_cmd(b, out) \
-  fetch_ext_or_command_from_buf((b), (out))
-#endif
-int generic_buffer_set_to_copy(generic_buffer_t **output,
-                               const generic_buffer_t *input);
+int buf_set_to_copy(buf_t **output,
+                    const buf_t *input);
 
 void assert_buf_ok(buf_t *buf);
 
@@ -103,6 +65,7 @@ void assert_buf_ok(buf_t *buf);
 STATIC int buf_find_string_offset(const buf_t *buf, const char *s, size_t n);
 STATIC void buf_pullup(buf_t *buf, size_t bytes);
 void buf_get_first_chunk_data(const buf_t *buf, const char **cp, size_t *sz);
+STATIC size_t preferred_chunk_size(size_t target);
 
 #define DEBUG_CHUNK_ALLOC
 /** A single chunk on a buffer. */

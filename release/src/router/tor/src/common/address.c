@@ -131,7 +131,8 @@ tor_addr_to_sockaddr(const tor_addr_t *a,
 #endif
     sin6->sin6_family = AF_INET6;
     sin6->sin6_port = htons(port);
-    memcpy(&sin6->sin6_addr, tor_addr_to_in6(a), sizeof(struct in6_addr));
+    memcpy(&sin6->sin6_addr, tor_addr_to_in6_assert(a),
+           sizeof(struct in6_addr));
     return sizeof(struct sockaddr_in6);
   } else {
     return 0;
@@ -334,7 +335,7 @@ tor_addr_lookup(const char *name, uint16_t family, tor_addr_t *addr)
       } else if (ent->h_addrtype == AF_INET6) {
         tor_addr_from_in6(addr, (struct in6_addr*) ent->h_addr);
       } else {
-        tor_assert(0); /* gethostbyname() returned a bizarre addrtype */
+        tor_assert(0); // LCOV_EXCL_LINE: gethostbyname() returned bizarre type
       }
       return 0;
     }
@@ -905,8 +906,10 @@ tor_addr_is_loopback(const tor_addr_t *addr)
     case AF_UNSPEC:
       return 0;
     default:
+      /* LCOV_EXCL_START */
       tor_fragile_assert();
       return 0;
+      /* LCOV_EXCL_STOP */
   }
 }
 
@@ -1027,7 +1030,7 @@ tor_addr_copy_tight(tor_addr_t *dest, const tor_addr_t *src)
     case AF_UNSPEC:
       break;
     default:
-      tor_fragile_assert();
+      tor_fragile_assert(); // LCOV_EXCL_LINE
     }
 }
 
@@ -1038,6 +1041,10 @@ tor_addr_copy_tight(tor_addr_t *dest, const tor_addr_t *src)
  * Different address families (IPv4 vs IPv6) are always considered unequal if
  * <b>how</b> is CMP_EXACT; otherwise, IPv6-mapped IPv4 addresses are
  * considered equivalent to their IPv4 equivalents.
+ *
+ * As a special case, all pointer-wise distinct AF_UNIX addresses are always
+ * considered unequal since tor_addr_t currently does not contain the
+ * information required to make the comparison.
  */
 int
 tor_addr_compare(const tor_addr_t *addr1, const tor_addr_t *addr2,
@@ -1096,6 +1103,7 @@ tor_addr_compare_masked(const tor_addr_t *addr1, const tor_addr_t *addr2,
       case AF_INET6: {
         if (mbits > 128)
           mbits = 128;
+
         const uint8_t *a1 = tor_addr_to_in6_addr8(addr1);
         const uint8_t *a2 = tor_addr_to_in6_addr8(addr2);
         const int bytes = mbits >> 3;
@@ -1110,9 +1118,29 @@ tor_addr_compare_masked(const tor_addr_t *addr1, const tor_addr_t *addr2,
           return 0;
         }
       }
+      case AF_UNIX:
+        /* HACKHACKHACKHACKHACK:
+         * tor_addr_t doesn't contain a copy of sun_path, so it's not
+         * possible to comapre this at all.
+         *
+         * Since the only time we currently actually should be comparing
+         * 2 AF_UNIX addresses is when dealing with ISO_CLIENTADDR (which
+         * is disabled for AF_UNIX SocksPorts anyway), this just does
+         * a pointer comparison.
+         *
+         * See: #20261.
+         */
+        if (addr1 < addr2)
+          return -1;
+        else if (addr1 == addr2)
+          return 0;
+        else
+          return 1;
       default:
+        /* LCOV_EXCL_START */
         tor_fragile_assert();
         return 0;
+        /* LCOV_EXCL_STOP */
     }
   } else if (how == CMP_EXACT) {
     /* Unequal families and an exact comparison?  Stop now! */
@@ -1165,14 +1193,16 @@ tor_addr_hash(const tor_addr_t *addr)
   case AF_INET6:
     return siphash24g(&addr->addr.in6_addr.s6_addr, 16);
   default:
+    /* LCOV_EXCL_START */
     tor_fragile_assert();
     return 0;
+    /* LCOV_EXCL_END */
   }
 }
 
 /** Return a newly allocated string with a representation of <b>addr</b>. */
 char *
-tor_dup_addr(const tor_addr_t *addr)
+tor_addr_to_str_dup(const tor_addr_t *addr)
 {
   char buf[TOR_ADDR_BUF_LEN];
   if (tor_addr_to_str(buf, addr, sizeof(buf), 0)) {
@@ -1595,6 +1625,7 @@ get_interface_addresses_raw,(int severity, sa_family_t family))
     return result;
 #endif
   (void) severity;
+  (void) result;
   return NULL;
 }
 
@@ -1761,13 +1792,13 @@ MOCK_IMPL(smartlist_t *,get_interface_address6_list,(int severity,
     {
       if (tor_addr_is_loopback(a) ||
           tor_addr_is_multicast(a)) {
-        SMARTLIST_DEL_CURRENT(addrs, a);
+        SMARTLIST_DEL_CURRENT_KEEPORDER(addrs, a);
         tor_free(a);
         continue;
       }
 
       if (!include_internal && tor_addr_is_internal(a, 0)) {
-        SMARTLIST_DEL_CURRENT(addrs, a);
+        SMARTLIST_DEL_CURRENT_KEEPORDER(addrs, a);
         tor_free(a);
         continue;
       }
@@ -1809,7 +1840,7 @@ MOCK_IMPL(smartlist_t *,get_interface_address6_list,(int severity,
 
 /* ======
  * IPv4 helpers
- * XXXX024 IPv6 deprecate some of these.
+ * XXXX IPv6 deprecate some of these.
  */
 
 /** Given an address of the form "ip:port", try to divide it into its

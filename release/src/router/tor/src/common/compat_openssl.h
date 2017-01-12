@@ -15,8 +15,9 @@
  * \brief compatability definitions for working with different openssl forks
  **/
 
-#if OPENSSL_VERSION_NUMBER < OPENSSL_V_SERIES(1,0,0)
-#error "We require OpenSSL >= 1.0.0"
+#if !defined(LIBRESSL_VERSION_NUMBER) && \
+  OPENSSL_VERSION_NUMBER < OPENSSL_V_SERIES(1,0,1)
+#error "We require OpenSSL >= 1.0.1"
 #endif
 
 #if OPENSSL_VERSION_NUMBER >= OPENSSL_V_SERIES(1,1,0) && \

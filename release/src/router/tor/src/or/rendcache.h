@@ -102,6 +102,13 @@ STATIC void validate_intro_point_failure(const rend_service_descriptor_t *desc,
                                         const char *service_id);
 
 STATIC void rend_cache_failure_entry_free_(void *entry);
+
+#ifdef TOR_UNIT_TESTS
+extern strmap_t *rend_cache;
+extern strmap_t *rend_cache_failure;
+extern digestmap_t *rend_cache_v2_dir;
+extern size_t rend_cache_total_allocation;
+#endif
 #endif
 
 #endif /* TOR_RENDCACHE_H */

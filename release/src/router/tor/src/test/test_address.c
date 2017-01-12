@@ -26,6 +26,7 @@
 #include "or.h"
 #include "address.h"
 #include "test.h"
+#include "log_test_helpers.h"
 
 /** Return 1 iff <b>sockaddr1</b> and <b>sockaddr2</b> represent
  * the same IP address and port combination. Otherwise, return 0.
@@ -556,18 +557,25 @@ fake_open_socket(int domain, int type, int protocol)
   return FAKE_SOCKET_FD;
 }
 
+static int
+fake_close_socket(tor_socket_t s)
+{
+  (void)s;
+  return 0;
+}
+
 static int last_connected_socket_fd = 0;
 
 static int connect_retval = 0;
 
 static tor_socket_t
-pretend_to_connect(tor_socket_t socket, const struct sockaddr *address,
+pretend_to_connect(tor_socket_t sock, const struct sockaddr *address,
                    socklen_t address_len)
 {
   (void)address;
   (void)address_len;
 
-  last_connected_socket_fd = socket;
+  last_connected_socket_fd = sock;
 
   return connect_retval;
 }
@@ -575,11 +583,11 @@ pretend_to_connect(tor_socket_t socket, const struct sockaddr *address,
 static struct sockaddr *mock_addr = NULL;
 
 static int
-fake_getsockname(tor_socket_t socket, struct sockaddr *address,
+fake_getsockname(tor_socket_t sock, struct sockaddr *address,
                  socklen_t *address_len)
 {
   socklen_t bytes_to_copy = 0;
-  (void) socket;
+  (void) sock;
 
   if (!mock_addr)
     return -1;
@@ -616,6 +624,7 @@ test_address_udp_socket_trick_whitebox(void *arg)
   MOCK(tor_open_socket,fake_open_socket);
   MOCK(tor_connect_socket,pretend_to_connect);
   MOCK(tor_getsockname,fake_getsockname);
+  MOCK(tor_close_socket,fake_close_socket);
 
   mock_addr = tor_malloc_zero(sizeof(struct sockaddr_storage));
   sockaddr_in_from_string("23.32.246.118",(struct sockaddr_in *)mock_addr);
@@ -646,11 +655,12 @@ test_address_udp_socket_trick_whitebox(void *arg)
 
   tt_assert(sockaddr_in6_are_equal(mock_addr6,ipv6_to_check));
 
+ done:
   UNMOCK(tor_open_socket);
   UNMOCK(tor_connect_socket);
   UNMOCK(tor_getsockname);
+  UNMOCK(tor_close_socket);
 
-  done:
   tor_free(ipv6_to_check);
   tor_free(mock_addr);
   tor_free(addr_from_hack);
@@ -793,7 +803,20 @@ test_address_get_if_addrs6_list_internal(void *arg)
 
   (void)arg;
 
+  /* We might drop a log_err */
+  setup_full_capture_of_logs(LOG_ERR);
   results = get_interface_address6_list(LOG_ERR, AF_INET6, 1);
+  tt_int_op(smartlist_len(mock_saved_logs()), OP_LE, 1);
+  if (smartlist_len(mock_saved_logs()) == 1) {
+    expect_log_msg_containing_either4("connect() failed",
+                                      "unable to create socket",
+                                      "Address that we determined via UDP "
+                                      "socket magic is unsuitable for public "
+                                      "comms.",
+                                      "getsockname() to determine interface "
+                                      "failed");
+  }
+  teardown_capture_of_logs();
 
   tt_assert(results != NULL);
   /* Work even on systems without IPv6 interfaces */
@@ -812,6 +835,7 @@ test_address_get_if_addrs6_list_internal(void *arg)
 
  done:
   free_interface_address6_list(results);
+  teardown_capture_of_logs();
   return;
 }
 
@@ -822,7 +846,20 @@ test_address_get_if_addrs6_list_no_internal(void *arg)
 
   (void)arg;
 
+  /* We might drop a log_err */
+  setup_full_capture_of_logs(LOG_ERR);
   results = get_interface_address6_list(LOG_ERR, AF_INET6, 0);
+  tt_int_op(smartlist_len(mock_saved_logs()), OP_LE, 1);
+  if (smartlist_len(mock_saved_logs()) == 1) {
+    expect_log_msg_containing_either4("connect() failed",
+                                      "unable to create socket",
+                                      "Address that we determined via UDP "
+                                      "socket magic is unsuitable for public "
+                                      "comms.",
+                                      "getsockname() to determine interface "
+                                      "failed");
+  }
+  teardown_capture_of_logs();
 
   tt_assert(results != NULL);
   /* Work even on systems without IPv6 interfaces */
@@ -840,6 +877,7 @@ test_address_get_if_addrs6_list_no_internal(void *arg)
   }
 
  done:
+  teardown_capture_of_logs();
   free_interface_address6_list(results);
   return;
 }
@@ -1110,7 +1148,7 @@ struct testcase_t address_tests[] = {
   ADDRESS_TEST(get_if_addrs_list_internal, 0),
   ADDRESS_TEST(get_if_addrs_list_no_internal, 0),
   ADDRESS_TEST(get_if_addrs6_list_internal, 0),
-  ADDRESS_TEST(get_if_addrs6_list_no_internal, 0),
+  ADDRESS_TEST(get_if_addrs6_list_no_internal, TT_FORK),
   ADDRESS_TEST(get_if_addrs_internal_fail, 0),
   ADDRESS_TEST(get_if_addrs_no_internal_fail, 0),
   ADDRESS_TEST(get_if_addrs, 0),

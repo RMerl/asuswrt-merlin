@@ -34,8 +34,8 @@ void connection_about_to_close_connection(connection_t *conn);
 void connection_close_immediate(connection_t *conn);
 void connection_mark_for_close_(connection_t *conn,
                                 int line, const char *file);
-void connection_mark_for_close_internal_(connection_t *conn,
-                                         int line, const char *file);
+MOCK_DECL(void, connection_mark_for_close_internal_,
+          (connection_t *conn, int line, const char *file));
 
 #define connection_mark_for_close(c) \
   connection_mark_for_close_((c), __LINE__, SHORT_FILE__)
@@ -52,13 +52,11 @@ void connection_mark_for_close_internal_(connection_t *conn,
  * For all other cases, use connection_mark_and_flush() instead, which
  * checks for or_connection_t properly, instead.  See below.
  */
-#define connection_mark_and_flush_internal_(c,line,file)                  \
-  do {                                                                    \
-    connection_t *tmp_conn_ = (c);                                        \
-    connection_mark_for_close_internal_(tmp_conn_, (line), (file));       \
-    tmp_conn_->hold_open_until_flushed = 1;                               \
-    IF_HAS_BUFFEREVENT(tmp_conn_,                                         \
-                       connection_start_writing(tmp_conn_));              \
+#define connection_mark_and_flush_internal_(c,line,file)                \
+  do {                                                                  \
+    connection_t *tmp_conn__ = (c);                                     \
+    connection_mark_for_close_internal_(tmp_conn__, (line), (file));    \
+    tmp_conn__->hold_open_until_flushed = 1;                            \
   } while (0)
 
 #define connection_mark_and_flush_internal(c)            \
@@ -166,21 +164,13 @@ static size_t connection_get_outbuf_len(connection_t *conn);
 static inline size_t
 connection_get_inbuf_len(connection_t *conn)
 {
-  IF_HAS_BUFFEREVENT(conn, {
-    return evbuffer_get_length(bufferevent_get_input(conn->bufev));
-  }) ELSE_IF_NO_BUFFEREVENT {
-    return conn->inbuf ? buf_datalen(conn->inbuf) : 0;
-  }
+  return conn->inbuf ? buf_datalen(conn->inbuf) : 0;
 }
 
 static inline size_t
 connection_get_outbuf_len(connection_t *conn)
 {
-  IF_HAS_BUFFEREVENT(conn, {
-    return evbuffer_get_length(bufferevent_get_output(conn->bufev));
-  }) ELSE_IF_NO_BUFFEREVENT {
     return conn->outbuf ? buf_datalen(conn->outbuf) : 0;
-  }
 }
 
 connection_t *connection_get_by_global_id(uint64_t id);
@@ -257,19 +247,21 @@ void clock_skew_warning(const connection_t *conn, long apparent_skew,
                         int trusted, log_domain_mask_t domain,
                         const char *received, const char *source);
 
-#ifdef USE_BUFFEREVENTS
-int connection_type_uses_bufferevent(connection_t *conn);
-void connection_configure_bufferevent_callbacks(connection_t *conn);
-void connection_handle_read_cb(struct bufferevent *bufev, void *arg);
-void connection_handle_write_cb(struct bufferevent *bufev, void *arg);
-void connection_handle_event_cb(struct bufferevent *bufev, short event,
-                                 void *arg);
-void connection_get_rate_limit_totals(uint64_t *read_out,
-                                      uint64_t *written_out);
-void connection_enable_rate_limiting(connection_t *conn);
-#else
-#define connection_type_uses_bufferevent(c) (0)
-#endif
+/** Check if a connection is on the way out so the OOS handler doesn't try
+ * to kill more than it needs. */
+static inline int
+connection_is_moribund(connection_t *conn)
+{
+  if (conn != NULL &&
+      (conn->conn_array_index < 0 ||
+       conn->marked_for_close)) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void connection_check_oos(int n_socks, int failed);
 
 #ifdef CONNECTION_PRIVATE
 STATIC void connection_free_(connection_t *conn);
@@ -289,6 +281,9 @@ MOCK_DECL(STATIC int,connection_connect_sockaddr,
                                              const struct sockaddr *bindaddr,
                                              socklen_t bindaddr_len,
                                              int *socket_error));
+MOCK_DECL(STATIC void, kill_conn_list_for_oos, (smartlist_t *conns));
+MOCK_DECL(STATIC smartlist_t *, pick_oos_victims, (int n));
+
 #endif
 
 #endif

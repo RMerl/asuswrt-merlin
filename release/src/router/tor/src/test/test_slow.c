@@ -18,9 +18,6 @@
 #include "or.h"
 #include "test.h"
 
-extern struct testcase_t slow_crypto_tests[];
-extern struct testcase_t slow_util_tests[];
-
 struct testgroup_t testgroups[] = {
   { "slow/crypto/", slow_crypto_tests },
   { "slow/util/", slow_util_tests },

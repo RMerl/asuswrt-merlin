@@ -6,6 +6,28 @@
  *
  * \brief A concrete subclass of channel_t using or_connection_t to transfer
  * cells between Tor instances.
+ *
+ * This module fills in the various function pointers in channel_t, to
+ * implement the channel_tls_t channels as used in Tor today.  These channels
+ * are created from channel_tls_connect() and
+ * channel_tls_handle_incoming(). Each corresponds 1:1 to or_connection_t
+ * object, as implemented in connection_or.c.  These channels transmit cells
+ * to the underlying or_connection_t by calling
+ * connection_or_write_*_cell_to_buf(), and receive cells from the underlying
+ * or_connection_t when connection_or_process_cells_from_inbuf() calls
+ * channel_tls_handle_*_cell().
+ *
+ * Here we also implement the server (responder) side of the v3+ Tor link
+ * handshake, which uses CERTS and AUTHENTICATE cell to negotiate versions,
+ * exchange expected and observed IP and time information, and bootstrap a
+ * level of authentication higher than we have gotten on the raw TLS
+ * handshake.
+ *
+ * NOTE: Since there is currently only one type of channel, there are probably
+ * more than a few cases where functionality that is currently in
+ * channeltls.c, connection_or.c, and channel.c ought to be divided up
+ * differently.  The right time to do this is probably whenever we introduce
+ * our next channel type.
  **/
 
 /*
@@ -22,6 +44,7 @@
 #include "channeltls.h"
 #include "circuitmux.h"
 #include "circuitmux_ewma.h"
+#include "command.h"
 #include "config.h"
 #include "connection.h"
 #include "connection_or.h"
@@ -51,7 +74,7 @@ uint64_t stats_n_authenticate_cells_processed = 0;
 uint64_t stats_n_authorize_cells_processed = 0;
 
 /** Active listener, if any */
-channel_listener_t *channel_tls_listener = NULL;
+static channel_listener_t *channel_tls_listener = NULL;
 
 /* channel_tls_t method declarations */
 
@@ -116,7 +139,7 @@ channel_tls_common_init(channel_tls_t *tlschan)
   chan->state = CHANNEL_STATE_OPENING;
   chan->close = channel_tls_close_method;
   chan->describe_transport = channel_tls_describe_transport_method;
-  chan->free = channel_tls_free_method;
+  chan->free_fn = channel_tls_free_method;
   chan->get_overhead_estimate = channel_tls_get_overhead_estimate_method;
   chan->get_remote_addr = channel_tls_get_remote_addr_method;
   chan->get_remote_descr = channel_tls_get_remote_descr_method;
@@ -445,7 +468,7 @@ channel_tls_free_method(channel_t *chan)
 static double
 channel_tls_get_overhead_estimate_method(channel_t *chan)
 {
-  double overhead = 1.0f;
+  double overhead = 1.0;
   channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
 
   tor_assert(tlschan);
@@ -462,7 +485,8 @@ channel_tls_get_overhead_estimate_method(channel_t *chan)
      * Never estimate more than 2.0; otherwise we get silly large estimates
      * at the very start of a new TLS connection.
      */
-    if (overhead > 2.0f) overhead = 2.0f;
+    if (overhead > 2.0)
+      overhead = 2.0;
   }
 
   log_debug(LD_CHANNEL,
@@ -554,7 +578,7 @@ channel_tls_get_remote_descr_method(channel_t *chan, int flags)
         break;
       case GRD_FLAG_ORIGINAL:
         /* Actual address with port */
-        addr_str = tor_dup_addr(&(tlschan->conn->real_addr));
+        addr_str = tor_addr_to_str_dup(&(tlschan->conn->real_addr));
         tor_snprintf(buf, MAX_DESCR_LEN + 1,
                      "%s:%u", addr_str, conn->port);
         tor_free(addr_str);
@@ -567,7 +591,7 @@ channel_tls_get_remote_descr_method(channel_t *chan, int flags)
         break;
       case GRD_FLAG_ORIGINAL|GRD_FLAG_ADDR_ONLY:
         /* Actual address, no port */
-        addr_str = tor_dup_addr(&(tlschan->conn->real_addr));
+        addr_str = tor_addr_to_str_dup(&(tlschan->conn->real_addr));
         strlcpy(buf, addr_str, sizeof(buf));
         tor_free(addr_str);
         answer = buf;
@@ -797,6 +821,7 @@ static int
 channel_tls_write_packed_cell_method(channel_t *chan,
                                      packed_cell_t *packed_cell)
 {
+  tor_assert(chan);
   channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
   size_t cell_network_size = get_cell_network_size(chan->wide_circ_ids);
   int written = 0;
@@ -1189,6 +1214,8 @@ channel_tls_handle_var_cell(var_cell_t *var_cell, or_connection_t *conn)
        * notice "hey, data arrived!" before we notice "hey, the handshake
        * finished!" And we need to be accepting both at once to handle both
        * the v2 and v3 handshakes. */
+      /* But that should be happening any longer've disabled bufferevents. */
+      tor_assert_nonfatal_unreached_once();
 
       /* fall through */
     case OR_CONN_STATE_TLS_SERVER_RENEGOTIATING:
@@ -1898,8 +1925,8 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
   }
 
  err:
-  for (unsigned i = 0; i < ARRAY_LENGTH(certs); ++i) {
-    tor_x509_cert_free(certs[i]);
+  for (unsigned u = 0; u < ARRAY_LENGTH(certs); ++u) {
+    tor_x509_cert_free(certs[u]);
   }
   certs_cell_free(cc);
 #undef ERR

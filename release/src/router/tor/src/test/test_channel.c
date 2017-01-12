@@ -20,9 +20,6 @@
 #include "test.h"
 #include "fakechans.h"
 
-/* This comes from channel.c */
-extern uint64_t estimated_total_queue_size;
-
 static int test_chan_accept_cells = 0;
 static int test_chan_fixed_cells_recved = 0;
 static cell_t * test_chan_last_seen_fixed_cell_ptr = NULL;
@@ -33,7 +30,7 @@ static int test_destroy_not_pending_calls = 0;
 static int test_doesnt_want_writes_count = 0;
 static int test_dumpstats_calls = 0;
 static int test_has_waiting_cells_count = 0;
-static double test_overhead_estimate = 1.0f;
+static double test_overhead_estimate = 1.0;
 static int test_releases_count = 0;
 static circuitmux_t *test_target_cmux = NULL;
 static unsigned int test_cmux_cells = 0;
@@ -792,7 +789,7 @@ test_channel_incoming(void *arg)
   /* Accept cells to lower layer */
   test_chan_accept_cells = 1;
   /* Use default overhead factor */
-  test_overhead_estimate = 1.0f;
+  test_overhead_estimate = 1.0;
 
   ch = new_fake_channel();
   tt_assert(ch);
@@ -881,7 +878,7 @@ test_channel_lifecycle(void *arg)
   /* Accept cells to lower layer */
   test_chan_accept_cells = 1;
   /* Use default overhead factor */
-  test_overhead_estimate = 1.0f;
+  test_overhead_estimate = 1.0;
 
   ch1 = new_fake_channel();
   tt_assert(ch1);
@@ -989,7 +986,7 @@ test_channel_lifecycle_2(void *arg)
   /* Accept cells to lower layer */
   test_chan_accept_cells = 1;
   /* Use default overhead factor */
-  test_overhead_estimate = 1.0f;
+  test_overhead_estimate = 1.0;
 
   ch = new_fake_channel();
   tt_assert(ch);
@@ -1136,7 +1133,7 @@ test_channel_multi(void *arg)
   /* Accept cells to lower layer */
   test_chan_accept_cells = 1;
   /* Use default overhead factor */
-  test_overhead_estimate = 1.0f;
+  test_overhead_estimate = 1.0;
 
   ch1 = new_fake_channel();
   tt_assert(ch1);
@@ -1444,7 +1441,7 @@ test_channel_queue_incoming(void *arg)
   /* Accept cells to lower layer */
   test_chan_accept_cells = 1;
   /* Use default overhead factor */
-  test_overhead_estimate = 1.0f;
+  test_overhead_estimate = 1.0;
 
   ch = new_fake_channel();
   tt_assert(ch);
@@ -1584,16 +1581,16 @@ test_channel_queue_size(void *arg)
   /* One cell, times an overhead factor of 1.0 */
   tt_u64_op(ch->bytes_queued_for_xmit, ==, 512);
   /* Try a different overhead factor */
-  test_overhead_estimate = 0.5f;
+  test_overhead_estimate = 0.5;
   /* This one should be ignored since it's below 1.0 */
   channel_update_xmit_queue_size(ch);
   tt_u64_op(ch->bytes_queued_for_xmit, ==, 512);
   /* Now try a larger one */
-  test_overhead_estimate = 2.0f;
+  test_overhead_estimate = 2.0;
   channel_update_xmit_queue_size(ch);
   tt_u64_op(ch->bytes_queued_for_xmit, ==, 1024);
   /* Go back to 1.0 */
-  test_overhead_estimate = 1.0f;
+  test_overhead_estimate = 1.0;
   channel_update_xmit_queue_size(ch);
   tt_u64_op(ch->bytes_queued_for_xmit, ==, 512);
   /* Check the global estimate too */

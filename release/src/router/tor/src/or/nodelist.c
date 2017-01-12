@@ -77,7 +77,7 @@ node_id_eq(const node_t *node1, const node_t *node2)
   return tor_memeq(node1->identity, node2->identity, DIGEST_LEN);
 }
 
-HT_PROTOTYPE(nodelist_map, node_t, ht_ent, node_id_hash, node_id_eq);
+HT_PROTOTYPE(nodelist_map, node_t, ht_ent, node_id_hash, node_id_eq)
 HT_GENERATE2(nodelist_map, node_t, ht_ent, node_id_hash, node_id_eq,
              0.6, tor_reallocarray_, tor_free_)
 
@@ -542,13 +542,15 @@ node_get_by_hex_id(const char *hex_id)
 MOCK_IMPL(const node_t *,
 node_get_by_nickname,(const char *nickname, int warn_if_unnamed))
 {
-  const node_t *node;
   if (!the_nodelist)
     return NULL;
 
   /* Handle these cases: DIGEST, $DIGEST, $DIGEST=name, $DIGEST~name. */
-  if ((node = node_get_by_hex_id(nickname)) != NULL)
+  {
+    const node_t *node;
+    if ((node = node_get_by_hex_id(nickname)) != NULL)
       return node;
+  }
 
   if (!strcasecmp(nickname, UNNAMED_ROUTER_NICKNAME))
     return NULL;
@@ -1171,14 +1173,38 @@ node_get_pref_ipv6_dirport(const node_t *node, tor_addr_port_t *ap_out)
   }
 }
 
+/** Return true iff <b>md</b> has a curve25519 onion key.
+ * Use node_has_curve25519_onion_key() instead of calling this directly. */
+static int
+microdesc_has_curve25519_onion_key(const microdesc_t *md)
+{
+  if (!md) {
+    return 0;
+  }
+
+  if (!md->onion_curve25519_pkey) {
+    return 0;
+  }
+
+  if (tor_mem_is_zero((const char*)md->onion_curve25519_pkey->public_key,
+                      CURVE25519_PUBKEY_LEN)) {
+    return 0;
+  }
+
+  return 1;
+}
+
 /** Return true iff <b>node</b> has a curve25519 onion key. */
 int
 node_has_curve25519_onion_key(const node_t *node)
 {
+  if (!node)
+    return 0;
+
   if (node->ri)
-    return node->ri->onion_curve25519_pkey != NULL;
+    return routerinfo_has_curve25519_onion_key(node->ri);
   else if (node->md)
-    return node->md->onion_curve25519_pkey != NULL;
+    return microdesc_has_curve25519_onion_key(node->md);
   else
     return 0;
 }
