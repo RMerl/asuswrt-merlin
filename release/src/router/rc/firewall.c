@@ -2882,13 +2882,11 @@ TRACE_PT("writing Parental Control\n");
 	// Drop rules always before Accept
 	strcpy(chain, "NSFW");	// Less code changes by using a var like the original code did
 #ifdef RTCONFIG_PARENTALCTRL
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0) {
+	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0)
 		fprintf(fp, "-A PControls -j %s\n", chain);
 #endif
-		fprintf(fp, "-A FORWARD -j %s\n", chain);
-#ifdef RTCONFIG_PARENTALCTRL
-	}
-#endif
+	// chain used for other things like pptp filtering, so always jump to it
+	fprintf(fp, "-A FORWARD -j %s\n", chain);
 
 	if (nvram_match("fw_lw_enable_x", "1"))
 	{
@@ -3882,13 +3880,11 @@ TRACE_PT("writing Parental Control\n");
 	// Drop rules always before Accept
 	strcpy(chain, "NSFW");  // Less code changes by using a var like the original code did
 #ifdef RTCONFIG_PARENTALCTRL
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0) {
+	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0)
 		fprintf(fp, "-A PControls -j %s\n", chain);
 #endif
-		fprintf(fp, "-A FORWARD -j %s\n", chain);
-#ifdef RTCONFIG_PARENTALCTRL
-	}
-#endif
+	// chain used for other things like pptp filtering, so always jump to it
+	fprintf(fp, "-A FORWARD -j %s\n", chain);
 
 	if (nvram_match("fw_lw_enable_x", "1"))
 	{
