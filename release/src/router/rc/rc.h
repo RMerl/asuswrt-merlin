@@ -749,6 +749,7 @@ extern int start_ots(void);
 extern int rand_seed_by_time(void);
 
 // common.c
+extern void killall_tk_period_wait(const char *name, int wait);
 extern void usage_exit(const char *cmd, const char *help) __attribute__ ((noreturn));
 #define modprobe(mod, args...) ({ char *argv[] = { "modprobe", "-s", mod, ## args, NULL }; _eval(argv, NULL, 0, NULL); })
 extern int modprobe_r(const char *mod);

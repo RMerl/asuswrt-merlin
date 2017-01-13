@@ -1730,7 +1730,7 @@ void stop_vpn_eas()
 
 void stop_vpn_all()
 {
-	char buffer[16], *cur;
+	char buffer[16];
 	int i;
 
 	// stop servers
@@ -1983,7 +1983,6 @@ void update_vpnrouting(int unit){
 void reset_vpn_settings(int type, int unit){
         struct nvram_tuple *t;
         char prefix[]="vpn_serverX_", tmp[100];
-        char word[256], *next;
 	char *service;
 
 	if (type == 1)
