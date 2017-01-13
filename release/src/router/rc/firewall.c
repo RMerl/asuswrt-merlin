@@ -2906,12 +2906,12 @@ TRACE_PT("writing Parental Control\n");
 		if (nvram_match("filter_lw_default_x", "DROP"))
 		{
 			dtype = logdrop;
-			ftype = logaccept;
+			ftype = "RETURN";
 
 		}
 		else
 		{
-			dtype = logaccept;
+			dtype = "RETURN";
 			ftype = logdrop;
 		}
 
@@ -3904,12 +3904,12 @@ TRACE_PT("writing Parental Control\n");
 		if (nvram_match("filter_lw_default_x", "DROP"))
 		{
 			dtype = logdrop;
-			ftype = logaccept;
+			ftype = "RETURN";
 
 		}
 		else
 		{
-			dtype = logaccept;
+			dtype = "RETURN";
 			ftype = logdrop;
 		}
 
