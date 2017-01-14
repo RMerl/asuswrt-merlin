@@ -6571,8 +6571,8 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			//For 66U normal boot & check device
 			if (((get_model()==MODEL_RTN66U) || (get_model()==MODEL_RTAC66U) || (get_model()==MODEL_RTAC5300)|| (get_model()==MODEL_RTAC5300R))
 			&& nvram_match("Ate_power_on_off_enable", "0")) {
+			    ate_dev_status();
 			    if (nvram_get_int("dev_fail_reboot")!=0) {
-				ate_dev_status();
 				if (strchr(nvram_get("Ate_dev_status"), 'X')) {
 					dev_fail_count = nvram_get_int("dev_fail_count");
 					dev_fail_count++;
