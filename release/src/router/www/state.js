@@ -1485,6 +1485,7 @@ Array.prototype.del = function(n){
 
 var current_url = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
 function show_menu(){
+	menu1_code=""; menu2_code=""; tab_code="";
 	var autodet_state = '<% nvram_get("autodet_state"); %>';
 	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';	
 	var wan_proto = '<% nvram_get("wan0_proto"); %>';	
