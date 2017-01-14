@@ -112,6 +112,7 @@ struct vsf_session
   int ssl_consumer_fd;
   
   int write_enable;
+  unsigned int login_fails;
 };
 #endif /* VSF_SESSION_H */
 

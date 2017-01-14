@@ -457,6 +457,8 @@ str_locate_chars(const struct mystr* p_str, const char* p_chars)
   
   memset(&retval, 0, sizeof(struct str_locate_result));
   retval.found = 0;
+  retval.char_found = 0;
+  retval.index = 0;
   for (; i < p_str->len; ++i)
   {
     unsigned int j = 0;
@@ -482,6 +484,7 @@ str_locate_text(const struct mystr* p_str, const char* p_text)
   unsigned int i;
   unsigned int text_len = vsf_sysutil_strlen(p_text);
   retval.found = 0;
+  retval.char_found = 0;
   retval.index = 0;
   if (text_len == 0 || text_len > p_str->len)
   {
@@ -508,6 +511,7 @@ str_locate_text_reverse(const struct mystr* p_str, const char* p_text)
   unsigned int i;
   unsigned int text_len = vsf_sysutil_strlen(p_text);
   retval.found = 0;
+  retval.char_found = 0;
   retval.index = 0;
   if (text_len == 0 || text_len > p_str->len)
   {

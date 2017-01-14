@@ -1048,6 +1048,11 @@ handle_retr(struct vsf_session* p_sess)
     goto file_close_out;
   }
 
+  /* Now deactive O_NONBLOCK, otherwise we have a problem on DMAPI filesystems
+   * such as XFS DMAPI.
+   */
+  vsf_sysutil_deactivate_noblock(opened_file);
+
   /* Optionally, we'll be paranoid and only serve publicly readable stuff */
   if (p_sess->is_anonymous && tunable_anon_world_readable_only &&
       !vsf_sysutil_statbuf_is_readable_other(s_p_statbuf))
@@ -1350,6 +1355,7 @@ handle_stor(struct vsf_session* p_sess)
 static void
 handle_upload_common(struct vsf_session* p_sess, int is_append, int is_unique)
 {
+  static struct vsf_sysutil_statbuf* s_p_statbuf;
   static struct mystr s_filename;
   struct mystr* p_filename;
   struct vsf_transfer_ret trans_ret;
@@ -1410,6 +1416,15 @@ handle_upload_common(struct vsf_session* p_sess, int is_append, int is_unique)
   {
     vsf_cmdio_write(p_sess, FTP_UPLOADFAIL, "Could not create file.");
     return;
+  }
+
+  vsf_sysutil_fstat(new_file_fd, &s_p_statbuf);
+  if (vsf_sysutil_statbuf_is_regfile(s_p_statbuf))
+  {
+    /* Now deactive O_NONBLOCK, otherwise we have a problem on DMAPI filesystems
+     * such as XFS DMAPI.
+     */
+    vsf_sysutil_deactivate_noblock(new_file_fd);
   }
   
   /* Are we required to chown() this file for security? */

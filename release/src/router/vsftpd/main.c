@@ -80,6 +80,8 @@ main(int argc, const char* argv[])
     /* Secure connection state */
     0, 0, 0, 0, 0, 0, -1, -1,
     /* write_enable */
+    0,
+    /* Login fails */
     0
   };
   int config_specified = 0;

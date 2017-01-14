@@ -81,7 +81,7 @@
 #define FTP_BADMODE           504
 #define FTP_BADAUTH           504
 #define FTP_NOSUCHPROT        504
-#define FTP_NEEDENCRYPT       521
+#define FTP_NEEDENCRYPT       522
 #define FTP_EPSVBAD           522
 #define FTP_DATATLSBAD        522
 #define FTP_LOGINERR          530

@@ -106,10 +106,18 @@ vsf_privop_do_login(struct vsf_session* p_sess,
   if (result == kVSFLoginFail)
   {
     vsf_log_do_log(p_sess, 0);
+    if (tunable_delay_failed_login)
+    {
+      vsf_sysutil_sleep((double) tunable_delay_failed_login);
+    }
   }
   else
   {
     vsf_log_do_log(p_sess, 1);
+    if (tunable_delay_successful_login)
+    {
+      vsf_sysutil_sleep((double) tunable_delay_successful_login);
+    }
   }
   return result;
 }
@@ -167,6 +175,10 @@ handle_login(struct vsf_session* p_sess, const struct mystr* p_user_str,
     }
     else
     {
+      if (!tunable_local_enable)
+      {
+        die("unexpected local login in handle_login");
+      }
       result = handle_local_login(p_sess, p_user_str, p_pass_str);
     }
     return result;

@@ -1832,7 +1832,7 @@ vsf_sysutil_connect_timeout(int fd, const struct vsf_sysutil_sockaddr* p_addr,
     }
     else
     {
-      int socklen = sizeof(retval);
+      socklen_t socklen = sizeof(retval);
       int sockoptret = getsockopt(fd, SOL_SOCKET, SO_ERROR, &retval, &socklen);
       if (sockoptret != 0)
       {
@@ -2609,35 +2609,6 @@ vsf_sysutil_chroot(const char* p_root_path)
   {
     die("chroot");
   }
-  /* Set our timezone in the TZ environment variable to cater for the fact
-   * that modern glibc does not cache /etc/localtime (which is of course now
-   * inaccessible).
-   */
-  if (s_timezone)
-  {
-    char envtz[sizeof("UTC-hh:mm:ss")];
-    int hour, min, sec;
-
-    hour = s_timezone;
-    if (hour < 0)
-    {
-      hour = -hour;
-    }
-    if (hour < 25*60*60)
-    {
-      sec = hour % 60;
-      hour /= 60;
-      min = hour % 60;
-      hour /= 60;
-      if (s_timezone < 0)
-      {
-        hour = -hour;
-      }
-
-      snprintf(envtz, sizeof(envtz), "UTC%+d:%d:%d", hour, min, sec);
-      setenv("TZ", envtz, 1);
-    }
-  }
 }
 
 unsigned int
@@ -2668,12 +2639,50 @@ vsf_sysutil_make_session_leader(void)
 void
 vsf_sysutil_tzset(void)
 {
-  time_t the_time = 0;
+  int retval;
+  char tzbuf[sizeof("+HHMM!")];
+  time_t the_time = time(NULL);
   struct tm* p_tm;
   tzset();
-  the_time = time(NULL);
   p_tm = localtime(&the_time);
-  s_timezone = -p_tm->tm_gmtoff;
+  if (p_tm == NULL)
+  {
+    die("localtime");
+  }
+  /* Set our timezone in the TZ environment variable to cater for the fact
+   * that modern glibc does not cache /etc/localtime (which becomes inaccessible
+   * when we chroot().
+   */
+  retval = strftime(tzbuf, sizeof(tzbuf), "%z", p_tm);
+  tzbuf[sizeof(tzbuf) - 1] = '\0';
+  if (retval == 5)
+  {
+    /* Static because putenv() does not copy the string. */
+    static char envtz[sizeof("TZ=UTC-hh:mm")];
+    /* Insert a colon so we have e.g. -05:00 instead of -0500 */
+    tzbuf[5] = tzbuf[4];
+    tzbuf[4] = tzbuf[3];
+    tzbuf[3] = ':';
+    /* Invert the sign - we just got the offset _from_ UTC but for TZ, we need
+     * the offset _to_ UTC.
+     */
+    if (tzbuf[0] == '+')
+    {
+      tzbuf[0] = '-';
+    }
+    else
+    {
+      tzbuf[0] = '+';
+    }
+    snprintf(envtz, sizeof(envtz), "TZ=UTC%s", tzbuf);
+    putenv(envtz);
+    s_timezone = ((tzbuf[1] - '0') * 10 + (tzbuf[2] - '0')) * 60 * 60;
+    s_timezone += ((tzbuf[4] - '0') * 10 + (tzbuf[5] - '0')) * 60;
+    if (tzbuf[0] == '-')
+    {
+      s_timezone *= -1;
+    }
+  }
 }
 
 const char*

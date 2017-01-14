@@ -112,6 +112,9 @@ unsigned int tunable_max_clients = 0;
 unsigned int tunable_file_open_mode = 0666;
 unsigned int tunable_max_per_ip = 0;
 unsigned int tunable_trans_chunk_size = 0;
+unsigned int tunable_delay_failed_login = 1;
+unsigned int tunable_delay_successful_login = 0;
+unsigned int tunable_max_login_fails = 3;
 
 const char* tunable_secure_chroot_dir = "/tmp";	//Yen
 const char* tunable_ftp_username = "ftp";

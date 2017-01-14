@@ -102,6 +102,9 @@ extern unsigned int tunable_max_clients;
 extern unsigned int tunable_file_open_mode;
 extern unsigned int tunable_max_per_ip;
 extern unsigned int tunable_trans_chunk_size;
+extern unsigned int tunable_delay_failed_login;
+extern unsigned int tunable_delay_successful_login;
+extern unsigned int tunable_max_login_fails;
 
 /* String defines */
 extern const char* tunable_secure_chroot_dir;
