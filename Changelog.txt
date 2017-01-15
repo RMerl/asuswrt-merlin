@@ -1,27 +1,29 @@
 Asuswrt-Merlin Changelog
 ========================
-380.65 Beta 1 (xx-xxx-2017)
-   - NEW: Merged with Asus GPL 380_4180 (broken Net Tools/WOL 
-          pages from 4180 were fixed)
+
+380.65 Beta 1 (15-Jan-2017)
+   - NEW: Merged with Asus GPL 380_4180 (and fixed its broken
+          Network Tools/Connections/etc... pages)
    - NEW: Upgraded to OpenVPN 2.4.0, and implemented support
           for many of its new features:
             * GCM ciphers
             * LZ4 compression
             * tls-crypt (uses the Static Key field)
             * Cipher negotiation (NCP), with (optional)
-              fallback to legacy "cipher" parameter when 
-              an OpenVPN 2.3 client connects to the 
+              fallback to legacy "cipher" parameter when
+              an OpenVPN 2.3 client connects to the
               router's 2.4 server.
           Please refer to the OpenVPN 2.4 documentation for
           more info on these new features.
 
           You will be warned if any server setting would
-          generate an exportable ovpn file that would be 
+          generate an exportable ovpn file that would be
           incompatible with older clients.
 
           Existing client config shouldn't need to be changed,
           unless you modify the router's server configuration.
 
+   - NEW: Upgraded Busybox to 1.25.1 (patch by theMIROn)
    - NEW: Added the following Busybox applets: ntpd, time, uniq,
           xargs and getopt, for feature parity with John's fork.
    - NEW: Option on Media Server page to enable minidlna's
@@ -31,7 +33,7 @@ Asuswrt-Merlin Changelog
           Gernot Pansy)
    - NEW: New "update-notification" user script, that gets run
           when a scheduled firmware check detects a new version
-         is available.
+          is available.
 
    - CHANGED: Removed support for all RC ciphers on OpenVPN.
               DES is staying for now, but should still be avoided
@@ -41,8 +43,10 @@ Asuswrt-Merlin Changelog
    - CHANGED: hosts file will now give a higher priority to the
               user-configured hostname for the router ahead of
               hardcoded ones (like router.asus.com).
+   - CHANGED: Create a system log entry if new firmware is available.
    - FIXED: Invalid DUID used when requesting an IPv6 prefix
-            for some of the newer router models (Asus bug)
+            for some of the newer router models, which would
+            prevent them from getting working IPv6 (Asus bug)
    - FIXED: Network Service Firewall rules not applied
             under certain configurations
    - FIXED: Port triggering wasn't working if traffic had
@@ -64,6 +68,9 @@ Asuswrt-Merlin Changelog
             (patch by john9527)
    - FIXED: OpenVPN client/server instances weren't properly
             restarted on a WAN restart (patch by john9527)
+   - FIXED: Some models (N66/Ac66/AC5300) would reboot 3 times
+            if one of the radios was found disabled by the user
+            while booting (Asus bug).
 
 
 380.64_2 (8-Jan-2017)
