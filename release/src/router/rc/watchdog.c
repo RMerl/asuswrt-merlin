@@ -2771,7 +2771,14 @@ static void auto_firmware_check()
 
 			if ((initial_state == 0) && (nvram_get_int("webs_state_flag") == 1))		// New update
 			{
-				logmessage("watchdog", "New firmware is available: %s.", nvram_safe_get("webs_state_info"));
+				char version[4], revision[3], build[16];
+
+				memset(version, 0, sizeof(version));
+				memset(revision, 0, sizeof(revision));
+				memset(build, 0, sizeof(build));
+
+				sscanf(nvram_safe_get("webs_state_info"), "%*[0-9]_%3s%2s_%15s", version, revision, build);
+				logmessage("watchdog", "New firmware version %s.%s_%s is available.", version, revision, build);
 				run_custom_script("update-notification", NULL);
 			}
 
