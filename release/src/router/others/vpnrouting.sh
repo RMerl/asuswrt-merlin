@@ -8,6 +8,7 @@ then
 fi
 
 create_client_list(){
+	OLDIFS=$IFS
 	IFS="<"
 
 	for ENTRY in $VPN_IP_LIST
