@@ -12,6 +12,7 @@ create_client_list(){
 	server=$1
 	VPN_IP_LIST=$(nvram get vpn_client$(echo $instance)_clientlist)
 
+	OLDIFS=$IFS
 	IFS="<"
 
 	for ENTRY in $VPN_IP_LIST
