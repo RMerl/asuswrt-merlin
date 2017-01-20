@@ -629,7 +629,7 @@ static void calc(void) {
 							_dprintf("%s: counter[%d]=%llu ptr->last[%d]=%llu c=%llu sc=%llu\n", __FUNCTION__, i, counter[i], i, ptr->last[i], c, sc);
 #endif
 							if (c < sc) {
-								diff = (0xFFFFFFFF - sc) + c;
+								diff = ~sc + 1 + c;
 								if (diff > MAX_ROLLOVER) diff = 0;
 							}
 							else {
