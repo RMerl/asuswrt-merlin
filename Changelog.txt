@@ -44,6 +44,8 @@ Asuswrt-Merlin Changelog
               user-configured hostname for the router ahead of
               hardcoded ones (like router.asus.com).
    - CHANGED: Create a system log entry if new firmware is available.
+   - CHANGED: Display name and icon for clients configured on the
+              Tor page.
    - FIXED: Invalid DUID used when requesting an IPv6 prefix
             for some of the newer router models, which would
             prevent them from getting working IPv6 (Asus bug)
