@@ -3,9 +3,8 @@ Makefile
 src/nano
 src/revision.h
 config.h
-doc/nanorc.sample
+doc/sample.nanorc
 src/.deps
 po/Makefile.in
 po/POTFILES
 autom4te.cache
-

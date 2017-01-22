@@ -9,7 +9,7 @@ curl-config
 src/curl
 src/hugehelp.c
 src/curl_config.h
-src/stamp-h2
+stamp-h2
 Makefile
 docs/examples/Makefile
 docs/libcurl/Makefile
@@ -37,3 +37,7 @@ tests/configurehelp.pm
 libtool
 lib/curl_config.h
 libcurl.pc
+.dirstamp
+libcurl.vers
+docs/libcurl/libcurl-symbols.3
+
