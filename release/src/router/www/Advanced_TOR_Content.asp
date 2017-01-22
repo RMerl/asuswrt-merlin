@@ -47,14 +47,62 @@ function show_tor_redir_list(){
 	var tor_redir_array = Tor_redir_list_str.split('&#60');
 	var code = "";
 
-	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="tor_redir_list_table">'; 
+	code +='<table style="margin-top:0px;" width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="tor_redir_list_table">';
+
 	if(tor_redir_array.length == 1){
 		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td>';
 	}		
 	else{
-		for(var i = 1; i < tor_redir_array.length; i++){
+		//user icon
+		var userIconBase64 = "NoIcon";
+		var clientName, deviceType, deviceVender;
+		for(var i=1; i<tor_redir_array.length; i++){
+
+			mac = tor_redir_array[i];
+
+			if(clientList[mac]) {
+				clientName = (clientList[mac].nickName == "") ? clientList[mac].name : clientList[mac].nickName;
+				deviceType = clientList[mac].type;
+				deviceVender = clientList[mac].vendor;
+			}
+			else {
+				clientName = ruleArray[0]; // TODO: Use some kind of default name, or empty string?
+				deviceType = 0;
+				deviceVender = "";
+			}
 			code +='<tr id="row'+i+'">';
-			code +='<td width="80%">'+ tor_redir_array[i] +'</td>';	
+			code +='<td width="80%" title="'+mac+'">';
+
+			code += '<table width="100%"><tr><td style="width:35%;border:0;float:right;padding-right:30px;">';
+			if(clientList[mac] == undefined) {
+				code += '<div class="clientIcon type0" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
+			}
+			else {
+				if(usericon_support) {
+					userIconBase64 = getUploadIcon(mac.replace(/\:/g, ""));
+				}
+				if(userIconBase64 != "NoIcon") {
+					code += '<div style="text-align:center;" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+				}
+				else if(deviceType != "0" || deviceVender == "") {
+					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
+				}
+				else if(deviceVender != "" ) {
+					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
+					if(venderIconClassName != "") {
+						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
+					}
+					else {
+						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(&quot;' + mac + '&quot;, this, &quot;' + clientName + '&quot;, &quot;&quot;, &quot;DNSFilter&quot;)"></div>';
+					}
+				}
+			}
+
+			code += '</td><td id="client_info_'+i+'" style="width:65%;text-align:left;border:0;">';
+			code += '<div>' + clientName + '</div>';
+			code += '<div>' + mac + '</div>';
+			code += '</td></tr></table>';
+			code +='</td>';
 			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this);\" value=\"\"/></td></tr>';
 		}
 	}
@@ -93,7 +141,7 @@ function addRow(obj){
 	}
 		
 	for(i = 0; i < device_num; i++){
-		if(obj.value.toLowerCase() == document.getElementById('tor_redir_list_table').rows[i].cells[0].innerHTML.toLowerCase()){
+		if(obj.value.toLowerCase() == document.getElementById('tor_redir_list_table').rows[i].cells[0].title.toLowerCase()){
 			alert("<#JS_duplicate#>");
 			return false;
 		}
@@ -111,7 +159,7 @@ function applyRule(){
 
 		for(i = 0; i < device_num; i++){
 			value += "<"		
-			value += document.getElementById('tor_redir_list_table').rows[i].cells[0].innerHTML;
+			value += document.getElementById('tor_redir_list_table').rows[i].cells[0].title;
 		}
 
 		if(value == "<"+"<#IPConnection_VSList_Norule#>" || value == "<"){
