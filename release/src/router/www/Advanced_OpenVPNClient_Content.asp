@@ -507,6 +507,7 @@ function applyRule(){
 	showLoading();
 
 	if (client_state != 0) {
+		document.form.action_wait.value = 15;
 		document.form.action_script.value = "restart_vpnclient"+openvpn_unit;
 	}
 
@@ -831,6 +832,7 @@ function defaultSettings() {
 	if (confirm("WARNING: This will reset this OpenVPN client to factory default settings!\n\nKeys and certificates associated to this instance will also be DELETED!\n\nProceed?")) {
 		document.form.action_script.value = "stop_vpnclient" + openvpn_unit + ";clearvpnclient" + openvpn_unit;
 		showLoading();
+		document.form.action_wait.value = 15;
 		document.form.submit();
 	} else {
 		return false;
@@ -926,7 +928,7 @@ function defaultSettings() {
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="">
-<input type="hidden" name="action_wait" value="10">
+<input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -1019,12 +1021,14 @@ function defaultSettings() {
 								$('#radio_service_enable').iphoneSwitch((client_state > 0),
 									 function() {
 										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
+										document.form.action_wait.value = 15;
 										parent.showLoading();
 										document.form.submit();
 										return true;
 									 },
 									 function() {
 										document.form.action_script.value = "stop_vpnclient" + openvpn_unit;
+										document.form.action_wait.value = 15;
 										parent.showLoading();
 										document.form.submit();
 										return true;
