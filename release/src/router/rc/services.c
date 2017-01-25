@@ -7813,11 +7813,16 @@ int get_apps_name(const char *string)
 int run_app_script(const char *pkg_name, const char *pkg_action)
 {
 	char app_name[128];
+	int restart_upnp = 0;
 
 	if(pkg_action == NULL || strlen(pkg_action) <= 0)
 		return -1;
 
-	stop_upnp();
+	if (pidof("miniupnpd") != -1) {
+		stop_upnp();
+		restart_upnp = 1;
+	}
+
 	memset(app_name, 0, 128);
 	if(pkg_name == NULL)
 		strcpy(app_name, "allpkg");
@@ -7827,7 +7832,7 @@ int run_app_script(const char *pkg_name, const char *pkg_action)
 	doSystem("/usr/sbin/app_init_run.sh %s %s", app_name, pkg_action);
 
 	sleep(5);
-	start_upnp();
+	if (restart_upnp) start_upnp();
 
 	return 0;
 }
