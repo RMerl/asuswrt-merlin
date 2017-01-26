@@ -386,10 +386,6 @@ function show_ddns_status(){
 		case "WWW.NAMECHEAP.COM":
 			ddnsName = ddns_hostname_x + "." + ddns_username_x;
 			break;
-
-		case "WWW.ASUS.COM":
-			ddnsName = ddns_hostname_x + ".asuscomm.com";
-			break;
 		
 		default:
 			ddnsName = ddns_hostname_x; 
