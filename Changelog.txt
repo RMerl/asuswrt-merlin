@@ -56,7 +56,7 @@ Asuswrt-Merlin Changelog
    - FIXED: Avahi wasn't rejecting connections from
             secondary WAN interface
    - FIXED: Sorting clients by connection time would incorrectly
-            treat 10 hours as longer than 9 hours, as it was
+            treat 10 hours as shorter than 9 hours, as it was
             handling it as a string (Asus bug)
    - FIXED: Exported ovpn client file wouldn't use the
             user-configured hostname when using DDNS custom mode.
