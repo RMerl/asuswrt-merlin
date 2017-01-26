@@ -4249,7 +4249,7 @@ start_services(void)
 
 	run_custom_script("services-start", NULL);
 
-	start_upnp();
+//	start_upnp();
 
 	sanity_logs();
 
