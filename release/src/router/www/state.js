@@ -2541,10 +2541,15 @@ var isFirefox = navigator.userAgent.search("Firefox") > -1;
 var isOpera = navigator.userAgent.search("Opera") > -1;
 var isIE8 = navigator.userAgent.search("MSIE 8") > -1; 
 var isiOS = navigator.userAgent.search("iP") > -1; 
+var isChrome = navigator.userAgent.search("Chrome") > -1;
+if(isChrome){
+	var major = navigator.userAgent.match("Chrome\/([0-9]*)\.");    //check for major version
+	var isChrome56 = (parseInt(major[1], 10) >= 56);
+}
 function browser_compatibility(){
 	var obj_inputBtn;
 
-	if((isFirefox || isOpera) && document.getElementById("FormTitle")){
+	if((isChrome56 || isFirefox || isOpera) && document.getElementById("FormTitle")){
 		document.getElementById("FormTitle").className = "FormTitle_firefox";
 //		if(current_url.indexOf("Guest_network") == 0)
 //			document.getElementById("FormTitle").style.marginTop = "-140px";
