@@ -2545,7 +2545,10 @@ var isChrome = navigator.userAgent.search("Chrome") > -1;
 if(isChrome){
 	var major = navigator.userAgent.match("Chrome\/([0-9]*)\.");    //check for major version
 	var isChrome56 = (parseInt(major[1], 10) >= 56);
+} else {
+	var isChrome56 = false;
 }
+
 function browser_compatibility(){
 	var obj_inputBtn;
 
