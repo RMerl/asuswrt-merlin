@@ -6191,10 +6191,14 @@ check_ddr_done:
 			restart_nas_services(1, 0);
 		}
 		if(action&RC_SERVICE_START){
-			stop_upnp();
+			int restart_upnp = 0;
+			if (pidof("miniupnpd") != -1) {
+				stop_upnp();
+				restart_upnp = 1;
+			}
 //_dprintf("restart_nas_services(%d): test 11.\n", getpid());
 			restart_nas_services(0, 1);
-			start_upnp();
+			if (restart_upnp) start_upnp();
 		}
 	}
 #if defined(RTCONFIG_SAMBASRV) && defined(RTCONFIG_FTP)
