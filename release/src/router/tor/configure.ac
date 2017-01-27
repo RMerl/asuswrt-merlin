@@ -4,7 +4,7 @@ dnl Copyright (c) 2007-2015, The Tor Project, Inc.
 dnl See LICENSE for licensing information
 
 AC_PREREQ([2.63])
-AC_INIT([tor],[0.2.9.8])
+AC_INIT([tor],[0.2.9.9])
 AC_CONFIG_SRCDIR([src/or/main.c])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -508,12 +508,13 @@ TOR_SEARCH_LIBRARY(libevent, $trylibeventdir, [-levent $STATIC_LIBEVENT_FLAGS $T
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
-void *event_init(void);],
+struct event_base;
+struct event_base *event_base_new(void);],
     [
 #ifdef _WIN32
 {WSADATA d; WSAStartup(0x101,&d); }
 #endif
-event_init();
+event_base_new();
 ], [--with-libevent-dir], [/opt/libevent])
 
 dnl Determine the incantation needed to link libevent.
@@ -760,14 +761,15 @@ m4_ifdef([AS_VAR_IF],[
        TOR_CHECK_CFLAGS(-fPIE)
        TOR_CHECK_LDFLAGS(-pie, "$all_ldflags_for_check", "$all_libs_for_check")
     fi
-    TOR_TRY_COMPILE_WITH_CFLAGS(-ftrapv, also_link, CFLAGS_FTRAPV="-ftrapv", true)
     TOR_TRY_COMPILE_WITH_CFLAGS(-fwrapv, also_link, CFLAGS_FWRAPV="-fwrapv", true)
-    if test "$tor_cv_cflags__ftrapv" = "yes" && test "$tor_can_link__ftrapv" != "yes"; then
-      AC_MSG_WARN([The compiler supports -ftrapv, but for some reason I was not able to link with -ftrapv. Are you missing run-time support? Run-time hardening will not work as well as it should.])
-    fi
 fi
 
 if test "x$enable_expensive_hardening" = "xyes"; then
+    TOR_TRY_COMPILE_WITH_CFLAGS(-ftrapv, also_link, CFLAGS_FTRAPV="-ftrapv", true)
+   if test "$tor_cv_cflags__ftrapv" = "yes" && test "$tor_can_link__ftrapv" != "yes"; then
+      AC_MSG_WARN([The compiler supports -ftrapv, but for some reason I was not able to link with -ftrapv. Are you missing run-time support? Run-time hardening will not work as well as it should.])
+   fi
+
    if test "$tor_cv_cflags__ftrapv" != "yes"; then
      AC_MSG_ERROR([You requested expensive hardening, but the compiler does not seem to support -ftrapv.])
    fi
@@ -1818,7 +1820,7 @@ if test "x$enable_gcc_warnings_advisory" != "xno"; then
      -Wstatic-float-init
      -Wstatic-in-inline
      -Wstatic-local-in-inline
-     -Wstrict-overflow=2
+     -Wstrict-overflow=1
      -Wstring-compare
      -Wstring-conversion
      -Wstrlcpy-strlcat-size
@@ -1862,6 +1864,10 @@ if test "x$enable_gcc_warnings_advisory" != "xno"; then
      -Wvla-extension
      -Wzero-length-array
   ], [ TOR_CHECK_CFLAGS([warning_flag]) ])
+
+dnl    We should re-enable this in some later version.  Clang doesn't
+dnl    mind, but it causes trouble with GCC.
+dnl     -Wstrict-overflow=2
 
 dnl    These seem to require annotations that we don't currently use,
 dnl    and they give false positives in our pthreads wrappers. (Clang 4)

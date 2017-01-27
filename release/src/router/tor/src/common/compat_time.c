@@ -324,10 +324,27 @@ monotime_diff_nsec(const monotime_t *start,
 /* end of "__APPLE__" */
 #elif defined(HAVE_CLOCK_GETTIME)
 
+#ifdef CLOCK_MONOTONIC_COARSE
+/**
+ * Which clock should we use for coarse-grained monotonic time? By default
+ * this is CLOCK_MONOTONIC_COARSE, but it might not work -- for example,
+ * if we're compiled with newer Linux headers and then we try to run on
+ * an old Linux kernel. In that case, we will fall back to CLOCK_MONOTONIC.
+ */
+static int clock_monotonic_coarse = CLOCK_MONOTONIC_COARSE;
+#endif
+
 static void
 monotime_init_internal(void)
 {
-  /* no action needed. */
+#ifdef CLOCK_MONOTONIC_COARSE
+  struct timespec ts;
+  if (clock_gettime(CLOCK_MONOTONIC_COARSE, &ts) < 0) {
+    log_info(LD_GENERAL, "CLOCK_MONOTONIC_COARSE isn't working (%s); "
+             "falling back to CLOCK_MONOTONIC.", strerror(errno));
+    clock_monotonic_coarse = CLOCK_MONOTONIC;
+  }
+#endif
 }
 
 void
@@ -355,7 +372,18 @@ monotime_coarse_get(monotime_coarse_t *out)
     return;
   }
 #endif
-  int r = clock_gettime(CLOCK_MONOTONIC_COARSE, &out->ts_);
+  int r = clock_gettime(clock_monotonic_coarse, &out->ts_);
+  if (PREDICT_UNLIKELY(r < 0) &&
+      errno == EINVAL &&
+      clock_monotonic_coarse == CLOCK_MONOTONIC_COARSE) {
+    /* We should have caught this at startup in monotime_init_internal!
+     */
+    log_warn(LD_BUG, "Falling back to non-coarse monotonic time %s initial "
+             "system start?", monotime_initialized?"after":"without");
+    clock_monotonic_coarse = CLOCK_MONOTONIC;
+    r = clock_gettime(clock_monotonic_coarse, &out->ts_);
+  }
+
   tor_assert(r == 0);
 }
 #endif

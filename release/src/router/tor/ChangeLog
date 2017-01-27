@@ -1,3 +1,46 @@
+Changes in version 0.2.9.9 - 2017-01-23
+  Tor 0.2.9.9 fixes a denial-of-service bug where an attacker could
+  cause relays and clients to crash, even if they were not built with
+  the --enable-expensive-hardening option. This bug affects all 0.2.9.x
+  versions, and also affects 0.3.0.1-alpha: all relays running an affected
+  version should upgrade.
+
+  This release also resolves a client-side onion service reachability
+  bug, and resolves a pair of small portability issues.
+
+  o Major bugfixes (security):
+    - Downgrade the "-ftrapv" option from "always on" to "only on when
+      --enable-expensive-hardening is provided." This hardening option,
+      like others, can turn survivable bugs into crashes -- and having
+      it on by default made a (relatively harmless) integer overflow bug
+      into a denial-of-service bug. Fixes bug 21278 (TROVE-2017-001);
+      bugfix on 0.2.9.1-alpha.
+
+  o Major bugfixes (client, onion service):
+    - Fix a client-side onion service reachability bug, where multiple
+      socks requests to an onion service (or a single slow request)
+      could cause us to mistakenly mark some of the service's
+      introduction points as failed, and we cache that failure so
+      eventually we run out and can't reach the service. Also resolves a
+      mysterious "Remote server sent bogus reason code 65021" log
+      warning. The bug was introduced in ticket 17218, where we tried to
+      remember the circuit end reason as a uint16_t, which mangled
+      negative values. Partially fixes bug 21056 and fixes bug 20307;
+      bugfix on 0.2.8.1-alpha.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the January 4 2017 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (portability):
+    - Avoid crashing when Tor is built using headers that contain
+      CLOCK_MONOTONIC_COARSE, but then tries to run on an older kernel
+      without CLOCK_MONOTONIC_COARSE. Fixes bug 21035; bugfix
+      on 0.2.9.1-alpha.
+    - Fix Libevent detection on platforms without Libevent 1 headers
+      installed. Fixes bug 21051; bugfix on 0.2.9.1-alpha.
+
+
 Changes in version 0.2.9.8 - 2016-12-19
 
   Tor 0.2.9.8 is the first stable release of the Tor 0.2.9 series.
