@@ -1527,6 +1527,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_DEFLAN50/d" $(1); \
 		echo "RTCONFIG_DEFLAN50=y" >>$(1); \
 	fi; \
+	if [ "$(ETHTOOL)" = "y" ]; then \
+		sed -i "/RTCONFIG_ETHTOOL/d" $(1); \
+		echo "RTCONFIG_ETHTOOL=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef

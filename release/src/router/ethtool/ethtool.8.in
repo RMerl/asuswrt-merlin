@@ -1,0 +1,972 @@
+.\" -*- nroff -*-
+.\" Copyright 1999 by David S. Miller.  All Rights Reserved.
+.\" Portions Copyright 2001 Sun Microsystems
+.\" Portions Copyright 2007, 2009 Free Software Foundation, Inc.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.\" There must be no text lines before .TH.  Use '.' for vertical spacing.
+.\"
+.\"	.An - list of n alternative values as in "flav vanilla|strawberry"
+.\"
+.de A1
+\\fB\\$1\\fP|\\fB\\$2\\fP
+..
+.de A2
+\\fB\\$1\\fP\ \\fB\\$2\\fP|\\fB\\$3\\fP
+..
+.de A3
+\\fB\\$1\\fP\ \\fB\\$2\\fP|\\fB\\$3\\fP|\\fB\\$4\\fP
+..
+.de A4
+\\fB\\$1\\fP\ \\fB\\$2\\fP|\\fB\\$3\\fP|\\fB\\$4\\fP|\\fB\\$5\\fP
+..
+.\" 
+.\"	.Bn - same as above but framed by square brackets
+.\"
+.de B1
+[\\fB\\$1\\fP|\\fB\\$2\\fP]
+..
+.de B2
+[\\fB\\$1\\fP\ \\fB\\$2\\fP|\\fB\\$3\\fP]
+..
+.de B3
+[\\fB\\$1\\fP\ \\fB\\$2\\fP|\\fB\\$3\\fP|\\fB\\$4\\fP]
+..
+.de B4
+[\\fB\\$1\\fP\ \\fB\\$2\\fP|\\fB\\$3\\fP|\\fB\\$4\\fP|\\fB\\$5\\fP]
+..
+.\"
+.\"	.BN - value with a numeric input as in "[value N]"
+.\"
+.de BN
+[\\fB\\$1\\fP\ \\fIN\\fP]
+..
+.\"
+.\"	.BM - same as above but has a mask field for format "[value N [m N]]"
+.\"
+.de BM
+[\\fB\\$1\\fP\ \\fIN\\fP\ [\\fBm\\fP\ \\fIN\\fP]]
+..
+.\"
+.\"	\(*MA - mac address
+.\"
+.ds MA \fIxx\fP\fB:\fP\fIyy\fP\fB:\fP\fIzz\fP\fB:\fP\fIaa\fP\fB:\fP\fIbb\fP\fB:\fP\fIcc\fP
+.\"
+.\"	\(*PA - IP address
+.\"
+.ds PA \fIip-address\fP
+.\"
+.\"	\(*WO - wol flags
+.\"
+.ds WO \fBp\fP|\fBu\fP|\fBm\fP|\fBb\fP|\fBa\fP|\fBg\fP|\fBs\fP|\fBd\fP...
+.\"
+.\"	\(*FL - flow type values
+.\"
+.ds FL \fBtcp4\fP|\fBudp4\fP|\fBah4\fP|\fBesp4\fP|\fBsctp4\fP|\fBtcp6\fP|\fBudp6\fP|\fBah6\fP|\fBesp6\fP|\fBsctp6\fP
+.\"
+.\"	\(*HO - hash options
+.\"
+.ds HO \fBm\fP|\fBv\fP|\fBt\fP|\fBs\fP|\fBd\fP|\fBf\fP|\fBn\fP|\fBr\fP...
+.\"
+.\"	\(*SD - Self-diag test values
+.\"
+.ds SD \fBoffline\fP|\fBonline\fP|\fBexternal_lb\fP
+.\"
+.\"	\(*NC - Network Classifier type values
+.\"
+.ds NC \fBether\fP|\fBip4\fP|\fBtcp4\fP|\fBudp4\fP|\fBsctp4\fP|\fBah4\fP|\fBesp4\fP|\fBip6\fP|\fBtcp6\fP|\fBudp6\fP|\fBah6\fP|\fBesp6\fP|\fBsctp6\fP
+..
+.\"
+.\" Start URL.
+.de UR
+.  ds m1 \\$1\"
+.  nh
+.  if \\n(mH \{\
+.    \" Start diversion in a new environment.
+.    do ev URL-div
+.    do di URL-div
+.  \}
+..
+.\" End URL.
+.de UE
+.  ie \\n(mH \{\
+.    br
+.    di
+.    ev
+.
+.    \" Has there been one or more input lines for the link text?
+.    ie \\n(dn \{\
+.      do HTML-NS "<a href=""\\*(m1"">"
+.      \" Yes, strip off final newline of diversion and emit it.
+.      do chop URL-div
+.      do URL-div
+\c
+.      do HTML-NS </a>
+.    \}
+.    el \
+.      do HTML-NS "<a href=""\\*(m1"">\\*(m1</a>"
+\&\\$*\"
+.  \}
+.  el \
+\\*(la\\*(m1\\*(ra\\$*\"
+.
+.  hy \\n(HY
+..
+.
+.TH ETHTOOL 8 "October 2016" "Ethtool version @VERSION@"
+.SH NAME
+ethtool \- query or control network driver and hardware settings
+.
+.SH SYNOPSIS
+.\" Do not adjust lines (i.e. left justification) and do not hyphenate.
+.na
+.nh
+.HP
+.B ethtool
+.I devname
+.HP
+.B ethtool \-h|\-\-help
+.HP
+.B ethtool \-\-version
+.HP
+.B ethtool \-a|\-\-show\-pause
+.I devname
+.HP
+.B ethtool \-A|\-\-pause
+.I devname
+.B2 autoneg on off
+.B2 rx on off
+.B2 tx on off
+.HP
+.B ethtool \-c|\-\-show\-coalesce
+.I devname
+.HP
+.B ethtool \-C|\-\-coalesce
+.I devname
+.B2 adaptive\-rx on off
+.B2 adaptive\-tx on off
+.BN rx\-usecs
+.BN rx\-frames
+.BN rx\-usecs\-irq
+.BN rx\-frames\-irq
+.BN tx\-usecs
+.BN tx\-frames
+.BN tx\-usecs\-irq
+.BN tx\-frames\-irq
+.BN stats\-block\-usecs
+.BN pkt\-rate\-low
+.BN rx\-usecs\-low
+.BN rx\-frames\-low
+.BN tx\-usecs\-low
+.BN tx\-frames\-low
+.BN pkt\-rate\-high
+.BN rx\-usecs\-high
+.BN rx\-frames\-high
+.BN tx\-usecs\-high
+.BN tx\-frames\-high
+.BN sample\-interval
+.HP
+.B ethtool \-g|\-\-show\-ring
+.I devname
+.HP
+.B ethtool \-G|\-\-set\-ring
+.I devname
+.BN rx
+.BN rx\-mini
+.BN rx\-jumbo
+.BN tx
+.HP
+.B ethtool \-i|\-\-driver
+.I devname
+.HP
+.B ethtool \-d|\-\-register\-dump
+.I devname
+.B2 raw on off
+.B2 hex on off
+.RB [ file 
+.IR name ]
+.HP
+.B ethtool \-e|\-\-eeprom\-dump
+.I devname
+.B2 raw on off
+.BN offset
+.BN length
+.HP
+.B ethtool \-E|\-\-change\-eeprom
+.I devname
+.BN magic
+.BN offset
+.BN length
+.BN value
+.HP
+.B ethtool \-k|\-\-show\-features|\-\-show\-offload
+.I devname
+.HP
+.B ethtool \-K|\-\-features|\-\-offload
+.I devname feature
+.A1 on off
+.RB ...
+.HP
+.B ethtool \-p|\-\-identify
+.I devname
+.RI [ N ]
+.HP
+.B ethtool \-P|\-\-show\-permaddr
+.I devname
+.HP
+.B ethtool \-r|\-\-negotiate
+.I devname
+.HP
+.B ethtool \-S|\-\-statistics
+.I devname
+.HP
+.B ethtool \-\-phy\-statistics
+.I devname
+.HP
+.B ethtool \-t|\-\-test
+.I devname
+.RI [\*(SD]
+.HP
+.B ethtool \-s
+.I devname
+.BN speed
+.B2 duplex half full
+.B4 port tp aui bnc mii fibre
+.B3 mdix auto on off
+.B2 autoneg on off
+.BN advertise
+.BN phyad
+.B2 xcvr internal external
+.RB [ wol \ \*(WO]
+.RB [ sopass \ \*(MA]
+.RB [ msglvl
+.IR N \ |
+.BI msglvl \ type
+.A1 on off
+.RB ...]
+.HP
+.B ethtool \-n|\-u|\-\-show\-nfc|\-\-show\-ntuple
+.I devname
+.RB [\  rx\-flow\-hash \ \*(FL \ |
+.br
+.BI rule \ N
+.RB ]
+.HP
+.B ethtool \-N|\-U|\-\-config\-nfc|\-\-config\-ntuple
+.I devname
+.BR rx\-flow\-hash \ \*(FL \ \: \*(HO \ |
+.br
+.B flow\-type \*(NC
+.RB [ src \ \*(MA\ [ m \ \*(MA]]
+.RB [ dst \ \*(MA\ [ m \ \*(MA]]
+.BM proto
+.RB [ src\-ip \ \*(PA\ [ m \ \*(PA]]
+.RB [ dst\-ip \ \*(PA\ [ m \ \*(PA]]
+.BM tos
+.BM tclass
+.BM l4proto
+.BM src\-port
+.BM dst\-port
+.BM spi
+.BM l4data
+.BM vlan\-etype
+.BM vlan
+.BM user\-def
+.RB [ dst-mac \ \*(MA\ [ m \ \*(MA]]
+.BN action
+.BN loc
+.RB |
+.br
+.BI delete \ N
+.HP
+.B ethtool \-w|\-\-get\-dump
+.I devname
+.RB [ data
+.IR filename ]
+.HP
+.B ethtool\ \-W|\-\-set\-dump
+.I devname N
+.HP
+.B ethtool \-T|\-\-show\-time\-stamping
+.I devname
+.HP
+.B ethtool \-x|\-\-show\-rxfh\-indir|\-\-show\-rxfh
+.I devname
+.HP
+.B ethtool \-X|\-\-set\-rxfh\-indir|\-\-rxfh
+.I devname
+.RB [ hkey \ \*(MA:\...]
+.RB [\  equal
+.IR N \ |
+.BI weight\  W0
+.IR W1
+.RB ...\ | \ default \ ]
+.HP
+.B ethtool \-f|\-\-flash
+.I devname file
+.RI [ N ]
+.HP
+.B ethtool \-l|\-\-show\-channels
+.I devname
+.HP
+.B ethtool \-L|\-\-set\-channels
+.I devname
+.BN rx
+.BN tx
+.BN other
+.BN combined
+.HP
+.B ethtool \-m|\-\-dump\-module\-eeprom|\-\-module\-info
+.I devname
+.B2 raw on off
+.B2 hex on off
+.BN offset
+.BN length
+.HP
+.B ethtool \-\-show\-priv\-flags
+.I devname
+.HP
+.B ethtool \-\-set\-priv\-flags
+.I devname flag
+.A1 on off
+.RB ...
+.HP
+.B ethtool \-\-show\-eee
+.I devname
+.HP
+.B ethtool \-\-set\-eee
+.I devname
+.B2 eee on off
+.B2 tx-lpi on off
+.BN tx-timer
+.BN advertise
+.
+.\" Adjust lines (i.e. full justification) and hyphenate.
+.ad
+.hy
+
+.SH DESCRIPTION
+.BI ethtool
+is used to query and control network device driver and hardware
+settings, particularly for wired Ethernet devices.
+
+.I devname
+is the name of the network device on which ethtool should operate.
+
+.SH OPTIONS
+.B ethtool
+with a single argument specifying the device name prints current
+settings of the specified device.
+.TP
+.B \-h \-\-help
+Shows a short help message.
+.TP
+.B \-\-version
+Shows the ethtool version number.
+.TP
+.B \-a \-\-show\-pause
+Queries the specified Ethernet device for pause parameter information.
+.TP
+.B \-A \-\-pause
+Changes the pause parameters of the specified Ethernet device.
+.RS 4
+.TP
+.A2 autoneg on off
+Specifies whether pause autonegotiation should be enabled.
+.TP
+.A2 rx on off
+Specifies whether RX pause should be enabled.
+.TP
+.A2 tx on off
+Specifies whether TX pause should be enabled.
+.RE
+.TP
+.B \-c \-\-show\-coalesce
+Queries the specified network device for coalescing information.
+.TP
+.B \-C \-\-coalesce
+Changes the coalescing settings of the specified network device.
+.TP
+.B \-g \-\-show\-ring
+Queries the specified network device for rx/tx ring parameter information.
+.TP
+.B \-G \-\-set\-ring
+Changes the rx/tx ring parameters of the specified network device.
+.RS 4
+.TP
+.BI rx \ N
+Changes the number of ring entries for the Rx ring.
+.TP
+.BI rx\-mini \ N
+Changes the number of ring entries for the Rx Mini ring.
+.TP
+.BI rx\-jumbo \ N
+Changes the number of ring entries for the Rx Jumbo ring.
+.TP
+.BI tx \ N
+Changes the number of ring entries for the Tx ring.
+.RE
+.TP
+.B \-i \-\-driver
+Queries the specified network device for associated driver information.
+.TP
+.B \-d \-\-register\-dump
+Retrieves and prints a register dump for the specified network device.
+The register format for some devices is known and decoded others
+are printed in hex.
+When 
+.I raw 
+is enabled, then ethtool dumps the raw register data to stdout.
+If
+.I file
+is specified, then use contents of previous raw register dump, rather
+than reading from the device.
+.TP
+.B \-e \-\-eeprom\-dump
+Retrieves and prints an EEPROM dump for the specified network device.
+When raw is enabled, then it dumps the raw EEPROM data to stdout. The
+length and offset parameters allow dumping certain portions of the EEPROM.
+Default is to dump the entire EEPROM.
+.RS 4
+.TP
+.BI raw \ on|off
+.TP
+.BI offset \ N
+.TP
+.BI length \ N
+.RE
+.TP
+.B \-E \-\-change\-eeprom
+If value is specified, changes EEPROM byte for the specified network device.
+offset and value specify which byte and it's new value. If value is not
+specified, stdin is read and written to the EEPROM. The length and offset
+parameters allow writing to certain portions of the EEPROM.
+Because of the persistent nature of writing to the EEPROM, a device-specific
+magic key must be specified to prevent the accidental writing to the EEPROM.
+.TP
+.B \-k \-\-show\-features \-\-show\-offload
+Queries the specified network device for the state of protocol
+offload and other features.
+.TP
+.B \-K \-\-features \-\-offload
+Changes the offload parameters and other features of the specified
+network device.  The following feature names are built-in and others
+may be defined by the kernel.
+.RS 4
+.TP
+.A2 rx on off
+Specifies whether RX checksumming should be enabled.
+.TP
+.A2 tx on off
+Specifies whether TX checksumming should be enabled.
+.TP
+.A2 sg on off
+Specifies whether scatter-gather should be enabled.
+.TP
+.A2 tso on off
+Specifies whether TCP segmentation offload should be enabled.
+.TP
+.A2 ufo on off
+Specifies whether UDP fragmentation offload should be enabled 
+.TP
+.A2 gso on off
+Specifies whether generic segmentation offload should be enabled 
+.TP
+.A2 gro on off
+Specifies whether generic receive offload should be enabled
+.TP
+.A2 lro on off
+Specifies whether large receive offload should be enabled
+.TP
+.A2 rxvlan on off
+Specifies whether RX VLAN acceleration should be enabled
+.TP
+.A2 txvlan on off
+Specifies whether TX VLAN acceleration should be enabled
+.TP
+.A2 ntuple on off
+Specifies whether Rx ntuple filters and actions should be enabled
+.TP
+.A2 rxhash on off
+Specifies whether receive hashing offload should be enabled
+.RE
+.TP
+.B \-p \-\-identify
+Initiates adapter-specific action intended to enable an operator to
+easily identify the adapter by sight.  Typically this involves
+blinking one or more LEDs on the specific network port.
+.RS 4
+.TP
+.BN
+Length of time to perform phys-id, in seconds.
+.RE
+.TP
+.B \-P \-\-show\-permaddr
+Queries the specified network device for permanent hardware address.
+.TP
+.B \-r \-\-negotiate
+Restarts auto-negotiation on the specified Ethernet device, if
+auto-negotiation is enabled.
+.TP
+.B \-S \-\-statistics
+Queries the specified network device for NIC- and driver-specific
+statistics.
+.TP
+.B \-\-phy\-statistics
+Queries the specified network device for PHY specific statistics.
+.TP
+.B \-t \-\-test
+Executes adapter selftest on the specified network device. Possible test modes are:
+.RS 4
+.TP
+.B offline
+Perform full set of tests, possibly interrupting normal operation
+during the tests,
+.TP
+.B online
+Perform limited set of tests, not interrupting normal operation,
+.TP
+.B external_lb
+Perform full set of tests, as for \fBoffline\fR, and additionally an
+external-loopback test.
+.RE
+.TP
+.B \-s \-\-change
+Allows changing some or all settings of the specified network device.
+All following options only apply if
+.B \-s
+was specified.
+.RS 4
+.TP
+.BI speed \ N
+Set speed in Mb/s.
+.B ethtool
+with just the device name as an argument will show you the supported device speeds.
+.TP
+.A2 duplex half full
+Sets full or half duplex mode.
+.TP
+.A4 port tp aui bnc mii fibre
+Selects device port.
+.TP
+.A3 mdix auto on off
+Selects MDI-X mode for port. May be used to override the automatic
+detection feature of most adapters. An argument of \fBauto\fR means
+automatic detection of MDI status, \fBon\fR forces MDI-X (crossover)
+mode, while \fBoff\fR means MDI (straight through) mode.  The driver
+should guarantee that this command takes effect immediately, and if
+necessary may reset the link to cause the change to take effect.
+.TP
+.A2 autoneg on off
+Specifies whether autonegotiation should be enabled. Autonegotiation 
+is enabled by default, but in some network devices may have trouble
+with it, so you can disable it if really necessary. 
+.TP
+.BI advertise \ N
+Sets the speed and duplex advertised by autonegotiation.  The argument is
+a hexadecimal value using one or a combination of the following values:
+.TS
+nokeep;
+lB	l	lB.
+0x001	10baseT Half
+0x002	10baseT Full
+0x004	100baseT Half
+0x008	100baseT Full
+0x010	1000baseT Half	(not supported by IEEE standards)
+0x020	1000baseT Full
+0x20000	1000baseKX Full
+0x20000000000	1000baseX Full
+0x8000	2500baseX Full	(not supported by IEEE standards)
+0x1000	10000baseT Full
+0x40000	10000baseKX4 Full
+0x80000	10000baseKR Full
+0x40000000000	10000baseCR  Full
+0x80000000000	10000baseSR  Full
+0x100000000000	10000baseLR  Full
+0x200000000000	10000baseLRM Full
+0x400000000000	10000baseER  Full
+0x200000	20000baseMLD2 Full	(not supported by IEEE standards)
+0x400000	20000baseKR2 Full	(not supported by IEEE standards)
+0x80000000	25000baseCR Full
+0x100000000	25000baseKR Full
+0x200000000	25000baseSR Full
+0x800000	40000baseKR4 Full
+0x1000000	40000baseCR4 Full
+0x2000000	40000baseSR4 Full
+0x4000000	40000baseLR4 Full
+0x400000000	50000baseCR2 Full
+0x800000000	50000baseKR2 Full
+0x10000000000	50000baseSR2 Full
+0x1000000000	100000baseKR4 Full
+0x2000000000	100000baseSR4 Full
+0x4000000000	100000baseCR4 Full
+0x8000000000	100000baseLR4_ER4 Full
+.TE
+.TP
+.BI phyad \ N
+PHY address.
+.TP
+.A2 xcvr internal external
+Selects transceiver type. Currently only internal and external can be
+specified, in the future further types might be added.
+.TP
+.BR wol \ \*(WO
+Sets Wake-on-LAN options.  Not all devices support this.  The argument to 
+this option is a string of characters specifying which options to enable.
+.TS
+nokeep;
+lB	l.
+p	Wake on PHY activity
+u	Wake on unicast messages
+m	Wake on multicast messages
+b	Wake on broadcast messages
+a	Wake on ARP
+g	Wake on MagicPacket\[tm]
+s	Enable SecureOn\[tm] password for MagicPacket\[tm]
+d	T{
+Disable (wake on nothing).  This option clears all previous options.
+T}
+.TE
+.TP
+.B sopass \*(MA\c
+Sets the SecureOn\[tm] password.  The argument to this option must be 6
+bytes in Ethernet MAC hex format (\*(MA).
+.PP
+.BI msglvl \ N
+.br
+.BI msglvl \ type
+.A1 on off
+.RB ...
+.RS
+Sets the driver message type flags by name or number. \fItype\fR
+names the type of message to enable or disable; \fIN\fR specifies the
+new flags numerically. The defined type names and numbers are:
+.TS
+nokeep;
+lB	l	l.
+drv	0x0001  General driver status
+probe	0x0002  Hardware probing
+link	0x0004  Link state
+timer	0x0008  Periodic status check
+ifdown	0x0010  Interface being brought down
+ifup	0x0020  Interface being brought up
+rx_err	0x0040  Receive error
+tx_err	0x0080  Transmit error
+tx_queued	0x0100  Transmit queueing
+intr	0x0200  Interrupt handling
+tx_done	0x0400  Transmit completion
+rx_status	0x0800  Receive completion
+pktdata	0x1000  Packet contents
+hw	0x2000  Hardware status
+wol	0x4000  Wake-on-LAN status
+.TE
+.PP
+The precise meanings of these type flags differ between drivers.
+.RE
+.PD
+.RE
+.TP
+.B \-n \-u \-\-show\-nfc \-\-show\-ntuple
+Retrieves receive network flow classification options or rules.
+.RS 4
+.TP
+.BR rx\-flow\-hash \ \*(FL
+Retrieves the hash options for the specified flow type.
+.TS
+nokeep;
+lB	l.
+tcp4	TCP over IPv4
+udp4	UDP over IPv4
+ah4	IPSEC AH over IPv4
+esp4	IPSEC ESP over IPv4
+sctp4	SCTP over IPv4
+tcp6	TCP over IPv6
+udp6	UDP over IPv6
+ah6	IPSEC AH over IPv6
+esp6	IPSEC ESP over IPv6
+sctp6	SCTP over IPv6
+.TE
+.TP
+.BI rule \ N
+Retrieves the RX classification rule with the given ID.
+.RE
+.PD
+.RE
+.TP
+.B \-N \-U \-\-config\-nfc \-\-config\-ntuple
+Configures receive network flow classification options or rules.
+.RS 4
+.TP
+.BR rx\-flow\-hash \ \*(FL \: \*(HO
+Configures the hash options for the specified flow type.
+.TS
+nokeep;
+lB	l.
+m	Hash on the Layer 2 destination address of the rx packet.
+v	Hash on the VLAN tag of the rx packet.
+t	Hash on the Layer 3 protocol field of the rx packet.
+s	Hash on the IP source address of the rx packet.
+d	Hash on the IP destination address of the rx packet.
+f	Hash on bytes 0 and 1 of the Layer 4 header of the rx packet.
+n	Hash on bytes 2 and 3 of the Layer 4 header of the rx packet.
+r	T{
+Discard all packets of this flow type. When this option is set, all
+other options are ignored.
+T}
+.TE
+.TP
+.B flow\-type \*(NC
+Inserts or updates a classification rule for the specified flow type.
+.TS
+nokeep;
+lB	l.
+ether	Ethernet
+ip4	Raw IPv4
+tcp4	TCP over IPv4
+udp4	UDP over IPv4
+sctp4	SCTP over IPv4
+ah4	IPSEC AH over IPv4
+esp4	IPSEC ESP over IPv4
+ip6	Raw IPv6
+tcp6	TCP over IPv6
+udp6	UDP over IPv6
+sctp6	SCTP over IPv6
+ah6	IPSEC AH over IPv6
+esp6	IPSEC ESP over IPv6
+.TE
+.PP
+For all fields that allow both a value and a mask to be specified, the
+mask may be specified immediately after the value using the \fBm\fR
+keyword, or separately using the field name keyword with \fB-mask\fR
+appended, e.g. \fBsrc-mask\fR.
+.PD
+.TP
+.BR src \ \*(MA\ [ m \ \*(MA]
+Includes the source MAC address, specified as 6 bytes in hexadecimal
+separated by colons, along with an optional mask.  Valid only for
+flow-type ether.
+.TP
+.BR dst \ \*(MA\ [ m \ \*(MA]
+Includes the destination MAC address, specified as 6 bytes in hexadecimal
+separated by colons, along with an optional mask.  Valid only for
+flow-type ether.
+.TP
+.BI proto \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Includes the Ethernet protocol number (ethertype) and an optional mask.
+Valid only for flow-type ether.
+.TP
+.BR src\-ip \ \*(PA\ [ m \ \*(PA]
+Specify the source IP address of the incoming packet to match along with
+an optional mask.  Valid for all IP based flow-types.
+.TP
+.BR dst\-ip \ \*(PA\ [ m \ \*(PA]
+Specify the destination IP address of the incoming packet to match along
+with an optional mask.  Valid for all IP based flow-types.
+.TP
+.BI tos \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Specify the value of the Type of Service field in the incoming packet to
+match along with an optional mask.  Applies to all IPv4 based flow-types.
+.TP
+.BI tclass \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Specify the value of the Traffic Class field in the incoming packet to
+match along with an optional mask.  Applies to all IPv6 based flow-types.
+.TP
+.BI l4proto \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Includes the layer 4 protocol number and optional mask.  Valid only for
+flow-types ip4 and ip6.
+.TP
+.BI src\-port \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Specify the value of the source port field (applicable to TCP/UDP packets)
+in the incoming packet to match along with an optional mask.  Valid for
+flow-types ip4, tcp4, udp4, and sctp4 and their IPv6 equivalents.
+.TP
+.BI dst\-port \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Specify the value of the destination port field (applicable to TCP/UDP
+packets)in the incoming packet to match along with an optional mask.
+Valid for flow-types ip4, tcp4, udp4, and sctp4 and their IPv6 equivalents.
+.TP
+.BI spi \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Specify the value of the security parameter index field (applicable to
+AH/ESP packets)in the incoming packet to match along with an optional
+mask.  Valid for flow-types ip4, ah4, and esp4 and their IPv6 equivalents.
+.TP
+.BI l4data \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Specify the value of the first 4 Bytes of Layer 4 in the incoming packet to
+match along with an optional mask.  Valid for ip4 and ip6 flow-types.
+.TP
+.BI vlan\-etype \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Includes the VLAN tag Ethertype and an optional mask.
+.TP
+.BI vlan \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Includes the VLAN tag and an optional mask.
+.TP
+.BI user\-def \ N \\fR\ [\\fPm \ N \\fR]\\fP
+Includes 64-bits of user-specific data and an optional mask.
+.TP
+.BR dst-mac \ \*(MA\ [ m \ \*(MA]
+Includes the destination MAC address, specified as 6 bytes in hexadecimal
+separated by colons, along with an optional mask.
+Valid for all IP based flow-types.
+.TP
+.BI action \ N
+Specifies the Rx queue to send packets to, or some other action.
+.TS
+nokeep;
+lB	l.
+-1	Drop the matched flow
+0 or higher	Rx queue to route the flow
+.TE
+.TP
+.BI loc \ N
+Specify the location/ID to insert the rule. This will overwrite
+any rule present in that location and will not go through any
+of the rule ordering process.
+.TP
+.BI delete \ N
+Deletes the RX classification rule with the given ID.
+.RE
+.TP
+.B \-w \-\-get\-dump
+Retrieves and prints firmware dump for the specified network device.
+By default, it prints out the dump flag, version and length of the dump data.
+When
+.I data
+is indicated, then ethtool fetches the dump data and directs it to a
+.I file.
+.TP
+.B \-W \-\-set\-dump
+Sets the dump flag for the device.
+.TP
+.B \-T \-\-show\-time\-stamping
+Show the device's time stamping capabilities and associated PTP
+hardware clock.
+.TP
+.B \-x \-\-show\-rxfh\-indir \-\-show\-rxfh
+Retrieves the receive flow hash indirection table and/or RSS hash key.
+.TP
+.B \-X \-\-set\-rxfh\-indir \-\-rxfh
+Configures the receive flow hash indirection table and/or RSS hash key.
+.RS 4
+.TP
+.BI hkey
+Sets RSS hash key of the specified network device. RSS hash key should be of device supported length.
+Hash key format must be in xx:yy:zz:aa:bb:cc format meaning both the nibbles of a byte should be mentioned
+even if a nibble is zero.
+.TP
+.BI equal\  N
+Sets the receive flow hash indirection table to spread flows evenly
+between the first \fIN\fR receive queues.
+.TP
+\fBweight\fR \fIW0 W1\fR ...
+Sets the receive flow hash indirection table to spread flows between
+receive queues according to the given weights.  The sum of the weights
+must be non-zero and must not exceed the size of the indirection table.
+.TP
+.BI default
+Sets the receive flow hash indirection table to its default value.
+.RE
+.TP
+.B \-f \-\-flash
+Write a firmware image to flash or other non-volatile memory on the
+device.
+.RS 4
+.TP
+.I file
+Specifies the filename of the firmware image.  The firmware must first
+be installed in one of the directories where the kernel firmware
+loader or firmware agent will look, such as /lib/firmware.
+.TP
+.I N
+If the device stores multiple firmware images in separate regions of
+non-volatile memory, this parameter may be used to specify which
+region is to be written.  The default is 0, requesting that all
+regions are written.  All other values are driver-dependent.
+.RE
+.PD
+.TP
+.B \-l \-\-show\-channels
+Queries the specified network device for the numbers of channels it has.
+A channel is an IRQ and the set of queues that can trigger that IRQ.
+.TP
+.B \-L \-\-set\-channels
+Changes the numbers of channels of the specified network device.
+.RS 4
+.TP
+.BI rx \ N
+Changes the number of channels with only receive queues.
+.TP
+.BI tx \ N
+Changes the number of channels with only transmit queues.
+.TP
+.BI other \ N
+Changes the number of channels used only for other purposes e.g. link interrupts or SR-IOV co-ordination.
+.TP
+.BI combined \ N
+Changes the number of multi-purpose channels.
+.RE
+.TP
+.B \-m \-\-dump\-module\-eeprom \-\-module\-info
+Retrieves and if possible decodes the EEPROM from plugin modules, e.g SFP+, QSFP.
+If the driver and module support it, the optical diagnostic information is also
+read and decoded.
+.TP
+.B \-\-show\-priv\-flags
+Queries the specified network device for its private flags.  The
+names and meanings of private flags (if any) are defined by each
+network device driver.
+.TP
+.B \-\-set\-priv\-flags
+Sets the device's private flags as specified.
+.RS 4
+.PP
+.I flag
+.A1 on off
+Sets the state of the named private flag.
+.RE
+.TP
+.B \-\-show\-eee
+Queries the specified network device for its support of Energy-Efficient
+Ethernet (according to the IEEE 802.3az specifications)
+.TP
+.B \-\-set\-eee
+Sets the device EEE behaviour.
+.RS 4
+.TP
+.A2 eee on off
+Enables/disables the device support of EEE.
+.TP
+.A2 tx-lpi on off
+Determines whether the device should assert its Tx LPI.
+.TP
+.BI advertise \ N
+Sets the speeds for which the device should advertise EEE capabilities.
+Values are as for
+.B \-\-change advertise
+.TP
+.BI tx-timer \ N
+Sets the amount of time the device should stay in idle mode prior to asserting
+its Tx LPI (in microseconds). This has meaning only when Tx LPI is enabled.
+.RE
+.SH BUGS
+Not supported (in part or whole) on all network drivers.
+.SH AUTHOR
+.B ethtool
+was written by David Miller.
+
+Modifications by 
+Jeff Garzik, 
+Tim Hockin,
+Jakub Jelinek,
+Andre Majorel,
+Eli Kupermann,
+Scott Feldman,
+Andi Kleen,
+Alexander Duyck,
+Sucheta Chakraborty,
+Jesse Brandeburg,
+Ben Hutchings.
+.SH AVAILABILITY
+.B ethtool
+is available from
+.UR http://www.kernel.org/pub/software/network/ethtool/
+.UE

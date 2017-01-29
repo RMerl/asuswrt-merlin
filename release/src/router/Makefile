@@ -613,6 +613,8 @@ obj-$(RTCONFIG_WEBDAV) += libexif
 
 obj-$(RTCONFIG_IXIAEP) += ixia_endpoint$(BCMEX)
 
+obj-$(RTCONFIG_ETHTOOL) += ethtool
+
 # Add for ASUS Components
 obj-$(RTCONFIG_UPNPC) += miniupnpc
 obj-y += miniupnpd$(MUVER)
@@ -4632,6 +4634,25 @@ phddns-install: phddns
 phddns-clean:
 	@[ ! -f phddns/Makefile ] || $(MAKE) -C phddns clean
 	@rm -f phddns/stamp-h1
+
+ethtool/stamp-h1:
+	cd $(TOP)/ethtool && CC=$(CC) STRIP=$(STRIP) \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	$(CONFIGURE) --prefix=/usr
+	touch ethtool/stamp-h1
+
+ethtool: ethtool/stamp-h1
+	@$(MAKE) -C ethtool CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) $(PARALLEL_BUILD)
+
+ethtool-clean:
+	-@$(MAKE) -C ethtool clean
+	@rm -f ethtool/stamp-h1
+
+ethtool-install: ethtool/ethtool
+	install -d $(INSTALLDIR)/ethtool/usr/sbin
+	libtool --mode=install install -c ethtool/ethtool $(INSTALLDIR)/ethtool/usr/sbin
+	$(STRIP) $(INSTALLDIR)/ethtool/usr/sbin/ethtool
 
 #
 # Generic rules
