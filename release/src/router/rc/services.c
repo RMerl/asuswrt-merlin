@@ -1291,7 +1291,6 @@ void start_dnsmasq(void)
 		fprintf(fp,"quiet-dhcp\n");
 #ifdef RTCONFIG_IPV6
 		fprintf(fp,"quiet-dhcp6\n");
-		fprintf(fp,"quiet-ra\n");
 #endif
 	}
 #ifdef RTCONFIG_FINDASUS
