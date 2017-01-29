@@ -15,8 +15,8 @@ extensions, without shared libraries, do this (this will make a
 binary called 'static', which you can rename):
 %make static
 
-WHAT GETS INSTALLED?
---------------------
+WHAT GETS INSTALLED AND WHAT OPTIONS ARE AVAILABLE?
+---------------------------------------------------
 
 - The ebtables manual gets installed in /usr/local/man/man8
   To put the manual somewhere else, include MANDIR=<<man-path/man>> as
@@ -30,6 +30,9 @@ WHAT GETS INSTALLED?
 - The ebtables initialisation file (enabling use of 'service ebtables') is
   copied to /etc/rc.d/init.d (change with option INITDIR)
 - The ebtables configuration file (ebtables-config) is copied to /etc/sysconfig
+- ebtables can use a lock file to enable concurrent execution of the ebtables
+  tool. The standard location of the lock file is /var/lib/ebtables/lock.
+  Include LOCKFILE=<<path-to-file>> if you want to use another file.
 
 That's all
 
@@ -37,7 +40,7 @@ You can also use a base directory different from the root directory (/),
 using the DESTDIR option. See the Makefile for more details.
 
 
-ADDITIONAL PROGRAM(S):
+ADDITIONAL PROGRAMS:
 ----------------------
 -- examples/ulog/test_ulog.c --
 

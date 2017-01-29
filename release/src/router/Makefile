@@ -3343,8 +3343,8 @@ igs$(BCMEX)$(EX7)-clean:
 
 ebtables: kernel_header dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \
-	CFLAGS="-Os $(EXTRACFLAGS) -Wall -Wunused" $(PARALLEL_BUILD) \
-	BINDIR="/usr/sbin" LIBDIR="/usr/lib/ebtables" KERNEL_INCLUDES=$(TOP)/kernel_header/include $(if $(RTCONFIG_IPV6),DO_IPV6=1,) $(if $(RTCONFIG_QCA),USE_ARPNAT=1,)
+	CFLAGS="-Os $(EXTRACFLAGS) -Wall -Wunused -Iinclude" $(PARALLEL_BUILD) \
+	BINDIR="/usr/sbin" LIBDIR="/usr/lib/ebtables" KERNEL_INCLUDES=$(LINUXDIR)/include $(if $(RTCONFIG_IPV6),DO_IPV6=1,) $(if $(RTCONFIG_QCA),USE_ARPNAT=1,)
 
 ebtables-install: ebtables
 	install -D ebtables/ebtables $(INSTALLDIR)/ebtables/usr/sbin/ebtables

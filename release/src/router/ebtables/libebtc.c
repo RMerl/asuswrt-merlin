@@ -32,6 +32,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
 
 static void decrease_chain_jumps(struct ebt_u_replace *replace);
 static int iterate_entries(struct ebt_u_replace *replace, int type);
@@ -130,15 +133,83 @@ void ebt_list_extensions()
 	}
 }
 
+#ifndef LOCKFILE
+#define LOCKDIR "/var/lib/ebtables"
+#define LOCKFILE LOCKDIR"/lock"
+#endif
+static int lockfd = -1, locked;
+int use_lockfd;
+/* Returns 0 on success, -1 when the file is locked by another process
+ * or -2 on any other error. */
+static int lock_file()
+{
+	int try = 0;
+	int ret = 0;
+	sigset_t sigset;
+
+tryagain:
+	/* the SIGINT handler will call unlock_file. To make sure the state
+	 * of the variable locked is correct, we need to temporarily mask the
+	 * SIGINT interrupt. */
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	sigprocmask(SIG_BLOCK, &sigset, NULL);
+	lockfd = open(LOCKFILE, O_CREAT | O_EXCL | O_WRONLY, 00600);
+	if (lockfd < 0) {
+		if (errno == EEXIST)
+			ret = -1;
+		else if (try == 1)
+			ret = -2;
+		else {
+			if (mkdir(LOCKDIR, 00700))
+				ret = -2;
+			else {
+				try = 1;
+				goto tryagain;
+			}
+		}
+	} else {
+		close(lockfd);
+		locked = 1;
+	}
+	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	return ret;
+}
+
+void unlock_file()
+{
+	if (locked) {
+		remove(LOCKFILE);
+		locked = 0;
+	}
+}
+
+void __attribute__ ((destructor)) onexit()
+{
+	if (use_lockfd)
+		unlock_file();
+}
 /* Get the table from the kernel or from a binary file
  * init: 1 = ask the kernel for the initial contents of a table, i.e. the
  *           way it looks when the table is insmod'ed
  *       0 = get the current data in the table */
 int ebt_get_kernel_table(struct ebt_u_replace *replace, int init)
 {
+	int ret;
+
 	if (!ebt_find_table(replace->name)) {
 		ebt_print_error("Bad table name '%s'", replace->name);
 		return -1;
+	}
+	while (use_lockfd && (ret = lock_file())) {
+		if (ret == -2) {
+			/* if we get an error we can't handle, we exit. This
+			 * doesn't break backwards compatibility since using
+			 * this file locking is disabled by default. */
+			ebt_print_error2("Unable to create lock file "LOCKFILE);
+		}
+		fprintf(stderr, "Trying to obtain lock %s\n", LOCKFILE);
+		sleep(1);
 	}
 	/* Get the kernel's information */
 	if (ebt_get_table(replace, init)) {
@@ -406,8 +477,8 @@ void ebt_delete_cc(struct ebt_cntchanges *cc)
 		cc->prev->next = cc->next;
 		cc->next->prev = cc->prev;
 		free(cc);
-	}
-	cc->type = CNT_DEL;
+	} else
+		cc->type = CNT_DEL;
 }
 
 void ebt_empty_chain(struct ebt_u_entries *entries)

@@ -5,8 +5,8 @@
 
 Summary: Ethernet Bridge frame table administration tool
 Name: ebtables
-Version: 2.0.9
-Release: 2
+Version: 2.0.10
+Release: 4
 License: GPL
 Group: System Environment/Base
 URL: http://ebtables.sourceforge.net/

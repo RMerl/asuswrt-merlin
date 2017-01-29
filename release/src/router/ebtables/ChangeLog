@@ -1,3 +1,32 @@
+20111215
+	Changelog for v2.0.10-4
+	* really fix counter setting bug (thanks to James' persistence)
+20111204
+	Changelog for v2.0.10-3
+	* fix counter setting bug (reported by James Sinclair)
+20110710
+	Changelog for v2.0.10-2
+	* enable compiler optimizations (-O3)
+	* small changes to remove the compiler warnings due to optimization being
+	  turned on (thanks to Peter Volkov)
+	* respect LDFLAGS in Makefiles (Peter Volkov)
+20110710
+	Changelog for v2.0.10-1
+	* fix --among-dst-file, which translated to --among-src
+	  (reported by Thierry Watelet)
+	* fix bug in test_ulog.c example
+	* Makefile: respect LDFLAGS during ebtables build (Peter Volkov)
+	* Makefile: create directories to avoid build failure when DESTDIR is
+	  supplied (Peter Volkov)
+	* incorporate fixes for possible issues found by Coverity analysis
+	  (thanks to Jiri Popelka)
+	* define __EXPORTED_HEADERS__ to get access to the Linux kernel headers
+	* extend ebt_ip6 to allow matching on ipv6-icmp types/codes (by Florian
+	  Westphal)
+	* Print a more useful error message when an update of the kernel table
+	  failed.
+	* Add --concurrent option, which enables using a file lock to support
+	  concurrent scripts updating the ebtables kernel tables
 20100203
 	Changelog for v2.0.9-2
 	* fix unwanted zeroing of counters in the last user-defined chain
