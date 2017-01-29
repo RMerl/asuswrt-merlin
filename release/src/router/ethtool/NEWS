@@ -1,0 +1,395 @@
+Version 4.8 - October 3, 2016
+
+	* Feature: QSFP Plus/QSFP28 Diagnostics Information Support
+	* Feature: Enhancing link mode bits to support 25G/50G/100G
+	* Feature: add support for 1000BaseX and missing 10G link mode
+	* Fixes: address Coverity issues 1363118 - 1363125
+
+Version 4.6 - June 26, 2016
+
+	* Feature: Support register dump on Intel X550 NICs (-d option)
+	* Fix: Correct some reported register offsets on Intel 10GbE NICs
+	  (-d option)
+	* Feature: Add IPv6 support to NFC (-n, -N, -u and -U options)
+	* Feature: Add support for ETHTOOL_xLINKSETTINGS ioctls (no option
+	  and -s option)
+	* Feature: Use netlink socket when AF_INET not available
+
+Version 4.5 - March 14, 2016
+
+	* Tests: Fix missing function declarations when building tests
+	* Tests: Fix return type of test_free() prorotype
+	* Feature: Add PHY statistics support (--phy-statistics option)
+	* Doc: Properly indent sub-options in man page
+	* Feature: Support setting default Rx flow indirection table
+	  (-X option)
+	* Fix: Use 'sane' kernel type definitions on 64-bit architectures
+	* Fix: Don't ignore fread() return value (-d option)
+	* Fix: Heap corruption when dumping registers from a file (-d option)
+	* Fix: Stricter input validation for EEPROM setting (-E option)
+	* Fix: Fix strict-aliasing compiler warnings in marvell.c
+	* Tests: Fix use of uninitialised variable in test_realloc()
+	* Tests: Fix compiler warning in test-features.c
+
+Version 4.2 - October 9, 2015
+
+	* Feature: Support soldered-on modules in module EEPROM dump (-m option)
+	* Feature: Add register dump support for VMware vmxnet3 (-d option)
+	* Feature: Update register dump support for IBM EMAC (-d option)
+	  (requires Linux 4.3 or a future stable update to 4.1 or 4.2)
+	* Doc: Fix typo in man page
+
+Version 4.0 - May 31, 2015
+
+	* Fix: Formatting of RX flow hash indirection table when size not
+	  divisible by 8 (-x option)
+	* Fix: Add missing Advertised speeds (no option and -s option)
+	* Feature: Add support to get expansion ROM version (-i option)
+	* Feature: Include SFP serial number and date in EEPROM dump
+	  (-m option)
+
+Version 3.18 - December 14, 2014
+
+	* Fix: Lookup of SFP Tx bias in SFF-8472 module diagnostics (-m option)
+	* Fix: Build with musl by using more common typedefs
+
+Version 3.16 - September 22, 2014
+
+	* Feature: Support for configurable RSS hash key (-x/-X options)
+
+Version 3.15 - July 20, 2014
+
+	* Feature: Add register dump support for Altera Triple Speed Ethernet
+	  (-d option)
+
+Version 3.14 - April 21, 2014
+
+	* Fix: Report Backplane as supported port (no option)
+	* Feature: Allow building a smaller executable without pretty-
+	  printing of register/EEPROM dumps (./configure --disable-pretty-dump)
+	* Fix: Typo in channel parameter format in an error message (-L option)
+
+Version 3.13 - January 27, 2014
+
+	* Doc: Update GPL text to include current address of the FSF
+	* Fix: Spelling fixes
+	* Doc: Fix advertising flag values in manual page for 20G link modes,
+	  and add missing 1G, 10G and 40G link modes
+
+Version 3.12.1 - November 8, 2013
+
+	* Fix: Memory corruption when applying external calibration to
+	  SFF-8472 module diagnostics (-m option)
+	* Feature: Add Intel 82599 and x540 DCB registers to dump
+	  (-d option)
+
+Version 3.12 - November 7, 2013
+
+	* Fix: Remove alternate method to check for VLAN tag offload on Linux
+	  < 2.6.37 (-k/-K options)
+	* Fix: Hide state of VLAN tag offload and LRO if the kernel is too old
+	  for us to reliably detect them (-k option)
+	* Feature: Add register dump support for Solarflare SFC9100 family
+	  (-d option)
+
+Version 3.11 - September 12, 2013
+
+	* Feature: Update Realtek chip list for register dump to match
+	  r8169 driver in Linux 3.11 (-d option)
+	* Feature: Add ixgbevf support for register dump (-d option)
+	* Feature: Filter ixgbe register dump according to the specific chip
+	  (-d option)
+
+Version 3.10 - July 1, 2013
+
+	* Feature: Beautify private flags print (--show-priv-flags option)
+
+Version 3.9 - April 30, 2013
+
+	* Feature: Display support for 10000BASE-KR link mode (no options)
+	* Feature: Add support for new versions of ixgbe register dump
+	  (-d dump)
+
+Version 3.8 - February 28, 2013
+
+	* Feature: Allow setting destination MAC address in L3/L4 flow spec
+	  rules (-N/-U option)
+	* Fix: Show full 64 bits of user-data (-n/-u option)
+	* Fix: Add version check for et131x regs (-d option)
+	* Doc: Improve description of -f, -t, -s, -N/-U, -W options in man page
+	* Fix: Restore 20000baseKR2 cap display (no options)
+
+Version 3.7 - December 13, 2012
+
+	* Fix: Gracefully handle failure of register pretty-printer (-d option)
+	* Feature: Add support for et131x registers (-d option)
+	* Feature: Basic optical diagnostics for SFF-8472 modules (-m option)
+
+Version 3.6 - October 5, 2012
+
+	* Feature: Allow setting MDI-X state (-s option)
+	* Fix: Preserve pause advertising bits when setting speed and
+	  duplex with autoneg on (-s option)
+	* Fix: Don't call ioctl to set EEE parameters if they are the same
+	  as the current parameters (--set-eee option)
+
+Version 3.5 - August 2, 2012
+
+	* Feature: Display support for 1000BASE-KX and 10GBASE-KX4 link modes
+	* Feature: Energy-Efficient Ethernet (EEE) configuration
+	  (--show-eee and --set-eee options)
+	* Fix: Don't trust drivers to null-terminate strings
+	* Feature: Display support for 40G link modes
+	* Package: Update RPM summary, description and URL
+	* Package: Exclude redundant documentation from RPM
+
+Version 3.4.2 - July 16, 2012
+
+	* Fix: Fix regression in RX NFC rule insertion for drivers that do
+	  not select rule locations (-N/-U option)
+	* Fix: Remove bogus error message when changing offload settings
+	  on Linux < 2.6.39 (-K option)
+	* Fix: Use alternate method to check for VLAN tag offload on Linux
+	  < 2.6.37 (-k option)
+
+Version 3.4.1 - June 13, 2012
+
+	* Fix: Work around failure of ETHTOOL_GSSET_INFO for unprivileged
+	  users (-k option)
+	* Fix: Report any unexpected error code from ETHTOOL_GSSET_INFO
+	  (-k and -K options)
+	* Doc: Fix the date of the man page to match the last update
+
+Version 3.4 - June 8, 2012
+
+	* Cleanup: Merge RX NFC options
+	* Doc: Improve description of RX NFC options
+	* Doc: Add ntuple to the -K option in the man page
+	* Feature: Show time stamping capabilities (-T option)
+	* Feature: Dump plug-in module EEPROM (-m option)
+	* Feature: Show and change all generic net device features
+	  (-k and -K options)
+
+Version 3.2 - January 12, 2012
+
+	* Feature: Add support for querying and setting private flags
+	  (--show-priv-flags, --set-priv-flags options)
+	* Feature: Omit zero values in Solarflare register tables (-d option)
+	* Feature: Allow driver to select RX NFC rule location (-U option)
+	* Fix: Correct register dump offsets for Intel 82575 chipsets
+	  (-d option)
+
+Version 3.1 - November 16, 2011
+
+	* Fix: Show all non-zero registers for tg3 (-d option)
+	* Feature: Add support for external loopback test (-t option)
+	* Fix: Show correct flow control registers for Intel 82599 (-d option)
+	* Feature: Add support for reporting and configuring numbers of
+	  channels/queues (-l and -L options)
+	* Feature: Report pause frame autonegotiation result (-a option)
+	* Doc: Change device name metavariable from 'ethX' to 'devname'
+	* Doc: Fix various layout problems
+	* Cleanup: Reorganise and add test cases for argument parsing
+	* Fix: Strictly check for extraneous or missing arguments; in
+	  particular, fail if the device name is missing
+
+Version 3.0 - August 4, 2011
+
+	* Feature: Report supported pause frame modes
+	* Feature: Support firmware dump (-w and -W options)
+	* Feature: Report advertised and supported 20G link modes
+	* Feature: Add an 'l4data' option for ip4 filters (-U option)
+	* Fix: Correct swapped h_source and h_dest fields for ether filters
+	  (-U option)
+	* Fix: Set ip_ver field correctly for ip4 filters (-U option)
+	* Fix: Correct parameter validation for -e and -E options; in
+	  particular, treat the 'magic' value as unsigned
+
+Version 2.6.39 - June 1, 2011
+
+	* Feature: Report some driver features (-i option)
+	* Doc: Remove misleading 'Auto' advertising mask from manual page
+	* Doc: Improve table formatting on manual page, using tbl
+	* Doc: Remove initial blank page in printed manual page
+	* Doc: Fix line-wrapping of options
+	* Feature: Add support for ESP as a separate protocol from AH
+	  (-n, -N, -u and -U options)
+	* Cleanup: Remove support for showing RX n-tuple settings
+	  (-u option), which was never implemented correctly in the kernel
+	* Feature: Add support for RX network flow classifier (NFC)
+	  (-u and -U options)
+	* Feature: Add support for e1000 M88 PHY registers (-d option)
+	* Cleanup: Change bug-address to netdev
+
+Version 2.6.38 - March 15, 2011
+
+	* Doc: Fix spelling and spacing in online help
+	* Doc: Update date, version and web site reference in manual page
+	* Doc: Fix spelling, capitalisation, consistency and style in
+	  manual page
+	* Doc: Generalise some references to network devices rather than
+	  Ethernet devices
+	* Fix: Don't silently ignore speed/duplex when autoneg is on
+	* Fix: Report an error (rather than full usage information) if
+	  given an unrecognised option
+	* Feature: Add --version option
+
+Version 2.6.37 - January 5, 2011
+
+	* Fix: Build fix for distributions with kernel headers from
+	  Linux 2.6.9 or earlier
+
+Version 2.6.36 - November 16, 2010
+
+	* Fix: RX n-tuple masks and documentation
+	* Feature: Ethernet-level RX n-tuple filtering and 'clear' action
+	* Feature: stmmac register dump support
+	* Feature: get permanent address (-P) option
+	* Feature: VLAN acceleration control
+
+Version 2.6.35 - August 10, 2010
+
+	* Feature: sfc register dump support
+	* Feature: improve cmd line parsing of ints, IPv4 addresses
+	* Feature: support ethtool named flags, messaging types
+	* Feature: minor man page fixes
+	* Feature: control RX flow hash indirection
+
+Version 2.6.34 - May 26, 2010
+
+	* Feature: Support n-tuple filter programming
+	* Feature: Support rx hashing, v2 (targetted for 2.6.35)
+	* Feature: Add names of newer Marvell chips
+
+Version 2.6.33 - February 24, 2010
+
+	This version introduces a new release numbering scheme, based
+	on the latest upstream kernel interface supported.
+
+	* Fix: several man page corrections
+	* Feature: rx flow hash configuration
+	* Feature: report 10000baseT support, where available
+	* Feature: report MDI-X status, pause auto-neg, link partner adverts
+	* Feature: support additional port types
+	* Feature: support arbitrary speeds, faster than 65535 Mb
+	* Feature: large and generic receive offload (LRO, GRO) support
+	* Feature: option to flash firmware image from specified file
+	* Feature: support for block writing of EEPROMs
+	* Feature: marvell register dump update
+	* Feature: at76c50x-usb, e1000e, igb, ixgbe, r8169 register dump support
+	* Cleanup: remove support for RX hashing by port (was removed in
+	  kernel by 59089d8d162ddcb5c434672e915331964d38a754)
+	* Doc: Explicitly ship GPLv2 license, rather than relying
+	  on autotools to supply it for us (autotools started auto-installing
+	  GPLv3 recently)
+
+Version 6 - July 26, 2007
+
+	* Fix/security: Fix handling of statistics where the label
+	  is exactly 32 bytes (ETH_GSTRING_LEN).
+	* Feature: Add ability to change the advertised speed/duplex
+	  to a different range of values, rather than all-or-one.
+	* Feature: ixgb register dump support
+	* Feature: sky2 register dump support
+	* Feature: Fabric7 VIOC register dump support
+	* Feature: Decode raw register dump stored in a file
+	* Feature: Add ability to force hex register dump, if desired
+	* Feature: update e1000 register dump
+	* Feature: Additional 10Gbps support
+	* Feature: Add 2.5G support
+	* Feature: Update r8169 register dump
+	* Feature: SMSC LAN911x/LAN921x register dump support
+	* Cleanup: Update internal ethtool.h copy to match upstream
+	  kernel 2.6.23-rc1 version of ethtool.h.
+
+Version 5 - September 1, 2006
+
+	* Security: Avoid potential buffer overflow
+	* Feature: GSO support
+	* Feature: skge register dump
+
+Version 4 - July 18, 2006
+
+	* Feature: UFO support
+	* Feature: support long options
+	* Features: e1000, pcnet32, tg3 updates
+	* Feature: added PPC4xx EMAC support
+	* Feature: Use hexdump instead of single values for register dump
+
+Version 3 - January 27, 2005
+
+	* Feature: r8159 register dump support
+	* Feature / bug fix: Support advertising gigabit ethernet
+	* Bug fix: make sure to advertise 10baseT-HD
+	* Other minor bug fixes.
+
+Version 2 - August 17, 2004
+
+	* Feature: ethtool register dump raw mode
+	* Feature: return results of self-test back to OS via exit(2)
+	* Feature: add verbose register dump for pcnet32, fec_8xx
+	* Maintenance: update to more recent autoconf
+	* Maintenance: minor updates to e1000-specific module
+	* Bug fix: Remove silly restriction on ethernet interface naming
+
+Version 1.8 - July 19, 2003
+
+	* Feature: Support amd8111e register dumps
+	* Feature: Support TSO enable/disable
+	* Feature: Support 10 gigabit ethernet
+	* Feature: Support writing EEPROM data
+	* Feature: Output e100 MDI/MDI-x status in register dump
+	* Feature: Clean up RealTek (RTL) chip output, support new chips.
+	* Feature: More supported e1000 devices.
+	* Bug fix: Properly set ecmd.advertising
+	* Bug fix: Fix leaks, handle some error conditions better.
+
+Version 1.7 - October 21, 2002
+
+	* Feature: Support e100 register dumps
+	* Feature: Support tg3 eeprom dumps
+	* Feature: Support partial eeprom dumps (with non-zero offsets)
+	* Feature: Support decimal/octal/hex numbers transparently,
+	  at the user's discretion.
+
+Version 1.6 - June 20, 2002
+
+	* Feature: Support e1000 register dumps
+	* Feature: Support RealTek RTL-8139C+ and RTL-8169 register dumps
+	* Feature: Support coalescing config (ETHTOOL_[GS]COALESCE)
+	* Feature: Support ring param config (ETHTOOL_[GS]RINGPARAM)
+	* Feature: Support pause param config (ETHTOOL_[GS]PAUSEPARAM)
+	* Feature: Support physical NIC identification (ETHTOOL_PHYS_ID)
+	* Feature: Support NIC self-testing (ETHTOOL_TEST)
+	* Feature: Support NIC checksum/scatter-gather configuration
+		(ETHTOOL_[GS]RXCSUM, ETHTOOL_[GS]TXCSUM, ETHTOOL_[GS]SG)
+
+Version 1.5 - Mar 4, 2002
+
+	* Fix: support usb network interfaces
+	* Fix: include redhat spec file in autoconf build system
+	* Fix: minor fixes to natsemi register dump
+	* Feature: report advertised as well as supported media,
+	  when printing device settings.
+
+Version 1.4 - Nov 19, 2001
+
+	* Support builds on configurations missing SIOCETHTOOL constant.
+	* Import ethtool.h from kernel 2.4.15-pre6.
+	* Support retrieval/setting of per-driver debug levels
+	  (ETHTOOL G/SMSGLVL)
+	* Support pretty-printing register dumps on natsemi, de2104x
+	  (ETHTOOL GREGS)
+	* Support restarting autonegotiation (ETHTOOL NWAY_RST)
+	* Support obtaining link status (ETHTOOL GLINK)
+
+Version 1.3 - Aug 02, 2001
+
+	* Support Wake-on-LAN (ETHTOOL GWOL and ETHTOOL SWOL ioctl).
+
+Version 1.2 - May 17, 2001
+
+	* Support ETHTOOL_GDRVINFO ioctl, which obtains
+	  information from the ethernet driver associated
+	  with the specified interface.
+
