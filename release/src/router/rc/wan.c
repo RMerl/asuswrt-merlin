@@ -1356,7 +1356,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 		return;
 	}
 #endif
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 	// had detected the DATA limit before.
 	else if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_DATALIMIT){
 		TRACE_PT("start_wan_if: Data limit was detected and skip the start_wan_if().\n");
@@ -1429,7 +1429,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 		/* Stop dhcp client */
 		stop_udhcpc(unit);
 
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 		unsigned long long rx, tx;
 		unsigned long long total, limit;
 
@@ -1680,7 +1680,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 
 #ifdef RTCONFIG_IPV6
 /* TODO: rewrite enabling/disabling IPv6 */
-		switch (get_ipv6_service_by_unit(unit)) {
+		switch (get_ipv6_service()) {
 		case IPV6_NATIVE_DHCP:
 		case IPV6_MANUAL:
 #ifdef RTCONFIG_6RELAYD
@@ -1707,7 +1707,7 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 #ifdef RTCONFIG_IPV6
 /* TODO: rewrite syncing MAC with enabled IPv6 */
 #ifdef RTCONFIG_RALINK
-		switch (get_ipv6_service_by_unit(unit)) {
+		switch (get_ipv6_service()) {
 		case IPV6_NATIVE_DHCP:
 		case IPV6_MANUAL:
 #ifdef RTCONFIG_6RELAYD
@@ -2042,7 +2042,7 @@ stop_wan_if(int unit)
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_DATALIMIT)
 		end_wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
 #endif
@@ -2068,6 +2068,22 @@ stop_wan_if(int unit)
 		killall_tk("stats");
 		killall_tk("ntpclient");
 
+#ifdef RTCONFIG_IPV6
+		switch (get_ipv6_service()) {
+		case IPV6_NATIVE_DHCP:
+		case IPV6_MANUAL:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
+			if (strcmp(wan_proto, "dhcp") != 0 && strcmp(wan_proto, "static") != 0 &&
+			    nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp"))
+				break;
+			/* fall through */
+		default:
+			stop_wan6();
+			break;
+		}
+#endif
 		/* Shutdown and kill all possible tasks */
 #if 0
 		killall_tk("ip-up");
@@ -2525,7 +2541,7 @@ void start_wan6(void)
 	char prefix[] = "wanXXXXXXXXXX_";
 	char *wan_proto;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit_ipv6());
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
 	wan_proto = nvram_get(strcat_r(prefix, "proto", tmp));
 
 	switch (get_ipv6_service()) {
@@ -2575,7 +2591,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 
 #ifdef RTCONFIG_IPV6
 		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
-		if (wan_unit == wan_primary_ifunit_ipv6()) {
+		if (wan_unit == wan_primary_ifunit()) {
 			switch (get_ipv6_service()) {
 			case IPV6_NATIVE_DHCP:
 			case IPV6_MANUAL:
@@ -2680,7 +2696,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		add_dhcp_routes(prefix, wan_ifname, 0);
 
 #ifdef RTCONFIG_IPV6
-	if (wan_unit == wan_primary_ifunit_ipv6()) {
+	if (wan_unit == wan_primary_ifunit()) {
 		switch (get_ipv6_service()) {
 		case IPV6_NATIVE_DHCP:
 		case IPV6_MANUAL:
@@ -2920,7 +2936,7 @@ wan_down(char *wan_ifname)
 
 	_dprintf("%s(%s): %s.\n", __FUNCTION__, wan_ifname, nvram_safe_get(strcat_r(prefix, "dns", tmp)));
 
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_DATALIMIT)
 		end_wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
 #endif
@@ -3329,10 +3345,6 @@ stop_wan(void)
 	}
 #endif
 
-#ifdef RTCONFIG_IPV6
-	stop_wan6();
-#endif
-
 	/* Start each configured and enabled wan connection and its undelying i/f */
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 		stop_wan_if(unit);
@@ -3605,10 +3617,6 @@ int autodet_main(int argc, char *argv[]){
 		}
 		else if(status == 2){
 			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_WITHPPPOE);
-			continue;
-		}
-		else if(is_ip_conflict(unit)){
-			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_OK);
 			continue;
 		}
 

@@ -307,7 +307,7 @@ char *ipv6_nvname_by_unit(const char *name, int unit)
 
 char *ipv6_nvname(const char *name)
 {
-	return ipv6_nvname_by_unit(name, wan_primary_ifunit_ipv6());
+	return ipv6_nvname_by_unit(name, wan_primary_ifunit());
 }
 
 int get_ipv6_service_by_unit(int unit)
@@ -341,7 +341,7 @@ int get_ipv6_service_by_unit(int unit)
 
 int get_ipv6_service(void)
 {
-	return get_ipv6_service_by_unit(wan_primary_ifunit_ipv6());
+	return get_ipv6_service_by_unit(wan_primary_ifunit());
 }
 
 const char *ipv6_router_address(struct in6_addr *in6addr)
@@ -776,7 +776,7 @@ const char *get_wanface(void)
 #ifdef RTCONFIG_IPV6
 const char *get_wan6face(void)
 {
-	return get_wan6_ifname(wan_primary_ifunit_ipv6());
+	return get_wan6_ifname(wan_primary_ifunit());
 }
 
 int update_6rd_info(void)
@@ -788,7 +788,7 @@ int update_6rd_info(void)
 	if (get_ipv6_service() != IPV6_6RD || !nvram_get_int(ipv6_nvname("ipv6_6rd_dhcp")))
 		return -1;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit_ipv6());
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
 
 	value = nvram_safe_get(strcat_r(prefix, "6rd_prefix", tmp));
 	if (*value ) {

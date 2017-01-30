@@ -1901,7 +1901,7 @@ static int webdav_has_lock(server *srv, connection *con, plugin_data *p, buffer 
 }
 
 //- 20111209 Sungmin add
-static const char* change_webdav_file_path(server *srv, connection *con, const char* source, const char* out)
+static const char* change_webdav_file_path(server *srv, connection *con, const char* source)
 {
 	UNUSED(con);
 	
@@ -1923,7 +1923,8 @@ static const char* change_webdav_file_path(server *srv, connection *con, const c
 
 			data_string *ds = (data_string *)alias->data[j];			
 			if( strncmp(source, ds->key->ptr, ds->key->used-1) == 0 ){
-				char* buff = replace_str(source, ds->key->ptr, ds->value->ptr, out);
+				char buff[4096];
+				replace_str(source, ds->key->ptr, ds->value->ptr, buff );				
 				array_free(alias);
 				return buff;
 			}
@@ -2110,7 +2111,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		char* usbdisk_rel_path=NULL;
 		char* usbdisk_share_folder=NULL;
 		int qry_type=0;
-		
+		Cdbg(1, "con->physical.path->ptr=%s", con->physical.path->ptr);
 		smbc_parse_mnt_path(con->physical.path->ptr, 
 						    p->mnt_path->ptr, 
 						    p->mnt_path->used-1, 
@@ -2288,13 +2289,13 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 					if(con->share_link_shortpath->used){
 						char buff[4096];
-						replace_str(&d.rel_path->ptr[0], 
+						char* tmp = replace_str(&d.rel_path->ptr[0], 
 							                    (char*)con->share_link_realpath->ptr, 
 							                    (char*)con->share_link_shortpath->ptr, 
-							        buff);
+							                    (char *)&buff[0]);
 						
 						buffer_append_string(b, "/");
-						buffer_append_string_encoded(b, buff, strlen(buff), ENCODING_REL_URI);
+						buffer_append_string_encoded(b, tmp, strlen(tmp), ENCODING_REL_URI);
 					}
 					else{
 						//Cdbg(DBE, "d.rel_path=%s", d.rel_path->ptr);
@@ -2801,7 +2802,10 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			char* a;
 			if (NULL != ( a = strstr(p->uri.path->ptr, con->share_link_shortpath->ptr))){
 				char buff[4096];
-				replace_str(a, con->share_link_shortpath->ptr, con->share_link_realpath->ptr, buff);
+				replace_str( a,
+					         con->share_link_shortpath->ptr, 
+					         con->share_link_realpath->ptr, 
+					         buff );
 				buffer_copy_string( p->uri.path, buff );
 			}
 			else{
@@ -2811,9 +2815,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		}
 		
 		//- 20111209 Sungmin add
-		char buff[4096];
-		memset(buff, 0, sizeof(buff));
-		buffer_copy_string(p->uri.path, change_webdav_file_path(srv, con, p->uri.path->ptr, buff));
+		buffer_copy_string(p->uri.path, change_webdav_file_path(srv, con, p->uri.path->ptr));
 		
 		/* we now have a URI which is clean. transform it into a physical path */
 		buffer_copy_buffer(p->physical.doc_root, con->physical.doc_root);
@@ -4292,19 +4294,27 @@ propmatch_cleanup:
 		else if( buffer_is_equal_string(media_type, CONST_STR_LEN("0")) ){
 			sprintf(sql_query, "%s where d.MIME glob 'i*' or d.MIME glob 'a*' or d.MIME glob 'v*'", sql_query);
 		}
-	
+
+		#if 0
+		if(!buffer_is_empty(keyword)){			
+			buffer_urldecode_path(keyword);
+			sprintf(sql_query, "%s and ( PATH LIKE '%s%s%s' or TITLE LIKE '%s%s%s' )", sql_query, "%", keyword->ptr, "%", "%", keyword->ptr, "%");			
+		}
+		#else
 		if(!buffer_is_empty(keyword)){			
 			buffer_urldecode_path(keyword);
 
 			if(strstr(keyword->ptr, "*")||strstr(keyword->ptr, "?")){
 				char buff[4096];
-				replace_str(keyword->ptr, "*", "%", buff);
-				replace_str(buff, "?", "_", buff);
-				sprintf(sql_query, "%s and ( PATH LIKE '%s' or TITLE LIKE '%s' )", sql_query, buff, buff);
+				char* tmp = replace_str(keyword->ptr, "*", "%", (char *)&buff[0]);
+				tmp = replace_str(tmp, "?", "_", (char *)&buff[0]);
+				 
+				sprintf(sql_query, "%s and ( PATH LIKE '%s' or TITLE LIKE '%s' )", sql_query, tmp, tmp); 
 			}
 			else
 				sprintf(sql_query, "%s and ( PATH LIKE '%s%s%s' or TITLE LIKE '%s%s%s' )", sql_query, "%", keyword->ptr, "%", "%", keyword->ptr, "%");
 		}
+		#endif
 		
 		if(!buffer_is_empty(parentid)){
 			sprintf(sql_query, "%s and o.PARENT_ID='%s'", sql_query, parentid->ptr );			
@@ -4526,9 +4536,16 @@ propmatch_cleanup:
 			
 			char buff[4096];
 			#if EMBEDDED_EANBLE
-			replace_str(&plpath[0], "tmp/mnt", usbdisk_name, buff);
+			char* tmp = replace_str(&plpath[0], 
+			                    	"tmp/mnt", 
+			                    	usbdisk_name, 
+				                	(char *)&buff[0]);
 			#else
-			replace_str(&plpath[0], "mnt", usbdisk_name, buff);
+			char* tmp = replace_str(&plpath[0], 
+			                    	"mnt", 
+			                    	usbdisk_name, 
+				                	(char *)&buff[0]);
+			
 			#endif
 
 			//Cdbg(DBE, "tmp=%s, con->url.path=%s", tmp, con->url.path->ptr);
@@ -4549,7 +4566,7 @@ propmatch_cleanup:
 			buffer_append_string_buffer(b, con->uri.scheme);
 			buffer_append_string_len(b,CONST_STR_LEN("://"));
 			buffer_append_string_buffer(b, con->uri.authority);
-			buffer_append_string_encoded(b, buff, strlen(buff), ENCODING_REL_URI);						
+			buffer_append_string_encoded(b, tmp, strlen(tmp), ENCODING_REL_URI);						
 			buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
 			
 			if (!buffer_is_empty(prop_200)) {
@@ -5026,17 +5043,24 @@ propmatch_cleanup:
 					#ifdef APP_IPKG
 					free(a);
 					#endif
-					replace_str(&filepath[0], "tmp/mnt", usbdisk_name, buff);
+					char* tmp = replace_str(&filepath[0], 
+					                    	"tmp/mnt", 
+					                    	usbdisk_name, 
+						                	(char *)&buff[0]);
 					#else
 					usbdisk_name = (char*)malloc(8);
 					memset(usbdisk_name,'\0', 8);
 					strcpy(usbdisk_name, "usbdisk");
-					replace_str(&filepath[0], "mnt", usbdisk_name, buff);
+					char* tmp = replace_str(&filepath[0], 
+					                    	"mnt", 
+					                    	usbdisk_name, 
+						                	(char *)&buff[0]);
+					
 					#endif
 
 					buffer* buffer_filepath = buffer_init();
 					buffer_copy_string(buffer_filepath, "");
-					buffer_append_string_encoded(buffer_filepath, buff, strlen(buff), ENCODING_REL_URI);
+					buffer_append_string_encoded(buffer_filepath,tmp,strlen(tmp),ENCODING_REL_URI);
 										
 					Cdbg(DBE, "filename=%s, filepath=%s", buffer_filename->ptr, buffer_filepath->ptr);
 					

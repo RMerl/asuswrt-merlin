@@ -4,8 +4,6 @@
 
 #ifdef RTCONFIG_DUALWAN
 
-#define FLUSH_INTERVAL 30
-
 #if defined(RTAC88U)
 #define MODEL_PROTECT "RT-AC88U"
 #endif
@@ -158,7 +156,7 @@ int dualwan_control(int argc, char *argv[])
 		f_write_string("/proc/sys/net/ipv4/route/flush", "1", 0, 0);
 		f_write_string("/proc/sys/net/ipv4/route/flush", "1", 0, 0);
 		f_write_string("/proc/sys/net/ipv4/route/flush", "1", 0, 0);
-		sleep(FLUSH_INTERVAL);
+		sleep(1);
 	}
 
 EXIT:

@@ -83,8 +83,6 @@ char* nvram_get_value(const char* key);
 
 int check_aicloud_db(const char* username, const char* password);
 
-/* for hostspot module */
-char* nvram_get_uamsecret(const char *str);
 
 
 

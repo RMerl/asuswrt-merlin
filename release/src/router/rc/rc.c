@@ -996,7 +996,7 @@ int main(int argc, char **argv)
 	else if(!strcmp(base, "write_3g_ppp_conf")){
 		return write_3g_ppp_conf();
 	}
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 	else if(!strcmp(base, "lplus")){
 		if(argc != 3){
 			printf("Usage: %s <integer1> <integer2>.\n", argv[0]);

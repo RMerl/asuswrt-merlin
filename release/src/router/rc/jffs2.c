@@ -70,11 +70,6 @@ unsigned int get_root_type(void)
 		case MODEL_RTN65U:
 		case MODEL_RTN14U: // it should be better to use LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 		case MODEL_RTAC51U:
-		case MODEL_RTN54U:
-		case MODEL_RTAC54U:
-		case MODEL_RTN56UB1:
-		case MODEL_RTN56UB2:
-		case MODEL_RTAC1200HP:
 		case MODEL_RTAC1200G:
 		case MODEL_RTAC1200GP:
 			return 0x73717368;	/* squashfs */

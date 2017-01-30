@@ -42,46 +42,6 @@ struct nvram_tuple router_defaults[] = {
 	//Use to do force submit form request
 	{ "force_change", "0" },
 
-	//NVRAM for fbwifi
-#ifdef RTCONFIG_FBWIFI
-	{ "fbwifi_enable",				"off"			},
-	{ "fbwifi_2g",					"off"			},
-	{ "fbwifi_5g",					"off"			},
-#if defined (RTAC3200)
-	{ "fbwifi_5g_2",				"off"			},
-	{ "fbwifi_ssid_2_temp",			""				},
-	{ "fbwifi_auth_mode_x_2_temp",	"open"			},
-	{ "fbwifi_crypto_2_temp",		"aes"			},
-	{ "fbwifi_wpa_psk_2_temp",		""				},
-	{ "fbwifi_macmode_2_temp",		"disabled"		},
-	{ "fbwifi_lanaccess_2_temp",	"off"			},
-	{ "fbwifi_expire_2_temp",		"0"				},
-	{ "fbwifi_5g_2_temp",			"off"			},
-#endif
-	{ "fbwifi_secret",				""				},
-	{ "fbwifi_id",					"off"			},
-	{ "fbwifi_ssid",				"ASUS-FBWiFi"	},
-	{ "fbwifi_auth_mode_x",			"open"			},
-	{ "fbwifi_crypto",				"aes"			},
-	{ "fbwifi_wpa_psk",				""				},
-	{ "fbwifi_ssid_0_temp",			""				},
-	{ "fbwifi_auth_mode_x_0_temp",	"open"			},
-	{ "fbwifi_crypto_x_0_temp",		"aes"			},
-	{ "fbwifi_wpa_psk_0_temp",		""				},
-	{ "fbwifi_macmode_0_temp",		"disabled"		},
-	{ "fbwifi_lanaccess_0_temp",	"off"			},
-	{ "fbwifi_expire_0_temp",		"0"				},
-	{ "fbwifi_ssid_1_temp",			""				},
-	{ "fbwifi_auth_mode_x_1_temp",	"open"			},
-	{ "fbwifi_crypto_1_temp",		"aes"			},
-	{ "fbwifi_wpa_psk_1_temp",		""				},
-	{ "fbwifi_macmode_1_temp",		"disabled"		},
-	{ "fbwifi_lanaccess_1_temp",	"off"			},
-	{ "fbwifi_expire_1_temp",		"0"				},
-	{ "fbwifi_2g_temp",				"off"			},
-	{ "fbwifi_5g_temp",				"off"			},
-#endif
-
 	// NVRAM for switch
 	{ "switch_stb_x", "0" }, 		// oleg patch
 	{ "switch_wantag", "none" },		//for IPTV/VoIP case
@@ -108,7 +68,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_RALINK
 #elif defined(RTCONFIG_QCA)
 #else
-	{ "wl_phytype", "n", 0 },		/* Current wireless band ("a" (5 GHz),
+	{ "wl_phytype", "b", 0 },		/* Current wireless band ("a" (5 GHz),
  						 * "b" (2.4 GHz), or "g" (2.4 GHz))
 						 */
 	{ "wl_corerev", "", 0 },		/* Current core revision */
@@ -210,15 +170,19 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_bss_opmode_cap_reqd", "0", 0 },
 #endif
+#if defined(RTCONFIG_BCM9)
 	{ "wl_rxchain_pwrsave_enable", "1", 0 },/* Rxchain powersave enable */
+#else
+	{ "wl_rxchain_pwrsave_enable", "0", 0 },/* Rxchain powersave enable */
+#endif
 	{ "wl_rxchain_pwrsave_quiet_time", "1800", 0 },	/* Quiet time for power save */
 	{ "wl_rxchain_pwrsave_pps", "10", 0 },	/* Packets per second threshold for power save */
-	{ "wl_rxchain_pwrsave_stas_assoc_check", "1", 0 }, /* STAs associated before powersave */
+	{ "wl_rxchain_pwrsave_stas_assoc_check", "0", 0 }, /* STAs associated before powersave */
 	{ "wl_radio_pwrsave_enable", "0", 0 },	/* Radio powersave enable */
 	{ "wl_radio_pwrsave_quiet_time", "1800", 0 },	/* Quiet time for power save */
 	{ "wl_radio_pwrsave_pps", "10", 0 },	/* Packets per second threshold for power save */
 	{ "wl_radio_pwrsave_level", "0", 0 },	/* Radio power save level */
-	{ "wl_radio_pwrsave_stas_assoc_check", "1", 0 }, /* STAs associated before powersave */
+	{ "wl_radio_pwrsave_stas_assoc_check", "0", 0 }, /* STAs associated before powersave */
 #endif
 	{ "wl_mode", "ap", 0 },			/* AP mode (ap|sta|wds) */
 #ifdef RTCONFIG_RALINK
@@ -707,7 +671,7 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_BCMWL6
 	{ "acs_ifnames", "", 0 },
-	{ "acs_dfs", "1", 0 },			/* enable DFS channels for acsd by default */
+	{ "acs_dfs", "1", 0 },			/* disable DFS channels for acsd by default */
 	{ "acs_band1", "0", 0 },
 	{ "acs_band3", "0", 0 },
 	{ "acs_ch13", "0", 0 },
@@ -725,9 +689,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_atf", "1", 0 }, 			/* Airtime Fairness */
 #else
 	{ "wl_atf", "0", 0 },
-#endif
-#ifdef DHD_56 //RTCONFIG_BCM_7114
-	{ "wl_atf_delay_disable", "1", 0},	/* delay scheme to reserve air time for the idle flowring */
 #endif
 #endif
 
@@ -1220,7 +1181,7 @@ struct nvram_tuple router_defaults[] = {
 	{"dslx_testlab", "disable" }, //Country-Specific Setting for AU or GB, default = disable.
 	{ "dslx_annex", "4" }, // Annex AIJLM(EnumAdslTypeA_I_J_L_M)
 #endif
-	{ "dslx_ginp", "1" },
+	{ "dslx_ginp", "0" },
 	{ "dslx_dla_enable", "1" },
 	{ "dslx_diag_enable", "0" },
 	{ "dslx_diag_duration", "0" },
@@ -1899,6 +1860,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "LED_switch_count", "1" },
 #endif
 #endif
+#ifdef RTCONFIG_TURBO
+	{ "btn_turbo", "1" },
+#endif
 #if defined(RTCONFIG_SWMODE_SWITCH)
 #if defined(PLAC66U)
 	{ "switch_mode", "0" },
@@ -2024,6 +1988,11 @@ struct nvram_tuple router_defaults[] = {
 	{"upnp_min_port_ext", "1" },
 	{"upnp_max_port_ext", "65535" },
 	{"mfp_ip_monopoly", "" },
+	#if (!defined(W7_LOGO) && !defined(WIFI_LOGO))
+	{"telnetd", "0" },
+	#else
+	{"telnetd", "1" },
+	#endif
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	{"pptpd_enable", 	"0" },
@@ -2434,7 +2403,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client_enforce",		"0"		},
 #endif
 
-#if defined(RTCONFIG_PUSH_EMAIL) || defined(RTCONFIG_NOTIFICATION_CENTER)
+#ifdef RTCONFIG_PUSH_EMAIL
 	{ "PM_enable", "0" },				/* Enable Push Mail feature. */
 	{ "PM_type", "0" },				/* Send the tracking to the of xDSL team's official gmail. */
 	{ "PM_SMTP_SERVER", "" },
@@ -4878,6 +4847,12 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:ledbh10", "7", 0 },
 	{ "1:ledbh10", "7", 0 },
+#ifdef RTCONFIG_LEDARRAY
+	{ "0:ledbh0", "7", 0 },
+	{ "0:ledbh9", "7", 0 },
+	{ "1:ledbh0", "7", 0 },
+	{ "1:ledbh9", "7", 0 },
+#endif
 	{ "0:temps_period", "5", 0 },
 	{ "0:tempthresh", "120", 0 },
 	{ "0:temps_hysteresis", "5", 0 },

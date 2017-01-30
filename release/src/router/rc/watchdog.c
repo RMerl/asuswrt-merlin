@@ -216,13 +216,6 @@ extern int no_need_to_start_wps();
 
 void led_control_normal(void)
 {
-#ifdef RTAC87U
-        LED_switch_count = nvram_get_int("LED_switch_count");
-#endif
-#ifdef RTCONFIG_LED_BTN
-	if (!nvram_get_int("AllLED")) return;
-#endif
-
 #ifdef RTCONFIG_WPS_LED
 	int v = LED_OFF;
 	// the behavior in normal when wps led != power led
@@ -236,10 +229,12 @@ void led_control_normal(void)
 #endif
 	// in case LED_WPS != LED_POWER
 
-	led_control(LED_POWER, LED_ON);
-#ifdef RTCONFIG_LOGO_LED
-	led_control(LED_LOGO, LED_ON);
+#if defined(RTCONFIG_LED_BTN) && defined(RTAC87U)
+	LED_switch_count = nvram_get_int("LED_switch_count");
+	if (nvram_get_int("AllLED") == 0) return;
 #endif
+
+	led_control(LED_POWER, LED_ON);
 
 #if defined(RTN11P) || defined(RTN300)
 	led_control(LED_WPS, LED_ON);	//wps led is also 2g led. and NO power led.
@@ -247,6 +242,7 @@ void led_control_normal(void)
 	if (nvram_get_int("led_pwr_gpio") != nvram_get_int("led_wps_gpio"))
 		led_control(LED_WPS, LED_OFF);
 #endif
+
 }
 
 void erase_nvram(void)
@@ -341,12 +337,18 @@ void btn_check(void)
 			nvram_set("btn_wifi_toggle", "1");
 		}
 #endif
+#ifdef RTCONFIG_TURBO
+		if (button_pressed(BTN_TURBO))
+		{
+			TRACE_PT("button TURBO pressed\n");
+			nvram_set("btn_turbo", "1");
+		}
+#endif
 #ifdef RTCONFIG_LED_BTN /* currently for RT-AC68U only */
 #if defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 		if (!button_pressed(BTN_LED))
 #elif defined(RTAC68U)
-		if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-			|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+		if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 			;
 		else if (((!nvram_match("cpurev", "c0") || nvram_get_int("PA") == 5023) && button_pressed(BTN_LED)) ||
 			   (nvram_match("cpurev", "c0") && nvram_get_int("PA") != 5023 && !button_pressed(BTN_LED)))
@@ -732,14 +734,19 @@ void btn_check(void)
 	}
 #endif
 
+#ifdef RTCONFIG_TURBO
+	if (button_pressed(BTN_TURBO))
+	{
+		TRACE_PT("button BTN_TURBO pressed\n");
+	}
+#endif
 #ifdef RTCONFIG_LED_BTN
 	LED_status_old = LED_status;
 	LED_status = button_pressed(BTN_LED);
 
 #if defined(RTAC68U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 #if defined(RTAC68U)
-	if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-		|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+	if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 		;
 	else if (nvram_match("cpurev", "c0") && nvram_get_int("PA") != 5023) {
 		if (!LED_status &&
@@ -818,8 +825,7 @@ void btn_check(void)
 			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 #else
 #ifdef RTAC68U
-			if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-				|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+			if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
 				kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 			else
 #endif
@@ -862,8 +868,13 @@ void btn_check(void)
 				led_control(LED_5G, LED_ON);
 			}
 #endif
-#ifdef RTCONFIG_LOGO_LED
-			led_control(LED_LOGO, LED_ON);
+#ifdef RTCONFIG_TURBO
+			if (nvram_match("wl0_radio", "1") || nvram_match("wl1_radio", "1")
+#ifdef RTAC3200
+				|| nvram_match("wl2_radio", "1")
+#endif
+			)
+				led_control(LED_TURBO, LED_ON);
 #endif
 			kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
 		}

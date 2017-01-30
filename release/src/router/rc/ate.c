@@ -1100,6 +1100,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+#ifdef RTCONFIG_TURBO
+	else if (!strcmp(command, "Get_Turbo")) {
+		puts(nvram_safe_get("btn_turbo"));
+		return 0;
+	}
+#endif
 #ifdef RTCONFIG_LED_BTN
 	else if (!strcmp(command, "Get_LedButtonStatus")) {
 		puts(nvram_safe_get("btn_led"));

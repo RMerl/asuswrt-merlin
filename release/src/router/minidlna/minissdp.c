@@ -255,7 +255,6 @@ SendSSDPResponse(int s, struct sockaddr_in sockname, int st_no,
 	DPRINTF(E_DEBUG, L_SSDP, "Sending M-SEARCH response to %s:%d ST: %s\n",
 		inet_ntoa(sockname.sin_addr), ntohs(sockname.sin_port),
 		known_service_types[st_no]);
- 
 	n = sendto(s, buf, l, 0,
 	           (struct sockaddr *)&sockname, sizeof(struct sockaddr_in) );
 	if (n < 0)
@@ -607,7 +606,6 @@ ProcessSSDPRequest(int s, unsigned short port)
 			{
 				st = bufr+i+3;
 				st_len = 0;
-
 				while (*st == ' ' || *st == '\t')
 					st++;
 				while (st[st_len]!='\r' && st[st_len]!='\n')

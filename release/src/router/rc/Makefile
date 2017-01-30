@@ -101,10 +101,6 @@ LDFLAGS += -L$(TOP)/wb -lws
 LDFLAGS += -L$(TOP)/push_log -lpush_log
 endif
 
-ifeq ($(RTCONFIG_FBWIFI),y)
-LDFLAGS += -L$(TOP)/fb_wifi -lfbwifi
-endif
-
 ifeq ($(RTCONFIG_NOTIFICATION_CENTER),y)
 CFLAGS  += -I$(TOP)/sqlite
 CFLAGS  += -I$(TOP)/nt_center/lib
@@ -140,8 +136,7 @@ LDFLAGS += $(EXTRA_LDFLAGS)
 
 OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o #mtd.o
 OBJS += firewall.o ppp.o services.o common.o
-OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o
-OBJS += format.o
+OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o #cpu.o
 ifeq ($(RTAC1200G),y)
 OBJS += mtd_sflash.o
 else
@@ -326,7 +321,7 @@ endif
 
 
 ifeq ($(RTCONFIG_HTTPS),y)
-ifeq ($(or $(RTCONFIG_PUSH_EMAIL),$(RTCONFIG_NOTIFICATION_CENTER)),y)
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 OBJS += pwdec.o
 endif
 endif

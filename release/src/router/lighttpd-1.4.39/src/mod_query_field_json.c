@@ -15,13 +15,9 @@
 #endif
 
 #ifdef EMBEDDED_EANBLE
-#ifndef APP_IPKG
 //#ifdef RTCONFIG_USB
 #include <disk_initial.h>
 //#endif
-#else
-#include "disk_data.h"
-#endif
 #endif
 
 #define DBE 1

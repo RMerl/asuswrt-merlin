@@ -566,7 +566,7 @@ URIHANDLER_FUNC(mod_staticfile_subrequest) {
 }
 
 /* this function is called at dlopen() time and inits the callbacks */
-//#ifndef APP_IPKG
+#ifndef APP_IPKG
 int mod_staticfile_plugin_init(plugin *p);
 int mod_staticfile_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -581,8 +581,7 @@ int mod_staticfile_plugin_init(plugin *p) {
 
 	return 0;
 }
-//#else
-/*
+#else
 int aicloud_mod_staticfile_plugin_init(plugin *p);
 int aicloud_mod_staticfile_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -596,5 +595,5 @@ int aicloud_mod_staticfile_plugin_init(plugin *p) {
 	p->data        = NULL;
 
 	return 0;
-}*/
-//#endif
+}
+#endif
