@@ -1268,7 +1268,9 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 	char *type, *ptr;
 	static char *swp_argv[] = { "swapon", "-a", NULL };
 	struct mntent *mnt;
+#if defined(RTCONFIG_USB_MODEM) || defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 	char command[PATH_MAX];
+#endif
 
 	if ((type = detect_fs_type(dev_name)) == NULL)
 		return 0;
@@ -2351,15 +2353,12 @@ void start_dms(void)
 	FILE *f;
 	int port, pid;
 	char dbdir[100];
-	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL , NULL};
+	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL, NULL, NULL };
 	static int once = 1;
 	int i, j;
 	char serial[18];
 	char *nv, *nvp, *b, *c;
 	char *nv2, *nvp2;
-	int dircount = 0, typecount = 0, sharecount = 0;
-	char dirlist[32][1024];
-	unsigned char typelist[32];
 	unsigned char type = 0;
 	char types[5];
 	int index = 4;
@@ -2381,8 +2380,7 @@ void start_dms(void)
 	if (nvram_get_int("dms_enable") != 0) {
 
 		if (/*(!once) &&*/ (nvram_get_int("dms_rebuild") == 0)) {
-			if (check_if_file_exist("/usr/sbin/minidlna"))	// non-destructive rescan
-				argv[--index] = "-r";
+			argv[index - 1] = "-r";
 		}
 
 		if ((f = fopen(argv[2], "w")) != NULL) {
@@ -2403,60 +2401,12 @@ void start_dms(void)
 				strdup(nvram_safe_get("dms_dir_type_x")) :
 				strdup(nvram_default_get("dms_dir_type_x"));
 
-			if (nvram_get_int("dms_dir_manual") && nv) {
-				while ((b = strsep(&nvp, "<")) != NULL) {
-					if (!strlen(b)) continue;
-
-					if (check_if_dir_exist(b))
-						strncpy(dirlist[dircount++], b, 1024);
-				}
-			}
-
-			if (nvram_get_int("dms_dir_manual") && dircount && nv2) {
-				while ((c = strsep(&nvp2, "<")) != NULL) {
-					if (!strlen(c)) continue;
-
-					type = 0;
-					while (*c)
-					{
-						if (*c == ',')
-							break;
-
-						if (*c == 'A' || *c == 'a')
-							type |= TYPE_AUDIO;
-						else if (*c == 'V' || *c == 'v')
-							type |= TYPE_VIDEO;
-						else if (*c == 'P' || *c == 'p')
-							type |= TYPE_IMAGES;
-						else
-							type = ALL_MEDIA;
-
-						c++;
-					}
-
-					typelist[typecount++] = type;
-				}
-			}
-
-			if (nv) free(nv);
-			if (nv2) free(nv2);
-#if 0
-			if (!dircount)
-#else
-			if (!nvram_get_int("dms_dir_manual"))
-#endif
-			{
-				strcpy(dirlist[dircount++], nvram_default_get("dms_dir"));
-				typelist[typecount++] = ALL_MEDIA;
-			}
-
 			memset(dbdir, 0, sizeof(dbdir));
 			find_dms_dbdir(dbdir);
 
 			if (strlen(dbdir))
 				mkdir_if_none(dbdir);
-			if (!check_if_dir_exist(dbdir))
-			{
+			if (!check_if_dir_exist(dbdir)) {
 				strcpy(dbdir, nvram_default_get("dms_dbdir"));
 				mkdir_if_none(dbdir);
 			}
@@ -2495,14 +2445,33 @@ void start_dms(void)
 				fprintf(f, "%s://%s:%d/\n", "http", nvram_safe_get("lan_ipaddr"), /*nvram_get_int("http_lanport") ? :*/ 80);
 			}
 
-			for (i = 0; i < dircount; i++)
-			{
-				type = typelist[i];
+                        if (!nvram_get_int("dms_dir_manual"))
+				fprintf(f, "media_dir=%s\n", nvram_default_get("dms_dir"));
+			else
+			while ((b = strsep(&nvp, "<")) != NULL && (c = strsep(&nvp2, "<")) != NULL) {
+				if (!strlen(b)) continue;
+				if (!strlen(c)) continue;
+
+				type = 0;
+				while (*c) {
+					if (*c == ',')
+						break;
+
+					if (*c == 'A' || *c == 'a')
+						type |= TYPE_AUDIO;
+					else if (*c == 'V' || *c == 'v')
+						type |= TYPE_VIDEO;
+					else if (*c == 'P' || *c == 'p')
+						type |= TYPE_IMAGES;
+					else
+						type = ALL_MEDIA;
+
+					c++;
+				}
 
 				if (type == ALL_MEDIA)
 					types[0] = 0;
-				else
-				{
+				else {
 					j = 0;
 					if (type & TYPE_AUDIO)
 						types[j++] = 'A';
@@ -2515,22 +2484,13 @@ void start_dms(void)
 					types[j] =  0;
 				}
 
-				if (check_if_dir_exist(dirlist[i]))
-				{
-					fprintf(f,
-						"media_dir=%s%s\n",
-						types,
-						dirlist[i]);
-
-					sharecount++;
-				}
+				if ((strlen(b) <= PATH_MAX) && check_if_dir_exist(b))
+					fprintf(f, "media_dir=%s%s\n", types, b);
 			}
-#if 0
-			if (!sharecount)
-			fprintf(f,
-				"media_dir=%s\n",
-				nvram_default_get("dms_dir"));
-#endif
+
+			if (nv) free(nv);
+			if (nv2) free(nv2);
+
 			fprintf(f,
 				"serial=%s\n"
 				"model_number=%s.%s\n",
@@ -2542,10 +2502,11 @@ void start_dms(void)
 			fclose(f);
 		}
 
-		dircount = 0;
-
 		if (nvram_get_int("dms_dbg"))
 			argv[index++] = "-v";
+
+		if (nvram_get_int("dms_web"))
+			argv[index++] = "-W";
 
 		use_custom_config(MEDIA_SERVER_APP".conf","/etc/"MEDIA_SERVER_APP".conf");
 		run_postconf(MEDIA_SERVER_APP, "/etc/"MEDIA_SERVER_APP".conf");
@@ -2956,7 +2917,7 @@ void start_cloudsync(int fromUI)
 		return;
 	}
 
-	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
+//	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
 
 	if(nvram_match("enable_cloudsync", "0")){
 		logmessage("Cloudsync client", "manually disabled all rules");

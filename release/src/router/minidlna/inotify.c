@@ -50,6 +50,8 @@
 #include "albumart.h"
 #include "playlist.h"
 #include "log.h"
+#include <pthread.h>
+#include <sys/wait.h>
 
 static time_t next_pl_fill = 0;
 
@@ -69,6 +71,9 @@ struct watch
 
 static struct watch *watches;
 static struct watch *lastwatch = NULL;
+
+//add for count audio &video &image number for 8200
+int a, v, p;
 
 char *get_path_from_wd(int wd)
 {
@@ -146,30 +151,120 @@ next_highest(unsigned int num)
 	return(++num);
 }
 
+//add for reduce memory usage
+//inotify add watch by scan folder instead of get folder from sqlite 
+
+#if SCANDIR_CONST
+typedef const struct dirent scan_filter;
+#else
+typedef struct dirent scan_filter;
+#endif
+
+static  int
+filter_hidden(scan_filter *d)
+{
+    return (d->d_name[0] != '.');
+}
+
+int
+add_watch_subdir(int fd,char * dir, unsigned int num_watches)
+{
+    struct dirent **namelist;
+    char *dir_path;
+    int i,n = 0;
+    char *name = NULL;
+
+    //DPRINTF(E_WARN, L_INOTIFY, "scandir  \n");
+
+    n = scandir( dir, &namelist, filter_hidden , alphasort);
+
+    if( n < 0 )
+    {
+        DPRINTF(E_WARN, L_INOTIFY, "Error scanning %s\n", dir);
+        return -1;
+    }
+
+    for( i=0; i < n; i++ )
+    {
+
+
+        dir_path = malloc(strlen(dir)+strlen(namelist[i]->d_name)+2);
+        memset(dir_path,0,strlen(dir)+strlen(namelist[i]->d_name)+2);
+        if (!dir_path)
+        {
+            DPRINTF(E_ERROR, L_INOTIFY, "Memory allocation failed\n");
+            return -1;
+        }
+        sprintf(dir_path, "%s/%s", dir, namelist[i]->d_name);
+
+        //DPRINTF(E_WARN, L_INOTIFY, "sherry--dir_path=%s\n",dir_path);
+        name = escape_tag(namelist[i]->d_name, 1);
+
+        //DPRINTF(E_WARN, L_INOTIFY, "sherry--name=%s\n",name);
+
+        if (strstr(dir_path,"/Download2/InComplete") || strstr(dir_path,"/Download2/Seeds") || strstr(dir_path,"/Download2/config") || strstr(dir_path,"/Download2/action"))
+        {
+            free(name);
+            free(namelist[i]);
+            continue;
+        }
+        if ((strncmp(name,"asusware",8) == 0))//eric added for have no need to scan asusware folder
+        {
+            free(name);
+            free(namelist[i]);
+            continue;
+        }
+        if ((strncmp(name,".minidlna",9) == 0))//sungmin added for have no need to scan minidlna folder
+        {
+            free(name);
+            free(namelist[i]);
+            continue;
+        }
+        if (path_is_dir(dir_path) && is_sys_dir(name))
+        {
+            free(name);
+            free(namelist[i]);
+            continue;
+        }
+        if( (path_is_dir(dir_path)) && (access(dir_path, R_OK|X_OK) == 0) )
+        {
+            DPRINTF(E_WARN, L_INOTIFY, "add_watch--dir_path=%s\n",dir_path);
+            add_watch(fd, dir_path);
+            num_watches++;
+            char dir_path_tmp[strlen(dir_path)+1];
+            sprintf(dir_path_tmp,"%s",dir_path);
+            free(dir_path);
+            dir_path=NULL;
+            num_watches=add_watch_subdir(fd,dir_path_tmp,num_watches);
+        }
+        if(dir_path!=NULL)
+            free(dir_path);
+        free(name);
+        free(namelist[i]);
+    }
+    free(namelist);
+    return num_watches;
+}
+
 int
 inotify_create_watches(int fd)
 {
 	FILE * max_watches;
 	unsigned int num_watches = 0, watch_limit;
-	char **result;
-	int i, rows = 0;
 	struct media_dir_s * media_path;
+	int rows = 0;
 
 	for( media_path = media_dirs; media_path != NULL; media_path = media_path->next )
 	{
 		DPRINTF(E_DEBUG, L_INOTIFY, "Add watch to %s\n", media_path->path);
 		add_watch(fd, media_path->path);
 		num_watches++;
+		DPRINTF(E_WARN, L_INOTIFY, "rows=add_watch_subdir,%u-num_watches\n",num_watches);
+		rows = add_watch_subdir(fd, media_path->path, num_watches);
 	}
-	sql_get_table(db, "SELECT PATH from DETAILS where MIME is NULL and PATH is not NULL", &result, &rows, NULL);
-	for( i=1; i <= rows; i++ )
-	{
-		DPRINTF(E_DEBUG, L_INOTIFY, "Add watch to %s\n", result[i]);
-		add_watch(fd, result[i]);
-		num_watches++;
-	}
-	sqlite3_free_table(result);
-		
+	num_watches=rows;
+	DPRINTF(E_WARN, L_INOTIFY, "rowes=%d, num_watches=%d\n", rows,num_watches);
+
 	max_watches = fopen("/proc/sys/fs/inotify/max_user_watches", "r");
 	if( max_watches )
 	{
@@ -299,6 +394,9 @@ inotify_insert_file(char * name, const char * path)
 	struct media_dir_s * media_path = media_dirs;
 	struct stat st;
 
+    pid_t pid;
+    int stat_val;
+//    pid_t child_pid;
 	/* Is it cover art for another file? */
 	if( is_image(path) )
 		update_if_album_art(path);
@@ -436,7 +534,31 @@ inotify_insert_file(char * name, const char * path)
 	if( !depth )
 	{
 		//DEBUG DPRINTF(E_DEBUG, L_INOTIFY, "Inserting %s\n", name);
-		insert_file(name, path, id+2, get_next_available_id("OBJECTS", id), types);
+        //add for reduce memory usage
+        //use separate process handle insert file
+        pid=fork();
+        switch(pid){
+        case 0:
+            //DPRINTF(E_WARN, L_SCANNER, _("sherry--child process is running, curpid is %d,parent pid is %d\n"),pid, getppid());
+            //DPRINTF(E_WARN, L_SCANNER, _("sherry--name=%s,full_path=%s,parent=%s\n"), name, path ,id);
+            insert_file0(name, path, id+2, get_next_available_id("OBJECTS", id), types);
+            break;
+        case -1:
+            //DPRINTF(E_ERROR, L_SCANNER, _("sherry--process creation failed!\n"));
+            break;
+        default:
+	    break;
+            //DPRINTF(E_WARN, L_SCANNER, _("sherry--parent process is running,childpid is %d,parentpid is %d\n"),pid, getppid());
+
+        }
+        if(pid!=0){//for parent process wait for child process ending
+//            child_pid = wait(&stat_val);
+            wait(&stat_val);
+            //DPRINTF(E_WARN, L_SCANNER, _("sherry--child process has exited pid is %d\n"),pid);
+            //if(!WIFEXITED(stat_val))
+                //DPRINTF(E_WARN, L_SCANNER, _("sherry--child process exited abnormally\n"));
+        }
+
 		sqlite3_free(id);
 		if( (is_audio(path) || is_playlist(path)) && next_pl_fill != 1 )
 		{
@@ -619,6 +741,32 @@ inotify_remove_file(const char * path)
 		sql_exec(db, "DELETE from DETAILS where ID = %lld", detailID);
 		sql_exec(db, "DELETE from OBJECTS where DETAIL_ID = %lld", detailID);
 	}
+    //add for reduce memory usage
+    //count audio &video &image number for 8200
+    if( detailID ){
+        FILE * fp;
+        fp=fopen("/tmp/count","r");
+        if(fp){
+            while (!feof(fp)){
+                fscanf(fp, "%d\n%d\n%d\n", &a,&v,&p);
+            }
+            fclose(fp);
+
+        }
+        if(is_image(path))
+            --p;
+        if(is_audio(path))
+            --a;
+        if(is_video(path))
+            --v;
+
+        fp=fopen("/tmp/count","w");
+        if(fp)
+        {
+            fprintf(fp, "%d\n%d\n%d\n", a,v,p);
+            fclose(fp);
+        }
+    }
 	snprintf(art_cache, sizeof(art_cache), "%s/art_cache%s", db_path, path);
 	remove(art_cache);
 
@@ -652,6 +800,32 @@ inotify_remove_directory(int fd, const char * path)
 				detailID = strtoll(result[i], NULL, 10);
 				sql_exec(db, "DELETE from DETAILS where ID = %lld", detailID);
 				sql_exec(db, "DELETE from OBJECTS where DETAIL_ID = %lld", detailID);
+                //add for reduce memory usage
+                //count audio &video &image number for 8200
+                if( detailID ){
+                    FILE * fp;
+                    fp=fopen("/tmp/count","r");
+                    if(fp){
+                        while (!feof(fp)){
+                            fscanf(fp, "%d\n%d\n%d\n", &a,&v,&p);
+                        }
+                        fclose(fp);
+
+                    }
+                    if(is_image(path))
+                        --p;
+                    if(is_audio(path))
+                        --a;
+                    if(is_video(path))
+                        --v;
+
+                    fp=fopen("/tmp/count","w");
+                    if(fp)
+                    {
+                        fprintf(fp, "%d\n%d\n%d\n", a,v,p);
+                        fclose(fp);
+                    }
+                }
 			}
 			ret = 0;
 		}

@@ -495,6 +495,25 @@ resolve_unknown_type(const char * path, media_types dir_type)
 					if( is_image(path) )
 						type = TYPE_FILE;
 					break;
+#ifdef MS_IPK  //2014.11.13 alan add for add 'Shared Content Type' 
+            case TYPE_AUDIO|TYPE_VIDEO:
+                if( is_audio(path) ||
+                        is_video(path) ||
+                        is_playlist(path) )
+                    type = TYPE_FILE;
+                break;
+            case TYPE_AUDIO|TYPE_IMAGES:
+                if( is_image(path) ||
+                        is_audio(path) ||
+                        is_playlist(path) )
+                    type = TYPE_FILE;
+                break;
+            case TYPE_VIDEO|TYPE_IMAGES:
+                if( is_image(path) ||
+                        is_video(path) )
+                    type = TYPE_FILE;
+                break;
+#endif
 				default:
 					break;
 			}
