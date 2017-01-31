@@ -4898,6 +4898,7 @@ int start_firewall(int wanunit, int lanunit)
 	char wan_if[IFNAMSIZ+1], wan_ip[32], lan_if[IFNAMSIZ+1], lan_ip[32];
 	char wanx_if[IFNAMSIZ+1], wanx_ip[32], wan_proto[16];
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
+	int restart_upnp = 0;
 
 	if (getpid() != 1) {
 		notify_rc("start_firewall");
@@ -4906,6 +4907,11 @@ int start_firewall(int wanunit, int lanunit)
 
 	if (!is_routing_enabled())
 		return -1;
+
+	if (pidof("miniupnpd") != -1) {
+		stop_upnp();
+		restart_upnp = 1;
+	}
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", wanunit);
 
@@ -5237,6 +5243,8 @@ int start_firewall(int wanunit, int lanunit)
 		modprobe_r("xt_HL");
 		modprobe_r("xt_hl");
 	}
+
+	if (restart_upnp) start_upnp();
 
 	run_custom_script("firewall-start", wan_if);
 
