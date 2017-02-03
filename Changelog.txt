@@ -1,25 +1,9 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.65 Beta 4 (xx-xxx-2017)
-   - CHANGED: Reverted most of GPL 4180, as it broke various LAN
-              applications.  The following parts from 4180
-              were kept:
-              httpd, libdisk, minidlna, www and miniupnpd fixes.
-
-
-380.65 beta 3 (xx-xxx-2017)
-   - CHANGED: Updated openssl to 1.0.2k
-   - CHANGED: Updated tor to 0.2.9.9
-   - FIXED: Webui layout was broken under Chrome 56
-   - FIXED: miniupnpd errors at boot time about missing chains.
-            Also streamlined miniupnpd stop/start events during
-            boot, there are fewer of them now.
-
-
-380.65 Beta 1 (15-Jan-2017)
-   - NEW: Merged with Asus GPL 380_4180 (and fixed its broken
-          Network Tools/Connections/etc... pages)
+380.65 (3-Feb-2017)
+   - NEW: Merged with parts of Asus GPL 380_4180, left out
+          most of it because of too many bugs in it.
    - NEW: Upgraded to OpenVPN 2.4.0, and implemented support
           for many of its new features:
             * GCM ciphers
@@ -54,14 +38,18 @@ Asuswrt-Merlin Changelog
    - CHANGED: Removed support for all RC ciphers on OpenVPN.
               DES is staying for now, but should still be avoided
               whenever possible.
-   - CHANGED: Updated Tor to 0.2.9.8 (patch by blackfuel)
+   - CHANGED: Updated openssl to 1.0.2k
+   - CHANGED: Updated tor to 0.2.9.9 (0.2.9.x patch by blackfuel)
    - CHANGED: Updated nano to 2.7.4.
    - CHANGED: hosts file will now give a higher priority to the
               user-configured hostname for the router ahead of
               hardcoded ones (like router.asus.com).
-   - CHANGED: Create a system log entry if new firmware is available.
+   - CHANGED: Create a system log entry if a new firmware 
+              version is available.
    - CHANGED: Display name and icon for clients configured on the
               Tor page.
+   - CHANGED: Streamlined miniupnpd stop/start events during boot,
+              so there are fewer of them now.
    - FIXED: Invalid DUID used when requesting an IPv6 prefix
             for some of the newer router models, which would
             prevent them from getting working IPv6 (Asus bug)
@@ -89,6 +77,7 @@ Asuswrt-Merlin Changelog
    - FIXED: Some models (N66/AC66/AC5300) would reboot 3 times
             if one of the radios was found disabled by the user
             while booting (Asus bug).
+   - FIXED: Webui layout was broken under Chrome 56.
 
 
 380.64_2 (8-Jan-2017)
