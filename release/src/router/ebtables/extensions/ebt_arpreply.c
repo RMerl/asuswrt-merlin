@@ -10,9 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netinet/ether.h>
 #include <getopt.h>
 #include "../include/ebtables_u.h"
+#include <netinet/ether.h>
 #include <linux/netfilter_bridge/ebt_arpreply.h>
 
 static int mac_supplied;

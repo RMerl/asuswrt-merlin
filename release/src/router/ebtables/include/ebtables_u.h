@@ -229,6 +229,8 @@ extern struct ebt_u_match *ebt_matches;
 extern struct ebt_u_watcher *ebt_watchers;
 extern struct ebt_u_target *ebt_targets;
 
+extern int use_lockfd;
+
 void ebt_register_table(struct ebt_u_table *);
 void ebt_register_match(struct ebt_u_match *);
 void ebt_register_watcher(struct ebt_u_watcher *);
@@ -376,4 +378,8 @@ extern int ebt_printstyle_mac;
 #define PROC_SYS_MODPROBE "/proc/sys/kernel/modprobe"
 #endif
 #define ATOMIC_ENV_VARIABLE "EBTABLES_ATOMIC_FILE"
+
+#ifndef ARRAY_SIZE
+# define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
+#endif
 #endif /* EBTABLES_U_H */

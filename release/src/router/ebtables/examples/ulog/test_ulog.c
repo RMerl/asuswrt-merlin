@@ -96,15 +96,15 @@ recv_new:
 		pkts_per_msg = 0;
 		len = recvfrom(sfd, buf, BUFLEN, 0,
 		               (struct sockaddr *)&sa_kernel, &addrlen);
-		if (errno == EINTR)
-			goto recv_new;
 		if (addrlen != sizeof(sa_kernel)) {
-			printf("addrlen %d != %d\n", addrlen,
-			       sizeof(sa_kernel));
+			printf("addrlen %u != %u\n", addrlen,
+			       (uint32_t)sizeof(sa_kernel));
 			exit(-1);
 		}
 		if (len == -1) {
 			perror("recvmsg");
+			if (errno == EINTR)
+				goto recv_new;
 			exit(-1);
 		}
 		nlh = (struct nlmsghdr *)buf;
@@ -281,7 +281,7 @@ truncated_icmp:
 		printf("ICMP_ECHO SEQ NR=%u\n", ntohs(icmph->un.echo.sequence));
 
 letscontinue:
-		printf("===>Total Packet length: %d, of which we examined "
+		printf("===>Total Packet length: %ld, of which we examined "
 		       "%d bytes\n", msg->data_len, curr_len);
 		printf("###############################\n"
 		       "######END#OF##PACKET#DUMP######\n"

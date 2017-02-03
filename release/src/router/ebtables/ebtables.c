@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <signal.h>
 #include "include/ebtables_u.h"
 #include "include/ethernetdb.h"
 
@@ -91,6 +92,7 @@ static struct option ebt_original_options[] =
 	{ "atomic-file"    , required_argument, 0, 9   },
 	{ "atomic-save"    , no_argument      , 0, 10  },
 	{ "init-table"     , no_argument      , 0, 11  },
+	{ "concurrent"     , no_argument      , 0, 13  },
 	{ 0 }
 };
 
@@ -322,7 +324,7 @@ static void list_em(struct ebt_u_entries *entries)
 			uint64_t bcnt = hlp->cnt.bcnt;
 
 			if (replace->flags & LIST_X)
-				printf("-c %llu %llu", pcnt, bcnt);
+				printf("-c %"PRIu64" %"PRIu64, pcnt, bcnt);
 			else
 				printf(", pcnt = %"PRIu64" -- bcnt = %"PRIu64, pcnt, bcnt);
 		}
@@ -374,6 +376,7 @@ static void print_help()
 "--set-counters -c chain\n"
 "          pcnt bcnt           : set the counters of the to be added rule\n"
 "--modprobe -M program         : try to insert modules using this program\n"
+"--concurrent                  : use a file lock to support concurrent scripts\n"
 "--version -V                  : print package version\n\n"
 "Environment variable:\n"
 ATOMIC_ENV_VARIABLE "          : if set <FILE> (see above) will equal its value"
@@ -525,6 +528,12 @@ void ebt_early_init_once()
 	ebt_iterate_targets(merge_target);
 }
 
+/* signal handler, installed when the option --concurrent is specified. */
+static void sighandler(int signum)
+{
+	exit(-1);
+}
+
 /* We use exec_style instead of #ifdef's because ebtables.so is a shared object. */
 int do_command(int argc, char *argv[], int exec_style,
                struct ebt_u_replace *replace_)
@@ -532,7 +541,7 @@ int do_command(int argc, char *argv[], int exec_style,
 	char *buffer;
 	int c, i;
 	int zerochain = -1; /* Needed for the -Z option (we can have -Z <this> -L <that>) */
-	int chcounter; /* Needed for -C */
+	int chcounter = 0; /* Needed for -C */
 	int policy = 0;
 	int rule_nr = 0;
 	int rule_nr_end = 0;
@@ -1036,6 +1045,11 @@ big_iface_length:
 			 * executed in daemon mode */
 			replace->filename = (char *)malloc(strlen(optarg) + 1);
 			strcpy(replace->filename, optarg);
+			break;
+		case 13 : /* concurrent */
+			signal(SIGINT, sighandler);
+			signal(SIGTERM, sighandler);
+			use_lockfd = 1;
 			break;
 		case 1 :
 			if (!strcmp(optarg, "!"))
