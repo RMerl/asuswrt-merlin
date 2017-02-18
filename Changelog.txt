@@ -1,6 +1,10 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.66 beta (xx-xxx-2017)
+   - NEW: Merged with GPL 380_7266.
+
+
 380.65 (3-Feb-2017)
    - NEW: Merged with parts of Asus GPL 380_4180, left out
           most of it because of too many bugs in it.
