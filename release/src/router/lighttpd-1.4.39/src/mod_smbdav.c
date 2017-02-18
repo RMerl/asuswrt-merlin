@@ -47,8 +47,12 @@
 
 #endif
 
+#ifndef APP_IPKG
 #ifdef RTCONFIG_USB
 #include <disk_initial.h>
+#endif
+#else
+#include "disk_data.h"
 #endif
 
 #include <curl/curl.h>
@@ -332,7 +336,82 @@ static int open_close_streaming_port(server* srv, int toOpen){
 #else
 	char* webdav_http_port = "8082";
 #endif
-	
+    #if (defined APP_IPKG) && (defined I686)
+    int i = 0;
+    char *p = NULL;
+    char* actual_s_system = nvram_get_second_system();
+    char* actual_f_system = nvram_get_first_system();
+    char* lan_ip = nvram_get_lan_ip();
+    char* lan_ip_s = nvram_get_lan_ip_s();
+    int length = strlen(lan_ip_s);
+    char *lan_ip_s_tmp = (char *)malloc(strlen(lan_ip_s)+3);
+    char lan_ip_s_bak[length + 1];
+    memset(lan_ip_s_tmp, 0, sizeof(lan_ip_s_tmp));
+    memset(lan_ip_s_bak, 0, sizeof(lan_ip_s_bak));
+    sprintf(lan_ip_s_bak, "%s",lan_ip_s);
+    free(lan_ip_s);
+    p = strtok(lan_ip_s_bak,".");
+    sprintf(lan_ip_s_tmp,"%s",p);
+    while(p != NULL && i < 2)
+    {
+        p = strtok(NULL, ".");
+        sprintf(lan_ip_s_tmp,"%s.%s", lan_ip_s_tmp,p);
+        i++;
+    }
+    sprintf(lan_ip_s_tmp,"%s.0/24", lan_ip_s_tmp);
+
+    if(toOpen==1 && srv->is_streaming_port_opend == 0){
+        //- open streaming port
+
+        //- delete accept rule
+       
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i erouter0 -o rndbr1 -p tcp -d %s --dport %s -j ACCEPT", actual_s_system, lan_ip, webdav_http_port);
+        rc = system(cmd);
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i rndbr1 -s %s -d %s -p tcp --dport %s -j ACCEPT", actual_s_system, lan_ip_s_tmp, lan_ip, webdav_http_port);
+        rc = system(cmd);
+        //- delete drop rule
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i erouter0 -o rndbr1 -p tcp -d %s --dport %s -j DROP", actual_s_system, lan_ip, webdav_http_port);
+        rc = system(cmd);
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i rndbr1 -s %s -d %s -p tcp --dport %s -j DROP", actual_s_system, lan_ip_s_tmp, lan_ip, webdav_http_port);
+        rc = system(cmd);
+
+        //- add accept rule        
+        sprintf(cmd, "%siptables -I BASE_FORWARD_CHAIN -i erouter0 -o rndbr1 -p tcp -d %s --dport %s -j ACCEPT", actual_s_system, lan_ip, webdav_http_port);
+        rc = system(cmd);
+        sprintf(cmd, "%siptables -I BASE_FORWARD_CHAIN -i rndbr1 -s %s -d %s -p tcp --dport %s -j ACCEPT", actual_s_system, lan_ip_s_tmp, lan_ip, webdav_http_port);
+        rc = system(cmd);
+    }
+    else if(toOpen==0 && srv->is_streaming_port_opend == 1){
+        //- close streaming port
+
+        //- check rule is existed?
+        //sprintf(cmd, "iptables -C INPUT -p tcp -m tcp --dport %s -j DROP", webdav_http_port);
+        //Cdbg(DBE, "%s", cmd);
+
+        //- delete accept rule
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i erouter0 -o rndbr1 -p tcp -d %s --dport %s -j ACCEPT", actual_s_system, lan_ip, webdav_http_port);     
+        rc = system(cmd);
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i rndbr1 -s %s -d %s -p tcp --dport %s -j ACCEPT", actual_s_system, lan_ip_s_tmp, lan_ip, webdav_http_port);     
+        rc = system(cmd);
+
+        //- delete drop rule      
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i erouter0 -o rndbr1 -p tcp -d %s --dport %s -j DROP", actual_s_system, lan_ip, webdav_http_port);
+        rc = system(cmd);
+        sprintf(cmd, "%siptables -D BASE_FORWARD_CHAIN -i rndbr1 -s %s -d %s -p tcp --dport %s -j DROP", actual_s_system, lan_ip_s_tmp, lan_ip, webdav_http_port);       
+        rc = system(cmd);
+
+        //- add drop rule        
+        sprintf(cmd, "%siptables -I BASE_FORWARD_CHAIN -i erouter0 -o rndbr1 -p tcp -d %s --dport %s -j DROP", actual_s_system, lan_ip, webdav_http_port);       
+        rc = system(cmd);
+        sprintf(cmd, "%siptables -I BASE_FORWARD_CHAIN -i rndbr1 -s %s -d %s -p tcp --dport %s -j DROP", actual_s_system, lan_ip_s_tmp, lan_ip, webdav_http_port);
+
+        rc = system(cmd);
+    }
+    free(actual_s_system);
+    free(actual_f_system);
+    free(lan_ip);
+    free(lan_ip_s_tmp);
+    #else
 	if(toOpen==1 && srv->is_streaming_port_opend == 0){
 		//- open streaming port
 
@@ -367,7 +446,7 @@ static int open_close_streaming_port(server* srv, int toOpen){
 		sprintf(cmd, "iptables -I INPUT 1 -p tcp -m tcp --dport %s -j DROP", webdav_http_port);
 		rc = system(cmd);
 	}
-	
+    #endif
 	if(rc!=0){
 		return 0;
 	}
@@ -6349,10 +6428,14 @@ propmatch_cleanup:
 		}
 		
 #if EMBEDDED_EANBLE	
-		
+        #if (defined OLEG_ARM) || (defined I686)
+        if( ( has_intermediate_crt_content==1 && system("tar -C / -czf /tmp/cert.tgz etc/cert.pem etc/key.pem etc/intermediate_cert.pem") == 0 ) ||
+                           ( has_intermediate_crt_content==0 && system("tar -C / -czf /tmp/cert.tgz etc/cert.pem etc/key.pem") == 0 ) )
+       #else
         if( ( has_intermediate_crt_content==1 && eval("tar", "-C", "/", "-czf", "/tmp/cert.tgz", "etc/cert.pem", "etc/key.pem", "etc/intermediate_cert.pem") == 0 ) ||
-			( has_intermediate_crt_content==0 && eval("tar", "-C", "/", "-czf", "/tmp/cert.tgz", "etc/cert.pem", "etc/key.pem") == 0 ) )
-        {
+                           ( has_intermediate_crt_content==0 && eval("tar", "-C", "/", "-czf", "/tmp/cert.tgz", "etc/cert.pem", "etc/key.pem") == 0 ) )
+        #endif
+{
         	Cdbg(DBE, "nvram_setfile_https_crt_file");
 
             if (nvram_setfile_https_crt_file("/tmp/cert.tgz", 8192)) {

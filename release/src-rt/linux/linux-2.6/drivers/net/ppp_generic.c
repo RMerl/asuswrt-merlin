@@ -2916,13 +2916,17 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 }
 
 int
-ppp_get_conn_pkt_info(int unit, struct ctf_ppp *ctfppp){
+ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
 	struct pppox_sock *po = NULL;
 	struct sock *sk = NULL;
 	struct ppp *ppp = NULL;
 	struct channel *pch = NULL;
 
-	ppp = ppp_find_unit(unit);
+	if (((struct net_device *)pppif)->hard_start_xmit != ppp_start_xmit){
+		return (BCME_ERROR);
+	}
+
+	ppp = ((struct net_device *)pppif)->priv;
 	if(ppp) pch = ppp->ctfpch;
 
 	if (pch == NULL){

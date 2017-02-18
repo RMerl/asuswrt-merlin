@@ -288,10 +288,14 @@ enum {
 #define is_apmode_enabled() (nvram_get_int("sw_mode")==SW_MODE_AP)
 // todo: multiple wan
 
-int wan_primary_ifunit(void);
+extern int wan_primary_ifunit(void);
+extern int wan_primary_ifunit_ipv6(void);
+extern int get_wan_state(int unit);
+extern int get_wan_sbstate(int unit);
+extern int get_wan_auxstate(int unit);
 extern int is_wan_connect(int unit);
 extern int is_phy_connect(int unit);
-extern int get_wan_state(int unit);
+extern int is_ip_conflict(int unit);
 extern int get_wan_unit(char *ifname);
 extern char *get_wan_ifname(int unit);
 #ifdef RTCONFIG_IPV6

@@ -684,6 +684,40 @@ static inline void __choose_mrate(char *prefix, int *mcast_phy, int *mcast_mcs)
 	*mcast_mcs = mcs;
 }
 
+int get_bw_via_channel(int band, int channel)
+{
+	int wl_bw;
+	char buf[32];
+
+	snprintf(buf, sizeof(buf), "wl%d_bw", band);
+	wl_bw = nvram_get_int(buf);
+	if(band == 0 || channel < 14 || channel > 165 || wl_bw != 1)  {
+		return wl_bw;
+	}
+
+	if(channel == 116 || channel == 140 || channel >= 165) {
+		return 0;	// 20 MHz
+	}
+	if(channel == 132 || channel == 136) {
+		if(wl_bw == 0)
+			return 0;
+		return 2;		// 40 MHz
+	}
+
+	//check for TW band2
+	snprintf(buf, sizeof(buf), "wl%d_country_code", band);
+	if(nvram_match(buf, "TW")) {
+		if(channel == 56)
+			return 0;
+		if(channel == 60 || channel == 64) {
+			if(wl_bw == 0)
+				return 0;
+			return 2;		// 40 MHz
+		}
+	}
+	return wl_bw;
+}
+
 int gen_ralink_config(int band, int is_iNIC)
 {
 	FILE *fp;
@@ -2010,6 +2044,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	int EXTCHA = 0;
 	int EXTCHA_MAX = 0;
 	int HTBW_MAX = 1;
+	int wl_bw = get_bw_via_channel(band, Channel);
 
 	if (band)
 	{
@@ -2079,11 +2114,11 @@ int gen_ralink_config(int band, int is_iNIC)
 	}
 
 	//HT_BW
-	str = nvram_safe_get(strcat_r(prefix, "bw", tmp));
+	//str = nvram_safe_get(strcat_r(prefix, "bw", tmp));
 
 	if (sw_mode == SW_MODE_REPEATER && wlc_band == band)
 		fprintf(fp, "HT_BW=%d\n", 1);
-	else if ((atoi(str) > 0) && (HTBW_MAX == 1))
+	else if ((wl_bw > 0) && (HTBW_MAX == 1))
 		fprintf(fp, "HT_BW=%d\n", 1);
 	else
 	{
@@ -2092,7 +2127,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	}
 
 	//HT_BSSCoexistence
-	if ((atoi(str) > 1) && (HTBW_MAX == 1) &&
+	if ((wl_bw > 1) && (HTBW_MAX == 1) &&
 		!((sw_mode == SW_MODE_REPEATER) && (wlc_band == band)))
 		fprintf(fp, "HT_BSSCoexistence=%d\n", 0);
 	else
@@ -2224,15 +2259,15 @@ int gen_ralink_config(int band, int is_iNIC)
 
 #if defined(VHT_SUPPORT)
 	//VHT_BW, VHT_DisallowNonVHT
-	str = nvram_safe_get(strcat_r(prefix, "bw", tmp));
+	//str = nvram_safe_get(strcat_r(prefix, "bw", tmp));
 	if(band != 1)
 	{
 	}
 	else if (sw_mode == SW_MODE_REPEATER && wlc_band == band)	// Repeater
 		fprintf(fp, "VHT_BW=%d\n", 1);
-	else if(str && (strcmp(str, "1") == 0) && (HTBW_MAX == 1) && (VHTBW_MAX == 1))	// Auto
+	else if(wl_bw == 1 && (HTBW_MAX == 1) && (VHTBW_MAX == 1))	// Auto
 		fprintf(fp, "VHT_BW=%d\n", 1);
-	else if(str && (strcmp(str, "3") == 0) && (HTBW_MAX == 1) && (VHTBW_MAX == 1))	// 80 MHz
+	else if(wl_bw == 3 && (HTBW_MAX == 1) && (VHTBW_MAX == 1))	// 80 MHz
 		fprintf(fp, "VHT_BW=%d\n", 1);
 	else
 		fprintf(fp, "VHT_BW=%d\n", 0);

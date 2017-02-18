@@ -192,6 +192,8 @@ int ntp_main(int argc, char *argv[])
 
 				server_idx = (server_idx + 1) % 2;
 			}
+			else if (strlen(nvram_safe_get("ntp_server1")))
+				strcpy(server, nvram_safe_get("ntp_server1"));
 			else
 				strcpy(server, "");
 			args[2] = server;

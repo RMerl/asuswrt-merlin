@@ -444,9 +444,8 @@ extern int f_wait_notexists(const char *name, int max);
 #define BTN_SWMODE_SW_REPEATER		6
 #define BTN_SWMODE_SW_AP		7
 #define BTN_WIFI_TOG			8
-#define BTN_TURBO			9
-#define BTN_LED				0xA
-#define BTN_LTE				11
+#define BTN_LED				9
+#define BTN_LTE				0xA
 
 enum led_id {
 	LED_POWER = 0,
@@ -465,7 +464,9 @@ enum led_id {
 	LED_LAN3,
 	LED_LAN4,
 #endif
-	LED_TURBO,
+#ifdef RTCONFIG_LOGO_LED
+	LED_LOGO,
+#endif
 	LED_WAN_RED,
 #ifdef RTCONFIG_QTN
 	BTN_QTN_RESET,	/* QTN platform uses led_control() to control this gpio. */
@@ -1222,7 +1223,10 @@ static inline int is_usb3_port(char *usb_node)
 #endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
 
 #ifdef RTAC68U
-#define MODEL_STR_RTAC66UV2    "RT-AC66U_B1"
+#define MODEL_STR_RTAC66UV2		"RT-AC66U_B1"
+#define MODEL_STR_RTAC66UV2_ODM1	"RT-AC1750_B1"
 #endif
+
+int wanport_status(int wan_unit);
 
 #endif	/* !__SHARED_H__ */

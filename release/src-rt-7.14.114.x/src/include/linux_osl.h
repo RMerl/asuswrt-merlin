@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.h 586208 2015-09-14 22:19:09Z $
+ * $Id: linux_osl.h 637193 2016-05-12 01:14:35Z $
  */
 
 #ifndef _linux_osl_h_
@@ -51,6 +51,7 @@ extern void* osl_get_bus_handle(osl_t *osh);
 extern uint32 g_assert_type;
 
 /* ASSERT */
+#ifndef ASSERT
 	#ifdef __GNUC__
 		#define GCC_VERSION \
 			(__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
@@ -61,6 +62,7 @@ extern uint32 g_assert_type;
 			#define ASSERT(exp)
 		#endif /* GCC_VERSION > 30100 */
 	#endif /* __GNUC__ */
+#endif /* ASSERT */
 
 /* bcm_prefetch_32B */
 static inline void bcm_prefetch_32B(const uint8 *addr, const int cachelines_32B)
@@ -115,6 +117,7 @@ extern uint osl_pci_slot(osl_t *osh);
 extern uint osl_pcie_domain(osl_t *osh);
 extern uint osl_pcie_bus(osl_t *osh);
 extern struct pci_dev *osl_pci_device(osl_t *osh);
+extern const char *osl_pci_name(osl_t *osh);
 
 /* Flags that can be used to handle OSL specifcs */
 #define OSL_PHYS_MEM_LESS_THAN_16MB	(1<<0L)

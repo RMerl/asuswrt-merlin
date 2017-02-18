@@ -439,11 +439,14 @@ void config_switch()
 				system("rtkswitch 40 1");			/* admin all frames on all ports */
 				system("rtkswitch 38 3");			/* Vodafone: P0  IPTV: P1 */
 				/* Internet:	untag: P9;   port: P4, P9 */
-				__setup_vlan(100, 1, 0x02000210);
+				__setup_vlan(100, 1, 0x02000211);
 				/* IPTV:	untag: N/A;  port: P0, P4 */
 				__setup_vlan(101, 0, 0x00000011);
 				/* Vodafone:	untag: P1;   port: P0, P1, P4 */
 				__setup_vlan(105, 1, 0x00020013);
+			}
+			else if (!strcmp(nvram_safe_get("switch_wantag"), "hinet")) { /* Hinet MOD */
+				eval("rtkswitch", "8", "4");			/* LAN4 with WAN */
 			}
 			else {
 				/* Cherry Cho added in 2011/7/11. */
@@ -1288,6 +1291,11 @@ void reinit_hwnat(int unit)
 #endif
 	if (!nvram_get_int("hwnat"))
 		return;
+#if defined(RTAC1200HP)
+	/* Temporary ipv6 workaround for 2G disconnection */
+	if (get_ipv6_service() != IPV6_DISABLED)
+		act = 0;
+#endif
 
 	/* If QoS is enabled, disable hwnat. */
 	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1)

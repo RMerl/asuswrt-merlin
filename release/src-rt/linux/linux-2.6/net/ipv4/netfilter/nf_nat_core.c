@@ -435,6 +435,7 @@ unsigned int nf_nat_packet(struct nf_conn *ct,
 			return NF_DROP;
 	} else {
 #ifdef HNDCTF
+		ip_conntrack_ipct_add(*pskb, hooknum, ct, ctinfo, NULL);
 #endif /* HNDCTF */
 	}
 

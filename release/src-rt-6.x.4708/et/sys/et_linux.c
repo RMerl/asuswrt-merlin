@@ -2422,12 +2422,6 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		} else
 			PKTCENQTAIL(h, t, p);
 #else /* PKTC */
-                ether_type = ((struct ether_header *) PKTDATA(et->osh, p))->ether_type;
-                if (ether_type == HTON16(ETHER_TYPE_BRCM)) {
-                        PKTFREE(osh, p, FALSE);
-                        continue;
-                }
-
 		PKTSETLINK(p, NULL);
 		if (t == NULL)
 			h = t = p;

@@ -120,6 +120,10 @@ ip_conntrack_is_ipc_allowed(struct sk_buff *skb, u_int32_t hooknum)
 
 	if (hooknum == NF_INET_PRE_ROUTING || hooknum == NF_INET_POST_ROUTING) {
 		dev = skb->dev;
+
+		if (dev == NULL)
+			return FALSE;
+
 		if (dev->priv_flags & IFF_802_1Q_VLAN)
 			dev = vlan_dev_real_dev(dev);
 
@@ -140,6 +144,51 @@ ip_conntrack_is_ipc_allowed(struct sk_buff *skb, u_int32_t hooknum)
 	return FALSE;
 }
 
+static int
+ip_conntrack_ipct_delete_one_dir(struct nf_conn *ct, enum ip_conntrack_dir dir)
+{
+	struct nf_conntrack_tuple *tp;
+	ctf_ipc_t ipct;
+	int ipaddr_sz;
+	bool v6;
+
+	if (!CTF_ENAB(kcih))
+		return (0);
+
+	tp = &ct->tuplehash[dir].tuple;
+
+	if ((tp->dst.protonum != IPPROTO_TCP) && (tp->dst.protonum != IPPROTO_UDP))
+		return (0);
+
+#ifdef CONFIG_IPV6
+	v6 = (tp->src.l3num == AF_INET6);
+	ipaddr_sz = (v6) ? sizeof(struct in6_addr) : sizeof(struct in_addr);
+#else
+	v6 = FALSE;
+	ipaddr_sz = sizeof(struct in_addr);
+#endif /* CONFIG_IPV6 */
+
+	memset(&ipct, 0, sizeof(ipct));
+	memcpy(ipct.tuple.sip, &tp->src.u3.ip, ipaddr_sz);
+	memcpy(ipct.tuple.dip, &tp->dst.u3.ip, ipaddr_sz);
+	ipct.tuple.proto = tp->dst.protonum;
+	ipct.tuple.sp = tp->src.u.tcp.port;
+	ipct.tuple.dp = tp->dst.u.tcp.port;
+
+	/* If there are no packets over this connection for timeout period
+	 * delete the entries.
+	 */
+	ctf_ipc_delete(kcih, &ipct, v6);
+
+#ifdef DEBUG
+	printk("%s: Deleting the tuple %x %x %d %d %d\n",
+	       __FUNCTION__, tp->src.u3.ip, tp->dst.u3.ip, tp->dst.protonum,
+	       tp->src.u.tcp.port, tp->dst.u.tcp.port);
+#endif
+
+	return (0);
+}
+
 void
 ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		      struct nf_conn *ct, enum ip_conntrack_info ci,
@@ -158,6 +207,7 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	struct ipv6hdr *ip6h = NULL;
 #endif /* CONFIG_IPV6 */
 	uint32 nud_flags;
+	bool need_ipct_upd = 0;
 
 	if ((skb == NULL) || (ct == NULL))
 		return;
@@ -206,8 +256,13 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		return;
 
 	dir = CTINFO2DIR(ci);
-	if (ct->ctf_flags & (1 << dir))
+	need_ipct_upd = 0;
+	if (ct->ctf_flags & (1 << dir)) {
+		if (IPVERSION_IS_4(ipver) && manip && (hooknum == NF_INET_POST_ROUTING))
+			need_ipct_upd = 1;
+		else
 		return;
+	}
 
 	/* Do route lookup for alias address if we are doing DNAT in this
 	 * direction.
@@ -500,10 +555,18 @@ PX_PROTO_PPTP_L2TP:
 			ipc_entry.nat.ip = manip->src.u3.ip;
 			ipc_entry.nat.port = manip->src.u.tcp.port;
 			ipc_entry.action |= CTF_ACTION_SNAT;
+			ct->ctf_flags |= CTF_FLAGS_SNAT_CACHED;
 		} else {
 			ipc_entry.nat.ip = manip->dst.u3.ip;
 			ipc_entry.nat.port = manip->dst.u.tcp.port;
 			ipc_entry.action |= CTF_ACTION_DNAT;
+			ct->ctf_flags |= CTF_FLAGS_DNAT_CACHED;
+		}
+	} else {
+		if (IPVERSION_IS_4(ipver)) {
+			if(ct->ctf_flags & (CTF_FLAGS_DNAT_CACHED | CTF_FLAGS_SNAT_CACHED)) {
+				return;
+			}
 		}
 	}
 
@@ -527,6 +590,14 @@ PX_PROTO_PPTP_L2TP:
 		}
 
 		ctf_brc_release(kcih);
+	}
+
+	if (need_ipct_upd) {
+		if ((ct->ctf_flags & CTF_FLAGS_ROUTE_CACHED)) {
+			ip_conntrack_ipct_delete_one_dir(ct, dir);
+		}
+		else
+			return;
 	}
 
 #ifdef DEBUG
@@ -573,6 +644,9 @@ PX_PROTO_PPTP_L2TP:
 			ctf_ipc_release(kcih, ipct);
 	}
 #endif
+
+	if (!manip && IPVERSION_IS_4(ipver))
+		ct->ctf_flags |= CTF_FLAGS_ROUTE_CACHED;
 
 	/* Update the attributes flag to indicate a CTF conn */
 	ct->ctf_flags |= (CTF_FLAGS_CACHED | (1 << dir));

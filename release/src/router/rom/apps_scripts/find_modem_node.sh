@@ -106,7 +106,11 @@ _find_dial_devs(){
 			continue
 		fi
 
-		$at_lock chat -t 1 -e '' 'ATQ0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		if [ "$modem_vid" == "4204" -a "$modem_pid" == "14104" ]; then # Pantech UML290VW: VID=0x106c, PID=0x3718
+			$at_lock chat -t 1 -e '' 'ATI' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		else
+			$at_lock chat -t 1 -e '' 'ATQ0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		fi
 		if [ "$?" == "0" ]; then
 			count=$((count+1))
 
@@ -245,6 +249,12 @@ if [ "$modem_type" == "tty" ] && [ "$modem_vid" == "6610" -o "$modem_vid" == "10
 	first_bulk_dev=""
 	echo "first_bulk_dev=$first_bulk_dev."
 elif [ "$usb_gobi2" != "" ] && [ "$is_gobi" == "1" ]; then # TM-AC1900v2
+	first_int_dev=`_find_first_int_dev "$io_devs"`
+	echo "first_int_dev=$first_int_dev."
+
+	first_bulk_dev=""
+	echo "Can't get the bulk node."
+elif [ "$modem_vid" == "4100" -a "$modem_pid" == "25382" ]; then # Docomo L-03D
 	first_int_dev=`_find_first_int_dev "$io_devs"`
 	echo "first_int_dev=$first_int_dev."
 

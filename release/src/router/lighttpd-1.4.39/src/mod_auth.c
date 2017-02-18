@@ -647,7 +647,7 @@ handler_t auth_ldap_init(server *srv, mod_auth_plugin_config *s) {
 	return HANDLER_ERROR;
 #endif
 }
-
+#ifndef APP_IPKG
 int mod_auth_plugin_init(plugin *p);
 int mod_auth_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -661,3 +661,18 @@ int mod_auth_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_auth_plugin_init(plugin *p);
+int aicloud_mod_auth_plugin_init(plugin *p) {
+    p->version     = LIGHTTPD_VERSION_ID;
+    p->name        = buffer_init_string("auth");
+    p->init        = mod_auth_init;
+    p->set_defaults = mod_auth_set_defaults;
+    p->handle_uri_clean = mod_auth_uri_handler;
+    p->cleanup     = mod_auth_free;
+
+    p->data        = NULL;
+
+    return 0;
+}
+#endif

@@ -569,6 +569,12 @@ static void plx_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 		printk("PCIE %04x:%02x:%04x: PLX UpPort mem_base 0x%08x, mem_limit 0x%08x\n",
 				port->hw_pci.domain, bus->number, devfn,
 				port->owin_res->start, port->owin_res->start + SZ_32M - 1);
+
+		/* Set 0dB de-emphasis on PEX8603 UpPort to improve TX signal */
+		printk("PCIE: Setting PEX8603 UpPort to 0dB de-emphasis.\n");
+		soc_pci_read_config(bus, devfn, 0xb80, 4, &dRead);
+		dRead |= (1 << 20);
+		soc_pci_write_config(bus, devfn, 0xb80, 4, dRead);
 	} else if (bus->number == (bus_inc + 2)) {
 		/* TODO: I need to fix these hard coded addresses. */
 		if (devfn == 0x8) {
@@ -1483,7 +1489,7 @@ out:
 static void
 bcm5301x_usb_phy_init(int coreid)
 {
-	/* NS-Bx and NS47094
+        /* NS-Bx and NS47094
 	 * Chiprev 4 for NS-B0 and chiprev 6 for NS-B1 */
         if ((CHIPID(sih->chip) == BCM4707_CHIP_ID &&
             (CHIPREV(sih->chiprev) == 4 || CHIPREV(sih->chiprev) == 6)) ||
@@ -1509,7 +1515,7 @@ bcm5301x_usb_phy_init(int coreid)
                         phy_reset = TRUE;
                 }
         }
-                                                  
+
 	if (coreid == NS_USB20_CORE_ID || coreid == USB20H_CORE_ID) {
 		bcm5301x_usb20_phy_init();
 	}
@@ -1915,6 +1921,60 @@ out:
 }
 
 static void __init
+bcm5301x_pcie_pll_init(void)
+{
+	uint32 pmu_base, chipcommon_base;
+	uint32 *pmu_control, *pmu_ctrl_addr, *pmu_ctrl_data;
+	uint32 *chipcommon_chipsts;
+	uint32 i, val;
+
+	/* Check chip ID */
+	if (!BCM53573_CHIP(CHIPID(sih->chip)))
+		return;
+
+	pmu_base = (uint32)REG_MAP(0x18012000, 4096);
+	pmu_control = (uint32 *)(pmu_base + 0x600);
+	pmu_ctrl_addr = (uint32 *)(pmu_base + 0x660);
+	pmu_ctrl_data = (uint32 *)(pmu_base + 0x664);
+
+	/* Enable access PLL Control Register 31 */
+	writel(31, pmu_ctrl_addr);
+
+	/* Disable PCIE PLL channel first by setting bit[5] */
+	val = readl(pmu_ctrl_data);
+	val |= (1 << 5);
+	writel(val, pmu_ctrl_data);
+
+	/* Update new value for tx jitter improvement and enable it */
+	writel(0x14221600, pmu_ctrl_data);
+
+	/* Enable bit[10] of PMUCONTROL register to make it take effect */
+	val = readl(pmu_control);
+	val |= (1 << 10);
+	writel(val, pmu_control);
+
+	/* Check bit[3] of CC chipstatus register for PCIE PLL lock */
+	chipcommon_base = (uint32)REG_MAP(0x18000000, 4096);
+	chipcommon_chipsts = (uint32 *)(chipcommon_base + 0x2c);
+
+	for (i = 0; i < 50; i++) {
+		val = readl(chipcommon_chipsts);
+		if (val & (1 << 3))
+			break;
+		mdelay(1);
+	}
+
+	if (i < 50) {
+		printk(KERN_INFO "PCIE PLL is locked\n");
+	} else {
+		printk(KERN_WARNING "Failed to lock PCIE PLL\n");
+	}
+
+	REG_UNMAP((void *)chipcommon_base);
+	REG_UNMAP((void *)pmu_base);
+}
+
+static void __init
 bcm5301x_pcie_phy_init(void)
 {
 	uint32 ccb_mii_base;
@@ -1950,7 +2010,8 @@ bcm5301x_pcie_phy_init(void)
 				break;
 		}
 
-		/* Change blkaddr */
+		/* Change blkaddr to 0x863 */
+		blkaddr = 0x863;
 		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
 		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (blkra << 18) |
 			(ta << 16) | (blkaddr << 4);
@@ -1968,6 +2029,52 @@ bcm5301x_pcie_phy_init(void)
 		regaddr = 0x19;
 		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
 			(ta << 16) | 0x0191;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Set 0dB pre-emphasis in TxBlock 0x820 to improve TX signal */
+		uint32 op_r = 2, tmp_val;
+		blkaddr = 0x820;
+
+		/* Change blkaddr to 0x820 */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (blkra << 18) |
+			(ta << 16) | (blkaddr << 4);
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Read 0x18 regaddr for GEN1 */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		regaddr = 0x18;
+		val = (sb << 30) | (op_r << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		tmp_val = readl(ccb_mii_mng_cmd_data_addr);
+
+		/* Set GEN1 0dB pre-emphasis */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x18;
+		tmp_val &= ~(0xf << 4);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | tmp_val;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Read 0x17 regaddr for GEN2 */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		regaddr = 0x17;
+		val = (sb << 30) | (op_r << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		tmp_val = readl(ccb_mii_mng_cmd_data_addr);
+
+		/* Set GEN2 0dB pre-emphasis */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x17;
+		tmp_val &= ~(0xf << 8);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | tmp_val;
 		writel(val, ccb_mii_mng_cmd_data_addr);
 	}
 
@@ -2075,6 +2182,8 @@ static int __init soc_pcie_init(void)
 
 		pcie_port = &bcm53573_pcie_ports[0];
 		pcie_ports_sz = ARRAY_SIZE(bcm53573_pcie_ports);
+
+		bcm5301x_pcie_pll_init();
 	}
 
 	/* Scan the SB bus */

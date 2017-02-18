@@ -312,7 +312,8 @@ misc_ioctrl(void)
 	char buf[16];
 
 #ifdef RTAC68U
-	if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+	if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+		&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 		return;
 #endif
 
@@ -586,11 +587,18 @@ wl_default_wps(int unit)
 		if (strncmp(t->name, "wl_", 3) &&
 			strncmp(t->name, prefix, 4))
 			continue;
-		if (!strcmp(t->name, "wl_ifname"))	// not to clean wl%d_ifname
-			continue;
-		if (!strcmp(t->name, "wl_vifnames"))	// not to clean wl%d_vifnames for guest network
-			continue;
-		if (!strcmp(t->name, "wl_hwaddr"))	// not to clean wl%d_hwaddr
+
+		if (strcmp(t->name, "wl_ssid") &&
+		    strcmp(t->name, "wl_auth_mode_x") &&
+		    strcmp(t->name, "wl_wep_x") &&
+		    strcmp(t->name, "wl_key") &&
+		    strcmp(t->name, "wl_key1") &&
+		    strcmp(t->name, "wl_key2") &&
+		    strcmp(t->name, "wl_key3") &&
+		    strcmp(t->name, "wl_key4") &&
+		    strcmp(t->name, "wl_phrase_x") &&
+		    strcmp(t->name, "wl_crypto") &&
+		    strcmp(t->name, "wl_wpa_psk"))
 			continue;
 
 		if (!strncmp(t->name, "wl_", 3))
@@ -772,6 +780,10 @@ wan_defaults(void)
 #endif
 
 	nvram_unset("wps_enable_old");
+	nvram_unset("wps_reset");
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
+	nvram_set_int("AllLED", 1);
+#endif
 }
 
 void
@@ -1879,6 +1891,7 @@ static int set_basic_ifname_vars(char *wan, char *lan, char *wl2g, char *wl5g, c
 				/* Broadcom, QCA, MTK (use MT7620/MT7621 ESW) platform */
 				if (nvram_get("switch_wantag")
 				    && !nvram_match("switch_wantag", "")
+				    && !nvram_match("switch_wantag", "hinet")
 				    && !nvram_match("switch_wantag", "none"))
 				{
 					sprintf(buf, "vlan%s", nvram_safe_get("switch_wan0tagid"));
@@ -2141,7 +2154,7 @@ int init_nvram(void)
 	nvram_set_int("led_2g_gpio", 0xff);
 	nvram_set_int("led_5g_gpio", 0xff);
 	nvram_set_int("led_all_gpio", 0xff);
-	nvram_set_int("led_turbo_gpio", 0xff);
+	nvram_set_int("led_logo_gpio", 0xff);
 	nvram_set_int("led_usb3_gpio", 0xff);
 	nvram_set_int("fan_gpio", 0xff);
 	nvram_set_int("have_fan_gpio", 0xff);
@@ -2160,9 +2173,6 @@ int init_nvram(void)
 #endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
 	nvram_set_int("btn_wltog_gpio", 0xff);
-#endif
-#ifdef RTCONFIG_TURBO
-	nvram_set_int("btn_turbo_gpio", 0xff);
 #endif
 #ifdef RTCONFIG_LED_BTN
 	nvram_set_int("btn_led_gpio", 0xff);
@@ -3877,9 +3887,7 @@ int init_nvram(void)
 
 		if (nvram_match("bl_version", "1.0.0.0"))
 			add_rc_support("led_2g");
-#ifdef RTCONFIG_LED_BTN
-		nvram_set_int("AllLED", 1);
-#endif
+
 		break;
 #endif
 
@@ -4129,9 +4137,7 @@ int init_nvram(void)
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
 		add_rc_support("smart_connect");
-#ifdef RTCONFIG_LED_BTN
-		nvram_set_int("AllLED", 1);
-#endif
+
 		break;
 #endif
 
@@ -4217,38 +4223,47 @@ int init_nvram(void)
 		nvram_set_int("led_sig3_gpio", 8|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_sig4_gpio", 6|GPIO_ACTIVE_LOW);
 #else
-		if(strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 			nvram_set_int("led_5g_gpio", 6|GPIO_ACTIVE_LOW);// 4360's fake led 5g
 #ifdef RTCONFIG_LED_BTN
-		if(strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 			nvram_set_int("btn_led_gpio", 5);		// active high
 #endif
-#ifdef RTCONFIG_TURBO
-		if(strcmp(get_productid(), MODEL_STR_RTAC66UV2))
-			nvram_set_int("led_turbo_gpio", 4|GPIO_ACTIVE_LOW);
+#ifdef RTCONFIG_LOGO_LED
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+			nvram_set_int("led_logo_gpio", 4|GPIO_ACTIVE_LOW);
 #endif
 #endif
 
 		nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 		nvram_set_int("led_usb_gpio", 0|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 		nvram_set_int("led_pwr_gpio", 3|GPIO_ACTIVE_LOW);
 		else
 		nvram_set_int("led_pwr_gpio", 0|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 		nvram_set_int("led_wps_gpio", 3|GPIO_ACTIVE_LOW);
 		else
 		nvram_set_int("led_wps_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_rst_gpio", 11|GPIO_ACTIVE_LOW);
-		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 		nvram_set_int("led_usb3_gpio", 14|GPIO_ACTIVE_LOW);
 #ifdef RTCONFIG_WIFI_TOG_BTN
-		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 		nvram_set_int("btn_wltog_gpio", 15|GPIO_ACTIVE_LOW);
 #endif
-		if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2))
+		if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
+			|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
 		nvram_set_int("led_wan_gpio", 5);
 
 #ifdef RTCONFIG_XHCIMODE
@@ -4294,9 +4309,6 @@ int init_nvram(void)
 		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
-#ifdef RTCONFIG_LED_BTN
-		nvram_set_int("AllLED", 1);
-#endif
 
 		break;
 #endif
@@ -4339,6 +4351,17 @@ int init_nvram(void)
 			add_rc_support("noaidisk");
 		}
 
+#ifdef RTCONFIG_MULTICAST_IPTV
+		if (nvram_get("switch_wantag") && !nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) {
+			char wan_if[10];
+			if (!nvram_match("switch_wan0tagid", "") && !nvram_match("switch_wan0tagid", "0"))
+				sprintf(wan_if, "vlan%s", nvram_safe_get("switch_wan0tagid"));
+			else
+				sprintf(wan_if, "eth0");
+
+			nvram_set("wan_ifnames", wan_if);
+		}
+#endif
 		break;
 #endif
 
@@ -4486,8 +4509,6 @@ int init_nvram(void)
 		nvram_set_int("led_lan_gpio", 21|GPIO_ACTIVE_LOW);	/* FAN CTRL: reserved */
 		/* PA 5V/3.3V switch, 22 */
 		/* SDIO_EN_1P8, 23 | HIGH */
-#ifdef RTCONFIG_TURBO
-#endif
 
 #ifdef RTCONFIG_XHCIMODE
 		nvram_set("xhci_ports", "1-1");
@@ -4517,9 +4538,6 @@ int init_nvram(void)
 		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
-#ifdef RTCONFIG_LED_BTN
-		nvram_set_int("AllLED", 1);
-#endif
 		nvram_set("ehci_irq", "111");
 		nvram_set("xhci_irq", "112");
 #ifdef RTCONFIG_MMC_LED
@@ -4744,9 +4762,6 @@ int init_nvram(void)
 		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
-#ifdef RTCONFIG_LED_BTN
-		nvram_set_int("AllLED", 1);
-#endif
 #ifdef RTCONFIG_WPS_DUALBAND
 	nvram_set_int("wps_band", 0);
 	nvram_set_int("wps_dualband", 1);
@@ -4858,10 +4873,6 @@ int init_nvram(void)
 #ifdef RTCONFIG_WIFI_TOG_BTN
 		nvram_set_int("btn_wltog_gpio", 7|GPIO_ACTIVE_LOW);
 #endif
-#ifdef RTCONFIG_TURBO
-		nvram_set_int("btn_turbo_gpio", 5);
-#endif
-
 #ifdef RTCONFIG_XHCIMODE
 		nvram_set("xhci_ports", "1-1");
 		nvram_set("ehci_ports", "2-1 2-2");
@@ -5207,7 +5218,9 @@ int init_nvram(void)
 	add_rc_support("dnsfilter");
 #endif
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
+#ifndef RTAC1200GP
 	add_rc_support("dualwan");
+#endif
 
 #ifdef RTCONFIG_DSL
 	set_wanscap_support("dsl");
@@ -5471,7 +5484,6 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_WPS_ALLLED_BTN
-	nvram_set_int("AllLED", 1);
 	add_rc_support("cfg_wps_btn");
 #endif
 
@@ -5524,6 +5536,10 @@ int init_nvram(void)
 #endif
 #ifdef RTCONFIG_USB_SMS_MODEM
 	add_rc_support("usbsms");
+#endif
+
+#ifdef RTCONFIG_FBWIFI
+	add_rc_support("fbwifi");
 #endif
 
 	return 0;
@@ -6288,6 +6304,11 @@ Alarm_Led(void) {
 		sleep(1);
 	}
 }
+void config_format_compatibility_handler(void)
+{
+	//adjust_url_urlelist(); /* For based on 382, new config format */
+	adjust_ddns_config();
+}
 
 int init_main(int argc, char *argv[])
 {
@@ -6307,7 +6328,9 @@ int init_main(int argc, char *argv[])
 #endif
 	{
 		sysinit();
-
+		
+		config_format_compatibility_handler();
+		
 		sigemptyset(&sigset);
 		for (i = 0; i < sizeof(initsigs) / sizeof(initsigs[0]); i++) {
 			sigaddset(&sigset, initsigs[i]);

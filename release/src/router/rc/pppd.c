@@ -244,9 +244,7 @@ start_pppd(int unit)
 #endif
 		if (nvram_match(ipv6_nvname_by_unit("ipv6_ifdev", unit), "ppp")
 #ifdef RTCONFIG_DUALWAN
-			&& !(!strstr(nvram_safe_get("wans_dualwan"), "none") &&
-			     !strcmp(nvram_safe_get("wans_mode"), "lb") &&
-			     unit != wan_primary_ifunit())
+			&& (unit == wan_primary_ifunit_ipv6())
 #endif
 		)
 			fprintf(fp, "+ipv6\n");

@@ -67,6 +67,7 @@ int rtkswitch_ioctl(int val, int val2, int val3)
 	case GET_RTK_PHYSTATES:
 	case SOFT_RESET:
 	case GET_CPU:
+	case GET_GREEN_ETHERNET:
 		p = NULL;
 		break;
 
@@ -81,6 +82,7 @@ int rtkswitch_ioctl(int val, int val2, int val3)
 	case SET_CPU:
 	case GET_TMODE:
 	case GET_PHY_REG9:
+	case SET_GREEN_ETHERNET:
 		p = (void*)&value;
 		value = (unsigned int)val2;
 		break;
@@ -293,6 +295,7 @@ void usage(char *cmd)
 		case SET_CPU:
 		case GET_PHY_REG9:
 		case GET_TMODE:
+		case SET_GREEN_ETHERNET:
 			rtk_cmds_pa[ci] = 1;
                 	break;
 

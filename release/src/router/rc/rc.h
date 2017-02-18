@@ -39,7 +39,7 @@
 #include "sysdeps.h"
 #include <linux/version.h>
 
-#if defined(RTCONFIG_USB) && defined(RTCONFIG_USB_MODEM)
+#if defined(RTCONFIG_USB)
 #include <usb_info.h>
 #endif
 
@@ -441,6 +441,9 @@ extern unsigned int num_of_mssid_support(unsigned int unit);
 extern void fa_nvram_adjust();
 #endif
 
+// format.c
+extern void adjust_url_urlelist();
+
 // interface.c
 extern int _ifconfig(const char *name, int flags, const char *addr, const char *netmask, const char *dstaddr, int mtu);
 static inline int ifconfig(const char *name, int flags, const char *addr, const char *netmask)
@@ -519,7 +522,6 @@ extern void restart_wireless(void);
 #ifdef RTCONFIG_BCM_7114
 extern void stop_wl_bcm(void);
 #endif
-extern void restart_wireless_wps(void);
 extern void start_wan_port(void);
 extern void stop_wan_port(void);
 extern void start_lan_port(int dt);

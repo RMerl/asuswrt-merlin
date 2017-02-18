@@ -13,7 +13,7 @@ KERNEL_SIZE = 0x1E00000
 # CFE Image Information
 #
 CFE_DIR = ../cfe
-CFE_IMAGE = cfe_rt-ac56u.bin
+CFE_IMAGE = cfe_rt-ac3200.bin
 
 #
 # Linux Firmware Image Information
@@ -39,7 +39,7 @@ all: check_img
 	@echo " +--------------------+--------+-----------------------------+"
 	@echo " |         CFE        | NVRAM  |    Linux Firmware Image     |"
 	@echo " +--------------------+--------+-----------------------------+"
-	@echo " |<----------$(CFE_SIZE)---------->|<-------$(KERNEL_SIZE)------------>|"
+	@echo " |<---------$(CFE_SIZE)---------->|<---------$(KERNEL_SIZE)--------->|"
 	
 	@echo -e "\n-Original CFE Image Size"
 	@wc -c $(CFE_DIR)/$(CFE_IMAGE)
@@ -70,7 +70,7 @@ all: check_img
 # Packed Image Size
 	@echo -e "\n-Packed Image Size"
 	@wc -c $(PACKED_DIR)/$(PACKED_IMAGE)
-	$(TOOL_DIR)/$(TOOL_NAME) -i $(PACKED_DIR)/$(PACKED_IMAGE) -b 8
+	$(TOOL_DIR)/$(TOOL_NAME) -i $(PACKED_DIR)/$(PACKED_IMAGE) -b 8 -m 14
 	@mv $(PACKED_DIR)/.out $(PACKED_DIR)/single_image.out
 	@mv $(PACKED_DIR)/.inj $(PACKED_DIR)/single_image.inj
 

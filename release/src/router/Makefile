@@ -564,6 +564,9 @@ obj-y += mDNSResponder
 endif
 endif
 
+obj-$(RTCONFIG_FBWIFI) += fb_wifi
+obj-$(RTCONFIG_FBWIFI) += httpd_uam
+
 #add for snmpd
 SNMPD_CFLAGS += -D$(BUILD_NAME)
 ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-N66U RT-AC66U RT-AC68U))
@@ -1431,6 +1434,10 @@ httpd: shared nvram$(BCMEX) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(if $(RTCONFIG
 	@$(SEP)
 	@$(MAKE) -C httpd
 
+httpd_uam: shared nvram$(BCMEX)$(EX7) libdisk $(if $(RTCONFIG_HTTPS),mssl)   $(if $(RTCONFIG_FBWIFI),fb_wifi)
+	@$(SEP)
+	$(MAKE) -C httpd_uam
+
 bonnie: bonnie/Makefile
 	$(MAKE) CXX=$(CXX) -C bonnie
 
@@ -1577,7 +1584,7 @@ wb: openssl libxml2 curl
 
 push_log: wb
 
-rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_USB_SMS_MODEM),smspdu)
+rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_FBWIFI),fb_wifi) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_USB_SMS_MODEM),smspdu)
 # Dig into our collection of prebuilt objects based on model and architecture.
 	@-rm -f rc/prebuild/*.o || true
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -2425,7 +2432,8 @@ quagga-install:
 	libtool --mode=install install -c quagga/watchquagga/watchquagga $(INSTALLDIR)/quagga/usr/sbin
 	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/zebra
 	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/ripd
-	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/watchquagga 
+	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/watchquagga
+	install -D $(shell dirname $(shell which $(CXX)))/../lib/librt.so.0 $(TARGETDIR)/lib/librt.so.0 
 
 zebra/stamp-h1:
 	@cd zebra && rm -f config.cache && \
@@ -3748,6 +3756,26 @@ webdav_client$(BCMEX)-clean:
 	-@$(MAKE) -C webdav_client$(BCMEX) clean
 	rm -rf webdav_client$(BCMEX)/stamp-h1
 
+#fbwifi
+fb_wifi/stamp-h1:
+	touch $@
+
+fb_wifi: curl-7.21.7 fb_wifi/stamp-h1
+	@$(MAKE) -C fb_wifi
+
+fb_wifi-install: fb_wifi
+	@$(SEP)
+	install -D fb_wifi/fb_wifi_check $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_check
+	install -D fb_wifi/fb_wifi_register $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_register
+	install -D fb_wifi/libfbwifi.so $(INSTALLDIR)/fb_wifi/usr/lib/libfbwifi.so
+	$(STRIP) $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_check
+	$(STRIP) $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_register
+	$(STRIP) $(INSTALLDIR)/fb_wifi/usr/lib/libfbwifi.so
+
+fb_wifi-clean:
+	-@$(MAKE) -C fb_wifi clean
+	rm -rf fb_wifi/stamp-h1
+
 #add by gauss
 #add install libcurl
 curl: curl/Makefile
@@ -3983,6 +4011,7 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	--without-kerberos \
 	--with-bdb=$(TOP)/db-4.8.30/build_unix \
 	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
+	--with-dtrace=no \
 	--program-prefix= \
 	--with-ssl-dir=$(TOP)/openssl \
 	--disable-static \

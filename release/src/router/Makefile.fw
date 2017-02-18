@@ -24,7 +24,7 @@ PCIEFD_EMBED_HEADER		:= $(SRCBASE_DHD)/shared/rtecdc_router.h
 
 # All firmware targets must be defined here
 #PCIEFD_TARGETS_LIST		:= 43602a1
-ifeq ($(or $(RTAC88U),$(RTAC3100),$(RTAC5300),$(RTAC5300R)), y)
+ifeq ($(or $(RTAC88U),$(RTAC3100),$(RTAC5300)), y)
 PCIEFD_TARGETS_LIST		+= 4366b1
 PCIEFD_TARGETS_LIST		+= 4366c0
 endif
@@ -62,9 +62,9 @@ FW_4366b1_MAKE_PATH		:= $(FW_4366b1_SRCBASE)/dongle/make/wl
 FW_4366b1_BUILD_PATH		:= $(FW_4366b1_SRCBASE)/../build/dongle/$(FW_4366b1_BUILD_PREFIX)
 FW_4366b1_OS_PATH		:= $(FW_4366b1_SRCBASE)/../components/threadx
 ifeq ($(WLTEST),1)
-    FW_4366b1_TARGET   := pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
+	FW_4366b1_TARGET   := pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac-splitassoc
 else
-    FW_4366b1_TARGET   := pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
+	FW_4366b1_TARGET   := pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
 endif
 
 # 4366c0-roml target
@@ -75,9 +75,9 @@ FW_4366c0_MAKE_PATH		:= $(FW_4366c0_SRCBASE)/dongle/make/wl
 FW_4366c0_BUILD_PATH		:= $(FW_4366c0_SRCBASE)/../build/dongle/$(FW_4366c0_BUILD_PREFIX)
 FW_4366c0_OS_PATH		:= $(FW_4366c0_SRCBASE)/../components/threadx
 ifeq ($(WLTEST),1)
-    FW_4366c0_TARGET   := pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
+	FW_4366c0_TARGET   := pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-phydump-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-dbgam-dbgams-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac-murx-splitassoc
 else
-    FW_4366c0_TARGET       := pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)-hostpmac
+	FW_4366c0_TARGET   := pcie-ag-splitrx-fdap-mbss-mfp-wnm-osen-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus-11nprop-obss-dbwsw-ringer-dmaindex16-bgdfs$(WLCX)-stamon-hostpmac-murx-splitassoc-dyn160
 endif
 
 

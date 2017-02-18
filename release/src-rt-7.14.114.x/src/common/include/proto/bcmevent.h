@@ -17,7 +17,7 @@
  *
  * Dependencies: proto/bcmeth.h
  *
- * $Id: bcmevent.h 623712 2016-03-09 01:25:41Z $
+ * $Id: bcmevent.h 637286 2016-05-12 06:02:56Z $
  *
  */
 
@@ -228,9 +228,9 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 #define WLC_E_BSSID		125	/* to report change in BSSID while roaming */
 #define WLC_E_TX_STAT_ERROR		126	/* tx error indication */
 #define WLC_E_BCMC_CREDIT_SUPPORT	127	/* credit check for BCMC supported */
+#define WLC_E_PEER_TIMEOUT		128 /* silently drop a STA because of inactivity */
 #define WLC_E_AUTHORIZED	136	/* a STA been authroized for traffic */
 #define WLC_E_PROBREQ_MSG_RX	137 /* probe req with wl_event_rx_frame_data_t header */
-#define WLC_E_PEER_TIMEOUT	138 /* silently drop a STA because of inactivity */
 #define WLC_E_RRM			141	/* RRM event */
 #define WLC_E_PRE_ASSOC_RSEP_IND        149	/* assoc resp received */
 #define WLC_E_BSSTRANS_RESP		156 /* BSS Transition Response received */

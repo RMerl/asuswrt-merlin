@@ -336,6 +336,40 @@ int bw40_channel_check(int band,char *ext)
 	return 1; //pass
 }   
    
+int get_bw_via_channel(int band, int channel)
+{
+	int wl_bw;
+	char buf[32];
+
+	snprintf(buf, sizeof(buf), "wl%d_bw", band);
+	wl_bw = nvram_get_int(buf);
+	if(band == 0 || channel < 14 || channel > 165 || wl_bw != 1)  {
+		return wl_bw;
+	}
+
+	if(channel == 116 || channel == 140 || channel >= 165) {
+		return 0;	// 20 MHz
+	}
+	if(channel == 132 || channel == 136) {
+		if(wl_bw == 0)
+			return 0;
+		return 2;		// 40 MHz
+	}
+
+	//check for TW band2
+	snprintf(buf, sizeof(buf), "wl%d_country_code", band);
+	if(nvram_match(buf, "TW")) {
+		if(channel == 56)
+			return 0;
+		if(channel == 60 || channel == 64) {
+			if(wl_bw == 0)
+				return 0;
+			return 2;		// 40 MHz
+		}
+	}
+	return wl_bw;
+}
+
 
 #define MAX_NO_GUEST 3
 int gen_ath_config(int band, int is_iNIC,int subnet)
@@ -379,6 +413,7 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 #ifdef RTCONFIG_QCA_TW_AUTO_BAND4
 	unsigned char CC[3];
 #endif	
+	int bw;
 
 	rep_mode=0;
 	bg_prot=0;
@@ -1016,12 +1051,12 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		if(!ban)
 		{   
 			//HT_BW
-			str = nvram_safe_get(strcat_r(tmpfix, "bw", tmp));
+			bw = get_bw_via_channel(band, nvram_get_int(strcat_r(tmpfix, "channel", tmp)));
 			if (sw_mode == SW_MODE_REPEATER && wlc_band == band)
 				sprintf(t_bw,"HT40");	
-			else if (atoi(str) > 0)
+			else if (bw > 0)
 			{
-	   			if(strstr(t_mode,"11ACV") && (atoi(str)==3 || atoi(str)==1)) //80 BW or auto BW
+				if(strstr(t_mode,"11ACV") && (bw==3 || bw==1)) //80 BW or auto BW
 					sprintf(t_bw,"HT80");
 				else	
 				{   
@@ -1091,7 +1126,7 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	   	fprintf(fp3, "iwconfig %s channel auto\n",wif);
 	}
 	if(!band && strstr(t_mode, "11N") != NULL) //only 2.4G && N mode is used
-		fprintf(fp3,"iwpriv %s disablecoext %d\n",wif,nvram_get_int(strcat_r(tmpfix, "bw", tmp))==2?1:0);	// when N mode is used
+		fprintf(fp3,"iwpriv %s disablecoext %d\n",wif,(bw==2)?1:0);	// when N mode is used
 
 	if(rep_mode)
 	   goto next;
@@ -2179,7 +2214,8 @@ getSiteSurvey(int band,char* ofile)
 	char *pt1,*pt2;
 	char a1[10],a2[10];
 	char ssid_str[256];
-	char ch[4],ssid[33],address[18],enc[9],auth[16],sig[9],wmode[8];
+	char ch[4] = "", ssid[33] = "", address[18] = "", enc[9] = "";
+	char auth[16] = "", sig[9] = "", wmode[8] = "";
 	int  lock;
 	char ure_mac[18];
 	int wl_authorized = 0;
@@ -2333,7 +2369,9 @@ getSiteSurvey(int band,char* ofile)
 		   		  
 		//sig
 	        pt1 = strstr(buf[3], "Quality=");	
-		pt2 = strstr(pt1,"/");
+		pt2 = NULL;
+		if (pt1 != NULL)
+			pt2 = strstr(pt1,"/");
 		if(pt1 && pt2)
 		{
 			memset(sig,0,sizeof(sig));

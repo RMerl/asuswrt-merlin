@@ -177,7 +177,7 @@ struct pppol2tp_ioc_stats {
 #if defined(CTF_PPPOE) || defined(CTF_PPTP) || defined(CTF_L2TP)
 extern void ppp_rxstats_upd(void *pppif, struct sk_buff *skb);
 extern void ppp_txstats_upd(void *pppif, struct sk_buff *skb);
-extern int ppp_get_conn_pkt_info(int unit, struct ctf_ppp *ctfppp);
+extern int ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp);
 #endif /* CTF_PPPOE | CTF_PPTP | CTF_L2TP */
 
 #endif /* _IF_PPP_H_ */

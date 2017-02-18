@@ -182,7 +182,7 @@ int char_to_ascii_safe(const char *output, const char *input, int outsize)
     return dst - output;
 }
 
-#if 0
+#ifdef APP_IPKG
 int
 check_if_file_exist(const char *filepath)
 {
@@ -193,6 +193,8 @@ check_if_file_exist(const char *filepath)
     else
         return 0;
 }
+#endif
+#if 0
 unsigned long f_size(const char *path)	// 4GB-1	-1 = error
 {
     struct stat st;
@@ -1574,6 +1576,7 @@ smbc_wrapper_lseek(connection* con, int fd, off_t offset, int whence)
 }
 int smbc_wrapper_parse_path(connection* con, char *pWorkgroup, char *pServer, char *pShare, char *pPath){
 	if(con->mode== SMB_BASIC||con->mode== SMB_NTLM){ 
+
 		smbc_parse_path(con->physical.path->ptr, pWorkgroup, pServer, pShare, pPath);
 		
 		//- Jerry add: replace '\\' to '/'
@@ -1976,12 +1979,6 @@ void ten2bin(int ten, char** out)
 	strcpy(*out, _array);
 }
 
-void substr(char *dest, const char* src, unsigned int start, unsigned int cnt)
-{
-   	strncpy(dest, src + start, cnt);
-   	dest[cnt] = 0;
-}
-
 void hexstr2binstr(const char* in_str, char** out_str)
 {
 	char *tmp;
@@ -2023,13 +2020,17 @@ void binstr2hexstr( const char* in_str, char** out_str )
 	buffer_copy_string(ret, "");
 	
 	int ic = strlen(in_str) / 4;
-	//Cdbg(DBE, "ic=%d", ic);
-	for( int i = 0; i < ic; i++ )
+
+	int i = 0;
+	int offset = 0;
+	for(i = 0; i < ic; i++)
 	{		
-		char str[4]="\0";
-		substr(str, in_str, i*4, 4);
-		
-		int uc = bin2ten( str );
+		char t[5] = "\0";
+		offset = i * 4;
+
+		strncpy(t, in_str + offset, 4);
+	
+		int uc = bin2ten( t );
 		
 		//- ten to hex
 		char* hex;
@@ -2079,8 +2080,7 @@ void interleave( char* src, int charcnt, char** out )
 
 	for( int i = 0; i < ic; i++ )	{		
 		for( int j = 0; j < charcnt; j++ ) {			
-			//ret += src.charAt( (j * ic) + i );
-
+		
 			int x = (j * ic) + i;
 			
 			char tmps[8]="\0";
@@ -2095,18 +2095,6 @@ void interleave( char* src, int charcnt, char** out )
 	strcpy(*out, ret->ptr);
 
 	buffer_free(ret);
-	//Cdbg(DBE, "end interleave");
-	/*
-	// example: input string "ABCDEFG", charcnt = 3 --> "ADGBE0CF0"	
-	var ret = "";	
-	var ic = Math.ceil( src.length / charcnt );	
-	for( var i = 0; i < ic; i++ )	{		
-		for( var j = 0; j < charcnt; j++ )		{			
-			ret += src.charAt( (j * ic) + i );		
-		}	
-	}	
-	return ret;
-	*/
 }
 
 void str2hexstr(char* str, char* hex)
@@ -2122,19 +2110,25 @@ void str2hexstr(char* str, char* hex)
 	hex = '\0';
 }
 
-
-
 int sumhexstr( const char* str )
 {		
+	//- e.g:  str = 4D44, ret = 4*16*16*16 + D*16*16 + 4*16*16 + 4*1
+	
 	int ret = 0;		
 	int ic = strlen(str) / 4.0;
-	for( int i = 0; i < ic; i++ )	
+
+	int i = 0;	
+	int offset = 0;
+	for(i = 0; i < ic; i++ )	
 	{		
-		char t[4]="\0";
-		substr(t, str, i*4, 4);
+		char t[5] = "\0";
+		offset = i * 4;
+
+		strncpy(t, str + offset, 4);
 
 		int j=0;
 		int y = 0;
+		
 		char *tmp;	
 		for (tmp = t; *tmp; ++tmp){
 			int pow = 1;
@@ -2149,74 +2143,85 @@ int sumhexstr( const char* str )
 		ret += y;	
 	}			
 	
+	//Cdbg(DBE, "ret=%d", ret);
+	
 	return ret;
 }
 
 int getshiftamount( const char* seed_str, const char* orignaldostr )
 {	
+	//- e.g {M,D,A,6,M,G,M,6,M,j,k,6,M,m,M,6,M,T,A,6,M,j,k,=}
+	//- => {4D,44,41,36,4D,47,4D,36,4D,6A,6B,36,4D,6D,4D,36,4D,54,41,36,4D,6A,6B,3D}
 	char seed_hex_str[100]="\0";
 	str2hexstr( seed_str, &seed_hex_str );
+	//Cdbg(DBE, "getshiftamount: seed_hex_str=%s", seed_hex_str);
 	
-	//sum hexstring, every 4digit (e.g "495a5c" => 0x495a + 0x5c => 0x49b6 => 18870;	
+	//- sum hexstring, every 4digit
+	//- e.g {0x4D44 + 0x4136 + ...} = 246635;	
 	int sumhex = sumhexstr( seed_hex_str );		
+	//Cdbg(DBE, "getshiftamount: sumhex=%d", sumhex);
 	
-	//limit shift value to lenght of seed	
+	//- limit shift value to lenght of seed	
 	int shiftamount = sumhex % strlen(orignaldostr);
 	//Cdbg(1, "sumhex=%d, getshiftamount=%d", sumhex, strlen(orignaldostr));
-	//ensure there is a shiftamount;	
+
+	//- ensure there is a shiftamount;	
 	if( shiftamount == 0 )		
 		shiftamount = 15;	
+	
 	return shiftamount;
 }
 
 void strleftshift( const char* str, int shiftamount, char** out )
 {	
 	// e.g strleftshift("abcdef", 2) => "cdefab"
-	char* aa = (char*)malloc(strlen(str)-shiftamount+1);
-	memset(aa, "\0", strlen(str)-shiftamount+1);
-	substr(aa, str, shiftamount, strlen(str)-shiftamount);
 	
-	char *bb = (char*)malloc(shiftamount+1);
-	memset(bb, "\0", shiftamount+1);
-	substr(bb, str, 0, shiftamount);
+	int str_len = strlen(str);
 
-	*out = (char*)malloc(strlen(str)+1);
-	memset(*out, "\0", strlen(str)+1);
-	strcpy(*out , aa);
-	strcat(*out, bb);
+	int right_buffer_size = str_len-shiftamount+1;
+	char* right_buffer = (char*)malloc(right_buffer_size);
+	memset(right_buffer, 0, right_buffer_size);
+	strncpy(right_buffer, str+shiftamount, right_buffer_size-1);
 
-	free(aa);
-	free(bb);
+	int left_buffer_size = shiftamount+1;
+	char *left_buffer = (char*)malloc(left_buffer_size);
+	memset(left_buffer, 0, left_buffer_size);
+	strncpy(left_buffer, str, left_buffer_size-1);
+	
+	int size = strlen(right_buffer)+strlen(left_buffer)+1;
+	*out = (char*)malloc(size);
+	memset(*out, 0, size);
+	strncpy(*out , right_buffer, strlen(right_buffer));
+	strncat(*out, left_buffer, strlen(left_buffer));
+
+	free(right_buffer);
+	free(left_buffer);
 }
 
 void strrightshift( const char* str, int shiftamount, char** out )
 {	
 	// e.g strrightshift("abcdef", 2) => "efabcd"
-	int len = strlen(str);
-	//Cdbg(DBE, "11 len=%d, shiftamount=%d", len, shiftamount);
-	
-	char* aa = (char*)malloc(shiftamount+1);
-	memset(aa, "\0", shiftamount+1);
-	
-	char *bb = (char*)malloc(len-shiftamount+1);
-	memset(bb, "\0", len-shiftamount+1);
-	
-	substr(aa, str, len-shiftamount, shiftamount);
-	//Cdbg(DBE, "33 aa=%d -> %d", len-shiftamount, shiftamount);
 		
-	substr(bb, str, 0, len-shiftamount);
-	//Cdbg(DBE, "44 bb=%d -> %d", 0, len-shiftamount);
+	int str_len = strlen(str);
+		
+	int right_buffer_size = shiftamount+1;
+	char* right_buffer = (char*)malloc(right_buffer_size);
+	memset(right_buffer, 0, right_buffer_size);
+	strncpy(right_buffer, str+(str_len-shiftamount), right_buffer_size-1);
 	
-	*out = (char*)malloc(len+1);	
-	memset(*out, "\0", strlen(str)+1);
+	int left_buffer_size = str_len-shiftamount+1;
+	char *left_buffer = (char*)malloc(left_buffer_size);
+	memset(left_buffer, 0, left_buffer_size);
+	strncpy(left_buffer, str, left_buffer_size-1);
 	
-	strcpy(*out , aa);
-	//Cdbg(DBE, "55 out=%s", *out);
-	strcat(*out, bb);
-	//Cdbg(DBE, "66 out=%s", *out);
+	int size = strlen(right_buffer)+strlen(left_buffer)+1;
+	*out = (char*)malloc(size);
+	memset(*out, 0, size);
+	strncpy(*out , right_buffer, strlen(right_buffer));
+	strncat(*out, left_buffer, strlen(left_buffer));
 	
-	free(aa);	
-	free(bb);
+	free(right_buffer);
+	free(left_buffer);
 }
 
 int bin2ten( const char* _v )
@@ -2245,6 +2250,7 @@ void binstr2str( const char* inbinstr, char** out )
 	
 	int ic = strlen(inbinstr) / 8;	
 	int k = 0;	
+	int offset = 0;
 
 	*out = (char*)malloc(ic+1);
 	memset(*out , '\0', ic);
@@ -2252,18 +2258,18 @@ void binstr2str( const char* inbinstr, char** out )
 	for( int i = 0; i < strlen(inbinstr); i+=8 )	
 	{				
 		//前四位元	
-		char* substrupper = (char*)malloc(4);
-		substr(substrupper, inbinstr, i, 4);
+		char substrupper[5] = "\0";
+		offset = i;
+		strncpy(substrupper, inbinstr + offset, 4);
 		int uc = bin2ten( substrupper );
-		free(substrupper);
-		substrupper=NULL;
+		Cdbg(DBE, "substrupper=%s, uc=%d", substrupper, uc);
 		
 		//後四位元
-		char* substrlowwer = (char*)malloc(4);
-		substr(substrlowwer, inbinstr,  i + 4, 4);
+		char substrlowwer[5] = "\0";
+		offset = i+4;
+		strncpy(substrlowwer, inbinstr + offset, 4);		
 		int lc = bin2ten( substrlowwer );
-		free(substrlowwer);
-		substrlowwer=NULL;
+		Cdbg(DBE, "substrlowwer=%s, lc=%d", substrlowwer, lc);
 		
 		int v = (uc << 4) | lc;	
 		
@@ -2333,25 +2339,25 @@ void str2binstr(const char* instr, char** out)
 
 char* x123_decode(const char* in_str, const char* key, char* out_str)
 {
-	//Cdbg(DBE, "in_str=%s, key=%s", in_str, key);
+	Cdbg(DBE, "in_str=%s, key=%s", in_str, key);
 
 	char* ibinstr;
 	hexstr2binstr( in_str, &ibinstr );
-	//Cdbg(1, "ibinstr=%s", ibinstr);
+	Cdbg(DBE, "ibinstr=%s", ibinstr);
 
 	char* binstr;
 	deinterleave( ibinstr, 8, &binstr );
-	//Cdbg(1, "deinterleave, binstr=%s", binstr);
+	Cdbg(DBE, "deinterleave: binstr=%s", binstr);
 
 	int shiftamount = getshiftamount( key, binstr );
-	//Cdbg(1, "shiftamount %d %s", shiftamount, key);
+	Cdbg(DBE, "getshiftamount: shiftamount=%d, key=%s", shiftamount, key);
 
 	char* unshiftbinstr;
 	strleftshift( binstr, shiftamount, &unshiftbinstr );
-	//Cdbg(1, "unshiftbinstr %s", unshiftbinstr);
+	Cdbg(DBE, "strleftshift: unshiftbinstr=%s", unshiftbinstr);
 
 	binstr2str(unshiftbinstr, &out_str);
-	//Cdbg(DBE, "out_str %s", out_str);
+	Cdbg(DBE, "out_str=%s", out_str);
 
 	free(ibinstr);
 	free(binstr);
@@ -2733,6 +2739,13 @@ int get_sharelink_save_count(){
 	return count;
 }
 
+void free_share_link_info(share_link_info_t *smb_sharelink_info){
+	buffer_free(smb_sharelink_info->shortpath);
+	buffer_free(smb_sharelink_info->realpath);
+	buffer_free(smb_sharelink_info->filename);
+	buffer_free(smb_sharelink_info->auth);
+}
+
 void save_sharelink_list(){
 	share_link_info_t* c;
 	time_t cur_time = time(NULL);
@@ -2805,12 +2818,7 @@ void save_sharelink_list(){
 	//Cdbg(1, "save sharelink array length = %d", get_sharelink_save_count());
 }
 
-void free_share_link_info(share_link_info_t *smb_sharelink_info){
-	buffer_free(smb_sharelink_info->shortpath);
-	buffer_free(smb_sharelink_info->realpath);
-	buffer_free(smb_sharelink_info->filename);
-	buffer_free(smb_sharelink_info->auth);
-}
+
 
 void read_sharelink_list(){
 

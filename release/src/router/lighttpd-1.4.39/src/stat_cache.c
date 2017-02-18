@@ -535,10 +535,9 @@ handler_t stat_cache_get_entry(server *srv, connection *con, buffer *name, stat_
 			fd = smbc_open(name->ptr, O_RDONLY, 0);
 			
 			if(fd == -1) {
-				Cdbg(DBE, "fail to smbc_open");
 				return HANDLER_ERROR;
 			}
-			//Cdbg(DBE, "call smbc_close");			
+			
 			smbc_close(fd);
 		}
 #else

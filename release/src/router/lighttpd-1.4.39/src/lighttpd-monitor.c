@@ -1,4 +1,6 @@
-//#include "log.h"
+#ifdef APP_IPKG
+#include "log.h"
+#endif
 #include <string.h>
 #include <sys/wait.h>
 #include <stdlib.h>
@@ -591,7 +593,11 @@ int main(int argc, char **argv) {
 			#ifndef APP_IPKG
 				system("/usr/sbin/lighttpd-arpping -f br0 &");
 			#else
+			#if defined I686
+				system("/opt/bin/lighttpd-arpping -f br2 &");
+			#else
 				system("/opt/bin/lighttpd-arpping -f br0 &");
+			#endif
 			#endif
 			#else
 				system("./_inst/sbin/lighttpd-arpping -f eth0 &");

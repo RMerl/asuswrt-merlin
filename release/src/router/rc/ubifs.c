@@ -172,6 +172,13 @@ void start_ubifs(void)
 		}
 	}
 
+	if (nvram_get_int("ubifs_clean_fs")) {
+		_dprintf("Clean /jffs/*\n");
+		system("rm -fr /jffs/*");
+		nvram_unset("ubifs_clean_fs");
+		nvram_commit_x();
+	}
+
 	notice_set("ubifs", format ? "Formatted" : "Loaded");
 
 	if (((p = nvram_get("ubifs_exec")) != NULL) && (*p != 0)) {
