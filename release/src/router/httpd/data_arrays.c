@@ -269,10 +269,10 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		    "%15s%*[ \t]"		// target
 		    "%15s%*[ \t]"		// prot
 		    "%*s%*[ \t]"		// opt
-		    "%15[^/]/%*d%*[ \t]"	// source
+		    "%19s%*[ \t]"		// source
 		    "%15[^/]/%*d%*[ \t]"	// destination
 		    "%255[^\n]",		// options
-		    target, proto, src, dst, tmp) < 4) continue;
+		    target, proto, src, dst, tmp) < 5) continue;
 
 		/* TODO: add port trigger, portmap, etc support */
 		if (strcmp(target, "DNAT") != 0)
@@ -285,13 +285,11 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		/* uppercase proto */
 		for (ptr = proto; *ptr; ptr++)
 			*ptr = toupper(*ptr);
-#ifdef NATSRC_SUPPORT
 		/* parse source */
-		if (strcmp(src, "0.0.0.0") == 0)
+		if (strcmp(src, "0.0.0.0/0") == 0)
 			strcpy(src, "ALL");
-#endif
 		/* parse destination */
-		if (strcmp(dst, "0.0.0.0") == 0)
+		if (strcmp(dst, "0.0.0.0/0") == 0)
 			strcpy(dst, "ALL");
 
 		/* parse options */
@@ -309,13 +307,9 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		}
 
 		ret += websWrite(wp, "["
-#ifdef NATSRC_SUPPORT
 			"\"%s\", "
-#endif
 			"\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
-#ifdef NATSRC_SUPPORT
 			src,
-#endif
 			dst, proto, range, host, port ? : range, chain);
 	}
 	fclose(fp);

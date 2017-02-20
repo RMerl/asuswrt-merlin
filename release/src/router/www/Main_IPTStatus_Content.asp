@@ -80,7 +80,7 @@ function show_vserver() {
 
 	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
 	code += '<thead><tr><td colspan="6">Virtual Servers</td></tr></thead>';
-	code += '<tr><th width="20%">Destination</th>';
+	code += '<tr><th width="20%">Source</th>';
 	code += '<th width="10%">Proto</th>';
 	code += '<th width="15%">Port range</th>';
 	code += '<th width="20%">Redirect to</th>';
