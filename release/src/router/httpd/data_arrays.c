@@ -238,8 +238,8 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 	char *nat_argv[] = {"iptables", "-t", "nat", "-nxL", NULL};
 	char line[256], tmp[256];
 	char target[16], proto[16];
-	char src[sizeof("255.255.255.255")];
-	char dst[sizeof("255.255.255.255")];
+	char src[19];
+	char dst[19];
 	char *range, *host, *port, *ptr, *val;
 	int ret = 0;
 	char chain[16];
@@ -269,7 +269,7 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		    "%15s%*[ \t]"		// target
 		    "%15s%*[ \t]"		// prot
 		    "%*s%*[ \t]"		// opt
-		    "%19s%*[ \t]"		// source
+		    "%18s%*[ \t]"		// source
 		    "%15[^/]/%*d%*[ \t]"	// destination
 		    "%255[^\n]",		// options
 		    target, proto, src, dst, tmp) < 5) continue;
