@@ -2338,90 +2338,63 @@ ej_wl_rate_5g_2(int eid, webs_t wp, int argc, char_t **argv)
 	return ej_wl_rate(eid, wp, argc, argv, 2);
 }
 
-static int wps_error_count = 0;
+static int wps_stop_count = 0;
+
+static void reset_wps_status()
+{
+	if (++wps_stop_count > 30)
+	{
+		wps_stop_count = 0;
+		nvram_set("wps_proc_status_x", "0");
+	}
+}
 
 char *
 getWscStatusStr()
 {
-	char *status;
-
-	status = nvram_safe_get("wps_proc_status");
+	char *status = nvram_safe_get("wps_proc_status_x");
 
 	switch (atoi(status)) {
-#if 1	/* AP mode */
 	case 1: /* WPS_ASSOCIATED */
-		wps_error_count = 0;
+		wps_stop_count = 0;
 		return "Start WPS Process";
 		break;
 	case 2: /* WPS_OK */
 	case 7: /* WPS_MSGDONE */
-		wps_error_count = 0;
+		reset_wps_status();
 		return "Success";
 		break;
 	case 3: /* WPS_MSG_ERR */
-		if (++wps_error_count > 60)
-		{
-			wps_error_count = 0;
-			nvram_set("wps_proc_status", "0");
-		}
+		reset_wps_status();
 		return "Fail due to WPS message exchange error!";
 		break;
 	case 4: /* WPS_TIMEOUT */
-		if (++wps_error_count > 60)
-		{
-			wps_error_count = 0;
-			nvram_set("wps_proc_status", "0");
-		}
+		reset_wps_status();
 		return "Fail due to WPS time out!";
 		break;
+	case 5: /* WPS_UI_SENDM2 */
+		return "Send M2";
+		break;
+	case 6: /* WPS_UI_SENDM7 */
+		return "Send M7";
+		break;
 	case 8: /* WPS_PBCOVERLAP */
-		if (++wps_error_count > 60)
-		{
-			wps_error_count = 0;
-			nvram_set("wps_proc_status", "0");
-		}
-		return "Fail due to WPS session overlap!";
+		reset_wps_status();
+		return "Fail due to PBC session overlap!";
+		break;
+	case 9: /* WPS_UI_FIND_PBC_AP */
+		return "Finding a PBC access point...";
+		break;
+	case 10: /* WPS_UI_ASSOCIATING */
+		return "Assciating with access point...";
 		break;
 	default:
-		wps_error_count = 0;
+		wps_stop_count = 0;
 		if (nvram_match("wps_enable", "1"))
 			return "Idle";
 		else
 			return "Not used";
 		break;
-#else	/* STA mode */
-	case 0:
-		return "Idle";
-		break;
-	case 1: /* WPS_ASSOCIATED */
-		return "Start enrolling...";
-		break;
-	case 2: /* WPS_OK */
-		return "Succeeded...";
-		break;
-	case 3: /* WPS_MSG_ERR */
-		return "Failed...";
-		break;
-	case 4: /* WPS_TIMEOUT */
-		return "Failed (timeout)...";
-		break;
-	case 7: /* WPS_MSGDONE */
-		return "Success";
-		break;
-	case 8: /* WPS_PBCOVERLAP */
-		return "Failed (pbc overlap)...";
-		break;
-	case 9: /* WPS_FIND_PBC_AP */
-		return "Finding a pbc access point...";
-		break;
-	case 10: /* WPS_ASSOCIATING */
-		return "Assciating with access point...";
-		break;
-	default:
-//		return "Init...";
-		return "Start WPS Process";
-		break;
-#endif
 	}
 }
 
@@ -2726,7 +2699,7 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)));
 
 	//C. WPS band
-	retval += websWrite(wp, "<wps_info>%d</wps_info>\n", nvram_get_int("wps_band"));
+	retval += websWrite(wp, "<wps_info>%d</wps_info>\n", nvram_get_int("wps_band_x"));
 
 	retval += websWrite(wp, "</wps>");
 

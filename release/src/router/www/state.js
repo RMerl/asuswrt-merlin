@@ -306,9 +306,12 @@ var concurrep_support = isSupport("concurrep");
 var psta_support = isSupport("psta");
 var wisp_support = isSupport("wisp");
 var wl6_support = isSupport("wl6");
+var no_finiwl_support = isSupport("no_finiwl");
 var Rawifi_support = isSupport("rawifi");
 var Qcawifi_support = isSupport("qcawifi");
 var wifi_logo_support = isSupport("wifilogo");
+var vht80_80_support = isSupport("vht80_80");
+var vht160_support = isSupport("vht160");
 var SwitchCtrl_support = isSupport("switchctrl");
 var dsl_support = isSupport("dsl");
 var vdsl_support = isSupport("vdsl");
@@ -327,6 +330,7 @@ var cfg_wps_btn_support = isSupport("cfg_wps_btn");
 var usb_support = isSupport("usbX");
 var usbPortMax = rc_support.charAt(rc_support.indexOf("usbX")+4);
 var printer_support = isSupport("printer"); 
+var noprinter_support = isSupport("noprinter");
 var appbase_support = isSupport("appbase");
 var appnet_support = isSupport("appnet");
 var media_support = isSupport(" media");
@@ -335,6 +339,7 @@ var nomedia_support = isSupport("nomedia");
 var noftp_support = isSupport("noftp");
 var noaidisk_support = isSupport("noaidisk");
 var cloudsync_support = isSupport("cloudsync");
+var nocloudsync_support = isSupport("nocloudsync");
 var aicloudipk_support = isSupport("aicloudipk");
 var yadns_hideqis = isSupport("yadns_hideqis");
 var yadns_support = yadns_hideqis || isSupport("yadns");
@@ -358,6 +363,7 @@ var hwmodeSwitch_support = isSupport("swmode_switch");
 var diskUtility_support = isSupport("diskutility");
 var networkTool_support = isSupport("nwtool");
 var band5g_11ac_support = isSupport("11AC");
+var no_vht_support = isSupport("no_vht");	//Hide 11AC/80MHz from GUI
 if(based_modelid == "RT-N600")		//UK , remove 80MHz(11ac) for MODELDEP: RT-N600
 	band5g_11ac_support = false;
 var optimizeXbox_support = isSupport("optimize_xbox");
@@ -369,6 +375,7 @@ var email_support = isSupport("email");
 var feedback_support = isSupport("feedback");
 var swisscom_support = isSupport("swisscom");
 var tmo_support = isSupport("tmo");
+var atf_support = isSupport("atf");
 var wl_mfp_support = isSupport("wl_mfp");	// For Protected Management Frames, ARM platform
 var bwdpi_support = isSupport("bwdpi");
 var traffic_analyzer_support = bwdpi_support;
@@ -410,6 +417,7 @@ if( based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_model
  }
 var disnwmd_support = isSupport("disable_nwmd");
 var noiptv_support = isSupport("noiptv");
+var nz_isp_support = isSupport("nz_isp");
 var QISWIZARD = "QIS_wizard.htm";
 
 var wl_version = "<% nvram_get("wl_version"); %>";
@@ -441,10 +449,7 @@ if(tmo_support && isMobile()){
 	
 if(isMobile() && (based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"))
 	QISWIZARD = "QIS_wizard_m.htm";	
-// for detect if the status of the machine is changed. {
-var wanstate = -1;
-var wansbstate = -1;
-var wanauxstate = -1;
+
 var stopFlag = 0;
 
 var gn_array_2g = <% wl_get_guestnetwork("0"); %>;
@@ -747,11 +752,11 @@ function show_banner(L3){// L3 = The third Level of Menu
 	if(usb_support)
 		banner_code +='<td width="30"><div id="usb_status"></div></td>\n';
 	
-	if(printer_support)
+	if(printer_support && !noprinter_support)
 		banner_code +='<td width="30" style="display:none"><div id="printer_status" class="printstatusoff"></div></td>\n';
 
 	/* Cherry Cho added in 2014/8/22. */
-	if(((modem_support && hadPlugged("modem")) || gobi_support) && (usb_index != -1) && (sim_state != "")){	
+	if(((modem_support && hadPlugged("modem") && !nomodem_support) || gobi_support) && (usb_index != -1) && (sim_state != "")){
 		banner_code +='<td width="30"><div id="sim_status" class="simnone"></div></td>\n';
 	}	
 
@@ -1107,7 +1112,7 @@ function remove_url(){
 		tabtitle[4][2] = "<#menu5_4_1#> / Cloud Disk";
 	}
 	
-	if(!cloudsync_support && !aicloudipk_support){
+	if((!cloudsync_support && !aicloudipk_support) || nocloudsync_support){
 		menuL1_title[6] = "";
 		menuL1_link[6] = "";
 	}
@@ -1154,7 +1159,7 @@ function remove_url(){
 			//menuL1_title[6] ="";            // AiCloud 2.0
 			//menuL1_link[6] ="";
 		}
-		
+
 		// Wireless
 		if(sw_mode == 4){
 			menuL2_title[1]="";
@@ -1488,7 +1493,7 @@ function show_menu(){
 	var autodet_state = '<% nvram_get("autodet_state"); %>';
 	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';	
 	var wan_proto = '<% nvram_get("wan0_proto"); %>';	
-	var wan_pppoe_username = '<% nvram_get("wan0_pppoe_username"); %>';
+	var wan_pppoe_username = decodeURIComponent('<% nvram_char_to_ascii("", "wan0_pppoe_username"); %>');
 	var cht_pppoe = wan_pppoe_username.split("@");
 	is_CHT_pppoe = (cht_pppoe[1] == "hinet.net") ? true : false;
 	is_CHT_pppoe_static = (cht_pppoe[1] == "ip.hinet.net") ? true : false;
@@ -2154,11 +2159,6 @@ function addOnlineHelp(obj, keywordArray){
         faqLang.CZ = "/cz/";
         faqLang.BR = "/br/";
         faqLang.TH = "/th/";
-	}else	if(keywordArray[0] == "monopoly" && keywordArray[1] == "mode"){
-		faqLang.TW = "/tw/";
-		faqLang.CN = ".cn/";
-		faqLang.FR = "/fr/";
-		faqLang.ES = "/es/";
 	
 	}else	if(keywordArray[0] == "ASUSWRT" && keywordArray[1] == "IPv6"){
 		faqLang.MS = "/my/";
@@ -3807,7 +3807,7 @@ function refreshStatus(xhr){
 			if(find_storage){
 				document.getElementById("usb_status").onclick = function(){openHint(24,2);}				
 			}
-			else if(modem_support && find_modem){
+			else if(modem_support && find_modem && !nomodem_support){
 				document.getElementById("usb_status").onclick = function(){openHint(24,7);}	
 			}			
 			else{
@@ -3822,7 +3822,7 @@ function refreshStatus(xhr){
 	}
 
 	// usb.printer
-	if(printer_support){
+	if(printer_support && !noprinter_support){
 		if(allUsbStatus.search("printer") == -1){
 			document.getElementById("printer_status").className = "printstatusoff";
 			document.getElementById("printer_status").parentNode.style.display = "none";
@@ -3995,7 +3995,7 @@ function refreshStatus(xhr){
 		}
 	}	
 
-	if(((modem_support && hadPlugged("modem")) || gobi_support) && (usb_index != -1) && (sim_state != "")){
+	if(((modem_support && hadPlugged("modem") && !nomodem_support) || gobi_support) && (usb_index != -1) && (sim_state != "")){
 		document.getElementById("sim_status").onmouseover = function(){overHint(99)};
 		document.getElementById("sim_status").onmouseout = function(){nd();}	
 		switch(sim_state)

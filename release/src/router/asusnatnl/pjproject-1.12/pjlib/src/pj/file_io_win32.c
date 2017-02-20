@@ -28,6 +28,39 @@
 #   define INVALID_SET_FILE_POINTER     ((DWORD)-1)
 #endif
 
+static pj_status_t set_file_pointer(pj_oshandle_t fd,
+    pj_off_t offset,
+    pj_off_t* newPos,
+    DWORD dwMoveMethod)
+{
+#if defined(PJ_WIN32_WINPHONE8) && PJ_WIN32_WINPHONE8
+    LARGE_INTEGER liDistance, liNewPos;
+
+    liDistance.QuadPart = offset;
+    if (!SetFilePointerEx(fd, liDistance, &liNewPos, dwMoveMethod)) {
+	return PJ_RETURN_OS_ERROR(GetLastError());
+    }
+    *newPos = liNewPos.QuadPart;
+#else
+    DWORD dwNewPos;
+    LONG  hi32;
+
+    hi32 = (LONG)(offset >> 32);
+
+    dwNewPos = SetFilePointer(fd, (long)offset, &hi32, dwMoveMethod);
+    if (dwNewPos == (DWORD)INVALID_SET_FILE_POINTER) {
+	DWORD dwStatus = GetLastError();
+	if (dwStatus != 0)
+	    return PJ_RETURN_OS_ERROR(dwStatus);
+	/* dwNewPos actually is not an error. */
+    }
+    *newPos = hi32;
+    *newPos = (*newPos << 32) + dwNewPos;
+#endif
+
+    return PJ_SUCCESS;
+}
+
 /**
  * Check for end-of-file condition on the specified descriptor.
  *
@@ -51,7 +84,7 @@ PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
                                   pj_oshandle_t *fd,
 								  unsigned *size)
 {
-    PJ_DECL_UNICODE_TEMP_BUF(wpathname,256)
+    PJ_DECL_UNICODE_TEMP_BUF(wpathname, 256)
     HANDLE hFile;
     DWORD dwDesiredAccess = 0;
     DWORD dwShareMode = 0;
@@ -97,14 +130,25 @@ PJ_DEF(pj_status_t) pj_file_open( pj_pool_t *pool,
     }
 
     dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    
     dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL;
 
-    hFile = CreateFile(PJ_STRING_TO_NATIVE(pathname,wpathname,sizeof(wpathname)), 
+#if defined(PJ_WIN32_WINPHONE8) && PJ_WIN32_WINPHONE8  
+    hFile = CreateFile2(PJ_STRING_TO_NATIVE(pathname,
+			wpathname, sizeof(wpathname)),
+			dwDesiredAccess, dwShareMode, dwCreationDisposition,
+			NULL);
+#else
+    hFile = CreateFile(PJ_STRING_TO_NATIVE(pathname,
+		       wpathname, sizeof(wpathname)),
 		       dwDesiredAccess, dwShareMode, NULL,
-                       dwCreationDisposition, dwFlagsAndAttributes, NULL);
+		       dwCreationDisposition, dwFlagsAndAttributes, NULL);
+#endif
+
     if (hFile == INVALID_HANDLE_VALUE) {
+	DWORD lastErr = GetLastError();	
         *fd = 0;
-        return PJ_RETURN_OS_ERROR(GetLastError());
+        return PJ_RETURN_OS_ERROR(lastErr);
     }
 
     if ((flags & PJ_O_APPEND) == PJ_O_APPEND) {
@@ -137,7 +181,7 @@ PJ_DEF(pj_status_t) pj_file_write( pj_oshandle_t fd,
     BOOL rc;
     DWORD bytesWritten;
 
-    rc = WriteFile(fd, data, *size, &bytesWritten, NULL);
+    rc = WriteFile(fd, data, (DWORD)*size, &bytesWritten, NULL);
     if (!rc) {
         *size = -1;
         return PJ_RETURN_OS_ERROR(GetLastError());
@@ -154,7 +198,7 @@ PJ_DEF(pj_status_t) pj_file_read( pj_oshandle_t fd,
     BOOL rc;
     DWORD bytesRead;
 
-    rc = ReadFile(fd, data, *size, &bytesRead, NULL);
+    rc = ReadFile(fd, data, (DWORD)*size, &bytesRead, NULL);
     if (!rc) {
         *size = -1;
         return PJ_RETURN_OS_ERROR(GetLastError());
@@ -193,8 +237,7 @@ PJ_DEF(pj_status_t) pj_file_setpos( pj_oshandle_t fd,
                                     enum pj_file_seek_type whence)
 {
     DWORD dwMoveMethod;
-    DWORD dwNewPos;
-    LONG  hi32;
+    pj_off_t newPos;
 
     if (whence == PJ_SEEK_SET)
         dwMoveMethod = FILE_BEGIN;
@@ -207,13 +250,8 @@ PJ_DEF(pj_status_t) pj_file_setpos( pj_oshandle_t fd,
         return PJ_EINVAL;
     }
 
-    hi32 = (LONG)(offset >> 32);
-    dwNewPos = SetFilePointer(fd, (long)offset, &hi32, dwMoveMethod);
-    if (dwNewPos == (DWORD)INVALID_SET_FILE_POINTER) {
-        DWORD dwStatus = GetLastError();
-        if (dwStatus != 0)
-            return PJ_RETURN_OS_ERROR(dwStatus);
-        /* dwNewPos actually is not an error. */
+    if (set_file_pointer(fd, offset, &newPos, dwMoveMethod) != PJ_SUCCESS) {
+	return PJ_RETURN_OS_ERROR(GetLastError());
     }
 
     return PJ_SUCCESS;
@@ -222,18 +260,10 @@ PJ_DEF(pj_status_t) pj_file_setpos( pj_oshandle_t fd,
 PJ_DEF(pj_status_t) pj_file_getpos( pj_oshandle_t fd,
                                     pj_off_t *pos)
 {
-    LONG hi32 = 0;
-    DWORD lo32;
-
-    lo32 = SetFilePointer(fd, 0, &hi32, FILE_CURRENT);
-    if (lo32 == (DWORD)INVALID_SET_FILE_POINTER) {
-        DWORD dwStatus = GetLastError();
-        if (dwStatus != 0)
-            return PJ_RETURN_OS_ERROR(dwStatus);
+    if (set_file_pointer(fd, 0, pos, FILE_CURRENT) != PJ_SUCCESS) {
+	return PJ_RETURN_OS_ERROR(GetLastError());
     }
 
-    *pos = hi32;
-    *pos = (*pos << 32) + lo32;
     return PJ_SUCCESS;
 }
 

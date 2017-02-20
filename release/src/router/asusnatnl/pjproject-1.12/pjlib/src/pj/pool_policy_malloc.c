@@ -22,7 +22,7 @@
 #include <pj/os.h>
 #include <pj/compat/malloc.h>
 
-#if !defined(WIN32) && !defined(PJ_ANDROID)
+#if !defined(PJ_WIN32) && !defined(PJ_ANDROID) && !defined(PJ_DARWINOS)
 #include <umem.h>
 #include <umem_impl.h>
 #endif
@@ -109,7 +109,7 @@ PJ_DEF(const pj_pool_factory_policy*) pj_pool_factory_get_default_policy(void)
 PJ_DEF(void *) pj_mem_alloc( pj_size_t size)
 {
 //#if defined(ROUTER)
-#if !defined(_WIN32) && !defined(PJ_ANDROID)
+#if !defined(_WIN32) && !defined(PJ_ANDROID) && !defined(PJ_DARWINOS)
 	if (!umem_inited) {
 		umem_startup(NULL, 0, 0, NULL, NULL);
 		umem_inited = 1;
@@ -123,7 +123,7 @@ PJ_DEF(void *) pj_mem_alloc( pj_size_t size)
 PJ_DEF(void) pj_mem_free( void *buf, pj_size_t size)
 {
 //#if defined(ROUTER)
-#if !defined(_WIN32) && !defined(PJ_ANDROID)
+#if !defined(_WIN32) && !defined(PJ_ANDROID) && !defined(PJ_DARWINOS)
 	if (!umem_inited) {
 		umem_startup(NULL, 0, 0, NULL, NULL);
 		umem_inited = 1;

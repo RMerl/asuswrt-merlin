@@ -391,7 +391,7 @@
  * Default: 4*PJ_STUN_RTO_VALUE (milliseconds)
  */
 #ifndef PJ_ICE_NOMINATED_CHECK_DELAY
-#   define PJ_ICE_NOMINATED_CHECK_DELAY		    (4*PJ_STUN_RTO_VALUE)
+#   define PJ_ICE_NOMINATED_CHECK_DELAY		    (15*PJ_STUN_RTO_VALUE)
 /**
  * if router is PPPoE, the TCP will take more time, so we need extend the delay time
  * Andrew Hung (2013/02/21)

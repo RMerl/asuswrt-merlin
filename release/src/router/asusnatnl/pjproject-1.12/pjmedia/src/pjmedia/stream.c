@@ -1541,12 +1541,12 @@ static void on_rx_rtp(void *data,
 	pj_bool_t is_tnl_data = PJ_FALSE;
 	pj_uint8_t *pkt = (pj_uint8_t *)buf;
 	pj_bool_t disable_flow_ctl = PJ_FALSE;
-
+/*
 	// Speed limit. Drop packet if it is over bandwidth.
 	if(call->tnl_stream->rx_band->isLimited && 
 		pj_bandwidthClamp(call->tnl_stream->rx_band, (pj_uint32_t)data_len) < 1)
 		return;
-
+*/
     pj_mutex_lock(call->tnl_stream_lock);
 #if 1
 	// Check if tunnel is destroyed.
@@ -2938,3 +2938,26 @@ PJ_DEF(pj_status_t) pjmedia_stream_set_nsmd_callback(pjmedia_stream *stream,
 	return PJ_SUCCESS;
 }
 #endif
+
+PJ_DEF(pj_bool_t) pjmedia_stream_rbuff_full(pjmedia_stream *stream)
+{
+	pjmedia_session *session = (pjmedia_session *)stream->user_data;
+	pjsua_call *call = (pjsua_call *)pjmedia_session_get_user_data(session);
+	if (call->tnl_stream->rbuff_cnt > 128)
+		return PJ_TRUE;
+
+	return PJ_FALSE;
+}
+
+
+PJ_DEF(pj_bool_t) pjmedia_stream_speed_limit_reached(pjmedia_stream *stream, int data_len)
+{
+	// Speed limit. Drop packet if it is over bandwidth.
+	pjmedia_session *session = (pjmedia_session *)stream->user_data;
+	pjsua_call *call = (pjsua_call *)pjmedia_session_get_user_data(session);
+	if(call->tnl_stream->rx_band->isLimited && 
+	   pj_bandwidthClamp(call->tnl_stream->rx_band, (pj_uint32_t)data_len) < 1)
+	   return PJ_TRUE;
+
+	return PJ_FALSE;
+}

@@ -20,62 +20,66 @@
 #ifndef __NAT_TUNNEL_CODEC_H__
 #define __NAT_TUNNEL_CODEC_H__
 
-/**
- * @file ntc.h
- * @brief ASUS proprietary NAT tunnel Codec
- */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	/**
+	 * @file ntc.h
+	 * @brief ASUS proprietary NAT tunnel Codec
+	 */
 
 #include <pjmedia-codec/types.h>
 
-/**
- * @defgroup PJMED_NAT tunnel Codec
- * @ingroup PJMEDIA_CODEC_CODECS
- * @brief ASUS proprietary tunnel codec.
- * @{
- *
- * This section describes functions to initialize and register NAT tunnel codec
- * factory to the codec manager. After the codec factory has been registered,
- * application can use @ref PJMEDIA_CODEC API to manipulate the codec.
- *
- * \section codec_setting Codec Settings
- *
- * \subsection general_setting General Settings
- *
- * General codec settings for this codec such as VAD and PLC can be 
- * manipulated through the <tt>setting</tt> field in #pjmedia_codec_param. 
- * Please see the documentation of #pjmedia_codec_param for more info.
- *
- * \subsection specific_setting Codec Specific Settings
- *
- * Currently none.
- */
-
-PJ_BEGIN_DECL
+	 /**
+	  * @defgroup PJMED_NAT tunnel Codec
+	  * @ingroup PJMEDIA_CODEC_CODECS
+	  * @brief ASUS proprietary tunnel codec.
+	  * @{
+	  *
+	  * This section describes functions to initialize and register NAT tunnel codec
+	  * factory to the codec manager. After the codec factory has been registered,
+	  * application can use @ref PJMEDIA_CODEC API to manipulate the codec.
+	  *
+	  * \section codec_setting Codec Settings
+	  *
+	  * \subsection general_setting General Settings
+	  *
+	  * General codec settings for this codec such as VAD and PLC can be
+	  * manipulated through the <tt>setting</tt> field in #pjmedia_codec_param.
+	  * Please see the documentation of #pjmedia_codec_param for more info.
+	  *
+	  * \subsection specific_setting Codec Specific Settings
+	  *
+	  * Currently none.
+	  */
 
 
-/**
- * Initialize and register NAT tunnel codec factory to pjmedia endpoint.
- * This will register PCMU and PCMA codec, in that order.
- *
- * @param inst_id	The the instance id of pjsua.
- * @param endpt		The pjmedia endpoint.
- *
- * @return		PJ_SUCCESS on success.
- */
-PJ_DECL(pj_status_t) pjmedia_codec_ntc_init(int inst_id, pjmedia_endpt *endpt);
+	  /**
+	   * Initialize and register NAT tunnel codec factory to pjmedia endpoint.
+	   * This will register PCMU and PCMA codec, in that order.
+	   *
+	   * @param inst_id	The the instance id of pjsua.
+	   * @param endpt		The pjmedia endpoint.
+	   *
+	   * @return		PJ_SUCCESS on success.
+	   */
+	PJ_DECL(pj_status_t) pjmedia_codec_ntc_init(int inst_id, pjmedia_endpt *endpt);
 
 
 
-/**
- * Unregister NAT tunnel codec factory from pjmedia endpoint.
- *
- * @param inst_id	The the instance id of pjsua.
- * @return	    PJ_SUCCESS on success.
- */
-PJ_DECL(pj_status_t) pjmedia_codec_ntc_deinit(int inst_id);
+	/**
+	 * Unregister NAT tunnel codec factory from pjmedia endpoint.
+	 *
+	 * @param inst_id	The the instance id of pjsua.
+	 * @return	    PJ_SUCCESS on success.
+	 */
+	PJ_DECL(pj_status_t) pjmedia_codec_ntc_deinit(int inst_id);
 
 
-PJ_END_DECL
+#ifdef __cplusplus
+}
+#endif
 
 /**
  * @}

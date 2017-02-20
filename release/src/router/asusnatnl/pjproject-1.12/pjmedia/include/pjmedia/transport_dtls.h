@@ -28,7 +28,6 @@
 #include <pj/ssl_sock.h>
 #include <pjmedia/transport.h>
 
-
 /**
  * @defgroup PJMEDIA_TRANSPORT_SRTP Secure RTP (SRTP) Media Transport
  * @ingroup PJMEDIA_TRANSPORT

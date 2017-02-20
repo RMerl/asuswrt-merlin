@@ -1602,6 +1602,7 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
 					&ice->clist, c)));
 			pj_stun_session_cancel_req(comp->stun_sess, 
 						   c->tdata, PJ_FALSE, 0);
+			c->transmit_count = pj_stun_tsx_tansmit_count(c->tdata->client_tsx);
 			c->tdata = NULL;
 			check_set_state(ice, c, PJ_ICE_SESS_CHECK_STATE_FAILED,
 					PJ_ECANCELLED);
@@ -1699,7 +1700,7 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
 	 */
 	if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLING)
 	{
-		int udp_check_ok = 0, turn_check_ok = 0, failed_check;
+		int udp_check_ok = 0, turn_check_ok = 0, failed_check = 0;
 		for (j=0; j<ice->clist.count; ++j) {
 			pj_ice_sess_check *c = &ice->clist.checks[j];
 			if (c->state == PJ_ICE_SESS_CHECK_STATE_SUCCEEDED) {

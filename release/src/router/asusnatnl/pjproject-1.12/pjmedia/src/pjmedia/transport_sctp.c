@@ -32,7 +32,7 @@
 #include <pj/math.h>
 #include <pjlib.h>
 
-#ifdef WIN32
+#ifdef PJ_WIN32
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 #define in_port_t u_short
@@ -229,7 +229,7 @@ typedef struct transport_sctp
 
 	int				  delayed_send_size;
 
-	pj_sockaddr *turn_mapped_addr;  // Save turn mapped address for notifying upper stack.
+	pj_sockaddr       *turn_mapped_addr;  // Save turn mapped address for notifying upper stack.
 } transport_sctp;
 
 /*
@@ -243,6 +243,8 @@ static void sctp_rtp_cb( void *user_data, void *pkt, pj_ssize_t size);
 static void sctp_rtcp_cb( void *user_data, void *pkt, pj_ssize_t size);
 
 static pj_status_t set_cipher_list(transport_sctp *sctp);
+
+static void dump_bin(const char *buf, unsigned len, pj_bool_t send);
 
 #ifdef ENABLE_DELAYED_SEND
 static write_data_t* alloc_send_data(transport_sctp *sctp, pj_size_t len);
@@ -418,9 +420,24 @@ static pj_str_t ssl_strerror(pj_status_t status,
 /* usrsctp library initialization counter */
 static int usrsctp_init_count;
 
+static int is_sctp_init_packet(void *data, size_t datalen);
+
 static int sctp_data_input(struct socket* sock, union sctp_sockstore addr,
 							void *data, size_t datalen,
 							struct sctp_rcvinfo rcv, int flags, void *ulp_info);
+
+static int is_sctp_init_packet(void *data, size_t datalen)
+{
+	char init_pattern1[4] = {0x13, 0x88, 0x13, 0x88};
+	char init_pattern2[4] = {0x01, 0x00, 0x00, 0x56};
+
+	if (datalen >= 16 &&
+		memcmp(&((char *)data)[0], init_pattern1, sizeof(init_pattern1)) == 0 &&
+		memcmp(&((char *)data)[12], init_pattern2, sizeof(init_pattern2)) == 0) {
+		return 1;
+	}
+	return 0;
+}
 
 static void sctp_server_create(pjmedia_transport *tp)
 {
@@ -585,8 +602,11 @@ error_cleanup:
 static void sctp_debug_printf(const char *format, ...)
 {
 	va_list arg;
+	char tmp[1024];
+	memset(tmp, 0, sizeof(tmp));
 	va_start(arg, format);
-	PJ_LOG(5, (THIS_FILE, format, arg));
+	vsprintf(tmp, format, arg);
+	PJ_LOG(5, (THIS_FILE, tmp));
 	va_end(arg);
 }
 
@@ -814,8 +834,14 @@ static int sctp_output_thread(void *arg) {
 		}
 		//pj_mutex_unlock(call->tnl_stream_lock3);
 
+		if (is_sctp_init_packet(buff, sz)) {
+			sctp->base.sctp_retry_count++;
+		}
+
 		if (sctp->member_tp)
 			pjmedia_transport_send_rtp(sctp->member_tp, buff, sz);
+
+		dump_bin(buff, sz, 1);
 		/*if (status == PJ_SUCCESS)
 			return 0;
 		else {
@@ -925,26 +951,23 @@ static int sctp_data_input(struct socket* sock, union sctp_sockstore addr,
 }
 
 /* Initialize usrsctp library*/
-static pj_status_t init_usrsctp(pj_pool_t *pool)
+PJ_DEF(pj_status_t) init_usrsctp(pj_pool_t *pool)
 {
 	pj_status_t status;
 
 	PJ_UNUSED_ARG(pool);
 
 	// Check if usrsctp is initialized.
-	if (usrsctp_init_count)
+	if (usrsctp_init_count++ > 0)
 		return PJ_SUCCESS;
 #ifdef USE_GLOBAL_LOCK
 	MUTEX_SETUP(global_mutex);
 #endif
 
-	usrsctp_init_count = 1;
-
 	// Init usrsctp
 	usrsctp_init(0, sctp_data_output, sctp_debug_printf);
 
 	//usrsctp_sysctl_set_sctp_debug_on(SCTP_DEBUG_ALL);
-	usrsctp_sysctl_set_sctp_debug_on(SCTP_DEBUG_ALL);
 
 	usrsctp_sysctl_set_sctp_blackhole(2);
 	usrsctp_sysctl_set_sctp_ecn_enable(0);
@@ -960,13 +983,10 @@ static pj_status_t init_usrsctp(pj_pool_t *pool)
 	return PJ_SUCCESS;
 }
 
-/* Shutdown OpenSSL */
-static void shutdown_usrsctp(void)
+/* Shutdown usrsctp */
+PJ_DEF(void) shutdown_usrsctp(void)
 {
-	// DEAN don't shutdown openssl for multiple instances.
-	return;
-
-	if (!usrsctp_init_count) // Execute only one time.
+	if (--usrsctp_init_count) // Flag for calling usrsctp_finish only one time.
 		return;
 
 	usrsctp_finish();
@@ -974,8 +994,6 @@ static void shutdown_usrsctp(void)
 #ifdef USE_GLOBAL_LOCK
 	MUTEX_CLEANUP(global_mutex);
 #endif
-
-	usrsctp_init_count = 0;
 }
 
 /* Create and initialize usrsctp and instance */
@@ -1002,8 +1020,8 @@ static pj_status_t create_sctp(transport_sctp *sctp)
         
     pj_assert(sctp);
 
-    /* Make sure OpenSSL library has been initialized */
-	init_usrsctp(sctp->pool);
+    /* Make sure usrsctp library has been initialized */
+	/*init_usrsctp(sctp->pool);*/
 
 	usrsctp_register_address(sctp);
 	PJ_LOG(4, (THIS_FILE, "create_sctp Registered %p within the SCTP stack.", sctp));
@@ -1312,6 +1330,9 @@ PJ_DEF(void) pjmedia_sctp_session_create(pjmedia_transport *tp,
 #endif
 	addr.sconn_port = htons(DEFAULT_SCTP_LOCAL_PORT);
 	addr.sconn_addr = sctp;
+	
+	PJ_LOG(4, (THIS_FILE, "pjmedia_sctp_session_create sconn_family=%d, sa_family=%d", addr.sconn_family, ((struct sockaddr *)&addr)->sa_family));
+	PJ_LOG(4, (THIS_FILE, "pjmedia_sctp_session_create sctp->offerer_side=%d, remote_ua_is_sdk=%d", sctp->offerer_side, sctp->base.remote_ua_is_sdk));
 
 	if (!sctp->offerer_side && sctp->base.remote_ua_is_sdk) {
 		pj_thread_create(sctp->pool, "sctp_accept_thread", &sctp_accept_thread,  
@@ -1377,12 +1398,12 @@ PJ_DEF(pj_status_t) pjmedia_sctp_init_lib(pjmedia_endpt *endpt)
     if (libsctp_initialized == PJ_FALSE) {
 	pj_status_t status;
 
-	status = init_usrsctp(pjmedia_get_pool(endpt));
+	/*status = init_usrsctp(pjmedia_get_pool(endpt));
 	if (status != PJ_SUCCESS) { 
 	    PJ_LOG(4, (THIS_FILE, "Failed to initialize libsctp: %d", 
 		       status));
 	    return status;
-	}
+	}*/
 
 	if (pjmedia_endpt_atexit(endpt, pjmedia_sctp_deinit_lib) != PJ_SUCCESS)
 	{
@@ -1410,8 +1431,6 @@ static void pjmedia_sctp_deinit_lib(pjmedia_endpt *endpt)
      */
 
     PJ_UNUSED_ARG(endpt);
-
-    shutdown_usrsctp();
 
     libsctp_initialized = PJ_FALSE;
 }
@@ -1457,6 +1476,7 @@ PJ_DEF(pj_status_t) pjmedia_transport_sctp_create(
 	sctp->session_inited = PJ_FALSE;
 	sctp->sctp_inited = PJ_FALSE;
 	sctp->media_type_app = PJ_FALSE;
+	sctp->base.sctp_retry_count = 0;
 
 	if (opt) {
 		sctp->setting = *opt;
@@ -1807,7 +1827,7 @@ static pj_status_t transport_send_rtp( pjmedia_transport *tp,
 			PJ_LOG(5, (THIS_FILE, "transport_send_rtp error %d sending data", errno));
 			pj_thread_sleep(1);
 		}
-		dump_bin(data, size, 1);
+		//dump_bin(data, size, 1);
 	} else {
 		PJ_LOG(5, (THIS_FILE, "transport_send_rtp() SSL not ready sctp->ssl_state=[%d].", sctp->state));
 
@@ -1915,6 +1935,14 @@ static void sctp_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	void *data = pkt;
 	pj_bool_t disable_flow_ctl = PJ_FALSE;
 
+	// Check if the speed limit is reached, if true drop the packet.
+	if (pjmedia_stream_speed_limit_reached(sctp->user_data, size))
+		return;
+
+	// Check if the recv buffer is full, if true drop the packet.
+	if (pjmedia_stream_rbuff_full(sctp->user_data))
+		return;
+
 	if (!pkt || size <= 0) {
 		return;
 	}
@@ -1922,7 +1950,7 @@ static void sctp_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	// check if there is no flow control flag.
 	disable_flow_ctl = pjmedia_natnl_disabled_flow_control(pkt, size);
 	if (sctp->bypass_sctp || disable_flow_ctl) {
-		dump_bin(pkt, size, 0);
+		//dump_bin(pkt, size, 0);
 		sctp->rtp_cb(sctp->user_data, pkt, size);
 		return;
 	}

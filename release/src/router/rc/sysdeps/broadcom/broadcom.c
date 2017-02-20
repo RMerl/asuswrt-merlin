@@ -542,8 +542,7 @@ setAllLedOn(void)
 #ifdef RTAC68U
 			 /* 4360's fake 5g led */
 			led_control(LED_5G, LED_ON);
-			if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-				|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+			if (is_ac66u_v2_series())
 			led_control(LED_WAN, LED_ON);
 #endif
 			break;
@@ -896,8 +895,7 @@ setAllLedOff(void)
 #ifdef RTAC68U
 			/* 4360's fake 5g led */
 			led_control(LED_5G, LED_OFF);
-			if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-				|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+			if (is_ac66u_v2_series())
 			led_control(LED_WAN, LED_OFF);
 #endif
 #ifdef RTCONFIG_FAKE_ETLAN_LED
@@ -1192,8 +1190,7 @@ setWanLedMode1(void)
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 #ifdef RTAC68U
-			if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-				&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+			if (!is_ac66u_v2_series())
 				goto exit;
 #endif
 			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
@@ -1222,8 +1219,7 @@ setWanLedMode2(void)
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 #ifdef RTAC68U
-			if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-				&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+			if (!is_ac66u_v2_series())
 				goto exit;
 #endif
 			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x0101");	// lan/wan ethernet/giga led
@@ -3689,13 +3685,14 @@ void wlconf_pre()
 #ifdef RTCONFIG_QTN
 		if (!strcmp(word, "wifi0")) break;
 #endif
-		if ((nvram_match(strcat_r(prefix, "nband", tmp), "1") &&
+		if (hw_vht_cap() &&
+		   ((nvram_match(strcat_r(prefix, "nband", tmp), "1") &&
 		     nvram_match(strcat_r(prefix, "vreqd", tmp), "1"))
 #if !defined(RTCONFIG_BCM9) && !defined(RTAC56U) && !defined(RTAC56S)
 		 || (nvram_match(strcat_r(prefix, "nband", tmp), "2") &&
 		     nvram_get_int(strcat_r(prefix, "turbo_qam", tmp)))
 #endif
-		) {
+		)) {
 #ifdef RTCONFIG_BCMARM
 #if !defined(RTCONFIG_BCM9) && !defined(RTAC56U) && !defined(RTAC56S)
 			if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))
@@ -3758,8 +3755,7 @@ void wlconf_post(const char *ifname)
 #endif
 
 #ifdef RTAC68U
-	if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-		|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1)) {
+	if (is_ac66u_v2_series()) {
 		if (unit) eval("wl", "-i", (char *) ifname, "radioreg", "0x892", "0x4068");
 		eval("wl", "-i", (char *) ifname, "aspm", "3");
 	}

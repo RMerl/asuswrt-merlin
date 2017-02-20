@@ -46,10 +46,63 @@ char *link_wan_nvname(int unit, char *buf, int size)
 	return buf;
 }
 
-int update_wan_leds(int wan_unit)
-{
-#if defined(RTCONFIG_LANWAN_LED)
 #if defined(RTCONFIG_WANRED_LED)
+static int update_wan_led_and_wanred_led(int wan_unit)
+{
+#if defined(RTCONFIG_WANPORT2)
+	/* e.g. BRT-AC828M2: WAN WHITE/RED LED x 2, RTCONFIG_DUALWAN must be enabled. */
+	int mode = sw_mode, l = link_wan[wan_unit], state;
+	int wan_led, wanred_led;
+	char s[] = "wanX_state_tXXX";
+
+	if (wan_unit < 0 || wan_unit >= WAN_UNIT_MAX)
+		return -1;
+
+	if (mode < SW_MODE_ROUTER || mode > SW_MODE_HOTSPOT)
+		mode = nvram_get_int("sw_mode");
+	/* Turn on/off WAN WHITE/RED LED in accordance with wan status. */
+	switch (mode) {
+	case SW_MODE_ROUTER:
+		switch (wan_unit) {
+		case 0:
+			wan_led = LED_WAN;
+			wanred_led = LED_WAN_RED;
+			break;
+		case 1:
+			wan_led = LED_WAN2;
+			wanred_led = LED_WAN2_RED;
+			break;
+		default:
+			return 0;
+		}
+
+		if (!nvram_match("wans_mode", "lb") &&
+		    wan_primary_ifunit() != wan_unit)
+		{
+			led_control(wanred_led, LED_OFF);
+			led_control(wan_led, LED_OFF);
+			return 0;
+		}
+
+		sprintf(s, "wan%d_state_t", wan_unit);
+		state = nvram_get_int(s);
+		l = get_wanports_status(wan_unit);
+		if (l == CONNED && state == WAN_STATE_CONNECTED) {
+			led_control(wanred_led, LED_OFF);
+			led_control(wan_led, LED_ON);
+		} else {
+			led_control(wanred_led, LED_ON);
+			led_control(wan_led, LED_OFF);
+		}
+		break;
+	case SW_MODE_REPEATER:	/* fallthrough */
+	case SW_MODE_AP:
+		wan_red_led_control(LED_OFF);
+		wan2_red_led_control(LED_OFF);
+		break;
+	}
+#else	/* !RTCONFIG_WANPORT2 */
+	/* e.g. RT-AC55U: WAN BLUE/RED LED */
 	int mode = sw_mode, l = link_wan[wan_unit], state;
 	char s[] = "wanX_state_tXXX";
 
@@ -62,7 +115,7 @@ int update_wan_leds(int wan_unit)
 	switch (mode) {
 	case SW_MODE_ROUTER:
 #if defined(RTCONFIG_DUALWAN)
-		if (!strcmp(dualwan_mode, "lb")) {
+		if (nvram_match("wans_mode", "lb")) {
 			int u, onoff = 0;
 
 			if (wan_unit)
@@ -113,18 +166,66 @@ int update_wan_leds(int wan_unit)
 		wan_red_led_control(LED_OFF);
 		break;
 	}
+#endif	/* RTCONFIG_WANPORT2 */
+
+	return 0;
+}
+#else	/* !RTCONFIG_WANRED_LED */
+static inline int update_wan_led_and_wanred_led(int wan_unit) { return 0; }
+#endif	/* RTCONFIG_WANRED_LED */
+
+#if defined(RTCONFIG_FAILOVER_LED)
+int update_failover_led(void)
+{
+	enum led_fan_mode_id v = LED_OFF;
+
+	/* If dual-wan is not enabled or is not fail-over mode,
+	 * always turn off fail-over led.
+	 */
+	if (get_dualwan_by_unit(1) == WANS_DUALWAN_IF_NONE ||
+	    !nvram_match("wans_mode", "fo"))
+	{
+		failover_led_control(LED_OFF);
+		return 0;
+	}
+
+	if (wan_primary_ifunit() == 1)
+		v = LED_ON;
+
+	failover_led_control(v);
+
+	return 0;
+}
+#else
+static inline int update_failover_led(void);
+#endif
+
+#if defined(RTCONFIG_LANWAN_LED)
+int update_wan_leds(int wan_unit)
+{
+#if defined(RTCONFIG_WANRED_LED)
+#ifdef RTCONFIG_WPS_ALLLED_BTN
+	if (nvram_match("AllLED", "1"))
+#endif
+	update_wan_led_and_wanred_led(wan_unit);
 #else	/* !RTCONFIG_WANRED_LED */
 	/* Turn on/off WAN LED in accordance with link status of WAN port */
-	if (link_wan[wan_unit]) {
+	if (link_wan[wan_unit]
+#ifdef RTCONFIG_WPS_ALLLED_BTN
+			&& nvram_match("AllLED", "1")
+#endif
+	) {
 		led_control(LED_WAN, LED_ON);
 	} else {
 		led_control(LED_WAN, LED_OFF);
 	}
 #endif	/* RTCONFIG_WANRED_LED */
-#endif	/* RTCONFIG_LANWAN_LED */
+
+	update_failover_led();
 
 	return 0;
 }
+#endif	/* RTCONFIG_LANWAN_LED */
 
 static void safe_leave(int signo){
 	csprintf("\n## wanduck.safeexit ##\n");
@@ -320,8 +421,7 @@ void enable_wan_wled()
 		switch (get_model()) {
 #ifdef RTAC68U
 			case MODEL_RTAC68U:
-				if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-					&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+				if (!is_ac66u_v2_series())
 					break;
 #endif
 			case MODEL_RTAC3200:
@@ -354,8 +454,7 @@ static void wan_led_control(int sig) {
 #if 0
 #if defined(RTAC68U) || defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
 #ifdef RTAC68U
-	if (strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-		&& strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+	if (!is_ac66u_v2_series())
 		return;
 #endif
 	char buf[16];
@@ -369,7 +468,7 @@ static void wan_led_control(int sig) {
 #if defined(RTAC68U) ||  defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R) || defined(DSL_AC68U)
 	if(nvram_match("AllLED", "1")
 #ifdef RTAC68U
-		&& (!strcmp(get_productid(), MODEL_STR_RTAC66UV2) || !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+		&& is_ac66u_v2_series()
 #endif
 	) {
 #if defined(RTAC68U) ||  defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) || defined(RTAC5300R)
@@ -1014,20 +1113,8 @@ int chk_proto(int wan_unit){
 			return DISCONN;
 		}
 		else if(current_state[wan_unit] == WAN_STATE_CONNECTING){
-#if defined(RTCONFIG_WANRED_LED)
-			int r = CASE_DHCPFAIL, v = DISCONN;
-
-			if (!strcmp(wan_proto, "static") && link_wan[wan_unit]) {
-				r = CASE_NONE;
-				v = CONNED;
-			}
-
-			disconn_case[wan_unit] = r;
-			return v;
-#else
 			disconn_case[wan_unit] = CASE_DHCPFAIL;
 			return DISCONN;
-#endif
 		}
 		else if(current_state[wan_unit] == WAN_STATE_DISCONNECTED){
 			disconn_case[wan_unit] = CASE_DHCPFAIL;
@@ -1220,8 +1307,8 @@ _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state
 
 		disconn_case[other_wan_unit] = CASE_DYN_MODEM;
 	}
-#endif
-#endif // RTCONFIG_DYN_MODEM
+#endif	/* RTCONFIG_DUALWAN */
+#endif	/* RTCONFIG_DYN_MODEM */
 
 	if(dualwan_unit__usbif(wan_unit)){
 		snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
@@ -1344,9 +1431,7 @@ csprintf("wanduck: try to get usb_if=%s.\n", usb_if);
 if(test_log)
 _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state=%d.\n", !isFirstUse, link_wan[wan_unit], sim_state);
 
-#if defined(RTCONFIG_WANRED_LED)
 		update_wan_leds(wan_unit);
-#endif
 
 		link_wan_nvname(wan_unit, wired_link_nvram, sizeof(wired_link_nvram));
 		if(link_wan[wan_unit] != nvram_get_int(wired_link_nvram)){
@@ -1383,6 +1468,9 @@ _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state
 		link_wan[wan_unit] = get_wanports_status(wan_unit);
 
 		if (get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_WAN
+#if defined(RTCONFIG_WANPORT2)
+		    || get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_WAN2
+#endif
 #if defined(RTCONFIG_WANRED_LED)
 		    || get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_LAN
 #endif
@@ -1411,7 +1499,12 @@ _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state
 	}
 
 #ifdef RTCONFIG_LANWAN_LED
-	if(get_lanports_status()) led_control(LED_LAN, LED_ON);
+	if(get_lanports_status()
+#ifdef RTCONFIG_WPS_ALLLED_BTN
+			&& nvram_match("AllLED", "1")
+#endif
+	)
+		led_control(LED_LAN, LED_ON);
 	else led_control(LED_LAN, LED_OFF);
 #endif
 
@@ -1596,18 +1689,6 @@ _dprintf("nat_rule: start_nat_rules 3.\n");
 		snprintf(wan_proto, 16, "%s", nvram_safe_get(strcat_r(prefix_wan, "proto", nvram_name)));
 
 		if(!strcmp(wan_proto, "static")){
-#if defined(RTCONFIG_WANRED_LED)
-			char tmp[100];
-			char *gateway, *wan_ifname;
-
-			wan_ifname = nvram_safe_get(strcat_r(prefix_wan, "ifname", tmp));
-			gateway = nvram_safe_get(strcat_r(prefix_wan, "gateway", tmp));
-			if (!test_gateway(gateway, wan_ifname)) {
-				update_wan_state(prefix_wan, WAN_STATE_CONNECTED, 0);
-			} else {
-				update_wan_state(prefix_wan, WAN_STATE_CONNECTING, 0);
-			}
-#endif
 			/* Sync time */
 			refresh_ntpc();
 		}
@@ -3181,7 +3262,9 @@ _dprintf("wanduck(%d): detect the modem to be reset...\n", current_wan_unit);
 			}
 #endif
 			else{
-#if !defined(RTN14U) && !defined(RTAC1200GP)
+#if defined(RTAC58U)
+				update_wan_leds(current_wan_unit);
+#elif !defined(RTN14U) && !defined(RTAC1200GP) && !defined(RTAC82U)
 				conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit);
 #endif
 				if(conn_state[current_wan_unit] == CONNED){
@@ -3506,7 +3589,7 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 #elif defined(RTAC68U) || defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)|| defined(RTAC5300R)
 						if(
 #ifdef RTAC68U
-							(!strcmp(get_productid(), MODEL_STR_RTAC66UV2) || !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+							is_ac66u_v2_series()
 #else
 							1
 #endif // RTAC68U
@@ -3587,7 +3670,7 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 #elif defined(RTAC68U) || defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)|| defined(RTAC5300R)
 				if(nvram_match("AllLED", "1")
 #ifdef RTAC68U
-					&& (!strcmp(get_productid(), MODEL_STR_RTAC66UV2) || !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+					&& is_ac66u_v2_series()
 #endif
 				){
 						led_control(LED_WAN, LED_OFF);
@@ -3700,7 +3783,7 @@ _dprintf("nat_rule: stop_nat_rules 7.\n");
 		if (strcmp(dualwan_wans, "wan none")) {
 			if(nvram_match("AllLED", "1")
 #ifdef RTAC68U
-				&& (!strcmp(get_productid(), MODEL_STR_RTAC66UV2) || !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1))
+				&& is_ac66u_v2_series()
 #endif
 			){
 				link_status = 0;

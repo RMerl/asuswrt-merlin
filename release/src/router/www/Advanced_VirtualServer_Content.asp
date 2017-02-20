@@ -44,9 +44,9 @@ var wItem2 = new Array(new Array("", "", "TCP"),
 
 <% login_state_hook(); %>
 
-var overlib_str0 = new Array();	//Viz add 2011.07 for record longer virtual srvr rule desc
-var overlib_str = new Array();	//Viz add 2011.07 for record longer virtual srvr portrange value
-
+var overlib_desc = new Array();	//Viz add 2011.07 for record longer virtual srvr rule desc
+var overlib_port = new Array();	//Viz add 2011.07 for record longer virtual srvr portrange value
+var overlib_src = new Array();	//Viz add 2011.07 for record longer virtual srvr portrange value
 
 var vts_rulelist_array = "<% nvram_char_to_ascii("","vts_rulelist"); %>";
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
@@ -57,6 +57,7 @@ var backup_port = "";
 var backup_ipaddr = "";
 var backup_lport = "";
 var backup_proto = "";
+var backup_Target = "";
 
 function initial(){
 	show_menu();
@@ -97,9 +98,16 @@ function isChange(){
 		return false;
 }
 
-function applyRule(){
-	cancel_Edit();
+function extractValue(row, col){
+	var obj = document.getElementById('vts_rulelist_table').rows[row].cells[col];
+	if(obj.innerHTML.lastIndexOf("...")<0)
+		return obj.innerHTML;
+	else
+		return obj.title;
+}
 
+function applyRule(){
+//	cancel_Edit();
 	if(parent.usb_support){
 		if(!validator.numberRange(document.form.vts_ftpport, 1, 65535)){
 			return false;	
@@ -108,18 +116,13 @@ function applyRule(){
 	
 	var rule_num = document.getElementById('vts_rulelist_table').rows.length;
 	var item_num = document.getElementById('vts_rulelist_table').rows[0].cells.length;
+	var item_idx = [0,2,3,4,5,1];
 	var tmp_value = "";
 
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
-		for(j=0; j<item_num-1; j++){			
-		
-			if(document.getElementById('vts_rulelist_table').rows[i].cells[j].innerHTML.lastIndexOf("...")<0){
-				tmp_value += document.getElementById('vts_rulelist_table').rows[i].cells[j].innerHTML;
-			}else{
-				tmp_value += document.getElementById('vts_rulelist_table').rows[i].cells[j].title;
-			}		
-			
+		for(j=0; j<Math.min(item_num-1, item_idx.length); j++){
+			tmp_value += extractValue(i, item_idx[j]);
 			if(j != item_num-2)	
 				tmp_value += ">";
 		}
@@ -129,7 +132,6 @@ function applyRule(){
 		tmp_value = "";	
 
 	document.form.vts_rulelist.value = tmp_value;
-	
 	/* 2014.04 Viz: No need to reboot for ctf enable models.
 	if(ctf_disable == '0' && isChange()){
 		document.form.action_script.value = "reboot";
@@ -223,7 +225,7 @@ function pullLANIPList(obj){
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
 		element.style.display = 'block';		
-		document.form.vts_ipaddr_x_0.focus();
+		document.form.vts_ipaddr_x_0.focus();		
 	}
 	else
 		hideClients_Block();
@@ -247,7 +249,6 @@ function addRow(obj, head){
 }
 
 function validForm(){
-	
 	if(!Block_chars(document.form.vts_desc_x_0, ["<" ,">" ,"'" ,"%"])){
 				return false;		
 	}	
@@ -302,30 +303,27 @@ function addRow_Group(upper){
 				return false;
 		}	
 		
-//Viz check same rule  //match(out port+out_proto) is not accepted
+//Viz check same rule  //match(srource+out port+out_proto) is not accepted
 	if(item_num >=2){
 		for(i=0; i<rule_num; i++){
-				if(entry_cmp(document.getElementById('vts_rulelist_table').rows[i].cells[4].innerHTML.toLowerCase(), document.form.vts_proto_x_0.value.toLowerCase(), 3)==0 
+				var proto_obj = document.getElementById('vts_rulelist_table').rows[i].cells[5];
+				if(entry_cmp(proto_obj.innerHTML.toLowerCase(), document.form.vts_proto_x_0.value.toLowerCase(), 3)==0 
 				|| document.form.vts_proto_x_0.value == 'BOTH'
-				|| document.getElementById('vts_rulelist_table').rows[i].cells[4].innerHTML == 'BOTH'){
-						
-						if(overlib_str[i]){
-							if(document.form.vts_port_x_0.value == overlib_str[i]){
-									alert("<#JS_duplicate#>");
-									document.form.vts_port_x_0.value =="";
-									document.form.vts_port_x_0.focus();
-									document.form.vts_port_x_0.select();							
-									return false;
-							}
-						}else{
-							if(document.form.vts_port_x_0.value == document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML){
-									alert("<#JS_duplicate#>");
-									document.form.vts_port_x_0.value =="";
-									document.form.vts_port_x_0.focus();
-									document.form.vts_port_x_0.select();							
-									return false;
-							}
-						}	
+				|| proto_obj.innerHTML == 'BOTH'){
+						var source = overlib_src[i];
+						if(!source)
+							source = document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML;
+						var prange = overlib_port[i];
+						if(!prange)
+							prange = document.getElementById('vts_rulelist_table').rows[i].cells[2].innerHTML;
+						if(document.form.vts_port_x_0.value == prange &&
+						   document.form.vts_target_x_0.value == source){
+								alert("<#JS_duplicate#>");
+								document.form.vts_port_x_0.value =="";
+								document.form.vts_port_x_0.focus();
+								document.form.vts_port_x_0.select();							
+								return false;
+						}
 				}	
 			}				
 		}
@@ -335,7 +333,7 @@ function addRow_Group(upper){
 		addRow(document.form.vts_ipaddr_x_0, 0);
 		addRow(document.form.vts_lport_x_0, 0);
 		addRow(document.form.vts_proto_x_0, 0);
-
+		addRow(document.form.vts_target_x_0, 0);
 		document.form.vts_proto_x_0.value="TCP";
 		showvts_rulelist();
 
@@ -345,6 +343,7 @@ function addRow_Group(upper){
 			backup_ipaddr = "";
 			backup_lport = "";
 			backup_proto = "";
+			backup_target = "";
 			document.getElementById('vts_rulelist_table').rows[rule_num-1].scrollIntoView();
 		}
 
@@ -420,33 +419,25 @@ function check_multi_range(obj, mini, maxi, allow_range){
 
 
 function edit_Row(r){ 	
-	cancel_Edit();
-
+       cancel_Edit();
 	var i=r.parentNode.parentNode.rowIndex;
-
-	if (document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML.lastIndexOf("...") <0 ) {
-		document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML;
-	}else{
-		document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].title;
-	}
-
-	if (document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML.lastIndexOf("...") <0 ) {
-		document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML;
-	}else{
-		document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].title;
-	}
-
-	document.form.vts_ipaddr_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[2].innerHTML; 
-	document.form.vts_lport_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[3].innerHTML;
-	document.form.vts_proto_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[4].innerHTML;
+  	
+	document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML;
+	document.form.vts_target_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML;
+	document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[2].innerHTML; 
+	document.form.vts_ipaddr_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[3].innerHTML; 
+	document.form.vts_lport_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[4].innerHTML;
+	document.form.vts_proto_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[5].innerHTML;
 
 	backup_desc = document.form.vts_desc_x_0.value;
 	backup_port = document.form.vts_port_x_0.value;
 	backup_ipaddr = document.form.vts_ipaddr_x_0.value;
 	backup_lport = document.form.vts_lport_x_0.value;
 	backup_proto = document.form.vts_proto_x_0.value;
+	backup_Target = document.form.vts_target_x_0.value;
 
 	del_Row(r);
+
 	document.form.vts_desc_x_0.focus();
 }
 
@@ -457,27 +448,25 @@ function cancel_Edit(){
 		document.form.vts_ipaddr_x_0.value = backup_ipaddr;
 		document.form.vts_lport_x_0.value = backup_lport;
 		document.form.vts_proto_x_0.value = backup_proto;
+		document.form.vts_target_x_0.value = backup_target;
 		addRow_Group(128);
 	}
 }
 
 function del_Row(r){
-  var i=r.parentNode.parentNode.rowIndex;
-  document.getElementById('vts_rulelist_table').deleteRow(i);
+	var i=r.parentNode.parentNode.rowIndex;
+	document.getElementById('vts_rulelist_table').deleteRow(i);
   
-  var vts_rulelist_value = "";
+	var vts_rulelist_value = "";
+	var item_idx = [0,2,3,4,5,1];
+
 	for(k=0; k<document.getElementById('vts_rulelist_table').rows.length; k++){
 		for(j=0; j<document.getElementById('vts_rulelist_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
 				vts_rulelist_value += "<";
 			else
 				vts_rulelist_value += ">";
-				
-			if(document.getElementById('vts_rulelist_table').rows[k].cells[j].innerHTML.lastIndexOf("...")<0){
-				vts_rulelist_value += document.getElementById('vts_rulelist_table').rows[k].cells[j].innerHTML;
-			}else{
-				vts_rulelist_value += document.getElementById('vts_rulelist_table').rows[k].cells[j].title;
-			}			
+			vts_rulelist_value += extractValue(k, item_idx[j]);
 		}
 	}
 	
@@ -495,37 +484,51 @@ function showvts_rulelist(){
 		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
 		for(var i = 1; i < vts_rulelist_row.length; i++){
-			overlib_str0[i] ="";
-			overlib_str[i] ="";			
+			overlib_desc[i] ="";
+			overlib_port[i] ="";
+			overlib_src[i] ="";
 			code +='<tr id="row'+i+'">';
 			var vts_rulelist_col = vts_rulelist_row[i].split('>');
-			var wid=[27, 15, 21, 10, 13];
-				for(var j = 0; j < vts_rulelist_col.length; j++){
-						if(j != 0 && j !=1){
-							code +='<td width="'+wid[j]+'%">'+ vts_rulelist_col[j] +'</td>';					
-						}else if(j==0){
-							if(vts_rulelist_col[0].length >23){
-								overlib_str0[i] += vts_rulelist_col[0];
-								vts_rulelist_col[0]=vts_rulelist_col[0].substring(0, 21)+"...";
-								code +='<td width="'+wid[j]+'%" title="'+overlib_str0[i]+'">'+ vts_rulelist_col[0] +'</td>';
-							}else
-								code +='<td width="'+wid[j]+'%">'+ vts_rulelist_col[j] +'</td>';
-						}else if(j==1){
-							if(vts_rulelist_col[1].length >13){
-								overlib_str[i] += vts_rulelist_col[1];
-								vts_rulelist_col[1]=vts_rulelist_col[1].substring(0, 11)+"...";
-								code +='<td width="'+wid[j]+'%" title='+overlib_str[i]+'>'+ vts_rulelist_col[1] +'</td>';
-							}else
-								code +='<td width="'+wid[j]+'%">'+ vts_rulelist_col[j] +'</td>';
-						}else{
-						}
-						
-				}
-				code +='<td width="14%"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
-				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
+			var desc = vts_rulelist_col[0];
+			var port_range = vts_rulelist_col[1];
+			var dest_ip = vts_rulelist_col[2];
+			var dest_port = vts_rulelist_col[3];
+			var protocol = vts_rulelist_col[4];
+			var source_target = (vts_rulelist_col.length < 6) ? "" : vts_rulelist_col[5];
+
+			if(desc.length >23){
+				overlib_desc[i] += desc;
+				desc = desc.substring(0, 21)+"...";
+				code +='<td style="width:143px" title="'+overlib_desc[i]+'">'+ desc +'</td>';
+			}else{
+				code +='<td style="width:143px">'+ desc +'</td>';
+			}
+
+			if(source_target.length >13){
+				overlib_src[i] += source_target;
+				source_target = source_target.substring(0, 11)+"...";
+				code +='<td style="width:143px" title='+overlib_src[i]+'>'+ source_target +'</td>';
+			}else{
+				code +='<td style="width:143px">'+ source_target +'</td>';
+			}
+
+			if(port_range.length >13){
+				overlib_port[i] += port_range;
+				port_range = port_range.substring(0, 11)+"...";
+				code +='<td style="width:102px" title='+overlib_port[i]+'>'+ port_range +'</td>';
+			}else{
+				code +='<td style="width:102px">'+ port_range +'</td>';
+			}
+
+			code +='<td style="width:131px">'+ dest_ip +'</td>';
+			code +='<td style="width:67px">'+ dest_port +'</td>';
+			code +='<td style="width:70px">'+ protocol +'</td>';
+			code +='<td style="width:42px"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
+			code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
-  code +='</table>';
+
+  	code +='</table>';
 	document.getElementById("vts_rulelist_Block").innerHTML = code;	     
 }
 
@@ -641,30 +644,34 @@ function changeBgColor(obj, num){
  		  	</thead>
  		  	
           		<tr>
-								<th><#BM_UserList1#></th>
+					<th><#BM_UserList1#></th>
+            		<th><a class="hintstyle" href="javascript:void(0);" onClick="">Source Target</a></th>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,26);"><#IPConnection_VServerLPort_itemname#></a></th>
             		<th><#IPConnection_VServerProto_itemname#></th>
-								<th><#list_add_delete#></th>
+					<th><#list_add_delete#></th>
           		</tr>  
           		        
           		<tr>
-  				<td width="27%">
-  					<input type="text" maxlength="30" class="input_20_table" name="vts_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);" autocorrect="off" autocapitalize="off"/>
+  				<td style="width:150px">
+  					<input type="text" maxlength="30" class="input_15_table" name="vts_desc_x_0" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"/>
   				</td>
-        			<td width="15%">
+  				<td style="width:148px">
+  					<input type="text" maxlength="30" class="input_15_table" name="vts_target_x_0" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"/>
+  				</td>
+        			<td style="width:106px">
 					<input type="text" maxlength="" class="input_12_table" name="vts_port_x_0" onkeypress="return validator.isPortRange(this, event)" autocorrect="off" autocapitalize="off"/>
 				</td>
-				<td width="21%">
-					<input type="text" maxlength="15" class="input_15_table" name="vts_ipaddr_x_0" align="left" onkeypress="return validator.isIPAddr(this, event)" style="float:left;"/ autocomplete="off" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
+				<td style="width:157px">
+					<input type="text" maxlength="15" class="input_12_table" name="vts_ipaddr_x_0" align="left" onkeypress="return validator.isIPAddr(this, event)" style="float:left;"/ autocomplete="off" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
 					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="<#select_IP#>">
 					<div id="ClientList_Block" class="clientlist_dropdown" style="margin-left:2px;margin-top:25px;"></div>
 				</td>
-				<td width="10%">
+				<td style="width:70px">
 					<input type="text" maxlength="5"  class="input_6_table" name="vts_lport_x_0" onKeyPress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"/>
 				</td>
-				<td width="13%">
+				<td style="width:73px">
 					<select name="vts_proto_x_0" class="input_option">
 						<option value="TCP">TCP</option>
 						<option value="UDP">UDP</option>
@@ -672,7 +679,7 @@ function changeBgColor(obj, num){
 						<option value="OTHER">OTHER</option>
 					</select>
 				</td>
-				<td width="14%">
+				<td style="width:45px">
 					<input type="button" class="add_btn" onClick="addRow_Group(128);" name="vts_rulelist2" value="">
 				</td>
 				</tr>

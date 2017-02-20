@@ -32,6 +32,10 @@
 
 #include <pj/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define LIST_INIT_SIZE 10 /* Start off an array with 10 elements */
 
@@ -80,6 +84,10 @@ static _inline_ int int_cmp(int *i, int *j, size_t sz)
 }
 
 #define p_int_cmp ((int (*)(const void *, const void *, size_t))&int_cmp)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIST_H */
 

@@ -7,7 +7,9 @@
       typedef __int32 int32_t;
       typedef __int64 int64_t;
       //typedef unsigned __int32 uint32_t;
+#if !defined(PJ_WIN32_UWP)
 	  typedef unsigned long uint32_t;	// +Roger modified
+#endif
       #ifndef LEGACY_WIN32
          typedef unsigned __int64 uint64_t;
       #else

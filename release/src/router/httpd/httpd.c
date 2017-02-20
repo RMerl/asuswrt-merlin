@@ -1101,7 +1101,7 @@ handle_request(void)
 	char *query;
 	int file_len;
 
-	memset(url, 0, 128);
+	memset(url, 0, sizeof(url));
 	if ((query = index(file, '?')) != NULL) {
 		file_len = strlen(file)-strlen(query);
 
@@ -1117,7 +1117,7 @@ handle_request(void)
 // 2007.11 James. }
 
 	memset(current_page_name, 0, sizeof(current_page_name));
-	strlcpy(current_page_name, file, sizeof(current_page_name));
+	strlcpy(current_page_name, url, sizeof(current_page_name));
 
 	if(strncmp(url, APPLYAPPSTR, strlen(APPLYAPPSTR))==0 
 #ifdef RTCONFIG_ROG

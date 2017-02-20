@@ -1202,12 +1202,12 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 	else if (strcmp(file, "wps_info.log")==0)
 	{
 #ifndef RTAC3200
-		if (nvram_match("wps_band", "0"))
+		if (nvram_match("wps_band_x", "0"))
 			return (ej_wps_info_2g(eid, wp, 0, NULL));
 		else
 			return (ej_wps_info(eid, wp, 0, NULL));
 #else
-		return wl_wps_info(eid, wp, argc, argv, nvram_get_int("wps_band"));
+		return wl_wps_info(eid, wp, argc, argv, nvram_get_int("wps_band_x"));
 #endif
 	}
 #if 0
@@ -2396,12 +2396,10 @@ static int validate_apply(webs_t wp, json_object *root) {
 					notify_rc("restart_set_dataset");
 				}
 #endif
-				if(!strcmp(name, "wps_enable")) {
-					nvram_set("wps_enable_old", value);
-					_dprintf("set wps_enable_old=%s\n", value);
-				}
-
 				nvram_set(name, value);
+				if(!strcmp(name, "wps_enable"))
+					nvram_set("wps_enable_x", value);
+
 				if(strcmp(name, "wans_dualwan") && strcmp(name, "wans_mode")) //not wans_dualwan
 					nvram_modified = 1;
 				_dprintf("set %s=%s\n", name, value);
@@ -2709,7 +2707,8 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 		}
 	}
 	else if(!strcmp(apiName, "portforward")){
-		char *name, *rport, *lip, *lport, *proto;
+		char *name, *rport, *srcip, *lip, *lport, *proto;
+		int cnt;
 
 		if(!strcmp(apiAction, "enable")){
 			if(nvram_match("vts_enable_x", "0")){
@@ -2731,6 +2730,7 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 			webVar_3 = websGetVar(wp, "lip", "");
 			webVar_4 = websGetVar(wp, "lport", "");
 			webVar_5 = websGetVar(wp, "proto", "");
+			webVar_6 = websGetVar(wp, "src", "");
 
 			if(!strcmp(webVar_1, "") || !strcmp(webVar_2, "") || !strcmp(webVar_3, "") ||
 			   !strcmp(webVar_4, "") || !strcmp(webVar_5, "")){
@@ -2759,11 +2759,14 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 
 					iCurrentListNum++;
 
-					if((vstrsep(p, ">", &name, &rport, &lip, &lport, &proto)) != 5) continue;
+					if ((cnt = vstrsep(p, ">", &name, &rport, &lip, &lport, &proto, &srcip)) < 5)
+						continue;
+					else if (cnt < 6)
+						srcip = "";
 
 					if(!strcmp(webVar_1, name) && !strcmp(webVar_2, rport) &&
 					   !strcmp(webVar_3, lip) && !strcmp(webVar_4, lport) &&
-					   !strcmp(webVar_5, proto)
+					   !strcmp(webVar_5, proto) && !strcmp(webVar_6, srcip)
 					){
 						retStatus = 1;
 						break;
@@ -2786,6 +2789,8 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 					strcat(nvramTmp, webVar_4);
 					strcat(nvramTmp, ">");
 					strcat(nvramTmp, webVar_5);
+					strcat(nvramTmp, ">");
+					strcat(nvramTmp, webVar_6);
 					strcat(nvramTmp, nvram_safe_get("vts_rulelist"));
 
 					nvram_set("vts_rulelist", nvramTmp);
@@ -2800,6 +2805,7 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 			webVar_3 = websGetVar(wp, "lip", "");
 			webVar_4 = websGetVar(wp, "lport", "");
 			webVar_5 = websGetVar(wp, "proto", "");
+			webVar_6 = websGetVar(wp, "src", "");
 
 			if(!strcmp(webVar_1, "") && !strcmp(webVar_2, "") && !strcmp(webVar_3, "") &&
 			   !strcmp(webVar_4, "") && !strcmp(webVar_5, "")){
@@ -2810,11 +2816,14 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 				g = buf = strdup(nvram_safe_get("vts_rulelist"));
 				while (buf) {
 					if ((p = strsep(&g, "<")) == NULL) break;
-					if((vstrsep(p, ">", &name, &rport, &lip, &lport, &proto)) != 5) continue;
+					if ((cnt = vstrsep(p, ">", &name, &rport, &lip, &lport, &proto, &srcip)) < 5)
+						continue;
+					else if (cnt < 6)
+						srcip = "";
 
 					if(!strcmp(webVar_1, name) && !strcmp(webVar_2, rport) &&
 					   !strcmp(webVar_3, lip) && !strcmp(webVar_4, lport) &&
-					   !strcmp(webVar_5, proto)
+					   !strcmp(webVar_5, proto) && !strcmp(webVar_6, srcip)
 					){
 						retStatus = 0;
 						continue;
@@ -2830,6 +2839,8 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 						strcat(nvramTmp, lport);
 						strcat(nvramTmp, ">");
 						strcat(nvramTmp, proto);
+						strcat(nvramTmp, ">");
+						strcat(nvramTmp, srcip);
 					}
 				}
 				free(buf);
@@ -2846,7 +2857,10 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 			strcat(retList, "<list>\n");
 			while (buf) {
 				if ((p = strsep(&g, "<")) == NULL) break;
-				if((vstrsep(p, ">", &name, &rport, &lip, &lport, &proto)) != 5) continue;
+				if ((cnt = vstrsep(p, ">", &name, &rport, &lip, &lport, &proto, &srcip)) < 5)
+					continue;
+				else if (cnt < 6)
+					srcip = "";
 
 				strcat(retList, "<item>\n");
 				sprintf(strTmp, "<name>%s</name>\n", name);
@@ -2858,6 +2872,8 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 				sprintf(strTmp, "<lport>%s</lport>\n", lport);
 				strcat(retList, strTmp);
 				sprintf(strTmp, "<proto>%s</proto>\n", proto);
+				strcat(retList, strTmp);
+				sprintf(strTmp, "<src>%s</src>\n", srcip);
 				strcat(retList, strTmp);
 				strcat(retList, "</item>\n");
 			}
@@ -3175,7 +3191,11 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 			if (!strcmp(action_script, "restart_wireless") || !strcmp(action_script, "restart_net")) {
 				char *rc_support = nvram_safe_get("rc_support");
 				if (find_word(rc_support, "2.4G") && find_word(rc_support, "5G"))
+#if defined(RTCONFIG_SOC_IPQ40XX)
+					websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 25);
+#else
 					websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 20);
+#endif
 				else
 					websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 5);
 			}
@@ -7468,7 +7488,7 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	{
 		action_para = get_cgi_json("wps_band",root);
 		if(action_para)
-			nvram_set("wps_band", action_para);
+			nvram_set("wps_band_x", action_para);
 #if defined(RTCONFIG_WPSMULTIBAND)
 		if ((action_para = get_cgi_json("wps_multiband",root)))
 			nvram_set("wps_multiband", action_para);
@@ -7480,12 +7500,12 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	{
 		action_para = get_cgi_json("wps_band",root);
 		if(action_para)
-			nvram_set("wps_band", action_para);
+			nvram_set("wps_band_x", action_para);
 		else goto wps_finish;
 
 		action_para = get_cgi_json("wps_enable",root);
 		if(action_para)
-			nvram_set("wps_enable", action_para);
+			nvram_set("wps_enable_x", action_para);
 		else goto wps_finish;
 
 		action_para = get_cgi_json("wps_sta_pin",root);
@@ -7510,7 +7530,7 @@ wps_finish:
 	{
 		action_para = get_cgi_json("wps_band",root);
 		if(action_para)
-			nvram_set("wps_band", action_para);
+			nvram_set("wps_band_x", action_para);
 #if defined(RTCONFIG_WPSMULTIBAND)
 		if ((action_para = get_cgi_json("wps_multiband",root)))
 			nvram_set("wps_multiband", action_para);
@@ -8284,7 +8304,7 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 
 		if (filelen>0)
 		{
-			fwrite(&ch, 1, 1, fifo);
+			fputc(ch, fifo);
 			filelen--;
 		}
 	}
@@ -8541,7 +8561,7 @@ do_upload_post(char *url, FILE *stream, int len, char *boundary)
 		ch = fgetc(stream);
 
 		if (filelen > 0) {
-			fwrite(&ch, 1, 1, fifo);
+			fputc(ch, fifo);
 			--filelen;
 		}
 	}
@@ -15271,7 +15291,7 @@ struct ej_handler ej_handlers[] = {
 #ifdef RTCONFIG_STAINFO
 	{ "wl_stainfo_list_2g", ej_wl_stainfo_list_2g},
 	{ "wl_stainfo_list_5g", ej_wl_stainfo_list_5g},
-#ifndef RTCONFIG_QTN
+#if !defined(RTCONFIG_QTN) && !defined(RTCONFIG_RALINK) && !defined(RTCONFIG_QCA)
 	{ "wl_stainfo_list_5g_2", ej_wl_stainfo_list_5g_2},
 #endif
 #endif

@@ -34,10 +34,10 @@
 #include <bcmnvram.h>
 #include "tunables.h"
 
-const char* NLS_NVRAM_U2C="asusnlsu2c";	// Jiahao
-const char* NLS_NVRAM_C2U="asusnlsc2u";
-static char *xfr_buf=NULL;
-//static int xfr_buf_init=0;
+#define XFR_BUF_SIZE	2048
+const char* NLS_NVRAM_U2C = "asusnlsu2c";	// Jiahao
+const char* NLS_NVRAM_C2U = "asusnlsc2u";
+static char *xfr_buf = NULL;
 char tmp[1024];
 
 #define DIE_DEBUG
@@ -80,17 +80,20 @@ vsf_exit(const char* p_text)
   vsf_sysutil_exit(0);
 }
 
-char * 
-local2remote(const char *buf) 
+char *
+local2remote(const char *buf)
 {
-	if (tunable_enable_iconv == 0) return NULL;
 	char *p;
 
-	xfr_buf = (char *)malloc(2048);
-	memset(tmp, 0, 1024);
-	sprintf(tmp, "%s%s_%s", NLS_NVRAM_U2C, tunable_remote_charset, buf);
-	if((p = (char *)nvram_xfr(tmp)) != NULL){
-		strcpy(xfr_buf, p);
+	if (tunable_enable_iconv == 0) return NULL;
+
+	xfr_buf = (char *) malloc(XFR_BUF_SIZE);
+	if (!xfr_buf) return NULL;
+
+	memset(tmp, 0, sizeof(tmp));
+	snprintf(tmp, sizeof(tmp), "%s%s_%s", NLS_NVRAM_U2C, tunable_remote_charset, buf);
+	if ((p = (char *) nvram_xfr(tmp)) != NULL) {
+		strlcpy(xfr_buf, p, XFR_BUF_SIZE);
 		return xfr_buf;
 	}
 	else
@@ -100,17 +103,20 @@ local2remote(const char *buf)
 	}
 }
 
-char * 
-remote2local(const char *buf) 
+char *
+remote2local(const char *buf)
 {
-	if (tunable_enable_iconv == 0) return NULL;
 	char *p;
 
-	xfr_buf = (char *)malloc(2048);
-	memset(tmp, 0, 1024);
-	sprintf(tmp, "%s%s_%s", NLS_NVRAM_C2U, tunable_remote_charset, buf);
-	if((p = (char *)nvram_xfr(tmp)) != NULL){
-		strcpy(xfr_buf, p);
+	if (tunable_enable_iconv == 0) return NULL;
+
+	xfr_buf = (char *) malloc(XFR_BUF_SIZE);
+	if (!xfr_buf) return NULL;
+
+	memset(tmp, 0, sizeof(tmp));
+	snprintf(tmp, sizeof(tmp), "%s%s_%s", NLS_NVRAM_C2U, tunable_remote_charset, buf);
+	if ((p = (char *) nvram_xfr(tmp)) != NULL) {
+		strlcpy(xfr_buf, p, XFR_BUF_SIZE);
 		return xfr_buf;
 	}
 	else

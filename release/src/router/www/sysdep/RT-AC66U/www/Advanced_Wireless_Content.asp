@@ -42,7 +42,7 @@ function initial(){
 		regen_5G_mode(document.form.wl_nmode_x, wl_unit)		
 	}
 
-	genBWTable(wl_unit);	
+	genBWTable(wl_unit);
 
 	if(((sw_mode == 2 || sw_mode == 4) && wl_unit == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1') ||
 	  ('<% nvram_get("wl_subunit"); %>' != '-1')){
@@ -51,22 +51,23 @@ function initial(){
 
 	//Change wireless mode help desc
 	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){ //AC 5G
-		if(based_modelid == "RT-AC87U") 
-			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 6)};//#WLANConfig11b_x_Mode_itemdescAC2#	
+		if(based_modelid == "RT-AC87U"){
+			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 6)};//#WLANConfig11b_x_Mode_itemdescAC2#
+		}	
 		else if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "4G-AC68U" ||
 				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC53U"){
 			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 7)};//#WLANConfig11b_x_Mode_itemdescAC3#
 		}	
-		else
+		else{
 			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 5)};//#WLANConfig11b_x_Mode_itemdescAC#
+		}
+		
+		if(no_vht_support){	//Hide 11AC/80MHz from GUI
+			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
+		}	
 	}
 	else if(band5g_support && document.form.wl_unit[1].selected == true){	//N 5G
 		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
-	}
-
-	// special case after modifing GuestNetwork
-	if(wl_unit == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
-		change_wl_unit();
 	}
 
 	wl_auth_mode_change(1);
@@ -273,7 +274,8 @@ function genBWTable(_unit){
 			if (!band5g_11ac_support){	//for RT-N66U SDK 6.x
 				bws = [0, 1, 2];
 				bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];		
-			}else if (based_modelid == "RT-AC87U"){
+			}
+			else if (based_modelid == "RT-AC87U"){
 				if(document.form.wl_nmode_x.value == 1){
 					bws = [1, 2];
 					bwsDesc = ["20 MHz", "40 MHz"];
@@ -292,9 +294,15 @@ function genBWTable(_unit){
 				bws = [0, 1, 2];
 				bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];
 			}
-			else{	
-				bws = [0, 1, 2, 3];
-				bwsDesc = ["20/40/80 MHz", "20 MHz", "40 MHz", "80 MHz"];
+			else{
+				if(no_vht_support){		//Hide 11AC/80MHz from GUI
+					bws = [0, 1, 2];
+					bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];
+				}
+				else{
+					bws = [0, 1, 2, 3];
+					bwsDesc = ["20/40/80 MHz", "20 MHz", "40 MHz", "80 MHz"];
+				}
 			}
 		}		
 	}
@@ -598,16 +606,22 @@ function regen_5G_mode(obj,flag){	//please sync to initial() : //Change wireless
 			obj.options[0] = new Option("<#Auto#>", 0);
 			obj.options[1] = new Option("N only", 1);			
 		}
+		else if(no_vht_support){	//Hide 11AC/80MHz from GUI
+			obj.options[0] = new Option("<#Auto#>", 0);
+			obj.options[1] = new Option("N only", 1);
+			obj.options[2] = new Option("Legacy", 2);
+		}
 		else{
 			obj.options[0] = new Option("<#Auto#>", 0);
 			obj.options[1] = new Option("N only", 1);
 			obj.options[2] = new Option("N/AC mixed", 8);
 			obj.options[3] = new Option("Legacy", 2);
-		}	
-	}else{
+		}
+	}
+	else{
 		obj.options[0] = new Option("<#Auto#>", 0);
 		obj.options[1] = new Option("N only", 1);
-		obj.options[2] = new Option("Legacy", 2);		
+		obj.options[2] = new Option("Legacy", 2);
 	}
 	obj.value = '<% nvram_get("wl_nmode_x"); %>';
 }
@@ -808,7 +822,7 @@ function regen_auto_option(obj){
 <input type="hidden" name="acs_band3" value='<% nvram_get("acs_band3"); %>'>
 <input type="hidden" name="acs_ch13" value='<% nvram_get("acs_ch13"); %>'>
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
-<input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>">
+<input type="hidden" name="wps_band" value="<% nvram_get("wps_band_x"); %>">
 <input type="hidden" name="wps_dualband" value="<% nvram_get("wps_dualband"); %>">
 <input type="hidden" name="smart_connect_x" value="<% nvram_get("smart_connect_x"); %>">
 <input type="hidden" name="wl1_80211h" value="<% nvram_get("wl1_80211h"); %>" >
@@ -1100,5 +1114,14 @@ function regen_auto_option(obj){
 </table>
 
 <div id="footer"></div>
+<script>
+(function() {
+	// special case after modifing GuestNetwork
+	// case 1 is after enable GuestNetwork, case 2 is after disable GuestNetwork
+	if('<% nvram_get("wl_unit"); %>' == "-1" || '<% nvram_get("wl_subunit"); %>' != "-1") {
+		change_wl_unit();
+	}
+})();
+</script>
 </body>
 </html>

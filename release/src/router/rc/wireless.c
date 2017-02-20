@@ -190,7 +190,7 @@ _dprintf("%s: Start to run...\n", __FUNCTION__);
 	int wanduck_notify = NOTIFY_IDLE;
 #if defined(RTCONFIG_BLINK_LED)
 	int unit = nvram_get_int("wlc_band");
-	char *led_gpio = NULL, ifname[IFNAMSIZ];
+	char *led_gpio = unit? "led_5g_gpio" : "led_2g_gpio";
 #endif
 
 	signal(SIGTERM, wlcconnect_safeleave);
@@ -270,18 +270,11 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 
 #if defined(RTCONFIG_BLINK_LED)
 #if defined(RTCONFIG_QCA)
-				if (unit == 0)
-					led_gpio = "led_2g_gpio";
-				else if (unit == 1)
-					led_gpio = "led_5g_gpio";
-
-				if (led_gpio) {
-					sprintf(ifname, "sta%d", unit);
-					if (wanduck_notify == NOTIFY_CONN)
-						append_netdev_bled_if(led_gpio, ifname);
-					else
-						remove_netdev_bled_if(led_gpio, ifname);
-				}
+				if (wanduck_notify == NOTIFY_CONN)
+					append_netdev_bled_if(led_gpio, get_staifname(unit));
+				else
+					remove_netdev_bled_if(led_gpio, get_staifname(unit));
+				update_wifi_led_state_in_wlcmode();
 #endif
 #endif
 			}
@@ -322,4 +315,34 @@ void repeater_pap_disable(void)
 	}
 }
 
+#if defined(RTCONFIG_BLINK_LED)
+void update_wifi_led_state_in_wlcmode(void)
+{
+	int band, wlc_state = nvram_get_int("wlc_state"), wlc_band = nvram_get_int("wlc_band");
+	char *led_gpio;
+	enum led_id id;
+
+	if (!repeater_mode() && !mediabridge_mode())
+		return;
+
+	for (band = 0; band < 2; ++band) {
+		id = band? LED_5G : LED_2G;
+		led_gpio = band? "led_5g_gpio" : "led_2g_gpio";
+		if (band != wlc_band) {
+			if (mediabridge_mode())
+				led_control(id, LED_OFF);
+			continue;
+		}
+
+		if (wlc_state == WLC_STATE_CONNECTED) {
+			set_bled_normal_mode(led_gpio);
+			led_control(id, LED_ON);
+		} else {
+			set_bled_udef_pattern(led_gpio, 700, "0 1");
+			set_bled_udef_pattern_mode(led_gpio);
+			led_control(id, LED_ON);
+		}
+	}
+}
 #endif
+#endif	/* RTCONFIG_WIRELESSREPEATER */

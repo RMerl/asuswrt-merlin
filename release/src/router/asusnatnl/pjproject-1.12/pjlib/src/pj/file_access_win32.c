@@ -33,6 +33,57 @@
 #   define CONTROL_ACCESS   READ_CONTROL
 #endif
 
+static pj_status_t get_file_size(HANDLE hFile, pj_off_t *size)
+{
+#if defined(PJ_WIN32_WINPHONE8) && PJ_WIN32_WINPHONE8
+    FILE_COMPRESSION_INFO fileInfo;
+
+    if (GetFileInformationByHandleEx(hFile, FileCompressionInfo, &fileInfo,
+	sizeof(FILE_COMPRESSION_INFO)))
+    {
+	*size = fileInfo.CompressedFileSize.QuadPart;
+    }
+    else {
+	*size = -1;
+	return PJ_RETURN_OS_ERROR(GetLastError());
+    }
+#else
+    DWORD sizeLo, sizeHi;
+
+    sizeLo = GetFileSize(hFile, &sizeHi);
+    if (sizeLo == INVALID_FILE_SIZE) {
+	DWORD dwStatus = GetLastError();
+	if (dwStatus != NO_ERROR) {
+	    *size = -1;
+	    return PJ_RETURN_OS_ERROR(dwStatus);
+	}
+    }
+    *size = sizeHi;
+    *size = ((*size) << 32) + sizeLo;
+#endif
+    return PJ_SUCCESS;
+}
+
+static HANDLE WINAPI create_file(LPCTSTR filename, DWORD desired_access,
+    DWORD share_mode,
+    LPSECURITY_ATTRIBUTES security_attributes,
+    DWORD creation_disposition,
+    DWORD flags_and_attributes,
+    HANDLE template_file)
+{
+#if defined(PJ_WIN32_WINPHONE8) && PJ_WIN32_WINPHONE8
+    PJ_UNUSED_ARG(security_attributes);
+    PJ_UNUSED_ARG(flags_and_attributes);
+    PJ_UNUSED_ARG(template_file);
+
+    return CreateFile2(filename, desired_access, share_mode,
+	creation_disposition, NULL);
+#else
+    return CreateFile(filename, desired_access, share_mode,
+		      security_attributes, creation_disposition,
+		      flags_and_attributes, template_file);
+#endif
+}
 
 /*
  * pj_file_exists()
@@ -44,10 +95,11 @@ PJ_DEF(pj_bool_t) pj_file_exists(const char *filename)
 
     PJ_ASSERT_RETURN(filename != NULL, 0);
 
-    hFile = CreateFile(PJ_STRING_TO_NATIVE(filename,wfilename,sizeof(wfilename)), 
-		       CONTROL_ACCESS, 
-		       FILE_SHARE_READ, NULL,
-                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = create_file(PJ_STRING_TO_NATIVE(filename,
+					    wfilename, sizeof(wfilename)),
+		        CONTROL_ACCESS, 
+		        FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
         return 0;
 
@@ -62,30 +114,20 @@ PJ_DEF(pj_bool_t) pj_file_exists(const char *filename)
 PJ_DEF(pj_off_t) pj_file_size(const char *filename)
 {
     PJ_DECL_UNICODE_TEMP_BUF(wfilename,256)
-    HANDLE hFile;
-    DWORD sizeLo, sizeHi;
+    HANDLE hFile;    
     pj_off_t size;
 
     PJ_ASSERT_RETURN(filename != NULL, -1);
 
-    hFile = CreateFile(PJ_STRING_TO_NATIVE(filename, wfilename,sizeof(wfilename)), 
-		       CONTROL_ACCESS, 
-                       FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = create_file(PJ_STRING_TO_NATIVE(filename, 
+					    wfilename, sizeof(wfilename)),
+		        CONTROL_ACCESS, 
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
         return -1;
 
-    sizeLo = GetFileSize(hFile, &sizeHi);
-    if (sizeLo == INVALID_FILE_SIZE) {
-        DWORD dwStatus = GetLastError();
-        if (dwStatus != NO_ERROR) {
-            CloseHandle(hFile);
-            return -1;
-        }
-    }
-
-    size = sizeHi;
-    size = (size << 32) + sizeLo;
+    get_file_size(hFile, &size);
 
     CloseHandle(hFile);
     return size;
@@ -138,12 +180,17 @@ PJ_DEF(pj_status_t) pj_file_move( const char *oldname, const char *newname)
 static pj_status_t file_time_to_time_val(const FILETIME *file_time,
                                          pj_time_val *time_val)
 {
+#if !defined(PJ_WIN32_WINPHONE8) || !PJ_WIN32_WINPHONE8
     FILETIME local_file_time;
+#endif
+
     SYSTEMTIME localTime;
     pj_parsed_time pt;
 
+#if !defined(PJ_WIN32_WINPHONE8) || !PJ_WIN32_WINPHONE8
     if (!FileTimeToLocalFileTime(file_time, &local_file_time))
 	return PJ_RETURN_OS_ERROR(GetLastError());
+#endif
 
     if (!FileTimeToSystemTime(file_time, &localTime))
         return PJ_RETURN_OS_ERROR(GetLastError());
@@ -172,35 +219,48 @@ PJ_DEF(pj_status_t) pj_file_getstat(const char *filename, pj_file_stat *stat)
 {
     PJ_DECL_UNICODE_TEMP_BUF(wfilename,256)
     HANDLE hFile;
-    DWORD sizeLo, sizeHi;
     FILETIME creationTime, accessTime, writeTime;
+#if defined(PJ_WIN32_WINPHONE8) && PJ_WIN32_WINPHONE8
+    FILE_BASIC_INFO fileInfo;
+#endif
 
     PJ_ASSERT_RETURN(filename!=NULL && stat!=NULL, PJ_EINVAL);
 
-    hFile = CreateFile(PJ_STRING_TO_NATIVE(filename,wfilename,sizeof(wfilename)), 
-		       CONTROL_ACCESS, 
-		       FILE_SHARE_READ, NULL,
-                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = create_file(PJ_STRING_TO_NATIVE(filename,
+					    wfilename, sizeof(wfilename)), 
+		        CONTROL_ACCESS, 
+		        FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
         return PJ_RETURN_OS_ERROR(GetLastError());
 
-    sizeLo = GetFileSize(hFile, &sizeHi);
-    if (sizeLo == INVALID_FILE_SIZE) {
-        DWORD dwStatus = GetLastError();
-        if (dwStatus != NO_ERROR) {
-            CloseHandle(hFile);
-            return PJ_RETURN_OS_ERROR(dwStatus);
-        }
+    if (get_file_size(hFile, &stat->size) != PJ_SUCCESS) {
+	CloseHandle(hFile);
+	return PJ_RETURN_OS_ERROR(GetLastError());
     }
 
-    stat->size = sizeHi;
-    stat->size = (stat->size << 32) + sizeLo;
-
-    if (GetFileTime(hFile, &creationTime, &accessTime, &writeTime)==FALSE) {
-        DWORD dwStatus = GetLastError();
-        CloseHandle(hFile);
-        return PJ_RETURN_OS_ERROR(dwStatus);
+#if defined(PJ_WIN32_WINPHONE8) && PJ_WIN32_WINPHONE8
+    if (GetFileInformationByHandleEx(hFile, FileBasicInfo, &fileInfo,
+	sizeof(FILE_BASIC_INFO)))
+    {
+	creationTime.dwLowDateTime = fileInfo.CreationTime.LowPart;
+	creationTime.dwHighDateTime = fileInfo.CreationTime.HighPart;
+	accessTime.dwLowDateTime = fileInfo.LastAccessTime.LowPart;
+	accessTime.dwHighDateTime = fileInfo.LastAccessTime.HighPart;
+	writeTime.dwLowDateTime = fileInfo.LastWriteTime.LowPart;
+	writeTime.dwHighDateTime = fileInfo.LastWriteTime.HighPart;
     }
+    else {
+	CloseHandle(hFile);
+	return PJ_RETURN_OS_ERROR(GetLastError());
+    }
+#else
+    if (GetFileTime(hFile, &creationTime, &accessTime, &writeTime) == FALSE) {
+	DWORD dwStatus = GetLastError();
+	CloseHandle(hFile);
+	return PJ_RETURN_OS_ERROR(dwStatus);
+    }
+#endif
 
     CloseHandle(hFile);
 

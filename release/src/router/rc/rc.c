@@ -258,6 +258,98 @@ static int rctest_main(int argc, char *argv[])
 }
 #endif
 
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX)
+/* download firmware */
+#ifndef FIRMWARE_DIR
+#define FIRMWARE_DIR	"/lib/firmware"
+#endif
+#ifndef FW_BUF_SIZE
+#define FW_BUF_SIZE	4096
+#endif
+static int hotplug_firmware(void)
+{
+	int ret = EINVAL;
+	FILE *f_fw = NULL, *f_loading = NULL, *f_data = NULL;
+	char sysfs_path[PATH_MAX], fw_path[PATH_MAX];
+	unsigned char buf[FW_BUF_SIZE] __attribute__((aligned(4)));
+	char *action, *devpath, *fw_name;
+	char *fw_root = FIRMWARE_DIR;
+	char *sysfs_root = "/sys";
+	const void *hook_data;
+	size_t hook_size = 0, len, tlen = 0;
+
+	action = getenv("ACTION");
+	devpath = getenv("DEVPATH");
+	fw_name = getenv("FIRMWARE");
+	if (!action || !devpath || !fw_name) {
+		_dprintf("ACTION (%s), DEVPATH (%s), or FIRMWARE (%s) are NULL!\n",
+			(!action)?"<NULL>":action, (!devpath)?"<NULL>":devpath, (!fw_name)?"<NULL>":fw_name);
+		return EINVAL;
+	}
+	if (strcmp(action, "add"))	/* Only "add" action is required to support downloade firmware */
+		return 0;
+
+	// Generate filename that are required.
+	sysfs_path[0] = fw_path[0] = '\0';
+	sprintf(sysfs_path, "%s/%s/loading", sysfs_root, devpath);
+	f_loading = fopen(sysfs_path, "w");
+	if (!f_loading) {
+		_dprintf("Open %s fail\n", f_loading);
+		goto err_exit1;
+	}
+	sprintf(sysfs_path, "%s/%s/data", sysfs_root, devpath);
+	f_data = fopen(sysfs_path, "wb");
+
+	hook_data = req_fw_hook(fw_name, &hook_size);
+	if (!hook_data || !hook_size) {
+		sprintf(fw_path, "%s/%s", fw_root, fw_name);
+		f_fw = fopen(fw_path, "rb");
+	}
+	// If open firmware successful, notify kernel we are going to download firmware.
+	// If open firmware failure, notify kernel we cannot get firmware
+	if ((hook_data && hook_size) || (f_fw && f_data)) {
+		fputs ("1", f_loading);
+	} else {
+		fputs ("-1", f_loading);
+		_dprintf("Open data (%s,%p) or firmware (%s,%p) failure\n", sysfs_path, f_data, fw_path, f_fw);
+		goto err_exit2;
+	}
+	fflush (f_loading);
+
+	/* Download firmware */
+	if (hook_data && hook_size) {
+		tlen = len = hook_size;
+		while (tlen > 0) {
+			len = fwrite(hook_data + (hook_size - tlen), 1, len, f_data);
+			tlen -= len;
+		}
+	} else {
+		while (!feof(f_fw)) {
+			len = fread(buf, 1, FW_BUF_SIZE, f_fw);
+			len = fwrite(buf, 1, len, f_data);
+			tlen += len;
+		}
+	}
+	fflush (f_data);
+
+	/* Notify kernel the downloading process had finished */
+	fputs ("0", f_loading);
+	fflush (f_loading);
+
+	ret = 0;
+
+err_exit2:
+	if (f_loading)
+		fclose(f_loading);
+	if (f_data)
+		fclose(f_data);
+	if (f_fw)
+		fclose(f_fw);
+err_exit1:
+
+	return ret;
+}
+#endif
 
 static int hotplug_main(int argc, char *argv[])
 {
@@ -275,6 +367,11 @@ static int hotplug_main(int argc, char *argv[])
 			hotplug_usb();
 		}
 #endif
+#endif
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX)
+		else if(!strcmp(argv[1], "firmware")) {
+			hotplug_firmware();
+		}
 #endif
 	}
 	return 0;
@@ -422,6 +519,9 @@ static const applets_t applets[] = {
 #endif
 #if defined(RTCONFIG_KEY_GUARD)
 	{ "keyguard",			keyguard_main			},
+#endif
+#if !(defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_REALTEK))
+	{ "erp_monitor",		erp_monitor_main		},
 #endif
 	{NULL, NULL}
 };

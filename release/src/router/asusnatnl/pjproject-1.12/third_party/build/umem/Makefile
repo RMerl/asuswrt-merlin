@@ -48,7 +48,10 @@ endif
 ifneq (,$(findstring x86_64,$(TARGET_NAME)))
     USER_UMEM_CFLAGS+=-DX86_64
 endif
-USER_UMEM_CFLAGS+=-DUMEM_STANDALONE
+ifneq (,$(findstring asustor,$(TARGET_NAME)))
+    USER_UMEM_CFLAGS+=-DASUSTOR
+endif
+#USER_UMEM_CFLAGS+=-DUMEM_STANDALONE
 export UMEM_CFLAGS = $(_CFLAGS) $(USER_UMEM_CFLAGS) 
 export CC_OUT CC AR RANLIB HOST_MV HOST_RM HOST_RMDIR HOST_MKDIR OBJEXT LD LDOUT 
 ###############################################################################

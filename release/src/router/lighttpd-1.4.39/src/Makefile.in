@@ -260,6 +260,36 @@ mod_staticfile_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(AM_CFLAGS) $(CFLAGS) $(mod_staticfile_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
+mod_userdir_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_mod_userdir_la_OBJECTS = mod_userdir.lo
+mod_userdir_la_OBJECTS = $(am_mod_userdir_la_OBJECTS)
+mod_userdir_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mod_userdir_la_CFLAGS) \
+	$(CFLAGS) $(mod_userdir_la_LDFLAGS) $(LDFLAGS) -o $@
+mod_usertrack_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_mod_usertrack_la_OBJECTS = mod_usertrack.lo
+mod_usertrack_la_OBJECTS = $(am_mod_usertrack_la_OBJECTS)
+mod_usertrack_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mod_usertrack_la_CFLAGS) \
+	$(CFLAGS) $(mod_usertrack_la_LDFLAGS) $(LDFLAGS) -o $@
+mod_rewrite_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_mod_rewrite_la_OBJECTS = mod_rewrite.lo
+mod_rewrite_la_OBJECTS = $(am_mod_rewrite_la_OBJECTS)
+mod_rewrite_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mod_rewrite_la_CFLAGS) \
+	$(CFLAGS) $(mod_rewrite_la_LDFLAGS) $(LDFLAGS) -o $@
+mod_redirect_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_mod_redirect_la_OBJECTS = mod_redirect.lo
+mod_redirect_la_OBJECTS = $(am_mod_redirect_la_OBJECTS)
+mod_redirect_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mod_redirect_la_CFLAGS) \
+	$(CFLAGS) $(mod_redirect_la_LDFLAGS) $(LDFLAGS) -o $@
+mod_captive_portal_uam_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_mod_captive_portal_uam_la_OBJECTS = mod_captive_portal_uam.lo
+mod_captive_portal_uam_la_OBJECTS = $(am_mod_captive_portal_uam_la_OBJECTS)
+mod_captive_portal_uam_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mod_captive_portal_uam_la_CFLAGS) \
+	$(CFLAGS) $(mod_captive_portal_uam_la_LDFLAGS) $(LDFLAGS) -o $@
 mod_webdav_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(sql_libadd)
@@ -379,7 +409,9 @@ SOURCES = $(liblightcomp_la_SOURCES) $(liblightsql_la_SOURCES) \
 	$(mod_create_captcha_image_la_SOURCES) \
 	$(mod_dirlisting_la_SOURCES) $(mod_indexfile_la_SOURCES) \
 	$(mod_query_field_json_la_SOURCES) $(mod_smbdav_la_SOURCES) \
-	$(mod_staticfile_la_SOURCES) $(mod_webdav_la_SOURCES) \
+	$(mod_staticfile_la_SOURCES) $(mod_userdir_la_SOURCES) $(mod_webdav_la_SOURCES) \
+	$(mod_captive_portal_uam_la_SOURCES) $(mod_redirect_la_SOURCES) \
+	$(mod_rewrite_la_SOURCES) $(mod_usertrack_la_SOURCES)\
 	$(lemon_SOURCES) $(lighttpd_SOURCES) $(lighttpd_angel_SOURCES) \
 	$(lighttpd_arpping_SOURCES) $(lighttpd_monitor_SOURCES) \
 	$(proc_open_SOURCES)
@@ -393,7 +425,9 @@ DIST_SOURCES = $(am__liblightcomp_la_SOURCES_DIST) \
 	$(mod_create_captcha_image_la_SOURCES) \
 	$(mod_dirlisting_la_SOURCES) $(mod_indexfile_la_SOURCES) \
 	$(mod_query_field_json_la_SOURCES) $(mod_smbdav_la_SOURCES) \
-	$(mod_staticfile_la_SOURCES) $(mod_webdav_la_SOURCES) \
+	$(mod_staticfile_la_SOURCES) $(mod_userdir_la_SOURCES) $(mod_webdav_la_SOURCES) \
+	$(mod_captive_portal_uam_la_SOURCES) $(mod_redirect_la_SOURCES) \
+	$(mod_rewrite_la_SOURCES) $(mod_usertrack_la_SOURCES)\
 	$(lemon_SOURCES) $(am__lighttpd_SOURCES_DIST) \
 	$(lighttpd_angel_SOURCES) $(lighttpd_arpping_SOURCES) \
 	$(lighttpd_monitor_SOURCES) $(proc_open_SOURCES)
@@ -731,7 +765,8 @@ src = server.c response.c connections.c network.c configfile.c \
 #Sungmin add
 
 #Sungmin add
-lib_LTLIBRARIES = $(am__append_1) mod_webdav.la mod_staticfile.la \
+lib_LTLIBRARIES = $(am__append_1) mod_webdav.la mod_staticfile.la mod_userdir.la \
+	mod_captive_portal_uam.la mod_redirect.la mod_rewrite.la mod_usertrack.la \
 	mod_dirlisting.la mod_indexfile.la mod_alias.la mod_access.la \
 	mod_compress.la mod_auth.la liblightsql.la mod_aicloud_auth.la \
 	mod_aidisk_access.la mod_smbdav.la mod_aicloud_sharelink.la \
@@ -743,6 +778,27 @@ lib_LTLIBRARIES = $(am__append_1) mod_webdav.la mod_staticfile.la \
 @NO_RDYNAMIC_TRUE@liblightcomp_la_LIBADD = $(PCRE_LIB) $(SSL_LIB) $(FAM_LIBS) $(LIBEV_LIBS)
 @NO_RDYNAMIC_FALSE@common_libadd = 
 @NO_RDYNAMIC_TRUE@common_libadd = liblightcomp.la
+mod_userdir_la_SOURCES = mod_userdir.c
+mod_userdir_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_userdir_la_LDFLAGS = -module -export-dynamic -avoid-version
+mod_userdir_la_LIBADD = $(common_libadd)
+mod_captive_portal_uam_la_SOURCES = mod_captive_portal_uam.c
+mod_captive_portal_uam_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_captive_portal_uam_la_LDFLAGS = -module -export-dynamic -avoid-version
+mod_captive_portal_uam_la_LIBADD = $(common_libadd)
+mod_redirect_la_SOURCES = mod_redirect.c
+mod_redirect_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_redirect_la_LDFLAGS = -module -export-dynamic -avoid-version
+mod_redirect_la_LIBADD = $(common_libadd)
+mod_rewrite_la_SOURCES = mod_rewrite.c
+mod_rewrite_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_rewrite_la_LDFLAGS = -module -export-dynamic -avoid-version
+mod_rewrite_la_LIBADD = $(common_libadd)
+mod_usertrack_la_SOURCES = mod_usertrack.c
+mod_usertrack_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_usertrack_la_LDFLAGS = -module -export-dynamic -avoid-version
+mod_usertrack_la_LIBADD = $(common_libadd)
+mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS) $(sql_libadd) -lcurl
 mod_webdav_la_SOURCES = mod_webdav.c
 mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
 mod_webdav_la_LDFLAGS = -module -export-dynamic -avoid-version
@@ -927,6 +983,20 @@ mod_staticfile.la: $(mod_staticfile_la_OBJECTS) $(mod_staticfile_la_DEPENDENCIES
 	$(AM_V_CCLD)$(mod_staticfile_la_LINK) -rpath $(libdir) $(mod_staticfile_la_OBJECTS) $(mod_staticfile_la_LIBADD) $(LIBS)
 mod_webdav.la: $(mod_webdav_la_OBJECTS) $(mod_webdav_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_webdav_la_LINK) -rpath $(libdir) $(mod_webdav_la_OBJECTS) $(mod_webdav_la_LIBADD) $(LIBS)
+mod_userdir.la: $(mod_userdir_la_OBJECTS) $(mod_userdir_la_DEPENDENCIES) $(EXTRA_mod_userdir_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(mod_userdir_la_LINK) -rpath $(libdir) $(mod_userdir_la_OBJECTS) $(mod_userdir_la_LIBADD) $(LIBS)
+
+mod_captive_portal_uam.la: $(mod_captive_portal_uam_la_OBJECTS) $(mod_captive_portal_uam_la_DEPENDENCIES) $(EXTRA_mod_captive_portal_uam_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(mod_captive_portal_uam_la_LINK) -rpath $(libdir) $(mod_captive_portal_uam_la_OBJECTS) $(mod_captive_portal_uam_la_LIBADD) $(LIBS)
+
+mod_redirect.la: $(mod_redirect_la_OBJECTS) $(mod_redirect_la_DEPENDENCIES) $(EXTRA_mod_redirect_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(mod_redirect_la_LINK) -rpath $(libdir) $(mod_redirect_la_OBJECTS) $(mod_redirect_la_LIBADD) $(LIBS)
+
+mod_rewrite.la: $(mod_rewrite_la_OBJECTS) $(mod_rewrite_la_DEPENDENCIES) $(EXTRA_mod_rewrite_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(mod_rewrite_la_LINK) -rpath $(libdir) $(mod_rewrite_la_OBJECTS) $(mod_rewrite_la_LIBADD) $(LIBS)
+
+mod_usertrack.la: $(mod_usertrack_la_OBJECTS) $(mod_usertrack_la_DEPENDENCIES) $(EXTRA_mod_usertrack_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(mod_usertrack_la_LINK) -rpath $(libdir) $(mod_usertrack_la_OBJECTS) $(mod_usertrack_la_LIBADD) $(LIBS)
 
 clean-noinstPROGRAMS:
 	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
@@ -1102,6 +1172,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_query_field_json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_la-mod_smbdav.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_staticfile.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_userdir.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_captive_portal_uam.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_redirect.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rewrite.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_usertrack.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_webdav_la-mod_webdav.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network_darwin_sendfile.Po@am__quote@

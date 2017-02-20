@@ -36,7 +36,9 @@
 #endif
 
 #define PORT_CPU PORT_MAX
-extern unsigned char ifhwaddr[ETHER_ADDR_LEN];
+static int cpu_portmap;
+static int lan_portmap;
+static int cpu_forward;
 
 struct entry {
 	TAILQ_ENTRY(entry) link;
@@ -108,10 +110,19 @@ static void free_entries(void)
 	}
 }
 
-int switch_init(char *ifname)
+int switch_init(char *ifname, int vid, int cputrap)
 {
-	log_switch("%-5s [" FMT_EA "] = 0x%x on %s interface", "init",
-	    ARG_EA(ifhwaddr), PORT_CPU, ifname);
+	int esw_portmap = (1 << (PORT_MAX + 1)) - 1;
+
+	cpu_portmap = 1 << PORT_CPU;
+	log_switch("%-5s cpu@%s = " FMT_PORTS, "init",
+	    ifname, ARG_PORTS(cpu_portmap));
+
+	lan_portmap = esw_portmap & ~cpu_portmap;
+	log_switch("%-5s lan@%s = " FMT_PORTS, "init",
+	    ifname, ARG_PORTS(lan_portmap));
+
+	cpu_forward = cputrap;
 
 	return add_entry(ifhwaddr, PORT_CPU) ? 0 : -1;
 }
@@ -137,8 +148,7 @@ int switch_add_portmap(unsigned char *maddr, int portmap)
 	struct entry *entry = get_entry(maddr);
 	int value, ports = entry ? entry->ports : 0;
 
-	value = ports | portmap;
-	value |= (1 << PORT_CPU);
+	value = ports | portmap | cpu_portmap;
 	if (value != ports) {
 		log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "write",
 		    ARG_EA(maddr), ARG_PORTS(value));
@@ -153,8 +163,7 @@ int switch_del_portmap(unsigned char *maddr, int portmap)
 	struct entry *entry = get_entry(maddr);
 	int value, ports = entry ? entry->ports : 0;
 
-	value = ports & ~portmap;
-	value |= (1 << PORT_CPU);
+	value = (ports & ~portmap) | cpu_portmap;
 	if (value != ports) {
 		log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "write",
 		    ARG_EA(maddr), ARG_PORTS(value));
@@ -173,6 +182,28 @@ int switch_clr_portmap(unsigned char *maddr)
 		ARG_EA(maddr), ARG_PORTS(ports));
 
 	return ports;
+}
+
+int switch_set_floodmap(unsigned char *raddr, int portmap)
+{
+	if (!cpu_forward)
+		return 0;
+
+	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "flood",
+	    ARG_EA(raddr), ARG_PORTS(portmap));
+
+	return (portmap & lan_portmap) ? 0 : 1;
+}
+
+int switch_clr_floodmap(unsigned char *raddr)
+{
+	if (!cpu_forward)
+		return 0;
+
+	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "flood",
+	    ARG_EA(raddr), ARG_PORTS(-1));
+
+	return 0;
 }
 
 #ifdef TEST

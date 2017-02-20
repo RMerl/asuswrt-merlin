@@ -3,7 +3,7 @@
 
 #define TRANSFER_TYPE		"https://"
 //#define SERVER 				"aae-spweb.asus.com"
-#define SERVER 				"aae-spweb.asuscloud.com"
+#define SERVER 				"aae-spweb-vx.asuscloud.com"
 #define GET_SERVICE_AREA	"/aae/getservicearea"
 #define LOGIN				"/aae/login"
 #define QUERY_FRIEND		"/aae/queryfriend"

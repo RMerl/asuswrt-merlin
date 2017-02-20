@@ -31,9 +31,10 @@
 #include <qca.h>
 
 #define NR_WANLAN_PORT	5
-
-/// RT-AC55U mapping
 #define MAX_WANLAN_PORT	5
+
+#if defined(RTAC55U) || defined(RTAC55UHP) || defined(RT4GAC55U) || defined(PLN12) || defined(PLAC56) || defined(PLAC66U)
+/// RT-AC55U/RT-AC55UHP/4G-AC55U mapping
 enum {
 	P0_PORT=0,
 	WAN_PORT=1,
@@ -44,6 +45,20 @@ enum {
 	P6_PORT=6,
 	P7_PORT=6,
 };
+#elif defined(RTAC88N) || defined(BRTAC828M2) || defined(RTAC88S)
+enum {
+	P0_PORT=0,
+	LAN1_PORT=1,
+	LAN2_PORT=2,
+	LAN3_PORT=3,
+	LAN4_PORT=4,
+	WAN_PORT=5,
+	P6_PORT=6,
+	P7_PORT=6,
+};
+#else
+#error Define WAN/LAN ports!
+#endif
 
 //0:WAN, 1:LAN, lan_wan_partition[][0] is port0
 static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
@@ -72,18 +87,26 @@ static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
 
 void reset_qca_switch(void);
 
+#if defined(RTAC55U) || defined(RTAC55UHP) || defined(RT4GAC55U) || defined(PLN12) || defined(PLAC56) || defined(PLAC66U)
+////// RT-AC55U/RT-AC55UHP/4G-AC55U definition
 #define RGMII_PORT		P6_PORT
 #define SGMII_PORT		P0_PORT
+#elif defined(RTAC88N) || defined(BRTAC828M2) || defined(RTAC88S)
+#define RGMII_PORT		P0_PORT
+#define SGMII_PORT		P6_PORT
+#endif
+
 #if defined(PLN12)
 #define	CPU_PORT_TO_WAN		P0_PORT // QCA953X GMAC1(eth1) connect to WAN port
 #define CPU_PORT_TO_LAN		P0_PORT // QCA953X GMAC1(eth1) connect to LAN port
 #elif (defined(PLAC56) || defined(PLAC66U))
 #define	CPU_PORT_TO_WAN		SGMII_PORT // QCA956X SGMII MAC0(eth0) connect to WAN port
 #define CPU_PORT_TO_LAN		SGMII_PORT // QCA956X SGMII MAC0(eth0) connect to LAN port
-#else /* RT-AC55U || 4G-AC55U */
+#else /* RT-AC55U || RT-AC55UHP || 4G-AC55U || RTAC88N || BRTAC828M2 || RTAC88S */
 #define	CPU_PORT_TO_WAN		RGMII_PORT // AC55U RGMII MAC0(eth0) connect to WAN port
 #define CPU_PORT_TO_LAN		SGMII_PORT // AC55U SGMII MAC1(eth1) connect to LAN port
 #endif
+
 #define	CPU_PORT_WAN_MASK	(1U << CPU_PORT_TO_WAN)
 #define CPU_PORT_LAN_MASK	(1U << CPU_PORT_TO_LAN)
 
@@ -162,7 +185,7 @@ static unsigned int get_lan_port_mask(void)
 	int sw_mode = nvram_get_int("sw_mode");
 	unsigned int m = nvram_get_int("lanports_mask");
 
-	if (sw_mode == SW_MODE_AP)
+	if (sw_mode == SW_MODE_AP || __mediabridge_mode(sw_mode))
 #if defined(PLN12)
 		m = ((1U << LAN1_PORT) | (1U << LAN4_PORT));
 #else
@@ -467,6 +490,7 @@ static void config_qca8337_LANWANPartition(int type)
 	else
 		eval("swconfig", "dev", MII_IFNAME, "set", "enable_vlan", "1"); // enable vlan
 #endif
+
 	eval("swconfig", "dev", MII_IFNAME, "set", "apply"); // apply changes
 }
 
@@ -920,7 +944,7 @@ rtkswitch_Reset_Storm_Control(void)
 	return 0;
 }
 
-void ATE_qca8337_port_status(void)
+void ATE_port_status(void)
 {
 	int i;
 	char buf[512];

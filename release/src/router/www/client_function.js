@@ -1631,6 +1631,9 @@ function card_confirm(callBack) {
 							case "WTFast" :
 								showDropdownClientList('setClientmac', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 								show_rulelist();
+							case "ATF" :
+								showWLMACList();
+								show_wl_atf_by_client();
 								break;
 							default :
 								refreshpage();
@@ -3026,9 +3029,9 @@ function expand_hide_Client(_obj, _controlObj) {
 	}
 }
 
-function control_dropdown_client_block(_containerID, _pullArrowID) {
-	event.stopPropagation(); //cancel bubbling
-	var element = event.target || event.srcElement;
+function control_dropdown_client_block(_containerID, _pullArrowID, _evt) {
+	_evt.stopPropagation(); //cancel bubbling
+	var element = _evt.target || _evt.srcElement;
 	if(element.id == "") {
 		if(document.getElementById(_containerID) != null && document.getElementById(_pullArrowID) != null) {
 			var container_state = document.getElementById(_containerID).style.display;
@@ -3043,7 +3046,7 @@ function control_dropdown_client_block(_containerID, _pullArrowID) {
 
 //_callBackFunParam = mac>ip>..., _interfaceMode = all(wired, wll), wired, wl, _clientState = all, online, offline
 function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode, _containerID, _pullArrowID, _clientState) {
-	document.body.onclick = function() {control_dropdown_client_block(_containerID, _pullArrowID);}
+	document.body.onclick = function(_evt) {control_dropdown_client_block(_containerID, _pullArrowID, _evt);}
 	if(clientList.length == 0){
 		setTimeout(function() {
 			genClientList();

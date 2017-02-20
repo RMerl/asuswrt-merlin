@@ -47,6 +47,10 @@
 				 (phy) == PHY_TYPE_LCN ? "c" : "n")
 #endif
 
+#ifdef RTCONFIG_BCMFA
+#include <sysdeps.h>
+#endif
+
 int wan_phyid = -1;
 
 void init_devs(void)
@@ -854,6 +858,10 @@ void generate_switch_para(void)
 				}
 
 				// port for LAN/WAN
+				if(nvram_match("ewan_dot1q", "1"))
+					vid = nvram_get_int("ewan_vid");
+				else
+					vid = 4;
 				if (get_wans_dualwan()&WANSCAP_LAN && wan1cfg >= 1 && wan1cfg <= 4) {
 					wan1cfg += WAN1PORT1-1;
 					if (wancfg != SWCFG_DEFAULT) {
@@ -870,10 +878,6 @@ void generate_switch_para(void)
 					}
 
 					switch_gen_config(wan, ports, wan1cfg, 1, "t");
-					if(nvram_match("ewan_dot1q", "1"))
-						vid = nvram_get_int("ewan_vid");
-					else
-						vid = 4;
 					snprintf(nv, sizeof(nv), "vlan%dports", vid);
 					nvram_set(nv, wan);
 					snprintf(nv, sizeof(nv), "vlan%dhwname", vid);
@@ -884,6 +888,11 @@ void generate_switch_para(void)
 					nvram_set("vlan1ports", lan);
 					switch_gen_config(lan, ports, cfg, 0, NULL);
 					nvram_set("lanports", lan);
+
+					snprintf(nv, sizeof(nv), "vlan%dports", vid);
+					nvram_unset(nv);
+					snprintf(nv, sizeof(nv), "vlan%dhwname", vid);
+					nvram_unset(nv);
 				}
 
 				for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
@@ -1678,12 +1687,15 @@ void init_switch()
 	config_lacp();
 #endif
 
-#ifdef RTCONFIG_GMAC3
-	if(nvram_get_int("gmac3_enable")) {
+#if defined(RTCONFIG_GMAC3) || defined(RTCONFIG_BCMFA)
+	if (nvram_get_int("gmac3_enable")
+#ifdef RTCONFIG_BCMFA
+		|| nvram_get_int("ctf_fa_mode") == CTF_FA_NORMAL
+#endif
+	) {
 		eval("et", "-i", "eth0", "robowr", "0x4", "0x4", "0", "6");
 	}
 #endif
-
 }
 
 int
@@ -2183,6 +2195,10 @@ void init_wl_compact(void)
 void fini_wl(void)
 {
 	int model = get_model();
+
+#ifdef RTAC3200
+	return;
+#endif
 
 #ifndef RTCONFIG_BCMARM
 #if defined(NAS_GTK_PER_STA) && defined(PROXYARP)
@@ -2692,7 +2708,7 @@ void generate_wl_para(char *ifname, int unit, int subunit)
 #endif
 
 		if (nvram_match("wps_enable", "1") &&
-			((unit == nvram_get_int("wps_band") || nvram_match("w_Setting", "0"))))
+			((unit == nvram_get_int("wps_band_x") || nvram_match("w_Setting", "0"))))
 			nvram_set(strcat_r(prefix, "wps_mode", tmp), "enabled");
 		else
 			nvram_set(strcat_r(prefix, "wps_mode", tmp), "disabled");
@@ -2720,6 +2736,7 @@ void generate_wl_para(char *ifname, int unit, int subunit)
 				nvram_set(strcat_r(prefix2, "radius_ipaddr", tmp2), nvram_safe_get(strcat_r(prefix, "radius_ipaddr", tmp)));
 				nvram_set(strcat_r(prefix2, "radius_key", tmp2), nvram_safe_get(strcat_r(prefix, "radius_key", tmp)));
 				nvram_set(strcat_r(prefix2, "radius_port", tmp2), nvram_safe_get(strcat_r(prefix, "radius_port", tmp)));
+				nvram_set(strcat_r(prefix2, "closed", tmp2), nvram_safe_get(strcat_r(prefix, "closed", tmp)));
 			}
 		}
 
@@ -3283,7 +3300,7 @@ void generate_wl_para(char *ifname, int unit, int subunit)
 				if (nvram_match(strcat_r(prefix, "vreqd", tmp2), "1")
 					&& nvram_match(strcat_r(prefix, "phytype", tmp), "v")
 				)
-					nvram_set(strcat_r(prefix, "bw_cap", tmp), "7");// 80M
+					nvram_set(strcat_r(prefix, "bw_cap", tmp), hw_vht_cap() ? "7" : "3");// 80M
 				else
 #endif
 				if (nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
@@ -3314,7 +3331,7 @@ void generate_wl_para(char *ifname, int unit, int subunit)
 			if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))	// 2.4G
 				nvram_set(strcat_r(prefix, "bw_cap", tmp), "3");
 			else
-				nvram_set(strcat_r(prefix, "bw_cap", tmp), "7");
+				nvram_set(strcat_r(prefix, "bw_cap", tmp), hw_vht_cap() ? "7" : "3");
 			nvram_set(strcat_r(prefix, "obss_coex", tmp), "0");
 		}
 #endif
@@ -3346,20 +3363,20 @@ void generate_wl_para(char *ifname, int unit, int subunit)
 			nvram_set(strcat_r(prefix, "txbf_bfe_cap", tmp), "0");
 		}
 
+
 #ifdef RTCONFIG_MUMIMO
-#ifdef RTCONFIG_PROXYSTA
 		/* mu_feature is not enabled for client modes. */
-		if (is_psta(unit) || is_psr(unit)) {
-			nvram_set(strcat_r(prefix, "mu_features", tmp), "0");
-		} else {
+		if (nvram_match(strcat_r(prefix, "mumimo", tmp), "1")
+#if 0
+			&& !is_ure(unit)
+#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
+			&& !(is_psta(unit) || is_psr(unit))
 #endif
-		if (nvram_match(strcat_r(prefix, "mumimo", tmp), "1"))
+#endif
+		)
 			nvram_set(strcat_r(prefix, "mu_features", tmp), "0x8000");
 		else
 			nvram_set(strcat_r(prefix, "mu_features", tmp), "0");
-#ifdef RTCONFIG_PROXYSTA
-		}
-#endif
 #endif
 
 #ifdef RTCONFIG_BCMARM
@@ -6047,8 +6064,8 @@ void set_acs_ifnames()
 
 #if defined(RTAC5300) || defined(RTAC5300R)
 	if ((nvram_get_int("wl2_band5grp") & WL_5G_BAND_3) && nvram_match("wl2_country_code", "E0"))
-		/* exclude non-certificated weather radar chanspec 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80 */
-		nvram_set("wl2_acs_excl_chans", "0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a");
+		/* exclude non-certificated weather radar chanspec 116l, 116/80, 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80 */
+		nvram_set("wl2_acs_excl_chans", "0xd876,0xe07a,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a");
 	else
 #endif
 	/* exclude acsd from selecting chanspec 165 */
@@ -6064,8 +6081,8 @@ void set_acs_ifnames()
 			nvram_set("wl1_acs_excl_chans", nvram_match("acs_band3", "1") ? "" : "0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
 		else
 #if defined(RTAC88U) || defined(RTAC3100)
-			/* exclude non-certificated weather radar chanspec 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80 */
-			nvram_set("wl1_acs_excl_chans", nvram_match("acs_dfs", "1") ? (nvram_match("wl1_country_code", "E0") ? "0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a" : "") : "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a,0xd084,0xd886,0xd088,0xd986,0xd08c");
+			/* exclude non-certificated weather radar chanspec 116l, 116/80, 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80 */
+			nvram_set("wl1_acs_excl_chans", nvram_match("acs_dfs", "1") ? (nvram_match("wl1_country_code", "E0") ? "0xd876,0xe07a,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a" : "") : "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a,0xd084,0xd886,0xd088,0xd986,0xd08c");
 #else
 			/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
 			nvram_set("wl1_acs_excl_chans", nvram_match("acs_dfs", "1") ? "" : "0xd034,0xe03a,0xd836,0xd038,0xe13a,0xd936,0xd03c,0xe23a,0xd83e,0xd040,0xe33a,0xd93e,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");

@@ -42,6 +42,11 @@ static const struct model_s model_list[] = {
 	{ "PL-N12",	MODEL_PLN12	},
 	{ "PL-AC56",	MODEL_PLAC56	},
 	{ "PL-AC66U",	MODEL_PLAC66U	},
+	{ "RT-AC58U",	MODEL_RTAC58U	},
+	{ "RT-AC82U",	MODEL_RTAC82U	},
+	{ "RT-AC88N",	MODEL_RTAC88N	},
+	{ "BRT-AC828M2",MODEL_BRTAC828M2},
+	{ "RT-AC88S",	MODEL_RTAC88S	},
 #else
 	{ "RT-N66U",	MODEL_RTN66U	},
 	{ "RT-AC56S",	MODEL_RTAC56S	},

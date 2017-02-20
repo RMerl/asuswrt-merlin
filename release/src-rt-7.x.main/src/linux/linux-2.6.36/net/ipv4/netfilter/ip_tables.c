@@ -435,6 +435,21 @@ ipt_do_table(struct sk_buff *skb,
 		ip = ip_hdr(skb);
 		if (verdict == IPT_CONTINUE)
 			e = ipt_next_entry(e);
+		else if (verdict == IPT_RETURN) {		// added -- zzz
+			e = jumpstack[--*stackptr];
+			if (*stackptr <= origptr) {
+				e = get_entry(table_base,
+				    private->underflow[hook]);
+				pr_debug("Underflow (this is normal) "
+					 "to %p\n", e);
+			} else {
+				e = jumpstack[--*stackptr];
+				pr_debug("Pulled %p out from pos %u\n",
+					 e, *stackptr);
+				e = ipt_next_entry(e);
+			}
+			continue;
+		}
 		else
 			/* Verdict */
 			break;

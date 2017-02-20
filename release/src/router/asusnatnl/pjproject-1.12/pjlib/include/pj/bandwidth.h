@@ -19,8 +19,8 @@
 PJ_BEGIN_DECL
 
 /* Needed for MS compiler */
-#ifdef _MSC_VER
-#define inline _inline
+#if defined(_MSC_VER) && !defined(PJ_WIN32_UWP)
+#  define inline _inline
 #endif
 
 /*

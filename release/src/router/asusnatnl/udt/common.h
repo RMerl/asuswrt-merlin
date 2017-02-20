@@ -48,6 +48,10 @@ written by
    #include <pthread.h>
 #else
    #include <windows.h>
+#if defined(PJ_WIN32_UWP)
+   #include <winsock2.h>
+   #include <ws2tcpip.h>
+#endif
 #endif
 #include <cstdlib>
 #include "udt.h"

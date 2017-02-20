@@ -146,12 +146,12 @@ function set_category(obj, flag){
 	if(flag == 0){
 		var children_length = $(obj).siblings()[1].children.length;
 		if(obj.checked == true){
-			for(i=0; i<children_length; i++){
+			for(var i=0; i<children_length; i++){
 				$(obj).siblings()[1].children[i].children[1].checked = true;	
 			}
 		}
 		else{
-			for(i=0; i<children_length; i++){
+			for(var i=0; i<children_length; i++){
 				$(obj).siblings()[1].children[i].children[1].checked = false;	
 			}	
 		}
@@ -166,7 +166,7 @@ function set_category(obj, flag){
 				parent_category.checked = true;
 		}
 		else{
-			for(i=0; i<sibling_length; i++){
+			for(var i=0; i<sibling_length; i++){
 				if(sibling[i].children[1].checked == true){
 					checked_flag = 1;			
 				}
@@ -186,7 +186,7 @@ function deleteRow_main(obj){
 	var target_mac = obj.parentNode.parentNode.children[1].title;
 	var apps_filter_row = apps_filter.split("<");
 	var apps_filter_temp = "";
-	for(i=0;i<apps_filter_row.length;i++){
+	for(var i=0;i<apps_filter_row.length;i++){
 		var apps_filter_col = apps_filter_row[i].split(">");	
 			if(apps_filter_col[1] != target_mac){
 				if(apps_filter_temp == ""){
@@ -247,15 +247,15 @@ function addRow_main(obj, length){
 		return false;	
 	}
 	
-	for(i=0; i < category_array.length;i++){
+	for(var i=0; i < category_array.length;i++){
 		subCategory_array = category_array[i].children[2].children;	
-		for(j=0;j<subCategory_array.length;j++){	
+		for(var j=0;j<subCategory_array.length;j++){	
 			category_checkbox = category_array[i].children[2].children[j].children[1];	
 			if(category_checkbox.checked)
 				blank_category = 1;
 		}
 	}
-	for(i=0;i<apps_filter_row.length;i++){
+	for(var i=0;i<apps_filter_row.length;i++){
 		if(apps_filter_row[i] != "") {
 			apps_filter_col = apps_filter_row[i].split(">");
 			if(apps_filter_col[1].toUpperCase() == document.form.PC_devicename.value.toUpperCase()){
@@ -282,10 +282,10 @@ function addRow_main(obj, length){
 	apps_filter += ">" + document.form.PC_devicename.value + ">";
 
 	/* To check which checkbox is checked*/
-	for(i=0; i < category_array.length;i++){
+	for(var i=0; i < category_array.length;i++){
 		first_catID = 0;
 		subCategory_array = category_array[i].children[2].children;	
-		for(j=0;j<subCategory_array.length;j++){	
+		for(var j=0;j<subCategory_array.length;j++){	
 			category_checkbox = category_array[i].children[2].children[j].children[1];
 			if(first_catID == 0){	
 				apps_filter += category_checkbox.checked ? 1:0;
@@ -344,12 +344,12 @@ function genMain_table(){
 	code += '<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-top:25px;margin-left:10px;"></div>';	
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;text-align:left;">';
-	for(i=0;i<category_name.length;i++){
+	for(var i=0;i<category_name.length;i++){
 		code += '<div style="font-size:14px;font-weight:bold">';
 		code += '<img class="closed" src="/images/Tree/vert_line_s10.gif" onclick="show_subCategory(this);">';
 		code += '<input type="checkbox" onclick="set_category(this, 0);">'+category_name[i];
 		code += '<div style="display:none;font-size:12px;">';
-		for(j=0;j<sub_category_name[i].length;j++){
+		for(var j=0;j<sub_category_name[i].length;j++){
 			code += '<div style="margin-left:20px;"><img src="/images/Tree/vert_line_s01.gif"><input type="checkbox" onclick="set_category(this, 1);">' + sub_category_name[i][j] + '</div>';		
 		}
 	
@@ -365,7 +365,7 @@ function genMain_table(){
 		code += '<tr><td style="color:#FFCC00;" colspan="10"><#IPConnection_VSList_Norule#></td></tr>';
 	}
 	else{
-		for(k=0;k< apps_filter_row.length;k++){
+		for(var k=0;k< apps_filter_row.length;k++){
 			var apps_filter_col = apps_filter_row[k].split('>');
 			
 			//user icon
@@ -427,7 +427,7 @@ function genMain_table(){
 			code +='</td>';
 			
 			code += '<td style="text-align:left;">';	
-			for(i=0;i<category_name.length;i++){
+			for(var i=0;i<category_name.length;i++){
 				var cate_flag_array = new Array(apps_filter_col[i+2]);
 				var cate_flag_array_col = cate_flag_array[0].split(",");
 				var cate_flag = cate_flag_array[0].indexOf('1');
@@ -442,7 +442,7 @@ function genMain_table(){
 				}
 
 				code += '<div style="display:none;">';
-				for(j=0;j<sub_category_name[i].length;j++){
+				for(var j=0;j<sub_category_name[i].length;j++){
 					if(cate_flag_array_col[j] == 1){
 						code += '<div style="margin-left:20px;"><img src="/images/Tree/vert_line_s01.gif"><input type="checkbox" onclick="set_category(this, 1);" checked>' + sub_category_name[i][j] + '</div>';
 					}
@@ -473,7 +473,7 @@ function edit_table(){
 	var apps_filter_temp = "";
 	var first_element = $('#main_element').siblings();
 	
-	for(k=1;k<first_element.length;k++){
+	for(var k=1;k<first_element.length;k++){
 		var enable_checkbox = first_element[k].children[0].children[0].checked ? 1:0;
 		var target_mac = first_element[k].children[1].title;
 		var category_array = first_element[k].children[2].children;
@@ -490,10 +490,10 @@ function edit_table(){
 		
 		apps_filter_temp += ">" + target_mac + ">";
 		
-		for(i=0; i < category_array.length;i++){
+		for(var i=0; i < category_array.length;i++){
 			first_catID = 0;
 			subCategory_array = category_array[i].children[2].children;
-			for(j=0;j<subCategory_array.length;j++){
+			for(var j=0;j<subCategory_array.length;j++){
 				category_checkbox = category_array[i].children[2].children[j].children[1];
 				if(category_checkbox.checked)
 					blank_category = 1;
@@ -541,9 +541,9 @@ function applyRule(){
 
 	var wrs_rulelist = "";
 	var apps_rulelist = "";
-	for(i=0;i<apps_filter_row.length;i++){
+	for(var i=0;i<apps_filter_row.length;i++){
 		var apps_filter_col =  apps_filter_row[i].split(">");	
-		for(j=0;j<apps_filter_col.length;j++){
+		for(var j=0;j<apps_filter_col.length;j++){
 			if(j == 0){		
 				if(wrs_rulelist == ""){
 					wrs_rulelist += apps_filter_col[j] + ">";
@@ -562,7 +562,7 @@ function applyRule(){
 				var cate_id_array = apps_filter_col[j].split(",");
 				var wrs_first_cate = 0;
 				var apps_first_cate = 0;
-				for(k=0;k<cate_id_array.length;k++){
+				for(var k=0;k<cate_id_array.length;k++){
 					if(cate_id_array[k] == 1){						
 						if(wrs_first_cate == 0){						
 							if(wrs_id_array[j-2][k] != ""){
@@ -630,12 +630,12 @@ function translate_category_id(){
 	var apps_filter_temp = "";
 	var wrs_filter_temp = "";
 	var wrs_app_filter_temp = "";
-	for(i=0;i<wrs_filter_row.length;i++){
+	for(var i=0;i<wrs_filter_row.length;i++){
 		var apps_filter_col = apps_filter_row[i].split(">");
 		var wrs_filter_col = wrs_filter_row[i].split(">");
 		var wrs_app_filter_col = wrs_app_filter_row[i].split(">");
 
-		for(j=0;j<wrs_filter_col.length;j++){
+		for(var j=0;j<wrs_filter_col.length;j++){
 			if(j == 0){
 				if(apps_filter_temp == "")
 					apps_filter_temp += wrs_filter_col[j] + ">";
@@ -646,7 +646,7 @@ function translate_category_id(){
 				apps_filter_temp += wrs_filter_col[j] + ">";	
 			}
 			else{
-				for(k=0;k<mapping_array_init[j-2].length;k++){		
+				for(var k=0;k<mapping_array_init[j-2].length;k++){		
 					if(wrs_filter_col[j] != "" && wrs_app_filter_col[j] != ""){
 						if(wrs_id_array[j-2][k] != ""){
 							if(wrs_id_array[j-2][k] != "" && (wrs_filter_col[j].indexOf(wrs_id_array[j-2][k]) != -1)){

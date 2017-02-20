@@ -462,7 +462,7 @@ function addRule(){
 	}
 
 	if(cur_rule_enable == "1" && enable_num == wtfast_status.Max_Computers){
-		alert("The number of enabled rules reaches the limitiation of the account. The added rule will be default disabled.");
+		alert("<#GB_rulelist_addmax#>");
 		rule_enable = "0";
 	}
 
@@ -693,7 +693,7 @@ function enable_wtfast_rule(index, enable){
 
 	if(enable == "1"){
 		if(enable_num == wtfast_status.Max_Computers){
-			alert("The number of enabled rules reaches the limitiation of the account. You can't enable rule unless you disable one existed enabled rule first.");
+			alert("<#GB_rulelist_enablemax#>");
 			return;
 		}
 	}

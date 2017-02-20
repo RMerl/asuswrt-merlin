@@ -150,7 +150,7 @@ var thisDevice;
 		type: '<3',
 		name: '<% nvram_get("productid"); %>',
 		ipaddr: '<% nvram_get("lan_ipaddr"); %>',
-		mac: '<% nvram_get("et0macaddr"); %>',
+		mac: '<% nvram_get("lan_hwaddr"); %>',
 		other: "1",
 		ssid:'<% nvram_get("wl_ssid"); %>',
 		netmask:'<% nvram_get("lan_netmask"); %>',

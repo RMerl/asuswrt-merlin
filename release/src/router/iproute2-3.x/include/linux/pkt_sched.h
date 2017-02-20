@@ -2,6 +2,7 @@
 #define __LINUX_PKT_SCHED_H
 
 #include <linux/types.h>
+#include <linux/version.h>
 
 /* Logical priority bands not depending on specific packet scheduler.
    Every scheduler will map them to real traffic classes, if it has
@@ -126,6 +127,10 @@ struct tc_fifo_qopt {
 struct tc_prio_qopt {
 	int	bands;			/* Number of bands */
 	__u8	priomap[TC_PRIO_MAX+1];	/* Map: logical priority -> PRIO band */
+#if LINUX_VERSION_CODE == KERNEL_VERSION(3, 4, 103)
+	/* Only IPQ806x-based QSDK kernel has this field. */
+	__u8	enable_flow;		/* Enable dequeue */
+#endif
 };
 
 /* MULTIQ section */

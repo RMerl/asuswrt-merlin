@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <ctype.h>
 #include <shared.h>
 #include "usb_info.h"
 #include "disk_initial.h"
@@ -192,12 +193,27 @@ char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_siz
 	return buf;
 }
 
+/**
+ * Get USB node.
+ * @target_string:
+ *  USB:	1-1, 1-1:1.0, 1-1.4, 1-1.4:1.0, 1-1.4.4, 1-1.4.4:1.0, etc
+ *  M.2 SSD:	ata1
+ * @return:
+ *  USB:	1-1, 1-1,     1-1.4, 1-1.4,     1-1.4.4, 1-1.4.4, etc
+ *  M.2 SSD:	ata1
+ */
 char *get_usb_node_by_string(const char *target_string, char *ret, const int ret_size)
 {
 	char usb_port[32], buf[16];
 	char *ptr, *ptr2, *ptr3;
 	int len;
 
+#if defined(RTCONFIG_M2_SSD)
+	if (isM2SSDDevice(target_string)) {
+		strlcpy(ret, M2_SSD_PORT, ret_size);
+		return ret;
+	}
+#endif
 	memset(usb_port, 0, sizeof(usb_port));
 	if(get_usb_port_by_string(target_string, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
@@ -316,6 +332,13 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 	}
 	else
 #endif
+#if defined(RTCONFIG_M2_SSD)
+	/* M.2 SATA SSD */
+	if (isM2SSDDevice(device_name)) {
+		strlcpy(buf, M2_SSD_PORT, buf_size);
+	}
+	else
+#endif
 	if(get_usb_node_by_string(usb_path, buf, buf_size) == NULL){
 		usb_dbg("(%s): Fail to get usb node: %s.\n", device_name, usb_path);
 		return NULL;
@@ -324,6 +347,19 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 	return buf;
 }
 
+/**
+ * Get USB port.
+ * @target_string:
+ *  USB:	../devices/platform/ipq-dwc3.0/dwc3.0/xhci-hcd.0/usb1/1-1/1-1:1.0/host1/target1:0:0/1:0:0:0/block/sdb
+ *       	1-1, 1-1:1.0, 1-1.4, 1-1.4:1.0, 1-1.4.4, 1-1.4.4:1.0,
+ *       	2-1, 2-1.3.2, etc
+ *  M.2 SSD:	../devices/platform/msm_sata.0/ahci.0/ata1/host0/target0:0:0/0:0:0:0/block/sda, ata1
+ * @return:
+ *  USB:	1-1
+ *  		1-1, 1-1, 1-1, 1-1, 1-1, 1-1
+ *  		2-1, 2-1, etc
+ *  M.2 SSD:	ata1, ata1
+ */
 char *get_usb_port_by_string(const char *target_string, char *buf, const int buf_size)
 {
 	memset(buf, 0, buf_size);
@@ -343,6 +379,10 @@ char *get_usb_port_by_string(const char *target_string, char *buf, const int buf
 #ifdef BCM_MMC
 	else if(strstr(target_string, SDCARD_PORT))
 		strcpy(buf, SDCARD_PORT);
+#endif
+#if defined(RTCONFIG_M2_SSD)
+	else if(strstr(target_string, M2_SSD_PORT))
+		strcpy(buf, M2_SSD_PORT);
 #endif
 	else if(strstr(target_string, USB_EHCI_PORT_3))
 		strcpy(buf, USB_EHCI_PORT_3);
@@ -432,6 +472,13 @@ char *get_usb_port_by_device(const char *device_name, char *buf, const int buf_s
 #ifdef BCM_MMC
 	if(isMMCDevice(device_name)){ // SD card.
 		snprintf(buf, buf_size, "%s", SDCARD_PORT);
+	}
+	else
+#endif
+#if defined(RTCONFIG_M2_SSD)
+	/* M.2 SATA SSD */
+	if (isM2SSDDevice(device_name)) {
+		strlcpy(buf, M2_SSD_PORT, buf_size);
 	}
 	else
 #endif
@@ -1238,6 +1285,27 @@ int isStorageDevice(const char *device_name){
 
 	return 0;
 }
+
+#if defined(RTCONFIG_M2_SSD)
+int isM2SSDDevice(const char *device_name)
+{
+	char disk_name[32], *p;
+	char disk_path[PATH_MAX], path[PATH_MAX];
+
+	if(strncmp(device_name, "sd", 2))
+		return 0;
+
+	strlcpy(disk_name, device_name, sizeof(disk_name));
+	for (p = disk_name + strlen(disk_name) - 1; isdigit(*p) && p > disk_name; p--)
+		*p = '\0';
+
+	snprintf(disk_path, sizeof(disk_path), "/sys/block/%s", disk_name);
+	if (readlink(disk_path, path, sizeof(path)) <= 0 || !strstr(path, "ahci"))
+		return 0;
+
+	return 1;
+}
+#endif
 
 #ifdef BCM_MMC
 int isMMCDevice(const char *device_name){

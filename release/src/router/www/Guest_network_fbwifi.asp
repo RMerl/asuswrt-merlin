@@ -79,6 +79,9 @@
 }
 </style>
 <script>
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
 var curState = 0;
 var fbwifi_enable = '<% nvram_get("fbwifi_enable"); %>';
 var fbwifi_2g_index = '<% nvram_get("fbwifi_2g"); %>';

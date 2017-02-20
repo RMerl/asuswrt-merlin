@@ -161,7 +161,7 @@ static void init_switch_ralink(void)
 	generate_switch_para();
 
 	// TODO: replace to nvram controlled procedure later
-	eval("ifconfig", "eth2", "hw", "ether", nvram_safe_get("et0macaddr"));
+	eval("ifconfig", "eth2", "hw", "ether", get_lan_hwaddr());
 #ifdef RTCONFIG_RALINK_RT3052
 	if(is_routing_enabled()) config_3052(nvram_get_int("switch_stb_x"));
 #else
@@ -201,12 +201,6 @@ void init_switch()
 #else
 	init_switch_ralink();
 #endif	
-}
-
-char *get_lan_hwaddr(void)
-{
-	/* TODO: handle exceptional model */
-        return nvram_safe_get("et0macaddr");
 }
 
 /**
@@ -579,7 +573,7 @@ void config_switch()
 			eval("rtkswitch", "26");
 #endif
 	}
-	else if (is_apmode_enabled())
+	else if (access_point_mode())
 	{
 		if (merge_wan_port_into_lan_ports)
 			eval("rtkswitch", "8", "100");
@@ -587,18 +581,18 @@ void config_switch()
 #if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
 	else if (mediabridge_mode())
 	{
+		if (merge_wan_port_into_lan_ports)
+			eval("rtkswitch", "8", "100");
 	}
 #endif
 
-	if (is_routing_enabled() || is_apmode_enabled()) {
 #ifdef RTCONFIG_DSL
-		dbG("link up all ports\n");
-		eval("rtkswitch", "16");	// link up all ports
+	dbG("link up all ports\n");
+	eval("rtkswitch", "16");	// link up all ports
 #else
-		dbG("link up wan port(s)\n");
-		eval("rtkswitch", "114");	// link up wan port(s)
+	dbG("link up wan port(s)\n");
+	eval("rtkswitch", "114");	// link up wan port(s)
 #endif
-	}
 
 #if defined(RTCONFIG_BLINK_LED)
 	if (is_swports_bled("led_lan_gpio")) {
@@ -607,6 +601,11 @@ void config_switch()
 	if (is_swports_bled("led_wan_gpio")) {
 		update_swports_bled("led_wan_gpio", nvram_get_int("wanports_mask"));
 	}
+#if defined(RTCONFIG_WANPORT2)
+	if (is_swports_bled("led_wan2_gpio")) {
+		update_swports_bled("led_wan2_gpio", nvram_get_int("wan1ports_mask"));
+	}
+#endif
 #endif
 }
 
@@ -1291,7 +1290,7 @@ void reinit_hwnat(int unit)
 #endif
 	if (!nvram_get_int("hwnat"))
 		return;
-#if defined(RTAC1200HP)
+#if defined(RTCONFIG_RALINK_MT7620)
 	/* Temporary ipv6 workaround for 2G disconnection */
 	if (get_ipv6_service() != IPV6_DISABLED)
 		act = 0;

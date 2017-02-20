@@ -93,25 +93,58 @@ int f_write_excl(const char *path, const void *buffer, int len, unsigned flags, 
 	return r;
 }
 
+/**
+ * Write @buffer, length len, to file specified by @path.
+ * @path:
+ * @buffer:
+ * @len:
+ * @flags:	Combination of FW_APPEND, FW_NEWLINE, FW_SILENT, etc.
+ * @cmode:
+ * @return:
+ * 	>0:	writted length
+ * 	-1:	open file error or -EINVAL
+ *  -errno:	errno of write file error
+ */
 int f_write(const char *path, const void *buffer, int len, unsigned flags, unsigned cmode)
 {
 	static const char nl = '\n';
-	int f;
-	int r = -1;
+	const void *b;
+	int f, ret = 0;
+	size_t wlen;
+	ssize_t r;
 	mode_t m;
 
 	m = umask(0);
 	if (cmode == 0) cmode = 0666;
 	if ((f = open(path, (flags & FW_APPEND) ? (O_WRONLY|O_CREAT|O_APPEND) : (O_WRONLY|O_CREAT|O_TRUNC), cmode)) >= 0) {
-		if ((buffer == NULL) || ((r = write(f, buffer, len)) == len)) {
+		if ((buffer == NULL)) {
 			if (flags & FW_NEWLINE) {
-				if (write(f, &nl, 1) == 1) ++r;
+				if (write(f, &nl, 1) == 1)
+					ret = 1;
+			}
+		} else {
+			for (b = buffer, wlen = len; wlen > 0;) {
+				r = write(f, b, wlen);
+				if (r < 0) {
+					ret = -errno;
+					if (!(flags & FW_SILENT)) {
+						_dprintf("%s: Write [%s] to [%s] failed! errno %d (%s)\n",
+							__func__, b, path, errno, strerror(errno));
+					}
+					break;
+				} else {
+					ret += r;
+					b += r;
+					wlen -= r;
+				}
 			}
 		}
 		close(f);
+	} else {
+		ret = -1;
 	}
 	umask(m);
-	return r;
+	return ret;
 }
 
 int f_read_string(const char *path, char *buffer, int max)

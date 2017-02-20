@@ -29,7 +29,7 @@ wget_timeout=`nvram get apps_wget_timeout`
 #wget_options="-nv -t 2 -T $wget_timeout --dns-timeout=120"
 wget_options="-q -t 2 -T $wget_timeout"
 download_file=
-
+apps_new_arm=`nvram get apps_new_arm`  #sherry add 
 
 # $1: package name.
 # return value. 1: have package. 0: no package.
@@ -296,6 +296,106 @@ elif [ "$1" == "aicloud" ]; then
 	fi
 fi
 
+#sherry add for 2016.7.18
+APPS_INSTALL_FOLDER_BAK=$APPS_INSTALL_FOLDER".bak"
+APPS_INSTALL_PATH_BAK=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER_BAK
+ASUS_UCLIBC_VER=1.0.12-1
+dm_exist=
+aicloud_exist=
+ms_exist=
+if [ $apps_new_arm -eq 1 ]; then 
+	uclibc_control_file=$APPS_INSTALL_PATH/lib/ipkg/info/uclibc-opt.control
+
+	if [ -f "$uclibc_control_file" ]; then
+		uclibc_version=`cat "$uclibc_control_file" |grep "Version:"`
+		uclibc_version=${uclibc_version:9}
+		ASUS_UCLIBC_VER_NUM=`echo $ASUS_UCLIBC_VER |sed 's/\.//g'|sed 's/\-//g'`
+		uclibc_version_num=`echo $uclibc_version |sed 's/\.//g'|sed 's/\-//g'`
+		if [ $ASUS_UCLIBC_VER_NUM -gt $uclibc_version_num ]; then
+			app_init_run.sh allpkg stop
+			if [ -f $APPS_INSTALL_PATH/lib/ipkg/info/downloadmaster.control ]; then
+				dm_exist=1
+			fi
+
+			if [ -f $APPS_INSTALL_PATH/lib/ipkg/info/aicloud.control ]; then
+				aicloud_exist=1
+			fi
+
+			if [ -f $APPS_INSTALL_PATH/lib/ipkg/info/mediaserver.control ]; then
+				ms_exist=1
+			fi
+
+			cp -rf $APPS_INSTALL_PATH $APPS_INSTALL_PATH_BAK
+			rm -rf $APPS_INSTALL_PATH
+
+			app_base_packages.sh $APPS_DEV
+			if [ "$?" != "0" ]; then
+				exit 1
+			fi
+			app_update.sh
+
+			app_inst_error=0
+			dm_inst_error=1
+			ms_inst_error=1
+			aicloud_inst_error=1
+			i=0
+
+			while [ "$i" == "0" -o "$app_inst_error" == "1" ]; do
+	
+				i=$(($i+1))
+				if [ "$i" -gt "2" ]; then
+					break
+				fi
+				
+				if [ "$1" != "downloadmaster" ] && [ "$dm_exist" == "1" ] && [ "$dm_inst_error" == "1" ]; then
+					app_install.sh downloadmaster $APPS_DEV
+					echo $?
+					if [ "$?" == "0" ]; then
+						dm_inst_error=0
+					else
+						app_inst_error=1
+					fi
+				fi
+
+				
+				if [ "$1" != "aicloud" ] && [ "$aicloud_exist" == "1" ] && [ "$aicloud_inst_error" == "1" ]; then
+					app_install.sh aicloud $APPS_DEV
+					if [ "$?" == "0" ]; then
+						aicloud_inst_error=0
+					else
+						app_inst_error=1
+					fi
+				fi
+
+				
+				if [ "$1" != "mediaserver" ] && [ "$ms_exist" == "1" ] && [ "$ms_inst_error" == "1" ]; then
+					app_install.sh mediaserver $APPS_DEV
+					if [ "$?" == "0" ]; then
+						ms_inst_error=0
+					else
+						app_inst_error=1
+					fi
+				fi
+
+			done
+
+			if [ "$app_inst_error" == "1" ]; then #install error
+				rm -rf $APPS_INSTALL_PATH
+				cp -rf $APPS_INSTALL_PATH_BAK $APPS_INSTALL_PATH
+				rm -rf $APPS_INSTALL_PATH_BAK
+				app_init_run.sh allpkg start
+				exit 1
+			else
+				rm -rf $APPS_INSTALL_PATH_BAK
+			fi
+
+
+		fi
+	fi
+
+fi
+
+#end sherry 2016.7.18
 
 nvram set apps_state_upgrade=1 # DOWNLOADING
 target_file=

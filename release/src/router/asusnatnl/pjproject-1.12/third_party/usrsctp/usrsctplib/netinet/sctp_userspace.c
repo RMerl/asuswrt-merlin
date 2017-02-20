@@ -122,7 +122,8 @@ sctp_userspace_get_mtu_from_ifn(uint32_t if_index, int af)
 			return (-1);
 		}
 	}
-	if ((pAdapterAddrs = (PIP_ADAPTER_ADDRESSES) GlobalAlloc(GPTR, AdapterAddrsSize)) == NULL) {
+	
+	if ((pAdapterAddrs = (PIP_ADAPTER_ADDRESSES) HeapAlloc(GetProcessHeap(), 0, AdapterAddrsSize)) == NULL) {
 		SCTPDBG(SCTP_DEBUG_USR, "Memory allocation error!\n");
 		return (-1);
 	}
@@ -131,9 +132,12 @@ sctp_userspace_get_mtu_from_ifn(uint32_t if_index, int af)
 		return (-1);
 	}
 	for (pAdapt = pAdapterAddrs; pAdapt; pAdapt = pAdapt->Next) {
-		if (pAdapt->IfIndex == if_index)
+		if (pAdapt->IfIndex == if_index) {
+			HeapFree(GetProcessHeap(), 0, pAdapterAddrs);
 			return (pAdapt->Mtu);
+		}
 	}
+	HeapFree(GetProcessHeap(), 0, pAdapterAddrs);
 	return (0);
 }
 

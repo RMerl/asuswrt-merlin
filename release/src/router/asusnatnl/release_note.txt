@@ -1,4 +1,33 @@
-﻿2016-02-18: 2.1.0.104
+﻿2016-08-11: 2.1.0.112
+==> SDK : 1. Update (ANT). Fix the issue that stack canary protection isn't enabled.
+
+2016-08-02: 2.1.0.111
+==> SDK : 1. Adding (ANT). Suppoert Windows UWP.
+
+2016-07-22: 2.1.0.110
+==> SDK : 1. Bug Fix (ANT). Crash issue on iOS when environment is IPv6.
+          2. Bug Fix (ANT). Adjust internal flow to avoid infinite initialized loop.
+
+2016-06-02: 2.1.0.108
+==> SDK : 1. Adding (ANT). Add natnl_retry_count structure to provide app retry count for every phase of tunnel build process. And retry_count to natnl_tnl_event and natnl_tnl_info.
+         2. Update (ANT). Default to disable tunnel data transfer on router unless the related flag is set.
+
+2016-05-04: 2.1.0.107
+==> SDK : 1. Bug Fix (ANT). DTLS handshake failed issue when the timing of ice negotiation complete of UAS is later than UAC's.
+          2. Bug Fix (ANT). The following steps will cause crash or hang. init -> make_call -> deinit -> init -> make_call.
+          3. Update (ANT). OpenSSL-1.0.2h.
+          4. Update (ANT). Default to use TLSv1.2 and DTLSv1.2. But it is still compatible with TLS and DTLS old version.
+
+2016-04-14: 2.1.0.106
+==> SDK : 1. Bug Fix (ANT). Fixed receive buffer size to avoid unlimited allocate memory.
+          2. Bug Fix (ANT). Fixed the issue which rtsp udp streaming doesn't work.
+
+2016-03-24: 2.1.0.105
+==> SDK : 1. Update (ANT). Extends the waiting timeout of receiving data to 60*100 usecs.
+          2. Update (OpenSSL). Update to 1.0.1s.
+          3. Update (ANT). Update iOS SDK to 9.3.
+
+2016-02-18: 2.1.0.104
 ==> SDK : 1. Adding (ANT). Add --disable-console-log option.
           2. Bug Fix (ANT). im_ports bug. This may causes incorrect im data.
           3. Bug Fix (ANT). log rotation may not work when log_append is on.

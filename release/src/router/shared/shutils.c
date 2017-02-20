@@ -534,6 +534,8 @@ get_pid_by_name(char *name)
 		}
 	}
 
+	closedir(dir);
+
 	return pid;
 }
 
@@ -1667,6 +1669,18 @@ long uptime(void)
 	sysinfo(&info);
 	
 	return info.uptime;
+}
+
+float uptime2(void)
+{
+	char uptime_str[64];
+	float uptime, idle;
+
+	if (f_read_string("/proc/uptime", uptime_str, sizeof(uptime_str)) <= 0 ||
+	    sscanf(uptime_str, "%f %f", &uptime, &idle) != 2)
+		return 0;
+
+	return uptime;
 }
 
 int _vstrsep(char *buf, const char *sep, ...)

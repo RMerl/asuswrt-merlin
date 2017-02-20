@@ -38,6 +38,9 @@
 
 </style>
 <script>
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
 <% login_state_hook(); %>
 var now_flag = '<% get_parameter("flag"); %>';
 <% wan_get_parameter(); %>
@@ -63,12 +66,13 @@ function QKaccount_load_body(){
 		hideLinkTag();
 		flash_button();
 
-		if(isSku("TW")){	
+		if(isSku("TW")){
 			document.getElementById("isp_TW_desc").style.display = "";
 			document.getElementById("mac_clone_field").style.display = "none";
 			document.getElementById("mac_clone_field_1").style.display = "none";
 			document.getElementById("vpn_field").style.display = "none";
-			document.getElementById("specialISP_tr").style.display = "none";
+			document.getElementById("specialisp_desc").innerHTML = "Hinet MOD";
+			document.getElementById("select_profile").style.display = "none";
 		}
 		else if(isSku("CN") || isSku("US") || isSku("CA")){
 			document.getElementById("vpn_field").style.display = "none";
@@ -137,6 +141,13 @@ function QKaccount_load_body(){
 	if(parent.pppoe_failed_flag){
 		document.getElementById("pppoe_fail_desc").style.display = "";
 	}
+
+	if(original_switch_wantag != "none"){
+		document.form.specialisp.checked = true;
+		enable_ISP_special();
+	}
+	else
+		document.form.specialisp.checked = false;
 }
 
 var retryCounter = 0;
@@ -248,6 +259,11 @@ function submitForm(o, s){
 		return false;
 	}
 
+	if(!document.form.specialisp.checked){
+		document.form.switch_wantag.value = "none";
+		set_ISP_profile();
+	}	
+
 	if(now_flag == "auto_way"){
 		//parent.showLoading();
 		simple_showLoading();
@@ -282,7 +298,6 @@ function submitForm(o, s){
 		}
 
 		// uinfi
-		var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
 		set_ISP_profile();
 
 		if(original_switch_wantag != document.form.switch_wantag.value){
@@ -530,16 +545,16 @@ function ISP_Profile_Selection(isp){
 		document.form.switch_wantag.value = "vodafone";
 		document.getElementById("iptv_configuration").style.display = "none";
 	}	
-        else if(isp == "hinet"){
-                document.getElementById("port_settings").style.display = "";
-                document.getElementById("wan_iptv_line").style.display = "none";
-                document.getElementById("wan_iptv_x").style.display = "none";
-                document.getElementById("wan_voip_line").style.display = "none";
-                document.getElementById("wan_voip_x").style.display = "none";
+    else if(isp == "hinet"){
+		document.getElementById("port_settings").style.display = "";
+		document.getElementById("wan_iptv_line").style.display = "";
+		document.getElementById("wan_iptv_x").style.display = "";
+		document.getElementById("wan_voip_line").style.display = "none";
+		document.getElementById("wan_voip_x").style.display = "none";
 		document.getElementById("manual_settings").style.display = "none";
-                document.form.switch_wantag.value = "hinet";
+		document.form.switch_wantag.value = "hinet";
 		document.getElementById("iptv_configuration").style.display = "none";
-        }
+    }
 	else if(isp == "manual"){
 		document.getElementById("port_settings").style.display = "";
 		document.getElementById("wan_iptv_line").style.display = "";
@@ -665,11 +680,25 @@ function set_ISP_profile(){
         document.form.switch_wan2tagid.value = "";
         document.form.switch_wan2prio.value = "0";
     }
+    else if(document.form.switch_wantag.value == "none") {
+	    document.form.switch_stb_x.value = "0";
+	    document.form.switch_wan0tagid.value = "";
+	    document.form.switch_wan0prio.value = "0";
+	    document.form.switch_wan1tagid.value = "";
+	    document.form.switch_wan1prio.value = "0";
+	    document.form.switch_wan2tagid.value = "";
+	    document.form.switch_wan2prio.value = "0";
+    }    
 }
 
 function enable_ISP_special(){
 	if(document.form.specialisp.checked){
-		ISP_Profile_Selection(original_switch_wantag);
+		if(isSku("TW")){
+			ISP_Profile_Selection("hinet");
+			document.getElementById("profile_setting").style.display = "";
+		}
+		else
+			ISP_Profile_Selection(original_switch_wantag);
 		
 		document.getElementById('image_field').style.display = "none";
 		document.getElementById("isp_card_desc").style.display = "none";
@@ -802,7 +831,7 @@ function pass_checked_iptv(obj){
 				</select>
 			</th>
 		</tr>
-		<tr id="specialISP_tr" style="display:none">
+		<tr id="specialISP_tr">
 			<th colspan="2">
 				<input type="checkbox" id="specialisp" name="specialisp" onclick="enable_ISP_special();">
 				<span id="specialisp_desc" class="QISGeneralFont" style="margin-left:0px;font-style:normal;color:#6CF;font-size:14px;font-weight:bolder;"><#PPPConnection_x_HostNameForISP_sectionname#></span>
@@ -849,6 +878,15 @@ function pass_checked_iptv(obj){
 							<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>><#Manual_Setting_btn#></option>
 						</select></td>
 					</tr>
+					</table>
+				</div>
+
+				<div id="profile_setting" style="display:none;">
+					<table class="iptvTable">
+						<tr>
+							<th><#Select_ISPfile#>:</th>
+							<td>Hinet MOD</td>
+						</tr>
 					</table>
 				</div>
 

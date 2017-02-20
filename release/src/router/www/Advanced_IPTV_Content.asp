@@ -57,7 +57,7 @@ function initial(){
 	document.form.emf_enable.value = original_emf_enable;
 	document.form.mr_enable_x.value = original_mr_enable;
 	disable_udpxy();	
-	if(!Rawifi_support && !Qcawifi_support)	//rawifi platform without this item, by Viz 2012.01	
+	if(!Qcawifi_support)
 		document.getElementById('enable_eff_multicast_forward').style.display="";		
 
 	if(dualWAN_support)
@@ -99,6 +99,8 @@ function initial(){
 		document.getElementById('meoOption').outerHTML = "";
 		document.getElementById('vodafoneOption').outerHTML = "";
 	}
+	if(!nz_isp_support)
+		document.getElementById('sfOption').outerHTML = "";
 }
 
 function load_ISP_profile(){
@@ -143,6 +145,9 @@ function load_ISP_profile(){
         else if(document.form.switch_wantag.value == "hinet") {
                 setting_value = [["", "0"], ["", "0"], ["", "0"], "4"]; 
         }
+        else if(document.form.switch_wantag.value == "stuff_fibre") {
+                setting_value = [["10", "0"], ["", "0"], ["", "0"], "0"];
+        }
 	
 	if(setting_value.length == 4){
 		document.form.switch_wan0tagid.value = setting_value[0][0];
@@ -184,7 +189,7 @@ function ISP_Profile_Selection(isp){
 	else if(isp == "unifi_home" || isp == "singtel_others" || isp == "meo" || isp == "hinet"){
 		ISP_setting = ["none", "", "none", "none", "none", "none", "4", "", ""];
 	}
-	else if(isp == "unifi_biz"){
+	else if(isp == "unifi_biz" || isp == "stuff_fibre"){
 		ISP_setting = ["none", "none", "none", "none", "none", "none", "0", "", ""];
 	}
 	else if(isp == "singtel_mio" || isp == "movistar"){
@@ -212,8 +217,8 @@ function ISP_Profile_Selection(isp){
 	document.getElementById("wan_voip_port3_x").style.display = ISP_setting[5];
 	document.form.switch_stb_x.value = ISP_setting[6];
 	document.getElementById("mr_enable_field").style.display = ISP_setting[7];
-	if(!Rawifi_support && !Qcawifi_support)
-		document.getElementById("enable_eff_multicast_forward").style.display = ISP_setting[8];	// only support Broadcom platform
+	if(!Qcawifi_support)
+		document.getElementById("enable_eff_multicast_forward").style.display = ISP_setting[8];
 	else	
 		document.getElementById("enable_eff_multicast_forward").style.display = "none";
 }
@@ -414,6 +419,7 @@ function change_rmvlan(){
 					<option value="maxis_fiber_iptv" <% nvram_match("switch_wantag", "maxis_fiber_iptv", "selected"); %>>Maxis-Fiber-IPTV</option>
 					<option value="maxis_fiber_sp_iptv" <% nvram_match("switch_wantag", "maxis_fiber_sp_iptv", "selected"); %>>Maxis-Fiber-Special-IPTV</option>
 -->
+					<option id="sfOption" value="stuff_fibre" <% nvram_match("switch_wantag", "stuff_fibre", "selected"); %>>Stuff-Fibre</option>
 					<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>><#Manual_Setting_btn#></option>
 				</select>
 			</td>

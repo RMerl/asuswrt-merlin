@@ -1265,8 +1265,7 @@ main(int argc, char **argv)
 #ifndef MS_IPK
 #if (!defined(RTN66U) && !defined(RTN56U))
 #ifdef RTAC68U
-	if (!strcmp(get_productid(), MODEL_STR_RTAC66UV2)
-		|| !strcmp(get_productid(), MODEL_STR_RTAC66UV2_ODM1)) {
+	if (is_ac66u_v2_series()) {
 		init_icon(PATH_ICON_ALT_PNG_SM);
 		init_icon(PATH_ICON_ALT_PNG_LRG);
 		init_icon(PATH_ICON_ALT_JPEG_SM);

@@ -48,6 +48,8 @@
 #include "gpio_api.h"
 #include "check.h"
 
+extern int nr_irqs;
+
 /*
  * File operation structure for blinkled devices
  */
@@ -78,6 +80,7 @@ static void (*bled_type_printer[BLED_TYPE_MAX])(struct bled_priv *bp, struct seq
 	[BLED_TYPE_NETDEV_BLED] = netdev_led_printer,
 	[BLED_TYPE_SWPORTS_BLED] = swports_led_printer,
 	[BLED_TYPE_USBBUS_BLED] = usbbus_led_printer,
+	[BLED_TYPE_INTERRUPT_BLED] = interrupt_led_printer,
 };
 
 static unsigned long bled_check_interval_tbl[BLED_BHTYPE_MAX] = {
@@ -411,6 +414,30 @@ static int validate_usbbus_bled(struct usbbus_bled *ul)
 	return 0;
 }
 #endif
+
+/**
+ * Validates struct interrupt_bled which is provided by user-space code.
+ * @return:
+ * 	0:	OK
+ *  otherwise:	fail
+ */
+static int validate_intr_bled(struct interrupt_bled *it)
+{
+	unsigned int i;
+
+	if (!it)
+		return -EINVAL;
+	if (validate_bled(&it->bled, 1))
+		return -EINVAL;
+	if (it->nr_interrupt > BLED_MAX_NR_INTERRUPT)
+		return -EINVAL;
+	for (i = 0; i < it->nr_interrupt; ++i) {
+		if (it->interrupt[i] >= nr_irqs)
+			return -ENODEV;
+	}
+
+	return 0;
+}
 
 /**
  * Initialize bled private date base on struct bled_common.
@@ -1457,6 +1484,51 @@ static int handle_set_mode(unsigned long arg)
 	return 0;
 }
 
+/**
+ * Handle BLED_CTL_ADD_INTERRUPT_BLED ioctl command.
+ * @arg:	pointer to parameter in user-space
+ * 		(pointer to struct interrupt_bled)
+ * @return:
+ * 	0:	success
+ *  otherwise:	fail
+ */
+static int handle_add_interrupt_bled(unsigned long arg)
+{
+	unsigned int i;
+	struct interrupt_bled it;
+	struct bled_common *bc = &it.bled;
+	struct interrupt_bled_priv *ip;
+	struct bled_priv *bp;
+	struct interrupt_bled_stat *intrs;
+
+	if (copy_from_user(&it, (void __user *) arg, sizeof(it)))
+		return -EFAULT;
+	if (validate_intr_bled(&it))
+		return -EINVAL;
+	bp = add_bled(bc, sizeof(struct interrupt_bled_priv));
+	if (IS_ERR(bp))
+		return PTR_ERR(bp);
+
+	ip = to_check_priv(bp);
+	intrs = &ip->interrupt_stat[0];
+	/* interrupt_bled-specific private data */
+	bp->type = BLED_TYPE_INTERRUPT_BLED;
+	bp->check = interrupt_check_traffic;
+	bp->reset_check = interrupt_reset_check_traffic;
+	for (i = 0; i < it.nr_interrupt; ++i, ++intrs) {
+		intrs->interrupt = it.interrupt[i];
+	}
+	ip->nr_interrupt = it.nr_interrupt;
+
+	bp->reset_check(bp);
+	if (bp->bh_type == BLED_BHTYPE_HYBRID)
+		schedule_delayed_work(&bp->bled_work, bp->next_check_interval);
+	mod_timer(&bp->timer, jiffies + bp->next_check_interval);
+	printk("bled: GPIO#%d: interrupt %u.\n", bp->gpio_nr, intrs->interrupt);
+
+	return 0;
+}
+
 static long bled_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = -EINVAL;
@@ -1504,6 +1576,9 @@ static long bled_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	case BLED_CTL_SET_MODE:
 		ret = handle_set_mode(arg);
+		break;
+	case BLED_CTL_ADD_INTERRUPT_BLED:
+		ret = handle_add_interrupt_bled(arg);
 		break;
 	}
 
@@ -1592,13 +1667,20 @@ static int __init bled_init(void)
 	}
 	bled_device = tmp_device;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+	bled_pdentry= proc_create(BLED_NAME, 0444, NULL,&proc_bled_operations);
+#else
 	bled_pdentry = create_proc_entry(BLED_NAME, 0444, NULL);
+#endif
 	if (!bled_pdentry) {
 		dbg_bl("Create %s fail!\n", BLED_NAME);
 		rc  = -ENOMEM;
 		goto cleanup;
 	}
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
 	bled_pdentry->proc_fops = &proc_bled_operations;
+#endif
 	bled_start = 1;
 
 	return 0;

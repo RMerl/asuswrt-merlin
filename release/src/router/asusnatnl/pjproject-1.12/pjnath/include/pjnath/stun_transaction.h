@@ -286,6 +286,8 @@ PJ_DECL(void) pj_stun_tsx_cancel_timer(pj_stun_client_tsx *tsx);
 
 PJ_DECL(char *)pj_stun_tsx_get_obj_name(pj_stun_client_tsx *tsx);
 
+PJ_DECL(int)pj_stun_tsx_tansmit_count(pj_stun_client_tsx *tsx);
+
 PJ_END_DECL
 
 

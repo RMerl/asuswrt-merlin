@@ -3891,6 +3891,8 @@ PJ_DECL(pj_status_t) pjsua_call_dial_dtmf(pjsua_inst_id inst_id,
  * @param msg_data	Optional list of headers etc to be included in outgoing
  *			request. The body descriptor in the msg_data is 
  *			ignored.
+ * @param s_rport	The remote port which the MESSAGE send to.
+ * @param s_proc_name	The remote process name which the MESSAGE send to.
  * @param user_data	Optional user data, which will be given back when
  *			the IM callback is called.
  *
@@ -3902,6 +3904,7 @@ PJ_DECL(pj_status_t) pjsua_call_send_im( pjsua_inst_id inst_id,
 					 const pj_str_t *content,
 					 const pjsua_msg_data *msg_data,
 					 char *s_rport,
+					 char *s_proc_name,
 					 void *user_data);
 
 
@@ -4378,6 +4381,7 @@ extern const pjsip_method pjsip_message_method;
  *			request. The body descriptor in the msg_data is 
  *			ignored.
  * @param s_rport	The remote port which the MESSAGE send to.
+ * @param s_proc_name	The remote process name which the MESSAGE send to.
  * @param s_timeout	The timeout value.
  * @param user_data	Optional user data, which will be given back when
  *			the IM callback is called.
@@ -4391,6 +4395,7 @@ PJ_DECL(pj_status_t) pjsua_im_send(pjsua_inst_id inst_id,
 				   const pj_str_t *content,
 				   const pjsua_msg_data *msg_data,
 				   char *s_rport,
+				   char *s_proc_name,
 				   char *s_timeout,
 				   void *user_data);
 

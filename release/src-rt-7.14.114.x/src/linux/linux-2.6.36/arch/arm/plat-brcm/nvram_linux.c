@@ -90,6 +90,160 @@ static struct resource norflash_region = {
 static unsigned char flash_nvh[MAX_NVRAM_SPACE];
 #ifdef CONFIG_MTD_NFLASH
 
+#define NLS_XFR 1              /* added by Jiahao for WL500gP */
+#ifdef NLS_XFR
+
+#include <linux/nls.h>
+
+static char *NLS_NVRAM_U2C="asusnlsu2c";
+static char *NLS_NVRAM_C2U="asusnlsc2u";
+__u16 unibuf[1024];
+char codebuf[1024];
+char tmpbuf[1024];
+
+void
+asusnls_u2c(char *name)
+{
+#ifdef CONFIG_NLS
+        char *codepage;
+        char *xfrstr;
+        struct nls_table *nls;
+        int ret, len;
+
+        strcpy(codebuf, name);
+        codepage=codebuf+strlen(NLS_NVRAM_U2C);
+        if((xfrstr=strchr(codepage, '_')))
+        {
+                *xfrstr=NULL;
+                xfrstr++;
+                nls=load_nls(codepage);
+                if(!nls)
+                {
+                        printk("NLS table is null!!\n");
+                }
+                else {
+                        len = 0;
+                        if (ret=utf8s_to_utf16s(xfrstr, strlen(xfrstr), unibuf))
+                        {
+                                int i;
+                                for (i = 0; (i < ret) && unibuf[i]; i++) {
+                                        int charlen;
+                                        charlen = nls->uni2char(unibuf[i], &name[len], NLS_MAX_CHARSET_SIZE);
+                                        if (charlen > 0) {
+                                                len += charlen;
+                                        }
+                                        else {
+                                                strcpy(name, "");
+                                                unload_nls(nls);
+                                                return;
+                                        }
+                                }
+                                name[len] = 0;
+                        }
+                        unload_nls(nls);
+                        if(!len)
+                        {
+                                printk("can not xfr from utf8 to %s\n", codepage);
+                                strcpy(name, "");
+                        }
+                }
+        }
+        else
+        {
+                strcpy(name, "");
+        }
+#endif
+}
+
+void
+asusnls_c2u(char *name)
+{
+#ifdef CONFIG_NLS
+        char *codepage;
+        char *xfrstr;
+        struct nls_table *nls;
+        int ret;
+
+        strcpy(codebuf, name);
+        codepage=codebuf+strlen(NLS_NVRAM_C2U);
+        if((xfrstr=strchr(codepage, '_')))
+        {
+                *xfrstr=NULL;
+                xfrstr++;
+
+                strcpy(name, "");
+                nls=load_nls(codepage);
+                if(!nls)
+                {
+                        printk("NLS table is null!!\n");
+                }
+                else
+                {
+                        int charlen;
+                        int i;
+                        int len = strlen(xfrstr);
+                        for (i = 0; len && *xfrstr; i++, xfrstr += charlen, len -= charlen) {   /* string to unicode */
+                                charlen = nls->char2uni(xfrstr, len, &unibuf[i]);
+                                if (charlen < 1) {
+                                        strcpy(name ,"");
+                                        unload_nls(nls);
+                                        return;
+                                }
+                        }
+                        unibuf[i] = 0;
+                        ret=utf16s_to_utf8s(unibuf, i, UTF16_HOST_ENDIAN, name, 1024);  /* unicode to utf-8, 1024 is size of array unibuf */
+                        name[ret]=0;
+                        unload_nls(nls);
+                        if(!ret)
+                        {
+                                printk("can not xfr from %s to utf8\n", codepage);
+                                strcpy(name, "");
+                        }
+                }
+        }
+        else
+        {
+                strcpy(name, "");
+      }
+#endif
+}
+
+char *
+nvram_xfr(const char *buf)
+{
+        char *name = tmpbuf;
+        ssize_t ret=0;
+
+        if (copy_from_user(name, buf, strlen(buf)+1)) {
+                ret = -EFAULT;
+                goto done;
+        }
+
+        if (strncmp(tmpbuf, NLS_NVRAM_U2C, strlen(NLS_NVRAM_U2C))==0)
+        {
+                asusnls_u2c(tmpbuf);
+        }
+        else if (strncmp(buf, NLS_NVRAM_C2U, strlen(NLS_NVRAM_C2U))==0)
+        {
+                asusnls_c2u(tmpbuf);
+        }
+        else
+        {
+                strcpy(tmpbuf, "");
+        }
+
+        if (copy_to_user(buf, tmpbuf, strlen(tmpbuf)+1))
+        {
+                ret = -EFAULT;
+                goto done;
+        }
+done:
+        if(ret==0) return tmpbuf;
+        else return NULL;
+}
+
+#endif  // NLS_XFR
+
 static struct nvram_header *
 BCMINITFN(nand_find_nvram)(hndnand_t *nfl, uint32 off)
 {

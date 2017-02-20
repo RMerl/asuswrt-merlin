@@ -61,6 +61,11 @@ static int got_usb2_old = 0;
 static int got_usb3_old = 0;
 #endif
 
+#if defined(RTCONFIG_M2_SSD)
+static char *usb_path3 = NULL;
+static int got_m2ssd = 0, got_m2ssd_old = 0;
+#endif
+
 static void
 alarmtimer(unsigned long sec, unsigned long usec)
 {
@@ -105,6 +110,18 @@ check_usb3(void)
 }
 #endif
 
+#ifdef RTCONFIG_M2_SSD
+static int check_m2_ssd(void)
+{
+	if (usb_busy)
+		return 0;
+	else if (nvram_invmatch("usb_led3", ""))
+		return 1;
+	else
+		return 0;
+}
+#endif
+
 static void no_blink(int sig)
 {
 	alarmtimer(USBLED_NORMAL_PERIOD, 0);
@@ -113,7 +130,15 @@ static void no_blink(int sig)
 		got_usb2 = -1;
 		got_usb3 = -1;
 	}
+#if defined(RTCONFIG_M2_SSD)
+	if (have_sata_led(model)) {
+		got_m2ssd = -1;
+		sata_led_control(nvram_match("usb_led3", "1")? LED_ON : LED_OFF);
+	}
+#endif
 	usb_busy = 0;
+	if (have_usb3_led(model) || have_sata_led(model))
+		nvram_unset("usb_led_id");
 }
 
 #if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
@@ -123,6 +148,9 @@ static void reset_status(int sig)
 #ifdef RTCONFIG_USB_XHCI
 	got_usb2_old = -1;
 	got_usb3_old = -1;
+#endif
+#if defined(RTCONFIG_M2_SSD)
+	got_m2ssd_old = -1;
 #endif
 }
 #endif
@@ -146,6 +174,8 @@ static void usbled_exit(int sig)
 	led_control(LED_USB, LED_OFF);
 	if (have_usb3_led(model))
 		led_control(LED_USB3, LED_OFF);
+	if (have_sata_led(model))
+		led_control(LED_SATA, LED_OFF);
 
 	remove("/var/run/usbled.pid");
 	exit(0);
@@ -155,6 +185,9 @@ static void usbled(int sig)
 {
 	usb_path1 = nvram_safe_get("usb_path1");
 	usb_path2 = nvram_safe_get("usb_path2");
+#if defined(RTCONFIG_M2_SSD)
+	usb_path3 = nvram_safe_get("usb_path3");
+#endif
 	status_usb_old = status_usb;
 	status_usb = usb_status();
 
@@ -165,6 +198,10 @@ static void usbled(int sig)
 		got_usb3_old = got_usb3;
 		got_usb3 = check_usb3();
 	}
+#endif
+#if defined(RTCONFIG_M2_SSD)
+	got_m2ssd_old = got_m2ssd;
+	got_m2ssd = check_m2_ssd();
 #endif
 
 	if (nvram_match("asus_mfg", "1")
@@ -207,6 +244,13 @@ static void usbled(int sig)
 		}
 		else
 #endif
+#if defined(RTCONFIG_M2_SSD)
+		if (got_m2ssd != got_m2ssd_old)
+		{
+			sata_led_control(got_m2ssd? LED_ON : LED_OFF);
+		}
+		else
+#endif
 		if (status_usb != status_usb_old)
 		{
 			if (status_usb)
@@ -228,7 +272,11 @@ static void usbled(int sig)
 		{
 			int led_id = nvram_get_int("usb_led_id");
 
-			if (led_id != LED_USB && led_id != LED_USB3)
+			if (led_id != LED_USB && led_id != LED_USB3
+#if defined(RTCONFIG_M2_SSD)
+			    && led_id != LED_SATA
+#endif
+			   )
 				led_id = LED_USB;
 
 			count = (count+1) % 20;

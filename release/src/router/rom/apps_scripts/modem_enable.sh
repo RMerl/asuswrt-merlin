@@ -179,13 +179,15 @@ _get_pdp_str(){
 }
 
 _is_Docomo_modem(){
+	ret="0"
+
 	if [ "$modem_vid" == "4100" -a "$modem_pid" == "25446" ]; then # Docomo L03F.
-		echo -n "1"
+		ret="1"
 	elif [ "$modem_vid" == "4100" -a "$modem_pid" == "25382" ]; then # Docomo L-03D
-		echo -n "1"
+		ret="1"
 	fi
 
-	echo -n "0"
+	echo -n "$ret"
 }
 
 

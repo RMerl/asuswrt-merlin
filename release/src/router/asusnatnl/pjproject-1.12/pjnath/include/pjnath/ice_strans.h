@@ -900,6 +900,8 @@ PJ_DECL(pj_bool_t) pj_ice_strans_tp_is_turn(unsigned transport_id);
 
 PJ_DECL(natnl_tunnel_type) pj_ice_strans_get_use_tunnel_type(struct pj_ice_strans *ice_st);
 
+PJ_DECL(int) pj_ice_strans_get_transmit_count(struct pj_ice_strans *ice_st);
+
 PJ_DECL(void) pj_ice_strans_set_use_upnp_flag(void *user_data, int use_upnp_flag);
 
 PJ_DECL(void) pj_ice_strans_set_use_stun_cand(void *user_data, pj_bool_t use_stun_cand);

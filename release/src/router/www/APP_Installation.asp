@@ -116,10 +116,10 @@ function initial(){
 	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || noaidisk_support)
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("AiDisk")[0]);
 
-	if(!printer_support)
+	if(!printer_support || noprinter_support)
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("<#Network_Printer_Server#>")[0]);
 
-	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || !modem_support || based_modelid == "4G-AC55U")
+	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || !modem_support || nomodem_support || based_modelid == "4G-AC55U")
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("3G/4G")[0]);
 
 	if(!timemachine_support)

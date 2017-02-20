@@ -71,7 +71,7 @@ function initial(){
 	
 	document.form.switch_stb_x.value = original_switch_stb_x;
 	disable_udpxy();
-	if(!Rawifi_support && !Qcawifi_support)	//rawifi platform without this item, by Viz 2012.01
+	if(!Qcawifi_support)
 		document.getElementById('enable_eff_multicast_forward').style.display="";
 	
 	if(dualWAN_support)
@@ -252,8 +252,8 @@ function ISP_Profile_Selection(isp){
 	document.getElementById("wan_voip_port3_x").style.display = ISP_setting[5];
 	document.form.switch_stb_x.value = ISP_setting[6];
 	document.getElementById("mr_enable_field").style.display = ISP_setting[7];
-	if(!Rawifi_support && !Qcawifi_support)
-		document.getElementById("enable_eff_multicast_forward").style.display = ISP_setting[8];	// only support Broadcom platform
+	if(!Qcawifi_support)
+		document.getElementById("enable_eff_multicast_forward").style.display = ISP_setting[8];
 	else
 		document.getElementById("enable_eff_multicast_forward").style.display = "none";
 

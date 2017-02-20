@@ -668,10 +668,18 @@ PJ_DEF(pj_status_t) pj_stun_sock_get_info( pj_stun_sock *stun_sock,
 	status = pj_enum_ip_interface(stun_sock->af, &info->alias_cnt, 
 				      info->aliases);
 	if (status != PJ_SUCCESS) {
+#if defined(_MSC_VER) && _MSC_VER >=1900  // Dean : Compatible with UWP
+		if (status == PJ_ENOTSUP && pj_sockaddr_has_addr(&def_addr)) {
+			pj_sockaddr_cp(&info->aliases[0], &def_addr);
+			info->alias_cnt = 1;
+		}
+#else
 	    pj_grp_lock_release(stun_sock->grp_lock);
 	    return status;
+#endif
 	}
-	PJ_LOG(4, ("stun_sock.c", "pj_stun_sock_get_info() pj_enum_ip_interface2."));
+	
+PJ_LOG		(4, ("stun_sock.c", "pj_stun_sock_get_info() pj_enum_ip_interface2."));
 
 	/* Set the port number for each address.
 	 */

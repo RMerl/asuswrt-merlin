@@ -255,12 +255,26 @@ int main(int argc, char *argv[])
 			fprintf(fp, "guest ok = yes\n");
 		}
 		else{
+#if defined(RTCONFIG_SAMBA36X)
+			fprintf(fp, "auth methods = guest\n");
+			fprintf(fp, "guest account = admin\n");
+			fprintf(fp, "map to guest = Bad Password\n");
+			fprintf(fp, "guest ok = yes\n");
+#else
 			fprintf(fp, "security = SHARE\n");
 			fprintf(fp, "guest only = yes\n");
+#endif
 		}
+#else
+#if defined(RTCONFIG_SAMBA36X)
+		fprintf(fp, "auth methods = guest\n");
+		fprintf(fp, "guest account = admin\n");
+		fprintf(fp, "map to guest = Bad Password\n");
+		fprintf(fp, "guest ok = yes\n");
 #else
 		fprintf(fp, "security = SHARE\n");
 		fprintf(fp, "guest only = yes\n");
+#endif
 #endif
 	}
 	else{
@@ -300,9 +314,10 @@ int main(int argc, char *argv[])
 	if (strcmp(nvram_safe_get("st_max_user"), "") != 0)
 		fprintf(fp, "max connections = %s\n", nvram_safe_get("st_max_user"));
 
-        /* remove socket options due to NIC compatible issue */
-	if(!nvram_get_int("stop_samba_speedup")){
-#ifdef RTCONFIG_BCMARM
+	if (!nvram_get_int("stop_samba_speedup")) {
+#if defined(RTCONFIG_SAMBA36X)
+		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE\n");
+#elif defined(RTCONFIG_BCMARM)
 #ifdef RTCONFIG_BCM_7114
 		fprintf(fp, "socket options = IPTOS_LOWDELAY TCP_NODELAY SO_RCVBUF=131072 SO_SNDBUF=131072\n");
 #endif
@@ -346,6 +361,20 @@ int main(int argc, char *argv[])
 #endif
 	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
 #endif // #if 0
+#if defined(RTCONFIG_SAMBA36X)
+	fprintf(fp, "enable core files = no\n");
+	fprintf(fp, "deadtime = 30\n");
+	fprintf(fp, "local master = yes\n");
+	fprintf(fp, "preferred master = yes\n");
+	fprintf(fp, "load printers = no\n");
+	fprintf(fp, "printable = no\n");
+	fprintf(fp, "max protocol = SMB2\n");
+	fprintf(fp, "smb encrypt = disabled\n");
+	fprintf(fp, "min receivefile size = 16384\n");
+	fprintf(fp, "passdb backend = smbpasswd\n");
+	fprintf(fp, "smb passwd file = /etc/samba/smbpasswd\n");
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 	fprintf(fp, "use sendfile = no\n");
 #else

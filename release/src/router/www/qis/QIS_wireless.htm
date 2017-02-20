@@ -12,6 +12,9 @@
 <script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
 var wl0_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>');
 var wl1_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
 var wl2_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>');
@@ -193,12 +196,14 @@ function QKWireless_load_body(){
 			parent.restartTime = true;
 		});
 	}
-	
-	setTimeout(function(){
-		parent.document.start_update.action_script.value = "start_webs_update";
-		parent.document.start_update.flag.value = "background";
-		parent.document.start_update.submit();
-	}, 100);
+
+	if(live_update_support && !no_update_support){
+		setTimeout(function(){
+			parent.document.start_update.action_script.value = "start_webs_update";
+			parent.document.start_update.flag.value = "background";
+			parent.document.start_update.submit();
+		}, 100);
+	}
 }
 
 function check_wan_state(){
@@ -783,14 +788,9 @@ function submitForm(){
 
 	document.form.submit();
 	if((document.form.sw_mode.value == "1" || document.form.sw_mode.value == "3") && !parent.pppoe_failed_flag){
-		if(parent.based_modelid == "RT-AC42U" || parent.based_modelid == "RT-AC58U")
-			setTimeout(function(){
-				location.href = "/qis/QIS_finish.htm";
-			}, 3500)
-		else
-			setTimeout(function(){
-				location.href = "/qis/QIS_finish.htm";
-			}, 500)
+		setTimeout(function(){
+			location.href = "/qis/QIS_finish.htm";
+		}, 500)
 	}
 }
 
@@ -1341,7 +1341,7 @@ function check_pppoe_state(){
 <input type="hidden" name="time_zone_dst" value="<% nvram_get("time_zone_dst"); %>" disabled>
 <!-- wireless -->
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>" disabled>
-<input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>" disabled>
+<input type="hidden" name="wps_band" value="<% nvram_get("wps_band_x"); %>" disabled>
 <input type="hidden" name="wps_multiband" value="<% nvram_get("wps_multiband"); %>" disabled>
 <input type="hidden" name="wps_dualband" value="<% nvram_get("wps_dualband"); %>" disabled>
 <input type="hidden" name="wl0_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>">

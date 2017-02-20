@@ -24,6 +24,9 @@
 <script type="text/JavaScript" language="JavaScript" src="/validator.js"></script>
 <script type="text/javascript">
 var accounts = [<% get_all_accounts(); %>];
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
 <% wanstate(); %>
 var autodet_state = '<% nvram_get("autodet_state"); %>';
 var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';
@@ -39,6 +42,8 @@ for(var i=0; i<accounts.length; i++){
 }
 
 function QKinternettype_load_body(){
+        if(parent.based_modelid == "RT-AC58U" || parent.based_modelid == "RT-AC82U")
+		waninfo();
 	detect_wan();
 	if(is_CN_sku)
 		document.getElementById("loginImage").style.display = "none";
@@ -103,9 +108,33 @@ function QKinternettype_load_body(){
 		update_dsl_info();
 	}
 	
+        if(parent.based_modelid == "RT-AC58U" || parent.based_modelid == "RT-AC82U"){
+               if(wanauxstate != 1)
+               {
+                       document.getElementById("restore").style.display = "";
+               }
+               else
+                       document.getElementById("restore").style.display = "none";
+        }
+	
+
 	if(wanauxstate == 1)
 		document.getElementById("prev_btn").style.display = "";
 }
+
+function waninfo(){
+	$.ajax({
+		url: '/start_autodet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout("waninfo();", 2000);		
+		},
+		success: function(response){
+			setTimeout("waninfo();", 2000);
+		}
+	});	
+}
+
 
 function detect_wan(){
 	$.ajax({
@@ -313,6 +342,29 @@ function submitForm(){
 	document.form.submit();
 }
 
+function uploadSetting(){
+  var file_obj = document.form.file;
+
+        if(file_obj.value == ""){
+                alert("<#JS_fieldblank#>");
+                file_obj.focus();
+        }
+        else if(file_obj.value.length < 6 ||
+                                        file_obj.value.lastIndexOf(".CFG")  < 0 ||
+                                        file_obj.value.lastIndexOf(".CFG") != (file_obj.value.length)-4){
+                alert("<#Setting_upload_hint#>");
+                file_obj.focus();
+        }
+        else{
+                stopFlag = 1;
+                parent.document.getElementById('proceeding_img_text').style.display = "";
+                parent.document.getElementById('connHint').innerHTML = "<#SET_ok_desc#>";
+                document.form.action = "/upload.cgi";
+                document.form.enctype = "multipart/form-data";
+                document.form.submit();
+        }
+}
+
 function skipsetting(){
 	changeiuiBackground2("loadingIcon_skip",1);
 
@@ -464,8 +516,13 @@ function paste_password(){
 		<ul>
 			<li><#QIS_pass_desc3#></li>
 		</ul>
+               <ul id="restore" style="display:none"><li><#QKset_restore_0#></li>
+               </ul>
 	</div>
 	<div id="loginImage" style="margin-left:320px;margin-top:-200px;"><img width="300px" style="border-radius:5px;" src="/images/qis/router_login.jpg"></span></div>
+</div>
+<div style="height:30px;display:none">
+       <input id="upload_setting_profile" type="file" name="file" class="input" style="color:#FFCC00;" onchange="uploadSetting();">
 </div>
 <br>
 

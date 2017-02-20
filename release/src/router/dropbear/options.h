@@ -131,7 +131,7 @@ If you test it please contact the Dropbear author */
  * If you disable MD5, Dropbear will fall back to SHA1 fingerprints,
  * which are not the standard form. */
 #define DROPBEAR_SHA1_HMAC
-#define DROPBEAR_SHA1_96_HMAC
+/*#define DROPBEAR_SHA1_96_HMAC */
 #define DROPBEAR_SHA2_256_HMAC
 #define DROPBEAR_SHA2_512_HMAC
 /* #define DROPBEAR_MD5_HMAC */

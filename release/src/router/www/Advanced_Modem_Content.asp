@@ -82,7 +82,7 @@ var passlist = new Array();
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var usb_modem_enable = 0;
 <% wan_get_parameter(); %>
-if(dualWAN_support){
+if(dualWAN_support || productid == "RT-AC1200G+"){
 	usb_modem_enable = (usb_index >= 0)? 1:0;
 }
 else{
@@ -140,7 +140,7 @@ function initial(){
 
 	$('#usb_modem_switch').iphoneSwitch(usb_modem_enable,
 		function() {
-			if(dualWAN_support)
+			if(dualWAN_support || productid == "RT-AC1200G+")
 				document.form.wans_dualwan.value = wans_dualwan_array[0]+" usb";
 			document.getElementById("modem_android_tr").style.display="";
 			if(document.form.modem_android.value == "0"){
@@ -157,7 +157,7 @@ function initial(){
 			}				
 		},
 		function() {
-			if(dualWAN_support){
+			if(dualWAN_support || productid == "RT-AC1200G+"){
 				if(usb_index == 0)
 						document.form.wans_dualwan.value = wans_dualwan_array[1]+" none";
 					else

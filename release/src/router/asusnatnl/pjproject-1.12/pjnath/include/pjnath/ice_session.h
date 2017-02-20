@@ -474,6 +474,9 @@ struct pj_ice_sess_check
 
 	// DEAN, valid when candidate type is PJ_ICE_CAND_TYPE_HOST_TCP or PJ_ICE_CAND_TYPE_SRFLX_TCP
 	pj_bool_t        tcp_sess_ready;
+
+	// Store transmit count
+	int transmit_count;
 };
 
 

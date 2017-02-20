@@ -1,38 +1,49 @@
 #Modify this to point to the PJSIP location.
 include ../version.mak
-RTSRCBASE=../../..
+#RTSRCBASE=../../..
 PJBASE=../pjproject-1.12
+RTSHAREDBASE=$(TOP)/shared
+RTNVARMBASE=$(TOP)/nvram$(BCMEX)
 UMEMBASE=../umem-1.0.1
 UDTBASE=../udt
 LIB_UDT=udt
 SCTPBASE=../pjproject-1.12/third_party/usrsctp/usrsctplib
 NATBASE=.
+#NVRAM_DIR=$(SRCBASE)/nvram$(BCMEX)
+#SHARED_DIR=$(SRCBASE)/shared
 include $(PJBASE)/build.mak
 
 CC      = $(PJ_CC)
 CXX		= $(PJ_CXX)
 AR      = $(PJ_AR)
-LD	= $(PJ_LD)
+LD	    = $(PJ_LD)
 #STRIP	= $(PJ_STRIP)   
 LDFLAGS = $(PJ_LDFLAGS)
 LDLIBS  = $(PJ_LDLIBS)
 LDLIBS += -L$(UDTBASE) -l$(LIB_UDT) -L$(NATBASE)
-CFLAGS  = $(PJ_CFLAGS) 
+CFLAGS += $(PJ_CFLAGS)
 CFLAGS += -g -I$(NATBASE) -I$(NATBASE)/msvc_prjs/asusnatnl 
 CFLAGS += -DTUNNEL_V=\"$(VERSION)\"
 CFLAGS += -I$(UDTBASE) -I$(SCTPBASE)
 #CFLAGS += -Wall
-CPPFLAGS += -fPIC
+CPPFLAGS += -fPIC $(CFLAGS)
 
 ifeq ($(AR),)
 AR=ar
 endif
 
 ifeq ($(router), yes)
-CFLAGS += -DROUTER=1
+#CFLAGS += -DROUTER=1
 #for wl_ioctl used.
+CFLAGS += -fpermissive
+CFLAGS += -DTYPEDEF_FLOAT_T
 CFLAGS += -I$(RTSHAREDBASE)
 CFLAGS += -I$(SRCBASE)/include
+
+LDLIBS += -lshared
+LDLIBS += -lnvram
+LDFLAGS += -L$(RTSHAREDBASE)
+LDFLAGS += -L$(RTNVARMBASE)
 endif
 
 #check if make goal is android-lib or linux-lib
@@ -71,6 +82,7 @@ OBJS = main.o natnl.o \
 		natnl_codec.o \
 		socket.o message.o client.o list.o tunnel.o \
 		im_handler.o \
+		im_ipc.o \
 		rtsp_handler.o \
 		$(JNI_OBJ)
 		#config.o \
@@ -84,23 +96,23 @@ OBJ_LIBS = main.o $(OBJS)
 #all: natnl
 all: natnl
 
-android-lib: main.c $(OBJS)
+android-lib: main.cpp $(OBJS)
 	$(CXX) -shared -o libnatnl.so $(CPPFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS)
 #$(STRIP) libnatnl.so
 #	NATLIB_NAME=libnatnl.so
-ifeq ($(wildcard ./*.c),)
+ifeq ($(wildcard ./*.cpp),)
 #For prebuild on router platform. Don't remove it.
 linux-lib:
 	-cp -f $(TOP)/asusnatnl/natnl/prebuild$(BCMEX)/libasusnatnl.so libasusnatnl.so
 else
-linux-lib: main.c $(OBJS)
+linux-lib: main.cpp $(OBJS)
 	$(CXX) -shared -o libasusnatnl.so $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS)
 	NATLIB_NAME=libasusnatnl.so
 endif
-#ios-static: main.c $(OBJS)
+#ios-static: main.cpp $(OBJS)
 #	$(CXX)  -Wl $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -static -all_load -o libasusnatnl.a
 
-ios-dylib: main.c $(OBJS)
+ios-dylib: main.cpp $(OBJS)
 	$(CXX)  -Wl $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -dynamiclib -o libasusnatnl.dylib
 	NATLIB_NAME=libasusnatnl.dylib
 	#$(CXX) -dynamiclib -o libasusnatnl.dylib -Wl $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS)
@@ -134,7 +146,7 @@ $(LIBRARY): main.o $(OBJS)
 static: $(LIBRARY) 
 	echo '<<<<< YYY=$(YYY), XXX=$(XXX)>>>>>'
 
-natnl: main.c $(APP_OBJS)
+natnl: main.cpp $(APP_OBJS)
 	$(CXX) -o $@ $< $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(APP_OBJS) $(LDLIBS)
 
 %.o: %.c

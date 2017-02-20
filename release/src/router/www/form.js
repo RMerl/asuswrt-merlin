@@ -59,6 +59,7 @@ function cal_panel_block(obj, multiple) {
 		}
 	};
 	var blockmarginLeft;
+	var winWidth = 0;
 	if (window.innerWidth) {
 		winWidth = window.innerWidth;
 	}

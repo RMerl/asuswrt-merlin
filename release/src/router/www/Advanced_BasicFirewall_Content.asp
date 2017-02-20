@@ -112,6 +112,9 @@ function done_validating(action){
 									<div class="formfonttitle"><#menu5_5#> - <#menu5_1_1#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div class="formfontdesc"><#FirewallConfig_display2_sectiondesc#></div>
+									<div class="formfontdesc" style="margin-top:-10px;">
+										<a id="faq" href="https://www.asus.com/support/FAQ/1031610/" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">DoS Protection FAQ</a>	<!-- untranslated -->
+									</div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,6);"><#FirewallConfig_FirewallEnable_itemname#></a></th>

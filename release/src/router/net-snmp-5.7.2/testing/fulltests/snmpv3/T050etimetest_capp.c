@@ -112,7 +112,7 @@ int
 main(int argc, char **argv)
 {
     int             rval = SNMPERR_SUCCESS, failcount = 0;
-    char            ch;
+    int             ch;
 
     local_progname = argv[0];
 

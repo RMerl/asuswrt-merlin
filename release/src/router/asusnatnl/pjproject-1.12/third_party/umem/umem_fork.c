@@ -203,7 +203,7 @@ umem_release_child(void)
 void
 umem_forkhandler_init(void)
 {
-#if !defined(_WIN32) && !defined(ANDROID) && !defined(ASUSTOR) && !defined(X86_64)
+#if !defined(_WIN32) && !defined(ANDROID) && !defined(ASUSTOR) && !defined(X86_64) && !defined(ARM)
 	/*
 	 * There is no way to unregister these atfork functions,
 	 * but we don't need to.  The dynamic linker and libc take

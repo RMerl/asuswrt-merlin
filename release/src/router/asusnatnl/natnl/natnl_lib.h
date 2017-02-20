@@ -1,12 +1,11 @@
 #ifndef __NATNL_LIB_H__
 #define __NATNL_LIB_H__
 
-#include <natnl_event.h>
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <natnl_event.h>
 
 #ifndef MAX_SIP_SERVER_COUNT
 #define MAX_SIP_SERVER_COUNT 8
@@ -24,7 +23,6 @@ extern "C" {
 #define MAX_IP_LEN 64 
 
 #define MAX_CALLS_COUNT 4
-
 
 /* 
 The structure is used to make a instant message port pair between local device and remote device.
@@ -246,6 +244,25 @@ struct natnl_srv_port {
 
 typedef struct natnl_srv_port natnl_tnl_port;
 
+/* 
+The structure is used to store the retry count for every phase of tunnel build process.
+*/
+struct natnl_retry_count {
+	// The retry count of ice check phase of tunnel build.
+	int ice;
+
+	// The retry count of dtls handshake phase of tunnel build.
+	int dtls;
+
+	// The retry count of udt handshake phase of tunnel build.
+	int udt;
+
+	// The retry count of sctp handshake phase of tunnel build.
+	int sctp;
+};
+
+typedef struct natnl_retry_count natnl_retry_count;
+
 /*
 The structure to be passed in on_natnl_tnl_state callback.
 */
@@ -340,6 +357,12 @@ struct natnl_tnl_event {
 	// this field will contain the ip:port of client side that is responsible 
 	// for communication with TURN server.
 	char                 turn_mapped_address[MAX_TEXT_LEN]; 
+
+	// The retry count for every phase of tunnel build.
+	natnl_retry_count    retry_count;
+
+	// The consuming time in seconds while tunnel build process.
+	int                  tnl_build_spent_sec;
 };
 
 /**
@@ -421,7 +444,13 @@ struct natnl_tnl_info {
 	int                  tnl_port_cnt;
 
 	// The array of current used tunnel port pair. The maximum size of this array is defined in MAX_TUNNEL_PORT_COUNT. 
-	natnl_tnl_port tnl_ports[MAX_TUNNEL_PORT_COUNT];
+	natnl_tnl_port       tnl_ports[MAX_TUNNEL_PORT_COUNT];
+
+	// The retry count for every phase of tunnel build.
+	natnl_retry_count    retry_count;
+
+	// The consuming time in seconds while tunnel build process.
+	int                  tnl_build_spent_sec;
 };
 
 /*
@@ -477,8 +506,11 @@ NATNL_LIB_API int WINAPI natnl_set_max_instances(int max_instance);
  * Initialize SDK
  * @param [in]  cfg. The natnl_config structure for basic setting.
  * @return 0 : For success. 
- *  60000004 : The instance of SDK was already initialized.
- *  60000008 : There are too many instances.
+ *  60000004 : The instance of SDK was already initialized. Should check the 
+ *             flow or retry later.
+ *  60000008 : There are too many instances. If natnl_set_max_instances is 
+ *             call to set maximum number of instances > 2 and all instannce 
+ *             slots are in use the error will be returned.
  *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init(struct natnl_config *cfg);
@@ -488,8 +520,11 @@ NATNL_LIB_API int WINAPI natnl_lib_init(struct natnl_config *cfg);
  * @param [in]  cfg. The natnl_config structure for basic setting.
  * @param [in]  app_data. The app data for instance identification. 
  * @return 0 : For success. 
- *  60000004 : The instance of SDK was already initialized.
- *  60000008 : There are too many instances.
+ *  60000004 : The instance of SDK was already initialized. Should check the 
+ *             flow or retry later.
+ *  60000008 : There are too many instances. If natnl_set_max_instances is 
+ *             call to set maximum number of instances > 2 and all instannce 
+ *             slots are in use the error will be returned.
  *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init2(struct natnl_config *cfg, void *app_data);
@@ -500,8 +535,11 @@ NATNL_LIB_API int WINAPI natnl_lib_init2(struct natnl_config *cfg, void *app_dat
  * @param [in]  app_data. The app data for instance identification. 
  * @param [in]  natnl_cb. The callback structure for event notification to application.
  * @return 0 : For success. 
- *  60000004 : The instance of SDK was already initialized.
- *  60000008 : There are too many instances.
+ *  60000004 : The instance of SDK was already initialized. Should check the 
+ *             flow or retry later.
+ *  60000008 : There are too many instances. If natnl_set_max_instances is 
+ *             call to set maximum number of instances > 2 and all instannce 
+ *             slots are in use the error will be returned.
  *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init3(struct natnl_config *cfg, struct natnl_callback *natnl_cb, void *app_data);
@@ -511,8 +549,11 @@ NATNL_LIB_API int WINAPI natnl_lib_init3(struct natnl_config *cfg, struct natnl_
  * @param [in]  cfg.     The natnl_config structure for basic setting.
  * @param [out] inst_id. A int pointer for instance id output. 
  * @return 0 : For success. 
- *  60000004 : SDK was initialized.
- *  60000008 : There are too many instances.
+ *  60000004 : The instance of SDK was already initialized. Should check the 
+ *             flow or retry later.
+ *  60000008 : There are too many instances. If natnl_set_max_instances is 
+ *             call to set maximum number of instances > 2 and all instannce 
+ *             slots are in use the error will be returned.
  *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id(struct natnl_config *cfg, int *inst_id);
@@ -524,8 +565,11 @@ NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id(struct natnl_config *cfg, i
  * @param [out] inst_id. A int pointer for instance id output. 
  * @param [in]  app_data. The app data for instance identification. 
  * @return 0 : For success. 
- *  60000004 : SDK was initialized.
- *  60000008 : There are too many instances.
+ *  60000004 : The instance of SDK was already initialized. Should check the 
+ *             flow or retry later.
+ *  60000008 : There are too many instances. If natnl_set_max_instances is 
+ *             call to set maximum number of instances > 2 and all instannce 
+ *             slots are in use the error will be returned.
  *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id2(struct natnl_config *cfg, int *inst_id, void *app_data);
@@ -537,8 +581,11 @@ NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id2(struct natnl_config *cfg, 
  * @param [in]  app_data. The app data for instance identification. 
  * @param [in]  natnl_cb. The callback structure for event notification to application.
  * @return 0 : For success. 
- *  60000004 : SDK was initialized.
- *  60000008 : There are too many instances.
+ *  60000004 : The instance of SDK was already initialized. Should check the 
+ *             flow or retry later.
+ *  60000008 : There are too many instances. If natnl_set_max_instances is 
+ *             call to set maximum number of instances > 2 and all instannce 
+ *             slots are in use the error will be returned.
  *  non-zero : For another error.
  */
 NATNL_LIB_API int WINAPI natnl_lib_init_with_inst_id3(struct natnl_config *cfg, int *inst_id, struct natnl_callback *natnl_cb, void *app_data);
@@ -824,7 +871,7 @@ NATNL_LIB_API int WINAPI natnl_instant_msg_port_with_inst_id(int action,
 						int inst_id);
 
 /**
- * Send instant message to remote device_id.
+ * Send instant message to remote device_id by using socket ipc.
  * @param [in]  dest_device_id. The device_id of destination for sending message.
  * @param [in]  msg_len.        The length of message content.
  * @param [in]  msg_content.    The message content.
@@ -832,10 +879,13 @@ NATNL_LIB_API int WINAPI natnl_instant_msg_port_with_inst_id(int action,
  * @param [in, out]  resp_len.  The length of response message.
  * @param [out]  resp_msg.      The buffer response message.
  * @return   0 : For success, the resp_len will carry the length 
- *                   of resp_msg and the resp_msg will carry response message, 
- *       70019(PJ_ETOOSMALL) : 
+ *                   of resp_msg and the resp_msg will carry response message. 
+ *    408(PJ_SC_REQUEST_TIMEOUT) : 
+ *               Request timeout. The root clause usually is the remote application 
+ *                   cannot handle the instant message. 
+ *    70019(PJ_ETOOSMALL) : 
  *               The resp_msg is too small to carry response message and 
- *                   the resp_len will carry the length that resp_msg needed,
+ *                   the resp_len will carry the length that resp_msg needed.
  *    60000005 : The instance of SDK isn't initialized, please initialize it first.
  *    60000014 : The instant message is too long. The maximum length is 1024 bytes.
  *    non-zero : For another error.
@@ -849,7 +899,7 @@ NATNL_LIB_API int WINAPI natnl_send_instant_msg(
 							char *resp_msg);
 
 /**
- * Send instant message to remote device_id.
+ * Send instant message to remote device_id by using IPC socket.
  * @param [in]  dest_device_id. The device_id of destination for sending message.
  * @param [in]  msg_content.    The message content.
  * @param [in]  inst_id.        The instance id of SDK, default is 1.
@@ -859,10 +909,13 @@ NATNL_LIB_API int WINAPI natnl_send_instant_msg(
  * @param [in]  inst_id.        The instance id of SDK that is output by natnl_lib_init_with_inst_id. 
                                 Default is 1.
  * @return   0 : For success, the resp_len will carry the length 
- *               of resp_msg and the resp_msg will carry response message, 
- *       70019(PJ_ETOOSMALL) : 
+ *                   of resp_msg and the resp_msg will carry response message. 
+ *    408(PJ_SC_REQUEST_TIMEOUT) : 
+ *               Request timeout. The root clause usually is the remote application 
+ *                   cannot handle the instant message. 
+ *    70019(PJ_ETOOSMALL) : 
  *               The resp_msg is too small to carry response message and 
- *               the resp_len will carry the length that resp_msg needed,
+ *                   the resp_len will carry the length that resp_msg needed.
  *    60000005 : The instance of SDK isn't initialized, please initialize it first.
  *    non-zero : For another error. 
  */
@@ -876,6 +929,64 @@ NATNL_LIB_API int WINAPI natnl_send_instant_msg_with_inst_id(
 						int inst_id);
 
 /**
+ * Send instant message to remote device_id by using IPC socket.
+ * @param [in]  dest_device_id. The device_id of destination for sending message.
+ * @param [in]  msg_len.        The length of message content.
+ * @param [in]  msg_content.    The message content.
+ * @param [in]  process_name.   The message receiving process name.
+ * @param [in, out]  resp_len.  The length of response message.
+ * @param [out]  resp_msg.      The buffer response message.
+ * @return   0 : For success, the resp_len will carry the length 
+ *                   of resp_msg and the resp_msg will carry response message. 
+ *    408(PJ_SC_REQUEST_TIMEOUT) : 
+ *               Request timeout. The root clause usually is the remote application 
+ *                   cannot handle the instant message. 
+ *    70019(PJ_ETOOSMALL) : 
+ *               The resp_msg is too small to carry response message and 
+ *                   the resp_len will carry the length that resp_msg needed.
+ *    60000005 : The instance of SDK isn't initialized, please initialize it first.
+ *    60000014 : The instant message is too long. The maximum length is 1024 bytes.
+ *    non-zero : For another error.
+ */
+NATNL_LIB_API int WINAPI natnl_send_instant_msg_to_remote_process(
+							char *dest_device_id,
+							int msg_len,
+							char *msg_content,
+							char *process_name,
+							int *resp_len,
+							char *resp_msg);
+
+/**
+ * Send instant message to remote device_id by using IPC signal/shared memory.
+ * @param [in]  dest_device_id. The device_id of destination for sending message.
+ * @param [in]  msg_content.    The message content.
+ * @param [in]  inst_id.        The instance id of SDK, default is 1.
+ * @param [in]  process_name.   The message receiving process name.
+ * @param [in, out]  resp_len.  The length of response message .
+ * @param [out]  resp_msg.      The buffer of response message.
+ * @param [in]  inst_id.        The instance id of SDK that is output by natnl_lib_init_with_inst_id. 
+                                Default is 1.
+ * @return   0 : For success, the resp_len will carry the length 
+ *                   of resp_msg and the resp_msg will carry response message. 
+ *    408(PJ_SC_REQUEST_TIMEOUT) : 
+ *               Request timeout. The root clause usually is the remote application 
+ *                   cannot handle the instant message. 
+ *    70019(PJ_ETOOSMALL) : 
+ *               The resp_msg is too small to carry response message and 
+ *                   the resp_len will carry the length that resp_msg needed.
+ *    60000005 : The instance of SDK isn't initialized, please initialize it first.
+ *    non-zero : For another error. 
+ */
+NATNL_LIB_API int WINAPI natnl_send_instant_msg_to_remote_process_with_inst_id(
+						char *dest_device_id,
+						int msg_len,
+						char *msg_content,
+						char *process_name,
+						int *resp_len,
+						char *resp_msg,
+						int inst_id);
+
+/**
  * Read the tunnel status. The function will block until tunnel is 
  * closed, broken or idle a while(idle_timeout_sec is set).
  *
@@ -883,6 +994,7 @@ NATNL_LIB_API int WINAPI natnl_send_instant_msg_with_inst_id(
  * @return   0 : For success. 
  *         200 : Local or remote ua hangup the tunnel.
  *       70004 : The parameters are invalid.
+ *      370004 : The STUN timeout. Tunnel is broken.
  *    60000005 : The instance of SDK isn't initialized, please initialize it first.
  *    60000009 : Tunnel timeout and call was hung by SDK.
  *    60000010 : Idle timeout but tunnel is still active. 
@@ -902,6 +1014,7 @@ NATNL_LIB_API int WINAPI natnl_read_tnl_status(
 * @return   0 : For success. 
 *         200 : local or remote ua hangup the tunnel.
 *       70004 : Invalid argument.
+*      370004 : The STUN timeout. Tunnel is broken.
 *    60000005 : The instance of SDK isn't initialized, please initialize it first.
 *    60000009 : Tunnel timeout and call was hung by local.
 *    60000010 : Idle timeout and tunnel is still active.

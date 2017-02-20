@@ -63,8 +63,7 @@ connmark_tg(struct sk_buff *skb, const struct xt_action_param *par)
 		if (newmark != skb->mark) {
 			skb->mark = newmark;
 		}
-		//return XT_RETURN;	// set return here will cause traffic blocked !?
-		break;
+		return XT_RETURN;
 	case XT_CONNMARK_SAVE:
 		newmark = (ct->mark & ~info->ctmask) ^
 		          (skb->mark & info->nfmask);

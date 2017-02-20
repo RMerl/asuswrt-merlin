@@ -2162,6 +2162,7 @@ PJ_DEF(pj_status_t) pjsua_call_send_im( pjsua_inst_id inst_id,
 					const pj_str_t *content,
 					const pjsua_msg_data *msg_data,
 					char *s_rport,
+					char *s_proc_name,
 					void *user_data)
 {
     pjsua_call *call;
@@ -2170,8 +2171,9 @@ PJ_DEF(pj_status_t) pjsua_call_send_im( pjsua_inst_id inst_id,
     pjsip_media_type ctype;
     pjsua_im_data *im_data;
     pjsip_tx_data *tdata;
-    pj_status_t status;
-	pj_str_t rport = (s_rport == NULL ? pj_str("8889") : pj_str(s_rport));
+	pj_status_t status;
+	pj_str_t rport = (s_rport == NULL ? pj_str("0") : pj_str(s_rport));
+	pj_str_t proc_name = (s_proc_name == NULL ? pj_str("") : pj_str(s_proc_name));
 
 
     PJ_ASSERT_RETURN(call_id>=0 && call_id<(int)pjsua_var[inst_id].ua_cfg.max_calls,
@@ -2201,6 +2203,10 @@ PJ_DEF(pj_status_t) pjsua_call_send_im( pjsua_inst_id inst_id,
 	/* Add rport header. */
 	pjsip_msg_add_hdr( tdata->msg, 
 		(pjsip_hdr*)pjsua_im_create_rport(tdata->pool, &rport));
+
+	/* Add process name header. */
+	pjsip_msg_add_hdr( tdata->msg, 
+		(pjsip_hdr*)pjsua_im_create_proc_name(tdata->pool, &proc_name));
 
     /* Parse MIME type */
     pjsua_parse_media_type(tdata->pool, mime_type, &ctype);

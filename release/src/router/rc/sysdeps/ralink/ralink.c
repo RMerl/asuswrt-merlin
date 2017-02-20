@@ -99,7 +99,7 @@ get_wscd_pidfile(void)
 {
 	static char tmpstr[32] = "/var/run/wscd.pid.";
 
-	sprintf(tmpstr, "/var/run/wscd.pid.%s", (!nvram_get_int("wps_band"))? WIF_2G:WIF_5G);
+	sprintf(tmpstr, "/var/run/wscd.pid.%s", (!nvram_get_int("wps_band_x"))? WIF_2G:WIF_5G);
 	return tmpstr;
 }
 
@@ -135,7 +135,7 @@ get_wifname(int band)
 const char *
 get_wpsifname(void)
 {
-	int wps_band = nvram_get_int("wps_band");
+	int wps_band = nvram_get_int("wps_band_x");
 
 	if (wps_band)
 		return WIF_5G;
@@ -147,7 +147,7 @@ get_wpsifname(void)
 char *
 get_non_wpsifname()
 {
-	int wps_band = nvram_get_int("wps_band");
+	int wps_band = nvram_get_int("wps_band_x");
 
 	if (wps_band)
 		return WIF_2G;
@@ -949,7 +949,7 @@ int gen_ralink_config(int band, int is_iNIC)
 #endif
 			else if (atoi(str) == 2)  // A
 				fprintf(fp, "WirelessMode=%d\n", 2);
-			else			// A,N
+			else			// A,N[,AC]
 			{
 #if defined(VHT_SUPPORT)
 				fprintf(fp, "WirelessMode=%d\n", 14);
@@ -2924,6 +2924,22 @@ next_mrate:
 	fprintf(fp, "WscV2Support=%d\n", 0);	// WPS/WSC v2 feature allows client to create connection via the PinCode of AP.
 						// Disable this feature causes longer detection time (click AP till show dialog box) on WIN7 client when WSC disabled either.
 
+	/* Set number of clients of guest network. */
+	for (i = 0; i < ssid_num; i++) {
+		int maxsta;
+
+		if (!i) {
+			fprintf(fp, "MaxStaNum=0;");
+		} else {
+			sprintf(prefix_mssid, "wl%d.%d_", band, i);
+			maxsta = nvram_get_int(strcat_r(prefix_mssid, "guest_num", temp));
+			/* If maxsta illegal, disable MaxStaNum. */
+			if (maxsta < 0 || maxsta > 32)
+				maxsta = 0;
+			fprintf(fp, "%d;", maxsta);
+		}
+	}
+	fprintf(fp, "\n");
 
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
 	if (is_iNIC)
@@ -3882,7 +3898,7 @@ int need_to_start_wps_band(int wps_band)
 int
 wps_pin(int pincode)
 {
-	int i, wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+	int i, wps_band = nvram_get_int("wps_band_x"), multiband = get_wps_multiband();
 	char str_lan_ipaddr[16];
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
 
@@ -3939,7 +3955,7 @@ wps_pin(int pincode)
 static int
 __wps_pbc(const int multiband)
 {
-	int i, wps_band = nvram_get_int("wps_band");
+	int i, wps_band = nvram_get_int("wps_band_x");
 	char str_lan_ipaddr[16];
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
 
@@ -4048,7 +4064,7 @@ wps_pin(int pincode)
 {
 	int i;
 	char prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+	int wps_band = nvram_get_int("wps_band_x"), multiband = get_wps_multiband();
 
 	i = 0;
 	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
@@ -4086,7 +4102,7 @@ __wps_pbc(const int multiband)
 {
 	int i;
 	char prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int wps_band = nvram_get_int("wps_band");
+	int wps_band = nvram_get_int("wps_band_x");
 
 	i = 0;
 	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
@@ -4150,7 +4166,7 @@ extern void wl_default_wps(int unit);
 void
 __wps_oob(const int multiband)
 {
-	int i, wps_band = nvram_get_int("wps_band");
+	int i, wps_band = nvram_get_int("wps_band_x");
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", word[256], *next;
 	char *p, ifnames[128];
 
@@ -4365,7 +4381,7 @@ start_wsc(void)
 	char *wps_sta_pin = nvram_safe_get("wps_sta_pin");
 	char str_lan_ipaddr[16];
 	char prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+	int wps_band = nvram_get_int("wps_band_x"), multiband = get_wps_multiband();
 
 	if (nvram_match("lan_ipaddr", ""))
 		return;
@@ -4424,7 +4440,7 @@ start_wsc_pin_enrollee(void)
 	int i;
 	char str_lan_ipaddr[16];
 	char prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+	int wps_band = nvram_get_int("wps_band_x"), multiband = get_wps_multiband();
 
 	if (nvram_match("lan_ipaddr", "")) {
 		nvram_set("wps_enable", "0");
@@ -4470,7 +4486,7 @@ __stop_wsc(int multiband)
 {
 	int i;
 	char prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int wps_band = nvram_get_int("wps_band");
+	int wps_band = nvram_get_int("wps_band_x");
 
 	i = 0;
 	strcpy(ifnames, nvram_safe_get("wl_ifnames"));

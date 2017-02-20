@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 CUR_DIR=`pwd`
 user=`echo $HOME`
 
@@ -17,15 +17,25 @@ OPENSSL_LDLIBS="-lssl -lcrypto"
 #UMEM_LDFLAGS=-L$UMEM_DIR
 #UMEM_LDLIBS=-lumem
 
+##### SHARED
+#SHARED_DIR=$TOP/shared
+#SHARED_LDFLAGS="-L$SHARED_DIR"
+#SHARED_LIBS="-lshared"
+
+##### NVRAM
+#NVRAM_DIR=$TOP/nvram$BCMEX
+#NVRAM_LDFLAGS="-L$NVRAM_DIR"
+#NVRAM_LIBS="-lnvram"
+
 GDB_CFLAGS=-g
-export LIBS="$LIBS $OPENSSL_LDLIBS $UMEM_LDLIBS"
-export CFLAGS="$OPENSSL_CFLAGS $UMEM_CFLAGS $GDB_CFLAGS -O2 -fPIC -DROUTER=1"
-export LDFLAGS="$OPENSSL_LDFLAGS $UMEM_LDFLAGS -lstdc++" 
+export LIBS="$LIBS $OPENSSL_LDLIBS $UMEM_LDLIBS $SHARED_LIBS $NVRAM_LIBS -lstdc++"
+export CFLAGS="$OPENSSL_CFLAGS $UMEM_CFLAGS $GDB_CFLAGS -O2 -fPIC -DROUTER=1 "
+# The EXTRA_LDFLAGS is for other platform use. (ex. Realtek)
+export LDFLAGS="$OPENSSL_LDFLAGS $UMEM_LDFLAGS $SHARED_LDFLAGS $NVRAM_LDFLAGS $EXTRA_LDFLAGS"
 mkdir -p pjlib/lib
 mkdir -p pjlib-util/lib
 mkdir -p pjsip/lib
 mkdir -p pjsip-apps/lib
 mkdir -p pjmedia/lib
 mkdir -p pjnath/lib
-./configure --prefix=$CUR_DIR/_inst --host=mips-linux --target=mips-linux
-
+./configure --prefix=$CUR_DIR/_inst --host=mips-linux --target=mips-linux 

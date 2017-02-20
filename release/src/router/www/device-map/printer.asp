@@ -44,7 +44,6 @@ function initial(){
 		document.getElementById("monoDesc").style.display = "none";
 	}
 
-	addOnlineHelp(document.getElementById("faq"), ["monopoly", "mode"]);
 }
 
 function cleanTask(){
@@ -98,7 +97,7 @@ function cleanTask(){
 <ul style="font-size:11px; font-family:Arial; color:#FFF; padding:0px; margin:0px; list-style:outside; line-height:150%;">
 	<li><#PrinterStatus_x_Monopoly_itemdesc#></li>
 	<li>
-		<a id="faq" href="" target="_blank" style="text-decoration:underline;"><#Printing_button_item#> FAQ</a>
+		<a id="faq" href="https://www.asus.com/support/FAQ/113988/" target="_blank" style="text-decoration:underline;"><#Printing_button_item#> FAQ</a>
 	</li>
 </ul>
 </div>

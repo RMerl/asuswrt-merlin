@@ -26,7 +26,11 @@
 
 #include <linux/version.h>
 #include <linux/time.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+#include "../usb-bus-stats.h"
+#else
 #include <linux/usb/usb-bus-stats.h>
+#endif
 #include "../bled_defs.h"
 #include "check.h"
 

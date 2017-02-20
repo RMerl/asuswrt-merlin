@@ -588,16 +588,18 @@ int ctrlpt(unsigned char *dest_ip)
                         if(FD_ISSET(ssdp_fd, &rfds))
                         {
                                 nbytes = recvfrom(ssdp_fd, buf, sizeof(buf), 0, (struct sockaddr*)&destaddr, &addrlen);
-                                buf[nbytes] = '\0';
+				if (nbytes > 0)
+				{
+					buf[nbytes] = '\0';
                                                                                                                                              
-                                //NMP_DEBUG_F("recv: %d from: %s\n", nbytes, inet_ntoa(destaddr.sin_addr));
-                                if( !memcmp(&destaddr.sin_addr, dest_ip, 4) )
-                                {
-                                        if(MATCH_PREFIX(buf, "HTTP/1.1 200 OK"))
-                                        {
-                                                global_exit = TRUE;
-                                                process_device_response(buf);
-                                                return_value = TRUE;
+					//NMP_DEBUG_F("recv: %d from: %s\n", nbytes, inet_ntoa(destaddr.sin_addr));
+					if( !memcmp(&destaddr.sin_addr, dest_ip, 4) )
+					{
+						if(MATCH_PREFIX(buf, "HTTP/1.1 200 OK")) {
+							global_exit = TRUE;
+							process_device_response(buf);
+							return_value = TRUE;
+						}
                                         }
                                 }
                         }
@@ -788,16 +790,27 @@ int process_device_response(char *msg)
         // get the destination ip
         location += 7;
 	i = 0;
-	while( (*location != ':') && (*location != '/')) {
+	while( (*location != ':') && (*location != '/') && i < 15) {
                 host[i] = *location++;
 		i++;
 	}
-        host[i] = '\0';
+	if(i > 15)
+		goto error;
+	else
+		host[i] = '\0';
+
         //get the destination port
         if(*location == ':') {
-            	for(location++, i =0; *location != '/'; i++)
-                	port[i] = *location++;
-            	port[i] = '\0';
+            	for(location++, i = 0; *location != '/'; i++) {
+			if(i <= 5)
+				port[i] = *location++;
+			else
+				goto error;
+		}
+		if(i > 6)
+			goto error;
+		else
+			port[i] = '\0';
             	destport = (ushort)atoi(port);
 	}
 	else
@@ -832,9 +845,12 @@ int process_device_response(char *msg)
 	while((nbytes = recv(http_fd, data,1500, 0)) > 0)
         {
                 len += nbytes;
+
                 if(len > 6000)
-                        break;
-                data[nbytes] ='\0';
+			goto error;
+		else
+			data[nbytes] ='\0';
+
                 strcat(descri, data);
         }
         //printf("%s\n", descri);
@@ -850,8 +866,10 @@ int process_device_response(char *msg)
         return 1;
 error:
         http_fd = -1;
-        free(data);
-        free(descri);
+	if(data)
+		free(data);
+	if(descri)
+		free(descri);
         return 0;
 }
                                                                                                                                              
@@ -1016,8 +1034,16 @@ void store_description(char *msg)
 
 /************* SMB Function ************/
 // 0xAB, 0xA+41,0xB+41
-int EncodeName(unsigned char *name, unsigned char *buffer, unsigned short length)
+int EncodeName(unsigned char *name, unsigned char *buffer, unsigned short length, int buf_size)
 {
+	/*
+		add protection for  Buffer Overflow boundedcpy
+	*/
+	if (buf_size < (length * 2 + 2)) {
+		memset(buffer, 0, buf_size);
+		return length*2+2;
+	}
+
         int i;
         buffer[0] = 0x20;
         buffer[length*2+1] = 0x00;
@@ -1029,8 +1055,15 @@ int EncodeName(unsigned char *name, unsigned char *buffer, unsigned short length
         return length*2+2;
 }
                                                                                                                                              
-int TranUnicode(UCHAR *uni, UCHAR *asc, USHORT length)
+int TranUnicode(UCHAR *uni, UCHAR *asc, USHORT length, int buf_size)
 {
+	/*
+		add protection for  Buffer Overflow boundedcpy
+	*/
+	if (buf_size < (length * 2)) {
+		memset(uni, 0, buf_size);
+		return length*2;
+	}
         int i;
         for (i=0; i<length; i++)
         {
@@ -1154,8 +1187,8 @@ SMBretry:
                         case NBSS_REQ:  // first send nbss request
 				offsetlen = 0;
                                 bzero(buf, MAXDATASIZE);
-                                EncodeName(my_info->des_hostname, des_nbss_name, my_info->des_hostname_len);
-                                EncodeName(my_info->my_hostname, my_nbss_name, my_info->my_hostname_len);
+                                EncodeName(my_info->des_hostname, des_nbss_name, my_info->des_hostname_len, sizeof(des_nbss_name));
+                                EncodeName(my_info->my_hostname, my_nbss_name, my_info->my_hostname_len, sizeof(my_nbss_name));
                                                                                                                                              
                                 memcpy(buf, nbss_header, sizeof(nbss_header));        // nbss base header
                                 offsetlen += sizeof(nbss_header); // 4
@@ -1400,19 +1433,19 @@ SMBretry:
                                 memcpy(buf+offsetlen, smb_info.CaseInsensitivePassword, 1);
                                 offsetlen += 1; // 68
                                 bzero(smb_info.AccountName, 32);
-                                tmplen = TranUnicode(smb_info.AccountName, my_info->account, my_info->account_len);
+                                tmplen = TranUnicode(smb_info.AccountName, my_info->account, my_info->account_len, sizeof(smb_info.AccountName));
                                 memcpy(buf+offsetlen, smb_info.AccountName, tmplen+2);
                                 offsetlen += tmplen+2; // 78
                                 bzero(smb_info.PrimaryDomain, 32);
-                                tmplen = TranUnicode(smb_info.PrimaryDomain, my_info->primarydomain, my_info->primarydomain_len);
+                                tmplen = TranUnicode(smb_info.PrimaryDomain, my_info->primarydomain, my_info->primarydomain_len, sizeof(smb_info.PrimaryDomain));
                                 memcpy(buf+offsetlen, smb_info.PrimaryDomain, tmplen+2);
                                 offsetlen += tmplen+2; // 98
                                 bzero(smb_info.NativeOS, 128);
-                                tmplen = TranUnicode(smb_info.NativeOS, my_info->nativeOS, my_info->nativeOS_len);
+                                tmplen = TranUnicode(smb_info.NativeOS, my_info->nativeOS, my_info->nativeOS_len, sizeof(smb_info.NativeOS));
                                 memcpy(buf+offsetlen, smb_info.NativeOS, tmplen+2);
                                 offsetlen += tmplen+2; // 110
                                 bzero(smb_info.NativeLanMan, 128);
-                                tmplen = TranUnicode(smb_info.NativeLanMan, my_info->nativeLanMan, my_info->nativeLanMan_len);
+                                tmplen = TranUnicode(smb_info.NativeLanMan, my_info->nativeLanMan, my_info->nativeLanMan_len, sizeof(smb_info.NativeLanMan));
                                 memcpy(buf+offsetlen, smb_info.NativeLanMan, tmplen+2);
                                 offsetlen += tmplen+2; //
                                 tmplen = htons(offsetlen-4);

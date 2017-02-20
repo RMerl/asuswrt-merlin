@@ -185,7 +185,7 @@
 				Optimization="0"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../../usrsctp/usrsctplib"
-				PreprocessorDefinitions="SCTP_DEBUG;SCTP_SIMPLE_ALLOCATOR;SCTP_PROCESS_LEVEL_LOCKS;__Userspace__;__Userspace_os_Windows;INET;INET6;_LIB"
+				PreprocessorDefinitions="SCTP_DEBUG;SCTP_SIMPLE_ALLOCATOR;SCTP_PROCESS_LEVEL_LOCKS;__Userspace__;__Userspace_os_Windows;_LIB"
 				RuntimeLibrary="2"
 				StructMemberAlignment="0"
 				EnableFunctionLevelLinking="true"

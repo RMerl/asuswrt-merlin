@@ -14,6 +14,9 @@
 <script type="text/JavaScript" language="JavaScript" src="../js/jquery.js"></script>
 <script type="text/JavaScript" language="JavaScript" src="../validator.js"></script>
 <script type="text/javascript">
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
 var accounts = [<% get_all_accounts(); %>];
 <% wanstate(); %>
 var autodet_state = '<% nvram_get("autodet_state"); %>';

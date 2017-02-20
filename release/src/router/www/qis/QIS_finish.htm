@@ -87,6 +87,7 @@ var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
 var webs_state_info = '<% nvram_get("webs_state_info"); %>';
 var PPPOEFAILREASON = "<#qis_fail_desc9#>";
+var delayTimeout = 500;
 
 if(parent.tmo_support)
         var theUrl = "cellspot.router"; 
@@ -334,6 +335,10 @@ function restartService(){
 		document.restartForm.wans_dualwan.value = parent.QKform.wans_dualwan.value;
 		document.restartForm.modem_enable.disabled = false;
 		document.restartForm.modem_enable.value = parent.QKform.modem_enable.value;
+		document.restartForm.modem_android.disabled = false;
+		document.restartForm.modem_android.value = parent.QKform.modem_android.value;
+		document.restartForm.modem_autoapn.disabled = false;
+		document.restartForm.modem_autoapn.value = parent.QKform.modem_autoapn.value;
 		document.restartForm.modem_country.disabled = false;
 		document.restartForm.modem_country.value = parent.QKform.modem_country.value;
 		document.restartForm.modem_isp.disabled = false;
@@ -352,6 +357,11 @@ function restartService(){
 		document.restartForm.modem_ttlsid.value = parent.QKform.modem_ttlsid.value;
 		document.restartForm.Dev3G.disabled = false;
 		document.restartForm.Dev3G.value = parent.QKform.Dev3G.value;
+		document.restartForm.modem_authmode.disabled = false;
+		document.restartForm.modem_authmode.value = parent.QKform.modem_authmode.value;
+		document.restartForm.modem_mtu.disabled = false;
+		document.restartForm.modem_mtu.value = parent.QKform.modem_mtu.value;
+
 	}
 
 	if(parent.sysReboot){
@@ -365,6 +375,8 @@ function restartService(){
 		if(parent.restartWireless){
 			actionScriptArray.push("restart_wireless");
 			document.restartForm.action_wait.value = 6;
+			if(parent.based_modelid == "RT-AC82U" || parent.based_modelid == "RT-AC58U")
+				delayTimeout = 20000;
 		}
 		if(parent.restartTime){
 			actionScriptArray.push("restart_time");
@@ -427,8 +439,7 @@ function checkIsNewFirmware(){
 			document.restartForm.submit();
 		}
 		else{
-			var delayTimeout = (parent.based_modelid == "RT-AC42U" || parent.based_modelid == "RT-AC58U") ? 10000 : 1;
-
+			document.getElementById('loadingIcon').style.display = '';
 			setTimeout(function(){
 				parent.location.href = '/index.asp';
 			}, delayTimeout);
@@ -1306,7 +1317,7 @@ function QKfinish_load_body(){
 			}
 			else{
 				$("#lanip")[0].innerHTML = "<#BOP_ctype_title1#>";
-				document.getElementById("applyBtn").innerHTML = "<div style='text-align:left;margin-left:75px;'><br/><br/><#LANConfig_ChangedLANIP#></div>";
+				document.getElementById("applyBtn").innerHTML = "<div style='text-align:left;margin-left:75px;'><br/><br/><#deviceDiscorvy3#></div>";
 			}
 		}
 	}
@@ -1803,6 +1814,8 @@ function QKfinish_load_body(){
 	<input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>" disabled>
 	<!--USB Modem-->
 	<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>" disabled>
+	<input type="hidden" name="modem_android" value="<% nvram_get("modem_android"); %>" disabled>
+	<input type="hidden" name="modem_autoapn" value="<% nvram_get("modem_autoapn"); %>" disabled>
 	<input type="hidden" name="modem_country" value="<% nvram_get("modem_country"); %>" disabled>
 	<input type="hidden" name="modem_isp" value="<% nvram_get("modem_isp"); %>" disabled>
 	<input type="hidden" name="modem_apn" value="<% nvram_get("modem_apn"); %>" disabled>
@@ -1812,6 +1825,9 @@ function QKfinish_load_body(){
 	<input type="hidden" name="modem_pass" value="<% nvram_get("modem_pass"); %>" disabled>
 	<input type="hidden" name="modem_ttlsid" value="<% nvram_get("modem_ttlsid"); %>" disabled>
 	<input type="hidden" name="Dev3G" value="<% nvram_get("Dev3G"); %>" disabled>
+	<input type="hidden" name="modem_authmode" value="<% nvram_get("modem_authmode"); %>" disabled>
+	<input type="hidden" name="modem_mtu" value="<% nvram_get("modem_mtu"); %>" disabled>
+
 </form>
 
 </body>

@@ -21,6 +21,7 @@
 
 #define NAWDS_SH_FMT	"/etc/Wireless/sh/nawds_%s.sh"
 
+
 extern const char WIF_2G[];
 extern const char WIF_5G[];
 extern const char WDSIF_5G[];
@@ -28,6 +29,7 @@ extern const char STA_2G[];
 extern const char STA_5G[];
 extern const char VPHY_2G[];
 extern const char VPHY_5G[];
+extern const char WSUP_DRV[];
 #define URE	"apcli0"
 
 #ifndef ETHER_ADDR_LEN
@@ -274,14 +276,22 @@ enum ASUS_IOCTL_SUBCMD {
 #define ETH1_MAC_OFFSET			0x5006
 #elif defined(RTCONFIG_SOC_IPQ8064)
 
-#if defined(RTAC88Q) || defined(RTAC88S)
+#if defined(BRTAC828M2) || defined(RTAC88S)
 #define ETH0_MAC_OFFSET			0x1006	/* 2G EEPROM */
 #define ETH1_MAC_OFFSET			0x5006	/* 5G EEPROM */
 #elif defined(RTAC88N)
-#define ETH0_MAC_OFFSET			0x1006	/* 5G EEPROM */
-#define ETH1_MAC_OFFSET			0x5006	/* 2G EEPROM */
+#define ETH0_MAC_OFFSET			0x5006	/* 2G EEPROM */
+#define ETH1_MAC_OFFSET			0x1006	/* 5G EEPROM */
 #else
 #error
+#endif
+
+#elif defined(RTCONFIG_SOC_IPQ40XX)
+#define ETH0_MAC_OFFSET			0x1006	/* 2G EEPROM */
+#if defined(RTAC82U)
+#define ETH1_MAC_OFFSET			0x9006	/* 5G EEPROM */
+#else
+#define ETH1_MAC_OFFSET			0x5006	/* 5G EEPROM */
 #endif
 
 #else
@@ -296,6 +306,10 @@ enum ASUS_IOCTL_SUBCMD {
 #define OFFSET_BOOT_VER			(MTD_FACTORY_BASE_ADDRESS + 0x0D18A)	/* 0x4018A -> 0x4D18A */
 #define OFFSET_COUNTRY_CODE		(MTD_FACTORY_BASE_ADDRESS + 0x0D188)	/* 0x40188 -> 0x4D188 */
 #define	FACTORY_COUNTRY_CODE_LEN	2
+#define OFFSET_RTAG			(MTD_FACTORY_BASE_ADDRESS + 0x0D19C)	/* 0x40188 -> 0x4D19C, len 4 */
+#if defined(RTAC58U)
+#define OFFSET_RTAG2			(MTD_FACTORY_BASE_ADDRESS + 0x0D1AC)	/* 4 bytes */
+#endif
 
 #if defined(RTCONFIG_WIFI_QCA9557_QCA9882) || defined(RTCONFIG_QCA953X) || defined(RTCONFIG_QCA956X)
 /* WAN: eth0
@@ -316,7 +330,7 @@ enum ASUS_IOCTL_SUBCMD {
  * 2G: follow WAN
  * 5G: follow LAN
  */
-#if defined(RTAC88Q) || defined(RTAC88S)
+#if defined(BRTAC828M2) || defined(RTAC88S)
 #define OFFSET_MAC_ADDR_2G		(MTD_FACTORY_BASE_ADDRESS + ETH0_MAC_OFFSET)
 #define OFFSET_MAC_ADDR			(MTD_FACTORY_BASE_ADDRESS + ETH1_MAC_OFFSET)
 #elif defined(RTAC88N)
@@ -328,6 +342,13 @@ enum ASUS_IOCTL_SUBCMD {
 
 #define	QC98XX_EEPROM_SIZE_LARGEST	12064 // sync with driver
 #define	QC98XX_EEPROM_MAC_OFFSET	(OFFSET_MAC_ADDR & 0xFFF) // 6
+
+#elif defined(RTCONFIG_SOC_IPQ40XX)
+#define OFFSET_MAC_ADDR_2G		(MTD_FACTORY_BASE_ADDRESS + ETH0_MAC_OFFSET)
+#define OFFSET_MAC_ADDR			(MTD_FACTORY_BASE_ADDRESS + ETH1_MAC_OFFSET)
+#define	QC98XX_EEPROM_SIZE_LARGEST	12064 // sync with driver
+#define	QC98XX_EEPROM_MAC_OFFSET	(OFFSET_MAC_ADDR & 0xFFF) // 6
+
 #else
 #error Define EEPROM offset and size
 #endif
@@ -350,7 +371,11 @@ enum ASUS_IOCTL_SUBCMD {
 #endif
 
 #define OFFSET_DEV_FLAGS		(MTD_FACTORY_BASE_ADDRESS + 0x0ffa0)	//device dependent flags
+#ifdef RTCONFIG_32BYTES_ODMPID
+#define OFFSET_ODMPID			(MTD_FACTORY_BASE_ADDRESS + 0x0ff70)	/* 32 bytes */
+#else
 #define OFFSET_ODMPID			(MTD_FACTORY_BASE_ADDRESS + 0x0ffb0)	//the shown model name (for Bestbuy and others)
+#endif
 #define OFFSET_FAIL_RET			(MTD_FACTORY_BASE_ADDRESS + 0x0ffc0)
 #define OFFSET_FAIL_BOOT_LOG		(MTD_FACTORY_BASE_ADDRESS + 0x0ffd0)	//bit operation for max 100
 #define OFFSET_FAIL_DEV_LOG		(MTD_FACTORY_BASE_ADDRESS + 0x0ffe0)	//bit operation for max 100
@@ -382,7 +407,7 @@ enum ASUS_IOCTL_SUBCMD {
 #define MII_IFNAME	"eth0"
 #elif defined(RTCONFIG_SOC_IPQ8064)
 #define MII_IFNAME	"switch0"
-#elif defined(RTCONFIG_QCA953X)
+#elif defined(RTCONFIG_QCA953X) || defined(RTCONFIG_SOC_IPQ40XX)
 #define MII_IFNAME	"eth1"
 #else
 #error Define MII_IFNAME interface!
@@ -397,8 +422,14 @@ extern int wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq);
 extern int qc98xx_verify_checksum(void *eeprom);
 extern int calc_qca_eeprom_csum(void *ptr, unsigned int eeprom_size);
 /* for ATE Get_WanLanStatus command */
+#if defined(RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2) || \
+    defined(RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2)
+#define MAX_NR_SWITCH_PORTS	8
+#else
+#define MAX_NR_SWITCH_PORTS	5
+#endif
 typedef struct {
-	unsigned int link[5];
-	unsigned int speed[5];
+	unsigned int link[MAX_NR_SWITCH_PORTS];
+	unsigned int speed[MAX_NR_SWITCH_PORTS];
 } phyState;
 #endif	/* _QCA_H_ */

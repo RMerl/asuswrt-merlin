@@ -220,7 +220,7 @@ private:
    #ifndef WIN32
       static void TLSDestroy(void* e) {if (NULL != e) delete (CUDTException*)e;}
    #else
-      std::map<DWORD, CUDTException*> m_mTLSRecord;
+      std::map<HANDLE, CUDTException*> m_mTLSRecord;
       void checkTLSValue();
       pthread_mutex_t m_TLSLock;
    #endif

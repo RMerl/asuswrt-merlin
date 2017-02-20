@@ -22,6 +22,9 @@
 #ifndef AA_CLIENT_H
 #define AA_CLIENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef WIN32
 #include <inttypes.h>
@@ -229,9 +232,9 @@ int client_im_timed_out(client_t *client);
 void client_set_status(client_t *client, enum client_status status);
 int client_is_working(client_t *client);
 int client_suspend_all(int inst_id, int call_id);
-int client_rtsp_teardown_session(client *rtsp_c);
-int client_rtsp_request_check(client *c);
-int client_rtsp_response_check(client *c);
+int client_rtsp_teardown_session(client_t *rtsp_c);
+int client_rtsp_request_check(client_t *c);
+int client_rtsp_response_check(client_t *c);
 
 /* Function pointers to use when making a list_t of clients */
 #define p_client_copy ((void* (*)(void *, const void *, size_t))&client_copy)
@@ -320,6 +323,10 @@ static _inline_ int client_ready_to_disconnect(client_t *c)
 	return ((c->to_disconn_remote_request /*|| 
 		c->to_disconn_tcp_srv_no_data*/) /*&& c->tcp2udp_len == 0*/);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CLIENT_H */
 

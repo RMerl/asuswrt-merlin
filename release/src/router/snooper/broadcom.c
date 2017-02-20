@@ -44,7 +44,11 @@
 #define log_switch(...) do {} while (0)
 #endif
 #ifdef TEST
-#define logger(level, fmt, args...) printf(fmt, ##args)
+#define logger(level, fmt, args...) printf(fmt, ##args), printf("\n")
+#endif
+
+#ifndef IOV_ET_ROBO_DEVID
+#define IOV_ET_ROBO_DEVID 3
 #endif
 
 #define REG_MII_PAGE		0x10 /* MII Page register */
@@ -56,6 +60,7 @@
 
 #define ROBO_PHY_ADDR		0x1e /* Robo Switch PHY Address */
 #define PAGE_CTRL		0x00 /* Control registers */
+#define PAGE_MMR		0x02 /* Management/Mirroring Registers */
 #define PAGE_VTBL		0x05 /* ARL Access Registers */
 #define PAGE_VLAN		0x34 /* VLAN Registers */
 #define REG_CTRL_MCAST		0x21 /* Multicast Control */
@@ -79,6 +84,7 @@ static int fd;
 static struct ifreq ifr;
 static int vlan;
 static int cpu_portmap;
+static int lan_portmap;
 
 static int robo_ioctl(int write, int page, int reg, uint16_t *value, int count)
 {
@@ -98,7 +104,9 @@ static int robo_ioctl(int write, int page, int reg, uint16_t *value, int count)
 		memcpy(valp, value, count * 2);
 	ifr.ifr_data = (caddr_t) vecarg;
 	ret = ioctl(fd, __ioctl_args[write], (caddr_t) &ifr);
-	if (!write)
+	if (ret < 0)
+		log_switch("ioctl: %s", strerror(errno));
+	else if (!write)
 		memcpy(value, valp, count * 2);
 
 	return ret;
@@ -118,24 +126,34 @@ static int phy_ioctl(int write, int phy, int reg, uint16_t *value)
 		vecarg[1] = *value;
 	ifr.ifr_data = (caddr_t) vecarg;
 	ret = ioctl(fd, __ioctl_args[write], (caddr_t) &ifr);
-	if (!write)
+	if (ret < 0)
+		log_switch("ioctl: %s", strerror(errno));
+	else if (!write)
 		*value = vecarg[1];
 
 	return ret;
 }
 
-static int phy_select(int page, int reg, int op)
+static int phy_select(int write, int page, int reg, int op)
 {
-	uint16_t value;
-	int i = 3;
+	uint16_t value[2];
+	int i = 5;
 
-	value = (page << 8) | REG_MII_PAGE_ENABLE;
-	phy_ioctl(1, ROBO_PHY_ADDR, REG_MII_PAGE, &value);
-	value = (reg << 8) | op;
-	phy_ioctl(1, ROBO_PHY_ADDR, REG_MII_ADDR, &value);
+	if (write) {
+		value[0] = (page << 8) | REG_MII_PAGE_ENABLE;
+		value[1] = (reg << 8) | op;
+	}
+	if (phy_ioctl(write, ROBO_PHY_ADDR, REG_MII_PAGE, &value[0]) < 0 ||
+	    phy_ioctl(write, ROBO_PHY_ADDR, REG_MII_ADDR, &value[1]) < 0)
+		return -1;
+	if (!write)
+		return ((value[0] >> 8) == page && (value[1] >> 8) == reg);
 	while (i--) {
-		if (phy_ioctl(0, ROBO_PHY_ADDR, REG_MII_ADDR, &value) == 0 && (value & 3) == 0)
+		if (phy_ioctl(0, ROBO_PHY_ADDR, REG_MII_ADDR, &value[1]) < 0)
+			return -1;
+		if ((value[1] & 0x03) == 0)
 			return 0;
+		usleep(100);
 	}
 
 	return -1;
@@ -143,18 +161,22 @@ static int phy_select(int page, int reg, int op)
 
 static int robo_read(int page, int reg, uint16_t *value, int count)
 {
-	int i, ret;
+	int i;
 
 	if (model == SWITCH_BCM5301x)
 		return robo_ioctl(0, page, reg, value, count);
 
-	ret = 0;
+retry:
+	if (phy_select(1, page, reg, REG_MII_ADDR_READ) < 0)
+		return -1;
 	for (i = 0; i < count; i++) {
-		ret |= phy_select(page, reg, REG_MII_ADDR_READ);
-		phy_ioctl(0, ROBO_PHY_ADDR, REG_MII_DATA0 + i, &value[i]);
+		if (phy_select(0, page, reg, REG_MII_ADDR_READ) <= 0)
+			goto retry;
+		if (phy_ioctl(0, ROBO_PHY_ADDR, REG_MII_DATA0 + i, &value[i]) < 0)
+			return -1;
 	}
 
-	return ret;
+	return 0;
 }
 
 static inline uint16_t robo_read16(int page, int reg)
@@ -178,9 +200,11 @@ static int robo_write(int page, int reg, uint16_t *value, int count)
 	if (model == SWITCH_BCM5301x)
 		return robo_ioctl(1, page, reg, value, count);
 
-	for (i = 0; i < count; i++)
-		phy_ioctl(1, ROBO_PHY_ADDR, REG_MII_DATA0 + i, &value[i]);
-	return phy_select(page, reg, REG_MII_ADDR_WRITE);
+	for (i = 0; i < count; i++) {
+		if (phy_ioctl(1, ROBO_PHY_ADDR, REG_MII_DATA0 + i, &value[i]) < 0)
+			return -1;
+	}
+	return phy_select(1, page, reg, REG_MII_ADDR_WRITE);
 }
 
 static inline int robo_write16(int page, int reg, uint16_t value)
@@ -193,10 +217,20 @@ static inline int robo_write32(int page, int reg, uint32_t value)
 	return robo_write(page, reg, (uint16_t *) &value, 2);
 }
 
+static void ether_etohw(unsigned char *ea, uint8_t *hwaddr)
+{
+	hwaddr[0] = ea[5];
+	hwaddr[1] = ea[4];
+	hwaddr[2] = ea[3];
+	hwaddr[3] = ea[2];
+	hwaddr[4] = ea[1];
+	hwaddr[5] = ea[0];
+}
+
 static int get_model(void)
 {
 	et_var_t var;
-	int ret, devid = 0;
+	uint32_t devid = 0;
 
 	memset(&var, 0, sizeof(var));
 	var.set = 0;
@@ -205,23 +239,29 @@ static int get_model(void)
 	var.len = sizeof(devid);
 
 	ifr.ifr_data = (caddr_t) &var;
-	ret = ioctl(fd, SIOCSETGETVAR, (caddr_t)&ifr);
-	if (ret < 0)
-		devid = robo_read16(0x02, 0x30);
+	if (ioctl(fd, SIOCSETGETVAR, (caddr_t) &ifr) < 0) {
+		if (robo_read(PAGE_MMR, 0x30, (uint16_t *) &devid, 2) < 0)
+			goto error;
+		if (devid == 0)
+			devid = 0x25;
+	}
+
+	log_switch("%-5s devid %08x", "read", devid);
 
 	if (devid == 0x25)
 		return SWITCH_BCM5325;
-	else if (devid == 0x3115)
+	else if (devid == 0x3115 || devid == 0x53115)
 		return SWITCH_BCM53115;
-	else if (devid == 0x3125)
+	else if (devid == 0x3125 || devid == 0x53125)
 		return SWITCH_BCM53125;
 	else if ((devid & 0xfffffff0) == 0x53010)
 		return SWITCH_BCM5301x;
 
+error:
 	return SWITCH_UNKNOWN;
 }
 
-static int read_entry(uint16_t *hwaddr, int vlan, uint16_t entry[6], int *index)
+static int read_entry(void *hwaddr, int vlan, uint16_t entry[6], int *index)
 {
 	int i, valid, portmap, vid;
 
@@ -267,7 +307,7 @@ static int read_entry(uint16_t *hwaddr, int vlan, uint16_t entry[6], int *index)
 	return -1;
 }
 
-static int write_entry(uint16_t hwaddr[3], int vlan, uint16_t entry[6], int index, int portmap)
+static int write_entry(void *hwaddr, int vlan, uint16_t entry[6], int index, int portmap)
 {
 	memcpy(entry, hwaddr, ETHER_ADDR_LEN);
 	switch (model) {
@@ -317,7 +357,7 @@ static int read_portmap(int vlan)
 			entry = robo_read32(PAGE_VLAN, REG_VLAN_READ);
 			if (((entry & 0x1000000)) &&
 			    ((entry & 0x0fff000) >> 12) == (vlan & 0x0fff)) {
-				portmap = entry & 0x2f;
+				portmap = entry & 0x3f;
 				break;
 			}
 		}
@@ -337,38 +377,16 @@ static int read_portmap(int vlan)
 	return portmap;
 }
 
-int switch_init(char *ifname)
+int switch_init(char *ifname, int vid, int cputrap)
 {
 	struct vlan_ioctl_args ifv;
-	int portmap;
+	uint8_t hwaddr[ETHER_ADDR_LEN];
+	uint16_t entry[6];
+	int esw_portmap, index;
 
-#ifdef SOCK_CLOEXEC
-	fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
-	if (fd < 0) {
-		log_error("socket: %s", strerror(errno));
+	fd = open_socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0)
 		return -1;
-	}
-#else
-	int value;
-
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0) {
-		log_error("socket: %s", strerror(errno));
-		return -1;
-	}
-
-	value = fcntl(fd, F_GETFD, 0);
-	if (value < 0 || fcntl(fd, F_SETFD, value | FD_CLOEXEC) < 0) {
-		log_error("fcntl::FD_CLOEXEC: %s", strerror(errno));
-		goto error;
-	}
-
-	value = fcntl(fd, F_GETFL, 0);
-	if (value < 0 || fcntl(fd, F_SETFL, value | O_NONBLOCK) < 0) {
-		log_error("fcntl::O_NONBLOCK: %s", strerror(errno));
-		goto error;
-	}
-#endif
 
 	memset(&ifr, 0, sizeof(ifr));
 	memset(&ifv, 0, sizeof(ifv));
@@ -383,34 +401,41 @@ int switch_init(char *ifname)
 		strncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name));
 	} else if (sscanf(ifname, "%16[^.].%u", ifr.ifr_name, &vlan) != 2) {
 		strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-		vlan = 0;
+		vlan = (vid < 0) ? 0 : vid;
 	}
 
 	model = get_model();
 	switch (model) {
 	case SWITCH_BCM5325:
-		cpu_portmap = (1 << 5);
+		esw_portmap = 0x7f;
 		break;
 	case SWITCH_BCM53115:
 	case SWITCH_BCM53125:
-		cpu_portmap = (1 << 5) | (1 << 8);
-		break;
 	case SWITCH_BCM5301x:
-		cpu_portmap = (1 << 5) | (1 << 7) | (1 << 8);
+		esw_portmap = 0x1ff;
 		break;
 	default:
 		log_error("unsupported switch: %s", strerror(errno));
 		goto error;
 	}
 
-	portmap = read_portmap(vlan);
+	lan_portmap = read_portmap(vlan);
 	log_switch("%-5s map@vlan%u = " FMT_PORTS, "read",
-	    vlan, ARG_PORTS(portmap));
+	    vlan, ARG_PORTS(lan_portmap));
 
-	if (portmap & cpu_portmap)
-		cpu_portmap &= portmap;
+	ether_etohw(ifhwaddr, hwaddr);
+	cpu_portmap = read_entry(hwaddr, vlan, entry, &index);
+	if (cpu_portmap < 0)
+		goto error;
+	if (model == SWITCH_BCM5325 && cpu_portmap == 8)
+		cpu_portmap = 5;
+	cpu_portmap = (1 << cpu_portmap);
 	log_switch("%-5s cpu@vlan%u = " FMT_PORTS, "init",
 	    vlan, ARG_PORTS(cpu_portmap));
+
+	lan_portmap &= esw_portmap & ~cpu_portmap;
+	log_switch("%-5s lan@vlan%u = " FMT_PORTS, "init",
+	    vlan, ARG_PORTS(lan_portmap));
 
 	if (model == SWITCH_BCM5325)
 		robo_write16(PAGE_CTRL, REG_CTRL_MCAST, 1);
@@ -425,42 +450,43 @@ error:
 
 void switch_done(void)
 {
+	if (fd < 0)
+		return;
+
 	if (model == SWITCH_BCM5325)
 		robo_write16(PAGE_CTRL, REG_CTRL_MCAST, 0);
-	if (fd >= 0)
-		close(fd);
+
+	close(fd);
 }
 
 int switch_get_port(unsigned char *haddr)
 {
-	uint16_t hwaddr[3], entry[6];
-	int value, index = 0;
+	uint8_t hwaddr[ETHER_ADDR_LEN];
+	uint16_t entry[6];
+	int value, index;
 
-	hwaddr[2] = (haddr[0] << 8) | haddr[1];
-	hwaddr[1] = (haddr[2] << 8) | haddr[3];
-	hwaddr[0] = (haddr[4] << 8) | haddr[5];
+	ether_etohw(haddr, hwaddr);
 
 	value = read_entry(hwaddr, vlan, entry, &index);
 	if (model == SWITCH_BCM5325 && value == 8)
 		value = 5;
 
-	log_switch("%-5s [" FMT_EA "] = 0x%x", "read",
-	    ARG_EA(haddr), value);
+	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "read",
+	    ARG_EA(haddr), ARG_PORTS(1 << value));
 
 	return value;
 }
 
 int switch_add_portmap(unsigned char *maddr, int portmap)
 {
-	uint16_t hwaddr[3], entry[6];
+	uint8_t hwaddr[ETHER_ADDR_LEN];
+	uint16_t entry[6];
 	int value, index = 0;
 
 	if ((maddr[0] & 0x01) == 0)
 		return -1;
 
-	hwaddr[2] = (maddr[0] << 8) | maddr[1];
-	hwaddr[1] = (maddr[2] << 8) | maddr[3];
-	hwaddr[0] = (maddr[4] << 8) | maddr[5];
+	ether_etohw(maddr, hwaddr);
 
 	value = read_entry(hwaddr, vlan, entry, &index);
 	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "read",
@@ -480,15 +506,14 @@ int switch_add_portmap(unsigned char *maddr, int portmap)
 
 int switch_del_portmap(unsigned char *maddr, int portmap)
 {
-	uint16_t hwaddr[3], entry[6];
+	uint8_t hwaddr[ETHER_ADDR_LEN];
+	uint16_t entry[6];
 	int value, index = 0;
 
 	if ((maddr[0] & 0x01) == 0)
 		return -1;
 
-	hwaddr[2] = (maddr[0] << 8) | maddr[1];
-	hwaddr[1] = (maddr[2] << 8) | maddr[3];
-	hwaddr[0] = (maddr[4] << 8) | maddr[5];
+	ether_etohw(maddr, hwaddr);
 
 	value = read_entry(hwaddr, vlan, entry, &index);
 	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "read",
@@ -508,15 +533,14 @@ int switch_del_portmap(unsigned char *maddr, int portmap)
 
 int switch_clr_portmap(unsigned char *maddr)
 {
-	uint16_t hwaddr[3], entry[6];
+	uint8_t hwaddr[ETHER_ADDR_LEN];
+	uint16_t entry[6];
 	int value, index = 0;
 
 	if ((maddr[0] & 0x01) == 0)
 		return -1;
 
-	hwaddr[2] = (maddr[0] << 8) | maddr[1];
-	hwaddr[1] = (maddr[2] << 8) | maddr[3];
-	hwaddr[0] = (maddr[4] << 8) | maddr[5];
+	ether_etohw(maddr, hwaddr);
 
 	value = read_entry(hwaddr, vlan, entry, &index);
 	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "read",
@@ -529,6 +553,16 @@ int switch_clr_portmap(unsigned char *maddr)
 	}
 
 	return value;
+}
+
+int switch_set_floodmap(unsigned char *raddr, int portmap)
+{
+	return -1;
+}
+
+int switch_clr_floodmap(unsigned char *raddr)
+{
+	return -1;
 }
 
 #ifdef TEST
@@ -548,7 +582,7 @@ int main(int argc, char *argv[])
 	count = count ? count / 16 : 0;
 	count = count ? : 1;
 
-	if (switch_init("eth0") < 0) {
+	if (switch_init("eth0", 0, 0) < 0) {
 		perror("switch");
 		return -1;
 	}

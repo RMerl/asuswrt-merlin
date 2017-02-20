@@ -50,7 +50,6 @@ written by
 #include <cstring>
 #include "api.h"
 #include "core.h"
-//#include "natnl.h"
 #include <pjmedia/natnl_stream.h>
 
 using namespace std;
@@ -877,6 +876,7 @@ int CUDTUnited::connect(void *c)
    try
    {
       s->m_pUDT->connect(name);
+	  call->med_tp->udt_retry_count = s->m_pUDT->m_retryCount;
    }
    catch (CUDTException e)
    {
@@ -1427,7 +1427,7 @@ void CUDTUnited::setError(CUDTException* e)
       CGuard tg(m_TLSLock);
       delete (CUDTException*)TlsGetValue(m_TLSError);
       TlsSetValue(m_TLSError, e);
-      m_mTLSRecord[GetCurrentThreadId()] = e;
+      m_mTLSRecord[GetCurrentThread()] = e;
    #endif
 }
 
@@ -1443,7 +1443,7 @@ CUDTException* CUDTUnited::getError()
       {
          CUDTException* e = new CUDTException;
          TlsSetValue(m_TLSError, e);
-         m_mTLSRecord[GetCurrentThreadId()] = e;
+         m_mTLSRecord[GetCurrentThread()] = e;
       }
       return (CUDTException*)TlsGetValue(m_TLSError);
    #endif
@@ -1454,10 +1454,10 @@ void CUDTUnited::checkTLSValue()
 {
    CGuard tg(m_TLSLock);
 
-   vector<DWORD> tbr;
-   for (map<DWORD, CUDTException*>::iterator i = m_mTLSRecord.begin(); i != m_mTLSRecord.end(); ++ i)
+   vector<HANDLE> tbr;
+   for (map<HANDLE, CUDTException*>::iterator i = m_mTLSRecord.begin(); i != m_mTLSRecord.end(); ++ i)
    {
-      HANDLE h = OpenThread(THREAD_QUERY_INFORMATION, FALSE, i->first);
+      HANDLE h = (HANDLE)i->first;
       if (NULL == h)
       {
          tbr.push_back(i->first);
@@ -1470,7 +1470,7 @@ void CUDTUnited::checkTLSValue()
       }
       CloseHandle(h);
    }
-   for (vector<DWORD>::iterator j = tbr.begin(); j != tbr.end(); ++ j)
+   for (vector<HANDLE>::iterator j = tbr.begin(); j != tbr.end(); ++ j)
       m_mTLSRecord.erase(*j);
 }
 #endif

@@ -206,7 +206,7 @@ static unsigned int get_lan_port_mask(void)
 	int sw_mode = nvram_get_int("sw_mode");
 	unsigned int m = nvram_get_int("lanports_mask");
 
-	if (sw_mode == SW_MODE_AP)
+	if (sw_mode == SW_MODE_AP || __mediabridge_mode(sw_mode))
 		m = 0x1F;
 
 	return m;

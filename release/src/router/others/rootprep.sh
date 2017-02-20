@@ -21,6 +21,11 @@ ln -sf /tmp/share usr/local/share
 
 ln -sf tmp/mnt mnt
 ln -sf tmp/var var
+if [ -d etc ] ; then
+	[ -e rom/etc ] || mkdir -p rom/etc
+	cp -af etc/* rom/etc
+	rm -fr etc
+fi
 ln -sf tmp/etc etc
 ln -sf tmp/home home
 ln -sf tmp/home/root root

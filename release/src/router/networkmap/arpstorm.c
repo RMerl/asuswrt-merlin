@@ -149,11 +149,7 @@ int main()
 
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
-#if defined(RTCONFIG_RGMII_BRCM5301X) || defined(RTCONFIG_QCA)
-	strcpy(router_mac, nvram_safe_get("et1macaddr"));
-#else
-	strcpy(router_mac, nvram_safe_get("et0macaddr"));
-#endif
+	strcpy(router_mac, get_lan_hwaddr());
 #ifdef RTCONFIG_GMAC3
         if(nvram_match("gmac3_enable", "1"))
                 strcpy(router_mac, nvram_safe_get("et2macaddr"));

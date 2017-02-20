@@ -2270,6 +2270,8 @@ static void ice_on_ice_complete(pj_ice_strans *ice_st,
 
 	tp_ice->base.tunnel_type = pj_ice_strans_get_use_tunnel_type(ice_st);
 
+	tp_ice->base.ice_retry_count = 1;//pj_ice_strans_get_transmit_count(ice_st);
+
     /* Notify application */
     if (tp_ice->cb.on_ice_complete)
 		(*tp_ice->cb.on_ice_complete)(&tp_ice->base, op, result, turn_mapped_addr);

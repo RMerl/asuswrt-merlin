@@ -189,7 +189,7 @@ PJ_DEF(pj_bool_t) pjmedia_natnl_disabled_flow_control(const void *data, int data
 {
 	pj_uint8_t *pkt = (pj_uint8_t *)data;
 	return (data_len >= NO_FLOW_CTL_TOTAL_HEADER_SIZE && 
-		((pj_uint32_t*)pkt)[0] == NO_FLOW_CTL_SESS_MGR_HEADER_MAGIC &&
+		((pj_uint32_t*)pkt)[0] == NO_FLOW_CTL_MAGIC() &&
 		pkt[NO_FLOW_CTL_SESS_MSG_DISABLE_FLOW_CTL_INDEX] == 1);
 }
 

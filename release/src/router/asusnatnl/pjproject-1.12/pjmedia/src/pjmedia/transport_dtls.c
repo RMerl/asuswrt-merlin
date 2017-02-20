@@ -30,7 +30,7 @@
 #include <pj/ssl_sock.h>
 #include <pj/math.h>
 
-#ifdef WIN32
+#ifdef PJ_WIN32
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 #define in_port_t u_short
@@ -38,7 +38,6 @@
 #else
 #include <sys/socket.h>
 #endif
-
 /* 
  * Include OpenSSL headers 
  */
@@ -223,7 +222,8 @@ static void ssl_free(void *buf) {
  * SSL/TLS state enumeration.
  */
 enum ssl_state {
-    SSL_STATE_NULL,
+	SSL_STATE_NULL,
+	SSL_STATE_INITIALIZED,
     SSL_STATE_HANDSHAKING,
     SSL_STATE_ESTABLISHED
 };
@@ -595,7 +595,7 @@ static pj_status_t init_openssl(pj_pool_t *pool)
 		SSL *ssl;
 		STACK_OF(SSL_CIPHER) *sk_cipher;
 		unsigned i, n;
-		meth = (SSL_METHOD*)DTLSv1_server_method();
+		meth = (SSL_METHOD*)DTLS_server_method();
 
 		if (!meth)
 		pj_assert(meth);
@@ -944,7 +944,7 @@ static pj_status_t create_ssl(transport_dtls *dtls)
 	openssl_ver = SSLeay_version(SSLEAY_VERSION);
 	PJ_LOG(4, (THIS_FILE, "create_ssl() OpenSSL version=[%s]", openssl_ver));
 
-	ssl_method = (SSL_METHOD*)DTLSv1_method();
+	ssl_method = (SSL_METHOD*)DTLS_method();
 	if (!ssl_method)
 		pj_assert(ssl_method);	
 #ifdef USE_GLOBAL_CTX
@@ -1260,14 +1260,14 @@ static pj_status_t set_cipher_list(transport_dtls *dtls)
 	unsigned i;
 	int j, ret;
 
-	if (dtls->setting.ciphers_num == 0)
-		return PJ_SUCCESS;
+	/*if (dtls->setting.ciphers_num == 0)
+		return PJ_SUCCESS;*/
 
 	pj_strset(&cipher_list, buf, 0);
 
 	/* Set SSL with ALL available ciphers */
-	SSL_set_cipher_list(dtls->ossl_ssl, "ALL");
-
+	SSL_set_cipher_list(dtls->ossl_ssl, "HIGH:!MEDIUM:!LOW:!aNULL:!eNULL:!kECDH:!aDH:!RC4:!3DES:!CAMELLIA:!MD5:!PSK:!SRP:!KRB5:@STRENGTH");
+#if 0
 	/* Generate user specified cipher list in OpenSSL format */
 	sk_cipher = SSL_get_ciphers(dtls->ossl_ssl);
 	for (i = 0; i < dtls->setting.ciphers_num; ++i) {
@@ -1306,7 +1306,7 @@ static pj_status_t set_cipher_list(transport_dtls *dtls)
 	if (ret < 1) {
 		return GET_SSL_STATUS(dtls);
 	}
-
+#endif
 	return PJ_SUCCESS;
 }
 
@@ -1807,6 +1807,7 @@ static pj_bool_t on_handshake_complete(transport_dtls *dtls,
 			}
 			// Call callback
 			if (dtls->setting.cb.on_dtls_handshake_complete) {
+				dtls->base.dtls_retry_count = dtls->handshake_retrans_cnt;
 				(*dtls->setting.cb.on_dtls_handshake_complete)((pjmedia_transport *)dtls->member_tp, 
 					status, dtls->turn_mapped_addr);
 			}
@@ -1834,6 +1835,7 @@ static pj_bool_t on_handshake_complete(transport_dtls *dtls,
 
 	// Call callback
 	if (dtls->setting.cb.on_dtls_handshake_complete) {
+		dtls->base.dtls_retry_count = dtls->handshake_retrans_cnt;
 		(*dtls->setting.cb.on_dtls_handshake_complete)((pjmedia_transport *)dtls->member_tp, 
 			status, dtls->turn_mapped_addr);
 	}
@@ -1864,7 +1866,7 @@ static void on_timer(pj_timer_heap_t *th, struct pj_timer_entry *te)
 				}
 
 				if (dtls->handshake_retrans_cnt >= 7) {
-					dtls->handshake_retrans_cnt = 0;
+					//dtls->handshake_retrans_cnt = 0;
 					PJ_LOG(1, (THIS_FILE, "on_timer() TIMER_HANDSHAKE_RETRANSMISSION exceeds 7 times. Give up!!"));
 				} else {
 					dtls->timer.id = TIMER_HANDSHAKE_RETRANSMISSION;
@@ -1913,6 +1915,11 @@ static pj_status_t do_handshake(transport_dtls *dtls)
 #endif
 
     err = SSL_do_handshake(dtls->ossl_ssl);
+	if (err < 0) {
+		int ssl_err = SSL_get_error(dtls->ossl_ssl, err);
+		PJ_LOG(1,(dtls->pool->obj_name, "SSL_do_handshake failed. err=[%d], ssl_err=[%d], ssl_err=[%d]", 
+			err, ssl_err, GET_SSL_STATUS(dtls)));
+	}
 
     /* SSL_do_handshake() may put some pending data into SSL write BIO, 
      * flush it if any.
@@ -1969,6 +1976,7 @@ PJ_DEF(pj_status_t) pjmedia_dtls_do_handshake(pjmedia_transport *tp,
 		status = PJ_SUCCESS;
 		// Call callback
 		if (dtls->setting.cb.on_dtls_handshake_complete) {
+			dtls->base.dtls_retry_count = dtls->handshake_retrans_cnt;
 			(*dtls->setting.cb.on_dtls_handshake_complete)((pjmedia_transport *)dtls->member_tp, 
 				status, dtls->turn_mapped_addr);
 		}
@@ -1988,7 +1996,7 @@ PJ_DEF(pj_status_t) pjmedia_dtls_do_handshake(pjmedia_transport *tp,
 		if ((dtls->media_type_app && dtls->offerer_side) ||
 			(!dtls->media_type_app && !dtls->offerer_side)) {
 #endif
-				if (dtls->ssl_state == SSL_STATE_NULL) {
+				if (dtls->ssl_state == SSL_STATE_INITIALIZED) {
 					SSL_set_accept_state(dtls->ossl_ssl);  // tls server side.
 					PJ_LOG(4, (THIS_FILE, "pjmedia_dtls_do_handshake SSL_set_accept_state."));
 					dtls->ssl_state = SSL_STATE_HANDSHAKING;
@@ -1999,7 +2007,7 @@ PJ_DEF(pj_status_t) pjmedia_dtls_do_handshake(pjmedia_transport *tp,
 			return PJ_SUCCESS;
 		}
 
-		if (dtls->ssl_state == SSL_STATE_NULL) {
+		if (dtls->ssl_state == SSL_STATE_INITIALIZED) {
 			SSL_set_connect_state(dtls->ossl_ssl);  // tls client side.
 			PJ_LOG(4, (THIS_FILE, "pjmedia_dtls_do_handshake SSL_set_connect_state."));
 			dtls->ssl_state = SSL_STATE_HANDSHAKING;
@@ -2233,7 +2241,7 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_start(
 
 					PJ_LOG(4, (THIS_FILE, "pjmedia_transport_dtls_start SSL_set_accept_state."));
 					// Try to do handshaking.
-					dtls->ssl_state = SSL_STATE_HANDSHAKING;
+					dtls->ssl_state = SSL_STATE_INITIALIZED;
 				}
 		} else {
 			if (dtls->ssl_state == SSL_STATE_NULL) {
@@ -2241,7 +2249,7 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_start(
 
 				PJ_LOG(4, (THIS_FILE, "pjmedia_transport_dtls_start SSL_set_connect_state."));
 				// Try to do handshaking.
-				dtls->ssl_state = SSL_STATE_HANDSHAKING;
+				dtls->ssl_state = SSL_STATE_INITIALIZED;
 			}
 		}
 
@@ -2614,7 +2622,7 @@ static void dtls_rtp_cb( void *user_data, void *pkt, pj_ssize_t size)
 	return;
 	}
 
-    if (!pkt || size <= 0) {
+    if (!pkt || size <= 0 || dtls->ssl_state == SSL_STATE_INITIALIZED) {
 	return;
 	}
 #ifdef USE_GLOBAL_LOCK
@@ -3130,5 +3138,4 @@ PJ_DEF(pj_status_t) pjmedia_transport_dtls_decrypt_pkt(pjmedia_transport *tp,
 
     return (err==PJ_SUCCESS) ? PJ_SUCCESS : err;
 }
-
 

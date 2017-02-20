@@ -31,35 +31,16 @@
 #include <shared.h>
 
 #include "disk_initial.h"
+#include "usb_info.h"
 
 #define SYS_BLOCK "/sys/block"
 #define SYS_TTY "/sys/class/tty"
 #define SYS_USB "/sys/class/usb"
 #define SYS_SG "/sys/class/scsi_generic"
 
-#define USB_XHCI_PORT_1 get_usb_xhci_port(0)
-#define USB_XHCI_PORT_2 get_usb_xhci_port(1)
-#define USB_EHCI_PORT_1 get_usb_ehci_port(0)
-#define USB_EHCI_PORT_2 get_usb_ehci_port(1)
-#define USB_OHCI_PORT_1 get_usb_ohci_port(0)
-#define USB_OHCI_PORT_2 get_usb_ohci_port(1)
-#define USB_EHCI_PORT_3 get_usb_ehci_port(2)
-#define USB_OHCI_PORT_3 get_usb_ohci_port(2)
-
-#ifdef BCM_MMC
-#define SDCARD_PORT USB_EHCI_PORT_3
+#if defined(usb_dbg)
+#undef usb_dbg
 #endif
-
-enum {
-	DEVICE_TYPE_UNKNOWN=0,
-	DEVICE_TYPE_DISK,
-	DEVICE_TYPE_PRINTER,
-	DEVICE_TYPE_SG,
-	DEVICE_TYPE_CD,
-	DEVICE_TYPE_MODEM,
-	DEVICE_TYPE_BECEEM
-};
-
 #define usb_dbg printf
 
 int isSerialNode(const char *device_name)
@@ -94,6 +75,27 @@ int isStorageDevice(const char *device_name){
 
 	return 0;
 }
+
+#if defined(RTCONFIG_M2_SSD)
+int isM2SSDDevice(const char *device_name)
+{
+	char disk_name[32], *p;
+	char disk_path[PATH_MAX], path[PATH_MAX];
+
+	if(strncmp(device_name, "sd", 2))
+		return 0;
+
+	strlcpy(disk_name, device_name, sizeof(disk_name));
+	for (p = disk_name + strlen(disk_name) - 1; isdigit(*p) && p > disk_name; p--)
+		*p = '\0';
+
+	snprintf(disk_path, sizeof(disk_path), "/sys/block/%s", disk_name);
+	if (readlink(disk_path, path, sizeof(path)) <= 0 || !strstr(path, "ahci"))
+		return 0;
+
+	return 1;
+}
+#endif
 
 #ifdef BCM_MMC
 int isMMCDevice(const char *device_name){
@@ -278,6 +280,12 @@ char *get_usb_node_by_string(const char *target_string, char *ret, const int ret
 	char *ptr, *ptr2, *ptr3;
 	int len;
 
+#if defined(RTCONFIG_M2_SSD)
+	if (isM2SSDDevice(target_string)) {
+		strlcpy(ret, M2_SSD_PORT, ret_size);
+		return ret;
+	}
+#endif
 	memset(usb_port, 0, sizeof(usb_port));
 	if(get_usb_port_by_string(target_string, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
@@ -393,6 +401,13 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 #ifdef BCM_MMC
 	if(isMMCDevice(device_name)){ // SD card.
 		snprintf(buf, buf_size, "%s", SDCARD_PORT);
+	}
+	else
+#endif
+#if defined(RTCONFIG_M2_SSD)
+	/* M.2 SATA SSD */
+	if (isM2SSDDevice(device_name)) {
+		strlcpy(buf, M2_SSD_PORT, buf_size);
 	}
 	else
 #endif
@@ -613,7 +628,7 @@ disk_info_t *create_disk(const char *device_name, disk_info_t **new_disk_info){
 	u32 major, minor;
 	u64 size_in_kilobytes = 0;
 	int len;
-	char usb_node[32], port_path[8];
+	char usb_node[32], port_path[8], *tag;
 	char buf[64], *port, *vendor = NULL, *model = NULL, *ptr;
 	partition_info_t *new_partition_info, **follow_partition_list;
 
@@ -763,26 +778,18 @@ disk_info_t *create_disk(const char *device_name, disk_info_t **new_disk_info){
 			follow_disk_info->tag[len] = 0;
 		}
 		else{
+			tag = DEFAULT_USB_TAG;
 #ifdef BCM_MMC
-			if(isMMCDevice(device_name))
-				len = strlen(DEFAULT_MMC_TAG);
-			else
+			if (isMMCDevice(device_name))
+				tag = DEFAULT_MMC_TAG;
 #endif
-				len = strlen(DEFAULT_USB_TAG);
-
-			follow_disk_info->tag = (char *)malloc(len+1);
-			if(follow_disk_info->tag == NULL){
+			if (isM2SSDDevice(device_name))
+				tag = DEFAULT_M2_SSD_TAG;
+			if ((follow_disk_info->tag = strdup(tag)) == NULL) {
 				usb_dbg("No memory!!(follow_disk_info->tag)\n");
 				free_disk_data(&follow_disk_info);
 				return NULL;
 			}
-#ifdef BCM_MMC
-			if(isMMCDevice(device_name))
-				strcpy(follow_disk_info->tag, DEFAULT_MMC_TAG);
-			else
-#endif
-				strcpy(follow_disk_info->tag, DEFAULT_USB_TAG);
-			follow_disk_info->tag[len] = 0;
 		}
 
 		follow_partition_list = &(follow_disk_info->partitions);

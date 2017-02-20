@@ -1,7 +1,9 @@
 ﻿function confirm_asus(content){
 	/* default config:
 		content = {
-			title: "Logout Confirm", 
+			title: "Logout Confirm",
+			ribbon: "beta css1",
+			ribbon_wrapper: "beta css2 ",
 			contentA: "#JS_logout#",
 			contentB: "#sub_title#",
 			contentC: "#note to user before click button#"
@@ -24,6 +26,8 @@
 	code += '>';
 	code += '<div class="confirm">';
 	code += '<div class="confirm_title">' + content.title + '</div>';
+	if( content.ribbon != undefined )
+		code += '<div class="'+content.ribbon_wrapper+'"><div class="'+content.ribbon+'">BETA</div></div>';
 	code += '<div class="confirm_contentA">' + content.contentA +'</div>';
 	
 	if(content.iframe.search("get_release_note") >= 0){

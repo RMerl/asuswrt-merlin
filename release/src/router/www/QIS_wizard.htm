@@ -697,6 +697,8 @@ function detect_httpd(){
 	<!--USB Modem-->
 	<input type="hidden" name="wans_dualwan" value="wan usb" disabled>
 	<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">
+	<input type="hidden" name="modem_android" value="<% nvram_get("modem_android"); %>">
+	<input type="hidden" name="modem_autoapn" value="<% nvram_get("modem_autoapn"); %>">
 	<input type="hidden" name="modem_country" value="<% nvram_get("modem_country"); %>">
 	<input type="hidden" name="modem_isp" value="<% nvram_get("modem_isp"); %>">
 	<input type="hidden" name="modem_apn" value="<% nvram_get("modem_apn"); %>">
@@ -706,6 +708,8 @@ function detect_httpd(){
 	<input type="hidden" name="modem_pass" value="<% nvram_get("modem_pass"); %>">
 	<input type="hidden" name="modem_ttlsid" value="<% nvram_get("modem_ttlsid"); %>">
 	<input type="hidden" name="Dev3G" value="<% nvram_get("Dev3G"); %>">
+	<input type="hidden" name="modem_authmode" value="<% nvram_get("modem_authmode"); %>">
+	<input type="hidden" name="modem_mtu" value="<% nvram_get("modem_mtu"); %>">
 </form>
 
 <form method="post" name="redirectForm" action="" target="contentM">

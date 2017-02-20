@@ -159,14 +159,16 @@ var sdk_7 = sdk_version_array[0] == "7" ? true:false
 var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
 var reboot_needed_time = eval("<% get_default_reboot_time(); %>");
 var orig_region = '<% nvram_get("location_code"); %>';
+var wl_txpower_orig = '<% nvram_get("wl_txpower"); %>';
 var machine_name = '<% get_machine_name(); %>';
 var machine_arm = (machine_name.search("arm") == -1) ? false : true;
-var array = new Array(7);
+var array;
 var clock_type = "";
 var wifi_schedule_value = '<% nvram_get("wl_sched"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
 function initial(){
 	show_menu();
 	register_event();
+	array = new Array(7);
 	init_array(array);
 	init_cookie();
 	count_time();
@@ -247,6 +249,7 @@ function initial(){
 	}
 	
 	inputCtrl(document.form.wl_turbo_qam, 0);
+	inputCtrl(document.form.wl_turbo_qam_brcm_intop, 0);
 	inputCtrl(document.form.wl_txbf, 0);
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
@@ -260,20 +263,37 @@ function initial(){
 			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
 			based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R")
 		{
-			document.getElementById('wl_txbf_desc').innerHTML = "802.11ac Beamforming";
+			if(no_vht_support){
+				inputCtrl(document.form.wl_txbf, 0);
+				inputCtrl(document.form.wl_itxbf, 0);
+			}
+			else{
+				document.getElementById('wl_txbf_desc').innerHTML = "802.11ac Beamforming";
+				inputCtrl(document.form.wl_txbf, 1);
+				inputCtrl(document.form.wl_itxbf, 1);
+			}
+		}
+
+		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828M2" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U")
+		{
 			inputCtrl(document.form.wl_txbf, 1);
-			inputCtrl(document.form.wl_itxbf, 1);
-		}	
-				
+			document.getElementById("wl_MU_MIMO_field").style.display = "";
+			document.getElementById("mu_mimo_sup").innerHTML = "";
+			document.form.wl_mumimo.disabled = false;
+		}
 		if( based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP")
 			inputCtrl(document.form.traffic_5g, 1);
-			
+
 		if(	based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" ||
 			based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"){
 			if(document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "8"){		// wireless mode: Auto , N/AC mixed
 				inputCtrl(document.form.wl_turbo_qam, 1);
 			}
 			else{		// wireless mode: N only, Legacy
+				inputCtrl(document.form.wl_turbo_qam, 0);
+			}
+
+			if(no_vht_support){	//Hide 11AC/80MHz from GUI
 				inputCtrl(document.form.wl_turbo_qam, 0);
 			}
 			
@@ -284,7 +304,8 @@ function initial(){
 			$('#turbo_qam_hint').click(function(){openHint(3,33);});
 		}
 
-		if((!Qcawifi_support && !Rawifi_support) || based_modelid == "RT-AC87U")		// hide on Broadcom platform
+		if((!Qcawifi_support && !Rawifi_support) || based_modelid == "RT-AC87U"
+		    || based_modelid == "RT-AC82U" || based_modelid == "RT-AC58U")		// hide on Broadcom platform
 			document.getElementById("wl_plcphdr_field").style.display = "none";
 	}
 	else{ // 2.4GHz
@@ -321,13 +342,27 @@ function initial(){
 					var value = ["0", "1", "2"];
 					add_options_x2(document.form.wl_turbo_qam, desc, value, '<% nvram_get("wl_turbo_qam"); %>');
 					$('#turbo_qam_hint').click(function(){openHint(3,33);});
-				}	
+				}				
 			}
 				
-			document.getElementById('wl_txbf_desc').innerHTML = "<#WLANConfig11b_x_ExpBeam#>";
-			inputCtrl(document.form.wl_txbf, 1);
-			inputCtrl(document.form.wl_itxbf, 1);
+			if(no_vht_support){	//Hide 11AC/80MHz from GUI
+					inputCtrl(document.form.wl_turbo_qam, 0);
+					inputCtrl(document.form.wl_txbf, 0);
+					inputCtrl(document.form.wl_itxbf, 0);
+			}
+			else{	
+				document.getElementById('wl_txbf_desc').innerHTML = "<#WLANConfig11b_x_ExpBeam#>";
+				inputCtrl(document.form.wl_txbf, 1);
+				inputCtrl(document.form.wl_itxbf, 1);
+			}	
 		}	
+		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828M2" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U")
+		{
+			$('wl_txbf_desc').innerHTML = "<#WLANConfig11b_x_ExpBeam#>";
+			inputCtrl(document.form.wl_txbf, 1);
+			inputCtrl(document.form.wl_turbo_qam, 1);
+			inputCtrl(document.form.wl_turbo_qam_brcm_intop, 1);
+		}
 	}
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
@@ -402,10 +437,27 @@ function initial(){
 		if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')	
 			inputCtrl(document.form.wl_atf, 0);
 	}
+	else if(atf_support){
+		inputCtrl(document.form.wl_atf, 1); /* QCA Airtime fairness. */
+	}
 	else{
 		inputCtrl(document.form.wl_atf, 0);
 	}
 	
+
+	if( based_modelid == "RT-AC82U" ||  based_modelid == "RT-AC58U")
+		document.getElementById("wl_implicitxbf_field").style.display = "";
+	else
+		document.getElementById("wl_implicitxbf_field").style.display = "none";
+
+	/* Hardware WiFi offloading */
+	if(based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828M2"){
+		inputCtrl(document.form.wl_hwol, 1);
+	}
+	else{
+		inputCtrl(document.form.wl_hwol, 0);
+	}
+
 	if(based_modelid != "RT-AC87U"){
 		check_ampdu_rts();
 	}
@@ -431,8 +483,8 @@ function initial(){
 }
 
 function adjust_tx_power(){
-	var power_value_old = document.form.wl_TxPower.value;
-	var power_value_new = document.form.wl_txpower.value;
+	var power_value_old = document.form.wl_TxPower.value;	//old nvram not exist now (value)
+	var power_value_new = document.form.wl_txpower.value;	//current nvram now (percentage)
 	var translated_value = 0;
 	
 	if(!power_support){
@@ -528,7 +580,11 @@ function applyRule(){
 			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
 		}
 
-		if("<% nvram_get("wl_unit"); %>" == "1" && "<% nvram_get("wl1_country_code"); %>" == "EU" && based_modelid == "RT-AC87U"){	//for EU RT-AC87U 5G Advanced setting
+		if(no_finiwl_support &&  wl_txpower_orig != document.form.wl_txpower.value){
+			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
+
+		if("<% nvram_get("wl_unit"); %>" == "1" && "<% nvram_get("wl1_country_code"); %>" == "EU" && based_modelid == "RT-AC87U"){      //for EU RT-AC87U 5G Advanced setting
 			if(document.form.wl1_80211h[0].selected && "<% nvram_get("wl1_chanspec"); %>" == "0")	//Interlocking set acs_dfs="0" while disabled 802.11h and wl1_chanspec="0"(Auto)
 				document.form.acs_dfs.value = "0";
 		}
@@ -620,7 +676,7 @@ function enable_wme_check(obj){
 
 /* AMPDU RTS for AC model, Jieming added at 2013.08.26 */
 function check_ampdu_rts(){
-	if(document.form.wl_nmode_x.value != 2 && band5g_11ac_support){
+	if(document.form.wl_nmode_x.value != 2 && band5g_11ac_support && !Qcawifi_support && !Rawifi_support){
 		document.getElementById('ampdu_rts_tr').style.display = "";
 		if(document.form.wl_ampdu_rts.value == 1){
 			document.form.wl_rts.disabled = false;
@@ -629,7 +685,12 @@ function check_ampdu_rts(){
 		else{
 			document.form.wl_rts.disabled = true;
 			document.getElementById('rts_threshold').style.display = "none";
-		}	
+		}
+
+		if(no_vht_support){		//Hide 11AC/80MHz from GUI
+			document.form.wl_ampdu_rts.disabled = true;
+			document.getElementById('ampdu_rts_tr').style.display = "none";
+		}
 	}
 	else{
 		document.form.wl_ampdu_rts.disabled = true;
@@ -1506,6 +1567,15 @@ function handle_beamforming(value){
 							</select>
 						</td>
 					</tr>
+					<tr>
+						<th><a class="hintstyle">256-QAM Broadcom interoperability</a></th>
+						<td>
+							<select name="wl_turbo_qam_brcm_intop" class="input_option">
+									<option value="0" <% nvram_match("wl_turbo_qam_brcm_intop", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_turbo_qam_brcm_intop", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
 					<!-- [MODELDEP] end -->
 					<!--For 5GHz of RT-AC87U  -->
 					<tr id="wl_80211h_tr" style="display:none;">
@@ -1561,6 +1631,16 @@ function handle_beamforming(value){
 							</select>
 						</td>
 					</tr>					
+					<!-- RT-AC82U & RT-AC58U -->
+					<tr id="wl_implicitxbf_field"  style="display:none">
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="">Implicit beamforming</a></th>
+						<td>
+							<select name="wl_implicitxbf" class="input_option">
+								<option value="0" <% nvram_match("wl_implicitxbf", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option value="1" <% nvram_match("wl_implicitxbf", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
 					<tr id="wl_txPower_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 16);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>
@@ -1579,6 +1659,18 @@ function handle_beamforming(value){
 							</div>
 						</td>
 					</tr>
+
+					<!--QCA9984 platform only, e.g. BRT-AC828M2 -->
+					<tr>
+						<th>Hardware WiFi Offloading</th><!-- untranslated -->
+						<td>
+							<select name="wl_hwol" class="input_option">
+									<option value="0" <% nvram_match("wl_hwol", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_hwol", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
+
 					<tr id="region_tr" style="display:none">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#WLANConfig11b_x_Region#></a></th>
 						<td><div id="region_div"></div></td>

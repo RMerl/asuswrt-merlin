@@ -271,6 +271,8 @@ PJ_DECL(pj_status_t) pjmedia_transport_sctp_stop(pjmedia_transport *sctp);
 PJ_DECL(pjmedia_transport*) pjmedia_transport_sctp_get_member(
 						    pjmedia_transport *sctp);
 
+PJ_DEF(pj_status_t) init_usrsctp(pj_pool_t *pool);
+PJ_DEF(void) shutdown_usrsctp(void);
 
 PJ_END_DECL
 

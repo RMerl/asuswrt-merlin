@@ -178,7 +178,7 @@ all: httpd #test_apps
 
 httpd: $(OBJS)
 	@echo " [httpd] CC $@"
-	$(CC) -o $@ $(OBJS) $(LIBS)
+	@$(CC) -o $@ $(OBJS) $(LIBS)
 
 	$(SIZECHECK)
 	$(CPTMP)

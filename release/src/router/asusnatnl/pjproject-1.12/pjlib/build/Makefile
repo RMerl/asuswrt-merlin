@@ -39,8 +39,8 @@ export PJLIB_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 	rbtree.o sock_common.o sock_qos_common.o sock_qos_bsd.o \
 	ssl_sock_common.o ssl_sock_ossl.o ssl_sock_dump.o \
 	timer.o types.o \
-	errno_lib.o string_lib.o bandwidth.o
-#charles move errno.o to errno_lib.o, string.o to string_lib.o
+	errno_lib.o string.o bandwidth.o
+#charles move errno.o to errno_lib.o, string.o to string.o
 export PJLIB_CFLAGS += $(_CFLAGS)
 
 ###############################################################################

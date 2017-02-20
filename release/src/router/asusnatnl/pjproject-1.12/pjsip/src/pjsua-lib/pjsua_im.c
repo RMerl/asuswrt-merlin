@@ -42,6 +42,8 @@ const pjsip_method pjsip_message_method =
 
 const pj_str_t im_rport_hdr = {"Rport", 5};
 
+const pj_str_t im_proc_name_hdr = {"Pname", 5};
+
 const pj_str_t im_timeout_hdr = {"Timeout", 7};
 
 
@@ -144,6 +146,19 @@ pjsip_generic_int_hdr* pjsua_im_create_timtout(pj_pool_t *pool, pj_str_t *timeou
     timeout = pjsip_generic_string_hdr_create(pool, &im_timeout_hdr, timeout_value);
 
     return timeout;
+}
+
+/**
+ * Create process name header for MESSAGE.
+ */
+pjsip_generic_int_hdr* pjsua_im_create_proc_name(pj_pool_t *pool, pj_str_t *proc_name_value)
+{
+    /* Create Accept header. */
+    pjsip_generic_int_hdr *proc_name;
+
+    proc_name = pjsip_generic_string_hdr_create(pool, &im_proc_name_hdr, proc_name_value);
+
+    return proc_name;
 }
 
 /**
@@ -566,6 +581,7 @@ PJ_DEF(pj_status_t) pjsua_im_send( pjsua_inst_id inst_id,
 				   const pj_str_t *content,
 				   const pjsua_msg_data *msg_data,
 				   char *s_rport,
+				   char *s_proc_name,
 				   char *s_timeout,
 				   void *user_data)
 {
@@ -577,8 +593,9 @@ PJ_DEF(pj_status_t) pjsua_im_send( pjsua_inst_id inst_id,
     pjsua_acc *acc;
     pj_str_t contact;
 	pj_status_t status;
-	pj_str_t rport = (s_rport == NULL ? pj_str("8889") : pj_str(s_rport));
-	pj_str_t timeout = (s_rport == NULL ? pj_str("30") : pj_str(s_timeout));
+	pj_str_t rport = (s_rport == NULL ? pj_str("0") : pj_str(s_rport));
+	pj_str_t timeout = (s_timeout == NULL ? pj_str("30") : pj_str(s_timeout));
+	pj_str_t proc_name = (s_proc_name == NULL ? pj_str("") : pj_str(s_proc_name));
 
     /* To and message body must be specified. */
     PJ_ASSERT_RETURN(to && content, PJ_EINVAL);
@@ -612,6 +629,10 @@ PJ_DEF(pj_status_t) pjsua_im_send( pjsua_inst_id inst_id,
 	/* Add rport header. */
 	pjsip_msg_add_hdr( tdata->msg, 
 		(pjsip_hdr*)pjsua_im_create_rport(tdata->pool, &rport));
+
+	/* Add rport header. */
+	pjsip_msg_add_hdr( tdata->msg, 
+		(pjsip_hdr*)pjsua_im_create_proc_name(tdata->pool, &proc_name));
 
 	/* Add timeout header. */
 	pjsip_msg_add_hdr( tdata->msg, 

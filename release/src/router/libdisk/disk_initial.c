@@ -129,7 +129,7 @@ extern disk_info_t *create_disk(const char *device_name, disk_info_t **new_disk_
 	u32 major, minor;
 	u64 size_in_kilobytes = 0;
 	int len;
-	char usb_node[32], port_path[8];
+	char usb_node[32], port_path[8], *tag;
 	char buf[64], *port, *vendor = NULL, *model = NULL, *ptr;
 	partition_info_t *new_partition_info, **follow_partition_list;
 
@@ -279,26 +279,18 @@ extern disk_info_t *create_disk(const char *device_name, disk_info_t **new_disk_
 			follow_disk_info->tag[len] = 0;
 		}
 		else{
+			tag = DEFAULT_USB_TAG;
 #ifdef BCM_MMC
-			if(isMMCDevice(device_name))
-				len = strlen(DEFAULT_MMC_TAG);
-			else
+			if (isMMCDevice(device_name))
+				tag = DEFAULT_MMC_TAG;
 #endif
-				len = strlen(DEFAULT_USB_TAG);
-
-			follow_disk_info->tag = (char *)malloc(len+1);
-			if(follow_disk_info->tag == NULL){
+			if (isM2SSDDevice(device_name))
+				tag = DEFAULT_M2_SSD_TAG;
+			if ((follow_disk_info->tag = strdup(tag)) == NULL) {
 				usb_dbg("No memory!!(follow_disk_info->tag)\n");
 				free_disk_data(&follow_disk_info);
 				return NULL;
 			}
-#ifdef BCM_MMC
-			if(isMMCDevice(device_name))
-				strcpy(follow_disk_info->tag, DEFAULT_MMC_TAG);
-			else
-#endif
-				strcpy(follow_disk_info->tag, DEFAULT_USB_TAG);
-			follow_disk_info->tag[len] = 0;
 		}
 
 		follow_partition_list = &(follow_disk_info->partitions);

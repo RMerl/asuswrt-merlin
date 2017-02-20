@@ -36,6 +36,18 @@
 #define	ETHER_ADDR_LEN		6
 #endif
 
+#if (defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA))
+#else
+#include <wlioctl.h>
+#endif
+#if defined(RTCONFIG_COOVACHILLI)
+#define MAC_FMT "%.2X:%.2X:%.2X:%.2X:%.2X:%.2X"
+#define MAC_ARG(x) (x)[0],(x)[1],(x)[2],(x)[3],(x)[4],(x)[5]
+#endif
+
+
+
+
 extern char *read_whole_file(const char *target){
 	FILE *fp;
 	char *buffer, *new_str;
@@ -1017,9 +1029,84 @@ int ubi_getinfo(const char *ubiname, int *dev, int *part, int *size)
 
 // -----------------------------------------------------------------------------
 
+/**
+ * Combine prefix and name before nvram_get().
+ * @prefix:
+ * @name:
+ * @return:
+ */
+char *nvram_pf_get(char *prefix, const char *name)
+{
+	size_t size;
+	char tmp[128], *t = tmp, *v = NULL;
+
+	if (!prefix || !name || *name == '\0')
+		return NULL;
+
+	if (!isprint(*prefix) || !isprint(*name)) {
+		dbg("%s: Invalid prefix 0x%x or name 0x%x?\n", __func__, *prefix, *name);
+		return NULL;
+	}
+
+	size = strlen(prefix) + strlen(name) + 1;
+	if (size > sizeof(tmp))
+		t = malloc(size);
+
+	if (!t)
+		return NULL;
+
+	v = nvram_get(strcat_r(prefix, name, tmp));
+
+	if (t != tmp)
+		free(t);
+
+	return v;
+}
+
+/**
+ * Combine prefix and name before nvram_set().
+ * @prefix:
+ * @name:
+ * @value:
+ * @return:
+ */
+int nvram_pf_set(char *prefix, const char *name, const char *value)
+{
+	int r = 0;
+	size_t size;
+	char tmp[128], *t = tmp;
+
+	if (!prefix || !name || *name == '\0')
+		return -1;
+
+	if (!isprint(*prefix) || !isprint(*name)) {
+		dbg("%s: Invalid prefix 0x%x or name 0x%x?\n", __func__, *prefix, *name);
+		return -2;
+	}
+
+	size = strlen(prefix) + strlen(name) + 1;
+	if (size > sizeof(tmp))
+		t = malloc(size);
+
+	if (!t)
+		return -3;
+
+	r = nvram_set(strcat_r(prefix, name, tmp), value);
+
+	if (t != tmp)
+		free(t);
+
+	return r;
+}
+
 int nvram_get_int(const char *key)
 {
 	return atoi(nvram_safe_get(key));
+}
+
+int nvram_pf_get_int(char *prefix, const char *key)
+{
+	return atoi(nvram_pf_safe_get(prefix, key));
 }
 
 int nvram_set_int(const char *key, int value)
@@ -1028,6 +1115,32 @@ int nvram_set_int(const char *key, int value)
 
 	snprintf(nvramstr, sizeof(nvramstr), "%d", value);
 	return nvram_set(key, nvramstr);
+}
+
+int nvram_pf_set_int(char *prefix, const char *key, int value)
+{
+	char nvramstr[16];
+
+	snprintf(nvramstr, sizeof(nvramstr), "%d", value);
+	return nvram_pf_set(prefix, key, nvramstr);
+}
+
+/**
+ * Match an prefix NVRAM variable.
+ */
+int nvram_pf_match(char *prefix, char *name, char *match)
+{
+	const char *value = nvram_pf_get(prefix, name);
+	return (value && !strcmp(value, match));
+}
+
+/**
+ * Inversely match an prefix NVRAM variable.
+ */
+int nvram_pf_invmatch(char *prefix, char *name, char *invmatch)
+{
+	const char *value = nvram_pf_get(prefix, name);
+	return (value && strcmp(value, invmatch));
 }
 
 double nvram_get_double(const char *key)
@@ -1874,6 +1987,7 @@ int get_primaryif_dualwan_unit(void)
 
 		wan_type = get_dualwan_by_unit(unit);
 		if (wan_type != WANS_DUALWAN_IF_WAN
+		    && wan_type != WANS_DUALWAN_IF_WAN2
 		    && wan_type != WANS_DUALWAN_IF_LAN
 		    && wan_type != WANS_DUALWAN_IF_USB)
 			continue;
@@ -2118,6 +2232,284 @@ long fappend(FILE *out, const char *fname)
 }
 
 
+#if defined(RTCONFIG_SOC_IPQ8064)
+/**
+ * Set Receive/Transmit Packet Scaling of specified interface.
+ * @ifname:	interface name
+ * @nr_rx_mask:	number of elements in rx_mask array
+ *    < 0:	Don't touch RPS of all RX queues of @ifname.
+ *    = 0:	RPS of all RX queues are configured as rx_mask[0]
+ *    > 0:	RPS of i-th RX queues is configured as rx_mask[i]
+ * @rx_mask:	pointer to array, each element are CPU bit-mask, bit0 = CPU0, bit1 = CPU1, etc.
+ * 		if rx_mask[i] equals to zero, RPS of i-th queue of @ifname is disabled.
+ * @nr_tx_mask:	number of elements in tx_mask array
+ *    < 0:	Don't touch XPS of all RX queues of @ifname.
+ *    = 0:	XPS of all TX queues are configured as tx_mask[0]
+ *    > 0:	XPS of i-th TX queues is configured as tx_mask[i]
+ * @tx_mask:	pointer to array, each element are CPU bit-mask, bit0 = CPU0, bit1 = CPU1, etc.
+ * 		if tx_mask[i] equals to zero, XPS of i-th queue of @ifname is disabled.
+ * @return:
+ * 	0:	success
+ *     -1:	invalid parameter
+ *     -2:	interface doesn't exist
+ */
+int __set_iface_ps(const char *ifname, int nr_rx_mask, const unsigned int *rx_mask, int nr_tx_mask, const unsigned int *tx_mask)
+{
+	const char *attr[] = { "rps_cpus", "xps_cpus" };
+	int q, max_q = nr_rx_mask? nr_rx_mask : 32;
+	char rx_m[16], tx_m[16];
+	char prefix[sizeof("/sys/class/net/ethXXXXXX/queues")], path[sizeof("/sys/class/net/ethXXXXXX/queuese/tx-0/xps_cpusYYYYYY")];
+
+	if (!ifname || *ifname == '\0' || nr_rx_mask > 32 || nr_tx_mask > 32)
+		return -1;
+
+	if ((nr_rx_mask >= 0 && !rx_mask) || (nr_tx_mask >= 0 && !tx_mask))
+		return -1;
+
+	snprintf(path, sizeof(path), "%s/%s", SYS_CLASS_NET, ifname);
+	if (!d_exists(path))
+		return -2;
+
+	snprintf(prefix, sizeof(prefix), "%s/%s/queues", SYS_CLASS_NET, ifname);
+	if (nr_rx_mask >= 0)
+		snprintf(rx_m, sizeof(rx_m), "%x", rx_mask[0]);
+	if (nr_tx_mask >= 0)
+		snprintf(tx_m, sizeof(tx_m), "%x", tx_mask[0]);
+	for (q = 0; q < max_q; ++q) {
+		if (nr_rx_mask > 0)
+			snprintf(rx_m, sizeof(rx_m), "%x", *(rx_m + q));
+		if (nr_tx_mask > 0)
+			snprintf(tx_m, sizeof(tx_m), "%x", *(tx_m + q));
+
+		if (nr_rx_mask >= 0) {
+			snprintf(path, sizeof(path), "%s/rx-%d/%s", prefix, q, attr[0]);
+			f_write_string(path, rx_m, 0, 0);
+		}
+		if (nr_tx_mask >= 0) {
+			snprintf(path, sizeof(path), "%s/tx-%d/%s", prefix, q, attr[1]);
+			f_write_string(path, tx_m, 0, 0);
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * Enable/disable GRO of specific interface via standard ethtool ioctl.
+ * @iface:	interface name
+ * @onoff:	ON/OFF GRO
+ * @return:
+ * 	 0:	success
+ * 	-1:	invalid parameter
+ * 	-2:	@iface doesn't exist
+ * 	-3:	open socket error
+ * 	-4:	ioctl error
+ */
+int ctrl_gro(char *iface, int onoff)
+{
+	/* ethtool-util.h */
+#ifndef SIOCETHTOOL
+#define SIOCETHTOOL     0x8946
+#endif
+
+	/* ethtool-copy.h */
+#define ETHTOOL_GGRO		0x0000002b /* Get GRO enable (ethtool_value) */
+#define ETHTOOL_SGRO		0x0000002c /* Set GRO enable (ethtool_value) */
+	/* for passing single values */
+	struct ethtool_value {
+		__u32	cmd;
+		__u32	data;
+	};
+
+	int fd, err;
+	struct ifreq ifr;
+	struct ethtool_value eval;
+	char path[sizeof("/sys/class/net/ethXXXXXX")];
+
+	if (!iface)
+		return -1;
+
+	snprintf(path, sizeof(path), "%s/%s", SYS_CLASS_NET, iface);
+	if (!d_exists(path))
+		return -2;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0)
+		return -3;
+
+	memset(&eval, 0, sizeof(eval));
+	memset(&ifr, 0, sizeof(ifr));
+	eval.cmd = ETHTOOL_SGRO;
+	eval.data = !!onoff;
+	ifr.ifr_data = (caddr_t) &eval;
+	strcpy(ifr.ifr_name, iface);
+	err = ioctl(fd, SIOCETHTOOL, &ifr);
+	if (err) {
+		dbg("Can't %s GRO on %s. errno %d (%s)\n",
+			onoff? "enable" : "disable",
+			iface, errno, strerror(errno));
+	}
+
+	close(fd);
+
+	return err? -4 : 0;
+}
+
+/**
+ * Enable/disable GRO on specific WAN unit.
+ * Only WAN, WAN2, LAN as WAN are supported, skip DSL, USB.
+ * @wan_unit:
+ * @onoff:
+ * @return:
+ * 	 0:	success
+ * 	-1:	invalid wan_unit
+ * 	-2:	not supported WAN type
+ * 	-3:	Can't enable GRO on WAN interface if PPPoE/PPTP/L2TP is chosed.
+ * 	-4:	ctrl_gro() fail
+ */
+int ctrl_wan_gro(int wan_unit, int onoff)
+{
+	int r, type;
+	char prefix[8];
+
+	if (wan_unit < WAN_UNIT_FIRST || wan_unit >= WAN_UNIT_MAX)
+		return -1;
+
+	type = get_dualwan_by_unit(wan_unit);
+	if (type != WANS_DUALWAN_IF_WAN &&
+	    type != WANS_DUALWAN_IF_WAN2 &&
+	    type != WANS_DUALWAN_IF_LAN)
+		return -2;
+
+	if (!strncmp(nvram_pf_safe_get(prefix, "ifname"), "vlan", 4))
+		return -2;
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
+	if (onoff && !(nvram_pf_match(prefix, "proto", "static") || nvram_pf_match(prefix, "proto", "dhcp")))
+		return -3;
+
+	r = ctrl_gro(nvram_pf_safe_get(prefix, "ifname"), onoff);
+
+	return r? -4 : 0;
+}
+
+/**
+ * Enable/disable GRO on all interfaces in lan_ifnames nvram variable.
+ * e.g. LAN/bridge/bonding interfaces.
+ * @wan_unit:
+ * @onoff:
+ * @return:
+ * 	 0:	success
+ * 	-1:	one or more ctrl_gro() fail
+ */
+int ctrl_lan_gro(int onoff)
+{
+	DIR *dir;
+	int c = 0, r;
+	struct dirent *entry;
+	char word[64], *next, iface[IFNAMSIZ], ifnames[256];
+	char path[sizeof("/sys/class/net/bondXXXXXX")];
+
+	strlcpy(ifnames, nvram_safe_get("lan_ifname"), sizeof(ifnames));
+	strlcat(ifnames, " ", sizeof(ifnames));
+	strlcat(ifnames, nvram_safe_get("lan_ifnames"), sizeof(ifnames));
+	foreach(word, ifnames, next) {
+		/* Skip VLAN, TUN, TAP, and Wireless interface. */
+		if (!strncmp(word, "vlan", 4) || !strncmp(word, "tun", 3) || !strncmp(word, "tap", 3)
+#if defined(RTCONFIG_RALINK)
+		    || !strncmp(word, "ra", 2)
+#elif defined(RTCONFIG_QCA)
+		    || !strncmp(word, "ath", 3)
+#else
+		    || !strncmp(word, "wl", 2)
+#endif
+		   )
+			continue;
+
+		snprintf(path, sizeof(path), "%s/%s", SYS_CLASS_NET, word);
+		if (!d_exists(path))
+			continue;
+		r = ctrl_gro(word, onoff);
+		if (r < 0)
+			c++;
+
+		if (!strncmp(word, "bond", 4)) {
+			/* Enable/disable GRO of all slaves interface of the bonding interface. */
+			if ((dir = opendir(path)) == NULL)
+				continue;
+
+			while ((entry = readdir(dir)) != NULL) {
+				if (strncmp(entry->d_name, "slave_", 6))
+					continue;
+				strlcpy(iface, entry->d_name + 6, sizeof(iface));
+				r = ctrl_gro(iface, onoff);
+				if (r < 0)
+					c++;
+			}
+			closedir(dir);
+		}
+	}
+
+	return c? -1 : 0;
+}
+#endif
+
+/**
+ * Set smp_affinity of specified irq
+ * @irq:
+ * @cpu_mask:
+ * @return:
+ * 	0:	success
+ *     -1:	irq not exist
+ */
+int set_irq_smp_affinity(unsigned int irq, unsigned int cpu_mask)
+{
+	char mask[16], path[sizeof("/proc/irq/XXXXXX/smp_affinityYYYYYY")];
+
+	snprintf(path, sizeof(path), "%s/%d", PROC_IRQ, irq);
+	if (!d_exists(path))
+		return -1;
+
+	snprintf(path, sizeof(path), "%s/%d/smp_affinity", PROC_IRQ, irq);
+	snprintf(mask, sizeof(mask), "%x", cpu_mask);
+	f_write_string(path, mask, 0, 0);
+
+	return 0;
+}
+
+/**
+ * Get prefix for QoS related nvram variables
+ * If RTCONFIG_MULTIWAN_CFG is enabled, this function writes "qosX_" to @buf or internal buffer.
+ * If RTCONFIG_MULTIWAN_CFG is not enabled, this function always writes "qos_" to @buf or internal buffer.
+ * @unit:	WAN unit
+ * @buf:	external buffer
+ * 		If @buf is NULL, internal buffer would be used.
+ * 		But it is not reentry-safe.
+ * @return:	pointer to prefix.
+ * 		If buf is not NULL, @return would be @buf.
+ */
+char *get_qos_prefix(int unit, char *buf)
+{
+	static char internal_buffer[32];	/* qosX_ */
+	char *r = internal_buffer;
+
+	if (buf)
+		r = buf;
+
+#if defined(RTCONFIG_MULTIWAN_CFG)
+	if (unit < 0 || unit >= WAN_UNIT_MAX) {
+		dbg("%s: Unknown wan_unit %d\n", __func__, unit);
+		unit = 0;
+	}
+
+	sprintf(r, "qos%d_", unit);
+#else
+	strcpy(r, "qos_");
+#endif
+
+	return r;
+}
+
 int internet_ready(void)
 {
 	if(nvram_get_int("ntp_ready") == 1)
@@ -2199,6 +2591,34 @@ double traffic_limiter_get_realtime(int unit)
 		val = atof(buf);
 
 	return val;
+}
+#endif
+
+#if defined(RTCONFIG_COOVACHILLI)
+void deauth_guest_sta(char *wlif_name, char *mac_addr)
+{
+#if (defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA))
+        char cmd[128];
+
+#if defined(RTCONFIG_RALINK)
+        sprintf(cmd,"iwpriv %s set DisConnectSta=%s", wlif_name, mac_addr);
+#elif defined(RTCONFIG_QCA)
+        sprintf(cmd, "iwpriv %s kickmac "MAC_FMT, wlif_name, MAC_ARG(mac_addr));
+#endif
+	printf("cmd=%s\n", cmd);
+        system(cmd);
+#else /* BCM */
+        int ret;
+        scb_val_t scb_val;
+
+        memcpy(&scb_val.ea, mac_addr, ETHER_ADDR_LEN);
+        scb_val.val = 8; /* reason code: Disassociated because sending STA is leaving BSS */
+
+        ret = wl_ioctl(wlif_name, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val, sizeof(scb_val));
+        if(ret < 0) {
+                printf("[WARNING] error to deauthticate ["MAC_FMT"] !!!\n", MAC_ARG(msc_addr));
+        }
+#endif
 }
 #endif
 

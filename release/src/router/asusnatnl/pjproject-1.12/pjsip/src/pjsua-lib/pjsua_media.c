@@ -954,8 +954,9 @@ static void on_dtls_handshake_complete(pjmedia_transport *tp,
 	}
 
 	// Perform SCTP connect.
-	if (pjsua_var[tp->inst_id].calls[id].use_sctp ||
-		pjsua_var[tp->inst_id].calls[id].med_tp->use_sctp) {
+	if (!status && 
+		(pjsua_var[tp->inst_id].calls[id].use_sctp ||
+		pjsua_var[tp->inst_id].calls[id].med_tp->use_sctp)) {
 		if (found)
 			pjmedia_sctp_session_create(pjsua_var[tp->inst_id].calls[id].med_tp, turn_mapped_addr);
 	} else {

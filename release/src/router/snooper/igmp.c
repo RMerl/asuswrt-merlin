@@ -28,6 +28,8 @@
 #include <netinet/igmp.h>
 #include <netinet/ether.h>
 #include <arpa/inet.h>
+#include <endian.h>
+#include <asm/byteorder.h>
 
 #include "snooper.h"
 
@@ -110,8 +112,6 @@ struct igmp3_query {
 
 #define IGMP_V3_MEMBERSHIP_REPORT 0x22
 
-extern unsigned char ifhwaddr[ETHER_ADDR_LEN];
-extern in_addr_t ifaddr;
 static struct {
 	int enabled:1;
 	int version;
@@ -125,17 +125,17 @@ static int reserved_mcast(in_addr_t group)
 		in_addr_t addr;
 		in_addr_t mask;
 	} reserved[] = {
-		{ 0xe0000000, 0xffffff00 },
-		{ 0xe000ff87, 0xffffffff },
-		{ 0xeffffffa, 0xffffffff }
+		{ __constant_htonl(0xe0000000), __constant_htonl(0xffffff00) },
+		{ __constant_htonl(0xe000ff87), __constant_htonl(0xffffffff) },
+		{ __constant_htonl(0xeffffffa), __constant_htonl(0xffffffff) }
 	};
 	unsigned char ea1[ETHER_ADDR_LEN];
 	unsigned char ea2[ETHER_ADDR_LEN];
 	unsigned int i;
 
 	for (i = 0; i < sizeof(reserved)/sizeof(reserved[0]); i++) {
-		ether_mtoe(htonl(reserved[i].addr), ea1);
-		ether_mtoe(htonl(reserved[i].mask) & group, ea2);
+		ether_mtoe(reserved[i].addr, ea1);
+		ether_mtoe(reserved[i].mask & group, ea2);
 		if (memcmp(ea1, ea2, sizeof(ea1)) == 0)
 			return 1;
 	}
@@ -168,26 +168,27 @@ static int inet_cksum(void *data, int len)
 }
 
 #ifdef DEBUG_IGMP
-static void log_packet(char *type, in_addr_t group, struct ether_header *eth, struct ip *iph, struct igmp *igmp, int loopback)
+static void log_packet(char *type, in_addr_t group, unsigned char *shost, struct ip *iph, struct igmp *igmp, int loopback)
 {
+	unsigned char dhost[ETHER_ADDR_LEN];
 #ifndef DEBUG_IGMP_MORE
 	if ((igmp->igmp_type != IGMP_MEMBERSHIP_QUERY) &&
 	    (!IN_MULTICAST(ntohl(group)) || reserved_mcast(group)))
 		return;
 #endif
+	ether_mtoe(iph->ip_dst.s_addr, dhost);
 	log_igmp("%-7s [" FMT_EA "] " FMT_IP " => [" FMT_EA "] " FMT_IP " <" FMT_IP "> %s", type,
-	    ARG_EA(eth->ether_shost), ARG_IP(&iph->ip_src.s_addr),
-	    ARG_EA(eth->ether_dhost), ARG_IP(&iph->ip_dst.s_addr),
+	    ARG_EA(shost), ARG_IP(&iph->ip_src.s_addr),
+	    ARG_EA(dhost), ARG_IP(&iph->ip_dst.s_addr),
 	    ARG_IP(&group), loopback ? "*" : "");
 }
 #else
 #define log_packet(...) do {} while (0);
 #endif
 
-int build_query(unsigned char *packet, int size, in_addr_t group, in_addr_t dst, unsigned char *dhost)
+int build_query(unsigned char *packet, int size, in_addr_t group, in_addr_t dst)
 {
 	unsigned char *ptr = packet, *end = packet + size;
-	struct ether_header *eth;
 	struct ip *iph;
 	struct ipopt_ra *raopt;
 	union {
@@ -197,14 +198,6 @@ int build_query(unsigned char *packet, int size, in_addr_t group, in_addr_t dst,
 	int igmp_len, len;
 
 	memset(packet, 0, size);
-
-	if (ptr > end - sizeof(*eth))
-		return -1;
-	eth = (struct ether_header *) ptr;
-	eth->ether_type = htons(ETHERTYPE_IP);
-	memcpy(eth->ether_shost, ifhwaddr, ETHER_ADDR_LEN);
-	memcpy(eth->ether_dhost, dhost, ETHER_ADDR_LEN);
-	ptr += sizeof(*eth);
 
 	if (ptr > end - sizeof(*iph))
 		return -1;
@@ -299,7 +292,7 @@ int accept_query(in_addr_t group, in_addr_t host, unsigned char *shost, int time
 	unsigned char ea[ETHER_ADDR_LEN];
 	int port;
 
-	if (loopback || (group && !IN_MULTICAST(ntohl(group))))
+	if (loopback < 0 || (group && !IN_MULTICAST(ntohl(group))))
 		return 0;
 
 	if (host && (ifaddr ? host <= ifaddr : 1)) {
@@ -307,11 +300,13 @@ int accept_query(in_addr_t group, in_addr_t host, unsigned char *shost, int time
 		mod_timer(&querier.timer, now() + QUERIER_PRESENT_INT * TIMER_HZ);
 	}
 
-	if (!reserved_mcast(group) && !querier.enabled) {
-		if (group)
-			ether_mtoe(group, ea);
-		expire_members(group ? ea : NULL, timeout);
+	if (!querier.enabled && group && !reserved_mcast(group)) {
+		ether_mtoe(group, ea);
+		expire_members(ea, timeout);
 	}
+
+	if (loopback)
+		return 1;
 
 	port = get_port(shost);
 	if (port < 0)
@@ -324,7 +319,6 @@ int accept_query(in_addr_t group, in_addr_t host, unsigned char *shost, int time
 int accept_igmp(unsigned char *packet, int size, unsigned char *shost, int loopback)
 {
 	unsigned char *ptr = packet, *end = packet + size;
-	struct ether_header *eth;
 	struct ip *iph;
 	union {
 		struct igmp *igmp;
@@ -333,13 +327,6 @@ int accept_igmp(unsigned char *packet, int size, unsigned char *shost, int loopb
 	} igmp;
 	struct igmp3_grec *grec;
 	unsigned int igmp_len, ngrec, nsrcs, timeout;
-
-	eth = (struct ether_header *) ptr;
-	if (ptr > end - sizeof(*eth) ||
-	    eth->ether_type != htons(ETHERTYPE_IP) ||
-	    eth->ether_shost[0] & 1)
-		return 0;
-	ptr += sizeof(*eth);
 
 	iph = (struct ip *) ptr;
 	if (ptr > end - sizeof(*iph) ||
@@ -358,14 +345,14 @@ int accept_igmp(unsigned char *packet, int size, unsigned char *shost, int loopb
 		if (igmp_len != sizeof(*igmp.igmp))
 			return 0;
 		log_packet((igmp.igmp->igmp_type == IGMP_V2_MEMBERSHIP_REPORT) ? "report2" : "report1",
-		    igmp.igmp->igmp_group.s_addr, eth, iph, igmp.igmp, loopback);
+		    igmp.igmp->igmp_group.s_addr, shost, iph, igmp.igmp, loopback);
 		accept_join(igmp.igmp->igmp_group.s_addr, iph->ip_src.s_addr, shost, loopback);
 		break;
 	case IGMP_V2_LEAVE_GROUP:
 		if (igmp_len != sizeof(*igmp.igmp))
 			return 0;
 		log_packet("leave2",
-		    igmp.igmp->igmp_group.s_addr, eth, iph, igmp.igmp, loopback);
+		    igmp.igmp->igmp_group.s_addr, shost, iph, igmp.igmp, loopback);
 		accept_leave(igmp.igmp->igmp_group.s_addr, iph->ip_src.s_addr, shost, loopback);
 		break;
 	case IGMP_V3_MEMBERSHIP_REPORT:
@@ -387,14 +374,14 @@ int accept_igmp(unsigned char *packet, int size, unsigned char *shost, int loopb
 			case IGMP3_CHANGE_TO_INCLUDE:
 				if (nsrcs == 0) {
 					log_packet("leave3",
-					    grec->grec_mca.s_addr, eth, iph, igmp.igmp, loopback);
+					    grec->grec_mca.s_addr, shost, iph, igmp.igmp, loopback);
 					accept_leave(grec->grec_mca.s_addr, iph->ip_src.s_addr, shost, loopback);
 					break;
 				} /* else fall through */
 			case IGMP3_MODE_IS_EXCLUDE:
 			case IGMP3_CHANGE_TO_EXCLUDE:
 				log_packet("report3",
-				    grec->grec_mca.s_addr, eth, iph, igmp.igmp, loopback);
+				    grec->grec_mca.s_addr, shost, iph, igmp.igmp, loopback);
 				accept_join(grec->grec_mca.s_addr, iph->ip_src.s_addr, shost, loopback);
 				break;
 			case IGMP3_BLOCK_OLD_SOURCES:
@@ -414,7 +401,7 @@ int accept_igmp(unsigned char *packet, int size, unsigned char *shost, int loopb
 			return 0;
 		log_packet((igmp_len >= sizeof(*igmp.query3)) ? "query3" :
 		    igmp.igmp->igmp_code ? "query2" : "query1",
-		    igmp.igmp->igmp_group.s_addr, eth, iph, igmp.igmp, loopback);
+		    igmp.igmp->igmp_group.s_addr, shost, iph, igmp.igmp, loopback);
 		accept_query(igmp.igmp->igmp_group.s_addr, iph->ip_src.s_addr, shost, timeout, loopback);
 		break;
 	default:
@@ -436,8 +423,6 @@ static void query_timer(struct timer_entry *timer, void *data)
 	send_query(INADDR_ANY);
 	mod_timer(timer, now() + ((querier.startup > 0) ?
 	    STARTUP_QUERY_INT * TIMER_HZ : QUERY_INT * TIMER_HZ));
-	if (querier.version > 1)
-		expire_members(NULL, QUERY_RESPONSE_INT * TIMER_HZ);
 }
 
 int init_querier(int enabled)
@@ -448,6 +433,8 @@ int init_querier(int enabled)
 	set_timer(&querier.timer, query_timer, NULL);
 	if (querier.enabled)
 		mod_timer(&querier.timer, now() + 1);
+
+	listen_query(htonl(INADDR_ALLHOSTS_GROUP), -1);
 
 	return querier.enabled;
 }

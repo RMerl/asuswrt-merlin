@@ -508,11 +508,7 @@ static void load(int new)
 
 	strlcpy(save_path, nvram_safe_get("rstats_path"), sizeof(save_path) - 32);
 	if (((n = strlen(save_path)) > 0) && (save_path[n - 1] == '/')) {
-#ifdef RTCONFIG_RGMII_BRCM5301X
-		ether_atoe(nvram_safe_get("et1macaddr"), mac);
-#else
-		ether_atoe(nvram_safe_get("et0macaddr"), mac);
-#endif
+		ether_atoe(get_lan_hwaddr(), mac);
 #ifdef RTCONFIG_GMAC3
         	if(nvram_match("gmac3_enable", "1"))
 			ether_atoe(nvram_safe_get("et2macaddr"), mac);

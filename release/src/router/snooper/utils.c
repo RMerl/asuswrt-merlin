@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -30,6 +34,44 @@
 #include <syslog.h>
 
 #include "snooper.h"
+
+int open_socket(int domain, int type, int protocol)
+{
+	int fd, value;
+
+#if defined(SOCK_CLOEXEC) && defined(SOCK_NONBLOCK)
+	fd = socket(domain, type | SOCK_CLOEXEC | SOCK_NONBLOCK, protocol);
+	if (fd >= 0)
+		return fd;
+	else if (fd < 0 && errno != EINVAL)
+		goto error;
+#endif
+	fd = socket(domain, type, protocol);
+	if (fd < 0)
+		goto error;
+
+#ifdef FD_CLOEXEC
+	value = fcntl(fd, F_GETFD, 0);
+	if (value < 0 || fcntl(fd, F_SETFD, value | FD_CLOEXEC) < 0) {
+		log_error("fcntl::FD_CLOEXEC: %s", strerror(errno));
+		close(fd);
+		return -1;
+	}
+#endif
+
+	value = fcntl(fd, F_GETFL, 0);
+	if (value < 0 || fcntl(fd, F_SETFL, value | O_NONBLOCK) < 0) {
+		log_error("fcntl::O_NONBLOCK: %s", strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+
+error:
+	log_error("socket: %s", strerror(errno));
+	return -1;
+}
 
 void ether_mtoe(in_addr_t addr, unsigned char *ea)
 {

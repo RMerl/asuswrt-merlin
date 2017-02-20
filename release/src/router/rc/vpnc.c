@@ -563,29 +563,58 @@ vpnc_down(char *vpnc_ifname)
 	else
 		wan_ifname = nvram_safe_get(strcat_r(wan_prefix, "pppoe_ifname", tmp));
 
-	/* Reset default gateway route */
-	if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static")) {
-		route_del(wan_ifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
-		route_add(wan_ifname, 0, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
-	}
-	else if (!strcmp(wan_proto, "pppoe") || !strcmp(wan_proto, "pptp") || !strcmp(wan_proto, "l2tp"))
-	{
-		char *wan_xgateway = nvram_safe_get(strcat_r(wan_prefix, "xgateway", tmp));
+#if !defined(CONFIG_BCMWL5) && defined(RTCONFIG_DUALWAN)
+	if (get_nr_wan_unit() > 1 && nvram_match("wans_mode", "lb")) {
+		/* Reset default gateway route */
+		if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static")) {
+			route_del(wan_ifname, 2, "0.0.0.0", nvram_pf_safe_get(wan_prefix, "gateway"), "0.0.0.0");
+		}
+		else if (!strcmp(wan_proto, "pppoe") || !strcmp(wan_proto, "pptp") || !strcmp(wan_proto, "l2tp"))
+		{
+			char *wan_xgateway = nvram_pf_safe_get(wan_prefix, "xgateway");
 
-		route_del(wan_ifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
-		route_add(wan_ifname, 0, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
+			route_del(wan_ifname, 2, "0.0.0.0", nvram_pf_safe_get(wan_prefix, "gateway"), "0.0.0.0");
+			if (strlen(wan_xgateway) > 0 && strcmp(wan_xgateway, "0.0.0.0")) {
+				char *wan_xifname = nvram_pf_safe_get(wan_prefix, "ifname");
 
-		if (strlen(wan_xgateway) > 0 && strcmp(wan_xgateway, "0.0.0.0")) {
-			char *wan_xifname = nvram_safe_get(strcat_r(wan_prefix, "ifname", tmp));
+				route_del(wan_xifname, 3, "0.0.0.0", nvram_pf_safe_get(wan_prefix, "xgateway"), "0.0.0.0");
+			}
 
-			route_del(wan_xifname, 3, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "xgateway", tmp)), "0.0.0.0");
-			route_add(wan_xifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "xgateway", tmp)), "0.0.0.0");	
+			/* Delete route to pptp/l2tp's server */
+			if (nvram_pf_get_int(prefix, "dut_disc") && strcmp(wan_proto, "pppoe"))
+				route_del(wan_ifname, 0, nvram_pf_safe_get(wan_prefix, "gateway"), "0.0.0.0", "255.255.255.255");
 		}
 
-		/* Delete route to pptp/l2tp's server */
-		if (nvram_get_int(strcat_r(prefix, "dut_disc", tmp)) && strcmp(wan_proto, "pppoe"))
-			route_del(wan_ifname, 0, nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0", "255.255.255.255");
+		/* default route via default gateway */
+		add_multi_routes();
+	} else {
+#endif
+		/* Reset default gateway route */
+		if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static")) {
+			route_del(wan_ifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
+			route_add(wan_ifname, 0, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
+		}
+		else if (!strcmp(wan_proto, "pppoe") || !strcmp(wan_proto, "pptp") || !strcmp(wan_proto, "l2tp"))
+		{
+			char *wan_xgateway = nvram_safe_get(strcat_r(wan_prefix, "xgateway", tmp));
+
+			route_del(wan_ifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
+			route_add(wan_ifname, 0, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
+
+			if (strlen(wan_xgateway) > 0 && strcmp(wan_xgateway, "0.0.0.0")) {
+				char *wan_xifname = nvram_safe_get(strcat_r(wan_prefix, "ifname", tmp));
+
+				route_del(wan_xifname, 3, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "xgateway", tmp)), "0.0.0.0");
+				route_add(wan_xifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "xgateway", tmp)), "0.0.0.0");
+			}
+
+			/* Delete route to pptp/l2tp's server */
+			if (nvram_get_int(strcat_r(prefix, "dut_disc", tmp)) && strcmp(wan_proto, "pppoe"))
+				route_del(wan_ifname, 0, nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0", "255.255.255.255");
+		}
+#if !defined(CONFIG_BCMWL5) && defined(RTCONFIG_DUALWAN)
 	}
+#endif
 
 	/* Delete firewall rules for VPN client */
 	vpnc_del_firewall_rule();

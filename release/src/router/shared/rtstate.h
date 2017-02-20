@@ -236,7 +236,8 @@ enum {
 	DISKMON_SCAN,
 	DISKMON_REMOUNT,
 	DISKMON_FINISH,
-	DISKMON_FORCE_STOP
+	DISKMON_FORCE_STOP,
+	DISKMON_FORMAT
 };
 
 #define DISKMON_FREQ_DISABLE 0
@@ -263,15 +264,17 @@ enum {
 #define WANSCAP_2G	0x08
 #define WANSCAP_5G	0x10
 #define WANSCAP_USB	0x20
+#define WANSCAP_WAN2	0x40
 
 // the following definition is for wans_dualwan
-#define WANS_DUALWAN_IF_NONE 	0
-#define WANS_DUALWAN_IF_DSL	1
-#define WANS_DUALWAN_IF_WAN	2
-#define WANS_DUALWAN_IF_LAN	3
-#define WANS_DUALWAN_IF_USB	4
-#define WANS_DUALWAN_IF_2G	5
-#define WANS_DUALWAN_IF_5G	6
+#define WANS_DUALWAN_IF_NONE  0
+#define WANS_DUALWAN_IF_DSL   1
+#define WANS_DUALWAN_IF_WAN   2
+#define WANS_DUALWAN_IF_LAN   3
+#define WANS_DUALWAN_IF_USB   4
+#define WANS_DUALWAN_IF_2G    5
+#define WANS_DUALWAN_IF_5G    6
+#define WANS_DUALWAN_IF_WAN2  7
 
 // the following definition is for free_caches()
 #define FREE_MEM_NONE  "0"
@@ -285,7 +288,6 @@ enum {
 #ifdef RTCONFIG_WIRELESSWAN
 #define is_wirelesswan_enabled() (nvram_get_int("sw_mode")==SW_MODE_HOTSPOT)
 #endif
-#define is_apmode_enabled() (nvram_get_int("sw_mode")==SW_MODE_AP)
 // todo: multiple wan
 
 extern int wan_primary_ifunit(void);

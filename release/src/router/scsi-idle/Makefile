@@ -1,6 +1,13 @@
 include ../common.mak
 
-CFLAGS += -Wall -Os $(EXTRACFLAGS) -I$(SRCBASE) -I$(SRCBASE)/include -I$(LINUXDIR)/include -I.
+ifeq ($(RTCONFIG_QCA),y)
+ifeq ($(CONFIG_LINUX3_14),y)
+CFLAGS += -I$(KDIR)/include
+endif
+endif
+
+CFLAGS += -Wall -Os $(EXTRACFLAGS) -I$(SRCBASE) -I$(SRCBASE)/include -I$(LINUXDIR)/include -I$(LINUXDIR)/arch/arm/include -I$(LINUXDIR)/arch/arm/plat-brcm/include -I.
+
 ifeq ($(CONFIG_LINUX26),y)
 CFLAGS += -DSCSI_SG
 endif

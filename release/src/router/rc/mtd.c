@@ -204,7 +204,7 @@ int mtd_unlock_erase_main_old(int argc, char *argv[])
 int mtd_unlock_erase_main(int argc, char *argv[])
 #endif
 {
-	char c;
+	int c;
 	char *dev = NULL;
 
 	while ((c = getopt(argc, argv, "d:")) != -1) {
@@ -237,7 +237,7 @@ int mtd_write_main(int argc, char *argv[])
 	long filelen = 0, n, wlen, unit_len;
 	struct sysinfo si;
 	uint32 ofs;
-	char c;
+	int c;
 	char *iname = NULL;
 	char *dev = NULL;
 	char msg_buf[2048];

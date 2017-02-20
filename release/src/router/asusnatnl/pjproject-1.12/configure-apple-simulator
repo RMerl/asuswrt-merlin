@@ -1,17 +1,17 @@
 #!/bin/sh
 
 CURRENTPATH=`pwd`
-OPENSSL_PATH="${CURRENTPATH}/../openssl/platforms/"
-OPENSSL_LIB_PATH="${CURRENTPATH}/../release/ios/lib/"
-OPENSSL_INC_PATH="${CURRENTPATH}/../openssl-1.0.1p/include/"
+OPENSSL_PATH="${CURRENTPATH}/../openssl/libs/ios-i386"
+OPENSSL_LIB_PATH="${OPENSSL_PATH}/lib/"
+OPENSSL_INC_PATH="${OPENSSL_PATH}/include/"
 
 SDK_VER="iPhoneSimulator.sdk"
 DEVELOPER=`xcode-select -print-path`
 SDK_PATH="${DEVELOPER}/Platforms/iPhoneSimulator.platform/Developer/SDKs/${SDK_VER}"
 export DEVPATH=${DEVELOPER}/Platforms/iPhoneSimulator.platform/Developer
 export CC="${DEVELOPER}/usr/bin/gcc -arch i386"
-export CFLAGS="-O2 -m32 -fembed-bitcode -Wno-unused-label -I${OPENSSL_INC_PATH} -DPJ_CONFIG_IPHONE=1 -isysroot ${SDK_PATH} -mios-simulator-version-min=7.0"
-export LDFLAGS="${OPENSSL_LIB_PATH}/libssl-i386.a ${OPENSSL_LIB_PATH}/libcrypto-i386.a -framework UIKit -framework CFNetwork"
+export CFLAGS="-m32 -fembed-bitcode -fstack-protector -Wno-unused-label -I${OPENSSL_INC_PATH} -DPJ_CONFIG_IPHONE=1 -isysroot ${SDK_PATH} -mios-simulator-version-min=7.0"
+export LDFLAGS="${OPENSSL_LIB_PATH}/libssl.a ${OPENSSL_LIB_PATH}/libcrypto.a -framework UIKit -framework CFNetwork"
 export ARCH="-arch i386"
 export CROSS_TYPE=i386-apple-darwin9 
 ./configure-iphone CC=${CC} ARCH=${ARCH}

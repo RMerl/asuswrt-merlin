@@ -117,7 +117,7 @@ function QKinternettype_load_body(){
 	else if(odmpid.length > 0 && odmpid != based_modelid){	//odmpid MODELDEP
 		if(odmpid == "RT-N66W" || odmpid == "RT-AC66W" || odmpid == "RT-AC68W" || odmpid == "RT-AC68RW")
 			document.getElementById("ModelPid_img").src="/images/Model_product_W.png";
-		else if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1")
+		else if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1")
 			document.getElementById("ModelPid_img").src="/images/RT-AC66U_V2/Model_product.png";
 		else
 			document.getElementById("ModelPid_img").src="/images/Model_product.png";
@@ -178,12 +178,17 @@ function QKinternettype_load_body(){
 		document.getElementById("main_manual").style.display = "none";
 		document.getElementById("lte_manual").style.display = "";
 	}
-	else if(based_modelid == "PL-N12" || based_modelid == "PL-AC56")
+	else if(based_modelid == "PL-N12" || based_modelid == "PL-AC56" || based_modelid == "RT-AC58U")
 		document.getElementById("Productdesc_4").style.display = "none";
 
 	setTimeout(function() {document.getElementById("btn_next_step").focus();}, 10);
+
 	if(wanauxstate != 1){
 		//submitForm(1);
+		location.href = "/qis/QIS_admin_pass.htm";
+	}
+	else if(parent.hadPlugged("modem")){
+		parent.flag_manual = "modem";
 		location.href = "/qis/QIS_admin_pass.htm";
 	}
 	else{
@@ -253,6 +258,11 @@ function detect_if_wan_plug(flag){
 					}
 					else{
 						document.getElementById("wan_unplug").style.display = "";
+
+						if(based_modelid == "RT-AC58U"){
+							document.getElementById("wan_unplug").style.marginTop = "0px";
+							document.getElementById("noti_usb_uplus").style.display = "";
+						}
 						
 						setTimeout("startPoll();", 2000);
 					}
@@ -369,17 +379,17 @@ function skip(){
 }
 
 function startPoll(){
-	if(parent.modem_support){
+	if(parent.modem_support && !parent.nomodem_support){
 		if(parent.ISMOBILE){
 			if(document.getElementById("unplugImg1_m").style.display == "none"){
 				$("#unplugImg2_m").fadeOut(500);
-				if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1")
+				if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1")
 					document.getElementById("unplugImg1_m").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 				setTimeout('$("#unplugImg1_m").fadeIn(500);', 500);	
 			}
 			else{
 				$("#unplugImg1_m").fadeOut(500);
-				if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1")
+				if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1")
 					document.getElementById("unplugImg2_m").src = "/images/RT-AC66U_V2/WANunplug_usb.png";
 				setTimeout('$("#unplugImg2_m").fadeIn(500);', 500);	
 			}
@@ -388,13 +398,13 @@ function startPoll(){
 			if(usb_flag != "" && based_modelid != "RT-AC87U"){
 				if(document.getElementById("unplugImg1").style.display == "none"){
 					$("#unplugImg2").fadeOut(500);
-					if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1")
+					if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1")
 						document.getElementById("unplugImg1").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 					setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
 				}
 				else{
 					$("#unplugImg1").fadeOut(500);	
-					if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1")
+					if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1")
 						document.getElementById("unplugImg2").src = "/images/RT-AC66U_V2/WANunplug_usb.png";
 					setTimeout('$("#unplugImg2").fadeIn(500);', 500);	
 				}
@@ -408,13 +418,13 @@ function startPoll(){
 	else{
 		if(parent.ISMOBILE){
 			$("#unplugImg1_m").fadeOut(500);
-			if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1")
+			if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1")
 				document.getElementById("unplugImg1_m").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 			setTimeout('$("#unplugImg1_m").fadeIn(500);', 500);	
 		}
 		else{
 			$("#unplugImg1").fadeOut(500);
-			if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1")
+			if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1")
 				document.getElementById("unplugImg1").src = "/images/RT-AC66U_V2/WANunplug_eth.png";
 			setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
 		}
@@ -541,6 +551,7 @@ function disable_button(){
 									<div><img id="unplugImg"  src="/images/WANunplug.png"></div>
 									<div><img id="unplugImg1" style="margin-top:-198px;" src="/images/WANunplug_eth.png"></div>
 									<div><img id="unplugImg2" style="margin-top:-198px;display:none;" src="/images/WANunplug_usb.png"></div>
+									<div id="noti_usb_uplus" class="QISGeneralFont" style="text-align:left;margin-left:25px;display:none;">*Please note that USB3.0 port is in front of router</div>
 								</div>	
 							</div>	
 						</td>

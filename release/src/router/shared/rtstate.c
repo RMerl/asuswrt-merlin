@@ -32,6 +32,39 @@ void add_rc_support(char *feature)
 		nvram_set("rc_support", feature);
 }
 
+void del_rc_support(char *features)
+{
+	char *tmp = nvram_safe_get("rc_support");
+	char *rcsupport = NULL;
+
+	if (!(features && *features))
+		return;
+
+	rcsupport = malloc(strlen(tmp) + 1);
+
+	if (rcsupport == NULL) {
+		_dprintf("del_rc_support fail\n");
+		return;
+	}
+	memset(rcsupport, 0, strlen(tmp) + 1);
+	strncpy(rcsupport, tmp, strlen(tmp));
+
+	if (*rcsupport) {
+		char word[256];
+		char *next;
+
+		foreach(word,features,next) {
+			remove_from_list(word, rcsupport, strlen(tmp) + 1);
+		}
+
+		nvram_set("rc_support", rcsupport);
+		free(rcsupport);
+	}
+	else{
+		_dprintf("del_rc_support fail\n");
+	}
+}
+
 int get_wan_state(int unit){
 	char tmp[100], prefix[16];
 
@@ -530,6 +563,7 @@ void add_wanscap_support(char *feature)
 int get_wans_dualwan(void) 
 {
 	int caps=0;
+	char word[80], *next;
 	char *wancaps = nvram_get("wans_dualwan");
 
 	if(wancaps == NULL)
@@ -542,12 +576,15 @@ int get_wans_dualwan(void)
 		wancaps = DEF_SECOND_WANIF;
 	}
 
-	if(strstr(wancaps, "lan")) caps |= WANSCAP_LAN;
-	if(strstr(wancaps, "2g")) caps |= WANSCAP_2G;
-	if(strstr(wancaps, "5g")) caps |= WANSCAP_5G;
-	if(strstr(wancaps, "usb")) caps |= WANSCAP_USB;
-	if(strstr(wancaps, "dsl")) caps |= WANSCAP_DSL;
-	if(strstr(wancaps, "wan")) caps |= WANSCAP_WAN;
+	foreach(word, wancaps, next) {
+		if (!strcmp(word,"lan")) caps |= WANSCAP_LAN;
+		if (!strcmp(word,"2g")) caps |= WANSCAP_2G;
+		if (!strcmp(word,"5g")) caps |= WANSCAP_5G;
+		if (!strcmp(word,"usb")) caps |= WANSCAP_USB;
+		if (!strcmp(word,"dsl")) caps |= WANSCAP_DSL;
+		if (!strcmp(word,"wan")) caps |= WANSCAP_WAN;
+		if (!strcmp(word,"wan2")) caps |= WANSCAP_WAN2;
+	}
 
 	return caps;
 }
@@ -579,6 +616,7 @@ int get_dualwan_by_unit(int unit)
 			if (!strcmp(word,"usb")) return WANS_DUALWAN_IF_USB;	
 			if (!strcmp(word,"dsl")) return WANS_DUALWAN_IF_DSL;
 			if (!strcmp(word,"wan")) return WANS_DUALWAN_IF_WAN;
+			if (!strcmp(word,"wan2")) return WANS_DUALWAN_IF_WAN2;
 			return WANS_DUALWAN_IF_NONE;
 		}
 		i++;
@@ -597,7 +635,23 @@ int get_dualwan_secondary(void)
 {
 	return get_dualwan_by_unit(1);
 }
-#endif
+
+/**
+ * Return total number of WAN unit.
+ * @return:
+ */
+int get_nr_wan_unit(void)
+{
+	int i, c = 0;
+
+	for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; ++i) {
+		if (get_dualwan_by_unit(i) != WANS_DUALWAN_IF_NONE)
+			c++;
+	}
+
+	return c;
+}
+#endif	/* RTCONFIG_DUALWAN */
 
 // no more to use
 /*

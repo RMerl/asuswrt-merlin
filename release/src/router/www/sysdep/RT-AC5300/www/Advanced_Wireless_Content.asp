@@ -63,11 +63,6 @@ function initial(){
 		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
 	}
 
-	// special case after modifing GuestNetwork
-	if(wl_unit == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
-		change_wl_unit();
-	}
-
 	wl_auth_mode_change(1);
 
 	if(optimizeXbox_support){
@@ -788,7 +783,7 @@ function regen_auto_option(obj){
 <input type="hidden" name="acs_band1" value='<% nvram_get("acs_band1"); %>'>
 <input type="hidden" name="acs_ch13" value='<% nvram_get("acs_ch13"); %>'>
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
-<input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>">
+<input type="hidden" name="wps_band" value="<% nvram_get("wps_band_x"); %>">
 <input type="hidden" name="wps_dualband" value="<% nvram_get("wps_dualband"); %>">
 <input type="hidden" name="smart_connect_x" value="<% nvram_get("smart_connect_x"); %>">
 <input type="hidden" name="wl1_80211h" value="<% nvram_get("wl1_80211h"); %>" >
@@ -1079,5 +1074,14 @@ function regen_auto_option(obj){
 </table>
 
 <div id="footer"></div>
+<script>
+(function() {
+	// special case after modifing GuestNetwork
+	// case 1 is after enable GuestNetwork, case 2 is after disable GuestNetwork
+	if('<% nvram_get("wl_unit"); %>' == "-1" || '<% nvram_get("wl_subunit"); %>' != "-1") {
+		change_wl_unit();
+	}
+})();
+</script>
 </body>
 </html>

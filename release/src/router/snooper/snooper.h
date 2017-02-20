@@ -21,15 +21,20 @@
 #include <sys/time.h>
 #include <sys/syslog.h>
 #include <netinet/in.h>
+#include <netinet/ether.h>
 
 #include "queue.h"
 
 /* snooper */
+extern unsigned char ifhwaddr[ETHER_ADDR_LEN];
+extern in_addr_t ifaddr;
+int listen_query(in_addr_t group, int timeout);
 int send_query(in_addr_t group);
+int switch_probe(void);
 
 /* igmp */
 int accept_igmp(unsigned char *packet, int size, unsigned char *shost, int loopback);
-int build_query(unsigned char *packet, int size, in_addr_t group, in_addr_t dst, unsigned char *dhost);
+int build_query(unsigned char *packet, int size, in_addr_t group, in_addr_t dst);
 int init_querier(int enabled);
 
 /* timer */
@@ -110,6 +115,7 @@ int purge_cache(void);
     ARG_PORT((a), 1), ARG_PORT((a), 2), ARG_PORT((a), 3), ARG_PORT((a), 4), \
     ARG_PORT((a), 5), ARG_PORT((a), 6), ARG_PORT((a), 7), ARG_PORT((a), 8)
 
+int open_socket(int domain, int type, int protocol);
 void ether_mtoe(in_addr_t addr, unsigned char *ea);
 unsigned int ether_hash(unsigned char *ea);
 int logger(int level, char *fmt, ...);
@@ -124,9 +130,11 @@ int logger(int level, char *fmt, ...);
 /* switch */
 #define PORT_MAX 8
 
-int switch_init(char *ifname);
+int switch_init(char *ifname, int vid, int cputrap);
 void switch_done(void);
 int switch_get_port(unsigned char *haddr);
 int switch_add_portmap(unsigned char *maddr, int portmap);
 int switch_del_portmap(unsigned char *maddr, int portmap);
 int switch_clr_portmap(unsigned char *maddr);
+int switch_set_floodmap(unsigned char *raddr, int portmap);
+int switch_clr_floodmap(unsigned char *raddr);
