@@ -1107,8 +1107,10 @@ void start_vpnserver(int serverNum)
 		//sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
 		//if ( !ovpn_crt_is_empty(&buffer[0]) )
 			fprintf(fp, "ca ca.crt\n");
-		//sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
-		//if ( !ovpn_crt_is_empty(&buffer[0]) )
+		sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
+		if ( !strncmp(get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)), "none", 4))
+			fprintf(fp, "dh none\n");
+		else
 			fprintf(fp, "dh dh.pem\n");
 		//sprintf(&buffer[0], "vpn_crt_server%d_crt", serverNum);
 		//if ( !ovpn_crt_is_empty(&buffer[0]) )
@@ -1363,15 +1365,17 @@ void start_vpnserver(int serverNum)
 			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
 			fclose(fp);
 			valid = 1;	// Tentative state
-
-			// Validate DH strength
-			sprintf(&buffer[0], "/usr/sbin/openssl dhparam -in /etc/openvpn/server%d/dh.pem -text | grep \"DH Parameters:\" > /tmp/output.txt", serverNum);
-			system(&buffer[0]);
-			if (f_read_string("/tmp/output.txt", &buffer[0], 64) > 0) {
-				if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
-					if (i < 1024) {
-						logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
-						valid = 0;      // Not valid after all, must regenerate
+			if (strncmp(buffer2, "none", 4))	// If not set to "none" then validate it
+			{
+				// Validate DH strength
+				sprintf(&buffer[0], "/usr/sbin/openssl dhparam -in /etc/openvpn/server%d/dh.pem -text | grep \"DH Parameters:\" > /tmp/output.txt", serverNum);
+				system(&buffer[0]);
+				if (f_read_string("/tmp/output.txt", &buffer[0], 64) > 0) {
+					if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
+						if (i < 1024) {
+							logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
+							valid = 0;      // Not valid after all, must regenerate
+						}
 					}
 				}
 			}

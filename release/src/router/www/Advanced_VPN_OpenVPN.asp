@@ -1177,7 +1177,7 @@ function defaultSettings() {
 									</td>
 								</tr>
 								<tr id="edit_tls4">
-									<th><#vpn_openvpn_KC_DH#></th>
+									<th><#vpn_openvpn_KC_DH#><br>(enter "none" to disable)</th>
 									<td>
 										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server_dh" name="edit_vpn_crt_server_dh" cols="65" maxlength="3999"></textarea>
 									</td>

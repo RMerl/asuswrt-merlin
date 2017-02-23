@@ -1840,10 +1840,10 @@ char *get_parsed_crt(const char *name, char *buf, size_t buf_len)
 		fp = fopen(tmpBuf, "r");
 		if(fp) {
 			while(fgets(buf, buf_len, fp)) {
-				if(!strncmp(buf, "-----BEGIN", 10))
+				if(!strncmp(buf, "-----BEGIN", 10) || !strncmp(buf, "none", 4))
 					break;
 			}
-			if(feof(fp)) {
+			if(feof(fp) &&  strncmp(buf, "none", 4)) {
 				fclose(fp);
 				memset(buf, 0, buf_len);
 				return buf;
