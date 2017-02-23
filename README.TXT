@@ -24,7 +24,7 @@ Installation:
       libexpat1-dev libssl-dev cvs gperf unzip python libxml-parser-perl gcc-multilib \
       gconf-editor libxml2-dev g++-4.7 g++-multilib gitk libncurses5 mtd-utils \
       libncurses5-dev libstdc++6-4.7-dev libvorbis-dev g++-4.7-multilib git autopoint \
-      autogen sed build-essential intltool libelf1:i386 libglib2.0-dev
+      autogen sed build-essential intltool libelf1:i386 libglib2.0-dev xutils-dev
 
    If your build environment is 64-bit, then also install the following packages:
 
