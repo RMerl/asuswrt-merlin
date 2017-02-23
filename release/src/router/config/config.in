@@ -172,8 +172,8 @@ config RTCONFIG_OPENVPN
 	depends on RTCONFIG_LZO
 	default n
 
-config RTCONFIG_IPSEC
-	bool "IPsec"
+config RTCONFIG_IPSECMOD
+	bool "IPsec Modules (RM)"
 	default n
 
 config RTCONFIG_IPSEC

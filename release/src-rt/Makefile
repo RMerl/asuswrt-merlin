@@ -1233,12 +1233,12 @@ define RouterOptions
 		sed -i "/RTCONFIG_VPNC/d" $(1); \
 		echo "RTCONFIG_VPNC=y" >>$(1); \
 	fi; \
-	if [ "$(IPSEC)" = "y" ]; then \
-		sed -i "/RTCONFIG_IPSEC/d" $(1); \
-		echo "RTCONFIG_IPSEC=y" >>$(1); \
+	if [ "$(IPSECMOD)" = "y" ]; then \
+		sed -i "/RTCONFIG_IPSECMOD/d" $(1); \
+		echo "RTCONFIG_IPSECMOD=y" >>$(1); \
 	else \
-		sed -i "/RTCONFIG_IPSEC/d" $(1); \
-		echo "# RTCONFIG_IPSEC is not set" >>$(1); \
+		sed -i "/RTCONFIG_IPSECMOD/d" $(1); \
+		echo "# RTCONFIG_IPSECMOD is not set" >>$(1); \
 	fi; \
 	if [ "$(KYIVSTAR)" = "y" ]; then \
 		sed -i "/RTCONFIG_KYIVSTAR/d" $(1); \
