@@ -3,6 +3,15 @@ Asuswrt-Merlin Changelog
 
 380.66 beta (xx-xxx-2017)
    - NEW: Merged with GPL 380_7266.
+          Notable changes:
+             * Port forwards can select a specific source IP
+          Known issues:
+             * Some wifi clients such as wireless printers
+               have connectivity issues.  Try disabling
+               Airtime Fairness as a potential workaround.
+  - CHANGED: Allow disabling use of DH, by entering
+             "none" in the DH field for OpenVPN server config.
+
 
 
 380.65 (3-Feb-2017)
