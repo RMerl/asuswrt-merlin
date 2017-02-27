@@ -5984,33 +5984,7 @@ int init_nvram2(void)
 	nvram_set("vpn_server1_errno", "0");
 	nvram_set("vpn_server2_errno", "0");
 	nvram_set("vpn_upload_state", "");
-
-	if(!nvram_is_empty("vpn_server_clientlist")) {
-		nvram_set("vpn_serverx_clientlist", nvram_safe_get("vpn_server_clientlist"));
-		nvram_unset("vpn_server_clientlist");
-	}
 #endif
-
-/* migrate dhcpc_options to wanxxx_clientid */
-        char *oldclientid = nvram_safe_get("wan0_dhcpc_options");
-	if (*oldclientid) {
-		nvram_set("wan0_clientid", oldclientid);
-		nvram_unset("wan0_dhcpc_options");
-	}
-
-	oldclientid = nvram_safe_get("wan1_dhcpc_options");
-	if (*oldclientid) {
-		nvram_set("wan1_clientid", oldclientid);
-		nvram_unset("wan1_dhcpc_options");
-	}
-
-/* Migrate to Asus's new tri-state sshd_enable to our dual nvram setup */
-	if (nvram_match("sshd_enable", "1")) {
-		if (nvram_match("sshd_wan", "0"))
-			nvram_set("sshd_enable", "2");  // LAN-only
-		// else stay WAN+LAN
-		nvram_unset("sshd_wan");
-	}
 
 	if (restore_defaults_g)
 	{
@@ -6022,9 +5996,9 @@ int init_nvram2(void)
 		sprintf(friendly_name, "%s-%02X%02X", "BRT-AC828", mac_binary[4], mac_binary[5]);
 		nvram_set("computer_name", friendly_name);
 #endif
-	}
 
-	nvram_commit();
+		nvram_commit();
+	}
 
 #ifdef RTCONFIG_WPS_ALLLED_BTN
 	nvram_set_int("AllLED", 1);
@@ -6786,6 +6760,7 @@ Alarm_Led(void) {
 }
 void config_format_compatibility_handler(void)
 {
+	adjust_merlin_config();
 	//adjust_url_urlelist(); /* For based on 382, new config format */
 	adjust_ddns_config();
 }
