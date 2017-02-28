@@ -22,7 +22,7 @@
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script>
-var wollist_array = '<% nvram_get("wollist"); %>';
+var wollist_array = "<% nvram_get("wollist"); %>";
 var manually_wol_list_array = new Array();
 Object.prototype.getKey = function(value) {
 	for(var key in this) {
