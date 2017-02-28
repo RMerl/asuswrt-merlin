@@ -477,6 +477,7 @@ extern void fa_nvram_adjust();
 #endif
 
 // format.c
+extern void adjust_merlin_config();
 extern void adjust_url_urlelist();
 extern void adjust_ddns_config();
 
