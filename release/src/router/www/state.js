@@ -347,6 +347,7 @@ var dnsfilter_support = isSupport("dnsfilter");
 var manualstb_support = isSupport("manual_stb");
 var wps_multiband_support = isSupport("wps_multiband");
 var modem_support = isSupport("modem"); 
+var nomodem_support = isSupport("nomodem");
 var IPv6_support = isSupport("ipv6"); 
 var IPv6_Passthrough_support = isSupport("ipv6pt"); 
 var ParentalCtrl2_support = isSupport("PARENTAL2");
@@ -368,7 +369,8 @@ if(based_modelid == "RT-N600")		//UK , remove 80MHz(11ac) for MODELDEP: RT-N600
 	band5g_11ac_support = false;
 var optimizeXbox_support = isSupport("optimize_xbox");
 var spectrum_support = isSupport("spectrum");
-var mediareview_support = isSupport("wlopmode");var userRSSI_support = isSupport("user_low_rssi");
+var mediareview_support = isSupport("wlopmode");
+var userRSSI_support = isSupport("user_low_rssi");
 var timemachine_support = isSupport("timemachine");
 var kyivstar_support = isSupport("kyivstar");
 var email_support = isSupport("email");
