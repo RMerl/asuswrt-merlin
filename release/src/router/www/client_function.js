@@ -3076,7 +3076,7 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 				}
 				break;
 			case "name" :
-				attribute_value = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+				attribute_value = (clientObj.nickName == "") ? clientObj.name.replace(/'/g, "\\'") : clientObj.nickName.replace(/'/g, "\\'");
 				break;
 		}
 		return attribute_value;
