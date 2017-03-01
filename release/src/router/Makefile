@@ -3947,12 +3947,13 @@ curl: curl/Makefile
 
 curl/Makefile: curl/configure
 	@cd curl && $(CONFIGURE) CC=$(CC) \
+		CFLAGS="-Os -Wall -ffunction-sections -fdata-sections" \
 		--prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
-		--enable-http --with-ssl=$(TOP)/openssl/ssl LDFLAGS="-ldl" \
+		--enable-http --with-ssl=$(TOP)/openssl/ssl \
 		$(if $(RTCONFIG_IPV6),--enable-ipv6) \
 		--disable-gopher --disable-dict --disable-telnet \
-		CFLAGS='$(CFLAGS) -I$(TOP)/openssl/include' \
-		LDFLAGS='$(LDFLAGS) -L$(TOP)/openssl -lcrypto -lssl' \
+		CPPFLAGS='-I$(TOP)/openssl/include' \
+		LDFLAGS='$(LDFLAGS) -L$(TOP)/openssl' LIBS='-lcrypto -lssl -ldl' \
 		--with-ca-bundle=/rom/ca-bundle.crt
 
 curl-install: curl
