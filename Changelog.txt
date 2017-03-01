@@ -9,9 +9,15 @@ Asuswrt-Merlin Changelog
              * Some wifi clients such as wireless printers
                have connectivity issues.  Try disabling
                Airtime Fairness as a potential workaround.
+
   - CHANGED: Allow disabling use of DH, by entering
              "none" in the DH field for OpenVPN server config.
-
+  - FIXED: WOL page fails to load if adding a client with a
+           quote in its name.
+  - FIXED: Couldn't add a DHCP reservation client if its name
+           contained a quote.
+  - FIXED: New outbound connections weren't logged if firewall
+           logging was enabled.
 
 
 380.65 (3-Feb-2017)
