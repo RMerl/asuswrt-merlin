@@ -3275,7 +3275,7 @@ TRACE_PT("write url filter\n");
 	}
 #endif
 
-	fprintf(fp, "-A FORWARD -i %s -j ACCEPT\n", lan_if);
+	fprintf(fp, "-A FORWARD -i %s -j %s\n", lan_if, logaccept);
 
 #ifdef RTCONFIG_TOR
 	 // for TOR users, block anything that cannot be routed through the TOR network (i.e. UDP and ICMP ping)
@@ -4367,7 +4367,7 @@ TRACE_PT("write url filter\n");
 	}
 #endif
 
-	fprintf(fp, "-A FORWARD -i %s -j ACCEPT\n", lan_if);
+	fprintf(fp, "-A FORWARD -i %s -j %s\n", lan_if, logaccept);
 
 #ifdef RTCONFIG_TOR
 	 // for TOR users, block anything that cannot be routed through the TOR network (i.e. UDP and ICMP ping)
