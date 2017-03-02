@@ -407,11 +407,24 @@ add_option (char *p[], int line, int unit)
 		sprintf(buf, "vpn_client%d_addr", unit);
 		nvram_set(buf, p[1]);
 
-		sprintf(buf, "vpn_client%d_port", unit);
 		if(p[2])
+		{
+			sprintf(buf, "vpn_client%d_port", unit);
 			nvram_set(buf, p[2]);
-		else
-			nvram_set(buf, "1194");
+		}
+		if(p[3])
+		{
+			sprintf(buf, "vpn_client%d_proto", unit);
+			if(!strncmp(p[3], "tcp", 3))
+				nvram_set(buf, "tcp-client");
+			else if(!strncmp(p[1], "udp", 3))
+				nvram_set(buf, "udp");
+		}
+	}
+	else if  (streq (p[0], "port") && p[1])
+	{
+		sprintf(buf, "vpn_client%d_port", unit);
+		nvram_set(buf, p[1]);
 	}
 	else if (streq (p[0], "resolv-retry") && p[1])
 	{
