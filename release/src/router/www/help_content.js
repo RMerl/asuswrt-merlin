@@ -336,5 +336,6 @@ helpcontent[50] = new Array("",
 				"Disabled: Actively block the port used by the protocol<br><br>Enabled: Allow NAT traffic through the protocol's port<br><br>Enabled+NAT Helper: Allow NAT traffic, and use a Netfilter module to help handle NAT forwarding for that protocol's traffic",
 				"This feature tells the router to regularly check for the availability of a new firmware version and to notify you if there is one available.  You can manually initiate that check from the Firmware Upgrade page.  You must still manually download and update your router afterward.",
 				"OpenVPN can automatically negotiate the cipher based on a list.  Requires OpenVPN 2.4.  For older remote client/servers, disable it, or use Enabled with Fallback mode, which will use the legacy cipher parameter when connecting to older remotes.",
-				"MiniDLNA can offer a web page showing the number of indexed media files and a list of DLNA clients.  Default address is http://router.asus.com:8200/");
-// Last: 50,17
+				"MiniDLNA can offer a web page showing the number of indexed media files and a list of DLNA clients.  Default address is http://router.asus.com:8200/",
+				"Wanduck sends DNS queries every few seconds to check for the WAN state.  You can disable this behaviour here.");
+// Last: 50,18
