@@ -195,43 +195,6 @@ int ipt_addr_compact(const char *s, int af, int strict)
 	return (r & af);
 }
 
-// address_checker function was stolen from  qos.c
-#define TYPE_IP 0
-#define TYPE_MAC 1
-#define TYPE_IPRANGE 2
-static void address_checker(int *addr_type, char *addr_old, char *addr_new, int len)
-{
-	char *second, *last_dot;
-	int len_to_minus, len_to_dot;
-
-	second = strchr(addr_old, '-');
-	if (second != NULL)
-	{
-		*addr_type = TYPE_IPRANGE;
-		if (strchr(second+1, '.') != NULL){
-			// long notation
-			strncpy(addr_new, addr_old, len);
-		}
-		else{
-			// short notation
-			last_dot = strrchr(addr_old, '.');
-			len_to_minus = second - addr_old;
-			len_to_dot = last_dot - addr_old;
-			strncpy(addr_new, addr_old, len_to_minus+1);
-			strncpy(addr_new + len_to_minus + 1, addr_new, len_to_dot+1);
-			strcpy(addr_new + len_to_minus + len_to_dot + 2, second+1);
-		}
-	}
-	else
-	{
-		if (strlen(addr_old) == 17)
-			*addr_type = TYPE_MAC;
-		else
-			*addr_type = TYPE_IP;
-		strncpy(addr_new, addr_old, len);
-	}
-}
-
 /*
 void nvram_unsets(char *name, int count)
 {
@@ -1386,6 +1349,40 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	//if (nvram_match("misc_natlog_x", "1"))
 	// 	fprintf(fp, "-A PREROUTING -i %s -j LOG --log-prefix ALERT --log-level 4\n", wan_if);
 
+#ifdef RTCONFIG_TOR
+	 if(nvram_match("Tor_enable", "1")){
+		nv = strdup(nvram_safe_get("Tor_redir_list"));
+		if (strlen(nv) == 0) {
+		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
+		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -j REDIRECT --to-ports 123\n", lan_if); // requires an NTP server
+		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
+		}
+		else{
+			while ((b = strsep(&nv, "<")) != NULL) {
+				if (strlen(b)==0) continue;
+				memset(addr_new, 0, sizeof(addr_new));
+				addr_type = addr_type_parse(b, addr_new, sizeof(addr_new));
+				if (addr_type == TYPE_IP){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -s %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -s %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -s %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
+				else if (addr_type == TYPE_MAC){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m mac --mac-source %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
+				else if (addr_type == TYPE_IPRANGE){
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m iprange --src-range %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
+				}
+			}
+			free(nv);
+		}
+	}
+#endif
+
 #ifdef RTCONFIG_AUTOCOVER_SIP
 	if(nvram_get_int("atcover_sip") == 1 && !strcmp(lan_ip, nvram_default_get("lan_ipaddr")) && strcmp(lan_ip, nvram_safe_get("atcover_sip_ip"))){
 		int dst_port;
@@ -1416,40 +1413,6 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		fprintf(fp, "-I PREROUTING 1 --dst 192.168.182.0/24 -p tcp --dport 80 -j REDIRECT --to-ports 3990\n");     
 	 	fprintf(fp, "-I PREROUTING 2 --src 192.168.182.0/24 --dst %s -p tcp --dport 80 -j REDIRECT --to-ports 8083\n", lan_ip);     
 //	 	fprintf(fp, "-I PREROUTING 2 --src 192.168.182.0/24 --dst 192.168.182.1 -p tcp --dport 50000 -j DNAT --to %s:8082\n", lan_ip);     
-	}
-#endif
-
-#ifdef RTCONFIG_TOR
-	 if(nvram_match("Tor_enable", "1")){
-		nv = strdup(nvram_safe_get("Tor_redir_list"));
-		if (strlen(nv) == 0) {
-		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
-		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -j REDIRECT --to-ports 123\n", lan_if); // requires an NTP server
-		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
-		}
-		else{
-			while ((b = strsep(&nv, "<")) != NULL) {
-				if (strlen(b)==0) continue;
-				memset(addr_new, 0, sizeof(addr_new));
-				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
-				if (addr_type == TYPE_IP){
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -s %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -s %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
-					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -s %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
-				}
-				else if (addr_type == TYPE_MAC){
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m mac --mac-source %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
-					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
-				}
-				else if (addr_type == TYPE_IPRANGE){
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
-					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -m iprange --src-range %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
-					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m iprange --src-range %s -j REDIRECT --to-ports %s\n", lan_if, lan_class, addr_new, nvram_safe_get("Tor_transport"));
-				}
-			}
-			free(nv);
-		}
 	}
 #endif
 
@@ -1636,22 +1599,6 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		//if (nvram_match("misc_natlog_x", "1"))
 		//	fprintf(fp, "-A PREROUTING -i %s -j LOG --log-prefix ALERT --log-level 4\n", wan_if);
 
-		/* VSERVER chain */
-		if(inet_addr_(wan_ip))
-			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wan_ip);
-
-		// wanx_if != wan_if means DHCP+PPP exist?
-		if (dualwan_unit__nonusbif(unit) && strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
-			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
-
-#ifdef RTCONFIG_CAPTIVE_PORTAL
-		if(nvram_match("chilli_enable", "1")){
-			fprintf(fp, "-I PREROUTING 1 --dst 192.168.182.0/24 -p tcp --dport 80 -j REDIRECT --to-ports 3990\n");     
-	 		fprintf(fp, "-I PREROUTING 2 --src 192.168.182.0/24 --dst %s -p tcp --dport 80 -j REDIRECT --to-ports 8083\n", lan_ip);     
-//	 		fprintf(fp, "-I PREROUTING 2 --src 192.168.182.0/24 --dst 192.168.182.1 -p tcp --dport 50000 -j DNAT --to %s:8082\n", lan_ip);     
-		}
-#endif
-
 #ifdef RTCONFIG_TOR
 	 if(nvram_match("Tor_enable", "1")){
 		nv = strdup(nvram_safe_get("Tor_redir_list"));
@@ -1664,7 +1611,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			while ((b = strsep(&nv, "<")) != NULL) {
 				if (strlen(b)==0) continue;
 				memset(addr_new, 0, sizeof(addr_new));
-				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
+				addr_type = addr_type_parse(b, addr_new, sizeof(addr_new));
 				if (addr_type == TYPE_IP){
 					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -s %s -j REDIRECT --to-ports %s\n", lan_if, addr_new, nvram_safe_get("Tor_dnsport"));
 					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 123 -s %s -j REDIRECT --to-ports 123\n", lan_if, addr_new); // requires an NTP server
@@ -1684,6 +1631,22 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			free(nv);
 		}
 	}
+#endif
+
+		/* VSERVER chain */
+		if(inet_addr_(wan_ip))
+			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wan_ip);
+
+		// wanx_if != wan_if means DHCP+PPP exist?
+		if (dualwan_unit__nonusbif(unit) && strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
+			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
+
+#ifdef RTCONFIG_CAPTIVE_PORTAL
+		if(nvram_match("chilli_enable", "1")){
+			fprintf(fp, "-I PREROUTING 1 --dst 192.168.182.0/24 -p tcp --dport 80 -j REDIRECT --to-ports 3990\n");     
+	 		fprintf(fp, "-I PREROUTING 2 --src 192.168.182.0/24 --dst %s -p tcp --dport 80 -j REDIRECT --to-ports 8083\n", lan_ip);     
+//	 		fprintf(fp, "-I PREROUTING 2 --src 192.168.182.0/24 --dst 192.168.182.1 -p tcp --dport 50000 -j DNAT --to %s:8082\n", lan_ip);     
+		}
 #endif
 	}
 	if (!fp) {
@@ -3289,7 +3252,7 @@ TRACE_PT("write url filter\n");
 			while ((b = strsep(&nv, "<")) != NULL) {
 				if (strlen(b)==0) continue;
 				memset(addr_new, 0, sizeof(addr_new));
-				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
+				addr_type = addr_type_parse(b, addr_new, sizeof(addr_new));
 				if (addr_type == TYPE_IP){
 					fprintf(fp, "-I FORWARD -i %s -s %s -j DROP\n", lan_if, addr_new);
 				}
@@ -4381,7 +4344,7 @@ TRACE_PT("write url filter\n");
 			while ((b = strsep(&nv, "<")) != NULL) {
 				if (strlen(b)==0) continue;
 				memset(addr_new, 0, sizeof(addr_new));
-				address_checker(&addr_type, b, addr_new, sizeof(addr_new));
+				addr_type = addr_type_parse(b, addr_new, sizeof(addr_new));
 				if (addr_type == TYPE_IP){
 					fprintf(fp, "-I FORWARD -i %s -s %s -j DROP\n", lan_if, addr_new);
 				}
