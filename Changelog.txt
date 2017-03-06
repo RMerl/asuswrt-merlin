@@ -10,8 +10,16 @@ Asuswrt-Merlin Changelog
                have connectivity issues.  Try disabling
                Airtime Fairness as a potential workaround.
 
+  - NEW: Option to disable Wanduck's constant DNS probing
+         for WAN state (Tools -> Other Settings)
   - CHANGED: Allow disabling use of DH, by entering
              "none" in the DH field for OpenVPN server config.
+  - CHANGED: Ovpn importer now recognizes the "port" parameter.
+  - CHANGED: Ovpn importer now support a third argument for
+             the "remote" parameter, allowing to define the
+             protocol.
+  - CHANGED: Moved Tor redirection rules at the top of the chain
+             to reduce potential risks of leaks (patch by blackfuel)
   - FIXED: WOL page fails to load if adding a client with a
            quote in its name.
   - FIXED: Couldn't add a DHCP reservation client if its name
