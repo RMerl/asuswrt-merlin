@@ -705,9 +705,9 @@ function done_validating(action){
                 <tbody>
                 <tr bgcolor="#4D595D">
                 <td valign="top">
-                	<div>&nbsp;</div>
-                	<div class="formfonttitle">Tools - Other Settings</div>
-                	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+			<div>&nbsp;</div>
+			<div class="formfonttitle">Tools - Other Settings</div>
+			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
@@ -717,14 +717,14 @@ function done_validating(action){
 					</thead>
 					<tr>
 						<th>Traffic history location</th>
-			        	<td>
-						<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
+						<td>
+							<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
 								<option value="0">RAM (Default)</option>
 								<option value="1">Custom location</option>
 								<option value="2">NVRAM</option>
 							</select>
 							<span id="invalid_location" style="display:none;" class="formfontdesc">Cannot use NVRAM if IPTraffic is enabled!</span>
-			   			</td>
+						</td>
 					</tr>
 
 					<tr id="rstats_stime_tr">
@@ -732,11 +732,11 @@ function done_validating(action){
 						<td>
 							<select name="rstats_stime" class="input_option" >
 								<option value="1" <% nvram_match("rstats_stime", "1","selected"); %>>Every 1 hour</option>
-			           				<option value="6" <% nvram_match("rstats_stime", "6","selected"); %>>Every 6 hours</option>
-			           				<option value="12" <% nvram_match("rstats_stime", "12","selected"); %>>Every 12 hours</option>
-			           				<option value="24" <% nvram_match("rstats_stime", "24","selected"); %>>Every 1 day</option>
-			           				<option value="72" <% nvram_match("rstats_stime", "72","selected"); %>>Every 3 days</option>
-			           				<option value="168" <% nvram_match("rstats_stime", "168","selected"); %>>Every 1 week</option>
+								<option value="6" <% nvram_match("rstats_stime", "6","selected"); %>>Every 6 hours</option>
+								<option value="12" <% nvram_match("rstats_stime", "12","selected"); %>>Every 12 hours</option>
+								<option value="24" <% nvram_match("rstats_stime", "24","selected"); %>>Every 1 day</option>
+								<option value="72" <% nvram_match("rstats_stime", "72","selected"); %>>Every 3 days</option>
+								<option value="168" <% nvram_match("rstats_stime", "168","selected"); %>>Every 1 week</option>
 							</select>
 						</td>
 					</tr>
@@ -746,20 +746,20 @@ function done_validating(action){
 						<button id="pathPicker" onclick="get_disk_tree(); return false;">Select...</button></td>
 					</tr>
 					<tr id="rstats_new_tr">
-		        			<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
+						<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
 						<td>
-       		       					<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
-	        		        		<input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
 					<tr>
-				        	<th>Starting day of monthly cycle</th>
-			        		<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
-			        	</tr>
+						<th>Starting day of monthly cycle</th>
+						<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
+					</tr>
 					<tr id="cstats_enable_tr">
-			        		<th>Enable IPTraffic (per IP monitoring)</i></th>
-				        	<td>
-	       		       				<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_Yes#>
+						<th>Enable IPTraffic (per IP monitoring)</i></th>
+						<td>
+							<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_Yes#>
 							<input type="radio" name="cstats_enable" class="input" value="0" <% nvram_match_x("", "cstats_enable", "0", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_No#>
 						</td>
 					</tr>
