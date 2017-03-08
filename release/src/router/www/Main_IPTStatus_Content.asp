@@ -93,11 +93,11 @@ function show_vserver() {
 			line = vserverarray[i];
 			code += '<tr>';
 			code += '<td>' + line[0] + '</td>';
-			code += '<td>' + line[1] + '</td>';
 			code += '<td>' + line[2] + '</td>';
 			code += '<td>' + line[3] + '</td>';
 			code += '<td>' + line[4] + '</td>';
 			code += '<td>' + line[5] + '</td>';
+			code += '<td>' + line[6] + '</td>';
 			code += '</tr>';
 		}
 	} else {
