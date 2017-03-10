@@ -1349,7 +1349,7 @@ asus_token_t* search_token_in_list(char* token, asus_token_t **prev)
 			cp = strtok(ptr->useragent, "-");
 
 			if(strcmp( cp, "asusrouter") != 0){
-				found = 1;
+				found = 0;
 				break;
 			}
         	}
