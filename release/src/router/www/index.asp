@@ -2125,13 +2125,110 @@ function closeClientDetailView() {
 			<td colspan="3">
 				<div id="custom_image" style="display:none;">
 					<table border="1" align="center" cellpadding="4" cellspacing="0" style="width:100%">
+						<!-- Generic -->
+						<tr>
+							<td>
+								<div class="type34" onclick="select_image(this.className);" title="PC"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type40" onclick="select_image(this.className);" title="Notebook"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type33" onclick="select_image(this.className);" title="Phone"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type41" onclick="select_image(this.className);" title="Tablet"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type7" onclick="select_image(this.className);" title="Game Console"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type18" onclick="select_image(this.className);" title="Printer"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type26" onclick="select_image(this.className);" title="Scanner"></div><!--untranslated-->
+							</td>
+						</tr>
+						<!-- Windows -->
 						<tr>
 							<td>
 								<div class="type1" onclick="select_image(this.className);" title="Windows device"></div><!--untranslated-->
 							</td>
 							<td>
+								<div class="type42" onclick="select_image(this.className);" title="Windows Notebook"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type19" onclick="select_image(this.className);" title="Windows Phone"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type43" onclick="select_image(this.className);" title="Windows Tablet"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type30" onclick="select_image(this.className);" title="Windows"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type25" onclick="select_image(this.className);" title="Kindle"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type23" onclick="select_image(this.className);" title="Smart TV"></div><!--untranslated-->
+							</td>
+						</tr>
+						<!-- Mac -->
+						<tr>
+							<td>
+								<div class="type14" onclick="select_image(this.className);" title="iMac"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type6" onclick="select_image(this.className);" title="Macbook"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type10" onclick="select_image(this.className);" title="iPhone"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type21" onclick="select_image(this.className);" title="iPad"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type32" onclick="select_image(this.className);" title="Mac OS"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type11" onclick="select_image(this.className);" title="Apple TV"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type45" onclick="select_image(this.className);" title="Smart Watch"></div><!--untranslated-->
+							</td>
+						</tr>
+						<!-- Linux -->
+						<tr>
+							<td>
+								<div class="type22" onclick="select_image(this.className);" title="Linux Device"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type44" onclick="select_image(this.className);" title="Linux Notebook"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type9" onclick="select_image(this.className);" title="Android Phone"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type20" onclick="select_image(this.className);" title="Android Tablet"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type31" onclick="select_image(this.className);" title="Android"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type47" onclick="select_image(this.className);" title="Linux"></div><!--untranslated-->
+							</td>
+							<td>
+								<div class="type27" onclick="select_image(this.className);" title="Chromecast"></div><!--untranslated-->
+							</td>
+						</tr>
+						<!-- Other -->
+						<tr>
+							<td>
 								<div class="type2" onclick="select_image(this.className);" title="Router"></div><!--untranslated-->
 							</td>
+							<td>
+								<div class="type24" onclick="select_image(this.className);" title="Repeater"></div><!--untranslated-->
+							</td>	
 							<td>
 								<div class="type4" onclick="select_image(this.className);" title="NAS/Server"></div><!--untranslated-->
 							</td>
@@ -2139,79 +2236,10 @@ function closeClientDetailView() {
 								<div class="type5" onclick="select_image(this.className);" title="IP Cam"></div><!--untranslated-->
 							</td>
 							<td>
-								<div class="type6" onclick="select_image(this.className);" title="Macbook"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type7" onclick="select_image(this.className);" title="Game Console"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type9" onclick="select_image(this.className);" title="Android Phone"></div><!--untranslated-->
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<div class="type10" onclick="select_image(this.className);" title="iPhone"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type11" onclick="select_image(this.className);" title="Apple TV"></div><!--untranslated-->
-							</td>
-							<td>
 								<div class="type12" onclick="select_image(this.className);" title="Set-top Box"></div><!--untranslated-->
 							</td>
 							<td>
-								<div class="type14" onclick="select_image(this.className);" title="iMac"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type15" onclick="select_image(this.className);" title="ROG"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type18" onclick="select_image(this.className);" title="Printer"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type19" onclick="select_image(this.className);" title="Windows Phone"></div><!--untranslated-->
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<div class="type20" onclick="select_image(this.className);" title="Android Tablet"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type21" onclick="select_image(this.className);" title="iPad"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type22" onclick="select_image(this.className);" title="Linux Device"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type23" onclick="select_image(this.className);" title="Smart TV"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type24" onclick="select_image(this.className);" title="Repeater"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type25" onclick="select_image(this.className);" title="Kindle"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type26" onclick="select_image(this.className);" title="Scanner"></div><!--untranslated-->
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<div class="type27" onclick="select_image(this.className);" title="Chromecast"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type28" onclick="select_image(this.className);" title="ASUS smartphone"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type29" onclick="select_image(this.className);" title="ASUS Pad"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type30" onclick="select_image(this.className);" title="Windows"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type31" onclick="select_image(this.className);" title="Android"></div><!--untranslated-->
-							</td>
-							<td>
-								<div class="type32" onclick="select_image(this.className);" title="Mac OS"></div><!--untranslated-->
+								<div class="type46" onclick="select_image(this.className);" title="Wireless Speakers"></div><!--untranslated-->
 							</td>
 							<td>
 								<div id="divUserIcon" class="client_upload_div" style="display:none;">+
