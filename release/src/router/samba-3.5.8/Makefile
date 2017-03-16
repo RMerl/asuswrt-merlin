@@ -108,6 +108,8 @@ apps: .conf
 		--disable-krb5developer \
 		--disable-developer \
 		--disable-debug \
+		--disable-external-libtdb \
+		--disable-external-libtalloc \
 		--without-ads \
 		--without-acl-support \
 		--without-ldap \
