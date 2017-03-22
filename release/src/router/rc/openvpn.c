@@ -10,6 +10,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+ #include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
 #include <time.h>
@@ -290,8 +291,10 @@ void start_vpnclient(int clientNum)
 	fprintf(fp, "route-up vpnrouting.sh\n");
 	fprintf(fp, "route-pre-down vpnrouting.sh\n");
 
-	nvi = nvram_get_int("vpn_loglevel");
-	if (nvi >= 0)
+	sprintf(&buffer[0], "vpn_client%d_verb", clientNum);
+	if( !nvram_is_empty(&buffer[0]) && (nvi = nvram_get_int(&buffer[0])) >= 0 )
+		fprintf(fp, "verb %d\n", nvi);
+	else if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
 		fprintf(fp, "verb %d\n", nvi);
 	else
 		fprintf(fp, "verb 3\n");
@@ -854,10 +857,8 @@ void start_vpnserver(int serverNum)
 	//protocol
 	sprintf(&buffer[0], "vpn_server%d_proto", serverNum);
 	fprintf(fp, "proto %s\n", nvram_safe_get(&buffer[0]));
-	if(!strcmp(nvram_safe_get(&buffer[0]), "udp")) {
-		fprintf(fp, "multihome\n");
+	if(!strcmp(nvram_safe_get(&buffer[0]), "udp"))
 		fprintf(fp_client, "proto %s\n", nvram_safe_get(&buffer[0]));
-	}
 	else
 		fprintf(fp_client, "proto tcp-client\n");
 
@@ -934,7 +935,10 @@ void start_vpnserver(int serverNum)
 	fprintf(fp, "keepalive 15 60\n");
 	fprintf(fp_client, "keepalive 15 60\n");
 
-	if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
+	sprintf(&buffer[0], "vpn_server%d_verb", serverNum);
+	if( !nvram_is_empty(&buffer[0]) && (nvi = nvram_get_int(&buffer[0])) >= 0 )
+		fprintf(fp, "verb %d\n", nvi);
+	else if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
 		fprintf(fp, "verb %d\n", nvi);
 	else
 		fprintf(fp, "verb 3\n");
