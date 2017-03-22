@@ -718,7 +718,7 @@ struct nvram_tuple router_defaults[] = {
 
 #if defined(RTCONFIG_BCMARM)
 #ifndef RTCONFIG_WIFILOGO
-	{ "wl_atf", "1", 0 }, 			/* Airtime Fairness */
+	{ "wl_atf", "0", 0 }, 			/* Airtime Fairness */
 #else
 	{ "wl_atf", "0", 0 },
 #endif
@@ -5058,7 +5058,7 @@ struct nvram_tuple router_defaults_override_type1[] = {
 	{ "wl_ebos_prr_transit", "-1", 0 },	/* pseudo-round robin transit limit */
 
 	/* Airtime fairness */
-	{ "wl_atf", "1", 0 },			/* ATF feature on */
+	{ "wl_atf", "0", 0 },			/* ATF feature off */
 #else
 	{ "wl_taf_enable", "0", 0 },		/* Disable TAF */
 #endif
