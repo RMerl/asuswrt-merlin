@@ -26,8 +26,16 @@ Asuswrt-Merlin Changelog
            contained a quote.
   - FIXED: New outbound connections weren't logged if firewall
            logging was enabled.
-  - FIXED: CVE-2017-6549 (workaround implemented while waiting
-           for a proper fix)
+
+
+380.65_2 (10-Mar-2017)
+   - FIXED: CVE-2017-6549 (implemented temporary workaround,
+            until a proper fix from Asus)
+   - FIXED: CVE-2017-6548 (backport from GPL 7266)
+   - FIXED: WOL page fails to load if adding a client with a
+            quote in its name.
+   - FIXED: Couldn't add a DHCP reservation client if its name
+            contained a quote.
 
 
 380.65 (3-Feb-2017)
