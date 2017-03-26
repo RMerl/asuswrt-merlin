@@ -9045,6 +9045,9 @@ returncmd(int argc UNUSED_PARAM, char **argv)
 
 /* Forward declarations for builtintab[] */
 static int breakcmd(int, char **) FAST_FUNC;
+#if ENABLE_FEATURE_EDITING
+static int clearhistorycmd(int, char **) FAST_FUNC;
+#endif
 static int dotcmd(int, char **) FAST_FUNC;
 static int evalcmd(int, char **) FAST_FUNC;
 static int exitcmd(int, char **) FAST_FUNC;
@@ -9109,6 +9112,9 @@ static const struct builtincmd builtintab[] = {
 	{ BUILTIN_SPEC_REG      "break"   , breakcmd   },
 	{ BUILTIN_REGULAR       "cd"      , cdcmd      },
 	{ BUILTIN_NOSPEC        "chdir"   , cdcmd      },
+#if ENABLE_FEATURE_EDITING
+	{ BUILTIN_NOSPEC        "clearhistory" , clearhistorycmd },
+#endif
 #if ENABLE_ASH_CMDCMD
 	{ BUILTIN_REGULAR       "command" , commandcmd },
 #endif
@@ -12612,6 +12618,17 @@ static int FAST_FUNC
 historycmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 {
 	show_history(line_input_state);
+	return EXIT_SUCCESS;
+}
+#endif
+
+#if ENABLE_FEATURE_EDITING
+static int FAST_FUNC
+clearhistorycmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
+{
+	free_line_input_t(line_input_state);
+	line_input_state = new_line_input_t(FOR_SHELL | WITH_PATH_LOOKUP);
+
 	return EXIT_SUCCESS;
 }
 #endif

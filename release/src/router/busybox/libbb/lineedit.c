@@ -1350,11 +1350,34 @@ void FAST_FUNC show_history(const line_input_t *st)
  * than configured MAX_HISTORY lines.
  */
 
-static void free_line_input_t(line_input_t *n)
+// the function OPENSSL_cleanse was stolen from OpenSSL because we need
+// a way to securely wipe the ash command history from memory without the 
+// compiler optimizing away the function
+static unsigned char cleanse_ctr = 0;
+static void OPENSSL_cleanse_busybox(void *ptr, size_t len)
+	{
+	unsigned char *p = ptr;
+	size_t loop = len, ctr = cleanse_ctr;
+	while(loop--)
+		{
+		*(p++) = (unsigned char)ctr;
+		ctr += (17 + ((size_t)p & 0xF));
+		}
+	p=memchr(ptr, (unsigned char)ctr, len);
+	if(p)
+		ctr += (63 + (size_t)p);
+	cleanse_ctr = (unsigned char)ctr;
+}
+
+void FAST_FUNC free_line_input_t(line_input_t *n)
 {
 	int i = n->cnt_history;
-	while (i > 0)
-		free(n->history[--i]);
+	while (i > 0) {
+		i--;
+		OPENSSL_cleanse_busybox(n->history[i], strlen(n->history[i]));
+		free(n->history[i]);
+	}
+	OPENSSL_cleanse_busybox(n, sizeof(*n));
 	free(n);
 }
 
