@@ -6640,6 +6640,8 @@ static void sysinit(void)
 		nvram_set("gmac3_enable", "0");
 	else
 		nvram_set("gmac3_enable", "1");
+#else
+	nvram_set("gmac3_enable", "0");
 #endif
 #endif
 
