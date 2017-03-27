@@ -26,6 +26,15 @@ Asuswrt-Merlin Changelog
            contained a quote.
   - FIXED: New outbound connections weren't logged if firewall
            logging was enabled.
+  - FIXED: OpenVPN server didn't always work properly in udp mode
+           when in a dual stack IPv4/IPv6 environment (backport
+           from GPL 382_9736)
+
+
+380.65_3 (xx-xxx-2017)
+   - FIXED: Various LAN/WAN issues with the RT-AC3200 due to
+            incorrect GMAC state checks (Asus bug) (patch
+            by john9527)
 
 
 380.65_2 (10-Mar-2017)
