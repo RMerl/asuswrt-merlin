@@ -12626,6 +12626,7 @@ historycmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 static int FAST_FUNC
 clearhistorycmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 {
+	remove(line_input_state->hist_file);
 	free_line_input_t(line_input_state);
 	line_input_state = new_line_input_t(FOR_SHELL | WITH_PATH_LOOKUP);
 
