@@ -613,7 +613,7 @@ char *get_lan_mac_name(void)
 {
 #ifdef RTCONFIG_BCMARM
 #ifdef RTCONFIG_GMAC3
-	if (!nvram_match("stop_gmac3", "1"))
+	if (nvram_get_int("gmac3_enable"))
 		return "et2macaddr";
 #endif
 	switch(get_model()) {
@@ -636,7 +636,7 @@ char *get_wan_mac_name(void)
 {
 #ifdef RTCONFIG_BCMARM
 #ifdef RTCONFIG_GMAC3
-	if (!nvram_match("stop_gmac3", "1"))
+        if (nvram_get_int("gmac3_enable"))
 		return "et2macaddr";
 #endif
 	switch(get_model()) {
