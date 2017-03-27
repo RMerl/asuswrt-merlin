@@ -8715,6 +8715,18 @@ static int FAST_FUNC builtin_help(char **argv UNUSED_PARAM)
 #if MAX_HISTORY && ENABLE_FEATURE_EDITING
 static int FAST_FUNC builtin_history(char **argv UNUSED_PARAM)
 {
+	unsigned opts;
+
+	opts = getopt32(argv, "!c");
+	if (opts == (unsigned)-1)
+		return EXIT_FAILURE;
+	if (opts & 1) {
+# if ENABLE_FEATURE_EDITING_SAVEHISTORY
+		remove(G.line_input_state->hist_file);
+# endif
+		clear_history(G.line_input_state);
+		return EXIT_SUCCESS;
+	}
 	show_history(G.line_input_state);
 	return EXIT_SUCCESS;
 }
