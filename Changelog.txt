@@ -1,6 +1,12 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.65_3 (xx-Mar-2017)
+   - FIXED: Various LAN/WAN issues with the RT-AC3200 due to
+            incorrect GMAC state checks (Asus bug) (patch
+            by john9527)
+
+
 380.65_2 (10-Mar-2017)
    - FIXED: CVE-2017-6549 (implemented temporary workaround,
             until a proper fix from Asus)
