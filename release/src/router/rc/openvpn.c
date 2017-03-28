@@ -1107,7 +1107,7 @@ void start_vpnserver(int serverNum)
 			}
 		}
 
-		fprintf(fp_client, "ns-cert-type server\n");
+		fprintf(fp_client, "remote-cert-tls server\n");
 		//sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
 		//if ( !ovpn_crt_is_empty(&buffer[0]) )
 			fprintf(fp, "ca ca.crt\n");
