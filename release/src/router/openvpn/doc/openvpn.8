@@ -327,7 +327,7 @@ http\-proxy 192.168.0.8 8080
 persist\-key
 persist\-tun
 pkcs12 client.p12
-ns\-cert\-type server
+remote\-cert\-tls server
 verb 3
 .in -4
 .ft
@@ -2712,6 +2712,34 @@ to the module initialization function.  Multiple
 plugin modules may be loaded into one OpenVPN
 process.
 
+The
+.B module-pathname
+argument can be just a filename or a filename with a relative
+or absolute path.  The format of the filename and path defines
+if the plug-in will be loaded from a default plug-in directory
+or outside this directory.
+
+.nf
+.ft 3
+.in +4
+.B \-\-plugin path\ \ \ \ \ \ \ \ Effective directory used
+====================================================
+ myplug.so            DEFAULT_DIR/myplug.so
+ subdir/myplug.so     DEFAULT_DIR/subdir/myplug.so
+ ./subdir/myplug.so   CWD/subdir/myplug.so
+ /usr/lib/my/plug.so  /usr/lib/my/plug.so
+.in -4
+.fi
+
+DEFAULT_DIR is replaced by the default plug-in directory,
+which is configured at the build time of OpenVPN.  CWD is the
+current directory where OpenVPN was started or the directory
+OpenVPN have swithed into via the
+.B\-\-cd
+option before the
+.B\-\-plugin
+option.
+
 For more information and examples on how to build OpenVPN
 plug-in modules, see the README file in the
 .B plugin
@@ -3969,9 +3997,8 @@ See management\-notes.txt in the OpenVPN distribution for a
 description of the OpenVPN challenge/response protocol.
 .\"*********************************************************
 .TP
-.B \-\-server\-poll\-timeout n
-.B \-\-connect\-timeout n
-when connecting to a remote server do not wait for more than
+\fB\-\-server\-poll\-timeout n\fR, \fB\-\-connect\-timeout n\fR
+When connecting to a remote server do not wait for more than
 .B n
 seconds waiting for a response before trying the next server.
 The default value is 120s. This timeout includes proxy and TCP
@@ -5314,7 +5341,11 @@ as X509_<depth>_<attribute>=<value>.  Multiple
 options can be defined to track multiple attributes.
 .\"*********************************************************
 .TP
-.B \-\-ns\-cert\-type client|server
+.B \-\-ns\-cert\-type client|server (DEPRECATED)
+This option is deprecated.  Use the more modern equivalent
+.B \-\-remote\-cert\-tls
+instead.  This option will be removed in OpenVPN 2.5.
+
 Require that peer certificate was signed with an explicit
 .B nsCertType
 designation of "client" or "server".
@@ -5341,15 +5372,25 @@ or
 .B \-\-tls\-verify.
 .\"*********************************************************
 .TP
-.B \-\-remote\-cert\-ku v...
+.B \-\-remote\-cert\-ku [v...]
 Require that peer certificate was signed with an explicit
 .B key usage.
 
-This is a useful security option for clients, to ensure that
-the host they connect to is a designated server.
+If present in the certificate, the keyUsage value is validated by the TLS
+library during the TLS handshake.  Specifying this option without arguments
+requires this extension to be present (so the TLS library will verify it).
 
-The key usage should be encoded in hex, more than one key
-usage can be specified.
+If the list
+.B v...
+is also supplied, the keyUsage field must have
+.B at least
+the same bits set as the bits in
+.B one of
+the values supplied in the list
+.B v...
+
+The key usage values in the list must be encoded in hex, e.g.
+"\-\-remote\-cert\-ku a0"
 .\"*********************************************************
 .TP
 .B \-\-remote\-cert\-eku oid
@@ -5370,24 +5411,21 @@ and
 .B extended key usage
 based on RFC3280 TLS rules.
 
-This is a useful security option for clients, to ensure that
-the host they connect to is a designated server.
+This is a useful security option for clients, to ensure that the host they
+connect to is a designated server.  Or the other way around; for a server to
+verify that only hosts with a client certificate can connect.
 
 The
 .B \-\-remote\-cert\-tls client
 option is equivalent to
 .B
-\-\-remote\-cert\-ku 80 08 88 \-\-remote\-cert\-eku "TLS Web Client Authentication"
-
-The key usage is digitalSignature and/or keyAgreement.
+\-\-remote\-cert\-ku \-\-remote\-cert\-eku "TLS Web Client Authentication"
 
 The
 .B \-\-remote\-cert\-tls server
 option is equivalent to
 .B
-\-\-remote\-cert\-ku a0 88 \-\-remote\-cert\-eku "TLS Web Server Authentication"
-
-The key usage is digitalSignature and ( keyEncipherment or keyAgreement ).
+\-\-remote\-cert\-ku \-\-remote\-cert\-eku "TLS Web Server Authentication"
 
 This is an important security precaution to protect against
 a man-in-the-middle attack where an authorized client
@@ -5819,9 +5857,7 @@ flag.
 .TP
 .B \-\-dhcp\-release
 Ask Windows to release the TAP adapter lease on shutdown.
-This option has the same caveats as
-.B \-\-dhcp\-renew
-above.
+This option has no effect now, as it is enabled by default starting with version 2.4.1.
 .\"*********************************************************
 .TP
 .B \-\-register\-dns

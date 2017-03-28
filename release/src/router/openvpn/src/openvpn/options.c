@@ -636,8 +636,8 @@ static const char usage_message[] =
     "--verify-x509-name name: Accept connections only from a host with X509 subject\n"
     "                  DN name. The remote host must also pass all other tests\n"
     "                  of verification.\n"
-    "--ns-cert-type t: Require that peer certificate was signed with an explicit\n"
-    "                  nsCertType designation t = 'client' | 'server'.\n"
+    "--ns-cert-type t: (DEPRECATED) Require that peer certificate was signed with \n"
+    "                  an explicit nsCertType designation t = 'client' | 'server'.\n"
     "--x509-track x  : Save peer X509 attribute x in environment for use by\n"
     "                  plugins and management interface.\n"
 #if defined(ENABLE_CRYPTO_OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x10001000
@@ -716,7 +716,6 @@ static const char usage_message[] =
     "--dhcp-renew       : Ask Windows to renew the TAP adapter lease on startup.\n"
     "--dhcp-pre-release : Ask Windows to release the previous TAP adapter lease on\n"
     "                       startup.\n"
-    "--dhcp-release     : Ask Windows to release the TAP adapter lease on shutdown.\n"
     "--register-dns  : Run ipconfig /flushdns and ipconfig /registerdns\n"
     "                  on connection initiation.\n"
     "--tap-sleep n   : Sleep for n seconds after TAP adapter open before\n"
@@ -999,7 +998,9 @@ setenv_settings(struct env_set *es, const struct options *o)
     {
         int i;
         for (i = 0; i < o->connection_list->len; ++i)
+        {
             setenv_connection_entry(es, o->connection_list->array[i], i+1);
+        }
     }
     else
     {
@@ -1214,7 +1215,6 @@ show_tuntap_options(const struct tuntap_options *o)
     SHOW_BOOL(dhcp_options);
     SHOW_BOOL(dhcp_renew);
     SHOW_BOOL(dhcp_pre_release);
-    SHOW_BOOL(dhcp_release);
     SHOW_STR(domain);
     SHOW_STR(netbios_scope);
     SHOW_INT(netbios_node_type);
@@ -1761,7 +1761,9 @@ show_settings(const struct options *o)
     {
         int i;
         for (i = 0; i<MAX_PARMS; i++)
+        {
             SHOW_INT(remote_cert_ku[i]);
+        }
     }
     SHOW_STR(remote_cert_eku);
     SHOW_INT(ssl_flags);
@@ -1789,22 +1791,30 @@ show_settings(const struct options *o)
     {
         int i;
         for (i = 0; i<MAX_PARMS && o->pkcs11_providers[i] != NULL; i++)
+        {
             SHOW_PARM(pkcs11_providers, o->pkcs11_providers[i], "%s");
+        }
     }
     {
         int i;
         for (i = 0; i<MAX_PARMS; i++)
+        {
             SHOW_PARM(pkcs11_protected_authentication, o->pkcs11_protected_authentication[i] ? "ENABLED" : "DISABLED", "%s");
+        }
     }
     {
         int i;
         for (i = 0; i<MAX_PARMS; i++)
+        {
             SHOW_PARM(pkcs11_private_mode, o->pkcs11_private_mode[i], "%08x");
+        }
     }
     {
         int i;
         for (i = 0; i<MAX_PARMS; i++)
+        {
             SHOW_PARM(pkcs11_cert_private, o->pkcs11_cert_private[i] ? "ENABLED" : "DISABLED", "%s");
+        }
     }
     SHOW_INT(pkcs11_pin_cache_period);
     SHOW_STR(pkcs11_id);
@@ -2939,7 +2949,9 @@ options_postprocess_verify(const struct options *o)
     {
         int i;
         for (i = 0; i < o->connection_list->len; ++i)
+        {
             options_postprocess_verify_ce(o, o->connection_list->array[i]);
+        }
     }
     else
     {
@@ -2990,7 +3002,9 @@ options_postprocess_mutate(struct options *o)
 
     ASSERT(o->connection_list);
     for (i = 0; i < o->connection_list->len; ++i)
+    {
         options_postprocess_mutate_ce(o, o->connection_list->array[i]);
+    }
 
 #ifdef ENABLE_CRYPTO
     if (o->tls_server)
@@ -3803,7 +3817,9 @@ options_warning_safe_scan1(const int msglevel,
     char *p = gc_malloc(OPTION_PARM_SIZE, true, &gc);
 
     while (buf_parse(&b, delim, p, OPTION_PARM_SIZE))
+    {
         options_warning_safe_scan2(msglevel, delim, report_inconsistent, p, b2_src, b1_name, b2_name);
+    }
 
     gc_free(&gc);
 }
@@ -4080,6 +4096,7 @@ usage(void)
     fprintf(fp, usage_message,
             title_string,
             o.ce.connect_retry_seconds,
+            o.ce.connect_retry_seconds_max,
             o.ce.local_port, o.ce.remote_port,
             TUN_MTU_DEFAULT, TAP_MTU_EXTRA_DEFAULT,
             o.verbosity);
@@ -4430,7 +4447,10 @@ read_inline_file(struct in_src *is, const char *close_tag, struct gc_arena *gc)
     {
         char *line_ptr = line;
         /* Remove leading spaces */
-        while (isspace(*line_ptr)) line_ptr++;
+        while (isspace(*line_ptr))
+        {
+            line_ptr++;
+        }
         if (!strncmp(line_ptr, close_tag, strlen(close_tag)))
         {
             endtagfound = true;
@@ -5320,18 +5340,24 @@ add_option(struct options *options,
         VERIFY_PERMISSION(OPT_P_GENERAL);
         /* Find out how many options to be ignored */
         for (i = 1; p[i]; i++)
+        {
             numignored++;
+        }
 
         /* add number of options already ignored */
         for (i = 0; options->ignore_unknown_option
              && options->ignore_unknown_option[i]; i++)
+        {
             numignored++;
+        }
 
         /* Allocate array */
         ALLOC_ARRAY_GC(ignore, const char *, numignored+1, &options->gc);
         for (i = 0; options->ignore_unknown_option
              && options->ignore_unknown_option[i]; i++)
+        {
             ignore[i] = options->ignore_unknown_option[i];
+        }
 
         options->ignore_unknown_option = ignore;
 
@@ -6015,7 +6041,8 @@ add_option(struct options *options,
             struct http_custom_header *custom_header = NULL;
             int i;
             /* Find the first free header */
-            for (i = 0; i < MAX_CUSTOM_HTTP_HEADER; i++) {
+            for (i = 0; i < MAX_CUSTOM_HTTP_HEADER; i++)
+            {
                 if (!ho->custom_headers[i].name)
                 {
                     custom_header = &ho->custom_headers[i];
@@ -7200,11 +7227,11 @@ add_option(struct options *options,
     {
         VERIFY_PERMISSION(OPT_P_IPWIN32);
         options->tuntap_options.dhcp_pre_release = true;
+        options->tuntap_options.dhcp_renew = true;
     }
     else if (streq(p[0], "dhcp-release") && !p[1])
     {
-        VERIFY_PERMISSION(OPT_P_IPWIN32);
-        options->tuntap_options.dhcp_release = true;
+        msg(M_WARN, "Obsolete option --dhcp-release detected. This is now on by default");
     }
     else if (streq(p[0], "dhcp-internal") && p[1] && !p[2]) /* standalone method for internal use */
     {
@@ -7903,12 +7930,18 @@ add_option(struct options *options,
     }
     else if (streq(p[0], "remote-cert-ku"))
     {
-        int j;
-
         VERIFY_PERMISSION(OPT_P_GENERAL);
 
+        size_t j;
         for (j = 1; j < MAX_PARMS && p[j] != NULL; ++j)
+        {
             sscanf(p[j], "%x", &(options->remote_cert_ku[j-1]));
+        }
+        if (j == 1)
+        {
+            /* No specific KU required, but require KU to be present */
+            options->remote_cert_ku[0] = OPENVPN_KU_REQUIRED;
+        }
     }
     else if (streq(p[0], "remote-cert-eku") && p[1] && !p[2])
     {
@@ -7921,15 +7954,12 @@ add_option(struct options *options,
 
         if (streq(p[1], "server"))
         {
-            options->remote_cert_ku[0] = 0xa0;
-            options->remote_cert_ku[1] = 0x88;
+            options->remote_cert_ku[0] = OPENVPN_KU_REQUIRED;
             options->remote_cert_eku = "TLS Web Server Authentication";
         }
         else if (streq(p[1], "client"))
         {
-            options->remote_cert_ku[0] = 0x80;
-            options->remote_cert_ku[1] = 0x08;
-            options->remote_cert_ku[2] = 0x88;
+            options->remote_cert_ku[0] = OPENVPN_KU_REQUIRED;
             options->remote_cert_eku = "TLS Web Client Authentication";
         }
         else
@@ -8037,10 +8067,16 @@ add_option(struct options *options,
         if (strncmp("ext:", s, 4) != 0)
         {
             size_t i = 0;
-            while (s[i] && !isupper(s[i])) i++;
+            while (s[i] && !isupper(s[i]))
+            {
+                i++;
+            }
             if (strlen(s) == i)
             {
-                while ((*s = toupper(*s)) != '\0') s++;
+                while ((*s = toupper(*s)) != '\0')
+                {
+                    s++;
+                }
                 msg(M_WARN, "DEPRECATED FEATURE: automatically upcased the "
                     "--x509-username-field parameter to '%s'; please update your"
                     "configuration", p[1]);
@@ -8094,7 +8130,9 @@ add_option(struct options *options,
         VERIFY_PERMISSION(OPT_P_GENERAL);
 
         for (j = 1; j < MAX_PARMS && p[j] != NULL; ++j)
+        {
             options->pkcs11_providers[j-1] = p[j];
+        }
     }
     else if (streq(p[0], "pkcs11-protected-authentication"))
     {
@@ -8103,7 +8141,9 @@ add_option(struct options *options,
         VERIFY_PERMISSION(OPT_P_GENERAL);
 
         for (j = 1; j < MAX_PARMS && p[j] != NULL; ++j)
+        {
             options->pkcs11_protected_authentication[j-1] = atoi(p[j]) != 0 ? 1 : 0;
+        }
     }
     else if (streq(p[0], "pkcs11-private-mode") && p[1])
     {
@@ -8112,7 +8152,9 @@ add_option(struct options *options,
         VERIFY_PERMISSION(OPT_P_GENERAL);
 
         for (j = 1; j < MAX_PARMS && p[j] != NULL; ++j)
+        {
             sscanf(p[j], "%x", &(options->pkcs11_private_mode[j-1]));
+        }
     }
     else if (streq(p[0], "pkcs11-cert-private"))
     {
@@ -8121,7 +8163,9 @@ add_option(struct options *options,
         VERIFY_PERMISSION(OPT_P_GENERAL);
 
         for (j = 1; j < MAX_PARMS && p[j] != NULL; ++j)
+        {
             options->pkcs11_cert_private[j-1] = atoi(p[j]) != 0 ? 1 : 0;
+        }
     }
     else if (streq(p[0], "pkcs11-pin-cache") && p[1] && !p[2])
     {

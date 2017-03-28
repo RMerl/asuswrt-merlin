@@ -27,7 +27,9 @@ AM_CFLAGS = \
 	$(OPTIONAL_CRYPTO_CFLAGS) \
 	$(OPTIONAL_LZO_CFLAGS) \
 	$(OPTIONAL_LZ4_CFLAGS) \
-	$(OPTIONAL_PKCS11_HELPER_CFLAGS)
+	$(OPTIONAL_PKCS11_HELPER_CFLAGS) \
+	-DPLUGIN_LIBDIR=\"${plugindir}\"
+
 if WIN32
 # we want unicode entry point but not the macro
 AM_CFLAGS += -municode -UUNICODE
@@ -79,6 +81,7 @@ openvpn_SOURCES = \
 	multi.c multi.h \
 	ntlm.c ntlm.h \
 	occ.c occ.h occ-inline.h \
+	openssl_compat.h \
 	pkcs11.c pkcs11.h pkcs11_backend.h \
 	pkcs11_openssl.c \
 	pkcs11_mbedtls.c \

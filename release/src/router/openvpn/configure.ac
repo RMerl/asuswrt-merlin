@@ -301,13 +301,12 @@ AC_ARG_WITH(
 	[with_crypto_library="openssl"]
 )
 
-AC_ARG_WITH(
-	[plugindir],
-	[AS_HELP_STRING([--with-plugindir], [plugin directory @<:@default=LIBDIR/openvpn@:>@])],
-	,
-	[with_plugindir="\$(libdir)/openvpn/plugins"]
-)
-
+AC_ARG_VAR([PLUGINDIR], [Path of plug-in directory @<:@default=LIBDIR/openvpn/plugins@:>@])
+if test -n "${PLUGINDIR}"; then
+	plugindir="${PLUGINDIR}"
+else
+	plugindir="\${libdir}/openvpn/plugins"
+fi
 
 AC_DEFINE_UNQUOTED([TARGET_ALIAS], ["${host}"], [A string representing our host])
 case "$host" in
@@ -378,6 +377,8 @@ AC_ARG_VAR([NETSTAT], [path to netstat utility]) # tests
 AC_ARG_VAR([MAN2HTML], [path to man2html utility])
 AC_ARG_VAR([GIT], [path to git utility])
 AC_ARG_VAR([SYSTEMD_ASK_PASSWORD], [path to systemd-ask-password utility])
+AC_ARG_VAR([SYSTEMD_UNIT_DIR], [Path of systemd unit directory @<:@default=LIBDIR/systemd/system@:>@])
+AC_ARG_VAR([TMPFILES_DIR], [Path of tmpfiles directory @<:@default=LIBDIR/tmpfiles.d@:>@])
 AC_PATH_PROGS([IFCONFIG], [ifconfig],, [$PATH:/usr/local/sbin:/usr/sbin:/sbin])
 AC_PATH_PROGS([ROUTE], [route],, [$PATH:/usr/local/sbin:/usr/sbin:/sbin])
 AC_PATH_PROGS([IPROUTE], [ip],, [$PATH:/usr/local/sbin:/usr/sbin:/sbin])
@@ -581,6 +582,30 @@ AC_COMPILE_IFELSE(
 	],
 	[AC_MSG_RESULT([no])]
 )
+
+saved_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS -Wl,--wrap=exit"
+AC_MSG_CHECKING([linker supports --wrap])
+AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[
+			void exit(int);
+			void __real_exit(int);
+			void __wrap_exit(int i) {
+				__real_exit(i);
+			}
+		]],
+		[[
+			exit(0);
+		]]
+	)],
+	[
+		AC_MSG_RESULT([yes])
+		have_ld_wrap_support=yes
+	],
+	[AC_MSG_RESULT([no])],
+)
+LDFLAGS="$saved_LDFLAGS"
 
 dnl We emulate signals in Windows
 AC_CHECK_DECLS(
@@ -873,6 +898,25 @@ if test "${enable_crypto}" = "yes" -a "${with_crypto_library}" = "openssl"; then
 		[have_crypto_aead_modes="no"; break]
 	)
 
+	AC_CHECK_FUNCS(
+		[ \
+			SSL_CTX_get_default_passwd_cb \
+			SSL_CTX_get_default_passwd_cb_userdata \
+			X509_STORE_get0_objects \
+			X509_OBJECT_free \
+			X509_OBJECT_get_type \
+			RSA_meth_new \
+			RSA_meth_free \
+			RSA_meth_set_pub_enc \
+			RSA_meth_set_pub_dec \
+			RSA_meth_set_priv_enc \
+			RSA_meth_set_priv_dec \
+			RSA_meth_set_init \
+			RSA_meth_set_finish \
+			RSA_meth_set0_app_data \
+		]
+	)
+
 	CFLAGS="${saved_CFLAGS}"
 	LIBS="${saved_LIBS}"
 
@@ -1075,6 +1119,18 @@ if test "$enable_systemd" = "yes" ; then
     OPTIONAL_SYSTEMD_LIBS="${libsystemd_LIBS}"
     AC_DEFINE(ENABLE_SYSTEMD, 1, [Enable systemd integration])
     LIBS="${saved_LIBS}"
+
+    if test -n "${SYSTEMD_UNIT_DIR}"; then
+        systemdunitdir="${SYSTEMD_UNIT_DIR}"
+    else
+        systemdunitdir="\${libdir}/systemd/system"
+    fi
+
+    if test -n "${TMPFILES_DIR}"; then
+        tmpfilesdir="${TMPFILES_DIR}"
+    else
+        tmpfilesdir="\${libdir}/tmpfiles.d"
+    fi
 fi
 
 
@@ -1244,11 +1300,14 @@ AM_CONDITIONAL([GIT_CHECKOUT], [test "${GIT_CHECKOUT}" = "yes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_AUTH_PAM], [test "${enable_plugin_auth_pam}" = "yes"])
 AM_CONDITIONAL([ENABLE_PLUGIN_DOWN_ROOT], [test "${enable_plugin_down_root}" = "yes"])
 AM_CONDITIONAL([ENABLE_CRYPTO], [test "${enable_crypto}" = "yes"])
+AM_CONDITIONAL([HAVE_LD_WRAP_SUPPORT], [test "${have_ld_wrap_support}" = "yes"])
 
-plugindir="${with_plugindir}"
 sampledir="\$(docdir)/sample"
 AC_SUBST([plugindir])
 AC_SUBST([sampledir])
+
+AC_SUBST([systemdunitdir])
+AC_SUBST([tmpfilesdir])
 
 VENDOR_SRC_ROOT="\$(abs_top_srcdir)/vendor/"
 VENDOR_DIST_ROOT="\$(abs_top_builddir)/vendor/dist"
@@ -1288,6 +1347,7 @@ AC_CONFIG_FILES([
 	distro/Makefile
 	distro/rpm/Makefile
 	distro/rpm/openvpn.spec
+	distro/systemd/Makefile
 	include/Makefile
 	src/Makefile
 	src/compat/Makefile

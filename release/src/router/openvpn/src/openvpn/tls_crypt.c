@@ -44,15 +44,14 @@ tls_crypt_buf_overhead(void)
 
 void
 tls_crypt_init_key(struct key_ctx_bi *key, const char *key_file,
-                   const char *key_inline, bool tls_server) {
+                   const char *key_inline, bool tls_server)
+{
     const int key_direction = tls_server ?
                               KEY_DIRECTION_NORMAL : KEY_DIRECTION_INVERSE;
 
     struct key_type kt;
     kt.cipher = cipher_kt_get("AES-256-CTR");
-    kt.cipher_length = cipher_kt_key_size(kt.cipher);
     kt.digest = md_kt_get("SHA256");
-    kt.hmac_length = md_kt_size(kt.digest);
 
     if (!kt.cipher)
     {
@@ -62,6 +61,9 @@ tls_crypt_init_key(struct key_ctx_bi *key, const char *key_file,
     {
         msg(M_FATAL, "ERROR: --tls-crypt requires HMAC-SHA-256 support.");
     }
+
+    kt.cipher_length = cipher_kt_key_size(kt.cipher);
+    kt.hmac_length = md_kt_size(kt.digest);
 
     crypto_read_openvpn_key(&kt, key, key_file, key_inline, key_direction,
                             "Control Channel Encryption", "tls-crypt");
@@ -79,7 +81,8 @@ tls_crypt_adjust_frame_parameters(struct frame *frame)
 
 bool
 tls_crypt_wrap(const struct buffer *src, struct buffer *dst,
-               struct crypto_options *opt) {
+               struct crypto_options *opt)
+{
     const struct key_ctx *ctx = &opt->key_ctx_bi.encrypt;
     struct gc_arena gc;
 

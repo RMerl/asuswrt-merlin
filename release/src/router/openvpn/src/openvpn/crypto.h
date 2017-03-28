@@ -132,9 +132,9 @@
 #include "packet_id.h"
 #include "mtu.h"
 
-/** Wrapper struct to pass around MD5 digests */
-struct md5_digest {
-    uint8_t digest[MD5_DIGEST_LENGTH];
+/** Wrapper struct to pass around SHA256 digests */
+struct sha256_digest {
+    uint8_t digest[SHA256_DIGEST_LENGTH];
 };
 
 /*
@@ -496,7 +496,8 @@ void crypto_read_openvpn_key(const struct key_type *key_type,
  * Returns 0 when data is equal, non-zero otherwise.
  */
 static inline int
-memcmp_constant_time(const void *a, const void *b, size_t size) {
+memcmp_constant_time(const void *a, const void *b, size_t size)
+{
     const uint8_t *a1 = a;
     const uint8_t *b1 = b;
     int ret = 0;

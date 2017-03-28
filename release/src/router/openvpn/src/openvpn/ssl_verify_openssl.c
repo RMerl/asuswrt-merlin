@@ -43,6 +43,7 @@
 #include "ssl_openssl.h"
 #include "ssl_verify.h"
 #include "ssl_verify_backend.h"
+#include "openssl_compat.h"
 
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
@@ -61,14 +62,15 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
     session = (struct tls_session *) SSL_get_ex_data(ssl, mydata_index);
     ASSERT(session);
 
-    struct buffer cert_hash = x509_get_sha256_fingerprint(ctx->current_cert, &gc);
-    cert_hash_remember(session, ctx->error_depth, &cert_hash);
+    X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
+    struct buffer cert_hash = x509_get_sha256_fingerprint(current_cert, &gc);
+    cert_hash_remember(session, X509_STORE_CTX_get_error_depth(ctx), &cert_hash);
 
     /* did peer present cert which was signed by our root cert? */
     if (!preverify_ok)
     {
         /* get the X509 name */
-        char *subject = x509_get_subject(ctx->current_cert, &gc);
+        char *subject = x509_get_subject(current_cert, &gc);
 
         if (!subject)
         {
@@ -76,11 +78,11 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
         }
 
         /* Log and ignore missing CRL errors */
-        if (ctx->error == X509_V_ERR_UNABLE_TO_GET_CRL)
+        if (X509_STORE_CTX_get_error(ctx) == X509_V_ERR_UNABLE_TO_GET_CRL)
         {
             msg(D_TLS_DEBUG_LOW, "VERIFY WARNING: depth=%d, %s: %s",
-                ctx->error_depth,
-                X509_verify_cert_error_string(ctx->error),
+                X509_STORE_CTX_get_error_depth(ctx),
+                X509_verify_cert_error_string(X509_STORE_CTX_get_error(ctx)),
                 subject);
             ret = 1;
             goto cleanup;
@@ -88,8 +90,8 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
 
         /* Remote site specified a certificate, but it's not correct */
         msg(D_TLS_ERRORS, "VERIFY ERROR: depth=%d, error=%s: %s",
-            ctx->error_depth,
-            X509_verify_cert_error_string(ctx->error),
+            X509_STORE_CTX_get_error_depth(ctx),
+            X509_verify_cert_error_string(X509_STORE_CTX_get_error(ctx)),
             subject);
 
         ERR_clear_error();
@@ -98,7 +100,7 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
         goto cleanup;
     }
 
-    if (SUCCESS != verify_cert(session, ctx->current_cert, ctx->error_depth))
+    if (SUCCESS != verify_cert(session, current_cert, X509_STORE_CTX_get_error_depth(ctx)))
     {
         goto cleanup;
     }
@@ -193,7 +195,8 @@ extract_x509_field_ssl(X509_NAME *x509, const char *field_name, char *out,
 
     ASSERT(size > 0);
     *out = '\0';
-    do {
+    do
+    {
         lastpos = tmp;
         tmp = X509_NAME_get_index_by_NID(x509, nid, lastpos);
     } while (tmp > -1);
@@ -587,54 +590,58 @@ result_t
 x509_verify_cert_ku(X509 *x509, const unsigned *const expected_ku,
                     int expected_len)
 {
-    ASN1_BIT_STRING *ku = NULL;
+    ASN1_BIT_STRING *ku = X509_get_ext_d2i(x509, NID_key_usage, NULL, NULL);
+
+    if (ku == NULL)
+    {
+        msg(D_TLS_ERRORS, "Certificate does not have key usage extension");
+        return FAILURE;
+    }
+
+    if (expected_ku[0] == OPENVPN_KU_REQUIRED)
+    {
+        /* Extension required, value checked by TLS library */
+        return SUCCESS;
+    }
+
+    unsigned nku = 0;
+    for (size_t i = 0; i < 8; i++)
+    {
+        if (ASN1_BIT_STRING_get_bit(ku, i))
+        {
+            nku |= 1 << (7 - i);
+        }
+    }
+
+    /*
+     * Fixup if no LSB bits
+     */
+    if ((nku & 0xff) == 0)
+    {
+        nku >>= 8;
+    }
+
+    msg(D_HANDSHAKE, "Validating certificate key usage");
     result_t fFound = FAILURE;
-
-    if ((ku = (ASN1_BIT_STRING *) X509_get_ext_d2i(x509, NID_key_usage, NULL,
-                                                   NULL)) == NULL)
+    for (size_t i = 0; fFound != SUCCESS && i < expected_len; i++)
     {
-        msg(D_HANDSHAKE, "Certificate does not have key usage extension");
-    }
-    else
-    {
-        unsigned nku = 0;
-        int i;
-        for (i = 0; i < 8; i++)
+        if (expected_ku[i] != 0 && (nku & expected_ku[i]) == expected_ku[i])
         {
-            if (ASN1_BIT_STRING_get_bit(ku, i))
-            {
-                nku |= 1 << (7 - i);
-            }
-        }
-
-        /*
-         * Fixup if no LSB bits
-         */
-        if ((nku & 0xff) == 0)
-        {
-            nku >>= 8;
-        }
-
-        msg(D_HANDSHAKE, "Validating certificate key usage");
-        for (i = 0; fFound != SUCCESS && i < expected_len; i++)
-        {
-            if (expected_ku[i] != 0)
-            {
-                msg(D_HANDSHAKE, "++ Certificate has key usage  %04x, expects "
-                    "%04x", nku, expected_ku[i]);
-
-                if (nku == expected_ku[i])
-                {
-                    fFound = SUCCESS;
-                }
-            }
+            fFound = SUCCESS;
         }
     }
 
-    if (ku != NULL)
+    if (fFound != SUCCESS)
     {
-        ASN1_BIT_STRING_free(ku);
+        msg(D_TLS_ERRORS,
+            "ERROR: Certificate has key usage %04x, expected one of:", nku);
+        for (size_t i = 0; i < expected_len && expected_ku[i]; i++)
+        {
+            msg(D_TLS_ERRORS, " * %04x", expected_ku[i]);
+        }
     }
+
+    ASN1_BIT_STRING_free(ku);
 
     return fFound;
 }
@@ -714,11 +721,12 @@ tls_verify_crl_missing(const struct tls_options *opt)
         crypto_msg(M_FATAL, "Cannot get certificate store");
     }
 
-    for (int i = 0; i < sk_X509_OBJECT_num(store->objs); i++)
+    STACK_OF(X509_OBJECT) *objs = X509_STORE_get0_objects(store);
+    for (int i = 0; i < sk_X509_OBJECT_num(objs); i++)
     {
-        X509_OBJECT *obj = sk_X509_OBJECT_value(store->objs, i);
+        X509_OBJECT *obj = sk_X509_OBJECT_value(objs, i);
         ASSERT(obj);
-        if (obj->type == X509_LU_CRL)
+        if (X509_OBJECT_get_type(obj) == X509_LU_CRL)
         {
             return false;
         }

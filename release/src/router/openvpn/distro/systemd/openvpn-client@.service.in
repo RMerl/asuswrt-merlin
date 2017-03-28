@@ -9,14 +9,14 @@ Documentation=https://community.openvpn.net/openvpn/wiki/HOWTO
 [Service]
 Type=notify
 PrivateTmp=true
-RuntimeDirectory=openvpn-client
-RuntimeDirectoryMode=0710
 WorkingDirectory=/etc/openvpn/client
-ExecStart=/usr/sbin/openvpn --suppress-timestamps --nobind --config %i.conf
+ExecStart=@sbindir@/openvpn --suppress-timestamps --nobind --config %i.conf
 CapabilityBoundingSet=CAP_IPC_LOCK CAP_NET_ADMIN CAP_NET_RAW CAP_SETGID CAP_SETUID CAP_SYS_CHROOT CAP_DAC_OVERRIDE
 LimitNPROC=10
 DeviceAllow=/dev/null rw
 DeviceAllow=/dev/net/tun rw
+ProtectSystem=true
+ProtectHome=true
 
 [Install]
 WantedBy=multi-user.target

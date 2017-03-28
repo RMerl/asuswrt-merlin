@@ -73,6 +73,7 @@ typedef mbedtls_md_context_t hmac_ctx_t;
 #define MD4_DIGEST_LENGTH       16
 #define MD5_DIGEST_LENGTH       16
 #define SHA_DIGEST_LENGTH       20
+#define SHA256_DIGEST_LENGTH    32
 #define DES_KEY_LENGTH 8
 
 /**
@@ -122,7 +123,8 @@ bool mbed_log_func_line(unsigned int flags, int errval, const char *func,
 /** Wraps mbed_log_func_line() to prevent function calls for non-errors */
 static inline bool
 mbed_log_func_line_lite(unsigned int flags, int errval,
-                        const char *func, int line) {
+                        const char *func, int line)
+{
     if (errval)
     {
         return mbed_log_func_line(flags, errval, func, line);

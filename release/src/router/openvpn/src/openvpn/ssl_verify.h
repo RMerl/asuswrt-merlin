@@ -218,6 +218,9 @@ struct x509_track
 /** Do not perform Netscape certificate type verification */
 #define NS_CERT_CHECK_CLIENT (1<<1)
 
+/** Require keyUsage to be present in cert (0xFFFF is an invalid KU value) */
+#define OPENVPN_KU_REQUIRED (0xFFFF)
+
 /*
  * TODO: document
  */
@@ -237,6 +240,9 @@ tls_client_reason(struct tls_multi *multi)
     return NULL;
 #endif
 }
+
+/** Remove any X509_ env variables from env_set es */
+void tls_x509_clear_env(struct env_set *es);
 
 #endif /* ENABLE_CRYPTO */
 

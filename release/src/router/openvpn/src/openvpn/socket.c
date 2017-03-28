@@ -205,7 +205,9 @@ do_preresolve_host(struct context *c,
         {
             struct cached_dns_entry *prev = c->c1.dns_cache;
             while (prev->next)
+            {
                 prev = prev->next;
+            }
             prev->next = ph;
         }
 
@@ -336,20 +338,6 @@ openvpn_getaddrinfo(unsigned int flags,
     ASSERT(hostname || servname);
     ASSERT(!(flags & GETADDR_HOST_ORDER));
 
-    if (hostname && (flags & GETADDR_RANDOMIZE))
-    {
-        hostname = hostname_randomize(hostname, &gc);
-    }
-
-    if (hostname)
-    {
-        print_hostname = hostname;
-    }
-    else
-    {
-        print_hostname = "undefined";
-    }
-
     if (servname)
     {
         print_servname = servname;
@@ -399,6 +387,20 @@ openvpn_getaddrinfo(unsigned int flags,
                               ((resolve_retry_seconds + 4)/ fail_wait_interval);
         const char *fmt;
         int level = 0;
+
+        if (hostname && (flags & GETADDR_RANDOMIZE))
+        {
+            hostname = hostname_randomize(hostname, &gc);
+        }
+
+        if (hostname)
+        {
+            print_hostname = hostname;
+        }
+        else
+        {
+            print_hostname = "undefined";
+        }
 
         fmt = "RESOLVE: Cannot resolve host address: %s:%s (%s)";
         if ((flags & GETADDR_MENTION_RESOLVE_RETRY)
@@ -510,6 +512,10 @@ openvpn_getaddrinfo(unsigned int flags,
     else
     {
         /* IP address parse succeeded */
+        if (flags & GETADDR_RANDOMIZE)
+        {
+            msg(M_WARN, "WARNING: ignoring --remote-random-hostname because the hostname is an IP address");
+        }
     }
 
 done:
@@ -1144,7 +1150,7 @@ tcp_connection_established(const struct link_socket_actual *act)
     gc_free(&gc);
 }
 
-static int
+static socket_descriptor_t
 socket_listen_accept(socket_descriptor_t sd,
                      struct link_socket_actual *act,
                      const char *remote_dynamic,
@@ -1156,7 +1162,7 @@ socket_listen_accept(socket_descriptor_t sd,
     struct gc_arena gc = gc_new();
     /* struct openvpn_sockaddr *remote = &act->dest; */
     struct openvpn_sockaddr remote_verify = act->dest;
-    int new_sd = SOCKET_UNDEFINED;
+    socket_descriptor_t new_sd = SOCKET_UNDEFINED;
 
     CLEAR(*act);
     socket_do_listen(sd, local, do_listen, true);
@@ -2008,7 +2014,8 @@ static void
 phase2_tcp_client(struct link_socket *sock, struct signal_info *sig_info)
 {
     bool proxy_retry = false;
-    do {
+    do
+    {
         socket_connect(&sock->sd,
                        sock->info.lsa->current_remote->ai_addr,
                        get_server_poll_remaining_time(sock->server_poll_timeout),
@@ -2364,7 +2371,8 @@ link_socket_bad_incoming_addr(struct buffer *buf,
                 (int)from_addr->dest.addr.sa.sa_family,
                 print_sockaddr_ex(info->lsa->remote_list->ai_addr,":",PS_SHOW_PORT, &gc));
             /* print additional remote addresses */
-            for (ai = info->lsa->remote_list->ai_next; ai; ai = ai->ai_next) {
+            for (ai = info->lsa->remote_list->ai_next; ai; ai = ai->ai_next)
+            {
                 msg(D_LINK_ERRORS,"or from peer address: %s",
                     print_sockaddr_ex(ai->ai_addr,":",PS_SHOW_PORT, &gc));
             }
@@ -3053,10 +3061,12 @@ ascii2proto(const char *proto_name)
 {
     int i;
     for (i = 0; i < SIZE(proto_names); ++i)
+    {
         if (!strcmp(proto_name, proto_names[i].short_form))
         {
             return proto_names[i].proto;
         }
+    }
     return -1;
 }
 
@@ -3065,10 +3075,12 @@ ascii2af(const char *proto_name)
 {
     int i;
     for (i = 0; i < SIZE(proto_names); ++i)
+    {
         if (!strcmp(proto_name, proto_names[i].short_form))
         {
             return proto_names[i].proto_af;
         }
+    }
     return 0;
 }
 

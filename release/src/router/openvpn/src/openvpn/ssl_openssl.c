@@ -45,6 +45,7 @@
 #include "ssl_backend.h"
 #include "ssl_common.h"
 #include "base64.h"
+#include "openssl_compat.h"
 
 #ifdef ENABLE_CRYPTOAPI
 #include "cryptoapi.h"
@@ -321,7 +322,8 @@ tls_ctx_restrict_ciphers(struct tls_root_ctx *ctx, const char *ciphers)
 
     /* Translate IANA cipher suite names to OpenSSL names */
     begin_of_cipher = end_of_cipher = 0;
-    for (; begin_of_cipher < strlen(ciphers); begin_of_cipher = end_of_cipher) {
+    for (; begin_of_cipher < strlen(ciphers); begin_of_cipher = end_of_cipher)
+    {
         end_of_cipher += strcspn(&ciphers[begin_of_cipher], ":");
         cipher_pair = tls_get_cipher_name_pair(&ciphers[begin_of_cipher], end_of_cipher - begin_of_cipher);
 
@@ -507,10 +509,18 @@ tls_ctx_load_ecdh_params(struct tls_root_ctx *ctx, const char *curve_name
         const EC_GROUP *ecgrp = NULL;
         EVP_PKEY *pkey = NULL;
 
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L && !defined(LIBRESSL_VERSION_NUMBER)
+        pkey = SSL_CTX_get0_privatekey(ctx->ctx);
+#else
         /* Little hack to get private key ref from SSL_CTX, yay OpenSSL... */
-        SSL ssl;
-        ssl.cert = ctx->ctx->cert;
-        pkey = SSL_get_privatekey(&ssl);
+        SSL *ssl = SSL_new(ctx->ctx);
+        if (!ssl)
+        {
+            crypto_msg(M_FATAL, "SSL_new failed");
+        }
+        pkey = SSL_get_privatekey(ssl);
+        SSL_free(ssl);
+#endif
 
         msg(D_TLS_DEBUG, "Extracting ECDH curve from private key");
 
@@ -649,7 +659,8 @@ tls_ctx_load_pkcs12(struct tls_root_ctx *ctx, const char *pkcs12_file,
         {
             for (i = 0; i < sk_X509_num(ca); i++)
             {
-                if (!X509_STORE_add_cert(ctx->ctx->cert_store,sk_X509_value(ca, i)))
+                X509_STORE *cert_store = SSL_CTX_get_cert_store(ctx->ctx);
+                if (!X509_STORE_add_cert(cert_store,sk_X509_value(ca, i)))
                 {
                     crypto_msg(M_FATAL,"Cannot add certificate to certificate chain (X509_STORE_add_cert)");
                 }
@@ -751,8 +762,9 @@ tls_ctx_load_cert_file_and_copy(struct tls_root_ctx *ctx,
         goto end;
     }
 
-    x = PEM_read_bio_X509(in, NULL, ctx->ctx->default_passwd_callback,
-                          ctx->ctx->default_passwd_callback_userdata);
+    x = PEM_read_bio_X509(in, NULL,
+                          SSL_CTX_get_default_passwd_cb(ctx->ctx),
+                          SSL_CTX_get_default_passwd_cb_userdata(ctx->ctx));
     if (x == NULL)
     {
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, ERR_R_PEM_LIB);
@@ -834,8 +846,8 @@ tls_ctx_load_priv_file(struct tls_root_ctx *ctx, const char *priv_key_file,
     }
 
     pkey = PEM_read_bio_PrivateKey(in, NULL,
-                                   ssl_ctx->default_passwd_callback,
-                                   ssl_ctx->default_passwd_callback_userdata);
+                                   SSL_CTX_get_default_passwd_cb(ctx->ctx),
+                                   SSL_CTX_get_default_passwd_cb_userdata(ctx->ctx));
     if (!pkey)
     {
         goto end;
@@ -888,15 +900,15 @@ backend_tls_ctx_reload_crl(struct tls_root_ctx *ssl_ctx, const char *crl_file,
     /* Always start with a cleared CRL list, for that we
      * we need to manually find the CRL object from the stack
      * and remove it */
-    for (int i = 0; i < sk_X509_OBJECT_num(store->objs); i++)
+    STACK_OF(X509_OBJECT) *objs = X509_STORE_get0_objects(store);
+    for (int i = 0; i < sk_X509_OBJECT_num(objs); i++)
     {
-        X509_OBJECT *obj = sk_X509_OBJECT_value(store->objs, i);
+        X509_OBJECT *obj = sk_X509_OBJECT_value(objs, i);
         ASSERT(obj);
-        if (obj->type == X509_LU_CRL)
+        if (X509_OBJECT_get_type(obj) == X509_LU_CRL)
         {
-            sk_X509_OBJECT_delete(store->objs, i);
-            X509_OBJECT_free_contents(obj);
-            OPENSSL_free(obj);
+            sk_X509_OBJECT_delete(objs, i);
+            X509_OBJECT_free(obj);
         }
     }
 
@@ -966,7 +978,7 @@ rsa_priv_dec(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, i
 static int
 rsa_finish(RSA *rsa)
 {
-    free((void *)rsa->meth);
+    RSA_meth_free(rsa->meth);
     rsa->meth = NULL;
     return 1;
 }
@@ -983,7 +995,7 @@ rsa_priv_enc(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, i
 
     if (padding != RSA_PKCS1_PADDING)
     {
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto done;
     }
 
@@ -1041,16 +1053,16 @@ tls_ctx_use_external_private_key(struct tls_root_ctx *ctx,
     ASSERT(NULL != cert);
 
     /* allocate custom RSA method object */
-    ALLOC_OBJ_CLEAR(rsa_meth, RSA_METHOD);
-    rsa_meth->name = "OpenVPN external private key RSA Method";
-    rsa_meth->rsa_pub_enc = rsa_pub_enc;
-    rsa_meth->rsa_pub_dec = rsa_pub_dec;
-    rsa_meth->rsa_priv_enc = rsa_priv_enc;
-    rsa_meth->rsa_priv_dec = rsa_priv_dec;
-    rsa_meth->init = NULL;
-    rsa_meth->finish = rsa_finish;
-    rsa_meth->flags = RSA_METHOD_FLAG_NO_CHECK;
-    rsa_meth->app_data = NULL;
+    rsa_meth = RSA_meth_new("OpenVPN external private key RSA Method",
+                            RSA_METHOD_FLAG_NO_CHECK);
+    check_malloc_return(rsa_meth);
+    RSA_meth_set_pub_enc(rsa_meth, rsa_pub_enc);
+    RSA_meth_set_pub_dec(rsa_meth, rsa_pub_dec);
+    RSA_meth_set_priv_enc(rsa_meth, rsa_priv_enc);
+    RSA_meth_set_priv_dec(rsa_meth, rsa_priv_dec);
+    RSA_meth_set_init(rsa_meth, NULL);
+    RSA_meth_set_finish(rsa_meth, rsa_finish);
+    RSA_meth_set0_app_data(rsa_meth, NULL);
 
     /* allocate RSA object */
     rsa = RSA_new();

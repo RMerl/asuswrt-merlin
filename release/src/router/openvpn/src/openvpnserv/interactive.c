@@ -215,7 +215,9 @@ AsyncPipeOp(async_op_t op, HANDLE pipe, LPVOID buffer, DWORD size, DWORD count, 
 
     handles[0] = io_event;
     for (i = 0; i < count; i++)
+    {
         handles[i + 1] = events[i];
+    }
 
     res = WaitForMultipleObjects(count + 1, handles, FALSE,
                                  op == peek ? INFINITE : IO_TIMEOUT);
@@ -1475,7 +1477,7 @@ RunOpenvpn(LPVOID p)
     }
 
     /* Check user is authorized or options are white-listed */
-    if (!IsAuthorizedUser(ovpn_user->User.Sid, &settings)
+    if (!IsAuthorizedUser(ovpn_user->User.Sid, imp_token, settings.ovpn_admin_group)
         && !ValidateOptions(pipe, sud.directory, sud.options))
     {
         goto out;
@@ -1840,7 +1842,8 @@ ServiceStartInteractive(DWORD dwArgc, LPTSTR *lpszArgv)
     PHANDLE handles = NULL;
     DWORD handle_count;
     BOOL
-    CmpHandle(LPVOID item, LPVOID hnd) {
+    CmpHandle(LPVOID item, LPVOID hnd)
+    {
         return item == hnd;
     }
 
