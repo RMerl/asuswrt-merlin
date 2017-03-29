@@ -1,10 +1,15 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.65_3 (28-Mar-2017)
+380.65_4 (28-Mar-2017)
    - FIXED: Various LAN/WAN issues with the RT-AC3200 due to
             incorrect GMAC state checks (Asus bug) (patch
             by john9527)
+   - FIXED: Some models would sometime randomly fail to start one
+            of their wifi radio, possibly due to a hardware design
+            issue.  Partly revert the 380.65 changes that removed
+            the automatic reboot if one radio was disabled at boot
+            time, but reduced the maximum number of reboots to 1.
 
 
 380.65_2 (10-Mar-2017)
