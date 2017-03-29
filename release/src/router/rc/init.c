@@ -5589,6 +5589,11 @@ int init_nvram2(void)
 		nvram_unset("sshd_wan");
 	}
 
+/* Adjust automatic reboot count on failed radio - reduce from 3 to 1 reboot */
+	if (nvram_match("dev_fail_reboot", "3")) {
+		nvram_set("dev_fail_reboot", "1");
+	}
+
 	if (restore_defaults_g)
 	{
 		nvram_set("computer_name", friendly_name);
@@ -6546,7 +6551,6 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					sleep(1);
 				}
 			}
-#if 0	// causes multiple reboot if wifi radio is disabled by user, ate_dev_status() doesn't check that
 			//For 66U normal boot & check device
 			if (((get_model()==MODEL_RTN66U) || (get_model()==MODEL_RTAC66U) || (get_model()==MODEL_RTAC5300)|| (get_model()==MODEL_RTAC5300R))
 			&& nvram_match("Ate_power_on_off_enable", "0")) {
@@ -6649,7 +6653,6 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					eval("arpstorm");
 				}
 			}
-#endif	// disable reboot on failure
 
 /*#ifdef RTCONFIG_USB_MODEM
 			if (is_usb_modem_ready() != 1 && nvram_match("ctf_disable_modem", "1")) {
