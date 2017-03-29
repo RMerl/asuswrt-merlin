@@ -1214,9 +1214,9 @@ function defaultSettings() {
 					</thead>
 
 					<tr>
-						<th>Global Log verbosity<br><i>(0-11, default=3)</i></th>
+						<th>Log verbosity<br><i>(0-11, default=3)</i></th>
 						<td>
-							<input type="text" maxlength="2" class="input_6_table" name="vpn_loglevel" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 0, 11)" value="<% nvram_get("vpn_loglevel"); %>">
+							<input type="text" maxlength="2" class="input_6_table" name="vpn_client_verb" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 0, 11)" value="<% nvram_get("vpn_client_verb"); %>">
 						</td>
 					</tr>
 
