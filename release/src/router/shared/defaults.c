@@ -2731,7 +2731,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "Ate_boot_fail",		"0" },
 	{ "Ate_total_fail",		"10" },
 	{ "Ate_continue_fail",		"3" },
-	{ "dev_fail_reboot",		"3" },
+	{ "dev_fail_reboot",		"1" },
 	// Wireless parameters
 
 #ifdef RTCONFIG_SNMPD

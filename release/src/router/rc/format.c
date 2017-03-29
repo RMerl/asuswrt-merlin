@@ -32,6 +32,11 @@ void adjust_merlin_config(void)
 		// else stay WAN+LAN
 		nvram_unset("sshd_wan");
 	}
+
+/* Adjust automatic reboot count on failed radio - reduce from 3 to 1 reboot */
+	if (nvram_match("dev_fail_reboot", "3")) {
+		nvram_set("dev_fail_reboot", "1");
+	}
 }
 
 void adjust_url_urlelist(void)
