@@ -89,7 +89,7 @@ function display_clients(clientsarray, obj) {
 	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
 	code += '<thead><tr>';
 	code += '<td width="25%">Device</td>';
-	code += '<td width="37%">IP</td>';
+	code += '<td width="37%">IP Address</td>';
 	code += '<td width="16%">Rx/Tx & RSSI</td><td width="12%">Connected</td>';
 	code += '<td width="10%">Flags</td>';
 	code += '</tr></thead>';
