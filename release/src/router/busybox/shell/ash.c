@@ -12612,9 +12612,6 @@ static int FAST_FUNC
 historycmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 {
 	if (nextopt("c") != '\0') {
-# if ENABLE_FEATURE_EDITING_SAVEHISTORY
-		remove(line_input_state->hist_file);
-# endif
 		clear_history(line_input_state);
 		return EXIT_SUCCESS;
 	}

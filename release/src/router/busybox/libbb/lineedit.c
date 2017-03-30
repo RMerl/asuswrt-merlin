@@ -1346,7 +1346,7 @@ void FAST_FUNC show_history(const line_input_t *st)
 // memory without the compiler optimizing it away
 static unsigned char secure_memory_wipe_ctr = 0;
 static void secure_memory_wipe(void *ptr, size_t len)
-	{
+{
 	unsigned char *p = ptr;
 	size_t loop = len, ctr = secure_memory_wipe_ctr;
 	while(loop--)
