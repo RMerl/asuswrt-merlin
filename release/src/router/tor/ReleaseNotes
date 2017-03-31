@@ -2,6 +2,68 @@ This document summarizes new features and bugfixes in each stable release
 of Tor. If you want to see more detailed descriptions of the changes in
 each development snapshot, see the ChangeLog file.
 
+Changes in version 0.2.9.10 - 2017-03-01
+  Tor 0.2.9.10 backports a security fix for users who build Tor with
+  the --enable-expensive-hardening option. It also includes fixes for
+  some major issues affecting directory authorities, LibreSSL
+  compatibility, and IPv6 correctness.
+
+  The Tor 0.2.9.x release series is now marked as a long-term-support
+  series.  We intend to backport security fixes to 0.2.9.x until at
+  least January of 2020.
+
+  o Major bugfixes (directory authority, 0.3.0.3-alpha):
+    - During voting, when marking a relay as a probable sybil, do not
+      clear its BadExit flag: sybils can still be bad in other ways
+      too. (We still clear the other flags.) Fixes bug 21108; bugfix
+      on 0.2.0.13-alpha.
+
+  o Major bugfixes (IPv6 Exits, backport from 0.3.0.3-alpha):
+    - Stop rejecting all IPv6 traffic on Exits whose exit policy rejects
+      any IPv6 addresses. Instead, only reject a port over IPv6 if the
+      exit policy rejects that port on more than an IPv6 /16 of
+      addresses. This bug was made worse by 17027 in 0.2.8.1-alpha,
+      which rejected a relay's own IPv6 address by default. Fixes bug
+      21357; bugfix on commit 004f3f4e53 in 0.2.4.7-alpha.
+
+  o Major bugfixes (parsing, also in 0.3.0.4-rc):
+    - Fix an integer underflow bug when comparing malformed Tor
+      versions. This bug could crash Tor when built with
+      --enable-expensive-hardening, or on Tor 0.2.9.1-alpha through Tor
+      0.2.9.8, which were built with -ftrapv by default. In other cases
+      it was harmless. Part of TROVE-2017-001. Fixes bug 21278; bugfix
+      on 0.0.8pre1. Found by OSS-Fuzz.
+
+  o Minor features (directory authorities, also in 0.3.0.4-rc):
+    - Directory authorities now reject descriptors that claim to be
+      malformed versions of Tor. Helps prevent exploitation of
+      bug 21278.
+    - Reject version numbers with components that exceed INT32_MAX.
+      Otherwise 32-bit and 64-bit platforms would behave inconsistently.
+      Fixes bug 21450; bugfix on 0.0.8pre1.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the February 8 2017 Maxmind GeoLite2
+      Country database.
+
+  o Minor features (portability, compilation, backport from 0.3.0.3-alpha):
+    - Autoconf now checks to determine if OpenSSL structures are opaque,
+      instead of explicitly checking for OpenSSL version numbers. Part
+      of ticket 21359.
+    - Support building with recent LibreSSL code that uses opaque
+      structures. Closes ticket 21359.
+
+  o Minor bugfixes (code correctness, also in 0.3.0.4-rc):
+    - Repair a couple of (unreachable or harmless) cases of the risky
+      comparison-by-subtraction pattern that caused bug 21278.
+
+  o Minor bugfixes (tor-resolve, backport from 0.3.0.3-alpha):
+    - The tor-resolve command line tool now rejects hostnames over 255
+      characters in length. Previously, it would silently truncate them,
+      which could lead to bugs. Fixes bug 21280; bugfix on 0.0.9pre5.
+      Patch by "junglefowl".
+
+
 Changes in version 0.2.9.9 - 2017-01-23
   Tor 0.2.9.9 fixes a denial-of-service bug where an attacker could
   cause relays and clients to crash, even if they were not built with

@@ -38,9 +38,11 @@ ENABLE_GCC_WARNING(redundant-decls)
 #include "log_test_helpers.h"
 #define NS_MODULE tortls
 
-#if OPENSSL_VERSION_NUMBER >= OPENSSL_V_SERIES(1,1,0) \
-    && !defined(LIBRESSL_VERSION_NUMBER)
+#ifndef HAVE_SSL_STATE
 #define OPENSSL_OPAQUE
+#endif
+
+#if defined(OPENSSL_OPAQUE) && !defined(LIBRESSL_VERSION_NUMBER)
 #define SSL_STATE_STR "before SSL initialization"
 #else
 #define SSL_STATE_STR "before/accept initialization"
@@ -723,6 +725,26 @@ test_tortls_get_my_certs(void *ignored)
   (void)1;
 }
 
+#ifndef HAVE_SSL_GET_CLIENT_CIPHERS
+static SSL_CIPHER *
+get_cipher_by_name(const char *name)
+{
+  int i;
+  const SSL_METHOD *method = SSLv23_method();
+  int num = method->num_ciphers();
+
+  for (i = 0; i < num; ++i) {
+    const SSL_CIPHER *cipher = method->get_cipher(i);
+    const char *ciphername = SSL_CIPHER_get_name(cipher);
+    if (!strcmp(ciphername, name)) {
+      return (SSL_CIPHER *)cipher;
+    }
+  }
+
+  return NULL;
+}
+#endif
+
 #ifndef OPENSSL_OPAQUE
 static void
 test_tortls_get_ciphersuite_name(void *ignored)
@@ -739,23 +761,6 @@ test_tortls_get_ciphersuite_name(void *ignored)
  done:
   tor_free(ctx->ssl);
   tor_free(ctx);
-}
-
-static SSL_CIPHER *
-get_cipher_by_name(const char *name)
-{
-  int i;
-  const SSL_METHOD *method = SSLv23_method();
-  int num = method->num_ciphers();
-  for (i = 0; i < num; ++i) {
-    const SSL_CIPHER *cipher = method->get_cipher(i);
-    const char *ciphername = SSL_CIPHER_get_name(cipher);
-    if (!strcmp(ciphername, name)) {
-      return (SSL_CIPHER *)cipher;
-    }
-  }
-
-  return NULL;
 }
 
 static SSL_CIPHER *

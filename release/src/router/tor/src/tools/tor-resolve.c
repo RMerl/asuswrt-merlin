@@ -80,6 +80,10 @@ build_socks_resolve_request(char **out,
     }
     ipv6 = reverse && tor_addr_family(&addr) == AF_INET6;
     addrlen = reverse ? (ipv6 ? 16 : 4) : 1 + strlen(hostname);
+    if (addrlen > UINT8_MAX) {
+      log_err(LD_GENERAL, "Hostname is too long!");
+      return -1;
+    }
     len = 6 + addrlen;
     *out = tor_malloc(len);
     (*out)[0] = 5; /* SOCKS version 5 */

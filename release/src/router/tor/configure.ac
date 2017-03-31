@@ -4,7 +4,7 @@ dnl Copyright (c) 2007-2015, The Tor Project, Inc.
 dnl See LICENSE for licensing information
 
 AC_PREREQ([2.63])
-AC_INIT([tor],[0.2.9.9])
+AC_INIT([tor],[0.2.9.10])
 AC_CONFIG_SRCDIR([src/or/main.c])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -676,6 +676,11 @@ AC_CHECK_FUNCS([ \
 
 dnl Check if OpenSSL has scrypt implementation.
 AC_CHECK_FUNCS([ EVP_PBE_scrypt ])
+
+dnl Check if OpenSSL structures are opaque
+AC_CHECK_MEMBERS([SSL.state], , ,
+[#include <openssl/ssl.h>
+])
 
 LIBS="$save_LIBS"
 LDFLAGS="$save_LDFLAGS"

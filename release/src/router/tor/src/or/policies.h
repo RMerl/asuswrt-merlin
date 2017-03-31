@@ -22,6 +22,9 @@
 #define EXIT_POLICY_REJECT_PRIVATE           (1 << 1)
 #define EXIT_POLICY_ADD_DEFAULT              (1 << 2)
 #define EXIT_POLICY_REJECT_LOCAL_INTERFACES  (1 << 3)
+#define EXIT_POLICY_OPTION_MAX             EXIT_POLICY_REJECT_LOCAL_INTERFACES
+/* All options set: used for unit testing */
+#define EXIT_POLICY_OPTION_ALL             ((EXIT_POLICY_OPTION_MAX << 1) - 1)
 
 typedef enum firewall_connection_t {
   FIREWALL_OR_CONNECTION      = 0,
@@ -73,7 +76,7 @@ void policy_expand_unspec(smartlist_t **policy);
 int policies_parse_from_options(const or_options_t *options);
 
 addr_policy_t *addr_policy_get_canonical_entry(addr_policy_t *ent);
-int cmp_addr_policies(smartlist_t *a, smartlist_t *b);
+int addr_policies_eq(const smartlist_t *a, const smartlist_t *b);
 MOCK_DECL(addr_policy_result_t, compare_tor_addr_to_addr_policy,
     (const tor_addr_t *addr, uint16_t port, const smartlist_t *policy));
 addr_policy_result_t compare_tor_addr_to_node_policy(const tor_addr_t *addr,

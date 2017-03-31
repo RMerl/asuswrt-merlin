@@ -355,6 +355,9 @@
 /* Define to 1 if you have the `SSL_SESSION_get_master_key' function. */
 #undef HAVE_SSL_SESSION_GET_MASTER_KEY
 
+/* Define to 1 if `state' is a member of `SSL'. */
+#undef HAVE_SSL_STATE
+
 /* Define to 1 if you have the `statvfs' function. */
 #undef HAVE_STATVFS
 
