@@ -2,7 +2,8 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.66 beta (xx-xxx-2017)
-   - NEW: Merged with GPL 380_7266.
+   - NEW: Merged with GPL 380_7378 (with many binary blobs
+          from 380_7266.
           Notable changes:
              * Port forwards can select a specific source IP
           Known issues:
@@ -18,8 +19,11 @@ Asuswrt-Merlin Changelog
   - CHANGED: Ovpn importer now support a third argument for
              the "remote" parameter, allowing to define the
              protocol.
-  - CHANGED: Moved Tor redirection rules at the top of the chain
-             to reduce potential risks of leaks (patch by blackfuel)
+  - CHANGED: Updated Tor to 0.2.9.10
+  - REMOVED: The Virtual Server page no longer allows users to
+             edit existing port forwards (our existing code is
+             incompatible with Asus's newer webui code and will 
+             need to be re-implemented.
   - FIXED: WOL page fails to load if adding a client with a
            quote in its name.
   - FIXED: Couldn't add a DHCP reservation client if its name
@@ -31,10 +35,15 @@ Asuswrt-Merlin Changelog
            from GPL 382_9736)
 
 
-380.65_3 (xx-xxx-2017)
+380.65_4 (28-Mar-2017)
    - FIXED: Various LAN/WAN issues with the RT-AC3200 due to
             incorrect GMAC state checks (Asus bug) (patch
             by john9527)
+   - FIXED: Some models would sometime randomly fail to start one
+            of their wifi radio, possibly due to a hardware design
+            issue.  Partly revert the 380.65 changes that removed
+            the automatic reboot if one radio was disabled at boot
+            time, but reduced the maximum number of reboots to 1.
 
 
 380.65_2 (10-Mar-2017)
