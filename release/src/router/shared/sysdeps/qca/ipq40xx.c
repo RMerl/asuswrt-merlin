@@ -308,8 +308,12 @@ static void build_wan_lan_mask(int stb)
 	if (sw_mode == SW_MODE_AP || sw_mode == SW_MODE_REPEATER)
 		wanscap_lan = 0;
 
-	if (stb == 100 && (sw_mode == SW_MODE_AP || __mediabridge_mode(sw_mode)))
+	if (stb == 100 && (sw_mode == SW_MODE_AP || __mediabridge_mode(sw_mode))) {
 		stb = 7;	/* Don't create WAN port. */
+		f_write_string("/proc/sys/net/edma/merge_wan_into_lan", "1", 0, 0);
+	}
+	else
+		f_write_string("/proc/sys/net/edma/merge_wan_into_lan", "0", 0, 0);
 
 #if 0	/* TODO: no WAN port */
 	if ((get_wans_dualwan() & (WANSCAP_LAN | WANSCAP_WAN)) == 0)

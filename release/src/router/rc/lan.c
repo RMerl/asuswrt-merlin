@@ -650,6 +650,15 @@ gen_qca_wifi_cfgs(void)
 	fprintf(fp2, "    logger Wireless not ready!\n");
 	fprintf(fp2, "fi\n");
 
+#if defined(RTAC58U) /* for RAM 128MB */
+	fprintf(fp2, "iwpriv wifi1 fc_buf_max 2048\n");
+	fprintf(fp2, "iwpriv wifi1 fc_q_max 256\n");
+	fprintf(fp2, "iwpriv wifi1 fc_q_min 16\n");
+	fprintf(fp2, "iwpriv wifi0 fc_buf_max 2048\n");
+	fprintf(fp2, "iwpriv wifi0 fc_q_max 256\n");
+	fprintf(fp2, "iwpriv wifi0 fc_q_min 16\n");
+#endif
+
 	fclose(fp);
 	fclose(fp2);
 	chmod("/tmp/prewifi.sh",0777);
@@ -934,6 +943,18 @@ set_wlpara_ra(const char* wif, int band)
 		}
 	}
 #endif // RTCONFIG_WLMODULE_RT3352_INIC_MII
+#if defined(RTN14U)
+#ifdef CE_ADAPTIVITY
+	/* CE adaptivity 1.9.1 for RT-N14U */
+	if (nvram_match("reg_spec", "CE") && (band == 0))
+	{
+		if ((nvram_get_int("wl0_nmode_x") != 2) && (nvram_get_int("wl0_bw") == 0)) /* N mode 20MHz */
+			eval("iwpriv", (char *)wif, "mac", "1030=66655443");
+		else
+			eval("iwpriv", (char *)wif, "mac", "1030=77766554");
+	}
+#endif
+#endif
 	eval("iwpriv", (char *)wif, "set", "IgmpAdd=01:00:5e:7f:ff:fa");
 	eval("iwpriv", (char *)wif, "set", "IgmpAdd=01:00:5e:00:00:09");
 	eval("iwpriv", (char *)wif, "set", "IgmpAdd=01:00:5e:00:00:fb");
@@ -1916,7 +1937,6 @@ _dprintf("nat_rule: stop_nat_rules 1.\n");
 	else
 		eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
 #endif
-	nvram_set("reload_svc_radio", "1");
 
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
 }
@@ -2458,8 +2478,8 @@ NEITHER_WDS_OR_PSTA:
 		if (!strncmp(interface, "eth0", 4) || !strncmp(interface, "eth1", 4))
 			return;
 #if defined(RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2) || defined(RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2)
-		/* BRT-AC828M2 SR1~SR3: eth2/eth3 are WAN1/WAN2.
-		 * BRT-AC828M2 SR4+   : eth2/eth3 are LAN2/WAN2.
+		/* BRT-AC828 SR1~SR3: eth2/eth3 are WAN1/WAN2.
+		 * BRT-AC828 SR4+   : eth2/eth3 are LAN2/WAN2.
 		 */
 		if (!strncmp(interface, "eth2", 4) || !strncmp(interface, "eth3", 4))
 			return;
@@ -3482,6 +3502,7 @@ gmac3_no_swbr:
 	free(lan_ifname);
 
 	nvram_set("reload_svc_radio", "1");
+	timecheck();
 }
 
 void restart_wl(void)

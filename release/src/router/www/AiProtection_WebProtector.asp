@@ -279,7 +279,7 @@ function addRow_main(obj, length){
 		apps_filter += enable_checkbox.checked ? 1:0;
 	}	
 
-	apps_filter += ">" + document.form.PC_devicename.value + ">";
+	apps_filter += ">" + document.form.PC_devicename.value.toUpperCase() + ">";
 
 	/* To check which checkbox is checked*/
 	for(var i=0; i < category_array.length;i++){
@@ -371,7 +371,7 @@ function genMain_table(){
 			//user icon
 			var userIconBase64 = "NoIcon";
 			var clientName, clientMac, clientIP, deviceType, deviceVender;
-			var clientMac = apps_filter_col[1];
+			var clientMac = apps_filter_col[1].toUpperCase();
 			var clientObj = clientList[clientMac];
 			if(clientObj) {
 				clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;

@@ -165,6 +165,7 @@ var machine_arm = (machine_name.search("arm") == -1) ? false : true;
 var array;
 var clock_type = "";
 var wifi_schedule_value = '<% nvram_get("wl_sched"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
+var tcode = '<% nvram_get("territory_code"); %>';
 function initial(){
 	show_menu();
 	register_event();
@@ -274,7 +275,7 @@ function initial(){
 			}
 		}
 
-		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828M2" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U")
+		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U")
 		{
 			inputCtrl(document.form.wl_txbf, 1);
 			document.getElementById("wl_MU_MIMO_field").style.display = "";
@@ -356,7 +357,7 @@ function initial(){
 				inputCtrl(document.form.wl_itxbf, 1);
 			}	
 		}	
-		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828M2" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U")
+		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U")
 		{
 			$('wl_txbf_desc').innerHTML = "<#WLANConfig11b_x_ExpBeam#>";
 			inputCtrl(document.form.wl_txbf, 1);
@@ -451,7 +452,7 @@ function initial(){
 		document.getElementById("wl_implicitxbf_field").style.display = "none";
 
 	/* Hardware WiFi offloading */
-	if(based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828M2"){
+	if(based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828"){
 		inputCtrl(document.form.wl_hwol, 1);
 	}
 	else{
@@ -477,6 +478,22 @@ function initial(){
 	if(location_list_support){
 		document.getElementById('region_div').innerHTML = '<% generate_region(); %>';
 		document.getElementById('region_tr').style.display = "";
+		if(based_modelid == "RT-AC55UHP"){
+			var code = "";
+			code += '<select name="location_code" class="input_option">';
+			if(tcode.indexOf("AA") != -1){
+				code += '<option value="AA">Asia (Default)</option>';
+			}
+			else if(tcode.indexOf("IN") != -1){
+				code += '<option value="AA">Asia</option>';
+				code += '<option value="IN">Default</option>';
+			}
+
+			code += '</select>';
+
+			document.getElementById('region_div').innerHTML = code;
+			document.form.location_code.value = orig_region;
+		}		
 	}
 
 	control_TimeField();
@@ -1660,7 +1677,7 @@ function handle_beamforming(value){
 						</td>
 					</tr>
 
-					<!--QCA9984 platform only, e.g. BRT-AC828M2 -->
+					<!--QCA9984 platform only, e.g. BRT-AC828 -->
 					<tr>
 						<th>Hardware WiFi Offloading</th><!-- untranslated -->
 						<td>

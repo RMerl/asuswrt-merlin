@@ -105,7 +105,7 @@ function applyRule(){
 			<tr>
 			  <td bgcolor="#4D595D" valign="top" height="360px">
 				<div>&nbsp;</div>
-				<div class="formfonttitle"><#menu2#> - Wi-Fi Proxy</div>
+				<div class="formfonttitle"><#menu5_1#> - Wi-Fi Proxy</div>
 				<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 				<div class="formfontdesc">Enable this feature in Repeater mode to successfully extend certain hotspot (public Wi-Fi) network.</div>
 

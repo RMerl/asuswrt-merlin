@@ -2593,6 +2593,7 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 
 	//6. WPAKey
+#if 0	//hide for security
 #ifdef RTCONFIG_QTN
 	if (unit)
 	{
@@ -2625,6 +2626,9 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
 	}
+#else
+	retval += websWrite(wp, "<wps_info></wps_info>\n");
+#endif
 
 	//7. AP PIN Code
 #ifdef RTCONFIG_QTNBAK
@@ -2652,6 +2656,7 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 
 	//8. Saved WPAKey
+#if 0	//hide for security
 #ifdef RTCONFIG_QTN
 	if (unit)
 	{
@@ -2681,7 +2686,9 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
 	}
-
+#else
+	retval += websWrite(wp, "<wps_info></wps_info>\n");
+#endif
 	//9. WPS enable?
 	if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "1");

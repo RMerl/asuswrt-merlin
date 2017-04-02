@@ -218,6 +218,8 @@ struct language_table language_tables[] = {
 static int initialize_listen_socket(usockaddr* usa, const char *ifname);
 static int auth_check( char* dirname, char* authorization, char* url, char* file, char* cookies, int fromapp_flag);
 static int referer_check(char* referer, int fromapp_flag);
+static int check_noauth_referrer(char* referer, int fromapp_flag);
+static char *get_referrer(char *referer);
 char *generate_token(void);
 static void send_error( int status, char* title, char* extra_header, char* text );
 //#ifdef RTCONFIG_CLOUDSYNC
@@ -249,7 +251,7 @@ char *http_ifname = NULL;
 time_t login_dt=0;
 char login_url[128];
 int login_error_status = 0;
-char cloud_file[256];
+char cloud_file[128];
 
 /* Added by Joey for handle one people at the same time */
 unsigned int login_ip=0; // the logined ip
@@ -408,44 +410,73 @@ __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
 	send_login_page(fromapp_flag, error_status, url, NULL, lock_time);
 }
 
+static char
+*get_referrer(char *referer)
+{
+	char *auth_referer=NULL;
+	char *cp1=NULL, *cp2=NULL, *location_cp=NULL, *location_cp1=NULL;
+
+	if(strstr(referer,"\r") != (char*) 0)
+		location_cp1 = strtok(referer, "\r");
+	else
+		location_cp1 = referer;
+
+	location_cp = strstr(location_cp1,"//");
+	if(location_cp != (char*) 0){
+		cp1 = &location_cp[2];
+		if(strstr(cp1,"/") != (char*) 0){
+			cp2 = strtok(cp1, "/");
+			auth_referer = cp2;
+		}else
+			auth_referer = cp1;
+	}else
+		auth_referer = location_cp1;
+
+	return auth_referer;
+}
+
+static int
+check_noauth_referrer(char* referer, int fromapp_flag)
+{
+	char *auth_referer=NULL;
+
+	if(fromapp_flag != 0)
+		return 0;
+
+	if(!referer || !strlen(host_name)){
+		return NOREFERER;
+	}else{
+		auth_referer = get_referrer(referer);
+	}
+
+	if(!strcmp(host_name, auth_referer))
+		return 0;
+	else
+		return REFERERFAIL;
+}
+
 static int
 referer_check(char* referer, int fromapp_flag)
 {
 	char *auth_referer=NULL;
-	char *cp1=NULL, *cp2=NULL, *location_cp=NULL, *location_cp1=NULL;
 	const int d_len = strlen(DUT_DOMAIN_NAME);
 	int port = 0;
 	int referer_from_https = 0;
-
+	int referer_host_check = 0;
 
 	if(fromapp_flag != 0)
 		return 0;
 	if(!referer){
-		send_login_page(fromapp_flag, NOREFERER, NULL, NULL, 0);
 		return NOREFERER;
 	}else{
-
-		if(strstr(referer,"\r") != (char*) 0)
-			location_cp1 = strtok(referer, "\r");
-		else
-			location_cp1 = referer;
-
-		location_cp = strstr(location_cp1,"//");
-		if(location_cp != (char*) 0){
-			cp1 = &location_cp[2];
-			if(strstr(cp1,"/") != (char*) 0){
-				cp2 = strtok(cp1, "/");
-				auth_referer = cp2;
-			}else
-				auth_referer = cp1;
-		}else
-			auth_referer = location_cp1;
-
+		auth_referer = get_referrer(referer);
 	}
+
 	if(referer_host[0] == 0){
-		send_login_page(fromapp_flag, WEB_NOREFERER, NULL, NULL, 0);
 		return WEB_NOREFERER;
 	}
+
+	if(!strcmp(host_name, auth_referer)) referer_host_check = 1;
 
 	if (*(auth_referer + d_len) == ':' && (port = atoi(auth_referer + d_len + 1)) > 0 && port < 65536)
 		referer_from_https = 1;
@@ -459,15 +490,13 @@ referer_check(char* referer, int fromapp_flag)
 	}
 
 	/* form based referer info? */
-	if((strlen(auth_referer) == strlen(referer_host)) && strncmp( auth_referer, referer_host, strlen(referer_host) ) == 0){
+	if(referer_host_check && (strlen(auth_referer) == strlen(referer_host)) && strncmp( auth_referer, referer_host, strlen(referer_host) ) == 0){
 		//_dprintf("asus token referer_check: the right user and password\n");
 		return 0;
 	}else{
 		//_dprintf("asus token referer_check: the wrong user and password\n");
-		send_login_page(fromapp_flag, REFERERFAIL, NULL, NULL, 0);
 		return REFERERFAIL;
 	}
-	send_login_page(fromapp_flag, REFERERFAIL, NULL, NULL, 0);
 	return REFERERFAIL;
 }
 
@@ -1166,8 +1195,6 @@ handle_request(void)
 		login_state = http_login_check();
 		// for each page, mime_exception is defined to do exception handler
 
-		mime_exception = 0;
-
 		// check exception first
 		for (exhandler = &except_mime_handlers[0]; exhandler->pattern; exhandler++) {
 			if(match(exhandler->pattern, url))
@@ -1176,8 +1203,6 @@ handle_request(void)
 				break;
 			}
 		}
-
-		do_referer = 0;
 
 		// check doreferer first
 		for (doreferer = &mime_referers[0]; doreferer->pattern; doreferer++) {
@@ -1224,8 +1249,8 @@ handle_request(void)
 								if (handler->input) {
 									handler->input(file, conn_fp, cl, boundary);
 								}
-								send_login_page(fromapp, referer_result, NULL, NULL, 0);
 							}
+							send_login_page(fromapp, referer_result, NULL, NULL, 0);
 							//if(!fromapp) http_logout(login_ip_tmp, cookies);
 							return;
 						}
@@ -1254,6 +1279,19 @@ handle_request(void)
 						http_login(login_ip_tmp, url);
 				}
 			}else{
+				if(fromapp == 0 && (do_referer&CHECK_REFERER)){
+					referer_result = check_noauth_referrer(referer, fromapp);
+					if(referer_result != 0){
+						if(strcasecmp(method, "post") == 0){
+							if (handler->input) {
+								handler->input(file, conn_fp, cl, boundary);
+							}
+						}
+						send_login_page(fromapp, referer_result, NULL, NULL, 0);
+						//if(!fromapp) http_logout(login_ip_tmp, cookies);
+						return;
+					}
+				}
 			}
 
 			if(!strcmp(file, "Logout.asp")){
@@ -1320,8 +1358,10 @@ handle_request(void)
 		if(strlen(file) > 50 && !(strstr(file, "findasus")) && !(strstr(file, "acme-challenge"))){
 			char inviteCode[256];
 			memset(cloud_file, 0, sizeof(cloud_file));
-			strncpy(cloud_file, file, sizeof(cloud_file));
-			snprintf(inviteCode, sizeof(inviteCode), "<script>location.href='/cloud_sync.asp';</script>");
+			if(!check_xxs_blacklist(file, 0))
+				strlcpy(cloud_file, file, sizeof(cloud_file));
+
+			snprintf(inviteCode, sizeof(inviteCode), "<meta http-equiv=\"refresh\" content=\"0; url=cloud_sync.asp?flag=%s\">\r\n", cloud_file);
 			send_page( 200, "OK", (char*) 0, inviteCode, 0);
 		}
 		else
@@ -1341,23 +1381,15 @@ asus_token_t* search_token_in_list(char* token, asus_token_t **prev)
 	while(ptr != NULL)
 	{
 		if(!strncmp(token, ptr->token, 32))
-        	{
+		{
 			found = 1;
 			break;
-        	}
-		else if(strncmp(token, "cgi_logout", 10) == 0){
-			cp = strtok(ptr->useragent, "-");
-
-			if(strcmp( cp, "asusrouter") != 0){
-				found = 0;
-				break;
-			}
-        	}
+		}
 		else
-        	{
+		{
 			tmp = ptr;
 			ptr = ptr->next;
-        	}
+		}
     	}
     	if(found == 1)
     	{
@@ -1388,18 +1420,14 @@ int delete_logout_from_list(char *cookies)
 		return 0;
 		
 	}else{
-		if(strncmp(cookies, "cgi_logout", 10) == 0){
-			strncpy(asustoken, cookies, sizeof(asustoken));
+		location_cp = strstr(cookies,"asus_token");
+		if(location_cp != NULL){
+			cp = &location_cp[11];
+			cp += strspn( cp, " \t" );
+			snprintf(asustoken, sizeof(asustoken), "%s", cp);
 		}else{
-			location_cp = strstr(cookies,"asus_token");
-			if(location_cp != NULL){		
-				cp = &location_cp[11];
-				cp += strspn( cp, " \t" );
-				snprintf(asustoken, sizeof(asustoken), "%s", cp);
-			}else{
-				//send_login_page(fromapp_flag, NOTOKEN);
-				return 0;
-			}
+			//send_login_page(fromapp_flag, NOTOKEN);
+			return 0;
 		}
 	}
 

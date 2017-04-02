@@ -1,8 +1,7 @@
 #!/bin/sh
 
 wget_timeout=`nvram get apps_wget_timeout`
-#wget_options="-nv -t 2 -T $wget_timeout --dns-timeout=120"
-wget_options="-q -t 2 -T $wget_timeout"
+wget_options="-q -t 2 -T $wget_timeout --no-check-certificate"
 
 nvram set sig_state_update=0 # INITIALIZING
 nvram set sig_state_flag=0   # 0: Don't do upgrade  1: Do upgrade	
@@ -29,11 +28,11 @@ fi
 
 model=`nvram get productid`
 if [ "$forsq" == "1" ]; then
-                echo "---- sig update sq normal----" > /tmp/sig_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/sig_update.zip -O /tmp/sig_update.txt		
+	echo "---- sig update sq normal----" > /tmp/sig_upgrade.log
+	wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/sig_update.zip -O /tmp/sig_update.txt		
 else
-                echo "---- sig update real normal----" > /tmp/sig_upgrade.log
-                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/sig_update.zip -O /tmp/sig_update.txt
+	echo "---- sig update real normal----" > /tmp/sig_upgrade.log
+	wget $wget_options https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/sig_update.zip -O /tmp/sig_update.txt
 fi	
 
 if [ "$?" != "0" ]; then

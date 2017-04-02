@@ -1196,7 +1196,7 @@ misc_defaults(int restore_defaults)
 			break;
 
 		case MODEL_RTAC88N:
-		case MODEL_BRTAC828M2:
+		case MODEL_BRTAC828:
 		case MODEL_RTAC88S:
 			nvram_set("reboot_time", "100");	// default is 70 sec
 			break;
@@ -1983,7 +1983,7 @@ static int set_basic_ifname_vars(char *wan, char *lan, char *wl2g, char *wl5g, c
 				add_wan_phy(wphy);
 		}
 
-#if defined(BRTAC828M2)
+#if defined(BRTAC828)
 		/* If wan2 or wan is not used as WAN, bridge it to LAN. */
 		if (wan2_orig && !(get_wans_dualwan() & WANSCAP_WAN2))
 			add_lan_phy(wan2_orig);
@@ -2199,7 +2199,7 @@ int init_nvram(void)
 #if defined(RTCONFIG_DUALWAN) && defined(CONFIG_BCMWL5)
 	char wan_if[10];
 #endif
-#if defined(BRTAC828M2) || defined(RTAC88S)
+#if defined(BRTAC828) || defined(RTAC88S)
 	char *wan0, *wan1, *lan_1, *lan_2, lan_ifs[32];
 #endif
 
@@ -3400,8 +3400,8 @@ int init_nvram(void)
 		break;
 #endif	/* RTAC88N */
 
-#if defined(BRTAC828M2) || defined(RTAC88S)
-	case MODEL_BRTAC828M2:
+#if defined(BRTAC828) || defined(RTAC88S)
+	case MODEL_BRTAC828:
 	case MODEL_RTAC88S:
 		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
 		//nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
@@ -3409,13 +3409,13 @@ int init_nvram(void)
 		nvram_set("lan_ifname", "br0");
 
 #if defined(RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2)
-		/* BRT-AC828M2 SR1~SR3, REV 1.00 ~ 1.20 */
+		/* BRT-AC828 SR1~SR3, REV 1.00 ~ 1.20 */
 		wan0 = "eth2";
 		wan1 = "eth3";
 		lan_1 = "eth0";
 		lan_2 = "eth1";
 #else
-		/* BRT-AC828M2 SR4 or above, REV 1.30+ */
+		/* BRT-AC828 SR4 or above, REV 1.30+ */
 		wan0 = "eth0";
 		wan1 = "eth3";
 		lan_1 = "eth1";
@@ -3446,7 +3446,7 @@ int init_nvram(void)
 			set_basic_ifname_vars(wan0, "bond0", "ath0", "ath1", "usb", NULL, "vlan2", "vlan3", wan1, 0);
 		}
 
-#if defined(BRTAC828M2_SR1)
+#if defined(BRTAC828_SR1)
 		nvram_set_int("btn_rst_gpio", 54|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_usb_gpio",  7);
 		nvram_set_int("led_usb3_gpio", 8);
@@ -3471,7 +3471,7 @@ int init_nvram(void)
 		nvram_set_int("led_wan_red_gpio", 56);
 		nvram_set_int("led_wan2_red_gpio", 55);	/* RTCONFIG_WANRED_LED && RTCONFIG_WANPORT2 */
 		nvram_set_int("led_failover_gpio", 26);
-#if !defined(BRTAC828M2_SR2)
+#if !defined(BRTAC828_SR2)
 		nvram_set_int("led_sata_gpio", 25);
 #endif
 #endif
@@ -3532,7 +3532,7 @@ int init_nvram(void)
 		nvram_set("wl1_HT_TxStream", "4");
 		nvram_set("wl1_HT_RxStream", "4");
 		break;
-#endif	/* BRTAC828M2 || RTAC88S */
+#endif	/* BRTAC828 || RTAC88S */
 
 #ifdef CONFIG_BCMWL5
 #ifndef RTCONFIG_BCMWL6
@@ -5992,7 +5992,7 @@ int init_nvram2(void)
 		nvram_set("dms_friendly_name", friendly_name);
 		nvram_set("daapd_friendly_name", friendly_name);
 
-#if defined(BRTAC828M2)
+#if defined(BRTAC828)
 		sprintf(friendly_name, "%s-%02X%02X", "BRT-AC828", mac_binary[4], mac_binary[5]);
 		nvram_set("computer_name", friendly_name);
 #endif
@@ -6077,6 +6077,7 @@ void force_free_caches()
 #ifdef RTCONFIG_BCMARM
 	f_write_string("/proc/sys/vm/drop_caches", "1", 0, 0);
 #endif
+	nvram_unset("reload_svc_radio");
 }
 
 #ifdef RTN65U

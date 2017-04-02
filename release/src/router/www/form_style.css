@@ -84,25 +84,6 @@
 .FormTitle tbody{
 	line-height:180%;
 }
-
-.FormTitle_firefox{
-	margin-top:-100px;
-	line-height:160%;
-	font-size:12px;
-	font-family:Arial, Verdana, Arial, Helvetica, sans-serif;
-	border:1px solid #4D595D;
-	color:white;
-}
-.FormTitle_firefox thead{
-	color:#FFF;
-	font-size:13px;
-	text-align:center;	
-	font-weight:bold;
-	background-color:#4D595D;
-}
-.FormTitle_firefox tbody{
-	line-height:180%;
-}
 .FormTable{
 	font-size:12px;
 	font-family:Arial, Helvetica, sans-serif;

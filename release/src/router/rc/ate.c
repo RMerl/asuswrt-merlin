@@ -38,8 +38,8 @@ static int setAllSpecificColorLedOn(enum led_color color)
 		all_led[i] = &no_led;
 
 	switch (model) {
-#if defined(BRTAC828M2)
-	case MODEL_BRTAC828M2:
+#if defined(BRTAC828)
+	case MODEL_BRTAC828:
 		{
 			static enum led_id white_led[] = {
 				LED_POWER, LED_WAN, LED_WAN2,
@@ -1016,7 +1016,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #if defined(RTCONFIG_M2_SSD)
-	/* Because M.2 SSD is assigned to port 3 and BRT-AC828M2 doesn't have SD card.
+	/* Because M.2 SSD is assigned to port 3 and BRT-AC828 doesn't have SD card.
 	 * It's safe to call functions for SD card here.
 	 */
 	else if (!strcmp(command, "Get_M2Ssd_Infor")) {

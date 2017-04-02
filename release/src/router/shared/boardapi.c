@@ -276,7 +276,7 @@ int init_gpio(void)
 			continue;
 		}
 #endif
-#if defined(BRTAC828M2)
+#if defined(BRTAC828)
 		if ((!strcmp(led_list[i], "led_wan_gpio") && nvram_match("led_wan_gpio", "qca8033")) ||
 		    (!strcmp(led_list[i], "led_wan2_gpio") && nvram_match("led_wan2_gpio", "qca8033"))) {
 			continue;

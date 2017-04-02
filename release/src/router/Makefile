@@ -241,6 +241,9 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 #
 obj-$(RTCONFIG_NOTIFICATION_CENTER) += sqlite
 obj-$(RTCONFIG_NOTIFICATION_CENTER) += nt_center
+
+obj-$(RTCONFIG_PROTECTION_SERVER) += protect_srv
+
 obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_QTN) += qtnimage
 obj-$(RTCONFIG_DMALLOC) += dmalloc
@@ -822,7 +825,7 @@ endif
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 
-MKSQUASHFS_TARGET = $(if $(KPATH_2636X_OR_3X),mksquashfs,mksquashfs-lzma)
+MKSQUASHFS_TARGET = mksquashfs
 MKSQUASHFS = $(MKSQUASHFS_TARGET)
 
 LINUX_ARCH_ASM_INCL_DIR = $(if ($KPATH_3X),$(LINUXDIR)/arch/mips/include/asm,$(LINUXDIR)/include/asm-mips)
@@ -2684,6 +2687,25 @@ nt_center-clean:
 	-$(MAKE) -C nt_center clean
 	@rm -f nt_center/stamp-h1
 
+protect_srv/stamp-h1:
+	touch $@
+
+protect_srv: protect_srv/stamp-h1
+	$(MAKE) -C protect_srv
+
+protect_srv-install: protect_srv
+	install -d $(INSTALLDIR)/protect_srv/usr/lib/
+	install -d $(INSTALLDIR)/protect_srv/usr/sbin/
+	install -D protect_srv/lib/libptcsrv.so $(INSTALLDIR)/protect_srv/usr/lib/libptcsrv.so
+	install -D protect_srv/protect_srv $(INSTALLDIR)/protect_srv/usr/sbin/protect_srv
+	install -D protect_srv/Send_Event2ptcsrv $(INSTALLDIR)/protect_srv/usr/sbin/Send_Event2ptcsrv
+	$(STRIP) $(INSTALLDIR)/protect_srv/usr/lib/libptcsrv.so
+	$(STRIP) $(INSTALLDIR)/protect_srv/usr/sbin/protect_srv
+
+protect_srv-clean:
+	-$(MAKE) -C protect_srv clean
+	@rm -f protect_srv/stamp-h1
+
 #	$(STRIP) $(INSTALLDIR)/tr/sbin/*
 
 #	libnet:
@@ -2862,7 +2884,10 @@ dropbear/config.h: dropbear/config.h.in
 		--disable-utmp --disable-utmpx \
 		--disable-wtmp --disable-wtmpx \
 		--disable-loginfunc \
-		--disable-pututline --disable-pututxline
+		--disable-pututline --disable-pututxline \
+		LDFLAGS="$(if $(RTCONFIG_PROTECTION_SERVER),-L$(TOP)/protect_srv/lib)" \
+		CFLAGS="$(if $(RTCONFIG_PROTECTION_SERVER),-I$(TOP)/protect_srv/include -DRTCONFIG_PROTECTION_SERVER)" \
+		LIBS="$(if $(RTCONFIG_PROTECTION_SERVER),-lptcsrv)" 
 
 
 dropbear: dropbear/config.h

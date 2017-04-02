@@ -408,7 +408,11 @@ function edit_Row(r){
 		document.form.cloud_username.value = cloud_synclist_all[r][2];
 		document.form.cloud_password.value = cloud_synclist_all[r][3];
 		if(ftp_protocol_temp == "ftp"){
-			document.form.ftp_url.value = cloud_synclist_all[r][4].substring(6);
+			var ftp_url_port = cloud_synclist_all[r][4].substring(6);
+			var ftp_url = ftp_url_port.split(":")[0];
+			var ftp_port = (ftp_url_port.split(":")[1] == undefined) ? "21" : ftp_url_port.split(":")[1];
+			document.form.ftp_url.value = ftp_url;
+			document.form.ftp_port.value = ftp_port;
 			document.getElementById('ftp_protocol')[0].selected = "selected";
 		}
 		document.form.ftp_root_path.value = cloud_synclist_all[r][5];
@@ -419,6 +423,8 @@ function edit_Row(r){
 }
 
 function delRow(_rulenum){
+	if(!confirm("Are you sure to delete this profile?"))/*untranslated*/
+		return false;
 	document.form.cloud_sync.value = cloud_sync.split('<').del(_rulenum-1).join("<");
 	FormActions("start_apply.htm", "apply", "restart_cloudsync", "2");
 	showLoading();
@@ -1019,6 +1025,12 @@ function validform(){
 		}
 	}
 
+	if(document.getElementById('select_service').innerHTML == "FTP server"){
+		if(!validator.numberRange(document.form.ftp_port, 1, 65535)) {
+			return false;
+		}
+	}
+
 	// add mode need check account whether had created or not.
 	if(editRule == -1) {
 		// ASUS WebStorage and Dropbox only suport one accoumt
@@ -1084,8 +1096,11 @@ function applyRule(){
 			newRule.push(0);
 			newRule.push(document.form.cloud_username.value);
 			newRule.push(document.form.cloud_password.value);
-			document.form.ftp_url.value = document.getElementById('ftp_protocol').value + document.form.ftp_url.value
-			newRule.push(document.form.ftp_url.value);
+			var full_ftp_url = document.getElementById('ftp_protocol').value + document.form.ftp_url.value;
+			if(document.form.ftp_port.value != "21") {
+				full_ftp_url += ":" + document.form.ftp_port.value;
+			}
+			newRule.push(full_ftp_url);
 			newRule.push(document.form.ftp_root_path.value);
 			newRule.push(1);
 			newRule.push(document.form.cloud_rule.value);
@@ -1863,8 +1878,6 @@ function onDropBoxLogin(token, uid){
 							</th>			
 							<td>
 							  <input type="text" class="input_32_table" maxlength="32" style="height: 23px;" id="sambaclient_name" name="sambaclient_name" autocorrect="off" autocapitalize="off">
-							  &nbsp;
-							  <span><#feedback_optional#></span>
 							</td>
 						</tr>	
 						<tr style="display:none;">
@@ -1933,7 +1946,7 @@ function onDropBoxLogin(token, uid){
 								<#IPConnection_VSList_ftpport#>
 							</th>			
 							<td>
-							  <input type="text" maxlength="32" class="input_32_table" style="height: 23px;" id="ftp_port" name="ftp_port" value="21" autocorrect="off" autocapitalize="off">
+							  <input type="text" maxlength="5" class="input_32_table" style="height: 23px;" id="ftp_port" name="ftp_port" value="21" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">
 							</td>
 						</tr>	
 						<tr style="display:none;">

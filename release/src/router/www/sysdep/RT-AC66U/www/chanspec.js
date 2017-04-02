@@ -264,29 +264,29 @@ function wl_chanspec_list_change(){
 								add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 1);	
 							}
 							else if(cur_control_channel >= 1 && cur_control_channel <= 4){
-								extend_channel = ["Above"];
+								extend_channel = ["<#WLANConfig11b_EChannelAbove#>"];
 								add_options_x2(document.form.wl_nctrlsb, extend_channel, "l");							
 							}
 							else if(wl_channel_list_2g.length == 12){    // 1 ~ 11
 								if(cur_control_channel >= 5 && cur_control_channel <= 7){
-									extend_channel = ["Above", "Below"];
+									extend_channel = ["<#WLANConfig11b_EChannelAbove#>", "<#WLANConfig11b_EChannelBelow#>"];
 									extend_channel_value = ["l", "u"];
 									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);							
 								}
 								else if(cur_control_channel >= 8 && cur_control_channel <= 11){
-									extend_channel = ["Below"];
+									extend_channel = ["<#WLANConfig11b_EChannelBelow#>"];
 									extend_channel_value = ["u"];
 									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);								
 								}
 							}
 							else{		// 1 ~ 13
 								if(cur_control_channel >= 5 && cur_control_channel <= 9){
-									extend_channel = ["Above", "Below"];
+									extend_channel = ["<#WLANConfig11b_EChannelAbove#>", "<#WLANConfig11b_EChannelBelow#>"];
 									extend_channel_value = ["l", "u"];
 									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);							
 								}
 								else if(cur_control_channel >= 10 && cur_control_channel <= 13){
-									extend_channel = ["Below"];
+									extend_channel = ["<#WLANConfig11b_EChannelBelow#>"];
 									extend_channel_value = ["u"];
 									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);								
 								}			
@@ -493,17 +493,17 @@ function change_channel(obj){
 	if(document.form.wl_bw.value != 1){   // 20/40 MHz or 40MHz
 		if(channel_length == 12){    // 1 ~ 11
 			if(selected_channel >= 1 && selected_channel <= 4){
-				extend_channel = ["Above"];
+				extend_channel = ["<#WLANConfig11b_EChannelAbove#>"];
 				extend_channel_value = ["l"];
 				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);				
 			}
 			else if(selected_channel >= 5 && selected_channel <= 7){
-				extend_channel = ["Above", "Below"];
+				extend_channel = ["<#WLANConfig11b_EChannelAbove#>", "<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["l", "u"];
 				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
 			}
 			else if(selected_channel >= 8 && selected_channel <= 11){
-				extend_channel = ["Below"];
+				extend_channel = ["<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["u"];
 				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);								
 			}
@@ -515,17 +515,17 @@ function change_channel(obj){
 		}
 		else{		// 1 ~ 13
 			if(selected_channel >= 1 && selected_channel <= 4){
-				extend_channel = ["Above"];
+				extend_channel = ["<#WLANConfig11b_EChannelAbove#>"];
 				extend_channel_value = ["l"];
 				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
 			}
 			else if(selected_channel >= 5 && selected_channel <= 9){
-				extend_channel = ["Above", "Below"];
+				extend_channel = ["<#WLANConfig11b_EChannelAbove#>", "<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["l", "u"];
 				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
 			}
 			else if(selected_channel >= 10 && selected_channel <= 13){
-				extend_channel = ["Below"];
+				extend_channel = ["<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["u"];
 				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);								
 			}

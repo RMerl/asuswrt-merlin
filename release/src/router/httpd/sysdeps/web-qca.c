@@ -1094,6 +1094,7 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 
 		//6. WPS WPAKey
+#if 0	//hide for security
 		if (!strlen(result.WPAKey))
 			retval += websWrite(wp, "%sNone%s\n", tag1, tag2);
 		else
@@ -1102,13 +1103,16 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			char_to_ascii(tmpstr, result.WPAKey);
 			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 		}
-
+#else
+		retval += websWrite(wp, "%s%s\n", tag1, tag2);
+#endif
 		//7. AP PIN Code
 		memset(tmpstr, 0, sizeof(tmpstr));
 		strcpy(tmpstr, getAPPIN(u));
 		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 
 		//8. Saved WPAKey
+#if 0	//hide for security
 		if (!strlen(nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp))))
 			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);
 		else
@@ -1116,7 +1120,9 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 		}
-
+#else
+		retval += websWrite(wp, "%s%s\n", tag1, tag2);
+#endif
 		//9. WPS enable?
 		if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
 			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);

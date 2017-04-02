@@ -316,6 +316,7 @@ var SwitchCtrl_support = isSupport("switchctrl");
 var dsl_support = isSupport("dsl");
 var vdsl_support = isSupport("vdsl");
 var dualWAN_support = isSupport("dualwan");
+var mtwancfg_support = isSupport("mtwancfg");
 var ruisp_support = isSupport("ruisp");
 var ssh_support = isSupport("ssh");
 var snmp_support = isSupport("snmp");
@@ -543,6 +544,7 @@ function change_wl_unit_status(_unit){
 	document.titleForm.submit();
 }
 
+var dsltmp_transmode_orig = '<% nvram_get("dsltmp_transmode"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var wans_dualwan_array = new Array();
 wans_dualwan_array = wans_dualwan_orig.split(" ");
@@ -1776,7 +1778,6 @@ function show_menu(){
 	
 	show_banner(L3);
 	show_footer();
-	browser_compatibility();	
 	show_selected_language();
 	autoFocus('<% get_parameter("af"); %>');
 
@@ -2050,6 +2051,8 @@ function show_menu(){
 		notification.run();
 	}
 	/*--notification end--*/
+
+	browser_compatibility();	
 }
 
 /*
@@ -2312,7 +2315,7 @@ function Block_chars(obj, keywordArray){
 function cal_height(){
 	var tableClientHeight;
 	var optionHeight = 52;
-	var manualOffSet = 25;
+	var manualOffSet = 55;
 	var table_height = Math.round(optionHeight*calculate_height - manualOffSet*calculate_height/14 - document.getElementById("tabMenu").clientHeight);	
 
 	if(navigator.userAgent.search("MSIE 8") > -1 || navigator.userAgent.search("MSIE 9") > -1 || navigator.userAgent.search("MSIE 10") > -1)
@@ -2373,15 +2376,6 @@ function cal_height(){
 		document.getElementById("Background_Management").style.height = table_height + "px";
 		tableClientHeight = document.getElementById("Background_Management").clientHeight;
 	}
-
-	/*// overflow
-	var isOverflow = parseInt(tableClientHeight) - parseInt(table_height);
-	if(isOverflow >= 0){
-		if(current_url.indexOf("Main_TrafficMonitor_realtime") == 0 && navigator.appName.indexOf("Microsoft") < 0)
-			contentObj[0].style.height = contentObj[0].clientHeight + 45 + "px";
-		else
-			contentObj[0].style.height = contentObj[0].clientHeight + 19 + "px";	
-	}*/
 }
 
 function submitenter(myfield,e)
@@ -2554,17 +2548,9 @@ if(isChrome){
 function browser_compatibility(){
 	var obj_inputBtn;
 
-	if((isChrome56 || isFirefox || isOpera) && document.getElementById("FormTitle")){
-		document.getElementById("FormTitle").className = "FormTitle_firefox";
-//		if(current_url.indexOf("Guest_network") == 0)
-//			document.getElementById("FormTitle").style.marginTop = "-140px";
-		if(current_url.indexOf("QoS_EZQoS.asp") == 0)
-			document.getElementById("FormTitle").style.marginTop = "0px"
-		/*if(current_url.indexOf("ParentalControl.asp") == 0 && !yadns_support)			//mark temporary, need to check 4M flash model. Jieming added at 2014/05/09
-			document.getElementById("FormTitle").style.marginTop = "-140px";	*/
-	}
-
 	if(isiOS){
+		var obj_inputBtn;
+
 		/* language options */
 		document.body.addEventListener("touchstart", mouseClick, false);
 
@@ -2578,6 +2564,25 @@ function browser_compatibility(){
 			obj_inputBtn[i].addEventListener('touchstart', function(){this.className = 'button_gen_long_touch';}, false);
 			obj_inputBtn[i].addEventListener('touchend', function(){this.className = 'button_gen_long';}, false);
 		}
+	}
+
+	try{
+		// if jQuery is available
+		var $container = $("#tabMenu").parent();
+		$('<div>')
+			.css({"margin-top":"-140px"})
+			.append($container.children())
+			.appendTo($container)
+	}
+	catch(e){
+		var container = document.getElementById('tabMenu').parentNode;
+		var newDiv = document.createElement('div');
+		newDiv.style.marginTop = "-140px";
+		for(var i=0; i<container.children.length; i++){
+			newDiv.appendChild(container.children[i].cloneNode(true));
+		}
+		container.innerHTML = "";
+		container.appendChild(newDiv);
 	}
 }	
 
@@ -3576,12 +3581,22 @@ function refreshStatus(xhr){
 				else if(_link_status == "4"){
 					if(_link_sbstatus == "1"){
 						this.hint = "<#QKSet_Internet_Setup_fail_reason3#>";
-						this.link = "/Advanced_WAN_Content.asp?af=wan_pppoe_username";
+						if(wans_dualwan_array[active_wan_unit] == "dsl" && dsltmp_transmode_orig == "ptm")
+							this.link = "/Advanced_VDSL_Content.asp?af=dslx_pppoe_username";
+						else if(wans_dualwan_array[active_wan_unit] == "dsl")
+							this.link = "/Advanced_DSL_Content.asp?af=dslx_pppoe_username";
+						else
+							this.link = "/Advanced_WAN_Content.asp?af=wan_pppoe_username";
 						this.className = "_error";
 					}
 					else if(_link_sbstatus == "2"){
 						this.hint = "<#QKSet_Internet_Setup_fail_reason2#>";
-						this.link = "/Advanced_WAN_Content.asp?af=wan_pppoe_username";
+						if(wans_dualwan_array[active_wan_unit] == "dsl" && dsltmp_transmode_orig == "ptm")
+							this.link = "/Advanced_VDSL_Content.asp?af=dslx_pppoe_username";
+						else if(wans_dualwan_array[active_wan_unit] == "dsl")
+							this.link = "/Advanced_DSL_Content.asp?af=dslx_pppoe_username";
+						else
+							this.link = "/Advanced_WAN_Content.asp?af=wan_pppoe_username";
 						this.className = "_error";
 					}
 					else if(_link_sbstatus == "3"){
@@ -3597,7 +3612,10 @@ function refreshStatus(xhr){
 				}
 				else if(_link_status == "5"){
 					this.hint = "<#web_redirect_reason5_1#>";
-					this.link = "/Advanced_WAN_Content.asp";
+					if(wans_dualwan_array[active_wan_unit] == "dsl")
+						this.link = "";
+					else
+						this.link = "/Advanced_WAN_Content.asp";
 					this.className = "_error";
 				}
 
@@ -4540,6 +4558,26 @@ function isSupportFileReader() {
 function isSupportCanvas() {
 	var elem = document.createElement("canvas");
 	return !!(elem.getContext && elem.getContext('2d'));
+}
+
+//check BWDPI engine status
+function check_bwdpi_engine_status() {
+	var status = false;
+	if(bwdpi_support) {
+		var dpi_engine_status = <%bwdpi_engine_status();%>;
+		if(dpi_engine_status.DpiEngine == 1)
+			status = true;
+	}
+
+	return status;
+}
+
+//check dual wan status
+function check_dual_wan_status() {
+	var dual_wan_status = {};
+	dual_wan_status.status = dualwan_enabled;
+	dual_wan_status.mode = '<% nvram_get("wans_mode"); %>';
+	return dual_wan_status;
 }
 
 function get_protocol() {

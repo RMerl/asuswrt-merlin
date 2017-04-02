@@ -1248,6 +1248,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_annex", "4" }, // Annex AIJLM(EnumAdslTypeA_I_J_L_M)
 #endif
 	{ "dslx_ginp", "1" },
+#ifdef RTCONFIG_DSL_TCLINUX
+	{ "dslx_ginp_try_enable", "0" },
+	{ "dslx_ginp_try_enable_disp", "0" },
+#endif
 	{ "dslx_dla_enable", "1" },
 	{ "dslx_diag_enable", "0" },
 	{ "dslx_diag_duration", "0" },
@@ -2890,10 +2894,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "rip_hostname", "ripd" },        // Set hostname of the ripd.(default: ripd)
 	{ "rip_passwd", "zebra" },         // Set password for vty interface. If there is no password, a vty won? accept connections.(default: zebra)
 #endif
-#ifdef BRTAC828M2
+#ifdef BRTAC828
 	{ "lan_trunk_0", "0"},
 	{ "lan_trunk_1", "0"},
-#endif	/* BRTAC828M2 */
+#endif	/* BRTAC828 */
 
 #if defined(RTCONFIG_PORT_BASED_VLAN)
 	//{ "vlan_enable", "0" },

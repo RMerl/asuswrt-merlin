@@ -33,6 +33,8 @@
 
 #define PATH_DEV_NVRAM "/dev/nvram"
 
+#define NVRAM_IOCTL_GET_SPACE	0x0001
+
 /* Globals */
 static int nvram_fd = -1;
 static char *nvram_buf = NULL;
@@ -40,14 +42,18 @@ static char *nvram_buf = NULL;
 int
 nvram_init(void *unused)
 {
+	int ret;
+	unsigned int nvram_space = MAX_NVRAM_SPACE;
+
 	if (nvram_fd >= 0)
 		return 0;
 
 	if ((nvram_fd = open(PATH_DEV_NVRAM, O_RDWR)) < 0)
 		goto err;
 
+	ret = ioctl(nvram_fd, NVRAM_IOCTL_GET_SPACE, &nvram_space);	// get the real nvram space size
 	/* Map kernel string buffer into user space */
-	nvram_buf = mmap(NULL, MAX_NVRAM_SPACE, PROT_READ, MAP_SHARED, nvram_fd, 0);
+	nvram_buf = mmap(NULL, nvram_space, PROT_READ, MAP_SHARED, nvram_fd, 0);
 	if (nvram_buf == MAP_FAILED) {
 		close(nvram_fd);
 		nvram_fd = -1;

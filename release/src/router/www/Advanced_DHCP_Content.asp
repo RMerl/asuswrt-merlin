@@ -193,7 +193,7 @@ function addRow_Group(upper){
 		//Viz check same rule  //match(ip or mac) is not accepted
 		if(item_num >=2){
 			for(i=0; i<rule_num; i++){
-					if(document.form.dhcp_staticmac_x_0.value.toLowerCase() == document.getElementById('dhcp_staticlist_table').rows[i].cells[0].innerHTML.toLowerCase()){
+					if(document.form.dhcp_staticmac_x_0.value.toUpperCase() == document.getElementById('dhcp_staticlist_table').rows[i].cells[0].innerHTML.toUpperCase()){
 						alert("<#JS_duplicate#>");
 						document.form.dhcp_staticmac_x_0.focus();
 						document.form.dhcp_staticmac_x_0.select();
@@ -283,7 +283,7 @@ function showdhcp_staticlist(){
 			var userIconBase64 = "NoIcon";
 			var clientName, deviceType, deviceVender;
 
-			var clientMac = dhcp_staticlist_col[0];
+			var clientMac = dhcp_staticlist_col[0].toUpperCase();
 			var clientIP = dhcp_staticlist_col[1];
 			if(clientList[clientMac]) {
 				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;

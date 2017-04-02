@@ -45,7 +45,7 @@ enum {
 	P6_PORT=6,
 	P7_PORT=6,
 };
-#elif defined(RTAC88N) || defined(BRTAC828M2) || defined(RTAC88S)
+#elif defined(RTAC88N) || defined(BRTAC828) || defined(RTAC88S)
 enum {
 	P0_PORT=0,
 	LAN1_PORT=1,
@@ -91,7 +91,7 @@ void reset_qca_switch(void);
 ////// RT-AC55U/RT-AC55UHP/4G-AC55U definition
 #define RGMII_PORT		P6_PORT
 #define SGMII_PORT		P0_PORT
-#elif defined(RTAC88N) || defined(BRTAC828M2) || defined(RTAC88S)
+#elif defined(RTAC88N) || defined(BRTAC828) || defined(RTAC88S)
 #define RGMII_PORT		P0_PORT
 #define SGMII_PORT		P6_PORT
 #endif
@@ -102,7 +102,7 @@ void reset_qca_switch(void);
 #elif (defined(PLAC56) || defined(PLAC66U))
 #define	CPU_PORT_TO_WAN		SGMII_PORT // QCA956X SGMII MAC0(eth0) connect to WAN port
 #define CPU_PORT_TO_LAN		SGMII_PORT // QCA956X SGMII MAC0(eth0) connect to LAN port
-#else /* RT-AC55U || RT-AC55UHP || 4G-AC55U || RTAC88N || BRTAC828M2 || RTAC88S */
+#else /* RT-AC55U || RT-AC55UHP || 4G-AC55U || RTAC88N || BRTAC828 || RTAC88S */
 #define	CPU_PORT_TO_WAN		RGMII_PORT // AC55U RGMII MAC0(eth0) connect to WAN port
 #define CPU_PORT_TO_LAN		SGMII_PORT // AC55U SGMII MAC1(eth1) connect to LAN port
 #endif

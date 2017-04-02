@@ -31,7 +31,8 @@ enum {
 };
 
 // ErP parameters
-#define ERP_DEFAULT_COUNT  30
+/* the total period : 96 * 10  sec = 960 sec = 16 * 60 sec = 16 min */
+#define ERP_DEFAULT_COUNT  96
 static int erp_det_period = 0;             // detect mode
 static int erp_led_period = 0;             // led mode for flashing
 static int erp_count = ERP_DEFAULT_COUNT;  // ERP_DEFAULT_COUNT * 10 sec
@@ -55,6 +56,8 @@ static int erp_check_usb_stat()
 static int erp_check_wl_stat(int model)
 {
 	/*
+		if enable wifi schedule, return -1
+
 		if ret = 0, active interface = 0
 		if ret = 1, active interface = 1
 		if ret = 2, active interface = 2
@@ -62,6 +65,11 @@ static int erp_check_wl_stat(int model)
 	*/
 
 	int ret = 0;
+
+	/* wifi scheduler casse */
+	if (nvram_match("wl0_timesched", "1") || nvram_match("wl1_timesched", "1") || nvram_match("wl2_timesched", "1")) {
+		return -1;
+	}
 
 	if (nvram_get_int("wl0_radio")) ret++;
 	if (nvram_get_int("wl1_radio")) ret++;
@@ -80,7 +88,7 @@ static int erp_check_arp_stat(int model)
 	/*
 		return ret
 		0 : it doesn't match any rule as below
-		1 : lan or wlan connection exist and more than 1 client
+		1 : lan or wlan connection exist and more than 0 client
 		2 : wan connection exist
 	*/
 
@@ -91,7 +99,7 @@ static int erp_check_arp_stat(int model)
 	char ifname[20];  // need to use array
 	char ipaddr[128]; // ipv6 addr
 	int flags = 0;    // arp flags
-	int BR_NUM = 1;   // the bridge interface numbers
+	int BR_NUM = 0;   // the bridge interface numbers
 	int unit = 0;
 	int wan_conn = 0; // wan connection stat
 
@@ -147,7 +155,7 @@ static int erp_check_arp_stat(int model)
 
 	// TODO: RTAC87U BR_NUM is special case
 	if (model == MODEL_RTAC87U) {
-		BR_NUM = 2;
+		BR_NUM = 1;
 	}
 
 	/* check bridge interface for WLAN or LAN */
@@ -173,8 +181,9 @@ check_end:
 static int erp_check_gphy_stat(int model)
 {
 	/*
-		if ret = 0, there is "no" gphy linked
-		if ret = 1, there is      gphy linked
+		if ret = 0, there is "no"  gphy linked
+		if ret = 1, there is       gphy linked
+		if ret = 2, there is "wan" gphy linked
 	*/
 
 	/* create ERP_FOLDOER */
@@ -205,19 +214,27 @@ static int erp_check_gphy_stat(int model)
 			ERP_DBG("len = %d\n", len);
 			if (len == 46) {
 				sscanf(buf, "W0=%[^;];L1=%[^;];L2=%[^;];L3=%[^;];L4=%[^;];L5=%[^;];L6=%[^;];L7=%[^;];L8=%[^;];", v0, v1, v2, v3, v4, v5, v6, v7, v8);
-				if ( (!strcmp(v0, "X") || (model==MODEL_DSLAC68U))
+				if ( (!strcmp(v0, "X") || (model==MODEL_DSLAC68U)) /* DSL-AC68U v0 always = "M" */
 					&& !strcmp(v1, "X") && !strcmp(v2, "X") && !strcmp(v3, "X") && !strcmp(v4, "X")
 					&& !strcmp(v5, "X") && !strcmp(v6, "X") && !strcmp(v7, "X") && !strcmp(v8, "X"))
 				{
 					ret = 0;
 				}
+				else if (strcmp(v0, "X") && (model!=MODEL_DSLAC68U)) /* no DSL-model */
+				{
+					ret = 2;
+				}
 			}
 			else if(len == 26) {
 				sscanf(buf, "W0=%[^;];L1=%[^;];L2=%[^;];L3=%[^;];L4=%[^;];", v0, v1, v2, v3, v4);
-				if ( (!strcmp(v0, "X") || (model==MODEL_DSLAC68U))
+				if ( (!strcmp(v0, "X") || (model==MODEL_DSLAC68U)) /* DSL-AC68U v0 always = "M" */
 					&& !strcmp(v1, "X") && !strcmp(v2, "X") && !strcmp(v3, "X") && !strcmp(v4, "X"))
 				{
 					ret = 0;
+				}
+				else if (strcmp(v0, "X") && (model!=MODEL_DSLAC68U)) /* no DSL-model */
+				{
+					ret = 2;
 				}
 			}
 		}
@@ -450,18 +467,31 @@ static void ERP_CHECK_MODE()
 	ERP_DBG("erp_usb=%d, erp_wl=%d, erp_arp=%d, erp_gphy=%d, erp_dsl=%d, erp_status=%d, erp_count=%d\n",
 		erp_usb, erp_wl, erp_arp, erp_gphy, erp_dsl, erp_status, erp_count);
 
+	// usb enabled
 	if (erp_usb == 1) goto wakeup;
+
+	// wifi scheduler enabled
+	if (erp_wl == -1) goto wakeup;
+
+	// wifi interface is over 1
 	if (erp_wl == 2 || erp_wl == 3) goto wakeup;
+
+	// lan / wlan / wan connection
 	if (erp_arp != 0) goto wakeup;
-	if (model == MODEL_DSLAC68U && erp_dsl == 1 && erp_wl != 0) goto wakeup; // DSL model
+
+	// gphy linked
+	if (erp_gphy != 0) goto wakeup;
+
+	// DSL model
+	if (model == MODEL_DSLAC68U && erp_dsl == 1) goto wakeup;
 
 	// step5. check timeout count
 	/*
-		(wl, arp, gphy) = (0, 0, X) or (1, 0, 0)
+		(wl, arp, gphy) = (0, 0, 0) or (1, 0, 0)
 	*/
 	if (erp_status == ERP_WAKEUP)
 	{
-		if ((erp_wl == 0 && erp_arp == 0) || (erp_wl == 1 && erp_arp == 0 && erp_gphy == 0)) {
+		if ((erp_wl == 0 && erp_arp == 0 && erp_gphy == 0) || (erp_wl == 1 && erp_arp == 0 && erp_gphy == 0)) {
 			if (erp_count > 0)
 				erp_count--;
 

@@ -1277,6 +1277,10 @@ config RTCONFIG_NOTIFICATION_CENTER
 	bool "Notification Center"
 	default y
 
+config RTCONFIG_PROTECTION_SERVER
+	bool "Security Protection Mechanism"
+	default n
+
 config RTCONFIG_6RELAYD
 	bool "IPv6 Relay support"
 	depends on RTCONFIG_IPV6

@@ -356,11 +356,11 @@ enum {
 	MODEL_RTN10PV2,
 	MODEL_RTAC1200G,
 	MODEL_RTAC1200GP,
-        MODEL_RTAC88N,
-        MODEL_BRTAC828M2,
-        MODEL_RTAC88S,
-        MODEL_RTAC58U,
-        MODEL_RTAC82U,
+	MODEL_RTAC88N,
+	MODEL_BRTAC828,
+	MODEL_RTAC88S,
+	MODEL_RTAC58U,
+	MODEL_RTAC82U,
 };
 
 /* NOTE: Do not insert new entries in the middle of this enum,
@@ -593,7 +593,7 @@ static inline int have_usb3_led(int model)
 #endif
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC3200:
-		case MODEL_BRTAC828M2:
+		case MODEL_BRTAC828:
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 		case MODEL_RTAC5300:
@@ -608,7 +608,7 @@ static inline int have_sata_led(int model)
 {
 	/* Return true if a model has SATA LED */
 	switch (model) {
-		case MODEL_BRTAC828M2:
+		case MODEL_BRTAC828:
 			return 1;
 	}
 	return 0;

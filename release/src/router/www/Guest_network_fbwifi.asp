@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - Captive Portal<!--untranslated--></title>
+<title><#Web_Title#> - Facebook Wi-Fi<!--untranslated--></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="other.css">
@@ -245,10 +245,10 @@ function fbwifiShowAndHide(flag) {
 		};
 		
 		var fbwifi_hint_array = [
-			"All 2.4GHz guest networks are used, if you want to use 2.4GHz band for Facebook WiFi, please remove one 2.4GHz guest network<br>",
-			"All 5GHz guest networks are used, if you want to use 5GHz band for Facebook WiFi, please remove one 5GHz guest network<br>",
-			"All 5GHz-2 guest networks are used, if you want to use 5GHz band for Facebook WiFi, please remove one 5GHz-2 guest network"
-		];/*untranslated*/
+			"<#Facebook_WiFi_unit_hint0#>",
+			"<#Facebook_WiFi_unit_hint1#>",
+			"<#Facebook_WiFi_unit_hint2#>"
+		];
 
 		document.getElementById("fbwifi_unit_hint").innerHTML = "";
 		if(wl_info.band2g_support && wl_info.band5g_support && wl_info.band5g_2_support) {
@@ -495,17 +495,17 @@ function agreement_confirm() {
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <div id="agreement_panel" class="panel_folder" style="margin-top: -100px;">
-	<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:25px;margin-left:30px;height:35px;">Term of use</div>
+	<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:25px;margin-left:30px;height:35px;"><#Facebook_WiFi_disclaim_title#></div>
 	<div class="folder_tree">
-		Disclaimer:
+		<#Facebook_WiFi_disclaim#>
 		<br><br>
-		1. Please be noted to keep Facebook Wi-Fi enabled firmware stay up to date.
+		1. <#Facebook_WiFi_disclaim1#>
 		<br><br>
-		2. Please be noted Facebook Wi-Fi service is provided by Facebook which will be terminated upon official announcement .
+		2. <#Facebook_WiFi_disclaim2#>
 		<br><br>
-		3. Please be noted there will be a 1 year grace period upon termination where Facebook will continue supporting the service. After that period, this feature will cease to operate.
+		3. <#Facebook_WiFi_disclaim3#>
 		<br><br>
-		4. Any non-certificated router is prohibited to use Facebook Wi-Fi enabled firmware.
+		4. <#Facebook_WiFi_disclaim4#>
 	</div>
 	<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;">
 		<input class="button_gen_long" type="button" style="margin-left:20%;margin-top:18px;" onclick="agreement_cancel();" value="<#CTL_Disagree#>">
@@ -536,11 +536,11 @@ function agreement_confirm() {
 <div id="full_screen_bg" class="full_screen_bg" onselectstart="return false;"></div>
 <div id="fbwifi_page_setting" class="fbwifi_page_setting">
 	<div class="fbwifi_page_setting_title">
-		Facebook Page Settings<!--untranslated-->
+		<#Facebook_WiFi_page#>
 	</div>
 	<div class="fbwifi_page_setting_text">
-		Choose a Facebook page for this Wi-Fi network, and manage page settings here : 
-		<span class="fbwifi_page_setting_link" onclick="configure_fbwifi();">Page Setting</span>
+		<#Facebook_WiFi_page_desc#>
+		<span class="fbwifi_page_setting_link" onclick="configure_fbwifi();"><#Facebook_page#></span>
 	</div>
 	<div class="fbwifi_page_setting_bottom">
 		<input class="button_gen" type="button" onclick="close_fbwifi_page_setting();" value="<#CTL_close#>">
@@ -571,37 +571,41 @@ function agreement_confirm() {
 									<table width="98%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_FBWiFi">
 										<tr id="FBWiFi_title">
 											<td align="left" style="color:#5AD; font-size:16px; border-bottom:1px dashed #AAA;" colspan="2">
-												<span>Facebook WiFi<!--untranslated--></span>
+												<span>Facebook Wi-Fi<!--untranslated--></span>
 												<span id="FBWiFi_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#><a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(0);"><#btn_go#></a>
 												</span>
 											</td>
 										</tr>
 										<tr>
 											<td width="50%">
-												<span style="line-height: 20px;" >Facebook Wi-Fi kets customers check in to participating businesses on Facebok for free Wi-Fi access. When people check int to your Page, you can share offers and other announcements with them.<!--untranslated-->
-												</span>
+												<span style="line-height: 20px;" ><#Facebook_WiFi_desc#></span>
 											</td>
 											<td width="50%">
 												<ul style="margin: 5px;line-height: 20px;">
 													<li>
-														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/business/facebook-wifi" target="_blank">What is Facebook WiFi<!--untranslated--></a>
+														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/business/facebook-wifi" target="_blank"><#Facebook_WiFi_FAQ1#></a>
 													</li>
 													<li>
-														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/business/a/facebook-wifi/businessowner" target="_blank">What benefit I can get by Facebook WiFi ?<!--untranslated--></a>
+														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/business/a/facebook-wifi/businessowner" target="_blank"><#Facebook_WiFi_FAQ2#></a>
 													</li>
 													<li>
-														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/help/364458366957655/" target="_blank">How to setup Facebook WiFi ?<!--untranslated--></a>
+														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/help/364458366957655/" target="_blank"><#Facebook_WiFi_FAQ3#></a>
 													</li>
 													<li>
-														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/help/126760650808045/" target="_blank">FAQs about Facebook WiFi<!--untranslated--></a>
+														<a style="font-weight: bolder;text-decoration: underline;" href="https://www.facebook.com/help/126760650808045/" target="_blank"><#Facebook_WiFi_FAQ4#></a>
 													</li>
 												</ul>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="2">
+												<div style="color:#FC0;">Please notice that current Facebook Wi-Fi only blocks the access from http:// connections before checking in.<!--untranslated--></div>
 											</td>
 										</tr>
 									</table>
 									<table id="tbFBWiFiSetting" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
-											<th>Enable Facebook WiFi<!--untranslated--></th>
+											<th><#Facebook_WiFi_enable#></th>
 											<td>
 												<div align="center" class="left" style="float:left; cursor:pointer;" id="radio_fbwifi_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden;">
@@ -629,7 +633,7 @@ function agreement_confirm() {
 																}
 															}
 															if(fbwifi_flag) {
-																alert("All guest networks are used now, please remove at least one guest network then try to enable Facebook WiFi again.");/*untranslated*/
+																alert("<#Facebook_WiFi_unit_hint_all#>");
 																$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 																return false;
 															}
@@ -694,24 +698,24 @@ function agreement_confirm() {
 											</td>
 										</tr>
 										<tr id="trFBPageSetting">
-											<th>Facebook page settings</th><!--untranslated-->
+											<th><#Facebook_WiFi_page#></th>
 											<td>
 												<div id="divFBSetting">
 													<div>
 														<input type="button" name="btFBSetting" class="button_gen" value="Setting" onclick="configure_fbwifi();">
 													</div>
 													<div style="margin-top:-30px;margin-bottom:9px;margin-left:130px;font-size:16px;color:#FFCC00;">
-														Confugure Facebook page connection.<!--untranslated-->
+														<#Facebook_WiFi_page_connection#>
 													</div>
 												</div>
 												<div id="divGettingID">
 													<img src="images/InternetScan.gif" />
 													<div style="margin-top:-20px;margin-left:30px;font-size:16px;color:#FFCC00;">
-														Connecting to Facebook page...<!--untranslated-->
+														<#Facebook_WiFi_connecting#>
 													</div>
 												</div>
 												<div id="divWanState" style="font-size:16px;color:#FFCC00;">
-														Unable to connect to Facebook page, please check your internet status.<!--untranslated-->
+														<#Facebook_WiFi_disconnected#>
 												</div>
 												
 											</td>

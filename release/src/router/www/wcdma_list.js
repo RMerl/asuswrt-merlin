@@ -346,7 +346,7 @@ function gen_list(){
 	}
 	else if(country == "TW"){
 		protolist = new Array("1", "1", "1", "1", "4");
-		isplist = new Array("Far EasTone", "Chunghwa Telecom", "TW Mobile", "VIBO", "GMC");
+		isplist = new Array("Far EasTone", "Chunghwa Telecom", "TW Mobile", "T Star", "GMC");
 		apnlist = new Array("internet", "internet", "internet", "internet", "");
 		daillist = new Array("*99#", "*99***1#", "*99#", "*99#", "");
 		userlist = new Array("", "", "", "", "");

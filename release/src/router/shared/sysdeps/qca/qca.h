@@ -276,7 +276,7 @@ enum ASUS_IOCTL_SUBCMD {
 #define ETH1_MAC_OFFSET			0x5006
 #elif defined(RTCONFIG_SOC_IPQ8064)
 
-#if defined(BRTAC828M2) || defined(RTAC88S)
+#if defined(BRTAC828) || defined(RTAC88S)
 #define ETH0_MAC_OFFSET			0x1006	/* 2G EEPROM */
 #define ETH1_MAC_OFFSET			0x5006	/* 5G EEPROM */
 #elif defined(RTAC88N)
@@ -330,7 +330,7 @@ enum ASUS_IOCTL_SUBCMD {
  * 2G: follow WAN
  * 5G: follow LAN
  */
-#if defined(BRTAC828M2) || defined(RTAC88S)
+#if defined(BRTAC828) || defined(RTAC88S)
 #define OFFSET_MAC_ADDR_2G		(MTD_FACTORY_BASE_ADDRESS + ETH0_MAC_OFFSET)
 #define OFFSET_MAC_ADDR			(MTD_FACTORY_BASE_ADDRESS + ETH1_MAC_OFFSET)
 #elif defined(RTAC88N)

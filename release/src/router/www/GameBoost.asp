@@ -161,7 +161,7 @@ function check_game_boost(){
 				<div id="tabMenu" style="*margin-top: -160px;"></div>
 				<br>
 		<!--=====Beginning of Main Content=====-->
-				<div id="applist_table" style="background:url('images/New_ui/mainimage_img_Game.jpg');background-repeat: no-repeat;margin-top:-155px;border-radius:3px;">
+				<div id="applist_table" style="background:url('images/New_ui/mainimage_img_Game.jpg');background-repeat: no-repeat;border-radius:3px;">
 					<table style="padding-left:10px;">
 						<tr>
 							<td class="formfonttitle">

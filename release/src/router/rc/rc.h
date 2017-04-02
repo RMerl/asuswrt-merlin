@@ -779,6 +779,7 @@ extern void rssi_check_unit(int unit);
 #if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 extern void led_table_ctrl(int on_off);
 #endif
+extern void timecheck(void);
 
 // usbled.c
 extern int usbled_main(int argc, char *argv[]);

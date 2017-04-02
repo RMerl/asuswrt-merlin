@@ -450,7 +450,7 @@ void config_switch(void)
 			sprintf(nvram_ports, "wan%sports_mask", (unit == WAN_UNIT_FIRST)? "" : prefix);
 			nvram_unset(nvram_ports);
 			if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN) {
-				/* BRT-AC828M2 LAN1 = P0, LAN2 = P1, etc */
+				/* BRT-AC828 LAN1 = P0, LAN2 = P1, etc */
 				nvram_set_int(nvram_ports, (1 << (wans_lanport - 1)));
 			}
 		}
@@ -782,9 +782,9 @@ int switch_exist(void)
 	unsigned int id[2];
 	char *wan_ifname[2] = {
 #if defined(RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2)
-		"eth2", "eth3"	/* BRT-AC828M2 SR1 ~ SR3 wan0, wan1 interface. */
+		"eth2", "eth3"	/* BRT-AC828 SR1 ~ SR3 wan0, wan1 interface. */
 #elif defined(RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2)
-		"eth0", "eth3"	/* BRT-AC828M2 SR4 or above wan0, wan1 interface. */
+		"eth0", "eth3"	/* BRT-AC828 SR4 or above wan0, wan1 interface. */
 #endif
 	};
 
@@ -1034,7 +1034,7 @@ static void __load_wifi_driver(int testmode)
 		strncpy(code_str, nvram_safe_get("wl1_txpower"), sizeof(code_str)-1);
 		eval("iwpriv", (char*) VPHY_5G, "txpwrpc", code_str);
 
-#if defined(BRTAC828M2)
+#if defined(BRTAC828)
 		set_irq_smp_affinity(68, 1);	/* wifi0 = 2G ==> CPU0 */
 		set_irq_smp_affinity(90, 2);	/* wifi1 = 5G ==> CPU1 */
 #elif defined(RTCONFIG_SOC_IPQ40XX)

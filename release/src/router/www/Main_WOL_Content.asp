@@ -130,7 +130,7 @@ function showwollist(){
 				clientName = (clientList[key].nickName == "") ? clientList[key].name : clientList[key].nickName;
 				manually_wol_list_array[key] = clientName;
 			}
-			var clientMac = key;
+			var clientMac = key.toUpperCase();
 			code +='<tr>';
 			code +='<td width="80%" align="center">';
 			if(clientList[clientMac]) {
@@ -200,7 +200,7 @@ function addRow_Group(upper){
 	
 	if(item_num >=2){
 		for(i=0; i<rule_num; i++){	
-			if(manually_wol_list_array[document.form.wollist_macAddr.value] != null){
+			if(manually_wol_list_array[document.form.wollist_macAddr.value.toUpperCase()] != null){
 				alert("<#JS_duplicate#>");
 				document.form.wollist_macAddr.focus();
 				document.form.wollist_macAddr.select();

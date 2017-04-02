@@ -298,11 +298,7 @@ ifeq ($(IPQ40XX),y)
 	@rm -rf $(PLATFORMDIR)/zImage.lzma ; \
 		$(CROSS_COMPILE)objcopy -O binary $(LINUXDIR)/vmlinux $(PLATFORMDIR)/vmlinus ; \
 		asustools/lzma -9 -f -c $(PLATFORMDIR)/vmlinus > $(PLATFORMDIR)/zImage.lzma ;
-ifeq ($(RTAC82U),y)
-	asustools/mkits.sh -D qcom-ipq40xx-ap.dkxx -o image/fit-qcom-ipq40xx-ap.dkxx.its -k $(PLATFORMDIR)/zImage.lzma -r $(PLATFORMDIR)/target.image -d $(LINUXDIR)/arch/arm/boot/dts/qcom-ipq40xx-rtac82u.dtb -C lzma -a 0x$(LOADADDR) -e 0x$(ENTRYADDR) -A $(ARCH) -v $(KERNEL_VER)
-else # RTAC58U
-	asustools/mkits.sh -D qcom-ipq40xx-ap.dkxx -o image/fit-qcom-ipq40xx-ap.dkxx.its -k $(PLATFORMDIR)/zImage.lzma -r $(PLATFORMDIR)/target.image -d $(LINUXDIR)/arch/arm/boot/dts/qcom-ipq40xx-ap.dk01.1-c2.dtb -C lzma -a 0x$(LOADADDR) -e 0x$(ENTRYADDR) -A $(ARCH) -v $(KERNEL_VER)
-endif
+	asustools/mkits.sh -D qcom-ipq40xx-ap.dkxx -o image/fit-qcom-ipq40xx-ap.dkxx.its -k $(PLATFORMDIR)/zImage.lzma -r $(PLATFORMDIR)/target.image -d $(LINUXDIR)/arch/arm/boot/dts/qcom-ipq40xx-$(lowercase_B).dtb -C lzma -a 0x$(LOADADDR) -e 0x$(ENTRYADDR) -A $(ARCH) -v $(KERNEL_VER)
 	asustools/mkimage -f image/fit-qcom-ipq40xx-ap.dkxx.its image/$(IMGNAME).img
 	asustools/mkimage -A $(ARCH) -O linux -T kernel -C lzma -a $(LOADADDR) -e $(ENTRYADDR) \
 			-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "0" "0" "0" "0" "0" "0" "0" "0" \
@@ -898,33 +894,48 @@ define RouterOptions
 			sed -i "/RTCONFIG_MEDIA_SERVER/d" $(1); \
 			echo "RTCONFIG_MEDIA_SERVER=y" >>$(1); \
 		fi; \
-		if [ "$(SWEBDAVCLIENT)" = "y" ]; then \
-			sed -i "/RTCONFIG_SWEBDAVCLIENT/d" $(1); \
-			echo "RTCONFIG_SWEBDAVCLIENT=y" >>$(1); \
-		fi; \
-		if [ "$(DROPBOXCLIENT)" = "y" ]; then \
-			sed -i "/RTCONFIG_DROPBOXCLIENT/d" $(1); \
-			echo "RTCONFIG_DROPBOXCLIENT=y" >>$(1); \
-		fi; \
-		if [ "$(FTPCLIENT)" = "y" ]; then \
-			sed -i "/RTCONFIG_FTPCLIENT/d" $(1); \
-			echo "RTCONFIG_FTPCLIENT=y" >>$(1); \
-		fi; \
-		if [ "$(SAMBACLIENT)" = "y" ]; then \
-			sed -i "/RTCONFIG_SAMBACLIENT/d" $(1); \
-			echo "RTCONFIG_SAMBACLIENT=y" >>$(1); \
-		fi; \
-		if [ "$(USBCLIENT)" = "y" ]; then \
-			sed -i "/RTCONFIG_USBCLIENT/d" $(1); \
-			echo "RTCONFIG_USBCLIENT=y" >>$(1); \
-		fi; \
-		if [ "$(FLICKRCLIENT)" = "y" ]; then \
-			sed -i "/RTCONFIG_FLICKRCLIENT/d" $(1); \
-			echo "RTCONFIG_FLICKRCLIENT=y" >>$(1); \
-		fi; \
-		if [ "$(CLOUDSYNC)" = "y" ]; then \
-			sed -i "/RTCONFIG_CLOUDSYNC/d" $(1); \
-			echo "RTCONFIG_CLOUDSYNC=y" >>$(1); \
+		if [ "$(SMARTSYNCBASE)" = "y" ]; then \
+				sed -i "/RTCONFIG_SWEBDAVCLIENT/d" $(1); \
+				echo "RTCONFIG_SWEBDAVCLIENT=y" >>$(1); \
+				sed -i "/RTCONFIG_DROPBOXCLIENT/d" $(1); \
+				echo "RTCONFIG_DROPBOXCLIENT=y" >>$(1); \
+				sed -i "/RTCONFIG_FTPCLIENT/d" $(1); \
+				echo "RTCONFIG_FTPCLIENT=y" >>$(1); \
+				sed -i "/RTCONFIG_SAMBACLIENT/d" $(1); \
+				echo "RTCONFIG_SAMBACLIENT=y" >>$(1); \
+				sed -i "/RTCONFIG_USBCLIENT/d" $(1); \
+				echo "RTCONFIG_USBCLIENT=y" >>$(1); \
+				sed -i "/RTCONFIG_CLOUDSYNC/d" $(1); \
+				echo "RTCONFIG_CLOUDSYNC=y" >>$(1); \
+		else \
+			if [ "$(SWEBDAVCLIENT)" = "y" ]; then \
+				sed -i "/RTCONFIG_SWEBDAVCLIENT/d" $(1); \
+				echo "RTCONFIG_SWEBDAVCLIENT=y" >>$(1); \
+			fi; \
+			if [ "$(DROPBOXCLIENT)" = "y" ]; then \
+				sed -i "/RTCONFIG_DROPBOXCLIENT/d" $(1); \
+				echo "RTCONFIG_DROPBOXCLIENT=y" >>$(1); \
+			fi; \
+			if [ "$(FTPCLIENT)" = "y" ]; then \
+				sed -i "/RTCONFIG_FTPCLIENT/d" $(1); \
+				echo "RTCONFIG_FTPCLIENT=y" >>$(1); \
+			fi; \
+			if [ "$(SAMBACLIENT)" = "y" ]; then \
+				sed -i "/RTCONFIG_SAMBACLIENT/d" $(1); \
+				echo "RTCONFIG_SAMBACLIENT=y" >>$(1); \
+			fi; \
+			if [ "$(USBCLIENT)" = "y" ]; then \
+				sed -i "/RTCONFIG_USBCLIENT/d" $(1); \
+				echo "RTCONFIG_USBCLIENT=y" >>$(1); \
+			fi; \
+			if [ "$(FLICKRCLIENT)" = "y" ]; then \
+				sed -i "/RTCONFIG_FLICKRCLIENT/d" $(1); \
+				echo "RTCONFIG_FLICKRCLIENT=y" >>$(1); \
+			fi; \
+			if [ "$(CLOUDSYNC)" = "y" ]; then \
+				sed -i "/RTCONFIG_CLOUDSYNC/d" $(1); \
+				echo "RTCONFIG_CLOUDSYNC=y" >>$(1); \
+			fi; \
 		fi; \
 		if [ "$(MODEM)" = "y" ]; then \
 			sed -i "/RTCONFIG_USB_MODEM/d" $(1); \
@@ -1384,6 +1395,10 @@ define RouterOptions
 	if [ "$(NOTIFICATION_CENTER)" = "y" ]; then \
 		sed -i "/RTCONFIG_NOTIFICATION_CENTER/d" $(1); \
 		echo "RTCONFIG_NOTIFICATION_CENTER=y" >>$(1); \
+	fi; \
+	if [ "$(PROTECTION_SERVER)" = "y" ]; then \
+		sed -i "/RTCONFIG_PROTECTION_SERVER/d" $(1); \
+		echo "RTCONFIG_PROTECTION_SERVER=y" >>$(1); \
 	fi; \
 	if [ "$(ADBLOCK)" = "y" ]; then \
 		sed -i "/RTCONFIG_ADBLOCK/d" $(1); \

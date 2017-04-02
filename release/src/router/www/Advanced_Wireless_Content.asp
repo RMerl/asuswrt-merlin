@@ -203,13 +203,13 @@ function check_channel_2g(){
 		}
 		
 		if ((CurrentCh >=1) && (CurrentCh <= 4)){
-			x.options[0].text = "Above";
+			x.options[0].text = "<#WLANConfig11b_EChannelAbove#>";
 			x.options[0].value = "lower";
 		}
 		else if ((CurrentCh >= 5) && (CurrentCh <= 7)){
-			x.options[0].text = "Above";
+			x.options[0].text = "<#WLANConfig11b_EChannelAbove#>";
 			x.options[0].value = "lower";
-			add_option(document.form.wl_nctrlsb, "Below", "upper");
+			add_option(document.form.wl_nctrlsb, "<#WLANConfig11b_EChannelBelow#>", "upper");
 			if (document.form.wl_nctrlsb_old.value == "upper")
 				document.form.wl_nctrlsb.options.selectedIndex=1;
 				
@@ -219,16 +219,16 @@ function check_channel_2g(){
 				document.form.wl_nctrlsb.remove(0);	
 		}
 		else if ((CurrentCh >= 8) && (CurrentCh <= 10)){
-			x.options[0].text = "Below";
+			x.options[0].text = "<#WLANConfig11b_EChannelBelow#>";
 			x.options[0].value = "upper";
 			if (option_length >=14){
-				add_option(document.form.wl_nctrlsb, "Above", "lower");
+				add_option(document.form.wl_nctrlsb, "<#WLANConfig11b_EChannelAbove#>", "lower");
 				if (document.form.wl_nctrlsb_old.value == "lower")
 					document.form.wl_nctrlsb.options.selectedIndex=1;
 			}
 		}
 		else if (CurrentCh >= 11){
-			x.options[0].text = "Below";
+			x.options[0].text = "<#WLANConfig11b_EChannelBelow#>";
 			x.options[0].value = "upper";
 		}
 		else{

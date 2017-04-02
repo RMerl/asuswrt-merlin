@@ -113,6 +113,10 @@ CFLAGS  += -I$(TOP)/nt_center/lib
 CFLAGS  += -DASUSWRT_SDK
 endif
 
+ifeq ($(RTCONFIG_PROTECTION_SERVER),y)
+CFLAGS  += -I$(TOP)/protect_srv/include
+endif
+
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
 
 ifneq ($(findstring NET_CLS_POLICE=, $(shell cat $(LINUXDIR)/.config)),)

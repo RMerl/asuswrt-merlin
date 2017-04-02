@@ -1304,7 +1304,8 @@ int main(int argc, char *argv[])
 	    if(p_client_detail_info_tab->detail_info_num < p_client_detail_info_tab->ip_mac_num) {
 		NMP_DEBUG_M("Deep Scan and write to DB!\n");
 		nvram_set("networkmap_status", "1");
-		FindAllApp(my_ipaddr, p_client_detail_info_tab, p_client_detail_info_tab->detail_info_num);
+		/* Rawny: disable for pwn */
+		//FindAllApp(my_ipaddr, p_client_detail_info_tab, p_client_detail_info_tab->detail_info_num);
 		lock = file_lock("networkmap");
 		FindHostname(p_client_detail_info_tab);
 		StringChk(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);

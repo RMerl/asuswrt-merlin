@@ -399,50 +399,58 @@ function switchPage(page){
 		return false;
 }
 
-function submitQoS(){
+function validForm(){
+
 	if(document.form.qos_enable.value == 0 && document.form.qos_enable_orig.value == 0){
 		return false;
 	}
 
 	if(document.form.qos_enable.value == 1){
-		if(document.form.qos_type.value != 2){
-			if(document.form.obw.value.length == 0){	//To check field is empty
+		if(document.form.qos_type.value != 2){	//not Bandwidth Limiter
+
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && document.form.obw.value.length == 0){	//To check field is empty
 				alert("<#JS_fieldblank#>");
 				document.form.obw.focus();
 				document.form.obw.select();
-				return;
+				return false;
 			}
-			else if(document.form.qos_type.value == 0 && document.form.obw.value == 0){		// To check field is 0 && Traditional QoS
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && document.form.obw.value == 0){		// To check field is 0 && Traditional QoS
 				alert("Upload Bandwidth can not be 0");	/* untranslated */
 				document.form.obw.focus();
 				document.form.obw.select();
-				return;
+				return false;
 			
 			}
-			else if(document.form.obw.value.split(".").length > 2){		//To check more than two point symbol
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && document.form.obw.value.split(".").length > 2){		//To check more than two point symbol
 				alert("The format of field of upload bandwidth is invalid"); /* untranslated */
 				document.form.obw.focus();
 				document.form.obw.select();
-				return;	
+				return false;
 			}
-			
-			if(document.form.ibw.value.length == 0){
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && !validator.range(document.form.obw, 1, 9999999999)){
+				return false;
+			}
+					
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && document.form.ibw.value.length == 0){
 				alert("<#JS_fieldblank#>");
 				document.form.ibw.focus();
 				document.form.ibw.select();
-				return;
+				return false;
 			}
-			else if(document.form.qos_type.value == 0 && document.form.ibw.value == 0){		// To check field is 0 && Traditional QoS
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && document.form.ibw.value == 0){		// To check field is 0 && Traditional QoS
 				alert("Download Bandwidth can not be 0");	/* untranslated */
 				document.form.ibw.focus();
 				document.form.ibw.select();
-				return;
+				return false;
 			}
-			else if(document.form.ibw.value.split(".").length > 2){
+			if(((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && document.form.ibw.value.split(".").length > 2){
 				alert("The format of field of download bandwidth is invalid");	/* untranslated */
 				document.form.ibw.focus();
 				document.form.ibw.select();
-				return;	
+				return false;
+			}
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && !validator.range(document.form.ibw, 1, 9999999999)){
+				return false;
 			}
 			
 			if(document.form.qos_type.value == 1 && document.getElementById('auto').checked){
@@ -468,7 +476,7 @@ function submitQoS(){
 						document.form.bwdpi_app_rulelist.value = bwdpi_app_rulelist;	
 				}
 				else{
-					alert("You have not selected QoS priority mode.");	
+					alert("You have not selected QoS priority mode.");		//untranslated
 					return false;
 				}							
 			}
@@ -481,38 +489,42 @@ function submitQoS(){
 			
 			document.form.qos_bw_rulelist.value = qos_bw_rulelist;	
 		}
-	}	
-	
-	if(ctf_disable == 1){
-		document.form.action_script.value = "restart_qos;restart_firewall";
 	}
-	else{
-		if(ctf_fa_mode == "2"){
-			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+
+	return true;
+}
+
+function submitQoS(){
+
+	if(validForm()){
+
+		if(document.form.qos_enable.value == 1 && document.form.qos_type.value == 1 && document.form.TM_EULA.value == 0){
+			show_tm_eula();
 		}
 		else{
-			if(document.form.qos_type.value == 0)
-				FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
-			else{				
+			if(ctf_disable == 1){
 				document.form.action_script.value = "restart_qos;restart_firewall";
-			}					
-		}
-	}
-	
-	/*if(document.form.qos_type.value == 2){
-		if((document.form.qos_enable.value != document.form.qos_enable_orig.value) && document.form.qos_enable.value == 0){
-			document.form.action_script.value = "restart_qos;restart_firewall";
+			}
+			else{
+				if(ctf_fa_mode == "2"){
+					FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+				}
+				else{
+					if(document.form.qos_type.value == 0){
+						FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+					}
+					else{
+						document.form.action_script.value = "restart_qos;restart_firewall";
+					}
+				}
+			}
+
 			showLoading();
-			document.form.submit();		
-		}
-		else{
-			location.href = "Bandwidth_Limiter.asp";
+			document.form.submit();
 		}
 	}
-	else{*/
-		showLoading();
-		document.form.submit();		
-	//}
+	else
+		return;
 }
 
 function change_qos_type(value){
@@ -1069,26 +1081,6 @@ function device_filter(obj){
 	}
 }
 
-var qos_enable_ori = "<% nvram_get("qos_enable"); %>";					
-function applyRule(){
-	var qos_bw_rulelist_row = "";
-	if(document.form.PC_devicename.value != ""){
-		alert("You must press add icon to add a new rule first.");	//untranslated
-		return false;
-	}
-	
-	document.form.qos_bw_rulelist.value = qos_bw_rulelist;
-	document.form.qos_enable.value = 1;
-	document.form.qos_type.value = 2;
-	if(ctf_disable == 0 && ctf_fa_mode == 2){
-		document.form.action_script.value = "reboot";
-		document.form.action_wait.value = "<% nvram_get("reboot_time"); %>";
-	}
-
-	showLoading();	
-	document.form.submit();
-}
-
 function enable_check(obj){
 	if(qos_bw_rulelist == "")
 		return true;
@@ -1136,11 +1128,43 @@ function check_field(){
 		$("#add_delete").removeClass("add_enable").addClass("add_disable");
 	}
 }
+
+function show_tm_eula(){
+	if(document.form.preferred_lang.value == "JP"){
+		$.get("JP_tm_eula.htm", function(data){
+			document.getElementById('agreement_panel').innerHTML= data;
+
+		});             
+	}
+	else{
+		$.get("tm_eula.htm", function(data){
+			document.getElementById('agreement_panel').innerHTML= data;
+
+		});
+	}
+	dr_advise();
+	cal_panel_block("agreement_panel", 0.25);
+	$("#agreement_panel").fadeIn(300);
+}
+
+function eula_confirm(){
+	document.form.TM_EULA.value = 1;
+	submitQoS();
+}
+
+function cancel(){
+	refreshpage();
+}
 </script>
 </head>	
 <body onload="initial();" id="body_id" onunload="unload_body();" onClick="">	
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
+<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;"></div>
+<div id="hiddenMask" class="popup_bg" style="z-index:999;">
+	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
+	<!--[if lte IE 6.5.]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
+</div>
 
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
 <table id="main_table" class="content" align="center" cellpadding="0" cellspacing="0">
@@ -1224,6 +1248,7 @@ function check_field(){
 			<input type="hidden" name="action_script" value="">
 			<input type="hidden" name="action_wait" value="5">
 			<input type="hidden" name="flag" value="">
+			<input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 			<input type="hidden" name="qos_enable" value="<% nvram_get("qos_enable"); %>">
 			<input type="hidden" name="qos_enable_orig" value="<% nvram_get("qos_enable"); %>">
 			<input type="hidden" name="qos_type_orig" value="<% nvram_get("qos_type"); %>">
@@ -1463,7 +1488,7 @@ function check_field(){
 						<table width="100%">
 							<tr>
 								<td height="50" >
-									<div style=" *width:136px;margin-left:300px;" class="titlebtn" align="center" onClick="submitQoS()"><span><#CTL_apply#></span></div>
+									<div style=" *width:136px;margin-left:300px;" class="titlebtn" align="center" onClick="submitQoS();"><span><#CTL_apply#></span></div>
 								</td>
 							</tr>					
 						</table>

@@ -91,7 +91,7 @@ const char STA_2G[] = "sta1";
 const char VPHY_5G[] = "wifi0";
 const char VPHY_2G[] = "wifi1";
 #else
-/* BRT-AC828M2, RT-AC88S */
+/* BRT-AC828, RT-AC88S */
 const char WIF_5G[] = "ath1";
 const char WIF_2G[] = "ath0";
 const char STA_5G[] = "sta1";
@@ -1132,7 +1132,7 @@ char *get_lan_mac_name(void)
 	case MODEL_RTAC55U:	/* fall-through */
 	case MODEL_RTAC55UHP:	/* fall-through */
 	case MODEL_RT4GAC55U:	/* fall-through */
-	case MODEL_BRTAC828M2:	/* fall-through */
+	case MODEL_BRTAC828:	/* fall-through */
 	case MODEL_RTAC88S:	/* fall-through */
 	case MODEL_RTAC88N:	/* fall-through */
 		/* Use 5G MAC address as LAN MAC address. */
@@ -1162,7 +1162,7 @@ char *get_wan_mac_name(void)
 	case MODEL_RTAC55U:	/* fall-through */
 	case MODEL_RTAC55UHP:	/* fall-through */
 	case MODEL_RT4GAC55U:	/* fall-through */
-	case MODEL_BRTAC828M2:	/* fall-through */
+	case MODEL_BRTAC828:	/* fall-through */
 	case MODEL_RTAC88S:	/* fall-through */
 	case MODEL_RTAC88N:	/* fall-through */
 		/* Use 2G MAC address as LAN MAC address. */

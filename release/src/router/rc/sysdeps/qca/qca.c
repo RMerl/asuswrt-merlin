@@ -1019,12 +1019,24 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 		nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp),"radius"))
 	   	{
 		   	//wep
+			int kn = 1;
+
 			if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "shared"))
 				fprintf(fp2, "iwpriv %s authmode 2\n", wif);
 			else if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "radius"))
 				fprintf(fp2, "iwpriv %s authmode 3\n", wif);
 			else
 				fprintf(fp2, "iwpriv %s authmode 1\n", wif);
+
+			for (kn = 1; kn <= 4; kn++) {
+				sprintf(tmpstr, "%skey%d", prefix_mssid, kn);
+				if (strlen(nvram_safe_get(tmpstr))==10 || strlen(nvram_safe_get(tmpstr))==26)
+					fprintf(fp2,"iwconfig %s key [%d] %s\n", wif, kn, nvram_safe_get(tmpstr));
+				else if (strlen(nvram_safe_get(tmpstr))==5 || strlen(nvram_safe_get(tmpstr))==13)
+					fprintf(fp2,"iwconfig %s key [%d] \"s:%s\"\n", wif, kn, nvram_safe_get(tmpstr));
+				else
+					fprintf(fp2,"iwconfig %s key [%d] off\n", wif, kn);
+			}
 
 		   	str = nvram_safe_get(strcat_r(prefix_mssid, "key", temp));
 			sprintf(tmpstr, "%skey%s", prefix_mssid, str);
@@ -2441,9 +2453,9 @@ void platform_start_ate_mode(void)
 		break;
 #endif	/* RT4GAC55U */
 
-#if defined(RTAC88N) || defined(BRTAC828M2) || defined(RTAC88S) || defined(RTAC58U) ||  defined(RTAC82U)     
+#if defined(RTAC88N) || defined(BRTAC828) || defined(RTAC88S) || defined(RTAC58U) ||  defined(RTAC82U)     
 	case MODEL_RTAC88N:
-	case MODEL_BRTAC828M2:
+	case MODEL_BRTAC828:
 	case MODEL_RTAC88S:
 	case MODEL_RTAC58U:
 	case MODEL_RTAC82U:
@@ -2479,7 +2491,7 @@ void platform_start_ate_mode(void)
 		}
 #endif
 		break;
-#endif	/* RTAC88N || BRTAC828M2 || RT-AC88S */
+#endif	/* RTAC88N || BRTAC828 || RT-AC88S */
 	default:
 		_dprintf("%s: model %d\n", __func__, model);
 	}

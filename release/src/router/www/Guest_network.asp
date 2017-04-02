@@ -697,7 +697,7 @@ function show_wl_maclist_x(){
 		var userIconBase64 = "NoIcon";
 		var clientName, deviceType, deviceVender;
 		Object.keys(manually_maclist_list_array).forEach(function(key) {
-			var clientMac = key;
+			var clientMac = key.toUpperCase();
 			if(clientList[clientMac]) {
 				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
 				deviceType = clientList[clientMac].type;
@@ -942,7 +942,7 @@ function setClientmac(macaddr){
 			<div id="subMenu"></div>
 		</td>	
 		<td valign="top">
-			<div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;"></div>
+			<div id="tabMenu" class="submenuBlock"></div>
 
 <!--===================================Beginning of Main Content===========================================-->
 <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">

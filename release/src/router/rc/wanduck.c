@@ -50,7 +50,7 @@ char *link_wan_nvname(int unit, char *buf, int size)
 static int update_wan_led_and_wanred_led(int wan_unit)
 {
 #if defined(RTCONFIG_WANPORT2)
-	/* e.g. BRT-AC828M2: WAN WHITE/RED LED x 2, RTCONFIG_DUALWAN must be enabled. */
+	/* e.g. BRT-AC828: WAN WHITE/RED LED x 2, RTCONFIG_DUALWAN must be enabled. */
 	int mode = sw_mode, l = link_wan[wan_unit], state;
 	int wan_led, wanred_led;
 	char s[] = "wanX_state_tXXX";

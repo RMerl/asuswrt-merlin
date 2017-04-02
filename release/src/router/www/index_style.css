@@ -230,11 +230,8 @@ body {
 
 /*==========================Level 3 Tab Class=================================*/
 .submenuBlock{
-	width:735px;
-	margin-top:-140px;
-/*	background-color:#547fb6;*/
-	padding-left:0px;
-	position:relative;
+	margin-bottom: -10px;
+	max-width: 760px;
 }
 
 .b1{

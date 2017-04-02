@@ -3531,10 +3531,9 @@ int write_lltd_conf(void)
 
 int start_lltd(void)
 {
-#ifdef CONFIG_BCMWL5
 	chdir("/usr/sbin");
 
-#ifndef RTCONFIG_BCMARM
+#if defined(CONFIG_BCMWL5) && !defined(RTCONFIG_BCMARM)
 	char *odmpid = nvram_safe_get("odmpid");
 	int model = get_model();
 
@@ -3558,21 +3557,23 @@ int start_lltd(void)
 		}
 	}
 	else
-#else
-	write_lltd_conf();
-	nvram_set("lld2d_hostname", get_productid());
 #endif
-	eval("lld2d", "br0");
+	{
+#ifdef RTCONFIG_BCMARM
+		write_lltd_conf();
+		nvram_set("lld2d_hostname", get_productid());
+#endif
+		eval("lld2d", "br0");
+	}
 
 	chdir("/");
-#endif
+
 	return 0;
 }
 
 void stop_lltd(void)
 {
-#ifdef CONFIG_BCMWL5
-#ifndef RTCONFIG_BCMARM
+#if defined(CONFIG_BCMWL5) && !defined(RTCONFIG_BCMARM)
 	char *odmpid = nvram_safe_get("odmpid");
 	int model = get_model();
 
@@ -3593,7 +3594,6 @@ void stop_lltd(void)
 	else
 #endif
 	killall_tk("lld2d");
-#endif
 }
 
 #if defined(RTCONFIG_MDNS)
@@ -5405,6 +5405,23 @@ stop_notification_center(void)
 }
 #endif
 
+#ifdef RTCONFIG_PROTECTION_SERVER
+int
+start_ptcsrv(void)
+{
+	char *ptcsrv_argv[] = {"protect_srv", NULL};
+	pid_t pid;
+
+	return _eval(ptcsrv_argv, NULL, 0, &pid);
+}
+void
+stop_ptcsrv(void)
+{
+	killall_tk("protect_srv");
+}
+
+#endif
+
 int
 start_services(void)
 {
@@ -5414,6 +5431,12 @@ start_services(void)
 
 #ifdef RTCONFIG_NOTIFICATION_CENTER
 	start_notification_center();
+#endif
+#ifdef RTCONFIG_PROTECTION_SERVER
+	start_ptcsrv();
+#endif
+#ifdef RTCONFIG_NETOOL
+	start_netool();
 #endif
 	start_telnetd();
 #ifdef RTCONFIG_SSH
@@ -7533,7 +7556,6 @@ check_ddr_done:
 	}
 	else if (strcmp(script, "dsl_setting") == 0) {
 		if((action & RC_SERVICE_STOP) && (action & RC_SERVICE_START)) {
-			nvram_set("dsltmp_syncloss_apply", "1");
 			eval("req_dsl_drv", "dslsetting");
 		}
 	}
