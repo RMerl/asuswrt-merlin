@@ -1513,6 +1513,8 @@ infosvr: shared nvram${BCMEX}
 httpd: shared nvram$(BCMEX) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_BWDPI),bwdpi_sqlite) json-c
 
 	@$(SEP)
+	@-rm -f httpd/prebuild/*.o || true
+	@-cp -f httpd/prebuild/models/$(BUILD_NAME)/* httpd/prebuild/
 	@$(MAKE) -C httpd
 
 httpd_uam: shared nvram$(BCMEX)$(EX7) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_FBWIFI),fb_wifi)
