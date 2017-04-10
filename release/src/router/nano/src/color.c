@@ -3,7 +3,7 @@
  *                                                                        *
  *   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,  *
  *   2010, 2011, 2013, 2014, 2015 Free Software Foundation, Inc.          *
- *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
+ *   Copyright (C) 2014, 2015, 2016, 2017 Benno Schulenberg               *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
  *   it under the terms of the GNU General Public License as published    *
@@ -290,53 +290,12 @@ void color_update(void)
     }
 }
 
-/* Reset the multiline coloring cache for one specific regex (given by
- * index) for lines that need reevaluation. */
-void reset_multis_for_id(filestruct *fileptr, int index)
-{
-    filestruct *row;
-
-    /* Reset the cache of earlier lines, as far back as needed. */
-    for (row = fileptr->prev; row != NULL; row = row->prev) {
-	alloc_multidata_if_needed(row);
-	if (row->multidata[index] == CNONE)
-	    break;
-	row->multidata[index] = -1;
-    }
-    for (; row != NULL; row = row->prev) {
-	alloc_multidata_if_needed(row);
-	if (row->multidata[index] != CNONE)
-	    break;
-	row->multidata[index] = -1;
-    }
-
-    /* Reset the cache of the current line. */
-    fileptr->multidata[index] = -1;
-
-    /* Reset the cache of later lines, as far ahead as needed. */
-    for (row = fileptr->next; row != NULL; row = row->next) {
-	alloc_multidata_if_needed(row);
-	if (row->multidata[index] == CNONE)
-	    break;
-	row->multidata[index] = -1;
-    }
-    for (; row != NULL; row = row->next) {
-	alloc_multidata_if_needed(row);
-	if (row->multidata[index] != CNONE)
-	    break;
-	row->multidata[index] = -1;
-    }
-
-    refresh_needed = TRUE;
-}
-
-/* Reset multi-line strings around the filestruct fileptr, trying to be
- * smart about stopping.  Bool force means: reset everything regardless,
- * useful when we don't know how much screen state has changed. */
-void reset_multis(filestruct *fileptr, bool force)
+/* Determine whether the matches of multiline regexes are still the same,
+ * and if not, schedule a screen refresh, so things will be repainted. */
+void check_the_multis(filestruct *line)
 {
     const colortype *ink;
-    int nobegin = 0, noend = 0;
+    bool astart, anend;
     regmatch_t startmatch, endmatch;
 
     /* If there is no syntax or no multiline regex, there is nothing to do. */
@@ -344,38 +303,34 @@ void reset_multis(filestruct *fileptr, bool force)
 	return;
 
     for (ink = openfile->colorstrings; ink != NULL; ink = ink->next) {
-	/* If it's not a multi-line regex, amscray. */
+	/* If it's not a multiline regex, skip. */
 	if (ink->end == NULL)
 	    continue;
 
-	alloc_multidata_if_needed(fileptr);
+	alloc_multidata_if_needed(line);
 
-	if (force == FALSE) {
-	    /* Check whether the multidata still matches the current situation. */
-	    nobegin = regexec(ink->start, fileptr->data, 1, &startmatch, 0);
-	    noend = regexec(ink->end, fileptr->data, 1, &endmatch, 0);
-	    if ((fileptr->multidata[ink->id] == CWHOLELINE ||
-			fileptr->multidata[ink->id] == CNONE) &&
-			nobegin && noend)
+	astart = (regexec(ink->start, line->data, 1, &startmatch, 0) == 0);
+	anend = (regexec(ink->end, line->data, 1, &endmatch, 0) == 0);
+
+	/* Check whether the multidata still matches the current situation. */
+	if (line->multidata[ink->id] == CNONE ||
+			line->multidata[ink->id] == CWHOLELINE) {
+	    if (!astart && !anend)
 		continue;
-	    else if (fileptr->multidata[ink->id] == CSTARTENDHERE &&
-			!nobegin && !noend && startmatch.rm_so < endmatch.rm_so)
+	} else if (line->multidata[ink->id] == CSTARTENDHERE) {
+	    if (astart && anend && startmatch.rm_so < endmatch.rm_so)
 		continue;
-	    else if (fileptr->multidata[ink->id] == CBEGINBEFORE &&
-			nobegin && !noend)
+	} else if (line->multidata[ink->id] == CBEGINBEFORE) {
+	    if (!astart && anend)
 		continue;
-	    else if (fileptr->multidata[ink->id] == CENDAFTER &&
-			!nobegin && noend)
+	} else if (line->multidata[ink->id] == CENDAFTER) {
+	    if (astart && !anend)
 		continue;
 	}
 
-	/* If we got here, things have changed. */
-	reset_multis_for_id(fileptr, ink->id);
-
-	/* If start and end are the same, push the resets further. */
-	if (force == FALSE && !nobegin && !noend &&
-				startmatch.rm_so == endmatch.rm_so)
-	    reset_multis_for_id(fileptr, ink->id);
+	/* There is a mismatch, so something changed: repaint. */
+	refresh_needed = TRUE;
+	return;
     }
 }
 
@@ -398,103 +353,85 @@ void precalc_multicolorinfo(void)
 {
     const colortype *ink;
     regmatch_t startmatch, endmatch;
-    filestruct *fileptr, *endptr;
+    filestruct *line, *tailline;
 
     if (openfile->colorstrings == NULL || ISSET(NO_COLOR_SYNTAX))
 	return;
 
 #ifdef DEBUG
-    fprintf(stderr, "Entering precalculation of multiline color info\n");
+    fprintf(stderr, "Precalculating the multiline color info...\n");
 #endif
 
     for (ink = openfile->colorstrings; ink != NULL; ink = ink->next) {
 	/* If this is not a multi-line regex, skip it. */
 	if (ink->end == NULL)
 	    continue;
-#ifdef DEBUG
-	fprintf(stderr, "Starting work on color id %d\n", ink->id);
-#endif
 
-	for (fileptr = openfile->fileage; fileptr != NULL; fileptr = fileptr->next) {
-	    int startx = 0, nostart = 0;
-#ifdef DEBUG
-	    fprintf(stderr, "working on lineno %ld... ", (long)fileptr->lineno);
-#endif
-	    alloc_multidata_if_needed(fileptr);
+	for (line = openfile->fileage; line != NULL; line = line->next) {
+	    int index = 0;
 
-	    while ((nostart = regexec(ink->start, &fileptr->data[startx], 1,
-			&startmatch, (startx == 0) ? 0 : REG_NOTBOL)) == 0) {
-		/* Look for an end, and start marking how many lines are
-		 * encompassed, which should speed up rendering later. */
-		startx += startmatch.rm_eo;
-#ifdef DEBUG
-		fprintf(stderr, "start found at pos %lu... ", (unsigned long)startx);
-#endif
-		/* Look first on this line for an end. */
-		if (regexec(ink->end, &fileptr->data[startx], 1,
-			&endmatch, (startx == 0) ? 0 : REG_NOTBOL) == 0) {
-		    startx += endmatch.rm_eo;
-		    /* Step ahead when both start and end are mere anchors. */
+	    alloc_multidata_if_needed(line);
+	    /* Assume nothing applies until proven otherwise below. */
+	    line->multidata[ink->id] = CNONE;
+
+	    /* For an unpaired start match, mark all remaining lines. */
+	    if (line->prev && line->prev->multidata[ink->id] == CWOULDBE) {
+		line->multidata[ink->id] = CWOULDBE;
+		continue;
+	    }
+
+	    /* When the line contains a start match, look for an end, and if
+	     * found, mark all the lines that are affected. */
+	    while (regexec(ink->start, line->data + index, 1,
+			&startmatch, (index == 0) ? 0 : REG_NOTBOL) == 0) {
+		/* Begin looking for an end match after the start match. */
+		index += startmatch.rm_eo;
+
+		/* If there is an end match on this line, mark the line, but
+		 * continue looking for other starts after it. */
+		if (regexec(ink->end, line->data + index, 1,
+			&endmatch, (index == 0) ? 0 : REG_NOTBOL) == 0) {
+		    line->multidata[ink->id] = CSTARTENDHERE;
+		    index += endmatch.rm_eo;
+		    /* If both start and end are mere anchors, step ahead. */
 		    if (startmatch.rm_so == startmatch.rm_eo &&
-				endmatch.rm_so == endmatch.rm_eo)
-			startx += 1;
-		    fileptr->multidata[ink->id] = CSTARTENDHERE;
-#ifdef DEBUG
-		    fprintf(stderr, "end found on this line\n");
-#endif
+				endmatch.rm_so == endmatch.rm_eo) {
+			/* When at end-of-line, we're done. */
+			if (line->data[index] == '\0')
+			    break;
+			index = move_mbright(line->data, index);
+		    }
 		    continue;
 		}
 
-		/* Nice, we didn't find the end regex on this line.  Let's start looking for it. */
-		for (endptr = fileptr->next; endptr != NULL; endptr = endptr->next) {
-#ifdef DEBUG
-		    fprintf(stderr, "\nadvancing to line %ld to find end... ", (long)endptr->lineno);
-#endif
-		    if (regexec(ink->end, endptr->data, 1, &endmatch, 0) == 0)
+		/* Look for an end match on later lines. */
+		tailline = line->next;
+
+		while (tailline != NULL) {
+		    if (regexec(ink->end, tailline->data, 1, &endmatch, 0) == 0)
 			break;
+		    tailline = tailline->next;
 		}
 
-		if (endptr == NULL) {
-#ifdef DEBUG
-		    fprintf(stderr, "no end found, breaking out\n");
-#endif
+		if (tailline == NULL) {
+		    line->multidata[ink->id] = CWOULDBE;
 		    break;
 		}
-#ifdef DEBUG
-		fprintf(stderr, "end found\n");
-#endif
+
 		/* We found it, we found it, la la la la la.  Mark all
 		 * the lines in between and the end properly. */
-		fileptr->multidata[ink->id] = CENDAFTER;
-#ifdef DEBUG
-		fprintf(stderr, "marking line %ld as CENDAFTER\n", (long)fileptr->lineno);
-#endif
-		for (fileptr = fileptr->next; fileptr != endptr; fileptr = fileptr->next) {
-		    alloc_multidata_if_needed(fileptr);
-		    fileptr->multidata[ink->id] = CWHOLELINE;
-#ifdef DEBUG
-		    fprintf(stderr, "marking intermediary line %ld as CWHOLELINE\n", (long)fileptr->lineno);
-#endif
+		line->multidata[ink->id] = CENDAFTER;
+
+		for (line = line->next; line != tailline; line = line->next) {
+		    alloc_multidata_if_needed(line);
+		    line->multidata[ink->id] = CWHOLELINE;
 		}
 
-		alloc_multidata_if_needed(endptr);
-		fileptr->multidata[ink->id] = CBEGINBEFORE;
-#ifdef DEBUG
-		fprintf(stderr, "marking line %ld as CBEGINBEFORE\n", (long)fileptr->lineno);
-#endif
-		/* Skip to the end point of the match. */
-		startx = endmatch.rm_eo;
-#ifdef DEBUG
-		fprintf(stderr, "jumping to line %ld pos %lu to continue\n", (long)fileptr->lineno, (unsigned long)startx);
-#endif
-	    }
+		alloc_multidata_if_needed(tailline);
+		tailline->multidata[ink->id] = CBEGINBEFORE;
 
-	    if (nostart && startx == 0) {
-#ifdef DEBUG
-		fprintf(stderr, "no match\n");
-#endif
-		fileptr->multidata[ink->id] = CNONE;
-		continue;
+		/* Begin looking for a new start after the end match. */
+		index = endmatch.rm_eo;
 	    }
 	}
     }

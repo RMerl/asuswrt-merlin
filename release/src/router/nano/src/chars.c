@@ -26,12 +26,8 @@
 #include <ctype.h>
 
 #ifdef ENABLE_UTF8
-#ifdef HAVE_WCHAR_H
 #include <wchar.h>
-#endif
-#ifdef HAVE_WCTYPE_H
 #include <wctype.h>
-#endif
 
 static bool use_utf8 = FALSE;
 	/* Whether we've enabled UTF-8 support. */
@@ -60,22 +56,6 @@ char *addstrings(char* str1, size_t len1, char* str2, size_t len2)
 
     return str1;
 }
-
-#ifndef HAVE_ISBLANK
-/* This function is equivalent to isblank(). */
-bool nisblank(int c)
-{
-    return isspace(c) && (c == '\t' || !is_cntrl_char(c));
-}
-#endif
-
-#if !defined(HAVE_ISWBLANK) && defined(ENABLE_UTF8)
-/* This function is equivalent to iswblank(). */
-bool niswblank(wchar_t wc)
-{
-    return iswspace(wc) && (wc == '\t' || !is_cntrl_wchar(wc));
-}
-#endif
 
 /* Return TRUE if the value of c is in byte range, and FALSE otherwise. */
 bool is_byte(int c)
@@ -450,35 +430,11 @@ size_t move_mbright(const char *buf, size_t pos)
     return pos + parse_mbchar(buf + pos, NULL, NULL);
 }
 
-#ifndef HAVE_STRCASECMP
-/* This function is equivalent to strcasecmp(). */
-int nstrcasecmp(const char *s1, const char *s2)
-{
-    return strncasecmp(s1, s2, HIGHEST_POSITIVE);
-}
-#endif
-
 /* This function is equivalent to strcasecmp() for multibyte strings. */
 int mbstrcasecmp(const char *s1, const char *s2)
 {
     return mbstrncasecmp(s1, s2, HIGHEST_POSITIVE);
 }
-
-#ifndef HAVE_STRNCASECMP
-/* This function is equivalent to strncasecmp(). */
-int nstrncasecmp(const char *s1, const char *s2, size_t n)
-{
-    if (s1 == s2)
-	return 0;
-
-    for (; *s1 != '\0' && *s2 != '\0' && n > 0; s1++, s2++, n--) {
-	if (tolower(*s1) != tolower(*s2))
-	    break;
-    }
-
-    return (n > 0) ? tolower(*s1) - tolower(*s2) : 0;
-}
-#endif
 
 /* This function is equivalent to strncasecmp() for multibyte strings. */
 int mbstrncasecmp(const char *s1, const char *s2, size_t n)
@@ -523,28 +479,6 @@ int mbstrncasecmp(const char *s1, const char *s2, size_t n)
 #endif
 	return strncasecmp(s1, s2, n);
 }
-
-#ifndef HAVE_STRCASESTR
-/* This function is equivalent to strcasestr(). */
-char *nstrcasestr(const char *haystack, const char *needle)
-{
-    size_t needle_len;
-
-    if (*needle == '\0')
-	return (char *)haystack;
-
-    needle_len = strlen(needle);
-
-    while (*haystack != '\0') {
-	if (strncasecmp(haystack, needle, needle_len) == 0)
-	    return (char *)haystack;
-
-	haystack++;
-    }
-
-    return NULL;
-}
-#endif
 
 /* This function is equivalent to strcasestr() for multibyte strings. */
 char *mbstrcasestr(const char *haystack, const char *needle)
@@ -664,19 +598,6 @@ size_t mbstrlen(const char *s)
 {
     return mbstrnlen(s, (size_t)-1);
 }
-
-#ifndef HAVE_STRNLEN
-/* This function is equivalent to strnlen(). */
-size_t nstrnlen(const char *s, size_t maxlen)
-{
-    size_t n = 0;
-
-    for (; *s != '\0' && maxlen > 0; s++, maxlen--, n++)
-	;
-
-    return n;
-}
-#endif
 
 /* This function is equivalent to strnlen() for multibyte strings. */
 size_t mbstrnlen(const char *s, size_t maxlen)
@@ -815,7 +736,7 @@ char *mbrevstrpbrk(const char *s, const char *accept, const char
 bool has_blank_chars(const char *s)
 {
     for (; *s != '\0'; s++) {
-	if (isblank(*s))
+	if (isblank((unsigned char)*s))
 	    return TRUE;
     }
 

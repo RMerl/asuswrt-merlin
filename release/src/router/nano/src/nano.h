@@ -49,9 +49,7 @@
 #include <sys/param.h>
 #endif
 
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 
 /* Suppress warnings for __attribute__((warn_unused_result)). */
 #define IGNORE_CALL_RESULT(call) do { if (call) {} } while(0)
@@ -116,45 +114,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#ifdef HAVE_REGEX_H
 #include <regex.h>
-#endif
 #include <signal.h>
 #include <assert.h>
-
-/* If no vsnprintf(), use the version from glib 2.x. */
-#ifndef HAVE_VSNPRINTF
-#include <glib.h>
-#define vsnprintf g_vsnprintf
-#endif
-
-/* If no isblank(), iswblank(), strcasecmp(), strncasecmp(),
- * strcasestr(), strnlen(), getdelim(), or getline(), use the versions
- * we have. */
-#ifndef HAVE_ISBLANK
-#define isblank nisblank
-#endif
-#ifndef HAVE_ISWBLANK
-#define iswblank niswblank
-#endif
-#ifndef HAVE_STRCASECMP
-#define strcasecmp nstrcasecmp
-#endif
-#ifndef HAVE_STRNCASECMP
-#define strncasecmp nstrncasecmp
-#endif
-#ifndef HAVE_STRCASESTR
-#define strcasestr nstrcasestr
-#endif
-#ifndef HAVE_STRNLEN
-#define strnlen nstrnlen
-#endif
-#ifndef HAVE_GETDELIM
-#define getdelim ngetdelim
-#endif
-#ifndef HAVE_GETLINE
-#define getline ngetline
-#endif
 
 /* If we aren't using ncurses with mouse support, turn the mouse support
  * off, as it's useless then. */
@@ -288,6 +250,8 @@ typedef struct lintstruct {
 	/* Whole line engulfed by the regex, start < me, end > me. */
 #define CSTARTENDHERE	(1<<5)
 	/* Regex starts and ends within this line. */
+#define CWOULDBE	(1<<6)
+	/* An unpaired start match on or before this line. */
 #endif /* !DISABLE_COLOR */
 
 /* More structure types. */
@@ -389,6 +353,9 @@ typedef struct openfilestruct {
 	/* The current line for this file. */
     size_t totsize;
 	/* The file's total number of characters. */
+    size_t firstcolumn;
+	/* The starting column of the top line of the edit window.
+	 * When not in softwrap mode, it's always zero. */
     size_t current_x;
 	/* The file's x-coordinate position. */
     size_t placewewant;
@@ -545,7 +512,8 @@ enum
     MAKE_IT_UNIX,
     JUSTIFY_TRIM,
     SHOW_CURSOR,
-    LINE_NUMBERS
+    LINE_NUMBERS,
+    NO_PAUSES
 };
 
 /* Flags for the menus in which a given function should be present. */

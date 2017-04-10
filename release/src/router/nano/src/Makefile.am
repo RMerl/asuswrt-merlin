@@ -1,4 +1,5 @@
-AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\" -DSYSCONFDIR=\"$(sysconfdir)\"
+AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\" -DSYSCONFDIR=\"$(sysconfdir)\" \
+	-I$(top_builddir)/lib -I$(top_srcdir)/lib
 
 CLEANFILES = revision.h
 
@@ -37,7 +38,7 @@ nano_SOURCES =	browser.c \
 		utils.c \
 		winio.c 
 
-nano_LDADD = @GLIB_LIBS@ @LIBINTL@
+nano_LDADD = @LIBINTL@ $(top_builddir)/lib/libgnu.a
 
 install-exec-hook:
 	cd $(DESTDIR)$(bindir) && rm -f rnano && $(LN_S) nano rnano

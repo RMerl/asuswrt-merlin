@@ -4,18 +4,23 @@ DISTFILES.common.extra1 = quot.sed boldquot.sed en@quot.header en@boldquot.heade
 
 .SUFFIXES: .insert-header .po-update-en
 
+en@quot.po-create:
+	$(MAKE) en@quot.po-update
+en@boldquot.po-create:
+	$(MAKE) en@boldquot.po-update
+
 en@quot.po-update: en@quot.po-update-en
 en@boldquot.po-update: en@boldquot.po-update-en
 
 .insert-header.po-update-en:
 	@lang=`echo $@ | sed -e 's/\.po-update-en$$//'`; \
-	if test "$(PACKAGE)" = "gettext"; then PATH=`pwd`/../src:$$PATH; GETTEXTLIBDIR=`cd $(top_srcdir)/src && pwd`; export GETTEXTLIBDIR; fi; \
+	if test "$(PACKAGE)" = "gettext-tools"; then PATH=`pwd`/../src:$$PATH; GETTEXTLIBDIR=`cd $(top_srcdir)/src && pwd`; export GETTEXTLIBDIR; fi; \
 	tmpdir=`pwd`; \
 	echo "$$lang:"; \
 	ll=`echo $$lang | sed -e 's/@.*//'`; \
 	LC_ALL=C; export LC_ALL; \
 	cd $(srcdir); \
-	if $(MSGINIT) -i $(DOMAIN).pot --no-translator -l $$ll -o - 2>/dev/null | sed -f $$tmpdir/$$lang.insert-header | $(MSGCONV) -t UTF-8 | $(MSGFILTER) sed -f `echo $$lang | sed -e 's/.*@//'`.sed 2>/dev/null > $$tmpdir/$$lang.new.po; then \
+	if $(MSGINIT) -i $(DOMAIN).pot --no-translator -l $$lang -o - 2>/dev/null | sed -f $$tmpdir/$$lang.insert-header | $(MSGCONV) -t UTF-8 | $(MSGFILTER) $(SED) -f `echo $$lang | sed -e 's/.*@//'`.sed 2>/dev/null > $$tmpdir/$$lang.new.po; then \
 	  if cmp $$lang.po $$tmpdir/$$lang.new.po >/dev/null 2>&1; then \
 	    rm -f $$tmpdir/$$lang.new.po; \
 	  else \

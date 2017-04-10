@@ -62,6 +62,7 @@ static const rcoption rcopts[] = {
 #endif
     {"nohelp", NO_HELP},
     {"nonewlines", NO_NEWLINES},
+    {"nopauses", NO_PAUSES},
 #ifndef DISABLE_WRAPPING
     {"nowrap", NO_WRAP},
 #endif
@@ -79,9 +80,7 @@ static const rcoption rcopts[] = {
 #endif
     {"rebinddelete", REBIND_DELETE},
     {"rebindkeypad", REBIND_KEYPAD},
-#ifdef HAVE_REGEX_H
     {"regexp", USE_REGEXP},
-#endif
 #ifndef DISABLE_SPELLER
     {"speller", 0},
 #endif
@@ -169,7 +168,7 @@ void rcfile_error(const char *msg, ...)
  * returned pointer will point to '\0' if we hit the end of the line. */
 char *parse_next_word(char *ptr)
 {
-    while (!isblank(*ptr) && *ptr != '\0')
+    while (!isblank((unsigned char)*ptr) && *ptr != '\0')
 	ptr++;
 
     if (*ptr == '\0')
@@ -178,7 +177,7 @@ char *parse_next_word(char *ptr)
     /* Null-terminate and advance ptr. */
     *ptr++ = '\0';
 
-    while (isblank(*ptr))
+    while (isblank((unsigned char)*ptr))
 	ptr++;
 
     return ptr;
@@ -217,7 +216,7 @@ char *parse_argument(char *ptr)
 	ptr = last_quote + 1;
     }
     if (ptr != NULL)
-	while (isblank(*ptr))
+	while (isblank((unsigned char)*ptr))
 	    ptr++;
     return ptr;
 }
@@ -232,7 +231,7 @@ char *parse_next_regex(char *ptr)
     /* Continue until the end of line, or until a " followed by a
      * blank character or the end of line. */
     while (*ptr != '\0' && (*ptr != '"' ||
-		(*(ptr + 1) != '\0' && !isblank(*(ptr + 1)))))
+		(*(ptr + 1) != '\0' && !isblank((unsigned char)ptr[1]))))
 	ptr++;
 
     assert(*ptr == '"' || *ptr == '\0');
@@ -246,7 +245,7 @@ char *parse_next_regex(char *ptr)
     /* Null-terminate and advance ptr. */
     *ptr++ = '\0';
 
-    while (isblank(*ptr))
+    while (isblank((unsigned char)*ptr))
 	ptr++;
 
     return ptr;
@@ -351,7 +350,7 @@ void parse_syntax(char *ptr)
 bool is_universal(void (*func))
 {
     if (func == do_left || func == do_right ||
-	func == do_home || func == do_end ||
+	func == do_home_void || func == do_end_void ||
 	func == do_prev_word_void || func == do_next_word_void ||
 	func == do_verbatim_input || func == do_cut_text_void ||
 	func == do_delete || func == do_backspace ||
@@ -389,11 +388,11 @@ void parse_binding(char *ptr, bool dobind)
     }
 
     /* Uppercase only the first two or three characters of the key name. */
-    keycopy[0] = toupper(keycopy[0]);
-    keycopy[1] = toupper(keycopy[1]);
+    keycopy[0] = toupper((unsigned char)keycopy[0]);
+    keycopy[1] = toupper((unsigned char)keycopy[1]);
     if (keycopy[0] == 'M' && keycopy[1] == '-') {
 	if (strlen(keycopy) > 2)
-	    keycopy[2] = toupper(keycopy[2]);
+	    keycopy[2] = toupper((unsigned char)keycopy[2]);
 	else {
 	    rcfile_error(N_("Key name is too short"));
 	    goto free_copy;
@@ -403,7 +402,7 @@ void parse_binding(char *ptr, bool dobind)
     /* Allow the codes for Insert and Delete to be rebound, but apart
      * from those two only Control, Meta and Function sequences. */
     if (!strcasecmp(keycopy, "Ins") || !strcasecmp(keycopy, "Del"))
-	keycopy[1] = tolower(keycopy[1]);
+	keycopy[1] = tolower((unsigned char)keycopy[1]);
     else if (keycopy[0] != '^' && keycopy[0] != 'M' && keycopy[0] != 'F') {
 	rcfile_error(N_("Key name must begin with \"^\", \"M\", or \"F\""));
 	goto free_copy;
@@ -648,7 +647,7 @@ void parse_colors(char *ptr, int rex_flags)
 {
     short fg, bg;
     bool bright = FALSE;
-    char *fgstr;
+    char *item;
 
     assert(ptr != NULL);
 
@@ -664,9 +663,9 @@ void parse_colors(char *ptr, int rex_flags)
 	return;
     }
 
-    fgstr = ptr;
+    item = ptr;
     ptr = parse_next_word(ptr);
-    if (!parse_color_names(fgstr, &fg, &bg, &bright))
+    if (!parse_color_names(item, &fg, &bg, &bright))
 	return;
 
     if (*ptr == '\0') {
@@ -696,12 +695,16 @@ void parse_colors(char *ptr, int rex_flags)
 	    continue;
 	}
 
-	fgstr = ++ptr;
+	item = ++ptr;
 	ptr = parse_next_regex(ptr);
 	if (ptr == NULL)
 	    break;
 
-	goodstart = nregcomp(fgstr, rex_flags);
+	if (*item == '\0') {
+	    rcfile_error(N_("Empty regex string"));
+	    goodstart = FALSE;
+	} else
+	    goodstart = nregcomp(item, rex_flags);
 
 	/* If the starting regex is valid, initialize a new color struct,
 	 * and hook it in at the tail of the linked list. */
@@ -713,7 +716,7 @@ void parse_colors(char *ptr, int rex_flags)
 	    newcolor->bright = bright;
 	    newcolor->rex_flags = rex_flags;
 
-	    newcolor->start_regex = mallocstrcpy(NULL, fgstr);
+	    newcolor->start_regex = mallocstrcpy(NULL, item);
 	    newcolor->start = NULL;
 
 	    newcolor->end_regex = NULL;
@@ -746,10 +749,15 @@ void parse_colors(char *ptr, int rex_flags)
 	    continue;
 	}
 
-	fgstr = ++ptr;
+	item = ++ptr;
 	ptr = parse_next_regex(ptr);
 	if (ptr == NULL)
 	    break;
+
+	if (*item == '\0') {
+	    rcfile_error(N_("Empty regex string"));
+	    continue;
+	}
 
 	/* If the start regex was invalid, skip past the end regex
 	 * to stay in sync. */
@@ -757,8 +765,8 @@ void parse_colors(char *ptr, int rex_flags)
 	    continue;
 
 	/* If it's valid, save the ending regex string. */
-	if (nregcomp(fgstr, rex_flags))
-	    newcolor->end_regex = mallocstrcpy(NULL, fgstr);
+	if (nregcomp(item, rex_flags))
+	    newcolor->end_regex = mallocstrcpy(NULL, item);
 
 	/* Lame way to skip another static counter. */
 	newcolor->id = live_syntax->nmultis;
@@ -959,7 +967,7 @@ void parse_rcfile(FILE *rcstream, bool syntax_only)
 
 	lineno++;
 	ptr = buf;
-	while (isblank(*ptr))
+	while (isblank((unsigned char)*ptr))
 	    ptr++;
 
 	/* If we have a blank line or a comment, skip to the next
@@ -1147,10 +1155,9 @@ void parse_rcfile(FILE *rcstream, bool syntax_only)
 		rcfile_error(N_("Requested fill size \"%s\" is invalid"),
 				option);
 		wrap_at = -CHARS_FROM_EOL;
-	    } else {
+	    } else
 		UNSET(NO_WRAP);
-		free(option);
-	    }
+	    free(option);
 	} else
 #endif
 #ifndef NANO_TINY
@@ -1211,8 +1218,8 @@ void parse_rcfile(FILE *rcstream, bool syntax_only)
 		rcfile_error(N_("Requested tab size \"%s\" is invalid"),
 				option);
 		tabsize = -1;
-	    } else
-		free(option);
+	    }
+	    free(option);
 	} else
 	    assert(FALSE);
     }
@@ -1286,7 +1293,7 @@ void do_rcfiles(void)
 
     free(nanorc);
 
-    if (errors && !ISSET(QUIET)) {
+    if (errors && !ISSET(QUIET) && !ISSET(NO_PAUSES)) {
 	errors = FALSE;
 	fprintf(stderr, _("\nPress Enter to continue starting nano.\n"));
 	while (getchar() != '\n')

@@ -259,6 +259,7 @@ void start_vpnclient(int clientNum)
 			fprintf(fp, "ncp-ciphers %s\n", buffer2);
 		} else {
 			nvi = 0;
+			fprintf(fp, "ncp-disable\n");
 		}
 	} else {
 		nvi = 0;
@@ -895,6 +896,7 @@ void start_vpnserver(int serverNum)
 			fprintf(fp_client, "ncp-ciphers %s\n", buffer2);
 		} else {
 			nvi = 0;
+			fprintf(fp, "ncp-disable\n");
 		}
 	} else {
 		nvi = 0;

@@ -8,9 +8,7 @@ Vague musings:
 - Allow indentation of marked text by spaces as well as tabs?
 - Allow indentation to add just enough columns to reach the nearest
   multiple of tabsize, rather than always adding tabsize columns?
-- Allow conversion between different character sets.  Maybe use glib's
-  iconv() if the system's iconv() is inadequate, since we already use
-  glib's vsnprintf() if the system lacks vsnprintf()?
+- Allow conversion between different character sets.
 - Allow setting marks (saved positions, not to be confused with the mark
   set via Ctrl-^) at various lines and/or columns in the buffer, and
   allow movement between them with a single keystroke?

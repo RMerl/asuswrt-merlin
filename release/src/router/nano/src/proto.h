@@ -76,7 +76,6 @@ extern WINDOW *topwin;
 extern WINDOW *edit;
 extern WINDOW *bottomwin;
 extern int editwinrows;
-extern int maxrows;
 
 extern filestruct *cutbuffer;
 extern filestruct *cutbottom;
@@ -100,13 +99,9 @@ extern const char *unjust_tag;
 extern char *punct;
 extern char *brackets;
 extern char *quotestr;
-#ifdef HAVE_REGEX_H
 extern regex_t quotereg;
 extern int quoterc;
 extern char *quoteerr;
-#else
-extern size_t quotelen;
-#endif
 #endif /* !DISABLE_JUSTIFY */
 
 extern char *word_chars;
@@ -154,10 +149,8 @@ extern filestruct *replacebot;
 extern poshiststruct *position_history;
 #endif
 
-#ifdef HAVE_REGEX_H
 extern regex_t search_regexp;
 extern regmatch_t regmatches[10];
-#endif
 
 extern int hilite_attribute;
 #ifndef DISABLE_COLOR
@@ -184,7 +177,7 @@ void do_filesearch(void);
 void do_fileresearch(void);
 void do_first_file(void);
 void do_last_file(void);
-char *striponedir(const char *path);
+char *strip_last_component(const char *path);
 #endif
 
 /* Most functions in chars.c. */
@@ -193,12 +186,6 @@ void utf8_init(void);
 bool using_utf8(void);
 #endif
 char *addstrings(char* str1, size_t len1, char* str2, size_t len2);
-#ifndef HAVE_ISBLANK
-bool nisblank(int c);
-#endif
-#if !defined(HAVE_ISWBLANK) && defined(ENABLE_UTF8)
-bool niswblank(wchar_t wc);
-#endif
 bool is_byte(int c);
 bool is_alpha_mbchar(const char *c);
 bool is_alnum_mbchar(const char *c);
@@ -217,17 +204,8 @@ char *make_mbchar(long chr, int *chr_mb_len);
 int parse_mbchar(const char *buf, char *chr, size_t *col);
 size_t move_mbleft(const char *buf, size_t pos);
 size_t move_mbright(const char *buf, size_t pos);
-#ifndef HAVE_STRCASECMP
-int nstrcasecmp(const char *s1, const char *s2);
-#endif
 int mbstrcasecmp(const char *s1, const char *s2);
-#ifndef HAVE_STRNCASECMP
-int nstrncasecmp(const char *s1, const char *s2, size_t n);
-#endif
 int mbstrncasecmp(const char *s1, const char *s2, size_t n);
-#ifndef HAVE_STRCASESTR
-char *nstrcasestr(const char *haystack, const char *needle);
-#endif
 char *mbstrcasestr(const char *haystack, const char *needle);
 char *revstrstr(const char *haystack, const char *needle,
 	const char *pointer);
@@ -236,9 +214,6 @@ char *revstrcasestr(const char *haystack, const char *needle, const char
 char *mbrevstrcasestr(const char *haystack, const char *needle, const
 	char *rev_start);
 size_t mbstrlen(const char *s);
-#ifndef HAVE_STRNLEN
-size_t nstrnlen(const char *s, size_t maxlen);
-#endif
 size_t mbstrnlen(const char *s, size_t maxlen);
 #if !defined(NANO_TINY) || !defined(DISABLE_JUSTIFY)
 char *mbstrchr(const char *s, const char *c);
@@ -266,7 +241,7 @@ bool is_valid_mbstring(const char *s);
 void set_colorpairs(void);
 void color_init(void);
 void color_update(void);
-void reset_multis(filestruct *fileptr, bool force);
+void check_the_multis(filestruct *line);
 void alloc_multidata_if_needed(filestruct *fileptr);
 void precalc_multicolorinfo(void);
 #endif
@@ -294,6 +269,10 @@ void initialize_buffer_text(void);
 bool open_buffer(const char *filename, bool undoable);
 #ifndef DISABLE_SPELLER
 void replace_buffer(const char *filename);
+#ifndef NANO_TINY
+void replace_marked_buffer(const char *filename, filestruct *top, size_t top_x,
+	filestruct *bot, size_t bot_x);
+#endif
 #endif
 void display_buffer(void);
 #ifndef DISABLE_MULTIBUFFER
@@ -301,8 +280,9 @@ void switch_to_prev_buffer_void(void);
 void switch_to_next_buffer_void(void);
 bool close_buffer(void);
 #endif
-filestruct *read_line(char *buf, size_t buf_len, filestruct *prevnode);
-void read_file(FILE *f, int fd, const char *filename, bool undoable, bool checkwritable);
+char *encode_data(char *buf, size_t buf_len);
+void read_file(FILE *f, int fd, const char *filename, bool undoable,
+		bool checkwritable);
 int open_file(const char *filename, bool newfie, bool quiet, FILE **f);
 char *get_next_filename(const char *name, const char *suffix);
 void do_insertfile_void(void);
@@ -403,9 +383,10 @@ void do_prev_word(bool allow_punct, bool allow_update);
 void do_prev_word_void(void);
 bool do_next_word(bool allow_punct, bool allow_update);
 void do_next_word_void(void);
-void ensure_line_is_visible(void);
-void do_home(void);
-void do_end(void);
+void do_home(bool be_clever);
+void do_home_void(void);
+void do_end(bool be_clever);
+void do_end_void(void);
 void do_up(bool scroll_only);
 void do_up_void(void);
 void do_down(bool scroll_only);
@@ -429,9 +410,10 @@ void renumber(filestruct *fileptr);
 partition *partition_filestruct(filestruct *top, size_t top_x,
 	filestruct *bot, size_t bot_x);
 void unpartition_filestruct(partition **p);
-void move_to_filestruct(filestruct **file_top, filestruct **file_bot,
+void extract_buffer(filestruct **file_top, filestruct **file_bot,
 	filestruct *top, size_t top_x, filestruct *bot, size_t bot_x);
-void copy_from_filestruct(filestruct *somebuffer);
+void ingraft_buffer(filestruct *somebuffer);
+void copy_from_buffer(filestruct *somebuffer);
 openfilestruct *make_new_opennode(void);
 void unlink_opennode(openfilestruct *fileptr);
 void delete_opennode(openfilestruct *fileptr);
@@ -449,11 +431,7 @@ void disable_mouse_support(void);
 void enable_mouse_support(void);
 void mouse_init(void);
 #endif
-void print_opt_full(const char *shortflag
-#ifdef HAVE_GETOPT_LONG
-	, const char *longflag
-#endif
-	, const char *desc);
+void print_opt(const char *shortflag, const char *longflag, const char *desc);
 void usage(void);
 void version(void);
 void do_exit(void);
@@ -525,15 +503,13 @@ void do_rcfiles(void);
 #endif /* !DISABLE_NANORC */
 
 /* All functions in search.c. */
-#ifdef HAVE_REGEX_H
 bool regexp_init(const char *regexp);
 void regexp_cleanup(void);
-#endif
 void not_found_msg(const char *str);
 void search_replace_abort(void);
 int search_init(bool replacing, bool use_answer);
-int findnextstr(const char *needle, bool whole_word_only, size_t *match_len,
-	const filestruct *begin, size_t begin_x);
+int findnextstr(const char *needle, bool whole_word_only, bool have_region,
+	size_t *match_len, bool skipone, const filestruct *begin, size_t begin_x);
 void do_search(void);
 #ifndef NANO_TINY
 void do_findprevious(void);
@@ -541,9 +517,7 @@ void do_findnext(void);
 #endif
 void do_research(void);
 void go_looking(void);
-#ifdef HAVE_REGEX_H
 int replace_regexp(char *string, bool create);
-#endif
 char *replace_line(const char *needle);
 ssize_t do_replace_loop(const char *needle, bool whole_word_only,
 	const filestruct *real_current, size_t *real_current_x);
@@ -611,11 +585,7 @@ void wrap_reset(void);
 bool do_wrap(filestruct *line);
 #endif
 #if !defined(DISABLE_HELP) || !defined(DISABLE_WRAPJUSTIFY)
-ssize_t break_line(const char *line, ssize_t goal
-#ifndef DISABLE_HELP
-	, bool newln
-#endif
-	);
+ssize_t break_line(const char *line, ssize_t goal, bool snap_at_nl);
 #endif
 #if !defined(NANO_TINY) || !defined(DISABLE_JUSTIFY)
 size_t indent_length(const char *line);
@@ -662,17 +632,7 @@ void snuggly_fit(char **str);
 void null_at(char **data, size_t index);
 void unsunder(char *str, size_t true_len);
 void sunder(char *str);
-#if !defined(NANO_TINY) && !defined(DISABLE_NANORC)
-#ifndef HAVE_GETLINE
-ssize_t ngetline(char **lineptr, size_t *n, FILE *stream);
-#endif
-#ifndef HAVE_GETDELIM
-ssize_t ngetdelim(char **lineptr, size_t *n, int delim, FILE *stream);
-#endif
-#endif
-#ifdef HAVE_REGEX_H
 const char *fixbounds(const char *r);
-#endif
 #ifndef DISABLE_SPELLER
 bool is_separate_word(size_t position, size_t length, const char *buf);
 #endif
@@ -727,7 +687,7 @@ int *parse_verbatim_kbinput(WINDOW *win, size_t *count);
 int get_mouseinput(int *mouse_x, int *mouse_y, bool allow_shortcuts);
 #endif
 const sc *get_shortcut(int *kbinput);
-void blank_line(WINDOW *win, int y, int x, int n);
+void blank_row(WINDOW *win, int y, int x, int n);
 void blank_titlebar(void);
 void blank_edit(void);
 void blank_statusbar(void);
@@ -746,15 +706,25 @@ void reset_cursor(void);
 void edit_draw(filestruct *fileptr, const char *converted,
 	int line, size_t from_col);
 int update_line(filestruct *fileptr, size_t index);
-bool need_horizontal_scroll(const size_t old_column, const size_t new_column);
-void edit_scroll(scroll_dir direction, ssize_t nlines);
+#ifndef NANO_TINY
+int update_softwrapped_line(filestruct *fileptr);
+#endif
+bool line_needs_update(const size_t old_column, const size_t new_column);
+int go_back_chunks(int nrows, filestruct **line, size_t *leftedge);
+int go_forward_chunks(int nrows, filestruct **line, size_t *leftedge);
+bool less_than_a_screenful(size_t was_lineno, size_t was_leftedge);
+void edit_scroll(scroll_dir direction, int nrows);
+void ensure_firstcolumn_is_aligned(void);
+bool current_is_above_screen(void);
+bool current_is_below_screen(void);
+bool current_is_offscreen(void);
 void edit_redraw(filestruct *old_current);
 void edit_refresh(void);
 void adjust_viewport(update_type location);
 void total_redraw(void);
 void total_refresh(void);
 void display_main_list(void);
-void do_cursorpos(bool constant);
+void do_cursorpos(bool force);
 void do_cursorpos_void(void);
 void spotlight(bool active, const char *word);
 void xon_complaint(void);

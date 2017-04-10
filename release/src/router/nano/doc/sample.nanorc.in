@@ -95,6 +95,10 @@
 ## Don't display the helpful shortcut lists at the bottom of the screen.
 # set nohelp
 
+## Don't pause between warnings at startup.  Which means that only the
+## last one will be readable (when there are multiple ones).
+# set nopauses
+
 ## Don't add newlines to the ends of files.
 # set nonewlines
 
@@ -198,10 +202,16 @@
 ## Paint the interface elements of nano.
 ## These are examples; by default there are no colors.
 # set titlecolor brightwhite,blue
-# set numbercolor cyan
 # set statuscolor brightwhite,green
-# set keycolor green
-# set functioncolor yellow
+# set numbercolor cyan
+# set keycolor cyan
+# set functioncolor green
+## In root's .nanorc you might want to use:
+# set titlecolor brightwhite,red
+# set statuscolor brightwhite,red
+# set numbercolor magenta
+# set keycolor brightmagenta
+# set functioncolor magenta
 
 
 ## Setup of syntax coloring.

@@ -82,7 +82,7 @@
 <h2><a name="1.5"></a>1.5. Why the name change from TIP?</h2>
 <blockquote><p>On January 10, 2000, TIP was officially renamed to nano because of a namespace conflict with another program called 'tip'. The original 'tip' program &quot;establishes a full duplex terminal connection to a remote host&quot;, and was included with many older Unix systems (and newer ones like Solaris). The conflict was not noticed at first because there is no 'tip' utility included with most GNU/Linux distributions (where nano was developed).</p></blockquote>
 <h2><a name="1.6"></a>1.6. What is the current version of nano?</h2>
-<blockquote><p>The current version of nano <i>should</i> be <b>2.7.4</b>.  Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
+<blockquote><p>The current version of nano <i>should</i> be <b>2.8.0</b>.  Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
 <h2><a name="1.7"></a>1.7. I want to read the man page without having to download the program!</h2>
 <blockquote><p>Jeez, demanding, aren't we? Okay, look <a href="https://nano-editor.org/dist/latest/nano.1.html">here</a>.</p></blockquote>
 <hr width="100%">
@@ -164,8 +164,8 @@
 <blockquote><p>It's not hard at all! But, your nano must <b>not</b> have been compiled with <b>--disable-nanorc</b>. Then simply copy the <b>sample.nanorc</b> that came with the nano source or your nano package (most likely in /usr/doc/nano) to .nanorc in your home directory. If you didn't get one, the syntax of the file is simple. Flags are turned on and off by using the words <b>set</b> and <b>unset</b> plus the long option name for the feature. For example, &quot;set nowrap&quot; or &quot;set smarthome&quot;.</p></blockquote>
 <h2><a name="3.9b"></a>3.9b. How about in Win32?</h2>
 <blockquote><p>If you're using the official nano .zip file and have extracted all the files, you should take the file nano.rc and place it somewhere on your Win32 system (for example, if you have write permission to do so, at the top of C:\).  Then you must create an Environment variable called HOME which points to the directory where you put nano.rc.  In Windows XP, you can get to Environment variables by right-clicking "My Computer" either on the desktop or in the Start Menu, and selecting Properties.  This should bring up the System Properties panel.  Then click the Advanced Tab, and there should be a button called Environment Variables.  Click that to bring up the Environment Variables section. Now, under User Variables you should be able to click the New button, and make a new Variables Name called HOME, with the Variable Value of whatever path you copied nano.rc into (just the directory name; don't add nano.rc onto the end).</p>
-<p>We're still working on documentation for enabling syntax highlighting on Win32; please bear with us.</p>
-<p>Note that the nano.rc file must remain Unix-formatted in order for nano to understand it.  In other words, you should probably use only nano to edit its config file.  Other programs like Wordpad and Notepad will convert the file to DOS format when saving, and the latter does not even properly read Unix-formatted files to begin with.</p></blockquote>
+  <p>We're still working on documentation for enabling syntax highlighting on Win32; please bear with us.</p>
+  <p>Note that the nano.rc file must remain Unix-formatted in order for nano to understand it.  In other words, you should probably use only nano to edit its config file.  Other programs like Wordpad and Notepad will convert the file to DOS format when saving, and the latter does not even properly read Unix-formatted files to begin with.</p></blockquote>
 <hr width="100%">
 
 <h1><a name="4"></a>4. Running</h1>
@@ -210,9 +210,9 @@
 <h2><a name="4.11"></a>4.11. How do I select text for or paste text from the clipboard in an X terminal when I'm running nano in one and nano's mouse support is turned on?</h2>
 <blockquote><p>Try holding down the Shift key and selecting or pasting the text as you normally would.</p></blockquote>
 <h2><a name="4.12"></a>4.12. On startup I get a message that says "Detected a legacy nano history file".  Now older nano versions can't find my search history!</h2>
-<blockquote><p>In nano 2.3.0, cursor-position history was introduced, and both history files now reside in a .nano subdirectory in your home directory.  A newer nano will move an existing search-history file to this new location so it can continue to be used.  This means that if you then try and use an earlier version of nano, it will be unable to see your current search history.  To fix this, run the following command:<br>
+<blockquote><p>In nano 2.3.0, cursor-position history was introduced, and both history files now reside in a .nano subdirectory in your home directory.  A newer nano will move an existing search-history file to this new location so it can continue to be used.  This means that if you then try and use an earlier version of nano, it will be unable to see your current search history.  To fix this, run the following command:</p>
   <p><b>ln -sf ~/.nano/search_history ~/.nano_history</b></p>
-</p><p>The "migration service" (moving the search-history file to its new location) will be deleted from nano in early 2018.</p></blockquote>
+  <p>The "migration service" (moving the search-history file to its new location) will be deleted from nano in early 2018.</p></blockquote>
 <hr width="100%">
 
 <h1><a name="5"></a>5. Internationalization</h1>
@@ -230,12 +230,13 @@
 <h2><a name="6.1"></a>6.1. Why should I use nano instead of Pico?</h2>
 <blockquote><p>There are many reasons to use nano instead of Pico. A more complete list can be found at the <a href="https://nano-editor.org/">nano homepage</a>.</p></blockquote>
 <h2><a name="6.2"></a>6.2. Why should I use Pico instead of nano?</h2>
-<blockquote><p>Again, check out the <a href="https://nano-editor.org/">nano homepage</a> for a good summary of reasons. It really is a matter of personal preference as to which editor you should use. If you're the type of person who likes using the original version of a program, then Pico is the editor for you. If you don't mind sacrificing mailer integration with Pine, and are looking for a few more features, as well as a 'better' license in terms of adding your own changes, nano is the way to go.</p><p>Note that the last of these no longer applies to the new version of Pine, <a href="http://www.washington.edu/alpine/">Alpine</a>, which is under the Apache License, version 2.0.</p></blockquote>
+<blockquote><p>Again, check out the <a href="https://nano-editor.org/">nano homepage</a> for a good summary of reasons. It really is a matter of personal preference as to which editor you should use. If you're the type of person who likes using the original version of a program, then Pico is the editor for you. If you don't mind sacrificing mailer integration with Pine, and are looking for a few more features, as well as a 'better' license in terms of adding your own changes, nano is the way to go.</p>
+<p>Note that the last of these no longer applies to the new version of Pine, <a href="http://www.washington.edu/alpine/">Alpine</a>, which is under the Apache License, version 2.0.</p></blockquote>
 <h2><a name="6.3"></a>6.3. What is so bad about the older Pine license?</h2>
 <blockquote><p>The U of W license for older versions of Pine and Pico is not considered truly Free Software according to both the Free Software Foundation and the <a href="http://www.debian.org/social_contract#guidelines">Debian Free Software Guidelines</a>. The main problem regards the limitations on distributing derived works: according to UW, you can distribute their software, and you can modify it, but you can not do both, i.e. distribute modified binaries.</p></blockquote>
 <h2><a name="6.4"></a>6.4. Okay, well, what mail program should I use then?</h2>
-<blockquote><p>If you are looking to use a Free Software program similar to Pine, and Emacs is not your thing, you should definitely take a look at <a href="http://www.mutt.org/">mutt</a>. It is a full-screen, console based mail program that actually has a lot more flexibility than Pine, but has a keymap included in the distribution that allows you to use the same keystrokes as Pine would to send and receive mail. It's also under the GNU General Public License, version 2.0.<P>
-Of course, due to the license change you can now use the <A HREF="http://www.washington.edu/alpine/">Alpine distribution</A> of PINE as it is now considered Free Software, but you would be sacrificing many of nano's features to do so.</p></blockquote>
+<blockquote><p>If you are looking to use a Free Software program similar to Pine, and Emacs is not your thing, you should definitely take a look at <a href="http://www.mutt.org/">mutt</a>. It is a full-screen, console based mail program that actually has a lot more flexibility than Pine, but has a keymap included in the distribution that allows you to use the same keystrokes as Pine would to send and receive mail. It's also under the GNU General Public License, version 2.0.</p>
+<p>Of course, due to the license change you can now use the <a href="http://www.washington.edu/alpine/">Alpine distribution</a> of PINE as it is now considered Free Software, but you would be sacrificing many of nano's features to do so.</p></blockquote>
 <hr width="100%">
 
 <h1><a name="7"></a>7. Miscellaneous</h1>
@@ -248,8 +249,8 @@ Of course, due to the license change you can now use the <A HREF="http://www.was
 <blockquote><p>That's fine. Send it <a href="mailto:nano-devel@gnu.org">our way</a>! Better yet, fix a <a href="https://savannah.gnu.org/bugs/?group=nano">bug</a> in the program or implement a <a href="https://nano-editor.org/dist/latest/TODO">cool feature</a> and send us that instead (though cash is fine too).</p></blockquote>
 <h2><a name="7.3"></a>7.3. How do I submit a bug report or patch?</h2>
 <blockquote>
-<p>The best place to submit bugs is to the <a href="https://savannah.gnu.org/bugs/?group=nano">Savannah bug tracker</a> as you can check whether the bug you are submitting has already been submitted.
-<p>Please submit patches for nano via the <a href="https://savannah.gnu.org/patch/?group=nano">Savannah project's patch manager</a> for the nano project.</p></blockquote>
+  <p>The best way to submit bugs is through the <a href="https://savannah.gnu.org/bugs/?group=nano">Savannah bug tracker</a>, as you can check whether the bug you are reporting has already been submitted, and it makes it easier for the maintainers to keep track of them.
+  <p>You can submit patches for nano via <a href="https://savannah.gnu.org/patch/?group=nano">Savannah's patch manager</a>.</p></blockquote>
 <h2><a name="7.4"></a>7.4. How do I join the development team?</h2>
 <blockquote><p>The easiest way is to consistently send in good patches that add some needed functionality, fix a bug or two, and/or make the program more optimized/efficient. Then ask nicely and you will probably be added to the Savannah development list and be given write access after a while. There is a lot of responsibility that goes along with being a team member, so don't think it's just something to add to your resume.</p></blockquote>
 <h2><a name="7.5"></a>7.5. Can I have write access to the git tree?</h2>
