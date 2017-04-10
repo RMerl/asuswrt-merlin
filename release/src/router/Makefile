@@ -1670,11 +1670,6 @@ push_log: wb
 rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_FBWIFI),fb_wifi) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_USB_SMS_MODEM),smspdu)
 # Dig into our collection of prebuilt objects based on model and architecture.
 	@-rm -f rc/prebuild/*.o || true
-ifeq ($(RTCONFIG_BCMARM),y)
-	@-cp -f rc/prebuild/arm/* rc/prebuild/
-else
-	@-cp -f rc/prebuild/mips/* rc/prebuild/
-endif
 	@-cp -f rc/prebuild/models/$(BUILD_NAME)/* rc/prebuild/
 	@$(MAKE) -C rc
 
