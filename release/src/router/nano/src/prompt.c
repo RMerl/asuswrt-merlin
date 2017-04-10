@@ -125,9 +125,9 @@ int do_statusbar_input(bool *ran_func, bool *finished)
 	else if (s->scfunc == do_next_word_void)
 	    do_statusbar_next_word();
 #endif
-	else if (s->scfunc == do_home)
+	else if (s->scfunc == do_home_void)
 	    do_statusbar_home();
-	else if (s->scfunc == do_end)
+	else if (s->scfunc == do_end_void)
 	    do_statusbar_end();
 	/* When in restricted mode at the "Write File" prompt and the
 	 * filename isn't blank, disallow any input and deletion. */
@@ -296,7 +296,7 @@ void do_statusbar_cut_text(void)
     if (!ISSET(CUT_TO_END))
 	statusbar_x = 0;
 
-    null_at(&answer, statusbar_x);
+    answer[statusbar_x] = '\0';
 
     update_the_statusbar();
 }
@@ -637,7 +637,7 @@ int do_prompt(bool allow_tabs, bool allow_files,
     vsnprintf(prompt, COLS * mb_cur_max(), msg, ap);
     va_end(ap);
     /* Reserve five columns for colon plus angles plus answer, ":<aa>". */
-    null_at(&prompt, actual_x(prompt, (COLS < 5) ? 0 : COLS - 5));
+    prompt[actual_x(prompt, (COLS < 5) ? 0 : COLS - 5)] = '\0';
 
     func = acquire_an_answer(&retval, allow_tabs, allow_files, &listed,
 #ifndef DISABLE_HISTORIES

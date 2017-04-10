@@ -123,22 +123,25 @@ Next: <a href="#Command_002dline-Options" accesskey="n" rel="next">Command-line 
 <p><code>nano [FILE]</code>
 </p></blockquote>
 
-<p>But it is also possible to specify one or more options, and to edit
-several files in a row.  Additionally, the cursor can be put on a
-specific line of a file by adding the line number
+<p>But it is also possible to specify one or more options (see the next
+section), and to edit several files in a row.  Additionally, the cursor
+can be put on a specific line of a file by adding the line number
 with a plus sign before the filename, and even in a specific column by
-adding it with a comma.  So the complete command synopsis is:
+adding it with a comma.  So a more complete command synopsis is:
 </p>
 <blockquote>
 <p><code>nano [OPTION]&hellip; [[+LINE[,COLUMN]|+,COLUMN] FILE]&hellip;</code>
 </p></blockquote>
 
-<p>But normallly you would set your preferred options in your
-<samp>.nanorc</samp> file.  And when the <code>positionlog</code> option is set
+<p>Normally, however, you set your preferred options in a <samp>.nanorc</samp>
+file (see See <a href="#Nanorc-Files">Nanorc Files</a>).  And when using <code>set positionlog</code>
 (making <code>nano</code> remember the cursor position when you close a file),
 you will rarely need to specify a line number.
 </p>
-
+<p>As a special case: when the first file specified is a dash, <code>nano</code>
+will read data from standard input.  Which means you can pipe the output
+of a command straight into a buffer.
+</p>
 <hr>
 <a name="Command_002dline-Options"></a>
 <div class="header">
@@ -151,11 +154,6 @@ Next: <a href="#Editor-Basics" accesskey="n" rel="next">Editor Basics</a>, Previ
 <p><code>nano</code> takes the following options from the command line:
 </p>
 <dl compact="compact">
-<dt><samp>+<var>line</var>,<var>column</var></samp></dt>
-<dd><p>Start at line number <var>line</var> and column number <var>column</var> (at least one of
-which must be specified) instead of the default of line 1, column 1.
-</p>
-</dd>
 <dt><samp>-A</samp></dt>
 <dt><samp>--smarthome</samp></dt>
 <dd><p>Make the Home key smarter.  When Home is pressed anywhere but at the
@@ -942,6 +940,11 @@ cursor, set the mark (with a double click), or execute shortcuts.
 </dd>
 <dt><code>set nohelp</code></dt>
 <dd><p>Don&rsquo;t display the help lists at the bottom of the screen.
+</p>
+</dd>
+<dt><code>set nopauses</code></dt>
+<dd><p>Don&rsquo;t pause between warnings at startup.  This means that only
+the last one will be visible (when there are multiple ones).
 </p>
 </dd>
 <dt><code>set nonewlines</code></dt>
@@ -1765,7 +1768,7 @@ Next: <a href="#Building-and-Configure-Options" accesskey="n" rel="next">Buildin
 <h2 class="chapter">9 Pico Compatibility</h2>
 
 <p><code>nano</code> attempts to emulate Pico as closely as possible, but there
-are certain differences between the editors:
+are some differences between the editors:
 </p>
 <dl compact="compact">
 <dt><code>Interactive Replace</code></dt>
@@ -1779,13 +1782,33 @@ ask any more), or Cancel (stop with replacing).
 <dt><code>Search and Replace History</code></dt>
 <dd><p>When the option <code>-H</code> or <code>--historylog</code> is given (or set in
 the .nanorc file), text entered as search or replace strings is stored.
-These strings can be accessed with the up/down arrow keys.  A retrieved
-string can subsequently be edited.
+These strings can be accessed with the up/down arrow keys, or you can
+type the first few characters and then use Tab to cycle through the
+matching strings.  A retrieved string can subsequently be edited.
 </p>
 </dd>
-<dt><code>Writing, Appending, or Prepending Selected Text to Files</code></dt>
-<dd><p>Text selected using the marking key (^^) can be written out, appended,
-or prepended to a new or existing file using the WriteOut key (^O).
+<dt><code>Position History</code></dt>
+<dd><p>When the option <code>-P</code> or <code>--positionlog</code> is given (or set in
+the .nanorc file), <code>nano</code> will store the position of the cursor
+when you close a file, and will place the cursor in that position
+again when you later reopen the file.
+</p>
+</dd>
+<dt><code>Writing Selected Text to Files</code></dt>
+<dd><p>When using the Write-Out key (^O), text that has been selected using the
+marking key (^^) can not just be written out to a new (or existing) file,
+it can also be appended or prepended to an existing file.
+</p>
+</dd>
+<dt><code>Reading Text from a Command</code></dt>
+<dd><p>When using the Read-File key (^R), <code>nano</code> can not just read a file,
+it can also read the output of a command to be run (^X).
+</p>
+</dd>
+<dt><code>File Browser</code></dt>
+<dd><p>In the file browser, <code>nano</code> does not implement the Add, Copy,
+Rename, and Delete commands that Pico provides.  In <code>nano</code> the
+browser is just a file browser, not a file manager.
 </p>
 </dd>
 <dt><code>Toggles</code></dt>

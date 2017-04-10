@@ -17,7 +17,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANO 1 "version 2.7.4" "January 2017"
+.TH NANO 1 "version 2.8.0" "March 2017"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -33,6 +33,13 @@ Pico, the default editor included in the non-free Pine package.  On
 top of copying Pico's look and feel, \fBnano\fP also implements some
 missing (or disabled by default) features in Pico, such as "search and
 replace" and "go to line and column number".
+
+When opening a file, the cursor can be put on a specific line by adding
+the line number with a plus sign (\fB+\fR) before the filename, and even
+in a specific column by adding it with a comma.
+
+If the first file specified is a dash (\fB\-\fR), \fBnano\fR will read
+data from standard input.
 
 .SH EDITING
 Entering text and moving around in a file is straightforward: typing the
@@ -60,11 +67,6 @@ The default key bindings can be changed via the .nanorc file -- see
 .BR nanorc (5).
 
 .SH OPTIONS
-.TP
-.B +\fIline\fP,\fIcolumn\fP
-Places the cursor on line number \fIline\fP and at column number \fIcolumn\fP
-(at least one of which must be specified) on startup, instead of the
-default line 1, column 1.
 .TP
 .BR \-A ", " \-\-smarthome
 Make the Home key smarter.  When Home is pressed anywhere but at the

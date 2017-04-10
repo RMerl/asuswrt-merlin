@@ -11,10 +11,10 @@ Prerequisites
 To successfully compile GNU nano from git, you'll need the following
 packages:
 
-- autoconf    (version >= 2.61)
-- automake    (version >= 1.7)
-- autopoint   (version >= 0.11.5)
-- gettext     (version >= 0.11.5)
+- autoconf    (version >= 2.69)
+- automake    (version >= 1.14)
+- autopoint   (version >= 0.18.3)
+- gettext     (version >= 0.18.3)
 - git         (version >= 2.7.4)
 - groff       (version >= 1.12)
 - pkg-config  (version >= 0.22)
@@ -24,8 +24,6 @@ packages:
 
 If you want UTF-8 support, you will also need libncursesw5-dev installed
 (version >= 5.7), or libslang2-dev (version >= 2.0) if you use --with-slang.
-If your system doesn't have 'snprintf' or 'vsnprintf' (which the configure
-script will check for), you will also need glib-2.x installed.
 
 These should all be available in your distro's package manager or software
 center, or otherwise on any GNU mirror.

@@ -3,7 +3,7 @@
  *                                                                        *
  *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
  *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
- *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
+ *   Copyright (C) 2014, 2015, 2016, 2017 Benno Schulenberg               *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
  *   it under the terms of the GNU General Public License as published    *
@@ -1486,40 +1486,39 @@ int *parse_verbatim_kbinput(WINDOW *win, size_t *count)
     }
 #endif
 
+    *count = 1;
+
 #ifdef ENABLE_UTF8
     if (using_utf8()) {
 	/* Check whether the first code is a valid starter digit: 0 or 1. */
-	long uni = get_unicode_kbinput(win, *kbinput);
+	long unicode = get_unicode_kbinput(win, *kbinput);
 
 	/* If the first code isn't the digit 0 nor 1, put it back. */
-	if (uni != ERR)
+	if (unicode != ERR)
 	    unget_input(kbinput, 1);
 	/* Otherwise, continue reading in digits until we have a complete
 	 * Unicode value, and put back the corresponding byte(s). */
 	else {
-	    char *uni_mb;
-	    int uni_mb_len, *seq, i;
+	    char *multibyte;
+	    int onebyte, i;
 
-	    while (uni == ERR) {
+	    while (unicode == ERR) {
 		free(kbinput);
 		while ((kbinput = get_input(win, 1)) == NULL)
 		    ;
-		uni = get_unicode_kbinput(win, *kbinput);
+		unicode = get_unicode_kbinput(win, *kbinput);
 	    }
 
 	    /* Convert the Unicode value to a multibyte sequence. */
-	    uni_mb = make_mbchar(uni, &uni_mb_len);
-
-	    seq = (int *)nmalloc(uni_mb_len * sizeof(int));
-
-	    for (i = 0; i < uni_mb_len; i++)
-		seq[i] = (unsigned char)uni_mb[i];
+	    multibyte = make_mbchar(unicode, (int *)count);
 
 	    /* Insert the multibyte sequence into the input buffer. */
-	    unget_input(seq, uni_mb_len);
+	    for (i = *count; i > 0 ; i--) {
+		onebyte = (unsigned char)multibyte[i - 1];
+		unget_input(&onebyte, 1);
+	    }
 
-	    free(seq);
-	    free(uni_mb);
+	    free(multibyte);
 	}
     } else
 #endif /* ENABLE_UTF8 */
@@ -1527,8 +1526,6 @@ int *parse_verbatim_kbinput(WINDOW *win, size_t *count)
 	unget_input(kbinput, 1);
 
     free(kbinput);
-
-    *count = 1;
 
     /* If this is an iTerm/Eterm/rxvt double escape, take both Escapes. */
     if (key_buffer_len > 3 && *key_buffer == ESC_CODE &&
@@ -1726,7 +1723,7 @@ const sc *get_shortcut(int *kbinput)
 
 /* Move to (x, y) in win, and display a line of n spaces with the
  * current attributes. */
-void blank_line(WINDOW *win, int y, int x, int n)
+void blank_row(WINDOW *win, int y, int x, int n)
 {
     wmove(win, y, x);
 
@@ -1737,23 +1734,23 @@ void blank_line(WINDOW *win, int y, int x, int n)
 /* Blank the first line of the top portion of the window. */
 void blank_titlebar(void)
 {
-    blank_line(topwin, 0, 0, COLS);
+    blank_row(topwin, 0, 0, COLS);
 }
 
 /* Blank all the lines of the middle portion of the window, i.e. the
  * edit window. */
 void blank_edit(void)
 {
-    int i;
+    int row;
 
-    for (i = 0; i < editwinrows; i++)
-	blank_line(edit, i, 0, COLS);
+    for (row = 0; row < editwinrows; row++)
+	blank_row(edit, row, 0, COLS);
 }
 
 /* Blank the first line of the bottom portion of the window. */
 void blank_statusbar(void)
 {
-    blank_line(bottomwin, 0, 0, COLS);
+    blank_row(bottomwin, 0, 0, COLS);
 }
 
 /* If the NO_HELP flag isn't set, blank the last two lines of the bottom
@@ -1761,8 +1758,8 @@ void blank_statusbar(void)
 void blank_bottombars(void)
 {
     if (!ISSET(NO_HELP) && LINES > 4) {
-	blank_line(bottomwin, 1, 0, COLS);
-	blank_line(bottomwin, 2, 0, COLS);
+	blank_row(bottomwin, 1, 0, COLS);
+	blank_row(bottomwin, 2, 0, COLS);
     }
 }
 
@@ -1810,21 +1807,13 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	/* The string we return. */
     size_t index;
 	/* Current position in converted. */
-
-    /* If this is data, make room for the "$" at the end of the line. */
-    if (isdata && !ISSET(SOFTWRAP) && strlenpt(buf) > start_col + span)
-	span--;
-
-    if (span == 0)
-	return mallocstrcpy(NULL, "");
+    size_t beyond = start_col + span;
+	/* The column number just beyond the last shown character. */
 
     start_index = actual_x(buf, start_col);
     column = strnlenpt(buf, start_index);
 
     assert(column <= start_col);
-
-    /* Allocate enough space to hold the entire converted buffer. */
-    converted = charalloc(strlen(buf) * (mb_cur_max() + tabsize) + 1);
 
     index = 0;
 #ifdef USING_OLD_NCURSES
@@ -1832,10 +1821,13 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 #endif
     buf += start_index;
 
-    if (*buf != '\0' && *buf != '\t' &&
-	(column < start_col || (isdata && column > 0))) {
-	/* We don't display the complete first character as it starts to
-	 * the left of the screen. */
+    /* Allocate enough space for converting the relevant part of the line. */
+    converted = charalloc(strlen(buf) * (mb_cur_max() + tabsize) + 1);
+
+    /* If the first character starts before the left edge, or would be
+     * overwritten by a "$" token, then show spaces instead. */
+    if (*buf != '\0' && *buf != '\t' && (column < start_col ||
+				(column > 0 && isdata && !ISSET(SOFTWRAP)))) {
 	if (is_cntrl_mbchar(buf)) {
 	    if (column < start_col) {
 		converted[index++] = control_mbrep(buf, isdata);
@@ -1858,7 +1850,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 #endif
     }
 
-    while (*buf != '\0') {
+    while (*buf != '\0' && start_col < beyond) {
 	int charlength, charwidth = 1;
 
 	if (*buf == ' ') {
@@ -1933,12 +1925,12 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	   buf += charlength + 7;
     }
 
-    /* Null-terminate converted. */
-    converted[index] = '\0';
+    /* If there is more text than can be shown, make room for the $. */
+    if (*buf != '\0' && isdata && !ISSET(SOFTWRAP))
+	index = move_mbleft(converted, index);
 
-    /* Make sure converted takes up no more than span columns. */
-    index = actual_x(converted, span);
-    null_at(&converted, index);
+    /* Null-terminate the converted string. */
+    converted[index] = '\0';
 
     return converted;
 }
@@ -2088,6 +2080,7 @@ void warn_and_shortly_pause(const char *msg)
 void statusline(message_type importance, const char *msg, ...)
 {
     va_list ap;
+    static int alerts = 0;
     char *compound, *message;
     size_t start_col;
     bool bracketed;
@@ -2112,12 +2105,20 @@ void statusline(message_type importance, const char *msg, ...)
 		(lastmessage == MILD && importance == HUSH))
 	return;
 
-    /* Delay another alert message, to allow an earlier one to be noticed. */
-    if (lastmessage == ALERT)
+    /* If the ALERT status has been reset, reset the counter. */
+    if (lastmessage == HUSH)
+	alerts = 0;
+
+    /* Shortly pause after each of the first three alert messages,
+     * to give the user time to read them. */
+    if (lastmessage == ALERT && alerts < 4 && !ISSET(NO_PAUSES))
 	napms(1200);
 
-    if (importance == ALERT)
+    if (importance == ALERT) {
+	if (++alerts > 3 && !ISSET(NO_PAUSES))
+	    msg = _("Further warnings were suppressed");
 	beep();
+    }
 
     lastmessage = importance;
 
@@ -2257,37 +2258,42 @@ void onekey(const char *keystroke, const char *desc, int length)
 }
 
 /* Redetermine current_y from the position of current relative to edittop,
- * and put the cursor in the edit window at (current_y, current_x). */
+ * and put the cursor in the edit window at (current_y, "current_x"). */
 void reset_cursor(void)
 {
-    size_t xpt = xplustabs();
+    ssize_t row = 0;
+    size_t col, xpt = xplustabs();
 
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
 	filestruct *line = openfile->edittop;
-	openfile->current_y = 0;
 
+	row -= (openfile->firstcolumn / editwincols);
+
+	/* Calculate how many rows the lines from edittop to current use. */
 	while (line != NULL && line != openfile->current) {
-	    openfile->current_y += strlenpt(line->data) / editwincols + 1;
+	    row += strlenpt(line->data) / editwincols + 1;
 	    line = line->next;
 	}
-	openfile->current_y += xpt / editwincols;
 
-	if (openfile->current_y < editwinrows)
-	    wmove(edit, openfile->current_y, xpt % editwincols + margin);
+	/* Add the number of wraps in the current line before the cursor. */
+	row += xpt / editwincols;
+	col = xpt % editwincols;
     } else
 #endif
     {
-	openfile->current_y = openfile->current->lineno -
-				openfile->edittop->lineno;
-
-	if (openfile->current_y < editwinrows)
-	    wmove(edit, openfile->current_y, xpt - get_page_start(xpt) + margin);
+	row = openfile->current->lineno - openfile->edittop->lineno;
+	col = xpt - get_page_start(xpt);
     }
+
+    if (row < editwinrows)
+	wmove(edit, row, margin + col);
+
+    openfile->current_y = row;
 }
 
 /* edit_draw() takes care of the job of actually painting a line into
- * the edit window.  fileptr is the line to be painted, at row line of
+ * the edit window.  fileptr is the line to be painted, at row row of
  * the window.  converted is the actual string to be written to the
  * window, with tabs and control characters replaced by strings of
  * regular characters.  from_col is the column number of the first
@@ -2295,7 +2301,7 @@ void reset_cursor(void)
  * corresponds to character number actual_x(fileptr->data, from_col) of the
  * line. */
 void edit_draw(filestruct *fileptr, const char *converted,
-	int line, size_t from_col)
+	int row, size_t from_col)
 {
 #if !defined(NANO_TINY) || !defined(DISABLE_COLOR)
     size_t from_x = actual_x(fileptr->data, from_col);
@@ -2317,24 +2323,24 @@ void edit_draw(filestruct *fileptr, const char *converted,
 	wattron(edit, interface_color_pair[LINE_NUMBER]);
 #ifndef NANO_TINY
 	if (ISSET(SOFTWRAP) && from_x != 0)
-	    mvwprintw(edit, line, 0, "%*s", margin - 1, " ");
+	    mvwprintw(edit, row, 0, "%*s", margin - 1, " ");
 	else
 #endif
-	    mvwprintw(edit, line, 0, "%*ld", margin - 1, (long)fileptr->lineno);
+	    mvwprintw(edit, row, 0, "%*ld", margin - 1, (long)fileptr->lineno);
 	wattroff(edit, interface_color_pair[LINE_NUMBER]);
     }
 #endif
 
-    /* First simply write the line -- afterward we'll add colors and the
-     * marking highlight on just the pieces that need it. */
-    mvwaddstr(edit, line, margin, converted);
+    /* First simply write the converted line -- afterward we'll add colors
+     * and the marking highlight on just the pieces that need it. */
+    mvwaddstr(edit, row, margin, converted);
 
 #ifdef USING_OLD_NCURSES
     /* Tell ncurses to really redraw the line without trying to optimize
      * for what it thinks is already there, because it gets it wrong in
      * the case of a wide character in column zero.  See bug #31743. */
     if (seen_wide)
-	wredrawln(edit, line, 1);
+	wredrawln(edit, row, 1);
 #endif
 
 #ifndef DISABLE_COLOR
@@ -2356,8 +2362,8 @@ void edit_draw(filestruct *fileptr, const char *converted,
 		/* The number of characters to paint. */
 	    const char *thetext;
 		/* The place in converted from where painting starts. */
-	    regmatch_t startmatch, endmatch;
-		/* Match positions of the start and end regexes. */
+	    regmatch_t match;
+		/* The match positions of a single-line regex. */
 
 	    /* Two notes about regexec().  A return value of zero means
 	     * that there is a match.  Also, rm_eo is the first
@@ -2378,36 +2384,35 @@ void edit_draw(filestruct *fileptr, const char *converted,
 		     * REG_NOMATCH, there are no more matches in the
 		     * line. */
 		    if (regexec(varnish->start, &fileptr->data[index], 1,
-				&startmatch, (index == 0) ? 0 : REG_NOTBOL) ==
-				REG_NOMATCH)
+				&match, (index == 0) ? 0 : REG_NOTBOL) != 0)
 			break;
 
-		    /* Skip over a zero-length regex match. */
-		    if (startmatch.rm_so == startmatch.rm_eo) {
-			index += startmatch.rm_eo + 1;
+		    /* If the match is of length zero, skip it. */
+		    if (match.rm_so == match.rm_eo) {
+			index = move_mbright(fileptr->data,
+						index + match.rm_eo);
 			continue;
 		    }
 
 		    /* Translate the match to the beginning of the line. */
-		    startmatch.rm_so += index;
-		    startmatch.rm_eo += index;
-		    index = startmatch.rm_eo;
+		    match.rm_so += index;
+		    match.rm_eo += index;
+		    index = match.rm_eo;
 
-		    /* If the matching piece is not visible, skip it. */
-		    if (startmatch.rm_so >= till_x ||
-					startmatch.rm_eo <= from_x)
+		    /* If the matching part is not visible, skip it. */
+		    if (match.rm_eo <= from_x || match.rm_so >= till_x)
 			continue;
 
-		    start_col = (startmatch.rm_so <= from_x) ?
-				0 : strnlenpt(fileptr->data,
-				startmatch.rm_so) - from_col;
+		    start_col = (match.rm_so <= from_x) ?
+					0 : strnlenpt(fileptr->data,
+					match.rm_so) - from_col;
 
 		    thetext = converted + actual_x(converted, start_col);
 
 		    paintlen = actual_x(thetext, strnlenpt(fileptr->data,
-				startmatch.rm_eo) - from_col - start_col);
+					match.rm_eo) - from_col - start_col);
 
-		    mvwaddnstr(edit, line, margin + start_col,
+		    mvwaddnstr(edit, row, margin + start_col,
 						thetext, paintlen);
 		}
 		goto tail_of_loop;
@@ -2418,44 +2423,33 @@ void edit_draw(filestruct *fileptr, const char *converted,
 		/* The first line before fileptr that matches 'start'. */
 	    const filestruct *end_line = fileptr;
 		/* The line that matches 'end'. */
+	    regmatch_t startmatch, endmatch;
+		/* The match positions of the start and end regexes. */
 
-	    /* First see if the multidata was maybe already calculated. */
-	    if (fileptr->multidata[varnish->id] == CNONE)
-		goto tail_of_loop;
-	    else if (fileptr->multidata[varnish->id] == CWHOLELINE) {
-		mvwaddnstr(edit, line, margin, converted, -1);
-		goto tail_of_loop;
-	    } else if (fileptr->multidata[varnish->id] == CBEGINBEFORE) {
-		regexec(varnish->end, fileptr->data, 1, &endmatch, 0);
-		/* If the coloured part is scrolled off, skip it. */
-		if (endmatch.rm_eo <= from_x)
-		    goto tail_of_loop;
-		paintlen = actual_x(converted, strnlenpt(fileptr->data,
-						endmatch.rm_eo) - from_col);
-		mvwaddnstr(edit, line, margin, converted, paintlen);
-		goto tail_of_loop;
+	    /* Assume nothing gets painted until proven otherwise below. */
+	    fileptr->multidata[varnish->id] = CNONE;
+
+	    /* First check the multidata of the preceding line -- it tells
+	     * us about the situation so far, and thus what to do here. */
+	    if (start_line != NULL && start_line->multidata != NULL) {
+		if (start_line->multidata[varnish->id] == CWHOLELINE ||
+			start_line->multidata[varnish->id] == CENDAFTER ||
+			start_line->multidata[varnish->id] == CWOULDBE)
+		    goto seek_an_end;
+		if (start_line->multidata[varnish->id] == CNONE ||
+			start_line->multidata[varnish->id] == CBEGINBEFORE ||
+			start_line->multidata[varnish->id] == CSTARTENDHERE)
+		    goto step_two;
 	    }
 
-	    /* There is no precalculated multidata, or it is CENDAFTER or
-	     * CSTARTENDHERE.  In all cases, find out what to paint. */
+	    /* The preceding line has no precalculated multidata.  So, do
+	     * some backtracking to find out what to paint. */
 
-	    /* When the multidata is unitialized, assume CNONE until one
-	     * of the steps below concludes otherwise. */
-	    if (fileptr->multidata[varnish->id] == -1)
-		fileptr->multidata[varnish->id] = CNONE;
-
-	    /* First check if the beginning of the line is colored by a
-	     * start on an earlier line, and an end on this line or later.
-	     *
-	     * So: find the first line before fileptr matching the start.
-	     * If every match on that line is followed by an end, then go
-	     * to step two.  Otherwise, find a line after start_line that
-	     * matches the end.  If that line is not before fileptr, then
-	     * paint the beginning of this line. */
-
+	    /* First step: see if there is a line before current that
+	     * matches 'start' and is not complemented by an 'end'. */
 	    while (start_line != NULL && regexec(varnish->start,
 		    start_line->data, 1, &startmatch, 0) == REG_NOMATCH) {
-		/* There is no start; but if there is an end on this line,
+		/* There is no start on this line; but if there is an end,
 		 * there is no need to look for starts on earlier lines. */
 		if (regexec(varnish->end, start_line->data, 0, NULL, 0) == 0)
 		    goto step_two;
@@ -2473,30 +2467,31 @@ void edit_draw(filestruct *fileptr, const char *converted,
 			start_line->multidata[varnish->id] == CSTARTENDHERE))
 		goto step_two;
 
-	    /* Skip over a zero-length regex match. */
-	    if (startmatch.rm_so == startmatch.rm_eo)
-		goto tail_of_loop;
-
-	    /* Now start_line is the first line before fileptr containing
-	     * a start match.  Is there a start on that line not followed
-	     * by an end on that line? */
+	    /* Is there an uncomplemented start on the found line? */
 	    while (TRUE) {
-		index += startmatch.rm_so;
-		startmatch.rm_eo -= startmatch.rm_so;
-		if (regexec(varnish->end, start_line->data + index +
-				startmatch.rm_eo, 0, NULL,
-				(index + startmatch.rm_eo == 0) ?
-				0 : REG_NOTBOL) == REG_NOMATCH)
-		    /* No end found after this start. */
+		/* Begin searching for an end after the start match. */
+		index += startmatch.rm_eo;
+		/* If there is no end after this last start, good. */
+		if (regexec(varnish->end, start_line->data + index, 1, &endmatch,
+				(index == 0) ? 0 : REG_NOTBOL) == REG_NOMATCH)
 		    break;
-		index++;
+		/* Begin searching for a new start after the end match. */
+		index += endmatch.rm_eo;
+		/* If both start and end match are mere anchors, advance. */
+		if (startmatch.rm_so == startmatch.rm_eo &&
+				endmatch.rm_so == endmatch.rm_eo) {
+		    if (start_line->data[index] == '\0')
+			break;
+		    index = move_mbright(start_line->data, index);
+		}
+		/* If there is no later start on this line, next step. */
 		if (regexec(varnish->start, start_line->data + index,
 				1, &startmatch, REG_NOTBOL) == REG_NOMATCH)
-		    /* No later start on this line. */
 		    goto step_two;
 	    }
 	    /* Indeed, there is a start without an end on that line. */
 
+  seek_an_end:
 	    /* We've already checked that there is no end between the start
 	     * and the current line.  But is there an end after the start
 	     * at all?  We don't paint unterminated starts. */
@@ -2505,33 +2500,26 @@ void edit_draw(filestruct *fileptr, const char *converted,
 		end_line = end_line->next;
 
 	    /* If there is no end, there is nothing to paint. */
-	    if (end_line == NULL)
+	    if (end_line == NULL) {
+		fileptr->multidata[varnish->id] = CWOULDBE;
 		goto tail_of_loop;
-	    /* If the end is scrolled off to the left, next step. */
-	    if (end_line == fileptr && endmatch.rm_eo <= from_x) {
-		fileptr->multidata[varnish->id] = CBEGINBEFORE;
-		goto step_two;
 	    }
 
-	    /* Now paint the start of the line.  However, if the end match
-	     * is on a different line, paint the whole line, and go on. */
+	    /* If the end is on a later line, paint whole line, and be done. */
 	    if (end_line != fileptr) {
-		mvwaddnstr(edit, line, margin, converted, -1);
+		mvwaddnstr(edit, row, margin, converted, -1);
 		fileptr->multidata[varnish->id] = CWHOLELINE;
-#ifdef DEBUG
-    fprintf(stderr, "  Marking for id %i  line %i as CWHOLELINE\n", varnish->id, line);
-#endif
-		/* Don't bother looking for any more starts. */
 		goto tail_of_loop;
-	    } else {
+	    }
+
+	    /* Only if it is visible, paint the part to be coloured. */
+	    if (endmatch.rm_eo > from_x) {
 		paintlen = actual_x(converted, strnlenpt(fileptr->data,
 						endmatch.rm_eo) - from_col);
-		mvwaddnstr(edit, line, margin, converted, paintlen);
-		fileptr->multidata[varnish->id] = CBEGINBEFORE;
-#ifdef DEBUG
-    fprintf(stderr, "  Marking for id %i  line %i as CBEGINBEFORE\n", varnish->id, line);
-#endif
+		mvwaddnstr(edit, row, margin, converted, paintlen);
 	    }
+	    fileptr->multidata[varnish->id] = CBEGINBEFORE;
+
   step_two:
 	    /* Second step: look for starts on this line, but begin
 	     * looking only after an end match, if there is one. */
@@ -2565,18 +2553,19 @@ void edit_draw(filestruct *fileptr, const char *converted,
 			paintlen = actual_x(thetext, strnlenpt(fileptr->data,
 					endmatch.rm_eo) - from_col - start_col);
 
-			mvwaddnstr(edit, line, margin + start_col,
+			mvwaddnstr(edit, row, margin + start_col,
 						thetext, paintlen);
 
 			fileptr->multidata[varnish->id] = CSTARTENDHERE;
-#ifdef DEBUG
-    fprintf(stderr, "  Marking for id %i  line %i as CSTARTENDHERE\n", varnish->id, line);
-#endif
 		    }
 		    index = endmatch.rm_eo;
-		    /* Skip over a zero-length match. */
-		    if (endmatch.rm_so == endmatch.rm_eo)
-			index += 1;
+		    /* If both start and end match are anchors, advance. */
+		    if (startmatch.rm_so == startmatch.rm_eo &&
+				endmatch.rm_so == endmatch.rm_eo) {
+			if (fileptr->data[index] == '\0')
+			    break;
+			index = move_mbright(fileptr->data, index);
+		    }
 		    continue;
 		}
 
@@ -2588,17 +2577,14 @@ void edit_draw(filestruct *fileptr, const char *converted,
 		    end_line = end_line->next;
 
 		/* If there is no end, we're done with this regex. */
-		if (end_line == NULL)
+		if (end_line == NULL) {
+		    fileptr->multidata[varnish->id] = CWOULDBE;
 		    break;
+		}
 
-		/* Paint the rest of the line. */
-		mvwaddnstr(edit, line, margin + start_col, thetext, -1);
+		/* Paint the rest of the line, and we're done. */
+		mvwaddnstr(edit, row, margin + start_col, thetext, -1);
 		fileptr->multidata[varnish->id] = CENDAFTER;
-#ifdef DEBUG
-    fprintf(stderr, "  Marking for id %i  line %i as CENDAFTER\n", varnish->id, line);
-#endif
-		/* We've painted to the end of the line, so don't
-		 * bother checking for any more starts. */
 		break;
 	    }
   tail_of_loop:
@@ -2638,6 +2624,9 @@ void edit_draw(filestruct *fileptr, const char *converted,
 	    /* Compute on which screen column to start painting. */
 	    start_col = strnlenpt(fileptr->data, top_x) - from_col;
 
+	    if (start_col < 0)
+		start_col = 0;
+
 	    thetext = converted + actual_x(converted, start_col);
 
 	    /* If the end of the mark is onscreen, compute how many
@@ -2648,102 +2637,123 @@ void edit_draw(filestruct *fileptr, const char *converted,
 	    }
 
 	    wattron(edit, hilite_attribute);
-	    mvwaddnstr(edit, line, margin + start_col, thetext, paintlen);
+	    mvwaddnstr(edit, row, margin + start_col, thetext, paintlen);
 	    wattroff(edit, hilite_attribute);
 	}
     }
 #endif /* !NANO_TINY */
 }
 
-/* Just update one line in the edit buffer.  This is basically a wrapper
- * for edit_draw().  The line will be displayed starting with
- * fileptr->data[index].  Likely arguments are current_x or zero.
- * Returns: Number of additional lines consumed (needed for SOFTWRAP). */
+/* Redraw the line at fileptr.  The line will be displayed so that the
+ * character with the given index is visible -- if necessary, the line
+ * will be horizontally scrolled.  In softwrap mode, however, the entire
+ * line will be passed to update_softwrapped_line().  Likely values of
+ * index are current_x or zero.  Return the number of additional rows
+ * consumed (when softwrapping). */
 int update_line(filestruct *fileptr, size_t index)
 {
-    int line = 0;
+    int row = 0;
 	/* The row in the edit window we will be updating. */
-    int extralinesused = 0;
     char *converted;
 	/* The data of the line with tabs and control characters expanded. */
-    size_t page_start;
+    size_t from_col = 0;
+	/* From which column a horizontally scrolled line is displayed. */
 
-#ifndef NANO_TINY
-    if (ISSET(SOFTWRAP)) {
-	filestruct *tmp;
-
-	for (tmp = openfile->edittop; tmp && tmp != fileptr; tmp = tmp->next)
-	    line += (strlenpt(tmp->data) / editwincols) + 1;
-    } else
-#endif
-	line = fileptr->lineno - openfile->edittop->lineno;
-
-    if (line < 0 || line >= editwinrows)
-	return 1;
-
-    /* First, blank out the line. */
-    blank_line(edit, line, 0, COLS);
-
-    /* Next, convert variables that index the line to their equivalent
-     * positions in the expanded line. */
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP))
-	index = 0;
-    else
+	return update_softwrapped_line(fileptr);
 #endif
-	index = strnlenpt(fileptr->data, index);
-    page_start = get_page_start(index);
+
+    row = fileptr->lineno - openfile->edittop->lineno;
+
+    /* If the line is offscreen, don't even try to display it. */
+    if (row < 0 || row >= editwinrows) {
+	statusline(ALERT, "Badness: tried to display a line on row %i"
+				" -- please report a bug", row);
+	return 0;
+    }
+
+    /* First, blank out the row. */
+    blank_row(edit, row, 0, COLS);
+
+    /* Next, find out from which column to start displaying the line. */
+    from_col = get_page_start(strnlenpt(fileptr->data, index));
 
     /* Expand the line, replacing tabs with spaces, and control
      * characters with their displayed forms. */
-    converted = display_string(fileptr->data, page_start, editwincols, TRUE);
-#ifdef DEBUG
-    if (ISSET(SOFTWRAP) && strlen(converted) >= editwincols - 2)
-	fprintf(stderr, "update_line(): converted(1) line = %s\n", converted);
-#endif
+    converted = display_string(fileptr->data, from_col, editwincols, TRUE);
 
-    /* Paint the line. */
-    edit_draw(fileptr, converted, line, page_start);
+    /* Draw the line. */
+    edit_draw(fileptr, converted, row, from_col);
     free(converted);
 
-#ifndef NANO_TINY
-    if (!ISSET(SOFTWRAP)) {
-#endif
-	if (page_start > 0)
-	    mvwaddch(edit, line, margin, '$');
-	if (strlenpt(fileptr->data) > page_start + editwincols)
-	    mvwaddch(edit, line, COLS - 1, '$');
-#ifndef NANO_TINY
-    } else {
-	size_t full_length = strlenpt(fileptr->data);
-	for (index += editwincols; index <= full_length && line < editwinrows - 1; index += editwincols) {
-	    line++;
-#ifdef DEBUG
-	    fprintf(stderr, "update_line(): softwrap code, moving to %d index %lu\n", line, (unsigned long)index);
-#endif
-	    blank_line(edit, line, 0, COLS);
+    if (from_col > 0)
+	mvwaddch(edit, row, margin, '$');
+    if (strlenpt(fileptr->data) > from_col + editwincols)
+	mvwaddch(edit, row, COLS - 1, '$');
 
-	    /* Expand the line, replacing tabs with spaces, and control
-	     * characters with their displayed forms. */
-	    converted = display_string(fileptr->data, index, editwincols, TRUE);
-#ifdef DEBUG
-	    if (ISSET(SOFTWRAP) && strlen(converted) >= editwincols - 2)
-		fprintf(stderr, "update_line(): converted(2) line = %s\n", converted);
-#endif
-
-	    /* Paint the line. */
-	    edit_draw(fileptr, converted, line, index);
-	    free(converted);
-	    extralinesused++;
-	}
-    }
-#endif /* !NANO_TINY */
-    return extralinesused;
+    return 1;
 }
 
-/* Check whether old_column and new_column are on different "pages" (or that
- * the mark is on), which means that the relevant line needs to be redrawn. */
-bool need_horizontal_scroll(const size_t old_column, const size_t new_column)
+#ifndef NANO_TINY
+/* Redraw all the chunks of the given line (as far as they fit onscreen),
+ * unless it's edittop, which will be displayed from column firstcolumn.
+ * Return the number of additional rows consumed. */
+int update_softwrapped_line(filestruct *fileptr)
+{
+    int row = 0;
+	/* The row in the edit window we will write to. */
+    filestruct *line = openfile->edittop;
+	/* An iterator needed to find the relevant row. */
+    int starting_row;
+	/* The first row in the edit window that gets updated. */
+    size_t from_col = 0;
+	/* The starting column of the current chunk. */
+    char *converted;
+	/* The data of the chunk with tabs and control characters expanded. */
+    size_t full_length;
+	/* The length of the expanded line. */
+
+    if (fileptr == openfile->edittop)
+	from_col = openfile->firstcolumn;
+    else
+	row -= (openfile->firstcolumn / editwincols);
+
+    /* Find out on which screen row the target line should be shown. */
+    while (line != fileptr && line != NULL) {
+	row += (strlenpt(line->data) / editwincols) + 1;
+	line = line->next;
+    }
+
+    /* If the first chunk is offscreen, don't even try to display it. */
+    if (row < 0 || row >= editwinrows) {
+	statusline(ALERT, "Badness: tried to display a chunk on row %i"
+				" -- please report a bug", row);
+	return 0;
+    }
+
+    full_length = strlenpt(fileptr->data);
+    starting_row = row;
+
+    while (from_col <= full_length && row < editwinrows) {
+	blank_row(edit, row, 0, COLS);
+
+	/* Convert the chunk to its displayable form and draw it. */
+	converted = display_string(fileptr->data, from_col, editwincols, TRUE);
+	edit_draw(fileptr, converted, row++, from_col);
+	free(converted);
+
+	from_col += editwincols;
+    }
+
+    return (row - starting_row);
+}
+#endif
+
+/* Check whether the mark is on, or whether old_column and new_column are on
+ * different "pages" (in softwrap mode, only the former applies), which means
+ * that the relevant line needs to be redrawn. */
+bool line_needs_update(const size_t old_column, const size_t new_column)
 {
 #ifndef NANO_TINY
     if (openfile->mark_set)
@@ -2753,131 +2763,223 @@ bool need_horizontal_scroll(const size_t old_column, const size_t new_column)
 	return (get_page_start(old_column) != get_page_start(new_column));
 }
 
-/* When edittop changes, try and figure out how many lines we really
- * have to work with, accounting for softwrap mode. */
-void compute_maxrows(void)
+/* Try to move up nrows softwrapped chunks from the given line and the
+ * given column (leftedge).  After moving, leftedge will be set to the
+ * starting column of the current chunk.  Return the number of chunks we
+ * couldn't move up, which will be zero if we completely succeeded. */
+int go_back_chunks(int nrows, filestruct **line, size_t *leftedge)
+{
+    int i;
+
+    /* Don't move more chunks than the window can hold. */
+    if (nrows > editwinrows - 1)
+	nrows = (editwinrows < 2) ? 1 : editwinrows - 1;
+
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP)) {
+	size_t current_chunk = (*leftedge) / editwincols;
+
+	/* Recede through the requested number of chunks. */
+	for (i = nrows; i > 0; i--) {
+	    if (current_chunk > 0) {
+		current_chunk--;
+		continue;
+	    }
+
+	    if (*line == openfile->fileage)
+		break;
+
+	    *line = (*line)->prev;
+	    current_chunk = strlenpt((*line)->data) / editwincols;
+	}
+
+	/* Only change leftedge when we actually could move. */
+	if (i < nrows)
+	    *leftedge = current_chunk * editwincols;
+    } else
+#endif
+	for (i = nrows; i > 0 && (*line)->prev != NULL; i--)
+	    *line = (*line)->prev;
+
+    return i;
+}
+
+/* Try to move down nrows softwrapped chunks from the given line and the
+ * given column (leftedge).  After moving, leftedge will be set to the
+ * starting column of the current chunk.  Return the number of chunks we
+ * couldn't move down, which will be zero if we completely succeeded. */
+int go_forward_chunks(int nrows, filestruct **line, size_t *leftedge)
+{
+    int i;
+
+    /* Don't move more chunks than the window can hold. */
+    if (nrows > editwinrows - 1)
+	nrows = (editwinrows < 2) ? 1 : editwinrows - 1;
+
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP)) {
+	size_t current_chunk = (*leftedge) / editwincols;
+	size_t last_chunk = strlenpt((*line)->data) / editwincols;
+
+	/* Advance through the requested number of chunks. */
+	for (i = nrows; i > 0; i--) {
+	    if (current_chunk < last_chunk) {
+		current_chunk++;
+		continue;
+	    }
+
+	    if (*line == openfile->filebot)
+		break;
+
+	    *line = (*line)->next;
+	    current_chunk = 0;
+	    last_chunk = strlenpt((*line)->data) / editwincols;
+	}
+
+	/* Only change leftedge when we actually could move. */
+	if (i < nrows)
+	    *leftedge = current_chunk * editwincols;
+    } else
+#endif
+	for (i = nrows; i > 0 && (*line)->next != NULL; i--)
+	    *line = (*line)->next;
+
+    return i;
+}
+
+/* Return TRUE if there are fewer than a screen's worth of lines between
+ * the line at line number was_lineno (and column was_leftedge, if we're
+ * in softwrap mode) and the line at current[current_x]. */
+bool less_than_a_screenful(size_t was_lineno, size_t was_leftedge)
 {
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
-	int screenrow;
-	filestruct *line = openfile->edittop;
+	filestruct *line = openfile->current;
+	size_t leftedge = (xplustabs() / editwincols) * editwincols;
+	int rows_left = go_back_chunks(editwinrows - 1, &line, &leftedge);
 
-	maxrows = 0;
-
-	for (screenrow = 0; screenrow < editwinrows && line != NULL; screenrow++) {
-	    screenrow += strlenpt(line->data) / editwincols;
-	    line = line->next;
-	    maxrows++;
-	}
-
-	if (screenrow < editwinrows)
-	    maxrows += editwinrows - screenrow;
-
-#ifdef DEBUG
-	fprintf(stderr, "recomputed: maxrows = %d\n", maxrows);
-#endif
+	return (rows_left > 0 || line->lineno < was_lineno ||
+		(line->lineno == was_lineno && leftedge <= was_leftedge));
     } else
-#endif /* !NANO_TINY */
-	maxrows = editwinrows;
+#endif
+	return (openfile->current->lineno - was_lineno < editwinrows);
 }
 
-/* Scroll the edit window in the given direction and the given number
- * of lines, and draw new lines on the blank lines left after the
- * scrolling.  direction is the direction to scroll, either UPWARD or
- * DOWNWARD, and nlines is the number of lines to scroll.  We change
- * edittop, and assume that current and current_x are up to date.  We
- * also assume that scrollok(edit) is FALSE. */
-void edit_scroll(scroll_dir direction, ssize_t nlines)
+/* Scroll the edit window in the given direction and the given number of rows,
+ * and draw new lines on the blank lines left after the scrolling. */
+void edit_scroll(scroll_dir direction, int nrows)
 {
-    ssize_t i;
-    filestruct *foo;
+    filestruct *line;
+    size_t leftedge;
 
-    /* Part 1: nlines is the number of lines we're going to scroll the
-     * text of the edit window. */
+    /* Part 1: nrows is the number of rows we're going to scroll the text of
+     * the edit window. */
 
-    /* Move the top line of the edit window up or down (depending on the
-     * value of direction) nlines lines, or as many lines as we can if
-     * there are fewer than nlines lines available. */
-    for (i = nlines; i > 0; i--) {
-	if (direction == UPWARD) {
-	    if (openfile->edittop == openfile->fileage)
-		break;
-	    openfile->edittop = openfile->edittop->prev;
-	} else {
-	    if (openfile->edittop == openfile->filebot)
-		break;
-	    openfile->edittop = openfile->edittop->next;
-	}
+    /* Move the top line of the edit window the requested number of rows up or
+     * down, and reduce the number of rows with the amount we couldn't move. */
+    if (direction == UPWARD)
+	nrows -= go_back_chunks(nrows, &openfile->edittop, &openfile->firstcolumn);
+    else
+	nrows -= go_forward_chunks(nrows, &openfile->edittop, &openfile->firstcolumn);
 
-#ifndef NANO_TINY
-	/* Don't over-scroll on long lines. */
-	if (ISSET(SOFTWRAP) && direction == UPWARD) {
-	    ssize_t len = strlenpt(openfile->edittop->data) / editwincols;
-	    i -= len;
-	    if (len > 0)
-		refresh_needed = TRUE;
-	}
-#endif
+    /* Don't bother scrolling zero rows, nor more than the window can hold. */
+    if (nrows == 0)
+	return;
+    if (nrows >= editwinrows) {
+	refresh_needed = TRUE;
+	return;
     }
 
-    /* Limit nlines to the number of lines we could scroll. */
-    nlines -= i;
-
-    /* Don't bother scrolling zero lines, nor more than the window can hold. */
-    if (nlines == 0)
-	return;
-    if (nlines >= editwinrows)
-	refresh_needed = TRUE;
-
-    if (refresh_needed == TRUE)
-	return;
-
-    /* Scroll the text of the edit window up or down nlines lines,
-     * depending on the value of direction. */
+    /* Scroll the text of the edit window a number of rows up or down. */
     scrollok(edit, TRUE);
-    wscrl(edit, (direction == UPWARD) ? -nlines : nlines);
+    wscrl(edit, (direction == UPWARD) ? -nrows : nrows);
     scrollok(edit, FALSE);
 
-    /* Part 2: nlines is the number of lines in the scrolled region of
-     * the edit window that we need to draw. */
+    /* Part 2: nrows is now the number of rows in the scrolled region of the
+     * edit window that we need to draw. */
 
-    /* If the scrolled region contains only one line, and the line
-     * before it is visible in the edit window, we need to draw it too.
-     * If the scrolled region contains more than one line, and the lines
-     * before and after the scrolled region are visible in the edit
-     * window, we need to draw them too. */
-    nlines += (nlines == 1) ? 1 : 2;
+    /* If we're not on the first "page" (when not softwrapping), or the mark
+     * is on, the row next to the scrolled region needs to be redrawn too. */
+    if (line_needs_update(openfile->placewewant, 0) && nrows < editwinrows)
+	nrows++;
 
-    if (nlines > editwinrows)
-	nlines = editwinrows;
+    /* If we scrolled backward, start on the first line of the blank region. */
+    line = openfile->edittop;
+    leftedge = openfile->firstcolumn;
 
-    /* If we scrolled up, we're on the line before the scrolled region. */
-    foo = openfile->edittop;
+    /* If we scrolled forward, move down to the start of the blank region. */
+    if (direction == DOWNWARD)
+	go_forward_chunks(editwinrows - nrows, &line, &leftedge);
 
-    /* If we scrolled down, move down to the line before the scrolled region. */
-    if (direction == DOWNWARD) {
-	for (i = editwinrows - nlines; i > 0 && foo != NULL; i--)
-	    foo = foo->next;
+#ifndef NANO_TINY
+    /* Compensate for the earlier onscreen chunks of a softwrapped line
+     * when the first blank row happens to be in the middle of that line. */
+    if (ISSET(SOFTWRAP) && line != openfile->edittop)
+	nrows += leftedge / editwincols;
+#endif
+
+    /* Draw new content on the blank rows inside the scrolled region
+     * (and on the bordering row too when it was deemed necessary). */
+    while (nrows > 0 && line != NULL) {
+	nrows -= update_line(line, (line == openfile->current) ?
+					openfile->current_x : 0);
+	line = line->next;
     }
+}
 
-    /* Draw new lines on any blank lines before or inside the scrolled
-     * region.  If we scrolled down and we're on the top line, or if we
-     * scrolled up and we're on the bottom line, the line won't be
-     * blank, so we don't need to draw it unless the mark is on or we're
-     * not on the first page. */
-    for (i = nlines; i > 0 && foo != NULL; i--) {
-	if ((i == nlines && direction == DOWNWARD) ||
-			(i == 1 && direction == UPWARD)) {
-	    if (need_horizontal_scroll(openfile->placewewant, 0))
-		update_line(foo, (foo == openfile->current) ?
-			openfile->current_x : 0);
-	} else
-	    update_line(foo, (foo == openfile->current) ?
-		openfile->current_x : 0);
-	foo = foo->next;
-    }
+/* Ensure that firstcolumn is at the starting column of the softwrapped chunk
+ * it's on.  We need to do this when the number of columns of the edit window
+ * has changed, because then the width of softwrapped chunks has changed. */
+void ensure_firstcolumn_is_aligned(void)
+{
+#ifndef NANO_TINY
+    if (openfile->firstcolumn % editwincols != 0)
+	openfile->firstcolumn -= (openfile->firstcolumn % editwincols);
+#endif
+}
 
-    compute_maxrows();
+/* Return TRUE if current[current_x] is above the top of the screen, and FALSE
+ * otherwise. */
+bool current_is_above_screen(void)
+{
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP))
+	/* The cursor is above screen when current[current_x] is before edittop
+	 * at column firstcolumn. */
+	return (openfile->current->lineno < openfile->edittop->lineno ||
+		(openfile->current->lineno == openfile->edittop->lineno &&
+		xplustabs() < openfile->firstcolumn));
+    else
+#endif
+	return (openfile->current->lineno < openfile->edittop->lineno);
+}
+
+/* Return TRUE if current[current_x] is below the bottom of the screen, and
+ * FALSE otherwise. */
+bool current_is_below_screen(void)
+{
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP)) {
+	filestruct *line = openfile->edittop;
+	size_t leftedge = openfile->firstcolumn;
+
+	/* If current[current_x] is more than a screen's worth of lines after
+	 * edittop at column firstcolumn, it's below the screen. */
+	return (go_forward_chunks(editwinrows - 1, &line, &leftedge) == 0 &&
+			(line->lineno < openfile->current->lineno ||
+			(line->lineno == openfile->current->lineno &&
+			leftedge < (xplustabs() / editwincols) * editwincols)));
+    } else
+#endif
+	return (openfile->current->lineno >=
+			openfile->edittop->lineno + editwinrows);
+}
+
+/* Return TRUE if current[current_x] is offscreen relative to edittop, and
+ * FALSE otherwise. */
+bool current_is_offscreen(void)
+{
+    return (current_is_above_screen() || current_is_below_screen());
 }
 
 /* Update any lines between old_current and current that need to be
@@ -2889,12 +2991,7 @@ void edit_redraw(filestruct *old_current)
     openfile->placewewant = xplustabs();
 
     /* If the current line is offscreen, scroll until it's onscreen. */
-    if (openfile->current->lineno >= openfile->edittop->lineno + maxrows ||
-#ifndef NANO_TINY
-		(openfile->current->lineno == openfile->edittop->lineno + maxrows - 1 &&
-		ISSET(SOFTWRAP) && strlenpt(openfile->current->data) >= editwincols) ||
-#endif
-		openfile->current->lineno < openfile->edittop->lineno) {
+    if (current_is_offscreen()) {
 	adjust_viewport((focusing || !ISSET(SMOOTH_SCROLL)) ? CENTERING : FLOWING);
 	refresh_needed = TRUE;
 	return;
@@ -2903,13 +3000,13 @@ void edit_redraw(filestruct *old_current)
 #ifndef NANO_TINY
     /* If the mark is on, update all lines between old_current and current. */
     if (openfile->mark_set) {
-	filestruct *foo = old_current;
+	filestruct *line = old_current;
 
-	while (foo != openfile->current) {
-	    update_line(foo, 0);
+	while (line != openfile->current) {
+	    update_line(line, 0);
 
-	    foo = (foo->lineno > openfile->current->lineno) ?
-			foo->prev : foo->next;
+	    line = (line->lineno > openfile->current->lineno) ?
+			line->prev : line->next;
 	}
     } else
 #endif
@@ -2918,9 +3015,9 @@ void edit_redraw(filestruct *old_current)
 	if (old_current != openfile->current && get_page_start(was_pww) > 0)
 	    update_line(old_current, 0);
 
-    /* Update current if we've changed page, or if it differs from
-     * old_current and needs to be horizontally scrolled. */
-    if (need_horizontal_scroll(was_pww, openfile->placewewant) ||
+    /* Update current if the mark is on or it has changed "page", or if it
+     * differs from old_current and needs to be horizontally scrolled. */
+    if (line_needs_update(was_pww, openfile->placewewant) ||
 			(old_current != openfile->current &&
 			get_page_start(openfile->placewewant) > 0))
 	update_line(openfile->current, openfile->current_x);
@@ -2933,15 +3030,11 @@ void edit_refresh(void)
     filestruct *line;
     int row = 0;
 
-    /* Figure out what maxrows should really be. */
-    compute_maxrows();
-
     /* If the current line is out of view, get it back on screen. */
-    if (openfile->current->lineno < openfile->edittop->lineno ||
-		openfile->current->lineno >= openfile->edittop->lineno + maxrows) {
+    if (current_is_offscreen()) {
 #ifdef DEBUG
-	fprintf(stderr, "edit-refresh: line = %ld, edittop = %ld and maxrows = %d\n",
-		(long)openfile->current->lineno, (long)openfile->edittop->lineno, maxrows);
+	fprintf(stderr, "edit-refresh: line = %ld, edittop = %ld and editwinrows = %d\n",
+		(long)openfile->current->lineno, (long)openfile->edittop->lineno, editwinrows);
 #endif
 	adjust_viewport((focusing || !ISSET(SMOOTH_SCROLL)) ? CENTERING : STATIONARY);
     }
@@ -2954,14 +3047,14 @@ void edit_refresh(void)
 
     while (row < editwinrows && line != NULL) {
 	if (line == openfile->current)
-	    row += update_line(line, openfile->current_x) + 1;
+	    row += update_line(line, openfile->current_x);
 	else
-	    row += update_line(line, 0) + 1;
+	    row += update_line(line, 0);
 	line = line->next;
     }
 
     while (row < editwinrows)
-	blank_line(edit, row++, 0, COLS);
+	blank_row(edit, row++, 0, COLS);
 
     reset_cursor();
     wnoutrefresh(edit);
@@ -2978,50 +3071,40 @@ void adjust_viewport(update_type manner)
 {
     int goal = 0;
 
-    /* If manner is CENTERING, move edittop half the number of window
-     * lines back from current.  If manner is STATIONARY, move edittop
-     * back current_y lines if current_y is in range of the screen,
-     * 0 lines if current_y is below zero, or (editwinrows - 1) lines
-     * if current_y is too big.  This puts current at the same place
-     * on the screen as before, or at the top or bottom if current_y is
-     * beyond either.  If manner is FLOWING, move edittop back 0 lines
-     * or (editwinrows - 1) lines, depending or where current has moved.
-     * This puts the cursor on the first or the last line. */
+    /* If manner is CENTERING, move edittop half the number of window rows
+     * back from current.  If manner is FLOWING, move edittop back 0 rows
+     * or (editwinrows - 1) rows, depending on where current has moved.
+     * This puts the cursor on the first or the last row.  If manner is
+     * STATIONARY, move edittop back current_y rows if current_y is in range
+     * of the screen, 0 rows if current_y is below zero, or (editwinrows - 1)
+     * rows if current_y is too big.  This puts current at the same place on
+     * the screen as before, or... at some undefined place. */
     if (manner == CENTERING)
 	goal = editwinrows / 2;
     else if (manner == FLOWING) {
-	if (openfile->current->lineno >= openfile->edittop->lineno) {
+	if (!current_is_above_screen())
 	    goal = editwinrows - 1;
-#ifndef NANO_TINY
-	    if (ISSET(SOFTWRAP))
-		goal -= strlenpt(openfile->current->data) / editwincols;
-#endif
-	}
     } else {
 	goal = openfile->current_y;
 
-	/* Limit goal to (editwinrows - 1) lines maximum. */
+	/* Limit goal to (editwinrows - 1) rows maximum. */
 	if (goal > editwinrows - 1)
 	    goal = editwinrows - 1;
     }
 
     openfile->edittop = openfile->current;
 
-    while (goal > 0 && openfile->edittop->prev != NULL) {
-	openfile->edittop = openfile->edittop->prev;
-	goal--;
 #ifndef NANO_TINY
-	if (ISSET(SOFTWRAP)) {
-	    goal -= strlenpt(openfile->edittop->data) / editwincols;
-	    if (goal < 0)
-		openfile->edittop = openfile->edittop->next;
-	}
+    if (ISSET(SOFTWRAP))
+	openfile->firstcolumn = (xplustabs() / editwincols) * editwincols;
 #endif
-    }
+
+    /* Move edittop back goal rows, starting at current[current_x]. */
+    go_back_chunks(goal, &openfile->edittop, &openfile->firstcolumn);
+
 #ifdef DEBUG
     fprintf(stderr, "adjust_viewport(): setting edittop to lineno %ld\n", (long)openfile->edittop->lineno);
 #endif
-    compute_maxrows();
 }
 
 /* Unconditionally redraw the entire screen. */
@@ -3062,10 +3145,10 @@ void display_main_list(void)
     bottombars(MMAIN);
 }
 
-/* If constant is TRUE, we display the current cursor position only if
- * suppress_cursorpos is FALSE.  If constant is FALSE, we display the
- * position always.  In any case we reset suppress_cursorpos to FALSE. */
-void do_cursorpos(bool constant)
+/* Show info about the current cursor position on the statusbar.
+ * Do this unconditionally when force is TRUE; otherwise, only if
+ * suppress_cursorpos is FALSE.  In any case, reset the latter. */
+void do_cursorpos(bool force)
 {
     char saved_byte;
     size_t sum, cur_xpt = xplustabs() + 1;
@@ -3086,8 +3169,8 @@ void do_cursorpos(bool constant)
     if (openfile->current != openfile->filebot)
 	sum--;
 
-    /* If the position needs to be suppressed, don't suppress it next time. */
-    if (suppress_cursorpos && constant) {
+    /* If the showing needs to be suppressed, don't suppress it next time. */
+    if (suppress_cursorpos && !force) {
 	suppress_cursorpos = FALSE;
 	return;
     }
@@ -3111,7 +3194,7 @@ void do_cursorpos(bool constant)
 /* Unconditionally display the current cursor position. */
 void do_cursorpos_void(void)
 {
-    do_cursorpos(FALSE);
+    do_cursorpos(TRUE);
 }
 
 void enable_nodelay(void)
@@ -3130,15 +3213,17 @@ void disable_nodelay(void)
  * expect word to have tabs and control characters expanded. */
 void spotlight(bool active, const char *word)
 {
-    size_t word_len = strlenpt(word), room;
+    size_t word_span = strlenpt(word);
+    size_t room = word_span;
 
     /* Compute the number of columns that are available for the word. */
-    room = editwincols + get_page_start(xplustabs()) - xplustabs();
+    if (!ISSET(SOFTWRAP)) {
+	room = editwincols + get_page_start(xplustabs()) - xplustabs();
 
-    assert(room > 0);
-
-    if (word_len > room)
-	room--;
+	/* If the word is partially offscreen, reserve space for the "$". */
+	if (word_span > room)
+	    room--;
+    }
 
     reset_cursor();
 
@@ -3146,12 +3231,12 @@ void spotlight(bool active, const char *word)
 	wattron(edit, hilite_attribute);
 
     /* This is so we can show zero-length matches. */
-    if (word_len == 0)
+    if (word_span == 0)
 	waddch(edit, ' ');
     else
 	waddnstr(edit, word, actual_x(word, room));
 
-    if (word_len > room)
+    if (word_span > room)
 	waddch(edit, '$');
 
     if (active)

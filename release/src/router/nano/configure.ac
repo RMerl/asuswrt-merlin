@@ -16,20 +16,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 
-AC_INIT([GNU nano], [2.7.4], [nano-devel@gnu.org], [nano])
+AC_INIT([GNU nano], [2.8.0], [nano-devel@gnu.org], [nano])
 AC_CONFIG_SRCDIR([src/nano.c])
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.14])
 AC_CONFIG_HEADERS([config.h])
 
 dnl Make sure the ONCE macros are available.
 
-AC_PREREQ(2.61)
+AC_PREREQ([2.69])
+
+dnl Lie about gnulib features we don't use to speed up & shrink down.
+
+gl_cv_func_printf_directive_n=yes
+gl_cv_func_printf_infinite_long_double=yes
+gl_cv_func_printf_long_double=yes
+gl_cv_func_snprintf_directive_n=yes
+gl_cv_glob_lists_symlinks=yes
 
 dnl Checks for programs.
 
 AC_GNU_SOURCE
 AC_PROG_CC
+gl_EARLY
+gl_INIT
 AC_PROG_LN_S
 AC_ISC_POSIX
 AC_SYS_LARGEFILE
@@ -37,7 +47,7 @@ PKG_PROG_PKG_CONFIG
 
 dnl Internationalization macros.
 
-AM_GNU_GETTEXT_VERSION(0.11.5)
+AM_GNU_GETTEXT_VERSION([0.18.3])
 AM_GNU_GETTEXT([external], [need-ngettext])
 AM_CONDITIONAL(USE_NLS, test x$USE_NLS = xyes)
 
@@ -48,7 +58,7 @@ AC_DEFINE_DIR([PKGDATADIR], [pkgdatadir], [Where data are placed to.])
 
 dnl Checks for header files.
 
-AC_CHECK_HEADERS(getopt.h libintl.h limits.h regex.h sys/param.h wchar.h wctype.h stdarg.h)
+AC_CHECK_HEADERS(libintl.h limits.h pwd.h termios.h sys/param.h)
 
 dnl Checks for options.
 
@@ -71,15 +81,7 @@ fi
 if test "x$enable_color" = xno; then
     AC_DEFINE(DISABLE_COLOR, 1, [Define this to disable syntax highlighting.])
 else
-    if test x$ac_cv_header_regex_h != xyes; then
-	AC_MSG_ERROR([
-*** The header file regex.h was not found.  If you wish to have
-*** color support, this header file is required.  Please either
-*** install C libraries that include the regex.h file, or call
-*** the configure script with --disable-color.])
-    else
-	color_support=yes
-    fi
+    color_support=yes
 fi
 
 AC_ARG_ENABLE(comment,
@@ -467,30 +469,9 @@ int main(void)
 
 dnl Checks for functions.
 
-AC_CHECK_FUNCS(getdelim getline isblank strcasecmp strcasestr strncasecmp strnlen snprintf vsnprintf)
-
 if test "x$enable_utf8" != xno; then
-    AC_CHECK_FUNCS(iswalnum iswblank iswpunct iswspace nl_langinfo mblen mbstowcs mbtowc wctomb wcwidth)
+    AC_CHECK_FUNCS(iswalnum iswpunct mblen mbstowcs mbtowc wctomb)
 fi
-
-if test x$ac_cv_func_snprintf = xno; then
-    AM_PATH_GLIB_2_0(2.0.0,,
-	AC_MSG_ERROR([
-*** snprintf() not found.  GLIB 2.x not found either.
-*** You should install the GLIB 2.x library which can
-*** be found at http://ftp.gtk.org/.]),
-	glib)
-fi
-
-if test x$ac_cv_func_vsnprintf = xno; then
-    AM_PATH_GLIB_2_0(2.0.0,,
-	AC_MSG_ERROR([
-*** vsnprintf() not found.  GLIB 2.x not found either.
-*** You should install the GLIB 2.x library which can
-*** be found at http://ftp.gtk.org/.]),
-	glib)
-fi
-
 dnl Checks for typedefs, structures, and compiler characteristics.
 
 dnl Checks for available flags.
@@ -500,8 +481,6 @@ AX_CHECK_COMPILE_FLAG([-Wall], [CFLAGS="$CFLAGS -Wall"], [], [])
 dnl Checks for library functions.
 
 AC_TYPE_SIGNAL
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(getopt_long)
 
 dnl Checks for libraries.
 
@@ -568,6 +547,9 @@ fi
 AC_CHECK_LIB([$CURSES_LIB_NAME], [use_default_colors],
 	     [AC_DEFINE(HAVE_USE_DEFAULT_COLORS, 1, [Define this if your curses library has the use_default_colors() command.])],
 	     [], [$CURSES_LIB])
+AC_CHECK_LIB([$CURSES_LIB_NAME], [set_escdelay],
+	     [AC_DEFINE(HAVE_SET_ESCDELAY, 1, [Define this if your curses library has the set_escdelay() function.])],
+	     [], [$CURSES_LIB])
 AC_CHECK_LIB([$CURSES_LIB_NAME], [key_defined],
 	     [AC_DEFINE(HAVE_KEY_DEFINED, 1, [Define this if your curses library has the key_defined() command.])],
 	     [], [$CURSES_LIB])
@@ -578,25 +560,15 @@ LIBS="$LIBS $CURSES_LIB"
 
 AC_SUBST(CURSES_LIB)
 
-if test "x$GLIB_CFLAGS" != "x"; then
-    CFLAGS="$CFLAGS $GLIB_CFLAGS"
-fi
-if test "x$GLIB_LIBS" != "x"; then
-    LDFLAGS="$LDFLAGS $GLIB_LIBS"
-fi
-
 if test "x$enable_utf8" != xno && \
     test x$CURSES_LIB_WIDE = xyes && \
     test x$ac_cv_func_iswalnum = xyes && \
     test x$ac_cv_func_iswpunct = xyes && \
-    (test x$ac_cv_func_iswblank = xyes || test x$ac_cv_func_iswspace = xyes) && \
-    test x$ac_cv_func_nl_langinfo = xyes && \
     test x$ac_cv_func_mblen = xyes && \
     test x$ac_cv_func_mbstowcs = xyes && \
     test x$ac_cv_func_mbtowc = xyes && \
-    test x$ac_cv_func_wctomb = xyes && \
-    test x$ac_cv_func_wcwidth = xyes; then
-	AC_DEFINE(ENABLE_UTF8, 1, [Define this if your system has sufficient UTF-8 support (a wide curses library, iswalnum(), iswpunct(), iswblank() or iswspace(), nl_langinfo, mblen(), mbstowcs(), mbtowc(), wctomb(), and wcwidth()).])
+    test x$ac_cv_func_wctomb = xyes; then
+	AC_DEFINE(ENABLE_UTF8, 1, [Define this if your system has sufficient UTF-8 support.])
 else
     if test "x$enable_utf8" = xyes; then
 	AC_MSG_ERROR([
@@ -747,6 +719,7 @@ AC_CONFIG_FILES([
 Makefile
 doc/Makefile
 doc/sample.nanorc
+lib/Makefile
 m4/Makefile
 po/Makefile.in
 src/Makefile

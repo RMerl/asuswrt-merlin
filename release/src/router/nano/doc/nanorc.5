@@ -17,7 +17,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANORC 5 "version 2.7.4" "January 2017"
+.TH NANORC 5 "version 2.8.0" "March 2017"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -150,6 +150,10 @@ Don't display the two help lines at the bottom of the screen.
 .TP
 .B set nonewlines
 Don't automatically add a newline to the ends of files.
+.TP
+.B set nopauses
+Don't pause between warnings at startup.  This means that only
+the last one will be visible (when there are multiple ones).
 .TP
 .B set nowrap
 Don't hard-wrap text at all.

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Tue Jan 10 11:32:19 2017 -->
+<!-- CreationDate: Fri Mar 31 11:01:52 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -67,6 +67,15 @@ default) features in Pico, such as &quot;search and
 replace&quot; and &quot;go to line and column
 number&quot;.</p>
 
+<p style="margin-left:11%; margin-top: 1em">When opening a
+file, the cursor can be put on a specific line by adding the
+line number with a plus sign (<b>+</b>) before the filename,
+and even in a specific column by adding it with a comma.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the first
+file specified is a dash (<b>&minus;</b>), <b>nano</b> will
+read data from standard input.</p>
+
 <h2>EDITING
 <a name="EDITING"></a>
 </h2>
@@ -109,14 +118,7 @@ the .nanorc file -- see <b>nanorc</b>(5).</p>
 
 
 
-<p style="margin-left:11%; margin-top: 1em"><b>+</b><i>line</i><b>,</b><i>column</i></p>
-
-<p style="margin-left:22%;">Places the cursor on line
-number <i>line</i> and at column number <i>column</i> (at
-least one of which must be specified) on startup, instead of
-the default line 1, column 1.</p>
-
-<p style="margin-left:11%;"><b>&minus;A</b>,
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;A</b>,
 <b>&minus;&minus;smarthome</b></p>
 
 <p style="margin-left:22%;">Make the Home key smarter. When

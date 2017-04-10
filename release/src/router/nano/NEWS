@@ -1,3 +1,29 @@
+2017.03.31 - GNU nano 2.8.0 "Axat" makes it easier to move around in
+		softwrapped lines: the Up and Down keys now step from
+		visual row to visual row instead of jumping between
+		logical lines, and the Home and End keys now move to
+		the start and end of a row, and only when already
+		there, then to the start and end of the logical line.
+		Furthermore, the screen can now scroll per row instead
+		of always per logical line.  On an entirely different
+		front: nano now makes use of gnulib, to make it build
+		on more platforms.  In short: there were many internal
+		changes, not many user-visible ones (apart form the
+		new softwrap navigation).  The conversion to gnulib
+		was done by Mike Frysinger, the softwrap overhaul by
+		David Ramsey.
+
+
+2017.02.23 - GNU nano 2.7.5 "Nijntje" can properly search and replace
+		the \B and \b regex anchors, correctly repaints things
+		when multiline regexes with identical start and end are
+		involved, fixes a crash with zero-length regex matches,
+		does replacements at the edges of a marked region right,
+		no longer hides double-width characters at the head of
+		softwrapped rows, displays at most three warnings at
+		startup, and documents the ability to read a file from
+		standard input.  Come tickle my ears.
+
 2017.01.10 - GNU nano 2.7.4 "Red dress" undoes deletions in an orderly
 		manner again (bug was introduced in previous version),
 		sets the preferred x position for vertical movements
