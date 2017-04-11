@@ -3304,6 +3304,9 @@ TRACE_PT("write url filter\n");
 		}
 	}
 
+#ifdef RTCONFIG_PROTECTION_SERVER
+	kill_pidfile_s(PROTECT_SRV_PID_PATH, SIGUSR1);
+#endif
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
@@ -3386,6 +3389,10 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	    ":logaccept - [0:0]\n"
 	    ":logdrop - [0:0]\n",
 	nvram_match("fw_enable_x", "1") ? "DROP" : "ACCEPT");
+
+#ifdef RTCONFIG_PROTECTION_SERVER
+	fprintf(fp, ":%s - [0:0]\n", PROTECT_SRV_RULE_CHAIN);
+#endif
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled()) {
@@ -5162,10 +5169,6 @@ int start_firewall(int wanunit, int lanunit)
 	strcpy(wan_ip, nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)));
 	strcpy(wanx_if, nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 	strcpy(wanx_ip, nvram_safe_get(strcat_r(prefix, "xipaddr", tmp)));
-
-#ifdef RTCONFIG_PROTECTION_SERVER
-	fprintf(fp, ":%s - [0:0]\n", PROTECT_SRV_RULE_CHAIN);
-#endif
 
 #ifdef RTCONFIG_IPV6
 	strlcpy(wan6face, get_wan6face(), sizeof(wan6face));
