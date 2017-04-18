@@ -296,6 +296,7 @@ var wifilogo_support = isSupport("WIFI_LOGO");
 var band2g_support = isSupport("2.4G"); 
 var band5g_support = isSupport("5G");
 var live_update_support = isSupport("update");
+var no_update_support = isSupport("noupdate");
 var cooler_support = isSupport("fanctrl");
 var power_support = isSupport("pwrctrl");
 if(is_US_sku)
