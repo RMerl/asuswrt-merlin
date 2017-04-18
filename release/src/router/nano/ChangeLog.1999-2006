@@ -5975,7 +5975,7 @@ GNU nano 1.1.8 - 2002.03.30
   do_insertfile()
 	- Handle cancel from ExtCmd properly. (David Benbennick)
   read_file()
-	- Abort if we read a file of 0 lines (num_lines == 0), fixes BUG #70.
+	- Abort if we read a file of 0 lines (num_lines == 0).  Fixes bug #70.
 	- Reverse tests to stop segfault on editing a new file of 0 lines.
 	  (David Benbennick)
 	- Change input var to one char instead of array. (David Benbennick)
@@ -6108,8 +6108,8 @@ GNU nano 1.1.7 - 2002.03.05
 	- Added Noconvert option to man page. (DLR)
 - nano.c:
   justify_format(), do_justify()
-        - Various fixes for starting blank spaces, spaces after
-          punctuation, & segfault with quoting strings. (David Benbennick)
+	- Various fixes for starting blank spaces, spaces after
+	  punctuation, & segfault with quoting strings. (David Benbennick)
   do_justify()
 	- Don't continue to justify string if it's indented more
 	  (quoting wise) than the beginning of the justification.
@@ -6139,8 +6139,8 @@ GNU nano 1.1.7 - 2002.03.05
 	- NANO_SMALL test was backwards. (Ken Tyler)
 - winio.c:
   strlenpt()
-        - Changed main function to strnlenpt() for new justify changes,
-          original function now just a stub.
+	- Changed main function to strnlenpt() for new justify changes,
+	  original function now just a stub.
 - nanorc.sample
 	- Mention unset in the sample nanorc.
 - po/ca.po, po/es.po:
@@ -6208,7 +6208,7 @@ nano-1.1.6 - 2002.01.25
 	- Temporarily unset REVERSE_SEARCH if it's set. (Rocco Corsi)
   do_suspend()
 	- Call tcsetattr() to restore the old terminal settings, so
-	  tcsh can use ^C after suspend for example (fixes BUG #68).
+	  tcsh can use ^C after suspend for example.  Fixes bug #68.
   do_wrap()
 	- Move "right" increment to part where new line is created,
 	  should change (fix?) some wrapping problems with autoindent.
@@ -6368,10 +6368,10 @@ nano-1.1.4 - 2001.12.11
 - nano.c:
   main()
 	- Add Esc-[-[IGL] keys for FreeBSD Console (PgUp,PgDn,Insert).
-        - Added better Hurd support for function keys (Alt-V,U,9,@,F).
+	- Added better Hurd support for function keys (Alt-V,U,9,@,F).
   signal_init()
-        - do SIG_IGN for the SIGTSTP sigaction regardless of whether
-          we have _POSIX_VDISABLE or not (more Hurd fixes)
+	- do SIG_IGN for the SIGTSTP sigaction regardless of whether
+	  we have _POSIX_VDISABLE or not (more Hurd fixes)
   help_init()
 	- Typo fixes and additions to the new help texts.
   do_curpos()
@@ -6487,10 +6487,10 @@ nano-1.1.2 - 2001.10.03
 	- Take control-space out of -tiny build, unneeded.
 - cut.c:
   cut_marked_segment()
-	- Add magic line when cutting a selection including filebot
-	  (discovered by DLR, fixed by DLR & Chris, fixes BUG #66).
+	- Add magic line when cutting a selection including filebot.
+	  Fixes bug #66. (discovered by DLR, fixed by DLR & Chris)
   do_cut_text()
-	- Don't recenter the line when cutting one line (DLR) (Bug #65).
+	- Don't recenter the line when cutting one line.  Fixes bug #65. (DLR)
 - faq.html:
 	- Notes about the Free Translation Project.
 	- Debian additions.
@@ -6681,14 +6681,14 @@ nano-1.1.0 - 2001.07.15
   add_to_cutbuffer()
 	- Remove useless statements. (Rocco)
   cut_marked_segment()
-	- Add bizarre copy of bot node, else *BSD goes ballistic (fixes
-          BUG #60).
+	- Add bizarre copy of bot node, else *BSD goes ballistic.  Fixes
+	  bug #60.
 	- Added 'destructive' argument.  Allows the selected text to be
 	  added to the cutbuffer without changing the contents of the
 	  file.  This allows writing selection to separate files.
   do_cut_text()
 	- If the line is empty when using -k and wasn't already added,
-	  create a dummy line and add it to the cutbuffer (fixes bug #61)
+	  create a dummy line and add it to the cutbuffer.  Fixes bug #61.
 	- Reset marked_cut if we blow away the cutbuffer.
 	- Moved the case of current == mark_beginbuf into cut_marked
 	  segment, so do_writeout could call it when writing selection to
@@ -6719,7 +6719,7 @@ nano-1.1.0 - 2001.07.15
 - move.c:
   page_up()
 	- Rewritten with a loop to make screen updates work when
-	  mark is set (fixes bug #59).
+	  mark is set.  Fixes bug #59.
   do_home(), do_end()
 	- Don't keep cutbuffer.
 - nano.1:
@@ -6756,7 +6756,7 @@ nano-1.1.0 - 2001.07.15
 	- Optimizations, remove "$" goes-to-last-line, less messages. (Rocco)
   do_replace()
 	- If we manage to make it in somehow with VIEW_MODE on, abort
-	  nicely (fixes BUG #59).
+	  nicely.  Fixes bug #59.
 - utils.c
   strcasestr()
 	- Replaced by mutt's mutt_stristr function, because the thought
@@ -6844,13 +6844,13 @@ nano-1.0.0 - 2001.03.22
 - move.c:
   page_down()
 	- Check for totlines < editwinrows in check for superfluous
-	  edit update (fixed BUG #57).
+	  edit update.  Fixes bug #57.
 - search.c:
   print_replaced()
 	- s/occurence/occurrence typos. (Jordi)
   search_init()
 	- If using Pico mode and regex and same answer is entered, use
-	  last_search string instead of answer (fixes BUG #56).
+	  last_search string instead of answer.  Fixes bug #56.
 - nano.texi:
 	- Meta-Z correction and grammar in --enable-tiny desc. (Neil Parks)
 
@@ -6868,7 +6868,7 @@ nano-0.9.99pre3 - 2001.02.19
 	- ALL_LINGUAS: added hu and ca.
 - cut.c:
   do_cut_text()
-	- marked text cut fixes (Rocco) (Fixes bug #54).
+	- Marked text cut fixes.  Fixes bug #54. (Rocco)
 - nano.c:
   do_delete()
 	- Added check for current->next == fileptr, as we have a magic
@@ -7016,7 +7016,7 @@ General -
 	  for now.
 	- Moved keypad() calls for PDCurses from main() to window_init()
 	  so the keypad continues to work after a Meta-X, for example.
-	  Fixed bug #51.
+	  Fixes bug #51.
 - faq.html:
 	- Fix typos and small mistakes. (Jordi)
 - files.c:
@@ -7038,7 +7038,7 @@ General -
 - move.c:
   page_down()
 	- Don't do an edit_update when there is only one page of text
-	  (fileage == edittop && filebot == editbot).  Fixes Bug #50.
+	  (fileage == edittop && filebot == editbot).  Fixes bug #50.
 - nano.c:
   main()
 	- Reorder the getopt options to be more or less alphabetical
@@ -7080,7 +7080,7 @@ General
 	  uncutting marked text at filebot. (Ryan Krebs)
 - files.c:
   read_file()
-	- If we encounter an error and insert is not set, run new_file().
+	- If we encounter an error and insert is not set, run new_file()
 	  (bug discovered by Ben Roberts).
   write_file()
 	- Change open call flags, basically copy joe's way of doing it so
@@ -7097,8 +7097,8 @@ General
 	  modify_control_key.  Removed #ifdef _POSIX_VDISABLE check
 	  around Control-S,Q,Z handlers because we need it now for
 	  the Alt-Alt-x code.
-	- Added --view option to getopt_long() call.  Bug discovered
-	  by Rocco Corsi.
+	- Added --view option to getopt_long() call (bug discovered by
+	  Rocco Corsi).
   help_init()
 	- Fix off by one error that was making ^G help in normal mode and
 	  ^_ in Pico mode not be displayed in the help (bug discovered by
@@ -7292,7 +7292,7 @@ nano 0.9.20 - 2000.11.18
 - nano.c:
   keypad_on()
 	- New function, toggles turning the keypad on and off in edit and
-	  bottomwin().  Added call to this in finish(), fixes bug #45.
+	  bottomwin().  Added call to this in finish().  Fixes bug #45.
 - search.c
   findnextstr()
 	- New arg for begin_x variable, basically a rewrite that
@@ -7359,7 +7359,7 @@ nano 0.9.18 - 2000.09.18
 - cut.c:
   do_cut_text()
 	- Don't immediately abort if we're on filebot and the marker is
-	  set (fixes bug #42).
+	  set.  Fixes bug #42.
 - files.c:
   open_file()
 	- Fix for bug #44. (Rocco Corsi)
@@ -7372,9 +7372,9 @@ nano 0.9.18 - 2000.09.18
 	  available, allows nano to work with cygwin.
 	- Added gettext calls to enable/disable strings. (Jordi)
 	- Revamped a great deal of the F-key and keypad key handling,
-	  because we not longer use keypad() (see below).
+	  because we no longer use keypad() (see below).
 	- Removed keypad() call because nano was not working with the
-	  keypad in many terms, which is very bad.
+	  keypad on many terminals, which is very bad.
 	- Made insert key call do_insertfile().
   do_toggle()
 	- Rewrote function to allow NOHELP toggle to work on systems
@@ -7450,7 +7450,7 @@ nano-0.9.17 - 2000.09.04
   findnextstr():
 	- Added reset for placewewant. (Ben Roberts)
 	- Fixed check for string that only occurs on the same line failing
-	  (discovered by Ken Tyler).
+	  (bug discovered by Ken Tyler).
 
 nano-0.9.16 - 2000.08.09
 - cut.c:
@@ -7481,7 +7481,7 @@ nano-0.9.15 - 2000.08.03
 	  with --with-slang or --without-slang
 - nano.c:
   splice_node()
-	- New function, abstracts linking in nodes.   Fixes bug #36.
+	- New function, abstracts linking in nodes.  Fixes bug #36.
   null_at()
 	- New function, nulls a string at a given index and realigns it.
   delete_buffer()
@@ -7555,7 +7555,7 @@ nano-0.9.13 - 2000.07.23
 	- More intelligent emergency-save filename selection. (Rob)
   do_spell():
 	- Changed exit semantics a bit so that aspell wouldn't get
-	  all screwy (bug discovered by Joshua Jensen.
+	  all screwy (bug discovered by Joshua Jensen).
 - files.c:
   read_file():
 	- Added init of buf variable, hopefully this will stop the
@@ -7606,8 +7606,8 @@ nano-0.9.12 - 2000.07.07
 	- Magic Line code in read_file (Rob)
 - nano.c:
 	- Removed dual alt_speller variables, oops! (Rocco Corsi)
-	- Removed unnecessary do_oldspell function. (Rocco Corsi).  Added
-	  SMALL_NANO #ifdef around actual spell function.
+	- Removed unnecessary do_oldspell function. (Rocco Corsi)
+	- Added SMALL_NANO #ifdef around actual spell function.
 	- Moved page_up() to move.c where is belongs.
 	- Corrected FIXME in do_enter with explanation. (Rob)
 	- Fixed FIXME in do_justify, resulted in creation of

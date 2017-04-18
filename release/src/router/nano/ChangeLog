@@ -1,3 +1,56 @@
+Changes between v2.8.0 and v2.8.1:
+----------------------------------
+
+Benno Schulenberg (33):
+      bindings: make ^Home and ^End go to top and tail of buffer
+      bindings: make ^Up/^Down go to first/last row in the file browser
+      bindings: use arrows instead of words to designate the cursor keys
+      bump version numbers and add a news item for the 2.8.1 release
+      copyright: update the year in --version, and use the standard hyphen
+      copyright: update the years, use ranges, and explain this usage
+      display: check the correct character for being double-width
+      display: with softwrap, show the cursor where the eye expects it
+      docs: correct an answer to a question in the FAQ
+      docs: mention another difference with Pico in the Info document
+      docs: remove the self-referencing stuff and the changelog from the FAQ
+      docs: trim the TODO file a bit, and put the more important items first
+      editing: avoid creating blank lines when using autoindent
+      files: check also for write errors when prepending, not just read errors
+      gnulib: update to current state
+      linting: treat a tab as one "column", not eight
+      linting: when no is said to a file, remove all corresponding entries
+      moving: when determining where we are on the screen, use placewewant
+      tweaks: adjust a couple of comments
+      tweaks: again use memory on the stack instead of malloc() and free()
+      tweaks: close the backup file also when we skip making a backup
+      tweaks: delete a function that hasn't been used since 2005
+      tweaks: delete unnecessary function prototypes
+      tweaks: elide a variable and a pair of braces
+      tweaks: fix some inconsistencies in an old Changelog
+      tweaks: fix two typos in the NEWS file
+      tweaks: group ^D and ^H together in the help lines
+      tweaks: keep the help text aligned, also with the narrow arrows
+      tweaks: put M-A before ^6, to look better above M-6 in the help lines
+      tweaks: put unshifted shortcuts ^6 and M-6 first, instead of ^^ and M-^
+      tweaks: reduce the number of additions that actual_x() performs
+      tweaks: replace a function call or a macro with a hard number
+      tweaks: use memory on the stack instead of calling malloc() and free()
+
+David Lawrence Ramsey (5):
+      bindings: use arrows instead of words for search history too
+      display: show '<' and '>' placeholders for characters that get split
+      input: support escape sequences for ^Home and ^End
+      scrolling: properly compensate for the onscreen chunks
+      tweaks: avoid a compilation warning
+
+Kamil Dudka (1):
+      backup: prevent a symlink attack by operating on the file descriptor
+
+Mike Frysinger (2):
+      configure: fix up word boundary regex logic now that we have gnulib
+      configure: ignore the REG_ENHANCED test when we use gnulib
+
+
 Changes between v2.7.5 and v2.8.0:
 ----------------------------------
 

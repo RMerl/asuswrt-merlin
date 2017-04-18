@@ -1,8 +1,7 @@
 /**************************************************************************
  *   nano.c  --  This file is part of GNU nano.                           *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -916,10 +915,9 @@ void version(void)
 #else
     printf(_(" GNU nano, version %s\n"), VERSION);
 #endif
-    printf(" (C) 1999..2016 Free Software Foundation, Inc.\n");
-    printf(_(" (C) 2014..%s the contributors to nano\n"), "2017");
-    printf(
-	_(" Email: nano@nano-editor.org	Web: https://nano-editor.org/"));
+    printf(" (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.\n");
+    printf(_(" (C) 2014-%s the contributors to nano\n"), "2017");
+    printf(_(" Email: nano@nano-editor.org	Web: https://nano-editor.org/"));
     printf(_("\n Compiled options:"));
 
 #ifdef NANO_TINY
@@ -1812,7 +1810,7 @@ int do_mouse(void)
  * TRUE. */
 void do_output(char *output, size_t output_len, bool allow_cntrls)
 {
-    char *char_buf = charalloc(mb_cur_max());
+    char onechar[MAXCHARLEN];
     int char_len;
     size_t current_len = strlen(openfile->current->data);
     size_t i = 0;
@@ -1832,7 +1830,7 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
 	    output[i] = '\n';
 
 	/* Get the next multibyte character. */
-	char_len = parse_mbchar(output + i, char_buf, NULL);
+	char_len = parse_mbchar(output + i, onechar, NULL);
 
 	i += char_len;
 
@@ -1853,7 +1851,7 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
 	charmove(openfile->current->data + openfile->current_x + char_len,
 			openfile->current->data + openfile->current_x,
 			current_len - openfile->current_x + 1);
-	strncpy(openfile->current->data + openfile->current_x, char_buf,
+	strncpy(openfile->current->data + openfile->current_x, onechar,
 			char_len);
 	current_len += char_len;
 	openfile->totsize++;
@@ -1892,8 +1890,6 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
 		xplustabs() / editwincols != original_row)))
 	refresh_needed = TRUE;
 #endif
-
-    free(char_buf);
 
     openfile->placewewant = xplustabs();
 
@@ -2000,18 +1996,14 @@ int main(int argc, char **argv)
     tcgetattr(0, &oldterm);
 
 #ifdef ENABLE_UTF8
-    {
-	/* If the locale set exists and uses UTF-8, we should use
-	 * UTF-8. */
-	char *locale = setlocale(LC_ALL, "");
-
-	if (locale != NULL && (strcmp(nl_langinfo(CODESET),
-		"UTF-8") == 0)) {
+    /* If setting the locale is successful and it uses UTF-8, we need
+     * to use the multibyte functions for text processing. */
+    if (setlocale(LC_ALL, "") != NULL &&
+		strcmp(nl_langinfo(CODESET), "UTF-8") == 0) {
 #ifdef USE_SLANG
-	    SLutf8_enable(1);
+	SLutf8_enable(1);
 #endif
-	    utf8_init();
-	}
+	utf8_init();
     }
 #else
     setlocale(LC_ALL, "");
@@ -2021,6 +2013,10 @@ int main(int argc, char **argv)
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
 #endif
+
+    if (MB_CUR_MAX > MAXCHARLEN)
+	fprintf(stderr, "Unexpected large character size: %i bytes"
+			" -- please report a bug\n", (int)MB_CUR_MAX);
 
 #if defined(DISABLE_NANORC) && defined(DISABLE_ROOTWRAPPING)
     /* If we don't have rcfile support, --disable-wrapping-as-root is
@@ -2516,12 +2512,18 @@ int main(int argc, char **argv)
     controlright = get_keycode("kRIT5", CONTROL_RIGHT);
     controlup = get_keycode("kUP5", CONTROL_UP);
     controldown = get_keycode("kDN5", CONTROL_DOWN);
+    /* Ask for the codes for Control+Home/End. */
+    controlhome = get_keycode("kHOM5", CONTROL_HOME);
+    controlend = get_keycode("kEND5", CONTROL_END);
 #ifndef NANO_TINY
     /* Ask for the codes for Shift+Control+Left/Right/Up/Down. */
     shiftcontrolleft = get_keycode("kLFT6", SHIFT_CONTROL_LEFT);
     shiftcontrolright = get_keycode("kRIT6", SHIFT_CONTROL_RIGHT);
     shiftcontrolup = get_keycode("kUP6", SHIFT_CONTROL_UP);
     shiftcontroldown = get_keycode("kDN6", SHIFT_CONTROL_DOWN);
+    /* Ask for the codes for Shift+Control+Home/End. */
+    shiftcontrolhome = get_keycode("kHOM6", SHIFT_CONTROL_HOME);
+    shiftcontrolend = get_keycode("kEND6", SHIFT_CONTROL_END);
     /* Ask for the codes for Shift+Alt+Left/Right/Up/Down. */
     shiftaltleft = get_keycode("kLFT4", SHIFT_ALT_LEFT);
     shiftaltright = get_keycode("kRIT4", SHIFT_ALT_RIGHT);

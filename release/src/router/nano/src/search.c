@@ -1,8 +1,7 @@
 /**************************************************************************
  *   search.c  --  This file is part of GNU nano.                         *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2015, 2016, 2017 Benno Schulenberg                     *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -994,7 +993,7 @@ void do_find_bracket(void)
 	 * the bracket at the current cursor position. */
     int wanted_ch_len;
 	/* The length of wanted_ch in bytes. */
-    char *bracket_set;
+    char bracket_set[MAXCHARLEN * 2 + 1];
 	/* The pair of characters in ch and wanted_ch. */
     size_t i;
 	/* Generic loop variable. */
@@ -1008,8 +1007,6 @@ void do_find_bracket(void)
 	/* The initial bracket count. */
     bool reverse;
 	/* The direction we search. */
-    char *found_ch;
-	/* The character we find. */
 
     assert(mbstrlen(matchbrackets) % 2 == 0);
 
@@ -1057,20 +1054,16 @@ void do_find_bracket(void)
     wanted_ch_len = parse_mbchar(wanted_ch, NULL, NULL);
 
     /* Fill bracket_set in with the values of ch and wanted_ch. */
-    bracket_set = charalloc((mb_cur_max() * 2) + 1);
     strncpy(bracket_set, ch, ch_len);
     strncpy(bracket_set + ch_len, wanted_ch, wanted_ch_len);
     bracket_set[ch_len + wanted_ch_len] = '\0';
-
-    found_ch = charalloc(mb_cur_max() + 1);
 
     while (TRUE) {
 	if (find_bracket_match(reverse, bracket_set)) {
 	    /* If we found an identical bracket, increment count.  If we
 	     * found a complementary bracket, decrement it. */
-	    parse_mbchar(openfile->current->data + openfile->current_x,
-			found_ch, NULL);
-	    count += (strncmp(found_ch, ch, ch_len) == 0) ? 1 : -1;
+	    count += (strncmp(openfile->current->data + openfile->current_x,
+				 ch, ch_len) == 0) ? 1 : -1;
 
 	    /* If count is zero, we've found a matching bracket.  Update
 	     * the screen and get out. */
@@ -1088,10 +1081,6 @@ void do_find_bracket(void)
 	    break;
 	}
     }
-
-    /* Clean up. */
-    free(bracket_set);
-    free(found_ch);
 }
 #endif /* !NANO_TINY */
 

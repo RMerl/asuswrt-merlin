@@ -1,8 +1,7 @@
 /**************************************************************************
  *   browser.c  --  This file is part of GNU nano.                        *
  *                                                                        *
- *   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,  *
- *   2010, 2011, 2013, 2014, 2015 Free Software Foundation, Inc.          *
+ *   Copyright (C) 2001-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2015, 2016 Benno Schulenberg                           *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -198,6 +197,17 @@ char *do_browser(char *path)
 	} else if (func == do_down_void) {
 	    if (selected + width <= filelist_len - 1)
 		selected += width;
+	} else if (func == do_prev_block) {
+	    selected = ((selected / (editwinrows * width)) *
+				editwinrows * width) + selected % width;
+	} else if (func == do_next_block) {
+	    selected = ((selected / (editwinrows * width)) *
+				editwinrows * width) + selected % width +
+				editwinrows * width - width;
+	    if (selected >= filelist_len)
+		selected = (filelist_len / width) * width + selected % width;
+	    if (selected >= filelist_len)
+		selected -= width;
 	} else if (func == do_page_up) {
 	    if (selected < width)
 		selected = 0;

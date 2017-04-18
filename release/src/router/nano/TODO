@@ -1,35 +1,31 @@
 A list of desired features
 --------------------------
 
-Vague musings:
-- FriBidi support?
-- Make matching bracket searches sophisticated enough to skip over
-  brackets inside comments?
-- Allow indentation of marked text by spaces as well as tabs?
-- Allow indentation to add just enough columns to reach the nearest
-  multiple of tabsize, rather than always adding tabsize columns?
-- Allow conversion between different character sets.
-- Allow setting marks (saved positions, not to be confused with the mark
-  set via Ctrl-^) at various lines and/or columns in the buffer, and
-  allow movement between them with a single keystroke?
-- Allow searching for and replacing newlines?
-  See also https://savannah.gnu.org/bugs/?47053.
-- New regression framework built on expect?
-- Add the ability to move to different lines of the screen with a single
-  keystroke, e.g. M-` (M-~) to go to the top line, M-& (M-7) to go to
-  the center line, and M-' (M-") to go to the last line?
-
 Somewhat urgent:
+- Make undo/redo work also for justifying and indenting.
 - Allow text searches in the help viewer.
   See https://savannah.gnu.org/bugs/?28994.
 - Detect when text is being pasted, so that we can handle it faster.
   See https://savannah.gnu.org/bugs/?40060.
+- Allow to define and execute a macro: a stored sequence of keystrokes.
+  See https://savannah.gnu.org/bugs/?50314.
 - Allow color syntaxes to apply to more than just color, so that we can
   e.g. specify a different alternate spell checker depending on which
   file type we have open.
 - Allow piping marked text to an external command and replacing it with
   the command's output -- that is: generalize the spell-check flow.
   See also https://savannah.gnu.org/bugs/?28993.
+
+Vague musings:
+- FriBidi support?
+- Allow setting marks (saved positions, not to be confused with the
+  mark set via Ctrl-^) at various lines and/or columns in the buffer,
+  and allow movement between them with a single keystroke?
+- Make matching bracket searches sophisticated enough to skip over
+  brackets inside comments?
+- Allow indentation of marked text by spaces as well as tabs?
+- Allow indentation to add just enough columns to reach the nearest
+  multiple of tabsize, rather than always adding tabsize columns?
 
 For version 2.4:
 - Handle window resizes better.  After we've resized, we should stay
@@ -63,14 +59,13 @@ For version 2.0:
 
 For version 1.2:
 - Single-line scroll up/down? [DONE]
-- Color syntax highlighting? (Certainly seems like there's a demand for
-  it.) [DONE]
-- .nanorc [DONE]
+- Color syntax highlighting? (There seems to be a demand for it.) [DONE]
+- Support for a .nanorc file. [DONE]
 - Backup making (filename~)? [DONE]
 - Search/replace string history. [DONE]
 - Implement Pico's -j and -g flags, as they are pretty easy to do. [DONE]
 - Make mouse support work with clicking on the shortcuts (-m). [DONE]
-- Implement -o (chroot of sorts). [DONE]
+- Implement -o (--operatingdir, a chroot of sorts). [DONE]
 - Allow -r to take a negative argument, meaning right margin instead of
   left (allows resizing that way), formerly -W arg. [DONE]
 
@@ -81,7 +76,6 @@ For version 1.0:
 - Allow nano to be resized in X. [DONE]
 - On PageUp/Down, put the cursor on the first line (like Pico), not the
   center line. [DONE]
-- Rewrite edit_refresh, if at all possible. [DONE]
 - Implement justify function. [DONE]
 - Cut to end of line. [DONE]
 - Built-in speller command. [DONE]

@@ -1,8 +1,7 @@
 /**************************************************************************
  *   prompt.c  --  This file is part of GNU nano.                         *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2016 Benno Schulenberg                                 *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -197,7 +196,7 @@ void do_statusbar_output(int *the_input, size_t input_len,
 	bool filtering)
 {
     char *output = charalloc(input_len + 1);
-    char *char_buf = charalloc(mb_cur_max());
+    char onechar[MAXCHARLEN];
     int i, char_len;
 
     /* Copy the typed stuff so it can be treated. */
@@ -213,7 +212,7 @@ void do_statusbar_output(int *the_input, size_t input_len,
 	    output[i] = '\n';
 
 	/* Interpret the next multibyte character. */
-	char_len = parse_mbchar(output + i, char_buf, NULL);
+	char_len = parse_mbchar(output + i, onechar, NULL);
 
 	i += char_len;
 
@@ -225,12 +224,11 @@ void do_statusbar_output(int *the_input, size_t input_len,
 	answer = charealloc(answer, strlen(answer) + char_len + 1);
 	charmove(answer + statusbar_x + char_len, answer + statusbar_x,
 				strlen(answer) - statusbar_x + 1);
-	strncpy(answer + statusbar_x, char_buf, char_len);
+	strncpy(answer + statusbar_x, onechar, char_len);
 
 	statusbar_x += char_len;
     }
 
-    free(char_buf);
     free(output);
 
     update_the_statusbar();
@@ -632,9 +630,9 @@ int do_prompt(bool allow_tabs, bool allow_files,
 #ifndef NANO_TINY
   redo_theprompt:
 #endif
-    prompt = charalloc((COLS * mb_cur_max()) + 1);
+    prompt = charalloc((COLS * MAXCHARLEN) + 1);
     va_start(ap, msg);
-    vsnprintf(prompt, COLS * mb_cur_max(), msg, ap);
+    vsnprintf(prompt, COLS * MAXCHARLEN, msg, ap);
     va_end(ap);
     /* Reserve five columns for colon plus angles plus answer, ":<aa>". */
     prompt[actual_x(prompt, (COLS < 5) ? 0 : COLS - 5)] = '\0';

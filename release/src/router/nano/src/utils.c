@@ -1,8 +1,7 @@
 /**************************************************************************
  *   utils.c  --  This file is part of GNU nano.                          *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2016 Benno Schulenberg                                 *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -215,7 +214,7 @@ const char *fixbounds(const char *r)
  * a separate word?  That is: is it not part of a longer word?*/
 bool is_separate_word(size_t position, size_t length, const char *buf)
 {
-    char before[mb_cur_max()], after[mb_cur_max()];
+    char before[MAXCHARLEN], after[MAXCHARLEN];
     size_t word_end = position + length;
 
     /* Get the characters before and after the word, if any. */
@@ -393,10 +392,10 @@ size_t xplustabs(void)
  * not overshoot the given column. */
 size_t actual_x(const char *text, size_t column)
 {
-    size_t index = 0;
-	/* The index in text, returned. */
+    const char *start = text;
+	/* From where we start walking through the text. */
     size_t width = 0;
-	/* The screen display width to text[index], in columns. */
+	/* The current accumulated span, in columns. */
 
     while (*text != '\0') {
 	int charlen = parse_mbchar(text, NULL, &width);
@@ -404,11 +403,10 @@ size_t actual_x(const char *text, size_t column)
 	if (width > column)
 	    break;
 
-	index += charlen;
 	text += charlen;
     }
 
-    return index;
+    return (text - start);
 }
 
 /* A strnlen() with tabs and multicolumn characters factored in:

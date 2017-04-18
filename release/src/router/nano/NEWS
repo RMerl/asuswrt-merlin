@@ -1,3 +1,17 @@
+2017.04.12 - GNU nano 2.8.1 "Ellert" fixes build failures on MacOS and
+		on musl, fixes scrolling problems in softwrap mode when
+		double-width characters on row boundaries are involved,
+		shows double-width characters as ">" and "<" when split
+		across two rows, moves the cursor more predictably (at
+		the cost of sometimes putting it on the second "half"
+		of a character), avoids creating lines that consist of
+		only blanks when using autoindent, makes ^Home and ^End
+		go to the start and end of the file (on terminals that
+		support those keystrokes), places the cursor better when
+		linting, lets the linter ask only once whether to open
+		an included file, and adds bindings for ^Up and ^Down
+		in the file browser.  Don't sit on your hands.
+
 2017.03.31 - GNU nano 2.8.0 "Axat" makes it easier to move around in
 		softwrapped lines: the Up and Down keys now step from
 		visual row to visual row instead of jumping between
@@ -8,7 +22,7 @@
 		of always per logical line.  On an entirely different
 		front: nano now makes use of gnulib, to make it build
 		on more platforms.  In short: there were many internal
-		changes, not many user-visible ones (apart form the
+		changes, not many user-visible ones (apart from the
 		new softwrap navigation).  The conversion to gnulib
 		was done by Mike Frysinger, the softwrap overhaul by
 		David Ramsey.
@@ -51,8 +65,8 @@
 		related to using line numbers in softwrap mode, allows to
 		use the PageUp and PageDown keys together with Shift on
 		VTE-based terminals, stops the help lines from flickering
-		during interactive replacing, makes a "set fill" override
-		an earlier "set nowrap", properly restores the selected
+		during interactive replacing, makes a 'set fill' override
+		an earlier 'set nowrap', properly restores the selected
 		region after an external spell check, and improves a few
 		other tidbits.  If you should find any more bugs, please
 		run 'man nano | grep bugs' and report them there.
@@ -293,11 +307,11 @@
 		has been added on top of the existing file extension
 		and header support already available.  Secondly, cursor
 		position can be saved between editing sessions with
-		the -P or --poslog command-line flag, or via "set poslog"
+		the -P or --poslog command-line flag, or via 'set poslog'
 		in your .nanorc.  Also included are some fixes for
 		compilation with g++, and better handling of issues
 		writing the backup file, which should reduce the need
-		for the "set allow_insecure_backup" nanorc option.
+		for the 'set allow_insecure_backup' nanorc option.
 		Don't stop, get it get it, don't stop, get it get it.
 
 
@@ -317,7 +331,7 @@
 		being used out of crontab).  For very strange situations
 		(such as where you cannot change the permissions on the
 		file you're writing), there is a new rc file option
-		"allow_insecure_backup" to be even more permissive and
+		'allow_insecure_backup' to be even more permissive and
 		allow the write to proceed.  Also included are some
 		syntax highlighting updates, and that is about it.
 		Keep fighting the good fight children.
@@ -1237,7 +1251,7 @@
 		important being that nano is now officially a GNU
 		program.  Some changes have been made for GNU
 		compatibility (like the default list of shortcuts, "^G
-		Get Help" is now Listed and "^_ Goto Line" is not).  The
+		Get Help" is now listed and "^_ Goto Line" is not).  The
 		Yes/No/All keys have finally been internationalized
 		also.  All in all, quite a few changes, considering nano
 		is supposed to be in a code freeze.  But there are the

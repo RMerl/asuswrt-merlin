@@ -1,8 +1,7 @@
 /**************************************************************************
  *   text.c  --  This file is part of GNU nano.                           *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2014, 2015 Mark Majeres                                *
  *   Copyright (C) 2016 Mike Scalora                                      *
  *   Copyright (C) 2015, 2016 Benno Schulenberg                           *
@@ -768,11 +767,13 @@ void do_undo(void)
 	    break;
 	}
 	undidmsg = _("line break");
+	size_t from_x = (u->begin == 0) ? 0 : u->mark_begin_x;
+	size_t to_x = (u->begin == 0) ? u->mark_begin_x : u->begin;
 	f->data = charealloc(f->data, strlen(f->data) +
-				strlen(&f->next->data[u->mark_begin_x]) + 1);
-	strcat(f->data, &f->next->data[u->mark_begin_x]);
+				strlen(&u->strdata[from_x]) + 1);
+	strcat(f->data, &u->strdata[from_x]);
 	unlink_node(f->next);
-	goto_line_posx(u->lineno, u->begin);
+	goto_line_posx(u->lineno, to_x);
 	break;
 #ifdef ENABLE_COMMENT
     case COMMENT:
@@ -982,12 +983,11 @@ void do_enter(void)
 {
     filestruct *newnode = make_new_node(openfile->current);
     size_t extra = 0;
+    bool allblanks = FALSE;
 
     assert(openfile->current != NULL && openfile->current->data != NULL);
 
 #ifndef NANO_TINY
-    add_undo(ENTER);
-
     if (ISSET(AUTOINDENT)) {
 	extra = indent_length(openfile->current->data);
 
@@ -995,6 +995,8 @@ void do_enter(void)
 	 * indentation to the current x position. */
 	if (extra > openfile->current_x)
 	    extra = openfile->current_x;
+	else if (extra == openfile->current_x)
+	    allblanks = TRUE;
     }
 #endif
     newnode->data = charalloc(strlen(openfile->current->data +
@@ -1005,13 +1007,19 @@ void do_enter(void)
     if (ISSET(AUTOINDENT)) {
 	/* Copy the whitespace from the current line to the new one. */
 	strncpy(newnode->data, openfile->current->data, extra);
-	openfile->totsize += extra;
+	/* If there were only blanks before the cursor, trim them. */
+	if (allblanks)
+	    openfile->current_x = 0;
+	else
+	    openfile->totsize += extra;
     }
 #endif
 
     null_at(&openfile->current->data, openfile->current_x);
 
 #ifndef NANO_TINY
+    add_undo(ENTER);
+
     /* Adjust the mark if it was on the current line after the cursor. */
     if (openfile->mark_set && openfile->current == openfile->mark_begin &&
 		openfile->current_x < openfile->mark_begin_x) {
@@ -1221,7 +1229,7 @@ void add_undo(undo_type action)
 	    u->xflags = WAS_FINAL_BACKSPACE;
     case DEL:
 	if (openfile->current->data[openfile->current_x] != '\0') {
-	    char *char_buf = charalloc(mb_cur_max() + 1);
+	    char *char_buf = charalloc(MAXCHARLEN + 1);
 	    int char_len = parse_mbchar(&openfile->current->data[u->begin],
 						char_buf, NULL);
 	    char_buf[char_len] = '\0';
@@ -1354,7 +1362,7 @@ fprintf(stderr, "  >> Updating... action = %d, openfile->last_action = %d, openf
 	fprintf(stderr, "  >> openfile->current->data = \"%s\", current_x = %lu, u->begin = %lu\n",
 			openfile->current->data, (unsigned long)openfile->current_x, (unsigned long)u->begin);
 #endif
-	char *char_buf = charalloc(mb_cur_max());
+	char *char_buf = charalloc(MAXCHARLEN);
 	int char_len = parse_mbchar(&openfile->current->data[u->mark_begin_x], char_buf, NULL);
 	u->strdata = addstrings(u->strdata, u->strdata ? strlen(u->strdata) : 0, char_buf, char_len);
 #ifdef DEBUG
@@ -1366,7 +1374,7 @@ fprintf(stderr, "  >> Updating... action = %d, openfile->last_action = %d, openf
     }
     case BACK:
     case DEL: {
-	char *char_buf = charalloc(mb_cur_max());
+	char *char_buf = charalloc(MAXCHARLEN);
 	int char_len = parse_mbchar(&openfile->current->data[openfile->current_x], char_buf, NULL);
 	if (openfile->current_x == u->begin) {
 	    /* They deleted more: add removed character after earlier stuff. */
@@ -1682,24 +1690,18 @@ ssize_t break_line(const char *line, ssize_t goal, bool snap_at_nl)
 size_t indent_length(const char *line)
 {
     size_t len = 0;
-    char *blank_mb;
-    int blank_mb_len;
-
-    assert(line != NULL);
-
-    blank_mb = charalloc(mb_cur_max());
+    char onechar[MAXCHARLEN];
+    int charlen;
 
     while (*line != '\0') {
-	blank_mb_len = parse_mbchar(line, blank_mb, NULL);
+	charlen = parse_mbchar(line, onechar, NULL);
 
-	if (!is_blank_mbchar(blank_mb))
+	if (!is_blank_mbchar(onechar))
 	    break;
 
-	line += blank_mb_len;
-	len += blank_mb_len;
+	line += charlen;
+	len += charlen;
     }
-
-    free(blank_mb);
 
     return len;
 }
@@ -3265,23 +3267,48 @@ void do_linter(void)
 			    SET(MULTIBUFFER);
 			    open_buffer(curlint->filename, FALSE);
 			} else {
-			    char *dontwantfile = curlint->filename;
+			    char *dontwantfile = mallocstrcpy(NULL, curlint->filename);
+			    lintstruct *restlint = NULL;
 
-			    while (curlint != NULL && !strcmp(curlint->filename, dontwantfile))
-				curlint = curlint->next;
-			    if (curlint == NULL) {
+			    while (curlint != NULL) {
+				if (strcmp(curlint->filename, dontwantfile) == 0) {
+				    if (curlint == lints)
+					lints = curlint->next;
+				    else
+					curlint->prev->next = curlint->next;
+				    if (curlint->next != NULL)
+					curlint->next->prev = curlint->prev;
+				    tmplint = curlint;
+				    curlint = curlint->next;
+				    free(tmplint->msg);
+				    free(tmplint->filename);
+				    free(tmplint);
+				} else {
+				    if (restlint == NULL)
+					restlint = curlint;
+				    curlint = curlint->next;
+				}
+			    }
+
+			    if (restlint == NULL) {
 				statusbar(_("No more errors in unopened files, cancelling"));
+				napms(2400);
 				break;
-			    } else
+			    } else {
+				curlint = restlint;
 				goto new_lint_loop;
+			    }
+
+			    free(dontwantfile);
 			}
 		    } else
 			openfile = tmpof;
 		}
 	    }
 #endif /* !NANO_TINY */
-	    do_gotolinecolumn(curlint->lineno, curlint->colno, FALSE, FALSE);
+	    goto_line_posx(curlint->lineno, curlint->colno - 1);
 	    titlebar(NULL);
+	    adjust_viewport(CENTERING);
 	    edit_refresh();
 	    statusbar(curlint->msg);
 	    bottombars(MLINTER);

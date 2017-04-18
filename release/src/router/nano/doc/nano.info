@@ -1414,6 +1414,13 @@ some differences between the editors:
      When using the Read-File key (^R), 'nano' can not just read a file,
      it can also read the output of a command to be run (^X).
 
+'Reading from Working Directory'
+     By default, Pico will read files from the user's home directory
+     (when using ^R), but it will write files to the current working
+     directory (when using ^O). 'nano' makes this symmetrical: always
+     reading from and writing to the current working directory -- the
+     directory that 'nano' was started in.
+
 'File Browser'
      In the file browser, 'nano' does not implement the Add, Copy,
      Rename, and Delete commands that Pico provides.  In 'nano' the
@@ -1593,6 +1600,6 @@ Node: Syntax Highlighting29513
 Node: Rebinding Keys34223
 Node: The File Browser44211
 Node: Pico Compatibility45033
-Node: Building and Configure Options47795
+Node: Building and Configure Options48150
 
 End Tag Table

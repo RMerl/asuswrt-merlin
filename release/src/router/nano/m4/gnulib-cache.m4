@@ -27,11 +27,12 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --lib=libgnu --source-base=lib --m4-base=m4 --doc-base=doc --tests-base=tests --aux-dir=. --no-conditional-dependencies --no-libtool --macro-prefix=gl getdelim getline getopt-gnu glob isblank iswblank lstat nl_langinfo regex sigaction snprintf-posix stdarg strcase strcasestr-simple strnlen sys_wait vsnprintf-posix wchar wctype-h wcwidth
+#   gnulib-tool --import --lib=libgnu --source-base=lib --m4-base=m4 --doc-base=doc --tests-base=tests --aux-dir=. --no-conditional-dependencies --no-libtool --macro-prefix=gl futimens getdelim getline getopt-gnu glob isblank iswblank lstat nl_langinfo regex sigaction snprintf-posix stdarg strcase strcasestr-simple strnlen sys_wait vsnprintf-posix wchar wctype-h wcwidth
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
 gl_MODULES([
+  futimens
   getdelim
   getline
   getopt-gnu

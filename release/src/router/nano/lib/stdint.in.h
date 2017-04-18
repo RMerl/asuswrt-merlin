@@ -128,8 +128,13 @@
    Return an unspecified value if BITS == 0, adding a check to pacify
    picky compilers.  */
 
-# define _STDINT_MIN(signed, bits, zero) \
-    ((signed) ? ~ _STDINT_MAX (signed, bits, zero) : (zero))
+/* These are separate macros, because if you try to merge these macros into
+   a single one, HP-UX cc rejects the resulting expression in constant
+   expressions.  */
+# define _STDINT_UNSIGNED_MIN(bits, zero) \
+    (zero)
+# define _STDINT_SIGNED_MIN(bits, zero) \
+    (~ _STDINT_MAX (1, bits, zero))
 
 # define _STDINT_MAX(signed, bits, zero) \
     (((((zero) + 1) << ((bits) ? (bits) - 1 - (signed) : 0)) - 1) * 2 + 1)
@@ -512,15 +517,15 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 # undef PTRDIFF_MAX
 # if @APPLE_UNIVERSAL_BUILD@
 #  ifdef _LP64
-#   define PTRDIFF_MIN  _STDINT_MIN (1, 64, 0l)
+#   define PTRDIFF_MIN  _STDINT_SIGNED_MIN (64, 0l)
 #   define PTRDIFF_MAX  _STDINT_MAX (1, 64, 0l)
 #  else
-#   define PTRDIFF_MIN  _STDINT_MIN (1, 32, 0)
+#   define PTRDIFF_MIN  _STDINT_SIGNED_MIN (32, 0)
 #   define PTRDIFF_MAX  _STDINT_MAX (1, 32, 0)
 #  endif
 # else
 #  define PTRDIFF_MIN  \
-    _STDINT_MIN (1, @BITSIZEOF_PTRDIFF_T@, 0@PTRDIFF_T_SUFFIX@)
+    _STDINT_SIGNED_MIN (@BITSIZEOF_PTRDIFF_T@, 0@PTRDIFF_T_SUFFIX@)
 #  define PTRDIFF_MAX  \
     _STDINT_MAX (1, @BITSIZEOF_PTRDIFF_T@, 0@PTRDIFF_T_SUFFIX@)
 # endif
@@ -528,9 +533,13 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 /* sig_atomic_t limits */
 # undef SIG_ATOMIC_MIN
 # undef SIG_ATOMIC_MAX
-# define SIG_ATOMIC_MIN  \
-   _STDINT_MIN (@HAVE_SIGNED_SIG_ATOMIC_T@, @BITSIZEOF_SIG_ATOMIC_T@, \
-                0@SIG_ATOMIC_T_SUFFIX@)
+# if @HAVE_SIGNED_SIG_ATOMIC_T@
+#  define SIG_ATOMIC_MIN  \
+    _STDINT_SIGNED_MIN (@BITSIZEOF_SIG_ATOMIC_T@, 0@SIG_ATOMIC_T_SUFFIX@)
+# else
+#  define SIG_ATOMIC_MIN  \
+    _STDINT_UNSIGNED_MIN (@BITSIZEOF_SIG_ATOMIC_T@, 0@SIG_ATOMIC_T_SUFFIX@)
+# endif
 # define SIG_ATOMIC_MAX  \
    _STDINT_MAX (@HAVE_SIGNED_SIG_ATOMIC_T@, @BITSIZEOF_SIG_ATOMIC_T@, \
                 0@SIG_ATOMIC_T_SUFFIX@)
@@ -566,16 +575,26 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 # endif
 # undef WCHAR_MIN
 # undef WCHAR_MAX
-# define WCHAR_MIN  \
-   _STDINT_MIN (@HAVE_SIGNED_WCHAR_T@, @BITSIZEOF_WCHAR_T@, 0@WCHAR_T_SUFFIX@)
+# if @HAVE_SIGNED_WCHAR_T@
+#  define WCHAR_MIN  \
+    _STDINT_SIGNED_MIN (@BITSIZEOF_WCHAR_T@, 0@WCHAR_T_SUFFIX@)
+# else
+#  define WCHAR_MIN  \
+    _STDINT_UNSIGNED_MIN (@BITSIZEOF_WCHAR_T@, 0@WCHAR_T_SUFFIX@)
+# endif
 # define WCHAR_MAX  \
    _STDINT_MAX (@HAVE_SIGNED_WCHAR_T@, @BITSIZEOF_WCHAR_T@, 0@WCHAR_T_SUFFIX@)
 
 /* wint_t limits */
 # undef WINT_MIN
 # undef WINT_MAX
-# define WINT_MIN  \
-   _STDINT_MIN (@HAVE_SIGNED_WINT_T@, @BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
+# if @HAVE_SIGNED_WINT_T@
+#  define WINT_MIN  \
+    _STDINT_SIGNED_MIN (@BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
+# else
+#  define WINT_MIN  \
+    _STDINT_UNSIGNED_MIN (@BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
+# endif
 # define WINT_MAX  \
    _STDINT_MAX (@HAVE_SIGNED_WINT_T@, @BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
 

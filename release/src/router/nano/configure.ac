@@ -1,7 +1,7 @@
 # Configuration for GNU nano - a small and user-friendly text editor
 #
-# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-# 2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.
+# Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.
+# Copyright (C) 2014, 2017 Mike Frysinger
 #
 # GNU nano is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 
-AC_INIT([GNU nano], [2.8.0], [nano-devel@gnu.org], [nano])
+AC_INIT([GNU nano], [2.8.1], [nano-devel@gnu.org], [nano])
 AC_CONFIG_SRCDIR([src/nano.c])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([1.14])
@@ -587,36 +587,43 @@ else
     fi
 fi
 
-AC_CACHE_CHECK([for enhanced regular expression flag], nano_cv_flag_reg_extended,
+AC_CACHE_CHECK([for enhanced regular expression flag], nano_cv_flag_reg_enhanced,
 	       [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <regex.h>]],
 						   [[
 						     #ifndef REG_ENHANCED
 						     error: No REG_ENHANCED support!
 						     #endif
 						   ]])],
-				  [nano_cv_flag_reg_extended="REG_EXTENDED | REG_ENHANCED"],
-				  [nano_cv_flag_reg_extended="REG_EXTENDED"])])
+				  [nano_cv_flag_reg_enhanced=yes],
+				  [nano_cv_flag_reg_enhanced=no])])
+dnl The bundled gnulib regex module doesn't support REG_ENHANCED.
+if test "$ac_use_included_regex" = "yes"; then
+    nano_cv_flag_reg_enhanced="no"
+fi
+if test "$nano_cv_flag_reg_enhanced" = "yes"; then
+    nano_reg_extended="REG_EXTENDED | REG_ENHANCED"
+else
+    nano_reg_extended="REG_EXTENDED"
+fi
 
-AC_DEFINE_UNQUOTED(NANO_REG_EXTENDED, $nano_cv_flag_reg_extended,
+AC_DEFINE_UNQUOTED(NANO_REG_EXTENDED, $nano_reg_extended,
 		   [Flag(s) to use to get the full range of extended regular expressions])
 
 # Check for word-boundary support (/< and />).
 AC_MSG_CHECKING([for GNU-style word boundary regex support])
 AC_ARG_WITH(wordbounds,
 AS_HELP_STRING([--with-wordbounds], [Use GNU-style word boundary delimiters]),
-	[ case "$with_wordbounds" in
-	    no)
-		AC_MSG_RESULT(no)
-		;;
-	    *)
-		AC_MSG_RESULT(yes)
-		# We explicitly don't check if the user forced the option, because
-		# this is needed for cross compilers and we can't test the target.
-		AC_DEFINE(GNU_WORDBOUNDS, 1, [Define this if the system supports GNU-style word boundaries in regexes.]) gnu_wordbounds=yes,
-		;;
-	  esac
-	], [
-	    AC_TRY_RUN([
+	[with_wordbounds=$withval], [with_wordbounds=auto])
+if test "$with_wordbounds" != "no"; then
+    dnl If we're using the bundled gnulib regex module, we know it's supported.
+    if test "$ac_use_included_regex" = "yes"; then
+        with_wordbounds="yes"
+    fi
+
+    dnl We explicitly don't check if the user forced the option, because
+    dnl this is needed for cross compilers and we can't test the target.
+    if test "$with_wordbounds" != "yes"; then
+        AC_TRY_RUN([
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -627,18 +634,29 @@ int main(void)
     size_t nmatch;
     regmatch_t pmatch;
 
-    if (regcomp(&r, "\\\\>", $nano_cv_flag_reg_extended|REG_NOSUB))
+    if (regcomp(&r, "\\\\>", $nano_reg_extended|REG_NOSUB))
 	return 1;
     if (regexec(&r, "word boundary", nmatch, &pmatch, 0))
 	return 1;
     return 0;
 }],
-	    AC_MSG_RESULT(yes)
-	    AC_DEFINE(GNU_WORDBOUNDS, 1, [Define this if the system supports GNU-style word boundaries in regexes.]) gnu_wordbounds=yes,
-	    AC_MSG_RESULT(no),
-	    AC_MSG_WARN([*** Can't check for GNU-style word boundary support when cross-compiling])
-	)
-])
+        with_wordbounds="yes",
+        with_wordbounds="no",
+        with_wordbounds="cross")
+    fi
+fi
+case $with_wordbounds in
+yes)
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(GNU_WORDBOUNDS, 1, [Define this if the system supports GNU-style word boundaries in regexes.])
+    ;;
+no)
+    AC_MSG_RESULT(no)
+    ;;
+cross)
+    AC_MSG_WARN([*** Can't check for GNU-style word boundary support when cross-compiling])
+    ;;
+esac
 
 if test x$color_support = xyes; then
 #    if test x$CURSES_LIB_NAME = xcurses; then

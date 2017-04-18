@@ -1,8 +1,7 @@
 /**************************************************************************
  *   move.c  --  This file is part of GNU nano.                           *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -96,7 +95,7 @@ void do_page_up(void)
     openfile->current_x = actual_x(openfile->current->data,
 					openfile->placewewant);
 
-    /* Scroll the edit window up a page. */
+    /* Move the viewport so that the cursor stays immobile, if possible. */
     adjust_viewport(STATIONARY);
     refresh_needed = TRUE;
 }
@@ -128,7 +127,7 @@ void do_page_down(void)
     openfile->current_x = actual_x(openfile->current->data,
 					openfile->placewewant);
 
-    /* Scroll the edit window down a page. */
+    /* Move the viewport so that the cursor stays immobile, if possible. */
     adjust_viewport(STATIONARY);
     refresh_needed = TRUE;
 }
@@ -153,8 +152,7 @@ void do_para_begin(bool allow_update)
 	edit_redraw(was_current);
 }
 
-/* Move up to the beginning of the last beginning-of-paragraph line
- * before the current line, and update the screen afterwards. */
+/* Move up to first start of a paragraph before the current line. */
 void do_para_begin_void(void)
 {
     do_para_begin(TRUE);
@@ -190,9 +188,7 @@ void do_para_end(bool allow_update)
 	edit_redraw(was_current);
 }
 
-/* Move down to the beginning of the last line of the current paragraph.
- * Then move down one line farther if there is such a line, or to the
- * end of the current line if not, and update the screen afterwards. */
+/* Move down to just after the first end of a paragraph. */
 void do_para_end_void(void)
 {
     do_para_end(TRUE);
@@ -348,12 +344,12 @@ void do_next_word_void(void)
 
 /* Move to the beginning of the current line (or softwrapped chunk).
  * If be_clever is TRUE, do a smart home when wanted and possible,
- * and do a dynamic home when in softwrap mode and it'spossible.
+ * and do a dynamic home when in softwrap mode and it's possible.
  * If be_clever is FALSE, just do a simple home. */
 void do_home(bool be_clever)
 {
     filestruct *was_current = openfile->current;
-    size_t was_column = xplustabs();
+    size_t was_column = openfile->placewewant;
     bool moved_off_chunk = TRUE;
 #ifndef NANO_TINY
     bool moved = FALSE;
@@ -383,17 +379,19 @@ void do_home(bool be_clever)
     if (!moved && ISSET(SOFTWRAP)) {
 	/* If already at the left edge of the screen, move fully home.
 	 * Otherwise, move to the left edge. */
-	if (openfile->current_x == leftedge_x && be_clever)
+	if (was_column % editwincols == 0 && be_clever)
 	    openfile->current_x = 0;
 	else {
 	    openfile->current_x = leftedge_x;
+	    openfile->placewewant = (was_column / editwincols) * editwincols;
 	    moved_off_chunk = FALSE;
 	}
     } else if (!moved)
 #endif
 	openfile->current_x = 0;
 
-    openfile->placewewant = xplustabs();
+    if (moved_off_chunk)
+	openfile->placewewant = 0;
 
     /* If we changed chunk, we might be offscreen.  Otherwise,
      * update current if the mark is on or we changed "page". */
@@ -416,7 +414,7 @@ void do_home_void(void)
 void do_end(bool be_clever)
 {
     filestruct *was_current = openfile->current;
-    size_t was_column = xplustabs();
+    size_t was_column = openfile->placewewant;
     size_t line_len = strlen(openfile->current->data);
     bool moved_off_chunk = TRUE;
 

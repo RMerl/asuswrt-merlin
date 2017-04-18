@@ -1,8 +1,7 @@
 /**************************************************************************
  *   help.c  --  This file is part of GNU nano.                           *
  *                                                                        *
- *   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,  *
- *   2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.          *
+ *   Copyright (C) 2000-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -370,7 +369,7 @@ void help_init(void)
      * plus one or two \n's. */
     for (f = allfuncs; f != NULL; f = f->next)
 	if (f->menus & currmenu)
-	    allocsize += (16 * mb_cur_max()) + strlen(f->help) + 2;
+	    allocsize += (16 * MAXCHARLEN) + strlen(f->help) + 2;
 
 #ifndef NANO_TINY
     /* If we're on the main list, we also count the toggle help text.
@@ -418,9 +417,9 @@ void help_init(void)
 		/* Make the first column narrower (6) than the second (10),
 		 * but allow it to spill into the second, for "M-Space". */
 		if (scsfound == 1) {
-		    sprintf(ptr, "%s              ", s->keystr);
+		    sprintf(ptr, "%s               ", s->keystr);
 		    /* Unicode arrows take three bytes instead of one. */
-		    if (s->keystr[1] == '\xE2')
+		    if (s->keystr[0] == '\xE2' || s->keystr[1] == '\xE2')
 			ptr += 8;
 		    else
 			ptr += 6;

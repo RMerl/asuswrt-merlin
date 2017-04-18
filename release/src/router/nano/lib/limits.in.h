@@ -28,6 +28,17 @@
 #ifndef _@GUARD_PREFIX@_LIMITS_H
 #define _@GUARD_PREFIX@_LIMITS_H
 
+/* For HP-UX 11.31.  */
+#if defined LONG_LONG_MIN && !defined LLONG_MIN
+# define LLONG_MIN LONG_LONG_MIN
+#endif
+#if defined LONG_LONG_MAX && !defined LLONG_MAX
+# define LLONG_MAX LONG_LONG_MAX
+#endif
+#if defined ULONG_LONG_MAX && !defined ULLONG_MAX
+# define ULLONG_MAX ULONG_LONG_MAX
+#endif
+
 /* The number of usable bits in an unsigned or signed integer type
    with minimum value MIN and maximum value MAX, as an int expression
    suitable in #if.  Cover all known practical hosts.  This

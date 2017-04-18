@@ -65,5 +65,12 @@ Bug Reports
 
 Current Status
 
-	GNU nano has reached its seventh milestone, 2.6.x.  Since 2.5.0, it
-	is a "rolling" release: bug fixing and development go hand in hand.
+	Since version 2.5.0, GNU nano has abandoned the distinction between
+	a stable and a development branch: it is now on a "rolling" release
+	-- fixing bugs and adding new features go hand in hand.
+
+Copyright Years
+
+	When in any file of this package a copyright notice mentions a
+	year range (such as 1999-2011), it is a shorthand for a list of
+	all the years in that interval.

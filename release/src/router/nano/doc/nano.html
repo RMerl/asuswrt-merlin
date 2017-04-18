@@ -1805,6 +1805,14 @@ it can also be appended or prepended to an existing file.
 it can also read the output of a command to be run (^X).
 </p>
 </dd>
+<dt><code>Reading from Working Directory</code></dt>
+<dd><p>By default, Pico will read files from the user&rsquo;s home directory (when
+using ^R), but it will write files to the current working directory
+(when using ^O).  <code>nano</code> makes this symmetrical: always reading
+from and writing to the current working directory &mdash; the directory
+that <code>nano</code> was started in.
+</p>
+</dd>
 <dt><code>File Browser</code></dt>
 <dd><p>In the file browser, <code>nano</code> does not implement the Add, Copy,
 Rename, and Delete commands that Pico provides.  In <code>nano</code> the

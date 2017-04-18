@@ -1,8 +1,7 @@
 /**************************************************************************
  *   winio.c  --  This file is part of GNU nano.                          *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2014, 2015, 2016, 2017 Benno Schulenberg               *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -505,6 +504,10 @@ int parse_kbinput(WINDOW *win)
 	return CONTROL_UP;
     else if (retval == controldown)
 	return CONTROL_DOWN;
+    else if (retval == controlhome)
+	return CONTROL_HOME;
+    else if (retval == controlend)
+	return CONTROL_END;
 #ifndef NANO_TINY
     else if (retval == shiftcontrolleft) {
 	shift_held = TRUE;
@@ -518,6 +521,12 @@ int parse_kbinput(WINDOW *win)
     } else if (retval == shiftcontroldown) {
 	shift_held = TRUE;
 	return CONTROL_DOWN;
+    } else if (retval == shiftcontrolhome) {
+	shift_held = TRUE;
+	return CONTROL_HOME;
+    } else if (retval == shiftcontrolend) {
+	shift_held = TRUE;
+	return CONTROL_END;
     } else if (retval == shiftaltleft) {
 	shift_held = TRUE;
 	return KEY_HOME;
@@ -554,6 +563,10 @@ int parse_kbinput(WINDOW *win)
 		return CONTROL_LEFT;
 	    else if (retval == KEY_RIGHT)
 		return CONTROL_RIGHT;
+	    else if (retval == KEY_HOME)
+		return CONTROL_HOME;
+	    else if (retval == KEY_END)
+		return CONTROL_END;
 	}
 #ifndef NANO_TINY
 	/* Are both Shift and Alt being held? */
@@ -953,6 +966,10 @@ int convert_sequence(const int *seq, size_t seq_len)
 			return CONTROL_RIGHT;
 		    case 'D': /* Esc [ 1 ; 5 D == Ctrl-Left on xterm. */
 			return CONTROL_LEFT;
+		    case 'F': /* Esc [ 1 ; 5 F == Ctrl-End on xterm. */
+			return CONTROL_END;
+		    case 'H': /* Esc [ 1 ; 5 H == Ctrl-Home on xterm. */
+			return CONTROL_HOME;
 		}
 		break;
 #ifndef NANO_TINY
@@ -966,6 +983,10 @@ int convert_sequence(const int *seq, size_t seq_len)
 			return shiftcontrolright;
 		    case 'D': /* Esc [ 1 ; 6 D == Shift-Ctrl-Left on xterm. */
 			return shiftcontrolleft;
+		    case 'F': /* Esc [ 1 ; 6 F == Shift-Ctrl-End on xterm. */
+			return shiftcontrolend;
+		    case 'H': /* Esc [ 1 ; 6 H == Shift-Ctrl-Home on xterm. */
+			return shiftcontrolhome;
 		}
 		break;
 #endif
@@ -1030,19 +1051,35 @@ int convert_sequence(const int *seq, size_t seq_len)
 			if (seq_len > 2 && (seq[2] == '~' || seq[2] == '^'))
 			    return KEY_NPAGE;
 			break;
-		    case '7': /* Esc [ 7 ~ == Home on Eterm/rxvt,
-			       * Esc [ 7 $ == Shift-Home on Eterm/rxvt. */
+		    case '7': /* Esc [ 7 ~ == Home on Eterm/rxvt;
+			       * Esc [ 7 $ == Shift-Home on Eterm/rxvt;
+			       * Esc [ 7 ^ == Control-Home on Eterm/rxvt;
+			       * Esc [ 7 @ == Shift-Control-Home on same. */
 			if (seq_len > 2 && seq[2] == '~')
 			    return KEY_HOME;
 			else if (seq_len > 2 && seq[2] == '$')
 			    return SHIFT_HOME;
+			else if (seq_len > 2 && seq[2] == '^')
+			    return CONTROL_HOME;
+#ifndef NANO_TINY
+			else if (seq_len > 2 && seq[2] == '@')
+			    return shiftcontrolhome;
+#endif
 			break;
-		    case '8': /* Esc [ 8 ~ == End on Eterm/rxvt.
-			       * Esc [ 8 $ == Shift-End on Eterm/rxvt. */
+		    case '8': /* Esc [ 8 ~ == End on Eterm/rxvt;
+			       * Esc [ 8 $ == Shift-End on Eterm/rxvt;
+			       * Esc [ 8 ^ == Control-End on Eterm/rxvt;
+			       * Esc [ 8 @ == Shift-Control-End on same. */
 			if (seq_len > 2 && seq[2] == '~')
 			    return KEY_END;
 			else if (seq_len > 2 && seq[2] == '$')
 			    return SHIFT_END;
+			else if (seq_len > 2 && seq[2] == '^')
+			    return CONTROL_END;
+#ifndef NANO_TINY
+			else if (seq_len > 2 && seq[2] == '@')
+			    return shiftcontrolend;
+#endif
 			break;
 		    case '9': /* Esc [ 9 == Delete on Mach console. */
 			return KEY_DC;
@@ -1406,26 +1443,6 @@ int get_control_kbinput(int kbinput)
 #endif
 
     return retval;
-}
-
-/* Put the output-formatted characters in output back into the keystroke
- * buffer, so that they can be parsed and displayed as output again. */
-void unparse_kbinput(char *output, size_t output_len)
-{
-    int *input;
-    size_t i;
-
-    if (output_len == 0)
-	return;
-
-    input = (int *)nmalloc(output_len * sizeof(int));
-
-    for (i = 0; i < output_len; i++)
-	input[i] = (int)output[i];
-
-    unget_input(input, output_len);
-
-    free(input);
 }
 
 /* Read in a stream of characters verbatim, and return the length of the
@@ -1822,10 +1839,10 @@ char *display_string(const char *buf, size_t start_col, size_t span,
     buf += start_index;
 
     /* Allocate enough space for converting the relevant part of the line. */
-    converted = charalloc(strlen(buf) * (mb_cur_max() + tabsize) + 1);
+    converted = charalloc(strlen(buf) * (MAXCHARLEN + tabsize) + 1);
 
     /* If the first character starts before the left edge, or would be
-     * overwritten by a "$" token, then show spaces instead. */
+     * overwritten by a "$" token, then show placeholders instead. */
     if (*buf != '\0' && *buf != '\t' && (column < start_col ||
 				(column > 0 && isdata && !ISSET(SOFTWRAP)))) {
 	if (is_cntrl_mbchar(buf)) {
@@ -1842,7 +1859,8 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 		start_col++;
 	    }
 
-	    converted[index++] = ' ';
+	    /* Display the right half of a two-column character as '<'. */
+	    converted[index++] = '<';
 	    start_col++;
 
 	    buf += parse_mbchar(buf, NULL, NULL);
@@ -1925,9 +1943,16 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	   buf += charlength + 7;
     }
 
-    /* If there is more text than can be shown, make room for the $. */
-    if (*buf != '\0' && isdata && !ISSET(SOFTWRAP))
+    /* If there is more text than can be shown, make room for the $ or >. */
+    if (*buf != '\0' && (start_col > beyond || (isdata && !ISSET(SOFTWRAP)))) {
 	index = move_mbleft(converted, index);
+
+#ifdef ENABLE_UTF8
+	/* Display the left half of a two-column character as '>'. */
+	if (mbwidth(converted + index) == 2)
+	    converted[index++] = '>';
+#endif
+    }
 
     /* Null-terminate the converted string. */
     converted[index] = '\0';
@@ -2128,8 +2153,8 @@ void statusline(message_type importance, const char *msg, ...)
     blank_statusbar();
 
     /* Construct the message out of all the arguments. */
-    compound = charalloc(mb_cur_max() * (COLS + 1));
-    vsnprintf(compound, mb_cur_max() * (COLS + 1), msg, ap);
+    compound = charalloc(MAXCHARLEN * (COLS + 1));
+    vsnprintf(compound, MAXCHARLEN * (COLS + 1), msg, ap);
     va_end(ap);
     message = display_string(compound, 0, COLS, FALSE);
     free(compound);
@@ -2279,6 +2304,12 @@ void reset_cursor(void)
 	/* Add the number of wraps in the current line before the cursor. */
 	row += xpt / editwincols;
 	col = xpt % editwincols;
+
+	/* If the cursor ought to be in column zero, nudge it there. */
+	if (openfile->placewewant % editwincols == 0 && col != 0) {
+	    row++;
+	    col = 0;
+	}
     } else
 #endif
     {
@@ -2912,10 +2943,12 @@ void edit_scroll(scroll_dir direction, int nrows)
 	go_forward_chunks(editwinrows - nrows, &line, &leftedge);
 
 #ifndef NANO_TINY
-    /* Compensate for the earlier onscreen chunks of a softwrapped line
-     * when the first blank row happens to be in the middle of that line. */
-    if (ISSET(SOFTWRAP) && line != openfile->edittop)
-	nrows += leftedge / editwincols;
+    /* Compensate for the earlier chunks of a softwrapped line. */
+    nrows += leftedge / editwincols;
+
+    /* Don't compensate for the chunks that are offscreen. */
+    if (line == openfile->edittop)
+	nrows -= openfile->firstcolumn / editwincols;
 #endif
 
     /* Draw new content on the blank rows inside the scrolled region

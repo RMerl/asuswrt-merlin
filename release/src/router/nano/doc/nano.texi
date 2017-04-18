@@ -6,8 +6,8 @@
 
 @smallbook
 @set EDITION 0.4
-@set VERSION 2.8.0
-@set UPDATED March 2017
+@set VERSION 2.8.1
+@set UPDATED April 2017
 
 @dircategory Editors
 @direntry
@@ -20,8 +20,8 @@
 
 @titlepage
 @title GNU @code{nano}
-@subtitle a small and friendly text editor.
-@subtitle version 2.8.0
+@subtitle a small and friendly text editor
+@subtitle version 2.8.1
 
 @author Chris Allegretta
 @page
@@ -30,8 +30,7 @@ This manual documents GNU @code{nano}, a small and friendly text editor.
 
 This manual is part of the GNU @code{nano} distribution.@*
 @sp 4
-Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-2009, 2014, 2015 Free Software Foundation, Inc.
+Copyright (C) 1999-2009, 2014-2017 Free Software Foundation, Inc.
 
 This document is dual-licensed.  You may distribute and/or modify it
 under the terms of either of the following licenses:
@@ -1427,6 +1426,13 @@ it can also be appended or prepended to an existing file.
 @item Reading Text from a Command
 When using the Read-File key (^R), @code{nano} can not just read a file,
 it can also read the output of a command to be run (^X).
+
+@item Reading from Working Directory
+By default, Pico will read files from the user's home directory (when
+using ^R), but it will write files to the current working directory
+(when using ^O).  @code{nano} makes this symmetrical: always reading
+from and writing to the current working directory --- the directory
+that @code{nano} was started in.
 
 @item File Browser
 In the file browser, @code{nano} does not implement the Add, Copy,

@@ -48,6 +48,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module alloca-opt:
   # Code from module btowc:
   # Code from module builtin-expect:
+  # Code from module clock-time:
   # Code from module closedir:
   # Code from module configmake:
   # Code from module ctype:
@@ -58,6 +59,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module errno:
   # Code from module extensions:
   # Code from module extern-inline:
+  # Code from module fcntl-h:
   # Code from module filename:
   # Code from module flexmember:
   # Code from module float:
@@ -67,12 +69,15 @@ AC_DEFUN([gl_EARLY],
   # Code from module fpucw:
   # Code from module frexp-nolibm:
   # Code from module frexpl-nolibm:
+  # Code from module fstat:
+  # Code from module futimens:
   # Code from module getdelim:
   # Code from module getline:
   # Code from module getlogin_r:
   # Code from module getopt-gnu:
   # Code from module getopt-posix:
   # Code from module gettext-h:
+  # Code from module gettime:
   # Code from module gettimeofday:
   # Code from module glob:
   # Code from module hard-locale:
@@ -126,6 +131,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module snprintf-posix:
   # Code from module ssize_t:
   # Code from module stat:
+  # Code from module stat-time:
   # Code from module stdarg:
   dnl Some compilers (e.g., AIX 5.3 cc) need to be in c99 mode
   dnl for the builtin va_copy to work.  With Autoconf 2.60 or later,
@@ -151,10 +157,12 @@ AC_DEFUN([gl_EARLY],
   # Code from module threadlib:
   gl_THREADLIB_EARLY
   # Code from module time:
+  # Code from module timespec:
   # Code from module unistd:
   # Code from module unitypes:
   # Code from module uniwidth/base:
   # Code from module uniwidth/width:
+  # Code from module utimens:
   # Code from module vasnprintf:
   # Code from module verify:
   # Code from module vsnprintf:
@@ -190,6 +198,7 @@ AC_DEFUN([gl_INIT],
   fi
   gl_WCHAR_MODULE_INDICATOR([btowc])
   gl___BUILTIN_EXPECT
+  gl_CLOCK_TIME
   gl_FUNC_CLOSEDIR
   if test $HAVE_CLOSEDIR = 0 || test $REPLACE_CLOSEDIR = 1; then
     AC_LIBOBJ([closedir])
@@ -208,6 +217,7 @@ AC_DEFUN([gl_INIT],
   gl_DIRENT_MODULE_INDICATOR([dirfd])
   gl_HEADER_ERRNO_H
   AC_REQUIRE([gl_EXTERN_INLINE])
+  gl_FCNTL_H
   AC_C_FLEXIBLE_ARRAY_MEMBER
   gl_FLOAT_H
   if test $REPLACE_FLOAT_LDBL = 1; then
@@ -231,6 +241,17 @@ AC_DEFUN([gl_INIT],
     AC_LIBOBJ([frexpl])
   fi
   gl_MATH_MODULE_INDICATOR([frexpl])
+  gl_FUNC_FSTAT
+  if test $REPLACE_FSTAT = 1; then
+    AC_LIBOBJ([fstat])
+    gl_PREREQ_FSTAT
+  fi
+  gl_SYS_STAT_MODULE_INDICATOR([fstat])
+  gl_FUNC_FUTIMENS
+  if test $HAVE_FUTIMENS = 0 || test $REPLACE_FUTIMENS = 1; then
+    AC_LIBOBJ([futimens])
+  fi
+  gl_SYS_STAT_MODULE_INDICATOR([futimens])
   gl_FUNC_GETDELIM
   if test $HAVE_GETDELIM = 0 || test $REPLACE_GETDELIM = 1; then
     AC_LIBOBJ([getdelim])
@@ -270,6 +291,7 @@ AC_DEFUN([gl_INIT],
   AC_SUBST([GNULIB_GL_UNISTD_H_GETOPT])
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
+  gl_GETTIME
   gl_FUNC_GETTIMEOFDAY
   if test $HAVE_GETTIMEOFDAY = 0 || test $REPLACE_GETTIMEOFDAY = 1; then
     AC_LIBOBJ([gettimeofday])
@@ -442,6 +464,8 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_STAT
   fi
   gl_SYS_STAT_MODULE_INDICATOR([stat])
+  gl_STAT_TIME
+  gl_STAT_BIRTHTIME
   gl_STDARG_H
   AM_STDBOOL_H
   gl_STDDEF_H
@@ -481,10 +505,12 @@ AC_DEFUN([gl_INIT],
   AC_PROG_MKDIR_P
   gl_THREADLIB
   gl_HEADER_TIME_H
+  gl_TIMESPEC
   gl_UNISTD_H
   gl_LIBUNISTRING_LIBHEADER([0.9.4], [unitypes.h])
   gl_LIBUNISTRING_LIBHEADER([0.9.4], [uniwidth.h])
   gl_LIBUNISTRING_MODULE([0.9.6], [uniwidth/width])
+  gl_UTIMENS
   gl_FUNC_VASNPRINTF
   gl_FUNC_VSNPRINTF
   gl_STDIO_MODULE_INDICATOR([vsnprintf])
@@ -644,14 +670,13 @@ AC_DEFUN([gltests_LIBSOURCES], [
 # gnulib-tool and may be removed by future gnulib-tool invocations.
 AC_DEFUN([gl_FILE_LIST], [
   build-aux/config.rpath
-  build-aux/snippet/_Noreturn.h
-  build-aux/snippet/arg-nonnull.h
-  build-aux/snippet/c++defs.h
-  build-aux/snippet/warn-on-use.h
+  lib/_Noreturn.h
   lib/alloca.c
   lib/alloca.in.h
+  lib/arg-nonnull.h
   lib/asnprintf.c
   lib/btowc.c
+  lib/c++defs.h
   lib/closedir.c
   lib/config.charset
   lib/ctype.in.h
@@ -660,6 +685,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/dirfd.c
   lib/dosname.h
   lib/errno.in.h
+  lib/fcntl.in.h
   lib/filename.h
   lib/flexmember.h
   lib/float+.h
@@ -671,6 +697,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/fpucw.h
   lib/frexp.c
   lib/frexpl.c
+  lib/fstat.c
+  lib/futimens.c
   lib/getdelim.c
   lib/getline.c
   lib/getlogin_r.c
@@ -679,6 +707,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/getopt1.c
   lib/getopt_int.h
   lib/gettext.h
+  lib/gettime.c
   lib/gettimeofday.c
   lib/glob-libc.h
   lib/glob.c
@@ -752,6 +781,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/sigprocmask.c
   lib/size_max.h
   lib/snprintf.c
+  lib/stat-time.c
+  lib/stat-time.h
   lib/stat.c
   lib/stdarg.in.h
   lib/stdbool.in.h
@@ -774,16 +805,21 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/sys_types.in.h
   lib/sys_wait.in.h
   lib/time.in.h
+  lib/timespec.c
+  lib/timespec.h
   lib/unistd.c
   lib/unistd.in.h
   lib/unitypes.in.h
   lib/uniwidth.in.h
   lib/uniwidth/cjk.h
   lib/uniwidth/width.c
+  lib/utimens.c
+  lib/utimens.h
   lib/vasnprintf.c
   lib/vasnprintf.h
   lib/verify.h
   lib/vsnprintf.c
+  lib/warn-on-use.h
   lib/wchar.in.h
   lib/wcrtomb.c
   lib/wctype-h.c
@@ -796,6 +832,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/alloca.m4
   m4/btowc.m4
   m4/builtin-expect.m4
+  m4/clock_time.m4
   m4/closedir.m4
   m4/codeset.m4
   m4/configmake.m4
@@ -811,17 +848,21 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/extensions.m4
   m4/extern-inline.m4
   m4/fcntl-o.m4
+  m4/fcntl_h.m4
   m4/flexmember.m4
   m4/float_h.m4
   m4/fnmatch.m4
   m4/fpieee.m4
   m4/frexp.m4
   m4/frexpl.m4
+  m4/fstat.m4
+  m4/futimens.m4
   m4/getdelim.m4
   m4/getline.m4
   m4/getlogin.m4
   m4/getlogin_r.m4
   m4/getopt.m4
+  m4/gettime.m4
   m4/gettimeofday.m4
   m4/glibc21.m4
   m4/glob.m4
@@ -884,6 +925,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/snprintf-posix.m4
   m4/snprintf.m4
   m4/ssize_t.m4
+  m4/stat-time.m4
   m4/stat.m4
   m4/stdarg.m4
   m4/stdbool.m4
@@ -904,7 +946,11 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/sys_wait_h.m4
   m4/threadlib.m4
   m4/time_h.m4
+  m4/timespec.m4
   m4/unistd_h.m4
+  m4/utimbuf.m4
+  m4/utimens.m4
+  m4/utimes.m4
   m4/vasnprintf.m4
   m4/vsnprintf-posix.m4
   m4/vsnprintf.m4

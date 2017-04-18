@@ -789,10 +789,14 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
                               malloc_home_dir = 1;
                             }
                           memcpy (home_dir, p->pw_dir, home_dir_len);
-
-                          free (pwtmpbuf);
                         }
                     }
+                  free (malloc_pwtmpbuf);
+                }
+              else
+                {
+                  if (__glibc_unlikely (malloc_name))
+                    free (name);
                 }
             }
           if (home_dir == NULL || home_dir[0] == '\0')
@@ -805,7 +809,10 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
                   goto out;
                 }
               else
-                home_dir = (char *) "~"; /* No luck.  */
+                {
+                  home_dir = (char *) "~"; /* No luck.  */
+                  malloc_home_dir = 0;
+                }
             }
 #  endif /* WINDOWS32 */
 # endif
@@ -847,6 +854,9 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
               dirname = newp;
               dirlen += home_len - 1;
               malloc_dirname = !use_alloca;
+
+              if (__glibc_unlikely (malloc_home_dir))
+                free (home_dir);
             }
           dirname_modified = 1;
         }
@@ -1048,6 +1058,8 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
           if (newcount > SIZE_MAX / sizeof (char *) - 2)
             {
             nospace:
+              if (__glibc_unlikely (malloc_dirname))
+                free (dirname);
               free (pglob->gl_pathv);
               pglob->gl_pathv = NULL;
               pglob->gl_pathc = 0;

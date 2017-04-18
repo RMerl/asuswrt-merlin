@@ -2,22 +2,22 @@
    NOTE: getopt is part of the C library, so if you don't know what
    "Keep this file name-space clean" means, talk to drepper@gnu.org
    before changing it!
-   Copyright (C) 1987-1996, 1998-2004, 2006, 2008-2017 Free Software
-   Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public
+   License as published by the Free Software Foundation; either
+   version 3 of the License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   The GNU C Library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LIBC
 # include <config.h>
@@ -27,8 +27,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <string.h>
 
 #ifdef _LIBC
 # include <libintl.h>
@@ -37,7 +37,7 @@
 # define _(msgid) gettext (msgid)
 #endif
 
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
 # include <wchar.h>
 #endif
 
@@ -181,7 +181,7 @@ exchange (char **argv, struct _getopt_data *d)
         {
           /* Bottom segment is the short one.  */
           int len = middle - bottom;
-          register int i;
+          int i;
 
           /* Swap it with the top part of the top segment.  */
           for (i = 0; i < len; i++)
@@ -198,7 +198,7 @@ exchange (char **argv, struct _getopt_data *d)
         {
           /* Top segment is the short one.  */
           int len = top - middle;
-          register int i;
+          int i;
 
           /* Swap it with the bottom part of the bottom segment.  */
           for (i = 0; i < len; i++)
@@ -564,11 +564,11 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
               first.next = ambig_list;
               ambig_list = &first;
 
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
               char *buf = NULL;
               size_t buflen = 0;
 
-              FILE *fp = open_memstream (&buf, &buflen);
+              FILE *fp = __open_memstream (&buf, &buflen);
               if (fp != NULL)
                 {
                   fprintf (fp,
@@ -584,7 +584,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
 
                   fputc_unlocked ('\n', fp);
 
-                  if (__builtin_expect (fclose (fp) != EOF, 1))
+                  if (__glibc_likely (fclose (fp) != EOF))
                     {
                       _IO_flockfile (stderr);
 
@@ -642,7 +642,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                 {
                   if (print_errors)
                     {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                       char *buf;
                       int n;
 #endif
@@ -650,7 +650,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                       if (argv[d->optind - 1][1] == '-')
                         {
                           /* --option */
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                           n = __asprintf (&buf, _("\
 %s: option '--%s' doesn't allow an argument\n"),
                                           argv[0], pfound->name);
@@ -663,7 +663,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                       else
                         {
                           /* +option or -option */
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                           n = __asprintf (&buf, _("\
 %s: option '%c%s' doesn't allow an argument\n"),
                                           argv[0], argv[d->optind - 1][0],
@@ -676,7 +676,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
 #endif
                         }
 
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                       if (n >= 0)
                         {
                           _IO_flockfile (stderr);
@@ -709,7 +709,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                 {
                   if (print_errors)
                     {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                       char *buf;
 
                       if (__asprintf (&buf, _("\
@@ -760,7 +760,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
         {
           if (print_errors)
             {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
               char *buf;
               int n;
 #endif
@@ -768,7 +768,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
               if (argv[d->optind][1] == '-')
                 {
                   /* --option */
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                   n = __asprintf (&buf, _("%s: unrecognized option '--%s'\n"),
                                   argv[0], d->__nextchar);
 #else
@@ -779,7 +779,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
               else
                 {
                   /* +option or -option */
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                   n = __asprintf (&buf, _("%s: unrecognized option '%c%s'\n"),
                                   argv[0], argv[d->optind][0], d->__nextchar);
 #else
@@ -788,7 +788,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
 #endif
                 }
 
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
               if (n >= 0)
                 {
                   _IO_flockfile (stderr);
@@ -826,19 +826,19 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
       {
         if (print_errors)
           {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
               char *buf;
               int n;
 #endif
 
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
               n = __asprintf (&buf, _("%s: invalid option -- '%c'\n"),
                               argv[0], c);
 #else
               fprintf (stderr, _("%s: invalid option -- '%c'\n"), argv[0], c);
 #endif
 
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
             if (n >= 0)
               {
                 _IO_flockfile (stderr);
@@ -884,7 +884,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
           {
             if (print_errors)
               {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                 char *buf;
 
                 if (__asprintf (&buf,
@@ -958,7 +958,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
           {
             if (print_errors)
               {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                 char *buf;
 
                 if (__asprintf (&buf, _("%s: option '-W %s' is ambiguous\n"),
@@ -998,7 +998,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                   {
                     if (print_errors)
                       {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                         char *buf;
 
                         if (__asprintf (&buf, _("\
@@ -1037,7 +1037,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                   {
                     if (print_errors)
                       {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                         char *buf;
 
                         if (__asprintf (&buf, _("\
@@ -1112,7 +1112,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
               {
                 if (print_errors)
                   {
-#if defined _LIBC && defined USE_IN_LIBIO
+#if defined _LIBC
                     char *buf;
 
                     if (__asprintf (&buf, _("\

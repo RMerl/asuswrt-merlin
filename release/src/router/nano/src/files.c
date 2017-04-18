@@ -1,8 +1,7 @@
 /**************************************************************************
  *   files.c  --  This file is part of GNU nano.                          *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2015, 2016 Benno Schulenberg                           *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -1541,12 +1540,14 @@ void init_backup_dir(void)
 
 /* Read from inn, write to out.  We assume inn is opened for reading,
  * and out for writing.  We return 0 on success, -1 on read error, or -2
- * on write error. */
-int copy_file(FILE *inn, FILE *out)
+ * on write error.  inn is always closed by this function, out is closed
+ * only if close_out is true. */
+int copy_file(FILE *inn, FILE *out, bool close_out)
 {
     int retval = 0;
     char buf[BUFSIZ];
     size_t charsread;
+    int (*flush_out_fnc)(FILE *) = (close_out) ? fclose : fflush;
 
     assert(inn != NULL && out != NULL && inn != out);
 
@@ -1564,7 +1565,7 @@ int copy_file(FILE *inn, FILE *out)
 
     if (fclose(inn) == EOF)
 	retval = -1;
-    if (fclose(out) == EOF)
+    if (flush_out_fnc(out) == EOF)
 	retval = -2;
 
     return retval;
@@ -1655,13 +1656,12 @@ bool write_file(const char *name, FILE *f_open, bool tmp,
 	int backup_fd;
 	FILE *backup_file;
 	char *backupname;
-	struct utimbuf filetime;
-	int copy_status;
+	static struct timespec filetime[2];
 	int backup_cflags;
 
 	/* Save the original file's access and modification times. */
-	filetime.actime = openfile->current_stat->st_atime;
-	filetime.modtime = openfile->current_stat->st_mtime;
+	filetime[0].tv_sec = openfile->current_stat->st_atime;
+	filetime[1].tv_sec = openfile->current_stat->st_mtime;
 
 	if (f_open == NULL) {
 	    /* Open the original file to copy to the backup. */
@@ -1753,35 +1753,36 @@ bool write_file(const char *name, FILE *f_open, bool tmp,
 	    statusline(HUSH, _("Error writing backup file %s: %s"),
 			backupname, strerror(errno));
 	    free(backupname);
+	    /* If we can't make a backup, DON'T go on, since whatever caused
+	     * the backup to fail (e.g. disk full) may well cause the real
+	     * file write to fail, in which case we could lose both the
+	     * backup and the original! */
 	    goto cleanup_and_exit;
 	}
 
-	/* We shouldn't worry about chown()ing something if we're not
-	 * root, since it's likely to fail! */
-	if (geteuid() == NANO_ROOT_UID && fchown(backup_fd,
-		openfile->current_stat->st_uid, openfile->current_stat->st_gid) == -1
-		&& !ISSET(INSECURE_BACKUP)) {
+	/* Only try chowning the backup when we're root. */
+	if (geteuid() == NANO_ROOT_UID &&
+			fchown(backup_fd, openfile->current_stat->st_uid,
+			openfile->current_stat->st_gid) == -1 &&
+			!ISSET(INSECURE_BACKUP)) {
+	    fclose(backup_file);
 	    if (prompt_failed_backupwrite(backupname))
 		goto skip_backup;
 	    statusline(HUSH, _("Error writing backup file %s: %s"),
 			backupname, strerror(errno));
 	    free(backupname);
-	    fclose(backup_file);
 	    goto cleanup_and_exit;
 	}
 
-	if (fchmod(backup_fd, openfile->current_stat->st_mode) == -1
-		&& !ISSET(INSECURE_BACKUP)) {
+	/* Set the backup's mode bits. */
+	if (fchmod(backup_fd, openfile->current_stat->st_mode) == -1 &&
+			!ISSET(INSECURE_BACKUP)) {
+	    fclose(backup_file);
 	    if (prompt_failed_backupwrite(backupname))
 		goto skip_backup;
 	    statusline(HUSH, _("Error writing backup file %s: %s"),
 			backupname, strerror(errno));
 	    free(backupname);
-	    fclose(backup_file);
-	    /* If we can't write to the backup, DONT go on, since
-	     * whatever caused the backup file to fail (e.g. disk
-	     * full) may well cause the real file write to fail, which
-	     * means we could lose both the backup and the original! */
 	    goto cleanup_and_exit;
 	}
 
@@ -1790,27 +1791,24 @@ bool write_file(const char *name, FILE *f_open, bool tmp,
 #endif
 
 	/* Copy the file. */
-	copy_status = copy_file(f, backup_file);
-
-	if (copy_status != 0) {
+	if (copy_file(f, backup_file, FALSE) != 0) {
+	    fclose(backup_file);
 	    statusline(ALERT, _("Error reading %s: %s"), realname,
 			strerror(errno));
 	    goto cleanup_and_exit;
 	}
 
-	/* And set its metadata. */
-	if (utime(backupname, &filetime) == -1 && !ISSET(INSECURE_BACKUP)) {
+	/* And set the backup's timestamps. */
+	if (futimens(backup_fd, filetime) == -1 && !ISSET(INSECURE_BACKUP)) {
+	    fclose(backup_file);
 	    if (prompt_failed_backupwrite(backupname))
 		goto skip_backup;
 	    statusline(HUSH, _("Error writing backup file %s: %s"),
 			backupname, strerror(errno));
-	    /* If we can't write to the backup, DON'T go on, since
-	     * whatever caused the backup file to fail (e.g. disk full
-	     * may well cause the real file write to fail, which means
-	     * we could lose both the backup and the original! */
 	    goto cleanup_and_exit;
 	}
 
+	fclose(backup_file);
 	free(backupname);
     }
 
@@ -1867,7 +1865,7 @@ bool write_file(const char *name, FILE *f_open, bool tmp,
 	    }
 	}
 
-	if (f_source == NULL || copy_file(f_source, f) != 0) {
+	if (f_source == NULL || copy_file(f_source, f, TRUE) != 0) {
 	    statusline(ALERT, _("Error writing temp file: %s"),
 			strerror(errno));
 	    unlink(tempname);
@@ -1975,7 +1973,7 @@ bool write_file(const char *name, FILE *f_open, bool tmp,
 	    goto cleanup_and_exit;
 	}
 
-	if (copy_file(f_source, f) == -1) {
+	if (copy_file(f_source, f, TRUE) != 0) {
 	    statusline(ALERT, _("Error writing %s: %s"), realname,
 			strerror(errno));
 	    goto cleanup_and_exit;
@@ -2634,7 +2632,7 @@ char *input_tab(char *buf, bool allow_files, size_t *place,
 	char *mzero, *glued;
 	const char *lastslash = revstrstr(buf, "/", buf + *place);
 	size_t lastslash_len = (lastslash == NULL) ? 0 : lastslash - buf + 1;
-	char char1[mb_cur_max()], char2[mb_cur_max()];
+	char char1[MAXCHARLEN], char2[MAXCHARLEN];
 	int len1, len2;
 
 	/* Get the number of characters that all matches have in common. */

@@ -1,8 +1,7 @@
 /**************************************************************************
  *   nano.h  --  This file is part of GNU nano.                           *
  *                                                                        *
- *   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,  *
- *   2008, 2009, 2010, 2011, 2013, 2014 Free Software Foundation, Inc.    *
+ *   Copyright (C) 1999-2011, 2013-2017 Free Software Foundation, Inc.    *
  *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
@@ -67,6 +66,13 @@
 #define charealloc(ptr, howmuch) (char *)nrealloc(ptr, (howmuch) * sizeof(char))
 #define charmove(dest, src, n) memmove(dest, src, (n) * sizeof(char))
 #define charset(dest, src, n) memset(dest, src, (n) * sizeof(char))
+
+/* In UTF-8 a character is at most six bytes long. */
+#ifdef ENABLE_UTF8
+#define MAXCHARLEN 6
+#else
+#define MAXCHARLEN 1
+#endif
 
 /* Set a default value for PATH_MAX if there isn't one. */
 #ifndef PATH_MAX
@@ -546,10 +552,14 @@ enum
 #define CONTROL_RIGHT 0x402
 #define CONTROL_UP 0x403
 #define CONTROL_DOWN 0x404
+#define CONTROL_HOME 0x411
+#define CONTROL_END 0x412
 #define SHIFT_CONTROL_LEFT 0x405
 #define SHIFT_CONTROL_RIGHT 0x406
 #define SHIFT_CONTROL_UP 0x407
 #define SHIFT_CONTROL_DOWN 0x408
+#define SHIFT_CONTROL_HOME 0x413
+#define SHIFT_CONTROL_END 0x414
 #define SHIFT_ALT_LEFT 0x409
 #define SHIFT_ALT_RIGHT 0x40a
 #define SHIFT_ALT_UP 0x40b

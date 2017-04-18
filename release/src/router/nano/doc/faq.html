@@ -9,20 +9,21 @@
 <h1>The GNU nano editor FAQ</h1>
 <h2>Table of Contents</h2>
 <h2><a href="#1">1. General</a></h2>
-<blockquote><p><a href="#1.1">1.1 About this FAQ</a><br>
-  <a href="#1.2">1.2. How do I contribute to it?</a><br>
-  <a href="#1.3">1.3. What is GNU nano?</a><br>
-  <a href="#1.4">1.4. What is the history behind nano?</a><br>
-  <a href="#1.5">1.5. Why the name change from TIP?</a><br>
-  <a href="#1.6">1.6. What is the current version of nano?</a><br>
-  <a href="#1.7">1.7. I want to read the manpage without having to download the program!</a></p></blockquote>
+<blockquote><p>
+  <a href="#1.1">1.1. What is GNU nano?</a><br>
+  <a href="#1.2">1.2. What is the history behind nano?</a><br>
+  <a href="#1.3">1.3. Why the name change from TIP?</a><br>
+  <a href="#1.4">1.4. What is the current version of nano?</a><br>
+  <a href="#1.5">1.5. I want to read the manpage without having to download the program!</a></p></blockquote>
 <h2><a href="#2">2. Where to get GNU nano.</a></h2>
-<blockquote><p><a href="#2.1">2.1. FTP and WWW sites that carry nano.</a><br>
+<blockquote><p>
+  <a href="#2.1">2.1. FTP and WWW sites that carry nano.</a><br>
   <a href="#2.2">2.2. RedHat and derivatives (.rpm) packages.</a><br>
   <a href="#2.3">2.3. Debian (.deb) packages.</a><br>
   <a href="#2.4">2.4. By GIT (for the brave).</a></p></blockquote>
 <h2><a href="#3">3. Installation and Configuration</a></h2>
-<blockquote><p><a href="#3.1">3.1. How do I install the RPM or DEB package?</a><br>
+<blockquote><p>
+  <a href="#3.1">3.1. How do I install the RPM or DEB package?</a><br>
   <a href="#3.2">3.2. Compiling from source: WHAT THE HECK DO I DO NOW?</a><br>
   <a href="#3.3">3.3. Why does everything go into /usr/local?</a><br>
   <a href="#3.5">3.5. nano should automatically run strip on the binary when installing it!</a><br>
@@ -32,7 +33,8 @@
   <a href="#3.9a">3.9a. How do I make a .nanorc file that nano will read when I start it?</a><br>
   <a href="#3.9b">3.9b. How about in Win32?</a></p></blockquote>
 <h2><a href="#4">4. Running</a></h2>
-<blockquote><p><a href="#4.1">4.1. How do I open a file with a name beginning with '+' from the command line?</a><br>
+<blockquote><p>
+  <a href="#4.1">4.1. How do I open a file with a name beginning with '+' from the command line?</a><br>
   <a href="#4.2">4.2. Ack! My Backspace/Delete/Enter/Meta/double bucky key doesn't seem to work! What can I do?</a><br>
   <a href="#4.3">4.3. Ack! My numeric keypad's keys don't work properly when NumLock is off! What can I do?</a><br>
   <a href="#4.4">4.4. Ack! When I hold down a Meta key combination for a while, the character of the held key gets inserted now and then. What gives?</a><br>
@@ -45,31 +47,29 @@
   <a href="#4.11">4.11. How do I select text for or paste text from the clipboard in an X terminal when I'm running nano in one and nano's mouse support is turned on?</a><br>
   <a href="#4.12">4.12. On startup I get a message that says "Detected a legacy nano history file".  Now older nano versions can't find my search history!</a></p></blockquote>
 <h2><a href="#5">5. Internationalization</a></h2>
-<blockquote><p><a href="#5.1">5.1. There's no translation for my language!</a><br>
+<blockquote><p>
+  <a href="#5.1">5.1. There's no translation for my language!</a><br>
   <a href="#5.2">5.2. I don't like the translation for &lt;x&gt; in my language. How can I fix it?</a><br>
   <a href="#5.3">5.3. What is the status of Unicode support?</a></p></blockquote>
 <h2><a href="#6">6. Advocacy and Licensing</a></h2>
-<blockquote><p><a href="#6.1">6.1. Why should I use nano instead of Pico?</a><br>
+<blockquote><p>
+  <a href="#6.1">6.1. Why should I use nano instead of Pico?</a><br>
   <a href="#6.2">6.2. Why should I use Pico instead of nano?</a><br>
   <a href="#6.3">6.3. What is so bad about the older Pine license?</a><br>
   <a href="#6.4">6.4. Okay, well, what mail program should I use then?</a></p></blockquote>
 <h2><a href="#7">7. Miscellaneous</a></h2>
-<blockquote><p><a href="#7.1">7.1. nano-related mailing lists.</a><br>
-  <a href="#7.2">7.2. I want to send the development team a big load of cash (or just a thank you).</a><br>
-  <a href="#7.3">7.3. How do I submit a bug report or patch?</a><br>
+<blockquote><p>
+  <a href="#7.1">7.1. Where can I ask questions or send suggestions?</a><br>
+  <a href="#7.2">7.2. How do I submit a bug report or patch?</a><br>
+  <a href="#7.3">7.3. I want to send the development team a big load of cash (or just a thank you).</a><br>
   <a href="#7.4">7.4. How do I join the development team?</a><br>
   <a href="#7.5">7.5. Can I have write access to the GIT tree?</a></p></blockquote>
-<h2><a href="#8">8. ChangeLog</a></h2>
 <hr width="100%">
 
 <h1><a name="1"></a>1. General</h1>
-<h2><a name="1.1"></a>1.1 About this FAQ</h2>
-<blockquote><p>This FAQ was originally written and maintained by Chris Allegretta &lt;<a href="mailto:chrisa@asty.org">chrisa@asty.org</a>&gt;, who also happens to be the creator of nano. It was then maintained by David Lawrence Ramsey &lt;<a href="mailto:pooka109@gmail.com">pooka109@gmail.com</a>&gt;. Maybe someone else will volunteer to maintain this FAQ someday, who knows...</p></blockquote>
-<h2><a name="1.2"></a>1.2. How do I contribute to it?</h2>
-<blockquote><p>Your best bet is to send it to the nano email address, <a href="mailto:nano@nano-editor.org">nano@nano-editor.org</a> and if it is useful enough it will be included in future versions.</p></blockquote>
-<h2><a name="1.3"></a>1.3. What is GNU nano?</h2>
+<h2><a name="1.1"></a>1.1. What is GNU nano?</h2>
 <blockquote><p>GNU nano is designed to be a free replacement for the Pico text editor, part of the Pine email suite from <a href="http://www.washington.edu/pine/">The University of Washington</a>. It aims to &quot;emulate Pico as closely as possible and then include extra functionality&quot;.</p></blockquote>
-<h2><a name="1.4"></a>1.4. What is the history behind nano?</h2>
+<h2><a name="1.2"></a>1.2. What is the history behind nano?</h2>
 <blockquote><p>Funny you should ask!</p>
   <p><b>In the beginning...</b></p>
   <p>For years Pine was THE program used to read email on a Unix system. The Pico text editor is the portion of the program one would use to compose his or her mail messages. Many beginners to Unix flocked to Pico and Pine because of their well organized, easy to use interfaces. With the proliferation of GNU/Linux in the mid to late 90's, many University students became intimately familiar with the strengths (and weaknesses) of Pine and Pico.</p>
@@ -79,11 +79,11 @@
   <p>It was in late 1999 when Chris Allegretta (our hero) was yet again complaining to himself about the less-than-perfect license Pico was distributed under, the 1000 makefiles that came with it and how just a few small improvements could make it the Best Editor in the World (TM). Having been a convert from Slackware to Debian, he missed having a simple binary package that included Pine and Pico, and had grown tired of downloading them himself.</p>
   <p>Finally something snapped inside and Chris coded and hacked like a madman for many hours straight one weekend to make a (barely usable) Pico clone, at the time called TIP (Tip Isn't Pico). The program could not be invoked without a filename, could not save files, had no help text display, spell checker, and so forth. But over time it improved, and with the help of a few great coders it matured to the (hopefully) stable state it is in today.</p>
   <p>In February 2001, nano was declared an official GNU program by Richard Stallman. nano also reached its first production release on March 22, 2001.</p></blockquote>
-<h2><a name="1.5"></a>1.5. Why the name change from TIP?</h2>
+<h2><a name="1.3"></a>1.3. Why the name change from TIP?</h2>
 <blockquote><p>On January 10, 2000, TIP was officially renamed to nano because of a namespace conflict with another program called 'tip'. The original 'tip' program &quot;establishes a full duplex terminal connection to a remote host&quot;, and was included with many older Unix systems (and newer ones like Solaris). The conflict was not noticed at first because there is no 'tip' utility included with most GNU/Linux distributions (where nano was developed).</p></blockquote>
-<h2><a name="1.6"></a>1.6. What is the current version of nano?</h2>
-<blockquote><p>The current version of nano <i>should</i> be <b>2.8.0</b>.  Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
-<h2><a name="1.7"></a>1.7. I want to read the man page without having to download the program!</h2>
+<h2><a name="1.4"></a>1.4. What is the current version of nano?</h2>
+<blockquote><p>The current version of nano <i>should</i> be <b>2.8.1</b>.  Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
+<h2><a name="1.5"></a>1.5. I want to read the man page without having to download the program!</h2>
 <blockquote><p>Jeez, demanding, aren't we? Okay, look <a href="https://nano-editor.org/dist/latest/nano.1.html">here</a>.</p></blockquote>
 <hr width="100%">
 
@@ -183,7 +183,7 @@
 <h2><a name="4.3"></a>4.3. Ack! My numeric keypad's keys don't work properly when NumLock is off! What can I do?</h2>
 <blockquote><p>You can use the <b>-K</b> or <b>--rebindkeypad</b> option on the command line, or add the line <b>set rebindkeypad</b> to your .nanorc. However, nano's mouse support won't work properly if you do any of these things.</p></blockquote>
 <h2><a name="4.4"></a>4.4. Ack! When I hold down a Meta key combination for a while, the character of the held key gets inserted now and then. What gives?</h2>
-<blockquote><p>This is a bug in the terminal, not in nano. When a key is repeating faster than nano can process it, the keyboard buffer becomes full and starts dropping incoming keystrokes. Unfortunately, it doesn't just drop whole keystrokes; it can also drop parts of multibyte key combinations, resulting in nano's receiving a wrong key.</p></blockquote>
+<blockquote><p>This was a bug in how nano handled consecutive escape sequences. It should be fixed since version 2.6.0.</p></blockquote>
 <h2><a name="4.5"></a>4.5. How do I type the F13-F16 keys shown in the help browser? My keyboard only has F1-F12!</h2>
 <blockquote><p>It depends on the terminal type you're using. On some terminals, such as the FreeBSD console, xterm, konsole, and gnome-terminal, Shift-F1 to Shift-F4 will generate F13 to F16. On other terminals, such as the Linux console, rxvt, and Eterm, Shift-F3 to Shift-F6 will generate F13 to F16.</p></blockquote>
 <h2><a name="4.6"></a>4.6. nano crashes when I type &lt;insert keystroke here&gt;!</h2>
@@ -240,93 +240,22 @@
 <hr width="100%">
 
 <h1><a name="7"></a>7. Miscellaneous</h1>
-<h2><a name="7.1"></a>7.1. nano-related mailing lists.</h2>
+<h2><a name="7.1"></a>7.1. Where can I ask questions or send suggestions?</h2>
 <blockquote><p>There are three mailing lists for nano hosted at <a href="http://savannah.gnu.org/">Savannah</a>: info-nano, help-nano and nano-devel. info-nano is a very low traffic list where new versions of nano are announced (surprise!). help-nano is for getting help with the editor without needing to hear all of the development issues surrounding it. nano-devel is a normally low, sometimes high traffic list for discussing the present and future development of nano. Here are links to where you can sign up for a given list:</p>
   <p>info-nano - <a href="http://mail.gnu.org/mailman/listinfo/info-nano/">http://mail.gnu.org/mailman/listinfo/info-nano/</a><br>
   help-nano - <a href="http://mail.gnu.org/mailman/listinfo/help-nano/">http://mail.gnu.org/mailman/listinfo/help-nano/</a><br>
   nano-devel - <a href="http://mail.gnu.org/mailman/listinfo/nano-devel/">http://mail.gnu.org/mailman/listinfo/nano-devel/</a></p></blockquote>
-<h2><a name="7.2"></a>7.2. I want to send the development team a big load of cash (or just a thank you).</h2>
-<blockquote><p>That's fine. Send it <a href="mailto:nano-devel@gnu.org">our way</a>! Better yet, fix a <a href="https://savannah.gnu.org/bugs/?group=nano">bug</a> in the program or implement a <a href="https://nano-editor.org/dist/latest/TODO">cool feature</a> and send us that instead (though cash is fine too).</p></blockquote>
-<h2><a name="7.3"></a>7.3. How do I submit a bug report or patch?</h2>
+<h2><a name="7.2"></a>7.3. How do I submit a bug report or patch?</h2>
 <blockquote>
   <p>The best way to submit bugs is through the <a href="https://savannah.gnu.org/bugs/?group=nano">Savannah bug tracker</a>, as you can check whether the bug you are reporting has already been submitted, and it makes it easier for the maintainers to keep track of them.
   <p>You can submit patches for nano via <a href="https://savannah.gnu.org/patch/?group=nano">Savannah's patch manager</a>.</p></blockquote>
+<h2><a name="7.3"></a>7.3. I want to send the development team a big load of cash (or just a thank you).</h2>
+<blockquote><p>That's fine. Send it <a href="mailto:nano-devel@gnu.org">our way</a>! Better yet, fix a <a href="https://savannah.gnu.org/bugs/?group=nano">bug</a> in the program or implement a <a href="https://nano-editor.org/dist/latest/TODO">cool feature</a> and send us that instead (though cash is fine too).</p></blockquote>
 <h2><a name="7.4"></a>7.4. How do I join the development team?</h2>
 <blockquote><p>The easiest way is to consistently send in good patches that add some needed functionality, fix a bug or two, and/or make the program more optimized/efficient. Then ask nicely and you will probably be added to the Savannah development list and be given write access after a while. There is a lot of responsibility that goes along with being a team member, so don't think it's just something to add to your resume.</p></blockquote>
 <h2><a name="7.5"></a>7.5. Can I have write access to the git tree?</h2>
 <blockquote><p>Re-read section <a href="#7.4">7.4</a> and you should know the answer.</p></blockquote>
 <hr width="100%">
 
-<h1><a name="8"></a>8. ChangeLog</h1>
-<blockquote><p>
-2017.01.09 - Delete some obsolete items and update a few others. (Benno)<br>
-2016.04.17 - Update docs to refer to GIT instead of subversion. (Mike)<br>
-2015.07.18 - More small fixes and updates. (Benno)<br>
-2014.04.24 - A bunch of small fixes and updates. (Benno)<br>
-2009.11.30 - Update various bits for nano 2.2.x. (DLR)<br>
-2009.11.18 - Typo fix. (j.mader@gmail.com)<br>
-2008.03.16 - Update docs to refer to subversion instead of CVS, add more words about Alpine, and refer to Savannah for bugs and patches. (Chris)<br>
-2007.12.21 - Update maintainer information. (DLR)<br>
-2007.12.09 - Add minor punctuation and wording fixes, and update various sections to account for Alpine. (DLR)<br>
-2007.08.26 - Update links to the Free Translation Project. (DLR)<br>
-2007.07.29 - Update RPM links for nano 2.0.x. (DLR)<br>
-2007.04.18 - Add a new section 4.14 to explain how autoindent affects pasted text. (John M. Gabriele, minor tweaks by DLR)<br>
-2007.04.04 - Update email address. (DLR)<br>
-2007.01.01 - Update section 4.1 to describe how to open files with names beginning with '+' at specified columns as well as lines. (DLR)<br>
-2006.11.25 - Add miscellaneous wording and capitalization fixes. (DLR)<br>
-2006.10.28 - Update various links for the 2.0 branch of nano. (DLR)<br>
-2006.10.06 - Update the question in section 4.13 to match the version of it in the answer section. (DLR)<br>
-2006.07.25 - Update section 5.3 again to not state &quot;the latest development version&quot; before 1.3.12, as it's no longer accurate. Also add some minor spacing fixes. (DLR)<br>
-2006.06.12 - Update section 5.3, due to the display fix for two-column Unicode characters. (DLR)<br>
-2006.06.05 - Add a new section 4.8, and move all section 4 entries after it down one number, to explain how to deal with glibc 2.2.3's crashes involving extended regular expressions. (DLR)<br>
-2006.06.04 - Add minor punctuation, wording, and typo fixes. (DLR)<br>
-2006.05.27 - Update section 3.8 to mention the new "Unicode Input" prompt, and how Unicode input only works when Unicode support is enabled. (DLR)<br>
-2006.05.12 - Remove section 4.4, and move all section 4 entries after it up one number, since it no longer applies. Meta-] and Meta-[ are no longer used to indent and unindent marked text, since they require that the bracket matching key change to Ctrl-], which is used as the telnet escape key (found by Chris). Also, make the link to the nano CVS page a bit more readable. (DLR)<br>
-2006.05.08 - Add a new section 4.5, and move all section 4 entries after it down one number, to explain a problem that can occur when holding down keys to generate Meta sequences. Also add a few more capitalization and wording fixes. (Benno Schulenberg, minor tweaks by DLR)<br>
-2006.05.01 - Add a new section 4.4, and move all section 4 entries after it down one number, to explain how to deal with problems typing Meta-[. Also add a few capitalization and wording fixes. (DLR)<br>
-2006.04.14 - Clarify section 1.4: help menu -> help text display. (DLR, suggested by Benno Schulenberg)<br>
-2006.03.16 - Update the Free Translation Project's address, change the character set to UTF-8, and remove broken links to contributed RedHat nano packages. (DLR)<br>
-2005.11.21 - Clarify section 5.3 to better explain how to enable Unicode support, and remove the mention of quirks, since they turned out to not be a nano problem. (Mike Frysinger and DLR)<br>
-2005.11.19 - Add a new section 5.3 to explain the status of nano's Unicode support. (Mike Frysinger, minor tweaks by DLR)<br>
-2005.08.27 - Update email address. (DLR)<br>
-2005.08.10 - Add a new section 4.3, and move all section 4 entries after it down one number, to explain how to deal with numeric keypad problems. (DLR)<br>
-2005.08.08 - Update section 3.8 to mention that verbatim input mode now takes a six-digit hexadecimal number. (DLR)<br>
-2005.07.04 - Update section 4.10 to mention that pasting from the X clipboard via the middle mouse button also works when the Shift key is used. (DLR)<br>
-2005.06.15 - Update description of --enable-extra, and add missing line breaks. (DLR)<br>
-2005.06.13 - Minor capitalization and wording fixes. (DLR)<br>
-2005.06.08 - Updated section 1.1 to mention the current maintainer. (DLR)<br>
-2005.03.09 - Added question about opening files with names beginning with '+'s, and added a few more miscellaneous cosmetic fixes. (DLR)<br>
-2005.01.03 - Removed now-inaccurate note about verbatim input's not working at prompts, and update its description to mention that it handles hexadecimal values now. (DLR)<br>
-2004.11.21 - Listed sh as an example of a Bourne shell. (DLR)<br>
-2004.11.05 - Fixed inaccuracy: Pico compatibility mode was made the default in nano 1.1.99pre1, not 1.2.2. Also added question about how to type F13-F16 on terminals lacking keys past F12 (suggested by Chris), question about how to select text for the clipboard in X terminals with nano's mouse support turned on (answer found by Joseph Birthisel), and misc. fixes and link updates. (DLR)<br>
-2004.04.07 - Removed NumLock glitch question, as it's no longer needed. (DLR)<br>
-2004.01.30 - Fixed inaccuracy: multibuffer mode was first in nano 1.1.0, not 1.1.12. (DLR)<br>
-2003.12.31 - Added question about the new verbatim input function, and a few minor fixes. Removed reference to &quot;set pico&quot; (DLR).<br>
-2003.07.02 - Added question about nano's not showing color when it's compiled with color support (DLR; suggested by Jordi).<br>
-2003.02.23 - Updated RPM links for nano 1.2.x (DLR).<br>
-2003.01.16 - Split section 4.5 into 4.5a and 4.5b for search string behavior. Added --enable-all docs.<br>
-2002.12.28 - More misc. fixes (David Benbennick, DLR).<br>
-2002.10.25 - Misc. fixes and link updates (DLR).<br>
-2002.09.10 - Another typo fix (DLR).<br>
-2002.05.15 - Typo fix (DLR).<br>
-2001.12.26 - Misc. fixes (Aaron S. Hawley, DLR).<br>
-2001.10.02 - Update for Free Translation Project.<br>
-2001.10.02 - Assorted fixes, Debian additions.<br>
-2001.06.30 - Silly typo fix.<br>
-2001.05.05 - Spelling fixes by David Lawrence Ramsey.<br>
-2001.05.02 - Misc fixes.<br>
-2001.03.26 - Typo fix in an URL.<br>
-2001.02.17 - Advocacy updates.<br>
-2001.02.15 - Added GNU notes for 0.9.99pre3.<br>
-2001.02.06 - Typo fixes.<br>
-2001.01.14 - Added note about NumLock glitch.<br>
-2001.01.10 - Linux -&gt; GNU/Linux.<br>
-2001.01.09 - Added &quot;making exe smaller&quot; section.<br>
-2000.12.19 - Typo and assorted error fixes.<br>
-2000.11.28 - Added blurb about make install-strip.<br>
-2000.11.19 - Changed Debian frozen to stable.<br>
-2000.11.18 - Previous string display (4.5).<br>
-2000.09.27 - Moved addresses to nano-editor.org.<br>
-2000.06.31 - Initial framework.</p></blockquote>
 </body>
 </html>
