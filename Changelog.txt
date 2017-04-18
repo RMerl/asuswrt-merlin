@@ -13,6 +13,7 @@ Asuswrt-Merlin Changelog
 
   - NEW: Option to disable Wanduck's constant DNS probing
          for WAN state (Tools -> Other Settings)
+  - CHANGED: Fixed CVE-2016-10229 security issue in kernel.
   - CHANGED: Allow disabling use of DH, by entering
              "none" in the DH field for OpenVPN server config.
   - CHANGED: Ovpn importer now recognizes the "port" parameter.
@@ -20,10 +21,11 @@ Asuswrt-Merlin Changelog
              the "remote" parameter, allowing to define the
              protocol.
   - CHANGED: Updated Tor to 0.2.9.10
+  - CHANGED: Updated nano to 2.8.0
   - REMOVED: The Virtual Server page no longer allows users to
              edit existing port forwards (our existing code is
-             incompatible with Asus's newer webui code and will 
-             need to be re-implemented.
+             incompatible with Asus's newer webui code and will
+             need to be re-implemented.)
   - FIXED: WOL page fails to load if adding a client with a
            quote in its name.
   - FIXED: Couldn't add a DHCP reservation client if its name
@@ -33,6 +35,9 @@ Asuswrt-Merlin Changelog
   - FIXED: OpenVPN server didn't always work properly in udp mode
            when in a dual stack IPv4/IPv6 environment (backport
            from GPL 382_9736)
+  - FIXED: When disabling NCP support in OpenVPN, the router
+           could still be trying to use it if the remote end
+           had it enabled.
 
 
 380.65_4 (28-Mar-2017)

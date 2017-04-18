@@ -2364,7 +2364,7 @@ fi; \
 			echo "CONFIG_NETFILTER_XT_MATCH_STATISTIC=y" >>$(1); \
 		fi; \
 	fi; \
-	if [ "$(IPSEC)" = "y" ]; then \
+	if [ "$(IPSECMOD)" = "y" ]; then \
 		sed -i "/CONFIG_XFRM_USER/d" $(1); \
 		echo "CONFIG_XFRM_USER=m" >>$(1); \
 		echo "# CONFIG_XFRM_SUB_POLICY is not set" >>$(1); \
