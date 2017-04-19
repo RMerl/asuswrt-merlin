@@ -6,6 +6,7 @@ Asuswrt-Merlin Changelog
           from 380_7266.
           Notable changes:
              * Port forwards can select a specific source IP
+             * Improved security against ssh break-in attempts
           Known issues:
              * Some wifi clients such as wireless printers
                have connectivity issues.  Try disabling
@@ -13,15 +14,18 @@ Asuswrt-Merlin Changelog
 
   - NEW: Option to disable Wanduck's constant DNS probing
          for WAN state (Tools -> Other Settings)
-  - CHANGED: Fixed CVE-2016-10229 security issue in kernel.
-  - CHANGED: Allow disabling use of DH, by entering
-             "none" in the DH field for OpenVPN server config.
+  - NEW: Allow disabling use of DH, by entering
+         "none" in the DH field for OpenVPN server config.
   - CHANGED: Ovpn importer now recognizes the "port" parameter.
   - CHANGED: Ovpn importer now support a third argument for
              the "remote" parameter, allowing to define the
              protocol.
   - CHANGED: Updated Tor to 0.2.9.10
-  - CHANGED: Updated nano to 2.8.0
+  - CHANGED: Updated nano to 2.8.1
+  - CHANGED: Policy-based routing tables will now only contain
+             routes related to their specific tunnel.  This
+             ensures that global routes cannot override a
+             tunnel's policies.
   - REMOVED: The Virtual Server page no longer allows users to
              edit existing port forwards (our existing code is
              incompatible with Asus's newer webui code and will
@@ -38,6 +42,8 @@ Asuswrt-Merlin Changelog
   - FIXED: When disabling NCP support in OpenVPN, the router
            could still be trying to use it if the remote end
            had it enabled.
+  - FIXED: Potential CVE-2016-10229 security issue in kernel
+           (unsure whether our kernel was vulnerable or not)
 
 
 380.65_4 (28-Mar-2017)
