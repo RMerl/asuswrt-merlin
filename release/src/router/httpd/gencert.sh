@@ -14,11 +14,15 @@ then
 	for CN in $LANCN; do
 		echo "$I.commonName=CN" >> openssl.config
 		echo "$I.commonName_value=$CN" >> openssl.config
+		echo "$I.organizationName=O" >> /etc/openssl.config
+		echo "$I.organizationName_value=$(uname -o)" >> /etc/openssl.config
 		I=$(($I + 1))
 	done
 else
 	echo "0.commonName=CN" >> openssl.config
 	echo "0.commonName_value=$LANIP" >> openssl.config
+	echo "0.organizationName=O" >> /etc/openssl.config
+	echo "0.organizationName_value=$(uname -o)" >> /etc/openssl.config
 fi
 
 I=0
