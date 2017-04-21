@@ -34,6 +34,8 @@ echo "[alt_names]" >> openssl.config
 
 # IP
 echo "IP.0 = $LANIP" >> openssl.config
+echo "DNS.$I = $LANIP" >> openssl.config # For broken clients like IE
+I=$(($I + 1))
 
 # DUT
 echo "DNS.$I = router.asus.com" >> openssl.config
