@@ -96,7 +96,7 @@ fi
 # create the key
 openssl genrsa -out key.pem 2048 -config /etc/openssl.config
 # create certificate request and sign it
-RANDFILE=/dev/urandom openssl req -new -x509 -key key.pem -sha256 -out cert.pem -days 3653 -config /etc/openssl.config
+openssl req -new -x509 -key key.pem -sha256 -out cert.pem -days 3653 -config /etc/openssl.config
 
 
 #	openssl x509 -in /etc/cert.pem -text -noout
