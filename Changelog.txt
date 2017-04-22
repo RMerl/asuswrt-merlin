@@ -26,6 +26,9 @@ Asuswrt-Merlin Changelog
              routes related to their specific tunnel.  This
              ensures that global routes cannot override a
              tunnel's policies.
+  - CHANGED: SSL certificate generated for httpds will now
+             contain SANs for hostname, router.asus.com, IP
+             and DDNS hostname.
   - REMOVED: The Virtual Server page no longer allows users to
              edit existing port forwards (our existing code is
              incompatible with Asus's newer webui code and will
