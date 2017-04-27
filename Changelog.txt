@@ -2,8 +2,7 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.66 beta (xx-xxx-2017)
-   - NEW: Merged with GPL 380_7378 (with many binary blobs
-          from 380_7266.
+   - NEW: Merged with GPL 380_7378
           Notable changes:
              * Port forwards can select a specific source IP
              * Improved security against ssh break-in attempts
