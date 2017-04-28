@@ -21,10 +21,6 @@ Asuswrt-Merlin Changelog
              protocol.
   - CHANGED: Updated Tor to 0.2.9.10
   - CHANGED: Updated nano to 2.8.1
-  - CHANGED: Policy-based routing tables will now only contain
-             routes related to their specific tunnel.  This
-             ensures that global routes cannot override a
-             tunnel's policies.
   - CHANGED: SSL certificate generated for httpds will now
              contain SANs for hostname, router.asus.com, IP
              and DDNS hostname.
