@@ -1651,7 +1651,7 @@ void stop_vpnserver(int serverNum)
 void start_vpn_eas()
 {
 	char buffer[16], *cur;
-	int nums[5], i;
+	int nums[MAX_OVPN_CLIENT], i;
 
 	if (strlen(nvram_safe_get("vpn_serverx_start")) == 0 && strlen(nvram_safe_get("vpn_clientx_eas")) == 0) return;
 	// wait for time sync for a while
@@ -1664,9 +1664,9 @@ void start_vpn_eas()
 	strlcpy(&buffer[0], nvram_safe_get("vpn_serverx_start"), sizeof(buffer));
 	if ( strlen(&buffer[0]) != 0 ) vpnlog(VPN_LOG_INFO, "Starting OpenVPN servers (eas): %s", &buffer[0]);
 	i = 0;
-	for( cur = strtok(&buffer[0],","); cur != NULL && i < 5; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
-	if(i < 5) nums[i] = 0;
-	for( i = 0; nums[i] > 0 && i < 5; i++ )
+	for( cur = strtok(&buffer[0],","); cur != NULL && i < MAX_OVPN_CLIENT; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
+	if(i < MAX_OVPN_CLIENT) nums[i] = 0;
+	for( i = 0; nums[i] > 0 && i < MAX_OVPN_CLIENT; i++ )
 	{
 
 		sprintf(&buffer[0], "vpnserver%d", nums[i]);
@@ -1689,9 +1689,9 @@ void start_vpn_eas()
 	strlcpy(&buffer[0], nvram_safe_get("vpn_clientx_eas"), sizeof(buffer));
 	if ( strlen(&buffer[0]) != 0 ) vpnlog(VPN_LOG_INFO, "Starting clients (eas): %s", &buffer[0]);
 	i = 0;
-	for( cur = strtok(&buffer[0],","); cur != NULL && i < 5; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
-	if(i < 5) nums[i] = 0;
-	for( i = 0; nums[i] > 0 && i < 5; i++ )
+	for( cur = strtok(&buffer[0],","); cur != NULL && i < MAX_OVPN_CLIENT; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
+	if(i < MAX_OVPN_CLIENT) nums[i] = 0;
+	for( i = 0; nums[i] > 0 && i < MAX_OVPN_CLIENT; i++ )
 	{
 		sprintf(&buffer[0], "vpnclient%d", nums[i]);
 		if ( pidof(&buffer[0]) >= 0 )
