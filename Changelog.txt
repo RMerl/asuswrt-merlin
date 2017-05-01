@@ -15,6 +15,16 @@ Asuswrt-Merlin Changelog
          for WAN state (Tools -> Other Settings)
   - NEW: Allow disabling use of DH, by entering
          "none" in the DH field for OpenVPN server config.
+  - NEW: Added new Internet redirection mode to OpenVPN clients
+         called "Policy Rule (Strict)".  The difference from the
+         existing "Policy Rule" mode is that in strict mode,
+         only rules that specifically target the tunnel's
+         interface will be used.  This ensures that you don't
+         leak traffic through global or other tunnel routes,
+         however it also means any static route you might have
+         defined at the WAN level will not be copied either.
+         In general, it's recommended to use this new strict
+         mode.
   - CHANGED: Ovpn importer now recognizes the "port" parameter.
   - CHANGED: Ovpn importer now support a third argument for
              the "remote" parameter, allowing to define the
