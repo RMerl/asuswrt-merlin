@@ -1304,7 +1304,7 @@ function defaultSettings() {
 						</td>
 					</tr>
 					<tr>
-						<th>Redirect Internet traffic</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,19);">Redirect Internet traffic</a></th>
 						<td colspan="2">
 							<select name="vpn_client_rgw" class="input_option" onChange="update_visibility();">
 							</select>
