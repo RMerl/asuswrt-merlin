@@ -48,7 +48,7 @@ if [ $script_type == 'up' ]
 then
 	echo iptables -t nat -N DNSVPN$instance >> $dnsscript
 
-	if [ $instance != 0 -a $(nvram get vpn_client$(echo $instance)_rgw) == 2 -a $(nvram get vpn_client$(echo $instance)_adns) == 3 ]
+	if [ $instance != 0 -a $(nvram get vpn_client$(echo $instance)_rgw) >= 2 -a $(nvram get vpn_client$(echo $instance)_adns) == 3 ]
 	then
 		setdns=0
 	else

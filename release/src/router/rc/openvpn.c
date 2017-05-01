@@ -1702,6 +1702,7 @@ void start_vpn_eas()
 
 		vpnlog(VPN_LOG_INFO, "Starting OpenVPN client %d (eas)", nums[i]);
 		start_vpnclient(nums[i]);
+
 	}
 }
 
@@ -1891,7 +1892,7 @@ int write_vpn_resolv(FILE* f)
 
 			// Don't modify dnsmasq if policy routing is enabled and dns mode set to "Exclusive"
 			snprintf(&buf[0], sizeof(buf), "vpn_client%c_rgw", num);
-			if ((nvram_get_int(&buf[0]) == 2 ) && (level == 3))
+			if ((nvram_get_int(&buf[0]) >= 2 ) && (level == 3))
 				continue;
 
 			if ( (dnsf = fopen(fn, "r")) == NULL )

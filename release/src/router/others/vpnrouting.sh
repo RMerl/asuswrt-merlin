@@ -82,10 +82,19 @@ init_table(){
 	ip route flush table $VPN_TBL
 
 # Fill it with copy of existing main table
-	ip route show table main | while read ROUTE
-	do
-		ip route add table $VPN_TBL $ROUTE
-	done
+	if [ "$VPN_REDIR" == "3" ]
+	then
+		ip route show table main dev $dev | while read ROUTE
+		do
+			ip route add table $VPN_TBL $ROUTE dev $dev
+		done
+	elif [ "$VPN_REDIR" == "2" ]
+	then
+		ip route show table main | while read ROUTE
+		do
+			ip route add table $VPN_TBL $ROUTE
+		done
+	fi
 }
 
 # Begin
@@ -139,7 +148,7 @@ then
 	logger -t "openvpn-routing" "Refreshing policy rules for client $VPN_UNIT"
 	purge_client_list
 
-	if [ $VPN_FORCE == "1" -a $VPN_REDIR == "2" ]
+	if [ $VPN_FORCE == "1" -a $VPN_REDIR >= "2" ]
 	then
 		init_table
 		logger -t "openvpn-routing" "Tunnel down - VPN client access blocked"
@@ -154,7 +163,7 @@ then
 	exit 0
 fi
 
-if [ $script_type == "route-up" -a $VPN_REDIR != "2" ]
+if [ $script_type == "route-up" -a $VPN_REDIR < "2" ]
 then
 	logger -t "openvpn-routing" "Skipping, client $VPN_UNIT not in routing policy mode"
 	run_custom_script
@@ -167,7 +176,7 @@ if [ $script_type == "route-pre-down" ]
 then
 	purge_client_list
 
-	if [ $VPN_FORCE == "1" -a $VPN_REDIR == "2" ]
+	if [ $VPN_FORCE == "1" -a $VPN_REDIR >= "2" ]
 	then
 		logger -t "openvpn-routing" "Tunnel down - VPN client access blocked"
 		ip route change prohibit default table $VPN_TBL
