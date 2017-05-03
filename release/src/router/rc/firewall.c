@@ -1410,7 +1410,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	{
 		/* call UPNP chain */
 		fprintf(fp, "-A VSERVER -j VUPNP\n");
-//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
+		fprintf(fp, "-A POSTROUTING -o %s -j PUPNP\n", wan_if);
 	}
 
 	/* Trigger port setting */
@@ -1669,7 +1669,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	{
 		/* call UPNP chain */
 		fprintf(fp, "-A VSERVER -j VUPNP\n");
-//		fprintf(fp, "-A POSTROUTING -j PUPNP\n");
+		fprintf(fp, "-A POSTROUTING -o %s -j PUPNP\n", wan_if);
 	}
 
 	/* Trigger port setting */
