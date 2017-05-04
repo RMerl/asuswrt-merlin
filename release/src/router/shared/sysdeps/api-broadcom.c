@@ -613,8 +613,9 @@ char *get_lan_mac_name(void)
 {
 #ifdef RTCONFIG_BCMARM
 #ifdef RTCONFIG_GMAC3
-	if (nvram_get_int("gmac3_enable"))
+	if (!nvram_match("stop_gmac3", "1") && *nvram_safe_get("et2macaddr") && !nvram_match("et2macaddr", "00:00:00:00:00:00"))
 		return "et2macaddr";
+	else
 #endif
 	switch(get_model()) {
 		case MODEL_RTAC87U:
@@ -636,7 +637,7 @@ char *get_wan_mac_name(void)
 {
 #ifdef RTCONFIG_BCMARM
 #ifdef RTCONFIG_GMAC3
-        if (nvram_get_int("gmac3_enable"))
+	if (!nvram_match("stop_gmac3", "1") && *nvram_safe_get("et2macaddr") && !nvram_match("et2macaddr", "00:00:00:00:00:00"))
 		return "et2macaddr";
 #endif
 	switch(get_model()) {
