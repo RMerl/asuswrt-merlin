@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -503,6 +503,20 @@ function del_Row(_this){
 	showvts_rulelist(vts_rulelist_array["vts_rulelist_" + wan_idx + ""], "vts_rulelist_" + wan_idx + "");
 }
 
+function edit_Row(_this){ 	
+	var wan_idx = $(_this).closest("*[wanUnitID]").attr( "wanUnitID" );
+	var form_idx = $("#vts_rulelist_0")[0]).closest("*[wanUnitID]").attr( "wanUnitID" );
+  	
+	document.getElementById("vts_desc_x_" + form_idx + "").value = document.getElementById("vts_desc_x_" + wan_idx + "").value;
+	document.getElementById("vts_target_x_" + form_idx + "").value = document.getElementById("vts_target_x_" + wan_idx + "").value;
+	document.getElementById("vts_port_x_" + form_idx + "").value = document.getElementById("vts_port_x_" + wan_idx + "").value;
+	document.getElementById("vts_ipaddr_x_" + form_idx + "").value = document.getElementById("vts_ipaddr_x_" + wan_idx + "").value;
+	document.getElementById("vts_lport_x_" + form_idx + "").value = document.getElementById("vts_lport_x_" + wan_idx + "").value;
+	document.getElementById("vts_proto_x_" + form_idx + "").value = document.getElementById("vts_proto_x_" + wan_idx + "").value;
+
+	del_Row(_this);
+}
+
 function showvts_rulelist(_arrayData, _tableID) {
 	var wan_idx = _tableID.split("_")[2];
 	var width_array = [20, 20, 16, 18, 10, 10, 6];
@@ -540,7 +554,7 @@ function showvts_rulelist(_arrayData, _tableID) {
 							break;
 					}
 				}
-				
+				code +='<td width="14%"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
 				code +='<td width="14%"><input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 				code +='</tr>';
 			}
