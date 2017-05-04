@@ -427,7 +427,7 @@ function validForm(){
 				document.form.obw.select();
 				return false;
 			}
-			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && !validator.rangeFloat(document.form.obw, 1, 9999999999)){
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && !validator.rangeFloat(document.form.obw, 0, 9999999999)){
 				return false;
 			}
 					
@@ -449,7 +449,7 @@ function validForm(){
 				document.form.ibw.select();
 				return false;
 			}
-			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && !validator.rangeFloat(document.form.ibw, 1, 9999999999)){
+			if( ((document.form.qos_type.value == 1 && document.form.bw_setting_name[1].checked == true ) || document.form.qos_type.value == 0) && !validator.rangeFloat(document.form.ibw, 0, 9999999999)){
 				return false;
 			}
 			
