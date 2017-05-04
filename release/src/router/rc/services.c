@@ -3193,7 +3193,7 @@ void start_upnp(void)
 {
 	FILE *f;
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
-	char et0macaddr[18];
+	char lanmacaddr[18];
 	char *proto, *port, *lport, *srcip, *dstip, *desc;
 	char *nv, *nvp, *b;
 	int upnp_enable, upnp_mnp_enable, upnp_port;
@@ -3232,19 +3232,10 @@ void start_upnp(void)
 				if (upnp_port < 0 || upnp_port > 65535)
 					upnp_port = 0;
 
-#if defined(RTCONFIG_RGMII_BRCM5301X)
-				strcpy(et0macaddr, nvram_safe_get("lan_hwaddr"));
-#elif defined(RTCONFIG_GMAC3)
-				if (nvram_match("gmac3_enable", "1"))
-					strcpy(et0macaddr, nvram_safe_get("et2macaddr"));
-				else
-					strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
-#else
-				strcpy(et0macaddr, get_lan_hwaddr());
-#endif
-				if (strlen(et0macaddr))
-					for (i = 0; i < strlen(et0macaddr); i++)
-						et0macaddr[i] = tolower(et0macaddr[i]);;
+				strlcpy(lanmacaddr, get_lan_hwaddr(), sizeof (lanmacaddr));
+				if (strlen(lanmacaddr))
+					for (i = 0; i < strlen(lanmacaddr); i++)
+						lanmacaddr[i] = tolower(lanmacaddr[i]);;
 
 				fprintf(f,
 					"ext_ifname=%s\n"
@@ -3275,7 +3266,7 @@ void start_upnp(void)
 					get_productid(),
 					"ASUS Wireless Router",
 					rt_serialno,
-					nvram_get("serial_no") ? : et0macaddr,
+					nvram_get("serial_no") ? : lanmacaddr,
 					"/tmp/upnp.leases");
 
 				if (nvram_get_int("upnp_clean")) {
@@ -3610,20 +3601,13 @@ int generate_mdns_config(void)
 {
 	FILE *fp;
 	char avahi_config[80];
-	char et0macaddr[18];
+	char lanmacaddr[18];
 	int ret = 0;
 	char *wan1_ifname;
 
 	sprintf(avahi_config, "%s/%s", AVAHI_CONFIG_PATH, AVAHI_CONFIG_FN);
 
-#if defined(RTCONFIG_GMAC3)
-	if (nvram_match("gmac3_enable", "1"))
-		strcpy(et0macaddr, nvram_safe_get("et2macaddr"));
-	else
-		strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
-#else
-	strcpy(et0macaddr, get_lan_hwaddr());
-#endif
+	strlcpy(lanmacaddr, get_lan_hwaddr(), sizeof (lanmacaddr));
 
 	/* Generate avahi configuration file */
 	if (!(fp = fopen(avahi_config, "w"))) {
@@ -3633,7 +3617,7 @@ int generate_mdns_config(void)
 
 	/* Set [server] configuration */
 	fprintf(fp, "[Server]\n");
-	fprintf(fp, "host-name=%s-%c%c%c%c\n", get_productid(),et0macaddr[12],et0macaddr[13],et0macaddr[15],et0macaddr[16]);
+	fprintf(fp, "host-name=%s-%c%c%c%c\n", get_productid(),lanmacaddr[12],lanmacaddr[13],lanmacaddr[15],lanmacaddr[16]);
 #ifdef RTCONFIG_FINDASUS
 	fprintf(fp, "aliases=findasus,%s\n",get_productid());
 	fprintf(fp, "aliases_llmnr=findasus,%s\n",get_productid());
