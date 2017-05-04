@@ -1,6 +1,11 @@
 asuswrt-merlin
 ==============
 
+*** Please do not use Github's Issue tracker for support requests!  ***
+*** Use the support forums at SNBForums instead.  The issue tracker ***
+*** is for development/bug tracking purposes only!                  ***
+
+
 This is an enhanced version of Asuswrt - the firmware used by all recent Asus routers. 
 
 The goal of this project is to fix issues and bring some minor functionality adjustments to the 
