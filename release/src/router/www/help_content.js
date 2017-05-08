@@ -338,5 +338,6 @@ helpcontent[50] = new Array("",
 				"OpenVPN can automatically negotiate the cipher based on a list.  Requires OpenVPN 2.4.  For older remote client/servers, disable it, or use Enabled with Fallback mode, which will use the legacy cipher parameter when connecting to older remotes.",
 				"MiniDLNA can offer a web page showing the number of indexed media files and a list of DLNA clients.  Default address is http://router.asus.com:8200/",
 				"Wanduck sends DNS queries every few seconds to check for the WAN state.  You can disable this behaviour here.",
-				"You can redirect your Internet traffic through the tunnel.  Select between \"All\" traffic, or only traffic based on your own rules.  Strict mode will take extra steps to ensure that only routes going through the VPN tunnel get used for your tunnelled clients.");
-// Last: 50,19
+				"You can redirect your Internet traffic through the tunnel.  Select between \"All\" traffic, or only traffic based on your own rules.  Strict mode will take extra steps to ensure that only routes going through the VPN tunnel get used for your tunnelled clients.",
+				"Bridge multicast snooping is no longer enabled by default, as it can possibly interfere with various things like IPv6, EMF and UPnP.  Re-enable it if you are encountering performance or stability issues with your LAN.");
+// Last: 50,20
