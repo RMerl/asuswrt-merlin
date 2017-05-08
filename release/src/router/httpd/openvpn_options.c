@@ -679,6 +679,11 @@ add_option (char *p[], int line, int unit)
 		sprintf(buf, "vpn_client%d_hmac", unit);
 		nvram_set(buf, p[1]);
 	}
+	else if (streq (p[0], "reneg-sec") && p[1])
+	{
+		sprintf(buf, "vpn_client%d_reneg", unit);
+		nvram_set(buf, p[1]);
+	}
 	// These are already added by us
 	else if (streq (p[0], "client") ||
 		 streq (p[0], "nobind") ||
