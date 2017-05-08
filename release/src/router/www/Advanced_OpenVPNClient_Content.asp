@@ -250,13 +250,13 @@ function initial()
 	for(var i = 0; i < ciphersarray.length; i++){
 		add_option(document.form.vpn_client_cipher,
 			ciphersarray[i][0], ciphersarray[i][0],
-			(currentcipher.toLower() == ciphersarray[i][0].toLower()));
+			(currentcipher.toLowerCase() == ciphersarray[i][0].toLowerCase()));
 	}
 
 	for(var i = 0; i < digestsarray.length; i++){
 		add_option(document.form.vpn_client_digest,
 			digestsarray[i][0], digestsarray[i][0],
-			(currentdigest.toLower() == digestsarray[i][0].toLower()));
+			(currentdigest.toLowerCase() == digestsarray[i][0].toLowerCase()));
 	}
 
 	// Set these based on a compound field
@@ -581,6 +581,8 @@ function ImportOvpn(){
 
 var vpn_upload_state = "init";
 function ovpnFileChecker(){
+	var missing;
+
 	document.getElementById("importOvpnFile").innerHTML = "<#Main_alert_proceeding_desc3#>";
 
 	$.ajax({
@@ -599,8 +601,9 @@ function ovpnFileChecker(){
 					setTimeout("ovpnFileChecker();",1000);
 				}
 				else if(vpn_upload_state > 0){
-					document.getElementById("importOvpnFile").innerHTML = "Failed!";
-					alert("Error " + vpn_upload_state +" while importing file - invalid key and/or certificate!\nFix your config file, then import it again.");
+					document.getElementById("importOvpnFile").innerHTML = "Warning!";
+					missing = upload_build_report(vpn_upload_state);
+					alert("Warning (" + vpn_upload_state +") while importing file - you will need to manually provide the " + missing.replace(/,\s*$/, "") + " content, on the keys/certificates page.");
 					setTimeout("location.href='Advanced_OpenVPNClient_Content.asp';", 3000);
 				}
 				else{
@@ -610,6 +613,24 @@ function ovpnFileChecker(){
 	});
 }
 
+function upload_build_report(ret){
+
+	var missing = "";
+
+	if (ret & 1)
+		missing += "CA, ";
+	if (ret & 2)
+		missing += "Certificate, ";
+	if (ret & 4)
+		missing += "Key, ";
+	if (ret & 8)
+		missing += "Static Key, ";
+	if (ret & 16)
+		missing += "CRL, ";
+	if (ret & 32)
+		missing += "Extra certificate, "
+	return missing;
+}
 
 function update_local_ip(object){
 
