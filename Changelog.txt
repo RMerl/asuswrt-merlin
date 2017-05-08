@@ -23,17 +23,26 @@ Asuswrt-Merlin Changelog
          leak traffic through global or other tunnel routes,
          however it also means any static route you might have
          defined at the WAN level will not be copied either.
-         In general, it's recommended to use this new strict
-         mode.
-  - CHANGED: Ovpn importer now recognizes the "port" parameter.
+  - CHANGED: Ovpn importer now recognizes the "port" and
+             "reneg-sec" parameters.
   - CHANGED: Ovpn importer now support a third argument for
-             the "remote" parameter, allowing to define the
+             the "remote" parameter, allowing to specify the
              protocol.
   - CHANGED: Updated Tor to 0.2.9.10
   - CHANGED: Updated nano to 2.8.1
   - CHANGED: SSL certificate generated for httpds will now
              contain SANs for hostname, router.asus.com, IP
              and DDNS hostname.
+  - CHANGED: Make minidlna always use the same uuid, based on
+             the LAN MAC (original patch by john9527)
+  - CHANGED: Better feedback provided when an ovpn file upload
+             generates a problem due to a key/cert that's
+             not provided inline.  Inform the user which of
+             these he will need to manually provide.
+  - CHANGED: Disable bridge multicast_snooping, as this should be
+             unnecessary, and it could interfere with EMF, UPNP and
+             other multicast applications.  Can be re-enabled from
+             the Tools -> Other Settings page.
   - REMOVED: The Virtual Server page no longer allows users to
              edit existing port forwards (our existing code is
              incompatible with Asus's newer webui code and will
@@ -52,6 +61,8 @@ Asuswrt-Merlin Changelog
            had it enabled.
   - FIXED: Potential CVE-2016-10229 security issue in kernel
            (unsure whether our kernel was vulnerable or not)
+  - FIXED: ovpn file import would fail to import auth hash or
+           cipher if they weren't uppercase.
 
 
 380.65_4 (28-Mar-2017)
