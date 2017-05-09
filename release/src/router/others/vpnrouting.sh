@@ -84,6 +84,11 @@ init_table(){
 # Fill it with copy of existing main table
 	if [ "$VPN_REDIR" == "3" ]
 	then
+		LANIFNAME=$(nvram get lan_ifname)
+		ip route show table main dev $LANIFNAME | while read ROUTE
+		do
+			ip route add table $VPN_TBL $ROUTE dev $LANIFNAME
+		done
 		ip route show table main dev $dev | while read ROUTE
 		do
 			ip route add table $VPN_TBL $ROUTE dev $dev
