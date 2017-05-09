@@ -130,7 +130,7 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-<% vpn_client_get_parameter(); %>;
+<% vpn_client_get_parameter(); %>
 
 openvpn_unit = '<% nvram_get("vpn_client_unit"); %>';
 
