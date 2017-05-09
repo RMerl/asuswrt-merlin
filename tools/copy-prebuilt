@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Copy model/SDK specific binary blobs from new GPL to development repo
+
+#
+# Usage: enter the new GPL directory then run this script.
+#        Then run by specifying the model number as argument.
+#        REPO will contain the location of your local repository
+
+MODEL=$1
+REPO=/home/merlin/asuswrt
+
+if [ "$MODEL" == "RT-AC88U" ] || [ "$MODEL" == "RT-AC3100" ] || [ "$MODEL" == "RT-AC5300" ]
+then
+	SDK="_7114"
+	ARCH="_arm"
+
+	cp release/src/router/bwdpi_bin/bwdpi_bcm7114/* $REPO/release/src/router/bwdpi_bin/bwdpi_bcm7114/
+	cp release/src/router/ctf_arm/bcm_7114_gmac3/* $REPO/release/src/router/ctf_arm/bcm_7114_gmac3/
+	cp release/src/router/wl_arm_7114/prebuilt/* $REPO/release/src/router/wl_arm_7114/prebuilt/$MODEL/
+	cp release/src/router/envram_bin/* $REPO/release/src/router/envram_bin/
+
+elif [ "$MODEL" == "RT-AC3200" ]
+then
+	SDK="_7"
+	ARCH="_arm"
+
+	cp release/src/router/bwdpi_bin/bwdpi_bcm7/* $REPO/release/src/router/bwdpi_bin/bwdpi_bcm7/
+	cp release/src/router/ctf_arm/bcm7/* $REPO/release/src/router/ctf_arm/bcm7/
+	cp release/src/router/wl_arm_7/prebuilt/* $REPO/release/src/router/wl_arm_7/prebuilt/
+
+elif [ "$MODEL" == "RT-AC56U" ] || [ "$MODEL" == "RT-AC68U" ] || [ "$MODEL" == "RT-AC87U" ]
+then
+	SDK=""
+	ARCH="_arm"
+
+        cp release/src/router/bwdpi_bin/bwdpi_bcm6_smp/* $REPO/release/src/router/bwdpi_bin/bwdpi_bcm6_smp/
+        cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
+        cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/$MODEL/prebuilt/
+
+elif [ "$MODEL" == "RT-N66U" ] || [ "$MODEL" == "RT-AC66U" ]
+then
+	SDK=""
+	ARCH=""
+
+	cp release/src-rt-6.x/wl/sysdeps/$MODEL/linux/*.o $REPO/release/src-rt-6.x/wl/sysdeps/$MODEL/linux/
+else
+	echo "Unrecognized model!"
+	exit
+fi
+
+
+# Asuswrt prebuild (model-specific)
+cp release/src/router/httpd/prebuild/* $REPO/release/src/router/httpd/prebuild/models/$MODEL
+cp release/src/router/rc/prebuild/* $REPO/release/src/router/rc/prebuild/models/$MODEL
+cp release/src/router/shared/prebuild/* $REPO/release/src/router/shared/prebuild/models/$MODEL
+
+
+# Arch-specific
+if [ "$ARCH" == "_arm" ]
+then
+	cp release/src/router/et$ARCH$SDK/prebuilt/* $REPO/release/src/router/et$ARCH$SDK/prebuilt/
+	cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
+fi
+
+# SDK-specific
+cp release/src/router/acsd$ARCH$SDK/prebuilt/* $REPO/release/src/router/acsd$ARCH$SDK/prebuilt/
+cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
+cp release/src/router/emf$ARCH$SDK/*.o $REPO/release/src/router/emf$ARCH$SDK/
+cp release/src/router/emf$ARCH$SDK/emfconf/prebuilt/* $REPO/release/src/router/emf$ARCH$SDK/emfconf/prebuilt/
+cp release/src/router/emf$ARCH$SDK/igsconf/prebuilt/* $REPO/release/src/router/emf$ARCH$SDK/igsconf/
+#cp release/src/router/libupnp$ARCH$SDK/prebuilt/* $REPO/release/src/router/libupnp$ARCH$SDK/prebuilt/
+cp release/src/router/nas$ARCH$SDK/nas/prebuilt/* $REPO/release/src/router/nas$ARCH$SDK/nas/prebuilt/
+cp release/src/router/wlconf$ARCH$SDK/prebuilt/* $REPO/release/src/router/wlconf$ARCH$SDK/prebuilt/
+cp release/src/router/wps$ARCH$SDK/prebuilt/* $REPO/release/src/router/wps$ARCH$SDK/prebuilt/
+
+# Arch-specific
+cp release/src/router/aaews/prebuild/* $REPO/release/src/router/aaews/prebuild$ARCH/
+cp release/src/router/asusnatnl/natnl/prebuild/* $REPO/release/src/router/asusnatnl/natnl/prebuild$ARCH/
+cp release/src/router/asuswebstorage/prebuild/* $REPO/release/src/router/asuswebstorage$ARCH/prebuild/
+cp -a release/src/router/Beceem_BCMS250/prebuild/* $REPO/release/src/router/Beceem_BCMS250$ARCH/prebuild/
+# cp -a release/src/router/cloudcheck/* $REPO/release/src/router/cloudcheck/
+cp release/src/router/dropbox_client/prebuild/* $REPO/release/src/router/dropbox_client/prebuild$ARCH/
+cp release/src/router/ftpclient/prebuild/* $REPO/release/src/router/ftpclient/prebuild$ARCH/
+cp release/src/router/sambaclient/prebuild/* $REPO/release/src/router/sambaclient/prebuild$ARCH/
+cp release/src/router/u2ec/prebuild/* $REPO/release/src/router/u2ec/prebuild$ARCH/
+cp release/src/router/wb/prebuild/libws.so $REPO/release/src/router/wb/prebuild/libws$ARCH.so
+cp release/src/router/webdav_client/prebuilt/* $REPO/release/src/router/webdav_client$ARCH/prebuilt/
+
+# Model-specific
+if [ "$MODEL" == "RT-AC88U" ]
+then
+	cp release/src/router/rtl_bin/prebuilt/* $REPO/release/src/router/rtl_bin/prebuilt/
+fi
+
+if [ "$MODEL" == "RT-AC3200" ] || [ "$MODEL" == "RT-AC88U" ] || [ "$MODEL" == "RT-AC3100" ] || [ "$MODEL" == "RT-AC5300" ]
+then
+	cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd$ARCH$SDK/prebuilt/
+fi

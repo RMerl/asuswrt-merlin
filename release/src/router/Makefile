@@ -1999,9 +1999,9 @@ upnp: nvram$(BCMEX) shared $(IPTABLES)
 
 miniupnpd/config.h: shared/version.h
 ifeq ($(RTCONFIG_IGD2),y)
-	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile $(if $(RTCONFIG_IPV6),--ipv6,) --igd2
+	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile $(if $(RTCONFIG_IPV6),--ipv6,) --igd2 --portinuse
 else
-	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile
+	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile --portinuse
 endif
 
 miniupnpd: $(IPTABLES) e2fsprogs miniupnpd/config.h

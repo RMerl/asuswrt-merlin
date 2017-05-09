@@ -1526,9 +1526,9 @@ var validator = {
 		}
 	},
 
-	rangeFloat: function(o, _min, _max, def){
+	rangeFloat: function(o, min, max, def=1){
 
-                if(isNaN(o.value) || o.value <= _min || o.value > _max) {
+                if(isNaN(o.value) || o.value <= min || o.value > max) {
                         alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max + '.');
 			o.value = def;
 			o.focus();

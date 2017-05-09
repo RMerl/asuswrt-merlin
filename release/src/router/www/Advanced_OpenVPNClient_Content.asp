@@ -232,14 +232,14 @@ function initial()
 	// Cipher list
 	free_options(document.form.vpn_client_cipher);
 	currentcipher = "<% nvram_get("vpn_client_cipher"); %>";
-	add_option(document.form.vpn_client_cipher, "Default","default",(currentcipher == "default"));
-	add_option(document.form.vpn_client_cipher, "None","none",(currentcipher == "none"));
+	add_option(document.form.vpn_client_cipher, "Default","default",(currentcipher.toLowerCase() == "default"));
+	add_option(document.form.vpn_client_cipher, "None","none",(currentcipher.toLowerCase() == "none"));
 
 	// Digest list
 	free_options(document.form.vpn_client_digest);
 	currentdigest = "<% nvram_get("vpn_client_digest"); %>";
-	add_option(document.form.vpn_client_digest, "Default","default",(currentdigest == "default"));
-	add_option(document.form.vpn_client_digest, "None","none",(currentdigest == "none"));
+	add_option(document.form.vpn_client_digest, "Default","default",(currentdigest.toLowerCase() == "default"));
+	add_option(document.form.vpn_client_digest, "None","none",(currentdigest.toLowerCase() == "none"));
 
 	// Extract the type out of the interface name 
 	// (imported ovpn can result in this being tun3, for example)
@@ -250,13 +250,13 @@ function initial()
 	for(var i = 0; i < ciphersarray.length; i++){
 		add_option(document.form.vpn_client_cipher,
 			ciphersarray[i][0], ciphersarray[i][0],
-			(currentcipher == ciphersarray[i][0]));
+			(currentcipher.toLowerCase() == ciphersarray[i][0].toLowerCase()));
 	}
 
 	for(var i = 0; i < digestsarray.length; i++){
 		add_option(document.form.vpn_client_digest,
 			digestsarray[i][0], digestsarray[i][0],
-			(currentdigest == digestsarray[i][0]));
+			(currentdigest.toLowerCase() == digestsarray[i][0].toLowerCase()));
 	}
 
 	// Set these based on a compound field
@@ -367,9 +367,9 @@ function update_visibility(){
 
 	showhide("vpn_client_cn", ((auth == "tls") && (tlsremote == 1)));
 	showhide("client_cn_label", ((auth == "tls") && (tlsremote == 1)));
-	showhide("clientlist_Block", (rgw == 2));
-	showhide("selectiveTable", (rgw == 2));
-	showhide("client_enforce", (rgw == 2));
+	showhide("clientlist_Block", (rgw >= 2));
+	showhide("selectiveTable", (rgw >= 2));
+	showhide("client_enforce", (rgw >= 2));
 
 	showhide("client_cipher", (ncp != 2));
 	showhide("ncp_enable", (auth == "tls"));
@@ -381,7 +381,7 @@ function update_rgw_options(){
 	currentpolicy = document.form.vpn_client_rgw.value;
 	iface = document.form.vpn_client_if_x.value;
 
-	if ((iface == "tap") && (currentpolicy == 2)) {
+	if ((iface == "tap") && (currentpolicy >= 2)) {
 		currentpolicy = 1;
 		document.form.vpn_client_rgw.value = 1;
 	}
@@ -389,8 +389,10 @@ function update_rgw_options(){
 	free_options(document.form.vpn_client_rgw);
 	add_option(document.form.vpn_client_rgw, "No","0",(currentpolicy == 0));
 	add_option(document.form.vpn_client_rgw, "All","1",(currentpolicy == 1));
-	if (iface == "tun")
+	if (iface == "tun") {
 		add_option(document.form.vpn_client_rgw, "Policy Rules","2",(currentpolicy == 2));
+		add_option(document.form.vpn_client_rgw, "Policy Rules (strict)","3",(currentpolicy == 3));
+	}
 }
 
 
@@ -579,6 +581,8 @@ function ImportOvpn(){
 
 var vpn_upload_state = "init";
 function ovpnFileChecker(){
+	var missing;
+
 	document.getElementById("importOvpnFile").innerHTML = "<#Main_alert_proceeding_desc3#>";
 
 	$.ajax({
@@ -597,8 +601,9 @@ function ovpnFileChecker(){
 					setTimeout("ovpnFileChecker();",1000);
 				}
 				else if(vpn_upload_state > 0){
-					document.getElementById("importOvpnFile").innerHTML = "Failed!";
-					alert("Error " + vpn_upload_state +" while importing file - invalid key and/or certificate!\nFix your config file, then import it again.");
+					document.getElementById("importOvpnFile").innerHTML = "Warning!";
+					missing = upload_build_report(vpn_upload_state);
+					alert("Warning (" + vpn_upload_state +") while importing file - you will need to manually provide the " + missing.replace(/,\s*$/, "") + " content, on the keys/certificates page.");
 					setTimeout("location.href='Advanced_OpenVPNClient_Content.asp';", 3000);
 				}
 				else{
@@ -608,6 +613,24 @@ function ovpnFileChecker(){
 	});
 }
 
+function upload_build_report(ret){
+
+	var missing = "";
+
+	if (ret & 1)
+		missing += "CA, ";
+	if (ret & 2)
+		missing += "Certificate, ";
+	if (ret & 4)
+		missing += "Key, ";
+	if (ret & 8)
+		missing += "Static Key, ";
+	if (ret & 16)
+		missing += "CRL, ";
+	if (ret & 32)
+		missing += "Extra certificate, "
+	return missing;
+}
 
 function update_local_ip(object){
 
@@ -1302,7 +1325,7 @@ function defaultSettings() {
 						</td>
 					</tr>
 					<tr>
-						<th>Redirect Internet traffic</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,19);">Redirect Internet traffic</a></th>
 						<td colspan="2">
 							<select name="vpn_client_rgw" class="input_option" onChange="update_visibility();">
 							</select>
