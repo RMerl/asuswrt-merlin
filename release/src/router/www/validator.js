@@ -1526,7 +1526,7 @@ var validator = {
 		}
 	},
 
-	rangeFloat: function(o, min, max, def=1){
+	rangeFloat: function(o, min, max, def){
 
                 if(isNaN(o.value) || o.value <= min || o.value > max) {
                         alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max + '.');
