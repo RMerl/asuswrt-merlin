@@ -325,12 +325,40 @@ packet_id_read(struct packet_id_net *pin, struct buffer *buf, bool long_form)
     return true;
 }
 
-bool
-packet_id_write(const struct packet_id_net *pin, struct buffer *buf, bool long_form, bool prepend)
+static bool
+packet_id_send_update(struct packet_id_send *p, bool long_form)
 {
-    packet_id_type net_id = htonpid(pin->id);
-    net_time_t net_time = htontime(pin->time);
+    if (!p->time)
+    {
+        p->time = now;
+    }
+    if (p->id == PACKET_ID_MAX)
+    {
+        /* Packet ID only allowed to roll over if using long form and time has
+         * moved forward since last roll over.
+         */
+        if (!long_form || now <= p->time)
+        {
+            return false;
+        }
+        p->time = now;
+        p->id = 0;
+    }
+    p->id++;
+    return true;
+}
 
+bool
+packet_id_write(struct packet_id_send *p, struct buffer *buf, bool long_form,
+        bool prepend)
+{
+    if (!packet_id_send_update(p, long_form))
+    {
+        return false;
+    }
+
+    const packet_id_type net_id = htonpid(p->id);
+    const net_time_t net_time = htontime(p->time);
     if (prepend)
     {
         if (long_form)

@@ -832,14 +832,7 @@ print_key_id(struct tls_multi *multi, struct gc_arena *gc)
     return BSTR(&out);
 }
 
-/*
- * Given a key_method, return true if op
- * represents the required form of hard_reset.
- *
- * If key_method = 0, return true if any
- * form of hard reset is used.
- */
-static bool
+bool
 is_hard_reset(int op, int key_method)
 {
     if (!key_method || key_method == 1)
@@ -2499,7 +2492,7 @@ key_method_2_read(struct buffer *buf, struct tls_multi *multi, struct tls_sessio
 
     struct gc_arena gc = gc_new();
     char *options;
-    struct user_pass *up;
+    struct user_pass *up = NULL;
 
     /* allocate temporary objects */
     ALLOC_ARRAY_CLEAR_GC(options, char, TLS_OPTIONS_LEN, &gc);
@@ -2661,6 +2654,10 @@ key_method_2_read(struct buffer *buf, struct tls_multi *multi, struct tls_sessio
 
 error:
     secure_memzero(ks->key_src, sizeof(*ks->key_src));
+    if (up)
+    {
+        secure_memzero(up, sizeof(*up));
+    }
     buf_clear(buf);
     gc_free(&gc);
     return false;
@@ -3723,7 +3720,12 @@ tls_pre_decrypt(struct tls_multi *multi,
                                 /* Save incoming ciphertext packet to reliable buffer */
                                 struct buffer *in = reliable_get_buf(ks->rec_reliable);
                                 ASSERT(in);
-                                ASSERT(buf_copy(in, buf));
+                                if(!buf_copy(in, buf))
+                                {
+                                    msg(D_MULTI_DROPPED,
+                                        "Incoming control channel packet too big, dropping.");
+                                    goto error;
+                                }
                                 reliable_mark_active_incoming(ks->rec_reliable, in, id, op);
                             }
 

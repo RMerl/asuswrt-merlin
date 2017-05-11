@@ -191,15 +191,23 @@ extract_x509_field_ssl(X509_NAME *x509, const char *field_name, char *out,
     X509_NAME_ENTRY *x509ne = 0;
     ASN1_STRING *asn1 = 0;
     unsigned char *buf = NULL;
-    int nid = OBJ_txt2nid(field_name);
+    ASN1_OBJECT *field_name_obj = OBJ_txt2obj(field_name, 0);
+
+    if (field_name_obj == NULL)
+    {
+        msg(D_TLS_ERRORS, "Invalid X509 attribute name '%s'", field_name);
+        return FAILURE;
+    }
 
     ASSERT(size > 0);
     *out = '\0';
     do
     {
         lastpos = tmp;
-        tmp = X509_NAME_get_index_by_NID(x509, nid, lastpos);
+        tmp = X509_NAME_get_index_by_OBJ(x509, field_name_obj, lastpos);
     } while (tmp > -1);
+
+    ASN1_OBJECT_free(field_name_obj);
 
     /* Nothing found */
     if (lastpos == -1)
@@ -601,6 +609,7 @@ x509_verify_cert_ku(X509 *x509, const unsigned *const expected_ku,
     if (expected_ku[0] == OPENVPN_KU_REQUIRED)
     {
         /* Extension required, value checked by TLS library */
+        ASN1_BIT_STRING_free(ku);
         return SUCCESS;
     }
 

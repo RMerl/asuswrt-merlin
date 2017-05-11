@@ -1840,7 +1840,7 @@ do_close_tun(struct context *c, bool force)
 #if defined(_WIN32)
             if (c->options.block_outside_dns)
             {
-                if (!win_wfp_uninit(c->options.msg_channel))
+                if (!win_wfp_uninit(adapter_index, c->options.msg_channel))
                 {
                     msg(M_FATAL, "Uninitialising WFP failed!");
                 }
@@ -1880,7 +1880,7 @@ do_close_tun(struct context *c, bool force)
 #if defined(_WIN32)
             if (c->options.block_outside_dns)
             {
-                if (!win_wfp_uninit(c->options.msg_channel))
+                if (!win_wfp_uninit(adapter_index, c->options.msg_channel))
                 {
                     msg(M_FATAL, "Uninitialising WFP failed!");
                 }
@@ -2762,7 +2762,10 @@ do_init_crypto_none(const struct context *c)
 {
     ASSERT(!c->options.test_crypto);
     msg(M_WARN,
-        "******* WARNING *******: all encryption and authentication features disabled -- all data will be tunnelled as cleartext");
+        "******* WARNING *******: All encryption and authentication features "
+        "disabled -- All data will be tunnelled as clear text and will not be "
+        "protected against man-in-the-middle changes. "
+        "PLEASE DO RECONSIDER THIS CONFIGURATION!");
 }
 #endif /* ifdef ENABLE_CRYPTO */
 
@@ -4068,6 +4071,8 @@ init_instance(struct context *c, const struct env_set *env, const unsigned int f
     {
         c->c2.did_open_tun = do_open_tun(c);
     }
+
+    c->c2.frame_initial = c->c2.frame;
 
     /* print MTU info */
     do_print_data_channel_mtu_parms(c);

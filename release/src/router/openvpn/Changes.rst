@@ -306,15 +306,36 @@ Maintainer-visible changes
 
 Version 2.4.1
 =============
- - ``--remote-cert-ku`` now only requires the certificate to have at least the
-   bits set of one of the values in the supplied list, instead of requiring an
-   exact match to one of the values in the list.
- - ``--remote-cert-tls`` now only requires that a keyUsage is present in the
-   certificate, and leaves the verification of the value up to the crypto
-   library, which has more information (i.e. the key exchange method in use)
-   to verify that the keyUsage is correct.
- - ``--ns-cert-type`` is deprecated.  Use ``--remote-cert-tls`` instead.
-   The nsCertType x509 extension is very old, and barely used.
-   ``--remote-cert-tls`` uses the far more common keyUsage and extendedKeyUsage
-   extension instead.  Make sure your certificates carry these to be able to
-   use ``--remote-cert-tls``.
+- ``--remote-cert-ku`` now only requires the certificate to have at least the
+  bits set of one of the values in the supplied list, instead of requiring an
+  exact match to one of the values in the list.
+- ``--remote-cert-tls`` now only requires that a keyUsage is present in the
+  certificate, and leaves the verification of the value up to the crypto
+  library, which has more information (i.e. the key exchange method in use)
+  to verify that the keyUsage is correct.
+- ``--ns-cert-type`` is deprecated.  Use ``--remote-cert-tls`` instead.
+  The nsCertType x509 extension is very old, and barely used.
+  ``--remote-cert-tls`` uses the far more common keyUsage and extendedKeyUsage
+  extension instead.  Make sure your certificates carry these to be able to
+  use ``--remote-cert-tls``.
+
+
+Version 2.4.2
+=============
+
+Bugfixes
+--------
+- Fix memory leak introduced in 2.4.1: if --remote-cert-tls is used, we leaked
+  some memory on each TLS (re)negotiation.
+
+Security
+--------
+- Fix a pre-authentication denial-of-service attack on both clients and servers.
+  By sending a too-large control packet, OpenVPN 2.4.0 or 2.4.1 can be forced
+  to hit an ASSERT() and stop the process.  If ``--tls-auth`` or ``--tls-crypt``
+  is used, only attackers that have the ``--tls-auth`` or ``--tls-crypt`` key
+  can mount an attack. (OSTIF/Quarkslab audit finding 5.1, CVE-2017-7478)
+- Fix an authenticated remote DoS vulnerability that could be triggered by
+  causing a packet id roll over.  An attack is rather inefficient; a peer
+  would need to get us to send at least about 196 GB of data.
+  (OSTIF/Quarkslab audit finding 5.2, CVE-2017-7479)

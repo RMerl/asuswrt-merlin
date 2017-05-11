@@ -55,7 +55,7 @@ extern "C" {
  */
 #define OPENVPN_VERSION_MAJOR 2
 #define OPENVPN_VERSION_MINOR 4
-#define OPENVPN_VERSION_PATCH ".1"
+#define OPENVPN_VERSION_PATCH ".2"
 
 /*
  * Plug-in types.  These types correspond to the set of script callbacks
@@ -200,7 +200,8 @@ struct openvpn_plugin_string_list
 
 /* openvpn_plugin_{open,func}_v3() related structs */
 
-/* Defines version of the v3 plugin argument structs
+/**
+ * Defines version of the v3 plugin argument structs
  *
  * Whenever one or more of these structs are modified, this constant
  * must be updated.  A changelog should be appended in this comment
@@ -219,8 +220,10 @@ struct openvpn_plugin_string_list
  *    3      Added ovpn_version, ovpn_version_major, ovpn_version_minor
  *           and ovpn_version_patch to provide the runtime version of
  *           OpenVPN to plug-ins.
+ *
+ *    4      Exported secure_memzero() as plugin_secure_memzero()
  */
-#define OPENVPN_PLUGINv3_STRUCTVER 3
+#define OPENVPN_PLUGINv3_STRUCTVER 4
 
 /**
  * Definitions needed for the plug-in callback functions.
@@ -256,8 +259,17 @@ typedef void (*plugin_vlog_t)(openvpn_plugin_log_flags_t flags,
                               const char *plugin_name,
                               const char *format,
                               va_list arglist) _ovpn_chk_fmt (3, 0);
-
 /* #undef _ovpn_chk_fmt */
+
+/**
+ *  Export of secure_memzero() to be used inside plug-ins
+ *
+ *  @param data   Pointer to data to zeroise
+ *  @param len    Length of data, in bytes
+ *
+ */
+typedef void (*plugin_secure_memzero_t)(void *data, size_t len);
+
 
 /**
  * Used by the openvpn_plugin_open_v3() function to pass callback
@@ -268,11 +280,18 @@ typedef void (*plugin_vlog_t)(openvpn_plugin_log_flags_t flags,
  *               Messages will only be displayed if the plugin_name parameter
  *               is set. PLOG_DEBUG messages will only be displayed with plug-in
  *               debug log verbosity (at the time of writing that's verb >= 7).
+ *
+ * plugin_secure_memzero
+ *             : Use this function to securely wipe sensitive information from
+ *               memory.  This function is declared in a way that the compiler
+ *               will not remove these function calls during the compiler
+ *               optimization phase.
  */
 struct openvpn_plugin_callbacks
 {
     plugin_log_t plugin_log;
     plugin_vlog_t plugin_vlog;
+    plugin_secure_memzero_t plugin_secure_memzero;
 };
 
 /**
@@ -329,12 +348,12 @@ struct openvpn_plugin_args_open_in
  *
  * STRUCT MEMBERS
  *
- * *type_mask : The plug-in should set this value to the logical OR of all script
+ * type_mask  : The plug-in should set this value to the logical OR of all script
  *              types which the plug-in wants to intercept.  For example, if the
  *              script wants to intercept the client-connect and client-disconnect
  *              script types:
  *
- *              *type_mask = OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_CLIENT_CONNECT)
+ *              type_mask = OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_CLIENT_CONNECT)
  *                         | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_CLIENT_DISCONNECT)
  *
  * *handle :    Pointer to a global plug-in context, created by the plug-in.  This pointer
