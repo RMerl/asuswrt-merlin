@@ -667,7 +667,7 @@ void start_vpnserver(int serverNum)
 	char nv1[32], nv2[32], nv3[32], fpath[128];
 	int valid = 0;
 	int userauth = 0, useronly = 0;
-	int i;
+	int i, len;
 
 	sprintf(&buffer[0], "start_vpnserver%d", serverNum);
 	if (getpid() != 1) {
@@ -1310,14 +1310,18 @@ void start_vpnserver(int serverNum)
 		sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
 		fprintf(fp_client, "<ca>\n");
 		fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
-		if (buffer2[strlen(buffer2)-1] != '\n') fprintf(fp_client, "\n");	// Append newline if missing
+		len = strlen(buffer2);
+		if ((len) && (buffer2[len-1] != '\n'))
+			fprintf(fp_client, "\n");	// Append newline if missing
 		fprintf(fp_client, "</ca>\n");
 
 		sprintf(&buffer[0], "vpn_crt_server%d_extra", serverNum);
 		if ( !ovpn_crt_is_empty(&buffer[0]) ) {
 			fprintf(fp_client, "<extra-certs>\n");
 			fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
-			if (buffer2[strlen(buffer2)-1] != '\n') fprintf(fp_client, "\n");       // Append newline if missing
+			len = strlen(buffer2);
+			if ((len) && (buffer2[len-1] != '\n'))
+				fprintf(fp_client, "\n");       // Append newline if missing
 			fprintf(fp_client, "</extra-certs>\n");
 		}
 
@@ -1345,7 +1349,9 @@ void start_vpnserver(int serverNum)
 			sprintf(&buffer[0], "vpn_crt_server%d_client_crt", serverNum);
 			if ((valid == 1) && ( !ovpn_crt_is_empty(&buffer[0]) ) ) {
 				fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
-				if (buffer2[strlen(buffer2)-1] != '\n') fprintf(fp_client, "\n");  // Append newline if missing
+				len = strlen(buffer2);
+				if ((len) && (buffer2[len-1] != '\n'))
+					fprintf(fp_client, "\n");       // Append newline if missing
 			} else {
 				fprintf(fp_client, "    paste client certificate data here\n");
 			}
@@ -1355,7 +1361,9 @@ void start_vpnserver(int serverNum)
 			sprintf(&buffer[0], "vpn_crt_server%d_client_key", serverNum);
 			if ((valid == 1) && ( !ovpn_crt_is_empty(&buffer[0]) ) ) {
 				fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
-				if (buffer2[strlen(buffer2)-1] != '\n') fprintf(fp_client, "\n");  // Append newline if missing
+				len = strlen(buffer2);
+				if ((len) && (buffer2[len-1] != '\n'))
+					fprintf(fp_client, "\n");       // Append newline if missing
 			} else {
 				fprintf(fp_client, "    paste client key data here\n");
 			}
@@ -1435,7 +1443,9 @@ void start_vpnserver(int serverNum)
 		else if(cryptMode == SECRET)
 			fprintf(fp_client, "<secret>\n");
 		fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
-		if (buffer2[strlen(buffer2)-1] != '\n') fprintf(fp_client, "\n");  // Append newline if missing
+		len = strlen(buffer2);
+		if ((len) && (buffer2[len-1] != '\n'))
+			fprintf(fp_client, "\n");       // Append newline if missing
 		if(cryptMode == TLS) {
 			if (nvi == 3)
 				fprintf(fp_client, "</tls-crypt>\n");
