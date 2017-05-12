@@ -1,19 +1,21 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.66 beta (xx-xxx-2017)
+380.66 (12-May-2017)
    - NEW: Merged with GPL 380_7378
           Notable changes:
              * Port forwards can select a specific source IP
-             * Improved security against ssh break-in attempts
-          Known issues:
-             * Some wifi clients such as wireless printers
-               have connectivity issues.  Try disabling
-               Airtime Fairness as a potential workaround.
+             * Security fixes for CVE-2017-5891, CVE-2017-5892
+               and CVE-2017-6547
+          Note:
+             * If you are experiencing new wifi stability
+               issues, try disabling Airtime Fairness on
+               the Wireless -> Professional page (on all
+               bands).
 
   - NEW: Option to disable Wanduck's constant DNS probing
          for WAN state (Tools -> Other Settings)
-  - NEW: Allow disabling use of DH, by entering
+  - NEW: Allow disabling the use of DH, by entering
          "none" in the DH field for OpenVPN server config.
   - NEW: Added new Internet redirection mode to OpenVPN clients
          called "Policy Rule (Strict)".  The difference from the
@@ -30,6 +32,8 @@ Asuswrt-Merlin Changelog
              protocol.
   - CHANGED: Updated Tor to 0.2.9.10
   - CHANGED: Updated nano to 2.8.1
+  - CHANGED: Updated OpenVPN to 2.4.2
+  - CHANGED: Updated LZ4 to 1.7.5 (used by OpenVPN)
   - CHANGED: SSL certificate generated for httpds will now
              contain SANs for hostname, router.asus.com, IP
              and DDNS hostname.
@@ -63,6 +67,12 @@ Asuswrt-Merlin Changelog
            (unsure whether our kernel was vulnerable or not)
   - FIXED: ovpn file import would fail to import auth hash or
            cipher if they weren't uppercase.
+  - FIXED: Couldn't edit SMB permissions if the disk had
+           multiple partitions (Asus bug) (patch by
+           Jeremy Goss)
+  - FIXED: Exporting a client.ovpn file with no existing CA
+           could generate garbled output in the generated
+           file.
 
 
 380.65_4 (28-Mar-2017)
