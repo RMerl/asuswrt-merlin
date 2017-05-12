@@ -1,6 +1,7 @@
 export PATH="/bin:/usr/bin:/sbin:/usr/sbin:/home/$USER:/mmc/sbin:/mmc/bin:/mmc/usr/sbin:/mmc/usr/bin:/opt/sbin:/opt/bin:/opt/usr/sbin:/opt/usr/bin"
 export PS1='\u@\h:\w\$ '
 
+alias ls='ls --color=always'
 alias l='ls -lFA'
 alias ll='ls -lF'
 
