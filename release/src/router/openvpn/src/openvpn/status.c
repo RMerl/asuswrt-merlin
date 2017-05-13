@@ -369,14 +369,9 @@ void update_nvram_status(int flag)
 		break;
 	case RUNNING:
 		sprintf(buf, "vpn_%s_errno", p);
-		if(nvram_get_int(buf)) {
-			sprintf(buf, "vpn_%s_state", p);
-			nvram_set_int(buf, ST_ERROR);
-		}
-		else {
-			sprintf(buf, "vpn_%s_state", p);
-			nvram_set_int(buf, ST_RUNNING);
-		}
+		nvram_set_int(buf, 0);
+		sprintf(buf, "vpn_%s_state", p);
+		nvram_set_int(buf, ST_RUNNING);
 		break;
 	case SSLPARAM_ERROR:
 		sprintf(buf, "vpn_%s_errno", p);
