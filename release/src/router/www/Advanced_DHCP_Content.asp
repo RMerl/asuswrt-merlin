@@ -98,6 +98,7 @@ if(yadns_support){
 var backup_mac = "";
 var backup_ip = "";
 var backup_name = "";
+var sortCol, sortMethod;
 
 function initial(){
 	show_menu();
@@ -113,8 +114,13 @@ function initial(){
   				}
 			}
 	}
-	//}Viz 2011.10
-	setTimeout("showdhcp_staticlist();", 100);
+	if (((sortCol = cookie.get('dhcp_sortcol')) != null) && ((sortMethod = cookie.get('dhcp_sortmet')) != null)) {
+		document.getElementById("col" + sortCol).style.borderBottom="2px solid #fc0";
+		merlinWS.sortMethod = parseInt(sortMethod);
+		setTimeout("merlinWS.sortStaticIpList(sortCol);", 100);
+	} else {
+		setTimeout("merlinWS.sortStaticIpList(1);", 100);
+	}
 	setTimeout("showDropdownClientList('setClientIP', 'mac>ip>name', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');", 1000);
 
 	if(pptpd_support){
@@ -623,6 +629,9 @@ var merlinWS = {
 	sortStaticIpList: function(colIndex) {
 		var theList = merlinWS.parseAsusList(dhcp_staticlist_array);
 
+		cookie.set('dhcp_sortcol', colIndex);
+		cookie.set('dhcp_sortmet', merlinWS.sortMethod);
+
 		if (colIndex == 1) {
 			theList.sort(merlinWS.sortBy(colIndex, true, null, {isIp: true}));
 		} else {
@@ -939,9 +948,9 @@ jQuery(function($) {
 			  	</thead>
 
 			  	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
-					<th><#IPConnection_ExternalIPAddress_itemname#></th>
-					<th>Hostname</th>
+					<th id="col0"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
+					<th id="col1"><#IPConnection_ExternalIPAddress_itemname#></th>
+					<th id="col2">Hostname</th>
 					<th><#list_add_delete#></th>
 			  	</tr>
 			  	<tr>
