@@ -3692,9 +3692,9 @@ eapd$(BCMEX)$(EX7)-clean:
 
 lighttpd-1.4.39/Makefile:
 	@$(SEP)
-ifneq ($(RTCONFIG_BCMARM),y)
-	cd lighttpd-1.4.39 && ./autogen.sh
-endif
+#ifneq ($(RTCONFIG_BCMARM),y)
+#	cd lighttpd-1.4.39 && ./autogen.sh
+#endif
 
 lighttpd-1.4.39/stamp-h1: lighttpd-1.4.39/Makefile
 
