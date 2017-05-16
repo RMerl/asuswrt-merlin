@@ -1,17 +1,23 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.66_2 (16_May-2017)
+  - FIXED: AiCloud fail to start on RT-N66U and RT-AC66U.
+  - FIXED: The generated key/cert for httpds and AiCloud could
+           sometimes be invalid due to a timing problem.
+
+
 380.66 (12-May-2017)
-   - NEW: Merged with GPL 380_7378
-          Notable changes:
-             * Port forwards can select a specific source IP
-             * Security fixes for CVE-2017-5891, CVE-2017-5892
-               and CVE-2017-6547
-          Note:
-             * If you are experiencing new wifi stability
-               issues, try disabling Airtime Fairness on
-               the Wireless -> Professional page (on all
-               bands).
+  - NEW: Merged with GPL 380_7378
+         Notable changes:
+            * Port forwards can select a specific source IP
+            * Security fixes for CVE-2017-5891, CVE-2017-5892
+              and CVE-2017-6547
+         Note:
+            * If you are experiencing new wifi stability
+              issues, try disabling Airtime Fairness on
+              the Wireless -> Professional page (on all
+              bands).
 
   - NEW: Option to disable Wanduck's constant DNS probing
          for WAN state (Tools -> Other Settings)
