@@ -181,20 +181,20 @@ mod_alias_la_SOURCES = mod_alias.c
 mod_alias_la_LDFLAGS = -module -export-dynamic -avoid-version
 mod_alias_la_LIBADD = $(common_libadd)
 
-lib_LTLIBRARIES += mod_userdir.la
-mod_userdir_la_SOURCES = mod_userdir.c
-mod_userdir_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_userdir_la_LIBADD = $(common_libadd)
+#lib_LTLIBRARIES += mod_userdir.la
+#mod_userdir_la_SOURCES = mod_userdir.c
+#mod_userdir_la_LDFLAGS = -module -export-dynamic -avoid-version
+#mod_userdir_la_LIBADD = $(common_libadd)
 
 #lib_LTLIBRARIES += mod_rrdtool.la
 #mod_rrdtool_la_SOURCES = mod_rrdtool.c
 #mod_rrdtool_la_LDFLAGS = -module -export-dynamic -avoid-version
 #mod_rrdtool_la_LIBADD = $(common_libadd)
 
-lib_LTLIBRARIES += mod_usertrack.la
-mod_usertrack_la_SOURCES = mod_usertrack.c
-mod_usertrack_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_usertrack_la_LIBADD = $(common_libadd)
+#lib_LTLIBRARIES += mod_usertrack.la
+#mod_usertrack_la_SOURCES = mod_usertrack.c
+#mod_usertrack_la_LDFLAGS = -module -export-dynamic -avoid-version
+#mod_usertrack_la_LIBADD = $(common_libadd)
 
 #lib_LTLIBRARIES += mod_proxy.la
 #mod_proxy_la_SOURCES = mod_proxy.c
@@ -256,15 +256,15 @@ mod_auth_la_SOURCES = mod_auth.c http_auth.c
 mod_auth_la_LDFLAGS = -module -export-dynamic -avoid-version
 mod_auth_la_LIBADD = $(CRYPT_LIB) $(SSL_LIB) $(LDAP_LIB) $(LBER_LIB) $(common_libadd)
 
-lib_LTLIBRARIES += mod_rewrite.la
-mod_rewrite_la_SOURCES = mod_rewrite.c
-mod_rewrite_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_rewrite_la_LIBADD = $(PCRE_LIB) $(common_libadd)
+#lib_LTLIBRARIES += mod_rewrite.la
+#mod_rewrite_la_SOURCES = mod_rewrite.c
+#mod_rewrite_la_LDFLAGS = -module -export-dynamic -avoid-version
+#mod_rewrite_la_LIBADD = $(PCRE_LIB) $(common_libadd)
 
-lib_LTLIBRARIES += mod_redirect.la
-mod_redirect_la_SOURCES = mod_redirect.c
-mod_redirect_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_redirect_la_LIBADD = $(PCRE_LIB) $(common_libadd)
+#lib_LTLIBRARIES += mod_redirect.la
+#mod_redirect_la_SOURCES = mod_redirect.c
+#mod_redirect_la_LDFLAGS = -module -export-dynamic -avoid-version
+#mod_redirect_la_LIBADD = $(PCRE_LIB) $(common_libadd)
 
 #lib_LTLIBRARIES += mod_status.la
 #mod_status_la_SOURCES = mod_status.c
@@ -275,48 +275,6 @@ mod_redirect_la_LIBADD = $(PCRE_LIB) $(common_libadd)
 #mod_accesslog_la_SOURCES = mod_accesslog.c
 #mod_accesslog_la_LDFLAGS = -module -export-dynamic -avoid-version
 #mod_accesslog_la_LIBADD = $(common_libadd)
-
-#Missing in GPL releaase
-lib_LTLIBRARIES += mod_aicloud_auth.la
-mod_aicloud_auth_la_SOURCES = mod_aicloud_auth.c
-mod_aicloud_auth_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_aicloud_auth_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
-lib_LTLIBRARIES += mod_aicloud_invite.la
-mod_aicloud_invite_la_SOURCES = mod_aicloud_invite.c
-mod_aicloud_invite_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_aicloud_invite_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
-lib_LTLIBRARIES += mod_aicloud_sharelink.la
-mod_aicloud_sharelink_la_SOURCES = mod_aicloud_sharelink.c
-mod_aicloud_sharelink_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_aicloud_sharelink_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
-lib_LTLIBRARIES += mod_aidisk_access.la
-mod_aidisk_access_la_SOURCES = mod_aidisk_access.c
-mod_aidisk_access_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_aidisk_access_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
-lib_LTLIBRARIES += mod_captive_portal_uam.la
-mod_captive_portal_uam_la_SOURCES = mod_captive_portal_uam.c
-mod_captive_portal_uam_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_captive_portal_uam_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
-lib_LTLIBRARIES += mod_create_captcha_image.la
-mod_create_captcha_image_la_SOURCES = mod_create_captcha_image.c
-mod_create_captcha_image_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_create_captcha_image_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
-lib_LTLIBRARIES += mod_smbdav.la
-mod_smbdav_la_SOURCES = mod_smbdav.c
-mod_smbdav_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_smbdav_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
-lib_LTLIBRARIES += mod_query_field_json.la
-mod_query_field_json_la_SOURCES = mod_query_field_json.c
-mod_query_field_json_la_LDFLAGS = -module -export-dynamic -avoid-version
-mod_query_field_json_la_LIBADD = $(PCRE_LIB) $(common_libadd)
-
 
 #Sungmin add
 lib_LTLIBRARIES += liblightsql.la
