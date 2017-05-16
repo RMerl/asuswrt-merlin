@@ -1,6 +1,14 @@
 #!/bin/sh
 SECS=1262278080
 
+WAITTIMER=0
+while [ -f "/var/run/gencert.pid" -a $WAITTIMER -lt 14 ]
+do
+	WAITTIMER=$((WAITTIMER+2))
+	sleep $WAITTIMER
+done
+touch /var/run/gencert.pid
+
 cd /etc
 
 cp -L openssl.cnf openssl.config
@@ -110,4 +118,4 @@ openssl req -new -x509 -key key.pem -sha256 -out cert.pem -days 3653 -config /et
 # server.pem for WebDav SSL
 cat key.pem cert.pem > server.pem
 
-rm -f /tmp/cert.csr /etc/openssl.config
+rm -f /tmp/cert.csr /etc/openssl.config /var/run/gencert.pid
