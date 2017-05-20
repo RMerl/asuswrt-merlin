@@ -4813,7 +4813,7 @@ int init_nvram(void)
 		nvram_set("2:ledbh9", "0x7");
 		nvram_set("wl2_vifnames", "wl2.1 wl2.2 wl2.3");
 #if defined(RTAC5300) || defined(RTAC5300R)
-		update_boardlimit_ac5300();
+//		update_boardlimit_ac5300();
 #endif
 	case MODEL_RTAC88U:
 	case MODEL_RTAC3100:
